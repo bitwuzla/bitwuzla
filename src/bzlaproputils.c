@@ -3489,13 +3489,16 @@ select_move(Bzla *bzla,
 uint64_t
 bzla_proputils_select_move_prop(Bzla *bzla,
                                 BzlaNode *root,
+                                BzlaBitVector *bvroot,
                                 BzlaNode **input,
                                 BzlaBitVector **assignment)
 {
   assert(bzla);
   assert(root);
-  assert(bzla_bv_to_uint64((BzlaBitVector *) bzla_model_get_bv(bzla, root))
-         == 0);
+  assert(bvroot);
+  assert(
+      bzla_bv_compare(bvroot, (BzlaBitVector *) bzla_model_get_bv(bzla, root))
+      != 0);
 
   bool b;
   int32_t i, nconst;
@@ -3514,7 +3517,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   nprops      = 0;
 
   cur   = root;
-  bvcur = bzla_bv_one(bzla->mm, 1);
+  bvcur = bzla_bv_copy(bzla->mm, bvroot);
 
   for (;;)
   {

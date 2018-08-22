@@ -47,6 +47,7 @@ void bzla_proputils_reset_prop_info_stack(BzlaMemMgr* mm,
 
 uint64_t bzla_proputils_select_move_prop(Bzla* bzla,
                                          BzlaNode* root,
+                                         BzlaBitVector* bvroot,
                                          BzlaNode** input,
                                          BzlaBitVector** assignment);
 

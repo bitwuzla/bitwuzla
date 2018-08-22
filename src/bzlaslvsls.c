@@ -1126,7 +1126,7 @@ move(Bzla *bzla, uint32_t nmoves)
   BzlaNodePtrStack candidates;
   BzlaIntHashTableIterator iit;
   BzlaSLSSolver *slv;
-  BzlaBitVector *neigh;
+  BzlaBitVector *neigh, *one;
 
   BZLALOG(1, "");
   BZLALOG(1, "*** move");
@@ -1158,8 +1158,10 @@ move(Bzla *bzla, uint32_t nmoves)
      * is chosen via justification. If a non-recoverable conflict is
      * encountered, no move is performed. */
     slv->max_move = BZLA_SLS_MOVE_PROP;
+    one           = bzla_bv_one(bzla->mm, 1);
     slv->stats.props +=
-        bzla_proputils_select_move_prop(bzla, constr, &can, &neigh);
+        bzla_proputils_select_move_prop(bzla, constr, one, &can, &neigh);
+    bzla_bv_free(bzla->mm, one);
     if (can)
     {
       assert(neigh);

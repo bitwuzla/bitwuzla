@@ -129,20 +129,23 @@ move(Bzla *bzla, uint32_t nmoves)
   BZLALOG(1, "*** move");
 
   BzlaNode *root, *input;
-  BzlaBitVector *assignment;
+  BzlaBitVector *bvroot, *assignment;
   BzlaPropSolver *slv;
   BzlaIntHashTable *exps;
 
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
 
-  root = select_constraint(bzla, nmoves);
+  root   = select_constraint(bzla, nmoves);
+  bvroot = bzla_bv_one(bzla->mm, 1);
 
   do
   {
-    slv->stats.props +=
-        bzla_proputils_select_move_prop(bzla, root, &input, &assignment);
+    slv->stats.props += bzla_proputils_select_move_prop(
+        bzla, root, bvroot, &input, &assignment);
   } while (!input);
+
+  bzla_bv_free(bzla->mm, bvroot);
 
 #ifndef NBZLALOG
   char *a;
@@ -269,7 +272,7 @@ sat_prop_solver_aux(Bzla *bzla)
 
   for (;;)
   {
-    assert(BZLA_EMPTY_STACK(slv->toprop));
+    bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
 
     /* collect unsatisfied roots (kept up-to-date in update_cone) */
     assert(!slv->roots);
