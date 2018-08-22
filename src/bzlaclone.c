@@ -21,6 +21,7 @@
 #include "bzlalog.h"
 #include "bzlamodel.h"
 #include "bzlamsg.h"
+#include "bzlaproputils.h"
 #include "bzlarwcache.h"
 #include "bzlasat.h"
 #include "bzlaslvaigprop.h"
@@ -624,6 +625,7 @@ bzla_clone_node_ptr_stack(BzlaMemMgr *mm,
                           BzlaNodeMap *exp_map,
                           bool is_zero_terminated)
 {
+  assert(mm);
   assert(stack);
   assert(res);
   assert(exp_map);
@@ -1501,7 +1503,10 @@ clone_aux_bzla(Bzla *bzla,
       CHKCLONE_MEM_INT_HASH_MAP(slv->score, cslv->score);
 
       allocated += sizeof(BzlaPropSolver) + MEM_PTR_HASH_TABLE(cslv->roots)
-                   + MEM_PTR_HASH_TABLE(cslv->score);
+                   + MEM_PTR_HASH_TABLE(cslv->score)
+                   + BZLA_SIZE_STACK(cslv->toprop) * sizeof(BzlaPropInfo);
+      for (i = 0; i < BZLA_COUNT_STACK(cslv->toprop); i++)
+        allocated += MEM_BITVEC(BZLA_PEEK_STACK(cslv->toprop, i).bvexp);
     }
     else if (clone->slv->kind == BZLA_AIGPROP_SOLVER_KIND)
     {

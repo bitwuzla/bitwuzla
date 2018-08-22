@@ -15,6 +15,7 @@ extern "C" {
 #include "bzlamodel.h"
 #include "bzlanode.h"
 #include "bzlaproputils.h"
+#include "bzlaslvprop.h"
 #include "utils/bzlautil.h"
 }
 

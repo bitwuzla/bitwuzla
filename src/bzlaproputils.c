@@ -10,6 +10,8 @@
 
 #include "bzlaprintmodel.h"
 #include "bzlaslsutils.h"
+#include "bzlaslvprop.h"
+#include "bzlaslvsls.h"
 #include "utils/bzlanodeiter.h"
 #include "utils/bzlautil.h"
 
@@ -1615,9 +1617,20 @@ res_rec_conf(Bzla *bzla,
     }
 #endif
     if (is_recoverable)
+    {
       BZLA_PROP_SOLVER(bzla)->stats.rec_conf += 1;
+      /* recoverable conflict, push entailed propagation */
+      assert(exp->arity == 2);
+      BzlaPropInfo prop = {exp, bzla_bv_copy(bzla->mm, bvexp), eidx ? 0 : 1};
+      BZLA_PUSH_STACK(BZLA_PROP_SOLVER(bzla)->toprop, prop);
+    }
     else
+    {
       BZLA_PROP_SOLVER(bzla)->stats.non_rec_conf += 1;
+      /* non-recoverable conflict, entailed propagations are thus invalid */
+      bzla_proputils_reset_prop_info_stack(bzla->mm,
+                                           &BZLA_PROP_SOLVER(bzla)->toprop);
+    }
     /* fix counter since we always increase the counter, even in the conflict
      * case */
     BZLA_PROP_SOLVER(bzla)->stats.props_inv -= 1;
@@ -3616,4 +3629,61 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   bzla_bv_free(bzla->mm, bvcur);
 
   return nprops;
+}
+
+/* ========================================================================== */
+
+void
+bzla_proputils_clone_prop_info_stack(BzlaMemMgr *mm,
+                                     BzlaPropInfoStack *stack,
+                                     BzlaPropInfoStack *res,
+                                     BzlaNodeMap *exp_map)
+{
+  assert(mm);
+  assert(stack);
+  assert(res);
+  assert(exp_map);
+
+  uint32_t i;
+  BzlaNode *cloned_exp;
+  BzlaBitVector *cloned_bv;
+  BzlaPropInfo cloned_prop;
+
+  BZLA_INIT_STACK(mm, *res);
+  assert(BZLA_SIZE_STACK(*stack) || !BZLA_COUNT_STACK(*stack));
+  if (BZLA_SIZE_STACK(*stack))
+  {
+    BZLA_NEWN(mm, res->start, BZLA_SIZE_STACK(*stack));
+    res->top = res->start;
+    res->end = res->start + BZLA_SIZE_STACK(*stack);
+
+    for (i = 0; i < BZLA_COUNT_STACK(*stack); i++)
+    {
+      cloned_exp = bzla_nodemap_mapped(exp_map, BZLA_PEEK_STACK(*stack, i).exp);
+      assert(cloned_exp);
+      cloned_prop.exp = cloned_exp;
+      assert(BZLA_PEEK_STACK(*stack, i).bvexp);
+      cloned_bv         = bzla_bv_copy(mm, BZLA_PEEK_STACK(*stack, i).bvexp);
+      cloned_prop.bvexp = cloned_bv;
+      cloned_prop.eidx  = BZLA_PEEK_STACK(*stack, i).eidx;
+      assert(cloned_prop.eidx == 0 || cloned_prop.eidx == 1);
+      BZLA_PUSH_STACK(*res, cloned_prop);
+    }
+  }
+  assert(BZLA_COUNT_STACK(*stack) == BZLA_COUNT_STACK(*res));
+  assert(BZLA_SIZE_STACK(*stack) == BZLA_SIZE_STACK(*res));
+}
+
+void
+bzla_proputils_reset_prop_info_stack(BzlaMemMgr *mm, BzlaPropInfoStack *stack)
+{
+  assert(mm);
+  assert(stack);
+
+  while (!BZLA_EMPTY_STACK(*stack))
+  {
+    BzlaPropInfo prop = BZLA_POP_STACK(*stack);
+    bzla_bv_free(mm, prop.bvexp);
+  }
+  BZLA_RESET_STACK(*stack);
 }

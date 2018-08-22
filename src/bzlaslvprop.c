@@ -206,6 +206,8 @@ clone_prop_solver(Bzla *clone, BzlaPropSolver *slv, BzlaNodeMap *exp_map)
   res->score =
       bzla_hashint_map_clone(clone->mm, slv->score, bzla_clone_data_as_dbl, 0);
 
+  bzla_proputils_clone_prop_info_stack(
+      clone->mm, &slv->toprop, &res->toprop, exp_map);
   return res;
 }
 
@@ -220,6 +222,9 @@ delete_prop_solver(BzlaPropSolver *slv)
   if (slv->score) bzla_hashint_map_delete(slv->score);
   if (slv->roots) bzla_hashint_map_delete(slv->roots);
 
+  bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
+
+  BZLA_RELEASE_STACK(slv->toprop);
   BZLA_DELETE(slv->bzla->mm, slv);
 }
 
@@ -264,6 +269,8 @@ sat_prop_solver_aux(Bzla *bzla)
 
   for (;;)
   {
+    assert(BZLA_EMPTY_STACK(slv->toprop));
+
     /* collect unsatisfied roots (kept up-to-date in update_cone) */
     assert(!slv->roots);
     slv->roots = bzla_hashint_map_new(bzla->mm);
@@ -335,6 +342,7 @@ sat_prop_solver_aux(Bzla *bzla)
       bzla_hashint_map_delete(slv->score);
       slv->score = bzla_hashint_map_new(bzla->mm);
     }
+    bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
     slv->stats.restarts += 1;
   }
 
@@ -356,6 +364,7 @@ DONE:
     bzla_hashint_map_delete(slv->score);
     slv->score = 0;
   }
+  bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
   return sat_result;
 }
 
@@ -548,6 +557,8 @@ bzla_new_prop_solver(Bzla *bzla)
   slv->api.print_time_stats =
       (BzlaSolverPrintTimeStats) print_time_stats_prop_solver;
   slv->api.print_model = (BzlaSolverPrintModel) print_model_prop_solver;
+
+  BZLA_INIT_STACK(bzla->mm, slv->toprop);
 
   BZLA_MSG(bzla->msg, 1, "enabled prop engine");
 

@@ -10,6 +10,7 @@
 #define BZLASLVPROP_H_INCLUDED
 
 #include "bzlabv.h"
+#include "bzlaproputils.h"
 #include "bzlaslv.h"
 #include "bzlatypes.h"
 #include "utils/bzlahashint.h"
@@ -18,8 +19,19 @@ struct BzlaPropSolver
 {
   BZLA_SOLVER_STRUCT;
 
-  BzlaIntHashTable *roots; /* map: maintains 'selected' */
+  /* Map, maintains the roots.
+   * Maps root to 'selected' (= how often it got selected) */
+  BzlaIntHashTable *roots;
+
+  /* Map, maintains SLS score.
+   * Maps node to its SLS score, only used for heuristically selecting
+   * a root r based on maximizing
+   *   score(r) + BZLA_PROP_SELECT_CFACT * sqrt (log (selected(r)) / nmoves)
+   * if BZLA_OPT_PROP_USE_BANDIT is enabled. */
   BzlaIntHashTable *score;
+
+  /* Work stack, maintains entailed propagations. */
+  BzlaPropInfoStack toprop;
 
   /* current probability for selecting the cond when either the
    * 'then' or 'else' branch is const (path selection) */

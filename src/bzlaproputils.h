@@ -13,14 +13,35 @@
 #include "bzlalog.h"
 #include "bzlamodel.h"
 #include "bzlanode.h"
-#include "bzlaslvprop.h"
-#include "bzlaslvsls.h"
 #include "bzlatypes.h"
 #include "utils/bzlahashint.h"
+#include "utils/bzlastack.h"
 
 /*------------------------------------------------------------------------*/
 
 #define BZLA_PROPUTILS_PROB_FLIP_COND_CONST_DELTA 100
+
+/*------------------------------------------------------------------------*/
+
+/* maintain information about entailed propagations, e.g., when all children
+ * of a node need to be updated with respect to the target value. */
+struct BzlaPropInfo
+{
+  BzlaNode* exp;
+  BzlaBitVector* bvexp; /* target value  */
+  int32_t eidx;         /* branch to take */
+};
+typedef struct BzlaPropInfo BzlaPropInfo;
+
+BZLA_DECLARE_STACK(BzlaPropInfo, BzlaPropInfo);
+
+void bzla_proputils_clone_prop_info_stack(BzlaMemMgr* mm,
+                                          BzlaPropInfoStack* stack,
+                                          BzlaPropInfoStack* res,
+                                          BzlaNodeMap* exp_map);
+
+void bzla_proputils_reset_prop_info_stack(BzlaMemMgr* mm,
+                                          BzlaPropInfoStack* stack);
 
 /*------------------------------------------------------------------------*/
 
