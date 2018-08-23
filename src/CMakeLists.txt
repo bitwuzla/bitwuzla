@@ -15,6 +15,7 @@ set(libboolector_src_files
   bzladbg.c
   bzladcr.c
   bzlaexp.c
+  bzlainvutils.c
   bzlalsutils.c
   bzlamodel.c
   bzlamsg.c
