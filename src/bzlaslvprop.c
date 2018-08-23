@@ -132,18 +132,36 @@ move(Bzla *bzla, uint32_t nmoves)
   BzlaBitVector *bvroot, *assignment;
   BzlaPropSolver *slv;
   BzlaIntHashTable *exps;
+  BzlaPropInfo prop;
+  int32_t eidx;
+  uint64_t props;
 
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
 
-  root   = select_constraint(bzla, nmoves);
-  bvroot = bzla_bv_one(bzla->mm, 1);
-
   do
   {
-    slv->stats.props += bzla_proputils_select_move_prop(
-        bzla, root, bvroot, &input, &assignment);
+    if (BZLA_EMPTY_STACK(slv->toprop))
+    {
+      root   = select_constraint(bzla, nmoves);
+      bvroot = bzla_bv_one(bzla->mm, 1);
+      eidx   = -1;
+    }
+    else
+    {
+      prop   = BZLA_POP_STACK(slv->toprop);
+      root   = prop.exp;
+      bvroot = prop.bvexp;
+      eidx   = prop.eidx;
+    }
+
+    props = bzla_proputils_select_move_prop(
+        bzla, root, bvroot, eidx, &input, &assignment);
   } while (!input);
+
+  assert(assignment);
+  slv->stats.props += props;
+  if (eidx != -1) slv->stats.entailed_props += props;
 
   bzla_bv_free(bzla->mm, bvroot);
 
@@ -183,6 +201,7 @@ move(Bzla *bzla, uint32_t nmoves)
   bzla_hashint_map_delete(exps);
 
   slv->stats.moves += 1;
+  if (eidx != -1) slv->stats.entailed_moves += 1;
   bzla_bv_free(bzla->mm, assignment);
 
   return true;
@@ -225,8 +244,7 @@ delete_prop_solver(BzlaPropSolver *slv)
   if (slv->score) bzla_hashint_map_delete(slv->score);
   if (slv->roots) bzla_hashint_map_delete(slv->roots);
 
-  bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
-
+  assert(BZLA_EMPTY_STACK(slv->toprop));
   BZLA_RELEASE_STACK(slv->toprop);
   BZLA_DELETE(slv->bzla->mm, slv);
 }
@@ -272,7 +290,7 @@ sat_prop_solver_aux(Bzla *bzla)
 
   for (;;)
   {
-    bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
+    assert(BZLA_EMPTY_STACK(slv->toprop));
 
     /* collect unsatisfied roots (kept up-to-date in update_cone) */
     assert(!slv->roots);
@@ -345,8 +363,8 @@ sat_prop_solver_aux(Bzla *bzla)
       bzla_hashint_map_delete(slv->score);
       slv->score = bzla_hashint_map_new(bzla->mm);
     }
-    bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
     slv->stats.restarts += 1;
+    bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
   }
 
 SAT:
@@ -403,6 +421,7 @@ sat_prop_solver(BzlaPropSolver *slv)
   slv->api.generate_model((BzlaSolver *) slv, false, true);
   sat_result = sat_prop_solver_aux(bzla);
 DONE:
+  assert(BZLA_EMPTY_STACK(slv->toprop));
   return sat_result;
 }
 
@@ -438,11 +457,14 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   BZLA_MSG(bzla->msg, 1, "");
   BZLA_MSG(bzla->msg, 1, "restarts: %u", slv->stats.restarts);
   BZLA_MSG(bzla->msg, 1, "moves: %u", slv->stats.moves);
+  BZLA_MSG(bzla->msg, 1, "   entailed moves: %u", slv->stats.entailed_moves);
   BZLA_MSG(bzla->msg,
            1,
            "moves per second: %.2f",
            (double) slv->stats.moves / (bzla->time.sat - bzla->time.simplify));
   BZLA_MSG(bzla->msg, 1, "propagation (steps): %u", slv->stats.props);
+  BZLA_MSG(
+      bzla->msg, 1, "   entailed propagations: %u", slv->stats.entailed_props);
   BZLA_MSG(bzla->msg,
            1,
            "   consistent value propagations: %u",

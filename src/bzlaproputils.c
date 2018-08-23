@@ -1555,16 +1555,24 @@ res_rec_conf(Bzla *bzla,
   (void) op;
   (void) e;
 
-  bool is_recoverable = bzla_node_is_bv_const(e) ? false : true;
-  BzlaBitVector *res =
-      bzla_opt_get(bzla, BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT) && !is_recoverable
-          ? 0
-          : fun(bzla, exp, bvexp, bve, eidx);
-  assert(bzla_opt_get(bzla, BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT) || res);
+  bool is_recoverable;
+  uint32_t no_move_on_conflict;
+  BzlaBitVector *res;
+  BzlaMemMgr *mm;
+
+  mm = bzla->mm;
+
+  is_recoverable      = bzla_node_is_bv_const(e) ? false : true;
+  no_move_on_conflict = bzla_opt_get(bzla, BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT);
+
+  res = no_move_on_conflict && !is_recoverable
+            ? 0
+            : fun(bzla, exp, bvexp, bve, eidx);
+  assert(no_move_on_conflict || res);
 
 #ifndef NDEBUG
-  char *sbve   = bzla_bv_to_char(bzla->mm, bve);
-  char *sbvexp = bzla_bv_to_char(bzla->mm, bvexp);
+  char *sbve   = bzla_bv_to_char(mm, bve);
+  char *sbvexp = bzla_bv_to_char(mm, bvexp);
   BZLALOG(2, "");
   if (eidx)
     BZLALOG(2,
@@ -1582,8 +1590,8 @@ res_rec_conf(Bzla *bzla,
             sbvexp,
             op,
             sbve);
-  bzla_mem_freestr(bzla->mm, sbve);
-  bzla_mem_freestr(bzla->mm, sbvexp);
+  bzla_mem_freestr(mm, sbve);
+  bzla_mem_freestr(mm, sbvexp);
 #endif
   if (bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_PROP)
   {
@@ -1621,15 +1629,14 @@ res_rec_conf(Bzla *bzla,
       BZLA_PROP_SOLVER(bzla)->stats.rec_conf += 1;
       /* recoverable conflict, push entailed propagation */
       assert(exp->arity == 2);
-      BzlaPropInfo prop = {exp, bzla_bv_copy(bzla->mm, bvexp), eidx ? 0 : 1};
+      BzlaPropInfo prop = {exp, bzla_bv_copy(mm, bvexp), eidx ? 0 : 1};
       BZLA_PUSH_STACK(BZLA_PROP_SOLVER(bzla)->toprop, prop);
     }
     else
     {
       BZLA_PROP_SOLVER(bzla)->stats.non_rec_conf += 1;
       /* non-recoverable conflict, entailed propagations are thus invalid */
-      bzla_proputils_reset_prop_info_stack(bzla->mm,
-                                           &BZLA_PROP_SOLVER(bzla)->toprop);
+      bzla_proputils_reset_prop_info_stack(mm, &BZLA_PROP_SOLVER(bzla)->toprop);
     }
     /* fix counter since we always increase the counter, even in the conflict
      * case */
@@ -3459,8 +3466,7 @@ select_move(Bzla *bzla,
             BzlaNode *exp,
             BzlaBitVector *bvexp,
             BzlaBitVector *bve[3],
-            int32_t (*select_path)(
-                Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector **),
+            int32_t eidx,
             BzlaBitVector *(*compute_value)(
                 Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector *, int32_t),
             BzlaBitVector **value)
@@ -3470,14 +3476,12 @@ select_move(Bzla *bzla,
   assert(bzla_node_is_regular(exp));
   assert(bvexp);
   assert(bve);
-  assert(select_path);
+  assert(eidx >= 0);
   assert(compute_value);
   assert(value);
 
-  int32_t eidx, idx;
+  int32_t idx;
 
-  eidx = select_path(bzla, exp, bvexp, bve);
-  assert(eidx >= 0);
   /* special case slice: only one child
    * special case cond: we only need assignment of condition to compute value */
   idx =
@@ -3490,15 +3494,13 @@ uint64_t
 bzla_proputils_select_move_prop(Bzla *bzla,
                                 BzlaNode *root,
                                 BzlaBitVector *bvroot,
+                                int32_t eidx,
                                 BzlaNode **input,
                                 BzlaBitVector **assignment)
 {
   assert(bzla);
   assert(root);
   assert(bvroot);
-  assert(
-      bzla_bv_compare(bvroot, (BzlaBitVector *) bzla_model_get_bv(bzla, root))
-      != 0);
 
   bool b;
   int32_t i, nconst;
@@ -3515,6 +3517,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   *input      = 0;
   *assignment = 0;
   nprops      = 0;
+
+  tmp = (BzlaBitVector *) bzla_model_get_bv(bzla, root);
+  if (!bzla_bv_compare(bvroot, tmp)) goto DONE;
 
   cur   = root;
   bvcur = bzla_bv_copy(bzla->mm, bvroot);
@@ -3620,17 +3625,22 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           compute_value = b ? inv_cond_bv : cons_cond_bv;
       }
 
-      cur = select_move(
-          bzla, real_cur, bvcur, bve, select_path, compute_value, &bvenew);
+      if (eidx == -1) eidx = select_path(bzla, real_cur, bvcur, bve);
+
+      cur =
+          select_move(bzla, real_cur, bvcur, bve, eidx, compute_value, &bvenew);
+
       if (!bvenew) break; /* non-recoverable conflict */
 
       bzla_bv_free(bzla->mm, bvcur);
       bvcur = bvenew;
+      eidx  = -1;
     }
   }
 
   bzla_bv_free(bzla->mm, bvcur);
 
+DONE:
   return nprops;
 }
 
@@ -3648,9 +3658,9 @@ bzla_proputils_clone_prop_info_stack(BzlaMemMgr *mm,
   assert(exp_map);
 
   uint32_t i;
+  int32_t cloned_eidx;
   BzlaNode *cloned_exp;
-  BzlaBitVector *cloned_bv;
-  BzlaPropInfo cloned_prop;
+  BzlaBitVector *cloned_bvexp;
 
   BZLA_INIT_STACK(mm, *res);
   assert(BZLA_SIZE_STACK(*stack) || !BZLA_COUNT_STACK(*stack));
@@ -3662,14 +3672,14 @@ bzla_proputils_clone_prop_info_stack(BzlaMemMgr *mm,
 
     for (i = 0; i < BZLA_COUNT_STACK(*stack); i++)
     {
+      assert(BZLA_PEEK_STACK(*stack, i).exp);
       cloned_exp = bzla_nodemap_mapped(exp_map, BZLA_PEEK_STACK(*stack, i).exp);
       assert(cloned_exp);
-      cloned_prop.exp = cloned_exp;
       assert(BZLA_PEEK_STACK(*stack, i).bvexp);
-      cloned_bv         = bzla_bv_copy(mm, BZLA_PEEK_STACK(*stack, i).bvexp);
-      cloned_prop.bvexp = cloned_bv;
-      cloned_prop.eidx  = BZLA_PEEK_STACK(*stack, i).eidx;
-      assert(cloned_prop.eidx == 0 || cloned_prop.eidx == 1);
+      cloned_bvexp = bzla_bv_copy(mm, BZLA_PEEK_STACK(*stack, i).bvexp);
+      cloned_eidx  = BZLA_PEEK_STACK(*stack, i).eidx;
+      assert(cloned_eidx == 0 || cloned_eidx == 1);
+      BzlaPropInfo cloned_prop = {cloned_exp, cloned_bvexp, cloned_eidx};
       BZLA_PUSH_STACK(*res, cloned_prop);
     }
   }

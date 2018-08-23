@@ -52,6 +52,8 @@ struct BzlaPropSolver
     uint64_t props;
     uint64_t props_cons;
     uint64_t props_inv;
+    uint64_t entailed_props;
+    uint64_t entailed_moves;
     uint64_t updates;
 
 #ifndef NDEBUG

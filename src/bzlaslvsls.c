@@ -1160,7 +1160,7 @@ move(Bzla *bzla, uint32_t nmoves)
     slv->max_move = BZLA_SLS_MOVE_PROP;
     one           = bzla_bv_one(bzla->mm, 1);
     slv->stats.props +=
-        bzla_proputils_select_move_prop(bzla, constr, one, &can, &neigh);
+        bzla_proputils_select_move_prop(bzla, constr, one, -1, &can, &neigh);
     bzla_bv_free(bzla->mm, one);
     if (can)
     {
