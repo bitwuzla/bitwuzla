@@ -1629,8 +1629,11 @@ res_rec_conf(Bzla *bzla,
       BZLA_PROP_SOLVER(bzla)->stats.rec_conf += 1;
       /* recoverable conflict, push entailed propagation */
       assert(exp->arity == 2);
-      BzlaPropInfo prop = {exp, bzla_bv_copy(mm, bvexp), eidx ? 0 : 1};
-      BZLA_PUSH_STACK(BZLA_PROP_SOLVER(bzla)->toprop, prop);
+      if (bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED))
+      {
+        BzlaPropInfo prop = {exp, bzla_bv_copy(mm, bvexp), eidx ? 0 : 1};
+        BZLA_PUSH_STACK(BZLA_PROP_SOLVER(bzla)->toprop, prop);
+      }
     }
     else
     {

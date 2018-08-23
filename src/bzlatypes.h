@@ -607,6 +607,15 @@ enum BzlaOption
   BZLA_OPT_PROP_NPROPS,
 
   /*!
+    * **BZLA_OPT_PROP_ENTAILED**
+
+      Enable (``value``: 1) or disable (``value``: 0) maintaining a work queue
+      with entailed propagations. If enabled, propagations from this queue are
+      propagated before randomly choosing a yet unsatisfied path from the root.
+   */
+  BZLA_OPT_PROP_ENTAILED,
+
+  /*!
     * **BZLA_OPT_PROP_USE_RESTARTS**
 
       Enable (``value``: 1) or disable (``value``: 0) restarts.

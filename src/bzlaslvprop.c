@@ -452,19 +452,25 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   assert(slv->bzla);
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
-  Bzla *bzla = slv->bzla;
+  Bzla *bzla           = slv->bzla;
+  bool enable_entailed = bzla_opt_get(slv->bzla, BZLA_OPT_PROP_ENTAILED);
 
   BZLA_MSG(bzla->msg, 1, "");
   BZLA_MSG(bzla->msg, 1, "restarts: %u", slv->stats.restarts);
   BZLA_MSG(bzla->msg, 1, "moves: %u", slv->stats.moves);
-  BZLA_MSG(bzla->msg, 1, "   entailed moves: %u", slv->stats.entailed_moves);
+
+  if (enable_entailed)
+    BZLA_MSG(bzla->msg, 1, "   entailed moves: %u", slv->stats.entailed_moves);
   BZLA_MSG(bzla->msg,
            1,
            "moves per second: %.2f",
            (double) slv->stats.moves / (bzla->time.sat - bzla->time.simplify));
   BZLA_MSG(bzla->msg, 1, "propagation (steps): %u", slv->stats.props);
-  BZLA_MSG(
-      bzla->msg, 1, "   entailed propagations: %u", slv->stats.entailed_props);
+  if (enable_entailed)
+    BZLA_MSG(bzla->msg,
+             1,
+             "   entailed propagations: %u",
+             slv->stats.entailed_props);
   BZLA_MSG(bzla->msg,
            1,
            "   consistent value propagations: %u",

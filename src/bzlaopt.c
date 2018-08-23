@@ -919,6 +919,16 @@ bzla_opt_init_opts(Bzla *bzla)
            UINT32_MAX,
            "number of propagation steps used as a limit for prop engine");
   init_opt(bzla,
+           BZLA_OPT_PROP_ENTAILED,
+           false,
+           true,
+           "prop:entailed",
+           0,
+           0,
+           0,
+           1,
+           "maintain and prioritize entailed propagations");
+  init_opt(bzla,
            BZLA_OPT_PROP_USE_RESTARTS,
            false,
            true,
