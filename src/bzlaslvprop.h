@@ -30,7 +30,14 @@ struct BzlaPropSolver
    * if BZLA_OPT_PROP_USE_BANDIT is enabled. */
   BzlaIntHashTable *score;
 
-  /* Work stack, maintains entailed propagations. */
+  /* Work stack, maintains entailed propagations that need to be processed
+   * with higher priority if BZLA_OPT_PROP_ENTAILED.
+   *
+   * A recoverable conflict entails that starting from the node where the
+   * conflict occurred there are more paths to fix (in our case exactly one
+   * other path since all bv operators are binary). These so-called entailed
+   * propagations are pushed onto stack 'toprop'.
+   */
   BzlaPropInfoStack toprop;
 
   /* current probability for selecting the cond when either the
@@ -45,18 +52,36 @@ struct BzlaPropSolver
 
   struct
   {
+    /* Number of restarts (if BZLA_OPT_PROP_USE_RESTARTS). */
     uint32_t restarts;
+    /* Number of moves. */
     uint32_t moves;
+    /* Number of recoverable conflicts.
+     * A recoverable conflict is a conflict that does not involve bit-vector
+     * constants. */
     uint32_t rec_conf;
+    /* Number of non-recoverable conflicts.
+     * A non-recoverable conflict involves bit-vector constants. */
     uint32_t non_rec_conf;
+    /* Number of recoverable conflicts that were fixed
+     * (corresponds to the number of moves that were a consequence of an
+     * entailed propagation). */
+    uint64_t fixed_conf;
+    /* Number of propagations (total). */
     uint64_t props;
+    /* Number of propagations via consistent value computation. */
     uint64_t props_cons;
+    /* Number of propagataions via inverse value computation. */
     uint64_t props_inv;
-    uint64_t entailed_props;
-    uint64_t entailed_moves;
+    /* Number of entailed propagations.
+     * Counts all propagations that were needed to fix recoverable conflicts. */
+    uint64_t props_entailed;
+    /* Number of updates performed when updating the cone of influence in the
+     * current assignment as a consequence of a move. */
     uint64_t updates;
 
 #ifndef NDEBUG
+    /* Number of calls to inverse value computation functions. */
     uint32_t inv_add;
     uint32_t inv_and;
     uint32_t inv_eq;
@@ -70,6 +95,7 @@ struct BzlaPropSolver
     uint32_t inv_slice;
     uint32_t inv_cond;
 
+    /* Number of calls to consistent value computation functions. */
     uint32_t cons_add;
     uint32_t cons_and;
     uint32_t cons_eq;

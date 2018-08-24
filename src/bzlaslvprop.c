@@ -164,7 +164,7 @@ move(Bzla *bzla, uint32_t nmoves)
 
   assert(assignment);
   slv->stats.props += props;
-  if (eidx != -1) slv->stats.entailed_props += props;
+  if (eidx != -1) slv->stats.props_entailed += props;
 
   bzla_bv_free(bzla->mm, bvroot);
 
@@ -204,7 +204,7 @@ move(Bzla *bzla, uint32_t nmoves)
   bzla_hashint_map_delete(exps);
 
   slv->stats.moves += 1;
-  if (eidx != -1) slv->stats.entailed_moves += 1;
+  if (eidx != -1) slv->stats.fixed_conf += 1;
   bzla_bv_free(bzla->mm, assignment);
 
   return true;
@@ -462,8 +462,6 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   BZLA_MSG(bzla->msg, 1, "restarts: %u", slv->stats.restarts);
   BZLA_MSG(bzla->msg, 1, "moves: %u", slv->stats.moves);
 
-  if (enable_entailed)
-    BZLA_MSG(bzla->msg, 1, "   entailed moves: %u", slv->stats.entailed_moves);
   BZLA_MSG(bzla->msg,
            1,
            "moves per second: %.2f",
@@ -473,7 +471,7 @@ print_stats_prop_solver(BzlaPropSolver *slv)
     BZLA_MSG(bzla->msg,
              1,
              "   entailed propagations: %u",
-             slv->stats.entailed_props);
+             slv->stats.props_entailed);
   BZLA_MSG(bzla->msg,
            1,
            "   consistent value propagations: %u",
@@ -484,16 +482,20 @@ print_stats_prop_solver(BzlaPropSolver *slv)
            1,
            "propagation (steps) per second: %.2f",
            (double) slv->stats.props / (bzla->time.sat - bzla->time.simplify));
-  BZLA_MSG(bzla->msg, 1, "updates (cone): %u", slv->stats.updates);
-  BZLA_MSG(bzla->msg, 1, "");
   BZLA_MSG(bzla->msg,
            1,
-           "propagation move conflicts (recoverable): %u",
-           slv->stats.rec_conf);
-  BZLA_MSG(bzla->msg,
-           1,
-           "propagation move conflicts (non-recoverable): %u",
+           "propagation conflicts (non-recoverable): %u",
            slv->stats.non_rec_conf);
+  BZLA_MSG(bzla->msg,
+           1,
+           "propagation conflicts (recoverable): %u",
+           slv->stats.rec_conf);
+  if (enable_entailed)
+    BZLA_MSG(bzla->msg,
+             1,
+             "   fixed recoverable conflicts (= entailed moves): %u",
+             slv->stats.fixed_conf);
+  BZLA_MSG(bzla->msg, 1, "updates (cone): %u", slv->stats.updates);
 #ifndef NDEBUG
   BZLA_MSG(bzla->msg, 1, "");
   BZLA_MSG(bzla->msg, 1, "consistent fun calls (add): %u", slv->stats.cons_add);
