@@ -121,7 +121,7 @@ select_constraint(Bzla *bzla, uint32_t nmoves)
 }
 
 static bool
-move(Bzla *bzla, uint32_t nmoves)
+move(Bzla *bzla)
 {
   assert(bzla);
 
@@ -146,7 +146,7 @@ move(Bzla *bzla, uint32_t nmoves)
 
     if (BZLA_EMPTY_STACK(slv->toprop))
     {
-      root   = select_constraint(bzla, nmoves);
+      root   = select_constraint(bzla, slv->stats.moves);
       bvroot = bzla_bv_one(bzla->mm, 1);
       eidx   = -1;
     }
@@ -269,7 +269,7 @@ sat_prop_solver_aux(Bzla *bzla)
 
   uint32_t j, max_steps;
   int32_t sat_result;
-  uint32_t nmoves, nprops;
+  uint32_t nprops;
   BzlaNode *root;
   BzlaPtrHashTableIterator it;
   BzlaPropSolver *slv;
@@ -277,8 +277,6 @@ sat_prop_solver_aux(Bzla *bzla)
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
   nprops = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
-
-  nmoves = 0;
 
   /* check for constraints occurring in both phases */
   bzla_iter_hashptr_init(&it, bzla->assumptions);
@@ -354,8 +352,7 @@ sat_prop_solver_aux(Bzla *bzla)
         goto DONE;
       }
 
-      if (!(move(bzla, nmoves))) goto UNSAT;
-      nmoves += 1;
+      if (!(move(bzla))) goto UNSAT;
 
       /* all constraints sat? */
       if (!slv->roots->count) goto SAT;
