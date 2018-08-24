@@ -139,8 +139,11 @@ move(Bzla *bzla, uint32_t nmoves)
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
 
+  bvroot = 0;
   do
   {
+    if (bvroot) bzla_bv_free(bzla->mm, bvroot);
+
     if (BZLA_EMPTY_STACK(slv->toprop))
     {
       root   = select_constraint(bzla, nmoves);
