@@ -3522,7 +3522,12 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   nprops      = 0;
 
   tmp = (BzlaBitVector *) bzla_model_get_bv(bzla, root);
-  if (!bzla_bv_compare(bvroot, tmp)) goto DONE;
+  if (!bzla_bv_compare(bvroot, tmp))
+  {
+    if (bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_PROP)
+      BZLA_PROP_SOLVER(bzla)->stats.fixed_conf++;
+    goto DONE;
+  }
 
   cur   = root;
   bvcur = bzla_bv_copy(bzla->mm, bvroot);
