@@ -1595,30 +1595,23 @@ res_rec_conf(Bzla *bzla,
 #endif
   if (bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_PROP)
   {
+    BzlaPropSolver *slv = BZLA_PROP_SOLVER(bzla);
 #ifndef NDEBUG
     /* fix counters since we always increase the counter, even in the conflict
      * case */
     switch (exp->kind)
     {
-      case BZLA_BV_ADD_NODE: BZLA_PROP_SOLVER(bzla)->stats.inv_add -= 1; break;
-      case BZLA_BV_AND_NODE: BZLA_PROP_SOLVER(bzla)->stats.inv_and -= 1; break;
-      case BZLA_BV_EQ_NODE: BZLA_PROP_SOLVER(bzla)->stats.inv_eq -= 1; break;
-      case BZLA_BV_ULT_NODE: BZLA_PROP_SOLVER(bzla)->stats.inv_ult -= 1; break;
-      case BZLA_BV_SLL_NODE: BZLA_PROP_SOLVER(bzla)->stats.inv_sll -= 1; break;
-      case BZLA_BV_SRL_NODE: BZLA_PROP_SOLVER(bzla)->stats.inv_srl -= 1; break;
-      case BZLA_BV_MUL_NODE: BZLA_PROP_SOLVER(bzla)->stats.inv_mul -= 1; break;
-      case BZLA_BV_UDIV_NODE:
-        BZLA_PROP_SOLVER(bzla)->stats.inv_udiv -= 1;
-        break;
-      case BZLA_BV_UREM_NODE:
-        BZLA_PROP_SOLVER(bzla)->stats.inv_urem -= 1;
-        break;
-      case BZLA_BV_CONCAT_NODE:
-        BZLA_PROP_SOLVER(bzla)->stats.inv_concat -= 1;
-        break;
-      case BZLA_BV_SLICE_NODE:
-        BZLA_PROP_SOLVER(bzla)->stats.inv_slice -= 1;
-        break;
+      case BZLA_BV_ADD_NODE: slv->stats.inv_add -= 1; break;
+      case BZLA_BV_AND_NODE: slv->stats.inv_and -= 1; break;
+      case BZLA_BV_EQ_NODE: slv->stats.inv_eq -= 1; break;
+      case BZLA_BV_ULT_NODE: slv->stats.inv_ult -= 1; break;
+      case BZLA_BV_SLL_NODE: slv->stats.inv_sll -= 1; break;
+      case BZLA_BV_SRL_NODE: slv->stats.inv_srl -= 1; break;
+      case BZLA_BV_MUL_NODE: slv->stats.inv_mul -= 1; break;
+      case BZLA_BV_UDIV_NODE: slv->stats.inv_udiv -= 1; break;
+      case BZLA_BV_UREM_NODE: slv->stats.inv_urem -= 1; break;
+      case BZLA_BV_CONCAT_NODE: slv->stats.inv_concat -= 1; break;
+      case BZLA_BV_SLICE_NODE: slv->stats.inv_slice -= 1; break;
       default:
         assert(bzla_node_is_bv_cond(exp));
         /* do not decrease, we do not call cons function in conflict case */
@@ -1626,24 +1619,24 @@ res_rec_conf(Bzla *bzla,
 #endif
     if (is_recoverable)
     {
-      BZLA_PROP_SOLVER(bzla)->stats.rec_conf += 1;
+      slv->stats.rec_conf += 1;
       /* recoverable conflict, push entailed propagation */
       assert(exp->arity == 2);
       if (bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED))
       {
         BzlaPropInfo prop = {exp, bzla_bv_copy(mm, bvexp), eidx ? 0 : 1};
-        BZLA_PUSH_STACK(BZLA_PROP_SOLVER(bzla)->toprop, prop);
+        BZLA_PUSH_STACK(slv->toprop, prop);
       }
     }
     else
     {
-      BZLA_PROP_SOLVER(bzla)->stats.non_rec_conf += 1;
+      slv->stats.non_rec_conf += 1;
       /* non-recoverable conflict, entailed propagations are thus invalid */
-      bzla_proputils_reset_prop_info_stack(mm, &BZLA_PROP_SOLVER(bzla)->toprop);
+      bzla_proputils_reset_prop_info_stack(mm, &slv->toprop);
     }
     /* fix counter since we always increase the counter, even in the conflict
      * case */
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv -= 1;
+    slv->stats.props_inv -= 1;
   }
   else
   {
