@@ -3508,11 +3508,27 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector *, int32_t);
 #ifndef NBZLALOG
   char *a;
+  uint32_t nrecconf_prev, nnonrecconf_prev, nrecconf, nnonrecconf;
+  uint32_t ncons = 0;
 #endif
 
   *input      = 0;
   *assignment = 0;
   nprops      = 0;
+
+#ifndef NBZLALOG
+  if (bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_PROP)
+  {
+    nrecconf_prev    = BZLA_PROP_SOLVER(bzla)->stats.rec_conf;
+    nnonrecconf_prev = BZLA_PROP_SOLVER(bzla)->stats.non_rec_conf;
+  }
+  else
+  {
+    assert(bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS);
+    nrecconf_prev    = BZLA_SLS_SOLVER(bzla)->stats.move_prop_rec_conf;
+    nnonrecconf_prev = BZLA_SLS_SOLVER(bzla)->stats.move_prop_non_rec_conf;
+  }
+#endif
 
   tmp = (BzlaBitVector *) bzla_model_get_bv(bzla, root);
   if (!bzla_bv_compare(bvroot, tmp))
@@ -3572,6 +3588,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
        * -> if b then inverse else consistent */
       b = bzla_rng_pick_with_prob(
           &bzla->rng, bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE));
+#ifndef NBZLALOG
+      if (!b) ncons += 1;
+#endif
 
       /* select path and determine path assignment */
       switch (real_cur->kind)
@@ -3642,6 +3661,30 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   bzla_bv_free(bzla->mm, bvcur);
 
 DONE:
+#ifndef NBZLALOG
+  if (bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_PROP)
+  {
+    nrecconf    = BZLA_PROP_SOLVER(bzla)->stats.rec_conf;
+    nnonrecconf = BZLA_PROP_SOLVER(bzla)->stats.non_rec_conf;
+  }
+  else
+  {
+    assert(bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS);
+    nrecconf    = BZLA_SLS_SOLVER(bzla)->stats.move_prop_rec_conf;
+    nnonrecconf = BZLA_SLS_SOLVER(bzla)->stats.move_prop_non_rec_conf;
+  }
+  nrecconf -= nrecconf_prev;
+  nnonrecconf -= nnonrecconf_prev;
+  ncons += nrecconf;
+  BZLALOG(1, "");
+  BZLALOG(1, "propagation path:");
+  BZLALOG(1, "    length: %u", nprops);
+  BZLALOG(1, "        inverse value props: %u", nprops - ncons);
+  BZLALOG(1, "        consistent value props: %u", ncons);
+  BZLALOG(1, "    conflicts: %u", nrecconf + nnonrecconf);
+  BZLALOG(1, "        recoverable conflicts: %u", nrecconf);
+  BZLALOG(1, "        non-recoverable conflicts: %u", nnonrecconf);
+#endif
   return nprops;
 }
 
