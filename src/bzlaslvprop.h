@@ -40,6 +40,10 @@ struct BzlaPropSolver
    */
   BzlaPropInfoStack toprop;
 
+#ifndef NDEBUG
+  BzlaPropInfoStack prop_path;
+#endif
+
   /* current probability for selecting the cond when either the
    * 'then' or 'else' branch is const (path selection) */
   uint32_t flip_cond_const_prob;
@@ -74,8 +78,7 @@ struct BzlaPropSolver
     uint64_t props_cons;
     /* Number of propagataions via inverse value computation. */
     uint64_t props_inv;
-    /* Number of entailed propagations.
-     * Counts all propagations that were needed to fix recoverable conflicts. */
+    /* Number of entailed propagations. */
     uint64_t props_entailed;
     /* Number of updates performed when updating the cone of influence in the
      * current assignment as a consequence of a move. */

@@ -134,14 +134,22 @@ move(Bzla *bzla)
   BzlaIntHashTable *exps;
   BzlaPropInfo prop;
   int32_t eidx;
-  uint64_t props;
+  uint64_t props, nprops;
 
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
+  assert(BZLA_EMPTY_STACK(slv->prop_path));
+  nprops = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
 
   bvroot = 0;
   do
   {
+    if (nprops && slv->stats.props >= nprops) goto DONE;
+
+#ifndef NDEBUG
+    bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->prop_path);
+#endif
+
     if (bvroot) bzla_bv_free(bzla->mm, bvroot);
 
     if (BZLA_EMPTY_STACK(slv->toprop))
@@ -160,11 +168,11 @@ move(Bzla *bzla)
 
     props = bzla_proputils_select_move_prop(
         bzla, root, bvroot, eidx, &input, &assignment);
+    slv->stats.props += props;
+    if (eidx != -1) slv->stats.props_entailed += props;
   } while (!input);
 
   assert(assignment);
-  slv->stats.props += props;
-  if (eidx != -1) slv->stats.props_entailed += props;
 
   bzla_bv_free(bzla->mm, bvroot);
 
@@ -203,6 +211,22 @@ move(Bzla *bzla)
       &slv->time.update_cone_compute_score);
   bzla_hashint_map_delete(exps);
 
+#ifndef NDEBUG
+  size_t i, cnt;
+  BzlaBitVector *bvass, *bvtarget;
+  BzlaNode *n;
+  cnt = BZLA_COUNT_STACK(slv->prop_path);
+  for (i = 0; i < cnt; i++)
+  {
+    n = BZLA_PEEK_STACK(slv->prop_path, cnt - 1 - i).exp;
+    assert(bzla_node_is_regular(n));
+    bvass    = (BzlaBitVector *) bzla_model_get_bv(bzla, n);
+    bvtarget = BZLA_PEEK_STACK(slv->prop_path, cnt - 1 - i).bvexp;
+    if (bzla_bv_compare(bvass, bvtarget)) break;
+  }
+  BZLALOG(1, "  matching target values: %u", i);
+#endif
+
   slv->stats.moves += 1;
   if (eidx != -1)
   {
@@ -211,6 +235,10 @@ move(Bzla *bzla)
   }
   bzla_bv_free(bzla->mm, assignment);
 
+DONE:
+#ifndef NDEBUG
+  bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->prop_path);
+#endif
   return true;
 }
 
@@ -237,6 +265,10 @@ clone_prop_solver(Bzla *clone, BzlaPropSolver *slv, BzlaNodeMap *exp_map)
 
   bzla_proputils_clone_prop_info_stack(
       clone->mm, &slv->toprop, &res->toprop, exp_map);
+#ifndef NDEBUG
+  bzla_proputils_clone_prop_info_stack(
+      clone->mm, &slv->prop_path, &res->prop_path, exp_map);
+#endif
   return res;
 }
 
@@ -253,6 +285,10 @@ delete_prop_solver(BzlaPropSolver *slv)
 
   assert(BZLA_EMPTY_STACK(slv->toprop));
   BZLA_RELEASE_STACK(slv->toprop);
+#ifndef NDEBUG
+  assert(BZLA_EMPTY_STACK(slv->prop_path));
+  BZLA_RELEASE_STACK(slv->prop_path);
+#endif
   BZLA_DELETE(slv->bzla->mm, slv);
 }
 
@@ -390,6 +426,7 @@ DONE:
     slv->score = 0;
   }
   bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
+  assert(BZLA_EMPTY_STACK(slv->prop_path));
   return sat_result;
 }
 
@@ -627,6 +664,9 @@ bzla_new_prop_solver(Bzla *bzla)
   slv->api.print_model = (BzlaSolverPrintModel) print_model_prop_solver;
 
   BZLA_INIT_STACK(bzla->mm, slv->toprop);
+#ifndef NDEBUG
+  BZLA_INIT_STACK(bzla->mm, slv->prop_path);
+#endif
 
   BZLA_MSG(bzla->msg, 1, "enabled prop engine");
 

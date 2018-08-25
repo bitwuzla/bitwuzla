@@ -92,8 +92,8 @@ bzla_lsutils_update_cone(Bzla *bzla,
                          double *time_update_cone_compute_score)
 {
   assert(bzla);
-  assert(bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_PROP
-         || bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS);
+  assert(bzla->slv->kind == BZLA_PROP_SOLVER_KIND
+         || bzla->slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(bv_model);
   assert(roots);
   assert(exps);

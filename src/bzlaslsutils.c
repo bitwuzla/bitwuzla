@@ -436,8 +436,8 @@ bzla_slsutils_compute_sls_scores(Bzla *bzla,
                                  BzlaIntHashTable *score)
 {
   assert(bzla);
-  assert(bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_PROP
-         || bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS);
+  assert(bzla->slv->kind == BZLA_PROP_SOLVER_KIND
+         || bzla->slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(bv_model);
   assert(fun_model);
   assert(score);
