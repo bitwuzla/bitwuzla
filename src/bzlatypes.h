@@ -609,10 +609,17 @@ enum BzlaOption
   /*!
     * **BZLA_OPT_PROP_ENTAILED**
 
-      Enable (``value``: 1) or disable (``value``: 0) maintaining a work queue
-      with entailed propagations. If enabled, propagations from this queue are
-      propagated before randomly choosing a yet unsatisfied path from the root.
-   */
+      Maintain a work queue with entailed propagations.
+      If enabled, propagations from this queue are propagated before randomly
+      choosing a yet unsatisfied path from the root.
+
+      This feature is disabled (BZLA_PROP_ENTAILED_OFF) by default.
+
+      * BZLA_PROP_ENTAILED_OFF: do not use strategy (default)
+      * BZLA_PROP_ENTAILED_ALL: propagate all entailed propagations
+      * BZLA_PROP_ENTAILED_FIRST: process only the first entailed propagation
+      * BZLA_PROP_ENTAILED_LAST: process only the last entailed propagation
+  */
   BZLA_OPT_PROP_ENTAILED,
 
   /*!
@@ -963,6 +970,17 @@ enum BzlaOptPropPathSel
   BZLA_PROP_PATH_SEL_RANDOM,
 };
 typedef enum BzlaOptPropPathSel BzlaOptPropPathSel;
+
+enum BzlaOptPropEntailed
+{
+  BZLA_PROP_ENTAILED_MIN,
+  BZLA_PROP_ENTAILED_OFF,
+  BZLA_PROP_ENTAILED_ALL,
+  BZLA_PROP_ENTAILED_FIRST,
+  BZLA_PROP_ENTAILED_LAST,
+  BZLA_PROP_ENTAILED_MAX,
+};
+typedef enum BzlaOptPropEntailed BzlaOptPropEntailed;
 
 enum BzlaOptQuantSynth
 {

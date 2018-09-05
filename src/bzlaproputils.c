@@ -1542,7 +1542,7 @@ res_rec_conf(Bzla *bzla,
   (void) e;
 
   bool is_recoverable;
-  uint32_t no_move_on_conflict;
+  uint32_t no_move_on_conflict, prop_entailed;
   BzlaBitVector *res;
   BzlaMemMgr *mm;
 
@@ -1607,10 +1607,22 @@ res_rec_conf(Bzla *bzla,
       slv->stats.rec_conf += 1;
       /* recoverable conflict, push entailed propagation */
       assert(exp->arity == 2);
-      if (bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED))
+      prop_entailed = bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED);
+      if (prop_entailed != BZLA_PROP_ENTAILED_OFF)
       {
         BzlaPropInfo prop = {exp, bzla_bv_copy(mm, bvexp), eidx ? 0 : 1};
-        BZLA_PUSH_STACK(slv->toprop, prop);
+        if (BZLA_EMPTY_STACK(slv->toprop)
+            || prop_entailed == BZLA_PROP_ENTAILED_ALL)
+        {
+          BZLA_PUSH_STACK(slv->toprop, prop);
+        }
+        else if (prop_entailed == BZLA_PROP_ENTAILED_LAST)
+        {
+          assert(BZLA_COUNT_STACK(slv->toprop) == 1);
+          BZLA_POKE_STACK(slv->toprop, 0, prop);
+        }
+        assert(prop_entailed == BZLA_PROP_ENTAILED_ALL
+               || BZLA_COUNT_STACK(slv->toprop) == 1);
       }
       /* fix counter since we always increase the counter, even in the conflict
        * case (except for slice and cond, where inv = cons)*/
