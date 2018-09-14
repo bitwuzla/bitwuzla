@@ -206,6 +206,7 @@ sat_aigprop_solver(BzlaAIGPropSolver *slv)
 
   if (bzla_terminate(bzla))
   {
+  UNKNOWN:
     sat_result = BZLA_RESULT_UNKNOWN;
     goto DONE;
   }
@@ -262,11 +263,17 @@ sat_aigprop_solver(BzlaAIGPropSolver *slv)
       (void) bzla_hashint_table_add(roots, bzla_aig_get_id(aig));
   }
 
-  if ((sat_result = aigprop_sat(slv->aprop, roots)) == BZLA_RESULT_UNSAT)
+  sat_result = aigprop_sat(slv->aprop, roots);
+  if (sat_result == AIGPROP_UNKNOWN)
+    goto UNKNOWN;
+  else if (sat_result == AIGPROP_UNSAT)
     goto UNSAT;
+  assert(sat_result == AIGPROP_SAT);
+  sat_result = BZLA_RESULT_SAT;
   generate_model_from_aig_model(bzla);
-  assert(sat_result == BZLA_RESULT_SAT);
+DONE:
   slv->stats.moves                  = slv->aprop->stats.moves;
+  slv->stats.props                  = slv->aprop->stats.props;
   slv->stats.restarts               = slv->aprop->stats.restarts;
   slv->time.aprop_sat               = slv->aprop->time.sat;
   slv->time.aprop_update_cone       = slv->aprop->time.update_cone;
@@ -275,7 +282,6 @@ sat_aigprop_solver(BzlaAIGPropSolver *slv)
       slv->aprop->time.update_cone_model_gen;
   slv->time.aprop_update_cone_compute_score =
       slv->aprop->time.update_cone_compute_score;
-DONE:
   if (slv->aprop->model)
   {
     bzla_hashint_map_delete(slv->aprop->model);
@@ -300,10 +306,17 @@ print_stats_aigprop_solver(BzlaAIGPropSolver *slv)
   BZLA_MSG(bzla->msg, 1, "");
   BZLA_MSG(bzla->msg, 1, "restarts: %d", slv->stats.restarts);
   BZLA_MSG(bzla->msg, 1, "moves: %d", slv->stats.moves);
-  BZLA_MSG(bzla->msg,
-           1,
-           "moves per second: %.2f",
-           (double) slv->stats.moves / slv->time.aprop_sat);
+  BZLA_MSG(
+      bzla->msg,
+      1,
+      "moves per second: %.2f",
+      slv->stats.moves ? (double) slv->stats.moves / slv->time.aprop_sat : 0.0);
+  BZLA_MSG(bzla->msg, 1, "props: %d", slv->stats.props);
+  BZLA_MSG(
+      bzla->msg,
+      1,
+      "props per second: %.2f",
+      slv->stats.props ? (double) slv->stats.props / slv->time.aprop_sat : 0.0);
 }
 
 static void
@@ -371,7 +384,8 @@ bzla_new_aigprop_solver(Bzla *bzla)
                           bzla_opt_get(bzla, BZLA_OPT_LOGLEVEL),
                           bzla_opt_get(bzla, BZLA_OPT_SEED),
                           bzla_opt_get(bzla, BZLA_OPT_AIGPROP_USE_RESTARTS),
-                          bzla_opt_get(bzla, BZLA_OPT_AIGPROP_USE_BANDIT));
+                          bzla_opt_get(bzla, BZLA_OPT_AIGPROP_USE_BANDIT),
+                          bzla_opt_get(bzla, BZLA_OPT_AIGPROP_NPROPS));
 
   BZLA_MSG(bzla->msg, 1, "enabled aigprop engine");
 

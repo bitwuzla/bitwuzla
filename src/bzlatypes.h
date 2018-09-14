@@ -784,6 +784,14 @@ enum BzlaOption
   */
   BZLA_OPT_AIGPROP_USE_BANDIT,
 
+  /*!
+    * **BZLA_OPT_AIGPROP_NPROPS**
+
+      Set the number of propagation (steps) used as a limit for the (bit-level)
+      propagation engine. Disabled if 0.
+   */
+  BZLA_OPT_AIGPROP_NPROPS,
+
   /* QUANT engine ------------------------------------------------------- */
   /*!
     * **BZLA_OPT_QUANT_SYNTH**

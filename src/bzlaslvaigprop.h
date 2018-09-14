@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015 Aina Niemetz.
+ *  Copyright (C) 2015-2018 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -24,6 +24,7 @@ struct BzlaAIGPropSolver
   struct
   {
     uint32_t moves;
+    uint64_t props;
     uint32_t restarts;
   } stats;
   struct

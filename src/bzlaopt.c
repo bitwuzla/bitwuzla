@@ -1142,6 +1142,16 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "use bandit scheme for constraint selection");
+  init_opt(bzla,
+           BZLA_OPT_AIGPROP_NPROPS,
+           false,
+           false,
+           "aigprop:nprops",
+           0,
+           0,
+           0,
+           UINT32_MAX,
+           "number of propagation steps used as a limit for aigprop engine");
 
   /* QUANT engine ----------------------------------------------------------- */
   init_opt(bzla,

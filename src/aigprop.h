@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2017 Aina Niemetz.
+ *  Copyright (C) 2015-2018 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -32,10 +32,12 @@ struct AIGProp
   uint32_t seed;
   uint32_t use_restarts;
   uint32_t use_bandit;
+  uint64_t nprops;
 
   struct
   {
     uint32_t moves;
+    uint64_t props;
     uint32_t restarts;
   } stats;
 
@@ -55,7 +57,8 @@ AIGProp *aigprop_new_aigprop(BzlaAIGMgr *amgr,
                              uint32_t loglevel,
                              uint32_t seed,
                              uint32_t use_restarts,
-                             uint32_t use_bandit);
+                             uint32_t use_bandit,
+                             uint64_t nprops);
 
 AIGProp *aigprop_clone_aigprop(BzlaAIGMgr *clone, AIGProp *aprop);
 void aigprop_delete_aigprop(AIGProp *aprop);
