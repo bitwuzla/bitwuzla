@@ -3943,14 +3943,15 @@ parse_bit_width_smt2(BzlaSMT2Parser *parser, uint32_t *width)
  * skiptokens = 2 -> skip BZLA_UNDERSCORE_TAG_SMT2
  */
 static int32_t
-parse_bitvec_sort(BzlaSMT2Parser *parser,
-                  uint32_t skiptokens,
-                  BoolectorSort *resptr)
+parse_bv_or_fp_sort(BzlaSMT2Parser *parser,
+                    uint32_t skiptokens,
+                    BoolectorSort *resptr)
 {
   assert(skiptokens <= 2);
 
   int32_t tag;
-  uint32_t width = 0;
+  uint32_t width = 0, width_eb, width_sb;
+  char *msg;
 
   if (skiptokens < 1 && !read_lpar_smt2(parser, 0))
   {
@@ -3972,25 +3973,50 @@ parse_bitvec_sort(BzlaSMT2Parser *parser,
   }
   if (tag == EOF)
   {
-    return !perr_smt2(parser, "expected 'BitVec' but reached end-of-file");
+    return !perr_smt2(
+        parser, "expected 'BitVec' or 'FloatingPoint' but reached end-of-file");
   }
-  if (tag != BZLA_BV_BITVEC_TAG_SMT2)
+  if (tag != BZLA_BV_BITVEC_TAG_SMT2 && tag != BZLA_FP_FLOATINGPOINT_TAG_SMT2)
   {
-    return !perr_smt2(parser, "expected 'BitVec' at '%s'", parser->token.start);
+    return !perr_smt2(parser,
+                      "expected 'BitVec' or 'FloatingPoint' at '%s'",
+                      parser->token.start);
   }
-
   if (!parse_bit_width_smt2(parser, &width))
   {
     return 0;
   }
-  BZLA_MSG(boolector_get_bzla_msg(parser->bzla),
-           3,
-           "parsed bit-vector sort of width %d",
-           width);
-  *resptr = boolector_bitvec_sort(parser->bzla, width);
+  if (tag == BZLA_FP_FLOATINGPOINT_TAG_SMT2)
+  {
+    width_eb = width;
+    if (!parse_bit_width_smt2(parser, &width_sb))
+    {
+      return 0;
+    }
+    BZLA_MSG(boolector_get_bzla_msg(parser->bzla),
+             3,
+             "parsed floating-point sort of exponent width %d "
+             "and significand width %d",
+             width_eb,
+             width_sb);
+    // FP STUB
+    *resptr = boolector_bool_sort(parser->bzla);
+    ////
+    msg = " to close floating-point sort";
+  }
+  else
+  {
+    BZLA_MSG(boolector_get_bzla_msg(parser->bzla),
+             3,
+             "parsed bit-vector sort of width %d",
+             width);
+    *resptr = boolector_bitvec_sort(parser->bzla, width);
+    msg     = " to close bit-vector sort";
+  }
+
   BZLA_PUSH_STACK(parser->sorts, *resptr);
 
-  return read_rpar_smt2(parser, " to close bit-vector sort");
+  return read_rpar_smt2(parser, msg);
 }
 
 static int32_t
@@ -4045,11 +4071,11 @@ parse_sort(BzlaSMT2Parser *parser,
         if (tag != BZLA_UNDERSCORE_TAG_SMT2)
           return !perr_smt2(
               parser, "expected '_' or 'Array' at '%s'", parser->token.start);
-        return parse_bitvec_sort(parser, 2, sort);
+        return parse_bv_or_fp_sort(parser, 2, sort);
       }
     }
     else
-      return parse_bitvec_sort(parser, 1, sort);
+      return parse_bv_or_fp_sort(parser, 1, sort);
   }
   else if (tag == BZLA_SYMBOL_TAG_SMT2)
   {
