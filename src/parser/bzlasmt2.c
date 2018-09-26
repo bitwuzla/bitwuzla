@@ -4056,13 +4056,47 @@ parse_sort(BzlaSMT2Parser *parser,
     BZLA_PUSH_STACK(parser->sorts, *sort);
     return 1;
   }
+  else if (tag == BZLA_FP_FLOAT16_TAG_SMT2)
+  {
+    // FP STUB
+    *sort = boolector_bool_sort(parser->bzla);
+    BZLA_PUSH_STACK(parser->sorts, *sort);
+    ////
+    return 1;
+  }
+  else if (tag == BZLA_FP_FLOAT32_TAG_SMT2)
+  {
+    // FP STUB
+    *sort = boolector_bool_sort(parser->bzla);
+    BZLA_PUSH_STACK(parser->sorts, *sort);
+    ////
+    return 1;
+  }
+  else if (tag == BZLA_FP_FLOAT64_TAG_SMT2)
+  {
+    // FP STUB
+    *sort = boolector_bool_sort(parser->bzla);
+    BZLA_PUSH_STACK(parser->sorts, *sort);
+    ////
+    return 1;
+  }
+  else if (tag == BZLA_FP_FLOAT128_TAG_SMT2)
+  {
+    // FP STUB
+    *sort = boolector_bool_sort(parser->bzla);
+    BZLA_PUSH_STACK(parser->sorts, *sort);
+    ////
+    return 1;
+  }
   else if (tag == BZLA_LPAR_TAG_SMT2)
   {
     if (allow_array_sort)
     {
       tag = read_token_smt2(parser);
       if (tag == BZLA_ARRAY_TAG_SMT2)
+      {
         return parse_array_sort(parser, tag, sort);
+      }
       else
       {
         if (tag == EOF)
