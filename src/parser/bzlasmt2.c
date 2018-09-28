@@ -49,14 +49,14 @@ typedef enum BzlaSMT2TagClass
   BZLA_ARRAY_TAG_CLASS_SMT2    = (BZLA_CLASS_SIZE_SMT2 << 5),
   BZLA_BV_TAG_CLASS_SMT2       = (BZLA_CLASS_SIZE_SMT2 << 6),
   BZLA_FP_TAG_CLASS_SMT2       = (BZLA_CLASS_SIZE_SMT2 << 7),
-  BZLA_LOGIC_TAG_CLASS_SMT2    = (BZLA_CLASS_SIZE_SMT2 << 7),
+  BZLA_LOGIC_TAG_CLASS_SMT2    = (BZLA_CLASS_SIZE_SMT2 << 8),
 } BzlaSMT2TagClass;
 
 #define BZLA_TAG_CLASS_MASK_SMT2                              \
   (BZLA_RESERVED_TAG_CLASS_SMT2 | BZLA_COMMAND_TAG_CLASS_SMT2 \
    | BZLA_KEYWORD_TAG_CLASS_SMT2 | BZLA_CORE_TAG_CLASS_SMT2   \
    | BZLA_ARRAY_TAG_CLASS_SMT2 | BZLA_BV_TAG_CLASS_SMT2       \
-   | BZLA_LOGIC_TAG_CLASS_SMT2)
+   | BZLA_FP_TAG_CLASS_SMT2 | BZLA_LOGIC_TAG_CLASS_SMT2)
 
 typedef enum BzlaSMT2Tag
 {
@@ -3089,6 +3089,34 @@ close_term(BzlaSMT2Parser *parser)
       return 0;
     }
   }
+  /* FP: (fp (_ BitVec 1) (_ BitVec n) (_ BitVec m)) -------------------- */
+  else if (tag == BZLA_FP_FP_TAG_SMT2)
+  {
+    if (nargs < 3)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(
+          parser, "argument to '%s' missing", item_cur->node->name);
+    }
+    for (i = 1; i <= nargs; i++)
+    {
+      if (!boolector_is_const(bzla, item_cur[i].exp))
+        return !perr_smt2(
+            parser,
+            "invalid argument to '%s', expected bit-vector constant",
+            item_cur->node->name);
+    }
+    if (boolector_get_width(bzla, item_cur[1].exp) != 1)
+      return !perr_smt2(parser,
+                        "first argument to '%s' invalid, expected "
+                        "bit-vector sort of size 1",
+                        item_cur->node->name);
+    // FP STUB
+    exp = boolector_true(bzla);
+    ////
+    assert(exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
+  }
   /* let (<var_binding>+) <term> -------------------------------------------- */
   else if (tag == BZLA_LET_TAG_SMT2)
   {
@@ -3629,6 +3657,13 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
   {
     if (tag == BZLA_BV_BITVEC_TAG_SMT2)
       return !perr_smt2(parser, "unexpected 'BitVec'");
+  }
+  else if (tag & BZLA_FP_TAG_CLASS_SMT2)
+  {
+    if (tag == BZLA_FP_FLOATINGPOINT_TAG_SMT2 || tag == BZLA_FP_FLOAT16_TAG_SMT2
+        || tag == BZLA_FP_FLOAT32_TAG_SMT2 || tag == BZLA_FP_FLOAT64_TAG_SMT2
+        || tag == BZLA_FP_FLOAT128_TAG_SMT2)
+      return !perr_smt2(parser, "unexpected '%s'", parser->token.start);
   }
   else
   {

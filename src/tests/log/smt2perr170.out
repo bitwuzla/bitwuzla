@@ -1,0 +1,1 @@
+log/smt2perr170.smt2:1:55: first argument to 'fp' invalid, expected bit-vector sort of size 1
