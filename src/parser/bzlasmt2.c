@@ -273,15 +273,16 @@ typedef enum BzlaSMT2Tag
   BZLA_FP_GT_TAG_SMT2                           = 37 + BZLA_FP_TAG_CLASS_SMT2,
   BZLA_FP_EQ_TAG_SMT2                           = 38 + BZLA_FP_TAG_CLASS_SMT2,
   BZLA_FP_IS_NORMAL_TAG_SMT2                    = 39 + BZLA_FP_TAG_CLASS_SMT2,
-  BZLA_FP_IS_ZERO_TAG_SMT2                      = 40 + BZLA_FP_TAG_CLASS_SMT2,
-  BZLA_FP_IS_INFITE_TAG_SMT2                    = 41 + BZLA_FP_TAG_CLASS_SMT2,
-  BZLA_FP_IS_NAN_TAG_SMT2                       = 42 + BZLA_FP_TAG_CLASS_SMT2,
-  BZLA_FP_IS_NEG_TAG_SMT2                       = 43 + BZLA_FP_TAG_CLASS_SMT2,
-  BZLA_FP_IS_POS_TAG_SMT2                       = 44 + BZLA_FP_TAG_CLASS_SMT2,
-  BZLA_FP_TO_FP_TAG_SMT2                        = 45 + BZLA_FP_TAG_CLASS_SMT2,
-  BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2               = 46 + BZLA_FP_TAG_CLASS_SMT2,
-  BZLA_FP_TO_UBV_TAG_SMT2                       = 47 + BZLA_FP_TAG_CLASS_SMT2,
-  BZLA_FP_TO_SBV_TAG_SMT2                       = 48 + BZLA_FP_TAG_CLASS_SMT2,
+  BZLA_FP_IS_SUBNORMAL_TAG_SMT2                 = 40 + BZLA_FP_TAG_CLASS_SMT2,
+  BZLA_FP_IS_ZERO_TAG_SMT2                      = 41 + BZLA_FP_TAG_CLASS_SMT2,
+  BZLA_FP_IS_INF_TAG_SMT2                       = 42 + BZLA_FP_TAG_CLASS_SMT2,
+  BZLA_FP_IS_NAN_TAG_SMT2                       = 43 + BZLA_FP_TAG_CLASS_SMT2,
+  BZLA_FP_IS_NEG_TAG_SMT2                       = 44 + BZLA_FP_TAG_CLASS_SMT2,
+  BZLA_FP_IS_POS_TAG_SMT2                       = 45 + BZLA_FP_TAG_CLASS_SMT2,
+  BZLA_FP_TO_FP_TAG_SMT2                        = 46 + BZLA_FP_TAG_CLASS_SMT2,
+  BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2               = 47 + BZLA_FP_TAG_CLASS_SMT2,
+  BZLA_FP_TO_UBV_TAG_SMT2                       = 48 + BZLA_FP_TAG_CLASS_SMT2,
+  BZLA_FP_TO_SBV_TAG_SMT2                       = 49 + BZLA_FP_TAG_CLASS_SMT2,
 
   /* ---------------------------------------------------------------------- */
   /* Logic                                                                  */
@@ -1057,12 +1058,13 @@ insert_fp_symbols_smt2(BzlaSMT2Parser *parser)
   INSERT("fp.geq", BZLA_FP_GEQ_TAG_SMT2);
   INSERT("fp.gt", BZLA_FP_GT_TAG_SMT2);
   INSERT("fp.eq", BZLA_FP_EQ_TAG_SMT2);
-  INSERT("isNormal", BZLA_FP_IS_NORMAL_TAG_SMT2);
-  INSERT("isZero", BZLA_FP_IS_ZERO_TAG_SMT2);
-  INSERT("isInfinite", BZLA_FP_IS_INFITE_TAG_SMT2);
-  INSERT("isNaN", BZLA_FP_IS_NAN_TAG_SMT2);
-  INSERT("isNegative", BZLA_FP_IS_NEG_TAG_SMT2);
-  INSERT("isPositive", BZLA_FP_IS_POS_TAG_SMT2);
+  INSERT("fp.isNormal", BZLA_FP_IS_NORMAL_TAG_SMT2);
+  INSERT("fp.isSubnormal", BZLA_FP_IS_SUBNORMAL_TAG_SMT2);
+  INSERT("fp.isZero", BZLA_FP_IS_ZERO_TAG_SMT2);
+  INSERT("fp.isInfinite", BZLA_FP_IS_INF_TAG_SMT2);
+  INSERT("fp.isNaN", BZLA_FP_IS_NAN_TAG_SMT2);
+  INSERT("fp.isNegative", BZLA_FP_IS_NEG_TAG_SMT2);
+  INSERT("fp.isPositive", BZLA_FP_IS_POS_TAG_SMT2);
   INSERT("to_fp", BZLA_FP_TO_FP_TAG_SMT2);
   INSERT("to_fp_unsigned", BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2);
   INSERT("to_ubv", BZLA_FP_TO_UBV_TAG_SMT2);
@@ -2333,6 +2335,43 @@ close_term_unary_fp_fun(BzlaSMT2Parser *parser,
  * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
  */
 static int32_t
+close_term_unary_bool_fp_fun(BzlaSMT2Parser *parser,
+                             BzlaSMT2Item *item_open,
+                             BzlaSMT2Item *item_cur,
+                             uint32_t nargs)
+// bool (*fun) (Bzla *, BoolectorNode *) )
+{
+  assert(parser);
+  assert(item_open);
+  assert(item_cur);
+  // assert (fun);
+
+  assert(item_cur->tag == BZLA_FP_IS_NORMAL_TAG_SMT2
+         || item_cur->tag == BZLA_FP_IS_SUBNORMAL_TAG_SMT2
+         || item_cur->tag == BZLA_FP_IS_ZERO_TAG_SMT2
+         || item_cur->tag == BZLA_FP_IS_INF_TAG_SMT2
+         || item_cur->tag == BZLA_FP_IS_NAN_TAG_SMT2
+         || item_cur->tag == BZLA_FP_IS_NEG_TAG_SMT2
+         || item_cur->tag == BZLA_FP_IS_POS_TAG_SMT2);
+
+  BoolectorNode *exp;
+
+  if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
+  // TODO: check all args FP
+  // FP STUB
+  exp = boolector_true(parser->bzla);
+  // exp = fun (parser->bzla, item_cur[1].exp);
+  ////
+  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  return 1;
+}
+
+/**
+ * item_open and item_cur point to items on the parser work stack.
+ * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
+ * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ */
+static int32_t
 close_term_bin_fp_fun(BzlaSMT2Parser *parser,
                       BzlaSMT2Item *item_open,
                       BzlaSMT2Item *item_cur,
@@ -2645,7 +2684,7 @@ close_term(BzlaSMT2Parser *parser)
       if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
       {
         parser->perrcoo = item_cur[i].coo;
-        return !perr_smt2(parser, "expected expression");
+        return !perr_smt2(parser, "xexpected expression");
       }
     }
   }
@@ -3463,6 +3502,62 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_FP_GT_TAG_SMT2)
   {
     if (!close_term_bin_fp_fun_chainable(parser, item_open, item_cur, nargs))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isNormal -------------------------------------------------------- */
+  else if (tag == BZLA_FP_IS_NORMAL_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isSubnormal ----------------------------------------------------- */
+  else if (tag == BZLA_FP_IS_SUBNORMAL_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isZero ---------------------------------------------------------- */
+  else if (tag == BZLA_FP_IS_ZERO_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isInfinite ------------------------------------------------------ */
+  else if (tag == BZLA_FP_IS_INF_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isNaN ----------------------------------------------------------- */
+  else if (tag == BZLA_FP_IS_NAN_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isNegative ------------------------------------------------------ */
+  else if (tag == BZLA_FP_IS_NEG_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    {
+      return 0;
+    }
+  }
+  /* FP: fp.isPositive ------------------------------------------------------ */
+  else if (tag == BZLA_FP_IS_POS_TAG_SMT2)
+  {
+    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
     {
       return 0;
     }
