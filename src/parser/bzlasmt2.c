@@ -2260,6 +2260,69 @@ close_term_extend_bv_fun(BzlaSMT2Parser *parser,
  * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
  */
 static int32_t
+close_term_to_fp_two_args(BzlaSMT2Parser *parser,
+                          BzlaSMT2Item *item_open,
+                          BzlaSMT2Item *item_cur,
+                          uint32_t nargs)
+{
+  assert(parser);
+  assert(item_open);
+  assert(item_cur);
+
+  BoolectorNode *exp;
+
+  if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
+  // TODO check first argument is RoundingMode
+  if (item_cur[2].tag == BZLA_REAL_CONSTANT_TAG_SMT2)
+  {
+    if (item_cur->tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
+    {
+      return !perr_smt2(
+          parser,
+          "invalid argument to '%s', expected bit-vector constant",
+          item_cur->node->name);
+    }
+    /* (_ to_fp eb sb) RoundingMode Real */
+    // FP STUB
+    exp = boolector_true(parser->bzla);
+    ////
+    bzla_mem_freestr(parser->mem, item_cur[2].str);
+    parser->work.top = item_cur;
+    item_open->tag   = BZLA_EXP_TAG_SMT2;
+    item_open->exp   = exp;
+  }
+  else
+  {
+    /* (_ to_fp eb sb) RoundingMode (_ BitVec m) */
+    if (item_cur[2].tag != BZLA_EXP_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser, "expected expression");
+    }
+    if (!boolector_is_const(parser->bzla, item_cur[2].exp))
+    {
+      return !perr_smt2(
+          parser,
+          "invalid argument to '%s', expected bit-vector constant",
+          item_cur->node->name);
+    }
+    // FP STUB
+    exp = boolector_true(parser->bzla);
+    ////
+    boolector_release(parser->bzla, item_cur[2].exp);
+    parser->work.top = item_cur;
+    item_open->tag   = BZLA_EXP_TAG_SMT2;
+    item_open->exp   = exp;
+  }
+  return 1;
+}
+
+/**
+ * item_open and item_cur point to items on the parser work stack.
+ * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
+ * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ */
+static int32_t
 close_term_rotate_bv_fun(BzlaSMT2Parser *parser,
                          BzlaSMT2Item *item_open,
                          BzlaSMT2Item *item_cur,
@@ -3161,56 +3224,13 @@ close_term(BzlaSMT2Parser *parser)
     }
     else
     {
-    TO_FP_TWO_ARGS:
-      if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
-      // TODO check first argument is RoundingMode
-      if (item_cur[2].tag == BZLA_REAL_CONSTANT_TAG_SMT2)
-      {
-        if (tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
-        {
-          return !perr_smt2(
-              parser,
-              "invalid argument to '%s', expected bit-vector constant",
-              item_cur->node->name);
-        }
-        /* (_ to_fp eb sb) RoundingMode Real */
-        // FP STUB
-        exp = boolector_true(bzla);
-        ////
-        bzla_mem_freestr(parser->mem, item_cur[2].str);
-        parser->work.top = item_cur;
-        item_open->tag   = BZLA_EXP_TAG_SMT2;
-        item_open->exp   = exp;
-      }
-      else
-      {
-        /* (_ to_fp eb sb) RoundingMode (_ BitVec m) */
-        if (item_cur[2].tag != BZLA_EXP_TAG_SMT2)
-        {
-          parser->perrcoo = item_cur[2].coo;
-          return !perr_smt2(parser, "expected expression");
-        }
-        if (!boolector_is_const(bzla, item_cur[2].exp))
-        {
-          return !perr_smt2(
-              parser,
-              "invalid argument to '%s', expected bit-vector constant",
-              item_cur->node->name);
-        }
-        // FP STUB
-        exp = boolector_true(bzla);
-        ////
-        boolector_release(bzla, item_cur[2].exp);
-        parser->work.top = item_cur;
-        item_open->tag   = BZLA_EXP_TAG_SMT2;
-        item_open->exp   = exp;
-      }
+      close_term_to_fp_two_args(parser, item_open, item_cur, nargs);
     }
   }
   /* FP: to_fp_unsigned ------------------------------------------------- */
   else if (tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
   {
-    goto TO_FP_TWO_ARGS;
+    close_term_to_fp_two_args(parser, item_open, item_cur, nargs);
   }
   /* let (<var_binding>+) <term> -------------------------------------------- */
   else if (tag == BZLA_LET_TAG_SMT2)
