@@ -2710,7 +2710,8 @@ close_term(BzlaSMT2Parser *parser)
   {
     i = 1;
     if (tag == BZLA_FP_ADD_TAG_SMT2 || tag == BZLA_FP_SUB_TAG_SMT2
-        || tag == BZLA_FP_MUL_TAG_SMT2 || tag == BZLA_FP_DIV_TAG_SMT2)
+        || tag == BZLA_FP_MUL_TAG_SMT2 || tag == BZLA_FP_DIV_TAG_SMT2
+        || tag == BZLA_FP_FMA_TAG_SMT2)
     {
       // TODO: check first arg RoundingMode
       i = 2;
@@ -3477,6 +3478,17 @@ close_term(BzlaSMT2Parser *parser)
     {
       return 0;
     }
+  }
+  /* FP: fp.fma ------------------------------------------------------------- */
+  else if (tag == BZLA_FP_FMA_TAG_SMT2)
+  {
+    if (!check_nargs_smt2(parser, item_cur, nargs, 4)) return 0;
+    if (!check_arg_sorts_match_smt2(parser, item_cur, 1, 3)) return 0;
+    // TODO: first arg RoundingMode, all other args FP
+    // FP STUB
+    exp = boolector_true(parser->bzla);
+    ////
+    release_exp_and_overwrite(parser, item_open, item_cur, 1, nargs, exp);
   }
   /* FP: fp.rem ------------------------------------------------------------- */
   else if (tag == BZLA_FP_REM_TAG_SMT2)
