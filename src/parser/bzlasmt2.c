@@ -1986,6 +1986,42 @@ release_exp_and_overwrite(BzlaSMT2Parser *parser,
   item_open->exp   = exp;
 }
 
+static int32_t
+parse_bit_width_smt2(BzlaSMT2Parser *parser, uint32_t *width)
+{
+  int32_t tag;
+
+  tag = read_token_smt2(parser);
+  if (tag == BZLA_INVALID_TAG_SMT2)
+  {
+    return 0;
+  }
+  if (tag == EOF)
+  {
+    return !perr_smt2(parser, "expected bit-width but reached end-of-file");
+  }
+  if (tag != BZLA_DECIMAL_CONSTANT_TAG_SMT2
+      && tag != BZLA_REAL_CONSTANT_TAG_SMT2)
+  {
+    return !perr_smt2(
+        parser, "expected bit-width at '%s'", parser->token.start);
+  }
+  assert(parser->token.start[0] != '-');
+  if (strchr(parser->token.start, '.'))
+  {
+    return !perr_smt2(parser,
+                      "invalid bit-width '%s', expected integer",
+                      parser->token.start);
+  }
+  if (parser->token.start[0] == '0')
+  {
+    assert(!parser->token.start[1]);
+    return !perr_smt2(parser, "invalid zero bit-width");
+  }
+  *width = 0;
+  return str2uint32_smt2(parser, true, parser->token.start, width) ? 1 : 0;
+}
+
 /**
  * item_open and item_cur point to items on the parser work stack.
  * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
@@ -3833,6 +3869,45 @@ parse_open_term_indexed_parametric(BzlaSMT2Parser *parser,
 }
 
 static int32_t
+parse_open_close_term_indexed_fp_special_const(BzlaSMT2Parser *parser,
+                                               BzlaSMT2Item *item_cur,
+                                               int32_t tag,
+                                               BzlaSMT2Node *node,
+                                               const char *msg)
+{
+  assert(parser);
+  assert(item_cur);
+  assert(node);
+  assert(msg);
+
+  assert(tag == BZLA_FP_POS_ZERO_TAG_SMT2 || tag == BZLA_FP_NEG_ZERO_TAG_SMT2
+         || tag == BZLA_FP_POS_INF_TAG_SMT2 || tag == BZLA_FP_NEG_INF_TAG_SMT2
+         || tag == BZLA_FP_NAN_TAG_SMT2);
+
+  BzlaSMT2Item *item_open;
+  BoolectorNode *exp;
+
+  item_open = item_cur - 1;
+  assert(node && tag == (int32_t) node->tag);
+  assert(BZLA_COUNT_STACK(parser->work) == 2);
+  if (!parse_bit_width_smt2(parser, &item_open->idx0)) return 0;
+  if (!parse_bit_width_smt2(parser, &item_open->idx1)) return 0;
+
+  // FP STUB
+  exp = boolector_true(parser->bzla);
+  ////
+
+  item_open->tag   = BZLA_EXP_TAG_SMT2;
+  item_open->node  = node;
+  item_open->exp   = exp;
+  parser->work.top = item_cur;
+  if (!read_rpar_smt2(parser, msg)) return 0;
+  assert(parser->open > 0);
+  parser->open--;
+  return 1;
+}
+
+static int32_t
 parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
 {
   assert(parser);
@@ -3899,6 +3974,46 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
   {
     if (!parse_open_term_indexed_parametric(
             parser, item_cur, tag, 2, node, " to close '(_ extract'"))
+    {
+      return 0;
+    }
+  }
+  else if (tag == BZLA_FP_POS_ZERO_TAG_SMT2)
+  {
+    if (!parse_open_close_term_indexed_fp_special_const(
+            parser, item_cur, tag, node, " to close '(_ +zero'"))
+    {
+      return 0;
+    }
+  }
+  else if (tag == BZLA_FP_NEG_ZERO_TAG_SMT2)
+  {
+    if (!parse_open_close_term_indexed_fp_special_const(
+            parser, item_cur, tag, node, " to close '(_ -zero'"))
+    {
+      return 0;
+    }
+  }
+  else if (tag == BZLA_FP_POS_INF_TAG_SMT2)
+  {
+    if (!parse_open_close_term_indexed_fp_special_const(
+            parser, item_cur, tag, node, " to close '(_ +oo'"))
+    {
+      return 0;
+    }
+  }
+  else if (tag == BZLA_FP_NEG_INF_TAG_SMT2)
+  {
+    if (!parse_open_close_term_indexed_fp_special_const(
+            parser, item_cur, tag, node, " to close '(_ -oo'"))
+    {
+      return 0;
+    }
+  }
+  else if (tag == BZLA_FP_NAN_TAG_SMT2)
+  {
+    if (!parse_open_close_term_indexed_fp_special_const(
+            parser, item_cur, tag, node, " to close '(_ Nan'"))
     {
       return 0;
     }
@@ -4437,42 +4552,6 @@ parse_term_smt2(BzlaSMT2Parser *parser,
                 BzlaSMT2Coo *cooptr)
 {
   return parse_term_aux_smt2(parser, false, 0, resptr, cooptr);
-}
-
-static int32_t
-parse_bit_width_smt2(BzlaSMT2Parser *parser, uint32_t *width)
-{
-  int32_t tag;
-
-  tag = read_token_smt2(parser);
-  if (tag == BZLA_INVALID_TAG_SMT2)
-  {
-    return 0;
-  }
-  if (tag == EOF)
-  {
-    return !perr_smt2(parser, "expected bit-width but reached end-of-file");
-  }
-  if (tag != BZLA_DECIMAL_CONSTANT_TAG_SMT2
-      && tag != BZLA_REAL_CONSTANT_TAG_SMT2)
-  {
-    return !perr_smt2(
-        parser, "expected bit-width at '%s'", parser->token.start);
-  }
-  assert(parser->token.start[0] != '-');
-  if (strchr(parser->token.start, '.'))
-  {
-    return !perr_smt2(parser,
-                      "invalid bit-width '%s', expected integer",
-                      parser->token.start);
-  }
-  if (parser->token.start[0] == '0')
-  {
-    assert(!parser->token.start[1]);
-    return !perr_smt2(parser, "invalid zero bit-width");
-  }
-  *width = 0;
-  return str2uint32_smt2(parser, true, parser->token.start, width) ? 1 : 0;
 }
 
 /*
