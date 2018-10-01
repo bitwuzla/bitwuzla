@@ -3524,7 +3524,7 @@ close_term(BzlaSMT2Parser *parser)
     }
   }
   /* FP: fp.eq -------------------------------------------------------------- */
-  else if (tag == BZLA_FP_LEQ_TAG_SMT2)
+  else if (tag == BZLA_FP_EQ_TAG_SMT2)
   {
     if (!close_term_bin_fp_fun_chainable(parser, item_open, item_cur, nargs))
     {
