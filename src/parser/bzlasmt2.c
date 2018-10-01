@@ -3910,7 +3910,6 @@ parse_open_close_term_indexed_fp_special_const(BzlaSMT2Parser *parser,
 
   item_open = item_cur - 1;
   assert(node && tag == (int32_t) node->tag);
-  assert(BZLA_COUNT_STACK(parser->work) == 2);
   if (!parse_bit_width_smt2(parser, &item_open->idx0)) return 0;
   if (!parse_bit_width_smt2(parser, &item_open->idx1)) return 0;
 
