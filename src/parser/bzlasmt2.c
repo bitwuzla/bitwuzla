@@ -2371,6 +2371,38 @@ close_term_unary_fp_fun(BzlaSMT2Parser *parser,
  * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
  */
 static int32_t
+close_term_unary_rm_fp_fun(BzlaSMT2Parser *parser,
+                           BzlaSMT2Item *item_open,
+                           BzlaSMT2Item *item_cur,
+                           uint32_t nargs)
+// BoolectorNode *(*fun) (Bzla *, BoolectorNode *) )
+{
+  assert(parser);
+  assert(item_open);
+  assert(item_cur);
+  // assert (fun);
+
+  assert(item_cur->tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2
+         || item_cur->tag == BZLA_FP_SQRT_TAG_SMT2);
+
+  BoolectorNode *exp;
+
+  if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
+  // TODO: first arg RoundingMode, other arg FP
+  // FP STUB
+  exp = boolector_true(parser->bzla);
+  // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
+  ////
+  release_exp_and_overwrite(parser, item_open, item_cur, 1, nargs, exp);
+  return 1;
+}
+
+/**
+ * item_open and item_cur point to items on the parser work stack.
+ * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
+ * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ */
+static int32_t
 close_term_unary_bool_fp_fun(BzlaSMT2Parser *parser,
                              BzlaSMT2Item *item_open,
                              BzlaSMT2Item *item_cur,
@@ -2711,7 +2743,8 @@ close_term(BzlaSMT2Parser *parser)
     i = 1;
     if (tag == BZLA_FP_ADD_TAG_SMT2 || tag == BZLA_FP_SUB_TAG_SMT2
         || tag == BZLA_FP_MUL_TAG_SMT2 || tag == BZLA_FP_DIV_TAG_SMT2
-        || tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2 || tag == BZLA_FP_FMA_TAG_SMT2)
+        || tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2 || tag == BZLA_FP_SQRT_TAG_SMT2
+        || tag == BZLA_FP_FMA_TAG_SMT2)
     {
       // TODO: check first arg RoundingMode
       i = 2;
@@ -2721,7 +2754,7 @@ close_term(BzlaSMT2Parser *parser)
       if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
       {
         parser->perrcoo = item_cur[i].coo;
-        return !perr_smt2(parser, "xexpected expression");
+        return !perr_smt2(parser, "expected expression");
       }
     }
   }
@@ -3447,16 +3480,21 @@ close_term(BzlaSMT2Parser *parser)
       return 0;
     }
   }
+  /* FP: fp.sqrt ------------------------------------------------------------ */
+  else if (tag == BZLA_FP_SQRT_TAG_SMT2)
+  {
+    if (!close_term_unary_rm_fp_fun(parser, item_open, item_cur, nargs))
+    {
+      return 0;
+    }
+  }
   /* FP: fp.roundToIntegral ------------------------------------------------- */
   else if (tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2)
   {
-    if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
-    // TODO: first arg RoundingMode, other arg FP
-    // FP STUB
-    exp = boolector_true(parser->bzla);
-    // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
-    ////
-    release_exp_and_overwrite(parser, item_open, item_cur, 1, nargs, exp);
+    if (!close_term_unary_rm_fp_fun(parser, item_open, item_cur, nargs))
+    {
+      return 0;
+    }
   }
   /* FP: fp.add ------------------------------------------------------------- */
   else if (tag == BZLA_FP_ADD_TAG_SMT2)
