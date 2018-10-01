@@ -2497,8 +2497,7 @@ close_term_bin_rm_fp_fun(BzlaSMT2Parser *parser,
   assert(item_cur->tag == BZLA_FP_ADD_TAG_SMT2
          || item_cur->tag == BZLA_FP_SUB_TAG_SMT2
          || item_cur->tag == BZLA_FP_MUL_TAG_SMT2
-         || item_cur->tag == BZLA_FP_DIV_TAG_SMT2
-         || item_cur->tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2);
+         || item_cur->tag == BZLA_FP_DIV_TAG_SMT2);
 
   BoolectorNode *exp;
 
@@ -3448,6 +3447,17 @@ close_term(BzlaSMT2Parser *parser)
       return 0;
     }
   }
+  /* FP: fp.roundToIntegral ------------------------------------------------- */
+  else if (tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2)
+  {
+    if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
+    // TODO: first arg RoundingMode, other arg FP
+    // FP STUB
+    exp = boolector_true(parser->bzla);
+    // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
+    ////
+    release_exp_and_overwrite(parser, item_open, item_cur, 1, nargs, exp);
+  }
   /* FP: fp.add ------------------------------------------------------------- */
   else if (tag == BZLA_FP_ADD_TAG_SMT2)
   {
@@ -3474,14 +3484,6 @@ close_term(BzlaSMT2Parser *parser)
   }
   /* FP: fp.div ------------------------------------------------------------- */
   else if (tag == BZLA_FP_DIV_TAG_SMT2)
-  {
-    if (!close_term_bin_rm_fp_fun(parser, item_open, item_cur, nargs))
-    {
-      return 0;
-    }
-  }
-  /* FP: fp.roundToIntegral ------------------------------------------------- */
-  else if (tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2)
   {
     if (!close_term_bin_rm_fp_fun(parser, item_open, item_cur, nargs))
     {
