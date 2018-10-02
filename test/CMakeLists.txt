@@ -6,6 +6,7 @@ set(test_names
   arithmetic
   bv
   comp
+  constbits
   exp
   hash
   inc
