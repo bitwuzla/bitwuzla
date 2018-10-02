@@ -2582,6 +2582,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   assert(item_cur);
 
   BoolectorNode *exp;
+  // BoolectorSort s;
   Bzla *bzla;
 
   bzla = parser->bzla;
@@ -2617,13 +2618,15 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
       parser->perrcoo = item_cur[2].coo;
       return !perr_smt2(parser, "expected expression");
     }
-    if (!boolector_is_const(parser->bzla, item_cur[2].exp))
-    {
-      return !perr_smt2(
-          parser,
-          "invalid argument to '%s', expected bit-vector constant",
-          item_cur->node->name);
-    }
+    // TODO: check: is bv or is fp sort
+    // s = boolector_get_sort(bzla, item_cur[2].exp);
+    // if (!boolector_is_bitvec_sort(bzla, s) && !boolector_is_fp_sort(bzla, s))
+    //{
+    //  return !perr_smt2 (
+    //      parser,
+    //      "invalid argument to '%s', expected bit-vector or floating-point
+    //      term", item_cur->node->name);
+    //}
     // FP STUB
     BoolectorSort s = boolector_bitvec_sort(bzla, 1);
     exp             = boolector_var(bzla, s, 0);
