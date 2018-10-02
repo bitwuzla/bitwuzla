@@ -1973,14 +1973,12 @@ static void
 release_exp_and_overwrite(BzlaSMT2Parser *parser,
                           BzlaSMT2Item *item_open,
                           BzlaSMT2Item *item_cur,
-                          uint32_t offset,
                           uint32_t nargs,
                           BoolectorNode *exp)
 {
   uint32_t i;
 
-  for (i = 1 + offset; i <= nargs; i++)
-    boolector_release(parser->bzla, item_cur[i].exp);
+  for (i = 1; i <= nargs; i++) boolector_release(parser->bzla, item_cur[i].exp);
   parser->work.top = item_cur;
   item_open->tag   = BZLA_EXP_TAG_SMT2;
   item_open->exp   = exp;
@@ -2094,7 +2092,7 @@ close_term_bin_bool(BzlaSMT2Parser *parser,
   }
   assert(exp);
 
-  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
 
   return 1;
 }
@@ -2126,7 +2124,7 @@ close_term_unary_bv_fun(BzlaSMT2Parser *parser,
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_not_array_or_uf_args_smt2(parser, item_cur, nargs)) return 0;
   exp = fun(parser->bzla, item_cur[1].exp);
-  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
 
@@ -2206,7 +2204,7 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
     boolector_release(parser->bzla, old);
   }
 
-  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
 
   return 1;
 }
@@ -2257,7 +2255,7 @@ close_term_bin_bv_fun(BzlaSMT2Parser *parser,
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, 2)) return 0;
   if (!check_not_array_or_uf_args_smt2(parser, item_cur, nargs)) return 0;
   exp = fun(parser->bzla, item_cur[1].exp, item_cur[2].exp);
-  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
 
@@ -2296,7 +2294,7 @@ close_term_extend_bv_fun(BzlaSMT2Parser *parser,
         parser, "resulting bit-width of '%s' too large", item_cur->node->name);
   }
   exp = fun(parser->bzla, item_cur[1].exp, item_cur->num);
-  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
 
@@ -2329,7 +2327,7 @@ close_term_rotate_bv_fun(BzlaSMT2Parser *parser,
   if (!check_not_array_or_uf_args_smt2(parser, item_cur, nargs)) return 0;
   width = boolector_get_width(parser->bzla, item_cur[1].exp);
   exp   = fun(parser->bzla, item_cur[1].exp, item_cur->num % width);
-  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
 
@@ -2354,14 +2352,19 @@ close_term_unary_fp_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_NEG_TAG_SMT2);
 
   BoolectorNode *exp;
+  Bzla *bzla;
+
+  bzla = parser->bzla;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   // TODO: check all args FP
   // FP STUB
-  exp = boolector_true(parser->bzla);
+  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  exp             = boolector_var(bzla, s, 0);
+  boolector_release_sort(bzla, s);
   // exp = fun (parser->bzla, item_cur[1].exp);
   ////
-  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
 
@@ -2386,14 +2389,19 @@ close_term_unary_rm_fp_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_SQRT_TAG_SMT2);
 
   BoolectorNode *exp;
+  Bzla *bzla;
+
+  bzla = parser->bzla;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   // TODO: check first arg RoundingMode, other arg FP
   // FP STUB
-  exp = boolector_true(parser->bzla);
+  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  exp             = boolector_var(bzla, s, 0);
+  boolector_release_sort(bzla, s);
   // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
   ////
-  release_exp_and_overwrite(parser, item_open, item_cur, 1, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
 
@@ -2423,14 +2431,19 @@ close_term_unary_bool_fp_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_IS_POS_TAG_SMT2);
 
   BoolectorNode *exp;
+  Bzla *bzla;
+
+  bzla = parser->bzla;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   // TODO: check all args FP
   // FP STUB
-  exp = boolector_true(parser->bzla);
-  // exp = fun (parser->bzla, item_cur[1].exp);
+  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  exp             = boolector_var(bzla, s, 0);
+  boolector_release_sort(bzla, s);
+  // exp = fun (bzla, item_cur[1].exp);
   ////
-  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
 
@@ -2458,15 +2471,20 @@ close_term_bin_fp_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_MAX_TAG_SMT2);
 
   BoolectorNode *exp;
+  Bzla *bzla;
+
+  bzla = parser->bzla;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, 2)) return 0;
   // TODO: check all args FP
   // FP STUB
-  exp = boolector_true(parser->bzla);
+  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  exp             = boolector_var(bzla, s, 0);
+  boolector_release_sort(bzla, s);
   // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
   ////
-  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
 
@@ -2496,14 +2514,19 @@ close_term_bin_fp_fun_chainable(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_GT_TAG_SMT2);
 
   BoolectorNode *exp;
+  Bzla *bzla;
+
+  bzla = parser->bzla;
 
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
   // TODO: check all args FP
   // FP STUB
-  exp = boolector_true(parser->bzla);
+  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  exp             = boolector_var(bzla, s, 0);
+  boolector_release_sort(bzla, s);
   // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
   ////
-  release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
 /**
@@ -2539,7 +2562,7 @@ close_term_bin_rm_fp_fun(BzlaSMT2Parser *parser,
   exp = boolector_true(parser->bzla);
   // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
   ////
-  release_exp_and_overwrite(parser, item_open, item_cur, 1, nargs, exp);
+  release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
 
@@ -2559,6 +2582,9 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   assert(item_cur);
 
   BoolectorNode *exp;
+  Bzla *bzla;
+
+  bzla = parser->bzla;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   // TODO check first argument is RoundingMode
@@ -2573,8 +2599,11 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
     }
     /* (_ to_fp eb sb) RoundingMode Real */
     // FP STUB
-    exp = boolector_true(parser->bzla);
+    BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+    exp             = boolector_var(bzla, s, 0);
+    boolector_release_sort(bzla, s);
     ////
+    boolector_release(bzla, item_cur[1].exp);
     bzla_mem_freestr(parser->mem, item_cur[2].str);
     parser->work.top = item_cur;
     item_open->tag   = BZLA_EXP_TAG_SMT2;
@@ -2596,9 +2625,11 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
           item_cur->node->name);
     }
     // FP STUB
-    exp = boolector_true(parser->bzla);
+    BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+    exp             = boolector_var(bzla, s, 0);
+    boolector_release_sort(bzla, s);
     ////
-    release_exp_and_overwrite(parser, item_open, item_cur, 1, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   return 1;
 }
@@ -2942,7 +2973,7 @@ close_term(BzlaSMT2Parser *parser)
       boolector_release(bzla, old);
       boolector_release(bzla, tmp);
     }
-    release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* CORE: DISTINCT --------------------------------------------------------- */
   else if (tag == BZLA_DISTINCT_TAG_SMT2)
@@ -2978,7 +3009,7 @@ close_term(BzlaSMT2Parser *parser)
       }
     }
     assert(exp);
-    release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* CORE: ITE -------------------------------------------------------------- */
   else if (tag == BZLA_ITE_TAG_SMT2)
@@ -2987,7 +3018,7 @@ close_term(BzlaSMT2Parser *parser)
     if (!check_ite_args_sorts_match_smt2(parser, item_cur)) return 0;
     exp =
         boolector_cond(bzla, item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
-    release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* ARRAY: SELECT ---------------------------------------------------------- */
   else if (tag == BZLA_ARRAY_SELECT_TAG_SMT2)
@@ -3016,7 +3047,7 @@ close_term(BzlaSMT2Parser *parser)
                         width);
     }
     exp = boolector_read(bzla, item_cur[1].exp, item_cur[2].exp);
-    release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* ARRAY: STORE ----------------------------------------------------------- */
   else if (tag == BZLA_ARRAY_STORE_TAG_SMT2)
@@ -3063,7 +3094,7 @@ close_term(BzlaSMT2Parser *parser)
     }
     exp = boolector_write(
         bzla, item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
-    release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* BV: EXTRACT ------------------------------------------------------------ */
   else if (tag == BZLA_BV_EXTRACT_TAG_SMT2)
@@ -3082,7 +3113,7 @@ close_term(BzlaSMT2Parser *parser)
     }
     exp =
         boolector_slice(bzla, item_cur[1].exp, item_cur->idx0, item_cur->idx1);
-    release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* BV: NOT ---------------------------------------------------------------- */
   else if (tag == BZLA_BV_NOT_TAG_SMT2)
@@ -3312,7 +3343,7 @@ close_term(BzlaSMT2Parser *parser)
       return !perr_smt2(parser, "resulting bit-width of 'repeat' too large");
     }
     exp = boolector_repeat(bzla, item_cur[1].exp, item_cur->num);
-    release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* BV: ZERO EXTEND -------------------------------------------------------- */
   else if (tag == BZLA_BV_ZERO_EXTEND_TAG_SMT2)
@@ -3370,7 +3401,7 @@ close_term(BzlaSMT2Parser *parser)
                                     item_cur[1].exp,
                                     item_cur[2].exp,
                                     tag == BZLA_BV_EXT_ROTATE_LEFT_TAG_SMT2);
-    release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* BV: ULE ---------------------------------------------------------------- */
   else if (tag == BZLA_BV_ULE_TAG_SMT2)
@@ -3458,10 +3489,12 @@ close_term(BzlaSMT2Parser *parser)
                         "bit-vector sort of size 1",
                         item_cur->node->name);
     // FP STUB
-    exp = boolector_true(bzla);
+    BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+    exp             = boolector_var(bzla, s, 0);
+    boolector_release_sort(bzla, s);
     ////
     assert(exp);
-    release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* FP: fp.abs ------------------------------------------------------------- */
   else if (tag == BZLA_FP_ABS_TAG_SMT2)
@@ -3534,9 +3567,11 @@ close_term(BzlaSMT2Parser *parser)
     if (!check_arg_sorts_match_smt2(parser, item_cur, 1, 3)) return 0;
     // TODO: check first arg RoundingMode, all other args FP
     // FP STUB
-    exp = boolector_true(parser->bzla);
+    BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+    exp             = boolector_var(bzla, s, 0);
+    boolector_release_sort(bzla, s);
     ////
-    release_exp_and_overwrite(parser, item_open, item_cur, 1, nargs, exp);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* FP: fp.rem ------------------------------------------------------------- */
   else if (tag == BZLA_FP_REM_TAG_SMT2)
@@ -3677,9 +3712,11 @@ close_term(BzlaSMT2Parser *parser)
             item_cur->node->name);
       }
       // FP STUB
-      exp = boolector_true(bzla);
+      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      exp             = boolector_var(bzla, s, 0);
+      boolector_release_sort(bzla, s);
       ////
-      release_exp_and_overwrite(parser, item_open, item_cur, 0, nargs, exp);
+      release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
     }
     else
     {
@@ -3946,6 +3983,9 @@ parse_open_close_term_indexed_fp_special_const(BzlaSMT2Parser *parser,
 
   BzlaSMT2Item *item_open;
   BoolectorNode *exp;
+  Bzla *bzla;
+
+  bzla = parser->bzla;
 
   item_open = item_cur - 1;
   assert(node && tag == (int32_t) node->tag);
@@ -3953,7 +3993,9 @@ parse_open_close_term_indexed_fp_special_const(BzlaSMT2Parser *parser,
   if (!parse_bit_width_smt2(parser, &item_open->idx1)) return 0;
 
   // FP STUB
-  exp = boolector_true(parser->bzla);
+  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  exp             = boolector_var(bzla, s, 0);
+  boolector_release_sort(bzla, s);
   ////
 
   item_open->tag   = BZLA_EXP_TAG_SMT2;
@@ -4332,13 +4374,16 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
         || tag == BZLA_FP_FLOAT32_TAG_SMT2 || tag == BZLA_FP_FLOAT64_TAG_SMT2
         || tag == BZLA_FP_FLOAT128_TAG_SMT2)
       return !perr_smt2(parser, "unexpected '%s'", parser->token.start);
+
     if (tag == BZLA_FP_ROUNDINGMODE_NEAREST_TO_EVEN_TAG_SMT2
         || tag == BZLA_FP_ROUNDINGMODE_RNE_TAG_SMT2)
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
       // FP STUB
       // TODO: represent RM constants as BV of size 3
-      item_cur->exp = boolector_true(bzla);
+      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      item_cur->exp   = boolector_var(bzla, s, 0);
+      boolector_release_sort(bzla, s);
       ////
     }
     else if (tag == BZLA_FP_ROUNDINGMODE_NEAREST_TO_AWAY_TAG_SMT2
@@ -4347,7 +4392,9 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
       item_cur->tag = BZLA_EXP_TAG_SMT2;
       // FP STUB
       // TODO: represent RM constants as BV of size 3
-      item_cur->exp = boolector_true(bzla);
+      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      item_cur->exp   = boolector_var(bzla, s, 0);
+      boolector_release_sort(bzla, s);
       ////
     }
     else if (tag == BZLA_FP_ROUNDINGMODE_TOWARD_POSITIVE_TAG_SMT2
@@ -4355,7 +4402,9 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
       // FP STUB
-      item_cur->exp = boolector_true(bzla);
+      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      item_cur->exp   = boolector_var(bzla, s, 0);
+      boolector_release_sort(bzla, s);
       ////
     }
     else if (tag == BZLA_FP_ROUNDINGMODE_TOWARD_NEGATIVE_TAG_SMT2
@@ -4363,7 +4412,9 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
       // FP STUB
-      item_cur->exp = boolector_true(bzla);
+      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      item_cur->exp   = boolector_var(bzla, s, 0);
+      boolector_release_sort(bzla, s);
       ////
     }
     else if (tag == BZLA_FP_ROUNDINGMODE_TOWARD_ZERO_TAG_SMT2
@@ -4371,7 +4422,9 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
       // FP STUB
-      item_cur->exp = boolector_true(bzla);
+      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      item_cur->exp   = boolector_var(bzla, s, 0);
+      boolector_release_sort(bzla, s);
       ////
     }
   }
@@ -4766,6 +4819,9 @@ parse_sort(BzlaSMT2Parser *parser,
            BoolectorSort *sort)
 {
   BzlaSMT2Node *alias;
+  Bzla *bzla;
+
+  bzla = parser->bzla;
 
   if (tag == BZLA_BOOL_TAG_SMT2)
   {
@@ -4776,7 +4832,7 @@ parse_sort(BzlaSMT2Parser *parser,
   else if (tag == BZLA_FP_FLOAT16_TAG_SMT2)
   {
     // FP STUB
-    *sort = boolector_bool_sort(parser->bzla);
+    *sort = boolector_bool_sort(bzla);
     BZLA_PUSH_STACK(parser->sorts, *sort);
     ////
     return 1;
@@ -4784,7 +4840,7 @@ parse_sort(BzlaSMT2Parser *parser,
   else if (tag == BZLA_FP_FLOAT32_TAG_SMT2)
   {
     // FP STUB
-    *sort = boolector_bool_sort(parser->bzla);
+    *sort = boolector_bool_sort(bzla);
     BZLA_PUSH_STACK(parser->sorts, *sort);
     ////
     return 1;
@@ -4792,7 +4848,7 @@ parse_sort(BzlaSMT2Parser *parser,
   else if (tag == BZLA_FP_FLOAT64_TAG_SMT2)
   {
     // FP STUB
-    *sort = boolector_bool_sort(parser->bzla);
+    *sort = boolector_bool_sort(bzla);
     BZLA_PUSH_STACK(parser->sorts, *sort);
     ////
     return 1;
@@ -4800,7 +4856,7 @@ parse_sort(BzlaSMT2Parser *parser,
   else if (tag == BZLA_FP_FLOAT128_TAG_SMT2)
   {
     // FP STUB
-    *sort = boolector_bool_sort(parser->bzla);
+    *sort = boolector_bool_sort(bzla);
     BZLA_PUSH_STACK(parser->sorts, *sort);
     ////
     return 1;
@@ -4808,7 +4864,7 @@ parse_sort(BzlaSMT2Parser *parser,
   else if (tag == BZLA_FP_ROUNDINGMODE_TAG_SMT2)
   {
     // FP STUB
-    *sort = boolector_bool_sort(parser->bzla);
+    *sort = boolector_bool_sort(bzla);
     BZLA_PUSH_STACK(parser->sorts, *sort);
     ////
     return 1;
