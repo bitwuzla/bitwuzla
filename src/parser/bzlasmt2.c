@@ -2388,7 +2388,7 @@ close_term_unary_rm_fp_fun(BzlaSMT2Parser *parser,
   BoolectorNode *exp;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
-  // TODO: first arg RoundingMode, other arg FP
+  // TODO: check first arg RoundingMode, other arg FP
   // FP STUB
   exp = boolector_true(parser->bzla);
   // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
@@ -2534,7 +2534,7 @@ close_term_bin_rm_fp_fun(BzlaSMT2Parser *parser,
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 3)) return 0;
   if (!check_arg_sorts_match_smt2(parser, item_cur, 1, 2)) return 0;
-  // TODO: first arg RoundingMode, all other args FP
+  // TODO: check first arg RoundingMode, all other args FP
   // FP STUB
   exp = boolector_true(parser->bzla);
   // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
@@ -3532,7 +3532,7 @@ close_term(BzlaSMT2Parser *parser)
   {
     if (!check_nargs_smt2(parser, item_cur, nargs, 4)) return 0;
     if (!check_arg_sorts_match_smt2(parser, item_cur, 1, 3)) return 0;
-    // TODO: first arg RoundingMode, all other args FP
+    // TODO: check first arg RoundingMode, all other args FP
     // FP STUB
     exp = boolector_true(parser->bzla);
     ////
@@ -4332,6 +4332,48 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
         || tag == BZLA_FP_FLOAT32_TAG_SMT2 || tag == BZLA_FP_FLOAT64_TAG_SMT2
         || tag == BZLA_FP_FLOAT128_TAG_SMT2)
       return !perr_smt2(parser, "unexpected '%s'", parser->token.start);
+    if (tag == BZLA_FP_ROUNDINGMODE_NEAREST_TO_EVEN_TAG_SMT2
+        || tag == BZLA_FP_ROUNDINGMODE_RNE_TAG_SMT2)
+    {
+      item_cur->tag = BZLA_EXP_TAG_SMT2;
+      // FP STUB
+      // TODO: represent RM constants as BV of size 3
+      item_cur->exp = boolector_true(bzla);
+      ////
+    }
+    else if (tag == BZLA_FP_ROUNDINGMODE_NEAREST_TO_AWAY_TAG_SMT2
+             || tag == BZLA_FP_ROUNDINGMODE_RNA_TAG_SMT2)
+    {
+      item_cur->tag = BZLA_EXP_TAG_SMT2;
+      // FP STUB
+      // TODO: represent RM constants as BV of size 3
+      item_cur->exp = boolector_true(bzla);
+      ////
+    }
+    else if (tag == BZLA_FP_ROUNDINGMODE_TOWARD_POSITIVE_TAG_SMT2
+             || tag == BZLA_FP_ROUNDINGMODE_RTP_TAG_SMT2)
+    {
+      item_cur->tag = BZLA_EXP_TAG_SMT2;
+      // FP STUB
+      item_cur->exp = boolector_true(bzla);
+      ////
+    }
+    else if (tag == BZLA_FP_ROUNDINGMODE_TOWARD_NEGATIVE_TAG_SMT2
+             || tag == BZLA_FP_ROUNDINGMODE_RTN_TAG_SMT2)
+    {
+      item_cur->tag = BZLA_EXP_TAG_SMT2;
+      // FP STUB
+      item_cur->exp = boolector_true(bzla);
+      ////
+    }
+    else if (tag == BZLA_FP_ROUNDINGMODE_TOWARD_ZERO_TAG_SMT2
+             || tag == BZLA_FP_ROUNDINGMODE_RTZ_TAG_SMT2)
+    {
+      item_cur->tag = BZLA_EXP_TAG_SMT2;
+      // FP STUB
+      item_cur->exp = boolector_true(bzla);
+      ////
+    }
   }
   else
   {
@@ -4763,6 +4805,14 @@ parse_sort(BzlaSMT2Parser *parser,
     ////
     return 1;
   }
+  else if (tag == BZLA_FP_ROUNDINGMODE_TAG_SMT2)
+  {
+    // FP STUB
+    *sort = boolector_bool_sort(parser->bzla);
+    BZLA_PUSH_STACK(parser->sorts, *sort);
+    ////
+    return 1;
+  }
   else if (tag == BZLA_LPAR_TAG_SMT2)
   {
     if (allow_array_sort)
@@ -4795,9 +4845,10 @@ parse_sort(BzlaSMT2Parser *parser,
     return 1;
   }
   else if (tag == EOF)
-    return !perr_smt2(parser, "reached end-of-file but expected '(' or 'Bool'");
+    return !perr_smt2(parser,
+                      "reached end-of-file but expected '(' or sort keyword");
   return !perr_smt2(
-      parser, "expected '(' or 'Bool' at '%s'", parser->token.start);
+      parser, "expected '(' or sort keyword at '%s'", parser->token.start);
 }
 
 static int32_t
