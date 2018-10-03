@@ -1690,6 +1690,7 @@ inv_add_bv(
    * res +   s = t   |->   res = t - s
    * s   + res = t   |
    */
+
   res = bzla_bv_sub(bzla->mm, t, s);
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_add, add, s, t, res, eidx, "+");
@@ -1810,6 +1811,8 @@ inv_eq_bv(
   BzlaBitVector *res;
   BzlaMemMgr *mm;
 
+  mm = bzla->mm;
+
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
 #ifndef NDEBUG
@@ -1818,11 +1821,14 @@ inv_eq_bv(
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  mm = bzla->mm;
+  /**
+   * invertibility condition: true
+   * (res = s) = t   ->   t = 0: choose random res != s
+   *                      t = 1: res = s
+   */
 
   if (bzla_bv_is_zero(t))
   {
-    /* res != t -> choose random res != t ----------------------------------- */
     if (bzla_rng_pick_with_prob(&bzla->rng,
                                 bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_EQ_FLIP)))
     {
@@ -1847,7 +1853,6 @@ inv_eq_bv(
   }
   else
   {
-    /* res = t -------------------------------------------------------------- */
     res = bzla_bv_copy(mm, s);
   }
 
