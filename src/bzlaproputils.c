@@ -8,6 +8,7 @@
 
 #include "bzlaproputils.h"
 
+#include "bzlainvutils.h"
 #include "bzlaprintmodel.h"
 #include "bzlaslsutils.h"
 #include "bzlaslvprop.h"
@@ -1683,9 +1684,12 @@ inv_add_bv(
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  /* invertibility condition: true */
-
-  /* res + s = s + res = t -> res = t - s */
+  /**
+   * invertibility condition: true
+   *
+   * res +   s = t   |->   res = t - s
+   * s   + res = t   |
+   */
   res = bzla_bv_sub(bzla->mm, t, s);
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_add, add, s, t, res, eidx, "+");
@@ -1711,12 +1715,14 @@ inv_and_bv(
   assert(!bzla_node_is_bv_const(and->e[eidx]));
 
   uint32_t i, bw;
-  int32_t bitand, bite;
+  int32_t bit_and, bit_e;
   BzlaNode *e;
   BzlaBitVector *res;
   BzlaMemMgr *mm;
   BzlaUIntStack dcbits;
   bool b;
+
+  mm = bzla->mm;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -1726,9 +1732,14 @@ inv_and_bv(
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  mm = bzla->mm;
-  e  = and->e[eidx ? 0 : 1];
+  e = and->e[eidx ? 0 : 1];
   assert(e);
+
+  /* check invertibility, if not invertible: CONFLICT */
+  if (!bzla_is_inv_and(mm, s, t))
+  {
+    return res_rec_conf(bzla, and, e, t, s, eidx, cons_and_bv, "AND");
+  }
 
   b = bzla_rng_pick_with_prob(&bzla->rng,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_AND_FLIP));
@@ -1739,16 +1750,10 @@ inv_and_bv(
 
   for (i = 0, bw = bzla_bv_get_width(t); i < bw; i++)
   {
-    bitand = bzla_bv_get_bit(t, i);
-    bite   = bzla_bv_get_bit(s, i);
+    bit_and = bzla_bv_get_bit(t, i);
+    bit_e   = bzla_bv_get_bit(s, i);
 
-    if (bitand&&!bite)
-    {
-      /* CONFLICT: all bits set in t, must be set in s ---------------------- */
-      bzla_bv_free(mm, res);
-      res = res_rec_conf(bzla, and, e, t, s, eidx, cons_and_bv, "AND");
-      goto DONE;
-    }
+    assert(!bit_and || bit_e);
 
     /* ----------------------------------------------------------------------
      * res & s = s & res = t
@@ -1757,9 +1762,9 @@ inv_and_bv(
      * -> all bits not set in t but set in s must not be set in res
      * -> all bits not set in s can be chosen to be set randomly
      * ---------------------------------------------------------------------- */
-    if (bitand)
+    if (bit_and)
       bzla_bv_set_bit(res, i, 1);
-    else if (bite)
+    else if (bit_e)
       bzla_bv_set_bit(res, i, 0);
     else if (b)
       BZLA_PUSH_STACK(dcbits, i);
@@ -1778,7 +1783,6 @@ inv_and_bv(
   check_result_binary_dbg(bzla, bzla_bv_and, and, s, t, res, eidx, "AND");
 #endif
 
-DONE:
   BZLA_RELEASE_STACK(dcbits);
   return res;
 }
