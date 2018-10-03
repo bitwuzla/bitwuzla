@@ -2114,13 +2114,12 @@ inv_srl_bv(
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(!bzla_node_is_bv_const(srl->e[eidx]));
 
-  uint32_t bw, i, j, clz_s, clz_t, shift;
+  uint32_t bw, i, clz_s, clz_t, shift;
   BzlaNode *e;
   BzlaBitVector *res, *bvmax, *tmp;
   BzlaMemMgr *mm;
-#ifndef NDEBUG
-  bool is_inv = true;
-#endif
+
+  mm = bzla->mm;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -2130,10 +2129,15 @@ inv_srl_bv(
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  mm = bzla->mm;
-  e  = srl->e[eidx ? 0 : 1];
+  e = srl->e[eidx ? 0 : 1];
   assert(e);
   bw = bzla_bv_get_width(t);
+
+  /* check invertibility, if not invertible: CONFLICT */
+  if (!bzla_is_inv_srl(mm, s, t, eidx))
+  {
+    return res_rec_conf(bzla, srl, e, t, s, eidx, cons_srl_bv, ">>");
+  }
 
   res   = 0;
   bw    = bzla_bv_get_width(t);
@@ -2163,43 +2167,31 @@ inv_srl_bv(
        * -> else conflict
        * -------------------------------------------------------------------- */
       clz_s = bzla_bv_get_num_leading_zeros(s);
-      if (clz_s <= clz_t)
+      assert(clz_s <= clz_t);
+      shift = clz_t - clz_s;
+      if (bzla_bv_is_zero(t))
       {
-        shift = clz_t - clz_s;
-
-        if (bzla_bv_is_zero(t))
-        {
-          /* x...x0 >> e[1] = 0...0
-           * -> choose random shift <= res < 2^bw
-           * ---------------------------------------------------------------- */
-          bvmax = bzla_bv_ones(mm, bw);
-          tmp   = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
-          res   = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, bvmax);
-          bzla_bv_free(mm, bvmax);
-          bzla_bv_free(mm, tmp);
-        }
-        else
-        {
-          for (i = 0, j = shift, res = 0; i < bw - j; i++)
-          {
-            if (bzla_bv_get_bit(s, bw - 1 - i)
-                != bzla_bv_get_bit(t, bw - 1 - (j + i)))
-            {
-              /* CONFLICT: shifted bits must match -------------------------- */
-              goto BVSRL_CONF;
-            }
-          }
-
-          res = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
-        }
+        /* x...x0 >> e[1] = 0...0
+         * -> choose random shift <= res < bw
+         * ---------------------------------------------------------------- */
+        bvmax = bzla_bv_ones(mm, bw);
+        tmp   = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
+        res   = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, bvmax);
+        bzla_bv_free(mm, bvmax);
+        bzla_bv_free(mm, tmp);
       }
       else
       {
-      BVSRL_CONF:
-        res = res_rec_conf(bzla, srl, e, t, s, eidx, cons_srl_bv, ">>");
 #ifndef NDEBUG
-        is_inv = false;
+        uint32_t j;
+        for (i = 0, j = shift, res = 0; i < bw - j; i++)
+        {
+          /* CONFLICT: shifted bits must match */
+          assert(bzla_bv_get_bit(s, bw - 1 - i)
+                 == bzla_bv_get_bit(t, bw - 1 - (j + i)));
+        }
 #endif
+        res = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
       }
     }
   }
@@ -2224,11 +2216,8 @@ inv_srl_bv(
       shift = bzla_bv_to_uint64(s);
     }
 
-    if ((shift < bw && clz_t < shift) || (shift >= bw && clz_t != bw))
-    {
-      /* CONFLICT: the MSBs shifted must be zero ---------------------------- */
-      goto BVSRL_CONF;
-    }
+    /* CONFLICT: the MSBs shifted must be zero */
+    assert((shift >= bw || clz_t >= shift) && (shift < bw || clz_t == bw));
 
     res = bzla_bv_sll(mm, t, s);
     for (i = 0; i < shift && i < bw; i++)
@@ -2238,8 +2227,7 @@ inv_srl_bv(
   }
 
 #ifndef NDEBUG
-  if (is_inv)
-    check_result_binary_dbg(bzla, bzla_bv_srl, srl, s, t, res, eidx, ">>");
+  check_result_binary_dbg(bzla, bzla_bv_srl, srl, s, t, res, eidx, ">>");
 #endif
   return res;
 }

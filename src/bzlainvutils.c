@@ -226,7 +226,7 @@ bzla_is_inv_srl(BzlaMemMgr *mm,
   {
     assert(pos_x == 1);
     res = false;
-    for (uint32_t i = 0, bw_s = bzla_bv_get_width(s); i < bw_s && !res; i++)
+    for (uint32_t i = 0, bw_s = bzla_bv_get_width(s); i <= bw_s && !res; i++)
     {
       BzlaBitVector *bv_i    = bzla_bv_uint64_to_bv(mm, i, bw_s);
       BzlaBitVector *s_srl_i = bzla_bv_srl(mm, s, bv_i);
