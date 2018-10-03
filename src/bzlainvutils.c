@@ -126,12 +126,13 @@ bzla_is_inv_sll(BzlaMemMgr *mm,
   {
     assert(pos_x == 1);
     res = false;
-    for (uint32_t i = 0, bw_s = bzla_bv_get_width(s); i < bw_s && !res; i++)
+    for (uint32_t i = 0, bw_s = bzla_bv_get_width(s); i <= bw_s && !res; i++)
     {
       BzlaBitVector *bv_i    = bzla_bv_uint64_to_bv(mm, i, bw_s);
-      BzlaBitVector *s_sll_i = bzla_bv_srl(mm, s, bv_i);
+      BzlaBitVector *s_sll_i = bzla_bv_sll(mm, s, bv_i);
       BzlaBitVector *eq_t    = bzla_bv_eq(mm, s_sll_i, t);
       res                    = bzla_bv_is_true(eq_t);
+
       bzla_bv_free(mm, bv_i);
       bzla_bv_free(mm, s_sll_i);
       bzla_bv_free(mm, eq_t);
