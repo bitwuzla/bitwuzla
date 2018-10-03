@@ -140,6 +140,8 @@ class TestProp : public TestBzla
     bzla_sort_release(d_bzla, sort);
     sat_res = sat_prop_solver_aux(d_bzla);
     ASSERT_EQ(sat_res, BZLA_RESULT_SAT);
+    // printf ("moves %u n %u\n", ((BzlaPropSolver *) g_btor->slv)->stats.moves,
+    // n);
     ASSERT_LE(((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
     bzla_reset_incremental_usage(d_bzla);
 #else

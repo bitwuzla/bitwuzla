@@ -1,6 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
+ *  Copyright (C) 2018 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -238,24 +239,27 @@ bzla_is_inv_srl(BzlaMemMgr *mm,
   return res;
 }
 
-/* Check invertibility condition for x < t or t < x.
+/* Check invertibility condition for x < s  = t or s < x = t.
  *
- * IC (pos_x = 0): t != 0
- * IC (pos_x = 1): t != ~0
+ * IC (pos_x = 0): t = 0 || s != 0
+ * IC (pos_x = 1): t = 0 || s != ~0
  */
 bool
-bzla_is_inv_ult(BzlaMemMgr *mm, const BzlaBitVector *t, uint32_t pos_x)
+bzla_is_inv_ult(BzlaMemMgr *mm,
+                const BzlaBitVector *s,
+                const BzlaBitVector *t,
+                uint32_t pos_x)
 {
   (void) mm;
   bool res;
   if (pos_x == 0)
   {
-    res = !bzla_bv_is_zero(t);
+    res = bzla_bv_is_zero(t) || !bzla_bv_is_zero(s);
   }
   else
   {
     assert(pos_x == 1);
-    res = !bzla_bv_is_ones(t);
+    res = bzla_bv_is_zero(t) || !bzla_bv_is_ones(s);
   }
   return res;
 }

@@ -1887,9 +1887,8 @@ inv_ult_bv(
   BzlaNode *e;
   BzlaBitVector *res, *zero, *one, *bvmax, *tmp;
   BzlaMemMgr *mm;
-#ifndef NDEBUG
-  bool is_inv = true;
-#endif
+
+  mm = bzla->mm;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -1899,9 +1898,14 @@ inv_ult_bv(
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  mm = bzla->mm;
-  e  = ult->e[eidx ? 0 : 1];
+  e = ult->e[eidx ? 0 : 1];
   assert(e);
+
+  /* check invertibility, if not invertible: CONFLICT */
+  if (!bzla_is_inv_ult(mm, s, t, eidx))
+  {
+    return res_rec_conf(bzla, ult, e, t, s, eidx, cons_ult_bv, "<");
+  }
 
   bw    = bzla_bv_get_width(s);
   zero  = bzla_bv_new(mm, bw);
@@ -1913,58 +1917,39 @@ inv_ult_bv(
 
   if (eidx)
   {
-    if (!bzla_bv_compare(s, bvmax) && isult)
+    assert(!isult || bzla_bv_compare(s, bvmax)); /* CONFLICT: 1...1 < e[1] */
+    if (!isult)
     {
-    BVULT_CONF:
-      /* CONFLICT: 1...1 < e[1] --------------------------------------------- */
-      res = res_rec_conf(bzla, ult, e, t, s, eidx, cons_ult_bv, "<");
-#ifndef NDEBUG
-      is_inv = false;
-#endif
+      /* s >= e[1] -------------------------------------------------------- */
+      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, s);
     }
     else
     {
-      if (!isult)
-      {
-        /* s >= e[1] -------------------------------------------------------- */
-        res = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, s);
-      }
-      else
-      {
-        /* s < e[1] --------------------------------------------------------- */
-        tmp = bzla_bv_add(mm, s, one);
-        res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, bvmax);
-        bzla_bv_free(mm, tmp);
-      }
+      /* s < e[1] --------------------------------------------------------- */
+      tmp = bzla_bv_add(mm, s, one);
+      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, bvmax);
+      bzla_bv_free(mm, tmp);
     }
   }
   else
   {
-    if (bzla_bv_is_zero(s) && isult)
+    assert(!isult || !bzla_bv_is_zero(s)); /* CONFLICT: e[0] < 0  */
+    if (!isult)
     {
-      /* CONFLICT: e[0] < 0 ------------------------------------------------- */
-      goto BVULT_CONF;
+      /* e[0] >= s -------------------------------------------------------- */
+      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, s, bvmax);
     }
     else
     {
-      if (!isult)
-      {
-        /* e[0] >= s -------------------------------------------------------- */
-        res = bzla_bv_new_random_range(mm, &bzla->rng, bw, s, bvmax);
-      }
-      else
-      {
-        /* e[0] < s --------------------------------------------------------- */
-        tmp = bzla_bv_sub(mm, s, one);
-        res = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
-        bzla_bv_free(mm, tmp);
-      }
+      /* e[0] < s --------------------------------------------------------- */
+      tmp = bzla_bv_sub(mm, s, one);
+      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
+      bzla_bv_free(mm, tmp);
     }
   }
 
 #ifndef NDEBUG
-  if (is_inv)
-    check_result_binary_dbg(bzla, bzla_bv_ult, ult, s, t, res, eidx, "<");
+  check_result_binary_dbg(bzla, bzla_bv_ult, ult, s, t, res, eidx, "<");
 #endif
   bzla_bv_free(mm, zero);
   bzla_bv_free(mm, one);

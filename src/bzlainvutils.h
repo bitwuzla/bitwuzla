@@ -50,7 +50,10 @@ bool bzla_is_inv_udiv(BzlaMemMgr *mm,
                       const BzlaBitVector *t,
                       uint32_t pos_x);
 
-bool bzla_is_inv_ult(BzlaMemMgr *mm, const BzlaBitVector *t, uint32_t pos_x);
+bool bzla_is_inv_ult(BzlaMemMgr *mm,
+                     const BzlaBitVector *s,
+                     const BzlaBitVector *t,
+                     uint32_t pos_x);
 
 bool bzla_is_inv_urem(BzlaMemMgr *mm,
                       const BzlaBitVector *s,
