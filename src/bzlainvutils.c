@@ -45,17 +45,18 @@ bzla_is_inv_concat(BzlaMemMgr *mm,
 {
   BzlaBitVector *slice;
   bool res;
+  uint32_t bw_s, bw_t;
+
+  bw_s = bzla_bv_get_width(s);
+  bw_t = bzla_bv_get_width(t);
   if (pos_x == 0)
   {
-    slice = bzla_bv_slice(mm, t, bzla_bv_get_width(s), 0);
+    slice = bzla_bv_slice(mm, t, bw_s, 0);
   }
   else
   {
     assert(pos_x == 1);
-    slice = bzla_bv_slice(mm,
-                          t,
-                          bzla_bv_get_width(t) - 1,
-                          bzla_bv_get_width(t) - bzla_bv_get_width(s));
+    slice = bzla_bv_slice(mm, t, bw_t - 1, bw_t - bw_s);
   }
   BzlaBitVector *s_eq_slice = bzla_bv_eq(mm, s, slice);
   res                       = bzla_bv_is_true(s_eq_slice);
