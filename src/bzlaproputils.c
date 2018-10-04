@@ -2444,9 +2444,8 @@ inv_udiv_bv(Bzla *bzla,
   BzlaBitVector *res, *lo, *up, *one, *bvmax, *tmp;
   BzlaMemMgr *mm;
   BzlaRNG *rng;
-#ifndef NDEBUG
-  bool is_inv = true;
-#endif
+
+  mm = bzla->mm;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -2456,11 +2455,16 @@ inv_udiv_bv(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  mm  = bzla->mm;
   rng = &bzla->rng;
   e   = udiv->e[eidx ? 0 : 1];
   assert(e);
   bw = bzla_bv_get_width(s);
+
+  /* check invertibility, if not invertible: CONFLICT */
+  if (!bzla_is_inv_udiv(mm, s, t, eidx))
+  {
+    return res_rec_conf(bzla, udiv, e, t, s, eidx, cons_udiv_bv, "/");
+  }
 
   one   = bzla_bv_one(mm, bw);
   bvmax = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
@@ -2505,30 +2509,20 @@ inv_udiv_bv(Bzla *bzla,
         /* t = 0 and s = 0 -> choose random e[1] > 0 ------------------------ */
         res = bzla_bv_new_random_range(mm, rng, bw, one, bvmax);
       }
-      else if (bzla_bv_compare(s, bvmax))
+      else
       {
+        assert(bzla_bv_compare(s, bvmax)); /* CONFLICT: s = ~0  and t = 0 */
+
         /* t = 0 and 0 < s < 2^bw - 1 -> choose random e[1] > s ------------- */
         tmp = bzla_bv_inc(mm, s);
         res = bzla_bv_new_random_range(mm, rng, bw, tmp, bvmax);
         bzla_bv_free(mm, tmp);
       }
-      else
-      {
-      BVUDIV_CONF:
-        /* CONFLICT --------------------------------------------------------- */
-        res = res_rec_conf(bzla, udiv, e, t, s, eidx, cons_udiv_bv, "/");
-#ifndef NDEBUG
-        is_inv = false;
-#endif
-      }
-    }
-    else if (bzla_bv_compare(s, t) < 0)
-    {
-      /* CONFLICT: s < t ---------------------------------------------------- */
-      goto BVUDIV_CONF;
     }
     else
     {
+      assert(bzla_bv_compare(s, t) >= 0); /* CONFLICT: s < t */
+
       /* if t is a divisor of s, choose e[1] = s / t
        * with prob = 0.5 and a s s.t. s / e[1] = t otherwise
        * -------------------------------------------------------------------- */
@@ -2557,20 +2551,12 @@ inv_udiv_bv(Bzla *bzla,
         lo  = bzla_bv_inc(mm, tmp); /* lower bound (incl.) */
         bzla_bv_free(mm, tmp);
 
-        if (bzla_bv_compare(lo, up) > 0)
-        {
-          /* CONFLICT: lo > up ---------------------------------------------- */
-          bzla_bv_free(mm, lo);
-          bzla_bv_free(mm, up);
-          goto BVUDIV_CONF;
-        }
-        else
-        {
-          /* choose lo <= e[1] <= up ---------------------------------------- */
-          res = bzla_bv_new_random_range(mm, rng, bw, lo, up);
-          bzla_bv_free(mm, lo);
-          bzla_bv_free(mm, up);
-        }
+        assert(bzla_bv_compare(lo, up) <= 0); /* CONFLICT: lo > up */
+
+        /* choose lo <= e[1] <= up ---------------------------------------- */
+        res = bzla_bv_new_random_range(mm, rng, bw, lo, up);
+        bzla_bv_free(mm, lo);
+        bzla_bv_free(mm, up);
       }
     }
   }
@@ -2596,69 +2582,54 @@ inv_udiv_bv(Bzla *bzla,
         /* t = 2^bw-1 and s = 1 -> e[0] = 2^bw-1 ---------------------------- */
         res = bzla_bv_copy(mm, bvmax);
       }
-      else if (bzla_bv_is_zero(s))
+      else
       {
+        assert(bzla_bv_is_zero(s)); /* CONFLICT: t = ~0 and s != 0 */
         /* t = 2^bw - 1 and s = 0 -> choose random e[0] --------------------- */
         res = bzla_bv_new_random(mm, rng, bw);
       }
-      else
-      {
-        /* CONFLICT --------------------------------------------------------- */
-        goto BVUDIV_CONF;
-      }
-    }
-    else if (bzla_bv_is_zero(s))
-    {
-      /* CONFLICT: s = 0 and t < 2^bw - 1 ----------------------------------- */
-      goto BVUDIV_CONF;
     }
     else
     {
       /* if s * t does not overflow, choose e[0] = s * t
        * with prob = 0.5 and a s s.t. e[0] / s = t otherwise */
 
-      if (bzla_bv_is_umulo(mm, s, t))
-      {
-        /* CONFLICT: overflow: s * t ---------------------------------------- */
-        goto BVUDIV_CONF;
-      }
+      assert(!bzla_bv_is_umulo(mm, s, t)); /* CONFLICT: overflow: s * t */
+      if (bzla_rng_pick_with_prob(rng, 500))
+        res = bzla_bv_mul(mm, s, t);
       else
       {
-        if (bzla_rng_pick_with_prob(rng, 500))
-          res = bzla_bv_mul(mm, s, t);
+        /* choose e[0] out of all options that yield
+         * e[0] / s = t
+         * Note: udiv always truncates the results towards 0.
+         * ---------------------------------------------------------------- */
+
+        /* determine upper and lower bounds for e[0]:
+         * up = s * (budiv + 1) - 1
+         *      if s * (t + 1) does not overflow
+         *      else 2^bw - 1
+         * lo = s * t */
+        lo  = bzla_bv_mul(mm, s, t);
+        tmp = bzla_bv_inc(mm, t);
+        if (bzla_bv_is_umulo(mm, s, tmp))
+        {
+          bzla_bv_free(mm, tmp);
+          up = bzla_bv_copy(mm, bvmax);
+        }
         else
         {
-          /* choose e[0] out of all options that yield
-           * e[0] / s = t
-           * Note: udiv always truncates the results towards 0.
-           * ---------------------------------------------------------------- */
-
-          /* determine upper and lower bounds for e[0]:
-           * up = s * (budiv + 1) - 1
-           *      if s * (t + 1) does not overflow
-           *      else 2^bw - 1
-           * lo = s * t */
-          lo  = bzla_bv_mul(mm, s, t);
-          tmp = bzla_bv_inc(mm, t);
-          if (bzla_bv_is_umulo(mm, s, tmp))
-          {
-            bzla_bv_free(mm, tmp);
-            up = bzla_bv_copy(mm, bvmax);
-          }
-          else
-          {
-            up = bzla_bv_mul(mm, s, tmp);
-            bzla_bv_free(mm, tmp);
-            tmp = bzla_bv_dec(mm, up);
-            bzla_bv_free(mm, up);
-            up = tmp;
-          }
-
-          res = bzla_bv_new_random_range(mm, &bzla->rng, bw, lo, up);
-
+          up = bzla_bv_mul(mm, s, tmp);
+          bzla_bv_free(mm, tmp);
+          tmp = bzla_bv_dec(mm, up);
           bzla_bv_free(mm, up);
-          bzla_bv_free(mm, lo);
+          up = tmp;
         }
+
+        res = bzla_bv_new_random_range(
+            mm, &bzla->rng, bzla_bv_get_width(s), lo, up);
+
+        bzla_bv_free(mm, up);
+        bzla_bv_free(mm, lo);
       }
     }
   }
@@ -2666,8 +2637,7 @@ inv_udiv_bv(Bzla *bzla,
   bzla_bv_free(mm, bvmax);
   bzla_bv_free(mm, one);
 #ifndef NDEBUG
-  if (is_inv)
-    check_result_binary_dbg(bzla, bzla_bv_udiv, udiv, s, t, res, eidx, "/");
+  check_result_binary_dbg(bzla, bzla_bv_udiv, udiv, s, t, res, eidx, "/");
 #endif
   return res;
 }
