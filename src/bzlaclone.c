@@ -1504,7 +1504,10 @@ clone_aux_bzla(Bzla *bzla,
 
       allocated += sizeof(BzlaPropSolver) + MEM_PTR_HASH_TABLE(cslv->roots)
                    + MEM_PTR_HASH_TABLE(cslv->score)
-                   + BZLA_SIZE_STACK(cslv->toprop) * sizeof(BzlaPropInfo);
+#ifndef NDEBUG
+                   + BZLA_SIZE_STACK(cslv->prop_path) * sizeof(BzlaPropInfo);
+#endif
+      +BZLA_SIZE_STACK(cslv->toprop) * sizeof(BzlaPropInfo);
       for (i = 0; i < BZLA_COUNT_STACK(cslv->toprop); i++)
         allocated += MEM_BITVEC(BZLA_PEEK_STACK(cslv->toprop, i).bvexp);
     }
