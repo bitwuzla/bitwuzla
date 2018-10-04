@@ -1576,6 +1576,10 @@ res_rec_conf(Bzla *bzla,
           assert(BZLA_COUNT_STACK(slv->toprop) == 1);
           BZLA_POKE_STACK(slv->toprop, 0, prop);
         }
+        else
+        {
+          bzla_bv_free(bzla->mm, prop.bvexp);
+        }
         assert(prop_entailed == BZLA_PROP_ENTAILED_ALL
                || BZLA_COUNT_STACK(slv->toprop) == 1);
       }
