@@ -23,8 +23,12 @@
  * IC: t & s = t
  */
 bool
-bzla_is_inv_and(BzlaMemMgr *mm, const BzlaBitVector *s, const BzlaBitVector *t)
+bzla_is_inv_and(BzlaMemMgr *mm,
+                const BzlaBitVector *s,
+                const BzlaBitVector *t,
+                uint32_t pos_x)
 {
+  (void) pos_x;
   BzlaBitVector *t_and_s = bzla_bv_and(mm, t, s);
   BzlaBitVector *eq_t    = bzla_bv_eq(mm, t_and_s, t);
   bool res               = bzla_bv_is_true(eq_t);
@@ -71,8 +75,12 @@ bzla_is_inv_concat(BzlaMemMgr *mm,
  * IC: (-s | s ) & t = t
  */
 bool
-bzla_is_inv_mul(BzlaMemMgr *mm, const BzlaBitVector *s, const BzlaBitVector *t)
+bzla_is_inv_mul(BzlaMemMgr *mm,
+                const BzlaBitVector *s,
+                const BzlaBitVector *t,
+                uint32_t pos_x)
 {
+  (void) pos_x;
   BzlaBitVector *neg_s      = bzla_bv_neg(mm, s);
   BzlaBitVector *neg_s_or_s = bzla_bv_or(mm, neg_s, s);
   BzlaBitVector *and_t      = bzla_bv_and(mm, neg_s_or_s, t);
@@ -90,8 +98,12 @@ bzla_is_inv_mul(BzlaMemMgr *mm, const BzlaBitVector *s, const BzlaBitVector *t)
  * IC: t | s = t
  */
 bool
-bzla_is_inv_or(BzlaMemMgr *mm, const BzlaBitVector *s, const BzlaBitVector *t)
+bzla_is_inv_or(BzlaMemMgr *mm,
+               const BzlaBitVector *s,
+               const BzlaBitVector *t,
+               uint32_t pos_x)
 {
+  (void) pos_x;
   BzlaBitVector *t_or_s = bzla_bv_or(mm, t, s);
   BzlaBitVector *eq_t   = bzla_bv_eq(mm, t_or_s, t);
   bool res              = bzla_bv_is_true(eq_t);

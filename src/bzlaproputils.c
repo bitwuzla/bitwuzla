@@ -1737,7 +1737,7 @@ inv_and_bv(
   assert(e);
 
   /* check invertibility, if not invertible: CONFLICT */
-  if (!bzla_is_inv_and(mm, s, t))
+  if (!bzla_is_inv_and(mm, s, t, eidx))
   {
     return res_rec_conf(bzla, and, e, t, s, eidx, cons_and_bv, "AND");
   }
@@ -2252,14 +2252,13 @@ inv_mul_bv(
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(mul->e[eidx]));
 
-  int32_t lsb_s, t_lsb, ispow2_s;
+  int32_t lsb_s, ispow2_s;
   uint32_t i, j, bw;
   BzlaBitVector *res, *inv, *tmp, *tmp2;
   BzlaMemMgr *mm;
   BzlaNode *e;
-#ifndef NDEBUG
-  bool is_inv = true;
-#endif
+
+  mm = bzla->mm;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -2269,10 +2268,15 @@ inv_mul_bv(
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  mm = bzla->mm;
-  e  = mul->e[eidx ? 0 : 1];
+  e = mul->e[eidx ? 0 : 1];
   assert(e);
   bw = bzla_bv_get_width(t);
+
+  /* check invertibility, if not invertible: CONFLICT */
+  if (!bzla_is_inv_mul(mm, s, t, eidx))
+  {
+    return res_rec_conf(bzla, mul, e, t, s, eidx, cons_mul_bv, "*");
+  }
 
   res = 0;
 
@@ -2299,29 +2303,17 @@ inv_mul_bv(
    * ------------------------------------------------------------------------ */
 
   lsb_s = bzla_bv_get_bit(s, 0);
+#ifndef NDEBUG
+  int32_t t_lsb;
   t_lsb = bzla_bv_get_bit(t, 0);
+  assert(!t_lsb || lsb_s); /* CONFLICT: t odd and s is even */
+#endif
 
   if (bzla_bv_is_zero(s))
   {
     /* s = 0 -> if t = 0 choose random value, else conflict ----------------- */
-    if (bzla_bv_is_zero(t))
-    {
-      res = bzla_bv_new_random(mm, &bzla->rng, bw);
-    }
-    else
-    {
-    BVMUL_CONF:
-      /* CONFLICT: s = 0 but t != 0 ----------------------------------------- */
-      res = res_rec_conf(bzla, mul, e, t, s, eidx, cons_mul_bv, "*");
-#ifndef NDEBUG
-      is_inv = false;
-#endif
-    }
-  }
-  else if (t_lsb && !lsb_s)
-  {
-    /* CONFLICT: t odd and s is even ---------------------------------------- */
-    goto BVMUL_CONF;
+    assert(bzla_bv_is_zero(t)); /* CONFLICT: s = 0 but t != 0 */
+    res = bzla_bv_new_random(mm, &bzla->rng, bw);
   }
   else
   {
@@ -2354,73 +2346,68 @@ inv_mul_bv(
       if ((ispow2_s = bzla_bv_power_of_two(s)) >= 0)
       {
         for (i = 0; i < bw; i++)
+        {
           if (bzla_bv_get_bit(t, i)) break;
-        if (i < (uint32_t) ispow2_s)
-        {
-          /* CONFLICT: number of 0-LSBs in t < n (for s = 2^n) -------------- */
-          goto BVMUL_CONF;
         }
-        else
-        {
-          /* res = t >> n with all bits shifted in set randomly
-           * (note: bw is not necessarily power of 2 -> do not use srl)
-           * ---------------------------------------------------------------- */
-          tmp = bzla_bv_slice(mm, t, bw - 1, ispow2_s);
-          res = bzla_bv_uext(mm, tmp, ispow2_s);
-          assert(bzla_bv_get_width(res) == bw);
-          for (i = 0; i < (uint32_t) ispow2_s; i++)
-          {
-            bzla_bv_set_bit(
-                res, bw - 1 - i, bzla_rng_pick_rand(&bzla->rng, 0, 1));
-          }
-          bzla_bv_free(mm, tmp);
-        }
+
+        /* CONFLICT: number of 0-LSBs in t < n (for s = 2^n) */
+        assert(i >= (uint32_t) ispow2_s);
+
+        /* res = t >> n with all bits shifted in set randomly
+         * (note: bw is not necessarily power of 2 -> do not use srl)
+         * ---------------------------------------------------------------- */
+        tmp = bzla_bv_slice(mm, t, bw - 1, ispow2_s);
+        res = bzla_bv_uext(mm, tmp, ispow2_s);
+        assert(bzla_bv_get_width(res) == bw);
+        for (i = 0; i < (uint32_t) ispow2_s; i++)
+          bzla_bv_set_bit(
+              res, bw - 1 - i, bzla_rng_pick_rand(&bzla->rng, 0, 1));
+        bzla_bv_free(mm, tmp);
       }
       else
       {
         for (i = 0; i < bw; i++)
+        {
           if (bzla_bv_get_bit(t, i)) break;
+        }
         for (j = 0; j < bw; j++)
+        {
           if (bzla_bv_get_bit(s, j)) break;
-        if (i < j)
-        {
-          /* CONFLICT: number of 0-LSB in t < number of 0-LSB in s ---------- */
-          goto BVMUL_CONF;
         }
-        else
-        {
-          /* c' = t >> n (with all bits shifted in set randomly)
-           * (note: bw is not necessarily power of 2 -> do not use srl)
-           * -> res = c' * m^-1 (with m^-1 the mod inverse of m, m odd)
-           * ---------------------------------------------------------------- */
-          tmp = bzla_bv_slice(mm, t, bw - 1, j);
-          res = bzla_bv_uext(mm, tmp, j);
-          assert(bzla_bv_get_width(res) == bw);
-          bzla_bv_free(mm, tmp);
 
-          tmp  = bzla_bv_slice(mm, s, bw - 1, j);
-          tmp2 = bzla_bv_uext(mm, tmp, j);
-          assert(bzla_bv_get_width(tmp2) == bw);
-          assert(bzla_bv_get_bit(tmp2, 0));
-          inv = bzla_bv_mod_inverse(mm, tmp2);
-          bzla_bv_free(mm, tmp);
-          bzla_bv_free(mm, tmp2);
-          tmp = res;
-          res = bzla_bv_mul(mm, tmp, inv);
-          /* choose one of all possible values */
-          for (i = 0; i < j; i++)
-            bzla_bv_set_bit(
-                res, bw - 1 - i, bzla_rng_pick_rand(&bzla->rng, 0, 1));
-          bzla_bv_free(mm, tmp);
-          bzla_bv_free(mm, inv);
-        }
+        /* CONFLICT: number of 0-LSB in t < number of 0-LSB in s */
+        assert(i >= j);
+
+        /* c' = t >> n (with all bits shifted in set randomly)
+         * (note: bw is not necessarily power of 2 -> do not use srl)
+         * -> res = c' * m^-1 (with m^-1 the mod inverse of m, m odd)
+         * ---------------------------------------------------------------- */
+        tmp = bzla_bv_slice(mm, t, bw - 1, j);
+        res = bzla_bv_uext(mm, tmp, j);
+        assert(bzla_bv_get_width(res) == bw);
+        bzla_bv_free(mm, tmp);
+
+        tmp  = bzla_bv_slice(mm, s, bw - 1, j);
+        tmp2 = bzla_bv_uext(mm, tmp, j);
+        assert(bzla_bv_get_width(tmp2) == bw);
+        assert(bzla_bv_get_bit(tmp2, 0));
+        inv = bzla_bv_mod_inverse(mm, tmp2);
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, tmp2);
+        tmp = res;
+        res = bzla_bv_mul(mm, tmp, inv);
+        /* choose one of all possible values */
+        for (i = 0; i < j; i++)
+          bzla_bv_set_bit(
+              res, bw - 1 - i, bzla_rng_pick_rand(&bzla->rng, 0, 1));
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, inv);
       }
     }
   }
 
 #ifndef NDEBUG
-  if (is_inv)
-    check_result_binary_dbg(bzla, bzla_bv_mul, mul, s, t, res, eidx, "*");
+  check_result_binary_dbg(bzla, bzla_bv_mul, mul, s, t, res, eidx, "*");
 #endif
   return res;
 }

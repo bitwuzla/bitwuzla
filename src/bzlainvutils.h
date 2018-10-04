@@ -15,7 +15,8 @@
 
 bool bzla_is_inv_and(BzlaMemMgr *mm,
                      const BzlaBitVector *s,
-                     const BzlaBitVector *t);
+                     const BzlaBitVector *t,
+                     uint32_t pos_x);
 
 bool bzla_is_inv_concat(BzlaMemMgr *mm,
                         const BzlaBitVector *s,
@@ -24,11 +25,13 @@ bool bzla_is_inv_concat(BzlaMemMgr *mm,
 
 bool bzla_is_inv_mul(BzlaMemMgr *mm,
                      const BzlaBitVector *s,
-                     const BzlaBitVector *t);
+                     const BzlaBitVector *t,
+                     uint32_t pos_x);
 
 bool bzla_is_inv_or(BzlaMemMgr *mm,
                     const BzlaBitVector *s,
-                    const BzlaBitVector *t);
+                    const BzlaBitVector *t,
+                    uint32_t pos_x);
 
 bool bzla_is_inv_sll(BzlaMemMgr *mm,
                      const BzlaBitVector *s,
