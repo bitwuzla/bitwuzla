@@ -2670,9 +2670,8 @@ inv_urem_bv(Bzla *bzla,
   BzlaNode *e;
   BzlaBitVector *res, *bvmax, *tmp, *tmp2, *one, *n, *mul, *up, *sub;
   BzlaMemMgr *mm;
-#ifndef NDEBUG
-  bool is_inv = true;
-#endif
+
+  mm = bzla->mm;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -2682,11 +2681,16 @@ inv_urem_bv(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  mm = bzla->mm;
-  e  = urem->e[eidx ? 0 : 1];
+  e = urem->e[eidx ? 0 : 1];
   assert(e);
 
   bw = bzla_bv_get_width(t);
+
+  /* check invertibility, if not invertible: CONFLICT */
+  if (!bzla_is_inv_urem(mm, s, t, eidx))
+  {
+    return res_rec_conf(bzla, urem, e, t, s, eidx, cons_urem_bv, "%");
+  }
 
   bvmax = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
   one   = bzla_bv_one(mm, bw);
@@ -2706,20 +2710,11 @@ inv_urem_bv(Bzla *bzla,
   {
     if (!bzla_bv_compare(t, bvmax))
     {
-      /* CONFLICT: t = 1...1 but s != 1...1 --------------------------------- */
-      if (bzla_bv_compare(s, bvmax))
-      {
-      BVUREM_CONF:
-        res = res_rec_conf(bzla, urem, e, t, s, eidx, cons_urem_bv, "%");
-#ifndef NDEBUG
-        is_inv = false;
-#endif
-      }
-      else
-      {
-        /* s % e[1] = 1...1 -> s = 1...1, e[1] = 0 -------------------------- */
-        res = bzla_bv_new(mm, bw);
-      }
+      /* CONFLICT: t = ~0 but s != ~0 */
+      assert(!bzla_bv_compare(s, bvmax));
+
+      /* s % e[1] = ~0 -> s = ~0, e[1] = 0 -------------------------- */
+      res = bzla_bv_new(mm, bw);
     }
     else
     {
@@ -2739,123 +2734,108 @@ inv_urem_bv(Bzla *bzla,
           bzla_bv_free(mm, tmp);
         }
       }
-      else if (cmp > 0)
+      else
       {
+        assert(cmp > 0); /* CONFLICT: s < t */
+
         /* s > t, e[1] = (s - t) / n ---------------------------------------- */
+#ifndef NDEBUG
         if (!bzla_bv_is_zero(t))
         {
           tmp = bzla_bv_dec(mm, s);
-          if (!bzla_bv_compare(t, tmp))
-          {
-            /* CONFLICT:
-             * t = s - 1 -> s % e[1] = s - 1
-             * -> not possible if t > 0
-             * -------------------------------------------------------------- */
-            bzla_bv_free(mm, tmp);
-            goto BVUREM_CONF;
-          }
+          /* CONFLICT: t = s - 1 -> s % e[1] = s - 1 > not possible if t > 0 */
+          assert(bzla_bv_compare(t, tmp));
           bzla_bv_free(mm, tmp);
         }
+#endif
 
         sub = bzla_bv_sub(mm, s, t);
 
-        if (bzla_bv_compare(sub, t) <= 0)
+        assert(bzla_bv_compare(sub, t) > 0); /* CONFLICT: s - t <= t */
+
+        /* choose either n = 1 or 1 <= n < (s - t) / t
+         * with prob = 0.5
+         * ---------------------------------------------------------------- */
+
+        if (bzla_rng_pick_with_prob(&bzla->rng, 500))
         {
-          /* CONFLICT: s - t <= t ------------------------------------------- */
-          bzla_bv_free(mm, sub);
-          goto BVUREM_CONF;
+          res = bzla_bv_copy(mm, sub);
         }
         else
         {
-          /* choose either n = 1 or 1 <= n < (s - t) / t
-           * with prob = 0.5
-           * ---------------------------------------------------------------- */
+          /* 1 <= n < (s - t) / t (non-truncating)
+           * (note: div truncates towards 0!)
+           * -------------------------------------------------------------- */
 
-          if (bzla_rng_pick_with_prob(&bzla->rng, 500))
+          if (bzla_bv_is_zero(t))
           {
-            res = bzla_bv_copy(mm, sub);
+            /* t = 0 -> 1 <= n <= s --------------------------------------- */
+            up = bzla_bv_copy(mm, s);
           }
           else
           {
-            /* 1 <= n < (s - t) / t (non-truncating)
-             * (note: div truncates towards 0!)
-             * -------------------------------------------------------------- */
-
-            if (bzla_bv_is_zero(t))
+            /* e[1] > t
+             * -> (s - t) / n > t
+             * -> (s - t) / t > n
+             * ------------------------------------------------------------ */
+            tmp  = bzla_bv_urem(mm, sub, t);
+            tmp2 = bzla_bv_udiv(mm, sub, t);
+            if (bzla_bv_is_zero(tmp))
             {
-              /* t = 0 -> 1 <= n <= s --------------------------------------- */
-              up = bzla_bv_copy(mm, s);
+              /* (s - t) / t is not truncated
+               * (remainder is 0), therefore the EXclusive
+               * upper bound
+               * -> up = (s - t) / t - 1
+               * ---------------------------------------------------------- */
+              up = bzla_bv_sub(mm, tmp2, one);
+              bzla_bv_free(mm, tmp2);
             }
             else
             {
-              /* e[1] > t
-               * -> (s - t) / n > t
-               * -> (s - t) / t > n
-               * ------------------------------------------------------------ */
-              tmp  = bzla_bv_urem(mm, sub, t);
-              tmp2 = bzla_bv_udiv(mm, sub, t);
-              if (bzla_bv_is_zero(tmp))
-              {
-                /* (s - t) / t is not truncated
-                 * (remainder is 0), therefore the EXclusive
-                 * upper bound
-                 * -> up = (s - t) / t - 1
-                 * ---------------------------------------------------------- */
-                up = bzla_bv_sub(mm, tmp2, one);
-                bzla_bv_free(mm, tmp2);
-              }
-              else
-              {
-                /* (s - t) / t is truncated
-                 * (remainder is not 0), therefore the INclusive
-                 * upper bound
-                 * -> up = (s - t) / t
-                 * ---------------------------------------------------------- */
-                up = tmp2;
-              }
-              bzla_bv_free(mm, tmp);
+              /* (s - t) / t is truncated
+               * (remainder is not 0), therefore the INclusive
+               * upper bound
+               * -> up = (s - t) / t
+               * ---------------------------------------------------------- */
+              up = tmp2;
             }
+            bzla_bv_free(mm, tmp);
+          }
 
-            if (bzla_bv_is_zero(up))
-              res = bzla_bv_udiv(mm, sub, one);
-            else
+          if (bzla_bv_is_zero(up))
+            res = bzla_bv_udiv(mm, sub, one);
+          else
+          {
+            /* choose 1 <= n <= up randomly
+             * s.t (s - t) % n = 0
+             * ------------------------------------------------------------ */
+            n   = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, up);
+            tmp = bzla_bv_urem(mm, sub, n);
+            for (cnt = 0; cnt < bw && !bzla_bv_is_zero(tmp); cnt++)
             {
-              /* choose 1 <= n <= up randomly
-               * s.t (s - t) % n = 0
-               * ------------------------------------------------------------ */
-              n   = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, up);
-              tmp = bzla_bv_urem(mm, sub, n);
-              for (cnt = 0; cnt < bw && !bzla_bv_is_zero(tmp); cnt++)
-              {
-                bzla_bv_free(mm, n);
-                bzla_bv_free(mm, tmp);
-                n   = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, up);
-                tmp = bzla_bv_urem(mm, sub, n);
-              }
-
-              if (bzla_bv_is_zero(tmp))
-              {
-                /* res = (s - t) / n */
-                res = bzla_bv_udiv(mm, sub, n);
-              }
-              else
-              {
-                /* fallback: n = 1 */
-                res = bzla_bv_copy(mm, sub);
-              }
-
               bzla_bv_free(mm, n);
               bzla_bv_free(mm, tmp);
+              n   = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, up);
+              tmp = bzla_bv_urem(mm, sub, n);
             }
-            bzla_bv_free(mm, up);
+
+            if (bzla_bv_is_zero(tmp))
+            {
+              /* res = (s - t) / n */
+              res = bzla_bv_udiv(mm, sub, n);
+            }
+            else
+            {
+              /* fallback: n = 1 */
+              res = bzla_bv_copy(mm, sub);
+            }
+
+            bzla_bv_free(mm, n);
+            bzla_bv_free(mm, tmp);
           }
+          bzla_bv_free(mm, up);
         }
         bzla_bv_free(mm, sub);
-      }
-      else
-      {
-        /* CONFLICT: s < t -------------------------------------------------- */
-        goto BVUREM_CONF;
       }
     }
   }
@@ -2872,32 +2852,24 @@ inv_urem_bv(Bzla *bzla,
    * ------------------------------------------------------------------------ */
   else
   {
+    /* CONFLICT: t > 0 and s = 1 */
+    assert(bzla_bv_is_zero(t) || !bzla_bv_is_one(s));
+
     if (bzla_bv_is_zero(s))
     {
-    BVUREM_ZERO_0:
       /* s = 0 -> e[0] = t -------------------------------------------------- */
       res = bzla_bv_copy(mm, t);
     }
-    else if (!bzla_bv_is_zero(t) && bzla_bv_is_one(s))
-    {
-      /* CONFLICT: t > 0 and s = 1 ------------------------------------------ */
-      goto BVUREM_CONF;
-    }
     else if (!bzla_bv_compare(t, bvmax))
     {
-      if (!bzla_bv_is_zero(s))
-      {
-        /* CONFLICT: s != 0 ------------------------------------------------- */
-        goto BVUREM_CONF;
-      }
-      else
-      {
-        /* t = 1...1 -> s = 0, e[0] = 1...1 --------------------------------- */
-        goto BVUREM_ZERO_0;
-      }
+      assert(bzla_bv_is_zero(s)); /* CONFLICT: s != 0 */
+      /* t = 1...1 -> s = 0, e[0] = 1...1 ----------------------------------- */
+      res = bzla_bv_copy(mm, t);
     }
-    else if (bzla_bv_compare(s, t) > 0)
+    else
     {
+      assert(bzla_bv_compare(s, t) > 0); /* CONFLICT: s <= t */
+
       if (bzla_rng_pick_with_prob(&bzla->rng, 500))
       {
       BVUREM_EQ_0:
@@ -2958,19 +2930,13 @@ inv_urem_bv(Bzla *bzla,
         }
       }
     }
-    else
-    {
-      /* CONFLICT: s <= t -------------------------------------------- */
-      goto BVUREM_CONF;
-    }
   }
 
   bzla_bv_free(mm, one);
   bzla_bv_free(mm, bvmax);
 
 #ifndef NDEBUG
-  if (is_inv)
-    check_result_binary_dbg(bzla, bzla_bv_urem, urem, s, t, res, eidx, "%");
+  check_result_binary_dbg(bzla, bzla_bv_urem, urem, s, t, res, eidx, "%");
 #endif
   return res;
 }
