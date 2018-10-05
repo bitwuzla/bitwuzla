@@ -56,7 +56,7 @@ bzla_is_inv_concat(BzlaMemMgr *mm,
   bw_t = bzla_bv_get_width(t);
   if (pos_x == 0)
   {
-    slice = bzla_bv_slice(mm, t, bw_s, 0);
+    slice = bzla_bv_slice(mm, t, bw_s - 1, 0);
   }
   else
   {

@@ -2967,9 +2967,8 @@ inv_concat_bv(Bzla *bzla,
   BzlaNode *e;
   BzlaBitVector *res, *tmp;
   BzlaMemMgr *mm;
-#ifndef NDEBUG
-  bool is_inv = true;
-#endif
+
+  mm = bzla->mm;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -2979,11 +2978,16 @@ inv_concat_bv(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  mm = bzla->mm;
-  e  = concat->e[eidx ? 0 : 1];
+  e = concat->e[eidx ? 0 : 1];
   assert(e);
   bw_t = bzla_bv_get_width(t);
   bw_s = bzla_bv_get_width(s);
+
+  /* check invertibility, if not invertible: CONFLICT */
+  if (!bzla_is_inv_concat(mm, s, t, eidx))
+  {
+    return res_rec_conf(bzla, concat, e, t, s, eidx, cons_concat_bv, "o");
+  }
 
   res = 0;
 
@@ -2995,19 +2999,8 @@ inv_concat_bv(Bzla *bzla,
   if (eidx)
   {
     tmp = bzla_bv_slice(mm, t, bw_t - 1, bw_t - bw_s);
-    if (bzla_bv_compare(tmp, s))
-    {
-    BVCONCAT_CONF:
-      /* CONFLICT: s bits do not match t ------------------------------------ */
-      res = res_rec_conf(bzla, concat, e, t, s, eidx, cons_concat_bv, "o");
-#ifndef NDEBUG
-      is_inv = false;
-#endif
-    }
-    else
-    {
-      res = bzla_bv_slice(mm, t, bw_t - bw_s - 1, 0);
-    }
+    assert(!bzla_bv_compare(tmp, s)); /* CONFLICT: s bits do not match t */
+    res = bzla_bv_slice(mm, t, bw_t - bw_s - 1, 0);
   }
   /* ------------------------------------------------------------------------
    * e[0] o s = t
@@ -3017,20 +3010,12 @@ inv_concat_bv(Bzla *bzla,
   else
   {
     tmp = bzla_bv_slice(mm, t, bw_s - 1, 0);
-    if (bzla_bv_compare(tmp, s))
-    {
-      /* CONFLICT: s bits do not match t ------------------------------------ */
-      goto BVCONCAT_CONF;
-    }
-    else
-    {
-      res = bzla_bv_slice(mm, t, bw_t - 1, bw_s);
-    }
+    assert(!bzla_bv_compare(tmp, s)); /* CONFLICT: s bits do not match t */
+    res = bzla_bv_slice(mm, t, bw_t - 1, bw_s);
   }
   bzla_bv_free(mm, tmp);
 #ifndef NDEBUG
-  if (is_inv)
-    check_result_binary_dbg(bzla, bzla_bv_concat, concat, s, t, res, eidx, "o");
+  check_result_binary_dbg(bzla, bzla_bv_concat, concat, s, t, res, eidx, "o");
 #endif
   return res;
 }
