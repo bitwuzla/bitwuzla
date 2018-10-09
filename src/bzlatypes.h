@@ -623,6 +623,14 @@ enum BzlaOption
   BZLA_OPT_PROP_ENTAILED,
 
   /*!
+    * **BZLA_OPT_PROP_CONST_BITS**
+
+      Enable (``value``: 1) or disable (``value``: 0) constant bit propagation
+      (requires bit-blasting to AIG).
+    */
+  BZLA_OPT_PROP_CONST_BITS,
+
+  /*!
     * **BZLA_OPT_PROP_USE_RESTARTS**
 
       Enable (``value``: 1) or disable (``value``: 0) restarts.

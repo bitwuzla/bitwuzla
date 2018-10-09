@@ -929,6 +929,16 @@ bzla_opt_init_opts(Bzla *bzla)
            BZLA_PROP_ENTAILED_MAX,
            "maintain and prioritize entailed propagations");
   init_opt(bzla,
+           BZLA_OPT_PROP_CONST_BITS,
+           false,
+           true,
+           "prop:const-bits",
+           0,
+           0,
+           0,
+           1,
+           "use constant bits propagation");
+  init_opt(bzla,
            BZLA_OPT_PROP_USE_RESTARTS,
            false,
            true,

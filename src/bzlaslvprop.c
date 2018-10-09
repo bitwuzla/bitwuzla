@@ -52,10 +52,21 @@ select_constraint(Bzla *bzla, uint32_t nmoves)
   assert(slv->roots->count);
 
 #ifndef NDEBUG
+  BzlaPtrHashTable *constraints;
   BzlaPtrHashTableIterator pit;
   BzlaNode *root;
-  bzla_iter_hashptr_init(&pit, bzla->unsynthesized_constraints);
-  bzla_iter_hashptr_queue(&pit, bzla->synthesized_constraints);
+  if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
+  {
+    assert(bzla->unsynthesized_constraints->count == 0);
+    constraints = bzla->synthesized_constraints;
+  }
+  else
+  {
+    assert(bzla->synthesized_constraints->count == 0);
+    constraints = bzla->unsynthesized_constraints;
+  }
+
+  bzla_iter_hashptr_init(&pit, constraints);
   bzla_iter_hashptr_queue(&pit, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&pit))
   {
@@ -321,6 +332,7 @@ sat_prop_solver_aux(Bzla *bzla)
   int32_t sat_result;
   uint32_t nprops;
   BzlaNode *root;
+  BzlaPtrHashTable *constraints;
   BzlaPtrHashTableIterator it;
   BzlaPropSolver *slv;
 
@@ -328,17 +340,25 @@ sat_prop_solver_aux(Bzla *bzla)
   assert(slv);
   nprops = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
 
+  if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
+  {
+    bzla_process_unsynthesized_constraints(bzla);
+    if (bzla->found_constraint_false) goto UNSAT;
+    assert(bzla->unsynthesized_constraints->count == 0);
+    constraints = bzla->synthesized_constraints;
+  }
+  else
+  {
+    assert(bzla->synthesized_constraints->count == 0);
+    constraints = bzla->unsynthesized_constraints;
+  }
+
   /* check for constraints occurring in both phases */
   bzla_iter_hashptr_init(&it, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&it))
   {
     root = bzla_iter_hashptr_next(&it);
-    if (bzla_hashptr_table_get(bzla->unsynthesized_constraints,
-                               bzla_node_invert(root)))
-      goto UNSAT;
-    if (bzla_hashptr_table_get(bzla->synthesized_constraints,
-                               bzla_node_invert(root)))
-      goto UNSAT;
+    if (bzla_hashptr_table_get(constraints, bzla_node_invert(root))) goto UNSAT;
     if (bzla_hashptr_table_get(bzla->assumptions, bzla_node_invert(root)))
       goto UNSAT;
   }
@@ -350,8 +370,11 @@ sat_prop_solver_aux(Bzla *bzla)
     /* collect unsatisfied roots (kept up-to-date in update_cone) */
     assert(!slv->roots);
     slv->roots = bzla_hashint_map_new(bzla->mm);
-    bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
-    bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
+    assert((bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS)
+            && bzla->unsynthesized_constraints->count == 0)
+           || (!bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS)
+               && bzla->synthesized_constraints->count == 0));
+    bzla_iter_hashptr_init(&it, constraints);
     bzla_iter_hashptr_queue(&it, bzla->assumptions);
     while (bzla_iter_hashptr_has_next(&it))
     {

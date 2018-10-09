@@ -42,6 +42,7 @@ class TestProp : public TestBzla
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_SLICE_FLIP, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_EQ_FLIP, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_AND_FLIP, 0);
+    // bzla_opt_set (d_bzla, BZLA_OPT_PROP_CONST_BITS, 1);
     // bzla_opt_set (d_bzla, BZLA_OPT_LOGLEVEL, 2);
   }
 
