@@ -30,7 +30,7 @@ class TestInc : public TestBoolector
     int32_t res;
 
     boolector_set_opt(d_bzla, BZLA_OPT_INCREMENTAL, 1);
-    s       = boolector_bitvec_sort(d_bzla, w);
+    s       = boolector_bv_sort(d_bzla, w);
     one     = boolector_one(d_bzla, s);
     current = boolector_zero(d_bzla, s);
     boolector_release_sort(d_bzla, s);
@@ -108,7 +108,7 @@ class TestInc : public TestBoolector
       i++;
 
       sprintf(name, "%d", i);
-      s    = boolector_bitvec_sort(d_bzla, w);
+      s    = boolector_bv_sort(d_bzla, w);
       next = boolector_var(d_bzla, s, name);
       boolector_release_sort(d_bzla, s);
 

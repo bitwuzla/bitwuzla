@@ -1184,7 +1184,7 @@ extrafun(BzlaSMTParser *parser, BzlaSMTNode *fdecl)
     datalen = atoi(p); /* TODO Overflow? */
     if (!datalen) goto INVALID_SORT;
 
-    s           = boolector_bitvec_sort(parser->bzla, datalen);
+    s           = boolector_bv_sort(parser->bzla, datalen);
     symbol->exp = boolector_var(parser->bzla, s, symbol->name);
     boolector_release_sort(parser->bzla, s);
   }
@@ -1200,8 +1200,8 @@ extrafun(BzlaSMTParser *parser, BzlaSMTNode *fdecl)
     datalen = atoi(p); /* TODO Overflow? */
     if (!datalen) goto INVALID_SORT;
 
-    es          = boolector_bitvec_sort(parser->bzla, datalen);
-    is          = boolector_bitvec_sort(parser->bzla, addrlen);
+    es          = boolector_bv_sort(parser->bzla, datalen);
+    is          = boolector_bv_sort(parser->bzla, addrlen);
     s           = boolector_array_sort(parser->bzla, is, es);
     symbol->exp = boolector_array(parser->bzla, s, symbol->name);
     boolector_release_sort(parser->bzla, is);
@@ -2003,7 +2003,7 @@ translate_shift(BzlaSMTParser *parser,
     }
     else
     {
-      s = boolector_bitvec_sort(parser->bzla, width);
+      s = boolector_bv_sort(parser->bzla, width);
       t = boolector_zero(parser->bzla, s);
       boolector_release_sort(parser->bzla, s);
     }

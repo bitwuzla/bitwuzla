@@ -300,7 +300,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_input:
         assert(line->nargs == 0);
-        if (boolector_is_bitvec_sort(bzla, sort))
+        if (boolector_is_bv_sort(bzla, sort))
           node = boolector_var(bzla, sort, line->symbol);
         else
         {
@@ -446,7 +446,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
         if (line->sort.tag == BTOR2_TAG_SORT_bitvec)
         {
           assert(line->sort.bitvec.width);
-          sort = boolector_bitvec_sort(bzla, line->sort.bitvec.width);
+          sort = boolector_bv_sort(bzla, line->sort.bitvec.width);
         }
         else
         {

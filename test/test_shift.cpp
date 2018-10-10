@@ -42,7 +42,7 @@ class TestShift : public TestCommon
     boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, 0);
     boolector_set_opt(bzla, BZLA_OPT_MODEL_GEN, 1);
 
-    sort   = boolector_bitvec_sort(bzla, bw);
+    sort   = boolector_bv_sort(bzla, bw);
     e0     = boolector_var(bzla, sort, "e0");
     ushift = std::stol(shift, nullptr, 2);
 
@@ -67,7 +67,7 @@ class TestShift : public TestCommon
         {
           BoolectorNode *slice =
               boolector_slice(bzla, res_shift1, bw - ushift - 1, 0);
-          BoolectorSort sort_sra_ones = boolector_bitvec_sort(bzla, ushift);
+          BoolectorSort sort_sra_ones = boolector_bv_sort(bzla, ushift);
           BoolectorNode *ones         = boolector_ones(bzla, sort_sra_ones);
           boolector_release_sort(bzla, sort_sra_ones);
           BoolectorNode *concat = boolector_concat(bzla, ones, slice);
@@ -98,7 +98,7 @@ class TestShift : public TestCommon
       bw_log2 = bzla_util_log_2(bw);
       if (bw_log2 && ushift < (1u << bw_log2))
       {
-        BoolectorSort sort_log2 = boolector_bitvec_sort(bzla, bw_log2);
+        BoolectorSort sort_log2 = boolector_bv_sort(bzla, bw_log2);
         BoolectorNode *shift2_e1 =
             boolector_unsigned_int(bzla, ushift, sort_log2);
         res_shift2 = shift_fun(bzla, e0, shift2_e1);

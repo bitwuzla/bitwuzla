@@ -2195,7 +2195,7 @@ BoolectorSort boolector_bool_sort(Bzla *bzla);
   .. seealso::
     boolector_var, boolector_param
 */
-BoolectorSort boolector_bitvec_sort(Bzla *bzla, uint32_t width);
+BoolectorSort boolector_bv_sort(Bzla *bzla, uint32_t width);
 
 /*!
   Create function sort.
@@ -2272,7 +2272,7 @@ bool boolector_is_array_sort(Bzla *bzla, BoolectorSort sort);
   :param sort: Sort.
   :return: True if ``sort`` is a bit-vector sort, and false otherwise.
  */
-bool boolector_is_bitvec_sort(Bzla *bzla, BoolectorSort sort);
+bool boolector_is_bv_sort(Bzla *bzla, BoolectorSort sort);
 
 /*!
   Determine if ``sort`` is a function sort.

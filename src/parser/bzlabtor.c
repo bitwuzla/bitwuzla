@@ -394,7 +394,7 @@ parse_var(BzlaBZLAParser *parser, uint32_t width)
 
   if (!parse_symbol(parser)) return 0;
 
-  s   = boolector_bitvec_sort(parser->bzla, width);
+  s   = boolector_bv_sort(parser->bzla, width);
   res = boolector_var(
       parser->bzla, s, parser->symbol.start[0] ? parser->symbol.start : 0);
   boolector_release_sort(parser->bzla, s);
@@ -411,7 +411,7 @@ parse_param(BzlaBZLAParser *parser, uint32_t width)
 
   if (!parse_symbol(parser)) return 0;
 
-  s   = boolector_bitvec_sort(parser->bzla, width);
+  s   = boolector_bv_sort(parser->bzla, width);
   res = boolector_param(
       parser->bzla, s, parser->symbol.start[0] ? parser->symbol.start : 0);
   boolector_release_sort(parser->bzla, s);
@@ -449,8 +449,8 @@ parse_array(BzlaBZLAParser *parser, uint32_t width)
 
   if (!parse_symbol(parser)) return 0;
 
-  is  = boolector_bitvec_sort(parser->bzla, idx_width);
-  es  = boolector_bitvec_sort(parser->bzla, width);
+  is  = boolector_bv_sort(parser->bzla, idx_width);
+  es  = boolector_bv_sort(parser->bzla, width);
   s   = boolector_array_sort(parser->bzla, is, es);
   res = boolector_array(
       parser->bzla, s, parser->symbol.start[0] ? parser->symbol.start : 0);
@@ -697,7 +697,7 @@ parse_zero(BzlaBZLAParser *parser, uint32_t width)
   BoolectorNode *res;
   BoolectorSort s;
 
-  s   = boolector_bitvec_sort(parser->bzla, width);
+  s   = boolector_bv_sort(parser->bzla, width);
   res = boolector_zero(parser->bzla, s);
   boolector_release_sort(parser->bzla, s);
   return res;
@@ -709,7 +709,7 @@ parse_one(BzlaBZLAParser *parser, uint32_t width)
   BoolectorNode *res;
   BoolectorSort s;
 
-  s   = boolector_bitvec_sort(parser->bzla, width);
+  s   = boolector_bv_sort(parser->bzla, width);
   res = boolector_one(parser->bzla, s);
   boolector_release_sort(parser->bzla, s);
   return res;
@@ -721,7 +721,7 @@ parse_ones(BzlaBZLAParser *parser, uint32_t width)
   BoolectorNode *res;
   BoolectorSort s;
 
-  s   = boolector_bitvec_sort(parser->bzla, width);
+  s   = boolector_bv_sort(parser->bzla, width);
   res = boolector_ones(parser->bzla, s);
   boolector_release_sort(parser->bzla, s);
   return res;

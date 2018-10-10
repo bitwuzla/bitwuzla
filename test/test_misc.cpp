@@ -84,7 +84,7 @@ class TestMisc : public TestMm
 
           result = mk_slice(x, i, j, num_bits);
 
-          sort   = boolector_bitvec_sort(bzla, high);
+          sort   = boolector_bv_sort(bzla, high);
           const1 = boolector_unsigned_int(bzla, x, sort);
           slice  = boolector_slice(bzla, const1, i, j);
           const2 = boolector_const(bzla, result);
@@ -162,7 +162,7 @@ class TestMisc : public TestMm
           result =
               ext_mode == UEXT ? uext(i, j, num_bits) : sext(i, j, num_bits);
 
-          sort   = boolector_bitvec_sort(bzla, num_bits);
+          sort   = boolector_bv_sort(bzla, num_bits);
           const1 = boolector_unsigned_int(bzla, i, sort);
           bfun   = bzla_fun(bzla, const1, j);
           const2 = boolector_const(bzla, result);
@@ -231,7 +231,7 @@ class TestMisc : public TestMm
 
           result = mk_concat(i, j, num_bits);
 
-          sort   = boolector_bitvec_sort(bzla, num_bits);
+          sort   = boolector_bv_sort(bzla, num_bits);
           const1 = boolector_unsigned_int(bzla, i, sort);
           const2 = boolector_unsigned_int(bzla, j, sort);
           concat = boolector_concat(bzla, const1, const2);
@@ -283,8 +283,8 @@ class TestMisc : public TestMm
 
             result = k ? i : j;
 
-            sort   = boolector_bitvec_sort(bzla, num_bits);
-            sort1  = boolector_bitvec_sort(bzla, 1);
+            sort   = boolector_bv_sort(bzla, num_bits);
+            sort1  = boolector_bv_sort(bzla, 1);
             const1 = boolector_unsigned_int(bzla, i, sort);
             const2 = boolector_unsigned_int(bzla, j, sort);
             const3 = boolector_unsigned_int(bzla, k, sort1);
@@ -334,8 +334,8 @@ class TestMisc : public TestMm
           bzla = boolector_new();
           boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
 
-          elem_sort  = boolector_bitvec_sort(bzla, num_bits);
-          index_sort = boolector_bitvec_sort(bzla, 1);
+          elem_sort  = boolector_bv_sort(bzla, num_bits);
+          index_sort = boolector_bv_sort(bzla, 1);
           array_sort = boolector_array_sort(bzla, index_sort, elem_sort);
           array      = boolector_array(bzla, array_sort, "array");
           const1     = boolector_false(bzla);

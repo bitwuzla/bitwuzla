@@ -2359,7 +2359,7 @@ close_term_unary_fp_fun(BzlaSMT2Parser *parser,
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   // TODO: check all args FP
   // FP STUB
-  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  BoolectorSort s = boolector_bv_sort(bzla, 1);
   exp             = boolector_var(bzla, s, 0);
   boolector_release_sort(bzla, s);
   // exp = fun (parser->bzla, item_cur[1].exp);
@@ -2396,7 +2396,7 @@ close_term_unary_rm_fp_fun(BzlaSMT2Parser *parser,
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   // TODO: check first arg RoundingMode, other arg FP
   // FP STUB
-  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  BoolectorSort s = boolector_bv_sort(bzla, 1);
   exp             = boolector_var(bzla, s, 0);
   boolector_release_sort(bzla, s);
   // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
@@ -2438,7 +2438,7 @@ close_term_unary_bool_fp_fun(BzlaSMT2Parser *parser,
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   // TODO: check all args FP
   // FP STUB
-  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  BoolectorSort s = boolector_bv_sort(bzla, 1);
   exp             = boolector_var(bzla, s, 0);
   boolector_release_sort(bzla, s);
   // exp = fun (bzla, item_cur[1].exp);
@@ -2479,7 +2479,7 @@ close_term_bin_fp_fun(BzlaSMT2Parser *parser,
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, 2)) return 0;
   // TODO: check all args FP
   // FP STUB
-  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  BoolectorSort s = boolector_bv_sort(bzla, 1);
   exp             = boolector_var(bzla, s, 0);
   boolector_release_sort(bzla, s);
   // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
@@ -2521,7 +2521,7 @@ close_term_bin_fp_fun_chainable(BzlaSMT2Parser *parser,
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
   // TODO: check all args FP
   // FP STUB
-  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  BoolectorSort s = boolector_bv_sort(bzla, 1);
   exp             = boolector_var(bzla, s, 0);
   boolector_release_sort(bzla, s);
   // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
@@ -2529,6 +2529,7 @@ close_term_bin_fp_fun_chainable(BzlaSMT2Parser *parser,
   release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
+
 /**
  * item_open and item_cur point to items on the parser work stack.
  * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
@@ -2600,7 +2601,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
     }
     /* (_ to_fp eb sb) RoundingMode Real */
     // FP STUB
-    BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+    BoolectorSort s = boolector_bv_sort(bzla, 1);
     exp             = boolector_var(bzla, s, 0);
     boolector_release_sort(bzla, s);
     ////
@@ -2620,7 +2621,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
     }
     // TODO: check: is bv or is fp sort
     // s = boolector_get_sort(bzla, item_cur[2].exp);
-    // if (!boolector_is_bitvec_sort(bzla, s) && !boolector_is_fp_sort(bzla, s))
+    // if (!boolector_is_bv_sort(bzla, s) && !boolector_is_fp_sort(bzla, s))
     //{
     //  return !perr_smt2 (
     //      parser,
@@ -2628,7 +2629,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
     //      term", item_cur->node->name);
     //}
     // FP STUB
-    BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+    BoolectorSort s = boolector_bv_sort(bzla, 1);
     exp             = boolector_var(bzla, s, 0);
     boolector_release_sort(bzla, s);
     ////
@@ -3492,7 +3493,7 @@ close_term(BzlaSMT2Parser *parser)
                         "bit-vector sort of size 1",
                         item_cur->node->name);
     // FP STUB
-    BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+    BoolectorSort s = boolector_bv_sort(bzla, 1);
     exp             = boolector_var(bzla, s, 0);
     boolector_release_sort(bzla, s);
     ////
@@ -3570,7 +3571,7 @@ close_term(BzlaSMT2Parser *parser)
     if (!check_arg_sorts_match_smt2(parser, item_cur, 1, 3)) return 0;
     // TODO: check first arg RoundingMode, all other args FP
     // FP STUB
-    BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+    BoolectorSort s = boolector_bv_sort(bzla, 1);
     exp             = boolector_var(bzla, s, 0);
     boolector_release_sort(bzla, s);
     ////
@@ -3715,7 +3716,7 @@ close_term(BzlaSMT2Parser *parser)
             item_cur->node->name);
       }
       // FP STUB
-      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      BoolectorSort s = boolector_bv_sort(bzla, 1);
       exp             = boolector_var(bzla, s, 0);
       boolector_release_sort(bzla, s);
       ////
@@ -3996,7 +3997,7 @@ parse_open_close_term_indexed_fp_special_const(BzlaSMT2Parser *parser,
   if (!parse_bit_width_smt2(parser, &item_open->idx1)) return 0;
 
   // FP STUB
-  BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+  BoolectorSort s = boolector_bv_sort(bzla, 1);
   exp             = boolector_var(bzla, s, 0);
   boolector_release_sort(bzla, s);
   ////
@@ -4165,7 +4166,7 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
         exp = boolector_const(bzla, constr);
       else if (!width2)
       {
-        s   = boolector_bitvec_sort(bzla, width);
+        s   = boolector_bv_sort(bzla, width);
         exp = boolector_zero(bzla, s);
         boolector_release_sort(bzla, s);
       }
@@ -4384,7 +4385,7 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
       item_cur->tag = BZLA_EXP_TAG_SMT2;
       // FP STUB
       // TODO: represent RM constants as BV of size 3
-      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      BoolectorSort s = boolector_bv_sort(bzla, 1);
       item_cur->exp   = boolector_var(bzla, s, 0);
       boolector_release_sort(bzla, s);
       ////
@@ -4395,7 +4396,7 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
       item_cur->tag = BZLA_EXP_TAG_SMT2;
       // FP STUB
       // TODO: represent RM constants as BV of size 3
-      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      BoolectorSort s = boolector_bv_sort(bzla, 1);
       item_cur->exp   = boolector_var(bzla, s, 0);
       boolector_release_sort(bzla, s);
       ////
@@ -4405,7 +4406,7 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
       // FP STUB
-      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      BoolectorSort s = boolector_bv_sort(bzla, 1);
       item_cur->exp   = boolector_var(bzla, s, 0);
       boolector_release_sort(bzla, s);
       ////
@@ -4415,7 +4416,7 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
       // FP STUB
-      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      BoolectorSort s = boolector_bv_sort(bzla, 1);
       item_cur->exp   = boolector_var(bzla, s, 0);
       boolector_release_sort(bzla, s);
       ////
@@ -4425,7 +4426,7 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
       // FP STUB
-      BoolectorSort s = boolector_bitvec_sort(bzla, 1);
+      BoolectorSort s = boolector_bv_sort(bzla, 1);
       item_cur->exp   = boolector_var(bzla, s, 0);
       boolector_release_sort(bzla, s);
       ////
@@ -4783,7 +4784,7 @@ parse_bv_or_fp_sort(BzlaSMT2Parser *parser,
              3,
              "parsed bit-vector sort of width %d",
              width);
-    *resptr = boolector_bitvec_sort(parser->bzla, width);
+    *resptr = boolector_bv_sort(parser->bzla, width);
     msg     = " to close bit-vector sort";
   }
 
@@ -5005,7 +5006,7 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
     for (i = 0; i < BZLA_COUNT_STACK(args); i++)
     {
       s = BZLA_PEEK_STACK(args, i);
-      if (!boolector_is_bitvec_sort(parser->bzla, s))
+      if (!boolector_is_bv_sort(parser->bzla, s))
       {
         BZLA_RELEASE_STACK(args);
         return !perr_smt2(parser,
@@ -5013,7 +5014,7 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
                           "supported for arity > 0");
       }
     }
-    if (!boolector_is_bitvec_sort(parser->bzla, sort))
+    if (!boolector_is_bv_sort(parser->bzla, sort))
     {
       BZLA_RELEASE_STACK(args);
       return !perr_smt2(parser,
@@ -5320,7 +5321,7 @@ declare_sort_smt2(BzlaSMT2Parser *parser)
   if (arity != 0)
     return !perr_smt2(parser, "sort arity other than 0 not supported");
 
-  sort                   = boolector_bitvec_sort(parser->bzla, opt_bit_width);
+  sort                   = boolector_bv_sort(parser->bzla, opt_bit_width);
   sort_alias->sort       = 1;
   sort_alias->sort_alias = sort;
   BZLA_PUSH_STACK(parser->sorts, sort);

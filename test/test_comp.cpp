@@ -52,7 +52,7 @@ class TestComp : public TestBoolector
           d_bzla = boolector_new();
           boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
 
-          BoolectorSort sort = boolector_bitvec_sort(d_bzla, num_bits);
+          BoolectorSort sort = boolector_bv_sort(d_bzla, num_bits);
           BoolectorNode *const1, *const2, *bfun;
 
           const1 = boolector_unsigned_int(d_bzla, i, sort);
@@ -106,7 +106,7 @@ class TestComp : public TestBoolector
           d_bzla = boolector_new();
           boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
 
-          BoolectorSort sort = boolector_bitvec_sort(d_bzla, num_bits);
+          BoolectorSort sort = boolector_bv_sort(d_bzla, num_bits);
           BoolectorNode *const1, *const2, *bfun;
 
           const1 = boolector_int(d_bzla, i, sort);

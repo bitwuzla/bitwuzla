@@ -33,7 +33,7 @@ class TestRotate : public TestBoolector
     funi = is_left ? boolector_roli : boolector_rori;
 
     ispow2 = bzla_util_is_power_of_2(bw);
-    sort   = boolector_bitvec_sort(d_bzla, bw);
+    sort   = boolector_bv_sort(d_bzla, bw);
     e0     = boolector_var(d_bzla, sort, "e0");
 
     roti = funi(d_bzla, e0, nbits);
@@ -48,7 +48,7 @@ class TestRotate : public TestBoolector
       bw_log2 = bzla_util_log_2(bw);
       if (bw_log2)
       {
-        sort_log2 = boolector_bitvec_sort(d_bzla, bw_log2);
+        sort_log2 = boolector_bv_sort(d_bzla, bw_log2);
         rot1_e1   = boolector_unsigned_int(d_bzla, nbits, sort_log2);
         rot1      = fun(d_bzla, e0, rot1_e1);
         ne1       = boolector_ne(d_bzla, rot1, rot0);
