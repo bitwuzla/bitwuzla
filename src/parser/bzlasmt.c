@@ -1568,8 +1568,8 @@ translate_eq(BzlaSMTParser *parser, BzlaSMTNode *node)
 
   if (isarray0 && isarray1)
   {
-    len0 = boolector_get_index_width(parser->bzla, a0);
-    len1 = boolector_get_index_width(parser->bzla, a1);
+    len0 = boolector_array_get_index_width(parser->bzla, a0);
+    len1 = boolector_array_get_index_width(parser->bzla, a1);
 
     if (len0 != len1)
     {
@@ -1689,8 +1689,8 @@ translate_cond(BzlaSMTParser *parser, BzlaSMTNode *node, const char *name)
 
   if (isarray1 && isarray2)
   {
-    width1 = boolector_get_index_width(parser->bzla, a1);
-    width2 = boolector_get_index_width(parser->bzla, a2);
+    width1 = boolector_array_get_index_width(parser->bzla, a1);
+    width2 = boolector_array_get_index_width(parser->bzla, a2);
 
     if (width1 != width2)
     {
@@ -2071,7 +2071,7 @@ translate_select(BzlaSMTParser *parser, BzlaSMTNode *node)
     return;
   }
 
-  if (boolector_get_index_width(parser->bzla, a0)
+  if (boolector_array_get_index_width(parser->bzla, a0)
       != boolector_bv_get_width(parser->bzla, a1))
   {
     (void) perr_smt(parser, "mismatched bit width of 'select' index");
@@ -2117,7 +2117,7 @@ translate_store(BzlaSMTParser *parser, BzlaSMTNode *node)
     return;
   }
 
-  if (boolector_get_index_width(parser->bzla, a0)
+  if (boolector_array_get_index_width(parser->bzla, a0)
       != boolector_bv_get_width(parser->bzla, a1))
   {
     (void) perr_smt(parser, "mismatched bit width of 'store' index");

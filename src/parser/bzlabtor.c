@@ -1372,7 +1372,7 @@ parse_acond(BzlaBZLAParser *parser, uint32_t width)
 
   if (!(t = parse_array_exp(parser, width))) goto RELEASE_C_AND_RETURN_ERROR;
 
-  if (idxwidth != boolector_get_index_width(parser->bzla, t))
+  if (idxwidth != boolector_array_get_index_width(parser->bzla, t))
   {
     (void) perr_btor(parser, "mismatch of index bit width of 'then' array");
   RELEASE_C_AND_T_AND_RETURN_ERROR:
@@ -1385,7 +1385,7 @@ parse_acond(BzlaBZLAParser *parser, uint32_t width)
   if (!(e = parse_array_exp(parser, width)))
     goto RELEASE_C_AND_T_AND_RETURN_ERROR;
 
-  if (idxwidth != boolector_get_index_width(parser->bzla, e))
+  if (idxwidth != boolector_array_get_index_width(parser->bzla, e))
   {
     (void) perr_btor(parser, "mismatch of index bit width of 'else' array");
     boolector_release(parser->bzla, e);
@@ -1472,7 +1472,7 @@ parse_read(BzlaBZLAParser *parser, uint32_t width)
     return 0;
   }
 
-  idxwidth = boolector_get_index_width(parser->bzla, array);
+  idxwidth = boolector_array_get_index_width(parser->bzla, array);
   if (!(idx = parse_exp(parser, idxwidth, false, true, 0)))
     goto RELEASE_ARRAY_AND_RETURN_ERROR;
 

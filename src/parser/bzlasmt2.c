@@ -1736,7 +1736,7 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
 
   if (boolector_is_array(parser->bzla, p[j].exp))
   {
-    domain = boolector_get_index_width(parser->bzla, p[j].exp);
+    domain = boolector_array_get_index_width(parser->bzla, p[j].exp);
     for (i = j + 1; i <= nargs; i++)
     {
       if (!boolector_is_array(parser->bzla, p[i].exp))
@@ -1754,7 +1754,7 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
             width,
             i,
             width2);
-      if ((width2 = boolector_get_index_width(parser->bzla, p[i].exp))
+      if ((width2 = boolector_array_get_index_width(parser->bzla, p[i].exp))
           != domain)
         return !perr_smt2(
             parser,
@@ -1858,8 +1858,8 @@ check_ite_args_sorts_match_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p)
           width,
           width2);
     }
-    domain = boolector_get_index_width(parser->bzla, p[2].exp);
-    width2 = boolector_get_index_width(parser->bzla, p[3].exp);
+    domain = boolector_array_get_index_width(parser->bzla, p[2].exp);
+    width2 = boolector_array_get_index_width(parser->bzla, p[3].exp);
     if (domain != width2)
     {
       parser->perrcoo = p->coo;
@@ -3039,7 +3039,7 @@ close_term(BzlaSMT2Parser *parser)
       return !perr_smt2(parser, "second argument of 'select' is an array");
     }
     width  = boolector_bv_get_width(bzla, item_cur[2].exp);
-    domain = boolector_get_index_width(bzla, item_cur[1].exp);
+    domain = boolector_array_get_index_width(bzla, item_cur[1].exp);
     if (width != domain)
     {
       parser->perrcoo = item_cur->coo;
@@ -3073,7 +3073,7 @@ close_term(BzlaSMT2Parser *parser)
       return !perr_smt2(parser, "third argument of 'store' is an array");
     }
     width  = boolector_bv_get_width(bzla, item_cur[2].exp);
-    domain = boolector_get_index_width(bzla, item_cur[1].exp);
+    domain = boolector_array_get_index_width(bzla, item_cur[1].exp);
     if (width != domain)
     {
       parser->perrcoo = item_cur->coo;

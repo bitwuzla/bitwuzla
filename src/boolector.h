@@ -1862,7 +1862,7 @@ uint32_t boolector_bv_get_width(Bzla *bzla, BoolectorNode *node);
   :param n_array: Array operand.
   :return: Bit width of indices of ``n_array``
 */
-uint32_t boolector_get_index_width(Bzla *bzla, BoolectorNode *n_array);
+uint32_t boolector_array_get_index_width(Bzla *bzla, BoolectorNode *n_array);
 
 /*!
   Get the bit-vector of a constant node represented as a bit string.

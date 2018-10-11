@@ -3649,7 +3649,7 @@ boolector_bv_get_width(Bzla *bzla, BoolectorNode *node)
 }
 
 uint32_t
-boolector_get_index_width(Bzla *bzla, BoolectorNode *n_array)
+boolector_array_get_index_width(Bzla *bzla, BoolectorNode *n_array)
 {
   uint32_t res;
   BzlaNode *e_array;
@@ -3666,7 +3666,7 @@ boolector_get_index_width(Bzla *bzla, BoolectorNode *n_array)
   res = bzla_node_array_get_index_width(bzla, e_array);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_UINT(res, get_index_width, BZLA_CLONED_EXP(e_array));
+  BZLA_CHKCLONE_RES_UINT(res, array_get_index_width, BZLA_CLONED_EXP(e_array));
 #endif
   return res;
 }
