@@ -3132,7 +3132,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_NEG_TAG_SMT2)
   {
     if (!close_term_unary_bv_fun(
-            parser, item_open, item_cur, nargs, boolector_neg))
+            parser, item_open, item_cur, nargs, boolector_bv_neg))
     {
       return 0;
     }

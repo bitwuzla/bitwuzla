@@ -928,7 +928,7 @@ BoolectorNode *boolector_bv_not(Bzla *bzla, BoolectorNode *node);
   :return: Bit-vector representing the two's complement of ``node`` with the
            same bit width as ``node``.
 */
-BoolectorNode *boolector_neg(Bzla *bzla, BoolectorNode *node);
+BoolectorNode *boolector_bv_neg(Bzla *bzla, BoolectorNode *node);
 
 /*!
   Create *or* reduction of node ``node``.

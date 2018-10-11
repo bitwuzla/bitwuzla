@@ -771,7 +771,7 @@ parse_not(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_neg(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_unary(parser, width, boolector_neg);
+  return parse_unary(parser, width, boolector_bv_neg);
 }
 
 static BoolectorNode *

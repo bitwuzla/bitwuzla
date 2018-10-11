@@ -332,7 +332,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_neg:
         assert(line->nargs == 1);
-        node = boolector_neg(bzla, e[0]);
+        node = boolector_bv_neg(bzla, e[0]);
         break;
 
       case BTOR2_TAG_nor:
