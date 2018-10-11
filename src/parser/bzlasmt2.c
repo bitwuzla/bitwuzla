@@ -2181,7 +2181,7 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
   if (fun == boolector_xnor)
   {
     is_xnor = true;
-    fun     = boolector_xor;
+    fun     = boolector_bv_xor;
   }
 
   for (i = 1, exp = 0; i <= nargs; i++)
@@ -2949,7 +2949,8 @@ close_term(BzlaSMT2Parser *parser)
   /* CORE: XOR -------------------------------------------------------------- */
   else if (tag == BZLA_XOR_TAG_SMT2)
   {
-    if (!close_term_bin_bool(parser, item_open, item_cur, nargs, boolector_xor))
+    if (!close_term_bin_bool(
+            parser, item_open, item_cur, nargs, boolector_bv_xor))
     {
       return 0;
     }
@@ -3186,7 +3187,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_XOR_TAG_SMT2)
   {
     if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, boolector_xor))
+            parser, item_open, item_cur, nargs, boolector_bv_xor))
     {
       return 0;
     }
