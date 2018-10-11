@@ -2812,7 +2812,7 @@ close_term(BzlaSMT2Parser *parser)
         BZLA_PUSH_STACK(fargs, item_cur[i].exp);
       }
       tmp = item_cur[0].exp;
-      if (nargs != boolector_get_fun_arity(bzla, tmp))
+      if (nargs != boolector_fun_get_arity(bzla, tmp))
       {
         BZLA_RELEASE_STACK(fargs);
         return !perr_smt2(parser, "invalid number of arguments");

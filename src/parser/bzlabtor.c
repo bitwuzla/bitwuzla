@@ -1598,7 +1598,7 @@ parse_apply(BzlaBZLAParser *parser, uint32_t width)
     return 0;
   }
 
-  arity = boolector_get_fun_arity(parser->bzla, fun);
+  arity = boolector_fun_get_arity(parser->bzla, fun);
   for (i = 0; i < arity; i++)
   {
     arg = parse_exp(parser, 0, false, true, 0);

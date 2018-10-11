@@ -1895,7 +1895,7 @@ void boolector_free_bits(Bzla *bzla, const char *bits);
   :param node: Function node.
   :return: Arity of ``node``.
 */
-uint32_t boolector_get_fun_arity(Bzla *bzla, BoolectorNode *node);
+uint32_t boolector_fun_get_arity(Bzla *bzla, BoolectorNode *node);
 
 /*------------------------------------------------------------------------*/
 

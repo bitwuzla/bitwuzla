@@ -3727,7 +3727,7 @@ boolector_free_bits(Bzla *bzla, const char *bits)
 }
 
 uint32_t
-boolector_get_fun_arity(Bzla *bzla, BoolectorNode *node)
+boolector_fun_get_arity(Bzla *bzla, BoolectorNode *node)
 {
   uint32_t res;
   BzlaNode *exp;
@@ -3743,7 +3743,7 @@ boolector_get_fun_arity(Bzla *bzla, BoolectorNode *node)
   res = bzla_node_fun_get_arity(bzla, exp);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_UINT(res, get_fun_arity, BZLA_CLONED_EXP(exp));
+  BZLA_CHKCLONE_RES_UINT(res, fun_get_arity, BZLA_CLONED_EXP(exp));
 #endif
   return res;
 }
