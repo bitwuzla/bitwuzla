@@ -822,7 +822,7 @@ parse_redunary(BzlaBZLAParser *parser, uint32_t width, Unary f)
 static BoolectorNode *
 parse_redand(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_redunary(parser, width, boolector_redand);
+  return parse_redunary(parser, width, boolector_bv_redand);
 }
 
 static BoolectorNode *

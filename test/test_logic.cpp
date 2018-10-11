@@ -302,12 +302,12 @@ TEST_F(TestLogic, xnor)
 TEST_F(TestLogic, redand)
 {
   red_logic_test(redand,
-                 boolector_redand,
+                 boolector_bv_redand,
                  BZLA_TEST_RED_LOGIC_LOW,
                  BZLA_TEST_RED_LOGIC_HIGH,
                  1);
   red_logic_test(redand,
-                 boolector_redand,
+                 boolector_bv_redand,
                  BZLA_TEST_RED_LOGIC_LOW,
                  BZLA_TEST_RED_LOGIC_HIGH,
                  0);

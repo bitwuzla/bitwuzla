@@ -3150,7 +3150,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_REDAND_TAG_SMT2)
   {
     if (!close_term_unary_bv_fun(
-            parser, item_open, item_cur, nargs, boolector_redand))
+            parser, item_open, item_cur, nargs, boolector_bv_redand))
     {
       return 0;
     }

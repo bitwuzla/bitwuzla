@@ -369,7 +369,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_redand:
         assert(line->nargs == 1);
-        node = boolector_redand(bzla, e[0]);
+        node = boolector_bv_redand(bzla, e[0]);
         break;
 
       case BTOR2_TAG_redor:

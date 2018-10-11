@@ -961,7 +961,7 @@ BoolectorNode *boolector_bv_redxor(Bzla *bzla, BoolectorNode *node);
   :param node: Bit-vector node.
   :return: Bit-vector with bit width one.
 */
-BoolectorNode *boolector_redand(Bzla *bzla, BoolectorNode *node);
+BoolectorNode *boolector_bv_redand(Bzla *bzla, BoolectorNode *node);
 
 /*!
   Create a bit-vector slice of ``node`` from index ``upper`` to index
