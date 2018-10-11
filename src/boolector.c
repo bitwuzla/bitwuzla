@@ -1873,7 +1873,7 @@ boolector_bv_uext(Bzla *bzla, BoolectorNode *node, uint32_t width)
 }
 
 BoolectorNode *
-boolector_sext(Bzla *bzla, BoolectorNode *node, uint32_t width)
+boolector_bv_sext(Bzla *bzla, BoolectorNode *node, uint32_t width)
 {
   BzlaNode *exp, *res;
 
@@ -1894,7 +1894,7 @@ boolector_sext(Bzla *bzla, BoolectorNode *node, uint32_t width)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, sext, BZLA_CLONED_EXP(exp), width);
+  BZLA_CHKCLONE_RES_PTR(res, bv_sext, BZLA_CLONED_EXP(exp), width);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }

@@ -409,7 +409,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_sext:
         assert(line->nargs == 1);
-        node = boolector_sext(bzla, e[0], line->args[1]);
+        node = boolector_bv_sext(bzla, e[0], line->args[1]);
         break;
 
       case BTOR2_TAG_sgt:

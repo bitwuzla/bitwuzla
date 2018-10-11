@@ -144,7 +144,7 @@ class TestMisc : public TestMm
     char *result     = 0;
     int32_t num_bits = 0;
 
-    bzla_fun = ext_mode == UEXT ? boolector_bv_uext : boolector_sext;
+    bzla_fun = ext_mode == UEXT ? boolector_bv_uext : boolector_bv_sext;
 
     for (num_bits = low; num_bits <= high; num_bits++)
     {

@@ -1662,7 +1662,7 @@ parse_ext(BzlaBZLAParser *parser, uint32_t width, Extend f)
 static BoolectorNode *
 parse_sext(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_ext(parser, width, boolector_sext);
+  return parse_ext(parser, width, boolector_bv_sext);
 }
 
 static BoolectorNode *

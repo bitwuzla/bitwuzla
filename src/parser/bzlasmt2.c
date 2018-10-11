@@ -3362,7 +3362,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_SIGN_EXTEND_TAG_SMT2)
   {
     if (!close_term_extend_bv_fun(
-            parser, item_open, item_cur, nargs, boolector_sext))
+            parser, item_open, item_cur, nargs, boolector_bv_sext))
     {
       return 0;
     }

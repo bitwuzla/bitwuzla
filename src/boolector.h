@@ -1005,7 +1005,10 @@ BoolectorNode *boolector_bv_uext(Bzla *bzla,
   :param width: Number of bits to pad.
   :return: A bit-vector extended by ``width`` bits.
 */
-BoolectorNode *boolector_sext(Bzla *bzla, BoolectorNode *node, uint32_t width);
+BoolectorNode *boolector_bv_sext(Bzla *bzla,
+                                 BoolectorNode *node,
+                                 uint32_t width);
+
 /*!
   Create a bit-vector *xor*.
 
