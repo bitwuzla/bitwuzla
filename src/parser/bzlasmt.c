@@ -1516,8 +1516,8 @@ translate_binary(BzlaSMTParser *parser,
   if ((a0 = node2nonarrayexp(parser, c0)))
     if ((a1 = node2nonarrayexp(parser, c1)))
     {
-      if (boolector_get_width(parser->bzla, a0)
-          != boolector_get_width(parser->bzla, a1))
+      if (boolector_bv_get_width(parser->bzla, a0)
+          != boolector_bv_get_width(parser->bzla, a1))
         (void) perr_smt(parser, "expression width mismatch");
       else
         translate_node(parser, node, f(parser->bzla, a0, a1));
@@ -1548,8 +1548,8 @@ translate_eq(BzlaSMTParser *parser, BzlaSMTNode *node)
   a1 = node2exp(parser, c1);
   if (!a1) return;
 
-  len0 = boolector_get_width(parser->bzla, a0);
-  len1 = boolector_get_width(parser->bzla, a1);
+  len0 = boolector_bv_get_width(parser->bzla, a0);
+  len1 = boolector_bv_get_width(parser->bzla, a1);
 
   if (len0 != len1)
   {
@@ -1605,7 +1605,7 @@ translate_associative_binary(BzlaSMTParser *parser,
     return;
   }
 
-  width = boolector_get_width(parser->bzla, exp);
+  width = boolector_bv_get_width(parser->bzla, exp);
   res   = boolector_copy(parser->bzla, exp);
 
   for (p = cdr(cdr(node)); p; p = cdr(p))
@@ -1619,7 +1619,7 @@ translate_associative_binary(BzlaSMTParser *parser,
       goto CHECK_FOR_PARSE_ERROR_AND_RETURN;
     }
 
-    if (boolector_get_width(parser->bzla, exp) != width)
+    if (boolector_bv_get_width(parser->bzla, exp) != width)
     {
       perr_smt(parser, "mismatched width of arguments of '%s'", name);
       goto RELEASE_RES_CHECK_FOR_PARSE_ERROR_AND_RETURN;
@@ -1656,7 +1656,7 @@ translate_cond(BzlaSMTParser *parser, BzlaSMTNode *node, const char *name)
   a0 = node2nonarrayexp(parser, c0);
   if (!a0) return;
 
-  if (boolector_get_width(parser->bzla, a0) != 1)
+  if (boolector_bv_get_width(parser->bzla, a0) != 1)
   {
     (void) perr_smt(parser, "non boolean conditional");
     return;
@@ -1668,8 +1668,8 @@ translate_cond(BzlaSMTParser *parser, BzlaSMTNode *node, const char *name)
   a2 = node2exp(parser, c2);
   if (!a2) return;
 
-  width1 = boolector_get_width(parser->bzla, a1);
-  width2 = boolector_get_width(parser->bzla, a2);
+  width1 = boolector_bv_get_width(parser->bzla, a1);
+  width2 = boolector_bv_get_width(parser->bzla, a2);
 
   if (width1 != width2)
   {
@@ -1728,7 +1728,7 @@ translate_extract(BzlaSMTParser *parser, BzlaSMTNode *node)
     return;
   }
 
-  len = boolector_get_width(parser->bzla, exp);
+  len = boolector_bv_get_width(parser->bzla, exp);
 
   p = next_numeral(p);
   assert(p);
@@ -1866,7 +1866,7 @@ translate_rotate(BzlaSMTParser *parser, BzlaSMTNode *node)
   assert(!next_numeral(p));
   shift = (uint32_t) strtol(p, 0, 10); /* TODO Overflow? */
 
-  width = boolector_get_width(parser->bzla, exp);
+  width = boolector_bv_get_width(parser->bzla, exp);
   assert(width > 0);
   shift %= width;
 
@@ -1880,7 +1880,7 @@ translate_rotate(BzlaSMTParser *parser, BzlaSMTNode *node)
     r = boolector_slice(parser->bzla, exp, width - 1, shift);
 
     translate_node(parser, node, boolector_concat(parser->bzla, l, r));
-    assert(boolector_get_width(parser->bzla, node->exp) == width);
+    assert(boolector_bv_get_width(parser->bzla, node->exp) == width);
 
     boolector_release(parser->bzla, l);
     boolector_release(parser->bzla, r);
@@ -1945,9 +1945,9 @@ translate_shift(BzlaSMTParser *parser,
     return;
   }
 
-  width = boolector_get_width(parser->bzla, a0);
+  width = boolector_bv_get_width(parser->bzla, a0);
 
-  if (width != boolector_get_width(parser->bzla, a1))
+  if (width != boolector_bv_get_width(parser->bzla, a1))
   {
     (void) perr_smt(parser, "expression width mismatch");
     return;
@@ -1985,8 +1985,8 @@ translate_shift(BzlaSMTParser *parser,
     u = boolector_slice(parser->bzla, a1, width - 1, width - p1);
     l = boolector_slice(parser->bzla, a1, l1 - 1, 0);
 
-    assert(boolector_get_width(parser->bzla, u) == p1);
-    assert(boolector_get_width(parser->bzla, l) == l1);
+    assert(boolector_bv_get_width(parser->bzla, u) == p1);
+    assert(boolector_bv_get_width(parser->bzla, l) == l1);
 
     if (p1 > 1)
       c = boolector_redor(parser->bzla, u);
@@ -2015,7 +2015,7 @@ translate_shift(BzlaSMTParser *parser,
     else
       e0 = boolector_uext(parser->bzla, a0, p0);
 
-    assert(boolector_get_width(parser->bzla, e0) == l0);
+    assert(boolector_bv_get_width(parser->bzla, e0) == l0);
 
     e = f(parser->bzla, e0, l);
     boolector_release(parser->bzla, e0);
@@ -2072,7 +2072,7 @@ translate_select(BzlaSMTParser *parser, BzlaSMTNode *node)
   }
 
   if (boolector_get_index_width(parser->bzla, a0)
-      != boolector_get_width(parser->bzla, a1))
+      != boolector_bv_get_width(parser->bzla, a1))
   {
     (void) perr_smt(parser, "mismatched bit width of 'select' index");
     return;
@@ -2118,7 +2118,7 @@ translate_store(BzlaSMTParser *parser, BzlaSMTNode *node)
   }
 
   if (boolector_get_index_width(parser->bzla, a0)
-      != boolector_get_width(parser->bzla, a1))
+      != boolector_bv_get_width(parser->bzla, a1))
   {
     (void) perr_smt(parser, "mismatched bit width of 'store' index");
     return;
@@ -2130,8 +2130,8 @@ translate_store(BzlaSMTParser *parser, BzlaSMTNode *node)
     return;
   }
 
-  if (boolector_get_width(parser->bzla, a2)
-      != boolector_get_width(parser->bzla, a0))
+  if (boolector_bv_get_width(parser->bzla, a2)
+      != boolector_bv_get_width(parser->bzla, a0))
   {
     (void) perr_smt(parser, "mismatched bit width of 'store' value");
     return;
@@ -2300,7 +2300,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
           {
             if (symbol->token == BZLA_SMTOK_FVAR)
             {
-              if (boolector_get_width(parser->bzla, exp) != 1)
+              if (boolector_bv_get_width(parser->bzla, exp) != 1)
               {
                 return perr_smt(parser, "flet assignment width not one"),
                        (BoolectorNode *) 0;
@@ -2453,7 +2453,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
     return (BoolectorNode *) 0;
   }
 
-  if (boolector_get_width(parser->bzla, exp) != 1)
+  if (boolector_bv_get_width(parser->bzla, exp) != 1)
     return perr_smt(parser, "non boolean formula"), (BoolectorNode *) 0;
 
   assert(!parser->error);

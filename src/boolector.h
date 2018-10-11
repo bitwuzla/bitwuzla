@@ -1853,7 +1853,7 @@ void boolector_set_symbol(Bzla *bzla, BoolectorNode *node, const char *symbol);
   :param node: Boolector node.
   :return: Bit width of ``node``.
 */
-uint32_t boolector_get_width(Bzla *bzla, BoolectorNode *node);
+uint32_t boolector_bv_get_width(Bzla *bzla, BoolectorNode *node);
 
 /*!
   Get the bit width of indices of ``n_array``.

@@ -3626,7 +3626,7 @@ boolector_set_symbol(Bzla *bzla, BoolectorNode *node, const char *symbol)
 }
 
 uint32_t
-boolector_get_width(Bzla *bzla, BoolectorNode *node)
+boolector_bv_get_width(Bzla *bzla, BoolectorNode *node)
 {
   uint32_t res;
   BzlaNode *exp;
@@ -3643,7 +3643,7 @@ boolector_get_width(Bzla *bzla, BoolectorNode *node)
     res = bzla_node_bv_get_width(bzla, exp);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_UINT(res, get_width, BZLA_CLONED_EXP(exp));
+  BZLA_CHKCLONE_RES_UINT(res, bv_get_width, BZLA_CLONED_EXP(exp));
 #endif
   return res;
 }

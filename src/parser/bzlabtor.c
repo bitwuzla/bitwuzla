@@ -309,7 +309,7 @@ parse_exp(BzlaBZLAParser *parser,
 
   if (expected_width)
   {
-    width_res = boolector_get_width(parser->bzla, res);
+    width_res = boolector_bv_get_width(parser->bzla, res);
 
     if (expected_width != width_res)
     {
@@ -599,7 +599,7 @@ parse_consth(BzlaBZLAParser *parser, uint32_t width)
   res = boolector_const(parser->bzla, tmp);
   bzla_mem_freestr(parser->mem, tmp);
 
-  assert(boolector_get_width(parser->bzla, res) == width);
+  assert(boolector_bv_get_width(parser->bzla, res) == width);
 
   return res;
 }
@@ -686,7 +686,7 @@ parse_constd(BzlaBZLAParser *parser, uint32_t width)
   res = boolector_const(parser->bzla, tmp);
   bzla_mem_freestr(parser->mem, tmp);
 
-  assert(boolector_get_width(parser->bzla, res) == width);
+  assert(boolector_bv_get_width(parser->bzla, res) == width);
 
   return res;
 }
@@ -757,7 +757,7 @@ parse_unary(BzlaBZLAParser *parser, uint32_t width, Unary f)
 
   res = f(parser->bzla, tmp);
   boolector_release(parser->bzla, tmp);
-  assert(boolector_get_width(parser->bzla, res) == width);
+  assert(boolector_bv_get_width(parser->bzla, res) == width);
 
   return res;
 }
@@ -805,7 +805,7 @@ parse_redunary(BzlaBZLAParser *parser, uint32_t width, Unary f)
 
   if (!(tmp = parse_exp(parser, 0, false, true, 0))) return 0;
 
-  if (boolector_get_width(parser->bzla, tmp) == 1)
+  if (boolector_bv_get_width(parser->bzla, tmp) == 1)
   {
     (void) perr_btor(parser, "argument of reduction operation of width 1");
     boolector_release(parser->bzla, tmp);
@@ -814,7 +814,7 @@ parse_redunary(BzlaBZLAParser *parser, uint32_t width, Unary f)
 
   res = f(parser->bzla, tmp);
   boolector_release(parser->bzla, tmp);
-  assert(boolector_get_width(parser->bzla, res) == 1);
+  assert(boolector_bv_get_width(parser->bzla, res) == 1);
 
   return res;
 }
@@ -861,7 +861,7 @@ parse_binary(BzlaBZLAParser *parser, uint32_t width, Binary f)
   res = f(parser->bzla, l, r);
   boolector_release(parser->bzla, r);
   boolector_release(parser->bzla, l);
-  assert(boolector_get_width(parser->bzla, res) == width);
+  assert(boolector_bv_get_width(parser->bzla, res) == width);
 
   return res;
 }
@@ -965,7 +965,7 @@ parse_logical(BzlaBZLAParser *parser, uint32_t width, Binary f)
 
   if (!(l = parse_exp(parser, 0, false, true, 0))) return 0;
 
-  if (boolector_get_width(parser->bzla, l) != 1)
+  if (boolector_bv_get_width(parser->bzla, l) != 1)
   {
   BIT_WIDTH_ERROR_RELEASE_L_AND_RETURN:
     (void) perr_btor(parser, "expected argument of bit width '1'");
@@ -979,7 +979,7 @@ parse_logical(BzlaBZLAParser *parser, uint32_t width, Binary f)
   if (!(r = parse_exp(parser, 0, false, true, 0)))
     goto RELEASE_L_AND_RETURN_ERROR;
 
-  if (boolector_get_width(parser->bzla, r) != 1)
+  if (boolector_bv_get_width(parser->bzla, r) != 1)
   {
     boolector_release(parser->bzla, r);
     goto BIT_WIDTH_ERROR_RELEASE_L_AND_RETURN;
@@ -988,7 +988,7 @@ parse_logical(BzlaBZLAParser *parser, uint32_t width, Binary f)
   res = f(parser->bzla, l, r);
   boolector_release(parser->bzla, r);
   boolector_release(parser->bzla, l);
-  assert(boolector_get_width(parser->bzla, res) == 1);
+  assert(boolector_bv_get_width(parser->bzla, res) == 1);
 
   return res;
 }
@@ -1065,7 +1065,7 @@ parse_compare_and_overflow(BzlaBZLAParser *parser,
   boolector_release(parser->bzla, r);
   boolector_release(parser->bzla, l);
 
-  assert(boolector_get_width(parser->bzla, res) == 1);
+  assert(boolector_bv_get_width(parser->bzla, res) == 1);
 
   return res;
 }
@@ -1192,8 +1192,8 @@ parse_concat(BzlaBZLAParser *parser, uint32_t width)
   if (!(r = parse_exp(parser, 0, false, true, 0)))
     goto RELEASE_L_AND_RETURN_ERROR;
 
-  lwidth = boolector_get_width(parser->bzla, l);
-  rwidth = boolector_get_width(parser->bzla, r);
+  lwidth = boolector_bv_get_width(parser->bzla, l);
+  rwidth = boolector_bv_get_width(parser->bzla, r);
 
   if (lwidth + rwidth != width)
   {
@@ -1211,7 +1211,7 @@ parse_concat(BzlaBZLAParser *parser, uint32_t width)
   res = boolector_concat(parser->bzla, l, r);
   boolector_release(parser->bzla, r);
   boolector_release(parser->bzla, l);
-  assert(boolector_get_width(parser->bzla, res) == width);
+  assert(boolector_bv_get_width(parser->bzla, res) == width);
 
   return res;
 }
@@ -1240,7 +1240,7 @@ parse_shift(BzlaBZLAParser *parser, uint32_t width, Shift f)
   if (!(r = parse_exp(parser, 0, false, true, &lit)))
     goto RELEASE_L_AND_RETURN_ERROR;
 
-  rw = boolector_get_width(parser->bzla, r);
+  rw = boolector_bv_get_width(parser->bzla, r);
   if (width != rw)
   {
     if (bzla_util_is_power_of_2(width))
@@ -1275,7 +1275,7 @@ parse_shift(BzlaBZLAParser *parser, uint32_t width, Shift f)
   res = f(parser->bzla, l, r);
   boolector_release(parser->bzla, r);
   boolector_release(parser->bzla, l);
-  assert(boolector_get_width(parser->bzla, res) == width);
+  assert(boolector_bv_get_width(parser->bzla, res) == width);
 
   return res;
 }
@@ -1417,7 +1417,7 @@ parse_slice(BzlaBZLAParser *parser, uint32_t width)
     return 0;
   }
 
-  argwidth = boolector_get_width(parser->bzla, arg);
+  argwidth = boolector_bv_get_width(parser->bzla, arg);
 
   if (parse_non_negative_int(parser, &upper)) goto RELEASE_ARG_AND_RETURN_ERROR;
 
@@ -1517,7 +1517,7 @@ parse_write(BzlaBZLAParser *parser, uint32_t width)
     goto RELEASE_ARRAY_AND_RETURN_ERROR;
   }
 
-  valwidth = boolector_get_width(parser->bzla, array);
+  valwidth = boolector_bv_get_width(parser->bzla, array);
   if (!(val = parse_exp(parser, valwidth, false, true, 0)))
     goto RELEASE_ARRAY_AND_IDX_AND_RETURN_ERROR;
 
@@ -1630,7 +1630,7 @@ parse_ext(BzlaBZLAParser *parser, uint32_t width, Extend f)
 
   if (!(arg = parse_exp(parser, 0, false, true, 0))) return 0;
 
-  awidth = boolector_get_width(parser->bzla, arg);
+  awidth = boolector_bv_get_width(parser->bzla, arg);
 
   if (parse_space(parser))
   {
@@ -1653,7 +1653,7 @@ parse_ext(BzlaBZLAParser *parser, uint32_t width, Extend f)
   }
 
   res = f(parser->bzla, arg, ewidth);
-  assert(boolector_get_width(parser->bzla, res) == width);
+  assert(boolector_bv_get_width(parser->bzla, res) == width);
   boolector_release(parser->bzla, arg);
 
   return res;
@@ -1949,7 +1949,7 @@ NEXT:
   }
 
 #ifndef NDEBUG
-  uint32_t w = boolector_get_width(parser->bzla, e);
+  uint32_t w = boolector_bv_get_width(parser->bzla, e);
   if (!strcmp(parser->op.start, "root"))
     assert(w == 1);
   else

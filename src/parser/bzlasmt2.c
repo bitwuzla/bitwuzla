@@ -1675,7 +1675,7 @@ is_boolean_exp_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p)
 {
   return !boolector_is_array(parser->bzla, p->exp)
          && !boolector_is_fun(parser->bzla, p->exp)
-         && boolector_get_width(parser->bzla, p->exp) == 1;
+         && boolector_bv_get_width(parser->bzla, p->exp) == 1;
 }
 
 static int32_t
@@ -1705,7 +1705,7 @@ check_boolean_args_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p, int32_t nargs)
       return !perr_smt2(
           parser, "argument %d of '%s' is an array term", i, p->node->name);
     }
-    if ((width = boolector_get_width(parser->bzla, p[i].exp)) != 1)
+    if ((width = boolector_bv_get_width(parser->bzla, p[i].exp)) != 1)
     {
       parser->perrcoo = p[i].coo;
       return !perr_smt2(parser,
@@ -1732,7 +1732,7 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
   parser->perrcoo = p->coo;
 
   j     = offset + 1;
-  width = boolector_get_width(parser->bzla, p[j].exp);
+  width = boolector_bv_get_width(parser->bzla, p[j].exp);
 
   if (boolector_is_array(parser->bzla, p[j].exp))
   {
@@ -1745,7 +1745,7 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
             "first argument of '%s' is an array but argument %d is not",
             p->node->name,
             i);
-      if ((width2 = boolector_get_width(parser->bzla, p[i].exp)) != width)
+      if ((width2 = boolector_bv_get_width(parser->bzla, p[i].exp)) != width)
         return !perr_smt2(
             parser,
             "first argument of '%s' is an array of bit-vectors of width %d "
@@ -1802,7 +1802,7 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
             "argument %d of '%s' is a function but first argument not",
             i,
             p->node->name);
-      if ((width2 = boolector_get_width(parser->bzla, p[i].exp)) != width)
+      if ((width2 = boolector_bv_get_width(parser->bzla, p[i].exp)) != width)
         return !perr_smt2(parser,
                           "first argument of '%s' is bit-vector of width %d "
                           "but argument %d is a bit-vector of width %d",
@@ -1831,7 +1831,7 @@ check_ite_args_sorts_match_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p)
     parser->perrcoo = p[1].coo;
     return !perr_smt2(parser, "first argument of 'ite' is a function");
   }
-  if ((width2 = boolector_get_width(parser->bzla, p[1].exp)) != 1)
+  if ((width2 = boolector_bv_get_width(parser->bzla, p[1].exp)) != 1)
   {
     parser->perrcoo = p[1].coo;
     return !perr_smt2(parser,
@@ -1846,8 +1846,8 @@ check_ite_args_sorts_match_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p)
       return !perr_smt2(parser,
                         "second argument of 'ite' is an array but third not");
     }
-    width  = boolector_get_width(parser->bzla, p[2].exp);
-    width2 = boolector_get_width(parser->bzla, p[3].exp);
+    width  = boolector_bv_get_width(parser->bzla, p[2].exp);
+    width2 = boolector_bv_get_width(parser->bzla, p[3].exp);
     if (width != width2)
     {
       parser->perrcoo = p->coo;
@@ -1880,8 +1880,8 @@ check_ite_args_sorts_match_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p)
       return !perr_smt2(parser,
                         "third argument of 'ite' is an array but second not");
     }
-    width  = boolector_get_width(parser->bzla, p[2].exp);
-    width2 = boolector_get_width(parser->bzla, p[3].exp);
+    width  = boolector_bv_get_width(parser->bzla, p[2].exp);
+    width2 = boolector_bv_get_width(parser->bzla, p[3].exp);
     if (width != width2)
     {
       parser->perrcoo = p->coo;
@@ -1956,7 +1956,7 @@ translate_ext_rotate_smt2(Bzla *bzla,
   shift_width = (uint32_t) bzla_bv_to_uint64(shift_width_bv);
   bzla_bv_free(bzla->mm, shift_width_bv);
 
-  assert(shift_width < boolector_get_width(bzla, exp));
+  assert(shift_width < boolector_bv_get_width(bzla, exp));
 
   return is_left ? boolector_roli(bzla, exp, shift_width)
                  : boolector_rori(bzla, exp, shift_width);
@@ -2286,7 +2286,7 @@ close_term_extend_bv_fun(BzlaSMT2Parser *parser,
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_not_array_or_uf_args_smt2(parser, item_cur, nargs)) return 0;
-  width = boolector_get_width(parser->bzla, item_cur[1].exp);
+  width = boolector_bv_get_width(parser->bzla, item_cur[1].exp);
   if ((uint32_t)(INT32_MAX - item_cur->num) < width)
   {
     parser->perrcoo = item_cur->coo;
@@ -2325,7 +2325,7 @@ close_term_rotate_bv_fun(BzlaSMT2Parser *parser,
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_not_array_or_uf_args_smt2(parser, item_cur, nargs)) return 0;
-  width = boolector_get_width(parser->bzla, item_cur[1].exp);
+  width = boolector_bv_get_width(parser->bzla, item_cur[1].exp);
   exp   = fun(parser->bzla, item_cur[1].exp, item_cur->num % width);
   release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
@@ -2908,7 +2908,7 @@ close_term(BzlaSMT2Parser *parser)
       return !perr_smt2(parser,
                         "unexpected array expression as argument to 'not'");
     }
-    if ((width = boolector_get_width(bzla, tmp)) != 1)
+    if ((width = boolector_bv_get_width(bzla, tmp)) != 1)
     {
       parser->perrcoo = item_cur[1].coo;
       return !perr_smt2(
@@ -3038,7 +3038,7 @@ close_term(BzlaSMT2Parser *parser)
       parser->perrcoo = item_cur[2].coo;
       return !perr_smt2(parser, "second argument of 'select' is an array");
     }
-    width  = boolector_get_width(bzla, item_cur[2].exp);
+    width  = boolector_bv_get_width(bzla, item_cur[2].exp);
     domain = boolector_get_index_width(bzla, item_cur[1].exp);
     if (width != domain)
     {
@@ -3072,7 +3072,7 @@ close_term(BzlaSMT2Parser *parser)
       parser->perrcoo = item_cur[3].coo;
       return !perr_smt2(parser, "third argument of 'store' is an array");
     }
-    width  = boolector_get_width(bzla, item_cur[2].exp);
+    width  = boolector_bv_get_width(bzla, item_cur[2].exp);
     domain = boolector_get_index_width(bzla, item_cur[1].exp);
     if (width != domain)
     {
@@ -3084,8 +3084,8 @@ close_term(BzlaSMT2Parser *parser)
                         domain,
                         width);
     }
-    width  = boolector_get_width(bzla, item_cur[1].exp);
-    width2 = boolector_get_width(bzla, item_cur[3].exp);
+    width  = boolector_bv_get_width(bzla, item_cur[1].exp);
+    width2 = boolector_bv_get_width(bzla, item_cur[3].exp);
     if (width != width2)
     {
       parser->perrcoo = item_cur->coo;
@@ -3105,7 +3105,7 @@ close_term(BzlaSMT2Parser *parser)
   {
     if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
     if (!check_not_array_or_uf_args_smt2(parser, item_cur, nargs)) return 0;
-    width = boolector_get_width(bzla, item_cur[1].exp);
+    width = boolector_bv_get_width(bzla, item_cur[1].exp);
     if (width <= (uint32_t) item_cur->idx0)
     {
       parser->perrcoo = item_cur->coo;
@@ -3340,7 +3340,7 @@ close_term(BzlaSMT2Parser *parser)
   {
     if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
     if (!check_not_array_or_uf_args_smt2(parser, item_cur, nargs)) return 0;
-    width = boolector_get_width(bzla, item_cur[1].exp);
+    width = boolector_bv_get_width(bzla, item_cur[1].exp);
     if (item_cur->num && ((uint32_t)(INT32_MAX / item_cur->num) < width))
     {
       parser->perrcoo = item_cur->coo;
@@ -3487,7 +3487,7 @@ close_term(BzlaSMT2Parser *parser)
             "invalid argument to '%s', expected bit-vector constant",
             item_cur->node->name);
     }
-    if (boolector_get_width(bzla, item_cur[1].exp) != 1)
+    if (boolector_bv_get_width(bzla, item_cur[1].exp) != 1)
       return !perr_smt2(parser,
                         "first argument to '%s' invalid, expected "
                         "bit-vector sort of size 1",
@@ -4191,7 +4191,7 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
     bzla_mem_freestr(parser->mem, decstr);
     bzla_mem_freestr(parser->mem, constr);
     if (!exp) return 0;
-    assert(boolector_get_width(bzla, exp) == width);
+    assert(boolector_bv_get_width(bzla, exp) == width);
     assert(item_cur > parser->work.start);
     item_cur--, parser->work.top--;
     assert(item_cur->tag == BZLA_LPAR_TAG_SMT2);
@@ -5763,7 +5763,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
         boolector_release(parser->bzla, exp);
         return 0;
       }
-      if ((width = boolector_get_width(parser->bzla, exp)) != 1)
+      if ((width = boolector_bv_get_width(parser->bzla, exp)) != 1)
       {
         parser->perrcoo = coo;
         boolector_release(parser->bzla, exp);
