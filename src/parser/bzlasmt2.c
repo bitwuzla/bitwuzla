@@ -2942,7 +2942,8 @@ close_term(BzlaSMT2Parser *parser)
   /* CORE: OR --------------------------------------------------------------- */
   else if (tag == BZLA_OR_TAG_SMT2)
   {
-    if (!close_term_bin_bool(parser, item_open, item_cur, nargs, boolector_or))
+    if (!close_term_bin_bool(
+            parser, item_open, item_cur, nargs, boolector_bv_or))
     {
       return 0;
     }
@@ -3179,7 +3180,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_OR_TAG_SMT2)
   {
     if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, boolector_or))
+            parser, item_open, item_cur, nargs, boolector_bv_or))
     {
       return 0;
     }

@@ -280,9 +280,9 @@ TEST_F(TestLogic, and)
 TEST_F(TestLogic, or)
 {
   binary_logic_test(
-      _or, boolector_or, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 1);
+      _or, boolector_bv_or, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 1);
   binary_logic_test(
-      _or, boolector_or, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 0);
+      _or, boolector_bv_or, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 0);
 }
 
 TEST_F(TestLogic, xor)
