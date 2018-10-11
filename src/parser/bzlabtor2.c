@@ -575,7 +575,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_xnor:
         assert(line->nargs == 2);
-        node = boolector_xnor(bzla, e[0], e[1]);
+        node = boolector_bv_xnor(bzla, e[0], e[1]);
         break;
 
       case BTOR2_TAG_xor:

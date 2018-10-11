@@ -2178,7 +2178,7 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
   }
 
   /* (bvxnor a b c d) == (bvnot (bvxor a b c d)) */
-  if (fun == boolector_xnor)
+  if (fun == boolector_bv_xnor)
   {
     is_xnor = true;
     fun     = boolector_bv_xor;
@@ -3286,7 +3286,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_XNOR_TAG_SMT2)
   {
     if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, boolector_xnor))
+            parser, item_open, item_cur, nargs, boolector_bv_xnor))
     {
       return 0;
     }

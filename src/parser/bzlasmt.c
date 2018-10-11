@@ -2274,7 +2274,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
           translate_associative_binary(parser, node, "xor", boolector_bv_xor);
           break;
         case BZLA_SMTOK_IFF:
-          translate_associative_binary(parser, node, "iff", boolector_xnor);
+          translate_associative_binary(parser, node, "iff", boolector_bv_xnor);
           break;
 
         case BZLA_SMTOK_EQ: translate_eq(parser, node); break;
@@ -2406,7 +2406,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
           translate_binary(parser, node, "bvxor", boolector_bv_xor);
           break;
         case BZLA_SMTOK_BVXNOR:
-          translate_binary(parser, node, "bvxnor", boolector_xnor);
+          translate_binary(parser, node, "bvxnor", boolector_bv_xnor);
           break;
         case BZLA_SMTOK_BVNOR:
           translate_binary(parser, node, "bvnor", boolector_nor);
