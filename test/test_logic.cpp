@@ -330,12 +330,12 @@ TEST_F(TestLogic, redor)
 TEST_F(TestLogic, redxor)
 {
   red_logic_test(redxor,
-                 boolector_redxor,
+                 boolector_bv_redxor,
                  BZLA_TEST_RED_LOGIC_LOW,
                  BZLA_TEST_RED_LOGIC_HIGH,
                  1);
   red_logic_test(redxor,
-                 boolector_redxor,
+                 boolector_bv_redxor,
                  BZLA_TEST_RED_LOGIC_LOW,
                  BZLA_TEST_RED_LOGIC_HIGH,
                  0);

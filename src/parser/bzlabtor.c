@@ -834,7 +834,7 @@ parse_redor(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_redxor(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_redunary(parser, width, boolector_redxor);
+  return parse_redunary(parser, width, boolector_bv_redxor);
 }
 
 static BoolectorNode *
