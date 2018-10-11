@@ -1375,7 +1375,9 @@ BoolectorNode *boolector_bv_rol(Bzla *bzla,
   :param n1: Second bit-vector operand.
   :return: Bit-vector with the same bit width as ``n0``.
 */
-BoolectorNode *boolector_ror(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_ror(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
 
 /*!
   Create a rotate left, with the number of bits to rotate by given as a
