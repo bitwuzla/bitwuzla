@@ -3252,7 +3252,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_LSHR_TAG_SMT2)
   {
     if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, boolector_srl))
+            parser, item_open, item_cur, nargs, boolector_bv_srl))
     {
       return 0;
     }
