@@ -3115,8 +3115,8 @@ close_term(BzlaSMT2Parser *parser)
                         item_cur->idx0,
                         width);
     }
-    exp =
-        boolector_slice(bzla, item_cur[1].exp, item_cur->idx0, item_cur->idx1);
+    exp = boolector_bv_slice(
+        bzla, item_cur[1].exp, item_cur->idx0, item_cur->idx1);
     release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* BV: NOT ---------------------------------------------------------------- */

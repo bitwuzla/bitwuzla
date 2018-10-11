@@ -86,7 +86,7 @@ class TestMisc : public TestMm
 
           sort   = boolector_bv_sort(bzla, high);
           const1 = boolector_unsigned_int(bzla, x, sort);
-          slice  = boolector_slice(bzla, const1, i, j);
+          slice  = boolector_bv_slice(bzla, const1, i, j);
           const2 = boolector_const(bzla, result);
           eq     = boolector_eq(bzla, slice, const2);
           boolector_assert(bzla, eq);

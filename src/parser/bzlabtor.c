@@ -1449,7 +1449,7 @@ parse_slice(BzlaBZLAParser *parser, uint32_t width)
     goto RELEASE_ARG_AND_RETURN_ERROR;
   }
 
-  res = boolector_slice(parser->bzla, arg, upper, lower);
+  res = boolector_bv_slice(parser->bzla, arg, upper, lower);
   boolector_release(parser->bzla, arg);
 
   return res;

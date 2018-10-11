@@ -62,11 +62,11 @@ class TestShift : public TestCommon
       /* if msb = 1, shift in 1 bits instead of 0 bits */
       if (ushift > 0)
       {
-        BoolectorNode *msb = boolector_slice(bzla, e0, bw - 1, bw - 1);
+        BoolectorNode *msb = boolector_bv_slice(bzla, e0, bw - 1, bw - 1);
         if (ushift < bw)
         {
           BoolectorNode *slice =
-              boolector_slice(bzla, res_shift1, bw - ushift - 1, 0);
+              boolector_bv_slice(bzla, res_shift1, bw - ushift - 1, 0);
           BoolectorSort sort_sra_ones = boolector_bv_sort(bzla, ushift);
           BoolectorNode *ones         = boolector_ones(bzla, sort_sra_ones);
           boolector_release_sort(bzla, sort_sra_ones);

@@ -975,10 +975,10 @@ BoolectorNode *boolector_bv_redand(Bzla *bzla, BoolectorNode *node);
                 less than or equal to ``upper``.
   :return: Bit-vector with bit width ``upper - lower + 1``.
 */
-BoolectorNode *boolector_slice(Bzla *bzla,
-                               BoolectorNode *node,
-                               uint32_t upper,
-                               uint32_t lower);
+BoolectorNode *boolector_bv_slice(Bzla *bzla,
+                                  BoolectorNode *node,
+                                  uint32_t upper,
+                                  uint32_t lower);
 
 /*!
   Create unsigned extension.

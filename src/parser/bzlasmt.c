@@ -1744,7 +1744,7 @@ translate_extract(BzlaSMTParser *parser, BzlaSMTNode *node)
   }
 
   translate_node(
-      parser, node, boolector_slice(parser->bzla, exp, upper, lower));
+      parser, node, boolector_bv_slice(parser->bzla, exp, upper, lower));
 }
 
 static void
@@ -1876,8 +1876,8 @@ translate_rotate(BzlaSMTParser *parser, BzlaSMTNode *node)
 
     assert(1 <= shift && shift < width);
 
-    l = boolector_slice(parser->bzla, exp, shift - 1, 0);
-    r = boolector_slice(parser->bzla, exp, width - 1, shift);
+    l = boolector_bv_slice(parser->bzla, exp, shift - 1, 0);
+    r = boolector_bv_slice(parser->bzla, exp, width - 1, shift);
 
     translate_node(parser, node, boolector_concat(parser->bzla, l, r));
     assert(boolector_bv_get_width(parser->bzla, node->exp) == width);
@@ -1982,8 +1982,8 @@ translate_shift(BzlaSMTParser *parser,
 
     assert(p1 > 0);
 
-    u = boolector_slice(parser->bzla, a1, width - 1, width - p1);
-    l = boolector_slice(parser->bzla, a1, l1 - 1, 0);
+    u = boolector_bv_slice(parser->bzla, a1, width - 1, width - p1);
+    l = boolector_bv_slice(parser->bzla, a1, l1 - 1, 0);
 
     assert(boolector_bv_get_width(parser->bzla, u) == p1);
     assert(boolector_bv_get_width(parser->bzla, l) == l1);
@@ -1997,7 +1997,7 @@ translate_shift(BzlaSMTParser *parser,
 
     if (f == boolector_sra)
     {
-      tmp = boolector_slice(parser->bzla, a0, width - 1, width - 1);
+      tmp = boolector_bv_slice(parser->bzla, a0, width - 1, width - 1);
       t   = boolector_sext(parser->bzla, tmp, width - 1);
       boolector_release(parser->bzla, tmp);
     }
@@ -2023,7 +2023,7 @@ translate_shift(BzlaSMTParser *parser,
 
     if (p0 > 0)
     {
-      tmp = boolector_slice(parser->bzla, e, width - 1, 0);
+      tmp = boolector_bv_slice(parser->bzla, e, width - 1, 0);
       boolector_release(parser->bzla, e);
       e = tmp;
     }
