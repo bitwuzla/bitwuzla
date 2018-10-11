@@ -2200,7 +2200,7 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
   if (is_xnor)
   {
     old = exp;
-    exp = boolector_not(parser->bzla, exp);
+    exp = boolector_bv_not(parser->bzla, exp);
     boolector_release(parser->bzla, old);
   }
 
@@ -2918,7 +2918,7 @@ close_term(BzlaSMT2Parser *parser)
     }
     parser->work.top = item_cur;
     item_open->tag   = BZLA_EXP_TAG_SMT2;
-    item_open->exp   = boolector_not(bzla, tmp);
+    item_open->exp   = boolector_bv_not(bzla, tmp);
     boolector_release(bzla, tmp);
   }
   /* CORE: IMPLIES ---------------------------------------------------------- */
@@ -3123,7 +3123,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_NOT_TAG_SMT2)
   {
     if (!close_term_unary_bv_fun(
-            parser, item_open, item_cur, nargs, boolector_not))
+            parser, item_open, item_cur, nargs, boolector_bv_not))
     {
       return 0;
     }

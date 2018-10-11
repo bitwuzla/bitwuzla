@@ -193,7 +193,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
       tmp = bzla_hashint_map_get(nodemap, unsigned_arg)->as_ptr;
       if (signed_arg < 0)
       {
-        e[i] = boolector_not(bzla, tmp);
+        e[i] = boolector_bv_not(bzla, tmp);
         boolector_release(bzla, tmp);
       }
       else
@@ -342,7 +342,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_not:
         assert(line->nargs == 1);
-        node = boolector_not(bzla, e[0]);
+        node = boolector_bv_not(bzla, e[0]);
         break;
 
       case BTOR2_TAG_one:

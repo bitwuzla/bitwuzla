@@ -1714,7 +1714,7 @@ boolector_uf(Bzla *bzla, BoolectorSort sort, const char *symbol)
 /*------------------------------------------------------------------------*/
 
 BoolectorNode *
-boolector_not(Bzla *bzla, BoolectorNode *node)
+boolector_bv_not(Bzla *bzla, BoolectorNode *node)
 {
   BzlaNode *exp, *res;
 
@@ -1729,7 +1729,7 @@ boolector_not(Bzla *bzla, BoolectorNode *node)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, not, BZLA_CLONED_EXP(exp));
+  BZLA_CHKCLONE_RES_PTR(res, bv_not, BZLA_CLONED_EXP(exp));
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }

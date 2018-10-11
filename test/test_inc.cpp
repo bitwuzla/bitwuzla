@@ -64,7 +64,7 @@ class TestInc : public TestBoolector
       current = next;
 
       nonzero = boolector_redor(d_bzla, current);
-      allzero = boolector_not(d_bzla, nonzero);
+      allzero = boolector_bv_not(d_bzla, nonzero);
       boolector_release(d_bzla, nonzero);
 
       i++;

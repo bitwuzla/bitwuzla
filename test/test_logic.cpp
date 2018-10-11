@@ -53,7 +53,7 @@ class TestLogic : public TestBoolector
         sort   = boolector_bv_sort(d_bzla, num_bits);
         const1 = boolector_unsigned_int(d_bzla, i, sort);
         const2 = boolector_unsigned_int(d_bzla, result, sort);
-        inv    = boolector_not(d_bzla, const1);
+        inv    = boolector_bv_not(d_bzla, const1);
         eq     = boolector_eq(d_bzla, inv, const2);
         boolector_assert(d_bzla, eq);
 

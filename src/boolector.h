@@ -918,7 +918,7 @@ BoolectorNode *boolector_uf(Bzla *bzla, BoolectorSort sort, const char *symbol);
   :return: Bit-vector representing the one's complement of ``node`` with the
            same bit width as ``node``.
 */
-BoolectorNode *boolector_not(Bzla *bzla, BoolectorNode *node);
+BoolectorNode *boolector_bv_not(Bzla *bzla, BoolectorNode *node);
 
 /*!
   Create the two's complement of bit-vector ``node``.

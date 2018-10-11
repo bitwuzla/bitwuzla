@@ -324,7 +324,7 @@ parse_exp(BzlaBZLAParser *parser,
   }
 
   if (lit < 0)
-    res = boolector_not(parser->bzla, res);
+    res = boolector_bv_not(parser->bzla, res);
   else
     res = boolector_copy(parser->bzla, res);
 
@@ -765,7 +765,7 @@ parse_unary(BzlaBZLAParser *parser, uint32_t width, Unary f)
 static BoolectorNode *
 parse_not(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_unary(parser, width, boolector_not);
+  return parse_unary(parser, width, boolector_bv_not);
 }
 
 static BoolectorNode *
