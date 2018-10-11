@@ -1968,7 +1968,7 @@ translate_shift(BzlaSMTParser *parser,
     else
     {
       tmp = boolector_bv_not(parser->bzla, a1);
-      translate_node(parser, node, boolector_and(parser->bzla, a0, tmp));
+      translate_node(parser, node, boolector_bv_and(parser->bzla, a0, tmp));
       boolector_release(parser->bzla, tmp);
     }
   }
@@ -2262,7 +2262,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
           translate_unary(parser, node, "not", boolector_bv_not);
           break;
         case BZLA_SMTOK_AND:
-          translate_associative_binary(parser, node, "and", boolector_and);
+          translate_associative_binary(parser, node, "and", boolector_bv_and);
           break;
         case BZLA_SMTOK_OR:
           translate_associative_binary(parser, node, "or", boolector_or);
@@ -2397,7 +2397,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
           translate_binary(parser, node, "bvslt", boolector_slt);
           break;
         case BZLA_SMTOK_BVAND:
-          translate_binary(parser, node, "bvand", boolector_and);
+          translate_binary(parser, node, "bvand", boolector_bv_and);
           break;
         case BZLA_SMTOK_BVOR:
           translate_binary(parser, node, "bvor", boolector_or);

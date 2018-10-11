@@ -2933,7 +2933,8 @@ close_term(BzlaSMT2Parser *parser)
   /* CORE: AND -------------------------------------------------------------- */
   else if (tag == BZLA_AND_TAG_SMT2)
   {
-    if (!close_term_bin_bool(parser, item_open, item_cur, nargs, boolector_and))
+    if (!close_term_bin_bool(
+            parser, item_open, item_cur, nargs, boolector_bv_and))
     {
       return 0;
     }
@@ -2974,7 +2975,7 @@ close_term(BzlaSMT2Parser *parser)
     {
       tmp = boolector_eq(bzla, item_cur[i - 1].exp, item_cur[i].exp);
       old = exp;
-      exp = boolector_and(bzla, old, tmp);
+      exp = boolector_bv_and(bzla, old, tmp);
       boolector_release(bzla, old);
       boolector_release(bzla, tmp);
     }
@@ -3003,7 +3004,7 @@ close_term(BzlaSMT2Parser *parser)
         if (exp)
         {
           old = exp;
-          exp = boolector_and(bzla, old, tmp);
+          exp = boolector_bv_and(bzla, old, tmp);
           boolector_release(bzla, old);
           boolector_release(bzla, tmp);
         }
@@ -3169,7 +3170,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_AND_TAG_SMT2)
   {
     if (!close_term_bin_bv_left_associative(
-            parser, item_open, item_cur, nargs, boolector_and))
+            parser, item_open, item_cur, nargs, boolector_bv_and))
     {
       return 0;
     }

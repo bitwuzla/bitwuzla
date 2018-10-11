@@ -272,9 +272,9 @@ TEST_F(TestLogic, not )
 TEST_F(TestLogic, and)
 {
   binary_logic_test(
-      _and, boolector_and, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 1);
+      _and, boolector_bv_and, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 1);
   binary_logic_test(
-      _and, boolector_and, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 0);
+      _and, boolector_bv_and, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 0);
 }
 
 TEST_F(TestLogic, or)
