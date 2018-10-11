@@ -97,7 +97,7 @@ class TestOverflow : public TestBzla
               result   = mul(i, j);
               break;
             case SMUL:
-              bzla_fun = boolector_smulo;
+              bzla_fun = boolector_bv_smulo;
               result   = mul(i, j);
               break;
             default:
@@ -196,7 +196,7 @@ class TestOverflow : public TestBzla
                 result   = mul(i, j);
                 break;
               case SMUL:
-                bzla_fun = boolector_smulo;
+                bzla_fun = boolector_bv_smulo;
                 result   = mul(i, j);
                 break;
               default:

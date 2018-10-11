@@ -490,7 +490,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_smulo:
         assert(line->nargs == 2);
-        node = boolector_smulo(bzla, e[0], e[1]);
+        node = boolector_bv_smulo(bzla, e[0], e[1]);
         break;
 
       case BTOR2_TAG_sra:

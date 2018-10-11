@@ -1181,9 +1181,9 @@ BoolectorNode *boolector_bv_umulo(Bzla *bzla,
            of ``n0`` and ``n1`` overflows in case both operands are treated
            signed.
 */
-BoolectorNode *boolector_smulo(Bzla *bzla,
-                               BoolectorNode *n0,
-                               BoolectorNode *n1);
+BoolectorNode *boolector_bv_smulo(Bzla *bzla,
+                                  BoolectorNode *n0,
+                                  BoolectorNode *n1);
 
 /*!
   Create an unsigned less than.
