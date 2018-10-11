@@ -1149,7 +1149,9 @@ BoolectorNode *boolector_bv_saddo(Bzla *bzla,
   :param n1: Second bit-vector operand.
   :return: Bit-vector multiplication with the same bit width as the operands.
 */
-BoolectorNode *boolector_mul(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_mul(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
 
 /*!
   Create an unsigned bit-vector multiplication overflow detection.

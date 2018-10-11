@@ -191,12 +191,12 @@ TEST_F(TestArith, sub_u)
 TEST_F(TestArith, mul_u)
 {
   u_arithmetic_test(mul,
-                    boolector_mul,
+                    boolector_bv_mul,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   u_arithmetic_test(mul,
-                    boolector_mul,
+                    boolector_bv_mul,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -261,12 +261,12 @@ TEST_F(TestArith, sub_s)
 TEST_F(TestArith, mul_s)
 {
   s_arithmetic_test(mul,
-                    boolector_mul,
+                    boolector_bv_mul,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   s_arithmetic_test(mul,
-                    boolector_mul,
+                    boolector_bv_mul,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
