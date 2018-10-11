@@ -1089,7 +1089,9 @@ BoolectorNode *boolector_bv_or(Bzla *bzla,
   :param n1: Second bit-vector operand.
   :return: Bit-vector with the same bit width as the operands.
 */
-BoolectorNode *boolector_nor(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_nor(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
 
 /*!
   Create bit-vector addition.

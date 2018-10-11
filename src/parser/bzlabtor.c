@@ -935,7 +935,7 @@ parse_or(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_nor(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_binary(parser, width, boolector_nor);
+  return parse_binary(parser, width, boolector_bv_nor);
 }
 
 static BoolectorNode *
