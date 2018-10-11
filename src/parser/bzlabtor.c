@@ -1169,7 +1169,7 @@ parse_usubo(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_umulo(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_compare_and_overflow(parser, width, boolector_umulo, 0);
+  return parse_compare_and_overflow(parser, width, boolector_bv_umulo, 0);
 }
 
 static BoolectorNode *

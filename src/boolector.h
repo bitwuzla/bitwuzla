@@ -1165,9 +1165,9 @@ BoolectorNode *boolector_bv_mul(Bzla *bzla,
            of ``n0`` and ``n1`` overflows in case both operands are treated
            unsigned.
 */
-BoolectorNode *boolector_umulo(Bzla *bzla,
-                               BoolectorNode *n0,
-                               BoolectorNode *n1);
+BoolectorNode *boolector_bv_umulo(Bzla *bzla,
+                                  BoolectorNode *n0,
+                                  BoolectorNode *n1);
 
 /*!
   Create signed multiplication overflow detection.
