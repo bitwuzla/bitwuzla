@@ -939,7 +939,7 @@ BoolectorNode *boolector_bv_neg(Bzla *bzla, BoolectorNode *node);
   :param node: Bit-vector node.
   :return: Bit-vector with bit width one.
 */
-BoolectorNode *boolector_redor(Bzla *bzla, BoolectorNode *node);
+BoolectorNode *boolector_bv_redor(Bzla *bzla, BoolectorNode *node);
 
 /*!
   Create *xor* reduction of node ``node``.

@@ -1989,7 +1989,7 @@ translate_shift(BzlaSMTParser *parser,
     assert(boolector_bv_get_width(parser->bzla, l) == l1);
 
     if (p1 > 1)
-      c = boolector_redor(parser->bzla, u);
+      c = boolector_bv_redor(parser->bzla, u);
     else
       c = boolector_copy(parser->bzla, u);
 

@@ -737,7 +737,7 @@ parse_root(BzlaBZLAParser *parser, uint32_t width)
   if (width > 1)
   {
     tmp = res;
-    res = boolector_redor(parser->bzla, tmp);
+    res = boolector_bv_redor(parser->bzla, tmp);
     boolector_release(parser->bzla, tmp);
   }
   boolector_assert(parser->bzla, res);
@@ -828,7 +828,7 @@ parse_redand(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_redor(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_redunary(parser, width, boolector_redor);
+  return parse_redunary(parser, width, boolector_bv_redor);
 }
 
 static BoolectorNode *
