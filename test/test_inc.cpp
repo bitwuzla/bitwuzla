@@ -114,7 +114,7 @@ class TestInc : public TestBoolector
 
       if (prev)
       {
-        lt = boolector_ult(d_bzla, prev, next);
+        lt = boolector_bv_ult(d_bzla, prev, next);
         boolector_assert(d_bzla, lt);
         boolector_release(d_bzla, lt);
         boolector_release(d_bzla, prev);

@@ -545,7 +545,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_ult:
         assert(line->nargs == 2);
-        node = boolector_ult(bzla, e[0], e[1]);
+        node = boolector_bv_ult(bzla, e[0], e[1]);
         break;
 
       case BTOR2_TAG_ulte:
