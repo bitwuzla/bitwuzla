@@ -1963,7 +1963,7 @@ translate_shift(BzlaSMTParser *parser,
     assert(l0 == 1);
     assert(l1 == 0);
 
-    if (f == boolector_sra)
+    if (f == boolector_bv_sra)
       translate_node(parser, node, boolector_copy(parser->bzla, a0));
     else
     {
@@ -1995,7 +1995,7 @@ translate_shift(BzlaSMTParser *parser,
 
     boolector_release(parser->bzla, u);
 
-    if (f == boolector_sra)
+    if (f == boolector_bv_sra)
     {
       tmp = boolector_bv_slice(parser->bzla, a0, width - 1, width - 1);
       t   = boolector_bv_sext(parser->bzla, tmp, width - 1);
@@ -2010,7 +2010,7 @@ translate_shift(BzlaSMTParser *parser,
 
     if (!p0)
       e0 = boolector_copy(parser->bzla, a0);
-    else if (f == boolector_sra)
+    else if (f == boolector_bv_sra)
       e0 = boolector_bv_sext(parser->bzla, a0, p0);
     else
       e0 = boolector_bv_uext(parser->bzla, a0, p0);
@@ -2418,7 +2418,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
           translate_shift(parser, node, "bvlshr", boolector_bv_srl);
           break;
         case BZLA_SMTOK_BVASHR:
-          translate_shift(parser, node, "bvashr", boolector_sra);
+          translate_shift(parser, node, "bvashr", boolector_bv_sra);
           break;
         case BZLA_SMTOK_BVSHL:
           translate_shift(parser, node, "bvshl", boolector_bv_sll);
