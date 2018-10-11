@@ -81,7 +81,7 @@ class TestOverflow : public TestBzla
               result   = add(i, j);
               break;
             case SADD:
-              bzla_fun = boolector_saddo;
+              bzla_fun = boolector_bv_saddo;
               result   = add(i, j);
               break;
             case USUB:
@@ -180,7 +180,7 @@ class TestOverflow : public TestBzla
                 result   = add(i, j);
                 break;
               case SADD:
-                bzla_fun = boolector_saddo;
+                bzla_fun = boolector_bv_saddo;
                 result   = add(i, j);
                 break;
               case USUB:

@@ -1135,9 +1135,9 @@ BoolectorNode *boolector_bv_uaddo(Bzla *bzla,
            ``n0`` and ``n1`` overflows in case both operands are treated
            signed.
 */
-BoolectorNode *boolector_saddo(Bzla *bzla,
-                               BoolectorNode *n0,
-                               BoolectorNode *n1);
+BoolectorNode *boolector_bv_saddo(Bzla *bzla,
+                                  BoolectorNode *n0,
+                                  BoolectorNode *n1);
 
 /*!
   Create a bitvector multiplication.
