@@ -1309,7 +1309,9 @@ BoolectorNode *boolector_bv_sgte(Bzla *bzla,
   :param n1: Second bit-vector operand.
   :return: Bit-vector with the same bit width as ``n0``.
 */
-BoolectorNode *boolector_sll(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_sll(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
 
 /*!
   Create a logical shift right.

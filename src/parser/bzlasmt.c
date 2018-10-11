@@ -2421,7 +2421,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
           translate_shift(parser, node, "bvashr", boolector_sra);
           break;
         case BZLA_SMTOK_BVSHL:
-          translate_shift(parser, node, "bvshl", boolector_sll);
+          translate_shift(parser, node, "bvshl", boolector_bv_sll);
           break;
         case BZLA_SMTOK_SELECT: translate_select(parser, node); break;
         case BZLA_SMTOK_STORE: translate_store(parser, node); break;
