@@ -990,7 +990,9 @@ BoolectorNode *boolector_bv_slice(Bzla *bzla,
   :param width: Number of zeroes to pad.
   :return: A bit-vector extended by ``width`` zeroes.
 */
-BoolectorNode *boolector_uext(Bzla *bzla, BoolectorNode *node, uint32_t width);
+BoolectorNode *boolector_bv_uext(Bzla *bzla,
+                                 BoolectorNode *node,
+                                 uint32_t width);
 
 /*!
   Create signed extension.

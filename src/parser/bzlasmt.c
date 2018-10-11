@@ -2013,7 +2013,7 @@ translate_shift(BzlaSMTParser *parser,
     else if (f == boolector_sra)
       e0 = boolector_sext(parser->bzla, a0, p0);
     else
-      e0 = boolector_uext(parser->bzla, a0, p0);
+      e0 = boolector_bv_uext(parser->bzla, a0, p0);
 
     assert(boolector_bv_get_width(parser->bzla, e0) == l0);
 
@@ -2331,7 +2331,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
         case BZLA_SMTOK_EXTRACT: translate_extract(parser, node); break;
         case BZLA_SMTOK_REPEAT: translate_repeat(parser, node); break;
         case BZLA_SMTOK_ZERO_EXTEND:
-          translate_extend(parser, node, boolector_uext);
+          translate_extend(parser, node, boolector_bv_uext);
           break;
         case BZLA_SMTOK_SIGN_EXTEND:
           translate_extend(parser, node, boolector_sext);

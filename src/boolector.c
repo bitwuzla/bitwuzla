@@ -1846,7 +1846,7 @@ boolector_bv_slice(Bzla *bzla,
 }
 
 BoolectorNode *
-boolector_uext(Bzla *bzla, BoolectorNode *node, uint32_t width)
+boolector_bv_uext(Bzla *bzla, BoolectorNode *node, uint32_t width)
 {
   BzlaNode *exp, *res;
 
@@ -1867,7 +1867,7 @@ boolector_uext(Bzla *bzla, BoolectorNode *node, uint32_t width)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, uext, BZLA_CLONED_EXP(exp), width);
+  BZLA_CHKCLONE_RES_PTR(res, bv_uext, BZLA_CLONED_EXP(exp), width);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }

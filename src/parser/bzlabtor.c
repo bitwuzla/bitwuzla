@@ -1256,7 +1256,7 @@ parse_shift(BzlaBZLAParser *parser, uint32_t width, Shift f)
         boolector_release(parser->bzla, r);
         return 0;
       }
-      tmp = boolector_uext(parser->bzla, r, width - rw);
+      tmp = boolector_bv_uext(parser->bzla, r, width - rw);
       boolector_release(parser->bzla, r);
       r = tmp;
     }
@@ -1668,7 +1668,7 @@ parse_sext(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_uext(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_ext(parser, width, boolector_uext);
+  return parse_ext(parser, width, boolector_bv_uext);
 }
 
 static void

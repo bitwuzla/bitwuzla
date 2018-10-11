@@ -530,7 +530,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_uext:
         assert(line->nargs == 1);
-        node = boolector_uext(bzla, e[0], line->args[1]);
+        node = boolector_bv_uext(bzla, e[0], line->args[1]);
         break;
 
       case BTOR2_TAG_ugt:
