@@ -1085,7 +1085,7 @@ parse_ne(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_sgt(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_compare_and_overflow(parser, width, boolector_sgt, 0);
+  return parse_compare_and_overflow(parser, width, boolector_bv_sgt, 0);
 }
 
 static BoolectorNode *

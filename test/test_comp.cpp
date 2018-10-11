@@ -215,8 +215,8 @@ TEST_F(TestComp, test_slte)
 
 TEST_F(TestComp, test_sgt)
 {
-  s_comp_test(gt, boolector_sgt, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  s_comp_test(gt, boolector_sgt, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  s_comp_test(gt, boolector_bv_sgt, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  s_comp_test(gt, boolector_bv_sgt, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_sgte)
