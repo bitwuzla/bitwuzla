@@ -163,12 +163,12 @@ class TestArith : public TestBoolector
 TEST_F(TestArith, add_u)
 {
   u_arithmetic_test(add,
-                    boolector_add,
+                    boolector_bv_add,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   u_arithmetic_test(add,
-                    boolector_add,
+                    boolector_bv_add,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -233,12 +233,12 @@ TEST_F(TestArith, urem_u)
 TEST_F(TestArith, add_s)
 {
   s_arithmetic_test(add,
-                    boolector_add,
+                    boolector_bv_add,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   s_arithmetic_test(add,
-                    boolector_add,
+                    boolector_bv_add,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);

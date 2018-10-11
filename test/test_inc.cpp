@@ -39,7 +39,7 @@ class TestInc : public TestBoolector
 
     for (;;)
     {
-      inc = boolector_add(d_bzla, current, one);
+      inc = boolector_bv_add(d_bzla, current, one);
 
       if (nondet)
       {
