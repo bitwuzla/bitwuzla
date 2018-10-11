@@ -183,8 +183,10 @@ TEST_F(TestComp, test_ugt)
 
 TEST_F(TestComp, test_ugte)
 {
-  u_comp_test(gte, boolector_ugte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  u_comp_test(gte, boolector_ugte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  u_comp_test(
+      gte, boolector_bv_ugte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  u_comp_test(
+      gte, boolector_bv_ugte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_eq_2)

@@ -1279,7 +1279,9 @@ BoolectorNode *boolector_bv_sgt(Bzla *bzla,
   :param n1: Second bit-vector operand.
   :return: Bit-vector with bit width one.
 */
-BoolectorNode *boolector_ugte(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_ugte(Bzla *bzla,
+                                 BoolectorNode *n0,
+                                 BoolectorNode *n1);
 
 /*!
   Create a signed greater than or equal.
