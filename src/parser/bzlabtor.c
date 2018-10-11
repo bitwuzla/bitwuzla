@@ -1109,7 +1109,7 @@ parse_slte(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_ugt(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_compare_and_overflow(parser, width, boolector_ugt, 0);
+  return parse_compare_and_overflow(parser, width, boolector_bv_ugt, 0);
 }
 
 static BoolectorNode *
