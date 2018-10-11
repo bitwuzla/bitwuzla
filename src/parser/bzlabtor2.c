@@ -439,7 +439,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_slte:
         assert(line->nargs == 2);
-        node = boolector_slte(bzla, e[0], e[1]);
+        node = boolector_bv_slte(bzla, e[0], e[1]);
         break;
 
       case BTOR2_TAG_sort:

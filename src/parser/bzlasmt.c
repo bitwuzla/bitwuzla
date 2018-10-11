@@ -2373,7 +2373,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
           translate_binary(parser, node, "bvule", boolector_bv_ulte);
           break;
         case BZLA_SMTOK_BVSLE:
-          translate_binary(parser, node, "bvsle", boolector_slte);
+          translate_binary(parser, node, "bvsle", boolector_bv_slte);
           break;
         case BZLA_SMTOK_BVSGT:
           translate_binary(parser, node, "bvsgt", boolector_sgt);
