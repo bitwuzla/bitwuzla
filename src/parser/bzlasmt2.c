@@ -4773,10 +4773,8 @@ parse_bv_or_fp_sort(BzlaSMT2Parser *parser,
              "and significand width %d",
              width_eb,
              width_sb);
-    // FP STUB
-    *resptr = boolector_bool_sort(parser->bzla);
-    ////
-    msg = " to close floating-point sort";
+    *resptr = boolector_fp_sort(parser->bzla, width_eb, width_sb);
+    msg     = " to close floating-point sort";
   }
   else
   {
@@ -4835,34 +4833,26 @@ parse_sort(BzlaSMT2Parser *parser,
   }
   else if (tag == BZLA_FP_FLOAT16_TAG_SMT2)
   {
-    // FP STUB
-    *sort = boolector_bool_sort(bzla);
+    *sort = boolector_fp_sort(parser->bzla, 5, 11);
     BZLA_PUSH_STACK(parser->sorts, *sort);
-    ////
     return 1;
   }
   else if (tag == BZLA_FP_FLOAT32_TAG_SMT2)
   {
-    // FP STUB
-    *sort = boolector_bool_sort(bzla);
+    *sort = boolector_fp_sort(parser->bzla, 8, 24);
     BZLA_PUSH_STACK(parser->sorts, *sort);
-    ////
     return 1;
   }
   else if (tag == BZLA_FP_FLOAT64_TAG_SMT2)
   {
-    // FP STUB
-    *sort = boolector_bool_sort(bzla);
+    *sort = boolector_fp_sort(parser->bzla, 11, 53);
     BZLA_PUSH_STACK(parser->sorts, *sort);
-    ////
     return 1;
   }
   else if (tag == BZLA_FP_FLOAT128_TAG_SMT2)
   {
-    // FP STUB
-    *sort = boolector_bool_sort(bzla);
+    *sort = boolector_fp_sort(parser->bzla, 15, 113);
     BZLA_PUSH_STACK(parser->sorts, *sort);
-    ////
     return 1;
   }
   else if (tag == BZLA_FP_ROUNDINGMODE_TAG_SMT2)

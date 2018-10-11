@@ -2198,6 +2198,21 @@ BoolectorSort boolector_bool_sort(Bzla *bzla);
 BoolectorSort boolector_bv_sort(Bzla *bzla, uint32_t width);
 
 /*!
+  Create a floating-point sort with exponen bit width ``ewidth`` and significand
+  bit-width ``swidth``.
+
+  :param bzla: Boolector instance.
+  :param ewidth: Bit width of the exponent.
+  :param swidth: Bit width of the significand.
+  :return: Floating-point sort with exponen bit width ``ewidth`` and
+           significand bit width ``swidth``.
+
+  .. seealso::
+    boolector_var, boolector_param
+*/
+BoolectorSort boolector_fp_sort(Bzla *bzla, uint32_t ewidth, uint32_t swidth);
+
+/*!
   Create function sort.
 
   :param bzla: Boolector instance.

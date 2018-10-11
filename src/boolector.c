@@ -4399,6 +4399,24 @@ boolector_bv_sort(Bzla *bzla, uint32_t width)
   return BZLA_EXPORT_BOOLECTOR_SORT(res);
 }
 
+BoolectorSort
+boolector_fp_sort(Bzla *bzla, uint32_t ewidth, uint32_t swidth)
+{
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI("%u %u", ewidth, swidth);
+  BZLA_ABORT(ewidth == 0, "'ewidth' must be > 0");
+  BZLA_ABORT(swidth == 0, "'swidth' must be > 0");
+
+  BzlaSortId res;
+  res = bzla_sort_fp(bzla, ewidth, swidth);
+  inc_sort_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_SORT(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_SORT(res, fp_sort, ewidth, swidth);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_SORT(res);
+}
+
 static BzlaSortId
 boolector_tuple_sort(Bzla *bzla, BoolectorSort *sorts, size_t num_elements)
 {

@@ -447,6 +447,18 @@ bzla_sort_bv(Bzla *bzla, uint32_t width)
 }
 
 BzlaSortId
+bzla_sort_fp(Bzla *bzla, uint32_t ewidth, uint32_t swidth)
+{
+  assert(bzla);
+  assert(ewidth > 0);
+  assert(swidth > 0);
+
+  /// FP STUB
+  return bzla_sort_bool(bzla);
+  ////
+}
+
+BzlaSortId
 bzla_sort_array(Bzla *bzla, BzlaSortId index_id, BzlaSortId element_id)
 {
   assert(bzla);

@@ -113,6 +113,10 @@ BzlaSortId bzla_sort_bool(Bzla *bzla);
 
 BzlaSortId bzla_sort_bv(Bzla *bzla, uint32_t width);
 
+/* Create floating-point sort with exponent bit-wdith 'ewidth' and significand
+ * bit-width 'swidth'. */
+BzlaSortId bzla_sort_fp(Bzla *bzla, uint32_t ewidth, uint32_t swidth);
+
 BzlaSortId bzla_sort_array(Bzla *bzla,
                            BzlaSortId index_id,
                            BzlaSortId element_id);
