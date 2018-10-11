@@ -169,8 +169,10 @@ TEST_F(TestComp, test_ult)
 
 TEST_F(TestComp, test_ulte)
 {
-  u_comp_test(lte, boolector_ulte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  u_comp_test(lte, boolector_ulte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  u_comp_test(
+      lte, boolector_bv_ulte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  u_comp_test(
+      lte, boolector_bv_ulte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_ugt)
