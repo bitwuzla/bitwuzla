@@ -77,7 +77,7 @@ class TestOverflow : public TestBzla
           switch (op)
           {
             case UADD:
-              bzla_fun = boolector_uaddo;
+              bzla_fun = boolector_bv_uaddo;
               result   = add(i, j);
               break;
             case SADD:
@@ -176,7 +176,7 @@ class TestOverflow : public TestBzla
             switch (op)
             {
               case UADD:
-                bzla_fun = boolector_uaddo;
+                bzla_fun = boolector_bv_uaddo;
                 result   = add(i, j);
                 break;
               case SADD:
