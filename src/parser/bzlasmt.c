@@ -2412,7 +2412,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
           translate_binary(parser, node, "bvnor", boolector_nor);
           break;
         case BZLA_SMTOK_BVNAND:
-          translate_binary(parser, node, "bvnand", boolector_nand);
+          translate_binary(parser, node, "bvnand", boolector_bv_nand);
           break;
         case BZLA_SMTOK_BVLSHR:
           translate_shift(parser, node, "bvlshr", boolector_srl);
