@@ -29,7 +29,7 @@ class TestRotate : public TestBoolector
     BoolectorNode *(*fun)(Bzla *, BoolectorNode *, BoolectorNode *);
     BoolectorNode *(*funi)(Bzla *, BoolectorNode *, uint32_t);
 
-    fun  = is_left ? boolector_rol : boolector_ror;
+    fun  = is_left ? boolector_bv_rol : boolector_ror;
     funi = is_left ? boolector_roli : boolector_rori;
 
     ispow2 = bzla_util_is_power_of_2(bw);

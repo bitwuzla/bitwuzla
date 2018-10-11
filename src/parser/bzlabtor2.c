@@ -384,7 +384,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_rol:
         assert(line->nargs == 2);
-        node = boolector_rol(bzla, e[0], e[1]);
+        node = boolector_bv_rol(bzla, e[0], e[1]);
         break;
 
       case BTOR2_TAG_ror:

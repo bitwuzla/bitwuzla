@@ -1283,7 +1283,7 @@ parse_shift(BzlaBZLAParser *parser, uint32_t width, Shift f)
 static BoolectorNode *
 parse_rol(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_shift(parser, width, boolector_rol);
+  return parse_shift(parser, width, boolector_bv_rol);
 }
 
 static BoolectorNode *
