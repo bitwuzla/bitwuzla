@@ -881,7 +881,7 @@ parse_and(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_smod(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_binary(parser, width, boolector_smod);
+  return parse_binary(parser, width, boolector_bv_smod);
 }
 
 static BoolectorNode *

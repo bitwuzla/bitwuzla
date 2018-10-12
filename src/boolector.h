@@ -1567,7 +1567,9 @@ BoolectorNode *boolector_bv_srem(Bzla *bzla,
     If ``n1`` is zero, the behavior of this function depends on
   boolector_bv_urem.
 */
-BoolectorNode *boolector_smod(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_smod(Bzla *bzla,
+                                 BoolectorNode *n0,
+                                 BoolectorNode *n1);
 
 /*!
   Create the concatenation of two bit-vectors.
