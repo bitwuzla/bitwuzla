@@ -1139,7 +1139,7 @@ parse_saddo(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_ssubo(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_compare_and_overflow(parser, width, boolector_ssubo, 0);
+  return parse_compare_and_overflow(parser, width, boolector_bv_ssubo, 0);
 }
 
 static BoolectorNode *

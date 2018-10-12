@@ -1443,9 +1443,9 @@ BoolectorNode *boolector_bv_usubo(Bzla *bzla,
            ``n0`` and ``n1`` overflows in case both operands are treated
            signed.
 */
-BoolectorNode *boolector_ssubo(Bzla *bzla,
-                               BoolectorNode *n0,
-                               BoolectorNode *n1);
+BoolectorNode *boolector_bv_ssubo(Bzla *bzla,
+                                  BoolectorNode *n0,
+                                  BoolectorNode *n1);
 
 /*!
   Create unsigned division.

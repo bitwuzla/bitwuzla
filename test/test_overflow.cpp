@@ -89,7 +89,7 @@ class TestOverflow : public TestBzla
               result   = sub(i, j);
               break;
             case SSUB:
-              bzla_fun = boolector_ssubo;
+              bzla_fun = boolector_bv_ssubo;
               result   = sub(i, j);
               break;
             case UMUL:
@@ -188,7 +188,7 @@ class TestOverflow : public TestBzla
                 result   = sub(i, j);
                 break;
               case SSUB:
-                bzla_fun = boolector_ssubo;
+                bzla_fun = boolector_bv_ssubo;
                 result   = sub(i, j);
                 break;
               case UMUL:
