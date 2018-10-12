@@ -85,7 +85,7 @@ class TestOverflow : public TestBzla
               result   = add(i, j);
               break;
             case USUB:
-              bzla_fun = boolector_usubo;
+              bzla_fun = boolector_bv_usubo;
               result   = sub(i, j);
               break;
             case SSUB:
@@ -184,7 +184,7 @@ class TestOverflow : public TestBzla
                 result   = add(i, j);
                 break;
               case USUB:
-                bzla_fun = boolector_usubo;
+                bzla_fun = boolector_bv_usubo;
                 result   = sub(i, j);
                 break;
               case SSUB:

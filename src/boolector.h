@@ -1427,9 +1427,9 @@ BoolectorNode *boolector_bv_sub(Bzla *bzla,
            ``n0`` and ``n1`` overflows in case both operands are treated
            unsigned.
 */
-BoolectorNode *boolector_usubo(Bzla *bzla,
-                               BoolectorNode *n0,
-                               BoolectorNode *n1);
+BoolectorNode *boolector_bv_usubo(Bzla *bzla,
+                                  BoolectorNode *n0,
+                                  BoolectorNode *n1);
 
 /*!
   Create a signed bit-vector subtraction overflow detection.

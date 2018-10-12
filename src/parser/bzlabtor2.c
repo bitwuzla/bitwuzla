@@ -565,7 +565,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_usubo:
         assert(line->nargs == 2);
-        node = boolector_usubo(bzla, e[0], e[1]);
+        node = boolector_bv_usubo(bzla, e[0], e[1]);
         break;
 
       case BTOR2_TAG_write:
