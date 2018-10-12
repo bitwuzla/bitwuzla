@@ -1591,7 +1591,7 @@ BoolectorNode *boolector_bv_concat(Bzla *bzla,
    :param n: Number of times to repeat the given node.
    :return: A node representing ``n`` concatenations of node ``node``.
  */
-BoolectorNode *boolector_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n);
+BoolectorNode *boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n);
 
 /*------------------------------------------------------------------------*/
 

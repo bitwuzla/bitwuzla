@@ -3349,7 +3349,7 @@ close_term(BzlaSMT2Parser *parser)
       parser->perrcoo = item_cur->coo;
       return !perr_smt2(parser, "resulting bit-width of 'repeat' too large");
     }
-    exp = boolector_repeat(bzla, item_cur[1].exp, item_cur->num);
+    exp = boolector_bv_repeat(bzla, item_cur[1].exp, item_cur->num);
     release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* BV: ZERO EXTEND -------------------------------------------------------- */
