@@ -102,7 +102,7 @@ class TestOverflow : public TestBzla
               break;
             default:
               assert(op == SDIV);
-              bzla_fun = boolector_sdivo;
+              bzla_fun = boolector_bv_sdivo;
               result   = div(i, j);
           }
 
@@ -201,7 +201,7 @@ class TestOverflow : public TestBzla
                 break;
               default:
                 assert(op == SDIV);
-                bzla_fun = boolector_sdivo;
+                bzla_fun = boolector_bv_sdivo;
                 result   = div(i, j);
             }
 

@@ -1507,9 +1507,9 @@ BoolectorNode *boolector_bv_sdiv(Bzla *bzla,
   .. note::
     Unsigned division cannot overflow.
 */
-BoolectorNode *boolector_sdivo(Bzla *bzla,
-                               BoolectorNode *n0,
-                               BoolectorNode *n1);
+BoolectorNode *boolector_bv_sdivo(Bzla *bzla,
+                                  BoolectorNode *n0,
+                                  BoolectorNode *n1);
 
 /*!
   Create an unsigned remainder.
