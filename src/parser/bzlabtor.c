@@ -947,7 +947,7 @@ parse_nand(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_sdiv(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_binary(parser, width, boolector_sdiv);
+  return parse_binary(parser, width, boolector_bv_sdiv);
 }
 
 static BoolectorNode *

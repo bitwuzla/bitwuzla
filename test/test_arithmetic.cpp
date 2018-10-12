@@ -275,12 +275,12 @@ TEST_F(TestArith, mul_s)
 TEST_F(TestArith, sdiv_s)
 {
   s_arithmetic_test(divide,
-                    boolector_sdiv,
+                    boolector_bv_sdiv,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   s_arithmetic_test(divide,
-                    boolector_sdiv,
+                    boolector_bv_sdiv,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);

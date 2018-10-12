@@ -1487,7 +1487,9 @@ BoolectorNode *boolector_bv_udiv(Bzla *bzla,
     Hence, the behavior in case of a division by zero depends on
     boolector_bv_udiv.
 */
-BoolectorNode *boolector_sdiv(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_sdiv(Bzla *bzla,
+                                 BoolectorNode *n0,
+                                 BoolectorNode *n1);
 
 /*!
   Create a signed bit-vector division overflow detection.
@@ -1540,7 +1542,7 @@ BoolectorNode *boolector_urem(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
   :return: Bit-vector with the same bit width as the operands.
 
   .. note::
-    Analogously to boolector_sdiv, the signed remainder is expressed by means
+    Analogously to boolector_bv_sdiv, the signed remainder is expressed by means
     of the unsigned remainder, where either node is normalized in case that its
     sign bit is 1.  Hence, in case that ``n1`` is zero, the result depends on
     boolector_urem.
