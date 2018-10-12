@@ -202,7 +202,7 @@ TEST_F(TestShift, srl_2)
     test_shift(2,
                std::bitset<2>(i).to_string().c_str(),
                boolector_bv_srl,
-               boolector_udiv);
+               boolector_bv_udiv);
   }
 }
 
@@ -213,7 +213,7 @@ TEST_F(TestShift, srl_3)
     test_shift(3,
                std::bitset<3>(i).to_string().c_str(),
                boolector_bv_srl,
-               boolector_udiv);
+               boolector_bv_udiv);
   }
 }
 
@@ -224,7 +224,7 @@ TEST_F(TestShift, srl_4)
     test_shift(4,
                std::bitset<4>(i).to_string().c_str(),
                boolector_bv_srl,
-               boolector_udiv);
+               boolector_bv_udiv);
   }
 }
 
@@ -235,7 +235,7 @@ TEST_F(TestShift, srl_5)
     test_shift(5,
                std::bitset<5>(i).to_string().c_str(),
                boolector_bv_srl,
-               boolector_udiv);
+               boolector_bv_udiv);
   }
 }
 
@@ -246,7 +246,7 @@ TEST_F(TestShift, srl_8)
     test_shift(8,
                std::bitset<8>(i).to_string().c_str(),
                boolector_bv_srl,
-               boolector_udiv);
+               boolector_bv_udiv);
   }
 }
 
@@ -257,7 +257,7 @@ TEST_F(TestShift, sra_2)
     test_shift(2,
                std::bitset<2>(i).to_string().c_str(),
                boolector_bv_sra,
-               boolector_udiv);
+               boolector_bv_udiv);
   }
 }
 
@@ -268,7 +268,7 @@ TEST_F(TestShift, sra_3)
     test_shift(3,
                std::bitset<3>(i).to_string().c_str(),
                boolector_bv_sra,
-               boolector_udiv);
+               boolector_bv_udiv);
   }
 }
 
@@ -279,7 +279,7 @@ TEST_F(TestShift, sra_4)
     test_shift(4,
                std::bitset<4>(i).to_string().c_str(),
                boolector_bv_sra,
-               boolector_udiv);
+               boolector_bv_udiv);
   }
 }
 
@@ -290,7 +290,7 @@ TEST_F(TestShift, sra_5)
     test_shift(5,
                std::bitset<5>(i).to_string().c_str(),
                boolector_bv_sra,
-               boolector_udiv);
+               boolector_bv_udiv);
   }
 }
 
@@ -301,6 +301,6 @@ TEST_F(TestShift, sra_8)
     test_shift(8,
                std::bitset<8>(i).to_string().c_str(),
                boolector_bv_sra,
-               boolector_udiv);
+               boolector_bv_udiv);
   }
 }

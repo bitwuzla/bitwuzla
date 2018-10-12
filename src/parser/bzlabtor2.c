@@ -525,7 +525,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_udiv:
         assert(line->nargs == 2);
-        node = boolector_udiv(bzla, e[0], e[1]);
+        node = boolector_bv_udiv(bzla, e[0], e[1]);
         break;
 
       case BTOR2_TAG_uext:

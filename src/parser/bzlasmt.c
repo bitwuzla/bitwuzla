@@ -2355,7 +2355,7 @@ translate_formula(BzlaSMTParser *parser, BzlaSMTNode *root)
           translate_binary(parser, node, "bvsdiv", boolector_sdiv);
           break;
         case BZLA_SMTOK_BVUDIV:
-          translate_binary(parser, node, "bvudiv", boolector_udiv);
+          translate_binary(parser, node, "bvudiv", boolector_bv_udiv);
           break;
         case BZLA_SMTOK_BVUREM:
           translate_binary(parser, node, "bvurem", boolector_urem);

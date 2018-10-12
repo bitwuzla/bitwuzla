@@ -1465,7 +1465,9 @@ BoolectorNode *boolector_bv_ssubo(Bzla *bzla,
     real circuits where division by zero cannot be uninterpreted and of course
     returns a result.
 */
-BoolectorNode *boolector_udiv(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_udiv(Bzla *bzla,
+                                 BoolectorNode *n0,
+                                 BoolectorNode *n1);
 
 /*!
   Create signed division.
@@ -1483,7 +1485,7 @@ BoolectorNode *boolector_udiv(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
     If the sign bits of ``a`` and ``b`` do not match, two's complement
     is performed on the result of the previous unsigned division.
     Hence, the behavior in case of a division by zero depends on
-    boolector_udiv.
+    boolector_bv_udiv.
 */
 BoolectorNode *boolector_sdiv(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
 
@@ -1519,7 +1521,7 @@ BoolectorNode *boolector_sdivo(Bzla *bzla,
   :return: Bit-vector with the same bit width as the operands.
 
   .. note::
-    As in boolector_udiv the behavior if ``n1`` is zero, does
+    As in boolector_bv_udiv the behavior if ``n1`` is zero, does
     not exactly comply with the SMT-LIB standard 1.2 and 2.0 where the result
     is handled as uninterpreted function. Our semantics are motivated by
     real circuits, where results can not be uninterpreted.
