@@ -1411,7 +1411,9 @@ BoolectorNode *boolector_rori(Bzla *bzla, BoolectorNode *n, uint32_t nbits);
   :param n1: Second bit-vector operand.
   :return: Bit-vector with the same bit width as the operands.
 */
-BoolectorNode *boolector_sub(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_sub(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
 
 /*!
   Create an unsigned bit-vector subtraction overflow detection.

@@ -899,7 +899,7 @@ parse_mul(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_sub(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_binary(parser, width, boolector_sub);
+  return parse_binary(parser, width, boolector_bv_sub);
 }
 
 static BoolectorNode *
