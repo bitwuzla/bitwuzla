@@ -289,12 +289,12 @@ TEST_F(TestArith, sdiv_s)
 TEST_F(TestArith, srem_s)
 {
   s_arithmetic_test(rem,
-                    boolector_srem,
+                    boolector_bv_srem,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   s_arithmetic_test(rem,
-                    boolector_srem,
+                    boolector_bv_srem,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);

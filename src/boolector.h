@@ -1549,7 +1549,9 @@ BoolectorNode *boolector_bv_urem(Bzla *bzla,
     sign bit is 1.  Hence, in case that ``n1`` is zero, the result depends on
     boolector_bv_urem.
 */
-BoolectorNode *boolector_srem(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_srem(Bzla *bzla,
+                                 BoolectorNode *n0,
+                                 BoolectorNode *n1);
 
 /*!
   Create a, signed remainder where its sign matches the sign of the divisor.
