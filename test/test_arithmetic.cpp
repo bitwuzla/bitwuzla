@@ -219,12 +219,12 @@ TEST_F(TestArith, udiv_u)
 TEST_F(TestArith, urem_u)
 {
   u_arithmetic_test(rem,
-                    boolector_urem,
+                    boolector_bv_urem,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   u_arithmetic_test(rem,
-                    boolector_urem,
+                    boolector_bv_urem,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);

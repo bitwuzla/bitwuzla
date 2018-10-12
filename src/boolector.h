@@ -1528,7 +1528,9 @@ BoolectorNode *boolector_bv_sdivo(Bzla *bzla,
     is handled as uninterpreted function. Our semantics are motivated by
     real circuits, where results can not be uninterpreted.
 */
-BoolectorNode *boolector_urem(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
+BoolectorNode *boolector_bv_urem(Bzla *bzla,
+                                 BoolectorNode *n0,
+                                 BoolectorNode *n1);
 
 /*!
   Create a signed remainder.
@@ -1545,7 +1547,7 @@ BoolectorNode *boolector_urem(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
     Analogously to boolector_bv_sdiv, the signed remainder is expressed by means
     of the unsigned remainder, where either node is normalized in case that its
     sign bit is 1.  Hence, in case that ``n1`` is zero, the result depends on
-    boolector_urem.
+    boolector_bv_urem.
 */
 BoolectorNode *boolector_srem(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
 
@@ -1560,7 +1562,8 @@ BoolectorNode *boolector_srem(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
   :return: Bit-vector with the same bit width as the operands.
 
   .. note::
-    If ``n1`` is zero, the behavior of this function depends on boolector_urem.
+    If ``n1`` is zero, the behavior of this function depends on
+  boolector_bv_urem.
 */
 BoolectorNode *boolector_smod(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1);
 

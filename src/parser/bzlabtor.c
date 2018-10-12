@@ -911,7 +911,7 @@ parse_udiv(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_urem(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_binary(parser, width, boolector_urem);
+  return parse_binary(parser, width, boolector_bv_urem);
 }
 
 static BoolectorNode *
