@@ -70,7 +70,7 @@ class TestShift : public TestCommon
           BoolectorSort sort_sra_ones = boolector_bv_sort(bzla, ushift);
           BoolectorNode *ones         = boolector_ones(bzla, sort_sra_ones);
           boolector_release_sort(bzla, sort_sra_ones);
-          BoolectorNode *concat = boolector_concat(bzla, ones, slice);
+          BoolectorNode *concat = boolector_bv_concat(bzla, ones, slice);
           boolector_release(bzla, slice);
           boolector_release(bzla, ones);
           tmp = boolector_cond(bzla, msb, concat, res_shift1);

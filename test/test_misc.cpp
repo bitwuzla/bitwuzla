@@ -234,7 +234,7 @@ class TestMisc : public TestMm
           sort   = boolector_bv_sort(bzla, num_bits);
           const1 = boolector_unsigned_int(bzla, i, sort);
           const2 = boolector_unsigned_int(bzla, j, sort);
-          concat = boolector_concat(bzla, const1, const2);
+          concat = boolector_bv_concat(bzla, const1, const2);
           const3 = boolector_const(bzla, result);
           eq     = boolector_eq(bzla, concat, const3);
           boolector_assert(bzla, eq);

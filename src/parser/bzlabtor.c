@@ -1208,7 +1208,7 @@ parse_concat(BzlaBZLAParser *parser, uint32_t width)
     return 0;
   }
 
-  res = boolector_concat(parser->bzla, l, r);
+  res = boolector_bv_concat(parser->bzla, l, r);
   boolector_release(parser->bzla, r);
   boolector_release(parser->bzla, l);
   assert(boolector_bv_get_width(parser->bzla, res) == width);

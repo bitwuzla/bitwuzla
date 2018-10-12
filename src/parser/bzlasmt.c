@@ -1789,7 +1789,7 @@ translate_repeat(BzlaSMTParser *parser, BzlaSMTNode *node)
 
   for (i = 1; i < count; i++)
   {
-    tmp = boolector_concat(parser->bzla, exp, res);
+    tmp = boolector_bv_concat(parser->bzla, exp, res);
     boolector_release(parser->bzla, res);
     res = tmp;
   }
@@ -1879,7 +1879,7 @@ translate_rotate(BzlaSMTParser *parser, BzlaSMTNode *node)
     l = boolector_bv_slice(parser->bzla, exp, shift - 1, 0);
     r = boolector_bv_slice(parser->bzla, exp, width - 1, shift);
 
-    translate_node(parser, node, boolector_concat(parser->bzla, l, r));
+    translate_node(parser, node, boolector_bv_concat(parser->bzla, l, r));
     assert(boolector_bv_get_width(parser->bzla, node->exp) == width);
 
     boolector_release(parser->bzla, l);
@@ -1908,7 +1908,7 @@ translate_concat(BzlaSMTParser *parser, BzlaSMTNode *node)
 
   if ((a0 = node2nonarrayexp(parser, c0)))
     if ((a1 = node2nonarrayexp(parser, c1)))
-      translate_node(parser, node, boolector_concat(parser->bzla, a0, a1));
+      translate_node(parser, node, boolector_bv_concat(parser->bzla, a0, a1));
 }
 
 static void
