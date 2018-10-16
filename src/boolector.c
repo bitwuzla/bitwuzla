@@ -4428,6 +4428,22 @@ boolector_fp_sort(Bzla *bzla, uint32_t ewidth, uint32_t swidth)
   return BZLA_EXPORT_BOOLECTOR_SORT(res);
 }
 
+BoolectorSort
+boolector_rm_sort(Bzla *bzla)
+{
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI("");
+
+  BzlaSortId res;
+  res = bzla_sort_rm(bzla);
+  inc_sort_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_SORT(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_SORT(res, rm_sort);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_SORT(res);
+}
+
 static BzlaSortId
 boolector_tuple_sort(Bzla *bzla, BoolectorSort *sorts, size_t num_elements)
 {

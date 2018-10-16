@@ -4860,10 +4860,8 @@ parse_sort(BzlaSMT2Parser *parser,
   }
   else if (tag == BZLA_FP_ROUNDINGMODE_TAG_SMT2)
   {
-    // FP STUB
-    *sort = boolector_bool_sort(bzla);
+    *sort = boolector_rm_sort(bzla);
     BZLA_PUSH_STACK(parser->sorts, *sort);
-    ////
     return 1;
   }
   else if (tag == BZLA_LPAR_TAG_SMT2)

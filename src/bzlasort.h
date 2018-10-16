@@ -117,6 +117,9 @@ BzlaSortId bzla_sort_bv(Bzla *bzla, uint32_t width);
  * bit-width 'swidth'. */
 BzlaSortId bzla_sort_fp(Bzla *bzla, uint32_t ewidth, uint32_t swidth);
 
+/* Create RoundingMode sort. */
+BzlaSortId bzla_sort_rm(Bzla *bzla);
+
 BzlaSortId bzla_sort_array(Bzla *bzla,
                            BzlaSortId index_id,
                            BzlaSortId element_id);

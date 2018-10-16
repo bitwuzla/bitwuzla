@@ -2273,6 +2273,14 @@ BoolectorSort boolector_bv_sort(Bzla *bzla, uint32_t width);
 BoolectorSort boolector_fp_sort(Bzla *bzla, uint32_t ewidth, uint32_t swidth);
 
 /*!
+  Create RoundingMode sort.
+
+  :param bzla: Boolector instance.
+  :return: Sort of type RoundingMode.
+*/
+BoolectorSort boolector_rm_sort(Bzla *bzla);
+
+/*!
   Create function sort.
 
   :param bzla: Boolector instance.
