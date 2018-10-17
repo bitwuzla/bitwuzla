@@ -4630,6 +4630,46 @@ boolector_is_bv_sort(Bzla *bzla, BoolectorSort sort)
 }
 
 bool
+boolector_is_fp_sort(Bzla *bzla, BoolectorSort sort)
+{
+  bool res;
+  BzlaSortId s;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
+  s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
+
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+
+  res = bzla_sort_is_fp(bzla, s);
+  BZLA_TRAPI_RETURN_BOOL(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_BOOL(res, is_fp_sort, sort);
+#endif
+  return res;
+}
+
+bool
+boolector_is_rm_sort(Bzla *bzla, BoolectorSort sort)
+{
+  bool res;
+  BzlaSortId s;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
+  s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
+
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+
+  res = bzla_sort_is_rm(bzla, s);
+  BZLA_TRAPI_RETURN_BOOL(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_BOOL(res, is_rm_sort, sort);
+#endif
+  return res;
+}
+
+bool
 boolector_is_fun_sort(Bzla *bzla, BoolectorSort sort)
 {
   bool res;

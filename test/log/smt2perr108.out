@@ -1,1 +1,1 @@
-log/smt2perr108.smt2:2:17: argument 1 of 'concat' is an array
+log/smt2perr108.smt2:2:17: argument 1 of 'concat' is an array, expected bit-vector term

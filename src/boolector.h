@@ -2358,6 +2358,24 @@ bool boolector_is_array_sort(Bzla *bzla, BoolectorSort sort);
 bool boolector_is_bv_sort(Bzla *bzla, BoolectorSort sort);
 
 /*!
+  Determine if ``sort`` is a floating-point sort.
+
+  :param bzla: Boolector instance.
+  :param sort: Sort.
+  :return: True if ``sort`` is a floating-point sort, and false otherwise.
+ */
+bool boolector_is_fp_sort(Bzla *bzla, BoolectorSort sort);
+
+/*!
+  Determine if ``sort`` is a RoundingMode sort.
+
+  :param bzla: Boolector instance.
+  :param sort: Sort.
+  :return: True if ``sort`` is a RoundingMode sort, and false otherwise.
+ */
+bool boolector_is_rm_sort(Bzla *bzla, BoolectorSort sort);
+
+/*!
   Determine if ``sort`` is a function sort.
 
   :param bzla: Boolector instance.

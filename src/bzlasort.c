@@ -768,6 +768,22 @@ bzla_sort_is_bv(Bzla *bzla, BzlaSortId id)
 }
 
 bool
+bzla_sort_is_fp(Bzla *bzla, BzlaSortId id)
+{
+  /// FP STUB
+  return bzla_sort_is_bool(bzla, id);
+  ////
+}
+
+bool
+bzla_sort_is_rm(Bzla *bzla, BzlaSortId id)
+{
+  /// FP STUB
+  return bzla_sort_is_bool(bzla, id);
+  ////
+}
+
+bool
 bzla_sort_is_array(Bzla *bzla, BzlaSortId id)
 {
   BzlaSort *sort;

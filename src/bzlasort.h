@@ -161,6 +161,12 @@ bool bzla_sort_is_bool(Bzla *bzla, BzlaSortId id);
 
 bool bzla_sort_is_bv(Bzla *bzla, BzlaSortId id);
 
+/* Return true if given sort is a floating-point sort. */
+bool bzla_sort_is_fp(Bzla *bzla, BzlaSortId id);
+
+/* Return true if given sort is a RoundingMode sort. */
+bool bzla_sort_is_rm(Bzla *bzla, BzlaSortId id);
+
 bool bzla_sort_is_array(Bzla *bzla, BzlaSortId id);
 
 bool bzla_sort_is_tuple(Bzla *bzla, BzlaSortId id);
