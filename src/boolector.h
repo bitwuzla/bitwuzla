@@ -931,7 +931,7 @@ BoolectorNode *boolector_bv_not(Bzla *bzla, BoolectorNode *node);
 BoolectorNode *boolector_bv_neg(Bzla *bzla, BoolectorNode *node);
 
 /*!
-  Create *or* reduction of node ``node``.
+  Create *or* reduction of bit-vector node ``node``.
 
   All bits of node ``node`` are combined by a Boolean *or*.
 
@@ -942,7 +942,7 @@ BoolectorNode *boolector_bv_neg(Bzla *bzla, BoolectorNode *node);
 BoolectorNode *boolector_bv_redor(Bzla *bzla, BoolectorNode *node);
 
 /*!
-  Create *xor* reduction of node ``node``.
+  Create *xor* reduction of bit-vector node ``node``.
 
   All bits of ``node`` are combined by a Boolean *xor*.
 
@@ -953,7 +953,7 @@ BoolectorNode *boolector_bv_redor(Bzla *bzla, BoolectorNode *node);
 BoolectorNode *boolector_bv_redxor(Bzla *bzla, BoolectorNode *node);
 
 /*!
-  Create *and* reduction of node ``node``.
+  Create *and* reduction of bit-vector node ``node``.
 
   All bits of ``node`` are combined by a Boolean *and*.
 
@@ -964,8 +964,8 @@ BoolectorNode *boolector_bv_redxor(Bzla *bzla, BoolectorNode *node);
 BoolectorNode *boolector_bv_redand(Bzla *bzla, BoolectorNode *node);
 
 /*!
-  Create a bit-vector slice of ``node`` from index ``upper`` to index
-  ``lower``.
+  Create a bit-vector slice of bit-vector ``node`` from index ``upper`` to
+  index ``lower``.
 
   :param bzla: Boolector instance.
   :param node: Bit-vector node.
@@ -981,9 +981,8 @@ BoolectorNode *boolector_bv_slice(Bzla *bzla,
                                   uint32_t lower);
 
 /*!
-  Create unsigned extension.
-
-  The bit-vector ``node`` is padded with ``width`` * zeroes.
+  Create unsigned extension of bit-vector node ``node`` (padding with ``width``
+  zero bits).
 
   :param bzla: Boolector instance.
   :param node: Bit-vector node.
@@ -995,10 +994,8 @@ BoolectorNode *boolector_bv_uext(Bzla *bzla,
                                  uint32_t width);
 
 /*!
-  Create signed extension.
-
-  The bit-vector ``node`` is padded with ``width`` bits where the value
-  depends on the value of the most significant bit of node ``n``.
+  Create signed extension of bit-vector node ``node`` (padding with ``width``
+  bits of the value of the most significant bit of ``node``).
 
   :param bzla: Boolector instance.
   :param node: Bit-vector node.
@@ -1186,7 +1183,7 @@ BoolectorNode *boolector_bv_smulo(Bzla *bzla,
                                   BoolectorNode *n1);
 
 /*!
-  Create an unsigned less than.
+  Create a bit-vector unsigned less than.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
 
@@ -1200,7 +1197,7 @@ BoolectorNode *boolector_bv_ult(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create a signed less than.
+  Create a bit-vector signed less than.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
 
@@ -1214,7 +1211,7 @@ BoolectorNode *boolector_bv_slt(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create an unsigned less than or equal.
+  Create a bit-vector unsigned less than or equal.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
 
@@ -1228,7 +1225,7 @@ BoolectorNode *boolector_bv_ulte(Bzla *bzla,
                                  BoolectorNode *n1);
 
 /*!
-  Create a signed less than or equal.
+  Create a bit-vector signed less than or equal.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
 
@@ -1242,7 +1239,7 @@ BoolectorNode *boolector_bv_slte(Bzla *bzla,
                                  BoolectorNode *n1);
 
 /*!
-  Create an unsigned greater than.
+  Create a unsigned bit-vector greater than.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
 
@@ -1256,7 +1253,7 @@ BoolectorNode *boolector_bv_ugt(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create a signed greater than.
+  Create a signed bit-vector greater than.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
 
@@ -1270,7 +1267,7 @@ BoolectorNode *boolector_bv_sgt(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create an unsigned greater than or equal.
+  Create a unsigned bit-vector greater than or equal.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
 
@@ -1284,7 +1281,7 @@ BoolectorNode *boolector_bv_ugte(Bzla *bzla,
                                  BoolectorNode *n1);
 
 /*!
-  Create a signed greater than or equal.
+  Create a signed bit-vector greater than or equal.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
 
@@ -1298,7 +1295,7 @@ BoolectorNode *boolector_bv_sgte(Bzla *bzla,
                                  BoolectorNode *n1);
 
 /*!
-  Create a logical shift left.
+  Create a bit-vector logical shift left.
 
   The parameters ``n0`` and ``n1`` must either have the same bit width or
   the bit width of ``n0`` must be a power of two (greater than 1) and the
@@ -1314,7 +1311,7 @@ BoolectorNode *boolector_bv_sll(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create a logical shift right.
+  Create a bit-vector logical shift right.
 
   The parameters ``n0`` and ``n1`` must either have the same bit width or
   the bit width of ``n0`` must be a power of two (greater than 1) and the
@@ -1330,7 +1327,7 @@ BoolectorNode *boolector_bv_srl(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create an arithmetic shift right.
+  Create a bit-vector arithmetic shift right.
 
   The parameters ``n0`` and ``n1`` must either have the same bit width or
   the bit width of ``n0`` must be a power of two (greater than 1) and the
@@ -1346,8 +1343,8 @@ BoolectorNode *boolector_bv_sra(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create a rotate left, with the number of bits to rotate by given as a
-  bit-vector.
+  Create a bit-vector rotate left, with the number of bits to rotate by given
+  as a bit-vector.
 
   The parameters ``n0`` and ``n1`` must either have the same bit width or
   the bit width of ``n0`` must be a power of two (greater than 1) and the
@@ -1363,8 +1360,8 @@ BoolectorNode *boolector_bv_rol(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create a rotate right, with the number of bits to rotate by given as a
-  bit-vector.
+  Create a bit-vector rotate right, with the number of bits to rotate by given
+  as a bit-vector.
 
   The parameters ``n0`` and ``n1`` must either have the same bit width or
   the bit width of ``n0`` must be a power of two (greater than 1) and the
@@ -1448,7 +1445,7 @@ BoolectorNode *boolector_bv_ssubo(Bzla *bzla,
                                   BoolectorNode *n1);
 
 /*!
-  Create unsigned division.
+  Create unsigned bit-vector division.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
   If ``n1`` is zero, then the result is -1.
@@ -1470,7 +1467,7 @@ BoolectorNode *boolector_bv_udiv(Bzla *bzla,
                                  BoolectorNode *n1);
 
 /*!
-  Create signed division.
+  Create signed bit-vector division.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
 
@@ -1512,7 +1509,7 @@ BoolectorNode *boolector_bv_sdivo(Bzla *bzla,
                                   BoolectorNode *n1);
 
 /*!
-  Create an unsigned remainder.
+  Create an unsigned bit-vector remainder.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
   If ``n1`` is zero, then the result is ``n0``.
@@ -1533,7 +1530,7 @@ BoolectorNode *boolector_bv_urem(Bzla *bzla,
                                  BoolectorNode *n1);
 
 /*!
-  Create a signed remainder.
+  Create a signed bit-vector remainder.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
   If ``n1`` is zero, then the result is ``n0``.
@@ -1554,7 +1551,8 @@ BoolectorNode *boolector_bv_srem(Bzla *bzla,
                                  BoolectorNode *n1);
 
 /*!
-  Create a, signed remainder where its sign matches the sign of the divisor.
+  Create a, signed bit-vector remainder where its sign matches the sign of the
+  divisor.
 
   The parameters ``n0`` and ``n1`` must have the same bit width.
 
@@ -1584,7 +1582,7 @@ BoolectorNode *boolector_bv_concat(Bzla *bzla,
                                    BoolectorNode *n1);
 
 /*!
-   Create ``n`` concatenations of a given node ``node``.
+   Create ``n`` concatenations of a given bit-vector node ``node``.
 
    :param bzla: Boolector instance.
    :param node: Bit-vector operand.
@@ -1902,7 +1900,7 @@ const char *boolector_get_symbol(Bzla *bzla, BoolectorNode *node);
 void boolector_set_symbol(Bzla *bzla, BoolectorNode *node, const char *symbol);
 
 /*!
-  Get the bit width of an expression.
+  Get the bit width of a bit-vector expression.
 
   If the expression is an array, it returns the bit width of the array
   elements.
@@ -1925,7 +1923,7 @@ uint32_t boolector_bv_get_width(Bzla *bzla, BoolectorNode *node);
 uint32_t boolector_array_get_index_width(Bzla *bzla, BoolectorNode *n_array);
 
 /*!
-  Get the bit-vector of a constant node represented as a bit string.
+  Get the bits of a bit-vector constant node as a bit string.
   Must be freed via boolector_free_bits.
 
   :param bzla: Boolector instance.
