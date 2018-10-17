@@ -1307,10 +1307,10 @@ node2exp(BzlaSMTParser *parser, BzlaSMTNode *node)
 
     token = symbol->token;
     if (token == BZLA_SMTOK_TRUE || token == BZLA_SMTOK_BIT1)
-      return symbol->exp = boolector_const(parser->bzla, "1");
+      return symbol->exp = boolector_bv_const(parser->bzla, "1");
 
     if (token == BZLA_SMTOK_FALSE || token == BZLA_SMTOK_BIT0)
-      return symbol->exp = boolector_const(parser->bzla, "0");
+      return symbol->exp = boolector_bv_const(parser->bzla, "0");
 
     p = symbol->name;
     if (*p++ == 'b' && *p++ == 'v')
@@ -1354,7 +1354,7 @@ node2exp(BzlaSMTParser *parser, BzlaSMTNode *node)
                   tmp = ext;
                 }
 
-                symbol->exp = boolector_const(parser->bzla, tmp);
+                symbol->exp = boolector_bv_const(parser->bzla, tmp);
                 parser->constants++;
               }
 
@@ -1372,7 +1372,7 @@ node2exp(BzlaSMTParser *parser, BzlaSMTNode *node)
 
           if (start < p && !*p)
           {
-            symbol->exp = boolector_const(parser->bzla, start);
+            symbol->exp = boolector_bv_const(parser->bzla, start);
             parser->constants++;
           }
         }
@@ -1404,7 +1404,7 @@ node2exp(BzlaSMTParser *parser, BzlaSMTNode *node)
             if (tmpbv) bzla_bv_free(parser->mem, tmpbv);
             tmp = ext;
           }
-          symbol->exp = boolector_const(parser->bzla, tmp);
+          symbol->exp = boolector_bv_const(parser->bzla, tmp);
           bzla_mem_freestr(parser->mem, tmp);
           parser->constants++;
         }
@@ -2004,7 +2004,7 @@ translate_shift(BzlaSMTParser *parser,
     else
     {
       s = boolector_bv_sort(parser->bzla, width);
-      t = boolector_zero(parser->bzla, s);
+      t = boolector_bv_zero(parser->bzla, s);
       boolector_release_sort(parser->bzla, s);
     }
 

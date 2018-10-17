@@ -31,8 +31,8 @@ class TestInc : public TestBoolector
 
     boolector_set_opt(d_bzla, BZLA_OPT_INCREMENTAL, 1);
     s       = boolector_bv_sort(d_bzla, w);
-    one     = boolector_one(d_bzla, s);
-    current = boolector_zero(d_bzla, s);
+    one     = boolector_bv_one(d_bzla, s);
+    current = boolector_bv_zero(d_bzla, s);
     boolector_release_sort(d_bzla, s);
 
     i = 0;

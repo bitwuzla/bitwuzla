@@ -233,7 +233,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
                      bw);
           goto DONE;
         }
-        node = boolector_const(bzla, line->constant);
+        node = boolector_bv_const(bzla, line->constant);
         break;
 
       case BTOR2_TAG_constd:
@@ -249,7 +249,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
                      bw);
           goto DONE;
         }
-        node = boolector_constd(bzla, sort, line->constant);
+        node = boolector_bv_constd(bzla, sort, line->constant);
         break;
 
       case BTOR2_TAG_consth:
@@ -265,7 +265,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
                      bw);
           goto DONE;
         }
-        node = boolector_consth(bzla, sort, line->constant);
+        node = boolector_bv_consth(bzla, sort, line->constant);
         break;
 
       case BTOR2_TAG_constraint:
@@ -347,12 +347,12 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_one:
         assert(line->nargs == 0);
-        node = boolector_one(bzla, sort);
+        node = boolector_bv_one(bzla, sort);
         break;
 
       case BTOR2_TAG_ones:
         assert(line->nargs == 0);
-        node = boolector_ones(bzla, sort);
+        node = boolector_bv_ones(bzla, sort);
         break;
 
       case BTOR2_TAG_or:
@@ -585,7 +585,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_zero:
         assert(line->nargs == 0);
-        node = boolector_zero(bzla, sort);
+        node = boolector_bv_zero(bzla, sort);
         break;
 
       default:

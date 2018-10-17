@@ -713,7 +713,7 @@ bool boolector_is_bv_const_min_signed(Bzla *bzla, BoolectorNode *node);
                representing the bit-vector constant specified by ``bits``.
   :return: Bit-vector constant with bit width ``strlen (bits)``.
 */
-BoolectorNode *boolector_const(Bzla *bzla, const char *bits);
+BoolectorNode *boolector_bv_const(Bzla *bzla, const char *bits);
 
 /*!
   Create bit-vector constant representing the decimal number ``str``.
@@ -724,9 +724,9 @@ BoolectorNode *boolector_const(Bzla *bzla, const char *bits);
               postive decimal number.
   :return: Bit-vector constant with sort ``sort``.
  */
-BoolectorNode *boolector_constd(Bzla *bzla,
-                                BoolectorSort sort,
-                                const char *str);
+BoolectorNode *boolector_bv_constd(Bzla *bzla,
+                                   BoolectorSort sort,
+                                   const char *str);
 
 /*!
   Create bit-vector constant representing the hexadecimal number ``str``.
@@ -737,9 +737,9 @@ BoolectorNode *boolector_constd(Bzla *bzla,
               number.
   :return: Bit-vector constant with sort ``sort``.
  */
-BoolectorNode *boolector_consth(Bzla *bzla,
-                                BoolectorSort sort,
-                                const char *str);
+BoolectorNode *boolector_bv_consth(Bzla *bzla,
+                                   BoolectorSort sort,
+                                   const char *str);
 
 /*!
   Create bit-vector constant zero of sort ``sort``.
@@ -748,7 +748,7 @@ BoolectorNode *boolector_consth(Bzla *bzla,
   :param sort: Sort of bit-vector constant.
   :return: Bit-vector constant zero of sort ``sort``.
 */
-BoolectorNode *boolector_zero(Bzla *bzla, BoolectorSort sort);
+BoolectorNode *boolector_bv_zero(Bzla *bzla, BoolectorSort sort);
 
 /*!
   Create bit-vector constant of sort ``sort``, where each bit is set to one.
@@ -757,7 +757,7 @@ BoolectorNode *boolector_zero(Bzla *bzla, BoolectorSort sort);
   :param sort: Sort of constant.
   :return: Bit-vector constant -1 of sort ``sort``.
 */
-BoolectorNode *boolector_ones(Bzla *bzla, BoolectorSort sort);
+BoolectorNode *boolector_bv_ones(Bzla *bzla, BoolectorSort sort);
 
 /*!
   Create bit-vector constant one of sort ``sort``.
@@ -766,7 +766,7 @@ BoolectorNode *boolector_ones(Bzla *bzla, BoolectorSort sort);
   :param sort: Sort of constant.
   :return: Bit-vector constant one of sort ``sort``.
 */
-BoolectorNode *boolector_one(Bzla *bzla, BoolectorSort sort);
+BoolectorNode *boolector_bv_one(Bzla *bzla, BoolectorSort sort);
 
 /*!
   Create bit-vector minimum signed value constant of sort ``sort``.
@@ -800,9 +800,9 @@ BoolectorNode *boolector_max_signed(Bzla *bzla, BoolectorSort sort);
   :param sort: Sort of constant.
   :return: Bit-vector constant of sort ``sort``.
 */
-BoolectorNode *boolector_unsigned_int(Bzla *bzla,
-                                      uint32_t u,
-                                      BoolectorSort sort);
+BoolectorNode *boolector_bv_unsigned_int(Bzla *bzla,
+                                         uint32_t u,
+                                         BoolectorSort sort);
 
 /*!
   Create bit-vector constant representing the signed integer ``i`` of sort
@@ -816,7 +816,7 @@ BoolectorNode *boolector_unsigned_int(Bzla *bzla,
   :param sort: Sort of constant.
   :return: Bit-vector constant of sort ``sort``.
 */
-BoolectorNode *boolector_int(Bzla *bzla, int32_t i, BoolectorSort sort);
+BoolectorNode *boolector_bv_int(Bzla *bzla, int32_t i, BoolectorSort sort);
 
 /*------------------------------------------------------------------------*/
 
@@ -1935,7 +1935,7 @@ uint32_t boolector_array_get_index_width(Bzla *bzla, BoolectorNode *n_array);
   .. seealso::
     boolector_free_bits
 */
-const char *boolector_get_bits(Bzla *bzla, BoolectorNode *node);
+const char *boolector_bv_const_get_bits(Bzla *bzla, BoolectorNode *node);
 
 /*!
   Free a bits string retrieved via boolector_get_bits.
@@ -1944,7 +1944,7 @@ const char *boolector_get_bits(Bzla *bzla, BoolectorNode *node);
   :param bits: String which has to be freed.
 
   .. seealso::
-    boolector_get_bits
+    boolector_bv_const_get_bits
 */
 void boolector_free_bits(Bzla *bzla, const char *bits);
 

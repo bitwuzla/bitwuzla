@@ -2032,8 +2032,8 @@ translate_ext_rotate_smt2(Bzla *bzla,
   uint32_t shift_width;
 
   /* max width of a bit vector is uint32_t -> conversion not a problem */
-  shift_width_bv =
-      bzla_bv_char_to_bv(bzla->mm, (char *) boolector_get_bits(bzla, shift));
+  shift_width_bv = bzla_bv_char_to_bv(
+      bzla->mm, (char *) boolector_bv_const_get_bits(bzla, shift));
   shift_width = (uint32_t) bzla_bv_to_uint64(shift_width_bv);
   bzla_bv_free(bzla->mm, shift_width_bv);
 
@@ -4248,11 +4248,11 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
                          width);
       }
       else if (width2 == width)
-        exp = boolector_const(bzla, constr);
+        exp = boolector_bv_const(bzla, constr);
       else if (!width2)
       {
         s   = boolector_bv_sort(bzla, width);
-        exp = boolector_zero(bzla, s);
+        exp = boolector_bv_zero(bzla, s);
         boolector_release_sort(bzla, s);
       }
       else
@@ -4267,7 +4267,7 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
           uconstrbv = bzla_bv_uext(parser->mem, constrbv, width - width2);
         }
         uconstr = bzla_bv_to_char(parser->mem, uconstrbv);
-        exp     = boolector_const(bzla, uconstr);
+        exp     = boolector_bv_const(bzla, uconstr);
         bzla_mem_freestr(parser->mem, uconstr);
         bzla_bv_free(parser->mem, uconstrbv);
         if (constrbv) bzla_bv_free(parser->mem, constrbv);
@@ -4651,7 +4651,7 @@ parse_open_term(BzlaSMT2Parser *parser, int32_t tag)
   else if (tag == BZLA_BINARY_CONSTANT_TAG_SMT2)
   {
     item_cur->tag = BZLA_EXP_TAG_SMT2;
-    item_cur->exp = boolector_const(bzla, parser->token.start + 2);
+    item_cur->exp = boolector_bv_const(bzla, parser->token.start + 2);
   }
   else if (tag == BZLA_HEXADECIMAL_CONSTANT_TAG_SMT2)
   {
@@ -4677,7 +4677,7 @@ parse_open_term(BzlaSMT2Parser *parser, int32_t tag)
       if (constrbv) bzla_bv_free(parser->mem, constrbv);
     }
     item_cur->tag = BZLA_EXP_TAG_SMT2;
-    item_cur->exp = boolector_const(bzla, uconstr);
+    item_cur->exp = boolector_bv_const(bzla, uconstr);
     bzla_mem_freestr(parser->mem, uconstr);
     bzla_mem_freestr(parser->mem, constr);
   }

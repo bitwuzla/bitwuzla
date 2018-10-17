@@ -56,10 +56,10 @@ class TestArith : public TestBoolector
             BoolectorSort sort = boolector_bv_sort(d_bzla, num_bits);
             BoolectorNode *const1, *const2, *const3, *bfun, *eq;
 
-            const1 = boolector_unsigned_int(d_bzla, i, sort);
-            const2 = boolector_unsigned_int(d_bzla, j, sort);
+            const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
+            const2 = boolector_bv_unsigned_int(d_bzla, j, sort);
             bfun   = btorfun(d_bzla, const1, const2);
-            const3 = boolector_unsigned_int(d_bzla, result, sort);
+            const3 = boolector_bv_unsigned_int(d_bzla, result, sort);
             eq     = boolector_eq(d_bzla, bfun, const3);
             boolector_assert(d_bzla, eq);
 
@@ -114,10 +114,10 @@ class TestArith : public TestBoolector
             BoolectorSort sort = boolector_bv_sort(d_bzla, num_bits);
             BoolectorNode *const1, *const2, *const3, *bfun, *eq;
 
-            const1 = boolector_int(d_bzla, i, sort);
-            const2 = boolector_int(d_bzla, j, sort);
+            const1 = boolector_bv_int(d_bzla, i, sort);
+            const2 = boolector_bv_int(d_bzla, j, sort);
             bfun   = btorfun(d_bzla, const1, const2);
-            const3 = boolector_int(d_bzla, result, sort);
+            const3 = boolector_bv_int(d_bzla, result, sort);
             eq     = boolector_eq(d_bzla, bfun, const3);
             boolector_assert(d_bzla, eq);
 

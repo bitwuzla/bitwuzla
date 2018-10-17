@@ -530,7 +530,7 @@ parse_const(BzlaBZLAParser *parser, uint32_t width)
     return 0;
   }
 
-  res = boolector_const(parser->bzla, parser->constant.start);
+  res = boolector_bv_const(parser->bzla, parser->constant.start);
 
   return res;
 }
@@ -596,7 +596,7 @@ parse_consth(BzlaBZLAParser *parser, uint32_t width)
   }
 
   assert(width == strlen(tmp));
-  res = boolector_const(parser->bzla, tmp);
+  res = boolector_bv_const(parser->bzla, tmp);
   bzla_mem_freestr(parser->mem, tmp);
 
   assert(boolector_bv_get_width(parser->bzla, res) == width);
@@ -683,7 +683,7 @@ parse_constd(BzlaBZLAParser *parser, uint32_t width)
   }
 
   assert(width == strlen(tmp));
-  res = boolector_const(parser->bzla, tmp);
+  res = boolector_bv_const(parser->bzla, tmp);
   bzla_mem_freestr(parser->mem, tmp);
 
   assert(boolector_bv_get_width(parser->bzla, res) == width);
@@ -698,7 +698,7 @@ parse_zero(BzlaBZLAParser *parser, uint32_t width)
   BoolectorSort s;
 
   s   = boolector_bv_sort(parser->bzla, width);
-  res = boolector_zero(parser->bzla, s);
+  res = boolector_bv_zero(parser->bzla, s);
   boolector_release_sort(parser->bzla, s);
   return res;
 }
@@ -710,7 +710,7 @@ parse_one(BzlaBZLAParser *parser, uint32_t width)
   BoolectorSort s;
 
   s   = boolector_bv_sort(parser->bzla, width);
-  res = boolector_one(parser->bzla, s);
+  res = boolector_bv_one(parser->bzla, s);
   boolector_release_sort(parser->bzla, s);
   return res;
 }
@@ -722,7 +722,7 @@ parse_ones(BzlaBZLAParser *parser, uint32_t width)
   BoolectorSort s;
 
   s   = boolector_bv_sort(parser->bzla, width);
-  res = boolector_ones(parser->bzla, s);
+  res = boolector_bv_ones(parser->bzla, s);
   boolector_release_sort(parser->bzla, s);
   return res;
 }

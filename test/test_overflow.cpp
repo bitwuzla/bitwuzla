@@ -109,8 +109,8 @@ class TestOverflow : public TestBzla
           if (result < 0 || result >= max) overflow_test = true;
 
           sort   = boolector_bv_sort(d_bzla, num_bits);
-          const1 = boolector_unsigned_int(d_bzla, i, sort);
-          const2 = boolector_unsigned_int(d_bzla, j, sort);
+          const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
+          const2 = boolector_bv_unsigned_int(d_bzla, j, sort);
           bfun   = bzla_fun(d_bzla, const1, const2);
           boolector_assert(d_bzla, bfun);
 
@@ -208,8 +208,8 @@ class TestOverflow : public TestBzla
             if (!(result >= -max && result < max)) overflow_test = true;
 
             sort   = boolector_bv_sort(d_bzla, num_bits);
-            const1 = boolector_int(d_bzla, i, sort);
-            const2 = boolector_int(d_bzla, j, sort);
+            const1 = boolector_bv_int(d_bzla, i, sort);
+            const2 = boolector_bv_int(d_bzla, j, sort);
             bfun   = bzla_fun(d_bzla, const1, const2);
             boolector_assert(d_bzla, bfun);
 

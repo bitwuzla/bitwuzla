@@ -38,7 +38,7 @@ class TestRotate : public TestBoolector
 
     roti = funi(d_bzla, e0, nbits);
 
-    rot0_e1 = boolector_unsigned_int(d_bzla, nbits, sort);
+    rot0_e1 = boolector_bv_unsigned_int(d_bzla, nbits, sort);
     rot0    = fun(d_bzla, e0, rot0_e1);
 
     ne0 = boolector_ne(d_bzla, rot0, roti);
@@ -49,7 +49,7 @@ class TestRotate : public TestBoolector
       if (bw_log2)
       {
         sort_log2 = boolector_bv_sort(d_bzla, bw_log2);
-        rot1_e1   = boolector_unsigned_int(d_bzla, nbits, sort_log2);
+        rot1_e1   = boolector_bv_unsigned_int(d_bzla, nbits, sort_log2);
         rot1      = fun(d_bzla, e0, rot1_e1);
         ne1       = boolector_ne(d_bzla, rot1, rot0);
         ne2       = boolector_ne(d_bzla, rot1, roti);

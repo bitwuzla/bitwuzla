@@ -85,9 +85,9 @@ class TestMisc : public TestMm
           result = mk_slice(x, i, j, num_bits);
 
           sort   = boolector_bv_sort(bzla, high);
-          const1 = boolector_unsigned_int(bzla, x, sort);
+          const1 = boolector_bv_unsigned_int(bzla, x, sort);
           slice  = boolector_bv_slice(bzla, const1, i, j);
-          const2 = boolector_const(bzla, result);
+          const2 = boolector_bv_const(bzla, result);
           eq     = boolector_eq(bzla, slice, const2);
           boolector_assert(bzla, eq);
 
@@ -163,9 +163,9 @@ class TestMisc : public TestMm
               ext_mode == UEXT ? uext(i, j, num_bits) : sext(i, j, num_bits);
 
           sort   = boolector_bv_sort(bzla, num_bits);
-          const1 = boolector_unsigned_int(bzla, i, sort);
+          const1 = boolector_bv_unsigned_int(bzla, i, sort);
           bfun   = bzla_fun(bzla, const1, j);
-          const2 = boolector_const(bzla, result);
+          const2 = boolector_bv_const(bzla, result);
           eq     = boolector_eq(bzla, bfun, const2);
           boolector_assert(bzla, eq);
 
@@ -232,10 +232,10 @@ class TestMisc : public TestMm
           result = mk_concat(i, j, num_bits);
 
           sort   = boolector_bv_sort(bzla, num_bits);
-          const1 = boolector_unsigned_int(bzla, i, sort);
-          const2 = boolector_unsigned_int(bzla, j, sort);
+          const1 = boolector_bv_unsigned_int(bzla, i, sort);
+          const2 = boolector_bv_unsigned_int(bzla, j, sort);
           concat = boolector_bv_concat(bzla, const1, const2);
-          const3 = boolector_const(bzla, result);
+          const3 = boolector_bv_const(bzla, result);
           eq     = boolector_eq(bzla, concat, const3);
           boolector_assert(bzla, eq);
 
@@ -285,11 +285,11 @@ class TestMisc : public TestMm
 
             sort   = boolector_bv_sort(bzla, num_bits);
             sort1  = boolector_bv_sort(bzla, 1);
-            const1 = boolector_unsigned_int(bzla, i, sort);
-            const2 = boolector_unsigned_int(bzla, j, sort);
-            const3 = boolector_unsigned_int(bzla, k, sort1);
+            const1 = boolector_bv_unsigned_int(bzla, i, sort);
+            const2 = boolector_bv_unsigned_int(bzla, j, sort);
+            const3 = boolector_bv_unsigned_int(bzla, k, sort1);
             cond   = boolector_cond(bzla, const3, const1, const2);
-            const4 = boolector_unsigned_int(bzla, result, sort);
+            const4 = boolector_bv_unsigned_int(bzla, result, sort);
             eq     = boolector_eq(bzla, cond, const4);
             boolector_assert(bzla, eq);
 
@@ -340,8 +340,8 @@ class TestMisc : public TestMm
           array      = boolector_array(bzla, array_sort, "array");
           const1     = boolector_false(bzla);
           const2     = boolector_true(bzla);
-          const3     = boolector_unsigned_int(bzla, i, elem_sort);
-          const4     = boolector_unsigned_int(bzla, j, elem_sort);
+          const3     = boolector_bv_unsigned_int(bzla, i, elem_sort);
+          const4     = boolector_bv_unsigned_int(bzla, j, elem_sort);
           read1      = boolector_read(bzla, array, const1);
           read2      = boolector_read(bzla, array, const2);
           eq1        = boolector_eq(bzla, const3, read1);

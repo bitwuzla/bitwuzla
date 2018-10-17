@@ -1202,7 +1202,7 @@ boolector_ne(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
 /*------------------------------------------------------------------------*/
 
 BoolectorNode *
-boolector_const(Bzla *bzla, const char *bits)
+boolector_bv_const(Bzla *bzla, const char *bits)
 {
   BzlaNode *res;
   BzlaBitVector *bv;
@@ -1217,13 +1217,13 @@ boolector_const(Bzla *bzla, const char *bits)
   bzla_bv_free(bzla->mm, bv);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, const, bits);
+  BZLA_CHKCLONE_RES_PTR(res, bv_const, bits);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_constd(Bzla *bzla, BoolectorSort sort, const char *str)
+boolector_bv_constd(Bzla *bzla, BoolectorSort sort, const char *str)
 {
   uint32_t w;
   BzlaNode *res;
@@ -1250,13 +1250,13 @@ boolector_constd(Bzla *bzla, BoolectorSort sort, const char *str)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, constd, sort, str);
+  BZLA_CHKCLONE_RES_PTR(res, bv_constd, sort, str);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_consth(Bzla *bzla, BoolectorSort sort, const char *str)
+boolector_bv_consth(Bzla *bzla, BoolectorSort sort, const char *str)
 {
   uint32_t w;
   BzlaNode *res;
@@ -1283,7 +1283,7 @@ boolector_consth(Bzla *bzla, BoolectorSort sort, const char *str)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, consth, sort, str);
+  BZLA_CHKCLONE_RES_PTR(res, bv_consth, sort, str);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
@@ -1388,7 +1388,7 @@ boolector_is_bv_const_min_signed(Bzla *bzla, BoolectorNode *node)
 /*------------------------------------------------------------------------*/
 
 BoolectorNode *
-boolector_zero(Bzla *bzla, BoolectorSort sort)
+boolector_bv_zero(Bzla *bzla, BoolectorSort sort)
 {
   BzlaNode *res;
   BzlaSortId s;
@@ -1402,13 +1402,13 @@ boolector_zero(Bzla *bzla, BoolectorSort sort)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, zero, sort);
+  BZLA_CHKCLONE_RES_PTR(res, bv_zero, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_ones(Bzla *bzla, BoolectorSort sort)
+boolector_bv_ones(Bzla *bzla, BoolectorSort sort)
 {
   BzlaNode *res;
   BzlaSortId s;
@@ -1422,13 +1422,13 @@ boolector_ones(Bzla *bzla, BoolectorSort sort)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, ones, sort);
+  BZLA_CHKCLONE_RES_PTR(res, bv_ones, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_one(Bzla *bzla, BoolectorSort sort)
+boolector_bv_one(Bzla *bzla, BoolectorSort sort)
 {
   BzlaNode *res;
   BzlaSortId s;
@@ -1442,7 +1442,7 @@ boolector_one(Bzla *bzla, BoolectorSort sort)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, one, sort);
+  BZLA_CHKCLONE_RES_PTR(res, bv_one, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
@@ -1488,7 +1488,7 @@ boolector_max_signed(Bzla *bzla, BoolectorSort sort)
 }
 
 BoolectorNode *
-boolector_unsigned_int(Bzla *bzla, uint32_t u, BoolectorSort sort)
+boolector_bv_unsigned_int(Bzla *bzla, uint32_t u, BoolectorSort sort)
 {
   BzlaNode *res;
   BzlaSortId s;
@@ -1502,13 +1502,13 @@ boolector_unsigned_int(Bzla *bzla, uint32_t u, BoolectorSort sort)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, unsigned_int, u, sort);
+  BZLA_CHKCLONE_RES_PTR(res, bv_unsigned_int, u, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_int(Bzla *bzla, int32_t i, BoolectorSort sort)
+boolector_bv_int(Bzla *bzla, int32_t i, BoolectorSort sort)
 {
   BzlaNode *res;
   BzlaSortId s;
@@ -1522,7 +1522,7 @@ boolector_int(Bzla *bzla, int32_t i, BoolectorSort sort)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, int, i, sort);
+  BZLA_CHKCLONE_RES_PTR(res, bv_int, i, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
@@ -3683,7 +3683,7 @@ boolector_array_get_index_width(Bzla *bzla, BoolectorNode *n_array)
 }
 
 const char *
-boolector_get_bits(Bzla *bzla, BoolectorNode *node)
+boolector_bv_const_get_bits(Bzla *bzla, BoolectorNode *node)
 {
   BzlaNode *exp, *real;
   BzlaBVAss *bvass;
@@ -3712,7 +3712,7 @@ boolector_get_bits(Bzla *bzla, BoolectorNode *node)
   if (bzla->clone)
   {
     const char *cloneres =
-        boolector_get_bits(bzla->clone, BZLA_CLONED_EXP(exp));
+        boolector_bv_const_get_bits(bzla->clone, BZLA_CLONED_EXP(exp));
     assert(!strcmp(cloneres, res));
     bvass->cloned_assignment = cloneres;
     bzla_chkclone(bzla, bzla->clone);

@@ -51,8 +51,8 @@ class TestLogic : public TestBoolector
         result = ~i & (max - 1);
 
         sort   = boolector_bv_sort(d_bzla, num_bits);
-        const1 = boolector_unsigned_int(d_bzla, i, sort);
-        const2 = boolector_unsigned_int(d_bzla, result, sort);
+        const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
+        const2 = boolector_bv_unsigned_int(d_bzla, result, sort);
         inv    = boolector_bv_not(d_bzla, const1);
         eq     = boolector_eq(d_bzla, inv, const2);
         boolector_assert(d_bzla, eq);
@@ -104,10 +104,10 @@ class TestLogic : public TestBoolector
           result = func(i, j);
 
           sort   = boolector_bv_sort(d_bzla, num_bits);
-          const1 = boolector_unsigned_int(d_bzla, i, sort);
-          const2 = boolector_unsigned_int(d_bzla, j, sort);
+          const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
+          const2 = boolector_bv_unsigned_int(d_bzla, j, sort);
           bfun   = bzla_fun(d_bzla, const1, const2);
-          const3 = boolector_unsigned_int(d_bzla, result, sort);
+          const3 = boolector_bv_unsigned_int(d_bzla, result, sort);
           eq     = boolector_eq(d_bzla, bfun, const3);
           boolector_assert(d_bzla, eq);
 
@@ -155,10 +155,10 @@ class TestLogic : public TestBoolector
             result = ~(i ^ j) & (max - 1);
 
             sort   = boolector_bv_sort(d_bzla, num_bits);
-            const1 = boolector_unsigned_int(d_bzla, i, sort);
-            const2 = boolector_unsigned_int(d_bzla, j, sort);
+            const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
+            const2 = boolector_bv_unsigned_int(d_bzla, j, sort);
             xnor   = boolector_bv_xnor(d_bzla, const1, const2);
-            const3 = boolector_unsigned_int(d_bzla, result, sort);
+            const3 = boolector_bv_unsigned_int(d_bzla, result, sort);
             eq     = boolector_eq(d_bzla, xnor, const3);
             boolector_assert(d_bzla, eq);
 
@@ -208,7 +208,7 @@ class TestLogic : public TestBoolector
         result = func(i, (uint32_t) num_bits);
 
         sort   = boolector_bv_sort(d_bzla, num_bits);
-        const1 = boolector_unsigned_int(d_bzla, i, sort);
+        const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
         bfun   = bzla_fun(d_bzla, const1);
         boolector_assert(d_bzla, bfun);
 

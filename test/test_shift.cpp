@@ -46,11 +46,11 @@ class TestShift : public TestCommon
     e0     = boolector_var(bzla, sort, "e0");
     ushift = std::stol(shift, nullptr, 2);
 
-    shift0     = boolector_const(bzla, shift);
+    shift0     = boolector_bv_const(bzla, shift);
     res_shift0 = shift_fun(bzla, e0, shift0);
 
     res_shift1 = boolector_copy(bzla, e0);
-    two        = boolector_unsigned_int(bzla, 2u, sort);
+    two        = boolector_bv_unsigned_int(bzla, 2u, sort);
     for (uint32_t i = 0; i < ushift; ++i)
     {
       tmp = fun(bzla, res_shift1, two);
@@ -68,7 +68,7 @@ class TestShift : public TestCommon
           BoolectorNode *slice =
               boolector_bv_slice(bzla, res_shift1, bw - ushift - 1, 0);
           BoolectorSort sort_sra_ones = boolector_bv_sort(bzla, ushift);
-          BoolectorNode *ones         = boolector_ones(bzla, sort_sra_ones);
+          BoolectorNode *ones         = boolector_bv_ones(bzla, sort_sra_ones);
           boolector_release_sort(bzla, sort_sra_ones);
           BoolectorNode *concat = boolector_bv_concat(bzla, ones, slice);
           boolector_release(bzla, slice);
@@ -80,7 +80,7 @@ class TestShift : public TestCommon
         }
         else
         {
-          BoolectorNode *ones = boolector_ones(bzla, sort);
+          BoolectorNode *ones = boolector_bv_ones(bzla, sort);
           tmp                 = boolector_cond(bzla, msb, ones, res_shift1);
           boolector_release(bzla, ones);
           boolector_release(bzla, res_shift1);
@@ -100,7 +100,7 @@ class TestShift : public TestCommon
       {
         BoolectorSort sort_log2 = boolector_bv_sort(bzla, bw_log2);
         BoolectorNode *shift2_e1 =
-            boolector_unsigned_int(bzla, ushift, sort_log2);
+            boolector_bv_unsigned_int(bzla, ushift, sort_log2);
         res_shift2 = shift_fun(bzla, e0, shift2_e1);
         ne1        = boolector_ne(bzla, res_shift2, res_shift0);
         ne2        = boolector_ne(bzla, res_shift2, res_shift1);
