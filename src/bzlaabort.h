@@ -84,6 +84,14 @@ void bzla_abort_warn(
     BZLA_ABORT(!bzla_node_is_array(arg), "'%s' must be an array\n", #arg); \
   } while (0)
 
+#define BZLA_ABORT_IS_NOT_FP(arg)                                  \
+  do                                                               \
+  {                                                                \
+    BZLA_ABORT(!bzla_sort_is_fp(bzla, bzla_node_get_sort_id(arg)), \
+               "'%s' must be a floating-point\n",                  \
+               #arg);                                              \
+  } while (0)
+
 #define BZLA_ABORT_IS_NOT_FUN(arg)                                  \
   do                                                                \
   {                                                                 \

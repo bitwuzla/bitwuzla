@@ -1594,6 +1594,26 @@ BoolectorNode *boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n);
 /*------------------------------------------------------------------------*/
 
 /*!
+  Create the absolute value of a given floating-point node ``node``.
+
+  :param bzla: Boolector instance.
+  :param node: Floating-point operand.
+  :return: A floating-point representing the absolut value of ``node``.
+ */
+BoolectorNode *boolector_fp_abs(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Create the negation of a given floating-point node ``node``.
+
+  :param bzla: Boolector instance.
+  :param node: Floating-point operand.
+  :return: A floating-point representing the negation of ``node``.
+ */
+BoolectorNode *boolector_fp_neg(Bzla *bzla, BoolectorNode *node);
+
+/*------------------------------------------------------------------------*/
+
+/*!
   Create a read on array ``n_array`` at position ``n_index``.
 
   :param bzla: Boolector instance.

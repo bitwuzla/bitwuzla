@@ -2421,30 +2421,22 @@ static int32_t
 close_term_unary_fp_fun(BzlaSMT2Parser *parser,
                         BzlaSMT2Item *item_open,
                         BzlaSMT2Item *item_cur,
-                        uint32_t nargs)
-// BoolectorNode *(*fun) (Bzla *, BoolectorNode *) )
+                        uint32_t nargs,
+                        BoolectorNode *(*fun)(Bzla *, BoolectorNode *) )
 {
   assert(parser);
   assert(item_open);
   assert(item_cur);
-  // assert (fun);
+  assert(fun);
 
   assert(item_cur->tag == BZLA_FP_ABS_TAG_SMT2
          || item_cur->tag == BZLA_FP_NEG_TAG_SMT2);
 
   BoolectorNode *exp;
-  Bzla *bzla;
-
-  bzla = parser->bzla;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_fp_args_smt2(parser, item_cur, nargs)) return 0;
-  // FP STUB
-  BoolectorSort s = boolector_bv_sort(bzla, 1);
-  exp             = boolector_var(bzla, s, 0);
-  boolector_release_sort(bzla, s);
-  // exp = fun (parser->bzla, item_cur[1].exp);
-  ////
+  exp = fun(parser->bzla, item_cur[1].exp);
   release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
@@ -3587,7 +3579,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.abs ------------------------------------------------------------- */
   else if (tag == BZLA_FP_ABS_TAG_SMT2)
   {
-    if (!close_term_unary_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_abs))
     {
       return 0;
     }
@@ -3595,7 +3588,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.neg ------------------------------------------------------------- */
   else if (tag == BZLA_FP_NEG_TAG_SMT2)
   {
-    if (!close_term_unary_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_neg))
     {
       return 0;
     }

@@ -441,6 +441,14 @@ BzlaNode *bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 
+/* Create floating-point absolute value. */
+BzlaNode *bzla_exp_fp_abs(Bzla *bzla, BzlaNode *exp);
+
+/* Create floating-point negation. */
+BzlaNode *bzla_exp_fp_neg(Bzla *bzla, BzlaNode *exp);
+
+/*------------------------------------------------------------------------*/
+
 /* Array read on array 'e_array' at position 'e_index'.
  * index_width(e_array) = width(e_index)
  * width(result) = elem_width(e_array)

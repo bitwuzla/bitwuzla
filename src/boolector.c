@@ -2995,6 +2995,50 @@ boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n)
 /*------------------------------------------------------------------------*/
 
 BoolectorNode *
+boolector_fp_abs(Bzla *bzla, BoolectorNode *node)
+{
+  BzlaNode *exp, *res;
+
+  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(exp);
+  BZLA_TRAPI_UNFUN(exp);
+  BZLA_ABORT_REFS_NOT_POS(exp);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
+  BZLA_ABORT_IS_NOT_FP(exp);
+  res = bzla_exp_fp_abs(bzla, exp);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res, fp_abs, BZLA_CLONED_EXP(exp));
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_neg(Bzla *bzla, BoolectorNode *node)
+{
+  BzlaNode *exp, *res;
+
+  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(exp);
+  BZLA_TRAPI_UNFUN(exp);
+  BZLA_ABORT_REFS_NOT_POS(exp);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
+  BZLA_ABORT_IS_NOT_FP(exp);
+  res = bzla_exp_fp_neg(bzla, exp);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res, fp_neg, BZLA_CLONED_EXP(exp));
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+/*------------------------------------------------------------------------*/
+
+BoolectorNode *
 boolector_read(Bzla *bzla, BoolectorNode *n_array, BoolectorNode *n_index)
 {
   BzlaNode *e_array, *e_index, *res;
