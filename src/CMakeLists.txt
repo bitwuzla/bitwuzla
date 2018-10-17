@@ -7,6 +7,7 @@ set(libboolector_src_files
   bzlaass.c
   bzlabeta.c
   bzlabv.c
+  bzlabvprop.c
   bzlachkclone.c
   bzlachkmodel.c
   bzlachkfailed.c
