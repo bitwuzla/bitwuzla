@@ -2515,15 +2515,15 @@ static int32_t
 close_term_bin_fp_fun(BzlaSMT2Parser *parser,
                       BzlaSMT2Item *item_open,
                       BzlaSMT2Item *item_cur,
-                      uint32_t nargs)
-//       BoolectorNode *(*fun) (Bzla *,
-//                              BoolectorNode *,
-//                              BoolectorNode *) )
+                      uint32_t nargs,
+                      BoolectorNode *(*fun)(Bzla *,
+                                            BoolectorNode *,
+                                            BoolectorNode *) )
 {
   assert(parser);
   assert(item_open);
   assert(item_cur);
-  // assert (fun);
+  assert(fun);
 
   assert(item_cur->tag == BZLA_FP_REM_TAG_SMT2
          || item_cur->tag == BZLA_FP_MIN_TAG_SMT2
@@ -2537,12 +2537,7 @@ close_term_bin_fp_fun(BzlaSMT2Parser *parser,
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   if (!check_fp_args_smt2(parser, item_cur, nargs)) return 0;
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, 2)) return 0;
-  // FP STUB
-  BoolectorSort s = boolector_bv_sort(bzla, 1);
-  exp             = boolector_var(bzla, s, 0);
-  boolector_release_sort(bzla, s);
-  // exp = fun (bzla, item_cur[1].exp, item_cur[2].exp);
-  ////
+  exp = fun(bzla, item_cur[1].exp, item_cur[2].exp);
   release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
@@ -3647,7 +3642,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.rem ------------------------------------------------------------- */
   else if (tag == BZLA_FP_REM_TAG_SMT2)
   {
-    if (!close_term_bin_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_bin_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_rem))
     {
       return 0;
     }
@@ -3655,7 +3651,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.min ------------------------------------------------------------- */
   else if (tag == BZLA_FP_MIN_TAG_SMT2)
   {
-    if (!close_term_bin_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_bin_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_min))
     {
       return 0;
     }
@@ -3663,7 +3660,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.max ------------------------------------------------------------- */
   else if (tag == BZLA_FP_MAX_TAG_SMT2)
   {
-    if (!close_term_bin_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_bin_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_max))
     {
       return 0;
     }

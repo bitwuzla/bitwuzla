@@ -1682,6 +1682,46 @@ BoolectorNode *boolector_fp_is_neg(Bzla *bzla, BoolectorNode *node);
 BoolectorNode *boolector_fp_is_pos(Bzla *bzla, BoolectorNode *node);
 
 /*!
+  Create the maximum expression of two given floating-point nodes ``n0``
+  and ``n1.
+
+  :param bzla: Boolector instance.
+  :param n0:   Floating-point operand.
+  :param n1:   Floating-point operand.
+  :return: A floating-point representing the maximum expression of two
+           floating-point nodes ``n0`` and ``n1``.
+ */
+BoolectorNode *boolector_fp_min(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
+
+/*!
+  Create the minimum expression of two given floating-point nodes ``n0``
+  and ``n1.
+
+  :param bzla: Boolector instance.
+  :param n0:   Floating-point operand.
+  :param n1:   Floating-point operand.
+  :return: A floating-point representing the minimum expression of two
+           floating-point nodes ``n0`` and ``n1``.
+ */
+BoolectorNode *boolector_fp_max(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
+
+/*!
+  Create a floating-point remainder.
+
+  :param bzla: Boolector instance.
+  :param n0:   Floating-point operand.
+  :param n1:   Floating-point operand.
+  :return: A floating-point representing the remainder of
+           ``n0`` divided by ``n1``.
+ */
+BoolectorNode *boolector_fp_rem(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
+/*!
   Create the square root of a given floating-point node ``n0`` with respect
   to the given rounding mode ``n1``.
 

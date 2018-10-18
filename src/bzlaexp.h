@@ -468,6 +468,15 @@ BzlaNode *bzla_exp_fp_abs(Bzla *bzla, BzlaNode *exp);
 /* Create floating-point negation. */
 BzlaNode *bzla_exp_fp_neg(Bzla *bzla, BzlaNode *exp);
 
+/* Create floating-point maximum. */
+BzlaNode *bzla_exp_fp_min(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
+/* Create floating-point minimum. */
+BzlaNode *bzla_exp_fp_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
+/* Create floating-point remainder. */
+BzlaNode *bzla_exp_fp_rem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
 /**
  * Create floating-point square root wrt to given rounding mode.
  * e0: rounding mode
