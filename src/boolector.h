@@ -1598,7 +1598,7 @@ BoolectorNode *boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n);
 
   :param bzla: Boolector instance.
   :param node: Floating-point operand.
-  :return: A floating-point representing the absolut value of ``node``.
+  :return:     A floating-point representing the absolut value of ``node``.
  */
 BoolectorNode *boolector_fp_abs(Bzla *bzla, BoolectorNode *node);
 
@@ -1607,7 +1607,7 @@ BoolectorNode *boolector_fp_abs(Bzla *bzla, BoolectorNode *node);
 
   :param bzla: Boolector instance.
   :param node: Floating-point operand.
-  :return: A floating-point representing the negation of ``node``.
+  :return:     A floating-point representing the negation of ``node``.
  */
 BoolectorNode *boolector_fp_neg(Bzla *bzla, BoolectorNode *node);
 
@@ -1616,8 +1616,8 @@ BoolectorNode *boolector_fp_neg(Bzla *bzla, BoolectorNode *node);
 
   :param bzla: Boolector instance.
   :param node: Boolector node.
-  :return: A bit-vector of size one, representing the Boolean result of
-           the query.
+  :return:     A bit-vector of size one, representing the Boolean result of
+               the query.
 */
 BoolectorNode *boolector_fp_is_normal(Bzla *bzla, BoolectorNode *node);
 
@@ -1626,8 +1626,8 @@ BoolectorNode *boolector_fp_is_normal(Bzla *bzla, BoolectorNode *node);
 
   :param bzla: Boolector instance.
   :param node: Boolector node.
-  :return: A bit-vector of size one, representing the Boolean result of
-           the query.
+  :return:     A bit-vector of size one, representing the Boolean result of
+               the query.
 */
 BoolectorNode *boolector_fp_is_subnormal(Bzla *bzla, BoolectorNode *node);
 
@@ -1636,8 +1636,8 @@ BoolectorNode *boolector_fp_is_subnormal(Bzla *bzla, BoolectorNode *node);
 
   :param bzla: Boolector instance.
   :param node: Boolector node.
-  :return: A bit-vector of size one, representing the Boolean result of
-           the query.
+  :return:     A bit-vector of size one, representing the Boolean result of
+               the query.
 */
 BoolectorNode *boolector_fp_is_zero(Bzla *bzla, BoolectorNode *node);
 
@@ -1646,8 +1646,8 @@ BoolectorNode *boolector_fp_is_zero(Bzla *bzla, BoolectorNode *node);
 
   :param bzla: Boolector instance.
   :param node: Boolector node.
-  :return: A bit-vector of size one, representing the Boolean result of
-           the query.
+  :return:     A bit-vector of size one, representing the Boolean result of
+               the query.
 */
 BoolectorNode *boolector_fp_is_inf(Bzla *bzla, BoolectorNode *node);
 
@@ -1656,8 +1656,8 @@ BoolectorNode *boolector_fp_is_inf(Bzla *bzla, BoolectorNode *node);
 
   :param bzla: Boolector instance.
   :param node: Boolector node.
-  :return: A bit-vector of size one, representing the Boolean result of
-           the query.
+  :return:     A bit-vector of size one, representing the Boolean result of
+               the query.
 */
 BoolectorNode *boolector_fp_is_nan(Bzla *bzla, BoolectorNode *node);
 
@@ -1666,8 +1666,8 @@ BoolectorNode *boolector_fp_is_nan(Bzla *bzla, BoolectorNode *node);
 
   :param bzla: Boolector instance.
   :param node: Boolector node.
-  :return: A bit-vector of size one, representing the Boolean result of
-           the query.
+  :return:     A bit-vector of size one, representing the Boolean result of
+               the query.
 */
 BoolectorNode *boolector_fp_is_neg(Bzla *bzla, BoolectorNode *node);
 
@@ -1676,8 +1676,8 @@ BoolectorNode *boolector_fp_is_neg(Bzla *bzla, BoolectorNode *node);
 
   :param bzla: Boolector instance.
   :param node: Boolector node.
-  :return: A bit-vector of size one, representing the Boolean result of
-           the query.
+  :return:     A bit-vector of size one, representing the Boolean result of
+               the query.
 */
 BoolectorNode *boolector_fp_is_pos(Bzla *bzla, BoolectorNode *node);
 
@@ -1688,8 +1688,8 @@ BoolectorNode *boolector_fp_is_pos(Bzla *bzla, BoolectorNode *node);
   :param bzla: Boolector instance.
   :param n0:   Floating-point operand.
   :param n1:   Floating-point operand.
-  :return: A floating-point representing the maximum expression of two
-           floating-point nodes ``n0`` and ``n1``.
+  :return:     A floating-point representing the maximum expression of two
+               floating-point nodes ``n0`` and ``n1``.
  */
 BoolectorNode *boolector_fp_min(Bzla *bzla,
                                 BoolectorNode *n0,
@@ -1702,8 +1702,8 @@ BoolectorNode *boolector_fp_min(Bzla *bzla,
   :param bzla: Boolector instance.
   :param n0:   Floating-point operand.
   :param n1:   Floating-point operand.
-  :return: A floating-point representing the minimum expression of two
-           floating-point nodes ``n0`` and ``n1``.
+  :return:     A floating-point representing the minimum expression of two
+               floating-point nodes ``n0`` and ``n1``.
  */
 BoolectorNode *boolector_fp_max(Bzla *bzla,
                                 BoolectorNode *n0,
@@ -1715,12 +1715,73 @@ BoolectorNode *boolector_fp_max(Bzla *bzla,
   :param bzla: Boolector instance.
   :param n0:   Floating-point operand.
   :param n1:   Floating-point operand.
-  :return: A floating-point representing the remainder of
-           ``n0`` divided by ``n1``.
+  :return:     A floating-point representing the remainder of ``n0`` divided by
+               ``n1``.
  */
 BoolectorNode *boolector_fp_rem(Bzla *bzla,
                                 BoolectorNode *n0,
                                 BoolectorNode *n1);
+/*!
+  Create a floating-point equality.
+
+  :param bzla: Boolector instance.
+  :param n0:   Floating-point operand.
+  :param n1:   Floating-point operand.
+  :return:     A bit-vector of size one, representing the equality over ``n0``
+               and ``n1``.
+ */
+BoolectorNode *boolector_fp_eq(Bzla *bzla,
+                               BoolectorNode *n0,
+                               BoolectorNode *n1);
+
+/*!
+  Create a floating-point less or equal.
+
+  :param bzla: Boolector instance.
+  :param n0:   Floating-point operand.
+  :param n1:   Floating-point operand.
+  :return:     A bit-vector of size one, representing ``n0`` less or equal
+               ``n1``.
+ */
+BoolectorNode *boolector_fp_leq(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
+
+/*!
+  Create a floating-point less than.
+
+  :param bzla: Boolector instance.
+  :param n0:   Floating-point operand.
+  :param n1:   Floating-point operand.
+  :return:     A bit-vector of size one representing ``n0`` less than ``n1``.
+ */
+BoolectorNode *boolector_fp_lt(Bzla *bzla,
+                               BoolectorNode *n0,
+                               BoolectorNode *n1);
+/*!
+  Create a floating-point greater or equal.
+
+  :param bzla: Boolector instance.
+  :param n0:   Floating-point operand.
+  :param n1:   Floating-point operand.
+  :return:     A floating-point representing ``n0`` greater or equal ``n1``.
+ */
+BoolectorNode *boolector_fp_geq(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
+
+/*!
+  Create a floating-point greater than.
+
+  :param bzla: Boolector instance.
+  :param n0:   Floating-point operand.
+  :param n1:   Floating-point operand.
+  :return:     A bit-vector of size one representing ``n0`` greater than ``n1``.
+ */
+BoolectorNode *boolector_fp_gt(Bzla *bzla,
+                               BoolectorNode *n0,
+                               BoolectorNode *n1);
+
 /*!
   Create the square root of a given floating-point node ``n0`` with respect
   to the given rounding mode ``n1``.
@@ -1728,8 +1789,8 @@ BoolectorNode *boolector_fp_rem(Bzla *bzla,
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
   :param n1:   Floating-point operand.
-  :return: A floating-point representing the square root of ``n1`` with respect
-           to rounding mode ``n0``.
+  :return:     A floating-point representing the square root of ``n1`` with
+               respect to rounding mode ``n0``.
  */
 BoolectorNode *boolector_fp_sqrt(Bzla *bzla,
                                  BoolectorNode *n0,
@@ -1742,8 +1803,8 @@ BoolectorNode *boolector_fp_sqrt(Bzla *bzla,
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
   :param n1:   Floating-point operand.
-  :return: A floating-point representing ``n1`` rounded to integral with
-           respect to rounding mode ``n0``.
+  :return:     A floating-point representing ``n1`` rounded to integral with
+               respect to rounding mode ``n0``.
  */
 BoolectorNode *boolector_fp_round_to_int(Bzla *bzla,
                                          BoolectorNode *n0,
