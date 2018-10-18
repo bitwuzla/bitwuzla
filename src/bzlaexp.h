@@ -447,6 +447,20 @@ BzlaNode *bzla_exp_fp_abs(Bzla *bzla, BzlaNode *exp);
 /* Create floating-point negation. */
 BzlaNode *bzla_exp_fp_neg(Bzla *bzla, BzlaNode *exp);
 
+/**
+ * Create floating-point square root wrt to given rounding mode.
+ * e0: rounding mode
+ * e1: floating-point operand
+ */
+BzlaNode *bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
+/**
+ * Create floating-point round-to-integral wrt to given rounding mode.
+ * e0: rounding mode
+ * e1: floating-point operand
+ */
+BzlaNode *bzla_exp_fp_round_to_int(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
 /*------------------------------------------------------------------------*/
 
 /* Array read on array 'e_array' at position 'e_index'.

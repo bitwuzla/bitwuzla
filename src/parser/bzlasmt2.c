@@ -1951,7 +1951,7 @@ check_bv_or_fp_args_smt2(BzlaSMT2Parser *parser,
     // TODO FP enable when RoundingMode sort is implemented
     // else if (boolector_is_rm_sort (parser->bzla, sort))
     //{
-    //  is_str = "a RoundingMode term";
+    //  is_str = "a rounding mode term";
     //  expected_str = "bit-vector";
     //  is_err = true;
     //}
@@ -2006,7 +2006,7 @@ check_rm_arg_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p, uint32_t idx)
   {
     parser->perrcoo = p[idx].coo;
     return !perr_smt2(parser,
-                      "argument %u of '%s' is not a RoundingMode term",
+                      "argument %u of '%s' is not a rounding mode term",
                       idx,
                       p->node->name);
   }
@@ -2450,30 +2450,24 @@ static int32_t
 close_term_unary_rm_fp_fun(BzlaSMT2Parser *parser,
                            BzlaSMT2Item *item_open,
                            BzlaSMT2Item *item_cur,
-                           uint32_t nargs)
-// BoolectorNode *(*fun) (Bzla *, BoolectorNode *) )
+                           uint32_t nargs,
+                           BoolectorNode *(*fun)(Bzla *,
+                                                 BoolectorNode *,
+                                                 BoolectorNode *) )
 {
   assert(parser);
   assert(item_open);
   assert(item_cur);
-  // assert (fun);
+  assert(fun);
 
   assert(item_cur->tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2
          || item_cur->tag == BZLA_FP_SQRT_TAG_SMT2);
 
   BoolectorNode *exp;
-  Bzla *bzla;
-
-  bzla = parser->bzla;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   if (!check_rm_fp_args_smt2(parser, item_cur, nargs)) return 0;
-  // FP STUB
-  BoolectorSort s = boolector_bv_sort(bzla, 1);
-  exp             = boolector_var(bzla, s, 0);
-  boolector_release_sort(bzla, s);
-  // exp = fun (parser->bzla, item_cur[1].exp, item_cur[2].exp);
-  ////
+  exp = fun(parser->bzla, item_cur[1].exp, item_cur[2].exp);
   release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
@@ -3597,7 +3591,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.sqrt ------------------------------------------------------------ */
   else if (tag == BZLA_FP_SQRT_TAG_SMT2)
   {
-    if (!close_term_unary_rm_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_rm_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_sqrt))
     {
       return 0;
     }
@@ -3605,7 +3600,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.roundToIntegral ------------------------------------------------- */
   else if (tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2)
   {
-    if (!close_term_unary_rm_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_rm_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_round_to_int))
     {
       return 0;
     }

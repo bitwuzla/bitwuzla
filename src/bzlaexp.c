@@ -1712,6 +1712,30 @@ bzla_exp_fp_neg(Bzla *bzla, BzlaNode *exp)
   ////
 }
 
+BzlaNode *
+bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_round_to_int(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
 /*------------------------------------------------------------------------*/
 
 BzlaNode *

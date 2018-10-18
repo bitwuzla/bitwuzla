@@ -92,6 +92,14 @@ void bzla_abort_warn(
                #arg);                                              \
   } while (0)
 
+#define BZLA_ABORT_IS_NOT_RM(arg)                                  \
+  do                                                               \
+  {                                                                \
+    BZLA_ABORT(!bzla_sort_is_rm(bzla, bzla_node_get_sort_id(arg)), \
+               "'%s' must be a rounding mode\n",                   \
+               #arg);                                              \
+  } while (0)
+
 #define BZLA_ABORT_IS_NOT_FUN(arg)                                  \
   do                                                                \
   {                                                                 \
