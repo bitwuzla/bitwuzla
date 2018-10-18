@@ -1612,6 +1612,76 @@ BoolectorNode *boolector_fp_abs(Bzla *bzla, BoolectorNode *node);
 BoolectorNode *boolector_fp_neg(Bzla *bzla, BoolectorNode *node);
 
 /*!
+  Create a fp.is_normal expression of a given floating-point node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: A bit-vector of size one, representing the Boolean result of
+           the query.
+*/
+BoolectorNode *boolector_fp_is_normal(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Create a fp.is_subnormal expression of a given floating-point node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: A bit-vector of size one, representing the Boolean result of
+           the query.
+*/
+BoolectorNode *boolector_fp_is_subnormal(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Create a fp.is_zero expression of a given floating-point node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: A bit-vector of size one, representing the Boolean result of
+           the query.
+*/
+BoolectorNode *boolector_fp_is_zero(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Create a fp.is_inf expression of a given floating-point node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: A bit-vector of size one, representing the Boolean result of
+           the query.
+*/
+BoolectorNode *boolector_fp_is_inf(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Create a fp.is_nan expression of a given floating-point node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: A bit-vector of size one, representing the Boolean result of
+           the query.
+*/
+BoolectorNode *boolector_fp_is_nan(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Create a fp.is_neg expression of a given floating-point node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: A bit-vector of size one, representing the Boolean result of
+           the query.
+*/
+BoolectorNode *boolector_fp_is_neg(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Create a fp.is_pos expression of a given floating-point node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: A bit-vector of size one, representing the Boolean result of
+           the query.
+*/
+BoolectorNode *boolector_fp_is_pos(Bzla *bzla, BoolectorNode *node);
+
+/*!
   Create the square root of a given floating-point node ``n0`` with respect
   to the given rounding mode ``n1``.
 

@@ -1713,6 +1713,76 @@ bzla_exp_fp_neg(Bzla *bzla, BzlaNode *exp)
 }
 
 BzlaNode *
+bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla == bzla_node_real_addr(exp)->bzla);
+  /// FP STUB
+  (void) exp;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_subnormal(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla == bzla_node_real_addr(exp)->bzla);
+  /// FP STUB
+  (void) exp;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_zero(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla == bzla_node_real_addr(exp)->bzla);
+  /// FP STUB
+  (void) exp;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_inf(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla == bzla_node_real_addr(exp)->bzla);
+  /// FP STUB
+  (void) exp;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_nan(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla == bzla_node_real_addr(exp)->bzla);
+  /// FP STUB
+  (void) exp;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_neg(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla == bzla_node_real_addr(exp)->bzla);
+  /// FP STUB
+  (void) exp;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_pos(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla == bzla_node_real_addr(exp)->bzla);
+  /// FP STUB
+  (void) exp;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
 bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   assert(bzla == bzla_node_real_addr(e0)->bzla);

@@ -441,6 +441,27 @@ BzlaNode *bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 
+/* Create floating-point is_normal. */
+BzlaNode *bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *exp);
+
+/* Create floating-point is_subnormal. */
+BzlaNode *bzla_exp_fp_is_subnormal(Bzla *bzla, BzlaNode *exp);
+
+/* Create floating-point is_zero. */
+BzlaNode *bzla_exp_fp_is_zero(Bzla *bzla, BzlaNode *exp);
+
+/* Create floating-point is_inf. */
+BzlaNode *bzla_exp_fp_is_inf(Bzla *bzla, BzlaNode *exp);
+
+/* Create floating-point is_nan. */
+BzlaNode *bzla_exp_fp_is_nan(Bzla *bzla, BzlaNode *exp);
+
+/* Create floating-point is_neg. */
+BzlaNode *bzla_exp_fp_is_neg(Bzla *bzla, BzlaNode *exp);
+
+/* Create floating-point is_pos. */
+BzlaNode *bzla_exp_fp_is_pos(Bzla *bzla, BzlaNode *exp);
+
 /* Create floating-point absolute value. */
 BzlaNode *bzla_exp_fp_abs(Bzla *bzla, BzlaNode *exp);
 

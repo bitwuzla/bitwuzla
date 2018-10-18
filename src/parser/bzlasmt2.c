@@ -2481,13 +2481,13 @@ static int32_t
 close_term_unary_bool_fp_fun(BzlaSMT2Parser *parser,
                              BzlaSMT2Item *item_open,
                              BzlaSMT2Item *item_cur,
-                             uint32_t nargs)
-// bool (*fun) (Bzla *, BoolectorNode *) )
+                             uint32_t nargs,
+                             BoolectorNode *(*fun)(Bzla *, BoolectorNode *) )
 {
   assert(parser);
   assert(item_open);
   assert(item_cur);
-  // assert (fun);
+  assert(fun);
 
   assert(item_cur->tag == BZLA_FP_IS_NORMAL_TAG_SMT2
          || item_cur->tag == BZLA_FP_IS_SUBNORMAL_TAG_SMT2
@@ -2498,18 +2498,10 @@ close_term_unary_bool_fp_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_IS_POS_TAG_SMT2);
 
   BoolectorNode *exp;
-  Bzla *bzla;
-
-  bzla = parser->bzla;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_fp_args_smt2(parser, item_cur, nargs)) return 0;
-  // FP STUB
-  BoolectorSort s = boolector_bv_sort(bzla, 1);
-  exp             = boolector_var(bzla, s, 0);
-  boolector_release_sort(bzla, s);
-  // exp = fun (bzla, item_cur[1].exp);
-  ////
+  exp = fun(parser->bzla, item_cur[1].exp);
   release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   return 1;
 }
@@ -3719,7 +3711,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.isNormal -------------------------------------------------------- */
   else if (tag == BZLA_FP_IS_NORMAL_TAG_SMT2)
   {
-    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_is_normal))
     {
       return 0;
     }
@@ -3727,7 +3720,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.isSubnormal ----------------------------------------------------- */
   else if (tag == BZLA_FP_IS_SUBNORMAL_TAG_SMT2)
   {
-    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_is_subnormal))
     {
       return 0;
     }
@@ -3735,7 +3729,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.isZero ---------------------------------------------------------- */
   else if (tag == BZLA_FP_IS_ZERO_TAG_SMT2)
   {
-    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_is_zero))
     {
       return 0;
     }
@@ -3743,7 +3738,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.isInfinite ------------------------------------------------------ */
   else if (tag == BZLA_FP_IS_INF_TAG_SMT2)
   {
-    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_is_inf))
     {
       return 0;
     }
@@ -3751,7 +3747,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.isNaN ----------------------------------------------------------- */
   else if (tag == BZLA_FP_IS_NAN_TAG_SMT2)
   {
-    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_is_nan))
     {
       return 0;
     }
@@ -3759,7 +3756,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.isNegative ------------------------------------------------------ */
   else if (tag == BZLA_FP_IS_NEG_TAG_SMT2)
   {
-    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_is_neg))
     {
       return 0;
     }
@@ -3767,7 +3765,8 @@ close_term(BzlaSMT2Parser *parser)
   /* FP: fp.isPositive ------------------------------------------------------ */
   else if (tag == BZLA_FP_IS_POS_TAG_SMT2)
   {
-    if (!close_term_unary_bool_fp_fun(parser, item_open, item_cur, nargs))
+    if (!close_term_unary_bool_fp_fun(
+            parser, item_open, item_cur, nargs, boolector_fp_is_pos))
     {
       return 0;
     }
