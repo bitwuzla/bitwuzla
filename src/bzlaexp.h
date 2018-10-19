@@ -506,6 +506,50 @@ BzlaNode *bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
  */
 BzlaNode *bzla_exp_fp_round_to_int(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
+/**
+ * Create floating-point with exponent size 'eb' and significand size 'sb'
+ * from given bit-vector expression 'exp'.
+ * exp: bit-vector operand
+ * eb:  bit-width of the exponent
+ * sb:  bit-width of the significand
+ */
+BzlaNode *bzla_exp_fp_to_fp(Bzla *bzla,
+                            BzlaNode *exp,
+                            uint32_t eb,
+                            uint32_t sb);
+
+/**
+ * Create floating-point to-fp from bit-vector (interpreted as signed) or
+ * floating-point expression wrt to given rounding mode.
+ * e0: rounding mode
+ * e1: bit-vector or floating-point operand
+ * eb: bit-width of the exponent
+ * sb: bit-width of the significand
+ */
+BzlaNode *bzla_exp_fp_to_fp_signed(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, uint32_t eb, uint32_t sb);
+
+/**
+ * Create floating-point to-fp from bit-vector expression (interpreted as
+ * unsigned) wrt to given rounding mode.
+ * e0: rounding mode
+ * e1: bit-vector operand
+ * eb: bit-width of the exponent
+ * sb: bit-width of the significand
+ */
+BzlaNode *bzla_exp_fp_to_fp_unsigned(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, uint32_t eb, uint32_t sb);
+
+/**
+ * Create floating-point to-fp from double wrt to given rounding mode.
+ * exp:  rounding mode
+ * real: the real operand represented as a strin
+ * eb:   bit-width of the exponent
+ * sb:   bit-width of the significand
+ */
+BzlaNode *bzla_exp_fp_to_fp_real(
+    Bzla *bzla, BzlaNode *exp, const char *real, uint32_t eb, uint32_t sb);
+
 /*------------------------------------------------------------------------*/
 
 /* Array read on array 'e_array' at position 'e_index'.

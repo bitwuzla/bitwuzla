@@ -92,6 +92,15 @@ void bzla_abort_warn(
                #arg);                                              \
   } while (0)
 
+#define BZLA_ABORT_IS_NOT_BV_OR_FP(arg)                                   \
+  do                                                                      \
+  {                                                                       \
+    BZLA_ABORT(!bzla_sort_is_bv(bzla, bzla_node_get_sort_id(arg))         \
+                   && !bzla_sort_is_fp(bzla, bzla_node_get_sort_id(arg)), \
+               "'%s' must be a bit-vector or floating-point\n",           \
+               #arg);                                                     \
+  } while (0)
+
 #define BZLA_ABORT_IS_NOT_RM(arg)                                  \
   do                                                               \
   {                                                                \

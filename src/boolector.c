@@ -3452,6 +3452,123 @@ boolector_fp_round_to_int(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
+BoolectorNode *
+boolector_fp_to_fp(Bzla *bzla, BoolectorNode *node, uint32_t eb, uint32_t sb)
+{
+  BzlaNode *exp, *res;
+  uint32_t bw;
+
+  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(exp);
+  BZLA_TRAPI_UNFUN_EXT(exp, "%u %u", eb, sb);
+  BZLA_ABORT(eb == 0, "'eb' must be > 0");
+  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  BZLA_ABORT_REFS_NOT_POS(exp);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
+  BZLA_ABORT_IS_NOT_BV(exp);
+  bw = bzla_node_bv_get_width(bzla, exp);
+  BZLA_ABORT(
+      bw != eb + sb,
+      "bit-width '%u' of bit-vector expression doesn't match significand and "
+      "exponent bit-width '%u + %u'",
+      bw,
+      eb,
+      sb);
+  res = bzla_exp_fp_to_fp(bzla, exp, eb, sb);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res, fp_to_fp, BZLA_CLONED_EXP(exp), eb, sb);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_to_fp_signed(
+    Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1, uint32_t eb, uint32_t sb)
+{
+  BzlaNode *e0, *e1, *res;
+
+  e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
+  e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(e0);
+  BZLA_ABORT_ARG_NULL(e1);
+  BZLA_TRAPI_BINFUN_EXT(e0, e1, "%u %u", eb, sb);
+  BZLA_ABORT(eb == 0, "'eb' must be > 0");
+  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  BZLA_ABORT_REFS_NOT_POS(e0);
+  BZLA_ABORT_REFS_NOT_POS(e1);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
+  BZLA_ABORT_IS_NOT_RM(e0);
+  BZLA_ABORT_IS_NOT_BV_OR_FP(e1);
+  res = bzla_exp_fp_to_fp_signed(bzla, e0, e1, eb, sb);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(
+      res, fp_to_fp_signed, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1), eb, sb);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_to_fp_unsigned(
+    Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1, uint32_t eb, uint32_t sb)
+{
+  BzlaNode *e0, *e1, *res;
+
+  e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
+  e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(e0);
+  BZLA_ABORT_ARG_NULL(e1);
+  BZLA_TRAPI_BINFUN_EXT(e0, e1, "%u %u", eb, sb);
+  BZLA_ABORT(eb == 0, "'eb' must be > 0");
+  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  BZLA_ABORT_REFS_NOT_POS(e0);
+  BZLA_ABORT_REFS_NOT_POS(e1);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
+  BZLA_ABORT_IS_NOT_RM(e0);
+  BZLA_ABORT_IS_NOT_BV_OR_FP(e1);
+  res = bzla_exp_fp_to_fp_unsigned(bzla, e0, e1, eb, sb);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(
+      res, fp_to_fp_unsigned, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1), eb, sb);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_to_fp_real(
+    Bzla *bzla, BoolectorNode *node, const char *real, uint32_t eb, uint32_t sb)
+{
+  BzlaNode *exp, *res;
+
+  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(exp);
+  BZLA_ABORT_ARG_NULL(real);
+  BZLA_TRAPI_UNFUN_EXT(exp, "%s", real);
+  BZLA_ABORT(eb == 0, "'eb' must be > 0");
+  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  BZLA_ABORT_REFS_NOT_POS(exp);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
+  BZLA_ABORT_IS_NOT_RM(exp);
+  res = bzla_exp_fp_to_fp_real(bzla, exp, real, eb, sb);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res, fp_to_fp_real, BZLA_CLONED_EXP(exp), real, eb, sb);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
 /*------------------------------------------------------------------------*/
 
 BoolectorNode *

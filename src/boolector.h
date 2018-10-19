@@ -1810,6 +1810,76 @@ BoolectorNode *boolector_fp_round_to_int(Bzla *bzla,
                                          BoolectorNode *n0,
                                          BoolectorNode *n1);
 
+/*!
+  Create a floating-point expression with exponent size ``eb`` and significand
+  size ``sb`` from a given bit-vector node ``node``.
+
+  :param bzla: Boolector instance.
+  :param node: Bit-vector operand.
+  :param eb:   The bit-width of the exponent.
+  :param sb:   The bit-width of the significand.
+  :return:     A floating-point with exponent size ``eb`` and significand size
+               ``sb`` representing bit-vector ``node``.
+ */
+BoolectorNode *boolector_fp_to_fp(Bzla *bzla,
+                                  BoolectorNode *node,
+                                  uint32_t eb,
+                                  uint32_t sb);
+
+/*!
+  Create a floating-point expression with exponent size ``eb`` and significand
+  from a given bit-vector (interpreted as signed) or floating-point node ``n1``
+  with respect to the given rounding mode ``n0``.
+
+  :param bzla: Boolector instance.
+  :param n0:   Rounding mode operand.
+  :param n1:   Bit-vector or floating-point operand.
+  :param eb:   The bit-width of the exponent.
+  :param sb:   The bit-width of the significand.
+  :return:     A floating-point with exponent size ``eb`` and significand size
+               ``sb`` representing bit-vector or floating-point ``n1`` with
+               respect to rounding mode ``n0``.
+ */
+BoolectorNode *boolector_fp_to_fp_signed(
+    Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1, uint32_t eb, uint32_t sb);
+
+/*!
+  Create a floating-point expression with exponent size ``eb`` and significand
+  from a given Real number (represented as a string) with respect to the given
+  rounding mode ``node``.
+
+  :param bzla: Boolector instance.
+  :param node: Rounding mode operand.
+  :param real: A real number represented as a string.
+  :param eb:   The bit-width of the exponent.
+  :param sb:   The bit-width of the significand.
+  :return:     A floating-point with exponent size ``eb`` and significand size
+               ``sb`` representing ``real`` with respect to rounding mode
+               ``node``.
+ */
+BoolectorNode *boolector_fp_to_fp_real(Bzla *bzla,
+                                       BoolectorNode *node,
+                                       const char *real,
+                                       uint32_t eb,
+                                       uint32_t sb);
+
+/*!
+  Create a floating-point expression with exponent size ``eb`` and significand
+  from a given bit-vector ``n1`` (interpreted as unsigned) with respect to the
+  given rounding mode ``n0``.
+
+  :param bzla: Boolector instance.
+  :param n0:   Rounding mode operand.
+  :param n1:   Bit-vector operand.
+  :param eb:   The bit-width of the exponent.
+  :param sb:   The bit-width of the significand.
+  :return:     A floating-point with exponent size ``eb`` and significand size
+               representing bit-vector or floating-point ``n1`` with respect to
+               rounding mode ``n0``.
+ */
+BoolectorNode *boolector_fp_to_fp_unsigned(
+    Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1, uint32_t eb, uint32_t sb);
+
 /*------------------------------------------------------------------------*/
 
 /*!

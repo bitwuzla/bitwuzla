@@ -59,6 +59,12 @@
              BZLA_TRAPI_NODE_ID(e0),                  \
              BZLA_TRAPI_NODE_ID(e1))
 
+#define BZLA_TRAPI_BINFUN_EXT(e0, e1, fmt, args...)       \
+  BZLA_TRAPI(BZLA_TRAPI_NODE_FMT BZLA_TRAPI_NODE_FMT fmt, \
+             BZLA_TRAPI_NODE_ID(e0),                      \
+             BZLA_TRAPI_NODE_ID(e1),                      \
+             ##args)
+
 #define BZLA_TRAPI_TERFUN(e0, e1, e2)                                     \
   BZLA_TRAPI(BZLA_TRAPI_NODE_FMT BZLA_TRAPI_NODE_FMT BZLA_TRAPI_NODE_FMT, \
              BZLA_TRAPI_NODE_ID(e0),                                      \
