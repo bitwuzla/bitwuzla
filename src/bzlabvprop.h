@@ -37,6 +37,17 @@ bool bzla_bvprop_is_valid(BzlaMemMgr *mm, const BzlaBvDomain *d);
 /* Check whether bit-vector domain is fixed, i.e., lo == hi */
 bool bzla_bvprop_is_fixed(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
+/* Propagate domains 'd_x' and 'd_y' of z = (x = y). The domains for 'x' and
+ * 'y' are either the same or the resulting domain 'res_xy' is invalid.
+ * Domain 'res_d_z' is either fixed (if res_d_xy is fixed or invalid) or valid
+ * (all values possible).
+ */
+void bzla_bvprop_eq(BzlaMemMgr *mm,
+                    BzlaBvDomain *d_x,
+                    BzlaBvDomain *d_y,
+                    BzlaBvDomain **res_d_xy,
+                    BzlaBvDomain **res_d_z);
+
 // TODO:
 // propagators:
 //
