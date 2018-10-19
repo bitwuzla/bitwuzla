@@ -539,6 +539,17 @@ BzlaNode *bzla_exp_fp_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
 BzlaNode *bzla_exp_fp_div(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
 
 /**
+ * Create floating-point fused multiplication and addition (e1 * e2) + e3 wrt
+ * to given rounding mode.
+ * e0: rounding mode
+ * e1: floating-point operand
+ * e2: floating-point operand
+ * e3: floating-point operand
+ */
+BzlaNode *bzla_exp_fp_fma(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3);
+
+/**
  * Create floating-point with exponent size 'eb' and significand size 'sb'
  * from given bit-vector expression 'exp'.
  * exp: bit-vector operand

@@ -1871,8 +1871,25 @@ BoolectorNode *boolector_fp_div(Bzla *bzla,
                                 BoolectorNode *n2);
 
 /*!
-  Create a floating-point expression with exponent size ``eb`` and significand
-  size ``sb`` from a given bit-vector node ``node``.
+  Create a floating-point fused multiplication and addition.
+
+  :param bzla: Boolector instance.
+  :param n0:   Rounding mode operand.
+  :param n1:   Floating-point operand.
+  :param n2:   Floating-point operand.
+  :param n3:   Floating-point operand.
+  :return:     A floating-point representing the fused multiplication and
+               addition ``(n1 * n2) + n3`` with respect to rounding mode ``n0``.
+ */
+BoolectorNode *boolector_fp_fma(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1,
+                                BoolectorNode *n2,
+                                BoolectorNode *n3);
+
+/*!
+  Create a floating-point expression with exponent size ``eb`` and
+  significand size ``sb`` from a given bit-vector node ``node``.
 
   :param bzla: Boolector instance.
   :param node: Bit-vector operand.

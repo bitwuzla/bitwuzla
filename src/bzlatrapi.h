@@ -71,6 +71,13 @@
              BZLA_TRAPI_NODE_ID(e1),                                      \
              BZLA_TRAPI_NODE_ID(e2))
 
+#define BZLA_TRAPI_QUATFUN(e0, e1, e2, e3)                               \
+  BZLA_TRAPI(BZLA_TRAPI_NODE_FMT BZLA_TRAPI_NODE_FMT BZLA_TRAPI_NODE_FMT \
+                 BZLA_TRAPI_NODE_FMT,                                    \
+             BZLA_TRAPI_NODE_ID(e0),                                     \
+             BZLA_TRAPI_NODE_ID(e1),                                     \
+             BZLA_TRAPI_NODE_ID(e2),                                     \
+             BZLA_TRAPI_NODE_ID(e3))
 #define BZLA_TRAPI_RETURN_NODE(res)                                    \
   do                                                                   \
   {                                                                    \

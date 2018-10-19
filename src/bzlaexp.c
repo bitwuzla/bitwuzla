@@ -1959,6 +1959,23 @@ bzla_exp_fp_div(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 }
 
 BzlaNode *
+bzla_exp_fp_fma(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3)
+{
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  assert(bzla == bzla_node_real_addr(e3)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  (void) e3;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
 bzla_exp_fp_to_fp(Bzla *bzla, BzlaNode *exp, uint32_t eb, uint32_t sb)
 {
   assert(bzla == bzla_node_real_addr(exp)->bzla);

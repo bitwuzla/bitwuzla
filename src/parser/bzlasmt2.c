@@ -3657,12 +3657,11 @@ close_term(BzlaSMT2Parser *parser)
     if (!check_nargs_smt2(parser, item_cur, nargs, 4)) return 0;
     if (!check_rm_fp_args_smt2(parser, item_cur, nargs)) return 0;
     if (!check_arg_sorts_match_smt2(parser, item_cur, 1, 3)) return 0;
-    // TODO: check first arg RoundingMode, all other args FP
-    // FP STUB
-    BoolectorSort s = boolector_bv_sort(bzla, 1);
-    exp             = boolector_var(bzla, s, 0);
-    boolector_release_sort(bzla, s);
-    ////
+    exp = boolector_fp_fma(bzla,
+                           item_cur[1].exp,
+                           item_cur[2].exp,
+                           item_cur[3].exp,
+                           item_cur[4].exp);
     release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
   /* FP: fp.rem ------------------------------------------------------------- */
