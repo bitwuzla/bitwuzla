@@ -1594,6 +1594,66 @@ BoolectorNode *boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n);
 /*------------------------------------------------------------------------*/
 
 /*!
+  Create a floating-point +zero const with exponent size ``eb`` and significand
+  size ``sb``.
+
+  :param bzla: Boolector instance.
+  :param eb:   The bit-width of the exponent.
+  :param sb:   The bit-width of the significand.
+  :return:     A floating-point +zero const with exponent size ``eb`` and
+               significand size ``sb``.
+ */
+BoolectorNode *boolector_fp_pos_zero(Bzla *bzla, uint32_t eb, uint32_t sb);
+
+/*!
+  Create a floating-point -zero const with exponent size ``eb`` and significand
+  size ``sb``.
+
+  :param bzla: Boolector instance.
+  :param eb:   The bit-width of the exponent.
+  :param sb:   The bit-width of the significand.
+  :return:     A floating-point -zero const with exponent size ``eb`` and
+               significand size ``sb``.
+ */
+BoolectorNode *boolector_fp_neg_zero(Bzla *bzla, uint32_t eb, uint32_t sb);
+
+/*!
+  Create a floating-point +oo const with exponent size ``eb`` and significand
+  size ``sb``.
+
+  :param bzla: Boolector instance.
+  :param eb:   The bit-width of the exponent.
+  :param sb:   The bit-width of the significand.
+  :return:     A floating-point +inf const with exponent size ``eb`` and
+               significand size ``sb``.
+ */
+BoolectorNode *boolector_fp_pos_inf(Bzla *bzla, uint32_t eb, uint32_t sb);
+
+/*!
+  Create a floating-point -oo const with exponent size ``eb`` and significand
+  size ``sb``.
+
+  :param bzla: Boolector instance.
+  :param eb:   The bit-width of the exponent.
+  :param sb:   The bit-width of the significand.
+  :return:     A floating-point -inf const with exponent size ``eb`` and
+               significand size ``sb``.
+ */
+BoolectorNode *boolector_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb);
+
+/*!
+  Create a floating-point Nan const with exponent size ``eb`` and significand
+  size ``sb``.
+
+  :param bzla: Boolector instance.
+  :param eb:   The bit-width of the exponent.
+  :param sb:   The bit-width of the significand.
+  :return:     A floating-point Nan const with exponent size ``eb`` and
+               significand size ``sb``.
+ */
+BoolectorNode *boolector_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb);
+
+/*!
   Create the absolute value of a given floating-point node ``node``.
 
   :param bzla: Boolector instance.

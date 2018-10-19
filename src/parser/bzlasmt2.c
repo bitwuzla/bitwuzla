@@ -4083,7 +4083,10 @@ parse_open_close_term_indexed_fp_special_const(BzlaSMT2Parser *parser,
                                                BzlaSMT2Item *item_cur,
                                                int32_t tag,
                                                BzlaSMT2Node *node,
-                                               const char *msg)
+                                               const char *msg,
+                                               BoolectorNode *(*fun)(Bzla *,
+                                                                     uint32_t,
+                                                                     uint32_t))
 {
   assert(parser);
   assert(item_cur);
@@ -4105,11 +4108,7 @@ parse_open_close_term_indexed_fp_special_const(BzlaSMT2Parser *parser,
   if (!parse_bit_width_smt2(parser, &item_open->idx0)) return 0;
   if (!parse_bit_width_smt2(parser, &item_open->idx1)) return 0;
 
-  // FP STUB
-  BoolectorSort s = boolector_bv_sort(bzla, 1);
-  exp             = boolector_var(bzla, s, 0);
-  boolector_release_sort(bzla, s);
-  ////
+  exp = fun(bzla, item_open->idx0, item_open->idx1);
 
   item_open->tag   = BZLA_EXP_TAG_SMT2;
   item_open->node  = node;
@@ -4194,40 +4193,60 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
   }
   else if (tag == BZLA_FP_POS_ZERO_TAG_SMT2)
   {
-    if (!parse_open_close_term_indexed_fp_special_const(
-            parser, item_cur, tag, node, " to close '(_ +zero'"))
+    if (!parse_open_close_term_indexed_fp_special_const(parser,
+                                                        item_cur,
+                                                        tag,
+                                                        node,
+                                                        " to close '(_ +zero'",
+                                                        boolector_fp_pos_zero))
     {
       return 0;
     }
   }
   else if (tag == BZLA_FP_NEG_ZERO_TAG_SMT2)
   {
-    if (!parse_open_close_term_indexed_fp_special_const(
-            parser, item_cur, tag, node, " to close '(_ -zero'"))
+    if (!parse_open_close_term_indexed_fp_special_const(parser,
+                                                        item_cur,
+                                                        tag,
+                                                        node,
+                                                        " to close '(_ -zero'",
+                                                        boolector_fp_neg_zero))
     {
       return 0;
     }
   }
   else if (tag == BZLA_FP_POS_INF_TAG_SMT2)
   {
-    if (!parse_open_close_term_indexed_fp_special_const(
-            parser, item_cur, tag, node, " to close '(_ +oo'"))
+    if (!parse_open_close_term_indexed_fp_special_const(parser,
+                                                        item_cur,
+                                                        tag,
+                                                        node,
+                                                        " to close '(_ +oo'",
+                                                        boolector_fp_pos_inf))
     {
       return 0;
     }
   }
   else if (tag == BZLA_FP_NEG_INF_TAG_SMT2)
   {
-    if (!parse_open_close_term_indexed_fp_special_const(
-            parser, item_cur, tag, node, " to close '(_ -oo'"))
+    if (!parse_open_close_term_indexed_fp_special_const(parser,
+                                                        item_cur,
+                                                        tag,
+                                                        node,
+                                                        " to close '(_ -oo'",
+                                                        boolector_fp_neg_inf))
     {
       return 0;
     }
   }
   else if (tag == BZLA_FP_NAN_TAG_SMT2)
   {
-    if (!parse_open_close_term_indexed_fp_special_const(
-            parser, item_cur, tag, node, " to close '(_ Nan'"))
+    if (!parse_open_close_term_indexed_fp_special_const(parser,
+                                                        item_cur,
+                                                        tag,
+                                                        node,
+                                                        " to close '(_ Nan'",
+                                                        boolector_fp_nan))
     {
       return 0;
     }

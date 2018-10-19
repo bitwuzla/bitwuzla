@@ -441,6 +441,46 @@ BzlaNode *bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 
+/**
+ * Create floating-point const +zero with exponent size 'eb' and significand
+ * size 'sb'.
+ * eb:  bit-width of the exponent
+ * sb:  bit-width of the significand
+ */
+BzlaNode *bzla_exp_fp_pos_zero(Bzla *bzla, uint32_t eb, uint32_t sb);
+
+/**
+ * Create floating-point const -zero with exponent size 'eb' and significand
+ * size 'sb'.
+ * eb:  bit-width of the exponent
+ * sb:  bit-width of the significand
+ */
+BzlaNode *bzla_exp_fp_neg_zero(Bzla *bzla, uint32_t eb, uint32_t sb);
+
+/**
+ * Create floating-point const +oo with exponent size 'eb' and significand
+ * size 'sb'.
+ * eb:  bit-width of the exponent
+ * sb:  bit-width of the significand
+ */
+BzlaNode *bzla_exp_fp_pos_inf(Bzla *bzla, uint32_t eb, uint32_t sb);
+
+/**
+ * Create floating-point const -oo with exponent size 'eb' and significand
+ * size 'sb'.
+ * eb:  bit-width of the exponent
+ * sb:  bit-width of the significand
+ */
+BzlaNode *bzla_exp_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb);
+
+/**
+ * Create floating-point const Nan with exponent size 'eb' and significand
+ * size 'sb'.
+ * eb:  bit-width of the exponent
+ * sb:  bit-width of the significand
+ */
+BzlaNode *bzla_exp_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb);
+
 /* Create floating-point is_normal. */
 BzlaNode *bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *exp);
 

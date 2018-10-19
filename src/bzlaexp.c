@@ -1693,6 +1693,61 @@ bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp)
 /*------------------------------------------------------------------------*/
 
 BzlaNode *
+bzla_exp_fp_pos_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+  assert(bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_neg_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+  assert(bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_pos_inf(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+  assert(bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+  assert(bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+  assert(bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
 bzla_exp_fp_abs(Bzla *bzla, BzlaNode *exp)
 {
   assert(bzla == bzla_node_real_addr(exp)->bzla);

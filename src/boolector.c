@@ -2995,6 +2995,96 @@ boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n)
 /*------------------------------------------------------------------------*/
 
 BoolectorNode *
+boolector_fp_pos_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+  BzlaNode *res;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI("%u %u", eb, sb);
+  BZLA_ABORT(eb == 0, "'eb' must be > 0");
+  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  res = bzla_exp_fp_pos_zero(bzla, eb, sb);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res, fp_pos_zero, eb, sb);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_neg_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+  BzlaNode *res;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI("%u %u", eb, sb);
+  BZLA_ABORT(eb == 0, "'eb' must be > 0");
+  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  res = bzla_exp_fp_neg_zero(bzla, eb, sb);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res, fp_neg_zero, eb, sb);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_pos_inf(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+  BzlaNode *res;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI("%u %u", eb, sb);
+  BZLA_ABORT(eb == 0, "'eb' must be > 0");
+  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  res = bzla_exp_fp_pos_inf(bzla, eb, sb);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res, fp_pos_inf, eb, sb);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+  BzlaNode *res;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI("%u %u", eb, sb);
+  BZLA_ABORT(eb == 0, "'eb' must be > 0");
+  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  res = bzla_exp_fp_neg_inf(bzla, eb, sb);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res, fp_neg_inf, eb, sb);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+  BzlaNode *res;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI("%u %u", eb, sb);
+  BZLA_ABORT(eb == 0, "'eb' must be > 0");
+  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  res = bzla_exp_fp_nan(bzla, eb, sb);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res, fp_nan, eb, sb);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
 boolector_fp_abs(Bzla *bzla, BoolectorNode *node)
 {
   BzlaNode *exp, *res;
