@@ -4632,7 +4632,7 @@ boolector_fun_get_arity(Bzla *bzla, BoolectorNode *node)
 /*------------------------------------------------------------------------*/
 
 bool
-boolector_is_const(Bzla *bzla, BoolectorNode *node)
+boolector_is_bv_const(Bzla *bzla, BoolectorNode *node)
 {
   BzlaNode *exp;
   bool res;
@@ -4645,7 +4645,7 @@ boolector_is_const(Bzla *bzla, BoolectorNode *node)
   res = bzla_node_is_bv_const(exp);
   BZLA_TRAPI_RETURN_BOOL(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_BOOL(res, is_const, BZLA_CLONED_EXP(exp));
+  BZLA_CHKCLONE_RES_BOOL(res, is_bv_const, BZLA_CLONED_EXP(exp));
 #endif
   return res;
 }

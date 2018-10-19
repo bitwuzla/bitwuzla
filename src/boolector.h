@@ -2390,7 +2390,7 @@ uint32_t boolector_fun_get_arity(Bzla *bzla, BoolectorNode *node);
   :param node: Boolector node.
   :return: True if ``node`` is a constant, and false otherwise.
 */
-bool boolector_is_const(Bzla *bzla, BoolectorNode *node);
+bool boolector_is_bv_const(Bzla *bzla, BoolectorNode *node);
 
 /*!
   Determine if given node is a bit-vector variable.

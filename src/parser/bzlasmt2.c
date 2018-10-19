@@ -2026,7 +2026,7 @@ translate_ext_rotate_smt2(Bzla *bzla,
                           BoolectorNode *shift,
                           bool is_left)
 {
-  assert(boolector_is_const(bzla, shift));
+  assert(boolector_is_bv_const(bzla, shift));
 
   BzlaBitVector *shift_width_bv;
   uint32_t shift_width;
@@ -3470,7 +3470,7 @@ close_term(BzlaSMT2Parser *parser)
   {
     if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
     if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
-    if (!boolector_is_const(bzla, item_cur[2].exp))
+    if (!boolector_is_bv_const(bzla, item_cur[2].exp))
     {
       parser->perrcoo = item_cur[2].coo;
       return !perr_smt2(
@@ -3560,7 +3560,7 @@ close_term(BzlaSMT2Parser *parser)
     }
     for (i = 1; i <= nargs; i++)
     {
-      if (!boolector_is_const(bzla, item_cur[i].exp))
+      if (!boolector_is_bv_const(bzla, item_cur[i].exp))
         return !perr_smt2(
             parser,
             "invalid argument to '%s', expected bit-vector constant",
@@ -3810,7 +3810,7 @@ close_term(BzlaSMT2Parser *parser)
         parser->perrcoo = item_cur[1].coo;
         return !perr_smt2(parser, "expected expression");
       }
-      if (!boolector_is_const(bzla, item_cur[1].exp))
+      if (!boolector_is_bv_const(bzla, item_cur[1].exp))
       {
         return !perr_smt2(
             parser,
