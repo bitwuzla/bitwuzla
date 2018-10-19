@@ -507,6 +507,38 @@ BzlaNode *bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 BzlaNode *bzla_exp_fp_round_to_int(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /**
+ * Create floating-point addition wrt to given rounding mode.
+ * e0: rounding mode
+ * e1: floating-point operand
+ * e2: floating-point operand
+ */
+BzlaNode *bzla_exp_fp_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
+
+/**
+ * Create floating-point subtraction wrt to given rounding mode.
+ * e0: rounding mode
+ * e1: floating-point operand
+ * e2: floating-point operand
+ */
+BzlaNode *bzla_exp_fp_sub(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
+
+/**
+ * Create floating-point multiplication wrt to given rounding mode.
+ * e0: rounding mode
+ * e1: floating-point operand
+ * e2: floating-point operand
+ */
+BzlaNode *bzla_exp_fp_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
+
+/**
+ * Create floating-point division wrt to given rounding mode.
+ * e0: rounding mode
+ * e1: floating-point operand
+ * e2: floating-point operand
+ */
+BzlaNode *bzla_exp_fp_div(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
+
+/**
  * Create floating-point with exponent size 'eb' and significand size 'sb'
  * from given bit-vector expression 'exp'.
  * exp: bit-vector operand

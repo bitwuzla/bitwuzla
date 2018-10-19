@@ -1903,6 +1903,62 @@ bzla_exp_fp_round_to_int(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 }
 
 BzlaNode *
+bzla_exp_fp_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_sub(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_div(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
 bzla_exp_fp_to_fp(Bzla *bzla, BzlaNode *exp, uint32_t eb, uint32_t sb)
 {
   assert(bzla == bzla_node_real_addr(exp)->bzla);

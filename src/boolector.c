@@ -3453,6 +3453,162 @@ boolector_fp_round_to_int(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
 }
 
 BoolectorNode *
+boolector_fp_add(Bzla *bzla,
+                 BoolectorNode *n0,
+                 BoolectorNode *n1,
+                 BoolectorNode *n2)
+{
+  BzlaNode *e0, *e1, *e2, *res;
+
+  e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
+  e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  e2 = BZLA_IMPORT_BOOLECTOR_NODE(n2);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(e0);
+  BZLA_ABORT_ARG_NULL(e1);
+  BZLA_ABORT_ARG_NULL(e2);
+  BZLA_TRAPI_TERFUN(e0, e1, e2);
+  BZLA_ABORT_REFS_NOT_POS(e0);
+  BZLA_ABORT_REFS_NOT_POS(e1);
+  BZLA_ABORT_REFS_NOT_POS(e2);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e2);
+  BZLA_ABORT_IS_NOT_RM(e0);
+  BZLA_ABORT_IS_NOT_FP(e1);
+  BZLA_ABORT_IS_NOT_FP(e2);
+  BZLA_ABORT_SORT_MISMATCH(e1, e2);
+  res = bzla_exp_fp_add(bzla, e0, e1, e2);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res,
+                        fp_add,
+                        BZLA_CLONED_EXP(e0),
+                        BZLA_CLONED_EXP(e1),
+                        BZLA_CLONED_EXP(e2));
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_sub(Bzla *bzla,
+                 BoolectorNode *n0,
+                 BoolectorNode *n1,
+                 BoolectorNode *n2)
+{
+  BzlaNode *e0, *e1, *e2, *res;
+
+  e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
+  e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  e2 = BZLA_IMPORT_BOOLECTOR_NODE(n2);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(e0);
+  BZLA_ABORT_ARG_NULL(e1);
+  BZLA_ABORT_ARG_NULL(e2);
+  BZLA_TRAPI_TERFUN(e0, e1, e2);
+  BZLA_ABORT_REFS_NOT_POS(e0);
+  BZLA_ABORT_REFS_NOT_POS(e1);
+  BZLA_ABORT_REFS_NOT_POS(e2);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e2);
+  BZLA_ABORT_IS_NOT_RM(e0);
+  BZLA_ABORT_IS_NOT_FP(e1);
+  BZLA_ABORT_IS_NOT_FP(e2);
+  BZLA_ABORT_SORT_MISMATCH(e1, e2);
+  res = bzla_exp_fp_sub(bzla, e0, e1, e2);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res,
+                        fp_sub,
+                        BZLA_CLONED_EXP(e0),
+                        BZLA_CLONED_EXP(e1),
+                        BZLA_CLONED_EXP(e2));
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_mul(Bzla *bzla,
+                 BoolectorNode *n0,
+                 BoolectorNode *n1,
+                 BoolectorNode *n2)
+{
+  BzlaNode *e0, *e1, *e2, *res;
+
+  e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
+  e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  e2 = BZLA_IMPORT_BOOLECTOR_NODE(n2);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(e0);
+  BZLA_ABORT_ARG_NULL(e1);
+  BZLA_ABORT_ARG_NULL(e2);
+  BZLA_TRAPI_TERFUN(e0, e1, e2);
+  BZLA_ABORT_REFS_NOT_POS(e0);
+  BZLA_ABORT_REFS_NOT_POS(e1);
+  BZLA_ABORT_REFS_NOT_POS(e2);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e2);
+  BZLA_ABORT_IS_NOT_RM(e0);
+  BZLA_ABORT_IS_NOT_FP(e1);
+  BZLA_ABORT_IS_NOT_FP(e2);
+  BZLA_ABORT_SORT_MISMATCH(e1, e2);
+  res = bzla_exp_fp_mul(bzla, e0, e1, e2);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res,
+                        fp_mul,
+                        BZLA_CLONED_EXP(e0),
+                        BZLA_CLONED_EXP(e1),
+                        BZLA_CLONED_EXP(e2));
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_div(Bzla *bzla,
+                 BoolectorNode *n0,
+                 BoolectorNode *n1,
+                 BoolectorNode *n2)
+{
+  BzlaNode *e0, *e1, *e2, *res;
+
+  e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
+  e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  e2 = BZLA_IMPORT_BOOLECTOR_NODE(n2);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(e0);
+  BZLA_ABORT_ARG_NULL(e1);
+  BZLA_ABORT_ARG_NULL(e2);
+  BZLA_TRAPI_TERFUN(e0, e1, e2);
+  BZLA_ABORT_REFS_NOT_POS(e0);
+  BZLA_ABORT_REFS_NOT_POS(e1);
+  BZLA_ABORT_REFS_NOT_POS(e2);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e2);
+  BZLA_ABORT_IS_NOT_RM(e0);
+  BZLA_ABORT_IS_NOT_FP(e1);
+  BZLA_ABORT_IS_NOT_FP(e2);
+  BZLA_ABORT_SORT_MISMATCH(e1, e2);
+  res = bzla_exp_fp_div(bzla, e0, e1, e2);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res,
+                        fp_div,
+                        BZLA_CLONED_EXP(e0),
+                        BZLA_CLONED_EXP(e1),
+                        BZLA_CLONED_EXP(e2));
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
 boolector_fp_to_fp(Bzla *bzla, BoolectorNode *node, uint32_t eb, uint32_t sb)
 {
   BzlaNode *exp, *res;

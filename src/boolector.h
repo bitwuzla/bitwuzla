@@ -1811,6 +1811,66 @@ BoolectorNode *boolector_fp_round_to_int(Bzla *bzla,
                                          BoolectorNode *n1);
 
 /*!
+  Create a floating-point addition.
+
+  :param bzla: Boolector instance.
+  :param n0:   Rounding mode operand.
+  :param n1:   Floating-point operand.
+  :param n2:   Floating-point operand.
+  :return:     A floating-point representing the addition of ``n1`` and ``n2``
+               with respect to rounding mode ``n0``.
+ */
+BoolectorNode *boolector_fp_add(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1,
+                                BoolectorNode *n2);
+
+/*!
+  Create a floating-point subtraction.
+
+  :param bzla: Boolector instance.
+  :param n0:   Rounding mode operand.
+  :param n1:   Floating-point operand.
+  :param n2:   Floating-point operand.
+  :return:     A floating-point representing subtracting ``n2`` from ``n1``
+               with respect to rounding mode ``n0``.
+ */
+BoolectorNode *boolector_fp_sub(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1,
+                                BoolectorNode *n2);
+
+/*!
+  Create a floating-point multiplication.
+
+  :param bzla: Boolector instance.
+  :param n0:   Rounding mode operand.
+  :param n1:   Floating-point operand.
+  :param n2:   Floating-point operand.
+  :return:     A floating-point representing the multiplication of ``n1`` and
+              ``n2`` with respect to rounding mode ``n0``.
+ */
+BoolectorNode *boolector_fp_mul(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1,
+                                BoolectorNode *n2);
+
+/*!
+  Create a floating-point division.
+
+  :param bzla: Boolector instance.
+  :param n0:   Rounding mode operand.
+  :param n1:   Floating-point operand.
+  :param n2:   Floating-point operand.
+  :return:     A floating-point representing the division of ``n1`` and ``n2``
+               with respect to rounding mode ``n0``.
+ */
+BoolectorNode *boolector_fp_div(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1,
+                                BoolectorNode *n2);
+
+/*!
   Create a floating-point expression with exponent size ``eb`` and significand
   size ``sb`` from a given bit-vector node ``node``.
 
