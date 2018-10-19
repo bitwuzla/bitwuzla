@@ -1783,8 +1783,8 @@ BoolectorNode *boolector_fp_gt(Bzla *bzla,
                                BoolectorNode *n1);
 
 /*!
-  Create the square root of a given floating-point node ``n0`` with respect
-  to the given rounding mode ``n1``.
+  Create the square root of a given floating-point node ``n1`` with respect
+  to the given rounding mode ``n0``.
 
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
@@ -1797,8 +1797,8 @@ BoolectorNode *boolector_fp_sqrt(Bzla *bzla,
                                  BoolectorNode *n1);
 
 /*!
-  Create a round-to-integral expression of a given floating-point node ``n0``
-  with respect to the given rounding mode ``n1``.
+  Create a round-to-integral expression of a given floating-point node ``n1``
+  with respect to the given rounding mode ``n0``.
 
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
