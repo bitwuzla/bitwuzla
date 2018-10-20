@@ -166,15 +166,11 @@ class TestBvProp : public TestMm
     size_t len = strlen(str_x);
     for (size_t i = 0; i < len; i++)
     {
-      if (((str_x[i] == 'x') != (str_z[i] == 'x'))
-          || (str_x[i] == '0' && str_z[i] != '1')
-          || (str_x[i] == '1' && str_z[i] != '0')
-          || (str_z[i] == '0' && str_x[i] != '1')
-          || (str_z[i] == '1' && str_x[i] != '0'))
-      {
-        res = false;
-        break;
-      }
+      assert(str_x[i] != 'x' || str_z[i] == 'x');
+      assert(str_x[i] != '0' || str_z[i] == '1');
+      assert(str_x[i] != '1' || str_z[i] == '0');
+      assert(str_z[i] != '0' || str_x[i] == '1');
+      assert(str_z[i] != '1' || str_x[i] == '0');
     }
     bzla_mem_freestr(d_mm, str_x);
     bzla_mem_freestr(d_mm, str_z);
@@ -320,7 +316,7 @@ TEST_F(TestBvProp, not )
            == bzla_bvprop_is_fixed(d_mm, res_x));
     assert(bzla_bvprop_is_fixed(d_mm, d_x)
            == bzla_bvprop_is_fixed(d_mm, res_z));
-    assert(check_not(res_x, res_z));
+    check_not(res_x, res_z);
 
     bzla_bvprop_free(d_mm, d_x);
     bzla_bvprop_free(d_mm, res_x);
@@ -340,7 +336,7 @@ TEST_F(TestBvProp, not )
            == bzla_bvprop_is_fixed(d_mm, res_x));
     assert(bzla_bvprop_is_fixed(d_mm, d_z)
            == bzla_bvprop_is_fixed(d_mm, res_z));
-    assert(check_not(res_x, res_z));
+    check_not(res_x, res_z);
 
     bzla_bvprop_free(d_mm, d_z);
     bzla_bvprop_free(d_mm, res_x);
