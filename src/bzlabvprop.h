@@ -1,6 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
+ *  Copyright (C) 2018 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -54,6 +55,14 @@ void bzla_bvprop_not(BzlaMemMgr *mm,
                      BzlaBvDomain *d_z,
                      BzlaBvDomain **res_d_x,
                      BzlaBvDomain **res_d_z);
+
+/* Propagate domains 'd_x' and 'd_z' of z = x << n where n is const. */
+void bzla_bvprop_sll_const(BzlaMemMgr *mm,
+                           BzlaBvDomain *d_x,
+                           BzlaBvDomain *d_z,
+                           BzlaBitVector *n,
+                           BzlaBvDomain **res_d_x,
+                           BzlaBvDomain **res_d_z);
 
 // TODO:
 // propagators:

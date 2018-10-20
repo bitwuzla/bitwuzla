@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
- *  Copyright (C) 2019 Aina Niemetz.
+ *  Copyright (C) 2018-2019 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -181,6 +181,21 @@ class TestBvProp : public TestMm
     return res;
   }
 
+  void check_sll_const(BzlaBvDomain *d_x, BzlaBvDomain *d_z, uint32_t n)
+  {
+    char *str_x = from_domain(d_mm, d_x);
+    char *str_z = from_domain(d_mm, d_z);
+    assert(strlen(str_x) == strlen(str_z));
+
+    size_t len = strlen(str_x);
+    for (size_t i = 0; i < len; i++)
+    {
+      assert(i >= n || str_z[len - 1 - i] == '0');
+      assert(i < n || str_z[len - 1 - i] == str_x[len - 1 - i + n]);
+    }
+    bzla_mem_freestr(d_mm, str_x);
+    bzla_mem_freestr(d_mm, str_z);
+  }
   char d_consts[TEST_NUM_CONSTS][TEST_CONST_LEN] = {{0}};
 };
 
@@ -332,4 +347,56 @@ TEST_F(TestBvProp, not )
     bzla_bvprop_free(d_mm, res_z);
   }
   bzla_bvprop_free(d_mm, d_x);
+}
+
+TEST_F(TestBvProp, sll)
+{
+  size_t i;
+  uint32_t n;
+  BzlaBitVector *bv_n;
+  BzlaBvDomain *d_x, *d_z, *res_x, *res_z;
+
+  d_z = bzla_bvprop_new_init(d_mm, TEST_BW);
+  for (i = 0; i < TEST_NUM_CONSTS; i++)
+  {
+    d_x = create_domain(d_consts[i]);
+    for (n = 0; n < TEST_BW + 1; n++)
+    {
+      bv_n = bzla_bv_uint64_to_bv(d_mm, n, TEST_BW);
+      bzla_bvprop_sll_const(d_mm, d_x, d_z, bv_n, &res_x, &res_z);
+      assert(bzla_bvprop_is_valid(d_mm, res_x));
+      assert(bzla_bvprop_is_valid(d_mm, res_z));
+      assert(bzla_bvprop_is_fixed(d_mm, d_x)
+             == bzla_bvprop_is_fixed(d_mm, res_x));
+      check_sll_const(res_x, res_z, n);
+
+      bzla_bvprop_free(d_mm, res_x);
+      bzla_bvprop_free(d_mm, res_z);
+      bzla_bv_free(d_mm, bv_n);
+    }
+    bzla_bvprop_free(d_mm, d_x);
+  }
+  bzla_bvprop_free(d_mm, d_z);
+
+  d_z = bzla_bvprop_new_init(d_mm, TEST_BW);
+  for (i = 0; i < TEST_NUM_CONSTS; i++)
+  {
+    d_x = create_domain(d_consts[i]);
+    for (n = 0; n < TEST_BW + 1; n++)
+    {
+      bv_n = bzla_bv_uint64_to_bv(d_mm, n, TEST_BW);
+      bzla_bvprop_sll_const(d_mm, d_x, d_z, bv_n, &res_x, &res_z);
+      assert(bzla_bvprop_is_valid(d_mm, res_x));
+      assert(bzla_bvprop_is_valid(d_mm, res_z));
+      assert(bzla_bvprop_is_fixed(d_mm, d_x)
+             == bzla_bvprop_is_fixed(d_mm, res_x));
+      check_sll_const(res_x, res_z, n);
+
+      bzla_bvprop_free(d_mm, res_x);
+      bzla_bvprop_free(d_mm, res_z);
+      bzla_bv_free(d_mm, bv_n);
+    }
+    bzla_bvprop_free(d_mm, d_x);
+  }
+  bzla_bvprop_free(d_mm, d_z);
 }
