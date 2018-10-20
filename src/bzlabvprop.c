@@ -119,3 +119,31 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
   }
   assert(bzla_bvprop_is_valid(mm, *res_d_z));
 }
+
+void
+bzla_bvprop_not(BzlaMemMgr *mm,
+                BzlaBvDomain *d_x,
+                BzlaBvDomain *d_z,
+                BzlaBvDomain **res_d_x,
+                BzlaBvDomain **res_d_z)
+{
+  assert(mm);
+  assert(d_x);
+  assert(d_z);
+
+  BzlaBitVector *not_hi = bzla_bv_not(mm, d_z->hi);
+  BzlaBitVector *not_lo = bzla_bv_not(mm, d_z->lo);
+  *res_d_x              = new_domain(mm);
+  (*res_d_x)->lo        = bzla_bv_or(mm, d_x->lo, not_hi);
+  (*res_d_x)->hi        = bzla_bv_and(mm, d_x->hi, not_lo);
+  bzla_bv_free(mm, not_hi);
+  bzla_bv_free(mm, not_lo);
+
+  not_hi         = bzla_bv_not(mm, d_x->hi);
+  not_lo         = bzla_bv_not(mm, d_x->lo);
+  *res_d_z       = new_domain(mm);
+  (*res_d_z)->lo = bzla_bv_or(mm, d_z->lo, not_hi);
+  (*res_d_z)->hi = bzla_bv_and(mm, d_z->hi, not_lo);
+  bzla_bv_free(mm, not_hi);
+  bzla_bv_free(mm, not_lo);
+}

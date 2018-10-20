@@ -117,6 +117,70 @@ class TestBvProp : public TestMm
     return res;
   }
 
+  bool is_false_eq(const char *a, const char *b)
+  {
+    assert(strlen(a) == strlen(b));
+    size_t len = strlen(a);
+    for (size_t i = 0; i < len; i++)
+    {
+      if (a[i] == 'x' || b[i] == 'x')
+      {
+        continue;
+      }
+      if (a[i] != b[i])
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool is_true_eq(const char *a, const char *b)
+  {
+    assert(strlen(a) == strlen(b));
+    size_t len = strlen(a);
+    for (size_t i = 0; i < len; i++)
+    {
+      if (a[i] == 'x' && b[i] == 'x')
+      {
+        return false;
+      }
+      if (a[i] != 'x' && b[i] != 'x')
+      {
+        if (a[i] != b[i])
+        {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  bool check_not(BzlaBvDomain *d_x, BzlaBvDomain *d_z)
+  {
+    bool res    = true;
+    char *str_x = from_domain(d_mm, d_x);
+    char *str_z = from_domain(d_mm, d_z);
+    assert(strlen(str_x) == strlen(str_z));
+
+    size_t len = strlen(str_x);
+    for (size_t i = 0; i < len; i++)
+    {
+      if (((str_x[i] == 'x') != (str_z[i] == 'x'))
+          || (str_x[i] == '0' && str_z[i] != '1')
+          || (str_x[i] == '1' && str_z[i] != '0')
+          || (str_z[i] == '0' && str_x[i] != '1')
+          || (str_z[i] == '1' && str_x[i] != '0'))
+      {
+        res = false;
+        break;
+      }
+    }
+    bzla_mem_freestr(d_mm, str_x);
+    bzla_mem_freestr(d_mm, str_z);
+    return res;
+  }
+
   char d_consts[TEST_NUM_CONSTS][TEST_CONST_LEN] = {{0}};
 };
 
@@ -200,18 +264,22 @@ TEST_F(TestBvProp, eq)
         if (str_z[0] == '0')
         {
           assert(!bzla_bvprop_is_valid(d_mm, res_xy));
+          assert(is_false_eq(d_consts[i], d_consts[j]));
         }
         else
         {
           assert(str_z[0] == '1');
           assert(bzla_bvprop_is_valid(d_mm, res_xy));
           assert(bzla_bvprop_is_fixed(d_mm, res_xy));
+          assert(is_true_eq(d_consts[i], d_consts[j]));
         }
         bzla_mem_freestr(d_mm, str_z);
       }
       else
       {
         assert(bzla_bvprop_is_valid(d_mm, res_xy));
+        assert(!is_false_eq(d_consts[i], d_consts[j]));
+        assert(!is_true_eq(d_consts[i], d_consts[j]));
       }
       bzla_bvprop_free(d_mm, d_y);
       bzla_bvprop_free(d_mm, res_xy);
@@ -219,4 +287,49 @@ TEST_F(TestBvProp, eq)
     }
     bzla_bvprop_free(d_mm, d_x);
   }
+}
+
+TEST_F(TestBvProp, not )
+{
+  BzlaBvDomain *d_x, *d_z, *res_x, *res_z;
+
+  d_z = bzla_bvprop_new_init(d_mm, TEST_BW);
+  for (size_t i = 0; i < TEST_NUM_CONSTS; i++)
+  {
+    d_x = create_domain(d_consts[i]);
+    bzla_bvprop_not(d_mm, d_x, d_z, &res_x, &res_z);
+
+    assert(bzla_bvprop_is_valid(d_mm, res_x));
+    assert(bzla_bvprop_is_valid(d_mm, res_z));
+    assert(bzla_bvprop_is_fixed(d_mm, d_x)
+           == bzla_bvprop_is_fixed(d_mm, res_x));
+    assert(bzla_bvprop_is_fixed(d_mm, d_x)
+           == bzla_bvprop_is_fixed(d_mm, res_z));
+    assert(check_not(res_x, res_z));
+
+    bzla_bvprop_free(d_mm, d_x);
+    bzla_bvprop_free(d_mm, res_x);
+    bzla_bvprop_free(d_mm, res_z);
+  }
+  bzla_bvprop_free(d_mm, d_z);
+
+  d_x = bzla_bvprop_new_init(d_mm, TEST_BW);
+  for (size_t i = 0; i < TEST_NUM_CONSTS; i++)
+  {
+    d_z = create_domain(d_consts[i]);
+    bzla_bvprop_not(d_mm, d_x, d_z, &res_x, &res_z);
+
+    assert(bzla_bvprop_is_valid(d_mm, res_x));
+    assert(bzla_bvprop_is_valid(d_mm, res_z));
+    assert(bzla_bvprop_is_fixed(d_mm, d_z)
+           == bzla_bvprop_is_fixed(d_mm, res_x));
+    assert(bzla_bvprop_is_fixed(d_mm, d_z)
+           == bzla_bvprop_is_fixed(d_mm, res_z));
+    assert(check_not(res_x, res_z));
+
+    bzla_bvprop_free(d_mm, d_z);
+    bzla_bvprop_free(d_mm, res_x);
+    bzla_bvprop_free(d_mm, res_z);
+  }
+  bzla_bvprop_free(d_mm, d_x);
 }

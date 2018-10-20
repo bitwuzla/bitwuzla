@@ -48,11 +48,16 @@ void bzla_bvprop_eq(BzlaMemMgr *mm,
                     BzlaBvDomain **res_d_xy,
                     BzlaBvDomain **res_d_z);
 
+/* Propagate domains 'd_x' and 'd_z' of z = ~x. */
+void bzla_bvprop_not(BzlaMemMgr *mm,
+                     BzlaBvDomain *d_x,
+                     BzlaBvDomain *d_z,
+                     BzlaBvDomain **res_d_x,
+                     BzlaBvDomain **res_d_z);
+
 // TODO:
 // propagators:
 //
-// y = x
-// y = ~x
 // z = x & y
 // y = x << n
 // y = x >> n
