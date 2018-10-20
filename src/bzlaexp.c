@@ -1748,6 +1748,20 @@ bzla_exp_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb)
 }
 
 BzlaNode *
+bzla_exp_fp_const(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
 bzla_exp_fp_abs(Bzla *bzla, BzlaNode *exp)
 {
   assert(bzla == bzla_node_real_addr(exp)->bzla);

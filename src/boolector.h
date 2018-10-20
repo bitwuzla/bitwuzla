@@ -1654,6 +1654,24 @@ BoolectorNode *boolector_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb);
 BoolectorNode *boolector_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb);
 
 /*!
+  Create a floating-point const with exponent size ``width(n0) + ``width(n2)``
+  and significand size ``width(n1)``.
+
+  :param bzla: Boolector instance.
+  :param n0:   The sign bit of the floating-point const, represented as a
+               bit-vector constant of size one.
+  :param n1:   The exponent of the floating-point const, represented as a
+               bit-vector constant.
+  :param n2:   The significand of the floating-point const,
+               represented as a bit-vector constant.
+  :return:     A floating-point const.
+ */
+BoolectorNode *boolector_fp_const(Bzla *bzla,
+                                  BoolectorNode *n0,
+                                  BoolectorNode *n1,
+                                  BoolectorNode *n2);
+
+/*!
   Create the absolute value of a given floating-point node ``node``.
 
   :param bzla: Boolector instance.

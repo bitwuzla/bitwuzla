@@ -3561,21 +3561,20 @@ close_term(BzlaSMT2Parser *parser)
     for (i = 1; i <= nargs; i++)
     {
       if (!boolector_is_bv_const(bzla, item_cur[i].exp))
+      {
         return !perr_smt2(
             parser,
             "invalid argument to '%s', expected bit-vector constant",
             item_cur->node->name);
+      }
     }
     if (boolector_bv_get_width(bzla, item_cur[1].exp) != 1)
       return !perr_smt2(parser,
                         "first argument to '%s' invalid, expected "
                         "bit-vector sort of size 1",
                         item_cur->node->name);
-    // FP STUB
-    BoolectorSort s = boolector_bv_sort(bzla, 1);
-    exp             = boolector_var(bzla, s, 0);
-    boolector_release_sort(bzla, s);
-    ////
+    exp = boolector_fp_const(
+        bzla, item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
     assert(exp);
     release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }

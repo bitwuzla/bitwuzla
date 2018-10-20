@@ -481,6 +481,17 @@ BzlaNode *bzla_exp_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb);
  */
 BzlaNode *bzla_exp_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb);
 
+/**
+ * Create floating-point const.
+ * e0: bit-vector constant of size 1 (sign bit)
+ * e1: bit-vector constant representing the exponent
+ * e2: bit-vector constant representing the significand
+ */
+BzlaNode *bzla_exp_fp_const(Bzla *bzla,
+                            BzlaNode *e0,
+                            BzlaNode *e1,
+                            BzlaNode *e2);
+
 /* Create floating-point is_normal. */
 BzlaNode *bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *exp);
 
