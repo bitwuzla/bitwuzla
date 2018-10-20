@@ -1693,6 +1693,51 @@ bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp)
 /*------------------------------------------------------------------------*/
 
 BzlaNode *
+bzla_exp_fp_rne(Bzla *bzla)
+{
+  assert(bzla);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_rna(Bzla *bzla)
+{
+  assert(bzla);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_rtp(Bzla *bzla)
+{
+  assert(bzla);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_rtn(Bzla *bzla)
+{
+  assert(bzla);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_rtz(Bzla *bzla)
+{
+  assert(bzla);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
 bzla_exp_fp_pos_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
 {
   assert(bzla);

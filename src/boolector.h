@@ -1594,6 +1594,46 @@ BoolectorNode *boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n);
 /*------------------------------------------------------------------------*/
 
 /*!
+  Create a round-nearest-ties-to-even rounding mode.
+
+  :param bzla: Boolector instance.
+  :return:     An RNE rounding mode const.
+ */
+BoolectorNode *boolector_fp_rne(Bzla *bzla);
+
+/*!
+  Create a round-nearest-ties-to-away rounding mode.
+
+  :param bzla: Boolector instance.
+  :return:     An RNA rounding mode const.
+ */
+BoolectorNode *boolector_fp_rna(Bzla *bzla);
+
+/*!
+  Create a round-toward-positive rounding mode.
+
+  :param bzla: Boolector instance.
+  :return:     An RTP rounding mode const.
+ */
+BoolectorNode *boolector_fp_rtp(Bzla *bzla);
+
+/*!
+  Create a round-toward-negative rounding mode.
+
+  :param bzla: Boolector instance.
+  :return:     An RTN rounding mode const.
+ */
+BoolectorNode *boolector_fp_rtn(Bzla *bzla);
+
+/*!
+  Create a round-toward-zero rounding mode.
+
+  :param bzla: Boolector instance.
+  :return:     An RTZ rounding mode const.
+ */
+BoolectorNode *boolector_fp_rtz(Bzla *bzla);
+
+/*!
   Create a floating-point +zero const with exponent size ``eb`` and significand
   size ``sb``.
 
