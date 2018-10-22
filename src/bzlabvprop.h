@@ -90,11 +90,18 @@ void bzla_bvprop_slice(BzlaMemMgr *mm,
                        BzlaBvDomain **res_d_x,
                        BzlaBvDomain **res_d_z);
 
+/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x o y. */
+void bzla_bvprop_concat(BzlaMemMgr *mm,
+                        BzlaBvDomain *d_x,
+                        BzlaBvDomain *d_y,
+                        BzlaBvDomain *d_z,
+                        BzlaBvDomain **res_d_y,
+                        BzlaBvDomain **res_d_x,
+                        BzlaBvDomain **res_d_z);
+
 // TODO:
 // propagators:
 //
-// z = x o y
-// y = x[n:m]
 // x < y
 //
 //
