@@ -64,6 +64,14 @@ void bzla_bvprop_sll_const(BzlaMemMgr *mm,
                            BzlaBvDomain **res_d_x,
                            BzlaBvDomain **res_d_z);
 
+/* Propagate domains 'd_x' and 'd_z' of z = x >> n where n is const. */
+void bzla_bvprop_srl_const(BzlaMemMgr *mm,
+                           BzlaBvDomain *d_x,
+                           BzlaBvDomain *d_z,
+                           BzlaBitVector *n,
+                           BzlaBvDomain **res_d_x,
+                           BzlaBvDomain **res_d_z);
+
 // TODO:
 // propagators:
 //
