@@ -483,3 +483,60 @@ TEST_F(TestBvProp, and)
     bzla_bvprop_free(d_mm, d_z);
   }
 }
+
+TEST_F(TestBvProp, slice)
+{
+  char buf[TEST_BW + 1];
+  BzlaBvDomain *d_x, *d_z, *res_x, *res_z;
+
+  for (size_t i = 0; i < TEST_NUM_CONSTS; i++)
+  {
+    d_x = create_domain(d_consts[i]);
+    for (size_t j = 0; j < TEST_NUM_CONSTS; j++)
+    {
+      for (uint32_t lower = 0; lower < TEST_BW; lower++)
+      {
+        for (uint32_t upper = lower; upper < TEST_BW; upper++)
+        {
+          memset(buf, 0, sizeof(buf));
+          memcpy(buf, &d_consts[j][TEST_BW - 1 - upper], upper - lower + 1);
+          assert(strlen(buf) > 0);
+          assert(strlen(buf) == upper - lower + 1);
+
+          d_z = create_domain(buf);
+          bzla_bvprop_slice(d_mm, d_x, d_z, upper, lower, &res_x, &res_z);
+          if (bzla_bvprop_is_valid(d_mm, res_z))
+          {
+            assert(bzla_bvprop_is_valid(d_mm, res_x));
+            char *str_res_x = from_domain(d_mm, res_x);
+            char *str_res_z = from_domain(d_mm, res_z);
+            for (size_t k = 0; k < upper - lower + 1; k++)
+            {
+              assert(str_res_z[k] == str_res_x[TEST_BW - 1 - upper + k]);
+            }
+            bzla_mem_freestr(d_mm, str_res_x);
+            bzla_mem_freestr(d_mm, str_res_z);
+          }
+          else
+          {
+            assert(!bzla_bvprop_is_valid(d_mm, res_x));
+            bool valid = true;
+            for (size_t k = 0; k < TEST_BW; k++)
+            {
+              if (buf[k] != d_consts[i][TEST_BW - 1 - upper + k])
+              {
+                valid = false;
+                break;
+              }
+            }
+            assert(!valid);
+          }
+          bzla_bvprop_free(d_mm, d_z);
+          bzla_bvprop_free(d_mm, res_x);
+          bzla_bvprop_free(d_mm, res_z);
+        }
+      }
+    }
+    bzla_bvprop_free(d_mm, d_x);
+  }
+}
