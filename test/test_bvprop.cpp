@@ -70,6 +70,10 @@ class TestBvProp : public TestMm
   static constexpr uint32_t TEST_NUM_CONSTS = 27;
   static constexpr uint32_t TEST_CONST_LEN  = (TEST_BW + 1);
 
+  static constexpr uint32_t TEST_BVPROP_AND = 0;
+  static constexpr uint32_t TEST_BVPROP_OR  = 1;
+  static constexpr uint32_t TEST_BVPROP_XOR = 2;
+
   void SetUp() override
   {
     TestMm::SetUp();
@@ -354,7 +358,7 @@ class TestBvProp : public TestMm
     }
   }
 
-  void test_and_or(bool is_or)
+  void test_and_or_xor(int32_t op)
   {
     BzlaBvDomain *d_x, *d_y, *d_z;
     BzlaBvDomain *res_x, *res_y, *res_z;
@@ -369,10 +373,19 @@ class TestBvProp : public TestMm
         {
           d_y = create_domain(d_consts[k]);
 
-          if (is_or)
-            bzla_bvprop_or(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
-          else
+          if (op == TEST_BVPROP_AND)
+          {
             bzla_bvprop_and(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+          }
+          else if (op == TEST_BVPROP_OR)
+          {
+            bzla_bvprop_or(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+          }
+          else
+          {
+            assert(op == TEST_BVPROP_XOR);
+            bzla_bvprop_xor(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+          }
 
           if (bzla_bvprop_is_valid(d_mm, res_z))
           {
@@ -381,19 +394,30 @@ class TestBvProp : public TestMm
 
             for (size_t l = 0; l < TEST_BW; l++)
             {
-              if (is_or)
-              {
-                assert(d_consts[i][l] != '1'
-                       || (d_consts[j][l] != '0' || d_consts[k][l] != '0'));
-                assert(d_consts[i][l] != '0'
-                       || (d_consts[j][l] != '1' && d_consts[k][l] != '1'));
-              }
-              else
+              if (op == TEST_BVPROP_AND)
               {
                 assert(d_consts[i][l] != '1'
                        || (d_consts[j][l] != '0' && d_consts[k][l] != '0'));
                 assert(d_consts[i][l] != '0'
                        || (d_consts[j][l] != '1' || d_consts[k][l] != '1'));
+              }
+              else if (op == TEST_BVPROP_OR)
+              {
+                assert(d_consts[i][l] != '1' || d_consts[j][l] != '0'
+                       || d_consts[k][l] != '0');
+                assert(d_consts[i][l] != '0'
+                       || (d_consts[j][l] != '1' && d_consts[k][l] != '1'));
+              }
+              else
+              {
+                assert(op == TEST_BVPROP_XOR);
+                assert(d_consts[i][l] != '1'
+                       || (d_consts[j][l] != '0' || d_consts[k][l] != '0')
+                       || (d_consts[j][l] != '1' || d_consts[k][l] != '1'));
+                assert(
+                    d_consts[i][l] != '0'
+                    || ((d_consts[j][l] != '0' || d_consts[k][l] != '1')
+                        && (d_consts[j][l] != '1' || d_consts[k][l] != '0')));
               }
             }
           }
@@ -402,18 +426,28 @@ class TestBvProp : public TestMm
             bool valid = true;
             for (size_t l = 0; l < TEST_BW && valid; l++)
             {
-              if ((is_or
-                   && ((d_consts[i][l] == '1' && d_consts[j][l] != '1'
-                        && d_consts[k][l] != '1')
-                       || (d_consts[i][l] == '0'
-                           && (d_consts[j][l] == '1'
-                               || d_consts[k][l] == '1'))))
-                  || (!is_or
-                      && ((d_consts[i][l] == '0' && d_consts[j][l] != '0'
-                           && d_consts[k][l] != '0')
-                          || (d_consts[i][l] == '1'
-                              && (d_consts[j][l] == '0'
-                                  || d_consts[k][l] == '0')))))
+              if ((op == TEST_BVPROP_AND
+                   && ((d_consts[i][l] == '0' && d_consts[j][l] != '0'
+                        && d_consts[k][l] != '0')
+                       || (d_consts[i][l] == '1'
+                           && (d_consts[j][l] == '0'
+                               || d_consts[k][l] == '0'))))
+                  || (op == TEST_BVPROP_OR
+                      && ((d_consts[i][l] == '1' && d_consts[j][l] != '1'
+                           && d_consts[k][l] != '1')
+                          || (d_consts[i][l] == '0'
+                              && (d_consts[j][l] == '1'
+                                  || d_consts[k][l] == '1'))))
+                  || (op == TEST_BVPROP_XOR
+                      && ((d_consts[i][l] == '1'
+                           && ((d_consts[j][l] != '0' && d_consts[k][l] != '0')
+                               || (d_consts[j][l] != '1'
+                                   && d_consts[k][l] != '1')))
+                          || (d_consts[i][l] == '0'
+                              && ((d_consts[j][l] != '1'
+                                   && d_consts[k][l] != '0')
+                                  || (d_consts[j][l] != '0'
+                                      && d_consts[k][l] != '1'))))))
               {
                 valid = false;
               }
@@ -428,7 +462,6 @@ class TestBvProp : public TestMm
       bzla_bvprop_free(d_mm, d_z);
     }
   }
-
   char d_consts[TEST_NUM_CONSTS][TEST_CONST_LEN] = {{0}};
 };
 
@@ -581,9 +614,11 @@ TEST_F(TestBvProp, sll) { test_shift_const(false); }
 
 TEST_F(TestBvProp, srl) { test_shift_const(true); }
 
-TEST_F(TestBvProp, and) { test_and_or(false); }
+TEST_F(TestBvProp, and) { test_and_or_xor(TEST_BVPROP_AND); }
 
-TEST_F(TestBvProp, or) { test_and_or(true); }
+TEST_F(TestBvProp, or) { test_and_or_xor(TEST_BVPROP_OR); }
+
+TEST_F(TestBvProp, xor) { test_and_or_xor(TEST_BVPROP_XOR); }
 
 TEST_F(TestBvProp, slice)
 {
