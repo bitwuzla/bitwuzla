@@ -312,6 +312,9 @@ bzla_bvprop_and(BzlaMemMgr *mm,
   assert(d_x);
   assert(d_y);
   assert(d_z);
+  assert(res_d_x);
+  assert(res_d_y);
+  assert(res_d_z);
 
   BzlaBitVector *tmp0, *tmp1;
 
@@ -456,7 +459,7 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
 #if 0
   /* These are the propagators as proposed in [1]. */
 
-  BzlaBitVector *mask, *zero, *ones, *tmp, *tmp1;
+  BzlaBitVector *mask, *zero, *ones, *tmp0, *tmp1;
   BzlaBitVector *lo_x, *hi_x, *lo_y, *hi_y;
 
   lo_x = bzla_bv_uext (mm, d_x->lo, wz - wx);
@@ -473,45 +476,45 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   *res_d_z = new_domain (mm);
 
   /* lo_z' = lo_z | ((lo_x << wy) | lo_y) */
-  tmp            = bzla_bv_sll_uint32 (mm, lo_x, wy);
-  tmp1           = bzla_bv_or (mm, tmp, lo_y);
+  tmp0           = bzla_bv_sll_uint32 (mm, lo_x, wy);
+  tmp1           = bzla_bv_or (mm, tmp0, lo_y);
   (*res_d_z)->lo = bzla_bv_or (mm, d_z->lo, tmp1);
-  bzla_bv_free (mm, tmp);
+  bzla_bv_free (mm, tmp0);
   bzla_bv_free (mm, tmp1);
 
   /* hi_z' = hi_z & ((hi_x << wy) | hi_y) */
-  tmp            = bzla_bv_sll_uint32 (mm, hi_x, wy);
-  tmp1           = bzla_bv_or (mm, tmp, hi_y);
+  tmp0           = bzla_bv_sll_uint32 (mm, hi_x, wy);
+  tmp1           = bzla_bv_or (mm, tmp0, hi_y);
   (*res_d_z)->hi = bzla_bv_and (mm, d_z->hi, tmp1);
-  bzla_bv_free (mm, tmp);
+  bzla_bv_free (mm, tmp0);
   bzla_bv_free (mm, tmp1);
 
   /* lo_x' = lo_x | (lo_z >> wy) */
-  tmp            = bzla_bv_srl_uint32 (mm, d_z->lo, wy);
-  tmp1           = bzla_bv_or (mm, lo_x, tmp);
+  tmp0           = bzla_bv_srl_uint32 (mm, d_z->lo, wy);
+  tmp1           = bzla_bv_or (mm, lo_x, tmp0);
   (*res_d_x)->lo = bzla_bv_slice (mm, tmp1, wx - 1, 0);
-  bzla_bv_free (mm, tmp);
+  bzla_bv_free (mm, tmp0);
   bzla_bv_free (mm, tmp1);
 
   /* hi_x' = hi_x & (hi_z >> wy) */
-  tmp            = bzla_bv_srl_uint32 (mm, d_z->hi, wy);
-  tmp1           = bzla_bv_and (mm, hi_x, tmp);
+  tmp0           = bzla_bv_srl_uint32 (mm, d_z->hi, wy);
+  tmp1           = bzla_bv_and (mm, hi_x, tmp0);
   (*res_d_x)->hi = bzla_bv_slice (mm, tmp1, wx - 1, 0);
-  bzla_bv_free (mm, tmp);
+  bzla_bv_free (mm, tmp0);
   bzla_bv_free (mm, tmp1);
 
   /* lo_y' = lo_y | (lo_z & mask */
-  tmp            = bzla_bv_and (mm, d_z->lo, mask);
-  tmp1           = bzla_bv_or (mm, lo_y, tmp);
+  tmp0           = bzla_bv_and (mm, d_z->lo, mask);
+  tmp1           = bzla_bv_or (mm, lo_y, tmp0);
   (*res_d_y)->lo = bzla_bv_slice (mm, tmp1, wy - 1, 0);
-  bzla_bv_free (mm, tmp);
+  bzla_bv_free (mm, tmp0);
   bzla_bv_free (mm, tmp1);
 
   /* hi_y' = hi_y & (hi_z & mask) */
-  tmp            = bzla_bv_and (mm, d_z->hi, mask);
-  tmp1           = bzla_bv_and (mm, hi_y, tmp);
+  tmp0           = bzla_bv_and (mm, d_z->hi, mask);
+  tmp1           = bzla_bv_and (mm, hi_y, tmp0);
   (*res_d_y)->hi = bzla_bv_slice (mm, tmp1, wy - 1, 0);
-  bzla_bv_free (mm, tmp);
+  bzla_bv_free (mm, tmp0);
   bzla_bv_free (mm, tmp1);
 
   bzla_bv_free (mm, lo_x);
