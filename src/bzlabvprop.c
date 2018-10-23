@@ -182,7 +182,7 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
 
   uint32_t w, wn;
   BzlaBitVector *mask1, *mask2, *ones_wn, *zero_wn, *ones_w_wn, *zero_w_wn;
-  BzlaBitVector *tmp, *tmp1;
+  BzlaBitVector *tmp0, *tmp1;
 
   w = bzla_bv_get_width(d_z->hi);
   assert(w == bzla_bv_get_width(d_z->lo));
@@ -241,37 +241,37 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
    * SLL: lo_x' = lo_x | (lo_z >> n)
    * SRL: lo_x' = lo_x | (lo_z << n)
    */
-  tmp = is_srl ? bzla_bv_sll(mm, d_z->lo, n) : bzla_bv_srl(mm, d_z->lo, n);
-  (*res_d_x)->lo = bzla_bv_or(mm, d_x->lo, tmp);
-  bzla_bv_free(mm, tmp);
+  tmp0 = is_srl ? bzla_bv_sll(mm, d_z->lo, n) : bzla_bv_srl(mm, d_z->lo, n);
+  (*res_d_x)->lo = bzla_bv_or(mm, d_x->lo, tmp0);
+  bzla_bv_free(mm, tmp0);
 
   /**
    * SLL: hi_x' = ((hi_z >> n) | mask1) & hi_x
    * SRL: hi_x' = ((hi_z << n) | mask1) & hi_x
    */
-  tmp  = is_srl ? bzla_bv_sll(mm, d_z->hi, n) : bzla_bv_srl(mm, d_z->hi, n);
-  tmp1 = bzla_bv_or(mm, tmp, mask1);
+  tmp0 = is_srl ? bzla_bv_sll(mm, d_z->hi, n) : bzla_bv_srl(mm, d_z->hi, n);
+  tmp1 = bzla_bv_or(mm, tmp0, mask1);
   (*res_d_x)->hi = bzla_bv_and(mm, tmp1, d_x->hi);
-  bzla_bv_free(mm, tmp);
+  bzla_bv_free(mm, tmp0);
   bzla_bv_free(mm, tmp1);
 
   /**
    * SLL: lo_z' = ((low_x << n) | lo_z) & mask2
    * SRL: lo_z' = ((low_x >> n) | lo_z) & mask2
    */
-  tmp  = is_srl ? bzla_bv_srl(mm, d_x->lo, n) : bzla_bv_sll(mm, d_x->lo, n);
-  tmp1 = bzla_bv_or(mm, tmp, d_z->lo);
+  tmp0 = is_srl ? bzla_bv_srl(mm, d_x->lo, n) : bzla_bv_sll(mm, d_x->lo, n);
+  tmp1 = bzla_bv_or(mm, tmp0, d_z->lo);
   (*res_d_z)->lo = bzla_bv_and(mm, tmp1, mask2);
-  bzla_bv_free(mm, tmp);
+  bzla_bv_free(mm, tmp0);
   bzla_bv_free(mm, tmp1);
 
   /**
    * SLL: hi_z' = (hi_x << n) & hi_z
    * SRL: hi_z' = (hi_x >> n) & hi_z
    */
-  tmp = is_srl ? bzla_bv_srl(mm, d_x->hi, n) : bzla_bv_sll(mm, d_x->hi, n);
-  (*res_d_z)->hi = bzla_bv_and(mm, tmp, d_z->hi);
-  bzla_bv_free(mm, tmp);
+  tmp0 = is_srl ? bzla_bv_srl(mm, d_x->hi, n) : bzla_bv_sll(mm, d_x->hi, n);
+  (*res_d_z)->hi = bzla_bv_and(mm, tmp0, d_z->hi);
+  bzla_bv_free(mm, tmp0);
 
   bzla_bv_free(mm, mask2);
   bzla_bv_free(mm, mask1);
@@ -353,6 +353,60 @@ bzla_bvprop_and(BzlaMemMgr *mm,
 
   /* hi_z' = hi_z & hi_x & hi_y */
   tmp0           = bzla_bv_and(mm, d_x->hi, d_y->hi);
+  (*res_d_z)->hi = bzla_bv_and(mm, d_z->hi, tmp0);
+  bzla_bv_free(mm, tmp0);
+}
+
+void
+bzla_bvprop_or(BzlaMemMgr *mm,
+               BzlaBvDomain *d_x,
+               BzlaBvDomain *d_y,
+               BzlaBvDomain *d_z,
+               BzlaBvDomain **res_d_x,
+               BzlaBvDomain **res_d_y,
+               BzlaBvDomain **res_d_z)
+{
+  assert(mm);
+  assert(d_x);
+  assert(d_y);
+  assert(d_z);
+  assert(res_d_x);
+  assert(res_d_y);
+  assert(res_d_z);
+
+  BzlaBitVector *tmp0, *tmp1;
+
+  *res_d_x = new_domain(mm);
+  *res_d_y = new_domain(mm);
+  *res_d_z = new_domain(mm);
+
+  /* lo_x' = lo_x | (~hi_y & lo_z) */
+  tmp0           = bzla_bv_not(mm, d_y->hi);
+  tmp1           = bzla_bv_and(mm, tmp0, d_z->lo);
+  (*res_d_x)->lo = bzla_bv_or(mm, d_x->lo, tmp1);
+  bzla_bv_free(mm, tmp0);
+  bzla_bv_free(mm, tmp1);
+
+  /* hi_x' = hi_x & hi_z */
+  (*res_d_x)->hi = bzla_bv_and(mm, d_x->hi, d_z->hi);
+
+  /* lo_y' = lo_y | (~hi_x & lo_z) */
+  tmp0           = bzla_bv_not(mm, d_x->hi);
+  tmp1           = bzla_bv_and(mm, tmp0, d_x->lo);
+  (*res_d_y)->lo = bzla_bv_or(mm, d_y->lo, tmp1);
+  bzla_bv_free(mm, tmp0);
+  bzla_bv_free(mm, tmp1);
+
+  /* hi_y' = hi_y & hi_z */
+  (*res_d_y)->hi = bzla_bv_and(mm, d_y->hi, d_z->hi);
+
+  /* lo_z' = lo_z | lo_x | lo_y */
+  tmp0           = bzla_bv_or(mm, d_z->lo, d_x->lo);
+  (*res_d_z)->lo = bzla_bv_or(mm, tmp0, d_y->lo);
+  bzla_bv_free(mm, tmp0);
+
+  /* hi_z' = hi_z & (hi_x | hi_y) */
+  tmp0           = bzla_bv_or(mm, d_x->hi, d_y->hi);
   (*res_d_z)->hi = bzla_bv_and(mm, d_z->hi, tmp0);
   bzla_bv_free(mm, tmp0);
 }
