@@ -347,6 +347,7 @@ class TestBvProp : public TestMm
     assert(d_z);
     assert(res_x);
     assert(res_z);
+    assert(!res_y || bzla_bvprop_is_valid(d_mm, res_y));
     assert(unfun || binfun);
 
     size_t i;
@@ -444,7 +445,7 @@ class TestBvProp : public TestMm
     size_t i, j;
     uint32_t n;
     BzlaBitVector *bv_n;
-    BzlaBvDomain *d_x, *d_z, *res_x, *res_z;
+    BzlaBvDomain *d_x, *d_y, *d_z, *res_x, *res_z;
 
     for (j = 0; j < 2; j++)
     {
@@ -463,12 +464,21 @@ class TestBvProp : public TestMm
         for (n = 0; n < TEST_BW + 1; n++)
         {
           bv_n = bzla_bv_uint64_to_bv(d_mm, n, TEST_BW);
-          res =
-              is_srl
-                  ? bzla_bvprop_srl_const(d_mm, d_x, d_z, bv_n, &res_x, &res_z)
-                  : bzla_bvprop_sll_const(d_mm, d_x, d_z, bv_n, &res_x, &res_z);
+          d_y  = bzla_bvprop_new(d_mm, bv_n, bv_n);
+          if (is_srl)
+          {
+            res = bzla_bvprop_srl_const(d_mm, d_x, d_z, bv_n, &res_x, &res_z);
+            check_sat(d_x, d_y, d_z, res_x, 0, res_z, 0, boolector_srl);
+          }
+          else
+          {
+            res = bzla_bvprop_sll_const(d_mm, d_x, d_z, bv_n, &res_x, &res_z);
+            check_sat(d_x, d_y, d_z, res_x, 0, res_z, 0, boolector_sll);
+          }
+          assert(res || !is_valid(d_mm, res_x, 0, res_z));
 
-          assert(!res || !bzla_bvprop_is_fixed(d_mm, d_x)
+          assert(!bzla_bvprop_is_fixed(d_mm, d_x)
+                 || !bzla_bvprop_is_valid(d_mm, res_x)
                  || !bzla_bv_compare(d_x->lo, res_x->lo));
           assert(!res || !bzla_bvprop_is_fixed(d_mm, d_z)
                  || !bzla_bv_compare(d_z->lo, res_z->lo));
@@ -490,6 +500,7 @@ class TestBvProp : public TestMm
 
           TEST_BVPROP_RELEASE_RES_XZ;
           bzla_bv_free(d_mm, bv_n);
+          bzla_bvprop_free(d_mm, d_y);
         }
         if (j)
           bzla_bvprop_free(d_mm, d_x);
