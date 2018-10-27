@@ -347,7 +347,6 @@ class TestBvProp : public TestMm
     assert(d_z);
     assert(res_x);
     assert(res_z);
-    assert(!res_y || bzla_bvprop_is_valid(d_mm, res_y));
     assert(unfun || binfun);
 
     size_t i;
@@ -517,6 +516,7 @@ class TestBvProp : public TestMm
 
   void test_and_or_xor(int32_t op)
   {
+    bool res;
     BzlaBvDomain *d_x, *d_y, *d_z;
     BzlaBvDomain *res_x, *res_y, *res_z;
 
@@ -532,17 +532,21 @@ class TestBvProp : public TestMm
 
           if (op == TEST_BVPROP_AND)
           {
-            bzla_bvprop_and(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+            res = bzla_bvprop_and(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+            check_sat(d_x, d_y, d_z, res_x, res_y, res_z, 0, boolector_and);
           }
           else if (op == TEST_BVPROP_OR)
           {
-            bzla_bvprop_or(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+            res = bzla_bvprop_or(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+            check_sat(d_x, d_y, d_z, res_x, res_y, res_z, 0, boolector_or);
           }
           else
           {
             assert(op == TEST_BVPROP_XOR);
-            bzla_bvprop_xor(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+            res = bzla_bvprop_xor(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+            check_sat(d_x, d_y, d_z, res_x, res_y, res_z, 0, boolector_xor);
           }
+          assert(res || !is_valid(d_mm, res_x, res_y, res_z));
 
           assert(!bzla_bvprop_is_fixed(d_mm, d_x)
                  || !bzla_bvprop_is_valid(d_mm, res_x)
