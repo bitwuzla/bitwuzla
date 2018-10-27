@@ -81,7 +81,7 @@ bzla_bvprop_is_fixed(BzlaMemMgr *mm, const BzlaBvDomain *d)
   return res;
 }
 
-void
+bool
 bzla_bvprop_eq(BzlaMemMgr *mm,
                BzlaBvDomain *d_x,
                BzlaBvDomain *d_y,
@@ -90,7 +90,9 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
 {
   assert(mm);
   assert(d_x);
+  assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_y);
+  assert(bzla_bvprop_is_valid(mm, d_y));
 
   /**
    * lo_xy = lo_x | lo_y
@@ -126,9 +128,10 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
     }
     assert(bzla_bvprop_is_valid(mm, *res_d_z));
   }
+  return true;
 }
 
-void
+bool
 bzla_bvprop_not(BzlaMemMgr *mm,
                 BzlaBvDomain *d_x,
                 BzlaBvDomain *d_z,
@@ -137,7 +140,9 @@ bzla_bvprop_not(BzlaMemMgr *mm,
 {
   assert(mm);
   assert(d_x);
+  assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_z);
+  assert(bzla_bvprop_is_valid(mm, d_z));
 
   /**
    * lo_x' = lo_x | ~hi_z
@@ -162,9 +167,12 @@ bzla_bvprop_not(BzlaMemMgr *mm,
   (*res_d_z)->hi = bzla_bv_and(mm, d_z->hi, not_lo);
   bzla_bv_free(mm, not_hi);
   bzla_bv_free(mm, not_lo);
+
+  return bzla_bvprop_is_valid(mm, *res_d_x)
+         && bzla_bvprop_is_valid(mm, *res_d_z);
 }
 
-static void
+static bool
 bvprop_shift_const_aux(BzlaMemMgr *mm,
                        BzlaBvDomain *d_x,
                        BzlaBvDomain *d_z,
@@ -175,13 +183,15 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
 {
   assert(mm);
   assert(d_x);
+  assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_z);
+  assert(bzla_bvprop_is_valid(mm, d_z));
   assert(n);
   assert(res_d_x);
   assert(res_d_z);
 
   uint32_t w, wn;
-  BzlaBitVector *mask1, *mask2, *ones_wn, *zero_wn, *ones_w_wn, *zero_w_wn;
+  BzlaBitVector *mask1, *ones_wn, *zero_wn, *ones_w_wn, *zero_w_wn;
   BzlaBitVector *tmp0, *tmp1;
 
   w = bzla_bv_get_width(d_z->hi);
@@ -197,19 +207,15 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
 
   /**
    * SLL: mask1 = 1_[wn]   :: 0_[w-wn]
-   *      mask2 = 1_[w-wn] :: 0_[wn]
    * SRL: mask1 = 0_[w-wn] :: 1_[wn]
-   *      mask2 = 0_[wn]   :: 1_[w-wn]
    */
   if (wn == 0)
   {
     mask1 = bzla_bv_zero(mm, w);
-    mask2 = bzla_bv_ones(mm, w);
   }
   else if (w == wn)
   {
     mask1 = bzla_bv_ones(mm, w);
-    mask2 = bzla_bv_zero(mm, w);
   }
   else
   {
@@ -218,16 +224,8 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
     ones_wn   = bzla_bv_ones(mm, wn);
     ones_w_wn = bzla_bv_ones(mm, w - wn);
 
-    if (is_srl)
-    {
-      mask1 = bzla_bv_concat(mm, zero_w_wn, ones_wn);
-      mask2 = bzla_bv_concat(mm, zero_wn, ones_w_wn);
-    }
-    else
-    {
-      mask1 = bzla_bv_concat(mm, ones_wn, zero_w_wn);
-      mask2 = bzla_bv_concat(mm, ones_w_wn, zero_wn);
-    }
+    mask1 = is_srl ? bzla_bv_concat(mm, zero_w_wn, ones_wn)
+                   : bzla_bv_concat(mm, ones_wn, zero_w_wn);
     bzla_bv_free(mm, zero_wn);
     bzla_bv_free(mm, zero_w_wn);
     bzla_bv_free(mm, ones_wn);
@@ -256,14 +254,21 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
   bzla_bv_free(mm, tmp1);
 
   /**
-   * SLL: lo_z' = ((low_x << n) | lo_z) & mask2
-   * SRL: lo_z' = ((low_x >> n) | lo_z) & mask2
+   * SLL: lo_z' = ((low_x << n) | lo_z)
+   * SRL: lo_z' = ((low_x >> n) | lo_z)
+   *
+   * Note: Propagator in [1] is incorrect!
+   * (was:
+   *   SLL: lo_z' = ((low_x << n) | lo_z) & mask2
+   *   SRL: lo_z' = ((low_x >> n) | lo_z) & mask2
+   *  with:
+   *   SLL: mask2 = 1_[w-wn] :: 0_[wn]
+   *   SRL: mask2 = 0_[wn]   :: 1_[w-wn]
+   *  )
    */
   tmp0 = is_srl ? bzla_bv_srl(mm, d_x->lo, n) : bzla_bv_sll(mm, d_x->lo, n);
-  tmp1 = bzla_bv_or(mm, tmp0, d_z->lo);
-  (*res_d_z)->lo = bzla_bv_and(mm, tmp1, mask2);
+  (*res_d_z)->lo = bzla_bv_or(mm, tmp0, d_z->lo);
   bzla_bv_free(mm, tmp0);
-  bzla_bv_free(mm, tmp1);
 
   /**
    * SLL: hi_z' = (hi_x << n) & hi_z
@@ -273,11 +278,13 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
   (*res_d_z)->hi = bzla_bv_and(mm, tmp0, d_z->hi);
   bzla_bv_free(mm, tmp0);
 
-  bzla_bv_free(mm, mask2);
   bzla_bv_free(mm, mask1);
+
+  return bzla_bvprop_is_valid(mm, *res_d_x)
+         && bzla_bvprop_is_valid(mm, *res_d_z);
 }
 
-void
+bool
 bzla_bvprop_sll_const(BzlaMemMgr *mm,
                       BzlaBvDomain *d_x,
                       BzlaBvDomain *d_z,
@@ -285,10 +292,10 @@ bzla_bvprop_sll_const(BzlaMemMgr *mm,
                       BzlaBvDomain **res_d_x,
                       BzlaBvDomain **res_d_z)
 {
-  bvprop_shift_const_aux(mm, d_x, d_z, n, res_d_x, res_d_z, false);
+  return bvprop_shift_const_aux(mm, d_x, d_z, n, res_d_x, res_d_z, false);
 }
 
-void
+bool
 bzla_bvprop_srl_const(BzlaMemMgr *mm,
                       BzlaBvDomain *d_x,
                       BzlaBvDomain *d_z,
@@ -296,10 +303,10 @@ bzla_bvprop_srl_const(BzlaMemMgr *mm,
                       BzlaBvDomain **res_d_x,
                       BzlaBvDomain **res_d_z)
 {
-  bvprop_shift_const_aux(mm, d_x, d_z, n, res_d_x, res_d_z, true);
+  return bvprop_shift_const_aux(mm, d_x, d_z, n, res_d_x, res_d_z, true);
 }
 
-void
+bool
 bzla_bvprop_and(BzlaMemMgr *mm,
                 BzlaBvDomain *d_x,
                 BzlaBvDomain *d_y,
@@ -310,8 +317,11 @@ bzla_bvprop_and(BzlaMemMgr *mm,
 {
   assert(mm);
   assert(d_x);
+  assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_y);
+  assert(bzla_bvprop_is_valid(mm, d_y));
   assert(d_z);
+  assert(bzla_bvprop_is_valid(mm, d_z));
   assert(res_d_x);
   assert(res_d_y);
   assert(res_d_z);
@@ -355,9 +365,13 @@ bzla_bvprop_and(BzlaMemMgr *mm,
   tmp0           = bzla_bv_and(mm, d_x->hi, d_y->hi);
   (*res_d_z)->hi = bzla_bv_and(mm, d_z->hi, tmp0);
   bzla_bv_free(mm, tmp0);
+
+  return bzla_bvprop_is_valid(mm, *res_d_x)
+         && bzla_bvprop_is_valid(mm, *res_d_y)
+         && bzla_bvprop_is_valid(mm, *res_d_z);
 }
 
-void
+bool
 bzla_bvprop_or(BzlaMemMgr *mm,
                BzlaBvDomain *d_x,
                BzlaBvDomain *d_y,
@@ -368,8 +382,11 @@ bzla_bvprop_or(BzlaMemMgr *mm,
 {
   assert(mm);
   assert(d_x);
+  assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_y);
+  assert(bzla_bvprop_is_valid(mm, d_y));
   assert(d_z);
+  assert(bzla_bvprop_is_valid(mm, d_z));
   assert(res_d_x);
   assert(res_d_y);
   assert(res_d_z);
@@ -409,9 +426,13 @@ bzla_bvprop_or(BzlaMemMgr *mm,
   tmp0           = bzla_bv_or(mm, d_x->hi, d_y->hi);
   (*res_d_z)->hi = bzla_bv_and(mm, d_z->hi, tmp0);
   bzla_bv_free(mm, tmp0);
+
+  return bzla_bvprop_is_valid(mm, *res_d_x)
+         && bzla_bvprop_is_valid(mm, *res_d_y)
+         && bzla_bvprop_is_valid(mm, *res_d_z);
 }
 
-void
+bool
 bzla_bvprop_xor(BzlaMemMgr *mm,
                 BzlaBvDomain *d_x,
                 BzlaBvDomain *d_y,
@@ -422,8 +443,11 @@ bzla_bvprop_xor(BzlaMemMgr *mm,
 {
   assert(mm);
   assert(d_x);
+  assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_y);
+  assert(bzla_bvprop_is_valid(mm, d_y));
   assert(d_z);
+  assert(bzla_bvprop_is_valid(mm, d_z));
   assert(res_d_x);
   assert(res_d_y);
   assert(res_d_z);
@@ -501,9 +525,12 @@ bzla_bvprop_xor(BzlaMemMgr *mm,
   bzla_bv_free(mm, not_hi_x);
   bzla_bv_free(mm, not_hi_y);
   bzla_bv_free(mm, not_hi_z);
+  return bzla_bvprop_is_valid(mm, *res_d_x)
+         && bzla_bvprop_is_valid(mm, *res_d_y)
+         && bzla_bvprop_is_valid(mm, *res_d_z);
 }
 
-void
+bool
 bzla_bvprop_slice(BzlaMemMgr *mm,
                   BzlaBvDomain *d_x,
                   BzlaBvDomain *d_z,
@@ -514,7 +541,9 @@ bzla_bvprop_slice(BzlaMemMgr *mm,
 {
   assert(mm);
   assert(d_x);
+  assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_z);
+  assert(bzla_bvprop_is_valid(mm, d_z));
   assert(upper >= lower);
   assert(upper < bzla_bv_get_width(d_x->lo));
   assert(upper - lower + 1 == bzla_bv_get_width(d_z->lo));
@@ -532,7 +561,7 @@ bzla_bvprop_slice(BzlaMemMgr *mm,
   sliced_x->lo           = bzla_bv_slice(mm, d_x->lo, upper, lower);
   sliced_x->hi           = bzla_bv_slice(mm, d_x->hi, upper, lower);
 
-  bzla_bvprop_eq(mm, sliced_x, d_z, res_d_z, 0);
+  if (!bzla_bvprop_eq(mm, sliced_x, d_z, res_d_z, 0)) return false;
   bzla_bvprop_free(mm, sliced_x);
 
   uint32_t wx = bzla_bv_get_width(d_x->lo);
@@ -574,9 +603,11 @@ bzla_bvprop_slice(BzlaMemMgr *mm,
   assert(bzla_bv_get_width(hi_x) == wx);
   (*res_d_x)->lo = lo_x;
   (*res_d_x)->hi = hi_x;
+  return bzla_bvprop_is_valid(mm, *res_d_x)
+         && bzla_bvprop_is_valid(mm, *res_d_z);
 }
 
-void
+bool
 bzla_bvprop_concat(BzlaMemMgr *mm,
                    BzlaBvDomain *d_x,
                    BzlaBvDomain *d_y,
@@ -587,8 +618,11 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
 {
   assert(mm);
   assert(d_x);
+  assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_y);
+  assert(bzla_bvprop_is_valid(mm, d_y));
   assert(d_z);
+  assert(bzla_bvprop_is_valid(mm, d_z));
   assert(res_d_x);
   assert(res_d_y);
   assert(res_d_z);
@@ -671,6 +705,9 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   bzla_bv_free (mm, zero);
   bzla_bv_free (mm, ones);
   bzla_bv_free (mm, mask);
+  return bzla_bvprop_is_valid (mm, *res_d_x)
+         && bzla_bvprop_is_valid (mm, *res_d_y)
+         && bzla_bvprop_is_valid (mm, *res_d_z);
 #else
   /* These propagators are compositional (simpler). */
 
@@ -688,8 +725,8 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   *res_d_z = new_domain(mm);
 
   /* res_z = prop(d_zx = d_x) o prop(d_zy o d_y) */
-  bzla_bvprop_eq(mm, d_zx, d_x, res_d_x, 0);
-  bzla_bvprop_eq(mm, d_zy, d_y, res_d_y, 0);
+  if (!bzla_bvprop_eq(mm, d_zx, d_x, res_d_x, 0)) return false;
+  if (!bzla_bvprop_eq(mm, d_zy, d_y, res_d_y, 0)) return false;
   (*res_d_z)->lo = bzla_bv_concat(mm, (*res_d_x)->lo, (*res_d_y)->lo);
   (*res_d_z)->hi = bzla_bv_concat(mm, (*res_d_x)->hi, (*res_d_y)->hi);
 
@@ -699,5 +736,6 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   bzla_bv_free(mm, hi_zy);
   bzla_bvprop_free(mm, d_zx);
   bzla_bvprop_free(mm, d_zy);
+  return true;
 #endif
 }

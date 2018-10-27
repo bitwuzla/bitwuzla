@@ -233,6 +233,8 @@ class TestBvProp : public TestMm
 
   bool check_not(BzlaBvDomain *d_x, BzlaBvDomain *d_z)
   {
+    assert(bzla_bvprop_is_valid(d_mm, d_x));
+    assert(bzla_bvprop_is_valid(d_mm, d_z));
     bool res    = true;
     char *str_x = from_domain(d_mm, d_x);
     char *str_z = from_domain(d_mm, d_z);
@@ -254,6 +256,8 @@ class TestBvProp : public TestMm
 
   void check_sll_const(BzlaBvDomain *d_x, BzlaBvDomain *d_z, uint32_t n)
   {
+    assert(bzla_bvprop_is_valid(d_mm, d_x));
+    assert(bzla_bvprop_is_valid(d_mm, d_z));
     char *str_x = from_domain(d_mm, d_x);
     char *str_z = from_domain(d_mm, d_z);
     assert(strlen(str_x) == strlen(str_z));
@@ -269,6 +273,8 @@ class TestBvProp : public TestMm
 
   void check_srl_const(BzlaBvDomain *d_x, BzlaBvDomain *d_z, uint32_t n)
   {
+    assert(bzla_bvprop_is_valid(d_mm, d_x));
+    assert(bzla_bvprop_is_valid(d_mm, d_z));
     char *str_x = from_domain(d_mm, d_x);
     char *str_z = from_domain(d_mm, d_z);
     assert(strlen(str_x) == strlen(str_z));
@@ -284,6 +290,9 @@ class TestBvProp : public TestMm
 
   void check_concat(BzlaBvDomain *d_x, BzlaBvDomain *d_y, BzlaBvDomain *d_z)
   {
+    assert(bzla_bvprop_is_valid(d_mm, d_x));
+    assert(bzla_bvprop_is_valid(d_mm, d_y));
+    assert(bzla_bvprop_is_valid(d_mm, d_z));
     size_t i, len_x, len_y;
     char *str_x = from_domain(d_mm, d_x);
     char *str_y = from_domain(d_mm, d_y);
@@ -305,6 +314,7 @@ class TestBvProp : public TestMm
 
   void test_shift_const(bool is_srl)
   {
+    bool res;
     size_t i, j;
     uint32_t n;
     BzlaBitVector *bv_n;
@@ -327,20 +337,30 @@ class TestBvProp : public TestMm
         for (n = 0; n < TEST_BW + 1; n++)
         {
           bv_n = bzla_bv_uint64_to_bv(d_mm, n, TEST_BW);
-          if (is_srl)
-            bzla_bvprop_srl_const(d_mm, d_x, d_z, bv_n, &res_x, &res_z);
-          else
-            bzla_bvprop_sll_const(d_mm, d_x, d_z, bv_n, &res_x, &res_z);
+          res =
+              is_srl
+                  ? bzla_bvprop_srl_const(d_mm, d_x, d_z, bv_n, &res_x, &res_z)
+                  : bzla_bvprop_sll_const(d_mm, d_x, d_z, bv_n, &res_x, &res_z);
 
-          assert(bzla_bvprop_is_valid(d_mm, res_x));
-          assert(bzla_bvprop_is_valid(d_mm, res_z));
+          assert(!res || !bzla_bvprop_is_fixed(d_mm, d_x)
+                 || !bzla_bv_compare(d_x->lo, res_x->lo));
+          assert(!res || !bzla_bvprop_is_fixed(d_mm, d_z)
+                 || !bzla_bv_compare(d_z->lo, res_z->lo));
+
           assert(j == 0
                  || bzla_bvprop_is_fixed(d_mm, d_x)
                         == bzla_bvprop_is_fixed(d_mm, res_x));
-          if (is_srl)
-            check_srl_const(res_x, res_z, n);
-          else
-            check_sll_const(res_x, res_z, n);
+          if (res)
+          {
+            if (is_srl)
+            {
+              check_srl_const(res_x, res_z, n);
+            }
+            else
+            {
+              check_sll_const(res_x, res_z, n);
+            }
+          }
 
           TEST_BVPROP_RELEASE_RES_XZ;
           bzla_bv_free(d_mm, bv_n);
@@ -386,6 +406,16 @@ class TestBvProp : public TestMm
             assert(op == TEST_BVPROP_XOR);
             bzla_bvprop_xor(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
           }
+
+          assert(!bzla_bvprop_is_fixed(d_mm, d_x)
+                 || !bzla_bvprop_is_valid(d_mm, res_x)
+                 || !bzla_bv_compare(d_x->lo, res_x->lo));
+          assert(!bzla_bvprop_is_fixed(d_mm, d_y)
+                 || !bzla_bvprop_is_valid(d_mm, res_y)
+                 || !bzla_bv_compare(d_y->lo, res_y->lo));
+          assert(!bzla_bvprop_is_fixed(d_mm, d_z)
+                 || !bzla_bvprop_is_valid(d_mm, res_z)
+                 || !bzla_bv_compare(d_z->lo, res_z->lo));
 
           if (bzla_bvprop_is_valid(d_mm, res_z))
           {
@@ -462,6 +492,7 @@ class TestBvProp : public TestMm
       bzla_bvprop_free(d_mm, d_z);
     }
   }
+
   char d_consts[TEST_NUM_CONSTS][TEST_CONST_LEN] = {{0}};
 };
 
@@ -536,7 +567,7 @@ TEST_F(TestBvProp, eq)
     for (size_t j = 0; j < TEST_NUM_CONSTS; j++)
     {
       d_y = create_domain(d_consts[j]);
-      bzla_bvprop_eq(d_mm, d_x, d_y, &res_xy, &res_z);
+      (void) bzla_bvprop_eq(d_mm, d_x, d_y, &res_xy, &res_z);
       if (bzla_bvprop_is_fixed(d_mm, res_z))
       {
         str_z = from_domain(d_mm, res_z);
@@ -572,6 +603,7 @@ TEST_F(TestBvProp, eq)
 
 TEST_F(TestBvProp, not )
 {
+  bool res;
   BzlaBvDomain *d_x, *d_z, *res_x, *res_z;
 
   for (size_t i = 0; i < TEST_NUM_CONSTS; i++)
@@ -581,10 +613,15 @@ TEST_F(TestBvProp, not )
     for (size_t j = 0; j < TEST_NUM_CONSTS; j++)
     {
       d_z = create_domain(d_consts[j]);
-      bzla_bvprop_not(d_mm, d_x, d_z, &res_x, &res_z);
+      res = bzla_bvprop_not(d_mm, d_x, d_z, &res_x, &res_z);
 
       if (bzla_bvprop_is_valid(d_mm, res_z))
       {
+        assert(res);
+        assert(!bzla_bvprop_is_fixed(d_mm, d_x)
+               || !bzla_bv_compare(d_x->lo, res_x->lo));
+        assert(!bzla_bvprop_is_fixed(d_mm, d_z)
+               || !bzla_bv_compare(d_z->lo, res_z->lo));
         assert(bzla_bvprop_is_valid(d_mm, res_x));
         assert(!bzla_bvprop_is_fixed(d_mm, d_z)
                || (bzla_bvprop_is_fixed(d_mm, res_x)
@@ -593,6 +630,7 @@ TEST_F(TestBvProp, not )
       }
       else
       {
+        assert(!res);
         bool valid = true;
         for (size_t k = 0; k < TEST_BW && valid; k++)
         {
@@ -641,6 +679,14 @@ TEST_F(TestBvProp, slice)
 
           d_z = create_domain(buf);
           bzla_bvprop_slice(d_mm, d_x, d_z, upper, lower, &res_x, &res_z);
+
+          assert(!bzla_bvprop_is_fixed(d_mm, d_x)
+                 || !bzla_bvprop_is_valid(d_mm, res_x)
+                 || !bzla_bv_compare(d_x->lo, res_x->lo));
+          assert(!bzla_bvprop_is_fixed(d_mm, d_z)
+                 || !bzla_bvprop_is_valid(d_mm, res_z)
+                 || !bzla_bv_compare(d_z->lo, res_z->lo));
+
           if (bzla_bvprop_is_valid(d_mm, res_z))
           {
             assert(bzla_bvprop_is_valid(d_mm, res_x));
