@@ -43,24 +43,32 @@ extern "C" {
     bzla_bvprop_free(d_mm, res_z);  \
   } while (0)
 
-#define TEST_PROPBV_CONCAT                                           \
-  do                                                                 \
-  {                                                                  \
-    bzla_bvprop_concat(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z); \
-    check_concat(res_x, res_y, res_z);                               \
-    assert(bzla_bvprop_is_valid(d_mm, res_x));                       \
-    assert(bzla_bvprop_is_valid(d_mm, res_y));                       \
-    assert(bzla_bvprop_is_valid(d_mm, res_z));                       \
-    assert(!bzla_bvprop_is_fixed(d_mm, d_x)                          \
-           || bzla_bvprop_is_fixed(d_mm, res_x));                    \
-    assert(!bzla_bvprop_is_fixed(d_mm, d_y)                          \
-           || bzla_bvprop_is_fixed(d_mm, res_y));                    \
-    assert(!bzla_bvprop_is_fixed(d_mm, d_z)                          \
-           || (bzla_bvprop_is_fixed(d_mm, res_x)                     \
-               && bzla_bvprop_is_fixed(d_mm, res_y)                  \
-               && bzla_bvprop_is_fixed(d_mm, res_z)));               \
-    TEST_BVPROP_RELEASE_D_XYZ;                                       \
-    TEST_BVPROP_RELEASE_RES_XYZ;                                     \
+#define TEST_PROPBV_CONCAT                                                    \
+  do                                                                          \
+  {                                                                           \
+    assert(bzla_bvprop_concat(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z)    \
+           || !is_valid(d_mm, res_x, res_y, res_z));                          \
+    check_sat(d_x, d_y, d_z, res_x, res_y, res_z, 0, boolector_concat, 0, 0); \
+    assert(!bzla_bvprop_is_fixed(d_mm, d_x)                                   \
+           || !bzla_bv_compare(d_x->lo, res_x->lo));                          \
+    assert(!bzla_bvprop_is_fixed(d_mm, d_y)                                   \
+           || !bzla_bv_compare(d_y->lo, res_y->lo));                          \
+    assert(!bzla_bvprop_is_fixed(d_mm, d_z)                                   \
+           || !bzla_bv_compare(d_z->lo, res_z->lo));                          \
+    check_concat(res_x, res_y, res_z);                                        \
+    assert(bzla_bvprop_is_valid(d_mm, res_x));                                \
+    assert(bzla_bvprop_is_valid(d_mm, res_y));                                \
+    assert(bzla_bvprop_is_valid(d_mm, res_z));                                \
+    assert(!bzla_bvprop_is_fixed(d_mm, d_x)                                   \
+           || bzla_bvprop_is_fixed(d_mm, res_x));                             \
+    assert(!bzla_bvprop_is_fixed(d_mm, d_y)                                   \
+           || bzla_bvprop_is_fixed(d_mm, res_y));                             \
+    assert(!bzla_bvprop_is_fixed(d_mm, d_z)                                   \
+           || (bzla_bvprop_is_fixed(d_mm, res_x)                              \
+               && bzla_bvprop_is_fixed(d_mm, res_y)                           \
+               && bzla_bvprop_is_fixed(d_mm, res_z)));                        \
+    TEST_BVPROP_RELEASE_D_XYZ;                                                \
+    TEST_BVPROP_RELEASE_RES_XYZ;                                              \
   } while (0)
 
 class TestBvProp : public TestMm
@@ -352,11 +360,11 @@ class TestBvProp : public TestMm
 
     size_t i;
     int32_t sat_res;
-    uint32_t bw, bwz, idx;
+    uint32_t bwx, bwy, bwz, idx;
     char *str_x, *str_y, *str_z;
     Bzla *bzla;
     BoolectorNode *x, *y, *z, *fun, *eq, *slice, *one, *zero;
-    BoolectorSort sw, swz, s1;
+    BoolectorSort swx, swy, swz, s1;
 
     str_x = from_domain(d_mm, d_x);
     str_y = 0;
@@ -364,14 +372,14 @@ class TestBvProp : public TestMm
 
     bzla = boolector_new();
     boolector_set_opt(bzla, BZLA_OPT_MODEL_GEN, 1);
-    bw   = bzla_bv_get_width(d_x->lo);
-    sw   = boolector_bitvec_sort(bzla, bw);
+    bwx  = bzla_bv_get_width(d_x->lo);
+    swx  = boolector_bitvec_sort(bzla, bwx);
     bwz  = bzla_bv_get_width(d_z->lo);
     swz  = boolector_bitvec_sort(bzla, bwz);
     s1   = boolector_bitvec_sort(bzla, 1);
     one  = boolector_one(bzla, s1);
     zero = boolector_zero(bzla, s1);
-    x    = boolector_var(bzla, sw, "x");
+    x    = boolector_var(bzla, swx, "x");
     y    = 0;
     if (unfun)
     {
@@ -381,7 +389,9 @@ class TestBvProp : public TestMm
     else if (binfun)
     {
       str_y = from_domain(d_mm, d_y);
-      y     = boolector_var(bzla, sw, "y");
+      bwy   = bzla_bv_get_width(d_y->lo);
+      swy   = boolector_bitvec_sort(bzla, bwy);
+      y     = boolector_var(bzla, swy, "y");
       z     = boolector_var(bzla, swz, "z");
       fun   = binfun(bzla, x, y);
     }
@@ -395,9 +405,9 @@ class TestBvProp : public TestMm
     boolector_release(bzla, fun);
     boolector_release(bzla, eq);
 
-    for (i = 0; i < bw; i++)
+    for (i = 0; i < bwx; i++)
     {
-      idx = bw - i - 1;
+      idx = bwx - i - 1;
       if (str_x[i] != 'x')
       {
         slice = boolector_slice(bzla, x, idx, idx);
@@ -409,9 +419,9 @@ class TestBvProp : public TestMm
     }
     if (str_y)
     {
-      for (i = 0; i < bw; i++)
+      for (i = 0; i < bwy; i++)
       {
-        idx = bw - i - 1;
+        idx = bwy - i - 1;
         if (str_y[i] != 'x')
         {
           slice = boolector_slice(bzla, y, idx, idx);
@@ -451,7 +461,8 @@ class TestBvProp : public TestMm
     boolector_release(bzla, z);
     boolector_release(bzla, one);
     boolector_release(bzla, zero);
-    boolector_release_sort(bzla, sw);
+    boolector_release_sort(bzla, swx);
+    if (y) boolector_release_sort(bzla, swy);
     boolector_release_sort(bzla, swz);
     boolector_release_sort(bzla, s1);
     boolector_delete(bzla);
