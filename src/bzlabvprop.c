@@ -16,6 +16,8 @@
 
 #include "bzlabvprop.h"
 
+#include <stdio.h>
+
 static BzlaBvDomain *
 new_domain(BzlaMemMgr *mm)
 {
@@ -705,9 +707,6 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   bzla_bv_free (mm, zero);
   bzla_bv_free (mm, ones);
   bzla_bv_free (mm, mask);
-  return bzla_bvprop_is_valid (mm, *res_d_x)
-         && bzla_bvprop_is_valid (mm, *res_d_y)
-         && bzla_bvprop_is_valid (mm, *res_d_z);
 #else
   /* These propagators are compositional (simpler). */
 
@@ -736,6 +735,8 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   bzla_bv_free(mm, hi_zy);
   bzla_bvprop_free(mm, d_zx);
   bzla_bvprop_free(mm, d_zy);
-  return true;
 #endif
+  return bzla_bvprop_is_valid(mm, *res_d_x)
+         && bzla_bvprop_is_valid(mm, *res_d_y)
+         && bzla_bvprop_is_valid(mm, *res_d_z);
 }
