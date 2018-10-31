@@ -532,19 +532,12 @@ class TestBvProp : public TestMm
     BzlaBitVector *bv_n;
     BzlaBvDomain *d_x, *d_y, *d_z, *res_x, *res_z;
 
-    for (j = 0; j < 2; j++)
+    for (i = 0; i < TEST_NUM_CONSTS; i++)
     {
-      if (j)
-        d_z = bzla_bvprop_new_init(d_mm, TEST_BW);
-      else
-        d_x = bzla_bvprop_new_init(d_mm, TEST_BW);
-
-      for (i = 0; i < TEST_NUM_CONSTS; i++)
+      d_z = create_domain(d_consts[i]);
+      for (j = 0; j < TEST_NUM_CONSTS; j++)
       {
-        if (j)
-          d_x = create_domain(d_consts[i]);
-        else
-          d_z = create_domain(d_consts[i]);
+        d_x = create_domain(d_consts[j]);
 
         for (n = 0; n < TEST_BW + 1; n++)
         {
@@ -588,11 +581,8 @@ class TestBvProp : public TestMm
                  || !bzla_bvprop_is_valid(d_mm, res_x)
                  || !bzla_bv_compare(d_x->lo, res_x->lo));
           assert(!res || !bzla_bvprop_is_fixed(d_mm, d_z)
+                 || !bzla_bvprop_is_valid(d_mm, res_z)
                  || !bzla_bv_compare(d_z->lo, res_z->lo));
-
-          assert(j == 0
-                 || bzla_bvprop_is_fixed(d_mm, d_x)
-                        == bzla_bvprop_is_fixed(d_mm, res_x));
           if (res)
           {
             if (is_srl)
@@ -609,16 +599,9 @@ class TestBvProp : public TestMm
           bzla_bv_free(d_mm, bv_n);
           bzla_bvprop_free(d_mm, d_y);
         }
-        if (j)
-          bzla_bvprop_free(d_mm, d_x);
-        else
-          bzla_bvprop_free(d_mm, d_z);
-      }
-
-      if (j)
-        bzla_bvprop_free(d_mm, d_z);
-      else
         bzla_bvprop_free(d_mm, d_x);
+      }
+      bzla_bvprop_free(d_mm, d_z);
     }
   }
 
