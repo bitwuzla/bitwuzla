@@ -563,7 +563,11 @@ bzla_bvprop_slice(BzlaMemMgr *mm,
   sliced_x->lo           = bzla_bv_slice(mm, d_x->lo, upper, lower);
   sliced_x->hi           = bzla_bv_slice(mm, d_x->hi, upper, lower);
 
-  if (!bzla_bvprop_eq(mm, sliced_x, d_z, res_d_z, 0)) return false;
+  if (!bzla_bvprop_eq(mm, sliced_x, d_z, res_d_z, 0))
+  {
+    bzla_bvprop_free(mm, sliced_x);
+    return false;
+  }
   bzla_bvprop_free(mm, sliced_x);
 
   uint32_t wx = bzla_bv_get_width(d_x->lo);
@@ -629,6 +633,7 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   assert(res_d_y);
   assert(res_d_z);
 
+  bool res;
   uint32_t wx, wy, wz;
 
   wx = bzla_bv_get_width(d_x->hi);
@@ -707,8 +712,11 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   bzla_bv_free (mm, zero);
   bzla_bv_free (mm, ones);
   bzla_bv_free (mm, mask);
+  res = bzla_bvprop_is_valid (mm, *res_d_x)
+        && bzla_bvprop_is_valid (mm, *res_d_y)
+        && bzla_bvprop_is_valid (mm, *res_d_z);
 #else
-  /* These propagators are compositional (simpler). */
+  /* These propagators are decompositional (simpler). */
 
   BzlaBitVector *lo_zx, *lo_zy, *hi_zx, *hi_zy;
   BzlaBvDomain *d_zx, *d_zy;
@@ -724,11 +732,23 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   *res_d_z = new_domain(mm);
 
   /* res_z = prop(d_zx = d_x) o prop(d_zy o d_y) */
-  if (!bzla_bvprop_eq(mm, d_zx, d_x, res_d_x, 0)) return false;
-  if (!bzla_bvprop_eq(mm, d_zy, d_y, res_d_y, 0)) return false;
+  if (!bzla_bvprop_eq(mm, d_zx, d_x, res_d_x, 0))
+  {
+    res = false;
+    goto DONE;
+  }
+  if (!bzla_bvprop_eq(mm, d_zy, d_y, res_d_y, 0))
+  {
+    res = false;
+    goto DONE;
+  }
+
   (*res_d_z)->lo = bzla_bv_concat(mm, (*res_d_x)->lo, (*res_d_y)->lo);
   (*res_d_z)->hi = bzla_bv_concat(mm, (*res_d_x)->hi, (*res_d_y)->hi);
 
+  res = bzla_bvprop_is_valid(mm, *res_d_x) && bzla_bvprop_is_valid(mm, *res_d_y)
+        && bzla_bvprop_is_valid(mm, *res_d_z);
+DONE:
   bzla_bv_free(mm, lo_zx);
   bzla_bv_free(mm, lo_zy);
   bzla_bv_free(mm, hi_zx);
@@ -736,9 +756,7 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   bzla_bvprop_free(mm, d_zx);
   bzla_bvprop_free(mm, d_zy);
 #endif
-  return bzla_bvprop_is_valid(mm, *res_d_x)
-         && bzla_bvprop_is_valid(mm, *res_d_y)
-         && bzla_bvprop_is_valid(mm, *res_d_z);
+  return res;
 }
 
 static bool
