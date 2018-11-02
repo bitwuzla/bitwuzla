@@ -117,6 +117,13 @@ bool bzla_bvprop_concat(BzlaMemMgr *mm,
                         BzlaBvDomain **res_d_x,
                         BzlaBvDomain **res_d_z);
 
+/* Propagate domains 'd_x' and 'd_z' of z = sext(x, n). */
+bool bzla_bvprop_sext(BzlaMemMgr *mm,
+                      BzlaBvDomain *d_x,
+                      BzlaBvDomain *d_z,
+                      BzlaBvDomain **res_d_x,
+                      BzlaBvDomain **res_d_z);
+
 /* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x + y. */
 bool bzla_bvprop_add(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
