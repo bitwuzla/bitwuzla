@@ -634,10 +634,8 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   assert(res_d_z);
 
   bool res;
-  uint32_t wx, wy, wz;
+  uint32_t wy, wz;
 
-  wx = bzla_bv_get_width(d_x->hi);
-  assert(wx == bzla_bv_get_width(d_x->lo));
   wy = bzla_bv_get_width(d_y->hi);
   assert(wy == bzla_bv_get_width(d_y->lo));
   wz = bzla_bv_get_width(d_z->hi);
@@ -646,8 +644,12 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
 #if 0
   /* These are the propagators as proposed in [1]. */
 
+  uint32_t wx;
   BzlaBitVector *mask, *zero, *ones, *tmp0, *tmp1;
   BzlaBitVector *lo_x, *hi_x, *lo_y, *hi_y;
+
+  wx = bzla_bv_get_width (d_x->hi);
+  assert (wx == bzla_bv_get_width (d_x->lo));
 
   lo_x = bzla_bv_uext (mm, d_x->lo, wz - wx);
   hi_x = bzla_bv_uext (mm, d_x->hi, wz - wx);
@@ -1074,32 +1076,14 @@ made_progress(BzlaBvDomain *d_x,
   assert(res_d_z);
   assert(!d_y || res_d_y);
 
-  uint32_t i;
-  uint32_t bw = bzla_bv_get_width(d_x->lo);
-  assert(bw == bzla_bv_get_width(d_x->hi));
-  assert(!d_y || bw == bzla_bv_get_width(d_y->lo));
-  assert(!d_y || bw == bzla_bv_get_width(d_y->hi));
-  assert(bw == bzla_bv_get_width(d_z->lo));
-  assert(bw == bzla_bv_get_width(d_z->hi));
-
-  for (i = 0; i < bw; i++)
-  {
-    // TODO use bv_compare
-    if (bzla_bv_get_bit(d_x->lo, i) != bzla_bv_get_bit(res_d_x->lo, i)
-        || bzla_bv_get_bit(d_x->hi, i) != bzla_bv_get_bit(res_d_x->hi, i))
-      return true;
-    if (d_y
-        && (bzla_bv_get_bit(d_y->lo, i) != bzla_bv_get_bit(res_d_y->lo, i)
-            || bzla_bv_get_bit(d_y->hi, i) != bzla_bv_get_bit(res_d_y->hi, i)))
-      return true;
-    if (bzla_bv_get_bit(d_z->lo, i) != bzla_bv_get_bit(res_d_z->lo, i)
-        || bzla_bv_get_bit(d_z->hi, i) != bzla_bv_get_bit(res_d_z->hi, i))
-      return true;
-    if (d_c
-        && (bzla_bv_get_bit(d_c->lo, i) != bzla_bv_get_bit(res_d_c->lo, i)
-            || bzla_bv_get_bit(d_c->hi, i) != bzla_bv_get_bit(res_d_c->hi, i)))
-      return true;
-  }
+  if (bzla_bv_compare(d_x->lo, res_d_x->lo)) return true;
+  if (bzla_bv_compare(d_x->hi, res_d_x->hi)) return true;
+  if (d_y && bzla_bv_compare(d_y->lo, res_d_y->lo)) return true;
+  if (d_y && bzla_bv_compare(d_y->hi, res_d_y->hi)) return true;
+  if (bzla_bv_compare(d_z->lo, res_d_z->lo)) return true;
+  if (bzla_bv_compare(d_z->hi, res_d_z->hi)) return true;
+  if (d_c && bzla_bv_compare(d_c->lo, res_d_c->lo)) return true;
+  if (d_c && bzla_bv_compare(d_c->hi, res_d_c->hi)) return true;
   return false;
 }
 
