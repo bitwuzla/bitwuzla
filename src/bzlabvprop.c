@@ -18,6 +18,8 @@
 
 #include <stdio.h>
 
+BZLA_DECLARE_STACK(BzlaBvDomainPtr, BzlaBvDomain *);
+
 static BzlaBvDomain *
 new_domain(BzlaMemMgr *mm)
 {
@@ -1586,6 +1588,285 @@ DONE:
   bzla_bvprop_free(mm, tmp_cin_and_x_xor_y);
 
   bzla_bv_free(mm, one);
+
+  return res;
+}
+
+bool
+bzla_bvprop_mul(BzlaMemMgr *mm,
+                BzlaBvDomain *d_x,
+                BzlaBvDomain *d_y,
+                BzlaBvDomain *d_z,
+                BzlaBvDomain **res_d_x,
+                BzlaBvDomain **res_d_y,
+                BzlaBvDomain **res_d_z)
+{
+  assert(mm);
+  assert(d_x);
+  assert(bzla_bvprop_is_valid(mm, d_x));
+  assert(d_y);
+  assert(bzla_bvprop_is_valid(mm, d_y));
+  assert(d_z);
+  assert(bzla_bvprop_is_valid(mm, d_z));
+  assert(res_d_x);
+  assert(res_d_y);
+  assert(res_d_z);
+
+  /* z_[bw] = x_[bw] * y_[bw]
+   * rewrites to
+   * ite (y[bw-1:bw-1], x << (bw - 1), 0)
+   *   + ite (y[bw-2:bw-2], x << (bw-2), 0)
+   *   + ...
+   *   + ite (y[1:1], x << 1, 0)
+   *   + ite (y[0:0], x, 0)
+   */
+
+  uint32_t i, idx, bw;
+  bool res, progress;
+  BzlaBitVector *bv;
+  BzlaBvDomain *d, *tmp_x, *tmp_y, *tmp_z, *tmp_zero;
+  BzlaBvDomain **tmp_c, **tmp_shift, **tmp_ite, **tmp0, **tmp1, **tmp_add;
+  BzlaBvDomain *tmp_res_c;
+  BzlaBvDomainPtrStack d_c_stack, d_shift_stack, d_ite_stack, d_add_stack;
+  BzlaBitVectorPtrStack shift_stack;
+
+  res = true;
+
+  BZLA_INIT_STACK(mm, d_c_stack);
+  BZLA_INIT_STACK(mm, d_shift_stack);
+  BZLA_INIT_STACK(mm, d_ite_stack);
+  BZLA_INIT_STACK(mm, d_add_stack);
+  BZLA_INIT_STACK(mm, shift_stack);
+
+  bw = bzla_bv_get_width(d_x->lo);
+  assert(bw == bzla_bv_get_width(d_x->hi));
+  assert(bw == bzla_bv_get_width(d_y->lo));
+  assert(bw == bzla_bv_get_width(d_y->hi));
+  assert(bw == bzla_bv_get_width(d_z->lo));
+  assert(bw == bzla_bv_get_width(d_z->hi));
+
+  bv       = bzla_bv_zero(mm, bw);
+  tmp_zero = bzla_bvprop_new(mm, bv, bv);
+  bzla_bv_free(mm, bv);
+
+  if (bw == 1)
+  {
+    /* multiplication simplifies to d_z = ite (d_y, x, 0) */
+    if (!bzla_bvprop_ite(
+            mm, d_y, d_x, tmp_zero, d_z, &tmp_res_c, res_d_x, res_d_y, res_d_z))
+    {
+      res = false;
+      bzla_bvprop_free(mm, *res_d_x);
+      bzla_bvprop_free(mm, *res_d_y);
+      bzla_bvprop_free(mm, *res_d_z);
+      goto DONE;
+    }
+    tmp_x = *res_d_x;
+    tmp_y = tmp_res_c;
+    tmp_z = *res_d_z;
+  }
+  else
+  {
+    for (i = 0; i < bw; i++)
+    {
+      /* slice y into bw ite conditions */
+      d     = new_domain(mm);
+      idx   = bw - 1 - i;
+      d->lo = bzla_bv_slice(mm, d_y->lo, idx, idx);
+      d->hi = bzla_bv_slice(mm, d_y->hi, idx, idx);
+      BZLA_PUSH_STACK(d_c_stack, d);
+      /* bw shift propagators */
+      d = bzla_bvprop_new_init(mm, bw);
+      BZLA_PUSH_STACK(d_shift_stack, d);
+      /* bw ite propagators */
+      d = bzla_bvprop_new_init(mm, bw);
+      BZLA_PUSH_STACK(d_ite_stack, d);
+      /* bw - 1 add propagators */
+      if (i == bw - 1)
+      {
+        /* last adder is end result: d_z = add_[bw-1]*/
+        d = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
+        BZLA_PUSH_STACK(d_add_stack, d);
+      }
+      else if (i > 0)
+      {
+        d = bzla_bvprop_new_init(mm, bw);
+        BZLA_PUSH_STACK(d_add_stack, d);
+      }
+      /* shift width */
+      bv = bzla_bv_uint64_to_bv(mm, bw - 1 - i, bw);
+      BZLA_PUSH_STACK(shift_stack, bv);
+    }
+
+    tmp_x = bzla_bvprop_new(mm, d_x->lo, d_x->hi);
+    tmp_y = bzla_bvprop_new(mm, d_y->lo, d_y->hi);
+    tmp_z = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
+
+    do
+    {
+      progress = false;
+
+      for (i = 0; i < bw; i++)
+      {
+        /* x << bw - 1 - i */
+        bv        = BZLA_PEEK_STACK(shift_stack, i);
+        tmp_shift = &d_shift_stack.start[i];
+        if (!bzla_bvprop_sll_const(mm, tmp_x, *tmp_shift, bv, res_d_x, res_d_z))
+        {
+          res = false;
+          bzla_bvprop_free(mm, *res_d_x);
+          bzla_bvprop_free(mm, *res_d_z);
+          goto DONE;
+        }
+        assert(bzla_bvprop_is_valid(mm, *res_d_x));
+        assert(bzla_bvprop_is_valid(mm, *res_d_z));
+        if (!progress)
+        {
+          progress =
+              made_progress(tmp_x, 0, *tmp_shift, 0, *res_d_x, 0, *res_d_z, 0);
+        }
+        bzla_bvprop_free(mm, tmp_x);
+        bzla_bvprop_free(mm, *tmp_shift);
+        tmp_x      = *res_d_x;
+        *tmp_shift = *res_d_z;
+
+        /* ite (y[bw-1-i:bw-1-i], x << bw - 1 - i, 0) */
+        tmp_c   = &d_c_stack.start[i];
+        tmp_ite = &d_ite_stack.start[i];
+        if (!bzla_bvprop_ite(mm,
+                             *tmp_c,
+                             *tmp_shift,
+                             tmp_zero,
+                             *tmp_ite,
+                             &tmp_res_c,
+                             res_d_x,
+                             res_d_y,
+                             res_d_z))
+        {
+          res = false;
+          bzla_bvprop_free(mm, tmp_res_c);
+          bzla_bvprop_free(mm, *res_d_x);
+          bzla_bvprop_free(mm, *res_d_y);
+          bzla_bvprop_free(mm, *res_d_z);
+          goto DONE;
+        }
+        assert(bzla_bvprop_is_valid(mm, *res_d_x));
+        assert(bzla_bvprop_is_valid(mm, *res_d_y));
+        assert(bzla_bvprop_is_valid(mm, *res_d_z));
+        assert(bzla_bvprop_is_valid(mm, tmp_res_c));
+        if (!progress)
+        {
+          progress = made_progress(*tmp_shift,
+                                   tmp_zero,
+                                   *tmp_ite,
+                                   *tmp_c,
+                                   *res_d_x,
+                                   *res_d_y,
+                                   *res_d_z,
+                                   tmp_res_c);
+        }
+        bzla_bvprop_free(mm, *tmp_shift);
+        assert(!bzla_bv_compare(tmp_zero->lo, (*res_d_y)->lo)
+               && !bzla_bv_compare(tmp_zero->hi, (*res_d_y)->hi));
+        bzla_bvprop_free(mm, *tmp_c);
+        bzla_bvprop_free(mm, *tmp_ite);
+        *tmp_shift = *res_d_x;
+        bzla_bvprop_free(mm, *res_d_y);
+        *tmp_ite = *res_d_z;
+        *tmp_c   = tmp_res_c;
+
+        /**
+         * ite (y[bw-1:bw-1], x << (bw - 1), 0)
+         *   + ite (y[bw-2:bw-2], x << (bw-2), 0)
+         *   + ...
+         *   + ite (y[1:1], x << 1, 0)
+         *   + ite (y[0:0], x, 0)
+         */
+        if (i > 0)
+        {
+          tmp0 = i == 1 ? &d_ite_stack.start[i - 1] : &d_add_stack.start[i - 2];
+          tmp1 = tmp_ite;
+          tmp_add = &d_add_stack.start[i - 1];
+          if (!bzla_bvprop_add(
+                  mm, *tmp0, *tmp1, *tmp_add, res_d_x, res_d_y, res_d_z))
+          {
+            res = false;
+            bzla_bvprop_free(mm, *res_d_x);
+            bzla_bvprop_free(mm, *res_d_y);
+            bzla_bvprop_free(mm, *res_d_z);
+            goto DONE;
+          }
+          assert(bzla_bvprop_is_valid(mm, *res_d_x));
+          assert(bzla_bvprop_is_valid(mm, *res_d_y));
+          assert(bzla_bvprop_is_valid(mm, *res_d_z));
+          if (!progress)
+          {
+            progress = made_progress(
+                *tmp0, *tmp1, *tmp_add, 0, *res_d_x, *res_d_y, *res_d_z, 0);
+          }
+          bzla_bvprop_free(mm, *tmp0);
+          bzla_bvprop_free(mm, *tmp1);
+          bzla_bvprop_free(mm, *tmp_add);
+          *tmp0    = *res_d_x;
+          *tmp1    = *res_d_y;
+          *tmp_add = *res_d_z;
+        }
+      }
+    } while (progress);
+
+    for (i = 0; i < bw; i++)
+    {
+      idx = bw - 1 - i;
+      d   = BZLA_PEEK_STACK(d_c_stack, i);
+      assert(bzla_bv_get_width(d->lo) == 1);
+      assert(bzla_bv_get_width(d->hi) == 1);
+      bzla_bv_set_bit(tmp_y->lo, idx, bzla_bv_get_bit(d->lo, 0));
+      bzla_bv_set_bit(tmp_y->hi, idx, bzla_bv_get_bit(d->hi, 0));
+    }
+    bzla_bvprop_free(mm, tmp_z);
+    tmp_z = new_domain(mm);
+    if (bw > 1)
+    {
+      tmp_z->lo = bzla_bv_copy(mm, d_add_stack.start[bw - 2]->lo);
+      tmp_z->hi = bzla_bv_copy(mm, d_add_stack.start[bw - 2]->hi);
+    }
+    else
+    {
+      tmp_z->lo = bzla_bv_copy(mm, d_ite_stack.start[0]->lo);
+      tmp_z->hi = bzla_bv_copy(mm, d_ite_stack.start[0]->hi);
+    }
+  }
+  assert(bzla_bvprop_is_valid(mm, tmp_x));
+  assert(bzla_bvprop_is_valid(mm, tmp_y));
+  assert(bzla_bvprop_is_valid(mm, tmp_z));
+DONE:
+  *res_d_x = tmp_x;
+  *res_d_y = tmp_y;
+  *res_d_z = tmp_z;
+
+  bzla_bvprop_free(mm, tmp_zero);
+
+  for (i = 0; i < bw; i++)
+  {
+    assert(!BZLA_EMPTY_STACK(d_c_stack));
+    assert(!BZLA_EMPTY_STACK(d_shift_stack));
+    assert(!BZLA_EMPTY_STACK(d_ite_stack));
+    assert(!BZLA_EMPTY_STACK(shift_stack));
+    bzla_bvprop_free(mm, BZLA_POP_STACK(d_c_stack));
+    bzla_bvprop_free(mm, BZLA_POP_STACK(d_shift_stack));
+    bzla_bvprop_free(mm, BZLA_POP_STACK(d_ite_stack));
+    bzla_bv_free(mm, BZLA_POP_STACK(shift_stack));
+    if (i < bw - 1)
+    {
+      assert(!BZLA_EMPTY_STACK(d_add_stack));
+      bzla_bvprop_free(mm, BZLA_POP_STACK(d_add_stack));
+    }
+  }
+  BZLA_RELEASE_STACK(d_c_stack);
+  BZLA_RELEASE_STACK(d_shift_stack);
+  BZLA_RELEASE_STACK(d_ite_stack);
+  BZLA_RELEASE_STACK(d_add_stack);
+  BZLA_RELEASE_STACK(shift_stack);
 
   return res;
 }
