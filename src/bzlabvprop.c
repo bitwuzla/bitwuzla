@@ -1621,7 +1621,7 @@ bzla_bvprop_mul(BzlaMemMgr *mm,
    *   + ite (y[0:0], x, 0)
    */
 
-  uint32_t i, idx, bw;
+  uint32_t i, bw, n;
   bool res, progress;
   BzlaBitVector *bv;
   BzlaBvDomain *d, *tmp_x, *tmp_y, *tmp_z, *tmp_zero;
@@ -1651,7 +1651,7 @@ bzla_bvprop_mul(BzlaMemMgr *mm,
 
   if (bw == 1)
   {
-    /* multiplication simplifies to d_z = ite (d_y, x, 0) */
+    /* For bit-width 1, multiplication simplifies to d_z = ite (d_y, x, 0) */
     if (!bzla_bvprop_ite(
             mm, d_y, d_x, tmp_zero, d_z, &tmp_res_c, res_d_x, res_d_y, res_d_z))
     {
@@ -1667,36 +1667,84 @@ bzla_bvprop_mul(BzlaMemMgr *mm,
   }
   else
   {
+    /**
+     * The full implementation of
+     *   ite (y[bw-1:bw-1], x << (bw - 1), 0)
+     *     + ite (y[bw-2:bw-2], x << (bw-2), 0)
+     *     + ...
+     *     + ite (y[1:1], x << 1, 0)
+     *     + ite (y[0:0], x, 0)
+     * would require n left shift propagators, n ite propagators, and n - 1
+     * add propagators (n = bw).
+     * We can simplify that since for each ite, the initial result domain is
+     * x...x = ite (condition, shift, 0). If the y bit at an index i (and
+     * therefore the condition for the i-th ite) is 0, the result of the ite
+     * is always 0 (that's the only possible propagation, no invalid results
+     * possible). Hence we can skip all 0 bits of y (i.e., all ite with a 0
+     * condition), except the last one (the last one is the end result).
+     */
+
     for (i = 0; i < bw; i++)
     {
+      n = bw - 1 - i;
+
+      /* if y bit is zero, the result of the ite is zero, skip */
+      if (i < bw - 1 && !bzla_bv_get_bit(d_y->lo, n)
+          && !bzla_bv_get_bit(d_y->hi, n))
+        continue;
+
       /* slice y into bw ite conditions */
       d     = new_domain(mm);
-      idx   = bw - 1 - i;
-      d->lo = bzla_bv_slice(mm, d_y->lo, idx, idx);
-      d->hi = bzla_bv_slice(mm, d_y->hi, idx, idx);
+      d->lo = bzla_bv_slice(mm, d_y->lo, n, n);
+      d->hi = bzla_bv_slice(mm, d_y->hi, n, n);
       BZLA_PUSH_STACK(d_c_stack, d);
-      /* bw shift propagators */
+      /* m shift propagators (m = number of 1 or x bits in y) */
       d = bzla_bvprop_new_init(mm, bw);
       BZLA_PUSH_STACK(d_shift_stack, d);
-      /* bw ite propagators */
+      /* m ite propagators */
       d = bzla_bvprop_new_init(mm, bw);
       BZLA_PUSH_STACK(d_ite_stack, d);
-      /* bw - 1 add propagators */
-      if (i == bw - 1)
-      {
-        /* last adder is end result: d_z = add_[bw-1]*/
-        d = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
-        BZLA_PUSH_STACK(d_add_stack, d);
-      }
-      else if (i > 0)
+      /* m - 1 add propagators */
+      if (BZLA_COUNT_STACK(d_c_stack) > 1)
       {
         d = bzla_bvprop_new_init(mm, bw);
         BZLA_PUSH_STACK(d_add_stack, d);
       }
       /* shift width */
-      bv = bzla_bv_uint64_to_bv(mm, bw - 1 - i, bw);
+      bv = bzla_bv_uint64_to_bv(mm, n, bw);
       BZLA_PUSH_STACK(shift_stack, bv);
     }
+
+    /**
+     * if m > 0: final add is end result
+     * else    : there is a single ite which is the end result
+     */
+    if (BZLA_COUNT_STACK(d_add_stack))
+    {
+      /* last adder is end result: d_z = add_[m-1]*/
+      d = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
+      bzla_bvprop_free(mm, BZLA_POP_STACK(d_add_stack));
+      BZLA_PUSH_STACK(d_add_stack, d);
+    }
+    else
+    {
+      /**
+       * We have at least one ite propagator, even if all bits in y are 0.
+       * In case there is only a single ite propagator, it is the end result.
+       */
+      assert(BZLA_COUNT_STACK(d_ite_stack) == 1);
+      if (BZLA_COUNT_STACK(d_ite_stack))
+      {
+        d = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
+        bzla_bvprop_free(mm, BZLA_POP_STACK(d_ite_stack));
+        BZLA_PUSH_STACK(d_ite_stack, d);
+      }
+    }
+
+    assert(BZLA_COUNT_STACK(d_c_stack) == BZLA_COUNT_STACK(d_shift_stack));
+    assert(BZLA_COUNT_STACK(d_c_stack) == BZLA_COUNT_STACK(d_ite_stack));
+    assert(BZLA_COUNT_STACK(d_c_stack) == BZLA_COUNT_STACK(d_add_stack) + 1);
+    assert(BZLA_COUNT_STACK(d_c_stack) == BZLA_COUNT_STACK(shift_stack));
 
     tmp_x = bzla_bvprop_new(mm, d_x->lo, d_x->hi);
     tmp_y = bzla_bvprop_new(mm, d_y->lo, d_y->hi);
@@ -1706,9 +1754,14 @@ bzla_bvprop_mul(BzlaMemMgr *mm,
     {
       progress = false;
 
-      for (i = 0; i < bw; i++)
+      for (i = 0; i < BZLA_COUNT_STACK(d_c_stack); i++)
       {
-        /* x << bw - 1 - i */
+        /**
+         * x << bw - 1 - m where m is the current bit index.
+         * The shift width of the current bit index (!= i) is stored at index i.
+         * The current bit index is not explicit here, since we only generate
+         * propagators for bits that 1/x (or for the last 0 bit if y = 0).
+         */
         bv        = BZLA_PEEK_STACK(shift_stack, i);
         tmp_shift = &d_shift_stack.start[i];
         if (!bzla_bvprop_sll_const(mm, tmp_x, *tmp_shift, bv, res_d_x, res_d_z))
@@ -1730,7 +1783,7 @@ bzla_bvprop_mul(BzlaMemMgr *mm,
         tmp_x      = *res_d_x;
         *tmp_shift = *res_d_z;
 
-        /* ite (y[bw-1-i:bw-1-i], x << bw - 1 - i, 0) */
+        /* ite (y[bw-1-m:bw-1-m], x << bw - 1 - m, 0) */
         tmp_c   = &d_c_stack.start[i];
         tmp_ite = &d_ite_stack.start[i];
         if (!bzla_bvprop_ite(mm,
@@ -1781,6 +1834,9 @@ bzla_bvprop_mul(BzlaMemMgr *mm,
          *   + ...
          *   + ite (y[1:1], x << 1, 0)
          *   + ite (y[0:0], x, 0)
+         *
+         * Note that we only create ite for bits in y that are 1/x. Thus, we
+         * don't create 'bw' adders but 'm = number of 1/x bits - 1' adders.
          */
         if (i > 0)
         {
@@ -1814,24 +1870,33 @@ bzla_bvprop_mul(BzlaMemMgr *mm,
       }
     } while (progress);
 
-    for (i = 0; i < bw; i++)
+    /* Collect y bits into the result for d_y. */
+    for (i = 0, n = 0; i < bw; i++)
     {
-      idx = bw - 1 - i;
-      d   = BZLA_PEEK_STACK(d_c_stack, i);
+      if (i < bw - 1 && !bzla_bv_get_bit(tmp_y->lo, bw - 1 - i)
+          && !bzla_bv_get_bit(tmp_y->hi, bw - 1 - i))
+        continue;
+      assert(n < BZLA_COUNT_STACK(d_c_stack));
+      d = BZLA_PEEK_STACK(d_c_stack, n);
       assert(bzla_bv_get_width(d->lo) == 1);
       assert(bzla_bv_get_width(d->hi) == 1);
-      bzla_bv_set_bit(tmp_y->lo, idx, bzla_bv_get_bit(d->lo, 0));
-      bzla_bv_set_bit(tmp_y->hi, idx, bzla_bv_get_bit(d->hi, 0));
+      bzla_bv_set_bit(tmp_y->lo, bw - 1 - i, bzla_bv_get_bit(d->lo, 0));
+      bzla_bv_set_bit(tmp_y->hi, bw - 1 - i, bzla_bv_get_bit(d->hi, 0));
+      n += 1;
     }
+    assert(n == BZLA_COUNT_STACK(d_c_stack));
+
+    /* Result for d_z. */
     bzla_bvprop_free(mm, tmp_z);
     tmp_z = new_domain(mm);
-    if (bw > 1)
+    if (n > 1)
     {
-      tmp_z->lo = bzla_bv_copy(mm, d_add_stack.start[bw - 2]->lo);
-      tmp_z->hi = bzla_bv_copy(mm, d_add_stack.start[bw - 2]->hi);
+      tmp_z->lo = bzla_bv_copy(mm, d_add_stack.start[n - 2]->lo);
+      tmp_z->hi = bzla_bv_copy(mm, d_add_stack.start[n - 2]->hi);
     }
     else
     {
+      assert(n == 1);
       tmp_z->lo = bzla_bv_copy(mm, d_ite_stack.start[0]->lo);
       tmp_z->hi = bzla_bv_copy(mm, d_ite_stack.start[0]->hi);
     }
@@ -1846,7 +1911,7 @@ DONE:
 
   bzla_bvprop_free(mm, tmp_zero);
 
-  for (i = 0; i < bw; i++)
+  for (i = 0, n = BZLA_COUNT_STACK(d_c_stack); i < n; i++)
   {
     assert(!BZLA_EMPTY_STACK(d_c_stack));
     assert(!BZLA_EMPTY_STACK(d_shift_stack));
@@ -1856,7 +1921,7 @@ DONE:
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_shift_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_ite_stack));
     bzla_bv_free(mm, BZLA_POP_STACK(shift_stack));
-    if (i < bw - 1)
+    if (i < n - 1)
     {
       assert(!BZLA_EMPTY_STACK(d_add_stack));
       bzla_bvprop_free(mm, BZLA_POP_STACK(d_add_stack));
