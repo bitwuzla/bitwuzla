@@ -1533,7 +1533,12 @@ TEST_F(TestBvProp, init_domain)
 
 TEST_F(TestBvProp, eq) { test_eq(3); }
 
-TEST_F(TestBvProp, not ) { test_not(3); }
+TEST_F(TestBvProp, not )
+{
+  test_not(1);
+  test_not(2);
+  test_not(3);
+}
 
 TEST_F(TestBvProp, sll)
 {
