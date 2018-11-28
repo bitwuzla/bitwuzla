@@ -1279,7 +1279,7 @@ bzla_bvprop_ite(BzlaMemMgr *mm,
       goto DONE;
     }
 
-    if (!progress)
+    if (bw > 1 && !progress)
     {
       progress = made_progress(tmp_x,
                                tmp_y,
@@ -1290,6 +1290,7 @@ bzla_bvprop_ite(BzlaMemMgr *mm,
                                *res_d_z,
                                res_tmp_bvc);
     }
+
     bzla_bvprop_free(mm, tmp_x);
     bzla_bvprop_free(mm, tmp_y);
     bzla_bvprop_free(mm, tmp_z);
@@ -1299,7 +1300,7 @@ bzla_bvprop_ite(BzlaMemMgr *mm,
     tmp_z   = *res_d_z;
     tmp_bvc = res_tmp_bvc;
 
-    if (!c_is_fixed && progress)
+    if (bw > 1 && !c_is_fixed && progress)
     {
       if (!bzla_bvprop_sext(mm, tmp_c, tmp_bvc, res_d_c, &res_tmp_bvc))
       {
@@ -1649,6 +1650,10 @@ bzla_bvprop_mul(BzlaMemMgr *mm,
   tmp_zero = bzla_bvprop_new(mm, bv, bv);
   bzla_bv_free(mm, bv);
 
+  tmp_x = bzla_bvprop_new(mm, d_x->lo, d_x->hi);
+  tmp_y = bzla_bvprop_new(mm, d_y->lo, d_y->hi);
+  tmp_z = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
+
   if (bw == 1)
   {
     /* For bit-width 1, multiplication simplifies to d_z = ite (d_y, x, 0) */
@@ -1656,14 +1661,19 @@ bzla_bvprop_mul(BzlaMemMgr *mm,
             mm, d_y, d_x, tmp_zero, d_z, &tmp_res_c, res_d_x, res_d_y, res_d_z))
     {
       res = false;
+      bzla_bvprop_free(mm, tmp_res_c);
       bzla_bvprop_free(mm, *res_d_x);
       bzla_bvprop_free(mm, *res_d_y);
       bzla_bvprop_free(mm, *res_d_z);
       goto DONE;
     }
+    bzla_bvprop_free(mm, tmp_x);
+    bzla_bvprop_free(mm, tmp_y);
+    bzla_bvprop_free(mm, tmp_z);
     tmp_x = *res_d_x;
     tmp_y = tmp_res_c;
     tmp_z = *res_d_z;
+    bzla_bvprop_free(mm, *res_d_y);
   }
   else
   {
@@ -1745,10 +1755,6 @@ bzla_bvprop_mul(BzlaMemMgr *mm,
     assert(BZLA_COUNT_STACK(d_c_stack) == BZLA_COUNT_STACK(d_ite_stack));
     assert(BZLA_COUNT_STACK(d_c_stack) == BZLA_COUNT_STACK(d_add_stack) + 1);
     assert(BZLA_COUNT_STACK(d_c_stack) == BZLA_COUNT_STACK(shift_stack));
-
-    tmp_x = bzla_bvprop_new(mm, d_x->lo, d_x->hi);
-    tmp_y = bzla_bvprop_new(mm, d_y->lo, d_y->hi);
-    tmp_z = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
 
     do
     {
@@ -1932,6 +1938,5 @@ DONE:
   BZLA_RELEASE_STACK(d_ite_stack);
   BZLA_RELEASE_STACK(d_add_stack);
   BZLA_RELEASE_STACK(shift_stack);
-
   return res;
 }

@@ -1555,4 +1555,9 @@ TEST_F(TestBvProp, sext) { test_sext(3); }
 
 TEST_F(TestBvProp, ite) { test_ite(3); }
 
-TEST_F(TestBvProp, mul) { test_mul(3); }
+TEST_F(TestBvProp, mul)
+{
+  test_mul(1);
+  test_mul(2);
+  test_mul(3);
+}
