@@ -1351,7 +1351,7 @@ class TestBvProp : public TestMm
                     true,
                     res);
 
-          if (bzla_bvprop_is_fixed(d_mm, d_x)
+          if (res && bzla_bvprop_is_fixed(d_mm, d_x)
               && bzla_bvprop_is_fixed(d_mm, d_y))
           {
             assert(bzla_bvprop_is_fixed(d_mm, res_x));
@@ -1531,7 +1531,12 @@ TEST_F(TestBvProp, init_domain)
   bzla_bvprop_free(d_mm, d);
 }
 
-TEST_F(TestBvProp, eq) { test_eq(3); }
+TEST_F(TestBvProp, eq)
+{
+  test_eq(1);
+  test_eq(2);
+  test_eq(3);
+}
 
 TEST_F(TestBvProp, not )
 {
