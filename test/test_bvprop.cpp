@@ -1541,7 +1541,12 @@ TEST_F(TestBvProp, srl) { test_srl_const(3); }
 
 TEST_F(TestBvProp, and) { test_and(3); }
 
-TEST_F(TestBvProp, or) { test_or(3); }
+TEST_F(TestBvProp, or)
+{
+  test_or(1);
+  test_or(2);
+  test_or(3);
+}
 
 TEST_F(TestBvProp, xor)
 {
