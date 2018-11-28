@@ -1537,7 +1537,12 @@ TEST_F(TestBvProp, not ) { test_not(3); }
 
 TEST_F(TestBvProp, sll) { test_sll_const(3); }
 
-TEST_F(TestBvProp, srl) { test_srl_const(3); }
+TEST_F(TestBvProp, srl)
+{
+  test_srl_const(1);
+  test_srl_const(2);
+  test_srl_const(3);
+}
 
 TEST_F(TestBvProp, and)
 {
