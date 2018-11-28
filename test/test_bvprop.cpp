@@ -1547,7 +1547,12 @@ TEST_F(TestBvProp, xor) { test_xor(3); }
 
 TEST_F(TestBvProp, slice) { test_slice(3); }
 
-TEST_F(TestBvProp, concat) { test_concat(3); }
+TEST_F(TestBvProp, concat)
+{
+  test_concat(1);
+  test_concat(2);
+  test_concat(3);
+}
 
 TEST_F(TestBvProp, add)
 {
