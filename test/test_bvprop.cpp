@@ -1549,11 +1549,21 @@ TEST_F(TestBvProp, slice) { test_slice(3); }
 
 TEST_F(TestBvProp, concat) { test_concat(3); }
 
-TEST_F(TestBvProp, add) { test_add(3); }
+TEST_F(TestBvProp, add)
+{
+  test_add(1);
+  test_add(2);
+  test_add(3);
+}
 
 TEST_F(TestBvProp, sext) { test_sext(3); }
 
-TEST_F(TestBvProp, ite) { test_ite(3); }
+TEST_F(TestBvProp, ite)
+{
+  test_ite(1);
+  test_ite(2);
+  test_ite(3);
+}
 
 TEST_F(TestBvProp, mul)
 {
