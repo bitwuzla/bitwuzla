@@ -1545,7 +1545,12 @@ TEST_F(TestBvProp, or) { test_or(3); }
 
 TEST_F(TestBvProp, xor) { test_xor(3); }
 
-TEST_F(TestBvProp, slice) { test_slice(3); }
+TEST_F(TestBvProp, slice)
+{
+  test_slice(1);
+  test_slice(2);
+  test_slice(3);
+}
 
 TEST_F(TestBvProp, concat)
 {
