@@ -98,47 +98,43 @@ class TestBvProp : public TestMm
   static constexpr uint32_t TEST_BVPROP_XOR = 2;
 
   /* Initialize all possible values for 3-valued constants of bit-width bw */
-  void generate_consts(uint32_t bw)
+  uint32_t generate_consts(uint32_t bw, char ***res)
   {
     assert(bw);
-    assert(!d_consts);
-    assert(!d_bw);
+    assert(res);
 
+    uint32_t psize, num_consts = 1;
     char bit = '0';
-    size_t psize;
 
-    d_bw = bw;
-    for (size_t i = 0; i < d_bw; i++) d_num_consts *= 3;
-    psize = d_num_consts;
+    for (uint32_t i = 0; i < bw; i++) num_consts *= 3;
+    psize = num_consts;
 
-    BZLA_NEWN(d_mm, d_consts, d_num_consts);
-    for (size_t i = 0; i < d_num_consts; i++)
-      BZLA_CNEWN(d_mm, d_consts[i], d_bw + 1);
+    BZLA_NEWN(d_mm, *res, num_consts);
+    for (uint32_t i = 0; i < num_consts; i++)
+      BZLA_CNEWN(d_mm, (*res)[i], bw + 1);
 
-    for (size_t i = 0; i < d_bw; i++)
+    for (uint32_t i = 0; i < bw; i++)
     {
       psize = psize / 3;
-      for (size_t j = 0; j < d_num_consts; j++)
+      for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_consts[j][i] = bit;
+        (*res)[j][i] = bit;
         if ((j + 1) % psize == 0)
         {
           bit = bit == '0' ? '1' : (bit == '1' ? 'x' : '0');
         }
       }
     }
+    return num_consts;
   }
 
-  void free_consts()
+  void free_consts(uint32_t bw, uint32_t num_consts, char **consts)
   {
-    assert(d_bw);
-    assert(d_consts);
-    for (size_t i = 0; i < d_num_consts; i++)
-      BZLA_DELETEN(d_mm, d_consts[i], d_bw + 1);
-    BZLA_DELETEN(d_mm, d_consts, d_num_consts);
-    d_num_consts = 1;
-    d_consts     = 0;
-    d_bw         = 0;
+    assert(bw);
+    assert(consts);
+    for (uint32_t i = 0; i < num_consts; i++)
+      BZLA_DELETEN(d_mm, consts[i], bw + 1);
+    BZLA_DELETEN(d_mm, consts, num_consts);
   }
 
   void print_domain(BzlaBvDomain *d, bool print_short)
@@ -511,9 +507,8 @@ class TestBvProp : public TestMm
     assert(!d_y || d_c || binfun || extfun);
     assert(!extfun || hi);
 
-    size_t i;
     int32_t sat_res;
-    uint32_t bwx, bwy, bwz, idx;
+    uint32_t i, bwx, bwy, bwz, idx;
     char *str_x, *str_y, *str_z, *str_c;
     Bzla *bzla;
     BoolectorNode *x, *y, *z, *c, *fun, *eq, *slice, *one, *zero;
@@ -663,23 +658,23 @@ class TestBvProp : public TestMm
   void test_shift_const(uint32_t bw, bool is_srl)
   {
     bool res;
-    size_t i, j;
-    uint32_t n;
+    uint32_t i, j, n, num_consts;
+    char **consts;
     BzlaBitVector *bv_n;
     BzlaBvDomain *d_x, *d_y, *d_z, *res_x, *res_z;
 
-    generate_consts(bw);
+    num_consts = generate_consts(bw, &consts);
 
-    for (i = 0; i < d_num_consts; i++)
+    for (i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(d_consts[i]);
-      for (j = 0; j < d_num_consts; j++)
+      d_z = create_domain(consts[i]);
+      for (j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(d_consts[j]);
+        d_x = create_domain(consts[j]);
 
-        for (n = 0; n < d_bw + 1; n++)
+        for (n = 0; n < bw + 1; n++)
         {
-          bv_n = bzla_bv_uint64_to_bv(d_mm, n, d_bw);
+          bv_n = bzla_bv_uint64_to_bv(d_mm, n, bw);
           d_y  = bzla_bvprop_new(d_mm, bv_n, bv_n);
           if (is_srl)
           {
@@ -747,7 +742,7 @@ class TestBvProp : public TestMm
       }
       bzla_bvprop_free(d_mm, d_z);
     }
-    free_consts();
+    free_consts(bw, num_consts, consts);
   }
 
   void test_sll_const(uint32_t bw) { test_shift_const(bw, false); }
@@ -757,20 +752,22 @@ class TestBvProp : public TestMm
   void test_and_or_xor(int32_t op, uint32_t bw)
   {
     bool res;
+    uint32_t num_consts;
+    char **consts;
     BzlaBvDomain *d_x, *d_y, *d_z;
     BzlaBvDomain *res_x, *res_y, *res_z;
 
-    generate_consts(bw);
+    num_consts = generate_consts(bw, &consts);
 
-    for (size_t i = 0; i < d_num_consts; i++)
+    for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(d_consts[i]);
-      for (size_t j = 0; j < d_num_consts; j++)
+      d_z = create_domain(consts[i]);
+      for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(d_consts[j]);
-        for (size_t k = 0; k < d_num_consts; k++)
+        d_x = create_domain(consts[j]);
+        for (uint32_t k = 0; k < num_consts; k++)
         {
-          d_y = create_domain(d_consts[k]);
+          d_y = create_domain(consts[k]);
 
           if (op == TEST_BVPROP_AND)
           {
@@ -847,62 +844,57 @@ class TestBvProp : public TestMm
             assert(bzla_bvprop_is_valid(d_mm, res_x));
             assert(bzla_bvprop_is_valid(d_mm, res_y));
 
-            for (size_t l = 0; l < d_bw; l++)
+            for (uint32_t l = 0; l < bw; l++)
             {
               if (op == TEST_BVPROP_AND)
               {
-                assert(d_consts[i][l] != '1'
-                       || (d_consts[j][l] != '0' && d_consts[k][l] != '0'));
-                assert(d_consts[i][l] != '0'
-                       || (d_consts[j][l] != '1' || d_consts[k][l] != '1'));
+                assert(consts[i][l] != '1'
+                       || (consts[j][l] != '0' && consts[k][l] != '0'));
+                assert(consts[i][l] != '0'
+                       || (consts[j][l] != '1' || consts[k][l] != '1'));
               }
               else if (op == TEST_BVPROP_OR)
               {
-                assert(d_consts[i][l] != '1' || d_consts[j][l] != '0'
-                       || d_consts[k][l] != '0');
-                assert(d_consts[i][l] != '0'
-                       || (d_consts[j][l] != '1' && d_consts[k][l] != '1'));
+                assert(consts[i][l] != '1' || consts[j][l] != '0'
+                       || consts[k][l] != '0');
+                assert(consts[i][l] != '0'
+                       || (consts[j][l] != '1' && consts[k][l] != '1'));
               }
               else
               {
                 assert(op == TEST_BVPROP_XOR);
-                assert(d_consts[i][l] != '1'
-                       || (d_consts[j][l] != '0' || d_consts[k][l] != '0')
-                       || (d_consts[j][l] != '1' || d_consts[k][l] != '1'));
-                assert(
-                    d_consts[i][l] != '0'
-                    || ((d_consts[j][l] != '0' || d_consts[k][l] != '1')
-                        && (d_consts[j][l] != '1' || d_consts[k][l] != '0')));
+                assert(consts[i][l] != '1'
+                       || (consts[j][l] != '0' || consts[k][l] != '0')
+                       || (consts[j][l] != '1' || consts[k][l] != '1'));
+                assert(consts[i][l] != '0'
+                       || ((consts[j][l] != '0' || consts[k][l] != '1')
+                           && (consts[j][l] != '1' || consts[k][l] != '0')));
               }
             }
           }
           else
           {
             bool valid = true;
-            for (size_t l = 0; l < d_bw && valid; l++)
+            for (uint32_t l = 0; l < bw && valid; l++)
             {
               if ((op == TEST_BVPROP_AND
-                   && ((d_consts[i][l] == '0' && d_consts[j][l] != '0'
-                        && d_consts[k][l] != '0')
-                       || (d_consts[i][l] == '1'
-                           && (d_consts[j][l] == '0'
-                               || d_consts[k][l] == '0'))))
+                   && ((consts[i][l] == '0' && consts[j][l] != '0'
+                        && consts[k][l] != '0')
+                       || (consts[i][l] == '1'
+                           && (consts[j][l] == '0' || consts[k][l] == '0'))))
                   || (op == TEST_BVPROP_OR
-                      && ((d_consts[i][l] == '1' && d_consts[j][l] != '1'
-                           && d_consts[k][l] != '1')
-                          || (d_consts[i][l] == '0'
-                              && (d_consts[j][l] == '1'
-                                  || d_consts[k][l] == '1'))))
+                      && ((consts[i][l] == '1' && consts[j][l] != '1'
+                           && consts[k][l] != '1')
+                          || (consts[i][l] == '0'
+                              && (consts[j][l] == '1' || consts[k][l] == '1'))))
                   || (op == TEST_BVPROP_XOR
-                      && ((d_consts[i][l] == '1'
-                           && ((d_consts[j][l] != '0' && d_consts[k][l] != '0')
-                               || (d_consts[j][l] != '1'
-                                   && d_consts[k][l] != '1')))
-                          || (d_consts[i][l] == '0'
-                              && ((d_consts[j][l] != '1'
-                                   && d_consts[k][l] != '0')
-                                  || (d_consts[j][l] != '0'
-                                      && d_consts[k][l] != '1'))))))
+                      && ((consts[i][l] == '1'
+                           && ((consts[j][l] != '0' && consts[k][l] != '0')
+                               || (consts[j][l] != '1' && consts[k][l] != '1')))
+                          || (consts[i][l] == '0'
+                              && ((consts[j][l] != '1' && consts[k][l] != '0')
+                                  || (consts[j][l] != '0'
+                                      && consts[k][l] != '1'))))))
               {
                 valid = false;
               }
@@ -916,7 +908,7 @@ class TestBvProp : public TestMm
       }
       bzla_bvprop_free(d_mm, d_z);
     }
-    free_consts();
+    free_consts(bw, num_consts, consts);
   }
 
   void test_and(uint32_t bw) { test_and_or_xor(TEST_BVPROP_AND, bw); }
@@ -927,17 +919,18 @@ class TestBvProp : public TestMm
 
   void test_eq(uint32_t bw)
   {
-    char *str_z;
+    uint32_t num_consts;
+    char *str_z, **consts;
     BzlaBvDomain *d_x, *d_y, *res_xy, *res_z;
 
-    generate_consts(bw);
+    num_consts = generate_consts(bw, &consts);
 
-    for (size_t i = 0; i < d_num_consts; i++)
+    for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_x = create_domain(d_consts[i]);
-      for (size_t j = 0; j < d_num_consts; j++)
+      d_x = create_domain(consts[i]);
+      for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_y = create_domain(d_consts[j]);
+        d_y = create_domain(consts[j]);
         (void) bzla_bvprop_eq(d_mm, d_x, d_y, &res_xy, &res_z);
         if (bzla_bvprop_is_fixed(d_mm, res_z))
         {
@@ -947,22 +940,22 @@ class TestBvProp : public TestMm
           if (str_z[0] == '0')
           {
             assert(!bzla_bvprop_is_valid(d_mm, res_xy));
-            assert(is_false_eq(d_consts[i], d_consts[j]));
+            assert(is_false_eq(consts[i], consts[j]));
           }
           else
           {
             assert(str_z[0] == '1');
             assert(bzla_bvprop_is_valid(d_mm, res_xy));
             assert(bzla_bvprop_is_fixed(d_mm, res_xy));
-            assert(is_true_eq(d_consts[i], d_consts[j]));
+            assert(is_true_eq(consts[i], consts[j]));
           }
           bzla_mem_freestr(d_mm, str_z);
         }
         else
         {
           assert(bzla_bvprop_is_valid(d_mm, res_xy));
-          assert(!is_false_eq(d_consts[i], d_consts[j]));
-          assert(!is_true_eq(d_consts[i], d_consts[j]));
+          assert(!is_false_eq(consts[i], consts[j]));
+          assert(!is_true_eq(consts[i], consts[j]));
         }
         bzla_bvprop_free(d_mm, d_y);
         bzla_bvprop_free(d_mm, res_xy);
@@ -970,23 +963,25 @@ class TestBvProp : public TestMm
       }
       bzla_bvprop_free(d_mm, d_x);
     }
-    free_consts();
+    free_consts(bw, num_consts, consts);
   }
 
   void test_not(uint32_t bw)
   {
     bool res;
+    uint32_t num_consts;
+    char **consts;
     BzlaBvDomain *d_x, *d_z, *res_x, *res_z;
 
-    generate_consts(bw);
+    num_consts = generate_consts(bw, &consts);
 
-    for (size_t i = 0; i < d_num_consts; i++)
+    for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_x = create_domain(d_consts[i]);
+      d_x = create_domain(consts[i]);
 
-      for (size_t j = 0; j < d_num_consts; j++)
+      for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_z = create_domain(d_consts[j]);
+        d_z = create_domain(consts[j]);
         res = bzla_bvprop_not(d_mm, d_x, d_z, &res_x, &res_z);
         check_sat(d_x,
                   0,
@@ -1021,9 +1016,9 @@ class TestBvProp : public TestMm
         {
           assert(!res);
           bool valid = true;
-          for (size_t k = 0; k < d_bw && valid; k++)
+          for (uint32_t k = 0; k < bw && valid; k++)
           {
-            if (d_consts[i][k] != 'x' && d_consts[i][k] == d_consts[j][k])
+            if (consts[i][k] != 'x' && consts[i][k] == consts[j][k])
             {
               valid = false;
             }
@@ -1035,29 +1030,30 @@ class TestBvProp : public TestMm
       }
       bzla_bvprop_free(d_mm, d_x);
     }
-    free_consts();
+    free_consts(bw, num_consts, consts);
   }
 
   void test_slice(uint32_t bw)
   {
     bool res;
-    char *buf;
+    uint32_t num_consts;
+    char *buf, **consts;
     BzlaBvDomain *d_x, *d_z, *res_x, *res_z;
 
-    generate_consts(bw);
-    BZLA_CNEWN(d_mm, buf, d_bw + 1);
+    num_consts = generate_consts(bw, &consts);
+    BZLA_CNEWN(d_mm, buf, bw + 1);
 
-    for (size_t i = 0; i < d_num_consts; i++)
+    for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_x = create_domain(d_consts[i]);
-      for (size_t j = 0; j < d_num_consts; j++)
+      d_x = create_domain(consts[i]);
+      for (uint32_t j = 0; j < num_consts; j++)
       {
-        for (uint32_t lower = 0; lower < d_bw; lower++)
+        for (uint32_t lower = 0; lower < bw; lower++)
         {
-          for (uint32_t upper = lower; upper < d_bw; upper++)
+          for (uint32_t upper = lower; upper < bw; upper++)
           {
-            memset(buf, 0, d_bw + 1);
-            memcpy(buf, &d_consts[j][d_bw - 1 - upper], upper - lower + 1);
+            memset(buf, 0, bw + 1);
+            memcpy(buf, &consts[j][bw - 1 - upper], upper - lower + 1);
             assert(strlen(buf) > 0);
             assert(strlen(buf) == upper - lower + 1);
 
@@ -1094,9 +1090,9 @@ class TestBvProp : public TestMm
               assert(bzla_bvprop_is_valid(d_mm, res_x));
               char *str_res_x = from_domain(d_mm, res_x);
               char *str_res_z = from_domain(d_mm, res_z);
-              for (size_t k = 0; k < upper - lower + 1; k++)
+              for (uint32_t k = 0; k < upper - lower + 1; k++)
               {
-                assert(str_res_z[k] == str_res_x[d_bw - 1 - upper + k]);
+                assert(str_res_z[k] == str_res_x[bw - 1 - upper + k]);
               }
               bzla_mem_freestr(d_mm, str_res_x);
               bzla_mem_freestr(d_mm, str_res_z);
@@ -1105,9 +1101,9 @@ class TestBvProp : public TestMm
             {
               assert(!bzla_bvprop_is_valid(d_mm, res_x));
               bool valid = true;
-              for (size_t k = 0; k < d_bw; k++)
+              for (uint32_t k = 0; k < bw; k++)
               {
-                if (buf[k] != d_consts[i][d_bw - 1 - upper + k])
+                if (buf[k] != consts[i][bw - 1 - upper + k])
                 {
                   valid = false;
                   break;
@@ -1122,102 +1118,102 @@ class TestBvProp : public TestMm
       }
       bzla_bvprop_free(d_mm, d_x);
     }
-    BZLA_DELETEN(d_mm, buf, d_bw + 1);
-    free_consts();
+    BZLA_DELETEN(d_mm, buf, bw + 1);
+    free_consts(bw, num_consts, consts);
   }
 
   void test_concat(uint32_t bw)
   {
     bool res;
-    size_t i, j, k;
-    char *s_const;
+    uint32_t i, j, k, num_consts;
+    char *s_const, **consts;
     BzlaBvDomain *d_x, *d_y, *d_z, *res_x, *res_y, *res_z;
 
-    generate_consts(bw);
+    num_consts = generate_consts(bw, &consts);
 
-    for (i = 1; i < d_bw; i++)
+    for (i = 1; i < bw; i++)
     {
-      j = d_bw - i;
-      for (k = 0; k < d_num_consts; k++)
+      j = bw - i;
+      for (k = 0; k < num_consts; k++)
       {
         d_x = bzla_bvprop_new_init(d_mm, i);
         d_y = bzla_bvprop_new_init(d_mm, j);
-        assert(i + j == d_bw);
-        d_z = bzla_bvprop_new_init(d_mm, d_bw);
+        assert(i + j == bw);
+        d_z = bzla_bvprop_new_init(d_mm, bw);
         TEST_PROPBV_CONCAT;
 
-        s_const = slice_str_const(d_consts[k], 0, i - 1);
+        s_const = slice_str_const(consts[k], 0, i - 1);
         d_x     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_y = bzla_bvprop_new_init(d_mm, j);
-        d_z = bzla_bvprop_new_init(d_mm, d_bw);
+        d_z = bzla_bvprop_new_init(d_mm, bw);
         TEST_PROPBV_CONCAT;
 
         d_x     = bzla_bvprop_new_init(d_mm, i);
-        s_const = slice_str_const(d_consts[k], i, d_bw - 1);
+        s_const = slice_str_const(consts[k], i, bw - 1);
         d_y     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
-        d_z = bzla_bvprop_new_init(d_mm, d_bw);
+        d_z = bzla_bvprop_new_init(d_mm, bw);
         TEST_PROPBV_CONCAT;
 
         d_x = bzla_bvprop_new_init(d_mm, i);
         d_y = bzla_bvprop_new_init(d_mm, j);
-        d_z = create_domain(d_consts[k]);
+        d_z = create_domain(consts[k]);
         TEST_PROPBV_CONCAT;
 
-        s_const = slice_str_const(d_consts[k], 0, i - 1);
+        s_const = slice_str_const(consts[k], 0, i - 1);
         d_x     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
-        s_const = slice_str_const(d_consts[k], i, d_bw - 1);
+        s_const = slice_str_const(consts[k], i, bw - 1);
         d_y     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
-        d_z = bzla_bvprop_new_init(d_mm, d_bw);
+        d_z = bzla_bvprop_new_init(d_mm, bw);
         TEST_PROPBV_CONCAT;
 
-        s_const = slice_str_const(d_consts[k], 0, i - 1);
+        s_const = slice_str_const(consts[k], 0, i - 1);
         d_x     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_y = bzla_bvprop_new_init(d_mm, j);
-        d_z = create_domain(d_consts[k]);
+        d_z = create_domain(consts[k]);
         TEST_PROPBV_CONCAT;
 
         d_x     = bzla_bvprop_new_init(d_mm, i);
-        s_const = slice_str_const(d_consts[k], i, d_bw - 1);
+        s_const = slice_str_const(consts[k], i, bw - 1);
         d_y     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
-        d_z = create_domain(d_consts[k]);
+        d_z = create_domain(consts[k]);
         TEST_PROPBV_CONCAT;
 
-        s_const = slice_str_const(d_consts[k], 0, i - 1);
+        s_const = slice_str_const(consts[k], 0, i - 1);
         d_x     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
-        s_const = slice_str_const(d_consts[k], i, d_bw - 1);
+        s_const = slice_str_const(consts[k], i, bw - 1);
         d_y     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
-        d_z = create_domain(d_consts[k]);
+        d_z = create_domain(consts[k]);
         TEST_PROPBV_CONCAT;
       }
     }
-    free_consts();
+    free_consts(bw, num_consts, consts);
   }
 
   void test_sext(uint32_t bw)
   {
     bool res;
-    size_t i, j;
-    uint32_t n;
+    uint32_t n, i, j, num_consts;
+    char **consts;
     BzlaBvDomain *d_x, *d_z, *res_x, *res_z;
 
-    generate_consts(bw);
+    num_consts = generate_consts(bw, &consts);
 
-    for (i = 0; i < d_num_consts; i++)
+    for (i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(d_consts[i]);
-      for (j = 0; j < d_num_consts; j++)
+      d_z = create_domain(consts[i]);
+      for (j = 0; j < num_consts; j++)
       {
-        for (n = 1; n < d_bw; n++)
+        for (n = 1; n < bw; n++)
         {
-          d_x = create_domain(d_consts[j] + n);
+          d_x = create_domain(consts[j] + n);
           res = bzla_bvprop_sext(d_mm, d_x, d_z, &res_x, &res_z);
           check_sat(d_x,
                     0,
@@ -1248,19 +1244,21 @@ class TestBvProp : public TestMm
       }
       bzla_bvprop_free(d_mm, d_z);
     }
-    free_consts();
+    free_consts(bw, num_consts, consts);
   }
 
   void test_ite(uint32_t bw)
   {
     bool res;
+    uint32_t num_consts;
+    char **consts;
     BzlaBitVector *tmp;
     BzlaBvDomain *d_c, *d_x, *d_y, *d_z;
     BzlaBvDomain *res_c, *res_x, *res_y, *res_z;
 
-    generate_consts(bw);
+    num_consts = generate_consts(bw, &consts);
 
-    for (size_t c = 0; c < 3; c++)
+    for (uint32_t c = 0; c < 3; c++)
     {
       if (c > 1)
       {
@@ -1273,15 +1271,15 @@ class TestBvProp : public TestMm
         bzla_bv_free(d_mm, tmp);
       }
 
-      for (size_t i = 0; i < d_num_consts; i++)
+      for (uint32_t i = 0; i < num_consts; i++)
       {
-        d_z = create_domain(d_consts[i]);
-        for (size_t j = 0; j < d_num_consts; j++)
+        d_z = create_domain(consts[i]);
+        for (uint32_t j = 0; j < num_consts; j++)
         {
-          d_x = create_domain(d_consts[j]);
-          for (size_t k = 0; k < d_num_consts; k++)
+          d_x = create_domain(consts[j]);
+          for (uint32_t k = 0; k < num_consts; k++)
           {
-            d_y = create_domain(d_consts[k]);
+            d_y = create_domain(consts[k]);
 
             res = bzla_bvprop_ite(
                 d_mm, d_c, d_x, d_y, d_z, &res_c, &res_x, &res_y, &res_z);
@@ -1312,27 +1310,29 @@ class TestBvProp : public TestMm
       }
       bzla_bvprop_free(d_mm, d_c);
     }
-    free_consts();
+    free_consts(bw, num_consts, consts);
   }
 
   void test_add(uint32_t bw)
   {
     bool res;
+    uint32_t num_consts;
+    char **consts;
     BzlaBitVector *tmp;
     BzlaBvDomain *d_x, *d_y, *d_z;
     BzlaBvDomain *res_x, *res_y, *res_z;
 
-    generate_consts(bw);
+    num_consts = generate_consts(bw, &consts);
 
-    for (size_t i = 0; i < d_num_consts; i++)
+    for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(d_consts[i]);
-      for (size_t j = 0; j < d_num_consts; j++)
+      d_z = create_domain(consts[i]);
+      for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(d_consts[j]);
-        for (size_t k = 0; k < d_num_consts; k++)
+        d_x = create_domain(consts[j]);
+        for (uint32_t k = 0; k < num_consts; k++)
         {
-          d_y = create_domain(d_consts[k]);
+          d_y = create_domain(consts[k]);
 
           res = bzla_bvprop_add(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
           check_sat(d_x,
@@ -1387,27 +1387,29 @@ class TestBvProp : public TestMm
       }
       bzla_bvprop_free(d_mm, d_z);
     }
-    free_consts();
+    free_consts(bw, num_consts, consts);
   }
 
   void test_mul(uint32_t bw)
   {
     bool res;
+    uint32_t num_consts;
+    char **consts;
     BzlaBitVector *tmp;
     BzlaBvDomain *d_x, *d_y, *d_z;
     BzlaBvDomain *res_x, *res_y, *res_z;
 
-    generate_consts(bw);
+    num_consts = generate_consts(bw, &consts);
 
-    for (size_t i = 0; i < d_num_consts; i++)
+    for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(d_consts[i]);
-      for (size_t j = 0; j < d_num_consts; j++)
+      d_z = create_domain(consts[i]);
+      for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(d_consts[j]);
-        for (size_t k = 0; k < d_num_consts; k++)
+        d_x = create_domain(consts[j]);
+        for (uint32_t k = 0; k < num_consts; k++)
         {
-          d_y = create_domain(d_consts[k]);
+          d_y = create_domain(consts[k]);
 
           res = bzla_bvprop_mul(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
           check_sat(d_x,
@@ -1463,7 +1465,7 @@ class TestBvProp : public TestMm
       }
       bzla_bvprop_free(d_mm, d_z);
     }
-    free_consts();
+    free_consts(bw, num_consts, consts);
   }
 
   uint32_t d_bw         = 0;
