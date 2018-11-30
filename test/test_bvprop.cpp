@@ -12,6 +12,7 @@
 extern "C" {
 #include "bzlabvprop.h"
 #include "utils/bzlamem.h"
+#include "utils/bzlautil.h"
 }
 
 #define TEST_BVPROP_RELEASE_D_XZ \
@@ -748,6 +749,89 @@ class TestBvProp : public TestMm
   void test_sll_const(uint32_t bw) { test_shift_const(bw, false); }
 
   void test_srl_const(uint32_t bw) { test_shift_const(bw, true); }
+
+  void test_shift(uint32_t bw, bool is_srl)
+  {
+    bool res;
+    uint32_t i, j, k, num_consts;
+    char **consts;
+    BzlaBvDomain *d_x, *d_y, *d_z, *res_x, *res_y, *res_z;
+
+    num_consts = generate_consts(bw, &consts);
+
+    for (i = 0; i < num_consts; i++)
+    {
+      d_z = create_domain(consts[i]);
+      for (j = 0; j < num_consts; j++)
+      {
+        d_x = create_domain(consts[j]);
+
+        for (k = 0; k < num_consts; k++)
+        {
+          d_y = create_domain(consts[k]);
+          if (is_srl)
+          {
+#if 0
+          res = bzla_bvprop_srl (d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+          check_sat (d_x,
+                     d_y,
+                     d_z,
+                     0,
+                     res_x,
+                     res_y,
+                     res_z,
+                     0,
+                     0,
+                     boolector_srl,
+                     0,
+                     0,
+                     0,
+                     true,
+                     res);
+#endif
+          }
+          else
+          {
+            res = bzla_bvprop_sll(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+            check_sat(d_x,
+                      d_y,
+                      d_z,
+                      0,
+                      res_x,
+                      res_y,
+                      res_z,
+                      0,
+                      0,
+                      boolector_sll,
+                      0,
+                      0,
+                      0,
+                      true,
+                      res);
+          }
+
+          assert(!bzla_bvprop_is_fixed(d_mm, d_x)
+                 || !bzla_bvprop_is_valid(d_mm, res_x)
+                 || !bzla_bv_compare(d_x->lo, res_x->lo));
+          assert(!bzla_bvprop_is_fixed(d_mm, d_y)
+                 || !bzla_bvprop_is_valid(d_mm, res_y)
+                 || !bzla_bv_compare(d_y->lo, res_y->lo));
+          assert(!res || !bzla_bvprop_is_fixed(d_mm, d_z)
+                 || !bzla_bvprop_is_valid(d_mm, res_z)
+                 || !bzla_bv_compare(d_z->lo, res_z->lo));
+          TEST_BVPROP_RELEASE_RES_XYZ;
+          bzla_bvprop_free(d_mm, d_y);
+        }
+        bzla_bvprop_free(d_mm, d_x);
+      }
+      bzla_bvprop_free(d_mm, d_z);
+    }
+    free_consts(bw, num_consts, consts);
+  }
+
+  void test_sll(uint32_t bw) { test_shift(bw, false); }
+
+  void test_srl(uint32_t bw) { test_shift(bw, true); }
 
   void test_and_or_xor(int32_t op, uint32_t bw)
   {
@@ -1547,18 +1631,24 @@ TEST_F(TestBvProp, not )
   test_not(3);
 }
 
-TEST_F(TestBvProp, sll)
+TEST_F(TestBvProp, sll_const)
 {
   test_sll_const(1);
   test_sll_const(2);
   test_sll_const(3);
 }
 
-TEST_F(TestBvProp, srl)
+TEST_F(TestBvProp, srl_const)
 {
   test_srl_const(1);
   test_srl_const(2);
   test_srl_const(3);
+}
+
+TEST_F(TestBvProp, sll)
+{
+  test_sll(2);
+  test_sll(3);
 }
 
 TEST_F(TestBvProp, and)
