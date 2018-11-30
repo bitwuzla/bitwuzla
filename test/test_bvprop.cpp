@@ -771,24 +771,22 @@ class TestBvProp : public TestMm
           d_y = create_domain(consts[k]);
           if (is_srl)
           {
-#if 0
-          res = bzla_bvprop_srl (d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
-          check_sat (d_x,
-                     d_y,
-                     d_z,
-                     0,
-                     res_x,
-                     res_y,
-                     res_z,
-                     0,
-                     0,
-                     boolector_srl,
-                     0,
-                     0,
-                     0,
-                     true,
-                     res);
-#endif
+            res = bzla_bvprop_srl(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+            check_sat(d_x,
+                      d_y,
+                      d_z,
+                      0,
+                      res_x,
+                      res_y,
+                      res_z,
+                      0,
+                      0,
+                      boolector_srl,
+                      0,
+                      0,
+                      0,
+                      true,
+                      res);
           }
           else
           {
@@ -1649,6 +1647,12 @@ TEST_F(TestBvProp, sll)
 {
   test_sll(2);
   test_sll(3);
+}
+
+TEST_F(TestBvProp, srl)
+{
+  test_srl(2);
+  test_srl(3);
 }
 
 TEST_F(TestBvProp, and)

@@ -381,13 +381,14 @@ bzla_bvprop_srl_const(BzlaMemMgr *mm,
 }
 
 bool
-bzla_bvprop_sll(BzlaMemMgr *mm,
-                BzlaBvDomain *d_x,
-                BzlaBvDomain *d_y,
-                BzlaBvDomain *d_z,
-                BzlaBvDomain **res_d_x,
-                BzlaBvDomain **res_d_y,
-                BzlaBvDomain **res_d_z)
+bvprop_shift_aux(BzlaMemMgr *mm,
+                 BzlaBvDomain *d_x,
+                 BzlaBvDomain *d_y,
+                 BzlaBvDomain *d_z,
+                 BzlaBvDomain **res_d_x,
+                 BzlaBvDomain **res_d_y,
+                 BzlaBvDomain **res_d_z,
+                 bool is_srl)
 {
   assert(mm);
   assert(d_x);
@@ -404,11 +405,19 @@ bzla_bvprop_sll(BzlaMemMgr *mm,
 
   /* z_[bw] = x_[bw] << y_[bw]
    *
-   * prev_z = x
-   * for i = 0 to bw - 1:
-   *   shift = 1 << i
-   *   cur_z = ite (y[i:i], prev_z << shift, prev_z)
-   *   prev_z = cur_z
+   * SLL:
+   *   prev_z = x
+   *   for i = 0 to bw - 1:
+   *     shift = 1 << i
+   *     cur_z = ite (y[i:i], prev_z << shift, prev_z)
+   *     prev_z = cur_z
+   *
+   * SRL:
+   *   prev_z = x
+   *   for i = 0 to bw - 1:
+   *     shift = 1 << i
+   *     cur_z = ite (y[i:i], prev_z >> shift, prev_z)
+   *     prev_z = cur_z
    */
 
   uint32_t i, n, bw;
@@ -468,24 +477,50 @@ bzla_bvprop_sll(BzlaMemMgr *mm,
 
     for (i = 0; i < bw; i++)
     {
-      /* prev_z = x
-       * for i = 0 to bw - 1:
-       *   cur_z = ite (y[i:i], prev_z << shift, prev_z)
-       *   prev_z = cur_z */
+      /**
+       * SLL:
+       *   prev_z = x
+       *   for i = 0 to bw - 1:
+       *     cur_z = ite (y[i:i], prev_z << shift, prev_z)
+       *     prev_z = cur_z
+       *
+       * SRL:
+       *   prev_z = x
+       *   for i = 0 to bw - 1:
+       *     cur_z = ite (y[i:i], prev_z << shift, prev_z)
+       *     prev_z = cur_z
+       */
 
       /* shift = 1 << i */
       bv = BZLA_PEEK_STACK(shift_stack, i);
 
       tmp_shift  = &d_shift_stack.start[i];
       tmp_z_prev = i ? &d_ite_stack.start[i - 1] : &tmp_x;
-      /* prev_z << shift */
-      if (!bzla_bvprop_sll_const(
-              mm, *tmp_z_prev, *tmp_shift, bv, res_d_x, res_d_z))
+      /**
+       * SLL: prev_z << shift
+       * SRL: prev_z >> shift
+       */
+      if (is_srl)
       {
-        res = false;
-        bzla_bvprop_free(mm, *res_d_x);
-        bzla_bvprop_free(mm, *res_d_z);
-        goto DONE;
+        if (!bzla_bvprop_srl_const(
+                mm, *tmp_z_prev, *tmp_shift, bv, res_d_x, res_d_z))
+        {
+          res = false;
+          bzla_bvprop_free(mm, *res_d_x);
+          bzla_bvprop_free(mm, *res_d_z);
+          goto DONE;
+        }
+      }
+      else
+      {
+        if (!bzla_bvprop_sll_const(
+                mm, *tmp_z_prev, *tmp_shift, bv, res_d_x, res_d_z))
+        {
+          res = false;
+          bzla_bvprop_free(mm, *res_d_x);
+          bzla_bvprop_free(mm, *res_d_z);
+          goto DONE;
+        }
       }
       assert(bzla_bvprop_is_valid(mm, *res_d_x));
       assert(bzla_bvprop_is_valid(mm, *res_d_z));
@@ -499,7 +534,10 @@ bzla_bvprop_sll(BzlaMemMgr *mm,
       *tmp_z_prev = *res_d_x;
       *tmp_shift  = *res_d_z;
 
-      /* ite (y[i:i], z << (1 << i), x) */
+      /**
+       * SLL: ite (y[i:i], z << (1 << i), x)
+       * SRL: ite (y[i:i], z >> (1 << i), x)
+       */
       tmp_c   = &d_c_stack.start[i];
       tmp_ite = &d_ite_stack.start[i];
       if (!bzla_bvprop_ite(mm,
@@ -585,6 +623,30 @@ DONE:
   BZLA_RELEASE_STACK(shift_stack);
 
   return res;
+}
+
+bool
+bzla_bvprop_sll(BzlaMemMgr *mm,
+                BzlaBvDomain *d_x,
+                BzlaBvDomain *d_y,
+                BzlaBvDomain *d_z,
+                BzlaBvDomain **res_d_x,
+                BzlaBvDomain **res_d_y,
+                BzlaBvDomain **res_d_z)
+{
+  return bvprop_shift_aux(mm, d_x, d_y, d_z, res_d_x, res_d_y, res_d_z, false);
+}
+
+bool
+bzla_bvprop_srl(BzlaMemMgr *mm,
+                BzlaBvDomain *d_x,
+                BzlaBvDomain *d_y,
+                BzlaBvDomain *d_z,
+                BzlaBvDomain **res_d_x,
+                BzlaBvDomain **res_d_y,
+                BzlaBvDomain **res_d_z)
+{
+  return bvprop_shift_aux(mm, d_x, d_y, d_z, res_d_x, res_d_y, res_d_z, true);
 }
 
 bool

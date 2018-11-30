@@ -64,16 +64,6 @@ bool bzla_bvprop_sll_const(BzlaMemMgr *mm,
                            BzlaBvDomain **res_d_x,
                            BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x' and 'd_z' of z = x << y where y is not const.
- * Note: bw(y) = log_2 bw(y). */
-bool bzla_bvprop_sll(BzlaMemMgr *mm,
-                     BzlaBvDomain *d_x,
-                     BzlaBvDomain *d_y,
-                     BzlaBvDomain *d_z,
-                     BzlaBvDomain **res_d_x,
-                     BzlaBvDomain **res_d_y,
-                     BzlaBvDomain **res_d_z);
-
 /* Propagate domains 'd_x' and 'd_z' of z = x >> n where n is const. */
 bool bzla_bvprop_srl_const(BzlaMemMgr *mm,
                            BzlaBvDomain *d_x,
@@ -84,6 +74,26 @@ bool bzla_bvprop_srl_const(BzlaMemMgr *mm,
 
 /* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x & y. */
 bool bzla_bvprop_and(BzlaMemMgr *mm,
+                     BzlaBvDomain *d_x,
+                     BzlaBvDomain *d_y,
+                     BzlaBvDomain *d_z,
+                     BzlaBvDomain **res_d_x,
+                     BzlaBvDomain **res_d_y,
+                     BzlaBvDomain **res_d_z);
+
+/* Propagate domains 'd_x' and 'd_z' of z = x << y where y is not const.
+ * Note: bw(y) = log_2 bw(y). */
+bool bzla_bvprop_sll(BzlaMemMgr *mm,
+                     BzlaBvDomain *d_x,
+                     BzlaBvDomain *d_y,
+                     BzlaBvDomain *d_z,
+                     BzlaBvDomain **res_d_x,
+                     BzlaBvDomain **res_d_y,
+                     BzlaBvDomain **res_d_z);
+
+/* Propagate domains 'd_x' and 'd_z' of z = x >> y where y is not const.
+ * Note: bw(y) = log_2 bw(y). */
+bool bzla_bvprop_srl(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
                      BzlaBvDomain *d_z,
