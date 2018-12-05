@@ -1615,14 +1615,14 @@ DONE:
 }
 
 bool
-bvprop_add_aux(BzlaMemMgr *mm,
-               BzlaBvDomain *d_x,
-               BzlaBvDomain *d_y,
-               BzlaBvDomain *d_z,
-               BzlaBvDomain **res_d_x,
-               BzlaBvDomain **res_d_y,
-               BzlaBvDomain **res_d_z,
-               bool no_overflows)
+bzla_bvprop_add_aux(BzlaMemMgr *mm,
+                    BzlaBvDomain *d_x,
+                    BzlaBvDomain *d_y,
+                    BzlaBvDomain *d_z,
+                    BzlaBvDomain **res_d_x,
+                    BzlaBvDomain **res_d_y,
+                    BzlaBvDomain **res_d_z,
+                    bool no_overflows)
 {
   assert(mm);
   assert(d_x);
@@ -1642,7 +1642,8 @@ bvprop_add_aux(BzlaMemMgr *mm,
   BzlaBvDomain *tmp_cin, *tmp_cout;
   BzlaBvDomain *tmp_x_xor_y, *tmp_x_and_y;
   BzlaBvDomain *tmp_cin_and_x_xor_y;
-  BzlaBvDomain *tmp_cin_msb, *tmp_cout_msb, *d_one;
+  BzlaBvDomain *tmp_cout_msb;
+  BzlaBvDomain *d_one;
 
   res = true;
 
@@ -1675,14 +1676,13 @@ bvprop_add_aux(BzlaMemMgr *mm,
   tmp_x_and_y         = bzla_bvprop_new_init(mm, bw);
   tmp_cin_and_x_xor_y = bzla_bvprop_new_init(mm, bw);
 
-  tmp_cin_msb  = 0;
   tmp_cout_msb = 0;
   d_one        = 0;
   if (no_overflows)
   {
-    tmp_cin  = bzla_bvprop_new_init(mm, 1);
-    tmp_cout = bzla_bvprop_new_init(mm, 1);
-    d_one    = bzla_bvprop_new(mm, one, one);
+    tmp_cout_msb = bzla_bvprop_new_init(mm, 1);
+    d_one        = bzla_bvprop_new_init(mm, 1);
+    bzla_bv_set_bit(d_one->lo, 0, 1);
   }
 
   do
@@ -1858,31 +1858,20 @@ bvprop_add_aux(BzlaMemMgr *mm,
 
     if (no_overflows)
     {
-      assert(tmp_cin_msb);
       assert(tmp_cout_msb);
       assert(d_one);
 
-      /* cin[MSB:MSB] != 1  || cout[MSB:MSB] != 0 */
-      if (!bzla_bvprop_slice(
-              mm, tmp_cin, tmp_cin_msb, bw - 1, bw - 1, res_d_x, res_d_z))
-      {
-        res = false;
-        bzla_bvprop_free(mm, *res_d_x);
-        bzla_bvprop_free(mm, *res_d_z);
-        goto DONE;
-      }
-      assert(bzla_bvprop_is_valid(mm, *res_d_x));
-      assert(bzla_bvprop_is_valid(mm, *res_d_z));
-      if (!progress)
-      {
-        progress =
-            made_progress(tmp_cin, 0, tmp_cin_msb, 0, *res_d_x, 0, *res_d_z, 0);
-      }
-      bzla_bvprop_free(mm, tmp_cin);
-      bzla_bvprop_free(mm, tmp_cin_msb);
-      tmp_cin     = *res_d_x;
-      tmp_cin_msb = *res_d_z;
+      /**
+       * Overflow:
+       * cout[MSB:MSB] == 1
+       *
+       * Add no-overflow propagation constraint:
+       * cout[MSB:MSB] == 0
+       * <->
+       * 1 xor cout[MSB:MSB] = 1
+       */
 
+      /* cout[MSB:MSB] */
       if (!bzla_bvprop_slice(
               mm, tmp_cout, tmp_cout_msb, bw - 1, bw - 1, res_d_x, res_d_z))
       {
@@ -1903,35 +1892,32 @@ bvprop_add_aux(BzlaMemMgr *mm,
       tmp_cout     = *res_d_x;
       tmp_cout_msb = *res_d_z;
 
-      if (!bzla_bvprop_or(
-              mm, tmp_cin_msb, tmp_cout_msb, d_one, res_d_x, res_d_y, res_d_z))
+      /* 1 xor cout[MSB:MSB] = 1 */
+      if (!bzla_bvprop_xor(
+              mm, d_one, tmp_cout_msb, d_one, res_d_x, res_d_y, res_d_z))
       {
         res = false;
         bzla_bvprop_free(mm, *res_d_x);
         bzla_bvprop_free(mm, *res_d_y);
         bzla_bvprop_free(mm, *res_d_z);
+        goto DONE;
       }
       assert(bzla_bvprop_is_valid(mm, *res_d_x));
       assert(bzla_bvprop_is_valid(mm, *res_d_y));
       assert(bzla_bvprop_is_valid(mm, *res_d_z));
       if (!progress)
       {
-        progress = made_progress(tmp_cin_msb,
-                                 tmp_cout_msb,
-                                 d_one,
-                                 0,
-                                 *res_d_x,
-                                 *res_d_y,
-                                 *res_d_z,
-                                 0);
+        progress = made_progress(
+            d_one, tmp_cout_msb, d_one, 0, *res_d_x, *res_d_y, *res_d_z, 0);
       }
-      bzla_bvprop_free(mm, tmp_cin_msb);
+      assert(!bzla_bv_compare(d_one->lo, (*res_d_x)->lo));
+      assert(!bzla_bv_compare(d_one->hi, (*res_d_x)->hi));
+      assert(!bzla_bv_compare(d_one->lo, (*res_d_z)->lo));
+      assert(!bzla_bv_compare(d_one->hi, (*res_d_z)->hi));
       bzla_bvprop_free(mm, tmp_cout_msb);
-      tmp_cin_msb  = *res_d_x;
-      tmp_cout_msb = *res_d_y;
-      assert(!bzla_bv_compare((*res_d_z)->lo, d_one->lo));
-      assert(!bzla_bv_compare((*res_d_z)->hi, d_one->hi));
+      bzla_bvprop_free(mm, *res_d_x);
       bzla_bvprop_free(mm, *res_d_z);
+      tmp_cout_msb = *res_d_y;
     }
   } while (progress);
 
@@ -1949,7 +1935,6 @@ DONE:
   bzla_bvprop_free(mm, tmp_x_xor_y);
   bzla_bvprop_free(mm, tmp_x_and_y);
   bzla_bvprop_free(mm, tmp_cin_and_x_xor_y);
-  if (tmp_cin_msb) bzla_bvprop_free(mm, tmp_cin_msb);
   if (tmp_cout_msb) bzla_bvprop_free(mm, tmp_cout_msb);
   if (d_one) bzla_bvprop_free(mm, d_one);
 
@@ -1967,7 +1952,8 @@ bzla_bvprop_add(BzlaMemMgr *mm,
                 BzlaBvDomain **res_d_y,
                 BzlaBvDomain **res_d_z)
 {
-  return bvprop_add_aux(mm, d_x, d_y, d_z, res_d_x, res_d_y, res_d_z, false);
+  return bzla_bvprop_add_aux(
+      mm, d_x, d_y, d_z, res_d_x, res_d_y, res_d_z, false);
 }
 
 bool

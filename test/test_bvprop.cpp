@@ -63,6 +63,7 @@ extern "C" {
               0,                                                           \
               0,                                                           \
               0,                                                           \
+              0,                                                           \
               false, /* not compositional but eq always returns true */    \
               res);                                                        \
     assert(!bzla_bvprop_is_fixed(d_mm, d_x)                                \
@@ -482,23 +483,23 @@ class TestBvProp : public TestMm
     bzla_mem_freestr(d_mm, str_c);
   }
 
-  void check_sat(BzlaBvDomain *d_x,
-                 BzlaBvDomain *d_y,
-                 BzlaBvDomain *d_z,
-                 BzlaBvDomain *d_c,
-                 BzlaBvDomain *res_x,
-                 BzlaBvDomain *res_y,
-                 BzlaBvDomain *res_z,
-                 BzlaBvDomain *res_c,
-                 BoolectorNode *(*unfun)(Bzla *, BoolectorNode *),
-                 BoolectorNode *(*binfun)(Bzla *,
-                                          BoolectorNode *,
-                                          BoolectorNode *),
-                 BoolectorNode *(*extfun)(Bzla *, BoolectorNode *, uint32_t),
-                 uint32_t hi,
-                 uint32_t lo,
-                 bool decompositional,
-                 bool valid)
+  void check_sat(
+      BzlaBvDomain *d_x,
+      BzlaBvDomain *d_y,
+      BzlaBvDomain *d_z,
+      BzlaBvDomain *d_c,
+      BzlaBvDomain *res_x,
+      BzlaBvDomain *res_y,
+      BzlaBvDomain *res_z,
+      BzlaBvDomain *res_c,
+      BoolectorNode *(*unfun)(Bzla *, BoolectorNode *),
+      BoolectorNode *(*binfun)(Bzla *, BoolectorNode *, BoolectorNode *),
+      BoolectorNode *(*binofun)(Bzla *, BoolectorNode *, BoolectorNode *),
+      BoolectorNode *(*extfun)(Bzla *, BoolectorNode *, uint32_t),
+      uint32_t hi,
+      uint32_t lo,
+      bool decompositional,
+      bool valid)
   {
     assert(d_x);
     assert(d_z);
@@ -507,12 +508,13 @@ class TestBvProp : public TestMm
     assert(!d_c || (!unfun && !binfun && !extfun));
     assert(!d_y || d_c || binfun || extfun);
     assert(!extfun || hi);
+    assert(!binofun || binfun);
 
     int32_t sat_res;
     uint32_t i, bwx, bwy, bwz, idx;
     char *str_x, *str_y, *str_z, *str_c;
     Bzla *bzla;
-    BoolectorNode *x, *y, *z, *c, *fun, *eq, *slice, *one, *zero;
+    BoolectorNode *x, *y, *z, *c, *fun, *ofun, *_not, *eq, *slice, *one, *zero;
     BoolectorSort swx, swy, swz, s1;
 
     str_x = from_domain(d_mm, d_x);
@@ -559,6 +561,14 @@ class TestBvProp : public TestMm
       assert(y);
       assert(!unfun && !extfun);
       fun = binfun(bzla, x, y);
+      if (binofun)
+      {
+        ofun = binofun(bzla, x, y);
+        _not = boolector_not(bzla, ofun);
+        boolector_assert(bzla, _not);
+        boolector_release(bzla, _not);
+        boolector_release(bzla, ofun);
+      }
     }
     else if (extfun)
     {
@@ -693,6 +703,7 @@ class TestBvProp : public TestMm
                       0,
                       0,
                       0,
+                      0,
                       false,
                       res);
           }
@@ -709,6 +720,7 @@ class TestBvProp : public TestMm
                       0,
                       0,
                       boolector_sll,
+                      0,
                       0,
                       0,
                       0,
@@ -785,6 +797,7 @@ class TestBvProp : public TestMm
                       0,
                       0,
                       0,
+                      0,
                       true,
                       res);
           }
@@ -801,6 +814,7 @@ class TestBvProp : public TestMm
                       0,
                       0,
                       boolector_sll,
+                      0,
                       0,
                       0,
                       0,
@@ -867,6 +881,7 @@ class TestBvProp : public TestMm
                       0,
                       0,
                       0,
+                      0,
                       false,
                       res);
           }
@@ -883,6 +898,7 @@ class TestBvProp : public TestMm
                       0,
                       0,
                       boolector_or,
+                      0,
                       0,
                       0,
                       0,
@@ -903,6 +919,7 @@ class TestBvProp : public TestMm
                       0,
                       0,
                       boolector_xor,
+                      0,
                       0,
                       0,
                       0,
@@ -1078,6 +1095,7 @@ class TestBvProp : public TestMm
                   0,
                   0,
                   0,
+                  0,
                   false,
                   res);
 
@@ -1151,6 +1169,7 @@ class TestBvProp : public TestMm
                       res_x,
                       0,
                       res_z,
+                      0,
                       0,
                       0,
                       0,
@@ -1307,6 +1326,7 @@ class TestBvProp : public TestMm
                     0,
                     0,
                     0,
+                    0,
                     boolector_sext,
                     n,
                     0,
@@ -1378,6 +1398,7 @@ class TestBvProp : public TestMm
                       0,
                       0,
                       0,
+                      0,
                       false, /* we always get an invalid result if invalid */
                       res);
             if (res) check_ite(res_x, res_y, res_z, res_c);
@@ -1395,7 +1416,7 @@ class TestBvProp : public TestMm
     free_consts(bw, num_consts, consts);
   }
 
-  void test_add(uint32_t bw)
+  void test_add(uint32_t bw, bool no_overflows)
   {
     bool res;
     uint32_t num_consts;
@@ -1416,7 +1437,8 @@ class TestBvProp : public TestMm
         {
           d_y = create_domain(consts[k]);
 
-          res = bzla_bvprop_add(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+          res = bzla_bvprop_add_aux(
+              d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z, no_overflows);
           check_sat(d_x,
                     d_y,
                     d_z,
@@ -1427,6 +1449,7 @@ class TestBvProp : public TestMm
                     0,
                     0,
                     boolector_add,
+                    no_overflows ? boolector_uaddo : 0,
                     0,
                     0,
                     0,
@@ -1504,6 +1527,7 @@ class TestBvProp : public TestMm
                     0,
                     0,
                     boolector_mul,
+                    0,
                     0,
                     0,
                     0,
@@ -1692,9 +1716,12 @@ TEST_F(TestBvProp, concat)
 
 TEST_F(TestBvProp, add)
 {
-  test_add(1);
-  test_add(2);
-  test_add(3);
+  test_add(1, false);
+  test_add(2, false);
+  test_add(3, false);
+  test_add(1, true);
+  test_add(2, true);
+  test_add(3, true);
 }
 
 TEST_F(TestBvProp, sext)
