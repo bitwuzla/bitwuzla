@@ -1614,15 +1614,16 @@ DONE:
   return res;
 }
 
-bool
-bzla_bvprop_add_aux(BzlaMemMgr *mm,
-                    BzlaBvDomain *d_x,
-                    BzlaBvDomain *d_y,
-                    BzlaBvDomain *d_z,
-                    BzlaBvDomain **res_d_x,
-                    BzlaBvDomain **res_d_y,
-                    BzlaBvDomain **res_d_z,
-                    bool no_overflows)
+static bool
+bvprop_add_aux(BzlaMemMgr *mm,
+               BzlaBvDomain *d_x,
+               BzlaBvDomain *d_y,
+               BzlaBvDomain *d_z,
+               BzlaBvDomain **res_d_x,
+               BzlaBvDomain **res_d_y,
+               BzlaBvDomain **res_d_z,
+               BzlaBvDomain **res_d_cout_msb,
+               bool no_overflows)
 {
   assert(mm);
   assert(d_x);
@@ -1634,6 +1635,7 @@ bzla_bvprop_add_aux(BzlaMemMgr *mm,
   assert(res_d_x);
   assert(res_d_y);
   assert(res_d_z);
+  assert(res_d_cout_msb);
 
   bool progress, res;
   uint32_t bw;
@@ -1929,17 +1931,46 @@ DONE:
   *res_d_x = tmp_x;
   *res_d_y = tmp_y;
   *res_d_z = tmp_z;
+  if (tmp_cout_msb)
+  {
+    *res_d_cout_msb = tmp_cout_msb;
+  }
+  else
+  {
+    BzlaBitVector *lo = bzla_bv_slice(mm, tmp_cout->lo, bw - 1, bw - 1);
+    BzlaBitVector *hi = bzla_bv_slice(mm, tmp_cout->hi, bw - 1, bw - 1);
+    *res_d_cout_msb   = bzla_bvprop_new(mm, lo, hi);
+    bzla_bv_free(mm, lo);
+    bzla_bv_free(mm, hi);
+  }
 
   bzla_bvprop_free(mm, tmp_cin);
   bzla_bvprop_free(mm, tmp_cout);
   bzla_bvprop_free(mm, tmp_x_xor_y);
   bzla_bvprop_free(mm, tmp_x_and_y);
   bzla_bvprop_free(mm, tmp_cin_and_x_xor_y);
-  if (tmp_cout_msb) bzla_bvprop_free(mm, tmp_cout_msb);
   if (d_one) bzla_bvprop_free(mm, d_one);
 
   bzla_bv_free(mm, one);
 
+  return res;
+}
+
+bool
+bzla_bvprop_add_aux(BzlaMemMgr *mm,
+                    BzlaBvDomain *d_x,
+                    BzlaBvDomain *d_y,
+                    BzlaBvDomain *d_z,
+                    BzlaBvDomain **res_d_x,
+                    BzlaBvDomain **res_d_y,
+                    BzlaBvDomain **res_d_z,
+                    bool no_overflows)
+{
+  bool res;
+  BzlaBvDomain *res_d_carry;
+  res = bvprop_add_aux(
+      mm, d_x, d_y, d_z, res_d_x, res_d_y, res_d_z, &res_d_carry, no_overflows);
+  bzla_bvprop_free(mm, res_d_carry);
   return res;
 }
 
