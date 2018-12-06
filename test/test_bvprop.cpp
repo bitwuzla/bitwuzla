@@ -1018,49 +1018,50 @@ class TestBvProp : public TestMm
 
   void test_eq(uint32_t bw)
   {
+    bool res;
+    char **consts;
     uint32_t num_consts;
-    char *str_z, **consts;
-    BzlaBvDomain *d_x, *d_y, *res_xy, *res_z;
+    const char *values_z[] = {"x", "0", "1"};
+    BzlaBvDomain *d_x, *d_y, *d_z, *res_x, *res_y, *res_z;
 
     num_consts = generate_consts(bw, &consts);
 
-    for (uint32_t i = 0; i < num_consts; i++)
+    for (size_t k = 0; k < 3; k++)
     {
-      d_x = create_domain(consts[i]);
-      for (uint32_t j = 0; j < num_consts; j++)
+      d_z = create_domain(values_z[k]);
+      for (size_t i = 0; i < num_consts; i++)
       {
-        d_y = create_domain(consts[j]);
-        (void) bzla_bvprop_eq(d_mm, d_x, d_y, &res_xy, &res_z);
-        if (bzla_bvprop_is_fixed(d_mm, res_z))
+        d_x = create_domain(consts[i]);
+        for (size_t j = 0; j < num_consts; j++)
         {
-          str_z = from_domain(d_mm, res_z);
-          assert(strlen(str_z) == 1);
-          assert(str_z[0] == '0' || str_z[0] == '1');
-          if (str_z[0] == '0')
-          {
-            assert(!bzla_bvprop_is_valid(d_mm, res_xy));
-            assert(is_false_eq(consts[i], consts[j]));
-          }
-          else
-          {
-            assert(str_z[0] == '1');
-            assert(bzla_bvprop_is_valid(d_mm, res_xy));
-            assert(bzla_bvprop_is_fixed(d_mm, res_xy));
-            assert(is_true_eq(consts[i], consts[j]));
-          }
-          bzla_mem_freestr(d_mm, str_z);
+          d_y = create_domain(consts[j]);
+          res = bzla_bvprop_eq(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+
+          check_sat(d_x,
+                    d_y,
+                    d_z,
+                    0,
+                    res_x,
+                    res_y,
+                    res_z,
+                    0,
+                    0,
+                    boolector_eq,
+                    0,
+                    0,
+                    0,
+                    0,
+                    true,
+                    res);
+
+          bzla_bvprop_free(d_mm, d_y);
+          bzla_bvprop_free(d_mm, res_x);
+          bzla_bvprop_free(d_mm, res_y);
+          bzla_bvprop_free(d_mm, res_z);
         }
-        else
-        {
-          assert(bzla_bvprop_is_valid(d_mm, res_xy));
-          assert(!is_false_eq(consts[i], consts[j]));
-          assert(!is_true_eq(consts[i], consts[j]));
-        }
-        bzla_bvprop_free(d_mm, d_y);
-        bzla_bvprop_free(d_mm, res_xy);
-        bzla_bvprop_free(d_mm, res_z);
+        bzla_bvprop_free(d_mm, d_x);
       }
-      bzla_bvprop_free(d_mm, d_x);
+      bzla_bvprop_free(d_mm, d_z);
     }
     free_consts(bw, num_consts, consts);
   }

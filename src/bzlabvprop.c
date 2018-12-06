@@ -70,6 +70,15 @@ new_domain(BzlaMemMgr *mm)
   return res;
 }
 
+static BzlaBvDomain *
+new_invalid_domain(BzlaMemMgr *mm, uint32_t width)
+{
+  BzlaBvDomain *res = new_domain(mm);
+  res->lo           = bzla_bv_ones(mm, width);
+  res->hi           = bzla_bv_zero(mm, width);
+  return res;
+}
+
 BzlaBvDomain *
 bzla_bvprop_new_init(BzlaMemMgr *mm, uint32_t width)
 {
@@ -102,8 +111,14 @@ bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d)
   assert(mm);
   assert(d);
 
-  bzla_bv_free(mm, d->lo);
-  bzla_bv_free(mm, d->hi);
+  if (d->lo)
+  {
+    bzla_bv_free(mm, d->lo);
+  }
+  if (d->hi)
+  {
+    bzla_bv_free(mm, d->hi);
+  }
   BZLA_DELETE(mm, d);
 }
 
@@ -158,7 +173,9 @@ bool
 bzla_bvprop_eq(BzlaMemMgr *mm,
                BzlaBvDomain *d_x,
                BzlaBvDomain *d_y,
-               BzlaBvDomain **res_d_xy,
+               BzlaBvDomain *d_z,
+               BzlaBvDomain **res_d_x,
+               BzlaBvDomain **res_d_y,
                BzlaBvDomain **res_d_z)
 {
   assert(mm);
@@ -166,42 +183,119 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
   assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_y);
   assert(bzla_bvprop_is_valid(mm, d_y));
+  assert(d_z);
+  assert(bzla_bvprop_is_valid(mm, d_z));
+  assert(bzla_bv_get_width(d_x->lo) == bzla_bv_get_width(d_y->lo));
+  assert(bzla_bv_get_width(d_x->hi) == bzla_bv_get_width(d_y->hi));
+  assert(bzla_bv_get_width(d_z->lo) == 1);
+  assert(bzla_bv_get_width(d_z->hi) == 1);
 
-  /**
-   * lo_xy = lo_x | lo_y
-   * hi_xy = hi_x & hi_y
-   */
-  *res_d_xy       = new_domain(mm);
-  (*res_d_xy)->lo = bzla_bv_or(mm, d_x->lo, d_y->lo);
-  (*res_d_xy)->hi = bzla_bv_and(mm, d_x->hi, d_y->hi);
+  bool valid = true;
+  BzlaBvDomain *tmp;
+  BzlaBitVector *sext_lo_z =
+      bzla_bv_sext(mm, d_z->lo, bzla_bv_get_width(d_x->lo) - 1);
+  BzlaBitVector *not_hi_y = bzla_bv_not(mm, d_y->hi);
+  BzlaBitVector *not_hi_x = bzla_bv_not(mm, d_x->hi);
 
+  // lo_x = lo_x | (sext(lo_z,n) & lo_y)
+  // hi_x = hi_x & ~(sext(hi_z,n) & ~hi_y)
+
+  tmp                          = new_domain(mm);
+  BzlaBitVector *lo_z_and_lo_y = bzla_bv_and(mm, sext_lo_z, d_y->lo);
+  tmp->lo                      = bzla_bv_or(mm, d_x->lo, lo_z_and_lo_y);
+
+  BzlaBitVector *lo_z_and_hi_y = bzla_bv_and(mm, sext_lo_z, not_hi_y);
+  BzlaBitVector *not_and       = bzla_bv_not(mm, lo_z_and_hi_y);
+  tmp->hi                      = bzla_bv_and(mm, d_x->hi, not_and);
+
+  bzla_bv_free(mm, lo_z_and_lo_y);
+  bzla_bv_free(mm, lo_z_and_hi_y);
+  bzla_bv_free(mm, not_and);
+
+  valid = valid & bzla_bvprop_is_valid(mm, tmp);
+  if (res_d_x)
+  {
+    *res_d_x = tmp;
+  }
+  else
+  {
+    bzla_bvprop_free(mm, tmp);
+  }
+
+  // lo_y = lo_y | (sext(lo_z,n) & lo_x)
+  // hi_y = hi_y & ~(sext(hi_z,n) & ~hi_x)
+
+  tmp = new_domain(mm);
+  if (valid)
+  {
+    BzlaBitVector *lo_z_and_lo_x = bzla_bv_and(mm, sext_lo_z, d_x->lo);
+    tmp->lo                      = bzla_bv_or(mm, d_y->lo, lo_z_and_lo_x);
+
+    BzlaBitVector *lo_z_and_hi_x = bzla_bv_and(mm, sext_lo_z, not_hi_x);
+    not_and                      = bzla_bv_not(mm, lo_z_and_hi_x);
+    tmp->hi                      = bzla_bv_and(mm, d_y->hi, not_and);
+
+    bzla_bv_free(mm, lo_z_and_lo_x);
+    bzla_bv_free(mm, lo_z_and_hi_x);
+    bzla_bv_free(mm, not_and);
+
+    valid = valid & bzla_bvprop_is_valid(mm, tmp);
+  }
+  if (res_d_y)
+  {
+    *res_d_y = tmp;
+  }
+  else
+  {
+    bzla_bvprop_free(mm, tmp);
+  }
+
+  // lo_z = lo_z | redand((lo_x & lo_y) | (~hi_x & ~hi_y))
+  // hi_z = hi_z & ~redand((lo_x & ~hi_y) | (~hi_x & lo_y))
+
+  tmp = new_domain(mm);
+  if (valid)
+  {
+    BzlaBitVector *lo_x_and_lo_y = bzla_bv_and(mm, d_x->lo, d_y->lo);
+    BzlaBitVector *hi_x_and_hi_y = bzla_bv_and(mm, not_hi_x, not_hi_y);
+    BzlaBitVector * or           = bzla_bv_or(mm, lo_x_and_lo_y, hi_x_and_hi_y);
+    BzlaBitVector *redand        = bzla_bv_redand(mm, or);
+    tmp->lo                      = bzla_bv_or(mm, d_z->lo, redand);
+
+    bzla_bv_free(mm, lo_x_and_lo_y);
+    bzla_bv_free(mm, hi_x_and_hi_y);
+    bzla_bv_free(mm, or);
+    bzla_bv_free(mm, redand);
+
+    BzlaBitVector *lo_x_and_hi_y = bzla_bv_and(mm, d_x->lo, not_hi_y);
+    BzlaBitVector *hi_x_and_lo_y = bzla_bv_and(mm, not_hi_x, d_y->lo);
+    or                           = bzla_bv_or(mm, lo_x_and_hi_y, hi_x_and_lo_y);
+    redand                       = bzla_bv_redand(mm, or);
+    BzlaBitVector *not_redand    = bzla_bv_not(mm, redand);
+    tmp->hi                      = bzla_bv_and(mm, d_z->hi, not_redand);
+
+    bzla_bv_free(mm, lo_x_and_hi_y);
+    bzla_bv_free(mm, hi_x_and_lo_y);
+    bzla_bv_free(mm, or);
+    bzla_bv_free(mm, redand);
+    bzla_bv_free(mm, not_redand);
+
+    valid = valid & bzla_bvprop_is_valid(mm, tmp);
+  }
   if (res_d_z)
   {
-    if (bzla_bvprop_is_valid(mm, *res_d_xy))
-    {
-      /* Domain is valid and fixed: equality is true. */
-      if (bzla_bvprop_is_fixed(mm, *res_d_xy))
-      {
-        *res_d_z       = new_domain(mm);
-        (*res_d_z)->lo = bzla_bv_one(mm, 1);
-        (*res_d_z)->hi = bzla_bv_one(mm, 1);
-      }
-      /* Domain is valid and not fixed: equality can be true/false. */
-      else
-      {
-        *res_d_z = bzla_bvprop_new_init(mm, 1);
-      }
-    }
-    /* Domain is invalid: equality is false. */
-    else
-    {
-      *res_d_z       = new_domain(mm);
-      (*res_d_z)->lo = bzla_bv_zero(mm, 1);
-      (*res_d_z)->hi = bzla_bv_zero(mm, 1);
-    }
-    assert(bzla_bvprop_is_valid(mm, *res_d_z));
+    *res_d_z = tmp;
   }
-  return true;
+  else
+  {
+    bzla_bvprop_free(mm, tmp);
+  }
+
+  bzla_bv_free(mm, sext_lo_z);
+  bzla_bv_free(mm, not_hi_x);
+  bzla_bv_free(mm, not_hi_y);
+
+  return valid;
 }
 
 bool
@@ -904,12 +998,19 @@ bzla_bvprop_slice(BzlaMemMgr *mm,
   sliced_x->lo           = bzla_bv_slice(mm, d_x->lo, upper, lower);
   sliced_x->hi           = bzla_bv_slice(mm, d_x->hi, upper, lower);
 
-  if (!bzla_bvprop_eq(mm, sliced_x, d_z, res_d_z, 0))
+  BzlaBitVector *one = bzla_bv_one(mm, 1);
+  BzlaBvDomain *d_eq = bzla_bvprop_new(mm, one, one);
+  bzla_bv_free(mm, one);
+
+  bool valid = bzla_bvprop_eq(mm, sliced_x, d_z, d_eq, res_d_z, 0, 0);
+  bzla_bvprop_free(mm, d_eq);
+  bzla_bvprop_free(mm, sliced_x);
+
+  if (!valid)
   {
-    bzla_bvprop_free(mm, sliced_x);
+    *res_d_x = new_invalid_domain(mm, bzla_bv_get_width(d_x->lo));
     return false;
   }
-  bzla_bvprop_free(mm, sliced_x);
 
   uint32_t wx = bzla_bv_get_width(d_x->lo);
 
@@ -1074,13 +1175,17 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
 
   *res_d_z = new_domain(mm);
 
+  BzlaBitVector *one = bzla_bv_one(mm, 1);
+  BzlaBvDomain *d_eq = bzla_bvprop_new(mm, one, one);
+  bzla_bv_free(mm, one);
+
   /* res_z = prop(d_zx = d_x) o prop(d_zy o d_y) */
-  if (!bzla_bvprop_eq(mm, d_zx, d_x, res_d_x, 0))
+  if (!bzla_bvprop_eq(mm, d_zx, d_x, d_eq, res_d_x, 0, 0))
   {
     res = false;
     goto DONE;
   }
-  if (!bzla_bvprop_eq(mm, d_zy, d_y, res_d_y, 0))
+  if (!bzla_bvprop_eq(mm, d_zy, d_y, d_eq, res_d_y, 0, 0))
   {
     res = false;
     goto DONE;
@@ -1098,6 +1203,7 @@ DONE:
   bzla_bv_free(mm, hi_zy);
   bzla_bvprop_free(mm, d_zx);
   bzla_bvprop_free(mm, d_zy);
+  bzla_bvprop_free(mm, d_eq);
 #endif
   return res;
 }
