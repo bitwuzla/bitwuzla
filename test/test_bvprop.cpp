@@ -1575,6 +1575,86 @@ class TestBvProp : public TestMm
     free_consts(bw, num_consts, consts);
   }
 
+  void test_ult(uint32_t bw)
+  {
+    bool res;
+    uint32_t num_consts, num_consts_z;
+    char **consts, **consts_z;
+    BzlaBitVector *tmp;
+    BzlaBvDomain *d_x, *d_y, *d_z;
+    BzlaBvDomain *res_x, *res_y, *res_z;
+
+    num_consts   = generate_consts(bw, &consts);
+    num_consts_z = generate_consts(1, &consts_z);
+
+    for (uint32_t i = 0; i < num_consts_z; i++)
+    {
+      d_z = create_domain(consts_z[i]);
+      for (uint32_t j = 0; j < num_consts; j++)
+      {
+        d_x = create_domain(consts[j]);
+        for (uint32_t k = 0; k < num_consts; k++)
+        {
+          d_y = create_domain(consts[k]);
+
+          res = bzla_bvprop_ult(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+          check_sat(d_x,
+                    d_y,
+                    d_z,
+                    0,
+                    res_x,
+                    res_y,
+                    res_z,
+                    0,
+                    0,
+                    boolector_ult,
+                    0,
+                    0,
+                    0,
+                    0,
+                    true,
+                    res);
+
+          if (bzla_bvprop_is_fixed(d_mm, d_x)
+              && bzla_bvprop_is_fixed(d_mm, d_y))
+          {
+            assert(bzla_bvprop_is_fixed(d_mm, res_x));
+            assert(bzla_bvprop_is_fixed(d_mm, res_y));
+            if (is_xxx_domain(d_mm, d_z))
+            {
+              tmp = bzla_bv_ult(d_mm, res_x->lo, res_y->lo);
+              assert(!bzla_bv_compare(d_x->lo, res_x->lo));
+              assert(!bzla_bv_compare(d_y->lo, res_y->lo));
+              assert(bzla_bvprop_is_fixed(d_mm, res_z));
+              assert(!bzla_bv_compare(tmp, res_z->lo));
+              bzla_bv_free(d_mm, tmp);
+            }
+            else if (bzla_bvprop_is_fixed(d_mm, d_z))
+            {
+              assert(bzla_bvprop_is_fixed(d_mm, res_z));
+              tmp = bzla_bv_ult(d_mm, d_x->lo, d_y->lo);
+              if (!bzla_bv_compare(tmp, d_z->lo))
+              {
+                assert(!bzla_bv_compare(d_x->lo, res_x->lo));
+                assert(!bzla_bv_compare(d_y->lo, res_y->lo));
+                bzla_bv_free(d_mm, tmp);
+                tmp = bzla_bv_ult(d_mm, res_x->lo, res_y->lo);
+                assert(!bzla_bv_compare(tmp, res_z->lo));
+              }
+              bzla_bv_free(d_mm, tmp);
+            }
+          }
+          bzla_bvprop_free(d_mm, d_y);
+          TEST_BVPROP_RELEASE_RES_XYZ;
+        }
+        bzla_bvprop_free(d_mm, d_x);
+      }
+      bzla_bvprop_free(d_mm, d_z);
+    }
+    free_consts(bw, num_consts, consts);
+    free_consts(1, num_consts_z, consts_z);
+  }
+
   uint32_t d_bw         = 0;
   uint32_t d_num_consts = 1;
   char **d_consts       = nullptr;
@@ -1744,4 +1824,11 @@ TEST_F(TestBvProp, mul)
   test_mul(1);
   test_mul(2);
   test_mul(3);
+}
+
+TEST_F(TestBvProp, ult)
+{
+  test_ult(1);
+  test_ult(2);
+  test_ult(3);
 }
