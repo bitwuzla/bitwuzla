@@ -1497,7 +1497,7 @@ class TestBvProp : public TestMm
     free_consts(bw, num_consts, consts);
   }
 
-  void test_mul(uint32_t bw)
+  void test_mul(uint32_t bw, bool no_overflows)
   {
     bool res;
     uint32_t num_consts;
@@ -1518,7 +1518,8 @@ class TestBvProp : public TestMm
         {
           d_y = create_domain(consts[k]);
 
-          res = bzla_bvprop_mul(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+          res = bzla_bvprop_mul_aux(
+              d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z, no_overflows);
           check_sat(d_x,
                     d_y,
                     d_z,
@@ -1529,7 +1530,7 @@ class TestBvProp : public TestMm
                     0,
                     0,
                     boolector_mul,
-                    0,
+                    no_overflows ? boolector_umulo : 0,
                     0,
                     0,
                     0,
@@ -1546,8 +1547,9 @@ class TestBvProp : public TestMm
               tmp = bzla_bv_mul(d_mm, res_x->lo, res_y->lo);
               assert(!bzla_bv_compare(d_x->lo, res_x->lo));
               assert(!bzla_bv_compare(d_y->lo, res_y->lo));
-              assert(bzla_bvprop_is_fixed(d_mm, res_z));
-              assert(!bzla_bv_compare(tmp, res_z->lo));
+              assert(no_overflows || bzla_bvprop_is_fixed(d_mm, res_z));
+              assert(!bzla_bvprop_is_fixed(d_mm, res_z)
+                     || !bzla_bv_compare(tmp, res_z->lo));
               bzla_bv_free(d_mm, tmp);
             }
             else if (bzla_bvprop_is_fixed(d_mm, d_z))
@@ -1822,9 +1824,12 @@ TEST_F(TestBvProp, ite)
 
 TEST_F(TestBvProp, mul)
 {
-  test_mul(1);
-  test_mul(2);
-  test_mul(3);
+  test_mul(1, false);
+  test_mul(2, false);
+  test_mul(3, false);
+  test_mul(1, true);
+  test_mul(2, true);
+  test_mul(3, true);
 }
 
 TEST_F(TestBvProp, ult)
