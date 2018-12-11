@@ -192,21 +192,22 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
 
   bool valid = true;
   BzlaBvDomain *tmp;
-  BzlaBitVector *sext_lo_z =
-      bzla_bv_sext(mm, d_z->lo, bzla_bv_get_width(d_x->lo) - 1);
-  BzlaBitVector *not_hi_y = bzla_bv_not(mm, d_y->hi);
-  BzlaBitVector *not_hi_x = bzla_bv_not(mm, d_x->hi);
+  BzlaBitVector *sext_lo_z, *not_hi_y, *not_hi_x;
+  BzlaBitVector *lo_z_and_lo_y, *lo_z_and_hi_y, *not_and;
+  sext_lo_z = bzla_bv_sext(mm, d_z->lo, bzla_bv_get_width(d_x->lo) - 1);
+  not_hi_y  = bzla_bv_not(mm, d_y->hi);
+  not_hi_x  = bzla_bv_not(mm, d_x->hi);
 
-  // lo_x = lo_x | (sext(lo_z,n) & lo_y)
-  // hi_x = hi_x & ~(sext(hi_z,n) & ~hi_y)
+  /* lo_x = lo_x | (sext(lo_z,n) & lo_y)
+   * hi_x = hi_x & ~(sext(hi_z,n) & ~hi_y)
+   */
+  tmp           = new_domain(mm);
+  lo_z_and_lo_y = bzla_bv_and(mm, sext_lo_z, d_y->lo);
+  tmp->lo       = bzla_bv_or(mm, d_x->lo, lo_z_and_lo_y);
 
-  tmp                          = new_domain(mm);
-  BzlaBitVector *lo_z_and_lo_y = bzla_bv_and(mm, sext_lo_z, d_y->lo);
-  tmp->lo                      = bzla_bv_or(mm, d_x->lo, lo_z_and_lo_y);
-
-  BzlaBitVector *lo_z_and_hi_y = bzla_bv_and(mm, sext_lo_z, not_hi_y);
-  BzlaBitVector *not_and       = bzla_bv_not(mm, lo_z_and_hi_y);
-  tmp->hi                      = bzla_bv_and(mm, d_x->hi, not_and);
+  lo_z_and_hi_y = bzla_bv_and(mm, sext_lo_z, not_hi_y);
+  not_and       = bzla_bv_not(mm, lo_z_and_hi_y);
+  tmp->hi       = bzla_bv_and(mm, d_x->hi, not_and);
 
   bzla_bv_free(mm, lo_z_and_lo_y);
   bzla_bv_free(mm, lo_z_and_hi_y);
@@ -222,18 +223,19 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
     bzla_bvprop_free(mm, tmp);
   }
 
-  // lo_y = lo_y | (sext(lo_z,n) & lo_x)
-  // hi_y = hi_y & ~(sext(hi_z,n) & ~hi_x)
-
+  /* lo_y = lo_y | (sext(lo_z,n) & lo_x)
+   * hi_y = hi_y & ~(sext(hi_z,n) & ~hi_x)
+   */
   if (valid)
   {
-    tmp                          = new_domain(mm);
-    BzlaBitVector *lo_z_and_lo_x = bzla_bv_and(mm, sext_lo_z, d_x->lo);
-    tmp->lo                      = bzla_bv_or(mm, d_y->lo, lo_z_and_lo_x);
+    BzlaBitVector *lo_z_and_lo_x, *lo_z_and_hi_x;
+    tmp           = new_domain(mm);
+    lo_z_and_lo_x = bzla_bv_and(mm, sext_lo_z, d_x->lo);
+    tmp->lo       = bzla_bv_or(mm, d_y->lo, lo_z_and_lo_x);
 
-    BzlaBitVector *lo_z_and_hi_x = bzla_bv_and(mm, sext_lo_z, not_hi_x);
-    not_and                      = bzla_bv_not(mm, lo_z_and_hi_x);
-    tmp->hi                      = bzla_bv_and(mm, d_y->hi, not_and);
+    lo_z_and_hi_x = bzla_bv_and(mm, sext_lo_z, not_hi_x);
+    not_and       = bzla_bv_not(mm, lo_z_and_hi_x);
+    tmp->hi       = bzla_bv_and(mm, d_y->hi, not_and);
 
     bzla_bv_free(mm, lo_z_and_lo_x);
     bzla_bv_free(mm, lo_z_and_hi_x);
@@ -254,29 +256,31 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
     bzla_bvprop_free(mm, tmp);
   }
 
-  // lo_z = lo_z | redand((lo_x & lo_y) | (~hi_x & ~hi_y))
-  // hi_z = hi_z & ~redand((lo_x & ~hi_y) | (~hi_x & lo_y))
-
+  /* lo_z = lo_z | redand((lo_x & lo_y) | (~hi_x & ~hi_y))
+   * hi_z = hi_z & ~redand((lo_x & ~hi_y) | (~hi_x & lo_y))
+   */
   if (valid)
   {
-    tmp                          = new_domain(mm);
-    BzlaBitVector *lo_x_and_lo_y = bzla_bv_and(mm, d_x->lo, d_y->lo);
-    BzlaBitVector *hi_x_and_hi_y = bzla_bv_and(mm, not_hi_x, not_hi_y);
-    BzlaBitVector * or           = bzla_bv_or(mm, lo_x_and_lo_y, hi_x_and_hi_y);
-    BzlaBitVector *redand        = bzla_bv_redand(mm, or);
-    tmp->lo                      = bzla_bv_or(mm, d_z->lo, redand);
+    BzlaBitVector *lo_x_and_lo_y, *hi_x_and_hi_y, * or, *redand;
+    tmp           = new_domain(mm);
+    lo_x_and_lo_y = bzla_bv_and(mm, d_x->lo, d_y->lo);
+    hi_x_and_hi_y = bzla_bv_and(mm, not_hi_x, not_hi_y);
+    or            = bzla_bv_or(mm, lo_x_and_lo_y, hi_x_and_hi_y);
+    redand        = bzla_bv_redand(mm, or);
+    tmp->lo       = bzla_bv_or(mm, d_z->lo, redand);
 
     bzla_bv_free(mm, lo_x_and_lo_y);
     bzla_bv_free(mm, hi_x_and_hi_y);
     bzla_bv_free(mm, or);
     bzla_bv_free(mm, redand);
 
-    BzlaBitVector *lo_x_and_hi_y = bzla_bv_and(mm, d_x->lo, not_hi_y);
-    BzlaBitVector *hi_x_and_lo_y = bzla_bv_and(mm, not_hi_x, d_y->lo);
-    or                           = bzla_bv_or(mm, lo_x_and_hi_y, hi_x_and_lo_y);
-    redand                       = bzla_bv_redand(mm, or);
-    BzlaBitVector *not_redand    = bzla_bv_not(mm, redand);
-    tmp->hi                      = bzla_bv_and(mm, d_z->hi, not_redand);
+    BzlaBitVector *lo_x_and_hi_y, *hi_x_and_lo_y, *not_redand;
+    lo_x_and_hi_y = bzla_bv_and(mm, d_x->lo, not_hi_y);
+    hi_x_and_lo_y = bzla_bv_and(mm, not_hi_x, d_y->lo);
+    or            = bzla_bv_or(mm, lo_x_and_hi_y, hi_x_and_lo_y);
+    redand        = bzla_bv_redand(mm, or);
+    not_redand    = bzla_bv_not(mm, redand);
+    tmp->hi       = bzla_bv_and(mm, d_z->hi, not_redand);
 
     bzla_bv_free(mm, lo_x_and_hi_y);
     bzla_bv_free(mm, hi_x_and_lo_y);
