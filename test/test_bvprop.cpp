@@ -1097,6 +1097,7 @@ class TestBvProp : public TestMm
     uint32_t num_consts;
     const char *values_z[] = {"x", "0", "1"};
     BzlaBvDomain *d_x, *d_y, *d_z, *res_x, *res_y, *res_z;
+    BzlaBitVector *tmp;
 
     num_consts = generate_consts(bw, &consts);
 
@@ -1109,8 +1110,8 @@ class TestBvProp : public TestMm
         for (size_t j = 0; j < num_consts; j++)
         {
           d_y = create_domain(consts[j]);
-          res = bzla_bvprop_eq(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
 
+          res = bzla_bvprop_eq(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
           check_sat(d_x,
                     d_y,
                     d_z,
@@ -1128,10 +1129,37 @@ class TestBvProp : public TestMm
                     true,
                     res);
 
+          if (res && bzla_bvprop_is_fixed(d_mm, d_x)
+              && bzla_bvprop_is_fixed(d_mm, d_y))
+          {
+            assert(bzla_bvprop_is_fixed(d_mm, res_x));
+            assert(bzla_bvprop_is_fixed(d_mm, res_y));
+            if (is_xxx_domain(d_mm, d_z))
+            {
+              tmp = bzla_bv_eq(d_mm, res_x->lo, res_y->lo);
+              assert(!bzla_bv_compare(d_x->lo, res_x->lo));
+              assert(!bzla_bv_compare(d_y->lo, res_y->lo));
+              assert(bzla_bvprop_is_fixed(d_mm, res_z));
+              assert(!bzla_bv_compare(tmp, res_z->lo));
+              bzla_bv_free(d_mm, tmp);
+            }
+            else if (bzla_bvprop_is_fixed(d_mm, d_z))
+            {
+              assert(bzla_bvprop_is_fixed(d_mm, res_z));
+              tmp = bzla_bv_eq(d_mm, d_x->lo, d_y->lo);
+              if (!bzla_bv_compare(tmp, d_z->lo))
+              {
+                assert(!bzla_bv_compare(d_x->lo, res_x->lo));
+                assert(!bzla_bv_compare(d_y->lo, res_y->lo));
+                bzla_bv_free(d_mm, tmp);
+                tmp = bzla_bv_eq(d_mm, res_x->lo, res_y->lo);
+                assert(!bzla_bv_compare(tmp, res_z->lo));
+              }
+              bzla_bv_free(d_mm, tmp);
+            }
+          }
           bzla_bvprop_free(d_mm, d_y);
-          bzla_bvprop_free(d_mm, res_x);
-          bzla_bvprop_free(d_mm, res_y);
-          bzla_bvprop_free(d_mm, res_z);
+          TEST_BVPROP_RELEASE_RES_XYZ;
         }
         bzla_bvprop_free(d_mm, d_x);
       }
