@@ -225,9 +225,9 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
   // lo_y = lo_y | (sext(lo_z,n) & lo_x)
   // hi_y = hi_y & ~(sext(hi_z,n) & ~hi_x)
 
-  tmp = new_domain(mm);
   if (valid)
   {
+    tmp                          = new_domain(mm);
     BzlaBitVector *lo_z_and_lo_x = bzla_bv_and(mm, sext_lo_z, d_x->lo);
     tmp->lo                      = bzla_bv_or(mm, d_y->lo, lo_z_and_lo_x);
 
@@ -241,6 +241,10 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
 
     valid = valid & bzla_bvprop_is_valid(mm, tmp);
   }
+  else
+  {
+    tmp = bzla_bvprop_new(mm, d_y->lo, d_y->hi);
+  }
   if (res_d_y)
   {
     *res_d_y = tmp;
@@ -253,9 +257,9 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
   // lo_z = lo_z | redand((lo_x & lo_y) | (~hi_x & ~hi_y))
   // hi_z = hi_z & ~redand((lo_x & ~hi_y) | (~hi_x & lo_y))
 
-  tmp = new_domain(mm);
   if (valid)
   {
+    tmp                          = new_domain(mm);
     BzlaBitVector *lo_x_and_lo_y = bzla_bv_and(mm, d_x->lo, d_y->lo);
     BzlaBitVector *hi_x_and_hi_y = bzla_bv_and(mm, not_hi_x, not_hi_y);
     BzlaBitVector * or           = bzla_bv_or(mm, lo_x_and_lo_y, hi_x_and_hi_y);
@@ -281,6 +285,10 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
     bzla_bv_free(mm, not_redand);
 
     valid = valid & bzla_bvprop_is_valid(mm, tmp);
+  }
+  else
+  {
+    tmp = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
   }
   if (res_d_z)
   {

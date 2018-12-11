@@ -38,7 +38,9 @@ bool bzla_bvprop_is_valid(BzlaMemMgr *mm, const BzlaBvDomain *d);
 /* Check whether bit-vector domain is fixed, i.e., lo == hi */
 bool bzla_bvprop_is_fixed(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
-/* Propagate domains 'd_x', 'd_y', and 'd_z' of z = (x = y).  */
+/* Propagate domains 'd_x', 'd_y', and 'd_z' of z = (x = y).
+ * If 'res_d_*' is NULL no result will be stored. Note that the propagator will
+ * stop propagating as soon as one invalid domain was computed. */
 bool bzla_bvprop_eq(BzlaMemMgr *mm,
                     BzlaBvDomain *d_x,
                     BzlaBvDomain *d_y,
