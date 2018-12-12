@@ -1732,6 +1732,10 @@ DONE:
   return res;
 }
 
+/**
+ * Note: 'd_cout' optionally passes in the input domain for cout.
+ *       'res_d_cout' optionally returns the resulting domain for cout.
+ */
 static bool
 bvprop_add_aux(BzlaMemMgr *mm,
                BzlaBvDomain *d_x,

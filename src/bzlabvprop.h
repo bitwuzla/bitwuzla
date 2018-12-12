@@ -166,7 +166,7 @@ bool bzla_bvprop_add(BzlaMemMgr *mm,
 
 /**
  * Propagate domains 'd_x', 'd_y' and 'd_z' of z = x + y where + does not
- * overflow.
+ * overflow if no_overflows = true.
  */
 bool bzla_bvprop_add_aux(BzlaMemMgr *mm,
                          BzlaBvDomain *d_x,
@@ -187,7 +187,7 @@ bool bzla_bvprop_mul(BzlaMemMgr *mm,
                      BzlaBvDomain **res_d_z);
 
 /* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x * y where * does not
- * overflow. */
+ * overflow if no_overflows = true. */
 bool bzla_bvprop_mul_aux(BzlaMemMgr *mm,
                          BzlaBvDomain *d_x,
                          BzlaBvDomain *d_y,
