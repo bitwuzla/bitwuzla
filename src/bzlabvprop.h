@@ -23,8 +23,10 @@ typedef struct BzlaBvDomain BzlaBvDomain;
 /* Create new bit-vector domain of width 'width' with low 0 and high ~0. */
 BzlaBvDomain *bzla_bvprop_new_init(BzlaMemMgr *mm, uint32_t width);
 
-/* Create new bit-vector domain with low 'lo' and high 'hi'.
- * Creates copies of lo and hi. */
+/**
+ * Create new bit-vector domain with low 'lo' and high 'hi'.
+ * Creates copies of lo and hi.
+ */
 BzlaBvDomain *bzla_bvprop_new(BzlaMemMgr *mm,
                               const BzlaBitVector *lo,
                               const BzlaBitVector *hi);
@@ -38,9 +40,11 @@ bool bzla_bvprop_is_valid(BzlaMemMgr *mm, const BzlaBvDomain *d);
 /* Check whether bit-vector domain is fixed, i.e., lo == hi */
 bool bzla_bvprop_is_fixed(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
-/* Propagate domains 'd_x', 'd_y', and 'd_z' of z = (x = y).
+/**
+ * Propagate domains 'd_x', 'd_y', and 'd_z' of z = (x = y).
  * If 'res_d_*' is NULL no result will be stored. Note that the propagator will
- * stop propagating as soon as one invalid domain was computed. */
+ * stop propagating as soon as one invalid domain was computed.
+ */
 bool bzla_bvprop_eq(BzlaMemMgr *mm,
                     BzlaBvDomain *d_x,
                     BzlaBvDomain *d_y,
@@ -81,8 +85,10 @@ bool bzla_bvprop_and(BzlaMemMgr *mm,
                      BzlaBvDomain **res_d_y,
                      BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x' and 'd_z' of z = x << y where y is not const.
- * Note: bw(y) = log_2 bw(y). */
+/**
+ * Propagate domains 'd_x' and 'd_z' of z = x << y where y is not const.
+ * Note: bw(y) = log_2 bw(y).
+ */
 bool bzla_bvprop_sll(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
@@ -91,8 +97,10 @@ bool bzla_bvprop_sll(BzlaMemMgr *mm,
                      BzlaBvDomain **res_d_y,
                      BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x' and 'd_z' of z = x >> y where y is not const.
- * Note: bw(y) = log_2 bw(y). */
+/**
+ * Propagate domains 'd_x' and 'd_z' of z = x >> y where y is not const.
+ * Note: bw(y) = log_2 bw(y).
+ */
 bool bzla_bvprop_srl(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
@@ -186,8 +194,10 @@ bool bzla_bvprop_mul(BzlaMemMgr *mm,
                      BzlaBvDomain **res_d_y,
                      BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x * y where * does not
- * overflow if no_overflows = true. */
+/**
+ * Propagate domains 'd_x', 'd_y' and 'd_z' of z = x * y where * does not
+ * overflow if no_overflows = true.
+ */
 bool bzla_bvprop_mul_aux(BzlaMemMgr *mm,
                          BzlaBvDomain *d_x,
                          BzlaBvDomain *d_y,
@@ -206,7 +216,7 @@ bool bzla_bvprop_ult(BzlaMemMgr *mm,
                      BzlaBvDomain **res_d_y,
                      BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x / y. */
+/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x / y (unsigned division). */
 bool bzla_bvprop_udiv(BzlaMemMgr *mm,
                       BzlaBvDomain *d_x,
                       BzlaBvDomain *d_y,
@@ -215,8 +225,15 @@ bool bzla_bvprop_udiv(BzlaMemMgr *mm,
                       BzlaBvDomain **res_d_y,
                       BzlaBvDomain **res_d_z);
 
-// TODO:
-// propagators:
-//
-// z = x urem y
+/**
+ * Propagate domains 'd_x', 'd_y' and 'd_z' of z = x % y (unsigned remainder).
+ */
+bool bzla_bvprop_urem(BzlaMemMgr *mm,
+                      BzlaBvDomain *d_x,
+                      BzlaBvDomain *d_y,
+                      BzlaBvDomain *d_z,
+                      BzlaBvDomain **res_d_x,
+                      BzlaBvDomain **res_d_y,
+                      BzlaBvDomain **res_d_z);
+
 #endif
