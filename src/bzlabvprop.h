@@ -34,11 +34,21 @@ BzlaBvDomain *bzla_bvprop_new(BzlaMemMgr *mm,
 /* Delete bit-vector domain. */
 void bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d);
 
+/* Copy bit-vector domain 'd'. */
+BzlaBvDomain *bzla_bvprop_copy(BzlaMemMgr *mm, const BzlaBvDomain *d);
+
 /* Check whether bit-vector domain is valid, i.e., ~lo | hi == ones. */
 bool bzla_bvprop_is_valid(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
 /* Check whether bit-vector domain is fixed, i.e., lo == hi */
 bool bzla_bvprop_is_fixed(BzlaMemMgr *mm, const BzlaBvDomain *d);
+
+/* Check whether bit-vector domain has some fixed bits. */
+bool bzla_bvprop_has_fixed_bits(BzlaMemMgr *mm, const BzlaBvDomain *d);
+
+/* Prints domain 'd' to stdout. 'print_short' indicates whether 'lo' and 'hi'
+ * should be printed separately. */
+void bzla_print_domain(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short);
 
 /**
  * Propagate domains 'd_x', 'd_y', and 'd_z' of z = (x = y).
@@ -168,8 +178,8 @@ bool bzla_bvprop_add(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
                      BzlaBvDomain *d_z,
-                     BzlaBvDomain **res_d_y,
                      BzlaBvDomain **res_d_x,
+                     BzlaBvDomain **res_d_y,
                      BzlaBvDomain **res_d_z);
 
 /**

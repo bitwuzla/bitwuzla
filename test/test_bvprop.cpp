@@ -10,6 +10,7 @@
 #include "test.h"
 
 extern "C" {
+#include "bzlaaigvec.h"
 #include "bzlabvprop.h"
 #include "utils/bzlamem.h"
 #include "utils/bzlautil.h"
@@ -99,6 +100,20 @@ class TestBvProp : public TestMm
   static constexpr uint32_t TEST_BVPROP_OR  = 1;
   static constexpr uint32_t TEST_BVPROP_XOR = 2;
 
+  void SetUp() override
+  {
+    TestMm::SetUp();
+    d_bzla  = bzla_new();
+    d_avmgr = bzla_aigvec_mgr_new(d_bzla);
+  }
+
+  void TearDown() override
+  {
+    bzla_aigvec_mgr_delete(d_avmgr);
+    bzla_delete(d_bzla);
+    TestMm::TearDown();
+  }
+
   /* Initialize all possible values for 3-valued constants of bit-width bw */
   uint32_t generate_consts(uint32_t bw, char ***res)
   {
@@ -178,21 +193,50 @@ class TestBvProp : public TestMm
 
   void print_domain(BzlaBvDomain *d, bool print_short)
   {
-    char *lo, *hi;
+    bzla_print_domain(d_mm, d, print_short);
+  }
 
-    to_str(d, &lo, &hi, print_short);
+  BzlaAIGVec *aigvec_from_domain(BzlaBvDomain *d)
+  {
+    char *str_d = from_domain(d_mm, d);
+    size_t len  = strlen(str_d);
 
-    if (print_short)
+    BzlaAIGVec *res = bzla_aigvec_var(d_avmgr, len);
+
+    for (size_t i = 0; i < len; i++)
     {
-      printf("%s\n", lo);
+      if (str_d[i] == '0')
+      {
+        bzla_aig_release(d_avmgr->amgr, res->aigs[i]);
+        res->aigs[i] = BZLA_AIG_FALSE;
+      }
+      else if (str_d[i] == '1')
+      {
+        bzla_aig_release(d_avmgr->amgr, res->aigs[i]);
+        res->aigs[i] = BZLA_AIG_TRUE;
+      }
     }
-    else
+    bzla_mem_freestr(d_mm, str_d);
+    return res;
+  }
+
+  void print_aigvec(BzlaAIGVec *av)
+  {
+    for (size_t i = 0; i < av->width; i++)
     {
-      printf("lo: %s\n", lo);
-      printf("hi: %s\n", hi);
-      bzla_mem_freestr(d_mm, hi);
+      if (av->aigs[i] == BZLA_AIG_FALSE)
+      {
+        printf("0");
+      }
+      else if (av->aigs[i] == BZLA_AIG_TRUE)
+      {
+        printf("1");
+      }
+      else
+      {
+        printf("x");
+      }
     }
-    bzla_mem_freestr(d_mm, lo);
   }
 
   char *slice_str_const(char *str_const, uint32_t from, uint32_t to)
@@ -503,6 +547,174 @@ class TestBvProp : public TestMm
     bzla_mem_freestr(d_mm, str_c);
   }
 
+  bool check_synth(BzlaBvDomain *d_x,
+                   BzlaBvDomain *d_y,
+                   BzlaBvDomain *d_z,
+                   BzlaBvDomain *d_c,
+                   BzlaBvDomain *res_z,
+                   BzlaNodeKind kind,
+                   uint32_t upper,
+                   uint32_t lower)
+  {
+    BzlaAIGVec *av_x = 0, *av_y = 0, *av_c = 0, *av_res = 0;
+
+    if (bzla_bvprop_has_fixed_bits(d_mm, d_z))
+    {
+      return true;
+    }
+
+    char *str_res_z = from_domain(d_mm, res_z);
+    if (d_x)
+    {
+      av_x = aigvec_from_domain(d_x);
+    }
+    if (d_y)
+    {
+      av_y = aigvec_from_domain(d_y);
+    }
+    if (d_c)
+    {
+      av_c = aigvec_from_domain(d_c);
+    }
+
+    switch (kind)
+    {
+      case BZLA_BV_SLICE_NODE:
+        av_res = bzla_aigvec_slice(d_avmgr, av_x, upper, lower);
+        break;
+
+      case BZLA_BV_AND_NODE:
+        av_res = bzla_aigvec_and(d_avmgr, av_x, av_y);
+        break;
+
+      case BZLA_BV_EQ_NODE: av_res = bzla_aigvec_eq(d_avmgr, av_x, av_y); break;
+
+      case BZLA_BV_ADD_NODE:
+        av_res = bzla_aigvec_add(d_avmgr, av_x, av_y);
+        break;
+
+      case BZLA_BV_MUL_NODE:
+        av_res = bzla_aigvec_mul(d_avmgr, av_x, av_y);
+        break;
+
+      case BZLA_BV_ULT_NODE:
+        av_res = bzla_aigvec_ult(d_avmgr, av_x, av_y);
+        break;
+
+      case BZLA_BV_SLL_NODE:
+        av_res = bzla_aigvec_sll(d_avmgr, av_x, av_y);
+        break;
+
+      case BZLA_BV_SRL_NODE:
+        av_res = bzla_aigvec_srl(d_avmgr, av_x, av_y);
+        break;
+
+      case BZLA_BV_UDIV_NODE:
+        av_res = bzla_aigvec_udiv(d_avmgr, av_x, av_y);
+        break;
+
+      case BZLA_BV_UREM_NODE:
+        av_res = bzla_aigvec_urem(d_avmgr, av_x, av_y);
+        break;
+
+      case BZLA_BV_CONCAT_NODE:
+        av_res = bzla_aigvec_concat(d_avmgr, av_x, av_y);
+        break;
+
+      default:
+        assert(kind == BZLA_COND_NODE);
+        av_res = bzla_aigvec_cond(d_avmgr, av_c, av_x, av_y);
+    }
+
+    if (av_x)
+    {
+      bzla_aigvec_release_delete(d_avmgr, av_x);
+    }
+    if (av_y)
+    {
+      bzla_aigvec_release_delete(d_avmgr, av_y);
+    }
+    if (av_c)
+    {
+      bzla_aigvec_release_delete(d_avmgr, av_c);
+    }
+
+    bool result = true;
+    for (size_t i = 0; i < av_res->width; i++)
+    {
+      if (bzla_aig_is_const(av_res->aigs[i]) && str_res_z[i] == 'x')
+      {
+        result = false;
+        break;
+      }
+    }
+
+    if (!result)
+    {
+      printf("\n");
+      if (d_x)
+      {
+        printf("x: ");
+        print_domain(d_x, true);
+      }
+      if (d_y)
+      {
+        printf("y: ");
+        print_domain(d_y, true);
+      }
+      if (d_z)
+      {
+        printf("z: ");
+        print_domain(d_z, true);
+      }
+      if (d_c)
+      {
+        printf("c: ");
+        print_domain(d_c, true);
+      }
+      printf("prop result: ");
+      print_domain(res_z, true);
+      printf("AIG result : ");
+      print_aigvec(av_res);
+      printf("\n");
+    }
+
+    bzla_aigvec_release_delete(d_avmgr, av_res);
+    bzla_mem_freestr(d_mm, str_res_z);
+
+    return result;
+  }
+
+  void check_sat_fix_bits(Bzla *bzla, BoolectorNode *var, const char bits[])
+  {
+    assert(bzla);
+    assert(var);
+    assert(bits);
+
+    uint32_t idx;
+    uint32_t w = boolector_get_width(bzla, var);
+    BoolectorNode *eq, *slice, *one, *zero;
+
+    assert(w == strlen(bits));
+
+    one  = boolector_const(bzla, "1");
+    zero = boolector_const(bzla, "0");
+    for (size_t i = 0; i < w; i++)
+    {
+      idx = w - i - 1;
+      if (bits[i] != 'x')
+      {
+        slice = boolector_slice(bzla, var, idx, idx);
+        eq    = boolector_eq(bzla, slice, bits[i] == '1' ? one : zero);
+        boolector_assert(bzla, eq);
+        boolector_release(bzla, eq);
+        boolector_release(bzla, slice);
+      }
+    }
+    boolector_release(bzla, one);
+    boolector_release(bzla, zero);
+  }
+
   void check_sat(
       BzlaBvDomain *d_x,
       BzlaBvDomain *d_y,
@@ -531,30 +743,31 @@ class TestBvProp : public TestMm
     assert(!binofun || binfun);
 
     int32_t sat_res;
-    uint32_t i, bwx, bwy, bwz, idx;
+    uint32_t bwx, bwy, bwz;
     char *str_x, *str_y, *str_z, *str_c;
+    char *str_res_x, *str_res_y, *str_res_z, *str_res_c;
     Bzla *bzla;
-    BoolectorNode *x, *y, *z, *c, *fun, *ofun, *_not, *eq, *slice, *one, *zero;
+    BoolectorNode *x, *y, *z, *c, *fun, *ofun, *_not, *eq;
     BoolectorSort swx, swy, swz, s1;
 
-    str_x = from_domain(d_mm, d_x);
-    str_y = 0;
-    str_z = from_domain(d_mm, d_z);
-    str_c = 0;
+    str_x     = from_domain(d_mm, d_x);
+    str_y     = 0;
+    str_z     = from_domain(d_mm, d_z);
+    str_c     = 0;
+    str_res_x = str_res_y = str_res_c = str_res_z = 0;
 
     bzla = boolector_new();
     boolector_set_opt(bzla, BZLA_OPT_MODEL_GEN, 1);
-    bwx  = bzla_bv_get_width(d_x->lo);
-    swx  = boolector_bitvec_sort(bzla, bwx);
-    bwz  = bzla_bv_get_width(d_z->lo);
-    swz  = boolector_bitvec_sort(bzla, bwz);
-    s1   = boolector_bitvec_sort(bzla, 1);
-    one  = boolector_one(bzla, s1);
-    zero = boolector_zero(bzla, s1);
-    x    = boolector_var(bzla, swx, "x");
-    z    = boolector_var(bzla, swz, "z");
-    y    = 0;
-    c    = 0;
+    boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
+    bwx = bzla_bv_get_width(d_x->lo);
+    swx = boolector_bitvec_sort(bzla, bwx);
+    bwz = bzla_bv_get_width(d_z->lo);
+    swz = boolector_bitvec_sort(bzla, bwz);
+    s1  = boolector_bitvec_sort(bzla, 1);
+    x   = boolector_var(bzla, swx, "x");
+    z   = boolector_var(bzla, swz, "z");
+    y   = 0;
+    c   = 0;
 
     if (d_y)
     {
@@ -604,57 +817,22 @@ class TestBvProp : public TestMm
     boolector_release(bzla, fun);
     boolector_release(bzla, eq);
 
-    for (i = 0; i < bwx; i++)
-    {
-      idx = bwx - i - 1;
-      if (str_x[i] != 'x')
-      {
-        slice = boolector_slice(bzla, x, idx, idx);
-        eq    = boolector_eq(bzla, slice, str_x[i] == '1' ? one : zero);
-        boolector_assert(bzla, eq);
-        boolector_release(bzla, eq);
-        boolector_release(bzla, slice);
-      }
-    }
+    boolector_push(bzla, 1);
+    check_sat_fix_bits(bzla, x, str_x);
     if (str_y)
     {
-      for (i = 0; i < bwy; i++)
-      {
-        idx = bwy - i - 1;
-        if (str_y[i] != 'x')
-        {
-          slice = boolector_slice(bzla, y, idx, idx);
-          eq    = boolector_eq(bzla, slice, str_y[i] == '1' ? one : zero);
-          boolector_assert(bzla, eq);
-          boolector_release(bzla, eq);
-          boolector_release(bzla, slice);
-        }
-      }
+      check_sat_fix_bits(bzla, y, str_y);
     }
-    for (i = 0; i < bwz; i++)
-    {
-      idx = bwz - i - 1;
-      if (str_z[i] != 'x')
-      {
-        slice = boolector_slice(bzla, z, idx, idx);
-        eq    = boolector_eq(bzla, slice, str_z[i] == '1' ? one : zero);
-        boolector_assert(bzla, eq);
-        boolector_release(bzla, eq);
-        boolector_release(bzla, slice);
-      }
-    }
+    check_sat_fix_bits(bzla, z, str_z);
     if (str_c)
     {
-      if (str_c[0] != 'x')
-      {
-        eq = boolector_eq(bzla, c, str_c[0] == '1' ? one : zero);
-        boolector_assert(bzla, eq);
-        boolector_release(bzla, eq);
-      }
+      check_sat_fix_bits(bzla, c, str_c);
     }
 
     // boolector_dump_smt2 (bzla, stdout);
     sat_res = boolector_sat(bzla);
+    boolector_pop(bzla, 1);
+
     assert(sat_res != BZLA_RESULT_SAT
            || (valid && is_valid(d_mm, res_x, res_y, res_z, res_c)));
     assert(sat_res != BZLA_RESULT_UNSAT
@@ -662,6 +840,77 @@ class TestBvProp : public TestMm
                 || (!valid && !is_valid(d_mm, res_x, res_y, res_z, res_c)))
                && (!decompositional || !valid
                    || !is_fixed(d_mm, res_x, res_y, res_z, res_c))));
+
+    /* Check correctness of results res_* for valid domains. */
+    if (valid)
+    {
+      str_res_x = from_domain(d_mm, res_x);
+      str_res_z = from_domain(d_mm, res_z);
+      if (res_y)
+      {
+        str_res_y = from_domain(d_mm, res_y);
+      }
+      if (res_c)
+      {
+        str_res_c = from_domain(d_mm, res_c);
+      }
+      boolector_push(bzla, 1);
+      check_sat_fix_bits(bzla, x, str_res_x);
+      if (str_res_y)
+      {
+        check_sat_fix_bits(bzla, y, str_res_y);
+      }
+      check_sat_fix_bits(bzla, z, str_res_z);
+      if (str_res_c)
+      {
+        check_sat_fix_bits(bzla, c, str_res_c);
+      }
+      sat_res = boolector_sat(bzla);
+      if (sat_res != BZLA_RESULT_SAT)
+      {
+        printf("\n");
+        printf("x: ");
+        print_domain(d_x, true);
+        if (d_y)
+        {
+          printf("y: ");
+          print_domain(d_y, true);
+        }
+        if (d_c)
+        {
+          printf("c: ");
+          print_domain(d_c, true);
+        }
+        printf("z: ");
+        print_domain(d_z, true);
+        printf("x': ");
+        print_domain(res_x, true);
+        if (res_y)
+        {
+          printf("y': ");
+          print_domain(res_y, true);
+        }
+        if (res_c)
+        {
+          printf("c': ");
+          print_domain(res_c, true);
+        }
+        printf("z': ");
+        print_domain(res_z, true);
+      }
+      assert(sat_res == BZLA_RESULT_SAT);
+      boolector_pop(bzla, 1);
+      bzla_mem_freestr(d_mm, str_res_x);
+      bzla_mem_freestr(d_mm, str_res_z);
+      if (str_res_y)
+      {
+        bzla_mem_freestr(d_mm, str_res_y);
+      }
+      if (str_res_c)
+      {
+        bzla_mem_freestr(d_mm, str_res_c);
+      }
+    }
 
     // printf ("sat_res %d\n", sat_res);
     // if (sat_res == BOOLECTOR_SAT)
@@ -673,8 +922,6 @@ class TestBvProp : public TestMm
     if (c) boolector_release(bzla, c);
     if (y) boolector_release(bzla, y);
     boolector_release(bzla, z);
-    boolector_release(bzla, one);
-    boolector_release(bzla, zero);
     boolector_release_sort(bzla, swx);
     if (y) boolector_release_sort(bzla, swy);
     boolector_release_sort(bzla, swz);
@@ -1918,9 +2165,11 @@ class TestBvProp : public TestMm
     free_consts(1, num_consts_z, consts_z);
   }
 
-  uint32_t d_bw         = 0;
-  uint32_t d_num_consts = 1;
-  char **d_consts       = nullptr;
+  uint32_t d_bw          = 0;
+  uint32_t d_num_consts  = 1;
+  char **d_consts        = nullptr;
+  Bzla *d_bzla           = nullptr;
+  BzlaAIGVecMgr *d_avmgr = nullptr;
 };
 
 TEST_F(TestBvProp, valid_domain)

@@ -20,15 +20,14 @@
 
 #include "utils/bzlautil.h"
 
-#if 0
-static void
-print_domain (BzlaMemMgr *g_mm, BzlaBvDomain *d, bool print_short)
+void
+bzla_print_domain(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short)
 {
   if (print_short)
   {
-    char *lo   = bzla_bv_to_char (g_mm, d->lo);
-    char *hi   = bzla_bv_to_char (g_mm, d->hi);
-    size_t len = strlen (lo);
+    char *lo   = bzla_bv_to_char(mm, d->lo);
+    char *hi   = bzla_bv_to_char(mm, d->hi);
+    size_t len = strlen(lo);
     for (size_t i = 0; i < len; i++)
     {
       if (lo[i] != hi[i])
@@ -39,26 +38,25 @@ print_domain (BzlaMemMgr *g_mm, BzlaBvDomain *d, bool print_short)
         }
         else
         {
-          assert (lo[i] == '1' && hi[i] == '0');
+          assert(lo[i] == '1' && hi[i] == '0');
           lo[i] = '?';
         }
       }
     }
-    printf ("%s\n", lo);
-    bzla_mem_freestr (g_mm, hi);
-    bzla_mem_freestr (g_mm, lo);
+    printf("%s\n", lo);
+    bzla_mem_freestr(mm, hi);
+    bzla_mem_freestr(mm, lo);
   }
   else
   {
-    char *s = bzla_bv_to_char (g_mm, d->lo);
-    printf ("lo: %s, ", s);
-    bzla_mem_freestr (g_mm, s);
-    s = bzla_bv_to_char (g_mm, d->hi);
-    printf ("hi: %s\n", s);
-    bzla_mem_freestr (g_mm, s);
+    char *s = bzla_bv_to_char(mm, d->lo);
+    printf("lo: %s, ", s);
+    bzla_mem_freestr(mm, s);
+    s = bzla_bv_to_char(mm, d->hi);
+    printf("hi: %s\n", s);
+    bzla_mem_freestr(mm, s);
   }
 }
-#endif
 
 BZLA_DECLARE_STACK(BzlaBvDomainPtr, BzlaBvDomain *);
 
@@ -122,6 +120,12 @@ bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d)
   BZLA_DELETE(mm, d);
 }
 
+BzlaBvDomain *
+bzla_bvprop_copy(BzlaMemMgr *mm, const BzlaBvDomain *d)
+{
+  return bzla_bvprop_new(mm, d->lo, d->hi);
+}
+
 bool
 bzla_bvprop_is_valid(BzlaMemMgr *mm, const BzlaBvDomain *d)
 {
@@ -139,6 +143,17 @@ bzla_bvprop_is_fixed(BzlaMemMgr *mm, const BzlaBvDomain *d)
   BzlaBitVector *equal = bzla_bv_eq(mm, d->lo, d->hi);
   bool res             = bzla_bv_is_true(equal);
   bzla_bv_free(mm, equal);
+  return res;
+}
+
+bool
+bzla_bvprop_has_fixed_bits(BzlaMemMgr *mm, const BzlaBvDomain *d)
+{
+  BzlaBitVector *xnor  = bzla_bv_xnor(mm, d->lo, d->hi);
+  BzlaBitVector *redor = bzla_bv_redor(mm, xnor);
+  bool res             = bzla_bv_is_true(redor);
+  bzla_bv_free(mm, xnor);
+  bzla_bv_free(mm, redor);
   return res;
 }
 
