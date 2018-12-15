@@ -164,14 +164,14 @@ bool bzla_bvprop_sext(BzlaMemMgr *mm,
 
 /* Propagate domains 'd_c', 'd_x', 'd_y' and 'd_z' of z = ite(c, x, y). */
 bool bzla_bvprop_ite(BzlaMemMgr *mm,
-                     BzlaBvDomain *d_c,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
                      BzlaBvDomain *d_z,
-                     BzlaBvDomain **res_d_c,
+                     BzlaBvDomain *d_c,
                      BzlaBvDomain **res_d_x,
                      BzlaBvDomain **res_d_y,
-                     BzlaBvDomain **res_d_z);
+                     BzlaBvDomain **res_d_z,
+                     BzlaBvDomain **res_d_c);
 
 /* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x + y. */
 bool bzla_bvprop_add(BzlaMemMgr *mm,

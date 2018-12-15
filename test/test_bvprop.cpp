@@ -1734,7 +1734,7 @@ class TestBvProp : public TestMm
             d_y = create_domain(consts[k]);
 
             res = bzla_bvprop_ite(
-                d_mm, d_c, d_x, d_y, d_z, &res_c, &res_x, &res_y, &res_z);
+                d_mm, d_x, d_y, d_z, d_c, &res_x, &res_y, &res_z, &res_c);
             check_sat(d_x,
                       d_y,
                       d_z,
@@ -1749,7 +1749,7 @@ class TestBvProp : public TestMm
                       0,
                       0,
                       0,
-                      false, /* we always get an invalid result if invalid */
+                      true,
                       res);
             if (res) check_ite(res_x, res_y, res_z, res_c);
 
