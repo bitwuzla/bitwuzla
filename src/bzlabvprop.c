@@ -175,14 +175,17 @@ made_progress(BzlaBvDomain *d_x,
   assert(res_d_z);
   assert(!d_y || res_d_y);
 
-  if (bzla_bv_compare(d_x->lo, res_d_x->lo)) return true;
-  if (bzla_bv_compare(d_x->hi, res_d_x->hi)) return true;
-  if (d_y && bzla_bv_compare(d_y->lo, res_d_y->lo)) return true;
-  if (d_y && bzla_bv_compare(d_y->hi, res_d_y->hi)) return true;
-  if (bzla_bv_compare(d_z->lo, res_d_z->lo)) return true;
-  if (bzla_bv_compare(d_z->hi, res_d_z->hi)) return true;
-  if (d_c && bzla_bv_compare(d_c->lo, res_d_c->lo)) return true;
-  if (d_c && bzla_bv_compare(d_c->hi, res_d_c->hi)) return true;
+  if (bzla_bv_compare(d_x->lo, res_d_x->lo)
+      || bzla_bv_compare(d_x->hi, res_d_x->hi)
+      || (d_y && bzla_bv_compare(d_y->lo, res_d_y->lo))
+      || (d_y && bzla_bv_compare(d_y->hi, res_d_y->hi))
+      || bzla_bv_compare(d_z->lo, res_d_z->lo)
+      || bzla_bv_compare(d_z->hi, res_d_z->hi)
+      || (d_c && bzla_bv_compare(d_c->lo, res_d_c->lo))
+      || (d_c && bzla_bv_compare(d_c->hi, res_d_c->hi)))
+  {
+    return true;
+  }
   return false;
 }
 
