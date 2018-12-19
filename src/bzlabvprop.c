@@ -189,6 +189,69 @@ made_progress(BzlaBvDomain *d_x,
   return false;
 }
 
+/* -------------------------------------------------------------------------- */
+
+typedef bool (*BVPropFunUnary)(BzlaMemMgr *,
+                               BzlaBvDomain *,
+                               BzlaBvDomain *,
+                               BzlaBvDomain **,
+                               BzlaBvDomain **);
+
+typedef bool (*BVPropFunBinary)(BzlaMemMgr *,
+                                BzlaBvDomain *,
+                                BzlaBvDomain *,
+                                BzlaBvDomain *,
+                                BzlaBvDomain **,
+                                BzlaBvDomain **,
+                                BzlaBvDomain **);
+
+typedef bool (*BVPropFunBinaryAux)(BzlaMemMgr *,
+                                   BzlaBvDomain *,
+                                   BzlaBvDomain *,
+                                   BzlaBvDomain *,
+                                   BzlaBvDomain **,
+                                   BzlaBvDomain **,
+                                   BzlaBvDomain **,
+                                   bool);
+
+typedef bool (*BVPropFunTernary)(BzlaMemMgr *,
+                                 BzlaBvDomain *,
+                                 BzlaBvDomain *,
+                                 BzlaBvDomain *,
+                                 BzlaBvDomain *,
+                                 BzlaBvDomain **,
+                                 BzlaBvDomain **,
+                                 BzlaBvDomain **,
+                                 BzlaBvDomain **);
+
+typedef bool (*BVPropFunTernaryAux)(BzlaMemMgr *,
+                                    BzlaBvDomain *,
+                                    BzlaBvDomain *,
+                                    BzlaBvDomain *,
+                                    BzlaBvDomain *,
+                                    BzlaBvDomain **,
+                                    BzlaBvDomain **,
+                                    BzlaBvDomain **,
+                                    BzlaBvDomain **,
+                                    bool);
+
+typedef bool (*BVPropFunShiftConst)(BzlaMemMgr *,
+                                    BzlaBvDomain *,
+                                    BzlaBvDomain *,
+                                    BzlaBitVector *,
+                                    BzlaBvDomain **,
+                                    BzlaBvDomain **);
+
+typedef bool (*BVPropFunSlice)(BzlaMemMgr *,
+                               BzlaBvDomain *,
+                               BzlaBvDomain *,
+                               uint32_t,
+                               uint32_t,
+                               BzlaBvDomain **,
+                               BzlaBvDomain **);
+
+/* -------------------------------------------------------------------------- */
+
 static bool
 decomp_step(BzlaMemMgr *mm,
             BzlaBvDomain **tmp_x,
@@ -203,58 +266,13 @@ decomp_step(BzlaMemMgr *mm,
             BzlaBvDomain **res_d_y,
             BzlaBvDomain **res_d_z,
             BzlaBvDomain **res_d_c,
-            bool (*fun2)(BzlaMemMgr *,
-                         BzlaBvDomain *,
-                         BzlaBvDomain *,
-                         BzlaBvDomain **,
-                         BzlaBvDomain **),
-            bool (*fun3)(BzlaMemMgr *,
-                         BzlaBvDomain *,
-                         BzlaBvDomain *,
-                         BzlaBvDomain *,
-                         BzlaBvDomain **,
-                         BzlaBvDomain **,
-                         BzlaBvDomain **),
-            bool (*fun3_aux)(BzlaMemMgr *,
-                             BzlaBvDomain *,
-                             BzlaBvDomain *,
-                             BzlaBvDomain *,
-                             BzlaBvDomain **,
-                             BzlaBvDomain **,
-                             BzlaBvDomain **,
-                             bool),
-            bool (*fun4)(BzlaMemMgr *,
-                         BzlaBvDomain *,
-                         BzlaBvDomain *,
-                         BzlaBvDomain *,
-                         BzlaBvDomain *,
-                         BzlaBvDomain **,
-                         BzlaBvDomain **,
-                         BzlaBvDomain **,
-                         BzlaBvDomain **),
-            bool (*fun4_aux)(BzlaMemMgr *,
-                             BzlaBvDomain *,
-                             BzlaBvDomain *,
-                             BzlaBvDomain *,
-                             BzlaBvDomain *,
-                             BzlaBvDomain **,
-                             BzlaBvDomain **,
-                             BzlaBvDomain **,
-                             BzlaBvDomain **,
-                             bool),
-            bool (*funshiftc)(BzlaMemMgr *,
-                              BzlaBvDomain *,
-                              BzlaBvDomain *,
-                              BzlaBitVector *,
-                              BzlaBvDomain **,
-                              BzlaBvDomain **),
-            bool (*funslice)(BzlaMemMgr *,
-                             BzlaBvDomain *,
-                             BzlaBvDomain *,
-                             uint32_t,
-                             uint32_t,
-                             BzlaBvDomain **,
-                             BzlaBvDomain **),
+            BVPropFunUnary fun1,
+            BVPropFunBinary fun2,
+            BVPropFunBinaryAux fun2_aux,
+            BVPropFunTernary fun3,
+            BVPropFunTernaryAux fun3_aux,
+            BVPropFunShiftConst fun_shift,
+            BVPropFunSlice fun_slice,
             bool *progress)
 {
   assert(tmp_x);
@@ -263,28 +281,28 @@ decomp_step(BzlaMemMgr *mm,
   assert(res_d_z);
   assert(!tmp_y || res_d_y);
   assert(!tmp_c || res_d_c);
-  assert((fun2 && !fun3 && !fun3_aux && !fun4 && !fun4_aux && !funshiftc
-          && !funslice)
-         || (!fun2 && fun3 && !fun3_aux && !fun4 && !fun4_aux && !funshiftc
-             && !funslice)
-         || (!fun2 && !fun3 && fun3_aux && !fun4 && !fun4_aux && !funshiftc
-             && !funslice)
-         || (!fun2 && !fun3 && !fun3_aux && fun4 && !fun4_aux && !funshiftc
-             && !funslice)
-         || (!fun2 && !fun3 && !fun3_aux && !fun4 && fun4_aux && !funshiftc
-             && !funslice)
-         || (!fun2 && !fun3 && !fun3_aux && !fun4 && !fun4_aux && funshiftc
-             && !funslice)
-         || (!fun2 && !fun3 && !fun3_aux && !fun4 && !fun4_aux && !funshiftc
-             && funslice));
-  assert(!fun4 || tmp_c);
-  assert(!funshiftc || (n && !tmp_y && !res_d_y && !tmp_c && !res_d_c));
+  assert((fun1 && !fun2 && !fun2_aux && !fun3 && !fun3_aux && !fun_shift
+          && !fun_slice)
+         || (!fun1 && fun2 && !fun2_aux && !fun3 && !fun3_aux && !fun_shift
+             && !fun_slice)
+         || (!fun1 && !fun2 && fun2_aux && !fun3 && !fun3_aux && !fun_shift
+             && !fun_slice)
+         || (!fun1 && !fun2 && !fun2_aux && fun3 && !fun3_aux && !fun_shift
+             && !fun_slice)
+         || (!fun1 && !fun2 && !fun2_aux && !fun3 && fun3_aux && !fun_shift
+             && !fun_slice)
+         || (!fun1 && !fun2 && !fun2_aux && !fun3 && !fun3_aux && fun_shift
+             && !fun_slice)
+         || (!fun1 && !fun2 && !fun2_aux && !fun3 && !fun3_aux && !fun_shift
+             && fun_slice));
+  assert(!fun3 || tmp_c);
+  assert(!fun_shift || (n && !tmp_y && !res_d_y && !tmp_c && !res_d_c));
   assert(progress);
 
-  if ((fun2 && !fun2(mm, *tmp_x, *tmp_z, res_d_x, res_d_z))
-      || (fun3 && !fun3(mm, *tmp_x, *tmp_y, *tmp_z, res_d_x, res_d_y, res_d_z))
-      || (fun3_aux
-          && !fun3_aux(mm,
+  if ((fun1 && !fun1(mm, *tmp_x, *tmp_z, res_d_x, res_d_z))
+      || (fun2 && !fun2(mm, *tmp_x, *tmp_y, *tmp_z, res_d_x, res_d_y, res_d_z))
+      || (fun2_aux
+          && !fun2_aux(mm,
                        *tmp_x,
                        *tmp_y,
                        *tmp_z,
@@ -292,8 +310,8 @@ decomp_step(BzlaMemMgr *mm,
                        res_d_y,
                        res_d_z,
                        no_overflows))
-      || (fun4
-          && !fun4(mm,
+      || (fun3
+          && !fun3(mm,
                    *tmp_x,
                    *tmp_y,
                    *tmp_z,
@@ -302,8 +320,8 @@ decomp_step(BzlaMemMgr *mm,
                    res_d_y,
                    res_d_z,
                    res_d_c))
-      || (fun4_aux
-          && !fun4_aux(mm,
+      || (fun3_aux
+          && !fun3_aux(mm,
                        *tmp_x,
                        *tmp_y,
                        *tmp_z,
@@ -313,8 +331,9 @@ decomp_step(BzlaMemMgr *mm,
                        res_d_z,
                        res_d_c,
                        no_overflows))
-      || (funshiftc && !funshiftc(mm, *tmp_x, *tmp_z, n, res_d_x, res_d_z))
-      || (funslice && !funslice(mm, *tmp_x, *tmp_z, hi, lo, res_d_x, res_d_z)))
+      || (fun_shift && !fun_shift(mm, *tmp_x, *tmp_z, n, res_d_x, res_d_z))
+      || (fun_slice
+          && !fun_slice(mm, *tmp_x, *tmp_z, hi, lo, res_d_x, res_d_z)))
   {
     bzla_bvprop_free(mm, *res_d_x);
     if (res_d_y) bzla_bvprop_free(mm, *res_d_y);
@@ -360,11 +379,7 @@ decomp_step_unary(BzlaMemMgr *mm,
                   BzlaBvDomain **tmp_z,
                   BzlaBvDomain **res_d_x,
                   BzlaBvDomain **res_d_z,
-                  bool (*fun2)(BzlaMemMgr *,
-                               BzlaBvDomain *,
-                               BzlaBvDomain *,
-                               BzlaBvDomain **,
-                               BzlaBvDomain **),
+                  BVPropFunUnary fun1,
                   bool *progress)
 {
   return decomp_step(mm,
@@ -380,7 +395,7 @@ decomp_step_unary(BzlaMemMgr *mm,
                      0,
                      res_d_z,
                      0,
-                     fun2,
+                     fun1,
                      0,
                      0,
                      0,
@@ -398,13 +413,7 @@ decomp_step_binary(BzlaMemMgr *mm,
                    BzlaBvDomain **res_d_x,
                    BzlaBvDomain **res_d_y,
                    BzlaBvDomain **res_d_z,
-                   bool (*fun3)(BzlaMemMgr *,
-                                BzlaBvDomain *,
-                                BzlaBvDomain *,
-                                BzlaBvDomain *,
-                                BzlaBvDomain **,
-                                BzlaBvDomain **,
-                                BzlaBvDomain **),
+                   BVPropFunBinary fun2,
                    bool *progress)
 {
   return decomp_step(mm,
@@ -421,7 +430,7 @@ decomp_step_binary(BzlaMemMgr *mm,
                      res_d_z,
                      0,
                      0,
-                     fun3,
+                     fun2,
                      0,
                      0,
                      0,
@@ -439,14 +448,7 @@ decomp_step_binary_aux(BzlaMemMgr *mm,
                        BzlaBvDomain **res_d_y,
                        BzlaBvDomain **res_d_z,
                        bool no_overflows,
-                       bool (*fun3_aux)(BzlaMemMgr *,
-                                        BzlaBvDomain *,
-                                        BzlaBvDomain *,
-                                        BzlaBvDomain *,
-                                        BzlaBvDomain **,
-                                        BzlaBvDomain **,
-                                        BzlaBvDomain **,
-                                        bool),
+                       BVPropFunBinaryAux fun2_aux,
                        bool *progress)
 {
   return decomp_step(mm,
@@ -464,7 +466,7 @@ decomp_step_binary_aux(BzlaMemMgr *mm,
                      0,
                      0,
                      0,
-                     fun3_aux,
+                     fun2_aux,
                      0,
                      0,
                      0,
@@ -482,15 +484,7 @@ decomp_step_ternary(BzlaMemMgr *mm,
                     BzlaBvDomain **res_d_y,
                     BzlaBvDomain **res_d_z,
                     BzlaBvDomain **res_d_c,
-                    bool (*fun4)(BzlaMemMgr *,
-                                 BzlaBvDomain *,
-                                 BzlaBvDomain *,
-                                 BzlaBvDomain *,
-                                 BzlaBvDomain *,
-                                 BzlaBvDomain **,
-                                 BzlaBvDomain **,
-                                 BzlaBvDomain **,
-                                 BzlaBvDomain **),
+                    BVPropFunTernary fun3,
                     bool *progress)
 {
   return decomp_step(mm,
@@ -509,7 +503,7 @@ decomp_step_ternary(BzlaMemMgr *mm,
                      0,
                      0,
                      0,
-                     fun4,
+                     fun3,
                      0,
                      0,
                      0,
@@ -527,16 +521,7 @@ decomp_step_ternary_aux(BzlaMemMgr *mm,
                         BzlaBvDomain **res_d_z,
                         BzlaBvDomain **res_d_c,
                         bool no_overflows,
-                        bool (*fun4_aux)(BzlaMemMgr *,
-                                         BzlaBvDomain *,
-                                         BzlaBvDomain *,
-                                         BzlaBvDomain *,
-                                         BzlaBvDomain *,
-                                         BzlaBvDomain **,
-                                         BzlaBvDomain **,
-                                         BzlaBvDomain **,
-                                         BzlaBvDomain **,
-                                         bool),
+                        BVPropFunTernaryAux fun3_aux,
                         bool *progress)
 {
   return decomp_step(mm,
@@ -556,7 +541,7 @@ decomp_step_ternary_aux(BzlaMemMgr *mm,
                      0,
                      0,
                      0,
-                     fun4_aux,
+                     fun3_aux,
                      0,
                      0,
                      progress);
@@ -569,12 +554,7 @@ decomp_step_shiftc(BzlaMemMgr *mm,
                    BzlaBitVector *n,
                    BzlaBvDomain **res_d_x,
                    BzlaBvDomain **res_d_z,
-                   bool (*funshiftc)(BzlaMemMgr *,
-                                     BzlaBvDomain *,
-                                     BzlaBvDomain *,
-                                     BzlaBitVector *,
-                                     BzlaBvDomain **,
-                                     BzlaBvDomain **),
+                   BVPropFunShiftConst fun_shift,
                    bool *progress)
 {
   return decomp_step(mm,
@@ -595,7 +575,7 @@ decomp_step_shiftc(BzlaMemMgr *mm,
                      0,
                      0,
                      0,
-                     funshiftc,
+                     fun_shift,
                      0,
                      progress);
 }
@@ -608,13 +588,7 @@ decomp_step_slice(BzlaMemMgr *mm,
                   uint32_t lo,
                   BzlaBvDomain **res_d_x,
                   BzlaBvDomain **res_d_z,
-                  bool (*funslice)(BzlaMemMgr *,
-                                   BzlaBvDomain *,
-                                   BzlaBvDomain *,
-                                   uint32_t,
-                                   uint32_t,
-                                   BzlaBvDomain **,
-                                   BzlaBvDomain **),
+                  BVPropFunSlice fun_slice,
                   bool *progress)
 {
   return decomp_step(mm,
@@ -636,7 +610,7 @@ decomp_step_slice(BzlaMemMgr *mm,
                      0,
                      0,
                      0,
-                     funslice,
+                     fun_slice,
                      progress);
 }
 
