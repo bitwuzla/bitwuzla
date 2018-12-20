@@ -2773,7 +2773,7 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
   BzlaBvDomainPtrStack d_c_stack, d_shift_stack, d_ite_stack, d_add_stack;
   BzlaBitVectorPtrStack shift_stack;
 
-  res = true;
+  progress = false;
 
   BZLA_INIT_STACK(mm, d_c_stack);
   BZLA_INIT_STACK(mm, d_shift_stack);
@@ -3971,7 +3971,7 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
 #if 1
     if (!(res = decomp_step_binary(mm,
                                    &tmp_y,
-                                   &d_zero_bw,
+                                   &tmp_zero_bw,
                                    &tmp_eq_y,
                                    res_d_x,
                                    res_d_y,
@@ -3981,6 +3981,8 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
     {
       goto DONE;
     }
+    assert(!bzla_bv_compare(d_zero_bw->lo, tmp_zero_bw->lo));
+    assert(!bzla_bv_compare(d_zero_bw->hi, tmp_zero_bw->hi));
 #else
     if (!bzla_bvprop_eq(
             mm, tmp_y, d_zero_bw, tmp_eq_y, res_d_x, res_d_y, res_d_z))
