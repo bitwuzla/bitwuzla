@@ -959,6 +959,7 @@ bvprop_shift_aux(BzlaMemMgr *mm,
   /* z_[bw] = x_[bw] << y_[bw]
    *
    * SLL:
+   *   z_[bw] == 0_[bw] && x[LSB:LSB] == 1_[1] = 0_[1]
    *   prev_z = x
    *   for i = 0 to bw - 1:
    *     shift = 1 << i
@@ -966,6 +967,7 @@ bvprop_shift_aux(BzlaMemMgr *mm,
    *     prev_z = cur_z
    *
    * SRL:
+   *   z_[bw] == 0_[bw] && x[MSB:MSB] == 1_[1] = 0_[1]
    *   prev_z = x
    *   for i = 0 to bw - 1:
    *     shift = 1 << i
@@ -976,7 +978,11 @@ bvprop_shift_aux(BzlaMemMgr *mm,
   uint32_t i, n, bw;
   bool res, progress;
   BzlaBitVector *bv;
-  BzlaBvDomain *d, *tmp_x, *tmp_y, *tmp_z;
+  BzlaBvDomain *d, *tmp_x, *tmp_x_bit, *tmp_y, *tmp_z;
+  BzlaBvDomain *tmp_eq_z, *tmp_eq_x_bit, *tmp_zero, *tmp_zero_bw, *tmp_one;
+#ifndef NDEBUG
+  BzlaBvDomain *d_zero, *d_zero_bw, *d_one;
+#endif
   BzlaBvDomainPtrStack d_c_stack, d_shift_stack, d_ite_stack;
   BzlaBvDomain **tmp_c, **tmp_shift, **tmp_ite, **tmp_z_prev;
   BzlaBvDomain *tmp_res_c;
@@ -1011,7 +1017,7 @@ bvprop_shift_aux(BzlaMemMgr *mm,
       d = bzla_bvprop_new_init(mm, bw);
     BZLA_PUSH_STACK(d_ite_stack, d);
     /* shift width */
-    bv = bzla_bv_uint64_to_bv(mm, 1 << i, bw);
+    bv = bzla_bv_uint64_to_bv(mm, 1u << i, bw);
     BZLA_PUSH_STACK(shift_stack, bv);
   }
 
@@ -1024,6 +1030,36 @@ bvprop_shift_aux(BzlaMemMgr *mm,
   tmp_y = bzla_bvprop_new(mm, d_y->lo, d_y->hi);
   tmp_z = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
 
+  tmp_x_bit     = new_domain(mm);
+  tmp_x_bit->lo = bzla_bv_uint64_to_bv(
+      mm, bzla_bv_get_bit(d_x->lo, is_srl ? bw - 1 : 0), 1);
+  tmp_x_bit->hi = bzla_bv_uint64_to_bv(
+      mm, bzla_bv_get_bit(d_x->hi, is_srl ? bw - 1 : 0), 1);
+
+  tmp_eq_z     = bzla_bvprop_new_init(mm, 1);
+  tmp_eq_x_bit = bzla_bvprop_new_init(mm, 1);
+
+  tmp_zero        = new_domain(mm);
+  tmp_zero->lo    = bzla_bv_zero(mm, 1);
+  tmp_zero->hi    = bzla_bv_zero(mm, 1);
+  tmp_zero_bw     = new_domain(mm);
+  tmp_zero_bw->lo = bzla_bv_zero(mm, bw);
+  tmp_zero_bw->hi = bzla_bv_zero(mm, bw);
+  tmp_one         = new_domain(mm);
+  tmp_one->lo     = bzla_bv_one(mm, 1);
+  tmp_one->hi     = bzla_bv_one(mm, 1);
+#ifndef NDEBUG
+  d_zero        = new_domain(mm);
+  d_zero->lo    = bzla_bv_zero(mm, 1);
+  d_zero->hi    = bzla_bv_zero(mm, 1);
+  d_zero_bw     = new_domain(mm);
+  d_zero_bw->lo = bzla_bv_zero(mm, bw);
+  d_zero_bw->hi = bzla_bv_zero(mm, bw);
+  d_one         = new_domain(mm);
+  d_one->lo     = bzla_bv_one(mm, 1);
+  d_one->hi     = bzla_bv_one(mm, 1);
+#endif
+
   do
   {
     progress = false;
@@ -1032,23 +1068,91 @@ bvprop_shift_aux(BzlaMemMgr *mm,
     {
       /**
        * SLL:
+       *   z_[bw] == 0_[bw] && x[LSB:LSB] == 1_[1] = 0_[1]
        *   prev_z = x
        *   for i = 0 to bw - 1:
        *     cur_z = ite (y[i:i], prev_z << shift, prev_z)
        *     prev_z = cur_z
        *
        * SRL:
+       *   z_[bw] == 0_[bw] && x[MSB:MSB] == 1_[1] = 0_[1]
        *   prev_z = x
        *   for i = 0 to bw - 1:
        *     cur_z = ite (y[i:i], prev_z << shift, prev_z)
        *     prev_z = cur_z
        */
 
+      /**
+       * SLL: x_bit = x[LSB:LSB]
+       * SRL: x_bit = x[MSB:MSB]
+       */
+      if (!(res = decomp_step_slice(mm,
+                                    &tmp_x,
+                                    &tmp_x_bit,
+                                    is_srl ? bw - 1 : 0,
+                                    is_srl ? bw - 1 : 0,
+                                    res_d_x,
+                                    res_d_z,
+                                    bzla_bvprop_slice,
+                                    &progress)))
+      {
+        goto DONE;
+      }
+
+      /* eq_z = z == 0 */
+      if (!(res = decomp_step_binary(mm,
+                                     &tmp_z,
+                                     &tmp_zero_bw,
+                                     &tmp_eq_z,
+                                     res_d_x,
+                                     res_d_y,
+                                     res_d_z,
+                                     bzla_bvprop_eq,
+                                     &progress)))
+      {
+        goto DONE;
+      }
+      assert(!bzla_bv_compare(tmp_zero_bw->lo, d_zero_bw->lo));
+      assert(!bzla_bv_compare(tmp_zero_bw->hi, d_zero_bw->hi));
+
+      /* eq_x_bit = x_bit == 1 */
+      if (!(res = decomp_step_binary(mm,
+                                     &tmp_x_bit,
+                                     &tmp_one,
+                                     &tmp_eq_x_bit,
+                                     res_d_x,
+                                     res_d_y,
+                                     res_d_z,
+                                     bzla_bvprop_eq,
+                                     &progress)))
+      {
+        goto DONE;
+      }
+      assert(!bzla_bv_compare(tmp_one->lo, d_one->lo));
+      assert(!bzla_bv_compare(tmp_one->hi, d_one->hi));
+
+      /* 0 = eq_z && eq_x_bit */
+      if (!(res = decomp_step_binary(mm,
+                                     &tmp_eq_z,
+                                     &tmp_eq_x_bit,
+                                     &tmp_zero,
+                                     res_d_x,
+                                     res_d_y,
+                                     res_d_z,
+                                     bzla_bvprop_and,
+                                     &progress)))
+      {
+        goto DONE;
+      }
+      assert(!bzla_bv_compare(tmp_zero->lo, d_zero->lo));
+      assert(!bzla_bv_compare(tmp_zero->hi, d_zero->hi));
+
       /* shift = 1 << i */
       bv = BZLA_PEEK_STACK(shift_stack, i);
 
       tmp_shift  = &d_shift_stack.start[i];
       tmp_z_prev = i ? &d_ite_stack.start[i - 1] : &tmp_x;
+
       /**
        * SLL: prev_z << shift
        * SRL: prev_z >> shift
@@ -1206,6 +1310,17 @@ DONE:
   BZLA_RELEASE_STACK(d_shift_stack);
   BZLA_RELEASE_STACK(d_ite_stack);
   BZLA_RELEASE_STACK(shift_stack);
+  bzla_bvprop_free(mm, tmp_x_bit);
+  bzla_bvprop_free(mm, tmp_eq_z);
+  bzla_bvprop_free(mm, tmp_eq_x_bit);
+  bzla_bvprop_free(mm, tmp_zero);
+  bzla_bvprop_free(mm, tmp_zero_bw);
+  bzla_bvprop_free(mm, tmp_one);
+#ifndef NDEBUG
+  bzla_bvprop_free(mm, d_zero);
+  bzla_bvprop_free(mm, d_zero_bw);
+  bzla_bvprop_free(mm, d_one);
+#endif
 
   return res;
 }
