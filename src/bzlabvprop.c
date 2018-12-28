@@ -933,7 +933,7 @@ bzla_bvprop_srl_const(BzlaMemMgr *mm,
   return bvprop_shift_const_aux(mm, d_x, d_z, n, res_d_x, res_d_z, true);
 }
 
-bool
+static bool
 bvprop_shift_aux(BzlaMemMgr *mm,
                  BzlaBvDomain *d_x,
                  BzlaBvDomain *d_y,

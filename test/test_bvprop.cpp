@@ -92,13 +92,27 @@ extern "C" {
 class TestBvProp : public TestMm
 {
  protected:
+  enum BvPropOp
+  {
+    TEST_BVPROP_ADD,
+    TEST_BVPROP_AND,
+    TEST_BVPROP_CONCAT,
+    TEST_BVPROP_EQ,
+    TEST_BVPROP_ITE,
+    TEST_BVPROP_MUL,
+    TEST_BVPROP_OR,
+    TEST_BVPROP_SLICE,
+    TEST_BVPROP_SLL,
+    TEST_BVPROP_SRL,
+    TEST_BVPROP_UDIV,
+    TEST_BVPROP_ULT,
+    TEST_BVPROP_UREM,
+    TEST_BVPROP_XOR
+  };
+
   static constexpr uint32_t TEST_BW         = 3;
   static constexpr uint32_t TEST_NUM_CONSTS = 27;
   static constexpr uint32_t TEST_CONST_LEN  = (TEST_BW + 1);
-
-  static constexpr uint32_t TEST_BVPROP_AND = 0;
-  static constexpr uint32_t TEST_BVPROP_OR  = 1;
-  static constexpr uint32_t TEST_BVPROP_XOR = 2;
 
   void SetUp() override
   {
@@ -237,6 +251,32 @@ class TestBvProp : public TestMm
         printf("x");
       }
     }
+  }
+
+  BzlaAIGVec *aigvec_or(BzlaAIGVec *a, BzlaAIGVec *b)
+  {
+    BzlaAIGVec *not_a, *not_b, *_and, *result;
+    not_a  = bzla_aigvec_not(d_avmgr, a);
+    not_b  = bzla_aigvec_not(d_avmgr, b);
+    _and   = bzla_aigvec_and(d_avmgr, not_a, not_b);
+    result = bzla_aigvec_not(d_avmgr, _and);
+    bzla_aigvec_release_delete(d_avmgr, not_a);
+    bzla_aigvec_release_delete(d_avmgr, not_b);
+    bzla_aigvec_release_delete(d_avmgr, _and);
+    return result;
+  }
+
+  BzlaAIGVec *aigvec_xor(BzlaAIGVec *a, BzlaAIGVec *b)
+  {
+    BzlaAIGVec *_or, *_and, *not_and, *result;
+    _or     = aigvec_or(a, b);
+    _and    = bzla_aigvec_and(d_avmgr, a, b);
+    not_and = bzla_aigvec_not(d_avmgr, _and);
+    result  = bzla_aigvec_and(d_avmgr, _or, not_and);
+    bzla_aigvec_release_delete(d_avmgr, _or);
+    bzla_aigvec_release_delete(d_avmgr, _and);
+    bzla_aigvec_release_delete(d_avmgr, not_and);
+    return result;
   }
 
   char *slice_str_const(char *str_const, uint32_t from, uint32_t to)
@@ -552,13 +592,20 @@ class TestBvProp : public TestMm
                    BzlaBvDomain *d_z,
                    BzlaBvDomain *d_c,
                    BzlaBvDomain *res_z,
-                   BzlaNodeKind kind,
+                   BvPropOp op,
                    uint32_t upper,
                    uint32_t lower)
   {
     BzlaAIGVec *av_x = 0, *av_y = 0, *av_c = 0, *av_res = 0;
 
     if (bzla_bvprop_has_fixed_bits(d_mm, d_z))
+    {
+      return true;
+    }
+    if ((op == TEST_BVPROP_SLL || op == TEST_BVPROP_SRL)
+        && (!bzla_util_is_power_of_2(bzla_bv_get_width(d_x->lo))
+            || bzla_util_log_2(bzla_bv_get_width(d_x->lo))
+                   != bzla_bv_get_width(d_y->lo)))
     {
       return true;
     }
@@ -577,52 +624,56 @@ class TestBvProp : public TestMm
       av_c = aigvec_from_domain(d_c);
     }
 
-    switch (kind)
+    switch (op)
     {
-      case BZLA_BV_SLICE_NODE:
+      case TEST_BVPROP_SLICE:
         av_res = bzla_aigvec_slice(d_avmgr, av_x, upper, lower);
         break;
 
-      case BZLA_BV_AND_NODE:
+      case TEST_BVPROP_AND:
         av_res = bzla_aigvec_and(d_avmgr, av_x, av_y);
         break;
 
-      case BZLA_BV_EQ_NODE: av_res = bzla_aigvec_eq(d_avmgr, av_x, av_y); break;
+      case TEST_BVPROP_OR: av_res = aigvec_or(av_x, av_y); break;
 
-      case BZLA_BV_ADD_NODE:
+      case TEST_BVPROP_XOR: av_res = aigvec_xor(av_x, av_y); break;
+
+      case TEST_BVPROP_EQ: av_res = bzla_aigvec_eq(d_avmgr, av_x, av_y); break;
+
+      case TEST_BVPROP_ADD:
         av_res = bzla_aigvec_add(d_avmgr, av_x, av_y);
         break;
 
-      case BZLA_BV_MUL_NODE:
+      case TEST_BVPROP_MUL:
         av_res = bzla_aigvec_mul(d_avmgr, av_x, av_y);
         break;
 
-      case BZLA_BV_ULT_NODE:
+      case TEST_BVPROP_ULT:
         av_res = bzla_aigvec_ult(d_avmgr, av_x, av_y);
         break;
 
-      case BZLA_BV_SLL_NODE:
+      case TEST_BVPROP_SLL:
         av_res = bzla_aigvec_sll(d_avmgr, av_x, av_y);
         break;
 
-      case BZLA_BV_SRL_NODE:
+      case TEST_BVPROP_SRL:
         av_res = bzla_aigvec_srl(d_avmgr, av_x, av_y);
         break;
 
-      case BZLA_BV_UDIV_NODE:
+      case TEST_BVPROP_UDIV:
         av_res = bzla_aigvec_udiv(d_avmgr, av_x, av_y);
         break;
 
-      case BZLA_BV_UREM_NODE:
+      case TEST_BVPROP_UREM:
         av_res = bzla_aigvec_urem(d_avmgr, av_x, av_y);
         break;
 
-      case BZLA_BV_CONCAT_NODE:
+      case TEST_BVPROP_CONCAT:
         av_res = bzla_aigvec_concat(d_avmgr, av_x, av_y);
         break;
 
       default:
-        assert(kind == BZLA_COND_NODE);
+        assert(op == TEST_BVPROP_ITE);
         av_res = bzla_aigvec_cond(d_avmgr, av_c, av_x, av_y);
     }
 
@@ -745,16 +796,20 @@ class TestBvProp : public TestMm
     int32_t sat_res;
     uint32_t bwx, bwy, bwz;
     char *str_x, *str_y, *str_z, *str_c;
+#if 0
     char *str_res_x, *str_res_y, *str_res_z, *str_res_c;
+#endif
     Bzla *bzla;
     BoolectorNode *x, *y, *z, *c, *fun, *ofun, *_not, *eq;
     BoolectorSort swx, swy, swz, s1;
 
-    str_x     = from_domain(d_mm, d_x);
-    str_y     = 0;
-    str_z     = from_domain(d_mm, d_z);
-    str_c     = 0;
+    str_x = from_domain(d_mm, d_x);
+    str_y = 0;
+    str_z = from_domain(d_mm, d_z);
+    str_c = 0;
+#if 0
     str_res_x = str_res_y = str_res_c = str_res_z = 0;
+#endif
 
     bzla = boolector_new();
     boolector_set_opt(bzla, BZLA_OPT_MODEL_GEN, 1);
@@ -842,75 +897,77 @@ class TestBvProp : public TestMm
                    || !is_fixed(d_mm, res_x, res_y, res_z, res_c))));
 
     /* Check correctness of results res_* for valid domains. */
+#if 0
     if (valid)
     {
-      str_res_x = from_domain(d_mm, res_x);
-      str_res_z = from_domain(d_mm, res_z);
+      str_res_x = from_domain (d_mm, res_x);
+      str_res_z = from_domain (d_mm, res_z);
       if (res_y)
       {
-        str_res_y = from_domain(d_mm, res_y);
+        str_res_y = from_domain (d_mm, res_y);
       }
       if (res_c)
       {
-        str_res_c = from_domain(d_mm, res_c);
+        str_res_c = from_domain (d_mm, res_c);
       }
-      boolector_push(bzla, 1);
-      check_sat_fix_bits(bzla, x, str_res_x);
+      boolector_push (bzla, 1);
+      check_sat_fix_bits (bzla, x, str_res_x);
       if (str_res_y)
       {
-        check_sat_fix_bits(bzla, y, str_res_y);
+        check_sat_fix_bits (bzla, y, str_res_y);
       }
-      check_sat_fix_bits(bzla, z, str_res_z);
+      check_sat_fix_bits (bzla, z, str_res_z);
       if (str_res_c)
       {
-        check_sat_fix_bits(bzla, c, str_res_c);
+        check_sat_fix_bits (bzla, c, str_res_c);
       }
-      sat_res = boolector_sat(bzla);
+      sat_res = boolector_sat (bzla);
       if (sat_res != BZLA_RESULT_SAT)
       {
-        printf("\n");
-        printf("x: ");
-        print_domain(d_x, true);
+        printf ("\n");
+        printf ("x: ");
+        print_domain (d_x, true);
         if (d_y)
         {
-          printf("y: ");
-          print_domain(d_y, true);
+          printf ("y: ");
+          print_domain (d_y, true);
         }
         if (d_c)
         {
-          printf("c: ");
-          print_domain(d_c, true);
+          printf ("c: ");
+          print_domain (d_c, true);
         }
-        printf("z: ");
-        print_domain(d_z, true);
-        printf("x': ");
-        print_domain(res_x, true);
+        printf ("z: ");
+        print_domain (d_z, true);
+        printf ("x': ");
+        print_domain (res_x, true);
         if (res_y)
         {
-          printf("y': ");
-          print_domain(res_y, true);
+          printf ("y': ");
+          print_domain (res_y, true);
         }
         if (res_c)
         {
-          printf("c': ");
-          print_domain(res_c, true);
+          printf ("c': ");
+          print_domain (res_c, true);
         }
-        printf("z': ");
-        print_domain(res_z, true);
+        printf ("z': ");
+        print_domain (res_z, true);
       }
-      assert(sat_res == BZLA_RESULT_SAT);
-      boolector_pop(bzla, 1);
-      bzla_mem_freestr(d_mm, str_res_x);
-      bzla_mem_freestr(d_mm, str_res_z);
+      assert (sat_res == BZLA_RESULT_SAT);
+      boolector_pop (bzla, 1);
+      bzla_mem_freestr (d_mm, str_res_x);
+      bzla_mem_freestr (d_mm, str_res_z);
       if (str_res_y)
       {
-        bzla_mem_freestr(d_mm, str_res_y);
+        bzla_mem_freestr (d_mm, str_res_y);
       }
       if (str_res_c)
       {
-        bzla_mem_freestr(d_mm, str_res_c);
+        bzla_mem_freestr (d_mm, str_res_c);
       }
     }
+#endif
 
     // printf ("sat_res %d\n", sat_res);
     // if (sat_res == BOOLECTOR_SAT)
@@ -973,6 +1030,9 @@ class TestBvProp : public TestMm
                       0,
                       false,
                       res);
+            assert(
+                !res
+                || check_synth(d_x, d_y, d_z, 0, res_z, TEST_BVPROP_SRL, 0, 0));
           }
           else
           {
@@ -993,6 +1053,9 @@ class TestBvProp : public TestMm
                       0,
                       false,
                       res);
+            assert(
+                !res
+                || check_synth(d_x, d_y, d_z, 0, res_z, TEST_BVPROP_SLL, 0, 0));
           }
           assert(res || !is_valid(d_mm, res_x, 0, res_z, 0));
 
@@ -1067,6 +1130,9 @@ class TestBvProp : public TestMm
                       0,
                       true,
                       res);
+            assert(
+                !res
+                || check_synth(d_x, d_y, d_z, 0, res_z, TEST_BVPROP_SRL, 0, 0));
           }
           else
           {
@@ -1087,6 +1153,9 @@ class TestBvProp : public TestMm
                       0,
                       true,
                       res);
+            assert(
+                !res
+                || check_synth(d_x, d_y, d_z, 0, res_z, TEST_BVPROP_SLL, 0, 0));
           }
 
           assert(!bzla_bvprop_is_fixed(d_mm, d_x)
@@ -1112,7 +1181,7 @@ class TestBvProp : public TestMm
 
   void test_srl(uint32_t bw) { test_shift(bw, true); }
 
-  void test_and_or_xor(int32_t op, uint32_t bw)
+  void test_and_or_xor(BvPropOp op, uint32_t bw)
   {
     bool res;
     uint32_t num_consts;
@@ -1185,6 +1254,7 @@ class TestBvProp : public TestMm
                     0,
                     false,
                     res);
+          assert(!res || check_synth(d_x, d_y, d_z, 0, res_z, op, 0, 0));
 
           to_str(res_x, &str_res_x, 0, true);
           to_str(res_y, &str_res_y, 0, true);
@@ -1375,6 +1445,8 @@ class TestBvProp : public TestMm
                     0,
                     true,
                     res);
+          assert(!res
+                 || check_synth(d_x, d_y, d_z, 0, res_z, TEST_BVPROP_EQ, 0, 0));
 
           if (res && bzla_bvprop_is_fixed(d_mm, d_x)
               && bzla_bvprop_is_fixed(d_mm, d_y))
@@ -1528,6 +1600,9 @@ class TestBvProp : public TestMm
                       lower,
                       false,
                       res);
+            assert(!res
+                   || check_synth(
+                       d_x, 0, d_z, 0, res_z, TEST_BVPROP_SLICE, upper, lower));
 
             assert(!bzla_bvprop_is_fixed(d_mm, d_x)
                    || !bzla_bvprop_is_valid(d_mm, res_x)
@@ -1885,6 +1960,9 @@ class TestBvProp : public TestMm
                     0,
                     true,
                     res);
+          assert(
+              !res
+              || check_synth(d_x, d_y, d_z, 0, res_z, TEST_BVPROP_MUL, 0, 0));
 
           if (bzla_bvprop_is_fixed(d_mm, d_x)
               && bzla_bvprop_is_fixed(d_mm, d_y))
@@ -1965,6 +2043,9 @@ class TestBvProp : public TestMm
                     0,
                     true,
                     res);
+          assert(
+              !res
+              || check_synth(d_x, d_y, d_z, 0, res_z, TEST_BVPROP_UDIV, 0, 0));
 
           if (bzla_bvprop_is_fixed(d_mm, d_x)
               && bzla_bvprop_is_fixed(d_mm, d_y))
@@ -2044,6 +2125,9 @@ class TestBvProp : public TestMm
                     0,
                     true,
                     res);
+          assert(
+              !res
+              || check_synth(d_x, d_y, d_z, 0, res_z, TEST_BVPROP_UREM, 0, 0));
 
           if (bzla_bvprop_is_fixed(d_mm, d_x)
               && bzla_bvprop_is_fixed(d_mm, d_y))
@@ -2124,6 +2208,9 @@ class TestBvProp : public TestMm
                     0,
                     true,
                     res);
+          assert(
+              !res
+              || check_synth(d_x, d_y, d_z, 0, res_z, TEST_BVPROP_ULT, 0, 0));
 
           if (bzla_bvprop_is_fixed(d_mm, d_x)
               && bzla_bvprop_is_fixed(d_mm, d_y))
