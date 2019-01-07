@@ -48,7 +48,7 @@ bool bzla_bvprop_has_fixed_bits(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
 /* Prints domain 'd' to stdout. 'print_short' indicates whether 'lo' and 'hi'
  * should be printed separately. */
-void bzla_print_domain(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short);
+void bzla_bvprop_print(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short);
 
 /**
  * Propagate domains 'd_x', 'd_y', and 'd_z' of z = (x = y).

@@ -20,44 +20,6 @@
 
 #include "utils/bzlautil.h"
 
-void
-bzla_print_domain(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short)
-{
-  if (print_short)
-  {
-    char *lo   = bzla_bv_to_char(mm, d->lo);
-    char *hi   = bzla_bv_to_char(mm, d->hi);
-    size_t len = strlen(lo);
-    for (size_t i = 0; i < len; i++)
-    {
-      if (lo[i] != hi[i])
-      {
-        if (lo[i] == '0' && hi[i] == '1')
-        {
-          lo[i] = 'x';
-        }
-        else
-        {
-          assert(lo[i] == '1' && hi[i] == '0');
-          lo[i] = '?';
-        }
-      }
-    }
-    printf("%s\n", lo);
-    bzla_mem_freestr(mm, hi);
-    bzla_mem_freestr(mm, lo);
-  }
-  else
-  {
-    char *s = bzla_bv_to_char(mm, d->lo);
-    printf("lo: %s, ", s);
-    bzla_mem_freestr(mm, s);
-    s = bzla_bv_to_char(mm, d->hi);
-    printf("hi: %s\n", s);
-    bzla_mem_freestr(mm, s);
-  }
-}
-
 BZLA_DECLARE_STACK(BzlaBvDomainPtr, BzlaBvDomain *);
 
 static BzlaBvDomain *
@@ -155,6 +117,44 @@ bzla_bvprop_has_fixed_bits(BzlaMemMgr *mm, const BzlaBvDomain *d)
   bzla_bv_free(mm, xnor);
   bzla_bv_free(mm, redor);
   return res;
+}
+
+void
+bzla_bvprop_print(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short)
+{
+  if (print_short)
+  {
+    char *lo   = bzla_bv_to_char(mm, d->lo);
+    char *hi   = bzla_bv_to_char(mm, d->hi);
+    size_t len = strlen(lo);
+    for (size_t i = 0; i < len; i++)
+    {
+      if (lo[i] != hi[i])
+      {
+        if (lo[i] == '0' && hi[i] == '1')
+        {
+          lo[i] = 'x';
+        }
+        else
+        {
+          assert(lo[i] == '1' && hi[i] == '0');
+          lo[i] = '?';
+        }
+      }
+    }
+    printf("%s\n", lo);
+    bzla_mem_freestr(mm, hi);
+    bzla_mem_freestr(mm, lo);
+  }
+  else
+  {
+    char *s = bzla_bv_to_char(mm, d->lo);
+    printf("lo: %s, ", s);
+    bzla_mem_freestr(mm, s);
+    s = bzla_bv_to_char(mm, d->hi);
+    printf("hi: %s\n", s);
+    bzla_mem_freestr(mm, s);
+  }
 }
 
 /* -------------------------------------------------------------------------- */

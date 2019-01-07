@@ -207,7 +207,7 @@ class TestBvProp : public TestMm
 
   void print_domain(BzlaBvDomain *d, bool print_short)
   {
-    bzla_print_domain(d_mm, d, print_short);
+    bzla_bvprop_print(d_mm, d, print_short);
   }
 
   BzlaAIGVec *aigvec_from_domain(BzlaBvDomain *d)
