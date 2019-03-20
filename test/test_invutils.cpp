@@ -21,8 +21,8 @@ extern "C" {
 #include "bzlaproputils.h"
 }
 
-using CreateBinExpFunc   = std::add_pointer<decltype(boolector_and)>::type;
-using CreateSliceExpFunc = std::add_pointer<decltype(boolector_slice)>::type;
+using CreateBinExpFunc   = std::add_pointer<decltype(boolector_bv_and)>::type;
+using CreateSliceExpFunc = std::add_pointer<decltype(boolector_bv_slice)>::type;
 
 class TestInvUtils : public TestBzla
 {
@@ -101,12 +101,13 @@ class TestInvUtils : public TestBzla
       x_values.push_back("xxx");
     }
 
-    if (create_exp_func == boolector_ult || create_exp_func == boolector_slt
+    if (create_exp_func == boolector_bv_ult
+        || create_exp_func == boolector_bv_slt
         || create_exp_func == boolector_eq)
     {
       bw_t = 1;
     }
-    else if (create_exp_func == boolector_concat)
+    else if (create_exp_func == boolector_bv_concat)
     {
       bw_s = 2; /* decrease number of tests for concat */
       bw_t = bw_s + bw_x;
@@ -358,30 +359,30 @@ class TestInvUtils : public TestBzla
     vs = bzla_bv_to_char(d_mm, s);
     vt = bzla_bv_to_char(d_mm, t);
 
-    sx = boolector_bitvec_sort(bzla, bzla_bv_get_width(x->lo));
+    sx = boolector_bv_sort(bzla, bzla_bv_get_width(x->lo));
     nx = boolector_var(bzla, sx, 0);
 
     vxlo = bzla_bv_to_char(d_mm, x->lo);
-    nxlo = boolector_const(bzla, vxlo);
+    nxlo = boolector_bv_const(bzla, vxlo);
 
     vxhi = bzla_bv_to_char(d_mm, x->hi);
-    nxhi = boolector_const(bzla, vxhi);
+    nxhi = boolector_bv_const(bzla, vxhi);
 
     /* assume const bits for x */
-    andhi = boolector_and(bzla, nx, nxhi);
+    andhi = boolector_bv_and(bzla, nx, nxhi);
     eq    = boolector_eq(bzla, andhi, nx);
     boolector_assume(bzla, eq);
     boolector_release(bzla, eq);
 
-    orlo = boolector_or(bzla, nx, nxlo);
+    orlo = boolector_bv_or(bzla, nx, nxlo);
     eq   = boolector_eq(bzla, orlo, nx);
     boolector_assume(bzla, eq);
     boolector_release(bzla, eq);
 
     /* x <> s = t  for operator <> */
 
-    ns = boolector_const(bzla, vs);
-    nt = boolector_const(bzla, vt);
+    ns = boolector_bv_const(bzla, vs);
+    nt = boolector_bv_const(bzla, vt);
 
     if (pos_x == 0)
       exp = create_exp_func(bzla, nx, ns);
@@ -436,29 +437,29 @@ class TestInvUtils : public TestBzla
     vs1 = bzla_bv_to_char(d_mm, s1);
     vt  = bzla_bv_to_char(d_mm, t);
 
-    sx = boolector_bitvec_sort(bzla, bzla_bv_get_width(x->lo));
+    sx = boolector_bv_sort(bzla, bzla_bv_get_width(x->lo));
     nx = boolector_var(bzla, sx, 0);
 
     vxlo = bzla_bv_to_char(d_mm, x->lo);
-    nxlo = boolector_const(bzla, vxlo);
+    nxlo = boolector_bv_const(bzla, vxlo);
 
     vxhi = bzla_bv_to_char(d_mm, x->hi);
-    nxhi = boolector_const(bzla, vxhi);
+    nxhi = boolector_bv_const(bzla, vxhi);
 
     /* assume const bits for x */
-    andhi = boolector_and(bzla, nx, nxhi);
+    andhi = boolector_bv_and(bzla, nx, nxhi);
     eq    = boolector_eq(bzla, andhi, nx);
     boolector_assume(bzla, eq);
     boolector_release(bzla, eq);
 
-    orlo = boolector_or(bzla, nx, nxlo);
+    orlo = boolector_bv_or(bzla, nx, nxlo);
     eq   = boolector_eq(bzla, orlo, nx);
     boolector_assume(bzla, eq);
     boolector_release(bzla, eq);
 
-    ns0 = boolector_const(bzla, vs0);
-    ns1 = boolector_const(bzla, vs1);
-    nt  = boolector_const(bzla, vt);
+    ns0 = boolector_bv_const(bzla, vs0);
+    ns1 = boolector_bv_const(bzla, vs1);
+    nt  = boolector_bv_const(bzla, vt);
 
     if (pos_x == 0)
     {
@@ -518,31 +519,31 @@ class TestInvUtils : public TestBzla
 
     vt = bzla_bv_to_char(d_mm, t);
 
-    sx = boolector_bitvec_sort(bzla, bzla_bv_get_width(x->lo));
+    sx = boolector_bv_sort(bzla, bzla_bv_get_width(x->lo));
     nx = boolector_var(bzla, sx, 0);
 
     vxlo = bzla_bv_to_char(d_mm, x->lo);
-    nxlo = boolector_const(bzla, vxlo);
+    nxlo = boolector_bv_const(bzla, vxlo);
 
     vxhi = bzla_bv_to_char(d_mm, x->hi);
-    nxhi = boolector_const(bzla, vxhi);
+    nxhi = boolector_bv_const(bzla, vxhi);
 
     /* assume const bits for x */
-    andhi = boolector_and(bzla, nx, nxhi);
+    andhi = boolector_bv_and(bzla, nx, nxhi);
     eq    = boolector_eq(bzla, andhi, nx);
     boolector_assume(bzla, eq);
     boolector_release(bzla, eq);
 
-    orlo = boolector_or(bzla, nx, nxlo);
+    orlo = boolector_bv_or(bzla, nx, nxlo);
     eq   = boolector_eq(bzla, orlo, nx);
     boolector_assume(bzla, eq);
     boolector_release(bzla, eq);
 
     /* x <> s = t  for operator <> */
 
-    nt = boolector_const(bzla, vt);
+    nt = boolector_bv_const(bzla, vt);
 
-    exp = boolector_slice(bzla, nx, upper, lower);
+    exp = boolector_bv_slice(bzla, nx, upper, lower);
     eq  = boolector_eq(bzla, exp, nt);
     boolector_assume(bzla, eq);
     boolector_release(bzla, eq);
@@ -574,18 +575,18 @@ class TestInvUtils : public TestBzla
 
 TEST_F(TestInvUtils, is_inv_add_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_add_const, boolector_add, 0);
+  test_is_inv_binary_const(bzla_is_inv_add_const, boolector_bv_add, 0);
 }
 
 TEST_F(TestInvUtils, is_inv_and_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_and_const, boolector_and, 0);
+  test_is_inv_binary_const(bzla_is_inv_and_const, boolector_bv_and, 0);
 }
 
 TEST_F(TestInvUtils, is_inv_concat_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_concat_const, boolector_concat, 0);
-  test_is_inv_binary_const(bzla_is_inv_concat_const, boolector_concat, 1);
+  test_is_inv_binary_const(bzla_is_inv_concat_const, boolector_bv_concat, 0);
+  test_is_inv_binary_const(bzla_is_inv_concat_const, boolector_bv_concat, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_eq_const)
@@ -595,14 +596,14 @@ TEST_F(TestInvUtils, is_inv_eq_const)
 
 TEST_F(TestInvUtils, is_inv_ult_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_ult_const, boolector_ult, 0);
-  test_is_inv_binary_const(bzla_is_inv_ult_const, boolector_ult, 1);
+  test_is_inv_binary_const(bzla_is_inv_ult_const, boolector_bv_ult, 0);
+  test_is_inv_binary_const(bzla_is_inv_ult_const, boolector_bv_ult, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_slt_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_slt_const, boolector_slt, 0);
-  test_is_inv_binary_const(bzla_is_inv_slt_const, boolector_slt, 1);
+  test_is_inv_binary_const(bzla_is_inv_slt_const, boolector_bv_slt, 0);
+  test_is_inv_binary_const(bzla_is_inv_slt_const, boolector_bv_slt, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_slice_const)
@@ -612,37 +613,37 @@ TEST_F(TestInvUtils, is_inv_slice_const)
 
 TEST_F(TestInvUtils, is_inv_sll_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_sll_const, boolector_sll, 0);
-  test_is_inv_binary_const(bzla_is_inv_sll_const, boolector_sll, 1);
+  test_is_inv_binary_const(bzla_is_inv_sll_const, boolector_bv_sll, 0);
+  test_is_inv_binary_const(bzla_is_inv_sll_const, boolector_bv_sll, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_srl_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_srl_const, boolector_srl, 0);
-  test_is_inv_binary_const(bzla_is_inv_srl_const, boolector_srl, 1);
+  test_is_inv_binary_const(bzla_is_inv_srl_const, boolector_bv_srl, 0);
+  test_is_inv_binary_const(bzla_is_inv_srl_const, boolector_bv_srl, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_sra_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_sra_const, boolector_sra, 0);
-  test_is_inv_binary_const(bzla_is_inv_sra_const, boolector_sra, 1);
+  test_is_inv_binary_const(bzla_is_inv_sra_const, boolector_bv_sra, 0);
+  test_is_inv_binary_const(bzla_is_inv_sra_const, boolector_bv_sra, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_mul_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_mul_const, boolector_mul, 0);
+  test_is_inv_binary_const(bzla_is_inv_mul_const, boolector_bv_mul, 0);
 }
 
 TEST_F(TestInvUtils, is_inv_urem_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_urem_const, boolector_urem, 0);
-  test_is_inv_binary_const(bzla_is_inv_urem_const, boolector_urem, 1);
+  test_is_inv_binary_const(bzla_is_inv_urem_const, boolector_bv_urem, 0);
+  test_is_inv_binary_const(bzla_is_inv_urem_const, boolector_bv_urem, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_udiv_const)
 {
-  test_is_inv_binary_const(bzla_is_inv_udiv_const, boolector_udiv, 0);
-  test_is_inv_binary_const(bzla_is_inv_udiv_const, boolector_udiv, 1);
+  test_is_inv_binary_const(bzla_is_inv_udiv_const, boolector_bv_udiv, 0);
+  test_is_inv_binary_const(bzla_is_inv_udiv_const, boolector_bv_udiv, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_cond_const)
@@ -656,18 +657,18 @@ TEST_F(TestInvUtils, is_inv_cond_const)
 
 TEST_F(TestInvUtils, is_inv_add)
 {
-  test_is_inv_binary(bzla_is_inv_add, boolector_add, 0);
+  test_is_inv_binary(bzla_is_inv_add, boolector_bv_add, 0);
 }
 
 TEST_F(TestInvUtils, is_inv_and)
 {
-  test_is_inv_binary(bzla_is_inv_and, boolector_and, 0);
+  test_is_inv_binary(bzla_is_inv_and, boolector_bv_and, 0);
 }
 
 TEST_F(TestInvUtils, is_inv_concat)
 {
-  test_is_inv_binary(bzla_is_inv_concat, boolector_concat, 0);
-  test_is_inv_binary(bzla_is_inv_concat, boolector_concat, 1);
+  test_is_inv_binary(bzla_is_inv_concat, boolector_bv_concat, 0);
+  test_is_inv_binary(bzla_is_inv_concat, boolector_bv_concat, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_eq)
@@ -677,7 +678,7 @@ TEST_F(TestInvUtils, is_inv_eq)
 
 TEST_F(TestInvUtils, is_inv_mul)
 {
-  test_is_inv_binary(bzla_is_inv_mul, boolector_mul, 0);
+  test_is_inv_binary(bzla_is_inv_mul, boolector_bv_mul, 0);
 }
 
 TEST_F(TestInvUtils, is_inv_slice)
@@ -687,44 +688,44 @@ TEST_F(TestInvUtils, is_inv_slice)
 
 TEST_F(TestInvUtils, is_inv_sll)
 {
-  test_is_inv_binary(bzla_is_inv_sll, boolector_sll, 0);
-  test_is_inv_binary(bzla_is_inv_sll, boolector_sll, 1);
+  test_is_inv_binary(bzla_is_inv_sll, boolector_bv_sll, 0);
+  test_is_inv_binary(bzla_is_inv_sll, boolector_bv_sll, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_srl)
 {
-  test_is_inv_binary(bzla_is_inv_srl, boolector_srl, 0);
-  test_is_inv_binary(bzla_is_inv_srl, boolector_srl, 1);
+  test_is_inv_binary(bzla_is_inv_srl, boolector_bv_srl, 0);
+  test_is_inv_binary(bzla_is_inv_srl, boolector_bv_srl, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_sra)
 {
-  test_is_inv_binary(bzla_is_inv_sra, boolector_sra, 0);
-  test_is_inv_binary(bzla_is_inv_sra, boolector_sra, 1);
+  test_is_inv_binary(bzla_is_inv_sra, boolector_bv_sra, 0);
+  test_is_inv_binary(bzla_is_inv_sra, boolector_bv_sra, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_udiv)
 {
-  test_is_inv_binary(bzla_is_inv_udiv, boolector_udiv, 0);
-  test_is_inv_binary(bzla_is_inv_udiv, boolector_udiv, 1);
+  test_is_inv_binary(bzla_is_inv_udiv, boolector_bv_udiv, 0);
+  test_is_inv_binary(bzla_is_inv_udiv, boolector_bv_udiv, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_ult)
 {
-  test_is_inv_binary(bzla_is_inv_ult, boolector_ult, 0);
-  test_is_inv_binary(bzla_is_inv_ult, boolector_ult, 1);
+  test_is_inv_binary(bzla_is_inv_ult, boolector_bv_ult, 0);
+  test_is_inv_binary(bzla_is_inv_ult, boolector_bv_ult, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_slt)
 {
-  test_is_inv_binary(bzla_is_inv_slt, boolector_slt, 0);
-  test_is_inv_binary(bzla_is_inv_slt, boolector_slt, 1);
+  test_is_inv_binary(bzla_is_inv_slt, boolector_bv_slt, 0);
+  test_is_inv_binary(bzla_is_inv_slt, boolector_bv_slt, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_urem)
 {
-  test_is_inv_binary(bzla_is_inv_urem, boolector_urem, 0);
-  test_is_inv_binary(bzla_is_inv_urem, boolector_urem, 1);
+  test_is_inv_binary(bzla_is_inv_urem, boolector_bv_urem, 0);
+  test_is_inv_binary(bzla_is_inv_urem, boolector_bv_urem, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_cond)

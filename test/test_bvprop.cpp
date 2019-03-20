@@ -279,7 +279,7 @@ class TestBvProp : public TestBvDomainCommon
               res_z,
               0,
               0,
-              boolector_concat,
+              boolector_bv_concat,
               0,
               0,
               0,
@@ -580,16 +580,16 @@ class TestBvProp : public TestBvDomainCommon
     s_hi = bzla_bv_to_char(bzla->mm, d->hi);
     s_lo = bzla_bv_to_char(bzla->mm, d->lo);
 
-    d_hi = boolector_const(bzla, s_hi);
-    d_lo = boolector_const(bzla, s_lo);
+    d_hi = boolector_bv_const(bzla, s_hi);
+    d_lo = boolector_bv_const(bzla, s_lo);
 
-    a = boolector_and(bzla, var, d_hi);
-    o = boolector_or(bzla, var, d_lo);
+    a = boolector_bv_and(bzla, var, d_hi);
+    o = boolector_bv_or(bzla, var, d_lo);
 
     ne1 = boolector_ne(bzla, a, var);
     ne2 = boolector_ne(bzla, o, var);
 
-    _or = boolector_or(bzla, ne1, ne2);
+    _or = boolector_bv_or(bzla, ne1, ne2);
 
     boolector_assert(bzla, _or);
 
@@ -623,16 +623,16 @@ class TestBvProp : public TestBvDomainCommon
     s_hi = bzla_bv_to_char(bzla->mm, d->hi);
     s_lo = bzla_bv_to_char(bzla->mm, d->lo);
 
-    d_hi = boolector_const(bzla, s_hi);
-    d_lo = boolector_const(bzla, s_lo);
+    d_hi = boolector_bv_const(bzla, s_hi);
+    d_lo = boolector_bv_const(bzla, s_lo);
 
-    a = boolector_and(bzla, var, d_hi);
-    o = boolector_or(bzla, var, d_lo);
+    a = boolector_bv_and(bzla, var, d_hi);
+    o = boolector_bv_or(bzla, var, d_lo);
 
     eq1 = boolector_eq(bzla, a, var);
     eq2 = boolector_eq(bzla, o, var);
 
-    _and = boolector_and(bzla, eq1, eq2);
+    _and = boolector_bv_and(bzla, eq1, eq2);
 
     boolector_assert(bzla, _and);
 
@@ -731,10 +731,10 @@ class TestBvProp : public TestBvDomainCommon
     boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
     boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, 0);
     bwx = bzla_bvdomain_get_width(d_x);
-    swx = boolector_bitvec_sort(bzla, bwx);
+    swx = boolector_bv_sort(bzla, bwx);
     bwz = bzla_bvdomain_get_width(d_z);
-    swz = boolector_bitvec_sort(bzla, bwz);
-    s1  = boolector_bitvec_sort(bzla, 1);
+    swz = boolector_bv_sort(bzla, bwz);
+    s1  = boolector_bv_sort(bzla, 1);
     x   = boolector_var(bzla, swx, "x");
     z   = boolector_var(bzla, swz, "z");
     y   = 0;
@@ -743,7 +743,7 @@ class TestBvProp : public TestBvDomainCommon
     if (d_y)
     {
       bwy = bzla_bvdomain_get_width(d_y);
-      swy = boolector_bitvec_sort(bzla, bwy);
+      swy = boolector_bv_sort(bzla, bwy);
       y   = boolector_var(bzla, swy, "y");
     }
 
@@ -766,7 +766,7 @@ class TestBvProp : public TestBvDomainCommon
       if (binofun)
       {
         ofun = binofun(bzla, x, y);
-        _not = boolector_not(bzla, ofun);
+        _not = boolector_bv_not(bzla, ofun);
         boolector_assert(bzla, _not);
         boolector_release(bzla, _not);
         boolector_release(bzla, ofun);
@@ -779,7 +779,7 @@ class TestBvProp : public TestBvDomainCommon
     }
     else
     {
-      fun = boolector_slice(bzla, x, hi, lo);
+      fun = boolector_bv_slice(bzla, x, hi, lo);
     }
     eq = boolector_eq(bzla, fun, z);
     boolector_assert(bzla, eq);
@@ -899,7 +899,7 @@ class TestBvProp : public TestBvDomainCommon
                       res_z,
                       0,
                       0,
-                      boolector_srl,
+                      boolector_bv_srl,
                       0,
                       0,
                       0,
@@ -922,7 +922,7 @@ class TestBvProp : public TestBvDomainCommon
                       res_z,
                       0,
                       0,
-                      boolector_sll,
+                      boolector_bv_sll,
                       0,
                       0,
                       0,
@@ -999,7 +999,7 @@ class TestBvProp : public TestBvDomainCommon
                       res_z,
                       0,
                       0,
-                      boolector_srl,
+                      boolector_bv_srl,
                       0,
                       0,
                       0,
@@ -1022,7 +1022,7 @@ class TestBvProp : public TestBvDomainCommon
                       res_z,
                       0,
                       0,
-                      boolector_sll,
+                      boolector_bv_sll,
                       0,
                       0,
                       0,
@@ -1095,20 +1095,20 @@ class TestBvProp : public TestBvDomainCommon
 
           if (op == TEST_BVPROP_AND)
           {
-            boolectorfun = boolector_and;
+            boolectorfun = boolector_bv_and;
             bvpropfun    = bzla_bvprop_and;
             bvfun        = bzla_bv_and;
           }
           else if (op == TEST_BVPROP_OR)
           {
-            boolectorfun = boolector_or;
+            boolectorfun = boolector_bv_or;
             bvpropfun    = bzla_bvprop_or;
             bvfun        = bzla_bv_or;
           }
           else
           {
             ASSERT_EQ(op, TEST_BVPROP_XOR);
-            boolectorfun = boolector_xor;
+            boolectorfun = boolector_bv_xor;
             bvpropfun    = bzla_bvprop_xor;
             bvfun        = bzla_bv_xor;
           }
@@ -1399,7 +1399,7 @@ class TestBvProp : public TestBvDomainCommon
                   0,
                   res_z,
                   0,
-                  boolector_not,
+                  boolector_bv_not,
                   0,
                   0,
                   0,
@@ -1646,7 +1646,7 @@ class TestBvProp : public TestBvDomainCommon
                     0,
                     0,
                     0,
-                    boolector_sext,
+                    boolector_bv_sext,
                     n,
                     0,
                     res);
@@ -1765,8 +1765,8 @@ class TestBvProp : public TestBvDomainCommon
                     res_z,
                     0,
                     0,
-                    boolector_add,
-                    no_overflows ? boolector_uaddo : 0,
+                    boolector_bv_add,
+                    no_overflows ? boolector_bv_uaddo : 0,
                     0,
                     0,
                     0,
@@ -1934,8 +1934,8 @@ class TestBvProp : public TestBvDomainCommon
                     res_z,
                     0,
                     0,
-                    boolector_mul,
-                    no_overflows ? boolector_umulo : 0,
+                    boolector_bv_mul,
+                    no_overflows ? boolector_bv_umulo : 0,
                     0,
                     0,
                     0,
@@ -2359,7 +2359,7 @@ class TestBvProp : public TestBvDomainCommon
                     res_z,
                     0,
                     0,
-                    boolector_udiv,
+                    boolector_bv_udiv,
                     0,
                     0,
                     0,
@@ -2861,7 +2861,7 @@ class TestBvProp : public TestBvDomainCommon
                     res_z,
                     0,
                     0,
-                    boolector_urem,
+                    boolector_bv_urem,
                     0,
                     0,
                     0,
@@ -3233,7 +3233,7 @@ class TestBvProp : public TestBvDomainCommon
                     res_z,
                     0,
                     0,
-                    boolector_ult,
+                    boolector_bv_ult,
                     0,
                     0,
                     0,
