@@ -16,6 +16,8 @@ path=
 
 gmp=no
 
+symfpu=no
+
 lingeling=unknown
 minisat=unknown
 picosat=unknown
@@ -67,6 +69,8 @@ where <option> is one of the following:
   --time-stats      compile with time statistics
 
   --gmp             use gmp for bit-vector implementation
+
+  --symfpu          use SymFPU for FP support
 
 By default all supported SAT solvers available are used and linked.
 If explicitly enabled, configuration will fail if the SAT solver library
@@ -142,6 +146,7 @@ do
 
     --gmp) gmp=yes;;
 
+    --symfpu) symfpu=yes;;
     --no-cadical)   cadical=no;;
     --no-cms)       cms=no;;
     --no-lingeling) lingeling=no;;
@@ -176,6 +181,8 @@ cmake_opts="$CMAKE_OPTS"
 [ -n "$path" ] && cmake_opts="$cmake_opts -DCMAKE_PREFIX_PATH=$path"
 
 [ $gmp = yes ] && cmake_opts="$cmake_opts -DUSE_GMP=ON"
+
+[ $symfpu = yes ] && cmake_opts="$cmake_opts -DUSE_SYMFPU=ON"
 
 [ $cadical = yes ] && cmake_opts="$cmake_opts -DUSE_CADICAL=ON"
 [ $cms = yes ] && cmake_opts="$cmake_opts -DUSE_CMS=ON"

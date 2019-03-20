@@ -43,7 +43,7 @@ function install_include
   if [ -n "$subdir" ]; then
     mkdir -p "${INSTALL_INCLUDE_DIR}/$subdir"
   fi
-  cp "$include" "${INSTALL_INCLUDE_DIR}/$subdir"
+  cp -r "$include" "${INSTALL_INCLUDE_DIR}/$subdir"
 }
 
 function install_bin
