@@ -2204,7 +2204,7 @@ BoolectorNode *boolector_apply(Bzla *bzla,
   :param node: Bit-vector operand.
   :return: Bit-vector with the same bit width as ``node`` incremented by one.
 */
-BoolectorNode *boolector_inc(Bzla *bzla, BoolectorNode *node);
+BoolectorNode *boolector_bv_inc(Bzla *bzla, BoolectorNode *node);
 
 /*!
   Create bit-vector expression that decrements bit-vector ``node`` by one.
@@ -2213,7 +2213,7 @@ BoolectorNode *boolector_inc(Bzla *bzla, BoolectorNode *node);
   :param node: Bit-vector operand.
   :return: Bit-vector with the same bit width as ``node`` decremented by one.
 */
-BoolectorNode *boolector_dec(Bzla *bzla, BoolectorNode *node);
+BoolectorNode *boolector_bv_dec(Bzla *bzla, BoolectorNode *node);
 
 /*------------------------------------------------------------------------*/
 

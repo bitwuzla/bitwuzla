@@ -4238,7 +4238,7 @@ boolector_apply(Bzla *bzla,
 /*------------------------------------------------------------------------*/
 
 BoolectorNode *
-boolector_inc(Bzla *bzla, BoolectorNode *node)
+boolector_bv_inc(Bzla *bzla, BoolectorNode *node)
 {
   BzlaNode *exp, *res;
 
@@ -4254,13 +4254,13 @@ boolector_inc(Bzla *bzla, BoolectorNode *node)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, inc, BZLA_CLONED_EXP(exp));
+  BZLA_CHKCLONE_RES_PTR(res, bv_inc, BZLA_CLONED_EXP(exp));
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_dec(Bzla *bzla, BoolectorNode *node)
+boolector_bv_dec(Bzla *bzla, BoolectorNode *node)
 {
   BzlaNode *exp, *res;
 
@@ -4276,7 +4276,7 @@ boolector_dec(Bzla *bzla, BoolectorNode *node)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, dec, BZLA_CLONED_EXP(exp));
+  BZLA_CHKCLONE_RES_PTR(res, bv_dec, BZLA_CLONED_EXP(exp));
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }

@@ -777,13 +777,13 @@ parse_neg(BzlaBZLAParser *parser, uint32_t width)
 static BoolectorNode *
 parse_inc(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_unary(parser, width, boolector_inc);
+  return parse_unary(parser, width, boolector_bv_inc);
 }
 
 static BoolectorNode *
 parse_dec(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_unary(parser, width, boolector_dec);
+  return parse_unary(parser, width, boolector_bv_dec);
 }
 
 static BoolectorNode *

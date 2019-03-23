@@ -275,7 +275,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_dec:
         assert(line->nargs == 1);
-        node = boolector_dec(bzla, e[0]);
+        node = boolector_bv_dec(bzla, e[0]);
         break;
 
       case BTOR2_TAG_eq:
@@ -295,7 +295,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
 
       case BTOR2_TAG_inc:
         assert(line->nargs == 1);
-        node = boolector_inc(bzla, e[0]);
+        node = boolector_bv_inc(bzla, e[0]);
         break;
 
       case BTOR2_TAG_input:
