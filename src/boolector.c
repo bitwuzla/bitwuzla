@@ -1448,7 +1448,7 @@ boolector_bv_one(Bzla *bzla, BoolectorSort sort)
 }
 
 BoolectorNode *
-boolector_min_signed(Bzla *bzla, BoolectorSort sort)
+boolector_bv_min_signed(Bzla *bzla, BoolectorSort sort)
 {
   BzlaNode *res;
   BzlaSortId s;
@@ -1462,13 +1462,13 @@ boolector_min_signed(Bzla *bzla, BoolectorSort sort)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, min_signed, sort);
+  BZLA_CHKCLONE_RES_PTR(res, bv_min_signed, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_max_signed(Bzla *bzla, BoolectorSort sort)
+boolector_bv_max_signed(Bzla *bzla, BoolectorSort sort)
 {
   BzlaNode *res;
   BzlaSortId s;
@@ -1482,7 +1482,7 @@ boolector_max_signed(Bzla *bzla, BoolectorSort sort)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, max_signed, sort);
+  BZLA_CHKCLONE_RES_PTR(res, bv_max_signed, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }

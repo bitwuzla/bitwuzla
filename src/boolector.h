@@ -776,7 +776,7 @@ BoolectorNode *boolector_bv_one(Bzla *bzla, BoolectorSort sort);
   :return: Bit-vector constant representing the minimum signed value
            of sort ``sort``.
 */
-BoolectorNode *boolector_min_signed(Bzla *bzla, BoolectorSort sort);
+BoolectorNode *boolector_bv_min_signed(Bzla *bzla, BoolectorSort sort);
 
 /*!
   Create bit-vector maximum signed value constant of sort ``sort``.
@@ -786,7 +786,7 @@ BoolectorNode *boolector_min_signed(Bzla *bzla, BoolectorSort sort);
   :return: Bit-vector constant representing the minimum signed value
            of sort ``sort``.
 */
-BoolectorNode *boolector_max_signed(Bzla *bzla, BoolectorSort sort);
+BoolectorNode *boolector_bv_max_signed(Bzla *bzla, BoolectorSort sort);
 
 /*!
   Create bit-vector constant representing the unsigned integer ``u`` of sort
