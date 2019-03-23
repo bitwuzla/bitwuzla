@@ -226,8 +226,10 @@ BzlaSymBV<isSigned>::BzlaSymBV(BzlaNode *node) : d_node(node)
 template <bool isSigned>
 BzlaSymBV<isSigned>::BzlaSymBV(const bwt w, const uint32_t val)
 {
+  assert(s_bzla);
   BzlaSortId s = bzla_sort_bv(s_bzla, w);
   d_node       = bzla_exp_bv_int(s_bzla, val, s);
+  bzla_sort_release(s_bzla, s);
 }
 
 template <bool isSigned>
@@ -239,18 +241,22 @@ BzlaSymBV<isSigned>::BzlaSymBV(const BzlaSymProp &p)
 template <bool isSigned>
 BzlaSymBV<isSigned>::BzlaSymBV(const BzlaSymBV<isSigned> &other)
 {
+  assert(s_bzla);
+  assert(checkNode(other.d_node));
   d_node = bzla_node_copy(s_bzla, other.d_node);
 }
 
 template <bool isSigned>
 BzlaSymBV<isSigned>::BzlaSymBV(const BzlaBitVector *bv)
-    : d_node(bzla_exp_bv_const(s_bzla, bv))
 {
+  assert(s_bzla);
+  d_node = bzla_exp_bv_const(s_bzla, bv);
 }
 
 template <bool isSigned>
 BzlaSymBV<isSigned>::~BzlaSymBV()
 {
+  assert(s_bzla);
   bzla_node_release(s_bzla, d_node);
 }
 
@@ -258,6 +264,7 @@ template <bool isSigned>
 bwt
 BzlaSymBV<isSigned>::getWidth(void) const
 {
+  assert(s_bzla);
   return bzla_node_bv_get_width(s_bzla, d_node);
 }
 
@@ -265,24 +272,39 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::one(const bwt &w)
 {
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  assert(s_bzla);
+  BzlaSortId s            = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n             = bzla_exp_bv_one(s_bzla, s);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  bzla_sort_release(s_bzla, s);
+  return res;
 }
 
 template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::zero(const bwt &w)
 {
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  assert(s_bzla);
+  BzlaSortId s            = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n             = bzla_exp_bv_zero(s_bzla, s);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  bzla_sort_release(s_bzla, s);
+  return res;
 }
 
 template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::allOnes(const bwt &w)
 {
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  assert(s_bzla);
+  BzlaSortId s            = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n             = bzla_exp_bv_ones(s_bzla, s);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  bzla_sort_release(s_bzla, s);
+  return res;
 }
 
 template <bool isSigned>
@@ -303,16 +325,26 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::maxValue(const bwt &w)
 {
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  assert(s_bzla);
+  BzlaSortId s            = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n             = bzla_exp_bv_max_signed(s_bzla, s);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  bzla_sort_release(s_bzla, s);
+  return res;
 }
 
 template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::minValue(const bwt &w)
 {
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  assert(s_bzla);
+  BzlaSortId s            = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n             = bzla_exp_bv_min_signed(s_bzla, s);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  bzla_sort_release(s_bzla, s);
+  return res;
 }
 
 template <bool isSigned>
