@@ -470,8 +470,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator~(void) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_not(s_bzla, d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -479,8 +481,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::increment() const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_inc(s_bzla, d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -488,8 +492,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::decrement() const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_dec(s_bzla, d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
