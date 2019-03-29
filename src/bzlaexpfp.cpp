@@ -503,8 +503,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::signExtendRightShift(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_sra(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -512,8 +514,7 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularLeftShift(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  return *this << op;
 }
 
 template <bool isSigned>
@@ -521,8 +522,7 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularRightShift(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  return *this >> op;
 }
 
 template <bool isSigned>
@@ -530,8 +530,7 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularIncrement() const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  return this->increment();
 }
 
 template <bool isSigned>
@@ -539,8 +538,7 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularDecrement() const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  return this->decrement();
 }
 
 template <bool isSigned>
@@ -548,8 +546,7 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularAdd(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  return *this + op;
 }
 
 template <bool isSigned>
@@ -557,8 +554,7 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularNegate() const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  return -(*this);
 }
 
 template <bool isSigned>
