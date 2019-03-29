@@ -402,8 +402,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator+(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_add(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -411,8 +413,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator-(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_sub(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -420,8 +424,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator*(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_mul(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -429,8 +435,11 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator/(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n = isSigned ? bzla_exp_bv_sdiv(s_bzla, d_node, op.d_node)
+                         : bzla_exp_bv_udiv(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -438,8 +447,11 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator%(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n = isSigned ? bzla_exp_bv_srem(s_bzla, d_node, op.d_node)
+                         : bzla_exp_bv_urem(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -447,8 +459,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator-(void) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_neg(s_bzla, d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
