@@ -220,7 +220,9 @@ class BzlaSymBV
 template <bool isSigned>
 BzlaSymBV<isSigned>::BzlaSymBV(BzlaNode *node) : d_node(node)
 {
+  assert(s_bzla);
   assert(checkNode(node));
+  d_node = bzla_node_copy(s_bzla, node);
 }
 
 template <bool isSigned>
@@ -235,6 +237,7 @@ BzlaSymBV<isSigned>::BzlaSymBV(const bwt w, const uint32_t val)
 template <bool isSigned>
 BzlaSymBV<isSigned>::BzlaSymBV(const BzlaSymProp &p)
 {
+  assert(s_bzla);
   // TODO
 }
 
@@ -311,6 +314,7 @@ template <bool isSigned>
 BzlaSymProp
 BzlaSymBV<isSigned>::isAllOnes() const
 {
+  assert(s_bzla);
   // TODO
 }
 
@@ -318,6 +322,7 @@ template <bool isSigned>
 BzlaSymProp
 BzlaSymBV<isSigned>::isAllZeros() const
 {
+  assert(s_bzla);
   // TODO
 }
 
@@ -351,22 +356,31 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator<<(const BzlaSymBV<isSigned> &op) const
 {
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  assert(s_bzla);
+  BzlaNode *n             = bzla_exp_bv_sll(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator>>(const BzlaSymBV<isSigned> &op) const
 {
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  assert(s_bzla);
+  assert(s_bzla);
+  BzlaNode *n = isSigned ? bzla_exp_bv_sra(s_bzla, d_node, op.d_node)
+                         : bzla_exp_bv_srl(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator|(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -375,6 +389,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator&(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -383,6 +398,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator+(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -391,6 +407,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator-(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -399,6 +416,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator*(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -407,6 +425,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator/(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -415,6 +434,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator%(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -423,6 +443,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator-(void) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -431,6 +452,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator~(void) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -439,6 +461,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::increment() const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -447,6 +470,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::decrement() const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -455,6 +479,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::signExtendRightShift(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -463,6 +488,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularLeftShift(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -471,6 +497,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularRightShift(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -479,6 +506,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularIncrement() const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -487,6 +515,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularDecrement() const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -495,6 +524,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularAdd(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -503,6 +533,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::modularNegate() const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -511,6 +542,7 @@ template <bool isSigned>
 BzlaSymProp
 BzlaSymBV<isSigned>::operator==(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
 }
 
@@ -518,6 +550,7 @@ template <bool isSigned>
 BzlaSymProp
 BzlaSymBV<isSigned>::operator<=(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
 }
 
@@ -525,6 +558,7 @@ template <bool isSigned>
 BzlaSymProp
 BzlaSymBV<isSigned>::operator>=(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
 }
 
@@ -532,6 +566,7 @@ template <bool isSigned>
 BzlaSymProp
 BzlaSymBV<isSigned>::operator<(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
 }
 
@@ -539,6 +574,7 @@ template <bool isSigned>
 BzlaSymProp
 BzlaSymBV<isSigned>::operator>(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
 }
 
@@ -546,6 +582,7 @@ template <bool isSigned>
 BzlaSymBV<true>
 BzlaSymBV<isSigned>::toSigned(void) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -554,6 +591,7 @@ template <bool isSigned>
 BzlaSymBV<false>
 BzlaSymBV<isSigned>::toUnsigned(void) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -562,6 +600,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::extend(bwt extension) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -570,6 +609,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::contract(bwt reduction) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -578,6 +618,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::resize(bwt newSize) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -586,6 +627,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::matchWidth(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -594,6 +636,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::append(const BzlaSymBV<isSigned> &op) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -602,6 +645,7 @@ template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::extract(bwt upper, bwt lower) const
 {
+  assert(s_bzla);
   // TODO
   return BzlaSymBV<isSigned>(1, 0);
 }
@@ -620,6 +664,7 @@ template <bool isSigned>
 BzlaNode *
 BzlaSymBV<isSigned>::fromProposition(BzlaNode *node) const
 {
+  assert(s_bzla);
   assert(checkNode(node));
   // TODO
 }
@@ -628,6 +673,7 @@ template <bool isSigned>
 BzlaNode *
 BzlaSymBV<isSigned>::toProposition(BzlaNode *node) const
 {
+  assert(s_bzla);
   assert(checkNode(node));
   // TODO
 }
