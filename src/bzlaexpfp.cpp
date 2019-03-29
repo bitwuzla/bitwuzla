@@ -368,7 +368,6 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator>>(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  assert(s_bzla);
   BzlaNode *n = isSigned ? bzla_exp_bv_sra(s_bzla, d_node, op.d_node)
                          : bzla_exp_bv_srl(s_bzla, d_node, op.d_node);
   BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
@@ -381,8 +380,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator|(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_or(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -390,8 +391,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::operator&(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_and(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
