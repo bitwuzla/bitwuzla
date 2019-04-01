@@ -13,6 +13,7 @@
 
 #include <limits.h>
 
+#include "bzlaabort.h"
 #include "bzlacore.h"
 #include "bzladbg.h"
 #include "bzlarewrite.h"
@@ -1688,6 +1689,587 @@ bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp)
   result = bzla_exp_bv_sub(bzla, exp, one);
   bzla_node_release(bzla, one);
   return result;
+}
+
+/*------------------------------------------------------------------------*/
+
+BzlaNode *
+bzla_exp_fp_rne(Bzla *bzla)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_rna(Bzla *bzla)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_rtp(Bzla *bzla)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_rtn(Bzla *bzla)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_rtz(Bzla *bzla)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_pos_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_neg_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_pos_inf(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_const(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_abs(Bzla *bzla, BzlaNode *node)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  /// FP STUB
+  (void) node;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_neg(Bzla *bzla, BzlaNode *node)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  /// FP STUB
+  (void) node;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *node)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  /// FP STUB
+  (void) node;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_subnormal(Bzla *bzla, BzlaNode *node)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  /// FP STUB
+  (void) node;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_zero(Bzla *bzla, BzlaNode *node)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  /// FP STUB
+  (void) node;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_inf(Bzla *bzla, BzlaNode *node)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  /// FP STUB
+  (void) node;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_nan(Bzla *bzla, BzlaNode *node)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  /// FP STUB
+  (void) node;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_neg(Bzla *bzla, BzlaNode *node)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  /// FP STUB
+  (void) node;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_is_pos(Bzla *bzla, BzlaNode *node)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  /// FP STUB
+  (void) node;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_min(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_rem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_leq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_geq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_gt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_round_to_int(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_sub(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_div(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_fma(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla == bzla_node_real_addr(e2)->bzla);
+  assert(bzla == bzla_node_real_addr(e3)->bzla);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) e2;
+  (void) e3;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_to_fp(Bzla *bzla, BzlaNode *node, uint32_t eb, uint32_t sb)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  (void) node;
+  (void) eb;
+  (void) sb;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_to_fp_signed(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, uint32_t eb, uint32_t sb)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) eb;
+  (void) sb;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_to_fp_unsigned(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, uint32_t eb, uint32_t sb)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) eb;
+  (void) sb;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_to_fp_real(
+    Bzla *bzla, BzlaNode *node, const char *real, uint32_t eb, uint32_t sb)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(node)->bzla);
+  assert(real);
+  assert(eb);
+  assert(sb);
+  /// FP STUB
+  (void) node;
+  (void) real;
+  (void) eb;
+  (void) sb;
+  return bzla_exp_true(bzla);
+  ////
 }
 
 /*------------------------------------------------------------------------*/
