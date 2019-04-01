@@ -17,7 +17,6 @@ set(libboolector_src_files
   bzladbg.c
   bzladcr.c
   bzlaexp.c
-  bzlaexpfp.cpp
   bzlainvutils.c
   bzlalsutils.c
   bzlamodel.c
@@ -38,6 +37,7 @@ set(libboolector_src_files
   bzlaslvsls.c
   bzlasort.c
   bzlasubst.c
+  bzlasymfpu.cpp
   bzlasynth.c
   bzlatrapi.c
   dumper/bzladumpaig.c
