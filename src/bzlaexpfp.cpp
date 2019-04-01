@@ -107,9 +107,12 @@ class BzlaSymProp
 #endif
 
  public:
-  BzlaSymProp(const BzlaNode *node);
+  BzlaSymProp(BzlaNode *node);
   BzlaSymProp(bool v);
   BzlaSymProp(const BzlaSymProp &other);
+  ~BzlaSymProp();
+
+  static void setBtor(Bzla *bzla) { s_bzla = bzla; }
 
   BzlaSymProp operator!(void) const;
   BzlaSymProp operator&&(const BzlaSymProp &op) const;
@@ -119,7 +122,13 @@ class BzlaSymProp
 
  protected:
   bool checkNode(const BzlaNode *node);
+
+ private:
+  BzlaNode *d_node;
+  static Bzla *s_bzla;
 };
+
+Bzla *BzlaSymProp::s_bzla = nullptr;
 
 /* Bitwuzla wrapper for bit-vector terms. ---------------------------------- */
 template <bool is_signed>
@@ -218,8 +227,93 @@ class BzlaSymBV
 
 /* -------------------------------------------------------------------------- */
 
+BzlaSymProp::BzlaSymProp(BzlaNode *node)
+{
+  assert(s_bzla);
+  assert(checkNode(node));
+  d_node = bzla_node_copy(s_bzla, node);
+}
+
+BzlaSymProp::BzlaSymProp(bool v)
+{
+  assert(s_bzla);
+  d_node = v ? bzla_exp_true(s_bzla) : bzla_exp_false(s_bzla);
+}
+
+BzlaSymProp::BzlaSymProp(const BzlaSymProp &other)
+{
+  assert(s_bzla);
+  assert(checkNode(other.d_node));
+  d_node = bzla_node_copy(s_bzla, other.d_node);
+}
+
+BzlaSymProp::~BzlaSymProp()
+{
+  assert(s_bzla);
+  bzla_node_release(s_bzla, d_node);
+}
+
+BzlaSymProp
+BzlaSymProp::operator!(void) const
+{
+  assert(s_bzla);
+  BzlaNode *n     = bzla_exp_bv_not(s_bzla, d_node);
+  BzlaSymProp res = BzlaSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
+}
+
+BzlaSymProp
+BzlaSymProp::operator&&(const BzlaSymProp &op) const
+{
+  assert(s_bzla);
+  BzlaNode *n     = bzla_exp_bv_and(s_bzla, d_node, op.d_node);
+  BzlaSymProp res = BzlaSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
+}
+
+BzlaSymProp
+BzlaSymProp::operator||(const BzlaSymProp &op) const
+{
+  assert(s_bzla);
+  BzlaNode *n     = bzla_exp_bv_or(s_bzla, d_node, op.d_node);
+  BzlaSymProp res = BzlaSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
+}
+
+BzlaSymProp
+BzlaSymProp::operator==(const BzlaSymProp &op) const
+{
+  assert(s_bzla);
+  BzlaNode *n     = bzla_exp_eq(s_bzla, d_node, op.d_node);
+  BzlaSymProp res = BzlaSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
+}
+
+BzlaSymProp
+BzlaSymProp::operator^(const BzlaSymProp &op) const
+{
+  assert(s_bzla);
+  BzlaNode *n     = bzla_exp_bv_xor(s_bzla, d_node, op.d_node);
+  BzlaSymProp res = BzlaSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
+}
+
+bool
+BzlaSymProp::checkNode(const BzlaNode *node)
+{
+  return bzla_sort_is_bv(node->bzla, bzla_node_get_sort_id(node))
+         && bzla_node_bv_get_width(s_bzla, node) == 1;
+}
+
+/* -------------------------------------------------------------------------- */
+
 template <bool is_signed>
-BzlaSymBV<is_signed>::BzlaSymBV(BzlaNode *node) : d_node(node)
+BzlaSymBV<is_signed>::BzlaSymBV(BzlaNode *node)
 {
   assert(s_bzla);
   assert(checkNode(node));
@@ -315,16 +409,14 @@ template <bool is_signed>
 BzlaSymProp
 BzlaSymBV<is_signed>::isAllOnes() const
 {
-  assert(s_bzla);
-  // TODO
+  return *this == BzlaSymBV<is_signed>::allOnes(this->getWidth());
 }
 
 template <bool is_signed>
 BzlaSymProp
 BzlaSymBV<is_signed>::isAllZeros() const
 {
-  assert(s_bzla);
-  // TODO
+  return *this == BzlaSymBV<is_signed>::zero(this->getWidth());
 }
 
 template <bool is_signed>
@@ -563,7 +655,10 @@ BzlaSymProp
 BzlaSymBV<is_signed>::operator==(const BzlaSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  // TODO
+  BzlaNode *n     = bzla_exp_eq(s_bzla, d_node, op.d_node);
+  BzlaSymProp res = BzlaSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool is_signed>
@@ -571,7 +666,11 @@ BzlaSymProp
 BzlaSymBV<is_signed>::operator<=(const BzlaSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  // TODO
+  BzlaNode *n = is_signed ? bzla_exp_bv_slte(s_bzla, d_node, op.d_node)
+                          : bzla_exp_bv_ulte(s_bzla, d_node, op.d_node);
+  BzlaSymProp res = BzlaSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool is_signed>
@@ -579,7 +678,11 @@ BzlaSymProp
 BzlaSymBV<is_signed>::operator>=(const BzlaSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  // TODO
+  BzlaNode *n = is_signed ? bzla_exp_bv_sgte(s_bzla, d_node, op.d_node)
+                          : bzla_exp_bv_ugte(s_bzla, d_node, op.d_node);
+  BzlaSymProp res = BzlaSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool is_signed>
@@ -587,7 +690,11 @@ BzlaSymProp
 BzlaSymBV<is_signed>::operator<(const BzlaSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  // TODO
+  BzlaNode *n = is_signed ? bzla_exp_bv_slt(s_bzla, d_node, op.d_node)
+                          : bzla_exp_bv_ult(s_bzla, d_node, op.d_node);
+  BzlaSymProp res = BzlaSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool is_signed>
@@ -595,7 +702,11 @@ BzlaSymProp
 BzlaSymBV<is_signed>::operator>(const BzlaSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  // TODO
+  BzlaNode *n = is_signed ? bzla_exp_bv_sgt(s_bzla, d_node, op.d_node)
+                          : bzla_exp_bv_ugt(s_bzla, d_node, op.d_node);
+  BzlaSymProp res = BzlaSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool is_signed>
