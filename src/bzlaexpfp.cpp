@@ -601,18 +601,14 @@ template <bool isSigned>
 BzlaSymBV<true>
 BzlaSymBV<isSigned>::toSigned(void) const
 {
-  assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  return BzlaSymBV<true>(*this);
 }
 
 template <bool isSigned>
 BzlaSymBV<false>
 BzlaSymBV<isSigned>::toUnsigned(void) const
 {
-  assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  return BzlaSymBV<false>(*this);
 }
 
 template <bool isSigned>
@@ -620,8 +616,11 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::extend(bwt extension) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n = isSigned ? bzla_exp_bv_sext(s_bzla, d_node, extension)
+                         : bzla_exp_bv_uext(s_bzla, d_node, extension);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -629,26 +628,30 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::contract(bwt reduction) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  assert(this->getWidth() > reduction);
+  BzlaNode *n =
+      bzla_exp_bv_slice(s_bzla, d_node, this->getWidth - 1 - reduction, 0);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::resize(bwt newSize) const
 {
-  assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  bwt bw = this->getWidth();
+  if (newSize > bw) return this->extend(newSize - bw);
+  if (newSize < bw) return this->contract(bw - newSize);
+  return *this;
 }
 
 template <bool isSigned>
 BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::matchWidth(const BzlaSymBV<isSigned> &op) const
 {
-  assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  assert(this->getWidth() <= op.getWidth());
+  return this->extend(op.getWidth() - this->getWidth());
 }
 
 template <bool isSigned>
@@ -656,8 +659,10 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::append(const BzlaSymBV<isSigned> &op) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  BzlaNode *n             = bzla_exp_bv_concat(s_bzla, d_node, op.d_node);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
@@ -665,8 +670,11 @@ BzlaSymBV<isSigned>
 BzlaSymBV<isSigned>::extract(bwt upper, bwt lower) const
 {
   assert(s_bzla);
-  // TODO
-  return BzlaSymBV<isSigned>(1, 0);
+  assert(upper >= lower);
+  BzlaNode *n             = bzla_exp_bv_slice(s_bzla, d_node, upper, lower);
+  BzlaSymBV<isSigned> res = BzlaSymBV<isSigned>(n);
+  bzla_node_release(s_bzla, n);
+  return res;
 }
 
 template <bool isSigned>
