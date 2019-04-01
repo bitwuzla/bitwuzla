@@ -217,8 +217,8 @@ class BzlaSymBV
   // BzlaNode* BVToBoolNode(BzlaNode* node) const;
 
   bool checkNode(const BzlaNode *node);
-  BzlaNode *fromProposition(BzlaNode *node) const;
-  BzlaNode *toProposition(BzlaNode *node) const;
+  // BzlaNode *fromProposition (BzlaNode *node) const;
+  // BzlaNode *toProposition (BzlaNode *node) const;
 
  private:
   BzlaNode *d_node;
@@ -799,20 +799,20 @@ BzlaSymBV<is_signed>::checkNode(const BzlaNode *node)
 // BzlaNode* BzlaSymBV::boolNodeToBV(BzlaNode* node) const;
 // BzlaNode* BzlaSymBV::BVToBoolNode(BzlaNode* node) const;
 
-template <bool is_signed>
-BzlaNode *
-BzlaSymBV<is_signed>::fromProposition(BzlaNode *node) const
-{
-  assert(s_bzla);
-  assert(checkNode(node));
-  // TODO
-}
-
-template <bool is_signed>
-BzlaNode *
-BzlaSymBV<is_signed>::toProposition(BzlaNode *node) const
-{
-  assert(s_bzla);
-  assert(checkNode(node));
-  // TODO
-}
+// template <bool is_signed>
+// BzlaNode *
+// BzlaSymBV<is_signed>::fromProposition (BzlaNode *node) const
+//{
+//  assert (s_bzla);
+//  assert (checkNode (node));
+//  return node;
+//}
+//
+// template <bool is_signed>
+// BzlaNode *
+// BzlaSymBV<is_signed>::toProposition (BzlaNode *node) const
+//{
+//  assert (s_bzla);
+//  assert (checkNode (node));
+//  return node;
+//}
