@@ -337,10 +337,11 @@ class TestBvProp : public TestMm
            && (!d_c || bzla_bvprop_is_fixed(mm, d_c));
   }
 
-  bool is_false_eq(const char *a, const char *b)
+#if 0
+  bool is_false_eq (const char *a, const char *b)
   {
-    assert(strlen(a) == strlen(b));
-    size_t len = strlen(a);
+    assert (strlen (a) == strlen (b));
+    size_t len = strlen (a);
     for (size_t i = 0; i < len; i++)
     {
       if (a[i] == 'x' || b[i] == 'x')
@@ -355,10 +356,10 @@ class TestBvProp : public TestMm
     return false;
   }
 
-  bool is_true_eq(const char *a, const char *b)
+  bool is_true_eq (const char *a, const char *b)
   {
-    assert(strlen(a) == strlen(b));
-    size_t len = strlen(a);
+    assert (strlen (a) == strlen (b));
+    size_t len = strlen (a);
     for (size_t i = 0; i < len; i++)
     {
       if (a[i] == 'x' && b[i] == 'x')
@@ -375,6 +376,7 @@ class TestBvProp : public TestMm
     }
     return true;
   }
+#endif
 
   /* Create hi for domain from 3-valued bit-vector 'bv'. */
   BzlaBitVector *to_hi(const char *bv) { return to_bv(bv, '1'); }
@@ -415,17 +417,18 @@ class TestBvProp : public TestMm
     return lo;
   }
 
-  bool check_const_bits(BzlaBvDomain *d, const char *expected)
+#if 0
+  bool check_const_bits (BzlaBvDomain *d, const char *expected)
   {
-    assert(bzla_bvprop_is_valid(d_mm, d));
-    size_t len = strlen(expected);
+    assert (bzla_bvprop_is_valid (d_mm, d));
+    size_t len = strlen (expected);
     uint32_t bit_lo, bit_hi;
     bool res = true;
 
     for (size_t i = 0; i < len && res; i++)
     {
-      bit_lo = bzla_bv_get_bit(d->lo, len - 1 - i);
-      bit_hi = bzla_bv_get_bit(d->hi, len - 1 - i);
+      bit_lo = bzla_bv_get_bit (d->lo, len - 1 - i);
+      bit_hi = bzla_bv_get_bit (d->hi, len - 1 - i);
       if (expected[i] == 'x')
       {
         res &= bit_lo != bit_hi;
@@ -437,6 +440,7 @@ class TestBvProp : public TestMm
     }
     return res;
   }
+#endif
 
   bool check_not(BzlaBvDomain *d_x, BzlaBvDomain *d_z)
   {
