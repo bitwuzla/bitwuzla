@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
- *  Copyright (C) 2018 Aina Niemetz.
+ *  Copyright (C) 2018-2019 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -37,14 +37,26 @@ void bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d);
 /* Copy bit-vector domain 'd'. */
 BzlaBvDomain *bzla_bvprop_copy(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
-/* Check whether bit-vector domain is valid, i.e., ~lo | hi == ones. */
+/* Check if bit-vector domain is valid, i.e., ~lo | hi == ones. */
 bool bzla_bvprop_is_valid(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
-/* Check whether bit-vector domain is fixed, i.e., lo == hi */
+/* Check if bit-vector domain is fixed, i.e., lo == hi */
 bool bzla_bvprop_is_fixed(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
-/* Check whether bit-vector domain has some fixed bits. */
+/* Check if bit-vector domain has some fixed bits. */
 bool bzla_bvprop_has_fixed_bits(BzlaMemMgr *mm, const BzlaBvDomain *d);
+
+/* Set bit at given position to fixed value. */
+void bzla_bvprop_fix_bit(const BzlaBvDomain *d, uint32_t pos, bool value);
+
+/* Check if bit at given position is fixed. */
+bool bzla_bvprop_is_fixed_bit(const BzlaBvDomain *d, uint32_t pos);
+
+/* Check if bit at given position is fixed and true. */
+bool bzla_bvprop_is_fixed_bit_true(const BzlaBvDomain *d, uint32_t pos);
+
+/* Check if bit at given position is fixed and false. */
+bool bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos);
 
 /* Prints domain 'd' to stdout. 'print_short' indicates whether 'lo' and 'hi'
  * should be printed separately. */

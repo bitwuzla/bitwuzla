@@ -2293,25 +2293,99 @@ TEST_F(TestBvProp, fixed_domain)
 {
   BzlaBitVector *lo, *hi;
   BzlaBvDomain *d;
+  uint32_t i;
 
   /* check fixed */
   lo = bzla_bv_char_to_bv(d_mm, "0001111");
   hi = bzla_bv_char_to_bv(d_mm, "0001111");
   d  = bzla_bvprop_new(d_mm, lo, hi);
-
   assert(bzla_bvprop_is_fixed(d_mm, d));
+  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  {
+    assert(bzla_bvprop_is_fixed_bit(d, i));
+  }
+  assert(bzla_bvprop_is_fixed_bit_false(d, 6));
+  assert(bzla_bvprop_is_fixed_bit_false(d, 5));
+  assert(bzla_bvprop_is_fixed_bit_false(d, 4));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 3));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 2));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 1));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 0));
   bzla_bv_free(d_mm, lo);
   bzla_bv_free(d_mm, hi);
+  bzla_bvprop_free(d_mm, d);
+
+  d = bzla_bvprop_new_init(d_mm, 7);
+  assert(!bzla_bvprop_is_fixed(d_mm, d));
+  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  {
+    assert(!bzla_bvprop_is_fixed_bit(d, i));
+  }
+  bzla_bvprop_fix_bit(d, 0, false);
+  bzla_bvprop_fix_bit(d, 1, false);
+  bzla_bvprop_fix_bit(d, 2, false);
+  bzla_bvprop_fix_bit(d, 3, true);
+  bzla_bvprop_fix_bit(d, 4, true);
+  bzla_bvprop_fix_bit(d, 5, true);
+  bzla_bvprop_fix_bit(d, 6, true);
+  assert(bzla_bvprop_is_fixed(d_mm, d));
+  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  {
+    assert(bzla_bvprop_is_fixed_bit(d, i));
+  }
+  assert(bzla_bvprop_is_fixed_bit_false(d, 0));
+  assert(bzla_bvprop_is_fixed_bit_false(d, 1));
+  assert(bzla_bvprop_is_fixed_bit_false(d, 2));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 3));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 4));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 5));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 6));
   bzla_bvprop_free(d_mm, d);
 
   /* check not fixed */
   lo = bzla_bv_char_to_bv(d_mm, "0001111");
   hi = bzla_bv_char_to_bv(d_mm, "0001011");
   d  = bzla_bvprop_new(d_mm, lo, hi);
-
   assert(!bzla_bvprop_is_fixed(d_mm, d));
+  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  {
+    assert(i == 2 || bzla_bvprop_is_fixed_bit(d, i));
+  }
+  assert(bzla_bvprop_is_fixed_bit_false(d, 6));
+  assert(bzla_bvprop_is_fixed_bit_false(d, 5));
+  assert(bzla_bvprop_is_fixed_bit_false(d, 4));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 3));
+  assert(!bzla_bvprop_is_fixed_bit(d, 2));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 1));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 0));
   bzla_bv_free(d_mm, lo);
   bzla_bv_free(d_mm, hi);
+  bzla_bvprop_free(d_mm, d);
+
+  d = bzla_bvprop_new_init(d_mm, 7);
+  assert(!bzla_bvprop_is_fixed(d_mm, d));
+  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  {
+    assert(!bzla_bvprop_is_fixed_bit(d, i));
+  }
+  bzla_bvprop_fix_bit(d, 0, false);
+  bzla_bvprop_fix_bit(d, 1, false);
+  bzla_bvprop_fix_bit(d, 2, false);
+  bzla_bvprop_fix_bit(d, 3, true);
+  bzla_bvprop_fix_bit(d, 5, true);
+  bzla_bvprop_fix_bit(d, 6, true);
+  assert(!bzla_bvprop_is_fixed(d_mm, d));
+  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  {
+    assert(i == 4 || bzla_bvprop_is_fixed_bit(d, i));
+  }
+  assert(bzla_bvprop_is_fixed_bit_false(d, 0));
+  assert(bzla_bvprop_is_fixed_bit_false(d, 1));
+  assert(bzla_bvprop_is_fixed_bit_false(d, 2));
+  assert(!bzla_bvprop_is_fixed_bit(d, 4));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 3));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 5));
+  assert(bzla_bvprop_is_fixed_bit_true(d, 6));
   bzla_bvprop_free(d_mm, d);
 }
 

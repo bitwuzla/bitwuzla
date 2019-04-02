@@ -120,6 +120,45 @@ bzla_bvprop_has_fixed_bits(BzlaMemMgr *mm, const BzlaBvDomain *d)
 }
 
 void
+bzla_bvprop_fix_bit(const BzlaBvDomain *d, uint32_t pos, bool value)
+{
+  assert(d);
+  assert(pos < bzla_bv_get_width(d->lo));
+  assert(pos < bzla_bv_get_width(d->hi));
+  bzla_bv_set_bit(d->lo, pos, value);
+  bzla_bv_set_bit(d->hi, pos, value);
+}
+
+bool
+bzla_bvprop_is_fixed_bit(const BzlaBvDomain *d, uint32_t pos)
+{
+  assert(d);
+  assert(pos < bzla_bv_get_width(d->lo));
+  assert(pos < bzla_bv_get_width(d->hi));
+  return bzla_bv_get_bit(d->lo, pos) == bzla_bv_get_bit(d->hi, pos);
+}
+
+bool
+bzla_bvprop_is_fixed_bit_true(const BzlaBvDomain *d, uint32_t pos)
+{
+  assert(d);
+  assert(pos < bzla_bv_get_width(d->lo));
+  assert(pos < bzla_bv_get_width(d->hi));
+  return bzla_bv_get_bit(d->lo, pos)
+         && bzla_bv_get_bit(d->lo, pos) == bzla_bv_get_bit(d->hi, pos);
+}
+
+bool
+bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos)
+{
+  assert(d);
+  assert(pos < bzla_bv_get_width(d->lo));
+  assert(pos < bzla_bv_get_width(d->hi));
+  return !bzla_bv_get_bit(d->lo, pos)
+         && bzla_bv_get_bit(d->lo, pos) == bzla_bv_get_bit(d->hi, pos);
+}
+
+void
 bzla_bvprop_print(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short)
 {
   if (print_short)
