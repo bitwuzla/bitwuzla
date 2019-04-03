@@ -8,6 +8,7 @@
 
 #include "bzlaproputils.h"
 
+#include "bzlabvprop.h"
 #include "bzlainvutils.h"
 #include "bzlaprintmodel.h"
 #include "bzlaslsutils.h"
@@ -3378,6 +3379,36 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   for (;;)
   {
     real_cur = bzla_node_real_addr(cur);
+
+#ifndef NDEBUG
+    if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+    {
+      BzlaPropSolver *slv = BZLA_PROP_SOLVER(bzla);
+      assert(slv->domains);
+      assert(bzla_hashint_map_contains(slv->domains, real_cur->id));
+      BzlaBvDomain *d =
+          bzla_hashint_map_get(slv->domains, real_cur->id)->as_ptr;
+      assert(bzla_bv_get_width(d->hi)
+             == bzla_node_bv_get_width(bzla, real_cur));
+      assert(bzla_bv_get_width(d->lo)
+             == bzla_node_bv_get_width(bzla, real_cur));
+      if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
+      {
+        assert(real_cur->av);
+        uint32_t bw = real_cur->av->width;
+        for (uint32_t j = 0; j < bw; j++)
+        {
+          uint32_t idx = bw - 1 - j;
+          if (bzla_aig_is_true(real_cur->av->aigs[j]))
+            assert(bzla_bvprop_is_fixed_bit_true(d, idx));
+          else if (bzla_aig_is_false(real_cur->av->aigs[j]))
+            assert(bzla_bvprop_is_fixed_bit_false(d, idx));
+          else
+            assert(!bzla_bvprop_is_fixed_bit(d, idx));
+        }
+      }
+    }
+#endif
 
     if (bzla_node_is_bv_var(cur))
     {

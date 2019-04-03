@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2018 Aina Niemetz.
+ *  Copyright (C) 2015-2019 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -11,7 +11,9 @@
 #include <math.h>
 
 #include "bzlaabort.h"
+#include "bzlaaigvec.h"
 #include "bzlabv.h"
+#include "bzlabvprop.h"
 #include "bzlaclone.h"
 #include "bzlacore.h"
 #include "bzladbg.h"
@@ -287,6 +289,7 @@ clone_prop_solver(Bzla *clone, BzlaPropSolver *slv, BzlaNodeMap *exp_map)
   res->roots = bzla_hashint_map_clone(clone->mm, slv->roots, 0, 0);
   res->score =
       bzla_hashint_map_clone(clone->mm, slv->score, bzla_clone_data_as_dbl, 0);
+  // TODO clone const_bits
 
   bzla_proputils_clone_prop_info_stack(
       clone->mm, &slv->toprop, &res->toprop, exp_map);
@@ -305,8 +308,20 @@ delete_prop_solver(BzlaPropSolver *slv)
   assert(slv->bzla);
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
+  BzlaIntHashTableIterator it;
+
   if (slv->score) bzla_hashint_map_delete(slv->score);
   if (slv->roots) bzla_hashint_map_delete(slv->roots);
+
+  if (slv->domains)
+  {
+    bzla_iter_hashint_init(&it, slv->domains);
+    while (bzla_iter_hashint_has_next(&it))
+    {
+      bzla_bvprop_free(slv->bzla->mm, bzla_iter_hashint_next_data(&it)->as_ptr);
+    }
+    bzla_hashint_map_delete(slv->domains);
+  }
 
   assert(BZLA_EMPTY_STACK(slv->toprop));
   BZLA_RELEASE_STACK(slv->toprop);
@@ -315,6 +330,75 @@ delete_prop_solver(BzlaPropSolver *slv)
   BZLA_RELEASE_STACK(slv->prop_path);
 #endif
   BZLA_DELETE(slv->bzla->mm, slv);
+}
+
+static void
+init_prop_domains(Bzla *bzla, BzlaIntHashTable *domains, BzlaNode *root)
+{
+  assert(bzla);
+  assert(domains);
+  assert(root);
+
+  uint32_t i, bw, idx;
+  BzlaNode *cur, *real_cur;
+  BzlaNodePtrStack visit;
+  BzlaIntHashTable *cache;
+  BzlaHashTableData *data;
+  BzlaMemMgr *mm;
+  BzlaAIGVec *av;
+  BzlaBvDomain *domain;
+
+  mm    = bzla->mm;
+  cache = bzla_hashint_map_new(mm);
+  BZLA_INIT_STACK(mm, visit);
+
+  BZLA_PUSH_STACK(visit, root);
+  while (!BZLA_EMPTY_STACK(visit))
+  {
+    cur      = BZLA_POP_STACK(visit);
+    real_cur = bzla_node_real_addr(cur);
+
+    /* We do post order traversal even though it is not strictly necessary for
+     * now, but it will be in the future (as soon as we use the propagators to
+     * init the domains rather than the the AIG layer). */
+    data = bzla_hashint_map_get(cache, real_cur->id);
+    if (!data)
+    {
+      bzla_hashint_map_add(cache, real_cur->id);
+      BZLA_PUSH_STACK(visit, cur);
+      for (i = 0; i < real_cur->arity; i++)
+        BZLA_PUSH_STACK(visit, real_cur->e[i]);
+    }
+    else
+    {
+      if (data->as_int) continue;
+      data->as_int = 1;
+
+      assert(!bzla_hashint_map_contains(domains, real_cur->id));
+      data         = bzla_hashint_map_add(domains, real_cur->id);
+      bw           = bzla_node_bv_get_width(bzla, real_cur);
+      domain       = bzla_bvprop_new_init(mm, bw);
+      data->as_ptr = domain;
+
+      if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
+      {
+        assert(real_cur->av);
+        assert(real_cur->av->width == bw);
+        av = real_cur->av;
+        bw = av->width;
+        for (i = 0; i < bw; i++)
+        {
+          idx = bw - 1 - i;
+          if (bzla_aig_is_true(av->aigs[i]))
+            bzla_bvprop_fix_bit(domain, idx, true);
+          else if (bzla_aig_is_false(av->aigs[i]))
+            bzla_bvprop_fix_bit(domain, idx, false);
+        }
+      }
+    }
+  }
+  bzla_hashint_map_delete(cache);
+  BZLA_RELEASE_STACK(visit);
 }
 
 /* This is an extra function in order to be able to test completeness
@@ -334,11 +418,15 @@ sat_prop_solver_aux(Bzla *bzla)
   BzlaNode *root;
   BzlaPtrHashTable *constraints;
   BzlaPtrHashTableIterator it;
+  BzlaIntHashTableIterator iit;
   BzlaPropSolver *slv;
 
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
   nprops = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
+
+  assert(!slv->domains);
+  slv->domains = bzla_hashint_map_new(bzla->mm);
 
   if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
   {
@@ -353,14 +441,29 @@ sat_prop_solver_aux(Bzla *bzla)
     constraints = bzla->unsynthesized_constraints;
   }
 
-  /* check for constraints occurring in both phases */
+  bzla_iter_hashptr_init(&it, constraints);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    root = bzla_iter_hashptr_next(&it);
+    init_prop_domains(bzla, slv->domains, root);
+  }
+
   bzla_iter_hashptr_init(&it, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&it))
   {
     root = bzla_iter_hashptr_next(&it);
+
+    /* check for constraints occurring in both phases */
     if (bzla_hashptr_table_get(constraints, bzla_node_invert(root))) goto UNSAT;
     if (bzla_hashptr_table_get(bzla->assumptions, bzla_node_invert(root)))
       goto UNSAT;
+
+    /* initialize propagator domains for inverse values / const bits handling */
+    if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
+    {
+      bzla_synthesize_exp(bzla, root, 0);
+    }
+    init_prop_domains(bzla, slv->domains, root);
   }
 
   for (;;)
@@ -461,6 +564,17 @@ DONE:
   {
     bzla_hashint_map_delete(slv->score);
     slv->score = 0;
+  }
+  if (slv->domains)
+  {
+    bzla_iter_hashint_init(&iit, slv->domains);
+    while (bzla_iter_hashint_has_next(&iit))
+    {
+      bzla_bvprop_free(slv->bzla->mm,
+                       bzla_iter_hashint_next_data(&iit)->as_ptr);
+    }
+    bzla_hashint_map_delete(slv->domains);
+    slv->domains = 0;
   }
   bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
   assert(BZLA_EMPTY_STACK(slv->prop_path));

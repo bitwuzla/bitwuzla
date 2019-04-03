@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2018 Aina Niemetz.
+ *  Copyright (C) 2015-2019 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -29,6 +29,10 @@ struct BzlaPropSolver
    *   score(r) + BZLA_PROP_SELECT_CFACT * sqrt (log (selected(r)) / nmoves)
    * if BZLA_OPT_PROP_USE_BANDIT is enabled. */
   BzlaIntHashTable *score;
+
+  /* Map, maintains constant bits.
+   * Maps node (id) to its propagator domain (BzlaBvDomain*). */
+  BzlaIntHashTable *domains;
 
   /* Work stack, maintains entailed propagations that need to be processed
    * with higher priority if BZLA_OPT_PROP_ENTAILED.
