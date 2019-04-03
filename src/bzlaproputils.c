@@ -3338,6 +3338,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
   BzlaBitVector *bve[3], *bvcur, *bvenew, *tmp;
+  BzlaOption opt_prop_prob_use_inv_value;
   int32_t (*select_path)(Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector **);
   BzlaBitVector *(*compute_value)(
       Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector *, int32_t);
@@ -3350,6 +3351,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   *input      = 0;
   *assignment = 0;
   nprops      = 0;
+
+  opt_prop_prob_use_inv_value =
+      bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE);
 
 #ifndef NBZLALOG
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
@@ -3450,8 +3454,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       /* we either select a consistent or inverse value
        * as path assignment, depending on the given probability p
        * -> if b then inverse else consistent */
-      b = bzla_rng_pick_with_prob(
-          &bzla->rng, bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE));
+      b = bzla_rng_pick_with_prob(&bzla->rng, opt_prop_prob_use_inv_value);
 #ifndef NBZLALOG
       if (!b) ncons += 1;
 #endif
