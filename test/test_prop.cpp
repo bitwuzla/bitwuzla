@@ -28,10 +28,12 @@ class TestProp : public TestBzla
   void SetUp() override
   {
     TestBzla::SetUp();
+
     d_bzla->slv       = bzla_new_prop_solver(d_bzla);
     d_bzla->slv->bzla = d_bzla;
     d_mm              = d_bzla->mm;
     d_rng             = &d_bzla->rng;
+    d_domains         = BZLA_PROP_SOLVER(d_bzla)->domains;
 
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE, 1000);
@@ -46,9 +48,6 @@ class TestProp : public TestBzla
     // bzla_opt_set (d_bzla, BZLA_OPT_LOGLEVEL, 2);
   }
 
-  BzlaMemMgr *d_mm = nullptr;
-  BzlaRNG *d_rng   = nullptr;
-
   void prop_complete_binary_eidx(
       uint32_t n,
       int32_t eidx,
@@ -60,8 +59,12 @@ class TestProp : public TestBzla
       BzlaBitVector *(*create_bv)(BzlaMemMgr *,
                                   const BzlaBitVector *,
                                   const BzlaBitVector *),
-      BzlaBitVector *(*inv_bv)(
-          Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector *, int32_t))
+      BzlaBitVector *(*inv_bv)(Bzla *,
+                               BzlaNode *,
+                               BzlaBitVector *,
+                               BzlaBitVector *,
+                               int32_t,
+                               BzlaIntHashTable *) )
   {
 #ifndef NDEBUG
     int32_t i, idx, sat_res;
@@ -90,18 +93,21 @@ class TestProp : public TestBzla
     bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[eidx], bvetmp[eidx]);
     bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, exp, bvexptmp);
 
-    // printf ("eidx %d bvetmp[0] %s bvetmp[1] %s\n", eidx, bzla_bv_to_char
-    // (d_mm, bvetmp[0]), bzla_bv_to_char (d_mm, bvetmp[1]));
+    // printf ("eidx %d bvetmp[0] %s bvetmp[1] %s target %s\n",
+    //        eidx,
+    //        bzla_bv_to_char (d_mm, bvetmp[0]),
+    //        bzla_bv_to_char (d_mm, bvetmp[1]),
+    //        bzla_bv_to_char (d_mm, bvexp));
     /* -> first test local completeness  */
     /* we must find a solution within n move(s) */
-    res[eidx] = inv_bv(d_bzla, exp, bvexp, bve, eidx);
-    ASSERT_NE(res[eidx], nullptr);
+    res[eidx] = inv_bv(d_bzla, exp, bvexp, bve, eidx, d_domains);
+    assert(res[eidx]);
     res[idx] = n == 1 ? bzla_bv_copy(d_mm, bve)
-                      : inv_bv(d_bzla, exp, bvexp, res[eidx], idx);
-    ASSERT_NE(res[idx], nullptr);
+                      : inv_bv(d_bzla, exp, bvexp, res[eidx], idx, d_domains);
+    assert(res[idx]);
     /* Note: this is also tested within the inverse function(s) */
     tmp = create_bv(d_mm, res[0], res[1]);
-    ASSERT_EQ(bzla_bv_compare(tmp, bvexp), 0);
+    assert(!bzla_bv_compare(tmp, bvexp));
     bzla_bv_free(d_mm, tmp);
     bzla_bv_free(d_mm, res[0]);
     bzla_bv_free(d_mm, res[1]);
@@ -110,14 +116,14 @@ class TestProp : public TestBzla
     {
       for (i = 0, res[eidx] = 0; i < TEST_PROP_COMPLETE_N_TESTS; i++)
       {
-        res[eidx] = inv_bv(d_bzla, exp, bvexp, bve, eidx);
-        ASSERT_NE(res[eidx], nullptr);
+        res[eidx] = inv_bv(d_bzla, exp, bvexp, bve, eidx, d_domains);
+        assert(res[eidx]);
         if (!bzla_bv_compare(res[eidx], bvres)) break;
         bzla_bv_free(d_mm, res[eidx]);
         res[eidx] = nullptr;
       }
-      ASSERT_NE(res[eidx], nullptr);
-      ASSERT_EQ(bzla_bv_compare(res[eidx], bvres), 0);
+      assert(res[eidx]);
+      assert(!bzla_bv_compare(res[eidx], bvres));
       bzla_bv_free(d_mm, res[eidx]);
     }
 
@@ -140,10 +146,10 @@ class TestProp : public TestBzla
     bzla_node_release(d_bzla, e[1]);
     bzla_sort_release(d_bzla, sort);
     sat_res = sat_prop_solver_aux(d_bzla);
-    ASSERT_EQ(sat_res, BZLA_RESULT_SAT);
-    // printf ("moves %u n %u\n", ((BzlaPropSolver *) g_btor->slv)->stats.moves,
+    assert(sat_res == BZLA_RESULT_SAT);
+    // printf ("moves %u n %u\n", ((BzlaPropSolver *) d_bzla->slv)->stats.moves,
     // n);
-    ASSERT_LE(((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
+    assert(((BzlaPropSolver *) d_bzla->slv)->stats.moves <= n);
     bzla_reset_incremental_usage(d_bzla);
 #else
     (void) n;
@@ -158,14 +164,19 @@ class TestProp : public TestBzla
 #endif
   }
 
-  void prop_complete_binary(
-      uint32_t n,
-      BzlaNode *(*create_exp)(Bzla *, BzlaNode *, BzlaNode *),
-      BzlaBitVector *(*create_bv)(BzlaMemMgr *,
-                                  const BzlaBitVector *,
-                                  const BzlaBitVector *),
-      BzlaBitVector *(*inv_bv)(
-          Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector *, int32_t))
+  void prop_complete_binary(uint32_t n,
+                            BzlaNode *(*create_exp)(Bzla *,
+                                                    BzlaNode *,
+                                                    BzlaNode *),
+                            BzlaBitVector *(*create_bv)(BzlaMemMgr *,
+                                                        const BzlaBitVector *,
+                                                        const BzlaBitVector *),
+                            BzlaBitVector *(*inv_bv)(Bzla *,
+                                                     BzlaNode *,
+                                                     BzlaBitVector *,
+                                                     BzlaBitVector *,
+                                                     int32_t,
+                                                     BzlaIntHashTable *) )
   {
     uint32_t bw;
     uint64_t i, j, k;
@@ -197,6 +208,10 @@ class TestProp : public TestBzla
       bzla_bv_free(d_mm, bve[0]);
     }
   }
+
+  BzlaMemMgr *d_mm            = nullptr;
+  BzlaRNG *d_rng              = nullptr;
+  BzlaIntHashTable *d_domains = nullptr;
 };
 
 /*------------------------------------------------------------------------*/
@@ -380,7 +395,7 @@ TEST_F(TestProp, complete_slice)
 
           /* -> first test local completeness
            *    we must find a solution within one move */
-          res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0);
+          res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0, d_domains);
           ASSERT_NE(res, nullptr);
           /* Note: this is also tested within inverse function */
           tmp = bzla_bv_slice(d_mm, res, up, lo);
@@ -390,7 +405,7 @@ TEST_F(TestProp, complete_slice)
           /* try to find exact given solution */
           for (k = 0, res = 0; k < TEST_PROP_COMPLETE_N_TESTS; k++)
           {
-            res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0);
+            res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0, d_domains);
             ASSERT_NE(res, nullptr);
             if (!bzla_bv_compare(res, bve)) break;
             bzla_bv_free(d_mm, res);

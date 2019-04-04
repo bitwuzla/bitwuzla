@@ -103,6 +103,21 @@ struct BzlaPropSolver
     uint32_t inv_slice;
     uint32_t inv_cond;
 
+    /* Number of calls to inverse value computation functions that fail
+     * (can only occur with propagator domains). */
+    uint32_t inv_add_conflicts;
+    uint32_t inv_and_conflicts;
+    uint32_t inv_eq_conflicts;
+    uint32_t inv_ult_conflicts;
+    uint32_t inv_sll_conflicts;
+    uint32_t inv_srl_conflicts;
+    uint32_t inv_mul_conflicts;
+    uint32_t inv_udiv_conflicts;
+    uint32_t inv_urem_conflicts;
+    uint32_t inv_concat_conflicts;
+    uint32_t inv_slice_conflicts;
+    uint32_t inv_cond_conflicts;
+
     /* Number of calls to consistent value computation functions. */
     uint32_t cons_add;
     uint32_t cons_and;

@@ -10,6 +10,7 @@
 
 extern "C" {
 #include "bzlabv.h"
+#include "bzlabvprop.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
 #include "bzlanode.h"
@@ -33,6 +34,7 @@ class TestPropInv : public TestBzla
     d_bzla->slv->bzla = d_bzla;
     d_mm              = d_bzla->mm;
     d_rng             = &d_bzla->rng;
+    d_domains         = BZLA_PROP_SOLVER(d_bzla)->domains;
 
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
     bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
@@ -47,23 +49,46 @@ class TestPropInv : public TestBzla
     bzla_model_generate(d_bzla, d_bzla->bv_model, d_bzla->fun_model, 0);
   }
 
-  void check_result(BzlaBitVector *(*inv_fun)(Bzla *,
-                                              BzlaNode *,
-                                              BzlaBitVector *,
-                                              BzlaBitVector *,
-                                              int32_t eidx),
+  void check_result(BzlaBitVector *(*inv_fun_bv)(Bzla *,
+                                                 BzlaNode *,
+                                                 BzlaBitVector *,
+                                                 BzlaBitVector *,
+                                                 int32_t eidx,
+                                                 BzlaIntHashTable *),
+                    BzlaBitVector *(*inv_fun_bvprop)(Bzla *,
+                                                     BzlaNode *,
+                                                     BzlaBitVector *,
+                                                     BzlaBitVector *,
+                                                     int32_t eidx,
+                                                     BzlaIntHashTable *),
                     BzlaNode *exp,
                     BzlaBitVector *bve,
                     BzlaBitVector *bvn,
                     BzlaBitVector *bvres,
-                    uint32_t eidx)
+                    uint32_t eidx,
+                    bool use_domains)
   {
     uint64_t k;
     BzlaBitVector *res;
+    BzlaIntHashTableIterator iit;
+
+    if (use_domains)
+    {
+      assert(!d_domains);
+      d_domains = bzla_hashint_map_new(d_bzla->mm);
+      init_prop_domains(d_bzla, d_domains, exp);
+    }
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
-      res = inv_fun(d_bzla, exp, bvn, bve, eidx);
+      if (use_domains)
+      {
+        res = inv_fun_bvprop(d_bzla, exp, bvn, bve, eidx, d_domains);
+      }
+      else
+      {
+        res = inv_fun_bv(d_bzla, exp, bvn, bve, eidx, d_domains);
+      }
       ASSERT_NE(res, nullptr);
       if (!bzla_bv_compare(res, bvres)) break;
       bzla_bv_free(d_mm, res);
@@ -72,17 +97,38 @@ class TestPropInv : public TestBzla
     ASSERT_NE(res, nullptr);
     ASSERT_EQ(bzla_bv_compare(res, bvres), 0);
     bzla_bv_free(d_mm, res);
+
+    if (use_domains)
+    {
+      bzla_iter_hashint_init(&iit, d_domains);
+      while (bzla_iter_hashint_has_next(&iit))
+      {
+        bzla_bvprop_free(d_mm,
+                         static_cast<BzlaBvDomain *>(
+                             bzla_iter_hashint_next_data(&iit)->as_ptr));
+      }
+      bzla_hashint_map_delete(d_domains);
+      d_domains = nullptr;
+    }
   }
 
   void check_binary(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              const BzlaBitVector *),
-                    BzlaBitVector *(*inv_fun)(Bzla *,
-                                              BzlaNode *,
-                                              BzlaBitVector *,
-                                              BzlaBitVector *,
-                                              int32_t eidx))
+                    BzlaBitVector *(*inv_fun_bv)(Bzla *,
+                                                 BzlaNode *,
+                                                 BzlaBitVector *,
+                                                 BzlaBitVector *,
+                                                 int32_t eidx,
+                                                 BzlaIntHashTable *),
+                    BzlaBitVector *(*inv_fun_bvprop)(Bzla *,
+                                                     BzlaNode *,
+                                                     BzlaBitVector *,
+                                                     BzlaBitVector *,
+                                                     int32_t eidx,
+                                                     BzlaIntHashTable *),
+                    bool use_domains)
   {
     uint32_t bw;
     uint64_t i, j;
@@ -104,8 +150,22 @@ class TestPropInv : public TestBzla
       {
         bve[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         bvexp  = bv_fun(d_mm, bve[0], bve[1]);
-        check_result(inv_fun, exp, bve[0], bvexp, bve[1], 1);
-        check_result(inv_fun, exp, bve[1], bvexp, bve[0], 0);
+        check_result(inv_fun_bv,
+                     inv_fun_bvprop,
+                     exp,
+                     bve[0],
+                     bvexp,
+                     bve[1],
+                     1,
+                     use_domains);
+        check_result(inv_fun_bv,
+                     inv_fun_bvprop,
+                     exp,
+                     bve[1],
+                     bvexp,
+                     bve[0],
+                     0,
+                     use_domains);
         bzla_bv_free(d_mm, bve[1]);
         bzla_bv_free(d_mm, bvexp);
       }
@@ -120,11 +180,19 @@ class TestPropInv : public TestBzla
                    BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                             const BzlaBitVector *,
                                             const BzlaBitVector *),
-                   BzlaBitVector *(*inv_fun)(Bzla *,
-                                             BzlaNode *,
-                                             BzlaBitVector *,
-                                             BzlaBitVector *,
-                                             int32_t eidx))
+                   BzlaBitVector *(*inv_fun_bv)(Bzla *,
+                                                BzlaNode *,
+                                                BzlaBitVector *,
+                                                BzlaBitVector *,
+                                                int32_t eidx,
+                                                BzlaIntHashTable *),
+                   BzlaBitVector *(*inv_fun_bvprop)(Bzla *,
+                                                    BzlaNode *,
+                                                    BzlaBitVector *,
+                                                    BzlaBitVector *,
+                                                    int32_t eidx,
+                                                    BzlaIntHashTable *),
+                   bool use_domains)
   {
     uint32_t bw;
     uint64_t i, j;
@@ -146,8 +214,22 @@ class TestPropInv : public TestBzla
       {
         bve[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         bvexp  = bv_fun(d_mm, bve[0], bve[1]);
-        check_result(inv_fun, exp, bve[0], bvexp, bve[1], 1);
-        check_result(inv_fun, exp, bve[1], bvexp, bve[0], 0);
+        check_result(inv_fun_bv,
+                     inv_fun_bvprop,
+                     exp,
+                     bve[0],
+                     bvexp,
+                     bve[1],
+                     1,
+                     use_domains);
+        check_result(inv_fun_bv,
+                     inv_fun_bvprop,
+                     exp,
+                     bve[1],
+                     bvexp,
+                     bve[0],
+                     0,
+                     use_domains);
         bzla_bv_free(d_mm, bve[1]);
         bzla_bv_free(d_mm, bvexp);
       }
@@ -191,21 +273,21 @@ class TestPropInv : public TestBzla
         {
         PROP_INV_CONF_AND_TESTS:
           /* prop engine: all conflicts are treated as fixable */
-          res = inv_and_bv(d_bzla, _and, bvand, bve[1], 0);
+          res = inv_and_bv(d_bzla, _and, bvand, bve[1], 0, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          res = inv_and_bv(d_bzla, _and, bvand, bve[0], 1);
+          res = inv_and_bv(d_bzla, _and, bvand, bve[0], 1, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          res = inv_and_bv(d_bzla, cand[0], bvand, bve[0], 1);
+          res = inv_and_bv(d_bzla, cand[0], bvand, bve[0], 1, d_domains);
           if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
           {
             ASSERT_EQ(res, nullptr);
@@ -219,7 +301,7 @@ class TestPropInv : public TestBzla
             bzla_bv_free(d_mm, tmp2);
           }
 
-          res = inv_and_bv(d_bzla, cand[1], bvand, bve[1], 0);
+          res = inv_and_bv(d_bzla, cand[1], bvand, bve[1], 0, d_domains);
           if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
           {
             ASSERT_EQ(res, nullptr);
@@ -290,13 +372,13 @@ class TestPropInv : public TestBzla
   PROP_INV_CONF_ULT_TESTS:
     /* 1...1 < e[1] */
     bve = bzla_bv_ones(d_mm, bw);
-    res = inv_ult_bv(d_bzla, ult, bvult, bve, 1);
+    res = inv_ult_bv(d_bzla, ult, bvult, bve, 1, d_domains);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
     ce   = bzla_exp_bv_const(d_bzla, bve);
     cult = bzla_exp_bv_ult(d_bzla, ce, e[1]);
-    res  = inv_ult_bv(d_bzla, cult, bvult, bve, 1);
+    res  = inv_ult_bv(d_bzla, cult, bvult, bve, 1, d_domains);
     if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
     {
       ASSERT_EQ(res, nullptr);
@@ -312,13 +394,13 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, bve);
     /* e[0] < 0 */
     bve = bzla_bv_new(d_mm, bw);
-    res = inv_ult_bv(d_bzla, ult, bvult, bve, 0);
+    res = inv_ult_bv(d_bzla, ult, bvult, bve, 0, d_domains);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
     ce   = bzla_exp_bv_const(d_bzla, bve);
     cult = bzla_exp_bv_ult(d_bzla, e[0], ce);
-    res  = inv_ult_bv(d_bzla, cult, bvult, bve, 0);
+    res  = inv_ult_bv(d_bzla, cult, bvult, bve, 0, d_domains);
     if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
     {
       ASSERT_EQ(res, nullptr);
@@ -973,11 +1055,11 @@ class TestPropInv : public TestBzla
       bve   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       ce    = bzla_exp_bv_const(d_bzla, bve);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      res   = inv_urem_bv(d_bzla, urem, bvurem, bve, 1);
+      res   = inv_urem_bv(d_bzla, urem, bvurem, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
-      res = inv_urem_bv(d_bzla, curem, bvurem, bve, 1);
+      res = inv_urem_bv(d_bzla, curem, bvurem, bve, 1, d_domains);
       if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
       {
         ASSERT_EQ(res, nullptr);
@@ -1005,10 +1087,10 @@ class TestPropInv : public TestBzla
       bzla_bv_free(d_mm, tmp);
       ce    = bzla_exp_bv_const(d_bzla, bve);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      res   = inv_urem_bv(d_bzla, urem, bvurem, bve, 1);
+      res   = inv_urem_bv(d_bzla, urem, bvurem, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      res = inv_urem_bv(d_bzla, curem, bvurem, bve, 1);
+      res = inv_urem_bv(d_bzla, curem, bvurem, bve, 1, d_domains);
       if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
       {
         ASSERT_EQ(res, nullptr);
@@ -1039,10 +1121,10 @@ class TestPropInv : public TestBzla
       bzla_bv_free(d_mm, tmp2);
       ce    = bzla_exp_bv_const(d_bzla, bve);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      res   = inv_urem_bv(d_bzla, urem, bvurem, bve, 1);
+      res   = inv_urem_bv(d_bzla, urem, bvurem, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      res = inv_urem_bv(d_bzla, curem, bvurem, bve, 1);
+      res = inv_urem_bv(d_bzla, curem, bvurem, bve, 1, d_domains);
       if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
       {
         ASSERT_EQ(res, nullptr);
@@ -1068,11 +1150,11 @@ class TestPropInv : public TestBzla
       bve   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
       ce    = bzla_exp_bv_const(d_bzla, bve);
       curem = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      res   = inv_urem_bv(d_bzla, urem, bvurem, bve, 0);
+      res   = inv_urem_bv(d_bzla, urem, bvurem, bve, 0, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(!bzla_bv_compare(res, bvurem));
       bzla_bv_free(d_mm, res);
-      res = inv_urem_bv(d_bzla, curem, bvurem, bve, 0);
+      res = inv_urem_bv(d_bzla, curem, bvurem, bve, 0, d_domains);
       if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
       {
         ASSERT_EQ(res, nullptr);
@@ -1097,10 +1179,10 @@ class TestPropInv : public TestBzla
       bve    = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvurem);
       ce     = bzla_exp_bv_const(d_bzla, bve);
       curem  = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      res    = inv_urem_bv(d_bzla, urem, bvurem, bve, 0);
+      res    = inv_urem_bv(d_bzla, urem, bvurem, bve, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      res = inv_urem_bv(d_bzla, curem, bvurem, bve, 0);
+      res = inv_urem_bv(d_bzla, curem, bvurem, bve, 0, d_domains);
       if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
       {
         ASSERT_EQ(res, nullptr);
@@ -1191,12 +1273,13 @@ class TestPropInv : public TestBzla
       cconcat[1] = bzla_exp_bv_concat(d_bzla, e[0], ce[1]);
       for (j = 0; j < 2; j++)
       {
-        res = inv_concat_bv(d_bzla, concat, bvconcat, bve[j ? 0 : 1], j);
+        res = inv_concat_bv(
+            d_bzla, concat, bvconcat, bve[j ? 0 : 1], j, d_domains);
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
         res = inv_concat_bv(
-            d_bzla, cconcat[j ? 0 : 1], bvconcat, bve[j ? 0 : 1], j);
+            d_bzla, cconcat[j ? 0 : 1], bvconcat, bve[j ? 0 : 1], j, d_domains);
         if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
         {
           ASSERT_EQ(res, nullptr);
@@ -1240,8 +1323,9 @@ class TestPropInv : public TestBzla
 #endif
   }
 
-  BzlaMemMgr *d_mm = nullptr;
-  BzlaRNG *d_rng   = nullptr;
+  BzlaMemMgr *d_mm            = nullptr;
+  BzlaRNG *d_rng              = nullptr;
+  BzlaIntHashTable *d_domains = nullptr;
 
  private:
   void check_conf_mul_result(BzlaNode *mul,
@@ -1257,13 +1341,13 @@ class TestPropInv : public TestBzla
     ce[1]   = bzla_exp_bv_const(d_bzla, bve);
     cmul[0] = bzla_exp_bv_mul(d_bzla, ce[0], e[1]);
     cmul[1] = bzla_exp_bv_mul(d_bzla, e[0], ce[1]);
-    res     = inv_mul_bv(d_bzla, mul, bvmul, bve, 0);
+    res     = inv_mul_bv(d_bzla, mul, bvmul, bve, 0, d_domains);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    res = inv_mul_bv(d_bzla, mul, bvmul, bve, 1);
+    res = inv_mul_bv(d_bzla, mul, bvmul, bve, 1, d_domains);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    res = inv_mul_bv(d_bzla, cmul[1], bvmul, bve, 0);
+    res = inv_mul_bv(d_bzla, cmul[1], bvmul, bve, 0, d_domains);
     ASSERT_TRUE(
         (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS && !res)
         || (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) != BZLA_ENGINE_SLS && res));
@@ -1275,7 +1359,7 @@ class TestPropInv : public TestBzla
       }
       bzla_bv_free(d_mm, res);
     }
-    res = inv_mul_bv(d_bzla, cmul[0], bvmul, bve, 1);
+    res = inv_mul_bv(d_bzla, cmul[0], bvmul, bve, 1, d_domains);
     ASSERT_TRUE(
         (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS && !res)
         || (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) != BZLA_ENGINE_SLS && res));
@@ -1313,11 +1397,11 @@ class TestPropInv : public TestBzla
     {
       ce    = bzla_exp_bv_const(d_bzla, bve);
       cudiv = bzla_exp_bv_udiv(d_bzla, ce, e[1]);
-      res   = inv_udiv_bv(d_bzla, udiv, bvudiv, bve, 1);
+      res   = inv_udiv_bv(d_bzla, udiv, bvudiv, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, bvudiv));
       bzla_bv_free(d_mm, res);
-      res = inv_udiv_bv(d_bzla, cudiv, bvudiv, bve, 1);
+      res = inv_udiv_bv(d_bzla, cudiv, bvudiv, bve, 1, d_domains);
       if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
       {
         ASSERT_EQ(res, nullptr);
@@ -1335,10 +1419,10 @@ class TestPropInv : public TestBzla
     {
       ce    = bzla_exp_bv_const(d_bzla, bve);
       cudiv = bzla_exp_bv_udiv(d_bzla, e[0], ce);
-      res   = inv_udiv_bv(d_bzla, udiv, bvudiv, bve, 0);
+      res   = inv_udiv_bv(d_bzla, udiv, bvudiv, bve, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      res = inv_udiv_bv(d_bzla, cudiv, bvudiv, bve, 0);
+      res = inv_udiv_bv(d_bzla, cudiv, bvudiv, bve, 0, d_domains);
       ASSERT_TRUE(
           (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS && !res)
           || (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) != BZLA_ENGINE_SLS && res));
@@ -1363,7 +1447,8 @@ class TestPropInv : public TestBzla
                                                   BzlaNode *,
                                                   BzlaBitVector *,
                                                   BzlaBitVector *,
-                                                  int32_t eidx),
+                                                  int32_t eidx,
+                                                  BzlaIntHashTable *),
                         const char *ve,
                         const char *vshift,
                         uint64_t rvalmax)
@@ -1378,11 +1463,11 @@ class TestPropInv : public TestBzla
     if (eidx)
     {
       cshift = exp_fun(d_bzla, ce, e[1]);
-      res    = inv_fun(d_bzla, shift, bvshift, bve, 1);
+      res    = inv_fun(d_bzla, shift, bvshift, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
-      res = inv_fun(d_bzla, cshift, bvshift, bve, 1);
+      res = inv_fun(d_bzla, cshift, bvshift, bve, 1, d_domains);
       if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
       {
         ASSERT_EQ(res, nullptr);
@@ -1397,10 +1482,10 @@ class TestPropInv : public TestBzla
     else
     {
       cshift = exp_fun(d_bzla, e[0], ce);
-      res    = inv_fun(d_bzla, shift, bvshift, bve, 0);
+      res    = inv_fun(d_bzla, shift, bvshift, bve, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      res = inv_fun(d_bzla, cshift, bvshift, bve, 0);
+      res = inv_fun(d_bzla, cshift, bvshift, bve, 0, d_domains);
       if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
       {
         ASSERT_EQ(res, nullptr);
@@ -1431,70 +1516,77 @@ class TestPropInv : public TestBzla
 TEST_F(TestPropInv, complete_add)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_add, bzla_bv_add, inv_add_bv);
+  check_binary(bzla_exp_bv_add, bzla_bv_add, inv_add_bv, inv_add_bvprop, false);
+  check_binary(bzla_exp_bv_add, bzla_bv_add, inv_add_bv, inv_add_bvprop, true);
 #endif
 }
 
 TEST_F(TestPropInv, complete_and)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_and, bzla_bv_and, inv_and_bv);
+  check_binary(bzla_exp_bv_and, bzla_bv_and, inv_and_bv, inv_and_bvprop, false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_eq)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_eq, bzla_bv_eq, inv_eq_bv);
+  check_binary(bzla_exp_eq, bzla_bv_eq, inv_eq_bv, inv_eq_bvprop, false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_ult)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_ult, bzla_bv_ult, inv_ult_bv);
+  check_binary(bzla_exp_bv_ult, bzla_bv_ult, inv_ult_bv, inv_ult_bvprop, false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_sll)
 {
 #ifndef NDEBUG
-  check_shift(bzla_exp_bv_sll, bzla_bv_sll, inv_sll_bv);
+  check_shift(bzla_exp_bv_sll, bzla_bv_sll, inv_sll_bv, inv_sll_bvprop, false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_srl)
 {
 #ifndef NDEBUG
-  check_shift(bzla_exp_bv_srl, bzla_bv_srl, inv_srl_bv);
+  check_shift(bzla_exp_bv_srl, bzla_bv_srl, inv_srl_bv, inv_srl_bvprop, false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_mul)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_mul, bzla_bv_mul, inv_mul_bv);
+  check_binary(bzla_exp_bv_mul, bzla_bv_mul, inv_mul_bv, inv_mul_bvprop, false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_udiv)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_udiv, bzla_bv_udiv, inv_udiv_bv);
+  check_binary(
+      bzla_exp_bv_udiv, bzla_bv_udiv, inv_udiv_bv, inv_udiv_bvprop, false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_urem)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_urem, bzla_bv_urem, inv_urem_bv);
+  check_binary(
+      bzla_exp_bv_urem, bzla_bv_urem, inv_urem_bv, inv_urem_bvprop, false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_concat)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_concat, bzla_bv_concat, inv_concat_bv);
+  check_binary(bzla_exp_bv_concat,
+               bzla_bv_concat,
+               inv_concat_bv,
+               inv_concat_bvprop,
+               false);
 #endif
 }
 
@@ -1523,7 +1615,7 @@ TEST_F(TestPropInv, complete_slice)
         bvexp = bzla_bv_slice(d_mm, bve, up, lo);
         for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
         {
-          res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0);
+          res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0, d_domains);
           ASSERT_NE(res, nullptr);
           if (!bzla_bv_compare(res, bve)) break;
           bzla_bv_free(d_mm, res);

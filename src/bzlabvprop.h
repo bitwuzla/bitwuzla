@@ -64,6 +64,13 @@ bool bzla_bvprop_is_fixed_bit_true(const BzlaBvDomain *d, uint32_t pos);
 /* Check if bit at given position is fixed and false. */
 bool bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos);
 
+/**
+ * Get a string representation of the given domain.
+ * Unset bits are represented as 'x', invalid bits are represented as 'i'.
+ * The result string must be released via bzla_mem_freestr.
+ */
+char *bzla_bvprop_to_char(BzlaMemMgr *mm, BzlaBvDomain *d);
+
 /* Prints domain 'd' to stdout. 'print_short' indicates whether 'lo' and 'hi'
  * should be printed separately. */
 void bzla_bvprop_print(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short);

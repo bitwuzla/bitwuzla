@@ -631,6 +631,14 @@ enum BzlaOption
   BZLA_OPT_PROP_CONST_BITS,
 
   /*!
+    * **BZLA_OPT_PROP_DOMAINS**
+
+      Enable (``value``: 1) or disable (``value``: 0) propagating inverse
+      values with domain propagators.
+    */
+  BZLA_OPT_PROP_DOMAINS,
+
+  /*!
     * **BZLA_OPT_PROP_USE_RESTARTS**
 
       Enable (``value``: 1) or disable (``value``: 0) restarts.

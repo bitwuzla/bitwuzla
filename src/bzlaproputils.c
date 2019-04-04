@@ -856,15 +856,27 @@ select_path_cond(Bzla *bzla,
 /* ========================================================================== */
 
 #ifdef NDEBUG
-static BzlaBitVector *inv_slice_bv(
-    Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector *, int32_t);
-static BzlaBitVector *inv_cond_bv(
-    Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector *, int32_t);
+static BzlaBitVector *inv_slice_bv(Bzla *,
+                                   BzlaNode *,
+                                   BzlaBitVector *,
+                                   BzlaBitVector *,
+                                   int32_t,
+                                   BzlaIntHashTable *);
+static BzlaBitVector *inv_cond_bv(Bzla *,
+                                  BzlaNode *,
+                                  BzlaBitVector *,
+                                  BzlaBitVector *,
+                                  int32_t,
+                                  BzlaIntHashTable *);
 #endif
 
 static BzlaBitVector *
-cons_add_bv(
-    Bzla *bzla, BzlaNode *add, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+cons_add_bv(Bzla *bzla,
+            BzlaNode *add,
+            BzlaBitVector *t,
+            BzlaBitVector *s,
+            int32_t eidx,
+            BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(add);
@@ -878,6 +890,7 @@ cons_add_bv(
   (void) add;
   (void) s;
   (void) eidx;
+  (void) domains;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -890,8 +903,12 @@ cons_add_bv(
 }
 
 static BzlaBitVector *
-cons_and_bv(
-    Bzla *bzla, BzlaNode *and, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+cons_and_bv(Bzla *bzla,
+            BzlaNode *and,
+            BzlaBitVector *t,
+            BzlaBitVector *s,
+            int32_t eidx,
+            BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(and);
@@ -908,6 +925,7 @@ cons_and_bv(
   bool b;
 
   (void) s;
+  (void) domains;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -948,8 +966,12 @@ cons_and_bv(
 }
 
 static BzlaBitVector *
-cons_eq_bv(
-    Bzla *bzla, BzlaNode *eq, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+cons_eq_bv(Bzla *bzla,
+           BzlaNode *eq,
+           BzlaBitVector *t,
+           BzlaBitVector *s,
+           int32_t eidx,
+           BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(eq);
@@ -961,6 +983,7 @@ cons_eq_bv(
   assert(!bzla_node_is_bv_const(eq->e[eidx]));
 
   (void) t;
+  (void) domains;
 
   BzlaBitVector *res;
 
@@ -987,8 +1010,12 @@ cons_eq_bv(
 }
 
 static BzlaBitVector *
-cons_ult_bv(
-    Bzla *bzla, BzlaNode *ult, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+cons_ult_bv(Bzla *bzla,
+            BzlaNode *ult,
+            BzlaBitVector *t,
+            BzlaBitVector *s,
+            int32_t eidx,
+            BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(ult);
@@ -1005,6 +1032,7 @@ cons_ult_bv(
   BzlaMemMgr *mm;
 
   (void) ult;
+  (void) domains;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -1046,8 +1074,12 @@ cons_ult_bv(
 }
 
 static BzlaBitVector *
-cons_sll_bv(
-    Bzla *bzla, BzlaNode *sll, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+cons_sll_bv(Bzla *bzla,
+            BzlaNode *sll,
+            BzlaBitVector *t,
+            BzlaBitVector *s,
+            int32_t eidx,
+            BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(sll);
@@ -1064,6 +1096,7 @@ cons_sll_bv(
 
   (void) sll;
   (void) s;
+  (void) domains;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -1098,8 +1131,12 @@ cons_sll_bv(
 }
 
 static BzlaBitVector *
-cons_srl_bv(
-    Bzla *bzla, BzlaNode *srl, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+cons_srl_bv(Bzla *bzla,
+            BzlaNode *srl,
+            BzlaBitVector *t,
+            BzlaBitVector *s,
+            int32_t eidx,
+            BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(srl);
@@ -1116,6 +1153,7 @@ cons_srl_bv(
 
   (void) srl;
   (void) s;
+  (void) domains;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -1153,8 +1191,12 @@ cons_srl_bv(
 }
 
 static BzlaBitVector *
-cons_mul_bv(
-    Bzla *bzla, BzlaNode *mul, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+cons_mul_bv(Bzla *bzla,
+            BzlaNode *mul,
+            BzlaBitVector *t,
+            BzlaBitVector *s,
+            int32_t eidx,
+            BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(mul);
@@ -1172,6 +1214,7 @@ cons_mul_bv(
   (void) mul;
   (void) s;
   (void) eidx;
+  (void) domains;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -1245,7 +1288,8 @@ cons_udiv_bv(Bzla *bzla,
              BzlaNode *udiv,
              BzlaBitVector *t,
              BzlaBitVector *s,
-             int32_t eidx)
+             int32_t eidx,
+             BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(udiv);
@@ -1268,6 +1312,7 @@ cons_udiv_bv(Bzla *bzla,
 
   (void) udiv;
   (void) s;
+  (void) domains;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -1336,7 +1381,8 @@ cons_urem_bv(Bzla *bzla,
              BzlaNode *urem,
              BzlaBitVector *t,
              BzlaBitVector *s,
-             int32_t eidx)
+             int32_t eidx,
+             BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(urem);
@@ -1353,6 +1399,7 @@ cons_urem_bv(Bzla *bzla,
 
   (void) urem;
   (void) s;
+  (void) domains;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -1403,7 +1450,8 @@ cons_concat_bv(Bzla *bzla,
                BzlaNode *concat,
                BzlaBitVector *t,
                BzlaBitVector *s,
-               int32_t eidx)
+               int32_t eidx,
+               BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(concat);
@@ -1417,6 +1465,8 @@ cons_concat_bv(Bzla *bzla,
   uint32_t r;
   BzlaBitVector *res;
   const BzlaBitVector *bvcur;
+
+  (void) domains;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -1457,9 +1507,10 @@ cons_slice_bv(Bzla *bzla,
               BzlaNode *slice,
               BzlaBitVector *t,
               BzlaBitVector *s,
-              int32_t eidx)
+              int32_t eidx,
+              BzlaIntHashTable *domains)
 {
-  return inv_slice_bv(bzla, slice, t, s, eidx);
+  return inv_slice_bv(bzla, slice, t, s, eidx, domains);
 }
 
 static BzlaBitVector *
@@ -1467,9 +1518,10 @@ cons_cond_bv(Bzla *bzla,
              BzlaNode *cond,
              BzlaBitVector *bvcond,
              BzlaBitVector *s,
-             int32_t eidx)
+             int32_t eidx,
+             BzlaIntHashTable *domains)
 {
-  return inv_cond_bv(bzla, cond, bvcond, s, eidx);
+  return inv_cond_bv(bzla, cond, bvcond, s, eidx, domains);
 }
 
 /* ========================================================================== */
@@ -1483,8 +1535,13 @@ res_rec_conf(Bzla *bzla,
              BzlaBitVector *t,
              BzlaBitVector *s,
              int32_t eidx,
-             BzlaBitVector *(*fun)(
-                 Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector *, int32_t),
+             BzlaIntHashTable *domains,
+             BzlaBitVector *(*fun)(Bzla *,
+                                   BzlaNode *,
+                                   BzlaBitVector *,
+                                   BzlaBitVector *,
+                                   int32_t,
+                                   BzlaIntHashTable *),
              char *op)
 {
   assert(bzla);
@@ -1509,7 +1566,9 @@ res_rec_conf(Bzla *bzla,
   is_recoverable      = bzla_node_is_bv_const(e) ? false : true;
   no_move_on_conflict = bzla_opt_get(bzla, BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT);
 
-  res = no_move_on_conflict && !is_recoverable ? 0 : fun(bzla, exp, t, s, eidx);
+  res = no_move_on_conflict && !is_recoverable
+            ? 0
+            : fun(bzla, exp, t, s, eidx, domains);
   assert(no_move_on_conflict || res);
 
 #ifndef NDEBUG
@@ -1610,7 +1669,7 @@ res_rec_conf(Bzla *bzla,
   return res;
 }
 
-/*------------------------------------------------------------------------*/
+/* -------------------------------------------------------------------------- */
 
 #ifndef NDEBUG
 static void
@@ -1667,8 +1726,12 @@ static BzlaBitVector *
 #else
 BzlaBitVector *
 #endif
-inv_add_bv(
-    Bzla *bzla, BzlaNode *add, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+inv_add_bv(Bzla *bzla,
+           BzlaNode *add,
+           BzlaBitVector *t,
+           BzlaBitVector *s,
+           int32_t eidx,
+           BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(add);
@@ -1683,6 +1746,7 @@ inv_add_bv(
 
   (void) add;
   (void) eidx;
+  (void) domains;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -1708,8 +1772,12 @@ static BzlaBitVector *
 #else
 BzlaBitVector *
 #endif
-inv_and_bv(
-    Bzla *bzla, BzlaNode *and, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+inv_and_bv(Bzla *bzla,
+           BzlaNode *and,
+           BzlaBitVector *t,
+           BzlaBitVector *s,
+           int32_t eidx,
+           BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(and);
@@ -1744,7 +1812,7 @@ inv_and_bv(
   /* check invertibility, if not invertible: CONFLICT */
   if (!bzla_is_inv_and(mm, s, t, eidx))
   {
-    return res_rec_conf(bzla, and, e, t, s, eidx, cons_and_bv, "AND");
+    return res_rec_conf(bzla, and, e, t, s, eidx, domains, cons_and_bv, "AND");
   }
 
   b = bzla_rng_pick_with_prob(&bzla->rng,
@@ -1801,8 +1869,12 @@ static BzlaBitVector *
 #else
 BzlaBitVector *
 #endif
-inv_eq_bv(
-    Bzla *bzla, BzlaNode *eq, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+inv_eq_bv(Bzla *bzla,
+          BzlaNode *eq,
+          BzlaBitVector *t,
+          BzlaBitVector *s,
+          int32_t eidx,
+          BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(eq);
@@ -1815,6 +1887,8 @@ inv_eq_bv(
 
   BzlaBitVector *res;
   BzlaMemMgr *mm;
+
+  (void) domains;
 
   mm = bzla->mm;
 
@@ -1875,8 +1949,12 @@ static BzlaBitVector *
 #else
 BzlaBitVector *
 #endif
-inv_ult_bv(
-    Bzla *bzla, BzlaNode *ult, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+inv_ult_bv(Bzla *bzla,
+           BzlaNode *ult,
+           BzlaBitVector *t,
+           BzlaBitVector *s,
+           int32_t eidx,
+           BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(ult);
@@ -1909,7 +1987,7 @@ inv_ult_bv(
   /* check invertibility, if not invertible: CONFLICT */
   if (!bzla_is_inv_ult(mm, s, t, eidx))
   {
-    return res_rec_conf(bzla, ult, e, t, s, eidx, cons_ult_bv, "<");
+    return res_rec_conf(bzla, ult, e, t, s, eidx, domains, cons_ult_bv, "<");
   }
 
   bw    = bzla_bv_get_width(s);
@@ -1970,8 +2048,12 @@ static BzlaBitVector *
 #else
 BzlaBitVector *
 #endif
-inv_sll_bv(
-    Bzla *bzla, BzlaNode *sll, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+inv_sll_bv(Bzla *bzla,
+           BzlaNode *sll,
+           BzlaBitVector *t,
+           BzlaBitVector *s,
+           int32_t eidx,
+           BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(sll);
@@ -2004,7 +2086,7 @@ inv_sll_bv(
   /* check invertibility, if not invertible: CONFLICT */
   if (!bzla_is_inv_sll(mm, s, t, eidx))
   {
-    return res_rec_conf(bzla, sll, e, t, s, eidx, cons_sll_bv, "<<");
+    return res_rec_conf(bzla, sll, e, t, s, eidx, domains, cons_sll_bv, "<<");
   }
 
   res   = 0;
@@ -2109,8 +2191,12 @@ static BzlaBitVector *
 #else
 BzlaBitVector *
 #endif
-inv_srl_bv(
-    Bzla *bzla, BzlaNode *srl, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+inv_srl_bv(Bzla *bzla,
+           BzlaNode *srl,
+           BzlaBitVector *t,
+           BzlaBitVector *s,
+           int32_t eidx,
+           BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(srl);
@@ -2143,7 +2229,7 @@ inv_srl_bv(
   /* check invertibility, if not invertible: CONFLICT */
   if (!bzla_is_inv_srl(mm, s, t, eidx))
   {
-    return res_rec_conf(bzla, srl, e, t, s, eidx, cons_srl_bv, ">>");
+    return res_rec_conf(bzla, srl, e, t, s, eidx, domains, cons_srl_bv, ">>");
   }
 
   res   = 0;
@@ -2249,8 +2335,12 @@ static BzlaBitVector *
 #else
 BzlaBitVector *
 #endif
-inv_mul_bv(
-    Bzla *bzla, BzlaNode *mul, BzlaBitVector *t, BzlaBitVector *s, int32_t eidx)
+inv_mul_bv(Bzla *bzla,
+           BzlaNode *mul,
+           BzlaBitVector *t,
+           BzlaBitVector *s,
+           int32_t eidx,
+           BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(mul);
@@ -2284,7 +2374,7 @@ inv_mul_bv(
   /* check invertibility, if not invertible: CONFLICT */
   if (!bzla_is_inv_mul(mm, s, t, eidx))
   {
-    return res_rec_conf(bzla, mul, e, t, s, eidx, cons_mul_bv, "*");
+    return res_rec_conf(bzla, mul, e, t, s, eidx, domains, cons_mul_bv, "*");
   }
 
   res = 0;
@@ -2435,7 +2525,8 @@ inv_udiv_bv(Bzla *bzla,
             BzlaNode *udiv,
             BzlaBitVector *t,
             BzlaBitVector *s,
-            int32_t eidx)
+            int32_t eidx,
+            BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(udiv);
@@ -2470,7 +2561,7 @@ inv_udiv_bv(Bzla *bzla,
   /* check invertibility, if not invertible: CONFLICT */
   if (!bzla_is_inv_udiv(mm, s, t, eidx))
   {
-    return res_rec_conf(bzla, udiv, e, t, s, eidx, cons_udiv_bv, "/");
+    return res_rec_conf(bzla, udiv, e, t, s, eidx, domains, cons_udiv_bv, "/");
   }
 
   one   = bzla_bv_one(mm, bw);
@@ -2666,7 +2757,8 @@ inv_urem_bv(Bzla *bzla,
             BzlaNode *urem,
             BzlaBitVector *t,
             BzlaBitVector *s,
-            int32_t eidx)
+            int32_t eidx,
+            BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(urem);
@@ -2701,7 +2793,7 @@ inv_urem_bv(Bzla *bzla,
   /* check invertibility, if not invertible: CONFLICT */
   if (!bzla_is_inv_urem(mm, s, t, eidx))
   {
-    return res_rec_conf(bzla, urem, e, t, s, eidx, cons_urem_bv, "%");
+    return res_rec_conf(bzla, urem, e, t, s, eidx, domains, cons_urem_bv, "%");
   }
 
   bvmax = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
@@ -2977,7 +3069,8 @@ inv_concat_bv(Bzla *bzla,
               BzlaNode *concat,
               BzlaBitVector *t,
               BzlaBitVector *s,
-              int32_t eidx)
+              int32_t eidx,
+              BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(concat);
@@ -3010,7 +3103,8 @@ inv_concat_bv(Bzla *bzla,
   /* check invertibility, if not invertible: CONFLICT */
   if (!bzla_is_inv_concat(mm, s, t, eidx))
   {
-    return res_rec_conf(bzla, concat, e, t, s, eidx, cons_concat_bv, "o");
+    return res_rec_conf(
+        bzla, concat, e, t, s, eidx, domains, cons_concat_bv, "o");
   }
 
   res = 0;
@@ -3056,20 +3150,23 @@ inv_slice_bv(Bzla *bzla,
              BzlaNode *slice,
              BzlaBitVector *t,
              BzlaBitVector *s,
-             int32_t eidx)
+             int32_t eidx,
+             BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(slice);
   assert(bzla_node_is_regular(slice));
   assert(t);
   assert(!bzla_node_is_bv_const(slice->e[0]));
-  (void) eidx;
 
   uint32_t i, upper, lower, rlower, rupper, rboth, bw_x;
   BzlaNode *e;
   BzlaBitVector *res;
   BzlaMemMgr *mm;
   bool bkeep, bflip;
+
+  (void) domains;
+  (void) eidx;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
@@ -3188,7 +3285,8 @@ inv_cond_bv(Bzla *bzla,
             BzlaNode *cond,
             BzlaBitVector *t,
             BzlaBitVector *s,
-            int32_t eidx)
+            int32_t eidx,
+            BzlaIntHashTable *domains)
 {
   assert(bzla);
   assert(cond);
@@ -3199,6 +3297,8 @@ inv_cond_bv(Bzla *bzla,
 
   BzlaBitVector *res, *s1, *s2;
   BzlaMemMgr *mm = bzla->mm;
+
+  (void) domains;
 
   s1 = (BzlaBitVector *) bzla_model_get_bv(bzla, cond->e[1]);
   s2 = (BzlaBitVector *) bzla_model_get_bv(bzla, cond->e[2]);
@@ -3292,6 +3392,254 @@ inv_cond_bv(Bzla *bzla,
 }
 
 /* ========================================================================== */
+/* Inverse value computation with propagator domains                          */
+/* ========================================================================== */
+
+/* -------------------------------------------------------------------------- */
+/* INV: add                                                                   */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_add_bvprop(Bzla *bzla,
+               BzlaNode *add,
+               BzlaBitVector *t,
+               BzlaBitVector *s,
+               int32_t eidx,
+               BzlaIntHashTable *domains)
+{
+  assert(bzla);
+  assert(domains);
+  assert(add);
+  assert(bzla_node_is_regular(add));
+  assert(t);
+  assert(s);
+  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
+  assert(eidx >= 0 && eidx <= 1);
+  assert(!bzla_node_is_bv_const(add->e[eidx]));
+
+  BzlaBitVector *res;
+  BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
+  bool is_valid;
+  BzlaMemMgr *mm;
+
+  mm = bzla->mm;
+
+  d_s = bzla_bvprop_new_fixed(mm, s);
+  d_t = bzla_bvprop_new_fixed(mm, t);
+  d_x = bzla_hashint_map_get(domains, add->id)->as_ptr;
+
+  is_valid = bzla_bvprop_add(mm, d_x, d_s, d_t, &d_res_x, &d_res_s, &d_res_t);
+
+  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  {
+#ifndef NDEBUG
+    BZLA_PROP_SOLVER(bzla)->stats.inv_add++;
+    if (!is_valid) BZLA_PROP_SOLVER(bzla)->stats.inv_add_conflicts++;
+#endif
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
+  }
+
+  if (!is_valid)
+  {
+    // TODO for now fall back, but we want to be able to handle this smarter
+    bzla_bvprop_free(mm, d_s);
+    bzla_bvprop_free(mm, d_t);
+    bzla_bvprop_free(mm, d_res_s);
+    bzla_bvprop_free(mm, d_res_t);
+    bzla_bvprop_free(mm, d_res_x);
+    return inv_add_bv(bzla, add, t, s, eidx, domains);
+  }
+
+  assert(bzla_bvprop_is_fixed(mm, d_res_x));
+  res = bzla_bv_copy(mm, d_res_x->lo);
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_add, add, s, t, res, eidx, "+");
+#endif
+  bzla_bvprop_free(mm, d_s);
+  bzla_bvprop_free(mm, d_t);
+  bzla_bvprop_free(mm, d_res_s);
+  bzla_bvprop_free(mm, d_res_t);
+  bzla_bvprop_free(mm, d_res_x);
+  return res;
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: and                                                                   */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_and_bvprop(Bzla *bzla,
+               BzlaNode *and,
+               BzlaBitVector *t,
+               BzlaBitVector *s,
+               int32_t eidx,
+               BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_and_bv(bzla, and, t, s, eidx, domains);
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: eq                                                                    */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_eq_bvprop(Bzla *bzla,
+              BzlaNode *eq,
+              BzlaBitVector *t,
+              BzlaBitVector *s,
+              int32_t eidx,
+              BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_eq_bv(bzla, eq, t, s, eidx, domains);
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: ult                                                                   */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_ult_bvprop(Bzla *bzla,
+               BzlaNode *ult,
+               BzlaBitVector *t,
+               BzlaBitVector *s,
+               int32_t eidx,
+               BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_ult_bv(bzla, ult, t, s, eidx, domains);
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: sll                                                                   */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_sll_bvprop(Bzla *bzla,
+               BzlaNode *sll,
+               BzlaBitVector *t,
+               BzlaBitVector *s,
+               int32_t eidx,
+               BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_sll_bv(bzla, sll, t, s, eidx, domains);
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: srl                                                                   */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_srl_bvprop(Bzla *bzla,
+               BzlaNode *srl,
+               BzlaBitVector *t,
+               BzlaBitVector *s,
+               int32_t eidx,
+               BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_srl_bv(bzla, srl, t, s, eidx, domains);
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: mul                                                                   */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_mul_bvprop(Bzla *bzla,
+               BzlaNode *mul,
+               BzlaBitVector *t,
+               BzlaBitVector *s,
+               int32_t eidx,
+               BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_mul_bv(bzla, mul, t, s, eidx, domains);
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: udiv                                                                  */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_udiv_bvprop(Bzla *bzla,
+                BzlaNode *div,
+                BzlaBitVector *t,
+                BzlaBitVector *s,
+                int32_t eidx,
+                BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_udiv_bv(bzla, div, t, s, eidx, domains);
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: urem                                                                  */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_urem_bvprop(Bzla *bzla,
+                BzlaNode *urem,
+                BzlaBitVector *t,
+                BzlaBitVector *s,
+                int32_t eidx,
+                BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_urem_bv(bzla, urem, t, s, eidx, domains);
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: concat                                                                */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_concat_bvprop(Bzla *bzla,
+                  BzlaNode *concat,
+                  BzlaBitVector *t,
+                  BzlaBitVector *s,
+                  int32_t eidx,
+                  BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_concat_bv(bzla, concat, t, s, eidx, domains);
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: slice                                                                 */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_slice_bvprop(Bzla *bzla,
+                 BzlaNode *slice,
+                 BzlaBitVector *t,
+                 BzlaBitVector *s,
+                 int32_t eidx,
+                 BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_slice_bv(bzla, slice, t, s, eidx, domains);
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: cond                                                                  */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+inv_cond_bvprop(Bzla *bzla,
+                BzlaNode *cond,
+                BzlaBitVector *t,
+                BzlaBitVector *s,
+                int32_t eidx,
+                BzlaIntHashTable *domains)
+{
+  // TODO
+  return inv_cond_bv(bzla, cond, t, s, eidx, domains);
+}
+
+/* ========================================================================== */
 /* Propagation move                                                           */
 /* ========================================================================== */
 
@@ -3301,8 +3649,13 @@ select_move(Bzla *bzla,
             BzlaBitVector *t,
             BzlaBitVector *s[3],
             int32_t eidx,
-            BzlaBitVector *(*compute_value)(
-                Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector *, int32_t),
+            BzlaIntHashTable *domains,
+            BzlaBitVector *(*compute_value)(Bzla *,
+                                            BzlaNode *,
+                                            BzlaBitVector *,
+                                            BzlaBitVector *,
+                                            int32_t,
+                                            BzlaIntHashTable *),
             BzlaBitVector **value)
 {
   assert(bzla);
@@ -3320,7 +3673,7 @@ select_move(Bzla *bzla,
    * special case cond: we only need assignment of condition to compute value */
   idx =
       eidx ? 0 : (bzla_node_is_bv_slice(exp) || bzla_node_is_cond(exp) ? 0 : 1);
-  *value = compute_value(bzla, exp, t, s[idx], eidx);
+  *value = compute_value(bzla, exp, t, s[idx], eidx, domains);
   return exp->e[eidx];
 }
 
@@ -3340,11 +3693,20 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   int32_t i, nconst;
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
+  BzlaIntHashTable *domains;
   BzlaBitVector *bve[3], *bvcur, *bvenew, *tmp;
-  BzlaOption opt_prop_prob_use_inv_value;
+  uint32_t opt_prop_prob_use_inv_value, opt_prop_domains;
+#ifndef NDEBUG
+  uint32_t opt_prop_const_bits;
+#endif
+
   int32_t (*select_path)(Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector **);
-  BzlaBitVector *(*compute_value)(
-      Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector *, int32_t);
+  BzlaBitVector *(*compute_value)(Bzla *,
+                                  BzlaNode *,
+                                  BzlaBitVector *,
+                                  BzlaBitVector *,
+                                  int32_t,
+                                  BzlaIntHashTable *);
 #ifndef NBZLALOG
   char *a;
   uint32_t nrecconf_prev, nnonrecconf_prev, nrecconf, nnonrecconf;
@@ -3354,15 +3716,21 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   *input      = 0;
   *assignment = 0;
   nprops      = 0;
+  domains     = 0;
 
+  opt_prop_domains = bzla_opt_get(bzla, BZLA_OPT_PROP_DOMAINS);
   opt_prop_prob_use_inv_value =
       bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE);
+#ifndef NDEBUG
+  opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
+#endif
 
 #ifndef NBZLALOG
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
     nrecconf_prev    = BZLA_PROP_SOLVER(bzla)->stats.rec_conf;
     nnonrecconf_prev = BZLA_PROP_SOLVER(bzla)->stats.non_rec_conf;
+    domains          = BZLA_PROP_SOLVER(bzla)->domains;
   }
   else
   {
@@ -3399,7 +3767,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
              == bzla_node_bv_get_width(bzla, real_cur));
       assert(bzla_bv_get_width(d->lo)
              == bzla_node_bv_get_width(bzla, real_cur));
-      if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
+      if (opt_prop_const_bits)
       {
         assert(real_cur->av);
         uint32_t bw = real_cur->av->width;
@@ -3467,52 +3835,66 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       {
         case BZLA_BV_ADD_NODE:
           select_path   = select_path_add;
-          compute_value = b ? inv_add_bv : cons_add_bv;
+          compute_value = b ? (opt_prop_domains ? inv_add_bvprop : inv_add_bv)
+                            : cons_add_bv;
           break;
         case BZLA_BV_AND_NODE:
           select_path   = select_path_and;
-          compute_value = b ? inv_and_bv : cons_and_bv;
+          compute_value = b ? (opt_prop_domains ? inv_and_bvprop : inv_and_bv)
+                            : cons_and_bv;
           break;
         case BZLA_BV_EQ_NODE:
-          select_path   = select_path_eq;
-          compute_value = b ? inv_eq_bv : cons_eq_bv;
+          select_path = select_path_eq;
+          compute_value =
+              b ? (opt_prop_domains ? inv_eq_bvprop : inv_eq_bv) : cons_eq_bv;
           break;
         case BZLA_BV_ULT_NODE:
           select_path   = select_path_ult;
-          compute_value = b ? inv_ult_bv : cons_ult_bv;
+          compute_value = b ? (opt_prop_domains ? inv_ult_bvprop : inv_ult_bv)
+                            : cons_ult_bv;
           break;
         case BZLA_BV_SLL_NODE:
           select_path   = select_path_sll;
-          compute_value = b ? inv_sll_bv : cons_sll_bv;
+          compute_value = b ? (opt_prop_domains ? inv_sll_bvprop : inv_sll_bv)
+                            : cons_sll_bv;
           break;
         case BZLA_BV_SRL_NODE:
           select_path   = select_path_srl;
-          compute_value = b ? inv_srl_bv : cons_srl_bv;
+          compute_value = b ? (opt_prop_domains ? inv_srl_bvprop : inv_srl_bv)
+                            : cons_srl_bv;
           break;
         case BZLA_BV_MUL_NODE:
           select_path   = select_path_mul;
-          compute_value = b ? inv_mul_bv : cons_mul_bv;
+          compute_value = b ? (opt_prop_domains ? inv_mul_bvprop : inv_mul_bv)
+                            : cons_mul_bv;
           break;
         case BZLA_BV_UDIV_NODE:
           select_path   = select_path_udiv;
-          compute_value = b ? inv_udiv_bv : cons_udiv_bv;
+          compute_value = b ? (opt_prop_domains ? inv_udiv_bvprop : inv_udiv_bv)
+                            : cons_udiv_bv;
           break;
         case BZLA_BV_UREM_NODE:
           select_path   = select_path_urem;
-          compute_value = b ? inv_urem_bv : cons_urem_bv;
+          compute_value = b ? (opt_prop_domains ? inv_urem_bvprop : inv_urem_bv)
+                            : cons_urem_bv;
           break;
         case BZLA_BV_CONCAT_NODE:
-          select_path   = select_path_concat;
-          compute_value = b ? inv_concat_bv : cons_concat_bv;
+          select_path = select_path_concat;
+          compute_value =
+              b ? (opt_prop_domains ? inv_concat_bvprop : inv_concat_bv)
+                : cons_concat_bv;
           break;
         case BZLA_BV_SLICE_NODE:
-          select_path   = select_path_slice;
-          compute_value = b ? inv_slice_bv : cons_slice_bv;
+          select_path = select_path_slice;
+          compute_value =
+              b ? (opt_prop_domains ? inv_slice_bvprop : inv_slice_bv)
+                : cons_slice_bv;
           break;
         default:
           assert(bzla_node_is_bv_cond(real_cur));
           select_path   = select_path_cond;
-          compute_value = b ? inv_cond_bv : cons_cond_bv;
+          compute_value = b ? (opt_prop_domains ? inv_cond_bvprop : inv_cond_bv)
+                            : cons_cond_bv;
       }
 
       if (eidx == -1) eidx = select_path(bzla, real_cur, bvcur, bve);
@@ -3524,8 +3906,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         BZLA_PUSH_STACK(BZLA_PROP_SOLVER(bzla)->prop_path, prop);
       }
 #endif
-      cur =
-          select_move(bzla, real_cur, bvcur, bve, eidx, compute_value, &bvenew);
+      cur = select_move(
+          bzla, real_cur, bvcur, bve, eidx, domains, compute_value, &bvenew);
       nprops += 1;
 
       if (!bvenew) break; /* non-recoverable conflict */

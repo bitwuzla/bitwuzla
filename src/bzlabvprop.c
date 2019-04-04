@@ -170,32 +170,43 @@ bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos)
          && bzla_bv_get_bit(d->lo, pos) == bzla_bv_get_bit(d->hi, pos);
 }
 
+char *
+bzla_bvprop_to_char(BzlaMemMgr *mm, BzlaBvDomain *d)
+{
+  char *hi, *res;
+  size_t len;
+
+  res = bzla_bv_to_char(mm, d->lo);
+  hi  = bzla_bv_to_char(mm, d->hi);
+  len = strlen(res);
+
+  for (size_t i = 0; i < len; i++)
+  {
+    if (res[i] != hi[i])
+    {
+      if (res[i] == '0' && hi[i] == '1')
+      {
+        res[i] = 'x';
+      }
+      else
+      {
+        assert(res[i] == '1' && hi[i] == '0');
+        res[i] = '?';
+      }
+    }
+  }
+  bzla_mem_freestr(mm, hi);
+  return res;
+}
+
 void
 bzla_bvprop_print(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short)
 {
   if (print_short)
   {
-    char *lo   = bzla_bv_to_char(mm, d->lo);
-    char *hi   = bzla_bv_to_char(mm, d->hi);
-    size_t len = strlen(lo);
-    for (size_t i = 0; i < len; i++)
-    {
-      if (lo[i] != hi[i])
-      {
-        if (lo[i] == '0' && hi[i] == '1')
-        {
-          lo[i] = 'x';
-        }
-        else
-        {
-          assert(lo[i] == '1' && hi[i] == '0');
-          lo[i] = '?';
-        }
-      }
-    }
-    printf("%s\n", lo);
-    bzla_mem_freestr(mm, hi);
-    bzla_mem_freestr(mm, lo);
+    char *s = bzla_bvprop_to_char(mm, d);
+    printf("%s\n", s);
+    bzla_mem_freestr(mm, s);
   }
   else
   {
@@ -1010,7 +1021,6 @@ bvprop_shift_aux(BzlaMemMgr *mm,
   /* z_[bw] = x_[bw] << y_[bw]
    *
    * SLL:
-   *   z_[bw] == 0_[bw] && x[LSB:LSB] == 1_[1] = 0_[1]
    *   prev_z = x
    *   for i = 0 to bw - 1:
    *     shift = 1 << i
@@ -1018,7 +1028,6 @@ bvprop_shift_aux(BzlaMemMgr *mm,
    *     prev_z = cur_z
    *
    * SRL:
-   *   z_[bw] == 0_[bw] && x[MSB:MSB] == 1_[1] = 0_[1]
    *   prev_z = x
    *   for i = 0 to bw - 1:
    *     shift = 1 << i
@@ -1119,84 +1128,84 @@ bvprop_shift_aux(BzlaMemMgr *mm,
     {
       /**
        * SLL:
-       *   z_[bw] == 0_[bw] && x[LSB:LSB] == 1_[1] = 0_[1]
        *   prev_z = x
        *   for i = 0 to bw - 1:
        *     cur_z = ite (y[i:i], prev_z << shift, prev_z)
        *     prev_z = cur_z
        *
        * SRL:
-       *   z_[bw] == 0_[bw] && x[MSB:MSB] == 1_[1] = 0_[1]
        *   prev_z = x
        *   for i = 0 to bw - 1:
        *     cur_z = ite (y[i:i], prev_z << shift, prev_z)
        *     prev_z = cur_z
        */
 
+#if 0
       /**
        * SLL: x_bit = x[LSB:LSB]
        * SRL: x_bit = x[MSB:MSB]
        */
-      if (!(res = decomp_step_slice(mm,
-                                    &tmp_x,
-                                    &tmp_x_bit,
-                                    is_srl ? bw - 1 : 0,
-                                    is_srl ? bw - 1 : 0,
-                                    res_d_x,
-                                    res_d_z,
-                                    bzla_bvprop_slice,
-                                    &progress)))
+      if (!(res = decomp_step_slice (mm,
+                                     &tmp_x,
+                                     &tmp_x_bit,
+                                     is_srl ? bw - 1 : 0,
+                                     is_srl ? bw - 1 : 0,
+                                     res_d_x,
+                                     res_d_z,
+                                     bzla_bvprop_slice,
+                                     &progress)))
       {
         goto DONE;
       }
 
       /* eq_z = z == 0 */
-      if (!(res = decomp_step_binary(mm,
-                                     &tmp_z,
-                                     &tmp_zero_bw,
-                                     &tmp_eq_z,
-                                     res_d_x,
-                                     res_d_y,
-                                     res_d_z,
-                                     bzla_bvprop_eq,
-                                     &progress)))
+      if (!(res = decomp_step_binary (mm,
+                                      &tmp_z,
+                                      &tmp_zero_bw,
+                                      &tmp_eq_z,
+                                      res_d_x,
+                                      res_d_y,
+                                      res_d_z,
+                                      bzla_bvprop_eq,
+                                      &progress)))
       {
         goto DONE;
       }
-      assert(!bzla_bv_compare(tmp_zero_bw->lo, d_zero_bw->lo));
-      assert(!bzla_bv_compare(tmp_zero_bw->hi, d_zero_bw->hi));
+      assert (!bzla_bv_compare (tmp_zero_bw->lo, d_zero_bw->lo));
+      assert (!bzla_bv_compare (tmp_zero_bw->hi, d_zero_bw->hi));
 
       /* eq_x_bit = x_bit == 1 */
-      if (!(res = decomp_step_binary(mm,
-                                     &tmp_x_bit,
-                                     &tmp_one,
-                                     &tmp_eq_x_bit,
-                                     res_d_x,
-                                     res_d_y,
-                                     res_d_z,
-                                     bzla_bvprop_eq,
-                                     &progress)))
+      if (!(res = decomp_step_binary (mm,
+                                      &tmp_x_bit,
+                                      &tmp_one,
+                                      &tmp_eq_x_bit,
+                                      res_d_x,
+                                      res_d_y,
+                                      res_d_z,
+                                      bzla_bvprop_eq,
+                                      &progress)))
       {
         goto DONE;
       }
-      assert(!bzla_bv_compare(tmp_one->lo, d_one->lo));
-      assert(!bzla_bv_compare(tmp_one->hi, d_one->hi));
+      assert (!bzla_bv_compare (tmp_one->lo, d_one->lo));
+      assert (!bzla_bv_compare (tmp_one->hi, d_one->hi));
 
       /* 0 = eq_z && eq_x_bit */
-      if (!(res = decomp_step_binary(mm,
-                                     &tmp_eq_z,
-                                     &tmp_eq_x_bit,
-                                     &tmp_zero,
-                                     res_d_x,
-                                     res_d_y,
-                                     res_d_z,
-                                     bzla_bvprop_and,
-                                     &progress)))
+      if (!(res = decomp_step_binary (mm,
+                                      &tmp_eq_z,
+                                      &tmp_eq_x_bit,
+                                      &tmp_zero,
+                                      res_d_x,
+                                      res_d_y,
+                                      res_d_z,
+                                      bzla_bvprop_and,
+                                      &progress)))
       {
         goto DONE;
       }
-      assert(!bzla_bv_compare(tmp_zero->lo, d_zero->lo));
-      assert(!bzla_bv_compare(tmp_zero->hi, d_zero->hi));
+      assert (!bzla_bv_compare (tmp_zero->lo, d_zero->lo));
+      assert (!bzla_bv_compare (tmp_zero->hi, d_zero->hi));
+#endif
 
       /* shift = 1 << i */
       bv = BZLA_PEEK_STACK(shift_stack, i);
