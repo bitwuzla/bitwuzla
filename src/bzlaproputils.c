@@ -1538,6 +1538,7 @@ res_rec_conf(Bzla *bzla,
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
     BzlaPropSolver *slv = BZLA_PROP_SOLVER(bzla);
+    prop_entailed       = bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED);
     if (is_recoverable)
     {
 #ifndef NDEBUG
@@ -1563,7 +1564,6 @@ res_rec_conf(Bzla *bzla,
       slv->stats.rec_conf += 1;
       /* recoverable conflict, push entailed propagation */
       assert(exp->arity == 2);
-      prop_entailed = bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED);
       if (prop_entailed != BZLA_PROP_ENTAILED_OFF)
       {
         BzlaPropInfo prop = {exp, bzla_bv_copy(mm, t), eidx ? 0 : 1};
@@ -1592,8 +1592,11 @@ res_rec_conf(Bzla *bzla,
     else
     {
       slv->stats.non_rec_conf += 1;
-      /* non-recoverable conflict, entailed propagations are thus invalid */
-      bzla_proputils_reset_prop_info_stack(mm, &slv->toprop);
+      if (prop_entailed)
+      {
+        /* non-recoverable conflict, entailed propagations are thus invalid */
+        bzla_proputils_reset_prop_info_stack(mm, &slv->toprop);
+      }
     }
   }
   else
