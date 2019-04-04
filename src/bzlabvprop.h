@@ -31,6 +31,12 @@ BzlaBvDomain *bzla_bvprop_new(BzlaMemMgr *mm,
                               const BzlaBitVector *lo,
                               const BzlaBitVector *hi);
 
+/**
+ * Create new (fixed) bit-vector domain with low 'bv' and high 'bv'.
+ * Creates copies of bv.
+ */
+BzlaBvDomain *bzla_bvprop_new_fixed(BzlaMemMgr *mm, const BzlaBitVector *bv);
+
 /* Delete bit-vector domain. */
 void bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d);
 

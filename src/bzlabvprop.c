@@ -65,6 +65,18 @@ bzla_bvprop_new(BzlaMemMgr *mm,
   return res;
 }
 
+BzlaBvDomain *
+bzla_bvprop_new_fixed(BzlaMemMgr *mm, const BzlaBitVector *bv)
+{
+  assert(mm);
+  assert(bv);
+
+  BzlaBvDomain *res = new_domain(mm);
+  res->lo           = bzla_bv_copy(mm, bv);
+  res->hi           = bzla_bv_copy(mm, bv);
+  return res;
+}
+
 void
 bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d)
 {

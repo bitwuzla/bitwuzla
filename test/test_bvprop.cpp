@@ -2389,12 +2389,24 @@ TEST_F(TestBvProp, fixed_domain)
   bzla_bvprop_free(d_mm, d);
 }
 
-TEST_F(TestBvProp, init_domain)
+TEST_F(TestBvProp, new_init_domain)
 {
   BzlaBvDomain *d = bzla_bvprop_new_init(d_mm, 32);
   assert(bzla_bvprop_is_valid(d_mm, d));
   assert(!bzla_bvprop_is_fixed(d_mm, d));
   bzla_bvprop_free(d_mm, d);
+}
+
+TEST_F(TestBvProp, new_fixed)
+{
+  BzlaBitVector *bv = bzla_bv_uint64_to_bv(d_mm, 128, 32);
+  BzlaBvDomain *d   = bzla_bvprop_new_fixed(d_mm, bv);
+  assert(bzla_bvprop_is_valid(d_mm, d));
+  assert(bzla_bvprop_is_fixed(d_mm, d));
+  assert(bzla_bv_compare(bv, d->lo) == 0);
+  assert(bzla_bv_compare(bv, d->hi) == 0);
+  bzla_bvprop_free(d_mm, d);
+  bzla_bv_free(d_mm, bv);
 }
 
 TEST_F(TestBvProp, eq)
