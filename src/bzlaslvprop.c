@@ -648,13 +648,14 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   assert(slv->bzla);
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
-  Bzla *bzla           = slv->bzla;
-  bool enable_entailed = bzla_opt_get(slv->bzla, BZLA_OPT_PROP_ENTAILED);
+  Bzla *bzla    = slv->bzla;
+  bool entailed = bzla_opt_get(slv->bzla, BZLA_OPT_PROP_ENTAILED);
+  bool domains  = bzla_opt_get(slv->bzla, BZLA_OPT_PROP_DOMAINS);
 
   BZLA_MSG(bzla->msg, 1, "");
   BZLA_MSG(bzla->msg, 1, "restarts: %u", slv->stats.restarts);
   BZLA_MSG(bzla->msg, 1, "moves: %u", slv->stats.moves);
-  if (enable_entailed)
+  if (entailed)
     BZLA_MSG(bzla->msg, 1, "    entailed moves: %u", slv->stats.moves_entailed);
 
   BZLA_MSG(bzla->msg,
@@ -662,7 +663,7 @@ print_stats_prop_solver(BzlaPropSolver *slv)
            "moves per second: %.2f",
            (double) slv->stats.moves / (bzla->time.sat - bzla->time.simplify));
   BZLA_MSG(bzla->msg, 1, "propagation (steps): %u", slv->stats.props);
-  if (enable_entailed)
+  if (entailed)
     BZLA_MSG(bzla->msg,
              1,
              "    entailed propagations: %u",
@@ -685,7 +686,7 @@ print_stats_prop_solver(BzlaPropSolver *slv)
            1,
            "propagation conflicts (recoverable): %u",
            slv->stats.rec_conf);
-  if (enable_entailed)
+  if (entailed)
   {
     BZLA_MSG(bzla->msg,
              1,
@@ -698,140 +699,120 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   }
   BZLA_MSG(bzla->msg, 1, "updates (cone): %u", slv->stats.updates);
 #ifndef NDEBUG
+  char *s_cons = "    consistent fun calls";
+  char *s_inv  = "    inverse fun calls";
+  /* Consistent value computation stats. */
   BZLA_MSG(bzla->msg, 1, "");
   BZLA_MSG(bzla->msg, 1, "consistent value computations:");
-  BZLA_MSG(
-      bzla->msg, 1, "    consistent fun calls (add): %u", slv->stats.cons_add);
-  BZLA_MSG(
-      bzla->msg, 1, "    consistent fun calls (and): %u", slv->stats.cons_and);
-  BZLA_MSG(
-      bzla->msg, 1, "    consistent fun calls (eq): %u", slv->stats.cons_eq);
-  BZLA_MSG(
-      bzla->msg, 1, "    consistent fun calls (ult): %u", slv->stats.cons_ult);
-  BZLA_MSG(
-      bzla->msg, 1, "    consistent fun calls (sll): %u", slv->stats.cons_sll);
-  BZLA_MSG(
-      bzla->msg, 1, "    consistent fun calls (srl): %u", slv->stats.cons_srl);
-  BZLA_MSG(
-      bzla->msg, 1, "    consistent fun calls (mul): %u", slv->stats.cons_mul);
-  BZLA_MSG(bzla->msg,
-           1,
-           "    consistent fun calls (udiv): %u",
-           slv->stats.cons_udiv);
-  BZLA_MSG(bzla->msg,
-           1,
-           "    consistent fun calls (urem): %u",
-           slv->stats.cons_urem);
-  BZLA_MSG(bzla->msg,
-           1,
-           "    consistent fun calls (concat): %u",
-           slv->stats.cons_concat);
-  BZLA_MSG(bzla->msg,
-           1,
-           "    consistent fun calls (slice): %u",
-           slv->stats.cons_slice);
-  BZLA_MSG(bzla->msg,
-           1,
-           "    consistent fun calls (cond): %u",
-           slv->stats.cons_cond);
+  BZLA_MSG(bzla->msg, 1, "%s (add): %u", s_cons, slv->stats.cons_add);
+  BZLA_MSG(bzla->msg, 1, "%s (and): %u", s_cons, slv->stats.cons_and);
+  BZLA_MSG(bzla->msg, 1, "%s (eq): %u", s_cons, slv->stats.cons_eq);
+  BZLA_MSG(bzla->msg, 1, "%s (ult): %u", s_cons, slv->stats.cons_ult);
+  BZLA_MSG(bzla->msg, 1, "%s (sll): %u", s_cons, slv->stats.cons_sll);
+  BZLA_MSG(bzla->msg, 1, "%s (srl): %u", s_cons, slv->stats.cons_srl);
+  BZLA_MSG(bzla->msg, 1, "%s (mul): %u", s_cons, slv->stats.cons_mul);
+  BZLA_MSG(bzla->msg, 1, "%s (udiv): %u", s_cons, slv->stats.cons_udiv);
+  BZLA_MSG(bzla->msg, 1, "%s (urem): %u", s_cons, slv->stats.cons_urem);
+  BZLA_MSG(bzla->msg, 1, "%s (concat): %u", s_cons, slv->stats.cons_concat);
+  BZLA_MSG(bzla->msg, 1, "%s (slice): %u", s_cons, slv->stats.cons_slice);
+  BZLA_MSG(bzla->msg, 1, "%s (cond): %u", s_cons, slv->stats.cons_cond);
 
+  /* Inverse value computation stats. */
   BZLA_MSG(bzla->msg, 1, "");
-  if (bzla_opt_get(bzla, BZLA_OPT_PROP_DOMAINS))
+  BZLA_MSG(bzla->msg,
+           1,
+           "inverse value computations%s:",
+           domains ? " [#conflicts /w domain props]" : "");
+
+  if (domains)
   {
     BZLA_MSG(bzla->msg,
              1,
-             "inverse value computations [# conflicts /w domain props]:");
-    BZLA_MSG(bzla->msg,
-             1,
-             "    inverse fun calls (add): %u [%u]",
+             "%s (add): %u [%u]",
+             s_inv,
              slv->stats.inv_add,
              slv->stats.inv_add_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (and): %u [%u]",
+             "%s (and): %u [%u]",
+             s_inv,
              slv->stats.inv_and,
              slv->stats.inv_and_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (eq): %u [%u]",
+             "%s (eq): %u [%u]",
+             s_inv,
              slv->stats.inv_eq,
              slv->stats.inv_eq_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (ult): %u [%u]",
+             "%s (ult): %u [%u]",
+             s_inv,
              slv->stats.inv_ult,
              slv->stats.inv_ult_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (sll): %u [%u]",
+             "%s (sll): %u [%u]",
+             s_inv,
              slv->stats.inv_sll,
              slv->stats.inv_sll_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (srl): %u [%u]",
+             "%s (srl): %u [%u]",
+             s_inv,
              slv->stats.inv_srl,
              slv->stats.inv_srl_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (mul): %u [%u]",
+             "%s (mul): %u [%u]",
+             s_inv,
              slv->stats.inv_mul,
              slv->stats.inv_mul_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (udiv): %u [%u]",
+             "%s (udiv): %u [%u]",
+             s_inv,
              slv->stats.inv_udiv,
              slv->stats.inv_udiv_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (urem): %u [%u]",
+             "%s (urem): %u [%u]",
+             s_inv,
              slv->stats.inv_urem,
              slv->stats.inv_urem_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (concat): %u [%u]",
+             "%s (concat): %u [%u]",
+             s_inv,
              slv->stats.inv_concat,
              slv->stats.inv_concat_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (slice): %u [%u]",
+             "%s (slice): %u [%u]",
+             s_inv,
              slv->stats.inv_slice,
              slv->stats.inv_slice_conflicts);
     BZLA_MSG(bzla->msg,
              1,
-             "    inverse fun calls (cond): %u [%u]",
+             "%s (cond): %u [%u]",
+             s_inv,
              slv->stats.inv_cond,
              slv->stats.inv_cond_conflicts);
   }
   else
   {
-    BZLA_MSG(bzla->msg, 1, "inverse value computations:");
-    BZLA_MSG(
-        bzla->msg, 1, "    inverse fun calls (add): %u", slv->stats.inv_add);
-    BZLA_MSG(
-        bzla->msg, 1, "    inverse fun calls (and): %u", slv->stats.inv_and);
-    BZLA_MSG(bzla->msg, 1, "    inverse fun calls (eq): %u", slv->stats.inv_eq);
-    BZLA_MSG(
-        bzla->msg, 1, "    inverse fun calls (ult): %u", slv->stats.inv_ult);
-    BZLA_MSG(
-        bzla->msg, 1, "    inverse fun calls (sll): %u", slv->stats.inv_sll);
-    BZLA_MSG(
-        bzla->msg, 1, "    inverse fun calls (srl): %u", slv->stats.inv_srl);
-    BZLA_MSG(
-        bzla->msg, 1, "    inverse fun calls (mul): %u", slv->stats.inv_mul);
-    BZLA_MSG(
-        bzla->msg, 1, "    inverse fun calls (udiv): %u", slv->stats.inv_udiv);
-    BZLA_MSG(
-        bzla->msg, 1, "    inverse fun calls (urem): %u", slv->stats.inv_urem);
-    BZLA_MSG(bzla->msg,
-             1,
-             "    inverse fun calls (concat): %u",
-             slv->stats.inv_concat);
-    BZLA_MSG(bzla->msg,
-             1,
-             "    inverse fun calls (slice): %u",
-             slv->stats.inv_slice);
-    BZLA_MSG(
-        bzla->msg, 1, "    inverse fun calls (cond): %u", slv->stats.inv_cond);
+    BZLA_MSG(bzla->msg, 1, "%s (add): %u", s_inv, slv->stats.inv_add);
+    BZLA_MSG(bzla->msg, 1, "%s (and): %u", s_inv, slv->stats.inv_and);
+    BZLA_MSG(bzla->msg, 1, "%s (eq): %u", s_inv, slv->stats.inv_eq);
+    BZLA_MSG(bzla->msg, 1, "%s (ult): %u", s_inv, slv->stats.inv_ult);
+    BZLA_MSG(bzla->msg, 1, "%s (sll): %u", s_inv, slv->stats.inv_sll);
+    BZLA_MSG(bzla->msg, 1, "%s (srl): %u", s_inv, slv->stats.inv_srl);
+    BZLA_MSG(bzla->msg, 1, "%s (mul): %u", s_inv, slv->stats.inv_mul);
+    BZLA_MSG(bzla->msg, 1, "%s (udiv): %u", s_inv, slv->stats.inv_udiv);
+    BZLA_MSG(bzla->msg, 1, "%s (urem): %u", s_inv, slv->stats.inv_urem);
+    BZLA_MSG(bzla->msg, 1, "%s (concat): %u", s_inv, slv->stats.inv_concat);
+    BZLA_MSG(bzla->msg, 1, "%s (slice): %u", s_inv, slv->stats.inv_slice);
+    BZLA_MSG(bzla->msg, 1, "%s (cond): %u", s_inv, slv->stats.inv_cond);
   }
 #endif
 }
