@@ -3245,7 +3245,11 @@ inv_cond_bv(Bzla *bzla,
 /* INV: add                                                                   */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_add_bvprop(Bzla *bzla,
                BzlaNode *add,
                BzlaBitVector *t,
@@ -3313,7 +3317,11 @@ inv_add_bvprop(Bzla *bzla,
 /* INV: and                                                                   */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_and_bvprop(Bzla *bzla,
                BzlaNode *and,
                BzlaBitVector *t,
@@ -3329,7 +3337,11 @@ inv_and_bvprop(Bzla *bzla,
 /* INV: eq                                                                    */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_eq_bvprop(Bzla *bzla,
               BzlaNode *eq,
               BzlaBitVector *t,
@@ -3345,7 +3357,11 @@ inv_eq_bvprop(Bzla *bzla,
 /* INV: ult                                                                   */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_ult_bvprop(Bzla *bzla,
                BzlaNode *ult,
                BzlaBitVector *t,
@@ -3361,7 +3377,11 @@ inv_ult_bvprop(Bzla *bzla,
 /* INV: sll                                                                   */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_sll_bvprop(Bzla *bzla,
                BzlaNode *sll,
                BzlaBitVector *t,
@@ -3377,7 +3397,11 @@ inv_sll_bvprop(Bzla *bzla,
 /* INV: srl                                                                   */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_srl_bvprop(Bzla *bzla,
                BzlaNode *srl,
                BzlaBitVector *t,
@@ -3393,7 +3417,11 @@ inv_srl_bvprop(Bzla *bzla,
 /* INV: mul                                                                   */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_mul_bvprop(Bzla *bzla,
                BzlaNode *mul,
                BzlaBitVector *t,
@@ -3409,7 +3437,11 @@ inv_mul_bvprop(Bzla *bzla,
 /* INV: udiv                                                                  */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_udiv_bvprop(Bzla *bzla,
                 BzlaNode *div,
                 BzlaBitVector *t,
@@ -3425,7 +3457,11 @@ inv_udiv_bvprop(Bzla *bzla,
 /* INV: urem                                                                  */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_urem_bvprop(Bzla *bzla,
                 BzlaNode *urem,
                 BzlaBitVector *t,
@@ -3441,7 +3477,11 @@ inv_urem_bvprop(Bzla *bzla,
 /* INV: concat                                                                */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_concat_bvprop(Bzla *bzla,
                   BzlaNode *concat,
                   BzlaBitVector *t,
@@ -3457,7 +3497,11 @@ inv_concat_bvprop(Bzla *bzla,
 /* INV: slice                                                                 */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_slice_bvprop(Bzla *bzla,
                  BzlaNode *slice,
                  BzlaBitVector *t,
@@ -3473,7 +3517,11 @@ inv_slice_bvprop(Bzla *bzla,
 /* INV: cond                                                                  */
 /* -------------------------------------------------------------------------- */
 
+#ifdef NDEBUG
+static BzlaBitVector *
+#else
 BzlaBitVector *
+#endif
 inv_cond_bvprop(Bzla *bzla,
                 BzlaNode *cond,
                 BzlaBitVector *t,

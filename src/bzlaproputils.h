@@ -52,9 +52,10 @@ uint64_t bzla_proputils_select_move_prop(Bzla* bzla,
                                          BzlaNode** input,
                                          BzlaBitVector** assignment);
 
-/*------------------------------------------------------------------------*/
-
 #ifndef NDEBUG
+/*=========================================================================*/
+/* Exported for unit tests only.                                           */
+/*=========================================================================*/
 
 /*------------------------------------------------------------------------*/
 /* Consistent value computation functions.                                */
@@ -327,6 +328,5 @@ void init_prop_domains(Bzla* bzla, BzlaIntHashTable* domains, BzlaNode* root);
 int32_t sat_prop_solver_aux(Bzla* bzla);
 #endif
 
-/*------------------------------------------------------------------------*/
-
+/*========================================================================*/
 #endif
