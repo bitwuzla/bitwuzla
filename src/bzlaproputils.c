@@ -3490,7 +3490,14 @@ inv_cond_bvprop(Bzla *bzla,
 /* Propagation move                                                           */
 /* ========================================================================== */
 
-/* Return false if conflict is (forced to be) non-recoverable. */
+/**
+ * Record the conflict and determine if it is recoverable.
+ *
+ * A conflict is always recoverable if given child 'e' is non-const.
+ * If we enforce to always move, even on non-recoverable conflicts (i.e.,
+ * option BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT is false), we still interpret the
+ * conflict as recoverable.
+ */
 static bool
 record_conflict(Bzla *bzla,
                 BzlaNode *exp,
@@ -3508,12 +3515,8 @@ record_conflict(Bzla *bzla,
   assert(t);
   assert(s);
 
-  bool is_recoverable;
-  uint32_t prop_entailed;
-  BzlaMemMgr *mm;
-
-  mm             = bzla->mm;
-  is_recoverable = bzla_node_is_bv_const(e) ? false : true;
+  BzlaMemMgr *mm      = bzla->mm;
+  bool is_recoverable = bzla_node_is_bv_const(e) ? false : true;
 
 #ifndef NDEBUG
   char *str_s = bzla_bv_to_char(mm, s);
@@ -3552,8 +3555,8 @@ record_conflict(Bzla *bzla,
 #endif
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
   {
-    BzlaPropSolver *slv = BZLA_PROP_SOLVER(bzla);
-    prop_entailed       = bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED);
+    BzlaPropSolver *slv    = BZLA_PROP_SOLVER(bzla);
+    uint32_t prop_entailed = bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED);
     if (is_recoverable)
     {
 #ifndef NDEBUG
