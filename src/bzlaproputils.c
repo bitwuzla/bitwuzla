@@ -1692,7 +1692,7 @@ inv_and_bv(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(and->e[eidx]));
-  assert(bzla_is_inv_and(bzla->mm, s, t, eidx));
+  assert(bzla_is_inv_and(bzla->mm, t, s, eidx));
 
   uint32_t i, bw;
   int32_t bit_and, bit_e;
@@ -1862,7 +1862,7 @@ inv_ult_bv(Bzla *bzla,
   assert(s);
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(ult->e[eidx]));
-  assert(bzla_is_inv_ult(bzla->mm, s, t, eidx));
+  assert(bzla_is_inv_ult(bzla->mm, t, s, eidx));
 
   bool isult;
   uint32_t bw;
@@ -1954,7 +1954,7 @@ inv_sll_bv(Bzla *bzla,
   assert(eidx >= 0 && eidx <= 1);
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(!bzla_node_is_bv_const(sll->e[eidx]));
-  assert(bzla_is_inv_sll(bzla->mm, s, t, eidx));
+  assert(bzla_is_inv_sll(bzla->mm, t, s, eidx));
 
   uint32_t bw, i, ctz_s, ctz_t, shift;
   BzlaBitVector *res, *tmp, *bvmax;
@@ -2089,7 +2089,7 @@ inv_srl_bv(Bzla *bzla,
   assert(eidx >= 0 && eidx <= 1);
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(!bzla_node_is_bv_const(srl->e[eidx]));
-  assert(bzla_is_inv_srl(bzla->mm, s, t, eidx));
+  assert(bzla_is_inv_srl(bzla->mm, t, s, eidx));
 
   uint32_t bw, i, clz_s, clz_t, shift;
   BzlaBitVector *res, *bvmax, *tmp;
@@ -2225,7 +2225,7 @@ inv_mul_bv(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(mul->e[eidx]));
-  assert(bzla_is_inv_mul(bzla->mm, s, t, eidx));
+  assert(bzla_is_inv_mul(bzla->mm, t, s, eidx));
 
   int32_t lsb_s, ispow2_s;
   uint32_t i, j, bw;
@@ -2404,7 +2404,7 @@ inv_udiv_bv(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(udiv->e[eidx]));
-  assert(bzla_is_inv_udiv(bzla->mm, s, t, eidx));
+  assert(bzla_is_inv_udiv(bzla->mm, t, s, eidx));
 
   uint32_t bw;
   BzlaBitVector *res, *lo, *up, *one, *bvmax, *tmp;
@@ -2630,7 +2630,7 @@ inv_urem_bv(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(urem->e[eidx]));
-  assert(bzla_is_inv_urem(bzla->mm, s, t, eidx));
+  assert(bzla_is_inv_urem(bzla->mm, t, s, eidx));
 
   uint32_t bw, cnt;
   int32_t cmp;
@@ -2934,7 +2934,7 @@ inv_concat_bv(Bzla *bzla,
   assert(s);
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(concat->e[eidx]));
-  assert(bzla_is_inv_concat(bzla->mm, s, t, eidx));
+  assert(bzla_is_inv_concat(bzla->mm, t, s, eidx));
 
   uint32_t bw_t, bw_s;
   BzlaBitVector *res, *tmp;
@@ -3854,7 +3854,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
       /* check invertibility --> if not invertible, fall back to consistent
        * value computation */
-      force_cons = is_inv ? !is_inv(mm, bv_s[idx], bv_t, eidx) : false;
+      force_cons = is_inv ? !is_inv(mm, bv_t, bv_s[idx], eidx) : false;
       /* not invertible counts as conflict */
       if (force_cons)
       {

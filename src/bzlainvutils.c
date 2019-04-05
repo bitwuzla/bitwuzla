@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
- *  Copyright (C) 2018 Aina Niemetz.
+ *  Copyright (C) 2018-2019 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -24,10 +24,13 @@
  */
 bool
 bzla_is_inv_and(BzlaMemMgr *mm,
-                const BzlaBitVector *s,
                 const BzlaBitVector *t,
+                const BzlaBitVector *s,
                 uint32_t pos_x)
 {
+  assert(mm);
+  assert(t);
+  assert(s);
   (void) pos_x;
   BzlaBitVector *t_and_s = bzla_bv_and(mm, t, s);
   BzlaBitVector *eq_t    = bzla_bv_eq(mm, t_and_s, t);
@@ -44,10 +47,14 @@ bzla_is_inv_and(BzlaMemMgr *mm,
  */
 bool
 bzla_is_inv_concat(BzlaMemMgr *mm,
-                   const BzlaBitVector *s,
                    const BzlaBitVector *t,
+                   const BzlaBitVector *s,
                    uint32_t pos_x)
 {
+  assert(mm);
+  assert(t);
+  assert(s);
+
   BzlaBitVector *slice;
   bool res;
   uint32_t bw_s, bw_t;
@@ -76,10 +83,14 @@ bzla_is_inv_concat(BzlaMemMgr *mm,
  */
 bool
 bzla_is_inv_mul(BzlaMemMgr *mm,
-                const BzlaBitVector *s,
                 const BzlaBitVector *t,
+                const BzlaBitVector *s,
                 uint32_t pos_x)
 {
+  assert(mm);
+  assert(t);
+  assert(s);
+
   (void) pos_x;
   BzlaBitVector *neg_s      = bzla_bv_neg(mm, s);
   BzlaBitVector *neg_s_or_s = bzla_bv_or(mm, neg_s, s);
@@ -99,10 +110,14 @@ bzla_is_inv_mul(BzlaMemMgr *mm,
  */
 bool
 bzla_is_inv_or(BzlaMemMgr *mm,
-               const BzlaBitVector *s,
                const BzlaBitVector *t,
+               const BzlaBitVector *s,
                uint32_t pos_x)
 {
+  assert(mm);
+  assert(t);
+  assert(s);
+
   (void) pos_x;
   BzlaBitVector *t_or_s = bzla_bv_or(mm, t, s);
   BzlaBitVector *eq_t   = bzla_bv_eq(mm, t_or_s, t);
@@ -119,10 +134,14 @@ bzla_is_inv_or(BzlaMemMgr *mm,
  */
 bool
 bzla_is_inv_sll(BzlaMemMgr *mm,
-                const BzlaBitVector *s,
                 const BzlaBitVector *t,
+                const BzlaBitVector *s,
                 uint32_t pos_x)
 {
+  assert(mm);
+  assert(t);
+  assert(s);
+
   bool res;
   if (pos_x == 0)
   {
@@ -161,10 +180,14 @@ bzla_is_inv_sll(BzlaMemMgr *mm,
  */
 bool
 bzla_is_inv_sra(BzlaMemMgr *mm,
-                const BzlaBitVector *s,
                 const BzlaBitVector *t,
+                const BzlaBitVector *s,
                 uint32_t pos_x)
 {
+  assert(mm);
+  assert(t);
+  assert(s);
+
   bool res;
   uint32_t bw_s = bzla_bv_get_width(s);
 
@@ -219,10 +242,14 @@ bzla_is_inv_sra(BzlaMemMgr *mm,
  */
 bool
 bzla_is_inv_srl(BzlaMemMgr *mm,
-                const BzlaBitVector *s,
                 const BzlaBitVector *t,
+                const BzlaBitVector *s,
                 uint32_t pos_x)
 {
+  assert(mm);
+  assert(t);
+  assert(s);
+
   bool res;
   if (pos_x == 0)
   {
@@ -259,10 +286,14 @@ bzla_is_inv_srl(BzlaMemMgr *mm,
  */
 bool
 bzla_is_inv_ult(BzlaMemMgr *mm,
-                const BzlaBitVector *s,
                 const BzlaBitVector *t,
+                const BzlaBitVector *s,
                 uint32_t pos_x)
 {
+  assert(mm);
+  assert(t);
+  assert(s);
+
   (void) mm;
   bool res;
   if (pos_x == 0)
@@ -284,10 +315,14 @@ bzla_is_inv_ult(BzlaMemMgr *mm,
  */
 bool
 bzla_is_inv_udiv(BzlaMemMgr *mm,
-                 const BzlaBitVector *s,
                  const BzlaBitVector *t,
+                 const BzlaBitVector *s,
                  uint32_t pos_x)
 {
+  assert(mm);
+  assert(t);
+  assert(s);
+
   BzlaBitVector *udiv;
   bool res;
   if (pos_x == 0)
@@ -317,10 +352,14 @@ bzla_is_inv_udiv(BzlaMemMgr *mm,
  */
 bool
 bzla_is_inv_urem(BzlaMemMgr *mm,
-                 const BzlaBitVector *s,
                  const BzlaBitVector *t,
+                 const BzlaBitVector *s,
                  uint32_t pos_x)
 {
+  assert(mm);
+  assert(t);
+  assert(s);
+
   bool res;
   BzlaBitVector *neg_s = bzla_bv_neg(mm, s);
   if (pos_x == 0)
