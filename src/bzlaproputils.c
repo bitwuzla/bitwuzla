@@ -3626,7 +3626,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   assert(root);
   assert(bvroot);
 
-  bool b, force_cons;
+  bool pick_inv, force_cons;
   int32_t i, idx_s, nconst;
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
@@ -3768,10 +3768,11 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
       /* we either select a consistent or inverse value
        * as path assignment, depending on the given probability p
-       * -> if b then inverse else consistent */
-      b = bzla_rng_pick_with_prob(&bzla->rng, opt_prop_prob_use_inv_value);
+       * -> if pick_inv then inverse else consistent */
+      pick_inv =
+          bzla_rng_pick_with_prob(&bzla->rng, opt_prop_prob_use_inv_value);
 #ifndef NBZLALOG
-      if (!b) ncons += 1;
+      if (!pick_inv) ncons += 1;
 #endif
 
       /* determine value computation function */
@@ -3858,78 +3859,81 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       {
         case BZLA_BV_ADD_NODE:
           assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = b && !force_cons
+          compute_value = pick_inv && !force_cons
                               ? (opt_prop_domains ? inv_add_bvprop : inv_add_bv)
                               : cons_add_bv;
           break;
         case BZLA_BV_AND_NODE:
           assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = b && !force_cons
+          compute_value = pick_inv && !force_cons
                               ? (opt_prop_domains ? inv_and_bvprop : inv_and_bv)
                               : cons_and_bv;
           break;
         case BZLA_BV_EQ_NODE:
           assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = b && !force_cons
+          compute_value = pick_inv && !force_cons
                               ? (opt_prop_domains ? inv_eq_bvprop : inv_eq_bv)
                               : cons_eq_bv;
           break;
         case BZLA_BV_ULT_NODE:
           assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = b && !force_cons
+          compute_value = pick_inv && !force_cons
                               ? (opt_prop_domains ? inv_ult_bvprop : inv_ult_bv)
                               : cons_ult_bv;
           break;
         case BZLA_BV_SLL_NODE:
           assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = b && !force_cons
+          compute_value = pick_inv && !force_cons
                               ? (opt_prop_domains ? inv_sll_bvprop : inv_sll_bv)
                               : cons_sll_bv;
           break;
         case BZLA_BV_SRL_NODE:
           assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = b && !force_cons
+          compute_value = pick_inv && !force_cons
                               ? (opt_prop_domains ? inv_srl_bvprop : inv_srl_bv)
                               : cons_srl_bv;
           break;
         case BZLA_BV_MUL_NODE:
           assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = b && !force_cons
+          compute_value = pick_inv && !force_cons
                               ? (opt_prop_domains ? inv_mul_bvprop : inv_mul_bv)
                               : cons_mul_bv;
           break;
         case BZLA_BV_UDIV_NODE:
           assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = b && !force_cons ? (opt_prop_domains ? inv_udiv_bvprop
-                                                               : inv_udiv_bv)
-                                           : cons_udiv_bv;
+          compute_value =
+              pick_inv && !force_cons
+                  ? (opt_prop_domains ? inv_udiv_bvprop : inv_udiv_bv)
+                  : cons_udiv_bv;
           break;
         case BZLA_BV_UREM_NODE:
           assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = b && !force_cons ? (opt_prop_domains ? inv_urem_bvprop
-                                                               : inv_urem_bv)
-                                           : cons_urem_bv;
+          compute_value =
+              pick_inv && !force_cons
+                  ? (opt_prop_domains ? inv_urem_bvprop : inv_urem_bv)
+                  : cons_urem_bv;
           break;
         case BZLA_BV_CONCAT_NODE:
           assert(idx_x >= 0 && idx_x <= 1);
           compute_value =
-              b && !force_cons
+              pick_inv && !force_cons
                   ? (opt_prop_domains ? inv_concat_bvprop : inv_concat_bv)
                   : cons_concat_bv;
           break;
         case BZLA_BV_SLICE_NODE:
           assert(idx_x >= 0 && idx_x <= 0);
           compute_value =
-              b && !force_cons
+              pick_inv && !force_cons
                   ? (opt_prop_domains ? inv_slice_bvprop : inv_slice_bv)
                   : cons_slice_bv;
           break;
         default:
           assert(bzla_node_is_bv_cond(real_cur));
           assert(idx_x >= 0 && idx_x <= 2);
-          compute_value = b && !force_cons ? (opt_prop_domains ? inv_cond_bvprop
-                                                               : inv_cond_bv)
-                                           : cons_cond_bv;
+          compute_value =
+              pick_inv && !force_cons
+                  ? (opt_prop_domains ? inv_cond_bvprop : inv_cond_bv)
+                  : cons_cond_bv;
       }
 
 #ifndef NDEBUG
