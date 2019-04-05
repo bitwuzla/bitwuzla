@@ -3535,6 +3535,7 @@ record_conflict(Bzla *bzla,
   }
   BZLALOG(2, "");
   if (eidx)
+  {
     BZLALOG(2,
             "%srecoverable CONFLICT (@%d): %s := %s %s x",
             is_recoverable ? "" : "non-",
@@ -3542,7 +3543,9 @@ record_conflict(Bzla *bzla,
             str_t,
             str_s,
             str_o);
+  }
   else
+  {
     BZLALOG(2,
             "%srecoverable CONFLICT (@%d): %s := x %s %s",
             is_recoverable ? "" : "non-",
@@ -3550,6 +3553,7 @@ record_conflict(Bzla *bzla,
             str_t,
             str_o,
             str_s);
+  }
   bzla_mem_freestr(mm, str_s);
   bzla_mem_freestr(mm, str_t);
 #endif
@@ -3559,23 +3563,6 @@ record_conflict(Bzla *bzla,
     uint32_t prop_entailed = bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED);
     if (is_recoverable)
     {
-#ifndef NDEBUG
-      /* fix counters since we always increase the counter, even in the conflict
-       * case  (except for slice and cond where inv = cons) */
-      switch (exp->kind)
-      {
-        case BZLA_BV_AND_NODE: slv->stats.inv_and -= 1; break;
-        case BZLA_BV_ULT_NODE: slv->stats.inv_ult -= 1; break;
-        case BZLA_BV_SLL_NODE: slv->stats.inv_sll -= 1; break;
-        case BZLA_BV_SRL_NODE: slv->stats.inv_srl -= 1; break;
-        case BZLA_BV_MUL_NODE: slv->stats.inv_mul -= 1; break;
-        case BZLA_BV_UDIV_NODE: slv->stats.inv_udiv -= 1; break;
-        case BZLA_BV_UREM_NODE: slv->stats.inv_urem -= 1; break;
-        default:
-          assert(bzla_node_is_bv_concat(exp));
-          slv->stats.inv_concat -= 1;
-      }
-#endif
       slv->stats.rec_conf += 1;
       /* recoverable conflict, push entailed propagation */
       assert(exp->arity == 2);
