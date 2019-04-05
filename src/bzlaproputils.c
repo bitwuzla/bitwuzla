@@ -3939,14 +3939,16 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         BZLA_PUSH_STACK(BZLA_PROP_SOLVER(bzla)->prop_path, prop);
       }
 #endif
-      cur = real_cur->e[idx_x];
+      /* compute new assignment */
       bv_s_new =
           compute_value(bzla, real_cur, bv_t, bv_s[idx_s], idx_x, domains);
       assert(bv_s_new);
-      nprops += 1;
-
+      /* propagate down */
       bzla_bv_free(bzla->mm, bv_t);
-      bv_t  = bv_s_new;
+      bv_t = bv_s_new;
+      cur  = real_cur->e[idx_x];
+
+      nprops += 1;
       idx_x = -1;
     }
   }
