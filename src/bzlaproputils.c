@@ -10,12 +10,32 @@
 
 #include "bzlabvprop.h"
 #include "bzlainvutils.h"
+#include "bzlanode.h"
 #include "bzlaprintmodel.h"
 #include "bzlaslsutils.h"
 #include "bzlaslvprop.h"
 #include "bzlaslvsls.h"
 #include "utils/bzlanodeiter.h"
 #include "utils/bzlautil.h"
+
+/* ========================================================================== */
+
+typedef int32_t (*BzlaPropSelectPath)(Bzla *,
+                                      BzlaNode *,
+                                      BzlaBitVector *,
+                                      BzlaBitVector **);
+
+typedef bool (*BzlaPropIsInv)(BzlaMemMgr *,
+                              const BzlaBitVector *,
+                              const BzlaBitVector *,
+                              uint32_t);
+
+typedef BzlaBitVector *(*BzlaPropComputeValue)(Bzla *,
+                                               BzlaNode *,
+                                               BzlaBitVector *,
+                                               BzlaBitVector *,
+                                               int32_t,
+                                               BzlaIntHashTable *);
 
 /* ========================================================================== */
 /* Path selection (for down-propagation)                                      */
@@ -3534,6 +3554,80 @@ inv_cond_bvprop(Bzla *bzla,
 }
 
 /* ========================================================================== */
+/* Lookup tables.                                                             */
+/* ========================================================================== */
+
+static BzlaPropSelectPath kind_to_select_path[BZLA_NUM_OPS_NODE] = {
+    [BZLA_BV_ADD_NODE]    = select_path_add,
+    [BZLA_BV_AND_NODE]    = select_path_and,
+    [BZLA_BV_CONCAT_NODE] = select_path_concat,
+    [BZLA_BV_EQ_NODE]     = select_path_eq,
+    [BZLA_BV_MUL_NODE]    = select_path_mul,
+    [BZLA_BV_ULT_NODE]    = select_path_ult,
+    [BZLA_BV_SLICE_NODE]  = select_path_slice,
+    [BZLA_BV_SLL_NODE]    = select_path_sll,
+    [BZLA_BV_SRL_NODE]    = select_path_srl,
+    [BZLA_BV_UDIV_NODE]   = select_path_udiv,
+    [BZLA_BV_UREM_NODE]   = select_path_urem,
+};
+
+static BzlaPropComputeValue kind_to_cons_bv[BZLA_NUM_OPS_NODE] = {
+    [BZLA_BV_ADD_NODE]    = cons_add_bv,
+    [BZLA_BV_AND_NODE]    = cons_and_bv,
+    [BZLA_BV_CONCAT_NODE] = cons_concat_bv,
+    [BZLA_BV_EQ_NODE]     = cons_eq_bv,
+    [BZLA_BV_MUL_NODE]    = cons_mul_bv,
+    [BZLA_BV_ULT_NODE]    = cons_ult_bv,
+    [BZLA_BV_SLICE_NODE]  = cons_slice_bv,
+    [BZLA_BV_SLL_NODE]    = cons_sll_bv,
+    [BZLA_BV_SRL_NODE]    = cons_srl_bv,
+    [BZLA_BV_UDIV_NODE]   = cons_udiv_bv,
+    [BZLA_BV_UREM_NODE]   = cons_urem_bv,
+};
+
+static BzlaPropComputeValue kind_to_inv_bv[BZLA_NUM_OPS_NODE] = {
+    [BZLA_BV_ADD_NODE]    = inv_add_bv,
+    [BZLA_BV_AND_NODE]    = inv_and_bv,
+    [BZLA_BV_CONCAT_NODE] = inv_concat_bv,
+    [BZLA_BV_EQ_NODE]     = inv_eq_bv,
+    [BZLA_BV_MUL_NODE]    = inv_mul_bv,
+    [BZLA_BV_ULT_NODE]    = inv_ult_bv,
+    [BZLA_BV_SLICE_NODE]  = inv_slice_bv,
+    [BZLA_BV_SLL_NODE]    = inv_sll_bv,
+    [BZLA_BV_SRL_NODE]    = inv_srl_bv,
+    [BZLA_BV_UDIV_NODE]   = inv_udiv_bv,
+    [BZLA_BV_UREM_NODE]   = inv_urem_bv,
+};
+
+static BzlaPropComputeValue kind_to_inv_bvprop[BZLA_NUM_OPS_NODE] = {
+    [BZLA_BV_ADD_NODE]    = inv_add_bvprop,
+    [BZLA_BV_AND_NODE]    = inv_and_bvprop,
+    [BZLA_BV_CONCAT_NODE] = inv_concat_bvprop,
+    [BZLA_BV_EQ_NODE]     = inv_eq_bvprop,
+    [BZLA_BV_MUL_NODE]    = inv_mul_bvprop,
+    [BZLA_BV_ULT_NODE]    = inv_ult_bvprop,
+    [BZLA_BV_SLICE_NODE]  = inv_slice_bvprop,
+    [BZLA_BV_SLL_NODE]    = inv_sll_bvprop,
+    [BZLA_BV_SRL_NODE]    = inv_srl_bvprop,
+    [BZLA_BV_UDIV_NODE]   = inv_udiv_bvprop,
+    [BZLA_BV_UREM_NODE]   = inv_urem_bvprop,
+};
+
+static BzlaPropIsInv kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
+    [BZLA_BV_ADD_NODE]    = 0,  // always invertible
+    [BZLA_BV_AND_NODE]    = bzla_is_inv_and,
+    [BZLA_BV_CONCAT_NODE] = bzla_is_inv_concat,
+    [BZLA_BV_EQ_NODE]     = 0,  // always invertible
+    [BZLA_BV_MUL_NODE]    = bzla_is_inv_mul,
+    [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult,
+    [BZLA_BV_SLICE_NODE]  = 0,  // always invertible
+    [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll,
+    [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl,
+    [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv,
+    [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem,
+};
+
+/* ========================================================================== */
 /* Propagation move                                                           */
 /* ========================================================================== */
 
@@ -3686,16 +3780,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   uint32_t opt_prop_const_bits;
 #endif
 
-  int32_t (*select_path)(Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector **);
-
-  BzlaBitVector *(*compute_value)(Bzla *,
-                                  BzlaNode *,
-                                  BzlaBitVector *,
-                                  BzlaBitVector *,
-                                  int32_t,
-                                  BzlaIntHashTable *);
-  bool (*is_inv)(
-      BzlaMemMgr *, const BzlaBitVector *, const BzlaBitVector *, uint32_t);
+  BzlaPropSelectPath select_path;
+  BzlaPropComputeValue inv_value, cons_value, compute_value;
+  BzlaPropIsInv is_inv;
 
 #ifndef NBZLALOG
   char *a;
@@ -3823,62 +3910,21 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       if (!pick_inv) ncons += 1;
 #endif
 
-      /* determine value computation function */
       is_inv = 0;
-      switch (real_cur->kind)
+      if (bzla_node_is_bv_cond(real_cur))
       {
-        case BZLA_BV_ADD_NODE:
-          select_path = select_path_add;
-          // always invertible
-          break;
-        case BZLA_BV_AND_NODE:
-          select_path = select_path_and;
-          is_inv      = bzla_is_inv_and;
-          break;
-        case BZLA_BV_EQ_NODE:
-          select_path = select_path_eq;
-          // always invertible
-          break;
-        case BZLA_BV_ULT_NODE:
-          select_path = select_path_ult;
-          is_inv      = bzla_is_inv_ult;
-          break;
-        case BZLA_BV_SLL_NODE:
-          select_path = select_path_sll;
-          is_inv      = bzla_is_inv_sll;
-          break;
-        case BZLA_BV_SRL_NODE:
-          select_path = select_path_srl;
-          is_inv      = bzla_is_inv_srl;
-          break;
-        case BZLA_BV_MUL_NODE:
-          select_path = select_path_mul;
-          is_inv      = bzla_is_inv_mul;
-          break;
-        case BZLA_BV_UDIV_NODE:
-          select_path = select_path_udiv;
-          is_inv      = bzla_is_inv_udiv;
-          break;
-        case BZLA_BV_UREM_NODE:
-          select_path = select_path_urem;
-          is_inv      = bzla_is_inv_urem;
-          break;
-        case BZLA_BV_CONCAT_NODE:
-          select_path = select_path_concat;
-          is_inv      = bzla_is_inv_concat;
-          break;
-        case BZLA_BV_SLICE_NODE:
-          select_path = select_path_slice;
-          // always invertible
-          break;
-        default:
-          assert(bzla_node_is_bv_cond(real_cur));
-          select_path = select_path_cond;
-          // always invertible
+        // always invertible
+        select_path = select_path_cond;
+      }
+      else
+      {
+        is_inv      = kind_to_is_inv[real_cur->kind];
+        select_path = kind_to_select_path[real_cur->kind];
       }
 
       /* select path */
       if (idx_x == -1) idx_x = select_path(bzla, real_cur, bv_t, bv_s);
+      assert(idx_x >= 0 && idx_x < real_cur->arity);
 
       idx_s = idx_x ? 0 : 1;
       /* special case slice: only one child
@@ -3903,86 +3949,18 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         }
       }
 
-      switch (real_cur->kind)
+      if (bzla_node_is_bv_cond(real_cur))
       {
-        case BZLA_BV_ADD_NODE:
-          assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = pick_inv && !force_cons
-                              ? (opt_prop_domains ? inv_add_bvprop : inv_add_bv)
-                              : cons_add_bv;
-          break;
-        case BZLA_BV_AND_NODE:
-          assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = pick_inv && !force_cons
-                              ? (opt_prop_domains ? inv_and_bvprop : inv_and_bv)
-                              : cons_and_bv;
-          break;
-        case BZLA_BV_EQ_NODE:
-          assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = pick_inv && !force_cons
-                              ? (opt_prop_domains ? inv_eq_bvprop : inv_eq_bv)
-                              : cons_eq_bv;
-          break;
-        case BZLA_BV_ULT_NODE:
-          assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = pick_inv && !force_cons
-                              ? (opt_prop_domains ? inv_ult_bvprop : inv_ult_bv)
-                              : cons_ult_bv;
-          break;
-        case BZLA_BV_SLL_NODE:
-          assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = pick_inv && !force_cons
-                              ? (opt_prop_domains ? inv_sll_bvprop : inv_sll_bv)
-                              : cons_sll_bv;
-          break;
-        case BZLA_BV_SRL_NODE:
-          assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = pick_inv && !force_cons
-                              ? (opt_prop_domains ? inv_srl_bvprop : inv_srl_bv)
-                              : cons_srl_bv;
-          break;
-        case BZLA_BV_MUL_NODE:
-          assert(idx_x >= 0 && idx_x <= 1);
-          compute_value = pick_inv && !force_cons
-                              ? (opt_prop_domains ? inv_mul_bvprop : inv_mul_bv)
-                              : cons_mul_bv;
-          break;
-        case BZLA_BV_UDIV_NODE:
-          assert(idx_x >= 0 && idx_x <= 1);
-          compute_value =
-              pick_inv && !force_cons
-                  ? (opt_prop_domains ? inv_udiv_bvprop : inv_udiv_bv)
-                  : cons_udiv_bv;
-          break;
-        case BZLA_BV_UREM_NODE:
-          assert(idx_x >= 0 && idx_x <= 1);
-          compute_value =
-              pick_inv && !force_cons
-                  ? (opt_prop_domains ? inv_urem_bvprop : inv_urem_bv)
-                  : cons_urem_bv;
-          break;
-        case BZLA_BV_CONCAT_NODE:
-          assert(idx_x >= 0 && idx_x <= 1);
-          compute_value =
-              pick_inv && !force_cons
-                  ? (opt_prop_domains ? inv_concat_bvprop : inv_concat_bv)
-                  : cons_concat_bv;
-          break;
-        case BZLA_BV_SLICE_NODE:
-          assert(idx_x >= 0 && idx_x <= 0);
-          compute_value =
-              pick_inv && !force_cons
-                  ? (opt_prop_domains ? inv_slice_bvprop : inv_slice_bv)
-                  : cons_slice_bv;
-          break;
-        default:
-          assert(bzla_node_is_bv_cond(real_cur));
-          assert(idx_x >= 0 && idx_x <= 2);
-          compute_value =
-              pick_inv && !force_cons
-                  ? (opt_prop_domains ? inv_cond_bvprop : inv_cond_bv)
-                  : cons_cond_bv;
+        cons_value = cons_cond_bv;
+        inv_value  = opt_prop_domains ? inv_cond_bvprop : inv_cond_bv;
       }
+      else
+      {
+        cons_value = kind_to_cons_bv[real_cur->kind];
+        inv_value  = opt_prop_domains ? kind_to_inv_bvprop[real_cur->kind]
+                                     : kind_to_inv_bv[real_cur->kind];
+      }
+      compute_value = pick_inv && !force_cons ? inv_value : cons_value;
 
 #ifndef NDEBUG
       if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
