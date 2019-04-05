@@ -870,7 +870,11 @@ static BzlaBitVector *inv_cond_bv(Bzla *,
                                   BzlaIntHashTable *);
 #endif
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_add_bv(Bzla *bzla,
             BzlaNode *add,
             BzlaBitVector *t,
@@ -902,7 +906,11 @@ cons_add_bv(Bzla *bzla,
   return bzla_bv_new_random(bzla->mm, &bzla->rng, bzla_bv_get_width(t));
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_and_bv(Bzla *bzla,
             BzlaNode *and,
             BzlaBitVector *t,
@@ -965,7 +973,11 @@ cons_and_bv(Bzla *bzla,
   return res;
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_eq_bv(Bzla *bzla,
            BzlaNode *eq,
            BzlaBitVector *t,
@@ -1009,7 +1021,11 @@ cons_eq_bv(Bzla *bzla,
   return res;
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_ult_bv(Bzla *bzla,
             BzlaNode *ult,
             BzlaBitVector *t,
@@ -1073,7 +1089,11 @@ cons_ult_bv(Bzla *bzla,
   return res;
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_sll_bv(Bzla *bzla,
             BzlaNode *sll,
             BzlaBitVector *t,
@@ -1130,7 +1150,11 @@ cons_sll_bv(Bzla *bzla,
   return res;
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_srl_bv(Bzla *bzla,
             BzlaNode *srl,
             BzlaBitVector *t,
@@ -1190,7 +1214,11 @@ cons_srl_bv(Bzla *bzla,
   return res;
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_mul_bv(Bzla *bzla,
             BzlaNode *mul,
             BzlaBitVector *t,
@@ -1283,7 +1311,11 @@ cons_mul_bv(Bzla *bzla,
   return res;
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_udiv_bv(Bzla *bzla,
              BzlaNode *udiv,
              BzlaBitVector *t,
@@ -1376,7 +1408,11 @@ cons_udiv_bv(Bzla *bzla,
   return res;
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_urem_bv(Bzla *bzla,
              BzlaNode *urem,
              BzlaBitVector *t,
@@ -1445,7 +1481,11 @@ cons_urem_bv(Bzla *bzla,
   return res;
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_concat_bv(Bzla *bzla,
                BzlaNode *concat,
                BzlaBitVector *t,
@@ -1502,7 +1542,11 @@ cons_concat_bv(Bzla *bzla,
   return res;
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_slice_bv(Bzla *bzla,
               BzlaNode *slice,
               BzlaBitVector *t,
@@ -1513,7 +1557,11 @@ cons_slice_bv(Bzla *bzla,
   return inv_slice_bv(bzla, slice, t, s, eidx, domains);
 }
 
+#ifdef NDEBUG
 static BzlaBitVector *
+#else
+BzlaBitVector *
+#endif
 cons_cond_bv(Bzla *bzla,
              BzlaNode *cond,
              BzlaBitVector *bvcond,
@@ -1527,149 +1575,6 @@ cons_cond_bv(Bzla *bzla,
 /* ========================================================================== */
 /* Inverse value computation                                                  */
 /* ========================================================================== */
-
-static BzlaBitVector *
-res_rec_conf(Bzla *bzla,
-             BzlaNode *exp,
-             BzlaNode *e,
-             BzlaBitVector *t,
-             BzlaBitVector *s,
-             int32_t eidx,
-             BzlaIntHashTable *domains,
-             BzlaBitVector *(*fun)(Bzla *,
-                                   BzlaNode *,
-                                   BzlaBitVector *,
-                                   BzlaBitVector *,
-                                   int32_t,
-                                   BzlaIntHashTable *),
-             char *op)
-{
-  assert(bzla);
-  assert(bzla->slv->kind == BZLA_PROP_SOLVER_KIND
-         || bzla->slv->kind == BZLA_SLS_SOLVER_KIND);
-  assert(exp);
-  assert(bzla_node_is_regular(exp));
-  assert(e);
-  assert(t);
-  assert(s);
-  assert(op);
-  (void) op;
-  (void) e;
-
-  bool is_recoverable;
-  uint32_t no_move_on_conflict, prop_entailed;
-  BzlaBitVector *res;
-  BzlaMemMgr *mm;
-
-  mm = bzla->mm;
-
-  is_recoverable      = bzla_node_is_bv_const(e) ? false : true;
-  no_move_on_conflict = bzla_opt_get(bzla, BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT);
-
-  res = no_move_on_conflict && !is_recoverable
-            ? 0
-            : fun(bzla, exp, t, s, eidx, domains);
-  assert(no_move_on_conflict || res);
-
-#ifndef NDEBUG
-  char *str_s = bzla_bv_to_char(mm, s);
-  char *str_t = bzla_bv_to_char(mm, t);
-  BZLALOG(2, "");
-  if (eidx)
-    BZLALOG(2,
-            "%s CONFLICT (@%d): %s := %s %s x",
-            is_recoverable ? "recoverable" : "non-recoverable",
-            bzla_node_get_id(exp),
-            str_t,
-            str_s,
-            op);
-  else
-    BZLALOG(2,
-            "%s CONFLICT (@%d): %s := x %s %s",
-            is_recoverable ? "recoverable" : "non-recoverable",
-            bzla_node_get_id(exp),
-            str_t,
-            op,
-            str_s);
-  bzla_mem_freestr(mm, str_s);
-  bzla_mem_freestr(mm, str_t);
-#endif
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-    BzlaPropSolver *slv = BZLA_PROP_SOLVER(bzla);
-    prop_entailed       = bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED);
-    if (is_recoverable)
-    {
-#ifndef NDEBUG
-      /* fix counters since we always increase the counter, even in the conflict
-       * case  (except for slice and cond where inv = cons) */
-      switch (exp->kind)
-      {
-        case BZLA_BV_ADD_NODE: slv->stats.inv_add -= 1; break;
-        case BZLA_BV_AND_NODE: slv->stats.inv_and -= 1; break;
-        case BZLA_BV_EQ_NODE: slv->stats.inv_eq -= 1; break;
-        case BZLA_BV_ULT_NODE: slv->stats.inv_ult -= 1; break;
-        case BZLA_BV_SLL_NODE: slv->stats.inv_sll -= 1; break;
-        case BZLA_BV_SRL_NODE: slv->stats.inv_srl -= 1; break;
-        case BZLA_BV_MUL_NODE: slv->stats.inv_mul -= 1; break;
-        case BZLA_BV_UDIV_NODE: slv->stats.inv_udiv -= 1; break;
-        case BZLA_BV_UREM_NODE: slv->stats.inv_urem -= 1; break;
-        case BZLA_BV_CONCAT_NODE: slv->stats.inv_concat -= 1; break;
-        default:
-          assert(bzla_node_is_bv_slice(exp) || bzla_node_is_bv_cond(exp));
-          /* do not decrease, we do not call cons function in conflict case */
-      }
-#endif
-      slv->stats.rec_conf += 1;
-      /* recoverable conflict, push entailed propagation */
-      assert(exp->arity == 2);
-      if (prop_entailed != BZLA_PROP_ENTAILED_OFF)
-      {
-        BzlaPropInfo prop = {exp, bzla_bv_copy(mm, t), eidx ? 0 : 1};
-        if (BZLA_EMPTY_STACK(slv->toprop)
-            || prop_entailed == BZLA_PROP_ENTAILED_ALL)
-        {
-          BZLA_PUSH_STACK(slv->toprop, prop);
-        }
-        else if (prop_entailed == BZLA_PROP_ENTAILED_LAST)
-        {
-          assert(BZLA_COUNT_STACK(slv->toprop) == 1);
-          BZLA_POKE_STACK(slv->toprop, 0, prop);
-        }
-        else
-        {
-          bzla_bv_free(bzla->mm, prop.bvexp);
-        }
-        assert(prop_entailed == BZLA_PROP_ENTAILED_ALL
-               || BZLA_COUNT_STACK(slv->toprop) == 1);
-      }
-      /* fix counter since we always increase the counter, even in the conflict
-       * case (except for slice and cond, where inv = cons)*/
-      if (!bzla_node_is_bv_slice(exp) && !bzla_node_is_bv_cond(exp))
-        slv->stats.props_inv -= 1;
-    }
-    else
-    {
-      slv->stats.non_rec_conf += 1;
-      if (prop_entailed)
-      {
-        /* non-recoverable conflict, entailed propagations are thus invalid */
-        bzla_proputils_reset_prop_info_stack(mm, &slv->toprop);
-      }
-    }
-  }
-  else
-  {
-    if (is_recoverable)
-      BZLA_SLS_SOLVER(bzla)->stats.move_prop_rec_conf += 1;
-    else
-      BZLA_SLS_SOLVER(bzla)->stats.move_prop_non_rec_conf += 1;
-  }
-
-  return res;
-}
-
-/* -------------------------------------------------------------------------- */
 
 #ifndef NDEBUG
 static void
@@ -1787,14 +1692,16 @@ inv_and_bv(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(and->e[eidx]));
+  assert(bzla_is_inv_and(bzla->mm, s, t, eidx));
 
   uint32_t i, bw;
   int32_t bit_and, bit_e;
-  BzlaNode *e;
   BzlaBitVector *res;
   BzlaMemMgr *mm;
   BzlaUIntStack dcbits;
   bool b;
+
+  (void) domains;
 
   mm = bzla->mm;
 
@@ -1804,15 +1711,6 @@ inv_and_bv(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.inv_and++;
 #endif
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
-
-  e = and->e[eidx ? 0 : 1];
-  assert(e);
-
-  /* check invertibility, if not invertible: CONFLICT */
-  if (!bzla_is_inv_and(mm, s, t, eidx))
-  {
-    return res_rec_conf(bzla, and, e, t, s, eidx, domains, cons_and_bv, "AND");
   }
 
   b = bzla_rng_pick_with_prob(&bzla->rng,
@@ -1964,12 +1862,14 @@ inv_ult_bv(Bzla *bzla,
   assert(s);
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(ult->e[eidx]));
+  assert(bzla_is_inv_ult(bzla->mm, s, t, eidx));
 
   bool isult;
   uint32_t bw;
-  BzlaNode *e;
   BzlaBitVector *res, *zero, *one, *bvmax, *tmp;
   BzlaMemMgr *mm;
+
+  (void) domains;
 
   mm = bzla->mm;
 
@@ -1979,15 +1879,6 @@ inv_ult_bv(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.inv_ult++;
 #endif
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
-
-  e = ult->e[eidx ? 0 : 1];
-  assert(e);
-
-  /* check invertibility, if not invertible: CONFLICT */
-  if (!bzla_is_inv_ult(mm, s, t, eidx))
-  {
-    return res_rec_conf(bzla, ult, e, t, s, eidx, domains, cons_ult_bv, "<");
   }
 
   bw    = bzla_bv_get_width(s);
@@ -2063,11 +1954,13 @@ inv_sll_bv(Bzla *bzla,
   assert(eidx >= 0 && eidx <= 1);
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(!bzla_node_is_bv_const(sll->e[eidx]));
+  assert(bzla_is_inv_sll(bzla->mm, s, t, eidx));
 
   uint32_t bw, i, ctz_s, ctz_t, shift;
-  BzlaNode *e;
   BzlaBitVector *res, *tmp, *bvmax;
   BzlaMemMgr *mm;
+
+  (void) domains;
 
   mm = bzla->mm;
 
@@ -2077,16 +1970,6 @@ inv_sll_bv(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.inv_sll++;
 #endif
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
-
-  e = sll->e[eidx ? 0 : 1];
-  assert(e);
-  bw = bzla_bv_get_width(t);
-
-  /* check invertibility, if not invertible: CONFLICT */
-  if (!bzla_is_inv_sll(mm, s, t, eidx))
-  {
-    return res_rec_conf(bzla, sll, e, t, s, eidx, domains, cons_sll_bv, "<<");
   }
 
   res   = 0;
@@ -2206,11 +2089,13 @@ inv_srl_bv(Bzla *bzla,
   assert(eidx >= 0 && eidx <= 1);
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(!bzla_node_is_bv_const(srl->e[eidx]));
+  assert(bzla_is_inv_srl(bzla->mm, s, t, eidx));
 
   uint32_t bw, i, clz_s, clz_t, shift;
-  BzlaNode *e;
   BzlaBitVector *res, *bvmax, *tmp;
   BzlaMemMgr *mm;
+
+  (void) domains;
 
   mm = bzla->mm;
 
@@ -2220,16 +2105,6 @@ inv_srl_bv(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.inv_srl++;
 #endif
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
-
-  e = srl->e[eidx ? 0 : 1];
-  assert(e);
-  bw = bzla_bv_get_width(t);
-
-  /* check invertibility, if not invertible: CONFLICT */
-  if (!bzla_is_inv_srl(mm, s, t, eidx))
-  {
-    return res_rec_conf(bzla, srl, e, t, s, eidx, domains, cons_srl_bv, ">>");
   }
 
   res   = 0;
@@ -2350,12 +2225,14 @@ inv_mul_bv(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(mul->e[eidx]));
+  assert(bzla_is_inv_mul(bzla->mm, s, t, eidx));
 
   int32_t lsb_s, ispow2_s;
   uint32_t i, j, bw;
   BzlaBitVector *res, *inv, *tmp, *tmp2;
   BzlaMemMgr *mm;
-  BzlaNode *e;
+
+  (void) domains;
 
   mm = bzla->mm;
 
@@ -2367,16 +2244,7 @@ inv_mul_bv(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  e = mul->e[eidx ? 0 : 1];
-  assert(e);
-  bw = bzla_bv_get_width(t);
-
-  /* check invertibility, if not invertible: CONFLICT */
-  if (!bzla_is_inv_mul(mm, s, t, eidx))
-  {
-    return res_rec_conf(bzla, mul, e, t, s, eidx, domains, cons_mul_bv, "*");
-  }
-
+  bw  = bzla_bv_get_width(t);
   res = 0;
 
   /* ------------------------------------------------------------------------
@@ -2536,12 +2404,14 @@ inv_udiv_bv(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(udiv->e[eidx]));
+  assert(bzla_is_inv_udiv(bzla->mm, s, t, eidx));
 
   uint32_t bw;
-  BzlaNode *e;
   BzlaBitVector *res, *lo, *up, *one, *bvmax, *tmp;
   BzlaMemMgr *mm;
   BzlaRNG *rng;
+
+  (void) domains;
 
   mm = bzla->mm;
 
@@ -2554,15 +2424,7 @@ inv_udiv_bv(Bzla *bzla,
   }
 
   rng = &bzla->rng;
-  e   = udiv->e[eidx ? 0 : 1];
-  assert(e);
-  bw = bzla_bv_get_width(s);
-
-  /* check invertibility, if not invertible: CONFLICT */
-  if (!bzla_is_inv_udiv(mm, s, t, eidx))
-  {
-    return res_rec_conf(bzla, udiv, e, t, s, eidx, domains, cons_udiv_bv, "/");
-  }
+  bw  = bzla_bv_get_width(s);
 
   one   = bzla_bv_one(mm, bw);
   bvmax = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
@@ -2768,12 +2630,14 @@ inv_urem_bv(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(urem->e[eidx]));
+  assert(bzla_is_inv_urem(bzla->mm, s, t, eidx));
 
   uint32_t bw, cnt;
   int32_t cmp;
-  BzlaNode *e;
   BzlaBitVector *res, *bvmax, *tmp, *tmp2, *one, *n, *mul, *up, *sub;
   BzlaMemMgr *mm;
+
+  (void) domains;
 
   mm = bzla->mm;
 
@@ -2785,16 +2649,7 @@ inv_urem_bv(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  e = urem->e[eidx ? 0 : 1];
-  assert(e);
-
   bw = bzla_bv_get_width(t);
-
-  /* check invertibility, if not invertible: CONFLICT */
-  if (!bzla_is_inv_urem(mm, s, t, eidx))
-  {
-    return res_rec_conf(bzla, urem, e, t, s, eidx, domains, cons_urem_bv, "%");
-  }
 
   bvmax = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
   one   = bzla_bv_one(mm, bw);
@@ -3079,11 +2934,13 @@ inv_concat_bv(Bzla *bzla,
   assert(s);
   assert(eidx >= 0 && eidx <= 1);
   assert(!bzla_node_is_bv_const(concat->e[eidx]));
+  assert(bzla_is_inv_concat(bzla->mm, s, t, eidx));
 
   uint32_t bw_t, bw_s;
-  BzlaNode *e;
   BzlaBitVector *res, *tmp;
   BzlaMemMgr *mm;
+
+  (void) domains;
 
   mm = bzla->mm;
 
@@ -3095,19 +2952,9 @@ inv_concat_bv(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  e = concat->e[eidx ? 0 : 1];
-  assert(e);
   bw_t = bzla_bv_get_width(t);
   bw_s = bzla_bv_get_width(s);
-
-  /* check invertibility, if not invertible: CONFLICT */
-  if (!bzla_is_inv_concat(mm, s, t, eidx))
-  {
-    return res_rec_conf(
-        bzla, concat, e, t, s, eidx, domains, cons_concat_bv, "o");
-  }
-
-  res = 0;
+  res  = 0;
 
   /* ------------------------------------------------------------------------
    * s o e[1] = t
@@ -3643,39 +3490,140 @@ inv_cond_bvprop(Bzla *bzla,
 /* Propagation move                                                           */
 /* ========================================================================== */
 
-static BzlaNode *
-select_move(Bzla *bzla,
-            BzlaNode *exp,
-            BzlaBitVector *t,
-            BzlaBitVector *s[3],
-            int32_t eidx,
-            BzlaIntHashTable *domains,
-            BzlaBitVector *(*compute_value)(Bzla *,
-                                            BzlaNode *,
-                                            BzlaBitVector *,
-                                            BzlaBitVector *,
-                                            int32_t,
-                                            BzlaIntHashTable *),
-            BzlaBitVector **value)
+/* Return false if conflict is (forced to be) non-recoverable. */
+static bool
+record_conflict(Bzla *bzla,
+                BzlaNode *exp,
+                BzlaNode *e,
+                BzlaBitVector *t,
+                BzlaBitVector *s,
+                int32_t eidx)
 {
   assert(bzla);
+  assert(bzla->slv->kind == BZLA_PROP_SOLVER_KIND
+         || bzla->slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(exp);
   assert(bzla_node_is_regular(exp));
+  assert(e);
   assert(t);
   assert(s);
-  assert(eidx >= 0);
-  assert(compute_value);
-  assert(value);
 
-  int32_t idx;
+  bool is_recoverable;
+  uint32_t prop_entailed;
+  BzlaMemMgr *mm;
 
-  /* special case slice: only one child
-   * special case cond: we only need assignment of condition to compute value */
-  idx =
-      eidx ? 0 : (bzla_node_is_bv_slice(exp) || bzla_node_is_cond(exp) ? 0 : 1);
-  *value = compute_value(bzla, exp, t, s[idx], eidx, domains);
-  return exp->e[eidx];
+  mm             = bzla->mm;
+  is_recoverable = bzla_node_is_bv_const(e) ? false : true;
+
+#ifndef NDEBUG
+  char *str_s = bzla_bv_to_char(mm, s);
+  char *str_t = bzla_bv_to_char(mm, t);
+  char *str_o = 0;
+  switch (exp->kind)
+  {
+    case BZLA_BV_AND_NODE: str_o = "&"; break;
+    case BZLA_BV_ULT_NODE: str_o = "<"; break;
+    case BZLA_BV_SLL_NODE: str_o = "<<"; break;
+    case BZLA_BV_SRL_NODE: str_o = ">>"; break;
+    case BZLA_BV_MUL_NODE: str_o = "*"; break;
+    case BZLA_BV_UDIV_NODE: str_o = "/"; break;
+    case BZLA_BV_UREM_NODE: str_o = "%"; break;
+    default: assert(exp->kind == BZLA_BV_CONCAT_NODE); str_o = "o";
+  }
+  BZLALOG(2, "");
+  if (eidx)
+    BZLALOG(2,
+            "%srecoverable CONFLICT (@%d): %s := %s %s x",
+            is_recoverable ? "" : "non-",
+            bzla_node_get_id(exp),
+            str_t,
+            str_s,
+            str_o);
+  else
+    BZLALOG(2,
+            "%srecoverable CONFLICT (@%d): %s := x %s %s",
+            is_recoverable ? "" : "non-",
+            bzla_node_get_id(exp),
+            str_t,
+            str_o,
+            str_s);
+  bzla_mem_freestr(mm, str_s);
+  bzla_mem_freestr(mm, str_t);
+#endif
+  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  {
+    BzlaPropSolver *slv = BZLA_PROP_SOLVER(bzla);
+    prop_entailed       = bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED);
+    if (is_recoverable)
+    {
+#ifndef NDEBUG
+      /* fix counters since we always increase the counter, even in the conflict
+       * case  (except for slice and cond where inv = cons) */
+      switch (exp->kind)
+      {
+        case BZLA_BV_AND_NODE: slv->stats.inv_and -= 1; break;
+        case BZLA_BV_ULT_NODE: slv->stats.inv_ult -= 1; break;
+        case BZLA_BV_SLL_NODE: slv->stats.inv_sll -= 1; break;
+        case BZLA_BV_SRL_NODE: slv->stats.inv_srl -= 1; break;
+        case BZLA_BV_MUL_NODE: slv->stats.inv_mul -= 1; break;
+        case BZLA_BV_UDIV_NODE: slv->stats.inv_udiv -= 1; break;
+        case BZLA_BV_UREM_NODE: slv->stats.inv_urem -= 1; break;
+        default:
+          assert(bzla_node_is_bv_concat(exp));
+          slv->stats.inv_concat -= 1;
+      }
+#endif
+      slv->stats.rec_conf += 1;
+      /* recoverable conflict, push entailed propagation */
+      assert(exp->arity == 2);
+      if (prop_entailed != BZLA_PROP_ENTAILED_OFF)
+      {
+        BzlaPropInfo prop = {exp, bzla_bv_copy(mm, t), eidx ? 0 : 1};
+        if (BZLA_EMPTY_STACK(slv->toprop)
+            || prop_entailed == BZLA_PROP_ENTAILED_ALL)
+        {
+          BZLA_PUSH_STACK(slv->toprop, prop);
+        }
+        else if (prop_entailed == BZLA_PROP_ENTAILED_LAST)
+        {
+          assert(BZLA_COUNT_STACK(slv->toprop) == 1);
+          BZLA_POKE_STACK(slv->toprop, 0, prop);
+        }
+        else
+        {
+          bzla_bv_free(bzla->mm, prop.bvexp);
+        }
+        assert(prop_entailed == BZLA_PROP_ENTAILED_ALL
+               || BZLA_COUNT_STACK(slv->toprop) == 1);
+      }
+      /* fix counter since we always increase the counter, even in the conflict
+       * case (except for slice and cond, where inv = cons)*/
+      if (!bzla_node_is_bv_slice(exp) && !bzla_node_is_bv_cond(exp))
+        slv->stats.props_inv -= 1;
+    }
+    else
+    {
+      slv->stats.non_rec_conf += 1;
+      if (prop_entailed)
+      {
+        /* non-recoverable conflict, entailed propagations are thus invalid */
+        bzla_proputils_reset_prop_info_stack(mm, &slv->toprop);
+      }
+    }
+  }
+  else
+  {
+    if (is_recoverable)
+      BZLA_SLS_SOLVER(bzla)->stats.move_prop_rec_conf += 1;
+    else
+      BZLA_SLS_SOLVER(bzla)->stats.move_prop_non_rec_conf += 1;
+  }
+
+  return is_recoverable
+         || !bzla_opt_get(bzla, BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT);
 }
+
+/* -------------------------------------------------------------------------- */
 
 uint64_t
 bzla_proputils_select_move_prop(Bzla *bzla,
@@ -3689,29 +3637,36 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   assert(root);
   assert(bvroot);
 
-  bool b;
-  int32_t i, nconst;
+  bool b, force_cons;
+  int32_t i, idx, nconst;
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
   BzlaIntHashTable *domains;
-  BzlaBitVector *bve[3], *bvcur, *bvenew, *tmp;
+  BzlaBitVector *bv_s[3], *bv_t, *bv_s_new, *tmp;
+  BzlaMemMgr *mm;
   uint32_t opt_prop_prob_use_inv_value, opt_prop_domains;
 #ifndef NDEBUG
   uint32_t opt_prop_const_bits;
 #endif
 
   int32_t (*select_path)(Bzla *, BzlaNode *, BzlaBitVector *, BzlaBitVector **);
+
   BzlaBitVector *(*compute_value)(Bzla *,
                                   BzlaNode *,
                                   BzlaBitVector *,
                                   BzlaBitVector *,
                                   int32_t,
                                   BzlaIntHashTable *);
+  bool (*is_inv)(
+      BzlaMemMgr *, const BzlaBitVector *, const BzlaBitVector *, uint32_t);
+
 #ifndef NBZLALOG
   char *a;
   uint32_t nrecconf_prev, nnonrecconf_prev, nrecconf, nnonrecconf;
   uint32_t ncons = 0;
 #endif
+
+  mm = bzla->mm;
 
   *input      = 0;
   *assignment = 0;
@@ -3748,8 +3703,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
     goto DONE;
   }
 
-  cur   = root;
-  bvcur = bzla_bv_copy(bzla->mm, bvroot);
+  cur  = root;
+  bv_t = bzla_bv_copy(bzla->mm, bvroot);
 
   for (;;)
   {
@@ -3773,13 +3728,13 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         uint32_t bw = real_cur->av->width;
         for (uint32_t j = 0; j < bw; j++)
         {
-          uint32_t idx = bw - 1 - j;
+          uint32_t k = bw - 1 - j;
           if (bzla_aig_is_true(real_cur->av->aigs[j]))
-            assert(bzla_bvprop_is_fixed_bit_true(d, idx));
+            assert(bzla_bvprop_is_fixed_bit_true(d, k));
           else if (bzla_aig_is_false(real_cur->av->aigs[j]))
-            assert(bzla_bvprop_is_fixed_bit_false(d, idx));
+            assert(bzla_bvprop_is_fixed_bit_false(d, k));
           else
-            assert(!bzla_bvprop_is_fixed_bit(d, idx));
+            assert(!bzla_bvprop_is_fixed_bit(d, k));
         }
       }
     }
@@ -3788,8 +3743,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
     if (bzla_node_is_bv_var(cur))
     {
       *input      = real_cur;
-      *assignment = bzla_node_is_inverted(cur) ? bzla_bv_not(bzla->mm, bvcur)
-                                               : bzla_bv_copy(bzla->mm, bvcur);
+      *assignment = bzla_node_is_inverted(cur) ? bzla_bv_not(bzla->mm, bv_t)
+                                               : bzla_bv_copy(bzla->mm, bv_t);
       break;
     }
     else if (bzla_node_is_bv_const(cur))
@@ -3802,21 +3757,21 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
       if (bzla_node_is_inverted(cur))
       {
-        tmp   = bvcur;
-        bvcur = bzla_bv_not(bzla->mm, tmp);
+        tmp  = bv_t;
+        bv_t = bzla_bv_not(bzla->mm, tmp);
         bzla_bv_free(bzla->mm, tmp);
       }
 
       /* check if all paths are const, if yes -> conflict */
       for (i = 0, nconst = 0; i < real_cur->arity; i++)
       {
-        bve[i] = (BzlaBitVector *) bzla_model_get_bv(bzla, real_cur->e[i]);
+        bv_s[i] = (BzlaBitVector *) bzla_model_get_bv(bzla, real_cur->e[i]);
         if (bzla_node_is_bv_const(real_cur->e[i])) nconst += 1;
       }
       if (nconst > real_cur->arity - 1) break;
 
 #ifndef NBZLALOG
-      a = bzla_bv_to_char(bzla->mm, bvcur);
+      a = bzla_bv_to_char(bzla->mm, bv_t);
       BZLALOG(2, "");
       BZLALOG(2, "propagate: %s", a);
       bzla_mem_freestr(bzla->mm, a);
@@ -3830,95 +3785,183 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       if (!b) ncons += 1;
 #endif
 
-      /* select path and determine path assignment */
+      /* determine value computation function */
+      is_inv = 0;
       switch (real_cur->kind)
       {
         case BZLA_BV_ADD_NODE:
-          select_path   = select_path_add;
-          compute_value = b ? (opt_prop_domains ? inv_add_bvprop : inv_add_bv)
-                            : cons_add_bv;
+          select_path = select_path_add;
+          // always invertible
           break;
         case BZLA_BV_AND_NODE:
-          select_path   = select_path_and;
-          compute_value = b ? (opt_prop_domains ? inv_and_bvprop : inv_and_bv)
-                            : cons_and_bv;
+          select_path = select_path_and;
+          is_inv      = bzla_is_inv_and;
           break;
         case BZLA_BV_EQ_NODE:
           select_path = select_path_eq;
-          compute_value =
-              b ? (opt_prop_domains ? inv_eq_bvprop : inv_eq_bv) : cons_eq_bv;
+          // always invertible
           break;
         case BZLA_BV_ULT_NODE:
-          select_path   = select_path_ult;
-          compute_value = b ? (opt_prop_domains ? inv_ult_bvprop : inv_ult_bv)
-                            : cons_ult_bv;
+          select_path = select_path_ult;
+          is_inv      = bzla_is_inv_ult;
           break;
         case BZLA_BV_SLL_NODE:
-          select_path   = select_path_sll;
-          compute_value = b ? (opt_prop_domains ? inv_sll_bvprop : inv_sll_bv)
-                            : cons_sll_bv;
+          select_path = select_path_sll;
+          is_inv      = bzla_is_inv_sll;
           break;
         case BZLA_BV_SRL_NODE:
-          select_path   = select_path_srl;
-          compute_value = b ? (opt_prop_domains ? inv_srl_bvprop : inv_srl_bv)
-                            : cons_srl_bv;
+          select_path = select_path_srl;
+          is_inv      = bzla_is_inv_srl;
           break;
         case BZLA_BV_MUL_NODE:
-          select_path   = select_path_mul;
-          compute_value = b ? (opt_prop_domains ? inv_mul_bvprop : inv_mul_bv)
-                            : cons_mul_bv;
+          select_path = select_path_mul;
+          is_inv      = bzla_is_inv_mul;
           break;
         case BZLA_BV_UDIV_NODE:
-          select_path   = select_path_udiv;
-          compute_value = b ? (opt_prop_domains ? inv_udiv_bvprop : inv_udiv_bv)
-                            : cons_udiv_bv;
+          select_path = select_path_udiv;
+          is_inv      = bzla_is_inv_udiv;
           break;
         case BZLA_BV_UREM_NODE:
-          select_path   = select_path_urem;
-          compute_value = b ? (opt_prop_domains ? inv_urem_bvprop : inv_urem_bv)
-                            : cons_urem_bv;
+          select_path = select_path_urem;
+          is_inv      = bzla_is_inv_urem;
           break;
         case BZLA_BV_CONCAT_NODE:
           select_path = select_path_concat;
-          compute_value =
-              b ? (opt_prop_domains ? inv_concat_bvprop : inv_concat_bv)
-                : cons_concat_bv;
+          is_inv      = bzla_is_inv_concat;
           break;
         case BZLA_BV_SLICE_NODE:
           select_path = select_path_slice;
-          compute_value =
-              b ? (opt_prop_domains ? inv_slice_bvprop : inv_slice_bv)
-                : cons_slice_bv;
+          // always invertible
           break;
         default:
           assert(bzla_node_is_bv_cond(real_cur));
-          select_path   = select_path_cond;
-          compute_value = b ? (opt_prop_domains ? inv_cond_bvprop : inv_cond_bv)
-                            : cons_cond_bv;
+          select_path = select_path_cond;
+          // always invertible
       }
 
-      if (eidx == -1) eidx = select_path(bzla, real_cur, bvcur, bve);
+      /* select path */
+      if (eidx == -1) eidx = select_path(bzla, real_cur, bv_t, bv_s);
+
+      idx = eidx ? 0 : 1;
+      /* special case slice: only one child
+       * special case cond: we only need assignment of cond to compute value */
+      if (bzla_node_is_bv_slice(real_cur) || bzla_node_is_cond(real_cur))
+      {
+        /* Note: both are always invertible, thus is_inv and record_conflict
+         *       will never be called below (is_inv = 0). */
+        idx = 0;
+      }
+
+      /* check invertibility --> if not invertible, fall back to consistent
+       * value computation */
+      force_cons = is_inv ? !is_inv(mm, bv_s[idx], bv_t, eidx) : false;
+      /* not invertible counts as conflict */
+      if (force_cons)
+      {
+        if (!record_conflict(
+                bzla, real_cur, real_cur->e[idx], bv_t, bv_s[idx], eidx))
+        {
+          break; /* non-recoverable conflict */
+        }
+      }
+
+      switch (real_cur->kind)
+      {
+        case BZLA_BV_ADD_NODE:
+          assert(eidx >= 0 && eidx <= 1);
+          compute_value = b && !force_cons
+                              ? (opt_prop_domains ? inv_add_bvprop : inv_add_bv)
+                              : cons_add_bv;
+          break;
+        case BZLA_BV_AND_NODE:
+          assert(eidx >= 0 && eidx <= 1);
+          compute_value = b && !force_cons
+                              ? (opt_prop_domains ? inv_and_bvprop : inv_and_bv)
+                              : cons_and_bv;
+          break;
+        case BZLA_BV_EQ_NODE:
+          assert(eidx >= 0 && eidx <= 1);
+          compute_value = b && !force_cons
+                              ? (opt_prop_domains ? inv_eq_bvprop : inv_eq_bv)
+                              : cons_eq_bv;
+          break;
+        case BZLA_BV_ULT_NODE:
+          assert(eidx >= 0 && eidx <= 1);
+          compute_value = b && !force_cons
+                              ? (opt_prop_domains ? inv_ult_bvprop : inv_ult_bv)
+                              : cons_ult_bv;
+          break;
+        case BZLA_BV_SLL_NODE:
+          assert(eidx >= 0 && eidx <= 1);
+          compute_value = b && !force_cons
+                              ? (opt_prop_domains ? inv_sll_bvprop : inv_sll_bv)
+                              : cons_sll_bv;
+          break;
+        case BZLA_BV_SRL_NODE:
+          assert(eidx >= 0 && eidx <= 1);
+          compute_value = b && !force_cons
+                              ? (opt_prop_domains ? inv_srl_bvprop : inv_srl_bv)
+                              : cons_srl_bv;
+          break;
+        case BZLA_BV_MUL_NODE:
+          assert(eidx >= 0 && eidx <= 1);
+          compute_value = b && !force_cons
+                              ? (opt_prop_domains ? inv_mul_bvprop : inv_mul_bv)
+                              : cons_mul_bv;
+          break;
+        case BZLA_BV_UDIV_NODE:
+          assert(eidx >= 0 && eidx <= 1);
+          compute_value = b && !force_cons ? (opt_prop_domains ? inv_udiv_bvprop
+                                                               : inv_udiv_bv)
+                                           : cons_udiv_bv;
+          break;
+        case BZLA_BV_UREM_NODE:
+          assert(eidx >= 0 && eidx <= 1);
+          compute_value = b && !force_cons ? (opt_prop_domains ? inv_urem_bvprop
+                                                               : inv_urem_bv)
+                                           : cons_urem_bv;
+          break;
+        case BZLA_BV_CONCAT_NODE:
+          assert(eidx >= 0 && eidx <= 1);
+          compute_value =
+              b && !force_cons
+                  ? (opt_prop_domains ? inv_concat_bvprop : inv_concat_bv)
+                  : cons_concat_bv;
+          break;
+        case BZLA_BV_SLICE_NODE:
+          assert(eidx >= 0 && eidx <= 0);
+          compute_value =
+              b && !force_cons
+                  ? (opt_prop_domains ? inv_slice_bvprop : inv_slice_bv)
+                  : cons_slice_bv;
+          break;
+        default:
+          assert(bzla_node_is_bv_cond(real_cur));
+          assert(eidx >= 0 && eidx <= 2);
+          compute_value = b && !force_cons ? (opt_prop_domains ? inv_cond_bvprop
+                                                               : inv_cond_bv)
+                                           : cons_cond_bv;
+      }
 
 #ifndef NDEBUG
       if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
       {
-        BzlaPropInfo prop = {real_cur, bzla_bv_copy(bzla->mm, bvcur), eidx};
+        BzlaPropInfo prop = {real_cur, bzla_bv_copy(bzla->mm, bv_t), eidx};
         BZLA_PUSH_STACK(BZLA_PROP_SOLVER(bzla)->prop_path, prop);
       }
 #endif
-      cur = select_move(
-          bzla, real_cur, bvcur, bve, eidx, domains, compute_value, &bvenew);
+      cur      = real_cur->e[eidx];
+      bv_s_new = compute_value(bzla, real_cur, bv_t, bv_s[idx], eidx, domains);
+      assert(bv_s_new);
       nprops += 1;
 
-      if (!bvenew) break; /* non-recoverable conflict */
-
-      bzla_bv_free(bzla->mm, bvcur);
-      bvcur = bvenew;
-      eidx  = -1;
+      bzla_bv_free(bzla->mm, bv_t);
+      bv_t = bv_s_new;
+      eidx = -1;
     }
   }
 
-  bzla_bv_free(bzla->mm, bvcur);
+  bzla_bv_free(bzla->mm, bv_t);
 
 DONE:
 #ifndef NBZLALOG
