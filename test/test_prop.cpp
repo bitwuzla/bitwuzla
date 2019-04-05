@@ -48,9 +48,9 @@ class TestProp : public TestBzla
     // bzla_opt_set (d_bzla, BZLA_OPT_LOGLEVEL, 2);
   }
 
-  void prop_complete_binary_eidx(
+  void prop_complete_binary_idx(
       uint32_t n,
-      int32_t eidx,
+      int32_t idx_x,
       uint32_t bw,
       BzlaBitVector *bve,
       BzlaBitVector *bvres,
@@ -67,7 +67,7 @@ class TestProp : public TestBzla
                                BzlaIntHashTable *) )
   {
 #ifndef NDEBUG
-    int32_t i, idx, sat_res;
+    int32_t i, idx_s, sat_res;
     BzlaNode *e[2], *exp, *val, *eq;
     BzlaBitVector *bvetmp[2], *bvexptmp, *res[2], *tmp;
     BzlaSortId sort;
@@ -79,32 +79,33 @@ class TestProp : public TestBzla
     val  = bzla_exp_bv_const(d_bzla, bvexp);
     eq   = bzla_exp_eq(d_bzla, exp, val);
 
-    idx = eidx ? 0 : 1;
+    idx_s = idx_x ? 0 : 1;
 
-    bvetmp[eidx] = bzla_bv_new_random(d_mm, d_rng, bw);
-    bvetmp[idx] =
+    bvetmp[idx_x] = bzla_bv_new_random(d_mm, d_rng, bw);
+    bvetmp[idx_s] =
         n == 1 ? bzla_bv_copy(d_mm, bve) : bzla_bv_new_random(d_mm, d_rng, bw);
     bvexptmp = create_bv(d_mm, bvetmp[0], bvetmp[1]);
 
     /* init bv model */
     bzla_model_init_bv(d_bzla, &d_bzla->bv_model);
     bzla_model_init_fun(d_bzla, &d_bzla->fun_model);
-    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx], bvetmp[idx]);
-    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[eidx], bvetmp[eidx]);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_s], bvetmp[idx_s]);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_x], bvetmp[idx_x]);
     bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, exp, bvexptmp);
 
-    // printf ("eidx %d bvetmp[0] %s bvetmp[1] %s target %s\n",
-    //        eidx,
+    // printf ("idx_x %d bvetmp[0] %s bvetmp[1] %s target %s\n",
+    //        idx_x,
     //        bzla_bv_to_char (d_mm, bvetmp[0]),
     //        bzla_bv_to_char (d_mm, bvetmp[1]),
     //        bzla_bv_to_char (d_mm, bvexp));
     /* -> first test local completeness  */
     /* we must find a solution within n move(s) */
-    res[eidx] = inv_bv(d_bzla, exp, bvexp, bve, eidx, d_domains);
-    assert(res[eidx]);
-    res[idx] = n == 1 ? bzla_bv_copy(d_mm, bve)
-                      : inv_bv(d_bzla, exp, bvexp, res[eidx], idx, d_domains);
-    assert(res[idx]);
+    res[idx_x] = inv_bv(d_bzla, exp, bvexp, bve, idx_x, d_domains);
+    assert(res[idx_x]);
+    res[idx_s] = n == 1
+                     ? bzla_bv_copy(d_mm, bve)
+                     : inv_bv(d_bzla, exp, bvexp, res[idx_x], idx_s, d_domains);
+    assert(res[idx_s]);
     /* Note: this is also tested within the inverse function(s) */
     tmp = create_bv(d_mm, res[0], res[1]);
     assert(!bzla_bv_compare(tmp, bvexp));
@@ -114,17 +115,17 @@ class TestProp : public TestBzla
     /* try to find the exact given solution */
     if (n == 1)
     {
-      for (i = 0, res[eidx] = 0; i < TEST_PROP_COMPLETE_N_TESTS; i++)
+      for (i = 0, res[idx_x] = 0; i < TEST_PROP_COMPLETE_N_TESTS; i++)
       {
-        res[eidx] = inv_bv(d_bzla, exp, bvexp, bve, eidx, d_domains);
-        assert(res[eidx]);
-        if (!bzla_bv_compare(res[eidx], bvres)) break;
-        bzla_bv_free(d_mm, res[eidx]);
-        res[eidx] = nullptr;
+        res[idx_x] = inv_bv(d_bzla, exp, bvexp, bve, idx_x, d_domains);
+        assert(res[idx_x]);
+        if (!bzla_bv_compare(res[idx_x], bvres)) break;
+        bzla_bv_free(d_mm, res[idx_x]);
+        res[idx_x] = nullptr;
       }
-      assert(res[eidx]);
-      assert(!bzla_bv_compare(res[eidx], bvres));
-      bzla_bv_free(d_mm, res[eidx]);
+      assert(res[idx_x]);
+      assert(!bzla_bv_compare(res[idx_x], bvres));
+      bzla_bv_free(d_mm, res[idx_x]);
     }
 
     /* -> then test completeness of the whole propagation algorithm
@@ -133,8 +134,8 @@ class TestProp : public TestBzla
     bzla_assume_exp(d_bzla, eq);
     bzla_model_init_bv(d_bzla, &d_bzla->bv_model);
     bzla_model_init_fun(d_bzla, &d_bzla->fun_model);
-    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx], bvetmp[idx]);
-    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[eidx], bvetmp[eidx]);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_s], bvetmp[idx_s]);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_x], bvetmp[idx_x]);
     bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, exp, bvexptmp);
     bzla_bv_free(d_mm, bvetmp[0]);
     bzla_bv_free(d_mm, bvetmp[1]);
@@ -153,7 +154,7 @@ class TestProp : public TestBzla
     bzla_reset_incremental_usage(d_bzla);
 #else
     (void) n;
-    (void) eidx;
+    (void) idx_x;
     (void) bw;
     (void) bve;
     (void) bvres;
@@ -197,9 +198,9 @@ class TestProp : public TestBzla
         /* -> first test local completeness  */
         for (k = 0; k < bw; k++)
         {
-          prop_complete_binary_eidx(
+          prop_complete_binary_idx(
               n, 1, bw, bve[0], bve[1], bvexp, create_exp, create_bv, inv_bv);
-          prop_complete_binary_eidx(
+          prop_complete_binary_idx(
               n, 0, bw, bve[1], bve[0], bvexp, create_exp, create_bv, inv_bv);
         }
         bzla_bv_free(d_mm, bve[1]);

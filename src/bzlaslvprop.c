@@ -146,7 +146,7 @@ move(Bzla *bzla)
   BzlaPropSolver *slv;
   BzlaIntHashTable *exps;
   BzlaPropInfo prop;
-  int32_t eidx;
+  int32_t idx_x;
   uint64_t props, nprops;
 #ifndef NBZLALOG
   size_t i;
@@ -183,20 +183,20 @@ move(Bzla *bzla)
     {
       root   = select_constraint(bzla, slv->stats.moves);
       bvroot = bzla_bv_one(bzla->mm, 1);
-      eidx   = -1;
+      idx_x  = -1;
     }
     else
     {
       prop   = BZLA_POP_STACK(slv->toprop);
       root   = prop.exp;
       bvroot = prop.bvexp;
-      eidx   = prop.eidx;
+      idx_x  = prop.idx_x;
     }
 
     props = bzla_proputils_select_move_prop(
-        bzla, root, bvroot, eidx, &input, &assignment);
+        bzla, root, bvroot, idx_x, &input, &assignment);
     slv->stats.props += props;
-    if (eidx != -1) slv->stats.props_entailed += props;
+    if (idx_x != -1) slv->stats.props_entailed += props;
   } while (!input);
 
   assert(assignment);
@@ -255,7 +255,7 @@ move(Bzla *bzla)
 #endif
 
   slv->stats.moves += 1;
-  if (eidx != -1)
+  if (idx_x != -1)
   {
     slv->stats.moves_entailed += 1;
     slv->stats.fixed_conf += 1;

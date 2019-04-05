@@ -29,7 +29,7 @@ struct BzlaPropInfo
 {
   BzlaNode* exp;
   BzlaBitVector* bvexp; /* target value  */
-  int32_t eidx;         /* branch to take */
+  int32_t idx_x;        /* branch to take */
 };
 typedef struct BzlaPropInfo BzlaPropInfo;
 

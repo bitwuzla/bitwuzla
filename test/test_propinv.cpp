@@ -54,19 +54,19 @@ class TestPropInv : public TestBzla
                                                  BzlaNode *,
                                                  BzlaBitVector *,
                                                  BzlaBitVector *,
-                                                 int32_t eidx,
+                                                 int32_t idx_x,
                                                  BzlaIntHashTable *),
                     BzlaBitVector *(*inv_fun_bvprop)(Bzla *,
                                                      BzlaNode *,
                                                      BzlaBitVector *,
                                                      BzlaBitVector *,
-                                                     int32_t eidx,
+                                                     int32_t idx_x,
                                                      BzlaIntHashTable *),
                     BzlaNode *exp,
                     BzlaBitVector *bve,
                     BzlaBitVector *bvn,
                     BzlaBitVector *bvres,
-                    uint32_t eidx,
+                    uint32_t idx_x,
                     bool use_domains)
   {
     uint64_t k;
@@ -84,11 +84,11 @@ class TestPropInv : public TestBzla
     {
       if (use_domains)
       {
-        res = inv_fun_bvprop(d_bzla, exp, bvn, bve, eidx, d_domains);
+        res = inv_fun_bvprop(d_bzla, exp, bvn, bve, idx_x, d_domains);
       }
       else
       {
-        res = inv_fun_bv(d_bzla, exp, bvn, bve, eidx, d_domains);
+        res = inv_fun_bv(d_bzla, exp, bvn, bve, idx_x, d_domains);
       }
       ASSERT_NE(res, nullptr);
       if (!bzla_bv_compare(res, bvres)) break;
@@ -121,13 +121,13 @@ class TestPropInv : public TestBzla
                                                  BzlaNode *,
                                                  BzlaBitVector *,
                                                  BzlaBitVector *,
-                                                 int32_t eidx,
+                                                 int32_t idx_x,
                                                  BzlaIntHashTable *),
                     BzlaBitVector *(*inv_fun_bvprop)(Bzla *,
                                                      BzlaNode *,
                                                      BzlaBitVector *,
                                                      BzlaBitVector *,
-                                                     int32_t eidx,
+                                                     int32_t idx_x,
                                                      BzlaIntHashTable *),
                     bool use_domains)
   {
@@ -185,13 +185,13 @@ class TestPropInv : public TestBzla
                                                 BzlaNode *,
                                                 BzlaBitVector *,
                                                 BzlaBitVector *,
-                                                int32_t eidx,
+                                                int32_t idx_x,
                                                 BzlaIntHashTable *),
                    BzlaBitVector *(*inv_fun_bvprop)(Bzla *,
                                                     BzlaNode *,
                                                     BzlaBitVector *,
                                                     BzlaBitVector *,
-                                                    int32_t eidx,
+                                                    int32_t idx_x,
                                                     BzlaIntHashTable *),
                    bool use_domains)
   {
@@ -2299,7 +2299,7 @@ class TestPropInv : public TestBzla
 #endif
   }
 
-  void check_conf_udiv_result(uint32_t eidx,
+  void check_conf_udiv_result(uint32_t idx_x,
                               BzlaNode *udiv,
                               BzlaNode **e,
                               BzlaBitVector *bvudiv,
@@ -2310,7 +2310,7 @@ class TestPropInv : public TestBzla
     BzlaNode *cudiv, *ce;
     BzlaBitVector *res;
 
-    if (eidx)
+    if (idx_x)
     {
       ce    = bzla_exp_bv_const(d_bzla, bve);
       cudiv = bzla_exp_bv_udiv(d_bzla, ce, e[1]);
@@ -2347,7 +2347,7 @@ class TestPropInv : public TestBzla
       bzla_node_release(d_bzla, ce);
     }
 #else
-    (void) eidx;
+    (void) idx_x;
     (void) udiv;
     (void) e;
     (void) bvudiv;
@@ -2355,7 +2355,7 @@ class TestPropInv : public TestBzla
 #endif
   }
 
-  void check_conf_shift(uint32_t eidx,
+  void check_conf_shift(uint32_t idx_x,
                         BzlaNode *shift,
                         BzlaNode **e,
                         BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
@@ -2367,13 +2367,13 @@ class TestPropInv : public TestBzla
                                                   BzlaNode *,
                                                   BzlaBitVector *,
                                                   BzlaBitVector *,
-                                                  int32_t eidx,
+                                                  int32_t idx_x,
                                                   BzlaIntHashTable *),
                         BzlaBitVector *(*cons_fun)(Bzla *,
                                                    BzlaNode *,
                                                    BzlaBitVector *,
                                                    BzlaBitVector *,
-                                                   int32_t eidx,
+                                                   int32_t idx_x,
                                                    BzlaIntHashTable *),
                         const char *ve,
                         const char *vshift,
@@ -2387,7 +2387,7 @@ class TestPropInv : public TestBzla
     bve     = bzla_bv_char_to_bv(d_mm, ve);
     bvshift = bzla_bv_char_to_bv(d_mm, vshift);
     ce      = bzla_exp_bv_const(d_bzla, bve);
-    if (eidx)
+    if (idx_x)
     {
       cshift = exp_fun(d_bzla, ce, e[1]);
       inv    = is_inv_fun(d_mm, bvshift, bve, 1);
@@ -2422,7 +2422,7 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, ce);
     bzla_node_release(d_bzla, cshift);
 #else
-    (void) eidx;
+    (void) idx_x;
     (void) shift;
     (void) e;
     (void) exp_fun;
