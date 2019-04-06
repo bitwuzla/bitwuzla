@@ -10,12 +10,14 @@
 
 extern "C" {
 #include "bzlabv.h"
+#include "bzlabvprop.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
 #include "bzlamodel.h"
 #include "bzlanode.h"
 #include "bzlaproputils.h"
 #include "bzlaslvprop.h"
+#include "utils/bzlahashint.h"
 #include "utils/bzlautil.h"
 }
 
@@ -33,7 +35,7 @@ class TestProp : public TestBzla
     d_bzla->slv->bzla = d_bzla;
     d_mm              = d_bzla->mm;
     d_rng             = &d_bzla->rng;
-    d_domains         = BZLA_PROP_SOLVER(d_bzla)->domains;
+    d_slv             = BZLA_PROP_SOLVER(d_bzla);
 
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE, 1000);
@@ -71,6 +73,11 @@ class TestProp : public TestBzla
     BzlaNode *e[2], *exp, *val, *eq;
     BzlaBitVector *bvetmp[2], *bvexptmp, *res[2], *tmp;
     BzlaSortId sort;
+    BzlaIntHashTable *domains;
+    BzlaIntHashTableIterator iit;
+
+    domains                           = bzla_hashint_map_new(d_bzla->mm);
+    BZLA_PROP_SOLVER(d_bzla)->domains = domains;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -78,6 +85,8 @@ class TestProp : public TestBzla
     exp  = create_exp(d_bzla, e[0], e[1]);
     val  = bzla_exp_bv_const(d_bzla, bvexp);
     eq   = bzla_exp_eq(d_bzla, exp, val);
+
+    init_prop_domains(d_bzla, domains, exp);
 
     idx_s = idx_x ? 0 : 1;
 
@@ -100,11 +109,11 @@ class TestProp : public TestBzla
     //        bzla_bv_to_char (d_mm, bvexp));
     /* -> first test local completeness  */
     /* we must find a solution within n move(s) */
-    res[idx_x] = inv_bv(d_bzla, exp, bvexp, bve, idx_x, d_domains);
+    res[idx_x] = inv_bv(d_bzla, exp, bvexp, bve, idx_x, domains);
     assert(res[idx_x]);
     res[idx_s] = n == 1
                      ? bzla_bv_copy(d_mm, bve)
-                     : inv_bv(d_bzla, exp, bvexp, res[idx_x], idx_s, d_domains);
+                     : inv_bv(d_bzla, exp, bvexp, res[idx_x], idx_s, domains);
     assert(res[idx_s]);
     /* Note: this is also tested within the inverse function(s) */
     tmp = create_bv(d_mm, res[0], res[1]);
@@ -117,7 +126,7 @@ class TestProp : public TestBzla
     {
       for (i = 0, res[idx_x] = 0; i < TEST_PROP_COMPLETE_N_TESTS; i++)
       {
-        res[idx_x] = inv_bv(d_bzla, exp, bvexp, bve, idx_x, d_domains);
+        res[idx_x] = inv_bv(d_bzla, exp, bvexp, bve, idx_x, domains);
         assert(res[idx_x]);
         if (!bzla_bv_compare(res[idx_x], bvres)) break;
         bzla_bv_free(d_mm, res[idx_x]);
@@ -127,6 +136,17 @@ class TestProp : public TestBzla
       assert(!bzla_bv_compare(res[idx_x], bvres));
       bzla_bv_free(d_mm, res[idx_x]);
     }
+
+    /* reset for sat call */
+    bzla_iter_hashint_init(&iit, domains);
+    while (bzla_iter_hashint_has_next(&iit))
+    {
+      bzla_bvprop_free(d_mm,
+                       static_cast<BzlaBvDomain *>(
+                           bzla_iter_hashint_next_data(&iit)->as_ptr));
+    }
+    bzla_hashint_map_delete(domains);
+    BZLA_PROP_SOLVER(d_bzla)->domains = 0;
 
     /* -> then test completeness of the whole propagation algorithm
      *    (we must find a solution within n move(s)) */
@@ -210,9 +230,9 @@ class TestProp : public TestBzla
     }
   }
 
-  BzlaMemMgr *d_mm            = nullptr;
-  BzlaRNG *d_rng              = nullptr;
-  BzlaIntHashTable *d_domains = nullptr;
+  BzlaMemMgr *d_mm      = nullptr;
+  BzlaRNG *d_rng        = nullptr;
+  BzlaPropSolver *d_slv = nullptr;
 };
 
 /*------------------------------------------------------------------------*/
@@ -221,6 +241,7 @@ TEST_F(TestProp, one_complete_add)
 {
 #ifndef NDEBUG
   prop_complete_binary(1, bzla_exp_bv_add, bzla_bv_add, inv_add_bv);
+  prop_complete_binary(1, bzla_exp_bv_add, bzla_bv_add, inv_add_bvprop);
 #endif
 }
 
@@ -293,6 +314,7 @@ TEST_F(TestProp, complete_add)
 {
 #ifndef NDEBUG
   prop_complete_binary(2, bzla_exp_bv_add, bzla_bv_add, inv_add_bv);
+  prop_complete_binary(2, bzla_exp_bv_add, bzla_bv_add, inv_add_bvprop);
 #endif
 }
 
@@ -368,6 +390,8 @@ TEST_F(TestProp, complete_slice)
   BzlaNode *exp, *e, *val, *eq;
   BzlaBitVector *bve, *bvexp, *bvetmp, *bvexptmp, *res, *tmp;
   BzlaSortId sort;
+  BzlaIntHashTable *domains;
+  BzlaIntHashTableIterator iit;
 
   bw   = TEST_PROP_COMPLETE_BW;
   sort = bzla_sort_bv(d_bzla, bw);
@@ -394,9 +418,13 @@ TEST_F(TestProp, complete_slice)
           bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e, bvetmp);
           bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, exp, bvexptmp);
 
+          domains = bzla_hashint_map_new(d_bzla->mm);
+          init_prop_domains(d_bzla, domains, exp);
+          BZLA_PROP_SOLVER(d_bzla)->domains = domains;
+
           /* -> first test local completeness
            *    we must find a solution within one move */
-          res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0, d_domains);
+          res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0, domains);
           ASSERT_NE(res, nullptr);
           /* Note: this is also tested within inverse function */
           tmp = bzla_bv_slice(d_mm, res, up, lo);
@@ -406,7 +434,7 @@ TEST_F(TestProp, complete_slice)
           /* try to find exact given solution */
           for (k = 0, res = 0; k < TEST_PROP_COMPLETE_N_TESTS; k++)
           {
-            res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0, d_domains);
+            res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0, domains);
             ASSERT_NE(res, nullptr);
             if (!bzla_bv_compare(res, bve)) break;
             bzla_bv_free(d_mm, res);
@@ -415,6 +443,17 @@ TEST_F(TestProp, complete_slice)
           ASSERT_NE(res, nullptr);
           ASSERT_EQ(bzla_bv_compare(res, bve), 0);
           bzla_bv_free(d_mm, res);
+
+          /* reset for sat call */
+          bzla_iter_hashint_init(&iit, domains);
+          while (bzla_iter_hashint_has_next(&iit))
+          {
+            bzla_bvprop_free(d_mm,
+                             static_cast<BzlaBvDomain *>(
+                                 bzla_iter_hashint_next_data(&iit)->as_ptr));
+          }
+          bzla_hashint_map_delete(domains);
+          BZLA_PROP_SOLVER(d_bzla)->domains = 0;
 
           /* -> then test completeness of whole propagation algorithm
            *    (we must find a solution within one move) */

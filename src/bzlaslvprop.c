@@ -332,10 +332,10 @@ delete_prop_solver(BzlaPropSolver *slv)
   BZLA_DELETE(slv->bzla->mm, slv);
 }
 
-#ifndef NDEBUG
-void
-#else
+#ifdef NDEBUG
 static void
+#else
+void
 #endif
 init_prop_domains(Bzla *bzla, BzlaIntHashTable *domains, BzlaNode *root)
 {
@@ -379,10 +379,9 @@ init_prop_domains(Bzla *bzla, BzlaIntHashTable *domains, BzlaNode *root)
         continue;
       data->as_int = 1;
 
-      data         = bzla_hashint_map_add(domains, real_cur->id);
-      bw           = bzla_node_bv_get_width(bzla, real_cur);
-      domain       = bzla_bvprop_new_init(mm, bw);
-      data->as_ptr = domain;
+      bw     = bzla_node_bv_get_width(bzla, real_cur);
+      domain = bzla_bvprop_new_init(mm, bw);
+      bzla_hashint_map_add(domains, real_cur->id)->as_ptr = domain;
 
       if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
       {

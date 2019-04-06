@@ -3281,6 +3281,7 @@ inv_add_bvprop(Bzla *bzla,
   assert(domains);
   assert(add);
   assert(bzla_node_is_regular(add));
+  assert(bzla_hashint_map_contains(domains, add->id));
   assert(t);
   assert(s);
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
