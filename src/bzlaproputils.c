@@ -30,12 +30,14 @@ typedef bool (*BzlaPropIsInv)(BzlaMemMgr *,
                               const BzlaBitVector *,
                               uint32_t);
 
+#ifdef NDEBUG
 typedef BzlaBitVector *(*BzlaPropComputeValue)(Bzla *,
                                                BzlaNode *,
                                                BzlaBitVector *,
                                                BzlaBitVector *,
                                                int32_t,
                                                BzlaIntHashTable *);
+#endif
 
 /* ========================================================================== */
 /* Path selection (for down-propagation)                                      */
@@ -3298,6 +3300,8 @@ inv_add_bvprop(Bzla *bzla,
   d_s = bzla_bvprop_new_fixed(mm, s);
   d_t = bzla_bvprop_new_fixed(mm, t);
   d_x = bzla_hashint_map_get(domains, add->id)->as_ptr;
+  assert(bzla_bv_get_width(d_x->lo) == bzla_bv_get_width(s));
+  assert(bzla_bv_get_width(d_x->hi) == bzla_bv_get_width(s));
 
   is_valid = bzla_bvprop_add(mm, d_x, d_s, d_t, &d_res_x, &d_res_s, &d_res_t);
 
@@ -3324,7 +3328,7 @@ inv_add_bvprop(Bzla *bzla,
   assert(bzla_bvprop_is_fixed(mm, d_res_x));
   res = bzla_bv_copy(mm, d_res_x->lo);
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_add, add, s, t, res, idx_x, "+");
+  check_result_binary_dbg(bzla, bzla_bv_add, add, s, t, res, idx_x, "&");
 #endif
   bzla_bvprop_free(mm, d_s);
   bzla_bvprop_free(mm, d_t);
@@ -3350,8 +3354,79 @@ inv_and_bvprop(Bzla *bzla,
                int32_t idx_x,
                BzlaIntHashTable *domains)
 {
-  // TODO
-  return inv_and_bv(bzla, and, t, s, idx_x, domains);
+  assert(bzla);
+  assert(domains);
+  assert(and);
+  assert(bzla_node_is_regular(and));
+  assert(bzla_hashint_map_contains(domains, and->id));
+  assert(t);
+  assert(s);
+  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
+  assert(idx_x >= 0 && idx_x <= 1);
+  assert(!bzla_node_is_bv_const(and->e[idx_x]));
+
+  uint32_t i, bit, bw_x;
+  BzlaBitVector *res;
+  BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
+  bool is_valid;
+  BzlaMemMgr *mm;
+
+  mm = bzla->mm;
+
+  bw_x = bzla_bv_get_width(s);
+
+  d_s = bzla_bvprop_new_fixed(mm, s);
+  d_t = bzla_bvprop_new_fixed(mm, t);
+  d_x = bzla_hashint_map_get(domains, and->id)->as_ptr;
+  assert(bzla_bv_get_width(d_x->lo) == bw_x);
+  assert(bzla_bv_get_width(d_x->hi) == bw_x);
+
+  is_valid = bzla_bvprop_and(mm, d_x, d_s, d_t, &d_res_x, &d_res_s, &d_res_t);
+
+  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  {
+#ifndef NDEBUG
+    BZLA_PROP_SOLVER(bzla)->stats.inv_and++;
+    if (!is_valid) BZLA_PROP_SOLVER(bzla)->stats.inv_and_conflicts++;
+#endif
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
+  }
+
+  if (!is_valid)
+  {
+    // TODO for now fall back, but we want to be able to handle this smarter
+    bzla_bvprop_free(mm, d_s);
+    bzla_bvprop_free(mm, d_t);
+    bzla_bvprop_free(mm, d_res_s);
+    bzla_bvprop_free(mm, d_res_t);
+    bzla_bvprop_free(mm, d_res_x);
+    return inv_and_bv(bzla, and, t, s, idx_x, domains);
+  }
+
+  if (!bzla_bvprop_is_fixed(mm, d_res_x))
+  {
+    res = bzla_bv_new(mm, bw_x);
+    for (i = 0; i < bw_x; i++)
+    {
+      bit = bzla_bvprop_is_fixed_bit(d_res_x, i)
+                ? bzla_bv_get_bit(d_res_x->lo, i)
+                : bzla_rng_pick_rand(&bzla->rng, 0, 1);
+      bzla_bv_set_bit(res, i, bit);
+    }
+  }
+  else
+  {
+    res = bzla_bv_copy(mm, d_res_x->lo);
+  }
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_and, and, s, t, res, idx_x, "+");
+#endif
+  bzla_bvprop_free(mm, d_s);
+  bzla_bvprop_free(mm, d_t);
+  bzla_bvprop_free(mm, d_res_s);
+  bzla_bvprop_free(mm, d_res_t);
+  bzla_bvprop_free(mm, d_res_x);
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */

@@ -323,7 +323,13 @@ BzlaBitVector* inv_cond_bvprop(Bzla* bzla,
 
 /*------------------------------------------------------------------------*/
 
-bool inv_is_recoverable(Bzla* bzla, BzlaNode* exp, int32_t idx_s);
+typedef BzlaBitVector* (*BzlaPropComputeValue)(Bzla*,
+                                               BzlaNode*,
+                                               BzlaBitVector*,
+                                               BzlaBitVector*,
+                                               int32_t,
+                                               BzlaIntHashTable*);
+
 void init_prop_domains(Bzla* bzla, BzlaIntHashTable* domains, BzlaNode* root);
 int32_t sat_prop_solver_aux(Bzla* bzla);
 #endif
