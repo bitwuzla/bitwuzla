@@ -257,6 +257,7 @@ TEST_F(TestProp, one_complete_eq)
 {
 #ifndef NDEBUG
   prop_complete_binary(1, bzla_exp_eq, bzla_bv_eq, inv_eq_bv);
+  prop_complete_binary(1, bzla_exp_eq, bzla_bv_eq, inv_eq_bvprop);
 #endif
 }
 
@@ -331,6 +332,7 @@ TEST_F(TestProp, complete_eq)
 {
 #ifndef NDEBUG
   prop_complete_binary(2, bzla_exp_eq, bzla_bv_eq, inv_eq_bv);
+  prop_complete_binary(2, bzla_exp_eq, bzla_bv_eq, inv_eq_bvprop);
 #endif
 }
 
