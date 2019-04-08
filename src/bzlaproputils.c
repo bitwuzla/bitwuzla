@@ -3290,16 +3290,18 @@ inv_add_bvprop(Bzla *bzla,
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(add->e[idx_x]));
 
+  BzlaNode *x;
   BzlaBitVector *res;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
   bool is_valid;
   BzlaMemMgr *mm;
 
   mm = bzla->mm;
+  x  = bzla_node_real_addr(add->e[idx_x]);
 
   d_s = bzla_bvprop_new_fixed(mm, s);
   d_t = bzla_bvprop_new_fixed(mm, t);
-  d_x = bzla_hashint_map_get(domains, add->id)->as_ptr;
+  d_x = bzla_hashint_map_get(domains, x->id)->as_ptr;
   assert(bzla_bv_get_width(d_x->lo) == bzla_bv_get_width(s));
   assert(bzla_bv_get_width(d_x->hi) == bzla_bv_get_width(s));
 
@@ -3309,13 +3311,15 @@ inv_add_bvprop(Bzla *bzla,
   {
 #ifndef NDEBUG
     BZLA_PROP_SOLVER(bzla)->stats.inv_add++;
-    if (!is_valid) BZLA_PROP_SOLVER(bzla)->stats.inv_add_conflicts++;
 #endif
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
   if (!is_valid)
   {
+#ifndef NDEBUG
+    if (!is_valid) BZLA_PROP_SOLVER(bzla)->stats.inv_add_conflicts++;
+#endif
     // TODO for now fall back, but we want to be able to handle this smarter
     bzla_bvprop_free(mm, d_s);
     bzla_bvprop_free(mm, d_t);
@@ -3366,18 +3370,20 @@ inv_and_bvprop(Bzla *bzla,
   assert(!bzla_node_is_bv_const(and->e[idx_x]));
 
   uint32_t i, bit, bw_x;
+  BzlaNode *x;
   BzlaBitVector *res;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
   bool is_valid;
   BzlaMemMgr *mm;
 
   mm = bzla->mm;
+  x  = bzla_node_real_addr(and->e[idx_x]);
 
   bw_x = bzla_bv_get_width(s);
 
   d_s = bzla_bvprop_new_fixed(mm, s);
   d_t = bzla_bvprop_new_fixed(mm, t);
-  d_x = bzla_hashint_map_get(domains, and->id)->as_ptr;
+  d_x = bzla_hashint_map_get(domains, x->id)->as_ptr;
   assert(bzla_bv_get_width(d_x->lo) == bw_x);
   assert(bzla_bv_get_width(d_x->hi) == bw_x);
 
@@ -3387,13 +3393,15 @@ inv_and_bvprop(Bzla *bzla,
   {
 #ifndef NDEBUG
     BZLA_PROP_SOLVER(bzla)->stats.inv_and++;
-    if (!is_valid) BZLA_PROP_SOLVER(bzla)->stats.inv_and_conflicts++;
 #endif
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
   if (!is_valid)
   {
+#ifndef NDEBUG
+    if (!is_valid) BZLA_PROP_SOLVER(bzla)->stats.inv_and_conflicts++;
+#endif
     // TODO for now fall back, but we want to be able to handle this smarter
     bzla_bvprop_free(mm, d_s);
     bzla_bvprop_free(mm, d_t);
@@ -3403,20 +3411,13 @@ inv_and_bvprop(Bzla *bzla,
     return inv_and_bv(bzla, and, t, s, idx_x, domains);
   }
 
-  if (!bzla_bvprop_is_fixed(mm, d_res_x))
+  res = bzla_bv_new(mm, bw_x);
+  for (i = 0; i < bw_x; i++)
   {
-    res = bzla_bv_new(mm, bw_x);
-    for (i = 0; i < bw_x; i++)
-    {
-      bit = bzla_bvprop_is_fixed_bit(d_res_x, i)
-                ? bzla_bv_get_bit(d_res_x->lo, i)
-                : bzla_rng_pick_rand(&bzla->rng, 0, 1);
-      bzla_bv_set_bit(res, i, bit);
-    }
-  }
-  else
-  {
-    res = bzla_bv_copy(mm, d_res_x->lo);
+    bit = bzla_bvprop_is_fixed_bit(d_res_x, i)
+              ? bzla_bv_get_bit(d_res_x->lo, i)
+              : bzla_rng_pick_rand(&bzla->rng, 0, 1);
+    bzla_bv_set_bit(res, i, bit);
   }
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_and, and, s, t, res, idx_x, "+");
