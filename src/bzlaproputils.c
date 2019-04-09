@@ -3376,6 +3376,14 @@ inv_and_bvprop(Bzla *bzla,
   bool is_valid;
   BzlaMemMgr *mm;
 
+  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  {
+#ifndef NDEBUG
+    BZLA_PROP_SOLVER(bzla)->stats.inv_and++;
+#endif
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
+  }
+
   mm   = bzla->mm;
   x    = bzla_node_real_addr(and->e[idx_x]);
   bw_x = bzla_bv_get_width(s);
@@ -3388,18 +3396,11 @@ inv_and_bvprop(Bzla *bzla,
 
   is_valid = bzla_bvprop_and(mm, d_x, d_s, d_t, &d_res_x, &d_res_s, &d_res_t);
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_and++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
-
   if (!is_valid)
   {
 #ifndef NDEBUG
-    if (!is_valid) BZLA_PROP_SOLVER(bzla)->stats.inv_and_conflicts++;
+    BZLA_PROP_SOLVER(bzla)->stats.inv_and_conflicts++;
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
 #endif
     // TODO for now fall back, but we want to be able to handle this smarter
     bzla_bvprop_free(mm, d_s);
