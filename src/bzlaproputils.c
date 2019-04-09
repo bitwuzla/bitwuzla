@@ -3263,6 +3263,17 @@ inv_cond_bv(Bzla *bzla,
 /* Inverse value computation with propagator domains                          */
 /* ========================================================================== */
 
+static BzlaBitVector *
+set_const_bits(BzlaMemMgr *mm, BzlaBvDomain *d_res_x, BzlaBitVector *res_x)
+{
+  assert(d_res_x);
+  assert(res_x);
+  BzlaBitVector *tmp = bzla_bv_and(mm, d_res_x->hi, res_x);
+  BzlaBitVector *res = bzla_bv_or(mm, d_res_x->lo, tmp);
+  bzla_bv_free(mm, tmp);
+  return res;
+}
+
 /* -------------------------------------------------------------------------- */
 /* INV: add                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -3457,12 +3468,20 @@ inv_eq_bvprop(Bzla *bzla,
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(eq->e[idx_x]));
 
-  uint32_t i, bw_x;
+  uint32_t bw_x;
   BzlaNode *x;
-  BzlaBitVector *res;
+  BzlaBitVector *res, *tmp;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
   bool is_valid, is_diseq;
   BzlaMemMgr *mm;
+
+  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  {
+#ifndef NDEBUG
+    BZLA_PROP_SOLVER(bzla)->stats.inv_eq++;
+#endif
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
+  }
 
   mm   = bzla->mm;
   x    = bzla_node_real_addr(eq->e[idx_x]);
@@ -3476,17 +3495,12 @@ inv_eq_bvprop(Bzla *bzla,
 
   is_valid = bzla_bvprop_eq(mm, d_x, d_s, d_t, &d_res_x, &d_res_s, &d_res_t);
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_eq++;
-    if (!is_valid) BZLA_PROP_SOLVER(bzla)->stats.inv_eq_conflicts++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
-
   if (!is_valid)
   {
+#ifndef NDEBUG
+    BZLA_PROP_SOLVER(bzla)->stats.inv_eq_conflicts++;
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
+#endif
     // TODO for now fall back, but we want to be able to handle this smarter
     bzla_bvprop_free(mm, d_s);
     bzla_bvprop_free(mm, d_t);
@@ -3496,22 +3510,25 @@ inv_eq_bvprop(Bzla *bzla,
     return inv_eq_bv(bzla, eq, t, s, idx_x, domains);
   }
 
-  res      = 0;
-  is_diseq = bzla_bv_is_zero(t);
-  do
+  if ((is_diseq = bzla_bv_is_zero(t)))
   {
-    if (res) bzla_bv_free(mm, res);
-    res = bzla_bv_new_random(mm, &bzla->rng, bw_x);
-  } while (is_diseq && !bzla_bv_compare(res, s));
-
-  for (i = 0; i < bw_x; i++)
-  {
-    if (bzla_bvprop_is_fixed_bit(d_res_x, i))
+    assert(bzla_bv_compare(d_res_x->lo, s) || bzla_bv_compare(d_res_x->hi, s));
+    res = 0;
+    do
     {
-      bzla_bv_set_bit(res, i, bzla_bv_get_bit(d_res_x->lo, i));
-    }
+      if (res) bzla_bv_free(mm, res);
+      tmp = bzla_bv_new_random(mm, &bzla->rng, bw_x);
+      res = set_const_bits(mm, d_res_x, tmp);
+      bzla_bv_free(mm, tmp);
+    } while (is_diseq && !bzla_bv_compare(res, s));
   }
-  assert(!is_diseq || bzla_bv_compare(res, s));
+  else
+  {
+    assert(bzla_bvprop_is_fixed(mm, d_res_x));
+    assert(!bzla_bv_compare(d_res_x->lo, s));
+    res = bzla_bv_copy(mm, d_res_x->lo);
+  }
+
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_eq, eq, s, t, res, idx_x, "=");
 #endif
