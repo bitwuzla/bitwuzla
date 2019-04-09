@@ -2641,6 +2641,7 @@ TEST_F(TestPropInv, complete_eq)
 {
 #ifndef NDEBUG
   check_binary(bzla_exp_eq, bzla_bv_eq, inv_eq_bv, inv_eq_bvprop, false);
+  check_binary(bzla_exp_eq, bzla_bv_eq, inv_eq_bv, inv_eq_bvprop, true);
 #endif
 }
 
