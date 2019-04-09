@@ -3380,9 +3380,9 @@ inv_and_bvprop(Bzla *bzla,
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(and->e[idx_x]));
 
-  uint32_t i, bit, bw_x;
+  uint32_t bw_x;
   BzlaNode *x;
-  BzlaBitVector *res;
+  BzlaBitVector *res, *tmp;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
   bool is_valid;
   BzlaMemMgr *mm;
@@ -3422,14 +3422,9 @@ inv_and_bvprop(Bzla *bzla,
     return inv_and_bv(bzla, and, t, s, idx_x, domains);
   }
 
-  res = bzla_bv_new(mm, bw_x);
-  for (i = 0; i < bw_x; i++)
-  {
-    bit = bzla_bvprop_is_fixed_bit(d_res_x, i)
-              ? bzla_bv_get_bit(d_res_x->lo, i)
-              : bzla_rng_pick_rand(&bzla->rng, 0, 1);
-    bzla_bv_set_bit(res, i, bit);
-  }
+  tmp = bzla_bv_new_random(mm, &bzla->rng, bw_x);
+  res = set_const_bits(mm, d_res_x, tmp);
+  bzla_bv_free(mm, tmp);
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_and, and, s, t, res, idx_x, "+");
 #endif
