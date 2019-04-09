@@ -3329,7 +3329,9 @@ inv_add_bvprop(Bzla *bzla,
   if (!is_valid)
   {
 #ifndef NDEBUG
-    if (!is_valid) BZLA_PROP_SOLVER(bzla)->stats.inv_add_conflicts++;
+    BZLA_PROP_SOLVER(bzla)->stats.inv_add_conflicts++;
+    BZLA_PROP_SOLVER(bzla)->stats.inv_add--;
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
 #endif
     // TODO for now fall back, but we want to be able to handle this smarter
     bzla_bvprop_free(mm, d_s);
@@ -3411,6 +3413,7 @@ inv_and_bvprop(Bzla *bzla,
   {
 #ifndef NDEBUG
     BZLA_PROP_SOLVER(bzla)->stats.inv_and_conflicts++;
+    BZLA_PROP_SOLVER(bzla)->stats.inv_and--;
     BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
 #endif
     // TODO for now fall back, but we want to be able to handle this smarter
@@ -3494,6 +3497,7 @@ inv_eq_bvprop(Bzla *bzla,
   {
 #ifndef NDEBUG
     BZLA_PROP_SOLVER(bzla)->stats.inv_eq_conflicts++;
+    BZLA_PROP_SOLVER(bzla)->stats.inv_eq--;
     BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
 #endif
     // TODO for now fall back, but we want to be able to handle this smarter
