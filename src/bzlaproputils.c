@@ -3555,8 +3555,154 @@ inv_ult_bvprop(Bzla *bzla,
                int32_t idx_x,
                BzlaIntHashTable *domains)
 {
-  // TODO
-  return inv_ult_bv(bzla, ult, t, s, idx_x, domains);
+  assert(bzla);
+  assert(domains);
+  assert(ult);
+  assert(bzla_node_is_regular(ult));
+  assert(bzla_hashint_map_contains(domains, ult->id));
+  assert(t);
+  assert(s);
+  assert(bzla_bv_get_width(t) == 1);
+  assert(idx_x >= 0 && idx_x <= 1);
+  assert(!bzla_node_is_bv_const(ult->e[idx_x]));
+
+  uint32_t bw_x;
+  BzlaNode *x;
+  BzlaBitVector *res, *tmp, *zero, *one, *bvmax;
+  BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
+  bool is_valid, is_ult, done;
+  BzlaMemMgr *mm;
+
+  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  {
+#ifndef NDEBUG
+    BZLA_PROP_SOLVER(bzla)->stats.inv_ult++;
+#endif
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
+  }
+
+  mm   = bzla->mm;
+  x    = bzla_node_real_addr(ult->e[idx_x]);
+  bw_x = bzla_bv_get_width(s);
+
+  d_s = bzla_bvprop_new_fixed(mm, s);
+  d_t = bzla_bvprop_new_fixed(mm, t);
+  d_x = bzla_hashint_map_get(domains, x->id)->as_ptr;
+  assert(bzla_bv_get_width(d_x->lo) == bw_x);
+  assert(bzla_bv_get_width(d_x->hi) == bw_x);
+
+  is_valid =
+      idx_x ? bzla_bvprop_ult(mm, d_s, d_x, d_t, &d_res_s, &d_res_x, &d_res_t)
+            : bzla_bvprop_ult(mm, d_x, d_s, d_t, &d_res_x, &d_res_s, &d_res_t);
+
+  if (!is_valid)
+  {
+#ifndef NDEBUG
+    BZLA_PROP_SOLVER(bzla)->stats.inv_ult_conflicts++;
+    BZLA_PROP_SOLVER(bzla)->stats.inv_ult--;
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
+#endif
+    // TODO for now fall back, but we want to be able to handle this smarter
+    bzla_bvprop_free(mm, d_s);
+    bzla_bvprop_free(mm, d_t);
+    bzla_bvprop_free(mm, d_res_s);
+    bzla_bvprop_free(mm, d_res_t);
+    bzla_bvprop_free(mm, d_res_x);
+    return inv_ult_bv(bzla, ult, t, s, idx_x, domains);
+  }
+
+  zero  = bzla_bv_new(mm, bw_x);
+  one   = bzla_bv_one(mm, bw_x);
+  bvmax = bzla_bv_ones(mm, bw_x);
+
+  if ((is_ult = bzla_bv_is_one(t)))
+  {
+    if (idx_x)
+    {
+      /* s < x */
+      res = 0;
+      do
+      {
+        if (res) bzla_bv_free(mm, res);
+        tmp = bzla_bv_add(mm, s, one);
+        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, tmp, bvmax);
+        bzla_bv_free(mm, tmp);
+        tmp = res;
+        res = set_const_bits(mm, d_res_x, tmp);
+        bzla_bv_free(mm, tmp);
+        tmp  = bzla_bv_ult(mm, s, res);
+        done = bzla_bv_is_true(tmp);
+        bzla_bv_free(mm, tmp);
+      } while (!done);
+    }
+    else
+    {
+      /* x < s */
+      assert(bzla_bv_compare(d_res_x->lo, s) < 0);
+      res = 0;
+      do
+      {
+        if (res) bzla_bv_free(mm, res);
+        tmp = bzla_bv_sub(mm, s, one);
+        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, zero, tmp);
+        bzla_bv_free(mm, tmp);
+        tmp = res;
+        res = set_const_bits(mm, d_res_x, tmp);
+        bzla_bv_free(mm, tmp);
+        tmp  = bzla_bv_ult(mm, res, s);
+        done = bzla_bv_is_true(tmp);
+        bzla_bv_free(mm, tmp);
+      } while (!done);
+    }
+  }
+  else
+  {
+    if (idx_x)
+    {
+      /* s >= x */
+      res = 0;
+      do
+      {
+        if (res) bzla_bv_free(mm, res);
+        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, zero, s);
+        tmp = res;
+        res = set_const_bits(mm, d_res_x, tmp);
+        bzla_bv_free(mm, tmp);
+        tmp  = bzla_bv_ult(mm, s, res);
+        done = bzla_bv_is_false(tmp);
+        bzla_bv_free(mm, tmp);
+      } while (!done);
+    }
+    else
+    {
+      /* x >= s */
+      res = 0;
+      do
+      {
+        if (res) bzla_bv_free(mm, res);
+        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, s, bvmax);
+        tmp = res;
+        res = set_const_bits(mm, d_res_x, tmp);
+        bzla_bv_free(mm, tmp);
+        tmp  = bzla_bv_ult(mm, res, s);
+        done = bzla_bv_is_false(tmp);
+        bzla_bv_free(mm, tmp);
+      } while (!done);
+    }
+  }
+
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_ult, ult, s, t, res, idx_x, "<");
+#endif
+  bzla_bv_free(mm, zero);
+  bzla_bv_free(mm, one);
+  bzla_bv_free(mm, bvmax);
+  bzla_bvprop_free(mm, d_s);
+  bzla_bvprop_free(mm, d_t);
+  bzla_bvprop_free(mm, d_res_s);
+  bzla_bvprop_free(mm, d_res_t);
+  bzla_bvprop_free(mm, d_res_x);
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */

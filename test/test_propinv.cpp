@@ -24,7 +24,7 @@ extern "C" {
 class TestPropInv : public TestBzla
 {
  protected:
-  static constexpr uint32_t TEST_PROP_INV_COMPLETE_BW      = 5u;
+  static constexpr uint32_t TEST_PROP_INV_COMPLETE_BW      = 4u;
   static constexpr uint64_t TEST_PROP_INV_COMPLETE_N_TESTS = 10000u;
 
   void SetUp() override
@@ -2661,6 +2661,12 @@ TEST_F(TestPropInv, complete_ult)
                inv_ult_bv,
                inv_ult_bvprop,
                false);
+  check_binary(bzla_exp_bv_ult,
+               bzla_bv_ult,
+               bzla_is_inv_ult,
+               inv_ult_bv,
+               inv_ult_bvprop,
+               true);
 #endif
 }
 
@@ -2795,6 +2801,9 @@ TEST_F(TestPropInv, conf_ult)
   check_conf_ult(1, false);
   check_conf_ult(4, false);
   check_conf_ult(8, false);
+  check_conf_ult(1, true);
+  check_conf_ult(4, true);
+  check_conf_ult(8, true);
 }
 
 TEST_F(TestPropInv, conf_sll)
