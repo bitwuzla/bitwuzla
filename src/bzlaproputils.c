@@ -25,18 +25,18 @@ typedef int32_t (*BzlaPropSelectPath)(Bzla *,
                                       BzlaBitVector *,
                                       BzlaBitVector **);
 
-typedef bool (*BzlaPropIsInv)(BzlaMemMgr *,
-                              const BzlaBitVector *,
-                              const BzlaBitVector *,
-                              uint32_t);
-
 #ifdef NDEBUG
-typedef BzlaBitVector *(*BzlaPropComputeValue)(Bzla *,
-                                               BzlaNode *,
-                                               BzlaBitVector *,
-                                               BzlaBitVector *,
-                                               int32_t,
-                                               BzlaIntHashTable *);
+typedef bool (*BzlaPropIsInv)(BzlaMemMgr *mm,
+                              const BzlaBitVector *t,
+                              const BzlaBitVector *s,
+                              uint32_t idx_x);
+
+typedef BzlaBitVector *(*BzlaPropComputeValue)(Bzla *bzla,
+                                               BzlaNode *exp,
+                                               BzlaBitVector *bv_t,
+                                               BzlaBitVector *bv_s,
+                                               int32_t idx_x,
+                                               BzlaIntHashTable *domains);
 #endif
 
 /* ========================================================================== */

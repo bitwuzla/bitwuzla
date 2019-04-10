@@ -13,6 +13,7 @@ extern "C" {
 #include "bzlabvprop.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
+#include "bzlainvutils.h"
 #include "bzlamodel.h"
 #include "bzlanode.h"
 #include "bzlaproputils.h"
@@ -61,12 +62,8 @@ class TestProp : public TestBzla
       BzlaBitVector *(*create_bv)(BzlaMemMgr *,
                                   const BzlaBitVector *,
                                   const BzlaBitVector *),
-      BzlaBitVector *(*inv_bv)(Bzla *,
-                               BzlaNode *,
-                               BzlaBitVector *,
-                               BzlaBitVector *,
-                               int32_t,
-                               BzlaIntHashTable *) )
+      BzlaPropIsInv is_inv,
+      BzlaPropComputeValue inv_fun)
   {
 #ifndef NDEBUG
     int32_t i, idx_s, sat_res;
@@ -109,11 +106,12 @@ class TestProp : public TestBzla
     //        bzla_bv_to_char (d_mm, bvexp));
     /* -> first test local completeness  */
     /* we must find a solution within n move(s) */
-    res[idx_x] = inv_bv(d_bzla, exp, bvexp, bve, idx_x, domains);
+    assert(is_inv(d_mm, bvexp, bve, idx_x));
+    res[idx_x] = inv_fun(d_bzla, exp, bvexp, bve, idx_x, domains);
     assert(res[idx_x]);
     res[idx_s] = n == 1
                      ? bzla_bv_copy(d_mm, bve)
-                     : inv_bv(d_bzla, exp, bvexp, res[idx_x], idx_s, domains);
+                     : inv_fun(d_bzla, exp, bvexp, res[idx_x], idx_s, domains);
     assert(res[idx_s]);
     /* Note: this is also tested within the inverse function(s) */
     tmp = create_bv(d_mm, res[0], res[1]);
@@ -126,7 +124,8 @@ class TestProp : public TestBzla
     {
       for (i = 0, res[idx_x] = 0; i < TEST_PROP_COMPLETE_N_TESTS; i++)
       {
-        res[idx_x] = inv_bv(d_bzla, exp, bvexp, bve, idx_x, domains);
+        assert(is_inv(d_mm, bvexp, bve, idx_x));
+        res[idx_x] = inv_fun(d_bzla, exp, bvexp, bve, idx_x, domains);
         assert(res[idx_x]);
         if (!bzla_bv_compare(res[idx_x], bvres)) break;
         bzla_bv_free(d_mm, res[idx_x]);
@@ -192,12 +191,8 @@ class TestProp : public TestBzla
                             BzlaBitVector *(*create_bv)(BzlaMemMgr *,
                                                         const BzlaBitVector *,
                                                         const BzlaBitVector *),
-                            BzlaBitVector *(*inv_bv)(Bzla *,
-                                                     BzlaNode *,
-                                                     BzlaBitVector *,
-                                                     BzlaBitVector *,
-                                                     int32_t,
-                                                     BzlaIntHashTable *) )
+                            BzlaPropIsInv is_inv,
+                            BzlaPropComputeValue inv_fun)
   {
     uint32_t bw;
     uint64_t i, j, k;
@@ -218,10 +213,26 @@ class TestProp : public TestBzla
         /* -> first test local completeness  */
         for (k = 0; k < bw; k++)
         {
-          prop_complete_binary_idx(
-              n, 1, bw, bve[0], bve[1], bvexp, create_exp, create_bv, inv_bv);
-          prop_complete_binary_idx(
-              n, 0, bw, bve[1], bve[0], bvexp, create_exp, create_bv, inv_bv);
+          prop_complete_binary_idx(n,
+                                   1,
+                                   bw,
+                                   bve[0],
+                                   bve[1],
+                                   bvexp,
+                                   create_exp,
+                                   create_bv,
+                                   is_inv,
+                                   inv_fun);
+          prop_complete_binary_idx(n,
+                                   0,
+                                   bw,
+                                   bve[1],
+                                   bve[0],
+                                   bvexp,
+                                   create_exp,
+                                   create_bv,
+                                   is_inv,
+                                   inv_fun);
         }
         bzla_bv_free(d_mm, bve[1]);
         bzla_bv_free(d_mm, bvexp);
@@ -240,73 +251,85 @@ class TestProp : public TestBzla
 TEST_F(TestProp, one_complete_add)
 {
 #ifndef NDEBUG
-  prop_complete_binary(1, bzla_exp_bv_add, bzla_bv_add, inv_add_bv);
-  prop_complete_binary(1, bzla_exp_bv_add, bzla_bv_add, inv_add_bvprop);
+  prop_complete_binary(
+      1, bzla_exp_bv_add, bzla_bv_add, bzla_is_inv_add, inv_add_bv);
+  prop_complete_binary(
+      1, bzla_exp_bv_add, bzla_bv_add, bzla_is_inv_add, inv_add_bvprop);
 #endif
 }
 
 TEST_F(TestProp, one_complete_and)
 {
 #ifndef NDEBUG
-  prop_complete_binary(1, bzla_exp_bv_and, bzla_bv_and, inv_and_bv);
-  prop_complete_binary(1, bzla_exp_bv_and, bzla_bv_and, inv_and_bvprop);
+  prop_complete_binary(
+      1, bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, inv_and_bv);
+  prop_complete_binary(
+      1, bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, inv_and_bvprop);
 #endif
 }
 
 TEST_F(TestProp, one_complete_eq)
 {
 #ifndef NDEBUG
-  prop_complete_binary(1, bzla_exp_eq, bzla_bv_eq, inv_eq_bv);
-  prop_complete_binary(1, bzla_exp_eq, bzla_bv_eq, inv_eq_bvprop);
+  prop_complete_binary(1, bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bv);
+  prop_complete_binary(
+      1, bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bvprop);
 #endif
 }
 
 TEST_F(TestProp, one_complete_ult)
 {
 #ifndef NDEBUG
-  prop_complete_binary(1, bzla_exp_bv_ult, bzla_bv_ult, inv_ult_bv);
+  prop_complete_binary(
+      1, bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, inv_ult_bv);
 #endif
 }
 
 TEST_F(TestProp, one_complete_sll)
 {
 #ifndef NDEBUG
-  prop_complete_binary(1, bzla_exp_bv_sll, bzla_bv_sll, inv_sll_bv);
+  prop_complete_binary(
+      1, bzla_exp_bv_sll, bzla_bv_sll, bzla_is_inv_sll, inv_sll_bv);
 #endif
 }
 
 TEST_F(TestProp, one_complete_srl)
 {
 #ifndef NDEBUG
-  prop_complete_binary(1, bzla_exp_bv_srl, bzla_bv_srl, inv_srl_bv);
+  prop_complete_binary(
+      1, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, inv_srl_bv);
 #endif
 }
 
 TEST_F(TestProp, one_complete_mul)
 {
 #ifndef NDEBUG
-  prop_complete_binary(1, bzla_exp_bv_mul, bzla_bv_mul, inv_mul_bv);
+  prop_complete_binary(
+      1, bzla_exp_bv_mul, bzla_bv_mul, bzla_is_inv_mul, inv_mul_bv);
 #endif
 }
 
 TEST_F(TestProp, one_complete_udiv)
 {
 #ifndef NDEBUG
-  prop_complete_binary(1, bzla_exp_bv_udiv, bzla_bv_udiv, inv_udiv_bv);
+  prop_complete_binary(
+      1, bzla_exp_bv_udiv, bzla_bv_udiv, bzla_is_inv_udiv, inv_udiv_bv);
 #endif
 }
 
 TEST_F(TestProp, one_complete_urem)
 {
 #ifndef NDEBUG
-  prop_complete_binary(1, bzla_exp_bv_urem, bzla_bv_urem, inv_urem_bv);
+  prop_complete_binary(
+      1, bzla_exp_bv_urem, bzla_bv_urem, bzla_is_inv_urem, inv_urem_bv);
 #endif
 }
 
 TEST_F(TestProp, one_complete_concat)
 {
 #ifndef NDEBUG
-  prop_complete_binary(1, bzla_exp_bv_concat, bzla_bv_concat, inv_concat_bv);
+  prop_complete_binary(
+      1, bzla_exp_bv_concat, bzla_bv_concat, bzla_is_inv_concat, inv_concat_bv);
 #endif
 }
 
@@ -315,73 +338,85 @@ TEST_F(TestProp, one_complete_concat)
 TEST_F(TestProp, complete_add)
 {
 #ifndef NDEBUG
-  prop_complete_binary(2, bzla_exp_bv_add, bzla_bv_add, inv_add_bv);
-  prop_complete_binary(2, bzla_exp_bv_add, bzla_bv_add, inv_add_bvprop);
+  prop_complete_binary(
+      2, bzla_exp_bv_add, bzla_bv_add, bzla_is_inv_add, inv_add_bv);
+  prop_complete_binary(
+      2, bzla_exp_bv_add, bzla_bv_add, bzla_is_inv_add, inv_add_bvprop);
 #endif
 }
 
 TEST_F(TestProp, complete_and)
 {
 #ifndef NDEBUG
-  prop_complete_binary(2, bzla_exp_bv_and, bzla_bv_and, inv_and_bv);
-  prop_complete_binary(2, bzla_exp_bv_and, bzla_bv_and, inv_and_bvprop);
+  prop_complete_binary(
+      2, bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, inv_and_bv);
+  prop_complete_binary(
+      2, bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, inv_and_bvprop);
 #endif
 }
 
 TEST_F(TestProp, complete_eq)
 {
 #ifndef NDEBUG
-  prop_complete_binary(2, bzla_exp_eq, bzla_bv_eq, inv_eq_bv);
-  prop_complete_binary(2, bzla_exp_eq, bzla_bv_eq, inv_eq_bvprop);
+  prop_complete_binary(2, bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bv);
+  prop_complete_binary(
+      2, bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bvprop);
 #endif
 }
 
 TEST_F(TestProp, complete_ult)
 {
 #ifndef NDEBUG
-  prop_complete_binary(2, bzla_exp_bv_ult, bzla_bv_ult, inv_ult_bv);
+  prop_complete_binary(
+      2, bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, inv_ult_bv);
 #endif
 }
 
 TEST_F(TestProp, complete_sll)
 {
 #ifndef NDEBUG
-  prop_complete_binary(2, bzla_exp_bv_sll, bzla_bv_sll, inv_sll_bv);
+  prop_complete_binary(
+      2, bzla_exp_bv_sll, bzla_bv_sll, bzla_is_inv_sll, inv_sll_bv);
 #endif
 }
 
 TEST_F(TestProp, complete_srl)
 {
 #ifndef NDEBUG
-  prop_complete_binary(2, bzla_exp_bv_srl, bzla_bv_srl, inv_srl_bv);
+  prop_complete_binary(
+      2, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, inv_srl_bv);
 #endif
 }
 
 TEST_F(TestProp, complete_mul)
 {
 #ifndef NDEBUG
-  prop_complete_binary(2, bzla_exp_bv_mul, bzla_bv_mul, inv_mul_bv);
+  prop_complete_binary(
+      2, bzla_exp_bv_mul, bzla_bv_mul, bzla_is_inv_mul, inv_mul_bv);
 #endif
 }
 
 TEST_F(TestProp, complete_udiv)
 {
 #ifndef NDEBUG
-  prop_complete_binary(2, bzla_exp_bv_udiv, bzla_bv_udiv, inv_udiv_bv);
+  prop_complete_binary(
+      2, bzla_exp_bv_udiv, bzla_bv_udiv, bzla_is_inv_udiv, inv_udiv_bv);
 #endif
 }
 
 TEST_F(TestProp, complete_urem)
 {
 #ifndef NDEBUG
-  prop_complete_binary(2, bzla_exp_bv_urem, bzla_bv_urem, inv_urem_bv);
+  prop_complete_binary(
+      2, bzla_exp_bv_urem, bzla_bv_urem, bzla_is_inv_urem, inv_urem_bv);
 #endif
 }
 
 TEST_F(TestProp, complete_concat)
 {
 #ifndef NDEBUG
-  prop_complete_binary(2, bzla_exp_bv_concat, bzla_bv_concat, inv_concat_bv);
+  prop_complete_binary(
+      2, bzla_exp_bv_concat, bzla_bv_concat, bzla_is_inv_concat, inv_concat_bv);
 #endif
 }
 

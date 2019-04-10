@@ -24,7 +24,7 @@ extern "C" {
 class TestPropInv : public TestBzla
 {
  protected:
-  static constexpr uint32_t TEST_PROP_INV_COMPLETE_BW      = 4u;
+  static constexpr uint32_t TEST_PROP_INV_COMPLETE_BW      = 5u;
   static constexpr uint64_t TEST_PROP_INV_COMPLETE_N_TESTS = 10000u;
 
   void SetUp() override
@@ -50,18 +50,9 @@ class TestPropInv : public TestBzla
     bzla_model_generate(d_bzla, d_bzla->bv_model, d_bzla->fun_model, 0);
   }
 
-  void check_result(BzlaBitVector *(*inv_fun_bv)(Bzla *,
-                                                 BzlaNode *,
-                                                 BzlaBitVector *,
-                                                 BzlaBitVector *,
-                                                 int32_t idx_x,
-                                                 BzlaIntHashTable *),
-                    BzlaBitVector *(*inv_fun_bvprop)(Bzla *,
-                                                     BzlaNode *,
-                                                     BzlaBitVector *,
-                                                     BzlaBitVector *,
-                                                     int32_t idx_x,
-                                                     BzlaIntHashTable *),
+  void check_result(BzlaPropIsInv is_inv,
+                    BzlaPropComputeValue inv_fun_bv,
+                    BzlaPropComputeValue inv_fun_bvprop,
                     BzlaNode *exp,
                     BzlaBitVector *bve,
                     BzlaBitVector *bvn,
@@ -82,6 +73,7 @@ class TestPropInv : public TestBzla
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
+      assert(is_inv(d_mm, bvn, bve, idx_x));
       if (use_domains)
       {
         res = inv_fun_bvprop(d_bzla, exp, bvn, bve, idx_x, d_domains);
@@ -117,18 +109,9 @@ class TestPropInv : public TestBzla
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              const BzlaBitVector *),
-                    BzlaBitVector *(*inv_fun_bv)(Bzla *,
-                                                 BzlaNode *,
-                                                 BzlaBitVector *,
-                                                 BzlaBitVector *,
-                                                 int32_t idx_x,
-                                                 BzlaIntHashTable *),
-                    BzlaBitVector *(*inv_fun_bvprop)(Bzla *,
-                                                     BzlaNode *,
-                                                     BzlaBitVector *,
-                                                     BzlaBitVector *,
-                                                     int32_t idx_x,
-                                                     BzlaIntHashTable *),
+                    BzlaPropIsInv is_inv,
+                    BzlaPropComputeValue inv_fun_bv,
+                    BzlaPropComputeValue inv_fun_bvprop,
                     bool use_domains)
   {
     uint32_t bw;
@@ -151,7 +134,8 @@ class TestPropInv : public TestBzla
       {
         bve[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         bvexp  = bv_fun(d_mm, bve[0], bve[1]);
-        check_result(inv_fun_bv,
+        check_result(is_inv,
+                     inv_fun_bv,
                      inv_fun_bvprop,
                      exp,
                      bve[0],
@@ -159,7 +143,8 @@ class TestPropInv : public TestBzla
                      bve[1],
                      1,
                      use_domains);
-        check_result(inv_fun_bv,
+        check_result(is_inv,
+                     inv_fun_bv,
                      inv_fun_bvprop,
                      exp,
                      bve[1],
@@ -181,18 +166,9 @@ class TestPropInv : public TestBzla
                    BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                             const BzlaBitVector *,
                                             const BzlaBitVector *),
-                   BzlaBitVector *(*inv_fun_bv)(Bzla *,
-                                                BzlaNode *,
-                                                BzlaBitVector *,
-                                                BzlaBitVector *,
-                                                int32_t idx_x,
-                                                BzlaIntHashTable *),
-                   BzlaBitVector *(*inv_fun_bvprop)(Bzla *,
-                                                    BzlaNode *,
-                                                    BzlaBitVector *,
-                                                    BzlaBitVector *,
-                                                    int32_t idx_x,
-                                                    BzlaIntHashTable *),
+                   BzlaPropIsInv is_inv,
+                   BzlaPropComputeValue inv_fun_bv,
+                   BzlaPropComputeValue inv_fun_bvprop,
                    bool use_domains)
   {
     uint32_t bw;
@@ -215,7 +191,8 @@ class TestPropInv : public TestBzla
       {
         bve[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         bvexp  = bv_fun(d_mm, bve[0], bve[1]);
-        check_result(inv_fun_bv,
+        check_result(is_inv,
+                     inv_fun_bv,
                      inv_fun_bvprop,
                      exp,
                      bve[0],
@@ -223,7 +200,8 @@ class TestPropInv : public TestBzla
                      bve[1],
                      1,
                      use_domains);
-        check_result(inv_fun_bv,
+        check_result(is_inv,
+                     inv_fun_bv,
                      inv_fun_bvprop,
                      exp,
                      bve[1],
@@ -2621,71 +2599,128 @@ class TestPropInv : public TestBzla
   }
 };
 
+/* Test if given
+ * bv_x <op> bv_s = bv_t or
+ * bv_s <op> bv_x = bv_t or
+ * bv_x <op> bv_t
+ * we can find value bv_x as result of the inverse value computation within
+ * TEST_PROP_INV_COMPLETE_N_TESTS tries. */
+
 TEST_F(TestPropInv, complete_add)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_add, bzla_bv_add, inv_add_bv, inv_add_bvprop, false);
-  check_binary(bzla_exp_bv_add, bzla_bv_add, inv_add_bv, inv_add_bvprop, true);
+  check_binary(bzla_exp_bv_add,
+               bzla_bv_add,
+               bzla_is_inv_add,
+               inv_add_bv,
+               inv_add_bvprop,
+               false);
+  check_binary(bzla_exp_bv_add,
+               bzla_bv_add,
+               bzla_is_inv_add,
+               inv_add_bv,
+               inv_add_bvprop,
+               true);
 #endif
 }
 
 TEST_F(TestPropInv, complete_and)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_and, bzla_bv_and, inv_and_bv, inv_and_bvprop, false);
-  check_binary(bzla_exp_bv_and, bzla_bv_and, inv_and_bv, inv_and_bvprop, true);
+  check_binary(bzla_exp_bv_and,
+               bzla_bv_and,
+               bzla_is_inv_and,
+               inv_and_bv,
+               inv_and_bvprop,
+               false);
+  check_binary(bzla_exp_bv_and,
+               bzla_bv_and,
+               bzla_is_inv_and,
+               inv_and_bv,
+               inv_and_bvprop,
+               true);
 #endif
 }
 
 TEST_F(TestPropInv, complete_eq)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_eq, bzla_bv_eq, inv_eq_bv, inv_eq_bvprop, false);
-  check_binary(bzla_exp_eq, bzla_bv_eq, inv_eq_bv, inv_eq_bvprop, true);
+  check_binary(
+      bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bv, inv_eq_bvprop, false);
+  check_binary(
+      bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bv, inv_eq_bvprop, true);
 #endif
 }
 
 TEST_F(TestPropInv, complete_ult)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_ult, bzla_bv_ult, inv_ult_bv, inv_ult_bvprop, false);
+  check_binary(bzla_exp_bv_ult,
+               bzla_bv_ult,
+               bzla_is_inv_ult,
+               inv_ult_bv,
+               inv_ult_bvprop,
+               false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_sll)
 {
 #ifndef NDEBUG
-  check_shift(bzla_exp_bv_sll, bzla_bv_sll, inv_sll_bv, inv_sll_bvprop, false);
+  check_shift(bzla_exp_bv_sll,
+              bzla_bv_sll,
+              bzla_is_inv_sll,
+              inv_sll_bv,
+              inv_sll_bvprop,
+              false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_srl)
 {
 #ifndef NDEBUG
-  check_shift(bzla_exp_bv_srl, bzla_bv_srl, inv_srl_bv, inv_srl_bvprop, false);
+  check_shift(bzla_exp_bv_srl,
+              bzla_bv_srl,
+              bzla_is_inv_srl,
+              inv_srl_bv,
+              inv_srl_bvprop,
+              false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_mul)
 {
 #ifndef NDEBUG
-  check_binary(bzla_exp_bv_mul, bzla_bv_mul, inv_mul_bv, inv_mul_bvprop, false);
+  check_binary(bzla_exp_bv_mul,
+               bzla_bv_mul,
+               bzla_is_inv_mul,
+               inv_mul_bv,
+               inv_mul_bvprop,
+               false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_udiv)
 {
 #ifndef NDEBUG
-  check_binary(
-      bzla_exp_bv_udiv, bzla_bv_udiv, inv_udiv_bv, inv_udiv_bvprop, false);
+  check_binary(bzla_exp_bv_udiv,
+               bzla_bv_udiv,
+               bzla_is_inv_udiv,
+               inv_udiv_bv,
+               inv_udiv_bvprop,
+               false);
 #endif
 }
 
 TEST_F(TestPropInv, complete_urem)
 {
 #ifndef NDEBUG
-  check_binary(
-      bzla_exp_bv_urem, bzla_bv_urem, inv_urem_bv, inv_urem_bvprop, false);
+  check_binary(bzla_exp_bv_urem,
+               bzla_bv_urem,
+               bzla_is_inv_urem,
+               inv_urem_bv,
+               inv_urem_bvprop,
+               false);
 #endif
 }
 
@@ -2694,6 +2729,7 @@ TEST_F(TestPropInv, complete_concat)
 #ifndef NDEBUG
   check_binary(bzla_exp_bv_concat,
                bzla_bv_concat,
+               bzla_is_inv_concat,
                inv_concat_bv,
                inv_concat_bvprop,
                false);

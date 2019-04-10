@@ -18,6 +18,23 @@
 
 #include <assert.h>
 
+/* Check invertibility condition for x + s = t.
+ *
+ * IC: true
+ */
+bool
+bzla_is_inv_add(BzlaMemMgr *mm,
+                const BzlaBitVector *t,
+                const BzlaBitVector *s,
+                uint32_t pos_x)
+{
+  assert(mm);
+  assert(t);
+  assert(s);
+  (void) pos_x;
+  return true;
+}
+
 /* Check invertibility condition for x & s = t.
  *
  * IC: t & s = t
@@ -75,6 +92,23 @@ bzla_is_inv_concat(BzlaMemMgr *mm,
   bzla_bv_free(mm, slice);
   bzla_bv_free(mm, s_eq_slice);
   return res;
+}
+
+/* Check invertibility condition for x + s = t.
+ *
+ * IC: true
+ */
+bool
+bzla_is_inv_eq(BzlaMemMgr *mm,
+               const BzlaBitVector *t,
+               const BzlaBitVector *s,
+               uint32_t pos_x)
+{
+  assert(mm);
+  assert(t);
+  assert(s);
+  (void) pos_x;
+  return true;
 }
 
 /* Check invertibility condition for x * s = t.

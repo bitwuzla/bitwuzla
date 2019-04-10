@@ -57,6 +57,18 @@ uint64_t bzla_proputils_select_move_prop(Bzla* bzla,
 /* Exported for unit tests only.                                           */
 /*=========================================================================*/
 
+typedef bool (*BzlaPropIsInv)(BzlaMemMgr* mm,
+                              const BzlaBitVector* t,
+                              const BzlaBitVector* s,
+                              uint32_t idx_x);
+
+typedef BzlaBitVector* (*BzlaPropComputeValue)(Bzla* bzla,
+                                               BzlaNode* exp,
+                                               BzlaBitVector* bv_t,
+                                               BzlaBitVector* bv_s,
+                                               int32_t idx_x,
+                                               BzlaIntHashTable* domains);
+
 /*------------------------------------------------------------------------*/
 /* Consistent value computation functions.                                */
 /*------------------------------------------------------------------------*/
@@ -322,13 +334,6 @@ BzlaBitVector* inv_cond_bvprop(Bzla* bzla,
                                BzlaIntHashTable* domains);
 
 /*------------------------------------------------------------------------*/
-
-typedef BzlaBitVector* (*BzlaPropComputeValue)(Bzla*,
-                                               BzlaNode*,
-                                               BzlaBitVector*,
-                                               BzlaBitVector*,
-                                               int32_t,
-                                               BzlaIntHashTable*);
 
 void init_prop_domains(Bzla* bzla, BzlaIntHashTable* domains, BzlaNode* root);
 int32_t sat_prop_solver_aux(Bzla* bzla);
