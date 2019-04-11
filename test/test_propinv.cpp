@@ -2679,6 +2679,12 @@ TEST_F(TestPropInv, complete_sll)
               inv_sll_bv,
               inv_sll_bvprop,
               false);
+  check_shift(bzla_exp_bv_sll,
+              bzla_bv_sll,
+              bzla_is_inv_sll,
+              inv_sll_bv,
+              inv_sll_bvprop,
+              true);
 #endif
 }
 
@@ -2811,6 +2817,9 @@ TEST_F(TestPropInv, conf_sll)
   check_conf_sll(2, false);
   check_conf_sll(4, false);
   check_conf_sll(8, false);
+  check_conf_sll(2, true);
+  check_conf_sll(4, true);
+  check_conf_sll(8, true);
 }
 
 TEST_F(TestPropInv, conf_srl)
