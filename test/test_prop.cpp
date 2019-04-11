@@ -302,6 +302,8 @@ TEST_F(TestProp, one_complete_srl)
 #ifndef NDEBUG
   prop_complete_binary(
       1, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, inv_srl_bv);
+  prop_complete_binary(
+      1, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, inv_srl_bvprop);
 #endif
 }
 
@@ -393,6 +395,8 @@ TEST_F(TestProp, complete_srl)
 #ifndef NDEBUG
   prop_complete_binary(
       2, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, inv_srl_bv);
+  prop_complete_binary(
+      2, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, inv_srl_bvprop);
 #endif
 }
 
