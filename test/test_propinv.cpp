@@ -2715,6 +2715,12 @@ TEST_F(TestPropInv, complete_mul)
                inv_mul_bv,
                inv_mul_bvprop,
                false);
+  check_binary(bzla_exp_bv_mul,
+               bzla_bv_mul,
+               bzla_is_inv_mul,
+               inv_mul_bv,
+               inv_mul_bvprop,
+               true);
 #endif
 }
 
@@ -2843,6 +2849,9 @@ TEST_F(TestPropInv, conf_mul)
   check_conf_mul(1, false);
   check_conf_mul(4, false);
   check_conf_mul(8, false);
+  check_conf_mul(1, true);
+  check_conf_mul(4, true);
+  check_conf_mul(8, true);
 }
 
 TEST_F(TestPropInv, conf_udiv)
