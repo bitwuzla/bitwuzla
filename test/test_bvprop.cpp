@@ -764,7 +764,6 @@ class TestBvProp : public TestMm
       print_aigvec(av_res);
       printf("\n");
     }
-
     ASSERT_TRUE(result);
 
   DONE:
@@ -2166,20 +2165,11 @@ class TestBvProp : public TestMm
     //// one bit
     if (str_z == "x")
     {
-      // all x cases
-      if (str_y == "1")
+      if (str_x == "1")
       {
-        res = true;
-      }
-      // some x cases
-      else
-      {
-        if (str_x == "1")
+        if (str_y == "x")
         {
-          if (str_y == "x")
-          {
-            res = true;
-          }
+          res = true;
         }
       }
     }
@@ -2187,37 +2177,59 @@ class TestBvProp : public TestMm
     //// two bits
     if (str_z == "xx")
     {
-      // all x cases
-      if (str_y == "11" || str_y == "x1")
+      if (str_x == "01")
       {
-        res = true;
+        if (str_y == "1x" || str_y == "0x")
+        {
+          res = true;
+        }
       }
-      // some cases
-      else
+      else if (str_x == "0x")
       {
         if (str_y == "1x")
         {
-          if (str_x == "00" || str_x == "01" || str_x == "0x" || str_x == "11")
-          {
-            res = true;
-          }
+          res = true;
         }
-        else if (str_y == "0x")
+      }
+      else if (str_x == "1x")
+      {
+        if (str_y == "1x" || str_y == "0x" || str_y == "x0")
         {
-          if (str_x == "01" || str_x == "10" || str_x == "11" || str_x == "1x"
-              || str_x == "x1")
-          {
-            res = true;
-          }
+          res = true;
         }
-        else if (str_y == "x0")
+      }
+      else if (str_x == "x0")
+      {
+        if (str_y == "01" || str_y == "1x" || str_y == "x1")
         {
-          if (str_x == "10" || str_x == "11" || str_x == "1x")
-          {
-            res = true;
-          }
+          res = true;
         }
-        else if (str_y == "xx" && str_x == "11")
+      }
+      else if (str_x == "x1")
+      {
+        if (str_y == "0x" || str_y == "01" || str_y == "1x")
+        {
+          res = true;
+        }
+      }
+      else if (str_x == "10")
+      {
+        if (str_y == "1x" || str_y == "0x" || str_y == "x0" || str_y == "x1")
+        {
+          res = true;
+        }
+      }
+      else if (str_x == "11")
+      {
+        if (str_y == "1x" || str_y == "0x" || str_y == "x0" || str_y == "x1"
+            || str_y == "xx")
+        {
+          res = true;
+        }
+      }
+      else if (str_x == "xx")
+      {
+        if (str_y == "1x")
         {
           res = true;
         }
@@ -2227,116 +2239,79 @@ class TestBvProp : public TestMm
     //// three bits
     if (str_z == "xxx")
     {
-      if (str_x == "000")
+      if (str_x == "001")
       {
-        if (str_y == "011" || str_y == "01x" || str_y == "0x1" || str_y == "101"
-            || str_y == "10x" || str_y == "110" || str_y == "111"
-            || str_y == "11x" || str_y == "1x0" || str_y == "1x1"
-            || str_y == "1xx" || str_y == "x01" || str_y == "x10"
-            || str_y == "x11" || str_y == "x1x" || str_y == "xx1")
-        {
-          res = true;
-        }
-      }
-      else if (str_x == "001")
-      {
-        if (str_y == "00x" || str_y == "011" || str_y == "01x" || str_y == "0x1"
-            || str_y == "101" || str_y == "10x" || str_y == "110"
-            || str_y == "111" || str_y == "11x" || str_y == "1x0"
-            || str_y == "1x1" || str_y == "1xx" || str_y == "x01"
-            || str_y == "x10" || str_y == "x11" || str_y == "x1x"
-            || str_y == "xx1")
+        if (str_y == "00x" || str_y == "01x" || str_y == "10x" || str_y == "1xx"
+            || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "00x")
       {
-        if (str_y == "011" || str_y == "01x" || str_y == "0x1" || str_y == "101"
-            || str_y == "10x" || str_y == "110" || str_y == "111"
-            || str_y == "11x" || str_y == "1x0" || str_y == "1x1"
-            || str_y == "1xx" || str_y == "x01" || str_y == "x10"
-            || str_y == "x11" || str_y == "x1x" || str_y == "xx1")
+        if (str_y == "01x" || str_y == "10x" || str_y == "1xx"
+            || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "010")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "01x" || str_y == "0x0"
-            || str_y == "0x1" || str_y == "101" || str_y == "10x"
-            || str_y == "110" || str_y == "111" || str_y == "11x"
-            || str_y == "1x0" || str_y == "1x1" || str_y == "1xx"
-            || str_y == "x01" || str_y == "x10" || str_y == "x11"
-            || str_y == "x1x" || str_y == "xx1")
+        if (str_y == "00x" || str_y == "01x" || str_y == "0x0" || str_y == "0x1"
+            || str_y == "10x" || str_y == "1x0" || str_y == "1xx"
+            || str_y == "x01" || str_y == "x1x" || str_y == "xx1")
         {
           res = true;
         }
       }
       else if (str_x == "011")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "01x" || str_y == "0x0"
-            || str_y == "0x1" || str_y == "0xx" || str_y == "101"
-            || str_y == "10x" || str_y == "110" || str_y == "111"
-            || str_y == "11x" || str_y == "1x0" || str_y == "1x1"
-            || str_y == "1xx" || str_y == "x01" || str_y == "x10"
-            || str_y == "x11" || str_y == "x1x" || str_y == "xx1")
+        if (str_y == "00x" || str_y == "01x" || str_y == "0x0" || str_y == "0x1"
+            || str_y == "0xx" || str_y == "10x" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "01x")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "01x" || str_y == "0x0"
-            || str_y == "0x1" || str_y == "101" || str_y == "10x"
-            || str_y == "110" || str_y == "111" || str_y == "11x"
-            || str_y == "1x0" || str_y == "1x1" || str_y == "1xx"
-            || str_y == "x01" || str_y == "x10" || str_y == "x11"
-            || str_y == "x1x" || str_y == "xx1")
+        if (str_y == "00x" || str_y == "01x" || str_y == "0x0" || str_y == "10x"
+            || str_y == "1x0" || str_y == "1xx" || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "0x0")
       {
-        if (str_y == "011" || str_y == "01x" || str_y == "0x1" || str_y == "101"
-            || str_y == "10x" || str_y == "110" || str_y == "111"
-            || str_y == "11x" || str_y == "1x0" || str_y == "1x1"
-            || str_y == "1xx" || str_y == "x01" || str_y == "x10"
-            || str_y == "x11" || str_y == "x1x" || str_y == "xx1")
+        if (str_y == "01x" || str_y == "0x1" || str_y == "10x" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "x01" || str_y == "x1x"
+            || str_y == "001")
         {
           res = true;
         }
       }
       else if (str_x == "0x1")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "01x" || str_y == "0x1"
-            || str_y == "101" || str_y == "10x" || str_y == "110"
-            || str_y == "111" || str_y == "11x" || str_y == "1x0"
-            || str_y == "1x1" || str_y == "1xx" || str_y == "x01"
-            || str_y == "x10" || str_y == "x11" || str_y == "x1x"
-            || str_y == "xx1")
+        if (str_y == "00x" || str_y == "01x" || str_y == "10x" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "x1x" || str_y == "001")
         {
           res = true;
         }
       }
       else if (str_x == "0xx")
       {
-        if (str_y == "011" || str_y == "01x" || str_y == "0x1" || str_y == "101"
-            || str_y == "10x" || str_y == "110" || str_y == "111"
-            || str_y == "11x" || str_y == "1x0" || str_y == "1x1"
-            || str_y == "1xx" || str_y == "x01" || str_y == "x10"
-            || str_y == "x11" || str_y == "x1x" || str_y == "xx1")
+        if (str_y == "01x" || str_y == "10x" || str_y == "1x0" || str_y == "1xx"
+            || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "100")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "0x0" || str_y == "0x1"
-            || str_y == "101" || str_y == "110" || str_y == "111"
-            || str_y == "11x" || str_y == "1x1" || str_y == "x00"
-            || str_y == "x01" || str_y == "x10" || str_y == "x11"
+        if (str_y == "00x" || str_y == "0x0" || str_y == "0x1" || str_y == "01x"
+            || str_y == "10x" || str_y == "1x0" || str_y == "1xx"
+            || str_y == "1xx" || str_y == "x00" || str_y == "x1x"
+            || str_y == "x00" || str_y == "x01" || str_y == "x10"
             || str_y == "xx1")
         {
           res = true;
@@ -2344,104 +2319,109 @@ class TestBvProp : public TestMm
       }
       else if (str_x == "101")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "0x0" || str_y == "0x1"
-            || str_y == "101" || str_y == "10x" || str_y == "110"
-            || str_y == "111" || str_y == "11x" || str_y == "x00"
-            || str_y == "x01" || str_y == "x0x" || str_y == "x10"
-            || str_y == "x11" || str_y == "xx1")
+        if (str_y == "00x" || str_y == "0x0" || str_y == "0x1" || str_y == "01x"
+            || str_y == "10x" || str_y == "1x0" || str_y == "1xx"
+            || str_y == "11x" || str_y == "x00" || str_y == "x01"
+            || str_y == "x0x" || str_y == "x1x" || str_y == "x10"
+            || str_y == "xx1")
         {
           res = true;
         }
       }
       else if (str_x == "10x")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "0x0" || str_y == "0x1"
-            || str_y == "110" || str_y == "111" || str_y == "11x"
-            || str_y == "x00" || str_y == "x01" || str_y == "x10"
-            || str_y == "x11" || str_y == "xx1")
+        if (str_y == "00x" || str_y == "01x" || str_y == "0x0" || str_y == "0x1"
+            || str_y == "10x" || str_y == "11x" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "x1x" || str_y == "x00"
+            || str_y == "x01" || str_y == "x10" || str_y == "xx1")
         {
           res = true;
         }
       }
       else if (str_x == "110")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "01x" || str_y == "0x0"
-            || str_y == "0x1" || str_y == "0xx" || str_y == "101"
-            || str_y == "10x" || str_y == "110" || str_y == "111"
-            || str_y == "1x0" || str_y == "x00" || str_y == "x10"
-            || str_y == "x11" || str_y == "xx0")
+        if (str_y == "00x" || str_y == "01x" || str_y == "0x0" || str_y == "0x1"
+            || str_y == "0xx" || str_y == "10x" || str_y == "1xx"
+            || str_y == "x1x" || str_y == "1x0" || str_y == "x00"
+            || str_y == "x10" || str_y == "x11" || str_y == "xx0")
         {
           res = true;
         }
       }
       else if (str_x == "111")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "01x" || str_y == "0x0"
-            || str_y == "0x1" || str_y == "0xx" || str_y == "101"
-            || str_y == "10x" || str_y == "110" || str_y == "111"
-            || str_y == "11x" || str_y == "1x0" || str_y == "1x1"
-            || str_y == "1xx" || str_y == "x00" || str_y == "x01"
-            || str_y == "x0x" || str_y == "x10" || str_y == "xx0")
+        if (str_y == "00x" || str_y == "01x" || str_y == "0x0" || str_y == "0x1"
+            || str_y == "0xx" || str_y == "10x" || str_y == "11x"
+            || str_y == "1x0" || str_y == "1x1" || str_y == "1xx"
+            || str_y == "x00" || str_y == "x01" || str_y == "x0x"
+            || str_y == "x1x" || str_y == "x10" || str_y == "xx0")
         {
           res = true;
         }
       }
       else if (str_x == "11x")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "01x" || str_y == "0x0"
-            || str_y == "0x1" || str_y == "0xx" || str_y == "101"
-            || str_y == "10x" || str_y == "110" || str_y == "1x0"
-            || str_y == "x00" || str_y == "x10" || str_y == "xx0")
+        if (str_y == "00x" || str_y == "01x" || str_y == "0x0" || str_y == "0x1"
+            || str_y == "0xx" || str_y == "10x" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "x1x" || str_y == "x00"
+            || str_y == "x10" || str_y == "xx0")
         {
           res = true;
         }
       }
       else if (str_x == "1x0")
       {
-        if (str_y == "00x" || str_y == "0x0" || str_y == "111"
-            || str_y == "x00")
+        if (str_y == "00x" || str_y == "001" || str_y == "0x0" || str_y == "01x"
+            || str_y == "10x" || str_y == "1x0" || str_y == "1xx"
+            || str_y == "x1x" || str_y == "x00")
         {
           res = true;
         }
       }
       else if (str_x == "1x1")
       {
-        if (str_y == "00x" || str_y == "0x0" || str_y == "101" || str_y == "10x"
-            || str_y == "x00" || str_y == "x01")
+        if (str_y == "00x" || str_y == "001" || str_y == "01x" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "0x0" || str_y == "101"
+            || str_y == "10x" || str_y == "x00" || str_y == "x01"
+            || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "1xx")
       {
-        if (str_y == "00x" || str_y == "0x0" || str_y == "x00")
+        if (str_y == "00x" || str_y == "0x0" || str_y == "x00" || str_y == "01x"
+            || str_y == "10x" || str_y == "1x0" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "x00")
       {
-        if (str_y == "011" || str_y == "0x1" || str_y == "101" || str_y == "110"
-            || str_y == "111" || str_y == "11x" || str_y == "1x1"
-            || str_y == "x01" || str_y == "x10" || str_y == "x11")
+        if (str_y == "0x1" || str_y == "x01" || str_y == "x10" || str_y == "001"
+            || str_y == "010" || str_y == "01x" || str_y == "10x"
+            || str_y == "1x0" || str_y == "1xx" || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "x01")
       {
-        if (str_y == "00x" || str_y == "011" || str_y == "0x1" || str_y == "110"
-            || str_y == "111" || str_y == "11x" || str_y == "x01"
-            || str_y == "x10" || str_y == "x11")
+        if (str_y == "00x" || str_y == "0x1" || str_y == "001" || str_y == "010"
+            || str_y == "01x" || str_y == "10x" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "11x" || str_y == "x01"
+            || str_y == "x1x" || str_y == "x10")
         {
           res = true;
         }
       }
       else if (str_x == "x0x")
       {
-        if (str_y == "011" || str_y == "0x1" || str_y == "110" || str_y == "111"
-            || str_y == "11x" || str_y == "x01" || str_y == "x10"
-            || str_y == "x11")
+        if (str_y == "0x1" || str_y == "001" || str_y == "010" || str_y == "01x"
+            || str_y == "10x" || str_y == "1x0" || str_y == "1xx"
+            || str_y == "x1x" || str_y == "11x" || str_y == "x01"
+            || str_y == "x10")
         {
           res = true;
         }
@@ -2449,35 +2429,51 @@ class TestBvProp : public TestMm
       else if (str_x == "x10")
       {
         if (str_y == "00x" || str_y == "011" || str_y == "0x0" || str_y == "0x1"
-            || str_y == "111" || str_y == "x11")
+            || str_y == "001" || str_y == "010" || str_y == "01x"
+            || str_y == "10x" || str_y == "1x0" || str_y == "1xx"
+            || str_y == "x1x" || str_y == "x11")
         {
           res = true;
         }
       }
       else if (str_x == "x11")
       {
-        if (str_y == "00x" || str_y == "0x0")
+        if (str_y == "00x" || str_y == "0x0" || str_y == "001" || str_y == "010"
+            || str_y == "01x" || str_y == "10x" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "x1x")
       {
-        if (str_y == "00x" || str_y == "0x0")
+        if (str_y == "00x" || str_y == "0x0" || str_y == "001" || str_y == "010"
+            || str_y == "01x" || str_y == "10x" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "xx0")
       {
-        if (str_y == "111")
+        if (str_y == "001" || str_y == "01x" || str_y == "10x" || str_y == "1x0"
+            || str_y == "1xx" || str_y == "x1x")
         {
           res = true;
         }
       }
       else if (str_x == "xx1")
       {
-        if (str_y == "00x")
+        if (str_y == "00x" || str_y == "001" || str_y == "01x" || str_y == "10x"
+            || str_y == "1x0" || str_y == "1xx" || str_y == "x1x")
+        {
+          res = true;
+        }
+      }
+      else if (str_x == "xxx")
+      {
+        if (str_y == "01x" || str_y == "10x" || str_y == "1x0" || str_y == "1xx"
+            || str_y == "x1x")
         {
           res = true;
         }
@@ -2493,6 +2489,8 @@ class TestBvProp : public TestMm
   void test_udiv(uint32_t bw)
   {
     bool res, expect_fail;
+    bool is_fixed_x, is_fixed_y, is_fixed_z;
+    bool is_fixed_res_x, is_fixed_res_y, is_fixed_res_z;
     uint32_t num_consts;
     char **consts;
     BzlaBitVector *tmp;
@@ -2534,32 +2532,55 @@ class TestBvProp : public TestMm
                 d_x, d_y, d_z, 0, res_z, TEST_BVPROP_UDIV, 0, 0, expect_fail);
           }
 
-          if (bzla_bvprop_is_fixed(d_mm, d_x)
-              && bzla_bvprop_is_fixed(d_mm, d_y))
+          is_fixed_x     = bzla_bvprop_is_fixed(d_mm, d_x);
+          is_fixed_y     = bzla_bvprop_is_fixed(d_mm, d_y);
+          is_fixed_z     = bzla_bvprop_is_fixed(d_mm, d_z);
+          is_fixed_res_x = bzla_bvprop_is_fixed(d_mm, res_x);
+          is_fixed_res_y = bzla_bvprop_is_fixed(d_mm, res_y);
+          is_fixed_res_z = bzla_bvprop_is_fixed(d_mm, res_z);
+
+          assert(!res || !is_fixed_x || is_fixed_res_x);
+          assert(!res || !is_fixed_y || is_fixed_res_y);
+          assert(!res || !is_fixed_z || is_fixed_res_z);
+
+          if (res && is_fixed_x && is_fixed_y)
           {
-            assert(bzla_bvprop_is_fixed(d_mm, res_x));
-            assert(bzla_bvprop_is_fixed(d_mm, res_y));
-            if (is_xxx_domain(d_mm, d_z))
+            assert(is_fixed_res_z);
+            assert(!bzla_bv_compare(d_x->lo, res_x->lo));
+            assert(!bzla_bv_compare(d_y->lo, res_y->lo));
+            assert(bzla_bvprop_is_fixed(d_mm, res_z));
+            tmp = bzla_bv_udiv(d_mm, d_x->lo, d_y->lo);
+            if (!bzla_bv_compare(tmp, d_z->lo))
             {
-              tmp = bzla_bv_udiv(d_mm, res_x->lo, res_y->lo);
               assert(!bzla_bv_compare(d_x->lo, res_x->lo));
               assert(!bzla_bv_compare(d_y->lo, res_y->lo));
-              assert(!bzla_bvprop_is_fixed(d_mm, res_z)
-                     || !bzla_bv_compare(tmp, res_z->lo));
+              bzla_bv_free(d_mm, tmp);
+              tmp = bzla_bv_udiv(d_mm, res_x->lo, res_y->lo);
+              assert(!bzla_bv_compare(tmp, res_z->lo));
+            }
+            bzla_bv_free(d_mm, tmp);
+          }
+
+          if (res && is_fixed_x && is_fixed_z)
+          {
+            assert(!bzla_bv_compare(d_x->lo, res_x->lo));
+            assert(!bzla_bv_compare(d_z->lo, res_z->lo));
+            if (bzla_bvprop_is_fixed(d_mm, res_y))
+            {
+              tmp = bzla_bv_udiv(d_mm, d_x->lo, d_y->lo);
+              assert(!bzla_bv_compare(tmp, d_z->lo));
               bzla_bv_free(d_mm, tmp);
             }
-            else if (bzla_bvprop_is_fixed(d_mm, d_z))
+          }
+
+          if (res && is_fixed_y && is_fixed_z)
+          {
+            assert(!bzla_bv_compare(d_y->lo, res_y->lo));
+            assert(!bzla_bv_compare(d_z->lo, res_z->lo));
+            if (bzla_bvprop_is_fixed(d_mm, res_x))
             {
-              assert(bzla_bvprop_is_fixed(d_mm, res_z));
               tmp = bzla_bv_udiv(d_mm, d_x->lo, d_y->lo);
-              if (!bzla_bv_compare(tmp, d_z->lo))
-              {
-                assert(!bzla_bv_compare(d_x->lo, res_x->lo));
-                assert(!bzla_bv_compare(d_y->lo, res_y->lo));
-                bzla_bv_free(d_mm, tmp);
-                tmp = bzla_bv_udiv(d_mm, res_x->lo, res_y->lo);
-                assert(!bzla_bv_compare(tmp, res_z->lo));
-              }
+              assert(!bzla_bv_compare(tmp, d_z->lo));
               bzla_bv_free(d_mm, tmp);
             }
           }
@@ -2971,10 +2992,8 @@ class TestBvProp : public TestMm
     std::string str_x = char_x;
     std::string str_y = char_y;
 
-    //// one bit
     if (str_z == "x")
     {
-      // printf("%s == '01': %d\n", str_x.c_str(), str_x == "01");
       if (str_x == "1")
       {
         if (str_y == "x")
@@ -3579,8 +3598,8 @@ TEST_F(TestBvProp, ult)
 
 TEST_F(TestBvProp, udiv)
 {
-  // test_udiv (1);
-  // test_udiv (2);
+  test_udiv(1);
+  test_udiv(2);
   test_udiv(3);
 }
 
