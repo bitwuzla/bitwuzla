@@ -3469,30 +3469,50 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
     {
       if (bw > 1)
       {
-        // TODO get rid of shift prop if i == 0
         /* if i == 0: r_i_shift = r_init << 1
          * else:      r_i_shift = r_i-1  << 1
          * Note: index bw - 1 is at stack index 0 */
         tmp_r_shift = &d_r_shift_stack.start[i];
         tmp_r_prev  = i == 0 ? &tmp_r_init : &d_r_prev_stack.start[i - 1];
-        // printf ("1 -----------------\n");
-        // printf ("r_i_shift = r_prev << 1\n");
-        // BVPROP_LOG (mm, *tmp_r_prev);
-        // BVPROP_LOG (mm, *tmp_r_shift);
-        if (!(res = decomp_step_shiftc(mm,
-                                       tmp_r_prev,
-                                       tmp_r_shift,
-                                       one,
-                                       res_d_x,
-                                       res_d_z,
-                                       bzla_bvprop_sll_const,
-                                       &progress)))
+        if (i == 0)
         {
-          goto DONE;
+          tmp_r_prev = &tmp_r_init;
+          if (!(res = decomp_step_binary(mm,
+                                         tmp_r_prev,
+                                         tmp_r_shift,
+                                         &tmp_one,
+                                         res_d_x,
+                                         res_d_y,
+                                         res_d_z,
+                                         bzla_bvprop_eq,
+                                         &progress)))
+          {
+            goto DONE;
+          }
+          assert(compare_fixed_domain(mm, tmp_one, d_one));
         }
-        // printf ("...................\n");
-        // BVPROP_LOG (mm, *tmp_r_prev);
-        // BVPROP_LOG (mm, *tmp_r_shift);
+        else
+        {
+          tmp_r_prev = &d_r_prev_stack.start[i - 1];
+          // printf ("1 -----------------\n");
+          // printf ("r_i_shift = r_prev << 1\n");
+          // BVPROP_LOG (mm, *tmp_r_prev);
+          // BVPROP_LOG (mm, *tmp_r_shift);
+          if (!(res = decomp_step_shiftc(mm,
+                                         tmp_r_prev,
+                                         tmp_r_shift,
+                                         one,
+                                         res_d_x,
+                                         res_d_z,
+                                         bzla_bvprop_sll_const,
+                                         &progress)))
+          {
+            goto DONE;
+          }
+          // printf ("...................\n");
+          // BVPROP_LOG (mm, *tmp_r_prev);
+          // BVPROP_LOG (mm, *tmp_r_shift);
+        }
       }
       assert(compare_fixed_domain(mm, d_zero_bw, tmp_r_init));
 
