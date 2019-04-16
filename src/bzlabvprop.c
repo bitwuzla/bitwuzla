@@ -43,6 +43,16 @@ new_invalid_domain(BzlaMemMgr *mm, uint32_t width)
   return res;
 }
 
+static bool
+compare_fixed_domain(BzlaMemMgr *mm, BzlaBvDomain *a, BzlaBvDomain *b)
+{
+  assert(bzla_bvprop_is_fixed(mm, a));
+  assert(bzla_bvprop_is_fixed(mm, b));
+  int32_t res_hi = bzla_bv_compare(a->hi, b->hi);
+  int32_t res_lo = bzla_bv_compare(a->lo, b->lo);
+  return res_hi == 0 && res_lo == 0;
+}
+
 #ifndef NDEBUG
 #define BVPROP_LOG(mm, domain)           \
   do                                     \
@@ -1190,8 +1200,7 @@ bvprop_shift_aux(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      assert (!bzla_bv_compare (tmp_zero_bw->lo, d_zero_bw->lo));
-      assert (!bzla_bv_compare (tmp_zero_bw->hi, d_zero_bw->hi));
+      assert (compare_fixed_domain (mm, tmp_zero_bw, d_zero_bw));
 
       /* eq_x_bit = x_bit == 1 */
       if (!(res = decomp_step_binary (mm,
@@ -1206,8 +1215,7 @@ bvprop_shift_aux(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      assert (!bzla_bv_compare (tmp_one->lo, d_one->lo));
-      assert (!bzla_bv_compare (tmp_one->hi, d_one->hi));
+      assert (compare_fixed_domain (mm, tmp_one, d_one));
 
       /* 0 = eq_z && eq_x_bit */
       if (!(res = decomp_step_binary (mm,
@@ -1225,6 +1233,8 @@ bvprop_shift_aux(BzlaMemMgr *mm,
       assert (!bzla_bv_compare (tmp_zero->lo, d_zero->lo));
       assert (!bzla_bv_compare (tmp_zero->hi, d_zero->hi));
 #endif
+
+      assert(compare_fixed_domain(mm, tmp_zero, d_zero));
 
       /* shift = 1 << i */
       bv = BZLA_PEEK_STACK(shift_stack, i);
@@ -2542,8 +2552,7 @@ bvprop_add_aux(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      assert(!bzla_bv_compare(d_one->lo, tmp_one->lo));
-      assert(!bzla_bv_compare(d_one->hi, tmp_one->hi));
+      assert(compare_fixed_domain(mm, d_one, tmp_one));
     }
   } while (progress);
 
@@ -2708,8 +2717,7 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
     {
       goto DONE;
     }
-    assert(!bzla_bv_compare(d_zero_bw->lo, tmp_zero_bw->lo));
-    assert(!bzla_bv_compare(d_zero_bw->hi, tmp_zero_bw->hi));
+    assert(compare_fixed_domain(mm, d_zero_bw, tmp_zero_bw));
   }
   else
   {
@@ -2907,8 +2915,7 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
         {
           goto DONE;
         }
-        assert(!bzla_bv_compare(d_zero_bw->lo, tmp_zero_bw->lo));
-        assert(!bzla_bv_compare(d_zero_bw->hi, tmp_zero_bw->hi));
+        assert(compare_fixed_domain(mm, d_zero_bw, tmp_zero_bw));
 
         /**
          * ite (y[bw-1:bw-1], x << (bw - 1), 0)
@@ -2975,10 +2982,8 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
         {
           goto DONE;
         }
-        assert(!bzla_bv_compare(d_zero->lo, tmp_zero->lo));
-        assert(!bzla_bv_compare(d_zero->hi, tmp_zero->hi));
-        assert(!bzla_bv_compare(d_one->lo, tmp_one->lo));
-        assert(!bzla_bv_compare(d_one->hi, tmp_one->hi));
+        assert(compare_fixed_domain(mm, d_zero, tmp_zero));
+        assert(compare_fixed_domain(mm, d_one, tmp_one));
       }
     } while (progress);
 
@@ -3176,8 +3181,7 @@ bzla_bvprop_ult(BzlaMemMgr *mm,
     {
       goto DONE;
     }
-    assert(!bzla_bv_compare(d_one->lo, tmp_one->lo));
-    assert(!bzla_bv_compare(d_one->hi, tmp_one->hi));
+    assert(compare_fixed_domain(mm, d_one, tmp_one));
 
     /* (add_2, cout_2) = x + add_1 */
     if (!(res = decomp_step_ternary_aux(mm,
@@ -3490,8 +3494,7 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
         // BVPROP_LOG (mm, *tmp_r_prev);
         // BVPROP_LOG (mm, *tmp_r_shift);
       }
-      assert(!bzla_bv_compare(d_zero_bw->lo, tmp_r_init->lo));
-      assert(!bzla_bv_compare(d_zero_bw->hi, tmp_r_init->hi));
+      assert(compare_fixed_domain(mm, d_zero_bw, tmp_r_init));
 
       tmp_r = &d_r_stack.start[i];
       if (bw > 1)
@@ -3651,8 +3654,7 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
       // BVPROP_LOG (mm, tmp_not_y);
       // BVPROP_LOG (mm, tmp_one_bw);
       // BVPROP_LOG (mm, tmp_neg_y);
-      assert(!bzla_bv_compare(d_one_bw->lo, tmp_one_bw->lo));
-      assert(!bzla_bv_compare(d_one_bw->hi, tmp_one_bw->hi));
+      assert(compare_fixed_domain(mm, d_one_bw, tmp_one_bw));
 
       /* sub = r_i + neg_y */
       tmp_sub = &d_sub_stack.start[i];
@@ -3750,8 +3752,7 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      assert(!bzla_bv_compare(d_zero_bw->lo, tmp_zero_bw->lo));
-      assert(!bzla_bv_compare(d_zero_bw->hi, tmp_zero_bw->hi));
+      assert(compare_fixed_domain(mm, d_zero_bw, tmp_zero_bw));
       // printf ("..............................\n");
       // BVPROP_LOG (mm, tmp_y);
       // BVPROP_LOG (mm, tmp_zero_bw);
@@ -3821,10 +3822,8 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      assert(!bzla_bv_compare(d_zero->lo, tmp_zero->lo));
-      assert(!bzla_bv_compare(d_zero->hi, tmp_zero->hi));
-      assert(!bzla_bv_compare(d_one->lo, tmp_one->lo));
-      assert(!bzla_bv_compare(d_one->hi, tmp_one->hi));
+      assert(compare_fixed_domain(mm, d_zero, tmp_zero));
+      assert(compare_fixed_domain(mm, d_one, tmp_one));
       // printf ("..............................\n");
       // BVPROP_LOG (mm, tmp_zero);
       // BVPROP_LOG (mm, tmp_one);
@@ -4066,8 +4065,7 @@ bzla_bvprop_urem(BzlaMemMgr *mm,
     {
       goto DONE;
     }
-    assert(!bzla_bv_compare(d_zero_bw->lo, tmp_zero_bw->lo));
-    assert(!bzla_bv_compare(d_zero_bw->hi, tmp_zero_bw->hi));
+    assert(compare_fixed_domain(mm, d_zero_bw, tmp_zero_bw));
 
     /* ite = eq_y ? 0 : 1 */
     if (!(res = decomp_step_ternary(mm,
@@ -4084,10 +4082,8 @@ bzla_bvprop_urem(BzlaMemMgr *mm,
     {
       goto DONE;
     }
-    assert(!bzla_bv_compare(d_zero->lo, tmp_zero->lo));
-    assert(!bzla_bv_compare(d_zero->hi, tmp_zero->hi));
-    assert(!bzla_bv_compare(d_one->lo, tmp_one->lo));
-    assert(!bzla_bv_compare(d_one->hi, tmp_one->hi));
+    assert(compare_fixed_domain(mm, d_zero, tmp_zero));
+    assert(compare_fixed_domain(mm, d_one, tmp_one));
 
     /* ite = z < y */
     if (!(res = decomp_step_binary(mm,
@@ -4142,8 +4138,7 @@ bzla_bvprop_urem(BzlaMemMgr *mm,
     {
       goto DONE;
     }
-    assert(!bzla_bv_compare(d_one->lo, tmp_one->lo));
-    assert(!bzla_bv_compare(d_one->hi, tmp_one->hi));
+    assert(compare_fixed_domain(mm, d_one, tmp_one));
 
   } while (progress);
 
