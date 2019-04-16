@@ -3280,30 +3280,34 @@ DONE:
   return res;
 }
 
-bool
-bzla_bvprop_udiv(BzlaMemMgr *mm,
-                 BzlaBvDomain *d_x,
-                 BzlaBvDomain *d_y,
-                 BzlaBvDomain *d_z,
-                 BzlaBvDomain **res_d_x,
-                 BzlaBvDomain **res_d_y,
-                 BzlaBvDomain **res_d_z)
+static bool
+bvprop_udiv_urem_aux(BzlaMemMgr *mm,
+                     BzlaBvDomain *d_x,
+                     BzlaBvDomain *d_y,
+                     BzlaBvDomain *d_q, /* 0 if urem */
+                     BzlaBvDomain *d_r, /* 0 if udiv */
+                     BzlaBvDomain **res_d_x,
+                     BzlaBvDomain **res_d_y,
+                     BzlaBvDomain **res_d_q,
+                     BzlaBvDomain **res_d_r)
 {
   assert(mm);
   assert(d_x);
   assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_y);
   assert(bzla_bvprop_is_valid(mm, d_y));
-  assert(d_z);
-  assert(bzla_bvprop_is_valid(mm, d_z));
+  assert((d_r && !d_q) || (!d_r && d_q));
+  assert(!d_q || bzla_bvprop_is_valid(mm, d_q));
+  assert(!d_r || bzla_bvprop_is_valid(mm, d_r));
   assert(res_d_x);
   assert(res_d_y);
-  assert(res_d_z);
+  assert(res_d_q);
 
-  /* z_[bw] = x_[bw] / y_[bw]
-   * ------------------------
+  /* q_[bw] = x_[bw] / y_[bw] with remainer r_[bw]
+   * ---------------------------------------------
    *
-   * r_init := 0_[bw]
+   * r_init := 0_[bw] for udiv
+   * q_init := 0_[bw] for urem
    * for i in bw-1...0:
    *   if i == bw-1:
    *     r_i = r_init << 1
@@ -3313,13 +3317,13 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
    *   ult_i      = r_i < y
    *   not_ult_i  = ~ult_i
    *   ite_r_i    = not_ult_i ? r_i - y : r_i
-   *   z[i] = not_ult_i ? 1_[1] : 0_[1]
+   *   q[i] = not_ult_i ? 1_[1] : 0_[1]
    *
    * division by zero:
    * eq_y_zero     = y == 0
    * not_eq_y_zero = ~eq_y_zero
-   * eq_z_ones     = z = ~0
-   * 1_[1]         = not_eq_y_zero | eq_z_ones
+   * eq_q_ones     = q = ~0
+   * 1_[1]         = not_eq_y_zero | eq_q_ones
    *
    */
 
@@ -3330,16 +3334,16 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
   BzlaBvDomain *d_one, *d_zero, *d_zero_bw, *d_one_bw, *d_ones_bw;
 #endif
   BzlaBvDomain *tmp_one, *tmp_zero, *tmp_zero_bw, *tmp_one_bw, *tmp_ones_bw;
-  BzlaBvDomain *tmp_x, *tmp_y, *tmp_z;
+  BzlaBvDomain *tmp_x, *tmp_y, *tmp_q;
   BzlaBvDomain *tmp_not_y, *tmp_neg_y;
-  BzlaBvDomain *tmp_eq_y_zero, *tmp_not_eq_y_zero, *tmp_eq_z_ones;
+  BzlaBvDomain *tmp_eq_y_zero, *tmp_not_eq_y_zero, *tmp_eq_q_ones;
   BzlaBvDomain *tmp_r_init;
-  BzlaBvDomain *tmp_res_c;
+  BzlaBvDomain *tmp_res_x, *tmp_res_y, *tmp_res_z, *tmp_res_c;
   BzlaBvDomain **tmp_r, **tmp_r_prev, **tmp_r_next, **tmp_r_shift;
   BzlaBvDomain **tmp_r_slice, **tmp_r_shift_slice;
   BzlaBvDomain **tmp_sub, **tmp_and, **tmp_ult;
-  BzlaBvDomain **tmp_x_bit, **tmp_z_bit;
-  BzlaBvDomainPtrStack d_x_stack, d_z_stack;
+  BzlaBvDomain **tmp_x_bit, **tmp_q_bit;
+  BzlaBvDomainPtrStack d_x_stack, d_q_stack;
   BzlaBvDomainPtrStack d_r_stack, d_r_prev_stack;
   BzlaBvDomainPtrStack d_r_shift_stack, d_r_slice_stack, d_r_shift_slice_stack;
   BzlaBvDomainPtrStack d_sub_stack, d_ult_stack, d_and_stack;
@@ -3355,15 +3359,17 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
   BZLA_INIT_STACK(mm, d_x_stack);
   BZLA_INIT_STACK(mm, d_r_slice_stack);
   BZLA_INIT_STACK(mm, d_r_shift_slice_stack);
-  BZLA_INIT_STACK(mm, d_z_stack);
+  BZLA_INIT_STACK(mm, d_q_stack);
   BZLA_INIT_STACK(mm, d_sub_stack);
 
   bw = bzla_bv_get_width(d_x->lo);
   assert(bw == bzla_bv_get_width(d_x->hi));
   assert(bw == bzla_bv_get_width(d_y->lo));
   assert(bw == bzla_bv_get_width(d_y->hi));
-  assert(bw == bzla_bv_get_width(d_z->lo));
-  assert(bw == bzla_bv_get_width(d_z->hi));
+  assert(!d_q || bw == bzla_bv_get_width(d_q->lo));
+  assert(!d_q || bw == bzla_bv_get_width(d_q->hi));
+  assert(!d_r || bw == bzla_bv_get_width(d_r->lo));
+  assert(!d_r || bw == bzla_bv_get_width(d_r->hi));
 
   one = bzla_bv_one(mm, bw);
 
@@ -3400,14 +3406,25 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
   tmp_ones_bw->lo = bzla_bv_ones(mm, bw);
   tmp_ones_bw->hi = bzla_bv_ones(mm, bw);
 
-  tmp_x             = bzla_bvprop_new_init(mm, bw);
-  tmp_y             = bzla_bvprop_new(mm, d_y->lo, d_y->hi);
-  tmp_not_y         = bzla_bvprop_new_init(mm, bw);
-  tmp_neg_y         = bzla_bvprop_new_init(mm, bw);
-  tmp_z             = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
+  tmp_x     = bzla_bvprop_new_init(mm, bw);
+  tmp_y     = bzla_bvprop_new(mm, d_y->lo, d_y->hi);
+  tmp_not_y = bzla_bvprop_new_init(mm, bw);
+  tmp_neg_y = bzla_bvprop_new_init(mm, bw);
+
+  if (d_q)
+  {
+    tmp_q = bzla_bvprop_new(mm, d_q->lo, d_q->hi);
+  }
+  else
+  {
+    tmp_q     = new_domain(mm);
+    tmp_q->lo = bzla_bv_zero(mm, bw);
+    tmp_q->hi = bzla_bv_zero(mm, bw);
+  }
+
   tmp_eq_y_zero     = bzla_bvprop_new_init(mm, 1);
   tmp_not_eq_y_zero = bzla_bvprop_new_init(mm, 1);
-  tmp_eq_z_ones     = bzla_bvprop_new_init(mm, 1);
+  tmp_eq_q_ones     = bzla_bvprop_new_init(mm, 1);
 
   /* r_init := 0_[bw] */
   tmp_r_init     = new_domain(mm);
@@ -3422,16 +3439,23 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
     d->lo = bzla_bv_slice(mm, d_x->lo, n, n);
     d->hi = bzla_bv_slice(mm, d_x->hi, n, n);
     BZLA_PUSH_STACK(d_x_stack, d);
-    /* slice z into bw bits */
+    /* slice q into bw bits */
     d     = new_domain(mm);
-    d->lo = bzla_bv_slice(mm, d_z->lo, n, n);
-    d->hi = bzla_bv_slice(mm, d_z->hi, n, n);
-    BZLA_PUSH_STACK(d_z_stack, d);
+    d->lo = bzla_bv_slice(mm, tmp_q->lo, n, n);
+    d->hi = bzla_bv_slice(mm, tmp_q->hi, n, n);
+    BZLA_PUSH_STACK(d_q_stack, d);
     /* domains for remainder r */
     d = bzla_bvprop_new_init(mm, bw);
     BZLA_PUSH_STACK(d_r_stack, d);
     /* domains for prev remainder r */
-    d = bzla_bvprop_new_init(mm, bw);
+    if (d_r && i == bw - 1)
+    {
+      d = bzla_bvprop_copy(mm, d_r);
+    }
+    else
+    {
+      d = bzla_bvprop_new_init(mm, bw);
+    }
     BZLA_PUSH_STACK(d_r_prev_stack, d);
     /* ult propagators */
     d = bzla_bvprop_new_init(mm, 1);
@@ -3459,7 +3483,7 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
   // printf ("\n############################\n");
   // BVPROP_LOG (mm, d_x);
   // BVPROP_LOG (mm, d_y);
-  // BVPROP_LOG (mm, d_z);
+  // BVPROP_LOG (mm, d_q);
   // printf ("############################\n");
   do
   {
@@ -3481,9 +3505,9 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                          tmp_r_prev,
                                          tmp_r_shift,
                                          &tmp_one,
-                                         res_d_x,
-                                         res_d_y,
-                                         res_d_z,
+                                         &tmp_res_x,
+                                         &tmp_res_y,
+                                         &tmp_res_z,
                                          bzla_bvprop_eq,
                                          &progress)))
           {
@@ -3502,8 +3526,8 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                          tmp_r_prev,
                                          tmp_r_shift,
                                          one,
-                                         res_d_x,
-                                         res_d_z,
+                                         &tmp_res_x,
+                                         &tmp_res_z,
                                          bzla_bvprop_sll_const,
                                          &progress)))
           {
@@ -3530,8 +3554,8 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                       tmp_r_slice,
                                       bw - 1,
                                       1,
-                                      res_d_x,
-                                      res_d_z,
+                                      &tmp_res_x,
+                                      &tmp_res_z,
                                       bzla_bvprop_slice,
                                       &progress)))
         {
@@ -3552,8 +3576,8 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                       tmp_r_shift_slice,
                                       bw - 1,
                                       1,
-                                      res_d_x,
-                                      res_d_z,
+                                      &tmp_res_x,
+                                      &tmp_res_z,
                                       bzla_bvprop_slice,
                                       &progress)))
         {
@@ -3573,9 +3597,9 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                        tmp_r_slice,
                                        tmp_r_shift_slice,
                                        &tmp_one,
-                                       res_d_x,
-                                       res_d_y,
-                                       res_d_z,
+                                       &tmp_res_x,
+                                       &tmp_res_y,
+                                       &tmp_res_z,
                                        bzla_bvprop_eq,
                                        &progress)))
         {
@@ -3598,8 +3622,8 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                     tmp_x_bit,
                                     0,
                                     0,
-                                    res_d_x,
-                                    res_d_z,
+                                    &tmp_res_x,
+                                    &tmp_res_z,
                                     bzla_bvprop_slice,
                                     &progress)))
       {
@@ -3620,9 +3644,9 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                      tmp_r,
                                      &tmp_y,
                                      tmp_ult,
-                                     res_d_x,
-                                     res_d_y,
-                                     res_d_z,
+                                     &tmp_res_x,
+                                     &tmp_res_y,
+                                     &tmp_res_z,
                                      bzla_bvprop_ult,
                                      &progress)))
       {
@@ -3641,8 +3665,8 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
       if (!(res = decomp_step_unary(mm,
                                     &tmp_y,
                                     &tmp_not_y,
-                                    res_d_x,
-                                    res_d_z,
+                                    &tmp_res_x,
+                                    &tmp_res_z,
                                     bzla_bvprop_not,
                                     &progress)))
       {
@@ -3662,9 +3686,9 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                      &tmp_not_y,
                                      &tmp_one_bw,
                                      &tmp_neg_y,
-                                     res_d_x,
-                                     res_d_y,
-                                     res_d_z,
+                                     &tmp_res_x,
+                                     &tmp_res_y,
+                                     &tmp_res_z,
                                      bzla_bvprop_add,
                                      &progress)))
       {
@@ -3687,9 +3711,9 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                      tmp_r,
                                      &tmp_neg_y,
                                      tmp_sub,
-                                     res_d_x,
-                                     res_d_y,
-                                     res_d_z,
+                                     &tmp_res_x,
+                                     &tmp_res_y,
+                                     &tmp_res_z,
                                      bzla_bvprop_add,
                                      &progress)))
       {
@@ -3715,9 +3739,9 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                       tmp_sub,
                                       tmp_r_next,
                                       tmp_ult,
-                                      res_d_x,
-                                      res_d_y,
-                                      res_d_z,
+                                      &tmp_res_x,
+                                      &tmp_res_y,
+                                      &tmp_res_z,
                                       &tmp_res_c,
                                       bzla_bvprop_ite,
                                       &progress)))
@@ -3730,28 +3754,28 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
       // BVPROP_LOG (mm, *tmp_r_next);
       // BVPROP_LOG (mm, *tmp_ult);
 
-      /* z_bit = z[i] */
+      /* q_bit = q[i] */
       n         = bw - i - 1;
-      tmp_z_bit = &d_z_stack.start[i];
+      tmp_q_bit = &d_q_stack.start[i];
       // printf ("11 ---------------------------\n");
-      // printf ("z_bit = z[i]\n");
-      // BVPROP_LOG (mm, tmp_z);
-      // BVPROP_LOG (mm, *tmp_z_bit);
+      // printf ("q_bit = q[i]\n");
+      // BVPROP_LOG (mm, tmp_q);
+      // BVPROP_LOG (mm, *tmp_q_bit);
       if (!(res = decomp_step_slice(mm,
-                                    &tmp_z,
-                                    tmp_z_bit,
+                                    &tmp_q,
+                                    tmp_q_bit,
                                     n,
                                     n,
-                                    res_d_x,
-                                    res_d_z,
+                                    &tmp_res_x,
+                                    &tmp_res_z,
                                     bzla_bvprop_slice,
                                     &progress)))
       {
         goto DONE;
       }
       // printf ("..............................\n");
-      // BVPROP_LOG (mm, tmp_z);
-      // BVPROP_LOG (mm, *tmp_z_bit);
+      // BVPROP_LOG (mm, tmp_q);
+      // BVPROP_LOG (mm, *tmp_q_bit);
 
       /* eq_y_zero = y == 0 */
       // printf ("12 ---------------------------\n");
@@ -3764,9 +3788,9 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                      &tmp_y,
                                      &tmp_zero_bw,
                                      &tmp_eq_y_zero,
-                                     res_d_x,
-                                     res_d_y,
-                                     res_d_z,
+                                     &tmp_res_x,
+                                     &tmp_res_y,
+                                     &tmp_res_z,
                                      bzla_bvprop_eq,
                                      &progress)))
       {
@@ -3786,8 +3810,8 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
       if (!(res = decomp_step_unary(mm,
                                     &tmp_eq_y_zero,
                                     &tmp_not_eq_y_zero,
-                                    res_d_x,
-                                    res_d_z,
+                                    &tmp_res_x,
+                                    &tmp_res_z,
                                     bzla_bvprop_not,
                                     &progress)))
       {
@@ -3808,9 +3832,9 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
                                      &tmp_not_eq_y_zero,
                                      tmp_ult,
                                      tmp_and,
-                                     res_d_x,
-                                     res_d_y,
-                                     res_d_z,
+                                     &tmp_res_x,
+                                     &tmp_res_y,
+                                     &tmp_res_z,
                                      bzla_bvprop_and,
                                      &progress)))
       {
@@ -3826,16 +3850,16 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
       // printf ("z_bit = and ? 0 : 1\n");
       // BVPROP_LOG (mm, tmp_zero);
       // BVPROP_LOG (mm, tmp_one);
-      // BVPROP_LOG (mm, *tmp_z_bit);
+      // BVPROP_LOG (mm, *tmp_q_bit);
       // BVPROP_LOG (mm, *tmp_and);
       if (!(res = decomp_step_ternary(mm,
                                       &tmp_zero,
                                       &tmp_one,
-                                      tmp_z_bit,
+                                      tmp_q_bit,
                                       tmp_and,
-                                      res_d_x,
-                                      res_d_y,
-                                      res_d_z,
+                                      &tmp_res_x,
+                                      &tmp_res_y,
+                                      &tmp_res_z,
                                       &tmp_res_c,
                                       bzla_bvprop_ite,
                                       &progress)))
@@ -3847,7 +3871,7 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
       // printf ("..............................\n");
       // BVPROP_LOG (mm, tmp_zero);
       // BVPROP_LOG (mm, tmp_one);
-      // BVPROP_LOG (mm, *tmp_z_bit);
+      // BVPROP_LOG (mm, *tmp_q_bit);
       // BVPROP_LOG (mm, *tmp_and);
     }
   } while (progress);
@@ -3865,12 +3889,13 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
 
   assert(bzla_bvprop_is_valid(mm, tmp_x));
   assert(bzla_bvprop_is_valid(mm, tmp_y));
-  assert(bzla_bvprop_is_valid(mm, tmp_z));
+  assert(bzla_bvprop_is_valid(mm, tmp_q));
 
 DONE:
   *res_d_x = tmp_x;
   *res_d_y = tmp_y;
-  *res_d_z = tmp_z;
+  if (res_d_q) *res_d_q = tmp_q;
+  if (res_d_r) *res_d_r = bzla_bvprop_copy(mm, d_r_prev_stack.start[bw - 1]);
 
   bzla_bv_free(mm, one);
 
@@ -3879,7 +3904,7 @@ DONE:
   bzla_bvprop_free(mm, tmp_r_init);
   bzla_bvprop_free(mm, tmp_eq_y_zero);
   bzla_bvprop_free(mm, tmp_not_eq_y_zero);
-  bzla_bvprop_free(mm, tmp_eq_z_ones);
+  bzla_bvprop_free(mm, tmp_eq_q_ones);
 
 #ifndef NDEBUG
   bzla_bvprop_free(mm, d_one);
@@ -3897,14 +3922,14 @@ DONE:
   for (i = 0, n = BZLA_COUNT_STACK(d_r_stack); i < n; i++)
   {
     assert(!BZLA_EMPTY_STACK(d_x_stack));
-    assert(!BZLA_EMPTY_STACK(d_z_stack));
+    assert(!BZLA_EMPTY_STACK(d_q_stack));
     assert(!BZLA_EMPTY_STACK(d_r_stack));
     assert(!BZLA_EMPTY_STACK(d_r_prev_stack));
     assert(!BZLA_EMPTY_STACK(d_sub_stack));
     assert(!BZLA_EMPTY_STACK(d_ult_stack));
     assert(!BZLA_EMPTY_STACK(d_and_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_x_stack));
-    bzla_bvprop_free(mm, BZLA_POP_STACK(d_z_stack));
+    bzla_bvprop_free(mm, BZLA_POP_STACK(d_q_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_r_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_r_prev_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_sub_stack));
@@ -3932,8 +3957,8 @@ DONE:
   BZLA_RELEASE_STACK(d_r_prev_stack);
   assert(BZLA_EMPTY_STACK(d_x_stack));
   BZLA_RELEASE_STACK(d_x_stack);
-  assert(BZLA_EMPTY_STACK(d_z_stack));
-  BZLA_RELEASE_STACK(d_z_stack);
+  assert(BZLA_EMPTY_STACK(d_q_stack));
+  BZLA_RELEASE_STACK(d_q_stack);
   assert(BZLA_EMPTY_STACK(d_sub_stack));
   BZLA_RELEASE_STACK(d_sub_stack);
   assert(BZLA_EMPTY_STACK(d_ult_stack));
@@ -3946,6 +3971,19 @@ DONE:
   // BVPROP_LOG (mm, *res_d_y);
   // BVPROP_LOG (mm, *res_d_z);
   return res;
+}
+
+bool
+bzla_bvprop_udiv(BzlaMemMgr *mm,
+                 BzlaBvDomain *d_x,
+                 BzlaBvDomain *d_y,
+                 BzlaBvDomain *d_z,
+                 BzlaBvDomain **res_d_x,
+                 BzlaBvDomain **res_d_y,
+                 BzlaBvDomain **res_d_z)
+{
+  return bvprop_udiv_urem_aux(
+      mm, d_x, d_y, d_z, 0, res_d_x, res_d_y, res_d_z, 0);
 }
 
 bool
