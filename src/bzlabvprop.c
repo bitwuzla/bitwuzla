@@ -54,12 +54,18 @@ compare_fixed_domain(BzlaMemMgr *mm, BzlaBvDomain *a, BzlaBvDomain *b)
 }
 
 #ifndef NDEBUG
-#define BVPROP_LOG(mm, domain)           \
-  do                                     \
+#define BVPROP_LOG_LEVEL 0
+#define BVPROP_LOG(FMT, ...)    \
+  if (BVPROP_LOG_LEVEL > 0)     \
+  {                             \
+    printf(FMT, ##__VA_ARGS__); \
+  }
+#define BVPROP_LOG_DOMAIN(mm, domain)    \
+  if (BVPROP_LOG_LEVEL > 0)              \
   {                                      \
     printf(#domain ": ");                \
     bzla_bvprop_print(mm, domain, true); \
-  } while (0)
+  }
 #else
 #define BVPROP_LOG(domain) ()
 #endif
@@ -3301,7 +3307,8 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
   assert(!d_r || bzla_bvprop_is_valid(mm, d_r));
   assert(res_d_x);
   assert(res_d_y);
-  assert(res_d_q);
+  assert(!d_q || res_d_q);
+  assert(!d_r || res_d_r);
 
   /* q_[bw] = x_[bw] / y_[bw] with remainer r_[bw]
    * ---------------------------------------------
@@ -3317,14 +3324,23 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
    *   ult_i      = r_i < y
    *   not_ult_i  = ~ult_i
    *   ite_r_i    = not_ult_i ? r_i - y : r_i
-   *   q[i] = not_ult_i ? 1_[1] : 0_[1]
+   *   q[i]       = not_ult_i ? 1_[1] : 0_[1]
    *
    * division by zero:
+   *
+   * udiv: x / 0 = ~0
+   * ----------------
    * eq_y_zero     = y == 0
    * not_eq_y_zero = ~eq_y_zero
    * eq_q_ones     = q = ~0
    * 1_[1]         = not_eq_y_zero | eq_q_ones
    *
+   * urem: x / 0 = x
+   * ---------------
+   * eq_y_zero     = y == 0
+   * not_eq_y_zero = ~eq_y_zero
+   * eq_r_ones     = r = x
+   * 1_[1]         = not_eq_y_zero | eq_r_ones
    */
 
   bool res, progress;
@@ -3336,15 +3352,15 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
   BzlaBvDomain *tmp_one, *tmp_zero, *tmp_zero_bw, *tmp_one_bw, *tmp_ones_bw;
   BzlaBvDomain *tmp_x, *tmp_y, *tmp_q;
   BzlaBvDomain *tmp_not_y, *tmp_neg_y;
-  BzlaBvDomain *tmp_eq_y_zero, *tmp_not_eq_y_zero, *tmp_eq_q_ones;
-  BzlaBvDomain *tmp_r_init;
+  BzlaBvDomain *tmp_eq_y_zero, *tmp_not_eq_y_zero;
+  BzlaBvDomain *tmp_r_init, *tmp_r_int;
   BzlaBvDomain *tmp_res_x, *tmp_res_y, *tmp_res_z, *tmp_res_c;
   BzlaBvDomain **tmp_r, **tmp_r_prev, **tmp_r_next, **tmp_r_shift;
   BzlaBvDomain **tmp_r_slice, **tmp_r_shift_slice;
   BzlaBvDomain **tmp_sub, **tmp_and, **tmp_ult;
   BzlaBvDomain **tmp_x_bit, **tmp_q_bit;
   BzlaBvDomainPtrStack d_x_stack, d_q_stack;
-  BzlaBvDomainPtrStack d_r_stack, d_r_prev_stack;
+  BzlaBvDomainPtrStack d_r_stack, d_r_prev_stack;  //, d_r_int_stack;
   BzlaBvDomainPtrStack d_r_shift_stack, d_r_slice_stack, d_r_shift_slice_stack;
   BzlaBvDomainPtrStack d_sub_stack, d_ult_stack, d_and_stack;
   BzlaBitVector *one;
@@ -3353,6 +3369,7 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
 
   BZLA_INIT_STACK(mm, d_r_stack);
   BZLA_INIT_STACK(mm, d_r_prev_stack);
+  // BZLA_INIT_STACK (mm, d_r_int_stack);
   BZLA_INIT_STACK(mm, d_r_shift_stack);
   BZLA_INIT_STACK(mm, d_ult_stack);
   BZLA_INIT_STACK(mm, d_and_stack);
@@ -3415,21 +3432,17 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
   {
     tmp_q = bzla_bvprop_new(mm, d_q->lo, d_q->hi);
   }
-  else
-  {
-    tmp_q     = new_domain(mm);
-    tmp_q->lo = bzla_bv_zero(mm, bw);
-    tmp_q->hi = bzla_bv_zero(mm, bw);
-  }
 
   tmp_eq_y_zero     = bzla_bvprop_new_init(mm, 1);
   tmp_not_eq_y_zero = bzla_bvprop_new_init(mm, 1);
-  tmp_eq_q_ones     = bzla_bvprop_new_init(mm, 1);
 
   /* r_init := 0_[bw] */
   tmp_r_init     = new_domain(mm);
   tmp_r_init->lo = bzla_bv_zero(mm, bw);
   tmp_r_init->hi = bzla_bv_zero(mm, bw);
+
+  /* intermediate remainder result for zero division check */
+  tmp_r_int = bzla_bvprop_new_init(mm, bw);
 
   for (i = 0; i < bw; i++)
   {
@@ -3440,10 +3453,13 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
     d->hi = bzla_bv_slice(mm, d_x->hi, n, n);
     BZLA_PUSH_STACK(d_x_stack, d);
     /* slice q into bw bits */
-    d     = new_domain(mm);
-    d->lo = bzla_bv_slice(mm, tmp_q->lo, n, n);
-    d->hi = bzla_bv_slice(mm, tmp_q->hi, n, n);
-    BZLA_PUSH_STACK(d_q_stack, d);
+    if (d_q)
+    {
+      d     = new_domain(mm);
+      d->lo = bzla_bv_slice(mm, tmp_q->lo, n, n);
+      d->hi = bzla_bv_slice(mm, tmp_q->hi, n, n);
+      BZLA_PUSH_STACK(d_q_stack, d);
+    }
     /* domains for remainder r */
     d = bzla_bvprop_new_init(mm, bw);
     BZLA_PUSH_STACK(d_r_stack, d);
@@ -3457,6 +3473,9 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       d = bzla_bvprop_new_init(mm, bw);
     }
     BZLA_PUSH_STACK(d_r_prev_stack, d);
+    // /* domains for intermediate result of remainder r */
+    // d = bzla_bvprop_new_init (mm, bw);
+    // BZLA_PUSH_STACK (d_r_int_stack, d);
     /* ult propagators */
     d = bzla_bvprop_new_init(mm, 1);
     BZLA_PUSH_STACK(d_ult_stack, d);
@@ -3480,11 +3499,12 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
     BZLA_PUSH_STACK(d_sub_stack, d);
   }
 
-  // printf ("\n############################\n");
-  // BVPROP_LOG (mm, d_x);
-  // BVPROP_LOG (mm, d_y);
-  // BVPROP_LOG (mm, d_q);
-  // printf ("############################\n");
+  BVPROP_LOG("\n############################\n");
+  BVPROP_LOG_DOMAIN(mm, d_x);
+  BVPROP_LOG_DOMAIN(mm, d_y);
+  if (d_q) BVPROP_LOG_DOMAIN(mm, d_q);
+  if (d_r) BVPROP_LOG_DOMAIN(mm, d_r);
+  BVPROP_LOG("############################\n");
   do
   {
     progress = false;
@@ -3497,7 +3517,6 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
          * else:      r_i_shift = r_i-1  << 1
          * Note: index bw - 1 is at stack index 0 */
         tmp_r_shift = &d_r_shift_stack.start[i];
-        tmp_r_prev  = i == 0 ? &tmp_r_init : &d_r_prev_stack.start[i - 1];
         if (i == 0)
         {
           tmp_r_prev = &tmp_r_init;
@@ -3518,10 +3537,10 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
         else
         {
           tmp_r_prev = &d_r_prev_stack.start[i - 1];
-          // printf ("1 -----------------\n");
-          // printf ("r_i_shift = r_prev << 1\n");
-          // BVPROP_LOG (mm, *tmp_r_prev);
-          // BVPROP_LOG (mm, *tmp_r_shift);
+          BVPROP_LOG("1 -----------------\n");
+          BVPROP_LOG("r_i_shift = r_prev << 1\n");
+          BVPROP_LOG_DOMAIN(mm, *tmp_r_prev);
+          BVPROP_LOG_DOMAIN(mm, *tmp_r_shift);
           if (!(res = decomp_step_shiftc(mm,
                                          tmp_r_prev,
                                          tmp_r_shift,
@@ -3533,9 +3552,9 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
           {
             goto DONE;
           }
-          // printf ("...................\n");
-          // BVPROP_LOG (mm, *tmp_r_prev);
-          // BVPROP_LOG (mm, *tmp_r_shift);
+          BVPROP_LOG("...................\n");
+          BVPROP_LOG_DOMAIN(mm, *tmp_r_prev);
+          BVPROP_LOG_DOMAIN(mm, *tmp_r_shift);
         }
       }
       assert(compare_fixed_domain(mm, d_zero_bw, tmp_r_init));
@@ -3545,10 +3564,10 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       {
         /* r_i_slice = r_i[bw-1:1] */
         tmp_r_slice = &d_r_slice_stack.start[i];
-        // printf ("2 -----------------\n");
-        // printf ("r_i_slice = r_i[bw-1:1]\n");
-        // BVPROP_LOG (mm, *tmp_r);
-        // BVPROP_LOG (mm, *tmp_r_slice);
+        BVPROP_LOG("2 -----------------\n");
+        BVPROP_LOG("r_i_slice = r_i[bw-1:1]\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_slice);
         if (!(res = decomp_step_slice(mm,
                                       tmp_r,
                                       tmp_r_slice,
@@ -3561,16 +3580,16 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
         {
           goto DONE;
         }
-        // printf ("...................\n");
-        // BVPROP_LOG (mm, *tmp_r);
-        // BVPROP_LOG (mm, *tmp_r_slice);
+        BVPROP_LOG("...................\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_slice);
 
         /* r_i_shift_slice = r_i_shift[bw-1:1] */
         tmp_r_shift_slice = &d_r_shift_slice_stack.start[i];
-        // printf ("3 -----------------\n");
-        // printf ("r_i_shift_slice = r_shift_i[bw-1:1]\n");
-        // BVPROP_LOG (mm, *tmp_r_shift);
-        // BVPROP_LOG (mm, *tmp_r_shift_slice);
+        BVPROP_LOG("3 -----------------\n");
+        BVPROP_LOG("r_i_shift_slice = r_shift_i[bw-1:1]\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_shift);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_shift_slice);
         if (!(res = decomp_step_slice(mm,
                                       tmp_r_shift,
                                       tmp_r_shift_slice,
@@ -3583,16 +3602,16 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
         {
           goto DONE;
         }
-        // printf ("...................\n");
-        // BVPROP_LOG (mm, *tmp_r_shift);
-        // BVPROP_LOG (mm, *tmp_r_shift_slice);
+        BVPROP_LOG("...................\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_shift);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_shift_slice);
 
         /* 1_[1] = r_i_slice == r_i_shift_slice */
-        // printf ("4 ----------------------------\n");
-        // printf ("r_i_slice = r_i_shift_slice\n");
-        // BVPROP_LOG (mm, *tmp_r_slice);
-        // BVPROP_LOG (mm, *tmp_r_shift_slice);
-        // BVPROP_LOG (mm, tmp_one);
+        BVPROP_LOG("4 ----------------------------\n");
+        BVPROP_LOG("r_i_slice = r_i_shift_slice\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_slice);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_shift_slice);
+        BVPROP_LOG_DOMAIN(mm, tmp_one);
         if (!(res = decomp_step_binary(mm,
                                        tmp_r_slice,
                                        tmp_r_shift_slice,
@@ -3605,18 +3624,18 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
         {
           goto DONE;
         }
-        // printf ("..............................\n");
-        // BVPROP_LOG (mm, *tmp_r_slice);
-        // BVPROP_LOG (mm, *tmp_r_shift_slice);
-        // BVPROP_LOG (mm, tmp_one);
+        BVPROP_LOG("..............................\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_slice);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_shift_slice);
+        BVPROP_LOG_DOMAIN(mm, tmp_one);
       }
 
       /* r_i[0] = x[i] */
       tmp_x_bit = &d_x_stack.start[i];
-      // printf ("5 -----------------\n");
-      // printf ("r_i[0] = x[i]\n");
-      // BVPROP_LOG (mm, *tmp_r);
-      // BVPROP_LOG (mm, *tmp_x_bit);
+      BVPROP_LOG("5 -----------------\n");
+      BVPROP_LOG("r_i[0] = x[i]\n");
+      BVPROP_LOG_DOMAIN(mm, *tmp_r);
+      BVPROP_LOG_DOMAIN(mm, *tmp_x_bit);
       if (!(res = decomp_step_slice(mm,
                                     tmp_r,
                                     tmp_x_bit,
@@ -3629,17 +3648,42 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      // printf ("...................\n");
-      // BVPROP_LOG (mm, *tmp_r);
-      // BVPROP_LOG (mm, *tmp_x_bit);
+      BVPROP_LOG("...................\n");
+      BVPROP_LOG_DOMAIN(mm, *tmp_r);
+      BVPROP_LOG_DOMAIN(mm, *tmp_x_bit);
+
+      if (d_r) /* we only need this for urem */
+      {
+        /* x_bit = x[i] */
+        n = bw - i - 1;
+        BVPROP_LOG("14 ---------------------------\n");
+        BVPROP_LOG("x_bit = x[i]\n");
+        BVPROP_LOG_DOMAIN(mm, tmp_x);
+        BVPROP_LOG_DOMAIN(mm, *tmp_x_bit);
+        if (!(res = decomp_step_slice(mm,
+                                      &tmp_x,
+                                      tmp_x_bit,
+                                      n,
+                                      n,
+                                      &tmp_res_x,
+                                      &tmp_res_z,
+                                      bzla_bvprop_slice,
+                                      &progress)))
+        {
+          goto DONE;
+        }
+        BVPROP_LOG("..............................\n");
+        BVPROP_LOG_DOMAIN(mm, tmp_x);
+        BVPROP_LOG_DOMAIN(mm, *tmp_x_bit);
+      }
 
       /* ult_i = r_i < y */
       tmp_ult = &d_ult_stack.start[i];
-      // printf ("6 ----------------------------\n");
-      // printf ("ult = r < y\n");
-      // BVPROP_LOG (mm, *tmp_r);
-      // BVPROP_LOG (mm, tmp_y);
-      // BVPROP_LOG (mm, *tmp_ult);
+      BVPROP_LOG("6 ----------------------------\n");
+      BVPROP_LOG("ult = r < y\n");
+      BVPROP_LOG_DOMAIN(mm, *tmp_r);
+      BVPROP_LOG_DOMAIN(mm, tmp_y);
+      BVPROP_LOG_DOMAIN(mm, *tmp_ult);
       if (!(res = decomp_step_binary(mm,
                                      tmp_r,
                                      &tmp_y,
@@ -3652,16 +3696,16 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      // printf ("..............................\n");
-      // BVPROP_LOG (mm, *tmp_r);
-      // BVPROP_LOG (mm, tmp_y);
-      // BVPROP_LOG (mm, *tmp_ult);
+      BVPROP_LOG("..............................\n");
+      BVPROP_LOG_DOMAIN(mm, *tmp_r);
+      BVPROP_LOG_DOMAIN(mm, tmp_y);
+      BVPROP_LOG_DOMAIN(mm, *tmp_ult);
 
       /* not_y = ~y */
-      // printf ("7 ----------------------------\n");
-      // printf ("not_y = ~y\n");
-      // BVPROP_LOG (mm, tmp_y);
-      // BVPROP_LOG (mm, tmp_not_y);
+      BVPROP_LOG("7 ----------------------------\n");
+      BVPROP_LOG("not_y = ~y\n");
+      BVPROP_LOG_DOMAIN(mm, tmp_y);
+      BVPROP_LOG_DOMAIN(mm, tmp_not_y);
       if (!(res = decomp_step_unary(mm,
                                     &tmp_y,
                                     &tmp_not_y,
@@ -3672,16 +3716,16 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      // printf ("..............................\n");
-      // BVPROP_LOG (mm, tmp_y);
-      // BVPROP_LOG (mm, tmp_not_y);
+      BVPROP_LOG("..............................\n");
+      BVPROP_LOG_DOMAIN(mm, tmp_y);
+      BVPROP_LOG_DOMAIN(mm, tmp_not_y);
 
       /* neg_y = not_y + 1 */
-      // printf ("8 ----------------------------\n");
-      // printf ("neq_y = not_y + 1\n");
-      // BVPROP_LOG (mm, tmp_not_y);
-      // BVPROP_LOG (mm, tmp_one_bw);
-      // BVPROP_LOG (mm, tmp_neg_y);
+      BVPROP_LOG("8 ----------------------------\n");
+      BVPROP_LOG("neq_y = not_y + 1\n");
+      BVPROP_LOG_DOMAIN(mm, tmp_not_y);
+      BVPROP_LOG_DOMAIN(mm, tmp_one_bw);
+      BVPROP_LOG_DOMAIN(mm, tmp_neg_y);
       if (!(res = decomp_step_binary(mm,
                                      &tmp_not_y,
                                      &tmp_one_bw,
@@ -3694,19 +3738,19 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      // printf ("..............................\n");
-      // BVPROP_LOG (mm, tmp_not_y);
-      // BVPROP_LOG (mm, tmp_one_bw);
-      // BVPROP_LOG (mm, tmp_neg_y);
+      BVPROP_LOG("..............................\n");
+      BVPROP_LOG_DOMAIN(mm, tmp_not_y);
+      BVPROP_LOG_DOMAIN(mm, tmp_one_bw);
+      BVPROP_LOG_DOMAIN(mm, tmp_neg_y);
       assert(compare_fixed_domain(mm, d_one_bw, tmp_one_bw));
 
       /* sub = r_i + neg_y */
       tmp_sub = &d_sub_stack.start[i];
-      // printf ("9 ----------------------------\n");
-      // printf ("sub = r + neg_y\n");
-      // BVPROP_LOG (mm, *tmp_r);
-      // BVPROP_LOG (mm, tmp_neg_y);
-      // BVPROP_LOG (mm, *tmp_sub);
+      BVPROP_LOG("9 ----------------------------\n");
+      BVPROP_LOG("sub = r + neg_y\n");
+      BVPROP_LOG_DOMAIN(mm, *tmp_r);
+      BVPROP_LOG_DOMAIN(mm, tmp_neg_y);
+      BVPROP_LOG_DOMAIN(mm, *tmp_sub);
       if (!(res = decomp_step_binary(mm,
                                      tmp_r,
                                      &tmp_neg_y,
@@ -3719,71 +3763,17 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      // printf ("..............................\n");
-      // BVPROP_LOG (mm, *tmp_r);
-      // BVPROP_LOG (mm, tmp_neg_y);
-      // BVPROP_LOG (mm, *tmp_sub);
-
-      /* next_r_prev = ult_i ? r_i : r_i - y
-       * ->
-       * next_r_prev = ult_i ? r_i : sub       */
-      tmp_r_next = &d_r_prev_stack.start[i];
-      // printf ("10 ----------------------------\n");
-      // printf ("r_prev = ult ? r : sub\n");
-      // BVPROP_LOG (mm, *tmp_r);
-      // BVPROP_LOG (mm, *tmp_sub);
-      // BVPROP_LOG (mm, *tmp_r_next);
-      // BVPROP_LOG (mm, *tmp_ult);
-      if (!(res = decomp_step_ternary(mm,
-                                      tmp_r,
-                                      tmp_sub,
-                                      tmp_r_next,
-                                      tmp_ult,
-                                      &tmp_res_x,
-                                      &tmp_res_y,
-                                      &tmp_res_z,
-                                      &tmp_res_c,
-                                      bzla_bvprop_ite,
-                                      &progress)))
-      {
-        goto DONE;
-      }
-      // printf ("..............................\n");
-      // BVPROP_LOG (mm, *tmp_r);
-      // BVPROP_LOG (mm, *tmp_sub);
-      // BVPROP_LOG (mm, *tmp_r_next);
-      // BVPROP_LOG (mm, *tmp_ult);
-
-      /* q_bit = q[i] */
-      n         = bw - i - 1;
-      tmp_q_bit = &d_q_stack.start[i];
-      // printf ("11 ---------------------------\n");
-      // printf ("q_bit = q[i]\n");
-      // BVPROP_LOG (mm, tmp_q);
-      // BVPROP_LOG (mm, *tmp_q_bit);
-      if (!(res = decomp_step_slice(mm,
-                                    &tmp_q,
-                                    tmp_q_bit,
-                                    n,
-                                    n,
-                                    &tmp_res_x,
-                                    &tmp_res_z,
-                                    bzla_bvprop_slice,
-                                    &progress)))
-      {
-        goto DONE;
-      }
-      // printf ("..............................\n");
-      // BVPROP_LOG (mm, tmp_q);
-      // BVPROP_LOG (mm, *tmp_q_bit);
+      BVPROP_LOG("..............................\n");
+      BVPROP_LOG_DOMAIN(mm, *tmp_r);
+      BVPROP_LOG_DOMAIN(mm, tmp_neg_y);
+      BVPROP_LOG_DOMAIN(mm, *tmp_sub);
 
       /* eq_y_zero = y == 0 */
-      // printf ("12 ---------------------------\n");
-      // printf ("eq_y_zero = y == 0\n");
-      // BVPROP_LOG (mm, tmp_y);
-      // BVPROP_LOG (mm, tmp_zero_bw);
-      // BVPROP_LOG (mm, tmp_eq_y_zero);
-      /* eq_y = y == 0 */
+      BVPROP_LOG("10 ---------------------------\n");
+      BVPROP_LOG("eq_y_zero = y == 0\n");
+      BVPROP_LOG_DOMAIN(mm, tmp_y);
+      BVPROP_LOG_DOMAIN(mm, tmp_zero_bw);
+      BVPROP_LOG_DOMAIN(mm, tmp_eq_y_zero);
       if (!(res = decomp_step_binary(mm,
                                      &tmp_y,
                                      &tmp_zero_bw,
@@ -3797,15 +3787,112 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
         goto DONE;
       }
       assert(compare_fixed_domain(mm, d_zero_bw, tmp_zero_bw));
-      // printf ("..............................\n");
-      // BVPROP_LOG (mm, tmp_y);
-      // BVPROP_LOG (mm, tmp_zero_bw);
-      // BVPROP_LOG (mm, tmp_eq_y_zero);
+      BVPROP_LOG("..............................\n");
+      BVPROP_LOG_DOMAIN(mm, tmp_y);
+      BVPROP_LOG_DOMAIN(mm, tmp_zero_bw);
+      BVPROP_LOG_DOMAIN(mm, tmp_eq_y_zero);
 
-      // printf ("13 ---------------------------\n");
-      // printf ("not_eq_y_zero = ~eq_y_zero\n");
-      // BVPROP_LOG (mm, tmp_eq_y_zero);
-      // BVPROP_LOG (mm, tmp_not_eq_y_zero);
+      /* we only need this for urem, for udiv we don't care about the
+       * div-by-zero check for the remainder */
+      if (d_r && i == bw - 1)
+      {
+        /* r_int = eq_y_zero ? x : sub */
+        BVPROP_LOG("11 ----------------------------\n");
+        BVPROP_LOG("r_int = y = 0 ? x : sub\n");
+        BVPROP_LOG_DOMAIN(mm, tmp_x);
+        BVPROP_LOG_DOMAIN(mm, *tmp_sub);
+        BVPROP_LOG_DOMAIN(mm, tmp_r_int);
+        BVPROP_LOG_DOMAIN(mm, tmp_eq_y_zero);
+        if (!(res = decomp_step_ternary(mm,
+                                        &tmp_x,
+                                        tmp_sub,
+                                        &tmp_r_int,
+                                        &tmp_eq_y_zero,
+                                        &tmp_res_x,
+                                        &tmp_res_y,
+                                        &tmp_res_z,
+                                        &tmp_res_c,
+                                        bzla_bvprop_ite,
+                                        &progress)))
+        {
+          goto DONE;
+        }
+        BVPROP_LOG("..............................\n");
+        BVPROP_LOG_DOMAIN(mm, tmp_x);
+        BVPROP_LOG_DOMAIN(mm, *tmp_sub);
+        BVPROP_LOG_DOMAIN(mm, tmp_r_int);
+        BVPROP_LOG_DOMAIN(mm, tmp_eq_y_zero);
+
+        /* r_next = ult_i ? r_i : r_int */
+        tmp_r_next = &d_r_prev_stack.start[i];
+        BVPROP_LOG("12 ----------------------------\n");
+        BVPROP_LOG("r_next = ult ? r : r_int\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r);
+        BVPROP_LOG_DOMAIN(mm, tmp_r_int);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_next);
+        BVPROP_LOG_DOMAIN(mm, *tmp_ult);
+        if (!(res = decomp_step_ternary(mm,
+                                        tmp_r,
+                                        &tmp_r_int,
+                                        tmp_r_next,
+                                        tmp_ult,
+                                        &tmp_res_x,
+                                        &tmp_res_y,
+                                        &tmp_res_z,
+                                        &tmp_res_c,
+                                        bzla_bvprop_ite,
+                                        &progress)))
+        {
+          goto DONE;
+        }
+        BVPROP_LOG("..............................\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r);
+        BVPROP_LOG_DOMAIN(mm, tmp_r_int);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_next);
+        BVPROP_LOG_DOMAIN(mm, *tmp_ult);
+      }
+      else
+      {
+        BVPROP_LOG("..............................\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r);
+        BVPROP_LOG_DOMAIN(mm, tmp_neg_y);
+        BVPROP_LOG_DOMAIN(mm, *tmp_sub);
+
+        /* next_r_prev = ult_i ? r_i : r_i - y
+         * ->
+         * next_r_prev = ult_i ? r_i : sub       */
+        tmp_r_next = &d_r_prev_stack.start[i];
+        BVPROP_LOG("13 ----------------------------\n");
+        BVPROP_LOG("r_prev = ult ? r : sub\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r);
+        BVPROP_LOG_DOMAIN(mm, *tmp_sub);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_next);
+        BVPROP_LOG_DOMAIN(mm, *tmp_ult);
+        if (!(res = decomp_step_ternary(mm,
+                                        tmp_r,
+                                        tmp_sub,
+                                        tmp_r_next,
+                                        tmp_ult,
+                                        &tmp_res_x,
+                                        &tmp_res_y,
+                                        &tmp_res_z,
+                                        &tmp_res_c,
+                                        bzla_bvprop_ite,
+                                        &progress)))
+        {
+          goto DONE;
+        }
+        BVPROP_LOG("..............................\n");
+        BVPROP_LOG_DOMAIN(mm, *tmp_r);
+        BVPROP_LOG_DOMAIN(mm, *tmp_sub);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_next);
+        BVPROP_LOG_DOMAIN(mm, *tmp_ult);
+      }
+
+      BVPROP_LOG("15 ---------------------------\n");
+      BVPROP_LOG("not_eq_y_zero = ~eq_y_zero\n");
+      BVPROP_LOG_DOMAIN(mm, tmp_eq_y_zero);
+      BVPROP_LOG_DOMAIN(mm, tmp_not_eq_y_zero);
       /* not_eq_y_zero = ~eq_y_zero */
       if (!(res = decomp_step_unary(mm,
                                     &tmp_eq_y_zero,
@@ -3817,17 +3904,17 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      // printf ("..............................\n");
-      // BVPROP_LOG (mm, tmp_eq_y_zero);
-      // BVPROP_LOG (mm, tmp_not_eq_y_zero);
+      BVPROP_LOG("..............................\n");
+      BVPROP_LOG_DOMAIN(mm, tmp_eq_y_zero);
+      BVPROP_LOG_DOMAIN(mm, tmp_not_eq_y_zero);
 
       /* and_i = not_eq_y_zero & ult */
       tmp_and = &d_and_stack.start[i];
-      // printf ("14 ----------------------------\n");
-      // printf ("and = not_eq_y_zero & ult\n");
-      // BVPROP_LOG (mm, tmp_not_eq_y_zero);
-      // BVPROP_LOG (mm, *tmp_ult);
-      // BVPROP_LOG (mm, *tmp_and);
+      BVPROP_LOG("16 ----------------------------\n");
+      BVPROP_LOG("and = not_eq_y_zero & ult\n");
+      BVPROP_LOG_DOMAIN(mm, tmp_not_eq_y_zero);
+      BVPROP_LOG_DOMAIN(mm, *tmp_ult);
+      BVPROP_LOG_DOMAIN(mm, *tmp_and);
       if (!(res = decomp_step_binary(mm,
                                      &tmp_not_eq_y_zero,
                                      tmp_ult,
@@ -3840,39 +3927,67 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       {
         goto DONE;
       }
-      // printf ("..............................\n");
-      // BVPROP_LOG (mm, tmp_not_eq_y_zero);
-      // BVPROP_LOG (mm, *tmp_ult);
-      // BVPROP_LOG (mm, *tmp_and);
+      BVPROP_LOG("..............................\n");
+      BVPROP_LOG_DOMAIN(mm, tmp_not_eq_y_zero);
+      BVPROP_LOG_DOMAIN(mm, *tmp_ult);
+      BVPROP_LOG_DOMAIN(mm, *tmp_and);
 
-      /* z_bit = and_i ? 0_[1] : 1_[1] */
-      // printf ("15 ---------------------------\n");
-      // printf ("z_bit = and ? 0 : 1\n");
-      // BVPROP_LOG (mm, tmp_zero);
-      // BVPROP_LOG (mm, tmp_one);
-      // BVPROP_LOG (mm, *tmp_q_bit);
-      // BVPROP_LOG (mm, *tmp_and);
-      if (!(res = decomp_step_ternary(mm,
-                                      &tmp_zero,
-                                      &tmp_one,
-                                      tmp_q_bit,
-                                      tmp_and,
-                                      &tmp_res_x,
-                                      &tmp_res_y,
-                                      &tmp_res_z,
-                                      &tmp_res_c,
-                                      bzla_bvprop_ite,
-                                      &progress)))
+      /* we only need this for udiv, we don't care about the quotient for
+       * urem */
+      if (d_q)
       {
-        goto DONE;
+        /* q_bit = q[i] */
+        n         = bw - i - 1;
+        tmp_q_bit = &d_q_stack.start[i];
+        BVPROP_LOG("14 ---------------------------\n");
+        BVPROP_LOG("q_bit = q[i]\n");
+        BVPROP_LOG_DOMAIN(mm, tmp_q);
+        BVPROP_LOG_DOMAIN(mm, *tmp_q_bit);
+        if (!(res = decomp_step_slice(mm,
+                                      &tmp_q,
+                                      tmp_q_bit,
+                                      n,
+                                      n,
+                                      &tmp_res_x,
+                                      &tmp_res_z,
+                                      bzla_bvprop_slice,
+                                      &progress)))
+        {
+          goto DONE;
+        }
+        BVPROP_LOG("..............................\n");
+        BVPROP_LOG_DOMAIN(mm, tmp_q);
+        BVPROP_LOG_DOMAIN(mm, *tmp_q_bit);
+
+        /* q_bit = and_i ? 0_[1] : 1_[1] */
+        BVPROP_LOG("17 ---------------------------\n");
+        BVPROP_LOG("q_bit = and ? 0 : 1\n");
+        BVPROP_LOG_DOMAIN(mm, tmp_zero);
+        BVPROP_LOG_DOMAIN(mm, tmp_one);
+        BVPROP_LOG_DOMAIN(mm, *tmp_q_bit);
+        BVPROP_LOG_DOMAIN(mm, *tmp_and);
+        if (!(res = decomp_step_ternary(mm,
+                                        &tmp_zero,
+                                        &tmp_one,
+                                        tmp_q_bit,
+                                        tmp_and,
+                                        &tmp_res_x,
+                                        &tmp_res_y,
+                                        &tmp_res_z,
+                                        &tmp_res_c,
+                                        bzla_bvprop_ite,
+                                        &progress)))
+        {
+          goto DONE;
+        }
+        assert(compare_fixed_domain(mm, d_zero, tmp_zero));
+        assert(compare_fixed_domain(mm, d_one, tmp_one));
+        BVPROP_LOG("..............................\n");
+        BVPROP_LOG_DOMAIN(mm, tmp_zero);
+        BVPROP_LOG_DOMAIN(mm, tmp_one);
+        BVPROP_LOG_DOMAIN(mm, *tmp_q_bit);
+        BVPROP_LOG_DOMAIN(mm, *tmp_and);
       }
-      assert(compare_fixed_domain(mm, d_zero, tmp_zero));
-      assert(compare_fixed_domain(mm, d_one, tmp_one));
-      // printf ("..............................\n");
-      // BVPROP_LOG (mm, tmp_zero);
-      // BVPROP_LOG (mm, tmp_one);
-      // BVPROP_LOG (mm, *tmp_q_bit);
-      // BVPROP_LOG (mm, *tmp_and);
     }
   } while (progress);
 
@@ -3889,7 +4004,8 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
 
   assert(bzla_bvprop_is_valid(mm, tmp_x));
   assert(bzla_bvprop_is_valid(mm, tmp_y));
-  assert(bzla_bvprop_is_valid(mm, tmp_q));
+  assert(!d_q || bzla_bvprop_is_valid(mm, tmp_q));
+  assert(!d_r || bzla_bvprop_is_valid(mm, d_r_prev_stack.start[bw - 1]));
 
 DONE:
   *res_d_x = tmp_x;
@@ -3902,9 +4018,9 @@ DONE:
   bzla_bvprop_free(mm, tmp_not_y);
   bzla_bvprop_free(mm, tmp_neg_y);
   bzla_bvprop_free(mm, tmp_r_init);
+  bzla_bvprop_free(mm, tmp_r_int);
   bzla_bvprop_free(mm, tmp_eq_y_zero);
   bzla_bvprop_free(mm, tmp_not_eq_y_zero);
-  bzla_bvprop_free(mm, tmp_eq_q_ones);
 
 #ifndef NDEBUG
   bzla_bvprop_free(mm, d_one);
@@ -3922,16 +4038,18 @@ DONE:
   for (i = 0, n = BZLA_COUNT_STACK(d_r_stack); i < n; i++)
   {
     assert(!BZLA_EMPTY_STACK(d_x_stack));
-    assert(!BZLA_EMPTY_STACK(d_q_stack));
+    assert(!d_q || !BZLA_EMPTY_STACK(d_q_stack));
     assert(!BZLA_EMPTY_STACK(d_r_stack));
     assert(!BZLA_EMPTY_STACK(d_r_prev_stack));
+    // assert (!BZLA_EMPTY_STACK (d_r_int_stack));
     assert(!BZLA_EMPTY_STACK(d_sub_stack));
     assert(!BZLA_EMPTY_STACK(d_ult_stack));
     assert(!BZLA_EMPTY_STACK(d_and_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_x_stack));
-    bzla_bvprop_free(mm, BZLA_POP_STACK(d_q_stack));
+    if (d_q) bzla_bvprop_free(mm, BZLA_POP_STACK(d_q_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_r_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_r_prev_stack));
+    // bzla_bvprop_free (mm, BZLA_POP_STACK (d_r_int_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_sub_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_ult_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_and_stack));
@@ -3955,6 +4073,8 @@ DONE:
   BZLA_RELEASE_STACK(d_r_shift_slice_stack);
   assert(BZLA_EMPTY_STACK(d_r_prev_stack));
   BZLA_RELEASE_STACK(d_r_prev_stack);
+  // assert (BZLA_EMPTY_STACK (d_r_int_stack));
+  // BZLA_RELEASE_STACK (d_r_int_stack);
   assert(BZLA_EMPTY_STACK(d_x_stack));
   BZLA_RELEASE_STACK(d_x_stack);
   assert(BZLA_EMPTY_STACK(d_q_stack));
@@ -3966,10 +4086,11 @@ DONE:
   assert(BZLA_EMPTY_STACK(d_and_stack));
   BZLA_RELEASE_STACK(d_and_stack);
 
-  // printf ("res: %d ############################\n", res);
-  // BVPROP_LOG (mm, *res_d_x);
-  // BVPROP_LOG (mm, *res_d_y);
-  // BVPROP_LOG (mm, *res_d_z);
+  BVPROP_LOG("res: %d ############################\n", res);
+  BVPROP_LOG_DOMAIN(mm, *res_d_x);
+  BVPROP_LOG_DOMAIN(mm, *res_d_y);
+  if (res_d_q) BVPROP_LOG_DOMAIN(mm, *res_d_q);
+  if (res_d_r) BVPROP_LOG_DOMAIN(mm, *res_d_r);
   return res;
 }
 
@@ -3984,6 +4105,19 @@ bzla_bvprop_udiv(BzlaMemMgr *mm,
 {
   return bvprop_udiv_urem_aux(
       mm, d_x, d_y, d_z, 0, res_d_x, res_d_y, res_d_z, 0);
+}
+
+bool
+bzla_bvprop_urem(BzlaMemMgr *mm,
+                 BzlaBvDomain *d_x,
+                 BzlaBvDomain *d_y,
+                 BzlaBvDomain *d_z,
+                 BzlaBvDomain **res_d_x,
+                 BzlaBvDomain **res_d_y,
+                 BzlaBvDomain **res_d_z)
+{
+  return bvprop_udiv_urem_aux(
+      mm, d_x, d_y, 0, d_z, res_d_x, res_d_y, 0, res_d_z);
 }
 
 #if 0
@@ -4244,24 +4378,23 @@ DONE:
 
   return res;
 }
-#endif
 
 bool
-bzla_bvprop_urem(BzlaMemMgr *mm,
-                 BzlaBvDomain *d_x,
-                 BzlaBvDomain *d_y,
-                 BzlaBvDomain *d_z,
-                 BzlaBvDomain **res_d_x,
-                 BzlaBvDomain **res_d_y,
-                 BzlaBvDomain **res_d_z)
+bzla_bvprop_urem (BzlaMemMgr *mm,
+                  BzlaBvDomain *d_x,
+                  BzlaBvDomain *d_y,
+                  BzlaBvDomain *d_z,
+                  BzlaBvDomain **res_d_x,
+                  BzlaBvDomain **res_d_y,
+                  BzlaBvDomain **res_d_z)
 {
-  assert(mm);
-  assert(d_x);
-  assert(bzla_bvprop_is_valid(mm, d_x));
-  assert(d_y);
-  assert(bzla_bvprop_is_valid(mm, d_y));
-  assert(d_z);
-  assert(bzla_bvprop_is_valid(mm, d_z));
+  assert (mm);
+  assert (d_x);
+  assert (bzla_bvprop_is_valid (mm, d_x));
+  assert (d_y);
+  assert (bzla_bvprop_is_valid (mm, d_y));
+  assert (d_z);
+  assert (bzla_bvprop_is_valid (mm, d_z));
 
   bool progress, res;
   uint32_t bw;
@@ -4275,12 +4408,12 @@ bzla_bvprop_urem(BzlaMemMgr *mm,
 
   res = true;
 
-  bw = bzla_bv_get_width(d_x->lo);
-  assert(bw == bzla_bv_get_width(d_x->hi));
-  assert(bw == bzla_bv_get_width(d_y->lo));
-  assert(bw == bzla_bv_get_width(d_y->hi));
-  assert(bw == bzla_bv_get_width(d_z->lo));
-  assert(bw == bzla_bv_get_width(d_z->hi));
+  bw = bzla_bv_get_width (d_x->lo);
+  assert (bw == bzla_bv_get_width (d_x->hi));
+  assert (bw == bzla_bv_get_width (d_y->lo));
+  assert (bw == bzla_bv_get_width (d_y->hi));
+  assert (bw == bzla_bv_get_width (d_z->lo));
+  assert (bw == bzla_bv_get_width (d_z->hi));
 
   /**
    * z_[bw] = x_[bw] / y_[bw]
@@ -4297,192 +4430,193 @@ bzla_bvprop_urem(BzlaMemMgr *mm,
    *       The propagator above is fixed w.r.t. to the standardized behavior.
    */
 
-  tmp_x = bzla_bvprop_new(mm, d_x->lo, d_x->hi);
-  tmp_y = bzla_bvprop_new(mm, d_y->lo, d_y->hi);
-  tmp_z = bzla_bvprop_new(mm, d_z->lo, d_z->hi);
+  tmp_x = bzla_bvprop_new (mm, d_x->lo, d_x->hi);
+  tmp_y = bzla_bvprop_new (mm, d_y->lo, d_y->hi);
+  tmp_z = bzla_bvprop_new (mm, d_z->lo, d_z->hi);
 
-  tmp_m = bzla_bvprop_new_init(mm, bw);
-  tmp_q = bzla_bvprop_new_init(mm, bw);
+  tmp_m = bzla_bvprop_new_init (mm, bw);
+  tmp_q = bzla_bvprop_new_init (mm, bw);
 
-  tmp_eq_y     = bzla_bvprop_new_init(mm, 1);
-  tmp_not_eq_y = bzla_bvprop_new_init(mm, 1);
-  tmp_eq_z     = bzla_bvprop_new_init(mm, 1);
-  tmp_ite      = bzla_bvprop_new_init(mm, 1);
+  tmp_eq_y     = bzla_bvprop_new_init (mm, 1);
+  tmp_not_eq_y = bzla_bvprop_new_init (mm, 1);
+  tmp_eq_z     = bzla_bvprop_new_init (mm, 1);
+  tmp_ite      = bzla_bvprop_new_init (mm, 1);
 
 #ifndef NDEBUG
-  d_one     = new_domain(mm);
-  d_one->lo = bzla_bv_one(mm, 1);
-  d_one->hi = bzla_bv_one(mm, 1);
+  d_one     = new_domain (mm);
+  d_one->lo = bzla_bv_one (mm, 1);
+  d_one->hi = bzla_bv_one (mm, 1);
 
-  d_zero     = new_domain(mm);
-  d_zero->lo = bzla_bv_zero(mm, 1);
-  d_zero->hi = bzla_bv_zero(mm, 1);
+  d_zero     = new_domain (mm);
+  d_zero->lo = bzla_bv_zero (mm, 1);
+  d_zero->hi = bzla_bv_zero (mm, 1);
 
-  d_zero_bw     = new_domain(mm);
-  d_zero_bw->lo = bzla_bv_zero(mm, bw);
-  d_zero_bw->hi = bzla_bv_zero(mm, bw);
+  d_zero_bw     = new_domain (mm);
+  d_zero_bw->lo = bzla_bv_zero (mm, bw);
+  d_zero_bw->hi = bzla_bv_zero (mm, bw);
 #endif
-  tmp_one     = new_domain(mm);
-  tmp_one->lo = bzla_bv_one(mm, 1);
-  tmp_one->hi = bzla_bv_one(mm, 1);
+  tmp_one     = new_domain (mm);
+  tmp_one->lo = bzla_bv_one (mm, 1);
+  tmp_one->hi = bzla_bv_one (mm, 1);
 
-  tmp_zero     = new_domain(mm);
-  tmp_zero->lo = bzla_bv_zero(mm, 1);
-  tmp_zero->hi = bzla_bv_zero(mm, 1);
+  tmp_zero     = new_domain (mm);
+  tmp_zero->lo = bzla_bv_zero (mm, 1);
+  tmp_zero->hi = bzla_bv_zero (mm, 1);
 
-  tmp_zero_bw     = new_domain(mm);
-  tmp_zero_bw->lo = bzla_bv_zero(mm, bw);
-  tmp_zero_bw->hi = bzla_bv_zero(mm, bw);
+  tmp_zero_bw     = new_domain (mm);
+  tmp_zero_bw->lo = bzla_bv_zero (mm, bw);
+  tmp_zero_bw->hi = bzla_bv_zero (mm, bw);
 
   do
   {
     progress = false;
 
     /* m = y * q (no overflows) */
-    if (!(res = decomp_step_binary_aux(mm,
-                                       &tmp_y,
-                                       &tmp_q,
-                                       &tmp_m,
-                                       res_d_x,
-                                       res_d_y,
-                                       res_d_z,
-                                       true,
-                                       bzla_bvprop_mul_aux,
-                                       &progress)))
-    {
-      goto DONE;
-    }
-
-    /* x = m + z (no overflows) */
-    if (!(res = decomp_step_ternary_aux(mm,
+    if (!(res = decomp_step_binary_aux (mm,
+                                        &tmp_y,
+                                        &tmp_q,
                                         &tmp_m,
-                                        &tmp_z,
-                                        &tmp_x,
-                                        0,
                                         res_d_x,
                                         res_d_y,
                                         res_d_z,
-                                        0,
                                         true,
-                                        bvprop_add_aux,
+                                        bzla_bvprop_mul_aux,
                                         &progress)))
     {
       goto DONE;
     }
 
-    /* eq_y = y == 0 */
-    if (!(res = decomp_step_binary(mm,
-                                   &tmp_y,
-                                   &tmp_zero_bw,
-                                   &tmp_eq_y,
-                                   res_d_x,
-                                   res_d_y,
-                                   res_d_z,
-                                   bzla_bvprop_eq,
-                                   &progress)))
+    /* x = m + z (no overflows) */
+    if (!(res = decomp_step_ternary_aux (mm,
+                                         &tmp_m,
+                                         &tmp_z,
+                                         &tmp_x,
+                                         0,
+                                         res_d_x,
+                                         res_d_y,
+                                         res_d_z,
+                                         0,
+                                         true,
+                                         bvprop_add_aux,
+                                         &progress)))
     {
       goto DONE;
     }
-    assert(compare_fixed_domain(mm, d_zero_bw, tmp_zero_bw));
 
-    /* ite = eq_y ? 0 : 1 */
-    if (!(res = decomp_step_ternary(mm,
-                                    &tmp_zero,
-                                    &tmp_one,
-                                    &tmp_ite,
+    /* eq_y = y == 0 */
+    if (!(res = decomp_step_binary (mm,
+                                    &tmp_y,
+                                    &tmp_zero_bw,
                                     &tmp_eq_y,
                                     res_d_x,
                                     res_d_y,
                                     res_d_z,
-                                    &res_d_c,
-                                    bzla_bvprop_ite,
+                                    bzla_bvprop_eq,
                                     &progress)))
     {
       goto DONE;
     }
-    assert(compare_fixed_domain(mm, d_zero, tmp_zero));
-    assert(compare_fixed_domain(mm, d_one, tmp_one));
+    assert (compare_fixed_domain (mm, d_zero_bw, tmp_zero_bw));
+
+    /* ite = eq_y ? 0 : 1 */
+    if (!(res = decomp_step_ternary (mm,
+                                     &tmp_zero,
+                                     &tmp_one,
+                                     &tmp_ite,
+                                     &tmp_eq_y,
+                                     res_d_x,
+                                     res_d_y,
+                                     res_d_z,
+                                     &res_d_c,
+                                     bzla_bvprop_ite,
+                                     &progress)))
+    {
+      goto DONE;
+    }
+    assert (compare_fixed_domain (mm, d_zero, tmp_zero));
+    assert (compare_fixed_domain (mm, d_one, tmp_one));
 
     /* ite = z < y */
-    if (!(res = decomp_step_binary(mm,
-                                   &tmp_z,
-                                   &tmp_y,
-                                   &tmp_ite,
-                                   res_d_x,
-                                   res_d_y,
-                                   res_d_z,
-                                   bzla_bvprop_ult,
-                                   &progress)))
+    if (!(res = decomp_step_binary (mm,
+                                    &tmp_z,
+                                    &tmp_y,
+                                    &tmp_ite,
+                                    res_d_x,
+                                    res_d_y,
+                                    res_d_z,
+                                    bzla_bvprop_ult,
+                                    &progress)))
     {
       goto DONE;
     }
 
     /* not_eq_y = ~eq */
-    if (!(res = decomp_step_unary(mm,
-                                  &tmp_eq_y,
-                                  &tmp_not_eq_y,
-                                  res_d_x,
-                                  res_d_z,
-                                  bzla_bvprop_not,
-                                  &progress)))
+    if (!(res = decomp_step_unary (mm,
+                                   &tmp_eq_y,
+                                   &tmp_not_eq_y,
+                                   res_d_x,
+                                   res_d_z,
+                                   bzla_bvprop_not,
+                                   &progress)))
     {
       goto DONE;
     }
 
     /* eq_z = z == x */
-    if (!(res = decomp_step_binary(mm,
-                                   &tmp_z,
-                                   &tmp_x,
-                                   &tmp_eq_z,
-                                   res_d_x,
-                                   res_d_y,
-                                   res_d_z,
-                                   bzla_bvprop_eq,
-                                   &progress)))
+    if (!(res = decomp_step_binary (mm,
+                                    &tmp_z,
+                                    &tmp_x,
+                                    &tmp_eq_z,
+                                    res_d_x,
+                                    res_d_y,
+                                    res_d_z,
+                                    bzla_bvprop_eq,
+                                    &progress)))
     {
       goto DONE;
     }
 
     /* 1 = not_eq_y | eq_z */
-    if (!(res = decomp_step_binary(mm,
-                                   &tmp_not_eq_y,
-                                   &tmp_eq_z,
-                                   &tmp_one,
-                                   res_d_x,
-                                   res_d_y,
-                                   res_d_z,
-                                   bzla_bvprop_or,
-                                   &progress)))
+    if (!(res = decomp_step_binary (mm,
+                                    &tmp_not_eq_y,
+                                    &tmp_eq_z,
+                                    &tmp_one,
+                                    res_d_x,
+                                    res_d_y,
+                                    res_d_z,
+                                    bzla_bvprop_or,
+                                    &progress)))
     {
       goto DONE;
     }
-    assert(compare_fixed_domain(mm, d_one, tmp_one));
+    assert (compare_fixed_domain (mm, d_one, tmp_one));
 
   } while (progress);
 
-  assert(bzla_bvprop_is_valid(mm, tmp_x));
-  assert(bzla_bvprop_is_valid(mm, tmp_y));
-  assert(bzla_bvprop_is_valid(mm, tmp_z));
+  assert (bzla_bvprop_is_valid (mm, tmp_x));
+  assert (bzla_bvprop_is_valid (mm, tmp_y));
+  assert (bzla_bvprop_is_valid (mm, tmp_z));
 
 DONE:
   *res_d_x = tmp_x;
   *res_d_y = tmp_y;
   *res_d_z = tmp_z;
 
-  bzla_bvprop_free(mm, tmp_m);
-  bzla_bvprop_free(mm, tmp_q);
-  bzla_bvprop_free(mm, tmp_eq_y);
-  bzla_bvprop_free(mm, tmp_not_eq_y);
-  bzla_bvprop_free(mm, tmp_eq_z);
-  bzla_bvprop_free(mm, tmp_ite);
+  bzla_bvprop_free (mm, tmp_m);
+  bzla_bvprop_free (mm, tmp_q);
+  bzla_bvprop_free (mm, tmp_eq_y);
+  bzla_bvprop_free (mm, tmp_not_eq_y);
+  bzla_bvprop_free (mm, tmp_eq_z);
+  bzla_bvprop_free (mm, tmp_ite);
 #ifndef NDEBUG
-  bzla_bvprop_free(mm, d_one);
-  bzla_bvprop_free(mm, d_zero);
-  bzla_bvprop_free(mm, d_zero_bw);
+  bzla_bvprop_free (mm, d_one);
+  bzla_bvprop_free (mm, d_zero);
+  bzla_bvprop_free (mm, d_zero_bw);
 #endif
-  bzla_bvprop_free(mm, tmp_one);
-  bzla_bvprop_free(mm, tmp_zero);
-  bzla_bvprop_free(mm, tmp_zero_bw);
+  bzla_bvprop_free (mm, tmp_one);
+  bzla_bvprop_free (mm, tmp_zero);
+  bzla_bvprop_free (mm, tmp_zero_bw);
 
   return res;
 }
+#endif
