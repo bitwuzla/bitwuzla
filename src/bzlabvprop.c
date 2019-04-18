@@ -3357,22 +3357,20 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
   BzlaBvDomain *tmp_res_x, *tmp_res_y, *tmp_res_z, *tmp_res_c;
   BzlaBvDomain **tmp_r, **tmp_r_prev, **tmp_r_next, **tmp_r_shift;
   BzlaBvDomain **tmp_r_slice, **tmp_r_shift_slice;
-  BzlaBvDomain **tmp_sub, **tmp_and, **tmp_ult;
+  BzlaBvDomain **tmp_sub, **tmp_ult;
   BzlaBvDomain **tmp_x_bit, **tmp_q_bit;
   BzlaBvDomainPtrStack d_x_stack, d_q_stack;
-  BzlaBvDomainPtrStack d_r_stack, d_r_prev_stack;  //, d_r_int_stack;
+  BzlaBvDomainPtrStack d_r_stack, d_r_prev_stack;
   BzlaBvDomainPtrStack d_r_shift_stack, d_r_slice_stack, d_r_shift_slice_stack;
-  BzlaBvDomainPtrStack d_sub_stack, d_ult_stack, d_and_stack;
+  BzlaBvDomainPtrStack d_sub_stack, d_ult_stack;
   BzlaBitVector *one;
 
   progress = false;
 
   BZLA_INIT_STACK(mm, d_r_stack);
   BZLA_INIT_STACK(mm, d_r_prev_stack);
-  // BZLA_INIT_STACK (mm, d_r_int_stack);
   BZLA_INIT_STACK(mm, d_r_shift_stack);
   BZLA_INIT_STACK(mm, d_ult_stack);
-  BZLA_INIT_STACK(mm, d_and_stack);
   BZLA_INIT_STACK(mm, d_x_stack);
   BZLA_INIT_STACK(mm, d_r_slice_stack);
   BZLA_INIT_STACK(mm, d_r_shift_slice_stack);
@@ -3473,15 +3471,9 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       d = bzla_bvprop_new_init(mm, bw);
     }
     BZLA_PUSH_STACK(d_r_prev_stack, d);
-    // /* domains for intermediate result of remainder r */
-    // d = bzla_bvprop_new_init (mm, bw);
-    // BZLA_PUSH_STACK (d_r_int_stack, d);
     /* ult propagators */
     d = bzla_bvprop_new_init(mm, 1);
     BZLA_PUSH_STACK(d_ult_stack, d);
-    /* and propagators */
-    d = bzla_bvprop_new_init(mm, 1);
-    BZLA_PUSH_STACK(d_and_stack, d);
     if (bw > 1)
     {
       /* shift propagators for remainder r */
@@ -3908,30 +3900,6 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       BVPROP_LOG_DOMAIN(mm, tmp_eq_y_zero);
       BVPROP_LOG_DOMAIN(mm, tmp_not_eq_y_zero);
 
-      /* and_i = not_eq_y_zero & ult */
-      tmp_and = &d_and_stack.start[i];
-      BVPROP_LOG("16 ----------------------------\n");
-      BVPROP_LOG("and = not_eq_y_zero & ult\n");
-      BVPROP_LOG_DOMAIN(mm, tmp_not_eq_y_zero);
-      BVPROP_LOG_DOMAIN(mm, *tmp_ult);
-      BVPROP_LOG_DOMAIN(mm, *tmp_and);
-      if (!(res = decomp_step_binary(mm,
-                                     &tmp_not_eq_y_zero,
-                                     tmp_ult,
-                                     tmp_and,
-                                     &tmp_res_x,
-                                     &tmp_res_y,
-                                     &tmp_res_z,
-                                     bzla_bvprop_and,
-                                     &progress)))
-      {
-        goto DONE;
-      }
-      BVPROP_LOG("..............................\n");
-      BVPROP_LOG_DOMAIN(mm, tmp_not_eq_y_zero);
-      BVPROP_LOG_DOMAIN(mm, *tmp_ult);
-      BVPROP_LOG_DOMAIN(mm, *tmp_and);
-
       /* we only need this for udiv, we don't care about the quotient for
        * urem */
       if (d_q)
@@ -3959,18 +3927,18 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
         BVPROP_LOG_DOMAIN(mm, tmp_q);
         BVPROP_LOG_DOMAIN(mm, *tmp_q_bit);
 
-        /* q_bit = and_i ? 0_[1] : 1_[1] */
+        /* q_bit = ult_i ? 0_[1] : 1_[1] */
         BVPROP_LOG("17 ---------------------------\n");
-        BVPROP_LOG("q_bit = and ? 0 : 1\n");
+        BVPROP_LOG("q_bit = ult ? 0 : 1\n");
         BVPROP_LOG_DOMAIN(mm, tmp_zero);
         BVPROP_LOG_DOMAIN(mm, tmp_one);
         BVPROP_LOG_DOMAIN(mm, *tmp_q_bit);
-        BVPROP_LOG_DOMAIN(mm, *tmp_and);
+        BVPROP_LOG_DOMAIN(mm, *tmp_ult);
         if (!(res = decomp_step_ternary(mm,
                                         &tmp_zero,
                                         &tmp_one,
                                         tmp_q_bit,
-                                        tmp_and,
+                                        tmp_ult,
                                         &tmp_res_x,
                                         &tmp_res_y,
                                         &tmp_res_z,
@@ -3986,7 +3954,7 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
         BVPROP_LOG_DOMAIN(mm, tmp_zero);
         BVPROP_LOG_DOMAIN(mm, tmp_one);
         BVPROP_LOG_DOMAIN(mm, *tmp_q_bit);
-        BVPROP_LOG_DOMAIN(mm, *tmp_and);
+        BVPROP_LOG_DOMAIN(mm, *tmp_ult);
       }
     }
   } while (progress);
@@ -4041,18 +4009,14 @@ DONE:
     assert(!d_q || !BZLA_EMPTY_STACK(d_q_stack));
     assert(!BZLA_EMPTY_STACK(d_r_stack));
     assert(!BZLA_EMPTY_STACK(d_r_prev_stack));
-    // assert (!BZLA_EMPTY_STACK (d_r_int_stack));
     assert(!BZLA_EMPTY_STACK(d_sub_stack));
     assert(!BZLA_EMPTY_STACK(d_ult_stack));
-    assert(!BZLA_EMPTY_STACK(d_and_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_x_stack));
     if (d_q) bzla_bvprop_free(mm, BZLA_POP_STACK(d_q_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_r_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_r_prev_stack));
-    // bzla_bvprop_free (mm, BZLA_POP_STACK (d_r_int_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_sub_stack));
     bzla_bvprop_free(mm, BZLA_POP_STACK(d_ult_stack));
-    bzla_bvprop_free(mm, BZLA_POP_STACK(d_and_stack));
   }
   for (i = 0, n = BZLA_COUNT_STACK(d_r_slice_stack); i < n; i++)
   {
@@ -4073,8 +4037,6 @@ DONE:
   BZLA_RELEASE_STACK(d_r_shift_slice_stack);
   assert(BZLA_EMPTY_STACK(d_r_prev_stack));
   BZLA_RELEASE_STACK(d_r_prev_stack);
-  // assert (BZLA_EMPTY_STACK (d_r_int_stack));
-  // BZLA_RELEASE_STACK (d_r_int_stack);
   assert(BZLA_EMPTY_STACK(d_x_stack));
   BZLA_RELEASE_STACK(d_x_stack);
   assert(BZLA_EMPTY_STACK(d_q_stack));
@@ -4083,8 +4045,6 @@ DONE:
   BZLA_RELEASE_STACK(d_sub_stack);
   assert(BZLA_EMPTY_STACK(d_ult_stack));
   BZLA_RELEASE_STACK(d_ult_stack);
-  assert(BZLA_EMPTY_STACK(d_and_stack));
-  BZLA_RELEASE_STACK(d_and_stack);
 
   BVPROP_LOG("res: %d ############################\n", res);
   BVPROP_LOG_DOMAIN(mm, *res_d_x);
