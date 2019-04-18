@@ -2555,7 +2555,7 @@ class TestBvProp : public TestMm
               assert(!bzla_bv_compare(d_x->lo, res_x->lo));
               assert(!bzla_bv_compare(d_y->lo, res_y->lo));
               bzla_bv_free(d_mm, tmp);
-              tmp = bzla_bv_udiv(d_mm, res_x->lo, res_y->lo);
+              tmp = bzla_bv_udiv(d_mm, d_x->lo, d_y->lo);
               assert(!bzla_bv_compare(tmp, res_z->lo));
             }
             bzla_bv_free(d_mm, tmp);
@@ -2567,7 +2567,7 @@ class TestBvProp : public TestMm
             assert(!bzla_bv_compare(d_z->lo, res_z->lo));
             if (bzla_bvprop_is_fixed(d_mm, res_y))
             {
-              tmp = bzla_bv_udiv(d_mm, d_x->lo, d_y->lo);
+              tmp = bzla_bv_udiv(d_mm, d_x->lo, res_y->lo);
               assert(!bzla_bv_compare(tmp, d_z->lo));
               bzla_bv_free(d_mm, tmp);
             }
@@ -2579,7 +2579,7 @@ class TestBvProp : public TestMm
             assert(!bzla_bv_compare(d_z->lo, res_z->lo));
             if (bzla_bvprop_is_fixed(d_mm, res_x))
             {
-              tmp = bzla_bv_udiv(d_mm, d_x->lo, d_y->lo);
+              tmp = bzla_bv_udiv(d_mm, res_x->lo, d_y->lo);
               assert(!bzla_bv_compare(tmp, d_z->lo));
               bzla_bv_free(d_mm, tmp);
             }
@@ -2987,7 +2987,7 @@ class TestBvProp : public TestMm
     bool is_fixed_res_x, is_fixed_res_y, is_fixed_res_z;
     uint32_t num_consts;
     char **consts;
-    // BzlaBitVector *tmp;
+    BzlaBitVector *tmp;
     BzlaBvDomain *d_x, *d_y, *d_z;
     BzlaBvDomain *res_x, *res_y, *res_z;
 
@@ -3041,46 +3041,44 @@ class TestBvProp : public TestMm
           if (res && is_fixed_x && is_fixed_y)
           {
             assert(is_fixed_res_z);
-            // assert (!bzla_bv_compare (d_x->lo, res_x->lo));
-            // assert (!bzla_bv_compare (d_y->lo, res_y->lo));
-            // assert (bzla_bvprop_is_fixed (d_mm, res_z));
-            // tmp = bzla_bv_udiv (d_mm, d_x->lo, d_y->lo);
-            // if (!bzla_bv_compare (tmp, d_z->lo))
-            //{
-            //  assert (!bzla_bv_compare (d_x->lo, res_x->lo));
-            //  assert (!bzla_bv_compare (d_y->lo, res_y->lo));
-            //  bzla_bv_free (d_mm, tmp);
-            //  tmp = bzla_bv_udiv (d_mm, res_x->lo, res_y->lo);
-            //  assert (!bzla_bv_compare (tmp, res_z->lo));
-            //}
-            // bzla_bv_free (d_mm, tmp);
+            assert(!bzla_bv_compare(d_x->lo, res_x->lo));
+            assert(!bzla_bv_compare(d_y->lo, res_y->lo));
+            assert(bzla_bvprop_is_fixed(d_mm, res_z));
+            tmp = bzla_bv_urem(d_mm, d_x->lo, d_y->lo);
+            if (!bzla_bv_compare(tmp, d_z->lo))
+            {
+              assert(!bzla_bv_compare(d_x->lo, res_x->lo));
+              assert(!bzla_bv_compare(d_y->lo, res_y->lo));
+              bzla_bv_free(d_mm, tmp);
+              tmp = bzla_bv_urem(d_mm, d_x->lo, d_y->lo);
+              assert(!bzla_bv_compare(tmp, res_z->lo));
+            }
+            bzla_bv_free(d_mm, tmp);
           }
 
-#if 0
-        if (res && is_fixed_x && is_fixed_z)
-        {
-          assert (!bzla_bv_compare (d_x->lo, res_x->lo));
-          assert (!bzla_bv_compare (d_z->lo, res_z->lo));
-          if (bzla_bvprop_is_fixed (d_mm, res_y))
+          if (res && is_fixed_x && is_fixed_z)
           {
-            tmp = bzla_bv_udiv (d_mm, d_x->lo, d_y->lo);
-            assert (!bzla_bv_compare (tmp, d_z->lo));
-            bzla_bv_free (d_mm, tmp);
+            assert(!bzla_bv_compare(d_x->lo, res_x->lo));
+            assert(!bzla_bv_compare(d_z->lo, res_z->lo));
+            if (bzla_bvprop_is_fixed(d_mm, res_y))
+            {
+              tmp = bzla_bv_urem(d_mm, d_x->lo, res_y->lo);
+              assert(!bzla_bv_compare(tmp, d_z->lo));
+              bzla_bv_free(d_mm, tmp);
+            }
           }
-        }
 
-        if (res && is_fixed_y && is_fixed_z)
-        {
-          assert (!bzla_bv_compare (d_y->lo, res_y->lo));
-          assert (!bzla_bv_compare (d_z->lo, res_z->lo));
-          if (bzla_bvprop_is_fixed (d_mm, res_x))
+          if (res && is_fixed_y && is_fixed_z)
           {
-            tmp = bzla_bv_udiv (d_mm, d_x->lo, d_y->lo);
-            assert (!bzla_bv_compare (tmp, d_z->lo));
-            bzla_bv_free (d_mm, tmp);
+            assert(!bzla_bv_compare(d_y->lo, res_y->lo));
+            assert(!bzla_bv_compare(d_z->lo, res_z->lo));
+            if (bzla_bvprop_is_fixed(d_mm, res_x))
+            {
+              tmp = bzla_bv_urem(d_mm, res_x->lo, d_y->lo);
+              assert(!bzla_bv_compare(tmp, d_z->lo));
+              bzla_bv_free(d_mm, tmp);
+            }
           }
-        }
-#endif
 
           bzla_bvprop_free(d_mm, d_y);
           TEST_BVPROP_RELEASE_RES_XYZ;
