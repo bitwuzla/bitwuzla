@@ -3286,6 +3286,266 @@ DONE:
   return res;
 }
 
+#if 0
+static bool
+bvprop_udiv_old (BzlaMemMgr *mm,
+                 BzlaBvDomain *d_x,
+                 BzlaBvDomain *d_y,
+                 BzlaBvDomain *d_z,
+                 BzlaBvDomain **res_d_x,
+                 BzlaBvDomain **res_d_y,
+                 BzlaBvDomain **res_d_z)
+{
+  assert (mm);
+  assert (d_x);
+  assert (bzla_bvprop_is_valid (mm, d_x));
+  assert (d_y);
+  assert (bzla_bvprop_is_valid (mm, d_y));
+  assert (d_z);
+  assert (bzla_bvprop_is_valid (mm, d_z));
+
+  bool progress, res;
+  uint32_t bw;
+  BzlaBvDomain *tmp_x, *tmp_y, *tmp_z;
+  BzlaBvDomain *tmp_m, *tmp_r, *tmp_eq_y, *tmp_not_eq_y, *tmp_eq_z, *tmp_ite;
+  BzlaBvDomain *res_d_c;
+#ifndef NDEBUG
+  BzlaBvDomain *d_one, *d_zero, *d_zero_bw, *d_ones_bw;
+#endif
+  BzlaBvDomain *tmp_one, *tmp_zero, *tmp_zero_bw, *tmp_ones_bw;
+
+  res = true;
+
+  bw = bzla_bv_get_width (d_x->lo);
+  assert (bw == bzla_bv_get_width (d_x->hi));
+  assert (bw == bzla_bv_get_width (d_y->lo));
+  assert (bw == bzla_bv_get_width (d_y->hi));
+  assert (bw == bzla_bv_get_width (d_z->lo));
+  assert (bw == bzla_bv_get_width (d_z->hi));
+
+  /**
+   * z_[bw] = x_[bw] / y_[bw]
+   * <->
+   * m_[bw]   = y_[bw] * z_[bw]  (no overflows!)
+   * x_[bw]   = m_[bw] + r_[bw]  (no overflows!)
+   * eq_y_[1] = y_[bw] = 0_[bw]
+   * ite_[1]  = eq_y_[1] ? 0_[1] : 1_[1]
+   * ite_[1]  = r_[bw] <_u y_[bw]
+   * 1_[1]    = ~eq_y_[1] | z_[bw] == ~0_[bw]
+   *
+   * Note: [1] does not interpret div-by-zero as defined by the standard,
+   *       but treats the operation as undefined if divisor is 0.
+   *       The propagator above is fixed w.r.t. to the standardized behavior.
+   */
+
+  tmp_x = bzla_bvprop_new (mm, d_x->lo, d_x->hi);
+  tmp_y = bzla_bvprop_new (mm, d_y->lo, d_y->hi);
+  tmp_z = bzla_bvprop_new (mm, d_z->lo, d_z->hi);
+
+  tmp_m = bzla_bvprop_new_init (mm, bw);
+  tmp_r = bzla_bvprop_new_init (mm, bw);
+
+  tmp_eq_y     = bzla_bvprop_new_init (mm, 1);
+  tmp_not_eq_y = bzla_bvprop_new_init (mm, 1);
+  tmp_eq_z     = bzla_bvprop_new_init (mm, 1);
+  tmp_ite      = bzla_bvprop_new_init (mm, 1);
+
+#ifndef NDEBUG
+  d_one     = new_domain (mm);
+  d_one->lo = bzla_bv_one (mm, 1);
+  d_one->hi = bzla_bv_one (mm, 1);
+
+  d_zero     = new_domain (mm);
+  d_zero->lo = bzla_bv_zero (mm, 1);
+  d_zero->hi = bzla_bv_zero (mm, 1);
+
+  d_zero_bw     = new_domain (mm);
+  d_zero_bw->lo = bzla_bv_zero (mm, bw);
+  d_zero_bw->hi = bzla_bv_zero (mm, bw);
+
+  d_ones_bw     = new_domain (mm);
+  d_ones_bw->lo = bzla_bv_ones (mm, bw);
+  d_ones_bw->hi = bzla_bv_ones (mm, bw);
+#endif
+
+  tmp_one     = new_domain (mm);
+  tmp_one->lo = bzla_bv_one (mm, 1);
+  tmp_one->hi = bzla_bv_one (mm, 1);
+
+  tmp_zero     = new_domain (mm);
+  tmp_zero->lo = bzla_bv_zero (mm, 1);
+  tmp_zero->hi = bzla_bv_zero (mm, 1);
+
+  tmp_zero_bw     = new_domain (mm);
+  tmp_zero_bw->lo = bzla_bv_zero (mm, bw);
+  tmp_zero_bw->hi = bzla_bv_zero (mm, bw);
+
+  tmp_ones_bw     = new_domain (mm);
+  tmp_ones_bw->lo = bzla_bv_ones (mm, bw);
+  tmp_ones_bw->hi = bzla_bv_ones (mm, bw);
+
+  do
+  {
+    progress = false;
+
+    /* m = y * z (no overflows) */
+    if (!(res = decomp_step_binary_aux (mm,
+                                        &tmp_y,
+                                        &tmp_z,
+                                        &tmp_m,
+                                        res_d_x,
+                                        res_d_y,
+                                        res_d_z,
+                                        true,
+                                        bzla_bvprop_mul_aux,
+                                        &progress)))
+    {
+      goto DONE;
+    }
+
+    /* x = m + r (no overflows) */
+    if (!(res = decomp_step_ternary_aux (mm,
+                                         &tmp_m,
+                                         &tmp_r,
+                                         &tmp_x,
+                                         0,
+                                         res_d_x,
+                                         res_d_y,
+                                         res_d_z,
+                                         0,
+                                         true,
+                                         bvprop_add_aux,
+                                         &progress)))
+    {
+      goto DONE;
+    }
+
+    /* eq_y = y == 0 */
+    if (!(res = decomp_step_binary (mm,
+                                    &tmp_y,
+                                    &tmp_zero_bw,
+                                    &tmp_eq_y,
+                                    res_d_x,
+                                    res_d_y,
+                                    res_d_z,
+                                    bzla_bvprop_eq,
+                                    &progress)))
+    {
+      goto DONE;
+    }
+    assert (!bzla_bv_compare (d_zero_bw->lo, tmp_zero_bw->lo));
+    assert (!bzla_bv_compare (d_zero_bw->hi, tmp_zero_bw->hi));
+
+    /* ite = eq_y ? 0 : 1 */
+    if (!(res = decomp_step_ternary (mm,
+                                     &tmp_zero,
+                                     &tmp_one,
+                                     &tmp_ite,
+                                     &tmp_eq_y,
+                                     res_d_x,
+                                     res_d_y,
+                                     res_d_z,
+                                     &res_d_c,
+                                     bzla_bvprop_ite,
+                                     &progress)))
+    {
+      goto DONE;
+    }
+    assert (!bzla_bv_compare (d_zero->lo, tmp_zero->lo));
+    assert (!bzla_bv_compare (d_zero->hi, tmp_zero->hi));
+    assert (!bzla_bv_compare (d_one->lo, tmp_one->lo));
+    assert (!bzla_bv_compare (d_one->hi, tmp_one->hi));
+
+    /* ite = r < y */
+    if (!(res = decomp_step_binary (mm,
+                                    &tmp_r,
+                                    &tmp_y,
+                                    &tmp_ite,
+                                    res_d_x,
+                                    res_d_y,
+                                    res_d_z,
+                                    bzla_bvprop_ult,
+                                    &progress)))
+    {
+      goto DONE;
+    }
+
+    /* not_eq_y = ~eq */
+    if (!(res = decomp_step_unary (mm,
+                                   &tmp_eq_y,
+                                   &tmp_not_eq_y,
+                                   res_d_x,
+                                   res_d_z,
+                                   bzla_bvprop_not,
+                                   &progress)))
+    {
+      goto DONE;
+    }
+
+    /* eq_z = z == ~0 */
+    if (!(res = decomp_step_binary (mm,
+                                    &tmp_z,
+                                    &tmp_ones_bw,
+                                    &tmp_eq_z,
+                                    res_d_x,
+                                    res_d_y,
+                                    res_d_z,
+                                    bzla_bvprop_eq,
+                                    &progress)))
+    {
+      goto DONE;
+    }
+    assert (!bzla_bv_compare (d_ones_bw->lo, tmp_ones_bw->lo));
+    assert (!bzla_bv_compare (d_ones_bw->hi, tmp_ones_bw->hi));
+
+    /* 1 = not_eq_y | eq_z */
+    if (!(res = decomp_step_binary (mm,
+                                    &tmp_not_eq_y,
+                                    &tmp_eq_z,
+                                    &tmp_one,
+                                    res_d_x,
+                                    res_d_y,
+                                    res_d_z,
+                                    bzla_bvprop_or,
+                                    &progress)))
+    {
+      goto DONE;
+    }
+    assert (!bzla_bv_compare (d_one->lo, tmp_one->lo));
+    assert (!bzla_bv_compare (d_one->hi, tmp_one->hi));
+
+  } while (progress);
+
+  assert (bzla_bvprop_is_valid (mm, tmp_x));
+  assert (bzla_bvprop_is_valid (mm, tmp_y));
+  assert (bzla_bvprop_is_valid (mm, tmp_z));
+
+DONE:
+  *res_d_x = tmp_x;
+  *res_d_y = tmp_y;
+  *res_d_z = tmp_z;
+
+  bzla_bvprop_free (mm, tmp_m);
+  bzla_bvprop_free (mm, tmp_r);
+  bzla_bvprop_free (mm, tmp_eq_y);
+  bzla_bvprop_free (mm, tmp_not_eq_y);
+  bzla_bvprop_free (mm, tmp_eq_z);
+  bzla_bvprop_free (mm, tmp_ite);
+#ifndef NDEBUG
+  bzla_bvprop_free (mm, d_one);
+  bzla_bvprop_free (mm, d_zero);
+  bzla_bvprop_free (mm, d_zero_bw);
+  bzla_bvprop_free (mm, d_ones_bw);
+#endif
+  bzla_bvprop_free (mm, tmp_one);
+  bzla_bvprop_free (mm, tmp_zero);
+  bzla_bvprop_free (mm, tmp_zero_bw);
+  bzla_bvprop_free (mm, tmp_ones_bw);
+
+  return res;
+}
+#endif
+
 static bool
 bvprop_udiv_urem_aux(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
@@ -3356,7 +3616,7 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
   BzlaBvDomain *tmp_r_init, *tmp_r_int;
   BzlaBvDomain *tmp_res_x, *tmp_res_y, *tmp_res_z, *tmp_res_c;
   BzlaBvDomain **tmp_r, **tmp_r_prev, **tmp_r_next, **tmp_r_shift;
-  BzlaBvDomain **tmp_r_slice, **tmp_r_shift_slice;
+  BzlaBvDomain **tmp_r_slice;
   BzlaBvDomain **tmp_sub, **tmp_ult;
   BzlaBvDomain **tmp_x_bit, **tmp_q_bit;
   BzlaBvDomainPtrStack d_x_stack, d_q_stack;
@@ -3512,6 +3772,10 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
         if (i == 0)
         {
           tmp_r_prev = &tmp_r_init;
+          BVPROP_LOG("1 -----------------\n");
+          BVPROP_LOG("r_i_shift = r_prev << 1\n");
+          BVPROP_LOG_DOMAIN(mm, *tmp_r_prev);
+          BVPROP_LOG_DOMAIN(mm, *tmp_r_shift);
           if (!(res = decomp_step_binary(mm,
                                          tmp_r_prev,
                                          tmp_r_shift,
@@ -3525,6 +3789,9 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
             goto DONE;
           }
           assert(compare_fixed_domain(mm, tmp_one, d_one));
+          BVPROP_LOG("...................\n");
+          BVPROP_LOG_DOMAIN(mm, *tmp_r_prev);
+          BVPROP_LOG_DOMAIN(mm, *tmp_r_shift);
         }
         else
         {
@@ -3577,14 +3844,13 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
         BVPROP_LOG_DOMAIN(mm, *tmp_r_slice);
 
         /* r_i_shift_slice = r_i_shift[bw-1:1] */
-        tmp_r_shift_slice = &d_r_shift_slice_stack.start[i];
         BVPROP_LOG("3 -----------------\n");
-        BVPROP_LOG("r_i_shift_slice = r_shift_i[bw-1:1]\n");
+        BVPROP_LOG("r_i_slice = r_shift_i[bw-1:1]\n");
         BVPROP_LOG_DOMAIN(mm, *tmp_r_shift);
-        BVPROP_LOG_DOMAIN(mm, *tmp_r_shift_slice);
+        BVPROP_LOG_DOMAIN(mm, *tmp_r_slice);
         if (!(res = decomp_step_slice(mm,
                                       tmp_r_shift,
-                                      tmp_r_shift_slice,
+                                      tmp_r_slice,
                                       bw - 1,
                                       1,
                                       &tmp_res_x,
@@ -3596,30 +3862,7 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
         }
         BVPROP_LOG("...................\n");
         BVPROP_LOG_DOMAIN(mm, *tmp_r_shift);
-        BVPROP_LOG_DOMAIN(mm, *tmp_r_shift_slice);
-
-        /* 1_[1] = r_i_slice == r_i_shift_slice */
-        BVPROP_LOG("4 ----------------------------\n");
-        BVPROP_LOG("r_i_slice = r_i_shift_slice\n");
         BVPROP_LOG_DOMAIN(mm, *tmp_r_slice);
-        BVPROP_LOG_DOMAIN(mm, *tmp_r_shift_slice);
-        BVPROP_LOG_DOMAIN(mm, tmp_one);
-        if (!(res = decomp_step_binary(mm,
-                                       tmp_r_slice,
-                                       tmp_r_shift_slice,
-                                       &tmp_one,
-                                       &tmp_res_x,
-                                       &tmp_res_y,
-                                       &tmp_res_z,
-                                       bzla_bvprop_eq,
-                                       &progress)))
-        {
-          goto DONE;
-        }
-        BVPROP_LOG("..............................\n");
-        BVPROP_LOG_DOMAIN(mm, *tmp_r_slice);
-        BVPROP_LOG_DOMAIN(mm, *tmp_r_shift_slice);
-        BVPROP_LOG_DOMAIN(mm, tmp_one);
       }
 
       /* r_i[0] = x[i] */
@@ -3845,17 +4088,12 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
       }
       else
       {
-        BVPROP_LOG("..............................\n");
-        BVPROP_LOG_DOMAIN(mm, *tmp_r);
-        BVPROP_LOG_DOMAIN(mm, tmp_neg_y);
-        BVPROP_LOG_DOMAIN(mm, *tmp_sub);
-
         /* next_r_prev = ult_i ? r_i : r_i - y
          * ->
          * next_r_prev = ult_i ? r_i : sub       */
         tmp_r_next = &d_r_prev_stack.start[i];
         BVPROP_LOG("13 ----------------------------\n");
-        BVPROP_LOG("r_prev = ult ? r : sub\n");
+        BVPROP_LOG("r_next = ult ? r : sub\n");
         BVPROP_LOG_DOMAIN(mm, *tmp_r);
         BVPROP_LOG_DOMAIN(mm, *tmp_sub);
         BVPROP_LOG_DOMAIN(mm, *tmp_r_next);
@@ -4081,264 +4319,6 @@ bzla_bvprop_urem(BzlaMemMgr *mm,
 }
 
 #if 0
-bool
-bzla_bvprop_udiv (BzlaMemMgr *mm,
-                  BzlaBvDomain *d_x,
-                  BzlaBvDomain *d_y,
-                  BzlaBvDomain *d_z,
-                  BzlaBvDomain **res_d_x,
-                  BzlaBvDomain **res_d_y,
-                  BzlaBvDomain **res_d_z)
-{
-  assert (mm);
-  assert (d_x);
-  assert (bzla_bvprop_is_valid (mm, d_x));
-  assert (d_y);
-  assert (bzla_bvprop_is_valid (mm, d_y));
-  assert (d_z);
-  assert (bzla_bvprop_is_valid (mm, d_z));
-
-  bool progress, res;
-  uint32_t bw;
-  BzlaBvDomain *tmp_x, *tmp_y, *tmp_z;
-  BzlaBvDomain *tmp_m, *tmp_r, *tmp_eq_y, *tmp_not_eq_y, *tmp_eq_z, *tmp_ite;
-  BzlaBvDomain *res_d_c;
-#ifndef NDEBUG
-  BzlaBvDomain *d_one, *d_zero, *d_zero_bw, *d_ones_bw;
-#endif
-  BzlaBvDomain *tmp_one, *tmp_zero, *tmp_zero_bw, *tmp_ones_bw;
-
-  res = true;
-
-  bw = d_x->lo->width;
-  assert (bw == d_x->hi->width);
-  assert (bw == d_y->lo->width);
-  assert (bw == d_y->hi->width);
-  assert (bw == d_z->lo->width);
-  assert (bw == d_z->hi->width);
-
-  /**
-   * z_[bw] = x_[bw] / y_[bw]
-   * <->
-   * m_[bw]   = y_[bw] * z_[bw]  (no overflows!)
-   * x_[bw]   = m_[bw] + r_[bw]  (no overflows!)
-   * eq_y_[1] = y_[bw] = 0_[bw]
-   * ite_[1]  = eq_y_[1] ? 0_[1] : 1_[1]
-   * ite_[1]  = r_[bw] <_u y_[bw]
-   * 1_[1]    = ~eq_y_[1] | z_[bw] == ~0_[bw]
-   *
-   * Note: [1] does not interpret div-by-zero as defined by the standard,
-   *       but treats the operation as undefined if divisor is 0.
-   *       The propagator above is fixed w.r.t. to the standardized behavior.
-   */
-
-  tmp_x = bzla_bvprop_new (mm, d_x->lo, d_x->hi);
-  tmp_y = bzla_bvprop_new (mm, d_y->lo, d_y->hi);
-  tmp_z = bzla_bvprop_new (mm, d_z->lo, d_z->hi);
-
-  tmp_m = bzla_bvprop_new_init (mm, bw);
-  tmp_r = bzla_bvprop_new_init (mm, bw);
-
-  tmp_eq_y     = bzla_bvprop_new_init (mm, 1);
-  tmp_not_eq_y = bzla_bvprop_new_init (mm, 1);
-  tmp_eq_z     = bzla_bvprop_new_init (mm, 1);
-  tmp_ite      = bzla_bvprop_new_init (mm, 1);
-
-#ifndef NDEBUG
-  d_one     = new_domain (mm);
-  d_one->lo = bzla_bv_one (mm, 1);
-  d_one->hi = bzla_bv_one (mm, 1);
-
-  d_zero     = new_domain (mm);
-  d_zero->lo = bzla_bv_zero (mm, 1);
-  d_zero->hi = bzla_bv_zero (mm, 1);
-
-  d_zero_bw     = new_domain (mm);
-  d_zero_bw->lo = bzla_bv_zero (mm, bw);
-  d_zero_bw->hi = bzla_bv_zero (mm, bw);
-
-  d_ones_bw     = new_domain (mm);
-  d_ones_bw->lo = bzla_bv_ones (mm, bw);
-  d_ones_bw->hi = bzla_bv_ones (mm, bw);
-#endif
-
-  tmp_one     = new_domain (mm);
-  tmp_one->lo = bzla_bv_one (mm, 1);
-  tmp_one->hi = bzla_bv_one (mm, 1);
-
-  tmp_zero     = new_domain (mm);
-  tmp_zero->lo = bzla_bv_zero (mm, 1);
-  tmp_zero->hi = bzla_bv_zero (mm, 1);
-
-  tmp_zero_bw     = new_domain (mm);
-  tmp_zero_bw->lo = bzla_bv_zero (mm, bw);
-  tmp_zero_bw->hi = bzla_bv_zero (mm, bw);
-
-  tmp_ones_bw     = new_domain (mm);
-  tmp_ones_bw->lo = bzla_bv_ones (mm, bw);
-  tmp_ones_bw->hi = bzla_bv_ones (mm, bw);
-
-  do
-  {
-    progress = false;
-
-    /* m = y * z (no overflows) */
-    if (!(res = decomp_step_binary_aux (mm,
-                                        &tmp_y,
-                                        &tmp_z,
-                                        &tmp_m,
-                                        res_d_x,
-                                        res_d_y,
-                                        res_d_z,
-                                        true,
-                                        bzla_bvprop_mul_aux,
-                                        &progress)))
-    {
-      goto DONE;
-    }
-
-    /* x = m + r (no overflows) */
-    if (!(res = decomp_step_ternary_aux (mm,
-                                         &tmp_m,
-                                         &tmp_r,
-                                         &tmp_x,
-                                         0,
-                                         res_d_x,
-                                         res_d_y,
-                                         res_d_z,
-                                         0,
-                                         true,
-                                         bvprop_add_aux,
-                                         &progress)))
-    {
-      goto DONE;
-    }
-
-    /* eq_y = y == 0 */
-    if (!(res = decomp_step_binary (mm,
-                                    &tmp_y,
-                                    &tmp_zero_bw,
-                                    &tmp_eq_y,
-                                    res_d_x,
-                                    res_d_y,
-                                    res_d_z,
-                                    bzla_bvprop_eq,
-                                    &progress)))
-    {
-      goto DONE;
-    }
-    assert (!bzla_bv_compare (d_zero_bw->lo, tmp_zero_bw->lo));
-    assert (!bzla_bv_compare (d_zero_bw->hi, tmp_zero_bw->hi));
-
-    /* ite = eq_y ? 0 : 1 */
-    if (!(res = decomp_step_ternary (mm,
-                                     &tmp_zero,
-                                     &tmp_one,
-                                     &tmp_ite,
-                                     &tmp_eq_y,
-                                     res_d_x,
-                                     res_d_y,
-                                     res_d_z,
-                                     &res_d_c,
-                                     bzla_bvprop_ite,
-                                     &progress)))
-    {
-      goto DONE;
-    }
-    assert (!bzla_bv_compare (d_zero->lo, tmp_zero->lo));
-    assert (!bzla_bv_compare (d_zero->hi, tmp_zero->hi));
-    assert (!bzla_bv_compare (d_one->lo, tmp_one->lo));
-    assert (!bzla_bv_compare (d_one->hi, tmp_one->hi));
-
-    /* ite = r < y */
-    if (!(res = decomp_step_binary (mm,
-                                    &tmp_r,
-                                    &tmp_y,
-                                    &tmp_ite,
-                                    res_d_x,
-                                    res_d_y,
-                                    res_d_z,
-                                    bzla_bvprop_ult,
-                                    &progress)))
-    {
-      goto DONE;
-    }
-
-    /* not_eq_y = ~eq */
-    if (!(res = decomp_step_unary (mm,
-                                   &tmp_eq_y,
-                                   &tmp_not_eq_y,
-                                   res_d_x,
-                                   res_d_z,
-                                   bzla_bvprop_not,
-                                   &progress)))
-    {
-      goto DONE;
-    }
-
-    /* eq_z = z == ~0 */
-    if (!(res = decomp_step_binary (mm,
-                                    &tmp_z,
-                                    &tmp_ones_bw,
-                                    &tmp_eq_z,
-                                    res_d_x,
-                                    res_d_y,
-                                    res_d_z,
-                                    bzla_bvprop_eq,
-                                    &progress)))
-    {
-      goto DONE;
-    }
-    assert (!bzla_bv_compare (d_ones_bw->lo, tmp_ones_bw->lo));
-    assert (!bzla_bv_compare (d_ones_bw->hi, tmp_ones_bw->hi));
-
-    /* 1 = not_eq_y | eq_z */
-    if (!(res = decomp_step_binary (mm,
-                                    &tmp_not_eq_y,
-                                    &tmp_eq_z,
-                                    &tmp_one,
-                                    res_d_x,
-                                    res_d_y,
-                                    res_d_z,
-                                    bzla_bvprop_or,
-                                    &progress)))
-    {
-      goto DONE;
-    }
-    assert (!bzla_bv_compare (d_one->lo, tmp_one->lo));
-    assert (!bzla_bv_compare (d_one->hi, tmp_one->hi));
-
-  } while (progress);
-
-  assert (bzla_bvprop_is_valid (mm, tmp_x));
-  assert (bzla_bvprop_is_valid (mm, tmp_y));
-  assert (bzla_bvprop_is_valid (mm, tmp_z));
-
-DONE:
-  *res_d_x = tmp_x;
-  *res_d_y = tmp_y;
-  *res_d_z = tmp_z;
-
-  bzla_bvprop_free (mm, tmp_m);
-  bzla_bvprop_free (mm, tmp_r);
-  bzla_bvprop_free (mm, tmp_eq_y);
-  bzla_bvprop_free (mm, tmp_not_eq_y);
-  bzla_bvprop_free (mm, tmp_eq_z);
-  bzla_bvprop_free (mm, tmp_ite);
-#ifndef NDEBUG
-  bzla_bvprop_free (mm, d_one);
-  bzla_bvprop_free (mm, d_zero);
-  bzla_bvprop_free (mm, d_zero_bw);
-  bzla_bvprop_free (mm, d_ones_bw);
-#endif
-  bzla_bvprop_free (mm, tmp_one);
-  bzla_bvprop_free (mm, tmp_zero);
-  bzla_bvprop_free (mm, tmp_zero_bw);
-  bzla_bvprop_free (mm, tmp_ones_bw);
-
-  return res;
-}
-
 bool
 bzla_bvprop_urem (BzlaMemMgr *mm,
                   BzlaBvDomain *d_x,
