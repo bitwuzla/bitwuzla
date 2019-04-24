@@ -3382,7 +3382,7 @@ inv_and_bvprop(Bzla *bzla,
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(and->e[idx_x]));
 
-  uint32_t bw_x;
+  uint32_t bw;
   BzlaNode *x;
   BzlaBitVector *res, *tmp;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
@@ -3397,15 +3397,16 @@ inv_and_bvprop(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
   }
 
-  mm   = bzla->mm;
-  x    = bzla_node_real_addr(and->e[idx_x]);
-  bw_x = bzla_node_bv_get_width(bzla, x);
+  mm = bzla->mm;
+  x  = bzla_node_real_addr(and->e[idx_x]);
+  bw = bzla_bv_get_width(s);
+  assert(bw == bzla_node_bv_get_width(bzla, x));
 
   d_s = bzla_bvprop_new_fixed(mm, s);
   d_t = bzla_bvprop_new_fixed(mm, t);
   d_x = bzla_hashint_map_get(domains, x->id)->as_ptr;
-  assert(bzla_bv_get_width(d_x->lo) == bw_x);
-  assert(bzla_bv_get_width(d_x->hi) == bw_x);
+  assert(bzla_bv_get_width(d_x->lo) == bw);
+  assert(bzla_bv_get_width(d_x->hi) == bw);
 
   is_valid = bzla_bvprop_and(mm, d_x, d_s, d_t, &d_res_x, &d_res_s, &d_res_t);
 
@@ -3425,7 +3426,7 @@ inv_and_bvprop(Bzla *bzla,
     return inv_and_bv(bzla, and, t, s, idx_x, domains);
   }
 
-  tmp = bzla_bv_new_random(mm, &bzla->rng, bw_x);
+  tmp = bzla_bv_new_random(mm, &bzla->rng, bw);
   res = set_const_bits(mm, d_res_x, tmp);
   bzla_bv_free(mm, tmp);
 #ifndef NDEBUG
@@ -3483,7 +3484,8 @@ inv_eq_bvprop(Bzla *bzla,
 
   mm   = bzla->mm;
   x    = bzla_node_real_addr(eq->e[idx_x]);
-  bw_x = bzla_node_bv_get_width(bzla, x);
+  bw_x = bzla_bv_get_width(s);
+  assert(bw_x == bzla_node_bv_get_width(bzla, x));
 
   d_s = bzla_bvprop_new_fixed(mm, s);
   d_t = bzla_bvprop_new_fixed(mm, t);
@@ -3583,7 +3585,8 @@ inv_ult_bvprop(Bzla *bzla,
 
   mm   = bzla->mm;
   x    = bzla_node_real_addr(ult->e[idx_x]);
-  bw_x = bzla_node_bv_get_width(bzla, x);
+  bw_x = bzla_bv_get_width(s);
+  assert(bw_x == bzla_node_bv_get_width(bzla, x));
 
   d_s = bzla_bvprop_new_fixed(mm, s);
   d_t = bzla_bvprop_new_fixed(mm, t);
@@ -3769,7 +3772,7 @@ inv_sll_bvprop(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.inv_sll--;
     BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
 #endif
-    // TODO for now fall back, but we want to be able to hsllle this smarter
+    // TODO for now fall back, but we want to be able to handle this smarter
     bzla_bvprop_free(mm, d_s);
     bzla_bvprop_free(mm, d_t);
     bzla_bvprop_free(mm, d_res_s);
@@ -3936,7 +3939,7 @@ inv_srl_bvprop(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.inv_srl--;
     BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
 #endif
-    // TODO for now fall back, but we want to be able to hsrlle this smarter
+    // TODO for now fall back, but we want to be able to handle this smarter
     bzla_bvprop_free(mm, d_s);
     bzla_bvprop_free(mm, d_t);
     bzla_bvprop_free(mm, d_res_s);
@@ -4085,7 +4088,8 @@ inv_mul_bvprop(Bzla *bzla,
 
   mm   = bzla->mm;
   x    = bzla_node_real_addr(mul->e[idx_x]);
-  bw_x = bzla_node_bv_get_width(bzla, x);
+  bw_x = bzla_bv_get_width(s);
+  assert(bw_x == bzla_node_bv_get_width(bzla, x));
 
   d_s = bzla_bvprop_new_fixed(mm, s);
   d_t = bzla_bvprop_new_fixed(mm, t);
@@ -4104,7 +4108,7 @@ inv_mul_bvprop(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.inv_mul--;
     BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
 #endif
-    // TODO for now fall back, but we want to be able to hmulle this smarter
+    // TODO for now fall back, but we want to be able to handle this smarter
     bzla_bvprop_free(mm, d_s);
     bzla_bvprop_free(mm, d_t);
     bzla_bvprop_free(mm, d_res_s);
@@ -4117,7 +4121,7 @@ inv_mul_bvprop(Bzla *bzla,
   res = set_const_bits(mm, d_res_x, tmp);
   bzla_bv_free(mm, tmp);
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_mul, mul, s, t, res, idx_x, "+");
+  check_result_binary_dbg(bzla, bzla_bv_mul, mul, s, t, res, idx_x, "*");
 #endif
   bzla_bvprop_free(mm, d_s);
   bzla_bvprop_free(mm, d_t);
@@ -4143,8 +4147,248 @@ inv_udiv_bvprop(Bzla *bzla,
                 int32_t idx_x,
                 BzlaIntHashTable *domains)
 {
-  // TODO
-  return inv_udiv_bv(bzla, div, t, s, idx_x, domains);
+  assert(bzla);
+  assert(domains);
+  assert(div);
+  assert(bzla_node_is_regular(div));
+  assert(bzla_hashint_map_contains(domains, div->id));
+  assert(t);
+  assert(s);
+  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
+  assert(idx_x >= 0 && idx_x <= 1);
+  assert(!bzla_node_is_bv_const(div->e[idx_x]));
+
+  uint32_t bw_x;
+  BzlaNode *x;
+  BzlaBitVector *res, *tmp, *tmp_res, *one, *ones, *up, *lo;
+  BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
+  bool is_valid;
+  BzlaMemMgr *mm;
+  BzlaRNG *rng;
+
+  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  {
+#ifndef NDEBUG
+    BZLA_PROP_SOLVER(bzla)->stats.inv_udiv++;
+#endif
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
+  }
+
+  mm  = bzla->mm;
+  rng = &bzla->rng;
+
+  x    = bzla_node_real_addr(div->e[idx_x]);
+  bw_x = bzla_bv_get_width(s);
+  assert(bw_x == bzla_node_bv_get_width(bzla, x));
+
+  d_s = bzla_bvprop_new_fixed(mm, s);
+  d_t = bzla_bvprop_new_fixed(mm, t);
+  d_x = bzla_hashint_map_get(domains, x->id)->as_ptr;
+  assert(bzla_bv_get_width(d_x->lo) == bw_x);
+  assert(bzla_bv_get_width(d_x->hi) == bw_x);
+
+  is_valid =
+      idx_x ? bzla_bvprop_udiv(mm, d_s, d_x, d_t, &d_res_s, &d_res_x, &d_res_t)
+            : bzla_bvprop_udiv(mm, d_x, d_s, d_t, &d_res_x, &d_res_s, &d_res_t);
+
+  if (!is_valid)
+  {
+#ifndef NDEBUG
+    BZLA_PROP_SOLVER(bzla)->stats.inv_udiv_conflicts++;
+    BZLA_PROP_SOLVER(bzla)->stats.inv_udiv--;
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
+#endif
+    // TODO for now fall back, but we want to be able to handle this smarter
+    bzla_bvprop_free(mm, d_s);
+    bzla_bvprop_free(mm, d_t);
+    bzla_bvprop_free(mm, d_res_s);
+    bzla_bvprop_free(mm, d_res_t);
+    bzla_bvprop_free(mm, d_res_x);
+    return inv_udiv_bv(bzla, div, t, s, idx_x, domains);
+  }
+
+  one  = bzla_bv_one(mm, bw_x);
+  ones = bzla_bv_ones(mm, bw_x);
+
+  /* ----------------------------------------------------------------------
+   * s / e[1] = t
+   *
+   * -> if t = 2^bw_x - 1: + s = t = 2^bw_x - 1 -> e[1] = 1 or e[1] = 0
+   *                     + s != t -> e[1] = 0
+   * -> if t = 0 and 0 < s < 2^bw_x - 1 choose random e[1] > s
+   *             and s = 0            choose random e[1] > 0
+   *             else conflict
+   * -> if s < t -> conflict
+   * -> if t is a divisor of s choose with 0.5 prob out of
+   *      + e[1] = t / s
+   *      + choose s s.t. s / e[1] = t
+   * -> else choose s s.t. s / e[1] = t
+   * ---------------------------------------------------------------------- */
+  if (idx_x)
+  {
+    if (!bzla_bv_compare(t, ones))
+    {
+      if (!bzla_bv_compare(s, t) && bzla_rng_pick_with_prob(rng, 500))
+      {
+        /**
+         * s = t = 2^bw_x - 1 -> choose either e[1] = 0 or e[1] = 1
+         * with prob 0.5
+         */
+        tmp_res = bzla_bv_one(mm, bw_x);
+      }
+      else
+      {
+        /* t = 2^bw_x - 1 and s != t -> e[1] = 0 */
+        tmp_res = bzla_bv_new(mm, bw_x);
+      }
+    }
+    else if (bzla_bv_is_zero(t))
+    {
+      if (bzla_bv_is_zero(s))
+      {
+        /* t = 0 and s = 0 -> choose random e[1] > 0 */
+        tmp_res = bzla_bv_new_random_range(mm, rng, bw_x, one, ones);
+      }
+      else
+      {
+        assert(bzla_bv_compare(s, ones)); /* CONFLICT: s = ~0  and t = 0 */
+
+        /* t = 0 and 0 < s < 2^bw_x - 1 -> choose random e[1] > s */
+        tmp     = bzla_bv_inc(mm, s);
+        tmp_res = bzla_bv_new_random_range(mm, rng, bw_x, tmp, ones);
+        bzla_bv_free(mm, tmp);
+      }
+    }
+    else
+    {
+      assert(bzla_bv_compare(s, t) >= 0); /* CONFLICT: s < t */
+
+      /**
+       * if t is a divisor of s, choose e[1] = s / t
+       * with prob = 0.5 and a s s.t. s / e[1] = t otherwise
+       */
+      tmp = bzla_bv_urem(mm, s, t);
+      if (bzla_bv_is_zero(tmp) && bzla_rng_pick_with_prob(rng, 500))
+      {
+        bzla_bv_free(mm, tmp);
+        tmp_res = bzla_bv_udiv(mm, s, t);
+      }
+      else
+      {
+        /**
+         * choose e[1] out of all options that yield s / e[1] = t
+         * Note: udiv always truncates the results towards 0.
+         */
+
+        /* determine upper and lower bounds for e[1]:
+         * up = s / t
+         * lo = s / (t + 1) + 1
+         * if lo > up -> conflict */
+        bzla_bv_free(mm, tmp);
+        up  = bzla_bv_udiv(mm, s, t); /* upper bound */
+        tmp = bzla_bv_inc(mm, t);
+        lo  = bzla_bv_udiv(mm, s, tmp); /* lower bound (excl.) */
+        bzla_bv_free(mm, tmp);
+        tmp = lo;
+        lo  = bzla_bv_inc(mm, tmp); /* lower bound (incl.) */
+        bzla_bv_free(mm, tmp);
+
+        assert(bzla_bv_compare(lo, up) <= 0); /* CONFLICT: lo > up */
+
+        /* choose lo <= e[1] <= up */
+        tmp_res = bzla_bv_new_random_range(mm, rng, bw_x, lo, up);
+        bzla_bv_free(mm, lo);
+        bzla_bv_free(mm, up);
+      }
+    }
+  }
+  /* ----------------------------------------------------------------------
+   * e[0] / s = t
+   *
+   * -> if t = 2^bw_x - 1 and s = 1 e[0] = 2^bw_x-1
+   *                    and s = 0, choose random e[0] > 0
+   *                    and s > 0 -> conflict
+   * -> if s = 0 and t < 2^bw_x - 1 -> conflict
+   * -> if s * t does not overflow, choose with 0.5 prob out of
+   *      + e[0] = s * t
+   *      + choose s s.t. e[0] / s = t
+   * -> else choose s s.t. e[0] / s = t
+   * ---------------------------------------------------------------------- */
+  else
+  {
+    if (!bzla_bv_compare(t, ones))
+    {
+      if (!bzla_bv_compare(s, one))
+      {
+        /* t = 2^bw_x-1 and s = 1 -> e[0] = 2^bw_x-1 */
+        tmp_res = bzla_bv_copy(mm, ones);
+      }
+      else
+      {
+        assert(bzla_bv_is_zero(s)); /* CONFLICT: t = ~0 and s != 0 */
+        /* t = 2^bw_x - 1 and s = 0 -> choose random e[0] */
+        tmp_res = bzla_bv_new_random(mm, &bzla->rng, bw_x);
+      }
+    }
+    else
+    {
+      /* if s * t does not overflow, choose e[0] = s * t
+       * with prob = 0.5 and a s s.t. e[0] / s = t otherwise
+       * ------------------------------------------------------------------ */
+
+      assert(!bzla_bv_is_umulo(mm, s, t)); /* CONFLICT: overflow: s * t */
+      if (bzla_rng_pick_with_prob(rng, 500))
+        tmp_res = bzla_bv_mul(mm, s, t);
+      else
+      {
+        /**
+         * choose e[0] out of all options that yield
+         * e[0] / s = t
+         * Note: udiv always truncates the results towards 0.
+         */
+
+        /* determine upper and lower bounds for e[0]:
+         * up = s * (budiv + 1) - 1
+         *      if s * (t + 1) does not overflow
+         *      else 2^bw_x - 1
+         * lo = s * t */
+        lo  = bzla_bv_mul(mm, s, t);
+        tmp = bzla_bv_inc(mm, t);
+        if (bzla_bv_is_umulo(mm, s, tmp))
+        {
+          bzla_bv_free(mm, tmp);
+          up = bzla_bv_copy(mm, ones);
+        }
+        else
+        {
+          up = bzla_bv_mul(mm, s, tmp);
+          bzla_bv_free(mm, tmp);
+          tmp = bzla_bv_dec(mm, up);
+          bzla_bv_free(mm, up);
+          up = tmp;
+        }
+
+        tmp_res = bzla_bv_new_random_range(
+            mm, &bzla->rng, bzla_bv_get_width(s), lo, up);
+
+        bzla_bv_free(mm, up);
+        bzla_bv_free(mm, lo);
+      }
+    }
+  }
+  res = set_const_bits(mm, d_res_x, tmp_res);
+  bzla_bv_free(mm, tmp_res);
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_udiv, div, s, t, res, idx_x, "/");
+#endif
+  bzla_bv_free(mm, one);
+  bzla_bv_free(mm, ones);
+  bzla_bvprop_free(mm, d_s);
+  bzla_bvprop_free(mm, d_t);
+  bzla_bvprop_free(mm, d_res_s);
+  bzla_bvprop_free(mm, d_res_t);
+  bzla_bvprop_free(mm, d_res_x);
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */

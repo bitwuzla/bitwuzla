@@ -2733,6 +2733,12 @@ TEST_F(TestPropInv, complete_udiv)
                inv_udiv_bv,
                inv_udiv_bvprop,
                false);
+  check_binary(bzla_exp_bv_udiv,
+               bzla_bv_udiv,
+               bzla_is_inv_udiv,
+               inv_udiv_bv,
+               inv_udiv_bvprop,
+               true);
 #endif
 }
 
@@ -2859,6 +2865,9 @@ TEST_F(TestPropInv, conf_udiv)
   check_conf_udiv(1, false);
   check_conf_udiv(4, false);
   check_conf_udiv(8, false);
+  check_conf_udiv(1, true);
+  check_conf_udiv(4, true);
+  check_conf_udiv(8, true);
 }
 
 TEST_F(TestPropInv, conf_urem)

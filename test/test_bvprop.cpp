@@ -2565,6 +2565,10 @@ class TestBvProp : public TestMm
           {
             assert(!bzla_bv_compare(d_x->lo, res_x->lo));
             assert(!bzla_bv_compare(d_z->lo, res_z->lo));
+            // this is a check if any bits are propagated to y (they aren't)
+            // for (uint32_t i = 0; i < res_y->lo->width; i++)
+            //   assert (bzla_bvprop_is_fixed_bit (d_y, i)
+            //           || !bzla_bvprop_is_fixed_bit (res_y, i));
             if (bzla_bvprop_is_fixed(d_mm, res_y))
             {
               tmp = bzla_bv_udiv(d_mm, d_x->lo, res_y->lo);
@@ -2577,6 +2581,10 @@ class TestBvProp : public TestMm
           {
             assert(!bzla_bv_compare(d_y->lo, res_y->lo));
             assert(!bzla_bv_compare(d_z->lo, res_z->lo));
+            // this is a check if any bits are propagated to x (they aren't)
+            // for (uint32_t i = 0; i < res_x->lo->width; i++)
+            //   assert (bzla_bvprop_is_fixed_bit (d_x, i)
+            //           || !bzla_bvprop_is_fixed_bit (res_x, i));
             if (bzla_bvprop_is_fixed(d_mm, res_x))
             {
               tmp = bzla_bv_udiv(d_mm, res_x->lo, d_y->lo);
