@@ -212,7 +212,7 @@ select_path_ult(Bzla *bzla, BzlaNode *ult, BzlaBitVector *t, BzlaBitVector **s)
   assert(s);
 
   int32_t idx_x;
-  BzlaBitVector *bvmax;
+  BzlaBitVector *ones;
   BzlaMemMgr *mm;
 
   mm    = bzla->mm;
@@ -223,15 +223,15 @@ select_path_ult(Bzla *bzla, BzlaNode *ult, BzlaBitVector *t, BzlaBitVector **s)
     if (bzla_opt_get(bzla, BZLA_OPT_PROP_PATH_SEL)
         == BZLA_PROP_PATH_SEL_ESSENTIAL)
     {
-      bvmax = bzla_bv_ones(mm, bzla_bv_get_width(s[0]));
+      ones = bzla_bv_ones(mm, bzla_bv_get_width(s[0]));
       if (bzla_bv_is_one(t))
       {
         /* 1...1 < s[1] */
-        if (!bzla_bv_compare(s[0], bvmax)) idx_x = 0;
+        if (!bzla_bv_compare(s[0], ones)) idx_x = 0;
         /* s[0] < 0 */
         if (bzla_bv_is_zero(s[1])) idx_x = idx_x == -1 ? 1 : -1;
       }
-      bzla_bv_free(mm, bvmax);
+      bzla_bv_free(mm, ones);
     }
     if (idx_x == -1) idx_x = select_path_random(bzla, ult);
   }
@@ -526,7 +526,7 @@ select_path_udiv(Bzla *bzla,
   assert(s);
 
   int32_t idx_x, cmp_udiv_max;
-  BzlaBitVector *bvmax, *up, *lo, *tmp;
+  BzlaBitVector *ones, *up, *lo, *tmp;
   BzlaMemMgr *mm;
 
   mm    = bzla->mm;
@@ -537,8 +537,8 @@ select_path_udiv(Bzla *bzla,
     if (bzla_opt_get(bzla, BZLA_OPT_PROP_PATH_SEL)
         == BZLA_PROP_PATH_SEL_ESSENTIAL)
     {
-      bvmax        = bzla_bv_ones(mm, bzla_bv_get_width(s[0]));
-      cmp_udiv_max = bzla_bv_compare(t, bvmax);
+      ones         = bzla_bv_ones(mm, bzla_bv_get_width(s[0]));
+      cmp_udiv_max = bzla_bv_compare(t, ones);
 
       /* s[0] / s[1] = 1...1 -> choose e[1]
        *   + 1...1 / 0 = 1...1
@@ -549,7 +549,7 @@ select_path_udiv(Bzla *bzla,
       else
       {
         /* 1...1 / e[0] = 0 -> choose e[0] */
-        if (bzla_bv_is_zero(t) && !bzla_bv_compare(s[0], bvmax)) idx_x = 0;
+        if (bzla_bv_is_zero(t) && !bzla_bv_compare(s[0], ones)) idx_x = 0;
         /* s[0] < t -> choose e[0] */
         else if (bzla_bv_compare(s[0], t) < 0)
           idx_x = 0;
@@ -571,7 +571,7 @@ select_path_udiv(Bzla *bzla,
         if (bzla_bv_is_zero(s[1]) || bzla_bv_is_umulo(mm, s[1], t))
           idx_x = idx_x == -1 ? 1 : -1;
       }
-      bzla_bv_free(mm, bvmax);
+      bzla_bv_free(mm, ones);
     }
     if (idx_x == -1) idx_x = select_path_random(bzla, udiv);
   }
@@ -605,7 +605,7 @@ select_path_urem(Bzla *bzla,
   assert(s);
 
   int32_t idx_x;
-  BzlaBitVector *bvmax, *sub, *tmp;
+  BzlaBitVector *ones, *sub, *tmp;
   BzlaMemMgr *mm;
 
   mm    = bzla->mm;
@@ -616,15 +616,15 @@ select_path_urem(Bzla *bzla,
     if (bzla_opt_get(bzla, BZLA_OPT_PROP_PATH_SEL)
         == BZLA_PROP_PATH_SEL_ESSENTIAL)
     {
-      bvmax = bzla_bv_ones(mm, bzla_bv_get_width(s[0]));
-      sub   = bzla_bv_sub(mm, s[0], t);
-      tmp   = bzla_bv_dec(mm, s[0]);
+      ones = bzla_bv_ones(mm, bzla_bv_get_width(s[0]));
+      sub  = bzla_bv_sub(mm, s[0], t);
+      tmp  = bzla_bv_dec(mm, s[0]);
 
       /* t = 1...1 -> s[0] = 1...1 and s[1] = 0...0 */
-      if (!bzla_bv_compare(t, bvmax))
+      if (!bzla_bv_compare(t, ones))
       {
         if (!bzla_bv_is_zero(s[1])) idx_x = 1;
-        if (bzla_bv_compare(s[0], bvmax)) idx_x = idx_x == -1 ? 0 : -1;
+        if (bzla_bv_compare(s[0], ones)) idx_x = idx_x == -1 ? 0 : -1;
       }
       /* t > 0 and s[1] = 1 */
       else if (!bzla_bv_is_zero(t) && bzla_bv_is_one(s[1]))
@@ -648,7 +648,7 @@ select_path_urem(Bzla *bzla,
       }
 
       bzla_bv_free(mm, tmp);
-      bzla_bv_free(mm, bvmax);
+      bzla_bv_free(mm, ones);
       bzla_bv_free(mm, sub);
     }
 
@@ -1065,7 +1065,7 @@ cons_ult_bv(Bzla *bzla,
 
   bool isult;
   uint32_t bw;
-  BzlaBitVector *bvmax, *zero, *tmp, *res;
+  BzlaBitVector *ones, *zero, *tmp, *res;
   BzlaMemMgr *mm;
 
   (void) ult;
@@ -1083,19 +1083,19 @@ cons_ult_bv(Bzla *bzla,
   bw    = bzla_bv_get_width(s);
   isult = !bzla_bv_is_zero(t);
   zero  = bzla_bv_new(mm, bw);
-  bvmax = bzla_bv_ones(mm, bw);
+  ones  = bzla_bv_ones(mm, bw);
 
   if (idx_x && isult)
   {
     /* s < res = 1  ->  res > 0 */
     tmp = bzla_bv_one(mm, bw);
-    res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, bvmax);
+    res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
     bzla_bv_free(mm, tmp);
   }
   else if (!idx_x && isult)
   {
     /* res < s = 1  ->  0 <= res < 1...1 */
-    tmp = bzla_bv_dec(mm, bvmax);
+    tmp = bzla_bv_dec(mm, ones);
     res = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
     bzla_bv_free(mm, tmp);
   }
@@ -1104,7 +1104,7 @@ cons_ult_bv(Bzla *bzla,
     res = bzla_bv_new_random(mm, &bzla->rng, bw);
   }
 
-  bzla_bv_free(mm, bvmax);
+  bzla_bv_free(mm, ones);
   bzla_bv_free(mm, zero);
 
   return res;
@@ -1354,14 +1354,14 @@ cons_udiv_bv(Bzla *bzla,
   assert(!bzla_node_is_bv_const(udiv->e[idx_x]));
 
   uint32_t bw;
-  BzlaBitVector *res, *tmp, *tmp_s, *zero, *one, *bvmax;
+  BzlaBitVector *res, *tmp, *tmp_s, *zero, *one, *ones;
   BzlaMemMgr *mm;
 
-  mm    = bzla->mm;
-  bw    = bzla_bv_get_width(t);
-  zero  = bzla_bv_new(mm, bw);
-  one   = bzla_bv_one(mm, bw);
-  bvmax = bzla_bv_ones(mm, bw);
+  mm   = bzla->mm;
+  bw   = bzla_bv_get_width(t);
+  zero = bzla_bv_new(mm, bw);
+  one  = bzla_bv_one(mm, bw);
+  ones = bzla_bv_ones(mm, bw);
 
   (void) udiv;
   (void) s;
@@ -1379,11 +1379,11 @@ cons_udiv_bv(Bzla *bzla,
   {
     /* -> t = 1...1 then res = 0 or res = 1
      * -> else choose res s.t. res * t does not overflow */
-    if (!bzla_bv_compare(t, bvmax))
+    if (!bzla_bv_compare(t, ones))
       res = bzla_bv_uint64_to_bv(mm, bzla_rng_pick_rand(&bzla->rng, 0, 1), bw);
     else
     {
-      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, bvmax);
+      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, ones);
       while (bzla_bv_is_umulo(mm, res, t))
       {
         tmp = bzla_bv_sub(mm, res, one);
@@ -1400,17 +1400,17 @@ cons_udiv_bv(Bzla *bzla,
      * -> else choose tmp_s s.t. res = tmp_s * t does not overflow */
     if (bzla_bv_is_zero(t))
     {
-      tmp = bzla_bv_dec(mm, bvmax);
+      tmp = bzla_bv_dec(mm, ones);
       res = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
       bzla_bv_free(mm, tmp);
     }
-    else if (!bzla_bv_compare(t, bvmax))
+    else if (!bzla_bv_compare(t, ones))
     {
       res = bzla_bv_new_random(mm, &bzla->rng, bw);
     }
     else
     {
-      tmp_s = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, bvmax);
+      tmp_s = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, ones);
       while (bzla_bv_is_umulo(mm, tmp_s, t))
       {
         tmp = bzla_bv_sub(mm, tmp_s, one);
@@ -1425,7 +1425,7 @@ cons_udiv_bv(Bzla *bzla,
 
   bzla_bv_free(mm, one);
   bzla_bv_free(mm, zero);
-  bzla_bv_free(mm, bvmax);
+  bzla_bv_free(mm, ones);
   return res;
 }
 
@@ -1451,7 +1451,7 @@ cons_urem_bv(Bzla *bzla,
   assert(!bzla_node_is_bv_const(urem->e[idx_x]));
 
   uint32_t bw;
-  BzlaBitVector *res, *bvmax, *tmp;
+  BzlaBitVector *res, *ones, *tmp;
   BzlaMemMgr *mm;
 
   (void) urem;
@@ -1465,14 +1465,14 @@ cons_urem_bv(Bzla *bzla,
 #endif
     BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
   }
-  mm    = bzla->mm;
-  bw    = bzla_bv_get_width(t);
-  bvmax = bzla_bv_ones(mm, bw);
+  mm   = bzla->mm;
+  bw   = bzla_bv_get_width(t);
+  ones = bzla_bv_ones(mm, bw);
 
   if (idx_x)
   {
     /* t = 1...1  ->  res = 0 */
-    if (!bzla_bv_compare(t, bvmax))
+    if (!bzla_bv_compare(t, ones))
     {
       res = bzla_bv_new(mm, bw);
     }
@@ -1480,25 +1480,25 @@ cons_urem_bv(Bzla *bzla,
     else
     {
       tmp = bzla_bv_inc(mm, t);
-      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, bvmax);
+      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
       bzla_bv_free(mm, tmp);
     }
   }
   else
   {
     /* t = 1...1  ->  res = 1...1 */
-    if (!bzla_bv_compare(t, bvmax))
+    if (!bzla_bv_compare(t, ones))
     {
-      res = bzla_bv_copy(mm, bvmax);
+      res = bzla_bv_copy(mm, ones);
     }
     /* else res >= t */
     else
     {
-      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, t, bvmax);
+      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, t, ones);
     }
   }
 
-  bzla_bv_free(mm, bvmax);
+  bzla_bv_free(mm, ones);
   return res;
 }
 
@@ -1887,7 +1887,7 @@ inv_ult_bv(Bzla *bzla,
 
   bool isult;
   uint32_t bw;
-  BzlaBitVector *res, *zero, *one, *bvmax, *tmp;
+  BzlaBitVector *res, *zero, *one, *ones, *tmp;
   BzlaMemMgr *mm;
 
   (void) domains;
@@ -1905,14 +1905,14 @@ inv_ult_bv(Bzla *bzla,
   bw    = bzla_bv_get_width(s);
   zero  = bzla_bv_new(mm, bw);
   one   = bzla_bv_one(mm, bw);
-  bvmax = bzla_bv_ones(mm, bw);
+  ones  = bzla_bv_ones(mm, bw);
   isult = !bzla_bv_is_zero(t);
 
   res = 0;
 
   if (idx_x)
   {
-    assert(!isult || bzla_bv_compare(s, bvmax)); /* CONFLICT: 1...1 < e[1] */
+    assert(!isult || bzla_bv_compare(s, ones)); /* CONFLICT: 1...1 < e[1] */
     if (!isult)
     {
       /* s >= e[1] */
@@ -1922,7 +1922,7 @@ inv_ult_bv(Bzla *bzla,
     {
       /* s < e[1] */
       tmp = bzla_bv_add(mm, s, one);
-      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, bvmax);
+      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
       bzla_bv_free(mm, tmp);
     }
   }
@@ -1932,7 +1932,7 @@ inv_ult_bv(Bzla *bzla,
     if (!isult)
     {
       /* e[0] >= s */
-      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, s, bvmax);
+      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, s, ones);
     }
     else
     {
@@ -1948,7 +1948,7 @@ inv_ult_bv(Bzla *bzla,
 #endif
   bzla_bv_free(mm, zero);
   bzla_bv_free(mm, one);
-  bzla_bv_free(mm, bvmax);
+  bzla_bv_free(mm, ones);
   return res;
 }
 
@@ -1978,7 +1978,7 @@ inv_sll_bv(Bzla *bzla,
   assert(bzla_is_inv_sll(bzla->mm, t, s, idx_x));
 
   uint32_t bw, i, ctz_s, ctz_t, shift;
-  BzlaBitVector *res, *tmp, *bvmax;
+  BzlaBitVector *res, *tmp, *ones;
   BzlaMemMgr *mm;
 
   (void) domains;
@@ -2029,10 +2029,10 @@ inv_sll_bv(Bzla *bzla,
          * x...x0 << e[1] = 0...0
          * -> choose random shift <= res < bw
          */
-        bvmax = bzla_bv_ones(mm, bw);
-        tmp   = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
-        res   = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, bvmax);
-        bzla_bv_free(mm, bvmax);
+        ones = bzla_bv_ones(mm, bw);
+        tmp  = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
+        res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
+        bzla_bv_free(mm, ones);
         bzla_bv_free(mm, tmp);
       }
       else
@@ -2113,7 +2113,7 @@ inv_srl_bv(Bzla *bzla,
   assert(bzla_is_inv_srl(bzla->mm, t, s, idx_x));
 
   uint32_t bw, i, clz_s, clz_t, shift;
-  BzlaBitVector *res, *bvmax, *tmp;
+  BzlaBitVector *res, *ones, *tmp;
   BzlaMemMgr *mm;
 
   (void) domains;
@@ -2165,10 +2165,10 @@ inv_srl_bv(Bzla *bzla,
          * x...x0 >> e[1] = 0...0
          * -> choose random shift <= res < bw
          */
-        bvmax = bzla_bv_ones(mm, bw);
-        tmp   = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
-        res   = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, bvmax);
-        bzla_bv_free(mm, bvmax);
+        ones = bzla_bv_ones(mm, bw);
+        tmp  = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
+        res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
+        bzla_bv_free(mm, ones);
         bzla_bv_free(mm, tmp);
       }
       else
@@ -2428,7 +2428,7 @@ inv_udiv_bv(Bzla *bzla,
   assert(bzla_is_inv_udiv(bzla->mm, t, s, idx_x));
 
   uint32_t bw;
-  BzlaBitVector *res, *lo, *up, *one, *bvmax, *tmp;
+  BzlaBitVector *res, *lo, *up, *one, *ones, *tmp;
   BzlaMemMgr *mm;
   BzlaRNG *rng;
 
@@ -2447,8 +2447,8 @@ inv_udiv_bv(Bzla *bzla,
   rng = &bzla->rng;
   bw  = bzla_bv_get_width(s);
 
-  one   = bzla_bv_one(mm, bw);
-  bvmax = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
+  one  = bzla_bv_one(mm, bw);
+  ones = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
 
   res = 0;
 
@@ -2468,7 +2468,7 @@ inv_udiv_bv(Bzla *bzla,
    * ------------------------------------------------------------------------ */
   if (idx_x)
   {
-    if (!bzla_bv_compare(t, bvmax))
+    if (!bzla_bv_compare(t, ones))
     {
       if (!bzla_bv_compare(s, t) && bzla_rng_pick_with_prob(&bzla->rng, 500))
       {
@@ -2489,15 +2489,15 @@ inv_udiv_bv(Bzla *bzla,
       if (bzla_bv_is_zero(s))
       {
         /* t = 0 and s = 0 -> choose random e[1] > 0 */
-        res = bzla_bv_new_random_range(mm, rng, bw, one, bvmax);
+        res = bzla_bv_new_random_range(mm, rng, bw, one, ones);
       }
       else
       {
-        assert(bzla_bv_compare(s, bvmax)); /* CONFLICT: s = ~0  and t = 0 */
+        assert(bzla_bv_compare(s, ones)); /* CONFLICT: s = ~0  and t = 0 */
 
         /* t = 0 and 0 < s < 2^bw - 1 -> choose random e[1] > s */
         tmp = bzla_bv_inc(mm, s);
-        res = bzla_bv_new_random_range(mm, rng, bw, tmp, bvmax);
+        res = bzla_bv_new_random_range(mm, rng, bw, tmp, ones);
         bzla_bv_free(mm, tmp);
       }
     }
@@ -2559,12 +2559,12 @@ inv_udiv_bv(Bzla *bzla,
    * ------------------------------------------------------------------------ */
   else
   {
-    if (!bzla_bv_compare(t, bvmax))
+    if (!bzla_bv_compare(t, ones))
     {
       if (!bzla_bv_compare(s, one))
       {
         /* t = 2^bw-1 and s = 1 -> e[0] = 2^bw-1 */
-        res = bzla_bv_copy(mm, bvmax);
+        res = bzla_bv_copy(mm, ones);
       }
       else
       {
@@ -2600,7 +2600,7 @@ inv_udiv_bv(Bzla *bzla,
         if (bzla_bv_is_umulo(mm, s, tmp))
         {
           bzla_bv_free(mm, tmp);
-          up = bzla_bv_copy(mm, bvmax);
+          up = bzla_bv_copy(mm, ones);
         }
         else
         {
@@ -2620,7 +2620,7 @@ inv_udiv_bv(Bzla *bzla,
     }
   }
 
-  bzla_bv_free(mm, bvmax);
+  bzla_bv_free(mm, ones);
   bzla_bv_free(mm, one);
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_udiv, udiv, s, t, res, idx_x, "/");
@@ -2655,7 +2655,7 @@ inv_urem_bv(Bzla *bzla,
 
   uint32_t bw, cnt;
   int32_t cmp;
-  BzlaBitVector *res, *bvmax, *tmp, *tmp2, *one, *n, *mul, *up, *sub;
+  BzlaBitVector *res, *ones, *tmp, *tmp2, *one, *n, *mul, *up, *sub;
   BzlaMemMgr *mm;
 
   (void) domains;
@@ -2672,8 +2672,8 @@ inv_urem_bv(Bzla *bzla,
 
   bw = bzla_bv_get_width(t);
 
-  bvmax = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
-  one   = bzla_bv_one(mm, bw);
+  ones = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
+  one  = bzla_bv_one(mm, bw);
 
   res = 0;
 
@@ -2688,10 +2688,10 @@ inv_urem_bv(Bzla *bzla,
    * ------------------------------------------------------------------------ */
   if (idx_x)
   {
-    if (!bzla_bv_compare(t, bvmax))
+    if (!bzla_bv_compare(t, ones))
     {
       /* CONFLICT: t = ~0 but s != ~0 */
-      assert(!bzla_bv_compare(s, bvmax));
+      assert(!bzla_bv_compare(s, ones));
 
       /* s % e[1] = ~0 -> s = ~0, e[1] = 0 */
       res = bzla_bv_new(mm, bw);
@@ -2714,7 +2714,7 @@ inv_urem_bv(Bzla *bzla,
         {
           /* t < res <= 2^bw - 1 */
           tmp = bzla_bv_add(mm, t, one);
-          res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, bvmax);
+          res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
           bzla_bv_free(mm, tmp);
         }
       }
@@ -2850,7 +2850,7 @@ inv_urem_bv(Bzla *bzla,
       /* s = 0 -> e[0] = t */
       res = bzla_bv_copy(mm, t);
     }
-    else if (!bzla_bv_compare(t, bvmax))
+    else if (!bzla_bv_compare(t, ones))
     {
       assert(bzla_bv_is_zero(s)); /* CONFLICT: s != 0 */
       /* t = ~0 -> s = 0, e[0] = ~0 */
@@ -2875,7 +2875,7 @@ inv_urem_bv(Bzla *bzla,
          * e[0] = s * n + t,
          * with n s.t. (s * n + t) does not overflow
          */
-        tmp2 = bzla_bv_sub(mm, bvmax, s);
+        tmp2 = bzla_bv_sub(mm, ones, s);
 
         /* overflow for n = 1 -> only simplest solution possible */
         if (bzla_bv_compare(tmp2, t) < 0)
@@ -2887,7 +2887,7 @@ inv_urem_bv(Bzla *bzla,
         {
           bzla_bv_free(mm, tmp2);
 
-          tmp = bzla_bv_copy(mm, bvmax);
+          tmp = bzla_bv_copy(mm, ones);
           n   = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, tmp);
 
           while (bzla_bv_is_umulo(mm, s, n))
@@ -2899,7 +2899,7 @@ inv_urem_bv(Bzla *bzla,
           }
 
           mul  = bzla_bv_mul(mm, s, n);
-          tmp2 = bzla_bv_sub(mm, bvmax, mul);
+          tmp2 = bzla_bv_sub(mm, ones, mul);
 
           if (bzla_bv_compare(tmp2, t) < 0)
           {
@@ -2925,7 +2925,7 @@ inv_urem_bv(Bzla *bzla,
   }
 
   bzla_bv_free(mm, one);
-  bzla_bv_free(mm, bvmax);
+  bzla_bv_free(mm, ones);
 
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_urem, urem, s, t, res, idx_x, "%");
@@ -3570,7 +3570,7 @@ inv_ult_bvprop(Bzla *bzla,
 
   uint32_t bw_x;
   BzlaNode *x;
-  BzlaBitVector *res, *tmp, *zero, *one, *bvmax;
+  BzlaBitVector *res, *tmp, *zero, *one, *ones;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
   bool is_valid, is_ult, done;
   BzlaMemMgr *mm;
@@ -3614,9 +3614,9 @@ inv_ult_bvprop(Bzla *bzla,
     return inv_ult_bv(bzla, ult, t, s, idx_x, domains);
   }
 
-  zero  = bzla_bv_new(mm, bw_x);
-  one   = bzla_bv_one(mm, bw_x);
-  bvmax = bzla_bv_ones(mm, bw_x);
+  zero = bzla_bv_new(mm, bw_x);
+  one  = bzla_bv_one(mm, bw_x);
+  ones = bzla_bv_ones(mm, bw_x);
 
   if ((is_ult = bzla_bv_is_one(t)))
   {
@@ -3628,7 +3628,7 @@ inv_ult_bvprop(Bzla *bzla,
       {
         if (res) bzla_bv_free(mm, res);
         tmp = bzla_bv_add(mm, s, one);
-        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, tmp, bvmax);
+        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, tmp, ones);
         bzla_bv_free(mm, tmp);
         tmp = res;
         res = set_const_bits(mm, d_res_x, tmp);
@@ -3683,7 +3683,7 @@ inv_ult_bvprop(Bzla *bzla,
       do
       {
         if (res) bzla_bv_free(mm, res);
-        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, s, bvmax);
+        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, s, ones);
         tmp = res;
         res = set_const_bits(mm, d_res_x, tmp);
         bzla_bv_free(mm, tmp);
@@ -3699,7 +3699,7 @@ inv_ult_bvprop(Bzla *bzla,
 #endif
   bzla_bv_free(mm, zero);
   bzla_bv_free(mm, one);
-  bzla_bv_free(mm, bvmax);
+  bzla_bv_free(mm, ones);
   bzla_bvprop_free(mm, d_s);
   bzla_bvprop_free(mm, d_t);
   bzla_bvprop_free(mm, d_res_s);
@@ -3737,7 +3737,7 @@ inv_sll_bvprop(Bzla *bzla,
   uint32_t bw_x;
   uint32_t i, ctz_s, ctz_t, shift;
   BzlaNode *x;
-  BzlaBitVector *res, *res_tmp, *tmp, *bvmax;
+  BzlaBitVector *res, *res_tmp, *tmp, *ones;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
   bool is_valid, done;
   BzlaMemMgr *mm;
@@ -3817,10 +3817,10 @@ inv_sll_bvprop(Bzla *bzla,
            * x...x0 << e[1] = 0...0
            * -> choose random shift <= res < bw_x
            */
-          bvmax   = bzla_bv_ones(mm, bw_x);
+          ones    = bzla_bv_ones(mm, bw_x);
           tmp     = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw_x);
-          res_tmp = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, tmp, bvmax);
-          bzla_bv_free(mm, bvmax);
+          res_tmp = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, tmp, ones);
+          bzla_bv_free(mm, ones);
           bzla_bv_free(mm, tmp);
         }
         else
@@ -3902,7 +3902,7 @@ inv_srl_bvprop(Bzla *bzla,
   uint32_t bw_x;
   uint32_t i, clz_s, clz_t, shift;
   BzlaNode *x;
-  BzlaBitVector *res, *res_tmp, *tmp, *bvmax;
+  BzlaBitVector *res, *res_tmp, *tmp, *ones;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
   bool is_valid, done;
   BzlaMemMgr *mm;
@@ -3987,10 +3987,10 @@ inv_srl_bvprop(Bzla *bzla,
            * x...x0 >> e[1] = 0...0
            * -> choose random shift <= res < bw_x
            */
-          bvmax   = bzla_bv_ones(mm, bw_x);
+          ones    = bzla_bv_ones(mm, bw_x);
           tmp     = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw_x);
-          res_tmp = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, tmp, bvmax);
-          bzla_bv_free(mm, bvmax);
+          res_tmp = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, tmp, ones);
+          bzla_bv_free(mm, ones);
           bzla_bv_free(mm, tmp);
         }
         else
