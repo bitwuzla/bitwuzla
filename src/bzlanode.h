@@ -42,10 +42,24 @@ BZLA_DECLARE_QUEUE(BzlaNodePtr, BzlaNode *);
 enum BzlaNodeKind
 {
   BZLA_INVALID_NODE = 0, /* for debugging purposes only */
+  /* -------------------------------------------------------------------- */
   BZLA_BV_CONST_NODE,
+  BZLA_FP_CONST_NODE,
+  BZLA_RM_CONST_NODE,
   BZLA_VAR_NODE,
   BZLA_PARAM_NODE, /* parameter for lambda expressions */
+  /* ------------------------------ unary -------------------------------- */
   BZLA_BV_SLICE_NODE,
+  BZLA_FP_ABS_NODE,
+  BZLA_FP_ISINF_NODE,
+  BZLA_FP_ISNAN_NODE,
+  BZLA_FP_ISNEG_NODE,
+  BZLA_FP_ISNORM_NODE,
+  BZLA_FP_ISPOS_NODE,
+  BZLA_FP_ISSUBNORM_NODE,
+  BZLA_FP_ISZERO_NODE,
+  BZLA_FP_NEG_NODE,
+  /* ------------------------------- binary ------------------------------ */
   BZLA_BV_AND_NODE,
   BZLA_BV_EQ_NODE,  /* equality on bit vectors */
   BZLA_FUN_EQ_NODE, /* equality on arrays */
@@ -58,18 +72,37 @@ enum BzlaNodeKind
   BZLA_BV_UDIV_NODE,
   BZLA_BV_UREM_NODE,
   BZLA_BV_CONCAT_NODE,
+  BZLA_FP_EQ_NODE,
+  BZLA_FP_GEQ_NODE,
+  BZLA_FP_GT_NODE,
+  BZLA_FP_LEQ_NODE,
+  BZLA_FP_LT_NODE,
+  BZLA_FP_MIN_NODE,
+  BZLA_FP_MAX_NODE,
+  BZLA_FP_SQRT_NODE,
+  BZLA_FP_REM_NODE,
+  BZLA_FP_RTI_NODE,
   BZLA_APPLY_NODE,
   BZLA_FORALL_NODE,
   BZLA_EXISTS_NODE,
   BZLA_LAMBDA_NODE, /* lambda expression */
-  BZLA_COND_NODE,   /* conditional on bit vectors */
+  /* ----------------------------- ternary ------------------------------ */
+  BZLA_COND_NODE,
+  BZLA_FP_ADD_NODE,
+  BZLA_FP_SUB_NODE,
+  BZLA_FP_MUL_NODE,
+  BZLA_FP_DIV_NODE,
   BZLA_ARGS_NODE,
   BZLA_UPDATE_NODE,
+  /* ----------------------------- quaternary --------------------------- */
+  BZLA_FP_FMA_NODE,
+  /* -------------------------------------------------------------------- */
   BZLA_UF_NODE,
+  /* -------------!!! DO NOT ADD ANYTHING BELOW THIS LINE !!!------------ */
   BZLA_PROXY_NODE, /* simplified expression without children */
   BZLA_NUM_OPS_NODE
 
-  // NOTE: do not change this without changing 'g_bzla_op2string' too ...
+  // !!! NOTE: do not change this without changing 'g_bzla_op2string' too !!!
 };
 
 typedef enum BzlaNodeKind BzlaNodeKind;
@@ -81,7 +114,7 @@ extern const char *const g_bzla_op2str[BZLA_NUM_OPS_NODE];
 #define BZLA_NODE_STRUCT                                                   \
   struct                                                                   \
   {                                                                        \
-    BzlaNodeKind kind : 5;        /* kind of expression */                 \
+    BzlaNodeKind kind : 6;        /* kind of expression */                 \
     uint8_t constraint : 1;       /* top level constraint ? */             \
     uint8_t erased : 1;           /* for debugging purposes */             \
     uint8_t disconnected : 1;     /* for debugging purposes */             \
@@ -278,7 +311,7 @@ bzla_node_is_synth(const BzlaNode *node)
 static inline bool
 bzla_node_is_unary_kind(BzlaNodeKind kind)
 {
-  return kind == BZLA_BV_SLICE_NODE;
+  return kind >= BZLA_BV_SLICE_NODE && kind <= BZLA_FP_NEG_NODE;
 }
 
 static inline bool
