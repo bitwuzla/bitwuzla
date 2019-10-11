@@ -386,4 +386,24 @@ TEST_F(TestParseError, smt2perr163) { run_smt_parse_error_test("smt2perr163"); }
 
 TEST_F(TestParseError, smt2perr164) { run_smt_parse_error_test("smt2perr164"); }
 
+TEST_F(TestParseError, smt2perr165) { run_smt_parse_error_test("smt2perr165"); }
+
+TEST_F(TestParseError, smt2perr166) { run_smt_parse_error_test("smt2perr166"); }
+
+TEST_F(TestParseError, smt2perr167) { run_smt_parse_error_test("smt2perr167"); }
+
+TEST_F(TestParseError, smt2perr168) { run_smt_parse_error_test("smt2perr168"); }
+
+TEST_F(TestParseError, smt2perr169) { run_smt_parse_error_test("smt2perr169"); }
+
+TEST_F(TestParseError, smt2perr170) { run_smt_parse_error_test("smt2perr170"); }
+
+TEST_F(TestParseError, smt2perr171) { run_smt_parse_error_test("smt2perr171"); }
+
+TEST_F(TestParseError, smt2perr172) { run_smt_parse_error_test("smt2perr172"); }
+
 TEST_F(TestParseError, smt2perr173) { run_smt_parse_error_test("smt2perr173"); }
+
+TEST_F(TestParseError, smt2perr174) { run_smt_parse_error_test("smt2perr174"); }
+
+TEST_F(TestParseError, smt2perr175) { run_smt_parse_error_test("smt2perr175"); }

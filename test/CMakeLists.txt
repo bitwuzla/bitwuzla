@@ -41,6 +41,7 @@ set(test_names
   util
 )
 
+
 foreach(test ${test_names})
   add_executable (test${test} test_${test}.cpp)
   target_include_directories(test${test} PRIVATE ${PROJECT_SOURCE_DIR}/test/new_test)
