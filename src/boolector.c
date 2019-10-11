@@ -5686,7 +5686,7 @@ boolector_is_fun_sort(Bzla *bzla, BoolectorSort sort)
 }
 
 uint32_t
-boolector_bitvec_sort_get_width(Bzla *bzla, BoolectorSort sort)
+boolector_bv_sort_get_width(Bzla *bzla, BoolectorSort sort)
 {
   uint32_t res;
   BzlaSortId s;
@@ -5700,7 +5700,7 @@ boolector_bitvec_sort_get_width(Bzla *bzla, BoolectorSort sort)
   res = bzla_sort_bv_get_width(bzla, s);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_UINT(res, bitvec_sort_get_width, sort);
+  BZLA_CHKCLONE_RES_UINT(res, bv_sort_get_width, sort);
 #endif
   return res;
 }

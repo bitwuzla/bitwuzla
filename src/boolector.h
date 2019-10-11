@@ -2873,7 +2873,7 @@ bool boolector_is_fun_sort(Bzla *bzla, BoolectorSort sort);
   :param node: Boolector sort.
   :return: Bit width of ``sort``.
 */
-uint32_t boolector_bitvec_sort_get_width(Bzla *bzla, BoolectorSort sort);
+uint32_t boolector_bv_sort_get_width(Bzla *bzla, BoolectorSort sort);
 
 /*------------------------------------------------------------------------*/
 
