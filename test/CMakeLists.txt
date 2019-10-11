@@ -11,6 +11,7 @@ set(test_names
   comp
   constbits
   exp
+  fp
   hash
   inc
   inthash

@@ -5696,11 +5696,54 @@ boolector_bv_sort_get_width(Bzla *bzla, BoolectorSort sort)
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
 
   BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit-vector sort");
 
   res = bzla_sort_bv_get_width(bzla, s);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
   BZLA_CHKCLONE_RES_UINT(res, bv_sort_get_width, sort);
+#endif
+  return res;
+}
+
+uint32_t
+boolector_fp_sort_get_exp_width(Bzla *bzla, BoolectorSort sort)
+{
+  uint32_t res;
+  BzlaSortId s;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
+  s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
+
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+
+  res = bzla_sort_fp_get_exp_width(bzla, s);
+  BZLA_TRAPI_RETURN_UINT(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_UINT(res, fp_sort_get_exp_width, sort);
+#endif
+  return res;
+}
+
+uint32_t
+boolector_fp_sort_get_sig_width(Bzla *bzla, BoolectorSort sort)
+{
+  uint32_t res;
+  BzlaSortId s;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
+  s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
+
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+
+  res = bzla_sort_fp_get_sig_width(bzla, s);
+  BZLA_TRAPI_RETURN_UINT(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_UINT(res, fp_sort_get_sig_width, sort);
 #endif
   return res;
 }

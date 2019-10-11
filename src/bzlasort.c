@@ -186,7 +186,9 @@ find_sort(BzlaSortUniqueTable *table, const BzlaSort *pattern)
   assert(hash < (uint32_t) table->size);
   for (res = table->chains + hash; (sort = *res) && !equal_sort(sort, pattern);
        res = &sort->next)
+  {
     assert(sort->refs > 0);
+  }
   return res;
 }
 
@@ -369,6 +371,12 @@ create_sort(Bzla *bzla, BzlaSortUniqueTable *table, BzlaSort *pattern)
 #endif
 	break;
 #endif
+    case BZLA_FP_SORT:
+      res->kind         = BZLA_FP_SORT;
+      res->fp.width_exp = pattern->fp.width_exp;
+      res->fp.width_sig = pattern->fp.width_sig;
+      break;
+
     case BZLA_FUN_SORT:
       res->kind         = BZLA_FUN_SORT;
       res->fun.domain   = copy_sort(pattern->fun.domain);
@@ -378,6 +386,8 @@ create_sort(Bzla *bzla, BzlaSortUniqueTable *table, BzlaSort *pattern)
       res->fun.codomain->parents++;
 #endif
       break;
+
+    case BZLA_RM_SORT: res->kind = BZLA_RM_SORT; break;
 
     case BZLA_TUPLE_SORT:
       res->kind               = BZLA_TUPLE_SORT;
@@ -444,28 +454,6 @@ bzla_sort_bv(Bzla *bzla, uint32_t width)
   }
   inc_sort_ref_counter(res);
   return res->id;
-}
-
-BzlaSortId
-bzla_sort_fp(Bzla *bzla, uint32_t ewidth, uint32_t swidth)
-{
-  assert(bzla);
-  assert(ewidth > 0);
-  assert(swidth > 0);
-
-  /// FP STUB
-  return bzla_sort_bool(bzla);
-  ////
-}
-
-BzlaSortId
-bzla_sort_rm(Bzla *bzla)
-{
-  assert(bzla);
-
-  /// FP STUB
-  return bzla_sort_bool(bzla);
-  ////
 }
 
 BzlaSortId
@@ -574,6 +562,78 @@ bzla_sort_lst (Bzla * bzla,
 #endif
 
 BzlaSortId
+bzla_sort_fp(Bzla *bzla, uint32_t ewidth, uint32_t swidth)
+{
+  assert(bzla);
+  assert(ewidth > 0);
+  assert(swidth > 0);
+
+  BzlaSort *res, **pos, pattern;
+  BzlaSortUniqueTable *table;
+
+  table = &bzla->sorts_unique_table;
+
+  BZLA_CLR(&pattern);
+  pattern.kind         = BZLA_FP_SORT;
+  pattern.fp.width_exp = ewidth;
+  pattern.fp.width_sig = swidth;
+  pos                  = find_sort(table, &pattern);
+  assert(pos);
+
+  res = *pos;
+  if (!res)
+  {
+    if (BZLA_FULL_SORT_UNIQUE_TABLE(table))
+    {
+      enlarge_sorts_unique_table(table);
+      pos = find_sort(table, &pattern);
+      assert(pos);
+      res = *pos;
+      assert(!res);
+    }
+    res  = create_sort(bzla, table, &pattern);
+    *pos = res;
+  }
+  inc_sort_ref_counter(res);
+  return res->id;
+}
+
+BzlaSortId
+bzla_sort_rm(Bzla *bzla)
+{
+  assert(bzla);
+
+  assert(bzla);
+
+  BzlaSort *res, **pos, pattern;
+  BzlaSortUniqueTable *table;
+
+  table = &bzla->sorts_unique_table;
+
+  BZLA_CLR(&pattern);
+  pattern.kind = BZLA_RM_SORT;
+  pos          = find_sort(table, &pattern);
+  assert(pos);
+
+  res = *pos;
+  if (!res)
+  {
+    if (BZLA_FULL_SORT_UNIQUE_TABLE(table))
+    {
+      enlarge_sorts_unique_table(table);
+      pos = find_sort(table, &pattern);
+      assert(pos);
+      res = *pos;
+      assert(!res);
+    }
+    res  = create_sort(bzla, table, &pattern);
+    *pos = res;
+  }
+  inc_sort_ref_counter(res);
+  return res->id;
+}
+
+BzlaSortId
 bzla_sort_fun(Bzla *bzla, BzlaSortId domain_id, BzlaSortId codomain_id)
 {
   assert(bzla);
@@ -680,6 +740,24 @@ bzla_sort_bv_get_width(Bzla *bzla, BzlaSortId id)
 }
 
 uint32_t
+bzla_sort_fp_get_exp_width(Bzla *bzla, BzlaSortId id)
+{
+  BzlaSort *sort;
+  sort = bzla_sort_get_by_id(bzla, id);
+  assert(bzla_sort_is_fp(bzla, id));
+  return sort->fp.width_exp;
+}
+
+uint32_t
+bzla_sort_fp_get_sig_width(Bzla *bzla, BzlaSortId id)
+{
+  BzlaSort *sort;
+  sort = bzla_sort_get_by_id(bzla, id);
+  assert(bzla_sort_is_fp(bzla, id));
+  return sort->fp.width_sig;
+}
+
+uint32_t
 bzla_sort_tuple_get_arity(Bzla *bzla, BzlaSortId id)
 {
   BzlaSort *sort;
@@ -770,17 +848,19 @@ bzla_sort_is_bv(Bzla *bzla, BzlaSortId id)
 bool
 bzla_sort_is_fp(Bzla *bzla, BzlaSortId id)
 {
-  /// FP STUB
-  return bzla_sort_is_bool(bzla, id);
-  ////
+  BzlaSort *sort;
+  sort = bzla_sort_get_by_id(bzla, id);
+  assert(sort);
+  return sort->kind == BZLA_FP_SORT;
 }
 
 bool
 bzla_sort_is_rm(Bzla *bzla, BzlaSortId id)
 {
-  /// FP STUB
-  return bzla_sort_is_bool(bzla, id);
-  ////
+  BzlaSort *sort;
+  sort = bzla_sort_get_by_id(bzla, id);
+  assert(sort);
+  return sort->kind == BZLA_RM_SORT;
 }
 
 bool

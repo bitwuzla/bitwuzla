@@ -30,7 +30,9 @@ enum BzlaSortKind
   BZLA_ARRAY_SORT   = 3,
   BZLA_LST_SORT     = 4,
   BZLA_FUN_SORT     = 5,
-  BZLA_TUPLE_SORT   = 6
+  BZLA_FP_SORT      = 6,
+  BZLA_RM_SORT      = 7,
+  BZLA_TUPLE_SORT   = 8
 };
 
 typedef enum BzlaSortKind BzlaSortKind;
@@ -40,6 +42,7 @@ typedef struct BzlaBitVecSort BzlaBitVecSort;
 typedef struct BzlaArraySort BzlaArraySort;
 typedef struct BzlaLstSort BzlaLstSort;
 typedef struct BzlaFunSort BzlaFunSort;
+typedef struct BzlaFloatingPointSort BzlaFloatingPointSort;
 typedef struct BzlaTupleSort BzlaTupleSort;
 
 struct BzlaBitVecSort
@@ -65,6 +68,12 @@ struct BzlaFunSort
   uint32_t arity;
   BzlaSort *domain;
   BzlaSort *codomain;
+};
+
+struct BzlaFloatingPointSort
+{
+  uint32_t width_exp;
+  uint32_t width_sig;
 };
 
 struct BzlaTupleSort
@@ -93,6 +102,7 @@ struct BzlaSort
     BzlaArraySort array;
     BzlaLstSort lst;
     BzlaFunSort fun;
+    BzlaFloatingPointSort fp;
     BzlaTupleSort tuple;
   };
 };
@@ -113,13 +123,6 @@ BzlaSortId bzla_sort_bool(Bzla *bzla);
 
 BzlaSortId bzla_sort_bv(Bzla *bzla, uint32_t width);
 
-/* Create floating-point sort with exponent bit-wdith 'ewidth' and significand
- * bit-width 'swidth'. */
-BzlaSortId bzla_sort_fp(Bzla *bzla, uint32_t ewidth, uint32_t swidth);
-
-/* Create RoundingMode sort. */
-BzlaSortId bzla_sort_rm(Bzla *bzla);
-
 BzlaSortId bzla_sort_array(Bzla *bzla,
                            BzlaSortId index_id,
                            BzlaSortId element_id);
@@ -134,6 +137,13 @@ BzlaSortId bzla_sort_fun(Bzla *bzla,
                          BzlaSortId domain_id,
                          BzlaSortId codomain_id);
 
+/* Create floating-point sort with exponent bit-wdith 'width_exp' and
+ * significand bit-width 'width_sig'. */
+BzlaSortId bzla_sort_fp(Bzla *bzla, uint32_t width_exp, uint32_t width_sig);
+
+/* Create RoundingMode sort. */
+BzlaSortId bzla_sort_rm(Bzla *bzla);
+
 BzlaSortId bzla_sort_tuple(Bzla *bzla,
                            BzlaSortId *element_ids,
                            size_t num_elements);
@@ -145,6 +155,9 @@ void bzla_sort_release(Bzla *bzla, BzlaSortId id);
 BzlaSort *bzla_sort_get_by_id(Bzla *bzla, BzlaSortId id);
 
 uint32_t bzla_sort_bv_get_width(Bzla *bzla, BzlaSortId id);
+
+uint32_t bzla_sort_fp_get_exp_width(Bzla *bzla, BzlaSortId id);
+uint32_t bzla_sort_fp_get_sig_width(Bzla *bzla, BzlaSortId id);
 
 uint32_t bzla_sort_fun_get_arity(Bzla *bzla, BzlaSortId id);
 uint32_t bzla_sort_tuple_get_arity(Bzla *bzla, BzlaSortId id);

@@ -18,30 +18,30 @@ extern "C" {
 
 /* ========================================================================== */
 
-class BzlaSymRM;
+class BzlaFPSymRM;
 class BzlaFPSortInfo;
-class BzlaSymProp;
+class BzlaFPSymProp;
 template <bool T>
-class BzlaSymBV;
+class BzlaFPSymBV;
 
 /* Template parameter for SymFPU templates. --------------------------------- */
-class BzlaSymTraits
+class BzlaFPSymTraits
 {
  public:
   /* The six key types that SymFPU uses. */
   typedef unsigned bwt;
-  typedef BzlaSymRM rm;
+  typedef BzlaFPSymRM rm;
   typedef BzlaFPSortInfo fpt;
-  typedef BzlaSymProp prop;
-  typedef BzlaSymBV<true> sbv;
-  typedef BzlaSymBV<false> ubv;
+  typedef BzlaFPSymProp prop;
+  typedef BzlaFPSymBV<true> sbv;
+  typedef BzlaFPSymBV<false> ubv;
 
   /* Give concrete instances (wrapped nodes) for each rounding mode. */
-  static BzlaSymRM RNE(void);
-  static BzlaSymRM RNA(void);
-  static BzlaSymRM RTP(void);
-  static BzlaSymRM RTN(void);
-  static BzlaSymRM RTZ(void);
+  static BzlaFPSymRM RNE(void);
+  static BzlaFPSymRM RNA(void);
+  static BzlaFPSymRM RTP(void);
+  static BzlaFPSymRM RTN(void);
+  static BzlaFPSymRM RTZ(void);
 
   /* Properties used by Symfpu. */
   static void precondition(const bool b);
@@ -53,7 +53,7 @@ class BzlaSymTraits
 };
 
 /* Use the same type names as SymFPU. */
-typedef BzlaSymTraits::bwt bwt;
+typedef BzlaFPSymTraits::bwt bwt;
 
 /* Mapping between sorts. */
 template <bool T>
@@ -70,19 +70,19 @@ struct BzlaSignedToLitSort<false>
 };
 
 /* Bitwuzla wrapper for rounding modes. ------------------------------------ */
-class BzlaSymRM
+class BzlaFPSymRM
 {
 #ifdef BZLA_USE_SYMFPU
-  friend symfpu::ite<BzlaSymProp, BzlaSymRM>;
+  friend symfpu::ite<BzlaFPSymProp, BzlaFPSymRM>;
 #endif
 
  public:
-  BzlaSymRM(const BzlaNode *node);
-  BzlaSymRM(const uint32_t val);
-  BzlaSymRM(const BzlaSymRM &other);
+  BzlaFPSymRM(const BzlaNode *node);
+  BzlaFPSymRM(const uint32_t val);
+  BzlaFPSymRM(const BzlaFPSymRM &other);
 
-  BzlaSymProp valid(void) const;
-  BzlaSymProp operator==(const BzlaSymRM &rm) const;
+  BzlaFPSymProp valid(void) const;
+  BzlaFPSymProp operator==(const BzlaFPSymRM &rm) const;
 
  protected:
   bool checkNode(const BzlaNode *node);
@@ -92,33 +92,41 @@ class BzlaSymRM
 class BzlaFPSortInfo
 {
  public:
-  BzlaFPSortInfo(const BzlaSort sort);
-  BzlaFPSortInfo(unsigned node, unsigned sig);
+  BzlaFPSortInfo(const BzlaSortId sort);
+  BzlaFPSortInfo(uint32_t ewidth, uint32_t swidth);
   BzlaFPSortInfo(const BzlaFPSortInfo &other);
-
-  BzlaSort getSort(void) const;
-};
-
-/* Bitwuzla wrapper for propositions. -------------------------------------- */
-class BzlaSymProp
-{
-#ifdef BZLA_USE_SYMFPU
-  friend ::symfpu::ite<BzlaSymProp, BzlaSymProp>;
-#endif
-
- public:
-  BzlaSymProp(BzlaNode *node);
-  BzlaSymProp(bool v);
-  BzlaSymProp(const BzlaSymProp &other);
-  ~BzlaSymProp();
 
   static void setBtor(Bzla *bzla) { s_bzla = bzla; }
 
-  BzlaSymProp operator!(void) const;
-  BzlaSymProp operator&&(const BzlaSymProp &op) const;
-  BzlaSymProp operator||(const BzlaSymProp &op) const;
-  BzlaSymProp operator==(const BzlaSymProp &op) const;
-  BzlaSymProp operator^(const BzlaSymProp &op) const;
+  BzlaSortId getSort(void) const;
+
+ private:
+  BzlaSortId d_sort;
+  static Bzla *s_bzla;
+};
+
+Bzla *BzlaFPSortInfo::s_bzla = nullptr;
+
+/* Bitwuzla wrapper for propositions. -------------------------------------- */
+class BzlaFPSymProp
+{
+#ifdef BZLA_USE_SYMFPU
+  friend ::symfpu::ite<BzlaFPSymProp, BzlaFPSymProp>;
+#endif
+
+ public:
+  BzlaFPSymProp(BzlaNode *node);
+  BzlaFPSymProp(bool v);
+  BzlaFPSymProp(const BzlaFPSymProp &other);
+  ~BzlaFPSymProp();
+
+  static void setBtor(Bzla *bzla) { s_bzla = bzla; }
+
+  BzlaFPSymProp operator!(void) const;
+  BzlaFPSymProp operator&&(const BzlaFPSymProp &op) const;
+  BzlaFPSymProp operator||(const BzlaFPSymProp &op) const;
+  BzlaFPSymProp operator==(const BzlaFPSymProp &op) const;
+  BzlaFPSymProp operator^(const BzlaFPSymProp &op) const;
 
  protected:
   bool checkNode(const BzlaNode *node);
@@ -128,87 +136,89 @@ class BzlaSymProp
   static Bzla *s_bzla;
 };
 
-Bzla *BzlaSymProp::s_bzla = nullptr;
+Bzla *BzlaFPSymProp::s_bzla = nullptr;
 
 /* Bitwuzla wrapper for bit-vector terms. ---------------------------------- */
 template <bool is_signed>
-class BzlaSymBV
+class BzlaFPSymBV
 {
-  friend BzlaSymBV<!is_signed>; /* Allow conversion between the sorts. */
+  friend BzlaFPSymBV<!is_signed>; /* Allow conversion between the sorts. */
 #ifdef BZLA_USE_SYMFPU
-  friend ::symfpu::ite<BzlaSymProp, BzlaSymBV<is_signed> >;
+  friend ::symfpu::ite<BzlaFPSymProp, BzlaFPSymBV<is_signed> >;
 #endif
 
  public:
-  BzlaSymBV(BzlaNode *node);
-  BzlaSymBV(const bwt w, const uint32_t val);
-  BzlaSymBV(const BzlaSymProp &p);
-  BzlaSymBV(const BzlaSymBV<is_signed> &other);
-  BzlaSymBV(const BzlaBitVector *bv);
-  ~BzlaSymBV();
+  BzlaFPSymBV(BzlaNode *node);
+  BzlaFPSymBV(const bwt w, const uint32_t val);
+  BzlaFPSymBV(const BzlaFPSymProp &p);
+  BzlaFPSymBV(const BzlaFPSymBV<is_signed> &other);
+  BzlaFPSymBV(const BzlaBitVector *bv);
+  ~BzlaFPSymBV();
 
   bwt getWidth(void) const;
   BzlaNode *getNode(void) const { return d_node; }
   static void setBtor(Bzla *bzla) { s_bzla = bzla; }
 
   /*** Constant creation and test ***/
-  static BzlaSymBV<is_signed> one(const bwt &w);
-  static BzlaSymBV<is_signed> zero(const bwt &w);
-  static BzlaSymBV<is_signed> allOnes(const bwt &w);
+  static BzlaFPSymBV<is_signed> one(const bwt &w);
+  static BzlaFPSymBV<is_signed> zero(const bwt &w);
+  static BzlaFPSymBV<is_signed> allOnes(const bwt &w);
 
-  BzlaSymProp isAllOnes() const;
-  BzlaSymProp isAllZeros() const;
+  BzlaFPSymProp isAllOnes() const;
+  BzlaFPSymProp isAllZeros() const;
 
-  static BzlaSymBV<is_signed> maxValue(const bwt &w);
-  static BzlaSymBV<is_signed> minValue(const bwt &w);
+  static BzlaFPSymBV<is_signed> maxValue(const bwt &w);
+  static BzlaFPSymBV<is_signed> minValue(const bwt &w);
 
   /*** Operators ***/
-  BzlaSymBV<is_signed> operator<<(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> operator>>(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> operator|(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> operator&(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> operator+(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> operator-(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> operator*(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> operator/(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> operator%(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> operator-(void) const;
-  BzlaSymBV<is_signed> operator~(void) const;
-  BzlaSymBV<is_signed> increment() const;
-  BzlaSymBV<is_signed> decrement() const;
-  BzlaSymBV<is_signed> signExtendRightShift(
-      const BzlaSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> operator<<(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> operator>>(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> operator|(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> operator&(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> operator+(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> operator-(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> operator*(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> operator/(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> operator%(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> operator-(void) const;
+  BzlaFPSymBV<is_signed> operator~(void) const;
+  BzlaFPSymBV<is_signed> increment() const;
+  BzlaFPSymBV<is_signed> decrement() const;
+  BzlaFPSymBV<is_signed> signExtendRightShift(
+      const BzlaFPSymBV<is_signed> &op) const;
 
   /*** Modular operations ***/
   // This back-end doesn't do any overflow checking so these are the same as
   // other operations
-  BzlaSymBV<is_signed> modularLeftShift(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> modularRightShift(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> modularIncrement() const;
-  BzlaSymBV<is_signed> modularDecrement() const;
-  BzlaSymBV<is_signed> modularAdd(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> modularNegate() const;
+  BzlaFPSymBV<is_signed> modularLeftShift(
+      const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> modularRightShift(
+      const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> modularIncrement() const;
+  BzlaFPSymBV<is_signed> modularDecrement() const;
+  BzlaFPSymBV<is_signed> modularAdd(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> modularNegate() const;
 
   /*** Comparisons ***/
-  BzlaSymProp operator==(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymProp operator<=(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymProp operator>=(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymProp operator<(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymProp operator>(const BzlaSymBV<is_signed> &op) const;
+  BzlaFPSymProp operator==(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymProp operator<=(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymProp operator>=(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymProp operator<(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymProp operator>(const BzlaFPSymBV<is_signed> &op) const;
 
   /*** Type conversion ***/
   // Bitwuzla nodes make no distinction between signed and unsigned, thus these
   // are trivial
-  BzlaSymBV<true> toSigned(void) const;
-  BzlaSymBV<false> toUnsigned(void) const;
+  BzlaFPSymBV<true> toSigned(void) const;
+  BzlaFPSymBV<false> toUnsigned(void) const;
 
   /*** Bit hacks ***/
-  BzlaSymBV<is_signed> extend(bwt extension) const;
-  BzlaSymBV<is_signed> contract(bwt reduction) const;
-  BzlaSymBV<is_signed> resize(bwt newSize) const;
-  BzlaSymBV<is_signed> matchWidth(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> append(const BzlaSymBV<is_signed> &op) const;
-  BzlaSymBV<is_signed> extract(bwt upper, bwt lower) const;
+  BzlaFPSymBV<is_signed> extend(bwt extension) const;
+  BzlaFPSymBV<is_signed> contract(bwt reduction) const;
+  BzlaFPSymBV<is_signed> resize(bwt newSize) const;
+  BzlaFPSymBV<is_signed> matchWidth(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> append(const BzlaFPSymBV<is_signed> &op) const;
+  BzlaFPSymBV<is_signed> extract(bwt upper, bwt lower) const;
 
  protected:
   typedef typename BzlaSignedToLitSort<is_signed>::BzlaLitSort literalType;
@@ -225,86 +235,119 @@ class BzlaSymBV
   static Bzla *s_bzla;
 };
 
+template <>
+Bzla *BzlaFPSymBV<true>::s_bzla = nullptr;
+template <>
+Bzla *BzlaFPSymBV<false>::s_bzla = nullptr;
+
 /* -------------------------------------------------------------------------- */
 
-BzlaSymProp::BzlaSymProp(BzlaNode *node)
+BzlaFPSortInfo::BzlaFPSortInfo(const BzlaSortId sort)
+{
+  assert(s_bzla);
+  assert(bzla_sort_is_fp(s_bzla, sort));
+  d_sort = bzla_sort_copy(s_bzla, sort);
+}
+
+BzlaFPSortInfo::BzlaFPSortInfo(uint32_t ewidth, uint32_t swidth)
+{
+  assert(s_bzla);
+  d_sort = bzla_sort_fp(s_bzla, ewidth, swidth);
+}
+
+BzlaFPSortInfo::BzlaFPSortInfo(const BzlaFPSortInfo &other)
+{
+  assert(s_bzla);
+  assert(bzla_sort_is_fp(s_bzla, other.d_sort));
+  d_sort = bzla_sort_copy(s_bzla, other.d_sort);
+}
+
+BzlaSortId
+BzlaFPSortInfo::getSort(void) const
+{
+  return d_sort;
+}
+
+/* -------------------------------------------------------------------------- */
+
+BzlaFPSymProp::BzlaFPSymProp(BzlaNode *node)
 {
   assert(s_bzla);
   assert(checkNode(node));
   d_node = bzla_node_copy(s_bzla, node);
 }
 
-BzlaSymProp::BzlaSymProp(bool v)
+BzlaFPSymProp::BzlaFPSymProp(bool v)
 {
   assert(s_bzla);
   d_node = v ? bzla_exp_true(s_bzla) : bzla_exp_false(s_bzla);
 }
 
-BzlaSymProp::BzlaSymProp(const BzlaSymProp &other)
+BzlaFPSymProp::BzlaFPSymProp(const BzlaFPSymProp &other)
 {
   assert(s_bzla);
   assert(checkNode(other.d_node));
   d_node = bzla_node_copy(s_bzla, other.d_node);
 }
 
-BzlaSymProp::~BzlaSymProp()
+BzlaFPSymProp::~BzlaFPSymProp()
 {
   assert(s_bzla);
   bzla_node_release(s_bzla, d_node);
 }
 
-BzlaSymProp
-BzlaSymProp::operator!(void) const
+BzlaFPSymProp
+BzlaFPSymProp::operator!(void) const
 {
   assert(s_bzla);
-  BzlaNode *n     = bzla_exp_bv_not(s_bzla, d_node);
-  BzlaSymProp res = BzlaSymProp(n);
+  BzlaNode *n       = bzla_exp_bv_not(s_bzla, d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
-BzlaSymProp
-BzlaSymProp::operator&&(const BzlaSymProp &op) const
+BzlaFPSymProp
+BzlaFPSymProp::operator&&(const BzlaFPSymProp &op) const
 {
   assert(s_bzla);
-  BzlaNode *n     = bzla_exp_bv_and(s_bzla, d_node, op.d_node);
-  BzlaSymProp res = BzlaSymProp(n);
+  BzlaNode *n       = bzla_exp_bv_and(s_bzla, d_node, op.d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
-BzlaSymProp
-BzlaSymProp::operator||(const BzlaSymProp &op) const
+BzlaFPSymProp
+BzlaFPSymProp::operator||(const BzlaFPSymProp &op) const
 {
   assert(s_bzla);
-  BzlaNode *n     = bzla_exp_bv_or(s_bzla, d_node, op.d_node);
-  BzlaSymProp res = BzlaSymProp(n);
+  BzlaNode *n       = bzla_exp_bv_or(s_bzla, d_node, op.d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
-BzlaSymProp
-BzlaSymProp::operator==(const BzlaSymProp &op) const
+BzlaFPSymProp
+BzlaFPSymProp::operator==(const BzlaFPSymProp &op) const
 {
   assert(s_bzla);
-  BzlaNode *n     = bzla_exp_eq(s_bzla, d_node, op.d_node);
-  BzlaSymProp res = BzlaSymProp(n);
+  BzlaNode *n       = bzla_exp_eq(s_bzla, d_node, op.d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
-BzlaSymProp
-BzlaSymProp::operator^(const BzlaSymProp &op) const
+BzlaFPSymProp
+BzlaFPSymProp::operator^(const BzlaFPSymProp &op) const
 {
   assert(s_bzla);
-  BzlaNode *n     = bzla_exp_bv_xor(s_bzla, d_node, op.d_node);
-  BzlaSymProp res = BzlaSymProp(n);
+  BzlaNode *n       = bzla_exp_bv_xor(s_bzla, d_node, op.d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 bool
-BzlaSymProp::checkNode(const BzlaNode *node)
+BzlaFPSymProp::checkNode(const BzlaNode *node)
 {
   return bzla_sort_is_bv(node->bzla, bzla_node_get_sort_id(node))
          && bzla_node_bv_get_width(s_bzla, node) == 1;
@@ -313,7 +356,7 @@ BzlaSymProp::checkNode(const BzlaNode *node)
 /* -------------------------------------------------------------------------- */
 
 template <bool is_signed>
-BzlaSymBV<is_signed>::BzlaSymBV(BzlaNode *node)
+BzlaFPSymBV<is_signed>::BzlaFPSymBV(BzlaNode *node)
 {
   assert(s_bzla);
   assert(checkNode(node));
@@ -321,7 +364,7 @@ BzlaSymBV<is_signed>::BzlaSymBV(BzlaNode *node)
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>::BzlaSymBV(const bwt w, const uint32_t val)
+BzlaFPSymBV<is_signed>::BzlaFPSymBV(const bwt w, const uint32_t val)
 {
   assert(s_bzla);
   BzlaSortId s = bzla_sort_bv(s_bzla, w);
@@ -330,14 +373,14 @@ BzlaSymBV<is_signed>::BzlaSymBV(const bwt w, const uint32_t val)
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>::BzlaSymBV(const BzlaSymProp &p)
+BzlaFPSymBV<is_signed>::BzlaFPSymBV(const BzlaFPSymProp &p)
 {
   assert(s_bzla);
   // TODO
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>::BzlaSymBV(const BzlaSymBV<is_signed> &other)
+BzlaFPSymBV<is_signed>::BzlaFPSymBV(const BzlaFPSymBV<is_signed> &other)
 {
   assert(s_bzla);
   assert(checkNode(other.d_node));
@@ -345,14 +388,14 @@ BzlaSymBV<is_signed>::BzlaSymBV(const BzlaSymBV<is_signed> &other)
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>::BzlaSymBV(const BzlaBitVector *bv)
+BzlaFPSymBV<is_signed>::BzlaFPSymBV(const BzlaBitVector *bv)
 {
   assert(s_bzla);
   d_node = bzla_exp_bv_const(s_bzla, bv);
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>::~BzlaSymBV()
+BzlaFPSymBV<is_signed>::~BzlaFPSymBV()
 {
   assert(s_bzla);
   bzla_node_release(s_bzla, d_node);
@@ -360,397 +403,399 @@ BzlaSymBV<is_signed>::~BzlaSymBV()
 
 template <bool is_signed>
 bwt
-BzlaSymBV<is_signed>::getWidth(void) const
+BzlaFPSymBV<is_signed>::getWidth(void) const
 {
   assert(s_bzla);
   return bzla_node_bv_get_width(s_bzla, d_node);
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::one(const bwt &w)
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::one(const bwt &w)
 {
   assert(s_bzla);
-  BzlaSortId s             = bzla_sort_bv(s_bzla, w);
-  BzlaNode *n              = bzla_exp_bv_one(s_bzla, s);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaSortId s               = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n                = bzla_exp_bv_one(s_bzla, s);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   bzla_sort_release(s_bzla, s);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::zero(const bwt &w)
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::zero(const bwt &w)
 {
   assert(s_bzla);
-  BzlaSortId s             = bzla_sort_bv(s_bzla, w);
-  BzlaNode *n              = bzla_exp_bv_zero(s_bzla, s);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaSortId s               = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n                = bzla_exp_bv_zero(s_bzla, s);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   bzla_sort_release(s_bzla, s);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::allOnes(const bwt &w)
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::allOnes(const bwt &w)
 {
   assert(s_bzla);
-  BzlaSortId s             = bzla_sort_bv(s_bzla, w);
-  BzlaNode *n              = bzla_exp_bv_ones(s_bzla, s);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaSortId s               = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n                = bzla_exp_bv_ones(s_bzla, s);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   bzla_sort_release(s_bzla, s);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymProp
-BzlaSymBV<is_signed>::isAllOnes() const
+BzlaFPSymProp
+BzlaFPSymBV<is_signed>::isAllOnes() const
 {
-  return *this == BzlaSymBV<is_signed>::allOnes(this->getWidth());
+  return *this == BzlaFPSymBV<is_signed>::allOnes(this->getWidth());
 }
 
 template <bool is_signed>
-BzlaSymProp
-BzlaSymBV<is_signed>::isAllZeros() const
+BzlaFPSymProp
+BzlaFPSymBV<is_signed>::isAllZeros() const
 {
-  return *this == BzlaSymBV<is_signed>::zero(this->getWidth());
+  return *this == BzlaFPSymBV<is_signed>::zero(this->getWidth());
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::maxValue(const bwt &w)
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::maxValue(const bwt &w)
 {
   assert(s_bzla);
-  BzlaSortId s             = bzla_sort_bv(s_bzla, w);
-  BzlaNode *n              = bzla_exp_bv_max_signed(s_bzla, s);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaSortId s               = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n                = bzla_exp_bv_max_signed(s_bzla, s);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   bzla_sort_release(s_bzla, s);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::minValue(const bwt &w)
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::minValue(const bwt &w)
 {
   assert(s_bzla);
-  BzlaSortId s             = bzla_sort_bv(s_bzla, w);
-  BzlaNode *n              = bzla_exp_bv_min_signed(s_bzla, s);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaSortId s               = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n                = bzla_exp_bv_min_signed(s_bzla, s);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   bzla_sort_release(s_bzla, s);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator<<(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator<<(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_sll(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_sll(s_bzla, d_node, op.d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator>>(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator>>(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
   BzlaNode *n = is_signed ? bzla_exp_bv_sra(s_bzla, d_node, op.d_node)
                           : bzla_exp_bv_srl(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator|(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator|(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_or(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_or(s_bzla, d_node, op.d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator&(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator&(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_and(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_and(s_bzla, d_node, op.d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator+(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator+(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_add(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_add(s_bzla, d_node, op.d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator-(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator-(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_sub(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_sub(s_bzla, d_node, op.d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator*(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator*(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_mul(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_mul(s_bzla, d_node, op.d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator/(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator/(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
   BzlaNode *n = is_signed ? bzla_exp_bv_sdiv(s_bzla, d_node, op.d_node)
                           : bzla_exp_bv_udiv(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator%(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator%(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
   BzlaNode *n = is_signed ? bzla_exp_bv_srem(s_bzla, d_node, op.d_node)
                           : bzla_exp_bv_urem(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator-(void) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator-(void) const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_neg(s_bzla, d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_neg(s_bzla, d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::operator~(void) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::operator~(void) const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_not(s_bzla, d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_not(s_bzla, d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::increment() const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::increment() const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_inc(s_bzla, d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_inc(s_bzla, d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::decrement() const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::decrement() const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_dec(s_bzla, d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_dec(s_bzla, d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::signExtendRightShift(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::signExtendRightShift(
+    const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_sra(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_sra(s_bzla, d_node, op.d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::modularLeftShift(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::modularLeftShift(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
   return *this << op;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::modularRightShift(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::modularRightShift(
+    const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
   return *this >> op;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::modularIncrement() const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::modularIncrement() const
 {
   assert(s_bzla);
   return this->increment();
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::modularDecrement() const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::modularDecrement() const
 {
   assert(s_bzla);
   return this->decrement();
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::modularAdd(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::modularAdd(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
   return *this + op;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::modularNegate() const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::modularNegate() const
 {
   assert(s_bzla);
   return -(*this);
 }
 
 template <bool is_signed>
-BzlaSymProp
-BzlaSymBV<is_signed>::operator==(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymProp
+BzlaFPSymBV<is_signed>::operator==(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  BzlaNode *n     = bzla_exp_eq(s_bzla, d_node, op.d_node);
-  BzlaSymProp res = BzlaSymProp(n);
+  BzlaNode *n       = bzla_exp_eq(s_bzla, d_node, op.d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymProp
-BzlaSymBV<is_signed>::operator<=(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymProp
+BzlaFPSymBV<is_signed>::operator<=(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
   BzlaNode *n = is_signed ? bzla_exp_bv_slte(s_bzla, d_node, op.d_node)
                           : bzla_exp_bv_ulte(s_bzla, d_node, op.d_node);
-  BzlaSymProp res = BzlaSymProp(n);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymProp
-BzlaSymBV<is_signed>::operator>=(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymProp
+BzlaFPSymBV<is_signed>::operator>=(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
   BzlaNode *n = is_signed ? bzla_exp_bv_sgte(s_bzla, d_node, op.d_node)
                           : bzla_exp_bv_ugte(s_bzla, d_node, op.d_node);
-  BzlaSymProp res = BzlaSymProp(n);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymProp
-BzlaSymBV<is_signed>::operator<(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymProp
+BzlaFPSymBV<is_signed>::operator<(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
   BzlaNode *n = is_signed ? bzla_exp_bv_slt(s_bzla, d_node, op.d_node)
                           : bzla_exp_bv_ult(s_bzla, d_node, op.d_node);
-  BzlaSymProp res = BzlaSymProp(n);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymProp
-BzlaSymBV<is_signed>::operator>(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymProp
+BzlaFPSymBV<is_signed>::operator>(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
   BzlaNode *n = is_signed ? bzla_exp_bv_sgt(s_bzla, d_node, op.d_node)
                           : bzla_exp_bv_ugt(s_bzla, d_node, op.d_node);
-  BzlaSymProp res = BzlaSymProp(n);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<true>
-BzlaSymBV<is_signed>::toSigned(void) const
+BzlaFPSymBV<true>
+BzlaFPSymBV<is_signed>::toSigned(void) const
 {
-  return BzlaSymBV<true>(*this);
+  return BzlaFPSymBV<true>(*this);
 }
 
 template <bool is_signed>
-BzlaSymBV<false>
-BzlaSymBV<is_signed>::toUnsigned(void) const
+BzlaFPSymBV<false>
+BzlaFPSymBV<is_signed>::toUnsigned(void) const
 {
-  return BzlaSymBV<false>(*this);
+  return BzlaFPSymBV<false>(*this);
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::extend(bwt extension) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::extend(bwt extension) const
 {
   assert(s_bzla);
   BzlaNode *n = is_signed ? bzla_exp_bv_sext(s_bzla, d_node, extension)
                           : bzla_exp_bv_uext(s_bzla, d_node, extension);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::contract(bwt reduction) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::contract(bwt reduction) const
 {
   assert(s_bzla);
   assert(this->getWidth() > reduction);
   BzlaNode *n =
       bzla_exp_bv_slice(s_bzla, d_node, this->getWidth - 1 - reduction, 0);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::resize(bwt newSize) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::resize(bwt newSize) const
 {
   bwt bw = this->getWidth();
   if (newSize > bw) return this->extend(newSize - bw);
@@ -759,49 +804,49 @@ BzlaSymBV<is_signed>::resize(bwt newSize) const
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::matchWidth(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::matchWidth(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(this->getWidth() <= op.getWidth());
   return this->extend(op.getWidth() - this->getWidth());
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::append(const BzlaSymBV<is_signed> &op) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::append(const BzlaFPSymBV<is_signed> &op) const
 {
   assert(s_bzla);
-  BzlaNode *n              = bzla_exp_bv_concat(s_bzla, d_node, op.d_node);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_concat(s_bzla, d_node, op.d_node);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
-BzlaSymBV<is_signed>
-BzlaSymBV<is_signed>::extract(bwt upper, bwt lower) const
+BzlaFPSymBV<is_signed>
+BzlaFPSymBV<is_signed>::extract(bwt upper, bwt lower) const
 {
   assert(s_bzla);
   assert(upper >= lower);
-  BzlaNode *n              = bzla_exp_bv_slice(s_bzla, d_node, upper, lower);
-  BzlaSymBV<is_signed> res = BzlaSymBV<is_signed>(n);
+  BzlaNode *n                = bzla_exp_bv_slice(s_bzla, d_node, upper, lower);
+  BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 template <bool is_signed>
 bool
-BzlaSymBV<is_signed>::checkNode(const BzlaNode *node)
+BzlaFPSymBV<is_signed>::checkNode(const BzlaNode *node)
 {
   return bzla_sort_is_bv(node->bzla, bzla_node_get_sort_id(node));
 }
 
-// BzlaNode* BzlaSymBV::boolNodeToBV(BzlaNode* node) const;
-// BzlaNode* BzlaSymBV::BVToBoolNode(BzlaNode* node) const;
+// BzlaNode* BzlaFPSymBV::boolNodeToBV(BzlaNode* node) const;
+// BzlaNode* BzlaFPSymBV::BVToBoolNode(BzlaNode* node) const;
 
 // template <bool is_signed>
 // BzlaNode *
-// BzlaSymBV<is_signed>::fromProposition (BzlaNode *node) const
+// BzlaFPSymBV<is_signed>::fromProposition (BzlaNode *node) const
 //{
 //  assert (s_bzla);
 //  assert (checkNode (node));
@@ -810,7 +855,7 @@ BzlaSymBV<is_signed>::checkNode(const BzlaNode *node)
 //
 // template <bool is_signed>
 // BzlaNode *
-// BzlaSymBV<is_signed>::toProposition (BzlaNode *node) const
+// BzlaFPSymBV<is_signed>::toProposition (BzlaNode *node) const
 //{
 //  assert (s_bzla);
 //  assert (checkNode (node));

@@ -2875,6 +2875,24 @@ bool boolector_is_fun_sort(Bzla *bzla, BoolectorSort sort);
 */
 uint32_t boolector_bv_sort_get_width(Bzla *bzla, BoolectorSort sort);
 
+/*!
+  Get the bit width of the exponent of a floating-point sort.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector sort.
+  :return: Exponent bit width of ``sort``.
+*/
+uint32_t boolector_fp_sort_get_exp_width(Bzla *bzla, BoolectorSort sort);
+
+/*!
+  Get the bit width of the significand of a floating-point sort.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector sort.
+  :return: Significand bit width of ``sort``.
+*/
+uint32_t boolector_fp_sort_get_sig_width(Bzla *bzla, BoolectorSort sort);
+
 /*------------------------------------------------------------------------*/
 
 /*!
