@@ -3448,9 +3448,6 @@ class TestBvProp : public TestMm
     free_consts(1, num_consts_z, consts_z);
   }
 
-  uint32_t d_bw          = 0;
-  uint32_t d_num_consts  = 1;
-  char **d_consts        = nullptr;
   Bzla *d_bzla           = nullptr;
   BzlaAIGVecMgr *d_avmgr = nullptr;
 };
