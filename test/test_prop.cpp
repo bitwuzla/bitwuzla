@@ -108,14 +108,14 @@ class TestProp : public TestBzla
     /* we must find a solution within n move(s) */
     assert(is_inv(d_mm, bvexp, bve, idx_x));
     res[idx_x] = inv_fun(d_bzla, exp, bvexp, bve, idx_x, domains);
-    assert(res[idx_x]);
+    ASSERT_NE(res[idx_x], nullptr);
     res[idx_s] = n == 1
                      ? bzla_bv_copy(d_mm, bve)
                      : inv_fun(d_bzla, exp, bvexp, res[idx_x], idx_s, domains);
-    assert(res[idx_s]);
+    ASSERT_NE(res[idx_s], nullptr);
     /* Note: this is also tested within the inverse function(s) */
     tmp = create_bv(d_mm, res[0], res[1]);
-    assert(!bzla_bv_compare(tmp, bvexp));
+    ASSERT_EQ(bzla_bv_compare(tmp, bvexp), 0);
     bzla_bv_free(d_mm, tmp);
     bzla_bv_free(d_mm, res[0]);
     bzla_bv_free(d_mm, res[1]);
@@ -126,13 +126,13 @@ class TestProp : public TestBzla
       {
         assert(is_inv(d_mm, bvexp, bve, idx_x));
         res[idx_x] = inv_fun(d_bzla, exp, bvexp, bve, idx_x, domains);
-        assert(res[idx_x]);
+        ASSERT_NE(res[idx_x], nullptr);
         if (!bzla_bv_compare(res[idx_x], bvres)) break;
         bzla_bv_free(d_mm, res[idx_x]);
         res[idx_x] = nullptr;
       }
-      assert(res[idx_x]);
-      assert(!bzla_bv_compare(res[idx_x], bvres));
+      ASSERT_NE(res[idx_x], nullptr);
+      ASSERT_EQ(bzla_bv_compare(res[idx_x], bvres), 0);
       bzla_bv_free(d_mm, res[idx_x]);
     }
 
@@ -166,10 +166,10 @@ class TestProp : public TestBzla
     bzla_node_release(d_bzla, e[1]);
     bzla_sort_release(d_bzla, sort);
     sat_res = sat_prop_solver_aux(d_bzla);
-    assert(sat_res == BZLA_RESULT_SAT);
+    ASSERT_EQ(sat_res, BZLA_RESULT_SAT);
     // printf ("moves %u n %u\n", ((BzlaPropSolver *) d_bzla->slv)->stats.moves,
     // n);
-    assert(((BzlaPropSolver *) d_bzla->slv)->stats.moves <= n);
+    ASSERT_LE(((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
     bzla_reset_incremental_usage(d_bzla);
 #else
     (void) n;
