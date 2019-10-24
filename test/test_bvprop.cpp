@@ -1456,7 +1456,7 @@ class TestBvProp : public TestMm
                     true,
                     res);
 
-          if (res && bzla_bvprop_is_fixed(d_mm, d_x)
+          if (bzla_bvprop_is_fixed(d_mm, d_x)
               && bzla_bvprop_is_fixed(d_mm, d_y))
           {
             assert(bzla_bvprop_is_fixed(d_mm, res_x));
@@ -1466,8 +1466,9 @@ class TestBvProp : public TestMm
               tmp = bzla_bv_add(d_mm, res_x->lo, res_y->lo);
               assert(!bzla_bv_compare(d_x->lo, res_x->lo));
               assert(!bzla_bv_compare(d_y->lo, res_y->lo));
-              assert(bzla_bvprop_is_fixed(d_mm, res_z));
-              assert(!bzla_bv_compare(tmp, res_z->lo));
+              assert(no_overflows || bzla_bvprop_is_fixed(d_mm, res_z));
+              assert(!bzla_bvprop_is_fixed(d_mm, res_z)
+                     || !bzla_bv_compare(tmp, res_z->lo));
               bzla_bv_free(d_mm, tmp);
             }
             else if (bzla_bvprop_is_fixed(d_mm, d_z))
