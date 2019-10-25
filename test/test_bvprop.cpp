@@ -46,49 +46,6 @@ extern "C" {
     bzla_bvprop_free(d_mm, res_z);  \
   } while (0)
 
-#define TEST_PROPBV_CONCAT                                                 \
-  do                                                                       \
-  {                                                                        \
-    res = bzla_bvprop_concat(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z); \
-    ASSERT_TRUE(res || !is_valid(d_mm, res_x, res_y, res_z, 0));           \
-    check_sat(d_x,                                                         \
-              d_y,                                                         \
-              d_z,                                                         \
-              0,                                                           \
-              res_x,                                                       \
-              res_y,                                                       \
-              res_z,                                                       \
-              0,                                                           \
-              0,                                                           \
-              boolector_concat,                                            \
-              0,                                                           \
-              0,                                                           \
-              0,                                                           \
-              0,                                                           \
-              false, /* not compositional but eq always returns true */    \
-              res);                                                        \
-    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_x)                           \
-                || !bzla_bv_compare(d_x->lo, res_x->lo));                  \
-    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_y)                           \
-                || !bzla_bv_compare(d_y->lo, res_y->lo));                  \
-    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_z)                           \
-                || !bzla_bv_compare(d_z->lo, res_z->lo));                  \
-    check_concat(res_x, res_y, res_z);                                     \
-    ASSERT_TRUE(bzla_bvprop_is_valid(d_mm, res_x));                        \
-    ASSERT_TRUE(bzla_bvprop_is_valid(d_mm, res_y));                        \
-    ASSERT_TRUE(bzla_bvprop_is_valid(d_mm, res_z));                        \
-    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_x)                           \
-                || bzla_bvprop_is_fixed(d_mm, res_x));                     \
-    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_y)                           \
-                || bzla_bvprop_is_fixed(d_mm, res_y));                     \
-    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_z)                           \
-                || (bzla_bvprop_is_fixed(d_mm, res_x)                      \
-                    && bzla_bvprop_is_fixed(d_mm, res_y)                   \
-                    && bzla_bvprop_is_fixed(d_mm, res_z)));                \
-    TEST_BVPROP_RELEASE_D_XYZ;                                             \
-    TEST_BVPROP_RELEASE_RES_XYZ;                                           \
-  } while (0)
-
 class TestBvProp : public TestMm
 {
  protected:
@@ -502,27 +459,46 @@ class TestBvProp : public TestMm
 
   void check_concat(BzlaBvDomain *d_x, BzlaBvDomain *d_y, BzlaBvDomain *d_z)
   {
-    assert(bzla_bvprop_is_valid(d_mm, d_x));
-    assert(bzla_bvprop_is_valid(d_mm, d_y));
-    assert(bzla_bvprop_is_valid(d_mm, d_z));
+    bool res;
+    BzlaBvDomain *res_x, *res_y, *res_z;
 
-    size_t i, len_x, len_y;
-    char *str_x = from_domain(d_mm, d_x);
-    char *str_y = from_domain(d_mm, d_y);
-    char *str_z = from_domain(d_mm, d_z);
-    ASSERT_EQ(strlen(str_x) + strlen(str_y), strlen(str_z));
-
-    for (i = 0, len_x = strlen(str_x); i < len_x; i++)
-    {
-      ASSERT_EQ(str_x[i], str_z[i]);
-    }
-    for (i = 0, len_y = strlen(str_y); i < len_y; i++)
-    {
-      ASSERT_EQ(str_y[i], str_z[i + len_x]);
-    }
-    bzla_mem_freestr(d_mm, str_x);
-    bzla_mem_freestr(d_mm, str_y);
-    bzla_mem_freestr(d_mm, str_z);
+    res = bzla_bvprop_concat(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
+    ASSERT_TRUE(res || !is_valid(d_mm, res_x, res_y, res_z, 0));
+    check_sat(d_x,
+              d_y,
+              d_z,
+              0,
+              res_x,
+              res_y,
+              res_z,
+              0,
+              0,
+              boolector_concat,
+              0,
+              0,
+              0,
+              0,
+              false, /* not compositional but eq always returns true */
+              res);
+    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_x)
+                || !bzla_bv_compare(d_x->lo, res_x->lo));
+    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_y)
+                || !bzla_bv_compare(d_y->lo, res_y->lo));
+    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_z)
+                || !bzla_bv_compare(d_z->lo, res_z->lo));
+    check_concat_result(res_x, res_y, res_z);
+    ASSERT_TRUE(bzla_bvprop_is_valid(d_mm, res_x));
+    ASSERT_TRUE(bzla_bvprop_is_valid(d_mm, res_y));
+    ASSERT_TRUE(bzla_bvprop_is_valid(d_mm, res_z));
+    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_x)
+                || bzla_bvprop_is_fixed(d_mm, res_x));
+    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_y)
+                || bzla_bvprop_is_fixed(d_mm, res_y));
+    ASSERT_TRUE(!bzla_bvprop_is_fixed(d_mm, d_z)
+                || (bzla_bvprop_is_fixed(d_mm, res_x)
+                    && bzla_bvprop_is_fixed(d_mm, res_y)
+                    && bzla_bvprop_is_fixed(d_mm, res_z)));
+    TEST_BVPROP_RELEASE_RES_XYZ;
   }
 
   void check_sext(BzlaBvDomain *d_x, BzlaBvDomain *d_z)
@@ -1712,10 +1688,9 @@ class TestBvProp : public TestMm
 
   void test_concat(uint32_t bw)
   {
-    bool res;
     uint32_t i, j, k, num_consts;
     char *s_const, **consts;
-    BzlaBvDomain *d_x, *d_y, *d_z, *res_x, *res_y, *res_z;
+    BzlaBvDomain *d_x, *d_y, *d_z;
 
     num_consts = generate_consts(bw, &consts);
 
@@ -1728,26 +1703,30 @@ class TestBvProp : public TestMm
         d_y = bzla_bvprop_new_init(d_mm, j);
         ASSERT_EQ(i + j, bw);
         d_z = bzla_bvprop_new_init(d_mm, bw);
-        TEST_PROPBV_CONCAT;
+        check_concat(d_x, d_y, d_z);
+        TEST_BVPROP_RELEASE_D_XYZ;
 
         s_const = slice_str_const(consts[k], 0, i - 1);
         d_x     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_y = bzla_bvprop_new_init(d_mm, j);
         d_z = bzla_bvprop_new_init(d_mm, bw);
-        TEST_PROPBV_CONCAT;
+        check_concat(d_x, d_y, d_z);
+        TEST_BVPROP_RELEASE_D_XYZ;
 
         d_x     = bzla_bvprop_new_init(d_mm, i);
         s_const = slice_str_const(consts[k], i, bw - 1);
         d_y     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_z = bzla_bvprop_new_init(d_mm, bw);
-        TEST_PROPBV_CONCAT;
+        check_concat(d_x, d_y, d_z);
+        TEST_BVPROP_RELEASE_D_XYZ;
 
         d_x = bzla_bvprop_new_init(d_mm, i);
         d_y = bzla_bvprop_new_init(d_mm, j);
         d_z = create_domain(consts[k]);
-        TEST_PROPBV_CONCAT;
+        check_concat(d_x, d_y, d_z);
+        TEST_BVPROP_RELEASE_D_XYZ;
 
         s_const = slice_str_const(consts[k], 0, i - 1);
         d_x     = create_domain(s_const);
@@ -1756,21 +1735,24 @@ class TestBvProp : public TestMm
         d_y     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_z = bzla_bvprop_new_init(d_mm, bw);
-        TEST_PROPBV_CONCAT;
+        check_concat(d_x, d_y, d_z);
+        TEST_BVPROP_RELEASE_D_XYZ;
 
         s_const = slice_str_const(consts[k], 0, i - 1);
         d_x     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_y = bzla_bvprop_new_init(d_mm, j);
         d_z = create_domain(consts[k]);
-        TEST_PROPBV_CONCAT;
+        check_concat(d_x, d_y, d_z);
+        TEST_BVPROP_RELEASE_D_XYZ;
 
         d_x     = bzla_bvprop_new_init(d_mm, i);
         s_const = slice_str_const(consts[k], i, bw - 1);
         d_y     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_z = create_domain(consts[k]);
-        TEST_PROPBV_CONCAT;
+        check_concat(d_x, d_y, d_z);
+        TEST_BVPROP_RELEASE_D_XYZ;
 
         s_const = slice_str_const(consts[k], 0, i - 1);
         d_x     = create_domain(s_const);
@@ -1779,7 +1761,8 @@ class TestBvProp : public TestMm
         d_y     = create_domain(s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_z = create_domain(consts[k]);
-        TEST_PROPBV_CONCAT;
+        check_concat(d_x, d_y, d_z);
+        TEST_BVPROP_RELEASE_D_XYZ;
       }
     }
     free_consts(bw, num_consts, consts);
@@ -3463,6 +3446,34 @@ class TestBvProp : public TestMm
 
   Bzla *d_bzla           = nullptr;
   BzlaAIGVecMgr *d_avmgr = nullptr;
+
+ private:
+  void check_concat_result(BzlaBvDomain *d_x,
+                           BzlaBvDomain *d_y,
+                           BzlaBvDomain *d_z)
+  {
+    assert(bzla_bvprop_is_valid(d_mm, d_x));
+    assert(bzla_bvprop_is_valid(d_mm, d_y));
+    assert(bzla_bvprop_is_valid(d_mm, d_z));
+
+    size_t i, len_x, len_y;
+    char *str_x = from_domain(d_mm, d_x);
+    char *str_y = from_domain(d_mm, d_y);
+    char *str_z = from_domain(d_mm, d_z);
+    ASSERT_EQ(strlen(str_x) + strlen(str_y), strlen(str_z));
+
+    for (i = 0, len_x = strlen(str_x); i < len_x; i++)
+    {
+      ASSERT_EQ(str_x[i], str_z[i]);
+    }
+    for (i = 0, len_y = strlen(str_y); i < len_y; i++)
+    {
+      ASSERT_EQ(str_y[i], str_z[i + len_x]);
+    }
+    bzla_mem_freestr(d_mm, str_x);
+    bzla_mem_freestr(d_mm, str_y);
+    bzla_mem_freestr(d_mm, str_z);
+  }
 };
 
 TEST_F(TestBvProp, valid_domain)
