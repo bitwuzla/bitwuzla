@@ -95,6 +95,7 @@ class BzlaFPSortInfo
   BzlaFPSortInfo(const BzlaSortId sort);
   BzlaFPSortInfo(uint32_t ewidth, uint32_t swidth);
   BzlaFPSortInfo(const BzlaFPSortInfo &other);
+  ~BzlaFPSortInfo();
 
   static void setBtor(Bzla *bzla) { s_bzla = bzla; }
 
@@ -260,6 +261,12 @@ BzlaFPSortInfo::BzlaFPSortInfo(const BzlaFPSortInfo &other)
   assert(s_bzla);
   assert(bzla_sort_is_fp(s_bzla, other.d_sort));
   d_sort = bzla_sort_copy(s_bzla, other.d_sort);
+}
+
+BzlaFPSortInfo::~BzlaFPSortInfo()
+{
+  assert(s_bzla);
+  bzla_sort_release(s_bzla, d_sort);
 }
 
 BzlaSortId
