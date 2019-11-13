@@ -457,44 +457,34 @@ BzlaNode *bzla_exp_fp_rtn(Bzla *bzla);
 BzlaNode *bzla_exp_fp_rtz(Bzla *bzla);
 
 /**
- * Create floating-point const +zero with exponent size 'eb' and significand
- * size 'sb'.
- * eb:  bit-width of the exponent
- * sb:  bit-width of the significand
+ * Create floating-point const +zero of given floating-point sort.
+ * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_pos_zero(Bzla *bzla, uint32_t eb, uint32_t sb);
+BzlaNode *bzla_exp_fp_pos_zero(Bzla *bzla, BzlaSortId sort);
 
 /**
- * Create floating-point const -zero with exponent size 'eb' and significand
- * size 'sb'.
- * eb:  bit-width of the exponent
- * sb:  bit-width of the significand
+ * Create floating-point const -zero of given floating-point sort.
+ * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_neg_zero(Bzla *bzla, uint32_t eb, uint32_t sb);
+BzlaNode *bzla_exp_fp_neg_zero(Bzla *bzla, BzlaSortId sort);
 
 /**
- * Create floating-point const +oo with exponent size 'eb' and significand
- * size 'sb'.
- * eb:  bit-width of the exponent
- * sb:  bit-width of the significand
+ * Create floating-point const +oo of given floating-point sort.
+ * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_pos_inf(Bzla *bzla, uint32_t eb, uint32_t sb);
+BzlaNode *bzla_exp_fp_pos_inf(Bzla *bzla, BzlaSortId sort);
 
 /**
- * Create floating-point const -oo with exponent size 'eb' and significand
- * size 'sb'.
- * eb:  bit-width of the exponent
- * sb:  bit-width of the significand
+ * Create floating-point const -oo of given floating-point sort.
+ * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb);
+BzlaNode *bzla_exp_fp_neg_inf(Bzla *bzla, BzlaSortId sort);
 
 /**
- * Create floating-point const Nan with exponent size 'eb' and significand
- * size 'sb'.
- * eb:  bit-width of the exponent
- * sb:  bit-width of the significand
+ * Create floating-point const Nan of given floating-point sort.
+ * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb);
+BzlaNode *bzla_exp_fp_nan(Bzla *bzla, BzlaSortId sort);
 
 /**
  * Create floating-point const.
@@ -616,48 +606,47 @@ BzlaNode *bzla_exp_fp_fma(
     Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3);
 
 /**
- * Create floating-point with exponent size 'eb' and significand size 'sb'
- * from given bit-vector expression 'exp'.
- * exp: bit-vector operand
- * eb:  bit-width of the exponent
- * sb:  bit-width of the significand
+ * Create floating-point of given floating-point sort from given bit-vector
+ * expression 'exp'.
+ * exp:  bit-vector operand
+ * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_to_fp(Bzla *bzla,
-                            BzlaNode *exp,
-                            uint32_t eb,
-                            uint32_t sb);
+BzlaNode *bzla_exp_fp_to_fp(Bzla *bzla, BzlaNode *exp, BzlaSortId sort);
 
 /**
  * Create floating-point to-fp from bit-vector (interpreted as signed) or
  * floating-point expression wrt to given rounding mode.
- * e0: rounding mode
- * e1: bit-vector or floating-point operand
- * eb: bit-width of the exponent
- * sb: bit-width of the significand
+ * e0:   rounding mode
+ * e1:   bit-vector or floating-point operand
+ * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_to_fp_signed(
-    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, uint32_t eb, uint32_t sb);
+BzlaNode *bzla_exp_fp_to_fp_signed(Bzla *bzla,
+                                   BzlaNode *e0,
+                                   BzlaNode *e1,
+                                   BzlaSortId sort);
 
 /**
  * Create floating-point to-fp from bit-vector expression (interpreted as
  * unsigned) wrt to given rounding mode.
- * e0: rounding mode
- * e1: bit-vector operand
- * eb: bit-width of the exponent
- * sb: bit-width of the significand
+ * e0:   rounding mode
+ * e1:   bit-vector operand
+ * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_to_fp_unsigned(
-    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, uint32_t eb, uint32_t sb);
+BzlaNode *bzla_exp_fp_to_fp_unsigned(Bzla *bzla,
+                                     BzlaNode *e0,
+                                     BzlaNode *e1,
+                                     BzlaSortId sort);
 
 /**
  * Create floating-point to-fp from double wrt to given rounding mode.
  * exp:  rounding mode
  * real: the real operand represented as a strin
- * eb:   bit-width of the exponent
- * sb:   bit-width of the significand
+ * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_to_fp_real(
-    Bzla *bzla, BzlaNode *exp, const char *real, uint32_t eb, uint32_t sb);
+BzlaNode *bzla_exp_fp_to_fp_real(Bzla *bzla,
+                                 BzlaNode *exp,
+                                 const char *real,
+                                 BzlaSortId sort);
 
 /*------------------------------------------------------------------------*/
 

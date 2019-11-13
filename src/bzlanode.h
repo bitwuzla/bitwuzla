@@ -210,11 +210,13 @@ struct BzlaNode
 
 /*------------------------------------------------------------------------*/
 
-struct BzlaFPVarNode
+struct BzlaFPConstNode
 {
   BZLA_NODE_STRUCT;
+  BzlaBitVector *exponent;
+  BzlaBitVector *significand;
 };
-typedef struct BzlaFPVarNode BzlaFPVarNode;
+typedef struct BzlaFPConstNode BzlaFPConstNode;
 
 struct BzlaFPNode
 {

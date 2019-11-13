@@ -1754,70 +1754,66 @@ bzla_exp_fp_rtz(Bzla *bzla)
 }
 
 BzlaNode *
-bzla_exp_fp_pos_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
+bzla_exp_fp_pos_zero(Bzla *bzla, BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla);
-  assert(eb);
-  assert(sb);
+  assert(sort);
+  assert(bzla_sort_is_fp(bzla, sort));
   /// FP STUB
   return bzla_exp_true(bzla);
   ////
 }
 
 BzlaNode *
-bzla_exp_fp_neg_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
+bzla_exp_fp_neg_zero(Bzla *bzla, BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla);
-  assert(eb);
-  assert(sb);
+  assert(sort);
   /// FP STUB
   return bzla_exp_true(bzla);
   ////
 }
 
 BzlaNode *
-bzla_exp_fp_pos_inf(Bzla *bzla, uint32_t eb, uint32_t sb)
+bzla_exp_fp_pos_inf(Bzla *bzla, BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla);
-  assert(eb);
-  assert(sb);
+  assert(sort);
   /// FP STUB
   return bzla_exp_true(bzla);
   ////
 }
 
 BzlaNode *
-bzla_exp_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb)
+bzla_exp_fp_neg_inf(Bzla *bzla, BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla);
-  assert(eb);
-  assert(sb);
+  assert(sort);
   /// FP STUB
   return bzla_exp_true(bzla);
   ////
 }
 
 BzlaNode *
-bzla_exp_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb)
+bzla_exp_fp_nan(Bzla *bzla, BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla);
-  assert(eb);
-  assert(sb);
+  assert(sort);
   /// FP STUB
   return bzla_exp_true(bzla);
   ////
@@ -2196,78 +2192,76 @@ bzla_exp_fp_fma(
 }
 
 BzlaNode *
-bzla_exp_fp_to_fp(Bzla *bzla, BzlaNode *node, uint32_t eb, uint32_t sb)
+bzla_exp_fp_to_fp(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla == bzla_node_real_addr(node)->bzla);
-  assert(eb);
-  assert(sb);
+  assert(sort);
   /// FP STUB
   (void) node;
-  (void) eb;
-  (void) sb;
+  (void) sort;
   return bzla_exp_true(bzla);
   ////
 }
 
 BzlaNode *
-bzla_exp_fp_to_fp_signed(
-    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, uint32_t eb, uint32_t sb)
+bzla_exp_fp_to_fp_signed(Bzla *bzla,
+                         BzlaNode *e0,
+                         BzlaNode *e1,
+                         BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
-  assert(eb);
-  assert(sb);
+  assert(sort);
   /// FP STUB
   (void) e0;
   (void) e1;
-  (void) eb;
-  (void) sb;
+  (void) sort;
   return bzla_exp_true(bzla);
   ////
 }
 
 BzlaNode *
-bzla_exp_fp_to_fp_unsigned(
-    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, uint32_t eb, uint32_t sb)
+bzla_exp_fp_to_fp_unsigned(Bzla *bzla,
+                           BzlaNode *e0,
+                           BzlaNode *e1,
+                           BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
-  assert(eb);
-  assert(sb);
+  assert(sort);
   /// FP STUB
   (void) e0;
   (void) e1;
-  (void) eb;
-  (void) sb;
+  (void) sort;
   return bzla_exp_true(bzla);
   ////
 }
 
 BzlaNode *
-bzla_exp_fp_to_fp_real(
-    Bzla *bzla, BzlaNode *node, const char *real, uint32_t eb, uint32_t sb)
+bzla_exp_fp_to_fp_real(Bzla *bzla,
+                       BzlaNode *node,
+                       const char *real,
+                       BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla == bzla_node_real_addr(node)->bzla);
   assert(real);
-  assert(eb);
-  assert(sb);
+  assert(sort);
   /// FP STUB
   (void) node;
   (void) real;
-  (void) eb;
-  (void) sb;
+  (void) sort;
   return bzla_exp_true(bzla);
   ////
 }

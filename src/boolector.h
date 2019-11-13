@@ -1597,7 +1597,7 @@ BoolectorNode *boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n);
   Create a round-nearest-ties-to-even rounding mode.
 
   :param bzla: Boolector instance.
-  :return:     An RNE rounding mode const.
+  :return:     An RNE rounding mode constant.
  */
 BoolectorNode *boolector_fp_rne(Bzla *bzla);
 
@@ -1605,7 +1605,7 @@ BoolectorNode *boolector_fp_rne(Bzla *bzla);
   Create a round-nearest-ties-to-away rounding mode.
 
   :param bzla: Boolector instance.
-  :return:     An RNA rounding mode const.
+  :return:     An RNA rounding mode constant.
  */
 BoolectorNode *boolector_fp_rna(Bzla *bzla);
 
@@ -1613,7 +1613,7 @@ BoolectorNode *boolector_fp_rna(Bzla *bzla);
   Create a round-toward-positive rounding mode.
 
   :param bzla: Boolector instance.
-  :return:     An RTP rounding mode const.
+  :return:     An RTP rounding mode constant.
  */
 BoolectorNode *boolector_fp_rtp(Bzla *bzla);
 
@@ -1621,7 +1621,7 @@ BoolectorNode *boolector_fp_rtp(Bzla *bzla);
   Create a round-toward-negative rounding mode.
 
   :param bzla: Boolector instance.
-  :return:     An RTN rounding mode const.
+  :return:     An RTN rounding mode constant.
  */
 BoolectorNode *boolector_fp_rtn(Bzla *bzla);
 
@@ -1629,69 +1629,54 @@ BoolectorNode *boolector_fp_rtn(Bzla *bzla);
   Create a round-toward-zero rounding mode.
 
   :param bzla: Boolector instance.
-  :return:     An RTZ rounding mode const.
+  :return:     An RTZ rounding mode constant.
  */
 BoolectorNode *boolector_fp_rtz(Bzla *bzla);
 
 /*!
-  Create a floating-point +zero const with exponent size ``eb`` and significand
-  size ``sb``.
+  Create a floating-point +zero constant of given sort.
 
   :param bzla: Boolector instance.
-  :param eb:   The bit-width of the exponent.
-  :param sb:   The bit-width of the significand.
-  :return:     A floating-point +zero const with exponent size ``eb`` and
-               significand size ``sb``.
+  :param sort: Floating-point sort.
+  :return:     A floating-point +zero constant of sort ``sort``.
  */
-BoolectorNode *boolector_fp_pos_zero(Bzla *bzla, uint32_t eb, uint32_t sb);
+BoolectorNode *boolector_fp_pos_zero(Bzla *bzla, BoolectorSort sort);
 
 /*!
-  Create a floating-point -zero const with exponent size ``eb`` and significand
-  size ``sb``.
+  Create a floating-point -zero constant of given sort.
 
   :param bzla: Boolector instance.
-  :param eb:   The bit-width of the exponent.
-  :param sb:   The bit-width of the significand.
-  :return:     A floating-point -zero const with exponent size ``eb`` and
-               significand size ``sb``.
+  :param sort: Floating-point sort.
+  :return:     A floating-point -zero constant of sort ``sort``.
  */
-BoolectorNode *boolector_fp_neg_zero(Bzla *bzla, uint32_t eb, uint32_t sb);
+BoolectorNode *boolector_fp_neg_zero(Bzla *bzla, BoolectorSort sort);
 
 /*!
-  Create a floating-point +oo const with exponent size ``eb`` and significand
-  size ``sb``.
+  Create a floating-point +oo constant of given sort.
 
   :param bzla: Boolector instance.
-  :param eb:   The bit-width of the exponent.
-  :param sb:   The bit-width of the significand.
-  :return:     A floating-point +inf const with exponent size ``eb`` and
-               significand size ``sb``.
+  :param sort: Floating-point sort.
+  :return:     A floating-point +inf constant of sort ``sort``.
  */
-BoolectorNode *boolector_fp_pos_inf(Bzla *bzla, uint32_t eb, uint32_t sb);
+BoolectorNode *boolector_fp_pos_inf(Bzla *bzla, BoolectorSort sort);
 
 /*!
-  Create a floating-point -oo const with exponent size ``eb`` and significand
-  size ``sb``.
+  Create a floating-point -oo constant of given sort.
 
   :param bzla: Boolector instance.
-  :param eb:   The bit-width of the exponent.
-  :param sb:   The bit-width of the significand.
-  :return:     A floating-point -inf const with exponent size ``eb`` and
-               significand size ``sb``.
+  :param sort: Floating-point sort.
+  :return:     A floating-point -inf constant of sort ``sort``.
  */
-BoolectorNode *boolector_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb);
+BoolectorNode *boolector_fp_neg_inf(Bzla *bzla, BoolectorSort sort);
 
 /*!
-  Create a floating-point Nan const with exponent size ``eb`` and significand
-  size ``sb``.
+  Create a floating-point Nan constant of given sort.
 
   :param bzla: Boolector instance.
-  :param eb:   The bit-width of the exponent.
-  :param sb:   The bit-width of the significand.
-  :return:     A floating-point Nan const with exponent size ``eb`` and
-               significand size ``sb``.
+  :param sort: Floating-point sort
+  :return:     A floating-point Nan constant of sort ``sort``.
  */
-BoolectorNode *boolector_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb);
+BoolectorNode *boolector_fp_nan(Bzla *bzla, BoolectorSort sort);
 
 /*!
   Create a floating-point const with exponent size ``width(n0) + ``width(n2)``
@@ -2011,15 +1996,13 @@ BoolectorNode *boolector_fp_fma(Bzla *bzla,
 
   :param bzla: Boolector instance.
   :param node: Bit-vector operand.
-  :param eb:   The bit-width of the exponent.
-  :param sb:   The bit-width of the significand.
-  :return:     A floating-point with exponent size ``eb`` and significand size
-               ``sb`` representing bit-vector ``node``.
+  :param sort: Floating-point sort.
+  :return:     A floating-point of sort ``sort`` representing bit-vector
+               ``node``.
  */
 BoolectorNode *boolector_fp_to_fp(Bzla *bzla,
                                   BoolectorNode *node,
-                                  uint32_t eb,
-                                  uint32_t sb);
+                                  BoolectorSort sort);
 
 /*!
   Create a floating-point expression with exponent size ``eb`` and significand
@@ -2029,14 +2012,14 @@ BoolectorNode *boolector_fp_to_fp(Bzla *bzla,
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
   :param n1:   Bit-vector or floating-point operand.
-  :param eb:   The bit-width of the exponent.
-  :param sb:   The bit-width of the significand.
-  :return:     A floating-point with exponent size ``eb`` and significand size
-               ``sb`` representing bit-vector or floating-point ``n1`` with
-               respect to rounding mode ``n0``.
+  :param sort: Floating-point sort.
+  :return:     A floating-point with of sort ``sort`` representing bit-vector
+               or floating-point ``n1`` with respect to rounding mode ``n0``.
  */
-BoolectorNode *boolector_fp_to_fp_signed(
-    Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1, uint32_t eb, uint32_t sb);
+BoolectorNode *boolector_fp_to_fp_signed(Bzla *bzla,
+                                         BoolectorNode *n0,
+                                         BoolectorNode *n1,
+                                         BoolectorSort sort);
 
 /*!
   Create a floating-point expression with exponent size ``eb`` and significand
@@ -2046,17 +2029,14 @@ BoolectorNode *boolector_fp_to_fp_signed(
   :param bzla: Boolector instance.
   :param node: Rounding mode operand.
   :param real: A real number represented as a string.
-  :param eb:   The bit-width of the exponent.
-  :param sb:   The bit-width of the significand.
-  :return:     A floating-point with exponent size ``eb`` and significand size
-               ``sb`` representing ``real`` with respect to rounding mode
-               ``node``.
+  :param sort: Floating-point sort.
+  :return:     A floating-point of sort ``sort`` representing ``real`` with
+               respect to rounding mode ``node``.
  */
 BoolectorNode *boolector_fp_to_fp_real(Bzla *bzla,
                                        BoolectorNode *node,
                                        const char *real,
-                                       uint32_t eb,
-                                       uint32_t sb);
+                                       BoolectorSort sort);
 
 /*!
   Create a floating-point expression with exponent size ``eb`` and significand
@@ -2066,14 +2046,14 @@ BoolectorNode *boolector_fp_to_fp_real(Bzla *bzla,
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
   :param n1:   Bit-vector operand.
-  :param eb:   The bit-width of the exponent.
-  :param sb:   The bit-width of the significand.
-  :return:     A floating-point with exponent size ``eb`` and significand size
-               representing bit-vector or floating-point ``n1`` with respect to
-               rounding mode ``n0``.
+  :param sort: Floating-point sort.
+  :return:     A floating-point of sort ``sort`` representing bit-vector or
+               floating-point ``n1`` with respect to rounding mode ``n0``.
  */
-BoolectorNode *boolector_fp_to_fp_unsigned(
-    Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1, uint32_t eb, uint32_t sb);
+BoolectorNode *boolector_fp_to_fp_unsigned(Bzla *bzla,
+                                           BoolectorNode *n0,
+                                           BoolectorNode *n1,
+                                           BoolectorSort sort);
 
 /*------------------------------------------------------------------------*/
 

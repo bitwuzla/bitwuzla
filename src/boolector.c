@@ -3075,91 +3075,101 @@ boolector_fp_rtz(Bzla *bzla)
 }
 
 BoolectorNode *
-boolector_fp_pos_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
+boolector_fp_pos_zero(Bzla *bzla, BoolectorSort sort)
 {
   BzlaNode *res;
+  BzlaSortId s;
 
+  s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_TRAPI("%u %u", eb, sb);
-  BZLA_ABORT(eb == 0, "'eb' must be > 0");
-  BZLA_ABORT(sb == 0, "'sb' must be > 0");
-  res = bzla_exp_fp_pos_zero(bzla, eb, sb);
+  BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  res = bzla_exp_fp_pos_zero(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_pos_zero, eb, sb);
+  BZLA_CHKCLONE_RES_PTR(res, fp_pos_zero, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_fp_neg_zero(Bzla *bzla, uint32_t eb, uint32_t sb)
+boolector_fp_neg_zero(Bzla *bzla, BoolectorSort sort)
 {
   BzlaNode *res;
+  BzlaSortId s;
 
+  s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_TRAPI("%u %u", eb, sb);
-  BZLA_ABORT(eb == 0, "'eb' must be > 0");
-  BZLA_ABORT(sb == 0, "'sb' must be > 0");
-  res = bzla_exp_fp_neg_zero(bzla, eb, sb);
+  BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  res = bzla_exp_fp_neg_zero(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_neg_zero, eb, sb);
+  BZLA_CHKCLONE_RES_PTR(res, fp_neg_zero, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_fp_pos_inf(Bzla *bzla, uint32_t eb, uint32_t sb)
+boolector_fp_pos_inf(Bzla *bzla, BoolectorSort sort)
 {
   BzlaNode *res;
+  BzlaSortId s;
 
+  s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_TRAPI("%u %u", eb, sb);
-  BZLA_ABORT(eb == 0, "'eb' must be > 0");
-  BZLA_ABORT(sb == 0, "'sb' must be > 0");
-  res = bzla_exp_fp_pos_inf(bzla, eb, sb);
+  BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  res = bzla_exp_fp_pos_inf(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_pos_inf, eb, sb);
+  BZLA_CHKCLONE_RES_PTR(res, fp_pos_inf, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_fp_neg_inf(Bzla *bzla, uint32_t eb, uint32_t sb)
+boolector_fp_neg_inf(Bzla *bzla, BoolectorSort sort)
 {
   BzlaNode *res;
+  BzlaSortId s;
 
+  s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_TRAPI("%u %u", eb, sb);
-  BZLA_ABORT(eb == 0, "'eb' must be > 0");
-  BZLA_ABORT(sb == 0, "'sb' must be > 0");
-  res = bzla_exp_fp_neg_inf(bzla, eb, sb);
+  BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  res = bzla_exp_fp_neg_inf(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_neg_inf, eb, sb);
+  BZLA_CHKCLONE_RES_PTR(res, fp_neg_inf, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_fp_nan(Bzla *bzla, uint32_t eb, uint32_t sb)
+boolector_fp_nan(Bzla *bzla, BoolectorSort sort)
 {
   BzlaNode *res;
+  BzlaSortId s;
 
+  s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_TRAPI("%u %u", eb, sb);
-  BZLA_ABORT(eb == 0, "'eb' must be > 0");
-  BZLA_ABORT(sb == 0, "'sb' must be > 0");
-  res = bzla_exp_fp_nan(bzla, eb, sb);
+  BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  res = bzla_exp_fp_nan(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_nan, eb, sb);
+  BZLA_CHKCLONE_RES_PTR(res, fp_nan, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
@@ -3872,21 +3882,25 @@ boolector_fp_fma(Bzla *bzla,
 }
 
 BoolectorNode *
-boolector_fp_to_fp(Bzla *bzla, BoolectorNode *node, uint32_t eb, uint32_t sb)
+boolector_fp_to_fp(Bzla *bzla, BoolectorNode *node, BoolectorSort sort)
 {
   BzlaNode *exp, *res;
-  uint32_t bw;
+  BzlaSortId s;
+  uint32_t bw, eb, sb;
 
   exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  s   = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(exp);
-  BZLA_TRAPI_UNFUN_EXT(exp, "%u %u", eb, sb);
-  BZLA_ABORT(eb == 0, "'eb' must be > 0");
-  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  BZLA_TRAPI_UNFUN_EXT(exp, BZLA_TRAPI_SORT_FMT, s);
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_BV(exp);
   bw = bzla_node_bv_get_width(bzla, exp);
+  eb = bzla_sort_fp_get_exp_width(bzla, s);
+  sb = bzla_sort_fp_get_sig_width(bzla, s);
   BZLA_ABORT(
       bw != eb + sb,
       "bit-width '%u' of bit-vector expression doesn't match significand and "
@@ -3894,96 +3908,107 @@ boolector_fp_to_fp(Bzla *bzla, BoolectorNode *node, uint32_t eb, uint32_t sb)
       bw,
       eb,
       sb);
-  res = bzla_exp_fp_to_fp(bzla, exp, eb, sb);
+  res = bzla_exp_fp_to_fp(bzla, exp, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_to_fp, BZLA_CLONED_EXP(exp), eb, sb);
+  BZLA_CHKCLONE_RES_PTR(res, fp_to_fp, BZLA_CLONED_EXP(exp), sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_fp_to_fp_signed(
-    Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1, uint32_t eb, uint32_t sb)
+boolector_fp_to_fp_signed(Bzla *bzla,
+                          BoolectorNode *n0,
+                          BoolectorNode *n1,
+                          BoolectorSort sort)
 {
   BzlaNode *e0, *e1, *res;
+  BzlaSortId s;
 
   e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
   e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  s  = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(e0);
   BZLA_ABORT_ARG_NULL(e1);
-  BZLA_TRAPI_BINFUN_EXT(e0, e1, "%u %u", eb, sb);
-  BZLA_ABORT(eb == 0, "'eb' must be > 0");
-  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  BZLA_TRAPI_BINFUN_EXT(e0, e1, BZLA_TRAPI_SORT_FMT, s);
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
   BZLA_ABORT_REFS_NOT_POS(e0);
   BZLA_ABORT_REFS_NOT_POS(e1);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
   BZLA_ABORT_IS_NOT_RM(e0);
   BZLA_ABORT_IS_NOT_BV_OR_FP(e1);
-  res = bzla_exp_fp_to_fp_signed(bzla, e0, e1, eb, sb);
+  res = bzla_exp_fp_to_fp_signed(bzla, e0, e1, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
   BZLA_CHKCLONE_RES_PTR(
-      res, fp_to_fp_signed, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1), eb, sb);
+      res, fp_to_fp_signed, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1), sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_fp_to_fp_unsigned(
-    Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1, uint32_t eb, uint32_t sb)
+boolector_fp_to_fp_unsigned(Bzla *bzla,
+                            BoolectorNode *n0,
+                            BoolectorNode *n1,
+                            BoolectorSort sort)
 {
   BzlaNode *e0, *e1, *res;
+  BzlaSortId s;
 
   e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
   e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  s  = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(e0);
   BZLA_ABORT_ARG_NULL(e1);
-  BZLA_TRAPI_BINFUN_EXT(e0, e1, "%u %u", eb, sb);
-  BZLA_ABORT(eb == 0, "'eb' must be > 0");
-  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  BZLA_TRAPI_BINFUN_EXT(e0, e1, BZLA_TRAPI_SORT_FMT, s);
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
   BZLA_ABORT_REFS_NOT_POS(e0);
   BZLA_ABORT_REFS_NOT_POS(e1);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
   BZLA_ABORT_IS_NOT_RM(e0);
   BZLA_ABORT_IS_NOT_BV_OR_FP(e1);
-  res = bzla_exp_fp_to_fp_unsigned(bzla, e0, e1, eb, sb);
+  res = bzla_exp_fp_to_fp_unsigned(bzla, e0, e1, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
   BZLA_CHKCLONE_RES_PTR(
-      res, fp_to_fp_unsigned, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1), eb, sb);
+      res, fp_to_fp_unsigned, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1), sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_fp_to_fp_real(
-    Bzla *bzla, BoolectorNode *node, const char *real, uint32_t eb, uint32_t sb)
+boolector_fp_to_fp_real(Bzla *bzla,
+                        BoolectorNode *node,
+                        const char *real,
+                        BoolectorSort sort)
 {
   BzlaNode *exp, *res;
+  BzlaSortId s;
 
   exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  s   = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(exp);
-  BZLA_ABORT_ARG_NULL(real);
-  BZLA_TRAPI_UNFUN_EXT(exp, "%s", real);
-  BZLA_ABORT(eb == 0, "'eb' must be > 0");
-  BZLA_ABORT(sb == 0, "'sb' must be > 0");
+  BZLA_TRAPI_UNFUN_EXT(exp, BZLA_TRAPI_SORT_FMT, s);
+  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_RM(exp);
-  res = bzla_exp_fp_to_fp_real(bzla, exp, real, eb, sb);
+  res = bzla_exp_fp_to_fp_real(bzla, exp, real, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_to_fp_real, BZLA_CLONED_EXP(exp), real, eb, sb);
+  BZLA_CHKCLONE_RES_PTR(res, fp_to_fp_real, BZLA_CLONED_EXP(exp), real, sort);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }

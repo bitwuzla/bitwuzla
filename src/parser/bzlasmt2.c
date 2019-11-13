@@ -2657,8 +2657,9 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
           item_cur->node->name);
     }
     /* (_ to_fp eb sb) RoundingMode Real */
-    exp = boolector_fp_to_fp_real(
-        bzla, item_cur[1].exp, item_cur[1].str, item_cur->idx0, item_cur->idx1);
+    s   = boolector_fp_sort(bzla, item_cur->idx0, item_cur->idx1);
+    exp = boolector_fp_to_fp_real(bzla, item_cur[1].exp, item_cur[1].str, s);
+    boolector_release_sort(bzla, s);
     boolector_release(bzla, item_cur[1].exp);
     bzla_mem_freestr(parser->mem, item_cur[2].str);
     parser->work.top = item_cur;
@@ -2686,11 +2687,10 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
                           "invalid argument to '%s', expected bit-vector term",
                           item_cur->node->name);
       }
-      exp = boolector_fp_to_fp_unsigned(bzla,
-                                        item_cur[1].exp,
-                                        item_cur[2].exp,
-                                        item_cur->idx0,
-                                        item_cur->idx1);
+      s   = boolector_fp_sort(bzla, item_cur->idx0, item_cur->idx1);
+      exp = boolector_fp_to_fp_unsigned(
+          bzla, item_cur[1].exp, item_cur[2].exp, s);
+      boolector_release_sort(bzla, s);
     }
     else
     {
@@ -2703,11 +2703,10 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
             "term",
             item_cur->node->name);
       }
-      exp = boolector_fp_to_fp_signed(bzla,
-                                      item_cur[1].exp,
-                                      item_cur[2].exp,
-                                      item_cur->idx0,
-                                      item_cur->idx1);
+      s = boolector_fp_sort(bzla, item_cur->idx0, item_cur->idx1);
+      exp =
+          boolector_fp_to_fp_signed(bzla, item_cur[1].exp, item_cur[2].exp, s);
+      boolector_release_sort(bzla, s);
     }
     release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
@@ -3818,8 +3817,10 @@ close_term(BzlaSMT2Parser *parser)
       }
       assert(item_cur->idx0);
       assert(item_cur->idx1);
-      exp = boolector_fp_to_fp(
-          bzla, item_cur[1].exp, item_cur->idx0, item_cur->idx1);
+      BoolectorSort sort =
+          boolector_fp_sort(bzla, item_cur->idx0, item_cur->idx1);
+      exp = boolector_fp_to_fp(bzla, item_cur[1].exp, sort);
+      boolector_release_sort(bzla, sort);
       release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
     }
     else
@@ -4078,14 +4079,13 @@ parse_open_term_indexed_parametric(BzlaSMT2Parser *parser,
 }
 
 static int32_t
-parse_open_close_term_indexed_fp_special_const(BzlaSMT2Parser *parser,
-                                               BzlaSMT2Item *item_cur,
-                                               int32_t tag,
-                                               BzlaSMT2Node *node,
-                                               const char *msg,
-                                               BoolectorNode *(*fun)(Bzla *,
-                                                                     uint32_t,
-                                                                     uint32_t))
+parse_open_close_term_indexed_fp_special_const(
+    BzlaSMT2Parser *parser,
+    BzlaSMT2Item *item_cur,
+    int32_t tag,
+    BzlaSMT2Node *node,
+    const char *msg,
+    BoolectorNode *(*fun)(Bzla *, BoolectorSort))
 {
   assert(parser);
   assert(item_cur);
@@ -4098,6 +4098,7 @@ parse_open_close_term_indexed_fp_special_const(BzlaSMT2Parser *parser,
 
   BzlaSMT2Item *item_open;
   BoolectorNode *exp;
+  BoolectorSort sort;
   Bzla *bzla;
 
   bzla = parser->bzla;
@@ -4107,7 +4108,9 @@ parse_open_close_term_indexed_fp_special_const(BzlaSMT2Parser *parser,
   if (!parse_bit_width_smt2(parser, &item_open->idx0)) return 0;
   if (!parse_bit_width_smt2(parser, &item_open->idx1)) return 0;
 
-  exp = fun(bzla, item_open->idx0, item_open->idx1);
+  sort = boolector_fp_sort(bzla, item_open->idx0, item_open->idx1);
+  exp  = fun(bzla, sort);
+  boolector_release_sort(bzla, sort);
 
   item_open->tag   = BZLA_EXP_TAG_SMT2;
   item_open->node  = node;
