@@ -26,7 +26,10 @@ class BzlaFPSymProp;
 template <bool T>
 class BzlaFPSymBV;
 
-/* Template parameter for SymFPU templates. --------------------------------- */
+/* -------------------------------------------------------------------------- */
+/* Template parameter for SymFPU templates.                                   */
+/* -------------------------------------------------------------------------- */
+
 class BzlaFPSymTraits
 {
  public:
@@ -71,7 +74,10 @@ struct BzlaSignedToLitSort<false>
   typedef uint32_t BzlaLitSort;
 };
 
-/* Bitwuzla wrapper for rounding modes. ------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla wrapper for rounding modes.                                      */
+/* -------------------------------------------------------------------------- */
+
 class BzlaFPSymRM
 {
 #ifdef BZLA_USE_SYMFPU
@@ -93,10 +99,74 @@ class BzlaFPSymRM
   BzlaNode *d_node;
   static Bzla *s_bzla;
 };
+/* -------------------------------------------------------------------------- */
 
 Bzla *BzlaFPSymRM::s_bzla = nullptr;
 
-/* Bitwuzla wrapper for floating-point sorts. ------------------------------ */
+BzlaFPSymRM::BzlaFPSymRM(BzlaNode *node)
+{
+  assert(s_bzla);
+  assert(checkNode(node));
+  d_node = bzla_node_copy(s_bzla, node);
+}
+
+BzlaFPSymRM::BzlaFPSymRM(const uint32_t val)
+{
+  assert(val < BZLA_RM_MAX);
+  d_node = bzla_exp_fp_rm(s_bzla, static_cast<BzlaRoundingMode>(val));
+  assert(checkNode(d_node));
+}
+
+BzlaFPSymRM::BzlaFPSymRM(const BzlaFPSymRM &other)
+{
+  assert(s_bzla);
+  assert(other.d_node);
+  assert(checkNode(other.d_node));
+  d_node = bzla_node_copy(s_bzla, other.d_node);
+}
+
+BzlaFPSymProp
+BzlaFPSymRM::valid(void) const
+{
+  assert(d_node);
+  BzlaNode *max;
+  max =
+      bzla_exp_bv_unsigned(s_bzla, BZLA_RM_MAX, bzla_node_get_sort_id(d_node));
+  bzla_node_release(s_bzla, max);
+  return bzla_exp_bv_ult(s_bzla, d_node, max);
+}
+
+BzlaFPSymProp
+BzlaFPSymRM::operator==(const BzlaFPSymRM &other) const
+{
+  assert(d_node);
+  assert(other.d_node);
+  return bzla_exp_eq(s_bzla, d_node, other.d_node);
+}
+
+bool
+BzlaFPSymRM::checkNode(const BzlaNode *node) const
+{
+  assert(s_bzla);
+  assert(node);
+
+  BzlaSortId sort = bzla_node_get_sort_id(node);
+  if (!bzla_sort_is_bv(s_bzla, sort))
+  {
+    return false;
+  }
+#ifdef BZLA_USE_SYMFPU
+  assert((((uint32_t) 1u) << BZLA_FP_RM_BW) >= SYMFPU_NUMBER_OF_ROUNDING_MODES);
+  return bzla_sort_bv_get_width(s_bzla, sort) == BZLA_FP_RM_BW;
+#else
+  return false;
+#endif
+}
+
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla wrapper for floating-point sorts.                                */
+/* -------------------------------------------------------------------------- */
+
 class BzlaFPSortInfo
 {
  public:
@@ -114,9 +184,48 @@ class BzlaFPSortInfo
   static Bzla *s_bzla;
 };
 
+/* -------------------------------------------------------------------------- */
+
 Bzla *BzlaFPSortInfo::s_bzla = nullptr;
 
-/* Bitwuzla wrapper for propositions. -------------------------------------- */
+BzlaFPSortInfo::BzlaFPSortInfo(const BzlaSortId sort)
+{
+  assert(s_bzla);
+  assert(bzla_sort_is_fp(s_bzla, sort));
+  d_sort = bzla_sort_copy(s_bzla, sort);
+}
+
+BzlaFPSortInfo::BzlaFPSortInfo(uint32_t ewidth, uint32_t swidth)
+{
+  assert(s_bzla);
+  d_sort = bzla_sort_fp(s_bzla, ewidth, swidth);
+}
+
+BzlaFPSortInfo::BzlaFPSortInfo(const BzlaFPSortInfo &other)
+{
+  assert(s_bzla);
+  assert(other.d_sort);
+  assert(bzla_sort_is_fp(s_bzla, other.d_sort));
+  d_sort = bzla_sort_copy(s_bzla, other.d_sort);
+}
+
+BzlaFPSortInfo::~BzlaFPSortInfo()
+{
+  assert(s_bzla);
+  bzla_sort_release(s_bzla, d_sort);
+}
+
+BzlaSortId
+BzlaFPSortInfo::getSort(void) const
+{
+  assert(d_sort);
+  return d_sort;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla wrapper for propositions.                                        */
+/* -------------------------------------------------------------------------- */
+
 class BzlaFPSymProp
 {
   friend BzlaFPSymBV<true>;
@@ -147,9 +256,102 @@ class BzlaFPSymProp
   static Bzla *s_bzla;
 };
 
+/* -------------------------------------------------------------------------- */
+
 Bzla *BzlaFPSymProp::s_bzla = nullptr;
 
-/* Bitwuzla wrapper for bit-vector terms. ---------------------------------- */
+BzlaFPSymProp::BzlaFPSymProp(BzlaNode *node)
+{
+  assert(s_bzla);
+  assert(checkNode(node));
+  d_node = bzla_node_copy(s_bzla, node);
+}
+
+BzlaFPSymProp::BzlaFPSymProp(bool v)
+{
+  assert(s_bzla);
+  d_node = v ? bzla_exp_true(s_bzla) : bzla_exp_false(s_bzla);
+}
+
+BzlaFPSymProp::BzlaFPSymProp(const BzlaFPSymProp &other)
+{
+  assert(s_bzla);
+  assert(checkNode(other.d_node));
+  d_node = bzla_node_copy(s_bzla, other.d_node);
+}
+
+BzlaFPSymProp::~BzlaFPSymProp()
+{
+  assert(s_bzla);
+  bzla_node_release(s_bzla, d_node);
+}
+
+BzlaFPSymProp
+BzlaFPSymProp::operator!(void) const
+{
+  assert(s_bzla);
+  BzlaNode *n       = bzla_exp_bv_not(s_bzla, d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
+}
+
+BzlaFPSymProp
+BzlaFPSymProp::operator&&(const BzlaFPSymProp &op) const
+{
+  assert(s_bzla);
+  assert(checkNode(op.d_node));
+  BzlaNode *n       = bzla_exp_bv_and(s_bzla, d_node, op.d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
+}
+
+BzlaFPSymProp
+BzlaFPSymProp::operator||(const BzlaFPSymProp &op) const
+{
+  assert(s_bzla);
+  assert(checkNode(op.d_node));
+  BzlaNode *n       = bzla_exp_bv_or(s_bzla, d_node, op.d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
+}
+
+BzlaFPSymProp
+BzlaFPSymProp::operator==(const BzlaFPSymProp &op) const
+{
+  assert(s_bzla);
+  assert(checkNode(op.d_node));
+  BzlaNode *n       = bzla_exp_eq(s_bzla, d_node, op.d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
+}
+
+BzlaFPSymProp
+BzlaFPSymProp::operator^(const BzlaFPSymProp &op) const
+{
+  assert(s_bzla);
+  assert(checkNode(op.d_node));
+  BzlaNode *n       = bzla_exp_bv_xor(s_bzla, d_node, op.d_node);
+  BzlaFPSymProp res = BzlaFPSymProp(n);
+  bzla_node_release(s_bzla, n);
+  return res;
+}
+
+bool
+BzlaFPSymProp::checkNode(const BzlaNode *node) const
+{
+  assert(checkNode(node));
+  return bzla_sort_is_bv(node->bzla, bzla_node_get_sort_id(node))
+         && bzla_node_bv_get_width(s_bzla, node) == 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla wrapper for bit-vector terms.                                    */
+/* -------------------------------------------------------------------------- */
+
 template <bool is_signed>
 class BzlaFPSymBV
 {
@@ -246,200 +448,12 @@ class BzlaFPSymBV
   static Bzla *s_bzla;
 };
 
+/* -------------------------------------------------------------------------- */
+
 template <>
 Bzla *BzlaFPSymBV<true>::s_bzla = nullptr;
 template <>
 Bzla *BzlaFPSymBV<false>::s_bzla = nullptr;
-
-/* -------------------------------------------------------------------------- */
-
-BzlaFPSymRM::BzlaFPSymRM(BzlaNode *node)
-{
-  assert(s_bzla);
-  assert(checkNode(node));
-  d_node = bzla_node_copy(s_bzla, node);
-}
-
-BzlaFPSymRM::BzlaFPSymRM(const uint32_t val)
-{
-  assert(val < BZLA_RM_MAX);
-  d_node = bzla_exp_fp_rm(s_bzla, static_cast<BzlaRoundingMode>(val));
-  assert(checkNode(d_node));
-}
-
-BzlaFPSymRM::BzlaFPSymRM(const BzlaFPSymRM &other)
-{
-  assert(s_bzla);
-  assert(other.d_node);
-  assert(checkNode(other.d_node));
-  d_node = bzla_node_copy(s_bzla, other.d_node);
-}
-
-BzlaFPSymProp
-BzlaFPSymRM::valid(void) const
-{
-  assert(d_node);
-  BzlaNode *max;
-  max =
-      bzla_exp_bv_unsigned(s_bzla, BZLA_RM_MAX, bzla_node_get_sort_id(d_node));
-  bzla_node_release(s_bzla, max);
-  return bzla_exp_bv_ult(s_bzla, d_node, max);
-}
-
-BzlaFPSymProp
-BzlaFPSymRM::operator==(const BzlaFPSymRM &other) const
-{
-  assert(d_node);
-  assert(other.d_node);
-  return bzla_exp_eq(s_bzla, d_node, other.d_node);
-}
-
-bool
-BzlaFPSymRM::checkNode(const BzlaNode *node) const
-{
-  assert(s_bzla);
-  assert(node);
-
-  BzlaSortId sort = bzla_node_get_sort_id(node);
-  if (!bzla_sort_is_bv(s_bzla, sort))
-  {
-    return false;
-  }
-#ifdef BZLA_USE_SYMFPU
-  assert((((uint32_t) 1u) << BZLA_FP_RM_BW) >= SYMFPU_NUMBER_OF_ROUNDING_MODES);
-  return bzla_sort_bv_get_width(s_bzla, sort) == BZLA_FP_RM_BW;
-#else
-  return false;
-#endif
-}
-
-/* -------------------------------------------------------------------------- */
-
-BzlaFPSortInfo::BzlaFPSortInfo(const BzlaSortId sort)
-{
-  assert(s_bzla);
-  assert(bzla_sort_is_fp(s_bzla, sort));
-  d_sort = bzla_sort_copy(s_bzla, sort);
-}
-
-BzlaFPSortInfo::BzlaFPSortInfo(uint32_t ewidth, uint32_t swidth)
-{
-  assert(s_bzla);
-  d_sort = bzla_sort_fp(s_bzla, ewidth, swidth);
-}
-
-BzlaFPSortInfo::BzlaFPSortInfo(const BzlaFPSortInfo &other)
-{
-  assert(s_bzla);
-  assert(other.d_sort);
-  assert(bzla_sort_is_fp(s_bzla, other.d_sort));
-  d_sort = bzla_sort_copy(s_bzla, other.d_sort);
-}
-
-BzlaFPSortInfo::~BzlaFPSortInfo()
-{
-  assert(s_bzla);
-  bzla_sort_release(s_bzla, d_sort);
-}
-
-BzlaSortId
-BzlaFPSortInfo::getSort(void) const
-{
-  assert(d_sort);
-  return d_sort;
-}
-
-/* -------------------------------------------------------------------------- */
-
-BzlaFPSymProp::BzlaFPSymProp(BzlaNode *node)
-{
-  assert(s_bzla);
-  assert(checkNode(node));
-  d_node = bzla_node_copy(s_bzla, node);
-}
-
-BzlaFPSymProp::BzlaFPSymProp(bool v)
-{
-  assert(s_bzla);
-  d_node = v ? bzla_exp_true(s_bzla) : bzla_exp_false(s_bzla);
-}
-
-BzlaFPSymProp::BzlaFPSymProp(const BzlaFPSymProp &other)
-{
-  assert(s_bzla);
-  assert(checkNode(other.d_node));
-  d_node = bzla_node_copy(s_bzla, other.d_node);
-}
-
-BzlaFPSymProp::~BzlaFPSymProp()
-{
-  assert(s_bzla);
-  bzla_node_release(s_bzla, d_node);
-}
-
-BzlaFPSymProp
-BzlaFPSymProp::operator!(void) const
-{
-  assert(s_bzla);
-  BzlaNode *n       = bzla_exp_bv_not(s_bzla, d_node);
-  BzlaFPSymProp res = BzlaFPSymProp(n);
-  bzla_node_release(s_bzla, n);
-  return res;
-}
-
-BzlaFPSymProp
-BzlaFPSymProp::operator&&(const BzlaFPSymProp &op) const
-{
-  assert(s_bzla);
-  assert(checkNode(op.d_node));
-  BzlaNode *n       = bzla_exp_bv_and(s_bzla, d_node, op.d_node);
-  BzlaFPSymProp res = BzlaFPSymProp(n);
-  bzla_node_release(s_bzla, n);
-  return res;
-}
-
-BzlaFPSymProp
-BzlaFPSymProp::operator||(const BzlaFPSymProp &op) const
-{
-  assert(s_bzla);
-  assert(checkNode(op.d_node));
-  BzlaNode *n       = bzla_exp_bv_or(s_bzla, d_node, op.d_node);
-  BzlaFPSymProp res = BzlaFPSymProp(n);
-  bzla_node_release(s_bzla, n);
-  return res;
-}
-
-BzlaFPSymProp
-BzlaFPSymProp::operator==(const BzlaFPSymProp &op) const
-{
-  assert(s_bzla);
-  assert(checkNode(op.d_node));
-  BzlaNode *n       = bzla_exp_eq(s_bzla, d_node, op.d_node);
-  BzlaFPSymProp res = BzlaFPSymProp(n);
-  bzla_node_release(s_bzla, n);
-  return res;
-}
-
-BzlaFPSymProp
-BzlaFPSymProp::operator^(const BzlaFPSymProp &op) const
-{
-  assert(s_bzla);
-  assert(checkNode(op.d_node));
-  BzlaNode *n       = bzla_exp_bv_xor(s_bzla, d_node, op.d_node);
-  BzlaFPSymProp res = BzlaFPSymProp(n);
-  bzla_node_release(s_bzla, n);
-  return res;
-}
-
-bool
-BzlaFPSymProp::checkNode(const BzlaNode *node) const
-{
-  assert(checkNode(node));
-  return bzla_sort_is_bv(node->bzla, bzla_node_get_sort_id(node))
-         && bzla_node_bv_get_width(s_bzla, node) == 1;
-}
-
-/* -------------------------------------------------------------------------- */
 
 template <bool is_signed>
 BzlaFPSymBV<is_signed>::BzlaFPSymBV(BzlaNode *node)
@@ -932,21 +946,3 @@ BzlaFPSymBV<is_signed>::checkNode(const BzlaNode *node) const
 
 // BzlaNode* BzlaFPSymBV::boolNodeToBV(BzlaNode* node) const;
 // BzlaNode* BzlaFPSymBV::BVToBoolNode(BzlaNode* node) const;
-
-// template <bool is_signed>
-// BzlaNode *
-// BzlaFPSymBV<is_signed>::fromProposition (BzlaNode *node) const
-//{
-//  assert (s_bzla);
-//  assert (checkNode (node));
-//  return node;
-//}
-//
-// template <bool is_signed>
-// BzlaNode *
-// BzlaFPSymBV<is_signed>::toProposition (BzlaNode *node) const
-//{
-//  assert (s_bzla);
-//  assert (checkNode (node));
-//  return node;
-//}
