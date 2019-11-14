@@ -1101,6 +1101,17 @@ enum BzlaOptBetaReduceMode
 };
 typedef enum BzlaOptBetaReduceMode BzlaOptBetaReduceMode;
 
+enum BzlaRoundingMode
+{
+  BZLA_RM_RNA = 0,
+  BZLA_RM_RNE = 1,
+  BZLA_RM_RTN = 2,
+  BZLA_RM_RTP = 3,
+  BZLA_RM_RTZ = 4,
+  BZLA_RM_MAX,
+};
+typedef enum BzlaRoundingMode BzlaRoundingMode;
+
 /* --------------------------------------------------------------------- */
 
 /* Callback function to be executed on abort, primarily intended to be used for

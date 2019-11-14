@@ -1694,60 +1694,13 @@ bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp)
 /*------------------------------------------------------------------------*/
 
 BzlaNode *
-bzla_exp_fp_rne(Bzla *bzla)
+bzla_exp_fp_rm(Bzla *bzla, BzlaRoundingMode rm)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla);
-  /// FP STUB
-  return bzla_exp_true(bzla);
-  ////
-}
-
-BzlaNode *
-bzla_exp_fp_rna(Bzla *bzla)
-{
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
-  assert(bzla);
-  /// FP STUB
-  return bzla_exp_true(bzla);
-  ////
-}
-
-BzlaNode *
-bzla_exp_fp_rtp(Bzla *bzla)
-{
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
-  assert(bzla);
-  /// FP STUB
-  return bzla_exp_true(bzla);
-  ////
-}
-
-BzlaNode *
-bzla_exp_fp_rtn(Bzla *bzla)
-{
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
-  assert(bzla);
-  /// FP STUB
-  return bzla_exp_true(bzla);
-  ////
-}
-
-BzlaNode *
-bzla_exp_fp_rtz(Bzla *bzla)
-{
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
-  assert(bzla);
+  (void) rm;
   /// FP STUB
   return bzla_exp_true(bzla);
   ////

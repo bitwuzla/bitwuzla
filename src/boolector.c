@@ -2995,81 +2995,20 @@ boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n)
 /*------------------------------------------------------------------------*/
 
 BoolectorNode *
-boolector_fp_rne(Bzla *bzla)
+boolector_fp_rm(Bzla *bzla, BzlaRoundingMode rm)
 {
   BzlaNode *res;
 
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("");
-  res = bzla_exp_fp_rne(bzla);
+  BZLA_ABORT(rm != BZLA_RM_RNA && rm != BZLA_RM_RNE && rm != BZLA_RM_RTN
+                 && rm != BZLA_RM_RTP && rm != BZLA_RM_RTZ,
+             "invalid valur for rounding mode");
+  res = bzla_exp_fp_rm(bzla, rm);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_rne);
-#endif
-  return BZLA_EXPORT_BOOLECTOR_NODE(res);
-}
-
-BoolectorNode *
-boolector_fp_rna(Bzla *bzla)
-{
-  BzlaNode *res;
-
-  BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_TRAPI("");
-  res = bzla_exp_fp_rna(bzla);
-  bzla_node_inc_ext_ref_counter(bzla, res);
-  BZLA_TRAPI_RETURN_NODE(res);
-#ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_rna);
-#endif
-  return BZLA_EXPORT_BOOLECTOR_NODE(res);
-}
-
-BoolectorNode *
-boolector_fp_rtp(Bzla *bzla)
-{
-  BzlaNode *res;
-
-  BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_TRAPI("");
-  res = bzla_exp_fp_rtp(bzla);
-  bzla_node_inc_ext_ref_counter(bzla, res);
-  BZLA_TRAPI_RETURN_NODE(res);
-#ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_rtp);
-#endif
-  return BZLA_EXPORT_BOOLECTOR_NODE(res);
-}
-
-BoolectorNode *
-boolector_fp_rtn(Bzla *bzla)
-{
-  BzlaNode *res;
-
-  BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_TRAPI("");
-  res = bzla_exp_fp_rtn(bzla);
-  bzla_node_inc_ext_ref_counter(bzla, res);
-  BZLA_TRAPI_RETURN_NODE(res);
-#ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_rtn);
-#endif
-  return BZLA_EXPORT_BOOLECTOR_NODE(res);
-}
-
-BoolectorNode *
-boolector_fp_rtz(Bzla *bzla)
-{
-  BzlaNode *res;
-
-  BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_TRAPI("");
-  res = bzla_exp_fp_rtz(bzla);
-  bzla_node_inc_ext_ref_counter(bzla, res);
-  BZLA_TRAPI_RETURN_NODE(res);
-#ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_rtz);
+  BZLA_CHKCLONE_RES_PTR(res, fp_rm, rm);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }

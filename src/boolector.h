@@ -1594,12 +1594,20 @@ BoolectorNode *boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n);
 /*------------------------------------------------------------------------*/
 
 /*!
-  Create a round-nearest-ties-to-even rounding mode.
+  Create rounding mode with given value
+
+  Parameter ``rm`` is one of:
+  * ``BZLA_RM_RNA``
+  * ``BZLA_RM_RNE``
+  * ``BZLA_RM_RTN``
+  * ``BZLA_RM_RTP``
+  * ``BZLA_RM_RTZ``
 
   :param bzla: Boolector instance.
+  :param rm:   The rounding mode value.
   :return:     An RNE rounding mode constant.
  */
-BoolectorNode *boolector_fp_rne(Bzla *bzla);
+BoolectorNode *boolector_fp_rm(Bzla *bzla, BzlaRoundingMode rm);
 
 /*!
   Create a round-nearest-ties-to-away rounding mode.

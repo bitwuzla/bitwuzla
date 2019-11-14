@@ -441,20 +441,8 @@ BzlaNode *bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 
-/* Create round-nearest-ties-to-even rounding mode. */
-BzlaNode *bzla_exp_fp_rne(Bzla *bzla);
-
-/* Create round-nearest-ties-to-away rounding mode. */
-BzlaNode *bzla_exp_fp_rna(Bzla *bzla);
-
-/* Create round-toward-positive rounding mode. */
-BzlaNode *bzla_exp_fp_rtp(Bzla *bzla);
-
-/* Create round-toward-negative rounding mode. */
-BzlaNode *bzla_exp_fp_rtn(Bzla *bzla);
-
-/* Create round-toward-zero rounding mode. */
-BzlaNode *bzla_exp_fp_rtz(Bzla *bzla);
+/* Create rounding mode. */
+BzlaNode *bzla_exp_fp_rm(Bzla *bzla, BzlaRoundingMode rm);
 
 /**
  * Create floating-point const +zero of given floating-point sort.

@@ -16,6 +16,8 @@ extern "C" {
 #include "symfpu/core/unpackedFloat.h"
 #endif
 
+#define BZLA_FP_RM_BW 3
+
 /* ========================================================================== */
 
 class BzlaFPSymRM;
@@ -29,7 +31,7 @@ class BzlaFPSymTraits
 {
  public:
   /* The six key types that SymFPU uses. */
-  typedef unsigned bwt;
+  typedef uint32_t bwt;
   typedef BzlaFPSymRM rm;
   typedef BzlaFPSortInfo fpt;
   typedef BzlaFPSymProp prop;
@@ -77,16 +79,22 @@ class BzlaFPSymRM
 #endif
 
  public:
-  BzlaFPSymRM(const BzlaNode *node);
+  BzlaFPSymRM(BzlaNode *node);
   BzlaFPSymRM(const uint32_t val);
   BzlaFPSymRM(const BzlaFPSymRM &other);
 
   BzlaFPSymProp valid(void) const;
-  BzlaFPSymProp operator==(const BzlaFPSymRM &rm) const;
+  BzlaFPSymProp operator==(const BzlaFPSymRM &other) const;
 
  protected:
-  bool checkNode(const BzlaNode *node);
+  bool checkNode(const BzlaNode *node) const;
+
+ private:
+  BzlaNode *d_node;
+  static Bzla *s_bzla;
 };
+
+Bzla *BzlaFPSymRM::s_bzla = nullptr;
 
 /* Bitwuzla wrapper for floating-point sorts. ------------------------------ */
 class BzlaFPSortInfo
@@ -111,6 +119,8 @@ Bzla *BzlaFPSortInfo::s_bzla = nullptr;
 /* Bitwuzla wrapper for propositions. -------------------------------------- */
 class BzlaFPSymProp
 {
+  friend BzlaFPSymBV<true>;
+  friend BzlaFPSymBV<false>;
 #ifdef BZLA_USE_SYMFPU
   friend ::symfpu::ite<BzlaFPSymProp, BzlaFPSymProp>;
 #endif
@@ -130,7 +140,7 @@ class BzlaFPSymProp
   BzlaFPSymProp operator^(const BzlaFPSymProp &op) const;
 
  protected:
-  bool checkNode(const BzlaNode *node);
+  bool checkNode(const BzlaNode *node) const;
 
  private:
   BzlaNode *d_node;
@@ -227,7 +237,7 @@ class BzlaFPSymBV
   // BzlaNode* boolNodeToBV(BzlaNode* node) const;
   // BzlaNode* BVToBoolNode(BzlaNode* node) const;
 
-  bool checkNode(const BzlaNode *node);
+  bool checkNode(const BzlaNode *node) const;
   // BzlaNode *fromProposition (BzlaNode *node) const;
   // BzlaNode *toProposition (BzlaNode *node) const;
 
@@ -240,6 +250,68 @@ template <>
 Bzla *BzlaFPSymBV<true>::s_bzla = nullptr;
 template <>
 Bzla *BzlaFPSymBV<false>::s_bzla = nullptr;
+
+/* -------------------------------------------------------------------------- */
+
+BzlaFPSymRM::BzlaFPSymRM(BzlaNode *node)
+{
+  assert(s_bzla);
+  assert(checkNode(node));
+  d_node = bzla_node_copy(s_bzla, node);
+}
+
+BzlaFPSymRM::BzlaFPSymRM(const uint32_t val)
+{
+  assert(val < BZLA_RM_MAX);
+  d_node = bzla_exp_fp_rm(s_bzla, static_cast<BzlaRoundingMode>(val));
+  assert(checkNode(d_node));
+}
+
+BzlaFPSymRM::BzlaFPSymRM(const BzlaFPSymRM &other)
+{
+  assert(s_bzla);
+  assert(other.d_node);
+  assert(checkNode(other.d_node));
+  d_node = bzla_node_copy(s_bzla, other.d_node);
+}
+
+BzlaFPSymProp
+BzlaFPSymRM::valid(void) const
+{
+  assert(d_node);
+  BzlaNode *max;
+  max =
+      bzla_exp_bv_unsigned(s_bzla, BZLA_RM_MAX, bzla_node_get_sort_id(d_node));
+  bzla_node_release(s_bzla, max);
+  return bzla_exp_bv_ult(s_bzla, d_node, max);
+}
+
+BzlaFPSymProp
+BzlaFPSymRM::operator==(const BzlaFPSymRM &other) const
+{
+  assert(d_node);
+  assert(other.d_node);
+  return bzla_exp_eq(s_bzla, d_node, other.d_node);
+}
+
+bool
+BzlaFPSymRM::checkNode(const BzlaNode *node) const
+{
+  assert(s_bzla);
+  assert(node);
+
+  BzlaSortId sort = bzla_node_get_sort_id(node);
+  if (!bzla_sort_is_bv(s_bzla, sort))
+  {
+    return false;
+  }
+#ifdef BZLA_USE_SYMFPU
+  assert((((uint32_t) 1u) << BZLA_FP_RM_BW) >= SYMFPU_NUMBER_OF_ROUNDING_MODES);
+  return bzla_sort_bv_get_width(s_bzla, sort) == BZLA_FP_RM_BW;
+#else
+  return false;
+#endif
+}
 
 /* -------------------------------------------------------------------------- */
 
@@ -259,6 +331,7 @@ BzlaFPSortInfo::BzlaFPSortInfo(uint32_t ewidth, uint32_t swidth)
 BzlaFPSortInfo::BzlaFPSortInfo(const BzlaFPSortInfo &other)
 {
   assert(s_bzla);
+  assert(other.d_sort);
   assert(bzla_sort_is_fp(s_bzla, other.d_sort));
   d_sort = bzla_sort_copy(s_bzla, other.d_sort);
 }
@@ -272,6 +345,7 @@ BzlaFPSortInfo::~BzlaFPSortInfo()
 BzlaSortId
 BzlaFPSortInfo::getSort(void) const
 {
+  assert(d_sort);
   return d_sort;
 }
 
@@ -317,6 +391,7 @@ BzlaFPSymProp
 BzlaFPSymProp::operator&&(const BzlaFPSymProp &op) const
 {
   assert(s_bzla);
+  assert(checkNode(op.d_node));
   BzlaNode *n       = bzla_exp_bv_and(s_bzla, d_node, op.d_node);
   BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
@@ -327,6 +402,7 @@ BzlaFPSymProp
 BzlaFPSymProp::operator||(const BzlaFPSymProp &op) const
 {
   assert(s_bzla);
+  assert(checkNode(op.d_node));
   BzlaNode *n       = bzla_exp_bv_or(s_bzla, d_node, op.d_node);
   BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
@@ -337,6 +413,7 @@ BzlaFPSymProp
 BzlaFPSymProp::operator==(const BzlaFPSymProp &op) const
 {
   assert(s_bzla);
+  assert(checkNode(op.d_node));
   BzlaNode *n       = bzla_exp_eq(s_bzla, d_node, op.d_node);
   BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
@@ -347,6 +424,7 @@ BzlaFPSymProp
 BzlaFPSymProp::operator^(const BzlaFPSymProp &op) const
 {
   assert(s_bzla);
+  assert(checkNode(op.d_node));
   BzlaNode *n       = bzla_exp_bv_xor(s_bzla, d_node, op.d_node);
   BzlaFPSymProp res = BzlaFPSymProp(n);
   bzla_node_release(s_bzla, n);
@@ -354,8 +432,9 @@ BzlaFPSymProp::operator^(const BzlaFPSymProp &op) const
 }
 
 bool
-BzlaFPSymProp::checkNode(const BzlaNode *node)
+BzlaFPSymProp::checkNode(const BzlaNode *node) const
 {
+  assert(checkNode(node));
   return bzla_sort_is_bv(node->bzla, bzla_node_get_sort_id(node))
          && bzla_node_bv_get_width(s_bzla, node) == 1;
 }
@@ -375,7 +454,8 @@ BzlaFPSymBV<is_signed>::BzlaFPSymBV(const bwt w, const uint32_t val)
 {
   assert(s_bzla);
   BzlaSortId s = bzla_sort_bv(s_bzla, w);
-  d_node       = bzla_exp_bv_int(s_bzla, val, s);
+  d_node       = is_signed ? bzla_exp_bv_int(s_bzla, val, s)
+                     : bzla_exp_bv_unsigned(s_bzla, val, s);
   bzla_sort_release(s_bzla, s);
 }
 
@@ -383,7 +463,9 @@ template <bool is_signed>
 BzlaFPSymBV<is_signed>::BzlaFPSymBV(const BzlaFPSymProp &p)
 {
   assert(s_bzla);
-  // TODO
+  assert(p.d_node);
+  assert(bzla_sort_bv_get_width(s_bzla, bzla_node_get_sort_id(p.d_node)));
+  d_node = bzla_node_copy(s_bzla, p.d_node);
 }
 
 template <bool is_signed>
@@ -843,7 +925,7 @@ BzlaFPSymBV<is_signed>::extract(bwt upper, bwt lower) const
 
 template <bool is_signed>
 bool
-BzlaFPSymBV<is_signed>::checkNode(const BzlaNode *node)
+BzlaFPSymBV<is_signed>::checkNode(const BzlaNode *node) const
 {
   return bzla_sort_is_bv(node->bzla, bzla_node_get_sort_id(node));
 }
