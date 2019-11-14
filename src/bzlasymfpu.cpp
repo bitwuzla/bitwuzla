@@ -26,39 +26,8 @@ class BzlaFPSymProp;
 template <bool T>
 class BzlaFPSymBV;
 
-/* -------------------------------------------------------------------------- */
-/* Template parameter for SymFPU templates.                                   */
-/* -------------------------------------------------------------------------- */
-
-class BzlaFPSymTraits
-{
- public:
-  /* The six key types that SymFPU uses. */
-  typedef uint32_t bwt;
-  typedef BzlaFPSymRM rm;
-  typedef BzlaFPSortInfo fpt;
-  typedef BzlaFPSymProp prop;
-  typedef BzlaFPSymBV<true> sbv;
-  typedef BzlaFPSymBV<false> ubv;
-
-  /* Give concrete instances (wrapped nodes) for each rounding mode. */
-  static BzlaFPSymRM RNE(void);
-  static BzlaFPSymRM RNA(void);
-  static BzlaFPSymRM RTP(void);
-  static BzlaFPSymRM RTN(void);
-  static BzlaFPSymRM RTZ(void);
-
-  /* Properties used by Symfpu. */
-  static void precondition(const bool b);
-  static void postcondition(const bool b);
-  static void invariant(const bool b);
-  static void precondition(const prop &p);
-  static void postcondition(const prop &p);
-  static void invariant(const prop &p);
-};
-
 /* Use the same type names as SymFPU. */
-typedef BzlaFPSymTraits::bwt bwt;
+typedef uint32_t bwt;
 
 /* Mapping between sorts. */
 template <bool T>
@@ -73,95 +42,6 @@ struct BzlaSignedToLitSort<false>
 {
   typedef uint32_t BzlaLitSort;
 };
-
-/* -------------------------------------------------------------------------- */
-/* Bitwuzla wrapper for rounding modes.                                      */
-/* -------------------------------------------------------------------------- */
-
-class BzlaFPSymRM
-{
-#ifdef BZLA_USE_SYMFPU
-  friend symfpu::ite<BzlaFPSymProp, BzlaFPSymRM>;
-#endif
-
- public:
-  BzlaFPSymRM(BzlaNode *node);
-  BzlaFPSymRM(const uint32_t val);
-  BzlaFPSymRM(const BzlaFPSymRM &other);
-
-  BzlaFPSymProp valid(void) const;
-  BzlaFPSymProp operator==(const BzlaFPSymRM &other) const;
-
- protected:
-  bool checkNode(const BzlaNode *node) const;
-
- private:
-  BzlaNode *d_node;
-  static Bzla *s_bzla;
-};
-/* -------------------------------------------------------------------------- */
-
-Bzla *BzlaFPSymRM::s_bzla = nullptr;
-
-BzlaFPSymRM::BzlaFPSymRM(BzlaNode *node)
-{
-  assert(s_bzla);
-  assert(checkNode(node));
-  d_node = bzla_node_copy(s_bzla, node);
-}
-
-BzlaFPSymRM::BzlaFPSymRM(const uint32_t val)
-{
-  assert(val < BZLA_RM_MAX);
-  d_node = bzla_exp_fp_rm(s_bzla, static_cast<BzlaRoundingMode>(val));
-  assert(checkNode(d_node));
-}
-
-BzlaFPSymRM::BzlaFPSymRM(const BzlaFPSymRM &other)
-{
-  assert(s_bzla);
-  assert(other.d_node);
-  assert(checkNode(other.d_node));
-  d_node = bzla_node_copy(s_bzla, other.d_node);
-}
-
-BzlaFPSymProp
-BzlaFPSymRM::valid(void) const
-{
-  assert(d_node);
-  BzlaNode *max;
-  max =
-      bzla_exp_bv_unsigned(s_bzla, BZLA_RM_MAX, bzla_node_get_sort_id(d_node));
-  bzla_node_release(s_bzla, max);
-  return bzla_exp_bv_ult(s_bzla, d_node, max);
-}
-
-BzlaFPSymProp
-BzlaFPSymRM::operator==(const BzlaFPSymRM &other) const
-{
-  assert(d_node);
-  assert(other.d_node);
-  return bzla_exp_eq(s_bzla, d_node, other.d_node);
-}
-
-bool
-BzlaFPSymRM::checkNode(const BzlaNode *node) const
-{
-  assert(s_bzla);
-  assert(node);
-
-  BzlaSortId sort = bzla_node_get_sort_id(node);
-  if (!bzla_sort_is_bv(s_bzla, sort))
-  {
-    return false;
-  }
-#ifdef BZLA_USE_SYMFPU
-  assert((((uint32_t) 1u) << BZLA_FP_RM_BW) >= SYMFPU_NUMBER_OF_ROUNDING_MODES);
-  return bzla_sort_bv_get_width(s_bzla, sort) == BZLA_FP_RM_BW;
-#else
-  return false;
-#endif
-}
 
 /* -------------------------------------------------------------------------- */
 /* Bitwuzla wrapper for floating-point sorts.                                */
@@ -946,3 +826,194 @@ BzlaFPSymBV<is_signed>::checkNode(const BzlaNode *node) const
 
 // BzlaNode* BzlaFPSymBV::boolNodeToBV(BzlaNode* node) const;
 // BzlaNode* BzlaFPSymBV::BVToBoolNode(BzlaNode* node) const;
+
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla wrapper for rounding modes.                                      */
+/* -------------------------------------------------------------------------- */
+
+class BzlaFPSymRM
+{
+#ifdef BZLA_USE_SYMFPU
+  friend symfpu::ite<BzlaFPSymProp, BzlaFPSymRM>;
+#endif
+
+ public:
+  BzlaFPSymRM(BzlaNode *node);
+  BzlaFPSymRM(const uint32_t val);
+  BzlaFPSymRM(const BzlaFPSymRM &other);
+
+  BzlaFPSymProp valid(void) const;
+  BzlaFPSymProp operator==(const BzlaFPSymRM &other) const;
+
+ protected:
+  bool checkNode(const BzlaNode *node) const;
+
+ private:
+  BzlaNode *d_node;
+  static Bzla *s_bzla;
+};
+
+/* -------------------------------------------------------------------------- */
+
+Bzla *BzlaFPSymRM::s_bzla = nullptr;
+
+BzlaFPSymRM::BzlaFPSymRM(BzlaNode *node)
+{
+  assert(s_bzla);
+  assert(checkNode(node));
+  d_node = bzla_node_copy(s_bzla, node);
+}
+
+BzlaFPSymRM::BzlaFPSymRM(const uint32_t val)
+{
+  assert(val < BZLA_RM_MAX);
+  d_node = bzla_exp_fp_rm(s_bzla, static_cast<BzlaRoundingMode>(val));
+  assert(checkNode(d_node));
+}
+
+BzlaFPSymRM::BzlaFPSymRM(const BzlaFPSymRM &other)
+{
+  assert(s_bzla);
+  assert(other.d_node);
+  assert(checkNode(other.d_node));
+  d_node = bzla_node_copy(s_bzla, other.d_node);
+}
+
+BzlaFPSymProp
+BzlaFPSymRM::valid(void) const
+{
+  assert(d_node);
+  BzlaNode *max;
+  max =
+      bzla_exp_bv_unsigned(s_bzla, BZLA_RM_MAX, bzla_node_get_sort_id(d_node));
+  bzla_node_release(s_bzla, max);
+  return bzla_exp_bv_ult(s_bzla, d_node, max);
+}
+
+BzlaFPSymProp
+BzlaFPSymRM::operator==(const BzlaFPSymRM &other) const
+{
+  assert(d_node);
+  assert(other.d_node);
+  return bzla_exp_eq(s_bzla, d_node, other.d_node);
+}
+
+bool
+BzlaFPSymRM::checkNode(const BzlaNode *node) const
+{
+  assert(s_bzla);
+  assert(node);
+
+  BzlaSortId sort = bzla_node_get_sort_id(node);
+  if (!bzla_sort_is_bv(s_bzla, sort))
+  {
+    return false;
+  }
+#ifdef BZLA_USE_SYMFPU
+  assert((((uint32_t) 1u) << BZLA_FP_RM_BW) >= SYMFPU_NUMBER_OF_ROUNDING_MODES);
+  return bzla_sort_bv_get_width(s_bzla, sort) == BZLA_FP_RM_BW;
+#else
+  return false;
+#endif
+}
+
+/* -------------------------------------------------------------------------- */
+/* Template parameter for SymFPU templates.                                   */
+/* -------------------------------------------------------------------------- */
+
+class BzlaFPSymTraits
+{
+ public:
+  /* The six key types that SymFPU uses. */
+  typedef BzlaFPSymRM rm;
+  typedef BzlaFPSortInfo fpt;
+  typedef BzlaFPSymProp prop;
+  typedef BzlaFPSymBV<true> sbv;
+  typedef BzlaFPSymBV<false> ubv;
+
+  /* Give concrete instances (wrapped nodes) for each rounding mode. */
+  static BzlaFPSymRM RNE(void);
+  static BzlaFPSymRM RNA(void);
+  static BzlaFPSymRM RTP(void);
+  static BzlaFPSymRM RTN(void);
+  static BzlaFPSymRM RTZ(void);
+
+  /* Properties used by Symfpu. */
+  static void precondition(const bool b);
+  static void postcondition(const bool b);
+  static void invariant(const bool b);
+  static void precondition(const prop &p);
+  static void postcondition(const prop &p);
+  static void invariant(const prop &p);
+};
+
+/* -------------------------------------------------------------------------- */
+
+BzlaFPSymRM
+BzlaFPSymTraits::RNE(void)
+{
+  return BZLA_RM_RNE;
+}
+
+BzlaFPSymRM
+BzlaFPSymTraits::RNA(void)
+{
+  return BZLA_RM_RNA;
+}
+
+BzlaFPSymRM
+BzlaFPSymTraits::RTP(void)
+{
+  return BZLA_RM_RTP;
+}
+
+BzlaFPSymRM
+BzlaFPSymTraits::RTN(void)
+{
+  return BZLA_RM_RTN;
+}
+
+BzlaFPSymRM
+BzlaFPSymTraits::RTZ(void)
+{
+  return BZLA_RM_RTZ;
+}
+
+void
+BzlaFPSymTraits::precondition(const bool b)
+{
+  assert(b);
+  (void) b;
+}
+
+void
+BzlaFPSymTraits::postcondition(const bool b)
+{
+  assert(b);
+  (void) b;
+}
+
+void
+BzlaFPSymTraits::invariant(const bool b)
+{
+  assert(b);
+  (void) b;
+}
+
+void
+BzlaFPSymTraits::precondition(const prop &p)
+{
+  (void) p;
+}
+
+void
+BzlaFPSymTraits::postcondition(const prop &p)
+{
+  (void) p;
+}
+
+void
+BzlaFPSymTraits::invariant(const prop &p)
+{
+  (void) p;
+}
