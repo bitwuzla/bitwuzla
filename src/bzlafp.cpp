@@ -25,6 +25,7 @@ extern "C" {
 /* Glue for SymFPU.                                                           */
 /* ========================================================================== */
 
+class BzlaFPWordBlaster;
 class BzlaFPSymRM;
 class BzlaFPSortInfo;
 class BzlaFPSymProp;
@@ -54,13 +55,13 @@ struct BzlaSignedToLitSort<false>
 
 class BzlaFPSortInfo
 {
+  friend BzlaFPWordBlaster;
+
  public:
   BzlaFPSortInfo(const BzlaSortId sort);
   BzlaFPSortInfo(uint32_t ewidth, uint32_t swidth);
   BzlaFPSortInfo(const BzlaFPSortInfo &other);
   ~BzlaFPSortInfo();
-
-  static void setBtor(Bzla *bzla) { s_bzla = bzla; }
 
   BzlaSortId getSort(void) const;
 
@@ -113,6 +114,7 @@ BzlaFPSortInfo::getSort(void) const
 
 class BzlaFPSymProp
 {
+  friend BzlaFPWordBlaster;
   friend BzlaFPSymBV<true>;
   friend BzlaFPSymBV<false>;
 #ifdef BZLA_USE_SYMFPU
@@ -124,8 +126,6 @@ class BzlaFPSymProp
   BzlaFPSymProp(bool v);
   BzlaFPSymProp(const BzlaFPSymProp &other);
   ~BzlaFPSymProp();
-
-  static void setBtor(Bzla *bzla) { s_bzla = bzla; }
 
   BzlaFPSymProp operator!(void) const;
   BzlaFPSymProp operator&&(const BzlaFPSymProp &op) const;
@@ -240,6 +240,7 @@ BzlaFPSymProp::checkNode(const BzlaNode *node) const
 template <bool is_signed>
 class BzlaFPSymBV
 {
+  friend BzlaFPWordBlaster;
   friend BzlaFPSymBV<!is_signed>; /* Allow conversion between the sorts. */
 #ifdef BZLA_USE_SYMFPU
   friend ::symfpu::ite<BzlaFPSymProp, BzlaFPSymBV<is_signed> >;
@@ -255,7 +256,6 @@ class BzlaFPSymBV
 
   bwt getWidth(void) const;
   BzlaNode *getNode(void) const { return d_node; }
-  static void setBtor(Bzla *bzla) { s_bzla = bzla; }
 
   /*** Constant creation and test ***/
   static BzlaFPSymBV<is_signed> one(const bwt &w);
@@ -838,6 +838,7 @@ BzlaFPSymBV<is_signed>::checkNode(const BzlaNode *node) const
 
 class BzlaFPSymRM
 {
+  friend BzlaFPWordBlaster;
 #ifdef BZLA_USE_SYMFPU
   friend symfpu::ite<BzlaFPSymProp, BzlaFPSymRM>;
 #endif
@@ -1040,7 +1041,14 @@ struct BzlaNodeHashFunction
 class BzlaFPWordBlaster
 {
  public:
-  BzlaFPWordBlaster(Bzla *bzla) : d_bzla(bzla) {}
+  BzlaFPWordBlaster(Bzla *bzla) : d_bzla(bzla)
+  {
+    BzlaFPSortInfo::s_bzla     = bzla;
+    BzlaFPSymRM::s_bzla        = bzla;
+    BzlaFPSymProp::s_bzla      = bzla;
+    BzlaFPSymBV<true>::s_bzla  = bzla;
+    BzlaFPSymBV<false>::s_bzla = bzla;
+  }
 
   void word_blast();
 
