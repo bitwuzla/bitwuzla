@@ -22,6 +22,7 @@
 #include "bzlaconfig.h"
 #include "bzladbg.h"
 #include "bzlaexp.h"
+#include "bzlafp.h"
 #include "bzlalog.h"
 #include "bzlamodel.h"
 #include "bzlaopt.h"
@@ -690,6 +691,8 @@ bzla_new(void)
 
   bzla->avmgr = bzla_aigvec_mgr_new(bzla);
 
+  bzla->word_blaster = bzla_fp_word_blaster_new(bzla);
+
   bzla_rng_init(&bzla->rng, bzla_opt_get(bzla, BZLA_OPT_SEED));
 
   bzla->bv_assignments  = bzla_ass_new_bv_list(mm);
@@ -898,6 +901,7 @@ bzla_delete(Bzla *bzla)
 
   mm = bzla->mm;
   bzla_rng_delete(&bzla->rng);
+  bzla_fp_word_blaster_delete(bzla->word_blaster);
 
   if (bzla->slv) bzla->slv->api.delet(bzla->slv);
 

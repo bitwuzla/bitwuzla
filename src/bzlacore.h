@@ -102,6 +102,8 @@ struct Bzla
 
   BzlaAIGVecMgr *avmgr;
 
+  void *word_blaster;
+
   BzlaPtrHashTable *symbols;
   BzlaPtrHashTable *node2symbol;
 

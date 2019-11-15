@@ -37,7 +37,7 @@ set(libboolector_src_files
   bzlaslvsls.c
   bzlasort.c
   bzlasubst.c
-  bzlasymfpu.cpp
+  bzlafp.cpp
   bzlasynth.c
   bzlatrapi.c
   dumper/bzladumpaig.c

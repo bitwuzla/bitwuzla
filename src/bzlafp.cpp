@@ -6,9 +6,12 @@
  *  See COPYING for more information on using this software.
  */
 
+#include <unordered_map>
+
 extern "C" {
 #include "bzlaabort.h"
 #include "bzlaexp.h"
+#include "bzlafp.h"
 #include "bzlanode.h"
 }
 
@@ -18,6 +21,8 @@ extern "C" {
 
 #define BZLA_FP_RM_BW 3
 
+/* ========================================================================== */
+/* Glue for SymFPU.                                                           */
 /* ========================================================================== */
 
 class BzlaFPSymRM;
@@ -1016,4 +1021,57 @@ void
 BzlaFPSymTraits::invariant(const prop &p)
 {
   (void) p;
+}
+
+/* ========================================================================== */
+/* Word blaster.                                                              */
+/* ========================================================================== */
+
+struct BzlaSortHashFunction
+{
+  size_t operator()(BzlaSortId sort) const { return sort; }
+};
+
+struct BzlaNodeHashFunction
+{
+  size_t operator()(BzlaNode *exp) const { return bzla_node_hash_by_id(exp); }
+};
+
+class BzlaFPWordBlaster
+{
+ public:
+  BzlaFPWordBlaster(Bzla *bzla) : d_bzla(bzla) {}
+
+  void word_blast();
+
+ private:
+  using BzlaFPSortInfoMap =
+      std::unordered_map<BzlaSortId, BzlaFPSortInfo, BzlaSortHashFunction>;
+  using BzlaFPSymRMMap =
+      std::unordered_map<BzlaNode *, BzlaFPSymRM, BzlaNodeHashFunction>;
+  using BzlaFPSymPropMap =
+      std::unordered_map<BzlaNode *, BzlaFPSymProp, BzlaNodeHashFunction>;
+  using BzlaFPSymUBVMap =
+      std::unordered_map<BzlaNode *, BzlaFPSymBV<false>, BzlaNodeHashFunction>;
+  using BzlaFPSymSBVMap =
+      std::unordered_map<BzlaNode *, BzlaFPSymBV<true>, BzlaNodeHashFunction>;
+
+  BzlaFPSortInfoMap s_sort_map;
+  BzlaFPSymRMMap d_rm_map;
+  BzlaFPSymPropMap d_prop_map;
+  BzlaFPSymUBVMap d_ubv_map;
+  BzlaFPSymSBVMap d_sbv_map;
+  Bzla *d_bzla;
+};
+
+void *
+bzla_fp_word_blaster_new(Bzla *bzla)
+{
+  return new BzlaFPWordBlaster(bzla);
+}
+
+void
+bzla_fp_word_blaster_delete(void *wblaster)
+{
+  delete static_cast<BzlaFPWordBlaster *>(wblaster);
 }
