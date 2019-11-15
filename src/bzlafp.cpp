@@ -22,7 +22,155 @@ extern "C" {
 #define BZLA_FP_RM_BW 3
 
 /* ========================================================================== */
-/* Glue for SymFPU.                                                           */
+/* Glue for SymFPU: concrete.                                                 */
+/* ========================================================================== */
+
+/* Mapping between sorts. */
+template <bool T>
+struct signedToLiteralType;
+template <>
+struct signedToLiteralType<true>
+{
+  using literalType = int32_t;
+};
+template <>
+struct signedToLiteralType<false>
+{
+  using literalType = uint32_t;
+};
+
+/* -------------------------------------------------------------------------- */
+/* Wrapper for BzlaBitVector.                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The template parameter distinguishes signed and unsigned bit-vectors, a
+ * distinction symfpu uses.
+ */
+template <bool isSigned>
+class BzlaFPBV
+{
+ protected:
+  using literalType = typename signedToLiteralType<isSigned>::literalType;
+
+  friend BzlaFPBV<!isSigned>; /* Allow conversion between the types. */
+#if BZLA_USE_SYMFPU
+  friend ::symfpu::ite<bool, BzlaFPBV<isSigned> >; /* For ite. */
+#endif
+
+ public:
+  BzlaFPBV(const uint32_t w, const uint32_t val);
+  BzlaFPBV(const bool &p);
+  BzlaFPBV(const BzlaFPBV<isSigned> &old);
+
+  BzlaFPBV(const BzlaBitVector *bv);
+  uint32_t getWidth(void) const;
+
+  static BzlaFPBV<isSigned> one(const uint32_t &w);
+  static BzlaFPBV<isSigned> zero(const uint32_t &w);
+  static BzlaFPBV<isSigned> allOnes(const uint32_t &w);
+
+  bool isAllOnes() const;
+  bool isAllZeros() const;
+
+  static BzlaFPBV<isSigned> maxValue(const uint32_t &w);
+  static BzlaFPBV<isSigned> minValue(const uint32_t &w);
+
+  /*** Operators ***/
+  BzlaFPBV<isSigned> operator<<(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> operator>>(const BzlaFPBV<isSigned> &op) const;
+
+  BzlaFPBV<isSigned> operator|(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> operator&(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> operator+(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> operator-(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> operator*(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> operator/(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> operator%(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> operator-(void) const;
+  BzlaFPBV<isSigned> operator~(void) const;
+
+  BzlaFPBV<isSigned> increment() const;
+  BzlaFPBV<isSigned> decrement() const;
+  BzlaFPBV<isSigned> signExtendRightShift(const BzlaFPBV<isSigned> &op) const;
+
+  /*** Modular opertaions ***/
+  // No overflow checking so these are the same as other operations
+  BzlaFPBV<isSigned> modularLeftShift(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> modularRightShift(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> modularIncrement() const;
+  BzlaFPBV<isSigned> modularDecrement() const;
+  BzlaFPBV<isSigned> modularAdd(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> modularNegate() const;
+
+  /*** Comparisons ***/
+  bool operator==(const BzlaFPBV<isSigned> &op) const;
+  bool operator<=(const BzlaFPBV<isSigned> &op) const;
+  bool operator>=(const BzlaFPBV<isSigned> &op) const;
+  bool operator<(const BzlaFPBV<isSigned> &op) const;
+  bool operator>(const BzlaFPBV<isSigned> &op) const;
+
+  /*** Type conversion ***/
+  BzlaFPBV<true> toSigned(void) const;
+  BzlaFPBV<false> toUnsigned(void) const;
+
+  /*** Bit hacks ***/
+  BzlaFPBV<isSigned> extend(uint32_t extension) const;
+  BzlaFPBV<isSigned> contract(uint32_t reduction) const;
+  BzlaFPBV<isSigned> resize(uint32_t newSize) const;
+  BzlaFPBV<isSigned> matchWidth(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> append(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<isSigned> extract(uint32_t upper, uint32_t lower) const;
+};
+
+/* -------------------------------------------------------------------------- */
+/* Template parameter for SymFPU templates.                                   */
+/* -------------------------------------------------------------------------- */
+
+class BzlaFPTraits
+{
+ public:
+  /* The six key types that SymFPU uses. */
+  using bwt  = uint32_t;
+  using rm   = BzlaRoundingMode;
+  using fpt  = BzlaFloatingPointSize;
+  using prop = bool;
+  using sbv  = BzlaFPBV<true>;
+  using ubv  = BzlaFPBV<false>;
+
+  /* Give concrete instances of each rounding mode, mainly for comparisons. */
+  static BzlaRoundingMode RNE(void);
+  static BzlaRoundingMode RNA(void);
+  static BzlaRoundingMode RTP(void);
+  static BzlaRoundingMode RTN(void);
+  static BzlaRoundingMode RTZ(void);
+
+  /* Properties used by Symfpu. */
+  static void precondition(const bool &p);
+  static void postcondition(const bool &p);
+  static void invariant(const bool &p);
+};
+
+/* ========================================================================== */
+/* Floating-Point constants.                                                  */
+/* ========================================================================== */
+
+struct BzlaFloatingPointSize
+{
+  uint32_t ewidth; /* size of exponent */
+  uint32_t swidth; /* size of significand */
+};
+
+struct BzlaFloatingPoint
+{
+  BzlaFloatingPointSize size;
+#ifdef BZLA_USE_SYMFPU
+  ::symfpu::unpackedFloat<BzlaFPTraits> fp;
+#endif
+};
+
+/* ========================================================================== */
+/* Glue for SymFPU: symbolic.                                                 */
 /* ========================================================================== */
 
 class BzlaFPWordBlaster;
@@ -32,21 +180,18 @@ class BzlaFPSymProp;
 template <bool T>
 class BzlaFPSymBV;
 
-/* Use the same type names as SymFPU. */
-typedef uint32_t bwt;
-
 /* Mapping between sorts. */
 template <bool T>
 struct BzlaSignedToLitSort;
 template <>
 struct BzlaSignedToLitSort<true>
 {
-  typedef int32_t BzlaLitSort;
+  using BzlaLitSort = int32_t;
 };
 template <>
 struct BzlaSignedToLitSort<false>
 {
-  typedef uint32_t BzlaLitSort;
+  using BzlaLitSort = uint32_t;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -248,25 +393,25 @@ class BzlaFPSymBV
 
  public:
   BzlaFPSymBV(BzlaNode *node);
-  BzlaFPSymBV(const bwt w, const uint32_t val);
+  BzlaFPSymBV(const uint32_t w, const uint32_t val);
   BzlaFPSymBV(const BzlaFPSymProp &p);
   BzlaFPSymBV(const BzlaFPSymBV<is_signed> &other);
   BzlaFPSymBV(const BzlaBitVector *bv);
   ~BzlaFPSymBV();
 
-  bwt getWidth(void) const;
+  uint32_t getWidth(void) const;
   BzlaNode *getNode(void) const { return d_node; }
 
   /*** Constant creation and test ***/
-  static BzlaFPSymBV<is_signed> one(const bwt &w);
-  static BzlaFPSymBV<is_signed> zero(const bwt &w);
-  static BzlaFPSymBV<is_signed> allOnes(const bwt &w);
+  static BzlaFPSymBV<is_signed> one(const uint32_t &w);
+  static BzlaFPSymBV<is_signed> zero(const uint32_t &w);
+  static BzlaFPSymBV<is_signed> allOnes(const uint32_t &w);
 
   BzlaFPSymProp isAllOnes() const;
   BzlaFPSymProp isAllZeros() const;
 
-  static BzlaFPSymBV<is_signed> maxValue(const bwt &w);
-  static BzlaFPSymBV<is_signed> minValue(const bwt &w);
+  static BzlaFPSymBV<is_signed> maxValue(const uint32_t &w);
+  static BzlaFPSymBV<is_signed> minValue(const uint32_t &w);
 
   /*** Operators ***/
   BzlaFPSymBV<is_signed> operator<<(const BzlaFPSymBV<is_signed> &op) const;
@@ -311,15 +456,15 @@ class BzlaFPSymBV
   BzlaFPSymBV<false> toUnsigned(void) const;
 
   /*** Bit hacks ***/
-  BzlaFPSymBV<is_signed> extend(bwt extension) const;
-  BzlaFPSymBV<is_signed> contract(bwt reduction) const;
-  BzlaFPSymBV<is_signed> resize(bwt newSize) const;
+  BzlaFPSymBV<is_signed> extend(uint32_t extension) const;
+  BzlaFPSymBV<is_signed> contract(uint32_t reduction) const;
+  BzlaFPSymBV<is_signed> resize(uint32_t newSize) const;
   BzlaFPSymBV<is_signed> matchWidth(const BzlaFPSymBV<is_signed> &op) const;
   BzlaFPSymBV<is_signed> append(const BzlaFPSymBV<is_signed> &op) const;
-  BzlaFPSymBV<is_signed> extract(bwt upper, bwt lower) const;
+  BzlaFPSymBV<is_signed> extract(uint32_t upper, uint32_t lower) const;
 
  protected:
-  typedef typename BzlaSignedToLitSort<is_signed>::BzlaLitSort literalType;
+  using literalType = typename BzlaSignedToLitSort<is_signed>::BzlaLitSort;
 
   // BzlaNode* boolNodeToBV(BzlaNode* node) const;
   // BzlaNode* BVToBoolNode(BzlaNode* node) const;
@@ -349,7 +494,7 @@ BzlaFPSymBV<is_signed>::BzlaFPSymBV(BzlaNode *node)
 }
 
 template <bool is_signed>
-BzlaFPSymBV<is_signed>::BzlaFPSymBV(const bwt w, const uint32_t val)
+BzlaFPSymBV<is_signed>::BzlaFPSymBV(const uint32_t w, const uint32_t val)
 {
   assert(s_bzla);
   BzlaSortId s = bzla_sort_bv(s_bzla, w);
@@ -390,7 +535,7 @@ BzlaFPSymBV<is_signed>::~BzlaFPSymBV()
 }
 
 template <bool is_signed>
-bwt
+uint32_t
 BzlaFPSymBV<is_signed>::getWidth(void) const
 {
   assert(s_bzla);
@@ -399,7 +544,7 @@ BzlaFPSymBV<is_signed>::getWidth(void) const
 
 template <bool is_signed>
 BzlaFPSymBV<is_signed>
-BzlaFPSymBV<is_signed>::one(const bwt &w)
+BzlaFPSymBV<is_signed>::one(const uint32_t &w)
 {
   assert(s_bzla);
   BzlaSortId s               = bzla_sort_bv(s_bzla, w);
@@ -412,7 +557,7 @@ BzlaFPSymBV<is_signed>::one(const bwt &w)
 
 template <bool is_signed>
 BzlaFPSymBV<is_signed>
-BzlaFPSymBV<is_signed>::zero(const bwt &w)
+BzlaFPSymBV<is_signed>::zero(const uint32_t &w)
 {
   assert(s_bzla);
   BzlaSortId s               = bzla_sort_bv(s_bzla, w);
@@ -425,7 +570,7 @@ BzlaFPSymBV<is_signed>::zero(const bwt &w)
 
 template <bool is_signed>
 BzlaFPSymBV<is_signed>
-BzlaFPSymBV<is_signed>::allOnes(const bwt &w)
+BzlaFPSymBV<is_signed>::allOnes(const uint32_t &w)
 {
   assert(s_bzla);
   BzlaSortId s               = bzla_sort_bv(s_bzla, w);
@@ -452,7 +597,7 @@ BzlaFPSymBV<is_signed>::isAllZeros() const
 
 template <bool is_signed>
 BzlaFPSymBV<is_signed>
-BzlaFPSymBV<is_signed>::maxValue(const bwt &w)
+BzlaFPSymBV<is_signed>::maxValue(const uint32_t &w)
 {
   assert(s_bzla);
   BzlaSortId s               = bzla_sort_bv(s_bzla, w);
@@ -465,7 +610,7 @@ BzlaFPSymBV<is_signed>::maxValue(const bwt &w)
 
 template <bool is_signed>
 BzlaFPSymBV<is_signed>
-BzlaFPSymBV<is_signed>::minValue(const bwt &w)
+BzlaFPSymBV<is_signed>::minValue(const uint32_t &w)
 {
   assert(s_bzla);
   BzlaSortId s               = bzla_sort_bv(s_bzla, w);
@@ -758,7 +903,7 @@ BzlaFPSymBV<is_signed>::toUnsigned(void) const
 
 template <bool is_signed>
 BzlaFPSymBV<is_signed>
-BzlaFPSymBV<is_signed>::extend(bwt extension) const
+BzlaFPSymBV<is_signed>::extend(uint32_t extension) const
 {
   assert(s_bzla);
   BzlaNode *n = is_signed ? bzla_exp_bv_sext(s_bzla, d_node, extension)
@@ -770,7 +915,7 @@ BzlaFPSymBV<is_signed>::extend(bwt extension) const
 
 template <bool is_signed>
 BzlaFPSymBV<is_signed>
-BzlaFPSymBV<is_signed>::contract(bwt reduction) const
+BzlaFPSymBV<is_signed>::contract(uint32_t reduction) const
 {
   assert(s_bzla);
   assert(this->getWidth() > reduction);
@@ -783,9 +928,9 @@ BzlaFPSymBV<is_signed>::contract(bwt reduction) const
 
 template <bool is_signed>
 BzlaFPSymBV<is_signed>
-BzlaFPSymBV<is_signed>::resize(bwt newSize) const
+BzlaFPSymBV<is_signed>::resize(uint32_t newSize) const
 {
-  bwt bw = this->getWidth();
+  uint32_t bw = this->getWidth();
   if (newSize > bw) return this->extend(newSize - bw);
   if (newSize < bw) return this->contract(bw - newSize);
   return *this;
@@ -812,7 +957,7 @@ BzlaFPSymBV<is_signed>::append(const BzlaFPSymBV<is_signed> &op) const
 
 template <bool is_signed>
 BzlaFPSymBV<is_signed>
-BzlaFPSymBV<is_signed>::extract(bwt upper, bwt lower) const
+BzlaFPSymBV<is_signed>::extract(uint32_t upper, uint32_t lower) const
 {
   assert(s_bzla);
   assert(upper >= lower);
@@ -931,11 +1076,12 @@ class BzlaFPSymTraits
 {
  public:
   /* The six key types that SymFPU uses. */
-  typedef BzlaFPSymRM rm;
-  typedef BzlaFPSortInfo fpt;
-  typedef BzlaFPSymProp prop;
-  typedef BzlaFPSymBV<true> sbv;
-  typedef BzlaFPSymBV<false> ubv;
+  using bwt  = uint32_t;
+  using rm   = BzlaFPSymRM;
+  using fpt  = BzlaFPSortInfo;
+  using prop = BzlaFPSymProp;
+  using sbv  = BzlaFPSymBV<true>;
+  using ubv  = BzlaFPSymBV<false>;
 
   /* Give concrete instances (wrapped nodes) for each rounding mode. */
   static BzlaFPSymRM RNE(void);

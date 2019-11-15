@@ -11,6 +11,9 @@
 #ifndef BZLAFP_H_INCLUDED
 #define BZLAFP_H_INCLUDED
 
+typedef struct BzlaFloatingPointSize BzlaFloatingPointSize;
+typedef struct BzlaFloatingPoint BzlaFloatingPoint;
+
 void *bzla_fp_word_blaster_new(Bzla *bzla);
 void bzla_fp_word_blaster_delete(void *wblaster);
 
