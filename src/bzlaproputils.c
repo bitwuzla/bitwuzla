@@ -8,7 +8,6 @@
 
 #include "bzlaproputils.h"
 
-#include "bzlabvprop.h"
 #include "bzlainvutils.h"
 #include "bzlanode.h"
 #include "bzlaprintmodel.h"
@@ -1863,6 +1862,21 @@ inv_eq_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: ult                                                                   */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x < s = t' or 's < x = t'.
+ * This inverse value computation does not consider constant bits.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * ult    : the Boolector node representing the ult operation
+ * t      : target value for ult (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -3545,6 +3559,126 @@ inv_eq_bvprop(Bzla *bzla,
 /* INV: ult                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Determine value interval for x with respect to constant bits for ult.
+ * Returns true if there exists a valid value interval for 'x'.
+ *
+ * Note: Resulting bit-vectors min and max must be released if a valid interval
+ *       exists (and don't have to be released otherwise).
+ *
+ * t    : target value for ult (the 'output' value)
+ * s    : (fixed) value of the other operand
+ * idx_x: the index of 'x', the operand we determine the value for
+ * d_x  : the 3-valued domain representing fixed and undetermined bits of 'x'
+ * min  : the minimum of the resulting interval (inclusive)
+ * max  : the maximum of the resulting interval (inclusive)
+ */
+#ifdef NDEBUG
+static bool
+#else
+bool
+#endif
+inv_interval_ult(BzlaMemMgr *mm,
+                 BzlaBitVector *t,
+                 BzlaBitVector *s,
+                 int32_t idx_x,
+                 BzlaBvDomain *d_x,
+                 BzlaBitVector **min,
+                 BzlaBitVector **max)
+{
+  assert(min);
+  assert(max);
+
+  uint32_t bw;
+
+  bw = bzla_bv_get_width(s);
+
+  if (bzla_bv_is_one(t))
+  {
+    if (idx_x)
+    {
+      /**
+       * s < x
+       *
+       * min: lo_x if lo_x > s else s + 1
+       * max: ~0
+       *
+       * conflict: hi_x <= s
+       */
+      assert(!bzla_bv_is_ones(s));
+      if (bzla_bv_compare(d_x->hi, s) <= 0) return false;
+      *max = bzla_bv_ones(mm, bw);
+      *min = bzla_bv_compare(d_x->lo, s) > 0 ? bzla_bv_copy(mm, d_x->lo)
+                                             : bzla_bv_inc(mm, s);
+    }
+    else
+    {
+      /**
+       * x < s
+       *
+       * min: 0
+       * max: hi_x if hi_x < s else s - 1
+       *
+       * conflict: lo_x >= s
+       */
+      assert(!bzla_bv_is_zero(s));
+      if (bzla_bv_compare(d_x->lo, s) >= 0) return false;
+      *min = bzla_bv_zero(mm, bw);
+      *max = bzla_bv_compare(d_x->hi, s) < 0 ? bzla_bv_copy(mm, d_x->hi)
+                                             : bzla_bv_dec(mm, s);
+    }
+  }
+  else
+  {
+    if (idx_x)
+    {
+      /* s >= x
+       *
+       * min: 0
+       * max: hi_x if hi_x <= s else s
+       *
+       * conflict: lo_x > s
+       */
+      if (bzla_bv_compare(d_x->lo, s) > 0) return false;
+      *min = bzla_bv_zero(mm, bw);
+      *max = bzla_bv_compare(d_x->hi, s) <= 0 ? bzla_bv_copy(mm, d_x->hi)
+                                              : bzla_bv_copy(mm, s);
+    }
+    else
+    {
+      /* x >= s
+       *
+       * min: lo_x if lo_x >= s else s
+       * max: ~0
+       *
+       * conflict: hi_x < s
+       */
+      if (bzla_bv_compare(d_x->hi, s) < 0) return false;
+      *min = bzla_bv_compare(d_x->lo, s) >= 0 ? bzla_bv_copy(mm, d_x->lo)
+                                              : bzla_bv_copy(mm, s);
+      *max = bzla_bv_ones(mm, bw);
+    }
+  }
+  return true;
+}
+
+/**
+ * Determine inverse value for 'x' given 'x < s = t' or 's < x = t' using the
+ * ult domain propagator. This inverse value computation determines an inverse
+ * value with respect to constant bits.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * Falls back to the inverse value computation that does not utilize propagator
+ * domains in case of a conflict.
+ *
+ * ult    : the Boolector node representing the ult operation
+ * t      : target value for ult (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: a map maintaining node (id) to its propagator domain
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -3570,9 +3704,10 @@ inv_ult_bvprop(Bzla *bzla,
 
   uint32_t bw_x;
   BzlaNode *x;
-  BzlaBitVector *res, *tmp, *zero, *one, *ones;
+  BzlaBitVector *res;
+  BzlaBitVector *min, *max;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
-  bool is_valid, is_ult, done;
+  bool is_valid_domain, is_valid_range;
   BzlaMemMgr *mm;
 
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
@@ -3594,11 +3729,15 @@ inv_ult_bvprop(Bzla *bzla,
   assert(bzla_bv_get_width(d_x->lo) == bw_x);
   assert(bzla_bv_get_width(d_x->hi) == bw_x);
 
-  is_valid =
+  /* propagate target value with respect to constant bits */
+  is_valid_domain =
       idx_x ? bzla_bvprop_ult(mm, d_s, d_x, d_t, &d_res_s, &d_res_x, &d_res_t)
             : bzla_bvprop_ult(mm, d_x, d_s, d_t, &d_res_x, &d_res_s, &d_res_t);
 
-  if (!is_valid)
+  /* determine value range for result ([min, max])*/
+  is_valid_range = inv_interval_ult(mm, t, s, idx_x, d_res_x, &min, &max);
+
+  if (!is_valid_domain || !is_valid_range)
   {
 #ifndef NDEBUG
     BZLA_PROP_SOLVER(bzla)->stats.inv_ult_conflicts++;
@@ -3606,100 +3745,19 @@ inv_ult_bvprop(Bzla *bzla,
     BZLA_PROP_SOLVER(bzla)->stats.props_inv--;
 #endif
     // TODO for now fall back, but we want to be able to handle this smarter
-    bzla_bvprop_free(mm, d_s);
-    bzla_bvprop_free(mm, d_t);
-    bzla_bvprop_free(mm, d_res_s);
-    bzla_bvprop_free(mm, d_res_t);
-    bzla_bvprop_free(mm, d_res_x);
-    return inv_ult_bv(bzla, ult, t, s, idx_x, domains);
+    res = inv_ult_bv(bzla, ult, t, s, idx_x, domains);
+    goto DONE;
   }
 
-  zero = bzla_bv_new(mm, bw_x);
-  one  = bzla_bv_one(mm, bw_x);
-  ones = bzla_bv_ones(mm, bw_x);
-
-  if ((is_ult = bzla_bv_is_one(t)))
-  {
-    if (idx_x)
-    {
-      /* s < x */
-      res = 0;
-      do
-      {
-        if (res) bzla_bv_free(mm, res);
-        tmp = bzla_bv_add(mm, s, one);
-        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, tmp, ones);
-        bzla_bv_free(mm, tmp);
-        tmp = res;
-        res = set_const_bits(mm, d_res_x, tmp);
-        bzla_bv_free(mm, tmp);
-        tmp  = bzla_bv_ult(mm, s, res);
-        done = bzla_bv_is_true(tmp);
-        bzla_bv_free(mm, tmp);
-      } while (!done);
-    }
-    else
-    {
-      /* x < s */
-      assert(bzla_bv_compare(d_res_x->lo, s) < 0);
-      res = 0;
-      do
-      {
-        if (res) bzla_bv_free(mm, res);
-        tmp = bzla_bv_sub(mm, s, one);
-        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, zero, tmp);
-        bzla_bv_free(mm, tmp);
-        tmp = res;
-        res = set_const_bits(mm, d_res_x, tmp);
-        bzla_bv_free(mm, tmp);
-        tmp  = bzla_bv_ult(mm, res, s);
-        done = bzla_bv_is_true(tmp);
-        bzla_bv_free(mm, tmp);
-      } while (!done);
-    }
-  }
-  else
-  {
-    if (idx_x)
-    {
-      /* s >= x */
-      res = 0;
-      do
-      {
-        if (res) bzla_bv_free(mm, res);
-        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, zero, s);
-        tmp = res;
-        res = set_const_bits(mm, d_res_x, tmp);
-        bzla_bv_free(mm, tmp);
-        tmp  = bzla_bv_ult(mm, s, res);
-        done = bzla_bv_is_false(tmp);
-        bzla_bv_free(mm, tmp);
-      } while (!done);
-    }
-    else
-    {
-      /* x >= s */
-      res = 0;
-      do
-      {
-        if (res) bzla_bv_free(mm, res);
-        res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, s, ones);
-        tmp = res;
-        res = set_const_bits(mm, d_res_x, tmp);
-        bzla_bv_free(mm, tmp);
-        tmp  = bzla_bv_ult(mm, res, s);
-        done = bzla_bv_is_false(tmp);
-        bzla_bv_free(mm, tmp);
-      } while (!done);
-    }
-  }
+  res = bzla_bv_new_random_range(mm, &bzla->rng, bw_x, min, max);
+  assert(bzla_bvprop_is_consistent(d_res_x, res));
+  bzla_bv_free(mm, min);
+  bzla_bv_free(mm, max);
 
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_ult, ult, s, t, res, idx_x, "<");
 #endif
-  bzla_bv_free(mm, zero);
-  bzla_bv_free(mm, one);
-  bzla_bv_free(mm, ones);
+DONE:
   bzla_bvprop_free(mm, d_s);
   bzla_bvprop_free(mm, d_t);
   bzla_bvprop_free(mm, d_res_s);

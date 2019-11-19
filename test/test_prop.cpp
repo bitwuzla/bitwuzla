@@ -22,6 +22,17 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
+#ifndef NDEBUG
+#define TEST_PROP_LOG_LEVEL 0
+#define TEST_PROP_LOG(FMT, ...) \
+  if (TEST_PROP_LOG_LEVEL > 0)  \
+  {                             \
+    printf(FMT, ##__VA_ARGS__); \
+  }
+#else
+#define TEST_PROP_LOG(domain) ()
+#endif
+
 class TestProp : public TestBzla
 {
  protected:
@@ -62,7 +73,7 @@ class TestProp : public TestBzla
       BzlaBitVector *(*create_bv)(BzlaMemMgr *,
                                   const BzlaBitVector *,
                                   const BzlaBitVector *),
-      BzlaPropIsInv is_inv,
+      BzlaPropIsInv is_inv_fun,
       BzlaPropComputeValue inv_fun)
   {
 #ifndef NDEBUG
@@ -99,14 +110,15 @@ class TestProp : public TestBzla
     bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_x], bvetmp[idx_x]);
     bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, exp, bvexptmp);
 
-    // printf ("idx_x %d bvetmp[0] %s bvetmp[1] %s target %s\n",
-    //        idx_x,
-    //        bzla_bv_to_char (d_mm, bvetmp[0]),
-    //        bzla_bv_to_char (d_mm, bvetmp[1]),
-    //        bzla_bv_to_char (d_mm, bvexp));
+    TEST_PROP_LOG("idx_x %d bvetmp[0] %s bvetmp[1] %s target %s\n",
+                  idx_x,
+                  bzla_bv_to_char(d_mm, bvetmp[0]),
+                  bzla_bv_to_char(d_mm, bvetmp[1]),
+                  bzla_bv_to_char(d_mm, bvexp));
+
     /* -> first test local completeness  */
     /* we must find a solution within n move(s) */
-    assert(is_inv(d_mm, bvexp, bve, idx_x));
+    assert(is_inv_fun(d_mm, bvexp, bve, idx_x));
     res[idx_x] = inv_fun(d_bzla, exp, bvexp, bve, idx_x, domains);
     ASSERT_NE(res[idx_x], nullptr);
     res[idx_s] = n == 1
@@ -124,7 +136,7 @@ class TestProp : public TestBzla
     {
       for (i = 0, res[idx_x] = 0; i < TEST_PROP_COMPLETE_N_TESTS; i++)
       {
-        assert(is_inv(d_mm, bvexp, bve, idx_x));
+        assert(is_inv_fun(d_mm, bvexp, bve, idx_x));
         res[idx_x] = inv_fun(d_bzla, exp, bvexp, bve, idx_x, domains);
         ASSERT_NE(res[idx_x], nullptr);
         if (!bzla_bv_compare(res[idx_x], bvres)) break;
@@ -167,8 +179,8 @@ class TestProp : public TestBzla
     bzla_sort_release(d_bzla, sort);
     sat_res = sat_prop_solver_aux(d_bzla);
     ASSERT_EQ(sat_res, BZLA_RESULT_SAT);
-    // printf ("moves %u n %u\n", ((BzlaPropSolver *) d_bzla->slv)->stats.moves,
-    // n);
+    TEST_PROP_LOG(
+        "moves %u n %u\n", ((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
     ASSERT_LE(((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
     bzla_reset_incremental_usage(d_bzla);
 #else
@@ -207,9 +219,10 @@ class TestProp : public TestBzla
       {
         bve[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         bvexp  = create_bv(d_mm, bve[0], bve[1]);
-        // printf ("bve[0] %s bve[1] %s bvexp %s\n", bzla_bv_to_char (d_mm,
-        // bve[0]), bzla_bv_to_char (d_mm, bve[1]), bzla_bv_to_char (d_mm,
-        // bvexp));
+        TEST_PROP_LOG("bve[0] %s bve[1] %s bvexp %s\n",
+                      bzla_bv_to_char(d_mm, bve[0]),
+                      bzla_bv_to_char(d_mm, bve[1]),
+                      bzla_bv_to_char(d_mm, bvexp));
         /* -> first test local completeness  */
         for (k = 0; k < bw; k++)
         {
@@ -245,6 +258,87 @@ class TestProp : public TestBzla
   BzlaRNG *d_rng        = nullptr;
   BzlaPropSolver *d_slv = nullptr;
 };
+
+/*------------------------------------------------------------------------*/
+
+TEST_F(TestProp, inv_interval_ult)
+{
+  bool res;
+  BzlaBitVector *s, *t, *min, *max, *tmp_t, *tmp_x;
+  std::vector<BzlaBvDomain *> domains;
+  uint32_t bw_t = 1, bw_s = 3;
+  uint64_t umin, umax;
+
+  for (uint32_t i = 0; i < 3; ++i)
+  {
+    for (uint32_t j = 0; j < 3; ++j)
+    {
+      for (uint32_t k = 0; k < 3; ++k)
+      {
+        std::stringstream ss;
+        ss << (i == 0 ? '0' : (i == 1 ? '1' : 'x'))
+           << (j == 0 ? '0' : (j == 1 ? '1' : 'x'))
+           << (k == 0 ? '0' : (k == 1 ? '1' : 'x'));
+        domains.push_back(bzla_bvprop_new_from_char(d_mm, ss.str().c_str()));
+      }
+    }
+  }
+
+  for (uint32_t i = 0; i < (uint32_t)(1 << bw_t); i++)
+  {
+    t = bzla_bv_uint64_to_bv(d_mm, i, bw_t);
+    for (uint32_t j = 0; j < (uint32_t)(1 << bw_s); j++)
+    {
+      s = bzla_bv_uint64_to_bv(d_mm, i, bw_s);
+      for (BzlaBvDomain *d : domains)
+      {
+        for (uint32_t idx = 0; idx < 2; ++idx)
+        {
+          res = inv_interval_ult(d_mm, t, s, idx, d, &min, &max);
+          if (res)
+          {
+            /* all values in interval must produce t */
+            umin = bzla_bv_to_uint64(min);
+            umax = bzla_bv_to_uint64(max);
+            for (uint32_t k = umin; k <= umax; ++k)
+            {
+              tmp_x = bzla_bv_uint64_to_bv(d_mm, k, bw_s);
+              tmp_t = idx ? bzla_bv_ult(d_mm, s, tmp_x)
+                          : bzla_bv_ult(d_mm, tmp_x, s);
+              ASSERT_EQ(bzla_bv_compare(tmp_t, t), 0);
+              bzla_bv_free(d_mm, tmp_x);
+              bzla_bv_free(d_mm, tmp_t);
+            }
+            bzla_bv_free(d_mm, min);
+            bzla_bv_free(d_mm, max);
+          }
+          else
+          {
+            /* either x->hi or x->lo already do not produce t */
+            bool conflict;
+            tmp_t =
+                idx ? bzla_bv_ult(d_mm, s, d->lo) : bzla_bv_ult(d_mm, d->lo, s);
+            conflict = bzla_bv_compare(tmp_t, t) != 0;
+            bzla_bv_free(d_mm, tmp_t);
+            tmp_t =
+                idx ? bzla_bv_ult(d_mm, s, d->hi) : bzla_bv_ult(d_mm, d->hi, s);
+            conflict = conflict || (bzla_bv_compare(tmp_t, t) != 0);
+            bzla_bv_free(d_mm, tmp_t);
+            ASSERT_TRUE(conflict);
+          }
+        }
+      }
+      bzla_bv_free(d_mm, s);
+    }
+    bzla_bv_free(d_mm, t);
+  }
+
+  while (!domains.empty())
+  {
+    bzla_bvprop_free(d_mm, domains.back());
+    domains.pop_back();
+  }
+}
 
 /*------------------------------------------------------------------------*/
 

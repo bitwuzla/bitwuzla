@@ -10,6 +10,7 @@
 #define BZLAPROPUTILS_H_INCLUDED
 
 #include "bzlabv.h"
+#include "bzlabvprop.h"
 #include "bzlalog.h"
 #include "bzlamodel.h"
 #include "bzlanode.h"
@@ -244,6 +245,18 @@ BzlaBitVector* inv_cond_bv(Bzla* bzla,
                            BzlaBitVector* s,
                            int32_t eidx,
                            BzlaIntHashTable* domains);
+
+/*------------------------------------------------------------------------*/
+/* Inverse value interval computation wrt const bits (propagator domain).  */
+/*------------------------------------------------------------------------*/
+
+bool inv_interval_ult(BzlaMemMgr* mm,
+                      BzlaBitVector* t,
+                      BzlaBitVector* s,
+                      int32_t idx_x,
+                      BzlaBvDomain* d_x,
+                      BzlaBitVector** min,
+                      BzlaBitVector** max);
 
 /*------------------------------------------------------------------------*/
 /* Inverse value computation functions using propagator domains.          */
