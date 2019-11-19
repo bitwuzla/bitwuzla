@@ -249,20 +249,6 @@ class TestBvProp : public TestMm
     return res;
   }
 
-  /* Create 2-valued bit-vector from 3-valued bit-vector 'bv' by initializing
-   * 'x' values to 'bit'. */
-  BzlaBitVector *to_bv(const char *c, char bit)
-  {
-    size_t len = strlen(c);
-    char buf[len + 1];
-    buf[len] = '\0';
-    for (size_t i = 0; i < len; i++)
-    {
-      buf[i] = (c[i] == 'x') ? bit : c[i];
-    }
-    return bzla_bv_char_to_bv(d_mm, buf);
-  }
-
   bool is_xxx_domain(BzlaMemMgr *mm, BzlaBvDomain *d)
   {
     assert(mm);
@@ -338,23 +324,6 @@ class TestBvProp : public TestMm
   }
 #endif
 
-  /* Create hi for domain from 3-valued bit-vector 'bv'. */
-  BzlaBitVector *to_hi(const char *bv) { return to_bv(bv, '1'); }
-
-  /* Create lo for domain from 3-valued bit-vector 'bv'. */
-  BzlaBitVector *to_lo(const char *bv) { return to_bv(bv, '0'); }
-
-  /* Create domain from 3-valued bit-vector 'bv'. */
-  BzlaBvDomain *create_domain(const char *bv)
-  {
-    BzlaBitVector *lo = to_lo(bv);
-    BzlaBitVector *hi = to_hi(bv);
-    BzlaBvDomain *res = bzla_bvprop_new(d_mm, lo, hi);
-    bzla_bv_free(d_mm, lo);
-    bzla_bv_free(d_mm, hi);
-    return res;
-  }
-
   /* Create 3-valued bit-vector from domain 'd'. */
   char *from_domain(BzlaMemMgr *mm, BzlaBvDomain *d)
   {
@@ -405,7 +374,7 @@ class TestBvProp : public TestMm
   void test_is_consistent(const char *d_val)
   {
     assert(strlen(d_val) == 3);
-    BzlaBvDomain *d = create_domain(d_val);
+    BzlaBvDomain *d = bzla_bvprop_new_from_char(d_mm, d_val);
     for (uint32_t i = 0; i < (1u << 3); ++i)
     {
       std::string bv_val = std::bitset<3>(i).to_string();
@@ -1046,10 +1015,10 @@ class TestBvProp : public TestMm
 
     for (i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(consts[i]);
+      d_z = bzla_bvprop_new_from_char(d_mm, consts[i]);
       for (j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(consts[j]);
+        d_x = bzla_bvprop_new_from_char(d_mm, consts[j]);
 
         for (n = 0; n < bw + 1; n++)
         {
@@ -1149,14 +1118,14 @@ class TestBvProp : public TestMm
 
     for (i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(consts[i]);
+      d_z = bzla_bvprop_new_from_char(d_mm, consts[i]);
       for (j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(consts[j]);
+        d_x = bzla_bvprop_new_from_char(d_mm, consts[j]);
 
         for (k = 0; k < num_consts; k++)
         {
-          d_y = create_domain(consts[k]);
+          d_y = bzla_bvprop_new_from_char(d_mm, consts[k]);
           if (is_srl)
           {
             res = bzla_bvprop_srl(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
@@ -1252,17 +1221,17 @@ class TestBvProp : public TestMm
 
     for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_z   = create_domain(consts[i]);
+      d_z   = bzla_bvprop_new_from_char(d_mm, consts[i]);
       str_z = consts[i];
 
       for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_x   = create_domain(consts[j]);
+        d_x   = bzla_bvprop_new_from_char(d_mm, consts[j]);
         str_x = consts[j];
 
         for (uint32_t k = 0; k < num_consts; k++)
         {
-          d_y   = create_domain(consts[k]);
+          d_y   = bzla_bvprop_new_from_char(d_mm, consts[k]);
           str_y = consts[k];
 
           if (op == TEST_BVPROP_AND)
@@ -1479,13 +1448,13 @@ class TestBvProp : public TestMm
 
     for (size_t k = 0; k < 3; k++)
     {
-      d_z = create_domain(values_z[k]);
+      d_z = bzla_bvprop_new_from_char(d_mm, values_z[k]);
       for (size_t i = 0; i < num_consts; i++)
       {
-        d_x = create_domain(consts[i]);
+        d_x = bzla_bvprop_new_from_char(d_mm, consts[i]);
         for (size_t j = 0; j < num_consts; j++)
         {
-          d_y = create_domain(consts[j]);
+          d_y = bzla_bvprop_new_from_char(d_mm, consts[j]);
 
           res = bzla_bvprop_eq(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
           check_sat(d_x,
@@ -1559,11 +1528,11 @@ class TestBvProp : public TestMm
 
     for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_x = create_domain(consts[i]);
+      d_x = bzla_bvprop_new_from_char(d_mm, consts[i]);
 
       for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_z = create_domain(consts[j]);
+        d_z = bzla_bvprop_new_from_char(d_mm, consts[j]);
         res = bzla_bvprop_not(d_mm, d_x, d_z, &res_x, &res_z);
         check_sat(d_x,
                   0,
@@ -1628,7 +1597,7 @@ class TestBvProp : public TestMm
 
     for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_x = create_domain(consts[i]);
+      d_x = bzla_bvprop_new_from_char(d_mm, consts[i]);
       for (uint32_t j = 0; j < num_consts; j++)
       {
         for (uint32_t lower = 0; lower < bw; lower++)
@@ -1640,7 +1609,7 @@ class TestBvProp : public TestMm
             ASSERT_GT(strlen(buf), 0u);
             ASSERT_EQ(strlen(buf), upper - lower + 1);
 
-            d_z = create_domain(buf);
+            d_z = bzla_bvprop_new_from_char(d_mm, buf);
             res =
                 bzla_bvprop_slice(d_mm, d_x, d_z, upper, lower, &res_x, &res_z);
             /* not compositional but eq always returns true */
@@ -1732,7 +1701,7 @@ class TestBvProp : public TestMm
         TEST_BVPROP_RELEASE_D_XYZ;
 
         s_const = slice_str_const(consts[k], 0, i - 1);
-        d_x     = create_domain(s_const);
+        d_x     = bzla_bvprop_new_from_char(d_mm, s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_y = bzla_bvprop_new_init(d_mm, j);
         d_z = bzla_bvprop_new_init(d_mm, bw);
@@ -1741,7 +1710,7 @@ class TestBvProp : public TestMm
 
         d_x     = bzla_bvprop_new_init(d_mm, i);
         s_const = slice_str_const(consts[k], i, bw - 1);
-        d_y     = create_domain(s_const);
+        d_y     = bzla_bvprop_new_from_char(d_mm, s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_z = bzla_bvprop_new_init(d_mm, bw);
         check_concat(d_x, d_y, d_z);
@@ -1749,43 +1718,43 @@ class TestBvProp : public TestMm
 
         d_x = bzla_bvprop_new_init(d_mm, i);
         d_y = bzla_bvprop_new_init(d_mm, j);
-        d_z = create_domain(consts[k]);
+        d_z = bzla_bvprop_new_from_char(d_mm, consts[k]);
         check_concat(d_x, d_y, d_z);
         TEST_BVPROP_RELEASE_D_XYZ;
 
         s_const = slice_str_const(consts[k], 0, i - 1);
-        d_x     = create_domain(s_const);
+        d_x     = bzla_bvprop_new_from_char(d_mm, s_const);
         bzla_mem_freestr(d_mm, s_const);
         s_const = slice_str_const(consts[k], i, bw - 1);
-        d_y     = create_domain(s_const);
+        d_y     = bzla_bvprop_new_from_char(d_mm, s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_z = bzla_bvprop_new_init(d_mm, bw);
         check_concat(d_x, d_y, d_z);
         TEST_BVPROP_RELEASE_D_XYZ;
 
         s_const = slice_str_const(consts[k], 0, i - 1);
-        d_x     = create_domain(s_const);
+        d_x     = bzla_bvprop_new_from_char(d_mm, s_const);
         bzla_mem_freestr(d_mm, s_const);
         d_y = bzla_bvprop_new_init(d_mm, j);
-        d_z = create_domain(consts[k]);
+        d_z = bzla_bvprop_new_from_char(d_mm, consts[k]);
         check_concat(d_x, d_y, d_z);
         TEST_BVPROP_RELEASE_D_XYZ;
 
         d_x     = bzla_bvprop_new_init(d_mm, i);
         s_const = slice_str_const(consts[k], i, bw - 1);
-        d_y     = create_domain(s_const);
+        d_y     = bzla_bvprop_new_from_char(d_mm, s_const);
         bzla_mem_freestr(d_mm, s_const);
-        d_z = create_domain(consts[k]);
+        d_z = bzla_bvprop_new_from_char(d_mm, consts[k]);
         check_concat(d_x, d_y, d_z);
         TEST_BVPROP_RELEASE_D_XYZ;
 
         s_const = slice_str_const(consts[k], 0, i - 1);
-        d_x     = create_domain(s_const);
+        d_x     = bzla_bvprop_new_from_char(d_mm, s_const);
         bzla_mem_freestr(d_mm, s_const);
         s_const = slice_str_const(consts[k], i, bw - 1);
-        d_y     = create_domain(s_const);
+        d_y     = bzla_bvprop_new_from_char(d_mm, s_const);
         bzla_mem_freestr(d_mm, s_const);
-        d_z = create_domain(consts[k]);
+        d_z = bzla_bvprop_new_from_char(d_mm, consts[k]);
         check_concat(d_x, d_y, d_z);
         TEST_BVPROP_RELEASE_D_XYZ;
       }
@@ -1804,12 +1773,12 @@ class TestBvProp : public TestMm
 
     for (i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(consts[i]);
+      d_z = bzla_bvprop_new_from_char(d_mm, consts[i]);
       for (j = 0; j < num_consts; j++)
       {
         for (n = 1; n < bw; n++)
         {
-          d_x = create_domain(consts[j] + n);
+          d_x = bzla_bvprop_new_from_char(d_mm, consts[j] + n);
           res = bzla_bvprop_sext(d_mm, d_x, d_z, &res_x, &res_z);
           check_sat(d_x,
                     0,
@@ -1870,13 +1839,13 @@ class TestBvProp : public TestMm
 
       for (uint32_t i = 0; i < num_consts; i++)
       {
-        d_z = create_domain(consts[i]);
+        d_z = bzla_bvprop_new_from_char(d_mm, consts[i]);
         for (uint32_t j = 0; j < num_consts; j++)
         {
-          d_x = create_domain(consts[j]);
+          d_x = bzla_bvprop_new_from_char(d_mm, consts[j]);
           for (uint32_t k = 0; k < num_consts; k++)
           {
-            d_y = create_domain(consts[k]);
+            d_y = bzla_bvprop_new_from_char(d_mm, consts[k]);
 
             res = bzla_bvprop_ite(
                 d_mm, d_x, d_y, d_z, d_c, &res_x, &res_y, &res_z, &res_c);
@@ -1924,13 +1893,13 @@ class TestBvProp : public TestMm
 
     for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(consts[i]);
+      d_z = bzla_bvprop_new_from_char(d_mm, consts[i]);
       for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(consts[j]);
+        d_x = bzla_bvprop_new_from_char(d_mm, consts[j]);
         for (uint32_t k = 0; k < num_consts; k++)
         {
-          d_y = create_domain(consts[k]);
+          d_y = bzla_bvprop_new_from_char(d_mm, consts[k]);
 
           res = bzla_bvprop_add_aux(
               d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z, no_overflows);
@@ -2094,13 +2063,13 @@ class TestBvProp : public TestMm
 
     for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(consts[i]);
+      d_z = bzla_bvprop_new_from_char(d_mm, consts[i]);
       for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(consts[j]);
+        d_x = bzla_bvprop_new_from_char(d_mm, consts[j]);
         for (uint32_t k = 0; k < num_consts; k++)
         {
-          d_y = create_domain(consts[k]);
+          d_y = bzla_bvprop_new_from_char(d_mm, consts[k]);
 
           res = bzla_bvprop_mul_aux(
               d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z, no_overflows);
@@ -2521,13 +2490,13 @@ class TestBvProp : public TestMm
     num_consts = generate_consts(bw, &consts);
     for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(consts[i]);
+      d_z = bzla_bvprop_new_from_char(d_mm, consts[i]);
       for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(consts[j]);
+        d_x = bzla_bvprop_new_from_char(d_mm, consts[j]);
         for (uint32_t k = 0; k < num_consts; k++)
         {
-          d_y = create_domain(consts[k]);
+          d_y = bzla_bvprop_new_from_char(d_mm, consts[k]);
 
           res = bzla_bvprop_udiv(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
           check_sat(d_x,
@@ -3024,13 +2993,13 @@ class TestBvProp : public TestMm
 
     for (uint32_t i = 0; i < num_consts; i++)
     {
-      d_z = create_domain(consts[i]);
+      d_z = bzla_bvprop_new_from_char(d_mm, consts[i]);
       for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(consts[j]);
+        d_x = bzla_bvprop_new_from_char(d_mm, consts[j]);
         for (uint32_t k = 0; k < num_consts; k++)
         {
-          d_y = create_domain(consts[k]);
+          d_y = bzla_bvprop_new_from_char(d_mm, consts[k]);
 
           res = bzla_bvprop_urem(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
           check_sat(d_x,
@@ -3397,13 +3366,13 @@ class TestBvProp : public TestMm
 
     for (uint32_t i = 0; i < num_consts_z; i++)
     {
-      d_z = create_domain(consts_z[i]);
+      d_z = bzla_bvprop_new_from_char(d_mm, consts_z[i]);
       for (uint32_t j = 0; j < num_consts; j++)
       {
-        d_x = create_domain(consts[j]);
+        d_x = bzla_bvprop_new_from_char(d_mm, consts[j]);
         for (uint32_t k = 0; k < num_consts; k++)
         {
-          d_y = create_domain(consts[k]);
+          d_y = bzla_bvprop_new_from_char(d_mm, consts[k]);
 
           res = bzla_bvprop_ult(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
           check_sat(d_x,

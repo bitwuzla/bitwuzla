@@ -98,6 +98,46 @@ bzla_bvprop_new(BzlaMemMgr *mm,
   return res;
 }
 
+/* Create 2-valued bit-vector from 3-valued bit-vector 'bv' by initializing
+ * 'x' values to 'bit'. */
+static BzlaBitVector *
+char_to_bv(BzlaMemMgr *mm, const char *c, char bit)
+{
+  size_t len = strlen(c);
+  char buf[len + 1];
+  buf[len] = '\0';
+  for (size_t i = 0; i < len; i++)
+  {
+    buf[i] = (c[i] == 'x') ? bit : c[i];
+  }
+  return bzla_bv_char_to_bv(mm, buf);
+}
+
+/* Create hi for domain from 3-valued string representation 'val'. */
+static BzlaBitVector *
+char_to_hi(BzlaMemMgr *mm, const char *val)
+{
+  return char_to_bv(mm, val, '1');
+}
+
+/* Create lo for domain from 3-valued string representation 'val'. */
+static BzlaBitVector *
+char_to_lo(BzlaMemMgr *mm, const char *val)
+{
+  return char_to_bv(mm, val, '0');
+}
+
+BzlaBvDomain *
+bzla_bvprop_new_from_char(BzlaMemMgr *mm, const char *val)
+{
+  BzlaBitVector *lo = char_to_lo(mm, val);
+  BzlaBitVector *hi = char_to_hi(mm, val);
+  BzlaBvDomain *res = bzla_bvprop_new(mm, lo, hi);
+  bzla_bv_free(mm, lo);
+  bzla_bv_free(mm, hi);
+  return res;
+}
+
 BzlaBvDomain *
 bzla_bvprop_new_fixed(BzlaMemMgr *mm, const BzlaBitVector *bv)
 {

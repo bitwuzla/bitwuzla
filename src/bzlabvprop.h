@@ -34,6 +34,11 @@ BzlaBvDomain *bzla_bvprop_new(BzlaMemMgr *mm,
                               const BzlaBitVector *hi);
 
 /**
+ * Create new bit-vector domain from a 3-valued string representation.
+ */
+BzlaBvDomain *bzla_bvprop_new_from_char(BzlaMemMgr *mm, const char *val);
+
+/**
  * Create new (fixed) bit-vector domain with low 'bv' and high 'bv'.
  * Creates copies of bv.
  */
