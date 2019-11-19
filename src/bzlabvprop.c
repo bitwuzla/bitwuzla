@@ -133,6 +133,14 @@ bzla_bvprop_copy(BzlaMemMgr *mm, const BzlaBvDomain *d)
   return bzla_bvprop_new(mm, d->lo, d->hi);
 }
 
+uint32_t
+bzla_bvprop_get_width(const BzlaBvDomain *d)
+{
+  assert(d);
+  assert(bzla_bv_get_width(d->lo) == bzla_bv_get_width(d->hi));
+  return bzla_bv_get_width(d->lo);
+}
+
 bool
 bzla_bvprop_is_valid(BzlaMemMgr *mm, const BzlaBvDomain *d)
 {
@@ -168,8 +176,7 @@ void
 bzla_bvprop_fix_bit(const BzlaBvDomain *d, uint32_t pos, bool value)
 {
   assert(d);
-  assert(pos < bzla_bv_get_width(d->lo));
-  assert(pos < bzla_bv_get_width(d->hi));
+  assert(pos < bzla_bvprop_get_width(d));
   bzla_bv_set_bit(d->lo, pos, value);
   bzla_bv_set_bit(d->hi, pos, value);
 }
@@ -178,8 +185,7 @@ bool
 bzla_bvprop_is_fixed_bit(const BzlaBvDomain *d, uint32_t pos)
 {
   assert(d);
-  assert(pos < bzla_bv_get_width(d->lo));
-  assert(pos < bzla_bv_get_width(d->hi));
+  assert(pos < bzla_bvprop_get_width(d));
   return bzla_bv_get_bit(d->lo, pos) == bzla_bv_get_bit(d->hi, pos);
 }
 
@@ -187,8 +193,7 @@ bool
 bzla_bvprop_is_fixed_bit_true(const BzlaBvDomain *d, uint32_t pos)
 {
   assert(d);
-  assert(pos < bzla_bv_get_width(d->lo));
-  assert(pos < bzla_bv_get_width(d->hi));
+  assert(pos < bzla_bvprop_get_width(d));
   return bzla_bv_get_bit(d->lo, pos)
          && bzla_bv_get_bit(d->lo, pos) == bzla_bv_get_bit(d->hi, pos);
 }
@@ -197,8 +202,7 @@ bool
 bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos)
 {
   assert(d);
-  assert(pos < bzla_bv_get_width(d->lo));
-  assert(pos < bzla_bv_get_width(d->hi));
+  assert(pos < bzla_bvprop_get_width(d));
   return !bzla_bv_get_bit(d->lo, pos)
          && bzla_bv_get_bit(d->lo, pos) == bzla_bv_get_bit(d->hi, pos);
 }
@@ -727,16 +731,15 @@ bzla_bvprop_eq(BzlaMemMgr *mm,
   assert(bzla_bvprop_is_valid(mm, d_y));
   assert(d_z);
   assert(bzla_bvprop_is_valid(mm, d_z));
-  assert(bzla_bv_get_width(d_x->lo) == bzla_bv_get_width(d_y->lo));
-  assert(bzla_bv_get_width(d_x->hi) == bzla_bv_get_width(d_y->hi));
-  assert(bzla_bv_get_width(d_z->lo) == 1);
-  assert(bzla_bv_get_width(d_z->hi) == 1);
+  assert(bzla_bvprop_get_width(d_x) == bzla_bvprop_get_width(d_y));
+  assert(bzla_bvprop_get_width(d_z) == 1);
 
   bool valid = true;
   BzlaBvDomain *tmp;
   BzlaBitVector *sext_lo_z, *not_hi_y, *not_hi_x;
   BzlaBitVector *lo_z_and_lo_y, *lo_z_and_hi_y, *not_and;
-  sext_lo_z = bzla_bv_sext(mm, d_z->lo, bzla_bv_get_width(d_x->lo) - 1);
+
+  sext_lo_z = bzla_bv_sext(mm, d_z->lo, bzla_bvprop_get_width(d_x) - 1);
   not_hi_y  = bzla_bv_not(mm, d_y->hi);
   not_hi_x  = bzla_bv_not(mm, d_x->hi);
 
@@ -908,7 +911,7 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
   assert(d_z);
   assert(bzla_bvprop_is_valid(mm, d_z));
   assert(n);
-  assert(bzla_bv_get_width(d_x->lo) == bzla_bv_get_width(n));
+  assert(bzla_bvprop_get_width(d_x) == bzla_bv_get_width(n));
   assert(res_d_x);
   assert(res_d_z);
 
@@ -916,10 +919,8 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
   BzlaBitVector *mask1, *ones_wn, *zero_wn, *ones_w_wn, *zero_w_wn;
   BzlaBitVector *tmp0, *tmp1;
 
-  w = bzla_bv_get_width(d_z->hi);
-  assert(w == bzla_bv_get_width(d_z->lo));
-  assert(w == bzla_bv_get_width(d_x->hi));
-  assert(w == bzla_bv_get_width(d_x->lo));
+  w = bzla_bvprop_get_width(d_z);
+  assert(w == bzla_bvprop_get_width(d_x));
 #ifndef NDEBUG
   BzlaBitVector *uint32maxbv = bzla_bv_ones(mm, 32);
   assert(bzla_bv_compare(n, uint32maxbv) <= 0);
@@ -1045,8 +1046,7 @@ bvprop_shift_aux(BzlaMemMgr *mm,
   assert(bzla_bvprop_is_valid(mm, d_y));
   assert(d_z);
   assert(bzla_bvprop_is_valid(mm, d_z));
-  assert(bzla_bv_get_width(d_x->lo) == bzla_bv_get_width(d_y->lo));
-  assert(bzla_bv_get_width(d_x->lo) == bzla_bv_get_width(d_z->lo));
+  assert(bzla_bvprop_get_width(d_x) == bzla_bvprop_get_width(d_y));
   assert(res_d_x);
   assert(res_d_y);
   assert(res_d_z);
@@ -1085,10 +1085,8 @@ bvprop_shift_aux(BzlaMemMgr *mm,
 
   res = true;
 
-  bw = bzla_bv_get_width(d_x->lo);
-  assert(bw == bzla_bv_get_width(d_x->hi));
-  assert(bw == bzla_bv_get_width(d_z->lo));
-  assert(bw == bzla_bv_get_width(d_z->hi));
+  bw = bzla_bvprop_get_width(d_x);
+  assert(bw == bzla_bvprop_get_width(d_z));
 
   BZLA_INIT_STACK(mm, d_c_stack);
   BZLA_INIT_STACK(mm, d_shift_stack);
@@ -1292,8 +1290,7 @@ bvprop_shift_aux(BzlaMemMgr *mm,
   for (i = 0; i < bw; i++)
   {
     d = BZLA_PEEK_STACK(d_c_stack, i);
-    assert(bzla_bv_get_width(d->lo) == 1);
-    assert(bzla_bv_get_width(d->hi) == 1);
+    assert(bzla_bvprop_get_width(d) == 1);
     bzla_bv_set_bit(tmp_y->lo, i, bzla_bv_get_bit(d->lo, 0));
     bzla_bv_set_bit(tmp_y->hi, i, bzla_bv_get_bit(d->hi, 0));
   }
@@ -1604,8 +1601,8 @@ bzla_bvprop_slice(BzlaMemMgr *mm,
   assert(d_z);
   assert(bzla_bvprop_is_valid(mm, d_z));
   assert(upper >= lower);
-  assert(upper < bzla_bv_get_width(d_x->lo));
-  assert(upper - lower + 1 == bzla_bv_get_width(d_z->lo));
+  assert(upper < bzla_bvprop_get_width(d_x));
+  assert(upper - lower + 1 == bzla_bvprop_get_width(d_z));
 
   /* Apply equality propagator on sliced 'x' domain.
    *
@@ -1627,14 +1624,13 @@ bzla_bvprop_slice(BzlaMemMgr *mm,
   bool valid = bzla_bvprop_eq(mm, sliced_x, d_z, d_eq, res_d_z, 0, 0);
   bzla_bvprop_free(mm, d_eq);
   bzla_bvprop_free(mm, sliced_x);
+  uint32_t wx = bzla_bvprop_get_width(d_x);
 
   if (!valid)
   {
-    *res_d_x = new_invalid_domain(mm, bzla_bv_get_width(d_x->lo));
+    *res_d_x = new_invalid_domain(mm, wx);
     return false;
   }
-
-  uint32_t wx = bzla_bv_get_width(d_x->lo);
 
   *res_d_x = new_domain(mm);
 
@@ -1700,10 +1696,8 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   bool res;
   uint32_t wy, wz;
 
-  wy = bzla_bv_get_width(d_y->hi);
-  assert(wy == bzla_bv_get_width(d_y->lo));
-  wz = bzla_bv_get_width(d_z->hi);
-  assert(wz == bzla_bv_get_width(d_z->lo));
+  wy = bzla_bvprop_get_width(d_y);
+  wz = bzla_bvprop_get_width(d_z);
 
 #if 0
   /* These are the propagators as proposed in [1]. */
@@ -1712,8 +1706,7 @@ bzla_bvprop_concat(BzlaMemMgr *mm,
   BzlaBitVector *mask, *zero, *ones, *tmp0, *tmp1;
   BzlaBitVector *lo_x, *hi_x, *lo_y, *hi_y;
 
-  wx = bzla_bv_get_width (d_x->hi);
-  assert (wx == bzla_bv_get_width (d_x->lo));
+  wx = bzla_bvprop_get_width (d_x);
 
   lo_x = bzla_bv_uext (mm, d_x->lo, wz - wx);
   hi_x = bzla_bv_uext (mm, d_x->hi, wz - wx);
@@ -1853,10 +1846,8 @@ bzla_bvprop_sext(BzlaMemMgr *mm,
   *res_d_x = new_domain(mm);
   *res_d_z = new_domain(mm);
 
-  wx = bzla_bv_get_width(d_x->hi);
-  assert(wx == bzla_bv_get_width(d_x->lo));
-  wz = bzla_bv_get_width(d_z->hi);
-  assert(wz == bzla_bv_get_width(d_z->lo));
+  wx = bzla_bvprop_get_width(d_x);
+  wz = bzla_bvprop_get_width(d_z);
   wn = wz - wx;
   assert(wn);
 
@@ -2103,7 +2094,7 @@ bzla_bvprop_ite(BzlaMemMgr *mm,
   assert(mm);
   assert(d_c);
   assert(bzla_bvprop_is_valid(mm, d_c));
-  assert(bzla_bv_get_width(d_c->lo) == 1);
+  assert(bzla_bvprop_get_width(d_c) == 1);
   assert(d_x);
   assert(bzla_bvprop_is_valid(mm, d_x));
   assert(d_y);
@@ -2124,12 +2115,9 @@ bzla_bvprop_ite(BzlaMemMgr *mm,
 
   res = true;
 
-  bw = bzla_bv_get_width(d_x->lo);
-  assert(bw == bzla_bv_get_width(d_x->hi));
-  assert(bw == bzla_bv_get_width(d_y->lo));
-  assert(bw == bzla_bv_get_width(d_y->hi));
-  assert(bw == bzla_bv_get_width(d_z->lo));
-  assert(bw == bzla_bv_get_width(d_z->hi));
+  bw = bzla_bvprop_get_width(d_x);
+  assert(bw == bzla_bvprop_get_width(d_y));
+  assert(bw == bzla_bvprop_get_width(d_z));
 
   ones = bzla_bv_ones(mm, bw);
   zero = bzla_bv_zero(mm, bw);
@@ -2382,12 +2370,9 @@ bvprop_add_aux(BzlaMemMgr *mm,
 
   res = true;
 
-  bw = bzla_bv_get_width(d_x->lo);
-  assert(bw == bzla_bv_get_width(d_x->hi));
-  assert(bw == bzla_bv_get_width(d_y->lo));
-  assert(bw == bzla_bv_get_width(d_y->hi));
-  assert(bw == bzla_bv_get_width(d_z->lo));
-  assert(bw == bzla_bv_get_width(d_z->hi));
+  bw = bzla_bvprop_get_width(d_x);
+  assert(bw == bzla_bvprop_get_width(d_y));
+  assert(bw == bzla_bvprop_get_width(d_z));
   one = bzla_bv_one(mm, bw);
 
   /* cin = x...x0 */
@@ -2673,12 +2658,9 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
   BZLA_INIT_STACK(mm, d_add_stack);
   BZLA_INIT_STACK(mm, shift_stack);
 
-  bw = bzla_bv_get_width(d_x->lo);
-  assert(bw == bzla_bv_get_width(d_x->hi));
-  assert(bw == bzla_bv_get_width(d_y->lo));
-  assert(bw == bzla_bv_get_width(d_y->hi));
-  assert(bw == bzla_bv_get_width(d_z->lo));
-  assert(bw == bzla_bv_get_width(d_z->hi));
+  bw = bzla_bvprop_get_width(d_x);
+  assert(bw == bzla_bvprop_get_width(d_y));
+  assert(bw == bzla_bvprop_get_width(d_z));
 
 #ifndef NDEBUG
   d_one  = 0;
@@ -2762,8 +2744,8 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
        *               the multiplication result is 0
        */
 
-      lo    = bzla_bv_uext(mm, d_x->lo, bzla_bv_get_width(d_x->lo));
-      hi    = bzla_bv_uext(mm, d_x->hi, bzla_bv_get_width(d_x->hi));
+      lo    = bzla_bv_uext(mm, d_x->lo, bw);
+      hi    = bzla_bv_uext(mm, d_x->hi, bw);
       tmp_x = bzla_bvprop_new(mm, lo, hi);
       bzla_bv_free(mm, lo);
       bzla_bv_free(mm, hi);
@@ -2833,8 +2815,8 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
       if (no_overflows)
       {
         d     = new_domain(mm);
-        d->lo = bzla_bv_uext(mm, d_z->lo, bzla_bv_get_width(d_z->lo));
-        d->hi = bzla_bv_uext(mm, d_z->hi, bzla_bv_get_width(d_z->hi));
+        d->lo = bzla_bv_uext(mm, d_z->lo, bw);
+        d->hi = bzla_bv_uext(mm, d_z->hi, bw);
       }
       else
       {
@@ -2855,8 +2837,8 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
         if (no_overflows)
         {
           d     = new_domain(mm);
-          d->lo = bzla_bv_uext(mm, d_z->lo, bzla_bv_get_width(d_z->lo));
-          d->hi = bzla_bv_uext(mm, d_z->hi, bzla_bv_get_width(d_z->hi));
+          d->lo = bzla_bv_uext(mm, d_z->lo, bw);
+          d->hi = bzla_bv_uext(mm, d_z->hi, bw);
         }
         else
         {
@@ -2901,12 +2883,9 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
         /* ite (y[bw-1-m:bw-1-m], x << bw - 1 - m, 0) */
         tmp_c   = &d_c_stack.start[i];
         tmp_ite = &d_ite_stack.start[i];
-        assert(!no_overflows || bzla_bv_get_width((*tmp_shift)->lo) == bwo);
-        assert(!no_overflows || bzla_bv_get_width((tmp_zero_bw)->lo) == bwo);
-        assert(!no_overflows || bzla_bv_get_width((*tmp_ite)->lo) == bwo);
-        assert(!no_overflows || bzla_bv_get_width((*tmp_shift)->lo) == bwo);
-        assert(!no_overflows || bzla_bv_get_width((tmp_zero_bw)->lo) == bwo);
-        assert(!no_overflows || bzla_bv_get_width((*tmp_ite)->lo) == bwo);
+        assert(!no_overflows || bzla_bvprop_get_width((*tmp_shift)) == bwo);
+        assert(!no_overflows || bzla_bvprop_get_width((tmp_zero_bw)) == bwo);
+        assert(!no_overflows || bzla_bvprop_get_width((*tmp_ite)) == bwo);
         if (!(res = decomp_step_ternary(mm,
                                         tmp_shift,
                                         &tmp_zero_bw,
@@ -2974,7 +2953,7 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
         {
           goto DONE;
         }
-        assert(!no_overflows || bzla_bv_get_width((*tmp)->lo) == bwo);
+        assert(!no_overflows || bzla_bvprop_get_width((*tmp)) == bwo);
 
         if (!(res = decomp_step_binary(mm,
                                        &tmp_slice,
@@ -3001,8 +2980,7 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
         continue;
       assert(n < BZLA_COUNT_STACK(d_c_stack));
       d = BZLA_PEEK_STACK(d_c_stack, n);
-      assert(bzla_bv_get_width(d->lo) == 1);
-      assert(bzla_bv_get_width(d->hi) == 1);
+      assert(bzla_bvprop_get_width(d) == 1);
       bzla_bv_set_bit(tmp_y->lo, bw - 1 - i, bzla_bv_get_bit(d->lo, 0));
       bzla_bv_set_bit(tmp_y->hi, bw - 1 - i, bzla_bv_get_bit(d->hi, 0));
       n += 1;
@@ -3119,12 +3097,9 @@ bzla_bvprop_ult(BzlaMemMgr *mm,
 
   res = true;
 
-  bw = bzla_bv_get_width(d_x->lo);
-  assert(bw == bzla_bv_get_width(d_x->hi));
-  assert(bw == bzla_bv_get_width(d_y->lo));
-  assert(bw == bzla_bv_get_width(d_y->hi));
-  assert(bzla_bv_get_width(d_z->lo) == 1);
-  assert(bzla_bv_get_width(d_z->hi) == 1);
+  bw = bzla_bvprop_get_width(d_x);
+  assert(bw == bzla_bvprop_get_width(d_y));
+  assert(bzla_bvprop_get_width(d_z) == 1);
 
   /**
    * z_[1] = x_[bw] < y_[bw]
@@ -3316,12 +3291,9 @@ bvprop_udiv_old (BzlaMemMgr *mm,
 
   res = true;
 
-  bw = bzla_bv_get_width (d_x->lo);
-  assert (bw == bzla_bv_get_width (d_x->hi));
-  assert (bw == bzla_bv_get_width (d_y->lo));
-  assert (bw == bzla_bv_get_width (d_y->hi));
-  assert (bw == bzla_bv_get_width (d_z->lo));
-  assert (bw == bzla_bv_get_width (d_z->hi));
+  bw = bzla_bvprop_get_width (d_x);
+  assert (bw == bzla_bvprop_get_width (d_y));
+  assert (bw == bzla_bvprop_get_width (d_z));
 
   /**
    * z_[bw] = x_[bw] / y_[bw]
@@ -3637,14 +3609,10 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
   BZLA_INIT_STACK(mm, d_q_stack);
   BZLA_INIT_STACK(mm, d_sub_stack);
 
-  bw = bzla_bv_get_width(d_x->lo);
-  assert(bw == bzla_bv_get_width(d_x->hi));
-  assert(bw == bzla_bv_get_width(d_y->lo));
-  assert(bw == bzla_bv_get_width(d_y->hi));
-  assert(!d_q || bw == bzla_bv_get_width(d_q->lo));
-  assert(!d_q || bw == bzla_bv_get_width(d_q->hi));
-  assert(!d_r || bw == bzla_bv_get_width(d_r->lo));
-  assert(!d_r || bw == bzla_bv_get_width(d_r->hi));
+  bw = bzla_bvprop_get_width(d_x);
+  assert(bw == bzla_bvprop_get_width(d_y));
+  assert(!d_q || bw == bzla_bvprop_get_width(d_q));
+  assert(!d_r || bw == bzla_bvprop_get_width(d_r));
 
   one = bzla_bv_one(mm, bw);
 
@@ -4202,8 +4170,7 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
   {
     n = bw - 1 - i;
     d = BZLA_PEEK_STACK(d_x_stack, i);
-    assert(bzla_bv_get_width(d->lo) == 1);
-    assert(bzla_bv_get_width(d->hi) == 1);
+    assert(bzla_bvprop_get_width(d) == 1);
     bzla_bv_set_bit(tmp_x->lo, n, bzla_bv_get_bit(d->lo, 0));
     bzla_bv_set_bit(tmp_x->hi, n, bzla_bv_get_bit(d->hi, 0));
   }
@@ -4348,12 +4315,9 @@ bzla_bvprop_urem (BzlaMemMgr *mm,
 
   res = true;
 
-  bw = bzla_bv_get_width (d_x->lo);
-  assert (bw == bzla_bv_get_width (d_x->hi));
-  assert (bw == bzla_bv_get_width (d_y->lo));
-  assert (bw == bzla_bv_get_width (d_y->hi));
-  assert (bw == bzla_bv_get_width (d_z->lo));
-  assert (bw == bzla_bv_get_width (d_z->hi));
+  bw = bzla_bvprop_get_width (d_x);
+  assert (bw == bzla_bvprop_get_width (d_y));
+  assert (bw == bzla_bvprop_get_width (d_z));
 
   /**
    * z_[bw] = x_[bw] / y_[bw]

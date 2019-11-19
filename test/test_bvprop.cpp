@@ -130,7 +130,6 @@ class TestBvProp : public TestMm
   void to_str(BzlaBvDomain *d, char **res_lo, char **res_hi, bool print_short)
   {
     assert(d);
-    assert(bzla_bv_get_width(d->lo) == bzla_bv_get_width(d->hi));
 
     if (print_short)
     {
@@ -534,8 +533,7 @@ class TestBvProp : public TestMm
                  BzlaBvDomain *d_z,
                  BzlaBvDomain *d_c)
   {
-    assert(bzla_bv_get_width(d_c->lo) == 1);
-    assert(bzla_bv_get_width(d_c->hi) == 1);
+    assert(bzla_bvprop_get_width(d_c) == 1);
     assert(bzla_bvprop_is_valid(d_mm, d_x));
     assert(bzla_bvprop_is_valid(d_mm, d_y));
     assert(bzla_bvprop_is_valid(d_mm, d_z));
@@ -835,9 +833,9 @@ class TestBvProp : public TestMm
     bzla = boolector_new();
     boolector_set_opt(bzla, BZLA_OPT_MODEL_GEN, 1);
     boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
-    bwx = bzla_bv_get_width(d_x->lo);
+    bwx = bzla_bvprop_get_width(d_x);
     swx = boolector_bitvec_sort(bzla, bwx);
-    bwz = bzla_bv_get_width(d_z->lo);
+    bwz = bzla_bvprop_get_width(d_z);
     swz = boolector_bitvec_sort(bzla, bwz);
     s1  = boolector_bitvec_sort(bzla, 1);
     x   = boolector_var(bzla, swx, "x");
@@ -848,7 +846,7 @@ class TestBvProp : public TestMm
     if (d_y)
     {
       str_y = from_domain(d_mm, d_y);
-      bwy   = bzla_bv_get_width(d_y->lo);
+      bwy   = bzla_bvprop_get_width(d_y);
       swy   = boolector_bitvec_sort(bzla, bwy);
       y     = boolector_var(bzla, swy, "y");
     }
@@ -3515,7 +3513,7 @@ TEST_F(TestBvProp, fixed_domain)
   hi = bzla_bv_char_to_bv(d_mm, "0001111");
   d  = bzla_bvprop_new(d_mm, lo, hi);
   ASSERT_TRUE(bzla_bvprop_is_fixed(d_mm, d));
-  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  for (i = 0; i < bzla_bvprop_get_width(d); i++)
   {
     ASSERT_TRUE(bzla_bvprop_is_fixed_bit(d, i));
   }
@@ -3532,7 +3530,7 @@ TEST_F(TestBvProp, fixed_domain)
 
   d = bzla_bvprop_new_init(d_mm, 7);
   ASSERT_FALSE(bzla_bvprop_is_fixed(d_mm, d));
-  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  for (i = 0; i < bzla_bvprop_get_width(d); i++)
   {
     ASSERT_FALSE(bzla_bvprop_is_fixed_bit(d, i));
   }
@@ -3544,7 +3542,7 @@ TEST_F(TestBvProp, fixed_domain)
   bzla_bvprop_fix_bit(d, 5, true);
   bzla_bvprop_fix_bit(d, 6, true);
   ASSERT_TRUE(bzla_bvprop_is_fixed(d_mm, d));
-  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  for (i = 0; i < bzla_bvprop_get_width(d); i++)
   {
     ASSERT_TRUE(bzla_bvprop_is_fixed_bit(d, i));
   }
@@ -3562,7 +3560,7 @@ TEST_F(TestBvProp, fixed_domain)
   hi = bzla_bv_char_to_bv(d_mm, "0001011");
   d  = bzla_bvprop_new(d_mm, lo, hi);
   ASSERT_FALSE(bzla_bvprop_is_fixed(d_mm, d));
-  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  for (i = 0; i < bzla_bvprop_get_width(d); i++)
   {
     ASSERT_TRUE(i == 2 || bzla_bvprop_is_fixed_bit(d, i));
   }
@@ -3579,7 +3577,7 @@ TEST_F(TestBvProp, fixed_domain)
 
   d = bzla_bvprop_new_init(d_mm, 7);
   ASSERT_FALSE(bzla_bvprop_is_fixed(d_mm, d));
-  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  for (i = 0; i < bzla_bvprop_get_width(d); i++)
   {
     ASSERT_FALSE(bzla_bvprop_is_fixed_bit(d, i));
   }
@@ -3590,7 +3588,7 @@ TEST_F(TestBvProp, fixed_domain)
   bzla_bvprop_fix_bit(d, 5, true);
   bzla_bvprop_fix_bit(d, 6, true);
   ASSERT_FALSE(bzla_bvprop_is_fixed(d_mm, d));
-  for (i = 0; i < bzla_bv_get_width(d->lo); i++)
+  for (i = 0; i < bzla_bvprop_get_width(d); i++)
   {
     ASSERT_TRUE(i == 4 || bzla_bvprop_is_fixed_bit(d, i));
   }

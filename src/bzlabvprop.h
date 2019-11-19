@@ -20,7 +20,7 @@ struct BzlaBvDomain
 
 typedef struct BzlaBvDomain BzlaBvDomain;
 
-/* Create new bit-vector domain of width 'width' with low 0 and high ~0. */
+/** Create new bit-vector domain of width 'width' with low 0 and high ~0. */
 BzlaBvDomain *bzla_bvprop_new_init(BzlaMemMgr *mm, uint32_t width);
 
 /**
@@ -37,31 +37,34 @@ BzlaBvDomain *bzla_bvprop_new(BzlaMemMgr *mm,
  */
 BzlaBvDomain *bzla_bvprop_new_fixed(BzlaMemMgr *mm, const BzlaBitVector *bv);
 
-/* Delete bit-vector domain. */
+/** Delete bit-vector domain. */
 void bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d);
 
-/* Copy bit-vector domain 'd'. */
+/** Copy bit-vector domain 'd'. */
 BzlaBvDomain *bzla_bvprop_copy(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
-/* Check if bit-vector domain is valid, i.e., ~lo | hi == ones. */
+/** Get the width of the given domain.  */
+uint32_t bzla_bvprop_get_width(const BzlaBvDomain *d);
+
+/** Check if bit-vector domain is valid, i.e., ~lo | hi == ones. */
 bool bzla_bvprop_is_valid(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
-/* Check if bit-vector domain is fixed, i.e., lo == hi */
+/** Check if bit-vector domain is fixed, i.e., lo == hi */
 bool bzla_bvprop_is_fixed(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
-/* Check if bit-vector domain has some fixed bits. */
+/** Check if bit-vector domain has some fixed bits. */
 bool bzla_bvprop_has_fixed_bits(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
-/* Set bit at given position to fixed value. */
+/** Set bit at given position to fixed value. */
 void bzla_bvprop_fix_bit(const BzlaBvDomain *d, uint32_t pos, bool value);
 
-/* Check if bit at given position is fixed. */
+/** Check if bit at given position is fixed. */
 bool bzla_bvprop_is_fixed_bit(const BzlaBvDomain *d, uint32_t pos);
 
-/* Check if bit at given position is fixed and true. */
+/** Check if bit at given position is fixed and true. */
 bool bzla_bvprop_is_fixed_bit_true(const BzlaBvDomain *d, uint32_t pos);
 
-/* Check if bit at given position is fixed and false. */
+/** Check if bit at given position is fixed and false. */
 bool bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos);
 
 /**
@@ -71,8 +74,10 @@ bool bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos);
  */
 char *bzla_bvprop_to_char(BzlaMemMgr *mm, BzlaBvDomain *d);
 
-/* Prints domain 'd' to stdout. 'print_short' indicates whether 'lo' and 'hi'
- * should be printed separately. */
+/**
+ * Prints domain 'd' to stdout. 'print_short' indicates whether 'lo' and 'hi'
+ * should be printed separately.
+ */
 void bzla_bvprop_print(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short);
 
 /**
@@ -88,14 +93,14 @@ bool bzla_bvprop_eq(BzlaMemMgr *mm,
                     BzlaBvDomain **res_d_y,
                     BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x' and 'd_z' of z = ~x. */
+/** Propagate domains 'd_x' and 'd_z' of z = ~x. */
 bool bzla_bvprop_not(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_z,
                      BzlaBvDomain **res_d_x,
                      BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x' and 'd_z' of z = x << n where n is const. */
+/** Propagate domains 'd_x' and 'd_z' of z = x << n where n is const. */
 bool bzla_bvprop_sll_const(BzlaMemMgr *mm,
                            BzlaBvDomain *d_x,
                            BzlaBvDomain *d_z,
@@ -103,7 +108,7 @@ bool bzla_bvprop_sll_const(BzlaMemMgr *mm,
                            BzlaBvDomain **res_d_x,
                            BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x' and 'd_z' of z = x >> n where n is const. */
+/** Propagate domains 'd_x' and 'd_z' of z = x >> n where n is const. */
 bool bzla_bvprop_srl_const(BzlaMemMgr *mm,
                            BzlaBvDomain *d_x,
                            BzlaBvDomain *d_z,
@@ -111,7 +116,7 @@ bool bzla_bvprop_srl_const(BzlaMemMgr *mm,
                            BzlaBvDomain **res_d_x,
                            BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x & y. */
+/** Propagate domains 'd_x', 'd_y' and 'd_z' of z = x & y. */
 bool bzla_bvprop_and(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
@@ -144,7 +149,7 @@ bool bzla_bvprop_srl(BzlaMemMgr *mm,
                      BzlaBvDomain **res_d_y,
                      BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x | y. */
+/** Propagate domains 'd_x', 'd_y' and 'd_z' of z = x | y. */
 bool bzla_bvprop_or(BzlaMemMgr *mm,
                     BzlaBvDomain *d_x,
                     BzlaBvDomain *d_y,
@@ -153,7 +158,7 @@ bool bzla_bvprop_or(BzlaMemMgr *mm,
                     BzlaBvDomain **res_d_y,
                     BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x | y. */
+/** Propagate domains 'd_x', 'd_y' and 'd_z' of z = x | y. */
 bool bzla_bvprop_xor(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
@@ -162,7 +167,7 @@ bool bzla_bvprop_xor(BzlaMemMgr *mm,
                      BzlaBvDomain **res_d_y,
                      BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x' and 'd_z' of z = x[upper:lower]. */
+/** Propagate domains 'd_x' and 'd_z' of z = x[upper:lower]. */
 bool bzla_bvprop_slice(BzlaMemMgr *mm,
                        BzlaBvDomain *d_x,
                        BzlaBvDomain *d_z,
@@ -171,7 +176,7 @@ bool bzla_bvprop_slice(BzlaMemMgr *mm,
                        BzlaBvDomain **res_d_x,
                        BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x o y. */
+/** Propagate domains 'd_x', 'd_y' and 'd_z' of z = x o y. */
 bool bzla_bvprop_concat(BzlaMemMgr *mm,
                         BzlaBvDomain *d_x,
                         BzlaBvDomain *d_y,
@@ -180,14 +185,14 @@ bool bzla_bvprop_concat(BzlaMemMgr *mm,
                         BzlaBvDomain **res_d_x,
                         BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x' and 'd_z' of z = sext(x, n). */
+/** Propagate domains 'd_x' and 'd_z' of z = sext(x, n). */
 bool bzla_bvprop_sext(BzlaMemMgr *mm,
                       BzlaBvDomain *d_x,
                       BzlaBvDomain *d_z,
                       BzlaBvDomain **res_d_x,
                       BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_c', 'd_x', 'd_y' and 'd_z' of z = ite(c, x, y). */
+/** Propagate domains 'd_c', 'd_x', 'd_y' and 'd_z' of z = ite(c, x, y). */
 bool bzla_bvprop_ite(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
@@ -198,7 +203,7 @@ bool bzla_bvprop_ite(BzlaMemMgr *mm,
                      BzlaBvDomain **res_d_z,
                      BzlaBvDomain **res_d_c);
 
-/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x + y. */
+/** Propagate domains 'd_x', 'd_y' and 'd_z' of z = x + y. */
 bool bzla_bvprop_add(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
@@ -220,7 +225,7 @@ bool bzla_bvprop_add_aux(BzlaMemMgr *mm,
                          BzlaBvDomain **res_d_z,
                          bool no_overflows);
 
-/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x * y. */
+/** Propagate domains 'd_x', 'd_y' and 'd_z' of z = x * y. */
 bool bzla_bvprop_mul(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
@@ -242,7 +247,7 @@ bool bzla_bvprop_mul_aux(BzlaMemMgr *mm,
                          BzlaBvDomain **res_d_z,
                          bool no_overflows);
 
-/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x < y (unsigned lt). */
+/** Propagate domains 'd_x', 'd_y' and 'd_z' of z = x < y (unsigned lt). */
 bool bzla_bvprop_ult(BzlaMemMgr *mm,
                      BzlaBvDomain *d_x,
                      BzlaBvDomain *d_y,
@@ -251,7 +256,9 @@ bool bzla_bvprop_ult(BzlaMemMgr *mm,
                      BzlaBvDomain **res_d_y,
                      BzlaBvDomain **res_d_z);
 
-/* Propagate domains 'd_x', 'd_y' and 'd_z' of z = x / y (unsigned division). */
+/**
+ * Propagate domains 'd_x', 'd_y' and 'd_z' of z = x / y (unsigned division).
+ */
 bool bzla_bvprop_udiv(BzlaMemMgr *mm,
                       BzlaBvDomain *d_x,
                       BzlaBvDomain *d_y,
