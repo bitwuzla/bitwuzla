@@ -133,6 +133,8 @@ bzla_bvprop_copy(BzlaMemMgr *mm, const BzlaBvDomain *d)
   return bzla_bvprop_new(mm, d->lo, d->hi);
 }
 
+/* -------------------------------------------------------------------------- */
+
 uint32_t
 bzla_bvprop_get_width(const BzlaBvDomain *d)
 {
@@ -140,6 +142,8 @@ bzla_bvprop_get_width(const BzlaBvDomain *d)
   assert(bzla_bv_get_width(d->lo) == bzla_bv_get_width(d->hi));
   return bzla_bv_get_width(d->lo);
 }
+
+/* -------------------------------------------------------------------------- */
 
 bool
 bzla_bvprop_is_valid(BzlaMemMgr *mm, const BzlaBvDomain *d)
@@ -206,6 +210,36 @@ bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos)
   return !bzla_bv_get_bit(d->lo, pos)
          && bzla_bv_get_bit(d->lo, pos) == bzla_bv_get_bit(d->hi, pos);
 }
+
+/* -------------------------------------------------------------------------- */
+
+/* Check if fixed bit of given domain are consistent with given bit-vector,
+ * i.e., if a bit is fixed to a value in the domain, it must have the same
+ * value in the bit-vector. */
+bool
+bzla_bvprop_is_consistent(BzlaBvDomain *d, BzlaBitVector *bv)
+{
+  assert(d);
+  assert(bv);
+
+  uint32_t i, bw;
+
+  bw = bzla_bv_get_width(bv);
+  assert(bzla_bv_get_width(d->lo) == bw);
+  assert(bzla_bv_get_width(d->hi) == bw);
+
+  for (i = 0; i < bw; i++)
+  {
+    if (bzla_bvprop_is_fixed_bit(d, i)
+        && bzla_bv_get_bit(d->lo, i) != bzla_bv_get_bit(bv, i))
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+/* -------------------------------------------------------------------------- */
 
 char *
 bzla_bvprop_to_char(BzlaMemMgr *mm, BzlaBvDomain *d)

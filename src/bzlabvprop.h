@@ -12,6 +12,8 @@
 
 #include "bzlabv.h"
 
+/* -------------------------------------------------------------------------- */
+
 struct BzlaBvDomain
 {
   BzlaBitVector *lo;
@@ -55,7 +57,9 @@ bool bzla_bvprop_is_fixed(BzlaMemMgr *mm, const BzlaBvDomain *d);
 /** Check if bit-vector domain has some fixed bits. */
 bool bzla_bvprop_has_fixed_bits(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
-/** Set bit at given position to fixed value. */
+/**
+ * Set bit at given position to fixed value (index 0 is LSB, width - 1 is MSB).
+ */
 void bzla_bvprop_fix_bit(const BzlaBvDomain *d, uint32_t pos, bool value);
 
 /** Check if bit at given position is fixed. */
@@ -66,6 +70,13 @@ bool bzla_bvprop_is_fixed_bit_true(const BzlaBvDomain *d, uint32_t pos);
 
 /** Check if bit at given position is fixed and false. */
 bool bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos);
+
+/**
+ * Check if fixed bit of given domain are consistent with given bit-vector,
+ * i.e., if a bit is fixed to a value in the domain, it must have the same
+ * value in the bit-vector.
+ */
+bool bzla_bvprop_is_consistent(BzlaBvDomain *d, BzlaBitVector *bv);
 
 /**
  * Get a string representation of the given domain.

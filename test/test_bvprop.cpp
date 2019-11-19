@@ -7,6 +7,8 @@
  *  See COPYING for more information on using this software.
  */
 
+#include <bitset>
+
 #include "test.h"
 
 extern "C" {
@@ -399,6 +401,29 @@ class TestBvProp : public TestMm
     return res;
   }
 #endif
+
+  void test_is_consistent(const char *d_val)
+  {
+    assert(strlen(d_val) == 3);
+    BzlaBvDomain *d = create_domain(d_val);
+    for (uint32_t i = 0; i < (1u << 3); ++i)
+    {
+      std::string bv_val = std::bitset<3>(i).to_string();
+      BzlaBitVector *bv  = bzla_bv_char_to_bv(d_mm, bv_val.c_str());
+      bool expected      = true;
+      for (uint32_t j = 0; j < 3; ++j)
+      {
+        if ((bzla_bvprop_is_fixed_bit_false(d, j) && bv_val[2 - j] != '0')
+            || (bzla_bvprop_is_fixed_bit_true(d, j) && bv_val[2 - j] != '1'))
+        {
+          expected = false;
+        }
+      }
+      ASSERT_EQ(bzla_bvprop_is_consistent(d, bv), expected);
+      bzla_bv_free(d_mm, bv);
+    }
+    bzla_bvprop_free(d_mm, d);
+  }
 
   void check_not(BzlaBvDomain *d_x, BzlaBvDomain *d_z)
   {
@@ -3620,6 +3645,24 @@ TEST_F(TestBvProp, new_fixed)
   ASSERT_EQ(bzla_bv_compare(bv, d->hi), 0);
   bzla_bvprop_free(d_mm, d);
   bzla_bv_free(d_mm, bv);
+}
+
+TEST_F(TestBvProp, is_consistent)
+{
+  for (uint32_t i = 0; i < 3; ++i)
+  {
+    for (uint32_t j = 0; j < 3; ++j)
+    {
+      for (uint32_t k = 0; k < 3; ++k)
+      {
+        std::stringstream ss;
+        ss << (i == 0 ? '0' : (i == 1 ? '1' : 'x'))
+           << (j == 0 ? '0' : (j == 1 ? '1' : 'x'))
+           << (k == 0 ? '0' : (k == 1 ? '1' : 'x'));
+        test_is_consistent(ss.str().c_str());
+      }
+    }
+  }
 }
 
 TEST_F(TestBvProp, eq)
