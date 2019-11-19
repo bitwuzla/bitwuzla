@@ -16,6 +16,8 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
+#define TEST_BVPROP_THREE_BITS 0
+
 #define TEST_BVPROP_RELEASE_D_XZ \
   do                             \
   {                              \
@@ -3653,34 +3655,44 @@ TEST_F(TestBvProp, srl_const)
 TEST_F(TestBvProp, sll)
 {
   test_sll(2);
+#if TEST_BVPROP_THREE_BITS
   test_sll(3);
+#endif
 }
 
 TEST_F(TestBvProp, srl)
 {
   test_srl(2);
+#if TEST_BVPROP_THREE_BITS
   test_srl(3);
+#endif
 }
 
 TEST_F(TestBvProp, and)
 {
   test_and(1);
   test_and(2);
+#if TEST_BVPROP_THREE_BITS
   test_and(3);
+#endif
 }
 
 TEST_F(TestBvProp, or)
 {
   test_or(1);
   test_or(2);
+#if TEST_BVPROP_THREE_BITS
   test_or(3);
+#endif
 }
 
 TEST_F(TestBvProp, xor)
 {
   test_xor(1);
   test_xor(2);
+#if TEST_BVPROP_THREE_BITS
   test_xor(3);
+#endif
 }
 
 TEST_F(TestBvProp, slice)
@@ -3701,10 +3713,14 @@ TEST_F(TestBvProp, add)
 {
   test_add(1, false);
   test_add(2, false);
+#if TEST_BVPROP_THREE_BITS
   test_add(3, false);
+#endif
   test_add(1, true);
   test_add(2, true);
+#if TEST_BVPROP_THREE_BITS
   test_add(3, true);
+#endif
 }
 
 TEST_F(TestBvProp, sext)
@@ -3718,17 +3734,23 @@ TEST_F(TestBvProp, ite)
 {
   test_ite(1);
   test_ite(2);
+#if TEST_BVPROP_THREE_BITS
   test_ite(3);
+#endif
 }
 
 TEST_F(TestBvProp, mul)
 {
   test_mul(1, false);
   test_mul(2, false);
+#if TEST_BVPROP_THREE_BITS
   test_mul(3, false);
+#endif
   test_mul(1, true);
   test_mul(2, true);
+#if TEST_BVPROP_THREE_BITS
   test_mul(3, true);
+#endif
 }
 
 TEST_F(TestBvProp, ult)
@@ -3742,12 +3764,16 @@ TEST_F(TestBvProp, udiv)
 {
   test_udiv(1);
   test_udiv(2);
+#if TEST_BVPROP_THREE_BITS
   test_udiv(3);
+#endif
 }
 
 TEST_F(TestBvProp, urem)
 {
   test_urem(1);
   test_urem(2);
+#if TEST_BVPROP_THREE_BITS
   test_urem(3);
+#endif
 }
