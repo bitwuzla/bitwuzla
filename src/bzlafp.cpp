@@ -254,6 +254,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator<<(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(op.d_bv);
+  return bzla_bv_sll(s_bzla->mm, d_bv, op.d_bv);
 }
 
 template <bool is_signed>
@@ -261,6 +263,7 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator>>(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(op.d_bv);
 }
 
 template <bool is_signed>
