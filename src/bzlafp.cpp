@@ -148,7 +148,7 @@ template <bool is_signed>
 BzlaFPBV<is_signed>::BzlaFPBV(const bool &val)
 {
   assert(s_bzla);
-  d_bv = bzla_bv_uint64_to_bv(s_bzla->mm, val ? 1u : 0u, 1);
+  d_bv = val ? bzla_bv_one(s_bzla->mm, 1) : bzla_bv_zero(s_bzla->mm, 1);
 }
 
 template <bool is_signed>
@@ -189,6 +189,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::one(const uint32_t &bw)
 {
   assert(s_bzla);
+  assert(bw);
+  return bzla_bv_one(s_bzla->mm, bw);
 }
 
 template <bool is_signed>
@@ -196,6 +198,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::zero(const uint32_t &bw)
 {
   assert(s_bzla);
+  assert(bw);
+  return bzla_bv_zero(s_bzla->mm, bw);
 }
 
 template <bool is_signed>
@@ -203,6 +207,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::allOnes(const uint32_t &bw)
 {
   assert(s_bzla);
+  assert(bw);
+  return bzla_bv_ones(s_bzla->mm, bw);
 }
 
 template <bool is_signed>
@@ -210,6 +216,8 @@ bool
 BzlaFPBV<is_signed>::isAllOnes() const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return bzla_bv_is_ones(d_bv);
 }
 
 template <bool is_signed>
@@ -217,20 +225,28 @@ bool
 BzlaFPBV<is_signed>::isAllZeros() const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return bzla_bv_is_zero(d_bv);
 }
 
 template <bool is_signed>
 BzlaFPBV<is_signed>
-BzlaFPBV<is_signed>::maxValue(const uint32_t &w)
+BzlaFPBV<is_signed>::maxValue(const uint32_t &bw)
 {
   assert(s_bzla);
+  assert(bw);
+  return is_signed ? bzla_bv_max_signed(s_bzla->mm, bw)
+                   : bzla_bv_ones(s_bzla->mm, bw);
 }
 
 template <bool is_signed>
 BzlaFPBV<is_signed>
-BzlaFPBV<is_signed>::minValue(const uint32_t &w)
+BzlaFPBV<is_signed>::minValue(const uint32_t &bw)
 {
   assert(s_bzla);
+  assert(bw);
+  return is_signed ? bzla_bv_min_signed(s_bzla->mm, bw)
+                   : bzla_bv_zero(s_bzla->mm, bw);
 }
 
 template <bool is_signed>
