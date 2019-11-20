@@ -941,9 +941,13 @@ BzlaFPSymBV<is_signed>
 BzlaFPSymBV<is_signed>::maxValue(const uint32_t &w)
 {
   assert(s_bzla);
-  BzlaSortId s               = bzla_sort_bv(s_bzla, w);
-  BzlaNode *n                = bzla_exp_bv_max_signed(s_bzla, s);
+
+  BzlaSortId s = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n  = is_signed ? bzla_exp_bv_max_signed(s_bzla, s)
+                          : bzla_exp_bv_ones(s_bzla, s);
+
   BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
+
   bzla_node_release(s_bzla, n);
   bzla_sort_release(s_bzla, s);
   return res;
@@ -954,9 +958,13 @@ BzlaFPSymBV<is_signed>
 BzlaFPSymBV<is_signed>::minValue(const uint32_t &w)
 {
   assert(s_bzla);
-  BzlaSortId s               = bzla_sort_bv(s_bzla, w);
-  BzlaNode *n                = bzla_exp_bv_min_signed(s_bzla, s);
+
+  BzlaSortId s = bzla_sort_bv(s_bzla, w);
+  BzlaNode *n  = is_signed ? bzla_exp_bv_min_signed(s_bzla, s)
+                          : bzla_exp_bv_zero(s_bzla, s);
+
   BzlaFPSymBV<is_signed> res = BzlaFPSymBV<is_signed>(n);
+
   bzla_node_release(s_bzla, n);
   bzla_sort_release(s_bzla, s);
   return res;
