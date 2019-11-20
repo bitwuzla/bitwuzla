@@ -10,6 +10,7 @@
 
 extern "C" {
 #include "bzlaabort.h"
+#include "bzlacore.h"
 #include "bzlaexp.h"
 #include "bzlafp.h"
 #include "bzlanode.h"
@@ -47,81 +48,421 @@ struct signedToLiteralType<false>
  * The template parameter distinguishes signed and unsigned bit-vectors, a
  * distinction symfpu uses.
  */
-template <bool isSigned>
+template <bool is_signed>
 class BzlaFPBV
 {
  protected:
-  using literalType = typename signedToLiteralType<isSigned>::literalType;
+  using literalType = typename signedToLiteralType<is_signed>::literalType;
 
-  friend BzlaFPBV<!isSigned>; /* Allow conversion between the types. */
+  friend BzlaFPBV<!is_signed>; /* Allow conversion between the types. */
 #if BZLA_USE_SYMFPU
-  friend ::symfpu::ite<bool, BzlaFPBV<isSigned> >; /* For ite. */
+  friend ::symfpu::ite<bool, BzlaFPBV<is_signed> >; /* For ite. */
 #endif
 
  public:
-  BzlaFPBV(const uint32_t w, const uint32_t val);
-  BzlaFPBV(const bool &p);
-  BzlaFPBV(const BzlaFPBV<isSigned> &old);
-
+  BzlaFPBV(const uint32_t bw, const uint32_t val);
+  BzlaFPBV(const bool &val);
+  BzlaFPBV(const BzlaFPBV<is_signed> &other);
   BzlaFPBV(const BzlaBitVector *bv);
+  ~BzlaFPBV();
+
   uint32_t getWidth(void) const;
 
-  static BzlaFPBV<isSigned> one(const uint32_t &w);
-  static BzlaFPBV<isSigned> zero(const uint32_t &w);
-  static BzlaFPBV<isSigned> allOnes(const uint32_t &w);
+  static BzlaFPBV<is_signed> one(const uint32_t &bw);
+  static BzlaFPBV<is_signed> zero(const uint32_t &bw);
+  static BzlaFPBV<is_signed> allOnes(const uint32_t &bw);
 
   bool isAllOnes() const;
   bool isAllZeros() const;
 
-  static BzlaFPBV<isSigned> maxValue(const uint32_t &w);
-  static BzlaFPBV<isSigned> minValue(const uint32_t &w);
+  static BzlaFPBV<is_signed> maxValue(const uint32_t &bw);
+  static BzlaFPBV<is_signed> minValue(const uint32_t &bw);
 
   /*** Operators ***/
-  BzlaFPBV<isSigned> operator<<(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> operator>>(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<is_signed> operator<<(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> operator>>(const BzlaFPBV<is_signed> &op) const;
 
-  BzlaFPBV<isSigned> operator|(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> operator&(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> operator+(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> operator-(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> operator*(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> operator/(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> operator%(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> operator-(void) const;
-  BzlaFPBV<isSigned> operator~(void) const;
+  BzlaFPBV<is_signed> operator|(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> operator&(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> operator+(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> operator-(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> operator*(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> operator/(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> operator%(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> operator-(void) const;
+  BzlaFPBV<is_signed> operator~(void) const;
 
-  BzlaFPBV<isSigned> increment() const;
-  BzlaFPBV<isSigned> decrement() const;
-  BzlaFPBV<isSigned> signExtendRightShift(const BzlaFPBV<isSigned> &op) const;
+  BzlaFPBV<is_signed> increment() const;
+  BzlaFPBV<is_signed> decrement() const;
+  BzlaFPBV<is_signed> signExtendRightShift(const BzlaFPBV<is_signed> &op) const;
 
-  /*** Modular opertaions ***/
+  /*** Modular operations ***/
   // No overflow checking so these are the same as other operations
-  BzlaFPBV<isSigned> modularLeftShift(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> modularRightShift(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> modularIncrement() const;
-  BzlaFPBV<isSigned> modularDecrement() const;
-  BzlaFPBV<isSigned> modularAdd(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> modularNegate() const;
+  BzlaFPBV<is_signed> modularLeftShift(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> modularRightShift(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> modularIncrement() const;
+  BzlaFPBV<is_signed> modularDecrement() const;
+  BzlaFPBV<is_signed> modularAdd(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> modularNegate() const;
 
   /*** Comparisons ***/
-  bool operator==(const BzlaFPBV<isSigned> &op) const;
-  bool operator<=(const BzlaFPBV<isSigned> &op) const;
-  bool operator>=(const BzlaFPBV<isSigned> &op) const;
-  bool operator<(const BzlaFPBV<isSigned> &op) const;
-  bool operator>(const BzlaFPBV<isSigned> &op) const;
+  bool operator==(const BzlaFPBV<is_signed> &op) const;
+  bool operator<=(const BzlaFPBV<is_signed> &op) const;
+  bool operator>=(const BzlaFPBV<is_signed> &op) const;
+  bool operator<(const BzlaFPBV<is_signed> &op) const;
+  bool operator>(const BzlaFPBV<is_signed> &op) const;
 
   /*** Type conversion ***/
   BzlaFPBV<true> toSigned(void) const;
   BzlaFPBV<false> toUnsigned(void) const;
 
   /*** Bit hacks ***/
-  BzlaFPBV<isSigned> extend(uint32_t extension) const;
-  BzlaFPBV<isSigned> contract(uint32_t reduction) const;
-  BzlaFPBV<isSigned> resize(uint32_t newSize) const;
-  BzlaFPBV<isSigned> matchWidth(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> append(const BzlaFPBV<isSigned> &op) const;
-  BzlaFPBV<isSigned> extract(uint32_t upper, uint32_t lower) const;
+  BzlaFPBV<is_signed> extend(uint32_t extension) const;
+  BzlaFPBV<is_signed> contract(uint32_t reduction) const;
+  BzlaFPBV<is_signed> resize(uint32_t newSize) const;
+  BzlaFPBV<is_signed> matchWidth(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> append(const BzlaFPBV<is_signed> &op) const;
+  BzlaFPBV<is_signed> extract(uint32_t upper, uint32_t lower) const;
+
+ private:
+  BzlaBitVector *d_bv = nullptr;
+  static Bzla *s_bzla;
 };
+
+/* -------------------------------------------------------------------------- */
+
+template <>
+Bzla *BzlaFPBV<true>::s_bzla = nullptr;
+template <>
+Bzla *BzlaFPBV<false>::s_bzla = nullptr;
+
+template <bool is_signed>
+BzlaFPBV<is_signed>::BzlaFPBV(const uint32_t bw, const uint32_t val)
+{
+  assert(s_bzla);
+  assert(bw);
+  d_bv = bzla_bv_uint64_to_bv(s_bzla->mm, val, bw);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>::BzlaFPBV(const bool &val)
+{
+  assert(s_bzla);
+  d_bv = bzla_bv_uint64_to_bv(s_bzla->mm, val ? 1u : 0u, 1);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>::BzlaFPBV(const BzlaFPBV<is_signed> &other)
+{
+  assert(s_bzla);
+  assert(other.d_bv);
+  d_bv = bzla_bv_copy(s_bzla->mm, other.d_bv);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>::BzlaFPBV(const BzlaBitVector *bv)
+{
+  assert(s_bzla);
+  assert(bv);
+  d_bv = bzla_bv_copy(s_bzla->mm, bv);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>::~BzlaFPBV()
+{
+  assert(s_bzla);
+  assert(d_bv);
+  bzla_bv_free(s_bzla->mm, d_bv);
+}
+
+template <bool is_signed>
+uint32_t
+BzlaFPBV<is_signed>::getWidth(void) const
+{
+  assert(s_bzla);
+  assert(d_bv);
+  return bzla_bv_get_width(d_bv);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::one(const uint32_t &bw)
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::zero(const uint32_t &bw)
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::allOnes(const uint32_t &bw)
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+bool
+BzlaFPBV<is_signed>::isAllOnes() const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+bool
+BzlaFPBV<is_signed>::isAllZeros() const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::maxValue(const uint32_t &w)
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::minValue(const uint32_t &w)
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator<<(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator>>(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator|(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator&(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator+(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator-(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator*(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator/(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator%(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator-(void) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator~(void) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::increment() const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::decrement() const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::signExtendRightShift(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::modularLeftShift(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::modularRightShift(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::modularIncrement() const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::modularDecrement() const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::modularAdd(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::modularNegate() const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+bool
+BzlaFPBV<is_signed>::operator==(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+bool
+BzlaFPBV<is_signed>::operator<=(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+bool
+BzlaFPBV<is_signed>::operator>=(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+bool
+BzlaFPBV<is_signed>::operator<(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+bool
+BzlaFPBV<is_signed>::operator>(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<true>
+BzlaFPBV<is_signed>::toSigned(void) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<false>
+BzlaFPBV<is_signed>::toUnsigned(void) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::extend(uint32_t extension) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::contract(uint32_t reduction) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::resize(uint32_t newSize) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::matchWidth(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::append(const BzlaFPBV<is_signed> &op) const
+{
+  assert(s_bzla);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::extract(uint32_t upper, uint32_t lower) const
+{
+  assert(s_bzla);
+}
 
 /* -------------------------------------------------------------------------- */
 /* Template parameter for SymFPU templates.                                   */
