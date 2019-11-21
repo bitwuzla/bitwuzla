@@ -18,6 +18,7 @@
 #include "bzlabv.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
+#include "bzlafp.h"
 #include "bzlalog.h"
 #include "bzlamodel.h"
 #include "bzlamsg.h"
@@ -906,6 +907,8 @@ clone_aux_bzla(Bzla *bzla,
   memcpy(clone, bzla, sizeof(Bzla));
   clone->mm = mm;
   bzla_rng_clone(&bzla->rng, &clone->rng);
+
+  clone->word_blaster = bzla_fp_word_blaster_clone(bzla);
 
   BZLA_CLR(&clone->cbs);
   bzla_opt_clone_opts(bzla, clone);

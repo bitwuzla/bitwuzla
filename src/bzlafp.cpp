@@ -1566,6 +1566,12 @@ class BzlaFPWordBlaster
 
   void word_blast();
 
+  BzlaFPWordBlaster *clone()
+  {
+    // TODO
+    return nullptr;
+  }
+
  private:
   using BzlaFPSortInfoMap =
       std::unordered_map<BzlaSortId, BzlaFPSortInfo, BzlaSortHashFunction>;
@@ -1590,6 +1596,12 @@ void *
 bzla_fp_word_blaster_new(Bzla *bzla)
 {
   return new BzlaFPWordBlaster(bzla);
+}
+
+void *
+bzla_fp_word_blaster_clone(Bzla *bzla)
+{
+  return static_cast<BzlaFPWordBlaster *>(bzla->word_blaster)->clone();
 }
 
 void
