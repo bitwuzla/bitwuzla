@@ -2039,8 +2039,8 @@ translate_ext_rotate_smt2(Bzla *bzla,
 
   assert(shift_width < boolector_bv_get_width(bzla, exp));
 
-  return is_left ? boolector_roli(bzla, exp, shift_width)
-                 : boolector_rori(bzla, exp, shift_width);
+  return is_left ? boolector_bv_roli(bzla, exp, shift_width)
+                 : boolector_bv_rori(bzla, exp, shift_width);
 }
 
 static int32_t parse_sort(BzlaSMT2Parser *parser,
@@ -3449,7 +3449,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_ROTATE_LEFT_TAG_SMT2)
   {
     if (!close_term_rotate_bv_fun(
-            parser, item_open, item_cur, nargs, boolector_roli))
+            parser, item_open, item_cur, nargs, boolector_bv_roli))
     {
       return 0;
     }
@@ -3458,7 +3458,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_ROTATE_RIGHT_TAG_SMT2)
   {
     if (!close_term_rotate_bv_fun(
-            parser, item_open, item_cur, nargs, boolector_rori))
+            parser, item_open, item_cur, nargs, boolector_bv_rori))
     {
       return 0;
     }

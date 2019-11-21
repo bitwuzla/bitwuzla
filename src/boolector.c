@@ -2656,7 +2656,7 @@ boolector_bv_ror(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
 }
 
 BoolectorNode *
-boolector_roli(Bzla *bzla, BoolectorNode *n, uint32_t nbits)
+boolector_bv_roli(Bzla *bzla, BoolectorNode *n, uint32_t nbits)
 {
   BzlaNode *exp, *res;
 
@@ -2671,13 +2671,13 @@ boolector_roli(Bzla *bzla, BoolectorNode *n, uint32_t nbits)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, roli, BZLA_CLONED_EXP(exp), nbits);
+  BZLA_CHKCLONE_RES_PTR(res, bv_roli, BZLA_CLONED_EXP(exp), nbits);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
 BoolectorNode *
-boolector_rori(Bzla *bzla, BoolectorNode *n, uint32_t nbits)
+boolector_bv_rori(Bzla *bzla, BoolectorNode *n, uint32_t nbits)
 {
   BzlaNode *exp, *res;
 
@@ -2692,7 +2692,7 @@ boolector_rori(Bzla *bzla, BoolectorNode *n, uint32_t nbits)
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, rori, BZLA_CLONED_EXP(exp), nbits);
+  BZLA_CHKCLONE_RES_PTR(res, bv_rori, BZLA_CLONED_EXP(exp), nbits);
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }

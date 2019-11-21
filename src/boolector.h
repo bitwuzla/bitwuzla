@@ -1385,7 +1385,7 @@ BoolectorNode *boolector_bv_ror(Bzla *bzla,
   :param nbits: Number of bits to rotate by.
   :return: Bit-vector with the same bit width as ``n``.
 */
-BoolectorNode *boolector_roli(Bzla *bzla, BoolectorNode *n, uint32_t nbits);
+BoolectorNode *boolector_bv_roli(Bzla *bzla, BoolectorNode *n, uint32_t nbits);
 
 /*!
   Create a rotate right, with the number of bits to rotate by given as a
@@ -1396,7 +1396,7 @@ BoolectorNode *boolector_roli(Bzla *bzla, BoolectorNode *n, uint32_t nbits);
   :param nbits: Number of bits to rotate by.
   :return: Bit-vector with the same bit width as ``n``.
 */
-BoolectorNode *boolector_rori(Bzla *bzla, BoolectorNode *n, uint32_t nbits);
+BoolectorNode *boolector_bv_rori(Bzla *bzla, BoolectorNode *n, uint32_t nbits);
 
 /*!
   Create a bit-vector subtraction.
