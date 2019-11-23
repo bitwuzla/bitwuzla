@@ -383,6 +383,9 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::signExtendRightShift(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  return bzla_bv_sra(s_bzla->mm, d_bv, op.d_bv);
 }
 
 template <bool is_signed>
@@ -390,6 +393,9 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::modularLeftShift(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  return *this << op;
 }
 
 template <bool is_signed>
@@ -397,6 +403,9 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::modularRightShift(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  return *this >> op;
 }
 
 template <bool is_signed>
@@ -404,6 +413,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::modularIncrement() const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return this->increment();
 }
 
 template <bool is_signed>
@@ -411,6 +422,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::modularDecrement() const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return this->decrement();
 }
 
 template <bool is_signed>
@@ -418,6 +431,9 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::modularAdd(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  return *this + op;
 }
 
 template <bool is_signed>
@@ -425,6 +441,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::modularNegate() const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return -(*this);
 }
 
 template <bool is_signed>
