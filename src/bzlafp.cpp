@@ -22,6 +22,8 @@ extern "C" {
 
 #define BZLA_FP_RM_BW 3
 
+class BzlaFPWordBlaster;
+
 /* ========================================================================== */
 /* Glue for SymFPU: concrete.                                                 */
 /* ========================================================================== */
@@ -51,6 +53,8 @@ struct signedToLiteralType<false>
 template <bool is_signed>
 class BzlaFPBV
 {
+  friend BzlaFPWordBlaster;
+
  protected:
   using literalType = typename signedToLiteralType<is_signed>::literalType;
 
@@ -688,7 +692,6 @@ struct BzlaFloatingPoint
 /* Glue for SymFPU: symbolic.                                                 */
 /* ========================================================================== */
 
-class BzlaFPWordBlaster;
 class BzlaFPSymRM;
 class BzlaFPSortInfo;
 class BzlaFPSymProp;
@@ -1713,6 +1716,8 @@ class BzlaFPWordBlaster
   BzlaFPWordBlaster(Bzla *bzla) : d_bzla(bzla)
   {
     BzlaFPSortInfo::s_bzla     = bzla;
+    BzlaFPBV<true>::s_bzla     = bzla;
+    BzlaFPBV<false>::s_bzla    = bzla;
     BzlaFPSymRM::s_bzla        = bzla;
     BzlaFPSymProp::s_bzla      = bzla;
     BzlaFPSymBV<true>::s_bzla  = bzla;
