@@ -318,6 +318,9 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator/(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(op.d_bv);
+  return is_signed ? bzla_bv_sdiv(s_bzla->mm, d_bv, op.d_bv)
+                   : bzla_bv_udiv(s_bzla->mm, d_bv, op.d_bv);
 }
 
 template <bool is_signed>
