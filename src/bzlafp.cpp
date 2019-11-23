@@ -504,6 +504,8 @@ BzlaFPBV<true>
 BzlaFPBV<is_signed>::toSigned(void) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return BzlaFPBV<true>(*this);
 }
 
 template <bool is_signed>
@@ -511,6 +513,8 @@ BzlaFPBV<false>
 BzlaFPBV<is_signed>::toUnsigned(void) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return BzlaFPBV<false>(*this);
 }
 
 template <bool is_signed>
