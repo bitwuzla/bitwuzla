@@ -450,6 +450,9 @@ bool
 BzlaFPBV<is_signed>::operator==(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  return bzla_bv_eq(s_bzla->mm, d_bv, op.d_bv);
 }
 
 template <bool is_signed>
@@ -457,6 +460,10 @@ bool
 BzlaFPBV<is_signed>::operator<=(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  return is_signed ? bzla_bv_slte(s_bzla->mm, d_bv, op.d_bv)
+                   : bzla_bv_ulte(s_bzla->mm, d_bv, op.d_bv);
 }
 
 template <bool is_signed>
@@ -464,6 +471,10 @@ bool
 BzlaFPBV<is_signed>::operator>=(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  return is_signed ? bzla_bv_sgte(s_bzla->mm, d_bv, op.d_bv)
+                   : bzla_bv_ugte(s_bzla->mm, d_bv, op.d_bv);
 }
 
 template <bool is_signed>
@@ -471,6 +482,10 @@ bool
 BzlaFPBV<is_signed>::operator<(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  return is_signed ? bzla_bv_slt(s_bzla->mm, d_bv, op.d_bv)
+                   : bzla_bv_ult(s_bzla->mm, d_bv, op.d_bv);
 }
 
 template <bool is_signed>
@@ -478,6 +493,10 @@ bool
 BzlaFPBV<is_signed>::operator>(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  return is_signed ? bzla_bv_sgt(s_bzla->mm, d_bv, op.d_bv)
+                   : bzla_bv_ugt(s_bzla->mm, d_bv, op.d_bv);
 }
 
 template <bool is_signed>
