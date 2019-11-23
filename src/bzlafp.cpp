@@ -254,6 +254,7 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator<<(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
   assert(op.d_bv);
   return bzla_bv_sll(s_bzla->mm, d_bv, op.d_bv);
 }
@@ -263,6 +264,7 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator>>(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
   assert(op.d_bv);
   return is_signed ? bzla_bv_sra(s_bzla->mm, d_bv, op.d_bv)
                    : bzla_bv_srl(s_bzla->mm, d_bv, op.d_bv);
@@ -273,6 +275,7 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator|(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
   assert(op.d_bv);
   return bzla_bv_or(s_bzla->mm, d_bv, op.d_bv);
 }
@@ -282,6 +285,7 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator&(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
   assert(op.d_bv);
   return bzla_bv_and(s_bzla->mm, d_bv, op.d_bv);
 }
@@ -291,6 +295,7 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator+(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
   assert(op.d_bv);
   return bzla_bv_add(s_bzla->mm, d_bv, op.d_bv);
 }
@@ -300,6 +305,7 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator-(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
   assert(op.d_bv);
   return bzla_bv_sub(s_bzla->mm, d_bv, op.d_bv);
 }
@@ -309,6 +315,7 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator*(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
   assert(op.d_bv);
   return bzla_bv_mul(s_bzla->mm, d_bv, op.d_bv);
 }
@@ -318,6 +325,7 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator/(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
   assert(op.d_bv);
   return is_signed ? bzla_bv_sdiv(s_bzla->mm, d_bv, op.d_bv)
                    : bzla_bv_udiv(s_bzla->mm, d_bv, op.d_bv);
@@ -328,6 +336,7 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator%(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
   assert(op.d_bv);
   return is_signed ? bzla_bv_srem(s_bzla->mm, d_bv, op.d_bv)
                    : bzla_bv_urem(s_bzla->mm, d_bv, op.d_bv);
@@ -338,6 +347,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator-(void) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return bzla_bv_neg(s_bzla->mm, d_bv);
 }
 
 template <bool is_signed>
@@ -345,6 +356,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::operator~(void) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return bzla_bv_not(s_bzla->mm, d_bv);
 }
 
 template <bool is_signed>
@@ -352,6 +365,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::increment() const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return bzla_bv_inc(s_bzla->mm, d_bv);
 }
 
 template <bool is_signed>
@@ -359,6 +374,8 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::decrement() const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return bzla_bv_dec(s_bzla->mm, d_bv);
 }
 
 template <bool is_signed>
