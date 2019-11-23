@@ -616,6 +616,56 @@ class BzlaFPTraits
   static void invariant(const bool &p);
 };
 
+/* -------------------------------------------------------------------------- */
+
+BzlaRoundingMode
+BzlaFPTraits::RNE(void)
+{
+  return BZLA_RM_RNE;
+}
+
+BzlaRoundingMode
+BzlaFPTraits::RNA(void)
+{
+  return BZLA_RM_RNA;
+}
+
+BzlaRoundingMode
+BzlaFPTraits::RTP(void)
+{
+  return BZLA_RM_RTP;
+}
+
+BzlaRoundingMode
+BzlaFPTraits::RTN(void)
+{
+  return BZLA_RM_RTN;
+}
+
+BzlaRoundingMode
+BzlaFPTraits::RTZ(void)
+{
+  return BZLA_RM_RTZ;
+}
+
+void
+BzlaFPTraits::precondition(const bool &p)
+{
+  assert(p);
+}
+
+void
+BzlaFPTraits::postcondition(const bool &p)
+{
+  assert(p);
+}
+
+void
+BzlaFPTraits::invariant(const bool &p)
+{
+  assert(p);
+}
+
 /* ========================================================================== */
 /* Floating-Point constants.                                                  */
 /* ========================================================================== */
