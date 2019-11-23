@@ -522,6 +522,9 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::extend(uint32_t extension) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  return is_signed ? bzla_bv_sext(s_bzla->mm, d_bv, extension)
+                   : bzla_bv_uext(s_bzla->mm, d_bv, extension);
 }
 
 template <bool is_signed>
@@ -529,6 +532,10 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::contract(uint32_t reduction) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  uint32_t bw = this->getWidth();
+  assert(bw - 1 - reduction < bw);
+  return bzla_bv_slice(s_bzla->mm, d_bv, bw - 1 - reduction, 0);
 }
 
 template <bool is_signed>
@@ -536,6 +543,17 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::resize(uint32_t newSize) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  uint32_t bw = this->getWidth();
+  if (newSize > bw)
+  {
+    return this->extend(newSize - bw);
+  }
+  if (newSize < bw)
+  {
+    return this->constract(bw - newSize);
+  }
+  return *this;
 }
 
 template <bool is_signed>
@@ -543,6 +561,11 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::matchWidth(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  uint32_t bw = this->getWidth();
+  assert(bw <= op.getWidth());
+  return this->extend(op.getWidth() - bw);
 }
 
 template <bool is_signed>
@@ -550,6 +573,9 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::append(const BzlaFPBV<is_signed> &op) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(op.d_bv);
+  return bzla_bv_concat(s_bzla->mm, d_bv, op.d_bv);
 }
 
 template <bool is_signed>
@@ -557,6 +583,9 @@ BzlaFPBV<is_signed>
 BzlaFPBV<is_signed>::extract(uint32_t upper, uint32_t lower) const
 {
   assert(s_bzla);
+  assert(d_bv);
+  assert(upper >= lower);
+  return bzla_bv_slice(s_bzla->mm, d_bv, upper, lower);
 }
 
 /* -------------------------------------------------------------------------- */
