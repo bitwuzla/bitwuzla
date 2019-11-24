@@ -80,6 +80,7 @@ set(sat_testcases
 "factor4294967297.btor"
 "fifo32ia04k05.smt2"
 "fifo32in04k05.smt2"
+"fp_sort.smt2"
 "invalidmodel1.smt2"
 "invalidmodel2.smt2 -xl=0 -ml=0 -rwl=2"
 "invalidmodel3.btor"
