@@ -304,6 +304,9 @@ clone_sorts_unique_table(Bzla *bzla, Bzla *clone)
 	    break;
 #endif
       case BZLA_BV_SORT: cid = bzla_sort_bv(clone, sort->bitvec.width); break;
+      case BZLA_FP_SORT:
+        cid = bzla_sort_fp(clone, sort->fp.width_exp, sort->fp.width_sig);
+        break;
 #if 0
 	  case BZLA_LST_SORT:
 	    cid = bzla_sort_lst (clone, sort->lst.head->id, sort->lst.tail->id);

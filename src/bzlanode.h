@@ -14,6 +14,7 @@
 
 #include "bzlaaigvec.h"
 #include "bzlabv.h"
+#include "bzlafp.h"
 #include "bzlasort.h"
 #include "bzlatypes.h"
 #include "utils/bzlahashptr.h"
@@ -213,8 +214,7 @@ struct BzlaNode
 struct BzlaFPConstNode
 {
   BZLA_NODE_STRUCT;
-  BzlaBitVector *exponent;
-  BzlaBitVector *significand;
+  void *fp;
 };
 typedef struct BzlaFPConstNode BzlaFPConstNode;
 
@@ -596,6 +596,15 @@ bzla_node_is_bv_srl(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_BV_SRL_NODE;
 }
 
+static inline bool
+bzla_node_is_fp_const(const BzlaNode *exp)
+{
+  assert(exp);
+  exp = bzla_node_real_addr(exp);
+  return bzla_sort_is_fp(exp->bzla, exp->sort_id)
+         && exp->kind == BZLA_FP_CONST_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 bool bzla_node_is_bv_const_zero(Bzla *bzla, BzlaNode *exp);
@@ -743,6 +752,11 @@ void bzla_node_bv_const_set_invbits(BzlaNode *exp, BzlaBitVector *bits);
 
 /*------------------------------------------------------------------------*/
 
+void bzla_node_fp_const_set_fp(BzlaNode *exp, BzlaFloatingPoint *fp);
+BzlaFloatingPoint *bzla_node_fp_const_get_fp(BzlaNode *exp);
+
+/*------------------------------------------------------------------------*/
+
 /* Gets the number of arguments of lambda expression 'exp'. */
 uint32_t bzla_node_fun_get_arity(Bzla *bzla, BzlaNode *exp);
 
@@ -790,6 +804,8 @@ BzlaNode *bzla_node_param_set_assigned_exp(BzlaNode *param, BzlaNode *exp);
 /*------------------------------------------------------------------------*/
 
 BzlaNode *bzla_node_create_bv_const(Bzla *bzla, const BzlaBitVector *bits);
+
+BzlaNode *bzla_node_create_fp_const(Bzla *bzla, const BzlaFloatingPoint *fp);
 
 BzlaNode *bzla_node_create_var(Bzla *bzla, BzlaSortId sort, const char *symbol);
 

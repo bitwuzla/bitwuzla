@@ -16,6 +16,7 @@
 #include "bzlaabort.h"
 #include "bzlacore.h"
 #include "bzladbg.h"
+#include "bzlafp.h"
 #include "bzlarewrite.h"
 
 /*------------------------------------------------------------------------*/
@@ -1694,6 +1695,12 @@ bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp)
 /*------------------------------------------------------------------------*/
 
 BzlaNode *
+exp_fp_const_aux(Bzla *bzla, const BzlaFloatingPoint *fp)
+{
+  return bzla_node_create_fp_const(bzla, fp);
+}
+
+BzlaNode *
 bzla_exp_fp_rm(Bzla *bzla, BzlaRoundingMode rm)
 {
 #if !defined(BZLA_USE_SYMFPU)
@@ -1715,9 +1722,14 @@ bzla_exp_fp_pos_zero(Bzla *bzla, BzlaSortId sort)
   assert(bzla);
   assert(sort);
   assert(bzla_sort_is_fp(bzla, sort));
-  /// FP STUB
-  return bzla_exp_true(bzla);
-  ////
+
+  BzlaNode *result;
+  BzlaFloatingPoint *fp;
+
+  fp     = bzla_fp_make_zero(bzla, sort, false);
+  result = exp_fp_const_aux(bzla, fp);
+  bzla_fp_free(bzla, fp);
+  return result;
 }
 
 BzlaNode *

@@ -14,6 +14,7 @@ extern "C" {
 #include "bzlaexp.h"
 #include "bzlafp.h"
 #include "bzlanode.h"
+#include "bzlasort.h"
 }
 
 #ifdef BZLA_USE_SYMFPU
@@ -23,6 +24,7 @@ extern "C" {
 #define BZLA_FP_RM_BW 3
 
 class BzlaFPWordBlaster;
+class BzlaFloatingPointSize;
 
 /* ========================================================================== */
 /* Glue for SymFPU: concrete.                                                 */
@@ -67,7 +69,7 @@ class BzlaFPBV
   BzlaFPBV(const uint32_t bw, const uint32_t val);
   BzlaFPBV(const bool &val);
   BzlaFPBV(const BzlaFPBV<is_signed> &other);
-  BzlaFPBV(const BzlaBitVector *bv);
+  BzlaFPBV(BzlaBitVector *bv);
   ~BzlaFPBV();
 
   uint32_t getWidth(void) const;
@@ -164,11 +166,11 @@ BzlaFPBV<is_signed>::BzlaFPBV(const BzlaFPBV<is_signed> &other)
 }
 
 template <bool is_signed>
-BzlaFPBV<is_signed>::BzlaFPBV(const BzlaBitVector *bv)
+BzlaFPBV<is_signed>::BzlaFPBV(BzlaBitVector *bv)
 {
   assert(s_bzla);
   assert(bv);
-  d_bv = bzla_bv_copy(s_bzla->mm, bv);
+  d_bv = bv;
 }
 
 template <bool is_signed>
@@ -674,17 +676,27 @@ BzlaFPTraits::invariant(const bool &p)
 /* Floating-Point constants.                                                  */
 /* ========================================================================== */
 
-struct BzlaFloatingPointSize
+class BzlaFloatingPointSize
 {
-  uint32_t ewidth; /* size of exponent */
-  uint32_t swidth; /* size of significand */
+ public:
+  BzlaFloatingPointSize(uint32_t e, uint32_t s) : d_ewidth(e), d_swidth(s) {}
+  BzlaFloatingPointSize(const BzlaFloatingPointSize &other);
+  /* symFPU interface */
+  uint32_t exponentWidth() const { return d_ewidth; }
+  uint32_t significandWidth() const { return d_swidth; }
+
+ private:
+  uint32_t d_ewidth; /* size of exponent */
+  uint32_t d_swidth; /* size of significand */
 };
+
+using BzlaUnpackedFloat = ::symfpu::unpackedFloat<BzlaFPTraits>;
 
 struct BzlaFloatingPoint
 {
-  BzlaFloatingPointSize size;
+  BzlaFloatingPointSize *size;
 #ifdef BZLA_USE_SYMFPU
-  ::symfpu::unpackedFloat<BzlaFPTraits> fp;
+  ::symfpu::unpackedFloat<BzlaFPTraits> *fp;
 #endif
 };
 
@@ -1752,6 +1764,77 @@ class BzlaFPWordBlaster
   Bzla *d_bzla;
 };
 
+/* ========================================================================== */
+
+BzlaFloatingPoint *
+bzla_fp_new(Bzla *bzla, BzlaSortId sort)
+{
+  assert(bzla);
+  assert(sort);
+  assert(bzla_sort_is_fp(bzla, sort));
+
+  BzlaFloatingPoint *res;
+  uint32_t ewidth = bzla_sort_fp_get_exp_width(bzla, sort);
+  uint32_t swidth = bzla_sort_fp_get_sig_width(bzla, sort);
+  BZLA_CNEW(bzla->mm, res);
+  res->size = new BzlaFloatingPointSize(ewidth, swidth);
+  return res;
+}
+
+void
+bzla_fp_free(Bzla *bzla, BzlaFloatingPoint *fp)
+{
+  assert(bzla);
+  assert(fp);
+  delete fp->size;
+  delete fp->fp;
+  BZLA_DELETE(bzla->mm, fp);
+}
+
+BzlaFloatingPoint *
+bzla_fp_copy(Bzla *bzla, const BzlaFloatingPoint *fp)
+{
+  assert(bzla);
+  assert(fp);
+
+  BzlaFloatingPoint *res;
+  BzlaSortId sort;
+
+  sort = bzla_sort_fp(
+      bzla, fp->size->exponentWidth(), fp->size->significandWidth());
+  res     = bzla_fp_new(bzla, sort);
+  res->fp = new BzlaUnpackedFloat(*fp->fp);
+  bzla_sort_release(bzla, sort);
+  return res;
+}
+
+uint32_t
+bzla_fp_get_exp_width(const BzlaFloatingPoint *fp)
+{
+  return fp->size->exponentWidth();
+}
+
+uint32_t
+bzla_fp_get_sig_width(const BzlaFloatingPoint *fp)
+{
+  return fp->size->significandWidth();
+}
+
+BzlaFloatingPoint *
+bzla_fp_make_zero(Bzla *bzla, BzlaSortId sort, bool sign)
+{
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  res = bzla_fp_new(bzla, sort);
+  res->fp =
+      new BzlaUnpackedFloat(BzlaUnpackedFloat::makeZero(*res->size, sign));
+#else
+  res = nullptr;
+#endif
+  return res;
+}
+
+/* ========================================================================== */
 void *
 bzla_fp_word_blaster_new(Bzla *bzla)
 {
@@ -1761,11 +1844,16 @@ bzla_fp_word_blaster_new(Bzla *bzla)
 void *
 bzla_fp_word_blaster_clone(Bzla *bzla)
 {
+  assert(bzla->word_blaster);
   return static_cast<BzlaFPWordBlaster *>(bzla->word_blaster)->clone();
 }
 
 void
 bzla_fp_word_blaster_delete(void *wblaster)
 {
-  delete static_cast<BzlaFPWordBlaster *>(wblaster);
+  if (wblaster) delete static_cast<BzlaFPWordBlaster *>(wblaster);
 }
+
+/* -------------------------------------------------------------------------- */
+
+// TODO hashing of FP consts

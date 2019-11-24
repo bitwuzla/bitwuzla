@@ -866,6 +866,10 @@ erase_local_data_exp(Bzla *bzla, BzlaNode *exp)
       bzla_node_bv_const_set_bits(exp, 0);
       bzla_node_bv_const_set_invbits(exp, 0);
       break;
+    case BZLA_FP_CONST_NODE:
+      bzla_fp_free(bzla, bzla_node_fp_const_get_fp(exp));
+      bzla_node_fp_const_set_fp(exp, 0);
+      break;
     case BZLA_LAMBDA_NODE:
     case BZLA_UPDATE_NODE:
     case BZLA_UF_NODE:
@@ -1298,6 +1302,24 @@ bzla_node_bv_const_set_invbits(BzlaNode *exp, BzlaBitVector *bits)
   assert(exp);
   assert(bzla_node_is_bv_const(exp));
   ((BzlaBVConstNode *) bzla_node_real_addr(exp))->invbits = bits;
+}
+
+/*------------------------------------------------------------------------*/
+
+void
+bzla_node_fp_const_set_fp(BzlaNode *exp, BzlaFloatingPoint *fp)
+{
+  assert(exp);
+  assert(bzla_node_is_fp_const(exp));
+  ((BzlaFPConstNode *) bzla_node_real_addr(exp))->fp = fp;
+}
+
+BzlaFloatingPoint *
+bzla_node_fp_const_get_fp(BzlaNode *exp)
+{
+  assert(exp);
+  assert(bzla_node_is_fp_const(exp));
+  return ((BzlaFPConstNode *) bzla_node_real_addr(exp))->fp;
 }
 
 /*------------------------------------------------------------------------*/
@@ -1895,7 +1917,7 @@ find_exp(Bzla *bzla,
 /*------------------------------------------------------------------------*/
 
 static BzlaNode *
-new_const_exp_node(Bzla *bzla, BzlaBitVector *bits)
+new_bv_const_exp_node(Bzla *bzla, BzlaBitVector *bits)
 {
   assert(bzla);
   assert(bits);
@@ -1910,6 +1932,26 @@ new_const_exp_node(Bzla *bzla, BzlaBitVector *bits)
   setup_node_and_add_to_id_table(bzla, exp);
   bzla_node_bv_const_set_bits((BzlaNode *) exp, bzla_bv_copy(bzla->mm, bits));
   bzla_node_bv_const_set_invbits((BzlaNode *) exp, bzla_bv_not(bzla->mm, bits));
+  return (BzlaNode *) exp;
+}
+
+static BzlaNode *
+new_fp_const_exp_node(Bzla *bzla, const BzlaFloatingPoint *fp)
+{
+  assert(bzla);
+  assert(fp);
+
+  BzlaFPConstNode *exp;
+  BzlaSortId sort;
+
+  BZLA_CNEW(bzla->mm, exp);
+  set_kind(bzla, (BzlaNode *) exp, BZLA_FP_CONST_NODE);
+  exp->bytes = sizeof *exp;
+  sort =
+      bzla_sort_fp(bzla, bzla_fp_get_exp_width(fp), bzla_fp_get_sig_width(fp));
+  bzla_node_set_sort_id((BzlaNode *) exp, sort);
+  setup_node_and_add_to_id_table(bzla, exp);
+  bzla_node_fp_const_set_fp((BzlaNode *) exp, bzla_fp_copy(bzla, fp));
   return (BzlaNode *) exp;
 }
 
@@ -2323,7 +2365,7 @@ bzla_node_create_bv_const(Bzla *bzla, const BzlaBitVector *bits)
       enlarge_nodes_unique_table(bzla);
       lookup = find_const_exp(bzla, lookupbits);
     }
-    *lookup = new_const_exp_node(bzla, lookupbits);
+    *lookup = new_bv_const_exp_node(bzla, lookupbits);
     assert(bzla->nodes_unique_table.num_elements < INT32_MAX);
     bzla->nodes_unique_table.num_elements += 1;
     (*lookup)->unique = 1;
@@ -2338,6 +2380,20 @@ bzla_node_create_bv_const(Bzla *bzla, const BzlaBitVector *bits)
   if (inv) return bzla_node_invert(*lookup);
   return *lookup;
 }
+
+BzlaNode *
+bzla_node_create_fp_const(Bzla *bzla, const BzlaFloatingPoint *fp)
+{
+  assert(bzla);
+  assert(fp);
+
+  // Note: we do not lookup already existing constants for now
+  //       TODO TODO TODO
+
+  return new_fp_const_exp_node(bzla, fp);
+}
+
+/*------------------------------------------------------------------------*/
 
 BzlaNode *
 bzla_node_create_var(Bzla *bzla, BzlaSortId sort, const char *symbol)
