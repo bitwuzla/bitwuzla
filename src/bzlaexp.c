@@ -1740,9 +1740,15 @@ bzla_exp_fp_neg_zero(Bzla *bzla, BzlaSortId sort)
 #endif
   assert(bzla);
   assert(sort);
-  /// FP STUB
-  return bzla_exp_true(bzla);
-  ////
+  assert(bzla_sort_is_fp(bzla, sort));
+
+  BzlaNode *result;
+  BzlaFloatingPoint *fp;
+
+  fp     = bzla_fp_make_zero(bzla, sort, true);
+  result = exp_fp_const_aux(bzla, fp);
+  bzla_fp_free(bzla, fp);
+  return result;
 }
 
 BzlaNode *
