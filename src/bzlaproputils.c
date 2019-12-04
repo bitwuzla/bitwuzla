@@ -4811,7 +4811,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
     real_cur = bzla_node_real_addr(cur);
 
 #ifndef NDEBUG
-    if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+    if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND && opt_prop_domains)
     {
       BzlaPropSolver *slv = BZLA_PROP_SOLVER(bzla);
       assert(slv->domains);

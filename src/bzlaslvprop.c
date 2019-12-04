@@ -417,7 +417,7 @@ sat_prop_solver_aux(Bzla *bzla)
 
   uint32_t j, max_steps;
   int32_t sat_result;
-  uint32_t nprops;
+  uint32_t nprops, opt_prop_domains;
   BzlaNode *root;
   BzlaPtrHashTable *constraints;
   BzlaPtrHashTableIterator it;
@@ -426,7 +426,9 @@ sat_prop_solver_aux(Bzla *bzla)
 
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
-  nprops = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
+
+  nprops           = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
+  opt_prop_domains = bzla_opt_get(bzla, BZLA_OPT_PROP_DOMAINS);
 
   assert(!slv->domains);
   slv->domains = bzla_hashint_map_new(bzla->mm);
@@ -448,7 +450,7 @@ sat_prop_solver_aux(Bzla *bzla)
   while (bzla_iter_hashptr_has_next(&it))
   {
     root = bzla_iter_hashptr_next(&it);
-    init_prop_domains(bzla, slv->domains, root);
+    if (opt_prop_domains) init_prop_domains(bzla, slv->domains, root);
   }
 
   bzla_iter_hashptr_init(&it, bzla->assumptions);
@@ -466,7 +468,7 @@ sat_prop_solver_aux(Bzla *bzla)
     {
       bzla_synthesize_exp(bzla, root, 0);
     }
-    init_prop_domains(bzla, slv->domains, root);
+    if (opt_prop_domains) init_prop_domains(bzla, slv->domains, root);
   }
 
   for (;;)
