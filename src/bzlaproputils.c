@@ -4949,6 +4949,15 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bv_s_new =
           compute_value(bzla, real_cur, bv_t, bv_s[idx_s], idx_x, domains);
       assert(bv_s_new);
+#ifndef NBZLALOG
+      a = bzla_bv_to_char(bzla->mm, bv_s_new);
+      BZLALOG(2, "");
+      BZLALOG(2,
+              "%s value: %s",
+              pick_inv && !force_cons ? "inverse" : "consistent",
+              a);
+      bzla_mem_freestr(bzla->mm, a);
+#endif
       /* propagate down */
       bzla_bv_free(bzla->mm, bv_t);
       bv_t = bv_s_new;
