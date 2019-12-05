@@ -651,7 +651,6 @@ print_stats_prop_solver(BzlaPropSolver *slv)
 
   Bzla *bzla    = slv->bzla;
   bool entailed = bzla_opt_get(slv->bzla, BZLA_OPT_PROP_ENTAILED);
-  bool domains  = bzla_opt_get(slv->bzla, BZLA_OPT_PROP_DOMAINS);
 
   BZLA_MSG(bzla->msg, 1, "");
   BZLA_MSG(bzla->msg, 1, "restarts: %u", slv->stats.restarts);
@@ -700,6 +699,7 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   }
   BZLA_MSG(bzla->msg, 1, "updates (cone): %u", slv->stats.updates);
 #ifndef NDEBUG
+  bool domains = bzla_opt_get(slv->bzla, BZLA_OPT_PROP_DOMAINS);
   char *s_cons = "    consistent fun calls";
   char *s_inv  = "    inverse fun calls";
   /* Consistent value computation stats. */

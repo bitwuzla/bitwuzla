@@ -816,6 +816,8 @@ class TestBvProp : public TestMm
     BoolectorNode *x, *y, *z, *c, *fun, *ofun, *_not, *eq;
     BoolectorSort swx, swy, swz, s1;
 
+    swy = 0;
+
     str_x = from_domain(d_mm, d_x);
     str_y = 0;
     str_z = from_domain(d_mm, d_z);

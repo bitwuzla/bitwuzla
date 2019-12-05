@@ -43,6 +43,7 @@ new_invalid_domain(BzlaMemMgr *mm, uint32_t width)
   return res;
 }
 
+#ifndef NDEBUG
 static bool
 compare_fixed_domain(BzlaMemMgr *mm, BzlaBvDomain *a, BzlaBvDomain *b)
 {
@@ -52,8 +53,6 @@ compare_fixed_domain(BzlaMemMgr *mm, BzlaBvDomain *a, BzlaBvDomain *b)
   int32_t res_lo = bzla_bv_compare(a->lo, b->lo);
   return res_hi == 0 && res_lo == 0;
 }
-
-#ifndef NDEBUG
 #define BVPROP_LOG_LEVEL 0
 #define BVPROP_LOG(FMT, ...)    \
   if (BVPROP_LOG_LEVEL > 0)     \
@@ -67,7 +66,8 @@ compare_fixed_domain(BzlaMemMgr *mm, BzlaBvDomain *a, BzlaBvDomain *b)
     bzla_bvprop_print(mm, domain, true); \
   }
 #else
-#define BVPROP_LOG(domain) ()
+#define BVPROP_LOG(FMT, ...)
+#define BVPROP_LOG_DOMAIN(mm, domain)
 #endif
 
 /* -------------------------------------------------------------------------- */
@@ -3796,8 +3796,14 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
   BVPROP_LOG("\n############################\n");
   BVPROP_LOG_DOMAIN(mm, d_x);
   BVPROP_LOG_DOMAIN(mm, d_y);
-  if (d_q) BVPROP_LOG_DOMAIN(mm, d_q);
-  if (d_r) BVPROP_LOG_DOMAIN(mm, d_r);
+  if (d_q)
+  {
+    BVPROP_LOG_DOMAIN(mm, d_q);
+  }
+  if (d_r)
+  {
+    BVPROP_LOG_DOMAIN(mm, d_r);
+  }
   BVPROP_LOG("############################\n");
   do
   {
@@ -4328,8 +4334,14 @@ DONE:
   BVPROP_LOG("res: %d ############################\n", res);
   BVPROP_LOG_DOMAIN(mm, *res_d_x);
   BVPROP_LOG_DOMAIN(mm, *res_d_y);
-  if (res_d_q) BVPROP_LOG_DOMAIN(mm, *res_d_q);
-  if (res_d_r) BVPROP_LOG_DOMAIN(mm, *res_d_r);
+  if (res_d_q)
+  {
+    BVPROP_LOG_DOMAIN(mm, *res_d_q);
+  }
+  if (res_d_r)
+  {
+    BVPROP_LOG_DOMAIN(mm, *res_d_r);
+  }
   return res;
 }
 

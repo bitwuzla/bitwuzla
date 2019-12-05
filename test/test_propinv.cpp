@@ -5,6 +5,7 @@
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
  */
+#ifndef NDEBUG
 
 #include "test.h"
 
@@ -221,7 +222,6 @@ class TestPropInv : public TestBzla
 
   void check_conf_and(uint32_t bw, bool use_domains)
   {
-#ifndef NDEBUG
     (void) bw;
     bool inv;
     uint64_t i, j;
@@ -340,14 +340,10 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, _and);
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
-#else
-    (void) bw;
-#endif
   }
 
   void check_conf_ult(uint32_t bw, bool use_domains)
   {
-#ifndef NDEBUG
     (void) bw;
     bool inv;
     BzlaNode *ult, *e[2], *cult, *ce;
@@ -451,14 +447,10 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, ult);
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
-#else
-    (void) bw;
-#endif
   }
 
   void check_conf_sll(uint32_t bw, bool use_domains)
   {
-#ifndef NDEBUG
     (void) bw;
     BzlaNode *sll, *e[2];
     BzlaSortId sort;
@@ -1127,14 +1119,10 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, sll);
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
-#else
-    (void) bw;
-#endif
   }
 
   void check_conf_srl(uint32_t bw, bool use_domains)
   {
-#ifndef NDEBUG
     (void) bw;
     BzlaNode *srl, *e[2];
     BzlaSortId sort;
@@ -1803,14 +1791,10 @@ class TestPropInv : public TestBzla
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
-#else
-    (void) bw;
-#endif
   }
 
   void check_conf_mul(uint32_t bw, bool use_domains)
   {
-#ifndef NDEBUG
     (void) bw;
     uint32_t i, j, k, r;
     BzlaNode *mul, *e[2];
@@ -1918,14 +1902,10 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, mul);
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
-#else
-    (void) bw;
-#endif
   }
 
   void check_conf_udiv(uint32_t bw, bool use_domains)
   {
-#ifndef NDEBUG
     (void) bw;
     int32_t k;
     BzlaNode *udiv, *e[2];
@@ -2010,14 +1990,10 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, udiv);
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
-#else
-    (void) bw;
-#endif
   }
 
   void check_conf_urem(uint32_t bw, bool use_domains)
   {
-#ifndef NDEBUG
     (void) bw;
     bool inv;
     int32_t k;
@@ -2218,14 +2194,10 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, urem);
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
-#else
-    (void) bw;
-#endif
   }
 
   void check_conf_concat(uint32_t bw, bool use_domains)
   {
-#ifndef NDEBUG
     (void) bw;
     bool inv;
     int32_t k, cnt;
@@ -2349,9 +2321,6 @@ class TestPropInv : public TestBzla
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
-#else
-    (void) bw;
-#endif
   }
 
   BzlaMemMgr *d_mm            = nullptr;
@@ -2365,7 +2334,6 @@ class TestPropInv : public TestBzla
                              BzlaBitVector *bve,
                              bool use_domains)
   {
-#ifndef NDEBUG
     bool inv;
     BzlaNode *cmul[2], *ce[2];
     BzlaBitVector *res;
@@ -2432,12 +2400,6 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, ce[1]);
     bzla_node_release(d_bzla, cmul[0]);
     bzla_node_release(d_bzla, cmul[1]);
-#else
-    (void) mul;
-    (void) e;
-    (void) bvmul;
-    (void) bve;
-#endif
   }
 
   void check_conf_udiv_result(uint32_t idx_x,
@@ -2447,7 +2409,6 @@ class TestPropInv : public TestBzla
                               BzlaBitVector *bve,
                               bool use_domains)
   {
-#ifndef NDEBUG
     bool inv;
     BzlaNode *cudiv, *ce;
     BzlaBitVector *res;
@@ -2511,13 +2472,6 @@ class TestPropInv : public TestBzla
       bzla_hashint_map_delete(d_domains);
       d_domains = nullptr;
     }
-#else
-    (void) idx_x;
-    (void) udiv;
-    (void) e;
-    (void) bvudiv;
-    (void) bve;
-#endif
   }
 
   void check_conf_shift(uint32_t idx_x,
@@ -2544,7 +2498,6 @@ class TestPropInv : public TestBzla
                         const char *vshift,
                         uint64_t rvalmax)
   {
-#ifndef NDEBUG
     bool inv;
     BzlaNode *cshift, *ce;
     BzlaBitVector *res, *bvshift, *bve;
@@ -2586,16 +2539,6 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, bve);
     bzla_node_release(d_bzla, ce);
     bzla_node_release(d_bzla, cshift);
-#else
-    (void) idx_x;
-    (void) shift;
-    (void) e;
-    (void) exp_fun;
-    (void) inv_fun;
-    (void) ve;
-    (void) vshift;
-    (void) rvalmax;
-#endif
   }
 };
 
@@ -2608,7 +2551,6 @@ class TestPropInv : public TestBzla
 
 TEST_F(TestPropInv, complete_add)
 {
-#ifndef NDEBUG
   check_binary(bzla_exp_bv_add,
                bzla_bv_add,
                bzla_is_inv_add,
@@ -2621,12 +2563,10 @@ TEST_F(TestPropInv, complete_add)
                inv_add_bv,
                inv_add_bvprop,
                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_and)
 {
-#ifndef NDEBUG
   check_binary(bzla_exp_bv_and,
                bzla_bv_and,
                bzla_is_inv_and,
@@ -2639,22 +2579,18 @@ TEST_F(TestPropInv, complete_and)
                inv_and_bv,
                inv_and_bvprop,
                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_eq)
 {
-#ifndef NDEBUG
   check_binary(
       bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bv, inv_eq_bvprop, false);
   check_binary(
       bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bv, inv_eq_bvprop, true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_ult)
 {
-#ifndef NDEBUG
   check_binary(bzla_exp_bv_ult,
                bzla_bv_ult,
                bzla_is_inv_ult,
@@ -2667,12 +2603,10 @@ TEST_F(TestPropInv, complete_ult)
                inv_ult_bv,
                inv_ult_bvprop,
                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_sll)
 {
-#ifndef NDEBUG
   check_shift(bzla_exp_bv_sll,
               bzla_bv_sll,
               bzla_is_inv_sll,
@@ -2685,12 +2619,10 @@ TEST_F(TestPropInv, complete_sll)
               inv_sll_bv,
               inv_sll_bvprop,
               true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_srl)
 {
-#ifndef NDEBUG
   check_shift(bzla_exp_bv_srl,
               bzla_bv_srl,
               bzla_is_inv_srl,
@@ -2703,12 +2635,10 @@ TEST_F(TestPropInv, complete_srl)
               inv_srl_bv,
               inv_srl_bvprop,
               true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_mul)
 {
-#ifndef NDEBUG
   check_binary(bzla_exp_bv_mul,
                bzla_bv_mul,
                bzla_is_inv_mul,
@@ -2721,12 +2651,10 @@ TEST_F(TestPropInv, complete_mul)
                inv_mul_bv,
                inv_mul_bvprop,
                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_udiv)
 {
-#ifndef NDEBUG
   check_binary(bzla_exp_bv_udiv,
                bzla_bv_udiv,
                bzla_is_inv_udiv,
@@ -2739,36 +2667,30 @@ TEST_F(TestPropInv, complete_udiv)
                inv_udiv_bv,
                inv_udiv_bvprop,
                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_urem)
 {
-#ifndef NDEBUG
   check_binary(bzla_exp_bv_urem,
                bzla_bv_urem,
                bzla_is_inv_urem,
                inv_urem_bv,
                inv_urem_bvprop,
                false);
-#endif
 }
 
 TEST_F(TestPropInv, complete_concat)
 {
-#ifndef NDEBUG
   check_binary(bzla_exp_bv_concat,
                bzla_bv_concat,
                bzla_is_inv_concat,
                inv_concat_bv,
                inv_concat_bvprop,
                false);
-#endif
 }
 
 TEST_F(TestPropInv, complete_slice)
 {
-#ifndef NDEBUG
   uint32_t bw;
   uint64_t up, lo, i, k;
   BzlaNode *exp, *e;
@@ -2807,7 +2729,6 @@ TEST_F(TestPropInv, complete_slice)
     }
   }
   bzla_node_release(d_bzla, e);
-#endif
 }
 
 TEST_F(TestPropInv, conf_and)
@@ -2883,3 +2804,4 @@ TEST_F(TestPropInv, conf_concat)
   check_conf_concat(4, false);
   check_conf_concat(8, false);
 }
+#endif

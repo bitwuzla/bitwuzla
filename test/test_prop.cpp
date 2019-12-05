@@ -5,6 +5,7 @@
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
  */
+#ifndef NDEBUG
 
 #include "test.h"
 
@@ -22,16 +23,12 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
-#ifndef NDEBUG
 #define TEST_PROP_LOG_LEVEL 0
 #define TEST_PROP_LOG(FMT, ...) \
   if (TEST_PROP_LOG_LEVEL > 0)  \
   {                             \
     printf(FMT, ##__VA_ARGS__); \
   }
-#else
-#define TEST_PROP_LOG(domain) ()
-#endif
 
 class TestProp : public TestBzla
 {
@@ -76,7 +73,6 @@ class TestProp : public TestBzla
       BzlaPropIsInv is_inv_fun,
       BzlaPropComputeValue inv_fun)
   {
-#ifndef NDEBUG
     int32_t i, idx_s, sat_res;
     BzlaNode *e[2], *exp, *val, *eq;
     BzlaBitVector *bvetmp[2], *bvexptmp, *res[2], *tmp;
@@ -183,17 +179,6 @@ class TestProp : public TestBzla
         "moves %u n %u\n", ((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
     ASSERT_LE(((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
     bzla_reset_incremental_usage(d_bzla);
-#else
-    (void) n;
-    (void) idx_x;
-    (void) bw;
-    (void) bve;
-    (void) bvres;
-    (void) bvexp;
-    (void) create_exp;
-    (void) create_bv;
-    (void) inv_bv;
-#endif
   }
 
   void prop_complete_binary(uint32_t n,
@@ -344,199 +329,158 @@ TEST_F(TestProp, inv_interval_ult)
 
 TEST_F(TestProp, one_complete_add)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       1, bzla_exp_bv_add, bzla_bv_add, bzla_is_inv_add, inv_add_bv);
   prop_complete_binary(
       1, bzla_exp_bv_add, bzla_bv_add, bzla_is_inv_add, inv_add_bvprop);
-#endif
 }
 
 TEST_F(TestProp, one_complete_and)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       1, bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, inv_and_bv);
   prop_complete_binary(
       1, bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, inv_and_bvprop);
-#endif
 }
 
 TEST_F(TestProp, one_complete_eq)
 {
-#ifndef NDEBUG
   prop_complete_binary(1, bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bv);
   prop_complete_binary(
       1, bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bvprop);
-#endif
 }
 
 TEST_F(TestProp, one_complete_ult)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       1, bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, inv_ult_bv);
   prop_complete_binary(
       1, bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, inv_ult_bvprop);
-#endif
 }
 
 TEST_F(TestProp, one_complete_sll)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       1, bzla_exp_bv_sll, bzla_bv_sll, bzla_is_inv_sll, inv_sll_bv);
   prop_complete_binary(
       1, bzla_exp_bv_sll, bzla_bv_sll, bzla_is_inv_sll, inv_sll_bvprop);
-#endif
 }
 
 TEST_F(TestProp, one_complete_srl)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       1, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, inv_srl_bv);
   prop_complete_binary(
       1, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, inv_srl_bvprop);
-#endif
 }
 
 TEST_F(TestProp, one_complete_mul)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       1, bzla_exp_bv_mul, bzla_bv_mul, bzla_is_inv_mul, inv_mul_bv);
   prop_complete_binary(
       1, bzla_exp_bv_mul, bzla_bv_mul, bzla_is_inv_mul, inv_mul_bvprop);
-#endif
 }
 
 TEST_F(TestProp, one_complete_udiv)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       1, bzla_exp_bv_udiv, bzla_bv_udiv, bzla_is_inv_udiv, inv_udiv_bv);
   prop_complete_binary(
       1, bzla_exp_bv_udiv, bzla_bv_udiv, bzla_is_inv_udiv, inv_udiv_bvprop);
-#endif
 }
 
 TEST_F(TestProp, one_complete_urem)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       1, bzla_exp_bv_urem, bzla_bv_urem, bzla_is_inv_urem, inv_urem_bv);
-#endif
 }
 
 TEST_F(TestProp, one_complete_concat)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       1, bzla_exp_bv_concat, bzla_bv_concat, bzla_is_inv_concat, inv_concat_bv);
-#endif
 }
 
 /*------------------------------------------------------------------------*/
 
 TEST_F(TestProp, complete_add)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       2, bzla_exp_bv_add, bzla_bv_add, bzla_is_inv_add, inv_add_bv);
   prop_complete_binary(
       2, bzla_exp_bv_add, bzla_bv_add, bzla_is_inv_add, inv_add_bvprop);
-#endif
 }
 
 TEST_F(TestProp, complete_and)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       2, bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, inv_and_bv);
   prop_complete_binary(
       2, bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, inv_and_bvprop);
-#endif
 }
 
 TEST_F(TestProp, complete_eq)
 {
-#ifndef NDEBUG
   prop_complete_binary(2, bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bv);
   prop_complete_binary(
       2, bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bvprop);
-#endif
 }
 
 TEST_F(TestProp, complete_ult)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       2, bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, inv_ult_bv);
   prop_complete_binary(
       2, bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, inv_ult_bvprop);
-#endif
 }
 
 TEST_F(TestProp, complete_sll)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       2, bzla_exp_bv_sll, bzla_bv_sll, bzla_is_inv_sll, inv_sll_bv);
   prop_complete_binary(
       2, bzla_exp_bv_sll, bzla_bv_sll, bzla_is_inv_sll, inv_sll_bvprop);
-#endif
 }
 
 TEST_F(TestProp, complete_srl)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       2, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, inv_srl_bv);
   prop_complete_binary(
       2, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, inv_srl_bvprop);
-#endif
 }
 
 TEST_F(TestProp, complete_mul)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       2, bzla_exp_bv_mul, bzla_bv_mul, bzla_is_inv_mul, inv_mul_bv);
   prop_complete_binary(
       2, bzla_exp_bv_mul, bzla_bv_mul, bzla_is_inv_mul, inv_mul_bvprop);
-#endif
 }
 
 TEST_F(TestProp, complete_udiv)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       2, bzla_exp_bv_udiv, bzla_bv_udiv, bzla_is_inv_udiv, inv_udiv_bv);
   prop_complete_binary(
       2, bzla_exp_bv_udiv, bzla_bv_udiv, bzla_is_inv_udiv, inv_udiv_bvprop);
-#endif
 }
 
 TEST_F(TestProp, complete_urem)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       2, bzla_exp_bv_urem, bzla_bv_urem, bzla_is_inv_urem, inv_urem_bv);
-#endif
 }
 
 TEST_F(TestProp, complete_concat)
 {
-#ifndef NDEBUG
   prop_complete_binary(
       2, bzla_exp_bv_concat, bzla_bv_concat, bzla_is_inv_concat, inv_concat_bv);
-#endif
 }
 
 TEST_F(TestProp, complete_slice)
 {
-#ifndef NDEBUG
   int32_t sat_res;
   uint32_t bw;
   uint64_t up, lo, i, j, k;
@@ -633,5 +577,5 @@ TEST_F(TestProp, complete_slice)
     }
   }
   bzla_sort_release(d_bzla, sort);
-#endif
 }
+#endif

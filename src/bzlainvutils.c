@@ -31,6 +31,9 @@ bzla_is_inv_add(BzlaMemMgr *mm,
   assert(mm);
   assert(t);
   assert(s);
+  (void) mm;
+  (void) t;
+  (void) s;
   (void) pos_x;
   return true;
 }
@@ -107,6 +110,9 @@ bzla_is_inv_eq(BzlaMemMgr *mm,
   assert(mm);
   assert(t);
   assert(s);
+  (void) mm;
+  (void) t;
+  (void) s;
   (void) pos_x;
   return true;
 }

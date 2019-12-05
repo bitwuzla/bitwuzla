@@ -1904,6 +1904,7 @@ inv_ult_bv(Bzla *bzla,
   BzlaBitVector *res, *zero, *one, *ones, *tmp;
   BzlaMemMgr *mm;
 
+  (void) ult;
   (void) domains;
 
   mm = bzla->mm;
@@ -1995,6 +1996,7 @@ inv_sll_bv(Bzla *bzla,
   BzlaBitVector *res, *tmp, *ones;
   BzlaMemMgr *mm;
 
+  (void) sll;
   (void) domains;
 
   mm = bzla->mm;
@@ -2130,6 +2132,7 @@ inv_srl_bv(Bzla *bzla,
   BzlaBitVector *res, *ones, *tmp;
   BzlaMemMgr *mm;
 
+  (void) srl;
   (void) domains;
 
   mm = bzla->mm;
@@ -2267,6 +2270,8 @@ inv_mul_bv(Bzla *bzla,
   BzlaBitVector *res, *inv, *tmp, *tmp2;
   BzlaMemMgr *mm;
 
+  (void) mul;
+  (void) idx_x;
   (void) domains;
 
   mm = bzla->mm;
@@ -2446,6 +2451,7 @@ inv_udiv_bv(Bzla *bzla,
   BzlaMemMgr *mm;
   BzlaRNG *rng;
 
+  (void) udiv;
   (void) domains;
 
   mm = bzla->mm;
@@ -2672,6 +2678,7 @@ inv_urem_bv(Bzla *bzla,
   BzlaBitVector *res, *ones, *tmp, *tmp2, *one, *n, *mul, *up, *sub;
   BzlaMemMgr *mm;
 
+  (void) urem;
   (void) domains;
 
   mm = bzla->mm;
@@ -2975,6 +2982,7 @@ inv_concat_bv(Bzla *bzla,
   BzlaBitVector *res, *tmp;
   BzlaMemMgr *mm;
 
+  (void) concat;
   (void) domains;
 
   mm = bzla->mm;
@@ -3793,7 +3801,7 @@ inv_sll_bvprop(Bzla *bzla,
   assert(!bzla_node_is_bv_const(sll->e[idx_x]));
 
   uint32_t bw_x;
-  uint32_t i, ctz_s, ctz_t, shift;
+  uint32_t ctz_s, ctz_t, shift;
   BzlaNode *x;
   BzlaBitVector *res, *res_tmp, *tmp, *ones;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
@@ -3884,7 +3892,7 @@ inv_sll_bvprop(Bzla *bzla,
         else
         {
 #ifndef NDEBUG
-          uint32_t j;
+          uint32_t i, j;
           for (i = 0, j = shift, res = 0; i < bzla_bv_get_width(s) - j; i++)
           {
             /* CONFLICT: shifted bits must match */
@@ -3958,7 +3966,7 @@ inv_srl_bvprop(Bzla *bzla,
   assert(!bzla_node_is_bv_const(srl->e[idx_x]));
 
   uint32_t bw_x;
-  uint32_t i, clz_s, clz_t, shift;
+  uint32_t clz_s, clz_t, shift;
   BzlaNode *x;
   BzlaBitVector *res, *res_tmp, *tmp, *ones;
   BzlaBvDomain *d_s, *d_t, *d_x, *d_res_s, *d_res_t, *d_res_x;
@@ -4054,7 +4062,7 @@ inv_srl_bvprop(Bzla *bzla,
         else
         {
 #ifndef NDEBUG
-          uint32_t j;
+          uint32_t i, j;
           for (i = 0, j = shift, res = 0; i < bw_x - j; i++)
           {
             /* CONFLICT: shifted bits must match */
@@ -4631,6 +4639,7 @@ record_conflict(Bzla *bzla,
   assert(e);
   assert(t);
   assert(s);
+  (void) s;
 
   BzlaMemMgr *mm      = bzla->mm;
   bool is_recoverable = bzla_node_is_bv_const(e) ? false : true;
