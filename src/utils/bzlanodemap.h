@@ -38,7 +38,7 @@ void bzla_nodemap_map(BzlaNodeMap *map, BzlaNode *src, BzlaNode *dst);
 void bzla_nodemap_delete(BzlaNodeMap *map);
 
 /*------------------------------------------------------------------------*/
-/* iterators    						          */
+/* iterators */
 /*------------------------------------------------------------------------*/
 
 typedef struct BzlaNodeMapIterator

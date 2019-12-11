@@ -1727,44 +1727,49 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
   assert(nargs >= 1);
 
   uint32_t i, j;
-  uint32_t domain, width, width2;
+  BoolectorSort sort, sort2, domain, domain2;
 
   parser->perrcoo = p->coo;
 
-  j     = offset + 1;
-  width = boolector_bv_get_width(parser->bzla, p[j].exp);
+  j    = offset + 1;
+  sort = boolector_get_sort(parser->bzla, p[j].exp);
 
   if (boolector_is_array(parser->bzla, p[j].exp))
   {
-    domain = boolector_array_get_index_width(parser->bzla, p[j].exp);
+    domain = boolector_fun_get_domain_sort(parser->bzla, p[j].exp);
     for (i = j + 1; i <= nargs; i++)
     {
       if (!boolector_is_array(parser->bzla, p[i].exp))
+      {
         return !perr_smt2(
             parser,
             "first argument of '%s' is an array but argument %d is not",
             p->node->name,
             i);
-      if ((width2 = boolector_bv_get_width(parser->bzla, p[i].exp)) != width)
+      }
+      if ((sort2 = boolector_get_sort(parser->bzla, p[i].exp)) != sort)
+      {
         return !perr_smt2(
             parser,
-            "first argument of '%s' is an array of bit-vectors of width %d "
-            "but argument %d is an array of bit-vectors of width %d",
+            "first argument of '%s' is an array of values of sort %d "
+            "but argument %d is an array of values of sort %d",
             p->node->name,
-            width,
+            sort,
             i,
-            width2);
-      if ((width2 = boolector_array_get_index_width(parser->bzla, p[i].exp))
+            sort2);
+      }
+      if ((domain2 = boolector_fun_get_domain_sort(parser->bzla, p[i].exp))
           != domain)
+      {
         return !perr_smt2(
             parser,
-            "first argument of '%s' is an array with index bit-vectors of "
-            "width %d "
-            "but argument %d is an array with index bit-vectors of width %d",
+            "first argument of '%s' is an array with index sort %d "
+            "but argument %d is an array with index sort %d",
             p->node->name,
             domain,
             i,
-            width2);
+            domain2);
+      }
     }
   }
   else if (boolector_is_fun(parser->bzla, p[j].exp))
@@ -1772,18 +1777,22 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
     for (i = j + 1; i <= nargs; i++)
     {
       if (!boolector_is_fun(parser->bzla, p[i].exp))
+      {
         return !perr_smt2(
             parser,
             "first argument of '%s' is a function but argument %d not",
             p->node->name,
             i);
+      }
       if (!boolector_is_equal_sort(parser->bzla, p[1].exp, p[i].exp))
+      {
         return !perr_smt2(
             parser,
             "sort of argument %d does not match with sort of first "
             "argument of '%s'",
             i,
             p->node->name);
+      }
     }
   }
   else
@@ -1791,25 +1800,31 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
     for (i = j; i <= nargs; i++)
     {
       if (boolector_is_array(parser->bzla, p[i].exp))
+      {
         return !perr_smt2(
             parser,
             "argument %d of '%s' is an array but first argument not",
             i,
             p->node->name);
+      }
       if (boolector_is_fun(parser->bzla, p[i].exp))
+      {
         return !perr_smt2(
             parser,
             "argument %d of '%s' is a function but first argument not",
             i,
             p->node->name);
-      if ((width2 = boolector_bv_get_width(parser->bzla, p[i].exp)) != width)
+      }
+      if ((sort2 = boolector_get_sort(parser->bzla, p[i].exp)) != sort)
+      {
         return !perr_smt2(parser,
-                          "first argument of '%s' is bit-vector of width %d "
-                          "but argument %d is a bit-vector of width %d",
+                          "first argument of '%s' is of sort %d "
+                          "but argument %d is of sort %d",
                           p->node->name,
-                          width,
+                          sort,
                           i,
-                          width2);
+                          sort2);
+      }
     }
   }
   parser->perrcoo.x = 0;

@@ -505,6 +505,7 @@ clone_exp(Bzla *clone,
 
   uint32_t i;
   BzlaBitVector *bits;
+  BzlaFloatingPoint *fp;
   BzlaNode *res;
   BzlaParamNode *param;
   BzlaMemMgr *mm;
@@ -522,12 +523,19 @@ clone_exp(Bzla *clone,
     bits = bzla_bv_copy(mm, bzla_node_bv_const_get_invbits(exp));
     bzla_node_bv_const_set_invbits(res, bits);
   }
+  else if (bzla_node_is_fp_const(exp))
+  {
+    fp = bzla_fp_copy(clone, bzla_node_fp_const_get_fp(exp));
+    bzla_node_fp_const_set_fp(res, fp);
+  }
 
   /* Note: no need to cache aig vectors here (exp->av is unique to exp). */
   if (bzla_node_is_fun(exp))
   {
     if (exp_layer_only)
+    {
       res->rho = 0;
+    }
     else if (exp->rho)
     {
       BZLA_PUSH_STACK(*rhos, res);
@@ -535,7 +543,9 @@ clone_exp(Bzla *clone,
     }
   }
   else if (exp->av)
+  {
     res->av = exp_layer_only ? 0 : bzla_aigvec_clone(exp->av, clone->avmgr);
+  }
 
   assert(!exp->next || !bzla_node_is_invalid(exp->next));
   BZLA_PUSH_STACK_IF(exp->next, *nodes, &res->next);
@@ -560,9 +570,11 @@ clone_exp(Bzla *clone,
   BZLA_PUSH_STACK_IF(exp->last_parent, *parents, &res->last_parent);
   /* <---------------------------------------------------------------------- */
 
-  /* ------------ BZLA_BV_ADDITIONAL_VAR_NODE_STRUCT (all nodes) ----------> */
-  if (!bzla_node_is_bv_const(exp))
+  /* ------- BZLA_BV_ADDITIONAL_VAR_NODE_STRUCT (all nodes except FP) ------ */
+  /* ---------- BZLA_FP_ADDITIONAL_VAR_NODE_STRUCT (all FP nodes) ---------> */
+  if (!bzla_node_is_bv_const(exp) && !bzla_node_is_fp_const(exp))
   {
+    // TODO will have to exclude more for FP
     if (!bzla_node_is_bv_var(exp) && !bzla_node_is_param(exp))
     {
       if (exp->arity)
@@ -911,8 +923,6 @@ clone_aux_bzla(Bzla *bzla,
   clone->mm = mm;
   bzla_rng_clone(&bzla->rng, &clone->rng);
 
-  clone->word_blaster = bzla_fp_word_blaster_clone(bzla);
-
   BZLA_CLR(&clone->cbs);
   bzla_opt_clone_opts(bzla, clone);
 #ifndef NDEBUG
@@ -1107,13 +1117,21 @@ clone_aux_bzla(Bzla *bzla,
       allocated += MEM_BITVEC(bzla_node_bv_const_get_bits(cur));
       allocated += MEM_BITVEC(bzla_node_bv_const_get_invbits(cur));
     }
+    else if (bzla_node_is_fp_const(cur))
+    {
+      allocated += bzla_fp_get_bytes(cur);
+    }
     if (!exp_layer_only)
     {
       if (!bzla_node_is_fun(cur) && cur->av)
+      {
         allocated += sizeof(*(cur->av)) + cur->av->width * sizeof(BzlaAIG *);
+      }
     }
     if (bzla_node_is_lambda(cur) && bzla_node_lambda_get_static_rho(cur))
+    {
       allocated += MEM_PTR_HASH_TABLE(bzla_node_lambda_get_static_rho(cur));
+    }
   }
   /* Note: hash table is initialized with size 1 */
   allocated += (emap->table->size - 1) * sizeof(BzlaPtrHashBucket *)
@@ -1541,6 +1559,9 @@ clone_aux_bzla(Bzla *bzla,
     assert(allocated == clone->mm->allocated);
   }
 #endif
+
+  clone->word_blaster = bzla_fp_word_blaster_clone(bzla, clone, emap);
+  assert(allocated == clone->mm->allocated);
 
   clone->parse_error_msg = NULL;
 #ifndef NDEBUG

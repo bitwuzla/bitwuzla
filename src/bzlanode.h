@@ -74,6 +74,7 @@ enum BzlaNodeKind
   BZLA_BV_UREM_NODE,
   BZLA_BV_CONCAT_NODE,
   BZLA_FP_EQ_NODE,
+  BZLA_FP_FPEQ_NODE,
   BZLA_FP_GEQ_NODE,
   BZLA_FP_GT_NODE,
   BZLA_FP_LEQ_NODE,
@@ -262,6 +263,11 @@ struct BzlaArgsNode
   BZLA_BV_ADDITIONAL_NODE_STRUCT;
 };
 typedef struct BzlaArgsNode BzlaArgsNode;
+
+/*------------------------------------------------------------------------*/
+
+bool bzla_node_is_bv(Bzla *bzla, const BzlaNode *exp);
+bool bzla_node_is_fp(Bzla *bzla, const BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 
@@ -601,8 +607,15 @@ bzla_node_is_fp_const(const BzlaNode *exp)
 {
   assert(exp);
   exp = bzla_node_real_addr(exp);
-  return bzla_sort_is_fp(exp->bzla, exp->sort_id)
-         && exp->kind == BZLA_FP_CONST_NODE;
+  return bzla_node_is_fp(exp->bzla, exp) && exp->kind == BZLA_FP_CONST_NODE;
+}
+
+static inline bool
+bzla_node_is_fp_eq(const BzlaNode *exp)
+{
+  assert(exp);
+  exp = bzla_node_real_addr(exp);
+  return exp->kind == BZLA_FP_EQ_NODE;
 }
 
 /*------------------------------------------------------------------------*/

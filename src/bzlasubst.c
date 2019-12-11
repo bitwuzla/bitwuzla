@@ -157,6 +157,7 @@ rebuild_exp(Bzla *bzla, BzlaNode *exp)
   {
     case BZLA_PROXY_NODE:
     case BZLA_BV_CONST_NODE:
+    case BZLA_FP_CONST_NODE:
     case BZLA_VAR_NODE:
     case BZLA_PARAM_NODE:
     case BZLA_UF_NODE:

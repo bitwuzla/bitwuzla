@@ -24,6 +24,7 @@
 #include "bzlabeta.h"
 #include "bzladbg.h"
 #include "bzlaexp.h"
+#include "bzlafp.h"
 #include "bzlalog.h"
 #include "bzlarewrite.h"
 #include "utils/bzlahashint.h"
@@ -64,6 +65,7 @@ const char *const g_bzla_op2str[BZLA_NUM_OPS_NODE] = {
     [BZLA_FP_CONST_NODE]     = "fpconst",
     [BZLA_FP_DIV_NODE]       = "fpdiv",
     [BZLA_FP_EQ_NODE]        = "fpeq",
+    [BZLA_FP_FPEQ_NODE]      = "fpfpeg",
     [BZLA_FP_ISINF_NODE]     = "fpisinf",
     [BZLA_FP_ISNAN_NODE]     = "fpisnan",
     [BZLA_FP_ISNEG_NODE]     = "fpisneg",
@@ -299,6 +301,24 @@ bzla_node_bv_is_neg(Bzla *bzla, BzlaNode *exp, BzlaNode **res)
 
 /*------------------------------------------------------------------------*/
 
+bool
+bzla_node_is_bv(Bzla *bzla, const BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+  return bzla_sort_is_bv(bzla, bzla_node_get_sort_id(exp));
+}
+
+bool
+bzla_node_is_fp(Bzla *bzla, const BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+  return bzla_sort_is_fp(bzla, bzla_node_get_sort_id(exp));
+}
+
+/*------------------------------------------------------------------------*/
+
 static void
 inc_exp_ref_counter(Bzla *bzla, BzlaNode *exp)
 {
@@ -349,18 +369,7 @@ bzla_node_copy(Bzla *bzla, BzlaNode *exp)
 /*------------------------------------------------------------------------*/
 
 static inline uint32_t
-hash_slice_exp(BzlaNode *e, uint32_t upper, uint32_t lower)
-{
-  uint32_t hash;
-  assert(upper >= lower);
-  hash = hash_primes[0] * (uint32_t) bzla_node_real_addr(e)->id;
-  hash += hash_primes[1] * (uint32_t) upper;
-  hash += hash_primes[2] * (uint32_t) lower;
-  return hash;
-}
-
-static inline uint32_t
-hash_bv_exp(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
+hash_bv_fp_exp(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
 {
   uint32_t hash = 0;
   uint32_t i;
@@ -376,6 +385,17 @@ hash_bv_exp(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
   assert(arity <= NPRIMES);
   for (i = 0; i < arity; i++)
     hash += hash_primes[i] * (uint32_t) bzla_node_real_addr(e[i])->id;
+  return hash;
+}
+
+static inline uint32_t
+hash_slice_exp(BzlaNode *e, uint32_t upper, uint32_t lower)
+{
+  uint32_t hash;
+  assert(upper >= lower);
+  hash = hash_primes[0] * (uint32_t) bzla_node_real_addr(e)->id;
+  hash += hash_primes[1] * (uint32_t) upper;
+  hash += hash_primes[2] * (uint32_t) lower;
   return hash;
 }
 
@@ -471,22 +491,36 @@ compute_hash_exp(Bzla *bzla, BzlaNode *exp, uint32_t table_size)
   uint32_t hash = 0;
 
   if (bzla_node_is_bv_const(exp))
+  {
     hash = bzla_bv_hash(bzla_node_bv_const_get_bits(exp));
+  }
+  else if (bzla_node_is_fp_const(exp))
+  {
+    hash = bzla_fp_hash(bzla_node_fp_const_get_fp(exp));
+  }
   /* hash for lambdas is computed once during creation. afterwards, we always
    * have to use the saved hash value since hashing of lambdas requires all
    * parameterized nodes and their inputs (cf. hash_binder_exp), which may
    * change at some point. */
   else if (bzla_node_is_lambda(exp))
+  {
     hash = bzla_hashptr_table_get(exp->bzla->lambdas, (BzlaNode *) exp)
                ->data.as_int;
+  }
   else if (bzla_node_is_quantifier(exp))
+  {
     hash = bzla_hashptr_table_get(exp->bzla->quantifiers, exp)->data.as_int;
+  }
   else if (exp->kind == BZLA_BV_SLICE_NODE)
+  {
     hash = hash_slice_exp(exp->e[0],
                           bzla_node_bv_slice_get_upper(exp),
                           bzla_node_bv_slice_get_lower(exp));
+  }
   else
-    hash = hash_bv_exp(bzla, exp->kind, exp->arity, exp->e);
+  {
+    hash = hash_bv_fp_exp(bzla, exp->kind, exp->arity, exp->e);
+  }
   hash &= table_size - 1;
   return hash;
 }
@@ -1533,17 +1567,14 @@ is_sorted_bv_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
   return bzla_node_real_addr(e[0])->id <= bzla_node_real_addr(e[1])->id;
 }
 
-static void
-sort_bv_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
-{
-  if (!is_sorted_bv_exp(bzla, kind, e)) BZLA_SWAP(BzlaNode *, e[0], e[1]);
-}
-
 /*------------------------------------------------------------------------*/
 
-/* Search for constant expression in hash table. Returns 0 if not found. */
+/**
+ * Search for bit-vector const expression in hash table.
+ * Returns 0 if not found.
+ */
 static BzlaNode **
-find_const_exp(Bzla *bzla, BzlaBitVector *bits)
+find_bv_const_exp(Bzla *bzla, BzlaBitVector *bits)
 {
   assert(bzla);
   assert(bits);
@@ -1561,6 +1592,38 @@ find_const_exp(Bzla *bzla, BzlaBitVector *bits)
     if (bzla_node_is_bv_const(cur)
         && bzla_node_bv_get_width(bzla, cur) == bzla_bv_get_width(bits)
         && !bzla_bv_compare(bzla_node_bv_const_get_bits(cur), bits))
+      break;
+    else
+    {
+      result = &cur->next;
+      cur    = *result;
+    }
+  }
+  return result;
+}
+
+/**
+ * Search for floating-point const expression in hash table.
+ * Returns 0 if not found.
+ */
+static BzlaNode **
+find_fp_const_exp(Bzla *bzla, const BzlaFloatingPoint *fp)
+{
+  assert(bzla);
+  assert(fp);
+
+  BzlaNode *cur, **result;
+  uint32_t hash;
+
+  hash = bzla_fp_hash(fp);
+  hash &= bzla->nodes_unique_table.size - 1;
+  result = bzla->nodes_unique_table.chains + hash;
+  cur    = *result;
+  while (cur)
+  {
+    assert(bzla_node_is_regular(cur));
+    if (bzla_node_is_fp_const(cur)
+        && !bzla_fp_compare(bzla_node_fp_const_get_fp(cur), fp))
       break;
     else
     {
@@ -1603,7 +1666,7 @@ find_slice_exp(Bzla *bzla, BzlaNode *e0, uint32_t upper, uint32_t lower)
 }
 
 static BzlaNode **
-find_bv_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
+find_bv_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
 {
   bool equal;
   uint32_t i;
@@ -1613,8 +1676,12 @@ find_bv_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
   assert(kind != BZLA_BV_SLICE_NODE);
   assert(kind != BZLA_BV_CONST_NODE);
 
-  sort_bv_exp(bzla, kind, e);
-  hash = hash_bv_exp(bzla, kind, arity, e);
+  if (!is_sorted_bv_exp(bzla, kind, e))
+  {
+    BZLA_SWAP(BzlaNode *, e[0], e[1]);
+  }
+
+  hash = hash_bv_fp_exp(bzla, kind, arity, e);
   hash &= bzla->nodes_unique_table.size - 1;
 
   result = bzla->nodes_unique_table.chains + hash;
@@ -1857,7 +1924,7 @@ compare_binder_exp(Bzla *bzla,
       else
       {
         assert(!bzla_node_is_binder(real_cur));
-        result = *find_bv_exp(bzla, real_cur->kind, e, real_cur->arity);
+        result = *find_bv_fp_exp(bzla, real_cur->kind, e, real_cur->arity);
       }
 
       if (!result)
@@ -1911,7 +1978,7 @@ find_exp(Bzla *bzla,
   else if (binder_hash)
     *binder_hash = 0;
 
-  return find_bv_exp(bzla, kind, e, arity);
+  return find_bv_fp_exp(bzla, kind, e, arity);
 }
 
 /*------------------------------------------------------------------------*/
@@ -2206,10 +2273,11 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
                               + bzla_node_bv_get_width(bzla, e[1]));
       break;
 
-    case BZLA_FUN_EQ_NODE:
-    case BZLA_BV_EQ_NODE:
     case BZLA_BV_ULT_NODE:
-    case BZLA_BV_SLT_NODE: sort = bzla_sort_bool(bzla); break;
+    case BZLA_BV_SLT_NODE:
+    case BZLA_BV_EQ_NODE:
+    case BZLA_FP_EQ_NODE:
+    case BZLA_FUN_EQ_NODE: sort = bzla_sort_bool(bzla); break;
 
     case BZLA_APPLY_NODE:
       sort = bzla_sort_copy(
@@ -2221,6 +2289,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
              || kind == BZLA_BV_MUL_NODE || kind == BZLA_BV_SLL_NODE
              || kind == BZLA_BV_SRL_NODE || kind == BZLA_BV_UDIV_NODE
              || kind == BZLA_BV_UREM_NODE || kind == BZLA_UPDATE_NODE);
+
       sort = bzla_sort_copy(bzla, bzla_node_get_sort_id(e[0]));
   }
 
@@ -2357,13 +2426,13 @@ bzla_node_create_bv_const(Bzla *bzla, const BzlaBitVector *bits)
     inv        = false;
   }
 
-  lookup = find_const_exp(bzla, lookupbits);
+  lookup = find_bv_const_exp(bzla, lookupbits);
   if (!*lookup)
   {
     if (BZLA_FULL_UNIQUE_TABLE(bzla->nodes_unique_table))
     {
       enlarge_nodes_unique_table(bzla);
-      lookup = find_const_exp(bzla, lookupbits);
+      lookup = find_bv_const_exp(bzla, lookupbits);
     }
     *lookup = new_bv_const_exp_node(bzla, lookupbits);
     assert(bzla->nodes_unique_table.num_elements < INT32_MAX);
@@ -2371,7 +2440,9 @@ bzla_node_create_bv_const(Bzla *bzla, const BzlaBitVector *bits)
     (*lookup)->unique = 1;
   }
   else
+  {
     inc_exp_ref_counter(bzla, *lookup);
+  }
 
   assert(bzla_node_is_regular(*lookup));
 
@@ -2387,10 +2458,27 @@ bzla_node_create_fp_const(Bzla *bzla, const BzlaFloatingPoint *fp)
   assert(bzla);
   assert(fp);
 
-  // Note: we do not lookup already existing constants for now
-  //       TODO TODO TODO
+  BzlaNode **lookup;
 
-  return new_fp_const_exp_node(bzla, fp);
+  lookup = find_fp_const_exp(bzla, fp);
+  if (!*lookup)
+  {
+    if (BZLA_FULL_UNIQUE_TABLE(bzla->nodes_unique_table))
+    {
+      enlarge_nodes_unique_table(bzla);
+      lookup = find_fp_const_exp(bzla, fp);
+    }
+    *lookup = new_fp_const_exp_node(bzla, fp);
+    assert(bzla->nodes_unique_table.num_elements < INT32_MAX);
+    bzla->nodes_unique_table.num_elements += 1;
+    (*lookup)->unique = 1;
+  }
+  else
+  {
+    inc_exp_ref_counter(bzla, *lookup);
+  }
+  assert(bzla_node_is_regular(*lookup));
+  return *lookup;
 }
 
 /*------------------------------------------------------------------------*/
@@ -2529,14 +2617,28 @@ bzla_node_create_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   BzlaNode *e[2];
   BzlaNodeKind kind;
+  BzlaSortId sort;
 
   e[0] = bzla_simplify_exp(bzla, e0);
   e[1] = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_eq_exp(bzla, e[0], e[1]));
   if (bzla_node_is_fun(e[0]))
+  {
     kind = BZLA_FUN_EQ_NODE;
+  }
   else
-    kind = BZLA_BV_EQ_NODE;
+  {
+    sort = bzla_node_get_sort_id(e0);
+    if (bzla_sort_is_bv(bzla, sort))
+    {
+      kind = BZLA_BV_EQ_NODE;
+    }
+    else
+    {
+      assert(bzla_sort_is_fp(bzla, sort));
+      kind = BZLA_FP_EQ_NODE;
+    }
+  }
   return create_exp(bzla, kind, 2, e);
 }
 

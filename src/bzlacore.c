@@ -2469,7 +2469,7 @@ void
 bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
 {
   BzlaNodePtrStack exp_stack;
-  BzlaNode *cur, *value, *args;
+  BzlaNode *cur, *cur_wb, *value, *args;
   BzlaAIGVec *av0, *av1, *av2;
   BzlaMemMgr *mm;
   BzlaAIGVecMgr *avmgr;
@@ -2570,8 +2570,18 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
 
         bzla_hashint_table_add(cache, cur->id);
         BZLA_PUSH_STACK(exp_stack, cur);
-        for (j = 1; j <= cur->arity; j++)
-          BZLA_PUSH_STACK(exp_stack, cur->e[cur->arity - j]);
+        assert(!bzla_node_is_fp(bzla, cur));
+        if (cur->arity && bzla_node_is_fp(bzla, cur->e[0]))
+        {
+          BZLA_PUSH_STACK(exp_stack, bzla_fp_word_blast(bzla, cur));
+        }
+        else
+        {
+          for (j = 1; j <= cur->arity; j++)
+          {
+            BZLA_PUSH_STACK(exp_stack, cur->e[cur->arity - j]);
+          }
+        }
 
         /* synthesize nodes in static_rho of lambda nodes */
         if (bzla_node_is_lambda(cur))
@@ -2605,7 +2615,8 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         restart = false;
         for (i = 0; i < cur->arity; i++)
         {
-          if (!bzla_node_is_synth(bzla_node_real_addr(cur->e[i])))
+          if (!bzla_node_is_fp(bzla, bzla_node_real_addr(cur->e[i]))
+              && !bzla_node_is_synth(bzla_node_real_addr(cur->e[i])))
           {
             BZLA_PUSH_STACK(exp_stack, cur->e[i]);
             restart = true;
@@ -2615,7 +2626,15 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         if (restart) continue;
       }
 
-      if (cur->arity == 1)
+      if (cur->arity && bzla_node_is_fp(bzla, cur->e[0]))
+      {
+        cur_wb     = bzla_fp_word_blast(bzla, cur);
+        invert_av0 = bzla_node_is_inverted(cur_wb);
+        av0        = bzla_aigvec_copy(avmgr, bzla_node_real_addr(cur_wb)->av);
+        if (invert_av0) bzla_aigvec_invert(avmgr, av0);
+        cur->av = av0;
+      }
+      else if (cur->arity == 1)
       {
         assert(bzla_node_is_bv_slice(cur));
         invert_av0 = bzla_node_is_inverted(cur->e[0]);

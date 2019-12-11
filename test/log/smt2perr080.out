@@ -1,1 +1,1 @@
-log/smt2perr080.smt2:3:10: first argument of '=' is an array with index bit-vectors of width 64 but argument 2 is an array with index bit-vectors of width 32
+log/smt2perr080.smt2:3:10: first argument of '=' is an array of values of sort 5 but argument 2 is an array of values of sort 8

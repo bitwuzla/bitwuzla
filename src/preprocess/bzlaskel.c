@@ -3,7 +3,7 @@
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2014 Armin Biere.
  *  Copyright (C) 2012-2017 Mathias Preiner.
- *  Copyright (C) 2012-2017 Aina Niemetz.
+ *  Copyright (C) 2012-2019 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -108,8 +108,11 @@ process_skeleton_tseitin(Bzla *bzla,
     {
       d->as_int = 1;
       if (bzla_node_is_fun(exp) || bzla_node_is_args(exp) || exp->parameterized
+          || bzla_node_is_fp(bzla, exp)
           || bzla_node_bv_get_width(bzla, exp) != 1)
+      {
         continue;
+      }
 
 #ifndef NDEBUG
       BzlaNode *child;
@@ -119,7 +122,7 @@ process_skeleton_tseitin(Bzla *bzla,
         d     = bzla_hashint_map_get(mark, child->id);
         assert(d->as_int == 1);
         if (!bzla_node_is_fun(child) && !bzla_node_is_args(child)
-            && !child->parameterized
+            && !bzla_node_is_fp(bzla, child) && !child->parameterized
             && bzla_node_bv_get_width(bzla, child) == 1)
           assert(bzla_hashptr_table_get(ids, child));
       }

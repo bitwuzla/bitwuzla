@@ -65,6 +65,11 @@ compute_hash_sort(const BzlaSort *sort, uint32_t table_size)
         tmp = sort->lst.tail->id;
         break;
 #endif
+    case BZLA_FP_SORT:
+      res = sort->fp.width_exp;
+      tmp = sort->fp.width_sig;
+      break;
+
     case BZLA_FUN_SORT:
       res = sort->fun.domain->id;
       tmp = sort->fun.codomain->id;

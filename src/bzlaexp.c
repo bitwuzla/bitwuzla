@@ -33,6 +33,7 @@ bzla_exp_create(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
       assert(arity == 2);
       return bzla_exp_bv_and(bzla, e[0], e[1]);
     case BZLA_BV_EQ_NODE:
+    case BZLA_FP_EQ_NODE:
     case BZLA_FUN_EQ_NODE:
       assert(arity == 2);
       return bzla_exp_eq(bzla, e[0], e[1]);
