@@ -2243,6 +2243,23 @@ bzla_fp_make_zero(Bzla *bzla, BzlaSortId sort, bool sign)
   return res;
 }
 
+BzlaFloatingPoint *
+bzla_fp_make_inf(Bzla *bzla, BzlaSortId sort, bool sign)
+{
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  res     = bzla_fp_new(bzla, sort);
+  res->fp = new BzlaUnpackedFloat(BzlaUnpackedFloat::makeInf(*res->size, sign));
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) sort;
+  (void) sign;
+  res = nullptr;
+#endif
+  return res;
+}
+
 /* ========================================================================== */
 
 void *

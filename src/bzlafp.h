@@ -71,6 +71,12 @@ int32_t bzla_fp_compare(const BzlaFloatingPoint *a, const BzlaFloatingPoint *b);
  */
 BzlaFloatingPoint *bzla_fp_make_zero(Bzla *bzla, BzlaSortId sort, bool sign);
 
+/**
+ * Create a floating-point constant node representing infinity.
+ * sign: false for +inf and true for -inf.
+ */
+BzlaFloatingPoint *bzla_fp_make_inf(Bzla *bzla, BzlaSortId sort, bool sign);
+
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */
 /* -------------------------------------------------------------------------- */
