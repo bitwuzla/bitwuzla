@@ -2228,6 +2228,10 @@ bzla_fp_compare(const BzlaFloatingPoint *a, const BzlaFloatingPoint *b)
 BzlaFloatingPoint *
 bzla_fp_make_zero(Bzla *bzla, BzlaSortId sort, bool sign)
 {
+  assert(bzla);
+  assert(sort);
+  assert(bzla_sort_is_fp(bzla, sort));
+
   BzlaFloatingPoint *res;
 #ifdef BZLA_USE_SYMFPU
   BzlaFPWordBlaster::set_s_bzla(bzla);
@@ -2246,11 +2250,36 @@ bzla_fp_make_zero(Bzla *bzla, BzlaSortId sort, bool sign)
 BzlaFloatingPoint *
 bzla_fp_make_inf(Bzla *bzla, BzlaSortId sort, bool sign)
 {
+  assert(bzla);
+  assert(sort);
+  assert(bzla_sort_is_fp(bzla, sort));
+
   BzlaFloatingPoint *res;
 #ifdef BZLA_USE_SYMFPU
   BzlaFPWordBlaster::set_s_bzla(bzla);
   res     = bzla_fp_new(bzla, sort);
   res->fp = new BzlaUnpackedFloat(BzlaUnpackedFloat::makeInf(*res->size, sign));
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) sort;
+  (void) sign;
+  res = nullptr;
+#endif
+  return res;
+}
+
+BzlaFloatingPoint *
+bzla_fp_make_nan(Bzla *bzla, BzlaSortId sort)
+{
+  assert(bzla);
+  assert(sort);
+  assert(bzla_sort_is_fp(bzla, sort));
+
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  res     = bzla_fp_new(bzla, sort);
+  res->fp = new BzlaUnpackedFloat(BzlaUnpackedFloat::makeNaN(*res->size));
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) sort;

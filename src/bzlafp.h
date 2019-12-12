@@ -77,6 +77,11 @@ BzlaFloatingPoint *bzla_fp_make_zero(Bzla *bzla, BzlaSortId sort, bool sign);
  */
 BzlaFloatingPoint *bzla_fp_make_inf(Bzla *bzla, BzlaSortId sort, bool sign);
 
+/**
+ * Create a floating-point constant node representing nan.
+ */
+BzlaFloatingPoint *bzla_fp_make_nan(Bzla *bzla, BzlaSortId sort);
+
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */
 /* -------------------------------------------------------------------------- */

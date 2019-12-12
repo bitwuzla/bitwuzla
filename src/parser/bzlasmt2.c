@@ -4262,7 +4262,7 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
                                                         item_cur,
                                                         tag,
                                                         node,
-                                                        " to close '(_ Nan'",
+                                                        " to close '(_ NaN'",
                                                         boolector_fp_nan))
     {
       return 0;
