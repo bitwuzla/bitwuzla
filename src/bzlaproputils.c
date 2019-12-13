@@ -1646,6 +1646,24 @@ check_result_binary_dbg(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: add                                                                   */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x + s = t' or 's + x = t'.
+ * Note that + is always invertible (if const bits are not considered).
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * add    : the Boolector node representing the + operation
+ * t      : target value for 'add' (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -1692,6 +1710,24 @@ inv_add_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: and                                                                   */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x & s = t' or 's & x = t'.
+ * Note that & is always invertible (if const bits are not considered).
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * and    : the Boolector node representing the & operation
+ * t      : target value for 'and' (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -1782,6 +1818,24 @@ inv_and_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: eq                                                                    */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x == s = t' or 's == x = t'.
+ * Note that == is always invertible (if const bits are not considered).
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * eq     : the Boolector node representing the == operation
+ * t      : target value for 'eq' (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -1867,11 +1921,13 @@ inv_eq_bv(Bzla *bzla,
  * Determine inverse value for 'x' given 'x < s = t' or 's < x = t'.
  * This inverse value computation does not consider constant bits.
  *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
  * ult    : the Boolector node representing the ult operation
- * t      : target value for ult (the 'output' value)
+ * t      : target value for 'ult' (the 'output' value)
  * s      : (fixed) value of the other operand
  * idx_x  : the index of 'x', the operand we determine the value for
  * domains: not used, in order to have a consistent interface for inverse
@@ -1970,6 +2026,23 @@ inv_ult_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: sll                                                                   */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x << s = t' or 's << x = t'.
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * sll    : the Boolector node representing the << operation
+ * t      : target value for 'sll' (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -2106,6 +2179,23 @@ inv_sll_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: srl                                                                   */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x >> s = t' or 's >> x = t'.
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * srl    : the Boolector node representing the >> operation
+ * t      : target value for 'srl' (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -2243,6 +2333,23 @@ inv_srl_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: mul                                                                   */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x * s = t' or 's * x = t'.
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * mul    : the Boolector node representing the * operation
+ * t      : target value for 'mul' (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -2424,6 +2531,23 @@ inv_mul_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: udiv                                                                  */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x / s = t' or 's / x = t'.
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * udiv   : the Boolector node representing the / operation
+ * t      : target value for 'udiv' (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -2651,6 +2775,23 @@ inv_udiv_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: urem                                                                  */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x % s = t' or 's % x = t'.
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * urem   : the Boolector node representing the % operation
+ * t      : target value for 'urem' (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -2957,6 +3098,23 @@ inv_urem_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: concat                                                                */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x o s = t' or 's o x = t'.
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * concat : the Boolector node representing the o operation
+ * t      : target value for 'concat' (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -3031,6 +3189,23 @@ inv_concat_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: slice                                                                 */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'x[u:l] = t'.
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * slice  : the Boolector node representing the [:] operation
+ * t      : target value for 'slice' (the 'output' value)
+ * idx_x  : not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -3166,6 +3341,24 @@ inv_slice_bv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 /* INV: cond                                                                  */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Determine inverse value for 'x' given 'c ? x : s = t' or 'c ? s : x = t'.
+ *
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * cond   : the Boolector node representing the ite operation
+ * t      : target value for 'cond' (the 'output' value)
+ * s      : (fixed) value of the other operand
+ * idx_x  : the index of 'x', the operand we determine the value for
+ * domains: not used, in order to have a consistent interface for inverse
+ *          value computation functions
+ */
 #ifdef NDEBUG
 static BzlaBitVector *
 #else
@@ -3682,7 +3875,7 @@ inv_interval_ult(BzlaMemMgr *mm,
  * domains in case of a conflict.
  *
  * ult    : the Boolector node representing the ult operation
- * t      : target value for ult (the 'output' value)
+ * t      : target value for 'ult' (the 'output' value)
  * s      : (fixed) value of the other operand
  * idx_x  : the index of 'x', the operand we determine the value for
  * domains: a map maintaining node (id) to its propagator domain
