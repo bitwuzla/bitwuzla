@@ -5,8 +5,6 @@
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
  */
-#ifndef NDEBUG
-
 #include "test.h"
 
 extern "C" {
@@ -64,12 +62,13 @@ class TestPropInv : public TestBzla
     uint64_t k;
     BzlaBitVector *res;
     BzlaIntHashTableIterator iit;
+    (void) is_inv;
 
     if (use_domains)
     {
       assert(!d_domains);
       d_domains = bzla_hashint_map_new(d_bzla->mm);
-      init_prop_domains(d_bzla, d_domains, exp);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
     }
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
@@ -230,7 +229,7 @@ class TestPropInv : public TestBzla
     BzlaBitVector *bvand, *bve[2], *res, *tmp, *tmp2;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
-    BzlaPropComputeValue inv_fun = inv_and_bv;
+    BzlaPropComputeValue inv_fun = bzla_proputils_inv_and;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -241,9 +240,9 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(!d_domains);
-      inv_fun   = inv_and_bvprop;
+      inv_fun   = bzla_proputils_inv_and_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
-      init_prop_domains(d_bzla, d_domains, _and);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, _and);
     }
 
     for (i = 0; i < (uint32_t)(1 << bw); i++)
@@ -265,7 +264,8 @@ class TestPropInv : public TestBzla
           /* prop engine: all conflicts are treated as fixable */
           inv = bzla_is_inv_and(d_mm, bvand, bve[1], 0);
           res = inv ? inv_fun(d_bzla, _and, bvand, bve[1], 0, d_domains)
-                    : cons_and_bv(d_bzla, _and, bvand, bve[1], 0, d_domains);
+                    : bzla_proputils_cons_and(
+                        d_bzla, _and, bvand, bve[1], 0, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
@@ -274,7 +274,8 @@ class TestPropInv : public TestBzla
 
           inv = bzla_is_inv_and(d_mm, bvand, bve[0], 1);
           res = inv ? inv_fun(d_bzla, _and, bvand, bve[0], 1, d_domains)
-                    : cons_and_bv(d_bzla, _and, bvand, bve[0], 1, d_domains);
+                    : bzla_proputils_cons_and(
+                        d_bzla, _and, bvand, bve[0], 1, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
@@ -283,7 +284,8 @@ class TestPropInv : public TestBzla
 
           inv = bzla_is_inv_and(d_mm, bvand, bve[0], 1);
           res = inv ? inv_fun(d_bzla, cand[0], bvand, bve[0], 1, d_domains)
-                    : cons_and_bv(d_bzla, cand[0], bvand, bve[0], 1, d_domains);
+                    : bzla_proputils_cons_and(
+                        d_bzla, cand[0], bvand, bve[0], 1, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
@@ -292,7 +294,8 @@ class TestPropInv : public TestBzla
 
           inv = bzla_is_inv_and(d_mm, bvand, bve[1], 0);
           res = inv ? inv_fun(d_bzla, cand[1], bvand, bve[1], 0, d_domains)
-                    : cons_and_bv(d_bzla, cand[1], bvand, bve[1], 0, d_domains);
+                    : bzla_proputils_cons_and(
+                        d_bzla, cand[1], bvand, bve[1], 0, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
@@ -351,7 +354,7 @@ class TestPropInv : public TestBzla
     BzlaBitVector *res, *bvult, *bve, *zero, *bvmax;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
-    BzlaPropComputeValue inv_fun = inv_ult_bv;
+    BzlaPropComputeValue inv_fun = bzla_proputils_inv_ult;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -362,9 +365,9 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(!d_domains);
-      inv_fun   = inv_ult_bvprop;
+      inv_fun   = bzla_proputils_inv_ult_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
-      init_prop_domains(d_bzla, d_domains, ult);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, ult);
     }
 
     zero  = bzla_bv_new(d_mm, bw);
@@ -378,7 +381,7 @@ class TestPropInv : public TestBzla
     bve = bzla_bv_ones(d_mm, bw);
     inv = bzla_is_inv_ult(d_mm, bvult, bve, 1);
     res = inv ? inv_fun(d_bzla, ult, bvult, bve, 1, d_domains)
-              : cons_ult_bv(d_bzla, ult, bvult, bve, 1, d_domains);
+              : bzla_proputils_cons_ult(d_bzla, ult, bvult, bve, 1, d_domains);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
@@ -386,7 +389,7 @@ class TestPropInv : public TestBzla
     cult = bzla_exp_bv_ult(d_bzla, ce, e[1]);
     inv  = bzla_is_inv_ult(d_mm, bvult, bve, 1);
     res  = inv ? inv_fun(d_bzla, cult, bvult, bve, 1, d_domains)
-              : cons_ult_bv(d_bzla, cult, bvult, bve, 1, d_domains);
+              : bzla_proputils_cons_ult(d_bzla, cult, bvult, bve, 1, d_domains);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
@@ -397,7 +400,7 @@ class TestPropInv : public TestBzla
     bve = bzla_bv_new(d_mm, bw);
     inv = bzla_is_inv_ult(d_mm, bvult, bve, 0);
     res = inv ? inv_fun(d_bzla, ult, bvult, bve, 0, d_domains)
-              : cons_ult_bv(d_bzla, ult, bvult, bve, 0, d_domains);
+              : bzla_proputils_cons_ult(d_bzla, ult, bvult, bve, 0, d_domains);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
@@ -405,7 +408,7 @@ class TestPropInv : public TestBzla
     cult = bzla_exp_bv_ult(d_bzla, e[0], ce);
     inv  = bzla_is_inv_ult(d_mm, bvult, bve, 0);
     res  = inv ? inv_fun(d_bzla, cult, bvult, bve, 0, d_domains)
-              : cons_ult_bv(d_bzla, cult, bvult, bve, 0, d_domains);
+              : bzla_proputils_cons_ult(d_bzla, cult, bvult, bve, 0, d_domains);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
@@ -456,7 +459,7 @@ class TestPropInv : public TestBzla
     BzlaSortId sort;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
-    BzlaPropComputeValue inv_fun = inv_sll_bv;
+    BzlaPropComputeValue inv_fun = bzla_proputils_inv_sll;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -467,9 +470,9 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(!d_domains);
-      inv_fun   = inv_sll_bvprop;
+      inv_fun   = bzla_proputils_inv_sll_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
-      init_prop_domains(d_bzla, d_domains, sll);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, sll);
     }
 
     /* prop engine: all conflicts are treated as fixable */
@@ -487,7 +490,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00",
                          "01",
                          0);
@@ -497,7 +500,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00",
                          "10",
                          1);
@@ -507,7 +510,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00",
                          "11",
                          0);
@@ -518,7 +521,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "01",
                          "11",
                          0);
@@ -529,7 +532,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "10",
                          "01",
                          0);
@@ -539,7 +542,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "10",
                          "11",
                          0);
@@ -550,7 +553,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "11",
                          "01",
                          0);
@@ -563,7 +566,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0000",
                          "0010",
                          1);
@@ -573,7 +576,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0000",
                          "1000",
                          3);
@@ -583,7 +586,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0000",
                          "0110",
                          1);
@@ -593,7 +596,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0000",
                          "1110",
                          1);
@@ -604,7 +607,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0001",
                          "0110",
                          1);
@@ -614,7 +617,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0001",
                          "1100",
                          2);
@@ -624,7 +627,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0001",
                          "1010",
                          1);
@@ -634,7 +637,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0001",
                          "1110",
                          1);
@@ -645,7 +648,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1000",
                          "0110",
                          1);
@@ -655,7 +658,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1000",
                          "1100",
                          2);
@@ -665,7 +668,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1000",
                          "1010",
                          1);
@@ -675,7 +678,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1000",
                          "1110",
                          1);
@@ -686,7 +689,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1010",
                          "0110",
                          1);
@@ -696,7 +699,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1010",
                          "1100",
                          2);
@@ -706,7 +709,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1010",
                          "1110",
                          1);
@@ -716,7 +719,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1010",
                          "1111",
                          0);
@@ -727,7 +730,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0110",
                          "0111",
                          0);
@@ -737,7 +740,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0110",
                          "0010",
                          1);
@@ -747,7 +750,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0110",
                          "1010",
                          1);
@@ -757,7 +760,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0110",
                          "1111",
                          0);
@@ -768,7 +771,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1111",
                          "1010",
                          1);
@@ -778,7 +781,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1111",
                          "0110",
                          1);
@@ -788,7 +791,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1111",
                          "0010",
                          1);
@@ -798,7 +801,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "1111",
                          "0011",
                          0);
@@ -811,7 +814,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000000",
                          "11111110",
                          1);
@@ -821,7 +824,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000000",
                          "10101010",
                          1);
@@ -832,7 +835,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000100",
                          "00111100",
                          2);
@@ -842,7 +845,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000100",
                          "11110000",
                          4);
@@ -853,7 +856,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00100000",
                          "11001100",
                          2);
@@ -863,7 +866,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00100000",
                          "01000010",
                          1);
@@ -874,7 +877,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "01010101",
                          "10101110",
                          1);
@@ -884,7 +887,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "01010101",
                          "10100100",
                          2);
@@ -895,7 +898,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "11111110",
                          "10111100",
                          2);
@@ -905,7 +908,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "11111110",
                          "11111101",
                          0);
@@ -916,7 +919,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "01111111",
                          "10111100",
                          2);
@@ -926,7 +929,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "01111111",
                          "11111101",
                          0);
@@ -937,7 +940,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "11111111",
                          "10111110",
                          1);
@@ -947,7 +950,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "11111111",
                          "11111101",
                          0);
@@ -967,7 +970,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "01",
                          "01",
                          0);
@@ -977,7 +980,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "01",
                          "11",
                          0);
@@ -989,7 +992,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0001",
                          "0001",
                          0);
@@ -999,7 +1002,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0010",
                          "0110",
                          0);
@@ -1009,7 +1012,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "0011",
                          "1100",
                          0);
@@ -1021,7 +1024,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000001",
                          "00000011",
                          0);
@@ -1031,7 +1034,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000010",
                          "00001110",
                          0);
@@ -1041,7 +1044,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000011",
                          "00001100",
                          0);
@@ -1051,7 +1054,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000100",
                          "11111100",
                          0);
@@ -1061,7 +1064,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000101",
                          "00011000",
                          0);
@@ -1071,7 +1074,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000110",
                          "11001100",
                          0);
@@ -1081,7 +1084,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
-                         cons_sll_bv,
+                         bzla_proputils_cons_sll,
                          "00000111",
                          "11000000",
                          0);
@@ -1128,7 +1131,7 @@ class TestPropInv : public TestBzla
     BzlaSortId sort;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
-    BzlaPropComputeValue inv_fun = inv_srl_bv;
+    BzlaPropComputeValue inv_fun = bzla_proputils_inv_srl;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -1139,9 +1142,9 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(!d_domains);
-      inv_fun   = inv_srl_bvprop;
+      inv_fun   = bzla_proputils_inv_srl_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
-      init_prop_domains(d_bzla, d_domains, srl);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, srl);
     }
 
     /* prop engine: all conflicts are treated as fixable */
@@ -1159,7 +1162,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00",
                          "01",
                          1);
@@ -1169,7 +1172,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00",
                          "10",
                          0);
@@ -1179,7 +1182,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00",
                          "11",
                          0);
@@ -1190,7 +1193,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "01",
                          "10",
                          0);
@@ -1200,7 +1203,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "01",
                          "11",
                          0);
@@ -1211,7 +1214,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "10",
                          "11",
                          0);
@@ -1222,7 +1225,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "11",
                          "10",
                          0);
@@ -1235,7 +1238,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0000",
                          "0010",
                          2);
@@ -1245,7 +1248,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0000",
                          "1000",
                          0);
@@ -1255,7 +1258,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0000",
                          "0110",
                          1);
@@ -1265,7 +1268,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0000",
                          "1110",
                          0);
@@ -1276,7 +1279,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0001",
                          "0110",
                          1);
@@ -1286,7 +1289,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0001",
                          "0011",
                          2);
@@ -1296,7 +1299,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0001",
                          "0101",
                          1);
@@ -1306,7 +1309,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0001",
                          "0111",
                          1);
@@ -1317,7 +1320,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1000",
                          "0110",
                          1);
@@ -1327,7 +1330,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1000",
                          "0011",
                          2);
@@ -1337,7 +1340,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1000",
                          "0101",
                          1);
@@ -1347,7 +1350,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1000",
                          "0111",
                          1);
@@ -1358,7 +1361,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1010",
                          "0110",
                          1);
@@ -1368,7 +1371,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1010",
                          "0011",
                          2);
@@ -1378,7 +1381,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1010",
                          "0111",
                          1);
@@ -1388,7 +1391,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1010",
                          "1111",
                          0);
@@ -1399,7 +1402,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0110",
                          "0111",
                          1);
@@ -1409,7 +1412,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0110",
                          "0010",
                          2);
@@ -1419,7 +1422,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0110",
                          "1010",
                          0);
@@ -1429,7 +1432,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0110",
                          "1111",
                          0);
@@ -1440,7 +1443,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1111",
                          "0101",
                          1);
@@ -1450,7 +1453,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1111",
                          "0110",
                          1);
@@ -1460,7 +1463,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1111",
                          "0010",
                          2);
@@ -1470,7 +1473,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "1111",
                          "0100",
                          1);
@@ -1483,7 +1486,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000000",
                          "01111111",
                          1);
@@ -1493,7 +1496,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000000",
                          "01010101",
                          1);
@@ -1504,7 +1507,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000100",
                          "00111100",
                          2);
@@ -1514,7 +1517,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000100",
                          "00001111",
                          4);
@@ -1525,7 +1528,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00100000",
                          "11001100",
                          0);
@@ -1535,7 +1538,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00100000",
                          "01000010",
                          1);
@@ -1546,7 +1549,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "01010101",
                          "01010111",
                          1);
@@ -1556,7 +1559,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "01010101",
                          "00101001",
                          2);
@@ -1567,7 +1570,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "11111110",
                          "10111100",
                          0);
@@ -1577,7 +1580,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "11111110",
                          "11111101",
                          0);
@@ -1588,7 +1591,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "01111111",
                          "00101111",
                          2);
@@ -1598,7 +1601,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "01111111",
                          "11111101",
                          0);
@@ -1609,7 +1612,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "11111111",
                          "01011111",
                          1);
@@ -1619,7 +1622,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "11111111",
                          "11111101",
                          0);
@@ -1639,7 +1642,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "01",
                          "10",
                          0);
@@ -1649,7 +1652,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "01",
                          "11",
                          0);
@@ -1661,7 +1664,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0001",
                          "1000",
                          0);
@@ -1671,7 +1674,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0010",
                          "0110",
                          0);
@@ -1681,7 +1684,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "0011",
                          "0011",
                          0);
@@ -1693,7 +1696,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000001",
                          "11000000",
                          0);
@@ -1703,7 +1706,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000010",
                          "01110000",
                          0);
@@ -1713,7 +1716,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000011",
                          "00110000",
                          0);
@@ -1723,7 +1726,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000100",
                          "00111111",
                          0);
@@ -1733,7 +1736,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000101",
                          "00011000",
                          0);
@@ -1743,7 +1746,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000110",
                          "00110011",
                          0);
@@ -1753,7 +1756,7 @@ class TestPropInv : public TestBzla
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
-                         cons_srl_bv,
+                         bzla_proputils_cons_srl,
                          "00000111",
                          "00000011",
                          0);
@@ -2002,7 +2005,7 @@ class TestPropInv : public TestBzla
     BzlaBitVector *res, *bve, *bvurem, *bvmax, *zero, *two, *tmp, *tmp2;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
-    BzlaPropComputeValue inv_fun = inv_urem_bv;
+    BzlaPropComputeValue inv_fun = bzla_proputils_inv_urem;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -2013,9 +2016,9 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(!d_domains);
-      inv_fun   = inv_urem_bvprop;
+      inv_fun   = bzla_proputils_inv_urem_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
-      init_prop_domains(d_bzla, d_domains, urem);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, urem);
     }
 
     zero  = bzla_bv_new(d_mm, bw);
@@ -2035,13 +2038,15 @@ class TestPropInv : public TestBzla
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
       inv   = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
       res   = inv ? inv_fun(d_bzla, urem, bvurem, bve, 1, d_domains)
-                : cons_urem_bv(d_bzla, urem, bvurem, bve, 1, d_domains);
+                : bzla_proputils_cons_urem(
+                    d_bzla, urem, bvurem, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
       inv = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
       res = inv ? inv_fun(d_bzla, curem, bvurem, bve, 1, d_domains)
-                : cons_urem_bv(d_bzla, curem, bvurem, bve, 1, d_domains);
+                : bzla_proputils_cons_urem(
+                    d_bzla, curem, bvurem, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
@@ -2064,12 +2069,14 @@ class TestPropInv : public TestBzla
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
       inv   = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
       res   = inv ? inv_fun(d_bzla, urem, bvurem, bve, 1, d_domains)
-                : cons_urem_bv(d_bzla, urem, bvurem, bve, 1, d_domains);
+                : bzla_proputils_cons_urem(
+                    d_bzla, urem, bvurem, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       inv = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
       res = inv ? inv_fun(d_bzla, curem, bvurem, bve, 1, d_domains)
-                : cons_urem_bv(d_bzla, curem, bvurem, bve, 1, d_domains);
+                : bzla_proputils_cons_urem(
+                    d_bzla, curem, bvurem, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
@@ -2095,12 +2102,14 @@ class TestPropInv : public TestBzla
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
       inv   = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
       res   = inv ? inv_fun(d_bzla, urem, bvurem, bve, 1, d_domains)
-                : cons_urem_bv(d_bzla, urem, bvurem, bve, 1, d_domains);
+                : bzla_proputils_cons_urem(
+                    d_bzla, urem, bvurem, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       inv = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
       res = inv ? inv_fun(d_bzla, curem, bvurem, bve, 1, d_domains)
-                : cons_urem_bv(d_bzla, curem, bvurem, bve, 1, d_domains);
+                : bzla_proputils_cons_urem(
+                    d_bzla, curem, bvurem, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
@@ -2121,13 +2130,15 @@ class TestPropInv : public TestBzla
       curem = bzla_exp_bv_urem(d_bzla, e[0], ce);
       inv   = bzla_is_inv_urem(d_mm, bvurem, bve, 0);
       res   = inv ? inv_fun(d_bzla, urem, bvurem, bve, 0, d_domains)
-                : cons_urem_bv(d_bzla, urem, bvurem, bve, 0, d_domains);
+                : bzla_proputils_cons_urem(
+                    d_bzla, urem, bvurem, bve, 0, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_EQ(bzla_bv_compare(res, bvurem), 0);
       bzla_bv_free(d_mm, res);
       inv = bzla_is_inv_urem(d_mm, bvurem, bve, 0);
       res = inv ? inv_fun(d_bzla, curem, bvurem, bve, 0, d_domains)
-                : cons_urem_bv(d_bzla, curem, bvurem, bve, 0, d_domains);
+                : bzla_proputils_cons_urem(
+                    d_bzla, curem, bvurem, bve, 0, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_EQ(bzla_bv_compare(res, bvurem), 0);
       bzla_bv_free(d_mm, res);
@@ -2147,12 +2158,14 @@ class TestPropInv : public TestBzla
       curem  = bzla_exp_bv_urem(d_bzla, e[0], ce);
       inv    = bzla_is_inv_urem(d_mm, bvurem, bve, 0);
       res    = inv ? inv_fun(d_bzla, urem, bvurem, bve, 0, d_domains)
-                : cons_urem_bv(d_bzla, urem, bvurem, bve, 0, d_domains);
+                : bzla_proputils_cons_urem(
+                    d_bzla, urem, bvurem, bve, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       inv = bzla_is_inv_urem(d_mm, bvurem, bve, 0);
       res = inv ? inv_fun(d_bzla, curem, bvurem, bve, 0, d_domains)
-                : cons_urem_bv(d_bzla, curem, bvurem, bve, 0, d_domains);
+                : bzla_proputils_cons_urem(
+                    d_bzla, curem, bvurem, bve, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
@@ -2207,7 +2220,7 @@ class TestPropInv : public TestBzla
     BzlaBitVector *res, *bvconcat, *bve[2], *tmp[2];
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
-    BzlaPropComputeValue inv_fun = inv_concat_bv;
+    BzlaPropComputeValue inv_fun = bzla_proputils_inv_concat;
 
     /* prop engine: all conflicts are treated as fixable */
 
@@ -2227,9 +2240,9 @@ class TestPropInv : public TestBzla
       if (use_domains)
       {
         assert(!d_domains);
-        inv_fun   = inv_concat_bvprop;
+        inv_fun   = bzla_proputils_inv_concat_bvprop;
         d_domains = bzla_hashint_map_new(d_bzla->mm);
-        init_prop_domains(d_bzla, d_domains, concat);
+        bzla_prop_solver_init_domains(d_bzla, d_domains, concat);
       }
 
       for (j = 0; j < 2; j++)
@@ -2260,7 +2273,7 @@ class TestPropInv : public TestBzla
         inv = bzla_is_inv_concat(d_mm, bvconcat, bve[j ? 0 : 1], j);
         res = inv ? inv_fun(
                   d_bzla, concat, bvconcat, bve[j ? 0 : 1], j, d_domains)
-                  : cons_concat_bv(
+                  : bzla_proputils_cons_concat(
                       d_bzla, concat, bvconcat, bve[j ? 0 : 1], j, d_domains);
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
@@ -2272,12 +2285,12 @@ class TestPropInv : public TestBzla
                             bve[j ? 0 : 1],
                             j,
                             d_domains)
-                  : cons_concat_bv(d_bzla,
-                                   cconcat[j ? 0 : 1],
-                                   bvconcat,
-                                   bve[j ? 0 : 1],
-                                   j,
-                                   d_domains);
+                  : bzla_proputils_cons_concat(d_bzla,
+                                               cconcat[j ? 0 : 1],
+                                               bvconcat,
+                                               bve[j ? 0 : 1],
+                                               j,
+                                               d_domains);
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
@@ -2338,14 +2351,14 @@ class TestPropInv : public TestBzla
     BzlaNode *cmul[2], *ce[2];
     BzlaBitVector *res;
     BzlaIntHashTableIterator iit;
-    BzlaPropComputeValue inv_fun = inv_mul_bv;
+    BzlaPropComputeValue inv_fun = bzla_proputils_inv_mul;
 
     if (use_domains)
     {
       assert(!d_domains);
-      inv_fun   = inv_mul_bvprop;
+      inv_fun   = bzla_proputils_inv_mul_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
-      init_prop_domains(d_bzla, d_domains, mul);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, mul);
     }
 
     ce[0]   = bzla_exp_bv_const(d_bzla, bve);
@@ -2355,12 +2368,13 @@ class TestPropInv : public TestBzla
 
     inv = bzla_is_inv_mul(d_mm, bvmul, bve, 0);
     res = inv ? inv_fun(d_bzla, mul, bvmul, bve, 0, d_domains)
-              : cons_mul_bv(d_bzla, mul, bvmul, bve, 0, d_domains);
+              : bzla_proputils_cons_mul(d_bzla, mul, bvmul, bve, 0, d_domains);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
     inv = bzla_is_inv_mul(d_mm, bvmul, bve, 0);
     res = inv ? inv_fun(d_bzla, cmul[1], bvmul, bve, 0, d_domains)
-              : cons_mul_bv(d_bzla, cmul[1], bvmul, bve, 0, d_domains);
+              : bzla_proputils_cons_mul(
+                  d_bzla, cmul[1], bvmul, bve, 0, d_domains);
     ASSERT_NE(res, nullptr);
     if (bzla_bv_get_bit(bvmul, 0))
     {
@@ -2370,12 +2384,13 @@ class TestPropInv : public TestBzla
 
     inv = bzla_is_inv_mul(d_mm, bvmul, bve, 1);
     res = inv ? inv_fun(d_bzla, mul, bvmul, bve, 1, d_domains)
-              : cons_mul_bv(d_bzla, mul, bvmul, bve, 1, d_domains);
+              : bzla_proputils_cons_mul(d_bzla, mul, bvmul, bve, 1, d_domains);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
     inv = bzla_is_inv_mul(d_mm, bvmul, bve, 1);
     res = inv ? inv_fun(d_bzla, cmul[0], bvmul, bve, 1, d_domains)
-              : cons_mul_bv(d_bzla, cmul[0], bvmul, bve, 1, d_domains);
+              : bzla_proputils_cons_mul(
+                  d_bzla, cmul[0], bvmul, bve, 1, d_domains);
     ASSERT_NE(res, nullptr);
     if (bzla_bv_get_bit(bvmul, 0))
     {
@@ -2413,14 +2428,14 @@ class TestPropInv : public TestBzla
     BzlaNode *cudiv, *ce;
     BzlaBitVector *res;
     BzlaIntHashTableIterator iit;
-    BzlaPropComputeValue inv_fun = inv_udiv_bv;
+    BzlaPropComputeValue inv_fun = bzla_proputils_inv_udiv;
 
     if (use_domains)
     {
       assert(!d_domains);
-      inv_fun   = inv_udiv_bvprop;
+      inv_fun   = bzla_proputils_inv_udiv_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
-      init_prop_domains(d_bzla, d_domains, udiv);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, udiv);
     }
 
     if (idx_x)
@@ -2429,13 +2444,15 @@ class TestPropInv : public TestBzla
       cudiv = bzla_exp_bv_udiv(d_bzla, ce, e[1]);
       inv   = bzla_is_inv_udiv(d_mm, bvudiv, bve, 1);
       res   = inv ? inv_fun(d_bzla, udiv, bvudiv, bve, 1, d_domains)
-                : cons_udiv_bv(d_bzla, udiv, bvudiv, bve, 1, d_domains);
+                : bzla_proputils_cons_udiv(
+                    d_bzla, udiv, bvudiv, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, bvudiv));
       bzla_bv_free(d_mm, res);
       inv = bzla_is_inv_udiv(d_mm, bvudiv, bve, 1);
       res = inv ? inv_fun(d_bzla, cudiv, bvudiv, bve, 1, d_domains)
-                : cons_udiv_bv(d_bzla, cudiv, bvudiv, bve, 1, d_domains);
+                : bzla_proputils_cons_udiv(
+                    d_bzla, cudiv, bvudiv, bve, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, bvudiv));
       bzla_bv_free(d_mm, res);
@@ -2448,12 +2465,14 @@ class TestPropInv : public TestBzla
       cudiv = bzla_exp_bv_udiv(d_bzla, e[0], ce);
       inv   = bzla_is_inv_udiv(d_mm, bvudiv, bve, 0);
       res   = inv ? inv_fun(d_bzla, udiv, bvudiv, bve, 0, d_domains)
-                : cons_udiv_bv(d_bzla, udiv, bvudiv, bve, 0, d_domains);
+                : bzla_proputils_cons_udiv(
+                    d_bzla, udiv, bvudiv, bve, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       inv = bzla_is_inv_udiv(d_mm, bvudiv, bve, 0);
       res = inv ? inv_fun(d_bzla, cudiv, bvudiv, bve, 0, d_domains)
-                : cons_udiv_bv(d_bzla, cudiv, bvudiv, bve, 0, d_domains);
+                : bzla_proputils_cons_udiv(
+                    d_bzla, cudiv, bvudiv, bve, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, cudiv);
@@ -2554,14 +2573,14 @@ TEST_F(TestPropInv, complete_add)
   check_binary(bzla_exp_bv_add,
                bzla_bv_add,
                bzla_is_inv_add,
-               inv_add_bv,
-               inv_add_bvprop,
+               bzla_proputils_inv_add,
+               bzla_proputils_inv_add_bvprop,
                false);
   check_binary(bzla_exp_bv_add,
                bzla_bv_add,
                bzla_is_inv_add,
-               inv_add_bv,
-               inv_add_bvprop,
+               bzla_proputils_inv_add,
+               bzla_proputils_inv_add_bvprop,
                true);
 }
 
@@ -2570,23 +2589,31 @@ TEST_F(TestPropInv, complete_and)
   check_binary(bzla_exp_bv_and,
                bzla_bv_and,
                bzla_is_inv_and,
-               inv_and_bv,
-               inv_and_bvprop,
+               bzla_proputils_inv_and,
+               bzla_proputils_inv_and_bvprop,
                false);
   check_binary(bzla_exp_bv_and,
                bzla_bv_and,
                bzla_is_inv_and,
-               inv_and_bv,
-               inv_and_bvprop,
+               bzla_proputils_inv_and,
+               bzla_proputils_inv_and_bvprop,
                true);
 }
 
 TEST_F(TestPropInv, complete_eq)
 {
-  check_binary(
-      bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bv, inv_eq_bvprop, false);
-  check_binary(
-      bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, inv_eq_bv, inv_eq_bvprop, true);
+  check_binary(bzla_exp_eq,
+               bzla_bv_eq,
+               bzla_is_inv_eq,
+               bzla_proputils_inv_eq,
+               bzla_proputils_inv_eq_bvprop,
+               false);
+  check_binary(bzla_exp_eq,
+               bzla_bv_eq,
+               bzla_is_inv_eq,
+               bzla_proputils_inv_eq,
+               bzla_proputils_inv_eq_bvprop,
+               true);
 }
 
 TEST_F(TestPropInv, complete_ult)
@@ -2594,14 +2621,14 @@ TEST_F(TestPropInv, complete_ult)
   check_binary(bzla_exp_bv_ult,
                bzla_bv_ult,
                bzla_is_inv_ult,
-               inv_ult_bv,
-               inv_ult_bvprop,
+               bzla_proputils_inv_ult,
+               bzla_proputils_inv_ult_bvprop,
                false);
   check_binary(bzla_exp_bv_ult,
                bzla_bv_ult,
                bzla_is_inv_ult,
-               inv_ult_bv,
-               inv_ult_bvprop,
+               bzla_proputils_inv_ult,
+               bzla_proputils_inv_ult_bvprop,
                true);
 }
 
@@ -2610,14 +2637,14 @@ TEST_F(TestPropInv, complete_sll)
   check_shift(bzla_exp_bv_sll,
               bzla_bv_sll,
               bzla_is_inv_sll,
-              inv_sll_bv,
-              inv_sll_bvprop,
+              bzla_proputils_inv_sll,
+              bzla_proputils_inv_sll_bvprop,
               false);
   check_shift(bzla_exp_bv_sll,
               bzla_bv_sll,
               bzla_is_inv_sll,
-              inv_sll_bv,
-              inv_sll_bvprop,
+              bzla_proputils_inv_sll,
+              bzla_proputils_inv_sll_bvprop,
               true);
 }
 
@@ -2626,14 +2653,14 @@ TEST_F(TestPropInv, complete_srl)
   check_shift(bzla_exp_bv_srl,
               bzla_bv_srl,
               bzla_is_inv_srl,
-              inv_srl_bv,
-              inv_srl_bvprop,
+              bzla_proputils_inv_srl,
+              bzla_proputils_inv_srl_bvprop,
               false);
   check_shift(bzla_exp_bv_srl,
               bzla_bv_srl,
               bzla_is_inv_srl,
-              inv_srl_bv,
-              inv_srl_bvprop,
+              bzla_proputils_inv_srl,
+              bzla_proputils_inv_srl_bvprop,
               true);
 }
 
@@ -2642,14 +2669,14 @@ TEST_F(TestPropInv, complete_mul)
   check_binary(bzla_exp_bv_mul,
                bzla_bv_mul,
                bzla_is_inv_mul,
-               inv_mul_bv,
-               inv_mul_bvprop,
+               bzla_proputils_inv_mul,
+               bzla_proputils_inv_mul_bvprop,
                false);
   check_binary(bzla_exp_bv_mul,
                bzla_bv_mul,
                bzla_is_inv_mul,
-               inv_mul_bv,
-               inv_mul_bvprop,
+               bzla_proputils_inv_mul,
+               bzla_proputils_inv_mul_bvprop,
                true);
 }
 
@@ -2658,14 +2685,14 @@ TEST_F(TestPropInv, complete_udiv)
   check_binary(bzla_exp_bv_udiv,
                bzla_bv_udiv,
                bzla_is_inv_udiv,
-               inv_udiv_bv,
-               inv_udiv_bvprop,
+               bzla_proputils_inv_udiv,
+               bzla_proputils_inv_udiv_bvprop,
                false);
   check_binary(bzla_exp_bv_udiv,
                bzla_bv_udiv,
                bzla_is_inv_udiv,
-               inv_udiv_bv,
-               inv_udiv_bvprop,
+               bzla_proputils_inv_udiv,
+               bzla_proputils_inv_udiv_bvprop,
                true);
 }
 
@@ -2674,8 +2701,8 @@ TEST_F(TestPropInv, complete_urem)
   check_binary(bzla_exp_bv_urem,
                bzla_bv_urem,
                bzla_is_inv_urem,
-               inv_urem_bv,
-               inv_urem_bvprop,
+               bzla_proputils_inv_urem,
+               bzla_proputils_inv_urem_bvprop,
                false);
 }
 
@@ -2684,8 +2711,8 @@ TEST_F(TestPropInv, complete_concat)
   check_binary(bzla_exp_bv_concat,
                bzla_bv_concat,
                bzla_is_inv_concat,
-               inv_concat_bv,
-               inv_concat_bvprop,
+               bzla_proputils_inv_concat,
+               bzla_proputils_inv_concat_bvprop,
                false);
 }
 
@@ -2713,7 +2740,7 @@ TEST_F(TestPropInv, complete_slice)
         bvexp = bzla_bv_slice(d_mm, bve, up, lo);
         for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
         {
-          res = inv_slice_bv(d_bzla, exp, bvexp, bve, 0, d_domains);
+          res = bzla_proputils_inv_slice(d_bzla, exp, bvexp, bve, 0, d_domains);
           ASSERT_NE(res, nullptr);
           if (!bzla_bv_compare(res, bve)) break;
           bzla_bv_free(d_mm, res);
@@ -2804,4 +2831,3 @@ TEST_F(TestPropInv, conf_concat)
   check_conf_concat(4, false);
   check_conf_concat(8, false);
 }
-#endif

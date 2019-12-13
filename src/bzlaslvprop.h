@@ -149,6 +149,11 @@ typedef struct BzlaPropSolver BzlaPropSolver;
 
 BzlaSolver *bzla_new_prop_solver(Bzla *bzla);
 
+void bzla_prop_solver_init_domains(Bzla *bzla,
+                                   BzlaIntHashTable *domains,
+                                   BzlaNode *root);
+
+int32_t bzla_prop_solver_sat(Bzla *bzla);
 /*------------------------------------------------------------------------*/
 
 #endif

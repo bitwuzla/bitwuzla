@@ -332,12 +332,10 @@ delete_prop_solver(BzlaPropSolver *slv)
   BZLA_DELETE(slv->bzla->mm, slv);
 }
 
-#ifdef NDEBUG
-static void
-#else
 void
-#endif
-init_prop_domains(Bzla *bzla, BzlaIntHashTable *domains, BzlaNode *root)
+bzla_prop_solver_init_domains(Bzla *bzla,
+                              BzlaIntHashTable *domains,
+                              BzlaNode *root)
 {
   assert(bzla);
   assert(domains);
@@ -406,12 +404,8 @@ init_prop_domains(Bzla *bzla, BzlaIntHashTable *domains, BzlaNode *root)
 
 /* This is an extra function in order to be able to test completeness
  * via test suite. */
-#ifdef NDEBUG
-static inline int32_t
-#else
 int32_t
-#endif
-sat_prop_solver_aux(Bzla *bzla)
+bzla_prop_solver_sat(Bzla *bzla)
 {
   assert(bzla);
 
@@ -450,7 +444,8 @@ sat_prop_solver_aux(Bzla *bzla)
   while (bzla_iter_hashptr_has_next(&it))
   {
     root = bzla_iter_hashptr_next(&it);
-    if (opt_prop_domains) init_prop_domains(bzla, slv->domains, root);
+    if (opt_prop_domains)
+      bzla_prop_solver_init_domains(bzla, slv->domains, root);
   }
 
   bzla_iter_hashptr_init(&it, bzla->assumptions);
@@ -468,7 +463,8 @@ sat_prop_solver_aux(Bzla *bzla)
     {
       bzla_synthesize_exp(bzla, root, 0);
     }
-    if (opt_prop_domains) init_prop_domains(bzla, slv->domains, root);
+    if (opt_prop_domains)
+      bzla_prop_solver_init_domains(bzla, slv->domains, root);
   }
 
   for (;;)
@@ -616,7 +612,7 @@ sat_prop_solver(BzlaPropSolver *slv)
    * not have to consider model_for_all_nodes, but let this be handled by
    * the model generation (if enabled) after SAT has been determined. */
   slv->api.generate_model((BzlaSolver *) slv, false, true);
-  sat_result = sat_prop_solver_aux(bzla);
+  sat_result = bzla_prop_solver_sat(bzla);
 DONE:
   assert(BZLA_EMPTY_STACK(slv->toprop));
   return sat_result;
