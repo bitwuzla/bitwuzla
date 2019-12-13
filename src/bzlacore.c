@@ -901,7 +901,7 @@ bzla_delete(Bzla *bzla)
 
   mm = bzla->mm;
   bzla_rng_delete(&bzla->rng);
-  bzla_fp_word_blaster_delete(bzla->word_blaster);
+  bzla_fp_word_blaster_delete(bzla);
 
   if (bzla->slv) bzla->slv->api.delet(bzla->slv);
 

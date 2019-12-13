@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2014-2017 Mathias Preiner.
- *  Copyright (C) 2014-2018 Aina Niemetz.
+ *  Copyright (C) 2014-2019 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -896,6 +896,15 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
       BZLA_PUSH_STACK(work_stack, cur);
       BZLA_PUSH_STACK(work_stack, cur_parent);
       md = bzla_hashint_map_add(mark, real_cur->id);
+      if (bzla_node_is_fp(bzla, real_cur)
+          || (real_cur->arity && bzla_node_is_fp(bzla, real_cur->e[0])))
+      {
+        next = bzla_fp_word_blaster_get_node(bzla, real_cur);
+        assert(next);
+        BZLA_PUSH_STACK(work_stack, next);
+        BZLA_PUSH_STACK(work_stack, cur_parent);
+        continue;
+      }
 
       /* special handling for conditionals:
        *  1) push condition
@@ -922,6 +931,15 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
         {
           BZLA_PUSH_STACK(work_stack, real_cur->e[i]);
           BZLA_PUSH_STACK(work_stack, real_cur);
+          /* Additionally, push bit-vector representation of floating-point
+           * node to evaluate first. */
+          if (bzla_node_is_fp(bzla, real_cur->e[i]))
+          {
+            BZLA_PUSH_STACK(
+                work_stack,
+                bzla_fp_word_blaster_get_node(bzla, real_cur->e[i]));
+            BZLA_PUSH_STACK(work_stack, real_cur);
+          }
         }
       }
     }
@@ -929,6 +947,19 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
     {
       assert(!bzla_node_is_param(real_cur));
       assert(real_cur->arity <= 3);
+
+      if (bzla_node_is_fp(bzla, real_cur)
+          || (real_cur->arity && bzla_node_is_fp(bzla, real_cur->e[0])))
+      {
+        BzlaNode *bv_node = bzla_fp_word_blaster_get_node(bzla, real_cur);
+        assert(BZLA_COUNT_STACK(arg_stack));
+        result = BZLA_POP_STACK(arg_stack);
+        assert(bzla_hashint_map_contains(bv_model, bv_node->id));
+        assert(bzla_bv_compare(
+                   result, bzla_hashint_map_get(bv_model, bv_node->id)->as_ptr)
+               == 0);
+        goto CACHE_AND_PUSH_RESULT;
+      }
 
       num_args = 0;
 

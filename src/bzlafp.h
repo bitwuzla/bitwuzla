@@ -82,6 +82,13 @@ BzlaFloatingPoint *bzla_fp_make_inf(Bzla *bzla, BzlaSortId sort, bool sign);
  */
 BzlaFloatingPoint *bzla_fp_make_nan(Bzla *bzla, BzlaSortId sort);
 
+/**
+ * Create a floating-point constant node from a given bit-vector constant.
+ */
+BzlaFloatingPoint *bzla_fp_make_const(Bzla *bzla,
+                                      BzlaSortId sort,
+                                      BzlaBitVector *bv_const);
+
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */
 /* -------------------------------------------------------------------------- */
@@ -98,12 +105,14 @@ void *bzla_fp_word_blaster_new(Bzla *bzla);
  */
 void *bzla_fp_word_blaster_clone(Bzla *bzla, Bzla *clone, BzlaNodeMap *exp_map);
 /**
- * Delete given word-blaster.
+ * Delete word-blaster of given Bzla instance.
  * Note: Memory is not managed by the memory manager of the given Bzla instance.
  */
-void bzla_fp_word_blaster_delete(void *wblaster);
+void bzla_fp_word_blaster_delete(Bzla *bzla);
 
 /** Word-blast given Boolean expression. */
 BzlaNode *bzla_fp_word_blast(Bzla *bzla, BzlaNode *node);
 
+/** Get BzlaNode representation of word-blasted node. */
+BzlaNode *bzla_fp_word_blaster_get_node(Bzla *bzla, BzlaNode *node);
 #endif

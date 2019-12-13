@@ -1815,15 +1815,42 @@ bzla_exp_fp_const(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+  assert(e2);
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
   assert(bzla == bzla_node_real_addr(e2)->bzla);
-  /// FP STUB
-  (void) e0;
-  (void) e1;
-  (void) e2;
-  return bzla_exp_true(bzla);
-  ////
+  assert(bzla_node_bv_get_width(bzla, e0) == 1);
+
+  uint32_t ewidth, swidth;
+  BzlaNode *result;
+  BzlaBitVector *bv_e0, *bv_e1, *bv_e2, *tmp, *concat;
+  BzlaSortId sort;
+  BzlaFloatingPoint *fp;
+
+  bv_e0 = bzla_node_is_regular(e0) ? bzla_node_bv_const_get_bits(e0)
+                                   : bzla_node_bv_const_get_invbits(e0);
+  bv_e1 = bzla_node_is_regular(e1) ? bzla_node_bv_const_get_bits(e1)
+                                   : bzla_node_bv_const_get_invbits(e1);
+  bv_e2 = bzla_node_is_regular(e2) ? bzla_node_bv_const_get_bits(e2)
+                                   : bzla_node_bv_const_get_invbits(e2);
+
+  tmp    = bzla_bv_concat(bzla->mm, bv_e0, bv_e1);
+  concat = bzla_bv_concat(bzla->mm, tmp, bv_e2);
+
+  ewidth = bzla_bv_get_width(bv_e1);
+  swidth = 1 + bzla_bv_get_width(bv_e2);
+  sort   = bzla_sort_fp(bzla, ewidth, swidth);
+  fp     = bzla_fp_make_const(bzla, sort, concat);
+  result = exp_fp_const_aux(bzla, fp);
+
+  bzla_fp_free(bzla, fp);
+  bzla_bv_free(bzla->mm, concat);
+  bzla_bv_free(bzla->mm, tmp);
+  bzla_sort_release(bzla, sort);
+  return result;
 }
 
 BzlaNode *

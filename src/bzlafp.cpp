@@ -22,6 +22,7 @@ extern "C" {
 #ifdef BZLA_USE_SYMFPU
 #include "symfpu/core/compare.h"
 #include "symfpu/core/ite.h"
+#include "symfpu/core/packing.h"
 #include "symfpu/core/unpackedFloat.h"
 #endif
 
@@ -77,6 +78,7 @@ class BzlaFPBV
   BzlaFPBV(const uint32_t bw, const uint32_t val);
   BzlaFPBV(const bool &val);
   BzlaFPBV(const BzlaFPBV<is_signed> &other);
+  BzlaFPBV(const BzlaFPBV<!is_signed> &other);
   BzlaFPBV(BzlaBitVector *bv);
   ~BzlaFPBV();
 
@@ -168,6 +170,14 @@ BzlaFPBV<is_signed>::BzlaFPBV(const bool &val)
 
 template <bool is_signed>
 BzlaFPBV<is_signed>::BzlaFPBV(const BzlaFPBV<is_signed> &other)
+{
+  assert(s_bzla);
+  assert(other.d_bv);
+  d_bv = bzla_bv_copy(s_bzla->mm, other.d_bv);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>::BzlaFPBV(const BzlaFPBV<!is_signed> &other)
 {
   assert(s_bzla);
   assert(other.d_bv);
@@ -467,7 +477,10 @@ BzlaFPBV<is_signed>::operator==(const BzlaFPBV<is_signed> &op) const
   assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return bzla_bv_eq(s_bzla->mm, d_bv, op.d_bv);
+  BzlaBitVector *res_bv = bzla_bv_eq(s_bzla->mm, d_bv, op.d_bv);
+  bool res              = bzla_bv_is_true(res_bv);
+  bzla_bv_free(s_bzla->mm, res_bv);
+  return res;
 }
 
 template <bool is_signed>
@@ -477,8 +490,11 @@ BzlaFPBV<is_signed>::operator<=(const BzlaFPBV<is_signed> &op) const
   assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_slte(s_bzla->mm, d_bv, op.d_bv)
-                   : bzla_bv_ulte(s_bzla->mm, d_bv, op.d_bv);
+  BzlaBitVector *res_bv = is_signed ? bzla_bv_slte(s_bzla->mm, d_bv, op.d_bv)
+                                    : bzla_bv_ulte(s_bzla->mm, d_bv, op.d_bv);
+  bool res = bzla_bv_is_true(res_bv);
+  bzla_bv_free(s_bzla->mm, res_bv);
+  return res;
 }
 
 template <bool is_signed>
@@ -488,8 +504,11 @@ BzlaFPBV<is_signed>::operator>=(const BzlaFPBV<is_signed> &op) const
   assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_sgte(s_bzla->mm, d_bv, op.d_bv)
-                   : bzla_bv_ugte(s_bzla->mm, d_bv, op.d_bv);
+  BzlaBitVector *res_bv = is_signed ? bzla_bv_sgte(s_bzla->mm, d_bv, op.d_bv)
+                                    : bzla_bv_ugte(s_bzla->mm, d_bv, op.d_bv);
+  bool res = bzla_bv_is_true(res_bv);
+  bzla_bv_free(s_bzla->mm, res_bv);
+  return res;
 }
 
 template <bool is_signed>
@@ -499,8 +518,11 @@ BzlaFPBV<is_signed>::operator<(const BzlaFPBV<is_signed> &op) const
   assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_slt(s_bzla->mm, d_bv, op.d_bv)
-                   : bzla_bv_ult(s_bzla->mm, d_bv, op.d_bv);
+  BzlaBitVector *res_bv = is_signed ? bzla_bv_slt(s_bzla->mm, d_bv, op.d_bv)
+                                    : bzla_bv_ult(s_bzla->mm, d_bv, op.d_bv);
+  bool res = bzla_bv_is_true(res_bv);
+  bzla_bv_free(s_bzla->mm, res_bv);
+  return res;
 }
 
 template <bool is_signed>
@@ -510,8 +532,11 @@ BzlaFPBV<is_signed>::operator>(const BzlaFPBV<is_signed> &op) const
   assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_sgt(s_bzla->mm, d_bv, op.d_bv)
-                   : bzla_bv_ugt(s_bzla->mm, d_bv, op.d_bv);
+  BzlaBitVector *res_bv = is_signed ? bzla_bv_sgt(s_bzla->mm, d_bv, op.d_bv)
+                                    : bzla_bv_ugt(s_bzla->mm, d_bv, op.d_bv);
+  bool res = bzla_bv_is_true(res_bv);
+  bzla_bv_free(s_bzla->mm, res_bv);
+  return res;
 }
 
 template <bool is_signed>
@@ -566,7 +591,7 @@ BzlaFPBV<is_signed>::resize(uint32_t newSize) const
   }
   if (newSize < bw)
   {
-    return this->constract(bw - newSize);
+    return this->contract(bw - newSize);
   }
   return *this;
 }
@@ -689,10 +714,16 @@ class BzlaFloatingPointSize
 {
  public:
   BzlaFloatingPointSize(uint32_t e, uint32_t s) : d_ewidth(e), d_swidth(s) {}
-  BzlaFloatingPointSize(const BzlaFloatingPointSize &other);
+  BzlaFloatingPointSize(const BzlaFloatingPointSize &other)
+      : d_ewidth(other.d_ewidth), d_swidth(other.d_swidth)
+  {
+  }
   /* symFPU interface */
   uint32_t exponentWidth() const { return d_ewidth; }
   uint32_t significandWidth() const { return d_swidth; }
+  uint32_t packedWidth() const { return d_ewidth + d_swidth; }
+  uint32_t packedExponentWidth() const { return d_ewidth; }
+  uint32_t packedSignificandWidth() const { return d_swidth - 1; }
 
  protected:
   uint32_t d_ewidth; /* size of exponent */
@@ -1835,6 +1866,21 @@ BzlaFPSymTraits::invariant(const prop &p)
 #ifdef BZLA_USE_SYMFPU
 namespace symfpu {
 
+#define BZLA_FP_ITE(T)                                              \
+  template <>                                                       \
+  struct ite<bool, T>                                               \
+  {                                                                 \
+    static const T &iteOp(const bool &_c, const T &_t, const T &_e) \
+    {                                                               \
+      return _c ? _t : _e;                                          \
+    }                                                               \
+  };
+BZLA_FP_ITE(BzlaFPTraits::rm);
+BZLA_FP_ITE(BzlaFPTraits::prop);
+BZLA_FP_ITE(BzlaFPTraits::sbv);
+BZLA_FP_ITE(BzlaFPTraits::ubv);
+#undef BZLA_FP_ITE
+
 template <class T>
 struct ite<BzlaFPSymProp, T>
 {
@@ -1846,8 +1892,9 @@ struct ite<BzlaFPSymProp, T>
     assert(c);
     assert(t);
     assert(e);
-    Bzla *bzla = bzla_node_real_addr(c)->bzla;
+    Bzla *bzla = T::s_bzla;
     assert(bzla);
+    assert(bzla == bzla_node_real_addr(c)->bzla);
     assert(bzla == bzla_node_real_addr(t)->bzla);
     assert(bzla == bzla_node_real_addr(e)->bzla);
     BzlaNode *ite = bzla_exp_cond(bzla, c, t, e);
@@ -1882,6 +1929,7 @@ class BzlaFPWordBlaster
   BzlaFPWordBlaster(Bzla *bzla) : d_bzla(bzla) {}
 
   BzlaNode *word_blast(BzlaNode *node);
+  BzlaNode *get_word_blasted_node(BzlaNode *node);
 
   BzlaFPWordBlaster *clone(Bzla *cbzla, BzlaNodeMap *exp_map);
 
@@ -1919,9 +1967,8 @@ class BzlaFPWordBlaster
       std::unordered_map<BzlaNode *, BzlaFPSymProp, BzlaNodeHashFunction>;
   using BzlaFPUnpackedFloatMap = std::
       unordered_map<BzlaNode *, BzlaSymUnpackedFloat, BzlaNodeHashFunction>;
-  // using BzlaFPSymUBVMap =
-  //    std::unordered_map<BzlaNode *, BzlaFPSymBV<false>,
-  //    BzlaNodeHashFunction>;
+  using BzlaFPPackedFloatMap =
+      std::unordered_map<BzlaNode *, BzlaFPSymBV<false>, BzlaNodeHashFunction>;
   // using BzlaFPSymSBVMap =
   //    std::unordered_map<BzlaNode *, BzlaFPSymBV<true>, BzlaNodeHashFunction>;
 
@@ -1931,6 +1978,7 @@ class BzlaFPWordBlaster
   // BzlaFPSymUBVMap d_ubv_map;
   // BzlaFPSymSBVMap d_sbv_map;
   BzlaFPUnpackedFloatMap d_unpacked_float_map;
+  BzlaFPPackedFloatMap d_packed_float_map;
   Bzla *d_bzla;
 };
 
@@ -2015,6 +2063,32 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
   assert(res);
 #endif
   return res;
+}
+
+BzlaNode *
+BzlaFPWordBlaster::get_word_blasted_node(BzlaNode *node)
+{
+  assert(d_bzla);
+  assert(node);
+  assert(bzla_node_is_regular(node));
+  assert(d_bzla == node->bzla);
+
+  if (d_packed_float_map.find(node) != d_packed_float_map.end())
+  {
+    return d_packed_float_map.at(node).getNode();
+  }
+
+  if (bzla_sort_is_bool(d_bzla, bzla_node_get_sort_id(node))
+      && d_prop_map.find(node) != d_prop_map.end())
+  {
+    return d_prop_map.at(node).getNode();
+  }
+
+  assert(d_unpacked_float_map.find(node) != d_unpacked_float_map.end());
+  d_packed_float_map.emplace(
+      node,
+      symfpu::pack(bzla_node_get_sort_id(node), d_unpacked_float_map.at(node)));
+  return d_packed_float_map.at(node).getNode();
 }
 
 BzlaFPWordBlaster *
@@ -2289,6 +2363,30 @@ bzla_fp_make_nan(Bzla *bzla, BzlaSortId sort)
   return res;
 }
 
+BzlaFloatingPoint *
+bzla_fp_make_const(Bzla *bzla, BzlaSortId sort, BzlaBitVector *bv_const)
+{
+  assert(bzla);
+  assert(sort);
+  assert(bv_const);
+  assert(bzla_sort_is_fp(bzla, sort));
+  assert(bzla_sort_fp_get_exp_width(bzla, sort)
+             + bzla_sort_fp_get_sig_width(bzla, sort)
+         == bzla_bv_get_width(bv_const));
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  res     = bzla_fp_new(bzla, sort);
+  res->fp = new BzlaUnpackedFloat(symfpu::unpack<BzlaFPTraits>(
+      *res->size, bzla_bv_copy(bzla->mm, bv_const)));
+#else
+  (void) sort;
+  (void) sign;
+  res = nullptr;
+#endif
+  return res;
+}
+
 /* ========================================================================== */
 
 void *
@@ -2300,7 +2398,10 @@ bzla_fp_word_blaster_new(Bzla *bzla)
 void *
 bzla_fp_word_blaster_clone(Bzla *bzla, Bzla *clone, BzlaNodeMap *exp_map)
 {
+  assert(bzla);
   assert(bzla->word_blaster);
+  assert(clone);
+  assert(exp_map);
   BzlaFPWordBlaster::set_s_bzla(clone);
   return static_cast<BzlaFPWordBlaster *>(bzla->word_blaster)
       ->clone(clone, exp_map);
@@ -2308,11 +2409,14 @@ bzla_fp_word_blaster_clone(Bzla *bzla, Bzla *clone, BzlaNodeMap *exp_map)
 }
 
 void
-bzla_fp_word_blaster_delete(void *wblaster)
+bzla_fp_word_blaster_delete(Bzla *bzla)
 {
-  BzlaFPWordBlaster *wb = static_cast<BzlaFPWordBlaster *>(wblaster);
+  assert(bzla);
+  if (!bzla->word_blaster) return;
+  BzlaFPWordBlaster *wb = static_cast<BzlaFPWordBlaster *>(bzla->word_blaster);
   BzlaFPWordBlaster::set_s_bzla(wb->get_bzla());
-  if (wblaster) delete wb;
+  delete wb;
+  bzla->word_blaster = nullptr;
   BzlaFPWordBlaster::unset_s_bzla();
 }
 
@@ -2325,6 +2429,19 @@ bzla_fp_word_blast(Bzla *bzla, BzlaNode *node)
   BzlaFPWordBlaster::set_s_bzla(bzla);
   BzlaNode *res =
       static_cast<BzlaFPWordBlaster *>(bzla->word_blaster)->word_blast(node);
+  BzlaFPWordBlaster::unset_s_bzla();
+  return res;
+}
+
+BzlaNode *
+bzla_fp_word_blaster_get_node(Bzla *bzla, BzlaNode *node)
+{
+  assert(bzla);
+  assert(bzla->word_blaster);
+  assert(node);
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  BzlaNode *res = static_cast<BzlaFPWordBlaster *>(bzla->word_blaster)
+                      ->get_word_blasted_node(node);
   BzlaFPWordBlaster::unset_s_bzla();
   return res;
 }
