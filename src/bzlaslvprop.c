@@ -383,6 +383,10 @@ bzla_prop_solver_init_domains(Bzla *bzla,
 
       if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
       {
+        if (!real_cur->av)
+        {
+          bzla_synthesize_exp(bzla, real_cur, 0);
+        }
         assert(real_cur->av);
         assert(real_cur->av->width == bw);
         av = real_cur->av;

@@ -53,8 +53,12 @@ class TestProp : public TestBzla
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_SLICE_FLIP, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_EQ_FLIP, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_AND_FLIP, 0);
-    // bzla_opt_set (d_bzla, BZLA_OPT_PROP_CONST_BITS, 1);
     // bzla_opt_set (d_bzla, BZLA_OPT_LOGLEVEL, 2);
+  }
+
+  void set_up_const_bits()
+  {
+    bzla_opt_set(d_bzla, BZLA_OPT_PROP_CONST_BITS, 1);
   }
 
   /**
@@ -64,7 +68,7 @@ class TestProp : public TestBzla
    *
    * n         : The number of propagation steps expected to be required to
    *             find a solution.
-   * ix_x      : The index of operand 'x'.
+   * idx_x     : The index of operand 'x'.
    * bw        : The bit-width to test for.
    * s         : The assignment of the other operand.
    * x         : The assignment of the operand we solve for.
@@ -266,6 +270,19 @@ class TestProp : public TestBzla
 
 /*------------------------------------------------------------------------*/
 
+class TestPropConst : public TestProp
+{
+ protected:
+  void SetUp() override
+  {
+    TestProp::SetUp();
+
+    bzla_opt_set(d_bzla, BZLA_OPT_PROP_CONST_BITS, 1);
+  }
+};
+
+/*------------------------------------------------------------------------*/
+
 // TODO disabled for now, need to rethink inverse value computation with
 // propagator domains, will probably not need it in the future
 #if 0
@@ -429,6 +446,15 @@ TEST_F(TestProp, one_complete_concat)
                        bzla_proputils_inv_concat);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Regular inverse value computation with const bits, no propagator domains   */
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestPropConst, one_complete_add_const)
+{
+  prop_complete_binary(
+      1, bzla_exp_bv_add, bzla_bv_add, bzla_is_inv_add, bzla_proputils_inv_add);
+}
 /* -------------------------------------------------------------------------- */
 /* Inverse value computation with propagator domains, no const bits.          */
 /* -------------------------------------------------------------------------- */
