@@ -523,8 +523,8 @@ TEST_F (TestProp, one_complete_concat_bvprop)
 #endif
 
 /* ========================================================================== */
-/* complete:                                                                */
-/* Test if it is possible to find a solution with two propagation step.     */
+/* complete:                                                                  */
+/* Test if it is possible to find a solution with two propagation step.       */
 /* ========================================================================== */
 
 /* -------------------------------------------------------------------------- */

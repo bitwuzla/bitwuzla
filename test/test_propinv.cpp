@@ -49,13 +49,39 @@ class TestPropInv : public TestBzla
     bzla_model_generate(d_bzla, d_bzla->bv_model, d_bzla->fun_model, 0);
   }
 
+  /**
+   * Check the result of a previous inverse value computation. Given 's'
+   * (the assignment of the other operand) and 't' (the target value of the
+   * operation) we expect that we determine and inverse value 'x_exp' for the
+   * operand at index 'idx_x'.
+   *
+   * We use this to check that a value 's' that was previously determined as
+   * the inverse value for an operation given 't' and 'x_exp', produces 'x_exp'
+   * as inverse value, i.e., we essentially reverse the inverse value
+   * computation with respect to the operands.
+   *
+   * is_inv        : The function to test if given operator is invertible with
+   *                 respect to s and t.
+   * inv_fun       : The function to compute the inverse value for x given s
+   *                 and t.
+   * inv_fun_bvprop: The function to compute the inverse value for x given s
+   *                 and t using propagator domains.
+   * exp           : The node representing the operation.
+   * s             : The assignment of the other operand.
+   * t             : The assignment of the output (the target value of the
+   *                 operation).
+   * x_exp         : The expected assignment of the operand we solve for.
+   * idx_x         : The index of operand 'x'.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_result(BzlaPropIsInv is_inv,
-                    BzlaPropComputeValue inv_fun_bv,
+                    BzlaPropComputeValue inv_fun,
                     BzlaPropComputeValue inv_fun_bvprop,
                     BzlaNode *exp,
-                    BzlaBitVector *bve,
-                    BzlaBitVector *bvn,
-                    BzlaBitVector *bvres,
+                    BzlaBitVector *s,
+                    BzlaBitVector *t,
+                    BzlaBitVector *x_exp,
                     uint32_t idx_x,
                     bool use_domains)
   {
@@ -73,22 +99,22 @@ class TestPropInv : public TestBzla
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
-      assert(is_inv(d_mm, bvn, bve, idx_x));
+      assert(is_inv(d_mm, t, s, idx_x));
       if (use_domains)
       {
-        res = inv_fun_bvprop(d_bzla, exp, bvn, bve, idx_x, d_domains);
+        res = inv_fun_bvprop(d_bzla, exp, t, s, idx_x, d_domains);
       }
       else
       {
-        res = inv_fun_bv(d_bzla, exp, bvn, bve, idx_x, d_domains);
+        res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains);
       }
       ASSERT_NE(res, nullptr);
-      if (!bzla_bv_compare(res, bvres)) break;
+      if (!bzla_bv_compare(res, x_exp)) break;
       bzla_bv_free(d_mm, res);
       res = 0;
     }
     ASSERT_NE(res, nullptr);
-    ASSERT_EQ(bzla_bv_compare(res, bvres), 0);
+    ASSERT_EQ(bzla_bv_compare(res, x_exp), 0);
     bzla_bv_free(d_mm, res);
 
     if (use_domains)
@@ -105,12 +131,29 @@ class TestPropInv : public TestBzla
     }
   }
 
+  /**
+   * Test if for a binary operation s0 <> s1 = t, the inverse value computation
+   * for the first operand produces value s0, and the inverse value computation
+   * for the second operand produces value s1.
+   *
+   * exp_fun       : The function to create the node representing operation <>.
+   * bv_fun        : The function to create the bit-vector result of operation
+   *                 s0 <> s1.
+   * is_inv        : The function to test if given operator is invertible with
+   *                 respect to s and t.
+   * inv_fun       : The function to compute the inverse value for x given s
+   *                 and t.
+   * inv_fun_bvprop: The function to compute the inverse value for x given s
+   *                 and t using propagator domains.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_binary(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              const BzlaBitVector *),
                     BzlaPropIsInv is_inv,
-                    BzlaPropComputeValue inv_fun_bv,
+                    BzlaPropComputeValue inv_fun,
                     BzlaPropComputeValue inv_fun_bvprop,
                     bool use_domains)
   {
@@ -118,7 +161,7 @@ class TestPropInv : public TestBzla
     uint64_t i, j;
     BzlaNode *exp, *e[2];
     BzlaSortId sort;
-    BzlaBitVector *bve[2], *bvexp;
+    BzlaBitVector *s[2], *t;
 
     bw   = TEST_PROP_INV_COMPLETE_BW;
     sort = bzla_sort_bv(d_bzla, bw);
@@ -129,39 +172,56 @@ class TestPropInv : public TestBzla
 
     for (i = 0; i < (uint32_t)(1 << bw); i++)
     {
-      bve[0] = bzla_bv_uint64_to_bv(d_mm, i, bw);
+      s[0] = bzla_bv_uint64_to_bv(d_mm, i, bw);
       for (j = 0; j < (uint32_t)(1 << bw); j++)
       {
-        bve[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
-        bvexp  = bv_fun(d_mm, bve[0], bve[1]);
+        s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
+        t    = bv_fun(d_mm, s[0], s[1]);
         check_result(is_inv,
-                     inv_fun_bv,
+                     inv_fun,
                      inv_fun_bvprop,
                      exp,
-                     bve[0],
-                     bvexp,
-                     bve[1],
+                     s[0],
+                     t,
+                     s[1],
                      1,
                      use_domains);
         check_result(is_inv,
-                     inv_fun_bv,
+                     inv_fun,
                      inv_fun_bvprop,
                      exp,
-                     bve[1],
-                     bvexp,
-                     bve[0],
+                     s[1],
+                     t,
+                     s[0],
                      0,
                      use_domains);
-        bzla_bv_free(d_mm, bve[1]);
-        bzla_bv_free(d_mm, bvexp);
+        bzla_bv_free(d_mm, s[1]);
+        bzla_bv_free(d_mm, t);
       }
-      bzla_bv_free(d_mm, bve[0]);
+      bzla_bv_free(d_mm, s[0]);
     }
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
     bzla_node_release(d_bzla, exp);
   }
 
+  /**
+   * Test if for a shift operation s0 <> s1 = t, the inverse value computation
+   * for the first operand produces value s0, and the inverse value computation
+   * for the second operand produces value s1.
+   *
+   * exp_fun       : The function to create the node representing operation <>.
+   * bv_fun        : The function to create the bit-vector result of operation
+   *                 s0 <> s1.
+   * is_inv        : The function to test if given operator is invertible with
+   *                 respect to s and t.
+   * inv_fun       : The function to compute the inverse value for x given s
+   *                 and t.
+   * inv_fun_bvprop: The function to compute the inverse value for x given s
+   *                 and t using propagator domains.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_shift(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                    BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                             const BzlaBitVector *,
@@ -175,7 +235,7 @@ class TestPropInv : public TestBzla
     uint64_t i, j;
     BzlaNode *exp, *e[2];
     BzlaSortId sort;
-    BzlaBitVector *bve[2], *bvexp;
+    BzlaBitVector *s[2], *x;
 
     bw   = TEST_PROP_INV_COMPLETE_BW;
     sort = bzla_sort_bv(d_bzla, bw);
@@ -186,39 +246,47 @@ class TestPropInv : public TestBzla
 
     for (i = 0; i < (uint32_t)(1 << bw); i++)
     {
-      bve[0] = bzla_bv_uint64_to_bv(d_mm, i, bw);
+      s[0] = bzla_bv_uint64_to_bv(d_mm, i, bw);
       for (j = 0; j < (uint32_t)(1 << bw); j++)
       {
-        bve[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
-        bvexp  = bv_fun(d_mm, bve[0], bve[1]);
+        s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
+        x    = bv_fun(d_mm, s[0], s[1]);
         check_result(is_inv,
                      inv_fun_bv,
                      inv_fun_bvprop,
                      exp,
-                     bve[0],
-                     bvexp,
-                     bve[1],
+                     s[0],
+                     x,
+                     s[1],
                      1,
                      use_domains);
         check_result(is_inv,
                      inv_fun_bv,
                      inv_fun_bvprop,
                      exp,
-                     bve[1],
-                     bvexp,
-                     bve[0],
+                     s[1],
+                     x,
+                     s[0],
                      0,
                      use_domains);
-        bzla_bv_free(d_mm, bve[1]);
-        bzla_bv_free(d_mm, bvexp);
+        bzla_bv_free(d_mm, s[1]);
+        bzla_bv_free(d_mm, x);
       }
-      bzla_bv_free(d_mm, bve[0]);
+      bzla_bv_free(d_mm, s[0]);
     }
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
     bzla_node_release(d_bzla, exp);
   }
 
+  /**
+   * Test if for x & s = t and s & x = t, the consistent value and inverse value
+   * computation always produces t when solved for x.
+   *
+   * bw            : The bit-width to use.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_conf_and(uint32_t bw, bool use_domains)
   {
     (void) bw;
@@ -226,7 +294,7 @@ class TestPropInv : public TestBzla
     uint64_t i, j;
     BzlaNode *_and, *cand[2], *e[2], *ce[2];
     BzlaSortId sort;
-    BzlaBitVector *bvand, *bve[2], *res, *tmp, *tmp2;
+    BzlaBitVector *bvand, *s[2], *res, *tmp, *tmp2;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_and;
@@ -247,55 +315,55 @@ class TestPropInv : public TestBzla
 
     for (i = 0; i < (uint32_t)(1 << bw); i++)
     {
-      bve[0]  = bzla_bv_uint64_to_bv(d_mm, i, bw);
-      bve[1]  = bzla_bv_uint64_to_bv(d_mm, i, bw);
-      ce[0]   = bzla_exp_bv_const(d_bzla, bve[0]);
-      ce[1]   = bzla_exp_bv_const(d_bzla, bve[1]);
+      s[0]    = bzla_bv_uint64_to_bv(d_mm, i, bw);
+      s[1]    = bzla_bv_uint64_to_bv(d_mm, i, bw);
+      ce[0]   = bzla_exp_bv_const(d_bzla, s[0]);
+      ce[1]   = bzla_exp_bv_const(d_bzla, s[1]);
       cand[0] = bzla_exp_bv_and(d_bzla, ce[0], e[1]);
       cand[1] = bzla_exp_bv_and(d_bzla, e[0], ce[1]);
 
       for (j = 0; j < (uint32_t)(1 << bw); j++)
       {
         bvand = bzla_bv_uint64_to_bv(d_mm, j, bw);
-        tmp   = bzla_bv_and(d_mm, bve[0], bvand);
+        tmp   = bzla_bv_and(d_mm, s[0], bvand);
         if (bzla_bv_compare(tmp, bvand))
         {
         PROP_INV_CONF_AND_TESTS:
           /* prop engine: all conflicts are treated as fixable */
-          inv = bzla_is_inv_and(d_mm, bvand, bve[1], 0);
-          res = inv ? inv_fun(d_bzla, _and, bvand, bve[1], 0, d_domains)
+          inv = bzla_is_inv_and(d_mm, bvand, s[1], 0);
+          res = inv ? inv_fun(d_bzla, _and, bvand, s[1], 0, d_domains)
                     : bzla_proputils_cons_and(
-                        d_bzla, _and, bvand, bve[1], 0, d_domains);
+                        d_bzla, _and, bvand, s[1], 0, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          inv = bzla_is_inv_and(d_mm, bvand, bve[0], 1);
-          res = inv ? inv_fun(d_bzla, _and, bvand, bve[0], 1, d_domains)
+          inv = bzla_is_inv_and(d_mm, bvand, s[0], 1);
+          res = inv ? inv_fun(d_bzla, _and, bvand, s[0], 1, d_domains)
                     : bzla_proputils_cons_and(
-                        d_bzla, _and, bvand, bve[0], 1, d_domains);
+                        d_bzla, _and, bvand, s[0], 1, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          inv = bzla_is_inv_and(d_mm, bvand, bve[0], 1);
-          res = inv ? inv_fun(d_bzla, cand[0], bvand, bve[0], 1, d_domains)
+          inv = bzla_is_inv_and(d_mm, bvand, s[0], 1);
+          res = inv ? inv_fun(d_bzla, cand[0], bvand, s[0], 1, d_domains)
                     : bzla_proputils_cons_and(
-                        d_bzla, cand[0], bvand, bve[0], 1, d_domains);
+                        d_bzla, cand[0], bvand, s[0], 1, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          inv = bzla_is_inv_and(d_mm, bvand, bve[1], 0);
-          res = inv ? inv_fun(d_bzla, cand[1], bvand, bve[1], 0, d_domains)
+          inv = bzla_is_inv_and(d_mm, bvand, s[1], 0);
+          res = inv ? inv_fun(d_bzla, cand[1], bvand, s[1], 0, d_domains)
                     : bzla_proputils_cons_and(
-                        d_bzla, cand[1], bvand, bve[1], 0, d_domains);
+                        d_bzla, cand[1], bvand, s[1], 0, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
@@ -323,8 +391,8 @@ class TestPropInv : public TestBzla
       bzla_node_release(d_bzla, cand[1]);
       bzla_node_release(d_bzla, ce[0]);
       bzla_node_release(d_bzla, ce[1]);
-      bzla_bv_free(d_mm, bve[0]);
-      bzla_bv_free(d_mm, bve[1]);
+      bzla_bv_free(d_mm, s[0]);
+      bzla_bv_free(d_mm, s[1]);
     }
 
     if (use_domains)
@@ -345,13 +413,21 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, e[1]);
   }
 
+  /**
+   * Test if for x < s = t and s < x = t, the consistent value and inverse value
+   * computation always produces t when solved for x.
+   *
+   * bw            : The bit-width to use.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_conf_ult(uint32_t bw, bool use_domains)
   {
     (void) bw;
     bool inv;
     BzlaNode *ult, *e[2], *cult, *ce;
     BzlaSortId sort;
-    BzlaBitVector *res, *bvult, *bve, *zero, *bvmax;
+    BzlaBitVector *res, *bvult, *s, *zero, *bvmax;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_ult;
@@ -378,43 +454,43 @@ class TestPropInv : public TestBzla
 
   PROP_INV_CONF_ULT_TESTS:
     /* 1...1 < e[1] */
-    bve = bzla_bv_ones(d_mm, bw);
-    inv = bzla_is_inv_ult(d_mm, bvult, bve, 1);
-    res = inv ? inv_fun(d_bzla, ult, bvult, bve, 1, d_domains)
-              : bzla_proputils_cons_ult(d_bzla, ult, bvult, bve, 1, d_domains);
+    s   = bzla_bv_ones(d_mm, bw);
+    inv = bzla_is_inv_ult(d_mm, bvult, s, 1);
+    res = inv ? inv_fun(d_bzla, ult, bvult, s, 1, d_domains)
+              : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 1, d_domains);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
-    ce   = bzla_exp_bv_const(d_bzla, bve);
+    ce   = bzla_exp_bv_const(d_bzla, s);
     cult = bzla_exp_bv_ult(d_bzla, ce, e[1]);
-    inv  = bzla_is_inv_ult(d_mm, bvult, bve, 1);
-    res  = inv ? inv_fun(d_bzla, cult, bvult, bve, 1, d_domains)
-              : bzla_proputils_cons_ult(d_bzla, cult, bvult, bve, 1, d_domains);
+    inv  = bzla_is_inv_ult(d_mm, bvult, s, 1);
+    res  = inv ? inv_fun(d_bzla, cult, bvult, s, 1, d_domains)
+              : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 1, d_domains);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
     bzla_node_release(d_bzla, cult);
     bzla_node_release(d_bzla, ce);
-    bzla_bv_free(d_mm, bve);
+    bzla_bv_free(d_mm, s);
     /* e[0] < 0 */
-    bve = bzla_bv_new(d_mm, bw);
-    inv = bzla_is_inv_ult(d_mm, bvult, bve, 0);
-    res = inv ? inv_fun(d_bzla, ult, bvult, bve, 0, d_domains)
-              : bzla_proputils_cons_ult(d_bzla, ult, bvult, bve, 0, d_domains);
+    s   = bzla_bv_new(d_mm, bw);
+    inv = bzla_is_inv_ult(d_mm, bvult, s, 0);
+    res = inv ? inv_fun(d_bzla, ult, bvult, s, 0, d_domains)
+              : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 0, d_domains);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
-    ce   = bzla_exp_bv_const(d_bzla, bve);
+    ce   = bzla_exp_bv_const(d_bzla, s);
     cult = bzla_exp_bv_ult(d_bzla, e[0], ce);
-    inv  = bzla_is_inv_ult(d_mm, bvult, bve, 0);
-    res  = inv ? inv_fun(d_bzla, cult, bvult, bve, 0, d_domains)
-              : bzla_proputils_cons_ult(d_bzla, cult, bvult, bve, 0, d_domains);
+    inv  = bzla_is_inv_ult(d_mm, bvult, s, 0);
+    res  = inv ? inv_fun(d_bzla, cult, bvult, s, 0, d_domains)
+              : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 0, d_domains);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
     bzla_node_release(d_bzla, cult);
     bzla_node_release(d_bzla, ce);
-    bzla_bv_free(d_mm, bve);
+    bzla_bv_free(d_mm, s);
 
     if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS) goto DONE;
 
@@ -452,6 +528,15 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, e[1]);
   }
 
+  /**
+   * Test if for x << s = t and s << x = t, the consistent value and inverse
+   * value computation always produces a value t when solved for x where the
+   * shifted bits match the corresponding bits in the shifted operand.
+   *
+   * bw            : The bit-width to use.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_conf_sll(uint32_t bw, bool use_domains)
   {
     (void) bw;
@@ -478,7 +563,7 @@ class TestPropInv : public TestBzla
     /* prop engine: all conflicts are treated as fixable */
 
   PROP_INV_CONF_SLL_TESTS:
-    /* bve << e[1] = bvsll */
+    /* s << e[1] = bvsll */
 
     /* -> shifted bits must match */
     switch (bw)
@@ -486,7 +571,6 @@ class TestPropInv : public TestBzla
       case 2:
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -496,7 +580,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -506,7 +589,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -517,7 +599,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -528,7 +609,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -538,7 +618,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -549,7 +628,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -562,7 +640,6 @@ class TestPropInv : public TestBzla
       case 4:
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -572,7 +649,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -582,7 +658,6 @@ class TestPropInv : public TestBzla
                          3);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -592,7 +667,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -603,7 +677,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -613,7 +686,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -623,7 +695,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -633,7 +704,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -644,7 +714,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -654,7 +723,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -664,7 +732,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -674,7 +741,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -685,7 +751,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -695,7 +760,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -705,7 +769,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -715,7 +778,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -726,7 +788,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -736,7 +797,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -746,7 +806,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -756,7 +815,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -767,7 +825,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -777,7 +834,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -787,7 +843,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -797,7 +852,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -810,7 +864,6 @@ class TestPropInv : public TestBzla
       case 8:
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -820,7 +873,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -831,7 +883,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -841,7 +892,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -852,7 +902,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -862,7 +911,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -873,7 +921,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -883,7 +930,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -894,7 +940,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -904,7 +949,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -915,7 +959,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -925,7 +968,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -936,7 +978,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -946,7 +987,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -959,14 +999,13 @@ class TestPropInv : public TestBzla
       default: break;
     }
 
-    /* e[0] << bve = bvsll
+    /* e[0] << s = bvsll
      * -> LSBs shifted must be zero */
     switch (bw)
     {
       case 2:
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -976,7 +1015,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -988,7 +1026,6 @@ class TestPropInv : public TestBzla
       case 4:
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -998,7 +1035,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -1008,7 +1044,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -1020,7 +1055,6 @@ class TestPropInv : public TestBzla
       case 8:
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -1030,7 +1064,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -1040,7 +1073,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -1050,7 +1082,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -1060,7 +1091,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -1070,7 +1100,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -1080,7 +1109,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          sll,
-                         e,
                          bzla_exp_bv_sll,
                          bzla_is_inv_sll,
                          inv_fun,
@@ -1124,6 +1152,15 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, e[1]);
   }
 
+  /**
+   * Test if for x >> s = t and s >> x = t, the consistent value and inverse
+   * value computation always produces a value t when solved for x where the
+   * shifted bits match the corresponding bits in the shifted operand.
+   *
+   * bw            : The bit-width to use.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_conf_srl(uint32_t bw, bool use_domains)
   {
     (void) bw;
@@ -1150,7 +1187,7 @@ class TestPropInv : public TestBzla
     /* prop engine: all conflicts are treated as fixable */
 
   PROP_INV_CONF_SRL_TESTS:
-    /* bve >> e[1] = bvsrl */
+    /* s >> e[1] = bvsrl */
 
     /* -> shifted bits must match */
     switch (bw)
@@ -1158,7 +1195,6 @@ class TestPropInv : public TestBzla
       case 2:
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1168,7 +1204,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1178,7 +1213,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1189,7 +1223,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1199,7 +1232,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1210,7 +1242,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1221,7 +1252,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1234,7 +1264,6 @@ class TestPropInv : public TestBzla
       case 4:
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1244,7 +1273,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1254,7 +1282,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1264,7 +1291,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1275,7 +1301,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1285,7 +1310,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1295,7 +1319,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1305,7 +1328,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1316,7 +1338,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1326,7 +1347,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1336,7 +1356,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1346,7 +1365,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1357,7 +1375,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1367,7 +1384,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1377,7 +1393,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1387,7 +1402,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1398,7 +1412,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1408,7 +1421,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1418,7 +1430,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1428,7 +1439,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1439,7 +1449,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1449,7 +1458,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1459,7 +1467,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1469,7 +1476,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1482,7 +1488,6 @@ class TestPropInv : public TestBzla
       case 8:
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1492,7 +1497,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1503,7 +1507,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1513,7 +1516,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1524,7 +1526,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1534,7 +1535,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1545,7 +1545,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1555,7 +1554,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1566,7 +1564,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1576,7 +1573,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1587,7 +1583,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1597,7 +1592,6 @@ class TestPropInv : public TestBzla
                          2);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1608,7 +1602,6 @@ class TestPropInv : public TestBzla
         ///
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1618,7 +1611,6 @@ class TestPropInv : public TestBzla
                          1);
         check_conf_shift(1,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1631,14 +1623,13 @@ class TestPropInv : public TestBzla
       default: break;
     }
 
-    /* e[0] << bve = bvsrl
+    /* e[0] << s = bvsrl
      * -> LSBs shifted must be zero */
     switch (bw)
     {
       case 2:
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1648,7 +1639,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1660,7 +1650,6 @@ class TestPropInv : public TestBzla
       case 4:
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1670,7 +1659,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1680,7 +1668,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1692,7 +1679,6 @@ class TestPropInv : public TestBzla
       case 8:
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1702,7 +1688,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1712,7 +1697,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1722,7 +1706,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1732,7 +1715,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1742,7 +1724,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1752,7 +1733,6 @@ class TestPropInv : public TestBzla
                          0);
         check_conf_shift(0,
                          srl,
-                         e,
                          bzla_exp_bv_srl,
                          bzla_is_inv_srl,
                          inv_fun,
@@ -1796,13 +1776,21 @@ class TestPropInv : public TestBzla
     d_bzla->slv = slv;
   }
 
+  /**
+   * Given x * s = t and s * x = t, test if the consistent value and inverse
+   * value computation always produces a 'legal' value t when solved for x.
+   *
+   * bw            : The bit-width to use.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_conf_mul(uint32_t bw, bool use_domains)
   {
     (void) bw;
     uint32_t i, j, k, r;
     BzlaNode *mul, *e[2];
     BzlaSortId sort;
-    BzlaBitVector *bvmul, *bve;
+    BzlaBitVector *bvmul, *s;
     BzlaSolver *slv = 0;
 
     sort = bzla_sort_bv(d_bzla, bw);
@@ -1814,8 +1802,8 @@ class TestPropInv : public TestBzla
     /* prop engine: all conflicts are treated as fixable */
 
   PROP_INV_CONF_MUL_TESTS:
-    /* bve = 0 but bvmul > 0 */
-    bve = bzla_bv_new(d_mm, bw);
+    /* s = 0 but bvmul > 0 */
+    s = bzla_bv_new(d_mm, bw);
     for (k = 0; k < 10; k++)
     {
       bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
@@ -1824,68 +1812,68 @@ class TestPropInv : public TestBzla
         bzla_bv_free(d_mm, bvmul);
         bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
       }
-      check_conf_mul_result(mul, e, bvmul, bve, use_domains);
+      check_conf_mul_result(mul, bvmul, s, use_domains);
       bzla_bv_free(d_mm, bvmul);
     }
-    bzla_bv_free(d_mm, bve);
+    bzla_bv_free(d_mm, s);
 
-    /* bvmul is odd but bve is even */
+    /* bvmul is odd but s is even */
     for (k = 0; k < 10; k++)
     {
       bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
       if (!bzla_bv_get_bit(bvmul, 0)) bzla_bv_set_bit(bvmul, 0, 1);
-      bve = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
-      if (bzla_bv_get_bit(bve, 0)) bzla_bv_set_bit(bve, 0, 0);
-      check_conf_mul_result(mul, e, bvmul, bve, use_domains);
+      s = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+      if (bzla_bv_get_bit(s, 0)) bzla_bv_set_bit(s, 0, 0);
+      check_conf_mul_result(mul, bvmul, s, use_domains);
       bzla_bv_free(d_mm, bvmul);
-      bzla_bv_free(d_mm, bve);
+      bzla_bv_free(d_mm, s);
     }
 
-    /* bve = 2^i and number of 0-LSBs in bvmul < i */
+    /* s = 2^i and number of 0-LSBs in bvmul < i */
     for (k = 0; k < 10; k++)
     {
       for (i = 1; bw > 1 && i < bw; i++)
       {
-        bve = bzla_bv_new(d_mm, bw);
-        bzla_bv_set_bit(bve, i, 1);
+        s = bzla_bv_new(d_mm, bw);
+        bzla_bv_set_bit(s, i, 1);
         bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
         r     = bzla_rng_pick_rand(&d_bzla->rng, 0, i - 1);
         for (j = 0; j < r; j++) bzla_bv_set_bit(bvmul, j, 0);
         if (!bzla_bv_get_bit(bvmul, r)) bzla_bv_set_bit(bvmul, r, 1);
-        check_conf_mul_result(mul, e, bvmul, bve, use_domains);
+        check_conf_mul_result(mul, bvmul, s, use_domains);
         bzla_bv_free(d_mm, bvmul);
-        bzla_bv_free(d_mm, bve);
+        bzla_bv_free(d_mm, s);
       }
     }
 
-    /* bve = 2^i * m and number of 0-LSBs in bvmul < i */
+    /* s = 2^i * m and number of 0-LSBs in bvmul < i */
     for (k = 0; k < 10; k++)
     {
       for (i = 0; bw > 1 && i < 10; i++)
       {
-        bve = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
-        while (bzla_bv_power_of_two(bve) >= 0)
+        s = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+        while (bzla_bv_power_of_two(s) >= 0)
         {
-          bzla_bv_free(d_mm, bve);
-          bve = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+          bzla_bv_free(d_mm, s);
+          s = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
         }
-        if (bzla_bv_get_bit(bve, 0))
+        if (bzla_bv_get_bit(s, 0))
         {
           r = bzla_rng_pick_rand(&d_bzla->rng, 1, bw - 1);
-          for (j = 0; j < r; j++) bzla_bv_set_bit(bve, j, 0);
+          for (j = 0; j < r; j++) bzla_bv_set_bit(s, j, 0);
         }
         else
         {
           for (j = 0; j < bw; j++)
-            if (bzla_bv_get_bit(bve, j)) break;
+            if (bzla_bv_get_bit(s, j)) break;
         }
         bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
         r     = bzla_rng_pick_rand(&d_bzla->rng, 0, j - 1);
         for (j = 0; j < r; j++) bzla_bv_set_bit(bvmul, j, 0);
         if (!bzla_bv_get_bit(bvmul, r)) bzla_bv_set_bit(bvmul, r, 1);
-        check_conf_mul_result(mul, e, bvmul, bve, use_domains);
+        check_conf_mul_result(mul, bvmul, s, use_domains);
         bzla_bv_free(d_mm, bvmul);
-        bzla_bv_free(d_mm, bve);
+        bzla_bv_free(d_mm, s);
       }
     }
 
@@ -1907,13 +1895,21 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, e[1]);
   }
 
+  /**
+   * Given x / s = t and s / x = t, test if the consistent value and inverse
+   * value computation always produces a 'legal' value t when solved for x.
+   *
+   * bw            : The bit-width to use.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_conf_udiv(uint32_t bw, bool use_domains)
   {
     (void) bw;
     int32_t k;
     BzlaNode *udiv, *e[2];
     BzlaSortId sort;
-    BzlaBitVector *bve, *bvudiv, *bvmax, *zero, *tmp, *tmp2;
+    BzlaBitVector *s, *bvudiv, *bvmax, *zero, *tmp, *tmp2;
     BzlaSolver *slv = 0;
 
     sort = bzla_sort_bv(d_bzla, bw);
@@ -1928,50 +1924,50 @@ class TestPropInv : public TestBzla
     /* prop engine: all conflicts are treated as fixable */
 
   PROP_INV_CONF_UDIV_TESTS:
-    /* bve / e[1] = bvudiv */
-    /* bve = 1...1 and bvudiv = 0 */
-    bve    = bzla_bv_copy(d_mm, bvmax);
+    /* s / e[1] = bvudiv */
+    /* s = 1...1 and bvudiv = 0 */
+    s      = bzla_bv_copy(d_mm, bvmax);
     bvudiv = bzla_bv_new(d_mm, bw);
-    check_conf_udiv_result(1, udiv, e, bvudiv, bve, use_domains);
+    check_conf_udiv_result(1, udiv, bvudiv, s, use_domains);
     bzla_bv_free(d_mm, bvudiv);
-    bzla_bv_free(d_mm, bve);
-    /* bve < bvudiv */
+    bzla_bv_free(d_mm, s);
+    /* s < bvudiv */
     for (k = 0; bw > 1 && k < 10; k++)
     {
       tmp = bzla_bv_uint64_to_bv(d_mm, 2, bw);
-      bve = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
+      s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       bzla_bv_free(d_mm, tmp);
-      tmp    = bzla_bv_inc(d_mm, bve);
+      tmp    = bzla_bv_inc(d_mm, s);
       tmp2   = bzla_bv_dec(d_mm, bvmax);
       bvudiv = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, tmp2);
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, tmp2);
-      check_conf_udiv_result(1, udiv, e, bvudiv, bve, use_domains);
+      check_conf_udiv_result(1, udiv, bvudiv, s, use_domains);
       bzla_bv_free(d_mm, bvudiv);
-      bzla_bv_free(d_mm, bve);
+      bzla_bv_free(d_mm, s);
     }
-    /* e[0] / bve = bvudiv */
-    /* bve = 0 and bvudiv < 1...1 */
+    /* e[0] / s = bvudiv */
+    /* s = 0 and bvudiv < 1...1 */
     for (k = 0; k < 10; k++)
     {
-      bve    = bzla_bv_new(d_mm, bw);
+      s      = bzla_bv_new(d_mm, bw);
       tmp    = bzla_bv_dec(d_mm, bvmax);
       bvudiv = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       bzla_bv_free(d_mm, tmp);
-      check_conf_udiv_result(0, udiv, e, bvudiv, bve, use_domains);
+      check_conf_udiv_result(0, udiv, bvudiv, s, use_domains);
       bzla_bv_free(d_mm, bvudiv);
-      bzla_bv_free(d_mm, bve);
+      bzla_bv_free(d_mm, s);
     }
-    /* bvudiv = 1...1 and bve > 1 */
+    /* bvudiv = 1...1 and s > 1 */
     for (k = 0; bw > 1 && k < 10; k++)
     {
       bvudiv = bzla_bv_copy(d_mm, bvmax);
       tmp    = bzla_bv_uint64_to_bv(d_mm, 2, bw);
-      bve    = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
+      s      = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
       bzla_bv_free(d_mm, tmp);
-      check_conf_udiv_result(0, udiv, e, bvudiv, bve, use_domains);
+      check_conf_udiv_result(0, udiv, bvudiv, s, use_domains);
       bzla_bv_free(d_mm, bvudiv);
-      bzla_bv_free(d_mm, bve);
+      bzla_bv_free(d_mm, s);
     }
 
     if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS) goto DONE;
@@ -1995,6 +1991,14 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, e[1]);
   }
 
+  /**
+   * Given x % s = t and s % x = t, test if the consistent value and inverse
+   * value computation always produces a 'legal' value t when solved for x.
+   *
+   * bw            : The bit-width to use.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_conf_urem(uint32_t bw, bool use_domains)
   {
     (void) bw;
@@ -2002,7 +2006,7 @@ class TestPropInv : public TestBzla
     int32_t k;
     BzlaNode *urem, *e[2], *curem, *ce;
     BzlaSortId sort;
-    BzlaBitVector *res, *bve, *bvurem, *bvmax, *zero, *two, *tmp, *tmp2;
+    BzlaBitVector *res, *s, *bvurem, *bvmax, *zero, *two, *tmp, *tmp2;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_urem;
@@ -2027,64 +2031,64 @@ class TestPropInv : public TestBzla
     /* prop engine: all conflicts are treated as fixable */
 
   PROP_INV_CONF_UREM_TESTS:
-    /* bve % e[1] = bvurem */
-    /* bvurem = 1...1 and bve < 1...1 */
+    /* s % e[1] = bvurem */
+    /* bvurem = 1...1 and s < 1...1 */
     bvurem = bzla_bv_copy(d_mm, bvmax);
     for (k = 0; k < 10; k++)
     {
       tmp   = bzla_bv_dec(d_mm, bvmax);
-      bve   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
-      ce    = bzla_exp_bv_const(d_bzla, bve);
+      s     = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
+      ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
-      res   = inv ? inv_fun(d_bzla, urem, bvurem, bve, 1, d_domains)
-                : bzla_proputils_cons_urem(
-                    d_bzla, urem, bvurem, bve, 1, d_domains);
+      inv   = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      res =
+          inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains)
+              : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, bve, 1, d_domains)
+      inv = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains)
                 : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, bve, 1, d_domains);
+                    d_bzla, curem, bvurem, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
       bzla_node_release(d_bzla, ce);
       bzla_bv_free(d_mm, tmp);
-      bzla_bv_free(d_mm, bve);
+      bzla_bv_free(d_mm, s);
     }
     bzla_bv_free(d_mm, bvurem);
-    /* bve < bvurem */
+    /* s < bvurem */
     for (k = 0; k < 10; k++)
     {
       tmp    = bzla_bv_inc(d_mm, zero);
       bvurem = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
       bzla_bv_free(d_mm, tmp);
       tmp = bzla_bv_dec(d_mm, bvurem);
-      bve = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
+      s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       bzla_bv_free(d_mm, tmp);
-      ce    = bzla_exp_bv_const(d_bzla, bve);
+      ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
-      res   = inv ? inv_fun(d_bzla, urem, bvurem, bve, 1, d_domains)
-                : bzla_proputils_cons_urem(
-                    d_bzla, urem, bvurem, bve, 1, d_domains);
+      inv   = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      res =
+          inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains)
+              : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, bve, 1, d_domains)
+      inv = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains)
                 : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, bve, 1, d_domains);
+                    d_bzla, curem, bvurem, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
       bzla_node_release(d_bzla, ce);
-      bzla_bv_free(d_mm, bve);
+      bzla_bv_free(d_mm, s);
       bzla_bv_free(d_mm, bvurem);
     }
-    /* bve > bvurem and bve - bvurem <= bvurem -> bve > 2 * bvurem */
+    /* s > bvurem and s - bvurem <= bvurem -> s > 2 * bvurem */
     for (k = 0; bw > 1 && k < 10; k++)
     {
       two    = bzla_bv_uint64_to_bv(d_mm, 2, bw);
@@ -2095,84 +2099,84 @@ class TestPropInv : public TestBzla
       bzla_bv_free(d_mm, tmp2);
       tmp  = bzla_bv_inc(d_mm, bvurem);
       tmp2 = bzla_bv_mul(d_mm, bvurem, two);
-      bve  = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, tmp2);
+      s    = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, tmp2);
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, tmp2);
-      ce    = bzla_exp_bv_const(d_bzla, bve);
+      ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
-      res   = inv ? inv_fun(d_bzla, urem, bvurem, bve, 1, d_domains)
-                : bzla_proputils_cons_urem(
-                    d_bzla, urem, bvurem, bve, 1, d_domains);
+      inv   = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      res =
+          inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains)
+              : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, bvurem, bve, 1);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, bve, 1, d_domains)
+      inv = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains)
                 : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, bve, 1, d_domains);
+                    d_bzla, curem, bvurem, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
       bzla_node_release(d_bzla, ce);
       bzla_bv_free(d_mm, two);
       bzla_bv_free(d_mm, bvurem);
-      bzla_bv_free(d_mm, bve);
+      bzla_bv_free(d_mm, s);
     }
 
-    /* e[0] % bve = bvurem */
-    /* bvurem = 1...1 and bve > 0 */
+    /* e[0] % s = bvurem */
+    /* bvurem = 1...1 and s > 0 */
     bvurem = bzla_bv_copy(d_mm, bvmax);
     for (k = 0; k < 10; k++)
     {
       tmp   = bzla_bv_inc(d_mm, zero);
-      bve   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
-      ce    = bzla_exp_bv_const(d_bzla, bve);
+      s     = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
+      ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      inv   = bzla_is_inv_urem(d_mm, bvurem, bve, 0);
-      res   = inv ? inv_fun(d_bzla, urem, bvurem, bve, 0, d_domains)
-                : bzla_proputils_cons_urem(
-                    d_bzla, urem, bvurem, bve, 0, d_domains);
+      inv   = bzla_is_inv_urem(d_mm, bvurem, s, 0);
+      res =
+          inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains)
+              : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_EQ(bzla_bv_compare(res, bvurem), 0);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, bvurem, bve, 0);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, bve, 0, d_domains)
+      inv = bzla_is_inv_urem(d_mm, bvurem, s, 0);
+      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains)
                 : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, bve, 0, d_domains);
+                    d_bzla, curem, bvurem, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_EQ(bzla_bv_compare(res, bvurem), 0);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
       bzla_node_release(d_bzla, ce);
       bzla_bv_free(d_mm, tmp);
-      bzla_bv_free(d_mm, bve);
+      bzla_bv_free(d_mm, s);
     }
     bzla_bv_free(d_mm, bvurem);
-    /* bve > 0 and bve <= bvurem */
+    /* s > 0 and s <= bvurem */
     for (k = 0; bw > 1 && k < 10; k++)
     {
       tmp    = bzla_bv_inc(d_mm, zero);
       bvurem = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
-      bve    = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvurem);
-      ce     = bzla_exp_bv_const(d_bzla, bve);
+      s      = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvurem);
+      ce     = bzla_exp_bv_const(d_bzla, s);
       curem  = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      inv    = bzla_is_inv_urem(d_mm, bvurem, bve, 0);
-      res    = inv ? inv_fun(d_bzla, urem, bvurem, bve, 0, d_domains)
-                : bzla_proputils_cons_urem(
-                    d_bzla, urem, bvurem, bve, 0, d_domains);
+      inv    = bzla_is_inv_urem(d_mm, bvurem, s, 0);
+      res =
+          inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains)
+              : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, bvurem, bve, 0);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, bve, 0, d_domains)
+      inv = bzla_is_inv_urem(d_mm, bvurem, s, 0);
+      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains)
                 : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, bve, 0, d_domains);
+                    d_bzla, curem, bvurem, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
       bzla_node_release(d_bzla, ce);
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, bvurem);
-      bzla_bv_free(d_mm, bve);
+      bzla_bv_free(d_mm, s);
     }
 
     if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS) goto DONE;
@@ -2209,6 +2213,14 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, e[1]);
   }
 
+  /**
+   * Given x o s = t and s o x = t, test if the consistent value and inverse
+   * value computation always produces a 'legal' value t when solved for x.
+   *
+   * bw            : The bit-width to use.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_conf_concat(uint32_t bw, bool use_domains)
   {
     (void) bw;
@@ -2217,7 +2229,7 @@ class TestPropInv : public TestBzla
     uint32_t i, j, bws[2];
     BzlaNode *concat, *e[2], *ce[2], *cconcat[2];
     BzlaSortId sorts[2];
-    BzlaBitVector *res, *bvconcat, *bve[2], *tmp[2];
+    BzlaBitVector *res, *bvconcat, *s[2], *tmp[2];
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_concat;
@@ -2247,10 +2259,10 @@ class TestPropInv : public TestBzla
 
       for (j = 0; j < 2; j++)
       {
-        bve[j] = bzla_bv_slice(
+        s[j] = bzla_bv_slice(
             d_mm, bvconcat, j ? bws[1] - 1 : bw - 1, j ? 0 : bws[1]);
-        ASSERT_EQ(bzla_bv_get_width(bve[j]), bws[j]);
-        tmp[j] = bzla_bv_copy(d_mm, bve[j]);
+        ASSERT_EQ(bzla_bv_get_width(s[j]), bws[j]);
+        tmp[j] = bzla_bv_copy(d_mm, s[j]);
         cnt    = 0;
         while (!cnt)
         {
@@ -2258,37 +2270,37 @@ class TestPropInv : public TestBzla
           {
             if (bzla_rng_pick_rand(&d_bzla->rng, 0, 5))
             {
-              bzla_bv_set_bit(bve[j], i, bzla_bv_get_bit(bve[j], i) ? 0 : 1);
+              bzla_bv_set_bit(s[j], i, bzla_bv_get_bit(s[j], i) ? 0 : 1);
               cnt += 1;
             }
           }
         }
       }
-      ce[0]      = bzla_exp_bv_const(d_bzla, bve[0]);
-      ce[1]      = bzla_exp_bv_const(d_bzla, bve[1]);
+      ce[0]      = bzla_exp_bv_const(d_bzla, s[0]);
+      ce[1]      = bzla_exp_bv_const(d_bzla, s[1]);
       cconcat[0] = bzla_exp_bv_concat(d_bzla, ce[0], e[1]);
       cconcat[1] = bzla_exp_bv_concat(d_bzla, e[0], ce[1]);
       for (j = 0; j < 2; j++)
       {
-        inv = bzla_is_inv_concat(d_mm, bvconcat, bve[j ? 0 : 1], j);
-        res = inv ? inv_fun(
-                  d_bzla, concat, bvconcat, bve[j ? 0 : 1], j, d_domains)
-                  : bzla_proputils_cons_concat(
-                      d_bzla, concat, bvconcat, bve[j ? 0 : 1], j, d_domains);
+        inv = bzla_is_inv_concat(d_mm, bvconcat, s[j ? 0 : 1], j);
+        res =
+            inv ? inv_fun(d_bzla, concat, bvconcat, s[j ? 0 : 1], j, d_domains)
+                : bzla_proputils_cons_concat(
+                    d_bzla, concat, bvconcat, s[j ? 0 : 1], j, d_domains);
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
-        inv = bzla_is_inv_concat(d_mm, bvconcat, bve[j ? 0 : 1], j);
+        inv = bzla_is_inv_concat(d_mm, bvconcat, s[j ? 0 : 1], j);
         res = inv ? inv_fun(d_bzla,
                             cconcat[j ? 0 : 1],
                             bvconcat,
-                            bve[j ? 0 : 1],
+                            s[j ? 0 : 1],
                             j,
                             d_domains)
                   : bzla_proputils_cons_concat(d_bzla,
                                                cconcat[j ? 0 : 1],
                                                bvconcat,
-                                               bve[j ? 0 : 1],
+                                               s[j ? 0 : 1],
                                                j,
                                                d_domains);
         ASSERT_NE(res, nullptr);
@@ -2301,7 +2313,7 @@ class TestPropInv : public TestBzla
         bzla_node_release(d_bzla, cconcat[j]);
         bzla_node_release(d_bzla, ce[j]);
         bzla_node_release(d_bzla, e[j]);
-        bzla_bv_free(d_mm, bve[j]);
+        bzla_bv_free(d_mm, s[j]);
         bzla_bv_free(d_mm, tmp[j]);
       }
 
@@ -2341,10 +2353,19 @@ class TestPropInv : public TestBzla
   BzlaIntHashTable *d_domains = nullptr;
 
  private:
+  /**
+   * Given x * s = t and s * x = t, test if the consistent value and inverse
+   * value computation always produces a 'legal' value t when solved for x.
+   *
+   * mul           : The node representing the multiplication.
+   * t             : The assignment of 'mul'.
+   * s             : The assignment of one of the operands of 'mul'.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_conf_mul_result(BzlaNode *mul,
-                             BzlaNode **e,
-                             BzlaBitVector *bvmul,
-                             BzlaBitVector *bve,
+                             BzlaBitVector *t,
+                             BzlaBitVector *s,
                              bool use_domains)
   {
     bool inv;
@@ -2361,38 +2382,36 @@ class TestPropInv : public TestBzla
       bzla_prop_solver_init_domains(d_bzla, d_domains, mul);
     }
 
-    ce[0]   = bzla_exp_bv_const(d_bzla, bve);
-    ce[1]   = bzla_exp_bv_const(d_bzla, bve);
-    cmul[0] = bzla_exp_bv_mul(d_bzla, ce[0], e[1]);
-    cmul[1] = bzla_exp_bv_mul(d_bzla, e[0], ce[1]);
+    ce[0]   = bzla_exp_bv_const(d_bzla, s);
+    ce[1]   = bzla_exp_bv_const(d_bzla, s);
+    cmul[0] = bzla_exp_bv_mul(d_bzla, ce[0], mul->e[1]);
+    cmul[1] = bzla_exp_bv_mul(d_bzla, mul->e[0], ce[1]);
 
-    inv = bzla_is_inv_mul(d_mm, bvmul, bve, 0);
-    res = inv ? inv_fun(d_bzla, mul, bvmul, bve, 0, d_domains)
-              : bzla_proputils_cons_mul(d_bzla, mul, bvmul, bve, 0, d_domains);
+    inv = bzla_is_inv_mul(d_mm, t, s, 0);
+    res = inv ? inv_fun(d_bzla, mul, t, s, 0, d_domains)
+              : bzla_proputils_cons_mul(d_bzla, mul, t, s, 0, d_domains);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    inv = bzla_is_inv_mul(d_mm, bvmul, bve, 0);
-    res = inv ? inv_fun(d_bzla, cmul[1], bvmul, bve, 0, d_domains)
-              : bzla_proputils_cons_mul(
-                  d_bzla, cmul[1], bvmul, bve, 0, d_domains);
+    inv = bzla_is_inv_mul(d_mm, t, s, 0);
+    res = inv ? inv_fun(d_bzla, cmul[1], t, s, 0, d_domains)
+              : bzla_proputils_cons_mul(d_bzla, cmul[1], t, s, 0, d_domains);
     ASSERT_NE(res, nullptr);
-    if (bzla_bv_get_bit(bvmul, 0))
+    if (bzla_bv_get_bit(t, 0))
     {
       ASSERT_EQ(bzla_bv_get_bit(res, 0), 1u);
     }
     bzla_bv_free(d_mm, res);
 
-    inv = bzla_is_inv_mul(d_mm, bvmul, bve, 1);
-    res = inv ? inv_fun(d_bzla, mul, bvmul, bve, 1, d_domains)
-              : bzla_proputils_cons_mul(d_bzla, mul, bvmul, bve, 1, d_domains);
+    inv = bzla_is_inv_mul(d_mm, t, s, 1);
+    res = inv ? inv_fun(d_bzla, mul, t, s, 1, d_domains)
+              : bzla_proputils_cons_mul(d_bzla, mul, t, s, 1, d_domains);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    inv = bzla_is_inv_mul(d_mm, bvmul, bve, 1);
-    res = inv ? inv_fun(d_bzla, cmul[0], bvmul, bve, 1, d_domains)
-              : bzla_proputils_cons_mul(
-                  d_bzla, cmul[0], bvmul, bve, 1, d_domains);
+    inv = bzla_is_inv_mul(d_mm, t, s, 1);
+    res = inv ? inv_fun(d_bzla, cmul[0], t, s, 1, d_domains)
+              : bzla_proputils_cons_mul(d_bzla, cmul[0], t, s, 1, d_domains);
     ASSERT_NE(res, nullptr);
-    if (bzla_bv_get_bit(bvmul, 0))
+    if (bzla_bv_get_bit(t, 0))
     {
       ASSERT_EQ(bzla_bv_get_bit(res, 0), 1u);
     }
@@ -2417,11 +2436,20 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, cmul[1]);
   }
 
+  /**
+   * Given x / s = t and s / x = t, test if the consistent value and inverse
+   * value computation always produces a 'legal' value t when solved for x.
+   *
+   * udiv          : The node representing the unsigned division.
+   * t             : The assignment of 'udiv'.
+   * s             : The assignment of one of the operands of udiv.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_bvprop).
+   */
   void check_conf_udiv_result(uint32_t idx_x,
                               BzlaNode *udiv,
-                              BzlaNode **e,
-                              BzlaBitVector *bvudiv,
-                              BzlaBitVector *bve,
+                              BzlaBitVector *t,
+                              BzlaBitVector *s,
                               bool use_domains)
   {
     bool inv;
@@ -2440,39 +2468,35 @@ class TestPropInv : public TestBzla
 
     if (idx_x)
     {
-      ce    = bzla_exp_bv_const(d_bzla, bve);
-      cudiv = bzla_exp_bv_udiv(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_udiv(d_mm, bvudiv, bve, 1);
-      res   = inv ? inv_fun(d_bzla, udiv, bvudiv, bve, 1, d_domains)
-                : bzla_proputils_cons_udiv(
-                    d_bzla, udiv, bvudiv, bve, 1, d_domains);
+      ce    = bzla_exp_bv_const(d_bzla, s);
+      cudiv = bzla_exp_bv_udiv(d_bzla, ce, udiv->e[1]);
+      inv   = bzla_is_inv_udiv(d_mm, t, s, 1);
+      res   = inv ? inv_fun(d_bzla, udiv, t, s, 1, d_domains)
+                : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
-      ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, bvudiv));
+      ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, t));
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_udiv(d_mm, bvudiv, bve, 1);
-      res = inv ? inv_fun(d_bzla, cudiv, bvudiv, bve, 1, d_domains)
-                : bzla_proputils_cons_udiv(
-                    d_bzla, cudiv, bvudiv, bve, 1, d_domains);
+      inv = bzla_is_inv_udiv(d_mm, t, s, 1);
+      res = inv ? inv_fun(d_bzla, cudiv, t, s, 1, d_domains)
+                : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
-      ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, bvudiv));
+      ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, t));
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, cudiv);
       bzla_node_release(d_bzla, ce);
     }
     else
     {
-      ce    = bzla_exp_bv_const(d_bzla, bve);
-      cudiv = bzla_exp_bv_udiv(d_bzla, e[0], ce);
-      inv   = bzla_is_inv_udiv(d_mm, bvudiv, bve, 0);
-      res   = inv ? inv_fun(d_bzla, udiv, bvudiv, bve, 0, d_domains)
-                : bzla_proputils_cons_udiv(
-                    d_bzla, udiv, bvudiv, bve, 0, d_domains);
+      ce    = bzla_exp_bv_const(d_bzla, s);
+      cudiv = bzla_exp_bv_udiv(d_bzla, udiv->e[0], ce);
+      inv   = bzla_is_inv_udiv(d_mm, t, s, 0);
+      res   = inv ? inv_fun(d_bzla, udiv, t, s, 0, d_domains)
+                : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_udiv(d_mm, bvudiv, bve, 0);
-      res = inv ? inv_fun(d_bzla, cudiv, bvudiv, bve, 0, d_domains)
-                : bzla_proputils_cons_udiv(
-                    d_bzla, cudiv, bvudiv, bve, 0, d_domains);
+      inv = bzla_is_inv_udiv(d_mm, t, s, 0);
+      res = inv ? inv_fun(d_bzla, cudiv, t, s, 0, d_domains)
+                : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, cudiv);
@@ -2493,9 +2517,22 @@ class TestPropInv : public TestBzla
     }
   }
 
+  /**
+   * Given x <> s = t and s <> x = t where <> is a shift operator, test if the
+   * consistent value and inverse value computation always produces a 'legal'
+   * value t when solved for x.
+   *
+   * shift     : The node representing the shift operation.
+   * exp_fun   : The function to create a node representing the shift operation.
+   * is_inv_fun: The function to test if given operator is invertible with
+   *             respect to s and t.
+   * inv_fun   : The function to compute the inverse value for x.
+   * cons_fun  : The function to compute the consistent value for x.
+   * s_vals    : A char* array representing the values for all operands of <>.
+   * rvalmax   : The maximum value of the inverse/consistent value.
+   */
   void check_conf_shift(uint32_t idx_x,
                         BzlaNode *shift,
-                        BzlaNode **e,
                         BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                         bool (*is_inv_fun)(BzlaMemMgr *,
                                            const BzlaBitVector *,
@@ -2513,60 +2550,67 @@ class TestPropInv : public TestBzla
                                                    BzlaBitVector *,
                                                    int32_t idx_x,
                                                    BzlaIntHashTable *),
-                        const char *ve,
-                        const char *vshift,
+                        const char *s_vals,
+                        const char *t_val,
                         uint64_t rvalmax)
   {
     bool inv;
     BzlaNode *cshift, *ce;
-    BzlaBitVector *res, *bvshift, *bve;
+    BzlaBitVector *res, *t, *s;
 
-    bve     = bzla_bv_char_to_bv(d_mm, ve);
-    bvshift = bzla_bv_char_to_bv(d_mm, vshift);
-    ce      = bzla_exp_bv_const(d_bzla, bve);
+    s  = bzla_bv_char_to_bv(d_mm, s_vals);
+    t  = bzla_bv_char_to_bv(d_mm, t_val);
+    ce = bzla_exp_bv_const(d_bzla, s);
     if (idx_x)
     {
-      cshift = exp_fun(d_bzla, ce, e[1]);
-      inv    = is_inv_fun(d_mm, bvshift, bve, 1);
-      res    = inv ? inv_fun(d_bzla, shift, bvshift, bve, 1, d_domains)
-                : cons_fun(d_bzla, shift, bvshift, bve, 1, d_domains);
+      cshift = exp_fun(d_bzla, ce, shift->e[1]);
+      inv    = is_inv_fun(d_mm, t, s, 1);
+      res    = inv ? inv_fun(d_bzla, shift, t, s, 1, d_domains)
+                : cons_fun(d_bzla, shift, t, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
-      inv = is_inv_fun(d_mm, bvshift, bve, 1);
-      res = inv ? inv_fun(d_bzla, cshift, bvshift, bve, 1, d_domains)
-                : cons_fun(d_bzla, cshift, bvshift, bve, 1, d_domains);
+      inv = is_inv_fun(d_mm, t, s, 1);
+      res = inv ? inv_fun(d_bzla, cshift, t, s, 1, d_domains)
+                : cons_fun(d_bzla, cshift, t, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
     }
     else
     {
-      cshift = exp_fun(d_bzla, e[0], ce);
-      inv    = is_inv_fun(d_mm, bvshift, bve, 0);
-      res    = inv ? inv_fun(d_bzla, shift, bvshift, bve, 0, d_domains)
-                : cons_fun(d_bzla, shift, bvshift, bve, 0, d_domains);
+      cshift = exp_fun(d_bzla, shift->e[0], ce);
+      inv    = is_inv_fun(d_mm, t, s, 0);
+      res    = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains)
+                : cons_fun(d_bzla, shift, t, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = is_inv_fun(d_mm, bvshift, bve, 0);
-      res = inv ? inv_fun(d_bzla, shift, bvshift, bve, 0, d_domains)
-                : cons_fun(d_bzla, shift, bvshift, bve, 0, d_domains);
+      inv = is_inv_fun(d_mm, t, s, 0);
+      res = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains)
+                : cons_fun(d_bzla, shift, t, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
     }
-    bzla_bv_free(d_mm, bvshift);
-    bzla_bv_free(d_mm, bve);
+    bzla_bv_free(d_mm, t);
+    bzla_bv_free(d_mm, s);
     bzla_node_release(d_bzla, ce);
     bzla_node_release(d_bzla, cshift);
   }
 };
 
-/* Test if given
- * bv_x <op> bv_s = bv_t or
- * bv_s <op> bv_x = bv_t or
- * bv_x <op> bv_t
- * we can find value bv_x as result of the inverse value computation within
- * TEST_PROP_INV_COMPLETE_N_TESTS tries. */
+/* ========================================================================== */
+/* complete:                                                                  */
+/* Test if given                                                              */
+/* x <op> s = t or                                                            */
+/* s <op> x = t or                                                            */
+/* x <op> t                                                                   */
+/* we can find solution x as result of the inverse value computation within   */
+/* TEST_PROP_INV_COMPLETE_N_TESTS tries.                                      */
+/* ========================================================================== */
+
+/* -------------------------------------------------------------------------- */
+/* Regular inverse value computation, no const bits, no propagator domains.   */
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestPropInv, complete_add)
 {
@@ -2576,14 +2620,6 @@ TEST_F(TestPropInv, complete_add)
                bzla_proputils_inv_add,
                bzla_proputils_inv_add_bvprop,
                false);
-#if 0
-  check_binary (bzla_exp_bv_add,
-                bzla_bv_add,
-                bzla_is_inv_add,
-                bzla_proputils_inv_add,
-                bzla_proputils_inv_add_bvprop,
-                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_and)
@@ -2594,14 +2630,6 @@ TEST_F(TestPropInv, complete_and)
                bzla_proputils_inv_and,
                bzla_proputils_inv_and_bvprop,
                false);
-#if 0
-  check_binary (bzla_exp_bv_and,
-                bzla_bv_and,
-                bzla_is_inv_and,
-                bzla_proputils_inv_and,
-                bzla_proputils_inv_and_bvprop,
-                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_eq)
@@ -2612,14 +2640,6 @@ TEST_F(TestPropInv, complete_eq)
                bzla_proputils_inv_eq,
                bzla_proputils_inv_eq_bvprop,
                false);
-#if 0
-  check_binary (bzla_exp_eq,
-                bzla_bv_eq,
-                bzla_is_inv_eq,
-                bzla_proputils_inv_eq,
-                bzla_proputils_inv_eq_bvprop,
-                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_ult)
@@ -2630,14 +2650,6 @@ TEST_F(TestPropInv, complete_ult)
                bzla_proputils_inv_ult,
                bzla_proputils_inv_ult_bvprop,
                false);
-#if 0
-  check_binary (bzla_exp_bv_ult,
-                bzla_bv_ult,
-                bzla_is_inv_ult,
-                bzla_proputils_inv_ult,
-                bzla_proputils_inv_ult_bvprop,
-                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_sll)
@@ -2648,14 +2660,6 @@ TEST_F(TestPropInv, complete_sll)
               bzla_proputils_inv_sll,
               bzla_proputils_inv_sll_bvprop,
               false);
-#if 0
-  check_shift (bzla_exp_bv_sll,
-               bzla_bv_sll,
-               bzla_is_inv_sll,
-               bzla_proputils_inv_sll,
-               bzla_proputils_inv_sll_bvprop,
-               true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_srl)
@@ -2666,14 +2670,6 @@ TEST_F(TestPropInv, complete_srl)
               bzla_proputils_inv_srl,
               bzla_proputils_inv_srl_bvprop,
               false);
-#if 0
-  check_shift (bzla_exp_bv_srl,
-               bzla_bv_srl,
-               bzla_is_inv_srl,
-               bzla_proputils_inv_srl,
-               bzla_proputils_inv_srl_bvprop,
-               true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_mul)
@@ -2684,14 +2680,6 @@ TEST_F(TestPropInv, complete_mul)
                bzla_proputils_inv_mul,
                bzla_proputils_inv_mul_bvprop,
                false);
-#if 0
-  check_binary (bzla_exp_bv_mul,
-                bzla_bv_mul,
-                bzla_is_inv_mul,
-                bzla_proputils_inv_mul,
-                bzla_proputils_inv_mul_bvprop,
-                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_udiv)
@@ -2702,14 +2690,6 @@ TEST_F(TestPropInv, complete_udiv)
                bzla_proputils_inv_udiv,
                bzla_proputils_inv_udiv_bvprop,
                false);
-#if 0
-  check_binary (bzla_exp_bv_udiv,
-                bzla_bv_udiv,
-                bzla_is_inv_udiv,
-                bzla_proputils_inv_udiv,
-                bzla_proputils_inv_udiv_bvprop,
-                true);
-#endif
 }
 
 TEST_F(TestPropInv, complete_urem)
@@ -2737,7 +2717,7 @@ TEST_F(TestPropInv, complete_slice)
   uint32_t bw;
   uint64_t up, lo, i, k;
   BzlaNode *exp, *e;
-  BzlaBitVector *bve, *bvexp, *res;
+  BzlaBitVector *s, *x, *res;
   BzlaSortId sort;
 
   bw   = TEST_PROP_INV_COMPLETE_BW;
@@ -2752,27 +2732,151 @@ TEST_F(TestPropInv, complete_slice)
       exp = bzla_exp_bv_slice(d_bzla, e, up, lo);
       for (i = 0; i < (uint32_t)(1 << bw); i++)
       {
-        bve   = bzla_bv_uint64_to_bv(d_mm, i, bw);
-        bvexp = bzla_bv_slice(d_mm, bve, up, lo);
+        s = bzla_bv_uint64_to_bv(d_mm, i, bw);
+        x = bzla_bv_slice(d_mm, s, up, lo);
         for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
         {
-          res = bzla_proputils_inv_slice(d_bzla, exp, bvexp, bve, 0, d_domains);
+          res = bzla_proputils_inv_slice(d_bzla, exp, x, s, 0, d_domains);
           ASSERT_NE(res, nullptr);
-          if (!bzla_bv_compare(res, bve)) break;
+          if (!bzla_bv_compare(res, s)) break;
           bzla_bv_free(d_mm, res);
           res = 0;
         }
         ASSERT_NE(res, nullptr);
-        ASSERT_EQ(bzla_bv_compare(res, bve), 0);
+        ASSERT_EQ(bzla_bv_compare(res, s), 0);
         bzla_bv_free(d_mm, res);
-        bzla_bv_free(d_mm, bvexp);
-        bzla_bv_free(d_mm, bve);
+        bzla_bv_free(d_mm, x);
+        bzla_bv_free(d_mm, s);
       }
       bzla_node_release(d_bzla, exp);
     }
   }
   bzla_node_release(d_bzla, e);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Inverse value computation with propagator domains, no const bits.          */
+/* -------------------------------------------------------------------------- */
+
+#if 0
+TEST_F (TestPropInv, complete_add_bvprop)
+{
+  check_binary (bzla_exp_bv_add,
+                bzla_bv_add,
+                bzla_is_inv_add,
+                bzla_proputils_inv_add,
+                bzla_proputils_inv_add_bvprop,
+                true);
+}
+
+TEST_F (TestPropInv, complete_and_bvprop)
+{
+  check_binary (bzla_exp_bv_and,
+                bzla_bv_and,
+                bzla_is_inv_and,
+                bzla_proputils_inv_and,
+                bzla_proputils_inv_and_bvprop,
+                true);
+}
+
+TEST_F (TestPropInv, complete_eq_bvprop)
+{
+  check_binary (bzla_exp_eq,
+                bzla_bv_eq,
+                bzla_is_inv_eq,
+                bzla_proputils_inv_eq,
+                bzla_proputils_inv_eq_bvprop,
+                true);
+}
+
+TEST_F (TestPropInv, complete_ult_bvprop)
+{
+  check_binary (bzla_exp_bv_ult,
+                bzla_bv_ult,
+                bzla_is_inv_ult,
+                bzla_proputils_inv_ult,
+                bzla_proputils_inv_ult_bvprop,
+                true);
+}
+
+TEST_F (TestPropInv, complete_sll_bvprop)
+{
+  check_shift (bzla_exp_bv_sll,
+               bzla_bv_sll,
+               bzla_is_inv_sll,
+               bzla_proputils_inv_sll,
+               bzla_proputils_inv_sll_bvprop,
+               true);
+}
+
+TEST_F (TestPropInv, complete_srl_bvprop)
+{
+  check_shift (bzla_exp_bv_srl,
+               bzla_bv_srl,
+               bzla_is_inv_srl,
+               bzla_proputils_inv_srl,
+               bzla_proputils_inv_srl_bvprop,
+               true);
+}
+
+TEST_F (TestPropInv, complete_mul_bvprop)
+{
+  check_binary (bzla_exp_bv_mul,
+                bzla_bv_mul,
+                bzla_is_inv_mul,
+                bzla_proputils_inv_mul,
+                bzla_proputils_inv_mul_bvprop,
+                true);
+}
+
+TEST_F (TestPropInv, complete_udiv_bvprop)
+{
+  check_binary (bzla_exp_bv_udiv,
+                bzla_bv_udiv,
+                bzla_is_inv_udiv,
+                bzla_proputils_inv_udiv,
+                bzla_proputils_inv_udiv_bvprop,
+                true);
+}
+
+TEST_F (TestPropInv, complete_urem_bvprop)
+{
+  check_binary (bzla_exp_bv_urem,
+                bzla_bv_urem,
+                bzla_is_inv_urem,
+                bzla_proputils_inv_urem,
+                bzla_proputils_inv_urem_bvprop,
+                true);
+}
+
+TEST_F (TestPropInv, complete_concat_bvprop)
+{
+  check_binary (bzla_exp_bv_concat,
+                bzla_bv_concat,
+                bzla_is_inv_concat,
+                bzla_proputils_inv_concat,
+                bzla_proputils_inv_concat_bvprop,
+                true);
+}
+
+TEST_F (TestPropInv, complete_slice)
+{
+}
+#endif
+
+/* ========================================================================== */
+/* complete:                                                                  */
+/* Test if given                                                              */
+/* x <op> s = t or                                                            */
+/* s <op> x = t or                                                            */
+/* x <op> t                                                                   */
+/* we can find solution x as result of the inverse value computation within   */
+/* TEST_PROP_INV_COMPLETE_N_TESTS tries.                                      */
+/* ========================================================================== */
+
+/* -------------------------------------------------------------------------- */
+/* Regular inverse value computation, no const bits, no propagator domains.   */
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestPropInv, conf_and)
 {
