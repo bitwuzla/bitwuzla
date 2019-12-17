@@ -2001,6 +2001,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
   assert(bzla_node_is_regular(node));
   assert(d_bzla == bzla_node_real_addr(node)->bzla);
   assert(bzla_sort_is_bool(d_bzla, bzla_node_get_sort_id(node)));
+  assert(node->arity && bzla_node_is_fp(d_bzla, node->e[0]));
 
   BzlaNode *res = nullptr;
 
