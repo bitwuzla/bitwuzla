@@ -604,6 +604,16 @@ bzla_is_inv_concat_const(BzlaMemMgr *mm,
   return true;
 }
 
+/**
+ * Check invertibility condition with respect to const bits in x for:
+ *
+ * x == s = t
+ * s == x = t
+ *
+ * IC:
+ * t = 0: (hi_x != lo_x) || (hi_x != s)
+ * t = 1: ((s & hi_x) | lo_x) = s
+ */
 bool
 bzla_is_inv_eq_const(BzlaMemMgr *mm,
                      const BzlaBvDomain *x,
@@ -616,7 +626,21 @@ bzla_is_inv_eq_const(BzlaMemMgr *mm,
   assert(t);
   assert(s);
   (void) pos_x;
-  return true;
+
+  bool res;
+  BzlaBitVector *and, * or ;
+
+  if (bzla_bv_is_false(t))
+  {
+    return bzla_bv_compare(x->hi, x->lo) || bzla_bv_compare(x->hi, s);
+  }
+
+  and = bzla_bv_and(mm, s, x->hi);
+  or  = bzla_bv_or(mm, and, x->lo);
+  res = bzla_bv_compare(or, s) == 0;
+  bzla_bv_free(mm, or);
+  bzla_bv_free(mm, and);
+  return res;
 }
 
 bool
