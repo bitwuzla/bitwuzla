@@ -56,6 +56,7 @@ uint64_t bzla_proputils_select_move_prop(Bzla* bzla,
 /*=========================================================================*/
 
 typedef bool (*BzlaPropIsInv)(BzlaMemMgr* mm,
+                              const BzlaBvDomain* x,
                               const BzlaBitVector* t,
                               const BzlaBitVector* s,
                               uint32_t idx_x);

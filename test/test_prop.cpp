@@ -101,9 +101,9 @@ class TestProp : public TestBzla
     int32_t i, idx_s, sat_res;
     BzlaNode *e[2], *exp, *val, *eq;
     BzlaBitVector *s_tmp[2], *x_tmp, *res[2], *tmp;
+    BzlaBvDomain *d_x;
     BzlaSortId sort;
     BzlaIntHashTable *domains;
-    BzlaIntHashTableIterator iit;
     (void) is_inv_fun;
 
     domains                           = bzla_hashint_map_new(d_bzla->mm);
@@ -117,6 +117,10 @@ class TestProp : public TestBzla
     eq   = bzla_exp_eq(d_bzla, exp, val);
 
     bzla_prop_solver_init_domains(d_bzla, domains, exp);
+    d_x = (BzlaBvDomain *) bzla_hashint_map_get(
+              domains, bzla_node_real_addr(exp->e[idx_x])->id)
+              ->as_ptr;
+    assert(d_x);
 
     idx_s = idx_x ? 0 : 1;
 
@@ -140,7 +144,7 @@ class TestProp : public TestBzla
 
     /* -> first test local completeness  */
     /* we must find a solution within n move(s) */
-    assert(is_inv_fun(d_mm, t, s, idx_x));
+    assert(is_inv_fun(d_mm, d_x, t, s, idx_x));
     res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, domains);
     ASSERT_NE(res[idx_x], nullptr);
     res[idx_s] = n == 1 ? bzla_bv_copy(d_mm, s)
@@ -157,7 +161,7 @@ class TestProp : public TestBzla
     {
       for (i = 0, res[idx_x] = 0; i < TEST_PROP_COMPLETE_N_TESTS; i++)
       {
-        assert(is_inv_fun(d_mm, t, s, idx_x));
+        assert(is_inv_fun(d_mm, d_x, t, s, idx_x));
         res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, domains);
         ASSERT_NE(res[idx_x], nullptr);
         if (!bzla_bv_compare(res[idx_x], x)) break;
@@ -168,17 +172,6 @@ class TestProp : public TestBzla
       ASSERT_EQ(bzla_bv_compare(res[idx_x], x), 0);
       bzla_bv_free(d_mm, res[idx_x]);
     }
-
-    /* reset for sat call */
-    bzla_iter_hashint_init(&iit, domains);
-    while (bzla_iter_hashint_has_next(&iit))
-    {
-      bzla_bvprop_free(d_mm,
-                       static_cast<BzlaBvDomain *>(
-                           bzla_iter_hashint_next_data(&iit)->as_ptr));
-    }
-    bzla_hashint_map_delete(domains);
-    BZLA_PROP_SOLVER(d_bzla)->domains = 0;
 
     /* -> then test completeness of the whole propagation algorithm
      *    (we must find a solution within n move(s)) */
@@ -574,8 +567,11 @@ TEST_F(TestPropConst, one_complete_add_const)
 
 TEST_F(TestPropConst, one_complete_and_const)
 {
-  prop_complete_binary(
-      1, bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, bzla_proputils_inv_and);
+  prop_complete_binary(1,
+                       bzla_exp_bv_and,
+                       bzla_bv_and,
+                       bzla_is_inv_and_const,
+                       bzla_proputils_inv_and);
 }
 
 TEST_F(TestPropConst, one_complete_eq_const)

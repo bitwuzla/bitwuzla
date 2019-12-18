@@ -85,9 +85,12 @@ class TestPropInv : public TestBzla
                     uint32_t idx_x,
                     bool use_domains)
   {
+    assert(bzla_node_is_regular(exp));
+
     uint64_t k;
     BzlaBitVector *res;
     BzlaIntHashTableIterator iit;
+    BzlaBvDomain *x = 0;
     (void) is_inv;
 
     if (use_domains)
@@ -95,11 +98,14 @@ class TestPropInv : public TestBzla
       assert(!d_domains);
       d_domains = bzla_hashint_map_new(d_bzla->mm);
       bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+      x = (BzlaBvDomain *) bzla_hashint_map_get(
+              d_domains, bzla_node_real_addr(exp->e[idx_x])->id)
+              ->as_ptr;
     }
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
-      assert(is_inv(d_mm, t, s, idx_x));
+      assert(is_inv(d_mm, x, t, s, idx_x));
       if (use_domains)
       {
         res = inv_fun_bvprop(d_bzla, exp, t, s, idx_x, d_domains);
@@ -295,6 +301,7 @@ class TestPropInv : public TestBzla
     BzlaNode *_and, *cand[2], *e[2], *ce[2];
     BzlaSortId sort;
     BzlaBitVector *bvand, *s[2], *res, *tmp, *tmp2;
+    BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_and;
@@ -311,6 +318,12 @@ class TestPropInv : public TestBzla
       inv_fun   = bzla_proputils_inv_and_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
       bzla_prop_solver_init_domains(d_bzla, d_domains, _and);
+      x0 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(_and->e[0])->id)
+               ->as_ptr;
+      x1 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(_and->e[1])->id)
+               ->as_ptr;
     }
 
     for (i = 0; i < (uint32_t)(1 << bw); i++)
@@ -330,7 +343,7 @@ class TestPropInv : public TestBzla
         {
         PROP_INV_CONF_AND_TESTS:
           /* prop engine: all conflicts are treated as fixable */
-          inv = bzla_is_inv_and(d_mm, bvand, s[1], 0);
+          inv = bzla_is_inv_and(d_mm, x0, bvand, s[1], 0);
           res = inv ? inv_fun(d_bzla, _and, bvand, s[1], 0, d_domains)
                     : bzla_proputils_cons_and(
                         d_bzla, _and, bvand, s[1], 0, d_domains);
@@ -340,7 +353,18 @@ class TestPropInv : public TestBzla
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          inv = bzla_is_inv_and(d_mm, bvand, s[0], 1);
+          inv = bzla_is_inv_and(d_mm, x0, bvand, s[1], 0);
+          res = inv ? inv_fun(d_bzla, cand[1], bvand, s[1], 0, d_domains)
+                    : bzla_proputils_cons_and(
+                        d_bzla, cand[1], bvand, s[1], 0, d_domains);
+          ASSERT_NE(res, nullptr);
+          tmp2 = bzla_bv_and(d_mm, bvand, res);
+          ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
+          bzla_bv_free(d_mm, res);
+          bzla_bv_free(d_mm, tmp2);
+
+          /* idx_x = 0 */
+          inv = bzla_is_inv_and(d_mm, x1, bvand, s[0], 1);
           res = inv ? inv_fun(d_bzla, _and, bvand, s[0], 1, d_domains)
                     : bzla_proputils_cons_and(
                         d_bzla, _and, bvand, s[0], 1, d_domains);
@@ -350,20 +374,10 @@ class TestPropInv : public TestBzla
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          inv = bzla_is_inv_and(d_mm, bvand, s[0], 1);
+          inv = bzla_is_inv_and(d_mm, x1, bvand, s[0], 1);
           res = inv ? inv_fun(d_bzla, cand[0], bvand, s[0], 1, d_domains)
                     : bzla_proputils_cons_and(
                         d_bzla, cand[0], bvand, s[0], 1, d_domains);
-          ASSERT_NE(res, nullptr);
-          tmp2 = bzla_bv_and(d_mm, bvand, res);
-          ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
-          bzla_bv_free(d_mm, res);
-          bzla_bv_free(d_mm, tmp2);
-
-          inv = bzla_is_inv_and(d_mm, bvand, s[1], 0);
-          res = inv ? inv_fun(d_bzla, cand[1], bvand, s[1], 0, d_domains)
-                    : bzla_proputils_cons_and(
-                        d_bzla, cand[1], bvand, s[1], 0, d_domains);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
@@ -428,6 +442,7 @@ class TestPropInv : public TestBzla
     BzlaNode *ult, *e[2], *cult, *ce;
     BzlaSortId sort;
     BzlaBitVector *res, *bvult, *s, *zero, *bvmax;
+    BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_ult;
@@ -444,6 +459,12 @@ class TestPropInv : public TestBzla
       inv_fun   = bzla_proputils_inv_ult_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
       bzla_prop_solver_init_domains(d_bzla, d_domains, ult);
+      x0 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(ult->e[0])->id)
+               ->as_ptr;
+      x1 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(ult->e[1])->id)
+               ->as_ptr;
     }
 
     zero  = bzla_bv_new(d_mm, bw);
@@ -455,7 +476,7 @@ class TestPropInv : public TestBzla
   PROP_INV_CONF_ULT_TESTS:
     /* 1...1 < e[1] */
     s   = bzla_bv_ones(d_mm, bw);
-    inv = bzla_is_inv_ult(d_mm, bvult, s, 1);
+    inv = bzla_is_inv_ult(d_mm, x1, bvult, s, 1);
     res = inv ? inv_fun(d_bzla, ult, bvult, s, 1, d_domains)
               : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 1, d_domains);
     ASSERT_NE(res, nullptr);
@@ -463,7 +484,7 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, res);
     ce   = bzla_exp_bv_const(d_bzla, s);
     cult = bzla_exp_bv_ult(d_bzla, ce, e[1]);
-    inv  = bzla_is_inv_ult(d_mm, bvult, s, 1);
+    inv  = bzla_is_inv_ult(d_mm, x1, bvult, s, 1);
     res  = inv ? inv_fun(d_bzla, cult, bvult, s, 1, d_domains)
               : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 1, d_domains);
     ASSERT_NE(res, nullptr);
@@ -474,7 +495,7 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, s);
     /* e[0] < 0 */
     s   = bzla_bv_new(d_mm, bw);
-    inv = bzla_is_inv_ult(d_mm, bvult, s, 0);
+    inv = bzla_is_inv_ult(d_mm, x0, bvult, s, 0);
     res = inv ? inv_fun(d_bzla, ult, bvult, s, 0, d_domains)
               : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 0, d_domains);
     ASSERT_NE(res, nullptr);
@@ -482,7 +503,7 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, res);
     ce   = bzla_exp_bv_const(d_bzla, s);
     cult = bzla_exp_bv_ult(d_bzla, e[0], ce);
-    inv  = bzla_is_inv_ult(d_mm, bvult, s, 0);
+    inv  = bzla_is_inv_ult(d_mm, x0, bvult, s, 0);
     res  = inv ? inv_fun(d_bzla, cult, bvult, s, 0, d_domains)
               : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 0, d_domains);
     ASSERT_NE(res, nullptr);
@@ -544,7 +565,6 @@ class TestPropInv : public TestBzla
     BzlaSortId sort;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
-    BzlaPropComputeValue inv_fun = bzla_proputils_inv_sll;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -555,7 +575,6 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(!d_domains);
-      inv_fun   = bzla_proputils_inv_sll_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
       bzla_prop_solver_init_domains(d_bzla, d_domains, sll);
     }
@@ -569,431 +588,71 @@ class TestPropInv : public TestBzla
     switch (bw)
     {
       case 2:
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00",
-                         "01",
-                         0);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00",
-                         "10",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00",
-                         "11",
-                         0);
+        check_conf_shift(1, sll, "sll", "00", "01", 0, use_domains);
+        check_conf_shift(1, sll, "sll", "00", "10", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "00", "11", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "01",
-                         "11",
-                         0);
+        check_conf_shift(1, sll, "sll", "01", "11", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "10",
-                         "01",
-                         0);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "10",
-                         "11",
-                         0);
+        check_conf_shift(1, sll, "sll", "10", "01", 0, use_domains);
+        check_conf_shift(1, sll, "sll", "10", "11", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "11",
-                         "01",
-                         0);
+        check_conf_shift(1, sll, "sll", "11", "01", 0, use_domains);
         break;
 
       case 4:
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0000",
-                         "0010",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0000",
-                         "1000",
-                         3);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0000",
-                         "0110",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0000",
-                         "1110",
-                         1);
+        check_conf_shift(1, sll, "sll", "0000", "0010", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "0000", "1000", 3, use_domains);
+        check_conf_shift(1, sll, "sll", "0000", "0110", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "0000", "1110", 1, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0001",
-                         "0110",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0001",
-                         "1100",
-                         2);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0001",
-                         "1010",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0001",
-                         "1110",
-                         1);
+        check_conf_shift(1, sll, "sll", "0001", "0110", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "0001", "1100", 2, use_domains);
+        check_conf_shift(1, sll, "sll", "0001", "1010", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "0001", "1110", 1, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1000",
-                         "0110",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1000",
-                         "1100",
-                         2);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1000",
-                         "1010",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1000",
-                         "1110",
-                         1);
+        check_conf_shift(1, sll, "sll", "1000", "0110", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "1000", "1100", 2, use_domains);
+        check_conf_shift(1, sll, "sll", "1000", "1010", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "1000", "1110", 1, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1010",
-                         "0110",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1010",
-                         "1100",
-                         2);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1010",
-                         "1110",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1010",
-                         "1111",
-                         0);
+        check_conf_shift(1, sll, "sll", "1010", "0110", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "1010", "1100", 2, use_domains);
+        check_conf_shift(1, sll, "sll", "1010", "1110", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "1010", "1111", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0110",
-                         "0111",
-                         0);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0110",
-                         "0010",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0110",
-                         "1010",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0110",
-                         "1111",
-                         0);
+        check_conf_shift(1, sll, "sll", "0110", "0111", 0, use_domains);
+        check_conf_shift(1, sll, "sll", "0110", "0010", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "0110", "1010", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "0110", "1111", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1111",
-                         "1010",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1111",
-                         "0110",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1111",
-                         "0010",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "1111",
-                         "0011",
-                         0);
+        check_conf_shift(1, sll, "sll", "1111", "1010", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "1111", "0110", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "1111", "0010", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "1111", "0011", 0, use_domains);
         break;
 
       case 8:
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000000",
-                         "11111110",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000000",
-                         "10101010",
-                         1);
+        check_conf_shift(1, sll, "sll", "00000000", "11111110", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "00000000", "10101010", 1, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000100",
-                         "00111100",
-                         2);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000100",
-                         "11110000",
-                         4);
+        check_conf_shift(1, sll, "sll", "00000100", "00111100", 2, use_domains);
+        check_conf_shift(1, sll, "sll", "00000100", "11110000", 4, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00100000",
-                         "11001100",
-                         2);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00100000",
-                         "01000010",
-                         1);
+        check_conf_shift(1, sll, "sll", "00100000", "11001100", 2, use_domains);
+        check_conf_shift(1, sll, "sll", "00100000", "01000010", 1, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "01010101",
-                         "10101110",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "01010101",
-                         "10100100",
-                         2);
+        check_conf_shift(1, sll, "sll", "01010101", "10101110", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "01010101", "10100100", 2, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "11111110",
-                         "10111100",
-                         2);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "11111110",
-                         "11111101",
-                         0);
+        check_conf_shift(1, sll, "sll", "11111110", "10111100", 2, use_domains);
+        check_conf_shift(1, sll, "sll", "11111110", "11111101", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "01111111",
-                         "10111100",
-                         2);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "01111111",
-                         "11111101",
-                         0);
+        check_conf_shift(1, sll, "sll", "01111111", "10111100", 2, use_domains);
+        check_conf_shift(1, sll, "sll", "01111111", "11111101", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "11111111",
-                         "10111110",
-                         1);
-        check_conf_shift(1,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "11111111",
-                         "11111101",
-                         0);
+        check_conf_shift(1, sll, "sll", "11111111", "10111110", 1, use_domains);
+        check_conf_shift(1, sll, "sll", "11111111", "11111101", 0, use_domains);
         break;
 
       default: break;
@@ -1004,118 +663,22 @@ class TestPropInv : public TestBzla
     switch (bw)
     {
       case 2:
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "01",
-                         "01",
-                         0);
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "01",
-                         "11",
-                         0);
+        check_conf_shift(0, sll, "sll", "01", "01", 0, use_domains);
+        check_conf_shift(0, sll, "sll", "01", "11", 0, use_domains);
         break;
       case 4:
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0001",
-                         "0001",
-                         0);
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0010",
-                         "0110",
-                         0);
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "0011",
-                         "1100",
-                         0);
+        check_conf_shift(0, sll, "sll", "0001", "0001", 0, use_domains);
+        check_conf_shift(0, sll, "sll", "0010", "0110", 0, use_domains);
+        check_conf_shift(0, sll, "sll", "0011", "1100", 0, use_domains);
         break;
       case 8:
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000001",
-                         "00000011",
-                         0);
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000010",
-                         "00001110",
-                         0);
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000011",
-                         "00001100",
-                         0);
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000100",
-                         "11111100",
-                         0);
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000101",
-                         "00011000",
-                         0);
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000110",
-                         "11001100",
-                         0);
-        check_conf_shift(0,
-                         sll,
-                         bzla_exp_bv_sll,
-                         bzla_is_inv_sll,
-                         inv_fun,
-                         bzla_proputils_cons_sll,
-                         "00000111",
-                         "11000000",
-                         0);
+        check_conf_shift(0, sll, "sll", "00000001", "00000011", 0, use_domains);
+        check_conf_shift(0, sll, "sll", "00000010", "00001110", 0, use_domains);
+        check_conf_shift(0, sll, "sll", "00000011", "00001100", 0, use_domains);
+        check_conf_shift(0, sll, "sll", "00000100", "11111100", 0, use_domains);
+        check_conf_shift(0, sll, "sll", "00000101", "00011000", 0, use_domains);
+        check_conf_shift(0, sll, "sll", "00000110", "11001100", 0, use_domains);
+        check_conf_shift(0, sll, "sll", "00000111", "11000000", 0, use_domains);
         break;
       default: break;
     }
@@ -1168,7 +731,6 @@ class TestPropInv : public TestBzla
     BzlaSortId sort;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
-    BzlaPropComputeValue inv_fun = bzla_proputils_inv_srl;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -1179,7 +741,6 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(!d_domains);
-      inv_fun   = bzla_proputils_inv_srl_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
       bzla_prop_solver_init_domains(d_bzla, d_domains, srl);
     }
@@ -1193,431 +754,71 @@ class TestPropInv : public TestBzla
     switch (bw)
     {
       case 2:
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00",
-                         "01",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00",
-                         "10",
-                         0);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00",
-                         "11",
-                         0);
+        check_conf_shift(1, srl, "srl", "00", "01", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "00", "10", 0, use_domains);
+        check_conf_shift(1, srl, "srl", "00", "11", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "01",
-                         "10",
-                         0);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "01",
-                         "11",
-                         0);
+        check_conf_shift(1, srl, "srl", "01", "10", 0, use_domains);
+        check_conf_shift(1, srl, "srl", "01", "11", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "10",
-                         "11",
-                         0);
+        check_conf_shift(1, srl, "srl", "10", "11", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "11",
-                         "10",
-                         0);
+        check_conf_shift(1, srl, "srl", "11", "10", 0, use_domains);
         break;
 
       case 4:
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0000",
-                         "0010",
-                         2);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0000",
-                         "1000",
-                         0);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0000",
-                         "0110",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0000",
-                         "1110",
-                         0);
+        check_conf_shift(1, srl, "srl", "0000", "0010", 2, use_domains);
+        check_conf_shift(1, srl, "srl", "0000", "1000", 0, use_domains);
+        check_conf_shift(1, srl, "srl", "0000", "0110", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "0000", "1110", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0001",
-                         "0110",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0001",
-                         "0011",
-                         2);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0001",
-                         "0101",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0001",
-                         "0111",
-                         1);
+        check_conf_shift(1, srl, "srl", "0001", "0110", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "0001", "0011", 2, use_domains);
+        check_conf_shift(1, srl, "srl", "0001", "0101", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "0001", "0111", 1, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1000",
-                         "0110",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1000",
-                         "0011",
-                         2);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1000",
-                         "0101",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1000",
-                         "0111",
-                         1);
+        check_conf_shift(1, srl, "srl", "1000", "0110", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "1000", "0011", 2, use_domains);
+        check_conf_shift(1, srl, "srl", "1000", "0101", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "1000", "0111", 1, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1010",
-                         "0110",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1010",
-                         "0011",
-                         2);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1010",
-                         "0111",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1010",
-                         "1111",
-                         0);
+        check_conf_shift(1, srl, "srl", "1010", "0110", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "1010", "0011", 2, use_domains);
+        check_conf_shift(1, srl, "srl", "1010", "0111", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "1010", "1111", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0110",
-                         "0111",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0110",
-                         "0010",
-                         2);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0110",
-                         "1010",
-                         0);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0110",
-                         "1111",
-                         0);
+        check_conf_shift(1, srl, "srl", "0110", "0111", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "0110", "0010", 2, use_domains);
+        check_conf_shift(1, srl, "srl", "0110", "1010", 0, use_domains);
+        check_conf_shift(1, srl, "srl", "0110", "1111", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1111",
-                         "0101",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1111",
-                         "0110",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1111",
-                         "0010",
-                         2);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "1111",
-                         "0100",
-                         1);
+        check_conf_shift(1, srl, "srl", "1111", "0101", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "1111", "0110", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "1111", "0010", 2, use_domains);
+        check_conf_shift(1, srl, "srl", "1111", "0100", 1, use_domains);
         break;
 
       case 8:
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000000",
-                         "01111111",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000000",
-                         "01010101",
-                         1);
+        check_conf_shift(1, srl, "srl", "00000000", "01111111", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "00000000", "01010101", 1, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000100",
-                         "00111100",
-                         2);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000100",
-                         "00001111",
-                         4);
+        check_conf_shift(1, srl, "srl", "00000100", "00111100", 2, use_domains);
+        check_conf_shift(1, srl, "srl", "00000100", "00001111", 4, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00100000",
-                         "11001100",
-                         0);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00100000",
-                         "01000010",
-                         1);
+        check_conf_shift(1, srl, "srl", "00100000", "11001100", 0, use_domains);
+        check_conf_shift(1, srl, "srl", "00100000", "01000010", 1, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "01010101",
-                         "01010111",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "01010101",
-                         "00101001",
-                         2);
+        check_conf_shift(1, srl, "srl", "01010101", "01010111", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "01010101", "00101001", 2, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "11111110",
-                         "10111100",
-                         0);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "11111110",
-                         "11111101",
-                         0);
+        check_conf_shift(1, srl, "srl", "11111110", "10111100", 0, use_domains);
+        check_conf_shift(1, srl, "srl", "11111110", "11111101", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "01111111",
-                         "00101111",
-                         2);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "01111111",
-                         "11111101",
-                         0);
+        check_conf_shift(1, srl, "srl", "01111111", "00101111", 2, use_domains);
+        check_conf_shift(1, srl, "srl", "01111111", "11111101", 0, use_domains);
         ///
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "11111111",
-                         "01011111",
-                         1);
-        check_conf_shift(1,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "11111111",
-                         "11111101",
-                         0);
+        check_conf_shift(1, srl, "srl", "11111111", "01011111", 1, use_domains);
+        check_conf_shift(1, srl, "srl", "11111111", "11111101", 0, use_domains);
         break;
 
       default: break;
@@ -1628,118 +829,22 @@ class TestPropInv : public TestBzla
     switch (bw)
     {
       case 2:
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "01",
-                         "10",
-                         0);
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "01",
-                         "11",
-                         0);
+        check_conf_shift(0, srl, "srl", "01", "10", 0, use_domains);
+        check_conf_shift(0, srl, "srl", "01", "11", 0, use_domains);
         break;
       case 4:
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0001",
-                         "1000",
-                         0);
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0010",
-                         "0110",
-                         0);
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "0011",
-                         "0011",
-                         0);
+        check_conf_shift(0, srl, "srl", "0001", "1000", 0, use_domains);
+        check_conf_shift(0, srl, "srl", "0010", "0110", 0, use_domains);
+        check_conf_shift(0, srl, "srl", "0011", "0011", 0, use_domains);
         break;
       case 8:
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000001",
-                         "11000000",
-                         0);
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000010",
-                         "01110000",
-                         0);
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000011",
-                         "00110000",
-                         0);
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000100",
-                         "00111111",
-                         0);
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000101",
-                         "00011000",
-                         0);
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000110",
-                         "00110011",
-                         0);
-        check_conf_shift(0,
-                         srl,
-                         bzla_exp_bv_srl,
-                         bzla_is_inv_srl,
-                         inv_fun,
-                         bzla_proputils_cons_srl,
-                         "00000111",
-                         "00000011",
-                         0);
+        check_conf_shift(0, srl, "srl", "00000001", "11000000", 0, use_domains);
+        check_conf_shift(0, srl, "srl", "00000010", "01110000", 0, use_domains);
+        check_conf_shift(0, srl, "srl", "00000011", "00110000", 0, use_domains);
+        check_conf_shift(0, srl, "srl", "00000100", "00111111", 0, use_domains);
+        check_conf_shift(0, srl, "srl", "00000101", "00011000", 0, use_domains);
+        check_conf_shift(0, srl, "srl", "00000110", "00110011", 0, use_domains);
+        check_conf_shift(0, srl, "srl", "00000111", "00000011", 0, use_domains);
         break;
       default: break;
     }
@@ -2007,6 +1112,7 @@ class TestPropInv : public TestBzla
     BzlaNode *urem, *e[2], *curem, *ce;
     BzlaSortId sort;
     BzlaBitVector *res, *s, *bvurem, *bvmax, *zero, *two, *tmp, *tmp2;
+    BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_urem;
@@ -2023,6 +1129,12 @@ class TestPropInv : public TestBzla
       inv_fun   = bzla_proputils_inv_urem_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
       bzla_prop_solver_init_domains(d_bzla, d_domains, urem);
+      x0 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(urem->e[0])->id)
+               ->as_ptr;
+      x1 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(urem->e[1])->id)
+               ->as_ptr;
     }
 
     zero  = bzla_bv_new(d_mm, bw);
@@ -2040,14 +1152,14 @@ class TestPropInv : public TestBzla
       s     = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
       res =
           inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains)
               : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
       res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains)
                 : bzla_proputils_cons_urem(
                     d_bzla, curem, bvurem, s, 1, d_domains);
@@ -2071,13 +1183,13 @@ class TestPropInv : public TestBzla
       bzla_bv_free(d_mm, tmp);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
       res =
           inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains)
               : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
       res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains)
                 : bzla_proputils_cons_urem(
                     d_bzla, curem, bvurem, s, 1, d_domains);
@@ -2104,13 +1216,13 @@ class TestPropInv : public TestBzla
       bzla_bv_free(d_mm, tmp2);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
       res =
           inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains)
               : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, bvurem, s, 1);
+      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
       res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains)
                 : bzla_proputils_cons_urem(
                     d_bzla, curem, bvurem, s, 1, d_domains);
@@ -2132,14 +1244,14 @@ class TestPropInv : public TestBzla
       s     = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      inv   = bzla_is_inv_urem(d_mm, bvurem, s, 0);
+      inv   = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0);
       res =
           inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains)
               : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_EQ(bzla_bv_compare(res, bvurem), 0);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, bvurem, s, 0);
+      inv = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0);
       res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains)
                 : bzla_proputils_cons_urem(
                     d_bzla, curem, bvurem, s, 0, d_domains);
@@ -2160,13 +1272,13 @@ class TestPropInv : public TestBzla
       s      = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvurem);
       ce     = bzla_exp_bv_const(d_bzla, s);
       curem  = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      inv    = bzla_is_inv_urem(d_mm, bvurem, s, 0);
+      inv    = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0);
       res =
           inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains)
               : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, bvurem, s, 0);
+      inv = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0);
       res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains)
                 : bzla_proputils_cons_urem(
                     d_bzla, curem, bvurem, s, 0, d_domains);
@@ -2230,6 +1342,7 @@ class TestPropInv : public TestBzla
     BzlaNode *concat, *e[2], *ce[2], *cconcat[2];
     BzlaSortId sorts[2];
     BzlaBitVector *res, *bvconcat, *s[2], *tmp[2];
+    BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaSolver *slv = 0;
     BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_concat;
@@ -2255,6 +1368,12 @@ class TestPropInv : public TestBzla
         inv_fun   = bzla_proputils_inv_concat_bvprop;
         d_domains = bzla_hashint_map_new(d_bzla->mm);
         bzla_prop_solver_init_domains(d_bzla, d_domains, concat);
+        x0 = (BzlaBvDomain *) bzla_hashint_map_get(
+                 d_domains, bzla_node_real_addr(concat->e[0])->id)
+                 ->as_ptr;
+        x1 = (BzlaBvDomain *) bzla_hashint_map_get(
+                 d_domains, bzla_node_real_addr(concat->e[1])->id)
+                 ->as_ptr;
       }
 
       for (j = 0; j < 2; j++)
@@ -2282,7 +1401,7 @@ class TestPropInv : public TestBzla
       cconcat[1] = bzla_exp_bv_concat(d_bzla, e[0], ce[1]);
       for (j = 0; j < 2; j++)
       {
-        inv = bzla_is_inv_concat(d_mm, bvconcat, s[j ? 0 : 1], j);
+        inv = bzla_is_inv_concat(d_mm, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j);
         res =
             inv ? inv_fun(d_bzla, concat, bvconcat, s[j ? 0 : 1], j, d_domains)
                 : bzla_proputils_cons_concat(
@@ -2290,7 +1409,7 @@ class TestPropInv : public TestBzla
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
-        inv = bzla_is_inv_concat(d_mm, bvconcat, s[j ? 0 : 1], j);
+        inv = bzla_is_inv_concat(d_mm, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j);
         res = inv ? inv_fun(d_bzla,
                             cconcat[j ? 0 : 1],
                             bvconcat,
@@ -2371,6 +1490,7 @@ class TestPropInv : public TestBzla
     bool inv;
     BzlaNode *cmul[2], *ce[2];
     BzlaBitVector *res;
+    BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_mul;
 
@@ -2380,6 +1500,12 @@ class TestPropInv : public TestBzla
       inv_fun   = bzla_proputils_inv_mul_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
       bzla_prop_solver_init_domains(d_bzla, d_domains, mul);
+      x0 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(mul->e[0])->id)
+               ->as_ptr;
+      x1 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(mul->e[1])->id)
+               ->as_ptr;
     }
 
     ce[0]   = bzla_exp_bv_const(d_bzla, s);
@@ -2387,12 +1513,12 @@ class TestPropInv : public TestBzla
     cmul[0] = bzla_exp_bv_mul(d_bzla, ce[0], mul->e[1]);
     cmul[1] = bzla_exp_bv_mul(d_bzla, mul->e[0], ce[1]);
 
-    inv = bzla_is_inv_mul(d_mm, t, s, 0);
+    inv = bzla_is_inv_mul(d_mm, x0, t, s, 0);
     res = inv ? inv_fun(d_bzla, mul, t, s, 0, d_domains)
               : bzla_proputils_cons_mul(d_bzla, mul, t, s, 0, d_domains);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    inv = bzla_is_inv_mul(d_mm, t, s, 0);
+    inv = bzla_is_inv_mul(d_mm, x0, t, s, 0);
     res = inv ? inv_fun(d_bzla, cmul[1], t, s, 0, d_domains)
               : bzla_proputils_cons_mul(d_bzla, cmul[1], t, s, 0, d_domains);
     ASSERT_NE(res, nullptr);
@@ -2402,12 +1528,12 @@ class TestPropInv : public TestBzla
     }
     bzla_bv_free(d_mm, res);
 
-    inv = bzla_is_inv_mul(d_mm, t, s, 1);
+    inv = bzla_is_inv_mul(d_mm, x1, t, s, 1);
     res = inv ? inv_fun(d_bzla, mul, t, s, 1, d_domains)
               : bzla_proputils_cons_mul(d_bzla, mul, t, s, 1, d_domains);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    inv = bzla_is_inv_mul(d_mm, t, s, 1);
+    inv = bzla_is_inv_mul(d_mm, x1, t, s, 1);
     res = inv ? inv_fun(d_bzla, cmul[0], t, s, 1, d_domains)
               : bzla_proputils_cons_mul(d_bzla, cmul[0], t, s, 1, d_domains);
     ASSERT_NE(res, nullptr);
@@ -2455,6 +1581,7 @@ class TestPropInv : public TestBzla
     bool inv;
     BzlaNode *cudiv, *ce;
     BzlaBitVector *res;
+    BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_udiv;
 
@@ -2464,19 +1591,25 @@ class TestPropInv : public TestBzla
       inv_fun   = bzla_proputils_inv_udiv_bvprop;
       d_domains = bzla_hashint_map_new(d_bzla->mm);
       bzla_prop_solver_init_domains(d_bzla, d_domains, udiv);
+      x0 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(udiv->e[0])->id)
+               ->as_ptr;
+      x1 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(udiv->e[1])->id)
+               ->as_ptr;
     }
 
     if (idx_x)
     {
       ce    = bzla_exp_bv_const(d_bzla, s);
       cudiv = bzla_exp_bv_udiv(d_bzla, ce, udiv->e[1]);
-      inv   = bzla_is_inv_udiv(d_mm, t, s, 1);
+      inv   = bzla_is_inv_udiv(d_mm, x1, t, s, 1);
       res   = inv ? inv_fun(d_bzla, udiv, t, s, 1, d_domains)
                 : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, t));
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_udiv(d_mm, t, s, 1);
+      inv = bzla_is_inv_udiv(d_mm, x1, t, s, 1);
       res = inv ? inv_fun(d_bzla, cudiv, t, s, 1, d_domains)
                 : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
@@ -2489,12 +1622,12 @@ class TestPropInv : public TestBzla
     {
       ce    = bzla_exp_bv_const(d_bzla, s);
       cudiv = bzla_exp_bv_udiv(d_bzla, udiv->e[0], ce);
-      inv   = bzla_is_inv_udiv(d_mm, t, s, 0);
+      inv   = bzla_is_inv_udiv(d_mm, x0, t, s, 0);
       res   = inv ? inv_fun(d_bzla, udiv, t, s, 0, d_domains)
                 : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_udiv(d_mm, t, s, 0);
+      inv = bzla_is_inv_udiv(d_mm, x0, t, s, 0);
       res = inv ? inv_fun(d_bzla, cudiv, t, s, 0, d_domains)
                 : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
@@ -2523,40 +1656,59 @@ class TestPropInv : public TestBzla
    * value t when solved for x.
    *
    * shift     : The node representing the shift operation.
-   * exp_fun   : The function to create a node representing the shift operation.
-   * is_inv_fun: The function to test if given operator is invertible with
-   *             respect to s and t.
-   * inv_fun   : The function to compute the inverse value for x.
-   * cons_fun  : The function to compute the consistent value for x.
    * s_vals    : A char* array representing the values for all operands of <>.
+   * t_val     : A char* representation of the target value of <>.
    * rvalmax   : The maximum value of the inverse/consistent value.
    */
   void check_conf_shift(uint32_t idx_x,
                         BzlaNode *shift,
-                        BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
-                        bool (*is_inv_fun)(BzlaMemMgr *,
-                                           const BzlaBitVector *,
-                                           const BzlaBitVector *,
-                                           uint32_t),
-                        BzlaBitVector *(*inv_fun)(Bzla *,
-                                                  BzlaNode *,
-                                                  BzlaBitVector *,
-                                                  BzlaBitVector *,
-                                                  int32_t idx_x,
-                                                  BzlaIntHashTable *),
-                        BzlaBitVector *(*cons_fun)(Bzla *,
-                                                   BzlaNode *,
-                                                   BzlaBitVector *,
-                                                   BzlaBitVector *,
-                                                   int32_t idx_x,
-                                                   BzlaIntHashTable *),
+                        std::string op,
                         const char *s_vals,
                         const char *t_val,
-                        uint64_t rvalmax)
+                        uint64_t rvalmax,
+                        bool use_domains)
   {
     bool inv;
     BzlaNode *cshift, *ce;
     BzlaBitVector *res, *t, *s;
+    BzlaBvDomain *x0 = 0, *x1 = 0;
+
+    /* The function to create a node representing the shift operation. */
+    BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *);
+    /* The function to test if given operator is invertible w.r.t.  s and t. */
+    BzlaPropIsInv is_inv_fun;
+    /* The function to compute the inverse value for x. */
+    BzlaPropComputeValue inv_fun;
+    /* The function to compute the consistent value for x. */
+    BzlaPropComputeValue cons_fun;
+
+    if (op == "sll")
+    {
+      exp_fun    = bzla_exp_bv_sll;
+      is_inv_fun = use_domains ? bzla_is_inv_sll_const : bzla_is_inv_sll;
+      inv_fun =
+          use_domains ? bzla_proputils_inv_sll : bzla_proputils_inv_sll_bvprop;
+      cons_fun = bzla_proputils_cons_sll;
+    }
+    else
+    {
+      assert(op == "srl");
+      exp_fun    = bzla_exp_bv_srl;
+      is_inv_fun = use_domains ? bzla_is_inv_srl_const : bzla_is_inv_srl;
+      inv_fun =
+          use_domains ? bzla_proputils_inv_srl : bzla_proputils_inv_srl_bvprop;
+      cons_fun = bzla_proputils_cons_srl;
+    }
+
+    if (use_domains)
+    {
+      x0 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(shift->e[0])->id)
+               ->as_ptr;
+      x1 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(shift->e[1])->id)
+               ->as_ptr;
+    }
 
     s  = bzla_bv_char_to_bv(d_mm, s_vals);
     t  = bzla_bv_char_to_bv(d_mm, t_val);
@@ -2564,13 +1716,13 @@ class TestPropInv : public TestBzla
     if (idx_x)
     {
       cshift = exp_fun(d_bzla, ce, shift->e[1]);
-      inv    = is_inv_fun(d_mm, t, s, 1);
+      inv    = is_inv_fun(d_mm, x1, t, s, 1);
       res    = inv ? inv_fun(d_bzla, shift, t, s, 1, d_domains)
                 : cons_fun(d_bzla, shift, t, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
-      inv = is_inv_fun(d_mm, t, s, 1);
+      inv = is_inv_fun(d_mm, x1, t, s, 1);
       res = inv ? inv_fun(d_bzla, cshift, t, s, 1, d_domains)
                 : cons_fun(d_bzla, cshift, t, s, 1, d_domains);
       ASSERT_NE(res, nullptr);
@@ -2580,12 +1732,12 @@ class TestPropInv : public TestBzla
     else
     {
       cshift = exp_fun(d_bzla, shift->e[0], ce);
-      inv    = is_inv_fun(d_mm, t, s, 0);
+      inv    = is_inv_fun(d_mm, x0, t, s, 0);
       res    = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains)
                 : cons_fun(d_bzla, shift, t, s, 0, d_domains);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = is_inv_fun(d_mm, t, s, 0);
+      inv = is_inv_fun(d_mm, x0, t, s, 0);
       res = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains)
                 : cons_fun(d_bzla, shift, t, s, 0, d_domains);
       ASSERT_NE(res, nullptr);

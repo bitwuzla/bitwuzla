@@ -1623,13 +1623,20 @@ bzla_proputils_inv_and(Bzla *bzla,
 {
   assert(bzla);
   assert(and);
-  assert(bzla_node_is_regular(and));
   assert(t);
   assert(s);
+  assert(domains);
+  assert(bzla_node_is_regular(and));
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(and->e[idx_x]));
-  assert(bzla_is_inv_and(bzla->mm, t, s, idx_x));
+#ifndef NDEBUG
+  assert(bzla_is_inv_and(bzla->mm, 0, t, s, idx_x));
+  BzlaBvDomain *x =
+      bzla_hashint_map_get(domains, bzla_node_real_addr(and->e[idx_x])->id)
+          ->as_ptr;
+  assert(!x || bzla_is_inv_and_const(bzla->mm, x, t, s, idx_x));
+#endif
 
   uint32_t i, bw;
   int32_t bit_and, bit_e;
@@ -1793,7 +1800,7 @@ bzla_proputils_inv_ult(Bzla *bzla,
   assert(s);
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(ult->e[idx_x]));
-  assert(bzla_is_inv_ult(bzla->mm, t, s, idx_x));
+  assert(bzla_is_inv_ult(bzla->mm, 0, t, s, idx_x));
 
   bool isult;
   uint32_t bw;
@@ -1883,7 +1890,7 @@ bzla_proputils_inv_sll(Bzla *bzla,
   assert(idx_x >= 0 && idx_x <= 1);
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(!bzla_node_is_bv_const(sll->e[idx_x]));
-  assert(bzla_is_inv_sll(bzla->mm, t, s, idx_x));
+  assert(bzla_is_inv_sll(bzla->mm, 0, t, s, idx_x));
 
   uint32_t bw, i, ctz_s, ctz_t, shift;
   BzlaBitVector *res, *tmp, *ones;
@@ -2016,7 +2023,7 @@ bzla_proputils_inv_srl(Bzla *bzla,
   assert(idx_x >= 0 && idx_x <= 1);
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(!bzla_node_is_bv_const(srl->e[idx_x]));
-  assert(bzla_is_inv_srl(bzla->mm, t, s, idx_x));
+  assert(bzla_is_inv_srl(bzla->mm, 0, t, s, idx_x));
 
   uint32_t bw, i, clz_s, clz_t, shift;
   BzlaBitVector *res, *ones, *tmp;
@@ -2150,7 +2157,7 @@ bzla_proputils_inv_mul(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(mul->e[idx_x]));
-  assert(bzla_is_inv_mul(bzla->mm, t, s, idx_x));
+  assert(bzla_is_inv_mul(bzla->mm, 0, t, s, idx_x));
 
   int32_t lsb_s, ispow2_s;
   uint32_t i, j, bw;
@@ -2328,7 +2335,7 @@ bzla_proputils_inv_udiv(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(udiv->e[idx_x]));
-  assert(bzla_is_inv_udiv(bzla->mm, t, s, idx_x));
+  assert(bzla_is_inv_udiv(bzla->mm, 0, t, s, idx_x));
 
   uint32_t bw;
   BzlaBitVector *res, *lo, *up, *one, *ones, *tmp;
@@ -2552,7 +2559,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(urem->e[idx_x]));
-  assert(bzla_is_inv_urem(bzla->mm, t, s, idx_x));
+  assert(bzla_is_inv_urem(bzla->mm, 0, t, s, idx_x));
 
   uint32_t bw, cnt;
   int32_t cmp;
@@ -2854,7 +2861,7 @@ bzla_proputils_inv_concat(Bzla *bzla,
   assert(s);
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(concat->e[idx_x]));
-  assert(bzla_is_inv_concat(bzla->mm, t, s, idx_x));
+  assert(bzla_is_inv_concat(bzla->mm, 0, t, s, idx_x));
 
   uint32_t bw_t, bw_s;
   BzlaBitVector *res, *tmp;
@@ -4472,6 +4479,20 @@ static BzlaPropIsInv kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem,
 };
 
+static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
+    [BZLA_BV_ADD_NODE]    = 0,
+    [BZLA_BV_AND_NODE]    = bzla_is_inv_and_const,
+    [BZLA_BV_CONCAT_NODE] = bzla_is_inv_concat,
+    [BZLA_BV_EQ_NODE]     = 0,  // always invertible
+    [BZLA_BV_MUL_NODE]    = bzla_is_inv_mul,
+    [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult,
+    [BZLA_BV_SLICE_NODE]  = 0,  // always invertible
+    [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll,
+    [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl,
+    [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv,
+    [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem,
+};
+
 /* ========================================================================== */
 /* Propagation move                                                           */
 /* ========================================================================== */
@@ -4619,12 +4640,11 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
   BzlaIntHashTable *domains;
+  BzlaHashTableData *d;
   BzlaBitVector *bv_s[3], *bv_t, *bv_s_new, *tmp;
   BzlaMemMgr *mm;
   uint32_t opt_prop_prob_use_inv_value, opt_prop_domains;
-#ifndef NDEBUG
   uint32_t opt_prop_const_bits;
-#endif
 
   BzlaPropSelectPath select_path;
   BzlaPropComputeValue inv_value, cons_value, compute_value;
@@ -4646,9 +4666,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   opt_prop_domains = bzla_opt_get(bzla, BZLA_OPT_PROP_DOMAINS);
   opt_prop_prob_use_inv_value =
       bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE);
-#ifndef NDEBUG
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
-#endif
 
 #ifndef NBZLALOG
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
@@ -4656,6 +4674,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
     nrecconf_prev    = BZLA_PROP_SOLVER(bzla)->stats.rec_conf;
     nnonrecconf_prev = BZLA_PROP_SOLVER(bzla)->stats.non_rec_conf;
     domains          = BZLA_PROP_SOLVER(bzla)->domains;
+    assert(!opt_prop_const_bits || domains);
   }
   else
   {
@@ -4764,7 +4783,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       }
       else
       {
-        is_inv      = kind_to_is_inv[real_cur->kind];
+        is_inv = opt_prop_const_bits ? kind_to_is_inv_const[real_cur->kind]
+                                     : kind_to_is_inv[real_cur->kind];
         select_path = kind_to_select_path[real_cur->kind];
       }
 
@@ -4784,7 +4804,13 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
       /* check invertibility --> if not invertible, fall back to consistent
        * value computation */
-      force_cons = is_inv ? !is_inv(mm, bv_t, bv_s[idx_s], idx_x) : false;
+      force_cons = false;
+      if (is_inv)
+      {
+        d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
+        assert(!opt_prop_const_bits || d);
+        force_cons = !is_inv(mm, d ? d->as_ptr : 0, bv_t, bv_s[idx_s], idx_x);
+      }
       /* not invertible counts as conflict */
       if (force_cons)
       {
