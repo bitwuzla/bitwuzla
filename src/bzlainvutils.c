@@ -521,6 +521,14 @@ bzla_is_inv_urem(BzlaMemMgr *mm,
 /* Check invertibility while considering constant bits in x.                  */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Check invertibility condition with respect to const bits in x for:
+ *
+ * x + s = t
+ * s + x = t
+ *
+ * IC: (((t - s) & hi_x) | lo_x) = t - s
+ */
 bool
 bzla_is_inv_add_const(BzlaMemMgr *mm,
                       const BzlaBvDomain *x,
@@ -533,7 +541,18 @@ bzla_is_inv_add_const(BzlaMemMgr *mm,
   assert(t);
   assert(s);
   (void) pos_x;
-  return true;
+
+  bool res;
+  BzlaBitVector *sub, *and, * or ;
+
+  sub = bzla_bv_sub(mm, t, s);
+  and = bzla_bv_and(mm, sub, x->hi);
+  or  = bzla_bv_or(mm, and, x->lo);
+  res = bzla_bv_compare(or, sub) == 0;
+  bzla_bv_free(mm, or);
+  bzla_bv_free(mm, and);
+  bzla_bv_free(mm, sub);
+  return res;
 }
 
 /**

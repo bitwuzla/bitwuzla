@@ -1586,6 +1586,13 @@ bzla_proputils_inv_add(Bzla *bzla,
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(add->e[idx_x]));
+#ifndef NDEBUG
+  assert(bzla_is_inv_add(bzla->mm, 0, t, s, idx_x));
+  BzlaBvDomain *x =
+      bzla_hashint_map_get(domains, bzla_node_real_addr(add->e[idx_x])->id)
+          ->as_ptr;
+  assert(!x || bzla_is_inv_add_const(bzla->mm, x, t, s, idx_x));
+#endif
 
   BzlaBitVector *res;
 
@@ -4480,7 +4487,7 @@ static BzlaPropIsInv kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
 };
 
 static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
-    [BZLA_BV_ADD_NODE]    = 0,
+    [BZLA_BV_ADD_NODE]    = bzla_is_inv_add_const,
     [BZLA_BV_AND_NODE]    = bzla_is_inv_and_const,
     [BZLA_BV_CONCAT_NODE] = bzla_is_inv_concat,
     [BZLA_BV_EQ_NODE]     = 0,  // always invertible
