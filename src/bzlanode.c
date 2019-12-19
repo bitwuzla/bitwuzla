@@ -2997,7 +2997,7 @@ bzla_array_cond_exp_node (Bzla * bzla, BzlaNode * e_cond, BzlaNode * e_if,
   bzla_node_release (bzla, app_if);
   bzla_node_release (bzla, app_else);
   bzla_node_release (bzla, cond);
-  
+
   return lambda;
 }
 #endif
