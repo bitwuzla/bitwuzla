@@ -1588,10 +1588,9 @@ bzla_proputils_inv_add(Bzla *bzla,
   assert(!bzla_node_is_bv_const(add->e[idx_x]));
 #ifndef NDEBUG
   assert(bzla_is_inv_add(bzla->mm, 0, t, s, idx_x));
-  BzlaBvDomain *x =
-      bzla_hashint_map_get(domains, bzla_node_real_addr(add->e[idx_x])->id)
-          ->as_ptr;
-  assert(!x || bzla_is_inv_add_const(bzla->mm, x, t, s, idx_x));
+  BzlaHashTableData *x =
+      bzla_hashint_map_get(domains, bzla_node_real_addr(add->e[idx_x])->id);
+  assert(!x || bzla_is_inv_add_const(bzla->mm, x->as_ptr, t, s, idx_x));
 #endif
 
   BzlaBitVector *res;
@@ -1639,10 +1638,9 @@ bzla_proputils_inv_and(Bzla *bzla,
   assert(!bzla_node_is_bv_const(and->e[idx_x]));
 #ifndef NDEBUG
   assert(bzla_is_inv_and(bzla->mm, 0, t, s, idx_x));
-  BzlaBvDomain *x =
-      bzla_hashint_map_get(domains, bzla_node_real_addr(and->e[idx_x])->id)
-          ->as_ptr;
-  assert(!x || bzla_is_inv_and_const(bzla->mm, x, t, s, idx_x));
+  BzlaHashTableData *x =
+      bzla_hashint_map_get(domains, bzla_node_real_addr(and->e[idx_x])->id);
+  assert(!x || bzla_is_inv_and_const(bzla->mm, x->as_ptr, t, s, idx_x));
 #endif
 
   uint32_t i, bw;
@@ -1732,10 +1730,9 @@ bzla_proputils_inv_eq(Bzla *bzla,
   assert(!bzla_node_is_bv_const(eq->e[idx_x]));
 #ifndef NDEBUG
   assert(bzla_is_inv_eq(bzla->mm, 0, t, s, idx_x));
-  BzlaBvDomain *x =
-      bzla_hashint_map_get(domains, bzla_node_real_addr(eq->e[idx_x])->id)
-          ->as_ptr;
-  assert(!x || bzla_is_inv_eq_const(bzla->mm, x, t, s, idx_x));
+  BzlaHashTableData *x =
+      bzla_hashint_map_get(domains, bzla_node_real_addr(eq->e[idx_x])->id);
+  assert(!x || bzla_is_inv_eq_const(bzla->mm, x->as_ptr, t, s, idx_x));
 #endif
 
   BzlaBitVector *res;
