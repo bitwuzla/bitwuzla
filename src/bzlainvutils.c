@@ -184,35 +184,6 @@ bzla_is_inv_mul(BzlaMemMgr *mm,
 /**
  * Check invertibility condition (without considering const bits in x) for:
  *
- * x | s = t
- * s | x = t
- *
- * IC: t | s = t
- */
-bool
-bzla_is_inv_or(BzlaMemMgr *mm,
-               const BzlaBvDomain *x,
-               const BzlaBitVector *t,
-               const BzlaBitVector *s,
-               uint32_t pos_x)
-{
-  assert(mm);
-  assert(t);
-  assert(s);
-  (void) x;
-  (void) pos_x;
-
-  BzlaBitVector *t_or_s = bzla_bv_or(mm, t, s);
-  BzlaBitVector *eq_t   = bzla_bv_eq(mm, t_or_s, t);
-  bool res              = bzla_bv_is_true(eq_t);
-  bzla_bv_free(mm, t_or_s);
-  bzla_bv_free(mm, eq_t);
-  return res;
-}
-
-/**
- * Check invertibility condition (without considering const bits in x) for:
- *
  * pos_x = 0:
  * x << s = t
  * IC: (t >> s) << s = t
@@ -674,21 +645,6 @@ bzla_is_inv_mul_const(BzlaMemMgr *mm,
                       const BzlaBitVector *t,
                       const BzlaBitVector *s,
                       uint32_t pos_x)
-{
-  assert(mm);
-  assert(x);
-  assert(t);
-  assert(s);
-  (void) pos_x;
-  return true;
-}
-
-bool
-bzla_is_inv_or_const(BzlaMemMgr *mm,
-                     const BzlaBvDomain *x,
-                     const BzlaBitVector *t,
-                     const BzlaBitVector *s,
-                     uint32_t pos_x)
 {
   assert(mm);
   assert(x);
