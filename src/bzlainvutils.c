@@ -585,6 +585,20 @@ bzla_is_inv_and_const(BzlaMemMgr *mm,
   return res;
 }
 
+/**
+ * Check invertibility condition with respect to const bits in x for:
+ *
+ * x o s = t
+ * IC: (t_h & hi_x) | lo_x = t_h
+ *     with
+ *     t_h = t[bw(t) - 1 : bw(x)]
+ *
+ * s o x = t
+ * IC: (t_l & hi_x) | lo_x = t_l
+ *     with
+ *     t_l = t[bw(x) - 1 : 0]
+ *
+ */
 bool
 bzla_is_inv_concat_const(BzlaMemMgr *mm,
                          const BzlaBvDomain *x,
@@ -596,8 +610,24 @@ bzla_is_inv_concat_const(BzlaMemMgr *mm,
   assert(x);
   assert(t);
   assert(s);
-  (void) pos_x;
-  return true;
+
+  bool res;
+  uint32_t bw_t, bw_x;
+  BzlaBitVector *t_slice, *and, * or ;
+
+  bw_t = bzla_bv_get_width(t);
+  bw_x = bzla_bvprop_get_width(x);
+
+  t_slice = pos_x == 0 ? bzla_bv_slice(mm, t, bw_t - 1, bw_x)
+                       : bzla_bv_slice(mm, t, bw_x - 1, 0);
+
+  and = bzla_bv_and(mm, t_slice, x->hi);
+  or  = bzla_bv_or(mm, and, x->lo);
+  res = bzla_bv_compare(or, t_slice) == 0;
+  bzla_bv_free(mm, t_slice);
+  bzla_bv_free(mm, or);
+  bzla_bv_free(mm, and);
+  return res;
 }
 
 /**
