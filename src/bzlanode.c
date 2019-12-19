@@ -2546,71 +2546,7 @@ bzla_node_create_param(Bzla *bzla, BzlaSortId sort, const char *symbol)
   return (BzlaNode *) exp;
 }
 
-static BzlaNode *
-unary_exp_slice_exp(Bzla *bzla, BzlaNode *exp, uint32_t upper, uint32_t lower)
-{
-  assert(bzla);
-  assert(exp);
-  assert(bzla == bzla_node_real_addr(exp)->bzla);
-
-  bool inv;
-  BzlaNode **lookup;
-
-  exp = bzla_simplify_exp(bzla, exp);
-
-  assert(!bzla_node_is_fun(exp));
-  assert(upper >= lower);
-  assert(upper < bzla_node_bv_get_width(bzla, exp));
-
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0
-      && bzla_node_is_inverted(exp))
-  {
-    inv = true;
-    exp = bzla_node_invert(exp);
-  }
-  else
-    inv = false;
-
-  lookup = find_slice_exp(bzla, exp, upper, lower);
-  if (!*lookup)
-  {
-    if (BZLA_FULL_UNIQUE_TABLE(bzla->nodes_unique_table))
-    {
-      enlarge_nodes_unique_table(bzla);
-      lookup = find_slice_exp(bzla, exp, upper, lower);
-    }
-    *lookup = new_slice_exp_node(bzla, exp, upper, lower);
-    assert(bzla->nodes_unique_table.num_elements < INT32_MAX);
-    bzla->nodes_unique_table.num_elements++;
-    (*lookup)->unique = 1;
-  }
-  else
-    inc_exp_ref_counter(bzla, *lookup);
-  assert(bzla_node_is_regular(*lookup));
-  if (inv) return bzla_node_invert(*lookup);
-  return *lookup;
-}
-
-BzlaNode *
-bzla_node_create_bv_slice(Bzla *bzla,
-                          BzlaNode *exp,
-                          uint32_t upper,
-                          uint32_t lower)
-{
-  exp = bzla_simplify_exp(bzla, exp);
-  assert(bzla_dbg_precond_slice_exp(bzla, exp, upper, lower));
-  return unary_exp_slice_exp(bzla, exp, upper, lower);
-}
-
-BzlaNode *
-bzla_node_create_bv_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  BzlaNode *e[2];
-  e[0] = bzla_simplify_exp(bzla, e0);
-  e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_BV_AND_NODE, 2, e);
-}
+/*------------------------------------------------------------------------*/
 
 BzlaNode *
 bzla_node_create_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
@@ -2640,96 +2576,6 @@ bzla_node_create_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     }
   }
   return create_exp(bzla, kind, 2, e);
-}
-
-BzlaNode *
-bzla_node_create_bv_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  BzlaNode *e[2];
-  e[0] = bzla_simplify_exp(bzla, e0);
-  e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_BV_ADD_NODE, 2, e);
-}
-
-BzlaNode *
-bzla_node_create_bv_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  BzlaNode *e[2];
-  e[0] = bzla_simplify_exp(bzla, e0);
-  e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_BV_MUL_NODE, 2, e);
-}
-
-BzlaNode *
-bzla_node_create_bv_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  BzlaNode *e[2];
-  e[0] = bzla_simplify_exp(bzla, e0);
-  e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_BV_ULT_NODE, 2, e);
-}
-
-BzlaNode *
-bzla_node_create_bv_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  BzlaNode *e[2];
-  e[0] = bzla_simplify_exp(bzla, e0);
-  e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_BV_SLT_NODE, 2, e);
-}
-
-BzlaNode *
-bzla_node_create_bv_sll(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  BzlaNode *e[2];
-  e[0] = bzla_simplify_exp(bzla, e0);
-  e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_shift_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_BV_SLL_NODE, 2, e);
-}
-
-BzlaNode *
-bzla_node_create_bv_srl(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  BzlaNode *e[2];
-  e[0] = bzla_simplify_exp(bzla, e0);
-  e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_shift_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_BV_SRL_NODE, 2, e);
-}
-
-BzlaNode *
-bzla_node_create_bv_udiv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  BzlaNode *e[2];
-  e[0] = bzla_simplify_exp(bzla, e0);
-  e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_BV_UDIV_NODE, 2, e);
-}
-
-BzlaNode *
-bzla_node_create_bv_urem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  BzlaNode *e[2];
-  e[0] = bzla_simplify_exp(bzla, e0);
-  e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_BV_UREM_NODE, 2, e);
-}
-
-BzlaNode *
-bzla_node_create_bv_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  BzlaNode *e[2];
-  e[0] = bzla_simplify_exp(bzla, e0);
-  e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_concat_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_BV_CONCAT_NODE, 2, e);
 }
 
 BzlaNode *
@@ -2776,57 +2622,6 @@ bzla_node_create_cond(Bzla *bzla,
   }
   return create_exp(bzla, BZLA_COND_NODE, 3, e);
 }
-
-#if 0
-BzlaNode *
-bzla_bv_cond_exp_node (Bzla * bzla, BzlaNode * e_cond, BzlaNode * e_if,
-		       BzlaNode * e_else)
-{
-  assert (bzla == bzla_node_real_addr (e_cond)->bzla);
-  assert (bzla == bzla_node_real_addr (e_if)->bzla);
-  assert (bzla == bzla_node_real_addr (e_else)->bzla);
-
-  if (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
-    return bzla_rewrite_ternary_exp (bzla, BZLA_BCOND_NODE, e_cond, e_if, e_else);
-
-  return bzla_node_create_cond (bzla, e_cond, e_if, e_else);
-}
-
-// TODO: arbitrary conditionals on functions
-BzlaNode *
-bzla_array_cond_exp_node (Bzla * bzla, BzlaNode * e_cond, BzlaNode * e_if,
-			  BzlaNode * e_else)
-{
-  assert (bzla == bzla_node_real_addr (e_cond)->bzla);
-  assert (bzla == bzla_node_real_addr (e_if)->bzla);
-  assert (bzla == bzla_node_real_addr (e_else)->bzla);
-
-  BzlaNode *cond, *param, *lambda, *app_if, *app_else;
-
-  e_cond = bzla_simplify_exp (bzla, e_cond);
-  e_if = bzla_simplify_exp (bzla, e_if);
-  e_else = bzla_simplify_exp (bzla, e_else);
-
-  assert (bzla_node_is_regular (e_if));
-  assert (bzla_node_is_fun (e_if));
-  assert (bzla_node_is_regular (e_else));
-  assert (bzla_node_is_fun (e_else));
-
-  param = bzla_exp_param (bzla, bzla_node_get_sort_id (e_if), 0);
-  app_if = bzla_exp_apply_n (bzla, e_if, &param, 1); 
-  app_else = bzla_exp_apply_n (bzla, e_else, &param, 1);
-  cond = bzla_bv_cond_exp_node (bzla, e_cond, app_if, app_else); 
-  lambda = bzla_exp_lambda (bzla, param, cond); 
-  lambda->is_array = 1;
-
-  bzla_node_release (bzla, param);
-  bzla_node_release (bzla, app_if);
-  bzla_node_release (bzla, app_else);
-  bzla_node_release (bzla, cond);
-  
-  return lambda;
-}
-#endif
 
 /* more than 4 children are not possible as we only have 2 bit for storing
  * the position in the parent pointers */
@@ -2997,6 +2792,215 @@ bzla_node_create_update(Bzla *bzla,
   if (fun->is_array) res->is_array = 1;
   return res;
 }
+
+/*------------------------------------------------------------------------*/
+
+static BzlaNode *
+unary_exp_slice_exp(Bzla *bzla, BzlaNode *exp, uint32_t upper, uint32_t lower)
+{
+  assert(bzla);
+  assert(exp);
+  assert(bzla == bzla_node_real_addr(exp)->bzla);
+
+  bool inv;
+  BzlaNode **lookup;
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  assert(!bzla_node_is_fun(exp));
+  assert(upper >= lower);
+  assert(upper < bzla_node_bv_get_width(bzla, exp));
+
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0
+      && bzla_node_is_inverted(exp))
+  {
+    inv = true;
+    exp = bzla_node_invert(exp);
+  }
+  else
+    inv = false;
+
+  lookup = find_slice_exp(bzla, exp, upper, lower);
+  if (!*lookup)
+  {
+    if (BZLA_FULL_UNIQUE_TABLE(bzla->nodes_unique_table))
+    {
+      enlarge_nodes_unique_table(bzla);
+      lookup = find_slice_exp(bzla, exp, upper, lower);
+    }
+    *lookup = new_slice_exp_node(bzla, exp, upper, lower);
+    assert(bzla->nodes_unique_table.num_elements < INT32_MAX);
+    bzla->nodes_unique_table.num_elements++;
+    (*lookup)->unique = 1;
+  }
+  else
+    inc_exp_ref_counter(bzla, *lookup);
+  assert(bzla_node_is_regular(*lookup));
+  if (inv) return bzla_node_invert(*lookup);
+  return *lookup;
+}
+
+BzlaNode *
+bzla_node_create_bv_slice(Bzla *bzla,
+                          BzlaNode *exp,
+                          uint32_t upper,
+                          uint32_t lower)
+{
+  exp = bzla_simplify_exp(bzla, exp);
+  assert(bzla_dbg_precond_slice_exp(bzla, exp, upper, lower));
+  return unary_exp_slice_exp(bzla, exp, upper, lower);
+}
+
+BzlaNode *
+bzla_node_create_bv_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_AND_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_bv_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_ADD_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_bv_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_MUL_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_bv_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_ULT_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_bv_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_SLT_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_bv_sll(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_shift_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_SLL_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_bv_srl(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_shift_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_SRL_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_bv_udiv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_UDIV_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_bv_urem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_UREM_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_bv_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_concat_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_CONCAT_NODE, 2, e);
+}
+
+#if 0
+BzlaNode *
+bzla_bv_cond_exp_node (Bzla * bzla, BzlaNode * e_cond, BzlaNode * e_if,
+		       BzlaNode * e_else)
+{
+  assert (bzla == bzla_node_real_addr (e_cond)->bzla);
+  assert (bzla == bzla_node_real_addr (e_if)->bzla);
+  assert (bzla == bzla_node_real_addr (e_else)->bzla);
+
+  if (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    return bzla_rewrite_ternary_exp (bzla, BZLA_BCOND_NODE, e_cond, e_if, e_else);
+
+  return bzla_node_create_cond (bzla, e_cond, e_if, e_else);
+}
+
+// TODO: arbitrary conditionals on functions
+BzlaNode *
+bzla_array_cond_exp_node (Bzla * bzla, BzlaNode * e_cond, BzlaNode * e_if,
+			  BzlaNode * e_else)
+{
+  assert (bzla == bzla_node_real_addr (e_cond)->bzla);
+  assert (bzla == bzla_node_real_addr (e_if)->bzla);
+  assert (bzla == bzla_node_real_addr (e_else)->bzla);
+
+  BzlaNode *cond, *param, *lambda, *app_if, *app_else;
+
+  e_cond = bzla_simplify_exp (bzla, e_cond);
+  e_if = bzla_simplify_exp (bzla, e_if);
+  e_else = bzla_simplify_exp (bzla, e_else);
+
+  assert (bzla_node_is_regular (e_if));
+  assert (bzla_node_is_fun (e_if));
+  assert (bzla_node_is_regular (e_else));
+  assert (bzla_node_is_fun (e_else));
+
+  param = bzla_exp_param (bzla, bzla_node_get_sort_id (e_if), 0);
+  app_if = bzla_exp_apply_n (bzla, e_if, &param, 1); 
+  app_else = bzla_exp_apply_n (bzla, e_else, &param, 1);
+  cond = bzla_bv_cond_exp_node (bzla, e_cond, app_if, app_else); 
+  lambda = bzla_exp_lambda (bzla, param, cond); 
+  lambda->is_array = 1;
+
+  bzla_node_release (bzla, param);
+  bzla_node_release (bzla, app_if);
+  bzla_node_release (bzla, app_else);
+  bzla_node_release (bzla, cond);
+  
+  return lambda;
+}
+#endif
 
 /*========================================================================*/
 
