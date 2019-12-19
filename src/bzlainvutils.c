@@ -699,6 +699,19 @@ bzla_is_inv_mul_const(BzlaMemMgr *mm,
   return true;
 }
 
+/**
+ * Check invertibility condition with respect to const bits in x for:
+ *
+ * pos_x = 0:
+ * x << s = t
+ * IC: (t >> s) << s = t
+ *     /\ (hi_x << s) & t = t
+ *     /\ (lo_x << s) | t = t
+ *
+ * pos_x = 1:
+ * s << x = t
+ * IC: (\/ s << i = t)  i = 0..bw(s)-1 for all possible i given x
+ */
 bool
 bzla_is_inv_sll_const(BzlaMemMgr *mm,
                       const BzlaBvDomain *x,
@@ -710,8 +723,55 @@ bzla_is_inv_sll_const(BzlaMemMgr *mm,
   assert(x);
   assert(t);
   assert(s);
-  (void) pos_x;
-  return true;
+
+  bool res, invalid;
+  BzlaBitVector *shift1, *shift2, *and, * or ;
+  BzlaBitVector *bv_i, *eq;
+
+  if (pos_x == 0)
+  {
+    if (!bzla_is_inv_sll(mm, x, t, s, pos_x)) return false;
+    shift1 = bzla_bv_sll(mm, x->hi, s);
+    shift2 = bzla_bv_sll(mm, x->lo, s);
+    and    = bzla_bv_and(mm, shift1, t);
+    or     = bzla_bv_or(mm, shift2, t);
+    res    = bzla_bv_compare(and, t) == 0 && bzla_bv_compare(or, t) == 0;
+    bzla_bv_free(mm, or);
+    bzla_bv_free(mm, and);
+    bzla_bv_free(mm, shift2);
+    bzla_bv_free(mm, shift1);
+  }
+  else
+  {
+    assert(pos_x == 1);
+    res = false;
+    for (uint32_t i = 0, bw_s = bzla_bv_get_width(s); i <= bw_s && !res; i++)
+    {
+      bv_i = bzla_bv_uint64_to_bv(mm, i, bw_s);
+
+      /* check if bv_i is a possible value given x */
+      and     = bzla_bv_and(mm, bv_i, x->hi);
+      or      = bzla_bv_or(mm, bv_i, x->lo);
+      invalid = bzla_bv_compare(or, bv_i) != 0;
+      bzla_bv_free(mm, or);
+      bzla_bv_free(mm, and);
+      if (invalid)
+      {
+        bzla_bv_free(mm, bv_i);
+        continue;
+      }
+
+      /* add to IC */
+      shift1 = bzla_bv_sll(mm, s, bv_i);
+      eq     = bzla_bv_eq(mm, shift1, t);
+      res    = bzla_bv_is_true(eq);
+
+      bzla_bv_free(mm, bv_i);
+      bzla_bv_free(mm, shift1);
+      bzla_bv_free(mm, eq);
+    }
+  }
+  return res;
 }
 
 bool

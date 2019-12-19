@@ -579,8 +579,11 @@ TEST_F(TestPropConst, one_complete_ult_const)
 
 TEST_F(TestPropConst, one_complete_sll_const)
 {
-  prop_complete_binary(
-      1, bzla_exp_bv_sll, bzla_bv_sll, bzla_is_inv_sll, bzla_proputils_inv_sll);
+  prop_complete_binary(1,
+                       bzla_exp_bv_sll,
+                       bzla_bv_sll,
+                       bzla_is_inv_sll_const,
+                       bzla_proputils_inv_sll);
 }
 
 TEST_F(TestPropConst, one_complete_srl_const)
@@ -834,8 +837,11 @@ TEST_F(TestPropConst, complete_ult_const)
 
 TEST_F(TestPropConst, complete_sll_const)
 {
-  prop_complete_binary(
-      2, bzla_exp_bv_sll, bzla_bv_sll, bzla_is_inv_sll, bzla_proputils_inv_sll);
+  prop_complete_binary(2,
+                       bzla_exp_bv_sll,
+                       bzla_bv_sll,
+                       bzla_is_inv_sll_const,
+                       bzla_proputils_inv_sll);
 }
 
 TEST_F(TestPropConst, complete_srl_const)

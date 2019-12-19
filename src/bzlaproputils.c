@@ -1901,7 +1901,12 @@ bzla_proputils_inv_sll(Bzla *bzla,
   assert(idx_x >= 0 && idx_x <= 1);
   assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(!bzla_node_is_bv_const(sll->e[idx_x]));
+#ifndef NDEBUG
   assert(bzla_is_inv_sll(bzla->mm, 0, t, s, idx_x));
+  BzlaHashTableData *x =
+      bzla_hashint_map_get(domains, bzla_node_real_addr(sll->e[idx_x])->id);
+  assert(!x || bzla_is_inv_sll_const(bzla->mm, x->as_ptr, t, s, idx_x));
+#endif
 
   uint32_t bw, i, ctz_s, ctz_t, shift;
   BzlaBitVector *res, *tmp, *ones;
@@ -4503,7 +4508,7 @@ static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_MUL_NODE]    = bzla_is_inv_mul,
     [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult,
     [BZLA_BV_SLICE_NODE]  = bzla_is_inv_slice,
-    [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll,
+    [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll_const,
     [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem,
