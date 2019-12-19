@@ -517,6 +517,31 @@ bzla_is_inv_urem(BzlaMemMgr *mm,
   return res;
 }
 
+/**
+ * Check invertibility condition (without considering const bits in x) for:
+ *
+ * x[:] = t
+ *
+ * IC: true
+ */
+bool
+bzla_is_inv_slice(BzlaMemMgr *mm,
+                  const BzlaBvDomain *x,
+                  const BzlaBitVector *t,
+                  const BzlaBitVector *s,
+                  uint32_t pos_x)
+{
+  assert(mm);
+  assert(t);
+  assert(s);
+  (void) mm;
+  (void) x;
+  (void) t;
+  (void) s;
+  (void) pos_x;
+  return true;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Check invertibility while considering constant bits in x.                  */
 /* -------------------------------------------------------------------------- */
@@ -754,6 +779,21 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
                        const BzlaBitVector *t,
                        const BzlaBitVector *s,
                        uint32_t pos_x)
+{
+  assert(mm);
+  assert(x);
+  assert(t);
+  assert(s);
+  (void) pos_x;
+  return true;
+}
+
+bool
+bzla_is_inv_slice_const(BzlaMemMgr *mm,
+                        const BzlaBvDomain *x,
+                        const BzlaBitVector *t,
+                        const BzlaBitVector *s,
+                        uint32_t pos_x)
 {
   assert(mm);
   assert(x);
