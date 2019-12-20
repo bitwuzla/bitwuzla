@@ -3,7 +3,7 @@
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2014 Armin Biere.
  *  Copyright (C) 2012-2017 Mathias Preiner.
- *  Copyright (C) 2012-2017 Aina Niemetz.
+ *  Copyright (C) 2012-2019 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -136,15 +136,15 @@ bzla_eliminate_slices_on_bv_vars(Bzla *bzla)
 
   while (!BZLA_EMPTY_STACK(vars))
   {
-    slices = bzla_hashptr_table_new(
-        mm, (BzlaHashPtr) hash_slice, (BzlaCmpPtr) compare_slices);
     var = BZLA_POP_STACK(vars);
+    if (!bzla_node_is_bv_var(var)) continue;
     BZLALOG(2,
             "process %s (%s)",
             bzla_util_node2string(var),
             bzla_util_node2string(bzla_node_get_simplified(bzla, var)));
     assert(bzla_node_is_regular(var));
-    assert(bzla_node_is_bv_var(var));
+    slices = bzla_hashptr_table_new(
+        mm, (BzlaHashPtr) hash_slice, (BzlaCmpPtr) compare_slices);
 
     /* find all slices on variable */
     bzla_iter_parent_init(&it, var);

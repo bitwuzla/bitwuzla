@@ -2573,7 +2573,8 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         assert(!bzla_node_is_fp(bzla, cur));
         if (cur->arity && bzla_node_is_fp(bzla, cur->e[0]))
         {
-          BZLA_PUSH_STACK(exp_stack, bzla_fp_word_blast(bzla, cur));
+          BzlaNode *wb = bzla_fp_word_blast(bzla, cur);
+          BZLA_PUSH_STACK(exp_stack, wb);
         }
         else
         {

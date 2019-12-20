@@ -6,6 +6,7 @@
  *  See COPYING for more information on using this software.
  */
 
+#include "bzlabv.h"
 #include "bzlasort.h"
 #include "bzlatypes.h"
 #include "utils/bzlanodemap.h"
@@ -113,6 +114,4 @@ void bzla_fp_word_blaster_delete(Bzla *bzla);
 /** Word-blast given Boolean expression. */
 BzlaNode *bzla_fp_word_blast(Bzla *bzla, BzlaNode *node);
 
-/** Get BzlaNode representation of word-blasted node. */
-BzlaNode *bzla_fp_word_blaster_get_node(Bzla *bzla, BzlaNode *node);
 #endif

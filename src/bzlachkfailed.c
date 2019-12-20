@@ -44,8 +44,8 @@ rebuild_formula(Bzla *bzla, uint32_t rewrite_level)
     if (cur->arity == 0)
     {
       assert(bzla_node_is_bv_var(cur) || bzla_node_is_bv_const(cur)
-             || bzla_node_is_fp_const(cur) || bzla_node_is_param(cur)
-             || bzla_node_is_uf(cur));
+             || bzla_node_is_fp_var(cur) || bzla_node_is_fp_const(cur)
+             || bzla_node_is_param(cur) || bzla_node_is_uf(cur));
       bzla_hashptr_table_add(t, cur);
     }
   }

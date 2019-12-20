@@ -98,9 +98,9 @@ rebuild_formula(Bzla *bzla, uint32_t rewrite_level)
 
     if (cur->arity == 0)
     {
-      assert(bzla_node_is_bv_var(cur) || bzla_node_is_bv_const(cur)
-             || bzla_node_is_fp_const(cur) || bzla_node_is_param(cur)
-             || bzla_node_is_uf(cur));
+      assert(bzla_node_is_bv_var(cur) || bzla_node_is_fp_var(cur)
+             || bzla_node_is_bv_const(cur) || bzla_node_is_fp_const(cur)
+             || bzla_node_is_param(cur) || bzla_node_is_uf(cur));
       bzla_hashptr_table_add(t, cur);
     }
   }
@@ -120,7 +120,7 @@ bzla_check_model(BzlaCheckModelContext *ctx)
   int32_t ret;
   Bzla *bzla, *clone;
   BzlaNode *cur, *exp, *simp, *simp_clone, *real_simp_clone, *model, *eq;
-  BzlaNode *args, *apply;
+  BzlaNode *args, *apply, *wb;
   BzlaPtrHashTableIterator it;
   const BzlaPtrHashTable *fmodel;
   BzlaBitVector *value;
@@ -249,7 +249,15 @@ bzla_check_model(BzlaCheckModelContext *ctx)
               bzla_node_get_symbol(clone, cur),
               bzla_util_node2string(model));
 
-      eq = bzla_exp_eq(clone, real_simp_clone, model);
+      if (bzla_node_is_fp(clone, real_simp_clone))
+      {
+        wb = bzla_fp_word_blast(clone, real_simp_clone);
+        eq = bzla_exp_eq(clone, wb, model);
+      }
+      else
+      {
+        eq = bzla_exp_eq(clone, real_simp_clone, model);
+      }
       bzla_assert_exp(clone, eq);
       bzla_node_release(clone, eq);
       bzla_node_release(clone, model);

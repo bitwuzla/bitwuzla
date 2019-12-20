@@ -899,7 +899,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
       if (bzla_node_is_fp(bzla, real_cur)
           || (real_cur->arity && bzla_node_is_fp(bzla, real_cur->e[0])))
       {
-        next = bzla_fp_word_blaster_get_node(bzla, real_cur);
+        next = bzla_fp_word_blast(bzla, real_cur);
         assert(next);
         BZLA_PUSH_STACK(work_stack, next);
         BZLA_PUSH_STACK(work_stack, cur_parent);
@@ -935,9 +935,8 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
            * node to evaluate first. */
           if (bzla_node_is_fp(bzla, real_cur->e[i]))
           {
-            BZLA_PUSH_STACK(
-                work_stack,
-                bzla_fp_word_blaster_get_node(bzla, real_cur->e[i]));
+            BzlaNode *wb = bzla_fp_word_blast(bzla, real_cur->e[i]);
+            BZLA_PUSH_STACK(work_stack, wb);
             BZLA_PUSH_STACK(work_stack, real_cur);
           }
         }
@@ -951,7 +950,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
       if (bzla_node_is_fp(bzla, real_cur)
           || (real_cur->arity && bzla_node_is_fp(bzla, real_cur->e[0])))
       {
-        BzlaNode *bv_node = bzla_fp_word_blaster_get_node(bzla, real_cur);
+        BzlaNode *bv_node = bzla_fp_word_blast(bzla, real_cur);
         assert(BZLA_COUNT_STACK(arg_stack));
         result = BZLA_POP_STACK(arg_stack);
         assert(bzla_hashint_map_contains(bv_model, bv_node->id));

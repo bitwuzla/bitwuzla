@@ -1587,7 +1587,8 @@ boolector_var(Bzla *bzla, BoolectorSort sort, const char *symbol)
 
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT(!bzla_sort_is_bv(bzla, s) && !bzla_sort_is_fp(bzla, s),
+             "'sort' is not a bit-vector or floating-point sort");
   symb = mk_unique_symbol(bzla, symbol);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT " %s", sort, bzla, symb);
   BZLA_ABORT(symb && bzla_hashptr_table_get(bzla->symbols, (char *) symb),

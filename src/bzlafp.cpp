@@ -6,6 +6,7 @@
  *  See COPYING for more information on using this software.
  */
 
+#include <sstream>
 #include <unordered_map>
 #include <vector>
 
@@ -1993,6 +1994,17 @@ fp_get_unpacked_float(BzlaNode *node)
   return static_cast<BzlaUnpackedFloat *>(bzla_fp_get_fp(node)->fp);
 }
 
+static std::string
+create_component_symbol(BzlaNode *node, const char *s)
+{
+  assert(node);
+  assert(s);
+  std::stringstream ss;
+  ss << "_fp_" << s << "_"
+     << bzla_node_get_symbol(bzla_node_real_addr(node)->bzla, node);
+  return ss.str();
+}
+
 BzlaNode *
 BzlaFPWordBlaster::word_blast(BzlaNode *node)
 {
@@ -2029,6 +2041,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
     {
       visited.emplace(cur, 0);
       to_visit.push_back(cur);
+
       for (uint32_t i = 0; i < cur->arity; ++i)
       {
         to_visit.push_back(cur->e[i]);
@@ -2041,6 +2054,43 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         assert(bzla_node_is_regular(cur));
         d_unpacked_float_map.emplace(
             cur, BzlaSymUnpackedFloat(*fp_get_unpacked_float(cur)));
+      }
+      else if (bzla_node_is_fp_var(cur))
+      {
+        BzlaSortId sort   = bzla_node_get_sort_id(cur);
+        BzlaSortId sort_1 = bzla_sort_bv(d_bzla, 1);
+        BzlaSortId sort_exp =
+            bzla_sort_bv(d_bzla, BzlaSymUnpackedFloat::exponentWidth(sort));
+        BzlaSortId sort_sig =
+            bzla_sort_bv(d_bzla, BzlaSymUnpackedFloat::significandWidth(sort));
+
+        BzlaNode *inf = bzla_exp_var(
+            d_bzla, sort_1, create_component_symbol(cur, "inf").c_str());
+        BzlaNode *nan = bzla_exp_var(
+            d_bzla, sort_1, create_component_symbol(cur, "nan").c_str());
+        BzlaNode *sign = bzla_exp_var(
+            d_bzla, sort_1, create_component_symbol(cur, "sign").c_str());
+        BzlaNode *zero = bzla_exp_var(
+            d_bzla, sort_1, create_component_symbol(cur, "zero").c_str());
+        BzlaNode *exp = bzla_exp_var(
+            d_bzla, sort_exp, create_component_symbol(cur, "exp").c_str());
+        BzlaNode *sig = bzla_exp_var(
+            d_bzla, sort_sig, create_component_symbol(cur, "sig").c_str());
+
+        BzlaSymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
+        d_unpacked_float_map.emplace(cur, uf);
+        BzlaFPSymProp assertion = uf.valid(sort);
+        bzla_assert_exp(d_bzla, assertion.getNode());
+
+        bzla_node_release(d_bzla, sig);
+        bzla_node_release(d_bzla, exp);
+        bzla_node_release(d_bzla, zero);
+        bzla_node_release(d_bzla, sign);
+        bzla_node_release(d_bzla, nan);
+        bzla_node_release(d_bzla, inf);
+        bzla_sort_release(d_bzla, sort_sig);
+        bzla_sort_release(d_bzla, sort_exp);
+        bzla_sort_release(d_bzla, sort_1);
       }
       else if (bzla_node_is_fp_eq(cur))
       {
@@ -2100,11 +2150,15 @@ BzlaFPWordBlaster::get_word_blasted_node(BzlaNode *node)
     return d_prop_map.at(node).getNode();
   }
 
-  assert(d_unpacked_float_map.find(node) != d_unpacked_float_map.end());
-  d_packed_float_map.emplace(
-      node,
-      symfpu::pack(bzla_node_get_sort_id(node), d_unpacked_float_map.at(node)));
-  return d_packed_float_map.at(node).getNode();
+  if (d_unpacked_float_map.find(node) != d_unpacked_float_map.end())
+  {
+    d_packed_float_map.emplace(node,
+                               symfpu::pack(bzla_node_get_sort_id(node),
+                                            d_unpacked_float_map.at(node)));
+    return d_packed_float_map.at(node).getNode();
+  }
+
+  return word_blast(node);
 }
 
 BzlaFPWordBlaster *
@@ -2443,23 +2497,10 @@ bzla_fp_word_blast(Bzla *bzla, BzlaNode *node)
   assert(bzla->word_blaster);
   assert(node);
   BzlaFPWordBlaster::set_s_bzla(bzla);
-  BzlaNode *res =
-      static_cast<BzlaFPWordBlaster *>(bzla->word_blaster)->word_blast(node);
-  BzlaFPWordBlaster::unset_s_bzla();
-  return res;
-}
-
-BzlaNode *
-bzla_fp_word_blaster_get_node(Bzla *bzla, BzlaNode *node)
-{
-  assert(bzla);
-  assert(bzla->word_blaster);
-  assert(node);
-  BzlaFPWordBlaster::set_s_bzla(bzla);
   BzlaNode *res = static_cast<BzlaFPWordBlaster *>(bzla->word_blaster)
                       ->get_word_blasted_node(node);
   BzlaFPWordBlaster::unset_s_bzla();
-  return res;
+  return bzla_simplify_exp(bzla, res);
 }
 
 /* -------------------------------------------------------------------------- */
