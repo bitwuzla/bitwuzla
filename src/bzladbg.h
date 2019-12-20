@@ -3,7 +3,7 @@
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2013 Armin Biere.
  *  Copyright (C) 2012-2017 Mathias Preiner.
- *  Copyright (C) 2012-2017 Aina Niemetz.
+ *  Copyright (C) 2012-2019 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -62,6 +62,8 @@ bool bzla_dbg_precond_regular_unary_bv_exp(Bzla* bzla, const BzlaNode* exp);
 bool bzla_dbg_precond_regular_binary_bv_exp(Bzla* bzla,
                                             const BzlaNode* e0,
                                             const BzlaNode* e1);
+
+bool bzla_dbg_precond_regular_unary_fp_exp(Bzla* bzla, const BzlaNode* exp);
 
 bool bzla_dbg_precond_eq_exp(Bzla* bzla,
                              const BzlaNode* e0,

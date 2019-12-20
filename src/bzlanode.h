@@ -382,6 +382,8 @@ bzla_node_is_proxy(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_PROXY_NODE;
 }
 
+/*------------------------------------------------------------------------*/
+
 static inline bool
 bzla_node_is_bv_const(const BzlaNode *exp)
 {
@@ -389,6 +391,16 @@ bzla_node_is_bv_const(const BzlaNode *exp)
   exp = bzla_node_real_addr(exp);
   return bzla_node_is_bv(exp->bzla, exp) && exp->kind == BZLA_BV_CONST_NODE;
 }
+
+static inline bool
+bzla_node_is_fp_const(const BzlaNode *exp)
+{
+  assert(exp);
+  exp = bzla_node_real_addr(exp);
+  return bzla_node_is_fp(exp->bzla, exp) && exp->kind == BZLA_FP_CONST_NODE;
+}
+
+/*------------------------------------------------------------------------*/
 
 static inline bool
 bzla_node_is_bv_var(const BzlaNode *exp)
@@ -405,6 +417,8 @@ bzla_node_is_fp_var(const BzlaNode *exp)
   exp = bzla_node_real_addr(exp);
   return bzla_node_is_fp(exp->bzla, exp) && exp->kind == BZLA_VAR_NODE;
 }
+
+/*------------------------------------------------------------------------*/
 
 static inline bool
 bzla_node_is_bv_eq(const BzlaNode *exp)
@@ -482,6 +496,17 @@ bzla_node_is_bv_concat(const BzlaNode *exp)
   assert(exp);
   return bzla_node_real_addr(exp)->kind == BZLA_BV_CONCAT_NODE;
 }
+
+/*------------------------------------------------------------------------*/
+
+static inline bool
+bzla_node_is_fp_abs(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_ABS_NODE;
+}
+
+/*------------------------------------------------------------------------*/
 
 static inline bool
 bzla_node_is_cond(const BzlaNode *exp)
@@ -607,14 +632,6 @@ static inline bool
 bzla_node_is_bv_srl(const BzlaNode *exp)
 {
   return bzla_node_real_addr(exp)->kind == BZLA_BV_SRL_NODE;
-}
-
-static inline bool
-bzla_node_is_fp_const(const BzlaNode *exp)
-{
-  assert(exp);
-  exp = bzla_node_real_addr(exp);
-  return bzla_node_is_fp(exp->bzla, exp) && exp->kind == BZLA_FP_CONST_NODE;
 }
 
 static inline bool
@@ -867,6 +884,8 @@ BzlaNode *bzla_node_create_bv_slice(Bzla *bzla,
                                     uint32_t upper,
                                     uint32_t lower);
 
+/*------------------------------------------------------------------------*/
+
 BzlaNode *bzla_node_create_bv_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 BzlaNode *bzla_node_create_bv_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
@@ -886,6 +905,10 @@ BzlaNode *bzla_node_create_bv_udiv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 BzlaNode *bzla_node_create_bv_urem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 BzlaNode *bzla_node_create_bv_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
+/*------------------------------------------------------------------------*/
+
+BzlaNode *bzla_node_create_fp_abs(Bzla *bzla, BzlaNode *e0);
 
 /*========================================================================*/
 

@@ -24,6 +24,7 @@ extern "C" {
 #include "symfpu/core/compare.h"
 #include "symfpu/core/ite.h"
 #include "symfpu/core/packing.h"
+#include "symfpu/core/sign.h"
 #include "symfpu/core/unpackedFloat.h"
 #endif
 
@@ -2103,6 +2104,15 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                                BzlaFPSortInfo(bzla_node_get_sort_id(cur->e[0])),
                                d_unpacked_float_map.at(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[1])));
+      }
+      else if (bzla_node_is_fp_abs(cur))
+      {
+        assert(d_unpacked_float_map.find(cur->e[0])
+               != d_unpacked_float_map.end());
+        d_unpacked_float_map.emplace(cur,
+                                     symfpu::absolute<BzlaFPSymTraits>(
+                                         bzla_node_get_sort_id(cur),
+                                         d_unpacked_float_map.at(cur->e[0])));
       }
       visited.at(cur) = 1;
     }

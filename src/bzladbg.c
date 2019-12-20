@@ -294,9 +294,22 @@ bzla_dbg_precond_regular_unary_bv_exp(Bzla *bzla, const BzlaNode *exp)
 {
   assert(bzla);
   assert(exp);
+  assert(bzla_node_real_addr(exp)->bzla == bzla);
   assert(!bzla_node_is_simplified(exp));
   assert(!bzla_node_is_fun(exp));
+  assert(bzla_node_is_bv(bzla, exp));
+  return true;
+}
+
+bool
+bzla_dbg_precond_regular_unary_fp_exp(Bzla *bzla, const BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
   assert(bzla_node_real_addr(exp)->bzla == bzla);
+  assert(!bzla_node_is_simplified(exp));
+  assert(!bzla_node_is_fun(exp));
+  assert(bzla_node_is_fp(bzla, exp));
   return true;
 }
 
