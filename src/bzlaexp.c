@@ -1822,6 +1822,9 @@ bzla_exp_fp_const(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
   assert(bzla == bzla_node_real_addr(e2)->bzla);
+  assert(bzla_node_is_bv_const(e0));
+  assert(bzla_node_is_bv_const(e1));
+  assert(bzla_node_is_bv_const(e2));
   assert(bzla_node_bv_get_width(bzla, e0) == 1);
 
   uint32_t ewidth, swidth;
