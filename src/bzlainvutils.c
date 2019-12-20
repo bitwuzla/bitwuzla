@@ -770,6 +770,19 @@ bzla_is_inv_sra_const(BzlaMemMgr *mm,
   return true;
 }
 
+/**
+ * Check invertibility condition with respect to const bits in x for:
+ *
+ * pos_x = 0:
+ * x << s = t
+ * IC: (t >> s) << s = t
+ *     /\ (hi_x << s) & t = t
+ *     /\ (lo_x << s) | t = t
+ *
+ * pos_x = 1:
+ * s << x = t
+ * IC: (\/ s << i = t)  i = 0..bw(s)-1 for all possible i given x
+ */
 bool
 bzla_is_inv_srl_const(BzlaMemMgr *mm,
                       const BzlaBvDomain *x,
@@ -781,8 +794,54 @@ bzla_is_inv_srl_const(BzlaMemMgr *mm,
   assert(x);
   assert(t);
   assert(s);
-  (void) pos_x;
-  return true;
+
+  bool res, invalid;
+  uint32_t bw_s;
+  BzlaBitVector *shift1, *shift2, *and, * or ;
+  BzlaBitVector *bv_i, *bv_bw;
+
+  if (pos_x == 0)
+  {
+    if (!bzla_is_inv_srl(mm, x, t, s, pos_x)) return false;
+    shift1 = bzla_bv_srl(mm, x->hi, s);
+    shift2 = bzla_bv_srl(mm, x->lo, s);
+    and    = bzla_bv_and(mm, shift1, t);
+    or     = bzla_bv_or(mm, shift2, t);
+    res    = bzla_bv_compare(and, t) == 0 && bzla_bv_compare(or, t) == 0;
+    bzla_bv_free(mm, or);
+    bzla_bv_free(mm, and);
+    bzla_bv_free(mm, shift2);
+    bzla_bv_free(mm, shift1);
+  }
+  else
+  {
+    assert(pos_x == 1);
+    bw_s  = bzla_bv_get_width(s);
+    bv_bw = bzla_bv_uint64_to_bv(mm, bw_s, bw_s);
+    res   = bzla_bv_compare(x->hi, bv_bw) >= 0 && bzla_bv_is_zero(t);
+    bzla_bv_free(mm, bv_bw);
+    for (uint32_t i = 0; i <= bw_s && !res; i++)
+    {
+      bv_i = bzla_bv_uint64_to_bv(mm, i, bw_s);
+
+      /* check if bv_i is a possible value given x */
+      and = bzla_bv_and(mm, bv_i, x->hi);
+      or  = bzla_bv_or(mm, bv_i, x->lo);
+      invalid =
+          bzla_bv_compare(or, bv_i) != 0 || bzla_bv_compare(and, bv_i) != 0;
+      bzla_bv_free(mm, or);
+      bzla_bv_free(mm, and);
+      if (!invalid)
+      {
+        /* add to IC */
+        shift1 = bzla_bv_srl(mm, s, bv_i);
+        res    = bzla_bv_compare(shift1, t) == 0;
+        bzla_bv_free(mm, shift1);
+      }
+      bzla_bv_free(mm, bv_i);
+    }
+  }
+  return res;
 }
 
 bool

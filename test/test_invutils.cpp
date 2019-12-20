@@ -255,6 +255,12 @@ TEST_F(TestInvUtils, is_inv_sll_const)
   test_is_inv_const(bzla_is_inv_sll_const, boolector_sll, 1);
 }
 
+TEST_F(TestInvUtils, is_inv_srl_const)
+{
+  test_is_inv_const(bzla_is_inv_srl_const, boolector_srl, 0);
+  test_is_inv_const(bzla_is_inv_srl_const, boolector_srl, 1);
+}
+
 /* Test is_inv_* functions (no const bits). */
 
 TEST_F(TestInvUtils, is_inv_add)
