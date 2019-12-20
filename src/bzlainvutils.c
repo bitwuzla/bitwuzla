@@ -775,13 +775,13 @@ bzla_is_inv_sra_const(BzlaMemMgr *mm,
  *
  * pos_x = 0:
  * x << s = t
- * IC: (t >> s) << s = t
- *     /\ (hi_x << s) & t = t
- *     /\ (lo_x << s) | t = t
+ * IC: (t << s) >> s = t
+ *     /\ (hi_x >> s) & t = t
+ *     /\ (lo_x >> s) | t = t
  *
  * pos_x = 1:
- * s << x = t
- * IC: (\/ s << i = t)  i = 0..bw(s)-1 for all possible i given x
+ * s >> x = t
+ * IC: (\/ s >> i = t)  i = 0..bw(s)-1 for all possible i given x
  */
 bool
 bzla_is_inv_srl_const(BzlaMemMgr *mm,
