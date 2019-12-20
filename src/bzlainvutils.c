@@ -465,7 +465,7 @@ bzla_is_inv_urem(BzlaMemMgr *mm,
 /**
  * Check invertibility condition (without considering const bits in x) for:
  *
- * x[:] = t
+ * x[upper:lower] = t
  *
  * IC: true
  */
@@ -473,17 +473,16 @@ bool
 bzla_is_inv_slice(BzlaMemMgr *mm,
                   const BzlaBvDomain *x,
                   const BzlaBitVector *t,
-                  const BzlaBitVector *s,
-                  uint32_t pos_x)
+                  uint32_t upper,
+                  uint32_t lower)
 {
   assert(mm);
   assert(t);
-  assert(s);
   (void) mm;
   (void) x;
   (void) t;
-  (void) s;
-  (void) pos_x;
+  (void) upper;
+  (void) lower;
   return true;
 }
 
@@ -922,17 +921,40 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
   return true;
 }
 
+/**
+ * Check invertibility condition with respect to const bits in x for:
+ *
+ * x[upper:lower] = t
+ *
+ * IC:
+ * m = ~(lo_x ^ hi_x)[upper:lower]  ... mask out all non-constant bits
+ * x[upper:lower] & m = t & m
+ */
 bool
 bzla_is_inv_slice_const(BzlaMemMgr *mm,
                         const BzlaBvDomain *x,
                         const BzlaBitVector *t,
-                        const BzlaBitVector *s,
-                        uint32_t pos_x)
+                        uint32_t upper,
+                        uint32_t lower)
 {
   assert(mm);
   assert(x);
   assert(t);
-  assert(s);
-  (void) pos_x;
-  return true;
+
+  bool res;
+  BzlaBitVector *mask, *mask_sliced, *x_mask, *t_mask;
+
+  mask        = bzla_bv_xnor(mm, x->lo, x->hi);
+  mask_sliced = bzla_bv_slice(mm, mask, upper, lower);
+
+  x_mask = bzla_bv_slice(mm, x->lo, upper, lower);
+  t_mask = bzla_bv_and(mm, mask_sliced, t);
+  res    = bzla_bv_compare(x_mask, t_mask) == 0;
+
+  bzla_bv_free(mm, mask);
+  bzla_bv_free(mm, mask_sliced);
+  bzla_bv_free(mm, x_mask);
+  bzla_bv_free(mm, t_mask);
+
+  return res;
 }

@@ -94,12 +94,12 @@ bool bzla_is_inv_urem(BzlaMemMgr *mm,
                       const BzlaBitVector *s,
                       uint32_t pos_x);
 
-/** Check invertibility of x[:] = t when solved for x. */
+/** Check invertibility of x[upper:lower] = t when solved for x. */
 bool bzla_is_inv_slice(BzlaMemMgr *mm,
                        const BzlaBvDomain *x,
                        const BzlaBitVector *t,
-                       const BzlaBitVector *s,
-                       uint32_t pos_x);
+                       uint32_t upper,
+                       uint32_t lower);
 
 /* -------------------------------------------------------------------------- */
 /* Check invertibility while considering constant bits in x.                  */
@@ -216,12 +216,12 @@ bool bzla_is_inv_urem_const(BzlaMemMgr *mm,
                             uint32_t pos_x);
 
 /**
- * Check invertibility of x[:] = t when solved for x with respect to const
- * bits in x.
+ * Check invertibility of x[upper:lower] = t when solved for x with respect to
+ * const bits in x.
  */
 bool bzla_is_inv_slice_const(BzlaMemMgr *mm,
                              const BzlaBvDomain *x,
                              const BzlaBitVector *t,
-                             const BzlaBitVector *s,
-                             uint32_t pos_x);
+                             uint32_t upper,
+                             uint32_t lower);
 #endif

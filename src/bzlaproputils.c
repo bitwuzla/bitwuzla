@@ -4513,7 +4513,7 @@ static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_EQ_NODE]     = bzla_is_inv_eq_const,
     [BZLA_BV_MUL_NODE]    = bzla_is_inv_mul,
     [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult_const,
-    [BZLA_BV_SLICE_NODE]  = bzla_is_inv_slice,
+    [BZLA_BV_SLICE_NODE]  = 0,  // different handling
     [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll_const,
     [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv,
@@ -4832,12 +4832,24 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       /* check invertibility --> if not invertible, fall back to consistent
        * value computation */
       force_cons = false;
-      if (is_inv)
+      if (opt_prop_const_bits && bzla_node_is_bv_slice(real_cur))
+      {
+        d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
+        assert(d);
+        force_cons =
+            !bzla_is_inv_slice_const(mm,
+                                     d->as_ptr,
+                                     bv_t,
+                                     bzla_node_bv_slice_get_upper(real_cur),
+                                     bzla_node_bv_slice_get_lower(real_cur));
+      }
+      else if (is_inv)
       {
         d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
         assert(!opt_prop_const_bits || d);
         force_cons = !is_inv(mm, d ? d->as_ptr : 0, bv_t, bv_s[idx_s], idx_x);
       }
+
       /* not invertible counts as conflict */
       if (force_cons)
       {
