@@ -113,10 +113,8 @@ bzla_is_inv_concat(BzlaMemMgr *mm,
     assert(pos_x == 1);
     slice = bzla_bv_slice(mm, t, bw_t - 1, bw_t - bw_s);
   }
-  BzlaBitVector *s_eq_slice = bzla_bv_eq(mm, s, slice);
-  res                       = bzla_bv_is_true(s_eq_slice);
+  res = bzla_bv_compare(s, slice) == 0;
   bzla_bv_free(mm, slice);
-  bzla_bv_free(mm, s_eq_slice);
   return res;
 }
 
@@ -170,12 +168,10 @@ bzla_is_inv_mul(BzlaMemMgr *mm,
   BzlaBitVector *neg_s      = bzla_bv_neg(mm, s);
   BzlaBitVector *neg_s_or_s = bzla_bv_or(mm, neg_s, s);
   BzlaBitVector *and_t      = bzla_bv_and(mm, neg_s_or_s, t);
-  BzlaBitVector *eq_t       = bzla_bv_eq(mm, and_t, t);
-  bool res                  = bzla_bv_is_true(eq_t);
+  bool res                  = bzla_bv_compare(and_t, t) == 0;
   bzla_bv_free(mm, neg_s);
   bzla_bv_free(mm, neg_s_or_s);
   bzla_bv_free(mm, and_t);
-  bzla_bv_free(mm, eq_t);
   return res;
 }
 
@@ -207,11 +203,9 @@ bzla_is_inv_sll(BzlaMemMgr *mm,
   {
     BzlaBitVector *t_srl_s = bzla_bv_srl(mm, t, s);
     BzlaBitVector *sll_s   = bzla_bv_sll(mm, t_srl_s, s);
-    BzlaBitVector *eq_t    = bzla_bv_eq(mm, sll_s, t);
-    res                    = bzla_bv_is_true(eq_t);
+    res                    = bzla_bv_compare(sll_s, t) == 0;
     bzla_bv_free(mm, t_srl_s);
     bzla_bv_free(mm, sll_s);
-    bzla_bv_free(mm, eq_t);
   }
   else
   {
@@ -221,12 +215,10 @@ bzla_is_inv_sll(BzlaMemMgr *mm,
     {
       BzlaBitVector *bv_i    = bzla_bv_uint64_to_bv(mm, i, bw_s);
       BzlaBitVector *s_sll_i = bzla_bv_sll(mm, s, bv_i);
-      BzlaBitVector *eq_t    = bzla_bv_eq(mm, s_sll_i, t);
-      res                    = bzla_bv_is_true(eq_t);
+      res                    = bzla_bv_compare(s_sll_i, t) == 0;
 
       bzla_bv_free(mm, bv_i);
       bzla_bv_free(mm, s_sll_i);
-      bzla_bv_free(mm, eq_t);
     }
   }
   return res;
@@ -268,19 +260,15 @@ bzla_is_inv_sra(BzlaMemMgr *mm,
     {
       BzlaBitVector *t_sll_s = bzla_bv_sll(mm, t, s);
       BzlaBitVector *sra_s   = bzla_bv_sra(mm, t_sll_s, s);
-      BzlaBitVector *eq_t    = bzla_bv_eq(mm, sra_s, t);
-      res                    = bzla_bv_is_true(eq_t);
+      res                    = bzla_bv_compare(sra_s, t) == 0;
       bzla_bv_free(mm, t_sll_s);
       bzla_bv_free(mm, sra_s);
-      bzla_bv_free(mm, eq_t);
     }
     bzla_bv_free(mm, s_ult_bw_s);
     if (res)
     {
-      BzlaBitVector *s_uge_bw_s = bzla_bv_ulte(mm, bv_bw_s, s);
-      res = (!bzla_bv_is_true(s_uge_bw_s) || bzla_bv_is_ones(t)
+      res = (bzla_bv_compare(bv_bw_s, s) == 1 || bzla_bv_is_ones(t)
              || bzla_bv_is_zero(t));
-      bzla_bv_free(mm, s_uge_bw_s);
     }
     bzla_bv_free(mm, bv_bw_s);
   }
@@ -292,11 +280,9 @@ bzla_is_inv_sra(BzlaMemMgr *mm,
     {
       BzlaBitVector *bv_i    = bzla_bv_uint64_to_bv(mm, i, bw_s);
       BzlaBitVector *s_sra_i = bzla_bv_sra(mm, s, bv_i);
-      BzlaBitVector *eq_t    = bzla_bv_eq(mm, s_sra_i, t);
-      res                    = bzla_bv_is_true(eq_t);
+      res                    = bzla_bv_compare(s_sra_i, t) == 0;
       bzla_bv_free(mm, bv_i);
       bzla_bv_free(mm, s_sra_i);
-      bzla_bv_free(mm, eq_t);
     }
   }
   return res;
@@ -330,11 +316,9 @@ bzla_is_inv_srl(BzlaMemMgr *mm,
   {
     BzlaBitVector *t_sll_s = bzla_bv_sll(mm, t, s);
     BzlaBitVector *srl_s   = bzla_bv_srl(mm, t_sll_s, s);
-    BzlaBitVector *eq_t    = bzla_bv_eq(mm, srl_s, t);
-    res                    = bzla_bv_is_true(eq_t);
+    res                    = bzla_bv_compare(srl_s, t) == 0;
     bzla_bv_free(mm, t_sll_s);
     bzla_bv_free(mm, srl_s);
-    bzla_bv_free(mm, eq_t);
   }
   else
   {
@@ -344,11 +328,9 @@ bzla_is_inv_srl(BzlaMemMgr *mm,
     {
       BzlaBitVector *bv_i    = bzla_bv_uint64_to_bv(mm, i, bw_s);
       BzlaBitVector *s_srl_i = bzla_bv_srl(mm, s, bv_i);
-      BzlaBitVector *eq_t    = bzla_bv_eq(mm, s_srl_i, t);
-      res                    = bzla_bv_is_true(eq_t);
+      res                    = bzla_bv_compare(s_srl_i, t) == 0;
       bzla_bv_free(mm, bv_i);
       bzla_bv_free(mm, s_srl_i);
-      bzla_bv_free(mm, eq_t);
     }
   }
   return res;
@@ -429,10 +411,8 @@ bzla_is_inv_udiv(BzlaMemMgr *mm,
     udiv                    = bzla_bv_udiv(mm, s, s_udiv_t);
     bzla_bv_free(mm, s_udiv_t);
   }
-  BzlaBitVector *eq_t = bzla_bv_eq(mm, udiv, t);
-  res                 = bzla_bv_is_true(eq_t);
+  res = bzla_bv_compare(udiv, t) == 0;
   bzla_bv_free(mm, udiv);
-  bzla_bv_free(mm, eq_t);
   return res;
 }
 
@@ -464,10 +444,8 @@ bzla_is_inv_urem(BzlaMemMgr *mm,
   if (pos_x == 0)
   {
     BzlaBitVector *not_neg_s = bzla_bv_not(mm, neg_s);
-    BzlaBitVector *uge_t     = bzla_bv_ulte(mm, t, not_neg_s);
-    res                      = bzla_bv_is_true(uge_t);
+    res                      = bzla_bv_compare(t, not_neg_s) <= 0;
     bzla_bv_free(mm, not_neg_s);
-    bzla_bv_free(mm, uge_t);
   }
   else
   {
@@ -475,12 +453,10 @@ bzla_is_inv_urem(BzlaMemMgr *mm,
     BzlaBitVector *t_add_t = bzla_bv_add(mm, t, t);
     BzlaBitVector *sub_s   = bzla_bv_add(mm, t_add_t, neg_s);
     BzlaBitVector *and_s   = bzla_bv_and(mm, sub_s, s);
-    BzlaBitVector *uge_t   = bzla_bv_ulte(mm, t, and_s);
-    res                    = bzla_bv_is_true(uge_t);
+    res                    = bzla_bv_compare(t, and_s) <= 0;
     bzla_bv_free(mm, t_add_t);
     bzla_bv_free(mm, sub_s);
     bzla_bv_free(mm, and_s);
-    bzla_bv_free(mm, uge_t);
   }
   bzla_bv_free(mm, neg_s);
   return res;
@@ -731,8 +707,9 @@ bzla_is_inv_sll_const(BzlaMemMgr *mm,
   assert(s);
 
   bool res, invalid;
+  uint32_t bw_s;
   BzlaBitVector *shift1, *shift2, *and, * or ;
-  BzlaBitVector *bv_i, *eq;
+  BzlaBitVector *bv_i, *bv_bw;
 
   if (pos_x == 0)
   {
@@ -750,31 +727,29 @@ bzla_is_inv_sll_const(BzlaMemMgr *mm,
   else
   {
     assert(pos_x == 1);
-    res = false;
-    for (uint32_t i = 0, bw_s = bzla_bv_get_width(s); i <= bw_s && !res; i++)
+    bw_s  = bzla_bv_get_width(s);
+    bv_bw = bzla_bv_uint64_to_bv(mm, bw_s, bw_s);
+    res   = bzla_bv_compare(x->hi, bv_bw) >= 0 && bzla_bv_is_zero(t);
+    bzla_bv_free(mm, bv_bw);
+    for (uint32_t i = 0; i <= bw_s && !res; i++)
     {
       bv_i = bzla_bv_uint64_to_bv(mm, i, bw_s);
 
       /* check if bv_i is a possible value given x */
-      and     = bzla_bv_and(mm, bv_i, x->hi);
-      or      = bzla_bv_or(mm, bv_i, x->lo);
-      invalid = bzla_bv_compare(or, bv_i) != 0;
+      and = bzla_bv_and(mm, bv_i, x->hi);
+      or  = bzla_bv_or(mm, bv_i, x->lo);
+      invalid =
+          bzla_bv_compare(or, bv_i) != 0 || bzla_bv_compare(and, bv_i) != 0;
       bzla_bv_free(mm, or);
       bzla_bv_free(mm, and);
-      if (invalid)
+      if (!invalid)
       {
-        bzla_bv_free(mm, bv_i);
-        continue;
+        /* add to IC */
+        shift1 = bzla_bv_sll(mm, s, bv_i);
+        res    = bzla_bv_compare(shift1, t) == 0;
+        bzla_bv_free(mm, shift1);
       }
-
-      /* add to IC */
-      shift1 = bzla_bv_sll(mm, s, bv_i);
-      eq     = bzla_bv_eq(mm, shift1, t);
-      res    = bzla_bv_is_true(eq);
-
       bzla_bv_free(mm, bv_i);
-      bzla_bv_free(mm, shift1);
-      bzla_bv_free(mm, eq);
     }
   }
   return res;

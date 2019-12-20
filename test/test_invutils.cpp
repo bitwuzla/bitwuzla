@@ -69,6 +69,15 @@ class TestInvUtils : public TestMm
                          CreateBinExp create_exp,
                          uint32_t pos_x)
   {
+    test_is_inv(is_inv, create_exp, pos_x, true);
+  }
+
+  void test_is_inv(BzlaPropIsInv is_inv,
+                   CreateBinExp create_exp,
+                   uint32_t pos_x,
+                   bool const_bits = false)
+  {
+    std::vector<std::string> x_values;
     BzlaBvDomain *x;
     BzlaBitVector *s, *t;
     char *vs, *vt;
@@ -77,11 +86,21 @@ class TestInvUtils : public TestMm
     uint32_t bw_s = TEST_INVUTILS_BW;
     uint32_t bw_t = TEST_INVUTILS_BW;
 
-    if (is_inv == bzla_is_inv_ult_const)
+    if (const_bits)
+    {
+      x_values = d_values;
+    }
+    else
+    {
+      /* x is unconstrained (no const bits) */
+      x_values.push_back("xxx");
+    }
+
+    if (create_exp == boolector_ult || create_exp == boolector_eq)
     {
       bw_t = 1;
     }
-    else if (is_inv == bzla_is_inv_concat_const)
+    else if (create_exp == boolector_concat)
     {
       bw_s = 2; /* decrease number of tests for concat */
       bw_t = bw_s + bw_x;
@@ -89,7 +108,7 @@ class TestInvUtils : public TestMm
 
     uint32_t nval_s = 1 << bw_s;
     uint32_t nval_t = 1 << bw_t;
-    for (const std::string &x_value : d_values)
+    for (const std::string &x_value : x_values)
     {
       x = bzla_bvprop_new_from_char(d_mm, x_value.c_str());
       for (uint32_t i = 0; i < nval_s; i++)
@@ -101,7 +120,7 @@ class TestInvUtils : public TestMm
           t           = bzla_bv_uint64_to_bv(d_mm, j, bw_t);
           vt          = bzla_bv_to_char(d_mm, t);
           bool res    = is_inv(d_mm, x, t, s, pos_x);
-          bool status = check_sat_is_inv_const(create_exp, x, t, s, pos_x);
+          bool status = check_sat_is_inv(create_exp, x, t, s, pos_x);
 
           if (res != status)
           {
@@ -122,11 +141,11 @@ class TestInvUtils : public TestMm
     }
   }
 
-  bool check_sat_is_inv_const(CreateBinExp create_exp,
-                              BzlaBvDomain *x,
-                              BzlaBitVector *t,
-                              BzlaBitVector *s,
-                              uint32_t pos_x)
+  bool check_sat_is_inv(CreateBinExp create_exp,
+                        BzlaBvDomain *x,
+                        BzlaBitVector *t,
+                        BzlaBitVector *s,
+                        uint32_t pos_x)
   {
     BoolectorSort sx;
     BoolectorNode *nx, *nxlo, *nxhi, *ns, *nt;
@@ -142,7 +161,7 @@ class TestInvUtils : public TestMm
     vt = bzla_bv_to_char(mm, t);
 
     sx = boolector_bitvec_sort(bzla, bzla_bv_get_width(x->lo));
-    nx = boolector_var(bzla, sx, 0);  //"x");
+    nx = boolector_var(bzla, sx, 0);
 
     vxlo = bzla_bv_to_char(mm, x->lo);
     nxlo = boolector_const(bzla, vxlo);
@@ -201,10 +220,11 @@ class TestInvUtils : public TestMm
   }
 };
 
-TEST_F(TestInvUtils, is_inv_concat_const)
+/* Test is_inv_*_const functions. */
+
+TEST_F(TestInvUtils, is_inv_add_const)
 {
-  test_is_inv_const(bzla_is_inv_concat_const, boolector_concat, 0);
-  test_is_inv_const(bzla_is_inv_concat_const, boolector_concat, 1);
+  test_is_inv_const(bzla_is_inv_add_const, boolector_add, 0);
 }
 
 TEST_F(TestInvUtils, is_inv_and_const)
@@ -212,18 +232,94 @@ TEST_F(TestInvUtils, is_inv_and_const)
   test_is_inv_const(bzla_is_inv_and_const, boolector_and, 0);
 }
 
-TEST_F(TestInvUtils, is_inv_add_const)
+TEST_F(TestInvUtils, is_inv_concat_const)
 {
-  test_is_inv_const(bzla_is_inv_add_const, boolector_add, 0);
+  test_is_inv_const(bzla_is_inv_concat_const, boolector_concat, 0);
+  test_is_inv_const(bzla_is_inv_concat_const, boolector_concat, 1);
 }
 
-// TEST_F (TestInvUtils, is_inv_eq_const)
-//{
-//  test_is_inv_const (bzla_is_inv_eq_const, boolector_eq, 0);
-//}
+TEST_F(TestInvUtils, is_inv_eq_const)
+{
+  test_is_inv_const(bzla_is_inv_eq_const, boolector_eq, 0);
+}
 
 TEST_F(TestInvUtils, is_inv_ult_const)
 {
   test_is_inv_const(bzla_is_inv_ult_const, boolector_ult, 0);
   test_is_inv_const(bzla_is_inv_ult_const, boolector_ult, 1);
+}
+
+TEST_F(TestInvUtils, is_inv_sll_const)
+{
+  test_is_inv_const(bzla_is_inv_sll_const, boolector_sll, 0);
+  test_is_inv_const(bzla_is_inv_sll_const, boolector_sll, 1);
+}
+
+/* Test is_inv_* functions (no const bits). */
+
+TEST_F(TestInvUtils, is_inv_add)
+{
+  test_is_inv(bzla_is_inv_add, boolector_add, 0);
+}
+
+TEST_F(TestInvUtils, is_inv_and)
+{
+  test_is_inv(bzla_is_inv_and, boolector_and, 0);
+}
+
+TEST_F(TestInvUtils, is_inv_concat)
+{
+  test_is_inv(bzla_is_inv_concat, boolector_concat, 0);
+  test_is_inv(bzla_is_inv_concat, boolector_concat, 1);
+}
+
+TEST_F(TestInvUtils, is_inv_eq)
+{
+  test_is_inv(bzla_is_inv_eq, boolector_eq, 0);
+}
+
+TEST_F(TestInvUtils, is_inv_mul)
+{
+  test_is_inv(bzla_is_inv_mul, boolector_mul, 0);
+}
+
+// TEST_F (TestInvUtils, is_inv_slice)
+//{
+//  test_is_inv (bzla_is_inv_slice, boolector_slice, 0);
+//}
+
+TEST_F(TestInvUtils, is_inv_sll)
+{
+  test_is_inv(bzla_is_inv_sll, boolector_sll, 0);
+  test_is_inv(bzla_is_inv_sll, boolector_sll, 1);
+}
+
+TEST_F(TestInvUtils, is_inv_sra)
+{
+  test_is_inv(bzla_is_inv_sra, boolector_sra, 0);
+  test_is_inv(bzla_is_inv_sra, boolector_sra, 1);
+}
+
+TEST_F(TestInvUtils, is_inv_srl)
+{
+  test_is_inv(bzla_is_inv_srl, boolector_srl, 0);
+  test_is_inv(bzla_is_inv_srl, boolector_srl, 1);
+}
+
+TEST_F(TestInvUtils, is_inv_udiv)
+{
+  test_is_inv(bzla_is_inv_udiv, boolector_udiv, 0);
+  test_is_inv(bzla_is_inv_udiv, boolector_udiv, 1);
+}
+
+TEST_F(TestInvUtils, is_inv_ult)
+{
+  test_is_inv(bzla_is_inv_ult, boolector_ult, 0);
+  test_is_inv(bzla_is_inv_ult, boolector_ult, 1);
+}
+
+TEST_F(TestInvUtils, is_inv_urem)
+{
+  test_is_inv(bzla_is_inv_urem, boolector_urem, 0);
+  test_is_inv(bzla_is_inv_urem, boolector_urem, 1);
 }
