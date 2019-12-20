@@ -62,8 +62,7 @@ enum BzlaNodeKind
   BZLA_FP_NEG_NODE,
   /* ------------------------------- binary ------------------------------ */
   BZLA_BV_AND_NODE,
-  BZLA_BV_EQ_NODE,  /* equality on bit vectors */
-  BZLA_FUN_EQ_NODE, /* equality on arrays */
+  BZLA_BV_EQ_NODE, /* equality over bit vectors */
   BZLA_BV_ADD_NODE,
   BZLA_BV_MUL_NODE,
   BZLA_BV_ULT_NODE,
@@ -73,7 +72,7 @@ enum BzlaNodeKind
   BZLA_BV_UDIV_NODE,
   BZLA_BV_UREM_NODE,
   BZLA_BV_CONCAT_NODE,
-  BZLA_FP_EQ_NODE,
+  BZLA_FP_EQ_NODE, /* (regular) equality over floating-points */
   BZLA_FP_FPEQ_NODE,
   BZLA_FP_GEQ_NODE,
   BZLA_FP_GT_NODE,
@@ -84,6 +83,8 @@ enum BzlaNodeKind
   BZLA_FP_SQRT_NODE,
   BZLA_FP_REM_NODE,
   BZLA_FP_RTI_NODE,
+  BZLA_RM_EQ_NODE,  /* equality over rounding modes */
+  BZLA_FUN_EQ_NODE, /* equality over uf/arrays */
   BZLA_APPLY_NODE,
   BZLA_FORALL_NODE,
   BZLA_EXISTS_NODE,
@@ -212,6 +213,16 @@ struct BzlaNode
 
 /*------------------------------------------------------------------------*/
 
+struct BzlaRMConstNode
+{
+  BZLA_NODE_STRUCT;
+  BzlaRoundingMode rm;
+  // BzlaBitVector *rm;
+};
+typedef struct BzlaRMConstNode BzlaRMConstNode;
+
+/*------------------------------------------------------------------------*/
+
 struct BzlaFPConstNode
 {
   BZLA_NODE_STRUCT;
@@ -267,6 +278,7 @@ typedef struct BzlaArgsNode BzlaArgsNode;
 /*------------------------------------------------------------------------*/
 
 bool bzla_node_is_bv(Bzla *bzla, const BzlaNode *exp);
+bool bzla_node_is_rm(Bzla *bzla, const BzlaNode *exp);
 bool bzla_node_is_fp(Bzla *bzla, const BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
@@ -390,6 +402,14 @@ bzla_node_is_bv_const(const BzlaNode *exp)
   assert(exp);
   exp = bzla_node_real_addr(exp);
   return bzla_node_is_bv(exp->bzla, exp) && exp->kind == BZLA_BV_CONST_NODE;
+}
+
+static inline bool
+bzla_node_is_rm_const(const BzlaNode *exp)
+{
+  assert(exp);
+  exp = bzla_node_real_addr(exp);
+  return bzla_node_is_rm(exp->bzla, exp) && exp->kind == BZLA_RM_CONST_NODE;
 }
 
 static inline bool
@@ -635,6 +655,14 @@ bzla_node_is_bv_srl(const BzlaNode *exp)
 }
 
 static inline bool
+bzla_node_is_rm_eq(const BzlaNode *exp)
+{
+  assert(exp);
+  exp = bzla_node_real_addr(exp);
+  return exp->kind == BZLA_RM_EQ_NODE;
+}
+
+static inline bool
 bzla_node_is_fp_eq(const BzlaNode *exp)
 {
   assert(exp);
@@ -789,6 +817,10 @@ void bzla_node_bv_const_set_invbits(BzlaNode *exp, BzlaBitVector *bits);
 
 /*------------------------------------------------------------------------*/
 
+BzlaRoundingMode bzla_node_rm_const_get_rm(BzlaNode *exp);
+
+/*------------------------------------------------------------------------*/
+
 void bzla_node_fp_const_set_fp(BzlaNode *exp, BzlaFloatingPoint *fp);
 BzlaFloatingPoint *bzla_node_fp_const_get_fp(BzlaNode *exp);
 
@@ -840,11 +872,18 @@ BzlaNode *bzla_node_param_set_assigned_exp(BzlaNode *param, BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 
+/* Create a bit-vector constant. */
 BzlaNode *bzla_node_create_bv_const(Bzla *bzla, const BzlaBitVector *bits);
 
+/* Create a roundingmode constant. */
+BzlaNode *bzla_node_create_rm_const(Bzla *bzla, const BzlaRoundingMode rm);
+
+/* Create a floating-point constant. */
 BzlaNode *bzla_node_create_fp_const(Bzla *bzla, const BzlaFloatingPoint *fp);
 
 BzlaNode *bzla_node_create_var(Bzla *bzla, BzlaSortId sort, const char *symbol);
+
+/*------------------------------------------------------------------------*/
 
 BzlaNode *bzla_node_create_uf(Bzla *bzla, BzlaSortId sort, const char *symbol);
 

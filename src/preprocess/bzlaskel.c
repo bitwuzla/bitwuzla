@@ -108,7 +108,7 @@ process_skeleton_tseitin(Bzla *bzla,
     {
       d->as_int = 1;
       if (bzla_node_is_fun(exp) || bzla_node_is_args(exp) || exp->parameterized
-          || bzla_node_is_fp(bzla, exp)
+          || bzla_node_is_fp(bzla, exp) || bzla_node_is_rm(bzla, exp)
           || bzla_node_bv_get_width(bzla, exp) != 1)
       {
         continue;
@@ -122,7 +122,8 @@ process_skeleton_tseitin(Bzla *bzla,
         d     = bzla_hashint_map_get(mark, child->id);
         assert(d->as_int == 1);
         if (!bzla_node_is_fun(child) && !bzla_node_is_args(child)
-            && !bzla_node_is_fp(bzla, child) && !child->parameterized
+            && !bzla_node_is_fp(bzla, child) && !bzla_node_is_rm(bzla, child)
+            && !child->parameterized
             && bzla_node_bv_get_width(bzla, child) == 1)
           assert(bzla_hashptr_table_get(ids, child));
       }

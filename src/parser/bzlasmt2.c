@@ -4528,31 +4528,31 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
         || tag == BZLA_FP_ROUNDINGMODE_RNE_TAG_SMT2)
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
-      item_cur->exp = boolector_fp_rm(bzla, BZLA_RM_RNE);
+      item_cur->exp = boolector_rm_const(bzla, BZLA_RM_RNE);
     }
     else if (tag == BZLA_FP_ROUNDINGMODE_NEAREST_TO_AWAY_TAG_SMT2
              || tag == BZLA_FP_ROUNDINGMODE_RNA_TAG_SMT2)
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
-      item_cur->exp = boolector_fp_rm(bzla, BZLA_RM_RNA);
+      item_cur->exp = boolector_rm_const(bzla, BZLA_RM_RNA);
     }
     else if (tag == BZLA_FP_ROUNDINGMODE_TOWARD_POSITIVE_TAG_SMT2
              || tag == BZLA_FP_ROUNDINGMODE_RTP_TAG_SMT2)
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
-      item_cur->exp = boolector_fp_rm(bzla, BZLA_RM_RTP);
+      item_cur->exp = boolector_rm_const(bzla, BZLA_RM_RTP);
     }
     else if (tag == BZLA_FP_ROUNDINGMODE_TOWARD_NEGATIVE_TAG_SMT2
              || tag == BZLA_FP_ROUNDINGMODE_RTN_TAG_SMT2)
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
-      item_cur->exp = boolector_fp_rm(bzla, BZLA_RM_RTN);
+      item_cur->exp = boolector_rm_const(bzla, BZLA_RM_RTN);
     }
     else if (tag == BZLA_FP_ROUNDINGMODE_TOWARD_ZERO_TAG_SMT2
              || tag == BZLA_FP_ROUNDINGMODE_RTZ_TAG_SMT2)
     {
       item_cur->tag = BZLA_EXP_TAG_SMT2;
-      item_cur->exp = boolector_fp_rm(bzla, BZLA_RM_RTZ);
+      item_cur->exp = boolector_rm_const(bzla, BZLA_RM_RTZ);
     }
   }
   else

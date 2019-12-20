@@ -323,6 +323,8 @@ clone_sorts_unique_table(Bzla *bzla, Bzla *clone)
             bzla_sort_fun(clone, sort->fun.domain->id, sort->fun.codomain->id);
         break;
 
+      case BZLA_RM_SORT: cid = bzla_sort_rm(clone); break;
+
       case BZLA_TUPLE_SORT:
         BZLA_RESET_STACK(elements);
         for (j = 0; j < sort->tuple.num_elements; j++)

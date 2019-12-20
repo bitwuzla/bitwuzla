@@ -17,6 +17,7 @@ extern "C" {
 #include "bzlaexp.h"
 #include "bzlafp.h"
 #include "bzlanode.h"
+#include "bzlarm.h"
 #include "bzlasort.h"
 }
 
@@ -27,8 +28,6 @@ extern "C" {
 #include "symfpu/core/sign.h"
 #include "symfpu/core/unpackedFloat.h"
 #endif
-
-#define BZLA_FP_RM_BW 3
 
 template <bool is_signed>
 class BzlaFPSymBV;
@@ -1678,9 +1677,12 @@ class BzlaFPSymRM
 #endif
 
  public:
+  /* Constructors. */
   BzlaFPSymRM(BzlaNode *node);
   BzlaFPSymRM(const uint32_t val);
   BzlaFPSymRM(const BzlaFPSymRM &other);
+  /* Destructor. */
+  ~BzlaFPSymRM();
 
   BzlaNode *getNode() const { return d_node; }
 
@@ -1708,8 +1710,12 @@ BzlaFPSymRM::BzlaFPSymRM(BzlaNode *node)
 
 BzlaFPSymRM::BzlaFPSymRM(const uint32_t val)
 {
-  assert(val < BZLA_RM_MAX);
-  d_node = bzla_exp_fp_rm(s_bzla, static_cast<BzlaRoundingMode>(val));
+  assert(s_bzla);
+  assert(bzla_rm_is_valid(val));
+  BzlaMemMgr *mm    = s_bzla->mm;
+  BzlaBitVector *rm = bzla_bv_uint64_to_bv(mm, val, BZLA_RM_BW);
+  d_node            = bzla_exp_bv_const(s_bzla, rm);
+  bzla_bv_free(mm, rm);
   assert(checkNode(d_node));
 }
 
@@ -1721,15 +1727,23 @@ BzlaFPSymRM::BzlaFPSymRM(const BzlaFPSymRM &other)
   d_node = bzla_node_copy(s_bzla, other.d_node);
 }
 
+BzlaFPSymRM::~BzlaFPSymRM()
+{
+  assert(s_bzla);
+  bzla_node_release(s_bzla, d_node);
+}
+
 BzlaFPSymProp
 BzlaFPSymRM::valid(void) const
 {
   assert(d_node);
-  BzlaNode *max;
-  max =
+  BzlaNode *max =
       bzla_exp_bv_unsigned(s_bzla, BZLA_RM_MAX, bzla_node_get_sort_id(d_node));
+  BzlaNode *valid = bzla_exp_bv_ult(s_bzla, d_node, max);
+  BzlaFPSymProp res(valid);
   bzla_node_release(s_bzla, max);
-  return bzla_exp_bv_ult(s_bzla, d_node, max);
+  bzla_node_release(s_bzla, valid);
+  return res;
 }
 
 BzlaFPSymProp
@@ -1737,7 +1751,10 @@ BzlaFPSymRM::operator==(const BzlaFPSymRM &other) const
 {
   assert(d_node);
   assert(other.d_node);
-  return bzla_exp_eq(s_bzla, d_node, other.d_node);
+  BzlaNode *eq = bzla_exp_eq(s_bzla, d_node, other.d_node);
+  BzlaFPSymProp res(eq);
+  bzla_node_release(s_bzla, eq);
+  return res;
 }
 
 bool
@@ -1746,14 +1763,13 @@ BzlaFPSymRM::checkNode(const BzlaNode *node) const
   assert(s_bzla);
   assert(node);
 
-  BzlaSortId sort = bzla_node_get_sort_id(node);
-  if (!bzla_sort_is_bv(s_bzla, sort))
+  if (!bzla_node_is_bv(s_bzla, node))
   {
     return false;
   }
 #ifdef BZLA_USE_SYMFPU
-  assert((((uint32_t) 1u) << BZLA_FP_RM_BW) >= SYMFPU_NUMBER_OF_ROUNDING_MODES);
-  return bzla_sort_bv_get_width(s_bzla, sort) == BZLA_FP_RM_BW;
+  assert((((uint32_t) 1u) << BZLA_RM_BW) >= SYMFPU_NUMBER_OF_ROUNDING_MODES);
+  return bzla_node_bv_get_width(s_bzla, node) == BZLA_RM_BW;
 #else
   return false;
 #endif
@@ -2014,8 +2030,9 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
   assert(bzla_node_is_regular(node));
   assert(d_bzla == bzla_node_real_addr(node)->bzla);
   assert((bzla_sort_is_bool(d_bzla, bzla_node_get_sort_id(node)) && node->arity
-          && bzla_node_is_fp(d_bzla, node->e[0]))
-         || bzla_node_is_fp(d_bzla, node));
+          && (bzla_node_is_fp(d_bzla, node->e[0])
+              || bzla_node_is_rm(d_bzla, node->e[0])))
+         || bzla_node_is_fp(d_bzla, node) || bzla_node_is_rm(d_bzla, node));
 
   BzlaNode *res = nullptr;
 
@@ -2050,9 +2067,12 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
     }
     else if (visited.at(cur) == 0)
     {
-      if (bzla_node_is_fp_const(cur))
+      if (bzla_node_is_rm_const(cur))
       {
-        assert(bzla_node_is_regular(cur));
+        d_rm_map.emplace(cur, BzlaFPSymRM(bzla_node_rm_const_get_rm(cur)));
+      }
+      else if (bzla_node_is_fp_const(cur))
+      {
         d_unpacked_float_map.emplace(
             cur, BzlaSymUnpackedFloat(*fp_get_unpacked_float(cur)));
       }
@@ -2104,6 +2124,13 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                                BzlaFPSortInfo(bzla_node_get_sort_id(cur->e[0])),
                                d_unpacked_float_map.at(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[1])));
+      }
+      else if (bzla_node_is_rm_eq(cur))
+      {
+        assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
+        assert(d_rm_map.find(cur->e[1]) != d_rm_map.end());
+        d_prop_map.emplace(cur,
+                           d_rm_map.at(cur->e[0]) == d_rm_map.at(cur->e[1]));
       }
       else if (bzla_node_is_fp_abs(cur))
       {
@@ -2160,6 +2187,11 @@ BzlaFPWordBlaster::get_word_blasted_node(BzlaNode *node)
     return d_prop_map.at(node).getNode();
   }
 
+  if (bzla_node_is_rm(d_bzla, node) && d_rm_map.find(node) != d_rm_map.end())
+  {
+    return d_rm_map.at(node).getNode();
+  }
+
   if (d_unpacked_float_map.find(node) != d_unpacked_float_map.end())
   {
     d_packed_float_map.emplace(node,
@@ -2177,7 +2209,20 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
   BzlaNode *exp, *cexp;
   BzlaFPWordBlaster *res = new BzlaFPWordBlaster(cbzla);
   res->d_sort_map        = BzlaFPSortInfoMap(d_sort_map);
-  // TODO d_rm_map
+
+  for (const auto &r : d_rm_map)
+  {
+    exp = r.first;
+    assert(bzla_node_is_regular(exp));
+    cexp = bzla_nodemap_mapped(exp_map, exp);
+    assert(cexp);
+    assert(res->d_rm_map.find(cexp) == res->d_rm_map.end());
+
+    BzlaNode *sexp  = d_rm_map.at(exp).getNode();
+    BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
+    assert(scexp);
+    res->d_rm_map.emplace(exp, BzlaFPSymRM(scexp));
+  }
   for (const auto &p : d_prop_map)
   {
     exp = p.first;

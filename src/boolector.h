@@ -1594,7 +1594,7 @@ BoolectorNode *boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n);
 /*------------------------------------------------------------------------*/
 
 /*!
-  Create rounding mode with given value
+  Create rounding mode constant with given value
 
   Parameter ``rm`` is one of:
   * ``BZLA_RM_RNA``
@@ -1607,39 +1607,9 @@ BoolectorNode *boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n);
   :param rm:   The rounding mode value.
   :return:     An RNE rounding mode constant.
  */
-BoolectorNode *boolector_fp_rm(Bzla *bzla, BzlaRoundingMode rm);
+BoolectorNode *boolector_rm_const(Bzla *bzla, BzlaRoundingMode rm);
 
-/*!
-  Create a round-nearest-ties-to-away rounding mode.
-
-  :param bzla: Boolector instance.
-  :return:     An RNA rounding mode constant.
- */
-BoolectorNode *boolector_fp_rna(Bzla *bzla);
-
-/*!
-  Create a round-toward-positive rounding mode.
-
-  :param bzla: Boolector instance.
-  :return:     An RTP rounding mode constant.
- */
-BoolectorNode *boolector_fp_rtp(Bzla *bzla);
-
-/*!
-  Create a round-toward-negative rounding mode.
-
-  :param bzla: Boolector instance.
-  :return:     An RTN rounding mode constant.
- */
-BoolectorNode *boolector_fp_rtn(Bzla *bzla);
-
-/*!
-  Create a round-toward-zero rounding mode.
-
-  :param bzla: Boolector instance.
-  :return:     An RTZ rounding mode constant.
- */
-BoolectorNode *boolector_fp_rtz(Bzla *bzla);
+/*------------------------------------------------------------------------*/
 
 /*!
   Create a floating-point +zero constant of given sort.

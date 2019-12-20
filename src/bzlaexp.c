@@ -33,6 +33,7 @@ bzla_exp_create(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
       assert(arity == 2);
       return bzla_exp_bv_and(bzla, e[0], e[1]);
     case BZLA_BV_EQ_NODE:
+    case BZLA_RM_EQ_NODE:
     case BZLA_FP_EQ_NODE:
     case BZLA_FUN_EQ_NODE:
       assert(arity == 2);
@@ -1699,22 +1700,26 @@ bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp)
 /*------------------------------------------------------------------------*/
 
 BzlaNode *
-exp_fp_const_aux(Bzla *bzla, const BzlaFloatingPoint *fp)
+exp_rm_const_aux(Bzla *bzla, const BzlaRoundingMode rm)
 {
-  return bzla_node_create_fp_const(bzla, fp);
+  return bzla_node_create_rm_const(bzla, rm);
 }
 
 BzlaNode *
-bzla_exp_fp_rm(Bzla *bzla, BzlaRoundingMode rm)
+bzla_exp_rm_const(Bzla *bzla, BzlaRoundingMode rm)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
-  assert(bzla);
-  (void) rm;
-  /// FP STUB
-  return bzla_exp_true(bzla);
-  ////
+  return exp_rm_const_aux(bzla, rm);
+}
+
+/*------------------------------------------------------------------------*/
+
+BzlaNode *
+exp_fp_const_aux(Bzla *bzla, const BzlaFloatingPoint *fp)
+{
+  return bzla_node_create_fp_const(bzla, fp);
 }
 
 BzlaNode *

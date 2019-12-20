@@ -442,7 +442,7 @@ BzlaNode *bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp);
 /*------------------------------------------------------------------------*/
 
 /* Create rounding mode. */
-BzlaNode *bzla_exp_fp_rm(Bzla *bzla, BzlaRoundingMode rm);
+BzlaNode *bzla_exp_rm_const(Bzla *bzla, BzlaRoundingMode rm);
 
 /**
  * Create floating-point const +zero of given floating-point sort.

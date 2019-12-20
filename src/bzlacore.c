@@ -2469,7 +2469,7 @@ void
 bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
 {
   BzlaNodePtrStack exp_stack;
-  BzlaNode *cur, *cur_wb, *value, *args;
+  BzlaNode *cur, *cur_wb, *value, *args, *real_e;
   BzlaAIGVec *av0, *av1, *av2;
   BzlaMemMgr *mm;
   BzlaAIGVecMgr *avmgr;
@@ -2570,8 +2570,9 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
 
         bzla_hashint_table_add(cache, cur->id);
         BZLA_PUSH_STACK(exp_stack, cur);
-        assert(!bzla_node_is_fp(bzla, cur));
-        if (cur->arity && bzla_node_is_fp(bzla, cur->e[0]))
+        assert(!bzla_node_is_fp(bzla, cur) && !bzla_node_is_rm(bzla, cur));
+        if (bzla_node_is_rm(bzla, cur->e[0])
+            || (cur->arity && bzla_node_is_fp(bzla, cur->e[0])))
         {
           BzlaNode *wb = bzla_fp_word_blast(bzla, cur);
           BZLA_PUSH_STACK(exp_stack, wb);
@@ -2616,8 +2617,9 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         restart = false;
         for (i = 0; i < cur->arity; i++)
         {
-          if (!bzla_node_is_fp(bzla, bzla_node_real_addr(cur->e[i]))
-              && !bzla_node_is_synth(bzla_node_real_addr(cur->e[i])))
+          real_e = bzla_node_real_addr(cur->e[i]);
+          if (!bzla_node_is_fp(bzla, real_e) && !bzla_node_is_rm(bzla, real_e)
+              && !bzla_node_is_synth(real_e))
           {
             BZLA_PUSH_STACK(exp_stack, cur->e[i]);
             restart = true;
@@ -2627,7 +2629,8 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         if (restart) continue;
       }
 
-      if (cur->arity && bzla_node_is_fp(bzla, cur->e[0]))
+      if (bzla_node_is_rm(bzla, cur->e[0])
+          || (cur->arity && bzla_node_is_fp(bzla, cur->e[0])))
       {
         cur_wb     = bzla_fp_word_blast(bzla, cur);
         invert_av0 = bzla_node_is_inverted(cur_wb);

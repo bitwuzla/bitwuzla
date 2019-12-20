@@ -27,6 +27,7 @@ set(libboolector_src_files
   bzlaprintmodel.c
   bzlaproputils.c
   bzlarewrite.c
+  bzlarm.c
   bzlarwcache.c
   bzlasat.c
   bzlaslsutils.c

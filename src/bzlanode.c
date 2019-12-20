@@ -27,6 +27,7 @@
 #include "bzlafp.h"
 #include "bzlalog.h"
 #include "bzlarewrite.h"
+#include "bzlarm.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlanodeiter.h"
@@ -310,6 +311,14 @@ bzla_node_is_bv(Bzla *bzla, const BzlaNode *exp)
 }
 
 bool
+bzla_node_is_rm(Bzla *bzla, const BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+  return bzla_sort_is_rm(bzla, bzla_node_get_sort_id(exp));
+}
+
+bool
 bzla_node_is_fp(Bzla *bzla, const BzlaNode *exp)
 {
   assert(bzla);
@@ -493,6 +502,10 @@ compute_hash_exp(Bzla *bzla, BzlaNode *exp, uint32_t table_size)
   if (bzla_node_is_bv_const(exp))
   {
     hash = bzla_bv_hash(bzla_node_bv_const_get_bits(exp));
+  }
+  else if (bzla_node_is_rm_const(exp))
+  {
+    hash = bzla_rm_hash(bzla_node_rm_const_get_rm(exp));
   }
   else if (bzla_node_is_fp_const(exp))
   {
@@ -935,6 +948,7 @@ erase_local_data_exp(Bzla *bzla, BzlaNode *exp)
         exp->rho = 0;
       }
       break;
+    case BZLA_RM_CONST_NODE: /* nothing extra to do */
     default: break;
   }
 
@@ -1340,6 +1354,16 @@ bzla_node_bv_const_set_invbits(BzlaNode *exp, BzlaBitVector *bits)
 
 /*------------------------------------------------------------------------*/
 
+BzlaRoundingMode
+bzla_node_rm_const_get_rm(BzlaNode *exp)
+{
+  assert(exp);
+  assert(bzla_node_is_rm_const(exp));
+  return ((BzlaRMConstNode *) bzla_node_real_addr(exp))->rm;
+}
+
+/*------------------------------------------------------------------------*/
+
 void
 bzla_node_fp_const_set_fp(BzlaNode *exp, BzlaFloatingPoint *fp)
 {
@@ -1591,8 +1615,43 @@ find_bv_const_exp(Bzla *bzla, BzlaBitVector *bits)
     assert(bzla_node_is_regular(cur));
     if (bzla_node_is_bv_const(cur)
         && bzla_node_bv_get_width(bzla, cur) == bzla_bv_get_width(bits)
-        && !bzla_bv_compare(bzla_node_bv_const_get_bits(cur), bits))
+        && bzla_bv_compare(bzla_node_bv_const_get_bits(cur), bits) == 0)
+    {
       break;
+    }
+    else
+    {
+      result = &cur->next;
+      cur    = *result;
+    }
+  }
+  return result;
+}
+
+/**
+ * Search for roundingmode const expression in hash table.
+ * Returns 0 if not found.
+ */
+static BzlaNode **
+find_rm_const_exp(Bzla *bzla, const BzlaRoundingMode rm)
+{
+  assert(bzla);
+  assert(bzla_rm_is_valid(rm));
+
+  BzlaNode *cur, **result;
+  uint32_t hash;
+
+  hash = bzla_rm_hash(rm);
+  hash &= bzla->nodes_unique_table.size - 1;
+  result = bzla->nodes_unique_table.chains + hash;
+  cur    = *result;
+  while (cur)
+  {
+    assert(bzla_node_is_regular(cur));
+    if (bzla_node_is_rm_const(cur) && bzla_node_rm_const_get_rm(cur) == rm)
+    {
+      break;
+    }
     else
     {
       result = &cur->next;
@@ -2003,6 +2062,25 @@ new_bv_const_exp_node(Bzla *bzla, BzlaBitVector *bits)
 }
 
 static BzlaNode *
+new_rm_const_exp_node(Bzla *bzla, const BzlaRoundingMode rm)
+{
+  assert(bzla);
+  assert(bzla_rm_is_valid(rm));
+
+  BzlaRMConstNode *exp;
+  BzlaSortId sort;
+
+  BZLA_CNEW(bzla->mm, exp);
+  set_kind(bzla, (BzlaNode *) exp, BZLA_RM_CONST_NODE);
+  exp->bytes = sizeof *exp;
+  sort       = bzla_sort_rm(bzla);
+  bzla_node_set_sort_id((BzlaNode *) exp, sort);
+  setup_node_and_add_to_id_table(bzla, exp);
+  exp->rm = rm;
+  return (BzlaNode *) exp;
+}
+
+static BzlaNode *
 new_fp_const_exp_node(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(bzla);
@@ -2276,7 +2354,8 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
     case BZLA_BV_SLT_NODE:
     case BZLA_BV_EQ_NODE:
     case BZLA_FP_EQ_NODE:
-    case BZLA_FUN_EQ_NODE: sort = bzla_sort_bool(bzla); break;
+    case BZLA_FUN_EQ_NODE:
+    case BZLA_RM_EQ_NODE: sort = bzla_sort_bool(bzla); break;
 
     case BZLA_APPLY_NODE:
       sort = bzla_sort_copy(
@@ -2453,6 +2532,35 @@ bzla_node_create_bv_const(Bzla *bzla, const BzlaBitVector *bits)
 }
 
 BzlaNode *
+bzla_node_create_rm_const(Bzla *bzla, const BzlaRoundingMode rm)
+{
+  assert(bzla);
+  assert(bzla_rm_is_valid(rm));
+
+  BzlaNode **lookup;
+
+  lookup = find_rm_const_exp(bzla, rm);
+  if (!*lookup)
+  {
+    if (BZLA_FULL_UNIQUE_TABLE(bzla->nodes_unique_table))
+    {
+      enlarge_nodes_unique_table(bzla);
+      lookup = find_rm_const_exp(bzla, rm);
+    }
+    *lookup = new_rm_const_exp_node(bzla, rm);
+    assert(bzla->nodes_unique_table.num_elements < INT32_MAX);
+    bzla->nodes_unique_table.num_elements += 1;
+    (*lookup)->unique = 1;
+  }
+  else
+  {
+    inc_exp_ref_counter(bzla, *lookup);
+  }
+  assert(bzla_node_is_regular(*lookup));
+  return *lookup;
+}
+
+BzlaNode *
 bzla_node_create_fp_const(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(bzla);
@@ -2568,6 +2676,10 @@ bzla_node_create_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     if (bzla_sort_is_bv(bzla, sort))
     {
       kind = BZLA_BV_EQ_NODE;
+    }
+    else if (bzla_sort_is_rm(bzla, sort))
+    {
+      kind = BZLA_RM_EQ_NODE;
     }
     else
     {
