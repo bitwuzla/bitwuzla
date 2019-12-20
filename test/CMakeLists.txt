@@ -13,6 +13,7 @@ set(test_names
   inc
   inthash
   inthashmap
+  invutils
   lambda
   logic
   mem

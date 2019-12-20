@@ -1811,7 +1811,13 @@ bzla_proputils_inv_ult(Bzla *bzla,
   assert(s);
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(ult->e[idx_x]));
+#ifndef NDEBUG
   assert(bzla_is_inv_ult(bzla->mm, 0, t, s, idx_x));
+  BzlaBvDomain *x =
+      bzla_hashint_map_get(domains, bzla_node_real_addr(ult->e[idx_x])->id)
+          ->as_ptr;
+  assert(!x || bzla_is_inv_ult_const(bzla->mm, x, t, s, idx_x));
+#endif
 
   bool isult;
   uint32_t bw;
@@ -4506,7 +4512,7 @@ static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_CONCAT_NODE] = bzla_is_inv_concat_const,
     [BZLA_BV_EQ_NODE]     = bzla_is_inv_eq_const,
     [BZLA_BV_MUL_NODE]    = bzla_is_inv_mul,
-    [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult,
+    [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult_const,
     [BZLA_BV_SLICE_NODE]  = bzla_is_inv_slice,
     [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll_const,
     [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl,

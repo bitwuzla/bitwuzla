@@ -210,9 +210,7 @@ class TestProp : public TestBzla
    *             find a solution.
    * create_bv : The function to create a bit-vector t = x <> s or t = s <> t
    *             for operator <>.
-   * is_inv_fun: The function to test if given operator is invertible with
-   *             respect to s and t.
-   * is_inv_fun: The function to test if given operator is invertible with
+   * is_inv    : The function to test if given operator is invertible with
    *             respect to s and t.
    * inv_fun   : The function to compute the inverse value for x given s and t.
    */

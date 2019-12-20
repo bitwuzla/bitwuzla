@@ -557,7 +557,7 @@ bzla_is_inv_add_const(BzlaMemMgr *mm,
  * x & s = t
  * s & x = t
  *
- * IC: ((s & t & hi_x) | lo_x) = t
+ * IC: (s & t & hi_x) = t && (s & t) | lo_x = t
  */
 bool
 bzla_is_inv_and_const(BzlaMemMgr *mm,
@@ -577,9 +577,13 @@ bzla_is_inv_and_const(BzlaMemMgr *mm,
 
   and1 = bzla_bv_and(mm, s, t);
   and2 = bzla_bv_and(mm, and1, x->hi);
-  or   = bzla_bv_or(mm, and2, x->lo);
-  res  = bzla_bv_compare(or, t) == 0;
-  bzla_bv_free(mm, or);
+  res  = bzla_bv_compare(and2, t) == 0;
+  if (res)
+  {
+    or  = bzla_bv_or(mm, and1, x->lo);
+    res = bzla_bv_compare(or, t) == 0;
+    bzla_bv_free(mm, or);
+  }
   bzla_bv_free(mm, and2);
   bzla_bv_free(mm, and1);
   return res;
@@ -819,6 +823,21 @@ bzla_is_inv_udiv_const(BzlaMemMgr *mm,
   return true;
 }
 
+/**
+ * Check invertibility condition with respect to const bits in x for:
+ *
+ * x < s = t
+ * s < x = t
+ *
+ * IC pos_x = 0:
+ * t = 1: t -> (s != 0 && lo_x < s)
+ * t = 0: ~t -> (hi_x >= s)
+ *
+ *
+ * IC pos_x = 1:
+ * t = 1: t -> (s != ~0 && hi_x > s)
+ * t = 0: ~t -> (lo_x <= s)
+ */
 bool
 bzla_is_inv_ult_const(BzlaMemMgr *mm,
                       const BzlaBvDomain *x,
@@ -830,8 +849,26 @@ bzla_is_inv_ult_const(BzlaMemMgr *mm,
   assert(x);
   assert(t);
   assert(s);
-  (void) pos_x;
-  return true;
+
+  if (pos_x == 0)
+  {
+    /* x < s */
+    if (bzla_bv_is_true(t))
+    {
+      return !bzla_bv_is_zero(s) && bzla_bv_compare(x->lo, s) == -1;
+    }
+    /* x >= s */
+    return bzla_bv_compare(x->hi, s) >= 0;
+  }
+  assert(pos_x == 1);
+
+  /* s < x */
+  if (bzla_bv_is_true(t))
+  {
+    return !bzla_bv_is_ones(s) && bzla_bv_compare(x->hi, s) == 1;
+  }
+  /* s >= x */
+  return bzla_bv_compare(x->lo, s) <= 0;
 }
 
 bool
