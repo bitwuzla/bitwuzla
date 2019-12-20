@@ -2000,8 +2000,9 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
   assert(node);
   assert(bzla_node_is_regular(node));
   assert(d_bzla == bzla_node_real_addr(node)->bzla);
-  assert(bzla_sort_is_bool(d_bzla, bzla_node_get_sort_id(node)));
-  assert(node->arity && bzla_node_is_fp(d_bzla, node->e[0]));
+  assert((bzla_sort_is_bool(d_bzla, bzla_node_get_sort_id(node)) && node->arity
+          && bzla_node_is_fp(d_bzla, node->e[0]))
+         || bzla_node_is_fp(d_bzla, node));
 
   BzlaNode *res = nullptr;
 
@@ -2018,8 +2019,11 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
     to_visit.pop_back();
     assert(bzla_node_is_regular(cur));
 
-    if (d_prop_map.find(cur) != d_prop_map.end()) continue;
-    if (d_unpacked_float_map.find(cur) != d_unpacked_float_map.end()) continue;
+    if (d_prop_map.find(cur) != d_prop_map.end()
+        || d_unpacked_float_map.find(cur) != d_unpacked_float_map.end())
+    {
+      continue;
+    }
 
     if (visited.find(cur) == visited.end())
     {
@@ -2059,8 +2063,19 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
     }
   }
 
-  assert(d_prop_map.find(node) != d_prop_map.end());
-  res = d_prop_map.at(node).getNode();
+  if (d_prop_map.find(node) != d_prop_map.end())
+  {
+    assert(bzla_sort_is_bool(d_bzla, bzla_node_get_sort_id(node)));
+    res = d_prop_map.at(node).getNode();
+  }
+  else
+  {
+    assert(d_unpacked_float_map.find(node) != d_unpacked_float_map.end());
+    d_packed_float_map.emplace(node,
+                               symfpu::pack(bzla_node_get_sort_id(node),
+                                            d_unpacked_float_map.at(node)));
+    res = d_packed_float_map.at(node).getNode();
+  }
   assert(res);
 #endif
   return res;
