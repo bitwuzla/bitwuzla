@@ -70,10 +70,8 @@ bzla_is_inv_and(BzlaMemMgr *mm,
   (void) pos_x;
 
   BzlaBitVector *t_and_s = bzla_bv_and(mm, t, s);
-  BzlaBitVector *eq_t    = bzla_bv_eq(mm, t_and_s, t);
-  bool res               = bzla_bv_is_true(eq_t);
+  bool res               = bzla_bv_compare(t_and_s, t) == 0;
   bzla_bv_free(mm, t_and_s);
-  bzla_bv_free(mm, eq_t);
   return res;
 }
 
@@ -557,7 +555,12 @@ bzla_is_inv_add_const(BzlaMemMgr *mm,
  * x & s = t
  * s & x = t
  *
- * IC: (s & t & hi_x) = t && (s & t) | lo_x = t
+ * m = ~(lo_x ^ hi_x)  ... mask out all non-constant bits
+ * IC: (s & t) = t && (s & hi_x) & m = t & m
+ *
+ * Intuition:
+ * 1) x & s = t on all const bits of x
+ * 2) s & t = t on all non-const bits of x
  */
 bool
 bzla_is_inv_and_const(BzlaMemMgr *mm,
@@ -570,22 +573,21 @@ bzla_is_inv_and_const(BzlaMemMgr *mm,
   assert(x);
   assert(t);
   assert(s);
-  (void) pos_x;
 
   bool res;
-  BzlaBitVector *and1, *and2, * or ;
+  BzlaBitVector *and1, *and2, *and3, *mask;
 
-  and1 = bzla_bv_and(mm, s, t);
-  and2 = bzla_bv_and(mm, and1, x->hi);
-  res  = bzla_bv_compare(and2, t) == 0;
-  if (res)
-  {
-    or  = bzla_bv_or(mm, and1, x->lo);
-    res = bzla_bv_compare(or, t) == 0;
-    bzla_bv_free(mm, or);
-  }
-  bzla_bv_free(mm, and2);
+  if (!bzla_is_inv_and(mm, x, t, s, pos_x)) return false;
+
+  mask = bzla_bv_xnor(mm, x->lo, x->hi);
+  and1 = bzla_bv_and(mm, s, x->hi);
+  and2 = bzla_bv_and(mm, and1, mask);
+  and3 = bzla_bv_and(mm, t, mask);
+  res  = bzla_bv_compare(and2, and3) == 0;
   bzla_bv_free(mm, and1);
+  bzla_bv_free(mm, and2);
+  bzla_bv_free(mm, and3);
+  bzla_bv_free(mm, mask);
   return res;
 }
 
