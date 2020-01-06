@@ -2355,6 +2355,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
     case BZLA_BV_EQ_NODE:
     case BZLA_FP_EQ_NODE:
     case BZLA_FP_IS_NORM_NODE:
+    case BZLA_FP_IS_SUBNORM_NODE:
     case BZLA_FUN_EQ_NODE:
     case BZLA_RM_EQ_NODE: sort = bzla_sort_bool(bzla); break;
 
@@ -3148,6 +3149,17 @@ bzla_node_create_fp_is_normal(Bzla *bzla, BzlaNode *e0)
   e[0] = bzla_simplify_exp(bzla, e0);
   assert(bzla_dbg_precond_regular_unary_fp_exp(bzla, e[0]));
   return create_exp(bzla, BZLA_FP_IS_NORM_NODE, 1, e);
+}
+
+BzlaNode *
+bzla_node_create_fp_is_subnormal(Bzla *bzla, BzlaNode *e0)
+{
+  assert(bzla);
+  assert(e0);
+  BzlaNode *e[1];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  assert(bzla_dbg_precond_regular_unary_fp_exp(bzla, e[0]));
+  return create_exp(bzla, BZLA_FP_IS_SUBNORM_NODE, 1, e);
 }
 
 /*========================================================================*/

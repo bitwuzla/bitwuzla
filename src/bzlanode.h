@@ -540,6 +540,13 @@ bzla_node_is_fp_is_normal(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_IS_NORM_NODE;
 }
 
+static inline bool
+bzla_node_is_fp_is_subnormal(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_IS_SUBNORM_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 static inline bool
@@ -965,6 +972,7 @@ BzlaNode *bzla_node_create_fp_abs(Bzla *bzla, BzlaNode *e0);
 BzlaNode *bzla_node_create_fp_neg(Bzla *bzla, BzlaNode *e0);
 
 BzlaNode *bzla_node_create_fp_is_normal(Bzla *bzla, BzlaNode *e0);
+BzlaNode *bzla_node_create_fp_is_subnormal(Bzla *bzla, BzlaNode *e0);
 
 /*========================================================================*/
 
