@@ -2571,8 +2571,9 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         bzla_hashint_table_add(cache, cur->id);
         BZLA_PUSH_STACK(exp_stack, cur);
         assert(!bzla_node_is_fp(bzla, cur) && !bzla_node_is_rm(bzla, cur));
-        if (bzla_node_is_rm(bzla, cur->e[0])
-            || (cur->arity && bzla_node_is_fp(bzla, cur->e[0])))
+        if (cur->arity
+            && (bzla_node_is_rm(bzla, cur->e[0])
+                || bzla_node_is_fp(bzla, cur->e[0])))
         {
           BzlaNode *wb = bzla_fp_word_blast(bzla, cur);
           BZLA_PUSH_STACK(exp_stack, wb);
