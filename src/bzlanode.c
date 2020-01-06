@@ -2354,6 +2354,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
     case BZLA_BV_SLT_NODE:
     case BZLA_BV_EQ_NODE:
     case BZLA_FP_EQ_NODE:
+    case BZLA_FP_IS_NORM_NODE:
     case BZLA_FUN_EQ_NODE:
     case BZLA_RM_EQ_NODE: sort = bzla_sort_bool(bzla); break;
 
@@ -2367,8 +2368,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
              || kind == BZLA_BV_MUL_NODE || kind == BZLA_BV_SLL_NODE
              || kind == BZLA_BV_SRL_NODE || kind == BZLA_BV_UDIV_NODE
              || kind == BZLA_BV_UREM_NODE || kind == BZLA_FP_ABS_NODE
-             || kind == BZLA_FP_NEG_NODE || kind == BZLA_FP_IS_NORM_NODE
-             || kind == BZLA_UPDATE_NODE);
+             || kind == BZLA_FP_NEG_NODE || kind == BZLA_UPDATE_NODE);
 
       sort = bzla_sort_copy(bzla, bzla_node_get_sort_id(e[0]));
   }

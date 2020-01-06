@@ -2157,7 +2157,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         d_prop_map.emplace(cur,
                            symfpu::isNormal<BzlaFPSymTraits>(
-                               bzla_node_get_sort_id(cur),
+                               bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
       }
       visited.at(cur) = 1;
