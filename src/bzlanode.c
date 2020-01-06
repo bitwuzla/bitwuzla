@@ -2367,7 +2367,8 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
              || kind == BZLA_BV_MUL_NODE || kind == BZLA_BV_SLL_NODE
              || kind == BZLA_BV_SRL_NODE || kind == BZLA_BV_UDIV_NODE
              || kind == BZLA_BV_UREM_NODE || kind == BZLA_FP_ABS_NODE
-             || kind == BZLA_FP_NEG_NODE || kind == BZLA_UPDATE_NODE);
+             || kind == BZLA_FP_NEG_NODE || kind == BZLA_FP_ISNORM_NODE
+             || kind == BZLA_UPDATE_NODE);
 
       sort = bzla_sort_copy(bzla, bzla_node_get_sort_id(e[0]));
   }
@@ -3136,6 +3137,17 @@ bzla_node_create_fp_neg(Bzla *bzla, BzlaNode *e0)
   e[0] = bzla_simplify_exp(bzla, e0);
   assert(bzla_dbg_precond_regular_unary_fp_exp(bzla, e[0]));
   return create_exp(bzla, BZLA_FP_NEG_NODE, 1, e);
+}
+
+BzlaNode *
+bzla_node_create_fp_is_normal(Bzla *bzla, BzlaNode *e0)
+{
+  assert(bzla);
+  assert(e0);
+  BzlaNode *e[1];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  assert(bzla_dbg_precond_regular_unary_fp_exp(bzla, e[0]));
+  return create_exp(bzla, BZLA_FP_ISNORM_NODE, 1, e);
 }
 
 /*========================================================================*/
