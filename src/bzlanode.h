@@ -52,13 +52,13 @@ enum BzlaNodeKind
   /* ------------------------------ unary -------------------------------- */
   BZLA_BV_SLICE_NODE,
   BZLA_FP_ABS_NODE,
-  BZLA_FP_ISINF_NODE,
-  BZLA_FP_ISNAN_NODE,
-  BZLA_FP_ISNEG_NODE,
-  BZLA_FP_ISNORM_NODE,
-  BZLA_FP_ISPOS_NODE,
-  BZLA_FP_ISSUBNORM_NODE,
-  BZLA_FP_ISZERO_NODE,
+  BZLA_FP_IS_INF_NODE,
+  BZLA_FP_IS_NAN_NODE,
+  BZLA_FP_IS_NEG_NODE,
+  BZLA_FP_IS_NORM_NODE,
+  BZLA_FP_IS_POS_NODE,
+  BZLA_FP_IS_SUBNORM_NODE,
+  BZLA_FP_IS_ZERO_NODE,
   BZLA_FP_NEG_NODE,
   /* ------------------------------- binary ------------------------------ */
   BZLA_BV_AND_NODE,
@@ -534,10 +534,10 @@ bzla_node_is_fp_neg(const BzlaNode *exp)
 }
 
 static inline bool
-bzla_node_is_fp_isnorm(const BzlaNode *exp)
+bzla_node_is_fp_is_normal(const BzlaNode *exp)
 {
   assert(exp);
-  return bzla_node_real_addr(exp)->kind == BZLA_FP_ISNORM_NODE;
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_IS_NORM_NODE;
 }
 
 /*------------------------------------------------------------------------*/
