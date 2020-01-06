@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiablity Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2019 Aina Niemetz.
+ *  Copyright (C) 2019-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -2138,6 +2138,15 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(cur,
                                      symfpu::absolute<BzlaFPSymTraits>(
+                                         bzla_node_get_sort_id(cur),
+                                         d_unpacked_float_map.at(cur->e[0])));
+      }
+      else if (bzla_node_is_fp_neg(cur))
+      {
+        assert(d_unpacked_float_map.find(cur->e[0])
+               != d_unpacked_float_map.end());
+        d_unpacked_float_map.emplace(cur,
+                                     symfpu::negate<BzlaFPSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_unpacked_float_map.at(cur->e[0])));
       }
