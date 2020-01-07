@@ -8,6 +8,7 @@
 (assert (and (fp.isZero (fp.neg a)) (not (fp.isNormal a))))
 (assert (not (fp.isInfinite b)))
 (assert (not (fp.isNaN b)))
-(assert (fp.isNegative b))
+(assert (not (fp.isNegative b)))
+(assert (not (fp.isPositive b)))
 (check-sat)
 
