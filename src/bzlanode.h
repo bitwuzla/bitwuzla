@@ -568,6 +568,13 @@ bzla_node_is_fp_is_nan(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_IS_NAN_NODE;
 }
 
+static inline bool
+bzla_node_is_fp_is_neg(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_IS_NEG_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 static inline bool
@@ -997,6 +1004,7 @@ BzlaNode *bzla_node_create_fp_is_subnormal(Bzla *bzla, BzlaNode *e0);
 BzlaNode *bzla_node_create_fp_is_zero(Bzla *bzla, BzlaNode *e0);
 BzlaNode *bzla_node_create_fp_is_inf(Bzla *bzla, BzlaNode *e0);
 BzlaNode *bzla_node_create_fp_is_nan(Bzla *bzla, BzlaNode *e0);
+BzlaNode *bzla_node_create_fp_is_neg(Bzla *bzla, BzlaNode *e0);
 
 /*========================================================================*/
 
