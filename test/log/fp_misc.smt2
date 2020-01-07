@@ -6,6 +6,7 @@
 (assert (not (and (fp.isNormal (fp.neg a)) (not (fp.isNormal a)))))
 (assert (not (and (fp.isSubnormal (fp.neg a)) (not (fp.isSubnormal a)))))
 (assert (and (fp.isZero (fp.neg a)) (not (fp.isNormal a))))
-(assert (fp.isInfinite b))
+(assert (not (fp.isInfinite b)))
+(assert (fp.isNaN b))
 (check-sat)
 
