@@ -59,13 +59,6 @@ bool bzla_is_inv_sll(BzlaMemMgr *mm,
                      const BzlaBitVector *s,
                      uint32_t pos_x);
 
-/** Check invertibility of x >>a s = t or s >>a x = t when solved for x. */
-bool bzla_is_inv_sra(BzlaMemMgr *mm,
-                     const BzlaBvDomain *x,
-                     const BzlaBitVector *t,
-                     const BzlaBitVector *s,
-                     uint32_t pos_x);
-
 /** Check invertibility of x >> s = t or s >> x = t when solved for x. */
 bool bzla_is_inv_srl(BzlaMemMgr *mm,
                      const BzlaBvDomain *x,
@@ -160,16 +153,6 @@ bool bzla_is_inv_mul_const(BzlaMemMgr *mm,
  * respect to const bits in x.
  */
 bool bzla_is_inv_sll_const(BzlaMemMgr *mm,
-                           const BzlaBvDomain *x,
-                           const BzlaBitVector *t,
-                           const BzlaBitVector *s,
-                           uint32_t pos_x);
-
-/**
- * Check invertibility of x >>a s = t or s >>a x = t when solved for x with
- * respect to const bits in x.
- */
-bool bzla_is_inv_sra_const(BzlaMemMgr *mm,
                            const BzlaBvDomain *x,
                            const BzlaBitVector *t,
                            const BzlaBitVector *s,

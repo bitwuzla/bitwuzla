@@ -228,70 +228,6 @@ bzla_is_inv_sll(BzlaMemMgr *mm,
  * Check invertibility condition (without considering const bits in x) for:
  *
  * pos_x = 0:
- * x >>a s = t
- * IC: (s < bw(s) -> (t << s) >>a s = t) /\ (s >= bw(s) -> (t = ~0 \/ t = 0))
- *
- * pos_x = 1:
- * s <<a x = t
- * IC: (\/ s >>a i = t)  i = 0..bw(s)-1
- */
-bool
-bzla_is_inv_sra(BzlaMemMgr *mm,
-                const BzlaBvDomain *x,
-                const BzlaBitVector *t,
-                const BzlaBitVector *s,
-                uint32_t pos_x)
-{
-  assert(mm);
-  assert(t);
-  assert(s);
-  (void) x;
-
-  bool res;
-  uint32_t bw_s = bzla_bv_get_width(s);
-
-  if (pos_x == 0)
-  {
-    BzlaBitVector *bv_bw_s    = bzla_bv_uint64_to_bv(mm, bw_s, bw_s);
-    BzlaBitVector *s_ult_bw_s = bzla_bv_ult(mm, s, bv_bw_s);
-
-    res = true;
-    if (bzla_bv_is_true(s_ult_bw_s))
-    {
-      BzlaBitVector *t_sll_s = bzla_bv_sll(mm, t, s);
-      BzlaBitVector *sra_s   = bzla_bv_sra(mm, t_sll_s, s);
-      res                    = bzla_bv_compare(sra_s, t) == 0;
-      bzla_bv_free(mm, t_sll_s);
-      bzla_bv_free(mm, sra_s);
-    }
-    bzla_bv_free(mm, s_ult_bw_s);
-    if (res)
-    {
-      res = (bzla_bv_compare(bv_bw_s, s) == 1 || bzla_bv_is_ones(t)
-             || bzla_bv_is_zero(t));
-    }
-    bzla_bv_free(mm, bv_bw_s);
-  }
-  else
-  {
-    assert(pos_x == 1);
-    res = false;
-    for (uint32_t i = 0; i < bw_s && !res; i++)
-    {
-      BzlaBitVector *bv_i    = bzla_bv_uint64_to_bv(mm, i, bw_s);
-      BzlaBitVector *s_sra_i = bzla_bv_sra(mm, s, bv_i);
-      res                    = bzla_bv_compare(s_sra_i, t) == 0;
-      bzla_bv_free(mm, bv_i);
-      bzla_bv_free(mm, s_sra_i);
-    }
-  }
-  return res;
-}
-
-/**
- * Check invertibility condition (without considering const bits in x) for:
- *
- * pos_x = 0:
  * x >> s = t
  * IC: (t << s) >> s = t
  *
@@ -752,21 +688,6 @@ bzla_is_inv_sll_const(BzlaMemMgr *mm,
     }
   }
   return res;
-}
-
-bool
-bzla_is_inv_sra_const(BzlaMemMgr *mm,
-                      const BzlaBvDomain *x,
-                      const BzlaBitVector *t,
-                      const BzlaBitVector *s,
-                      uint32_t pos_x)
-{
-  assert(mm);
-  assert(x);
-  assert(t);
-  assert(s);
-  (void) pos_x;
-  return true;
 }
 
 /**
