@@ -1998,6 +1998,7 @@ class BzlaFPWordBlaster
   // BzlaFPSymSBVMap d_sbv_map;
   BzlaFPUnpackedFloatMap d_unpacked_float_map;
   BzlaFPPackedFloatMap d_packed_float_map;
+
   Bzla *d_bzla;
 };
 

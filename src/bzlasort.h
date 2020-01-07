@@ -156,8 +156,12 @@ BzlaSort *bzla_sort_get_by_id(Bzla *bzla, BzlaSortId id);
 
 uint32_t bzla_sort_bv_get_width(Bzla *bzla, BzlaSortId id);
 
+/* Return exponent width of given floating-point sort. */
 uint32_t bzla_sort_fp_get_exp_width(Bzla *bzla, BzlaSortId id);
+/* Return significant width of given floating-point sort. */
 uint32_t bzla_sort_fp_get_sig_width(Bzla *bzla, BzlaSortId id);
+/* Return width of bit-vector representation of given floating-point sort. */
+uint32_t bzla_sort_fp_get_bv_width(Bzla *bzla, BzlaSortId id);
 
 uint32_t bzla_sort_fun_get_arity(Bzla *bzla, BzlaSortId id);
 uint32_t bzla_sort_tuple_get_arity(Bzla *bzla, BzlaSortId id);

@@ -763,6 +763,15 @@ bzla_sort_fp_get_sig_width(Bzla *bzla, BzlaSortId id)
 }
 
 uint32_t
+bzla_sort_fp_get_bv_width(Bzla *bzla, BzlaSortId id)
+{
+  BzlaSort *sort;
+  sort = bzla_sort_get_by_id(bzla, id);
+  assert(bzla_sort_is_fp(bzla, id));
+  return sort->fp.width_exp + sort->fp.width_sig;
+}
+
+uint32_t
 bzla_sort_tuple_get_arity(Bzla *bzla, BzlaSortId id)
 {
   BzlaSort *sort;

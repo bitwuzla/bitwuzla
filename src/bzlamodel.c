@@ -866,6 +866,15 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
             mm, bzla_node_get_simplified(bzla, real_cur));
         goto CACHE_AND_PUSH_RESULT;
       }
+      /* if fp var is not synthesized (i.e., does not occur in the formula and
+       * is thus not word-blasted), add default bit-vector assignment 0 */
+      else if (bzla_node_is_fp_var(real_cur) && !real_cur->av)
+      {
+        result = bzla_bv_new(
+            bzla->mm,
+            bzla_sort_fp_get_bv_width(bzla, bzla_node_get_sort_id(real_cur)));
+        goto CACHE_AND_PUSH_RESULT;
+      }
       else if (bzla_node_is_bv_const(real_cur))
       {
         result = bzla_bv_copy(mm, bzla_node_bv_const_get_bits(real_cur));
