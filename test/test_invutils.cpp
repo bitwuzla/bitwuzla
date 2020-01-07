@@ -388,6 +388,10 @@ TEST_F(TestInvUtils, is_inv_srl_const)
   test_is_inv_binary_const(bzla_is_inv_srl_const, boolector_srl, 1);
 }
 
+// TODO mul
+// TODO udiv
+// TODO urem
+
 /* Test is_inv_* functions (no const bits). */
 
 TEST_F(TestInvUtils, is_inv_add)
