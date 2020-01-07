@@ -959,13 +959,16 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
       if (bzla_node_is_fp(bzla, real_cur)
           || (real_cur->arity && bzla_node_is_fp(bzla, real_cur->e[0])))
       {
-        BzlaNode *bv_node = bzla_fp_word_blast(bzla, real_cur);
-        assert(BZLA_COUNT_STACK(arg_stack));
-        result = BZLA_POP_STACK(arg_stack);
+#ifdef NDEBUG
+        BzlaNode *bv_node =
+            bzla_node_real_addr(bzla_fp_word_blast(bzla, real_cur));
         assert(bzla_hashint_map_contains(bv_model, bv_node->id));
         assert(bzla_bv_compare(
                    result, bzla_hashint_map_get(bv_model, bv_node->id)->as_ptr)
                == 0);
+        assert(BZLA_COUNT_STACK(arg_stack));
+#endif
+        result = BZLA_POP_STACK(arg_stack);
         goto CACHE_AND_PUSH_RESULT;
       }
 
