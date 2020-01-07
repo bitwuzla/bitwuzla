@@ -80,6 +80,9 @@ bzla_exp_create(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
     case BZLA_FP_IS_ZERO_NODE:
       assert(arity == 1);
       return bzla_exp_fp_is_zero(bzla, e[0]);
+    case BZLA_FP_IS_INF_NODE:
+      assert(arity == 1);
+      return bzla_exp_fp_is_inf(bzla, e[0]);
     case BZLA_APPLY_NODE:
       assert(arity == 2);
       return bzla_exp_apply(bzla, e[0], e[1]);
@@ -1927,11 +1930,7 @@ bzla_exp_fp_is_inf(Bzla *bzla, BzlaNode *node)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
-  assert(bzla == bzla_node_real_addr(node)->bzla);
-  /// FP STUB
-  (void) node;
-  return bzla_exp_true(bzla);
-  ////
+  return bzla_node_create_fp_is_inf(bzla, node);
 }
 
 BzlaNode *

@@ -554,6 +554,13 @@ bzla_node_is_fp_is_zero(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_IS_ZERO_NODE;
 }
 
+static inline bool
+bzla_node_is_fp_is_inf(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_IS_INF_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 static inline bool
@@ -981,6 +988,7 @@ BzlaNode *bzla_node_create_fp_neg(Bzla *bzla, BzlaNode *e0);
 BzlaNode *bzla_node_create_fp_is_normal(Bzla *bzla, BzlaNode *e0);
 BzlaNode *bzla_node_create_fp_is_subnormal(Bzla *bzla, BzlaNode *e0);
 BzlaNode *bzla_node_create_fp_is_zero(Bzla *bzla, BzlaNode *e0);
+BzlaNode *bzla_node_create_fp_is_inf(Bzla *bzla, BzlaNode *e0);
 
 /*========================================================================*/
 
