@@ -665,6 +665,14 @@ bzla_node_is_fp_leq(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_LEQ_NODE;
 }
 
+/** Return true if given node is a floating-point fp.lt node. */
+static inline bool
+bzla_node_is_fp_lt(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_LT_NODE;
+}
+
 /** Return true if given node is a floating-point fp.min node. */
 static inline bool
 bzla_node_is_fp_min(const BzlaNode *exp)
@@ -1224,6 +1232,8 @@ BzlaNode *bzla_node_create_fp_is_pos(Bzla *bzla, BzlaNode *e0);
 
 /** Create fp.leq node. */
 BzlaNode *bzla_node_create_fp_leq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+/** Create fp.lt node. */
+BzlaNode *bzla_node_create_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /** Create fp.min node. */
 BzlaNode *bzla_node_create_fp_min(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
