@@ -589,6 +589,13 @@ bzla_node_is_fp_min(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_MIN_NODE;
 }
 
+static inline bool
+bzla_node_is_fp_max(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_MAX_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 static inline bool
@@ -1023,6 +1030,9 @@ BzlaNode *bzla_node_create_fp_is_pos(Bzla *bzla, BzlaNode *e0);
 
 /* Create fp.min node. */
 BzlaNode *bzla_node_create_fp_min(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
+/* Create fp.max node. */
+BzlaNode *bzla_node_create_fp_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /*========================================================================*/
 

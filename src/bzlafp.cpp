@@ -1985,6 +1985,8 @@ class BzlaFPWordBlaster
   }
 
  private:
+  BzlaNode *min_max_uf(BzlaNode *node);
+
   using BzlaSymUnpackedFloat = ::symfpu::unpackedFloat<BzlaFPSymTraits>;
   using BzlaFPSortInfoMap =
       std::unordered_map<BzlaSortId, BzlaFPSortInfo, BzlaSortHashFunction>;
@@ -2232,34 +2234,12 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
       }
-      else if (bzla_node_is_fp_min(cur))
+      else if (bzla_node_is_fp_min(cur) || bzla_node_is_fp_max(cur))
       {
         assert(cur->arity == 2);
-        uint32_t arity     = cur->arity;
-        BzlaSortId sort_fp = bzla_node_get_sort_id(cur);
-        BzlaNode *uf;
-        if (d_min_map.find(sort_fp) == d_min_map.end())
-        {
-          uint32_t bw         = bzla_sort_fp_get_bv_width(d_bzla, sort_fp);
-          BzlaSortId sort_bv1 = bzla_sort_bv(d_bzla, 1);
-          BzlaSortId sort_bv  = bzla_sort_bv(d_bzla, bw);
-          BzlaSortId sorts[2];
-          for (uint32_t i = 0; i < arity; ++i) sorts[i] = sort_bv;
-          BzlaSortId sort_domain = bzla_sort_tuple(d_bzla, sorts, arity);
-          BzlaSortId sort_fun    = bzla_sort_fun(d_bzla, sort_domain, sort_bv1);
-          uf                     = bzla_exp_uf(d_bzla, sort_fun, "_fp_min_");
-          d_min_map[sort_fp]     = uf;
-          bzla_sort_release(d_bzla, sort_fun);
-          bzla_sort_release(d_bzla, sort_domain);
-          bzla_sort_release(d_bzla, sort_bv);
-          bzla_sort_release(d_bzla, sort_bv1);
-        }
-        else
-        {
-          uf = d_min_map.at(sort_fp);
-        }
+        BzlaNode *uf = min_max_uf(cur);
         BzlaNode *args[2];
-        for (uint32_t i = 0; i < arity; ++i)
+        for (uint32_t i = 0; i < cur->arity; ++i)
         {
           assert(d_unpacked_float_map.find(cur->e[i])
                  != d_unpacked_float_map.end());
@@ -2272,14 +2252,26 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
           }
           args[i] = d_packed_float_map.at(cur->e[i]).getNode();
         }
-        BzlaNode *apply_args = bzla_exp_args(d_bzla, args, arity);
+        BzlaNode *apply_args = bzla_exp_args(d_bzla, args, cur->arity);
         BzlaNode *apply      = bzla_exp_apply(d_bzla, uf, apply_args);
-        d_unpacked_float_map.emplace(
-            cur,
-            symfpu::min<BzlaFPSymTraits>(sort_fp,
-                                         d_unpacked_float_map.at(cur->e[0]),
-                                         d_unpacked_float_map.at(cur->e[1]),
-                                         apply));
+        if (bzla_node_is_fp_min(cur))
+        {
+          d_unpacked_float_map.emplace(
+              cur,
+              symfpu::min<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
+                                           d_unpacked_float_map.at(cur->e[0]),
+                                           d_unpacked_float_map.at(cur->e[1]),
+                                           apply));
+        }
+        else
+        {
+          d_unpacked_float_map.emplace(
+              cur,
+              symfpu::max<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
+                                           d_unpacked_float_map.at(cur->e[0]),
+                                           d_unpacked_float_map.at(cur->e[1]),
+                                           apply));
+        }
         bzla_node_release(d_bzla, apply);
         bzla_node_release(d_bzla, apply_args);
       }
@@ -2427,6 +2419,35 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
                              BzlaFPSymBV<false>(csig)));
   }
   return res;
+}
+
+BzlaNode *
+BzlaFPWordBlaster::min_max_uf(BzlaNode *node)
+{
+  assert(bzla_node_is_regular(node));
+
+  BzlaSortId sort_fp = bzla_node_get_sort_id(node);
+
+  if (d_min_map.find(sort_fp) != d_min_map.end()) return d_min_map.at(sort_fp);
+
+  BzlaNode *uf;
+  uint32_t arity      = node->arity;
+  uint32_t bw         = bzla_sort_fp_get_bv_width(d_bzla, sort_fp);
+  BzlaSortId sort_bv1 = bzla_sort_bv(d_bzla, 1);
+  BzlaSortId sort_bv  = bzla_sort_bv(d_bzla, bw);
+  BzlaSortId sorts[2];
+  for (uint32_t i = 0; i < arity; ++i) sorts[i] = sort_bv;
+  BzlaSortId sort_domain = bzla_sort_tuple(d_bzla, sorts, arity);
+  BzlaSortId sort_fun    = bzla_sort_fun(d_bzla, sort_domain, sort_bv1);
+  uf                     = bzla_exp_uf(d_bzla,
+                   sort_fun,
+                   bzla_node_is_fp_min(node) ? "_fp_min_uf_" : "_fp_max_uf");
+  d_min_map[sort_fp]     = uf;
+  bzla_sort_release(d_bzla, sort_fun);
+  bzla_sort_release(d_bzla, sort_domain);
+  bzla_sort_release(d_bzla, sort_bv);
+  bzla_sort_release(d_bzla, sort_bv1);
+  return uf;
 }
 
 /* ========================================================================== */
