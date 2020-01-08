@@ -2361,6 +2361,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
     case BZLA_FP_IS_NAN_NODE:
     case BZLA_FP_IS_NEG_NODE:
     case BZLA_FP_IS_POS_NODE:
+    case BZLA_FP_LEQ_NODE:
     case BZLA_FUN_EQ_NODE:
     case BZLA_RM_EQ_NODE: sort = bzla_sort_bool(bzla); break;
 
@@ -3221,6 +3222,19 @@ bzla_node_create_fp_is_pos(Bzla *bzla, BzlaNode *e0)
   e[0] = bzla_simplify_exp(bzla, e0);
   assert(bzla_dbg_precond_regular_unary_fp_exp(bzla, e[0]));
   return create_exp(bzla, BZLA_FP_IS_POS_NODE, 1, e);
+}
+
+BzlaNode *
+bzla_node_create_fp_leq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_regular_binary_fp_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_FP_LEQ_NODE, 2, e);
 }
 
 BzlaNode *

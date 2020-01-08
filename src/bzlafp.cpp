@@ -2234,6 +2234,18 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
       }
+      else if (bzla_node_is_fp_leq(cur))
+      {
+        assert(d_unpacked_float_map.find(cur->e[0])
+               != d_unpacked_float_map.end());
+        assert(d_unpacked_float_map.find(cur->e[1])
+               != d_unpacked_float_map.end());
+        d_prop_map.emplace(cur,
+                           symfpu::lessThanOrEqual<BzlaFPSymTraits>(
+                               bzla_node_get_sort_id(cur->e[0]),
+                               d_unpacked_float_map.at(cur->e[0]),
+                               d_unpacked_float_map.at(cur->e[1])));
+      }
       else if (bzla_node_is_fp_min(cur) || bzla_node_is_fp_max(cur))
       {
         assert(cur->arity == 2);

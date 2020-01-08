@@ -9,6 +9,7 @@
 (assert (not (fp.isInfinite b)))
 (assert (not (fp.isNaN b)))
 (assert (not (fp.isNegative b)))
-(assert (not (fp.isPositive b)))
+(assert (fp.isPositive b))
+(assert (not (fp.leq a a)))
 (check-sat)
 
