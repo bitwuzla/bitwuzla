@@ -438,6 +438,7 @@ set(unsat_testcases
 "extarraywrite3.smt2"
 "fifo32bc04k05.smt2"
 "fp_inf.smt2"
+"fp_min.smt2"
 "fp_misc.smt2"
 "fp_nan.smt2"
 "fp_zero.smt2"

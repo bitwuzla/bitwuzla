@@ -3,7 +3,7 @@
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2013 Armin Biere.
  *  Copyright (C) 2012-2017 Mathias Preiner.
- *  Copyright (C) 2012-2019 Aina Niemetz.
+ *  Copyright (C) 2012-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -63,7 +63,13 @@ bool bzla_dbg_precond_regular_binary_bv_exp(Bzla* bzla,
                                             const BzlaNode* e0,
                                             const BzlaNode* e1);
 
+/* Check assertions for unary fp expressions. */
 bool bzla_dbg_precond_regular_unary_fp_exp(Bzla* bzla, const BzlaNode* exp);
+
+/* Check assertions for binary fp expressions without rounding mode operand. */
+bool bzla_dbg_precond_regular_binary_fp_exp(Bzla* bzla,
+                                            const BzlaNode* e0,
+                                            const BzlaNode* e1);
 
 bool bzla_dbg_precond_eq_exp(Bzla* bzla,
                              const BzlaNode* e0,

@@ -19,6 +19,7 @@ extern "C" {
 #include "bzlanode.h"
 #include "bzlarm.h"
 #include "bzlasort.h"
+#include "utils/bzlamem.h"
 }
 
 #ifdef BZLA_USE_SYMFPU
@@ -1900,28 +1901,34 @@ BZLA_FP_ITE(BzlaFPTraits::sbv);
 BZLA_FP_ITE(BzlaFPTraits::ubv);
 #undef BZLA_FP_ITE
 
-template <class T>
-struct ite<BzlaFPSymProp, T>
-{
-  static const T iteOp(const BzlaFPSymProp &_c, const T &_t, const T &_e)
-  {
-    BzlaNode *c = _c.getNode();
-    BzlaNode *t = _t.getNode();
-    BzlaNode *e = _e.getNode();
-    assert(c);
-    assert(t);
-    assert(e);
-    Bzla *bzla = T::s_bzla;
-    assert(bzla);
-    assert(bzla == bzla_node_real_addr(c)->bzla);
-    assert(bzla == bzla_node_real_addr(t)->bzla);
-    assert(bzla == bzla_node_real_addr(e)->bzla);
-    BzlaNode *ite = bzla_exp_cond(bzla, c, t, e);
-    T res(ite);
-    bzla_node_release(bzla, ite);
-    return res;
-  }
-};
+#define BZLA_FP_SYM_ITE(T)                                                  \
+  template <>                                                               \
+  struct ite<BzlaFPSymProp, T>                                              \
+  {                                                                         \
+    static const T iteOp(const BzlaFPSymProp &_c, const T &_t, const T &_e) \
+    {                                                                       \
+      BzlaNode *c = _c.getNode();                                           \
+      BzlaNode *t = _t.getNode();                                           \
+      BzlaNode *e = _e.getNode();                                           \
+      assert(c);                                                            \
+      assert(t);                                                            \
+      assert(e);                                                            \
+      Bzla *bzla = T::s_bzla;                                               \
+      assert(bzla);                                                         \
+      assert(bzla == bzla_node_real_addr(c)->bzla);                         \
+      assert(bzla == bzla_node_real_addr(t)->bzla);                         \
+      assert(bzla == bzla_node_real_addr(e)->bzla);                         \
+      BzlaNode *ite = bzla_exp_cond(bzla, c, t, e);                         \
+      T res(ite);                                                           \
+      bzla_node_release(bzla, ite);                                         \
+      return res;                                                           \
+    }                                                                       \
+  };
+BZLA_FP_SYM_ITE(BzlaFPSymTraits::rm);
+BZLA_FP_SYM_ITE(BzlaFPSymTraits::prop);
+BZLA_FP_SYM_ITE(BzlaFPSymTraits::sbv);
+BZLA_FP_SYM_ITE(BzlaFPSymTraits::ubv);
+#undef BZLA_FP_SYM_ITE
 
 }  // namespace symfpu
 #endif
@@ -1946,6 +1953,7 @@ class BzlaFPWordBlaster
 {
  public:
   BzlaFPWordBlaster(Bzla *bzla) : d_bzla(bzla) {}
+  ~BzlaFPWordBlaster();
 
   BzlaNode *word_blast(BzlaNode *node);
   BzlaNode *get_word_blasted_node(BzlaNode *node);
@@ -1999,6 +2007,7 @@ class BzlaFPWordBlaster
   BzlaFPUnpackedFloatMap d_unpacked_float_map;
   BzlaFPPackedFloatMap d_packed_float_map;
 
+  std::unordered_map<BzlaSortId, BzlaNode *, BzlaSortHashFunction> d_min_map;
   Bzla *d_bzla;
 };
 
@@ -2022,6 +2031,14 @@ create_component_symbol(BzlaNode *node, const char *s)
   ss << "_fp_" << s << "_"
      << bzla_node_get_symbol(bzla_node_real_addr(node)->bzla, node);
   return ss.str();
+}
+
+BzlaFPWordBlaster::~BzlaFPWordBlaster()
+{
+  for (const auto &p : d_min_map)
+  {
+    bzla_node_release(d_bzla, p.second);
+  }
 }
 
 BzlaNode *
@@ -2214,6 +2231,57 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                            symfpu::isPositive<BzlaFPSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
+      }
+      else if (bzla_node_is_fp_min(cur))
+      {
+        assert(cur->arity == 2);
+        uint32_t arity     = cur->arity;
+        BzlaSortId sort_fp = bzla_node_get_sort_id(cur);
+        BzlaNode *uf;
+        if (d_min_map.find(sort_fp) == d_min_map.end())
+        {
+          uint32_t bw         = bzla_sort_fp_get_bv_width(d_bzla, sort_fp);
+          BzlaSortId sort_bv1 = bzla_sort_bv(d_bzla, 1);
+          BzlaSortId sort_bv  = bzla_sort_bv(d_bzla, bw);
+          BzlaSortId sorts[2];
+          for (uint32_t i = 0; i < arity; ++i) sorts[i] = sort_bv;
+          BzlaSortId sort_domain = bzla_sort_tuple(d_bzla, sorts, arity);
+          BzlaSortId sort_fun    = bzla_sort_fun(d_bzla, sort_domain, sort_bv1);
+          uf                     = bzla_exp_uf(d_bzla, sort_fun, "_fp_min_");
+          d_min_map[sort_fp]     = uf;
+          bzla_sort_release(d_bzla, sort_fun);
+          bzla_sort_release(d_bzla, sort_domain);
+          bzla_sort_release(d_bzla, sort_bv);
+          bzla_sort_release(d_bzla, sort_bv1);
+        }
+        else
+        {
+          uf = d_min_map.at(sort_fp);
+        }
+        BzlaNode *args[2];
+        for (uint32_t i = 0; i < arity; ++i)
+        {
+          assert(d_unpacked_float_map.find(cur->e[i])
+                 != d_unpacked_float_map.end());
+          if (d_packed_float_map.find(cur->e[i]) == d_packed_float_map.end())
+          {
+            d_packed_float_map.emplace(
+                cur->e[i],
+                symfpu::pack(bzla_node_get_sort_id(cur->e[i]),
+                             d_unpacked_float_map.at(cur->e[i])));
+          }
+          args[i] = d_packed_float_map.at(cur->e[i]).getNode();
+        }
+        BzlaNode *apply_args = bzla_exp_args(d_bzla, args, arity);
+        BzlaNode *apply      = bzla_exp_apply(d_bzla, uf, apply_args);
+        d_unpacked_float_map.emplace(
+            cur,
+            symfpu::min<BzlaFPSymTraits>(sort_fp,
+                                         d_unpacked_float_map.at(cur->e[0]),
+                                         d_unpacked_float_map.at(cur->e[1]),
+                                         apply));
+        bzla_node_release(d_bzla, apply);
+        bzla_node_release(d_bzla, apply_args);
       }
       visited.at(cur) = 1;
     }

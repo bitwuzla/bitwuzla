@@ -3,7 +3,7 @@
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2013 Armin Biere.
  *  Copyright (C) 2012-2017 Mathias Preiner.
- *  Copyright (C) 2012-2019 Aina Niemetz.
+ *  Copyright (C) 2012-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -381,8 +381,26 @@ bzla_dbg_precond_regular_binary_bv_exp(Bzla *bzla,
   assert(e1);
   assert(!bzla_node_is_simplified(e0));
   assert(!bzla_node_is_simplified(e1));
-  assert(!bzla_node_is_fun(e0));
-  assert(!bzla_node_is_fun(e1));
+  assert(bzla_node_is_bv(bzla, e0));
+  assert(bzla_node_is_bv(bzla, e1));
+  assert(bzla_node_get_sort_id(e0) == bzla_node_get_sort_id(e1));
+  assert(bzla_node_real_addr(e0)->bzla == bzla);
+  assert(bzla_node_real_addr(e1)->bzla == bzla);
+  return true;
+}
+
+bool
+bzla_dbg_precond_regular_binary_fp_exp(Bzla *bzla,
+                                       const BzlaNode *e0,
+                                       const BzlaNode *e1)
+{
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+  assert(!bzla_node_is_simplified(e0));
+  assert(!bzla_node_is_simplified(e1));
+  assert(bzla_node_is_fp(bzla, e0));
+  assert(bzla_node_is_fp(bzla, e1));
   assert(bzla_node_get_sort_id(e0) == bzla_node_get_sort_id(e1));
   assert(bzla_node_real_addr(e0)->bzla == bzla);
   assert(bzla_node_real_addr(e1)->bzla == bzla);
