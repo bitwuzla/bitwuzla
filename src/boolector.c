@@ -3460,7 +3460,7 @@ boolector_fp_eq(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
 }
 
 BoolectorNode *
-boolector_fp_leq(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
+boolector_fp_lte(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
 {
   BzlaNode *e0, *e1, *res;
 
@@ -3477,11 +3477,11 @@ boolector_fp_leq(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   BZLA_ABORT_IS_NOT_FP(e0);
   BZLA_ABORT_IS_NOT_FP(e1);
   BZLA_ABORT_SORT_MISMATCH(e0, e1);
-  res = bzla_exp_fp_leq(bzla, e0, e1);
+  res = bzla_exp_fp_lte(bzla, e0, e1);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_leq, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1));
+  BZLA_CHKCLONE_RES_PTR(res, fp_lte, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1));
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
@@ -3514,7 +3514,7 @@ boolector_fp_lt(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
 }
 
 BoolectorNode *
-boolector_fp_geq(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
+boolector_fp_gte(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
 {
   BzlaNode *e0, *e1, *res;
 
@@ -3531,11 +3531,11 @@ boolector_fp_geq(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   BZLA_ABORT_IS_NOT_FP(e0);
   BZLA_ABORT_IS_NOT_FP(e1);
   BZLA_ABORT_SORT_MISMATCH(e0, e1);
-  res = bzla_exp_fp_geq(bzla, e0, e1);
+  res = bzla_exp_fp_gte(bzla, e0, e1);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(res, fp_geq, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1));
+  BZLA_CHKCLONE_RES_PTR(res, fp_gte, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1));
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }

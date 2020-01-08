@@ -74,9 +74,7 @@ enum BzlaNodeKind
   BZLA_BV_CONCAT_NODE,
   BZLA_FP_EQ_NODE, /* (regular) equality over floating-points */
   BZLA_FP_FPEQ_NODE,
-  BZLA_FP_GEQ_NODE,
-  BZLA_FP_GT_NODE,
-  BZLA_FP_LEQ_NODE,
+  BZLA_FP_LTE_NODE,
   BZLA_FP_LT_NODE,
   BZLA_FP_MIN_NODE,
   BZLA_FP_MAX_NODE,
@@ -659,10 +657,10 @@ bzla_node_is_fp_is_pos(const BzlaNode *exp)
 
 /** Return true if given node is a floating-point fp.leq node. */
 static inline bool
-bzla_node_is_fp_leq(const BzlaNode *exp)
+bzla_node_is_fp_lte(const BzlaNode *exp)
 {
   assert(exp);
-  return bzla_node_real_addr(exp)->kind == BZLA_FP_LEQ_NODE;
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_LTE_NODE;
 }
 
 /** Return true if given node is a floating-point fp.lt node. */
@@ -1231,7 +1229,7 @@ BzlaNode *bzla_node_create_fp_is_neg(Bzla *bzla, BzlaNode *e0);
 BzlaNode *bzla_node_create_fp_is_pos(Bzla *bzla, BzlaNode *e0);
 
 /** Create fp.leq node. */
-BzlaNode *bzla_node_create_fp_leq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+BzlaNode *bzla_node_create_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 /** Create fp.lt node. */
 BzlaNode *bzla_node_create_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 

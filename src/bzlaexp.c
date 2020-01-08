@@ -92,9 +92,9 @@ bzla_exp_create(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
     case BZLA_FP_IS_POS_NODE:
       assert(arity == 1);
       return bzla_exp_fp_is_pos(bzla, e[0]);
-    case BZLA_FP_LEQ_NODE:
+    case BZLA_FP_LTE_NODE:
       assert(arity == 2);
-      return bzla_exp_fp_leq(bzla, e[0], e[1]);
+      return bzla_exp_fp_lte(bzla, e[0], e[1]);
     case BZLA_FP_LT_NODE:
       assert(arity == 2);
       return bzla_exp_fp_lt(bzla, e[0], e[1]);
@@ -2030,12 +2030,12 @@ bzla_exp_fp_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 }
 
 BzlaNode *
-bzla_exp_fp_leq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+bzla_exp_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
-  return bzla_node_create_fp_leq(bzla, e0, e1);
+  return bzla_node_create_fp_lte(bzla, e0, e1);
 }
 
 BzlaNode *
@@ -2048,7 +2048,7 @@ bzla_exp_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 }
 
 BzlaNode *
-bzla_exp_fp_geq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+bzla_exp_fp_gte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");

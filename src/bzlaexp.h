@@ -525,13 +525,13 @@ BzlaNode *bzla_exp_fp_rem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 BzlaNode *bzla_exp_fp_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /* Create floating-point less or equal. */
-BzlaNode *bzla_exp_fp_leq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+BzlaNode *bzla_exp_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /* Create floating-point less than. */
 BzlaNode *bzla_exp_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /* Create floating-point greater or equal. */
-BzlaNode *bzla_exp_fp_geq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+BzlaNode *bzla_exp_fp_gte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /* Create floating-point greater than. */
 BzlaNode *bzla_exp_fp_gt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);

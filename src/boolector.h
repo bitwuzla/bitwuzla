@@ -1824,7 +1824,7 @@ BoolectorNode *boolector_fp_eq(Bzla *bzla,
   :return:     A bit-vector of size one, representing ``n0`` less or equal
                ``n1``.
  */
-BoolectorNode *boolector_fp_leq(Bzla *bzla,
+BoolectorNode *boolector_fp_lte(Bzla *bzla,
                                 BoolectorNode *n0,
                                 BoolectorNode *n1);
 
@@ -1847,7 +1847,7 @@ BoolectorNode *boolector_fp_lt(Bzla *bzla,
   :param n1:   Floating-point operand.
   :return:     A floating-point representing ``n0`` greater or equal ``n1``.
  */
-BoolectorNode *boolector_fp_geq(Bzla *bzla,
+BoolectorNode *boolector_fp_gte(Bzla *bzla,
                                 BoolectorNode *n0,
                                 BoolectorNode *n1);
 

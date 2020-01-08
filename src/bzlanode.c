@@ -75,9 +75,7 @@ const char *const g_bzla_op2str[BZLA_NUM_OPS_NODE] = {
     [BZLA_FP_IS_SUBNORM_NODE] = "fpissubnorm",
     [BZLA_FP_IS_ZERO_NODE]    = "fpiszero",
     [BZLA_FP_FMA_NODE]        = "fpfma",
-    [BZLA_FP_GEQ_NODE]        = "fpgeq",
-    [BZLA_FP_GT_NODE]         = "fpgt",
-    [BZLA_FP_LEQ_NODE]        = "fpleq",
+    [BZLA_FP_LTE_NODE]        = "fplte",
     [BZLA_FP_LT_NODE]         = "fplt",
     [BZLA_FP_MIN_NODE]        = "fpmin",
     [BZLA_FP_MAX_NODE]        = "fpmax",
@@ -2361,7 +2359,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
     case BZLA_FP_IS_NAN_NODE:
     case BZLA_FP_IS_NEG_NODE:
     case BZLA_FP_IS_POS_NODE:
-    case BZLA_FP_LEQ_NODE:
+    case BZLA_FP_LTE_NODE:
     case BZLA_FP_LT_NODE:
     case BZLA_FUN_EQ_NODE:
     case BZLA_RM_EQ_NODE: sort = bzla_sort_bool(bzla); break;
@@ -3226,7 +3224,7 @@ bzla_node_create_fp_is_pos(Bzla *bzla, BzlaNode *e0)
 }
 
 BzlaNode *
-bzla_node_create_fp_leq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+bzla_node_create_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   assert(bzla);
   assert(e0);
@@ -3235,7 +3233,7 @@ bzla_node_create_fp_leq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e[0] = bzla_simplify_exp(bzla, e0);
   e[1] = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_fp_exp(bzla, e[0], e[1]));
-  return create_exp(bzla, BZLA_FP_LEQ_NODE, 2, e);
+  return create_exp(bzla, BZLA_FP_LTE_NODE, 2, e);
 }
 
 BzlaNode *

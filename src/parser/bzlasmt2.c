@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2011-2017 Armin Biere.
- *  Copyright (C) 2013-2019 Aina Niemetz.
+ *  Copyright (C) 2013-2020 Aina Niemetz.
  *  Copyright (C) 2013-2020 Mathias Preiner.
  *
  *  This file is part of Boolector.
@@ -3717,7 +3717,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_FP_LEQ_TAG_SMT2)
   {
     if (!close_term_bin_fp_fun_chainable(
-            parser, item_open, item_cur, nargs, boolector_fp_leq))
+            parser, item_open, item_cur, nargs, boolector_fp_lte))
     {
       return 0;
     }
@@ -3735,7 +3735,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_FP_GEQ_TAG_SMT2)
   {
     if (!close_term_bin_fp_fun_chainable(
-            parser, item_open, item_cur, nargs, boolector_fp_geq))
+            parser, item_open, item_cur, nargs, boolector_fp_gte))
     {
       return 0;
     }
