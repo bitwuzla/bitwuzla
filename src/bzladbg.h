@@ -66,6 +66,11 @@ bool bzla_dbg_precond_regular_binary_bv_exp(Bzla* bzla,
 /* Check assertions for unary fp expressions. */
 bool bzla_dbg_precond_regular_unary_fp_exp(Bzla* bzla, const BzlaNode* exp);
 
+/* Check assertions for unary fp to_fp expressions. */
+bool bzla_dbg_precond_unary_fp_to_fp_exp(Bzla* bzla,
+                                         const BzlaNode* exp,
+                                         const BzlaSortId sort);
+
 /* Check assertions for binary fp expressions without rounding mode operand. */
 bool bzla_dbg_precond_regular_binary_fp_exp(Bzla* bzla,
                                             const BzlaNode* e0,

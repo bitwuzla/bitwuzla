@@ -2204,13 +2204,7 @@ bzla_exp_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
-  assert(bzla == bzla_node_real_addr(node)->bzla);
-  assert(sort);
-  /// FP STUB
-  (void) node;
-  (void) sort;
-  return bzla_exp_true(bzla);
-  ////
+  return bzla_node_create_fp_to_fp_from_bv(bzla, node, sort);
 }
 
 BzlaNode *

@@ -314,6 +314,20 @@ bzla_dbg_precond_regular_unary_fp_exp(Bzla *bzla, const BzlaNode *exp)
 }
 
 bool
+bzla_dbg_precond_unary_fp_to_fp_exp(Bzla *bzla,
+                                    const BzlaNode *exp,
+                                    const BzlaSortId sort)
+{
+  assert(bzla);
+  assert(exp);
+  assert(bzla_sort_is_fp(bzla, sort));
+  assert(bzla_node_real_addr(exp)->bzla == bzla);
+  assert(!bzla_node_is_simplified(exp));
+  assert(bzla_node_is_bv(bzla, exp));
+  return true;
+}
+
+bool
 bzla_dbg_precond_eq_exp(Bzla *bzla, const BzlaNode *e0, const BzlaNode *e1)
 {
   BzlaNode *real_e0, *real_e1;

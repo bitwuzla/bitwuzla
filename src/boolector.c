@@ -3967,6 +3967,7 @@ boolector_fp_to_fp_from_real(Bzla *bzla,
                              const char *real,
                              BoolectorSort sort)
 {
+  BZLA_ABORT(true, "to_fp from real not supported");
   BzlaNode *exp, *res;
   BzlaSortId s;
 

@@ -60,6 +60,7 @@ enum BzlaNodeKind
   BZLA_FP_IS_SUBNORM_NODE,
   BZLA_FP_IS_ZERO_NODE,
   BZLA_FP_NEG_NODE,
+  BZLA_FP_TO_FP_BV_NODE,
   /* ------------------------------- binary ------------------------------ */
   BZLA_BV_AND_NODE,
   BZLA_BV_EQ_NODE, /* equality over bit vectors */
@@ -80,6 +81,9 @@ enum BzlaNodeKind
   BZLA_FP_SQRT_NODE,
   BZLA_FP_REM_NODE,
   BZLA_FP_RTI_NODE,
+  BZLA_FP_TO_FP_FP_NODE,
+  BZLA_FP_TO_FP_INT_NODE,
+  BZLA_FP_TO_FP_UINT_NODE,
   BZLA_RM_EQ_NODE,  /* equality over rounding modes */
   BZLA_FUN_EQ_NODE, /* equality over uf/arrays */
   BZLA_APPLY_NODE,
@@ -728,6 +732,14 @@ bzla_node_is_fp_fma(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_FMA_NODE;
 }
 
+/** Return true if given node is a floating-point to_fp from IEEE bv node. */
+static inline bool
+bzla_node_is_fp_to_fp_from_bv(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_TO_FP_BV_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 /** Return true if given node is an if-then-else node. */
@@ -1309,6 +1321,11 @@ BzlaNode *bzla_node_create_fp_div(Bzla *bzla,
 /** Create fp.fma node. */
 BzlaNode *bzla_node_create_fp_fma(
     Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3);
+
+/** Create to_fp from IEEE bit-vector node. */
+BzlaNode *bzla_node_create_fp_to_fp_from_bv(Bzla *bzla,
+                                            BzlaNode *exp,
+                                            BzlaSortId sort);
 
 /*========================================================================*/
 

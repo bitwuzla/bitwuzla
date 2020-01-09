@@ -2415,6 +2415,14 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                                          d_unpacked_float_map.at(cur->e[2]),
                                          d_unpacked_float_map.at(cur->e[3])));
       }
+      else if (bzla_node_is_fp_to_fp_from_bv(cur))
+      {
+        assert(bzla_node_is_bv(d_bzla, cur->e[0]));
+        d_unpacked_float_map.emplace(
+            cur,
+            symfpu::unpack<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
+                                            BzlaFPSymBV<false>(cur->e[0])));
+      }
       visited.at(cur) = 1;
     }
     else
