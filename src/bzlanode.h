@@ -718,6 +718,14 @@ bzla_node_is_fp_mul(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_MUL_NODE;
 }
 
+/** Return true if given node is a floating-point fp.div node. */
+static inline bool
+bzla_node_is_fp_div(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_DIV_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 /** Return true if given node is an if-then-else node. */
@@ -1283,6 +1291,12 @@ BzlaNode *bzla_node_create_fp_add(Bzla *bzla,
 
 /** Create fp.mul node. */
 BzlaNode *bzla_node_create_fp_mul(Bzla *bzla,
+                                  BzlaNode *e0,
+                                  BzlaNode *e1,
+                                  BzlaNode *e2);
+
+/** Create fp.div node. */
+BzlaNode *bzla_node_create_fp_div(Bzla *bzla,
                                   BzlaNode *e0,
                                   BzlaNode *e1,
                                   BzlaNode *e2);

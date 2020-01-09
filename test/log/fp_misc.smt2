@@ -13,5 +13,6 @@
 (assert (and (fp.leq a a) (not (fp.lt a a))))
 (assert (and (fp.geq (fp.sqrt RNE a) (fp.roundToIntegral RNE b)) (not (fp.gt (fp.add RNA a a) b))))
 (assert (fp.geq (fp.add RTN a b) (fp.sub RTN a b)))
-(assert (fp.lt (fp.mul RTP a (_ +zero 5 11)) (_ -zero 5 11)))
+(assert (fp.leq (fp.mul RTP a (_ +zero 5 11)) (_ -zero 5 11)))
+(assert (not (fp.isNaN (fp.div RTP a (_ +zero 5 11)))))
 (check-sat)
