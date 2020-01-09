@@ -440,6 +440,7 @@ bzla_dbg_precond_rm_ternary_fp_exp(Bzla *bzla,
   assert(bzla_node_is_rm(bzla, e0));
   assert(bzla_node_is_fp(bzla, e1));
   assert(bzla_node_is_fp(bzla, e2));
+  assert(bzla_node_get_sort_id(e1) == bzla_node_get_sort_id(e2));
   assert(bzla_node_real_addr(e0)->bzla == bzla);
   assert(bzla_node_real_addr(e1)->bzla == bzla);
   assert(bzla_node_real_addr(e2)->bzla == bzla);

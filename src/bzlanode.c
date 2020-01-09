@@ -84,7 +84,6 @@ const char *const g_bzla_op2str[BZLA_NUM_OPS_NODE] = {
     [BZLA_FP_REM_NODE]        = "fprem",
     [BZLA_FP_RTI_NODE]        = "fprti",
     [BZLA_FP_SQRT_NODE]       = "fpsqrt",
-    [BZLA_FP_SUB_NODE]        = "fpsub",
     [BZLA_RM_CONST_NODE]      = "rmconst",
     [BZLA_APPLY_NODE]         = "apply",
     [BZLA_FORALL_NODE]        = "forall",
@@ -3316,7 +3315,7 @@ bzla_node_create_fp_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
   BzlaNode *e[3];
   e[0] = bzla_simplify_exp(bzla, e0);
   e[1] = bzla_simplify_exp(bzla, e1);
-  e[2] = bzla_simplify_exp(bzla, e1);
+  e[2] = bzla_simplify_exp(bzla, e2);
   assert(bzla_dbg_precond_rm_ternary_fp_exp(bzla, e[0], e[1], e[2]));
   return create_exp(bzla, BZLA_FP_ADD_NODE, 3, e);
 }

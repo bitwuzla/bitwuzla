@@ -90,7 +90,6 @@ enum BzlaNodeKind
   /* ----------------------------- ternary ------------------------------ */
   BZLA_COND_NODE,
   BZLA_FP_ADD_NODE,
-  BZLA_FP_SUB_NODE,
   BZLA_FP_MUL_NODE,
   BZLA_FP_DIV_NODE,
   BZLA_ARGS_NODE,

@@ -2132,12 +2132,10 @@ bzla_exp_fp_sub(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
   assert(bzla == bzla_node_real_addr(e2)->bzla);
-  /// FP STUB
-  (void) e0;
-  (void) e1;
-  (void) e2;
-  return bzla_exp_true(bzla);
-  ////
+  BzlaNode *neg    = bzla_exp_fp_neg(bzla, e2);
+  BzlaNode *result = bzla_exp_fp_add(bzla, e0, e1, neg);
+  bzla_node_release(bzla, neg);
+  return result;
 }
 
 BzlaNode *
