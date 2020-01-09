@@ -710,6 +710,14 @@ bzla_node_is_fp_add(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_ADD_NODE;
 }
 
+/** Return true if given node is a floating-point fp.mul node. */
+static inline bool
+bzla_node_is_fp_mul(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_MUL_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 /** Return true if given node is an if-then-else node. */
@@ -1269,6 +1277,12 @@ BzlaNode *bzla_node_create_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /** Create fp.add node. */
 BzlaNode *bzla_node_create_fp_add(Bzla *bzla,
+                                  BzlaNode *e0,
+                                  BzlaNode *e1,
+                                  BzlaNode *e2);
+
+/** Create fp.mul node. */
+BzlaNode *bzla_node_create_fp_mul(Bzla *bzla,
                                   BzlaNode *e0,
                                   BzlaNode *e1,
                                   BzlaNode *e2);

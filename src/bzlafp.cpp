@@ -28,6 +28,7 @@ extern "C" {
 #include "symfpu/core/compare.h"
 #include "symfpu/core/convert.h"
 #include "symfpu/core/ite.h"
+#include "symfpu/core/multiply.h"
 #include "symfpu/core/packing.h"
 #include "symfpu/core/sign.h"
 #include "symfpu/core/sqrt.h"
@@ -2352,6 +2353,20 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                                          d_unpacked_float_map.at(cur->e[1]),
                                          d_unpacked_float_map.at(cur->e[2]),
                                          BzlaFPSymProp(true)));
+      }
+      else if (bzla_node_is_fp_mul(cur))
+      {
+        assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
+        assert(d_unpacked_float_map.find(cur->e[1])
+               != d_unpacked_float_map.end());
+        assert(d_unpacked_float_map.find(cur->e[2])
+               != d_unpacked_float_map.end());
+        d_unpacked_float_map.emplace(cur,
+                                     symfpu::multiply<BzlaFPSymTraits>(
+                                         bzla_node_get_sort_id(cur),
+                                         d_rm_map.at(cur->e[0]),
+                                         d_unpacked_float_map.at(cur->e[1]),
+                                         d_unpacked_float_map.at(cur->e[2])));
       }
       visited.at(cur) = 1;
     }
