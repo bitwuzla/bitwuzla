@@ -2076,11 +2076,15 @@ bzla_exp_fp_gt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 #endif
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
-  /// FP STUB
-  (void) e0;
-  (void) e1;
-  return bzla_exp_true(bzla);
-  ////
+
+  BzlaNode *result;
+
+  e0 = bzla_simplify_exp(bzla, e0);
+  e1 = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_regular_binary_fp_exp(bzla, e0, e1));
+
+  result = bzla_exp_fp_lt(bzla, e1, e0);
+  return result;
 }
 
 BzlaNode *
