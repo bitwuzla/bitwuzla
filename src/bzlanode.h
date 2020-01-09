@@ -687,7 +687,7 @@ bzla_node_is_fp_max(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_MAX_NODE;
 }
 
-/** Return true if given node is a floating-point fp.max node. */
+/** Return true if given node is a floating-point fp.sqrt node. */
 static inline bool
 bzla_node_is_fp_sqrt(const BzlaNode *exp)
 {
@@ -695,12 +695,20 @@ bzla_node_is_fp_sqrt(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_SQRT_NODE;
 }
 
-/** Return true if given node is a floating-point fp.max node. */
+/** Return true if given node is a floating-point fp.roundToIntegral node. */
 static inline bool
 bzla_node_is_fp_rti(const BzlaNode *exp)
 {
   assert(exp);
   return bzla_node_real_addr(exp)->kind == BZLA_FP_RTI_NODE;
+}
+
+/** Return true if given node is a floating-point fp.add node. */
+static inline bool
+bzla_node_is_fp_add(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_ADD_NODE;
 }
 
 /*------------------------------------------------------------------------*/
@@ -1259,6 +1267,12 @@ BzlaNode *bzla_node_create_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /** Create fp.rti node. */
 BzlaNode *bzla_node_create_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
+/** Create fp.add node. */
+BzlaNode *bzla_node_create_fp_add(Bzla *bzla,
+                                  BzlaNode *e0,
+                                  BzlaNode *e1,
+                                  BzlaNode *e2);
 
 /*========================================================================*/
 

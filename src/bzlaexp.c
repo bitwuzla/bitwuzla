@@ -110,6 +110,9 @@ bzla_exp_create(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
     case BZLA_FP_RTI_NODE:
       assert(arity == 2);
       return bzla_exp_fp_rti(bzla, e[0], e[1]);
+    case BZLA_FP_ADD_NODE:
+      assert(arity == 3);
+      return bzla_exp_fp_add(bzla, e[0], e[1], e[2]);
     case BZLA_APPLY_NODE:
       assert(arity == 2);
       return bzla_exp_apply(bzla, e[0], e[1]);
@@ -2117,15 +2120,7 @@ bzla_exp_fp_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
-  assert(bzla == bzla_node_real_addr(e0)->bzla);
-  assert(bzla == bzla_node_real_addr(e1)->bzla);
-  assert(bzla == bzla_node_real_addr(e2)->bzla);
-  /// FP STUB
-  (void) e0;
-  (void) e1;
-  (void) e2;
-  return bzla_exp_true(bzla);
-  ////
+  return bzla_node_create_fp_add(bzla, e0, e1, e2);
 }
 
 BzlaNode *
