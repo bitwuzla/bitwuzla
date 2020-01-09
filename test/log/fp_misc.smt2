@@ -10,6 +10,7 @@
 (assert (not (fp.isNaN b)))
 (assert (not (fp.isNegative b)))
 (assert (fp.isPositive b))
-(assert (not (and (fp.leq a a) (not (fp.lt a a)))))
+(assert (and (fp.leq a a) (not (fp.lt a a))))
+(assert (not (and (fp.geq a b) (not (fp.lt a b)))))
 (check-sat)
 
