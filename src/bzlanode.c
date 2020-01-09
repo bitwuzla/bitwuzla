@@ -409,11 +409,12 @@ hash_slice_exp(BzlaNode *e, uint32_t upper, uint32_t lower)
 }
 
 static inline uint32_t
-hash_unary_to_fp_exp(BzlaNode *e, BzlaSortId sort)
+hash_to_fp_exp(BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
   uint32_t hash;
-  hash = hash_primes[0] * (uint32_t) bzla_node_real_addr(e)->id;
-  hash += hash_primes[1] * sort;
+  hash = hash_primes[0] * (uint32_t) bzla_node_real_addr(e0)->id;
+  if (e1) hash += hash_primes[1] * (uint32_t) bzla_node_real_addr(e1)->id;
+  hash += hash_primes[2] * sort;
   return hash;
 }
 
@@ -542,7 +543,7 @@ compute_hash_exp(Bzla *bzla, BzlaNode *exp, uint32_t table_size)
   }
   else if (exp->kind == BZLA_FP_TO_FP_BV_NODE)
   {
-    hash = hash_unary_to_fp_exp(exp->e[0], bzla_node_get_sort_id(exp));
+    hash = hash_to_fp_exp(exp->e[0], 0, bzla_node_get_sort_id(exp));
   }
   else
   {
@@ -1746,7 +1747,8 @@ find_slice_exp(Bzla *bzla, BzlaNode *e0, uint32_t upper, uint32_t lower)
  * Returns 0 if not found.
  */
 static BzlaNode **
-find_unary_to_fp_exp(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
+find_to_fp_exp(
+    Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
   assert(bzla);
   assert(e0);
@@ -1755,14 +1757,14 @@ find_unary_to_fp_exp(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
   BzlaNode *cur, **result;
   uint32_t hash;
 
-  hash = hash_unary_to_fp_exp(e0, sort);
+  hash = hash_to_fp_exp(e0, e1, sort);
   hash &= bzla->nodes_unique_table.size - 1;
   result = bzla->nodes_unique_table.chains + hash;
   cur    = *result;
   while (cur)
   {
     assert(bzla_node_is_regular(cur));
-    if (cur->kind == BZLA_FP_TO_FP_BV_NODE && cur->e[0] == e0
+    if (cur->kind == kind && cur->e[0] == e0 && (!e1 || cur->e[1] == e1)
         && sort == bzla_node_get_sort_id(cur))
     {
       break;
@@ -2029,8 +2031,19 @@ compare_binder_exp(Bzla *bzla,
       }
       else if (bzla_node_is_fp_to_fp_from_bv(real_cur))
       {
-        result =
-            *find_unary_to_fp_exp(bzla, e[0], bzla_node_get_sort_id(real_cur));
+        result = *find_to_fp_exp(bzla,
+                                 BZLA_FP_TO_FP_BV_NODE,
+                                 e[0],
+                                 0,
+                                 bzla_node_get_sort_id(real_cur));
+      }
+      else if (bzla_node_is_fp_to_fp_from_fp(real_cur))
+      {
+        result = *find_to_fp_exp(bzla,
+                                 BZLA_FP_TO_FP_FP_NODE,
+                                 e[0],
+                                 e[1],
+                                 bzla_node_get_sort_id(real_cur));
       }
       else if (bzla_node_is_param(real_cur))
       {
@@ -2164,6 +2177,7 @@ new_unary_to_fp_exp_node(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
 {
   assert(bzla);
   assert(e0);
+  assert(bzla_node_is_bv(bzla, e0));
   assert(bzla_sort_is_fp(bzla, sort));
   assert(bzla == bzla_node_real_addr(e0)->bzla);
 
@@ -2176,6 +2190,34 @@ new_unary_to_fp_exp_node(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
   bzla_node_set_sort_id(exp, bzla_sort_copy(bzla, sort));
   setup_node_and_add_to_id_table(bzla, exp);
   connect_child_exp(bzla, exp, e0, 0);
+  return exp;
+}
+
+static BzlaNode *
+new_binary_to_fp_from_fp_exp_node(Bzla *bzla,
+                                  BzlaNode *e0,
+                                  BzlaNode *e1,
+                                  BzlaSortId sort)
+{
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+  assert(bzla_node_is_rm(bzla, e0));
+  assert(bzla_node_is_fp(bzla, e1));
+  assert(bzla_sort_is_fp(bzla, sort));
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+
+  BzlaNode *exp = 0;
+
+  BZLA_CNEW(bzla->mm, exp);
+  set_kind(bzla, (BzlaNode *) exp, BZLA_FP_TO_FP_FP_NODE);
+  exp->bytes = sizeof *exp;
+  exp->arity = 2;
+  bzla_node_set_sort_id(exp, bzla_sort_copy(bzla, sort));
+  setup_node_and_add_to_id_table(bzla, exp);
+  connect_child_exp(bzla, exp, e0, 0);
+  connect_child_exp(bzla, exp, e1, 1);
   return exp;
 }
 
@@ -3070,15 +3112,56 @@ unary_exp_to_fp_exp(Bzla *bzla, BzlaNode *exp, BzlaSortId sort)
 
   assert(bzla_node_is_bv(bzla, exp));
 
-  lookup = find_unary_to_fp_exp(bzla, exp, sort);
+  lookup = find_to_fp_exp(bzla, BZLA_FP_TO_FP_BV_NODE, exp, 0, sort);
   if (!*lookup)
   {
     if (BZLA_FULL_UNIQUE_TABLE(bzla->nodes_unique_table))
     {
       enlarge_nodes_unique_table(bzla);
-      lookup = find_unary_to_fp_exp(bzla, exp, sort);
+      lookup = find_to_fp_exp(bzla, BZLA_FP_TO_FP_BV_NODE, exp, 0, sort);
     }
     *lookup = new_unary_to_fp_exp_node(bzla, exp, sort);
+    assert(bzla->nodes_unique_table.num_elements < INT32_MAX);
+    bzla->nodes_unique_table.num_elements++;
+    (*lookup)->unique = 1;
+  }
+  else
+  {
+    inc_exp_ref_counter(bzla, *lookup);
+  }
+  assert(bzla_node_is_regular(*lookup));
+  return *lookup;
+}
+
+static BzlaNode *
+binary_exp_to_fp_exp(
+    Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
+{
+  assert(bzla);
+  assert(kind == BZLA_FP_TO_FP_FP_NODE);
+  assert(e0);
+  assert(e1);
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(bzla_sort_is_fp(bzla, sort));
+
+  BzlaNode **lookup;
+
+  e0 = bzla_simplify_exp(bzla, e0);
+  e1 = bzla_simplify_exp(bzla, e1);
+
+  assert(bzla_node_is_rm(bzla, e0));
+  assert(bzla_node_is_bv(bzla, e1) || bzla_node_is_fp(bzla, e1));
+
+  lookup = find_to_fp_exp(bzla, kind, e0, e1, sort);
+  if (!*lookup)
+  {
+    if (BZLA_FULL_UNIQUE_TABLE(bzla->nodes_unique_table))
+    {
+      enlarge_nodes_unique_table(bzla);
+      lookup = find_to_fp_exp(bzla, kind, e0, e1, sort);
+    }
+    *lookup = new_binary_to_fp_from_fp_exp_node(bzla, e0, e1, sort);
     assert(bzla->nodes_unique_table.num_elements < INT32_MAX);
     bzla->nodes_unique_table.num_elements++;
     (*lookup)->unique = 1;
@@ -3514,6 +3597,19 @@ bzla_node_create_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *exp, BzlaSortId sort)
   exp = bzla_simplify_exp(bzla, exp);
   assert(bzla_dbg_precond_unary_fp_to_fp_exp(bzla, exp, sort));
   return unary_exp_to_fp_exp(bzla, exp, sort);
+}
+
+BzlaNode *
+bzla_node_create_fp_to_fp_from_fp(Bzla *bzla,
+                                  BzlaNode *e0,
+                                  BzlaNode *e1,
+                                  BzlaSortId sort)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_binary_fp_to_fp_exp(bzla, e[0], e[1], sort));
+  return binary_exp_to_fp_exp(bzla, BZLA_FP_TO_FP_FP_NODE, e[0], e[1], sort);
 }
 
 /*========================================================================*/

@@ -3881,7 +3881,7 @@ boolector_fp_to_fp_from_fp(Bzla *bzla,
   BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
   BZLA_ABORT_IS_NOT_RM(e0);
-  BZLA_ABORT_IS_NOT_BV(e1);
+  BZLA_ABORT_IS_NOT_FP(e1);
   res = bzla_exp_fp_to_fp_from_fp(bzla, e0, e1, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
