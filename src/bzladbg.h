@@ -82,6 +82,13 @@ bool bzla_dbg_precond_rm_ternary_fp_exp(Bzla* bzla,
                                         const BzlaNode* e1,
                                         const BzlaNode* e2);
 
+/* Check assertions for quaternary fp expressions with rounding mode operand. */
+bool bzla_dbg_precond_rm_quaternary_fp_exp(Bzla* bzla,
+                                           const BzlaNode* e0,
+                                           const BzlaNode* e1,
+                                           const BzlaNode* e2,
+                                           const BzlaNode* e3);
+
 bool bzla_dbg_precond_eq_exp(Bzla* bzla,
                              const BzlaNode* e0,
                              const BzlaNode* e1);

@@ -2,7 +2,7 @@
  *
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2016 Armin Biere.
- *  Copyright (C) 2015-2018 Aina Niemetz.
+ *  Copyright (C) 2015-2020 Aina Niemetz.
  *  Copyright (C) 2015-2017 Mathias Preiner.
  *
  *  This file is part of Boolector.
@@ -654,8 +654,8 @@ bzla_util_node2string(const BzlaNode *exp)
               bzla_node_bv_slice_get_upper(exp),
               bzla_node_bv_slice_get_lower(exp));
   }
-  else if ((bzla_node_is_bv_var(real_exp) || bzla_node_is_uf(real_exp)
-            || bzla_node_is_param(real_exp))
+  else if ((bzla_node_is_bv_var(real_exp) || bzla_node_is_fp_var(real_exp)
+            || bzla_node_is_uf(real_exp) || bzla_node_is_param(real_exp))
            && (tmp = bzla_node_get_symbol(bzla, real_exp)))
   {
     new_len += strlen(tmp) + 1;

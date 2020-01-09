@@ -127,7 +127,7 @@ extern const char *const g_bzla_op2str[BZLA_NUM_OPS_NODE];
     uint8_t is_array : 1;         /* function represents array ? */        \
     uint8_t rebuild : 1;          /* indicates whether rebuild is required \
                                      during substitution */                \
-    uint8_t arity : 2;            /* arity of operator (at most 3) */      \
+    uint8_t arity : 3;            /* arity of operator (at most 3) */      \
     uint8_t bytes;                /* allocated bytes */                    \
     int32_t id;                   /* unique expression id */               \
     uint32_t refs;                /* reference counter (incl. ext_refs) */ \
@@ -256,8 +256,11 @@ typedef struct BzlaArgsNode BzlaArgsNode;
 
 /*------------------------------------------------------------------------*/
 
+/** Return true if given node is a bit-vector node. */
 bool bzla_node_is_bv(Bzla *bzla, const BzlaNode *exp);
+/** Return true if given node is a rounding mode node. */
 bool bzla_node_is_rm(Bzla *bzla, const BzlaNode *exp);
+/** Return true if given node is a floating-point node. */
 bool bzla_node_is_fp(Bzla *bzla, const BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
@@ -351,6 +354,26 @@ bzla_node_is_ternary_kind(BzlaNodeKind kind)
 {
   return kind >= BZLA_COND_NODE && kind <= BZLA_UPDATE_NODE;
 }
+
+/** Return true if given kind is a floating-point kind. */
+static inline bool
+bzla_node_is_fp_kind(BzlaNodeKind kind)
+{
+  return kind == BZLA_FP_CONST_NODE || kind == BZLA_FP_ABS_NODE
+         || kind == BZLA_FP_IS_INF_NODE || kind == BZLA_FP_IS_NAN_NODE
+         || kind == BZLA_FP_IS_NEG_NODE || kind == BZLA_FP_IS_NORM_NODE
+         || kind == BZLA_FP_IS_POS_NODE || kind == BZLA_FP_IS_SUBNORM_NODE
+         || kind == BZLA_FP_IS_ZERO_NODE || kind == BZLA_FP_NEG_NODE
+         || kind == BZLA_FP_EQ_NODE || kind == BZLA_FP_FPEQ_NODE
+         || kind == BZLA_FP_LTE_NODE || kind == BZLA_FP_LT_NODE
+         || kind == BZLA_FP_MIN_NODE || kind == BZLA_FP_MAX_NODE
+         || kind == BZLA_FP_SQRT_NODE || kind == BZLA_FP_REM_NODE
+         || kind == BZLA_FP_RTI_NODE || kind == BZLA_FP_ADD_NODE
+         || kind == BZLA_FP_MUL_NODE || kind == BZLA_FP_DIV_NODE
+         || kind == BZLA_FP_FMA_NODE;
+}
+
+/*------------------------------------------------------------------------*/
 
 /** Return true if given node is of unary kind (arity == 1). */
 static inline bool
@@ -706,6 +729,14 @@ bzla_node_is_fp_div(const BzlaNode *exp)
 {
   assert(exp);
   return bzla_node_real_addr(exp)->kind == BZLA_FP_DIV_NODE;
+}
+
+/** Return true if given node is a floating-point fp.fma node. */
+static inline bool
+bzla_node_is_fp_fma(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_FMA_NODE;
 }
 
 /*------------------------------------------------------------------------*/
@@ -1282,6 +1313,10 @@ BzlaNode *bzla_node_create_fp_div(Bzla *bzla,
                                   BzlaNode *e0,
                                   BzlaNode *e1,
                                   BzlaNode *e2);
+
+/** Create fp.fma node. */
+BzlaNode *bzla_node_create_fp_fma(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3);
 
 /*========================================================================*/
 

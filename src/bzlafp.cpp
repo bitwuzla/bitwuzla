@@ -20,6 +20,7 @@ extern "C" {
 #include "bzlarm.h"
 #include "bzlasort.h"
 #include "utils/bzlamem.h"
+#include "utils/bzlautil.h"
 }
 
 #ifdef BZLA_USE_SYMFPU
@@ -28,6 +29,7 @@ extern "C" {
 #include "symfpu/core/compare.h"
 #include "symfpu/core/convert.h"
 #include "symfpu/core/divide.h"
+#include "symfpu/core/fma.h"
 #include "symfpu/core/ite.h"
 #include "symfpu/core/multiply.h"
 #include "symfpu/core/packing.h"
@@ -2382,6 +2384,23 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                                          d_rm_map.at(cur->e[0]),
                                          d_unpacked_float_map.at(cur->e[1]),
                                          d_unpacked_float_map.at(cur->e[2])));
+      }
+      else if (bzla_node_is_fp_fma(cur))
+      {
+        assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
+        assert(d_unpacked_float_map.find(cur->e[1])
+               != d_unpacked_float_map.end());
+        assert(d_unpacked_float_map.find(cur->e[2])
+               != d_unpacked_float_map.end());
+        assert(d_unpacked_float_map.find(cur->e[3])
+               != d_unpacked_float_map.end());
+        d_unpacked_float_map.emplace(
+            cur,
+            symfpu::fma<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
+                                         d_rm_map.at(cur->e[0]),
+                                         d_unpacked_float_map.at(cur->e[1]),
+                                         d_unpacked_float_map.at(cur->e[2]),
+                                         d_unpacked_float_map.at(cur->e[3])));
       }
       visited.at(cur) = 1;
     }

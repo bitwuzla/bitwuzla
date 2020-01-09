@@ -14,5 +14,6 @@
 (assert (and (fp.geq (fp.sqrt RNE a) (fp.roundToIntegral RNE b)) (not (fp.gt (fp.add RNA a a) b))))
 (assert (fp.geq (fp.add RTN a b) (fp.sub RTN a b)))
 (assert (fp.leq (fp.mul RTP a (_ +zero 5 11)) (_ -zero 5 11)))
-(assert (not (fp.isNaN (fp.div RTP a (_ +zero 5 11)))))
+(assert (fp.isNaN (fp.div RTP a (_ +zero 5 11))))
+(assert (distinct (fp.add RTZ (fp.mul RTZ a b) a) (fp.fma RTZ a b a)))
 (check-sat)

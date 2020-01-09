@@ -25,7 +25,7 @@ BzlaNode *
 bzla_exp_create(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
 {
   assert(arity > 0);
-  assert(arity <= 3);
+  assert(arity <= BZLA_NODE_MAX_CHILDREN);
 
   switch (kind)
   {
@@ -119,6 +119,9 @@ bzla_exp_create(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
     case BZLA_FP_DIV_NODE:
       assert(arity == 3);
       return bzla_exp_fp_div(bzla, e[0], e[1], e[2]);
+    case BZLA_FP_FMA_NODE:
+      assert(arity == 4);
+      return bzla_exp_fp_fma(bzla, e[0], e[1], e[2], e[3]);
     case BZLA_APPLY_NODE:
       assert(arity == 2);
       return bzla_exp_apply(bzla, e[0], e[1]);
@@ -2169,17 +2172,7 @@ bzla_exp_fp_fma(
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
-  assert(bzla == bzla_node_real_addr(e0)->bzla);
-  assert(bzla == bzla_node_real_addr(e1)->bzla);
-  assert(bzla == bzla_node_real_addr(e2)->bzla);
-  assert(bzla == bzla_node_real_addr(e3)->bzla);
-  /// FP STUB
-  (void) e0;
-  (void) e1;
-  (void) e2;
-  (void) e3;
-  return bzla_exp_true(bzla);
-  ////
+  return bzla_node_create_fp_fma(bzla, e0, e1, e2, e3);
 }
 
 BzlaNode *
