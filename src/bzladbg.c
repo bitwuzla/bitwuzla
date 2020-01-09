@@ -408,6 +408,23 @@ bzla_dbg_precond_regular_binary_fp_exp(Bzla *bzla,
 }
 
 bool
+bzla_dbg_precond_rm_binary_fp_exp(Bzla *bzla,
+                                  const BzlaNode *e0,
+                                  const BzlaNode *e1)
+{
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+  assert(!bzla_node_is_simplified(e0));
+  assert(!bzla_node_is_simplified(e1));
+  assert(bzla_node_is_rm(bzla, e0));
+  assert(bzla_node_is_fp(bzla, e1));
+  assert(bzla_node_real_addr(e0)->bzla == bzla);
+  assert(bzla_node_real_addr(e1)->bzla == bzla);
+  return true;
+}
+
+bool
 bzla_dbg_precond_read_exp(Bzla *bzla,
                           const BzlaNode *e_array,
                           const BzlaNode *e_index)

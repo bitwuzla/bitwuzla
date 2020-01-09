@@ -28,6 +28,7 @@ extern "C" {
 #include "symfpu/core/ite.h"
 #include "symfpu/core/packing.h"
 #include "symfpu/core/sign.h"
+#include "symfpu/core/sqrt.h"
 #include "symfpu/core/unpackedFloat.h"
 #endif
 
@@ -1173,6 +1174,20 @@ BzlaFPSymBV<is_signed>::~BzlaFPSymBV()
 }
 
 template <bool is_signed>
+BzlaFPSymBV<is_signed> &
+BzlaFPSymBV<is_signed>::operator=(const BzlaFPSymBV<is_signed> &other)
+{
+  assert(d_node);
+  assert(other.d_node);
+  assert(s_bzla == bzla_node_real_addr(d_node)->bzla);
+  assert(s_bzla == bzla_node_real_addr(other.d_node)->bzla);
+  BzlaNode *n = bzla_node_copy(s_bzla, other.d_node);
+  bzla_node_release(s_bzla, d_node);
+  d_node = n;
+  return *this;
+}
+
+template <bool is_signed>
 uint32_t
 BzlaFPSymBV<is_signed>::getWidth(void) const
 {
@@ -2298,6 +2313,17 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         }
         bzla_node_release(d_bzla, apply);
         bzla_node_release(d_bzla, apply_args);
+      }
+      else if (bzla_node_is_fp_sqrt(cur))
+      {
+        assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
+        assert(d_unpacked_float_map.find(cur->e[1])
+               != d_unpacked_float_map.end());
+        d_unpacked_float_map.emplace(
+            cur,
+            symfpu::sqrt<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
+                                          d_rm_map.at(cur->e[0]),
+                                          d_unpacked_float_map.at(cur->e[1])));
       }
       visited.at(cur) = 1;
     }

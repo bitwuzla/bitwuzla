@@ -11,6 +11,6 @@
 (assert (not (fp.isNegative b)))
 (assert (fp.isPositive b))
 (assert (and (fp.leq a a) (not (fp.lt a a))))
-(assert (not (and (fp.geq a b) (not (fp.gt a b)))))
+(assert (not (and (fp.geq (fp.sqrt RNE a) b) (not (fp.gt a b)))))
 (check-sat)
 

@@ -71,6 +71,11 @@ bool bzla_dbg_precond_regular_binary_fp_exp(Bzla* bzla,
                                             const BzlaNode* e0,
                                             const BzlaNode* e1);
 
+/* Check assertions for binary fp expressions with rounding mode operand. */
+bool bzla_dbg_precond_rm_binary_fp_exp(Bzla* bzla,
+                                       const BzlaNode* e0,
+                                       const BzlaNode* e1);
+
 bool bzla_dbg_precond_eq_exp(Bzla* bzla,
                              const BzlaNode* e0,
                              const BzlaNode* e1);
