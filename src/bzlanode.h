@@ -691,6 +691,14 @@ bzla_node_is_fp_max(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_MAX_NODE;
 }
 
+/** Return true if given node is a floating-point fp.rem node. */
+static inline bool
+bzla_node_is_fp_rem(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_REM_NODE;
+}
+
 /** Return true if given node is a floating-point fp.sqrt node. */
 static inline bool
 bzla_node_is_fp_sqrt(const BzlaNode *exp)
@@ -1289,6 +1297,9 @@ BzlaNode *bzla_node_create_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 BzlaNode *bzla_node_create_fp_min(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 /** Create fp.max node. */
 BzlaNode *bzla_node_create_fp_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
+/** Create fp.rem node. */
+BzlaNode *bzla_node_create_fp_rem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /** Create fp.sqrt node. */
 BzlaNode *bzla_node_create_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);

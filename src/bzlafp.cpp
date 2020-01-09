@@ -33,6 +33,7 @@ extern "C" {
 #include "symfpu/core/ite.h"
 #include "symfpu/core/multiply.h"
 #include "symfpu/core/packing.h"
+#include "symfpu/core/remainder.h"
 #include "symfpu/core/sign.h"
 #include "symfpu/core/sqrt.h"
 #include "symfpu/core/unpackedFloat.h"
@@ -2319,6 +2320,18 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         }
         bzla_node_release(d_bzla, apply);
         bzla_node_release(d_bzla, apply_args);
+      }
+      else if (bzla_node_is_fp_rem(cur))
+      {
+        assert(d_unpacked_float_map.find(cur->e[0])
+               != d_unpacked_float_map.end());
+        assert(d_unpacked_float_map.find(cur->e[1])
+               != d_unpacked_float_map.end());
+        d_unpacked_float_map.emplace(cur,
+                                     symfpu::remainder<BzlaFPSymTraits>(
+                                         bzla_node_get_sort_id(cur),
+                                         d_unpacked_float_map.at(cur->e[0]),
+                                         d_unpacked_float_map.at(cur->e[1])));
       }
       else if (bzla_node_is_fp_sqrt(cur))
       {

@@ -957,7 +957,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
     else if (md->as_int == 0 || md->as_int == 2)
     {
       assert(!bzla_node_is_param(real_cur));
-      assert(real_cur->arity <= 3);
+      assert(real_cur->arity <= BZLA_NODE_MAX_CHILDREN);
 
       if (bzla_node_is_rm(bzla, real_cur) || bzla_node_is_fp(bzla, real_cur)
           || (real_cur->arity
