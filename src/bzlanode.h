@@ -146,20 +146,16 @@ extern const char *const g_bzla_op2str[BZLA_NUM_OPS_NODE];
     BzlaNode *last_parent;  /* tail of parent list */                      \
   }
 
-#define BZLA_BV_ADDITIONAL_NODE_STRUCT                             \
-  struct                                                           \
-  {                                                                \
-    BzlaNode *e[3];           /* expression children */            \
-    BzlaNode *prev_parent[3]; /* prev in parent list of child i */ \
-    BzlaNode *next_parent[3]; /* next in parent list of child i */ \
-  }
+#define BZLA_NODE_MAX_CHILDREN 4
 
-#define BZLA_FP_ADDITIONAL_NODE_STRUCT                             \
-  struct                                                           \
-  {                                                                \
-    BzlaNode *e[4];           /* expression children */            \
-    BzlaNode *prev_parent[4]; /* prev in parent list of child i */ \
-    BzlaNode *next_parent[4]; /* next in parent list of child i */ \
+#define BZLA_ADDITIONAL_NODE_STRUCT                                          \
+  struct                                                                     \
+  {                                                                          \
+    BzlaNode *e[BZLA_NODE_MAX_CHILDREN];           /* expression children */ \
+    BzlaNode *prev_parent[BZLA_NODE_MAX_CHILDREN]; /* prev in parent list of \
+                                                      child i */             \
+    BzlaNode *next_parent[BZLA_NODE_MAX_CHILDREN]; /* next in parent list of \
+                                                      child i */             \
   }
 
 /*------------------------------------------------------------------------*/
@@ -187,25 +183,18 @@ typedef struct BzlaBVConstNode BzlaBVConstNode;
 struct BzlaBVSliceNode
 {
   BZLA_NODE_STRUCT;
-  BZLA_BV_ADDITIONAL_NODE_STRUCT;
+  BZLA_ADDITIONAL_NODE_STRUCT;
   uint32_t upper;
   uint32_t lower;
 };
 typedef struct BzlaBVSliceNode BzlaBVSliceNode;
-
-struct BzlaBVNode
-{
-  BZLA_NODE_STRUCT;
-  BZLA_BV_ADDITIONAL_NODE_STRUCT;
-};
-typedef struct BzlaBVNode BzlaBVNode;
 
 /*------------------------------------------------------------------------*/
 
 struct BzlaNode
 {
   BZLA_NODE_STRUCT;
-  BZLA_BV_ADDITIONAL_NODE_STRUCT;
+  BZLA_ADDITIONAL_NODE_STRUCT;
 };
 
 /*------------------------------------------------------------------------*/
@@ -227,20 +216,13 @@ struct BzlaFPConstNode
 };
 typedef struct BzlaFPConstNode BzlaFPConstNode;
 
-struct BzlaFPNode
-{
-  BZLA_NODE_STRUCT;
-  BZLA_FP_ADDITIONAL_NODE_STRUCT;
-};
-typedef struct BzlaFPNode BzlaFPNode;
-
 /*------------------------------------------------------------------------*/
 
 #define BZLA_BINDER_STRUCT                                   \
   struct                                                     \
   {                                                          \
     BZLA_NODE_STRUCT;                                        \
-    BZLA_BV_ADDITIONAL_NODE_STRUCT;                          \
+    BZLA_ADDITIONAL_NODE_STRUCT;                             \
     BzlaNode *body; /* short-cut for curried binder terms */ \
   }
 
@@ -268,7 +250,7 @@ typedef struct BzlaParamNode BzlaParamNode;
 struct BzlaArgsNode
 {
   BZLA_NODE_STRUCT;
-  BZLA_BV_ADDITIONAL_NODE_STRUCT;
+  BZLA_ADDITIONAL_NODE_STRUCT;
 };
 typedef struct BzlaArgsNode BzlaArgsNode;
 

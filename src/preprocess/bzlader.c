@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2016-2017 Mathias Preiner.
- *  Copyright (C) 2017 Aina Niemetz.
+ *  Copyright (C) 2017-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -319,7 +319,7 @@ elim_vars(Bzla *bzla, BzlaNode *root, bool elim_evars)
   assert(root);
 
   uint32_t i, num_quant_vars = 0, num_elim_vars = 0, opt_simp_const;
-  BzlaNode *cur, *real_cur, *e[3], *result;
+  BzlaNode *cur, *real_cur, *e[BZLA_NODE_MAX_CHILDREN], *result;
   BzlaNodePtrStack visit;
   BzlaMemMgr *mm;
   BzlaIntHashTable *mark, *map, *vars, *qcache, *deps;

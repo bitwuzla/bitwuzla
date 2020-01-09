@@ -90,7 +90,7 @@ bzla_optimize_unconstrained(Bzla *bzla)
 
   double start, delta;
   uint32_t i, num_ucs;
-  bool uc[3], ucp[3];
+  bool uc[4], ucp[4];
   BzlaNode *cur, *cur_parent;
   BzlaNodePtrStack stack, roots;
   BzlaPtrHashTableIterator it;

@@ -1738,7 +1738,7 @@ bzla_clone_recursively_rebuild_exp(Bzla *bzla,
 
   uint32_t i, rwl;
   char *symbol;
-  BzlaNode *real_exp, *cur, *cur_clone, *e[3];
+  BzlaNode *real_exp, *cur, *cur_clone, *e[BZLA_NODE_MAX_CHILDREN];
   BzlaNodePtrStack work_stack;
   BzlaIntHashTable *mark;
   BzlaMemMgr *mm;

@@ -184,7 +184,7 @@ rebuild_noproxy(Bzla *bzla, BzlaNode *node, BzlaIntHashTable *cache)
   assert(!bzla_node_is_simplified(node));
 
   size_t i;
-  BzlaNode *e[3]   = {0, 0, 0}, *child, *real_child, *simp;
+  BzlaNode *e[4]   = {0, 0, 0, 0}, *child, *real_child, *simp;
   BzlaNode *result = 0;
   BzlaHashTableData *d;
 

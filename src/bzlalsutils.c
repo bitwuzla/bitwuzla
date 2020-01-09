@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2018 Aina Niemetz.
+ *  Copyright (C) 2015-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -112,7 +112,7 @@ bzla_lsutils_update_cone(Bzla *bzla,
   BzlaHashTableData *d;
   BzlaNodePtrStack stack, cone;
   BzlaIntHashTable *cache;
-  BzlaBitVector *bv, *e[3], *ass;
+  BzlaBitVector *bv, *e[BZLA_NODE_MAX_CHILDREN], *ass;
   BzlaMemMgr *mm;
 
   start = delta = bzla_util_time_stamp();

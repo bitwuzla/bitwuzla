@@ -7352,7 +7352,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   BzlaNode *cur, *real_cur;
   BzlaIntHashTable *domains;
   BzlaHashTableData *d;
-  BzlaBitVector *bv_s[3] = {0, 0, 0}, *bv_t, *bv_s_new, *tmp;
+  BzlaBitVector *bv_s[BZLA_NODE_MAX_CHILDREN] = {0, 0, 0};
+  BzlaBitVector *bv_t, *bv_s_new, *tmp;
   BzlaMemMgr *mm;
   uint32_t opt_prop_prob_use_inv_value;
   uint32_t opt_prop_const_bits;

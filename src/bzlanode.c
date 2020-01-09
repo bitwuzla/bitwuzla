@@ -98,7 +98,7 @@ const char *const g_bzla_op2str[BZLA_NUM_OPS_NODE] = {
 
 /*------------------------------------------------------------------------*/
 
-static uint32_t hash_primes[] = {333444569u, 76891121u, 456790003u};
+static uint32_t hash_primes[] = {333444569u, 76891121u, 456790003u, 111130391u};
 
 #define NPRIMES ((uint32_t)(sizeof hash_primes / sizeof *hash_primes))
 
@@ -697,7 +697,7 @@ connect_child_exp(Bzla *bzla, BzlaNode *parent, BzlaNode *child, uint32_t pos)
   assert(bzla == parent->bzla);
   assert(child);
   assert(bzla == bzla_node_real_addr(child)->bzla);
-  assert(pos <= 2);
+  assert(pos <= BZLA_NODE_MAX_CHILDREN - 1);
   assert(bzla_simplify_exp(bzla, child) == child);
   assert(!bzla_node_is_args(child) || bzla_node_is_args(parent)
          || bzla_node_is_apply(parent) || bzla_node_is_update(parent));
@@ -781,7 +781,7 @@ disconnect_child_exp(Bzla *bzla, BzlaNode *parent, uint32_t pos)
   assert(!bzla_node_is_bv_const(parent));
   assert(!bzla_node_is_bv_var(parent));
   assert(!bzla_node_is_uf(parent));
-  assert(pos <= 2);
+  assert(pos <= BZLA_NODE_MAX_CHILDREN - 1);
 
   (void) bzla;
   BzlaNode *first_parent, *last_parent;
@@ -1069,7 +1069,7 @@ bzla_node_set_to_proxy(Bzla *bzla, BzlaNode *exp)
   assert(!bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
 
   uint32_t i;
-  BzlaNode *e[3];
+  BzlaNode *e[BZLA_NODE_MAX_CHILDREN];
 
   remove_from_nodes_unique_table_exp(bzla, exp);
   /* also updates op stats */
@@ -2307,7 +2307,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
 {
   assert(bzla);
   assert(arity > 0);
-  assert(arity <= 3);
+  assert(arity <= BZLA_NODE_MAX_CHILDREN);
   assert(e);
 
 #ifndef NDEBUG
@@ -2318,7 +2318,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
 #endif
 
   uint32_t i;
-  BzlaBVNode *exp;
+  BzlaNode *exp;
   BzlaSortId sort;
 
 #ifdef NDEBUG
@@ -2330,9 +2330,9 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
 #endif
 
   BZLA_CNEW(bzla->mm, exp);
-  set_kind(bzla, (BzlaNode *) exp, kind);
-  exp->bytes = sizeof(*exp);
+  set_kind(bzla, exp, kind);
   exp->arity = arity;
+  exp->bytes = sizeof(*exp);
   setup_node_and_add_to_id_table(bzla, exp);
 
   switch (kind)
@@ -2409,12 +2409,12 @@ create_exp(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
   assert(bzla);
   assert(kind);
   assert(arity > 0);
-  assert(arity <= 3);
+  assert(arity <= BZLA_NODE_MAX_CHILDREN);
   assert(e);
 
   uint32_t i;
   uint32_t binder_hash;
-  BzlaNode **lookup, *simp_e[3], *simp;
+  BzlaNode **lookup, *simp_e[BZLA_NODE_MAX_CHILDREN], *simp;
   BzlaIntHashTable *params = 0;
 
   for (i = 0; i < arity; i++)
