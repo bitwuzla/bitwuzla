@@ -695,6 +695,14 @@ bzla_node_is_fp_sqrt(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_SQRT_NODE;
 }
 
+/** Return true if given node is a floating-point fp.max node. */
+static inline bool
+bzla_node_is_fp_rti(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_RTI_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 /** Return true if given node is an if-then-else node. */
@@ -1248,6 +1256,9 @@ BzlaNode *bzla_node_create_fp_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /** Create fp.sqrt node. */
 BzlaNode *bzla_node_create_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
+/** Create fp.rti node. */
+BzlaNode *bzla_node_create_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /*========================================================================*/
 

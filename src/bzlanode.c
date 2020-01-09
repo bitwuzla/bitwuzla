@@ -2370,6 +2370,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
       break;
 
     case BZLA_FP_SQRT_NODE:
+    case BZLA_FP_RTI_NODE:
       sort = bzla_sort_copy(bzla, bzla_node_get_sort_id(e[1]));
       break;
 
@@ -3290,6 +3291,19 @@ bzla_node_create_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e[1] = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_rm_binary_fp_exp(bzla, e[0], e[1]));
   return create_exp(bzla, BZLA_FP_SQRT_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_rm_binary_fp_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_FP_RTI_NODE, 2, e);
 }
 
 /*========================================================================*/
