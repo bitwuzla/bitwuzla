@@ -1969,8 +1969,9 @@ BoolectorNode *boolector_fp_fma(Bzla *bzla,
                                 BoolectorNode *n3);
 
 /*!
-  Create a floating-point expression with exponent size ``eb`` and
-  significand size ``sb`` from a given bit-vector node ``node``.
+  Create a floating-point expression with exponent size ``eb`` and significand
+  size ``sb`` from a given bit-vector node ``node`` (interpreted as in IEEE
+  754-2008 interchange format).
 
   :param bzla: Boolector instance.
   :param node: Bit-vector operand.
@@ -1978,43 +1979,43 @@ BoolectorNode *boolector_fp_fma(Bzla *bzla,
   :return:     A floating-point of sort ``sort`` representing bit-vector
                ``node``.
  */
-BoolectorNode *boolector_fp_to_fp(Bzla *bzla,
-                                  BoolectorNode *node,
-                                  BoolectorSort sort);
+BoolectorNode *boolector_fp_to_fp_from_bv(Bzla *bzla,
+                                          BoolectorNode *node,
+                                          BoolectorSort sort);
 
 /*!
   Create a floating-point expression with exponent size ``eb`` and significand
-  from a given bit-vector (interpreted as signed) or floating-point node ``n1``
-  with respect to the given rounding mode ``n0``.
+  size ``sb`` from a given floating-point node ``n1`` with respect to the
+  given rounding mode ``n0``.
 
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
-  :param n1:   Bit-vector or floating-point operand.
+  :param n1:   Floating-point operand.
   :param sort: Floating-point sort.
-  :return:     A floating-point with of sort ``sort`` representing bit-vector
-               or floating-point ``n1`` with respect to rounding mode ``n0``.
+  :return:     A floating-point of sort ``sort`` representing floating-point
+               ``node``.
  */
-BoolectorNode *boolector_fp_to_fp_signed(Bzla *bzla,
-                                         BoolectorNode *n0,
-                                         BoolectorNode *n1,
-                                         BoolectorSort sort);
+BoolectorNode *boolector_fp_to_fp_from_fp(Bzla *bzla,
+                                          BoolectorNode *n0,
+                                          BoolectorNode *n1,
+                                          BoolectorSort sort);
 
 /*!
   Create a floating-point expression with exponent size ``eb`` and significand
-  from a given Real number (represented as a string) with respect to the given
-  rounding mode ``node``.
+  from a given machine integer represented as bit-vector (interpreted as
+  signed) node ``n1`` with respect to the given rounding mode ``n0``.
 
   :param bzla: Boolector instance.
-  :param node: Rounding mode operand.
-  :param real: A real number represented as a string.
+  :param n0:   Rounding mode operand.
+  :param n1:   Bit-vector operand.
   :param sort: Floating-point sort.
-  :return:     A floating-point of sort ``sort`` representing ``real`` with
-               respect to rounding mode ``node``.
+  :return:     A floating-point with of sort ``sort`` representing bit-vector
+               ``n1`` with respect to rounding mode ``n0``.
  */
-BoolectorNode *boolector_fp_to_fp_real(Bzla *bzla,
-                                       BoolectorNode *node,
-                                       const char *real,
-                                       BoolectorSort sort);
+BoolectorNode *boolector_fp_to_fp_from_int(Bzla *bzla,
+                                           BoolectorNode *n0,
+                                           BoolectorNode *n1,
+                                           BoolectorSort sort);
 
 /*!
   Create a floating-point expression with exponent size ``eb`` and significand
@@ -2028,10 +2029,27 @@ BoolectorNode *boolector_fp_to_fp_real(Bzla *bzla,
   :return:     A floating-point of sort ``sort`` representing bit-vector or
                floating-point ``n1`` with respect to rounding mode ``n0``.
  */
-BoolectorNode *boolector_fp_to_fp_unsigned(Bzla *bzla,
-                                           BoolectorNode *n0,
-                                           BoolectorNode *n1,
-                                           BoolectorSort sort);
+BoolectorNode *boolector_fp_to_fp_from_uint(Bzla *bzla,
+                                            BoolectorNode *n0,
+                                            BoolectorNode *n1,
+                                            BoolectorSort sort);
+
+/*!
+  Create a floating-point expression with exponent size ``eb`` and significand
+  from a given Real number (represented as a string) with respect to the given
+  rounding mode ``node``.
+
+  :param bzla: Boolector instance.
+  :param node: Rounding mode operand.
+  :param real: A real number represented as a string.
+  :param sort: Floating-point sort.
+  :return:     A floating-point of sort ``sort`` representing ``real`` with
+               respect to rounding mode ``node``.
+ */
+BoolectorNode *boolector_fp_to_fp_from_real(Bzla *bzla,
+                                            BoolectorNode *node,
+                                            const char *real,
+                                            BoolectorSort sort);
 
 /*------------------------------------------------------------------------*/
 

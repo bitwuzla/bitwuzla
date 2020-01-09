@@ -2672,8 +2672,9 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
           item_cur->node->name);
     }
     /* (_ to_fp eb sb) RoundingMode Real */
-    s   = boolector_fp_sort(bzla, item_cur->idx0, item_cur->idx1);
-    exp = boolector_fp_to_fp_real(bzla, item_cur[1].exp, item_cur[1].str, s);
+    s = boolector_fp_sort(bzla, item_cur->idx0, item_cur->idx1);
+    exp =
+        boolector_fp_to_fp_from_real(bzla, item_cur[1].exp, item_cur[1].str, s);
     boolector_release_sort(bzla, s);
     boolector_release(bzla, item_cur[1].exp);
     bzla_mem_freestr(parser->mem, item_cur[2].str);
@@ -2683,10 +2684,6 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   }
   else
   {
-    /**
-     * (_ to_fp eb sb) RoundingMode (_ BitVec m)
-     * (_ to_fp eb sb) RoundingMode (_ FloatingPoint mb nb)
-     */
     if (item_cur[2].tag != BZLA_EXP_TAG_SMT2)
     {
       parser->perrcoo = item_cur[2].coo;
@@ -2696,6 +2693,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
 
     if (item_cur->tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
     {
+      /* (_ to_fp_unsigned eb sb) RoundingMode (_ BitVec m) */
       if (!boolector_is_bv_sort(bzla, s))
       {
         return !perr_smt2(parser,
@@ -2703,7 +2701,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
                           item_cur->node->name);
       }
       s   = boolector_fp_sort(bzla, item_cur->idx0, item_cur->idx1);
-      exp = boolector_fp_to_fp_unsigned(
+      exp = boolector_fp_to_fp_from_uint(
           bzla, item_cur[1].exp, item_cur[2].exp, s);
       boolector_release_sort(bzla, s);
     }
@@ -2719,8 +2717,18 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
             item_cur->node->name);
       }
       s = boolector_fp_sort(bzla, item_cur->idx0, item_cur->idx1);
-      exp =
-          boolector_fp_to_fp_signed(bzla, item_cur[1].exp, item_cur[2].exp, s);
+      if (boolector_is_bv_sort(bzla, s))
+      {
+        /* (_ to_fp eb sb) RoundingMode (_ BitVec m) */
+        exp = boolector_fp_to_fp_from_int(
+            bzla, item_cur[1].exp, item_cur[2].exp, s);
+      }
+      else
+      {
+        /* (_ to_fp eb sb) RoundingMode (_ FloatingPoint mb nb) */
+        exp = boolector_fp_to_fp_from_fp(
+            bzla, item_cur[1].exp, item_cur[2].exp, s);
+      }
       boolector_release_sort(bzla, s);
     }
     release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
@@ -3823,18 +3831,19 @@ close_term(BzlaSMT2Parser *parser)
         parser->perrcoo = item_cur[1].coo;
         return !perr_smt2(parser, "expected expression");
       }
-      if (!boolector_is_bv_const(bzla, item_cur[1].exp))
+      if (!boolector_is_bv_sort(bzla,
+                                boolector_get_sort(bzla, item_cur[1].exp)))
       {
         return !perr_smt2(
             parser,
-            "invalid argument to '%s', expected bit-vector constant",
+            "invalid argument to '%s', expected bit-vector expression",
             item_cur->node->name);
       }
       assert(item_cur->idx0);
       assert(item_cur->idx1);
       BoolectorSort sort =
           boolector_fp_sort(bzla, item_cur->idx0, item_cur->idx1);
-      exp = boolector_fp_to_fp(bzla, item_cur[1].exp, sort);
+      exp = boolector_fp_to_fp_from_bv(bzla, item_cur[1].exp, sort);
       boolector_release_sort(bzla, sort);
       release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
     }

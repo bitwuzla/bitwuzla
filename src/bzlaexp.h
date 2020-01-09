@@ -594,46 +594,58 @@ BzlaNode *bzla_exp_fp_fma(
 
 /**
  * Create floating-point of given floating-point sort from given bit-vector
- * expression 'exp'.
+ * expression 'exp' (interpreted as in IEEE 754-2008 interchange format).
  * exp:  bit-vector operand
  * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_to_fp(Bzla *bzla, BzlaNode *exp, BzlaSortId sort);
+BzlaNode *bzla_exp_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *exp, BzlaSortId sort);
 
 /**
- * Create floating-point to-fp from bit-vector (interpreted as signed) or
- * floating-point expression wrt to given rounding mode.
+ * Create floating-point to-fp from floating-point expression wrt to given
+ * rounding mode.
  * e0:   rounding mode
- * e1:   bit-vector or floating-point operand
+ * e1:   floating-point operand
  * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_to_fp_signed(Bzla *bzla,
-                                   BzlaNode *e0,
-                                   BzlaNode *e1,
-                                   BzlaSortId sort);
+BzlaNode *bzla_exp_fp_to_fp_from_fp(Bzla *bzla,
+                                    BzlaNode *e0,
+                                    BzlaNode *e1,
+                                    BzlaSortId sort);
 
 /**
- * Create floating-point to-fp from bit-vector expression (interpreted as
- * unsigned) wrt to given rounding mode.
+ * Create floating-point to-fp from signed machine integer (represented as
+ * bit-vector, interpreted as signed) wrt to given rounding mode.
  * e0:   rounding mode
  * e1:   bit-vector operand
  * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_to_fp_unsigned(Bzla *bzla,
+BzlaNode *bzla_exp_fp_to_fp_from_int(Bzla *bzla,
                                      BzlaNode *e0,
                                      BzlaNode *e1,
                                      BzlaSortId sort);
 
 /**
- * Create floating-point to-fp from double wrt to given rounding mode.
- * exp:  rounding mode
- * real: the real operand represented as a strin
+ * Create floating-point to-fp from unsigned machine integer (represented as
+ * bit-vector, interpreted as unsigned) wrt to given rounding mode.
+ * e0:   rounding mode
+ * e1:   bit-vector operand
  * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_to_fp_real(Bzla *bzla,
-                                 BzlaNode *exp,
-                                 const char *real,
-                                 BzlaSortId sort);
+BzlaNode *bzla_exp_fp_to_fp_from_uint(Bzla *bzla,
+                                      BzlaNode *e0,
+                                      BzlaNode *e1,
+                                      BzlaSortId sort);
+
+/**
+ * Create floating-point to-fp from double wrt to given rounding mode.
+ * exp:  rounding mode
+ * real: the real operand represented as a string
+ * sort: floating-point sort
+ */
+BzlaNode *bzla_exp_fp_to_fp_from_real(Bzla *bzla,
+                                      BzlaNode *exp,
+                                      const char *real,
+                                      BzlaSortId sort);
 
 /*------------------------------------------------------------------------*/
 

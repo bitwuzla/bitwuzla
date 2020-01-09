@@ -2,7 +2,7 @@
  *
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2014 Armin Biere.
- *  Copyright (C) 2013-2019 Aina Niemetz
+ *  Copyright (C) 2013-2020 Aina Niemetz
  *  Copyright (C) 2013-2017 Mathias Preiner.
  *
  *  This file is part of Boolector.
@@ -90,12 +90,11 @@ void bzla_abort_warn(
         !bzla_node_is_fp(bzla, arg), "'%s' must be a floating-point\n", #arg); \
   } while (0)
 
-#define BZLA_ABORT_IS_NOT_BV_OR_FP(arg)                                    \
-  do                                                                       \
-  {                                                                        \
-    BZLA_ABORT(!bzla_node_is_bv(bzla, arg) && !bzla_node_is_fp(bzla, arg), \
-               "'%s' must be a bit-vector or floating-point\n",            \
-               #arg);                                                      \
+#define BZLA_ABORT_IS_NOT_FP(arg)                                              \
+  do                                                                           \
+  {                                                                            \
+    BZLA_ABORT(                                                                \
+        !bzla_node_is_fp(bzla, arg), "'%s' must be a floating-point\n", #arg); \
   } while (0)
 
 #define BZLA_ABORT_IS_NOT_RM(arg)                                  \

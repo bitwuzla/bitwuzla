@@ -2199,7 +2199,7 @@ bzla_exp_fp_fma(
 }
 
 BzlaNode *
-bzla_exp_fp_to_fp(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
+bzla_exp_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
@@ -2214,10 +2214,10 @@ bzla_exp_fp_to_fp(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
 }
 
 BzlaNode *
-bzla_exp_fp_to_fp_signed(Bzla *bzla,
-                         BzlaNode *e0,
-                         BzlaNode *e1,
-                         BzlaSortId sort)
+bzla_exp_fp_to_fp_from_fp(Bzla *bzla,
+                          BzlaNode *e0,
+                          BzlaNode *e1,
+                          BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
@@ -2234,7 +2234,7 @@ bzla_exp_fp_to_fp_signed(Bzla *bzla,
 }
 
 BzlaNode *
-bzla_exp_fp_to_fp_unsigned(Bzla *bzla,
+bzla_exp_fp_to_fp_from_int(Bzla *bzla,
                            BzlaNode *e0,
                            BzlaNode *e1,
                            BzlaSortId sort)
@@ -2254,10 +2254,30 @@ bzla_exp_fp_to_fp_unsigned(Bzla *bzla,
 }
 
 BzlaNode *
-bzla_exp_fp_to_fp_real(Bzla *bzla,
-                       BzlaNode *node,
-                       const char *real,
-                       BzlaSortId sort)
+bzla_exp_fp_to_fp_from_uint(Bzla *bzla,
+                            BzlaNode *e0,
+                            BzlaNode *e1,
+                            BzlaSortId sort)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla == bzla_node_real_addr(e0)->bzla);
+  assert(bzla == bzla_node_real_addr(e1)->bzla);
+  assert(sort);
+  /// FP STUB
+  (void) e0;
+  (void) e1;
+  (void) sort;
+  return bzla_exp_true(bzla);
+  ////
+}
+
+BzlaNode *
+bzla_exp_fp_to_fp_from_real(Bzla *bzla,
+                            BzlaNode *node,
+                            const char *real,
+                            BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
