@@ -905,8 +905,10 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
       BZLA_PUSH_STACK(work_stack, cur);
       BZLA_PUSH_STACK(work_stack, cur_parent);
       md = bzla_hashint_map_add(mark, real_cur->id);
-      if (bzla_node_is_fp(bzla, real_cur)
-          || (real_cur->arity && bzla_node_is_fp(bzla, real_cur->e[0])))
+      if (bzla_node_is_rm(bzla, real_cur) || bzla_node_is_fp(bzla, real_cur)
+          || (real_cur->arity
+              && (bzla_node_is_fp(bzla, real_cur->e[0])
+                  || bzla_node_is_rm(bzla, real_cur->e[0]))))
       {
         next = bzla_fp_word_blast(bzla, real_cur);
         assert(next);
@@ -942,7 +944,8 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
           BZLA_PUSH_STACK(work_stack, real_cur);
           /* Additionally, push bit-vector representation of floating-point
            * node to evaluate first. */
-          if (bzla_node_is_fp(bzla, real_cur->e[i]))
+          if (bzla_node_is_rm(bzla, real_cur->e[i])
+              || bzla_node_is_fp(bzla, real_cur->e[i]))
           {
             BzlaNode *wb = bzla_fp_word_blast(bzla, real_cur->e[i]);
             BZLA_PUSH_STACK(work_stack, wb);
@@ -956,8 +959,10 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
       assert(!bzla_node_is_param(real_cur));
       assert(real_cur->arity <= 3);
 
-      if (bzla_node_is_fp(bzla, real_cur)
-          || (real_cur->arity && bzla_node_is_fp(bzla, real_cur->e[0])))
+      if (bzla_node_is_rm(bzla, real_cur) || bzla_node_is_fp(bzla, real_cur)
+          || (real_cur->arity
+              && (bzla_node_is_rm(bzla, real_cur->e[0])
+                  || bzla_node_is_fp(bzla, real_cur->e[0]))))
       {
 #ifdef NDEBUG
         BzlaNode *bv_node =

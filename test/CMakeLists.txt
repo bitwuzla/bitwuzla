@@ -83,6 +83,7 @@ set(sat_testcases
 "fp_sort.smt2"
 "fp_regr1.smt2"
 "fp_regr2.smt2"
+"fp_regr3.smt2"
 "invalidmodel1.smt2"
 "invalidmodel2.smt2 -xl=0 -ml=0 -rwl=2"
 "invalidmodel3.btor"
