@@ -73,7 +73,6 @@ enum BzlaNodeKind
   BZLA_BV_UREM_NODE,
   BZLA_BV_CONCAT_NODE,
   BZLA_FP_EQ_NODE, /* (regular) equality over floating-points */
-  BZLA_FP_FPEQ_NODE,
   BZLA_FP_LTE_NODE,
   BZLA_FP_LT_NODE,
   BZLA_FP_MIN_NODE,
@@ -353,24 +352,6 @@ static inline bool
 bzla_node_is_ternary_kind(BzlaNodeKind kind)
 {
   return kind >= BZLA_COND_NODE && kind <= BZLA_UPDATE_NODE;
-}
-
-/** Return true if given kind is a floating-point kind. */
-static inline bool
-bzla_node_is_fp_kind(BzlaNodeKind kind)
-{
-  return kind == BZLA_FP_CONST_NODE || kind == BZLA_FP_ABS_NODE
-         || kind == BZLA_FP_IS_INF_NODE || kind == BZLA_FP_IS_NAN_NODE
-         || kind == BZLA_FP_IS_NEG_NODE || kind == BZLA_FP_IS_NORM_NODE
-         || kind == BZLA_FP_IS_POS_NODE || kind == BZLA_FP_IS_SUBNORM_NODE
-         || kind == BZLA_FP_IS_ZERO_NODE || kind == BZLA_FP_NEG_NODE
-         || kind == BZLA_FP_EQ_NODE || kind == BZLA_FP_FPEQ_NODE
-         || kind == BZLA_FP_LTE_NODE || kind == BZLA_FP_LT_NODE
-         || kind == BZLA_FP_MIN_NODE || kind == BZLA_FP_MAX_NODE
-         || kind == BZLA_FP_SQRT_NODE || kind == BZLA_FP_REM_NODE
-         || kind == BZLA_FP_RTI_NODE || kind == BZLA_FP_ADD_NODE
-         || kind == BZLA_FP_MUL_NODE || kind == BZLA_FP_DIV_NODE
-         || kind == BZLA_FP_FMA_NODE;
 }
 
 /*------------------------------------------------------------------------*/

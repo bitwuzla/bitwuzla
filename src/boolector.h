@@ -1763,7 +1763,7 @@ BoolectorNode *boolector_fp_is_neg(Bzla *bzla, BoolectorNode *node);
 BoolectorNode *boolector_fp_is_pos(Bzla *bzla, BoolectorNode *node);
 
 /*!
-  Create the maximum expression of two given floating-point nodes ``n0``
+  Create the fp.max expression of two given floating-point nodes ``n0``
   and ``n1.
 
   :param bzla: Boolector instance.
@@ -1777,7 +1777,7 @@ BoolectorNode *boolector_fp_min(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create the minimum expression of two given floating-point nodes ``n0``
+  Create the fp.miniexpression of two given floating-point nodes ``n0``
   and ``n1.
 
   :param bzla: Boolector instance.
@@ -1791,7 +1791,7 @@ BoolectorNode *boolector_fp_max(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create a floating-point remainder.
+  Create a floating-point remainder fp.rem.
 
   :param bzla: Boolector instance.
   :param n0:   Floating-point operand.
@@ -1803,7 +1803,7 @@ BoolectorNode *boolector_fp_rem(Bzla *bzla,
                                 BoolectorNode *n0,
                                 BoolectorNode *n1);
 /*!
-  Create a floating-point equality.
+  Create a floating-point equality fp.eq.
 
   :param bzla: Boolector instance.
   :param n0:   Floating-point operand.
@@ -1811,12 +1811,12 @@ BoolectorNode *boolector_fp_rem(Bzla *bzla,
   :return:     A bit-vector of size one, representing the equality over ``n0``
                and ``n1``.
  */
-BoolectorNode *boolector_fp_eq(Bzla *bzla,
-                               BoolectorNode *n0,
-                               BoolectorNode *n1);
+BoolectorNode *boolector_fp_fpeq(Bzla *bzla,
+                                 BoolectorNode *n0,
+                                 BoolectorNode *n1);
 
 /*!
-  Create a floating-point less or equal.
+  Create a floating-point less or equal fp.leq.
 
   :param bzla: Boolector instance.
   :param n0:   Floating-point operand.
@@ -1829,7 +1829,7 @@ BoolectorNode *boolector_fp_lte(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create a floating-point less than.
+  Create a floating-point less than fp.lt.
 
   :param bzla: Boolector instance.
   :param n0:   Floating-point operand.
@@ -1840,7 +1840,7 @@ BoolectorNode *boolector_fp_lt(Bzla *bzla,
                                BoolectorNode *n0,
                                BoolectorNode *n1);
 /*!
-  Create a floating-point greater or equal.
+  Create a floating-point greater or equal fp.geq.
 
   :param bzla: Boolector instance.
   :param n0:   Floating-point operand.
@@ -1852,7 +1852,7 @@ BoolectorNode *boolector_fp_gte(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create a floating-point greater than.
+  Create a floating-point greater than fp.gt.
 
   :param bzla: Boolector instance.
   :param n0:   Floating-point operand.
@@ -1864,8 +1864,8 @@ BoolectorNode *boolector_fp_gt(Bzla *bzla,
                                BoolectorNode *n1);
 
 /*!
-  Create the square root of a given floating-point node ``n1`` with respect
-  to the given rounding mode ``n0``.
+  Create the square root fp.sqrt of a given floating-point node ``n1`` with
+  respect to the given rounding mode ``n0``.
 
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
@@ -1878,7 +1878,7 @@ BoolectorNode *boolector_fp_sqrt(Bzla *bzla,
                                  BoolectorNode *n1);
 
 /*!
-  Create a round-to-integral expression of a given floating-point node ``n1``
+  Create the fp.roundToIntegral expression of a given floating-point node ``n1``
   with respect to the given rounding mode ``n0``.
 
   :param bzla: Boolector instance.
@@ -1892,7 +1892,7 @@ BoolectorNode *boolector_fp_rti(Bzla *bzla,
                                 BoolectorNode *n1);
 
 /*!
-  Create a floating-point addition.
+  Create a floating-point addition fp.add.
 
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
@@ -1907,7 +1907,7 @@ BoolectorNode *boolector_fp_add(Bzla *bzla,
                                 BoolectorNode *n2);
 
 /*!
-  Create a floating-point subtraction.
+  Create a floating-point subtraction fp.sub.
 
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
@@ -1922,7 +1922,7 @@ BoolectorNode *boolector_fp_sub(Bzla *bzla,
                                 BoolectorNode *n2);
 
 /*!
-  Create a floating-point multiplication.
+  Create a floating-point multiplication fp.mul.
 
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
@@ -1937,7 +1937,7 @@ BoolectorNode *boolector_fp_mul(Bzla *bzla,
                                 BoolectorNode *n2);
 
 /*!
-  Create a floating-point division.
+  Create a floating-point division fp.div.
 
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.
@@ -1952,7 +1952,7 @@ BoolectorNode *boolector_fp_div(Bzla *bzla,
                                 BoolectorNode *n2);
 
 /*!
-  Create a floating-point fused multiplication and addition.
+  Create a floating-point fused multiplication and addition fp.fma.
 
   :param bzla: Boolector instance.
   :param n0:   Rounding mode operand.

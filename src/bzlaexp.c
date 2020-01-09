@@ -2030,18 +2030,44 @@ bzla_exp_fp_rem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 }
 
 BzlaNode *
-bzla_exp_fp_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+bzla_exp_fp_fpeq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
-  /// FP STUB
-  (void) e0;
-  (void) e1;
-  return bzla_exp_true(bzla);
-  ////
+  BzlaNode *isnan0, *isnan1, *not_isnan0, *not_isnan1;
+  BzlaNode *iszero0, *iszero1;
+  BzlaNode *eq, *and, *and1, * or ;
+  BzlaNode *result;
+
+  isnan0     = bzla_exp_fp_is_nan(bzla, e0);
+  isnan1     = bzla_exp_fp_is_nan(bzla, e1);
+  not_isnan0 = bzla_exp_bv_not(bzla, isnan0);
+  not_isnan1 = bzla_exp_bv_not(bzla, isnan1);
+  and        = bzla_exp_bv_and(bzla, not_isnan0, not_isnan1);
+
+  eq      = bzla_exp_eq(bzla, e0, e1);
+  iszero0 = bzla_exp_fp_is_zero(bzla, e0);
+  iszero1 = bzla_exp_fp_is_zero(bzla, e1);
+  and1    = bzla_exp_bv_and(bzla, iszero0, iszero1);
+  or      = bzla_exp_bv_or(bzla, eq, and1);
+
+  result = bzla_exp_bv_and(bzla, and, or);
+
+  bzla_node_release(bzla, or);
+  bzla_node_release(bzla, and1);
+  bzla_node_release(bzla, iszero0);
+  bzla_node_release(bzla, iszero1);
+  bzla_node_release(bzla, eq);
+  bzla_node_release(bzla, and);
+  bzla_node_release(bzla, not_isnan0);
+  bzla_node_release(bzla, not_isnan1);
+  bzla_node_release(bzla, isnan0);
+  bzla_node_release(bzla, isnan1);
+
+  return result;
 }
 
 BzlaNode *

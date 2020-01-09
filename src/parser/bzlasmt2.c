@@ -3708,7 +3708,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_FP_EQ_TAG_SMT2)
   {
     if (!close_term_bin_fp_fun_chainable(
-            parser, item_open, item_cur, nargs, boolector_fp_eq))
+            parser, item_open, item_cur, nargs, boolector_fp_fpeq))
     {
       return 0;
     }

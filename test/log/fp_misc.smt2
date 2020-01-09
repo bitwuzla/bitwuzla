@@ -15,5 +15,5 @@
 (assert (fp.geq (fp.add RTN a b) (fp.sub RTN a b)))
 (assert (fp.leq (fp.mul RTP a (_ +zero 5 11)) (_ -zero 5 11)))
 (assert (fp.isNaN (fp.div RTP a (_ +zero 5 11))))
-(assert (= (fp.add RTZ (fp.mul RTZ a b) a) (fp.fma RTZ a b (fp.rem a b))))
+(assert (fp.eq (fp.add RTZ (fp.mul RTZ a b) a) (fp.fma RTZ a b (fp.rem a b))))
 (check-sat)

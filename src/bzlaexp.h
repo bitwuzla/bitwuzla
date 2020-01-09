@@ -485,73 +485,73 @@ BzlaNode *bzla_exp_fp_const(Bzla *bzla,
                             BzlaNode *e1,
                             BzlaNode *e2);
 
-/* Create floating-point is_normal. */
+/** Create floating-point fp.isNormal. */
 BzlaNode *bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point is_subnormal. */
+/* Create floating-point fp.isSubnormal. */
 BzlaNode *bzla_exp_fp_is_subnormal(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point is_zero. */
+/* Create floating-point fp.isZero. */
 BzlaNode *bzla_exp_fp_is_zero(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point is_inf. */
+/* Create floating-point fp.isInfinite. */
 BzlaNode *bzla_exp_fp_is_inf(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point is_nan. */
+/* Create floating-point fp.isNaN. */
 BzlaNode *bzla_exp_fp_is_nan(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point is_neg. */
+/* Create floating-point fp.isNegative. */
 BzlaNode *bzla_exp_fp_is_neg(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point is_pos. */
+/* Create floating-point fp.isPositive. */
 BzlaNode *bzla_exp_fp_is_pos(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point absolute value. */
+/* Create floating-point fp.abs. */
 BzlaNode *bzla_exp_fp_abs(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point negation. */
+/* Create floating-point fp.neg. */
 BzlaNode *bzla_exp_fp_neg(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point maximum. */
+/* Create floating-point fp.max. */
 BzlaNode *bzla_exp_fp_min(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point minimum. */
+/* Create floating-point fp.min. */
 BzlaNode *bzla_exp_fp_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point remainder. */
+/* Create floating-point fp.rem. */
 BzlaNode *bzla_exp_fp_rem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point equality. */
-BzlaNode *bzla_exp_fp_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+/* Create floating-point fp.eq. */
+BzlaNode *bzla_exp_fp_fpeq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point less or equal. */
+/* Create floating-point fp.leq. */
 BzlaNode *bzla_exp_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point less than. */
+/* Create floating-point fp.lt. */
 BzlaNode *bzla_exp_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point greater or equal. */
+/* Create floating-point fp.geq. */
 BzlaNode *bzla_exp_fp_gte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point greater than. */
+/* Create floating-point fp.gt. */
 BzlaNode *bzla_exp_fp_gt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /**
- * Create floating-point square root wrt to given rounding mode.
+ * Create floating-point fp.sqrt wrt to given rounding mode.
  * e0: rounding mode
  * e1: floating-point operand
  */
 BzlaNode *bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /**
- * Create floating-point round-to-integral wrt to given rounding mode.
+ * Create floating-point fp.roundToIntegral wrt to given rounding mode.
  * e0: rounding mode
  * e1: floating-point operand
  */
 BzlaNode *bzla_exp_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /**
- * Create floating-point addition wrt to given rounding mode.
+ * Create floating-point fp.add wrt to given rounding mode.
  * e0: rounding mode
  * e1: floating-point operand
  * e2: floating-point operand
@@ -559,7 +559,7 @@ BzlaNode *bzla_exp_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 BzlaNode *bzla_exp_fp_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
 
 /**
- * Create floating-point subtraction wrt to given rounding mode.
+ * Create floating-point fp.sub wrt to given rounding mode.
  * e0: rounding mode
  * e1: floating-point operand
  * e2: floating-point operand
@@ -567,7 +567,7 @@ BzlaNode *bzla_exp_fp_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
 BzlaNode *bzla_exp_fp_sub(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
 
 /**
- * Create floating-point multiplication wrt to given rounding mode.
+ * Create floating-point fp.mul wrt to given rounding mode.
  * e0: rounding mode
  * e1: floating-point operand
  * e2: floating-point operand
@@ -575,7 +575,7 @@ BzlaNode *bzla_exp_fp_sub(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
 BzlaNode *bzla_exp_fp_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
 
 /**
- * Create floating-point division wrt to given rounding mode.
+ * Create floating-point fp.div wrt to given rounding mode.
  * e0: rounding mode
  * e1: floating-point operand
  * e2: floating-point operand
@@ -583,8 +583,7 @@ BzlaNode *bzla_exp_fp_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
 BzlaNode *bzla_exp_fp_div(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
 
 /**
- * Create floating-point fused multiplication and addition (e1 * e2) + e3 wrt
- * to given rounding mode.
+ * Create floating-point fp.fpma (e1 * e2) + e3 wrt to given rounding mode.
  * e0: rounding mode
  * e1: floating-point operand
  * e2: floating-point operand
