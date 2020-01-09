@@ -3594,7 +3594,7 @@ boolector_fp_sqrt(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
 }
 
 BoolectorNode *
-boolector_fp_round_to_int(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
+boolector_fp_rti(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
 {
   BzlaNode *e0, *e1, *res;
 
@@ -3610,12 +3610,11 @@ boolector_fp_round_to_int(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
   BZLA_ABORT_IS_NOT_RM(e0);
   BZLA_ABORT_IS_NOT_FP(e1);
-  res = bzla_exp_fp_round_to_int(bzla, e0, e1);
+  res = bzla_exp_fp_rti(bzla, e0, e1);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(
-      res, fp_round_to_int, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1));
+  BZLA_CHKCLONE_RES_PTR(res, fp_rti, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1));
 #endif
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }

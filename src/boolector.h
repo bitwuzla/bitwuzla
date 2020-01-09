@@ -1887,9 +1887,9 @@ BoolectorNode *boolector_fp_sqrt(Bzla *bzla,
   :return:     A floating-point representing ``n1`` rounded to integral with
                respect to rounding mode ``n0``.
  */
-BoolectorNode *boolector_fp_round_to_int(Bzla *bzla,
-                                         BoolectorNode *n0,
-                                         BoolectorNode *n1);
+BoolectorNode *boolector_fp_rti(Bzla *bzla,
+                                BoolectorNode *n0,
+                                BoolectorNode *n1);
 
 /*!
   Create a floating-point addition.

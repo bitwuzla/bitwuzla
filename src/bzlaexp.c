@@ -2100,7 +2100,7 @@ bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 }
 
 BzlaNode *
-bzla_exp_fp_round_to_int(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+bzla_exp_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");

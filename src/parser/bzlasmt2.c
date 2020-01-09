@@ -3623,7 +3623,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2)
   {
     if (!close_term_unary_rm_fp_fun(
-            parser, item_open, item_cur, nargs, boolector_fp_round_to_int))
+            parser, item_open, item_cur, nargs, boolector_fp_rti))
     {
       return 0;
     }

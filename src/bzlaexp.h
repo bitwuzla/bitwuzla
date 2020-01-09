@@ -548,7 +548,7 @@ BzlaNode *bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
  * e0: rounding mode
  * e1: floating-point operand
  */
-BzlaNode *bzla_exp_fp_round_to_int(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+BzlaNode *bzla_exp_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /**
  * Create floating-point addition wrt to given rounding mode.
