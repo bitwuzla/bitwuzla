@@ -2418,7 +2418,34 @@ uint32_t boolector_fun_get_arity(Bzla *bzla, BoolectorNode *node);
 /*------------------------------------------------------------------------*/
 
 /*!
-  Determine if given node is a constant node.
+  Determine if given node is a bit-vector node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: True if ``node`` is a bit-vector node.
+*/
+bool boolector_is_bv(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Determine if given node is a rounding mode node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: True if ``node`` is a rounding mode node.
+*/
+bool boolector_is_rm(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Determine if given node is a floating-point node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: True if ``node`` is a floating-point node.
+*/
+bool boolector_is_fp(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Determine if given node is a bit-vector constant node.
 
   :param bzla: Boolector instance.
   :param node: Boolector node.
@@ -2427,11 +2454,12 @@ uint32_t boolector_fun_get_arity(Bzla *bzla, BoolectorNode *node);
 bool boolector_is_bv_const(Bzla *bzla, BoolectorNode *node);
 
 /*!
-  Determine if given node is a bit-vector variable.
+  Determine if given node is a (bit-vector, rounding mode or
+  floating-point) variable.
 
   :param bzla: Boolector instance.
   :param node: Boolector node.
-  :return: True if ``node`` is a bit-vector variable, and false otherwise.
+  :return: True if ``node`` is a variable, and false otherwise.
 */
 bool boolector_is_var(Bzla *bzla, BoolectorNode *node);
 

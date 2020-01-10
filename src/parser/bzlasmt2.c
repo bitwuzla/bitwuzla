@@ -3831,8 +3831,7 @@ close_term(BzlaSMT2Parser *parser)
         parser->perrcoo = item_cur[1].coo;
         return !perr_smt2(parser, "expected expression");
       }
-      if (!boolector_is_bv_sort(bzla,
-                                boolector_get_sort(bzla, item_cur[1].exp)))
+      if (!boolector_is_bv(bzla, item_cur[1].exp))
       {
         return !perr_smt2(
             parser,

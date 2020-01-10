@@ -4763,6 +4763,63 @@ boolector_fun_get_arity(Bzla *bzla, BoolectorNode *node)
 /*------------------------------------------------------------------------*/
 
 bool
+boolector_is_bv(Bzla *bzla, BoolectorNode *node)
+{
+  BzlaNode *exp;
+  bool res;
+  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(exp);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
+  BZLA_TRAPI_UNFUN(exp);
+  BZLA_ABORT_REFS_NOT_POS(exp);
+  res = bzla_node_is_bv(bzla, exp);
+  BZLA_TRAPI_RETURN_BOOL(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_BOOL(res, is_bv, BZLA_CLONED_EXP(exp));
+#endif
+  return res;
+}
+
+bool
+boolector_is_rm(Bzla *bzla, BoolectorNode *node)
+{
+  BzlaNode *exp;
+  bool res;
+  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(exp);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
+  BZLA_TRAPI_UNFUN(exp);
+  BZLA_ABORT_REFS_NOT_POS(exp);
+  res = bzla_node_is_rm(bzla, exp);
+  BZLA_TRAPI_RETURN_BOOL(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_BOOL(res, is_rm, BZLA_CLONED_EXP(exp));
+#endif
+  return res;
+}
+
+bool
+boolector_is_fp(Bzla *bzla, BoolectorNode *node)
+{
+  BzlaNode *exp;
+  bool res;
+  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(exp);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
+  BZLA_TRAPI_UNFUN(exp);
+  BZLA_ABORT_REFS_NOT_POS(exp);
+  res = bzla_node_is_fp(bzla, exp);
+  BZLA_TRAPI_RETURN_BOOL(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_BOOL(res, is_fp, BZLA_CLONED_EXP(exp));
+#endif
+  return res;
+}
+
+bool
 boolector_is_bv_const(Bzla *bzla, BoolectorNode *node)
 {
   BzlaNode *exp;
