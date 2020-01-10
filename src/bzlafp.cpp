@@ -2446,6 +2446,16 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                                          d_rm_map.at(cur->e[0]),
                                          BzlaFPSymBV<true>(cur->e[1])));
       }
+      else if (bzla_node_is_fp_to_fp_from_uint(cur))
+      {
+        assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
+        assert(bzla_node_is_bv(d_bzla, cur->e[1]));
+        d_unpacked_float_map.emplace(cur,
+                                     symfpu::convertUBVToFloat<BzlaFPSymTraits>(
+                                         bzla_node_get_sort_id(cur),
+                                         d_rm_map.at(cur->e[0]),
+                                         BzlaFPSymBV<false>(cur->e[1])));
+      }
       visited.at(cur) = 1;
     }
     else

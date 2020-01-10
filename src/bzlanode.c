@@ -2053,6 +2053,14 @@ compare_binder_exp(Bzla *bzla,
                                  e[1],
                                  bzla_node_get_sort_id(real_cur));
       }
+      else if (bzla_node_is_fp_to_fp_from_uint(real_cur))
+      {
+        result = *find_to_fp_exp(bzla,
+                                 BZLA_FP_TO_FP_UINT_NODE,
+                                 e[0],
+                                 e[1],
+                                 bzla_node_get_sort_id(real_cur));
+      }
       else if (bzla_node_is_param(real_cur))
       {
         if ((bb = bzla_hashptr_table_get(param_map, real_cur)))
@@ -2206,7 +2214,8 @@ new_binary_to_fp_exp_node(
     Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
   assert(bzla);
-  assert(kind == BZLA_FP_TO_FP_FP_NODE || kind == BZLA_FP_TO_FP_INT_NODE);
+  assert(kind == BZLA_FP_TO_FP_FP_NODE || kind == BZLA_FP_TO_FP_INT_NODE
+         || kind == BZLA_FP_TO_FP_UINT_NODE);
   assert(e0);
   assert(e1);
   assert(bzla_node_is_rm(bzla, e0));
@@ -3145,7 +3154,8 @@ binary_exp_to_fp_exp(
     Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
   assert(bzla);
-  assert(kind == BZLA_FP_TO_FP_FP_NODE || kind == BZLA_FP_TO_FP_INT_NODE);
+  assert(kind == BZLA_FP_TO_FP_FP_NODE || kind == BZLA_FP_TO_FP_INT_NODE
+         || kind == BZLA_FP_TO_FP_UINT_NODE);
   assert(e0);
   assert(e1);
   assert(bzla == bzla_node_real_addr(e0)->bzla);
@@ -3630,6 +3640,19 @@ bzla_node_create_fp_to_fp_from_int(Bzla *bzla,
   e[1] = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_binary_fp_to_fp_exp(bzla, e[0], e[1], sort));
   return binary_exp_to_fp_exp(bzla, BZLA_FP_TO_FP_INT_NODE, e[0], e[1], sort);
+}
+
+BzlaNode *
+bzla_node_create_fp_to_fp_from_uint(Bzla *bzla,
+                                    BzlaNode *e0,
+                                    BzlaNode *e1,
+                                    BzlaSortId sort)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_binary_fp_to_fp_exp(bzla, e[0], e[1], sort));
+  return binary_exp_to_fp_exp(bzla, BZLA_FP_TO_FP_UINT_NODE, e[0], e[1], sort);
 }
 
 /*========================================================================*/
