@@ -2037,11 +2037,18 @@ compare_binder_exp(Bzla *bzla,
                                  0,
                                  bzla_node_get_sort_id(real_cur));
       }
-      else if (bzla_node_is_fp_to_fp_from_fp(real_cur)
-               || bzla_node_is_fp_to_fp_from_int(real_cur))
+      else if (bzla_node_is_fp_to_fp_from_fp(real_cur))
       {
         result = *find_to_fp_exp(bzla,
                                  BZLA_FP_TO_FP_FP_NODE,
+                                 e[0],
+                                 e[1],
+                                 bzla_node_get_sort_id(real_cur));
+      }
+      else if (bzla_node_is_fp_to_fp_from_int(real_cur))
+      {
+        result = *find_to_fp_exp(bzla,
+                                 BZLA_FP_TO_FP_INT_NODE,
                                  e[0],
                                  e[1],
                                  bzla_node_get_sort_id(real_cur));
