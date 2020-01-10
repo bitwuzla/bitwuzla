@@ -2392,14 +2392,23 @@ bzla_substitute_nodes_node_map(Bzla *bzla,
         result = bzla_exp_fp_to_fp_from_fp(
             bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
       }
+      else if (bzla_node_is_fp_to_fp_from_int(real_cur))
+      {
+        result = bzla_exp_fp_to_fp_from_int(
+            bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
+      }
       else
       {
         /* if the param of a quantifier gets subtituted by a non-param,
          * we do not create a quantifier, but return the body instead */
         if (bzla_node_is_quantifier(real_cur) && !bzla_node_is_param(e[0]))
+        {
           result = bzla_node_copy(bzla, e[1]);
+        }
         else
+        {
           result = bzla_exp_create(bzla, real_cur->kind, e, real_cur->arity);
+        }
       }
       for (i = 0; i < real_cur->arity; i++) bzla_node_release(bzla, e[i]);
 

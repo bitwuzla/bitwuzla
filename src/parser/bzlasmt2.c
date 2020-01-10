@@ -2717,7 +2717,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
             item_cur->node->name);
       }
       s = boolector_fp_sort(bzla, item_cur->idx0, item_cur->idx1);
-      if (boolector_is_bv_sort(bzla, s))
+      if (boolector_is_bv_sort(bzla, boolector_get_sort(bzla, item_cur[2].exp)))
       {
         /* (_ to_fp eb sb) RoundingMode (_ BitVec m) */
         exp = boolector_fp_to_fp_from_int(

@@ -748,6 +748,17 @@ bzla_node_is_fp_to_fp_from_fp(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_FP_TO_FP_FP_NODE;
 }
 
+/**
+ * Return true if given node is a floating-point to_fp from machine int
+ * (signed bit-vector) node.
+ */
+static inline bool
+bzla_node_is_fp_to_fp_from_int(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_TO_FP_INT_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 /** Return true if given node is an if-then-else node. */
@@ -1340,6 +1351,12 @@ BzlaNode *bzla_node_create_fp_to_fp_from_fp(Bzla *bzla,
                                             BzlaNode *e0,
                                             BzlaNode *e1,
                                             BzlaSortId sort);
+
+/** Create to_fp from machine integer (signed bit-vector) node. */
+BzlaNode *bzla_node_create_fp_to_fp_from_int(Bzla *bzla,
+                                             BzlaNode *e0,
+                                             BzlaNode *e1,
+                                             BzlaSortId sort);
 
 /*========================================================================*/
 
