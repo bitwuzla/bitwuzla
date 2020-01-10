@@ -546,6 +546,12 @@ compute_hash_exp(Bzla *bzla, BzlaNode *exp, uint32_t table_size)
   {
     hash = hash_to_fp_exp(exp->e[0], 0, bzla_node_get_sort_id(exp));
   }
+  else if (exp->kind == BZLA_FP_TO_FP_FP_NODE
+           || exp->kind == BZLA_FP_TO_FP_INT_NODE
+           || exp->kind == BZLA_FP_TO_FP_UINT_NODE)
+  {
+    hash = hash_to_fp_exp(exp->e[0], exp->e[1], bzla_node_get_sort_id(exp));
+  }
   else
   {
     hash = hash_bv_fp_exp(bzla, exp->kind, exp->arity, exp->e);
@@ -1026,10 +1032,14 @@ recursively_release_exp(Bzla *bzla, BzlaNode *root)
 
   do
   {
-    cur = bzla_node_real_addr(BZLA_POP_STACK(stack));
+    cur = BZLA_POP_STACK(stack);
+    cur = bzla_node_real_addr(cur);
+    assert(cur);
 
     if (cur->refs > 1)
+    {
       cur->refs--;
+    }
     else
     {
     RECURSIVELY_RELEASE_NODE_ENTER_WITHOUT_POP:
@@ -1038,7 +1048,10 @@ recursively_release_exp(Bzla *bzla, BzlaNode *root)
       assert(cur->parents == 0);
 
       for (i = 1; i <= cur->arity; i++)
+      {
+        assert(cur->e[cur->arity - i]);
         BZLA_PUSH_STACK(stack, cur->e[cur->arity - i]);
+      }
 
       if (cur->simplified)
       {
