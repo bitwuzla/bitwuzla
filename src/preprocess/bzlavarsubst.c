@@ -59,7 +59,8 @@ substitute_remove_cycles(Bzla *bzla, BzlaPtrHashTable *substs)
       {
         cur = BZLA_POP_STACK(stack); /* left */
         assert(bzla_node_is_regular(cur));
-        assert(bzla_node_is_bv_var(cur) || bzla_node_is_uf(cur));
+        assert(bzla_node_is_bv_var(cur) || bzla_node_is_rm_var(cur)
+               || bzla_node_is_fp_var(cur) || bzla_node_is_uf(cur));
         assert(!bzla_hashptr_table_get(order, cur));
         bzla_hashptr_table_add(order, cur)->data.as_int = order_num++;
         continue;
@@ -70,6 +71,8 @@ substitute_remove_cycles(Bzla *bzla, BzlaPtrHashTable *substs)
       bzla_hashint_table_add(mark, cur->id);
 
       if (bzla_node_is_bv_const(cur) || bzla_node_is_bv_var(cur)
+          || bzla_node_is_rm_const(cur) || bzla_node_is_rm_var(cur)
+          || bzla_node_is_fp_const(cur) || bzla_node_is_fp_var(cur)
           || bzla_node_is_param(cur) || bzla_node_is_uf(cur))
       {
         b_temp = bzla_hashptr_table_get(substs, cur);
@@ -120,6 +123,8 @@ substitute_remove_cycles(Bzla *bzla, BzlaPtrHashTable *substs)
         continue;
 
       if (bzla_node_is_bv_const(cur) || bzla_node_is_bv_var(cur)
+          || bzla_node_is_rm_const(cur) || bzla_node_is_rm_var(cur)
+          || bzla_node_is_fp_const(cur) || bzla_node_is_fp_var(cur)
           || bzla_node_is_param(cur) || bzla_node_is_uf(cur))
       {
         assert(bzla_hashptr_table_get(order, cur));
