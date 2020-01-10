@@ -451,6 +451,18 @@ bzla_node_is_bv_var(const BzlaNode *exp)
 }
 
 /**
+ * Return true if given node is a rounding mode variable (first-order
+ * constant).
+ */
+static inline bool
+bzla_node_is_rm_var(const BzlaNode *exp)
+{
+  assert(exp);
+  exp = bzla_node_real_addr(exp);
+  return bzla_node_is_rm(exp->bzla, exp) && exp->kind == BZLA_VAR_NODE;
+}
+
+/**
  * Return true if given node is a floating-point variable (first-order
  * constant).
  */

@@ -505,6 +505,7 @@ compute_hash_exp(Bzla *bzla, BzlaNode *exp, uint32_t table_size)
   assert(bzla_util_is_power_of_2(table_size));
   assert(bzla_node_is_regular(exp));
   assert(!bzla_node_is_bv_var(exp));
+  assert(!bzla_node_is_rm_var(exp));
   assert(!bzla_node_is_fp_var(exp));
   assert(!bzla_node_is_uf(exp));
 
@@ -604,6 +605,7 @@ enlarge_nodes_unique_table(Bzla *bzla)
     {
       assert(bzla_node_is_regular(cur));
       assert(!bzla_node_is_bv_var(cur));
+      assert(!bzla_node_is_rm_var(cur));
       assert(!bzla_node_is_fp_var(cur));
       assert(!bzla_node_is_uf(cur));
       temp             = cur->next;
@@ -2756,7 +2758,8 @@ bzla_node_create_var(Bzla *bzla, BzlaSortId sort, const char *symbol)
 {
   assert(bzla);
   assert(sort);
-  assert(bzla_sort_is_bv(bzla, sort) || bzla_sort_is_fp(bzla, sort));
+  assert(bzla_sort_is_bv(bzla, sort) || bzla_sort_is_rm(bzla, sort)
+         || bzla_sort_is_fp(bzla, sort));
   assert(!symbol || !bzla_hashptr_table_get(bzla->symbols, (char *) symbol));
 
   BzlaBVVarNode *exp;
