@@ -4474,6 +4474,48 @@ boolector_get_sort(Bzla *bzla, const BoolectorNode *node)
 }
 
 BoolectorSort
+boolector_array_get_index_sort(Bzla *bzla, const BoolectorNode *node)
+{
+  BzlaNode *exp;
+  BzlaSortId res, sort;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(node);
+  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  BZLA_ABORT(!bzla_node_is_array(bzla_simplify_exp(bzla, exp)),
+             "node must be an array node");
+  BZLA_TRAPI_UNFUN(exp);
+  sort = bzla_node_get_sort_id(exp);
+  res  = bzla_sort_array_get_index(bzla, sort);
+  BZLA_TRAPI_RETURN_SORT(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_SORT(res, array_get_index_sort, BZLA_CLONED_EXP(exp));
+#endif
+  return BZLA_EXPORT_BOOLECTOR_SORT(res);
+}
+
+BoolectorSort
+boolector_array_get_element_sort(Bzla *bzla, const BoolectorNode *node)
+{
+  BzlaNode *exp;
+  BzlaSortId res, sort;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(node);
+  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  BZLA_ABORT(!bzla_node_is_array(bzla_simplify_exp(bzla, exp)),
+             "node must be an array node");
+  BZLA_TRAPI_UNFUN(exp);
+  sort = bzla_node_get_sort_id(exp);
+  res  = bzla_sort_array_get_element(bzla, sort);
+  BZLA_TRAPI_RETURN_SORT(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_SORT(res, array_get_element_sort, BZLA_CLONED_EXP(exp));
+#endif
+  return BZLA_EXPORT_BOOLECTOR_SORT(res);
+}
+
+BoolectorSort
 boolector_fun_get_domain_sort(Bzla *bzla, const BoolectorNode *node)
 {
   BzlaNode *exp;

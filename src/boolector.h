@@ -2255,6 +2255,28 @@ int32_t boolector_get_node_id(Bzla *bzla, BoolectorNode *node);
 BoolectorSort boolector_get_sort(Bzla *bzla, const BoolectorNode *node);
 
 /*!
+  Get the index sort of given array node ``node``.
+  The result does not have to be released.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector function node.
+  :return: Index sort of array ``node``.
+*/
+BoolectorSort boolector_array_get_index_sort(Bzla *bzla,
+                                             const BoolectorNode *node);
+
+/*!
+  Get the element sort of given array node ``node``.
+  The result does not have to be released.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector function node.
+  :return: Element sort of array ``node``.
+*/
+BoolectorSort boolector_array_get_element_sort(Bzla *bzla,
+                                               const BoolectorNode *node);
+
+/*!
   Get the domain sort of given function node ``node``.
   The result does not have to be released.
 

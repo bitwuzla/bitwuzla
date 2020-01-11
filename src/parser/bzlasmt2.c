@@ -2765,7 +2765,7 @@ close_term(BzlaSMT2Parser *parser)
   Bzla *bzla;
   BoolectorNode *exp, *tmp, *old;
   int32_t open, tag, k;
-  uint32_t i, j, width, width2, domain, nargs;
+  uint32_t i, j, width, nargs;
   BzlaSMT2Item *item_open;
   BzlaSMT2Item *item_cur;
   BzlaSMT2Node *sym;
@@ -2941,19 +2941,10 @@ close_term(BzlaSMT2Parser *parser)
           parser, "'not' with %d arguments but expected exactly one", nargs);
     }
     tmp = item_cur[1].exp;
-    if (boolector_is_array(bzla, tmp))
+    if (!boolector_is_bv(bzla, tmp) || boolector_bv_get_width(bzla, tmp) != 1)
     {
       parser->perrcoo = item_cur[1].coo;
-      return !perr_smt2(parser,
-                        "unexpected array expression as argument to 'not'");
-    }
-    if ((width = boolector_bv_get_width(bzla, tmp)) != 1)
-    {
-      parser->perrcoo = item_cur[1].coo;
-      return !perr_smt2(
-          parser,
-          "unexpected bit-vector of width %d as argument to 'not'",
-          width);
+      return !perr_smt2(parser, "expected bit-vector of size 1");
     }
     parser->work.top = item_cur;
     item_open->tag   = BZLA_EXP_TAG_SMT2;
@@ -3080,17 +3071,19 @@ close_term(BzlaSMT2Parser *parser)
       parser->perrcoo = item_cur[2].coo;
       return !perr_smt2(parser, "second argument of 'select' is an array");
     }
-    width  = boolector_bv_get_width(bzla, item_cur[2].exp);
-    domain = boolector_array_get_index_width(bzla, item_cur[1].exp);
-    if (width != domain)
+    if (boolector_is_fun(bzla, item_cur[2].exp))
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser, "second argument of 'select' is a function");
+    }
+    if (boolector_get_sort(bzla, item_cur[2].exp)
+        != boolector_array_get_index_sort(bzla, item_cur[1].exp))
     {
       parser->perrcoo = item_cur->coo;
-      return !perr_smt2(parser,
-                        "first (array) argument of 'select' has index "
-                        "bit-width %u but the second (index) argument "
-                        "has bit-width %u",
-                        domain,
-                        width);
+      return !perr_smt2(
+          parser,
+          "index sort of array (first) argument and sort of index "
+          "(second) argument to 'select' do not match");
     }
     exp = boolector_read(bzla, item_cur[1].exp, item_cur[2].exp);
     release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
@@ -3109,34 +3102,33 @@ close_term(BzlaSMT2Parser *parser)
       parser->perrcoo = item_cur[2].coo;
       return !perr_smt2(parser, "second argument of 'store' is an array");
     }
+    if (boolector_is_fun(bzla, item_cur[2].exp))
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser, "second argument of 'store' is a function");
+    }
     if (boolector_is_array(bzla, item_cur[3].exp))
     {
       parser->perrcoo = item_cur[3].coo;
       return !perr_smt2(parser, "third argument of 'store' is an array");
     }
-    width  = boolector_bv_get_width(bzla, item_cur[2].exp);
-    domain = boolector_array_get_index_width(bzla, item_cur[1].exp);
-    if (width != domain)
+    if (boolector_get_sort(bzla, item_cur[2].exp)
+        != boolector_array_get_index_sort(bzla, item_cur[1].exp))
     {
       parser->perrcoo = item_cur->coo;
-      return !perr_smt2(parser,
-                        "first (array) argument of 'store' has index "
-                        "bit-width %u but the second (index) argument "
-                        "has bit-width %u",
-                        domain,
-                        width);
+      return !perr_smt2(
+          parser,
+          "index sort of array (first) argument and sort of index "
+          "(second) argument to 'store' do not match");
     }
-    width  = boolector_bv_get_width(bzla, item_cur[1].exp);
-    width2 = boolector_bv_get_width(bzla, item_cur[3].exp);
-    if (width != width2)
+    if (boolector_get_sort(bzla, item_cur[3].exp)
+        != boolector_array_get_element_sort(bzla, item_cur[1].exp))
     {
       parser->perrcoo = item_cur->coo;
-      return !perr_smt2(parser,
-                        "first (array) argument of 'store' has element "
-                        "bit-width %u but the third (stored bit-vector) "
-                        "argument has bit-width %u",
-                        width,
-                        width2);
+      return !perr_smt2(
+          parser,
+          "element sort of array (first) argument and sort of element "
+          "(second) argument to 'store' do not match");
     }
     exp = boolector_write(
         bzla, item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
