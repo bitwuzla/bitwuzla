@@ -1834,79 +1834,20 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
 static bool
 check_ite_args_sorts_match_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p)
 {
-  uint32_t domain, width, width2;
   assert(p->tag == BZLA_ITE_TAG_SMT2);
-  if (boolector_is_array(parser->bzla, p[1].exp))
-  {
-    parser->perrcoo = p[1].coo;
-    return !perr_smt2(parser, "first argument of 'ite' is an array");
-  }
-  if (boolector_is_fun(parser->bzla, p[1].exp))
-  {
-    parser->perrcoo = p[1].coo;
-    return !perr_smt2(parser, "first argument of 'ite' is a function");
-  }
-  if ((width2 = boolector_bv_get_width(parser->bzla, p[1].exp)) != 1)
+  if (!boolector_is_bv(parser->bzla, p[1].exp)
+      || boolector_bv_get_width(parser->bzla, p[1].exp) != 1)
   {
     parser->perrcoo = p[1].coo;
     return !perr_smt2(parser,
-                      "first argument of 'ite' is bit-vector of bit-width %u",
-                      width2);
+                      "first argument of 'ite' is not a bit-vector of size 1");
   }
-  if (boolector_is_array(parser->bzla, p[2].exp))
+  if (boolector_get_sort(parser->bzla, p[2].exp)
+      != boolector_get_sort(parser->bzla, p[3].exp))
   {
-    if (!boolector_is_array(parser->bzla, p[3].exp))
-    {
-      parser->perrcoo = p->coo;
-      return !perr_smt2(parser,
-                        "second argument of 'ite' is an array but third not");
-    }
-    width  = boolector_bv_get_width(parser->bzla, p[2].exp);
-    width2 = boolector_bv_get_width(parser->bzla, p[3].exp);
-    if (width != width2)
-    {
-      parser->perrcoo = p->coo;
-      return !perr_smt2(
-          parser,
-          "second argument of 'ite' is array of bit-vectors of width %u and "
-          "third argument is array of bit-vectors of width %u",
-          width,
-          width2);
-    }
-    domain = boolector_array_get_index_width(parser->bzla, p[2].exp);
-    width2 = boolector_array_get_index_width(parser->bzla, p[3].exp);
-    if (domain != width2)
-    {
-      parser->perrcoo = p->coo;
-      return !perr_smt2(
-          parser,
-          "second argument of 'ite' is array with index bit-vectors of width "
-          "%u and "
-          "third argument is array with index bit-vectors of width %u",
-          domain,
-          width2);
-    }
-  }
-  else
-  {
-    if (boolector_is_array(parser->bzla, p[3].exp))
-    {
-      parser->perrcoo = p->coo;
-      return !perr_smt2(parser,
-                        "third argument of 'ite' is an array but second not");
-    }
-    width  = boolector_bv_get_width(parser->bzla, p[2].exp);
-    width2 = boolector_bv_get_width(parser->bzla, p[3].exp);
-    if (width != width2)
-    {
-      parser->perrcoo = p->coo;
-      return !perr_smt2(
-          parser,
-          "second argument of 'ite' is bit-vector of width %d and "
-          "third argument is bit-vector of width %d",
-          width,
-          width2);
-    }
+    parser->perrcoo = p->coo;
+    return !perr_smt2(
+        parser, "sorts of second and third argument to 'ite' do not match");
   }
   return true;
 }
