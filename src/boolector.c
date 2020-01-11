@@ -4929,7 +4929,7 @@ boolector_is_var(Bzla *bzla, BoolectorNode *node)
   BZLA_TRAPI_UNFUN(exp);
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
-  res = bzla_node_is_bv_var(bzla_simplify_exp(bzla, exp));
+  res = bzla_node_is_var(bzla_simplify_exp(bzla, exp));
   BZLA_TRAPI_RETURN_BOOL(res);
 #ifndef NDEBUG
   BZLA_CHKCLONE_RES_BOOL(res, is_var, BZLA_CLONED_EXP(exp));

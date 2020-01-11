@@ -504,9 +504,7 @@ compute_hash_exp(Bzla *bzla, BzlaNode *exp, uint32_t table_size)
   assert(table_size > 0);
   assert(bzla_util_is_power_of_2(table_size));
   assert(bzla_node_is_regular(exp));
-  assert(!bzla_node_is_bv_var(exp));
-  assert(!bzla_node_is_rm_var(exp));
-  assert(!bzla_node_is_fp_var(exp));
+  assert(!bzla_node_is_var(exp));
   assert(!bzla_node_is_uf(exp));
 
   uint32_t hash = 0;
@@ -610,9 +608,7 @@ enlarge_nodes_unique_table(Bzla *bzla)
     while (cur)
     {
       assert(bzla_node_is_regular(cur));
-      assert(!bzla_node_is_bv_var(cur));
-      assert(!bzla_node_is_rm_var(cur));
-      assert(!bzla_node_is_fp_var(cur));
+      assert(!bzla_node_is_var(cur));
       assert(!bzla_node_is_uf(cur));
       temp             = cur->next;
       hash             = compute_hash_exp(bzla, cur, new_size);
@@ -806,7 +802,7 @@ disconnect_child_exp(Bzla *bzla, BzlaNode *parent, uint32_t pos)
   assert(bzla_node_is_regular(parent));
   assert(bzla == parent->bzla);
   assert(!bzla_node_is_bv_const(parent));
-  assert(!bzla_node_is_bv_var(parent));
+  assert(!bzla_node_is_var(parent));
   assert(!bzla_node_is_uf(parent));
   assert(pos <= BZLA_NODE_MAX_CHILDREN - 1);
 
@@ -1133,7 +1129,7 @@ bzla_node_set_bzla_id(Bzla *bzla, BzlaNode *exp, int32_t id)
   assert(exp);
   assert(id);
   assert(bzla == bzla_node_real_addr(exp)->bzla);
-  assert(bzla_node_is_bv_var(exp) || bzla_node_is_uf_array(exp));
+  assert(bzla_node_is_var(exp) || bzla_node_is_uf_array(exp));
 
   (void) bzla;
   BzlaNode *real_exp;

@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2014-2017 Mathias Preiner.
- *  Copyright (C) 2014-2018 Aina Niemetz.
+ *  Copyright (C) 2014-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -399,7 +399,7 @@ bzla_dcr_compare_scores(Bzla *bzla, BzlaNode *a, BzlaNode *b)
 
   if (h == BZLA_JUST_HEUR_BRANCH_MIN_APP)
   {
-    if (bzla_node_is_bv_var(a))
+    if (bzla_node_is_var(a))
       sa = 0;
     else
     {
@@ -408,7 +408,7 @@ bzla_dcr_compare_scores(Bzla *bzla, BzlaNode *a, BzlaNode *b)
       sa = ((BzlaPtrHashTable *) bucket->data.as_ptr)->count;
     }
 
-    if (bzla_node_is_bv_var(b))
+    if (bzla_node_is_var(b))
       sb = 0;
     else
     {
@@ -453,8 +453,10 @@ bzla_dcr_compare_scores_qsort(const void *p1, const void *p2)
 
   if (h == BZLA_JUST_HEUR_BRANCH_MIN_APP)
   {
-    if (bzla_node_is_bv_var(a))
+    if (bzla_node_is_var(a))
+    {
       sa = 0;
+    }
     else
     {
       bucket = bzla_hashptr_table_get(slv->score, a);
@@ -463,8 +465,10 @@ bzla_dcr_compare_scores_qsort(const void *p1, const void *p2)
       sa = ((BzlaPtrHashTable *) bucket->data.as_ptr)->count;
     }
 
-    if (bzla_node_is_bv_var(b))
+    if (bzla_node_is_var(b))
+    {
       sb = 0;
+    }
     else
     {
       bucket = bzla_hashptr_table_get(slv->score, b);
@@ -475,8 +479,10 @@ bzla_dcr_compare_scores_qsort(const void *p1, const void *p2)
   }
   else if (h == BZLA_JUST_HEUR_BRANCH_MIN_DEP)
   {
-    if (bzla_node_is_bv_var(a))
+    if (bzla_node_is_var(a))
+    {
       sa = 1;
+    }
     else
     {
       bucket = bzla_hashptr_table_get(slv->score, a);
@@ -484,8 +490,10 @@ bzla_dcr_compare_scores_qsort(const void *p1, const void *p2)
       sa = bucket->data.as_int;
     }
 
-    if (bzla_node_is_bv_var(b))
+    if (bzla_node_is_var(b))
+    {
       sb = 1;
+    }
     else
     {
       bucket = bzla_hashptr_table_get(slv->score, b);

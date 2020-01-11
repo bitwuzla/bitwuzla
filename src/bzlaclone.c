@@ -572,12 +572,10 @@ clone_exp(Bzla *clone,
   BZLA_PUSH_STACK_IF(exp->last_parent, *parents, &res->last_parent);
   /* <---------------------------------------------------------------------- */
 
-  /* ------- BZLA_BV_ADDITIONAL_VAR_NODE_STRUCT (all nodes except FP) ------ */
-  /* ---------- BZLA_FP_ADDITIONAL_VAR_NODE_STRUCT (all FP nodes) ---------> */
+  /* ------------- BZLA_ADDITIONAL_VAR_NODE_STRUCT (all nodes) ------------- */
   if (!bzla_node_is_bv_const(exp) && !bzla_node_is_fp_const(exp))
   {
-    // TODO will have to exclude more for FP
-    if (!bzla_node_is_bv_var(exp) && !bzla_node_is_param(exp))
+    if (!bzla_node_is_var(exp) && !bzla_node_is_param(exp))
     {
       if (exp->arity)
       {

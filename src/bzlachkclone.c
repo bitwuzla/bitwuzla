@@ -561,7 +561,7 @@ bzla_chkclone_exp(Bzla *bzla,
 
   if (!bzla_node_is_bv_const(real_exp))
   {
-    if (!bzla_node_is_bv_var(real_exp) && !bzla_node_is_uf(real_exp)
+    if (!bzla_node_is_var(real_exp) && !bzla_node_is_uf(real_exp)
         && !bzla_node_is_param(real_exp))
     {
       if (real_exp->arity)

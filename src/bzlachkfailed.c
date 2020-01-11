@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2012-2020 Mathias Preiner.
- *  Copyright (C) 2012-2019 Aina Niemetz.
+ *  Copyright (C) 2012-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -43,9 +43,8 @@ rebuild_formula(Bzla *bzla, uint32_t rewrite_level)
 
     if (cur->arity == 0)
     {
-      assert(bzla_node_is_bv_var(cur) || bzla_node_is_bv_const(cur)
-             || bzla_node_is_fp_var(cur) || bzla_node_is_fp_const(cur)
-             || bzla_node_is_rm_var(cur) || bzla_node_is_rm_const(cur)
+      assert(bzla_node_is_var(cur) || bzla_node_is_bv_const(cur)
+             || bzla_node_is_fp_const(cur) || bzla_node_is_rm_const(cur)
              || bzla_node_is_param(cur) || bzla_node_is_uf(cur));
       bzla_hashptr_table_add(t, cur);
     }

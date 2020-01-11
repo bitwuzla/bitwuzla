@@ -3,7 +3,7 @@
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2014 Armin Biere.
  *  Copyright (C) 2012-2017 Mathias Preiner.
- *  Copyright (C) 2012-2017 Aina Niemetz.
+ *  Copyright (C) 2012-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -174,7 +174,7 @@ bzla_optimize_unconstrained(Bzla *bzla)
     if (!d) continue;
 
     assert(!bzla_node_is_bv_const(cur));
-    assert(!bzla_node_is_bv_var(cur));
+    assert(!bzla_node_is_var(cur));
     assert(!bzla_node_is_uf(cur));
     assert(!bzla_node_is_param(cur));
 

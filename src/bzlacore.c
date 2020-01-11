@@ -1525,8 +1525,8 @@ normalize_substitution(Bzla *bzla,
   real_left  = bzla_node_real_addr(left);
   real_right = bzla_node_real_addr(right);
 
-  if (!bzla_node_is_bv_var(real_left) && !bzla_node_is_bv_var(real_right)
-      && !bzla_node_is_uf(real_left) && !bzla_node_is_uf(real_right))
+  if (bzla_node_is_bv(bzla, real_left) && !bzla_node_is_bv_var(real_left)
+      && !bzla_node_is_bv_var(real_right))
   {
     if (bzla_rewrite_linear_term(bzla, left, &fc, left_result, &tmp))
       *right_result = bzla_exp_bv_sub(bzla, right, tmp);
@@ -1549,7 +1549,7 @@ normalize_substitution(Bzla *bzla,
   }
   else
   {
-    if ((!bzla_node_is_bv_var(real_left) && bzla_node_is_bv_var(real_right))
+    if ((!bzla_node_is_var(real_left) && bzla_node_is_var(real_right))
         || (!bzla_node_is_uf(real_left) && bzla_node_is_uf(real_right)))
     {
       *left_result  = right;

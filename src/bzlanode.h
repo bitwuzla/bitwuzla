@@ -443,6 +443,17 @@ bzla_node_is_fp_const(const BzlaNode *exp)
  * Return true if given node is a bit-vector variable (first-order constant).
  */
 static inline bool
+bzla_node_is_var(const BzlaNode *exp)
+{
+  assert(exp);
+  exp = bzla_node_real_addr(exp);
+  return exp->kind == BZLA_VAR_NODE;
+}
+
+/**
+ * Return true if given node is a bit-vector variable (first-order constant).
+ */
+static inline bool
 bzla_node_is_bv_var(const BzlaNode *exp)
 {
   assert(exp);

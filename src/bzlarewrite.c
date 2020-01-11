@@ -454,6 +454,7 @@ static bool
 is_true_cond(BzlaNode *cond)
 {
   assert(cond);
+  assert(bzla_node_is_bv(bzla_node_real_addr(cond)->bzla, cond));
   assert(bzla_node_bv_get_width(bzla_node_real_addr(cond)->bzla, cond) == 1);
 
   if (bzla_node_is_inverted(cond)
@@ -1309,6 +1310,7 @@ rewrite_linear_term_bounded(Bzla *bzla,
   BzlaBitVector *factor;
 
   if (*bound_ptr <= 0) return false;
+  if (!bzla_node_is_bv(bzla, term)) return false;
 
   *bound_ptr -= 1;
 
@@ -1349,7 +1351,9 @@ rewrite_linear_term_bounded(Bzla *bzla,
       other = term->e[0];
     }
     else
+    {
       return false;
+    }
 
     *rhs_ptr = rewrite_add_exp(bzla, other, tmp);
     bzla_node_release(bzla, tmp);
@@ -1360,7 +1364,9 @@ rewrite_linear_term_bounded(Bzla *bzla,
     {
       if (!rewrite_linear_term_bounded(
               bzla, term->e[1], &factor, lhs_ptr, &tmp, bound_ptr))
+      {
         return false;
+      }
 
       /* term = e0 * e1
        *      = e0 * (factor * lhs + rhs)
@@ -1373,7 +1379,9 @@ rewrite_linear_term_bounded(Bzla *bzla,
     {
       if (!rewrite_linear_term_bounded(
               bzla, term->e[0], &factor, lhs_ptr, &tmp, bound_ptr))
+      {
         return false;
+      }
 
       /* term = e0 * e1
        *      = (factor * lhs + rhs) * e1
@@ -1383,7 +1391,9 @@ rewrite_linear_term_bounded(Bzla *bzla,
       other = term->e[1];
     }
     else
+    {
       return false;
+    }
 
     assert(!bzla_node_is_inverted(other));
     *factor_ptr =
@@ -1399,7 +1409,9 @@ rewrite_linear_term_bounded(Bzla *bzla,
     *factor_ptr = bzla_bv_one(bzla->mm, bzla_node_bv_get_width(bzla, term));
   }
   else
+  {
     return false;
+  }
 
   return true;
 }
@@ -1411,6 +1423,11 @@ bzla_rewrite_linear_term(Bzla *bzla,
                          BzlaNode **lp,
                          BzlaNode **rp)
 {
+  assert(bzla);
+  assert(term);
+  assert(fp);
+  assert(lp);
+  assert(rp);
   uint32_t bound = 100;
   bool res;
   res = rewrite_linear_term_bounded(bzla, term, fp, lp, rp, &bound);
@@ -5692,7 +5709,7 @@ applies_bool_cond(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
   (void) e0;
   (void) e2;
-  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND
+  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv(bzla, e1)
          && bzla_node_bv_get_width(bzla, e1) == 1;
 }
 
