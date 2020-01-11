@@ -1755,6 +1755,7 @@ BzlaFPSymRM::BzlaFPSymRM(BzlaNode *node)
     assert(bzla_node_is_rm_var(node));
     BzlaSortId sort = bzla_sort_bv(s_bzla, BZLA_RM_BW);
     std::stringstream ss;
+    ss << "_rm_var_" << bzla_node_get_id(node) << "_";
     d_node = bzla_exp_var(s_bzla, sort, ss.str().c_str());
     bzla_sort_release(s_bzla, sort);
   }
@@ -2054,6 +2055,7 @@ class BzlaFPWordBlaster
   BzlaFPPackedFloatMap d_packed_float_map;
 
   std::unordered_map<BzlaSortId, BzlaNode *, BzlaSortHashFunction> d_min_map;
+  std::unordered_map<BzlaNode *, BzlaNode *, BzlaNodeHashFunction> d_ite_map;
   Bzla *d_bzla;
 };
 
@@ -2084,6 +2086,11 @@ BzlaFPWordBlaster::~BzlaFPWordBlaster()
   {
     bzla_node_release(d_bzla, p.second);
   }
+  for (const auto &p : d_ite_map)
+  {
+    bzla_node_release(d_bzla, p.first);
+    bzla_node_release(d_bzla, p.second);
+  }
 }
 
 BzlaNode *
@@ -2109,9 +2116,8 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
 
   while (!to_visit.empty())
   {
-    cur = to_visit.back();
+    cur = bzla_node_real_addr(to_visit.back());
     to_visit.pop_back();
-    assert(bzla_node_is_regular(cur));
 
     if (d_prop_map.find(cur) != d_prop_map.end()
         || d_rm_map.find(cur) != d_rm_map.end()
@@ -2125,6 +2131,18 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       visited.emplace(cur, 0);
       to_visit.push_back(cur);
 
+      if (bzla_node_is_cond(cur)
+          && (bzla_node_is_rm(d_bzla, cur->e[1])
+              || bzla_node_is_fp(d_bzla, cur->e[1])))
+      {
+        std::stringstream ss;
+        ss << "_fp_var_" << bzla_node_get_id(cur) << "_";
+        BzlaNode *var =
+            bzla_exp_var(d_bzla, bzla_node_get_sort_id(cur), ss.str().c_str());
+        to_visit.push_back(var);
+        d_ite_map.emplace(bzla_node_copy(d_bzla, cur), var);
+      }
+
       for (uint32_t i = 0; i < cur->arity; ++i)
       {
         to_visit.push_back(cur->e[i]);
@@ -2132,7 +2150,36 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
     }
     else if (visited.at(cur) == 0)
     {
-      if (bzla_node_is_rm_const(cur))
+      if (bzla_node_is_cond(cur)
+          && (bzla_node_is_rm(d_bzla, cur->e[1])
+              || bzla_node_is_fp(d_bzla, cur->e[1])))
+      {
+        assert(d_ite_map.find(cur) != d_ite_map.end());
+        BzlaNode *var = d_ite_map.at(cur);
+
+        if (bzla_node_is_rm(d_bzla, cur->e[1]))
+        {
+          assert(d_rm_map.find(var) != d_rm_map.end());
+          d_rm_map.emplace(cur, d_rm_map.at(var));
+        }
+        else
+        {
+          assert(d_unpacked_float_map.find(var) != d_unpacked_float_map.end());
+          d_unpacked_float_map.emplace(cur, d_unpacked_float_map.at(var));
+        }
+        BzlaNode *then_eq  = bzla_exp_eq(d_bzla, var, cur->e[1]);
+        BzlaNode *else_eq  = bzla_exp_eq(d_bzla, var, cur->e[2]);
+        BzlaNode *then_imp = bzla_exp_implies(d_bzla, cur->e[0], then_eq);
+        BzlaNode *else_imp =
+            bzla_exp_implies(d_bzla, bzla_node_invert(cur->e[0]), else_eq);
+        bzla_assert_exp(d_bzla, then_imp);
+        bzla_assert_exp(d_bzla, else_imp);
+        bzla_node_release(d_bzla, else_imp);
+        bzla_node_release(d_bzla, then_imp);
+        bzla_node_release(d_bzla, else_eq);
+        bzla_node_release(d_bzla, then_eq);
+      }
+      else if (bzla_node_is_rm_const(cur))
       {
         d_rm_map.emplace(cur, BzlaFPSymRM(cur));
       }
