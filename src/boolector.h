@@ -2449,9 +2449,27 @@ bool boolector_is_fp(Bzla *bzla, BoolectorNode *node);
 
   :param bzla: Boolector instance.
   :param node: Boolector node.
-  :return: True if ``node`` is a constant, and false otherwise.
+  :return: True if ``node`` is a bit-vector constant, and false otherwise.
 */
 bool boolector_is_bv_const(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Determine if given node is a rounding mode constant node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: True if ``node`` is a constant, and false otherwise.
+*/
+bool boolector_is_rm_const(Bzla *bzla, BoolectorNode *node);
+
+/*!
+  Determine if given node is a floating-point constant node.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: True if ``node`` is a floating-point constant, and false otherwise.
+*/
+bool boolector_is_fp_const(Bzla *bzla, BoolectorNode *node);
 
 /*!
   Determine if given node is a (bit-vector, rounding mode or
