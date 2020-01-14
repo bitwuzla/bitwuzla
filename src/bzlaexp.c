@@ -2097,16 +2097,11 @@ bzla_exp_fp_gte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
 
-  BzlaNode *result, *lt;
-
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_fp_exp(bzla, e0, e1));
 
-  lt     = bzla_exp_fp_lt(bzla, e0, e1);
-  result = bzla_exp_bv_not(bzla, lt);
-  bzla_node_release(bzla, lt);
-  return result;
+  return bzla_exp_fp_lte(bzla, e1, e0);
 }
 
 BzlaNode *
