@@ -2531,7 +2531,7 @@ close_term_bin_fp_fun_chainable(BzlaSMT2Parser *parser,
   if (!check_fp_args_smt2(parser, item_cur, nargs)) return 0;
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
   exp = fun(bzla, item_cur[1].exp, item_cur[2].exp);
-  for (i = 3; i < nargs; i++)
+  for (i = 3; i <= nargs; i++)
   {
     tmp = fun(bzla, item_cur[i - 1].exp, item_cur[i].exp);
     old = exp;
