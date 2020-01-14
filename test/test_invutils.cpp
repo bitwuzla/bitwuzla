@@ -388,7 +388,10 @@ TEST_F(TestInvUtils, is_inv_srl_const)
   test_is_inv_binary_const(bzla_is_inv_srl_const, boolector_srl, 1);
 }
 
-// TODO mul
+TEST_F(TestInvUtils, is_inv_mul_const)
+{
+  test_is_inv_binary_const(bzla_is_inv_mul_const, boolector_mul, 0);
+}
 // TODO udiv
 // TODO urem
 

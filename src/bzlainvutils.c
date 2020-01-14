@@ -427,6 +427,46 @@ bzla_is_inv_slice(BzlaMemMgr *mm,
 /* -------------------------------------------------------------------------- */
 
 /**
+ * Check whether const bits of domain 'd' matches const bits of 'bv'.
+ */
+static bool
+check_const_bits(BzlaMemMgr *mm, const BzlaBvDomain *d, const BzlaBitVector *bv)
+{
+  bool res;
+  BzlaBitVector *and, * or ;
+  and = bzla_bv_and(mm, bv, d->hi);
+  or  = bzla_bv_or(mm, and, d->lo);
+  res = bzla_bv_compare(or, bv) == 0;
+  bzla_bv_free(mm, or);
+  bzla_bv_free(mm, and);
+  return res;
+}
+
+static bool
+check_const_domain_bits(BzlaMemMgr *mm,
+                        const BzlaBvDomain *d1,
+                        const BzlaBvDomain *d2)
+{
+  bool res;
+  BzlaBitVector *const_d1, *const_d2, *common, *masked_d1, *masked_d2;
+
+  const_d1  = bzla_bv_xnor(mm, d1->lo, d1->hi);
+  const_d2  = bzla_bv_xnor(mm, d2->lo, d2->hi);
+  common    = bzla_bv_and(mm, const_d1, const_d2);
+  masked_d1 = bzla_bv_and(mm, common, d1->lo);
+  masked_d2 = bzla_bv_and(mm, common, d2->lo);
+
+  res = bzla_bv_compare(masked_d1, masked_d2) == 0;
+
+  bzla_bv_free(mm, const_d1);
+  bzla_bv_free(mm, const_d2);
+  bzla_bv_free(mm, common);
+  bzla_bv_free(mm, masked_d1);
+  bzla_bv_free(mm, masked_d2);
+  return res;
+}
+
+/**
  * Check invertibility condition with respect to const bits in x for:
  *
  * x + s = t
@@ -448,14 +488,10 @@ bzla_is_inv_add_const(BzlaMemMgr *mm,
   (void) pos_x;
 
   bool res;
-  BzlaBitVector *sub, *and, * or ;
+  BzlaBitVector *sub;
 
   sub = bzla_bv_sub(mm, t, s);
-  and = bzla_bv_and(mm, sub, x->hi);
-  or  = bzla_bv_or(mm, and, x->lo);
-  res = bzla_bv_compare(or, sub) == 0;
-  bzla_bv_free(mm, or);
-  bzla_bv_free(mm, and);
+  res = check_const_bits(mm, x, sub);
   bzla_bv_free(mm, sub);
   return res;
 }
@@ -585,20 +621,12 @@ bzla_is_inv_eq_const(BzlaMemMgr *mm,
   assert(s);
   (void) pos_x;
 
-  bool res;
-  BzlaBitVector *and, * or ;
-
   if (bzla_bv_is_false(t))
   {
     return bzla_bv_compare(x->hi, x->lo) || bzla_bv_compare(x->hi, s);
   }
 
-  and = bzla_bv_and(mm, s, x->hi);
-  or  = bzla_bv_or(mm, and, x->lo);
-  res = bzla_bv_compare(or, s) == 0;
-  bzla_bv_free(mm, or);
-  bzla_bv_free(mm, and);
-  return res;
+  return check_const_bits(mm, x, s);
 }
 
 bool
@@ -613,7 +641,77 @@ bzla_is_inv_mul_const(BzlaMemMgr *mm,
   assert(t);
   assert(s);
   (void) pos_x;
-  return true;
+
+  bool res = true, lsb_s;
+  BzlaBitVector *mod_inv_s, *tmp;
+
+  res = bzla_is_inv_mul(mm, x, t, s, pos_x);
+
+  if (res && !bzla_bv_is_zero(s) && bzla_bvprop_has_fixed_bits(mm, x))
+  {
+    /* x is constant */
+    if (bzla_bvprop_is_fixed(mm, x))
+    {
+      tmp = bzla_bv_mul(mm, x->lo, s);
+      res = bzla_bv_compare(tmp, t) == 0;
+      bzla_bv_free(mm, tmp);
+    }
+    else
+    {
+      lsb_s = bzla_bv_get_bit(s, 0) == 1;
+
+      /* s odd */
+      if (lsb_s)
+      {
+        mod_inv_s = bzla_bv_mod_inverse(mm, s);
+        tmp       = bzla_bv_mul(mm, mod_inv_s, t);
+        res       = check_const_bits(mm, x, tmp);
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, mod_inv_s);
+      } /* s even */
+      else
+      {
+        /* x = (t >> ctz(s)) * (s >> ctz(s))^-1 */
+
+        BzlaBitVector *tmp_s, *tmp_t, *tmp_x, *mask_lo, *mask_hi, *ones;
+        BzlaBitVector *lo, *hi;
+        BzlaBvDomain *d_tmp_x;
+        uint32_t tz_s = bzla_bv_get_num_trailing_zeros(s);
+        assert(tz_s <= bzla_bv_get_num_trailing_zeros(t));
+
+        tmp_s = bzla_bv_srl_uint64(mm, s, tz_s);
+        tmp_t = bzla_bv_srl_uint64(mm, t, tz_s);
+
+        assert(bzla_bv_get_bit(tmp_s, 0) == 1);
+
+        mod_inv_s = bzla_bv_mod_inverse(mm, tmp_s);
+        bzla_bv_free(mm, tmp_s);
+
+        tmp_x = bzla_bv_mul(mm, mod_inv_s, tmp_t);
+        bzla_bv_free(mm, tmp_t);
+        bzla_bv_free(mm, mod_inv_s);
+
+        /* create domain of x with the most ctz(s) bits set to 'x'. */
+        ones    = bzla_bv_ones(mm, bzla_bv_get_width(tmp_x));
+        mask_lo = bzla_bv_srl_uint64(mm, ones, tz_s);
+        mask_hi = bzla_bv_not(mm, mask_lo);
+        bzla_bv_free(mm, ones);
+
+        lo      = bzla_bv_and(mm, mask_lo, tmp_x);
+        hi      = bzla_bv_or(mm, mask_hi, tmp_x);
+        d_tmp_x = bzla_bvprop_new(mm, lo, hi);
+        bzla_bv_free(mm, tmp_x);
+        bzla_bv_free(mm, mask_lo);
+        bzla_bv_free(mm, mask_hi);
+        bzla_bv_free(mm, lo);
+        bzla_bv_free(mm, hi);
+
+        res = check_const_domain_bits(mm, d_tmp_x, x);
+        bzla_bvprop_free(mm, d_tmp_x);
+      }
+    }
+  }
+  return res;
 }
 
 /**
