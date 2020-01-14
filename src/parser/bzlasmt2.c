@@ -2060,9 +2060,12 @@ parse_bit_width_smt2(BzlaSMT2Parser *parser, uint32_t *width)
 /* -------------------------------------------------------------------------- */
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (OP Bool Bool Bool)
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_bin_bool(BzlaSMT2Parser *parser,
@@ -2137,9 +2140,12 @@ close_term_bin_bool(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (OP (_ BitVec m) (_ BitVec m))
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_unary_bv_fun(BzlaSMT2Parser *parser,
@@ -2168,9 +2174,13 @@ close_term_unary_bv_fun(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (LEFT_ASSOCIATIVE_OP (_ BitVec m) (_ BitVec m) (_ BitVec m))
+ * (concat (_ BitVec m) (_ BitVec n) (_ BitVec m+n))
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
@@ -2249,9 +2259,13 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (OP (_ BitVec m) (_ BitVec m) (_ BitVec m))
+ * (OP (_ BitVec m) (_ BitVec m) Bool)
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_bin_bv_fun(BzlaSMT2Parser *parser,
@@ -2299,9 +2313,13 @@ close_term_bin_bv_fun(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * ((_ zero_extend i) (_ BitVec m) (_ BitVec m+i))
+ * ((_ sign_extend i) (_ BitVec m) (_ BitVec m+i))
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_extend_bv_fun(BzlaSMT2Parser *parser,
@@ -2338,9 +2356,13 @@ close_term_extend_bv_fun(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * ((_ rotate_left i) (_ BitVec m) (_ BitVec m))
+ * ((_ rotate_right i) (_ BitVec m) (_ BitVec m))
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_rotate_bv_fun(BzlaSMT2Parser *parser,
@@ -2371,9 +2393,15 @@ close_term_rotate_bv_fun(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (
+ *   OP (_ FloatingPoint eb sb)
+ *   (_ FloatingPoint eb sb)
+ * )
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_unary_fp_fun(BzlaSMT2Parser *parser,
@@ -2400,9 +2428,15 @@ close_term_unary_fp_fun(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (
+ *   OP RoundingMode (_ FloatingPoint eb sb)
+ *   (_ FloatingPoint eb sb)
+ * )
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_unary_rm_fp_fun(BzlaSMT2Parser *parser,
@@ -2431,9 +2465,15 @@ close_term_unary_rm_fp_fun(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (
+ *   OP (_ FloatingPoint eb sb)
+ *   Bool
+ * )
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_unary_bool_fp_fun(BzlaSMT2Parser *parser,
@@ -2465,9 +2505,15 @@ close_term_unary_bool_fp_fun(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (
+ *   OP (_ FloatingPoint eb sb) (_ FloatingPoint eb sb)
+ *   (_ FloatingPoint eb sb)
+ * )
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_bin_fp_fun(BzlaSMT2Parser *parser,
@@ -2498,9 +2544,15 @@ close_term_bin_fp_fun(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (
+ *   OP (_ FloatingPoint eb sb) (_ FloatingPoint eb sb)
+ *   Bool
+ * )
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_bin_fp_fun_chainable(BzlaSMT2Parser *parser,
@@ -2544,9 +2596,15 @@ close_term_bin_fp_fun_chainable(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (
+ *   OP RoundingMode (_ FloatingPoint eb sb) (_ FloatingPoint eb sb)
+ *   (_ FloatingPoint eb sb)
+ * )
+ *
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_bin_rm_fp_fun(BzlaSMT2Parser *parser,
@@ -2579,9 +2637,22 @@ close_term_bin_rm_fp_fun(BzlaSMT2Parser *parser,
 }
 
 /**
- * item_open and item_cur point to items on the parser work stack.
- * If if nargs > 0, we expect nargs SMT2Items on the stack after item_cur:
- * item_cur[1] is the first argument, ..., item_cur[nargs] is the last argument.
+ * (
+ *   (_ to_fp eb sb) RoundingMode (_ FloatingPoint eb sb)
+ *   (_ FloatingPoint eb sb)
+ * )
+ * (
+ *   (_ to_fp eb sb) RoundingMode (_ BitVec m)
+ *   (_ FloatingPoint eb sb)
+ * )
+ * (
+ *   (_ to_fp_unsigned eb sb) RoundingMode (_ BitVec m)
+ *   (_ FloatingPoint eb sb)
+ * )
+ * Note: item_open and item_cur point to items on the parser work stack.
+ *       If if nargs > 0, we expect nargs SMT2Items on the stack after
+ *       item_cur: item_cur[1] is the first argument, ..., item_cur[nargs] is
+ *       the last argument.
  */
 static int32_t
 close_term_to_fp_two_args(BzlaSMT2Parser *parser,
