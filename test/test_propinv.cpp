@@ -49,6 +49,21 @@ class TestPropInv : public TestBzla
     bzla_model_generate(d_bzla, d_bzla->bv_model, d_bzla->fun_model, 0);
   }
 
+  void clear_domains()
+  {
+    BzlaIntHashTableIterator iit;
+    bzla_iter_hashint_init(&iit, d_domains);
+    while (bzla_iter_hashint_has_next(&iit))
+    {
+      int32_t key = bzla_iter_hashint_next(&iit);
+      bzla_bvprop_free(d_mm,
+                       static_cast<BzlaBvDomain *>(
+                           bzla_hashint_map_get(d_domains, key)->as_ptr));
+      bzla_hashint_map_remove(d_domains, key, 0);
+    }
+    assert(d_domains->count == 0);
+  }
+
   /**
    * Check the result of a previous inverse value computation. Given 's'
    * (the assignment of the other operand) and 't' (the target value of the
@@ -90,7 +105,6 @@ class TestPropInv : public TestBzla
 
     uint64_t k;
     BzlaBitVector *res;
-    BzlaIntHashTableIterator iit;
     BzlaBvDomain *x = 0;
     (void) is_inv;
 
@@ -122,19 +136,7 @@ class TestPropInv : public TestBzla
     ASSERT_EQ(bzla_bv_compare(res, x_exp), 0);
     bzla_bv_free(d_mm, res);
 
-    if (use_domains)
-    {
-      bzla_iter_hashint_init(&iit, d_domains);
-      while (bzla_iter_hashint_has_next(&iit))
-      {
-        int32_t key = bzla_iter_hashint_next(&iit);
-        bzla_bvprop_free(d_mm,
-                         static_cast<BzlaBvDomain *>(
-                             bzla_hashint_map_get(d_domains, key)->as_ptr));
-        bzla_hashint_map_remove(d_domains, key, 0);
-      }
-      assert(d_domains->count == 0);
-    }
+    clear_domains();
   }
 
   /**
@@ -302,8 +304,7 @@ class TestPropInv : public TestBzla
     BzlaSortId sort;
     BzlaBitVector *bvand, *s[2], *res, *tmp, *tmp2;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaSolver *slv = 0;
-    BzlaIntHashTableIterator iit;
+    BzlaSolver *slv              = 0;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_and;
 
     sort = bzla_sort_bv(d_bzla, bw);
@@ -408,19 +409,7 @@ class TestPropInv : public TestBzla
       bzla_bv_free(d_mm, s[1]);
     }
 
-    if (use_domains)
-    {
-      bzla_iter_hashint_init(&iit, d_domains);
-      while (bzla_iter_hashint_has_next(&iit))
-      {
-        int32_t key = bzla_iter_hashint_next(&iit);
-        bzla_bvprop_free(d_mm,
-                         static_cast<BzlaBvDomain *>(
-                             bzla_hashint_map_get(d_domains, key)->as_ptr));
-        bzla_hashint_map_remove(d_domains, key, 0);
-      }
-      assert(d_domains->count == 0);
-    }
+    clear_domains();
 
     bzla_node_release(d_bzla, _and);
     bzla_node_release(d_bzla, e[0]);
@@ -443,8 +432,7 @@ class TestPropInv : public TestBzla
     BzlaSortId sort;
     BzlaBitVector *res, *bvult, *s, *zero, *bvmax;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaSolver *slv = 0;
-    BzlaIntHashTableIterator iit;
+    BzlaSolver *slv              = 0;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_ult;
 
     sort = bzla_sort_bv(d_bzla, bw);
@@ -526,19 +514,7 @@ class TestPropInv : public TestBzla
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
 
-    if (use_domains)
-    {
-      bzla_iter_hashint_init(&iit, d_domains);
-      while (bzla_iter_hashint_has_next(&iit))
-      {
-        int32_t key = bzla_iter_hashint_next(&iit);
-        bzla_bvprop_free(d_mm,
-                         static_cast<BzlaBvDomain *>(
-                             bzla_hashint_map_get(d_domains, key)->as_ptr));
-        bzla_hashint_map_remove(d_domains, key, 0);
-      }
-      assert(d_domains->count == 0);
-    }
+    clear_domains();
 
     bzla_bv_free(d_mm, bvult);
     bzla_bv_free(d_mm, zero);
@@ -564,7 +540,6 @@ class TestPropInv : public TestBzla
     BzlaNode *sll, *e[2];
     BzlaSortId sort;
     BzlaSolver *slv = 0;
-    BzlaIntHashTableIterator iit;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -696,19 +671,7 @@ class TestPropInv : public TestBzla
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
 
-    if (use_domains)
-    {
-      bzla_iter_hashint_init(&iit, d_domains);
-      while (bzla_iter_hashint_has_next(&iit))
-      {
-        int32_t key = bzla_iter_hashint_next(&iit);
-        bzla_bvprop_free(d_mm,
-                         static_cast<BzlaBvDomain *>(
-                             bzla_hashint_map_get(d_domains, key)->as_ptr));
-        bzla_hashint_map_remove(d_domains, key, 0);
-      }
-      assert(d_domains->count == 0);
-    }
+    clear_domains();
 
     bzla_node_release(d_bzla, sll);
     bzla_node_release(d_bzla, e[0]);
@@ -730,7 +693,6 @@ class TestPropInv : public TestBzla
     BzlaNode *srl, *e[2];
     BzlaSortId sort;
     BzlaSolver *slv = 0;
-    BzlaIntHashTableIterator iit;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -862,19 +824,7 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
 
-    if (use_domains)
-    {
-      bzla_iter_hashint_init(&iit, d_domains);
-      while (bzla_iter_hashint_has_next(&iit))
-      {
-        int32_t key = bzla_iter_hashint_next(&iit);
-        bzla_bvprop_free(d_mm,
-                         static_cast<BzlaBvDomain *>(
-                             bzla_hashint_map_get(d_domains, key)->as_ptr));
-        bzla_hashint_map_remove(d_domains, key, 0);
-      }
-      assert(d_domains->count == 0);
-    }
+    clear_domains();
 
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
     d_bzla->slv->api.delet(d_bzla->slv);
@@ -1113,8 +1063,7 @@ class TestPropInv : public TestBzla
     BzlaSortId sort;
     BzlaBitVector *res, *s, *bvurem, *bvmax, *zero, *two, *tmp, *tmp2;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaSolver *slv = 0;
-    BzlaIntHashTableIterator iit;
+    BzlaSolver *slv              = 0;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_urem;
 
     sort = bzla_sort_bv(d_bzla, bw);
@@ -1304,19 +1253,7 @@ class TestPropInv : public TestBzla
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
 
-    if (use_domains)
-    {
-      bzla_iter_hashint_init(&iit, d_domains);
-      while (bzla_iter_hashint_has_next(&iit))
-      {
-        int32_t key = bzla_iter_hashint_next(&iit);
-        bzla_bvprop_free(d_mm,
-                         static_cast<BzlaBvDomain *>(
-                             bzla_hashint_map_get(d_domains, key)->as_ptr));
-        bzla_hashint_map_remove(d_domains, key, 0);
-      }
-      assert(d_domains->count == 0);
-    }
+    clear_domains();
 
     bzla_bv_free(d_mm, zero);
     bzla_bv_free(d_mm, bvmax);
@@ -1343,8 +1280,7 @@ class TestPropInv : public TestBzla
     BzlaSortId sorts[2];
     BzlaBitVector *res, *bvconcat, *s[2], *tmp[2];
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaSolver *slv = 0;
-    BzlaIntHashTableIterator iit;
+    BzlaSolver *slv              = 0;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_concat;
 
     /* prop engine: all conflicts are treated as fixable */
@@ -1435,19 +1371,8 @@ class TestPropInv : public TestBzla
         bzla_bv_free(d_mm, tmp[j]);
       }
 
-      if (use_domains)
-      {
-        bzla_iter_hashint_init(&iit, d_domains);
-        while (bzla_iter_hashint_has_next(&iit))
-        {
-          int32_t key = bzla_iter_hashint_next(&iit);
-          bzla_bvprop_free(d_mm,
-                           static_cast<BzlaBvDomain *>(
-                               bzla_hashint_map_get(d_domains, key)->as_ptr));
-          bzla_hashint_map_remove(d_domains, key, 0);
-        }
-        assert(d_domains->count == 0);
-      }
+      clear_domains();
+
       bzla_node_release(d_bzla, concat);
       bzla_bv_free(d_mm, bvconcat);
     }
@@ -1491,7 +1416,6 @@ class TestPropInv : public TestBzla
     BzlaNode *cmul[2], *ce[2];
     BzlaBitVector *res;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_mul;
 
     if (use_domains)
@@ -1542,19 +1466,7 @@ class TestPropInv : public TestBzla
     }
     bzla_bv_free(d_mm, res);
 
-    if (use_domains)
-    {
-      bzla_iter_hashint_init(&iit, d_domains);
-      while (bzla_iter_hashint_has_next(&iit))
-      {
-        int32_t key = bzla_iter_hashint_next(&iit);
-        bzla_bvprop_free(d_mm,
-                         static_cast<BzlaBvDomain *>(
-                             bzla_hashint_map_get(d_domains, key)->as_ptr));
-        bzla_hashint_map_remove(d_domains, key, 0);
-      }
-      assert(d_domains->count == 0);
-    }
+    clear_domains();
 
     bzla_node_release(d_bzla, ce[0]);
     bzla_node_release(d_bzla, ce[1]);
@@ -1582,7 +1494,6 @@ class TestPropInv : public TestBzla
     BzlaNode *cudiv, *ce;
     BzlaBitVector *res;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaIntHashTableIterator iit;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_udiv;
 
     if (use_domains)
@@ -1635,19 +1546,7 @@ class TestPropInv : public TestBzla
       bzla_node_release(d_bzla, ce);
     }
 
-    if (use_domains)
-    {
-      bzla_iter_hashint_init(&iit, d_domains);
-      while (bzla_iter_hashint_has_next(&iit))
-      {
-        int32_t key = bzla_iter_hashint_next(&iit);
-        bzla_bvprop_free(d_mm,
-                         static_cast<BzlaBvDomain *>(
-                             bzla_hashint_map_get(d_domains, key)->as_ptr));
-        bzla_hashint_map_remove(d_domains, key, 0);
-      }
-      assert(d_domains->count == 0);
-    }
+    clear_domains();
   }
 
   /**
