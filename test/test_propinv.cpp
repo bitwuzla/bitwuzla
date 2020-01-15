@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2019 Aina Niemetz.
+ *  Copyright (C) 2015-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -86,6 +86,7 @@ class TestPropInv : public TestBzla
                     bool use_domains)
   {
     assert(bzla_node_is_regular(exp));
+    assert(d_domains);
 
     uint64_t k;
     BzlaBitVector *res;
@@ -95,8 +96,6 @@ class TestPropInv : public TestBzla
 
     if (use_domains)
     {
-      assert(!d_domains);
-      d_domains = bzla_hashint_map_new(d_bzla->mm);
       bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x = (BzlaBvDomain *) bzla_hashint_map_get(
               d_domains, bzla_node_real_addr(exp->e[idx_x])->id)
@@ -128,12 +127,13 @@ class TestPropInv : public TestBzla
       bzla_iter_hashint_init(&iit, d_domains);
       while (bzla_iter_hashint_has_next(&iit))
       {
+        int32_t key = bzla_iter_hashint_next(&iit);
         bzla_bvprop_free(d_mm,
                          static_cast<BzlaBvDomain *>(
-                             bzla_iter_hashint_next_data(&iit)->as_ptr));
+                             bzla_hashint_map_get(d_domains, key)->as_ptr));
+        bzla_hashint_map_remove(d_domains, key, 0);
       }
-      bzla_hashint_map_delete(d_domains);
-      d_domains = nullptr;
+      assert(d_domains->count == 0);
     }
   }
 
@@ -314,9 +314,8 @@ class TestPropInv : public TestBzla
 
     if (use_domains)
     {
-      assert(!d_domains);
-      inv_fun   = bzla_proputils_inv_and_bvprop;
-      d_domains = bzla_hashint_map_new(d_bzla->mm);
+      assert(d_domains);
+      inv_fun = bzla_proputils_inv_and_bvprop;
       bzla_prop_solver_init_domains(d_bzla, d_domains, _and);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(_and->e[0])->id)
@@ -414,12 +413,13 @@ class TestPropInv : public TestBzla
       bzla_iter_hashint_init(&iit, d_domains);
       while (bzla_iter_hashint_has_next(&iit))
       {
+        int32_t key = bzla_iter_hashint_next(&iit);
         bzla_bvprop_free(d_mm,
                          static_cast<BzlaBvDomain *>(
-                             bzla_iter_hashint_next_data(&iit)->as_ptr));
+                             bzla_hashint_map_get(d_domains, key)->as_ptr));
+        bzla_hashint_map_remove(d_domains, key, 0);
       }
-      bzla_hashint_map_delete(d_domains);
-      d_domains = nullptr;
+      assert(d_domains->count == 0);
     }
 
     bzla_node_release(d_bzla, _and);
@@ -455,9 +455,8 @@ class TestPropInv : public TestBzla
 
     if (use_domains)
     {
-      assert(!d_domains);
-      inv_fun   = bzla_proputils_inv_ult_bvprop;
-      d_domains = bzla_hashint_map_new(d_bzla->mm);
+      assert(d_domains);
+      inv_fun = bzla_proputils_inv_ult_bvprop;
       bzla_prop_solver_init_domains(d_bzla, d_domains, ult);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(ult->e[0])->id)
@@ -532,12 +531,13 @@ class TestPropInv : public TestBzla
       bzla_iter_hashint_init(&iit, d_domains);
       while (bzla_iter_hashint_has_next(&iit))
       {
+        int32_t key = bzla_iter_hashint_next(&iit);
         bzla_bvprop_free(d_mm,
                          static_cast<BzlaBvDomain *>(
-                             bzla_iter_hashint_next_data(&iit)->as_ptr));
+                             bzla_hashint_map_get(d_domains, key)->as_ptr));
+        bzla_hashint_map_remove(d_domains, key, 0);
       }
-      bzla_hashint_map_delete(d_domains);
-      d_domains = nullptr;
+      assert(d_domains->count == 0);
     }
 
     bzla_bv_free(d_mm, bvult);
@@ -574,8 +574,7 @@ class TestPropInv : public TestBzla
 
     if (use_domains)
     {
-      assert(!d_domains);
-      d_domains = bzla_hashint_map_new(d_bzla->mm);
+      assert(d_domains);
       bzla_prop_solver_init_domains(d_bzla, d_domains, sll);
     }
 
@@ -702,12 +701,13 @@ class TestPropInv : public TestBzla
       bzla_iter_hashint_init(&iit, d_domains);
       while (bzla_iter_hashint_has_next(&iit))
       {
+        int32_t key = bzla_iter_hashint_next(&iit);
         bzla_bvprop_free(d_mm,
                          static_cast<BzlaBvDomain *>(
-                             bzla_iter_hashint_next_data(&iit)->as_ptr));
+                             bzla_hashint_map_get(d_domains, key)->as_ptr));
+        bzla_hashint_map_remove(d_domains, key, 0);
       }
-      bzla_hashint_map_delete(d_domains);
-      d_domains = nullptr;
+      assert(d_domains->count == 0);
     }
 
     bzla_node_release(d_bzla, sll);
@@ -740,8 +740,7 @@ class TestPropInv : public TestBzla
 
     if (use_domains)
     {
-      assert(!d_domains);
-      d_domains = bzla_hashint_map_new(d_bzla->mm);
+      assert(d_domains);
       bzla_prop_solver_init_domains(d_bzla, d_domains, srl);
     }
 
@@ -868,12 +867,13 @@ class TestPropInv : public TestBzla
       bzla_iter_hashint_init(&iit, d_domains);
       while (bzla_iter_hashint_has_next(&iit))
       {
+        int32_t key = bzla_iter_hashint_next(&iit);
         bzla_bvprop_free(d_mm,
                          static_cast<BzlaBvDomain *>(
-                             bzla_iter_hashint_next_data(&iit)->as_ptr));
+                             bzla_hashint_map_get(d_domains, key)->as_ptr));
+        bzla_hashint_map_remove(d_domains, key, 0);
       }
-      bzla_hashint_map_delete(d_domains);
-      d_domains = nullptr;
+      assert(d_domains->count == 0);
     }
 
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
@@ -1125,9 +1125,8 @@ class TestPropInv : public TestBzla
 
     if (use_domains)
     {
-      assert(!d_domains);
-      inv_fun   = bzla_proputils_inv_urem_bvprop;
-      d_domains = bzla_hashint_map_new(d_bzla->mm);
+      assert(d_domains);
+      inv_fun = bzla_proputils_inv_urem_bvprop;
       bzla_prop_solver_init_domains(d_bzla, d_domains, urem);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(urem->e[0])->id)
@@ -1310,12 +1309,13 @@ class TestPropInv : public TestBzla
       bzla_iter_hashint_init(&iit, d_domains);
       while (bzla_iter_hashint_has_next(&iit))
       {
+        int32_t key = bzla_iter_hashint_next(&iit);
         bzla_bvprop_free(d_mm,
                          static_cast<BzlaBvDomain *>(
-                             bzla_iter_hashint_next_data(&iit)->as_ptr));
+                             bzla_hashint_map_get(d_domains, key)->as_ptr));
+        bzla_hashint_map_remove(d_domains, key, 0);
       }
-      bzla_hashint_map_delete(d_domains);
-      d_domains = nullptr;
+      assert(d_domains->count == 0);
     }
 
     bzla_bv_free(d_mm, zero);
@@ -1364,9 +1364,8 @@ class TestPropInv : public TestBzla
 
       if (use_domains)
       {
-        assert(!d_domains);
-        inv_fun   = bzla_proputils_inv_concat_bvprop;
-        d_domains = bzla_hashint_map_new(d_bzla->mm);
+        assert(d_domains);
+        inv_fun = bzla_proputils_inv_concat_bvprop;
         bzla_prop_solver_init_domains(d_bzla, d_domains, concat);
         x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                  d_domains, bzla_node_real_addr(concat->e[0])->id)
@@ -1441,12 +1440,13 @@ class TestPropInv : public TestBzla
         bzla_iter_hashint_init(&iit, d_domains);
         while (bzla_iter_hashint_has_next(&iit))
         {
+          int32_t key = bzla_iter_hashint_next(&iit);
           bzla_bvprop_free(d_mm,
                            static_cast<BzlaBvDomain *>(
-                               bzla_iter_hashint_next_data(&iit)->as_ptr));
+                               bzla_hashint_map_get(d_domains, key)->as_ptr));
+          bzla_hashint_map_remove(d_domains, key, 0);
         }
-        bzla_hashint_map_delete(d_domains);
-        d_domains = nullptr;
+        assert(d_domains->count == 0);
       }
       bzla_node_release(d_bzla, concat);
       bzla_bv_free(d_mm, bvconcat);
@@ -1496,9 +1496,8 @@ class TestPropInv : public TestBzla
 
     if (use_domains)
     {
-      assert(!d_domains);
-      inv_fun   = bzla_proputils_inv_mul_bvprop;
-      d_domains = bzla_hashint_map_new(d_bzla->mm);
+      assert(d_domains);
+      inv_fun = bzla_proputils_inv_mul_bvprop;
       bzla_prop_solver_init_domains(d_bzla, d_domains, mul);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(mul->e[0])->id)
@@ -1548,12 +1547,13 @@ class TestPropInv : public TestBzla
       bzla_iter_hashint_init(&iit, d_domains);
       while (bzla_iter_hashint_has_next(&iit))
       {
+        int32_t key = bzla_iter_hashint_next(&iit);
         bzla_bvprop_free(d_mm,
                          static_cast<BzlaBvDomain *>(
-                             bzla_iter_hashint_next_data(&iit)->as_ptr));
+                             bzla_hashint_map_get(d_domains, key)->as_ptr));
+        bzla_hashint_map_remove(d_domains, key, 0);
       }
-      bzla_hashint_map_delete(d_domains);
-      d_domains = nullptr;
+      assert(d_domains->count == 0);
     }
 
     bzla_node_release(d_bzla, ce[0]);
@@ -1587,9 +1587,8 @@ class TestPropInv : public TestBzla
 
     if (use_domains)
     {
-      assert(!d_domains);
-      inv_fun   = bzla_proputils_inv_udiv_bvprop;
-      d_domains = bzla_hashint_map_new(d_bzla->mm);
+      assert(d_domains);
+      inv_fun = bzla_proputils_inv_udiv_bvprop;
       bzla_prop_solver_init_domains(d_bzla, d_domains, udiv);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(udiv->e[0])->id)
@@ -1641,12 +1640,13 @@ class TestPropInv : public TestBzla
       bzla_iter_hashint_init(&iit, d_domains);
       while (bzla_iter_hashint_has_next(&iit))
       {
+        int32_t key = bzla_iter_hashint_next(&iit);
         bzla_bvprop_free(d_mm,
                          static_cast<BzlaBvDomain *>(
-                             bzla_iter_hashint_next_data(&iit)->as_ptr));
+                             bzla_hashint_map_get(d_domains, key)->as_ptr));
+        bzla_hashint_map_remove(d_domains, key, 0);
       }
-      bzla_hashint_map_delete(d_domains);
-      d_domains = nullptr;
+      assert(d_domains->count == 0);
     }
   }
 
@@ -1668,6 +1668,8 @@ class TestPropInv : public TestBzla
                         uint64_t rvalmax,
                         bool use_domains)
   {
+    assert(d_domains);
+
     bool inv;
     BzlaNode *cshift, *ce;
     BzlaBitVector *res, *t, *s;

@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2019 Aina Niemetz.
+ *  Copyright (C) 2015-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -305,6 +305,7 @@ delete_prop_solver(BzlaPropSolver *slv)
 {
   assert(slv);
   assert(slv->kind == BZLA_PROP_SOLVER_KIND);
+  assert(slv->domains);
   assert(slv->bzla);
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
@@ -313,15 +314,12 @@ delete_prop_solver(BzlaPropSolver *slv)
   if (slv->score) bzla_hashint_map_delete(slv->score);
   if (slv->roots) bzla_hashint_map_delete(slv->roots);
 
-  if (slv->domains)
+  bzla_iter_hashint_init(&it, slv->domains);
+  while (bzla_iter_hashint_has_next(&it))
   {
-    bzla_iter_hashint_init(&it, slv->domains);
-    while (bzla_iter_hashint_has_next(&it))
-    {
-      bzla_bvprop_free(slv->bzla->mm, bzla_iter_hashint_next_data(&it)->as_ptr);
-    }
-    bzla_hashint_map_delete(slv->domains);
+    bzla_bvprop_free(slv->bzla->mm, bzla_iter_hashint_next_data(&it)->as_ptr);
   }
+  bzla_hashint_map_delete(slv->domains);
 
   assert(BZLA_EMPTY_STACK(slv->toprop));
   BZLA_RELEASE_STACK(slv->toprop);
@@ -427,11 +425,11 @@ bzla_prop_solver_sat(Bzla *bzla)
 
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
+  assert(slv->domains);
+  assert(slv->domains->count == 0);
 
   nprops           = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
   opt_prop_domains = bzla_opt_get(bzla, BZLA_OPT_PROP_DOMAINS);
-
-  if (!slv->domains) slv->domains = bzla_hashint_map_new(bzla->mm);
 
   if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
   {
@@ -451,7 +449,9 @@ bzla_prop_solver_sat(Bzla *bzla)
   {
     root = bzla_iter_hashptr_next(&it);
     if (opt_prop_domains)
+    {
       bzla_prop_solver_init_domains(bzla, slv->domains, root);
+    }
   }
 
   bzla_iter_hashptr_init(&it, bzla->assumptions);
@@ -470,7 +470,9 @@ bzla_prop_solver_sat(Bzla *bzla)
       bzla_synthesize_exp(bzla, root, 0);
     }
     if (opt_prop_domains)
+    {
       bzla_prop_solver_init_domains(bzla, slv->domains, root);
+    }
   }
 
   for (;;)
@@ -580,8 +582,6 @@ DONE:
       bzla_bvprop_free(slv->bzla->mm,
                        bzla_iter_hashint_next_data(&iit)->as_ptr);
     }
-    bzla_hashint_map_delete(slv->domains);
-    slv->domains = 0;
   }
   bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
   assert(BZLA_EMPTY_STACK(slv->prop_path));
@@ -866,8 +866,9 @@ bzla_new_prop_solver(Bzla *bzla)
 
   BZLA_CNEW(bzla->mm, slv);
 
-  slv->bzla = bzla;
-  slv->kind = BZLA_PROP_SOLVER_KIND;
+  slv->bzla    = bzla;
+  slv->kind    = BZLA_PROP_SOLVER_KIND;
+  slv->domains = bzla_hashint_map_new(bzla->mm);
 
   slv->api.clone = (BzlaSolverClone) clone_prop_solver;
   slv->api.delet = (BzlaSolverDelete) delete_prop_solver;
