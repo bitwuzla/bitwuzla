@@ -593,6 +593,30 @@ BzlaNode *bzla_exp_fp_fma(
     Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3);
 
 /**
+ * Create signed bit-vector fp.to_sbv from given floating-point wrt to given
+ * rounding mode.
+ * e0: rounding mode
+ * e1: floating-point operand
+ * sort: bit-vector sort
+ */
+BzlaNode *bzla_exp_fp_to_sbv(Bzla *bzla,
+                             BzlaNode *e0,
+                             BzlaNode *e1,
+                             BzlaSortId sort);
+
+/**
+ * Create signed bit-vector fp.to_ubv from given floating-point wrt to given
+ * rounding mode.
+ * e0: rounding mode
+ * e1: floating-point operand
+ * sort: bit-vector sort
+ */
+BzlaNode *bzla_exp_fp_to_ubv(Bzla *bzla,
+                             BzlaNode *e0,
+                             BzlaNode *e1,
+                             BzlaSortId sort);
+
+/**
  * Create floating-point of given floating-point sort from given bit-vector
  * expression 'exp' (interpreted as in IEEE 754-2008 interchange format).
  * exp:  bit-vector operand

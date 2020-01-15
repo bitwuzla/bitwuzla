@@ -82,10 +82,10 @@ bool bzla_dbg_precond_rm_binary_fp_exp(Bzla* bzla,
                                        const BzlaNode* e1);
 
 /* Check assertions for binary fp to_fp expressions. */
-bool bzla_dbg_precond_binary_fp_to_fp_exp(Bzla* bzla,
-                                          const BzlaNode* e0,
-                                          const BzlaNode* e1,
-                                          const BzlaSortId sort);
+bool bzla_dbg_precond_binary_fp_conversion_exp(Bzla* bzla,
+                                               const BzlaNode* e0,
+                                               const BzlaNode* e1,
+                                               const BzlaSortId sort);
 
 /* Check assertions for ternary fp expressions with rounding mode operand. */
 bool bzla_dbg_precond_rm_ternary_fp_exp(Bzla* bzla,

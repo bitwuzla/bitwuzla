@@ -3825,6 +3825,70 @@ boolector_fp_fma(Bzla *bzla,
 }
 
 BoolectorNode *
+boolector_fp_to_sbv(Bzla *bzla,
+                    BoolectorNode *n0,
+                    BoolectorNode *n1,
+                    BoolectorSort sort)
+{
+  BzlaNode *e0, *e1, *res;
+  BzlaSortId s;
+
+  e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
+  e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  s  = BZLA_IMPORT_BOOLECTOR_SORT(sort);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(e0);
+  BZLA_ABORT_ARG_NULL(e1);
+  BZLA_TRAPI_BINFUN(e0, e1);
+  BZLA_ABORT_REFS_NOT_POS(e0);
+  BZLA_ABORT_REFS_NOT_POS(e1);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
+  BZLA_ABORT_IS_NOT_RM(e0);
+  BZLA_ABORT_IS_NOT_FP(e1);
+  res = bzla_exp_fp_to_sbv(bzla, e0, e1, s);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(
+      res, fp_to_sbv, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1), sort);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
+boolector_fp_to_ubv(Bzla *bzla,
+                    BoolectorNode *n0,
+                    BoolectorNode *n1,
+                    BoolectorSort sort)
+{
+  BzlaNode *e0, *e1, *res;
+  BzlaSortId s;
+
+  e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
+  e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  s  = BZLA_IMPORT_BOOLECTOR_SORT(sort);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(e0);
+  BZLA_ABORT_ARG_NULL(e1);
+  BZLA_TRAPI_BINFUN(e0, e1);
+  BZLA_ABORT_REFS_NOT_POS(e0);
+  BZLA_ABORT_REFS_NOT_POS(e1);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
+  BZLA_ABORT_IS_NOT_RM(e0);
+  BZLA_ABORT_IS_NOT_FP(e1);
+  res = bzla_exp_fp_to_ubv(bzla, e0, e1, s);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(
+      res, fp_to_ubv, BZLA_CLONED_EXP(e0), BZLA_CLONED_EXP(e1), sort);
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
 boolector_fp_to_fp_from_bv(Bzla *bzla, BoolectorNode *node, BoolectorSort sort)
 {
   BzlaNode *exp, *res;

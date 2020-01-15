@@ -2194,6 +2194,24 @@ bzla_exp_fp_fma(
 }
 
 BzlaNode *
+bzla_exp_fp_to_sbv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  return bzla_node_create_fp_to_sbv(bzla, e0, e1, sort);
+}
+
+BzlaNode *
+bzla_exp_fp_to_ubv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  return bzla_node_create_fp_to_ubv(bzla, e0, e1, sort);
+}
+
+BzlaNode *
 bzla_exp_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)

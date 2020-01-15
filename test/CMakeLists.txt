@@ -356,6 +356,8 @@ set(sat_testcases
 )
 
 set(unsat_testcases
+"Float-no-simp1-main.smt2"
+"Float-no-simp3-main.smt2"
 "3vl1.btor -rwl 0"
 "3vl1.btor -rwl 2"
 "3vl2.btor -rwl 0"

@@ -168,6 +168,12 @@ rebuild_exp(Bzla *bzla, BzlaNode *exp)
                                exp->e[0],
                                bzla_node_bv_slice_get_upper(exp),
                                bzla_node_bv_slice_get_lower(exp));
+    case BZLA_FP_TO_SBV_NODE:
+      return bzla_exp_fp_to_sbv(
+          bzla, exp->e[0], exp->e[1], bzla_node_get_sort_id(exp));
+    case BZLA_FP_TO_UBV_NODE:
+      return bzla_exp_fp_to_ubv(
+          bzla, exp->e[0], exp->e[1], bzla_node_get_sort_id(exp));
     case BZLA_FP_TO_FP_BV_NODE:
       return bzla_exp_fp_to_fp_from_bv(
           bzla, exp->e[0], bzla_node_get_sort_id(exp));
@@ -253,6 +259,16 @@ rebuild_noproxy(Bzla *bzla, BzlaNode *node, BzlaIntHashTable *cache)
                                  e[0],
                                  bzla_node_bv_slice_get_upper(node),
                                  bzla_node_bv_slice_get_lower(node));
+      break;
+
+    case BZLA_FP_TO_SBV_NODE:
+      result =
+          bzla_exp_fp_to_sbv(bzla, e[0], e[1], bzla_node_get_sort_id(node));
+      break;
+
+    case BZLA_FP_TO_UBV_NODE:
+      result =
+          bzla_exp_fp_to_ubv(bzla, e[0], e[1], bzla_node_get_sort_id(node));
       break;
 
     case BZLA_FP_TO_FP_BV_NODE:

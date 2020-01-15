@@ -83,6 +83,8 @@ const char *const g_bzla_op2str[BZLA_NUM_OPS_NODE] = {
     [BZLA_FP_REM_NODE]        = "fprem",
     [BZLA_FP_RTI_NODE]        = "fprti",
     [BZLA_FP_SQRT_NODE]       = "fpsqrt",
+    [BZLA_FP_TO_SBV_NODE]     = "fptosbv",
+    [BZLA_FP_TO_UBV_NODE]     = "fptoubv",
     [BZLA_FP_TO_FP_BV_NODE]   = "fptofpfrombv",
     [BZLA_FP_TO_FP_FP_NODE]   = "fptofpfromfp",
     [BZLA_FP_TO_FP_INT_NODE]  = "fptofpfromint",
@@ -409,7 +411,7 @@ hash_slice_exp(BzlaNode *e, uint32_t upper, uint32_t lower)
 }
 
 static inline uint32_t
-hash_to_fp_exp(BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
+hash_fp_conversion_exp(BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
   uint32_t hash;
   hash = hash_primes[0] * (uint32_t) bzla_node_real_addr(e0)->id;
@@ -542,13 +544,15 @@ compute_hash_exp(Bzla *bzla, BzlaNode *exp, uint32_t table_size)
   }
   else if (exp->kind == BZLA_FP_TO_FP_BV_NODE)
   {
-    hash = hash_to_fp_exp(exp->e[0], 0, bzla_node_get_sort_id(exp));
+    hash = hash_fp_conversion_exp(exp->e[0], 0, bzla_node_get_sort_id(exp));
   }
-  else if (exp->kind == BZLA_FP_TO_FP_FP_NODE
+  else if (exp->kind == BZLA_FP_TO_SBV_NODE || exp->kind == BZLA_FP_TO_UBV_NODE
+           || exp->kind == BZLA_FP_TO_FP_FP_NODE
            || exp->kind == BZLA_FP_TO_FP_INT_NODE
            || exp->kind == BZLA_FP_TO_FP_UINT_NODE)
   {
-    hash = hash_to_fp_exp(exp->e[0], exp->e[1], bzla_node_get_sort_id(exp));
+    hash = hash_fp_conversion_exp(
+        exp->e[0], exp->e[1], bzla_node_get_sort_id(exp));
   }
   else
   {
@@ -1754,21 +1758,27 @@ find_slice_exp(Bzla *bzla, BzlaNode *e0, uint32_t upper, uint32_t lower)
 }
 
 /**
- * Search for unary floating-point to_fp expression in hash table.
+ * Search for floating-point conversion expression in hash table.
  * Returns 0 if not found.
  */
 static BzlaNode **
-find_to_fp_exp(
+find_fp_conversion_exp(
     Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
   assert(bzla);
+  assert(kind == BZLA_FP_TO_SBV_NODE || kind == BZLA_FP_TO_UBV_NODE
+         || kind == BZLA_FP_TO_FP_BV_NODE || kind == BZLA_FP_TO_FP_FP_NODE
+         || kind == BZLA_FP_TO_FP_INT_NODE || kind == BZLA_FP_TO_FP_UINT_NODE);
   assert(e0);
-  assert(bzla_sort_is_fp(bzla, sort));
+  assert(kind == BZLA_FP_TO_SBV_NODE || kind == BZLA_FP_TO_UBV_NODE
+         || bzla_sort_is_fp(bzla, sort));
+  assert((kind != BZLA_FP_TO_SBV_NODE && kind != BZLA_FP_TO_UBV_NODE)
+         || bzla_sort_is_bv(bzla, sort));
 
   BzlaNode *cur, **result;
   uint32_t hash;
 
-  hash = hash_to_fp_exp(e0, e1, sort);
+  hash = hash_fp_conversion_exp(e0, e1, sort);
   hash &= bzla->nodes_unique_table.size - 1;
   result = bzla->nodes_unique_table.chains + hash;
   cur    = *result;
@@ -1800,7 +1810,12 @@ find_bv_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
   assert(kind != BZLA_BV_SLICE_NODE);
   assert(kind != BZLA_BV_CONST_NODE);
   assert(kind != BZLA_FP_CONST_NODE);
+  assert(kind != BZLA_FP_TO_SBV_NODE);
+  assert(kind != BZLA_FP_TO_UBV_NODE);
   assert(kind != BZLA_FP_TO_FP_BV_NODE);
+  assert(kind != BZLA_FP_TO_FP_FP_NODE);
+  assert(kind != BZLA_FP_TO_FP_INT_NODE);
+  assert(kind != BZLA_FP_TO_FP_UINT_NODE);
 
   if (!is_sorted_bv_exp(bzla, kind, e))
   {
@@ -2040,37 +2055,53 @@ compare_binder_exp(Bzla *bzla,
                                  bzla_node_bv_slice_get_upper(real_cur),
                                  bzla_node_bv_slice_get_lower(real_cur));
       }
+      else if (bzla_node_is_fp_to_sbv(real_cur))
+      {
+        result = *find_fp_conversion_exp(bzla,
+                                         BZLA_FP_TO_SBV_NODE,
+                                         e[0],
+                                         e[1],
+                                         bzla_node_get_sort_id(real_cur));
+      }
+      else if (bzla_node_is_fp_to_ubv(real_cur))
+      {
+        result = *find_fp_conversion_exp(bzla,
+                                         BZLA_FP_TO_UBV_NODE,
+                                         e[0],
+                                         e[1],
+                                         bzla_node_get_sort_id(real_cur));
+      }
       else if (bzla_node_is_fp_to_fp_from_bv(real_cur))
       {
-        result = *find_to_fp_exp(bzla,
-                                 BZLA_FP_TO_FP_BV_NODE,
-                                 e[0],
-                                 0,
-                                 bzla_node_get_sort_id(real_cur));
+        result = *find_fp_conversion_exp(bzla,
+                                         BZLA_FP_TO_FP_BV_NODE,
+                                         e[0],
+                                         0,
+                                         bzla_node_get_sort_id(real_cur));
       }
       else if (bzla_node_is_fp_to_fp_from_fp(real_cur))
       {
-        result = *find_to_fp_exp(bzla,
-                                 BZLA_FP_TO_FP_FP_NODE,
-                                 e[0],
-                                 e[1],
-                                 bzla_node_get_sort_id(real_cur));
+        result = *find_fp_conversion_exp(bzla,
+                                         BZLA_FP_TO_FP_FP_NODE,
+                                         e[0],
+                                         e[1],
+                                         bzla_node_get_sort_id(real_cur));
       }
       else if (bzla_node_is_fp_to_fp_from_int(real_cur))
       {
-        result = *find_to_fp_exp(bzla,
-                                 BZLA_FP_TO_FP_INT_NODE,
-                                 e[0],
-                                 e[1],
-                                 bzla_node_get_sort_id(real_cur));
+        result = *find_fp_conversion_exp(bzla,
+                                         BZLA_FP_TO_FP_INT_NODE,
+                                         e[0],
+                                         e[1],
+                                         bzla_node_get_sort_id(real_cur));
       }
       else if (bzla_node_is_fp_to_fp_from_uint(real_cur))
       {
-        result = *find_to_fp_exp(bzla,
-                                 BZLA_FP_TO_FP_UINT_NODE,
-                                 e[0],
-                                 e[1],
-                                 bzla_node_get_sort_id(real_cur));
+        result = *find_fp_conversion_exp(bzla,
+                                         BZLA_FP_TO_FP_UINT_NODE,
+                                         e[0],
+                                         e[1],
+                                         bzla_node_get_sort_id(real_cur));
       }
       else if (bzla_node_is_param(real_cur))
       {
@@ -2221,17 +2252,21 @@ new_unary_to_fp_exp_node(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
 }
 
 static BzlaNode *
-new_binary_to_fp_exp_node(
+new_binary_fp_conversion_node(
     Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
   assert(bzla);
-  assert(kind == BZLA_FP_TO_FP_FP_NODE || kind == BZLA_FP_TO_FP_INT_NODE
+  assert(kind == BZLA_FP_TO_SBV_NODE || kind == BZLA_FP_TO_UBV_NODE
+         || kind == BZLA_FP_TO_FP_FP_NODE || kind == BZLA_FP_TO_FP_INT_NODE
          || kind == BZLA_FP_TO_FP_UINT_NODE);
   assert(e0);
   assert(e1);
   assert(bzla_node_is_rm(bzla, e0));
   assert(bzla_node_is_bv(bzla, e1) || bzla_node_is_fp(bzla, e1));
-  assert(bzla_sort_is_fp(bzla, sort));
+  assert(kind == BZLA_FP_TO_SBV_NODE || kind == BZLA_FP_TO_UBV_NODE
+         || bzla_sort_is_fp(bzla, sort));
+  assert((kind != BZLA_FP_TO_SBV_NODE && kind != BZLA_FP_TO_UBV_NODE)
+         || bzla_sort_is_bv(bzla, sort));
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
 
@@ -2530,6 +2565,9 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
     case BZLA_FP_FMA_NODE:
       sort = bzla_sort_copy(bzla, bzla_node_get_sort_id(e[1]));
       break;
+
+    case BZLA_FP_TO_SBV_NODE:
+    case BZLA_FP_TO_UBV_NODE: break;
 
     default:
       assert(kind == BZLA_BV_AND_NODE || kind == BZLA_BV_ADD_NODE
@@ -3140,13 +3178,14 @@ unary_exp_to_fp_exp(Bzla *bzla, BzlaNode *exp, BzlaSortId sort)
 
   assert(bzla_node_is_bv(bzla, exp));
 
-  lookup = find_to_fp_exp(bzla, BZLA_FP_TO_FP_BV_NODE, exp, 0, sort);
+  lookup = find_fp_conversion_exp(bzla, BZLA_FP_TO_FP_BV_NODE, exp, 0, sort);
   if (!*lookup)
   {
     if (BZLA_FULL_UNIQUE_TABLE(bzla->nodes_unique_table))
     {
       enlarge_nodes_unique_table(bzla);
-      lookup = find_to_fp_exp(bzla, BZLA_FP_TO_FP_BV_NODE, exp, 0, sort);
+      lookup =
+          find_fp_conversion_exp(bzla, BZLA_FP_TO_FP_BV_NODE, exp, 0, sort);
     }
     *lookup = new_unary_to_fp_exp_node(bzla, exp, sort);
     assert(bzla->nodes_unique_table.num_elements < INT32_MAX);
@@ -3162,17 +3201,21 @@ unary_exp_to_fp_exp(Bzla *bzla, BzlaNode *exp, BzlaSortId sort)
 }
 
 static BzlaNode *
-binary_exp_to_fp_exp(
+binary_exp_fp_conversion_exp(
     Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
   assert(bzla);
-  assert(kind == BZLA_FP_TO_FP_FP_NODE || kind == BZLA_FP_TO_FP_INT_NODE
+  assert(kind == BZLA_FP_TO_SBV_NODE || kind == BZLA_FP_TO_UBV_NODE
+         || kind == BZLA_FP_TO_FP_FP_NODE || kind == BZLA_FP_TO_FP_INT_NODE
          || kind == BZLA_FP_TO_FP_UINT_NODE);
   assert(e0);
   assert(e1);
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
-  assert(bzla_sort_is_fp(bzla, sort));
+  assert(kind == BZLA_FP_TO_SBV_NODE || kind == BZLA_FP_TO_UBV_NODE
+         || bzla_sort_is_fp(bzla, sort));
+  assert((kind != BZLA_FP_TO_SBV_NODE && kind != BZLA_FP_TO_UBV_NODE)
+         || bzla_sort_is_bv(bzla, sort));
 
   BzlaNode **lookup;
 
@@ -3182,15 +3225,15 @@ binary_exp_to_fp_exp(
   assert(bzla_node_is_rm(bzla, e0));
   assert(bzla_node_is_bv(bzla, e1) || bzla_node_is_fp(bzla, e1));
 
-  lookup = find_to_fp_exp(bzla, kind, e0, e1, sort);
+  lookup = find_fp_conversion_exp(bzla, kind, e0, e1, sort);
   if (!*lookup)
   {
     if (BZLA_FULL_UNIQUE_TABLE(bzla->nodes_unique_table))
     {
       enlarge_nodes_unique_table(bzla);
-      lookup = find_to_fp_exp(bzla, kind, e0, e1, sort);
+      lookup = find_fp_conversion_exp(bzla, kind, e0, e1, sort);
     }
-    *lookup = new_binary_to_fp_exp_node(bzla, kind, e0, e1, sort);
+    *lookup = new_binary_fp_conversion_node(bzla, kind, e0, e1, sort);
     assert(bzla->nodes_unique_table.num_elements < INT32_MAX);
     bzla->nodes_unique_table.num_elements++;
     (*lookup)->unique = 1;
@@ -3621,6 +3664,34 @@ bzla_node_create_fp_fma(
 }
 
 BzlaNode *
+bzla_node_create_fp_to_sbv(Bzla *bzla,
+                           BzlaNode *e0,
+                           BzlaNode *e1,
+                           BzlaSortId sort)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_binary_fp_conversion_exp(bzla, e[0], e[1], sort));
+  return binary_exp_fp_conversion_exp(
+      bzla, BZLA_FP_TO_SBV_NODE, e[0], e[1], sort);
+}
+
+BzlaNode *
+bzla_node_create_fp_to_ubv(Bzla *bzla,
+                           BzlaNode *e0,
+                           BzlaNode *e1,
+                           BzlaSortId sort)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_binary_fp_conversion_exp(bzla, e[0], e[1], sort));
+  return binary_exp_fp_conversion_exp(
+      bzla, BZLA_FP_TO_UBV_NODE, e[0], e[1], sort);
+}
+
+BzlaNode *
 bzla_node_create_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *exp, BzlaSortId sort)
 {
   exp = bzla_simplify_exp(bzla, exp);
@@ -3637,8 +3708,9 @@ bzla_node_create_fp_to_fp_from_fp(Bzla *bzla,
   BzlaNode *e[2];
   e[0] = bzla_simplify_exp(bzla, e0);
   e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_binary_fp_to_fp_exp(bzla, e[0], e[1], sort));
-  return binary_exp_to_fp_exp(bzla, BZLA_FP_TO_FP_FP_NODE, e[0], e[1], sort);
+  assert(bzla_dbg_precond_binary_fp_conversion_exp(bzla, e[0], e[1], sort));
+  return binary_exp_fp_conversion_exp(
+      bzla, BZLA_FP_TO_FP_FP_NODE, e[0], e[1], sort);
 }
 
 BzlaNode *
@@ -3650,8 +3722,9 @@ bzla_node_create_fp_to_fp_from_int(Bzla *bzla,
   BzlaNode *e[2];
   e[0] = bzla_simplify_exp(bzla, e0);
   e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_binary_fp_to_fp_exp(bzla, e[0], e[1], sort));
-  return binary_exp_to_fp_exp(bzla, BZLA_FP_TO_FP_INT_NODE, e[0], e[1], sort);
+  assert(bzla_dbg_precond_binary_fp_conversion_exp(bzla, e[0], e[1], sort));
+  return binary_exp_fp_conversion_exp(
+      bzla, BZLA_FP_TO_FP_INT_NODE, e[0], e[1], sort);
 }
 
 BzlaNode *
@@ -3663,8 +3736,9 @@ bzla_node_create_fp_to_fp_from_uint(Bzla *bzla,
   BzlaNode *e[2];
   e[0] = bzla_simplify_exp(bzla, e0);
   e[1] = bzla_simplify_exp(bzla, e1);
-  assert(bzla_dbg_precond_binary_fp_to_fp_exp(bzla, e[0], e[1], sort));
-  return binary_exp_to_fp_exp(bzla, BZLA_FP_TO_FP_UINT_NODE, e[0], e[1], sort);
+  assert(bzla_dbg_precond_binary_fp_conversion_exp(bzla, e[0], e[1], sort));
+  return binary_exp_fp_conversion_exp(
+      bzla, BZLA_FP_TO_FP_UINT_NODE, e[0], e[1], sort);
 }
 
 /*========================================================================*/

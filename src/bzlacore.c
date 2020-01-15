@@ -2382,6 +2382,16 @@ bzla_substitute_nodes_node_map(Bzla *bzla,
                                    bzla_node_bv_slice_get_upper(real_cur),
                                    bzla_node_bv_slice_get_lower(real_cur));
       }
+      else if (bzla_node_is_fp_to_sbv(real_cur))
+      {
+        result = bzla_exp_fp_to_sbv(
+            bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
+      }
+      else if (bzla_node_is_fp_to_ubv(real_cur))
+      {
+        result = bzla_exp_fp_to_ubv(
+            bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
+      }
       else if (bzla_node_is_fp_to_fp_from_bv(real_cur))
       {
         result = bzla_exp_fp_to_fp_from_bv(
@@ -2599,8 +2609,27 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
             && (bzla_node_is_rm(bzla, cur->e[0])
                 || bzla_node_is_fp(bzla, cur->e[0])))
         {
-          BzlaNode *wb = bzla_fp_word_blast(bzla, cur);
-          BZLA_PUSH_STACK(exp_stack, wb);
+          if (bzla_node_is_args(cur))
+          {
+            BzlaArgsIterator it;
+            bzla_iter_args_init(&it, cur);
+            while (bzla_iter_args_has_next(&it))
+            {
+              cur_wb = bzla_iter_args_next(&it);
+              if (bzla_node_is_rm(bzla, cur_wb)
+                  || bzla_node_is_fp(bzla, cur_wb))
+              {
+                cur_wb = bzla_fp_word_blast(bzla, cur_wb);
+                BZLA_PUSH_STACK(exp_stack, cur_wb);
+              }
+              BZLA_PUSH_STACK(exp_stack, cur_wb);
+            }
+          }
+          else
+          {
+            cur_wb = bzla_fp_word_blast(bzla, cur);
+            BZLA_PUSH_STACK(exp_stack, cur_wb);
+          }
         }
         else
         {

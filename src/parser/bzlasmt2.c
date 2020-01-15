@@ -1065,10 +1065,10 @@ insert_fp_symbols_smt2(BzlaSMT2Parser *parser)
   INSERT("fp.isNaN", BZLA_FP_IS_NAN_TAG_SMT2);
   INSERT("fp.isNegative", BZLA_FP_IS_NEG_TAG_SMT2);
   INSERT("fp.isPositive", BZLA_FP_IS_POS_TAG_SMT2);
+  INSERT("fp.to_ubv", BZLA_FP_TO_UBV_TAG_SMT2);
+  INSERT("fp.to_sbv", BZLA_FP_TO_SBV_TAG_SMT2);
   INSERT("to_fp", BZLA_FP_TO_FP_TAG_SMT2);
   INSERT("to_fp_unsigned", BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2);
-  INSERT("to_ubv", BZLA_FP_TO_UBV_TAG_SMT2);
-  INSERT("to_sbv", BZLA_FP_TO_SBV_TAG_SMT2);
 }
 
 static void
@@ -2453,7 +2453,8 @@ close_term_unary_rm_fp_fun(BzlaSMT2Parser *parser,
   assert(fun);
 
   assert(item_cur->tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2
-         || item_cur->tag == BZLA_FP_SQRT_TAG_SMT2);
+         || item_cur->tag == BZLA_FP_SQRT_TAG_SMT2
+         || item_cur->tag == BZLA_FP_TO_SBV_TAG_SMT2);
 
   BoolectorNode *exp;
 
@@ -2880,19 +2881,9 @@ close_term(BzlaSMT2Parser *parser)
   if (tag != BZLA_LET_TAG_SMT2 && tag != BZLA_LETBIND_TAG_SMT2
       && tag != BZLA_PARLETBINDING_TAG_SMT2 && tag != BZLA_SORTED_VAR_TAG_SMT2
       && tag != BZLA_SORTED_VARS_TAG_SMT2 && tag != BZLA_FORALL_TAG_SMT2
-      && tag != BZLA_EXISTS_TAG_SMT2 && tag != BZLA_BANG_TAG_SMT2
-      && tag != BZLA_FP_TO_FP_TAG_SMT2
-      && tag != BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
+      && tag != BZLA_EXISTS_TAG_SMT2 && tag != BZLA_BANG_TAG_SMT2)
   {
     i = 1;
-    if (tag == BZLA_FP_ADD_TAG_SMT2 || tag == BZLA_FP_SUB_TAG_SMT2
-        || tag == BZLA_FP_MUL_TAG_SMT2 || tag == BZLA_FP_DIV_TAG_SMT2
-        || tag == BZLA_FP_ROUND_TO_INT_TAG_SMT2 || tag == BZLA_FP_SQRT_TAG_SMT2
-        || tag == BZLA_FP_FMA_TAG_SMT2)
-    {
-      // TODO: check first arg RoundingMode
-      i = 2;
-    }
     for (; i <= nargs; i++)
     {
       if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
@@ -3824,6 +3815,46 @@ close_term(BzlaSMT2Parser *parser)
       return 0;
     }
   }
+  /* FP: fp.to_sbv fp.to_ubv ------------------------------------------------ */
+  else if (tag == BZLA_FP_TO_SBV_TAG_SMT2 || tag == BZLA_FP_TO_UBV_TAG_SMT2)
+  {
+    assert(item_cur->idx0);
+    BoolectorSort sort = boolector_bv_sort(bzla, item_cur->idx0);
+    if (item_cur[1].tag != BZLA_EXP_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[1].coo;
+      return !perr_smt2(parser, "expected expression");
+    }
+    if (!boolector_is_rm(bzla, item_cur[1].exp))
+    {
+      return !perr_smt2(
+          parser,
+          "invalid argument to '%s', expected bit-vector expression",
+          item_cur->node->name);
+    }
+    if (item_cur[2].tag != BZLA_EXP_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser, "expected expression");
+    }
+    if (!boolector_is_fp(bzla, item_cur[2].exp))
+    {
+      return !perr_smt2(
+          parser,
+          "invalid argument to '%s', expected bit-vector expression",
+          item_cur->node->name);
+    }
+    if (tag == BZLA_FP_TO_SBV_TAG_SMT2)
+    {
+      exp = boolector_fp_to_sbv(bzla, item_cur[1].exp, item_cur[2].exp, sort);
+    }
+    else
+    {
+      exp = boolector_fp_to_ubv(bzla, item_cur[1].exp, item_cur[2].exp, sort);
+    }
+    boolector_release_sort(bzla, sort);
+    release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
+  }
   /* FP: to_fp ---------------------------------------------------------- */
   else if (tag == BZLA_FP_TO_FP_TAG_SMT2)
   {
@@ -4069,7 +4100,14 @@ parse_open_term_indexed_parametric(BzlaSMT2Parser *parser,
 
   if (nargs == 1)
   {
-    if (!parse_uint32_smt2(parser, true, &item_open->num)) return 0;
+    if (tag == BZLA_FP_TO_SBV_TAG_SMT2 || tag == BZLA_FP_TO_UBV_TAG_SMT2)
+    {
+      if (!parse_bit_width_smt2(parser, &item_open->idx0)) return 0;
+    }
+    else
+    {
+      if (!parse_uint32_smt2(parser, true, &item_open->num)) return 0;
+    }
   }
   else if (tag == BZLA_FP_TO_FP_TAG_SMT2
            || tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
@@ -4280,6 +4318,22 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
       return 0;
     }
   }
+  else if (tag == BZLA_FP_TO_SBV_TAG_SMT2)
+  {
+    if (!parse_open_term_indexed_parametric(
+            parser, item_cur, tag, 1, node, " to close '(_ fp.to_sbv'"))
+    {
+      return 0;
+    }
+  }
+  else if (tag == BZLA_FP_TO_UBV_TAG_SMT2)
+  {
+    if (!parse_open_term_indexed_parametric(
+            parser, item_cur, tag, 1, node, " to close '(_ fp.to_ubv'"))
+    {
+      return 0;
+    }
+  }
   else if (tag == BZLA_FP_TO_FP_TAG_SMT2)
   {
     if (!parse_open_term_indexed_parametric(
@@ -4291,7 +4345,7 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
   else if (tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
   {
     if (!parse_open_term_indexed_parametric(
-            parser, item_cur, tag, 2, node, " to close '(_ extract'"))
+            parser, item_cur, tag, 2, node, " to close '(_ to_fp_unsigned'"))
     {
       return 0;
     }

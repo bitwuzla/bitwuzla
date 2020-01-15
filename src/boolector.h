@@ -1876,7 +1876,6 @@ BoolectorNode *boolector_fp_gt(Bzla *bzla,
 BoolectorNode *boolector_fp_sqrt(Bzla *bzla,
                                  BoolectorNode *n0,
                                  BoolectorNode *n1);
-
 /*!
   Create the fp.roundToIntegral expression of a given floating-point node ``n1``
   with respect to the given rounding mode ``n0``.
@@ -1967,6 +1966,38 @@ BoolectorNode *boolector_fp_fma(Bzla *bzla,
                                 BoolectorNode *n1,
                                 BoolectorNode *n2,
                                 BoolectorNode *n3);
+
+/*!
+  Create the signed bit-vector representation fp.to_sbv of a given
+  floating-point node ``n1`` with respect to the given rounding mode ``n0``.
+
+  :param bzla: Boolector instance.
+  :param n0:   Rounding mode operand.
+  :param n1:   Floating-point operand.
+  :param sort: Floating-point sort.
+  :return:     A bit-vector representing ``n1`` (as a two's compelement) with
+               respect to rounding mode ``n0``.
+ */
+BoolectorNode *boolector_fp_to_sbv(Bzla *bzla,
+                                   BoolectorNode *n0,
+                                   BoolectorNode *n1,
+                                   BoolectorSort sort);
+
+/*!
+  Create the signed bit-vector representation fp.to_ubv of a given
+  floating-point node ``n1`` with respect to the given rounding mode ``n0``.
+
+  :param bzla: Boolector instance.
+  :param n0:   Rounding mode operand.
+  :param n1:   Floating-point operand.
+  :param sort: Floating-point sort.
+  :return:     A bit-vector representing ``n1`` (as a two's compelement) with
+               respect to rounding mode ``n0``.
+ */
+BoolectorNode *boolector_fp_to_ubv(Bzla *bzla,
+                                   BoolectorNode *n0,
+                                   BoolectorNode *n1,
+                                   BoolectorSort sort);
 
 /*!
   Create a floating-point expression with exponent size ``eb`` and significand
