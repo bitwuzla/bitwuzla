@@ -2487,8 +2487,8 @@ bzla_proputils_inv_udiv(Bzla *bzla,
    * -> if s = 0 and t < 2^bw - 1 -> conflict
    * -> if s * t does not overflow, choose with 0.5 prob out of
    *      + e[0] = s * t
-   *      + choose s s.t. e[0] / s = t
-   * -> else choose s s.t. e[0] / s = t
+   *      + choose e[0] s.t. e[0] / s = t
+   * -> else choose e[0] s.t. e[0] / s = t
    * ------------------------------------------------------------------------ */
   else
   {
@@ -2659,7 +2659,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
         if (!bzla_bv_is_zero(t))
         {
           tmp = bzla_bv_dec(mm, s);
-          /* CONFLICT: t = s - 1 -> s % e[1] = s - 1 > not possible if t > 0 */
+          /* CONFLICT: t = s - 1 -> s % e[1] = s - 1 -> not possible if t > 0 */
           assert(bzla_bv_compare(t, tmp));
           bzla_bv_free(mm, tmp);
         }
