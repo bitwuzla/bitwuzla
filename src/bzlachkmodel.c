@@ -117,7 +117,7 @@ bzla_check_model(BzlaCheckModelContext *ctx)
   assert(ctx);
 
   uint32_t i;
-  int32_t ret;
+  int32_t sat_res;
   Bzla *bzla, *clone;
   BzlaNode *cur, *exp, *simp, *simp_clone, *real_simp_clone, *model, *eq;
   BzlaNode *args, *apply, *wb;
@@ -271,14 +271,10 @@ bzla_check_model(BzlaCheckModelContext *ctx)
     bzla_substitute_var_exps(clone);
 
   bzla_opt_set(clone, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
-  ret = bzla_simplify(clone);
 
   // bzla_print_model (bzla, "btor", stdout);
-  assert(ret != BZLA_RESULT_UNKNOWN
-         || bzla_check_sat(clone, -1, -1) == BZLA_RESULT_SAT);
-  // TODO: check if roots have been simplified through aig rewriting
-  // BZLA_ABORT (ret == BZLA_RESULT_UNKNOWN, "rewriting needed");
-  BZLA_ABORT(ret == BZLA_RESULT_UNSAT, "invalid model");
+  sat_res = bzla_check_sat(clone, -1, -1);
+  BZLA_ABORT(sat_res == BZLA_RESULT_UNSAT, "invalid model");
   BZLALOG(1, "end check model");
 }
 
