@@ -5938,12 +5938,14 @@ read_command_smt2(BzlaSMT2Parser *parser)
     case BZLA_ASSERT_TAG_SMT2:
       if (!parse_term_smt2(parser, &exp, &coo)) return 0;
       assert(!parser->error);
-      if (boolector_is_array(parser->bzla, exp))
+      if (!boolector_is_bv(parser->bzla, exp)
+          || boolector_bv_sort_get_width(parser->bzla,
+                                         boolector_get_sort(parser->bzla, exp))
+                 != 1)
       {
         parser->perrcoo = coo;
         boolector_release(parser->bzla, exp);
-        return !perr_smt2(parser,
-                          "assert argument is an array and not a formula");
+        return !perr_smt2(parser, "assert argument is not a formula");
       }
       if (!read_rpar_smt2(parser, " after asserted expression"))
       {
