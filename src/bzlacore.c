@@ -2503,7 +2503,7 @@ void
 bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
 {
   BzlaNodePtrStack exp_stack;
-  BzlaNode *cur, *cur_wb, *value, *args, *real_e;
+  BzlaNode *cur, *wb, *value, *args, *real_e;
   BzlaAIGVec *av0, *av1, *av2;
   BzlaMemMgr *mm;
   BzlaAIGVecMgr *avmgr;
@@ -2615,20 +2615,19 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
             bzla_iter_args_init(&it, cur);
             while (bzla_iter_args_has_next(&it))
             {
-              cur_wb = bzla_iter_args_next(&it);
-              if (bzla_node_is_rm(bzla, cur_wb)
-                  || bzla_node_is_fp(bzla, cur_wb))
+              wb = bzla_iter_args_next(&it);
+              if (bzla_node_is_rm(bzla, wb) || bzla_node_is_fp(bzla, wb))
               {
-                cur_wb = bzla_fp_word_blast(bzla, cur_wb);
-                BZLA_PUSH_STACK(exp_stack, cur_wb);
+                wb = bzla_fp_word_blast(bzla, wb);
+                BZLA_PUSH_STACK(exp_stack, wb);
               }
-              BZLA_PUSH_STACK(exp_stack, cur_wb);
+              BZLA_PUSH_STACK(exp_stack, wb);
             }
           }
           else
           {
-            cur_wb = bzla_fp_word_blast(bzla, cur);
-            BZLA_PUSH_STACK(exp_stack, cur_wb);
+            wb = bzla_fp_word_blast(bzla, cur);
+            BZLA_PUSH_STACK(exp_stack, wb);
           }
         }
         else
@@ -2686,9 +2685,9 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
       if (bzla_node_is_rm(bzla, cur->e[0])
           || (cur->arity && bzla_node_is_fp(bzla, cur->e[0])))
       {
-        cur_wb     = bzla_fp_word_blast(bzla, cur);
-        invert_av0 = bzla_node_is_inverted(cur_wb);
-        av0        = bzla_aigvec_copy(avmgr, bzla_node_real_addr(cur_wb)->av);
+        wb         = bzla_fp_word_blast(bzla, cur);
+        invert_av0 = bzla_node_is_inverted(wb);
+        av0        = bzla_aigvec_copy(avmgr, bzla_node_real_addr(wb)->av);
         if (invert_av0) bzla_aigvec_invert(avmgr, av0);
         cur->av = av0;
       }

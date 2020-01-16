@@ -792,7 +792,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
   BzlaMemMgr *mm;
   BzlaNodePtrStack work_stack, reset;
   BzlaVoidPtrStack arg_stack;
-  BzlaNode *cur, *real_cur, *next, *cur_parent;
+  BzlaNode *cur, *real_cur, *next, *cur_parent, *wb;
   BzlaHashTableData *d, dd;
   BzlaIntHashTable *assigned, *reset_st, *param_model_cache;
   BzlaBitVector *result = 0, *inv_result, **e;
@@ -910,10 +910,28 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
               && (bzla_node_is_fp(bzla, real_cur->e[0])
                   || bzla_node_is_rm(bzla, real_cur->e[0]))))
       {
-        next = bzla_fp_word_blast(bzla, real_cur);
-        assert(next);
-        BZLA_PUSH_STACK(work_stack, next);
-        BZLA_PUSH_STACK(work_stack, cur_parent);
+        if (bzla_node_is_args(cur))
+        {
+          BzlaArgsIterator it;
+          bzla_iter_args_init(&it, cur);
+          while (bzla_iter_args_has_next(&it))
+          {
+            next = bzla_iter_args_next(&it);
+            if (bzla_node_is_rm(bzla, next) || bzla_node_is_fp(bzla, next))
+            {
+              next = bzla_fp_word_blast(bzla, next);
+              BZLA_PUSH_STACK(work_stack, next);
+              BZLA_PUSH_STACK(work_stack, cur_parent);
+            }
+          }
+        }
+        else
+        {
+          next = bzla_fp_word_blast(bzla, real_cur);
+          assert(next);
+          BZLA_PUSH_STACK(work_stack, next);
+          BZLA_PUSH_STACK(work_stack, cur_parent);
+        }
         continue;
       }
 
@@ -947,7 +965,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
           if (bzla_node_is_rm(bzla, real_cur->e[i])
               || bzla_node_is_fp(bzla, real_cur->e[i]))
           {
-            BzlaNode *wb = bzla_fp_word_blast(bzla, real_cur->e[i]);
+            wb = bzla_fp_word_blast(bzla, real_cur->e[i]);
             BZLA_PUSH_STACK(work_stack, wb);
             BZLA_PUSH_STACK(work_stack, real_cur);
           }
