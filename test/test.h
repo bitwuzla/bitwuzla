@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2019 Aina Niemetz.
+ *  Copyright (C) 2019-2020 Aina Niemetz.
  *  Copyright (C) 2020 Mathias Preiner.
  *
  *  This file is part of Boolector.
@@ -18,6 +18,7 @@
 
 extern "C" {
 #include "boolector.h"
+#include "bzlabvprop.h"
 #include "bzlaconfig.h"
 #include "bzlacore.h"
 }
@@ -70,7 +71,7 @@ class TestCommon : public ::testing::Test
 
   std::string d_log_file_name;
   std::string d_out_file_name;
-  FILE* d_log_file      = nullptr;
+  FILE *d_log_file      = nullptr;
   bool d_check_log_file = true;
 };
 
@@ -90,7 +91,7 @@ class TestMm : public TestCommon
     TestCommon::TearDown();
   }
 
-  BzlaMemMgr* d_mm = nullptr;
+  BzlaMemMgr *d_mm = nullptr;
 };
 
 class TestBzla : public TestCommon
@@ -109,7 +110,7 @@ class TestBzla : public TestCommon
     TestCommon::TearDown();
   }
 
-  Bzla* d_bzla = nullptr;
+  Bzla *d_bzla = nullptr;
 };
 
 class TestBoolector : public TestCommon
@@ -127,13 +128,13 @@ class TestBoolector : public TestCommon
     TestCommon::TearDown();
   }
 
-  Bzla* d_bzla = nullptr;
+  Bzla *d_bzla = nullptr;
 };
 
 class TestFile : public TestBoolector
 {
  protected:
-  void run_test(const char* name, int32_t expected, uint32_t verbosity = 0u)
+  void run_test(const char *name, int32_t expected, uint32_t verbosity = 0u)
   {
     if (!d_log_file)
     {
@@ -145,9 +146,9 @@ class TestFile : public TestBoolector
     }
 
     std::stringstream ss_in;
-    FILE* f_in;
+    FILE *f_in;
     int32_t parse_status;
-    char* parse_err;
+    char *parse_err;
     int32_t sat_res;
     bool parsed_smt2;
 
@@ -204,7 +205,8 @@ class TestFile : public TestBoolector
 
     if (d_get_model)
     {
-      boolector_print_model(d_bzla, (char*) d_model_format.c_str(), d_log_file);
+      boolector_print_model(
+          d_bzla, (char *) d_model_format.c_str(), d_log_file);
     }
 
     if (expected != BOOLECTOR_UNKNOWN)
@@ -215,8 +217,8 @@ class TestFile : public TestBoolector
     fclose(f_in);
   }
 
-  void run_test(const char* name,
-                const char* ext,
+  void run_test(const char *name,
+                const char *ext,
                 int32_t expected,
                 uint32_t verbosity = 0u)
   {
@@ -235,6 +237,147 @@ class TestFile : public TestBoolector
 
   bool d_dump               = false;
   std::string d_dump_format = "btor";
+};
+
+class TestBvDomain : public TestMm
+{
+ protected:
+  /* Initialize all possible values for 3-valued constants of bit-width bw */
+  uint32_t generate_consts(uint32_t bw, char ***res)
+  {
+    assert(bw);
+    assert(res);
+
+    uint32_t psize, num_consts = 1;
+    char bit = '0';
+
+    for (uint32_t i = 0; i < bw; i++) num_consts *= 3;
+    psize = num_consts;
+
+    BZLA_NEWN(d_mm, *res, num_consts);
+    for (uint32_t i = 0; i < num_consts; i++)
+      BZLA_CNEWN(d_mm, (*res)[i], bw + 1);
+
+    for (uint32_t i = 0; i < bw; i++)
+    {
+      psize = psize / 3;
+      for (uint32_t j = 0; j < num_consts; j++)
+      {
+        (*res)[j][i] = bit;
+        if ((j + 1) % psize == 0)
+        {
+          bit = bit == '0' ? '1' : (bit == '1' ? 'x' : '0');
+        }
+      }
+    }
+    return num_consts;
+  }
+
+  void free_consts(uint32_t bw, uint32_t num_consts, char **consts)
+  {
+    assert(bw);
+    assert(consts);
+    for (uint32_t i = 0; i < num_consts; i++)
+      BZLA_DELETEN(d_mm, consts[i], bw + 1);
+    BZLA_DELETEN(d_mm, consts, num_consts);
+  }
+
+  void to_str(BzlaBvDomain *d, char **res_lo, char **res_hi, bool print_short)
+  {
+    assert(d);
+
+    if (print_short)
+    {
+      assert(res_lo);
+      char *lo = bzla_bv_to_char(d_mm, d->lo);
+      char *hi = bzla_bv_to_char(d_mm, d->hi);
+      for (size_t i = 0, len = strlen(lo); i < len; i++)
+      {
+        if (lo[i] != hi[i])
+        {
+          if (lo[i] == '0' && hi[i] == '1')
+          {
+            lo[i] = 'x';
+          }
+          else
+          {
+            assert(lo[i] == '1' && hi[i] == '0');
+            lo[i] = '?';
+          }
+        }
+      }
+      bzla_mem_freestr(d_mm, hi);
+      *res_lo = lo;
+      if (res_hi) *res_hi = 0;
+    }
+    else
+    {
+      assert(res_hi);
+      *res_lo = bzla_bv_to_char(d_mm, d->lo);
+      *res_hi = bzla_bv_to_char(d_mm, d->hi);
+    }
+  }
+
+  void print_domain(BzlaBvDomain *d, bool print_short)
+  {
+    bzla_bvprop_print(d_mm, d, print_short);
+  }
+
+  /* Create 3-valued bit-vector from domain 'd'. */
+  char *from_domain(BzlaMemMgr *mm, BzlaBvDomain *d)
+  {
+    assert(bzla_bvprop_is_valid(mm, d));
+    char *lo = bzla_bv_to_char(mm, d->lo);
+    char *hi = bzla_bv_to_char(mm, d->hi);
+
+    size_t len = strlen(lo);
+    for (size_t i = 0; i < len; i++)
+    {
+      if (lo[i] != hi[i])
+      {
+        /* lo[i] == '1' && hi[i] == '0' would be an invalid domain. */
+        assert(lo[i] == '0');
+        assert(hi[i] == '1');
+        lo[i] = 'x';
+      }
+    }
+    bzla_mem_freestr(mm, hi);
+    return lo;
+  }
+
+  bool is_xxx_domain(BzlaMemMgr *mm, BzlaBvDomain *d)
+  {
+    assert(mm);
+    assert(d);
+    char *str_d = from_domain(mm, d);
+    bool res    = strchr(str_d, '1') == NULL && strchr(str_d, '0') == NULL;
+    bzla_mem_freestr(mm, str_d);
+    return res;
+  }
+
+  bool is_valid(BzlaMemMgr *mm,
+                BzlaBvDomain *d_x,
+                BzlaBvDomain *d_y,
+                BzlaBvDomain *d_z,
+                BzlaBvDomain *d_c)
+  {
+    return (!d_x || bzla_bvprop_is_valid(mm, d_x))
+           && (!d_y || bzla_bvprop_is_valid(mm, d_y))
+           && (!d_z || bzla_bvprop_is_valid(mm, d_z))
+           && (!d_c || bzla_bvprop_is_valid(mm, d_c));
+  }
+
+  bool is_fixed(BzlaMemMgr *mm,
+                BzlaBvDomain *d_x,
+                BzlaBvDomain *d_y,
+                BzlaBvDomain *d_z,
+                BzlaBvDomain *d_c)
+  {
+    return (!d_x || bzla_bvprop_is_fixed(mm, d_x))
+           && (!d_y || bzla_bvprop_is_fixed(mm, d_y))
+           && (!d_z || bzla_bvprop_is_fixed(mm, d_z))
+           && (!d_c || bzla_bvprop_is_fixed(mm, d_c));
+  }
 };
 
 #endif

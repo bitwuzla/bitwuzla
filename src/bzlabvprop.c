@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
- *  Copyright (C) 2018-2019 Aina Niemetz.
+ *  Copyright (C) 2018-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -4610,3 +4610,70 @@ DONE:
   return res;
 }
 #endif
+
+/*----------------------------------------------------------------------------*/
+
+void
+bzla_bvprop_gen_init(BzlaMemMgr *mm,
+                     BzlaBvDomainGenerator *gen,
+                     const BzlaBvDomain *d)
+{
+  assert(gen);
+  assert(mm);
+  assert(d);
+
+  uint32_t i, bw;
+
+  for (i = 0, bw = bzla_bv_get_width(d->lo), gen->cnt = 0; i < bw; i++)
+  {
+    if (!bzla_bvprop_is_fixed_bit(d, i)) gen->cnt += 1;
+  }
+
+  gen->mm     = mm;
+  gen->cur    = 0;
+  gen->bits   = gen->cnt ? bzla_bv_new(mm, gen->cnt) : 0;
+  gen->cnt    = gen->cnt ? 1 << gen->cnt : 0;
+  gen->domain = d;
+}
+
+bool
+bzla_bvprop_gen_has_next(const BzlaBvDomainGenerator *gen)
+{
+  assert(gen);
+  return gen->cur < gen->cnt;
+}
+
+BzlaBitVector *
+bzla_bvprop_gen_next(BzlaBvDomainGenerator *gen)
+{
+  assert(gen);
+  assert(gen->bits);
+  assert(bzla_bvprop_gen_has_next(gen));
+
+  uint32_t i, j, bw;
+  BzlaBitVector *res, *next;
+
+  bw  = bzla_bv_get_width(gen->domain->lo);
+  res = bzla_bv_copy(gen->mm, gen->domain->lo);
+  for (i = 0, j = 0; i < bw; ++i)
+  {
+    if (!bzla_bvprop_is_fixed_bit(gen->domain, i))
+    {
+      bzla_bv_set_bit(res, i, bzla_bv_get_bit(gen->bits, j++));
+    }
+  }
+  next = bzla_bv_inc(gen->mm, gen->bits);
+  bzla_bv_free(gen->mm, gen->bits);
+  gen->bits = next;
+  gen->cur += 1;
+  return res;
+}
+
+void
+bzla_bvprop_gen_delete(const BzlaBvDomainGenerator *gen)
+{
+  assert(gen);
+  if (gen->bits) bzla_bv_free(gen->mm, gen->bits);
+}
+
+/*----------------------------------------------------------------------------*/

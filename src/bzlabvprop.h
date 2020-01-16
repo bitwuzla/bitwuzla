@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
- *  Copyright (C) 2018-2019 Aina Niemetz.
+ *  Copyright (C) 2018-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -12,7 +12,7 @@
 
 #include "bzlabv.h"
 
-/* -------------------------------------------------------------------------- */
+/*----------------------------------------------------------------------------*/
 
 struct BzlaBvDomain
 {
@@ -21,6 +21,8 @@ struct BzlaBvDomain
 };
 
 typedef struct BzlaBvDomain BzlaBvDomain;
+
+/*----------------------------------------------------------------------------*/
 
 /** Create new bit-vector domain of width 'width' with low 0 and high ~0. */
 BzlaBvDomain *bzla_bvprop_new_init(BzlaMemMgr *mm, uint32_t width);
@@ -32,7 +34,6 @@ BzlaBvDomain *bzla_bvprop_new_init(BzlaMemMgr *mm, uint32_t width);
 BzlaBvDomain *bzla_bvprop_new(BzlaMemMgr *mm,
                               const BzlaBitVector *lo,
                               const BzlaBitVector *hi);
-
 /**
  * Create new bit-vector domain from a 3-valued string representation.
  */
@@ -49,6 +50,8 @@ void bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d);
 
 /** Copy bit-vector domain 'd'. */
 BzlaBvDomain *bzla_bvprop_copy(BzlaMemMgr *mm, const BzlaBvDomain *d);
+
+/*----------------------------------------------------------------------------*/
 
 /** Get the width of the given domain.  */
 uint32_t bzla_bvprop_get_width(const BzlaBvDomain *d);
@@ -83,6 +86,8 @@ bool bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos);
  */
 bool bzla_bvprop_is_consistent(BzlaBvDomain *d, BzlaBitVector *bv);
 
+/*----------------------------------------------------------------------------*/
+
 /**
  * Get a string representation of the given domain.
  * Unset bits are represented as 'x', invalid bits are represented as 'i'.
@@ -95,6 +100,8 @@ char *bzla_bvprop_to_char(BzlaMemMgr *mm, BzlaBvDomain *d);
  * should be printed separately.
  */
 void bzla_bvprop_print(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short);
+
+/*----------------------------------------------------------------------------*/
 
 /**
  * Propagate domains 'd_x', 'd_y', and 'd_z' of z = (x = y).
@@ -293,5 +300,32 @@ bool bzla_bvprop_urem(BzlaMemMgr *mm,
                       BzlaBvDomain **res_d_x,
                       BzlaBvDomain **res_d_y,
                       BzlaBvDomain **res_d_z);
+
+/*----------------------------------------------------------------------------*/
+/* generator */
+/*----------------------------------------------------------------------------*/
+
+struct BzlaBvDomainGenerator
+{
+  BzlaMemMgr *mm;
+  uint32_t cur;
+  uint32_t cnt;
+  BzlaBitVector *bits;
+  const BzlaBvDomain *domain;
+};
+
+typedef struct BzlaBvDomainGenerator BzlaBvDomainGenerator;
+
+void bzla_bvprop_gen_init(BzlaMemMgr *mm,
+                          BzlaBvDomainGenerator *gen,
+                          const BzlaBvDomain *d);
+
+bool bzla_bvprop_gen_has_next(const BzlaBvDomainGenerator *gen);
+
+BzlaBitVector *bzla_bvprop_gen_next(BzlaBvDomainGenerator *gen);
+
+void bzla_bvprop_gen_delete(const BzlaBvDomainGenerator *gen);
+
+/*----------------------------------------------------------------------------*/
 
 #endif

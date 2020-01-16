@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
- *  Copyright (C) 2018-2019 Aina Niemetz.
+ *  Copyright (C) 2018-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -50,7 +50,7 @@ extern "C" {
     bzla_bvprop_free(d_mm, res_z);  \
   } while (0)
 
-class TestBvProp : public TestMm
+class TestBvProp : public TestBvDomain
 {
  protected:
   enum BvPropOp
@@ -71,13 +71,9 @@ class TestBvProp : public TestMm
     TEST_BVPROP_XOR
   };
 
-  static constexpr uint32_t TEST_BW         = 3;
-  static constexpr uint32_t TEST_NUM_CONSTS = 27;
-  static constexpr uint32_t TEST_CONST_LEN  = (TEST_BW + 1);
-
   void SetUp() override
   {
-    TestMm::SetUp();
+    TestBvDomain::SetUp();
     d_bzla  = bzla_new();
     d_avmgr = bzla_aigvec_mgr_new(d_bzla);
   }
@@ -86,88 +82,7 @@ class TestBvProp : public TestMm
   {
     bzla_aigvec_mgr_delete(d_avmgr);
     bzla_delete(d_bzla);
-    TestMm::TearDown();
-  }
-
-  /* Initialize all possible values for 3-valued constants of bit-width bw */
-  uint32_t generate_consts(uint32_t bw, char ***res)
-  {
-    assert(bw);
-    assert(res);
-
-    uint32_t psize, num_consts = 1;
-    char bit = '0';
-
-    for (uint32_t i = 0; i < bw; i++) num_consts *= 3;
-    psize = num_consts;
-
-    BZLA_NEWN(d_mm, *res, num_consts);
-    for (uint32_t i = 0; i < num_consts; i++)
-      BZLA_CNEWN(d_mm, (*res)[i], bw + 1);
-
-    for (uint32_t i = 0; i < bw; i++)
-    {
-      psize = psize / 3;
-      for (uint32_t j = 0; j < num_consts; j++)
-      {
-        (*res)[j][i] = bit;
-        if ((j + 1) % psize == 0)
-        {
-          bit = bit == '0' ? '1' : (bit == '1' ? 'x' : '0');
-        }
-      }
-    }
-    return num_consts;
-  }
-
-  void free_consts(uint32_t bw, uint32_t num_consts, char **consts)
-  {
-    assert(bw);
-    assert(consts);
-    for (uint32_t i = 0; i < num_consts; i++)
-      BZLA_DELETEN(d_mm, consts[i], bw + 1);
-    BZLA_DELETEN(d_mm, consts, num_consts);
-  }
-
-  void to_str(BzlaBvDomain *d, char **res_lo, char **res_hi, bool print_short)
-  {
-    assert(d);
-
-    if (print_short)
-    {
-      assert(res_lo);
-      char *lo = bzla_bv_to_char(d_mm, d->lo);
-      char *hi = bzla_bv_to_char(d_mm, d->hi);
-      for (size_t i = 0, len = strlen(lo); i < len; i++)
-      {
-        if (lo[i] != hi[i])
-        {
-          if (lo[i] == '0' && hi[i] == '1')
-          {
-            lo[i] = 'x';
-          }
-          else
-          {
-            assert(lo[i] == '1' && hi[i] == '0');
-            lo[i] = '?';
-          }
-        }
-      }
-      bzla_mem_freestr(d_mm, hi);
-      *res_lo = lo;
-      if (res_hi) *res_hi = 0;
-    }
-    else
-    {
-      assert(res_hi);
-      *res_lo = bzla_bv_to_char(d_mm, d->lo);
-      *res_hi = bzla_bv_to_char(d_mm, d->hi);
-    }
-  }
-
-  void print_domain(BzlaBvDomain *d, bool print_short)
-  {
-    bzla_bvprop_print(d_mm, d, print_short);
+    TestBvDomain::TearDown();
   }
 
   BzlaAIGVec *aigvec_from_domain(BzlaBvDomain *d)
@@ -249,40 +164,6 @@ class TestBvProp : public TestMm
     return res;
   }
 
-  bool is_xxx_domain(BzlaMemMgr *mm, BzlaBvDomain *d)
-  {
-    assert(mm);
-    assert(d);
-    char *str_d = from_domain(mm, d);
-    bool res    = strchr(str_d, '1') == NULL && strchr(str_d, '0') == NULL;
-    bzla_mem_freestr(mm, str_d);
-    return res;
-  }
-
-  bool is_valid(BzlaMemMgr *mm,
-                BzlaBvDomain *d_x,
-                BzlaBvDomain *d_y,
-                BzlaBvDomain *d_z,
-                BzlaBvDomain *d_c)
-  {
-    return (!d_x || bzla_bvprop_is_valid(mm, d_x))
-           && (!d_y || bzla_bvprop_is_valid(mm, d_y))
-           && (!d_z || bzla_bvprop_is_valid(mm, d_z))
-           && (!d_c || bzla_bvprop_is_valid(mm, d_c));
-  }
-
-  bool is_fixed(BzlaMemMgr *mm,
-                BzlaBvDomain *d_x,
-                BzlaBvDomain *d_y,
-                BzlaBvDomain *d_z,
-                BzlaBvDomain *d_c)
-  {
-    return (!d_x || bzla_bvprop_is_fixed(mm, d_x))
-           && (!d_y || bzla_bvprop_is_fixed(mm, d_y))
-           && (!d_z || bzla_bvprop_is_fixed(mm, d_z))
-           && (!d_c || bzla_bvprop_is_fixed(mm, d_c));
-  }
-
 #if 0
   bool is_false_eq (const char *a, const char *b)
   {
@@ -323,28 +204,6 @@ class TestBvProp : public TestMm
     return true;
   }
 #endif
-
-  /* Create 3-valued bit-vector from domain 'd'. */
-  char *from_domain(BzlaMemMgr *mm, BzlaBvDomain *d)
-  {
-    assert(bzla_bvprop_is_valid(mm, d));
-    char *lo = bzla_bv_to_char(mm, d->lo);
-    char *hi = bzla_bv_to_char(mm, d->hi);
-
-    size_t len = strlen(lo);
-    for (size_t i = 0; i < len; i++)
-    {
-      if (lo[i] != hi[i])
-      {
-        /* lo[i] == '1' && hi[i] == '0' would be an invalid domain. */
-        assert(lo[i] == '0');
-        assert(hi[i] == '1');
-        lo[i] = 'x';
-      }
-    }
-    bzla_mem_freestr(mm, hi);
-    return lo;
-  }
 
 #if 0
   bool check_const_bits (BzlaBvDomain *d, const char *expected)

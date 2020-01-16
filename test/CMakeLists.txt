@@ -6,6 +6,7 @@ set(test_names
   arithmetic
   bv
   bvprop
+  bvpropgen
   comp
   constbits
   exp
