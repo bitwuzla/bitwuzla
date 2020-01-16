@@ -2604,10 +2604,10 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
 
         bzla_hashint_table_add(cache, cur->id);
         BZLA_PUSH_STACK(exp_stack, cur);
-        assert(!bzla_node_is_fp(bzla, cur) && !bzla_node_is_rm(bzla, cur));
-        if (cur->arity
-            && (bzla_node_is_rm(bzla, cur->e[0])
-                || bzla_node_is_fp(bzla, cur->e[0])))
+        if (bzla_node_is_rm(bzla, cur) || bzla_node_is_fp(bzla, cur)
+            || (cur->arity
+                && (bzla_node_is_rm(bzla, cur->e[0])
+                    || bzla_node_is_fp(bzla, cur->e[0]))))
         {
           if (bzla_node_is_args(cur))
           {
@@ -2630,12 +2630,9 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
             BZLA_PUSH_STACK(exp_stack, wb);
           }
         }
-        else
+        for (j = 1; j <= cur->arity; j++)
         {
-          for (j = 1; j <= cur->arity; j++)
-          {
-            BZLA_PUSH_STACK(exp_stack, cur->e[cur->arity - j]);
-          }
+          BZLA_PUSH_STACK(exp_stack, cur->e[cur->arity - j]);
         }
 
         /* synthesize nodes in static_rho of lambda nodes */
@@ -2682,8 +2679,10 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         if (restart) continue;
       }
 
-      if (bzla_node_is_rm(bzla, cur->e[0])
-          || (cur->arity && bzla_node_is_fp(bzla, cur->e[0])))
+      if (bzla_node_is_rm(bzla, cur) || bzla_node_is_fp(bzla, cur)
+          || (cur->arity
+              && (bzla_node_is_rm(bzla, cur->e[0])
+                  || bzla_node_is_fp(bzla, cur->e[0]))))
       {
         wb         = bzla_fp_word_blast(bzla, cur);
         invert_av0 = bzla_node_is_inverted(wb);

@@ -2160,7 +2160,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
               || bzla_node_is_fp(d_bzla, cur->e[1])))
       {
         std::stringstream ss;
-        ss << "_fp_var_" << bzla_node_get_id(cur) << "_";
+        ss << "_fp_ite_" << bzla_node_get_id(cur) << "_";
         BzlaNode *var =
             bzla_exp_var(d_bzla, bzla_node_get_sort_id(cur), ss.str().c_str());
         to_visit.push_back(var);
