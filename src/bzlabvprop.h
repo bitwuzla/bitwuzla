@@ -308,17 +308,25 @@ bool bzla_bvprop_urem(BzlaMemMgr *mm,
 struct BzlaBvDomainGenerator
 {
   BzlaMemMgr *mm;
-  uint32_t cur;
-  uint32_t cnt;
+  uint32_t n_gen;
+  uint32_t n_max;
   BzlaBitVector *bits;
-  const BzlaBvDomain *domain;
+  BzlaBitVector *cur;
+  BzlaBvDomain *domain;
+  BzlaBitVector *max;
 };
 
 typedef struct BzlaBvDomainGenerator BzlaBvDomainGenerator;
 
 void bzla_bvprop_gen_init(BzlaMemMgr *mm,
                           BzlaBvDomainGenerator *gen,
-                          const BzlaBvDomain *d);
+                          BzlaBvDomain *d);
+
+void bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
+                                BzlaBvDomainGenerator *gen,
+                                BzlaBvDomain *d,
+                                BzlaBitVector *min,
+                                BzlaBitVector *max);
 
 bool bzla_bvprop_gen_has_next(const BzlaBvDomainGenerator *gen);
 
