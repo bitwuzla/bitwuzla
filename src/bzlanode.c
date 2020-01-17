@@ -2849,7 +2849,8 @@ bzla_node_create_param(Bzla *bzla, BzlaSortId sort, const char *symbol)
 {
   assert(bzla);
   assert(sort);
-  assert(bzla_sort_is_bv(bzla, sort));
+  assert(bzla_sort_is_bv(bzla, sort) || bzla_sort_is_rm(bzla, sort)
+         || bzla_sort_is_fp(bzla, sort));
   assert(!symbol || !bzla_hashptr_table_get(bzla->symbols, (char *) symbol));
 
   BzlaParamNode *exp;

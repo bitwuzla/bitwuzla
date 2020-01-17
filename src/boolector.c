@@ -4196,7 +4196,10 @@ boolector_param(Bzla *bzla, BoolectorSort sort, const char *symbol)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT " %s", sort, bzla, symb);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT(
+      !bzla_sort_is_bv(bzla, s) && !bzla_sort_is_rm(bzla, s)
+          && !bzla_sort_is_fp(bzla, s),
+      "only bit-vector, rounding mode or floating-point arguments supported");
   BZLA_ABORT(symb && bzla_hashptr_table_get(bzla->symbols, symb),
              "symbol '%s' is already in use in the current context",
              symb);

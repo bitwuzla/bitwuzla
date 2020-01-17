@@ -369,7 +369,9 @@ beta_reduce(Bzla *bzla,
           bzla_node_release(bzla, e[1]);
           break;
         case BZLA_BV_EQ_NODE:
+        case BZLA_FP_EQ_NODE:
         case BZLA_FUN_EQ_NODE:
+        case BZLA_RM_EQ_NODE:
           result = bzla_exp_eq(bzla, e[1], e[0]);
           bzla_node_release(bzla, e[0]);
           bzla_node_release(bzla, e[1]);
@@ -418,6 +420,143 @@ beta_reduce(Bzla *bzla,
           result = bzla_exp_bv_concat(bzla, e[1], e[0]);
           bzla_node_release(bzla, e[0]);
           bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_ABS_NODE:
+          result = bzla_exp_fp_abs(bzla, e[0]);
+          bzla_node_release(bzla, e[0]);
+          break;
+        case BZLA_FP_IS_INF_NODE:
+          result = bzla_exp_fp_is_inf(bzla, e[0]);
+          bzla_node_release(bzla, e[0]);
+          break;
+        case BZLA_FP_IS_NAN_NODE:
+          result = bzla_exp_fp_is_nan(bzla, e[0]);
+          bzla_node_release(bzla, e[0]);
+          break;
+        case BZLA_FP_IS_NEG_NODE:
+          result = bzla_exp_fp_is_nan(bzla, e[0]);
+          bzla_node_release(bzla, e[0]);
+          break;
+        case BZLA_FP_IS_NORM_NODE:
+          result = bzla_exp_fp_is_normal(bzla, e[0]);
+          bzla_node_release(bzla, e[0]);
+          break;
+        case BZLA_FP_IS_POS_NODE:
+          result = bzla_exp_fp_is_pos(bzla, e[0]);
+          bzla_node_release(bzla, e[0]);
+          break;
+        case BZLA_FP_IS_SUBNORM_NODE:
+          result = bzla_exp_fp_is_subnormal(bzla, e[0]);
+          bzla_node_release(bzla, e[0]);
+          break;
+        case BZLA_FP_IS_ZERO_NODE:
+          result = bzla_exp_fp_is_zero(bzla, e[0]);
+          bzla_node_release(bzla, e[0]);
+          break;
+        case BZLA_FP_NEG_NODE:
+          result = bzla_exp_fp_is_neg(bzla, e[0]);
+          bzla_node_release(bzla, e[0]);
+          break;
+        case BZLA_FP_LTE_NODE:
+          result = bzla_exp_fp_lte(bzla, e[0], e[1]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_LT_NODE:
+          result = bzla_exp_fp_lt(bzla, e[0], e[1]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_MIN_NODE:
+          result = bzla_exp_fp_min(bzla, e[0], e[1]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_MAX_NODE:
+          result = bzla_exp_fp_max(bzla, e[0], e[1]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_SQRT_NODE:
+          result = bzla_exp_fp_sqrt(bzla, e[0], e[1]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_REM_NODE:
+          result = bzla_exp_fp_rem(bzla, e[0], e[1]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_RTI_NODE:
+          result = bzla_exp_fp_rti(bzla, e[0], e[1]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_TO_SBV_NODE:
+          assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
+          result =
+              bzla_exp_fp_to_sbv(bzla, e[0], e[1], bzla_node_get_sort_id(cur));
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_TO_UBV_NODE:
+          assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
+          result =
+              bzla_exp_fp_to_ubv(bzla, e[0], e[1], bzla_node_get_sort_id(cur));
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_TO_FP_BV_NODE:
+          assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
+          result =
+              bzla_exp_fp_to_fp_from_bv(bzla, e[0], bzla_node_get_sort_id(cur));
+          bzla_node_release(bzla, e[0]);
+          break;
+        case BZLA_FP_TO_FP_FP_NODE:
+          assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
+          result = bzla_exp_fp_to_fp_from_fp(
+              bzla, e[0], e[1], bzla_node_get_sort_id(cur));
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_TO_FP_INT_NODE:
+          assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
+          result = bzla_exp_fp_to_fp_from_int(
+              bzla, e[0], e[1], bzla_node_get_sort_id(cur));
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_TO_FP_UINT_NODE:
+          assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
+          result = bzla_exp_fp_to_fp_from_uint(
+              bzla, e[0], e[1], bzla_node_get_sort_id(cur));
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_FP_ADD_NODE:
+          result = bzla_exp_fp_add(bzla, e[0], e[1], e[2]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          bzla_node_release(bzla, e[2]);
+          break;
+        case BZLA_FP_MUL_NODE:
+          result = bzla_exp_fp_mul(bzla, e[0], e[1], e[2]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          bzla_node_release(bzla, e[2]);
+          break;
+        case BZLA_FP_DIV_NODE:
+          result = bzla_exp_fp_div(bzla, e[0], e[1], e[2]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          bzla_node_release(bzla, e[2]);
+          break;
+        case BZLA_FP_FMA_NODE:
+          result = bzla_exp_fp_fma(bzla, e[0], e[1], e[2], e[3]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          bzla_node_release(bzla, e[2]);
+          bzla_node_release(bzla, e[3]);
           break;
         case BZLA_ARGS_NODE:
           assert(real_cur->arity >= 1);
