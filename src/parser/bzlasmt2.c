@@ -2889,6 +2889,10 @@ close_term(BzlaSMT2Parser *parser)
       if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
       {
         parser->perrcoo = item_cur[i].coo;
+        if (item_cur[i].tag == BZLA_REAL_CONSTANT_TAG_SMT2)
+        {
+          return !perr_smt2(parser, "Real constants not supported");
+        }
         return !perr_smt2(parser, "expected expression");
       }
     }
