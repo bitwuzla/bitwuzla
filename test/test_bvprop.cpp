@@ -205,31 +205,6 @@ class TestBvProp : public TestBvDomain
   }
 #endif
 
-#if 0
-  bool check_const_bits (BzlaBvDomain *d, const char *expected)
-  {
-    assert (bzla_bvprop_is_valid (d_mm, d));
-    size_t len = strlen (expected);
-    uint32_t bit_lo, bit_hi;
-    bool res = true;
-
-    for (size_t i = 0; i < len && res; i++)
-    {
-      bit_lo = bzla_bv_get_bit (d->lo, len - 1 - i);
-      bit_hi = bzla_bv_get_bit (d->hi, len - 1 - i);
-      if (expected[i] == 'x')
-      {
-        res &= bit_lo != bit_hi;
-      }
-      else
-      {
-        res &= bit_lo == bit_hi;
-      }
-    }
-    return res;
-  }
-#endif
-
   void test_is_consistent(const char *d_val)
   {
     assert(strlen(d_val) == 3);
