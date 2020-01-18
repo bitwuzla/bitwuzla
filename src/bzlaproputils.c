@@ -2726,6 +2726,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
 
           if (bzla_bv_is_zero(up))
           {
+            assert(false);
             res = bzla_bv_udiv(mm, sub, one);
           }
           else
