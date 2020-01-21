@@ -2698,8 +2698,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
              * -> (s - t) / n > t
              * -> (s - t) / t > n
              */
-            tmp  = bzla_bv_urem(mm, sub, t);
-            tmp2 = bzla_bv_udiv(mm, sub, t);
+            bzla_bv_udiv_urem(mm, sub, t, &tmp2, &tmp);
             if (bzla_bv_is_zero(tmp))
             {
               /**
