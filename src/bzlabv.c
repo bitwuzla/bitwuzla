@@ -2304,19 +2304,34 @@ bzla_bv_mul(BzlaMemMgr *mm, const BzlaBitVector *a, const BzlaBitVector *b)
   return res;
 }
 
-#ifndef BZLA_USE_GMP
-static void
-udiv_urem_bv(BzlaMemMgr *mm,
-             const BzlaBitVector *a,
-             const BzlaBitVector *b,
-             BzlaBitVector **q,
-             BzlaBitVector **r)
+void
+bzla_bv_udiv_urem(BzlaMemMgr *mm,
+                  const BzlaBitVector *a,
+                  const BzlaBitVector *b,
+                  BzlaBitVector **q,
+                  BzlaBitVector **r)
 {
   assert(mm);
   assert(a);
   assert(b);
   assert(a->width == b->width);
 
+#ifdef BZLA_USE_GMP
+  uint32_t bw = a->width;
+  if (bzla_bv_is_zero(b))
+  {
+    q->val = bzla_bv_ones(mm, bw);
+    r->val = bzla_bv_copy(mm, a);
+  }
+  else
+  {
+    q = bzla_bv_new(mm, bw);
+    r = bzla_bv_new(mm, bw);
+    mpz_fdiv_qr(q->val, r->val, a->val, b->val);
+    mpz_fdiv_r_2exp(q->val, q->val, bw);
+    mpz_fdiv_r_2exp(r->val, r->val, bw);
+  }
+#else
   assert(a->len == b->len);
   int64_t i;
   bool is_true;
@@ -2341,13 +2356,13 @@ udiv_urem_bv(BzlaMemMgr *mm,
       x = z;
     }
     quot = bzla_bv_uint64_to_bv(mm, x, bw);
-    rem  = bzla_bv_uint64_to_bv(mm, y, bw);
+    rem = bzla_bv_uint64_to_bv(mm, y, bw);
   }
   else
   {
     neg_b = bzla_bv_neg(mm, b);
-    quot  = bzla_bv_new(mm, bw);
-    rem   = bzla_bv_new(mm, bw);
+    quot = bzla_bv_new(mm, bw);
+    rem = bzla_bv_new(mm, bw);
 
     for (i = bw - 1; i >= 0; i--)
     {
@@ -2356,13 +2371,13 @@ udiv_urem_bv(BzlaMemMgr *mm,
       rem = tmp;
       bzla_bv_set_bit(rem, 0, bzla_bv_get_bit(a, i));
 
-      ult     = bzla_bv_ult(mm, b, rem);
+      ult = bzla_bv_ult(mm, b, rem);
       is_true = bzla_bv_is_true(ult);
       bzla_bv_free(mm, ult);
 
       if (is_true) goto UDIV_UREM_SUBTRACT;
 
-      eq      = bzla_bv_eq(mm, b, rem);
+      eq = bzla_bv_eq(mm, b, rem);
       is_true = bzla_bv_is_true(eq);
       bzla_bv_free(mm, eq);
 
@@ -2387,8 +2402,8 @@ udiv_urem_bv(BzlaMemMgr *mm,
     *r = rem;
   else
     bzla_bv_free(mm, rem);
-}
 #endif
+}
 
 BzlaBitVector *
 bzla_bv_udiv(BzlaMemMgr *mm, const BzlaBitVector *a, const BzlaBitVector *b)
@@ -2407,7 +2422,7 @@ bzla_bv_udiv(BzlaMemMgr *mm, const BzlaBitVector *a, const BzlaBitVector *b)
   mpz_fdiv_r_2exp(res->val, res->val, bw);
 #else
   assert(a->len == b->len);
-  udiv_urem_bv(mm, a, b, &res, 0);
+  bzla_bv_udiv_urem(mm, a, b, &res, 0);
   assert(res);
 #endif
   return res;
@@ -2430,7 +2445,7 @@ bzla_bv_urem(BzlaMemMgr *mm, const BzlaBitVector *a, const BzlaBitVector *b)
   mpz_fdiv_r_2exp(res->val, res->val, bw);
 #else
   assert(a->len == b->len);
-  udiv_urem_bv(mm, a, b, 0, &res);
+  bzla_bv_udiv_urem(mm, a, b, 0, &res);
   assert(res);
 #endif
   return res;
@@ -2975,7 +2990,7 @@ bzla_bv_mod_inverse(BzlaMemMgr *mm, const BzlaBitVector *bv)
 
   while (!bzla_bv_is_zero(b))
   {
-    udiv_urem_bv(mm, a, b, &q, &r);
+    bzla_bv_udiv_urem(mm, a, b, &q, &r);
 
     bzla_bv_free(mm, a);
 

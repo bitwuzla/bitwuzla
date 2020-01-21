@@ -290,14 +290,13 @@ class TestBv : public TestBzla
   void unary_bitvec(uint64_t (*int_func)(uint64_t, uint32_t),
                     BzlaBitVector *(*bitvec_func)(BzlaMemMgr *,
                                                   const BzlaBitVector *),
-                    uint32_t num_tests,
                     uint32_t bit_width)
   {
     uint32_t i;
     BzlaBitVector *bv, *res;
     uint64_t a, ares, bres;
 
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
     {
       bv   = bzla_bv_new_random(d_mm, d_rng, bit_width);
       res  = bitvec_func(d_mm, bv);
@@ -314,7 +313,6 @@ class TestBv : public TestBzla
                      BzlaBitVector *(*bitvec_func)(BzlaMemMgr *,
                                                    const BzlaBitVector *,
                                                    const BzlaBitVector *),
-                     uint32_t num_tests,
                      uint32_t bit_width)
   {
     uint32_t i;
@@ -322,7 +320,7 @@ class TestBv : public TestBzla
     uint64_t a1, a2, ares, bres;
 
     zero = bzla_bv_new(d_mm, bit_width);
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
     {
       bv1 = bzla_bv_new_random(d_mm, d_rng, bit_width);
       bv2 = bzla_bv_new_random(d_mm, d_rng, bit_width);
@@ -357,7 +355,6 @@ class TestBv : public TestBzla
       BzlaBitVector *(*bitvec_func)(BzlaMemMgr *,
                                     const BzlaBitVector *,
                                     const BzlaBitVector *),
-      uint32_t num_tests,
       uint32_t bit_width)
   {
     uint32_t i;
@@ -365,7 +362,7 @@ class TestBv : public TestBzla
     int64_t a1, a2, ares, bres;
 
     zero = bzla_bv_new(d_mm, bit_width);
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
     {
       bv1 = bzla_bv_new_random(d_mm, d_rng, bit_width);
       bv2 = bzla_bv_new_random(d_mm, d_rng, bit_width);
@@ -404,6 +401,55 @@ class TestBv : public TestBzla
     bzla_bv_free(d_mm, zero);
   }
 
+  void udiv_urem_bitvec(uint32_t bit_width)
+  {
+    uint32_t i;
+    BzlaBitVector *bv1, *bv2, *zero, *q, *r;
+    uint64_t a1, a2, ares_div, ares_rem, bres_div, bres_rem;
+
+    zero = bzla_bv_new(d_mm, bit_width);
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    {
+      bv1 = bzla_bv_new_random(d_mm, d_rng, bit_width);
+      bv2 = bzla_bv_new_random(d_mm, d_rng, bit_width);
+      a1  = bzla_bv_to_uint64(bv1);
+      a2  = bzla_bv_to_uint64(bv2);
+      /* test for x = 0 explicitly */
+      bzla_bv_udiv_urem(d_mm, zero, bv2, &q, &r);
+      ares_div = udiv(0, a2, bit_width);
+      ares_rem = urem(0, a2, bit_width);
+      bres_div = bzla_bv_to_uint64(q);
+      bres_rem = bzla_bv_to_uint64(r);
+      ASSERT_EQ(ares_div, bres_div);
+      ASSERT_EQ(ares_rem, bres_rem);
+      bzla_bv_free(d_mm, q);
+      bzla_bv_free(d_mm, r);
+      /* test for y = 0 explicitly */
+      bzla_bv_udiv_urem(d_mm, bv1, zero, &q, &r);
+      ares_div = udiv(a1, 0, bit_width);
+      ares_rem = urem(a1, 0, bit_width);
+      bres_div = bzla_bv_to_uint64(q);
+      bres_rem = bzla_bv_to_uint64(r);
+      ASSERT_EQ(ares_div, bres_div);
+      ASSERT_EQ(ares_rem, bres_rem);
+      bzla_bv_free(d_mm, q);
+      bzla_bv_free(d_mm, r);
+      /* test x, y random */
+      bzla_bv_udiv_urem(d_mm, bv1, bv2, &q, &r);
+      ares_div = udiv(a1, a2, bit_width);
+      ares_rem = urem(a1, a2, bit_width);
+      bres_div = bzla_bv_to_uint64(q);
+      bres_rem = bzla_bv_to_uint64(r);
+      ASSERT_EQ(ares_div, bres_div);
+      ASSERT_EQ(ares_rem, bres_rem);
+      bzla_bv_free(d_mm, q);
+      bzla_bv_free(d_mm, r);
+      bzla_bv_free(d_mm, bv1);
+      bzla_bv_free(d_mm, bv2);
+    }
+    bzla_bv_free(d_mm, zero);
+  }
+
   void shift_bitvec(const char *toshift,
                     const char *shift,
                     const char *expected,
@@ -427,14 +473,13 @@ class TestBv : public TestBzla
     bzla_bv_free(d_mm, bv);
   }
 
-  void concat_bitvec(int32_t num_tests, uint32_t bit_width)
+  void concat_bitvec(uint32_t bit_width)
   {
-    int32_t i;
-    uint32_t bw1, bw2;
+    uint32_t i, bw1, bw2;
     BzlaBitVector *bv1, *bv2, *res;
     uint64_t a1, a2, ares, bres;
 
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
     {
       bw1 = bzla_rng_pick_rand(d_rng, 1, bit_width - 1);
       bw2 = bit_width - bw1;
@@ -453,13 +498,13 @@ class TestBv : public TestBzla
     }
   }
 
-  void slice_bitvec(uint32_t num_tests, uint32_t bit_width)
+  void slice_bitvec(uint32_t bit_width)
   {
     uint32_t i, upper, lower;
     char *sbv, *sres;
     BzlaBitVector *bv, *res;
 
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
     {
       bv    = bzla_bv_new_random(d_mm, d_rng, bit_width);
       lower = rand() % bit_width;
@@ -486,14 +531,13 @@ class TestBv : public TestBzla
   void ext_bitvec(BzlaBitVector *(*ext_func)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              uint32_t),
-                  uint32_t num_tests,
                   uint32_t bit_width)
   {
     uint32_t i, j, len;
     char *sbv, *sres;
     BzlaBitVector *bv, *res;
 
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
     {
       len = bzla_rng_pick_rand(d_rng, 0, bit_width - 1);
       bv  = bzla_bv_new_random(d_mm, d_rng, bit_width - len);
@@ -515,13 +559,13 @@ class TestBv : public TestBzla
     }
   }
 
-  void ite_bitvec(uint32_t num_tests, uint32_t bit_width)
+  void ite_bitvec(uint32_t bit_width)
   {
     uint32_t i;
     BzlaBitVector *bvc, *bvt, *bve, *res;
     uint64_t ac, at, ae, ares, bres;
 
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
     {
       bvc  = bzla_bv_new_random(d_mm, d_rng, 1);
       bvt  = bzla_bv_new_random(d_mm, d_rng, bit_width);
@@ -542,12 +586,12 @@ class TestBv : public TestBzla
     }
   }
 
-  void mod_inverse_bitvec(uint32_t num_tests, uint32_t bit_width)
+  void mod_inverse_bitvec(uint32_t bit_width)
   {
     uint32_t i;
     BzlaBitVector *bv, *bvinv, *mul;
 
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_MOD_INV_TESTS; i++)
     {
       bv = bzla_bv_new_random(d_mm, d_rng, bit_width);
       bzla_bv_set_bit(bv, 0, 1);  // must be odd
@@ -560,12 +604,12 @@ class TestBv : public TestBzla
     }
   }
 
-  void flipped_bit_bitvec(uint32_t num_tests, uint32_t bit_width)
+  void flipped_bit_bitvec(uint32_t bit_width)
   {
     uint32_t i, j, pos;
     BzlaBitVector *bv, *res;
 
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
     {
       pos = bzla_rng_pick_rand(d_rng, 0, bit_width - 1);
       bv  = bzla_bv_new_random(d_mm, d_rng, bit_width);
@@ -581,12 +625,12 @@ class TestBv : public TestBzla
     }
   }
 
-  void flipped_bit_range_bitvec(uint32_t num_tests, uint32_t bit_width)
+  void flipped_bit_range_bitvec(uint32_t bit_width)
   {
     uint32_t i, j, up, lo;
     BzlaBitVector *bv, *res;
 
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
     {
       lo = bzla_rng_pick_rand(d_rng, 0, bit_width - 1);
       up = lo == bit_width - 1
@@ -605,12 +649,12 @@ class TestBv : public TestBzla
     }
   }
 
-  void new_random_bit_range_bitvec(uint32_t num_tests, uint32_t bw)
+  void new_random_bit_range_bitvec(uint32_t bw)
   {
     uint32_t i, j, up, lo;
     BzlaBitVector *bv1, *bv2, *bv3;
 
-    for (i = 0; i < num_tests; i++)
+    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
     {
       lo  = bzla_rng_pick_rand(d_rng, 0, bw - 1);
       up  = lo == bw - 1 ? bw - 1 : bzla_rng_pick_rand(d_rng, lo + 1, bw - 1);
@@ -846,11 +890,11 @@ TEST_F(TestBv, new_random_range)
 
 TEST_F(TestBv, new_random_bit_range)
 {
-  new_random_bit_range_bitvec(BZLA_TEST_BITVEC_TESTS, 1);
-  new_random_bit_range_bitvec(BZLA_TEST_BITVEC_TESTS, 7);
-  new_random_bit_range_bitvec(BZLA_TEST_BITVEC_TESTS, 31);
-  new_random_bit_range_bitvec(BZLA_TEST_BITVEC_TESTS, 33);
-  new_random_bit_range_bitvec(BZLA_TEST_BITVEC_TESTS, 64);
+  new_random_bit_range_bitvec(1);
+  new_random_bit_range_bitvec(7);
+  new_random_bit_range_bitvec(31);
+  new_random_bit_range_bitvec(33);
+  new_random_bit_range_bitvec(64);
 }
 
 TEST_F(TestBv, copy)
@@ -2055,223 +2099,220 @@ TEST_F(TestBv, set_get_flip_bit)
 
 TEST_F(TestBv, not )
 {
-  unary_bitvec(_not, bzla_bv_not, BZLA_TEST_BITVEC_TESTS, 1);
-  unary_bitvec(_not, bzla_bv_not, BZLA_TEST_BITVEC_TESTS, 7);
-  unary_bitvec(_not, bzla_bv_not, BZLA_TEST_BITVEC_TESTS, 31);
-  unary_bitvec(_not, bzla_bv_not, BZLA_TEST_BITVEC_TESTS, 33);
+  unary_bitvec(_not, bzla_bv_not, 1);
+  unary_bitvec(_not, bzla_bv_not, 7);
+  unary_bitvec(_not, bzla_bv_not, 31);
+  unary_bitvec(_not, bzla_bv_not, 33);
 }
 
 TEST_F(TestBv, neg)
 {
-  unary_bitvec(neg, bzla_bv_neg, BZLA_TEST_BITVEC_TESTS, 1);
-  unary_bitvec(neg, bzla_bv_neg, BZLA_TEST_BITVEC_TESTS, 7);
-  unary_bitvec(neg, bzla_bv_neg, BZLA_TEST_BITVEC_TESTS, 31);
-  unary_bitvec(neg, bzla_bv_neg, BZLA_TEST_BITVEC_TESTS, 33);
+  unary_bitvec(neg, bzla_bv_neg, 1);
+  unary_bitvec(neg, bzla_bv_neg, 7);
+  unary_bitvec(neg, bzla_bv_neg, 31);
+  unary_bitvec(neg, bzla_bv_neg, 33);
 }
 
 TEST_F(TestBv, redand)
 {
-  unary_bitvec(redand, bzla_bv_redand, BZLA_TEST_BITVEC_TESTS, 1);
-  unary_bitvec(redand, bzla_bv_redand, BZLA_TEST_BITVEC_TESTS, 7);
-  unary_bitvec(redand, bzla_bv_redand, BZLA_TEST_BITVEC_TESTS, 31);
-  unary_bitvec(redand, bzla_bv_redand, BZLA_TEST_BITVEC_TESTS, 33);
+  unary_bitvec(redand, bzla_bv_redand, 1);
+  unary_bitvec(redand, bzla_bv_redand, 7);
+  unary_bitvec(redand, bzla_bv_redand, 31);
+  unary_bitvec(redand, bzla_bv_redand, 33);
 }
 
 TEST_F(TestBv, redor)
 {
-  unary_bitvec(redor, bzla_bv_redor, BZLA_TEST_BITVEC_TESTS, 1);
-  unary_bitvec(redor, bzla_bv_redor, BZLA_TEST_BITVEC_TESTS, 7);
-  unary_bitvec(redor, bzla_bv_redor, BZLA_TEST_BITVEC_TESTS, 31);
-  unary_bitvec(redor, bzla_bv_redor, BZLA_TEST_BITVEC_TESTS, 33);
+  unary_bitvec(redor, bzla_bv_redor, 1);
+  unary_bitvec(redor, bzla_bv_redor, 7);
+  unary_bitvec(redor, bzla_bv_redor, 31);
+  unary_bitvec(redor, bzla_bv_redor, 33);
 }
 
 TEST_F(TestBv, inc)
 {
-  unary_bitvec(inc, bzla_bv_inc, BZLA_TEST_BITVEC_TESTS, 1);
-  unary_bitvec(inc, bzla_bv_inc, BZLA_TEST_BITVEC_TESTS, 7);
-  unary_bitvec(inc, bzla_bv_inc, BZLA_TEST_BITVEC_TESTS, 31);
-  unary_bitvec(inc, bzla_bv_inc, BZLA_TEST_BITVEC_TESTS, 33);
+  unary_bitvec(inc, bzla_bv_inc, 1);
+  unary_bitvec(inc, bzla_bv_inc, 7);
+  unary_bitvec(inc, bzla_bv_inc, 31);
+  unary_bitvec(inc, bzla_bv_inc, 33);
 }
 
 TEST_F(TestBv, dec)
 {
-  unary_bitvec(dec, bzla_bv_dec, BZLA_TEST_BITVEC_TESTS, 1);
-  unary_bitvec(dec, bzla_bv_dec, BZLA_TEST_BITVEC_TESTS, 7);
-  unary_bitvec(dec, bzla_bv_dec, BZLA_TEST_BITVEC_TESTS, 31);
-  unary_bitvec(dec, bzla_bv_dec, BZLA_TEST_BITVEC_TESTS, 33);
+  unary_bitvec(dec, bzla_bv_dec, 1);
+  unary_bitvec(dec, bzla_bv_dec, 7);
+  unary_bitvec(dec, bzla_bv_dec, 31);
+  unary_bitvec(dec, bzla_bv_dec, 33);
 }
 
 TEST_F(TestBv, add)
 {
-  binary_bitvec(add, bzla_bv_add, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(add, bzla_bv_add, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(add, bzla_bv_add, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(add, bzla_bv_add, BZLA_TEST_BITVEC_TESTS, 33);
+  binary_bitvec(add, bzla_bv_add, 1);
+  binary_bitvec(add, bzla_bv_add, 7);
+  binary_bitvec(add, bzla_bv_add, 31);
+  binary_bitvec(add, bzla_bv_add, 33);
 }
 
 TEST_F(TestBv, sub)
 {
-  binary_bitvec(sub, bzla_bv_sub, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(sub, bzla_bv_sub, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(sub, bzla_bv_sub, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(sub, bzla_bv_sub, BZLA_TEST_BITVEC_TESTS, 33);
+  binary_bitvec(sub, bzla_bv_sub, 1);
+  binary_bitvec(sub, bzla_bv_sub, 7);
+  binary_bitvec(sub, bzla_bv_sub, 31);
+  binary_bitvec(sub, bzla_bv_sub, 33);
 }
 
 TEST_F(TestBv, and)
 {
-  binary_bitvec(_and, bzla_bv_and, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(_and, bzla_bv_and, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(_and, bzla_bv_and, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(_and, bzla_bv_and, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(_and, bzla_bv_and, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(_and, bzla_bv_and, 1);
+  binary_bitvec(_and, bzla_bv_and, 7);
+  binary_bitvec(_and, bzla_bv_and, 31);
+  binary_bitvec(_and, bzla_bv_and, 33);
+  binary_bitvec(_and, bzla_bv_and, 64);
 }
 
 TEST_F(TestBv, nand)
 {
-  binary_bitvec(nand, bzla_bv_nand, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(nand, bzla_bv_nand, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(nand, bzla_bv_nand, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(nand, bzla_bv_nand, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(nand, bzla_bv_nand, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(nand, bzla_bv_nand, 1);
+  binary_bitvec(nand, bzla_bv_nand, 7);
+  binary_bitvec(nand, bzla_bv_nand, 31);
+  binary_bitvec(nand, bzla_bv_nand, 33);
+  binary_bitvec(nand, bzla_bv_nand, 64);
 }
 
 TEST_F(TestBv, or)
 {
-  binary_bitvec(_or, bzla_bv_or, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(_or, bzla_bv_or, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(_or, bzla_bv_or, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(_or, bzla_bv_or, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(_or, bzla_bv_or, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(_or, bzla_bv_or, 1);
+  binary_bitvec(_or, bzla_bv_or, 7);
+  binary_bitvec(_or, bzla_bv_or, 31);
+  binary_bitvec(_or, bzla_bv_or, 33);
+  binary_bitvec(_or, bzla_bv_or, 64);
 }
 
 TEST_F(TestBv, nor)
 {
-  binary_bitvec(nor, bzla_bv_nor, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(nor, bzla_bv_nor, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(nor, bzla_bv_nor, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(nor, bzla_bv_nor, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(nor, bzla_bv_nor, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(nor, bzla_bv_nor, 1);
+  binary_bitvec(nor, bzla_bv_nor, 7);
+  binary_bitvec(nor, bzla_bv_nor, 31);
+  binary_bitvec(nor, bzla_bv_nor, 33);
+  binary_bitvec(nor, bzla_bv_nor, 64);
 }
 
 TEST_F(TestBv, xnor)
 {
-  binary_bitvec(xnor, bzla_bv_xnor, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(xnor, bzla_bv_xnor, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(xnor, bzla_bv_xnor, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(xnor, bzla_bv_xnor, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(xnor, bzla_bv_xnor, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(xnor, bzla_bv_xnor, 1);
+  binary_bitvec(xnor, bzla_bv_xnor, 7);
+  binary_bitvec(xnor, bzla_bv_xnor, 31);
+  binary_bitvec(xnor, bzla_bv_xnor, 33);
+  binary_bitvec(xnor, bzla_bv_xnor, 64);
 }
 
-TEST_F(TestBv, implies)
-{
-  binary_bitvec(implies, bzla_bv_implies, BZLA_TEST_BITVEC_TESTS, 1);
-}
+TEST_F(TestBv, implies) { binary_bitvec(implies, bzla_bv_implies, 1); }
 
 TEST_F(TestBv, xor)
 {
-  binary_bitvec(_xor, bzla_bv_xor, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(_xor, bzla_bv_xor, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(_xor, bzla_bv_xor, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(_xor, bzla_bv_xor, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(_xor, bzla_bv_xor, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(_xor, bzla_bv_xor, 1);
+  binary_bitvec(_xor, bzla_bv_xor, 7);
+  binary_bitvec(_xor, bzla_bv_xor, 31);
+  binary_bitvec(_xor, bzla_bv_xor, 33);
+  binary_bitvec(_xor, bzla_bv_xor, 64);
 }
 
 TEST_F(TestBv, eq)
 {
-  binary_bitvec(eq, bzla_bv_eq, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(eq, bzla_bv_eq, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(eq, bzla_bv_eq, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(eq, bzla_bv_eq, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(eq, bzla_bv_eq, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(eq, bzla_bv_eq, 1);
+  binary_bitvec(eq, bzla_bv_eq, 7);
+  binary_bitvec(eq, bzla_bv_eq, 31);
+  binary_bitvec(eq, bzla_bv_eq, 33);
+  binary_bitvec(eq, bzla_bv_eq, 64);
 }
 
 TEST_F(TestBv, ne)
 {
-  binary_bitvec(ne, bzla_bv_ne, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(ne, bzla_bv_ne, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(ne, bzla_bv_ne, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(ne, bzla_bv_ne, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(ne, bzla_bv_ne, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(ne, bzla_bv_ne, 1);
+  binary_bitvec(ne, bzla_bv_ne, 7);
+  binary_bitvec(ne, bzla_bv_ne, 31);
+  binary_bitvec(ne, bzla_bv_ne, 33);
+  binary_bitvec(ne, bzla_bv_ne, 64);
 }
 
 TEST_F(TestBv, ult)
 {
-  binary_bitvec(ult, bzla_bv_ult, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(ult, bzla_bv_ult, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(ult, bzla_bv_ult, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(ult, bzla_bv_ult, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(ult, bzla_bv_ult, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(ult, bzla_bv_ult, 1);
+  binary_bitvec(ult, bzla_bv_ult, 7);
+  binary_bitvec(ult, bzla_bv_ult, 31);
+  binary_bitvec(ult, bzla_bv_ult, 33);
+  binary_bitvec(ult, bzla_bv_ult, 64);
 }
 
 TEST_F(TestBv, ulte)
 {
-  binary_bitvec(ulte, bzla_bv_ulte, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(ulte, bzla_bv_ulte, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(ulte, bzla_bv_ulte, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(ulte, bzla_bv_ulte, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(ulte, bzla_bv_ulte, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(ulte, bzla_bv_ulte, 1);
+  binary_bitvec(ulte, bzla_bv_ulte, 7);
+  binary_bitvec(ulte, bzla_bv_ulte, 31);
+  binary_bitvec(ulte, bzla_bv_ulte, 33);
+  binary_bitvec(ulte, bzla_bv_ulte, 64);
 }
 
 TEST_F(TestBv, ugt)
 {
-  binary_bitvec(ugt, bzla_bv_ugt, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(ugt, bzla_bv_ugt, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(ugt, bzla_bv_ugt, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(ugt, bzla_bv_ugt, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(ugt, bzla_bv_ugt, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(ugt, bzla_bv_ugt, 1);
+  binary_bitvec(ugt, bzla_bv_ugt, 7);
+  binary_bitvec(ugt, bzla_bv_ugt, 31);
+  binary_bitvec(ugt, bzla_bv_ugt, 33);
+  binary_bitvec(ugt, bzla_bv_ugt, 64);
 }
 
 TEST_F(TestBv, ugte)
 {
-  binary_bitvec(ugte, bzla_bv_ugte, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(ugte, bzla_bv_ugte, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(ugte, bzla_bv_ugte, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(ugte, bzla_bv_ugte, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_bitvec(ugte, bzla_bv_ugte, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_bitvec(ugte, bzla_bv_ugte, 1);
+  binary_bitvec(ugte, bzla_bv_ugte, 7);
+  binary_bitvec(ugte, bzla_bv_ugte, 31);
+  binary_bitvec(ugte, bzla_bv_ugte, 33);
+  binary_bitvec(ugte, bzla_bv_ugte, 64);
 }
 
 TEST_F(TestBv, slt)
 {
-  binary_signed_bitvec(slt, bzla_bv_slt, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_signed_bitvec(slt, bzla_bv_slt, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_signed_bitvec(slt, bzla_bv_slt, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_signed_bitvec(slt, bzla_bv_slt, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_signed_bitvec(slt, bzla_bv_slt, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_signed_bitvec(slt, bzla_bv_slt, 1);
+  binary_signed_bitvec(slt, bzla_bv_slt, 7);
+  binary_signed_bitvec(slt, bzla_bv_slt, 31);
+  binary_signed_bitvec(slt, bzla_bv_slt, 33);
+  binary_signed_bitvec(slt, bzla_bv_slt, 64);
 }
 
 TEST_F(TestBv, slte)
 {
-  binary_signed_bitvec(slte, bzla_bv_slte, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_signed_bitvec(slte, bzla_bv_slte, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_signed_bitvec(slte, bzla_bv_slte, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_signed_bitvec(slte, bzla_bv_slte, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_signed_bitvec(slte, bzla_bv_slte, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_signed_bitvec(slte, bzla_bv_slte, 1);
+  binary_signed_bitvec(slte, bzla_bv_slte, 7);
+  binary_signed_bitvec(slte, bzla_bv_slte, 31);
+  binary_signed_bitvec(slte, bzla_bv_slte, 33);
+  binary_signed_bitvec(slte, bzla_bv_slte, 64);
 }
 
 TEST_F(TestBv, sgt)
 {
-  binary_signed_bitvec(sgt, bzla_bv_sgt, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_signed_bitvec(sgt, bzla_bv_sgt, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_signed_bitvec(sgt, bzla_bv_sgt, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_signed_bitvec(sgt, bzla_bv_sgt, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_signed_bitvec(sgt, bzla_bv_sgt, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_signed_bitvec(sgt, bzla_bv_sgt, 1);
+  binary_signed_bitvec(sgt, bzla_bv_sgt, 7);
+  binary_signed_bitvec(sgt, bzla_bv_sgt, 31);
+  binary_signed_bitvec(sgt, bzla_bv_sgt, 33);
+  binary_signed_bitvec(sgt, bzla_bv_sgt, 64);
 }
 
 TEST_F(TestBv, sgte)
 {
-  binary_signed_bitvec(sgte, bzla_bv_sgte, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_signed_bitvec(sgte, bzla_bv_sgte, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_signed_bitvec(sgte, bzla_bv_sgte, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_signed_bitvec(sgte, bzla_bv_sgte, BZLA_TEST_BITVEC_TESTS, 33);
-  binary_signed_bitvec(sgte, bzla_bv_sgte, BZLA_TEST_BITVEC_TESTS, 64);
+  binary_signed_bitvec(sgte, bzla_bv_sgte, 1);
+  binary_signed_bitvec(sgte, bzla_bv_sgte, 7);
+  binary_signed_bitvec(sgte, bzla_bv_sgte, 31);
+  binary_signed_bitvec(sgte, bzla_bv_sgte, 33);
+  binary_signed_bitvec(sgte, bzla_bv_sgte, 64);
 }
 
 TEST_F(TestBv, sll)
 {
-  binary_bitvec(sll, bzla_bv_sll, BZLA_TEST_BITVEC_TESTS, 2);
-  binary_bitvec(sll, bzla_bv_sll, BZLA_TEST_BITVEC_TESTS, 8);
-  binary_bitvec(sll, bzla_bv_sll, BZLA_TEST_BITVEC_TESTS, 16);
-  binary_bitvec(sll, bzla_bv_sll, BZLA_TEST_BITVEC_TESTS, 32);
+  binary_bitvec(sll, bzla_bv_sll, 2);
+  binary_bitvec(sll, bzla_bv_sll, 8);
+  binary_bitvec(sll, bzla_bv_sll, 16);
+  binary_bitvec(sll, bzla_bv_sll, 32);
 
   for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
   {
@@ -2368,10 +2409,10 @@ TEST_F(TestBv, sll)
 
 TEST_F(TestBv, srl)
 {
-  binary_bitvec(srl, bzla_bv_srl, BZLA_TEST_BITVEC_TESTS, 2);
-  binary_bitvec(srl, bzla_bv_srl, BZLA_TEST_BITVEC_TESTS, 8);
-  binary_bitvec(srl, bzla_bv_srl, BZLA_TEST_BITVEC_TESTS, 16);
-  binary_bitvec(srl, bzla_bv_srl, BZLA_TEST_BITVEC_TESTS, 32);
+  binary_bitvec(srl, bzla_bv_srl, 2);
+  binary_bitvec(srl, bzla_bv_srl, 8);
+  binary_bitvec(srl, bzla_bv_srl, 16);
+  binary_bitvec(srl, bzla_bv_srl, 32);
 
   for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
   {
@@ -2467,11 +2508,11 @@ TEST_F(TestBv, srl)
 
 TEST_F(TestBv, sra)
 {
-  binary_bitvec(sra, bzla_bv_sra, BZLA_TEST_BITVEC_TESTS, 2);
-  binary_bitvec(sra, bzla_bv_sra, BZLA_TEST_BITVEC_TESTS, 8);
-  binary_bitvec(sra, bzla_bv_sra, BZLA_TEST_BITVEC_TESTS, 9);
-  binary_bitvec(sra, bzla_bv_sra, BZLA_TEST_BITVEC_TESTS, 16);
-  binary_bitvec(sra, bzla_bv_sra, BZLA_TEST_BITVEC_TESTS, 32);
+  binary_bitvec(sra, bzla_bv_sra, 2);
+  binary_bitvec(sra, bzla_bv_sra, 8);
+  binary_bitvec(sra, bzla_bv_sra, 9);
+  binary_bitvec(sra, bzla_bv_sra, 16);
+  binary_bitvec(sra, bzla_bv_sra, 32);
 
   for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
   {
@@ -2577,122 +2618,130 @@ TEST_F(TestBv, sra)
 
 TEST_F(TestBv, mul)
 {
-  binary_bitvec(mul, bzla_bv_mul, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(mul, bzla_bv_mul, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(mul, bzla_bv_mul, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(mul, bzla_bv_mul, BZLA_TEST_BITVEC_TESTS, 33);
+  binary_bitvec(mul, bzla_bv_mul, 1);
+  binary_bitvec(mul, bzla_bv_mul, 7);
+  binary_bitvec(mul, bzla_bv_mul, 31);
+  binary_bitvec(mul, bzla_bv_mul, 33);
 }
 
 TEST_F(TestBv, udiv)
 {
-  binary_bitvec(udiv, bzla_bv_udiv, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(udiv, bzla_bv_udiv, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(udiv, bzla_bv_udiv, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(udiv, bzla_bv_udiv, BZLA_TEST_BITVEC_TESTS, 33);
+  binary_bitvec(udiv, bzla_bv_udiv, 1);
+  binary_bitvec(udiv, bzla_bv_udiv, 7);
+  binary_bitvec(udiv, bzla_bv_udiv, 31);
+  binary_bitvec(udiv, bzla_bv_udiv, 33);
 }
 
 TEST_F(TestBv, urem)
 {
-  binary_bitvec(urem, bzla_bv_urem, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_bitvec(urem, bzla_bv_urem, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_bitvec(urem, bzla_bv_urem, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_bitvec(urem, bzla_bv_urem, BZLA_TEST_BITVEC_TESTS, 33);
+  binary_bitvec(urem, bzla_bv_urem, 1);
+  binary_bitvec(urem, bzla_bv_urem, 7);
+  binary_bitvec(urem, bzla_bv_urem, 31);
+  binary_bitvec(urem, bzla_bv_urem, 33);
+}
+
+TEST_F(TestBv, udiv_urem)
+{
+  udiv_urem_bitvec(1);
+  udiv_urem_bitvec(7);
+  udiv_urem_bitvec(31);
+  udiv_urem_bitvec(33);
 }
 
 TEST_F(TestBv, sdiv)
 {
-  binary_signed_bitvec(sdiv, bzla_bv_sdiv, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_signed_bitvec(sdiv, bzla_bv_sdiv, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_signed_bitvec(sdiv, bzla_bv_sdiv, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_signed_bitvec(sdiv, bzla_bv_sdiv, BZLA_TEST_BITVEC_TESTS, 33);
+  binary_signed_bitvec(sdiv, bzla_bv_sdiv, 1);
+  binary_signed_bitvec(sdiv, bzla_bv_sdiv, 7);
+  binary_signed_bitvec(sdiv, bzla_bv_sdiv, 31);
+  binary_signed_bitvec(sdiv, bzla_bv_sdiv, 33);
 }
 
 TEST_F(TestBv, srem)
 {
-  binary_signed_bitvec(srem, bzla_bv_srem, BZLA_TEST_BITVEC_TESTS, 1);
-  binary_signed_bitvec(srem, bzla_bv_srem, BZLA_TEST_BITVEC_TESTS, 7);
-  binary_signed_bitvec(srem, bzla_bv_srem, BZLA_TEST_BITVEC_TESTS, 31);
-  binary_signed_bitvec(srem, bzla_bv_srem, BZLA_TEST_BITVEC_TESTS, 33);
+  binary_signed_bitvec(srem, bzla_bv_srem, 1);
+  binary_signed_bitvec(srem, bzla_bv_srem, 7);
+  binary_signed_bitvec(srem, bzla_bv_srem, 31);
+  binary_signed_bitvec(srem, bzla_bv_srem, 33);
 }
 
 TEST_F(TestBv, concat)
 {
-  concat_bitvec(BZLA_TEST_BITVEC_TESTS, 2);
-  concat_bitvec(BZLA_TEST_BITVEC_TESTS, 7);
-  concat_bitvec(BZLA_TEST_BITVEC_TESTS, 31);
-  concat_bitvec(BZLA_TEST_BITVEC_TESTS, 33);
-  concat_bitvec(BZLA_TEST_BITVEC_TESTS, 64);
+  concat_bitvec(2);
+  concat_bitvec(7);
+  concat_bitvec(31);
+  concat_bitvec(33);
+  concat_bitvec(64);
 }
 
 TEST_F(TestBv, slice)
 {
-  slice_bitvec(BZLA_TEST_BITVEC_TESTS, 1);
-  slice_bitvec(BZLA_TEST_BITVEC_TESTS, 7);
-  slice_bitvec(BZLA_TEST_BITVEC_TESTS, 31);
-  slice_bitvec(BZLA_TEST_BITVEC_TESTS, 33);
-  slice_bitvec(BZLA_TEST_BITVEC_TESTS, 64);
+  slice_bitvec(1);
+  slice_bitvec(7);
+  slice_bitvec(31);
+  slice_bitvec(33);
+  slice_bitvec(64);
 }
 
 TEST_F(TestBv, uext)
 {
-  ext_bitvec(bzla_bv_uext, BZLA_TEST_BITVEC_TESTS, 2);
-  ext_bitvec(bzla_bv_uext, BZLA_TEST_BITVEC_TESTS, 3);
-  ext_bitvec(bzla_bv_uext, BZLA_TEST_BITVEC_TESTS, 4);
-  ext_bitvec(bzla_bv_uext, BZLA_TEST_BITVEC_TESTS, 5);
-  ext_bitvec(bzla_bv_uext, BZLA_TEST_BITVEC_TESTS, 6);
-  ext_bitvec(bzla_bv_uext, BZLA_TEST_BITVEC_TESTS, 7);
-  ext_bitvec(bzla_bv_uext, BZLA_TEST_BITVEC_TESTS, 31);
-  ext_bitvec(bzla_bv_uext, BZLA_TEST_BITVEC_TESTS, 33);
-  ext_bitvec(bzla_bv_uext, BZLA_TEST_BITVEC_TESTS, 64);
+  ext_bitvec(bzla_bv_uext, 2);
+  ext_bitvec(bzla_bv_uext, 3);
+  ext_bitvec(bzla_bv_uext, 4);
+  ext_bitvec(bzla_bv_uext, 5);
+  ext_bitvec(bzla_bv_uext, 6);
+  ext_bitvec(bzla_bv_uext, 7);
+  ext_bitvec(bzla_bv_uext, 31);
+  ext_bitvec(bzla_bv_uext, 33);
+  ext_bitvec(bzla_bv_uext, 64);
 }
 
 TEST_F(TestBv, sext)
 {
-  ext_bitvec(bzla_bv_sext, BZLA_TEST_BITVEC_TESTS, 2);
-  ext_bitvec(bzla_bv_sext, BZLA_TEST_BITVEC_TESTS, 3);
-  ext_bitvec(bzla_bv_sext, BZLA_TEST_BITVEC_TESTS, 4);
-  ext_bitvec(bzla_bv_sext, BZLA_TEST_BITVEC_TESTS, 5);
-  ext_bitvec(bzla_bv_sext, BZLA_TEST_BITVEC_TESTS, 6);
-  ext_bitvec(bzla_bv_sext, BZLA_TEST_BITVEC_TESTS, 7);
-  ext_bitvec(bzla_bv_sext, BZLA_TEST_BITVEC_TESTS, 31);
-  ext_bitvec(bzla_bv_sext, BZLA_TEST_BITVEC_TESTS, 33);
-  ext_bitvec(bzla_bv_sext, BZLA_TEST_BITVEC_TESTS, 64);
+  ext_bitvec(bzla_bv_sext, 2);
+  ext_bitvec(bzla_bv_sext, 3);
+  ext_bitvec(bzla_bv_sext, 4);
+  ext_bitvec(bzla_bv_sext, 5);
+  ext_bitvec(bzla_bv_sext, 6);
+  ext_bitvec(bzla_bv_sext, 7);
+  ext_bitvec(bzla_bv_sext, 31);
+  ext_bitvec(bzla_bv_sext, 33);
+  ext_bitvec(bzla_bv_sext, 64);
 }
 
 TEST_F(TestBv, ite)
 {
-  ite_bitvec(BZLA_TEST_BITVEC_TESTS, 1);
-  ite_bitvec(BZLA_TEST_BITVEC_TESTS, 7);
-  ite_bitvec(BZLA_TEST_BITVEC_TESTS, 31);
-  ite_bitvec(BZLA_TEST_BITVEC_TESTS, 33);
-  ite_bitvec(BZLA_TEST_BITVEC_TESTS, 64);
+  ite_bitvec(1);
+  ite_bitvec(7);
+  ite_bitvec(31);
+  ite_bitvec(33);
+  ite_bitvec(64);
 }
 
 TEST_F(TestBv, mod_inverse)
 {
-  mod_inverse_bitvec(BZLA_TEST_BITVEC_MOD_INV_TESTS, 1);
-  mod_inverse_bitvec(BZLA_TEST_BITVEC_MOD_INV_TESTS, 7);
-  mod_inverse_bitvec(BZLA_TEST_BITVEC_MOD_INV_TESTS, 31);
-  mod_inverse_bitvec(BZLA_TEST_BITVEC_MOD_INV_TESTS, 33);
-  mod_inverse_bitvec(BZLA_TEST_BITVEC_MOD_INV_TESTS, 64);
+  mod_inverse_bitvec(1);
+  mod_inverse_bitvec(7);
+  mod_inverse_bitvec(31);
+  mod_inverse_bitvec(33);
+  mod_inverse_bitvec(64);
 }
 
 TEST_F(TestBv, flipped_bit)
 {
-  flipped_bit_bitvec(BZLA_TEST_BITVEC_TESTS, 1);
-  flipped_bit_bitvec(BZLA_TEST_BITVEC_TESTS, 7);
-  flipped_bit_bitvec(BZLA_TEST_BITVEC_TESTS, 31);
-  flipped_bit_bitvec(BZLA_TEST_BITVEC_TESTS, 33);
-  flipped_bit_bitvec(BZLA_TEST_BITVEC_TESTS, 64);
+  flipped_bit_bitvec(1);
+  flipped_bit_bitvec(7);
+  flipped_bit_bitvec(31);
+  flipped_bit_bitvec(33);
+  flipped_bit_bitvec(64);
 }
 
 TEST_F(TestBv, flipped_bit_range)
 {
-  flipped_bit_range_bitvec(BZLA_TEST_BITVEC_TESTS, 1);
-  flipped_bit_range_bitvec(BZLA_TEST_BITVEC_TESTS, 7);
-  flipped_bit_range_bitvec(BZLA_TEST_BITVEC_TESTS, 31);
-  flipped_bit_range_bitvec(BZLA_TEST_BITVEC_TESTS, 33);
-  flipped_bit_range_bitvec(BZLA_TEST_BITVEC_TESTS, 64);
+  flipped_bit_range_bitvec(1);
+  flipped_bit_range_bitvec(7);
+  flipped_bit_range_bitvec(31);
+  flipped_bit_range_bitvec(33);
+  flipped_bit_range_bitvec(64);
 }
 
 TEST_F(TestBv, is_umulo)
