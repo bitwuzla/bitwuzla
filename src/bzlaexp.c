@@ -1875,41 +1875,47 @@ bzla_exp_fp_nan(Bzla *bzla, BzlaSortId sort)
 }
 
 BzlaNode *
-bzla_exp_fp_const(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+bzla_exp_fp_const(Bzla *bzla,
+                  BzlaNode *e0_sign,
+                  BzlaNode *e1_exp,
+                  BzlaNode *e2_sig)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
   assert(bzla);
-  assert(e0);
-  assert(e1);
-  assert(e2);
-  assert(bzla == bzla_node_real_addr(e0)->bzla);
-  assert(bzla == bzla_node_real_addr(e1)->bzla);
-  assert(bzla == bzla_node_real_addr(e2)->bzla);
-  assert(bzla_node_is_bv_const(e0));
-  assert(bzla_node_is_bv_const(e1));
-  assert(bzla_node_is_bv_const(e2));
-  assert(bzla_node_bv_get_width(bzla, e0) == 1);
+  assert(e0_sign);
+  assert(e1_exp);
+  assert(e2_sig);
+  assert(bzla == bzla_node_real_addr(e0_sign)->bzla);
+  assert(bzla == bzla_node_real_addr(e1_exp)->bzla);
+  assert(bzla == bzla_node_real_addr(e2_sig)->bzla);
+  assert(bzla_node_is_bv_const(e0_sign));
+  assert(bzla_node_is_bv_const(e1_exp));
+  assert(bzla_node_is_bv_const(e2_sig));
+  assert(bzla_node_bv_get_width(bzla, e0_sign) == 1);
 
   uint32_t ewidth, swidth;
   BzlaNode *result;
-  BzlaBitVector *bv_e0, *bv_e1, *bv_e2, *tmp, *concat;
+  BzlaBitVector *bv_e0_sign, *bv_e1_exp, *bv_e2_sig, *tmp, *concat;
   BzlaSortId sort;
   BzlaFloatingPoint *fp;
 
-  bv_e0 = bzla_node_is_regular(e0) ? bzla_node_bv_const_get_bits(e0)
-                                   : bzla_node_bv_const_get_invbits(e0);
-  bv_e1 = bzla_node_is_regular(e1) ? bzla_node_bv_const_get_bits(e1)
-                                   : bzla_node_bv_const_get_invbits(e1);
-  bv_e2 = bzla_node_is_regular(e2) ? bzla_node_bv_const_get_bits(e2)
-                                   : bzla_node_bv_const_get_invbits(e2);
+  bv_e0_sign = bzla_node_is_regular(e0_sign)
+                   ? bzla_node_bv_const_get_bits(e0_sign)
+                   : bzla_node_bv_const_get_invbits(e0_sign);
+  bv_e1_exp = bzla_node_is_regular(e1_exp)
+                  ? bzla_node_bv_const_get_bits(e1_exp)
+                  : bzla_node_bv_const_get_invbits(e1_exp);
+  bv_e2_sig = bzla_node_is_regular(e2_sig)
+                  ? bzla_node_bv_const_get_bits(e2_sig)
+                  : bzla_node_bv_const_get_invbits(e2_sig);
 
-  tmp    = bzla_bv_concat(bzla->mm, bv_e0, bv_e1);
-  concat = bzla_bv_concat(bzla->mm, tmp, bv_e2);
+  tmp    = bzla_bv_concat(bzla->mm, bv_e0_sign, bv_e1_exp);
+  concat = bzla_bv_concat(bzla->mm, tmp, bv_e2_sig);
 
-  ewidth = bzla_bv_get_width(bv_e1);
-  swidth = 1 + bzla_bv_get_width(bv_e2);
+  ewidth = bzla_bv_get_width(bv_e1_exp);
+  swidth = 1 + bzla_bv_get_width(bv_e2_sig);
   sort   = bzla_sort_fp(bzla, ewidth, swidth);
   fp     = bzla_fp_make_const(bzla, sort, concat);
   result = exp_fp_const_aux(bzla, fp);
