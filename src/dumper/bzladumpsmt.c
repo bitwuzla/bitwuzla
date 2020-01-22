@@ -210,6 +210,13 @@ dump_smt_id(BzlaSMTDumpContext *sdc, BzlaNode *exp)
 }
 
 static bool
+is_const(const BzlaNode *exp)
+{
+  return bzla_node_is_bv_const(exp) || bzla_node_is_fp_const(exp)
+         || bzla_node_is_rm_const(exp);
+}
+
+static bool
 is_boolean(BzlaSMTDumpContext *sdc, BzlaNode *exp)
 {
   exp = bzla_node_real_addr(exp);
@@ -325,6 +332,11 @@ bzla_dumpsmt_dump_sort(BzlaSort *sort, FILE *file)
               fmt,
               sort->array.index->bitvec.width,
               sort->array.element->bitvec.width);
+      break;
+
+    case BZLA_FP_SORT:
+      fmt = "(_ FloatingPoint %u %u)";
+      fprintf(file, fmt, sort->fp.width_exp, sort->fp.width_sig);
       break;
 
     case BZLA_FUN_SORT:
@@ -453,18 +465,62 @@ extract_store (BzlaSMTDumpContext * sdc, BzlaNode * exp,
   }
 
 static const char *g_kind2smt[BZLA_NUM_OPS_NODE] = {
-    [BZLA_INVALID_NODE] = "invalid",  [BZLA_BV_CONST_NODE] = "bvconst",
-    [BZLA_VAR_NODE] = "var",          [BZLA_PARAM_NODE] = "param",
-    [BZLA_BV_SLICE_NODE] = "extract", [BZLA_BV_AND_NODE] = "bvand",
-    [BZLA_FUN_EQ_NODE] = "=",         [BZLA_BV_EQ_NODE] = "=",
-    [BZLA_BV_ADD_NODE] = "bvadd",     [BZLA_BV_MUL_NODE] = "bvmul",
-    [BZLA_BV_ULT_NODE] = "bvult",     [BZLA_BV_SLT_NODE] = "bvslt",
-    [BZLA_BV_SLL_NODE] = "bvshl",     [BZLA_BV_SRL_NODE] = "bvlshr",
-    [BZLA_BV_UDIV_NODE] = "bvudiv",   [BZLA_BV_UREM_NODE] = "bvurem",
-    [BZLA_BV_CONCAT_NODE] = "concat", [BZLA_APPLY_NODE] = "apply",
-    [BZLA_LAMBDA_NODE] = "lambda",    [BZLA_COND_NODE] = "ite",
-    [BZLA_ARGS_NODE] = "args",        [BZLA_UF_NODE] = "uf",
-    [BZLA_PROXY_NODE] = "proxy"};
+    [BZLA_INVALID_NODE]       = "invalid",
+    [BZLA_BV_CONST_NODE]      = "bvconst",
+    [BZLA_FP_CONST_NODE]      = "fpconst",
+    [BZLA_RM_CONST_NODE]      = "rmconst",
+    [BZLA_VAR_NODE]           = "var",
+    [BZLA_PARAM_NODE]         = "param",
+    [BZLA_BV_SLICE_NODE]      = "extract",
+    [BZLA_FP_ABS_NODE]        = "fp.abs",
+    [BZLA_FP_IS_INF_NODE]     = "fp.isInfinite",
+    [BZLA_FP_IS_NAN_NODE]     = "fp.isNaN",
+    [BZLA_FP_IS_NEG_NODE]     = "fp.isNeg",
+    [BZLA_FP_IS_NORM_NODE]    = "fp.isNormal",
+    [BZLA_FP_IS_POS_NODE]     = "fp.isPositive",
+    [BZLA_FP_IS_SUBNORM_NODE] = "fp.isSubnormal",
+    [BZLA_FP_IS_ZERO_NODE]    = "fp.isZero",
+    [BZLA_FP_NEG_NODE]        = "fp.neg",
+    [BZLA_FP_TO_FP_BV_NODE]   = "to_fp",
+    [BZLA_BV_AND_NODE]        = "bvand",
+    [BZLA_BV_EQ_NODE]         = "=",
+    [BZLA_BV_ADD_NODE]        = "bvadd",
+    [BZLA_BV_MUL_NODE]        = "bvmul",
+    [BZLA_BV_ULT_NODE]        = "bvult",
+    [BZLA_BV_SLL_NODE]        = "bvshl",
+    [BZLA_BV_SLT_NODE]        = "bvslt",
+    [BZLA_BV_SRL_NODE]        = "bvlshr",
+    [BZLA_BV_UDIV_NODE]       = "bvudiv",
+    [BZLA_BV_UREM_NODE]       = "bvurem",
+    [BZLA_BV_CONCAT_NODE]     = "concat",
+    [BZLA_FP_EQ_NODE]         = "=",
+    [BZLA_FP_LTE_NODE]        = "fp.leq",
+    [BZLA_FP_LT_NODE]         = "fp.lt",
+    [BZLA_FP_MIN_NODE]        = "fp.min",
+    [BZLA_FP_MAX_NODE]        = "fp.max",
+    [BZLA_FP_SQRT_NODE]       = "fp.sqrt",
+    [BZLA_FP_REM_NODE]        = "fp.rem",
+    [BZLA_FP_RTI_NODE]        = "fp.roundToIntegral",
+    [BZLA_FP_TO_SBV_NODE]     = "fp.to_sbv",
+    [BZLA_FP_TO_UBV_NODE]     = "fp.to_ubv",
+    [BZLA_FP_TO_FP_FP_NODE]   = "to_fp",
+    [BZLA_FP_TO_FP_INT_NODE]  = "to_fp",
+    [BZLA_FP_TO_FP_UINT_NODE] = "to_fp_unsigned",
+    [BZLA_RM_EQ_NODE]         = "=",
+    [BZLA_FUN_EQ_NODE]        = "=",
+    [BZLA_APPLY_NODE]         = "apply",
+    [BZLA_FORALL_NODE]        = "forall",
+    [BZLA_EXISTS_NODE]        = "exists",
+    [BZLA_LAMBDA_NODE]        = "lambda",
+    [BZLA_COND_NODE]          = "ite",
+    [BZLA_FP_ADD_NODE]        = "fp.add",
+    [BZLA_FP_MUL_NODE]        = "fp.mul",
+    [BZLA_FP_DIV_NODE]        = "fp.div",
+    [BZLA_ARGS_NODE]          = "args",
+    [BZLA_UPDATE_NODE]        = "update",
+    [BZLA_FP_FMA_NODE]        = "fp.fma",
+    [BZLA_UF_NODE]            = "uf",
+};
 
 static void
 collect_and_children(BzlaSMTDumpContext *sdc,
@@ -632,7 +688,7 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
   uint32_t pad, i, zero_extend;
   int32_t add_space;
   BzlaBitVector *bits;
-  const char *op, *fmt;
+  const char *op;
   BzlaNode *tmp, *real_exp;
   BzlaArgsIterator it;
   BzlaNodeIterator node_it;
@@ -695,7 +751,7 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
       }
 
       /* always print constants */
-      if (bzla_node_is_bv_const(real_exp))
+      if (is_const(real_exp))
       {
         if (exp == sdc->bzla->true_exp && !expect_bv)
           fputs("true", sdc->file);
@@ -753,7 +809,7 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
         assert(b);
         /* functions and variables are declared separately */
         assert(bzla_node_is_lambda(real_exp) || bzla_node_is_uf(real_exp)
-               || bzla_node_is_bv_var(real_exp) || bzla_node_is_param(real_exp)
+               || bzla_node_is_var(real_exp) || bzla_node_is_param(real_exp)
                || b->data.as_int > 1);
 #endif
         dump_smt_id(sdc, exp);
@@ -774,7 +830,8 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
         case BZLA_BV_SLL_NODE:
         case BZLA_BV_SRL_NODE:
           assert(!is_bool);
-          op  = real_exp->kind == BZLA_BV_SRL_NODE ? "bvlshr" : "bvshl";
+          op = g_kind2smt[real_exp->kind];
+          assert(bzla_node_bv_get_width(sdc->bzla, real_exp) > 1);
           pad = bzla_node_bv_get_width(sdc->bzla, real_exp)
                 - bzla_node_bv_get_width(sdc->bzla, real_exp->e[1]);
           PUSH_DUMP_NODE(real_exp->e[1], 1, 0, 1, pad, depth + 1);
@@ -874,7 +931,7 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
               break;
             case BZLA_BV_SLICE_NODE:
               assert(!is_bool);
-              op = "(_ extract ";
+              op = "extract";
               break;
             case BZLA_BV_AND_NODE:
               op        = is_bool ? "and" : "bvand";
@@ -908,7 +965,7 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
               assert(is_bool);
               op = "exists";
               break;
-            default: assert(0); op = "unknown";
+            default: op = g_kind2smt[real_exp->kind];
           }
           if (bzla_node_is_bv_and(real_exp) && is_bool)
           {
@@ -947,13 +1004,12 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
       /* open s-expression */
       assert(op);
       open_sexp(sdc);
-      fprintf(sdc->file, "%s", op);
 
       if (bzla_node_is_bv_slice(real_exp))
       {
-        fmt = "%d %d)";
         fprintf(sdc->file,
-                fmt,
+                "(_ %s %d %d)",
+                op,
                 bzla_node_bv_slice_get_upper(real_exp),
                 bzla_node_bv_slice_get_lower(real_exp));
       }
@@ -963,9 +1019,30 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
         bzla_dumpsmt_dump_sort_node(real_exp, sdc->file);
         fputs(") ", sdc->file);
       }
+      else if (bzla_node_is_fp_to_fp_from_int(real_exp)
+               || bzla_node_is_fp_to_fp_from_bv(real_exp)
+               || bzla_node_is_fp_to_fp_from_fp(real_exp)
+               || bzla_node_is_fp_to_fp_from_uint(real_exp))
+      {
+        BzlaSort *sort =
+            bzla_sort_get_by_id(sdc->bzla, bzla_node_get_sort_id(real_exp));
+        fprintf(sdc->file,
+                "(_ %s %u %u)",
+                op,
+                sort->fp.width_exp,
+                sort->fp.width_sig);
+      }
+      else if (bzla_node_is_fp_to_sbv(real_exp)
+               || bzla_node_is_fp_to_ubv(real_exp))
+      {
+        fprintf(sdc->file,
+                "(_ %s %u)",
+                op,
+                bzla_node_bv_get_width(sdc->bzla, real_exp));
+      }
       else if (bzla_node_is_quantifier(real_exp))
       {
-        fputs(" (", sdc->file);
+        fprintf(sdc->file, "%s (", op);
         bzla_iter_binder_init(&node_it, real_exp);
         tmp = 0;
         while (bzla_iter_binder_has_next(&node_it))
@@ -1013,6 +1090,10 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
 		    sdc, real_exp->e[1], false,
 		    depth_limit ? depth_limit - depth : 0);
 #endif
+      }
+      else
+      {
+        fprintf(sdc->file, "%s", op);
       }
     }
     /* close s-expression */
@@ -1123,7 +1204,7 @@ collect_shared_exps(BzlaSMTDumpContext *sdc,
     if (!bzla_node_is_args(cur)
         && !bzla_node_is_param(cur)
         /* constants are always printed */
-        && !bzla_node_is_bv_const(cur) && refs > 1)
+        && !is_const(cur) && refs > 1)
       BZLA_PUSH_STACK(*shared, cur);
 
     bzla_hashint_table_add(cache, cur->id);
@@ -1263,7 +1344,7 @@ dump_fun_smt2(BzlaSMTDumpContext *sdc, BzlaNode *fun)
     if (!bzla_node_is_args(cur)
         && !bzla_node_is_param(cur)
         /* constants are always printed */
-        && !bzla_node_is_bv_const(cur) && cur->parameterized && refs > 1)
+        && !is_const(cur) && cur->parameterized && refs > 1)
       BZLA_PUSH_STACK(shared, cur);
 
     bzla_hashptr_table_add(mark, cur);
@@ -1378,7 +1459,7 @@ dump_declare_fun_smt(BzlaSMTDumpContext *sdc, BzlaNode *exp)
   fputs("(declare-fun ", sdc->file);
   dump_smt_id(sdc, exp);
   fputc(' ', sdc->file);
-  if (bzla_node_is_bv_var(exp) || bzla_node_is_uf_array(exp))
+  if (bzla_node_is_var(exp) || bzla_node_is_uf_array(exp))
     fputs("() ", sdc->file);
   bzla_dumpsmt_dump_sort_node(exp, sdc->file);
   fputs(")\n", sdc->file);
@@ -1468,8 +1549,21 @@ mark_boolean(BzlaSMTDumpContext *sdc, BzlaNodePtrStack *exps)
     cur = BZLA_PEEK_STACK(*exps, i);
 
     /* these nodes are boolean by definition */
-    if (bzla_node_is_bv_eq(cur) || bzla_node_is_fun_eq(cur)
-        || bzla_node_is_bv_ult(cur) || bzla_node_is_bv_slt(cur)
+    if (
+        /* Boolean BV nodes */
+        bzla_node_is_bv_eq(cur) || bzla_node_is_fun_eq(cur)
+        || bzla_node_is_bv_ult(cur)
+        || bzla_node_is_bv_slt(cur)
+
+        /* Boolean FP nodes */
+        || bzla_node_is_fp_is_inf(cur) || bzla_node_is_fp_is_nan(cur)
+        || bzla_node_is_fp_is_neg(cur) || bzla_node_is_fp_is_normal(cur)
+        || bzla_node_is_fp_is_pos(cur) || bzla_node_is_fp_is_subnormal(cur)
+        || bzla_node_is_fp_is_zero(cur) || bzla_node_is_fp_lte(cur)
+        || bzla_node_is_fp_lt(cur)
+        || bzla_node_is_fp_eq(cur)
+
+        /* Other Boolean nodes */
         || cur == bzla_node_real_addr(sdc->bzla->true_exp)
         || bzla_node_is_quantifier(cur))
     {
@@ -1546,7 +1640,7 @@ dump_smt(BzlaSMTDumpContext *sdc)
     bzla_hashptr_table_add(sdc->dump, cur)->data.as_int = 0;
     BZLA_PUSH_STACK(all, cur);
 
-    if (bzla_node_is_bv_var(cur))
+    if (bzla_node_is_var(cur))
       BZLA_PUSH_STACK(vars, cur);
     else if (bzla_node_is_uf(cur))
       BZLA_PUSH_STACK(ufs, cur);
@@ -1632,9 +1726,9 @@ dump_smt(BzlaSMTDumpContext *sdc)
         || cur->parameterized
         || bzla_node_is_param(cur)
         /* constants are always printed */
-        || bzla_node_is_bv_const(cur)
+        || is_const(cur)
         /* for variables and functions the resp. symbols are always printed */
-        || bzla_node_is_bv_var(cur)
+        || bzla_node_is_var(cur)
         || (bzla_node_is_lambda(cur) && !bzla_node_is_array(cur))
         || bzla_node_is_uf(cur)
         /* argument nodes are never printed */
@@ -1716,7 +1810,7 @@ dump_smt(BzlaSMTDumpContext *sdc)
     cur = bzla_iter_hashptr_next(&it);
     /* constants and function applications are always dumped (hence, not in
      * mark) */
-    if (bzla_node_is_bv_const(cur)
+    if (is_const(cur)
         || bzla_node_is_apply(cur)
         /* argument nodes are never dumped and not in mark */
         || bzla_node_is_args(cur) || cur->parameterized
@@ -1820,7 +1914,7 @@ bzla_dumpsmt_dump_node(Bzla *bzla, FILE *file, BzlaNode *exp, uint32_t depth)
     fprintf(file, "%s_%d\n", g_kind2smt[real_exp->kind], real_exp->id);
     goto CLEANUP;
   }
-  else if (bzla_node_is_bv_var(exp) || bzla_node_is_uf(exp))
+  else if (bzla_node_is_var(exp) || bzla_node_is_uf(exp))
   {
     dump_declare_fun_smt(sdc, exp);
     goto CLEANUP;
@@ -1833,7 +1927,7 @@ bzla_dumpsmt_dump_node(Bzla *bzla, FILE *file, BzlaNode *exp, uint32_t depth)
 
     if (bzla_hashptr_table_get(sdc->dump, cur)) continue;
 
-    if (bzla_node_is_bv_var(cur) || bzla_node_is_uf(cur)
+    if (bzla_node_is_var(cur) || bzla_node_is_uf(cur)
         || (bzla_node_is_param(cur)
             && (!(binder = bzla_node_param_get_binder(cur))
                 || !bzla_hashptr_table_get(sdc->dump, binder))))
