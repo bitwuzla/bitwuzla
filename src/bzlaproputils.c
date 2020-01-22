@@ -2836,14 +2836,16 @@ bzla_proputils_inv_urem(Bzla *bzla,
           mul  = bzla_bv_mul(mm, s, n);
           tmp2 = bzla_bv_sub(mm, ones, mul);
 
-          if (bzla_bv_compare(tmp2, t) < 0)
+          while (bzla_bv_compare(tmp2, t) < 0)
           {
             bzla_bv_free(mm, tmp);
             tmp = bzla_bv_sub(mm, n, one);
             bzla_bv_free(mm, n);
             n = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, tmp);
             bzla_bv_free(mm, mul);
-            mul = bzla_bv_mul(mm, s, n);
+            bzla_bv_free(mm, tmp2);
+            mul  = bzla_bv_mul(mm, s, n);
+            tmp2 = bzla_bv_sub(mm, ones, mul);
           }
 
           res = bzla_bv_add(mm, mul, t);
