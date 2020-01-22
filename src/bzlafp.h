@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2019 Aina Niemetz.
+ *  Copyright (C) 2019-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -49,6 +49,25 @@ uint32_t bzla_fp_get_exp_width(const BzlaFloatingPoint *fp);
 /** Return the significand width of a given floating-point. */
 uint32_t bzla_fp_get_sig_width(const BzlaFloatingPoint *fp);
 
+/**
+ * Return the bit-width of the bit-vector representation of the given
+ * floating-point.
+ */
+uint32_t bzla_fp_get_bv_width(const BzlaFloatingPoint *fp);
+
+/**
+ * Get the triple of bit-vectors representing a given floating-point.
+ * sign: The output argument for the bit-vector representation of the sign bit.
+ * exp : The output argument for the bit-vector representation of the exponent.
+ * sig : The output argument for the bit-vector representation of the
+ *       significand.
+ */
+void bzla_fp_as_bv(Bzla *bzla,
+                   BzlaFloatingPoint *fp,
+                   BzlaBitVector **sign,
+                   BzlaBitVector **exp,
+                   BzlaBitVector **sig);
+
 /** Get the floating-point of a floating-point constant node. */
 BzlaFloatingPoint *bzla_fp_get_fp(BzlaNode *node);
 
@@ -65,6 +84,21 @@ uint32_t bzla_fp_hash(const BzlaFloatingPoint *fp);
 int32_t bzla_fp_compare(const BzlaFloatingPoint *a, const BzlaFloatingPoint *b);
 
 /* -------------------------------------------------------------------------- */
+
+/** Returns true if given floating-point represents a zero value. */
+bool bzla_fp_is_zero(Bzla *bzla, const BzlaFloatingPoint *fp);
+
+/** Returns true if given floating-point represents a normal value. */
+bool bzla_fp_is_normal(Bzla *bzla, const BzlaFloatingPoint *fp);
+
+/** Returns true if given floating-point represents a subnormal value. */
+bool bzla_fp_is_subnormal(Bzla *bzla, const BzlaFloatingPoint *fp);
+
+/** Returns true if given floating-point represents a nan value. */
+bool bzla_fp_is_nan(Bzla *bzla, const BzlaFloatingPoint *fp);
+
+/** Returns true if given floating-point represents a infinite value. */
+bool bzla_fp_is_inf(Bzla *bzla, const BzlaFloatingPoint *fp);
 
 /**
  * Create a floating-point constant node representing zero.
