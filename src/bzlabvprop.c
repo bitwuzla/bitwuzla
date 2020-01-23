@@ -4651,6 +4651,7 @@ bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
   assert(min || max);
 
   uint32_t i, j, bw, cnt;
+  BzlaBitVector *m;
 
   bw = bzla_bv_get_width(d->lo);
   for (i = 0, cnt = 0; i < bw; i++)
@@ -4659,23 +4660,27 @@ bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
   }
 
   gen->bits = 0;
-  if (min)
+  if (cnt)
   {
-    if (bzla_bv_compare(min, d->hi) <= 0)
+    if (min)
     {
-      gen->bits = bzla_bv_new(mm, cnt);
-      for (i = 0, j = 0; i < bw; i++)
+      if (bzla_bv_compare(min, d->hi) <= 0)
       {
-        if (!bzla_bvprop_is_fixed_bit(d, i))
+        m         = bzla_bv_compare(d->lo, min) > 0 ? d->lo : min;
+        gen->bits = bzla_bv_new(mm, cnt);
+        for (i = 0, j = 0; i < bw; i++)
         {
-          bzla_bv_set_bit(gen->bits, j++, bzla_bv_get_bit(min, i));
+          if (!bzla_bvprop_is_fixed_bit(d, i))
+          {
+            bzla_bv_set_bit(gen->bits, j++, bzla_bv_get_bit(m, i));
+          }
         }
       }
     }
-  }
-  else if (max && bzla_bv_compare(max, d->lo) >= 0)
-  {
-    gen->bits = bzla_bv_new(mm, cnt);
+    else if (max && bzla_bv_compare(max, d->lo) >= 0)
+    {
+      gen->bits = bzla_bv_new(mm, cnt);
+    }
   }
 
   gen->mm    = mm;

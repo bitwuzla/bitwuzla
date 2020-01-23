@@ -173,28 +173,43 @@ TEST_F(TestBvPropGen, next_range_00x_23)
 }
 TEST_F(TestBvPropGen, next_range_00x_33) { test_next("00x", "010", 0, {}); }
 
-TEST_F(TestBvPropGen, next_01x_11)
+TEST_F(TestBvPropGen, next_range_01x_11)
 {
   test_next("01x", 0, "011", {"010", "011"});
 }
-TEST_F(TestBvPropGen, next_01x_12) { test_next("01x", 0, "010", {"010"}); }
-TEST_F(TestBvPropGen, next_01x_13) { test_next("01x", 0, "000", {}); }
-TEST_F(TestBvPropGen, next_01x_21)
+TEST_F(TestBvPropGen, next_range_01x_12)
+{
+  test_next("01x", 0, "010", {"010"});
+}
+TEST_F(TestBvPropGen, next_range_01x_13) { test_next("01x", 0, "000", {}); }
+TEST_F(TestBvPropGen, next_range_01x_21)
 {
   test_next("01x", "000", 0, {"010", "011"});
 }
-TEST_F(TestBvPropGen, next_01x_22)
+TEST_F(TestBvPropGen, next_range_01x_22)
 {
   test_next("01x", "010", 0, {"010", "011"});
 }
-TEST_F(TestBvPropGen, next_01x_23) { test_next("01x", "100", 0, {}); }
-TEST_F(TestBvPropGen, next_01x_31)
+TEST_F(TestBvPropGen, next_range_01x_23) { test_next("01x", "100", 0, {}); }
+TEST_F(TestBvPropGen, next_range_01x_31)
 {
   test_next("01x", "000", "011", {"010", "011"});
 }
-TEST_F(TestBvPropGen, next_01x_32)
+TEST_F(TestBvPropGen, next_range_01x_32)
 {
   test_next("01x", "010", "100", {"010", "011"});
 }
-TEST_F(TestBvPropGen, next_01x_33) { test_next("01x", "010", "010", {"010"}); }
-TEST_F(TestBvPropGen, next_01x_34) { test_next("01x", "100", "111", {}); }
+TEST_F(TestBvPropGen, next_range_01x_33)
+{
+  test_next("01x", "010", "010", {"010"});
+}
+TEST_F(TestBvPropGen, next_range_01x_34) { test_next("01x", "100", "111", {}); }
+
+TEST_F(TestBvPropGen, next_range_01x_regr1)
+{
+  test_next("01x", "001", "110", {"010", "011"});
+}
+TEST_F(TestBvPropGen, next_range_01x_regr2)
+{
+  test_next("x1x", "001", 0, {"010", "011", "110", "111"});
+}
