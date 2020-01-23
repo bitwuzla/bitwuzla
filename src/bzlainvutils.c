@@ -959,14 +959,20 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
     BzlaBitVectorPtrStack candidates;
     uint32_t bw;
     int32_t cmp;
-    BzlaBitVector *ones, *lo, *hi, *sub, *rem, *div, *bv;
+    BzlaBitVector *n_hi, *one, *ones, *hi, *sub, *mul, *div, *rem, *bv;
 
     bw   = bzla_bv_get_width(t);
     ones = bzla_bv_ones(mm, bw);
-
+    one  = bzla_bv_one(mm, bw);
     if (pos_x)
     {
-      if (bzla_bv_compare(t, ones) == 0)
+      if (bzla_bvprop_is_fixed(mm, x))
+      {
+        rem = bzla_bv_urem(mm, s, x->lo);
+        res = bzla_bv_compare(rem, t) == 0;
+        bzla_bv_free(mm, rem);
+      }
+      else if (bzla_bv_compare(t, ones) == 0)
       {
         /* s % x = t = ones: s = ones, x = 0 */
         assert(bzla_bv_compare(s, ones) == 0);
@@ -999,7 +1005,6 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
            *       (s - t) % t = 0: hi = (s - t) / t - 1
            *       (s - t) % t > 0: hi = (s - t) / t
            */
-          lo = bzla_bv_one(mm, bw);
           if (bzla_bv_is_zero(t))
           {
             hi = bzla_bv_copy(mm, s);
@@ -1007,8 +1012,7 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
           else
           {
             sub = bzla_bv_sub(mm, s, t);
-            rem = bzla_bv_urem(mm, sub, t);
-            div = bzla_bv_udiv(mm, sub, t);
+            bzla_bv_udiv_urem(mm, sub, t, &div, &rem);
             if (bzla_bv_is_zero(rem))
             {
               hi = bzla_bv_dec(mm, div);
@@ -1021,19 +1025,18 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
             bzla_bv_free(mm, rem);
             bzla_bv_free(mm, sub);
           }
-
           BZLA_INIT_STACK(mm, candidates);
           BzlaBvDomainGenerator gen;
-          bzla_bvprop_gen_init_range(mm, &gen, (BzlaBvDomain *) x, lo, hi);
+          bzla_bvprop_gen_init_range(mm, &gen, (BzlaBvDomain *) x, one, hi);
           while (bzla_bvprop_gen_has_next(&gen))
           {
             bv  = bzla_bvprop_gen_next(&gen);
             rem = bzla_bv_urem(mm, s, bv);
             if (bzla_bv_compare(rem, t) == 0)
             {
-              if (check_const_bits(mm, x, rem))
+              if (check_const_bits(mm, x, bv))
               {
-                BZLA_PUSH_STACK(candidates, rem);
+                BZLA_PUSH_STACK(candidates, bv);
               }
               else
               {
@@ -1045,14 +1048,21 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
               bzla_bv_free(mm, rem);
             }
           }
-          res = BZLA_EMPTY_STACK(candidates);
+          res = !BZLA_EMPTY_STACK(candidates);
           BZLA_RELEASE_STACK(candidates);
+          bzla_bvprop_gen_delete(&gen);
         }
       }
     }
     else
     {
-      if (bzla_bv_is_zero(s) || bzla_bv_compare(t, ones) == 0)
+      if (bzla_bvprop_is_fixed(mm, x))
+      {
+        rem = bzla_bv_urem(mm, x->lo, s);
+        res = bzla_bv_compare(rem, t) == 0;
+        bzla_bv_free(mm, rem);
+      }
+      else if (bzla_bv_is_zero(s) || bzla_bv_compare(t, ones) == 0)
       {
         /* x % 0 = t: x = t
          * t = ones : s = 0, x = ones */
@@ -1075,11 +1085,63 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
           }
           else
           {
-            /* x = s * n + t, with n s.t. (s * n + t) does not overflow */
+            bzla_bv_free(mm, sub);
+            /**
+             * x = s * n + t, with n s.t. (s * n + t) does not overflow
+             * -> n <= (~0 - t) / s (truncated)
+             * -> ~0 - s * n >= t
+             */
+            sub = bzla_bv_sub(mm, ones, t);
+            /* n_hi = (~0 - t) / s */
+            n_hi = bzla_bv_udiv(mm, sub, s);
+            assert(!bzla_bv_is_zero(n_hi));
+            bzla_bv_free(mm, sub);
+            /* ~0 - s * n_hi < t ? decrease n_hi until */
+            mul = bzla_bv_mul(mm, s, n_hi);
+            sub = bzla_bv_sub(mm, ones, mul);
+            while (bzla_bv_compare(sub, t) < 0)
+            {
+              bv   = n_hi;
+              n_hi = bzla_bv_dec(mm, n_hi);
+              bzla_bv_free(mm, bv);
+              bzla_bv_free(mm, mul);
+              mul = bzla_bv_mul(mm, s, n_hi);
+              bzla_bv_free(mm, sub);
+              sub = bzla_bv_sub(mm, ones, mul);
+            }
+
+            /* hi = s * n_hi + t (upper bound for x) */
+            hi = bzla_bv_add(mm, mul, t);
+            bzla_bv_free(mm, mul);
+            BZLA_INIT_STACK(mm, candidates);
+            BzlaBvDomainGenerator gen;
+            /* x->lo <= x <= hi */
+            bzla_bvprop_gen_init_range(mm, &gen, (BzlaBvDomain *) x, 0, hi);
+            while (bzla_bvprop_gen_has_next(&gen))
+            {
+              bv  = bzla_bvprop_gen_next(&gen);
+              rem = bzla_bv_urem(mm, bv, s);
+              if (bzla_bv_compare(rem, t) == 0)
+              {
+                if (check_const_bits(mm, x, bv))
+                {
+                  BZLA_PUSH_STACK(candidates, bv);
+                }
+              }
+              bzla_bv_free(mm, rem);
+            }
+            res = !BZLA_EMPTY_STACK(candidates);
+            BZLA_RELEASE_STACK(candidates);
+            bzla_bvprop_gen_delete(&gen);
+            bzla_bv_free(mm, hi);
+            bzla_bv_free(mm, n_hi);
           }
+          bzla_bv_free(mm, sub);
         }
       }
     }
+    bzla_bv_free(mm, one);
+    bzla_bv_free(mm, ones);
   }
   return res;
 }

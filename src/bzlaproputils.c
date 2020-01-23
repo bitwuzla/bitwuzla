@@ -2836,10 +2836,11 @@ bzla_proputils_inv_urem(Bzla *bzla,
           mul  = bzla_bv_mul(mm, s, n);
           tmp2 = bzla_bv_sub(mm, ones, mul);
 
+          /* choose n s.t. addition in s * n + t does not overflow */
           while (bzla_bv_compare(tmp2, t) < 0)
           {
             bzla_bv_free(mm, tmp);
-            tmp = bzla_bv_sub(mm, n, one);
+            tmp = bzla_bv_dec(mm, n);
             bzla_bv_free(mm, n);
             n = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, tmp);
             bzla_bv_free(mm, mul);
