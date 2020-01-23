@@ -2589,7 +2589,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
 
   uint32_t bw, cnt;
   int32_t cmp;
-  BzlaBitVector *res, *ones, *tmp, *tmp2, *one, *n, *mul, *up, *sub;
+  BzlaBitVector *res, *ones, *tmp, *tmp2, *one, *n, *mul, *n_hi, *sub;
   BzlaMemMgr *mm;
 
   (void) urem;
@@ -2689,7 +2689,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
           if (bzla_bv_is_zero(t))
           {
             /* t = 0 -> 1 <= n <= s */
-            up = bzla_bv_copy(mm, s);
+            n_hi = bzla_bv_copy(mm, s);
           }
           else
           {
@@ -2702,28 +2702,26 @@ bzla_proputils_inv_urem(Bzla *bzla,
             if (bzla_bv_is_zero(tmp))
             {
               /**
-               * (s - t) / t is not truncated
-               * (remainder is 0), therefore the EXclusive
-               * upper bound
-               * -> up = (s - t) / t - 1
+               * (s - t) / t is not truncated (remainder is 0) and is therefore
+               * the EXclusive upper bound, the inclusive upper bound is:
+               *   n_hi = (s - t) / t - 1
                */
-              up = bzla_bv_sub(mm, tmp2, one);
+              n_hi = bzla_bv_sub(mm, tmp2, one);
               bzla_bv_free(mm, tmp2);
             }
             else
             {
               /**
-               * (s - t) / t is truncated
-               * (remainder is not 0), therefore the INclusive
-               * upper bound
-               * -> up = (s - t) / t
+               * (s - t) / t is truncated (remainder is not 0) and is therefore
+               * the INclusive upper bound:
+               *   n_hi = (s - t) / t
                */
-              up = tmp2;
+              n_hi = tmp2;
             }
             bzla_bv_free(mm, tmp);
           }
 
-          if (bzla_bv_is_zero(up))
+          if (bzla_bv_is_zero(n_hi))
           {
             assert(false);
             res = bzla_bv_udiv(mm, sub, one);
@@ -2731,16 +2729,16 @@ bzla_proputils_inv_urem(Bzla *bzla,
           else
           {
             /**
-             * choose 1 <= n <= up randomly
+             * choose 1 <= n <= n_hi randomly
              * s.t (s - t) % n = 0
              */
-            n   = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, up);
+            n   = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, n_hi);
             tmp = bzla_bv_urem(mm, sub, n);
             for (cnt = 0; cnt < bw && !bzla_bv_is_zero(tmp); cnt++)
             {
               bzla_bv_free(mm, n);
               bzla_bv_free(mm, tmp);
-              n   = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, up);
+              n   = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, n_hi);
               tmp = bzla_bv_urem(mm, sub, n);
             }
 
@@ -2758,7 +2756,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
             bzla_bv_free(mm, n);
             bzla_bv_free(mm, tmp);
           }
-          bzla_bv_free(mm, up);
+          bzla_bv_free(mm, n_hi);
         }
         bzla_bv_free(mm, sub);
       }
