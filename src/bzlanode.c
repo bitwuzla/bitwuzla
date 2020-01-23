@@ -2566,9 +2566,6 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
       sort = bzla_sort_copy(bzla, bzla_node_get_sort_id(e[1]));
       break;
 
-    case BZLA_FP_TO_SBV_NODE:
-    case BZLA_FP_TO_UBV_NODE: break;
-
     default:
       assert(kind == BZLA_BV_AND_NODE || kind == BZLA_BV_ADD_NODE
              || kind == BZLA_BV_MUL_NODE || kind == BZLA_BV_SLL_NODE
