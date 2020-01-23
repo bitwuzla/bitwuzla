@@ -1,6 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2019 Mathias Preiner.
+ *  Copyright (C) 2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -110,7 +111,6 @@ class TestInvUtils : public TestMm
 
     uint32_t nval_s = 1 << bw_s;
     uint32_t nval_t = 1 << bw_t;
-#if 1
     for (const std::string &x_value : x_values)
     {
       x = bzla_bvprop_new_from_char(d_mm, x_value.c_str());
@@ -120,17 +120,7 @@ class TestInvUtils : public TestMm
         vs = bzla_bv_to_char(d_mm, s);
         for (uint32_t j = 0; j < nval_t; j++)
         {
-          t = bzla_bv_uint64_to_bv(d_mm, j, bw_t);
-#else
-    {
-      std::string x_value = "10x";
-      x                   = bzla_bvprop_new_from_char(d_mm, x_value.c_str());
-      {
-        s  = bzla_bv_char_to_bv(d_mm, "011");
-        vs = bzla_bv_to_char(d_mm, s);
-        {
-          t = bzla_bv_char_to_bv(d_mm, "010");
-#endif
+          t        = bzla_bv_uint64_to_bv(d_mm, j, bw_t);
           vt       = bzla_bv_to_char(d_mm, t);
           bool res = is_inv(d_mm, x, t, s, pos_x);
           bool status =
@@ -407,9 +397,9 @@ TEST_F(TestInvUtils, is_inv_mul_const)
 TEST_F(TestInvUtils, is_inv_urem_const)
 {
   test_is_inv_binary_const(bzla_is_inv_urem_const, boolector_urem, 0);
+  test_is_inv_binary_const(bzla_is_inv_urem_const, boolector_urem, 1);
 }
 // TODO udiv
-// TODO urem
 
 /* Test is_inv_* functions (no const bits). */
 

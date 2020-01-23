@@ -959,7 +959,7 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
     BzlaBitVectorPtrStack candidates;
     uint32_t bw;
     int32_t cmp;
-    BzlaBitVector *n_hi, *one, *ones, *hi, *sub, *mul, *div, *rem, *bv;
+    BzlaBitVector *n_hi, *one, *ones, *hi, *lo, *sub, *mul, *div, *rem, *bv;
 
     bw   = bzla_bv_get_width(t);
     ones = bzla_bv_ones(mm, bw);
@@ -985,7 +985,7 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
         if (cmp == 0)
         {
           /* s = t and t != ones: x = 0 or random x > t */
-          res = bzla_bv_compare(x->hi, t) >= 0;
+          res = bzla_bv_is_zero(x->lo) || bzla_bv_compare(x->hi, t) > 0;
         }
         else
         {
@@ -999,35 +999,43 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
            *
            * bv division is truncating, thus:
            *
-           *    1 <= n <= hi
+           *    1 <= n <= n_hi
            *
-           * with: t = 0          : hi = s
-           *       (s - t) % t = 0: hi = (s - t) / t - 1
-           *       (s - t) % t > 0: hi = (s - t) / t
+           * with: t = 0          : n_hi = s
+           *       (s - t) % t = 0: n_hi = (s - t) / t - 1 if > t else t + 1
+           *       (s - t) % t > 0: n_hi = (s - t) / t
            */
+          sub = bzla_bv_sub(mm, s, t);
           if (bzla_bv_is_zero(t))
           {
-            hi = bzla_bv_copy(mm, s);
+            n_hi = bzla_bv_copy(mm, s);
           }
           else
           {
-            sub = bzla_bv_sub(mm, s, t);
             bzla_bv_udiv_urem(mm, sub, t, &div, &rem);
             if (bzla_bv_is_zero(rem))
             {
-              hi = bzla_bv_dec(mm, div);
+              n_hi = bzla_bv_dec(mm, div);
               bzla_bv_free(mm, div);
             }
             else
             {
-              hi = div;
+              n_hi = div;
             }
             bzla_bv_free(mm, rem);
-            bzla_bv_free(mm, sub);
+            assert(bzla_bv_compare(n_hi, one) >= 0);
           }
+          hi = sub;
+          lo = bzla_bv_udiv(mm, sub, n_hi);
+          if (bzla_bv_compare(lo, t) <= 0)
+          {
+            bzla_bv_free(mm, lo);
+            lo = bzla_bv_inc(mm, t);
+          }
+          bzla_bv_free(mm, n_hi);
           BZLA_INIT_STACK(mm, candidates);
           BzlaBvDomainGenerator gen;
-          bzla_bvprop_gen_init_range(mm, &gen, (BzlaBvDomain *) x, one, hi);
+          bzla_bvprop_gen_init_range(mm, &gen, (BzlaBvDomain *) x, lo, hi);
           while (bzla_bvprop_gen_has_next(&gen))
           {
             bv  = bzla_bvprop_gen_next(&gen);
@@ -1038,19 +1046,14 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
               {
                 BZLA_PUSH_STACK(candidates, bv);
               }
-              else
-              {
-                bzla_bv_free(mm, rem);
-              }
             }
-            else
-            {
-              bzla_bv_free(mm, rem);
-            }
+            bzla_bv_free(mm, rem);
           }
           res = !BZLA_EMPTY_STACK(candidates);
           BZLA_RELEASE_STACK(candidates);
           bzla_bvprop_gen_delete(&gen);
+          bzla_bv_free(mm, hi);
+          bzla_bv_free(mm, lo);
         }
       }
     }
