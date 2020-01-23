@@ -870,7 +870,6 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
        * is thus not word-blasted), add default bit-vector assignment 0 */
       else if (bzla_node_is_fp_var(real_cur) && !real_cur->av)
       {
-        printf("asdf\n");
         result = bzla_bv_new(
             bzla->mm,
             bzla_sort_fp_get_bv_width(bzla, bzla_node_get_sort_id(real_cur)));
