@@ -2102,16 +2102,39 @@ BzlaFPWordBlaster::~BzlaFPWordBlaster()
 {
   for (const auto &p : d_min_max_uf_map)
   {
+    bzla_sort_release(d_bzla, p.first);
     bzla_node_release(d_bzla, p.second);
   }
   for (const auto &p : d_sbv_ubv_uf_map)
   {
+    bzla_sort_release(d_bzla, p.first.first);
+    bzla_sort_release(d_bzla, p.first.second);
     bzla_node_release(d_bzla, p.second);
   }
   for (const auto &p : d_ite_map)
   {
     bzla_node_release(d_bzla, p.first);
     bzla_node_release(d_bzla, p.second);
+  }
+  for (const auto &p : d_unpacked_float_map)
+  {
+    bzla_node_release(d_bzla, p.first);
+  }
+  for (const auto &p : d_rm_map)
+  {
+    bzla_node_release(d_bzla, p.first);
+  }
+  for (const auto &p : d_prop_map)
+  {
+    bzla_node_release(d_bzla, p.first);
+  }
+  for (const auto &p : d_ubv_map)
+  {
+    bzla_node_release(d_bzla, p.first);
+  }
+  for (const auto &p : d_sbv_map)
+  {
+    bzla_node_release(d_bzla, p.first);
   }
 }
 
@@ -2184,12 +2207,13 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         if (bzla_node_is_rm(d_bzla, cur->e[1]))
         {
           assert(d_rm_map.find(var) != d_rm_map.end());
-          d_rm_map.emplace(cur, d_rm_map.at(var));
+          d_rm_map.emplace(bzla_node_copy(d_bzla, cur), d_rm_map.at(var));
         }
         else
         {
           assert(d_unpacked_float_map.find(var) != d_unpacked_float_map.end());
-          d_unpacked_float_map.emplace(cur, d_unpacked_float_map.at(var));
+          d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
+                                       d_unpacked_float_map.at(var));
         }
         BzlaNode *then_eq  = bzla_exp_eq(d_bzla, var, cur->e[1]);
         BzlaNode *else_eq  = bzla_exp_eq(d_bzla, var, cur->e[2]);
@@ -2205,19 +2229,20 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       }
       else if (bzla_node_is_rm_const(cur))
       {
-        d_rm_map.emplace(cur, BzlaFPSymRM(cur));
+        d_rm_map.emplace(bzla_node_copy(d_bzla, cur), BzlaFPSymRM(cur));
       }
       else if (bzla_node_is_rm_var(cur))
       {
         BzlaFPSymRM var(cur);
-        d_rm_map.emplace(cur, var);
+        d_rm_map.emplace(bzla_node_copy(d_bzla, cur), var);
         BzlaFPSymProp assertion = var.valid();
         bzla_assert_exp(d_bzla, assertion.getNode());
       }
       else if (bzla_node_is_fp_const(cur))
       {
         d_unpacked_float_map.emplace(
-            cur, BzlaSymUnpackedFloat(*fp_get_unpacked_float(cur)));
+            bzla_node_copy(d_bzla, cur),
+            BzlaSymUnpackedFloat(*fp_get_unpacked_float(cur)));
       }
       else if (bzla_node_is_fp_var(cur))
       {
@@ -2242,7 +2267,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
             d_bzla, sort_sig, create_component_symbol(cur, "sig").c_str());
 
         BzlaSymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
-        d_unpacked_float_map.emplace(cur, uf);
+        d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur), uf);
         BzlaFPSymProp assertion = uf.valid(sort);
         bzla_assert_exp(d_bzla, assertion.getNode());
 
@@ -2262,7 +2287,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
-        d_prop_map.emplace(cur,
+        d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
                            symfpu::smtlibEqual<BzlaFPSymTraits>(
                                BzlaFPSortInfo(bzla_node_get_sort_id(cur->e[0])),
                                d_unpacked_float_map.at(cur->e[0]),
@@ -2272,14 +2297,14 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
         assert(d_rm_map.find(cur->e[1]) != d_rm_map.end());
-        d_prop_map.emplace(cur,
+        d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
                            d_rm_map.at(cur->e[0]) == d_rm_map.at(cur->e[1]));
       }
       else if (bzla_node_is_fp_abs(cur))
       {
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
-        d_unpacked_float_map.emplace(cur,
+        d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
                                      symfpu::absolute<BzlaFPSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_unpacked_float_map.at(cur->e[0])));
@@ -2288,7 +2313,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
-        d_unpacked_float_map.emplace(cur,
+        d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
                                      symfpu::negate<BzlaFPSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_unpacked_float_map.at(cur->e[0])));
@@ -2297,7 +2322,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
-        d_prop_map.emplace(cur,
+        d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
                            symfpu::isNormal<BzlaFPSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
@@ -2306,7 +2331,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
-        d_prop_map.emplace(cur,
+        d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
                            symfpu::isSubnormal<BzlaFPSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
@@ -2315,7 +2340,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
-        d_prop_map.emplace(cur,
+        d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
                            symfpu::isZero<BzlaFPSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
@@ -2324,7 +2349,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
-        d_prop_map.emplace(cur,
+        d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
                            symfpu::isInfinite<BzlaFPSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
@@ -2334,7 +2359,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
         d_prop_map.emplace(
-            cur,
+            bzla_node_copy(d_bzla, cur),
             symfpu::isNaN<BzlaFPSymTraits>(bzla_node_get_sort_id(cur->e[0]),
                                            d_unpacked_float_map.at(cur->e[0])));
       }
@@ -2342,7 +2367,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
-        d_prop_map.emplace(cur,
+        d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
                            symfpu::isNegative<BzlaFPSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
@@ -2351,7 +2376,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
-        d_prop_map.emplace(cur,
+        d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
                            symfpu::isPositive<BzlaFPSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
@@ -2362,7 +2387,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
-        d_prop_map.emplace(cur,
+        d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
                            symfpu::lessThanOrEqual<BzlaFPSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0]),
@@ -2374,7 +2399,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
-        d_prop_map.emplace(cur,
+        d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
                            symfpu::lessThan<BzlaFPSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0]),
@@ -2403,7 +2428,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         if (bzla_node_is_fp_min(cur))
         {
           d_unpacked_float_map.emplace(
-              cur,
+              bzla_node_copy(d_bzla, cur),
               symfpu::min<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
                                            d_unpacked_float_map.at(cur->e[0]),
                                            d_unpacked_float_map.at(cur->e[1]),
@@ -2412,7 +2437,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         else
         {
           d_unpacked_float_map.emplace(
-              cur,
+              bzla_node_copy(d_bzla, cur),
               symfpu::max<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
                                            d_unpacked_float_map.at(cur->e[0]),
                                            d_unpacked_float_map.at(cur->e[1]),
@@ -2427,7 +2452,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
-        d_unpacked_float_map.emplace(cur,
+        d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
                                      symfpu::remainder<BzlaFPSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_unpacked_float_map.at(cur->e[0]),
@@ -2439,7 +2464,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(
-            cur,
+            bzla_node_copy(d_bzla, cur),
             symfpu::sqrt<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
                                           d_rm_map.at(cur->e[0]),
                                           d_unpacked_float_map.at(cur->e[1])));
@@ -2449,7 +2474,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
-        d_unpacked_float_map.emplace(cur,
+        d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
                                      symfpu::roundToIntegral<BzlaFPSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
@@ -2463,7 +2488,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[2])
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(
-            cur,
+            bzla_node_copy(d_bzla, cur),
             symfpu::add<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
                                          d_unpacked_float_map.at(cur->e[1]),
@@ -2477,7 +2502,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         assert(d_unpacked_float_map.find(cur->e[2])
                != d_unpacked_float_map.end());
-        d_unpacked_float_map.emplace(cur,
+        d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
                                      symfpu::multiply<BzlaFPSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
@@ -2491,7 +2516,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         assert(d_unpacked_float_map.find(cur->e[2])
                != d_unpacked_float_map.end());
-        d_unpacked_float_map.emplace(cur,
+        d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
                                      symfpu::divide<BzlaFPSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
@@ -2508,7 +2533,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[3])
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(
-            cur,
+            bzla_node_copy(d_bzla, cur),
             symfpu::fma<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
                                          d_unpacked_float_map.at(cur->e[1]),
@@ -2527,7 +2552,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         BzlaNode *apply      = bzla_exp_apply(d_bzla, uf, apply_args);
         if (bzla_node_is_fp_to_sbv(cur))
         {
-          d_sbv_map.emplace(cur,
+          d_sbv_map.emplace(bzla_node_copy(d_bzla, cur),
                             symfpu::convertFloatToSBV<BzlaFPSymTraits>(
                                 bzla_node_get_sort_id(cur->e[1]),
                                 d_rm_map.at(cur->e[0]),
@@ -2537,7 +2562,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         }
         else
         {
-          d_ubv_map.emplace(cur,
+          d_ubv_map.emplace(bzla_node_copy(d_bzla, cur),
                             symfpu::convertFloatToUBV<BzlaFPSymTraits>(
                                 bzla_node_get_sort_id(cur->e[1]),
                                 d_rm_map.at(cur->e[0]),
@@ -2552,7 +2577,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(bzla_node_is_bv(d_bzla, cur->e[0]));
         d_unpacked_float_map.emplace(
-            cur,
+            bzla_node_copy(d_bzla, cur),
             symfpu::unpack<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
                                             BzlaFPSymBV<false>(cur->e[0])));
       }
@@ -2562,7 +2587,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(
-            cur,
+            bzla_node_copy(d_bzla, cur),
             symfpu::convertFloatToFloat<BzlaFPSymTraits>(
                 bzla_node_get_sort_id(cur->e[1]),
                 bzla_node_get_sort_id(cur),
@@ -2573,7 +2598,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
         assert(bzla_node_is_bv(d_bzla, cur->e[1]));
-        d_unpacked_float_map.emplace(cur,
+        d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
                                      symfpu::convertSBVToFloat<BzlaFPSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
@@ -2583,7 +2608,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
         assert(bzla_node_is_bv(d_bzla, cur->e[1]));
-        d_unpacked_float_map.emplace(cur,
+        d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
                                      symfpu::convertUBVToFloat<BzlaFPSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
@@ -2689,7 +2714,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     cexp = bzla_nodemap_mapped(exp_map, exp);
     assert(cexp);
     assert(res->d_min_max_uf_map.find(s) == res->d_min_max_uf_map.end());
-    res->d_min_max_uf_map.emplace(s, cexp);
+    res->d_min_max_uf_map.emplace(bzla_sort_copy(cbzla, s), cexp);
   }
   for (const auto &p : d_sbv_ubv_uf_map)
   {
@@ -2698,7 +2723,10 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     cexp = bzla_nodemap_mapped(exp_map, exp);
     assert(cexp);
     assert(res->d_sbv_ubv_uf_map.find(p.first) == res->d_sbv_ubv_uf_map.end());
-    res->d_sbv_ubv_uf_map.emplace(p.first, cexp);
+    res->d_sbv_ubv_uf_map.emplace(std::pair<BzlaSortId, BzlaSortId>(
+                                      bzla_sort_copy(cbzla, p.first.first),
+                                      bzla_sort_copy(cbzla, p.first.second)),
+                                  cexp);
   }
   for (const auto &p : d_rm_map)
   {
@@ -2711,7 +2739,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_rm_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_rm_map.emplace(cexp, BzlaFPSymRM(scexp));
+    res->d_rm_map.emplace(bzla_node_copy(cbzla, cexp), BzlaFPSymRM(scexp));
   }
   for (const auto &p : d_prop_map)
   {
@@ -2724,7 +2752,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_prop_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_prop_map.emplace(cexp, BzlaFPSymProp(scexp));
+    res->d_prop_map.emplace(bzla_node_copy(cbzla, cexp), BzlaFPSymProp(scexp));
   }
   for (const auto &p : d_sbv_map)
   {
@@ -2737,7 +2765,8 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_sbv_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_sbv_map.emplace(cexp, BzlaFPSymBV<true>(scexp));
+    res->d_sbv_map.emplace(bzla_node_copy(cbzla, cexp),
+                           BzlaFPSymBV<true>(scexp));
   }
   for (const auto &p : d_ubv_map)
   {
@@ -2750,7 +2779,8 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_ubv_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_ubv_map.emplace(cexp, BzlaFPSymBV<false>(scexp));
+    res->d_ubv_map.emplace(bzla_node_copy(cbzla, cexp),
+                           BzlaFPSymBV<false>(scexp));
   }
   for (const auto &p : d_unpacked_float_map)
   {
@@ -2792,7 +2822,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     assert(csig);
 
     res->d_unpacked_float_map.emplace(
-        cexp,
+        bzla_node_copy(cbzla, cexp),
         BzlaSymUnpackedFloat(BzlaFPSymProp(cnan),
                              BzlaFPSymProp(cinf),
                              BzlaFPSymProp(czero),
