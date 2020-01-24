@@ -2042,8 +2042,6 @@ class BzlaFPWordBlaster
   BzlaNode *sbv_ubv_uf(BzlaNode *node);
 
   using BzlaSymUnpackedFloat = ::symfpu::unpackedFloat<BzlaFPSymTraits>;
-  using BzlaFPSortInfoMap =
-      std::unordered_map<BzlaSortId, BzlaFPSortInfo, BzlaSortHashFunction>;
   using BzlaFPSymRMMap =
       std::unordered_map<BzlaNode *, BzlaFPSymRM, BzlaNodeHashFunction>;
   using BzlaFPSymPropMap =
@@ -2057,7 +2055,6 @@ class BzlaFPWordBlaster
   using BzlaFPSymUBVMap =
       std::unordered_map<BzlaNode *, BzlaFPSymBV<false>, BzlaNodeHashFunction>;
 
-  BzlaFPSortInfoMap d_sort_map;
   BzlaFPSymRMMap d_rm_map;
   BzlaFPSymPropMap d_prop_map;
   BzlaFPSymUBVMap d_ubv_map;
@@ -2696,15 +2693,6 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
 {
   BzlaNode *exp, *cexp;
   BzlaFPWordBlaster *res = new BzlaFPWordBlaster(cbzla);
-  res->d_sort_map        = BzlaFPSortInfoMap(d_sort_map);
-
-  std::unordered_map<BzlaSortId, BzlaNode *, BzlaSortHashFunction>
-      d_min_max_uf_map;
-
-  std::unordered_map<std::pair<BzlaSortId, BzlaSortId>,
-                     BzlaNode *,
-                     BzlaSortPairHashFunction>
-      d_sbv_ubv_uf_map;
 
   for (const auto &p : d_min_max_uf_map)
   {
@@ -2714,7 +2702,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     cexp = bzla_nodemap_mapped(exp_map, exp);
     assert(cexp);
     assert(res->d_min_max_uf_map.find(s) == res->d_min_max_uf_map.end());
-    res->d_min_max_uf_map.emplace(bzla_sort_copy(cbzla, s), cexp);
+    res->d_min_max_uf_map.emplace(s, cexp);
   }
   for (const auto &p : d_sbv_ubv_uf_map)
   {
@@ -2723,10 +2711,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     cexp = bzla_nodemap_mapped(exp_map, exp);
     assert(cexp);
     assert(res->d_sbv_ubv_uf_map.find(p.first) == res->d_sbv_ubv_uf_map.end());
-    res->d_sbv_ubv_uf_map.emplace(std::pair<BzlaSortId, BzlaSortId>(
-                                      bzla_sort_copy(cbzla, p.first.first),
-                                      bzla_sort_copy(cbzla, p.first.second)),
-                                  cexp);
+    res->d_sbv_ubv_uf_map.emplace(p.first, cexp);
   }
   for (const auto &p : d_rm_map)
   {
@@ -2739,7 +2724,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_rm_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_rm_map.emplace(bzla_node_copy(cbzla, cexp), BzlaFPSymRM(scexp));
+    res->d_rm_map.emplace(cexp, BzlaFPSymRM(scexp));
   }
   for (const auto &p : d_prop_map)
   {
@@ -2752,7 +2737,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_prop_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_prop_map.emplace(bzla_node_copy(cbzla, cexp), BzlaFPSymProp(scexp));
+    res->d_prop_map.emplace(cexp, BzlaFPSymProp(scexp));
   }
   for (const auto &p : d_sbv_map)
   {
@@ -2765,8 +2750,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_sbv_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_sbv_map.emplace(bzla_node_copy(cbzla, cexp),
-                           BzlaFPSymBV<true>(scexp));
+    res->d_sbv_map.emplace(cexp, BzlaFPSymBV<true>(scexp));
   }
   for (const auto &p : d_ubv_map)
   {
@@ -2779,8 +2763,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_ubv_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_ubv_map.emplace(bzla_node_copy(cbzla, cexp),
-                           BzlaFPSymBV<false>(scexp));
+    res->d_ubv_map.emplace(cexp, BzlaFPSymBV<false>(scexp));
   }
   for (const auto &p : d_unpacked_float_map)
   {
@@ -2822,7 +2805,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     assert(csig);
 
     res->d_unpacked_float_map.emplace(
-        bzla_node_copy(cbzla, cexp),
+        cexp,
         BzlaSymUnpackedFloat(BzlaFPSymProp(cnan),
                              BzlaFPSymProp(cinf),
                              BzlaFPSymProp(czero),
@@ -2854,12 +2837,13 @@ BzlaFPWordBlaster::min_max_uf(BzlaNode *node)
   std::stringstream ss;
   ss << (bzla_node_is_fp_min(node) ? "_fp_min_uf_" : "_fp_max_uf_")
      << bzla_node_get_id(node) << "_";
-  d_min_max_uf_map[sort_fp] = bzla_exp_uf(d_bzla, sort_fun, ss.str().c_str());
+  d_min_max_uf_map.emplace(bzla_sort_copy(d_bzla, sort_fp),
+                           bzla_exp_uf(d_bzla, sort_fun, ss.str().c_str()));
   bzla_sort_release(d_bzla, sort_fun);
   bzla_sort_release(d_bzla, sort_domain);
   bzla_sort_release(d_bzla, sort_bv);
   bzla_sort_release(d_bzla, sort_bv1);
-  return d_min_max_uf_map[sort_fp];
+  return d_min_max_uf_map.at(sort_fp);
 }
 
 BzlaNode *
@@ -2883,10 +2867,12 @@ BzlaFPWordBlaster::sbv_ubv_uf(BzlaNode *node)
   std::stringstream ss;
   ss << (bzla_node_is_fp_to_sbv(node) ? "_fp_sbv_uf_" : "_fp_ubv_uf_")
      << bzla_node_get_id(node) << "_";
-  d_sbv_ubv_uf_map[p] = bzla_exp_uf(d_bzla, sort_fun, ss.str().c_str());
+  (void) bzla_sort_copy(d_bzla, sort_fp);
+  (void) bzla_sort_copy(d_bzla, sort_bv);
+  d_sbv_ubv_uf_map.emplace(p, bzla_exp_uf(d_bzla, sort_fun, ss.str().c_str()));
   bzla_sort_release(d_bzla, sort_fun);
   bzla_sort_release(d_bzla, sort_domain);
-  return d_sbv_ubv_uf_map[p];
+  return d_sbv_ubv_uf_map.at(p);
 }
 
 /* ========================================================================== */
