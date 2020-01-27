@@ -75,24 +75,24 @@ class TestPropInv : public TestBzla
    * as inverse value, i.e., we essentially reverse the inverse value
    * computation with respect to the operands.
    *
-   * is_inv        : The function to test if given operator is invertible with
-   *                 respect to s and t.
-   * inv_fun       : The function to compute the inverse value for x given s
-   *                 and t.
-   * inv_fun_bvprop: The function to compute the inverse value for x given s
-   *                 and t using propagator domains.
-   * exp           : The node representing the operation.
-   * s             : The assignment of the other operand.
-   * t             : The assignment of the output (the target value of the
-   *                 operation).
-   * x_exp         : The expected assignment of the operand we solve for.
-   * idx_x         : The index of operand 'x'.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   * is_inv       : The function to test if given operator is invertible with
+   *                respect to s and t.
+   * inv_fun      : The function to compute the inverse value for x given s
+   *                and t.
+   * inv_fun_const: The function to compute the inverse value for x given s
+   *                and t using propagator domains.
+   * exp          : The node representing the operation.
+   * s            : The assignment of the other operand.
+   * t            : The assignment of the output (the target value of the
+   *                operation).
+   * x_exp        : The expected assignment of the operand we solve for.
+   * idx_x        : The index of operand 'x'.
+   * use_domains  : True if this check should be performed using propagator
+   *                domains (inv_fun_const).
    */
   void check_result(BzlaPropIsInv is_inv,
                     BzlaPropComputeValue inv_fun,
-                    BzlaPropComputeValue inv_fun_bvprop,
+                    BzlaPropComputeValue inv_fun_const,
                     BzlaNode *exp,
                     BzlaBitVector *s,
                     BzlaBitVector *t,
@@ -121,7 +121,7 @@ class TestPropInv : public TestBzla
       assert(is_inv(d_mm, x, t, s, idx_x));
       if (use_domains)
       {
-        res = inv_fun_bvprop(d_bzla, exp, t, s, idx_x, d_domains);
+        res = inv_fun_const(d_bzla, exp, t, s, idx_x, d_domains);
       }
       else
       {
@@ -144,17 +144,17 @@ class TestPropInv : public TestBzla
    * for the first operand produces value s0, and the inverse value computation
    * for the second operand produces value s1.
    *
-   * exp_fun       : The function to create the node representing operation <>.
-   * bv_fun        : The function to create the bit-vector result of operation
-   *                 s0 <> s1.
-   * is_inv        : The function to test if given operator is invertible with
-   *                 respect to s and t.
-   * inv_fun       : The function to compute the inverse value for x given s
-   *                 and t.
-   * inv_fun_bvprop: The function to compute the inverse value for x given s
-   *                 and t using propagator domains.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   * exp_fun      : The function to create the node representing operation <>.
+   * bv_fun       : The function to create the bit-vector result of operation
+   *                s0 <> s1.
+   * is_inv       : The function to test if given operator is invertible with
+   *                respect to s and t.
+   * inv_fun      : The function to compute the inverse value for x given s
+   *                and t.
+   * inv_fun_const: The function to compute the inverse value for x given s
+   *                and t using propagator domains.
+   * use_domains  : True if this check should be performed using propagator
+   *                domains (inv_fun_const).
    */
   void check_binary(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
@@ -162,7 +162,7 @@ class TestPropInv : public TestBzla
                                              const BzlaBitVector *),
                     BzlaPropIsInv is_inv,
                     BzlaPropComputeValue inv_fun,
-                    BzlaPropComputeValue inv_fun_bvprop,
+                    BzlaPropComputeValue inv_fun_const,
                     bool use_domains)
   {
     uint32_t bw;
@@ -185,24 +185,10 @@ class TestPropInv : public TestBzla
       {
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         t    = bv_fun(d_mm, s[0], s[1]);
-        check_result(is_inv,
-                     inv_fun,
-                     inv_fun_bvprop,
-                     exp,
-                     s[0],
-                     t,
-                     s[1],
-                     1,
-                     use_domains);
-        check_result(is_inv,
-                     inv_fun,
-                     inv_fun_bvprop,
-                     exp,
-                     s[1],
-                     t,
-                     s[0],
-                     0,
-                     use_domains);
+        check_result(
+            is_inv, inv_fun, inv_fun_const, exp, s[0], t, s[1], 1, use_domains);
+        check_result(
+            is_inv, inv_fun, inv_fun_const, exp, s[1], t, s[0], 0, use_domains);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
       }
@@ -218,17 +204,17 @@ class TestPropInv : public TestBzla
    * for the first operand produces value s0, and the inverse value computation
    * for the second operand produces value s1.
    *
-   * exp_fun       : The function to create the node representing operation <>.
-   * bv_fun        : The function to create the bit-vector result of operation
-   *                 s0 <> s1.
-   * is_inv        : The function to test if given operator is invertible with
-   *                 respect to s and t.
-   * inv_fun       : The function to compute the inverse value for x given s
-   *                 and t.
-   * inv_fun_bvprop: The function to compute the inverse value for x given s
-   *                 and t using propagator domains.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   * exp_fun      : The function to create the node representing operation <>.
+   * bv_fun       : The function to create the bit-vector result of operation
+   *                s0 <> s1.
+   * is_inv       : The function to test if given operator is invertible with
+   *                respect to s and t.
+   * inv_fun      : The function to compute the inverse value for x given s
+   *                and t.
+   * inv_fun_const: The function to compute the inverse value for x given s
+   *                and t using propagator domains.
+   * use_domains  : True if this check should be performed using propagator
+   *                 domains (inv_fun_const).
    */
   void check_shift(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                    BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
@@ -236,7 +222,7 @@ class TestPropInv : public TestBzla
                                             const BzlaBitVector *),
                    BzlaPropIsInv is_inv,
                    BzlaPropComputeValue inv_fun_bv,
-                   BzlaPropComputeValue inv_fun_bvprop,
+                   BzlaPropComputeValue inv_fun_const,
                    bool use_domains)
   {
     uint32_t bw;
@@ -261,7 +247,7 @@ class TestPropInv : public TestBzla
         x    = bv_fun(d_mm, s[0], s[1]);
         check_result(is_inv,
                      inv_fun_bv,
-                     inv_fun_bvprop,
+                     inv_fun_const,
                      exp,
                      s[0],
                      x,
@@ -270,7 +256,7 @@ class TestPropInv : public TestBzla
                      use_domains);
         check_result(is_inv,
                      inv_fun_bv,
-                     inv_fun_bvprop,
+                     inv_fun_const,
                      exp,
                      s[1],
                      x,
@@ -293,7 +279,7 @@ class TestPropInv : public TestBzla
    *
    * bw            : The bit-width to use.
    * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   *                 domains (inv_fun_const).
    */
   void check_conf_and(uint32_t bw, bool use_domains)
   {
@@ -316,7 +302,7 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(d_domains);
-      inv_fun = bzla_proputils_inv_and_bvprop;
+      inv_fun = bzla_proputils_inv_and_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, _and);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(_and->e[0])->id)
@@ -422,7 +408,7 @@ class TestPropInv : public TestBzla
    *
    * bw            : The bit-width to use.
    * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   *                 domains (inv_fun_const).
    */
   void check_conf_ult(uint32_t bw, bool use_domains)
   {
@@ -444,7 +430,7 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(d_domains);
-      inv_fun = bzla_proputils_inv_ult_bvprop;
+      inv_fun = bzla_proputils_inv_ult_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, ult);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(ult->e[0])->id)
@@ -532,7 +518,7 @@ class TestPropInv : public TestBzla
    *
    * bw            : The bit-width to use.
    * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   *                 domains (inv_fun_const).
    */
   void check_conf_sll(uint32_t bw, bool use_domains)
   {
@@ -685,7 +671,7 @@ class TestPropInv : public TestBzla
    *
    * bw            : The bit-width to use.
    * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   *                 domains (inv_fun_const).
    */
   void check_conf_srl(uint32_t bw, bool use_domains)
   {
@@ -837,7 +823,7 @@ class TestPropInv : public TestBzla
    *
    * bw            : The bit-width to use.
    * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   *                 domains (inv_fun_const).
    */
   void check_conf_mul(uint32_t bw, bool use_domains)
   {
@@ -956,7 +942,7 @@ class TestPropInv : public TestBzla
    *
    * bw            : The bit-width to use.
    * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   *                 domains (inv_fun_const).
    */
   void check_conf_udiv(uint32_t bw, bool use_domains)
   {
@@ -1052,7 +1038,7 @@ class TestPropInv : public TestBzla
    *
    * bw            : The bit-width to use.
    * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   *                 domains (inv_fun_const).
    */
   void check_conf_urem(uint32_t bw, bool use_domains)
   {
@@ -1075,7 +1061,7 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(d_domains);
-      inv_fun = bzla_proputils_inv_urem_bvprop;
+      inv_fun = bzla_proputils_inv_urem_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, urem);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(urem->e[0])->id)
@@ -1268,7 +1254,7 @@ class TestPropInv : public TestBzla
    *
    * bw            : The bit-width to use.
    * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   *                 domains (inv_fun_const).
    */
   void check_conf_concat(uint32_t bw, bool use_domains)
   {
@@ -1301,7 +1287,7 @@ class TestPropInv : public TestBzla
       if (use_domains)
       {
         assert(d_domains);
-        inv_fun = bzla_proputils_inv_concat_bvprop;
+        inv_fun = bzla_proputils_inv_concat_const;
         bzla_prop_solver_init_domains(d_bzla, d_domains, concat);
         x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                  d_domains, bzla_node_real_addr(concat->e[0])->id)
@@ -1405,7 +1391,7 @@ class TestPropInv : public TestBzla
    * t             : The assignment of 'mul'.
    * s             : The assignment of one of the operands of 'mul'.
    * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   *                 domains (inv_fun_const).
    */
   void check_conf_mul_result(BzlaNode *mul,
                              BzlaBitVector *t,
@@ -1421,7 +1407,7 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(d_domains);
-      inv_fun = bzla_proputils_inv_mul_bvprop;
+      inv_fun = bzla_proputils_inv_mul_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, mul);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(mul->e[0])->id)
@@ -1482,7 +1468,7 @@ class TestPropInv : public TestBzla
    * t             : The assignment of 'udiv'.
    * s             : The assignment of one of the operands of udiv.
    * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_bvprop).
+   *                 domains (inv_fun_const).
    */
   void check_conf_udiv_result(uint32_t idx_x,
                               BzlaNode *udiv,
@@ -1499,7 +1485,7 @@ class TestPropInv : public TestBzla
     if (use_domains)
     {
       assert(d_domains);
-      inv_fun = bzla_proputils_inv_udiv_bvprop;
+      inv_fun = bzla_proputils_inv_udiv_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, udiv);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(udiv->e[0])->id)
@@ -1588,7 +1574,7 @@ class TestPropInv : public TestBzla
       exp_fun    = bzla_exp_bv_sll;
       is_inv_fun = use_domains ? bzla_is_inv_sll_const : bzla_is_inv_sll;
       inv_fun =
-          use_domains ? bzla_proputils_inv_sll : bzla_proputils_inv_sll_bvprop;
+          use_domains ? bzla_proputils_inv_sll : bzla_proputils_inv_sll_const;
       cons_fun = bzla_proputils_cons_sll;
     }
     else
@@ -1597,7 +1583,7 @@ class TestPropInv : public TestBzla
       exp_fun    = bzla_exp_bv_srl;
       is_inv_fun = use_domains ? bzla_is_inv_srl_const : bzla_is_inv_srl;
       inv_fun =
-          use_domains ? bzla_proputils_inv_srl : bzla_proputils_inv_srl_bvprop;
+          use_domains ? bzla_proputils_inv_srl : bzla_proputils_inv_srl_const;
       cons_fun = bzla_proputils_cons_srl;
     }
 
@@ -1671,7 +1657,7 @@ TEST_F(TestPropInv, complete_add)
                bzla_bv_add,
                bzla_is_inv_add,
                bzla_proputils_inv_add,
-               bzla_proputils_inv_add_bvprop,
+               bzla_proputils_inv_add_const,
                false);
 }
 
@@ -1681,7 +1667,7 @@ TEST_F(TestPropInv, complete_and)
                bzla_bv_and,
                bzla_is_inv_and,
                bzla_proputils_inv_and,
-               bzla_proputils_inv_and_bvprop,
+               bzla_proputils_inv_and_const,
                false);
 }
 
@@ -1691,7 +1677,7 @@ TEST_F(TestPropInv, complete_eq)
                bzla_bv_eq,
                bzla_is_inv_eq,
                bzla_proputils_inv_eq,
-               bzla_proputils_inv_eq_bvprop,
+               bzla_proputils_inv_eq_const,
                false);
 }
 
@@ -1701,7 +1687,7 @@ TEST_F(TestPropInv, complete_ult)
                bzla_bv_ult,
                bzla_is_inv_ult,
                bzla_proputils_inv_ult,
-               bzla_proputils_inv_ult_bvprop,
+               bzla_proputils_inv_ult_const,
                false);
 }
 
@@ -1711,7 +1697,7 @@ TEST_F(TestPropInv, complete_sll)
               bzla_bv_sll,
               bzla_is_inv_sll,
               bzla_proputils_inv_sll,
-              bzla_proputils_inv_sll_bvprop,
+              bzla_proputils_inv_sll_const,
               false);
 }
 
@@ -1721,7 +1707,7 @@ TEST_F(TestPropInv, complete_srl)
               bzla_bv_srl,
               bzla_is_inv_srl,
               bzla_proputils_inv_srl,
-              bzla_proputils_inv_srl_bvprop,
+              bzla_proputils_inv_srl_const,
               false);
 }
 
@@ -1731,7 +1717,7 @@ TEST_F(TestPropInv, complete_mul)
                bzla_bv_mul,
                bzla_is_inv_mul,
                bzla_proputils_inv_mul,
-               bzla_proputils_inv_mul_bvprop,
+               bzla_proputils_inv_mul_const,
                false);
 }
 
@@ -1741,7 +1727,7 @@ TEST_F(TestPropInv, complete_udiv)
                bzla_bv_udiv,
                bzla_is_inv_udiv,
                bzla_proputils_inv_udiv,
-               bzla_proputils_inv_udiv_bvprop,
+               bzla_proputils_inv_udiv_const,
                false);
 }
 
@@ -1751,7 +1737,7 @@ TEST_F(TestPropInv, complete_urem)
                bzla_bv_urem,
                bzla_is_inv_urem,
                bzla_proputils_inv_urem,
-               bzla_proputils_inv_urem_bvprop,
+               bzla_proputils_inv_urem_const,
                false);
 }
 
@@ -1761,7 +1747,7 @@ TEST_F(TestPropInv, complete_concat)
                bzla_bv_concat,
                bzla_is_inv_concat,
                bzla_proputils_inv_concat,
-               bzla_proputils_inv_concat_bvprop,
+               bzla_proputils_inv_concat_const,
                false);
 }
 
@@ -1812,103 +1798,103 @@ TEST_F(TestPropInv, complete_slice)
 /* -------------------------------------------------------------------------- */
 
 #if 0
-TEST_F (TestPropInv, complete_add_bvprop)
+TEST_F (TestPropInv, complete_add_const)
 {
   check_binary (bzla_exp_bv_add,
                 bzla_bv_add,
                 bzla_is_inv_add,
                 bzla_proputils_inv_add,
-                bzla_proputils_inv_add_bvprop,
+                bzla_proputils_inv_add_const,
                 true);
 }
 
-TEST_F (TestPropInv, complete_and_bvprop)
+TEST_F (TestPropInv, complete_and_const)
 {
   check_binary (bzla_exp_bv_and,
                 bzla_bv_and,
                 bzla_is_inv_and,
                 bzla_proputils_inv_and,
-                bzla_proputils_inv_and_bvprop,
+                bzla_proputils_inv_and_const,
                 true);
 }
 
-TEST_F (TestPropInv, complete_eq_bvprop)
+TEST_F (TestPropInv, complete_eq_const)
 {
   check_binary (bzla_exp_eq,
                 bzla_bv_eq,
                 bzla_is_inv_eq,
                 bzla_proputils_inv_eq,
-                bzla_proputils_inv_eq_bvprop,
+                bzla_proputils_inv_eq_const,
                 true);
 }
 
-TEST_F (TestPropInv, complete_ult_bvprop)
+TEST_F (TestPropInv, complete_ult_const)
 {
   check_binary (bzla_exp_bv_ult,
                 bzla_bv_ult,
                 bzla_is_inv_ult,
                 bzla_proputils_inv_ult,
-                bzla_proputils_inv_ult_bvprop,
+                bzla_proputils_inv_ult_const,
                 true);
 }
 
-TEST_F (TestPropInv, complete_sll_bvprop)
+TEST_F (TestPropInv, complete_sll_const)
 {
   check_shift (bzla_exp_bv_sll,
                bzla_bv_sll,
                bzla_is_inv_sll,
                bzla_proputils_inv_sll,
-               bzla_proputils_inv_sll_bvprop,
+               bzla_proputils_inv_sll_const,
                true);
 }
 
-TEST_F (TestPropInv, complete_srl_bvprop)
+TEST_F (TestPropInv, complete_srl_const)
 {
   check_shift (bzla_exp_bv_srl,
                bzla_bv_srl,
                bzla_is_inv_srl,
                bzla_proputils_inv_srl,
-               bzla_proputils_inv_srl_bvprop,
+               bzla_proputils_inv_srl_const,
                true);
 }
 
-TEST_F (TestPropInv, complete_mul_bvprop)
+TEST_F (TestPropInv, complete_mul_const)
 {
   check_binary (bzla_exp_bv_mul,
                 bzla_bv_mul,
                 bzla_is_inv_mul,
                 bzla_proputils_inv_mul,
-                bzla_proputils_inv_mul_bvprop,
+                bzla_proputils_inv_mul_const,
                 true);
 }
 
-TEST_F (TestPropInv, complete_udiv_bvprop)
+TEST_F (TestPropInv, complete_udiv_const)
 {
   check_binary (bzla_exp_bv_udiv,
                 bzla_bv_udiv,
                 bzla_is_inv_udiv,
                 bzla_proputils_inv_udiv,
-                bzla_proputils_inv_udiv_bvprop,
+                bzla_proputils_inv_udiv_const,
                 true);
 }
 
-TEST_F (TestPropInv, complete_urem_bvprop)
+TEST_F (TestPropInv, complete_urem_const)
 {
   check_binary (bzla_exp_bv_urem,
                 bzla_bv_urem,
                 bzla_is_inv_urem,
                 bzla_proputils_inv_urem,
-                bzla_proputils_inv_urem_bvprop,
+                bzla_proputils_inv_urem_const,
                 true);
 }
 
-TEST_F (TestPropInv, complete_concat_bvprop)
+TEST_F (TestPropInv, complete_concat_const)
 {
   check_binary (bzla_exp_bv_concat,
                 bzla_bv_concat,
                 bzla_is_inv_concat,
                 bzla_proputils_inv_concat,
-                bzla_proputils_inv_concat_bvprop,
+                bzla_proputils_inv_concat_const,
                 true);
 }
 
