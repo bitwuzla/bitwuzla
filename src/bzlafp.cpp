@@ -741,7 +741,9 @@ class BzlaFloatingPointSize
   uint32_t d_swidth; /* size of significand */
 };
 
+#ifdef BZLA_USE_SYMFPU
 using BzlaUnpackedFloat = ::symfpu::unpackedFloat<BzlaFPTraits>;
+#endif
 
 struct BzlaFloatingPoint
 {
@@ -2041,13 +2043,15 @@ class BzlaFPWordBlaster
   BzlaNode *min_max_uf(BzlaNode *node);
   BzlaNode *sbv_ubv_uf(BzlaNode *node);
 
-  using BzlaSymUnpackedFloat = ::symfpu::unpackedFloat<BzlaFPSymTraits>;
+#ifdef BZLA_USE_SYMFPU
+  using BzlaSymUnpackedFloat   = ::symfpu::unpackedFloat<BzlaFPSymTraits>;
+  using BzlaFPUnpackedFloatMap = std::
+      unordered_map<BzlaNode *, BzlaSymUnpackedFloat, BzlaNodeHashFunction>;
+#endif
   using BzlaFPSymRMMap =
       std::unordered_map<BzlaNode *, BzlaFPSymRM, BzlaNodeHashFunction>;
   using BzlaFPSymPropMap =
       std::unordered_map<BzlaNode *, BzlaFPSymProp, BzlaNodeHashFunction>;
-  using BzlaFPUnpackedFloatMap = std::
-      unordered_map<BzlaNode *, BzlaSymUnpackedFloat, BzlaNodeHashFunction>;
   using BzlaFPPackedFloatMap =
       std::unordered_map<BzlaNode *, BzlaFPSymBV<false>, BzlaNodeHashFunction>;
   using BzlaFPSymSBVMap =
@@ -2059,7 +2063,9 @@ class BzlaFPWordBlaster
   BzlaFPSymPropMap d_prop_map;
   BzlaFPSymUBVMap d_ubv_map;
   BzlaFPSymSBVMap d_sbv_map;
+#ifdef BZLA_USE_SYMFPU
   BzlaFPUnpackedFloatMap d_unpacked_float_map;
+#endif
   BzlaFPPackedFloatMap d_packed_float_map;
 
   std::unordered_map<BzlaSortId, BzlaNode *, BzlaSortHashFunction>
@@ -2076,6 +2082,7 @@ class BzlaFPWordBlaster
 
 /* -------------------------------------------------------------------------- */
 
+#ifdef BZLA_USE_SYMFPU
 static BzlaUnpackedFloat *
 fp_get_unpacked_float(BzlaNode *node)
 {
@@ -2084,7 +2091,9 @@ fp_get_unpacked_float(BzlaNode *node)
   assert(bzla_node_is_fp_const(node));
   return static_cast<BzlaUnpackedFloat *>(bzla_fp_get_fp(node)->fp);
 }
+#endif
 
+#ifdef BZLA_USE_SYMFPU
 static std::string
 create_component_symbol(BzlaNode *node, const char *s)
 {
@@ -2094,6 +2103,7 @@ create_component_symbol(BzlaNode *node, const char *s)
   ss << "_fp_var_" << bzla_node_get_id(node) << s << "_component_";
   return ss.str();
 }
+#endif
 
 BzlaFPWordBlaster::~BzlaFPWordBlaster()
 {
@@ -2113,10 +2123,12 @@ BzlaFPWordBlaster::~BzlaFPWordBlaster()
     bzla_node_release(d_bzla, p.first);
     bzla_node_release(d_bzla, p.second);
   }
+#ifdef BZLA_USE_SYMFPU
   for (const auto &p : d_unpacked_float_map)
   {
     bzla_node_release(d_bzla, p.first);
   }
+#endif
   for (const auto &p : d_rm_map)
   {
     bzla_node_release(d_bzla, p.first);
@@ -2661,6 +2673,7 @@ BzlaFPWordBlaster::get_word_blasted_node(BzlaNode *node)
   assert(bzla_node_is_regular(node));
   assert(d_bzla == node->bzla);
 
+#ifdef BZLA_USE_SYMFPU
   if (d_packed_float_map.find(node) != d_packed_float_map.end())
   {
     return d_packed_float_map.at(node).getNode();
@@ -2686,6 +2699,9 @@ BzlaFPWordBlaster::get_word_blasted_node(BzlaNode *node)
   }
 
   return word_blast(node);
+#else
+  return nullptr;
+#endif
 }
 
 BzlaFPWordBlaster *
@@ -2765,6 +2781,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     assert(scexp);
     res->d_ubv_map.emplace(cexp, BzlaFPSymBV<false>(scexp));
   }
+#ifdef BZLA_USE_SYMFPU
   for (const auto &p : d_unpacked_float_map)
   {
     exp = p.first;
@@ -2813,6 +2830,7 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
                              BzlaFPSymBV<true>(cexpo),
                              BzlaFPSymBV<false>(csig)));
   }
+#endif
   return res;
 }
 
@@ -2998,8 +3016,10 @@ bzla_fp_get_bytes(BzlaNode *node)
 #endif
 }
 
+#ifdef BZLA_USE_SYMFPU
 static uint32_t hash_primes[] = {
     333444569u, 111130391u, 22237357u, 33355519u, 456790003u, 76891121u};
+#endif
 
 uint32_t
 bzla_fp_hash(const BzlaFloatingPoint *fp)
@@ -3061,70 +3081,80 @@ bool
 bzla_fp_is_zero(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
+  bool res = false;
 #ifdef BZLA_USE_SYMFPU
   BzlaFPWordBlaster::set_s_bzla(bzla);
-  bool res = symfpu::isZero(*fp->size, *fp->fp);
+  res = symfpu::isZero(*fp->size, *fp->fp);
   BzlaFPWordBlaster::unset_s_bzla();
-  return res;
 #else
-  return false;
+  (void) bzla;
+  (void) fp;
 #endif
+  return res;
 }
 
 bool
 bzla_fp_is_normal(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
+  bool res = false;
 #ifdef BZLA_USE_SYMFPU
   BzlaFPWordBlaster::set_s_bzla(bzla);
-  bool res = symfpu::isNormal(*fp->size, *fp->fp);
+  res = symfpu::isNormal(*fp->size, *fp->fp);
   BzlaFPWordBlaster::unset_s_bzla();
-  return res;
 #else
-  return false;
+  (void) bzla;
+  (void) fp;
 #endif
+  return res;
 }
 
 bool
 bzla_fp_is_subnormal(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
+  bool res = false;
 #ifdef BZLA_USE_SYMFPU
   BzlaFPWordBlaster::set_s_bzla(bzla);
-  bool res = symfpu::isSubnormal(*fp->size, *fp->fp);
+  res = symfpu::isSubnormal(*fp->size, *fp->fp);
   BzlaFPWordBlaster::unset_s_bzla();
-  return res;
 #else
-  return false;
+  (void) bzla;
+  (void) fp;
 #endif
+  return res;
 }
 
 bool
 bzla_fp_is_nan(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
+  bool res = false;
 #ifdef BZLA_USE_SYMFPU
   BzlaFPWordBlaster::set_s_bzla(bzla);
-  bool res = symfpu::isNaN(*fp->size, *fp->fp);
+  res = symfpu::isNaN(*fp->size, *fp->fp);
   BzlaFPWordBlaster::unset_s_bzla();
-  return res;
 #else
-  return false;
+  (void) bzla;
+  (void) fp;
 #endif
+  return res;
 }
 
 bool
 bzla_fp_is_inf(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
+  bool res = false;
 #ifdef BZLA_USE_SYMFPU
   BzlaFPWordBlaster::set_s_bzla(bzla);
-  bool res = symfpu::isNaN(*fp->size, *fp->fp);
+  res = symfpu::isNaN(*fp->size, *fp->fp);
   BzlaFPWordBlaster::unset_s_bzla();
-  return res;
 #else
-  return false;
+  (void) bzla;
+  (void) fp;
 #endif
+  return res;
 }
 
 BzlaFloatingPoint *
@@ -3142,6 +3172,7 @@ bzla_fp_make_zero(Bzla *bzla, BzlaSortId sort, bool sign)
       new BzlaUnpackedFloat(BzlaUnpackedFloat::makeZero(*res->size, sign));
   BzlaFPWordBlaster::unset_s_bzla();
 #else
+  (void) bzla;
   (void) sort;
   (void) sign;
   res = nullptr;
@@ -3163,6 +3194,7 @@ bzla_fp_make_inf(Bzla *bzla, BzlaSortId sort, bool sign)
   res->fp = new BzlaUnpackedFloat(BzlaUnpackedFloat::makeInf(*res->size, sign));
   BzlaFPWordBlaster::unset_s_bzla();
 #else
+  (void) bzla;
   (void) sort;
   (void) sign;
   res = nullptr;
@@ -3184,8 +3216,8 @@ bzla_fp_make_nan(Bzla *bzla, BzlaSortId sort)
   res->fp = new BzlaUnpackedFloat(BzlaUnpackedFloat::makeNaN(*res->size));
   BzlaFPWordBlaster::unset_s_bzla();
 #else
+  (void) bzla;
   (void) sort;
-  (void) sign;
   res = nullptr;
 #endif
   return res;
@@ -3208,8 +3240,9 @@ bzla_fp_make_const(Bzla *bzla, BzlaSortId sort, BzlaBitVector *bv_const)
   res->fp = new BzlaUnpackedFloat(symfpu::unpack<BzlaFPTraits>(
       *res->size, bzla_bv_copy(bzla->mm, bv_const)));
 #else
+  (void) bzla;
   (void) sort;
-  (void) sign;
+  (void) bv_const;
   res = nullptr;
 #endif
   return res;
