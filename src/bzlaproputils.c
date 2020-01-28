@@ -862,6 +862,18 @@ select_path_cond(Bzla *bzla,
 /* Consistent value computation                                               */
 /* ========================================================================== */
 
+static void
+record_cons_stats(Bzla *bzla, uint32_t *stats)
+{
+  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  {
+#ifndef NDEBUG
+    *stats += 1;
+#endif
+    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
+  }
+}
+
 BzlaBitVector *
 bzla_proputils_cons_add(Bzla *bzla,
                         BzlaNode *add,
@@ -884,13 +896,7 @@ bzla_proputils_cons_add(Bzla *bzla,
   (void) idx_x;
   (void) domains;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.cons_add++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
-  }
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_add);
   return bzla_bv_new_random(bzla->mm, &bzla->rng, bzla_bv_get_width(t));
 }
 
@@ -919,13 +925,7 @@ bzla_proputils_cons_and(Bzla *bzla,
   (void) s;
   (void) domains;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.cons_and++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
-  }
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_and);
 
   b = bzla_rng_pick_with_prob(&bzla->rng,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_AND_FLIP));
@@ -979,13 +979,7 @@ bzla_proputils_cons_eq(Bzla *bzla,
 
   BzlaBitVector *res;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.cons_eq++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
-  }
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_eq);
 
   if (bzla_rng_pick_with_prob(&bzla->rng,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_EQ_FLIP)))
@@ -1026,13 +1020,7 @@ bzla_proputils_cons_ult(Bzla *bzla,
   (void) ult;
   (void) domains;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.cons_ult++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
-  }
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_ult);
 
   mm    = bzla->mm;
   bw    = bzla_bv_get_width(s);
@@ -1090,13 +1078,7 @@ bzla_proputils_cons_sll(Bzla *bzla,
   (void) s;
   (void) domains;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.cons_sll++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
-  }
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sll);
 
   mm = bzla->mm;
   bw = bzla_bv_get_width(t);
@@ -1147,13 +1129,7 @@ bzla_proputils_cons_srl(Bzla *bzla,
   (void) s;
   (void) domains;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.cons_srl++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
-  }
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_srl);
 
   mm = bzla->mm;
   bw = bzla_bv_get_width(t);
@@ -1208,13 +1184,7 @@ bzla_proputils_cons_mul(Bzla *bzla,
   (void) idx_x;
   (void) domains;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.cons_mul++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
-  }
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_mul);
 
   mm  = bzla->mm;
   bw  = bzla_bv_get_width(t);
@@ -1306,13 +1276,7 @@ bzla_proputils_cons_udiv(Bzla *bzla,
   (void) s;
   (void) domains;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.cons_udiv++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
-  }
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_udiv);
 
   if (idx_x)
   {
@@ -1393,13 +1357,8 @@ bzla_proputils_cons_urem(Bzla *bzla,
   (void) s;
   (void) domains;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.cons_urem++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
-  }
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_urem);
+
   mm   = bzla->mm;
   bw   = bzla_bv_get_width(t);
   ones = bzla_bv_ones(mm, bw);
@@ -1460,13 +1419,7 @@ bzla_proputils_cons_concat(Bzla *bzla,
 
   (void) domains;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.cons_concat++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
-  }
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_concat);
 
   idx_s = idx_x ? 0 : 1;
   bw_t  = bzla_bv_get_width(t);
@@ -1519,6 +1472,18 @@ bzla_proputils_cons_cond(Bzla *bzla,
 /* ========================================================================== */
 /* Inverse value computation                                                  */
 /* ========================================================================== */
+
+static void
+record_inv_stats(Bzla *bzla, uint32_t *stats)
+{
+  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  {
+#ifndef NDEBUG
+    *stats += 1;
+#endif
+    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
+  }
+}
 
 #ifndef NDEBUG
 static void
@@ -1627,13 +1592,7 @@ bzla_proputils_inv_add(Bzla *bzla,
   (void) idx_x;
   (void) domains;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_add++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_add);
 
   /* invertibility condition: true, res = t - s */
   res = bzla_bv_sub(bzla->mm, t, s);
@@ -1677,13 +1636,7 @@ bzla_proputils_inv_and(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_and++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_and);
 
   b = bzla_rng_pick_with_prob(&bzla->rng,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_AND_FLIP));
@@ -1761,13 +1714,7 @@ bzla_proputils_inv_eq(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_eq++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_eq);
 
   /**
    * invertibility condition: true
@@ -1843,13 +1790,7 @@ bzla_proputils_inv_ult(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_ult++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
 
   bw    = bzla_bv_get_width(s);
   zero  = bzla_bv_new(mm, bw);
@@ -1933,13 +1874,7 @@ bzla_proputils_inv_sll(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_sll++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sll);
 
   res   = 0;
   bw    = bzla_bv_get_width(t);
@@ -2067,13 +2002,7 @@ bzla_proputils_inv_srl(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_srl++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
 
   res   = 0;
   bw    = bzla_bv_get_width(t);
@@ -2204,13 +2133,7 @@ bzla_proputils_inv_mul(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_mul++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
 
   bw  = bzla_bv_get_width(t);
   res = 0;
@@ -2382,13 +2305,7 @@ bzla_proputils_inv_udiv(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_udiv++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_udiv);
 
   rng = &bzla->rng;
   bw  = bzla_bv_get_width(s);
@@ -2607,13 +2524,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_urem++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_urem);
 
   bw = bzla_bv_get_width(t);
 
@@ -2925,13 +2836,7 @@ bzla_proputils_inv_concat(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_concat++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_concat);
 
   bw_t = bzla_bv_get_width(t);
   bw_s = bzla_bv_get_width(s);
@@ -2993,13 +2898,7 @@ bzla_proputils_inv_slice(Bzla *bzla,
   (void) domains;
   (void) idx_x;
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_slice++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_slice);
 
   /* invertibility condition: true */
 
@@ -3131,13 +3030,7 @@ bzla_proputils_inv_cond(Bzla *bzla,
   char *str_s2 = bzla_bv_to_char(mm, s2);
 #endif
 
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-#ifndef NDEBUG
-    BZLA_PROP_SOLVER(bzla)->stats.inv_cond++;
-#endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
-  }
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_cond);
 
   /* either assume that cond is fixed and propagate snew
    * to enabled path, or flip condition */
