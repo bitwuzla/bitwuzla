@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2015 Mathias Preiner.
- *  Copyright (C) 2017-2019 Aina Niemetz.
+ *  Copyright (C) 2017-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -27,6 +27,23 @@ class TestIntHashMap : public TestMm
   {
     if (d_htable)
     {
+      uint32_t size = d_htable->size;
+      std::vector<int32_t> keys;
+      BzlaIntHashTableIterator it;
+      bzla_iter_hashint_init(&it, d_htable);
+      while (bzla_iter_hashint_has_next(&it))
+      {
+        keys.push_back(bzla_iter_hashint_next(&it));
+      }
+      bzla_hashint_map_clear(d_htable);
+      ASSERT_EQ(d_htable->count, 0);
+      ASSERT_EQ(d_htable->size, size);
+      for (int32_t i : keys)
+      {
+        ASSERT_FALSE(bzla_hashint_map_contains(d_htable, i));
+      }
+      bzla_iter_hashint_init(&it, d_htable);
+      ASSERT_FALSE(bzla_iter_hashint_has_next(&it));
       bzla_hashint_map_delete(d_htable);
       d_htable = nullptr;
     }

@@ -1,6 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2015-2016 Mathias Preiner.
+ *  Copyright (C) 2016-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -10,12 +11,12 @@
 
 #include <assert.h>
 
-/*------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 
 #define HOP_RANGE 32
 #define ADD_RANGE 8 * HOP_RANGE
 
-/*------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 
 static inline uint32_t
 hash(uint32_t h)
@@ -219,7 +220,9 @@ resize(BzlaIntHashTable *t)
   assert(old_count == t->count);
 }
 
-/*------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/* hash table                                                                 */
+/*----------------------------------------------------------------------------*/
 
 BzlaIntHashTable *
 bzla_hashint_table_new(BzlaMemMgr *mm)
@@ -273,6 +276,15 @@ bool
 bzla_hashint_table_contains(BzlaIntHashTable *t, int32_t key)
 {
   return bzla_hashint_table_get_pos(t, key) != t->size;
+}
+
+void
+bzla_hashint_table_clear(BzlaIntHashTable *t)
+{
+  assert(t);
+  t->count = 0;
+  memset(t->keys, 0, sizeof(*t->keys) * t->size);
+  memset(t->hop_info, 0, sizeof(*t->hop_info) * t->size);
 }
 
 size_t
@@ -332,7 +344,9 @@ bzla_hashint_table_clone(BzlaMemMgr *mm, BzlaIntHashTable *table)
   return res;
 }
 
-/* map functions */
+/*----------------------------------------------------------------------------*/
+/* hash map                                                                   */
+/*----------------------------------------------------------------------------*/
 
 BzlaIntHashTable *
 bzla_hashint_map_new(BzlaMemMgr *mm)
@@ -349,6 +363,13 @@ bzla_hashint_map_contains(BzlaIntHashTable *t, int32_t key)
 {
   assert(t->data);
   return bzla_hashint_table_contains(t, key);
+}
+
+void
+bzla_hashint_map_clear(BzlaIntHashTable *t)
+{
+  memset(t->data, 0, sizeof(*t->data) * t->size);
+  bzla_hashint_table_clear(t);
 }
 
 void
@@ -423,16 +444,18 @@ bzla_hashint_map_clone(BzlaMemMgr *mm,
     }
   }
   else /* as_ptr does not have to be cloned */
+  {
     memcpy(res->data, table->data, table->size * sizeof(*table->data));
+  }
 
   assert(table->count == res->count);
 
   return res;
 }
 
-/*------------------------------------------------------------------------*/
-/* iterators */
-/*------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/* iterators                                                                  */
+/*----------------------------------------------------------------------------*/
 
 void
 bzla_iter_hashint_init(BzlaIntHashTableIterator *it, const BzlaIntHashTable *t)
