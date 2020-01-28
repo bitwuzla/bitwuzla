@@ -25,6 +25,7 @@
 #include "bzlaprintmodel.h"
 #include "bzlaproputils.h"
 #include "bzlaslsutils.h"
+#include "utils/bzlahash.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlautil.h"
@@ -346,7 +347,7 @@ bzla_prop_solver_init_domains(Bzla *bzla,
   BzlaHashTableData *data;
   BzlaMemMgr *mm;
   BzlaAIGVec *av;
-  BzlaBvDomain *domain;
+  BzlaBvDomain *domain, *invdomain;
 
   mm    = bzla->mm;
   cache = bzla_hashint_map_new(mm);
@@ -371,14 +372,22 @@ bzla_prop_solver_init_domains(Bzla *bzla,
     }
     else
     {
-      if (data->as_int || bzla_hashint_map_contains(domains, real_cur->id))
-        continue;
+      if (data->as_int) continue;
+      if (bzla_hashint_map_contains(domains, real_cur->id)) continue;
       data->as_int = 1;
 
       bw     = bzla_node_bv_get_width(bzla, real_cur);
       domain = bzla_bvprop_new_init(mm, bw);
-      /* inverted nodes are stored with negative id */
-      bzla_hashint_map_add(domains, bzla_node_get_id(cur))->as_ptr = domain;
+      bzla_hashint_map_add(domains, real_cur->id)->as_ptr = domain;
+      /* inverted nodes are additionally stored with negative id */
+      invdomain = 0;
+      if (bzla_node_is_inverted((cur)))
+      {
+        assert(!bzla_hashint_map_contains(domains, bzla_node_get_id(cur)));
+        invdomain = bzla_bvprop_new_init(mm, bw);
+        bzla_hashint_map_add(domains, bzla_node_get_id(cur))->as_ptr =
+            invdomain;
+      }
 
       if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
       {
@@ -393,12 +402,16 @@ bzla_prop_solver_init_domains(Bzla *bzla,
         for (i = 0; i < bw; i++)
         {
           idx = bw - 1 - i;
-          if (bzla_aig_is_true(av->aigs[i]))
-            bzla_bvprop_fix_bit(
-                domain, idx, bzla_node_is_regular(cur) ? true : false);
-          else if (bzla_aig_is_false(av->aigs[i]))
-            bzla_bvprop_fix_bit(
-                domain, idx, bzla_node_is_regular(cur) ? false : true);
+          if (bzla_aig_is_const(av->aigs[i]))
+          {
+            bzla_bvprop_fix_bit(domain, idx, bzla_aig_is_true(av->aigs[i]));
+            if (bzla_node_is_inverted(cur))
+            {
+              assert(invdomain);
+              bzla_bvprop_fix_bit(
+                  invdomain, idx, bzla_aig_is_false(av->aigs[i]));
+            }
+          }
         }
       }
     }
@@ -582,6 +595,7 @@ DONE:
       bzla_bvprop_free(slv->bzla->mm,
                        bzla_iter_hashint_next_data(&iit)->as_ptr);
     }
+    bzla_hashint_map_clear(slv->domains);
   }
   bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
   assert(BZLA_EMPTY_STACK(slv->prop_path));

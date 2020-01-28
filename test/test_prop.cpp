@@ -59,16 +59,15 @@ class TestProp : public TestBzla
 
   void clear_domains()
   {
-    BzlaIntHashTableIterator iit;
-    bzla_iter_hashint_init(&iit, d_domains);
-    while (bzla_iter_hashint_has_next(&iit))
+    BzlaIntHashTableIterator it;
+    bzla_iter_hashint_init(&it, d_domains);
+    while (bzla_iter_hashint_has_next(&it))
     {
-      int32_t key = bzla_iter_hashint_next(&iit);
-      bzla_bvprop_free(d_mm,
-                       static_cast<BzlaBvDomain *>(
-                           bzla_hashint_map_get(d_domains, key)->as_ptr));
-      bzla_hashint_map_remove(d_domains, key, 0);
+      BzlaHashTableData *data = bzla_iter_hashint_next_data(&it);
+      BzlaBvDomain *d         = static_cast<BzlaBvDomain *>(data->as_ptr);
+      bzla_bvprop_free(d_mm, d);
     }
+    bzla_hashint_map_clear(d_domains);
     assert(d_domains->count == 0);
   }
 
@@ -554,16 +553,16 @@ TEST_F(TestProp, one_complete_concat)
 /* Regular inverse value computation with const bits, no propagator domains   */
 /* -------------------------------------------------------------------------- */
 
-#if 0
-TEST_F (TestPropConst, one_complete_add_const)
+TEST_F(TestPropConst, one_complete_add_const)
 {
-  prop_complete_binary (1,
-                        bzla_exp_bv_add,
-                        bzla_bv_add,
-                        bzla_is_inv_add_const,
-                        bzla_proputils_inv_add);
+  prop_complete_binary(1,
+                       bzla_exp_bv_add,
+                       bzla_bv_add,
+                       bzla_is_inv_add_const,
+                       bzla_proputils_inv_add_const);
 }
 
+#if 0
 TEST_F (TestPropConst, one_complete_and_const)
 {
   prop_complete_binary (1,
