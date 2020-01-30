@@ -93,13 +93,13 @@ bool bzla_bvprop_is_consistent(BzlaBvDomain *d, BzlaBitVector *bv);
  * Unset bits are represented as 'x', invalid bits are represented as 'i'.
  * The result string must be released via bzla_mem_freestr.
  */
-char *bzla_bvprop_to_char(BzlaMemMgr *mm, BzlaBvDomain *d);
+char *bzla_bvprop_to_char(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
 /**
  * Prints domain 'd' to stdout. 'print_short' indicates whether 'lo' and 'hi'
  * should be printed separately.
  */
-void bzla_bvprop_print(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short);
+void bzla_bvprop_print(BzlaMemMgr *mm, const BzlaBvDomain *d, bool print_short);
 
 /*----------------------------------------------------------------------------*/
 
@@ -311,8 +311,10 @@ struct BzlaBvDomainGenerator
   uint32_t n_gen;
   uint32_t n_max;
   BzlaBitVector *bits;
+  BzlaBitVector *next;
   BzlaBitVector *cur;
   BzlaBvDomain *domain;
+  BzlaBitVector *min;
   BzlaBitVector *max;
 };
 
@@ -320,11 +322,11 @@ typedef struct BzlaBvDomainGenerator BzlaBvDomainGenerator;
 
 void bzla_bvprop_gen_init(BzlaMemMgr *mm,
                           BzlaBvDomainGenerator *gen,
-                          BzlaBvDomain *d);
+                          const BzlaBvDomain *d);
 
 void bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
                                 BzlaBvDomainGenerator *gen,
-                                BzlaBvDomain *d,
+                                const BzlaBvDomain *d,
                                 BzlaBitVector *min,
                                 BzlaBitVector *max);
 

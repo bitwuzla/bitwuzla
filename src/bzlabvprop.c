@@ -282,7 +282,7 @@ bzla_bvprop_is_consistent(BzlaBvDomain *d, BzlaBitVector *bv)
 /* -------------------------------------------------------------------------- */
 
 char *
-bzla_bvprop_to_char(BzlaMemMgr *mm, BzlaBvDomain *d)
+bzla_bvprop_to_char(BzlaMemMgr *mm, const BzlaBvDomain *d)
 {
   char *hi, *res;
   size_t len;
@@ -311,7 +311,7 @@ bzla_bvprop_to_char(BzlaMemMgr *mm, BzlaBvDomain *d)
 }
 
 void
-bzla_bvprop_print(BzlaMemMgr *mm, BzlaBvDomain *d, bool print_short)
+bzla_bvprop_print(BzlaMemMgr *mm, const BzlaBvDomain *d, bool print_short)
 {
   if (print_short)
   {
@@ -4613,10 +4613,37 @@ DONE:
 
 /*----------------------------------------------------------------------------*/
 
+static BzlaBitVector *
+gen_next_bits(BzlaBvDomainGenerator *gen)
+{
+  assert(gen->domain);
+  assert(gen->bits);
+
+  uint32_t bw, i, j;
+  BzlaBitVector *res, *next_bits;
+
+  bw  = bzla_bv_get_width(gen->domain->lo);
+  res = bzla_bv_copy(gen->mm, gen->domain->lo);
+  for (i = 0, j = 0; i < bw; ++i)
+  {
+    if (!bzla_bvprop_is_fixed_bit(gen->domain, i))
+    {
+      bzla_bv_set_bit(res, i, bzla_bv_get_bit(gen->bits, j++));
+    }
+  }
+
+  /* bits' = bits + 1 */
+  next_bits = bzla_bv_inc(gen->mm, gen->bits);
+  bzla_bv_free(gen->mm, gen->bits);
+  gen->bits = next_bits;
+
+  return res;
+}
+
 void
 bzla_bvprop_gen_init(BzlaMemMgr *mm,
                      BzlaBvDomainGenerator *gen,
-                     BzlaBvDomain *d)
+                     const BzlaBvDomain *d)
 {
   assert(mm);
   assert(gen);
@@ -4633,15 +4660,17 @@ bzla_bvprop_gen_init(BzlaMemMgr *mm,
   gen->n_gen  = 0;
   gen->n_max  = cnt ? 1 << cnt : 0;
   gen->bits   = cnt ? bzla_bv_new(mm, cnt) : 0;
+  gen->min    = 0;
   gen->max    = 0;
   gen->domain = bzla_bvprop_copy(mm, d);
+  gen->next   = gen->bits ? gen_next_bits(gen) : 0;
   gen->cur    = 0;
 }
 
 void
 bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
                            BzlaBvDomainGenerator *gen,
-                           BzlaBvDomain *d,
+                           const BzlaBvDomain *d,
                            BzlaBitVector *min,
                            BzlaBitVector *max)
 {
@@ -4686,10 +4715,23 @@ bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
   gen->mm    = mm;
   gen->n_gen = 0;
   gen->n_max = cnt ? 1 << cnt : 0;
-  gen->max   = max && bzla_bv_compare(max, d->hi) < 0 ? bzla_bv_copy(mm, max)
+  gen->min   = min && bzla_bv_compare(min, d->lo) > 0 ? bzla_bv_copy(mm, min)
+                                                    : bzla_bv_copy(mm, d->lo);
+  gen->max = max && bzla_bv_compare(max, d->hi) < 0 ? bzla_bv_copy(mm, max)
                                                     : bzla_bv_copy(mm, d->hi);
   gen->domain = bzla_bvprop_copy(mm, d);
+  gen->next   = gen->bits ? gen_next_bits(gen) : 0;
   gen->cur    = 0;
+
+  /* Skip all values less than min. */
+  if (gen->bits && min)
+  {
+    while (bzla_bv_compare(gen->next, min) < 0)
+    {
+      bzla_bv_free(mm, gen->next);
+      gen->next = gen_next_bits(gen);
+    }
+  }
 }
 
 bool
@@ -4697,7 +4739,10 @@ bzla_bvprop_gen_has_next(const BzlaBvDomainGenerator *gen)
 {
   assert(gen);
   return gen->bits && gen->n_gen < gen->n_max
-         && (!gen->max || !gen->cur || bzla_bv_compare(gen->cur, gen->max) < 0);
+         && (!gen->next || !gen->min
+             || bzla_bv_compare(gen->next, gen->min) >= 0)
+         && (!gen->next || !gen->max
+             || bzla_bv_compare(gen->next, gen->max) <= 0);
 }
 
 BzlaBitVector *
@@ -4707,24 +4752,18 @@ bzla_bvprop_gen_next(BzlaBvDomainGenerator *gen)
   assert(gen->bits);
   assert(bzla_bvprop_gen_has_next(gen));
 
-  uint32_t i, j, bw;
-  BzlaBitVector *res, *next;
+  BzlaBitVector *res;
 
-  bw  = bzla_bv_get_width(gen->domain->lo);
-  res = bzla_bv_copy(gen->mm, gen->domain->lo);
-  for (i = 0, j = 0; i < bw; ++i)
-  {
-    if (!bzla_bvprop_is_fixed_bit(gen->domain, i))
-    {
-      bzla_bv_set_bit(res, i, bzla_bv_get_bit(gen->bits, j++));
-    }
-  }
-  next = bzla_bv_inc(gen->mm, gen->bits);
-  bzla_bv_free(gen->mm, gen->bits);
-  gen->bits = next;
+  res = bzla_bv_copy(gen->mm, gen->next);
+
+  /* next' = expand(bits'). */
+  if (gen->next) bzla_bv_free(gen->mm, gen->next);
+  gen->next = gen_next_bits(gen);
   gen->n_gen += 1;
+
   if (gen->cur) bzla_bv_free(gen->mm, gen->cur);
   gen->cur = res;
+
   return res;
 }
 
@@ -4734,7 +4773,9 @@ bzla_bvprop_gen_delete(const BzlaBvDomainGenerator *gen)
   assert(gen);
   if (gen->bits) bzla_bv_free(gen->mm, gen->bits);
   bzla_bvprop_free(gen->mm, gen->domain);
+  if (gen->min) bzla_bv_free(gen->mm, gen->min);
   if (gen->max) bzla_bv_free(gen->mm, gen->max);
+  if (gen->next) bzla_bv_free(gen->mm, gen->next);
   if (gen->cur) bzla_bv_free(gen->mm, gen->cur);
 }
 
