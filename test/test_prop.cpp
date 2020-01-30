@@ -818,7 +818,7 @@ TEST_F (TestPropConst, complete_add_const)
                         bzla_exp_bv_add,
                         bzla_bv_add,
                         bzla_is_inv_add_const,
-                        bzla_proputils_inv_add);
+                        bzla_proputils_inv_add_const);
 }
 
 TEST_F (TestPropConst, complete_and_const)
