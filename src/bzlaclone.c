@@ -1359,6 +1359,7 @@ clone_aux_bzla(Bzla *bzla,
   assert(allocated == clone->mm->allocated);
 #endif
   BZLA_NEW(mm, clone->rw_cache);
+  memcpy(clone->rw_cache, bzla->rw_cache, sizeof(BzlaRwCache));
   clone->rw_cache->bzla  = clone;
   clone->rw_cache->cache = bzla_hashptr_table_clone(
       mm, bzla->rw_cache->cache, bzla_clone_key_as_rw_cache_tuple, 0, 0, 0);
