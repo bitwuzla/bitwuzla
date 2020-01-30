@@ -1170,6 +1170,9 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
             }
             bzla_bv_free(mm, rem);
           }
+          /* Note: The elements on stack 'candidates' are not valid anymore
+           * since the bit-vector that bzla_bvprop_gen_next returns is not a
+           * copy and gets released on the next bzla_bvprop_gen_next call. */
           res = !BZLA_EMPTY_STACK(candidates);
           BZLA_RELEASE_STACK(candidates);
           bzla_bvprop_gen_delete(&gen);
