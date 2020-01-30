@@ -50,6 +50,7 @@ class TestBvPropGen : public TestBvDomain
       BzlaBitVector *exp = bzla_bv_char_to_bv(d_mm, expected[i++].c_str());
       ASSERT_EQ(bzla_bv_compare(res, exp), 0);
       bzla_bv_free(d_mm, exp);
+      bzla_bv_free(d_mm, res);
     }
     bzla_bvprop_free(d_mm, d);
     bzla_bvprop_gen_delete(&gen);
@@ -204,6 +205,7 @@ TEST_F(TestBvPropGen, next_range_01x_33)
   test_next("01x", "010", "010", {"010"});
 }
 TEST_F(TestBvPropGen, next_range_01x_34) { test_next("01x", "100", "111", {}); }
+TEST_F(TestBvPropGen, next_range_x10_35) { test_next("x10", "011", "101", {}); }
 
 TEST_F(TestBvPropGen, next_range_01x_regr1)
 {

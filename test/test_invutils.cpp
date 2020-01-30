@@ -399,7 +399,12 @@ TEST_F(TestInvUtils, is_inv_urem_const)
   test_is_inv_binary_const(bzla_is_inv_urem_const, boolector_urem, 0);
   test_is_inv_binary_const(bzla_is_inv_urem_const, boolector_urem, 1);
 }
-// TODO udiv
+
+TEST_F(TestInvUtils, is_inv_udiv_const)
+{
+  test_is_inv_binary_const(bzla_is_inv_udiv_const, boolector_udiv, 0);
+  test_is_inv_binary_const(bzla_is_inv_udiv_const, boolector_udiv, 1);
+}
 
 /* Test is_inv_* functions (no const bits). */
 

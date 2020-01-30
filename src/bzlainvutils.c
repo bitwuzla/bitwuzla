@@ -886,8 +886,129 @@ bzla_is_inv_udiv_const(BzlaMemMgr *mm,
   assert(x);
   assert(t);
   assert(s);
-  (void) pos_x;
-  return true;
+
+  bool res = true;
+  BzlaBitVector *tmp, *min, *max;
+
+  res = bzla_is_inv_udiv(mm, x, t, s, pos_x);
+
+  if (res && bzla_bvprop_has_fixed_bits(mm, x))
+  {
+    /* x is constant */
+    if (bzla_bvprop_is_fixed(mm, x))
+    {
+      if (pos_x == 0)
+      {
+        tmp = bzla_bv_udiv(mm, x->lo, s);
+      }
+      else
+      {
+        tmp = bzla_bv_udiv(mm, s, x->lo);
+      }
+      res = bzla_bv_compare(tmp, t) == 0;
+      bzla_bv_free(mm, tmp);
+    }
+    else
+    {
+      if (pos_x == 0)
+      {
+        if (bzla_bv_is_zero(t))
+        {
+          res = bzla_bv_compare(x->lo, s) < 0;
+        }
+        /* If s == 0, we can always find an inverse value for x. */
+        else if (!bzla_bv_is_zero(s))
+        {
+          min = bzla_bv_mul(mm, s, t);
+          max = bzla_bv_add(mm, min, s);
+          if (bzla_bv_compare(max, min) < 0)
+          {
+            bzla_bv_free(mm, max);
+            max = bzla_bv_ones(mm, bzla_bv_get_width(x->lo));
+          }
+          else
+          {
+            tmp = bzla_bv_dec(mm, max);
+            bzla_bv_free(mm, max);
+            max = tmp;
+          }
+
+          if (bzla_bv_compare(x->lo, min) > 0)
+          {
+            bzla_bv_free(mm, min);
+            min = bzla_bv_copy(mm, x->lo);
+          }
+
+          if (bzla_bv_compare(x->hi, max) < 0)
+          {
+            bzla_bv_free(mm, max);
+            max = bzla_bv_copy(mm, x->hi);
+          }
+
+          BzlaBvDomainGenerator dgen;
+          bzla_bvprop_gen_init_range(mm, &dgen, x, min, max);
+          res = bzla_bvprop_gen_has_next(&dgen);
+          bzla_bvprop_gen_delete(&dgen);
+          bzla_bv_free(mm, min);
+          bzla_bv_free(mm, max);
+        }
+      }
+      else
+      {
+        assert(pos_x == 1);
+        uint32_t bw = bzla_bv_get_width(s);
+
+        if (!bzla_bv_is_zero(s) || !bzla_bv_is_zero(t))
+        {
+          tmp = bzla_bv_udiv(mm, s, x->hi);
+
+          if (bzla_bv_compare(tmp, t) > 0)
+          {
+            res = false;
+          }
+          bzla_bv_free(mm, tmp);
+
+          if (res)
+          {
+            if (bzla_bv_is_ones(t))
+            {
+              min = bzla_bv_zero(mm, bw);
+              max = bzla_bv_is_ones(s) ? bzla_bv_one(mm, bw)
+                                       : bzla_bv_copy(mm, min);
+            }
+            else if (bzla_bv_compare(s, t) == 0)
+            {
+              min = bzla_bv_one(mm, bzla_bv_get_width(s));
+              max = bzla_bv_copy(mm, min);
+            }
+            else
+            {
+              tmp = bzla_bv_inc(mm, t);
+              min = bzla_bv_udiv(mm, s, tmp);
+              bzla_bv_free(mm, tmp);
+              max = bzla_bv_udiv(mm, s, t);
+            }
+
+            BzlaBvDomainGenerator dgen;
+            bzla_bvprop_gen_init_range(mm, &dgen, x, min, max);
+            res = false;
+            while (bzla_bvprop_gen_has_next(&dgen))
+            {
+              tmp = bzla_bv_udiv(mm, s, bzla_bvprop_gen_next(&dgen));
+              res = bzla_bv_compare(tmp, t) == 0;
+              bzla_bv_free(mm, tmp);
+              if (res) break;
+            }
+            bzla_bvprop_gen_delete(&dgen);
+            bzla_bv_free(mm, min);
+            bzla_bv_free(mm, max);
+          }
+        }
+      }
+    }
+  }
+
+  return res;
 }
 
 /**
