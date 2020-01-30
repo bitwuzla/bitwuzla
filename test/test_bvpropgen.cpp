@@ -36,10 +36,6 @@ class TestBvPropGen : public TestBvDomain
     {
       bzla_bvprop_gen_init(d_mm, &gen, d);
     }
-    ASSERT_TRUE(bzla_bvprop_is_fixed(d_mm, d)
-                || (bv_min && bzla_bv_compare(bv_min, d->hi) > 0)
-                || (bv_max && bzla_bv_compare(bv_max, d->lo) < 0)
-                || bzla_bvprop_gen_has_next(&gen));
     if (bv_min) bzla_bv_free(d_mm, bv_min);
     if (bv_max) bzla_bv_free(d_mm, bv_max);
     uint32_t i = 0;
@@ -50,7 +46,6 @@ class TestBvPropGen : public TestBvDomain
       BzlaBitVector *exp = bzla_bv_char_to_bv(d_mm, expected[i++].c_str());
       ASSERT_EQ(bzla_bv_compare(res, exp), 0);
       bzla_bv_free(d_mm, exp);
-      bzla_bv_free(d_mm, res);
     }
     bzla_bvprop_free(d_mm, d);
     bzla_bvprop_gen_delete(&gen);
