@@ -562,26 +562,32 @@ TEST_F(TestPropConst, one_complete_add_const)
                        bzla_proputils_inv_add_const);
 }
 
-#if 0
-TEST_F (TestPropConst, one_complete_and_const)
+TEST_F(TestPropConst, one_complete_and_const)
 {
-  prop_complete_binary (1,
-                        bzla_exp_bv_and,
-                        bzla_bv_and,
-                        bzla_is_inv_and_const,
-                        bzla_proputils_inv_and);
+  prop_complete_binary(1,
+                       bzla_exp_bv_and,
+                       bzla_bv_and,
+                       bzla_is_inv_and_const,
+                       bzla_proputils_inv_and_const);
 }
 
+#if 0
 TEST_F (TestPropConst, one_complete_eq_const)
 {
-  prop_complete_binary (
-      1, bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq_const, bzla_proputils_inv_eq);
+  prop_complete_binary (1,
+                        bzla_exp_eq,
+                        bzla_bv_eq,
+                        bzla_is_inv_eq_const,
+                        bzla_proputils_inv_eq_const);
 }
 
 TEST_F (TestPropConst, one_complete_ult_const)
 {
-  prop_complete_binary (
-      1, bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, bzla_proputils_inv_ult);
+  prop_complete_binary (1,
+                        bzla_exp_bv_ult,
+                        bzla_bv_ult,
+                        bzla_is_inv_ult,
+                        bzla_proputils_inv_ult_const);
 }
 
 TEST_F (TestPropConst, one_complete_sll_const)
@@ -590,19 +596,25 @@ TEST_F (TestPropConst, one_complete_sll_const)
                         bzla_exp_bv_sll,
                         bzla_bv_sll,
                         bzla_is_inv_sll_const,
-                        bzla_proputils_inv_sll);
+                        bzla_proputils_inv_sll_const);
 }
 
 TEST_F (TestPropConst, one_complete_srl_const)
 {
-  prop_complete_binary (
-      1, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, bzla_proputils_inv_srl);
+  prop_complete_binary (1,
+                        bzla_exp_bv_srl,
+                        bzla_bv_srl,
+                        bzla_is_inv_srl,
+                        bzla_proputils_inv_srl_const);
 }
 
 TEST_F (TestPropConst, one_complete_mul_const)
 {
-  prop_complete_binary (
-      1, bzla_exp_bv_mul, bzla_bv_mul, bzla_is_inv_mul, bzla_proputils_inv_mul);
+  prop_complete_binary (1,
+                        bzla_exp_bv_mul,
+                        bzla_bv_mul,
+                        bzla_is_inv_mul,
+                        bzla_proputils_inv_mul_const);
 }
 
 TEST_F (TestPropConst, one_complete_udiv_const)
@@ -611,7 +623,7 @@ TEST_F (TestPropConst, one_complete_udiv_const)
                         bzla_exp_bv_udiv,
                         bzla_bv_udiv,
                         bzla_is_inv_udiv,
-                        bzla_proputils_inv_udiv);
+                        bzla_proputils_inv_udiv_const);
 }
 
 TEST_F (TestPropConst, one_complete_urem_const)
@@ -620,7 +632,7 @@ TEST_F (TestPropConst, one_complete_urem_const)
                         bzla_exp_bv_urem,
                         bzla_bv_urem,
                         bzla_is_inv_urem,
-                        bzla_proputils_inv_urem);
+                        bzla_proputils_inv_urem_const);
 }
 
 TEST_F (TestPropConst, one_complete_concat_const)
@@ -629,7 +641,7 @@ TEST_F (TestPropConst, one_complete_concat_const)
                         bzla_exp_bv_concat,
                         bzla_bv_concat,
                         bzla_is_inv_concat_const,
-                        bzla_proputils_inv_concat);
+                        bzla_proputils_inv_concat_const);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -827,7 +839,7 @@ TEST_F (TestPropConst, complete_and_const)
                         bzla_exp_bv_and,
                         bzla_bv_and,
                         bzla_is_inv_and_const,
-                        bzla_proputils_inv_and);
+                        bzla_proputils_inv_and_const);
 }
 
 TEST_F (TestPropConst, complete_eq_const)

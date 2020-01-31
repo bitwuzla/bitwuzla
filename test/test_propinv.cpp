@@ -1923,19 +1923,19 @@ TEST_F(TestPropInvConst, complete_add_const)
 {
   check_binary(bzla_exp_bv_add,
                bzla_bv_add,
-               bzla_is_inv_add,
+               bzla_is_inv_add_const,
                bzla_proputils_inv_add_const);
 }
 
-#if 0
-TEST_F (TestPropInvConst, complete_and_const)
+TEST_F(TestPropInvConst, complete_and_const)
 {
-  check_binary (bzla_exp_bv_and,
-                bzla_bv_and,
-                bzla_is_inv_and,
-                bzla_proputils_inv_and_const);
+  check_binary(bzla_exp_bv_and,
+               bzla_bv_and,
+               bzla_is_inv_and_const,
+               bzla_proputils_inv_and_const);
 }
 
+#if 0
 TEST_F (TestPropInvConst, complete_eq_const)
 {
   check_binary (bzla_exp_eq,

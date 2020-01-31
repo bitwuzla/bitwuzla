@@ -3110,21 +3110,19 @@ bzla_proputils_inv_cond(Bzla *bzla,
 }
 
 /* ========================================================================== */
-/* Inverse value computation with propagator domains                          */
+/* Inverse value computation with respect to const bits                       */
 /* ========================================================================== */
 
-#if 0
 static BzlaBitVector *
-set_const_bits (BzlaMemMgr *mm, BzlaBvDomain *d_res_x, BzlaBitVector *res_x)
+set_const_bits(BzlaMemMgr *mm, BzlaBvDomain *d_res_x, BzlaBitVector *res_x)
 {
-  assert (d_res_x);
-  assert (res_x);
-  BzlaBitVector *tmp = bzla_bv_and (mm, d_res_x->hi, res_x);
-  BzlaBitVector *res = bzla_bv_or (mm, d_res_x->lo, tmp);
-  bzla_bv_free (mm, tmp);
+  assert(d_res_x);
+  assert(res_x);
+  BzlaBitVector *tmp = bzla_bv_and(mm, d_res_x->hi, res_x);
+  BzlaBitVector *res = bzla_bv_or(mm, d_res_x->lo, tmp);
+  bzla_bv_free(mm, tmp);
   return res;
 }
-#endif
 
 /* -------------------------------------------------------------------------- */
 /* INV: add                                                                   */
@@ -3138,6 +3136,18 @@ bzla_proputils_inv_add_const(Bzla *bzla,
                              int32_t idx_x,
                              BzlaIntHashTable *domains)
 {
+  assert(domains);
+#ifndef NDEBUG
+  check_inv_dbg(bzla,
+                add,
+                t,
+                s,
+                idx_x,
+                domains,
+                bzla_is_inv_add,
+                bzla_is_inv_add_const,
+                true);
+#endif
   return bzla_proputils_inv_add(bzla, add, t, s, idx_x, domains);
 }
 
@@ -3153,8 +3163,30 @@ bzla_proputils_inv_and_const(Bzla *bzla,
                              int32_t idx_x,
                              BzlaIntHashTable *domains)
 {
-  // TODO
-  return bzla_proputils_inv_and(bzla, and, t, s, idx_x, domains);
+  assert(domains);
+  assert(bzla_node_is_regular(and));
+  assert(!bzla_hashint_map_contains(domains, and->id)
+         || bzla_hashint_map_contains(domains,
+                                      bzla_node_real_addr(and->e[idx_x])->id));
+  BzlaBitVector *tmp, *res;
+  BzlaBvDomain *x;
+#ifndef NDEBUG
+  check_inv_dbg(bzla,
+                and,
+                t,
+                s,
+                idx_x,
+                domains,
+                bzla_is_inv_and,
+                bzla_is_inv_and_const,
+                true);
+#endif
+  x = bzla_hashint_map_get(domains, bzla_node_real_addr(and->e[idx_x])->id)
+          ->as_ptr;
+  tmp = bzla_proputils_inv_and(bzla, and, t, s, idx_x, domains);
+  res = set_const_bits(bzla->mm, x, tmp);
+  bzla_bv_free(bzla->mm, tmp);
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
