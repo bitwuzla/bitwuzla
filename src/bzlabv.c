@@ -452,46 +452,6 @@ bzla_bv_consth(BzlaMemMgr *mm, const char *str, uint32_t bw)
 /*------------------------------------------------------------------------*/
 
 BzlaBitVector *
-bzla_bv_get_assignment(BzlaMemMgr *mm, BzlaNode *exp)
-{
-  assert(mm);
-  assert(exp);
-  assert(!bzla_node_is_proxy(exp));
-
-  BzlaBitVector *res;
-
-  uint32_t i, j, width;
-  int32_t bit;
-  bool inv;
-  BzlaNode *real_exp;
-  BzlaAIGVec *av;
-  BzlaAIGMgr *amgr;
-
-  exp      = bzla_node_get_simplified(bzla_node_real_addr(exp)->bzla, exp);
-  real_exp = bzla_node_real_addr(exp);
-
-  if (!real_exp->av)
-    return bzla_bv_new(mm, bzla_node_bv_get_width(real_exp->bzla, real_exp));
-
-  amgr  = bzla_get_aig_mgr(real_exp->bzla);
-  av    = real_exp->av;
-  width = av->width;
-  res   = bzla_bv_new(mm, width);
-  inv   = bzla_node_is_inverted(exp);
-
-  for (i = 0, j = width - 1; i < width; i++, j--)
-  {
-    bit = bzla_aig_get_assignment(amgr, av->aigs[j]);
-    if (inv) bit *= -1;
-    assert(bit == -1 || bit == 1);
-    bzla_bv_set_bit(res, i, bit == 1 ? 1 : 0);
-  }
-  return res;
-}
-
-/*------------------------------------------------------------------------*/
-
-BzlaBitVector *
 bzla_bv_copy(BzlaMemMgr *mm, const BzlaBitVector *bv)
 {
   assert(mm);

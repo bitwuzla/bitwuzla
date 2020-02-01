@@ -13,6 +13,7 @@
 #include "bzlaclone.h"
 #include "bzladbg.h"
 #include "bzlalog.h"
+#include "bzlarm.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlamem.h"
@@ -707,6 +708,57 @@ bzla_model_clone_fun(Bzla *bzla, BzlaIntHashTable *fun_model, bool inc_ref_cnt)
 /* Model                                                                  */
 /*------------------------------------------------------------------------*/
 
+BzlaBitVector *
+bzla_model_get_bv_assignment(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+  assert(!bzla_node_is_proxy(exp));
+
+  BzlaBitVector *res;
+
+  uint32_t i, j, width;
+  int32_t bit;
+  bool inv;
+  BzlaNode *real_exp;
+  BzlaAIGVec *av;
+  BzlaAIGMgr *amgr;
+  BzlaMemMgr *mm;
+
+  exp      = bzla_node_get_simplified(bzla_node_real_addr(exp)->bzla, exp);
+  real_exp = bzla_node_real_addr(exp);
+  mm       = bzla->mm;
+
+  if (!real_exp->av)
+  {
+    if (bzla_node_is_rm(bzla, real_exp))
+    {
+      return bzla_bv_new(mm, BZLA_RM_BW);
+    }
+    else if (bzla_node_is_fp(bzla, real_exp))
+    {
+      return bzla_bv_new(
+          mm, bzla_sort_fp_get_bv_width(bzla, bzla_node_get_sort_id(real_exp)));
+    }
+    return bzla_bv_new(mm, bzla_node_bv_get_width(real_exp->bzla, real_exp));
+  }
+
+  amgr  = bzla_get_aig_mgr(real_exp->bzla);
+  av    = real_exp->av;
+  width = av->width;
+  res   = bzla_bv_new(mm, width);
+  inv   = bzla_node_is_inverted(exp);
+
+  for (i = 0, j = width - 1; i < width; i++, j--)
+  {
+    bit = bzla_aig_get_assignment(amgr, av->aigs[j]);
+    if (inv) bit *= -1;
+    assert(bit == -1 || bit == 1);
+    bzla_bv_set_bit(res, i, bit == 1 ? 1 : 0);
+  }
+  return res;
+}
+
 static BzlaBitVector *
 get_apply_value(Bzla *bzla,
                 BzlaNode *app,
@@ -862,8 +914,8 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
        * it doesn't have one) */
       if (bzla_node_is_bv_var(real_cur) || bzla_node_is_fun_eq(real_cur))
       {
-        result = bzla_bv_get_assignment(
-            mm, bzla_node_get_simplified(bzla, real_cur));
+        result = bzla_model_get_bv_assignment(
+            bzla, bzla_node_get_simplified(bzla, real_cur));
         goto CACHE_AND_PUSH_RESULT;
       }
       /* if fp var is not synthesized (i.e., does not occur in the formula and
@@ -1146,8 +1198,8 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
 
         case BZLA_UF_NODE:
           assert(bzla_node_is_apply(cur_parent));
-          result = bzla_bv_get_assignment(
-              mm, bzla_node_get_simplified(bzla, cur_parent));
+          result = bzla_model_get_bv_assignment(
+              bzla, bzla_node_get_simplified(bzla, cur_parent));
           break;
 
         case BZLA_UPDATE_NODE:

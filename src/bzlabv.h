@@ -79,9 +79,6 @@ BzlaBitVector *bzla_bv_constd(BzlaMemMgr *mm, const char *str, uint32_t bw);
 /** Create bit-vector of given bit-width from given hexadecimal string. */
 BzlaBitVector *bzla_bv_consth(BzlaMemMgr *mm, const char *str, uint32_t bw);
 
-/** Get AIG vector assignment of given node as bit-vector. */
-BzlaBitVector *bzla_bv_get_assignment(BzlaMemMgr *mm, BzlaNode *exp);
-
 /** Create a (deep) copy of the given bit-vector. */
 BzlaBitVector *bzla_bv_copy(BzlaMemMgr *mm, const BzlaBitVector *bv);
 

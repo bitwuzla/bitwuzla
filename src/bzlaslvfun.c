@@ -303,7 +303,7 @@ get_bv_assignment(Bzla *bzla, BzlaNode *exp)
   {
     /* synthesized nodes are always encoded and have an assignment */
     if (bzla_node_is_synth(real_exp))
-      bv = bzla_bv_get_assignment(bzla->mm, real_exp);
+      bv = bzla_model_get_bv_assignment(bzla, real_exp);
     else if (bzla_node_is_bv_const(real_exp))
       bv = bzla_bv_copy(bzla->mm, bzla_node_bv_const_get_bits(real_exp));
     /* initialize var, apply, and feq nodes if they are not yet synthesized
@@ -313,7 +313,7 @@ get_bv_assignment(Bzla *bzla, BzlaNode *exp)
     {
       if (!bzla_node_is_synth(real_exp))
         BZLALOG(1, "zero-initialize: %s", bzla_util_node2string(real_exp));
-      bv = bzla_bv_get_assignment(bzla->mm, real_exp);
+      bv = bzla_model_get_bv_assignment(bzla, real_exp);
     }
     else
       bv = bzla_eval_exp(bzla, real_exp);

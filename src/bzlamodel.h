@@ -1,7 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2014-2016 Mathias Preiner.
- *  Copyright (C) 2014-2017 Aina Niemetz.
+ *  Copyright (C) 2014-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -16,6 +16,12 @@
 #include "utils/bzlahashint.h"
 
 /*------------------------------------------------------------------------*/
+
+/**
+ * Get AIG vector assignment of given node as bit-vector.
+ * Zero initialized if unconstrained.
+ */
+BzlaBitVector* bzla_model_get_bv_assignment(Bzla* bzla, BzlaNode* exp);
 
 BzlaBitVector* bzla_model_recursively_compute_assignment(
     Bzla* bzla,
