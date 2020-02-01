@@ -113,6 +113,15 @@ void bzla_abort_warn(
                #arg);                                               \
   } while (0)
 
+#define BZLA_ABORT_IS_FUN_OR_ARRAY(arg)                                     \
+  do                                                                        \
+  {                                                                         \
+    BZLA_ABORT(bzla_sort_is_fun(bzla, bzla_node_get_sort_id(arg))           \
+                   || bzla_sort_is_array(bzla, bzla_node_get_sort_id(arg)), \
+               "'%s' must not be a function or an array\n",                 \
+               #arg);                                                       \
+  } while (0)
+
 #define BZLA_ABORT_SORT_MISMATCH(argbw1, argbw2)                               \
   do                                                                           \
   {                                                                            \

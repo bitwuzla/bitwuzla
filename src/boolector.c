@@ -4114,17 +4114,14 @@ boolector_write(Bzla *bzla,
   BZLA_ABORT_BZLA_MISMATCH(bzla, e_index);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e_value);
   BZLA_ABORT_IS_NOT_ARRAY(e_array);
-  BZLA_ABORT_IS_NOT_BV(e_index);
-  BZLA_ABORT_IS_NOT_BV(e_value);
-  BZLA_ABORT(
-      bzla_sort_array_get_index(bzla, bzla_node_get_sort_id(e_array))
-          != bzla_node_get_sort_id(e_index),
-      "index bit-width of 'e_array' and bit-width of 'e_index' must be equal");
-  BZLA_ABORT(
-      bzla_sort_array_get_element(bzla, bzla_node_get_sort_id(e_array))
-          != bzla_node_get_sort_id(e_value),
-      "element bit-width of 'e_array' and bit-width of 'e_value' must be "
-      "equal");
+  BZLA_ABORT_IS_FUN_OR_ARRAY(e_index);
+  BZLA_ABORT_IS_FUN_OR_ARRAY(e_value);
+  BZLA_ABORT(bzla_sort_array_get_index(bzla, bzla_node_get_sort_id(e_array))
+                 != bzla_node_get_sort_id(e_index),
+             "index sort of 'e_array' and 'e_index' must be equal");
+  BZLA_ABORT(bzla_sort_array_get_element(bzla, bzla_node_get_sort_id(e_array))
+                 != bzla_node_get_sort_id(e_value),
+             "element sort of 'e_array' and 'e_value' must be equal");
   res = bzla_exp_write(bzla, e_array, e_index, e_value);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -5723,10 +5720,12 @@ boolector_array_sort(Bzla *bzla, BoolectorSort index, BoolectorSort element)
   es = BZLA_IMPORT_BOOLECTOR_SORT(element);
 
   BZLA_ABORT(!bzla_sort_is_valid(bzla, is), "'index' sort is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, is), "'index' is not a bit vector sort");
+  BZLA_ABORT(bzla_sort_is_fun(bzla, is),
+             "array sorts with array/function 'index' sort not supported");
   BZLA_ABORT(!bzla_sort_is_valid(bzla, es),
              "'element' sort is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, es), "'element' is not a bit vector sort");
+  BZLA_ABORT(bzla_sort_is_fun(bzla, es),
+             "array sorts with array/function 'element' sort not supported");
 
   res = bzla_sort_array(bzla, is, es);
   inc_sort_ext_ref_counter(bzla, res);

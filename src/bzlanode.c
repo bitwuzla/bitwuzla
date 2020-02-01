@@ -2828,8 +2828,8 @@ bzla_node_create_uf(Bzla *bzla, BzlaSortId sort, const char *symbol)
   BzlaUFNode *exp;
 
   assert(bzla_sort_is_fun(bzla, sort));
-  assert(bzla_sort_is_bv(bzla, bzla_sort_fun_get_codomain(bzla, sort))
-         || bzla_sort_is_bool(bzla, bzla_sort_fun_get_codomain(bzla, sort)));
+  assert(!bzla_sort_is_array(bzla, bzla_sort_fun_get_codomain(bzla, sort))
+         && !bzla_sort_is_fun(bzla, bzla_sort_fun_get_codomain(bzla, sort)));
 
   BZLA_CNEW(bzla->mm, exp);
   set_kind(bzla, (BzlaNode *) exp, BZLA_UF_NODE);
