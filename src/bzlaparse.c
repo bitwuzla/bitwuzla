@@ -2,7 +2,7 @@
  *
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2014 Armin Biere.
- *  Copyright (C) 2012-2018 Aina Niemetz.
+ *  Copyright (C) 2012-2020 Aina Niemetz.
  *  Copyright (C) 2012-2020 Mathias Preiner.
  *
  *  This file is part of Boolector.
@@ -85,6 +85,8 @@ parse_aux(Bzla *bzla,
       BZLA_MSG(bzla->msg, 1, "logic QF_UFBV");
     else if (parse_res.logic == BZLA_LOGIC_QF_ABV)
       BZLA_MSG(bzla->msg, 1, "logic QF_ABV");
+    else if (parse_res.logic == BZLA_LOGIC_QF_ABVFP)
+      BZLA_MSG(bzla->msg, 1, "logic QF_ABVFP");
     else if (parse_res.logic == BZLA_LOGIC_QF_FP)
       BZLA_MSG(bzla->msg, 1, "logic QF_FP");
     else
