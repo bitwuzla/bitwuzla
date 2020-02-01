@@ -2552,9 +2552,11 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         BZLALOG(2, "  synthesized: %s", bzla_util_node2string(cur));
         /* no need to call bzla_aigvec_to_sat_tseitin here */
       }
-      /* encode bv skeleton inputs: var, apply, feq */
+      /* encode bv skeleton inputs: var, apply, feq
+       * exception: FP/RM applies, we need to word-blast them first */
       else if (bzla_node_is_bv_var(cur)
-               || (bzla_node_is_apply(cur) && !cur->parameterized)
+               || (bzla_node_is_apply(cur) && !cur->parameterized
+                   && bzla_node_is_bv(bzla, cur))
                || bzla_node_is_fun_eq(cur))
       {
         assert(!cur->parameterized);

@@ -16,6 +16,7 @@
 #include "bzlalog.h"
 #include "bzlamodel.h"
 #include "bzlaopt.h"
+#include "bzlarm.h"
 #include "bzlasubst.h"
 #include "preprocess/bzlapreprocess.h"
 #include "preprocess/bzlavarsubst.h"
@@ -119,11 +120,12 @@ bzla_check_model(BzlaCheckModelContext *ctx)
   uint32_t i;
   int32_t sat_res;
   Bzla *bzla, *clone;
-  BzlaNode *cur, *exp, *simp, *simp_clone, *real_simp_clone, *model, *eq;
+  BzlaNode *cur, *exp, *simp, *simp_clone, *real_simp_clone, *model, *eq, *tmp;
   BzlaNode *args, *apply, *wb;
   BzlaPtrHashTableIterator it;
   const BzlaPtrHashTable *fmodel;
-  BzlaBitVector *value;
+  BzlaBitVector *value, *bv;
+  BzlaRoundingMode rm;
   BzlaBitVectorTuple *args_tuple;
   BzlaNodePtrStack consts;
 
@@ -222,7 +224,23 @@ bzla_check_model(BzlaCheckModelContext *ctx)
         args  = bzla_exp_args(clone, consts.start, BZLA_COUNT_STACK(consts));
         apply = bzla_exp_apply(clone, real_simp_clone, args);
         model = bzla_exp_bv_const(clone, value);
-        eq    = bzla_exp_eq(clone, apply, model);
+        if (bzla_node_is_fp(bzla, apply))
+        {
+          tmp   = model;
+          model = bzla_exp_fp_to_fp_from_bv(
+              clone, tmp, bzla_node_get_sort_id(apply));
+          bzla_node_release(clone, tmp);
+        }
+        else if (bzla_node_is_rm(bzla, apply))
+        {
+          tmp = model;
+          bv  = bzla_node_is_regular(tmp) ? bzla_node_bv_const_get_bits(tmp)
+                                         : bzla_node_bv_const_get_invbits(tmp);
+          rm    = bzla_rm_from_bv(bv);
+          model = bzla_exp_rm_const(clone, rm);
+          bzla_node_release(clone, tmp);
+        }
+        eq = bzla_exp_eq(clone, apply, model);
 
         BZLALOG(2, "  value: %s", bzla_util_node2string(model));
 

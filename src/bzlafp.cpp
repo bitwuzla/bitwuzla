@@ -1,6 +1,7 @@
 /*  Boolector: Satisfiablity Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2019-2020 Aina Niemetz.
+ *  Copyright (C) 2020 Mathias Preiner.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -2240,7 +2241,8 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         d_rm_map.emplace(bzla_node_copy(d_bzla, cur), BzlaFPSymRM(cur));
       }
-      else if (bzla_node_is_rm_var(cur))
+      else if (bzla_node_is_rm_var(cur)
+               || (bzla_node_is_apply(cur) && bzla_node_is_rm(d_bzla, cur)))
       {
         BzlaFPSymRM var(cur);
         d_rm_map.emplace(bzla_node_copy(d_bzla, cur), var);
@@ -2253,7 +2255,8 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
             bzla_node_copy(d_bzla, cur),
             BzlaSymUnpackedFloat(*fp_get_unpacked_float(cur)));
       }
-      else if (bzla_node_is_fp_var(cur))
+      else if (bzla_node_is_fp_var(cur)
+               || (bzla_node_is_apply(cur) && bzla_node_is_fp(d_bzla, cur)))
       {
         BzlaSortId sort   = bzla_node_get_sort_id(cur);
         BzlaSortId sort_1 = bzla_sort_bv(d_bzla, 1);
