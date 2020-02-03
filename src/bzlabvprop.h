@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2018 Mathias Preiner.
+ *  Copyright (C) 2018-2020 Mathias Preiner.
  *  Copyright (C) 2018-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
@@ -305,35 +305,66 @@ bool bzla_bvprop_urem(BzlaMemMgr *mm,
 /* generator */
 /*----------------------------------------------------------------------------*/
 
+/** A generator to enumerate all possible values of a given domain. */
 struct BzlaBvDomainGenerator
 {
-  BzlaMemMgr *mm;
-  uint32_t n_gen;
-  uint32_t n_max;
-  BzlaBitVector *bits;
-  BzlaBitVector *next;
-  BzlaBitVector *cur;
-  BzlaBvDomain *domain;
-  BzlaBitVector *min;
-  BzlaBitVector *max;
+  BzlaMemMgr *mm;       /* the associated memory manager */
+  BzlaRNG *rng;         /* the associated RNG (may be 0) */
+  uint32_t n_gen;       /* number of generated values (for non-ranged init) */
+  uint32_t n_max;       /* the max number of values (for non-ranged init) */
+  BzlaBitVector *bits;  /* unconstrained bits, most LSB is farthest right. */
+  BzlaBitVector *next;  /* next value */
+  BzlaBitVector *cur;   /* current value */
+  BzlaBvDomain *domain; /* the domain to enumerate values for */
+  BzlaBitVector *min;   /* the min value (in case of ranged init) */
+  BzlaBitVector *max;   /* the max value (in case of ranged init) */
 };
 
 typedef struct BzlaBvDomainGenerator BzlaBvDomainGenerator;
 
+/**
+ * Initialize domain generator.
+ * mm : the associated memory manager
+ * rng: the associated random number generator, may be 0
+ * gen: the generator to be initialized
+ * d  : the domain to enumerate values for
+ */
 void bzla_bvprop_gen_init(BzlaMemMgr *mm,
+                          BzlaRNG *rng,
                           BzlaBvDomainGenerator *gen,
                           const BzlaBvDomain *d);
 
+/**
+ * Initialize generator for values within given range (inclusive).
+ * mm : the associated memory manager
+ * rng: the associated random number generator, may be 0
+ * gen: the generator to be initialized
+ * d  : the domain to enumerate values for
+ * min: the minimum value to start enumeration with
+ * max: the maximum value to enumerate until
+ */
 void bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
+                                BzlaRNG *rng,
                                 BzlaBvDomainGenerator *gen,
                                 const BzlaBvDomain *d,
                                 BzlaBitVector *min,
                                 BzlaBitVector *max);
 
+/**
+ * Return true if not all possible values have been generated yet.
+ * Note: For bzla_bvprop_gen_random(), this is always returns true if there
+ *       are any values to enumerate (i.e., the initial call to
+ *       bzla_bvprop_gen_has_next() is true).
+ */
 bool bzla_bvprop_gen_has_next(const BzlaBvDomainGenerator *gen);
 
+/** Generate next element in the sequence. */
 BzlaBitVector *bzla_bvprop_gen_next(BzlaBvDomainGenerator *gen);
 
+/** Generate random element in the sequence. */
+BzlaBitVector *bzla_bvprop_gen_random(BzlaBvDomainGenerator *gen);
+
+/** Delete generator and release all associated memory. */
 void bzla_bvprop_gen_delete(const BzlaBvDomainGenerator *gen);
 
 /*----------------------------------------------------------------------------*/

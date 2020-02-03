@@ -946,7 +946,7 @@ bzla_is_inv_udiv_const(BzlaMemMgr *mm,
           }
 
           BzlaBvDomainGenerator dgen;
-          bzla_bvprop_gen_init_range(mm, &dgen, x, min, max);
+          bzla_bvprop_gen_init_range(mm, 0, &dgen, x, min, max);
           res = bzla_bvprop_gen_has_next(&dgen);
           bzla_bvprop_gen_delete(&dgen);
           bzla_bv_free(mm, min);
@@ -990,7 +990,7 @@ bzla_is_inv_udiv_const(BzlaMemMgr *mm,
             }
 
             BzlaBvDomainGenerator dgen;
-            bzla_bvprop_gen_init_range(mm, &dgen, x, min, max);
+            bzla_bvprop_gen_init_range(mm, 0, &dgen, x, min, max);
             res = false;
             while (bzla_bvprop_gen_has_next(&dgen))
             {
@@ -1156,7 +1156,7 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
           bzla_bv_free(mm, n_hi);
           BZLA_INIT_STACK(mm, candidates);
           BzlaBvDomainGenerator gen;
-          bzla_bvprop_gen_init_range(mm, &gen, (BzlaBvDomain *) x, lo, hi);
+          bzla_bvprop_gen_init_range(mm, 0, &gen, (BzlaBvDomain *) x, lo, hi);
           while (bzla_bvprop_gen_has_next(&gen))
           {
             bv  = bzla_bvprop_gen_next(&gen);
@@ -1243,7 +1243,7 @@ bzla_is_inv_urem_const(BzlaMemMgr *mm,
             BZLA_INIT_STACK(mm, candidates);
             BzlaBvDomainGenerator gen;
             /* x->lo <= x <= hi */
-            bzla_bvprop_gen_init_range(mm, &gen, (BzlaBvDomain *) x, 0, hi);
+            bzla_bvprop_gen_init_range(mm, 0, &gen, (BzlaBvDomain *) x, 0, hi);
             while (bzla_bvprop_gen_has_next(&gen))
             {
               bv  = bzla_bvprop_gen_next(&gen);

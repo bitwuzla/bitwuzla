@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2018 Mathias Preiner.
+ *  Copyright (C) 2018-2020 Mathias Preiner.
  *  Copyright (C) 2018-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
@@ -4614,7 +4614,7 @@ DONE:
 /*----------------------------------------------------------------------------*/
 
 static BzlaBitVector *
-gen_next_bits(BzlaBvDomainGenerator *gen)
+gen_next_bits(BzlaBvDomainGenerator *gen, bool random)
 {
   assert(gen->domain);
   assert(gen->bits);
@@ -4632,8 +4632,17 @@ gen_next_bits(BzlaBvDomainGenerator *gen)
     }
   }
 
-  /* bits' = bits + 1 */
-  next_bits = bzla_bv_inc(gen->mm, gen->bits);
+  if (random)
+  {
+    assert(gen->rng);
+    next_bits =
+        bzla_bv_new_random(gen->mm, gen->rng, bzla_bv_get_width(gen->bits));
+  }
+  else
+  {
+    /* bits' = bits + 1 */
+    next_bits = bzla_bv_inc(gen->mm, gen->bits);
+  }
   bzla_bv_free(gen->mm, gen->bits);
   gen->bits = next_bits;
 
@@ -4642,6 +4651,7 @@ gen_next_bits(BzlaBvDomainGenerator *gen)
 
 void
 bzla_bvprop_gen_init(BzlaMemMgr *mm,
+                     BzlaRNG *rng,
                      BzlaBvDomainGenerator *gen,
                      const BzlaBvDomain *d)
 {
@@ -4663,12 +4673,14 @@ bzla_bvprop_gen_init(BzlaMemMgr *mm,
   gen->min    = 0;
   gen->max    = 0;
   gen->domain = bzla_bvprop_copy(mm, d);
-  gen->next   = gen->bits ? gen_next_bits(gen) : 0;
+  gen->next   = gen->bits ? gen_next_bits(gen, false) : 0;
   gen->cur    = 0;
+  gen->rng    = rng;
 }
 
 void
 bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
+                           BzlaRNG *rng,
                            BzlaBvDomainGenerator *gen,
                            const BzlaBvDomain *d,
                            BzlaBitVector *min,
@@ -4720,8 +4732,9 @@ bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
   gen->max = max && bzla_bv_compare(max, d->hi) < 0 ? bzla_bv_copy(mm, max)
                                                     : bzla_bv_copy(mm, d->hi);
   gen->domain = bzla_bvprop_copy(mm, d);
-  gen->next   = gen->bits ? gen_next_bits(gen) : 0;
+  gen->next   = gen->bits ? gen_next_bits(gen, false) : 0;
   gen->cur    = 0;
+  gen->rng    = rng;
 
   /* Skip all values less than min. */
   if (gen->bits && min)
@@ -4729,7 +4742,7 @@ bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
     while (bzla_bv_compare(gen->next, min) < 0)
     {
       bzla_bv_free(mm, gen->next);
-      gen->next = gen_next_bits(gen);
+      gen->next = gen_next_bits(gen, false);
     }
   }
 }
@@ -4758,12 +4771,32 @@ bzla_bvprop_gen_next(BzlaBvDomainGenerator *gen)
 
   /* next' = expand(bits'). */
   if (gen->next) bzla_bv_free(gen->mm, gen->next);
-  gen->next = gen_next_bits(gen);
+  gen->next = gen_next_bits(gen, false);
   gen->n_gen += 1;
 
   if (gen->cur) bzla_bv_free(gen->mm, gen->cur);
   gen->cur = res;
 
+  return res;
+}
+
+BzlaBitVector *
+bzla_bvprop_gen_random(BzlaBvDomainGenerator *gen)
+{
+  assert(gen);
+  assert(gen->bits);
+  assert(gen->rng);
+  assert(bzla_bvprop_gen_has_next(gen));
+
+  BzlaBitVector *res = 0;
+  do
+  {
+    if (res) bzla_bv_free(gen->mm, res);
+    res = gen_next_bits(gen, true);
+  } while ((gen->min && bzla_bv_compare(res, gen->min) < 0)
+           || (gen->max && bzla_bv_compare(res, gen->max) > 0));
+  if (gen->cur) bzla_bv_free(gen->mm, gen->cur);
+  gen->cur = res;
   return res;
 }
 

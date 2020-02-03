@@ -108,11 +108,20 @@ void bzla_bv_print_without_new_line(const BzlaBitVector *bv);
  */
 void bzla_bv_print_all(const BzlaBitVector *bv);
 
-/** Convert given bit-vector to a binary string. */
+/**
+ * Convert given bit-vector to a binary string.
+ * Note: Result string must be freed with bzla_mem_freestr().
+ */
 char *bzla_bv_to_char(BzlaMemMgr *mm, const BzlaBitVector *bv);
-/** Convert given bit-vector to a hexadecimal string. */
+/**
+ * Convert given bit-vector to a hexadecimal string.
+ * Note: Result string must be freed with bzla_mem_freestr().
+ */
 char *bzla_bv_to_hex_char(BzlaMemMgr *mm, const BzlaBitVector *bv);
-/** Convert given bit-vector to a decimal string. */
+/**
+ * Convert given bit-vector to a decimal string.
+ * Note: Result string must be freed with bzla_mem_freestr().
+ */
 char *bzla_bv_to_dec_char(BzlaMemMgr *mm, const BzlaBitVector *bv);
 
 /** Convert given bit-vector to an unsigned 64 bit integer. */
