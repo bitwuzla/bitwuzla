@@ -3201,8 +3201,30 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
                             int32_t idx_x,
                             BzlaIntHashTable *domains)
 {
-  // TODO
-  return bzla_proputils_inv_eq(bzla, eq, t, s, idx_x, domains);
+  assert(domains);
+  assert(bzla_node_is_regular(eq));
+  assert(!bzla_hashint_map_contains(domains, eq->id)
+         || bzla_hashint_map_contains(domains,
+                                      bzla_node_real_addr(eq->e[idx_x])->id));
+  BzlaBitVector *tmp, *res;
+  BzlaBvDomain *x;
+#ifndef NDEBUG
+  check_inv_dbg(bzla,
+                eq,
+                t,
+                s,
+                idx_x,
+                domains,
+                bzla_is_inv_eq,
+                bzla_is_inv_eq_const,
+                false);
+#endif
+  x = bzla_hashint_map_get(domains, bzla_node_real_addr(eq->e[idx_x])->id)
+          ->as_ptr;
+  tmp = bzla_proputils_inv_eq(bzla, eq, t, s, idx_x, domains);
+  res = set_const_bits(bzla->mm, x, tmp);
+  bzla_bv_free(bzla->mm, tmp);
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */

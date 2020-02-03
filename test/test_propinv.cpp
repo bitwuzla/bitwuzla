@@ -1935,15 +1935,15 @@ TEST_F(TestPropInvConst, complete_and_const)
                bzla_proputils_inv_and_const);
 }
 
-#if 0
-TEST_F (TestPropInvConst, complete_eq_const)
+TEST_F(TestPropInvConst, complete_eq_const)
 {
-  check_binary (bzla_exp_eq,
-                bzla_bv_eq,
-                bzla_is_inv_eq,
-                bzla_proputils_inv_eq_const);
+  check_binary(bzla_exp_eq,
+               bzla_bv_eq,
+               bzla_is_inv_eq_const,
+               bzla_proputils_inv_eq_const);
 }
 
+#if 0
 TEST_F (TestPropInvConst, complete_ult_const)
 {
   check_binary (bzla_exp_bv_ult,
