@@ -526,7 +526,7 @@ select_path_udiv(Bzla *bzla,
       ones         = bzla_bv_ones(mm, bzla_bv_get_width(s[0]));
       cmp_udiv_max = bzla_bv_compare(t, ones);
 
-      /* s[0] / s[1] = 1...1 -> choose e[1]
+      /* s[0] / s[1] = 1...1 -> choose x
        *   + 1...1 / 0 = 1...1
        *   + 1...1 / 1 = 1...1
        *   + x...x / 0 = 1...1 */
@@ -534,9 +534,9 @@ select_path_udiv(Bzla *bzla,
         idx_x = 1;
       else
       {
-        /* 1...1 / e[0] = 0 -> choose e[0] */
+        /* 1...1 / x = 0 -> choose x */
         if (bzla_bv_is_zero(t) && !bzla_bv_compare(s[0], ones)) idx_x = 0;
-        /* s[0] < t -> choose e[0] */
+        /* s[0] < t -> choose x */
         else if (bzla_bv_compare(s[0], t) < 0)
           idx_x = 0;
         else
@@ -553,7 +553,7 @@ select_path_udiv(Bzla *bzla,
           bzla_bv_free(mm, tmp);
         }
 
-        /* e[0] / 0 != 1...1 -> choose e[1] */
+        /* x / 0 != 1...1 -> choose x */
         if (bzla_bv_is_zero(s[1]) || bzla_bv_is_umulo(mm, s[1], t))
           idx_x = idx_x == -1 ? 1 : -1;
       }
@@ -1805,15 +1805,16 @@ bzla_proputils_inv_ult(Bzla *bzla,
 
   if (idx_x)
   {
-    assert(!isult || bzla_bv_compare(s, ones)); /* CONFLICT: 1...1 < e[1] */
+    /* s < x = t ---------------------------------------------------------- */
+    assert(!isult || bzla_bv_compare(s, ones)); /* CONFLICT: 1...1 < x */
     if (!isult)
     {
-      /* s >= e[1] */
+      /* s >= x */
       res = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, s);
     }
     else
     {
-      /* s < e[1] */
+      /* s < x */
       tmp = bzla_bv_add(mm, s, one);
       res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
       bzla_bv_free(mm, tmp);
@@ -1821,15 +1822,16 @@ bzla_proputils_inv_ult(Bzla *bzla,
   }
   else
   {
-    assert(!isult || !bzla_bv_is_zero(s)); /* CONFLICT: e[0] < 0  */
+    /* x < s = t ---------------------------------------------------------- */
+    assert(!isult || !bzla_bv_is_zero(s)); /* CONFLICT: x < 0  */
     if (!isult)
     {
-      /* e[0] >= s */
+      /* x >= s */
       res = bzla_bv_new_random_range(mm, &bzla->rng, bw, s, ones);
     }
     else
     {
-      /* e[0] < s */
+      /* x < s */
       tmp = bzla_bv_sub(mm, s, one);
       res = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
       bzla_bv_free(mm, tmp);
@@ -1884,7 +1886,7 @@ bzla_proputils_inv_sll(Bzla *bzla,
   ctz_t = bzla_bv_get_num_trailing_zeros(t);
 
   /* ------------------------------------------------------------------------
-   * s << e[1] = t
+   * s << x = t
    *
    * -> identify possible shift value via zero LSB in t
    *    (considering zero LSB in s)
@@ -1893,7 +1895,7 @@ bzla_proputils_inv_sll(Bzla *bzla,
   {
     if (bzla_bv_is_zero(s) && bzla_bv_is_zero(t))
     {
-      /* 0...0 << e[1] = 0...0 -> choose res randomly */
+      /* 0...0 << x = 0...0 -> choose res randomly */
       res = bzla_bv_new_random(mm, &bzla->rng, bw);
     }
     else
@@ -1912,7 +1914,7 @@ bzla_proputils_inv_sll(Bzla *bzla,
       if (bzla_bv_is_zero(t))
       {
         /**
-         * x...x0 << e[1] = 0...0
+         * x...x0 << x = 0...0
          * -> choose random shift <= res < bw
          */
         ones = bzla_bv_ones(mm, bw);
@@ -1936,9 +1938,9 @@ bzla_proputils_inv_sll(Bzla *bzla,
     }
   }
   /* ------------------------------------------------------------------------
-   * e[0] << s = t
+   * x << s = t
    *
-   * -> e[0] = t >> s
+   * -> x = t >> s
    *    set irrelevant MSBs (the ones that get shifted out) randomly
    * ------------------------------------------------------------------------ */
   else
@@ -2012,7 +2014,7 @@ bzla_proputils_inv_srl(Bzla *bzla,
   clz_t = bzla_bv_get_num_leading_zeros(t);
 
   /* ------------------------------------------------------------------------
-   * s >> e[1] = t
+   * s >> x = t
    *
    * -> identify possible shift value via zero MSBs in t
    *    (considering zero MSBs in s)
@@ -2021,7 +2023,7 @@ bzla_proputils_inv_srl(Bzla *bzla,
   {
     if (bzla_bv_is_zero(s) && bzla_bv_is_zero(t))
     {
-      /* 0...0 >> e[1] = 0...0 -> choose random res */
+      /* 0...0 >> x = 0...0 -> choose random res */
       res = bzla_bv_new_random(mm, &bzla->rng, bw);
     }
     else
@@ -2041,7 +2043,7 @@ bzla_proputils_inv_srl(Bzla *bzla,
       if (bzla_bv_is_zero(t))
       {
         /**
-         * x...x0 >> e[1] = 0...0
+         * x...x0 >> x = 0...0
          * -> choose random shift <= res < bw
          */
         ones = bzla_bv_ones(mm, bw);
@@ -2066,9 +2068,9 @@ bzla_proputils_inv_srl(Bzla *bzla,
     }
   }
   /* ------------------------------------------------------------------------
-   * e[0] >> s = t
+   * x >> s = t
    *
-   * -> e[0] = t << s
+   * -> x = t << s
    *    set irrelevant LSBs (the ones that get shifted out) randomly
    * ------------------------------------------------------------------------ */
   else
@@ -2319,18 +2321,18 @@ bzla_proputils_inv_udiv(Bzla *bzla,
   res = 0;
 
   /* ------------------------------------------------------------------------
-   * s / e[1] = t
+   * s / x = t
    *
-   * -> if t = 2^bw - 1: + s = t = 2^bw - 1 -> e[1] = 1 or e[1] = 0
-   *                     + s != t -> e[1] = 0
-   * -> if t = 0 and 0 < s < 2^bw - 1 choose random e[1] > s
-   *             and s = 0            choose random e[1] > 0
+   * -> if t = 2^bw - 1: + s = t = 2^bw - 1 -> x = 1 or x = 0
+   *                     + s != t -> x = 0
+   * -> if t = 0 and 0 < s < 2^bw - 1 choose random x > s
+   *             and s = 0            choose random x > 0
    *             else conflict
    * -> if s < t -> conflict
    * -> if t is a divisor of s choose with 0.5 prob out of
-   *      + e[1] = t / s
-   *      + choose s s.t. s / e[1] = t
-   * -> else choose s s.t. s / e[1] = t
+   *      + x = t / s
+   *      + choose s s.t. s / x = t
+   * -> else choose s s.t. s / x = t
    * ------------------------------------------------------------------------ */
   if (idx_x)
   {
@@ -2339,14 +2341,14 @@ bzla_proputils_inv_udiv(Bzla *bzla,
       if (!bzla_bv_compare(s, t) && bzla_rng_pick_with_prob(&bzla->rng, 500))
       {
         /**
-         * s = t = 2^bw - 1 -> choose either e[1] = 0 or e[1] = 1
+         * s = t = 2^bw - 1 -> choose either x = 0 or x = 1
          * with prob 0.5
          */
         res = bzla_bv_one(mm, bw);
       }
       else
       {
-        /* t = 2^bw - 1 and s != t -> e[1] = 0 */
+        /* t = 2^bw - 1 and s != t -> x = 0 */
         res = bzla_bv_new(mm, bw);
       }
     }
@@ -2354,14 +2356,14 @@ bzla_proputils_inv_udiv(Bzla *bzla,
     {
       if (bzla_bv_is_zero(s))
       {
-        /* t = 0 and s = 0 -> choose random e[1] > 0 */
+        /* t = 0 and s = 0 -> choose random x > 0 */
         res = bzla_bv_new_random_range(mm, rng, bw, one, ones);
       }
       else
       {
         assert(bzla_bv_compare(s, ones)); /* CONFLICT: s = ~0  and t = 0 */
 
-        /* t = 0 and 0 < s < 2^bw - 1 -> choose random e[1] > s */
+        /* t = 0 and 0 < s < 2^bw - 1 -> choose random x > s */
         tmp = bzla_bv_inc(mm, s);
         res = bzla_bv_new_random_range(mm, rng, bw, tmp, ones);
         bzla_bv_free(mm, tmp);
@@ -2372,8 +2374,8 @@ bzla_proputils_inv_udiv(Bzla *bzla,
       assert(bzla_bv_compare(s, t) >= 0); /* CONFLICT: s < t */
 
       /**
-       * if t is a divisor of s, choose e[1] = s / t
-       * with prob = 0.5 and a s s.t. s / e[1] = t otherwise
+       * if t is a divisor of s, choose x = s / t
+       * with prob = 0.5 and a s s.t. s / x = t otherwise
        */
       tmp = bzla_bv_urem(mm, s, t);
       if (bzla_bv_is_zero(tmp) && bzla_rng_pick_with_prob(rng, 500))
@@ -2384,11 +2386,11 @@ bzla_proputils_inv_udiv(Bzla *bzla,
       else
       {
         /**
-         * choose e[1] out of all options that yield s / e[1] = t
+         * choose x out of all options that yield s / x = t
          * Note: udiv always truncates the results towards 0.
          */
 
-        /* determine upper and lower bounds for e[1]:
+        /* determine upper and lower bounds for x:
          * up = s / t
          * lo = s / (t + 1) + 1
          * if lo > up -> conflict */
@@ -2403,7 +2405,7 @@ bzla_proputils_inv_udiv(Bzla *bzla,
 
         assert(bzla_bv_compare(lo, up) <= 0); /* CONFLICT: lo > up */
 
-        /* choose lo <= e[1] <= up */
+        /* choose lo <= x <= up */
         res = bzla_bv_new_random_range(mm, rng, bw, lo, up);
         bzla_bv_free(mm, lo);
         bzla_bv_free(mm, up);
@@ -2412,16 +2414,16 @@ bzla_proputils_inv_udiv(Bzla *bzla,
   }
 
   /* ------------------------------------------------------------------------
-   * e[0] / s = t
+   * x / s = t
    *
-   * -> if t = 2^bw - 1 and s = 1 e[0] = 2^bw-1
-   *                    and s = 0, choose random e[0] > 0
+   * -> if t = 2^bw - 1 and s = 1 x = 2^bw-1
+   *                    and s = 0, choose random x > 0
    *                    and s > 0 -> conflict
    * -> if s = 0 and t < 2^bw - 1 -> conflict
    * -> if s * t does not overflow, choose with 0.5 prob out of
-   *      + e[0] = s * t
-   *      + choose e[0] s.t. e[0] / s = t
-   * -> else choose e[0] s.t. e[0] / s = t
+   *      + x = s * t
+   *      + choose x s.t. x / s = t
+   * -> else choose x s.t. x / s = t
    * ------------------------------------------------------------------------ */
   else
   {
@@ -2429,20 +2431,20 @@ bzla_proputils_inv_udiv(Bzla *bzla,
     {
       if (!bzla_bv_compare(s, one))
       {
-        /* t = 2^bw-1 and s = 1 -> e[0] = 2^bw-1 */
+        /* t = 2^bw-1 and s = 1 -> x = 2^bw-1 */
         res = bzla_bv_copy(mm, ones);
       }
       else
       {
         assert(bzla_bv_is_zero(s)); /* CONFLICT: t = ~0 and s != 0 */
-        /* t = 2^bw - 1 and s = 0 -> choose random e[0] */
+        /* t = 2^bw - 1 and s = 0 -> choose random x */
         res = bzla_bv_new_random(mm, rng, bw);
       }
     }
     else
     {
-      /* if s * t does not overflow, choose e[0] = s * t
-       * with prob = 0.5 and a s s.t. e[0] / s = t otherwise
+      /* if s * t does not overflow, choose x = s * t
+       * with prob = 0.5 and a s s.t. x / s = t otherwise
        * -------------------------------------------------------------------- */
 
       assert(!bzla_bv_is_umulo(mm, s, t)); /* CONFLICT: overflow: s * t */
@@ -2451,12 +2453,12 @@ bzla_proputils_inv_udiv(Bzla *bzla,
       else
       {
         /**
-         * choose e[0] out of all options that yield
-         * e[0] / s = t
+         * choose x out of all options that yield
+         * x / s = t
          * Note: udiv always truncates the results towards 0.
          */
 
-        /* determine upper and lower bounds for e[0]:
+        /* determine upper and lower bounds for x:
          * up = s * (budiv + 1) - 1
          *      if s * (t + 1) does not overflow
          *      else 2^bw - 1
@@ -2537,12 +2539,12 @@ bzla_proputils_inv_urem(Bzla *bzla,
   res = 0;
 
   /* -----------------------------------------------------------------------
-   * s % e[1] = t
+   * s % x = t
    *
-   * -> if t = 1...1 -> s = 1...1 and e[1] = 0...0, else conflict
-   * -> if s = t, choose either e[1] = 0 or some e[1] > t randomly
+   * -> if t = 1...1 -> s = 1...1 and x = 0...0, else conflict
+   * -> if s = t, choose either x = 0 or some x > t randomly
    * -> if t > 0 and t = s - 1, conflict
-   * -> if s > t, e[1] = ((s - t) / n) > t, else conflict
+   * -> if s > t, x = ((s - t) / n) > t, else conflict
    * -> if s < t, conflict
    * ------------------------------------------------------------------------ */
   if (idx_x)
@@ -2552,7 +2554,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
       /* CONFLICT: t = ~0 but s != ~0 */
       assert(!bzla_bv_compare(s, ones));
 
-      /* s % e[1] = ~0 -> s = ~0, e[1] = 0 */
+      /* s % x = ~0 -> s = ~0, x = 0 */
       res = bzla_bv_new(mm, bw);
     }
     else
@@ -2561,12 +2563,12 @@ bzla_proputils_inv_urem(Bzla *bzla,
 
       if (cmp == 0)
       {
-        /* s = t, choose either e[1] = 0 or random e[1] > t
+        /* s = t, choose either x = 0 or random x > t
          * ------------------------------------------------------------------ */
 
         if (bzla_rng_pick_with_prob(&bzla->rng, 250))
         {
-          /* choose e[1] = 0 with prob = 0.25 */
+          /* choose x = 0 with prob = 0.25 */
           res = bzla_bv_new(mm, bw);
         }
         else
@@ -2579,7 +2581,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
       }
       else
       {
-        /* s > t, e[1] = (s - t) / n
+        /* s > t, x = (s - t) / n
          * ------------------------------------------------------------------ */
 
         assert(cmp > 0); /* CONFLICT: s < t */
@@ -2587,7 +2589,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
         if (!bzla_bv_is_zero(t))
         {
           tmp = bzla_bv_dec(mm, s);
-          /* CONFLICT: t = s - 1 -> s % e[1] = s - 1 -> not possible if t > 0 */
+          /* CONFLICT: t = s - 1 -> s % x = s - 1 -> not possible if t > 0 */
           assert(bzla_bv_compare(t, tmp));
           bzla_bv_free(mm, tmp);
         }
@@ -2618,7 +2620,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
           else
           {
             /**
-             * e[1] > t
+             * x > t
              * -> (s - t) / n > t
              * -> (s - t) / t > n
              */
@@ -2687,15 +2689,15 @@ bzla_proputils_inv_urem(Bzla *bzla,
     }
   }
   /* ------------------------------------------------------------------------
-   * e[0] % s = t
+   * x % s = t
    *
-   * -> if s = 0, e[0] = t
+   * -> if s = 0, x = t
    * -> if t = 1...1 and s != 0, conflict
    * -> if s <= t, conflict
    * -> if t > 0 and s = 1, conflict
    * -> else choose either
-   *      - e[0] = t, or
-   *      - e[0] = s * n + b, with n s.t. (s * n + b) does not overflow
+   *      - x = t, or
+   *      - x = s * n + b, with n s.t. (s * n + b) does not overflow
    * ------------------------------------------------------------------------ */
   else
   {
@@ -2704,13 +2706,13 @@ bzla_proputils_inv_urem(Bzla *bzla,
 
     if (bzla_bv_is_zero(s))
     {
-      /* s = 0 -> e[0] = t */
+      /* s = 0 -> x = t */
       res = bzla_bv_copy(mm, t);
     }
     else if (!bzla_bv_compare(t, ones))
     {
       assert(bzla_bv_is_zero(s)); /* CONFLICT: s != 0 */
-      /* t = ~0 -> s = 0, e[0] = ~0 */
+      /* t = ~0 -> s = 0, x = ~0 */
       res = bzla_bv_copy(mm, t);
     }
     else
@@ -2729,7 +2731,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
       else
       {
         /**
-         * e[0] = s * n + t,
+         * x = s * n + t,
          * with n s.t. (s * n + t) does not overflow
          */
         tmp2 = bzla_bv_sub(mm, ones, s);
@@ -2846,9 +2848,9 @@ bzla_proputils_inv_concat(Bzla *bzla,
   res  = 0;
 
   /* ------------------------------------------------------------------------
-   * s o e[1] = t
+   * s o x = t
    *
-   * -> slice e[1] out of the lower bits of t
+   * -> slice x out of the lower bits of t
    * ------------------------------------------------------------------------ */
   if (idx_x)
   {
@@ -2857,9 +2859,9 @@ bzla_proputils_inv_concat(Bzla *bzla,
     res = bzla_bv_slice(mm, t, bw_t - bw_s - 1, 0);
   }
   /* ------------------------------------------------------------------------
-   * e[0] o s = t
+   * x o s = t
    *
-   * -> slice e[0] out of the upper bits of t
+   * -> slice x out of the upper bits of t
    * ------------------------------------------------------------------------ */
   else
   {
