@@ -4624,6 +4624,14 @@ gen_next_bits(BzlaBvDomainGenerator *gen, bool random)
 
   bw  = bzla_bv_get_width(gen->domain->lo);
   res = bzla_bv_copy(gen->mm, gen->domain->lo);
+
+  if (random)
+  {
+    assert(gen->rng);
+    bzla_bv_free(gen->mm, gen->bits);
+    gen->bits = bzla_bv_new_random(gen->mm, gen->rng, bw);
+  }
+
   for (i = 0, j = 0; i < bw; ++i)
   {
     if (!bzla_bvprop_is_fixed_bit(gen->domain, i))
@@ -4632,17 +4640,8 @@ gen_next_bits(BzlaBvDomainGenerator *gen, bool random)
     }
   }
 
-  if (random)
-  {
-    assert(gen->rng);
-    next_bits =
-        bzla_bv_new_random(gen->mm, gen->rng, bzla_bv_get_width(gen->bits));
-  }
-  else
-  {
-    /* bits' = bits + 1 */
-    next_bits = bzla_bv_inc(gen->mm, gen->bits);
-  }
+  /* bits' = bits + 1 */
+  next_bits = bzla_bv_inc(gen->mm, gen->bits);
   bzla_bv_free(gen->mm, gen->bits);
   gen->bits = next_bits;
 

@@ -3233,102 +3233,6 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
 /* INV: ult                                                                   */
 /* -------------------------------------------------------------------------- */
 
-bool
-bzla_proputils_inv_interval_ult(BzlaMemMgr *mm,
-                                BzlaBitVector *t,
-                                BzlaBitVector *s,
-                                int32_t idx_x,
-                                BzlaBvDomain *d_x,
-                                BzlaBitVector **min,
-                                BzlaBitVector **max)
-{
-  assert(mm);
-  assert(t);
-  assert(s);
-  assert(d_x);
-  assert(min);
-  assert(max);
-  // TODO disabled for now, need to rethink inverse value computation with
-  // propagator domains, will probably not need it in the future
-#if 0
-
-  uint32_t bw;
-
-  bw = bzla_bv_get_width (s);
-
-  if (bzla_bv_is_one (t))
-  {
-    if (idx_x)
-    {
-      /**
-       * s < x
-       *
-       * min: lo_x if lo_x > s else s + 1
-       * max: ~0
-       *
-       * conflict: hi_x <= s
-       */
-      assert (!bzla_bv_is_ones (s));
-      if (bzla_bv_compare (d_x->hi, s) <= 0) return false;
-      *max = bzla_bv_ones (mm, bw);
-      *min = bzla_bv_compare (d_x->lo, s) > 0 ? bzla_bv_copy (mm, d_x->lo)
-                                              : bzla_bv_inc (mm, s);
-    }
-    else
-    {
-      /**
-       * x < s
-       *
-       * min: 0
-       * max: hi_x if hi_x < s else s - 1
-       *
-       * conflict: lo_x >= s
-       */
-      assert (!bzla_bv_is_zero (s));
-      if (bzla_bv_compare (d_x->lo, s) >= 0) return false;
-      *min = bzla_bv_zero (mm, bw);
-      *max = bzla_bv_compare (d_x->hi, s) < 0 ? bzla_bv_copy (mm, d_x->hi)
-                                              : bzla_bv_dec (mm, s);
-    }
-  }
-  else
-  {
-    if (idx_x)
-    {
-      /* s >= x
-       *
-       * min: 0
-       * max: hi_x if hi_x <= s else s
-       *
-       * conflict: lo_x > s
-       */
-      if (bzla_bv_compare (d_x->lo, s) > 0) return false;
-      *min = bzla_bv_zero (mm, bw);
-      *max = bzla_bv_compare (d_x->hi, s) <= 0 ? bzla_bv_copy (mm, d_x->hi)
-                                               : bzla_bv_copy (mm, s);
-    }
-    else
-    {
-      /* x >= s
-       *
-       * min: lo_x if lo_x >= s else s
-       * max: ~0
-       *
-       * conflict: hi_x < s
-       */
-      if (bzla_bv_compare (d_x->hi, s) < 0) return false;
-      *min = bzla_bv_compare (d_x->lo, s) >= 0 ? bzla_bv_copy (mm, d_x->lo)
-                                               : bzla_bv_copy (mm, s);
-      *max = bzla_bv_ones (mm, bw);
-    }
-  }
-  return true;
-#else
-  (void) idx_x;
-  return 0;
-#endif
-}
-
 BzlaBitVector *
 bzla_proputils_inv_ult_const(Bzla *bzla,
                              BzlaNode *ult,
@@ -3337,8 +3241,90 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
                              int32_t idx_x,
                              BzlaIntHashTable *domains)
 {
-  // TODO
-  return bzla_proputils_inv_ult(bzla, ult, t, s, idx_x, domains);
+  assert(domains);
+  assert(bzla_node_is_regular(ult));
+  assert(!bzla_hashint_map_contains(domains, ult->id)
+         || bzla_hashint_map_contains(domains,
+                                      bzla_node_real_addr(ult->e[idx_x])->id));
+#ifndef NDEBUG
+  check_inv_dbg(bzla,
+                ult,
+                t,
+                s,
+                idx_x,
+                domains,
+                bzla_is_inv_ult,
+                bzla_is_inv_ult_const,
+                false);
+#endif
+  bool isult;
+  uint32_t bw;
+  BzlaBitVector *res, *zero, *one, *ones, *tmp;
+  BzlaMemMgr *mm;
+  BzlaBvDomain *x;
+  BzlaBvDomainGenerator gen;
+
+  (void) ult;
+  (void) domains;
+
+  mm = bzla->mm;
+
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
+
+  bw    = bzla_bv_get_width(s);
+  zero  = bzla_bv_new(mm, bw);
+  one   = bzla_bv_one(mm, bw);
+  ones  = bzla_bv_ones(mm, bw);
+  isult = !bzla_bv_is_zero(t);
+
+  x = bzla_hashint_map_get(domains, bzla_node_real_addr(ult->e[idx_x])->id)
+          ->as_ptr;
+
+  res = 0;
+
+  if (idx_x)
+  {
+    /* s < x = t ---------------------------------------------------------- */
+    if (!isult)
+    {
+      /* s >= x */
+      bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, zero, s);
+    }
+    else
+    {
+      /* s < x */
+      tmp = bzla_bv_add(mm, s, one);
+      bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, tmp, ones);
+      bzla_bv_free(mm, tmp);
+    }
+  }
+  else
+  {
+    /* x < s = t ---------------------------------------------------------- */
+    if (!isult)
+    {
+      /* x >= s */
+      bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, s, ones);
+    }
+    else
+    {
+      /* x < s */
+      tmp = bzla_bv_sub(mm, s, one);
+      bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
+      bzla_bv_free(mm, tmp);
+    }
+  }
+  assert(bzla_bvprop_gen_has_next(&gen));
+  res = bzla_bv_copy(bzla->mm, bzla_bvprop_gen_random(&gen));
+
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_ult, ult, s, t, res, idx_x, "<");
+#endif
+  bzla_bvprop_gen_delete(&gen);
+  bzla_bv_free(mm, zero);
+  bzla_bv_free(mm, one);
+  bzla_bv_free(mm, ones);
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */

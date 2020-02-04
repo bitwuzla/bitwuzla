@@ -176,7 +176,8 @@ class TestProp : public TestBzla
         bzla_bv_free(d_mm, res[idx_x]);
         res[idx_x] = nullptr;
       }
-      ASSERT_NE(res[idx_x], nullptr);
+      // ASSERT_NE (res[idx_x], nullptr);
+      assert(res[idx_x] != nullptr);
       ASSERT_EQ(bzla_bv_compare(res[idx_x], x), 0);
       bzla_bv_free(d_mm, res[idx_x]);
     }
@@ -385,92 +386,6 @@ class TestPropConst : public TestProp
   }
 };
 
-/*------------------------------------------------------------------------*/
-
-// TODO disabled for now, need to rethink inverse value computation with
-// propagator domains, will probably not need it in the future
-#if 0
-TEST_F (TestProp, inv_interval_ult)
-{
-  bool res;
-  BzlaBitVector *s, *t, *min, *max, *tmp_t, *tmp_x;
-  uint32_t bw_t = 1, bw_s = 3;
-  uint64_t umin, umax;
-
-  for (uint32_t i = 0; i < 3; ++i)
-  {
-    for (uint32_t j = 0; j < 3; ++j)
-    {
-      for (uint32_t k = 0; k < 3; ++k)
-      {
-        std::stringstream ss;
-        ss << (i == 0 ? '0' : (i == 1 ? '1' : 'x'))
-           << (j == 0 ? '0' : (j == 1 ? '1' : 'x'))
-           << (k == 0 ? '0' : (k == 1 ? '1' : 'x'));
-        d_domains.push_back (
-            bzla_bvprop_new_from_char (d_mm, ss.str ().c_str ()));
-      }
-    }
-  }
-
-  for (uint32_t i = 0; i < (uint32_t) (1 << bw_t); i++)
-  {
-    t = bzla_bv_uint64_to_bv (d_mm, i, bw_t);
-    for (uint32_t j = 0; j < (uint32_t) (1 << bw_s); j++)
-    {
-      s = bzla_bv_uint64_to_bv (d_mm, i, bw_s);
-      for (BzlaBvDomain *d : d_domains)
-      {
-        for (uint32_t idx = 0; idx < 2; ++idx)
-        {
-          res =
-              bzla_proputils_inv_interval_ult (d_mm, t, s, idx, d, &min, &max);
-          if (res)
-          {
-            /* all values in interval must produce t */
-            umin = bzla_bv_to_uint64 (min);
-            umax = bzla_bv_to_uint64 (max);
-            for (uint32_t k = umin; k <= umax; ++k)
-            {
-              tmp_x = bzla_bv_uint64_to_bv (d_mm, k, bw_s);
-              tmp_t = idx ? bzla_bv_ult (d_mm, s, tmp_x)
-                          : bzla_bv_ult (d_mm, tmp_x, s);
-              ASSERT_EQ (bzla_bv_compare (tmp_t, t), 0);
-              bzla_bv_free (d_mm, tmp_x);
-              bzla_bv_free (d_mm, tmp_t);
-            }
-            bzla_bv_free (d_mm, min);
-            bzla_bv_free (d_mm, max);
-          }
-          else
-          {
-            /* either x->hi or x->lo already do not produce t */
-            bool conflict;
-            tmp_t = idx ? bzla_bv_ult (d_mm, s, d->lo)
-                        : bzla_bv_ult (d_mm, d->lo, s);
-            conflict = bzla_bv_compare (tmp_t, t) != 0;
-            bzla_bv_free (d_mm, tmp_t);
-            tmp_t = idx ? bzla_bv_ult (d_mm, s, d->hi)
-                        : bzla_bv_ult (d_mm, d->hi, s);
-            conflict = conflict || (bzla_bv_compare (tmp_t, t) != 0);
-            bzla_bv_free (d_mm, tmp_t);
-            ASSERT_TRUE (conflict);
-          }
-        }
-      }
-      bzla_bv_free (d_mm, s);
-    }
-    bzla_bv_free (d_mm, t);
-  }
-
-  while (!d_domains.empty ())
-  {
-    bzla_bvprop_free (d_mm, d_domains.back ());
-    d_domains.pop_back ();
-  }
-}
-#endif
-
 /* ========================================================================== */
 /* one_complete:                                                              */
 /* Test if it is possible to find a solution with one propagation step.       */
@@ -580,16 +495,16 @@ TEST_F(TestPropConst, one_complete_eq_const)
                        bzla_proputils_inv_eq_const);
 }
 
-#if 0
-TEST_F (TestPropConst, one_complete_ult_const)
+TEST_F(TestPropConst, one_complete_ult_const)
 {
-  prop_complete_binary (1,
-                        bzla_exp_bv_ult,
-                        bzla_bv_ult,
-                        bzla_is_inv_ult,
-                        bzla_proputils_inv_ult_const);
+  prop_complete_binary(1,
+                       bzla_exp_bv_ult,
+                       bzla_bv_ult,
+                       bzla_is_inv_ult_const,
+                       bzla_proputils_inv_ult_const);
 }
 
+#if 0
 TEST_F (TestPropConst, one_complete_sll_const)
 {
   prop_complete_binary (1,
@@ -853,8 +768,10 @@ TEST_F (TestPropConst, complete_eq_const)
 
 TEST_F (TestPropConst, complete_ult_const)
 {
-  prop_complete_binary (
-      2, bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, bzla_proputils_inv_ult);
+  prop_complete_binary (2,
+                        bzla_exp_bv_ult,
+                        bzla_bv_ult, bzla_is_inv_ult_const,
+                        bzla_proputils_inv_ult_const);
 }
 
 TEST_F (TestPropConst, complete_sll_const)

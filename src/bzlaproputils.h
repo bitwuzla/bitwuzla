@@ -441,32 +441,6 @@ BzlaBitVector* bzla_proputils_inv_cond(Bzla* bzla,
                                        BzlaIntHashTable* domains);
 
 /*------------------------------------------------------------------------*/
-/* Inverse value interval computation wrt const bits (propagator domain).  */
-/*------------------------------------------------------------------------*/
-
-/**
- * Determine value interval for x with respect to constant bits for ult.
- * Returns true if there exists a valid value interval for 'x'.
- *
- * Note: Resulting bit-vectors min and max must be released if a valid interval
- *       exists (and don't have to be released otherwise).
- *
- * t    : target value for ult (the 'output' value)
- * s    : (fixed) value of the other operand
- * idx_x: the index of 'x', the operand we determine the value for
- * d_x  : the 3-valued domain representing fixed and undetermined bits of 'x'
- * min  : the minimum of the resulting interval (inclusive)
- * max  : the maximum of the resulting interval (inclusive)
- */
-bool bzla_proputils_inv_interval_ult(BzlaMemMgr* mm,
-                                     BzlaBitVector* t,
-                                     BzlaBitVector* s,
-                                     int32_t idx_x,
-                                     BzlaBvDomain* d_x,
-                                     BzlaBitVector** min,
-                                     BzlaBitVector** max);
-
-/*------------------------------------------------------------------------*/
 /* Inverse value computation functions using propagator domains.          */
 /*------------------------------------------------------------------------*/
 

@@ -62,6 +62,17 @@ class TestBvPropGen : public TestBvDomain
                   expected.end());
         results.insert(as_str);
         bzla_mem_freestr(d_mm, as_str);
+        /* test that call to has_next in between */
+        if (bzla_bvprop_gen_has_next(&gen)
+            && bzla_rng_pick_with_prob(&d_rng, 500))
+        {
+          res    = bzla_bvprop_gen_next(&gen);
+          as_str = bzla_bv_to_char(d_mm, res);
+          ASSERT_NE(std::find(expected.begin(), expected.end(), as_str),
+                    expected.end());
+          results.insert(as_str);
+          bzla_mem_freestr(d_mm, as_str);
+        }
       }
     }
     else
@@ -345,7 +356,16 @@ TEST_F(TestBvPropGen, next_xx1_rand)
   test_next("xx1", 0, 0, {"001", "011", "101", "111"}, true);
 }
 
-TEST_F(TestBvPropGen, next_xxx_rand)
+TEST_F(TestBvPropGen, next_xxx_1_rand)
+{
+  test_next("xxx",
+            "000",
+            "111",
+            {"000", "001", "010", "011", "100", "101", "110", "111"},
+            true);
+}
+
+TEST_F(TestBvPropGen, next_xxx_2_rand)
 {
   test_next("xxx",
             0,
