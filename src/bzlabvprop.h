@@ -51,6 +51,12 @@ void bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d);
 /** Copy bit-vector domain 'd'. */
 BzlaBvDomain *bzla_bvprop_copy(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
+/**
+ * Compare two bit-vector domains.
+ * Returns true if they are equal, and false otherwise.
+ */
+bool bzla_bvprop_is_equal(const BzlaBvDomain *a, const BzlaBvDomain *b);
+
 /*----------------------------------------------------------------------------*/
 
 /** Get the width of the given domain.  */

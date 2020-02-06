@@ -75,16 +75,17 @@ class TestPropInv : public TestBzla
    * as inverse value, i.e., we essentially reverse the inverse value
    * computation with respect to the operands.
    *
-   * is_inv : The function to test if given operator is invertible with
-   *          respect to s and t.
-   * inv_fun: The function to compute the inverse value for x given s and t.
-   * exp    : The node representing the operation.
-   * s      : The assignment of the other operand.
-   * t      : The assignment of the output (the target value of the operation).
-   * x_bv   : The expected assignment of the operand we solve for.
-   * idx_x  : The index of operand 'x'.
+   * is_inv_fun: The function to test if given operator is invertible with
+   *             respect to s and t.
+   * inv_fun   : The function to compute the inverse value for x given s and t.
+   * exp       : The node representing the operation.
+   * s         : The assignment of the other operand.
+   * t         : The assignment of the output (the target value of the
+   *             operation).
+   * x_bv      : The expected assignment of the operand we solve for.
+   * idx_x     : The index of operand 'x'.
    */
-  void check_result(BzlaPropIsInv is_inv,
+  void check_result(BzlaPropIsInv is_inv_fun,
                     BzlaPropComputeValue inv_fun,
                     BzlaNode *exp,
                     BzlaBitVector *s,
@@ -92,7 +93,7 @@ class TestPropInv : public TestBzla
                     BzlaBitVector *x_bv,
                     uint32_t idx_x)
   {
-    assert(is_inv);
+    assert(is_inv_fun);
     assert(inv_fun);
     assert(exp);
     assert(bzla_node_is_regular(exp));
@@ -102,15 +103,18 @@ class TestPropInv : public TestBzla
     assert(d_domains);
 
     uint64_t k;
+    bool is_inv;
     BzlaBitVector *res;
-    BzlaBvDomain *x = 0;
-    (void) is_inv;
+    BzlaBvDomain *x = 0, *d_res_x;
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
-      assert(is_inv(d_mm, x, t, s, idx_x));
-      res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains);
+      d_res_x = 0;
+      is_inv  = is_inv_fun(d_mm, x, t, s, idx_x, &d_res_x);
+      assert(is_inv);
+      res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
       ASSERT_NE(res, nullptr);
+      if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
       res = 0;
@@ -125,19 +129,19 @@ class TestPropInv : public TestBzla
    * for the first operand produces value s0, and the inverse value computation
    * for the second operand produces value s1.
    *
-   * exp_fun      : The function to create the node representing operation <>.
-   * bv_fun       : The function to create the bit-vector result of operation
-   *                s0 <> s1.
-   * is_inv       : The function to test if given operator is invertible with
-   *                respect to s and t.
-   * inv_fun      : The function to compute the inverse value for x given s
+   * exp_fun   : The function to create the node representing operation <>.
+   * bv_fun    : The function to create the bit-vector result of operation
+   *             s0 <> s1.
+   * is_inv_fun: The function to test if given operator is invertible with
+   *             respect to s and t.
+   * inv_fun   : The function to compute the inverse value for x given s
    *                and t.
    */
   void check_binary(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              const BzlaBitVector *),
-                    BzlaPropIsInv is_inv,
+                    BzlaPropIsInv is_inv_fun,
                     BzlaPropComputeValue inv_fun)
   {
     uint32_t bw;
@@ -160,8 +164,8 @@ class TestPropInv : public TestBzla
       {
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         t    = bv_fun(d_mm, s[0], s[1]);
-        check_result(is_inv, inv_fun, exp, s[0], t, s[1], 1);
-        check_result(is_inv, inv_fun, exp, s[1], t, s[0], 0);
+        check_result(is_inv_fun, inv_fun, exp, s[0], t, s[1], 1);
+        check_result(is_inv_fun, inv_fun, exp, s[1], t, s[0], 0);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
       }
@@ -180,7 +184,7 @@ class TestPropInv : public TestBzla
    * exp_fun      : The function to create the node representing operation <>.
    * bv_fun       : The function to create the bit-vector result of operation
    *                s0 <> s1.
-   * is_inv       : The function to test if given operator is invertible with
+   * is_inv_fun   : The function to test if given operator is invertible with
    *                respect to s and t.
    * inv_fun      : The function to compute the inverse value for x given s
    *                and t.
@@ -191,7 +195,7 @@ class TestPropInv : public TestBzla
                    BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                             const BzlaBitVector *,
                                             const BzlaBitVector *),
-                   BzlaPropIsInv is_inv,
+                   BzlaPropIsInv is_inv_fun,
                    BzlaPropComputeValue inv_fun_bv)
   {
     uint32_t bw;
@@ -214,8 +218,8 @@ class TestPropInv : public TestBzla
       {
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         x    = bv_fun(d_mm, s[0], s[1]);
-        check_result(is_inv, inv_fun_bv, exp, s[0], x, s[1], 1);
-        check_result(is_inv, inv_fun_bv, exp, s[1], x, s[0], 0);
+        check_result(is_inv_fun, inv_fun_bv, exp, s[0], x, s[1], 1);
+        check_result(is_inv_fun, inv_fun_bv, exp, s[1], x, s[0], 0);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, x);
       }
@@ -282,20 +286,20 @@ class TestPropInv : public TestBzla
         {
         PROP_INV_CONF_AND_TESTS:
           /* prop engine: all conflicts are treated as fixable */
-          inv = bzla_is_inv_and(d_mm, x0, bvand, s[1], 0);
-          res = inv ? inv_fun(d_bzla, _and, bvand, s[1], 0, d_domains)
+          inv = bzla_is_inv_and(d_mm, x0, bvand, s[1], 0, 0);
+          res = inv ? inv_fun(d_bzla, _and, bvand, s[1], 0, d_domains, 0)
                     : bzla_proputils_cons_and(
-                        d_bzla, _and, bvand, s[1], 0, d_domains);
+                        d_bzla, _and, bvand, s[1], 0, d_domains, 0);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          inv = bzla_is_inv_and(d_mm, x0, bvand, s[1], 0);
-          res = inv ? inv_fun(d_bzla, cand[1], bvand, s[1], 0, d_domains)
+          inv = bzla_is_inv_and(d_mm, x0, bvand, s[1], 0, 0);
+          res = inv ? inv_fun(d_bzla, cand[1], bvand, s[1], 0, d_domains, 0)
                     : bzla_proputils_cons_and(
-                        d_bzla, cand[1], bvand, s[1], 0, d_domains);
+                        d_bzla, cand[1], bvand, s[1], 0, d_domains, 0);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
@@ -303,20 +307,20 @@ class TestPropInv : public TestBzla
           bzla_bv_free(d_mm, tmp2);
 
           /* idx_x = 0 */
-          inv = bzla_is_inv_and(d_mm, x1, bvand, s[0], 1);
-          res = inv ? inv_fun(d_bzla, _and, bvand, s[0], 1, d_domains)
+          inv = bzla_is_inv_and(d_mm, x1, bvand, s[0], 1, 0);
+          res = inv ? inv_fun(d_bzla, _and, bvand, s[0], 1, d_domains, 0)
                     : bzla_proputils_cons_and(
-                        d_bzla, _and, bvand, s[0], 1, d_domains);
+                        d_bzla, _and, bvand, s[0], 1, d_domains, 0);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          inv = bzla_is_inv_and(d_mm, x1, bvand, s[0], 1);
-          res = inv ? inv_fun(d_bzla, cand[0], bvand, s[0], 1, d_domains)
+          inv = bzla_is_inv_and(d_mm, x1, bvand, s[0], 1, 0);
+          res = inv ? inv_fun(d_bzla, cand[0], bvand, s[0], 1, d_domains, 0)
                     : bzla_proputils_cons_and(
-                        d_bzla, cand[0], bvand, s[0], 1, d_domains);
+                        d_bzla, cand[0], bvand, s[0], 1, d_domains, 0);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, bvand, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
@@ -402,17 +406,18 @@ class TestPropInv : public TestBzla
   PROP_INV_CONF_ULT_TESTS:
     /* 1...1 < e[1] */
     s   = bzla_bv_ones(d_mm, bw);
-    inv = bzla_is_inv_ult(d_mm, x1, bvult, s, 1);
-    res = inv ? inv_fun(d_bzla, ult, bvult, s, 1, d_domains)
-              : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 1, d_domains);
+    inv = bzla_is_inv_ult(d_mm, x1, bvult, s, 1, 0);
+    res = inv ? inv_fun(d_bzla, ult, bvult, s, 1, d_domains, 0)
+              : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 1, d_domains, 0);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
     ce   = bzla_exp_bv_const(d_bzla, s);
     cult = bzla_exp_bv_ult(d_bzla, ce, e[1]);
-    inv  = bzla_is_inv_ult(d_mm, x1, bvult, s, 1);
-    res  = inv ? inv_fun(d_bzla, cult, bvult, s, 1, d_domains)
-              : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 1, d_domains);
+    inv  = bzla_is_inv_ult(d_mm, x1, bvult, s, 1, 0);
+    res =
+        inv ? inv_fun(d_bzla, cult, bvult, s, 1, d_domains, 0)
+            : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 1, d_domains, 0);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
@@ -421,17 +426,18 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, s);
     /* e[0] < 0 */
     s   = bzla_bv_new(d_mm, bw);
-    inv = bzla_is_inv_ult(d_mm, x0, bvult, s, 0);
-    res = inv ? inv_fun(d_bzla, ult, bvult, s, 0, d_domains)
-              : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 0, d_domains);
+    inv = bzla_is_inv_ult(d_mm, x0, bvult, s, 0, 0);
+    res = inv ? inv_fun(d_bzla, ult, bvult, s, 0, d_domains, 0)
+              : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 0, d_domains, 0);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
     ce   = bzla_exp_bv_const(d_bzla, s);
     cult = bzla_exp_bv_ult(d_bzla, e[0], ce);
-    inv  = bzla_is_inv_ult(d_mm, x0, bvult, s, 0);
-    res  = inv ? inv_fun(d_bzla, cult, bvult, s, 0, d_domains)
-              : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 0, d_domains);
+    inv  = bzla_is_inv_ult(d_mm, x0, bvult, s, 0, 0);
+    res =
+        inv ? inv_fun(d_bzla, cult, bvult, s, 0, d_domains, 0)
+            : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 0, d_domains, 0);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
@@ -1039,17 +1045,17 @@ class TestPropInv : public TestBzla
       s     = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
-      res =
-          inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains)
-              : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 1, d_domains);
+      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains, 0)
+                : bzla_proputils_cons_urem(
+                    d_bzla, urem, bvurem, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains)
+      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains, 0)
                 : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, s, 1, d_domains);
+                    d_bzla, curem, bvurem, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
@@ -1070,16 +1076,16 @@ class TestPropInv : public TestBzla
       bzla_bv_free(d_mm, tmp);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
-      res =
-          inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains)
-              : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 1, d_domains);
+      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains, 0)
+                : bzla_proputils_cons_urem(
+                    d_bzla, urem, bvurem, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains)
+      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains, 0)
                 : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, s, 1, d_domains);
+                    d_bzla, curem, bvurem, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
@@ -1103,16 +1109,16 @@ class TestPropInv : public TestBzla
       bzla_bv_free(d_mm, tmp2);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
-      res =
-          inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains)
-              : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 1, d_domains);
+      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains, 0)
+                : bzla_proputils_cons_urem(
+                    d_bzla, urem, bvurem, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains)
+      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains, 0)
                 : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, s, 1, d_domains);
+                    d_bzla, curem, bvurem, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
@@ -1131,17 +1137,17 @@ class TestPropInv : public TestBzla
       s     = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      inv   = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0);
-      res =
-          inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains)
-              : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 0, d_domains);
+      inv   = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0, 0);
+      res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains, 0)
+                : bzla_proputils_cons_urem(
+                    d_bzla, urem, bvurem, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_EQ(bzla_bv_compare(res, bvurem), 0);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains)
+      inv = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0, 0);
+      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains, 0)
                 : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, s, 0, d_domains);
+                    d_bzla, curem, bvurem, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_EQ(bzla_bv_compare(res, bvurem), 0);
       bzla_bv_free(d_mm, res);
@@ -1159,16 +1165,16 @@ class TestPropInv : public TestBzla
       s      = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvurem);
       ce     = bzla_exp_bv_const(d_bzla, s);
       curem  = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      inv    = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0);
-      res =
-          inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains)
-              : bzla_proputils_cons_urem(d_bzla, urem, bvurem, s, 0, d_domains);
+      inv    = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0, 0);
+      res    = inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains, 0)
+                : bzla_proputils_cons_urem(
+                    d_bzla, urem, bvurem, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains)
+      inv = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0, 0);
+      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains, 0)
                 : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, s, 0, d_domains);
+                    d_bzla, curem, bvurem, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, curem);
@@ -1275,27 +1281,31 @@ class TestPropInv : public TestBzla
       cconcat[1] = bzla_exp_bv_concat(d_bzla, e[0], ce[1]);
       for (j = 0; j < 2; j++)
       {
-        inv = bzla_is_inv_concat(d_mm, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j);
-        res =
-            inv ? inv_fun(d_bzla, concat, bvconcat, s[j ? 0 : 1], j, d_domains)
-                : bzla_proputils_cons_concat(
-                    d_bzla, concat, bvconcat, s[j ? 0 : 1], j, d_domains);
+        inv =
+            bzla_is_inv_concat(d_mm, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j, 0);
+        res = inv ? inv_fun(
+                  d_bzla, concat, bvconcat, s[j ? 0 : 1], j, d_domains, 0)
+                  : bzla_proputils_cons_concat(
+                      d_bzla, concat, bvconcat, s[j ? 0 : 1], j, d_domains, 0);
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
-        inv = bzla_is_inv_concat(d_mm, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j);
+        inv =
+            bzla_is_inv_concat(d_mm, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j, 0);
         res = inv ? inv_fun(d_bzla,
                             cconcat[j ? 0 : 1],
                             bvconcat,
                             s[j ? 0 : 1],
                             j,
-                            d_domains)
+                            d_domains,
+                            0)
                   : bzla_proputils_cons_concat(d_bzla,
                                                cconcat[j ? 0 : 1],
                                                bvconcat,
                                                s[j ? 0 : 1],
                                                j,
-                                               d_domains);
+                                               d_domains,
+                                               0);
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
@@ -1354,13 +1364,15 @@ class TestPropInv : public TestBzla
     bool inv;
     BzlaNode *cmul[2], *ce[2];
     BzlaBitVector *res;
-    BzlaBvDomain *x0 = 0, *x1 = 0;
+    BzlaBvDomain *x0 = 0, *x1 = 0, *d_res_x;
+    BzlaPropIsInv is_inv_fun     = bzla_is_inv_mul;
     BzlaPropComputeValue inv_fun = bzla_proputils_inv_mul;
 
     if (use_domains)
     {
       assert(d_domains);
-      inv_fun = bzla_proputils_inv_mul_const;
+      is_inv_fun = bzla_is_inv_mul_const;
+      inv_fun    = bzla_proputils_inv_mul_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, mul);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(mul->e[0])->id)
@@ -1375,35 +1387,47 @@ class TestPropInv : public TestBzla
     cmul[0] = bzla_exp_bv_mul(d_bzla, ce[0], mul->e[1]);
     cmul[1] = bzla_exp_bv_mul(d_bzla, mul->e[0], ce[1]);
 
-    inv = bzla_is_inv_mul(d_mm, x0, t, s, 0);
-    res = inv ? inv_fun(d_bzla, mul, t, s, 0, d_domains)
-              : bzla_proputils_cons_mul(d_bzla, mul, t, s, 0, d_domains);
+    d_res_x = 0;
+    inv     = is_inv_fun(d_mm, x0, t, s, 0, &d_res_x);
+    res =
+        inv ? inv_fun(d_bzla, mul, t, s, 0, d_domains, d_res_x)
+            : bzla_proputils_cons_mul(d_bzla, mul, t, s, 0, d_domains, d_res_x);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    inv = bzla_is_inv_mul(d_mm, x0, t, s, 0);
-    res = inv ? inv_fun(d_bzla, cmul[1], t, s, 0, d_domains)
-              : bzla_proputils_cons_mul(d_bzla, cmul[1], t, s, 0, d_domains);
+    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    d_res_x = 0;
+    inv     = is_inv_fun(d_mm, x0, t, s, 0, &d_res_x);
+    res     = inv ? inv_fun(d_bzla, cmul[1], t, s, 0, d_domains, d_res_x)
+              : bzla_proputils_cons_mul(
+                  d_bzla, cmul[1], t, s, 0, d_domains, d_res_x);
     ASSERT_NE(res, nullptr);
+    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
     if (bzla_bv_get_bit(t, 0))
     {
       ASSERT_EQ(bzla_bv_get_bit(res, 0), 1u);
     }
     bzla_bv_free(d_mm, res);
 
-    inv = bzla_is_inv_mul(d_mm, x1, t, s, 1);
-    res = inv ? inv_fun(d_bzla, mul, t, s, 1, d_domains)
-              : bzla_proputils_cons_mul(d_bzla, mul, t, s, 1, d_domains);
+    d_res_x = 0;
+    inv     = is_inv_fun(d_mm, x1, t, s, 1, &d_res_x);
+    res =
+        inv ? inv_fun(d_bzla, mul, t, s, 1, d_domains, d_res_x)
+            : bzla_proputils_cons_mul(d_bzla, mul, t, s, 1, d_domains, d_res_x);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    inv = bzla_is_inv_mul(d_mm, x1, t, s, 1);
-    res = inv ? inv_fun(d_bzla, cmul[0], t, s, 1, d_domains)
-              : bzla_proputils_cons_mul(d_bzla, cmul[0], t, s, 1, d_domains);
+    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    d_res_x = 0;
+    inv     = is_inv_fun(d_mm, x1, t, s, 1, &d_res_x);
+    res     = inv ? inv_fun(d_bzla, cmul[0], t, s, 1, d_domains, d_res_x)
+              : bzla_proputils_cons_mul(
+                  d_bzla, cmul[0], t, s, 1, d_domains, d_res_x);
     ASSERT_NE(res, nullptr);
     if (bzla_bv_get_bit(t, 0))
     {
       ASSERT_EQ(bzla_bv_get_bit(res, 0), 1u);
     }
     bzla_bv_free(d_mm, res);
+    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
 
     clear_domains();
 
@@ -1452,15 +1476,16 @@ class TestPropInv : public TestBzla
     {
       ce    = bzla_exp_bv_const(d_bzla, s);
       cudiv = bzla_exp_bv_udiv(d_bzla, ce, udiv->e[1]);
-      inv   = bzla_is_inv_udiv(d_mm, x1, t, s, 1);
-      res   = inv ? inv_fun(d_bzla, udiv, t, s, 1, d_domains)
-                : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 1, d_domains);
+      inv   = bzla_is_inv_udiv(d_mm, x1, t, s, 1, 0);
+      res   = inv ? inv_fun(d_bzla, udiv, t, s, 1, d_domains, 0)
+                : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, t));
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_udiv(d_mm, x1, t, s, 1);
-      res = inv ? inv_fun(d_bzla, cudiv, t, s, 1, d_domains)
-                : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 1, d_domains);
+      inv = bzla_is_inv_udiv(d_mm, x1, t, s, 1, 0);
+      res =
+          inv ? inv_fun(d_bzla, cudiv, t, s, 1, d_domains, 0)
+              : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, t));
       bzla_bv_free(d_mm, res);
@@ -1471,14 +1496,15 @@ class TestPropInv : public TestBzla
     {
       ce    = bzla_exp_bv_const(d_bzla, s);
       cudiv = bzla_exp_bv_udiv(d_bzla, udiv->e[0], ce);
-      inv   = bzla_is_inv_udiv(d_mm, x0, t, s, 0);
-      res   = inv ? inv_fun(d_bzla, udiv, t, s, 0, d_domains)
-                : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 0, d_domains);
+      inv   = bzla_is_inv_udiv(d_mm, x0, t, s, 0, 0);
+      res   = inv ? inv_fun(d_bzla, udiv, t, s, 0, d_domains, 0)
+                : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_udiv(d_mm, x0, t, s, 0);
-      res = inv ? inv_fun(d_bzla, cudiv, t, s, 0, d_domains)
-                : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 0, d_domains);
+      inv = bzla_is_inv_udiv(d_mm, x0, t, s, 0, 0);
+      res =
+          inv ? inv_fun(d_bzla, cudiv, t, s, 0, d_domains, 0)
+              : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       bzla_node_release(d_bzla, cudiv);
@@ -1556,15 +1582,15 @@ class TestPropInv : public TestBzla
     if (idx_x)
     {
       cshift = exp_fun(d_bzla, ce, shift->e[1]);
-      inv    = is_inv_fun(d_mm, x1, t, s, 1);
-      res    = inv ? inv_fun(d_bzla, shift, t, s, 1, d_domains)
-                : cons_fun(d_bzla, shift, t, s, 1, d_domains);
+      inv    = is_inv_fun(d_mm, x1, t, s, 1, 0);
+      res    = inv ? inv_fun(d_bzla, shift, t, s, 1, d_domains, 0)
+                : cons_fun(d_bzla, shift, t, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
-      inv = is_inv_fun(d_mm, x1, t, s, 1);
-      res = inv ? inv_fun(d_bzla, cshift, t, s, 1, d_domains)
-                : cons_fun(d_bzla, cshift, t, s, 1, d_domains);
+      inv = is_inv_fun(d_mm, x1, t, s, 1, 0);
+      res = inv ? inv_fun(d_bzla, cshift, t, s, 1, d_domains, 0)
+                : cons_fun(d_bzla, cshift, t, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
@@ -1572,14 +1598,14 @@ class TestPropInv : public TestBzla
     else
     {
       cshift = exp_fun(d_bzla, shift->e[0], ce);
-      inv    = is_inv_fun(d_mm, x0, t, s, 0);
-      res    = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains)
-                : cons_fun(d_bzla, shift, t, s, 0, d_domains);
+      inv    = is_inv_fun(d_mm, x0, t, s, 0, 0);
+      res    = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains, 0)
+                : cons_fun(d_bzla, shift, t, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = is_inv_fun(d_mm, x0, t, s, 0);
-      res = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains)
-                : cons_fun(d_bzla, shift, t, s, 0, d_domains);
+      inv = is_inv_fun(d_mm, x0, t, s, 0, 0);
+      res = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains, 0)
+                : cons_fun(d_bzla, shift, t, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
     }
@@ -1604,7 +1630,7 @@ class TestPropInvConst : public TestPropInv
   }
 
   /** Helper for check_result_aux. */
-  void check_result_n_tests(BzlaPropIsInv is_inv,
+  void check_result_n_tests(BzlaPropIsInv is_inv_fun,
                             BzlaPropComputeValue inv_fun,
                             BzlaNode *exp,
                             BzlaBitVector *s,
@@ -1613,7 +1639,9 @@ class TestPropInvConst : public TestPropInv
                             uint32_t idx_x)
   {
     uint64_t k;
+    bool is_inv;
     BzlaBitVector *res;
+    BzlaBvDomain *d_res_x;
 
     assert(bzla_hashint_map_contains(d_domains,
                                      bzla_node_real_addr(exp->e[idx_x])->id));
@@ -1623,8 +1651,11 @@ class TestPropInvConst : public TestPropInv
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
-      assert(is_inv(d_mm, x, t, s, idx_x));
-      res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains);
+      d_res_x = 0;
+      is_inv  = is_inv_fun(d_mm, x, t, s, idx_x, &d_res_x);
+      assert(is_inv);
+      res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
+      if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
       ASSERT_NE(res, nullptr);
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
@@ -1636,7 +1667,7 @@ class TestPropInvConst : public TestPropInv
   }
 
   /** Helper for check_result. */
-  void check_result_aux(BzlaPropIsInv is_inv,
+  void check_result_aux(BzlaPropIsInv is_inv_fun,
                         BzlaPropComputeValue inv_fun,
                         BzlaNode *exp,
                         BzlaBitVector *s,
@@ -1660,7 +1691,7 @@ class TestPropInvConst : public TestPropInv
       bzla_bvprop_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
     }
 
-    check_result_n_tests(is_inv, inv_fun, exp, s, t, x_bv, idx_x);
+    check_result_n_tests(is_inv_fun, inv_fun, exp, s, t, x_bv, idx_x);
     clear_domains();
   }
 
@@ -1676,16 +1707,17 @@ class TestPropInvConst : public TestPropInv
    * as inverse value, i.e., we essentially reverse the inverse value
    * computation with respect to the operands.
    *
-   * is_inv : The function to test if given operator is invertible with
-   *          respect to s and t.
-   * inv_fun: The function to compute the inverse value for x given s and t.
-   * exp    : The node representing the operation.
-   * s      : The assignment of the other operand.
-   * t      : The assignment of the output (the target value of the operation).
-   * x_bv   : The expected assignment of the operand we solve for.
-   * idx_x  : The index of operand 'x'.
+   * is_inv_fun : The function to test if given operator is invertible with
+   *              respect to s and t.
+   * inv_fun    : The function to compute the inverse value for x given s and t.
+   * exp        : The node representing the operation.
+   * s          : The assignment of the other operand.
+   * t          : The assignment of the output (the target value of the
+   *              operation).
+   * x_bv       : The expected assignment of the operand we solve for.
+   * idx_x      : The index of operand 'x'.
    */
-  void check_result(BzlaPropIsInv is_inv,
+  void check_result(BzlaPropIsInv is_inv_fun,
                     BzlaPropComputeValue inv_fun,
                     BzlaNode *exp,
                     BzlaBitVector *s,
@@ -1693,7 +1725,7 @@ class TestPropInvConst : public TestPropInv
                     BzlaBitVector *x_bv,
                     uint32_t idx_x)
   {
-    assert(is_inv);
+    assert(is_inv_fun);
     assert(inv_fun);
     assert(exp);
     assert(bzla_node_is_regular(exp));
@@ -1708,7 +1740,7 @@ class TestPropInvConst : public TestPropInv
     for (uint32_t i = 0, bw = bzla_bv_get_width(x_bv); i < bw; ++i)
     {
       fixed_idx.push_back(i);
-      check_result_aux(is_inv, inv_fun, exp, s, t, x_bv, idx_x, fixed_idx);
+      check_result_aux(is_inv_fun, inv_fun, exp, s, t, x_bv, idx_x, fixed_idx);
       fixed_idx.clear();
     }
 
@@ -1719,7 +1751,8 @@ class TestPropInvConst : public TestPropInv
       {
         fixed_idx.push_back(i);
         fixed_idx.push_back(j);
-        check_result_aux(is_inv, inv_fun, exp, s, t, x_bv, idx_x, fixed_idx);
+        check_result_aux(
+            is_inv_fun, inv_fun, exp, s, t, x_bv, idx_x, fixed_idx);
         fixed_idx.clear();
       }
     }
@@ -1734,7 +1767,8 @@ class TestPropInvConst : public TestPropInv
           fixed_idx.push_back(i);
           fixed_idx.push_back(j);
           fixed_idx.push_back(k);
-          check_result_aux(is_inv, inv_fun, exp, s, t, x_bv, idx_x, fixed_idx);
+          check_result_aux(
+              is_inv_fun, inv_fun, exp, s, t, x_bv, idx_x, fixed_idx);
           fixed_idx.clear();
         }
       }
@@ -1749,7 +1783,7 @@ class TestPropInvConst : public TestPropInv
    * exp_fun    : The function to create the node representing operation <>.
    * bv_fun     : The function to create the bit-vector result of operation
    *              s0 <> s1.
-   * is_inv     : The function to test if given operator is invertible with
+   * is_inv_fun : The function to test if given operator is invertible with
    *              respect to s and t.
    * inv_fun    : The function to compute the inverse value for x given s
    *              and t considering const bits in x.
@@ -1758,7 +1792,7 @@ class TestPropInvConst : public TestPropInv
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              const BzlaBitVector *),
-                    BzlaPropIsInv is_inv,
+                    BzlaPropIsInv is_inv_fun,
                     BzlaPropComputeValue inv_fun)
   {
     uint32_t bw;
@@ -1781,8 +1815,8 @@ class TestPropInvConst : public TestPropInv
       {
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         t    = bv_fun(d_mm, s[0], s[1]);
-        check_result(is_inv, inv_fun, exp, s[0], t, s[1], 1);
-        check_result(is_inv, inv_fun, exp, s[1], t, s[0], 0);
+        check_result(is_inv_fun, inv_fun, exp, s[0], t, s[1], 1);
+        check_result(is_inv_fun, inv_fun, exp, s[1], t, s[0], 0);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
       }
@@ -1897,7 +1931,7 @@ TEST_F(TestPropInv, complete_slice)
         x = bzla_bv_slice(d_mm, s, up, lo);
         for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
         {
-          res = bzla_proputils_inv_slice(d_bzla, exp, x, s, 0, d_domains);
+          res = bzla_proputils_inv_slice(d_bzla, exp, x, s, 0, d_domains, 0);
           ASSERT_NE(res, nullptr);
           if (!bzla_bv_compare(res, s)) break;
           bzla_bv_free(d_mm, res);
@@ -1951,6 +1985,14 @@ TEST_F(TestPropInvConst, complete_ult_const)
                bzla_proputils_inv_ult_const);
 }
 
+TEST_F(TestPropInvConst, complete_mul_const)
+{
+  check_binary(bzla_exp_bv_mul,
+               bzla_bv_mul,
+               bzla_is_inv_mul_const,
+               bzla_proputils_inv_mul_const);
+}
+
 #if 0
 TEST_F (TestPropInvConst, complete_sll_const)
 {
@@ -1966,14 +2008,6 @@ TEST_F (TestPropInvConst, complete_srl_const)
                bzla_bv_srl,
                bzla_is_inv_srl,
                bzla_proputils_inv_srl_const);
-}
-
-TEST_F (TestPropInvConst, complete_mul_const)
-{
-  check_binary (bzla_exp_bv_mul,
-                bzla_bv_mul,
-                bzla_is_inv_mul,
-                bzla_proputils_inv_mul_const);
 }
 
 TEST_F (TestPropInvConst, complete_udiv_const)

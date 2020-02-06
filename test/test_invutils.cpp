@@ -120,11 +120,14 @@ class TestInvUtils : public TestMm
         vs = bzla_bv_to_char(d_mm, s);
         for (uint32_t j = 0; j < nval_t; j++)
         {
-          t        = bzla_bv_uint64_to_bv(d_mm, j, bw_t);
-          vt       = bzla_bv_to_char(d_mm, t);
-          bool res = is_inv(d_mm, x, t, s, pos_x);
+          t  = bzla_bv_uint64_to_bv(d_mm, j, bw_t);
+          vt = bzla_bv_to_char(d_mm, t);
+
+          BzlaBvDomain *d_res_x = 0;
+          bool res              = is_inv(d_mm, x, t, s, pos_x, &d_res_x);
           bool status =
               check_sat_is_inv_binary(create_exp_func, x, t, s, pos_x);
+          if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
 
           if (res != status)
           {

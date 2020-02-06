@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2019 Aina Niemetz.
+ *  Copyright (C) 2015-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -108,12 +108,13 @@ class TestProp : public TestBzla
       BzlaPropIsInv is_inv_fun,
       BzlaPropComputeValue inv_fun)
   {
+    bool is_inv;
     int32_t i, idx_s, sat_res;
     BzlaNode *e[2], *exp, *val, *eq;
     BzlaBitVector *s_tmp[2], *x_tmp, *res[2], *tmp;
     BzlaBvDomain *d_x;
     BzlaSortId sort;
-    (void) is_inv_fun;
+    BzlaBvDomain *d_res_x;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
@@ -152,11 +153,14 @@ class TestProp : public TestBzla
 
     /* -> first test local completeness  */
     /* we must find a solution within n move(s) */
-    assert(is_inv_fun(d_mm, d_x, t, s, idx_x));
-    res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, d_domains);
+    d_res_x = nullptr;
+    is_inv  = is_inv_fun(d_mm, d_x, t, s, idx_x, &d_res_x);
+    assert(is_inv);
+    res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
     ASSERT_NE(res[idx_x], nullptr);
-    res[idx_s] = n == 1 ? bzla_bv_copy(d_mm, s)
-                        : inv_fun(d_bzla, exp, t, res[idx_x], idx_s, d_domains);
+    res[idx_s] =
+        n == 1 ? bzla_bv_copy(d_mm, s)
+               : inv_fun(d_bzla, exp, t, res[idx_x], idx_s, d_domains, d_res_x);
     ASSERT_NE(res[idx_s], nullptr);
     /* Note: this is also tested within the inverse function(s) */
     tmp = create_bv(d_mm, res[0], res[1]);
@@ -164,16 +168,20 @@ class TestProp : public TestBzla
     bzla_bv_free(d_mm, tmp);
     bzla_bv_free(d_mm, res[0]);
     bzla_bv_free(d_mm, res[1]);
+    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
     /* try to find the exact given solution */
     if (n == 1)
     {
       for (i = 0, res[idx_x] = 0; i < TEST_PROP_COMPLETE_N_TESTS; i++)
       {
-        assert(is_inv_fun(d_mm, d_x, t, s, idx_x));
-        res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, d_domains);
+        d_res_x = nullptr;
+        is_inv  = is_inv_fun(d_mm, d_x, t, s, idx_x, &d_res_x);
+        assert(is_inv);
+        res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
         ASSERT_NE(res[idx_x], nullptr);
         if (!bzla_bv_compare(res[idx_x], x)) break;
         bzla_bv_free(d_mm, res[idx_x]);
+        if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
         res[idx_x] = nullptr;
       }
       // ASSERT_NE (res[idx_x], nullptr);
@@ -270,14 +278,6 @@ class TestProp : public TestBzla
    * Test if a solution for the slice operator can be found within one
    * propagation step, and then if it can be found within one move.
    *
-   * n         : The number of propagation steps expected to be required to
-   *             find a solution.
-   * create_bv : The function to create a bit-vector t = x <> s or t = s <> t
-   *             for operator <>.
-   * is_inv_fun: The function to test if given operator is invertible with
-   *             respect to s and t.
-   * is_inv_fun: The function to test if given operator is invertible with
-   *             respect to s and t.
    * inv_fun   : The function to compute the inverse value for x given s and t.
    */
   void prop_complete_slice(BzlaPropComputeValue inv_fun)
@@ -318,7 +318,7 @@ class TestProp : public TestBzla
 
             /* -> first test local completeness
              *    we must find a solution within one move */
-            res = inv_fun(d_bzla, exp, t, s, 0, d_domains);
+            res = inv_fun(d_bzla, exp, t, s, 0, d_domains, 0);
             ASSERT_NE(res, nullptr);
             /* Note: this is also tested within inverse function */
             tmp = bzla_bv_slice(d_mm, res, up, lo);
@@ -328,7 +328,7 @@ class TestProp : public TestBzla
             /* try to find exact given solution */
             for (k = 0, res = 0; k < TEST_PROP_COMPLETE_N_TESTS; k++)
             {
-              res = inv_fun(d_bzla, exp, t, s, 0, d_domains);
+              res = inv_fun(d_bzla, exp, t, s, 0, d_domains, 0);
               ASSERT_NE(res, nullptr);
               if (!bzla_bv_compare(res, s)) break;
               bzla_bv_free(d_mm, res);
@@ -504,6 +504,15 @@ TEST_F(TestPropConst, one_complete_ult_const)
                        bzla_proputils_inv_ult_const);
 }
 
+TEST_F(TestPropConst, one_complete_mul_const)
+{
+  prop_complete_binary(1,
+                       bzla_exp_bv_mul,
+                       bzla_bv_mul,
+                       bzla_is_inv_mul_const,
+                       bzla_proputils_inv_mul_const);
+}
+
 #if 0
 TEST_F (TestPropConst, one_complete_sll_const)
 {
@@ -521,15 +530,6 @@ TEST_F (TestPropConst, one_complete_srl_const)
                         bzla_bv_srl,
                         bzla_is_inv_srl,
                         bzla_proputils_inv_srl_const);
-}
-
-TEST_F (TestPropConst, one_complete_mul_const)
-{
-  prop_complete_binary (1,
-                        bzla_exp_bv_mul,
-                        bzla_bv_mul,
-                        bzla_is_inv_mul,
-                        bzla_proputils_inv_mul_const);
 }
 
 TEST_F (TestPropConst, one_complete_udiv_const)
@@ -558,6 +558,7 @@ TEST_F (TestPropConst, one_complete_concat_const)
                         bzla_is_inv_concat_const,
                         bzla_proputils_inv_concat_const);
 }
+#endif
 
 /* -------------------------------------------------------------------------- */
 /* Inverse value computation with propagator domains, no const bits.          */
@@ -661,119 +662,130 @@ TEST_F (TestProp, one_complete_concat_bvprop)
 /* Regular inverse value computation, no const bits, no propagator domains.   */
 /* -------------------------------------------------------------------------- */
 
-TEST_F (TestProp, complete_add)
+TEST_F(TestProp, complete_add)
 {
-  prop_complete_binary (
+  prop_complete_binary(
       2, bzla_exp_bv_add, bzla_bv_add, bzla_is_inv_add, bzla_proputils_inv_add);
 }
 
-TEST_F (TestProp, complete_and)
+TEST_F(TestProp, complete_and)
 {
-  prop_complete_binary (
+  prop_complete_binary(
       2, bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, bzla_proputils_inv_and);
 }
 
-TEST_F (TestProp, complete_eq)
+TEST_F(TestProp, complete_eq)
 {
-  prop_complete_binary (
+  prop_complete_binary(
       2, bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, bzla_proputils_inv_eq);
 }
 
-TEST_F (TestProp, complete_ult)
+TEST_F(TestProp, complete_ult)
 {
-  prop_complete_binary (
+  prop_complete_binary(
       2, bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, bzla_proputils_inv_ult);
 }
 
-TEST_F (TestProp, complete_sll)
+TEST_F(TestProp, complete_sll)
 {
-  prop_complete_binary (
+  prop_complete_binary(
       2, bzla_exp_bv_sll, bzla_bv_sll, bzla_is_inv_sll, bzla_proputils_inv_sll);
 }
 
-TEST_F (TestProp, complete_srl)
+TEST_F(TestProp, complete_srl)
 {
-  prop_complete_binary (
+  prop_complete_binary(
       2, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, bzla_proputils_inv_srl);
 }
 
-TEST_F (TestProp, complete_mul)
+TEST_F(TestProp, complete_mul)
 {
-  prop_complete_binary (
+  prop_complete_binary(
       2, bzla_exp_bv_mul, bzla_bv_mul, bzla_is_inv_mul, bzla_proputils_inv_mul);
 }
 
-TEST_F (TestProp, complete_udiv)
+TEST_F(TestProp, complete_udiv)
 {
-  prop_complete_binary (2,
-                        bzla_exp_bv_udiv,
-                        bzla_bv_udiv,
-                        bzla_is_inv_udiv,
-                        bzla_proputils_inv_udiv);
+  prop_complete_binary(2,
+                       bzla_exp_bv_udiv,
+                       bzla_bv_udiv,
+                       bzla_is_inv_udiv,
+                       bzla_proputils_inv_udiv);
 }
 
-TEST_F (TestProp, complete_urem)
+TEST_F(TestProp, complete_urem)
 {
-  prop_complete_binary (2,
-                        bzla_exp_bv_urem,
-                        bzla_bv_urem,
-                        bzla_is_inv_urem,
-                        bzla_proputils_inv_urem);
+  prop_complete_binary(2,
+                       bzla_exp_bv_urem,
+                       bzla_bv_urem,
+                       bzla_is_inv_urem,
+                       bzla_proputils_inv_urem);
 }
 
-TEST_F (TestProp, complete_concat)
+TEST_F(TestProp, complete_concat)
 {
-  prop_complete_binary (2,
-                        bzla_exp_bv_concat,
-                        bzla_bv_concat,
-                        bzla_is_inv_concat,
-                        bzla_proputils_inv_concat);
+  prop_complete_binary(2,
+                       bzla_exp_bv_concat,
+                       bzla_bv_concat,
+                       bzla_is_inv_concat,
+                       bzla_proputils_inv_concat);
 }
 
-TEST_F (TestProp, complete_slice)
+TEST_F(TestProp, complete_slice)
 {
-  prop_complete_slice (bzla_proputils_inv_slice);
+  prop_complete_slice(bzla_proputils_inv_slice);
 }
 
 /* -------------------------------------------------------------------------- */
 /* Regular inverse value computation with const bits, no propagator domains.  */
 /* -------------------------------------------------------------------------- */
 
-TEST_F (TestPropConst, complete_add_const)
+TEST_F(TestPropConst, complete_add_const)
 {
-  prop_complete_binary (2,
-                        bzla_exp_bv_add,
-                        bzla_bv_add,
-                        bzla_is_inv_add_const,
-                        bzla_proputils_inv_add_const);
+  prop_complete_binary(2,
+                       bzla_exp_bv_add,
+                       bzla_bv_add,
+                       bzla_is_inv_add_const,
+                       bzla_proputils_inv_add_const);
 }
 
-TEST_F (TestPropConst, complete_and_const)
+TEST_F(TestPropConst, complete_and_const)
 {
-  prop_complete_binary (2,
-                        bzla_exp_bv_and,
-                        bzla_bv_and,
-                        bzla_is_inv_and_const,
-                        bzla_proputils_inv_and_const);
+  prop_complete_binary(2,
+                       bzla_exp_bv_and,
+                       bzla_bv_and,
+                       bzla_is_inv_and_const,
+                       bzla_proputils_inv_and_const);
 }
 
-TEST_F (TestPropConst, complete_eq_const)
+TEST_F(TestPropConst, complete_eq_const)
 {
-  prop_complete_binary (2,
-                        bzla_exp_eq,
-                        bzla_bv_eq,
-                        bzla_is_inv_eq_const,
-                        bzla_proputils_inv_eq_const);
+  prop_complete_binary(2,
+                       bzla_exp_eq,
+                       bzla_bv_eq,
+                       bzla_is_inv_eq_const,
+                       bzla_proputils_inv_eq_const);
 }
 
-TEST_F (TestPropConst, complete_ult_const)
+TEST_F(TestPropConst, complete_ult_const)
 {
-  prop_complete_binary (2,
-                        bzla_exp_bv_ult,
-                        bzla_bv_ult, bzla_is_inv_ult_const,
-                        bzla_proputils_inv_ult_const);
+  prop_complete_binary(2,
+                       bzla_exp_bv_ult,
+                       bzla_bv_ult,
+                       bzla_is_inv_ult_const,
+                       bzla_proputils_inv_ult_const);
 }
 
+TEST_F(TestPropConst, complete_mul_const)
+{
+  prop_complete_binary(2,
+                       bzla_exp_bv_mul,
+                       bzla_bv_mul,
+                       bzla_is_inv_mul_const,
+                       bzla_proputils_inv_mul_const);
+}
+
+#if 0
 TEST_F (TestPropConst, complete_sll_const)
 {
   prop_complete_binary (2,
@@ -785,14 +797,11 @@ TEST_F (TestPropConst, complete_sll_const)
 
 TEST_F (TestPropConst, complete_srl_const)
 {
-  prop_complete_binary (
-      2, bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, bzla_proputils_inv_srl);
-}
-
-TEST_F (TestPropConst, complete_mul_const)
-{
-  prop_complete_binary (
-      2, bzla_exp_bv_mul, bzla_bv_mul, bzla_is_inv_mul, bzla_proputils_inv_mul);
+  prop_complete_binary (2,
+                        bzla_exp_bv_srl,
+                        bzla_bv_srl,
+                        bzla_is_inv_srl_const,
+                        bzla_proputils_inv_srl_const);
 }
 
 TEST_F (TestPropConst, complete_udiv_const)
@@ -800,8 +809,8 @@ TEST_F (TestPropConst, complete_udiv_const)
   prop_complete_binary (2,
                         bzla_exp_bv_udiv,
                         bzla_bv_udiv,
-                        bzla_is_inv_udiv,
-                        bzla_proputils_inv_udiv);
+                        bzla_is_inv_udiv_const,
+                        bzla_proputils_inv_udiv_const);
 }
 
 TEST_F (TestPropConst, complete_urem_const)
@@ -809,8 +818,8 @@ TEST_F (TestPropConst, complete_urem_const)
   prop_complete_binary (2,
                         bzla_exp_bv_urem,
                         bzla_bv_urem,
-                        bzla_is_inv_urem,
-                        bzla_proputils_inv_urem);
+                        bzla_is_inv_urem_const,
+                        bzla_proputils_inv_urem_const);
 }
 
 TEST_F (TestPropConst, complete_concat_const)
@@ -819,13 +828,14 @@ TEST_F (TestPropConst, complete_concat_const)
                         bzla_exp_bv_concat,
                         bzla_bv_concat,
                         bzla_is_inv_concat_const,
-                        bzla_proputils_inv_concat);
+                        bzla_proputils_inv_concat_const);
 }
 
 TEST_F (TestPropConst, complete_slice_const)
 {
-  prop_complete_slice (bzla_proputils_inv_slice);
+  prop_complete_slice (bzla_proputils_inv_slice_const);
 }
+#endif
 
 /* -------------------------------------------------------------------------- */
 /* Inverse value computation with propagator domains, no const bits.          */
@@ -922,5 +932,4 @@ TEST_F (TestProp, complete_concat_bvprop)
 TEST_F (TestProp, complete_slice_bvprop)
 {
 }
-#endif
 #endif

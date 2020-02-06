@@ -49,9 +49,7 @@ compare_fixed_domain(BzlaMemMgr *mm, BzlaBvDomain *a, BzlaBvDomain *b)
 {
   assert(bzla_bvprop_is_fixed(mm, a));
   assert(bzla_bvprop_is_fixed(mm, b));
-  int32_t res_hi = bzla_bv_compare(a->hi, b->hi);
-  int32_t res_lo = bzla_bv_compare(a->lo, b->lo);
-  return res_hi == 0 && res_lo == 0;
+  return bzla_bvprop_is_equal(a, b);
 }
 #define BVPROP_LOG_LEVEL 0
 #define BVPROP_LOG(FMT, ...)    \
@@ -173,6 +171,12 @@ bzla_bvprop_copy(BzlaMemMgr *mm, const BzlaBvDomain *d)
   return bzla_bvprop_new(mm, d->lo, d->hi);
 }
 
+bool
+bzla_bvprop_is_equal(const BzlaBvDomain *a, const BzlaBvDomain *b)
+{
+  return bzla_bv_compare(a->hi, b->hi) == 0
+         && bzla_bv_compare(a->lo, b->lo) == 0;
+}
 /* -------------------------------------------------------------------------- */
 
 uint32_t
