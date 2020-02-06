@@ -154,7 +154,7 @@ class TestProp : public TestBzla
     /* -> first test local completeness  */
     /* we must find a solution within n move(s) */
     d_res_x = nullptr;
-    is_inv  = is_inv_fun(d_mm, d_x, t, s, idx_x, &d_res_x);
+    is_inv  = is_inv_fun(d_bzla, d_x, t, s, idx_x, &d_res_x);
     assert(is_inv);
     res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
     ASSERT_NE(res[idx_x], nullptr);
@@ -175,7 +175,7 @@ class TestProp : public TestBzla
       for (i = 0, res[idx_x] = 0; i < TEST_PROP_COMPLETE_N_TESTS; i++)
       {
         d_res_x = nullptr;
-        is_inv  = is_inv_fun(d_mm, d_x, t, s, idx_x, &d_res_x);
+        is_inv  = is_inv_fun(d_bzla, d_x, t, s, idx_x, &d_res_x);
         assert(is_inv);
         res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
         ASSERT_NE(res[idx_x], nullptr);

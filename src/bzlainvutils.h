@@ -18,7 +18,7 @@
 /* -------------------------------------------------------------------------- */
 
 /** Check invertibility of x + s = t or s + x = t when solved for x. */
-bool bzla_is_inv_add(BzlaMemMgr *mm,
+bool bzla_is_inv_add(Bzla *bzla,
                      const BzlaBvDomain *x,
                      const BzlaBitVector *t,
                      const BzlaBitVector *s,
@@ -26,7 +26,7 @@ bool bzla_is_inv_add(BzlaMemMgr *mm,
                      BzlaBvDomain **d_res_x);
 
 /** Check invertibility of x & s = t or s & x = t when solved for x. */
-bool bzla_is_inv_and(BzlaMemMgr *mm,
+bool bzla_is_inv_and(Bzla *bzla,
                      const BzlaBvDomain *x,
                      const BzlaBitVector *t,
                      const BzlaBitVector *s,
@@ -34,7 +34,7 @@ bool bzla_is_inv_and(BzlaMemMgr *mm,
                      BzlaBvDomain **d_res_x);
 
 /** Check invertibility of x o s = t or s o x = t when solved for x. */
-bool bzla_is_inv_concat(BzlaMemMgr *mm,
+bool bzla_is_inv_concat(Bzla *bzla,
                         const BzlaBvDomain *x,
                         const BzlaBitVector *t,
                         const BzlaBitVector *s,
@@ -42,7 +42,7 @@ bool bzla_is_inv_concat(BzlaMemMgr *mm,
                         BzlaBvDomain **d_res_x);
 
 /** Check invertibility of x & s = t or s & x = t when solved for x. */
-bool bzla_is_inv_eq(BzlaMemMgr *mm,
+bool bzla_is_inv_eq(Bzla *bzla,
                     const BzlaBvDomain *x,
                     const BzlaBitVector *t,
                     const BzlaBitVector *s,
@@ -50,7 +50,7 @@ bool bzla_is_inv_eq(BzlaMemMgr *mm,
                     BzlaBvDomain **d_res_x);
 
 /** Check invertibility of x * s = t or s * x = t when solved for x. */
-bool bzla_is_inv_mul(BzlaMemMgr *mm,
+bool bzla_is_inv_mul(Bzla *bzla,
                      const BzlaBvDomain *x,
                      const BzlaBitVector *t,
                      const BzlaBitVector *s,
@@ -58,7 +58,7 @@ bool bzla_is_inv_mul(BzlaMemMgr *mm,
                      BzlaBvDomain **d_res_x);
 
 /** Check invertibility of x << s = t or s << x = t when solved for x. */
-bool bzla_is_inv_sll(BzlaMemMgr *mm,
+bool bzla_is_inv_sll(Bzla *bzla,
                      const BzlaBvDomain *x,
                      const BzlaBitVector *t,
                      const BzlaBitVector *s,
@@ -66,7 +66,7 @@ bool bzla_is_inv_sll(BzlaMemMgr *mm,
                      BzlaBvDomain **d_res_x);
 
 /** Check invertibility of x >> s = t or s >> x = t when solved for x. */
-bool bzla_is_inv_srl(BzlaMemMgr *mm,
+bool bzla_is_inv_srl(Bzla *bzla,
                      const BzlaBvDomain *x,
                      const BzlaBitVector *t,
                      const BzlaBitVector *s,
@@ -74,7 +74,7 @@ bool bzla_is_inv_srl(BzlaMemMgr *mm,
                      BzlaBvDomain **d_res_x);
 
 /** Check invertibility of x / s = t or s / x = t when solved for x. */
-bool bzla_is_inv_udiv(BzlaMemMgr *mm,
+bool bzla_is_inv_udiv(Bzla *bzla,
                       const BzlaBvDomain *x,
                       const BzlaBitVector *t,
                       const BzlaBitVector *s,
@@ -82,7 +82,7 @@ bool bzla_is_inv_udiv(BzlaMemMgr *mm,
                       BzlaBvDomain **d_res_x);
 
 /** Check invertibility of x < s = t or s < x = t when solved for x. */
-bool bzla_is_inv_ult(BzlaMemMgr *mm,
+bool bzla_is_inv_ult(Bzla *bzla,
                      const BzlaBvDomain *x,
                      const BzlaBitVector *t,
                      const BzlaBitVector *s,
@@ -90,7 +90,7 @@ bool bzla_is_inv_ult(BzlaMemMgr *mm,
                      BzlaBvDomain **d_res_x);
 
 /** Check invertibility of x % s = t or s % x = t when solved for x. */
-bool bzla_is_inv_urem(BzlaMemMgr *mm,
+bool bzla_is_inv_urem(Bzla *bzla,
                       const BzlaBvDomain *x,
                       const BzlaBitVector *t,
                       const BzlaBitVector *s,
@@ -98,7 +98,7 @@ bool bzla_is_inv_urem(BzlaMemMgr *mm,
                       BzlaBvDomain **d_res_x);
 
 /** Check invertibility of x[upper:lower] = t when solved for x. */
-bool bzla_is_inv_slice(BzlaMemMgr *mm,
+bool bzla_is_inv_slice(Bzla *bzla,
                        const BzlaBvDomain *x,
                        const BzlaBitVector *t,
                        uint32_t upper,
@@ -112,7 +112,7 @@ bool bzla_is_inv_slice(BzlaMemMgr *mm,
  * Check invertibility of x + s = t or s + x = t when solved for x with
  * respect to const bits in x.
  */
-bool bzla_is_inv_add_const(BzlaMemMgr *mm,
+bool bzla_is_inv_add_const(Bzla *bzla,
                            const BzlaBvDomain *x,
                            const BzlaBitVector *t,
                            const BzlaBitVector *s,
@@ -123,7 +123,7 @@ bool bzla_is_inv_add_const(BzlaMemMgr *mm,
  * Check invertibility of x & s = t or s & x = t when solved for x with
  * respect to const bits in x.
  */
-bool bzla_is_inv_and_const(BzlaMemMgr *mm,
+bool bzla_is_inv_and_const(Bzla *bzla,
                            const BzlaBvDomain *x,
                            const BzlaBitVector *t,
                            const BzlaBitVector *s,
@@ -134,7 +134,7 @@ bool bzla_is_inv_and_const(BzlaMemMgr *mm,
  * Check invertibility of x o s = t or s o x = t when solved for x with
  * respect to const bits in x.
  */
-bool bzla_is_inv_concat_const(BzlaMemMgr *mm,
+bool bzla_is_inv_concat_const(Bzla *bzla,
                               const BzlaBvDomain *x,
                               const BzlaBitVector *t,
                               const BzlaBitVector *s,
@@ -145,7 +145,7 @@ bool bzla_is_inv_concat_const(BzlaMemMgr *mm,
  * Check invertibility of x & s = t or s & x = t when solved for x with
  * respect to const bits in x.
  */
-bool bzla_is_inv_eq_const(BzlaMemMgr *mm,
+bool bzla_is_inv_eq_const(Bzla *bzla,
                           const BzlaBvDomain *x,
                           const BzlaBitVector *t,
                           const BzlaBitVector *s,
@@ -156,7 +156,7 @@ bool bzla_is_inv_eq_const(BzlaMemMgr *mm,
  * Check invertibility of x * s = t or s * x = t when solved for x with
  * respect to const bits in x.
  */
-bool bzla_is_inv_mul_const(BzlaMemMgr *mm,
+bool bzla_is_inv_mul_const(Bzla *bzla,
                            const BzlaBvDomain *x,
                            const BzlaBitVector *t,
                            const BzlaBitVector *s,
@@ -167,7 +167,7 @@ bool bzla_is_inv_mul_const(BzlaMemMgr *mm,
  * Check invertibility of x << s = t or s << x = t when solved for x with
  * respect to const bits in x.
  */
-bool bzla_is_inv_sll_const(BzlaMemMgr *mm,
+bool bzla_is_inv_sll_const(Bzla *bzla,
                            const BzlaBvDomain *x,
                            const BzlaBitVector *t,
                            const BzlaBitVector *s,
@@ -178,7 +178,7 @@ bool bzla_is_inv_sll_const(BzlaMemMgr *mm,
  * Check invertibility of x >> s = t or s >> x = t when solved for x with
  * respect to const bits in x.
  */
-bool bzla_is_inv_srl_const(BzlaMemMgr *mm,
+bool bzla_is_inv_srl_const(Bzla *bzla,
                            const BzlaBvDomain *x,
                            const BzlaBitVector *t,
                            const BzlaBitVector *s,
@@ -189,7 +189,7 @@ bool bzla_is_inv_srl_const(BzlaMemMgr *mm,
  * Check invertibility of x / s = t or s / x = t when solved for x with
  * respect to const bits in x.
  */
-bool bzla_is_inv_udiv_const(BzlaMemMgr *mm,
+bool bzla_is_inv_udiv_const(Bzla *bzla,
                             const BzlaBvDomain *x,
                             const BzlaBitVector *t,
                             const BzlaBitVector *s,
@@ -200,7 +200,7 @@ bool bzla_is_inv_udiv_const(BzlaMemMgr *mm,
  * Check invertibility of x < s = t or s < x = t when solved for x with
  * respect to const bits in x.
  */
-bool bzla_is_inv_ult_const(BzlaMemMgr *mm,
+bool bzla_is_inv_ult_const(Bzla *bzla,
                            const BzlaBvDomain *x,
                            const BzlaBitVector *t,
                            const BzlaBitVector *s,
@@ -211,7 +211,7 @@ bool bzla_is_inv_ult_const(BzlaMemMgr *mm,
  * Check invertibility of x % s = t or s % x = t when solved for x with
  * respect to const bits in x.
  */
-bool bzla_is_inv_urem_const(BzlaMemMgr *mm,
+bool bzla_is_inv_urem_const(Bzla *bzla,
                             const BzlaBvDomain *x,
                             const BzlaBitVector *t,
                             const BzlaBitVector *s,
@@ -222,7 +222,7 @@ bool bzla_is_inv_urem_const(BzlaMemMgr *mm,
  * Check invertibility of x[upper:lower] = t when solved for x with respect to
  * const bits in x.
  */
-bool bzla_is_inv_slice_const(BzlaMemMgr *mm,
+bool bzla_is_inv_slice_const(Bzla *bzla,
                              const BzlaBvDomain *x,
                              const BzlaBitVector *t,
                              uint32_t upper,

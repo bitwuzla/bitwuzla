@@ -110,7 +110,7 @@ class TestPropInv : public TestBzla
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
       d_res_x = 0;
-      is_inv  = is_inv_fun(d_mm, x, t, s, idx_x, &d_res_x);
+      is_inv  = is_inv_fun(d_bzla, x, t, s, idx_x, &d_res_x);
       assert(is_inv);
       res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
       ASSERT_NE(res, nullptr);
@@ -286,7 +286,7 @@ class TestPropInv : public TestBzla
         {
         PROP_INV_CONF_AND_TESTS:
           /* prop engine: all conflicts are treated as fixable */
-          inv = bzla_is_inv_and(d_mm, x0, bvand, s[1], 0, 0);
+          inv = bzla_is_inv_and(d_bzla, x0, bvand, s[1], 0, 0);
           res = inv ? inv_fun(d_bzla, _and, bvand, s[1], 0, d_domains, 0)
                     : bzla_proputils_cons_and(
                         d_bzla, _and, bvand, s[1], 0, d_domains, 0);
@@ -296,7 +296,7 @@ class TestPropInv : public TestBzla
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          inv = bzla_is_inv_and(d_mm, x0, bvand, s[1], 0, 0);
+          inv = bzla_is_inv_and(d_bzla, x0, bvand, s[1], 0, 0);
           res = inv ? inv_fun(d_bzla, cand[1], bvand, s[1], 0, d_domains, 0)
                     : bzla_proputils_cons_and(
                         d_bzla, cand[1], bvand, s[1], 0, d_domains, 0);
@@ -307,7 +307,7 @@ class TestPropInv : public TestBzla
           bzla_bv_free(d_mm, tmp2);
 
           /* idx_x = 0 */
-          inv = bzla_is_inv_and(d_mm, x1, bvand, s[0], 1, 0);
+          inv = bzla_is_inv_and(d_bzla, x1, bvand, s[0], 1, 0);
           res = inv ? inv_fun(d_bzla, _and, bvand, s[0], 1, d_domains, 0)
                     : bzla_proputils_cons_and(
                         d_bzla, _and, bvand, s[0], 1, d_domains, 0);
@@ -317,7 +317,7 @@ class TestPropInv : public TestBzla
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
 
-          inv = bzla_is_inv_and(d_mm, x1, bvand, s[0], 1, 0);
+          inv = bzla_is_inv_and(d_bzla, x1, bvand, s[0], 1, 0);
           res = inv ? inv_fun(d_bzla, cand[0], bvand, s[0], 1, d_domains, 0)
                     : bzla_proputils_cons_and(
                         d_bzla, cand[0], bvand, s[0], 1, d_domains, 0);
@@ -406,7 +406,7 @@ class TestPropInv : public TestBzla
   PROP_INV_CONF_ULT_TESTS:
     /* 1...1 < e[1] */
     s   = bzla_bv_ones(d_mm, bw);
-    inv = bzla_is_inv_ult(d_mm, x1, bvult, s, 1, 0);
+    inv = bzla_is_inv_ult(d_bzla, x1, bvult, s, 1, 0);
     res = inv ? inv_fun(d_bzla, ult, bvult, s, 1, d_domains, 0)
               : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 1, d_domains, 0);
     ASSERT_NE(res, nullptr);
@@ -414,7 +414,7 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, res);
     ce   = bzla_exp_bv_const(d_bzla, s);
     cult = bzla_exp_bv_ult(d_bzla, ce, e[1]);
-    inv  = bzla_is_inv_ult(d_mm, x1, bvult, s, 1, 0);
+    inv  = bzla_is_inv_ult(d_bzla, x1, bvult, s, 1, 0);
     res =
         inv ? inv_fun(d_bzla, cult, bvult, s, 1, d_domains, 0)
             : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 1, d_domains, 0);
@@ -426,7 +426,7 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, s);
     /* e[0] < 0 */
     s   = bzla_bv_new(d_mm, bw);
-    inv = bzla_is_inv_ult(d_mm, x0, bvult, s, 0, 0);
+    inv = bzla_is_inv_ult(d_bzla, x0, bvult, s, 0, 0);
     res = inv ? inv_fun(d_bzla, ult, bvult, s, 0, d_domains, 0)
               : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 0, d_domains, 0);
     ASSERT_NE(res, nullptr);
@@ -434,7 +434,7 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, res);
     ce   = bzla_exp_bv_const(d_bzla, s);
     cult = bzla_exp_bv_ult(d_bzla, e[0], ce);
-    inv  = bzla_is_inv_ult(d_mm, x0, bvult, s, 0, 0);
+    inv  = bzla_is_inv_ult(d_bzla, x0, bvult, s, 0, 0);
     res =
         inv ? inv_fun(d_bzla, cult, bvult, s, 0, d_domains, 0)
             : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 0, d_domains, 0);
@@ -1045,14 +1045,14 @@ class TestPropInv : public TestBzla
       s     = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      inv   = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
       res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains, 0)
                 : bzla_proputils_cons_urem(
                     d_bzla, urem, bvurem, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      inv = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
       res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains, 0)
                 : bzla_proputils_cons_urem(
                     d_bzla, curem, bvurem, s, 1, d_domains, 0);
@@ -1076,13 +1076,13 @@ class TestPropInv : public TestBzla
       bzla_bv_free(d_mm, tmp);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      inv   = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
       res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains, 0)
                 : bzla_proputils_cons_urem(
                     d_bzla, urem, bvurem, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      inv = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
       res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains, 0)
                 : bzla_proputils_cons_urem(
                     d_bzla, curem, bvurem, s, 1, d_domains, 0);
@@ -1109,13 +1109,13 @@ class TestPropInv : public TestBzla
       bzla_bv_free(d_mm, tmp2);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      inv   = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
       res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains, 0)
                 : bzla_proputils_cons_urem(
                     d_bzla, urem, bvurem, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, x1, bvurem, s, 1, 0);
+      inv = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
       res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains, 0)
                 : bzla_proputils_cons_urem(
                     d_bzla, curem, bvurem, s, 1, d_domains, 0);
@@ -1137,14 +1137,14 @@ class TestPropInv : public TestBzla
       s     = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
       ce    = bzla_exp_bv_const(d_bzla, s);
       curem = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      inv   = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0, 0);
+      inv   = bzla_is_inv_urem(d_bzla, x0, bvurem, s, 0, 0);
       res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains, 0)
                 : bzla_proputils_cons_urem(
                     d_bzla, urem, bvurem, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_EQ(bzla_bv_compare(res, bvurem), 0);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0, 0);
+      inv = bzla_is_inv_urem(d_bzla, x0, bvurem, s, 0, 0);
       res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains, 0)
                 : bzla_proputils_cons_urem(
                     d_bzla, curem, bvurem, s, 0, d_domains, 0);
@@ -1165,13 +1165,13 @@ class TestPropInv : public TestBzla
       s      = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvurem);
       ce     = bzla_exp_bv_const(d_bzla, s);
       curem  = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      inv    = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0, 0);
+      inv    = bzla_is_inv_urem(d_bzla, x0, bvurem, s, 0, 0);
       res    = inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains, 0)
                 : bzla_proputils_cons_urem(
                     d_bzla, urem, bvurem, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_mm, x0, bvurem, s, 0, 0);
+      inv = bzla_is_inv_urem(d_bzla, x0, bvurem, s, 0, 0);
       res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains, 0)
                 : bzla_proputils_cons_urem(
                     d_bzla, curem, bvurem, s, 0, d_domains, 0);
@@ -1281,8 +1281,8 @@ class TestPropInv : public TestBzla
       cconcat[1] = bzla_exp_bv_concat(d_bzla, e[0], ce[1]);
       for (j = 0; j < 2; j++)
       {
-        inv =
-            bzla_is_inv_concat(d_mm, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j, 0);
+        inv = bzla_is_inv_concat(
+            d_bzla, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j, 0);
         res = inv ? inv_fun(
                   d_bzla, concat, bvconcat, s[j ? 0 : 1], j, d_domains, 0)
                   : bzla_proputils_cons_concat(
@@ -1290,8 +1290,8 @@ class TestPropInv : public TestBzla
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
-        inv =
-            bzla_is_inv_concat(d_mm, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j, 0);
+        inv = bzla_is_inv_concat(
+            d_bzla, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j, 0);
         res = inv ? inv_fun(d_bzla,
                             cconcat[j ? 0 : 1],
                             bvconcat,
@@ -1388,7 +1388,7 @@ class TestPropInv : public TestBzla
     cmul[1] = bzla_exp_bv_mul(d_bzla, mul->e[0], ce[1]);
 
     d_res_x = 0;
-    inv     = is_inv_fun(d_mm, x0, t, s, 0, &d_res_x);
+    inv     = is_inv_fun(d_bzla, x0, t, s, 0, &d_res_x);
     res =
         inv ? inv_fun(d_bzla, mul, t, s, 0, d_domains, d_res_x)
             : bzla_proputils_cons_mul(d_bzla, mul, t, s, 0, d_domains, d_res_x);
@@ -1396,7 +1396,7 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, res);
     if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
     d_res_x = 0;
-    inv     = is_inv_fun(d_mm, x0, t, s, 0, &d_res_x);
+    inv     = is_inv_fun(d_bzla, x0, t, s, 0, &d_res_x);
     res     = inv ? inv_fun(d_bzla, cmul[1], t, s, 0, d_domains, d_res_x)
               : bzla_proputils_cons_mul(
                   d_bzla, cmul[1], t, s, 0, d_domains, d_res_x);
@@ -1409,7 +1409,7 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, res);
 
     d_res_x = 0;
-    inv     = is_inv_fun(d_mm, x1, t, s, 1, &d_res_x);
+    inv     = is_inv_fun(d_bzla, x1, t, s, 1, &d_res_x);
     res =
         inv ? inv_fun(d_bzla, mul, t, s, 1, d_domains, d_res_x)
             : bzla_proputils_cons_mul(d_bzla, mul, t, s, 1, d_domains, d_res_x);
@@ -1417,7 +1417,7 @@ class TestPropInv : public TestBzla
     bzla_bv_free(d_mm, res);
     if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
     d_res_x = 0;
-    inv     = is_inv_fun(d_mm, x1, t, s, 1, &d_res_x);
+    inv     = is_inv_fun(d_bzla, x1, t, s, 1, &d_res_x);
     res     = inv ? inv_fun(d_bzla, cmul[0], t, s, 1, d_domains, d_res_x)
               : bzla_proputils_cons_mul(
                   d_bzla, cmul[0], t, s, 1, d_domains, d_res_x);
@@ -1476,13 +1476,13 @@ class TestPropInv : public TestBzla
     {
       ce    = bzla_exp_bv_const(d_bzla, s);
       cudiv = bzla_exp_bv_udiv(d_bzla, ce, udiv->e[1]);
-      inv   = bzla_is_inv_udiv(d_mm, x1, t, s, 1, 0);
+      inv   = bzla_is_inv_udiv(d_bzla, x1, t, s, 1, 0);
       res   = inv ? inv_fun(d_bzla, udiv, t, s, 1, d_domains, 0)
                 : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, t));
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_udiv(d_mm, x1, t, s, 1, 0);
+      inv = bzla_is_inv_udiv(d_bzla, x1, t, s, 1, 0);
       res =
           inv ? inv_fun(d_bzla, cudiv, t, s, 1, d_domains, 0)
               : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 1, d_domains, 0);
@@ -1496,12 +1496,12 @@ class TestPropInv : public TestBzla
     {
       ce    = bzla_exp_bv_const(d_bzla, s);
       cudiv = bzla_exp_bv_udiv(d_bzla, udiv->e[0], ce);
-      inv   = bzla_is_inv_udiv(d_mm, x0, t, s, 0, 0);
+      inv   = bzla_is_inv_udiv(d_bzla, x0, t, s, 0, 0);
       res   = inv ? inv_fun(d_bzla, udiv, t, s, 0, d_domains, 0)
                 : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_udiv(d_mm, x0, t, s, 0, 0);
+      inv = bzla_is_inv_udiv(d_bzla, x0, t, s, 0, 0);
       res =
           inv ? inv_fun(d_bzla, cudiv, t, s, 0, d_domains, 0)
               : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 0, d_domains, 0);
@@ -1582,13 +1582,13 @@ class TestPropInv : public TestBzla
     if (idx_x)
     {
       cshift = exp_fun(d_bzla, ce, shift->e[1]);
-      inv    = is_inv_fun(d_mm, x1, t, s, 1, 0);
+      inv    = is_inv_fun(d_bzla, x1, t, s, 1, 0);
       res    = inv ? inv_fun(d_bzla, shift, t, s, 1, d_domains, 0)
                 : cons_fun(d_bzla, shift, t, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
-      inv = is_inv_fun(d_mm, x1, t, s, 1, 0);
+      inv = is_inv_fun(d_bzla, x1, t, s, 1, 0);
       res = inv ? inv_fun(d_bzla, cshift, t, s, 1, d_domains, 0)
                 : cons_fun(d_bzla, cshift, t, s, 1, d_domains, 0);
       ASSERT_NE(res, nullptr);
@@ -1598,12 +1598,12 @@ class TestPropInv : public TestBzla
     else
     {
       cshift = exp_fun(d_bzla, shift->e[0], ce);
-      inv    = is_inv_fun(d_mm, x0, t, s, 0, 0);
+      inv    = is_inv_fun(d_bzla, x0, t, s, 0, 0);
       res    = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains, 0)
                 : cons_fun(d_bzla, shift, t, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = is_inv_fun(d_mm, x0, t, s, 0, 0);
+      inv = is_inv_fun(d_bzla, x0, t, s, 0, 0);
       res = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains, 0)
                 : cons_fun(d_bzla, shift, t, s, 0, d_domains, 0);
       ASSERT_NE(res, nullptr);
@@ -1652,7 +1652,7 @@ class TestPropInvConst : public TestPropInv
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
       d_res_x = 0;
-      is_inv  = is_inv_fun(d_mm, x, t, s, idx_x, &d_res_x);
+      is_inv  = is_inv_fun(d_bzla, x, t, s, idx_x, &d_res_x);
       assert(is_inv);
       res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
       if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);

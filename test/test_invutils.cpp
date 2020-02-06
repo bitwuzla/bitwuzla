@@ -24,7 +24,7 @@ using CreateBinExpFunc   = std::add_pointer<decltype(boolector_and)>::type;
 using CreateSliceExpFunc = std::add_pointer<decltype(boolector_slice)>::type;
 using IsInvSlice = std::add_pointer<decltype(bzla_is_inv_slice_const)>::type;
 
-class TestInvUtils : public TestMm
+class TestInvUtils : public TestBzla
 {
  protected:
   static constexpr int32_t TEST_INVUTILS_BW = 3;
@@ -33,7 +33,8 @@ class TestInvUtils : public TestMm
 
   void SetUp() override
   {
-    TestMm::SetUp();
+    TestBzla::SetUp();
+    d_mm = d_bzla->mm;
     initialize_values(TEST_INVUTILS_BW);
   }
 
@@ -124,7 +125,7 @@ class TestInvUtils : public TestMm
           vt = bzla_bv_to_char(d_mm, t);
 
           BzlaBvDomain *d_res_x = 0;
-          bool res              = is_inv(d_mm, x, t, s, pos_x, &d_res_x);
+          bool res              = is_inv(d_bzla, x, t, s, pos_x, &d_res_x);
           bool status =
               check_sat_is_inv_binary(create_exp_func, x, t, s, pos_x);
           if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
@@ -180,7 +181,7 @@ class TestInvUtils : public TestMm
           {
             t           = bzla_bv_uint64_to_bv(d_mm, i, bw_t);
             vt          = bzla_bv_to_char(d_mm, t);
-            bool res    = is_inv(d_mm, x, t, upper, lower);
+            bool res    = is_inv(d_bzla, x, t, upper, lower);
             bool status = check_sat_is_inv_slice(x, t, upper, lower);
 
             if (res != status)
@@ -212,21 +213,20 @@ class TestInvUtils : public TestMm
     BoolectorNode *andhi, *orlo, *eq, *exp;
     char *vs, *vt, *vxlo, *vxhi;
 
-    Bzla *bzla     = boolector_new();
-    BzlaMemMgr *mm = bzla->mm;
+    Bzla *bzla = boolector_new();
 
     boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
 
-    vs = bzla_bv_to_char(mm, s);
-    vt = bzla_bv_to_char(mm, t);
+    vs = bzla_bv_to_char(d_mm, s);
+    vt = bzla_bv_to_char(d_mm, t);
 
     sx = boolector_bitvec_sort(bzla, bzla_bv_get_width(x->lo));
     nx = boolector_var(bzla, sx, 0);
 
-    vxlo = bzla_bv_to_char(mm, x->lo);
+    vxlo = bzla_bv_to_char(d_mm, x->lo);
     nxlo = boolector_const(bzla, vxlo);
 
-    vxhi = bzla_bv_to_char(mm, x->hi);
+    vxhi = bzla_bv_to_char(d_mm, x->hi);
     nxhi = boolector_const(bzla, vxhi);
 
     /* assume const bits for x */
@@ -270,10 +270,10 @@ class TestInvUtils : public TestMm
     boolector_release(bzla, andhi);
     boolector_release(bzla, orlo);
 
-    bzla_mem_freestr(mm, vs);
-    bzla_mem_freestr(mm, vt);
-    bzla_mem_freestr(mm, vxlo);
-    bzla_mem_freestr(mm, vxhi);
+    bzla_mem_freestr(d_mm, vs);
+    bzla_mem_freestr(d_mm, vt);
+    bzla_mem_freestr(d_mm, vxlo);
+    bzla_mem_freestr(d_mm, vxhi);
     boolector_delete(bzla);
 
     return status == BOOLECTOR_SAT;
@@ -289,20 +289,19 @@ class TestInvUtils : public TestMm
     BoolectorNode *andhi, *orlo, *eq, *exp;
     char *vt, *vxlo, *vxhi;
 
-    Bzla *bzla     = boolector_new();
-    BzlaMemMgr *mm = bzla->mm;
+    Bzla *bzla = boolector_new();
 
     boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
 
-    vt = bzla_bv_to_char(mm, t);
+    vt = bzla_bv_to_char(d_mm, t);
 
     sx = boolector_bitvec_sort(bzla, bzla_bv_get_width(x->lo));
     nx = boolector_var(bzla, sx, 0);
 
-    vxlo = bzla_bv_to_char(mm, x->lo);
+    vxlo = bzla_bv_to_char(d_mm, x->lo);
     nxlo = boolector_const(bzla, vxlo);
 
-    vxhi = bzla_bv_to_char(mm, x->hi);
+    vxhi = bzla_bv_to_char(d_mm, x->hi);
     nxhi = boolector_const(bzla, vxhi);
 
     /* assume const bits for x */
@@ -337,13 +336,15 @@ class TestInvUtils : public TestMm
     boolector_release(bzla, andhi);
     boolector_release(bzla, orlo);
 
-    bzla_mem_freestr(mm, vt);
-    bzla_mem_freestr(mm, vxlo);
-    bzla_mem_freestr(mm, vxhi);
+    bzla_mem_freestr(d_mm, vt);
+    bzla_mem_freestr(d_mm, vxlo);
+    bzla_mem_freestr(d_mm, vxhi);
     boolector_delete(bzla);
 
     return status == BOOLECTOR_SAT;
   }
+
+  BzlaMemMgr *d_mm;
 };
 
 /* Test is_inv_*_const functions. */

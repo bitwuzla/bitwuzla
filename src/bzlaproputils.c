@@ -1532,7 +1532,7 @@ check_inv_dbg(Bzla *bzla,
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(node->e[idx_x]));
 #ifndef NDEBUG
-  assert(inv_fun(bzla->mm, 0, t, s, idx_x, 0));
+  assert(inv_fun(bzla, 0, t, s, idx_x, 0));
   BzlaBvDomain *d_tmp_x = 0;
   bool is_inv;
   (void) d_res_x;
@@ -1545,8 +1545,7 @@ check_inv_dbg(Bzla *bzla,
         bzla_hashint_map_get(domains, bzla_node_real_addr(node->e[idx_x])->id);
     if (x)
     {
-      is_inv =
-          inv_fun_const(bzla->mm, x ? x->as_ptr : 0, t, s, idx_x, &d_tmp_x);
+      is_inv = inv_fun_const(bzla, x ? x->as_ptr : 0, t, s, idx_x, &d_tmp_x);
       assert(is_inv);
       assert(!d_tmp_x || !d_res_x || bzla_bvprop_is_equal(d_tmp_x, d_res_x));
     }
@@ -3994,7 +3993,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
         assert(d);
         force_cons =
-            !bzla_is_inv_slice_const(mm,
+            !bzla_is_inv_slice_const(bzla,
                                      d->as_ptr,
                                      bv_t,
                                      bzla_node_bv_slice_get_upper(real_cur),
@@ -4004,8 +4003,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       {
         d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
         assert(!opt_prop_const_bits || d);
-        force_cons =
-            !is_inv(mm, d ? d->as_ptr : 0, bv_t, bv_s[idx_s], idx_x, &d_res_x);
+        force_cons = !is_inv(
+            bzla, d ? d->as_ptr : 0, bv_t, bv_s[idx_s], idx_x, &d_res_x);
       }
 
       /* not invertible counts as conflict */
