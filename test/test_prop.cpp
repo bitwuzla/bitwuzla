@@ -179,13 +179,12 @@ class TestProp : public TestBzla
         assert(is_inv);
         res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
         ASSERT_NE(res[idx_x], nullptr);
+        if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
         if (!bzla_bv_compare(res[idx_x], x)) break;
         bzla_bv_free(d_mm, res[idx_x]);
-        if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
         res[idx_x] = nullptr;
       }
-      // ASSERT_NE (res[idx_x], nullptr);
-      assert(res[idx_x] != nullptr);
+      ASSERT_NE(res[idx_x], nullptr);
       ASSERT_EQ(bzla_bv_compare(res[idx_x], x), 0);
       bzla_bv_free(d_mm, res[idx_x]);
     }
@@ -513,16 +512,16 @@ TEST_F(TestPropConst, one_complete_mul_const)
                        bzla_proputils_inv_mul_const);
 }
 
-#if 0
-TEST_F (TestPropConst, one_complete_sll_const)
+TEST_F(TestPropConst, one_complete_sll_const)
 {
-  prop_complete_binary (1,
-                        bzla_exp_bv_sll,
-                        bzla_bv_sll,
-                        bzla_is_inv_sll_const,
-                        bzla_proputils_inv_sll_const);
+  prop_complete_binary(1,
+                       bzla_exp_bv_sll,
+                       bzla_bv_sll,
+                       bzla_is_inv_sll_const,
+                       bzla_proputils_inv_sll_const);
 }
 
+#if 0
 TEST_F (TestPropConst, one_complete_srl_const)
 {
   prop_complete_binary (1,
@@ -785,16 +784,16 @@ TEST_F(TestPropConst, complete_mul_const)
                        bzla_proputils_inv_mul_const);
 }
 
-#if 0
-TEST_F (TestPropConst, complete_sll_const)
+TEST_F(TestPropConst, complete_sll_const)
 {
-  prop_complete_binary (2,
-                        bzla_exp_bv_sll,
-                        bzla_bv_sll,
-                        bzla_is_inv_sll_const,
-                        bzla_proputils_inv_sll);
+  prop_complete_binary(2,
+                       bzla_exp_bv_sll,
+                       bzla_bv_sll,
+                       bzla_is_inv_sll_const,
+                       bzla_proputils_inv_sll_const);
 }
 
+#if 0
 TEST_F (TestPropConst, complete_srl_const)
 {
   prop_complete_binary (2,

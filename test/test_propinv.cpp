@@ -1826,6 +1826,60 @@ class TestPropInvConst : public TestPropInv
     bzla_node_release(d_bzla, e[1]);
     bzla_node_release(d_bzla, exp);
   }
+
+  /**
+   * Test if for a shift operation s0 <> s1 = t, the inverse value computation
+   * for the first operand produces value s0, and the inverse value computation
+   * for the second operand produces value s1.
+   *
+   * exp_fun      : The function to create the node representing operation <>.
+   * bv_fun       : The function to create the bit-vector result of operation
+   *                s0 <> s1.
+   * is_inv_fun   : The function to test if given operator is invertible with
+   *                respect to s and t.
+   * inv_fun      : The function to compute the inverse value for x given s
+   *                and t.
+   * inv_fun_const: The function to compute the inverse value for x given s
+   *                and t using propagator domains.
+   */
+  void check_shift(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
+                   BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
+                                            const BzlaBitVector *,
+                                            const BzlaBitVector *),
+                   BzlaPropIsInv is_inv_fun,
+                   BzlaPropComputeValue inv_fun_bv)
+  {
+    uint32_t bw;
+    uint64_t i, j;
+    BzlaNode *exp, *e[2];
+    BzlaSortId sort;
+    BzlaBitVector *s[2], *x;
+
+    bw   = TEST_PROP_INV_COMPLETE_BW;
+    sort = bzla_sort_bv(d_bzla, bw);
+    e[0] = bzla_exp_var(d_bzla, sort, 0);
+    e[1] = bzla_exp_var(d_bzla, sort, 0);
+    bzla_sort_release(d_bzla, sort);
+    exp = exp_fun(d_bzla, e[0], e[1]);
+
+    for (i = 0; i < (uint32_t)(1 << bw); i++)
+    {
+      s[0] = bzla_bv_uint64_to_bv(d_mm, i, bw);
+      for (j = 0; j < (uint32_t)(1 << bw); j++)
+      {
+        s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
+        x    = bv_fun(d_mm, s[0], s[1]);
+        check_result(is_inv_fun, inv_fun_bv, exp, s[0], x, s[1], 1);
+        check_result(is_inv_fun, inv_fun_bv, exp, s[1], x, s[0], 0);
+        bzla_bv_free(d_mm, s[1]);
+        bzla_bv_free(d_mm, x);
+      }
+      bzla_bv_free(d_mm, s[0]);
+    }
+    bzla_node_release(d_bzla, e[0]);
+    bzla_node_release(d_bzla, e[1]);
+    bzla_node_release(d_bzla, exp);
+  }
 };
 
 /* ========================================================================== */
@@ -1993,20 +2047,20 @@ TEST_F(TestPropInvConst, complete_mul_const)
                bzla_proputils_inv_mul_const);
 }
 
-#if 0
-TEST_F (TestPropInvConst, complete_sll_const)
+TEST_F(TestPropInvConst, complete_sll_const)
 {
-  check_shift (bzla_exp_bv_sll,
-               bzla_bv_sll,
-               bzla_is_inv_sll,
-               bzla_proputils_inv_sll_const);
+  check_shift(bzla_exp_bv_sll,
+              bzla_bv_sll,
+              bzla_is_inv_sll_const,
+              bzla_proputils_inv_sll_const);
 }
 
+#if 0
 TEST_F (TestPropInvConst, complete_srl_const)
 {
   check_shift (bzla_exp_bv_srl,
                bzla_bv_srl,
-               bzla_is_inv_srl,
+               bzla_is_inv_srl_const,
                bzla_proputils_inv_srl_const);
 }
 
@@ -2014,7 +2068,7 @@ TEST_F (TestPropInvConst, complete_udiv_const)
 {
   check_binary (bzla_exp_bv_udiv,
                 bzla_bv_udiv,
-                bzla_is_inv_udiv,
+                bzla_is_inv_udiv_const,
                 bzla_proputils_inv_udiv_const);
 }
 
@@ -2022,7 +2076,7 @@ TEST_F (TestPropInvConst, complete_urem_const)
 {
   check_binary (bzla_exp_bv_urem,
                 bzla_bv_urem,
-                bzla_is_inv_urem,
+                bzla_is_inv_urem_const,
                 bzla_proputils_inv_urem_const);
 }
 
@@ -2030,7 +2084,7 @@ TEST_F (TestPropInvConst, complete_concat_const)
 {
   check_binary (bzla_exp_bv_concat,
                 bzla_bv_concat,
-                bzla_is_inv_concat,
+                bzla_is_inv_concat_const,
                 bzla_proputils_inv_concat_const);
 }
 

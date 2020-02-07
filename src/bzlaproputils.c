@@ -1533,8 +1533,6 @@ check_inv_dbg(Bzla *bzla,
   assert(!bzla_node_is_bv_const(node->e[idx_x]));
 #ifndef NDEBUG
   assert(inv_fun(bzla, 0, t, s, idx_x, 0));
-  BzlaBvDomain *d_tmp_x = 0;
-  bool is_inv;
   (void) d_res_x;
   if (domains)
   {
@@ -1543,13 +1541,7 @@ check_inv_dbg(Bzla *bzla,
                domains, bzla_node_real_addr(node->e[idx_x])->id));
     BzlaHashTableData *x =
         bzla_hashint_map_get(domains, bzla_node_real_addr(node->e[idx_x])->id);
-    if (x)
-    {
-      is_inv = inv_fun_const(bzla, x ? x->as_ptr : 0, t, s, idx_x, &d_tmp_x);
-      assert(is_inv);
-      assert(!d_tmp_x || !d_res_x || bzla_bvprop_is_equal(d_tmp_x, d_res_x));
-    }
-    if (d_tmp_x) bzla_bvprop_free(bzla->mm, d_tmp_x);
+    assert(!x || inv_fun_const(bzla, x ? x->as_ptr : 0, t, s, idx_x, 0));
   }
 #endif
 }
