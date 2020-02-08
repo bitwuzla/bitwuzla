@@ -157,10 +157,15 @@ class TestProp : public TestBzla
     is_inv  = is_inv_fun(d_bzla, d_x, t, s, idx_x, &d_res_x);
     assert(is_inv);
     res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
+    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    d_res_x = nullptr;
     ASSERT_NE(res[idx_x], nullptr);
+    is_inv = is_inv_fun(d_bzla, d_x, t, res[idx_x], idx_s, &d_res_x);
+    assert(is_inv);
     res[idx_s] =
         n == 1 ? bzla_bv_copy(d_mm, s)
                : inv_fun(d_bzla, exp, t, res[idx_x], idx_s, d_domains, d_res_x);
+    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
     ASSERT_NE(res[idx_s], nullptr);
     /* Note: this is also tested within the inverse function(s) */
     tmp = create_bv(d_mm, res[0], res[1]);
@@ -168,7 +173,6 @@ class TestProp : public TestBzla
     bzla_bv_free(d_mm, tmp);
     bzla_bv_free(d_mm, res[0]);
     bzla_bv_free(d_mm, res[1]);
-    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
     /* try to find the exact given solution */
     if (n == 1)
     {

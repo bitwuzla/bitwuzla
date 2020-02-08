@@ -725,6 +725,8 @@ bzla_is_inv_mul_const(Bzla *bzla,
   BzlaBitVector *mod_inv_s, *x;
   BzlaMemMgr *mm;
 
+  if (d_res_x) *d_res_x = 0;
+
   mm  = bzla->mm;
   res = bzla_is_inv_mul(bzla, d_x, t, s, pos_x, 0);
 
@@ -832,7 +834,6 @@ bzla_is_inv_sll_const(Bzla *bzla,
   assert(x);
   assert(t);
   assert(s);
-  (void) d_res_x;
 
   bool res;
   uint32_t bw, i, cnt;
@@ -843,6 +844,8 @@ bzla_is_inv_sll_const(Bzla *bzla,
   BzlaBitVectorPtrStack results;
 
   mm = bzla->mm;
+
+  if (d_res_x) *d_res_x = 0;
 
   if (pos_x == 0)
   {
@@ -913,6 +916,7 @@ bzla_is_inv_sll_const(Bzla *bzla,
     }
     BZLA_RELEASE_STACK(results);
   }
+  if (pos_x == 0 && d_res_x) assert(*d_res_x == 0);
   return res;
 }
 
