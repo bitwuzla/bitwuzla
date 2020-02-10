@@ -3162,6 +3162,8 @@ bzla_proputils_inv_cond(Bzla *bzla,
 /* Inverse value computation with respect to const bits                       */
 /* ========================================================================== */
 
+#define BZLA_PROPUTILS_SHIFT_MAX_RAND 10
+
 /**
  * Create a bit-vector with all bits that are const bits in domain d_res_x
  * set to their const value, and all other bits set to their value in res_x.
@@ -3413,8 +3415,10 @@ bzla_proputils_inv_sll_const(Bzla *bzla,
                 true,
                 d_res_x);
 #endif
-  BzlaBitVector *tmp, *res;
+  uint32_t cnt;
+  BzlaBitVector *tmp, *res, *bv;
   BzlaBvDomain *x;
+  BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
   mm  = bzla->mm;
@@ -3425,24 +3429,37 @@ bzla_proputils_inv_sll_const(Bzla *bzla,
 
   if (idx_x)
   {
-    assert(d_res_x);
-
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sll);
 
-    if (bzla_bvprop_is_fixed(mm, d_res_x))
+    if (bzla_bvprop_is_fixed(mm, x))
     {
 #ifndef NDEBUG
-      tmp = bzla_bv_sll(mm, s, d_res_x->lo);
+      tmp = bzla_bv_sll(mm, s, x->lo);
       assert(bzla_bv_compare(tmp, t) == 0);
       bzla_bv_free(mm, tmp);
 #endif
-      res = bzla_bv_copy(mm, d_res_x->lo);
+      res = bzla_bv_copy(mm, x->lo);
     }
     else
     {
-      tmp = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
-      res = set_const_bits(mm, d_res_x, tmp);
-      bzla_bv_free(mm, tmp);
+      assert(d_res_x);
+      assert(bzla_bvprop_is_fixed(mm, d_res_x));
+      bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, d_res_x->lo, 0);
+      assert(bzla_bvprop_gen_has_next(&gen));
+      for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_SHIFT_MAX_RAND; cnt++)
+      {
+        bv  = bzla_bvprop_gen_random(&gen);
+        tmp = bzla_bv_sll(mm, s, bv);
+        if (bzla_bv_compare(tmp, t) == 0)
+        {
+          res = bzla_bv_copy(mm, bv);
+          bzla_bv_free(mm, tmp);
+          break;
+        }
+        bzla_bv_free(mm, tmp);
+      }
+      if (!res) res = bzla_bv_copy(mm, d_res_x->lo);
+      bzla_bvprop_gen_delete(&gen);
     }
   }
   else

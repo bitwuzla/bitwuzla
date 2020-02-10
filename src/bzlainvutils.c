@@ -836,12 +836,10 @@ bzla_is_inv_sll_const(Bzla *bzla,
   assert(s);
 
   bool res;
-  uint32_t bw, i, cnt;
   BzlaBitVector *shift1, *shift2, *and, * or ;
-  BzlaBitVector *bv, *bv_bw;
+  BzlaBitVector *bv;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
-  BzlaBitVectorPtrStack results;
 
   mm = bzla->mm;
 
@@ -862,25 +860,20 @@ bzla_is_inv_sll_const(Bzla *bzla,
   }
   else
   {
-    res = false;
-    BZLA_INIT_STACK(mm, results);
     assert(pos_x == 1);
-    bw    = bzla_bv_get_width(s);
-    bv_bw = bzla_bv_uint64_to_bv(mm, bw, bw);
-    res   = bzla_bv_compare(x->hi, bv_bw) >= 0 && bzla_bv_is_zero(t);
-    bzla_bv_free(mm, bv_bw);
     if (bzla_bvprop_is_fixed(mm, x))
     {
       shift1 = bzla_bv_sll(mm, s, x->lo);
       res    = bzla_bv_compare(shift1, t) == 0;
-      if (res)
+      if (d_res_x && res)
       {
-        BZLA_PUSH_STACK(results, bzla_bv_copy(mm, x->lo));
+        *d_res_x = bzla_bvprop_new(mm, x->lo, x->lo);
       }
       bzla_bv_free(mm, shift1);
     }
     else
     {
+      res = false;
       bzla_bvprop_gen_init(mm, &bzla->rng, &gen, x);
       while (bzla_bvprop_gen_has_next(&gen))
       {
@@ -890,31 +883,19 @@ bzla_is_inv_sll_const(Bzla *bzla,
           shift1 = bzla_bv_sll(mm, s, bv);
           if (bzla_bv_compare(shift1, t) == 0)
           {
-            if (!res) res = true;
-            if (!d_res_x)
+            res = true;
+            if (d_res_x)
             {
+              *d_res_x = bzla_bvprop_new(mm, bv, bv);
               bzla_bv_free(mm, shift1);
               break;
             }
-            BZLA_PUSH_STACK(results, bzla_bv_copy(mm, bv));
           }
           bzla_bv_free(mm, shift1);
         }
       }
       bzla_bvprop_gen_delete(&gen);
     }
-    if (d_res_x && (cnt = BZLA_COUNT_STACK(results)))
-    {
-      assert(!res || cnt);
-      i        = bzla_rng_pick_rand(&bzla->rng, 0, cnt - 1);
-      *d_res_x = bzla_bvprop_new(
-          mm, BZLA_PEEK_STACK(results, i), BZLA_PEEK_STACK(results, i));
-    }
-    while (!BZLA_EMPTY_STACK(results))
-    {
-      bzla_bv_free(mm, BZLA_POP_STACK(results));
-    }
-    BZLA_RELEASE_STACK(results);
   }
   if (pos_x == 0 && d_res_x) assert(*d_res_x == 0);
   return res;
