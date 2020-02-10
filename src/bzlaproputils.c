@@ -3485,8 +3485,75 @@ bzla_proputils_inv_srl_const(Bzla *bzla,
                              BzlaIntHashTable *domains,
                              BzlaBvDomain *d_res_x)
 {
-  // TODO
-  return bzla_proputils_inv_srl(bzla, srl, t, s, idx_x, domains, d_res_x);
+  assert(idx_x || d_res_x == 0);
+  assert(!idx_x || d_res_x);
+#ifndef NDEBUG
+  check_inv_dbg(bzla,
+                srl,
+                t,
+                s,
+                idx_x,
+                domains,
+                bzla_is_inv_srl,
+                bzla_is_inv_srl_const,
+                true,
+                d_res_x);
+#endif
+  uint32_t cnt;
+  BzlaBitVector *tmp, *res, *bv;
+  BzlaBvDomain *x;
+  BzlaBvDomainGenerator gen;
+  BzlaMemMgr *mm;
+
+  mm  = bzla->mm;
+  res = 0;
+
+  x = bzla_hashint_map_get(domains, bzla_node_real_addr(srl->e[idx_x])->id)
+          ->as_ptr;
+
+  if (idx_x)
+  {
+    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
+
+    if (bzla_bvprop_is_fixed(mm, x))
+    {
+#ifndef NDEBUG
+      tmp = bzla_bv_srl(mm, s, x->lo);
+      assert(bzla_bv_compare(tmp, t) == 0);
+      bzla_bv_free(mm, tmp);
+#endif
+      res = bzla_bv_copy(mm, x->lo);
+    }
+    else
+    {
+      assert(d_res_x);
+      assert(bzla_bvprop_is_fixed(mm, d_res_x));
+      bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, d_res_x->lo, 0);
+      assert(bzla_bvprop_gen_has_next(&gen));
+      for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_SHIFT_MAX_RAND; cnt++)
+      {
+        bv  = bzla_bvprop_gen_random(&gen);
+        tmp = bzla_bv_srl(mm, s, bv);
+        if (bzla_bv_compare(tmp, t) == 0)
+        {
+          res = bzla_bv_copy(mm, bv);
+          bzla_bv_free(mm, tmp);
+          break;
+        }
+        bzla_bv_free(mm, tmp);
+      }
+      if (!res) res = bzla_bv_copy(mm, d_res_x->lo);
+      bzla_bvprop_gen_delete(&gen);
+    }
+  }
+  else
+  {
+    assert(d_res_x == 0);
+    tmp = bzla_proputils_inv_srl(bzla, srl, t, s, idx_x, domains, 0);
+    res = set_const_bits(mm, x, tmp);
+    bzla_bv_free(mm, tmp);
+  }
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -3725,13 +3792,13 @@ static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_AND_NODE]    = bzla_is_inv_and_const,
     [BZLA_BV_CONCAT_NODE] = bzla_is_inv_concat_const,
     [BZLA_BV_EQ_NODE]     = bzla_is_inv_eq_const,
-    [BZLA_BV_MUL_NODE]    = bzla_is_inv_mul,
+    [BZLA_BV_MUL_NODE]    = bzla_is_inv_mul_const,
     [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult_const,
     [BZLA_BV_SLICE_NODE]  = 0,  // different handling
     [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll_const,
-    [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl,
-    [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv,
-    [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem,
+    [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl_const,
+    [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv_const,
+    [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem_const,
 };
 
 /* ========================================================================== */

@@ -928,10 +928,9 @@ bzla_is_inv_srl_const(Bzla *bzla,
   assert(s);
   (void) d_res_x;
 
-  bool res, invalid;
-  uint32_t bw_s;
-  BzlaBitVector *shift1, *shift2, *and, * or ;
-  BzlaBitVector *bv_i, *bv_bw;
+  bool res;
+  BzlaBitVector *shift1, *shift2, *and, * or, *bv;
+  BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
   mm = bzla->mm;
@@ -952,29 +951,40 @@ bzla_is_inv_srl_const(Bzla *bzla,
   else
   {
     assert(pos_x == 1);
-    bw_s  = bzla_bv_get_width(s);
-    bv_bw = bzla_bv_uint64_to_bv(mm, bw_s, bw_s);
-    res   = bzla_bv_compare(x->hi, bv_bw) >= 0 && bzla_bv_is_zero(t);
-    bzla_bv_free(mm, bv_bw);
-    for (uint32_t i = 0; i <= bw_s && !res; i++)
+    if (bzla_bvprop_is_fixed(mm, x))
     {
-      bv_i = bzla_bv_uint64_to_bv(mm, i, bw_s);
-
-      /* check if bv_i is a possible value given x */
-      and = bzla_bv_and(mm, bv_i, x->hi);
-      or  = bzla_bv_or(mm, bv_i, x->lo);
-      invalid =
-          bzla_bv_compare(or, bv_i) != 0 || bzla_bv_compare(and, bv_i) != 0;
-      bzla_bv_free(mm, or);
-      bzla_bv_free(mm, and);
-      if (!invalid)
+      shift1 = bzla_bv_srl(mm, s, x->lo);
+      res    = bzla_bv_compare(shift1, t) == 0;
+      if (d_res_x && res)
       {
-        /* add to IC */
-        shift1 = bzla_bv_srl(mm, s, bv_i);
-        res    = bzla_bv_compare(shift1, t) == 0;
-        bzla_bv_free(mm, shift1);
+        *d_res_x = bzla_bvprop_new(mm, x->lo, x->lo);
       }
-      bzla_bv_free(mm, bv_i);
+      bzla_bv_free(mm, shift1);
+    }
+    else
+    {
+      res = false;
+      bzla_bvprop_gen_init(mm, &bzla->rng, &gen, x);
+      while (bzla_bvprop_gen_has_next(&gen))
+      {
+        bv = bzla_bvprop_gen_next(&gen);
+        if (check_const_bits(mm, x, bv))
+        {
+          shift1 = bzla_bv_srl(mm, s, bv);
+          if (bzla_bv_compare(shift1, t) == 0)
+          {
+            res = true;
+            if (d_res_x)
+            {
+              *d_res_x = bzla_bvprop_new(mm, bv, bv);
+              bzla_bv_free(mm, shift1);
+              break;
+            }
+          }
+          bzla_bv_free(mm, shift1);
+        }
+      }
+      bzla_bvprop_gen_delete(&gen);
     }
   }
   return res;
