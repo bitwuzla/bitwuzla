@@ -3205,7 +3205,30 @@ bzla_proputils_inv_add_const(Bzla *bzla,
                 true,
                 d_res_x);
 #endif
-  return bzla_proputils_inv_add(bzla, add, t, s, idx_x, domains, 0);
+  BzlaBitVector *res;
+  BzlaBvDomain *x;
+  BzlaMemMgr *mm;
+
+  mm = bzla->mm;
+  x  = bzla_hashint_map_get(domains, bzla_node_real_addr(add->e[idx_x])->id)
+          ->as_ptr;
+
+  if (bzla_bvprop_is_fixed(mm, x))
+  {
+#ifndef NDEBUG
+    BzlaBitVector *tmp =
+        idx_x ? bzla_bv_add(mm, s, x->lo) : bzla_bv_add(mm, s, x->lo);
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(mm, tmp);
+#endif
+    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_add);
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else
+  {
+    res = bzla_proputils_inv_add(bzla, add, t, s, idx_x, domains, 0);
+  }
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -3228,6 +3251,7 @@ bzla_proputils_inv_and_const(Bzla *bzla,
                                       bzla_node_real_addr(and->e[idx_x])->id));
   BzlaBitVector *tmp, *res;
   BzlaBvDomain *x;
+  BzlaMemMgr *mm;
 #ifndef NDEBUG
   check_inv_dbg(bzla,
                 and,
@@ -3240,11 +3264,25 @@ bzla_proputils_inv_and_const(Bzla *bzla,
                 true,
                 d_res_x);
 #endif
-  x = bzla_hashint_map_get(domains, bzla_node_real_addr(and->e[idx_x])->id)
+  mm = bzla->mm;
+  x  = bzla_hashint_map_get(domains, bzla_node_real_addr(and->e[idx_x])->id)
           ->as_ptr;
-  tmp = bzla_proputils_inv_and(bzla, and, t, s, idx_x, domains, 0);
-  res = set_const_bits(bzla->mm, x, tmp);
-  bzla_bv_free(bzla->mm, tmp);
+  if (bzla_bvprop_is_fixed(mm, x))
+  {
+#ifndef NDEBUG
+    tmp = idx_x ? bzla_bv_and(mm, s, x->lo) : bzla_bv_and(mm, s, x->lo);
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(mm, tmp);
+#endif
+    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_and);
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else
+  {
+    tmp = bzla_proputils_inv_and(bzla, and, t, s, idx_x, domains, 0);
+    res = set_const_bits(mm, x, tmp);
+    bzla_bv_free(mm, tmp);
+  }
   return res;
 }
 
@@ -3268,6 +3306,7 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
                                       bzla_node_real_addr(eq->e[idx_x])->id));
   BzlaBitVector *tmp, *res;
   BzlaBvDomain *x;
+  BzlaMemMgr *mm;
 #ifndef NDEBUG
   check_inv_dbg(bzla,
                 eq,
@@ -3280,11 +3319,26 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
                 false,
                 d_res_x);
 #endif
-  x = bzla_hashint_map_get(domains, bzla_node_real_addr(eq->e[idx_x])->id)
+  mm = bzla->mm;
+  x  = bzla_hashint_map_get(domains, bzla_node_real_addr(eq->e[idx_x])->id)
           ->as_ptr;
-  tmp = bzla_proputils_inv_eq(bzla, eq, t, s, idx_x, domains, 0);
-  res = set_const_bits(bzla->mm, x, tmp);
-  bzla_bv_free(bzla->mm, tmp);
+
+  if (bzla_bvprop_is_fixed(mm, x))
+  {
+#ifndef NDEBUG
+    tmp = idx_x ? bzla_bv_eq(mm, s, x->lo) : bzla_bv_eq(mm, s, x->lo);
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(mm, tmp);
+#endif
+    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_eq);
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else
+  {
+    tmp = bzla_proputils_inv_eq(bzla, eq, t, s, idx_x, domains, 0);
+    res = set_const_bits(mm, x, tmp);
+    bzla_bv_free(mm, tmp);
+  }
   return res;
 }
 
@@ -3344,7 +3398,17 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
 
   res = 0;
 
-  if (idx_x)
+  if (bzla_bvprop_is_fixed(mm, x))
+  {
+#ifndef NDEBUG
+    tmp = idx_x ? bzla_bv_ult(mm, s, x->lo) : bzla_bv_ult(mm, s, x->lo);
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(mm, tmp);
+#endif
+    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else if (idx_x)
   {
     /* s < x = t ---------------------------------------------------------- */
     if (!isult)
@@ -3427,40 +3491,38 @@ bzla_proputils_inv_sll_const(Bzla *bzla,
   x = bzla_hashint_map_get(domains, bzla_node_real_addr(sll->e[idx_x])->id)
           ->as_ptr;
 
-  if (idx_x)
+  if (bzla_bvprop_is_fixed(mm, x))
+  {
+#ifndef NDEBUG
+    tmp = idx_x ? bzla_bv_sll(mm, s, x->lo) : bzla_bv_sll(mm, s, x->lo);
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(mm, tmp);
+#endif
+    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sll);
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else if (idx_x)
   {
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sll);
 
-    if (bzla_bvprop_is_fixed(mm, x))
+    assert(d_res_x);
+    assert(bzla_bvprop_is_fixed(mm, d_res_x));
+    bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, d_res_x->lo, 0);
+    assert(bzla_bvprop_gen_has_next(&gen));
+    for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_SHIFT_MAX_RAND; cnt++)
     {
-#ifndef NDEBUG
-      tmp = bzla_bv_sll(mm, s, x->lo);
-      assert(bzla_bv_compare(tmp, t) == 0);
-      bzla_bv_free(mm, tmp);
-#endif
-      res = bzla_bv_copy(mm, x->lo);
-    }
-    else
-    {
-      assert(d_res_x);
-      assert(bzla_bvprop_is_fixed(mm, d_res_x));
-      bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, d_res_x->lo, 0);
-      assert(bzla_bvprop_gen_has_next(&gen));
-      for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_SHIFT_MAX_RAND; cnt++)
+      bv  = bzla_bvprop_gen_random(&gen);
+      tmp = bzla_bv_sll(mm, s, bv);
+      if (bzla_bv_compare(tmp, t) == 0)
       {
-        bv  = bzla_bvprop_gen_random(&gen);
-        tmp = bzla_bv_sll(mm, s, bv);
-        if (bzla_bv_compare(tmp, t) == 0)
-        {
-          res = bzla_bv_copy(mm, bv);
-          bzla_bv_free(mm, tmp);
-          break;
-        }
+        res = bzla_bv_copy(mm, bv);
         bzla_bv_free(mm, tmp);
+        break;
       }
-      if (!res) res = bzla_bv_copy(mm, d_res_x->lo);
-      bzla_bvprop_gen_delete(&gen);
+      bzla_bv_free(mm, tmp);
     }
+    if (!res) res = bzla_bv_copy(mm, d_res_x->lo);
+    bzla_bvprop_gen_delete(&gen);
   }
   else
   {
@@ -3511,40 +3573,38 @@ bzla_proputils_inv_srl_const(Bzla *bzla,
   x = bzla_hashint_map_get(domains, bzla_node_real_addr(srl->e[idx_x])->id)
           ->as_ptr;
 
-  if (idx_x)
+  if (bzla_bvprop_is_fixed(mm, x))
+  {
+#ifndef NDEBUG
+    tmp = idx_x ? bzla_bv_srl(mm, s, x->lo) : bzla_bv_srl(mm, s, x->lo);
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(mm, tmp);
+#endif
+    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else if (idx_x)
   {
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
 
-    if (bzla_bvprop_is_fixed(mm, x))
+    assert(d_res_x);
+    assert(bzla_bvprop_is_fixed(mm, d_res_x));
+    bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, d_res_x->lo, 0);
+    assert(bzla_bvprop_gen_has_next(&gen));
+    for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_SHIFT_MAX_RAND; cnt++)
     {
-#ifndef NDEBUG
-      tmp = bzla_bv_srl(mm, s, x->lo);
-      assert(bzla_bv_compare(tmp, t) == 0);
-      bzla_bv_free(mm, tmp);
-#endif
-      res = bzla_bv_copy(mm, x->lo);
-    }
-    else
-    {
-      assert(d_res_x);
-      assert(bzla_bvprop_is_fixed(mm, d_res_x));
-      bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, d_res_x->lo, 0);
-      assert(bzla_bvprop_gen_has_next(&gen));
-      for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_SHIFT_MAX_RAND; cnt++)
+      bv  = bzla_bvprop_gen_random(&gen);
+      tmp = bzla_bv_srl(mm, s, bv);
+      if (bzla_bv_compare(tmp, t) == 0)
       {
-        bv  = bzla_bvprop_gen_random(&gen);
-        tmp = bzla_bv_srl(mm, s, bv);
-        if (bzla_bv_compare(tmp, t) == 0)
-        {
-          res = bzla_bv_copy(mm, bv);
-          bzla_bv_free(mm, tmp);
-          break;
-        }
+        res = bzla_bv_copy(mm, bv);
         bzla_bv_free(mm, tmp);
+        break;
       }
-      if (!res) res = bzla_bv_copy(mm, d_res_x->lo);
-      bzla_bvprop_gen_delete(&gen);
+      bzla_bv_free(mm, tmp);
     }
+    if (!res) res = bzla_bv_copy(mm, d_res_x->lo);
+    bzla_bvprop_gen_delete(&gen);
   }
   else
   {
@@ -3587,7 +3647,20 @@ bzla_proputils_inv_mul_const(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (d_res_x)
+  x = bzla_hashint_map_get(domains, bzla_node_real_addr(mul->e[idx_x])->id)
+          ->as_ptr;
+
+  if (bzla_bvprop_is_fixed(mm, x))
+  {
+#ifndef NDEBUG
+    tmp = bzla_bv_mul(mm, s, x->lo);
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(mm, tmp);
+#endif
+    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else if (d_res_x)
   {
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
 
@@ -3609,8 +3682,6 @@ bzla_proputils_inv_mul_const(Bzla *bzla,
   }
   else
   {
-    x = bzla_hashint_map_get(domains, bzla_node_real_addr(mul->e[idx_x])->id)
-            ->as_ptr;
     if (bzla_bv_is_zero(s))
     {
       record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
