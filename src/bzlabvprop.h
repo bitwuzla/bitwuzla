@@ -45,6 +45,14 @@ BzlaBvDomain *bzla_bvprop_new_from_char(BzlaMemMgr *mm, const char *val);
  */
 BzlaBvDomain *bzla_bvprop_new_fixed(BzlaMemMgr *mm, const BzlaBitVector *bv);
 
+/**
+ * Create new (fixed) bit-vector domain with low 'val' and high 'val'.
+ * Note: 'val' must be representable with max. 64 bits.
+ */
+BzlaBvDomain *bzla_bvprop_new_fixed_uint64(BzlaMemMgr *mm,
+                                           uint64_t val,
+                                           uint32_t width);
+
 /** Delete bit-vector domain. */
 void bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d);
 
@@ -91,6 +99,14 @@ bool bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos);
  * value in the bit-vector.
  */
 bool bzla_bvprop_is_consistent(BzlaBvDomain *d, BzlaBitVector *bv);
+
+/**
+ * Check if all fixed bits of domain 'd' match with their corresponding bits
+ * of bit-vector 'bv'.
+ */
+bool bzla_bvprop_check_fixed_bits(BzlaMemMgr *mm,
+                                  const BzlaBvDomain *d,
+                                  const BzlaBitVector *bv);
 
 /*----------------------------------------------------------------------------*/
 

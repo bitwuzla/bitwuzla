@@ -474,30 +474,18 @@ bzla_is_inv_slice(Bzla *bzla,
 /* Check invertibility while considering constant bits in x.                  */
 /* -------------------------------------------------------------------------- */
 
-/** Check if const bits of domain 'd' match const bits of bit-vector 'bv'. */
-static bool
-check_const_bits(BzlaMemMgr *mm, const BzlaBvDomain *d, const BzlaBitVector *bv)
-{
-  bool res;
-  BzlaBitVector *and, * or ;
-  and = bzla_bv_and(mm, bv, d->hi);
-  or  = bzla_bv_or(mm, and, d->lo);
-  res = bzla_bv_compare(or, bv) == 0;
-  bzla_bv_free(mm, or);
-  bzla_bv_free(mm, and);
-  return res;
-}
-
 /** Check if const bits of domain 'd' match given value 'val'. */
 static bool
-check_const_bits_val(BzlaMemMgr *mm, const BzlaBvDomain *d, uint32_t val)
+bzla_bvprop_check_fixed_bits_val(BzlaMemMgr *mm,
+                                 const BzlaBvDomain *d,
+                                 uint32_t val)
 {
   bool res;
   uint32_t bw;
   BzlaBitVector *bv;
   bw  = bzla_bv_get_width(d->lo);
   bv  = val ? bzla_bv_ones(mm, bw) : bzla_bv_new(mm, bw);
-  res = check_const_bits(mm, d, bv);
+  res = bzla_bvprop_check_fixed_bits(mm, d, bv);
   bzla_bv_free(mm, bv);
   return res;
 }
@@ -557,7 +545,7 @@ bzla_is_inv_add_const(Bzla *bzla,
   mm = bzla->mm;
 
   sub = bzla_bv_sub(mm, t, s);
-  res = check_const_bits(mm, x, sub);
+  res = bzla_bvprop_check_fixed_bits(mm, x, sub);
   bzla_bv_free(mm, sub);
   return res;
 }
@@ -704,7 +692,7 @@ bzla_is_inv_eq_const(Bzla *bzla,
     return bzla_bv_compare(x->hi, x->lo) || bzla_bv_compare(x->hi, s);
   }
 
-  return check_const_bits(bzla->mm, x, s);
+  return bzla_bvprop_check_fixed_bits(bzla->mm, x, s);
 }
 
 bool
@@ -748,7 +736,7 @@ bzla_is_inv_mul_const(Bzla *bzla,
       {
         mod_inv_s = bzla_bv_mod_inverse(mm, s);
         x         = bzla_bv_mul(mm, mod_inv_s, t);
-        res       = check_const_bits(mm, d_x, x);
+        res       = bzla_bvprop_check_fixed_bits(mm, d_x, x);
         if (d_res_x && res)
         {
           *d_res_x = bzla_bvprop_new(mm, x, x);
@@ -878,7 +866,7 @@ bzla_is_inv_sll_const(Bzla *bzla,
       while (bzla_bvprop_gen_has_next(&gen))
       {
         bv = bzla_bvprop_gen_next(&gen);
-        if (check_const_bits(mm, x, bv))
+        if (bzla_bvprop_check_fixed_bits(mm, x, bv))
         {
           shift1 = bzla_bv_sll(mm, s, bv);
           if (bzla_bv_compare(shift1, t) == 0)
@@ -968,7 +956,7 @@ bzla_is_inv_srl_const(Bzla *bzla,
       while (bzla_bvprop_gen_has_next(&gen))
       {
         bv = bzla_bvprop_gen_next(&gen);
-        if (check_const_bits(mm, x, bv))
+        if (bzla_bvprop_check_fixed_bits(mm, x, bv))
         {
           shift1 = bzla_bv_srl(mm, s, bv);
           if (bzla_bv_compare(shift1, t) == 0)
@@ -1213,18 +1201,20 @@ bzla_is_inv_urem_const(Bzla *bzla,
     {
       uint32_t bw;
       int32_t cmp;
-      BzlaBitVector *n_hi, *one, *ones, *hi, *lo, *sub, *mul, *div, *bv;
+      BzlaBitVector *n_hi, *ones, *hi, *lo, *sub, *mul, *div, *bv;
 
       bw   = bzla_bv_get_width(t);
       ones = bzla_bv_ones(mm, bw);
-      one  = bzla_bv_one(mm, bw);
+#ifndef NDEBUG
+      BzlaBitVector *one = bzla_bv_one(mm, bw);
+#endif
       if (pos_x)
       {
         if (bzla_bv_compare(t, ones) == 0)
         {
           /* s % x = t = ones: s = ones, x = 0 */
           assert(bzla_bv_compare(s, ones) == 0);
-          res = check_const_bits_val(mm, x, 0);
+          res = bzla_bvprop_check_fixed_bits_val(mm, x, 0);
         }
         else
         {
@@ -1287,12 +1277,16 @@ bzla_is_inv_urem_const(Bzla *bzla,
             while (bzla_bvprop_gen_has_next(&gen))
             {
               bv = bzla_bvprop_gen_next(&gen);
-              assert(check_const_bits(mm, x, bv));
+              assert(bzla_bvprop_check_fixed_bits(mm, x, bv));
               rem = bzla_bv_urem(mm, s, bv);
               if (bzla_bv_compare(rem, t) == 0)
               {
                 res = true;
                 bzla_bv_free(mm, rem);
+                if (d_res_x)
+                {
+                  *d_res_x = bzla_bvprop_new(mm, bv, hi);
+                }
                 break;
               }
               bzla_bv_free(mm, rem);
@@ -1309,12 +1303,12 @@ bzla_is_inv_urem_const(Bzla *bzla,
         {
           /* x % 0 = t: x = t
            * t = ones : s = 0, x = ones */
-          res = check_const_bits(mm, x, t);
+          res = bzla_bvprop_check_fixed_bits(mm, x, t);
         }
         else
         {
           assert(bzla_bv_compare(s, t) > 0);
-          if (!check_const_bits(mm, x, t))
+          if (!bzla_bvprop_check_fixed_bits(mm, x, t))
           {
             /* simplest solution (0 <= res < s: res = t) does not apply, thus
              * x = s * n + t with n s.t. (s * n + t) does not overflow */
@@ -1364,12 +1358,16 @@ bzla_is_inv_urem_const(Bzla *bzla,
               while (bzla_bvprop_gen_has_next(&gen))
               {
                 bv = bzla_bvprop_gen_next(&gen);
-                assert(check_const_bits(mm, x, bv));
+                assert(bzla_bvprop_check_fixed_bits(mm, x, bv));
                 rem = bzla_bv_urem(mm, bv, s);
                 if (bzla_bv_compare(rem, t) == 0)
                 {
                   res = true;
                   bzla_bv_free(mm, rem);
+                  if (d_res_x)
+                  {
+                    *d_res_x = bzla_bvprop_new(mm, bv, hi);
+                  }
                   break;
                 }
                 bzla_bv_free(mm, rem);
@@ -1382,7 +1380,9 @@ bzla_is_inv_urem_const(Bzla *bzla,
           }
         }
       }
+#ifndef NDEBUG
       bzla_bv_free(mm, one);
+#endif
       bzla_bv_free(mm, ones);
     }
   }

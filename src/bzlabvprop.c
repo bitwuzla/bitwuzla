@@ -148,6 +148,17 @@ bzla_bvprop_new_fixed(BzlaMemMgr *mm, const BzlaBitVector *bv)
   return res;
 }
 
+BzlaBvDomain *
+bzla_bvprop_new_fixed_uint64(BzlaMemMgr *mm, uint64_t val, uint32_t width)
+{
+  assert(mm);
+  assert(width);
+  BzlaBvDomain *res = new_domain(mm);
+  res->lo           = bzla_bv_uint64_to_bv(mm, val, width);
+  res->hi           = bzla_bv_copy(mm, res->lo);
+  return res;
+}
+
 void
 bzla_bvprop_free(BzlaMemMgr *mm, BzlaBvDomain *d)
 {
@@ -177,6 +188,7 @@ bzla_bvprop_is_equal(const BzlaBvDomain *a, const BzlaBvDomain *b)
   return bzla_bv_compare(a->hi, b->hi) == 0
          && bzla_bv_compare(a->lo, b->lo) == 0;
 }
+
 /* -------------------------------------------------------------------------- */
 
 uint32_t
@@ -253,6 +265,21 @@ bzla_bvprop_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos)
   assert(pos < bzla_bvprop_get_width(d));
   return !bzla_bv_get_bit(d->lo, pos)
          && bzla_bv_get_bit(d->lo, pos) == bzla_bv_get_bit(d->hi, pos);
+}
+
+bool
+bzla_bvprop_check_fixed_bits(BzlaMemMgr *mm,
+                             const BzlaBvDomain *d,
+                             const BzlaBitVector *bv)
+{
+  bool res;
+  BzlaBitVector *and, * or ;
+  and = bzla_bv_and(mm, bv, d->hi);
+  or  = bzla_bv_or(mm, and, d->lo);
+  res = bzla_bv_compare(or, bv) == 0;
+  bzla_bv_free(mm, or);
+  bzla_bv_free(mm, and);
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
