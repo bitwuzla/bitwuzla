@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2019 Aina Niemetz.
+ *  Copyright (C) 2015-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -61,5 +61,7 @@ double bzla_rng_pick_rand_dbl(BzlaRNG* rng, double from, double to);
 
 /* Pick true with given probability (1000 = 100%). */
 bool bzla_rng_pick_with_prob(BzlaRNG* rng, uint32_t prob);
+/* Pick true with probability 50%. */
+bool bzla_rng_flip_coin(BzlaRNG* rng);
 
 #endif

@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2014-2019 Aina Niemetz.
+ *  Copyright (C) 2014-2020 Aina Niemetz.
  *  Copyright (C) 2014-2020 Mathias Preiner.
  *  Copyright (C) 2015 Armin Biere.
  *
@@ -807,7 +807,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            100,
            0,
-           BZLA_PROB_MAX,
+           BZLA_PROB_100,
            "probability for choosing random walks "
            "(interpreted as <n>/1000)");
   init_opt(bzla,
@@ -1006,7 +1006,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            990,
            0,
-           BZLA_PROB_MAX,
+           BZLA_PROB_100,
            "probability for producing inverse rather than consistent values "
            "(interpreted as <n>/1000)");
   init_opt(bzla,
@@ -1017,7 +1017,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            100,
            0,
-           BZLA_PROB_MAX,
+           BZLA_PROB_100,
            "probability for choosing to flip the condition (rather than "
            "choosing the enabled path) for ITE during path selection "
            "for prop moves (interpreted as <n>/1000)");
@@ -1029,7 +1029,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            100,
            0,
-           BZLA_PROB_MAX,
+           BZLA_PROB_100,
            "probability for choosing to flip the condition (rather than "
            "choosing the enabled path) for ITE during path selection "
            "for prop moves if either of the 'then' or 'else' branches "
@@ -1067,7 +1067,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            500,
            0,
-           BZLA_PROB_MAX,
+           BZLA_PROB_100,
            "probability for keeping the current value of the don't care "
            "bits of the operand of a slice operation "
            "(rather than fully randomizing all of them, "
@@ -1082,7 +1082,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            900,
            0,
-           BZLA_PROB_MAX,
+           BZLA_PROB_100,
            "probability for using slice of current assignment with max. "
            "one of its bits flipped (rather than using slice of down "
            "propagated assignment) as result of consistent value selction "
@@ -1095,7 +1095,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            0,
            0,
-           BZLA_PROB_MAX,
+           BZLA_PROB_100,
            "probability for using the current assignment of the operand "
            "of a slice operation with max. one of its bits flipped "
            "(rather than fully randomizing all of them) as a result of "
@@ -1109,7 +1109,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            0,
            0,
-           BZLA_PROB_MAX,
+           BZLA_PROB_100,
            "probability for using the current assignment of the selected "
            "node with one of its bits flipped (rather than using a fully "
            "randomized node) in case of inequalities "
@@ -1123,7 +1123,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            0,
            0,
-           BZLA_PROB_MAX,
+           BZLA_PROB_100,
            "probability for using the current assignment of the don't care "
            "bits of the selected node with max. one of its bits flipped "
            "(rather fully randomizing all of them) in case of an and operation "

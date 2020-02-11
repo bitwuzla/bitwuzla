@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2019 Aina Niemetz.
+ *  Copyright (C) 2015-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -15,10 +15,10 @@
 #ifndef NDEBUG
 #include <float.h>
 #endif
-
 #ifdef BZLA_USE_GMP
 #include <gmp.h>
 #endif
+#include <stdint.h>
 
 void
 bzla_rng_init(BzlaRNG* rng, uint32_t seed)
@@ -121,10 +121,16 @@ bool
 bzla_rng_pick_with_prob(BzlaRNG* rng, uint32_t prob)
 {
   assert(rng);
-  assert(prob <= BZLA_PROB_MAX);
+  assert(prob <= BZLA_PROB_100);
 
   uint32_t r;
 
-  r = bzla_rng_pick_rand(rng, 0, BZLA_PROB_MAX - 1);
+  r = bzla_rng_pick_rand(rng, 0, BZLA_PROB_100 - 1);
   return r < prob;
+}
+
+bool
+bzla_rng_flip_coin(BzlaRNG* rng)
+{
+  return bzla_rng_pick_with_prob(rng, BZLA_PROB_50);
 }

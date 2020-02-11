@@ -535,7 +535,7 @@ bzla_prop_solver_sat(Bzla *bzla)
     slv->flip_cond_const_prob =
         bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_FLIP_COND_CONST);
     slv->flip_cond_const_prob_delta =
-        slv->flip_cond_const_prob > (BZLA_PROB_MAX / 2)
+        slv->flip_cond_const_prob > (BZLA_PROB_50)
             ? -BZLA_PROPUTILS_PROB_FLIP_COND_CONST_DELTA
             : BZLA_PROPUTILS_PROB_FLIP_COND_CONST_DELTA;
 

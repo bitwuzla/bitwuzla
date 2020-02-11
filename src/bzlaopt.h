@@ -61,7 +61,8 @@ typedef struct BzlaOptHelp BzlaOptHelp;
 
 #define BZLA_VERBOSITY_MAX 4
 
-#define BZLA_PROB_MAX 1000
+#define BZLA_PROB_100 1000
+#define BZLA_PROB_50 500
 
 /* enums for option values are defined in bzlatypes.h */
 
