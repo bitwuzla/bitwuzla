@@ -993,7 +993,7 @@ bzla_is_inv_udiv_const(Bzla *bzla,
   (void) d_res_x;
 
   bool res = true;
-  BzlaBitVector *tmp, *min, *max;
+  BzlaBitVector *tmp, *min, *max, *inc;
   BzlaMemMgr *mm;
 
   mm  = bzla->mm;
@@ -1090,22 +1090,18 @@ bzla_is_inv_udiv_const(Bzla *bzla,
             }
             else
             {
-              tmp = bzla_bv_inc(mm, t);
-              min = bzla_bv_udiv(mm, s, tmp);
+              inc = bzla_bv_inc(mm, t);
+              tmp = bzla_bv_udiv(mm, s, inc);
+              bzla_bv_free(mm, inc);
+              min = bzla_bv_inc(mm, tmp);
               bzla_bv_free(mm, tmp);
+
               max = bzla_bv_udiv(mm, s, t);
             }
 
             BzlaBvDomainGenerator dgen;
             bzla_bvprop_gen_init_range(mm, 0, &dgen, x, min, max);
-            res = false;
-            while (bzla_bvprop_gen_has_next(&dgen))
-            {
-              tmp = bzla_bv_udiv(mm, s, bzla_bvprop_gen_next(&dgen));
-              res = bzla_bv_compare(tmp, t) == 0;
-              bzla_bv_free(mm, tmp);
-              if (res) break;
-            }
+            res = bzla_bvprop_gen_has_next(&dgen);
             bzla_bvprop_gen_delete(&dgen);
             bzla_bv_free(mm, min);
             bzla_bv_free(mm, max);
