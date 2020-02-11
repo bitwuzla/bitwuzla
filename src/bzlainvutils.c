@@ -1211,7 +1211,6 @@ bzla_is_inv_urem_const(Bzla *bzla,
     }
     else
     {
-      BzlaBitVectorPtrStack candidates;
       uint32_t bw;
       int32_t cmp;
       BzlaBitVector *n_hi, *one, *ones, *hi, *lo, *sub, *mul, *div, *bv;
@@ -1282,27 +1281,22 @@ bzla_is_inv_urem_const(Bzla *bzla,
               lo = bzla_bv_inc(mm, t);
             }
             bzla_bv_free(mm, n_hi);
-            BZLA_INIT_STACK(mm, candidates);
             BzlaBvDomainGenerator gen;
             bzla_bvprop_gen_init_range(mm, 0, &gen, (BzlaBvDomain *) x, lo, hi);
+            res = false;
             while (bzla_bvprop_gen_has_next(&gen))
             {
-              bv  = bzla_bvprop_gen_next(&gen);
+              bv = bzla_bvprop_gen_next(&gen);
+              assert(check_const_bits(mm, x, bv));
               rem = bzla_bv_urem(mm, s, bv);
               if (bzla_bv_compare(rem, t) == 0)
               {
-                if (check_const_bits(mm, x, bv))
-                {
-                  BZLA_PUSH_STACK(candidates, bv);
-                }
+                res = true;
+                bzla_bv_free(mm, rem);
+                break;
               }
               bzla_bv_free(mm, rem);
             }
-            /* Note: The elements on stack 'candidates' are not valid anymore
-             * since the bit-vector that bzla_bvprop_gen_next returns is not a
-             * copy and gets released on the next bzla_bvprop_gen_next call. */
-            res = !BZLA_EMPTY_STACK(candidates);
-            BZLA_RELEASE_STACK(candidates);
             bzla_bvprop_gen_delete(&gen);
             bzla_bv_free(mm, hi);
             bzla_bv_free(mm, lo);
@@ -1362,26 +1356,24 @@ bzla_is_inv_urem_const(Bzla *bzla,
               /* hi = s * n_hi + t (upper bound for x) */
               hi = bzla_bv_add(mm, mul, t);
               bzla_bv_free(mm, mul);
-              BZLA_INIT_STACK(mm, candidates);
               BzlaBvDomainGenerator gen;
               /* x->lo <= x <= hi */
               bzla_bvprop_gen_init_range(
                   mm, 0, &gen, (BzlaBvDomain *) x, 0, hi);
+              res = false;
               while (bzla_bvprop_gen_has_next(&gen))
               {
-                bv  = bzla_bvprop_gen_next(&gen);
+                bv = bzla_bvprop_gen_next(&gen);
+                assert(check_const_bits(mm, x, bv));
                 rem = bzla_bv_urem(mm, bv, s);
                 if (bzla_bv_compare(rem, t) == 0)
                 {
-                  if (check_const_bits(mm, x, bv))
-                  {
-                    BZLA_PUSH_STACK(candidates, bv);
-                  }
+                  res = true;
+                  bzla_bv_free(mm, rem);
+                  break;
                 }
                 bzla_bv_free(mm, rem);
               }
-              res = !BZLA_EMPTY_STACK(candidates);
-              BZLA_RELEASE_STACK(candidates);
               bzla_bvprop_gen_delete(&gen);
               bzla_bv_free(mm, hi);
               bzla_bv_free(mm, n_hi);
