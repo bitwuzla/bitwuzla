@@ -16,7 +16,10 @@ extern "C" {
 
 #include <stdlib.h>
 
+#include <bitset>
 #include <unordered_set>
+
+#define TEST_BVPROPGEN_BW 4
 
 class TestBvPropGen : public TestBvDomain
 {
@@ -25,13 +28,25 @@ class TestBvPropGen : public TestBvDomain
   {
     TestBvDomain::SetUp();
     bzla_rng_init(&d_rng, 0);
+    d_num_consts = generate_consts(TEST_BVPROPGEN_BW, &d_xvalues);
+    for (uint32_t i = 0; i < (1u << TEST_BVPROPGEN_BW); ++i)
+    {
+      std::string v = std::bitset<TEST_BVPROPGEN_BW>(i).to_string();
+      d_values.push_back(v);
+    }
   }
 
-  void test_next(const char *str_d,
-                 const char *min,
-                 const char *max,
-                 std::vector<std::string> expected,
-                 bool rand = false)
+  void TearDown() override
+  {
+    free_consts(TEST_BVPROPGEN_BW, d_num_consts, d_xvalues);
+    TestBvDomain::TearDown();
+  }
+
+  void test_next_aux(const char *str_d,
+                     const char *min,
+                     const char *max,
+                     std::vector<std::string> expected,
+                     bool rand = false)
   {
     BzlaBvDomainGenerator gen;
     BzlaBvDomain *d       = bzla_bvprop_new_from_char(d_mm, str_d);
@@ -92,6 +107,77 @@ class TestBvPropGen : public TestBvDomain
     bzla_bvprop_gen_delete(&gen);
   }
 
+  bool check_const_bits(std::string &x, std::string &s)
+  {
+    assert(x.size() == s.size());
+    for (uint32_t i = 0, n = x.size(); i < n; ++i)
+    {
+      if (x[i] != 'x' && x[i] != s[i]) return false;
+    }
+    return true;
+  }
+
+  std::vector<std::string> generate_expected(std::string x,
+                                             const std::string min,
+                                             const std::string max)
+  {
+    std::vector<std::string> res;
+    uint64_t umin = strtoul(min.c_str(), 0, 2);
+    uint64_t umax = strtoul(max.c_str(), 0, 2);
+
+    if (x.find('x') != std::string::npos)
+    {
+      for (uint32_t i = umin; i <= umax; ++i)
+      {
+        std::string v = std::bitset<TEST_BVPROPGEN_BW>(i).to_string();
+        if (check_const_bits(x, v))
+        {
+          res.push_back(v);
+        }
+      }
+    }
+    return res;
+  }
+
+  void test_next(bool rand = false)
+  {
+    std::string ones(TEST_BVPROPGEN_BW, '1');
+    std::string zero(TEST_BVPROPGEN_BW, '0');
+
+    for (uint32_t i = 0; i < d_num_consts; ++i)
+    {
+      for (const std::string &min : d_values)
+      {
+        /* check with min and max */
+        for (const std::string &max : d_values)
+        {
+          std::vector<std::string> expected =
+              generate_expected(d_xvalues[i], min, max);
+          test_next_aux(d_xvalues[i], min.c_str(), max.c_str(), expected, rand);
+        }
+
+        /* check with min (no max) */
+        std::vector<std::string> expected =
+            generate_expected(d_xvalues[i], min, ones);
+        test_next_aux(d_xvalues[i], min.c_str(), 0, expected, rand);
+      }
+      /* check with max (no min) */
+      for (const std::string &max : d_values)
+      {
+        std::vector<std::string> expected =
+            generate_expected(d_xvalues[i], zero, max);
+        test_next_aux(d_xvalues[i], 0, max.c_str(), expected, rand);
+      }
+      /* check without min and max */
+      std::vector<std::string> expected =
+          generate_expected(d_xvalues[i], zero, ones);
+      test_next_aux(d_xvalues[i], 0, 0, expected, rand);
+    }
+  }
+
+  uint32_t d_num_consts;
+  char **d_xvalues;
+  std::vector<std::string> d_values;
   BzlaRNG d_rng;
 };
 
@@ -136,122 +222,7 @@ TEST_F(TestBvPropGen, has_next)
   }
 }
 
-TEST_F(TestBvPropGen, next_00x) { test_next("00x", 0, 0, {"000", "001"}); }
-TEST_F(TestBvPropGen, next_01x) { test_next("01x", 0, 0, {"010", "011"}); }
-TEST_F(TestBvPropGen, next_10x) { test_next("10x", 0, 0, {"100", "101"}); }
-TEST_F(TestBvPropGen, next_11x) { test_next("11x", 0, 0, {"110", "111"}); }
-
-TEST_F(TestBvPropGen, next_0x0) { test_next("0x0", 0, 0, {"000", "010"}); }
-TEST_F(TestBvPropGen, next_0x1) { test_next("0x1", 0, 0, {"001", "011"}); }
-TEST_F(TestBvPropGen, next_1x0) { test_next("1x0", 0, 0, {"100", "110"}); }
-TEST_F(TestBvPropGen, next_1x1) { test_next("1x1", 0, 0, {"101", "111"}); }
-
-TEST_F(TestBvPropGen, next_x00) { test_next("x00", 0, 0, {"000", "100"}); }
-TEST_F(TestBvPropGen, next_x01) { test_next("x01", 0, 0, {"001", "101"}); }
-TEST_F(TestBvPropGen, next_x10) { test_next("x10", 0, 0, {"010", "110"}); }
-TEST_F(TestBvPropGen, next_x11) { test_next("x11", 0, 0, {"011", "111"}); }
-
-TEST_F(TestBvPropGen, next_0xx)
-{
-  test_next("0xx", 0, 0, {"000", "001", "010", "011"});
-}
-
-TEST_F(TestBvPropGen, next_1xx)
-{
-  test_next("1xx", 0, 0, {"100", "101", "110", "111"});
-}
-
-TEST_F(TestBvPropGen, next_xx0)
-{
-  test_next("xx0", 0, 0, {"000", "010", "100", "110"});
-}
-
-TEST_F(TestBvPropGen, next_xx1)
-{
-  test_next("xx1", 0, 0, {"001", "011", "101", "111"});
-}
-
-TEST_F(TestBvPropGen, next_xxx)
-{
-  test_next(
-      "xxx", 0, 0, {"000", "001", "010", "011", "100", "101", "110", "111"});
-}
-
-TEST_F(TestBvPropGen, next_range_00x_11)
-{
-  test_next("00x", 0, "000", {"000"});
-}
-TEST_F(TestBvPropGen, next_range_00x_21)
-{
-  test_next("00x", 0, "001", {"000", "001"});
-}
-TEST_F(TestBvPropGen, next_range_00x_31)
-{
-  test_next("00x", 0, "010", {"000", "001"});
-}
-TEST_F(TestBvPropGen, next_range_00x_12)
-{
-  test_next("00x", "000", "000", {"000"});
-}
-TEST_F(TestBvPropGen, next_range_00x_22)
-{
-  test_next("00x", "000", "001", {"000", "001"});
-}
-TEST_F(TestBvPropGen, next_range_00x_32)
-{
-  test_next("00x", "001", "010", {"001"});
-}
-TEST_F(TestBvPropGen, next_range_00x_13)
-{
-  test_next("00x", "000", 0, {"000", "001"});
-}
-TEST_F(TestBvPropGen, next_range_00x_23)
-{
-  test_next("00x", "001", 0, {"001"});
-}
-TEST_F(TestBvPropGen, next_range_00x_33) { test_next("00x", "010", 0, {}); }
-
-TEST_F(TestBvPropGen, next_range_01x_11)
-{
-  test_next("01x", 0, "011", {"010", "011"});
-}
-TEST_F(TestBvPropGen, next_range_01x_12)
-{
-  test_next("01x", 0, "010", {"010"});
-}
-TEST_F(TestBvPropGen, next_range_01x_13) { test_next("01x", 0, "000", {}); }
-TEST_F(TestBvPropGen, next_range_01x_21)
-{
-  test_next("01x", "000", 0, {"010", "011"});
-}
-TEST_F(TestBvPropGen, next_range_01x_22)
-{
-  test_next("01x", "010", 0, {"010", "011"});
-}
-TEST_F(TestBvPropGen, next_range_01x_23) { test_next("01x", "100", 0, {}); }
-TEST_F(TestBvPropGen, next_range_01x_31)
-{
-  test_next("01x", "000", "011", {"010", "011"});
-}
-TEST_F(TestBvPropGen, next_range_01x_32)
-{
-  test_next("01x", "010", "100", {"010", "011"});
-}
-TEST_F(TestBvPropGen, next_range_01x_33)
-{
-  test_next("01x", "010", "010", {"010"});
-}
-TEST_F(TestBvPropGen, next_range_01x_34) { test_next("01x", "100", "111", {}); }
-TEST_F(TestBvPropGen, next_range_x10_35) { test_next("x10", "011", "101", {}); }
-
-TEST_F(TestBvPropGen, next_range_01x_regr1)
-{
-  test_next("01x", "001", "110", {"010", "011"});
-}
-TEST_F(TestBvPropGen, next_range_01x_regr2)
-{
-  test_next("x1x", "001", 0, {"010", "011", "110", "111"});
-}
+TEST_F(TestBvPropGen, next) { test_next(); }
 
 TEST_F(TestBvPropGen, has_next_rand)
 {
@@ -285,201 +256,4 @@ TEST_F(TestBvPropGen, has_next_rand)
   }
 }
 
-TEST_F(TestBvPropGen, next_00x_rand)
-{
-  test_next("00x", 0, 0, {"000", "001"}, true);
-}
-TEST_F(TestBvPropGen, next_01x_rand)
-{
-  test_next("01x", 0, 0, {"010", "011"}, true);
-}
-TEST_F(TestBvPropGen, next_10x_rand)
-{
-  test_next("10x", 0, 0, {"100", "101"}, true);
-}
-TEST_F(TestBvPropGen, next_11x_rand)
-{
-  test_next("11x", 0, 0, {"110", "111"}, true);
-}
-
-TEST_F(TestBvPropGen, next_0x0_rand)
-{
-  test_next("0x0", 0, 0, {"000", "010"}, true);
-}
-TEST_F(TestBvPropGen, next_0x1_rand)
-{
-  test_next("0x1", 0, 0, {"001", "011"}, true);
-}
-TEST_F(TestBvPropGen, next_1x0_rand)
-{
-  test_next("1x0", 0, 0, {"100", "110"}, true);
-}
-TEST_F(TestBvPropGen, next_1x1_rand)
-{
-  test_next("1x1", 0, 0, {"101", "111"}, true);
-}
-
-TEST_F(TestBvPropGen, next_x00_rand)
-{
-  test_next("x00", 0, 0, {"000", "100"}, true);
-}
-TEST_F(TestBvPropGen, next_x01_rand)
-{
-  test_next("x01", 0, 0, {"001", "101"}, true);
-}
-TEST_F(TestBvPropGen, next_x10_rand)
-{
-  test_next("x10", 0, 0, {"010", "110"}, true);
-}
-TEST_F(TestBvPropGen, next_x11_rand)
-{
-  test_next("x11", 0, 0, {"011", "111"}, true);
-}
-
-TEST_F(TestBvPropGen, next_0xx_rand)
-{
-  test_next("0xx", 0, 0, {"000", "001", "010", "011"}, true);
-}
-
-TEST_F(TestBvPropGen, next_1xx_rand)
-{
-  test_next("1xx", 0, 0, {"100", "101", "110", "111"}, true);
-}
-
-TEST_F(TestBvPropGen, next_xx0_rand)
-{
-  test_next("xx0", 0, 0, {"000", "010", "100", "110"}, true);
-}
-
-TEST_F(TestBvPropGen, next_xx1_rand)
-{
-  test_next("xx1", 0, 0, {"001", "011", "101", "111"}, true);
-}
-
-TEST_F(TestBvPropGen, next_xxx_1_rand)
-{
-  test_next("xxx",
-            "000",
-            "111",
-            {"000", "001", "010", "011", "100", "101", "110", "111"},
-            true);
-}
-
-TEST_F(TestBvPropGen, next_xxx_2_rand)
-{
-  test_next("xxx",
-            0,
-            0,
-            {"000", "001", "010", "011", "100", "101", "110", "111"},
-            true);
-}
-
-TEST_F(TestBvPropGen, next_range_00x_11_rand)
-{
-  test_next("00x", 0, "000", {"000"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_00x_21_rand)
-{
-  test_next("00x", 0, "001", {"000", "001"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_00x_31_rand)
-{
-  test_next("00x", 0, "010", {"000", "001"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_00x_12_rand)
-{
-  test_next("00x", "000", "000", {"000"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_00x_22_rand)
-{
-  test_next("00x", "000", "001", {"000", "001"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_00x_32_rand)
-{
-  test_next("00x", "001", "010", {"001"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_00x_13_rand)
-{
-  test_next("00x", "000", 0, {"000", "001"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_00x_23_rand)
-{
-  test_next("00x", "001", 0, {"001"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_00x_33_rand)
-{
-  test_next("00x", "010", 0, {}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_11_rand)
-{
-  test_next("01x", 0, "011", {"010", "011"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_12_rand)
-{
-  test_next("01x", 0, "010", {"010"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_13_rand)
-{
-  test_next("01x", 0, "000", {}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_21_rand)
-{
-  test_next("01x", "000", 0, {"010", "011"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_22_rand)
-{
-  test_next("01x", "010", 0, {"010", "011"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_23_rand)
-{
-  test_next("01x", "100", 0, {}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_31_rand)
-{
-  test_next("01x", "000", "011", {"010", "011"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_32_rand)
-{
-  test_next("01x", "010", "100", {"010", "011"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_33_rand)
-{
-  test_next("01x", "010", "010", {"010"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_34_rand)
-{
-  test_next("01x", "100", "111", {}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_x10_35_rand_rand)
-{
-  test_next("x10", "011", "101", {}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_regr1_rand)
-{
-  test_next("01x", "001", "110", {"010", "011"}, true);
-}
-
-TEST_F(TestBvPropGen, next_range_01x_regr2_rand)
-{
-  test_next("x1x", "001", 0, {"010", "011", "110", "111"}, true);
-}
+TEST_F(TestBvPropGen, next_rand) { test_next(true); }
