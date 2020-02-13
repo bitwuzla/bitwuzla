@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2018 Aina Niemetz.
+ *  Copyright (C) 2015-2020 Aina Niemetz.
  *  Copyright (C) 2017 Mathias Preiner.
  *
  *  This file is part of Boolector.
@@ -1424,6 +1424,12 @@ delete_sls_solver(BzlaSLSSolver *slv)
 
   if (slv->score) bzla_hashint_map_delete(slv->score);
   if (slv->roots) bzla_hashint_map_delete(slv->roots);
+  bzla_iter_hashint_init(&it, slv->domains);
+  while (bzla_iter_hashint_has_next(&it))
+  {
+    bzla_bvprop_free(slv->bzla->mm, bzla_iter_hashint_next_data(&it)->as_ptr);
+  }
+  bzla_hashint_map_delete(slv->domains);
   if (slv->weights)
   {
     bzla_iter_hashint_init(&it, slv->weights);
@@ -1759,8 +1765,9 @@ bzla_new_sls_solver(Bzla *bzla)
 
   BZLA_CNEW(bzla->mm, slv);
 
-  slv->kind = BZLA_SLS_SOLVER_KIND;
-  slv->bzla = bzla;
+  slv->bzla    = bzla;
+  slv->kind    = BZLA_SLS_SOLVER_KIND;
+  slv->domains = bzla_hashint_map_new(bzla->mm);
 
   BZLA_INIT_STACK(bzla->mm, slv->moves);
 

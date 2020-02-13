@@ -4303,11 +4303,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   }
 #endif
 
-  if (opt_prop_domains && bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-  {
-    domains = BZLA_PROP_SOLVER(bzla)->domains;
-    assert(!opt_prop_const_bits || domains);
-  }
+  domains = BZLA_PROP_SOLVER(bzla)->domains;
+  assert(domains);
 
   tmp = (BzlaBitVector *) bzla_model_get_bv(bzla, root);
   if (!bzla_bv_compare(bvroot, tmp))
