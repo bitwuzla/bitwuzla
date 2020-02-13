@@ -1626,7 +1626,6 @@ class TestPropInvConst : public TestPropInv
     TestPropInv::SetUp();
 
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_CONST_BITS, 1);
-    bzla_opt_set(d_bzla, BZLA_OPT_PROP_DOMAINS, 1);
   }
 
   /** Helper for check_result_aux. */

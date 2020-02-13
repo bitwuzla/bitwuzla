@@ -630,6 +630,7 @@ enum BzlaOption
     */
   BZLA_OPT_PROP_CONST_BITS,
 
+#if 0
   /*!
     * **BZLA_OPT_PROP_DOMAINS**
 
@@ -637,6 +638,7 @@ enum BzlaOption
       values with domain propagators.
     */
   BZLA_OPT_PROP_DOMAINS,
+#endif
 
   /*!
     * **BZLA_OPT_PROP_USE_RESTARTS**

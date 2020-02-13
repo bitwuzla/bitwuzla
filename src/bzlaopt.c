@@ -938,16 +938,18 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "use constant bits propagation");
-  init_opt(bzla,
-           BZLA_OPT_PROP_DOMAINS,
-           false,
-           true,
-           "prop-domains",
-           0,
-           0,
-           0,
-           1,
-           "use domain propagators for inverse value computation");
+#if 0
+  init_opt (bzla,
+            BZLA_OPT_PROP_DOMAINS,
+            false,
+            true,
+            "prop-domains",
+            0,
+            0,
+            0,
+            1,
+            "use domain propagators for inverse value computation");
+#endif
   init_opt(bzla,
            BZLA_OPT_PROP_USE_RESTARTS,
            false,

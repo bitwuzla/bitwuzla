@@ -4263,7 +4263,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   BzlaBitVector *bv_s[3], *bv_t, *bv_s_new, *tmp;
   BzlaBvDomain *d_res_x;
   BzlaMemMgr *mm;
-  uint32_t opt_prop_prob_use_inv_value, opt_prop_domains;
+  uint32_t opt_prop_prob_use_inv_value;
   uint32_t opt_prop_const_bits;
 
   BzlaPropSelectPath select_path;
@@ -4284,7 +4284,6 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   domains     = 0;
   d_res_x     = 0;
 
-  opt_prop_domains = bzla_opt_get(bzla, BZLA_OPT_PROP_DOMAINS);
   opt_prop_prob_use_inv_value =
       bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE);
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
@@ -4322,7 +4321,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
     real_cur = bzla_node_real_addr(cur);
 
 #ifndef NDEBUG
-    if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND && opt_prop_domains)
+    if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND && opt_prop_const_bits)
     {
       BzlaPropSolver *slv = BZLA_PROP_SOLVER(bzla);
       assert(slv->domains);
@@ -4468,14 +4467,14 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       if (bzla_node_is_bv_cond(real_cur))
       {
         cons_value = bzla_proputils_cons_cond;
-        inv_value  = opt_prop_domains ? bzla_proputils_inv_cond_const
-                                     : bzla_proputils_inv_cond;
+        inv_value  = opt_prop_const_bits ? bzla_proputils_inv_cond_const
+                                        : bzla_proputils_inv_cond;
       }
       else
       {
         cons_value = kind_to_cons_bv[real_cur->kind];
-        inv_value  = opt_prop_domains ? kind_to_inv_const[real_cur->kind]
-                                     : kind_to_inv[real_cur->kind];
+        inv_value  = opt_prop_const_bits ? kind_to_inv_const[real_cur->kind]
+                                        : kind_to_inv[real_cur->kind];
       }
       compute_value = pick_inv && !force_cons ? inv_value : cons_value;
 

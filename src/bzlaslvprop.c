@@ -429,7 +429,7 @@ bzla_prop_solver_sat(Bzla *bzla)
 
   uint32_t j, max_steps;
   int32_t sat_result;
-  uint32_t nprops, opt_prop_domains;
+  uint32_t nprops, opt_prop_const_bits;
   BzlaNode *root;
   BzlaPtrHashTable *constraints;
   BzlaPtrHashTableIterator it;
@@ -441,8 +441,8 @@ bzla_prop_solver_sat(Bzla *bzla)
   assert(slv->domains);
   assert(slv->domains->count == 0);
 
-  nprops           = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
-  opt_prop_domains = bzla_opt_get(bzla, BZLA_OPT_PROP_DOMAINS);
+  nprops              = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
+  opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
 
   if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
   {
@@ -461,7 +461,7 @@ bzla_prop_solver_sat(Bzla *bzla)
   while (bzla_iter_hashptr_has_next(&it))
   {
     root = bzla_iter_hashptr_next(&it);
-    if (opt_prop_domains)
+    if (opt_prop_const_bits)
     {
       bzla_prop_solver_init_domains(bzla, slv->domains, root);
     }
@@ -482,7 +482,7 @@ bzla_prop_solver_sat(Bzla *bzla)
     {
       bzla_synthesize_exp(bzla, root, 0);
     }
-    if (opt_prop_domains)
+    if (opt_prop_const_bits)
     {
       bzla_prop_solver_init_domains(bzla, slv->domains, root);
     }
@@ -715,7 +715,6 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   }
   BZLA_MSG(bzla->msg, 1, "updates (cone): %u", slv->stats.updates);
 #ifndef NDEBUG
-  bool domains = bzla_opt_get(slv->bzla, BZLA_OPT_PROP_DOMAINS);
   char *s_cons = "    consistent fun calls";
   char *s_inv  = "    inverse fun calls";
   /* Consistent value computation stats. */
@@ -736,101 +735,20 @@ print_stats_prop_solver(BzlaPropSolver *slv)
 
   /* Inverse value computation stats. */
   BZLA_MSG(bzla->msg, 1, "");
-  BZLA_MSG(bzla->msg,
-           1,
-           "inverse value computations%s:",
-           domains ? " [#conflicts /w domain props]" : "");
+  BZLA_MSG(bzla->msg, 1, "inverse value computations:");
 
-  if (domains)
-  {
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (add): %u [%u]",
-             s_inv,
-             slv->stats.inv_add,
-             slv->stats.inv_add_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (and): %u [%u]",
-             s_inv,
-             slv->stats.inv_and,
-             slv->stats.inv_and_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (eq): %u [%u]",
-             s_inv,
-             slv->stats.inv_eq,
-             slv->stats.inv_eq_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (ult): %u [%u]",
-             s_inv,
-             slv->stats.inv_ult,
-             slv->stats.inv_ult_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (sll): %u [%u]",
-             s_inv,
-             slv->stats.inv_sll,
-             slv->stats.inv_sll_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (srl): %u [%u]",
-             s_inv,
-             slv->stats.inv_srl,
-             slv->stats.inv_srl_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (mul): %u [%u]",
-             s_inv,
-             slv->stats.inv_mul,
-             slv->stats.inv_mul_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (udiv): %u [%u]",
-             s_inv,
-             slv->stats.inv_udiv,
-             slv->stats.inv_udiv_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (urem): %u [%u]",
-             s_inv,
-             slv->stats.inv_urem,
-             slv->stats.inv_urem_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (concat): %u [%u]",
-             s_inv,
-             slv->stats.inv_concat,
-             slv->stats.inv_concat_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (slice): %u [%u]",
-             s_inv,
-             slv->stats.inv_slice,
-             slv->stats.inv_slice_conflicts);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s (cond): %u [%u]",
-             s_inv,
-             slv->stats.inv_cond,
-             slv->stats.inv_cond_conflicts);
-  }
-  else
-  {
-    BZLA_MSG(bzla->msg, 1, "%s (add): %u", s_inv, slv->stats.inv_add);
-    BZLA_MSG(bzla->msg, 1, "%s (and): %u", s_inv, slv->stats.inv_and);
-    BZLA_MSG(bzla->msg, 1, "%s (eq): %u", s_inv, slv->stats.inv_eq);
-    BZLA_MSG(bzla->msg, 1, "%s (ult): %u", s_inv, slv->stats.inv_ult);
-    BZLA_MSG(bzla->msg, 1, "%s (sll): %u", s_inv, slv->stats.inv_sll);
-    BZLA_MSG(bzla->msg, 1, "%s (srl): %u", s_inv, slv->stats.inv_srl);
-    BZLA_MSG(bzla->msg, 1, "%s (mul): %u", s_inv, slv->stats.inv_mul);
-    BZLA_MSG(bzla->msg, 1, "%s (udiv): %u", s_inv, slv->stats.inv_udiv);
-    BZLA_MSG(bzla->msg, 1, "%s (urem): %u", s_inv, slv->stats.inv_urem);
-    BZLA_MSG(bzla->msg, 1, "%s (concat): %u", s_inv, slv->stats.inv_concat);
-    BZLA_MSG(bzla->msg, 1, "%s (slice): %u", s_inv, slv->stats.inv_slice);
-    BZLA_MSG(bzla->msg, 1, "%s (cond): %u", s_inv, slv->stats.inv_cond);
-  }
+  BZLA_MSG(bzla->msg, 1, "%s (add): %u", s_inv, slv->stats.inv_add);
+  BZLA_MSG(bzla->msg, 1, "%s (and): %u", s_inv, slv->stats.inv_and);
+  BZLA_MSG(bzla->msg, 1, "%s (eq): %u", s_inv, slv->stats.inv_eq);
+  BZLA_MSG(bzla->msg, 1, "%s (ult): %u", s_inv, slv->stats.inv_ult);
+  BZLA_MSG(bzla->msg, 1, "%s (sll): %u", s_inv, slv->stats.inv_sll);
+  BZLA_MSG(bzla->msg, 1, "%s (srl): %u", s_inv, slv->stats.inv_srl);
+  BZLA_MSG(bzla->msg, 1, "%s (mul): %u", s_inv, slv->stats.inv_mul);
+  BZLA_MSG(bzla->msg, 1, "%s (udiv): %u", s_inv, slv->stats.inv_udiv);
+  BZLA_MSG(bzla->msg, 1, "%s (urem): %u", s_inv, slv->stats.inv_urem);
+  BZLA_MSG(bzla->msg, 1, "%s (concat): %u", s_inv, slv->stats.inv_concat);
+  BZLA_MSG(bzla->msg, 1, "%s (slice): %u", s_inv, slv->stats.inv_slice);
+  BZLA_MSG(bzla->msg, 1, "%s (cond): %u", s_inv, slv->stats.inv_cond);
 #endif
 }
 
