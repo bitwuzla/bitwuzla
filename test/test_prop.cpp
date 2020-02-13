@@ -561,6 +561,10 @@ TEST_F(TestPropConst, one_complete_concat_const)
                        bzla_proputils_inv_concat_const);
 }
 
+/* Note: We don't need to test completeness within one propagation step
+ *       for slice -- we can always compute an inverse value for slice
+ *       within one step if it is invertible. */
+
 /* -------------------------------------------------------------------------- */
 /* Inverse value computation with propagator domains, no const bits.          */
 /* -------------------------------------------------------------------------- */
@@ -831,12 +835,10 @@ TEST_F(TestPropConst, complete_concat_const)
                        bzla_proputils_inv_concat_const);
 }
 
-#if 0
-TEST_F (TestPropConst, complete_slice_const)
+TEST_F(TestPropConst, complete_slice_const)
 {
-  prop_complete_slice (bzla_proputils_inv_slice_const);
+  prop_complete_slice(bzla_proputils_inv_slice_const);
 }
-#endif
 
 /* -------------------------------------------------------------------------- */
 /* Inverse value computation with propagator domains, no const bits.          */

@@ -4003,7 +4003,6 @@ bzla_proputils_inv_slice_const(Bzla *bzla,
                                BzlaIntHashTable *domains,
                                BzlaBvDomain *d_res_x)
 {
-  // TODO
   return bzla_proputils_inv_slice(bzla, slice, t, s, idx_x, domains, d_res_x);
 }
 
