@@ -1483,14 +1483,13 @@ bzla_proputils_cons_slice(Bzla *bzla,
 BzlaBitVector *
 bzla_proputils_cons_cond(Bzla *bzla,
                          BzlaNode *cond,
-                         BzlaBitVector *bvcond,
+                         BzlaBitVector *t,
                          BzlaBitVector *s,
                          int32_t idx_x,
                          BzlaIntHashTable *domains,
                          BzlaBvDomain *d_res_x)
 {
-  return bzla_proputils_inv_cond(
-      bzla, cond, bvcond, s, idx_x, domains, d_res_x);
+  return bzla_proputils_inv_cond(bzla, cond, t, s, idx_x, domains, d_res_x);
 }
 
 /* ========================================================================== */
@@ -4039,6 +4038,7 @@ static BzlaPropSelectPath kind_to_select_path[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = select_path_srl,
     [BZLA_BV_UDIV_NODE]   = select_path_udiv,
     [BZLA_BV_UREM_NODE]   = select_path_urem,
+    [BZLA_COND_NODE]      = select_path_cond,
 };
 
 static BzlaPropComputeValue kind_to_cons_bv[BZLA_NUM_OPS_NODE] = {
@@ -4053,6 +4053,7 @@ static BzlaPropComputeValue kind_to_cons_bv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = bzla_proputils_cons_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_cons_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_cons_urem,
+    [BZLA_COND_NODE]      = bzla_proputils_cons_cond,
 };
 
 static BzlaPropComputeValue kind_to_inv[BZLA_NUM_OPS_NODE] = {
@@ -4067,6 +4068,7 @@ static BzlaPropComputeValue kind_to_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = bzla_proputils_inv_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_inv_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_inv_urem,
+    [BZLA_COND_NODE]      = bzla_proputils_inv_cond,
 };
 
 static BzlaPropComputeValue kind_to_inv_const[BZLA_NUM_OPS_NODE] = {
@@ -4081,6 +4083,7 @@ static BzlaPropComputeValue kind_to_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = bzla_proputils_inv_srl_const,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_inv_udiv_const,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_inv_urem_const,
+    [BZLA_COND_NODE]      = bzla_proputils_inv_cond_const,
 };
 
 static BzlaPropIsInv kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
@@ -4095,6 +4098,7 @@ static BzlaPropIsInv kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem,
+    [BZLA_COND_NODE]      = 0,  // always invertible
 };
 
 static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
@@ -4396,26 +4400,18 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       if (!pick_inv) ncons += 1;
 #endif
 
-      is_inv = 0;
-      if (bzla_node_is_bv_cond(real_cur))
-      {
-        // always invertible
-        select_path = select_path_cond;
-      }
-      else
-      {
-        is_inv = opt_prop_const_bits ? kind_to_is_inv_const[real_cur->kind]
-                                     : kind_to_is_inv[real_cur->kind];
-        select_path = kind_to_select_path[real_cur->kind];
-      }
+      is_inv = opt_prop_const_bits ? kind_to_is_inv_const[real_cur->kind]
+                                   : kind_to_is_inv[real_cur->kind];
+      select_path = kind_to_select_path[real_cur->kind];
 
       /* select path */
       if (idx_x == -1) idx_x = select_path(bzla, real_cur, bv_t, bv_s);
       assert(idx_x >= 0 && idx_x < real_cur->arity);
 
       idx_s = idx_x ? 0 : 1;
-      /* special case slice: only one child
-       * special case cond: we only need assignment of cond to compute value */
+      /* special cases:
+       * - slice: only one child
+       * -  cond: we only need assignment of cond to compute value */
       if (bzla_node_is_bv_slice(real_cur) || bzla_node_is_cond(real_cur))
       {
         /* Note: both are always invertible, thus is_inv and record_conflict
@@ -4423,14 +4419,15 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         idx_s = 0;
       }
 
-      /* check invertibility --> if not invertible, fall back to consistent
-       * value computation */
-      force_cons = false;
+      /* check invertibility
+       * -> if not invertible, fall back to consistent value computation */
+      force_cons = false; /* if true, force consistent value computation */
       if (opt_prop_const_bits && bzla_node_is_bv_slice(real_cur))
       {
         assert(domains);
         d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
         assert(d);
+        assert(d->as_ptr);
         force_cons =
             !bzla_is_inv_slice_const(bzla,
                                      d->as_ptr,
@@ -4464,18 +4461,10 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         }
       }
 
-      if (bzla_node_is_bv_cond(real_cur))
-      {
-        cons_value = bzla_proputils_cons_cond;
-        inv_value  = opt_prop_const_bits ? bzla_proputils_inv_cond_const
-                                        : bzla_proputils_inv_cond;
-      }
-      else
-      {
-        cons_value = kind_to_cons_bv[real_cur->kind];
-        inv_value  = opt_prop_const_bits ? kind_to_inv_const[real_cur->kind]
-                                        : kind_to_inv[real_cur->kind];
-      }
+      cons_value = kind_to_cons_bv[real_cur->kind];
+      inv_value  = opt_prop_const_bits ? kind_to_inv_const[real_cur->kind]
+                                      : kind_to_inv[real_cur->kind];
+
       compute_value = pick_inv && !force_cons ? inv_value : cons_value;
 
 #ifndef NDEBUG
