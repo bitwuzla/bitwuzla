@@ -4258,7 +4258,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   int32_t i, idx_s, nconst;
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
-  BzlaIntHashTable *domains;
+  BzlaIntHashTable *domains = 0;
   BzlaHashTableData *d;
   BzlaBitVector *bv_s[3], *bv_t, *bv_s_new, *tmp;
   BzlaBvDomain *d_res_x;
@@ -4294,8 +4294,6 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   {
     nrecconf_prev    = BZLA_PROP_SOLVER(bzla)->stats.rec_conf;
     nnonrecconf_prev = BZLA_PROP_SOLVER(bzla)->stats.non_rec_conf;
-    domains          = BZLA_PROP_SOLVER(bzla)->domains;
-    assert(!opt_prop_const_bits || domains);
   }
   else
   {
@@ -4304,6 +4302,12 @@ bzla_proputils_select_move_prop(Bzla *bzla,
     nnonrecconf_prev = BZLA_SLS_SOLVER(bzla)->stats.move_prop_non_rec_conf;
   }
 #endif
+
+  if (opt_prop_domains && bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  {
+    domains = BZLA_PROP_SOLVER(bzla)->domains;
+    assert(!opt_prop_const_bits || domains);
+  }
 
   tmp = (BzlaBitVector *) bzla_model_get_bv(bzla, root);
   if (!bzla_bv_compare(bvroot, tmp))
@@ -4428,6 +4432,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       force_cons = false;
       if (opt_prop_const_bits && bzla_node_is_bv_slice(real_cur))
       {
+        assert(domains);
         d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
         assert(d);
         force_cons =
@@ -4439,7 +4444,15 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       }
       else if (is_inv)
       {
-        d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
+        if (domains)
+        {
+          d = bzla_hashint_map_get(domains,
+                                   bzla_node_get_id(real_cur->e[idx_x]));
+        }
+        else
+        {
+          d = 0;
+        }
         assert(!opt_prop_const_bits || d);
         force_cons = !is_inv(
             bzla, d ? d->as_ptr : 0, bv_t, bv_s[idx_s], idx_x, &d_res_x);
