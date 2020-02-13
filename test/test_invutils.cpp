@@ -124,6 +124,13 @@ class TestInvUtils : public TestBzla
           t  = bzla_bv_uint64_to_bv(d_mm, j, bw_t);
           vt = bzla_bv_to_char(d_mm, t);
 
+          printf("idx_x %d\n", pos_x);
+          printf("s ");
+          bzla_bv_print(s);
+          printf("t ");
+          bzla_bv_print(t);
+          printf("x ");
+          bzla_bvprop_print(d_mm, x, true);
           BzlaBvDomain *d_res_x = 0;
           bool res              = is_inv(d_bzla, x, t, s, pos_x, &d_res_x);
           bool status =

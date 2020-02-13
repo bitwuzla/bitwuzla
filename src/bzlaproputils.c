@@ -2510,7 +2510,7 @@ bzla_proputils_inv_udiv(Bzla *bzla,
          */
 
         /* determine upper and lower bounds for x:
-         * up = s * (budiv + 1) - 1
+         * up = s * (t + 1) - 1
          *      if s * (t + 1) does not overflow
          *      else 2^bw - 1
          * lo = s * t */
@@ -3162,7 +3162,7 @@ bzla_proputils_inv_cond(Bzla *bzla,
 /* Inverse value computation with respect to const bits                       */
 /* ========================================================================== */
 
-#define BZLA_PROPUTILS_SHIFT_MAX_RAND 10
+#define BZLA_PROPUTILS_GEN_MAX_RAND 10
 
 /**
  * Create a bit-vector with all bits that are const bits in domain d_res_x
@@ -3510,7 +3510,7 @@ bzla_proputils_inv_sll_const(Bzla *bzla,
     assert(bzla_bvprop_is_fixed(mm, d_res_x));
     bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, d_res_x->lo, 0);
     assert(bzla_bvprop_gen_has_next(&gen));
-    for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_SHIFT_MAX_RAND; cnt++)
+    for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_GEN_MAX_RAND; cnt++)
     {
       bv  = bzla_bvprop_gen_random(&gen);
       tmp = bzla_bv_sll(mm, s, bv);
@@ -3592,7 +3592,7 @@ bzla_proputils_inv_srl_const(Bzla *bzla,
     assert(bzla_bvprop_is_fixed(mm, d_res_x));
     bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, d_res_x->lo, 0);
     assert(bzla_bvprop_gen_has_next(&gen));
-    for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_SHIFT_MAX_RAND; cnt++)
+    for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_GEN_MAX_RAND; cnt++)
     {
       bv  = bzla_bvprop_gen_random(&gen);
       tmp = bzla_bv_srl(mm, s, bv);
@@ -3706,15 +3706,105 @@ bzla_proputils_inv_mul_const(Bzla *bzla,
 
 BzlaBitVector *
 bzla_proputils_inv_udiv_const(Bzla *bzla,
-                              BzlaNode *div,
+                              BzlaNode *udiv,
                               BzlaBitVector *t,
                               BzlaBitVector *s,
                               int32_t idx_x,
                               BzlaIntHashTable *domains,
                               BzlaBvDomain *d_res_x)
 {
-  // TODO
-  return bzla_proputils_inv_udiv(bzla, div, t, s, idx_x, domains, d_res_x);
+#ifndef NDEBUG
+  check_inv_dbg(bzla,
+                udiv,
+                t,
+                s,
+                idx_x,
+                domains,
+                bzla_is_inv_udiv,
+                bzla_is_inv_udiv_const,
+                true,
+                d_res_x);
+#endif
+  uint32_t bw;
+  BzlaBitVector *tmp, *res;
+  BzlaBvDomain *x;
+  BzlaMemMgr *mm;
+
+  mm = bzla->mm;
+
+  x = bzla_hashint_map_get(domains, bzla_node_real_addr(udiv->e[idx_x])->id)
+          ->as_ptr;
+
+  if (bzla_bvprop_is_fixed(mm, x))
+  {
+#ifndef NDEBUG
+    tmp = bzla_bv_udiv(mm, s, x->lo);
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(mm, tmp);
+#endif
+    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_udiv);
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else
+  {
+    BzlaBvDomainGenerator gen;
+
+    if (d_res_x)
+    {
+      assert(d_res_x);
+      bzla_bvprop_gen_init_range(
+          mm, &bzla->rng, &gen, x, d_res_x->lo, d_res_x->hi);
+    }
+    else if (bzla_bv_is_zero(s))
+    {
+      bw = bzla_bv_get_width(s);
+      if (idx_x)
+      {
+        if (bzla_bv_is_ones(t))
+        {
+          /* x = 0 */
+          tmp = bzla_bv_new(mm, bw);
+          bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, tmp, tmp);
+          bzla_bv_free(mm, tmp);
+        }
+        else
+        {
+          /* x > 0 */
+          tmp = bzla_bv_one(mm, bw);
+          bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, tmp, 0);
+          bzla_bv_free(mm, tmp);
+        }
+      }
+      else
+      {
+        /* x random */
+        bzla_bvprop_gen_init(mm, &bzla->rng, &gen, x);
+      }
+    }
+    else
+    {
+      assert(bzla_bv_is_zero(t));
+      if (idx_x)
+      {
+        /* x > s */
+        tmp = bzla_bv_inc(mm, s);
+        bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, tmp, 0);
+        bzla_bv_free(mm, tmp);
+      }
+      else
+      {
+        /* x < s */
+        tmp = bzla_bv_dec(mm, s);
+        bzla_bvprop_gen_init_range(mm, &bzla->rng, &gen, x, 0, tmp);
+        bzla_bv_free(mm, tmp);
+      }
+    }
+
+    assert(bzla_bvprop_gen_has_next(&gen));
+    res = bzla_bv_copy(mm, bzla_bvprop_gen_random(&gen));
+    bzla_bvprop_gen_delete(&gen);
+  }
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -3817,7 +3907,7 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
       bzla_bvprop_gen_init_range(
           mm, &bzla->rng, &gen, x, d_res_x->lo, d_res_x->hi);
       assert(bzla_bvprop_gen_has_next(&gen));
-      for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_SHIFT_MAX_RAND; cnt++)
+      for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_GEN_MAX_RAND; cnt++)
       {
         bv  = bzla_bvprop_gen_random(&gen);
         tmp = bzla_bv_urem(mm, s, bv);
@@ -3864,7 +3954,7 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
         bzla_bvprop_gen_init(mm, &bzla->rng, &gen, x);
       }
       assert(bzla_bvprop_gen_has_next(&gen));
-      for (cnt = 0; cnt < BZLA_PROPUTILS_SHIFT_MAX_RAND; cnt++)
+      for (cnt = 0; cnt < BZLA_PROPUTILS_GEN_MAX_RAND; cnt++)
       {
         bv  = bzla_bvprop_gen_random(&gen);
         tmp = bzla_bv_urem(mm, bv, s);

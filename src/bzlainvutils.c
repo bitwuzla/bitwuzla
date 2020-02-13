@@ -999,7 +999,7 @@ bzla_is_inv_udiv_const(Bzla *bzla,
   mm  = bzla->mm;
   res = bzla_is_inv_udiv(bzla, x, t, s, pos_x, 0);
 
-  if (res && bzla_bvprop_has_fixed_bits(mm, x))
+  if (res)
   {
     /* x is constant */
     if (bzla_bvprop_is_fixed(mm, x))
@@ -1055,6 +1055,10 @@ bzla_is_inv_udiv_const(Bzla *bzla,
           BzlaBvDomainGenerator dgen;
           bzla_bvprop_gen_init_range(mm, 0, &dgen, x, min, max);
           res = bzla_bvprop_gen_has_next(&dgen);
+          if (d_res_x && res)
+          {
+            *d_res_x = bzla_bvprop_new(mm, bzla_bvprop_gen_next(&dgen), max);
+          }
           bzla_bvprop_gen_delete(&dgen);
           bzla_bv_free(mm, min);
           bzla_bv_free(mm, max);
@@ -1102,6 +1106,10 @@ bzla_is_inv_udiv_const(Bzla *bzla,
             BzlaBvDomainGenerator dgen;
             bzla_bvprop_gen_init_range(mm, 0, &dgen, x, min, max);
             res = bzla_bvprop_gen_has_next(&dgen);
+            if (d_res_x && res)
+            {
+              *d_res_x = bzla_bvprop_new(mm, bzla_bvprop_gen_next(&dgen), max);
+            }
             bzla_bvprop_gen_delete(&dgen);
             bzla_bv_free(mm, min);
             bzla_bv_free(mm, max);
