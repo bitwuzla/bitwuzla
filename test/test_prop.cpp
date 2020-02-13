@@ -552,16 +552,14 @@ TEST_F(TestPropConst, one_complete_urem_const)
                        bzla_proputils_inv_urem_const);
 }
 
-#if 0
-TEST_F (TestPropConst, one_complete_concat_const)
+TEST_F(TestPropConst, one_complete_concat_const)
 {
-  prop_complete_binary (1,
-                        bzla_exp_bv_concat,
-                        bzla_bv_concat,
-                        bzla_is_inv_concat_const,
-                        bzla_proputils_inv_concat_const);
+  prop_complete_binary(1,
+                       bzla_exp_bv_concat,
+                       bzla_bv_concat,
+                       bzla_is_inv_concat_const,
+                       bzla_proputils_inv_concat_const);
 }
-#endif
 
 /* -------------------------------------------------------------------------- */
 /* Inverse value computation with propagator domains, no const bits.          */
@@ -824,16 +822,16 @@ TEST_F(TestPropConst, complete_urem_const)
                        bzla_proputils_inv_urem_const);
 }
 
-#if 0
-TEST_F (TestPropConst, complete_concat_const)
+TEST_F(TestPropConst, complete_concat_const)
 {
-  prop_complete_binary (2,
-                        bzla_exp_bv_concat,
-                        bzla_bv_concat,
-                        bzla_is_inv_concat_const,
-                        bzla_proputils_inv_concat_const);
+  prop_complete_binary(2,
+                       bzla_exp_bv_concat,
+                       bzla_bv_concat,
+                       bzla_is_inv_concat_const,
+                       bzla_proputils_inv_concat_const);
 }
 
+#if 0
 TEST_F (TestPropConst, complete_slice_const)
 {
   prop_complete_slice (bzla_proputils_inv_slice_const);

@@ -2079,15 +2079,15 @@ TEST_F(TestPropInvConst, complete_udiv_const)
                bzla_proputils_inv_udiv_const);
 }
 
-#if 0
-TEST_F (TestPropInvConst, complete_concat_const)
+TEST_F(TestPropInvConst, complete_concat_const)
 {
-  check_binary (bzla_exp_bv_concat,
-                bzla_bv_concat,
-                bzla_is_inv_concat_const,
-                bzla_proputils_inv_concat_const);
+  check_binary(bzla_exp_bv_concat,
+               bzla_bv_concat,
+               bzla_is_inv_concat_const,
+               bzla_proputils_inv_concat_const);
 }
 
+#if 0
 TEST_F (TestPropInvConst, complete_slice)
 {
 }

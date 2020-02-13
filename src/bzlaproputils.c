@@ -3987,7 +3987,6 @@ bzla_proputils_inv_concat_const(Bzla *bzla,
                                 BzlaIntHashTable *domains,
                                 BzlaBvDomain *d_res_x)
 {
-  // TODO
   return bzla_proputils_inv_concat(bzla, concat, t, s, idx_x, domains, d_res_x);
 }
 
