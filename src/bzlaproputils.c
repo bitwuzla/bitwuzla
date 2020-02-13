@@ -4159,6 +4159,7 @@ record_conflict(Bzla *bzla,
     case BZLA_BV_MUL_NODE: str_o = "*"; break;
     case BZLA_BV_UDIV_NODE: str_o = "/"; break;
     case BZLA_BV_UREM_NODE: str_o = "%"; break;
+    case BZLA_BV_ADD_NODE: str_o = "+"; break;
     default: assert(exp->kind == BZLA_BV_CONCAT_NODE); str_o = "o";
   }
   BZLALOG(2, "");
