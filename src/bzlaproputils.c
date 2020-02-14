@@ -4162,6 +4162,7 @@ record_conflict(Bzla *bzla,
     case BZLA_BV_UDIV_NODE: str_o = "/"; break;
     case BZLA_BV_UREM_NODE: str_o = "%"; break;
     case BZLA_BV_ADD_NODE: str_o = "+"; break;
+    case BZLA_BV_EQ_NODE: str_o = "="; break;
     default: assert(exp->kind == BZLA_BV_CONCAT_NODE); str_o = "o";
   }
   BZLALOG(2, "");
@@ -4262,7 +4263,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   int32_t i, idx_s, nconst;
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
-  BzlaIntHashTable *domains = 0;
+  BzlaIntHashTable *domains;
   BzlaHashTableData *d;
   BzlaBitVector *bv_s[3], *bv_t, *bv_s_new, *tmp;
   BzlaBvDomain *d_res_x;
@@ -4437,15 +4438,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       }
       else if (is_inv)
       {
-        if (domains)
-        {
-          d = bzla_hashint_map_get(domains,
-                                   bzla_node_get_id(real_cur->e[idx_x]));
-        }
-        else
-        {
-          d = 0;
-        }
+        assert(domains);
+        d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
         assert(!opt_prop_const_bits || d);
         force_cons = !is_inv(
             bzla, d ? d->as_ptr : 0, bv_t, bv_s[idx_s], idx_x, &d_res_x);

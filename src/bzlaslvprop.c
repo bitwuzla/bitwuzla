@@ -380,14 +380,8 @@ bzla_prop_solver_init_domains(Bzla *bzla,
       domain = bzla_bvprop_new_init(mm, bw);
       bzla_hashint_map_add(domains, real_cur->id)->as_ptr = domain;
       /* inverted nodes are additionally stored with negative id */
-      invdomain = 0;
-      if (bzla_node_is_inverted((cur)))
-      {
-        assert(!bzla_hashint_map_contains(domains, bzla_node_get_id(cur)));
-        invdomain = bzla_bvprop_new_init(mm, bw);
-        bzla_hashint_map_add(domains, bzla_node_get_id(cur))->as_ptr =
-            invdomain;
-      }
+      invdomain = bzla_bvprop_new_init(mm, bw);
+      bzla_hashint_map_add(domains, -real_cur->id)->as_ptr = invdomain;
 
       if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
       {
@@ -405,12 +399,8 @@ bzla_prop_solver_init_domains(Bzla *bzla,
           if (bzla_aig_is_const(av->aigs[i]))
           {
             bzla_bvprop_fix_bit(domain, idx, bzla_aig_is_true(av->aigs[i]));
-            if (bzla_node_is_inverted(cur))
-            {
-              assert(invdomain);
-              bzla_bvprop_fix_bit(
-                  invdomain, idx, bzla_aig_is_false(av->aigs[i]));
-            }
+            assert(invdomain);
+            bzla_bvprop_fix_bit(invdomain, idx, bzla_aig_is_false(av->aigs[i]));
           }
         }
       }
