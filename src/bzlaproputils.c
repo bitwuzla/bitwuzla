@@ -748,7 +748,7 @@ select_path_slice(Bzla *bzla,
 static int32_t
 select_path_cond(Bzla *bzla,
                  BzlaNode *cond,
-                 BzlaBitVector *bvcond,
+                 BzlaBitVector *t,
                  BzlaBitVector **s)
 {
   assert(bzla);
@@ -756,7 +756,7 @@ select_path_cond(Bzla *bzla,
          || bzla->slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(cond);
   assert(bzla_node_is_regular(cond));
-  assert(bvcond);
+  assert(t);
   assert(s);
 
   bool e1const, e2const;
@@ -764,7 +764,7 @@ select_path_cond(Bzla *bzla,
   uint32_t prob;
   BzlaBitVector *s0;
 
-  (void) bvcond;
+  (void) t;
 
   s0 = *s;
   assert(s0);
@@ -3083,7 +3083,7 @@ bzla_proputils_inv_cond(Bzla *bzla,
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_cond);
 
-  /* either assume that cond is fixed and propagate snew
+  /* either assume that cond is fixed and propagate s
    * to enabled path, or flip condition */
 
   if (idx_x == 0)
