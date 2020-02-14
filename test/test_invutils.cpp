@@ -82,9 +82,10 @@ class TestInvUtils : public TestBzla
                           bool const_bits = false)
   {
     std::vector<std::string> x_values;
-    BzlaBvDomain *x;
+    BzlaBvDomain *x, *d_res_x;
     BzlaBitVector *s, *t;
     char *vs, *vt;
+    bool res, status;
 
     uint32_t bw_x = TEST_INVUTILS_BW;
     uint32_t bw_s = TEST_INVUTILS_BW;
@@ -124,17 +125,9 @@ class TestInvUtils : public TestBzla
           t  = bzla_bv_uint64_to_bv(d_mm, j, bw_t);
           vt = bzla_bv_to_char(d_mm, t);
 
-          printf("idx_x %d\n", pos_x);
-          printf("s ");
-          bzla_bv_print(s);
-          printf("t ");
-          bzla_bv_print(t);
-          printf("x ");
-          bzla_bvprop_print(d_mm, x, true);
-          BzlaBvDomain *d_res_x = 0;
-          bool res              = is_inv(d_bzla, x, t, s, pos_x, &d_res_x);
-          bool status =
-              check_sat_is_inv_binary(create_exp_func, x, t, s, pos_x);
+          d_res_x = 0;
+          res     = is_inv(d_bzla, x, t, s, pos_x, &d_res_x);
+          status  = check_sat_is_inv_binary(create_exp_func, x, t, s, pos_x);
           if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
 
           if (res != status)
@@ -151,6 +144,100 @@ class TestInvUtils : public TestBzla
         }
         bzla_bv_free(d_mm, s);
         bzla_mem_freestr(d_mm, vs);
+      }
+      bzla_bvprop_free(d_mm, x);
+    }
+  }
+
+  void test_is_inv_cond(uint32_t pos_x, bool const_bits)
+  {
+    std::vector<std::string> x_values;
+    BzlaBvDomain *x, *d_res_x;
+    BzlaBitVector *s0, *s1, *t;
+    char *vs0, *vs1, *vt;
+    bool res, status;
+    uint32_t bw_s0, bw_s1, bw = TEST_INVUTILS_BW;
+    uint32_t nval, nval_s0, nval_s1;
+
+    if (pos_x)
+    {
+      bw_s0 = 1;
+      bw_s1 = bw;
+      if (const_bits)
+      {
+        x_values = d_values;
+      }
+      else
+      {
+        x_values.push_back("xxx");
+      }
+    }
+    else
+    {
+      bw_s0 = bw;
+      bw_s1 = bw;
+      if (const_bits)
+      {
+        x_values.push_back("x");
+        x_values.push_back("0");
+        x_values.push_back("1");
+      }
+      else
+      {
+        x_values.push_back("x");
+      }
+    }
+    nval    = 1 << bw;
+    nval_s0 = 1 << bw_s0;
+    nval_s1 = 1 << bw_s1;
+
+    for (const std::string &x_value : x_values)
+    {
+      x = bzla_bvprop_new_from_char(d_mm, x_value.c_str());
+      for (uint32_t i = 0; i < nval_s0; i++)
+      {
+        s0  = bzla_bv_uint64_to_bv(d_mm, i, bw_s0);
+        vs0 = bzla_bv_to_char(d_mm, s0);
+        for (uint32_t j = 0; j < nval_s1; j++)
+        {
+          s1  = bzla_bv_uint64_to_bv(d_mm, j, bw_s1);
+          vs1 = bzla_bv_to_char(d_mm, s1);
+          for (uint32_t k = 0; k < nval; k++)
+          {
+            t  = bzla_bv_uint64_to_bv(d_mm, k, bw);
+            vt = bzla_bv_to_char(d_mm, t);
+
+            d_res_x = 0;
+            if (const_bits)
+            {
+              res =
+                  bzla_is_inv_cond_const(d_bzla, x, t, s0, s1, pos_x, &d_res_x);
+            }
+            else
+            {
+              res = bzla_is_inv_cond(d_bzla, x, t, s0, s1, pos_x, &d_res_x);
+            }
+            status = check_sat_is_inv_cond(x, t, s0, s1, pos_x);
+            if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+
+            if (res != status)
+            {
+              std::cout << "pos_x: " << pos_x << std::endl;
+              std::cout << "t: " << vt << std::endl;
+              std::cout << "x: " << x_value << std::endl;
+              std::cout << "s0: " << vs0 << std::endl;
+              std::cout << "s1: " << vs1 << std::endl;
+            }
+
+            ASSERT_EQ(res, status);
+            bzla_bv_free(d_mm, t);
+            bzla_mem_freestr(d_mm, vt);
+          }
+          bzla_bv_free(d_mm, s1);
+          bzla_mem_freestr(d_mm, vs1);
+        }
+        bzla_bv_free(d_mm, s0);
+        bzla_mem_freestr(d_mm, vs0);
       }
       bzla_bvprop_free(d_mm, x);
     }
@@ -278,6 +365,91 @@ class TestInvUtils : public TestBzla
     boolector_release(bzla, orlo);
 
     bzla_mem_freestr(d_mm, vs);
+    bzla_mem_freestr(d_mm, vt);
+    bzla_mem_freestr(d_mm, vxlo);
+    bzla_mem_freestr(d_mm, vxhi);
+    boolector_delete(bzla);
+
+    return status == BOOLECTOR_SAT;
+  }
+
+  bool check_sat_is_inv_cond(BzlaBvDomain *x,
+                             BzlaBitVector *t,
+                             BzlaBitVector *s0,
+                             BzlaBitVector *s1,
+                             uint32_t pos_x)
+  {
+    BoolectorSort sx;
+    BoolectorNode *nx, *nxlo, *nxhi, *ns0, *ns1, *nt;
+    BoolectorNode *andhi, *orlo, *eq, *exp;
+    char *vs0, *vs1, *vt, *vxlo, *vxhi;
+
+    Bzla *bzla = boolector_new();
+
+    boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
+
+    vs0 = bzla_bv_to_char(d_mm, s0);
+    vs1 = bzla_bv_to_char(d_mm, s1);
+    vt  = bzla_bv_to_char(d_mm, t);
+
+    sx = boolector_bitvec_sort(bzla, bzla_bv_get_width(x->lo));
+    nx = boolector_var(bzla, sx, 0);
+
+    vxlo = bzla_bv_to_char(d_mm, x->lo);
+    nxlo = boolector_const(bzla, vxlo);
+
+    vxhi = bzla_bv_to_char(d_mm, x->hi);
+    nxhi = boolector_const(bzla, vxhi);
+
+    /* assume const bits for x */
+    andhi = boolector_and(bzla, nx, nxhi);
+    eq    = boolector_eq(bzla, andhi, nx);
+    boolector_assume(bzla, eq);
+    boolector_release(bzla, eq);
+
+    orlo = boolector_or(bzla, nx, nxlo);
+    eq   = boolector_eq(bzla, orlo, nx);
+    boolector_assume(bzla, eq);
+    boolector_release(bzla, eq);
+
+    ns0 = boolector_const(bzla, vs0);
+    ns1 = boolector_const(bzla, vs1);
+    nt  = boolector_const(bzla, vt);
+
+    if (pos_x == 0)
+    {
+      exp = boolector_cond(bzla, nx, ns0, ns1);
+    }
+    else if (pos_x == 1)
+    {
+      exp = boolector_cond(bzla, ns0, nx, ns1);
+    }
+    else
+    {
+      assert(pos_x == 2);
+      exp = boolector_cond(bzla, ns0, ns1, nx);
+    }
+
+    eq = boolector_eq(bzla, exp, nt);
+    boolector_assume(bzla, eq);
+    boolector_release(bzla, eq);
+
+    int32_t status = boolector_sat(bzla);
+    assert(status == BOOLECTOR_SAT || status == BOOLECTOR_UNSAT);
+
+    boolector_release_sort(bzla, sx);
+    boolector_release(bzla, exp);
+    boolector_release(bzla, nx);
+    boolector_release(bzla, nxlo);
+    boolector_release(bzla, nxhi);
+    boolector_release(bzla, ns0);
+    boolector_release(bzla, ns1);
+    boolector_release(bzla, nt);
+    boolector_release(bzla, andhi);
+    boolector_release(bzla, orlo);
+
+    bzla_mem_freestr(d_mm, vs0);
+    bzla_mem_freestr(d_mm, vs1);
     bzla_mem_freestr(d_mm, vt);
     bzla_mem_freestr(d_mm, vxlo);
     bzla_mem_freestr(d_mm, vxhi);
@@ -415,6 +587,13 @@ TEST_F(TestInvUtils, is_inv_udiv_const)
 {
   test_is_inv_binary_const(bzla_is_inv_udiv_const, boolector_udiv, 0);
   test_is_inv_binary_const(bzla_is_inv_udiv_const, boolector_udiv, 1);
+}
+
+TEST_F(TestInvUtils, is_inv_cond_const)
+{
+  test_is_inv_cond(0, true);
+  test_is_inv_cond(1, true);
+  test_is_inv_cond(2, true);
 }
 
 /* Test is_inv_* functions (no const bits). */

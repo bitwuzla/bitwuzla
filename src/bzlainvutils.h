@@ -97,6 +97,18 @@ bool bzla_is_inv_urem(Bzla *bzla,
                       uint32_t pos_x,
                       BzlaBvDomain **d_res_x);
 
+/**
+ * Check invertibility of x ? s0 : s1 = t or c ? x : s = t or c ? s : x = t
+ * when solved for x.
+ */
+bool bzla_is_inv_cond(Bzla *bzla,
+                      const BzlaBvDomain *x,
+                      const BzlaBitVector *t,
+                      const BzlaBitVector *s0,
+                      const BzlaBitVector *s1,
+                      uint32_t pos_x,
+                      BzlaBvDomain **d_res_x);
+
 /** Check invertibility of x[upper:lower] = t when solved for x. */
 bool bzla_is_inv_slice(Bzla *bzla,
                        const BzlaBvDomain *x,
@@ -215,6 +227,18 @@ bool bzla_is_inv_urem_const(Bzla *bzla,
                             const BzlaBvDomain *x,
                             const BzlaBitVector *t,
                             const BzlaBitVector *s,
+                            uint32_t pos_x,
+                            BzlaBvDomain **d_res_x);
+
+/**
+ * Check invertibility of x ? s0 : s1 = t or c ? x : s = t or c ? s : x = t
+ * when solved for x with respect to const bits in x.
+ */
+bool bzla_is_inv_cond_const(Bzla *bzla,
+                            const BzlaBvDomain *x,
+                            const BzlaBitVector *t,
+                            const BzlaBitVector *s0,
+                            const BzlaBitVector *s1,
                             uint32_t pos_x,
                             BzlaBvDomain **d_res_x);
 
