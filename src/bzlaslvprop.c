@@ -401,8 +401,10 @@ bzla_prop_solver_init_domains(Bzla *bzla,
             bzla_bvprop_fix_bit(domain, idx, bzla_aig_is_true(av->aigs[i]));
             assert(invdomain);
             bzla_bvprop_fix_bit(invdomain, idx, bzla_aig_is_false(av->aigs[i]));
+            BZLA_PROP_SOLVER(bzla)->stats.fixed_bits++;
           }
         }
+        BZLA_PROP_SOLVER(bzla)->stats.total_bits += bw;
       }
     }
   }
@@ -740,6 +742,17 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   BZLA_MSG(bzla->msg, 1, "%s (slice): %u", s_inv, slv->stats.inv_slice);
   BZLA_MSG(bzla->msg, 1, "%s (cond): %u", s_inv, slv->stats.inv_cond);
 #endif
+
+  if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
+  {
+    BZLA_MSG(bzla->msg, 1, "");
+    BZLA_MSG(bzla->msg,
+             1,
+             "fixed bits: %zu/%zu (%.1f%%)",
+             slv->stats.fixed_bits,
+             slv->stats.total_bits,
+             (double) slv->stats.fixed_bits / slv->stats.total_bits * 100);
+  }
 }
 
 static void

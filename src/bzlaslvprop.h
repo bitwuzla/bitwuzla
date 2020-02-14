@@ -88,7 +88,6 @@ struct BzlaPropSolver
      * current assignment as a consequence of a move. */
     uint64_t updates;
 
-#ifndef NDEBUG
     /* Number of calls to inverse value computation functions. */
     uint32_t inv_add;
     uint32_t inv_and;
@@ -116,7 +115,10 @@ struct BzlaPropSolver
     uint32_t cons_concat;
     uint32_t cons_slice;
     uint32_t cons_cond;
-#endif
+
+    /* constant bit information */
+    uint64_t fixed_bits;
+    uint64_t total_bits;
   } stats;
 
   struct
