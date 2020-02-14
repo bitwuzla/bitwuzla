@@ -576,9 +576,10 @@ BzlaBitVector* bzla_proputils_inv_slice_const(Bzla* bzla,
                                               BzlaBvDomain* d_res_x);
 
 BzlaBitVector* bzla_proputils_inv_cond_const(Bzla* bzla,
-                                             BzlaNode* cond_exp,
+                                             BzlaNode* cond,
                                              BzlaBitVector* t,
-                                             BzlaBitVector* s,
+                                             BzlaBitVector* s0,
+                                             BzlaBitVector* s1,
                                              int32_t idx_x,
                                              BzlaIntHashTable* domains,
                                              BzlaBvDomain* d_res_x);

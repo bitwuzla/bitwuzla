@@ -1516,8 +1516,8 @@ check_inv_dbg(Bzla *bzla,
               BzlaBitVector *s,
               int32_t idx_x,
               BzlaIntHashTable *domains,
-              BzlaPropIsInv inv_fun,
-              BzlaPropIsInv inv_fun_const,
+              BzlaPropIsInv is_inv_fun,
+              BzlaPropIsInv is_inv_fun_const,
               bool same_bw,
               BzlaBvDomain *d_res_x)
 {
@@ -1531,17 +1531,14 @@ check_inv_dbg(Bzla *bzla,
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(node->e[idx_x]));
 #ifndef NDEBUG
-  assert(inv_fun(bzla, 0, t, s, idx_x, 0));
+  assert(is_inv_fun(bzla, 0, t, s, idx_x, 0));
   (void) d_res_x;
-  if (domains)
-  {
-    assert(!bzla_hashint_map_contains(domains, node->id)
-           || bzla_hashint_map_contains(
-               domains, bzla_node_real_addr(node->e[idx_x])->id));
-    BzlaHashTableData *x =
-        bzla_hashint_map_get(domains, bzla_node_real_addr(node->e[idx_x])->id);
-    assert(!x || inv_fun_const(bzla, x ? x->as_ptr : 0, t, s, idx_x, 0));
-  }
+  assert(!bzla_hashint_map_contains(domains, node->id)
+         || bzla_hashint_map_contains(domains,
+                                      bzla_node_real_addr(node->e[idx_x])->id));
+  BzlaHashTableData *x =
+      bzla_hashint_map_get(domains, bzla_node_real_addr(node->e[idx_x])->id);
+  assert(!x || is_inv_fun_const(bzla, x ? x->as_ptr : 0, t, s, idx_x, 0));
 #endif
 }
 
@@ -4015,13 +4012,74 @@ BzlaBitVector *
 bzla_proputils_inv_cond_const(Bzla *bzla,
                               BzlaNode *cond,
                               BzlaBitVector *t,
-                              BzlaBitVector *s,
+                              BzlaBitVector *s0,
+                              BzlaBitVector *s1,
                               int32_t idx_x,
                               BzlaIntHashTable *domains,
                               BzlaBvDomain *d_res_x)
 {
-  // TODO
-  return bzla_proputils_inv_cond(bzla, cond, t, s, idx_x, domains, d_res_x);
+  assert(bzla);
+  assert(cond);
+  assert(bzla_node_is_regular(cond));
+  assert(t);
+  assert(s0);
+  assert(s1);
+  assert(domains);
+  assert(!idx_x || bzla_bv_get_width(s0) == bzla_bv_get_width(s1));
+  assert(!idx_x || bzla_bv_get_width(s0) == bzla_bv_get_width(t));
+  assert(idx_x >= 0 && idx_x <= 2);
+  assert(!bzla_node_is_bv_const(cond->e[idx_x]));
+
+  BzlaBitVector *tmp, *res;
+  BzlaBvDomain *x;
+  BzlaMemMgr *mm;
+
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_cond);
+
+  mm = bzla->mm;
+
+  assert(!bzla_hashint_map_contains(domains, cond->id)
+         || bzla_hashint_map_contains(domains,
+                                      bzla_node_real_addr(cond->e[idx_x])->id));
+  x = bzla_hashint_map_get(domains, bzla_node_real_addr(cond->e[idx_x])->id)
+          ->as_ptr;
+  assert(bzla_is_inv_cond_const(bzla, x, t, s0, s1, idx_x, 0));
+
+  if (bzla_bvprop_is_fixed(mm, x))
+  {
+#ifndef NDEBUG
+    if (idx_x == 0)
+    {
+      tmp = bzla_bv_ite(mm, x->lo, s0, s1);
+    }
+    else if (idx_x == 1)
+    {
+      tmp = bzla_bv_ite(mm, s0, x->lo, s1);
+    }
+    else
+    {
+      tmp = bzla_bv_ite(mm, s0, s1, x->lo);
+    }
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(mm, tmp);
+#endif
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else if (d_res_x)
+  {
+    /* all non-random cases are determined in is_inv */
+    assert(bzla_bvprop_is_fixed(mm, d_res_x));
+    res = bzla_bv_copy(mm, d_res_x->lo);
+  }
+  else
+  {
+    /* x random */
+    BzlaBvDomainGenerator gen;
+    bzla_bvprop_gen_init(mm, &bzla->rng, &gen, x);
+    assert(bzla_bvprop_gen_has_next(&gen));
+    res = bzla_bv_copy(mm, bzla_bvprop_gen_random(&gen));
+  }
+  return res;
 }
 
 /* ========================================================================== */
@@ -4085,7 +4143,7 @@ static BzlaPropComputeValue kind_to_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = bzla_proputils_inv_srl_const,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_inv_udiv_const,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_inv_urem_const,
-    [BZLA_COND_NODE]      = bzla_proputils_inv_cond_const,
+    [BZLA_COND_NODE]      = 0,  // special handling
 };
 
 static BzlaPropIsInv kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
@@ -4100,7 +4158,7 @@ static BzlaPropIsInv kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem,
-    [BZLA_COND_NODE]      = 0,  // always invertible
+    [BZLA_COND_NODE]      = 0,  // special handling
 };
 
 static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
@@ -4110,11 +4168,12 @@ static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_EQ_NODE]     = bzla_is_inv_eq_const,
     [BZLA_BV_MUL_NODE]    = bzla_is_inv_mul_const,
     [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult_const,
-    [BZLA_BV_SLICE_NODE]  = 0,  // different handling
+    [BZLA_BV_SLICE_NODE]  = 0,  // special handling
     [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll_const,
     [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl_const,
     [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv_const,
     [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem_const,
+    [BZLA_COND_NODE]      = 0,  // special handling
 };
 
 /* ========================================================================== */
