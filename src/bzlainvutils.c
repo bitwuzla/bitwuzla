@@ -1517,7 +1517,16 @@ bzla_is_inv_cond_const(Bzla *bzla,
     }
     if (res && d_res_x)
     {
-      *d_res_x = bzla_bvprop_new(mm, t, t);
+      uint64_t val;
+      if (cmp0 && cmp1)
+      {
+        val = bzla_rng_flip_coin(&bzla->rng);
+      }
+      else
+      {
+        val = cmp0 ? 1 : 0;
+      }
+      *d_res_x = bzla_bvprop_new_fixed_uint64(mm, val, 1);
     }
     return res;
   }

@@ -112,7 +112,7 @@ class TestProp : public TestBzla
     int32_t i, idx_s, sat_res;
     BzlaNode *e[2], *exp, *val, *eq;
     BzlaBitVector *s_tmp[2], *x_tmp, *res[2], *tmp;
-    BzlaBvDomain *d_x;
+    BzlaBvDomain *d_x, *d_s;
     BzlaSortId sort;
     BzlaBvDomain *d_res_x;
 
@@ -123,6 +123,8 @@ class TestProp : public TestBzla
     val  = bzla_exp_bv_const(d_bzla, t);
     eq   = bzla_exp_eq(d_bzla, exp, val);
 
+    idx_s = idx_x ? 0 : 1;
+
     bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
     assert((BzlaBvDomain *) bzla_hashint_map_get(
         d_domains, bzla_node_real_addr(exp->e[idx_x])->id));
@@ -131,7 +133,12 @@ class TestProp : public TestBzla
               ->as_ptr;
     assert(d_x);
 
-    idx_s = idx_x ? 0 : 1;
+    assert((BzlaBvDomain *) bzla_hashint_map_get(
+        d_domains, bzla_node_real_addr(exp->e[idx_s])->id));
+    d_s = (BzlaBvDomain *) bzla_hashint_map_get(
+              d_domains, bzla_node_real_addr(exp->e[idx_s])->id)
+              ->as_ptr;
+    assert(d_s);
 
     s_tmp[idx_x] = bzla_bv_new_random(d_mm, d_rng, bw);
     s_tmp[idx_s] =
@@ -160,7 +167,7 @@ class TestProp : public TestBzla
     if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
     d_res_x = nullptr;
     ASSERT_NE(res[idx_x], nullptr);
-    is_inv = is_inv_fun(d_bzla, d_x, t, res[idx_x], idx_s, &d_res_x);
+    is_inv = is_inv_fun(d_bzla, d_s, t, res[idx_x], idx_s, &d_res_x);
     assert(is_inv);
     res[idx_s] =
         n == 1 ? bzla_bv_copy(d_mm, s)
@@ -221,6 +228,298 @@ class TestProp : public TestBzla
   }
 
   /**
+   * Same as prop_complete_binary_idx but for cond.
+   *
+   * n         : The number of propagation steps expected to be required to
+   *             find a solution.
+   * idx_x     : The index of operand 'x'.
+   * bw        : The bit-width to test for.
+   * s0        : The assignment of the first of two other operands:
+   *               - for idx_x = 0, assignment s0 is for e[1] and s1 for e[2]
+   *               - for idx_x = 1, assignment s0 is for e[0] and s1 for e[2]
+   *               - for idx_x = 2, assignment s0 is for e[0] and s1 for e[1]
+   * x         : The assignment of the operand we solve for.
+   * t         : The assignment of the output (the target value of the
+   *             operation).
+   * const_bits: True to test with const bits.
+   */
+  void prop_complete_cond_idx(uint32_t n,
+                              uint32_t idx_x,
+                              uint32_t bw,
+                              BzlaBitVector *s0,
+                              BzlaBitVector *s1,
+                              BzlaBitVector *x,
+                              BzlaBitVector *t,
+                              bool const_bits)
+  {
+    assert(const_bits);  // else not supported yet because of special handling
+                         // for cond (TODO)
+
+    bool is_inv;
+    uint32_t i, idx_s0, idx_s1;
+    int32_t sat_res;
+    BzlaNode *e[3], *exp, *val, *eq;
+    BzlaBitVector *s_tmp[3], *x_tmp, *res[3], *tmp;
+    BzlaBvDomain *d_x, *d_s0, *d_s1;
+    BzlaSortId sort, sort1;
+    BzlaBvDomain *d_res_x;
+
+    bool (*is_inv_fun)(Bzla *,
+                       const BzlaBvDomain *,
+                       const BzlaBitVector *,
+                       const BzlaBitVector *,
+                       const BzlaBitVector *,
+                       uint32_t,
+                       BzlaBvDomain **);
+    BzlaBitVector *(*inv_fun)(Bzla *,
+                              BzlaNode *,
+                              BzlaBitVector *,
+                              BzlaBitVector *,
+                              BzlaBitVector *,
+                              int32_t,
+                              BzlaIntHashTable *,
+                              BzlaBvDomain *);
+
+    if (const_bits)
+    {
+      is_inv_fun = bzla_is_inv_cond_const;
+      inv_fun    = bzla_proputils_inv_cond_const;
+    }
+    else
+    {
+      // not supported yet because of special handling for cond
+      // is_inv_fun = bzla_is_inv_cond;
+      // inv_fun = bzla_proputils_inv_cond;
+    }
+
+    sort  = bzla_sort_bv(d_bzla, bw);
+    sort1 = bzla_sort_bv(d_bzla, 1);
+    e[0]  = bzla_exp_var(d_bzla, sort1, 0);
+    e[1]  = bzla_exp_var(d_bzla, sort, 0);
+    e[2]  = bzla_exp_var(d_bzla, sort, 0);
+    exp   = bzla_exp_cond(d_bzla, e[0], e[1], e[2]);
+    val   = bzla_exp_bv_const(d_bzla, t);
+    eq    = bzla_exp_eq(d_bzla, exp, val);
+
+    if (idx_x == 0)
+    {
+      idx_s0 = 1;
+      idx_s1 = 2;
+    }
+    else if (idx_x == 1)
+    {
+      idx_s0 = 0;
+      idx_s1 = 2;
+    }
+    else
+    {
+      idx_s0 = 0;
+      idx_s1 = 1;
+    }
+
+    bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+    assert((BzlaBvDomain *) bzla_hashint_map_get(
+        d_domains, bzla_node_real_addr(exp->e[idx_x])->id));
+    d_x = (BzlaBvDomain *) bzla_hashint_map_get(
+              d_domains, bzla_node_real_addr(exp->e[idx_x])->id)
+              ->as_ptr;
+    assert(d_x);
+    assert(bzla_bv_get_width(x) == bzla_bvprop_get_width(d_x));
+
+    assert((BzlaBvDomain *) bzla_hashint_map_get(
+        d_domains, bzla_node_real_addr(exp->e[idx_s0])->id));
+    d_s0 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(exp->e[idx_s0])->id)
+               ->as_ptr;
+    assert(d_s0);
+
+    assert((BzlaBvDomain *) bzla_hashint_map_get(
+        d_domains, bzla_node_real_addr(exp->e[idx_s1])->id));
+    d_s1 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(exp->e[idx_s1])->id)
+               ->as_ptr;
+    assert(d_s1);
+
+    s_tmp[idx_x] = bzla_bv_new_random(d_mm, d_rng, bw);
+    if (n == 2)
+    {
+      s_tmp[idx_s0] = bzla_bv_copy(d_mm, s0);
+      s_tmp[idx_s1] = bzla_bv_copy(d_mm, s1);
+    }
+    else
+    {
+      s_tmp[idx_s0] = bzla_bv_new_random(d_mm, d_rng, idx_x == 0 ? bw : 1);
+      s_tmp[idx_s1] = bzla_bv_new_random(d_mm, d_rng, bw);
+    }
+    x_tmp = bzla_bv_ite(d_mm, s_tmp[0], s_tmp[1], s_tmp[2]);
+
+    /* init bv model */
+    bzla_model_init_bv(d_bzla, &d_bzla->bv_model);
+    bzla_model_init_fun(d_bzla, &d_bzla->fun_model);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_s0], s_tmp[idx_s0]);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_s1], s_tmp[idx_s1]);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_x], s_tmp[idx_x]);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, exp, x_tmp);
+
+    TEST_PROP_LOG("idx_x %d s_tmp[0] %s s_tmp[1] %s s_tmp[2] %s target %s\n",
+                  idx_x,
+                  bzla_bv_to_char(d_mm, s_tmp[0]),
+                  bzla_bv_to_char(d_mm, s_tmp[1]),
+                  bzla_bv_to_char(d_mm, s_tmp[2]),
+                  bzla_bv_to_char(d_mm, t));
+
+    /* -> first test local completeness  */
+    /* we must find a solution within n move(s) */
+    d_res_x = nullptr;
+    is_inv  = is_inv_fun(d_bzla, d_x, t, s0, s1, idx_x, &d_res_x);
+    assert(is_inv);
+    res[idx_x] = inv_fun(d_bzla, exp, t, s0, s1, idx_x, d_domains, d_res_x);
+    if (d_res_x)
+    {
+      bzla_bvprop_free(d_mm, d_res_x);
+    }
+    d_res_x = nullptr;
+    // ASSERT_NE (res[idx_x], nullptr);
+    assert(res[idx_x]);
+    if (idx_x == 0)
+    {
+      assert(bzla_bv_get_width(res[idx_x]) == 1);
+    }
+    else
+    {
+      assert(bzla_bv_get_width(res[idx_x]) == bzla_bv_get_width(s1));
+    }
+
+    if (n <= 2)
+    {
+      res[idx_s0] = bzla_bv_copy(d_mm, s0);
+      res[idx_s1] = bzla_bv_copy(d_mm, s1);
+    }
+
+    if (idx_x == 0)
+    {
+      /**
+       * s0: e[1], s1: e[2]
+       *
+       * test enabled branch:
+       * res[idx_x] = 0: determine res[idx_s1] as res[idx_x] ? s0 : xs1 = t
+       * res[idx_x] = 1: determine res[idx_s0] as res[idx_x] ? xs0 : s1 = t
+       */
+      if (bzla_bv_is_one(res[idx_x]))
+      {
+        is_inv = is_inv_fun(d_bzla, d_s0, t, res[idx_x], s1, idx_s0, &d_res_x);
+        assert(is_inv);
+        if (n != 2)
+        {
+          res[idx_s0] = inv_fun(
+              d_bzla, exp, t, res[idx_x], s1, idx_s0, d_domains, d_res_x);
+          // ASSERT_NE (res[idx_s0], nullptr);
+          assert(res[idx_s0]);
+          res[idx_s1] = bzla_bv_copy(d_mm, s1);
+        }
+      }
+      else
+      {
+        is_inv = is_inv_fun(d_bzla, d_s1, t, res[idx_x], s0, idx_s1, &d_res_x);
+        assert(is_inv);
+        if (n != 2)
+        {
+          res[idx_s0] = bzla_bv_copy(d_mm, s0);
+          res[idx_s1] = inv_fun(
+              d_bzla, exp, t, res[idx_x], s0, idx_s1, d_domains, d_res_x);
+          // ASSERT_NE (res[idx_s1], nullptr);
+          assert(res[idx_s1]);
+        }
+      }
+      if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    }
+    else
+    {
+      is_inv = is_inv_fun(d_bzla, d_s1, t, s0, res[idx_x], idx_s1, &d_res_x);
+      assert(is_inv);
+      if (n != 2)
+      {
+        /**
+         * test with condition fixed:
+         * idx_x = 1: s0: e[0], s1: e[2]
+         *            determine res[idx_s1] as c ? res[idx_x] : xs1 = t
+         * idx_x = 2: s0: e[0], s1: e[1]
+         *            determine res[idx_s1] as c ? xs1 : res[idx_x] = t
+         */
+        res[idx_s0] = bzla_bv_copy(d_mm, s0);
+        res[idx_s1] =
+            inv_fun(d_bzla, exp, t, s0, res[idx_x], idx_s1, d_domains, d_res_x);
+        // ASSERT_NE (res[idx_s1], nullptr);
+        assert(res[idx_s1]);
+      }
+      if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    }
+
+    /* Note: this is also tested within the inverse function(s) */
+    tmp = bzla_bv_ite(d_mm, res[0], res[1], res[2]);
+    // ASSERT_EQ (bzla_bv_compare (tmp, t), 0);
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(d_mm, tmp);
+    bzla_bv_free(d_mm, res[0]);
+    bzla_bv_free(d_mm, res[1]);
+    bzla_bv_free(d_mm, res[2]);
+    /* try to find the exact given solution */
+    if (n == 1)
+    {
+      for (i = 0, res[idx_x] = 0; i < TEST_PROP_COMPLETE_N_TESTS; i++)
+      {
+        d_res_x = nullptr;
+        is_inv  = is_inv_fun(d_bzla, d_x, t, s0, s1, idx_x, &d_res_x);
+        assert(is_inv);
+        res[idx_x] = inv_fun(d_bzla, exp, t, s0, s1, idx_x, d_domains, d_res_x);
+        // ASSERT_NE (res[idx_x], nullptr);
+        assert(res[idx_x]);
+        if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+        if (!bzla_bv_compare(res[idx_x], x)) break;
+        bzla_bv_free(d_mm, res[idx_x]);
+        res[idx_x] = nullptr;
+      }
+      // ASSERT_NE (res[idx_x], nullptr);
+      assert(res[idx_x]);
+      // ASSERT_EQ (bzla_bv_compare (res[idx_x], x), 0);
+      assert(bzla_bv_compare(res[idx_x], x) == 0);
+      bzla_bv_free(d_mm, res[idx_x]);
+    }
+
+    /* -> then test completeness of the whole propagation algorithm
+     *    (we must find a solution within n move(s)) */
+    ((BzlaPropSolver *) d_bzla->slv)->stats.moves = 0;
+    bzla_assume_exp(d_bzla, eq);
+    bzla_model_init_bv(d_bzla, &d_bzla->bv_model);
+    bzla_model_init_fun(d_bzla, &d_bzla->fun_model);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_s0], s_tmp[idx_s0]);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_s1], s_tmp[idx_s1]);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e[idx_x], s_tmp[idx_x]);
+    bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, exp, x_tmp);
+    bzla_bv_free(d_mm, s_tmp[0]);
+    bzla_bv_free(d_mm, s_tmp[1]);
+    bzla_bv_free(d_mm, s_tmp[2]);
+    bzla_bv_free(d_mm, x_tmp);
+    bzla_node_release(d_bzla, eq);
+    bzla_node_release(d_bzla, val);
+    bzla_node_release(d_bzla, exp);
+    bzla_node_release(d_bzla, e[0]);
+    bzla_node_release(d_bzla, e[1]);
+    bzla_node_release(d_bzla, e[2]);
+    bzla_sort_release(d_bzla, sort);
+    bzla_sort_release(d_bzla, sort1);
+    clear_domains();
+    sat_res = bzla_prop_solver_sat(d_bzla);
+    // ASSERT_EQ (sat_res, BZLA_RESULT_SAT);
+    assert(sat_res == BZLA_RESULT_SAT);
+    TEST_PROP_LOG(
+        "moves %u n %u\n", ((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
+    // ASSERT_LE (((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
+    assert(((BzlaPropSolver *) d_bzla->slv)->stats.moves <= n);
+    bzla_reset_incremental_usage(d_bzla);
+  }
+
+  /**
    * Given a binary operator and assignments 's' (for the other operand) and
    * 't' (for the target value of the operation) with a solution 'x' (for the
    * operand to solve for), test if a solution can be found within 'n'
@@ -272,6 +571,52 @@ class TestProp : public TestBzla
         }
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
+      }
+      bzla_bv_free(d_mm, s[0]);
+    }
+  }
+
+  /**
+   * Same as prop_complete_binary but for cond.
+   *
+   * n         : The number of propagation steps expected to be required to
+   *             find a solution.
+   * const_bits: True to test with const bits.
+   */
+  void prop_complete_cond(uint32_t n, bool const_bits)
+  {
+    uint32_t bw;
+    uint64_t i, j, k, l;
+    BzlaBitVector *s[3], *t;
+
+    bw = TEST_PROP_COMPLETE_BW;
+
+    for (i = 0; i < (uint32_t)(1 << 1); i++)
+    {
+      s[0] = bzla_bv_uint64_to_bv(d_mm, i, 1);
+      for (j = 0; j < (uint32_t)(1 << bw); j++)
+      {
+        s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
+        for (k = 0; k < (uint32_t)(1 << bw); k++)
+        {
+          s[2] = bzla_bv_uint64_to_bv(d_mm, k, bw);
+          t    = bzla_bv_ite(d_mm, s[0], s[1], s[2]);
+          TEST_PROP_LOG("s[0] %s s[1] %s s[2] %s t %s\n",
+                        bzla_bv_to_char(d_mm, s[0]),
+                        bzla_bv_to_char(d_mm, s[1]),
+                        bzla_bv_to_char(d_mm, s[2]),
+                        bzla_bv_to_char(d_mm, t));
+          /* -> first test local completeness  */
+          for (l = 0; l < bw; l++)
+          {
+            prop_complete_cond_idx(n, 0, bw, s[1], s[2], s[0], t, const_bits);
+            prop_complete_cond_idx(n, 1, bw, s[0], s[2], s[1], t, const_bits);
+            prop_complete_cond_idx(n, 2, bw, s[0], s[1], s[2], t, const_bits);
+          }
+          bzla_bv_free(d_mm, t);
+          bzla_bv_free(d_mm, s[2]);
+        }
+        bzla_bv_free(d_mm, s[1]);
       }
       bzla_bv_free(d_mm, s[0]);
     }
@@ -833,6 +1178,8 @@ TEST_F(TestPropConst, complete_concat_const)
                        bzla_is_inv_concat_const,
                        bzla_proputils_inv_concat_const);
 }
+
+TEST_F(TestPropConst, complete_cond_const) { prop_complete_cond(10, true); }
 
 TEST_F(TestPropConst, complete_slice_const)
 {
