@@ -4648,21 +4648,23 @@ static BzlaBitVector *
 gen_next_bits(BzlaBvDomainGenerator *gen, bool random)
 {
   assert(gen->domain);
-  assert(gen->bits);
+  assert(random || gen->bits);
 
   uint32_t bw, bw_bits, i, j;
   BzlaBitVector *res, *next_bits;
 
-  bw      = bzla_bv_get_width(gen->domain->lo);
-  bw_bits = bzla_bv_get_width(gen->bits);
-  res     = bzla_bv_copy(gen->mm, gen->domain->lo);
+  bw  = bzla_bv_get_width(gen->domain->lo);
+  res = bzla_bv_copy(gen->mm, gen->domain->lo);
 
+  /* Random always resets gen->bits to a random value between bits_min and
+   * bits_max. */
   if (random)
   {
     assert(gen->rng);
     assert(gen->bits_min);
     assert(gen->bits_max);
-    bzla_bv_free(gen->mm, gen->bits);
+    if (gen->bits) bzla_bv_free(gen->mm, gen->bits);
+    bw_bits   = bzla_bv_get_width(gen->bits_min);
     gen->bits = bzla_bv_new_random_range(
         gen->mm, gen->rng, bw_bits, gen->bits_min, gen->bits_max);
   }
@@ -4675,10 +4677,27 @@ gen_next_bits(BzlaBvDomainGenerator *gen, bool random)
     }
   }
 
-  /* bits' = bits + 1 */
-  next_bits = bzla_bv_inc(gen->mm, gen->bits);
-  bzla_bv_free(gen->mm, gen->bits);
-  gen->bits = next_bits;
+  /* If bits is ones, we enumerated all values. */
+  if (bzla_bv_compare(gen->bits, gen->bits_max) == 0)
+  {
+    bzla_bv_free(gen->mm, gen->bits);
+    /* random never terminates and bits start again at bits_min. */
+    gen->bits = random ? bzla_bv_copy(gen->mm, gen->bits_min) : 0;
+  }
+  else
+  {
+    next_bits = bzla_bv_inc(gen->mm, gen->bits);
+    bzla_bv_free(gen->mm, gen->bits);
+    gen->bits = next_bits;
+  }
+
+  assert(!gen->bits || bzla_bv_compare(gen->bits, gen->bits_min) >= 0);
+  assert(!gen->bits || bzla_bv_compare(gen->bits, gen->bits_max) <= 0);
+  assert(bzla_bv_compare(res, gen->min) >= 0);
+  assert(bzla_bv_compare(res, gen->max) <= 0);
+
+  if (gen->cur) bzla_bv_free(gen->mm, gen->cur);
+  gen->cur = res;
 
   return res;
 }
@@ -4692,26 +4711,7 @@ bzla_bvprop_gen_init(BzlaMemMgr *mm,
   assert(mm);
   assert(gen);
   assert(d);
-
-  uint32_t i, bw, cnt;
-
-  for (i = 0, bw = bzla_bv_get_width(d->lo), cnt = 0; i < bw; i++)
-  {
-    if (!bzla_bvprop_is_fixed_bit(d, i)) cnt += 1;
-  }
-
-  gen->mm       = mm;
-  gen->n_gen    = 0;
-  gen->n_max    = cnt ? 1 << cnt : 0;
-  gen->bits     = cnt ? bzla_bv_new(mm, cnt) : 0;
-  gen->bits_min = cnt && rng ? bzla_bv_new(mm, cnt) : 0;
-  gen->bits_max = cnt && rng ? bzla_bv_ones(mm, cnt) : 0;
-  gen->min      = 0;
-  gen->max      = 0;
-  gen->domain   = bzla_bvprop_copy(mm, d);
-  gen->next     = gen->bits ? gen_next_bits(gen, false) : 0;
-  gen->cur      = 0;
-  gen->rng      = rng;
+  bzla_bvprop_gen_init_range(mm, rng, gen, d, 0, 0);
 }
 
 void
@@ -4725,7 +4725,6 @@ bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
   assert(mm);
   assert(gen);
   assert(d);
-  assert(min || max);
 
   uint32_t i, j, k, idx_i, idx_j, j0, bw, cnt, bit;
 
@@ -4735,90 +4734,113 @@ bzla_bvprop_gen_init_range(BzlaMemMgr *mm,
     if (!bzla_bvprop_is_fixed_bit(d, i)) cnt += 1;
   }
 
+  if (!min || bzla_bv_compare(d->lo, min) > 0)
+  {
+    min = d->lo;
+  }
+
+  if (!max || bzla_bv_compare(d->hi, max) < 0)
+  {
+    max = d->hi;
+  }
+
   gen->bits     = 0;
   gen->bits_min = 0;
   gen->bits_max = 0;
 
-  if (!min) min = d->lo;
-  if (!max) max = d->hi;
-
-  if (cnt)
+  if (cnt && bzla_bv_compare(min, d->hi) <= 0
+      && bzla_bv_compare(max, d->lo) >= 0)
   {
-    if (bzla_bv_compare(min, d->hi) <= 0 && bzla_bv_compare(d->lo, min) <= 0)
+    assert(bzla_bv_compare(min, d->lo) >= 0);
+    assert(bzla_bv_compare(max, d->hi) <= 0);
+
+    /* set unconstrained bits to the minimum value that corresponds to a
+     * generated value >= min */
+    gen->bits_min = bzla_bv_new(mm, cnt);
+    for (i = 0, j = 0, j0 = 0; i < bw; i++)
     {
-      /* set unconstrained bits to the minimum value that corresponds to a
-       * generated value >= min */
-      gen->bits = bzla_bv_new(mm, cnt);
-      for (i = 0, j = 0, j0 = 0; i < bw; i++)
+      idx_i = bw - 1 - i;
+      bit   = bzla_bv_get_bit(min, idx_i);
+      if (!bzla_bvprop_is_fixed_bit(d, idx_i))
       {
-        idx_i = bw - 1 - i;
-        bit   = bzla_bv_get_bit(min, idx_i);
-        if (!bzla_bvprop_is_fixed_bit(d, idx_i))
-        {
-          assert(j < cnt);
-          idx_j = cnt - 1 - j;
-          bzla_bv_set_bit(gen->bits, idx_j, bit);
-          if (!bit) j0 = j;
-          j += 1;
-        }
-        else if (bzla_bvprop_is_fixed_bit_true(d, idx_i) && !bit)
-        {
-          break;
-        }
-        else if (bzla_bvprop_is_fixed_bit_false(d, idx_i) && bit)
-        {
-          assert(j > 0);
-          assert(bzla_bv_get_bit(gen->bits, cnt - j0 - 1) == 0);
-          bzla_bv_set_bit(gen->bits, cnt - 1 - j0, 1);
-          for (k = j0 + 1; k < cnt; k++)
-          {
-            bzla_bv_set_bit(gen->bits, cnt - 1 - k, 0);
-          }
-          break;
-        }
+        assert(j < cnt);
+        idx_j = cnt - 1 - j;
+        bzla_bv_set_bit(gen->bits_min, idx_j, bit);
+        if (!bit) j0 = j;
+        j += 1;
       }
-      /* we need this information for gen_random() */
-      if (rng)
+      else if (bzla_bvprop_is_fixed_bit_true(d, idx_i) && !bit)
       {
-        gen->bits_min = bzla_bv_copy(mm, gen->bits);
-        gen->bits_max = bzla_bv_ones(mm, cnt);
+        break;
+      }
+      else if (bzla_bvprop_is_fixed_bit_false(d, idx_i) && bit)
+      {
+        assert(j > 0);
+        assert(bzla_bv_get_bit(gen->bits_min, cnt - j0 - 1) == 0);
+        bzla_bv_set_bit(gen->bits_min, cnt - 1 - j0, 1);
+        for (k = j0 + 1; k < cnt; k++)
+        {
+          bzla_bv_set_bit(gen->bits_min, cnt - 1 - k, 0);
+        }
+        break;
       }
     }
-    else if (bzla_bv_compare(max, d->lo) >= 0
-             || bzla_bv_compare(min, d->lo) < 0)
+
+    /* set unconstrained bits to the maxium value that corresponds to a
+     * generated value <= max */
+    gen->bits_max = bzla_bv_ones(mm, cnt);
+    for (i = 0, j = 0, j0 = 0; i < bw; i++)
     {
-      gen->bits = bzla_bv_new(mm, cnt);
-      /* we need this information for gen_random() */
-      if (rng)
+      idx_i = bw - 1 - i;
+      bit   = bzla_bv_get_bit(max, idx_i);
+      if (!bzla_bvprop_is_fixed_bit(d, idx_i))
       {
-        gen->bits_min = bzla_bv_new(mm, cnt);
-        gen->bits_max = bzla_bv_ones(mm, cnt);
+        assert(j < cnt);
+        idx_j = cnt - 1 - j;
+        bzla_bv_set_bit(gen->bits_max, idx_j, bit);
+        if (bit) j0 = j;
+        j += 1;
       }
+      else if (bzla_bvprop_is_fixed_bit_true(d, idx_i) && !bit)
+      {
+        assert(j > 0);
+        assert(bzla_bv_get_bit(gen->bits_max, cnt - j0 - 1) == 1);
+        bzla_bv_set_bit(gen->bits_max, cnt - 1 - j0, 0);
+        for (k = j0 + 1; k < cnt; k++)
+        {
+          bzla_bv_set_bit(gen->bits_max, cnt - 1 - k, 1);
+        }
+        break;
+      }
+      else if (bzla_bvprop_is_fixed_bit_false(d, idx_i) && bit)
+      {
+        break;
+      }
+    }
+
+    /* If bits_min > bits_max, we can't generate any value. */
+    if (bzla_bv_compare(gen->bits_min, gen->bits_max) <= 0)
+    {
+      gen->bits = bzla_bv_copy(mm, gen->bits_min);
     }
   }
 
-  gen->mm    = mm;
-  gen->n_gen = 0;
-  gen->n_max = cnt ? 1 << cnt : 0;
-  gen->min   = min && bzla_bv_compare(min, d->lo) > 0 ? bzla_bv_copy(mm, min)
-                                                    : bzla_bv_copy(mm, d->lo);
-  gen->max = max && bzla_bv_compare(max, d->hi) < 0 ? bzla_bv_copy(mm, max)
-                                                    : bzla_bv_copy(mm, d->hi);
+  gen->mm     = mm;
   gen->domain = bzla_bvprop_copy(mm, d);
-  gen->next   = gen->bits ? gen_next_bits(gen, false) : 0;
   gen->cur    = 0;
   gen->rng    = rng;
+#ifndef NDEBUG
+  gen->min = bzla_bv_copy(mm, min);
+  gen->max = bzla_bv_copy(mm, max);
+#endif
 }
 
 bool
 bzla_bvprop_gen_has_next(const BzlaBvDomainGenerator *gen)
 {
   assert(gen);
-  return gen->bits && gen->n_gen < gen->n_max
-         && (!gen->next || !gen->min
-             || bzla_bv_compare(gen->next, gen->min) >= 0)
-         && (!gen->next || !gen->max
-             || bzla_bv_compare(gen->next, gen->max) <= 0);
+  assert(!gen->bits || bzla_bv_compare(gen->bits, gen->bits_min) >= 0);
+  return gen->bits && bzla_bv_compare(gen->bits, gen->bits_max) <= 0;
 }
 
 BzlaBitVector *
@@ -4827,40 +4849,15 @@ bzla_bvprop_gen_next(BzlaBvDomainGenerator *gen)
   assert(gen);
   assert(gen->bits);
   assert(bzla_bvprop_gen_has_next(gen));
-
-  BzlaBitVector *res;
-
-  res = bzla_bv_copy(gen->mm, gen->next);
-
-  /* next' = expand(bits'). */
-  if (gen->next) bzla_bv_free(gen->mm, gen->next);
-  gen->next = gen_next_bits(gen, false);
-  gen->n_gen += 1;
-
-  if (gen->cur) bzla_bv_free(gen->mm, gen->cur);
-  gen->cur = res;
-
-  return res;
+  return gen_next_bits(gen, false);
 }
 
 BzlaBitVector *
 bzla_bvprop_gen_random(BzlaBvDomainGenerator *gen)
 {
   assert(gen);
-  assert(gen->bits);
   assert(gen->rng);
-
-  BzlaBitVector *res = 0;
-
-  do
-  {
-    if (res) bzla_bv_free(gen->mm, res);
-    res = gen_next_bits(gen, true);
-  } while ((gen->min && bzla_bv_compare(res, gen->min) < 0)
-           || (gen->max && bzla_bv_compare(res, gen->max) > 0));
-  if (gen->cur) bzla_bv_free(gen->mm, gen->cur);
-  gen->cur = res;
-  return res;
+  return gen_next_bits(gen, true);
 }
 
 void
@@ -4871,10 +4868,11 @@ bzla_bvprop_gen_delete(const BzlaBvDomainGenerator *gen)
   if (gen->bits_min) bzla_bv_free(gen->mm, gen->bits_min);
   if (gen->bits_max) bzla_bv_free(gen->mm, gen->bits_max);
   bzla_bvprop_free(gen->mm, gen->domain);
+  if (gen->cur) bzla_bv_free(gen->mm, gen->cur);
+#ifndef NDEBUG
   if (gen->min) bzla_bv_free(gen->mm, gen->min);
   if (gen->max) bzla_bv_free(gen->mm, gen->max);
-  if (gen->next) bzla_bv_free(gen->mm, gen->next);
-  if (gen->cur) bzla_bv_free(gen->mm, gen->cur);
+#endif
 }
 
 /*----------------------------------------------------------------------------*/

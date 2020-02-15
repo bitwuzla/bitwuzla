@@ -330,14 +330,11 @@ bool bzla_bvprop_urem(BzlaMemMgr *mm,
 /** A generator to enumerate all possible values of a given domain. */
 struct BzlaBvDomainGenerator
 {
-  BzlaMemMgr *mm;      /* the associated memory manager */
-  BzlaRNG *rng;        /* the associated RNG (may be 0) */
-  uint32_t n_gen;      /* number of generated values (for non-ranged init) */
-  uint32_t n_max;      /* the max number of values (for non-ranged init) */
-  BzlaBitVector *bits; /* unconstrained bits, most LSB is farthest right. */
+  BzlaMemMgr *mm;          /* the associated memory manager */
+  BzlaRNG *rng;            /* the associated RNG (may be 0) */
+  BzlaBitVector *bits;     /* unconstrained bits, most LSB is farthest right. */
   BzlaBitVector *bits_min; /* min value of unconstrained bits */
   BzlaBitVector *bits_max; /* max value of unconstrained bits */
-  BzlaBitVector *next;     /* next value */
   BzlaBitVector *cur;      /* current value */
   BzlaBvDomain *domain;    /* the domain to enumerate values for */
   BzlaBitVector *min;      /* the min value (in case of ranged init) */
