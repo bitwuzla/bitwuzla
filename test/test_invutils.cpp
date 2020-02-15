@@ -115,7 +115,7 @@ class TestInvUtils : public TestBzla
     uint32_t nval_t = 1 << bw_t;
     for (const std::string &x_value : x_values)
     {
-      x = bzla_bvprop_new_from_char(d_mm, x_value.c_str());
+      x = bzla_bvdomain_new_from_char(d_mm, x_value.c_str());
       for (uint32_t i = 0; i < nval_s; i++)
       {
         s  = bzla_bv_uint64_to_bv(d_mm, i, bw_s);
@@ -128,7 +128,7 @@ class TestInvUtils : public TestBzla
           d_res_x = 0;
           res     = is_inv(d_bzla, x, t, s, pos_x, &d_res_x);
           status  = check_sat_is_inv_binary(create_exp_func, x, t, s, pos_x);
-          if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+          if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
 
           if (res != status)
           {
@@ -145,7 +145,7 @@ class TestInvUtils : public TestBzla
         bzla_bv_free(d_mm, s);
         bzla_mem_freestr(d_mm, vs);
       }
-      bzla_bvprop_free(d_mm, x);
+      bzla_bvdomain_free(d_mm, x);
     }
   }
 
@@ -193,7 +193,7 @@ class TestInvUtils : public TestBzla
 
     for (const std::string &x_value : x_values)
     {
-      x = bzla_bvprop_new_from_char(d_mm, x_value.c_str());
+      x = bzla_bvdomain_new_from_char(d_mm, x_value.c_str());
       for (uint32_t i = 0; i < nval_s0; i++)
       {
         s0  = bzla_bv_uint64_to_bv(d_mm, i, bw_s0);
@@ -218,7 +218,7 @@ class TestInvUtils : public TestBzla
               res = bzla_is_inv_cond(d_bzla, x, t, s0, s1, pos_x, &d_res_x);
             }
             status = check_sat_is_inv_cond(x, t, s0, s1, pos_x);
-            if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+            if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
 
             if (res != status)
             {
@@ -239,7 +239,7 @@ class TestInvUtils : public TestBzla
         bzla_bv_free(d_mm, s0);
         bzla_mem_freestr(d_mm, vs0);
       }
-      bzla_bvprop_free(d_mm, x);
+      bzla_bvdomain_free(d_mm, x);
     }
   }
 
@@ -264,7 +264,7 @@ class TestInvUtils : public TestBzla
 
     for (const std::string &x_value : x_values)
     {
-      x = bzla_bvprop_new_from_char(d_mm, x_value.c_str());
+      x = bzla_bvdomain_new_from_char(d_mm, x_value.c_str());
       for (uint32_t lower = 0; lower < bw_x; ++lower)
       {
         for (uint32_t upper = lower; upper < bw_x; ++upper)
@@ -292,7 +292,7 @@ class TestInvUtils : public TestBzla
           }
         }
       }
-      bzla_bvprop_free(d_mm, x);
+      bzla_bvdomain_free(d_mm, x);
     }
   }
 

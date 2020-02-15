@@ -320,13 +320,13 @@ class TestBvDomain : public TestMm
 
   void print_domain(BzlaBvDomain *d, bool print_short)
   {
-    bzla_bvprop_print(d_mm, d, print_short);
+    bzla_bvdomain_print(d_mm, d, print_short);
   }
 
   /* Create 3-valued bit-vector from domain 'd'. */
   char *from_domain(BzlaMemMgr *mm, BzlaBvDomain *d)
   {
-    assert(bzla_bvprop_is_valid(mm, d));
+    assert(bzla_bvdomain_is_valid(mm, d));
     char *lo = bzla_bv_to_char(mm, d->lo);
     char *hi = bzla_bv_to_char(mm, d->hi);
 
@@ -361,10 +361,10 @@ class TestBvDomain : public TestMm
                 BzlaBvDomain *d_z,
                 BzlaBvDomain *d_c)
   {
-    return (!d_x || bzla_bvprop_is_valid(mm, d_x))
-           && (!d_y || bzla_bvprop_is_valid(mm, d_y))
-           && (!d_z || bzla_bvprop_is_valid(mm, d_z))
-           && (!d_c || bzla_bvprop_is_valid(mm, d_c));
+    return (!d_x || bzla_bvdomain_is_valid(mm, d_x))
+           && (!d_y || bzla_bvdomain_is_valid(mm, d_y))
+           && (!d_z || bzla_bvdomain_is_valid(mm, d_z))
+           && (!d_c || bzla_bvdomain_is_valid(mm, d_c));
   }
 
   bool is_fixed(BzlaMemMgr *mm,
@@ -373,10 +373,10 @@ class TestBvDomain : public TestMm
                 BzlaBvDomain *d_z,
                 BzlaBvDomain *d_c)
   {
-    return (!d_x || bzla_bvprop_is_fixed(mm, d_x))
-           && (!d_y || bzla_bvprop_is_fixed(mm, d_y))
-           && (!d_z || bzla_bvprop_is_fixed(mm, d_z))
-           && (!d_c || bzla_bvprop_is_fixed(mm, d_c));
+    return (!d_x || bzla_bvdomain_is_fixed(mm, d_x))
+           && (!d_y || bzla_bvdomain_is_fixed(mm, d_y))
+           && (!d_z || bzla_bvdomain_is_fixed(mm, d_z))
+           && (!d_c || bzla_bvdomain_is_fixed(mm, d_c));
   }
 };
 

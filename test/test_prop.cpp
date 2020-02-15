@@ -65,7 +65,7 @@ class TestProp : public TestBzla
     {
       BzlaHashTableData *data = bzla_iter_hashint_next_data(&it);
       BzlaBvDomain *d         = static_cast<BzlaBvDomain *>(data->as_ptr);
-      bzla_bvprop_free(d_mm, d);
+      bzla_bvdomain_free(d_mm, d);
     }
     bzla_hashint_map_clear(d_domains);
     assert(d_domains->count == 0);
@@ -164,7 +164,7 @@ class TestProp : public TestBzla
     is_inv  = is_inv_fun(d_bzla, d_x, t, s, idx_x, &d_res_x);
     assert(is_inv);
     res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
-    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
     d_res_x = nullptr;
     ASSERT_NE(res[idx_x], nullptr);
     is_inv = is_inv_fun(d_bzla, d_s, t, res[idx_x], idx_s, &d_res_x);
@@ -172,7 +172,7 @@ class TestProp : public TestBzla
     res[idx_s] =
         n == 1 ? bzla_bv_copy(d_mm, s)
                : inv_fun(d_bzla, exp, t, res[idx_x], idx_s, d_domains, d_res_x);
-    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
     ASSERT_NE(res[idx_s], nullptr);
     /* Note: this is also tested within the inverse function(s) */
     tmp = create_bv(d_mm, res[0], res[1]);
@@ -190,7 +190,7 @@ class TestProp : public TestBzla
         assert(is_inv);
         res[idx_x] = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
         ASSERT_NE(res[idx_x], nullptr);
-        if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+        if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
         if (!bzla_bv_compare(res[idx_x], x)) break;
         bzla_bv_free(d_mm, res[idx_x]);
         res[idx_x] = nullptr;
@@ -324,7 +324,7 @@ class TestProp : public TestBzla
               d_domains, bzla_node_real_addr(exp->e[idx_x])->id)
               ->as_ptr;
     assert(d_x);
-    assert(bzla_bv_get_width(x) == bzla_bvprop_get_width(d_x));
+    assert(bzla_bv_get_width(x) == bzla_bvdomain_get_width(d_x));
 
     assert((BzlaBvDomain *) bzla_hashint_map_get(
         d_domains, bzla_node_real_addr(exp->e[idx_s0])->id));
@@ -376,7 +376,7 @@ class TestProp : public TestBzla
     res[idx_x] = inv_fun(d_bzla, exp, t, s0, s1, idx_x, d_domains, d_res_x);
     if (d_res_x)
     {
-      bzla_bvprop_free(d_mm, d_res_x);
+      bzla_bvdomain_free(d_mm, d_res_x);
     }
     d_res_x = nullptr;
     // ASSERT_NE (res[idx_x], nullptr);
@@ -431,7 +431,7 @@ class TestProp : public TestBzla
           assert(res[idx_s1]);
         }
       }
-      if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+      if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
     }
     else
     {
@@ -452,7 +452,7 @@ class TestProp : public TestBzla
         // ASSERT_NE (res[idx_s1], nullptr);
         assert(res[idx_s1]);
       }
-      if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+      if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
     }
 
     /* Note: this is also tested within the inverse function(s) */
@@ -474,7 +474,7 @@ class TestProp : public TestBzla
         res[idx_x] = inv_fun(d_bzla, exp, t, s0, s1, idx_x, d_domains, d_res_x);
         // ASSERT_NE (res[idx_x], nullptr);
         assert(res[idx_x]);
-        if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+        if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
         if (!bzla_bv_compare(res[idx_x], x)) break;
         bzla_bv_free(d_mm, res[idx_x]);
         res[idx_x] = nullptr;

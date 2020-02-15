@@ -49,39 +49,39 @@ class TestBvPropGen : public TestBvDomain
                      bool rand = false)
   {
     BzlaBvDomainGenerator gen;
-    BzlaBvDomain *d       = bzla_bvprop_new_from_char(d_mm, str_d);
+    BzlaBvDomain *d       = bzla_bvdomain_new_from_char(d_mm, str_d);
     BzlaBitVector *bv_min = 0;
     BzlaBitVector *bv_max = 0;
     if (min || max)
     {
       bv_min = min ? bzla_bv_char_to_bv(d_mm, min) : 0;
       bv_max = max ? bzla_bv_char_to_bv(d_mm, max) : 0;
-      bzla_bvprop_gen_init_range(
+      bzla_bvdomain_gen_init_range(
           d_mm, rand ? &d_rng : nullptr, &gen, d, bv_min, bv_max);
     }
     else
     {
-      bzla_bvprop_gen_init(d_mm, rand ? &d_rng : nullptr, &gen, d);
+      bzla_bvdomain_gen_init(d_mm, rand ? &d_rng : nullptr, &gen, d);
     }
     if (bv_min) bzla_bv_free(d_mm, bv_min);
     if (bv_max) bzla_bv_free(d_mm, bv_max);
     if (rand)
     {
-      ASSERT_TRUE(expected.size() || !bzla_bvprop_gen_has_next(&gen));
+      ASSERT_TRUE(expected.size() || !bzla_bvdomain_gen_has_next(&gen));
       std::unordered_set<std::string> results;
       while (results.size() < expected.size())
       {
-        BzlaBitVector *res = bzla_bvprop_gen_random(&gen);
+        BzlaBitVector *res = bzla_bvdomain_gen_random(&gen);
         char *as_str       = bzla_bv_to_char(d_mm, res);
         ASSERT_NE(std::find(expected.begin(), expected.end(), as_str),
                   expected.end());
         results.insert(as_str);
         bzla_mem_freestr(d_mm, as_str);
         /* test that call to has_next in between */
-        if (bzla_bvprop_gen_has_next(&gen)
+        if (bzla_bvdomain_gen_has_next(&gen)
             && bzla_rng_pick_with_prob(&d_rng, 500))
         {
-          res    = bzla_bvprop_gen_next(&gen);
+          res    = bzla_bvdomain_gen_next(&gen);
           as_str = bzla_bv_to_char(d_mm, res);
           ASSERT_NE(std::find(expected.begin(), expected.end(), as_str),
                     expected.end());
@@ -93,18 +93,18 @@ class TestBvPropGen : public TestBvDomain
     else
     {
       uint32_t i = 0;
-      while (bzla_bvprop_gen_has_next(&gen))
+      while (bzla_bvdomain_gen_has_next(&gen))
       {
         ASSERT_LT(i, expected.size());
-        BzlaBitVector *res = bzla_bvprop_gen_next(&gen);
+        BzlaBitVector *res = bzla_bvdomain_gen_next(&gen);
         BzlaBitVector *exp = bzla_bv_char_to_bv(d_mm, expected[i++].c_str());
         ASSERT_EQ(bzla_bv_compare(res, exp), 0);
         bzla_bv_free(d_mm, exp);
       }
       ASSERT_EQ(i, expected.size());
     }
-    bzla_bvprop_free(d_mm, d);
-    bzla_bvprop_gen_delete(&gen);
+    bzla_bvdomain_free(d_mm, d);
+    bzla_bvdomain_gen_delete(&gen);
   }
 
   bool check_const_bits(std::string &x, std::string &s)
@@ -186,10 +186,10 @@ TEST_F(TestBvPropGen, newdelete)
   BzlaBvDomainGenerator gen;
   for (uint32_t bw = 1; bw <= 16; ++bw)
   {
-    BzlaBvDomain *d = bzla_bvprop_new_init(d_mm, bw);
-    bzla_bvprop_gen_init(d_mm, 0, &gen, d);
-    bzla_bvprop_gen_delete(&gen);
-    bzla_bvprop_free(d_mm, d);
+    BzlaBvDomain *d = bzla_bvdomain_new_init(d_mm, bw);
+    bzla_bvdomain_gen_init(d_mm, 0, &gen, d);
+    bzla_bvdomain_gen_delete(&gen);
+    bzla_bvdomain_free(d_mm, d);
   }
 }
 
@@ -206,16 +206,16 @@ TEST_F(TestBvPropGen, has_next)
 
     for (i = 0; i < num_consts; i++)
     {
-      d = bzla_bvprop_new_from_char(d_mm, consts[i]);
-      bzla_bvprop_gen_init(d_mm, 0, &gen, d);
-      ASSERT_TRUE(bzla_bvprop_is_fixed(d_mm, d)
-                  || bzla_bvprop_gen_has_next(&gen));
-      while (bzla_bvprop_gen_has_next(&gen))
+      d = bzla_bvdomain_new_from_char(d_mm, consts[i]);
+      bzla_bvdomain_gen_init(d_mm, 0, &gen, d);
+      ASSERT_TRUE(bzla_bvdomain_is_fixed(d_mm, d)
+                  || bzla_bvdomain_gen_has_next(&gen));
+      while (bzla_bvdomain_gen_has_next(&gen))
       {
-        bzla_bvprop_gen_next(&gen);
+        bzla_bvdomain_gen_next(&gen);
       }
-      bzla_bvprop_free(d_mm, d);
-      bzla_bvprop_gen_delete(&gen);
+      bzla_bvdomain_free(d_mm, d);
+      bzla_bvdomain_gen_delete(&gen);
     }
 
     free_consts(bw, num_consts, consts);
@@ -237,20 +237,20 @@ TEST_F(TestBvPropGen, has_next_rand)
 
     for (i = 0; i < num_consts; i++)
     {
-      d = bzla_bvprop_new_from_char(d_mm, consts[i]);
-      bzla_bvprop_gen_init(d_mm, &d_rng, &gen, d);
-      ASSERT_TRUE(bzla_bvprop_is_fixed(d_mm, d)
-                  || bzla_bvprop_gen_has_next(&gen));
-      if (bzla_bvprop_gen_has_next(&gen))
+      d = bzla_bvdomain_new_from_char(d_mm, consts[i]);
+      bzla_bvdomain_gen_init(d_mm, &d_rng, &gen, d);
+      ASSERT_TRUE(bzla_bvdomain_is_fixed(d_mm, d)
+                  || bzla_bvdomain_gen_has_next(&gen));
+      if (bzla_bvdomain_gen_has_next(&gen))
       {
         for (n_tests = 2 * num_consts; n_tests != 0; --n_tests)
         {
-          ASSERT_TRUE(bzla_bvprop_gen_has_next(&gen));
-          bzla_bvprop_gen_random(&gen);
+          ASSERT_TRUE(bzla_bvdomain_gen_has_next(&gen));
+          bzla_bvdomain_gen_random(&gen);
         }
       }
-      bzla_bvprop_free(d_mm, d);
-      bzla_bvprop_gen_delete(&gen);
+      bzla_bvdomain_free(d_mm, d);
+      bzla_bvdomain_gen_delete(&gen);
     }
     free_consts(bw, num_consts, consts);
   }

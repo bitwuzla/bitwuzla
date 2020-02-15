@@ -318,7 +318,7 @@ delete_prop_solver(BzlaPropSolver *slv)
   bzla_iter_hashint_init(&it, slv->domains);
   while (bzla_iter_hashint_has_next(&it))
   {
-    bzla_bvprop_free(slv->bzla->mm, bzla_iter_hashint_next_data(&it)->as_ptr);
+    bzla_bvdomain_free(slv->bzla->mm, bzla_iter_hashint_next_data(&it)->as_ptr);
   }
   bzla_hashint_map_delete(slv->domains);
 
@@ -377,10 +377,10 @@ bzla_prop_solver_init_domains(Bzla *bzla,
       data->as_int = 1;
 
       bw     = bzla_node_bv_get_width(bzla, real_cur);
-      domain = bzla_bvprop_new_init(mm, bw);
+      domain = bzla_bvdomain_new_init(mm, bw);
       bzla_hashint_map_add(domains, real_cur->id)->as_ptr = domain;
       /* inverted nodes are additionally stored with negative id */
-      invdomain = bzla_bvprop_new_init(mm, bw);
+      invdomain = bzla_bvdomain_new_init(mm, bw);
       bzla_hashint_map_add(domains, -real_cur->id)->as_ptr = invdomain;
 
       if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
@@ -398,9 +398,10 @@ bzla_prop_solver_init_domains(Bzla *bzla,
           idx = bw - 1 - i;
           if (bzla_aig_is_const(av->aigs[i]))
           {
-            bzla_bvprop_fix_bit(domain, idx, bzla_aig_is_true(av->aigs[i]));
+            bzla_bvdomain_fix_bit(domain, idx, bzla_aig_is_true(av->aigs[i]));
             assert(invdomain);
-            bzla_bvprop_fix_bit(invdomain, idx, bzla_aig_is_false(av->aigs[i]));
+            bzla_bvdomain_fix_bit(
+                invdomain, idx, bzla_aig_is_false(av->aigs[i]));
             BZLA_PROP_SOLVER(bzla)->stats.fixed_bits++;
           }
         }
@@ -584,8 +585,8 @@ DONE:
     bzla_iter_hashint_init(&iit, slv->domains);
     while (bzla_iter_hashint_has_next(&iit))
     {
-      bzla_bvprop_free(slv->bzla->mm,
-                       bzla_iter_hashint_next_data(&iit)->as_ptr);
+      bzla_bvdomain_free(slv->bzla->mm,
+                         bzla_iter_hashint_next_data(&iit)->as_ptr);
     }
     bzla_hashint_map_clear(slv->domains);
   }

@@ -505,16 +505,16 @@ bzla_is_inv_slice(Bzla *bzla,
 
 /** Check if const bits of domain 'd' match given value 'val'. */
 static bool
-bzla_bvprop_check_fixed_bits_val(BzlaMemMgr *mm,
-                                 const BzlaBvDomain *d,
-                                 uint32_t val)
+bzla_bvdomain_check_fixed_bits_val(BzlaMemMgr *mm,
+                                   const BzlaBvDomain *d,
+                                   uint32_t val)
 {
   bool res;
   uint32_t bw;
   BzlaBitVector *bv;
   bw  = bzla_bv_get_width(d->lo);
   bv  = val ? bzla_bv_ones(mm, bw) : bzla_bv_new(mm, bw);
-  res = bzla_bvprop_check_fixed_bits(mm, d, bv);
+  res = bzla_bvdomain_check_fixed_bits(mm, d, bv);
   bzla_bv_free(mm, bv);
   return res;
 }
@@ -574,7 +574,7 @@ bzla_is_inv_add_const(Bzla *bzla,
   if (d_res_x) *d_res_x = 0;
 
   sub = bzla_bv_sub(mm, t, s);
-  res = bzla_bvprop_check_fixed_bits(mm, x, sub);
+  res = bzla_bvdomain_check_fixed_bits(mm, x, sub);
   bzla_bv_free(mm, sub);
   return res;
 }
@@ -664,7 +664,7 @@ bzla_is_inv_concat_const(Bzla *bzla,
 
   bw_t = bzla_bv_get_width(t);
   bw_s = bzla_bv_get_width(s);
-  bw_x = bzla_bvprop_get_width(x);
+  bw_x = bzla_bvdomain_get_width(x);
 
   if (pos_x == 0)
   {
@@ -722,7 +722,7 @@ bzla_is_inv_eq_const(Bzla *bzla,
     return bzla_bv_compare(x->hi, x->lo) || bzla_bv_compare(x->hi, s);
   }
 
-  return bzla_bvprop_check_fixed_bits(bzla->mm, x, s);
+  return bzla_bvdomain_check_fixed_bits(bzla->mm, x, s);
 }
 
 bool
@@ -747,10 +747,10 @@ bzla_is_inv_mul_const(Bzla *bzla,
   res = bzla_is_inv_mul(bzla, d_x, t, s, pos_x, 0);
   if (d_res_x) *d_res_x = 0;
 
-  if (res && !bzla_bv_is_zero(s) && bzla_bvprop_has_fixed_bits(mm, d_x))
+  if (res && !bzla_bv_is_zero(s) && bzla_bvdomain_has_fixed_bits(mm, d_x))
   {
     /* d_x is constant */
-    if (bzla_bvprop_is_fixed(mm, d_x))
+    if (bzla_bvdomain_is_fixed(mm, d_x))
     {
       x   = bzla_bv_mul(mm, d_x->lo, s);
       res = bzla_bv_compare(x, t) == 0;
@@ -765,10 +765,10 @@ bzla_is_inv_mul_const(Bzla *bzla,
       {
         mod_inv_s = bzla_bv_mod_inverse(mm, s);
         x         = bzla_bv_mul(mm, mod_inv_s, t);
-        res       = bzla_bvprop_check_fixed_bits(mm, d_x, x);
+        res       = bzla_bvdomain_check_fixed_bits(mm, d_x, x);
         if (d_res_x && res)
         {
-          *d_res_x = bzla_bvprop_new(mm, x, x);
+          *d_res_x = bzla_bvdomain_new(mm, x, x);
         }
         bzla_bv_free(mm, x);
         bzla_bv_free(mm, mod_inv_s);
@@ -804,7 +804,7 @@ bzla_is_inv_mul_const(Bzla *bzla,
 
         lo      = bzla_bv_and(mm, mask_lo, tmp_x);
         hi      = bzla_bv_or(mm, mask_hi, tmp_x);
-        d_tmp_x = bzla_bvprop_new(mm, lo, hi);
+        d_tmp_x = bzla_bvdomain_new(mm, lo, hi);
         bzla_bv_free(mm, tmp_x);
         bzla_bv_free(mm, mask_lo);
         bzla_bv_free(mm, mask_hi);
@@ -818,7 +818,7 @@ bzla_is_inv_mul_const(Bzla *bzla,
         }
         else
         {
-          bzla_bvprop_free(mm, d_tmp_x);
+          bzla_bvdomain_free(mm, d_tmp_x);
         }
       }
     }
@@ -877,24 +877,24 @@ bzla_is_inv_sll_const(Bzla *bzla,
   else
   {
     assert(pos_x == 1);
-    if (bzla_bvprop_is_fixed(mm, x))
+    if (bzla_bvdomain_is_fixed(mm, x))
     {
       shift1 = bzla_bv_sll(mm, s, x->lo);
       res    = bzla_bv_compare(shift1, t) == 0;
       if (d_res_x && res)
       {
-        *d_res_x = bzla_bvprop_new(mm, x->lo, x->lo);
+        *d_res_x = bzla_bvdomain_new(mm, x->lo, x->lo);
       }
       bzla_bv_free(mm, shift1);
     }
     else
     {
       res = false;
-      bzla_bvprop_gen_init(mm, &bzla->rng, &gen, x);
-      while (bzla_bvprop_gen_has_next(&gen))
+      bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+      while (bzla_bvdomain_gen_has_next(&gen))
       {
-        bv = bzla_bvprop_gen_next(&gen);
-        if (bzla_bvprop_check_fixed_bits(mm, x, bv))
+        bv = bzla_bvdomain_gen_next(&gen);
+        if (bzla_bvdomain_check_fixed_bits(mm, x, bv))
         {
           shift1 = bzla_bv_sll(mm, s, bv);
           if (bzla_bv_compare(shift1, t) == 0)
@@ -902,7 +902,7 @@ bzla_is_inv_sll_const(Bzla *bzla,
             res = true;
             if (d_res_x)
             {
-              *d_res_x = bzla_bvprop_new(mm, bv, bv);
+              *d_res_x = bzla_bvdomain_new(mm, bv, bv);
               bzla_bv_free(mm, shift1);
               break;
             }
@@ -910,7 +910,7 @@ bzla_is_inv_sll_const(Bzla *bzla,
           bzla_bv_free(mm, shift1);
         }
       }
-      bzla_bvprop_gen_delete(&gen);
+      bzla_bvdomain_gen_delete(&gen);
     }
   }
   if (pos_x == 0 && d_res_x) assert(*d_res_x == 0);
@@ -967,24 +967,24 @@ bzla_is_inv_srl_const(Bzla *bzla,
   else
   {
     assert(pos_x == 1);
-    if (bzla_bvprop_is_fixed(mm, x))
+    if (bzla_bvdomain_is_fixed(mm, x))
     {
       shift1 = bzla_bv_srl(mm, s, x->lo);
       res    = bzla_bv_compare(shift1, t) == 0;
       if (d_res_x && res)
       {
-        *d_res_x = bzla_bvprop_new(mm, x->lo, x->lo);
+        *d_res_x = bzla_bvdomain_new(mm, x->lo, x->lo);
       }
       bzla_bv_free(mm, shift1);
     }
     else
     {
       res = false;
-      bzla_bvprop_gen_init(mm, &bzla->rng, &gen, x);
-      while (bzla_bvprop_gen_has_next(&gen))
+      bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+      while (bzla_bvdomain_gen_has_next(&gen))
       {
-        bv = bzla_bvprop_gen_next(&gen);
-        if (bzla_bvprop_check_fixed_bits(mm, x, bv))
+        bv = bzla_bvdomain_gen_next(&gen);
+        if (bzla_bvdomain_check_fixed_bits(mm, x, bv))
         {
           shift1 = bzla_bv_srl(mm, s, bv);
           if (bzla_bv_compare(shift1, t) == 0)
@@ -992,7 +992,7 @@ bzla_is_inv_srl_const(Bzla *bzla,
             res = true;
             if (d_res_x)
             {
-              *d_res_x = bzla_bvprop_new(mm, bv, bv);
+              *d_res_x = bzla_bvdomain_new(mm, bv, bv);
               bzla_bv_free(mm, shift1);
               break;
             }
@@ -1000,7 +1000,7 @@ bzla_is_inv_srl_const(Bzla *bzla,
           bzla_bv_free(mm, shift1);
         }
       }
-      bzla_bvprop_gen_delete(&gen);
+      bzla_bvdomain_gen_delete(&gen);
     }
   }
   return res;
@@ -1030,7 +1030,7 @@ bzla_is_inv_udiv_const(Bzla *bzla,
   if (res)
   {
     /* x is constant */
-    if (bzla_bvprop_is_fixed(mm, x))
+    if (bzla_bvdomain_is_fixed(mm, x))
     {
       if (pos_x == 0)
       {
@@ -1081,13 +1081,14 @@ bzla_is_inv_udiv_const(Bzla *bzla,
           }
 
           BzlaBvDomainGenerator dgen;
-          bzla_bvprop_gen_init_range(mm, 0, &dgen, x, min, max);
-          res = bzla_bvprop_gen_has_next(&dgen);
+          bzla_bvdomain_gen_init_range(mm, 0, &dgen, x, min, max);
+          res = bzla_bvdomain_gen_has_next(&dgen);
           if (d_res_x && res)
           {
-            *d_res_x = bzla_bvprop_new(mm, bzla_bvprop_gen_next(&dgen), max);
+            *d_res_x =
+                bzla_bvdomain_new(mm, bzla_bvdomain_gen_next(&dgen), max);
           }
-          bzla_bvprop_gen_delete(&dgen);
+          bzla_bvdomain_gen_delete(&dgen);
           bzla_bv_free(mm, min);
           bzla_bv_free(mm, max);
         }
@@ -1132,13 +1133,14 @@ bzla_is_inv_udiv_const(Bzla *bzla,
             }
 
             BzlaBvDomainGenerator dgen;
-            bzla_bvprop_gen_init_range(mm, 0, &dgen, x, min, max);
-            res = bzla_bvprop_gen_has_next(&dgen);
+            bzla_bvdomain_gen_init_range(mm, 0, &dgen, x, min, max);
+            res = bzla_bvdomain_gen_has_next(&dgen);
             if (d_res_x && res)
             {
-              *d_res_x = bzla_bvprop_new(mm, bzla_bvprop_gen_next(&dgen), max);
+              *d_res_x =
+                  bzla_bvdomain_new(mm, bzla_bvdomain_gen_next(&dgen), max);
             }
-            bzla_bvprop_gen_delete(&dgen);
+            bzla_bvdomain_gen_delete(&dgen);
             bzla_bv_free(mm, min);
             bzla_bv_free(mm, max);
           }
@@ -1224,7 +1226,7 @@ bzla_is_inv_urem_const(Bzla *bzla,
 
   if (res)
   {
-    if (bzla_bvprop_is_fixed(mm, x))
+    if (bzla_bvdomain_is_fixed(mm, x))
     {
       rem = pos_x ? bzla_bv_urem(mm, s, x->lo) : bzla_bv_urem(mm, x->lo, s);
       res = bzla_bv_compare(rem, t) == 0;
@@ -1247,7 +1249,7 @@ bzla_is_inv_urem_const(Bzla *bzla,
         {
           /* s % x = t = ones: s = ones, x = 0 */
           assert(bzla_bv_compare(s, ones) == 0);
-          res = bzla_bvprop_check_fixed_bits_val(mm, x, 0);
+          res = bzla_bvdomain_check_fixed_bits_val(mm, x, 0);
         }
         else
         {
@@ -1305,12 +1307,13 @@ bzla_is_inv_urem_const(Bzla *bzla,
             }
             bzla_bv_free(mm, n_hi);
             BzlaBvDomainGenerator gen;
-            bzla_bvprop_gen_init_range(mm, 0, &gen, (BzlaBvDomain *) x, lo, hi);
+            bzla_bvdomain_gen_init_range(
+                mm, 0, &gen, (BzlaBvDomain *) x, lo, hi);
             res = false;
-            while (bzla_bvprop_gen_has_next(&gen))
+            while (bzla_bvdomain_gen_has_next(&gen))
             {
-              bv = bzla_bvprop_gen_next(&gen);
-              assert(bzla_bvprop_check_fixed_bits(mm, x, bv));
+              bv = bzla_bvdomain_gen_next(&gen);
+              assert(bzla_bvdomain_check_fixed_bits(mm, x, bv));
               rem = bzla_bv_urem(mm, s, bv);
               if (bzla_bv_compare(rem, t) == 0)
               {
@@ -1318,13 +1321,13 @@ bzla_is_inv_urem_const(Bzla *bzla,
                 bzla_bv_free(mm, rem);
                 if (d_res_x)
                 {
-                  *d_res_x = bzla_bvprop_new(mm, bv, hi);
+                  *d_res_x = bzla_bvdomain_new(mm, bv, hi);
                 }
                 break;
               }
               bzla_bv_free(mm, rem);
             }
-            bzla_bvprop_gen_delete(&gen);
+            bzla_bvdomain_gen_delete(&gen);
             bzla_bv_free(mm, hi);
             bzla_bv_free(mm, lo);
           }
@@ -1336,12 +1339,12 @@ bzla_is_inv_urem_const(Bzla *bzla,
         {
           /* x % 0 = t: x = t
            * t = ones : s = 0, x = ones */
-          res = bzla_bvprop_check_fixed_bits(mm, x, t);
+          res = bzla_bvdomain_check_fixed_bits(mm, x, t);
         }
         else
         {
           assert(bzla_bv_compare(s, t) > 0);
-          if (!bzla_bvprop_check_fixed_bits(mm, x, t))
+          if (!bzla_bvdomain_check_fixed_bits(mm, x, t))
           {
             /* simplest solution (0 <= res < s: res = t) does not apply, thus
              * x = s * n + t with n s.t. (s * n + t) does not overflow */
@@ -1385,13 +1388,13 @@ bzla_is_inv_urem_const(Bzla *bzla,
               bzla_bv_free(mm, mul);
               BzlaBvDomainGenerator gen;
               /* x->lo <= x <= hi */
-              bzla_bvprop_gen_init_range(
+              bzla_bvdomain_gen_init_range(
                   mm, 0, &gen, (BzlaBvDomain *) x, 0, hi);
               res = false;
-              while (bzla_bvprop_gen_has_next(&gen))
+              while (bzla_bvdomain_gen_has_next(&gen))
               {
-                bv = bzla_bvprop_gen_next(&gen);
-                assert(bzla_bvprop_check_fixed_bits(mm, x, bv));
+                bv = bzla_bvdomain_gen_next(&gen);
+                assert(bzla_bvdomain_check_fixed_bits(mm, x, bv));
                 rem = bzla_bv_urem(mm, bv, s);
                 if (bzla_bv_compare(rem, t) == 0)
                 {
@@ -1399,13 +1402,13 @@ bzla_is_inv_urem_const(Bzla *bzla,
                   bzla_bv_free(mm, rem);
                   if (d_res_x)
                   {
-                    *d_res_x = bzla_bvprop_new(mm, bv, hi);
+                    *d_res_x = bzla_bvdomain_new(mm, bv, hi);
                   }
                   break;
                 }
                 bzla_bv_free(mm, rem);
               }
-              bzla_bvprop_gen_delete(&gen);
+              bzla_bvdomain_gen_delete(&gen);
               bzla_bv_free(mm, hi);
               bzla_bv_free(mm, n_hi);
             }
@@ -1465,11 +1468,11 @@ bzla_is_inv_cond_const(Bzla *bzla,
   {
     /* s0: value for e[0] */
     /* s1: value for e[2] */
-    if (bzla_bv_is_true(s0) && bzla_bvprop_check_fixed_bits(bzla->mm, x, t))
+    if (bzla_bv_is_true(s0) && bzla_bvdomain_check_fixed_bits(bzla->mm, x, t))
     {
       if (d_res_x)
       {
-        *d_res_x = bzla_bvprop_new(mm, t, t);
+        *d_res_x = bzla_bvdomain_new(mm, t, t);
       }
       return true;
     }
@@ -1482,11 +1485,11 @@ bzla_is_inv_cond_const(Bzla *bzla,
   {
     /* s0: value for e[0] */
     /* s1: value for e[1] */
-    if (bzla_bv_is_false(s0) && bzla_bvprop_check_fixed_bits(bzla->mm, x, t))
+    if (bzla_bv_is_false(s0) && bzla_bvdomain_check_fixed_bits(bzla->mm, x, t))
     {
       if (d_res_x)
       {
-        *d_res_x = bzla_bvprop_new(mm, t, t);
+        *d_res_x = bzla_bvdomain_new(mm, t, t);
       }
       return true;
     }
@@ -1500,14 +1503,14 @@ bzla_is_inv_cond_const(Bzla *bzla,
     /* s0: value for e[1] */
     /* s1: value for e[2] */
     bool res = false;
-    assert(bzla_bvprop_get_width(x) == 1);
+    assert(bzla_bvdomain_get_width(x) == 1);
     cmp0 = bzla_bv_compare(s0, t) == 0;
     cmp1 = bzla_bv_compare(s1, t) == 0;
-    if (bzla_bvprop_is_fixed_bit_true(x, 0))
+    if (bzla_bvdomain_is_fixed_bit_true(x, 0))
     {
       res = cmp0;
     }
-    else if (bzla_bvprop_is_fixed_bit_false(x, 0))
+    else if (bzla_bvdomain_is_fixed_bit_false(x, 0))
     {
       res = cmp1;
     }
@@ -1526,7 +1529,7 @@ bzla_is_inv_cond_const(Bzla *bzla,
       {
         val = cmp0 ? 1 : 0;
       }
-      *d_res_x = bzla_bvprop_new_fixed_uint64(mm, val, 1);
+      *d_res_x = bzla_bvdomain_new_fixed_uint64(mm, val, 1);
     }
     return res;
   }

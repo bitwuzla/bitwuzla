@@ -56,9 +56,9 @@ class TestPropInv : public TestBzla
     while (bzla_iter_hashint_has_next(&iit))
     {
       int32_t key = bzla_iter_hashint_next(&iit);
-      bzla_bvprop_free(d_mm,
-                       static_cast<BzlaBvDomain *>(
-                           bzla_hashint_map_get(d_domains, key)->as_ptr));
+      bzla_bvdomain_free(d_mm,
+                         static_cast<BzlaBvDomain *>(
+                             bzla_hashint_map_get(d_domains, key)->as_ptr));
       bzla_hashint_map_remove(d_domains, key, 0);
     }
     assert(d_domains->count == 0);
@@ -114,7 +114,7 @@ class TestPropInv : public TestBzla
       assert(is_inv);
       res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
       ASSERT_NE(res, nullptr);
-      if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+      if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
       res = 0;
@@ -1394,14 +1394,14 @@ class TestPropInv : public TestBzla
             : bzla_proputils_cons_mul(d_bzla, mul, t, s, 0, d_domains, d_res_x);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
     d_res_x = 0;
     inv     = is_inv_fun(d_bzla, x0, t, s, 0, &d_res_x);
     res     = inv ? inv_fun(d_bzla, cmul[1], t, s, 0, d_domains, d_res_x)
               : bzla_proputils_cons_mul(
                   d_bzla, cmul[1], t, s, 0, d_domains, d_res_x);
     ASSERT_NE(res, nullptr);
-    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
     if (bzla_bv_get_bit(t, 0))
     {
       ASSERT_EQ(bzla_bv_get_bit(res, 0), 1u);
@@ -1415,7 +1415,7 @@ class TestPropInv : public TestBzla
             : bzla_proputils_cons_mul(d_bzla, mul, t, s, 1, d_domains, d_res_x);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
     d_res_x = 0;
     inv     = is_inv_fun(d_bzla, x1, t, s, 1, &d_res_x);
     res     = inv ? inv_fun(d_bzla, cmul[0], t, s, 1, d_domains, d_res_x)
@@ -1427,7 +1427,7 @@ class TestPropInv : public TestBzla
       ASSERT_EQ(bzla_bv_get_bit(res, 0), 1u);
     }
     bzla_bv_free(d_mm, res);
-    if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+    if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
 
     clear_domains();
 
@@ -1654,7 +1654,7 @@ class TestPropInvConst : public TestPropInv
       is_inv  = is_inv_fun(d_bzla, x, t, s, idx_x, &d_res_x);
       assert(is_inv);
       res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
-      if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+      if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
       ASSERT_NE(res, nullptr);
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
@@ -1691,7 +1691,7 @@ class TestPropInvConst : public TestPropInv
       assert(is_inv);
       res = bzla_proputils_inv_cond_const(
           d_bzla, exp, t, s0, s1, idx_x, d_domains, d_res_x);
-      if (d_res_x) bzla_bvprop_free(d_mm, d_res_x);
+      if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
       ASSERT_NE(res, nullptr);
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
@@ -1752,11 +1752,11 @@ class TestPropInvConst : public TestPropInv
     x = (BzlaBvDomain *) bzla_hashint_map_get(
             d_domains, bzla_node_real_addr(exp->e[idx_x])->id)
             ->as_ptr;
-    assert(!bzla_bvprop_has_fixed_bits(d_mm, x));
+    assert(!bzla_bvdomain_has_fixed_bits(d_mm, x));
 
     for (uint32_t i : fixed_idx)
     {
-      bzla_bvprop_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
+      bzla_bvdomain_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
     }
 
     check_result_n_tests(is_inv_fun, inv_fun, exp, s, t, x_bv, idx_x);
@@ -1780,11 +1780,11 @@ class TestPropInvConst : public TestPropInv
     x = (BzlaBvDomain *) bzla_hashint_map_get(
             d_domains, bzla_node_real_addr(exp->e[idx_x])->id)
             ->as_ptr;
-    assert(!bzla_bvprop_has_fixed_bits(d_mm, x));
+    assert(!bzla_bvdomain_has_fixed_bits(d_mm, x));
 
     for (uint32_t i : fixed_idx)
     {
-      bzla_bvprop_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
+      bzla_bvdomain_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
     }
 
     check_result_cond_n_tests(exp, s0, s1, t, x_bv, idx_x);
@@ -1807,11 +1807,11 @@ class TestPropInvConst : public TestPropInv
     x = (BzlaBvDomain *) bzla_hashint_map_get(
             d_domains, bzla_node_real_addr(exp->e[0])->id)
             ->as_ptr;
-    assert(!bzla_bvprop_has_fixed_bits(d_mm, x));
+    assert(!bzla_bvdomain_has_fixed_bits(d_mm, x));
 
     for (uint32_t i : fixed_idx)
     {
-      bzla_bvprop_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
+      bzla_bvdomain_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
     }
 
     check_result_slice_n_tests(exp, t, x_bv, upper, lower);

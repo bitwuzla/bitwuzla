@@ -1427,7 +1427,7 @@ delete_sls_solver(BzlaSLSSolver *slv)
   bzla_iter_hashint_init(&it, slv->domains);
   while (bzla_iter_hashint_has_next(&it))
   {
-    bzla_bvprop_free(slv->bzla->mm, bzla_iter_hashint_next_data(&it)->as_ptr);
+    bzla_bvdomain_free(slv->bzla->mm, bzla_iter_hashint_next_data(&it)->as_ptr);
   }
   bzla_hashint_map_delete(slv->domains);
   if (slv->weights)
