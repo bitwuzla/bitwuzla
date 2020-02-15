@@ -234,7 +234,7 @@ class TestProp : public TestBzla
    *             find a solution.
    * idx_x     : The index of operand 'x'.
    * bw        : The bit-width to test for.
-   * s0        : The assignment of the first of two other operands:
+   * s0, s1    : The assignment of other two operands:
    *               - for idx_x = 0, assignment s0 is for e[1] and s1 for e[2]
    *               - for idx_x = 1, assignment s0 is for e[0] and s1 for e[2]
    *               - for idx_x = 2, assignment s0 is for e[0] and s1 for e[1]
