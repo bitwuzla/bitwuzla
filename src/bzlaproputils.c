@@ -1533,11 +1533,11 @@ check_inv_dbg(Bzla *bzla,
 #ifndef NDEBUG
   assert(is_inv_fun(bzla, 0, t, s, idx_x, 0));
   (void) d_res_x;
-  assert(!bzla_hashint_map_contains(domains, node->id)
-         || bzla_hashint_map_contains(domains,
-                                      bzla_node_real_addr(node->e[idx_x])->id));
+  assert(
+      !bzla_hashint_map_contains(domains, node->id)
+      || bzla_hashint_map_contains(domains, bzla_node_get_id(node->e[idx_x])));
   BzlaHashTableData *x =
-      bzla_hashint_map_get(domains, bzla_node_real_addr(node->e[idx_x])->id);
+      bzla_hashint_map_get(domains, bzla_node_get_id(node->e[idx_x]));
   assert(!x || is_inv_fun_const(bzla, x ? x->as_ptr : 0, t, s, idx_x, 0));
 #endif
 }
@@ -3389,8 +3389,7 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
   ones  = bzla_bv_ones(mm, bw);
   isult = !bzla_bv_is_zero(t);
 
-  x = bzla_hashint_map_get(domains, bzla_node_real_addr(ult->e[idx_x])->id)
-          ->as_ptr;
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(ult->e[idx_x]))->as_ptr;
 
   res = 0;
 
@@ -3485,8 +3484,7 @@ bzla_proputils_inv_sll_const(Bzla *bzla,
   mm  = bzla->mm;
   res = 0;
 
-  x = bzla_hashint_map_get(domains, bzla_node_real_addr(sll->e[idx_x])->id)
-          ->as_ptr;
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(sll->e[idx_x]))->as_ptr;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
@@ -3567,8 +3565,7 @@ bzla_proputils_inv_srl_const(Bzla *bzla,
   mm  = bzla->mm;
   res = 0;
 
-  x = bzla_hashint_map_get(domains, bzla_node_real_addr(srl->e[idx_x])->id)
-          ->as_ptr;
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(srl->e[idx_x]))->as_ptr;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
@@ -3644,8 +3641,7 @@ bzla_proputils_inv_mul_const(Bzla *bzla,
 
   mm = bzla->mm;
 
-  x = bzla_hashint_map_get(domains, bzla_node_real_addr(mul->e[idx_x])->id)
-          ->as_ptr;
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(mul->e[idx_x]))->as_ptr;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
@@ -3730,8 +3726,7 @@ bzla_proputils_inv_udiv_const(Bzla *bzla,
 
   mm = bzla->mm;
 
-  x = bzla_hashint_map_get(domains, bzla_node_real_addr(udiv->e[idx_x])->id)
-          ->as_ptr;
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(udiv->e[idx_x]))->as_ptr;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
@@ -3838,8 +3833,7 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
 
   mm = bzla->mm;
 
-  x = bzla_hashint_map_get(domains, bzla_node_real_addr(urem->e[idx_x])->id)
-          ->as_ptr;
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(urem->e[idx_x]))->as_ptr;
 
   bw = bzla_bv_get_width(s);
   assert(bzla_bv_get_width(t) == bw);
@@ -4042,8 +4036,7 @@ bzla_proputils_inv_cond_const(Bzla *bzla,
   assert(!bzla_hashint_map_contains(domains, cond->id)
          || bzla_hashint_map_contains(domains,
                                       bzla_node_real_addr(cond->e[idx_x])->id));
-  x = bzla_hashint_map_get(domains, bzla_node_real_addr(cond->e[idx_x])->id)
-          ->as_ptr;
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(cond->e[idx_x]))->as_ptr;
   assert(bzla_is_inv_cond_const(bzla, x, t, s0, s1, idx_x, 0));
 
   if (bzla_bvdomain_is_fixed(mm, x))
