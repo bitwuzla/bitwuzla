@@ -43,12 +43,15 @@ select_path_non_const(BzlaNode *exp)
   int32_t idx_x;
 
   for (i = 0, idx_x = -1; i < exp->arity; i++)
+  {
     if (bzla_node_is_bv_const(exp->e[i]))
     {
       idx_x = i ? 0 : 1;
       break;
     }
-  assert(exp->arity == 1 || !bzla_node_is_bv_const(exp->e[i ? 0 : 1]));
+  }
+  assert(exp->arity == 1 || idx_x == -1
+         || !bzla_node_is_bv_const(exp->e[idx_x]));
   return idx_x;
 }
 
@@ -57,7 +60,9 @@ select_path_random(Bzla *bzla, BzlaNode *exp)
 {
   assert(bzla);
   assert(exp);
-  return (int32_t) bzla_rng_pick_rand(&bzla->rng, 0, exp->arity - 1);
+  int32_t idx_x = (int32_t) bzla_rng_pick_rand(&bzla->rng, 0, exp->arity - 1);
+  assert(!bzla_node_is_bv_const(exp->e[idx_x]));
+  return idx_x;
 }
 
 static int32_t
@@ -90,6 +95,7 @@ select_path_add(Bzla *bzla, BzlaNode *add, BzlaBitVector *t, BzlaBitVector **s)
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(add->e[idx_x]));
   return idx_x;
 }
 
@@ -153,6 +159,7 @@ select_path_and(Bzla *bzla, BzlaNode *and, BzlaBitVector *t, BzlaBitVector **s)
   BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(and->e[1]), a);
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
+  assert(!bzla_node_is_bv_const(and->e[idx_x]));
 #endif
   return idx_x;
 }
@@ -186,6 +193,7 @@ select_path_eq(Bzla *bzla, BzlaNode *eq, BzlaBitVector *t, BzlaBitVector **s)
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(eq->e[idx_x]));
   return idx_x;
 }
 
@@ -236,6 +244,7 @@ select_path_ult(Bzla *bzla, BzlaNode *ult, BzlaBitVector *t, BzlaBitVector **s)
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(ult->e[idx_x]));
   return idx_x;
 }
 
@@ -333,6 +342,7 @@ DONE:
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(sll->e[idx_x]));
   return idx_x;
 }
 
@@ -431,6 +441,7 @@ DONE:
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(srl->e[idx_x]));
   return idx_x;
 }
 
@@ -497,6 +508,7 @@ select_path_mul(Bzla *bzla, BzlaNode *mul, BzlaBitVector *t, BzlaBitVector **s)
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(mul->e[idx_x]));
   return idx_x;
 }
 
@@ -576,6 +588,7 @@ select_path_udiv(Bzla *bzla,
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(udiv->e[idx_x]));
   return idx_x;
 }
 
@@ -655,6 +668,7 @@ select_path_urem(Bzla *bzla,
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(urem->e[idx_x]));
   return idx_x;
 }
 
@@ -710,6 +724,7 @@ select_path_concat(Bzla *bzla,
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(concat->e[idx_x]));
   return idx_x;
 }
 
@@ -759,9 +774,9 @@ select_path_cond(Bzla *bzla,
   assert(t);
   assert(s);
 
-  bool e1const, e2const;
-  int32_t idx_x;
-  uint32_t prob;
+  bool is_const_e1, is_const_e2;
+  int32_t idx_x, *delta;
+  uint32_t *prob, *nflips_cond;
   BzlaBitVector *s0;
 
   (void) t;
@@ -770,72 +785,74 @@ select_path_cond(Bzla *bzla,
   assert(s0);
 
   if (bzla_node_is_bv_const(cond->e[0]))
+  {
+    /* pick enabled branch */
+    assert((cond->e[0] == bzla->true_exp && !bzla_node_is_bv_const(cond->e[1]))
+           || (cond->e[0] != bzla->true_exp
+               && !bzla_node_is_bv_const(cond->e[2])));
     idx_x = cond->e[0] == bzla->true_exp ? 1 : 2;
+  }
   else
   {
-    e1const = bzla_node_is_bv_const(cond->e[1]);
-    e2const = bzla_node_is_bv_const(cond->e[2]);
-
-    /* flip condition
-     *
-     * if either the 'then' or 'else' branch is const
-     * with probability BZLA_OPT_PROP_FLIP_COND_CONST_PROB,
-     * which is dynamically updated (depending on the number
-     * times this case has already bin encountered)
-     *
-     * else with probability BZLA_OPT_PROP_FLIP_COND_PROB,
-     * which is constant and will not be updated */
-    if (((e1const && bzla_bv_is_true(s0)) || (e2const && bzla_bv_is_false(s0)))
-        && bzla_rng_pick_with_prob(
-            &bzla->rng,
-            (prob = bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_FLIP_COND_CONST))))
+    is_const_e1 = bzla_node_is_bv_const(cond->e[1]);
+    is_const_e2 = bzla_node_is_bv_const(cond->e[2]);
+    if (is_const_e1 && is_const_e2)
     {
       idx_x = 0;
-
+    }
+    else if ((is_const_e1 && bzla_bv_is_true(s0))
+             || (is_const_e2 && bzla_bv_is_false(s0)))
+    {
+      /* enabled branch is const
+       *
+       * -> flip condition with probability BZLA_OPT_PROP_FLIP_COND_CONST_PROB,
+       *    which is dynamically updated (depending on the number times this
+       *    case has already bin encountered)
+       *
+       * -> else select other non-const branch
+       */
       if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
       {
-        BzlaPropSolver *slv;
-        slv = BZLA_PROP_SOLVER(bzla);
-        if (++slv->nflip_cond_const
+        prob        = &BZLA_PROP_SOLVER(bzla)->flip_cond_const_prob;
+        delta       = &BZLA_PROP_SOLVER(bzla)->flip_cond_const_prob_delta;
+        nflips_cond = &BZLA_PROP_SOLVER(bzla)->nflip_cond_const;
+      }
+      else
+      {
+        assert(bzla->slv->kind == BZLA_SLS_SOLVER_KIND);
+        prob        = &BZLA_SLS_SOLVER(bzla)->prop_flip_cond_const_prob;
+        delta       = &BZLA_SLS_SOLVER(bzla)->prop_flip_cond_const_prob_delta;
+        nflips_cond = &BZLA_SLS_SOLVER(bzla)->prop_nflip_cond_const;
+      }
+      if (bzla_rng_pick_with_prob(&bzla->rng, *prob))
+      {
+        idx_x = 0;
+        *nflips_cond += 1;
+        if (*nflips_cond
             == bzla_opt_get(bzla, BZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL))
         {
-          slv->nflip_cond_const = 0;
-          slv->flip_cond_const_prob_delta =
-              prob == 0
-                  ? 100
-                  : (prob == 1000 ? -100 : slv->flip_cond_const_prob_delta);
-          bzla_opt_set(bzla,
-                       BZLA_OPT_PROP_PROB_FLIP_COND_CONST,
-                       prob + slv->flip_cond_const_prob_delta);
+          *nflips_cond = 0;
+          *delta       = *prob == 0 ? 100 : (*prob == 1000 ? -100 : *delta);
+          *prob += *delta;
         }
       }
       else
       {
-        BzlaSLSSolver *slv;
-        slv = BZLA_SLS_SOLVER(bzla);
-        if (++slv->prop_nflip_cond_const
-            == bzla_opt_get(bzla, BZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL))
-        {
-          slv->prop_nflip_cond_const = 0;
-          slv->prop_flip_cond_const_prob_delta =
-              prob == 0 ? 100
-                        : (prob == 1000 ? -100
-                                        : slv->prop_flip_cond_const_prob_delta);
-          bzla_opt_set(bzla,
-                       BZLA_OPT_PROP_PROB_FLIP_COND_CONST,
-                       prob + slv->prop_flip_cond_const_prob_delta);
-        }
+        idx_x = is_const_e1 ? 2 : 1;
       }
     }
-    else if (bzla_rng_pick_with_prob(
-                 &bzla->rng, bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_FLIP_COND)))
-    {
-      idx_x = 0;
-    }
-    /* assume cond to be fixed and select enabled branch */
     else
     {
-      idx_x = bzla_bv_is_true(s0) ? 1 : 2;
+      /* enabled branch is not const, condition not const */
+      if (bzla_rng_pick_with_prob(
+              &bzla->rng, bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_FLIP_COND)))
+      {
+        idx_x = 0;
+      }
+      else
+      {
+        idx_x = bzla_bv_is_true(s0) ? 1 : 2;
+      }
     }
   }
 
@@ -856,6 +873,7 @@ select_path_cond(Bzla *bzla,
   bzla_mem_freestr(mm, a);
   BZLALOG(2, "    * chose: %d", idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(cond->e[idx_x]));
   return idx_x;
 }
 
