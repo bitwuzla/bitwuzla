@@ -4221,7 +4221,7 @@ record_conflict(Bzla *bzla,
     is_recoverable = false;
   }
 #ifndef NDEBUG
-  char *str_s0 = bzla_bv_to_char(mm, s0);
+  char *str_s0 = s0 ? bzla_bv_to_char(mm, s0) : 0;
   char *str_t  = bzla_bv_to_char(mm, t);
   char *str_o  = 0;
   if (bzla_node_is_cond(exp))
