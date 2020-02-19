@@ -2655,11 +2655,28 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         }
       }
     }
+    /* FP nodes are now word-blasted. Set AIG vector of FP node to AIG vector
+     * of word-blasted bit-vector node. */
+    else if (bzla_node_is_rm(bzla, cur) || bzla_node_is_fp(bzla, cur)
+             || (cur->arity
+                 && (bzla_node_is_rm(bzla, cur->e[0])
+                     || bzla_node_is_fp(bzla, cur->e[0]))))
+    {
+      wb         = bzla_fp_word_blast(bzla, cur);
+      invert_av0 = bzla_node_is_inverted(wb);
+      av0        = bzla_aigvec_copy(avmgr, bzla_node_real_addr(wb)->av);
+      if (invert_av0) bzla_aigvec_invert(avmgr, av0);
+      cur->av = av0;
+      BZLALOG(2, "  synthesized: %s", bzla_util_node2string(cur));
+      bzla_aigvec_to_sat_tseitin(avmgr, cur->av);
+    }
     /* paremterized nodes, argument nodes and functions are not
      * synthesizable */
     else if (!cur->parameterized && !bzla_node_is_args(cur)
              && !bzla_node_is_fun(cur))
     {
+      assert(bzla_node_is_bv(bzla, cur));
+
       if (!opt_lazy_synth)
       {
         /* due to pushing nodes from static_rho onto 'exp_stack' a strict
@@ -2670,8 +2687,7 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         for (i = 0; i < cur->arity; i++)
         {
           real_e = bzla_node_real_addr(cur->e[i]);
-          if (!bzla_node_is_fp(bzla, real_e) && !bzla_node_is_rm(bzla, real_e)
-              && !bzla_node_is_synth(real_e))
+          if (!bzla_node_is_synth(real_e))
           {
             BZLA_PUSH_STACK(exp_stack, cur->e[i]);
             restart = true;
@@ -2681,18 +2697,7 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         if (restart) continue;
       }
 
-      if (bzla_node_is_rm(bzla, cur) || bzla_node_is_fp(bzla, cur)
-          || (cur->arity
-              && (bzla_node_is_rm(bzla, cur->e[0])
-                  || bzla_node_is_fp(bzla, cur->e[0]))))
-      {
-        wb         = bzla_fp_word_blast(bzla, cur);
-        invert_av0 = bzla_node_is_inverted(wb);
-        av0        = bzla_aigvec_copy(avmgr, bzla_node_real_addr(wb)->av);
-        if (invert_av0) bzla_aigvec_invert(avmgr, av0);
-        cur->av = av0;
-      }
-      else if (cur->arity == 1)
+      if (cur->arity == 1)
       {
         assert(bzla_node_is_bv_slice(cur));
         invert_av0 = bzla_node_is_inverted(cur->e[0]);
