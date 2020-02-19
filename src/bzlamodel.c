@@ -14,6 +14,7 @@
 #include "bzladbg.h"
 #include "bzlalog.h"
 #include "bzlarm.h"
+#include "utils/bzlahash.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlamem.h"
