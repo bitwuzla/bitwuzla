@@ -3416,45 +3416,48 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
     res = bzla_bv_copy(mm, x->lo);
   }
-  else if (idx_x)
-  {
-    /* s < x = t ---------------------------------------------------------- */
-    if (!isult)
-    {
-      /* s >= x */
-      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, s);
-    }
-    else
-    {
-      /* s < x */
-      tmp = bzla_bv_add(mm, s, one);
-      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, tmp, ones);
-      bzla_bv_free(mm, tmp);
-    }
-  }
   else
   {
-    /* x < s = t ---------------------------------------------------------- */
-    if (!isult)
+    if (idx_x)
     {
-      /* x >= s */
-      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, s, ones);
+      /* s < x = t ---------------------------------------------------------- */
+      if (!isult)
+      {
+        /* s >= x */
+        bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, s);
+      }
+      else
+      {
+        /* s < x */
+        tmp = bzla_bv_add(mm, s, one);
+        bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, tmp, ones);
+        bzla_bv_free(mm, tmp);
+      }
     }
     else
     {
-      /* x < s */
-      tmp = bzla_bv_sub(mm, s, one);
-      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
-      bzla_bv_free(mm, tmp);
+      /* x < s = t ---------------------------------------------------------- */
+      if (!isult)
+      {
+        /* x >= s */
+        bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, s, ones);
+      }
+      else
+      {
+        /* x < s */
+        tmp = bzla_bv_sub(mm, s, one);
+        bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
+        bzla_bv_free(mm, tmp);
+      }
     }
+    assert(bzla_bvdomain_gen_has_next(&gen));
+    res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+    bzla_bvdomain_gen_delete(&gen);
   }
-  assert(bzla_bvdomain_gen_has_next(&gen));
-  res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
 
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_ult, ult, s, t, res, idx_x, "<");
 #endif
-  bzla_bvdomain_gen_delete(&gen);
   bzla_bv_free(mm, zero);
   bzla_bv_free(mm, one);
   bzla_bv_free(mm, ones);
