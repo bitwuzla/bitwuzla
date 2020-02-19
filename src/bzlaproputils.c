@@ -3409,7 +3409,7 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = idx_x ? bzla_bv_ult(mm, s, x->lo) : bzla_bv_ult(mm, s, x->lo);
+    tmp = idx_x ? bzla_bv_ult(mm, s, x->lo) : bzla_bv_ult(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
@@ -3505,7 +3505,7 @@ bzla_proputils_inv_sll_const(Bzla *bzla,
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = idx_x ? bzla_bv_sll(mm, s, x->lo) : bzla_bv_sll(mm, s, x->lo);
+    tmp = idx_x ? bzla_bv_sll(mm, s, x->lo) : bzla_bv_sll(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
@@ -3586,7 +3586,7 @@ bzla_proputils_inv_srl_const(Bzla *bzla,
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = idx_x ? bzla_bv_srl(mm, s, x->lo) : bzla_bv_srl(mm, s, x->lo);
+    tmp = idx_x ? bzla_bv_srl(mm, s, x->lo) : bzla_bv_srl(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
@@ -3747,7 +3747,7 @@ bzla_proputils_inv_udiv_const(Bzla *bzla,
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = bzla_bv_udiv(mm, s, x->lo);
+    tmp = idx_x ? bzla_bv_udiv(mm, s, x->lo) : bzla_bv_udiv(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
@@ -3858,7 +3858,7 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = bzla_bv_urem(mm, s, x->lo);
+    tmp = idx_x ? bzla_bv_urem(mm, s, x->lo) : bzla_bv_urem(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
