@@ -3224,14 +3224,12 @@ bzla_proputils_inv_add_const(Bzla *bzla,
   BzlaMemMgr *mm;
 
   mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_real_addr(add->e[idx_x])->id)
-          ->as_ptr;
+  x  = bzla_hashint_map_get(domains, bzla_node_get_id(add->e[idx_x]))->as_ptr;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    BzlaBitVector *tmp =
-        idx_x ? bzla_bv_add(mm, s, x->lo) : bzla_bv_add(mm, s, x->lo);
+    BzlaBitVector *tmp = bzla_bv_add(mm, s, x->lo);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
@@ -3260,9 +3258,9 @@ bzla_proputils_inv_and_const(Bzla *bzla,
 {
   assert(domains);
   assert(bzla_node_is_regular(and));
-  assert(!bzla_hashint_map_contains(domains, and->id)
-         || bzla_hashint_map_contains(domains,
-                                      bzla_node_real_addr(and->e[idx_x])->id));
+  assert(
+      !bzla_hashint_map_contains(domains, and->id)
+      || bzla_hashint_map_contains(domains, bzla_node_get_id(and->e[idx_x])));
   BzlaBitVector *tmp, *res;
   BzlaBvDomain *x;
   BzlaMemMgr *mm;
@@ -3279,12 +3277,11 @@ bzla_proputils_inv_and_const(Bzla *bzla,
                 d_res_x);
 #endif
   mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_real_addr(and->e[idx_x])->id)
-          ->as_ptr;
+  x  = bzla_hashint_map_get(domains, bzla_node_get_id(and->e[idx_x]))->as_ptr;
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = idx_x ? bzla_bv_and(mm, s, x->lo) : bzla_bv_and(mm, s, x->lo);
+    tmp = bzla_bv_and(mm, s, x->lo);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
@@ -3316,8 +3313,7 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
   assert(domains);
   assert(bzla_node_is_regular(eq));
   assert(!bzla_hashint_map_contains(domains, eq->id)
-         || bzla_hashint_map_contains(domains,
-                                      bzla_node_real_addr(eq->e[idx_x])->id));
+         || bzla_hashint_map_contains(domains, bzla_node_get_id(eq->e[idx_x])));
   BzlaBitVector *tmp, *res;
   BzlaBvDomain *x;
   BzlaMemMgr *mm;
@@ -3334,13 +3330,12 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
                 d_res_x);
 #endif
   mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_real_addr(eq->e[idx_x])->id)
-          ->as_ptr;
+  x  = bzla_hashint_map_get(domains, bzla_node_get_id(eq->e[idx_x]))->as_ptr;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = idx_x ? bzla_bv_eq(mm, s, x->lo) : bzla_bv_eq(mm, s, x->lo);
+    tmp = bzla_bv_eq(mm, s, x->lo);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
@@ -3371,9 +3366,9 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
 {
   assert(domains);
   assert(bzla_node_is_regular(ult));
-  assert(!bzla_hashint_map_contains(domains, ult->id)
-         || bzla_hashint_map_contains(domains,
-                                      bzla_node_real_addr(ult->e[idx_x])->id));
+  assert(
+      !bzla_hashint_map_contains(domains, ult->id)
+      || bzla_hashint_map_contains(domains, bzla_node_get_id(ult->e[idx_x])));
 #ifndef NDEBUG
   check_inv_dbg(bzla,
                 ult,
@@ -4051,9 +4046,9 @@ bzla_proputils_inv_cond_const(Bzla *bzla,
 
   mm = bzla->mm;
 
-  assert(!bzla_hashint_map_contains(domains, cond->id)
-         || bzla_hashint_map_contains(domains,
-                                      bzla_node_real_addr(cond->e[idx_x])->id));
+  assert(
+      !bzla_hashint_map_contains(domains, cond->id)
+      || bzla_hashint_map_contains(domains, bzla_node_get_id(cond->e[idx_x])));
   x = bzla_hashint_map_get(domains, bzla_node_get_id(cond->e[idx_x]))->as_ptr;
   assert(bzla_is_inv_cond_const(bzla, x, t, s0, s1, idx_x, 0));
 
