@@ -4275,7 +4275,7 @@ record_conflict(Bzla *bzla,
   else if (bzla_node_is_bv_slice(exp))
   {
     BZLALOG(2,
-            "%srecoverable CONFLICT (@%d): %s := x[%s:%s]",
+            "%srecoverable CONFLICT (@%d): %s := x[%u:%u]",
             is_recoverable ? "" : "non-",
             bzla_node_get_id(exp),
             str_t,
