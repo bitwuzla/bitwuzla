@@ -1556,7 +1556,8 @@ check_inv_dbg(Bzla *bzla,
       || bzla_hashint_map_contains(domains, bzla_node_get_id(node->e[idx_x])));
   BzlaHashTableData *x =
       bzla_hashint_map_get(domains, bzla_node_get_id(node->e[idx_x]));
-  assert(!x || is_inv_fun_const(bzla, x ? x->as_ptr : 0, t, s, idx_x, 0));
+  assert(!x || !bzla_bvdomain_has_fixed_bits(bzla->mm, x->as_ptr)
+         || is_inv_fun_const(bzla, x->as_ptr, t, s, idx_x, 0));
 #endif
 }
 
@@ -4410,7 +4411,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   assert(root);
   assert(bvroot);
 
-  bool is_inv, pick_inv;
+  bool is_inv, pick_inv, has_fixed_bits;
   int32_t i, idx_s, idx_s0, idx_s1, nconst;
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
@@ -4563,6 +4564,17 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       }
 #endif
 
+      d              = 0;
+      has_fixed_bits = false;
+      if (opt_prop_const_bits)
+      {
+        assert(domains);
+        d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
+        assert(d);
+        has_fixed_bits = bzla_bvdomain_has_fixed_bits(mm, d->as_ptr);
+        assert(d->as_ptr);
+      }
+
       /* 1) check invertibility
        *    -> if not invertible, fall back to consistent value computation
        * 2) if not invertible, enforce consistent value computation
@@ -4575,11 +4587,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bv_s_new = 0;
       if (bzla_node_is_cond(real_cur))
       {
-        if (opt_prop_const_bits)
+        if (has_fixed_bits)
         {
-          assert(domains);
-          d = bzla_hashint_map_get(domains,
-                                   bzla_node_get_id(real_cur->e[idx_x]));
           assert(d);
           assert(d->as_ptr);
           if (idx_x == 0)
@@ -4677,11 +4686,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       }
       else if (bzla_node_is_bv_slice(real_cur))
       {
-        if (opt_prop_const_bits)
+        if (has_fixed_bits)
         {
-          assert(domains);
-          d = bzla_hashint_map_get(domains,
-                                   bzla_node_get_id(real_cur->e[idx_x]));
           assert(d);
           assert(d->as_ptr);
           is_inv =
@@ -4722,20 +4728,12 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       {
         BzlaPropComputeValue inv_value_fun, cons_value_fun, compute_value_fun;
 
-        idx_s      = idx_x ? 0 : 1;
-        is_inv_fun = opt_prop_const_bits ? kind_to_is_inv_const[real_cur->kind]
-                                         : kind_to_is_inv[real_cur->kind];
+        idx_s = idx_x ? 0 : 1;
+
+        is_inv_fun = has_fixed_bits ? kind_to_is_inv_const[real_cur->kind]
+                                    : kind_to_is_inv[real_cur->kind];
         if (is_inv_fun)
         {
-          if (domains)
-          {
-            d = bzla_hashint_map_get(domains,
-                                     bzla_node_get_id(real_cur->e[idx_x]));
-          }
-          else
-          {
-            d = 0;
-          }
           assert(!opt_prop_const_bits || d);
           is_inv = is_inv_fun(
               bzla, d ? d->as_ptr : 0, bv_t, bv_s[idx_s], idx_x, &d_res_x);
@@ -4764,8 +4762,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         }
         /* compute new assignment */
         cons_value_fun = kind_to_cons_bv[real_cur->kind];
-        inv_value_fun  = opt_prop_const_bits ? kind_to_inv_const[real_cur->kind]
-                                            : kind_to_inv[real_cur->kind];
+        inv_value_fun  = has_fixed_bits ? kind_to_inv_const[real_cur->kind]
+                                       : kind_to_inv[real_cur->kind];
 
         compute_value_fun = pick_inv && is_inv ? inv_value_fun : cons_value_fun;
 
