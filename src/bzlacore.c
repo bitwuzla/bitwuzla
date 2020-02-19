@@ -2655,151 +2655,74 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
         }
       }
     }
-    /* FP nodes are now word-blasted. Set AIG vector of FP node to AIG vector
-     * of word-blasted bit-vector node. */
-    else if (bzla_node_is_rm(bzla, cur) || bzla_node_is_fp(bzla, cur)
-             || (cur->arity
-                 && (bzla_node_is_rm(bzla, cur->e[0])
-                     || bzla_node_is_fp(bzla, cur->e[0]))))
-    {
-      wb         = bzla_fp_word_blast(bzla, cur);
-      invert_av0 = bzla_node_is_inverted(wb);
-      av0        = bzla_aigvec_copy(avmgr, bzla_node_real_addr(wb)->av);
-      if (invert_av0) bzla_aigvec_invert(avmgr, av0);
-      cur->av = av0;
-      BZLALOG(2, "  synthesized: %s", bzla_util_node2string(cur));
-      bzla_aigvec_to_sat_tseitin(avmgr, cur->av);
-    }
     /* paremterized nodes, argument nodes and functions are not
      * synthesizable */
     else if (!cur->parameterized && !bzla_node_is_args(cur)
              && !bzla_node_is_fun(cur))
     {
-      assert(bzla_node_is_bv(bzla, cur));
-
-      if (!opt_lazy_synth)
+      /* FP nodes are now word-blasted. Set AIG vector of FP node to AIG vector
+       * of word-blasted bit-vector node. */
+      if (bzla_node_is_rm(bzla, cur) || bzla_node_is_fp(bzla, cur)
+          || (cur->arity
+              && (bzla_node_is_rm(bzla, cur->e[0])
+                  || bzla_node_is_fp(bzla, cur->e[0]))))
       {
-        /* due to pushing nodes from static_rho onto 'exp_stack' a strict
-         * DFS order is not guaranteed anymore. hence, we have to check
-         * if one of the children of 'cur' is not yet synthesized and
-         * thus, have to synthesize them before 'cur'. */
-        restart = false;
-        for (i = 0; i < cur->arity; i++)
-        {
-          real_e = bzla_node_real_addr(cur->e[i]);
-          if (!bzla_node_is_synth(real_e))
-          {
-            BZLA_PUSH_STACK(exp_stack, cur->e[i]);
-            restart = true;
-            break;
-          }
-        }
-        if (restart) continue;
-      }
-
-      if (cur->arity == 1)
-      {
-        assert(bzla_node_is_bv_slice(cur));
-        invert_av0 = bzla_node_is_inverted(cur->e[0]);
-        av0        = bzla_node_real_addr(cur->e[0])->av;
+        wb         = bzla_fp_word_blast(bzla, cur);
+        invert_av0 = bzla_node_is_inverted(wb);
+        av0        = bzla_aigvec_copy(avmgr, bzla_node_real_addr(wb)->av);
         if (invert_av0) bzla_aigvec_invert(avmgr, av0);
-        cur->av = bzla_aigvec_slice(avmgr,
-                                    av0,
-                                    bzla_node_bv_slice_get_upper(cur),
-                                    bzla_node_bv_slice_get_lower(cur));
-        if (invert_av0) bzla_aigvec_invert(avmgr, av0);
-      }
-      else if (cur->arity == 2)
-      {
-        /* We have to check if the children are in the same memory
-         * place if they are in the same memory place. Then we need to
-         * allocate memory for the AIG vectors if they are not, then
-         * we can invert them in place and invert them back afterwards
-         * (only if necessary) .
-         */
-        is_same_children_mem =
-            bzla_node_real_addr(cur->e[0]) == bzla_node_real_addr(cur->e[1]);
-        if (is_same_children_mem)
-        {
-          av0 = BZLA_AIGVEC_NODE(bzla, cur->e[0]);
-          av1 = BZLA_AIGVEC_NODE(bzla, cur->e[1]);
-        }
-        else
-        {
-          invert_av0 = bzla_node_is_inverted(cur->e[0]);
-          av0        = bzla_node_real_addr(cur->e[0])->av;
-          if (invert_av0) bzla_aigvec_invert(avmgr, av0);
-          invert_av1 = bzla_node_is_inverted(cur->e[1]);
-          av1        = bzla_node_real_addr(cur->e[1])->av;
-          if (invert_av1) bzla_aigvec_invert(avmgr, av1);
-        }
-        switch (cur->kind)
-        {
-          case BZLA_BV_AND_NODE:
-            cur->av = bzla_aigvec_and(avmgr, av0, av1);
-            break;
-          case BZLA_BV_EQ_NODE:
-            cur->av = bzla_aigvec_eq(avmgr, av0, av1);
-            break;
-          case BZLA_BV_ADD_NODE:
-            cur->av = bzla_aigvec_add(avmgr, av0, av1);
-            break;
-          case BZLA_BV_MUL_NODE:
-            cur->av = bzla_aigvec_mul(avmgr, av0, av1);
-            break;
-          case BZLA_BV_ULT_NODE:
-            cur->av = bzla_aigvec_ult(avmgr, av0, av1);
-            break;
-          case BZLA_BV_SLL_NODE:
-            cur->av = bzla_aigvec_sll(avmgr, av0, av1);
-            break;
-          case BZLA_BV_SLT_NODE:
-            cur->av = bzla_aigvec_slt(avmgr, av0, av1);
-            break;
-          case BZLA_BV_SRL_NODE:
-            cur->av = bzla_aigvec_srl(avmgr, av0, av1);
-            break;
-          case BZLA_BV_UDIV_NODE:
-            cur->av = bzla_aigvec_udiv(avmgr, av0, av1);
-            break;
-          case BZLA_BV_UREM_NODE:
-            cur->av = bzla_aigvec_urem(avmgr, av0, av1);
-            break;
-          default:
-            assert(cur->kind == BZLA_BV_CONCAT_NODE);
-            cur->av = bzla_aigvec_concat(avmgr, av0, av1);
-            break;
-        }
-
-        if (is_same_children_mem)
-        {
-          bzla_aigvec_release_delete(avmgr, av0);
-          bzla_aigvec_release_delete(avmgr, av1);
-        }
-        else
-        {
-          if (invert_av0) bzla_aigvec_invert(avmgr, av0);
-          if (invert_av1) bzla_aigvec_invert(avmgr, av1);
-        }
-        if (!opt_lazy_synth) bzla_aigvec_to_sat_tseitin(avmgr, cur->av);
+        cur->av = av0;
       }
       else
       {
-        assert(cur->arity == 3);
+        assert(bzla_node_is_bv(bzla, cur));
 
-        if (bzla_node_is_bv_cond(cur))
+        if (!opt_lazy_synth)
         {
+          /* due to pushing nodes from static_rho onto 'exp_stack' a strict
+           * DFS order is not guaranteed anymore. hence, we have to check
+           * if one of the children of 'cur' is not yet synthesized and
+           * thus, have to synthesize them before 'cur'. */
+          restart = false;
+          for (i = 0; i < cur->arity; i++)
+          {
+            real_e = bzla_node_real_addr(cur->e[i]);
+            if (!bzla_node_is_synth(real_e))
+            {
+              BZLA_PUSH_STACK(exp_stack, cur->e[i]);
+              restart = true;
+              break;
+            }
+          }
+          if (restart) continue;
+        }
+
+        if (cur->arity == 1)
+        {
+          assert(bzla_node_is_bv_slice(cur));
+          invert_av0 = bzla_node_is_inverted(cur->e[0]);
+          av0        = bzla_node_real_addr(cur->e[0])->av;
+          if (invert_av0) bzla_aigvec_invert(avmgr, av0);
+          cur->av = bzla_aigvec_slice(avmgr,
+                                      av0,
+                                      bzla_node_bv_slice_get_upper(cur),
+                                      bzla_node_bv_slice_get_lower(cur));
+          if (invert_av0) bzla_aigvec_invert(avmgr, av0);
+        }
+        else if (cur->arity == 2)
+        {
+          /* We have to check if the children are in the same memory
+           * place if they are in the same memory place. Then we need to
+           * allocate memory for the AIG vectors if they are not, then
+           * we can invert them in place and invert them back afterwards
+           * (only if necessary) .
+           */
           is_same_children_mem =
-              bzla_node_real_addr(cur->e[0]) == bzla_node_real_addr(cur->e[1])
-              || bzla_node_real_addr(cur->e[0])
-                     == bzla_node_real_addr(cur->e[2])
-              || bzla_node_real_addr(cur->e[1])
-                     == bzla_node_real_addr(cur->e[2]);
+              bzla_node_real_addr(cur->e[0]) == bzla_node_real_addr(cur->e[1]);
           if (is_same_children_mem)
           {
             av0 = BZLA_AIGVEC_NODE(bzla, cur->e[0]);
             av1 = BZLA_AIGVEC_NODE(bzla, cur->e[1]);
-            av2 = BZLA_AIGVEC_NODE(bzla, cur->e[2]);
           }
           else
           {
@@ -2809,22 +2732,97 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
             invert_av1 = bzla_node_is_inverted(cur->e[1]);
             av1        = bzla_node_real_addr(cur->e[1])->av;
             if (invert_av1) bzla_aigvec_invert(avmgr, av1);
-            invert_av2 = bzla_node_is_inverted(cur->e[2]);
-            av2        = bzla_node_real_addr(cur->e[2])->av;
-            if (invert_av2) bzla_aigvec_invert(avmgr, av2);
           }
-          cur->av = bzla_aigvec_cond(avmgr, av0, av1, av2);
+          switch (cur->kind)
+          {
+            case BZLA_BV_AND_NODE:
+              cur->av = bzla_aigvec_and(avmgr, av0, av1);
+              break;
+            case BZLA_BV_EQ_NODE:
+              cur->av = bzla_aigvec_eq(avmgr, av0, av1);
+              break;
+            case BZLA_BV_ADD_NODE:
+              cur->av = bzla_aigvec_add(avmgr, av0, av1);
+              break;
+            case BZLA_BV_MUL_NODE:
+              cur->av = bzla_aigvec_mul(avmgr, av0, av1);
+              break;
+            case BZLA_BV_ULT_NODE:
+              cur->av = bzla_aigvec_ult(avmgr, av0, av1);
+              break;
+            case BZLA_BV_SLL_NODE:
+              cur->av = bzla_aigvec_sll(avmgr, av0, av1);
+              break;
+            case BZLA_BV_SRL_NODE:
+              cur->av = bzla_aigvec_srl(avmgr, av0, av1);
+              break;
+            case BZLA_BV_UDIV_NODE:
+              cur->av = bzla_aigvec_udiv(avmgr, av0, av1);
+              break;
+            case BZLA_BV_UREM_NODE:
+              cur->av = bzla_aigvec_urem(avmgr, av0, av1);
+              break;
+            default:
+              assert(cur->kind == BZLA_BV_CONCAT_NODE);
+              cur->av = bzla_aigvec_concat(avmgr, av0, av1);
+              break;
+          }
+
           if (is_same_children_mem)
           {
-            bzla_aigvec_release_delete(avmgr, av2);
-            bzla_aigvec_release_delete(avmgr, av1);
             bzla_aigvec_release_delete(avmgr, av0);
+            bzla_aigvec_release_delete(avmgr, av1);
           }
           else
           {
             if (invert_av0) bzla_aigvec_invert(avmgr, av0);
             if (invert_av1) bzla_aigvec_invert(avmgr, av1);
-            if (invert_av2) bzla_aigvec_invert(avmgr, av2);
+          }
+          if (!opt_lazy_synth) bzla_aigvec_to_sat_tseitin(avmgr, cur->av);
+        }
+        else
+        {
+          assert(cur->arity == 3);
+
+          if (bzla_node_is_bv_cond(cur))
+          {
+            is_same_children_mem =
+                bzla_node_real_addr(cur->e[0]) == bzla_node_real_addr(cur->e[1])
+                || bzla_node_real_addr(cur->e[0])
+                       == bzla_node_real_addr(cur->e[2])
+                || bzla_node_real_addr(cur->e[1])
+                       == bzla_node_real_addr(cur->e[2]);
+            if (is_same_children_mem)
+            {
+              av0 = BZLA_AIGVEC_NODE(bzla, cur->e[0]);
+              av1 = BZLA_AIGVEC_NODE(bzla, cur->e[1]);
+              av2 = BZLA_AIGVEC_NODE(bzla, cur->e[2]);
+            }
+            else
+            {
+              invert_av0 = bzla_node_is_inverted(cur->e[0]);
+              av0        = bzla_node_real_addr(cur->e[0])->av;
+              if (invert_av0) bzla_aigvec_invert(avmgr, av0);
+              invert_av1 = bzla_node_is_inverted(cur->e[1]);
+              av1        = bzla_node_real_addr(cur->e[1])->av;
+              if (invert_av1) bzla_aigvec_invert(avmgr, av1);
+              invert_av2 = bzla_node_is_inverted(cur->e[2]);
+              av2        = bzla_node_real_addr(cur->e[2])->av;
+              if (invert_av2) bzla_aigvec_invert(avmgr, av2);
+            }
+            cur->av = bzla_aigvec_cond(avmgr, av0, av1, av2);
+            if (is_same_children_mem)
+            {
+              bzla_aigvec_release_delete(avmgr, av2);
+              bzla_aigvec_release_delete(avmgr, av1);
+              bzla_aigvec_release_delete(avmgr, av0);
+            }
+            else
+            {
+              if (invert_av0) bzla_aigvec_invert(avmgr, av0);
+              if (invert_av1) bzla_aigvec_invert(avmgr, av1);
+              if (invert_av2) bzla_aigvec_invert(avmgr, av2);
+            }
           }
         }
       }
