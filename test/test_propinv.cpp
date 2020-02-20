@@ -1652,6 +1652,16 @@ class TestPropInvConst : public TestPropInv
     {
       d_res_x = 0;
       is_inv  = is_inv_fun(d_bzla, x, t, s, idx_x, &d_res_x);
+      if (!is_inv)
+      {
+        std::cout << "x: ";
+        bzla_bvdomain_print(d_mm, x, true);
+        std::cout << "t: ";
+        bzla_bv_print(t);
+        std::cout << "s: ";
+        bzla_bv_print(s);
+        std::cout << "idx_x: " << idx_x << std::endl;
+      }
       assert(is_inv);
       res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
       if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);

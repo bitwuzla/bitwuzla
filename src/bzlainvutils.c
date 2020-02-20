@@ -226,12 +226,14 @@ bzla_is_inv_sll(Bzla *bzla,
 
   bool res;
   BzlaMemMgr *mm;
+  BzlaBitVector *sll_s;
+  uint32_t shift, ctz_t, ctz_s;
 
   mm = bzla->mm;
   if (pos_x == 0)
   {
     BzlaBitVector *t_srl_s = bzla_bv_srl(mm, t, s);
-    BzlaBitVector *sll_s   = bzla_bv_sll(mm, t_srl_s, s);
+    sll_s                  = bzla_bv_sll(mm, t_srl_s, s);
     res                    = bzla_bv_compare(sll_s, t) == 0;
     bzla_bv_free(mm, t_srl_s);
     bzla_bv_free(mm, sll_s);
@@ -239,15 +241,27 @@ bzla_is_inv_sll(Bzla *bzla,
   else
   {
     assert(pos_x == 1);
-    res = false;
-    for (uint32_t i = 0, bw_s = bzla_bv_get_width(s); i <= bw_s && !res; i++)
-    {
-      BzlaBitVector *bv_i    = bzla_bv_uint64_to_bv(mm, i, bw_s);
-      BzlaBitVector *s_sll_i = bzla_bv_sll(mm, s, bv_i);
-      res                    = bzla_bv_compare(s_sll_i, t) == 0;
 
-      bzla_bv_free(mm, bv_i);
-      bzla_bv_free(mm, s_sll_i);
+    ctz_t = bzla_bv_get_num_trailing_zeros(t);
+    ctz_s = bzla_bv_get_num_trailing_zeros(s);
+
+    if (ctz_s > ctz_t)
+    {
+      res = false;
+    }
+    else
+    {
+      if (bzla_bv_is_zero(t))
+      {
+        res = true;
+      }
+      else
+      {
+        shift = ctz_t - ctz_s;
+        sll_s = bzla_bv_sll_uint64(mm, s, shift);
+        res   = bzla_bv_compare(sll_s, t) == 0;
+        bzla_bv_free(mm, sll_s);
+      }
     }
   }
   return res;
@@ -826,6 +840,10 @@ bzla_is_inv_mul_const(Bzla *bzla,
   return res;
 }
 
+typedef BzlaBitVector *(*BzlaBitVectorBinFun)(BzlaMemMgr *,
+                                              const BzlaBitVector *,
+                                              const BzlaBitVector *);
+
 /**
  * Check invertibility condition with respect to const bits in x for:
  *
@@ -837,8 +855,126 @@ bzla_is_inv_mul_const(Bzla *bzla,
  *
  * pos_x = 1:
  * s << x = t
- * IC: (\/ s << i = t)  i = 0..bw(s)-1 for all possible i given x
+ * IC: ((t = 0) /\ (hi_x >= ctz(t) - ctz(s) \/ (s = 0)))
+ *     \/ (ccb(x, ctz(t) - ctz(s)))
+ *
+ * where ccb(x, y) checks whether fixed bits of x match corresponding bits in y.
+ *
+ * Note: Above conditions are for left shift, right shift is analogously
+ * (is_sll = false).
  */
+static bool
+is_inv_shift_const(Bzla *bzla,
+                   const BzlaBvDomain *x,
+                   const BzlaBitVector *t,
+                   const BzlaBitVector *s,
+                   uint32_t pos_x,
+                   BzlaBvDomain **d_res_x,
+                   bool is_sll)
+{
+  assert(bzla);
+  assert(x);
+  assert(t);
+  assert(s);
+
+  uint32_t cz_s, cz_t;
+  bool res;
+  BzlaBitVector *shift1, *shift2, *and, * or ;
+  BzlaBitVector *bv, *min;
+  BzlaBvDomainGenerator gen;
+  BzlaMemMgr *mm;
+  BzlaBitVectorBinFun bv_fun;
+  uint32_t (*count_zero_fun)(const BzlaBitVector *);
+
+  if (is_sll)
+  {
+    bv_fun         = bzla_bv_sll;
+    count_zero_fun = bzla_bv_get_num_trailing_zeros;
+    res            = bzla_is_inv_sll(bzla, x, t, s, pos_x, d_res_x);
+  }
+  else
+  {
+    bv_fun         = bzla_bv_srl;
+    count_zero_fun = bzla_bv_get_num_leading_zeros;
+    res            = bzla_is_inv_srl(bzla, x, t, s, pos_x, d_res_x);
+  }
+
+  if (!res) return false;
+
+  mm = bzla->mm;
+  if (d_res_x) *d_res_x = 0;
+
+  if (pos_x == 0)
+  {
+    shift1 = bv_fun(mm, x->hi, s);
+    shift2 = bv_fun(mm, x->lo, s);
+    and    = bzla_bv_and(mm, shift1, t);
+    or     = bzla_bv_or(mm, shift2, t);
+    res    = bzla_bv_compare(and, t) == 0 && bzla_bv_compare(or, t) == 0;
+    bzla_bv_free(mm, or);
+    bzla_bv_free(mm, and);
+    bzla_bv_free(mm, shift2);
+    bzla_bv_free(mm, shift1);
+  }
+  else
+  {
+    assert(pos_x == 1);
+    if (bzla_bvdomain_is_fixed(mm, x))
+    {
+      shift1 = bv_fun(mm, s, x->lo);
+      res    = bzla_bv_compare(shift1, t) == 0;
+      if (d_res_x && res)
+      {
+        *d_res_x = bzla_bvdomain_new(mm, x->lo, x->lo);
+      }
+      bzla_bv_free(mm, shift1);
+    }
+    else
+    {
+      cz_s = count_zero_fun(s);
+      cz_t = count_zero_fun(t);
+      assert(cz_s <= cz_t);
+
+      /* Mininum number of bits required to shift left (right) s to match
+       * trailing (leading) zeroes of t. */
+      min = bzla_bv_uint64_to_bv(mm, cz_t - cz_s, bzla_bv_get_width(s));
+      if (bzla_bv_is_zero(t))
+      {
+        res = bzla_bv_compare(x->hi, min) >= 0 || bzla_bv_is_zero(s);
+        if (res && d_res_x)
+        {
+          /* If s is zero, any value of x is an inverse. */
+          bzla_bvdomain_gen_init_range(
+              mm, &bzla->rng, &gen, x, bzla_bv_is_zero(s) ? 0 : min, 0);
+          assert(bzla_bvdomain_gen_has_next(&gen));
+          bv       = bzla_bvdomain_gen_random(&gen);
+          *d_res_x = bzla_bvdomain_new(mm, bv, bv);
+          bzla_bvdomain_gen_delete(&gen);
+        }
+      }
+      else
+      {
+        res = bzla_bvdomain_check_fixed_bits(mm, x, min);
+#ifndef NDEBUG
+        if (res)
+        {
+          bv = bv_fun(mm, s, min);
+          assert(bzla_bv_compare(bv, t) == 0);
+          bzla_bv_free(mm, bv);
+        }
+#endif
+        if (res && d_res_x)
+        {
+          *d_res_x = bzla_bvdomain_new(mm, min, min);
+        }
+      }
+      bzla_bv_free(mm, min);
+    }
+  }
+  if (pos_x == 0 && d_res_x) assert(*d_res_x == 0);
+  return res;
+}
+
 bool
 bzla_is_inv_sll_const(Bzla *bzla,
                       const BzlaBvDomain *x,
@@ -851,85 +987,9 @@ bzla_is_inv_sll_const(Bzla *bzla,
   assert(x);
   assert(t);
   assert(s);
-
-  bool res;
-  BzlaBitVector *shift1, *shift2, *and, * or ;
-  BzlaBitVector *bv;
-  BzlaBvDomainGenerator gen;
-  BzlaMemMgr *mm;
-
-  mm = bzla->mm;
-  if (d_res_x) *d_res_x = 0;
-
-  if (pos_x == 0)
-  {
-    if (!bzla_is_inv_sll(bzla, x, t, s, pos_x, 0)) return false;
-    shift1 = bzla_bv_sll(mm, x->hi, s);
-    shift2 = bzla_bv_sll(mm, x->lo, s);
-    and    = bzla_bv_and(mm, shift1, t);
-    or     = bzla_bv_or(mm, shift2, t);
-    res    = bzla_bv_compare(and, t) == 0 && bzla_bv_compare(or, t) == 0;
-    bzla_bv_free(mm, or);
-    bzla_bv_free(mm, and);
-    bzla_bv_free(mm, shift2);
-    bzla_bv_free(mm, shift1);
-  }
-  else
-  {
-    assert(pos_x == 1);
-    if (bzla_bvdomain_is_fixed(mm, x))
-    {
-      shift1 = bzla_bv_sll(mm, s, x->lo);
-      res    = bzla_bv_compare(shift1, t) == 0;
-      if (d_res_x && res)
-      {
-        *d_res_x = bzla_bvdomain_new(mm, x->lo, x->lo);
-      }
-      bzla_bv_free(mm, shift1);
-    }
-    else
-    {
-      res = false;
-      bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
-      while (bzla_bvdomain_gen_has_next(&gen))
-      {
-        bv = bzla_bvdomain_gen_next(&gen);
-        if (bzla_bvdomain_check_fixed_bits(mm, x, bv))
-        {
-          shift1 = bzla_bv_sll(mm, s, bv);
-          if (bzla_bv_compare(shift1, t) == 0)
-          {
-            res = true;
-            if (d_res_x)
-            {
-              *d_res_x = bzla_bvdomain_new(mm, bv, bv);
-              bzla_bv_free(mm, shift1);
-              break;
-            }
-          }
-          bzla_bv_free(mm, shift1);
-        }
-      }
-      bzla_bvdomain_gen_delete(&gen);
-    }
-  }
-  if (pos_x == 0 && d_res_x) assert(*d_res_x == 0);
-  return res;
+  return is_inv_shift_const(bzla, x, t, s, pos_x, d_res_x, true);
 }
 
-/**
- * Check invertibility condition with respect to const bits in x for:
- *
- * pos_x = 0:
- * x << s = t
- * IC: (t << s) >> s = t
- *     /\ (hi_x >> s) & t = t
- *     /\ (lo_x >> s) | t = t
- *
- * pos_x = 1:
- * s >> x = t
- * IC: (\/ s >> i = t)  i = 0..bw(s)-1 for all possible i given x
- */
 bool
 bzla_is_inv_srl_const(Bzla *bzla,
                       const BzlaBvDomain *x,
@@ -942,68 +1002,7 @@ bzla_is_inv_srl_const(Bzla *bzla,
   assert(x);
   assert(t);
   assert(s);
-
-  bool res;
-  BzlaBitVector *shift1, *shift2, *and, * or, *bv;
-  BzlaBvDomainGenerator gen;
-  BzlaMemMgr *mm;
-
-  mm = bzla->mm;
-  if (d_res_x) *d_res_x = 0;
-
-  if (pos_x == 0)
-  {
-    if (!bzla_is_inv_srl(bzla, x, t, s, pos_x, 0)) return false;
-    shift1 = bzla_bv_srl(mm, x->hi, s);
-    shift2 = bzla_bv_srl(mm, x->lo, s);
-    and    = bzla_bv_and(mm, shift1, t);
-    or     = bzla_bv_or(mm, shift2, t);
-    res    = bzla_bv_compare(and, t) == 0 && bzla_bv_compare(or, t) == 0;
-    bzla_bv_free(mm, or);
-    bzla_bv_free(mm, and);
-    bzla_bv_free(mm, shift2);
-    bzla_bv_free(mm, shift1);
-  }
-  else
-  {
-    assert(pos_x == 1);
-    if (bzla_bvdomain_is_fixed(mm, x))
-    {
-      shift1 = bzla_bv_srl(mm, s, x->lo);
-      res    = bzla_bv_compare(shift1, t) == 0;
-      if (d_res_x && res)
-      {
-        *d_res_x = bzla_bvdomain_new(mm, x->lo, x->lo);
-      }
-      bzla_bv_free(mm, shift1);
-    }
-    else
-    {
-      res = false;
-      bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
-      while (bzla_bvdomain_gen_has_next(&gen))
-      {
-        bv = bzla_bvdomain_gen_next(&gen);
-        if (bzla_bvdomain_check_fixed_bits(mm, x, bv))
-        {
-          shift1 = bzla_bv_srl(mm, s, bv);
-          if (bzla_bv_compare(shift1, t) == 0)
-          {
-            res = true;
-            if (d_res_x)
-            {
-              *d_res_x = bzla_bvdomain_new(mm, bv, bv);
-              bzla_bv_free(mm, shift1);
-              break;
-            }
-          }
-          bzla_bv_free(mm, shift1);
-        }
-      }
-      bzla_bvdomain_gen_delete(&gen);
-    }
-  }
-  return res;
+  return is_inv_shift_const(bzla, x, t, s, pos_x, d_res_x, false);
 }
 
 bool
