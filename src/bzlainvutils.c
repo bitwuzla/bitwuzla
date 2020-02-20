@@ -24,6 +24,10 @@
 /* Check invertibility without considering constant bits in x.                */
 /* -------------------------------------------------------------------------- */
 
+typedef BzlaBitVector *(*BzlaBitVectorBinFun)(BzlaMemMgr *,
+                                              const BzlaBitVector *,
+                                              const BzlaBitVector *);
+
 /**
  * Check invertibility condition (without considering const bits in x) for:
  *
@@ -208,15 +212,19 @@ bzla_is_inv_mul(Bzla *bzla,
  *
  * pos_x = 1:
  * s << x = t
- * IC: (\/ s << i = t)  i = 0..bw(s)-1
+ * IC: ctz(s) <= ctz(t) /\ ((t = 0) \/ (s << (ctz(t) - ctz(t))) = t)
+ *
+ * Note: Above conditions are for left shift, right shift is analogously
+ * (is_sll = false).
  */
-bool
-bzla_is_inv_sll(Bzla *bzla,
-                const BzlaBvDomain *x,
-                const BzlaBitVector *t,
-                const BzlaBitVector *s,
-                uint32_t pos_x,
-                BzlaBvDomain **d_res_x)
+static bool
+is_inv_shift(Bzla *bzla,
+             const BzlaBvDomain *x,
+             const BzlaBitVector *t,
+             const BzlaBitVector *s,
+             uint32_t pos_x,
+             BzlaBvDomain **d_res_x,
+             bool is_sll)
 {
   assert(bzla);
   assert(t);
@@ -226,24 +234,42 @@ bzla_is_inv_sll(Bzla *bzla,
 
   bool res;
   BzlaMemMgr *mm;
-  BzlaBitVector *sll_s;
-  uint32_t shift, ctz_t, ctz_s;
+  BzlaBitVector *shift1, *shift2;
+  uint32_t ctz_t, ctz_s;
+  BzlaBitVectorBinFun shift1_fun, shift2_fun;
+  uint32_t (*count_zero_fun)(const BzlaBitVector *);
+  BzlaBitVector *(*ishift_fun)(BzlaMemMgr *, const BzlaBitVector *, uint64_t);
+
+  if (is_sll)
+  {
+    count_zero_fun = bzla_bv_get_num_trailing_zeros;
+    shift1_fun     = bzla_bv_srl;
+    shift2_fun     = bzla_bv_sll;
+    ishift_fun     = bzla_bv_sll_uint64;
+  }
+  else
+  {
+    count_zero_fun = bzla_bv_get_num_leading_zeros;
+    shift1_fun     = bzla_bv_sll;
+    shift2_fun     = bzla_bv_srl;
+    ishift_fun     = bzla_bv_srl_uint64;
+  }
 
   mm = bzla->mm;
   if (pos_x == 0)
   {
-    BzlaBitVector *t_srl_s = bzla_bv_srl(mm, t, s);
-    sll_s                  = bzla_bv_sll(mm, t_srl_s, s);
-    res                    = bzla_bv_compare(sll_s, t) == 0;
-    bzla_bv_free(mm, t_srl_s);
-    bzla_bv_free(mm, sll_s);
+    shift1 = shift1_fun(mm, t, s);
+    shift2 = shift2_fun(mm, shift1, s);
+    res    = bzla_bv_compare(shift2, t) == 0;
+    bzla_bv_free(mm, shift1);
+    bzla_bv_free(mm, shift2);
   }
   else
   {
     assert(pos_x == 1);
 
-    ctz_t = bzla_bv_get_num_trailing_zeros(t);
-    ctz_s = bzla_bv_get_num_trailing_zeros(s);
+    ctz_t = count_zero_fun(t);
+    ctz_s = count_zero_fun(s);
 
     if (ctz_s > ctz_t)
     {
@@ -257,27 +283,29 @@ bzla_is_inv_sll(Bzla *bzla,
       }
       else
       {
-        shift = ctz_t - ctz_s;
-        sll_s = bzla_bv_sll_uint64(mm, s, shift);
-        res   = bzla_bv_compare(sll_s, t) == 0;
-        bzla_bv_free(mm, sll_s);
+        shift1 = ishift_fun(mm, s, ctz_t - ctz_s);
+        res    = bzla_bv_compare(shift1, t) == 0;
+        bzla_bv_free(mm, shift1);
       }
     }
   }
   return res;
 }
 
-/**
- * Check invertibility condition (without considering const bits in x) for:
- *
- * pos_x = 0:
- * x >> s = t
- * IC: (t << s) >> s = t
- *
- * pos_x = 1:
- * s >> x = t
- * IC: (\/ s >> i = t)  i = 0..bw(s)-1
- */
+bool
+bzla_is_inv_sll(Bzla *bzla,
+                const BzlaBvDomain *x,
+                const BzlaBitVector *t,
+                const BzlaBitVector *s,
+                uint32_t pos_x,
+                BzlaBvDomain **d_res_x)
+{
+  assert(bzla);
+  assert(t);
+  assert(s);
+  return is_inv_shift(bzla, x, t, s, pos_x, d_res_x, true);
+}
+
 bool
 bzla_is_inv_srl(Bzla *bzla,
                 const BzlaBvDomain *x,
@@ -289,35 +317,7 @@ bzla_is_inv_srl(Bzla *bzla,
   assert(bzla);
   assert(t);
   assert(s);
-  (void) x;
-  (void) d_res_x;
-
-  bool res;
-  BzlaMemMgr *mm;
-
-  mm = bzla->mm;
-  if (pos_x == 0)
-  {
-    BzlaBitVector *t_sll_s = bzla_bv_sll(mm, t, s);
-    BzlaBitVector *srl_s   = bzla_bv_srl(mm, t_sll_s, s);
-    res                    = bzla_bv_compare(srl_s, t) == 0;
-    bzla_bv_free(mm, t_sll_s);
-    bzla_bv_free(mm, srl_s);
-  }
-  else
-  {
-    assert(pos_x == 1);
-    res = false;
-    for (uint32_t i = 0, bw_s = bzla_bv_get_width(s); i <= bw_s && !res; i++)
-    {
-      BzlaBitVector *bv_i    = bzla_bv_uint64_to_bv(mm, i, bw_s);
-      BzlaBitVector *s_srl_i = bzla_bv_srl(mm, s, bv_i);
-      res                    = bzla_bv_compare(s_srl_i, t) == 0;
-      bzla_bv_free(mm, bv_i);
-      bzla_bv_free(mm, s_srl_i);
-    }
-  }
-  return res;
+  return is_inv_shift(bzla, x, t, s, pos_x, d_res_x, false);
 }
 
 /**
@@ -839,10 +839,6 @@ bzla_is_inv_mul_const(Bzla *bzla,
   }
   return res;
 }
-
-typedef BzlaBitVector *(*BzlaBitVectorBinFun)(BzlaMemMgr *,
-                                              const BzlaBitVector *,
-                                              const BzlaBitVector *);
 
 /**
  * Check invertibility condition with respect to const bits in x for:
