@@ -30,6 +30,38 @@ typedef int32_t (*BzlaPropSelectPath)(Bzla *,
 /* Path selection (for down-propagation)                                      */
 /* ========================================================================== */
 
+#ifndef NBZLALOG
+static void
+select_path_log(Bzla *bzla, BzlaNode *exp, BzlaBitVector *s[], uint32_t idx_x)
+{
+  exp = bzla_node_real_addr(exp);
+  char *a;
+  BzlaMemMgr *mm = bzla->mm;
+
+  BZLALOG(2, "");
+  BZLALOG(2, "select path: %s", bzla_util_node2string(exp));
+
+  for (size_t i = 0; i < exp->arity; i++)
+  {
+    a = bzla_bv_to_char(mm, s[i]);
+    BZLALOG(
+        2, "       e[%zu]: %s (%s)", i, bzla_util_node2string(exp->e[i]), a);
+    bzla_mem_freestr(mm, a);
+  }
+
+  BZLALOG(2, "    * chose: %u", idx_x);
+  if (BZLA_PROP_SOLVER(bzla)->domains)
+  {
+    BzlaHashTableData *d = bzla_hashint_map_get(
+        BZLA_PROP_SOLVER(bzla)->domains, bzla_node_get_id(exp->e[idx_x]));
+    if (d)
+    {
+      BZLALOG(2, "    * domain: %s", bzla_bvdomain_to_str(d->as_ptr));
+    }
+  }
+}
+#endif
+
 static int32_t
 select_path_non_const(BzlaNode *exp)
 {
@@ -83,17 +115,7 @@ select_path_add(Bzla *bzla, BzlaNode *add, BzlaBitVector *t, BzlaBitVector **s)
   if (idx_x == -1) idx_x = select_path_random(bzla, add);
   assert(idx_x >= 0);
 #ifndef NBZLALOG
-  char *a;
-  BzlaMemMgr *mm = bzla->mm;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(add));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(add->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, s[1]);
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(add->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
+  select_path_log(bzla, add, s, idx_x);
 #endif
   assert(!bzla_node_is_bv_const(add->e[idx_x]));
   return idx_x;
@@ -149,18 +171,9 @@ select_path_and(Bzla *bzla, BzlaNode *and, BzlaBitVector *t, BzlaBitVector **s)
 
   assert(idx_x >= 0);
 #ifndef NBZLALOG
-  char *a;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(and));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(and->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, s[1]);
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(and->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
-  assert(!bzla_node_is_bv_const(and->e[idx_x]));
+  select_path_log(bzla, and, s, idx_x);
 #endif
+  assert(!bzla_node_is_bv_const(and->e[idx_x]));
   return idx_x;
 }
 
@@ -181,17 +194,7 @@ select_path_eq(Bzla *bzla, BzlaNode *eq, BzlaBitVector *t, BzlaBitVector **s)
   if (idx_x == -1) idx_x = select_path_random(bzla, eq);
   assert(idx_x >= 0);
 #ifndef NBZLALOG
-  char *a;
-  BzlaMemMgr *mm = bzla->mm;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(eq));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(eq->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, s[1]);
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(eq->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
+  select_path_log(bzla, eq, s, idx_x);
 #endif
   assert(!bzla_node_is_bv_const(eq->e[idx_x]));
   return idx_x;
@@ -233,16 +236,7 @@ select_path_ult(Bzla *bzla, BzlaNode *ult, BzlaBitVector *t, BzlaBitVector **s)
 
   assert(idx_x >= 0);
 #ifndef NBZLALOG
-  char *a;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(ult));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(ult->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, s[1]);
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(ult->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
+  select_path_log(bzla, ult, s, idx_x);
 #endif
   assert(!bzla_node_is_bv_const(ult->e[idx_x]));
   return idx_x;
@@ -331,16 +325,7 @@ select_path_sll(Bzla *bzla, BzlaNode *sll, BzlaBitVector *t, BzlaBitVector **s)
 DONE:
   assert(idx_x >= 0);
 #ifndef NBZLALOG
-  char *a;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(sll));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(sll->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, s[1]);
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(sll->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
+  select_path_log(bzla, sll, s, idx_x);
 #endif
   assert(!bzla_node_is_bv_const(sll->e[idx_x]));
   return idx_x;
@@ -430,16 +415,7 @@ select_path_srl(Bzla *bzla, BzlaNode *srl, BzlaBitVector *t, BzlaBitVector **s)
 DONE:
   assert(idx_x >= 0);
 #ifndef NBZLALOG
-  char *a;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(srl));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(srl->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, s[1]);
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(srl->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
+  select_path_log(bzla, srl, s, idx_x);
 #endif
   assert(!bzla_node_is_bv_const(srl->e[idx_x]));
   return idx_x;
@@ -496,17 +472,7 @@ select_path_mul(Bzla *bzla, BzlaNode *mul, BzlaBitVector *t, BzlaBitVector **s)
   }
   assert(idx_x >= 0);
 #ifndef NBZLALOG
-  char *a;
-  BzlaMemMgr *mm = bzla->mm;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(mul));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(mul->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, s[1]);
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(mul->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
+  select_path_log(bzla, mul, s, idx_x);
 #endif
   assert(!bzla_node_is_bv_const(mul->e[idx_x]));
   return idx_x;
@@ -577,16 +543,7 @@ select_path_udiv(Bzla *bzla,
 
   assert(idx_x >= 0);
 #ifndef NBZLALOG
-  char *a;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(udiv));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(udiv->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, s[1]);
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(udiv->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
+  select_path_log(bzla, udiv, s, idx_x);
 #endif
   assert(!bzla_node_is_bv_const(udiv->e[idx_x]));
   return idx_x;
@@ -657,16 +614,7 @@ select_path_urem(Bzla *bzla,
 
   assert(idx_x >= 0);
 #ifndef NBZLALOG
-  char *a;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(urem));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(urem->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, s[1]);
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(urem->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
+  select_path_log(bzla, urem, s, idx_x);
 #endif
   assert(!bzla_node_is_bv_const(urem->e[idx_x]));
   return idx_x;
@@ -713,16 +661,7 @@ select_path_concat(Bzla *bzla,
 
   assert(idx_x >= 0);
 #ifndef NBZLALOG
-  char *a;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(concat));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(concat->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, s[1]);
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(concat->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
+  select_path_log(bzla, concat, s, idx_x);
 #endif
   assert(!bzla_node_is_bv_const(concat->e[idx_x]));
   return idx_x;
@@ -747,14 +686,7 @@ select_path_slice(Bzla *bzla,
   (void) t;
   (void) s;
 #ifndef NBZLALOG
-  char *a;
-  BzlaMemMgr *mm = bzla->mm;
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(slice));
-  a = bzla_bv_to_char(mm, s[0]);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(slice->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: 0");
+  select_path_log(bzla, slice, s, 0);
 #endif
 
   return 0;
@@ -857,21 +789,7 @@ select_path_cond(Bzla *bzla,
   }
 
 #ifndef NBZLALOG
-  char *a;
-  BzlaMemMgr *mm = bzla->mm;
-
-  BZLALOG(2, "");
-  BZLALOG(2, "select path: %s", bzla_util_node2string(cond));
-  a = bzla_bv_to_char(mm, s0);
-  BZLALOG(2, "       e[0]: %s (%s)", bzla_util_node2string(cond->e[0]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, bzla_model_get_bv(bzla, cond->e[1]));
-  BZLALOG(2, "       e[1]: %s (%s)", bzla_util_node2string(cond->e[1]), a);
-  bzla_mem_freestr(mm, a);
-  a = bzla_bv_to_char(mm, bzla_model_get_bv(bzla, cond->e[2]));
-  BZLALOG(2, "       e[2]: %s (%s)", bzla_util_node2string(cond->e[2]), a);
-  bzla_mem_freestr(mm, a);
-  BZLALOG(2, "    * chose: %d", idx_x);
+  select_path_log(bzla, cond, s, idx_x);
 #endif
   assert(!bzla_node_is_bv_const(cond->e[idx_x]));
   return idx_x;

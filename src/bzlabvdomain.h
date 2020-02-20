@@ -121,6 +121,8 @@ void bzla_bvdomain_print(BzlaMemMgr *mm,
                          const BzlaBvDomain *d,
                          bool print_short);
 
+const char *bzla_bvdomain_to_str(const BzlaBvDomain *d);
+
 /*----------------------------------------------------------------------------*/
 /* generator */
 /*----------------------------------------------------------------------------*/

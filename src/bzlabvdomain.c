@@ -301,6 +301,62 @@ bzla_bvdomain_print(BzlaMemMgr *mm, const BzlaBvDomain *d, bool print_short)
   }
 }
 
+#define PRINT_BUFFER_SIZE 1024
+
+const char *
+bzla_bvdomain_to_str(const BzlaBvDomain *d)
+{
+  static char s_buf[PRINT_BUFFER_SIZE];
+  static size_t s_buf_pos = 0;
+  size_t width            = bzla_bv_get_width(d->lo);
+  bool too_long           = width + 1 >= PRINT_BUFFER_SIZE;
+
+  assert(s_buf_pos <= PRINT_BUFFER_SIZE);
+
+  /* if bits don't fit into buffer */
+  if (width + 1 >= PRINT_BUFFER_SIZE - s_buf_pos)
+  {
+    s_buf_pos = 0;
+  }
+
+  uint32_t bit_lo, bit_hi;
+  char c;
+  size_t print_width = too_long ? width - 3 : width;
+  for (size_t i = 1; i <= print_width; i++)
+  {
+    bit_lo = bzla_bv_get_bit(d->lo, width - i);
+    bit_hi = bzla_bv_get_bit(d->hi, width - i);
+    if (bit_lo != bit_hi)
+    {
+      if (bit_lo == 0 && bit_hi == 1)
+      {
+        c = 'x';
+      }
+      else
+      {
+        assert(bit_lo == 1);
+        assert(bit_hi == 0);
+        c = '?';
+      }
+    }
+    else
+    {
+      c = bit_lo == 0 ? '0' : '1';
+    }
+    s_buf[s_buf_pos++] = c;
+    assert(s_buf_pos < PRINT_BUFFER_SIZE - 1);
+  }
+  if (too_long)
+  {
+    assert(s_buf_pos < PRINT_BUFFER_SIZE - 4);
+    s_buf[s_buf_pos++] = '.';
+    s_buf[s_buf_pos++] = '.';
+    s_buf[s_buf_pos++] = '.';
+  }
+  s_buf[s_buf_pos++] = 0;
+  return s_buf;
+}
+
 /*----------------------------------------------------------------------------*/
 
 static BzlaBitVector *
