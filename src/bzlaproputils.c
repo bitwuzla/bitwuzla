@@ -27,6 +27,23 @@ typedef int32_t (*BzlaPropSelectPath)(Bzla *,
                                       BzlaBitVector **);
 
 /* ========================================================================== */
+
+/**
+ * Create a bit-vector with all bits that are const bits in domain d_res_x
+ * set to their const value, and all other bits set to their value in res_x.
+ */
+static BzlaBitVector *
+set_const_bits(BzlaMemMgr *mm, BzlaBvDomain *d_res_x, BzlaBitVector *res_x)
+{
+  assert(d_res_x);
+  assert(res_x);
+  BzlaBitVector *tmp = bzla_bv_and(mm, d_res_x->hi, res_x);
+  BzlaBitVector *res = bzla_bv_or(mm, d_res_x->lo, tmp);
+  bzla_bv_free(mm, tmp);
+  return res;
+}
+
+/* ========================================================================== */
 /* Path selection (for down-propagation)                                      */
 /* ========================================================================== */
 
@@ -1441,8 +1458,26 @@ bzla_proputils_cons_add_const(Bzla *bzla,
                               BzlaIntHashTable *domains,
                               BzlaBvDomain *d_res_x)
 {
-  // TODO
-  return bzla_proputils_cons_add(bzla, add, t, s, idx_x, domains, d_res_x);
+  assert(bzla);
+  assert(add);
+  assert(bzla_node_is_regular(add));
+  assert(t);
+  assert(s);
+  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
+  assert(idx_x >= 0 && idx_x <= 1);
+  assert(!bzla_node_is_bv_const(add->e[idx_x]));
+  (void) d_res_x;
+
+  BzlaBitVector *tmp, *res;
+  BzlaBvDomain *x;
+  BzlaMemMgr *mm;
+
+  mm  = bzla->mm;
+  x   = bzla_hashint_map_get(domains, bzla_node_get_id(add->e[idx_x]))->as_ptr;
+  tmp = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
+  res = set_const_bits(mm, x, tmp);
+  bzla_bv_free(mm, tmp);
+  return res;
 }
 
 BzlaBitVector *
@@ -3257,21 +3292,6 @@ bzla_proputils_inv_cond(Bzla *bzla,
 /* ========================================================================== */
 
 #define BZLA_PROPUTILS_GEN_MAX_RAND 10
-
-/**
- * Create a bit-vector with all bits that are const bits in domain d_res_x
- * set to their const value, and all other bits set to their value in res_x.
- */
-static BzlaBitVector *
-set_const_bits(BzlaMemMgr *mm, BzlaBvDomain *d_res_x, BzlaBitVector *res_x)
-{
-  assert(d_res_x);
-  assert(res_x);
-  BzlaBitVector *tmp = bzla_bv_and(mm, d_res_x->hi, res_x);
-  BzlaBitVector *res = bzla_bv_or(mm, d_res_x->lo, tmp);
-  bzla_bv_free(mm, tmp);
-  return res;
-}
 
 /* -------------------------------------------------------------------------- */
 /* INV: add                                                                   */
