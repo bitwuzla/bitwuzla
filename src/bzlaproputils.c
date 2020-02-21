@@ -828,6 +828,28 @@ record_cons_stats(Bzla *bzla, uint32_t *stats)
   }
 }
 
+#ifndef NDEBUG
+static void
+check_cons_dbg(Bzla *bzla,
+               BzlaNode *node,
+               BzlaBitVector *t,
+               BzlaBitVector *s,
+               int32_t idx_x,
+               BzlaIntHashTable *domains,
+               bool same_bw)
+{
+  assert(bzla);
+  assert(node);
+  assert(bzla_node_is_regular(node));
+  assert(t);
+  assert(s);
+  assert(domains);
+  assert(!same_bw || bzla_bv_get_width(s) == bzla_bv_get_width(t));
+  assert(idx_x >= 0 && idx_x <= 1);
+  assert(!bzla_node_is_bv_const(node->e[idx_x]));
+}
+#endif
+
 BzlaBitVector *
 bzla_proputils_cons_add(Bzla *bzla,
                         BzlaNode *add,
@@ -837,15 +859,9 @@ bzla_proputils_cons_add(Bzla *bzla,
                         BzlaIntHashTable *domains,
                         BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(add);
-  assert(bzla_node_is_regular(add));
-  assert(t);
-  assert(s);
-  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(add->e[idx_x]));
-
+#ifndef NDEBUG
+  check_cons_dbg(bzla, add, t, s, idx_x, domains, true);
+#endif
   (void) add;
   (void) s;
   (void) idx_x;
@@ -865,15 +881,9 @@ bzla_proputils_cons_and(Bzla *bzla,
                         BzlaIntHashTable *domains,
                         BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(and);
-  assert(bzla_node_is_regular(and));
-  assert(t);
-  assert(s);
-  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(and->e[idx_x]));
-
+#ifndef NDEBUG
+  check_cons_dbg(bzla, and, t, s, idx_x, domains, true);
+#endif
   uint32_t i, bw;
   BzlaBitVector *res;
   BzlaUIntStack dcbits;
@@ -924,15 +934,9 @@ bzla_proputils_cons_eq(Bzla *bzla,
                        BzlaIntHashTable *domains,
                        BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(eq);
-  assert(bzla_node_is_regular(eq));
-  assert(t);
-  assert(bzla_bv_get_width(t) == 1);
-  assert(s);
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(eq->e[idx_x]));
-
+#ifndef NDEBUG
+  check_cons_dbg(bzla, eq, t, s, idx_x, domains, false);
+#endif
   (void) t;
   (void) domains;
   (void) d_res_x;
@@ -964,15 +968,9 @@ bzla_proputils_cons_ult(Bzla *bzla,
                         BzlaIntHashTable *domains,
                         BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(ult);
-  assert(bzla_node_is_regular(ult));
-  assert(t);
-  assert(bzla_bv_get_width(t) == 1);
-  assert(s);
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(ult->e[idx_x]));
-
+#ifndef NDEBUG
+  check_cons_dbg(bzla, ult, t, s, idx_x, domains, false);
+#endif
   bool isult;
   uint32_t bw;
   BzlaBitVector *ones, *zero, *tmp, *res;
@@ -1024,15 +1022,9 @@ bzla_proputils_cons_sll(Bzla *bzla,
                         BzlaIntHashTable *domains,
                         BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(sll);
-  assert(bzla_node_is_regular(sll));
-  assert(t);
-  assert(s);
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
-  assert(!bzla_node_is_bv_const(sll->e[idx_x]));
-
+#ifndef NDEBUG
+  check_cons_dbg(bzla, sll, t, s, idx_x, domains, true);
+#endif
   uint32_t i, bw, ctz_bvsll, shift;
   BzlaBitVector *res, *bv_shift;
   BzlaMemMgr *mm;
@@ -1077,15 +1069,9 @@ bzla_proputils_cons_srl(Bzla *bzla,
                         BzlaIntHashTable *domains,
                         BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(srl);
-  assert(bzla_node_is_regular(srl));
-  assert(t);
-  assert(s);
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
-  assert(!bzla_node_is_bv_const(srl->e[idx_x]));
-
+#ifndef NDEBUG
+  check_cons_dbg(bzla, srl, t, s, idx_x, domains, true);
+#endif
   uint32_t i, shift, bw;
   BzlaBitVector *res, *bv_shift;
   BzlaMemMgr *mm;
@@ -1133,15 +1119,9 @@ bzla_proputils_cons_mul(Bzla *bzla,
                         BzlaIntHashTable *domains,
                         BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(mul);
-  assert(bzla_node_is_regular(mul));
-  assert(t);
-  assert(s);
-  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(mul->e[idx_x]));
-
+#ifndef NDEBUG
+  check_cons_dbg(bzla, mul, t, s, idx_x, domains, true);
+#endif
   uint32_t r, bw, ctz_res, ctz_bvmul;
   BzlaBitVector *res, *tmp;
   BzlaMemMgr *mm;
@@ -1222,15 +1202,9 @@ bzla_proputils_cons_udiv(Bzla *bzla,
                          BzlaIntHashTable *domains,
                          BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(udiv);
-  assert(bzla_node_is_regular(udiv));
-  assert(t);
-  assert(s);
-  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(udiv->e[idx_x]));
-
+#ifndef NDEBUG
+  check_cons_dbg(bzla, udiv, t, s, idx_x, domains, true);
+#endif
   uint32_t bw;
   BzlaBitVector *res, *tmp, *tmp_s, *zero, *one, *ones;
   BzlaMemMgr *mm;
@@ -1311,15 +1285,9 @@ bzla_proputils_cons_urem(Bzla *bzla,
                          BzlaIntHashTable *domains,
                          BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(urem);
-  assert(bzla_node_is_regular(urem));
-  assert(t);
-  assert(s);
-  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(urem->e[idx_x]));
-
+#ifndef NDEBUG
+  check_cons_dbg(bzla, urem, t, s, idx_x, domains, true);
+#endif
   uint32_t bw;
   BzlaBitVector *res, *ones, *tmp;
   BzlaMemMgr *mm;
@@ -1377,14 +1345,9 @@ bzla_proputils_cons_concat(Bzla *bzla,
                            BzlaIntHashTable *domains,
                            BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(concat);
-  assert(bzla_node_is_regular(concat));
-  assert(t);
-  assert(s);
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(concat->e[idx_x]));
-
+#ifndef NDEBUG
+  check_cons_dbg(bzla, concat, t, s, idx_x, domains, false);
+#endif
   int32_t idx_s, bw_t, bw_s;
   uint32_t r;
   BzlaBitVector *res;
@@ -1458,14 +1421,9 @@ bzla_proputils_cons_add_const(Bzla *bzla,
                               BzlaIntHashTable *domains,
                               BzlaBvDomain *d_res_x)
 {
-  assert(bzla);
-  assert(add);
-  assert(bzla_node_is_regular(add));
-  assert(t);
-  assert(s);
-  assert(bzla_bv_get_width(s) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(add->e[idx_x]));
+#ifndef NDEBUG
+  check_cons_dbg(bzla, add, t, s, idx_x, domains, true);
+#endif
   (void) d_res_x;
 
   BzlaBitVector *tmp, *res;
@@ -1662,7 +1620,6 @@ check_inv_dbg(Bzla *bzla,
   assert(!same_bw || bzla_bv_get_width(s) == bzla_bv_get_width(t));
   assert(idx_x >= 0 && idx_x <= 1);
   assert(!bzla_node_is_bv_const(node->e[idx_x]));
-#ifndef NDEBUG
   assert(is_inv_fun(bzla, 0, t, s, idx_x, 0));
   (void) d_res_x;
   assert(
@@ -1672,7 +1629,6 @@ check_inv_dbg(Bzla *bzla,
       bzla_hashint_map_get(domains, bzla_node_get_id(node->e[idx_x]));
   assert(!x || !bzla_bvdomain_has_fixed_bits(bzla->mm, x->as_ptr)
          || is_inv_fun_const(bzla, x->as_ptr, t, s, idx_x, 0));
-#endif
 }
 
 static void
