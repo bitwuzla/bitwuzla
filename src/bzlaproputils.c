@@ -1449,8 +1449,31 @@ bzla_proputils_cons_and_const(Bzla *bzla,
                               BzlaIntHashTable *domains,
                               BzlaBvDomain *d_res_x)
 {
-  // TODO
-  return bzla_proputils_cons_and(bzla, and, t, s, idx_x, domains, d_res_x);
+#ifndef NDEBUG
+  check_cons_dbg(bzla, and, t, s, idx_x, domains, true);
+#endif
+  BzlaBitVector *tmp, *res;
+  BzlaBvDomain *x;
+  BzlaMemMgr *mm;
+  (void) d_res_x;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_and);
+
+  mm = bzla->mm;
+  x  = bzla_hashint_map_get(domains, bzla_node_get_id(and->e[idx_x]))->as_ptr;
+
+  for (uint32_t i = 0, bw = bzla_bv_get_width(t); i < bw; i++)
+  {
+    if (bzla_bv_get_bit(t, i) && bzla_bvdomain_is_fixed_bit_false(x, i))
+    {
+      /* non-recoverable conflict */
+      return NULL;
+    }
+  }
+  tmp = bzla_proputils_cons_and(bzla, and, t, s, idx_x, domains, d_res_x);
+  res = set_const_bits(mm, x, tmp);
+  bzla_bv_free(mm, tmp);
+  return res;
 }
 
 BzlaBitVector *
@@ -4278,7 +4301,8 @@ record_conflict(Bzla *bzla,
                 BzlaNode *exp,
                 BzlaBitVector *t,
                 BzlaBitVector *s[3],
-                uint32_t idx_x)
+                uint32_t idx_x,
+                bool is_recoverable)
 {
   assert(bzla);
   assert(bzla->slv->kind == BZLA_PROP_SOLVER_KIND
@@ -4289,8 +4313,7 @@ record_conflict(Bzla *bzla,
   (void) s;
 
   BzlaMemMgr *mm;
-  uint32_t idx_s      = 0;
-  bool is_recoverable = true;
+  uint32_t idx_s = 0;
 
   mm = bzla->mm;
 
@@ -4718,7 +4741,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
           if (!is_inv)
           {
-            if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x))
+            if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x, true))
             {
               /* non-recoverable conflict */
               if (d_res_x)
@@ -4785,7 +4808,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           if (!is_inv)
           {
             /* not invertible counts as conflict */
-            if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x))
+            if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x, true))
             {
               /* non-recoverable conflict */
               break;
@@ -4826,7 +4849,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         if (!is_inv)
         {
           /* not invertible counts as conflict */
-          if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x))
+          if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x, true))
           {
             /* non-recoverable conflict */
             if (d_res_x)
@@ -4849,11 +4872,15 @@ bzla_proputils_select_move_prop(Bzla *bzla,
             bzla, real_cur, bv_t, bv_s[idx_s], idx_x, domains, d_res_x);
       }
 
-      assert(bv_s_new);
       if (d_res_x)
       {
         bzla_bvdomain_free(mm, d_res_x);
         d_res_x = 0;
+      }
+      if (!bv_s_new)
+      {
+        (void) record_conflict(bzla, real_cur, bv_t, bv_s, idx_x, false);
+        break;
       }
 #ifndef NBZLALOG
       a = bzla_bv_to_char(bzla->mm, bv_s_new);
