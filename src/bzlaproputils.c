@@ -1429,6 +1429,167 @@ bzla_proputils_cons_cond(Bzla *bzla,
 }
 
 /* ========================================================================== */
+/* Consistent value computation with respect to const bits                    */
+/* ========================================================================== */
+
+BzlaBitVector *
+bzla_proputils_cons_add_const(Bzla *bzla,
+                              BzlaNode *add,
+                              BzlaBitVector *t,
+                              BzlaBitVector *s,
+                              int32_t idx_x,
+                              BzlaIntHashTable *domains,
+                              BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_add(bzla, add, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_and_const(Bzla *bzla,
+                              BzlaNode *and,
+                              BzlaBitVector *t,
+                              BzlaBitVector *s,
+                              int32_t idx_x,
+                              BzlaIntHashTable *domains,
+                              BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_and(bzla, and, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_eq_const(Bzla *bzla,
+                             BzlaNode *eq,
+                             BzlaBitVector *t,
+                             BzlaBitVector *s,
+                             int32_t idx_x,
+                             BzlaIntHashTable *domains,
+                             BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_eq(bzla, eq, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_ult_const(Bzla *bzla,
+                              BzlaNode *ult,
+                              BzlaBitVector *t,
+                              BzlaBitVector *s,
+                              int32_t idx_x,
+                              BzlaIntHashTable *domains,
+                              BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_ult(bzla, ult, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_sll_const(Bzla *bzla,
+                              BzlaNode *sll,
+                              BzlaBitVector *t,
+                              BzlaBitVector *s,
+                              int32_t idx_x,
+                              BzlaIntHashTable *domains,
+                              BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_sll(bzla, sll, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_srl_const(Bzla *bzla,
+                              BzlaNode *srl,
+                              BzlaBitVector *t,
+                              BzlaBitVector *s,
+                              int32_t idx_x,
+                              BzlaIntHashTable *domains,
+                              BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_srl(bzla, srl, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_mul_const(Bzla *bzla,
+                              BzlaNode *mul,
+                              BzlaBitVector *t,
+                              BzlaBitVector *s,
+                              int32_t idx_x,
+                              BzlaIntHashTable *domains,
+                              BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_mul(bzla, mul, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_udiv_const(Bzla *bzla,
+                               BzlaNode *udiv,
+                               BzlaBitVector *t,
+                               BzlaBitVector *s,
+                               int32_t idx_x,
+                               BzlaIntHashTable *domains,
+                               BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_udiv(bzla, udiv, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_urem_const(Bzla *bzla,
+                               BzlaNode *urem,
+                               BzlaBitVector *t,
+                               BzlaBitVector *s,
+                               int32_t idx_x,
+                               BzlaIntHashTable *domains,
+                               BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_urem(bzla, urem, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_concat_const(Bzla *bzla,
+                                 BzlaNode *concat,
+                                 BzlaBitVector *t,
+                                 BzlaBitVector *s,
+                                 int32_t idx_x,
+                                 BzlaIntHashTable *domains,
+                                 BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_concat(
+      bzla, concat, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_slice_const(Bzla *bzla,
+                                BzlaNode *slice,
+                                BzlaBitVector *t,
+                                BzlaBitVector *s,
+                                int32_t idx_x,
+                                BzlaIntHashTable *domains,
+                                BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_slice(bzla, slice, t, s, idx_x, domains, d_res_x);
+}
+
+BzlaBitVector *
+bzla_proputils_cons_cond_const(Bzla *bzla,
+                               BzlaNode *cond,
+                               BzlaBitVector *t,
+                               BzlaBitVector *s,
+                               int32_t idx_x,
+                               BzlaIntHashTable *domains,
+                               BzlaBvDomain *d_res_x)
+{
+  // TODO
+  return bzla_proputils_cons_cond(bzla, cond, t, s, idx_x, domains, d_res_x);
+}
+
+/* ========================================================================== */
 /* Inverse value computation                                                  */
 /* ========================================================================== */
 
@@ -4032,7 +4193,7 @@ static BzlaPropSelectPath kind_to_select_path[BZLA_NUM_OPS_NODE] = {
     [BZLA_COND_NODE]      = select_path_cond,
 };
 
-static BzlaPropComputeValue kind_to_cons_bv[BZLA_NUM_OPS_NODE] = {
+static BzlaPropComputeValue kind_to_cons[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ADD_NODE]    = bzla_proputils_cons_add,
     [BZLA_BV_AND_NODE]    = bzla_proputils_cons_and,
     [BZLA_BV_CONCAT_NODE] = bzla_proputils_cons_concat,
@@ -4045,6 +4206,21 @@ static BzlaPropComputeValue kind_to_cons_bv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_cons_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_cons_urem,
     [BZLA_COND_NODE]      = bzla_proputils_cons_cond,
+};
+
+static BzlaPropComputeValue kind_to_cons_const[BZLA_NUM_OPS_NODE] = {
+    [BZLA_BV_ADD_NODE]    = bzla_proputils_cons_add_const,
+    [BZLA_BV_AND_NODE]    = bzla_proputils_cons_and_const,
+    [BZLA_BV_CONCAT_NODE] = bzla_proputils_cons_concat_const,
+    [BZLA_BV_EQ_NODE]     = bzla_proputils_cons_eq_const,
+    [BZLA_BV_MUL_NODE]    = bzla_proputils_cons_mul_const,
+    [BZLA_BV_ULT_NODE]    = bzla_proputils_cons_ult_const,
+    [BZLA_BV_SLICE_NODE]  = bzla_proputils_cons_slice_const,
+    [BZLA_BV_SLL_NODE]    = bzla_proputils_cons_sll_const,
+    [BZLA_BV_SRL_NODE]    = bzla_proputils_cons_srl_const,
+    [BZLA_BV_UDIV_NODE]   = bzla_proputils_cons_udiv_const,
+    [BZLA_BV_UREM_NODE]   = bzla_proputils_cons_urem_const,
+    [BZLA_COND_NODE]      = bzla_proputils_cons_cond_const,
 };
 
 static BzlaPropComputeValue kind_to_inv[BZLA_NUM_OPS_NODE] = {
@@ -4679,8 +4855,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           }
         }
         /* compute new assignment */
-        cons_value_fun = kind_to_cons_bv[real_cur->kind];
-        inv_value_fun  = has_fixed_bits ? kind_to_inv_const[real_cur->kind]
+        cons_value_fun = has_fixed_bits ? kind_to_cons_const[real_cur->kind]
+                                        : kind_to_cons[real_cur->kind];
+        inv_value_fun = has_fixed_bits ? kind_to_inv_const[real_cur->kind]
                                        : kind_to_inv[real_cur->kind];
 
         compute_value_fun = pick_inv && is_inv ? inv_value_fun : cons_value_fun;

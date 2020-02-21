@@ -71,7 +71,7 @@ typedef BzlaBitVector* (*BzlaPropComputeValue)(Bzla* bzla,
                                                BzlaBvDomain* d_res_x);
 
 /*------------------------------------------------------------------------*/
-/* Consistent value computation functions.                                */
+/* Consistent value computation functions as implemented for CAV'16. */
 /*------------------------------------------------------------------------*/
 
 BzlaBitVector* bzla_proputils_cons_add(Bzla* bzla,
@@ -169,6 +169,106 @@ BzlaBitVector* bzla_proputils_cons_cond(Bzla* bzla,
                                         int32_t idx_x,
                                         BzlaIntHashTable* domains,
                                         BzlaBvDomain* d_res_x);
+
+/*------------------------------------------------------------------------*/
+/* Consistent value computation functions with respect to const bits.     */
+/*------------------------------------------------------------------------*/
+
+BzlaBitVector* bzla_proputils_cons_add_const(Bzla* bzla,
+                                             BzlaNode* add_exp,
+                                             BzlaBitVector* t,
+                                             BzlaBitVector* s,
+                                             int32_t idx_x,
+                                             BzlaIntHashTable* domains,
+                                             BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_and_const(Bzla* bzla,
+                                             BzlaNode* and_exp,
+                                             BzlaBitVector* t,
+                                             BzlaBitVector* s,
+                                             int32_t idx_x,
+                                             BzlaIntHashTable* domains,
+                                             BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_eq_const(Bzla* bzla,
+                                            BzlaNode* eq_exp,
+                                            BzlaBitVector* t,
+                                            BzlaBitVector* s,
+                                            int32_t idx_x,
+                                            BzlaIntHashTable* domains,
+                                            BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_ult_const(Bzla* bzla,
+                                             BzlaNode* ult_exp,
+                                             BzlaBitVector* t,
+                                             BzlaBitVector* s,
+                                             int32_t idx_x,
+                                             BzlaIntHashTable* domains,
+                                             BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_sll_const(Bzla* bzla,
+                                             BzlaNode* sll_exp,
+                                             BzlaBitVector* t,
+                                             BzlaBitVector* s,
+                                             int32_t idx_x,
+                                             BzlaIntHashTable* domains,
+                                             BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_srl_const(Bzla* bzla,
+                                             BzlaNode* srl_exp,
+                                             BzlaBitVector* t,
+                                             BzlaBitVector* s,
+                                             int32_t idx_x,
+                                             BzlaIntHashTable* domains,
+                                             BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_mul_const(Bzla* bzla,
+                                             BzlaNode* mul_exp,
+                                             BzlaBitVector* t,
+                                             BzlaBitVector* s,
+                                             int32_t idx_x,
+                                             BzlaIntHashTable* domains,
+                                             BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_udiv_const(Bzla* bzla,
+                                              BzlaNode* div_exp,
+                                              BzlaBitVector* t,
+                                              BzlaBitVector* s,
+                                              int32_t idx_x,
+                                              BzlaIntHashTable* domains,
+                                              BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_urem_const(Bzla* bzla,
+                                              BzlaNode* urem_exp,
+                                              BzlaBitVector* t,
+                                              BzlaBitVector* s,
+                                              int32_t idx_x,
+                                              BzlaIntHashTable* domains,
+                                              BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_concat_const(Bzla* bzla,
+                                                BzlaNode* conc_exp,
+                                                BzlaBitVector* t,
+                                                BzlaBitVector* s,
+                                                int32_t idx_x,
+                                                BzlaIntHashTable* domains,
+                                                BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_slice_const(Bzla* bzla,
+                                               BzlaNode* slice_exp,
+                                               BzlaBitVector* t,
+                                               BzlaBitVector* s,
+                                               int32_t idx_x,
+                                               BzlaIntHashTable* domains,
+                                               BzlaBvDomain* d_res_x);
+
+BzlaBitVector* bzla_proputils_cons_cond_const(Bzla* bzla,
+                                              BzlaNode* cond_exp,
+                                              BzlaBitVector* t,
+                                              BzlaBitVector* s,
+                                              int32_t idx_x,
+                                              BzlaIntHashTable* domains,
+                                              BzlaBvDomain* d_res_x);
 
 /*------------------------------------------------------------------------*/
 /* Inverse value computation functions as implemented for CAV'16.         */
@@ -467,7 +567,7 @@ BzlaBitVector* bzla_proputils_inv_cond(Bzla* bzla,
                                        BzlaBvDomain* d_res_x);
 
 /*------------------------------------------------------------------------*/
-/* Inverse value computation functions using propagator domains.          */
+/* Inverse value computation functions with respect to const bits.        */
 /*------------------------------------------------------------------------*/
 
 BzlaBitVector* bzla_proputils_inv_add_const(Bzla* bzla,
@@ -495,15 +595,11 @@ BzlaBitVector* bzla_proputils_inv_eq_const(Bzla* bzla,
                                            BzlaBvDomain* d_res_x);
 
 /**
- * Determine inverse value for 'x' given 'x < s = t' or 's < x = t' using the
- * ult domain propagator. This inverse value computation determines an inverse
- * value with respect to constant bits.
+ * Determine inverse value for 'x' given 'x < s = t' or 's < x = t' with
+ * respect to const bits.
  *
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
- *
- * Falls back to the inverse value computation that does not utilize propagator
- * domains in case of a conflict.
  *
  * ult    : the Boolector node representing the ult operation
  * t      : target value for 'ult' (the 'output' value)
