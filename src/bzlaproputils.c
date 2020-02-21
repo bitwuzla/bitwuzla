@@ -1430,6 +1430,8 @@ bzla_proputils_cons_add_const(Bzla *bzla,
   BzlaBvDomain *x;
   BzlaMemMgr *mm;
 
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_add);
+
   mm  = bzla->mm;
   x   = bzla_hashint_map_get(domains, bzla_node_get_id(add->e[idx_x]))->as_ptr;
   tmp = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
