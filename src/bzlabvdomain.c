@@ -310,6 +310,9 @@ bzla_bvdomain_to_str(const BzlaBvDomain *d)
   static size_t s_buf_pos = 0;
   size_t width            = bzla_bv_get_width(d->lo);
   bool too_long           = width + 1 >= PRINT_BUFFER_SIZE;
+  size_t print_width, buf_start;
+  uint32_t bit_lo, bit_hi;
+  char c;
 
   assert(s_buf_pos <= PRINT_BUFFER_SIZE);
 
@@ -319,9 +322,9 @@ bzla_bvdomain_to_str(const BzlaBvDomain *d)
     s_buf_pos = 0;
   }
 
-  uint32_t bit_lo, bit_hi;
-  char c;
-  size_t print_width = too_long ? width - 3 : width;
+  /* Save 3 characters for ... if bv is too long to fit into buffer. */
+  print_width = too_long ? width - 3 : width;
+  buf_start   = s_buf_pos;
   for (size_t i = 1; i <= print_width; i++)
   {
     bit_lo = bzla_bv_get_bit(d->lo, width - i);
@@ -354,7 +357,7 @@ bzla_bvdomain_to_str(const BzlaBvDomain *d)
     s_buf[s_buf_pos++] = '.';
   }
   s_buf[s_buf_pos++] = 0;
-  return s_buf;
+  return s_buf + buf_start;
 }
 
 /*----------------------------------------------------------------------------*/
