@@ -4276,43 +4276,49 @@ static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
 static bool
 record_conflict(Bzla *bzla,
                 BzlaNode *exp,
-                BzlaNode *e0,
-                BzlaNode *e1,
                 BzlaBitVector *t,
-                BzlaBitVector *s0,
-                BzlaBitVector *s1,
-                int32_t idx_x)
+                BzlaBitVector *s[3],
+                uint32_t idx_x)
 {
   assert(bzla);
   assert(bzla->slv->kind == BZLA_PROP_SOLVER_KIND
          || bzla->slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(exp);
   assert(bzla_node_is_regular(exp));
-  assert(e0);
   assert(t);
-  (void) s0;
-  (void) s1;
+  (void) s;
 
   BzlaMemMgr *mm;
+  uint32_t idx_s      = 0;
   bool is_recoverable = true;
 
   mm = bzla->mm;
 
-  if (bzla_node_is_bv_const(e0) && (!e1 || bzla_node_is_bv_const(e1)))
-  {
-    is_recoverable = false;
-  }
-#ifndef NDEBUG
-  char *str_s0 = s0 ? bzla_bv_to_char(mm, s0) : 0;
-  char *str_t  = bzla_bv_to_char(mm, t);
-  char *str_o  = 0;
   if (bzla_node_is_cond(exp))
   {
-    assert(s1);
-    char *str_s1 = bzla_bv_to_char(mm, s1);
+    is_recoverable = idx_x != 0 || !bzla_node_is_bv_const(exp->e[1])
+                     || !bzla_node_is_bv_const(exp->e[2]);
+  }
+  else
+  {
+    if (exp->arity > 1)
+    {
+      idx_s = idx_x ? 0 : 1;
+    }
+    is_recoverable = !bzla_node_is_bv_const(exp->e[idx_s]);
+  }
+#ifndef NDEBUG
+  char *str_s0, *str_s1;
+  char *str_t = bzla_bv_to_char(mm, t);
+  char *str_o = 0;
+  if (bzla_node_is_cond(exp))
+  {
+    assert(s[1]);
     BZLALOG(2, "");
     if (idx_x == 0)
     {
+      str_s0 = bzla_bv_to_char(mm, s[1]);
+      str_s1 = bzla_bv_to_char(mm, s[2]);
       BZLALOG(2,
               "%srecoverable CONFLICT (@%d): %s := x ? %s : %s",
               is_recoverable ? "" : "non-",
@@ -4323,6 +4329,8 @@ record_conflict(Bzla *bzla,
     }
     else if (idx_x == 1)
     {
+      str_s0 = bzla_bv_to_char(mm, s[0]);
+      str_s1 = bzla_bv_to_char(mm, s[2]);
       BZLALOG(2,
               "%srecoverable CONFLICT (@%d): %s := %s ? x : %s",
               is_recoverable ? "" : "non-",
@@ -4333,6 +4341,8 @@ record_conflict(Bzla *bzla,
     }
     else
     {
+      str_s0 = bzla_bv_to_char(mm, s[0]);
+      str_s1 = bzla_bv_to_char(mm, s[1]);
       BZLALOG(2,
               "%srecoverable CONFLICT (@%d): %s := %s ? %s : x",
               is_recoverable ? "" : "non-",
@@ -4341,6 +4351,7 @@ record_conflict(Bzla *bzla,
               str_s0,
               str_s1);
     }
+    bzla_mem_freestr(mm, str_s0);
     bzla_mem_freestr(mm, str_s1);
   }
   else if (bzla_node_is_bv_slice(exp))
@@ -4355,7 +4366,8 @@ record_conflict(Bzla *bzla,
   }
   else
   {
-    assert(s0);
+    idx_s  = idx_x ? 0 : 1;
+    str_s0 = bzla_bv_to_char(mm, s[idx_s]);
     switch (exp->kind)
     {
       case BZLA_BV_AND_NODE: str_o = "&"; break;
@@ -4390,8 +4402,8 @@ record_conflict(Bzla *bzla,
               str_o,
               str_s0);
     }
+    bzla_mem_freestr(mm, str_s0);
   }
-  bzla_mem_freestr(mm, str_s0);
   bzla_mem_freestr(mm, str_t);
 #endif
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
@@ -4607,6 +4619,14 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         if (bzla_node_is_bv_const(real_cur->e[i])) nconst += 1;
       }
       if (nconst > real_cur->arity - 1) break;
+      /* additionally, for ite, if condition and enabled branch are const
+       * -> conflict */
+      if (bzla_node_is_cond(real_cur) && bzla_node_is_bv_const(real_cur->e[0])
+          && (bzla_node_is_bv_const(
+              real_cur == bzla->true_exp ? real_cur->e[1] : real_cur->e[2])))
+      {
+        break;
+      }
 
 #ifndef NBZLALOG
       a = bzla_bv_to_char(bzla->mm, bv_t);
@@ -4698,14 +4718,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
           if (!is_inv)
           {
-            if (!record_conflict(bzla,
-                                 real_cur,
-                                 real_cur->e[idx_s0],
-                                 real_cur->e[idx_s1],
-                                 bv_t,
-                                 bv_s[idx_s0],
-                                 bv_s[idx_s1],
-                                 idx_x))
+            if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x))
             {
               /* non-recoverable conflict */
               if (d_res_x)
@@ -4772,8 +4785,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           if (!is_inv)
           {
             /* not invertible counts as conflict */
-            if (!record_conflict(
-                    bzla, real_cur, real_cur->e[0], 0, bv_t, 0, 0, idx_x))
+            if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x))
             {
               /* non-recoverable conflict */
               break;
@@ -4814,14 +4826,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         if (!is_inv)
         {
           /* not invertible counts as conflict */
-          if (!record_conflict(bzla,
-                               real_cur,
-                               real_cur->e[idx_s],
-                               0,
-                               bv_t,
-                               bv_s[idx_s],
-                               0,
-                               idx_x))
+          if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x))
           {
             /* non-recoverable conflict */
             if (d_res_x)
