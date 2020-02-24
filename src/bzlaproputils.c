@@ -1063,7 +1063,7 @@ bzla_proputils_cons_sll(Bzla *bzla,
 #ifndef NDEBUG
   check_cons_dbg(bzla, sll, t, s, idx_x, domains, true);
 #endif
-  uint32_t i, bw, ctz_bvsll, shift;
+  uint32_t i, bw, ctz_t, shift;
   BzlaBitVector *res, *bv_shift;
   BzlaMemMgr *mm;
 
@@ -1077,9 +1077,8 @@ bzla_proputils_cons_sll(Bzla *bzla,
   mm = bzla->mm;
   bw = bzla_bv_get_width(t);
 
-  ctz_bvsll = bzla_bv_get_num_trailing_zeros(t);
-  shift     = bzla_rng_pick_rand(
-      &bzla->rng, 0, ctz_bvsll == bw ? ctz_bvsll - 1 : ctz_bvsll);
+  ctz_t    = bzla_bv_get_num_trailing_zeros(t);
+  shift    = bzla_rng_pick_rand(&bzla->rng, 0, ctz_t);
   bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
 
   if (idx_x)
@@ -1129,7 +1128,7 @@ bzla_proputils_cons_srl(Bzla *bzla,
     if (bzla_bv_get_bit(t, bw - 1 - i)) break;
   }
 
-  shift    = bzla_rng_pick_rand(&bzla->rng, 0, i == bw ? i - 1 : i);
+  shift    = bzla_rng_pick_rand(&bzla->rng, 0, i);
   bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
 
   if (idx_x)
