@@ -959,6 +959,86 @@ bzla_proputils_cons_eq(Bzla *bzla,
   return res;
 }
 
+static BzlaBitVector *
+cons_ult_aux(Bzla *bzla,
+             BzlaNode *ult,
+             BzlaBitVector *t,
+             BzlaBitVector *s,
+             int32_t idx_x,
+             BzlaIntHashTable *domains,
+             BzlaBvDomain *d_res_x,
+             bool with_const_bits)
+{
+#ifndef NDEBUG
+  check_cons_dbg(bzla, ult, t, s, idx_x, domains, false);
+#endif
+  bool isult;
+  uint32_t bw;
+  BzlaBitVector *ones, *zero, *tmp, *res;
+  BzlaMemMgr *mm;
+  BzlaBvDomain *x;
+
+  (void) ult;
+  (void) d_res_x;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_ult);
+
+  mm    = bzla->mm;
+  bw    = bzla_bv_get_width(s);
+  isult = !bzla_bv_is_zero(t);
+
+  x = with_const_bits
+          ? bzla_hashint_map_get(domains, bzla_node_get_id(ult->e[idx_x]))
+                ->as_ptr
+          : 0;
+
+  if (idx_x && isult)
+  {
+    /* s < res = 1  ->  res > 0 */
+    if (x && bzla_bvdomain_is_fixed(mm, x) && bzla_bv_is_zero(x->lo))
+    {
+      /* non-recoverable conflict */
+      return NULL;
+    }
+    ones = bzla_bv_ones(mm, bw);
+    tmp  = bzla_bv_one(mm, bw);
+    res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
+    bzla_bv_free(mm, tmp);
+    bzla_bv_free(mm, ones);
+  }
+  else if (!idx_x && isult)
+  {
+    /* res < s = 1  ->  0 <= res < 1...1 */
+    if (x && bzla_bvdomain_is_fixed(mm, x) && bzla_bv_is_ones(x->lo))
+    {
+      /* non-recoverable conflict */
+      return NULL;
+    }
+    zero = bzla_bv_new(mm, bw);
+    ones = bzla_bv_ones(mm, bw);
+    tmp  = bzla_bv_dec(mm, ones);
+    res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
+    bzla_bv_free(mm, tmp);
+    bzla_bv_free(mm, zero);
+    bzla_bv_free(mm, ones);
+  }
+  else
+  {
+    tmp = bzla_bv_new_random(mm, &bzla->rng, bw);
+    if (x)
+    {
+      res = set_const_bits(mm, x, tmp);
+      bzla_bv_free(mm, tmp);
+    }
+    else
+    {
+      res = tmp;
+    }
+  }
+
+  return res;
+}
+
 BzlaBitVector *
 bzla_proputils_cons_ult(Bzla *bzla,
                         BzlaNode *ult,
@@ -968,49 +1048,7 @@ bzla_proputils_cons_ult(Bzla *bzla,
                         BzlaIntHashTable *domains,
                         BzlaBvDomain *d_res_x)
 {
-#ifndef NDEBUG
-  check_cons_dbg(bzla, ult, t, s, idx_x, domains, false);
-#endif
-  bool isult;
-  uint32_t bw;
-  BzlaBitVector *ones, *zero, *tmp, *res;
-  BzlaMemMgr *mm;
-
-  (void) ult;
-  (void) domains;
-  (void) d_res_x;
-
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_ult);
-
-  mm    = bzla->mm;
-  bw    = bzla_bv_get_width(s);
-  isult = !bzla_bv_is_zero(t);
-  zero  = bzla_bv_new(mm, bw);
-  ones  = bzla_bv_ones(mm, bw);
-
-  if (idx_x && isult)
-  {
-    /* s < res = 1  ->  res > 0 */
-    tmp = bzla_bv_one(mm, bw);
-    res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
-    bzla_bv_free(mm, tmp);
-  }
-  else if (!idx_x && isult)
-  {
-    /* res < s = 1  ->  0 <= res < 1...1 */
-    tmp = bzla_bv_dec(mm, ones);
-    res = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
-    bzla_bv_free(mm, tmp);
-  }
-  else
-  {
-    res = bzla_bv_new_random(mm, &bzla->rng, bw);
-  }
-
-  bzla_bv_free(mm, ones);
-  bzla_bv_free(mm, zero);
-
-  return res;
+  return cons_ult_aux(bzla, ult, t, s, idx_x, domains, d_res_x, false);
 }
 
 BzlaBitVector *
@@ -1511,8 +1549,7 @@ bzla_proputils_cons_ult_const(Bzla *bzla,
                               BzlaIntHashTable *domains,
                               BzlaBvDomain *d_res_x)
 {
-  // TODO
-  return bzla_proputils_cons_ult(bzla, ult, t, s, idx_x, domains, d_res_x);
+  return cons_ult_aux(bzla, ult, t, s, idx_x, domains, d_res_x, true);
 }
 
 BzlaBitVector *
