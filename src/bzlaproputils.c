@@ -1063,8 +1063,8 @@ bzla_proputils_cons_sll(Bzla *bzla,
 #ifndef NDEBUG
   check_cons_dbg(bzla, sll, t, s, idx_x, domains, true);
 #endif
-  uint32_t i, bw, ctz_t, shift;
-  BzlaBitVector *res, *bv_shift;
+  uint32_t bw, ctz_t, shift;
+  BzlaBitVector *res, *bv_shift, *left, *right;
   BzlaMemMgr *mm;
 
   (void) sll;
@@ -1074,12 +1074,21 @@ bzla_proputils_cons_sll(Bzla *bzla,
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sll);
 
-  mm = bzla->mm;
-  bw = bzla_bv_get_width(t);
+  mm    = bzla->mm;
+  bw    = bzla_bv_get_width(t);
+  ctz_t = bzla_bv_get_num_trailing_zeros(t);
 
-  ctz_t    = bzla_bv_get_num_trailing_zeros(t);
-  shift    = bzla_rng_pick_rand(&bzla->rng, 0, ctz_t);
-  bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
+  if (bw >= 64 && ctz_t == bw)
+  {
+    shift    = bw;
+    bv_shift = bzla_bv_new_random(mm, &bzla->rng, bw);
+  }
+  else
+  {
+    shift = bzla_rng_pick_rand(
+        &bzla->rng, 0, ctz_t < bw ? ctz_t : ((1u << bw) - 1));
+    bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
+  }
 
   if (idx_x)
   {
@@ -1087,10 +1096,24 @@ bzla_proputils_cons_sll(Bzla *bzla,
   }
   else
   {
-    res = bzla_bv_srl(mm, t, bv_shift);
-    for (i = 0; i < shift; i++)
+    if (shift == bw)
     {
-      bzla_bv_set_bit(res, bw - 1 - i, bzla_rng_pick_rand(&bzla->rng, 0, 1));
+      res = bzla_bv_new_random(mm, &bzla->rng, bw);
+    }
+    else
+    {
+      if (shift)
+      {
+        left  = bzla_bv_new_random(mm, &bzla->rng, shift);
+        right = bzla_bv_slice(mm, t, bw - 1 - shift, 0);
+        res   = bzla_bv_concat(mm, left, right);
+        bzla_bv_free(mm, left);
+        bzla_bv_free(mm, right);
+      }
+      else
+      {
+        res = bzla_bv_copy(mm, t);
+      }
     }
     bzla_bv_free(mm, bv_shift);
   }
@@ -1109,8 +1132,9 @@ bzla_proputils_cons_srl(Bzla *bzla,
 #ifndef NDEBUG
   check_cons_dbg(bzla, srl, t, s, idx_x, domains, true);
 #endif
-  uint32_t i, shift, bw;
-  BzlaBitVector *res, *bv_shift;
+  uint32_t clz_t, bw;
+  uint64_t shift;
+  BzlaBitVector *res, *bv_shift, *left, *right;
   BzlaMemMgr *mm;
 
   (void) srl;
@@ -1120,16 +1144,21 @@ bzla_proputils_cons_srl(Bzla *bzla,
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_srl);
 
-  mm = bzla->mm;
-  bw = bzla_bv_get_width(t);
+  mm    = bzla->mm;
+  bw    = bzla_bv_get_width(t);
+  clz_t = bzla_bv_get_num_leading_zeros(t);
 
-  for (i = 0; i < bw; i++)
+  if (bw >= 64 && clz_t == bw)
   {
-    if (bzla_bv_get_bit(t, bw - 1 - i)) break;
+    shift    = bw;
+    bv_shift = bzla_bv_new_random(mm, &bzla->rng, bw);
   }
-
-  shift    = bzla_rng_pick_rand(&bzla->rng, 0, i);
-  bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
+  else
+  {
+    shift = bzla_rng_pick_rand(
+        &bzla->rng, 0, clz_t < bw ? clz_t : ((1u << bw) - 1));
+    bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
+  }
 
   if (idx_x)
   {
@@ -1137,10 +1166,24 @@ bzla_proputils_cons_srl(Bzla *bzla,
   }
   else
   {
-    res = bzla_bv_sll(mm, t, bv_shift);
-    for (i = 0; i < shift; i++)
+    if (shift == bw)
     {
-      bzla_bv_set_bit(res, i, bzla_rng_pick_rand(&bzla->rng, 0, 1));
+      res = bzla_bv_new_random(mm, &bzla->rng, bw);
+    }
+    else
+    {
+      if (shift)
+      {
+        right = bzla_bv_new_random(mm, &bzla->rng, shift);
+        left  = bzla_bv_slice(mm, t, bw - 1 - shift, 0);
+        res   = bzla_bv_concat(mm, left, right);
+        bzla_bv_free(mm, left);
+        bzla_bv_free(mm, right);
+      }
+      else
+      {
+        res = bzla_bv_copy(mm, t);
+      }
     }
     bzla_bv_free(mm, bv_shift);
   }
