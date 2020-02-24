@@ -1432,8 +1432,9 @@ bzla_proputils_cons_add_const(Bzla *bzla,
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_add);
 
-  mm  = bzla->mm;
-  x   = bzla_hashint_map_get(domains, bzla_node_get_id(add->e[idx_x]))->as_ptr;
+  mm = bzla->mm;
+  x  = bzla_hashint_map_get(domains, bzla_node_get_id(add->e[idx_x]))->as_ptr;
+  if (bzla_bvdomain_is_fixed(mm, x)) return bzla_bv_copy(mm, x->lo);
   tmp = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
   res = set_const_bits(mm, x, tmp);
   bzla_bv_free(mm, tmp);
@@ -1461,6 +1462,7 @@ bzla_proputils_cons_and_const(Bzla *bzla,
 
   mm = bzla->mm;
   x  = bzla_hashint_map_get(domains, bzla_node_get_id(and->e[idx_x]))->as_ptr;
+  if (bzla_bvdomain_is_fixed(mm, x)) return bzla_bv_copy(mm, x->lo);
 
   for (uint32_t i = 0, bw = bzla_bv_get_width(t); i < bw; i++)
   {
@@ -1485,7 +1487,18 @@ bzla_proputils_cons_eq_const(Bzla *bzla,
                              BzlaIntHashTable *domains,
                              BzlaBvDomain *d_res_x)
 {
-  // TODO
+#ifndef NDEBUG
+  check_cons_dbg(bzla, eq, t, s, idx_x, domains, false);
+#endif
+  BzlaBvDomain *x;
+  (void) d_res_x;
+
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(eq->e[idx_x]))->as_ptr;
+  if (bzla_bvdomain_is_fixed(bzla->mm, x))
+  {
+    record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_eq);
+    return bzla_bv_copy(bzla->mm, x->lo);
+  }
   return bzla_proputils_cons_eq(bzla, eq, t, s, idx_x, domains, d_res_x);
 }
 
