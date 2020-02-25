@@ -977,6 +977,7 @@ cons_ult_aux(Bzla *bzla,
   BzlaBitVector *ones, *zero, *tmp, *res;
   BzlaMemMgr *mm;
   BzlaBvDomain *x;
+  BzlaBvDomainGenerator gen;
 
   (void) ult;
   (void) d_res_x;
@@ -995,32 +996,94 @@ cons_ult_aux(Bzla *bzla,
   if (idx_x && isult)
   {
     /* s < res = 1  ->  res > 0 */
-    if (x && bzla_bvdomain_is_fixed(mm, x) && bzla_bv_is_zero(x->lo))
+    if (x)
     {
-      /* non-recoverable conflict */
-      return NULL;
+      if (bzla_bvdomain_is_fixed(mm, x))
+      {
+        if (bzla_bv_is_zero(x->lo))
+        {
+          /* non-recoverable conflict */
+          return NULL;
+        }
+        res = bzla_bv_copy(mm, x->lo);
+      }
+      else
+      {
+        ones = bzla_bv_ones(mm, bw);
+        tmp  = bzla_bv_one(mm, bw);
+        bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, tmp, ones);
+        if (!bzla_bvdomain_gen_has_next(&gen))
+        {
+          /* non-recoverable conflict */
+          bzla_bvdomain_gen_delete(&gen);
+          bzla_bv_free(mm, tmp);
+          bzla_bv_free(mm, ones);
+          return NULL;
+        }
+        res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+        bzla_bvdomain_gen_delete(&gen);
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, ones);
+      }
     }
-    ones = bzla_bv_ones(mm, bw);
-    tmp  = bzla_bv_one(mm, bw);
-    res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
-    bzla_bv_free(mm, tmp);
-    bzla_bv_free(mm, ones);
+    else
+    {
+      ones = bzla_bv_ones(mm, bw);
+      tmp  = bzla_bv_one(mm, bw);
+      res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
+      bzla_bv_free(mm, tmp);
+      bzla_bv_free(mm, ones);
+    }
   }
   else if (!idx_x && isult)
   {
     /* res < s = 1  ->  0 <= res < 1...1 */
-    if (x && bzla_bvdomain_is_fixed(mm, x) && bzla_bv_is_ones(x->lo))
+    if (x)
     {
-      /* non-recoverable conflict */
-      return NULL;
+      if (bzla_bvdomain_is_fixed(mm, x))
+      {
+        if (bzla_bv_is_ones(x->lo))
+        {
+          /* non-recoverable conflict */
+          return NULL;
+        }
+        res = bzla_bv_copy(mm, x->lo);
+      }
+      else
+      {
+        zero = bzla_bv_new(mm, bw);
+        ones = bzla_bv_ones(mm, bw);
+        tmp  = bzla_bv_dec(mm, ones);
+        bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
+        if (!bzla_bvdomain_gen_has_next(&gen))
+        {
+          /* non-recoverable conflict */
+          bzla_bvdomain_gen_delete(&gen);
+          bzla_bv_free(mm, tmp);
+          bzla_bv_free(mm, ones);
+          bzla_bv_free(mm, zero);
+          return NULL;
+        }
+        res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, ones);
+        bzla_bv_free(mm, zero);
+      }
     }
-    zero = bzla_bv_new(mm, bw);
-    ones = bzla_bv_ones(mm, bw);
-    tmp  = bzla_bv_dec(mm, ones);
-    res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
-    bzla_bv_free(mm, tmp);
-    bzla_bv_free(mm, zero);
-    bzla_bv_free(mm, ones);
+    else
+    {
+      zero = bzla_bv_new(mm, bw);
+      ones = bzla_bv_ones(mm, bw);
+      tmp  = bzla_bv_dec(mm, ones);
+      res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
+      bzla_bv_free(mm, tmp);
+      bzla_bv_free(mm, ones);
+      bzla_bv_free(mm, zero);
+    }
+  }
+  else if (x && bzla_bvdomain_is_fixed(mm, x))
+  {
+    res = bzla_bv_copy(mm, x->lo);
   }
   else
   {
