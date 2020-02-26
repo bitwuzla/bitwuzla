@@ -140,7 +140,6 @@ move(Bzla *bzla)
   assert(bzla);
 
   BZLALOG(1, "");
-  BZLALOG(1, "*** move");
 
   BzlaNode *root, *input;
   BzlaBitVector *bvroot, *assignment;
@@ -156,6 +155,10 @@ move(Bzla *bzla)
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
   assert(BZLA_EMPTY_STACK(slv->prop_path));
+
+  BZLALOG(1, "*** move %u", slv->stats.moves + 1);
+  BZLALOG(1, "unsatisfied roots: %u", slv->roots->count);
+
   nprops = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
 
   bvroot = 0;
