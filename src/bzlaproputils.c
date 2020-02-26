@@ -1409,7 +1409,7 @@ bzla_proputils_cons_mul(Bzla *bzla,
 #ifndef NDEBUG
   check_cons_dbg(bzla, mul, t, s, idx_x, domains, true);
 #endif
-  uint32_t r, bw, ctz_res, ctz_bvmul;
+  uint32_t r, bw, ctz_res, ctz_t;
   BzlaBitVector *res, *tmp;
   BzlaMemMgr *mm;
 
@@ -1441,21 +1441,20 @@ bzla_proputils_cons_mul(Bzla *bzla,
      *               than in t */
     else
     {
-      ctz_bvmul = bzla_bv_get_num_trailing_zeros(t);
+      ctz_t = bzla_bv_get_num_trailing_zeros(t);
       /* choose res as 2^n with ctz(t) >= ctz(res) with prob 0.1 */
       if (bzla_rng_pick_with_prob(&bzla->rng, 100))
       {
         bzla_bv_free(mm, res);
         res = bzla_bv_new(mm, bw);
-        bzla_bv_set_bit(
-            res, bzla_rng_pick_rand(&bzla->rng, 0, ctz_bvmul - 1), 1);
+        bzla_bv_set_bit(res, bzla_rng_pick_rand(&bzla->rng, 0, ctz_t - 1), 1);
       }
       /* choose res as t / 2^n with prob 0.1
        * (note: bw not necessarily power of 2 -> do not use srl) */
       else if (bzla_rng_pick_with_prob(&bzla->rng, 100))
       {
         bzla_bv_free(mm, res);
-        if ((r = bzla_rng_pick_rand(&bzla->rng, 0, ctz_bvmul)))
+        if ((r = bzla_rng_pick_rand(&bzla->rng, 0, ctz_t)))
         {
           tmp = bzla_bv_slice(mm, t, bw - 1, r);
           res = bzla_bv_uext(mm, tmp, r);
@@ -1470,9 +1469,8 @@ bzla_proputils_cons_mul(Bzla *bzla,
       else
       {
         ctz_res = bzla_bv_get_num_trailing_zeros(res);
-        if (ctz_res > ctz_bvmul)
-          bzla_bv_set_bit(
-              res, bzla_rng_pick_rand(&bzla->rng, 0, ctz_bvmul - 1), 1);
+        if (ctz_res > ctz_t)
+          bzla_bv_set_bit(res, bzla_rng_pick_rand(&bzla->rng, 0, ctz_t - 1), 1);
       }
     }
   }
@@ -1834,8 +1832,96 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
                               BzlaIntHashTable *domains,
                               BzlaBvDomain *d_res_x)
 {
-  // TODO
-  return bzla_proputils_cons_mul(bzla, mul, t, s, idx_x, domains, d_res_x);
+#ifndef NDEBUG
+  check_cons_dbg(bzla, mul, t, s, idx_x, domains, true);
+#endif
+  bool is_fixed;
+  uint32_t i, bw, ctz_t;
+  BzlaBitVector *res, *zero;
+  BzlaBvDomain *x;
+  BzlaBvDomainGenerator gen;
+  BzlaMemMgr *mm;
+
+  mm = bzla->mm;
+  x  = bzla_hashint_map_get(domains, bzla_node_get_id(mul->e[idx_x]))->as_ptr;
+  bw = bzla_bv_get_width(t);
+
+  res = bzla_proputils_cons_mul(bzla, mul, t, s, idx_x, domains, d_res_x);
+
+  if (!bzla_bvdomain_check_fixed_bits(mm, x, res))
+  {
+    bzla_bv_free(mm, res);
+    zero     = bzla_bv_new(mm, bw);
+    is_fixed = bzla_bvdomain_is_fixed(mm, x);
+
+    if (!bzla_bv_is_zero(t))
+    {
+      if (is_fixed && bzla_bv_is_zero(x->lo))
+      {
+        /* non-recoverable conflict */
+        bzla_bv_free(mm, zero);
+        return NULL;
+      }
+      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, 0);
+    }
+    else
+    {
+      bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+    }
+
+    if (bzla_bv_get_bit(t, 0))
+    {
+      /* t odd, res must be odd */
+      if (bzla_bvdomain_is_fixed_bit_false(x, 0))
+      {
+        /* non-recoverable conflict */
+        bzla_bv_free(mm, zero);
+        bzla_bvdomain_gen_delete(&gen);
+        return NULL;
+      }
+      if (is_fixed)
+      {
+        assert(bzla_bvdomain_is_fixed_bit_true(x, 0));
+        res = bzla_bv_copy(mm, x->lo);
+      }
+      else
+      {
+        if (!bzla_bvdomain_gen_has_next(&gen))
+        {
+          /* non-recoverable conflict */
+          bzla_bv_free(mm, zero);
+          bzla_bvdomain_gen_delete(&gen);
+          return NULL;
+        }
+        res = bzla_bv_copy(mm, bzla_bvdomain_gen_next(&gen));
+        bzla_bv_set_bit(res, 0, 1);
+      }
+    }
+    else
+    {
+      /* t even, res can be either with ctz(t) >= ctz(res) */
+      if (is_fixed)
+      {
+        res = bzla_bv_copy(mm, x->lo);
+      }
+      else
+      {
+        res = bzla_bv_copy(mm, bzla_bvdomain_gen_next(&gen));
+      }
+      ctz_t = bzla_bv_get_num_trailing_zeros(t);
+      for (i = 0; i < ctz_t; i++)
+      {
+        if (bzla_bvdomain_is_fixed_bit_true(x, i))
+        {
+          bzla_bv_free(mm, zero);
+          bzla_bvdomain_gen_delete(&gen);
+          return NULL;
+        }
+        if (!is_fixed) bzla_bv_set_bit(res, i, 0);
+      }
+    }
+  }
+  return res;
 }
 
 BzlaBitVector *
