@@ -1920,6 +1920,7 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
         if (!is_fixed) bzla_bv_set_bit(res, i, 0);
       }
     }
+    bzla_bvdomain_gen_delete(&gen);
   }
   return res;
 }
