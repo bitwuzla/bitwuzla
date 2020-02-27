@@ -54,6 +54,7 @@ select_path_log(Bzla *bzla, BzlaNode *exp, BzlaBitVector *s[], uint32_t idx_x)
   exp = bzla_node_real_addr(exp);
   char *a;
   BzlaMemMgr *mm = bzla->mm;
+  BzlaHashTableData *d;
 
   BZLALOG(2, "");
   BZLALOG(2, "select path: %s", bzla_util_node2string(exp));
@@ -64,16 +65,26 @@ select_path_log(Bzla *bzla, BzlaNode *exp, BzlaBitVector *s[], uint32_t idx_x)
     BZLALOG(
         2, "       e[%zu]: %s (%s)", i, bzla_util_node2string(exp->e[i]), a);
     bzla_mem_freestr(mm, a);
+
+    if (BZLA_PROP_SOLVER(bzla)->domains)
+    {
+      d = bzla_hashint_map_get(BZLA_PROP_SOLVER(bzla)->domains,
+                               bzla_node_get_id(exp->e[i]));
+      if (d)
+      {
+        BZLALOG(2, "       domain: %s", bzla_bvdomain_to_str(d->as_ptr));
+      }
+    }
   }
 
   BZLALOG(2, "    * chose: %u", idx_x);
   if (BZLA_PROP_SOLVER(bzla)->domains)
   {
-    BzlaHashTableData *d = bzla_hashint_map_get(
-        BZLA_PROP_SOLVER(bzla)->domains, bzla_node_get_id(exp->e[idx_x]));
+    d = bzla_hashint_map_get(BZLA_PROP_SOLVER(bzla)->domains,
+                             bzla_node_get_id(exp->e[idx_x]));
     if (d)
     {
-      BZLALOG(2, "    * domain: %s", bzla_bvdomain_to_str(d->as_ptr));
+      BZLALOG(2, "      domain: %s", bzla_bvdomain_to_str(d->as_ptr));
     }
   }
 }
