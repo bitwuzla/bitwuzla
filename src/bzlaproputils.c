@@ -1175,6 +1175,7 @@ cons_sll_aux(Bzla *bzla,
         return NULL;
       }
       bv_shift = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+      shift    = bzla_bv_to_uint64(bv_shift);
       bzla_bv_free(mm, zero);
       bzla_bv_free(mm, tmp);
       bzla_bvdomain_gen_delete(&gen);
@@ -1185,6 +1186,7 @@ cons_sll_aux(Bzla *bzla,
       bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
     }
   }
+  if (shift >= bw) shift = bw;
 
   if (idx_x)
   {
@@ -1316,6 +1318,7 @@ cons_srl_aux(Bzla *bzla,
         return NULL;
       }
       bv_shift = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+      shift    = bzla_bv_to_uint64(bv_shift);
       bzla_bv_free(mm, zero);
       bzla_bv_free(mm, tmp);
       bzla_bvdomain_gen_delete(&gen);
@@ -1326,6 +1329,7 @@ cons_srl_aux(Bzla *bzla,
       bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
     }
   }
+  if (shift >= bw) shift = bw;
 
   if (idx_x)
   {
