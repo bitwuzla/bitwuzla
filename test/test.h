@@ -69,6 +69,13 @@ class TestCommon : public ::testing::Test
                            std::istreambuf_iterator<char>(out_file.rdbuf())));
   }
 
+  void log(const std::string &msg)
+  {
+    std::cerr << "\033[0;32m"
+              << "[          ] "
+              << "\033[0;0m" << msg << std::endl;
+  }
+
   std::string d_log_file_name;
   std::string d_out_file_name;
   FILE *d_log_file      = nullptr;

@@ -26,6 +26,7 @@ set(test_names
   overflow
   parseerror
   prop
+  propcons
   propinv
   rotate
   queue
