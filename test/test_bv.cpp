@@ -17,6 +17,16 @@ extern "C" {
 #include "bzlabv.h"
 }
 
+#define TEST_BV_IS_UADDO_BITVEC(bw, v0, v1, res)      \
+  do                                                  \
+  {                                                   \
+    bv0 = bzla_bv_uint64_to_bv(d_mm, v0, bw);         \
+    bv1 = bzla_bv_uint64_to_bv(d_mm, v1, bw);         \
+    ASSERT_EQ(bzla_bv_is_uaddo(d_mm, bv0, bv1), res); \
+    bzla_bv_free(d_mm, bv0);                          \
+    bzla_bv_free(d_mm, bv1);                          \
+  } while (0)
+
 #define TEST_BV_IS_UMULO_BITVEC(bw, v0, v1, res)      \
   do                                                  \
   {                                                   \
@@ -683,6 +693,32 @@ class TestBv : public TestBzla
       bzla_bv_free(d_mm, bv1);
       bzla_bv_free(d_mm, bv2);
       bzla_bv_free(d_mm, bv3);
+    }
+  }
+
+  void is_uaddo_bitvec(uint32_t bw)
+  {
+    BzlaBitVector *bv0, *bv1;
+
+    switch (bw)
+    {
+      case 1:
+        TEST_BV_IS_UADDO_BITVEC(bw, 0, 0, false);
+        TEST_BV_IS_UADDO_BITVEC(bw, 0, 1, false);
+        TEST_BV_IS_UADDO_BITVEC(bw, 1, 1, true);
+        break;
+      case 7:
+        TEST_BV_IS_UADDO_BITVEC(bw, 3, 6, false);
+        TEST_BV_IS_UADDO_BITVEC(bw, 126, 2, true);
+        break;
+      case 31:
+        TEST_BV_IS_UADDO_BITVEC(bw, 15, 78, false);
+        TEST_BV_IS_UADDO_BITVEC(bw, 2147483647, 2147483650, true);
+        break;
+      case 33:
+        TEST_BV_IS_UADDO_BITVEC(bw, 15, 78, false);
+        TEST_BV_IS_UADDO_BITVEC(bw, 4294967295, 4294967530, true);
+        break;
     }
   }
 
@@ -2742,6 +2778,14 @@ TEST_F(TestBv, flipped_bit_range)
   flipped_bit_range_bitvec(31);
   flipped_bit_range_bitvec(33);
   flipped_bit_range_bitvec(64);
+}
+
+TEST_F(TestBv, is_uaddo)
+{
+  is_uaddo_bitvec(1);
+  is_uaddo_bitvec(7);
+  is_uaddo_bitvec(31);
+  is_uaddo_bitvec(33);
 }
 
 TEST_F(TestBv, is_umulo)

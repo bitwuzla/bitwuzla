@@ -424,7 +424,12 @@ BzlaBitVector *bzla_bv_flipped_bit_range(BzlaMemMgr *mm,
 
 /*------------------------------------------------------------------------*/
 
-/** Return true if 'bv0' * 'bv1' produces an overflow. */
+/** Return true if the unsigned addition 'bv0 + bv1' produces an overflow. */
+bool bzla_bv_is_uaddo(BzlaMemMgr *mm,
+                      const BzlaBitVector *a,
+                      const BzlaBitVector *b);
+
+/** Return true if unsigned multiplication 'bv0 * bv1' produces an overflow. */
 bool bzla_bv_is_umulo(BzlaMemMgr *mm,
                       const BzlaBitVector *bv0,
                       const BzlaBitVector *bv1);

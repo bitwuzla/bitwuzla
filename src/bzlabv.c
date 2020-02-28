@@ -2758,6 +2758,42 @@ bzla_bv_flipped_bit_range(BzlaMemMgr *mm,
 /*------------------------------------------------------------------------*/
 
 bool
+bzla_bv_is_uaddo(BzlaMemMgr *mm, const BzlaBitVector *a, const BzlaBitVector *b)
+{
+  assert(mm);
+  assert(a);
+  assert(b);
+  assert(a->width == b->width);
+#ifndef BZLA_USE_GMP
+  assert(a->len == b->len);
+#endif
+  bool res    = false;
+  uint32_t bw = a->width;
+
+#ifdef BZLA_USE_GMP
+  (void) mm;
+  mpz_t add;
+  mpz_init(add);
+  mpz_add(add, a->val, b->val);
+  mpz_fdiv_q_2exp(add, add, bw);
+  res = mpz_cmp_ui(add, 0) != 0;
+  mpz_clear(add);
+#else
+  BzlaBitVector *aext, *bext, *add, *o;
+  aext = bzla_bv_uext(mm, a, 1);
+  bext = bzla_bv_uext(mm, b, 1);
+  add = bzla_bv_add(mm, aext, bext);
+  o = bzla_bv_slice(mm, add, bw, bw);
+  res = bzla_bv_is_one(o);
+  bzla_bv_free(mm, aext);
+  bzla_bv_free(mm, bext);
+  bzla_bv_free(mm, add);
+  bzla_bv_free(mm, o);
+#endif
+  return res;
+}
+
+bool
 bzla_bv_is_umulo(BzlaMemMgr *mm, const BzlaBitVector *a, const BzlaBitVector *b)
 {
   assert(mm);
@@ -2767,7 +2803,6 @@ bzla_bv_is_umulo(BzlaMemMgr *mm, const BzlaBitVector *a, const BzlaBitVector *b)
 #ifndef BZLA_USE_GMP
   assert(a->len == b->len);
 #endif
-
   bool res    = false;
   uint32_t bw = a->width;
 
@@ -2787,7 +2822,7 @@ bzla_bv_is_umulo(BzlaMemMgr *mm, const BzlaBitVector *a, const BzlaBitVector *b)
     bext = bzla_bv_uext(mm, b, bw);
     mul = bzla_bv_mul(mm, aext, bext);
     o = bzla_bv_slice(mm, mul, mul->width - 1, bw);
-    if (!bzla_bv_is_zero(o)) res = true;
+    res = !bzla_bv_is_zero(o);
     bzla_bv_free(mm, aext);
     bzla_bv_free(mm, bext);
     bzla_bv_free(mm, mul);
