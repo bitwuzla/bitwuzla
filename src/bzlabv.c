@@ -2608,6 +2608,7 @@ bzla_bv_slice(BzlaMemMgr *mm,
   assert(mm);
   assert(bv);
   assert(bv->width > upper);
+  assert(upper >= lower);
 
   BzlaBitVector *res;
   uint32_t bw = upper - lower + 1;
