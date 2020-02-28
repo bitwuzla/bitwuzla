@@ -1079,6 +1079,7 @@ cons_ult_aux(Bzla *bzla,
         bzla_bv_free(mm, tmp);
         bzla_bv_free(mm, ones);
         bzla_bv_free(mm, zero);
+        bzla_bvdomain_gen_delete(&gen);
       }
     }
     else
