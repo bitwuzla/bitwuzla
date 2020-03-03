@@ -32,15 +32,16 @@ typedef int32_t (*BzlaPropSelectPath)(Bzla *,
  * Create a bit-vector with all bits that are const bits in domain d_res_x
  * set to their const value, and all other bits set to their value in res_x.
  */
-static BzlaBitVector *
-set_const_bits(BzlaMemMgr *mm, BzlaBvDomain *d_res_x, BzlaBitVector *res_x)
+static void
+set_const_bits(BzlaMemMgr *mm, BzlaBvDomain *d, BzlaBitVector **res)
 {
-  assert(d_res_x);
-  assert(res_x);
-  BzlaBitVector *tmp = bzla_bv_and(mm, d_res_x->hi, res_x);
-  BzlaBitVector *res = bzla_bv_or(mm, d_res_x->lo, tmp);
+  assert(d);
+  assert(res);
+  assert(*res);
+  BzlaBitVector *tmp = bzla_bv_and(mm, d->hi, *res);
+  bzla_bv_free(mm, *res);
+  *res = bzla_bv_or(mm, d->lo, tmp);
   bzla_bv_free(mm, tmp);
-  return res;
 }
 
 /* ========================================================================== */
@@ -1099,15 +1100,10 @@ cons_ult_aux(Bzla *bzla,
   }
   else
   {
-    tmp = bzla_bv_new_random(mm, &bzla->rng, bw);
+    res = bzla_bv_new_random(mm, &bzla->rng, bw);
     if (x)
     {
-      res = set_const_bits(mm, x, tmp);
-      bzla_bv_free(mm, tmp);
-    }
-    else
-    {
-      res = tmp;
+      set_const_bits(mm, x, &res);
     }
   }
 
@@ -1167,7 +1163,7 @@ cons_sll_aux(Bzla *bzla,
     bv_shift = bzla_bv_new_random(mm, &bzla->rng, bw);
     if (x && idx_x)
     {
-      set_const_bits(mm, x, bv_shift);
+      set_const_bits(mm, x, &bv_shift);
     }
   }
   else
@@ -1211,7 +1207,7 @@ cons_sll_aux(Bzla *bzla,
       res = bzla_bv_new_random(mm, &bzla->rng, bw);
       if (x)
       {
-        set_const_bits(mm, x, bv_shift);
+        set_const_bits(mm, x, &res);
       }
     }
     else
@@ -1310,7 +1306,7 @@ cons_srl_aux(Bzla *bzla,
     bv_shift = bzla_bv_new_random(mm, &bzla->rng, bw);
     if (x && idx_x)
     {
-      set_const_bits(mm, x, bv_shift);
+      set_const_bits(mm, x, &bv_shift);
     }
   }
   else
@@ -1354,7 +1350,7 @@ cons_srl_aux(Bzla *bzla,
       res = bzla_bv_new_random(mm, &bzla->rng, bw);
       if (x)
       {
-        set_const_bits(mm, x, bv_shift);
+        set_const_bits(mm, x, &res);
       }
     }
     else
@@ -1727,7 +1723,7 @@ bzla_proputils_cons_add_const(Bzla *bzla,
 #endif
   (void) d_res_x;
 
-  BzlaBitVector *tmp, *res;
+  BzlaBitVector *res;
   BzlaBvDomain *x;
   BzlaMemMgr *mm;
 
@@ -1736,9 +1732,8 @@ bzla_proputils_cons_add_const(Bzla *bzla,
   mm = bzla->mm;
   x  = bzla_hashint_map_get(domains, bzla_node_get_id(add->e[idx_x]))->as_ptr;
   if (bzla_bvdomain_is_fixed(mm, x)) return bzla_bv_copy(mm, x->lo);
-  tmp = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
-  res = set_const_bits(mm, x, tmp);
-  bzla_bv_free(mm, tmp);
+  res = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
+  set_const_bits(mm, x, &res);
   return res;
 }
 
@@ -1754,7 +1749,7 @@ bzla_proputils_cons_and_const(Bzla *bzla,
 #ifndef NDEBUG
   check_cons_dbg(bzla, and, t, s, idx_x, domains, true);
 #endif
-  BzlaBitVector *tmp, *res;
+  BzlaBitVector *res;
   BzlaBvDomain *x;
   BzlaMemMgr *mm;
   (void) d_res_x;
@@ -1773,9 +1768,8 @@ bzla_proputils_cons_and_const(Bzla *bzla,
       return NULL;
     }
   }
-  tmp = bzla_proputils_cons_and(bzla, and, t, s, idx_x, domains, d_res_x);
-  res = set_const_bits(mm, x, tmp);
-  bzla_bv_free(mm, tmp);
+  res = bzla_proputils_cons_and(bzla, and, t, s, idx_x, domains, d_res_x);
+  set_const_bits(mm, x, &res);
   return res;
 }
 
@@ -3771,9 +3765,8 @@ bzla_proputils_inv_and_const(Bzla *bzla,
   }
   else
   {
-    tmp = bzla_proputils_inv_and(bzla, and, t, s, idx_x, domains, 0);
-    res = set_const_bits(mm, x, tmp);
-    bzla_bv_free(mm, tmp);
+    res = bzla_proputils_inv_and(bzla, and, t, s, idx_x, domains, 0);
+    set_const_bits(mm, x, &res);
   }
   return res;
 }
@@ -3825,9 +3818,8 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
   }
   else
   {
-    tmp = bzla_proputils_inv_eq(bzla, eq, t, s, idx_x, domains, 0);
-    res = set_const_bits(mm, x, tmp);
-    bzla_bv_free(mm, tmp);
+    res = bzla_proputils_inv_eq(bzla, eq, t, s, idx_x, domains, 0);
+    set_const_bits(mm, x, &res);
   }
   return res;
 }
@@ -4019,9 +4011,8 @@ bzla_proputils_inv_sll_const(Bzla *bzla,
   else
   {
     assert(d_res_x == 0);
-    tmp = bzla_proputils_inv_sll(bzla, sll, t, s, idx_x, domains, 0);
-    res = set_const_bits(mm, x, tmp);
-    bzla_bv_free(mm, tmp);
+    res = bzla_proputils_inv_sll(bzla, sll, t, s, idx_x, domains, 0);
+    set_const_bits(mm, x, &res);
   }
   return res;
 }
@@ -4100,9 +4091,8 @@ bzla_proputils_inv_srl_const(Bzla *bzla,
   else
   {
     assert(d_res_x == 0);
-    tmp = bzla_proputils_inv_srl(bzla, srl, t, s, idx_x, domains, 0);
-    res = set_const_bits(mm, x, tmp);
-    bzla_bv_free(mm, tmp);
+    res = bzla_proputils_inv_srl(bzla, srl, t, s, idx_x, domains, 0);
+    set_const_bits(mm, x, &res);
   }
   return res;
 }
@@ -4165,9 +4155,8 @@ bzla_proputils_inv_mul_const(Bzla *bzla,
     }
     else
     {
-      tmp = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
-      res = set_const_bits(mm, d_res_x, tmp);
-      bzla_bv_free(mm, tmp);
+      res = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
+      set_const_bits(mm, d_res_x, &res);
     }
   }
   else
@@ -4176,9 +4165,8 @@ bzla_proputils_inv_mul_const(Bzla *bzla,
     {
       record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
 
-      tmp = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
-      res = set_const_bits(mm, x, tmp);
-      bzla_bv_free(mm, tmp);
+      res = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
+      set_const_bits(mm, x, &res);
     }
     else
     {
