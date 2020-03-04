@@ -71,7 +71,7 @@ class TestPropCons : public TestBvDomainCommon
   {
     uint32_t expected_result;
     Bzla *bzla;
-    BzlaSortId sort;
+    BzlaSortId sort_x, sort_s;
     BzlaBvDomain *d_x;
     BzlaBitVector *bv_s, *bv_t, *bv_x, *bv_cur_x;
     BzlaIntHashTable *domains;
@@ -92,24 +92,34 @@ class TestPropCons : public TestBvDomainCommon
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
     bzla_opt_set(bzla, BZLA_OPT_CHK_MODEL, 0);
 
-    sort = bzla_sort_bv(bzla, TEST_PROPCONS_BW);
+    if (expr_fun == bzla_exp_bv_concat)
+    {
+      sort_x = bzla_sort_bv(bzla, TEST_PROPCONS_BW);
+      sort_s = bzla_sort_bv(bzla, TEST_PROPCONS_BW - 1);
+    }
+    else
+    {
+      sort_x = bzla_sort_bv(bzla, TEST_PROPCONS_BW);
+      sort_s = bzla_sort_copy(bzla, sort_x);
+    }
 
     bzla_rng_init(&rng, 0);
 
     if (pos_x == 0)
     {
-      x    = bzla_exp_var(bzla, sort, "x");
-      s    = bzla_exp_var(bzla, sort, "s");
+      x    = bzla_exp_var(bzla, sort_x, "x");
+      s    = bzla_exp_var(bzla, sort_s, "s");
       expr = expr_fun(bzla, x, s);
     }
     else
     {
-      s    = bzla_exp_var(bzla, sort, "s");
-      x    = bzla_exp_var(bzla, sort, "x");
+      s    = bzla_exp_var(bzla, sort_s, "s");
+      x    = bzla_exp_var(bzla, sort_x, "x");
       expr = expr_fun(bzla, s, x);
     }
 
-    bzla_sort_release(bzla, sort);
+    bzla_sort_release(bzla, sort_x);
+    bzla_sort_release(bzla, sort_s);
 
     gen_xvalues(bzla_node_bv_get_width(bzla, x), values_x);
     gen_values(bzla_node_bv_get_width(bzla, s), values_s);
