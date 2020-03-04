@@ -1938,9 +1938,9 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
 #ifndef NDEBUG
   check_cons_dbg(bzla, mul, t, s, idx_x, domains, true);
 #endif
-  bool is_fixed;
+  bool is_fixed, ctz_ok;
   uint32_t i, bw, ctz_t;
-  BzlaBitVector *res, *zero;
+  BzlaBitVector *res, *one;
   BzlaBvDomain *x;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
@@ -1954,7 +1954,6 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
   if (!bzla_bvdomain_check_fixed_bits(mm, x, res))
   {
     bzla_bv_free(mm, res);
-    zero     = bzla_bv_new(mm, bw);
     is_fixed = bzla_bvdomain_is_fixed(mm, x);
 
     if (!bzla_bv_is_zero(t))
@@ -1962,10 +1961,11 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
       if (is_fixed && bzla_bv_is_zero(x->lo))
       {
         /* non-recoverable conflict */
-        bzla_bv_free(mm, zero);
         return NULL;
       }
-      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, 0);
+      one = bzla_bv_one(mm, bw);
+      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, one, 0);
+      bzla_bv_free(mm, one);
     }
     else
     {
@@ -1978,7 +1978,6 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
       if (bzla_bvdomain_is_fixed_bit_false(x, 0))
       {
         /* non-recoverable conflict */
-        bzla_bv_free(mm, zero);
         bzla_bvdomain_gen_delete(&gen);
         return NULL;
       }
@@ -1992,13 +1991,16 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
         if (!bzla_bvdomain_gen_has_next(&gen))
         {
           /* non-recoverable conflict */
-          bzla_bv_free(mm, zero);
           bzla_bvdomain_gen_delete(&gen);
           return NULL;
         }
         res = bzla_bv_copy(mm, bzla_bvdomain_gen_next(&gen));
         bzla_bv_set_bit(res, 0, 1);
       }
+    }
+    else if (bzla_bv_is_zero(t))
+    {
+      res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
     }
     else
     {
@@ -2012,16 +2014,26 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
         res = bzla_bv_copy(mm, bzla_bvdomain_gen_next(&gen));
       }
       ctz_t = bzla_bv_get_num_trailing_zeros(t);
-      for (i = 0; i < ctz_t; i++)
+      for (i = 0, ctz_ok = false; i < ctz_t; i++)
       {
-        if (bzla_bvdomain_is_fixed_bit_true(x, i))
+        if (!bzla_bvdomain_is_fixed_bit_false(x, i))
         {
-          bzla_bv_free(mm, zero);
-          bzla_bvdomain_gen_delete(&gen);
-          return NULL;
+          ctz_ok = true;
+          break;
         }
-        if (!is_fixed) bzla_bv_set_bit(res, i, 0);
       }
+      if (!ctz_ok && bzla_bvdomain_is_fixed_bit_false(x, ctz_t))
+      {
+        /* non-recoverable conflict */
+        bzla_bvdomain_gen_delete(&gen);
+        bzla_bv_free(mm, res);
+        return NULL;
+      }
+      do
+      {
+        i = bzla_rng_pick_rand(&bzla->rng, 0, ctz_t);
+      } while (bzla_bvdomain_is_fixed_bit_false(x, i));
+      bzla_bv_set_bit(res, i, 1);
     }
     bzla_bvdomain_gen_delete(&gen);
   }
