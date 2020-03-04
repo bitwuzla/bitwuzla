@@ -1870,7 +1870,120 @@ bzla_proputils_cons_srl_const(Bzla *bzla,
                               BzlaIntHashTable *domains,
                               BzlaBvDomain *d_res_x)
 {
-  return cons_srl_aux(bzla, srl, t, s, idx_x, domains, d_res_x, true);
+#ifndef NDEBUG
+  check_cons_dbg(bzla, srl, t, s, idx_x, domains, true);
+#endif
+  uint32_t i, r, bw, bw_l, clz_t, shift, max;
+  BzlaBitVector *res, *left, *right, *zero, *tmp, *t_slice;
+  BzlaBvDomain *x, *x_slice;
+  BzlaBvDomainGenerator gen;
+  BzlaMemMgr *mm;
+
+  (void) srl;
+  (void) s;
+  (void) domains;
+  (void) d_res_x;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_srl);
+
+  mm    = bzla->mm;
+  bw    = bzla_bv_get_width(t);
+  clz_t = bzla_bv_get_num_leading_zeros(t);
+
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(srl->e[idx_x]))->as_ptr;
+
+  if (idx_x)
+  {
+    if (bw >= 64 && clz_t == bw)
+    {
+      res = bzla_bv_new_random(mm, &bzla->rng, bw);
+      if (idx_x)
+      {
+        set_const_bits(mm, x, &res);
+      }
+    }
+    else
+    {
+      max = clz_t < bw ? clz_t : ((1u << bw) - 1);
+      if (idx_x)
+      {
+        tmp  = bzla_bv_uint64_to_bv(mm, max, bw);
+        zero = bzla_bv_new(mm, bw);
+        bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
+        if (!bzla_bvdomain_gen_has_next(&gen))
+        {
+          /* non-recoverable conflict */
+          bzla_bv_free(mm, zero);
+          bzla_bv_free(mm, tmp);
+          bzla_bvdomain_gen_delete(&gen);
+          return NULL;
+        }
+        res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+        bzla_bv_free(mm, zero);
+        bzla_bv_free(mm, tmp);
+        bzla_bvdomain_gen_delete(&gen);
+      }
+      else
+      {
+        shift = bzla_rng_pick_rand(&bzla->rng, 0, max);
+        res   = bzla_bv_uint64_to_bv(mm, shift, bw);
+      }
+    }
+  }
+  else if (bzla_bv_is_zero(t))
+  {
+    bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+    res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+    bzla_bvdomain_gen_delete(&gen);
+  }
+  else
+  {
+    BzlaBitVectorPtrStack stack;
+    BZLA_INIT_STACK(mm, stack);
+
+    for (i = clz_t; i != UINT32_MAX; i--)
+    {
+      x_slice = bzla_bvdomain_slice(mm, x, bw - 1, i);
+      t_slice = bzla_bv_slice(mm, t, bw - 1 - i, 0);
+      if (bzla_bvdomain_check_fixed_bits(mm, x_slice, t_slice))
+      {
+        BZLA_PUSH_STACK(stack, t_slice);
+      }
+      else
+      {
+        bzla_bv_free(mm, t_slice);
+      }
+      bzla_bvdomain_free(mm, x_slice);
+    }
+    if (BZLA_EMPTY_STACK(stack))
+    {
+      BZLA_RELEASE_STACK(stack);
+      return NULL;
+    }
+    r    = bzla_rng_pick_rand(&bzla->rng, 0, BZLA_COUNT_STACK(stack) - 1);
+    left = BZLA_PEEK_STACK(stack, r);
+    bw_l = bzla_bv_get_width(left);
+    if (bw == bw_l)
+    {
+      res = bzla_bv_copy(mm, left);
+    }
+    else
+    {
+      bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+      tmp   = bzla_bvdomain_gen_random(&gen);
+      right = bzla_bv_slice(mm, tmp, bw - 1 - bw_l, 0);
+      bzla_bvdomain_gen_delete(&gen);
+      res = bzla_bv_concat(mm, left, right);
+      bzla_bv_free(mm, right);
+    }
+
+    while (!BZLA_EMPTY_STACK(stack))
+    {
+      bzla_bv_free(mm, BZLA_POP_STACK(stack));
+    }
+    BZLA_RELEASE_STACK(stack);
+  }
+  return res;
 }
 
 BzlaBitVector *
