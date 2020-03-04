@@ -1439,7 +1439,7 @@ bzla_proputils_cons_urem(Bzla *bzla,
   check_cons_dbg(bzla, urem, t, s, idx_x, domains, true);
 #endif
   uint32_t bw;
-  BzlaBitVector *res, *ones, *tmp;
+  BzlaBitVector *res, *ones, *tmp, *max, *min;
   BzlaMemMgr *mm;
 
   (void) urem;
@@ -1455,14 +1455,14 @@ bzla_proputils_cons_urem(Bzla *bzla,
 
   if (idx_x)
   {
-    /* t = 1...1  ->  res = 0 */
     if (!bzla_bv_compare(t, ones))
     {
+      /* t = 1...1  ->  res = 0 */
       res = bzla_bv_new(mm, bw);
     }
-    /* else res > t */
     else
     {
+      /* else res > t */
       tmp = bzla_bv_inc(mm, t);
       res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
       bzla_bv_free(mm, tmp);
@@ -1470,15 +1470,29 @@ bzla_proputils_cons_urem(Bzla *bzla,
   }
   else
   {
-    /* t = 1...1  ->  res = 1...1 */
     if (!bzla_bv_compare(t, ones))
     {
+      /* t = 1...1  ->  res = 1...1 */
       res = bzla_bv_copy(mm, ones);
     }
-    /* else res >= t */
     else
     {
-      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, t, ones);
+      /* else res >= t:
+       * pick s > t such that x = s + t does not overflow -> t < s < ones - t */
+      max = bzla_bv_sub(mm, ones, t);
+      min = bzla_bv_inc(mm, t);
+      if (bzla_bv_compare(min, max) > 0)
+      {
+        res = bzla_bv_copy(mm, t);
+      }
+      else
+      {
+        tmp = bzla_bv_new_random_range(mm, &bzla->rng, bw, min, max);
+        res = bzla_bv_add(mm, tmp, t);
+        bzla_bv_free(mm, tmp);
+      }
+      bzla_bv_free(mm, min);
+      bzla_bv_free(mm, max);
     }
   }
 
