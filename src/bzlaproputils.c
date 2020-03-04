@@ -1994,7 +1994,7 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
           bzla_bvdomain_gen_delete(&gen);
           return NULL;
         }
-        res = bzla_bv_copy(mm, bzla_bvdomain_gen_next(&gen));
+        res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
         bzla_bv_set_bit(res, 0, 1);
       }
     }
@@ -2011,7 +2011,7 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
       }
       else
       {
-        res = bzla_bv_copy(mm, bzla_bvdomain_gen_next(&gen));
+        res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
       }
       ctz_t = bzla_bv_get_num_trailing_zeros(t);
       for (i = 0, ctz_ok = false; i < ctz_t; i++)
