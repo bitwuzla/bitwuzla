@@ -1123,23 +1123,20 @@ bzla_proputils_cons_ult(Bzla *bzla,
   return cons_ult_aux(bzla, ult, t, s, idx_x, domains, d_res_x, false);
 }
 
-static BzlaBitVector *
-cons_sll_aux(Bzla *bzla,
-             BzlaNode *sll,
-             BzlaBitVector *t,
-             BzlaBitVector *s,
-             int32_t idx_x,
-             BzlaIntHashTable *domains,
-             BzlaBvDomain *d_res_x,
-             bool with_const_bits)
+BzlaBitVector *
+bzla_proputils_cons_sll(Bzla *bzla,
+                        BzlaNode *sll,
+                        BzlaBitVector *t,
+                        BzlaBitVector *s,
+                        int32_t idx_x,
+                        BzlaIntHashTable *domains,
+                        BzlaBvDomain *d_res_x)
 {
 #ifndef NDEBUG
   check_cons_dbg(bzla, sll, t, s, idx_x, domains, true);
 #endif
   uint32_t bw, ctz_t, shift, max;
-  BzlaBitVector *res, *bv_shift, *left, *right, *zero, *tmp;
-  BzlaBvDomain *x;
-  BzlaBvDomainGenerator gen;
+  BzlaBitVector *res, *bv_shift, *left, *right;
   BzlaMemMgr *mm;
 
   (void) sll;
@@ -1153,48 +1150,16 @@ cons_sll_aux(Bzla *bzla,
   bw    = bzla_bv_get_width(t);
   ctz_t = bzla_bv_get_num_trailing_zeros(t);
 
-  x = with_const_bits
-          ? bzla_hashint_map_get(domains, bzla_node_get_id(sll->e[idx_x]))
-                ->as_ptr
-          : 0;
-
   if (bw >= 64 && ctz_t == bw)
   {
     shift    = bw;
     bv_shift = bzla_bv_new_random(mm, &bzla->rng, bw);
-    if (x && idx_x)
-    {
-      set_const_bits(mm, x, &bv_shift);
-    }
   }
   else
   {
-    max = ctz_t < bw ? ctz_t : ((1u << bw) - 1);
-    if (x && idx_x)
-    {
-      tmp  = bzla_bv_uint64_to_bv(mm, max, bw);
-      zero = bzla_bv_new(mm, bw);
-      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
-      if (!bzla_bvdomain_gen_has_next(&gen))
-      {
-        /* non-recoverable conflict */
-        printf("2\n");
-        bzla_bv_free(mm, zero);
-        bzla_bv_free(mm, tmp);
-        bzla_bvdomain_gen_delete(&gen);
-        return NULL;
-      }
-      bv_shift = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
-      shift    = bzla_bv_to_uint64(bv_shift);
-      bzla_bv_free(mm, zero);
-      bzla_bv_free(mm, tmp);
-      bzla_bvdomain_gen_delete(&gen);
-    }
-    else
-    {
-      shift    = bzla_rng_pick_rand(&bzla->rng, 0, max);
-      bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
-    }
+    max      = ctz_t < bw ? ctz_t : ((1u << bw) - 1);
+    shift    = bzla_rng_pick_rand(&bzla->rng, 0, max);
+    bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
   }
   if (shift >= bw) shift = bw;
 
@@ -1207,34 +1172,13 @@ cons_sll_aux(Bzla *bzla,
     if (shift == bw)
     {
       res = bzla_bv_new_random(mm, &bzla->rng, bw);
-      if (x)
-      {
-        set_const_bits(mm, x, &res);
-      }
     }
     else
     {
       if (shift)
       {
-        if (x)
-        {
-          if (bzla_bvdomain_is_fixed(mm, x))
-          {
-            left = bzla_bv_slice(mm, x->lo, bw - 1, bw - shift);
-          }
-          else
-          {
-            bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
-            left = bzla_bv_slice(
-                mm, bzla_bvdomain_gen_random(&gen), bw - 1, bw - shift);
-            bzla_bvdomain_gen_delete(&gen);
-          }
-        }
-        else
-        {
-          left = bzla_bv_new_random(mm, &bzla->rng, shift);
-        }
-        right = bzla_bv_slice(mm, t, bw - 1 - shift, 0);
+        left  = bzla_bv_new_random(mm, &bzla->rng, shift);
+        right = bzla_bv_slice(mm, t, bw - 1, shift);
         res   = bzla_bv_concat(mm, left, right);
         bzla_bv_free(mm, left);
         bzla_bv_free(mm, right);
@@ -1243,32 +1187,10 @@ cons_sll_aux(Bzla *bzla,
       {
         res = bzla_bv_copy(mm, t);
       }
-      printf("res ");
-      bzla_bv_print(res);
-      if (x && !bzla_bvdomain_check_fixed_bits(mm, x, res))
-      {
-        /* non-recoverable conflict */
-        printf("1\n");
-        bzla_bv_free(mm, bv_shift);
-        bzla_bv_free(mm, res);
-        return NULL;
-      }
     }
     bzla_bv_free(mm, bv_shift);
   }
   return res;
-}
-
-BzlaBitVector *
-bzla_proputils_cons_sll(Bzla *bzla,
-                        BzlaNode *sll,
-                        BzlaBitVector *t,
-                        BzlaBitVector *s,
-                        int32_t idx_x,
-                        BzlaIntHashTable *domains,
-                        BzlaBvDomain *d_res_x)
-{
-  return cons_sll_aux(bzla, sll, t, s, idx_x, domains, d_res_x, false);
 }
 
 static BzlaBitVector *

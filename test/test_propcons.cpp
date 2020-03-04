@@ -274,13 +274,11 @@ TEST_F(TestPropCons, cons_mul)
   test_binary(bzla_exp_bv_mul, bzla_proputils_cons_mul, 1, false);
 }
 
-#if 0
-TEST_F (TestPropCons, cons_sll)
+TEST_F(TestPropCons, cons_sll)
 {
-  test_binary (bzla_exp_bv_sll, bzla_proputils_cons_sll, 0, false);
-  test_binary (bzla_exp_bv_sll, bzla_proputils_cons_sll, 1, false);
+  test_binary(bzla_exp_bv_sll, bzla_proputils_cons_sll, 0, false);
+  test_binary(bzla_exp_bv_sll, bzla_proputils_cons_sll, 1, false);
 }
-#endif
 
 TEST_F(TestPropCons, cons_srl)
 {
