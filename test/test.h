@@ -246,7 +246,7 @@ class TestFile : public TestBoolector
   std::string d_dump_format = "btor";
 };
 
-class TestBvDomain : public TestMm
+class TestBvDomainCommon : public TestMm
 {
  protected:
   /* Initialize all possible values for 3-valued constants of bit-width bw */

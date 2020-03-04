@@ -1,6 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2020 Mathias Preiner.
+ *  Copyright (C) 2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -11,16 +12,11 @@
 
 extern "C" {
 #include "bzlabv.h"
-//#include "bzlabvprop.h"
 #include "bzlaclone.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
-//#include "bzlainvutils.h"
-//#include "bzlanode.h"
 #include "bzlaproputils.h"
 #include "bzlaslvprop.h"
-//#include "bzlaslvsls.h"
-//#include "utils/bzlautil.h"
 }
 
 #define TEST_PROPCONS_BW 3
@@ -36,7 +32,7 @@ using BzlaConsFun = std::add_pointer<BzlaBitVector *(Bzla *,
                                                      BzlaIntHashTable *,
                                                      BzlaBvDomain *)>::type;
 
-class TestPropCons : public TestBvDomain
+class TestPropCons : public TestBvDomainCommon
 {
  protected:
   void gen_xvalues(uint32_t bw, std::vector<std::string> &values)

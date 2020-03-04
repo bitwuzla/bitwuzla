@@ -21,12 +21,12 @@ extern "C" {
 
 #define TEST_BVDOMAINGEN_BW 4
 
-class TestBvDomainGen : public TestBvDomain
+class TestBvDomainGen : public TestBvDomainCommon
 {
  protected:
   void SetUp() override
   {
-    TestBvDomain::SetUp();
+    TestBvDomainCommon::SetUp();
     bzla_rng_init(&d_rng, 0);
     d_num_consts = generate_consts(TEST_BVDOMAINGEN_BW, &d_xvalues);
     for (uint32_t i = 0; i < (1u << TEST_BVDOMAINGEN_BW); ++i)
@@ -39,7 +39,7 @@ class TestBvDomainGen : public TestBvDomain
   void TearDown() override
   {
     free_consts(TEST_BVDOMAINGEN_BW, d_num_consts, d_xvalues);
-    TestBvDomain::TearDown();
+    TestBvDomainCommon::TearDown();
   }
 
   void test_next_aux(const char *str_d,

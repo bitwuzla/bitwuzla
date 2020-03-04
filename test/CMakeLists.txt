@@ -5,8 +5,9 @@ set(test_names
   aigvec
   arithmetic
   bv
-  bvprop
+  bvdomain
   bvdomaingen
+  bvprop
   comp
   constbits
   exp
