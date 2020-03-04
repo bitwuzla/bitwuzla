@@ -355,13 +355,11 @@ TEST_F (TestPropCons, cons_mul_const)
 }
 #endif
 
-#if 0
-TEST_F (TestPropCons, cons_sll_const)
+TEST_F(TestPropCons, cons_sll_const)
 {
-  test_binary (bzla_exp_bv_sll, bzla_proputils_cons_sll_const, 0, true);
-  test_binary (bzla_exp_bv_sll, bzla_proputils_cons_sll_const, 1, true);
+  test_binary(bzla_exp_bv_sll, bzla_proputils_cons_sll_const, 0, true);
+  test_binary(bzla_exp_bv_sll, bzla_proputils_cons_sll_const, 1, true);
 }
-#endif
 
 #if 0
 TEST_F (TestPropCons, cons_srl_const)
