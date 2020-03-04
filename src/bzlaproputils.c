@@ -2075,9 +2075,44 @@ bzla_proputils_cons_concat_const(Bzla *bzla,
                                  BzlaIntHashTable *domains,
                                  BzlaBvDomain *d_res_x)
 {
-  // TODO
-  return bzla_proputils_cons_concat(
-      bzla, concat, t, s, idx_x, domains, d_res_x);
+#ifndef NDEBUG
+  check_cons_dbg(bzla, concat, t, s, idx_x, domains, false);
+#endif
+  int32_t bw_t, bw_s, hi, lo;
+  BzlaBitVector *res;
+  BzlaBvDomain *x;
+  BzlaMemMgr *mm;
+
+  (void) domains;
+  (void) d_res_x;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_concat);
+
+  mm   = bzla->mm;
+  bw_t = bzla_bv_get_width(t);
+  bw_s = bzla_bv_get_width(s);
+
+  if (idx_x)
+  {
+    hi = bw_t - bw_s - 1;
+    lo = 0;
+  }
+  else
+  {
+    hi = bw_t - 1;
+    lo = bw_s;
+  }
+
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(concat->e[idx_x]))->as_ptr;
+  res = bzla_bv_slice(mm, t, hi, lo);
+
+  if (!bzla_bvdomain_check_fixed_bits(mm, x, res))
+  {
+    /* non-recoverable conflict */
+    bzla_bv_free(mm, res);
+    res = NULL;
+  }
+  return res;
 }
 
 BzlaBitVector *
