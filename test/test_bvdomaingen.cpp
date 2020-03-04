@@ -19,26 +19,26 @@ extern "C" {
 #include <bitset>
 #include <unordered_set>
 
-#define TEST_BVPROPGEN_BW 4
+#define TEST_BVDOMAINGEN_BW 4
 
-class TestBvPropGen : public TestBvDomain
+class TestBvDomainGen : public TestBvDomain
 {
  protected:
   void SetUp() override
   {
     TestBvDomain::SetUp();
     bzla_rng_init(&d_rng, 0);
-    d_num_consts = generate_consts(TEST_BVPROPGEN_BW, &d_xvalues);
-    for (uint32_t i = 0; i < (1u << TEST_BVPROPGEN_BW); ++i)
+    d_num_consts = generate_consts(TEST_BVDOMAINGEN_BW, &d_xvalues);
+    for (uint32_t i = 0; i < (1u << TEST_BVDOMAINGEN_BW); ++i)
     {
-      std::string v = std::bitset<TEST_BVPROPGEN_BW>(i).to_string();
+      std::string v = std::bitset<TEST_BVDOMAINGEN_BW>(i).to_string();
       d_values.push_back(v);
     }
   }
 
   void TearDown() override
   {
-    free_consts(TEST_BVPROPGEN_BW, d_num_consts, d_xvalues);
+    free_consts(TEST_BVDOMAINGEN_BW, d_num_consts, d_xvalues);
     TestBvDomain::TearDown();
   }
 
@@ -129,7 +129,7 @@ class TestBvPropGen : public TestBvDomain
     {
       for (uint32_t i = umin; i <= umax; ++i)
       {
-        std::string v = std::bitset<TEST_BVPROPGEN_BW>(i).to_string();
+        std::string v = std::bitset<TEST_BVDOMAINGEN_BW>(i).to_string();
         if (check_const_bits(x, v))
         {
           res.push_back(v);
@@ -141,8 +141,8 @@ class TestBvPropGen : public TestBvDomain
 
   void test_next(bool rand = false)
   {
-    std::string ones(TEST_BVPROPGEN_BW, '1');
-    std::string zero(TEST_BVPROPGEN_BW, '0');
+    std::string ones(TEST_BVDOMAINGEN_BW, '1');
+    std::string zero(TEST_BVDOMAINGEN_BW, '0');
 
     for (uint32_t i = 0; i < d_num_consts; ++i)
     {
@@ -181,7 +181,7 @@ class TestBvPropGen : public TestBvDomain
   BzlaRNG d_rng;
 };
 
-TEST_F(TestBvPropGen, newdelete)
+TEST_F(TestBvDomainGen, newdelete)
 {
   BzlaBvDomainGenerator gen;
   for (uint32_t bw = 1; bw <= 16; ++bw)
@@ -193,7 +193,7 @@ TEST_F(TestBvPropGen, newdelete)
   }
 }
 
-TEST_F(TestBvPropGen, has_next)
+TEST_F(TestBvDomainGen, has_next)
 {
   uint32_t bw, i, num_consts;
   BzlaBvDomainGenerator gen;
@@ -222,9 +222,9 @@ TEST_F(TestBvPropGen, has_next)
   }
 }
 
-TEST_F(TestBvPropGen, next) { test_next(); }
+TEST_F(TestBvDomainGen, next) { test_next(); }
 
-TEST_F(TestBvPropGen, has_next_rand)
+TEST_F(TestBvDomainGen, has_next_rand)
 {
   uint32_t bw, i, num_consts, n_tests;
   BzlaBvDomainGenerator gen;
@@ -256,4 +256,4 @@ TEST_F(TestBvPropGen, has_next_rand)
   }
 }
 
-TEST_F(TestBvPropGen, next_rand) { test_next(true); }
+TEST_F(TestBvDomainGen, next_rand) { test_next(true); }
