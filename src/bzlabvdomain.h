@@ -56,15 +56,29 @@ void bzla_bvdomain_free(BzlaMemMgr *mm, BzlaBvDomain *d);
 BzlaBvDomain *bzla_bvdomain_copy(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
 /**
- * Compare two bit-vector domains.
- * Returns true if they are equal, and false otherwise.
+ * Create a new domain that represents the slice of a given domain from bit
+ * index 'hi' to bit index 'lo'.
+ *
+ * The resulting domain 'res' is defined such that
+ *   res->lo = x->lo[hi:lo] and
+ *   res->hi = x->hi[hi:lo].
  */
-bool bzla_bvdomain_is_equal(const BzlaBvDomain *a, const BzlaBvDomain *b);
+/** Create the slice from bit index upper to lower of given the bit-vector. */
+BzlaBvDomain *bzla_bvdomain_slice(BzlaMemMgr *mm,
+                                  const BzlaBvDomain *d,
+                                  uint32_t hi,
+                                  uint32_t lo);
 
 /*----------------------------------------------------------------------------*/
 
 /** Get the width of the given domain.  */
 uint32_t bzla_bvdomain_get_width(const BzlaBvDomain *d);
+
+/**
+ * Compare two bit-vector domains.
+ * Returns true if they are equal, and false otherwise.
+ */
+bool bzla_bvdomain_is_equal(const BzlaBvDomain *a, const BzlaBvDomain *b);
 
 /** Check if bit-vector domain is valid, i.e., ~lo | hi == ones. */
 bool bzla_bvdomain_is_valid(BzlaMemMgr *mm, const BzlaBvDomain *d);

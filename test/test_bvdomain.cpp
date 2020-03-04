@@ -205,3 +205,35 @@ TEST_F(TestBvDomain, is_consistent)
     }
   }
 }
+
+TEST_F(TestBvDomain, slice)
+{
+  char **consts;
+  uint32_t num_consts;
+
+  num_consts = generate_consts(3, &consts);
+
+  for (uint32_t n = 0; n < num_consts; n++)
+  {
+    for (int32_t i = 2; i >= 0; --i)
+    {
+      for (int32_t j = i; j >= 0; --j)
+      {
+        BzlaBvDomain *d = bzla_bvdomain_new_from_char(d_mm, consts[n]);
+        BzlaBvDomain *s = bzla_bvdomain_slice(d_mm, d, i, j);
+        char *dlo       = bzla_bv_to_char(d_mm, d->lo);
+        char *dhi       = bzla_bv_to_char(d_mm, d->hi);
+        char *slo       = bzla_bv_to_char(d_mm, s->lo);
+        char *shi       = bzla_bv_to_char(d_mm, s->hi);
+        ASSERT_EQ(strncmp(dlo + 2 - i, slo, i - j + 1), 0);
+        bzla_mem_freestr(d_mm, dlo);
+        bzla_mem_freestr(d_mm, dhi);
+        bzla_mem_freestr(d_mm, slo);
+        bzla_mem_freestr(d_mm, shi);
+        bzla_bvdomain_free(d_mm, d);
+        bzla_bvdomain_free(d_mm, s);
+      }
+    }
+  }
+  free_consts(3, num_consts, consts);
+}

@@ -129,6 +129,22 @@ bzla_bvdomain_is_equal(const BzlaBvDomain *a, const BzlaBvDomain *b)
          && bzla_bv_compare(a->lo, b->lo) == 0;
 }
 
+BzlaBvDomain *
+bzla_bvdomain_slice(BzlaMemMgr *mm,
+                    const BzlaBvDomain *d,
+                    uint32_t hi,
+                    uint32_t lo)
+{
+  assert(mm);
+  assert(d);
+  assert(hi >= lo);
+
+  BzlaBvDomain *res = new_domain(mm);
+  res->lo           = bzla_bv_slice(mm, d->lo, hi, lo);
+  res->hi           = bzla_bv_slice(mm, d->hi, hi, lo);
+  return res;
+}
+
 /* -------------------------------------------------------------------------- */
 
 uint32_t
