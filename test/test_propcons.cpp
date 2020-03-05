@@ -258,6 +258,183 @@ class TestPropCons : public TestBvDomainCommon
     ss << "Number of tests (pos_x: " << pos_x << "): " << num_tests;
     log(ss.str());
   }
+
+  void test_slice(BzlaConsFun cons_fun, bool fixed_bits)
+  {
+    uint32_t expected_result;
+    Bzla *bzla;
+    BzlaSortId sort_x;
+    BzlaBvDomain *d_x;
+    BzlaBitVector *bv_t, *bv_x, *bv_cur_x;
+    BzlaIntHashTable *domains;
+    BzlaBvDomainGenerator gen;
+    BzlaRNG rng;
+    BzlaSolver *slv_sat = nullptr, *slv_prop;
+    BzlaMemMgr *mm;
+    BzlaNode *x, *expr, *eq_t, *c_x, *c_t, *eq_x;
+    BzlaNode *x_lo, *x_hi, *and_x, *or_x, *eq_x1, *eq_x2;
+    std::vector<std::string> values_x;
+
+    bzla = bzla_new();
+    mm   = bzla->mm;
+
+    slv_prop       = bzla_new_prop_solver(bzla);
+    slv_prop->bzla = bzla;
+
+    bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
+    bzla_opt_set(bzla, BZLA_OPT_CHK_MODEL, 0);
+
+    sort_x = bzla_sort_bv(bzla, TEST_PROPCONS_BW);
+
+    bzla_rng_init(&rng, 0);
+
+    x = bzla_exp_var(bzla, sort_x, "x");
+    bzla_sort_release(bzla, sort_x);
+
+    gen_xvalues(bzla_node_bv_get_width(bzla, x), values_x);
+
+    uint64_t num_tests = 0;
+    for (const std::string &xval : values_x)
+    {
+      d_x = bzla_bvdomain_new_from_char(mm, xval.c_str());
+
+      if (!fixed_bits && bzla_bvdomain_has_fixed_bits(mm, d_x))
+      {
+        bzla_bvdomain_free(mm, d_x);
+        continue;
+      }
+
+      domains = bzla_hashint_map_new(mm);
+      bzla_hashint_map_add(domains, bzla_node_get_id(x))->as_ptr = d_x;
+
+      x_lo  = bzla_exp_bv_const(bzla, d_x->lo);
+      x_hi  = bzla_exp_bv_const(bzla, d_x->hi);
+      and_x = bzla_exp_bv_and(bzla, x_hi, x);
+      or_x  = bzla_exp_bv_or(bzla, x_lo, x);
+      eq_x1 = bzla_exp_eq(bzla, and_x, x);
+      eq_x2 = bzla_exp_eq(bzla, or_x, x);
+
+      uint32_t bw = bzla_node_bv_get_width(bzla, x);
+      for (uint32_t i = 0; i < bw; ++i)
+      {
+        uint32_t upper = bw - i - 1;
+        for (uint32_t lower = 0; lower <= upper; ++lower)
+        {
+          expr = bzla_exp_bv_slice(bzla, x, upper, lower);
+
+          /* This can happen on a full slice (rewriting). */
+          if (!bzla_node_is_bv_slice(expr))
+          {
+            bzla_node_release(bzla, expr);
+            continue;
+          }
+
+          std::vector<std::string> values_t;
+          gen_values(bzla_node_bv_get_width(bzla, expr), values_t);
+          for (const std::string &tval : values_t)
+          {
+            bv_t = bzla_bv_char_to_bv(mm, tval.c_str());
+            c_t  = bzla_exp_bv_const(bzla, bv_t);
+
+            bzla_bvdomain_gen_init(mm, &rng, &gen, d_x);
+            while (bzla_bvdomain_gen_has_next(&gen))
+            {
+              ++num_tests;
+              bv_cur_x = bzla_bvdomain_gen_next(&gen);
+
+              bzla_model_init_bv(bzla, &bzla->bv_model);
+              bzla_model_init_fun(bzla, &bzla->fun_model);
+              bzla_model_add_to_bv(bzla, bzla->bv_model, x, bv_cur_x);
+
+              bzla->slv = slv_prop;
+              bv_x      = cons_fun(bzla, expr, bv_t, bv_cur_x, 0, domains, 0);
+
+              bzla_model_delete(bzla);
+
+              expected_result = bv_x ? BZLA_RESULT_SAT : BZLA_RESULT_UNSAT;
+
+              if (bv_x)
+              {
+                c_x  = bzla_exp_bv_const(bzla, bv_x);
+                eq_x = bzla_exp_eq(bzla, x, c_x);
+                bzla_assume_exp(bzla, eq_x);
+              }
+
+              eq_t = bzla_exp_eq(bzla, expr, c_t);
+
+              bzla_assume_exp(bzla, eq_x1);
+              bzla_assume_exp(bzla, eq_x2);
+              bzla_assume_exp(bzla, eq_t);
+
+              bzla->slv    = slv_sat;
+              uint32_t res = bzla_check_sat(bzla, -1, -1);
+
+              if (res != expected_result)
+              {
+                std::cout << "d_x:    ";
+                bzla_bvdomain_print(mm, d_x, true);
+                std::cout << "cur_x:  ";
+                bzla_bv_print(bv_cur_x);
+                std::cout << "upper: " << upper << std::endl;
+                std::cout << "lower: " << lower << std::endl;
+                std::cout << "t:      ";
+                bzla_bv_print(bv_t);
+                std::cout << "pos_x:  0" << std::endl;
+                std::cout << "cons_x: ";
+                if (bv_x)
+                {
+                  bzla_bv_print(bv_x);
+                }
+                else
+                {
+                  std::cout << "none" << std::endl;
+                }
+              }
+
+              ASSERT_EQ(res, expected_result);
+
+              if (!slv_sat)
+              {
+                slv_sat = bzla->slv;
+              }
+
+              if (bv_x)
+              {
+                bzla_node_release(bzla, c_x);
+                bzla_bv_free(mm, bv_x);
+                bzla_node_release(bzla, eq_x);
+              }
+
+              bzla_node_release(bzla, eq_t);
+            }
+            bzla_bvdomain_gen_delete(&gen);
+            bzla_bv_free(mm, bv_t);
+            bzla_node_release(bzla, c_t);
+          }
+          bzla_node_release(bzla, expr);
+        }
+      }
+
+      bzla_node_release(bzla, x_lo);
+      bzla_node_release(bzla, x_hi);
+      bzla_node_release(bzla, and_x);
+      bzla_node_release(bzla, or_x);
+      bzla_node_release(bzla, eq_x1);
+      bzla_node_release(bzla, eq_x2);
+
+      bzla_hashint_map_delete(domains);
+      bzla_bvdomain_free(mm, d_x);
+    }
+
+    bzla_node_release(bzla, x);
+    bzla->slv = slv_prop;
+    slv_prop->api.delet(slv_prop);
+    bzla->slv = slv_sat;
+    bzla_delete(bzla);
+    std::stringstream ss;
+    ss << "Number of tests (pos_x: 0): " << num_tests;
+    log(ss.str());
+  }
 };
 
 TEST_F(TestPropCons, cons_add)
@@ -314,14 +491,12 @@ TEST_F(TestPropCons, cons_urem)
   test_binary(bzla_exp_bv_urem, bzla_proputils_cons_urem, 1, false);
 }
 
-// TODO: missing support for unary/ternary
-#if 0
-TEST_F (TestPropCons, cons_slice)
+TEST_F(TestPropCons, cons_slice)
 {
-  test_binary (bzla_exp_bv_slice, bzla_proputils_cons_slice, 0, false);
-  test_binary (bzla_exp_bv_slice, bzla_proputils_cons_slice, 1, false);
+  test_slice(bzla_proputils_cons_slice, false);
 }
 
+#if 0
 TEST_F (TestPropCons, cons_cond)
 {
   test_binary (bzla_exp_bv_cond, bzla_proputils_cons_cond, 0, false);
@@ -387,14 +562,12 @@ TEST_F(TestPropCons, cons_urem_const)
   test_binary(bzla_exp_bv_urem, bzla_proputils_cons_urem_const, 1, true);
 }
 
-// TODO: missing support for unary/ternary
-#if 0
-TEST_F (TestPropCons, cons_slice_const)
+TEST_F(TestPropCons, cons_slice_const)
 {
-  test_binary (bzla_exp_bv_slice, bzla_proputils_cons_slice_const, 0, true);
-  test_binary (bzla_exp_bv_slice, bzla_proputils_cons_slice_const, 1, true);
+  test_slice(bzla_proputils_cons_slice_const, true);
 }
 
+#if 0
 TEST_F (TestPropCons, cons_cond_const)
 {
   test_binary (bzla_exp_bv_cond, bzla_proputils_cons_cond_const, 0, true);

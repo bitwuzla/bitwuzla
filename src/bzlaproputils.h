@@ -257,7 +257,7 @@ BzlaBitVector* bzla_proputils_cons_concat_const(Bzla* bzla,
 BzlaBitVector* bzla_proputils_cons_slice_const(Bzla* bzla,
                                                BzlaNode* slice_exp,
                                                BzlaBitVector* t,
-                                               BzlaBitVector* s,
+                                               BzlaBitVector* x_val,
                                                int32_t idx_x,
                                                BzlaIntHashTable* domains,
                                                BzlaBvDomain* d_res_x);
@@ -523,7 +523,7 @@ BzlaBitVector* bzla_proputils_inv_concat(Bzla* bzla,
  *
  * Assertion: Operation is invertible given 't'.
  *
- * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * Returns an inverse value for 'x' given values 'x_val' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
  * slice  : the Boolector node representing the [:] operation
@@ -536,7 +536,7 @@ BzlaBitVector* bzla_proputils_inv_concat(Bzla* bzla,
 BzlaBitVector* bzla_proputils_inv_slice(Bzla* bzla,
                                         BzlaNode* slice_exp,
                                         BzlaBitVector* t,
-                                        BzlaBitVector* s,
+                                        BzlaBitVector* x_val,
                                         int32_t idx_x,
                                         BzlaIntHashTable* domains,
                                         BzlaBvDomain* d_res_x);
@@ -666,7 +666,7 @@ BzlaBitVector* bzla_proputils_inv_concat_const(Bzla* bzla,
 BzlaBitVector* bzla_proputils_inv_slice_const(Bzla* bzla,
                                               BzlaNode* slice_exp,
                                               BzlaBitVector* t,
-                                              BzlaBitVector* s,
+                                              BzlaBitVector* x_val,
                                               int32_t idx_x,
                                               BzlaIntHashTable* domains,
                                               BzlaBvDomain* d_res_x);

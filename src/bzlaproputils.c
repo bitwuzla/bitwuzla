@@ -2480,13 +2480,22 @@ BzlaBitVector *
 bzla_proputils_cons_slice_const(Bzla *bzla,
                                 BzlaNode *slice,
                                 BzlaBitVector *t,
-                                BzlaBitVector *s,
+                                BzlaBitVector *x_val,
                                 int32_t idx_x,
                                 BzlaIntHashTable *domains,
                                 BzlaBvDomain *d_res_x)
 {
-  // TODO
-  return bzla_proputils_cons_slice(bzla, slice, t, s, idx_x, domains, d_res_x);
+  BzlaHashTableData *d;
+  d = bzla_hashint_map_get(domains, bzla_node_get_id(slice->e[0]));
+  assert(d);
+  if (!bzla_is_inv_slice_const(bzla,
+                               d->as_ptr,
+                               t,
+                               bzla_node_bv_slice_get_upper(slice),
+                               bzla_node_bv_slice_get_lower(slice)))
+    return 0;
+  return bzla_proputils_inv_slice_const(
+      bzla, slice, t, x_val, idx_x, domains, d_res_x);
 }
 
 BzlaBitVector *
@@ -3932,7 +3941,7 @@ BzlaBitVector *
 bzla_proputils_inv_slice(Bzla *bzla,
                          BzlaNode *slice,
                          BzlaBitVector *t,
-                         BzlaBitVector *s,
+                         BzlaBitVector *x_val,
                          int32_t idx_x,
                          BzlaIntHashTable *domains,
                          BzlaBvDomain *d_res_x)
@@ -3942,6 +3951,11 @@ bzla_proputils_inv_slice(Bzla *bzla,
   assert(bzla_node_is_regular(slice));
   assert(t);
   assert(!bzla_node_is_bv_const(slice->e[0]));
+  assert(bzla_is_inv_slice(bzla,
+                           0,
+                           t,
+                           bzla_node_bv_slice_get_upper(slice),
+                           bzla_node_bv_slice_get_lower(slice)));
 
   uint32_t i, upper, lower, rlower, rupper, rboth, bw_x;
   BzlaNode *e;
@@ -3977,10 +3991,10 @@ bzla_proputils_inv_slice(Bzla *bzla,
   /* keep previous value for don't care bits or set randomly with prob
    * BZLA_OPT_PROP_PROB_SLICE_KEEP_DC */
   for (i = 0; i < lower; i++)
-    bzla_bv_set_bit(
-        res,
-        i,
-        bkeep ? bzla_bv_get_bit(s, i) : bzla_rng_pick_rand(&bzla->rng, 0, 1));
+    bzla_bv_set_bit(res,
+                    i,
+                    bkeep ? bzla_bv_get_bit(x_val, i)
+                          : bzla_rng_pick_rand(&bzla->rng, 0, 1));
 
   /* set sliced bits to propagated value */
   for (i = lower; i <= upper; i++)
@@ -3990,10 +4004,10 @@ bzla_proputils_inv_slice(Bzla *bzla,
    * BZLA_OPT_PROP_PROB_SLICE_KEEP_DC */
   bw_x = bzla_bv_get_width(res);
   for (i = upper + 1; i < bw_x; i++)
-    bzla_bv_set_bit(
-        res,
-        i,
-        bkeep ? bzla_bv_get_bit(s, i) : bzla_rng_pick_rand(&bzla->rng, 0, 1));
+    bzla_bv_set_bit(res,
+                    i,
+                    bkeep ? bzla_bv_get_bit(x_val, i)
+                          : bzla_rng_pick_rand(&bzla->rng, 0, 1));
 
   if (bflip)
   {
@@ -4976,12 +4990,25 @@ BzlaBitVector *
 bzla_proputils_inv_slice_const(Bzla *bzla,
                                BzlaNode *slice,
                                BzlaBitVector *t,
-                               BzlaBitVector *s,
+                               BzlaBitVector *x_val,
                                int32_t idx_x,
                                BzlaIntHashTable *domains,
                                BzlaBvDomain *d_res_x)
 {
-  return bzla_proputils_inv_slice(bzla, slice, t, s, idx_x, domains, d_res_x);
+  BzlaBvDomain *x;
+  BzlaHashTableData *d;
+  d = bzla_hashint_map_get(domains, bzla_node_get_id(slice->e[0]));
+  assert(d);
+  x = d->as_ptr;
+  assert(bzla_is_inv_slice_const(bzla,
+                                 x,
+                                 t,
+                                 bzla_node_bv_slice_get_upper(slice),
+                                 bzla_node_bv_slice_get_lower(slice)));
+  BzlaBitVector *res =
+      bzla_proputils_inv_slice(bzla, slice, t, x_val, idx_x, domains, d_res_x);
+  set_const_bits(bzla->mm, x, &res);
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
