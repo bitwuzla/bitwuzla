@@ -381,13 +381,11 @@ TEST_F(TestPropCons, cons_ult_const)
   test_binary(bzla_exp_bv_ult, bzla_proputils_cons_ult_const, 1, true);
 }
 
-#if 0
-TEST_F (TestPropCons, cons_urem_const)
+TEST_F(TestPropCons, cons_urem_const)
 {
-  test_binary (bzla_exp_bv_urem, bzla_proputils_cons_urem_const, 0, true);
-  test_binary (bzla_exp_bv_urem, bzla_proputils_cons_urem_const, 1, true);
+  test_binary(bzla_exp_bv_urem, bzla_proputils_cons_urem_const, 0, true);
+  test_binary(bzla_exp_bv_urem, bzla_proputils_cons_urem_const, 1, true);
 }
-#endif
 
 // TODO: missing support for unary/ternary
 #if 0
