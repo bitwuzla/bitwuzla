@@ -1512,39 +1512,19 @@ bzla_proputils_cons_concat(Bzla *bzla,
 #ifndef NDEBUG
   check_cons_dbg(bzla, concat, t, s, idx_x, domains, false);
 #endif
-  int32_t idx_s, bw_t, bw_s;
-  uint32_t r;
+  int32_t bw_t, bw_s;
   BzlaBitVector *res;
-  const BzlaBitVector *bvcur;
 
   (void) domains;
   (void) d_res_x;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_concat);
 
-  idx_s = idx_x ? 0 : 1;
-  bw_t  = bzla_bv_get_width(t);
-  bw_s  = bzla_bv_get_width(s);
+  bw_t = bzla_bv_get_width(t);
+  bw_s = bzla_bv_get_width(s);
 
-  /* If one operand is const, with BZLA_OPT_CONC_FLIP_PROB
-   * either slice bits out of current assignment and flip max. one bit
-   * randomly, or slice bits out of given assignment 's'.  */
-
-  if (bzla_node_is_bv_const(concat->e[idx_s])
-      && bzla_rng_pick_with_prob(
-          &bzla->rng, bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_CONC_FLIP)))
-  {
-    bvcur = bzla_model_get_bv(bzla, concat);
-    res   = idx_x ? bzla_bv_slice(bzla->mm, bvcur, bw_t - bw_s - 1, 0)
-                : bzla_bv_slice(bzla->mm, bvcur, bw_t - 1, bw_s);
-    r = bzla_rng_pick_rand(&bzla->rng, 0, bzla_bv_get_width(res));
-    if (r) bzla_bv_flip_bit(res, r - 1);
-  }
-  else
-  {
-    res = idx_x ? bzla_bv_slice(bzla->mm, t, bw_t - bw_s - 1, 0)
-                : bzla_bv_slice(bzla->mm, t, bw_t - 1, bw_s);
-  }
+  res = idx_x ? bzla_bv_slice(bzla->mm, t, bw_t - bw_s - 1, 0)
+              : bzla_bv_slice(bzla->mm, t, bw_t - 1, bw_s);
   return res;
 }
 
