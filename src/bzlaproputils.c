@@ -4063,7 +4063,6 @@ bzla_proputils_inv_cond(Bzla *bzla,
   assert(cond);
   assert(bzla_node_is_regular(cond));
   assert(t);
-  assert(!bzla_bv_compare(s, bzla_model_get_bv(bzla, cond->e[0])));
   assert(idx_x || !bzla_node_is_bv_const(cond->e[idx_x]));
 
   BzlaBitVector *res, *s1, *s2;
