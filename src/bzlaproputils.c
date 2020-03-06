@@ -2543,6 +2543,7 @@ bzla_proputils_cons_cond_const(Bzla *bzla,
 
   BzlaBitVector *res;
   BzlaBvDomain *x;
+  BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_cond);
@@ -2550,39 +2551,15 @@ bzla_proputils_cons_cond_const(Bzla *bzla,
   mm = bzla->mm;
   x  = bzla_hashint_map_get(domains, bzla_node_get_id(cond->e[idx_x]))->as_ptr;
 
-  if (idx_x == 1 || idx_x == 2)
+  if ((idx_x == 1 || idx_x == 2) && bzla_bvdomain_check_fixed_bits(mm, x, t))
   {
-    if (!bzla_bvdomain_check_fixed_bits(mm, x, t))
-    {
-      /* non-recoverable conflict */
-      return NULL;
-    }
     res = bzla_bv_copy(mm, t);
   }
   else
   {
-    res = bzla_rng_flip_coin(&bzla->rng) ? bzla_bv_one(mm, 1)
-                                         : bzla_bv_new(mm, 1);
-
-    if (!bzla_bvdomain_check_fixed_bits(mm, x, res))
-    {
-      if (bzla_bv_is_one(res))
-      {
-        bzla_bv_free(mm, res);
-        res = bzla_bv_new(mm, 1);
-      }
-      else
-      {
-        bzla_bv_free(mm, res);
-        res = bzla_bv_one(mm, 1);
-      }
-      if (!bzla_bvdomain_check_fixed_bits(mm, x, res))
-      {
-        /* non-recoverable conflict */
-        bzla_bv_free(mm, res);
-        return NULL;
-      }
-    }
+    bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+    res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+    bzla_bvdomain_gen_delete(&gen);
   }
   return res;
 }
