@@ -582,8 +582,10 @@ class TestPropCons : public TestBvDomainCommon
                 bzla_bvdomain_print(mm, d_x, true);
                 std::cout << "cur_x:  ";
                 bzla_bv_print(bv_cur_x);
-                std::cout << "s:      ";
+                std::cout << "s1:     ";
                 bzla_bv_print(bv_s1);
+                std::cout << "s2:     ";
+                bzla_bv_print(bv_s2);
                 std::cout << "t:      ";
                 bzla_bv_print(bv_t);
                 std::cout << "pos_x:  " << pos_x << std::endl;
@@ -598,7 +600,6 @@ class TestPropCons : public TestBvDomainCommon
                 }
               }
 
-              assert(res == expected_result);
               ASSERT_EQ(res, expected_result);
 
               if (!slv_sat)
@@ -782,11 +783,9 @@ TEST_F(TestPropCons, cons_slice_const)
   test_slice(bzla_proputils_cons_slice_const, true);
 }
 
-#if 0
-TEST_F (TestPropCons, cons_cond_const)
+TEST_F(TestPropCons, cons_cond_const)
 {
-  test_cond (bzla_proputils_cons_cond_const, 0, true);
-  test_cond (bzla_proputils_cons_cond_const, 1, true);
-  test_cond (bzla_proputils_cons_cond_const, 2, true);
+  test_cond(bzla_proputils_cons_cond_const, 0, true);
+  test_cond(bzla_proputils_cons_cond_const, 1, true);
+  test_cond(bzla_proputils_cons_cond_const, 2, true);
 }
-#endif

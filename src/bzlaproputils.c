@@ -2523,9 +2523,65 @@ bzla_proputils_cons_cond_const(Bzla *bzla,
                                BzlaIntHashTable *domains,
                                BzlaBvDomain *d_res_x)
 {
-  // TODO
-  return bzla_proputils_cons_cond(
-      bzla, cond, t, s0, s1, idx_x, domains, d_res_x);
+  assert(bzla);
+  assert(cond);
+  assert(bzla_node_is_regular(cond));
+  assert(t);
+  assert(s0);
+  assert(s1);
+  assert(domains);
+  assert(!idx_x || bzla_bv_get_width(s0) == 1);
+  assert(idx_x || bzla_bv_get_width(s0) == bzla_bv_get_width(t));
+  assert(idx_x || bzla_bv_get_width(s1) == bzla_bv_get_width(t));
+  assert(idx_x >= 0 && idx_x <= 2);
+  assert(!bzla_node_is_bv_const(cond->e[idx_x]));
+  (void) domains;
+  (void) d_res_x;
+
+  BzlaBitVector *res;
+  BzlaBvDomain *x;
+  BzlaMemMgr *mm;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_cond);
+
+  mm = bzla->mm;
+  x  = bzla_hashint_map_get(domains, bzla_node_get_id(cond->e[idx_x]))->as_ptr;
+
+  if (idx_x == 1 || idx_x == 2)
+  {
+    if (!bzla_bvdomain_check_fixed_bits(mm, x, t))
+    {
+      /* non-recoverable conflict */
+      return NULL;
+    }
+    res = bzla_bv_copy(mm, t);
+  }
+  else
+  {
+    res = bzla_rng_flip_coin(&bzla->rng) ? bzla_bv_one(mm, 1)
+                                         : bzla_bv_new(mm, 1);
+
+    if (!bzla_bvdomain_check_fixed_bits(mm, x, res))
+    {
+      if (bzla_bv_is_one(res))
+      {
+        bzla_bv_free(mm, res);
+        res = bzla_bv_new(mm, 1);
+      }
+      else
+      {
+        bzla_bv_free(mm, res);
+        res = bzla_bv_one(mm, 1);
+      }
+      if (!bzla_bvdomain_check_fixed_bits(mm, x, res))
+      {
+        /* non-recoverable conflict */
+        bzla_bv_free(mm, res);
+        return NULL;
+      }
+    }
+  }
+  return res;
 }
 
 /* ========================================================================== */
