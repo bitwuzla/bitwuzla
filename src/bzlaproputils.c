@@ -1550,8 +1550,38 @@ bzla_proputils_cons_cond(Bzla *bzla,
                          BzlaIntHashTable *domains,
                          BzlaBvDomain *d_res_x)
 {
-  return bzla_proputils_inv_cond(
-      bzla, cond, t, s0, s1, idx_x, domains, d_res_x);
+  assert(bzla);
+  assert(cond);
+  assert(bzla_node_is_regular(cond));
+  assert(t);
+  assert(s0);
+  assert(s1);
+  assert(domains);
+  assert(!idx_x || bzla_bv_get_width(s0) == 1);
+  assert(idx_x || bzla_bv_get_width(s0) == bzla_bv_get_width(t));
+  assert(idx_x || bzla_bv_get_width(s1) == bzla_bv_get_width(t));
+  assert(idx_x >= 0 && idx_x <= 2);
+  assert(!bzla_node_is_bv_const(cond->e[idx_x]));
+  (void) domains;
+  (void) d_res_x;
+
+  BzlaBitVector *res;
+  BzlaMemMgr *mm;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_cond);
+
+  mm = bzla->mm;
+
+  if (idx_x == 1 || idx_x == 2)
+  {
+    res = bzla_bv_copy(mm, t);
+  }
+  else
+  {
+    res = bzla_rng_flip_coin(&bzla->rng) ? bzla_bv_one(mm, 1)
+                                         : bzla_bv_new(mm, 1);
+  }
+  return res;
 }
 
 /* ========================================================================== */
