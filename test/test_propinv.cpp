@@ -125,6 +125,57 @@ class TestPropInv : public TestBzla
   }
 
   /**
+   * Same as check_result but for cond.
+   *
+   * exp        : The node representing the operation.
+   * s0, s1    : The assignment of other two operands:
+   *               - for idx_x = 0, assignment s0 is for e[1] and s1 for e[2]
+   *               - for idx_x = 1, assignment s0 is for e[0] and s1 for e[2]
+   *               - for idx_x = 2, assignment s0 is for e[0] and s1 for e[1]
+   * t          : The assignment of the output (the target value of the
+   *              operation).
+   * x_bv       : The expected assignment of the operand we solve for.
+   * idx_x      : The index of operand 'x'.
+   */
+  void check_result_cond(BzlaNode *exp,
+                         BzlaBitVector *s0,
+                         BzlaBitVector *s1,
+                         BzlaBitVector *t,
+                         BzlaBitVector *x_bv,
+                         uint32_t idx_x)
+  {
+    assert(exp);
+    assert(bzla_node_is_regular(exp));
+    assert(s0);
+    assert(s1);
+    assert(t);
+    assert(x_bv);
+    assert(d_domains);
+
+    uint64_t k;
+    bool is_inv;
+    BzlaBitVector *res;
+    BzlaBvDomain *d_res_x;
+
+    for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
+    {
+      d_res_x = 0;
+      is_inv  = bzla_is_inv_cond(d_bzla, 0, t, s0, s1, idx_x, &d_res_x);
+      assert(is_inv);
+      res = bzla_proputils_inv_cond(
+          d_bzla, exp, t, s0, s1, idx_x, d_domains, d_res_x);
+      if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
+      ASSERT_NE(res, nullptr);
+      if (!bzla_bv_compare(res, x_bv)) break;
+      bzla_bv_free(d_mm, res);
+      res = 0;
+    }
+    ASSERT_NE(res, nullptr);
+    ASSERT_EQ(bzla_bv_compare(res, x_bv), 0);
+    bzla_bv_free(d_mm, res);
+  }
+
+  /**
    * Test if for a binary operation s0 <> s1 = t, the inverse value computation
    * for the first operand produces value s0, and the inverse value computation
    * for the second operand produces value s1.
@@ -173,6 +224,57 @@ class TestPropInv : public TestBzla
     }
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
+    bzla_node_release(d_bzla, exp);
+  }
+
+  /** Same as check_binary but for cond.  */
+  void check_cond()
+  {
+    uint32_t bw;
+    uint64_t i, j, k;
+    BzlaNode *exp, *e[3];
+    BzlaSortId sort, sort1;
+    BzlaBitVector *s[3], *t;
+
+    bw    = TEST_PROP_INV_COMPLETE_BW;
+    sort  = bzla_sort_bv(d_bzla, bw);
+    sort1 = bzla_sort_bv(d_bzla, 1);
+    e[0]  = bzla_exp_var(d_bzla, sort1, 0);
+    e[1]  = bzla_exp_var(d_bzla, sort, 0);
+    e[2]  = bzla_exp_var(d_bzla, sort, 0);
+    bzla_sort_release(d_bzla, sort);
+    bzla_sort_release(d_bzla, sort1);
+    exp = bzla_exp_cond(d_bzla, e[0], e[1], e[2]);
+
+    for (i = 0; i < (uint32_t)(1 << 1); i++)
+    {
+      s[0] = bzla_bv_uint64_to_bv(d_mm, i, 1);
+      for (j = 0; j < (uint32_t)(1 << bw); j++)
+      {
+        s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
+        for (k = 0; k < (uint32_t)(1 << bw); k++)
+        {
+          s[2] = bzla_bv_uint64_to_bv(d_mm, k, bw);
+          t    = bzla_bv_ite(d_mm, s[0], s[1], s[2]);
+          check_result_cond(exp, s[1], s[2], t, s[0], 0);
+          if (bzla_bv_is_one(s[0]))
+          {
+            check_result_cond(exp, s[0], s[2], t, s[1], 1);
+          }
+          else
+          {
+            check_result_cond(exp, s[0], s[1], t, s[2], 2);
+          }
+          bzla_bv_free(d_mm, s[2]);
+          bzla_bv_free(d_mm, t);
+        }
+        bzla_bv_free(d_mm, s[1]);
+      }
+      bzla_bv_free(d_mm, s[0]);
+    }
+    bzla_node_release(d_bzla, e[0]);
+    bzla_node_release(d_bzla, e[1]);
+    bzla_node_release(d_bzla, e[2]);
     bzla_node_release(d_bzla, exp);
   }
 
@@ -2313,6 +2415,8 @@ TEST_F(TestPropInv, complete_slice)
   }
   bzla_node_release(d_bzla, e);
 }
+
+TEST_F(TestPropInv, complete_cond) { check_cond(); }
 
 /* -------------------------------------------------------------------------- */
 /* Inverse value computation with propagator domains, no const bits.          */

@@ -658,3 +658,10 @@ TEST_F(TestInvUtils, is_inv_urem)
   test_is_inv_binary(bzla_is_inv_urem, boolector_urem, 0);
   test_is_inv_binary(bzla_is_inv_urem, boolector_urem, 1);
 }
+
+TEST_F(TestInvUtils, is_inv_cond)
+{
+  test_is_inv_cond(0, false);
+  test_is_inv_cond(1, false);
+  test_is_inv_cond(2, false);
+}

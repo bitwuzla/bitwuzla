@@ -24,13 +24,21 @@ extern "C" {
 using BzlaBinFun =
     std::add_pointer<BzlaNode *(Bzla *, BzlaNode *, BzlaNode *)>::type;
 
-using BzlaConsFun = std::add_pointer<BzlaBitVector *(Bzla *,
+using BzlaConsFun     = std::add_pointer<BzlaBitVector *(Bzla *,
                                                      BzlaNode *,
                                                      BzlaBitVector *,
                                                      BzlaBitVector *,
                                                      int32_t,
                                                      BzlaIntHashTable *,
                                                      BzlaBvDomain *)>::type;
+using BzlaConsCondFun = std::add_pointer<BzlaBitVector *(Bzla *,
+                                                         BzlaNode *,
+                                                         BzlaBitVector *,
+                                                         BzlaBitVector *,
+                                                         BzlaBitVector *,
+                                                         int32_t,
+                                                         BzlaIntHashTable *,
+                                                         BzlaBvDomain *)>::type;
 
 class TestPropCons : public TestBvDomainCommon
 {
@@ -436,7 +444,7 @@ class TestPropCons : public TestBvDomainCommon
     log(ss.str());
   }
 
-  void test_cond(BzlaConsFun cons_fun, uint32_t pos_x, bool fixed_bits)
+  void test_cond(BzlaConsCondFun cons_fun, uint32_t pos_x, bool fixed_bits)
   {
     uint32_t expected_result;
     Bzla *bzla;
@@ -545,7 +553,8 @@ class TestPropCons : public TestBvDomainCommon
               bzla_model_add_to_bv(bzla, bzla->bv_model, s2, bv_s2);
 
               bzla->slv = slv_prop;
-              bv_x = cons_fun(bzla, expr, bv_t, bv_cur_x, pos_x, domains, 0);
+              bv_x =
+                  cons_fun(bzla, expr, bv_t, bv_s1, bv_s2, pos_x, domains, 0);
 
               bzla_model_delete(bzla);
 
@@ -589,6 +598,7 @@ class TestPropCons : public TestBvDomainCommon
                 }
               }
 
+              assert(res == expected_result);
               ASSERT_EQ(res, expected_result);
 
               if (!slv_sat)

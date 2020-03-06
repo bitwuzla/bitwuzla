@@ -466,7 +466,14 @@ bzla_is_inv_urem(Bzla *bzla,
  * c ? x : s = t
  * c ? s : x = t
  *
- * IC: true
+ * IC pos_x = 0:
+ * s0 == t || s1 == t
+ *
+ * IC pos_x = 1:
+ * s0 == true
+ *
+ * IC pos_x = 2:
+ * s0 == false
  */
 bool
 bzla_is_inv_cond(Bzla *bzla,
@@ -479,14 +486,25 @@ bzla_is_inv_cond(Bzla *bzla,
 {
   assert(bzla);
   assert(t);
-  (void) bzla;
+  assert(s0);
+  assert(s1);
   (void) x;
-  (void) t;
-  (void) s0;
-  (void) s1;
-  (void) pos_x;
-  (void) d_res_x;
-  return true;
+
+  if (d_res_x) *d_res_x = 0;
+
+  if (pos_x == 1 && bzla_bv_is_true(s0))
+  {
+    return true;
+  }
+  else if (pos_x == 2 && bzla_bv_is_false(s0))
+  {
+    return true;
+  }
+  else if (bzla_bv_compare(s0, t) == 0 || bzla_bv_compare(s1, t) == 0)
+  {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -1432,8 +1450,11 @@ bzla_is_inv_urem_const(Bzla *bzla,
  * || (is_fixed_false(x) && s1 = t)
  * (s0 the value for e[1] and s1 the value for e[2])
  *
- * IC pos_x = 1 and pos_x = 2:
- * check_fixed_bits(t, x)
+ * IC pos_x = 1:
+ * s0 = true && check_fixed_bits(t, x)
+ *
+ * IC pos_x = 2:
+ * s0 == false && check_fixed_bits(t, x)
  *
  * with
  * check_fixed_bits(x,s) := ((s & hi_x) | lo_x) = s
