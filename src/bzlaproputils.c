@@ -2473,7 +2473,10 @@ bzla_proputils_cons_slice_const(Bzla *bzla,
                                t,
                                bzla_node_bv_slice_get_upper(slice),
                                bzla_node_bv_slice_get_lower(slice)))
-    return 0;
+  {
+    /* non-recoverable conflict */
+    return NULL;
+  }
   return bzla_proputils_inv_slice_const(
       bzla, slice, t, x_val, idx_x, domains, d_res_x);
 }
