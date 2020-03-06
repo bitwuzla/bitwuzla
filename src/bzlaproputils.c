@@ -1664,7 +1664,7 @@ bzla_proputils_cons_eq_const(Bzla *bzla,
 #ifndef NDEBUG
   check_cons_dbg(bzla, eq, t, s, idx_x, domains, false);
 #endif
-  BzlaBvDomain *res;
+  BzlaBitVector *res;
   BzlaBvDomain *x;
   (void) d_res_x;
 
