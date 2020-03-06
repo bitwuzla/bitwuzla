@@ -666,6 +666,12 @@ TEST_F(TestPropCons, cons_and)
   test_binary(bzla_exp_bv_and, bzla_proputils_cons_and, 1, false);
 }
 
+TEST_F(TestPropCons, cons_eq)
+{
+  test_binary(bzla_exp_eq, bzla_proputils_cons_eq, 0, false);
+  test_binary(bzla_exp_eq, bzla_proputils_cons_eq, 1, false);
+}
+
 TEST_F(TestPropCons, cons_concat)
 {
   test_binary(bzla_exp_bv_concat, bzla_proputils_cons_concat, 0, false);
@@ -734,6 +740,12 @@ TEST_F(TestPropCons, cons_and_const)
 {
   test_binary(bzla_exp_bv_and, bzla_proputils_cons_and_const, 0, true);
   test_binary(bzla_exp_bv_and, bzla_proputils_cons_and_const, 1, true);
+}
+
+TEST_F(TestPropCons, cons_eq_const)
+{
+  test_binary(bzla_exp_eq, bzla_proputils_cons_eq_const, 0, true);
+  test_binary(bzla_exp_eq, bzla_proputils_cons_eq_const, 1, true);
 }
 
 TEST_F(TestPropCons, cons_concat_const)

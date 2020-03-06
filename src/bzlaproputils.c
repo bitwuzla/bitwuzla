@@ -1664,6 +1664,7 @@ bzla_proputils_cons_eq_const(Bzla *bzla,
 #ifndef NDEBUG
   check_cons_dbg(bzla, eq, t, s, idx_x, domains, false);
 #endif
+  BzlaBvDomain *res;
   BzlaBvDomain *x;
   (void) d_res_x;
 
@@ -1673,7 +1674,9 @@ bzla_proputils_cons_eq_const(Bzla *bzla,
     record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_eq);
     return bzla_bv_copy(bzla->mm, x->lo);
   }
-  return bzla_proputils_cons_eq(bzla, eq, t, s, idx_x, domains, d_res_x);
+  res = bzla_proputils_cons_eq(bzla, eq, t, s, idx_x, domains, d_res_x);
+  set_const_bits(bzla->mm, x, &res);
+  return res;
 }
 
 BzlaBitVector *
