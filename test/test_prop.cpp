@@ -287,9 +287,8 @@ class TestProp : public TestBzla
     }
     else
     {
-      // not supported yet because of special handling for cond
-      // is_inv_fun = bzla_is_inv_cond;
-      // inv_fun = bzla_proputils_inv_cond;
+      is_inv_fun = bzla_is_inv_cond;
+      inv_fun    = bzla_proputils_inv_cond;
     }
 
     sort  = bzla_sort_bv(d_bzla, bw);
@@ -340,7 +339,7 @@ class TestProp : public TestBzla
                ->as_ptr;
     assert(d_s1);
 
-    s_tmp[idx_x] = bzla_bv_new_random(d_mm, d_rng, bw);
+    s_tmp[idx_x] = bzla_bv_new_random(d_mm, d_rng, idx_x ? bw : 1);
     if (n == 2)
     {
       s_tmp[idx_s0] = bzla_bv_copy(d_mm, s0);
@@ -348,7 +347,7 @@ class TestProp : public TestBzla
     }
     else
     {
-      s_tmp[idx_s0] = bzla_bv_new_random(d_mm, d_rng, idx_x == 0 ? bw : 1);
+      s_tmp[idx_s0] = bzla_bv_new_random(d_mm, d_rng, idx_x ? 1 : bw);
       s_tmp[idx_s1] = bzla_bv_new_random(d_mm, d_rng, bw);
     }
     x_tmp = bzla_bv_ite(d_mm, s_tmp[0], s_tmp[1], s_tmp[2]);
