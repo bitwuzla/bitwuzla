@@ -4327,6 +4327,9 @@ bzla_proputils_inv_add_const(Bzla *bzla,
   {
     res = bzla_proputils_inv_add(bzla, add, t, s, idx_x, domains, 0);
   }
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_add, add, s, t, res, idx_x, "+");
+#endif
   return res;
 }
 
@@ -4380,6 +4383,9 @@ bzla_proputils_inv_and_const(Bzla *bzla,
     res = bzla_proputils_inv_and(bzla, and, t, s, idx_x, domains, 0);
     set_const_bits(mm, x, &res);
   }
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_and, and, s, t, res, idx_x, "&");
+#endif
   return res;
 }
 
@@ -4400,9 +4406,12 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
   assert(bzla_node_is_regular(eq));
   assert(!bzla_hashint_map_contains(domains, eq->id)
          || bzla_hashint_map_contains(domains, bzla_node_get_id(eq->e[idx_x])));
+
   BzlaBitVector *tmp, *res;
   BzlaBvDomain *x;
+  BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
+
 #ifndef NDEBUG
   check_inv_dbg(bzla,
                 eq,
@@ -4428,11 +4437,24 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_eq);
     res = bzla_bv_copy(mm, x->lo);
   }
+  else if (bzla_bv_is_zero(t))
+  {
+    bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+    do
+    {
+      res = bzla_bvdomain_gen_random(&gen);
+    } while (bzla_bv_compare(res, s) == 0);
+    res = bzla_bv_copy(mm, res);
+    bzla_bvdomain_gen_delete(&gen);
+  }
   else
   {
-    res = bzla_proputils_inv_eq(bzla, eq, t, s, idx_x, domains, 0);
-    set_const_bits(mm, x, &res);
+    assert(bzla_bvdomain_check_fixed_bits(mm, x, s));
+    res = bzla_bv_copy(mm, s);
   }
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_eq, eq, s, t, res, idx_x, "=");
+#endif
   return res;
 }
 
@@ -4626,6 +4648,9 @@ bzla_proputils_inv_sll_const(Bzla *bzla,
     res = bzla_proputils_inv_sll(bzla, sll, t, s, idx_x, domains, 0);
     set_const_bits(mm, x, &res);
   }
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_sll, sll, s, t, res, idx_x, "<<");
+#endif
   return res;
 }
 
@@ -4706,6 +4731,9 @@ bzla_proputils_inv_srl_const(Bzla *bzla,
     res = bzla_proputils_inv_srl(bzla, srl, t, s, idx_x, domains, 0);
     set_const_bits(mm, x, &res);
   }
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_srl, srl, s, t, res, idx_x, ">>");
+#endif
   return res;
 }
 
@@ -4786,6 +4814,9 @@ bzla_proputils_inv_mul_const(Bzla *bzla,
       res = bzla_proputils_inv_mul(bzla, mul, t, s, idx_x, domains, 0);
     }
   }
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_mul, mul, s, t, res, idx_x, "*");
+#endif
   return res;
 }
 
@@ -4893,6 +4924,9 @@ bzla_proputils_inv_udiv_const(Bzla *bzla,
     res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
     bzla_bvdomain_gen_delete(&gen);
   }
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_udiv, udiv, s, t, res, idx_x, "/");
+#endif
   return res;
 }
 
@@ -5060,6 +5094,9 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
     }
     bzla_bv_free(mm, ones);
   }
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_urem, urem, s, t, res, idx_x, "%");
+#endif
   return res;
 }
 
@@ -5092,19 +5129,50 @@ bzla_proputils_inv_slice_const(Bzla *bzla,
                                BzlaIntHashTable *domains,
                                BzlaBvDomain *d_res_x)
 {
+  assert(bzla);
+  assert(slice);
+  assert(bzla_node_is_regular(slice));
+  assert(t);
+  assert(domains);
+  assert(idx_x == 0);
+  assert(!bzla_node_is_bv_const(slice->e[0]));
+#ifndef NDEBUG
+  uint32_t upper = bzla_node_bv_slice_get_upper(slice);
+  uint32_t lower = bzla_node_bv_slice_get_lower(slice);
+#endif
+  assert(bzla_is_inv_slice(bzla, 0, t, upper, lower));
+  assert(bzla_hashint_map_contains(domains, bzla_node_get_id(slice->e[idx_x])));
+
+  BzlaBitVector *res;
   BzlaBvDomain *x;
-  BzlaHashTableData *d;
-  d = bzla_hashint_map_get(domains, bzla_node_get_id(slice->e[0]));
-  assert(d);
-  x = d->as_ptr;
+
+  x = bzla_hashint_map_get(domains, bzla_node_get_id(slice->e[idx_x]))->as_ptr;
   assert(bzla_is_inv_slice_const(bzla,
                                  x,
                                  t,
                                  bzla_node_bv_slice_get_upper(slice),
                                  bzla_node_bv_slice_get_lower(slice)));
-  BzlaBitVector *res =
+
+  res =
       bzla_proputils_inv_slice(bzla, slice, t, x_val, idx_x, domains, d_res_x);
   set_const_bits(bzla->mm, x, &res);
+#ifndef NDEBUG
+  BzlaMemMgr *mm        = bzla->mm;
+  BzlaBitVector *tmpdbg = bzla_bv_slice(mm, res, upper, lower);
+  assert(!bzla_bv_compare(tmpdbg, t));
+  bzla_bv_free(mm, tmpdbg);
+  char *str_t   = bzla_bv_to_char(mm, t);
+  char *str_res = bzla_bv_to_char(mm, res);
+  BZLALOG(3,
+          "prop (xxxxx): %s: %s := %s[%d:%d]",
+          bzla_util_node2string(slice),
+          str_t,
+          str_res,
+          lower,
+          upper);
+  bzla_mem_freestr(mm, str_t);
+  bzla_mem_freestr(mm, str_res);
+#endif
   return res;
 }
 
@@ -5185,6 +5253,24 @@ bzla_proputils_inv_cond_const(Bzla *bzla,
     res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
     bzla_bvdomain_gen_delete(&gen);
   }
+#ifndef NDEBUG
+  char *str_res = bzla_bv_to_char(mm, res);
+  char *str_t   = bzla_bv_to_char(bzla->mm, t);
+  char *str_s0  = bzla_bv_to_char(mm, s0);
+  char *str_s1  = bzla_bv_to_char(mm, s1);
+  BZLALOG(3,
+          "prop (e[%d]): %s: %s := %s ? %s : %s",
+          idx_x,
+          bzla_util_node2string(cond),
+          str_t,
+          idx_x == 0 ? str_res : str_s0,
+          idx_x == 1 ? str_res : (idx_x == 0 ? str_s0 : str_s1),
+          idx_x == 2 ? str_res : str_s1);
+  bzla_mem_freestr(mm, str_t);
+  bzla_mem_freestr(mm, str_res);
+  bzla_mem_freestr(mm, str_s0);
+  bzla_mem_freestr(mm, str_s1);
+#endif
   return res;
 }
 
