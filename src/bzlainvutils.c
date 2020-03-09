@@ -811,7 +811,7 @@ bzla_is_inv_mul_const(Bzla *bzla,
         /* d_x = (t >> ctz(s)) * (s >> ctz(s))^-1 */
 
         BzlaBitVector *tmp_s, *tmp_t, *tmp_x, *mask_lo, *mask_hi, *ones;
-        BzlaBitVector *lo, *hi;
+        BzlaBitVector *lo, *hi, *mask_x, *mask_lohi, *masked_x;
         BzlaBvDomain *d_tmp_x;
         uint32_t tz_s = bzla_bv_get_num_trailing_zeros(s);
         assert(tz_s <= bzla_bv_get_num_trailing_zeros(t));
@@ -829,14 +829,20 @@ bzla_is_inv_mul_const(Bzla *bzla,
         bzla_bv_free(mm, mod_inv_s);
 
         /* create domain of d_x with the most ctz(s) bits set to 'd_x'. */
-        ones    = bzla_bv_ones(mm, bzla_bv_get_width(tmp_x));
-        mask_lo = bzla_bv_srl_uint64(mm, ones, tz_s);
-        mask_hi = bzla_bv_not(mm, mask_lo);
-        bzla_bv_free(mm, ones);
+        ones      = bzla_bv_ones(mm, bzla_bv_get_width(tmp_x));
+        mask_x    = bzla_bv_srl_uint64(mm, ones, tz_s);
+        masked_x  = bzla_bv_and(mm, tmp_x, mask_x);
+        mask_lohi = bzla_bv_not(mm, mask_x);
+        mask_lo   = bzla_bv_and(mm, d_x->lo, mask_lohi);
+        mask_hi   = bzla_bv_and(mm, d_x->hi, mask_lohi);
+        lo        = bzla_bv_or(mm, mask_lo, masked_x);
+        hi        = bzla_bv_or(mm, mask_hi, masked_x);
+        d_tmp_x   = bzla_bvdomain_new(mm, lo, hi);
 
-        lo      = bzla_bv_and(mm, mask_lo, tmp_x);
-        hi      = bzla_bv_or(mm, mask_hi, tmp_x);
-        d_tmp_x = bzla_bvdomain_new(mm, lo, hi);
+        bzla_bv_free(mm, mask_lohi);
+        bzla_bv_free(mm, mask_x);
+        bzla_bv_free(mm, masked_x);
+        bzla_bv_free(mm, ones);
         bzla_bv_free(mm, tmp_x);
         bzla_bv_free(mm, mask_lo);
         bzla_bv_free(mm, mask_hi);
