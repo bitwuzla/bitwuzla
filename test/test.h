@@ -10,6 +10,7 @@
 #ifndef TEST_H_INCLUDED
 #define TEST_H_INCLUDED
 
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -384,6 +385,46 @@ class TestBvDomainCommon : public TestMm
            && (!d_y || bzla_bvdomain_is_fixed(mm, d_y))
            && (!d_z || bzla_bvdomain_is_fixed(mm, d_z))
            && (!d_c || bzla_bvdomain_is_fixed(mm, d_c));
+  }
+};
+
+class TestPropCommon : public TestCommon
+{
+ public:
+  static void gen_all_combinations(size_t size,
+                                   const std::vector<char> &bits,
+                                   std::vector<std::string> &values)
+  {
+    size_t num_values;
+    size_t num_bits = bits.size();
+    std::vector<size_t> psizes;
+
+    num_values = pow(num_bits, size);
+    for (size_t i = 0; i < size; ++i)
+    {
+      psizes.push_back(num_values / pow(num_bits, i + 1));
+    }
+
+    /* Generate all combinations of 'bits'. */
+    for (size_t row = 0; row < num_values; ++row)
+    {
+      std::string val;
+      for (size_t col = 0; col < size; ++col)
+      {
+        val += bits[(row / psizes[col]) % num_bits];
+      }
+      values.push_back(val);
+    }
+  }
+
+  static void gen_xvalues(uint32_t bw, std::vector<std::string> &values)
+  {
+    gen_all_combinations(bw, {'x', '0', '1'}, values);
+  }
+
+  static void gen_values(uint32_t bw, std::vector<std::string> &values)
+  {
+    gen_all_combinations(bw, {'0', '1'}, values);
   }
 };
 

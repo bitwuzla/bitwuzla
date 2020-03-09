@@ -40,38 +40,9 @@ using BzlaConsCondFun = std::add_pointer<BzlaBitVector *(Bzla *,
                                                          BzlaIntHashTable *,
                                                          BzlaBvDomain *)>::type;
 
-class TestPropCons : public TestBvDomainCommon
+class TestPropCons : public TestPropCommon
 {
  protected:
-  void gen_xvalues(uint32_t bw, std::vector<std::string> &values)
-  {
-    char **xvalues;
-    uint32_t num_consts = generate_consts(bw, &xvalues);
-
-    for (uint32_t i = 0; i < num_consts; ++i)
-    {
-      std::string val(xvalues[i]);
-      values.push_back(val);
-    }
-    free_consts(bw, num_consts, xvalues);
-  }
-
-  void gen_values(uint32_t bw, std::vector<std::string> &values)
-  {
-    char **xvalues;
-    uint32_t num_consts = generate_consts(bw, &xvalues);
-
-    for (uint32_t i = 0; i < num_consts; ++i)
-    {
-      std::string val(xvalues[i]);
-      if (val.find('x') == val.npos)
-      {
-        values.push_back(val);
-      }
-    }
-    free_consts(bw, num_consts, xvalues);
-  }
-
   void test_binary(BzlaBinFun expr_fun,
                    BzlaConsFun cons_fun,
                    uint32_t pos_x,
