@@ -234,5 +234,4 @@ TEST_F(TestBvDomain, slice)
       }
     }
   }
-  free_consts(3, num_consts, consts);
 }

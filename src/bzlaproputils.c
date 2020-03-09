@@ -4003,6 +4003,7 @@ bzla_proputils_inv_slice(Bzla *bzla,
   assert(slice);
   assert(bzla_node_is_regular(slice));
   assert(t);
+  assert(x_val);
   assert(!bzla_node_is_bv_const(slice->e[0]));
   assert(bzla_is_inv_slice(bzla,
                            0,

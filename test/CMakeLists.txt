@@ -28,6 +28,7 @@ set(test_names
   parseerror
   prop
   propcons
+  propinv
   propinvcomplete
   rotate
   queue
