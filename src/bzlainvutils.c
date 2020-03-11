@@ -1105,7 +1105,7 @@ bzla_is_inv_udiv_const(Bzla *bzla,
           if (d_res_x && res)
           {
             *d_res_x =
-                bzla_bvdomain_new(mm, bzla_bvdomain_gen_next(&dgen), max);
+                bzla_bvdomain_new(mm, bzla_bvdomain_gen_random(&dgen), max);
           }
           bzla_bvdomain_gen_delete(&dgen);
           bzla_bv_free(mm, min);
@@ -1157,7 +1157,7 @@ bzla_is_inv_udiv_const(Bzla *bzla,
             if (d_res_x && res)
             {
               *d_res_x =
-                  bzla_bvdomain_new(mm, bzla_bvdomain_gen_next(&dgen), max);
+                  bzla_bvdomain_new(mm, bzla_bvdomain_gen_random(&dgen), max);
             }
             bzla_bvdomain_gen_delete(&dgen);
             bzla_bv_free(mm, min);
