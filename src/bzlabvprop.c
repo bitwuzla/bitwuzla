@@ -1926,7 +1926,10 @@ bzla_bvprop_cond(BzlaMemMgr *mm,
   uint32_t bw;
   bool progress, c_is_fixed;
   BzlaBvDomain *tmp_bvc, *res_tmp_bvc, *tmp_x, *tmp_y, *tmp_z, *tmp_c;
-  BzlaBitVector *not_hi_x, *not_lo_x, *not_hi_y, *not_hi_z, *not_hi_bvc;
+  BzlaBitVector *hi_x, *lo_x, *not_hi_x, *not_lo_x;
+  BzlaBitVector *hi_y, *lo_y, *not_hi_y, *not_lo_y;
+  BzlaBitVector *hi_z, *lo_z, *not_hi_z;
+  BzlaBitVector *hi_bvc, *lo_bvc, *not_hi_bvc, *not_lo_bvc;
   BzlaBitVector *ones, *zero, *tmp0, *tmp1, *tmp2;
 
   res = true;
@@ -1965,12 +1968,23 @@ bzla_bvprop_cond(BzlaMemMgr *mm,
   not_hi_x   = 0;
   not_lo_x   = 0;
   not_hi_y   = 0;
+  not_lo_y   = 0;
   not_hi_z   = 0;
   not_hi_bvc = 0;
+  not_lo_bvc = 0;
 
   do
   {
     progress = false;
+
+    hi_x   = tmp_x->hi;
+    lo_x   = tmp_x->lo;
+    hi_y   = tmp_y->hi;
+    lo_y   = tmp_y->lo;
+    hi_z   = tmp_z->hi;
+    lo_z   = tmp_z->lo;
+    hi_bvc = tmp_bvc->hi;
+    lo_bvc = tmp_bvc->lo;
 
     res_tmp_bvc = new_domain(mm);
     *res_d_x    = new_domain(mm);
@@ -1980,89 +1994,94 @@ bzla_bvprop_cond(BzlaMemMgr *mm,
     if (not_hi_x) bzla_bv_free(mm, not_hi_x);
     if (not_lo_x) bzla_bv_free(mm, not_lo_x);
     if (not_hi_y) bzla_bv_free(mm, not_hi_y);
+    if (not_lo_y) bzla_bv_free(mm, not_lo_y);
     if (not_hi_z) bzla_bv_free(mm, not_hi_z);
     if (not_hi_bvc) bzla_bv_free(mm, not_hi_bvc);
+    if (not_lo_bvc) bzla_bv_free(mm, not_lo_bvc);
 
-    not_hi_x   = bzla_bv_not(mm, tmp_x->hi);
-    not_lo_x   = bzla_bv_not(mm, tmp_x->lo);
-    not_hi_y   = bzla_bv_not(mm, tmp_y->hi);
-    not_hi_z   = bzla_bv_not(mm, tmp_z->hi);
-    not_hi_bvc = bzla_bv_not(mm, tmp_bvc->hi);
+    not_hi_x   = bzla_bv_not(mm, hi_x);
+    not_lo_x   = bzla_bv_not(mm, lo_x);
+    not_hi_y   = bzla_bv_not(mm, hi_y);
+    not_lo_y   = bzla_bv_not(mm, lo_y);
+    not_hi_z   = bzla_bv_not(mm, hi_z);
+    not_lo_bvc = bzla_bv_not(mm, lo_bvc);
+    not_hi_bvc = bzla_bv_not(mm, hi_bvc);
 
-    /* lo_bvc' = lo_bvc | (lo_z & (~hi_y)) | ((~hi_z) & lo_y) */
-    tmp0            = bzla_bv_and(mm, not_hi_z, tmp_y->lo);
-    tmp1            = bzla_bv_and(mm, tmp_z->lo, not_hi_y);
+    /* lo_bvc' = lo_bvc | (lo_z & ~hi_y) | (~hi_z & lo_y) */
+    tmp0            = bzla_bv_and(mm, not_hi_z, lo_y);
+    tmp1            = bzla_bv_and(mm, lo_z, not_hi_y);
     tmp2            = bzla_bv_or(mm, tmp0, tmp1);
-    res_tmp_bvc->lo = bzla_bv_or(mm, tmp_bvc->lo, tmp2);
+    res_tmp_bvc->lo = bzla_bv_or(mm, lo_bvc, tmp2);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
     bzla_bv_free(mm, tmp2);
 
-    /* hi_bvc' = hi_bvc & (~lo_z | hi_x) & (hi_z | (~lo_x)) */
-    tmp0 = bzla_bv_or(mm, tmp_z->hi, not_lo_x);
-    tmp1 = bzla_bv_not(mm, tmp_z->lo);
-    tmp2 = bzla_bv_or(mm, tmp1, tmp_x->hi);
+    /* hi_bvc' = hi_bvc & (~lo_z | hi_x) & (hi_z | ~lo_x) */
+    tmp0 = bzla_bv_or(mm, hi_z, not_lo_x);
+    tmp1 = bzla_bv_not(mm, lo_z);
+    tmp2 = bzla_bv_or(mm, tmp1, hi_x);
     bzla_bv_free(mm, tmp1);
     tmp1            = bzla_bv_and(mm, tmp0, tmp2);
-    res_tmp_bvc->hi = bzla_bv_and(mm, tmp_bvc->hi, tmp1);
+    res_tmp_bvc->hi = bzla_bv_and(mm, hi_bvc, tmp1);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
     bzla_bv_free(mm, tmp2);
 
-    /* lo_x' = lo_x | (lo_z & (lo_bvc | (~hi_y))) */
-    tmp0           = bzla_bv_or(mm, tmp_bvc->lo, not_hi_y);
-    tmp1           = bzla_bv_and(mm, tmp_z->lo, tmp0);
-    (*res_d_x)->lo = bzla_bv_or(mm, tmp_x->lo, tmp1);
+    /* lo_x' = lo_x | (lo_z & (lo_bvc | ~hi_y)) */
+    tmp0           = bzla_bv_or(mm, lo_bvc, not_hi_y);
+    tmp1           = bzla_bv_and(mm, lo_z, tmp0);
+    (*res_d_x)->lo = bzla_bv_or(mm, lo_x, tmp1);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
 
-    /* hi_x' = hi_x & (~((~hi_z) & (lo_bvc | lo_y))) */
-    tmp0           = bzla_bv_or(mm, tmp_bvc->lo, tmp_y->lo);
-    tmp1           = bzla_bv_and(mm, not_hi_z, tmp0);
-    tmp2           = bzla_bv_not(mm, tmp1);
-    (*res_d_x)->hi = bzla_bv_and(mm, tmp_x->hi, tmp2);
+    /* hi_x' = hi_x & (~(~hi_z & (lo_bvc | lo_y)))
+     *
+     * (corresponds to
+     *    hi_x' = hi_x & (hi_z | (~lo_bvc & ~lo_y))
+     * )
+     */
+    tmp0           = bzla_bv_and(mm, not_lo_bvc, not_lo_y);
+    tmp1           = bzla_bv_or(mm, hi_z, tmp0);
+    (*res_d_x)->hi = bzla_bv_and(mm, hi_x, tmp1);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
-    bzla_bv_free(mm, tmp2);
 
-    /* lo_y' = lo_y | (lo_z & ((~hi_bvc) | (~hi_x))) */
+    /* lo_y' = lo_y | (lo_z & (~hi_bvc | ~hi_x)) */
     tmp0           = bzla_bv_or(mm, not_hi_bvc, not_hi_x);
-    tmp1           = bzla_bv_and(mm, tmp_z->lo, tmp0);
-    (*res_d_y)->lo = bzla_bv_or(mm, tmp_y->lo, tmp1);
+    tmp1           = bzla_bv_and(mm, lo_z, tmp0);
+    (*res_d_y)->lo = bzla_bv_or(mm, lo_y, tmp1);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
 
     /* hi_y' = hi_y & (hi_z | (hi_bvc & ~lo_x)) */
-    tmp0           = bzla_bv_and(mm, tmp_bvc->hi, not_lo_x);
-    tmp1           = bzla_bv_or(mm, tmp_z->hi, tmp0);
-    (*res_d_y)->hi = bzla_bv_and(mm, tmp_y->hi, tmp1);
+    tmp0           = bzla_bv_and(mm, hi_bvc, not_lo_x);
+    tmp1           = bzla_bv_or(mm, hi_z, tmp0);
+    (*res_d_y)->hi = bzla_bv_and(mm, hi_y, tmp1);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
 
-    /* lo_z' = lo_z | (lo_bvc & lo_x) | ((~hi_bvc) & lo_y) | (lo_x & lo_y) */
-    tmp0 = bzla_bv_and(mm, tmp_x->lo, tmp_y->lo);
-    tmp1 = bzla_bv_and(mm, not_hi_bvc, tmp_y->lo);
+    /* lo_z' = lo_z | (lo_bvc & lo_x) | (~hi_bvc & lo_y) | (lo_x & lo_y) */
+    tmp0 = bzla_bv_and(mm, lo_x, lo_y);
+    tmp1 = bzla_bv_and(mm, not_hi_bvc, lo_y);
     tmp2 = bzla_bv_or(mm, tmp0, tmp1);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
-    tmp0           = bzla_bv_and(mm, tmp_bvc->lo, tmp_x->lo);
+    tmp0           = bzla_bv_and(mm, lo_bvc, lo_x);
     tmp1           = bzla_bv_or(mm, tmp0, tmp2);
-    (*res_d_z)->lo = bzla_bv_or(mm, tmp_z->lo, tmp1);
+    (*res_d_z)->lo = bzla_bv_or(mm, lo_z, tmp1);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
     bzla_bv_free(mm, tmp2);
 
     /* hi_z' = hi_z & (~lo_bvc | hi_x) & (hi_bvc | hi_y) & (hi_x | hi_y) */
-    tmp0 = bzla_bv_or(mm, tmp_x->hi, tmp_y->hi);
-    tmp1 = bzla_bv_or(mm, tmp_bvc->hi, tmp_y->hi);
+    tmp0 = bzla_bv_or(mm, hi_x, hi_y);
+    tmp1 = bzla_bv_or(mm, hi_bvc, hi_y);
     tmp2 = bzla_bv_and(mm, tmp0, tmp1);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
-    tmp0 = bzla_bv_not(mm, tmp_bvc->lo);
-    tmp1 = bzla_bv_or(mm, tmp0, tmp_x->hi);
-    bzla_bv_free(mm, tmp0);
+    tmp1           = bzla_bv_or(mm, not_lo_bvc, hi_x);
     tmp0           = bzla_bv_and(mm, tmp1, tmp2);
-    (*res_d_z)->hi = bzla_bv_and(mm, tmp_z->hi, tmp0);
+    (*res_d_z)->hi = bzla_bv_and(mm, hi_z, tmp0);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
     bzla_bv_free(mm, tmp2);
@@ -2134,7 +2153,9 @@ DONE:
   bzla_bv_free(mm, not_hi_x);
   bzla_bv_free(mm, not_lo_x);
   bzla_bv_free(mm, not_hi_y);
+  bzla_bv_free(mm, not_lo_y);
   bzla_bv_free(mm, not_hi_z);
+  bzla_bv_free(mm, not_lo_bvc);
   bzla_bv_free(mm, not_hi_bvc);
 
   bzla_bv_free(mm, ones);
