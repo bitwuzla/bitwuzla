@@ -499,7 +499,7 @@ class TestPropInv : public TestBzla
                ->as_ptr;
     }
 
-    zero  = bzla_bv_new(d_mm, bw);
+    zero  = bzla_bv_zero(d_mm, bw);
     bvmax = bzla_bv_ones(d_mm, bw);
     bvult = bzla_bv_one(d_mm, 1);
 
@@ -527,7 +527,7 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, ce);
     bzla_bv_free(d_mm, s);
     /* e[0] < 0 */
-    s   = bzla_bv_new(d_mm, bw);
+    s   = bzla_bv_zero(d_mm, bw);
     inv = bzla_is_inv_ult(d_bzla, x0, bvult, s, 0, 0);
     res = inv ? inv_fun(d_bzla, ult, bvult, s, 0, d_domains, 0)
               : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 0, d_domains, 0);
@@ -905,7 +905,7 @@ class TestPropInv : public TestBzla
 
   PROP_INV_CONF_MUL_TESTS:
     /* s = 0 but bvmul > 0 */
-    s = bzla_bv_new(d_mm, bw);
+    s = bzla_bv_zero(d_mm, bw);
     for (k = 0; k < 10; k++)
     {
       bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
@@ -936,7 +936,7 @@ class TestPropInv : public TestBzla
     {
       for (i = 1; bw > 1 && i < bw; i++)
       {
-        s = bzla_bv_new(d_mm, bw);
+        s = bzla_bv_zero(d_mm, bw);
         bzla_bv_set_bit(s, i, 1);
         bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
         r     = bzla_rng_pick_rand(&d_bzla->rng, 0, i - 1);
@@ -1020,7 +1020,7 @@ class TestPropInv : public TestBzla
     bzla_sort_release(d_bzla, sort);
     udiv = bzla_exp_bv_udiv(d_bzla, e[0], e[1]);
 
-    zero  = bzla_bv_new(d_mm, bw);
+    zero  = bzla_bv_zero(d_mm, bw);
     bvmax = bzla_bv_ones(d_mm, bw);
 
     /* prop engine: all conflicts are treated as fixable */
@@ -1029,7 +1029,7 @@ class TestPropInv : public TestBzla
     /* s / e[1] = bvudiv */
     /* s = 1...1 and bvudiv = 0 */
     s      = bzla_bv_copy(d_mm, bvmax);
-    bvudiv = bzla_bv_new(d_mm, bw);
+    bvudiv = bzla_bv_zero(d_mm, bw);
     check_conf_udiv_result(1, udiv, bvudiv, s, use_domains);
     bzla_bv_free(d_mm, bvudiv);
     bzla_bv_free(d_mm, s);
@@ -1052,7 +1052,7 @@ class TestPropInv : public TestBzla
     /* s = 0 and bvudiv < 1...1 */
     for (k = 0; k < 10; k++)
     {
-      s      = bzla_bv_new(d_mm, bw);
+      s      = bzla_bv_zero(d_mm, bw);
       tmp    = bzla_bv_dec(d_mm, bvmax);
       bvudiv = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       bzla_bv_free(d_mm, tmp);
@@ -1132,7 +1132,7 @@ class TestPropInv : public TestBzla
                ->as_ptr;
     }
 
-    zero  = bzla_bv_new(d_mm, bw);
+    zero  = bzla_bv_zero(d_mm, bw);
     bvmax = bzla_bv_ones(d_mm, bw);
 
     /* prop engine: all conflicts are treated as fixable */

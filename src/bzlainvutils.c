@@ -545,7 +545,7 @@ bzla_bvdomain_check_fixed_bits_val(BzlaMemMgr *mm,
   uint32_t bw;
   BzlaBitVector *bv;
   bw  = bzla_bv_get_width(d->lo);
-  bv  = val ? bzla_bv_ones(mm, bw) : bzla_bv_new(mm, bw);
+  bv  = val ? bzla_bv_ones(mm, bw) : bzla_bv_zero(mm, bw);
   res = bzla_bvdomain_check_fixed_bits(mm, d, bv);
   bzla_bv_free(mm, bv);
   return res;

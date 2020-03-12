@@ -1064,7 +1064,7 @@ cons_ult_aux(Bzla *bzla,
       }
       else
       {
-        zero = bzla_bv_new(mm, bw);
+        zero = bzla_bv_zero(mm, bw);
         ones = bzla_bv_ones(mm, bw);
         tmp  = bzla_bv_dec(mm, ones);
         bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
@@ -1086,7 +1086,7 @@ cons_ult_aux(Bzla *bzla,
     }
     else
     {
-      zero = bzla_bv_new(mm, bw);
+      zero = bzla_bv_zero(mm, bw);
       ones = bzla_bv_ones(mm, bw);
       tmp  = bzla_bv_dec(mm, ones);
       res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
@@ -1311,7 +1311,7 @@ bzla_proputils_cons_mul(Bzla *bzla,
       if (bzla_rng_pick_with_prob(&bzla->rng, 100))
       {
         bzla_bv_free(mm, res);
-        res = bzla_bv_new(mm, bw);
+        res = bzla_bv_zero(mm, bw);
         bzla_bv_set_bit(res, bzla_rng_pick_rand(&bzla->rng, 0, ctz_t - 1), 1);
       }
       /* choose res as t / 2^n with prob 0.1
@@ -1361,7 +1361,7 @@ bzla_proputils_cons_udiv(Bzla *bzla,
 
   mm   = bzla->mm;
   bw   = bzla_bv_get_width(t);
-  zero = bzla_bv_new(mm, bw);
+  zero = bzla_bv_zero(mm, bw);
   one  = bzla_bv_one(mm, bw);
   ones = bzla_bv_ones(mm, bw);
 
@@ -1458,7 +1458,7 @@ bzla_proputils_cons_urem(Bzla *bzla,
     if (!bzla_bv_compare(t, ones))
     {
       /* t = 1...1  ->  res = 0 */
-      res = bzla_bv_new(mm, bw);
+      res = bzla_bv_zero(mm, bw);
     }
     else
     {
@@ -1579,7 +1579,7 @@ bzla_proputils_cons_cond(Bzla *bzla,
   else
   {
     res = bzla_rng_flip_coin(&bzla->rng) ? bzla_bv_one(mm, 1)
-                                         : bzla_bv_new(mm, 1);
+                                         : bzla_bv_zero(mm, 1);
   }
   return res;
 }
@@ -1738,7 +1738,7 @@ bzla_proputils_cons_sll_const(Bzla *bzla,
       if (idx_x)
       {
         tmp  = bzla_bv_uint64_to_bv(mm, max, bw);
-        zero = bzla_bv_new(mm, bw);
+        zero = bzla_bv_zero(mm, bw);
         bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
         if (!bzla_bvdomain_gen_has_next(&gen))
         {
@@ -1863,7 +1863,7 @@ bzla_proputils_cons_srl_const(Bzla *bzla,
       if (idx_x)
       {
         tmp  = bzla_bv_uint64_to_bv(mm, max, bw);
-        zero = bzla_bv_new(mm, bw);
+        zero = bzla_bv_zero(mm, bw);
         bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
         if (!bzla_bvdomain_gen_has_next(&gen))
         {
@@ -2082,7 +2082,7 @@ bzla_proputils_cons_udiv_const(Bzla *bzla,
   x  = bzla_hashint_map_get(domains, bzla_node_get_id(udiv->e[idx_x]))->as_ptr;
   bw = bzla_bv_get_width(t);
 
-  zero = bzla_bv_new(mm, bw);
+  zero = bzla_bv_zero(mm, bw);
   one  = bzla_bv_one(mm, bw);
   ones = bzla_bv_ones(mm, bw);
 
@@ -2109,11 +2109,11 @@ bzla_proputils_cons_udiv_const(Bzla *bzla,
       }
       else if (!check_one)
       {
-        res = bzla_bv_new(mm, bw);
+        res = bzla_bv_zero(mm, bw);
       }
       else
       {
-        res = bzla_rng_flip_coin(&bzla->rng) ? bzla_bv_new(mm, bw)
+        res = bzla_rng_flip_coin(&bzla->rng) ? bzla_bv_zero(mm, bw)
                                              : bzla_bv_one(mm, bw);
       }
     }
@@ -2311,7 +2311,7 @@ bzla_proputils_cons_urem_const(Bzla *bzla,
 
   mm   = bzla->mm;
   bw   = bzla_bv_get_width(t);
-  zero = bzla_bv_new(mm, bw);
+  zero = bzla_bv_zero(mm, bw);
   ones = bzla_bv_ones(mm, bw);
 
   x = bzla_hashint_map_get(domains, bzla_node_get_id(urem->e[idx_x]))->as_ptr;
@@ -2906,7 +2906,7 @@ bzla_proputils_inv_ult(Bzla *bzla,
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
 
   bw    = bzla_bv_get_width(s);
-  zero  = bzla_bv_new(mm, bw);
+  zero  = bzla_bv_zero(mm, bw);
   one   = bzla_bv_one(mm, bw);
   ones  = bzla_bv_ones(mm, bw);
   isult = !bzla_bv_is_zero(t);
@@ -3471,7 +3471,7 @@ bzla_proputils_inv_udiv(Bzla *bzla,
       else
       {
         /* t = 2^bw - 1 and s != t -> x = 0 */
-        res = bzla_bv_new(mm, bw);
+        res = bzla_bv_zero(mm, bw);
       }
     }
     else if (bzla_bv_is_zero(t))
@@ -3680,7 +3680,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
       assert(!bzla_bv_compare(s, ones));
 
       /* s % x = ~0 -> s = ~0, x = 0 */
-      res = bzla_bv_new(mm, bw);
+      res = bzla_bv_zero(mm, bw);
     }
     else
     {
@@ -3694,7 +3694,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
         if (bzla_rng_pick_with_prob(&bzla->rng, 250))
         {
           /* choose x = 0 with prob = 0.25 */
-          res = bzla_bv_new(mm, bw);
+          res = bzla_bv_zero(mm, bw);
         }
         else
         {
@@ -4044,7 +4044,7 @@ bzla_proputils_inv_slice(Bzla *bzla,
   upper = bzla_node_bv_slice_get_upper(slice);
   lower = bzla_node_bv_slice_get_lower(slice);
 
-  res = bzla_bv_new(mm, bzla_node_bv_get_width(bzla, e));
+  res = bzla_bv_zero(mm, bzla_node_bv_get_width(bzla, e));
 
   /* keep previous value for don't care bits or set randomly with prob
    * BZLA_OPT_PROP_PROB_SLICE_KEEP_DC */
@@ -4172,7 +4172,7 @@ bzla_proputils_inv_cond(Bzla *bzla,
     if (cmp0 && cmp1)
     {
       res = bzla_rng_flip_coin(&bzla->rng) ? bzla_bv_one(mm, 1)
-                                           : bzla_bv_new(mm, 1);
+                                           : bzla_bv_zero(mm, 1);
     }
     else if (cmp0)
     {
@@ -4181,7 +4181,7 @@ bzla_proputils_inv_cond(Bzla *bzla,
     else
     {
       assert(cmp1);
-      res = bzla_bv_new(mm, 1);
+      res = bzla_bv_zero(mm, 1);
     }
   }
 #if 0
@@ -4509,7 +4509,7 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
 
   bw    = bzla_bv_get_width(s);
-  zero  = bzla_bv_new(mm, bw);
+  zero  = bzla_bv_zero(mm, bw);
   one   = bzla_bv_one(mm, bw);
   ones  = bzla_bv_ones(mm, bw);
   isult = !bzla_bv_is_zero(t);
@@ -4888,7 +4888,7 @@ bzla_proputils_inv_udiv_const(Bzla *bzla,
         if (bzla_bv_is_ones(t))
         {
           /* x = 0 */
-          tmp = bzla_bv_new(mm, bw);
+          tmp = bzla_bv_zero(mm, bw);
           bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, tmp, tmp);
           bzla_bv_free(mm, tmp);
         }
@@ -4990,7 +4990,7 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
     if (bzla_bv_compare(t, ones) == 0)
     {
       /* s % x = t = ones: s = ones, x = 0 */
-      res = bzla_bv_new(mm, bw);
+      res = bzla_bv_zero(mm, bw);
     }
     else if (bzla_bv_compare(s, t) == 0)
     {
@@ -4998,7 +4998,7 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
       if (bzla_bv_compare(x->hi, t) <= 0
           || (bzla_bv_is_zero(x->lo) && bzla_rng_flip_coin(&bzla->rng)))
       {
-        res = bzla_bv_new(mm, bw);
+        res = bzla_bv_zero(mm, bw);
       }
       else
       {
