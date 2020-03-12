@@ -1100,7 +1100,7 @@ bzla_is_inv_udiv_const(Bzla *bzla,
           }
 
           BzlaBvDomainGenerator dgen;
-          bzla_bvdomain_gen_init_range(mm, 0, &dgen, x, min, max);
+          bzla_bvdomain_gen_init_range(mm, &bzla->rng, &dgen, x, min, max);
           res = bzla_bvdomain_gen_has_next(&dgen);
           if (d_res_x && res)
           {
@@ -1152,7 +1152,7 @@ bzla_is_inv_udiv_const(Bzla *bzla,
             }
 
             BzlaBvDomainGenerator dgen;
-            bzla_bvdomain_gen_init_range(mm, 0, &dgen, x, min, max);
+            bzla_bvdomain_gen_init_range(mm, &bzla->rng, &dgen, x, min, max);
             res = bzla_bvdomain_gen_has_next(&dgen);
             if (d_res_x && res)
             {
