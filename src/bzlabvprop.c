@@ -691,15 +691,23 @@ bzla_bvprop_not(BzlaMemMgr *mm,
   assert(d_z);
   assert(bzla_bvdomain_is_valid(mm, d_z));
 
+  BzlaBitVector *not_hi, *not_lo;
+  BzlaBitVector *hi_x, *lo_x, *hi_z, *lo_z;
+
+  hi_x = d_x->hi;
+  lo_x = d_x->lo;
+  hi_z = d_z->hi;
+  lo_z = d_z->lo;
+
   /**
    * lo_x' = lo_x | ~hi_z
    * hi_x' = hi_x & ~hi_z
    */
-  BzlaBitVector *not_hi = bzla_bv_not(mm, d_z->hi);
-  BzlaBitVector *not_lo = bzla_bv_not(mm, d_z->lo);
-  *res_d_x              = new_domain(mm);
-  (*res_d_x)->lo        = bzla_bv_or(mm, d_x->lo, not_hi);
-  (*res_d_x)->hi        = bzla_bv_and(mm, d_x->hi, not_lo);
+  not_hi         = bzla_bv_not(mm, hi_z);
+  not_lo         = bzla_bv_not(mm, lo_z);
+  *res_d_x       = new_domain(mm);
+  (*res_d_x)->lo = bzla_bv_or(mm, lo_x, not_hi);
+  (*res_d_x)->hi = bzla_bv_and(mm, hi_x, not_lo);
   bzla_bv_free(mm, not_hi);
   bzla_bv_free(mm, not_lo);
 
@@ -707,11 +715,11 @@ bzla_bvprop_not(BzlaMemMgr *mm,
    * lo_z' = lo_z | ~hi_x
    * hi_z' = hi_z & ~hi_x
    */
-  not_hi         = bzla_bv_not(mm, d_x->hi);
-  not_lo         = bzla_bv_not(mm, d_x->lo);
+  not_hi         = bzla_bv_not(mm, hi_x);
+  not_lo         = bzla_bv_not(mm, lo_x);
   *res_d_z       = new_domain(mm);
-  (*res_d_z)->lo = bzla_bv_or(mm, d_z->lo, not_hi);
-  (*res_d_z)->hi = bzla_bv_and(mm, d_z->hi, not_lo);
+  (*res_d_z)->lo = bzla_bv_or(mm, lo_z, not_hi);
+  (*res_d_z)->hi = bzla_bv_and(mm, hi_z, not_lo);
   bzla_bv_free(mm, not_hi);
   bzla_bv_free(mm, not_lo);
 
