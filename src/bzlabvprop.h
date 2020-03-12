@@ -128,15 +128,15 @@ bool bzla_bvprop_sext(BzlaMemMgr *mm,
                       BzlaBvDomain **res_d_z);
 
 /** Propagate domains 'd_c', 'd_x', 'd_y' and 'd_z' of z = ite(c, x, y). */
-bool bzla_bvprop_ite(BzlaMemMgr *mm,
-                     BzlaBvDomain *d_x,
-                     BzlaBvDomain *d_y,
-                     BzlaBvDomain *d_z,
-                     BzlaBvDomain *d_c,
-                     BzlaBvDomain **res_d_x,
-                     BzlaBvDomain **res_d_y,
-                     BzlaBvDomain **res_d_z,
-                     BzlaBvDomain **res_d_c);
+bool bzla_bvprop_cond(BzlaMemMgr *mm,
+                      BzlaBvDomain *d_x,
+                      BzlaBvDomain *d_y,
+                      BzlaBvDomain *d_z,
+                      BzlaBvDomain *d_c,
+                      BzlaBvDomain **res_d_x,
+                      BzlaBvDomain **res_d_y,
+                      BzlaBvDomain **res_d_z,
+                      BzlaBvDomain **res_d_c);
 
 /** Propagate domains 'd_x', 'd_y' and 'd_z' of z = x + y. */
 bool bzla_bvprop_add(BzlaMemMgr *mm,

@@ -59,7 +59,7 @@ class TestBvProp : public TestBvDomainCommon
     TEST_BVPROP_AND,
     TEST_BVPROP_CONCAT,
     TEST_BVPROP_EQ,
-    TEST_BVPROP_ITE,
+    TEST_BVPROP_COND,
     TEST_BVPROP_MUL,
     TEST_BVPROP_OR,
     TEST_BVPROP_SLICE,
@@ -332,10 +332,10 @@ class TestBvProp : public TestBvDomainCommon
     }
   }
 
-  void check_ite(BzlaBvDomain *d_x,
-                 BzlaBvDomain *d_y,
-                 BzlaBvDomain *d_z,
-                 BzlaBvDomain *d_c)
+  void check_cond(BzlaBvDomain *d_x,
+                  BzlaBvDomain *d_y,
+                  BzlaBvDomain *d_z,
+                  BzlaBvDomain *d_c)
   {
     assert(bzla_bvdomain_get_width(d_c) == 1);
     assert(bzla_bvdomain_is_valid(d_mm, d_x));
@@ -460,7 +460,7 @@ class TestBvProp : public TestBvDomainCommon
         break;
 
       default:
-        assert(op == TEST_BVPROP_ITE);
+        assert(op == TEST_BVPROP_COND);
         av_res = bzla_aigvec_cond(d_avmgr, av_c, av_x, av_y);
     }
 
@@ -1667,7 +1667,7 @@ class TestBvProp : public TestBvDomainCommon
     free_consts(bw, num_consts, consts);
   }
 
-  void test_ite(uint32_t bw)
+  void test_cond(uint32_t bw)
   {
     bool res;
     uint32_t num_consts;
@@ -1701,7 +1701,7 @@ class TestBvProp : public TestBvDomainCommon
           {
             d_y = bzla_bvdomain_new_from_char(d_mm, consts[k]);
 
-            res = bzla_bvprop_ite(
+            res = bzla_bvprop_cond(
                 d_mm, d_x, d_y, d_z, d_c, &res_x, &res_y, &res_z, &res_c);
             check_sat(d_x,
                       d_y,
@@ -1718,7 +1718,7 @@ class TestBvProp : public TestBvDomainCommon
                       0,
                       0,
                       res);
-            if (res) check_ite(res_x, res_y, res_z, res_c);
+            if (res) check_cond(res_x, res_y, res_z, res_c);
 
             bzla_bvdomain_free(d_mm, d_y);
             TEST_BVPROP_RELEASE_RES_XYZ;
@@ -3424,12 +3424,12 @@ TEST_F(TestBvProp, sext)
   test_sext(3);
 }
 
-TEST_F(TestBvProp, ite)
+TEST_F(TestBvProp, cond)
 {
-  test_ite(1);
-  test_ite(2);
+  test_cond(1);
+  test_cond(2);
 #if TEST_BVPROP_THREE_BITS
-  test_ite(3);
+  test_cond(3);
 #endif
 }
 

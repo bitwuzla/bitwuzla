@@ -1093,7 +1093,7 @@ bvprop_shift_aux(BzlaMemMgr *mm,
                                       res_d_y,
                                       res_d_z,
                                       &tmp_res_c,
-                                      bzla_bvprop_ite,
+                                      bzla_bvprop_cond,
                                       &progress)))
       {
         goto DONE;
@@ -1897,15 +1897,15 @@ SEXT_SIGN_1:
 }
 
 bool
-bzla_bvprop_ite(BzlaMemMgr *mm,
-                BzlaBvDomain *d_x,
-                BzlaBvDomain *d_y,
-                BzlaBvDomain *d_z,
-                BzlaBvDomain *d_c,
-                BzlaBvDomain **res_d_x,
-                BzlaBvDomain **res_d_y,
-                BzlaBvDomain **res_d_z,
-                BzlaBvDomain **res_d_c)
+bzla_bvprop_cond(BzlaMemMgr *mm,
+                 BzlaBvDomain *d_x,
+                 BzlaBvDomain *d_y,
+                 BzlaBvDomain *d_z,
+                 BzlaBvDomain *d_c,
+                 BzlaBvDomain **res_d_x,
+                 BzlaBvDomain **res_d_y,
+                 BzlaBvDomain **res_d_z,
+                 BzlaBvDomain **res_d_c)
 {
   assert(mm);
   assert(d_c);
@@ -2516,7 +2516,7 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
                                     res_d_y,
                                     res_d_z,
                                     &tmp_res_c,
-                                    bzla_bvprop_ite,
+                                    bzla_bvprop_cond,
                                     &progress)))
     {
       goto DONE;
@@ -2711,7 +2711,7 @@ bzla_bvprop_mul_aux(BzlaMemMgr *mm,
                                         res_d_y,
                                         res_d_z,
                                         &tmp_res_c,
-                                        bzla_bvprop_ite,
+                                        bzla_bvprop_cond,
                                         &progress)))
         {
           goto DONE;
@@ -3234,7 +3234,7 @@ bvprop_udiv_old (BzlaMemMgr *mm,
                                      res_d_y,
                                      res_d_z,
                                      &res_d_c,
-                                     bzla_bvprop_ite,
+                                     bzla_bvprop_cond,
                                      &progress)))
     {
       goto DONE;
@@ -3837,7 +3837,7 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
                                         &tmp_res_y,
                                         &tmp_res_z,
                                         &tmp_res_c,
-                                        bzla_bvprop_ite,
+                                        bzla_bvprop_cond,
                                         &progress)))
         {
           goto DONE;
@@ -3865,7 +3865,7 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
                                         &tmp_res_y,
                                         &tmp_res_z,
                                         &tmp_res_c,
-                                        bzla_bvprop_ite,
+                                        bzla_bvprop_cond,
                                         &progress)))
         {
           goto DONE;
@@ -3897,7 +3897,7 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
                                         &tmp_res_y,
                                         &tmp_res_z,
                                         &tmp_res_c,
-                                        bzla_bvprop_ite,
+                                        bzla_bvprop_cond,
                                         &progress)))
         {
           goto DONE;
@@ -3971,7 +3971,7 @@ bvprop_udiv_urem_aux(BzlaMemMgr *mm,
                                         &tmp_res_y,
                                         &tmp_res_z,
                                         &tmp_res_c,
-                                        bzla_bvprop_ite,
+                                        bzla_bvprop_cond,
                                         &progress)))
         {
           goto DONE;
@@ -4260,7 +4260,7 @@ bzla_bvprop_urem (BzlaMemMgr *mm,
                                      res_d_y,
                                      res_d_z,
                                      &res_d_c,
-                                     bzla_bvprop_ite,
+                                     bzla_bvprop_cond,
                                      &progress)))
     {
       goto DONE;
