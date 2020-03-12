@@ -1220,43 +1220,47 @@ bzla_bvprop_and(BzlaMemMgr *mm,
   assert(res_d_z);
 
   BzlaBitVector *tmp0, *tmp1;
+  BzlaBitVector *hi_x, *lo_x, *hi_y, *lo_y, *hi_z, *lo_z;
+
+  hi_x = d_x->hi;
+  lo_x = d_x->lo;
+  hi_y = d_y->hi;
+  lo_y = d_y->lo;
+  hi_z = d_z->hi;
+  lo_z = d_z->lo;
 
   *res_d_x = new_domain(mm);
   *res_d_y = new_domain(mm);
   *res_d_z = new_domain(mm);
 
   /* lo_x' = lo_x | lo_z */
-  (*res_d_x)->lo = bzla_bv_or(mm, d_x->lo, d_z->lo);
+  (*res_d_x)->lo = bzla_bv_or(mm, lo_x, lo_z);
 
-  /* hi_x' = hi_x & ~(~hi_z & lo_y) */
-  tmp0 = bzla_bv_not(mm, d_z->hi);
-  tmp1 = bzla_bv_and(mm, tmp0, d_y->lo);
+  /* hi_x' = hi_x & (hi_z | ~lo_y) */
+  tmp0           = bzla_bv_not(mm, lo_y);
+  tmp1           = bzla_bv_or(mm, hi_z, tmp0);
+  (*res_d_x)->hi = bzla_bv_and(mm, hi_x, tmp1);
   bzla_bv_free(mm, tmp0);
-  tmp0 = bzla_bv_not(mm, tmp1);
   bzla_bv_free(mm, tmp1);
-  (*res_d_x)->hi = bzla_bv_and(mm, d_x->hi, tmp0);
-  bzla_bv_free(mm, tmp0);
 
   /* lo_y' = lo_y | lo_z */
-  (*res_d_y)->lo = bzla_bv_or(mm, d_y->lo, d_z->lo);
+  (*res_d_y)->lo = bzla_bv_or(mm, lo_y, lo_z);
 
-  /* hi_y' = hi_y | ~(~hi_z & lo_x) */
-  tmp0 = bzla_bv_not(mm, d_z->hi);
-  tmp1 = bzla_bv_and(mm, tmp0, d_x->lo);
+  /* hi_y' = hi_y & (hi_z | ~lo_x) */
+  tmp0           = bzla_bv_not(mm, lo_x);
+  tmp1           = bzla_bv_or(mm, hi_z, tmp0);
+  (*res_d_y)->hi = bzla_bv_and(mm, hi_y, tmp1);
   bzla_bv_free(mm, tmp0);
-  tmp0 = bzla_bv_not(mm, tmp1);
   bzla_bv_free(mm, tmp1);
-  (*res_d_y)->hi = bzla_bv_and(mm, d_y->hi, tmp0);
-  bzla_bv_free(mm, tmp0);
 
   /* lo_z' = lo_z | (lo_x & lo_y) */
-  tmp0           = bzla_bv_and(mm, d_x->lo, d_y->lo);
-  (*res_d_z)->lo = bzla_bv_or(mm, d_z->lo, tmp0);
+  tmp0           = bzla_bv_and(mm, lo_x, lo_y);
+  (*res_d_z)->lo = bzla_bv_or(mm, lo_z, tmp0);
   bzla_bv_free(mm, tmp0);
 
   /* hi_z' = hi_z & hi_x & hi_y */
-  tmp0           = bzla_bv_and(mm, d_x->hi, d_y->hi);
-  (*res_d_z)->hi = bzla_bv_and(mm, d_z->hi, tmp0);
+  tmp0           = bzla_bv_and(mm, hi_x, hi_y);
+  (*res_d_z)->hi = bzla_bv_and(mm, hi_z, tmp0);
   bzla_bv_free(mm, tmp0);
 
   return bzla_bvdomain_is_valid(mm, *res_d_x)
