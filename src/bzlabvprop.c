@@ -749,6 +749,12 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
   uint32_t w, wn;
   BzlaBitVector *mask1, *ones_wn, *zero_wn, *ones_w_wn, *zero_w_wn;
   BzlaBitVector *tmp0, *tmp1;
+  BzlaBitVector *hi_x, *lo_x, *hi_z, *lo_z;
+
+  hi_x = d_x->hi;
+  lo_x = d_x->lo;
+  hi_z = d_z->hi;
+  lo_z = d_z->lo;
 
   w = bzla_bvdomain_get_width(d_z);
   assert(w == bzla_bvdomain_get_width(d_x));
@@ -793,17 +799,17 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
    * SLL: lo_x' = lo_x | (lo_z >> n)
    * SRL: lo_x' = lo_x | (lo_z << n)
    */
-  tmp0 = is_srl ? bzla_bv_sll(mm, d_z->lo, n) : bzla_bv_srl(mm, d_z->lo, n);
-  (*res_d_x)->lo = bzla_bv_or(mm, d_x->lo, tmp0);
+  tmp0           = is_srl ? bzla_bv_sll(mm, lo_z, n) : bzla_bv_srl(mm, lo_z, n);
+  (*res_d_x)->lo = bzla_bv_or(mm, lo_x, tmp0);
   bzla_bv_free(mm, tmp0);
 
   /**
    * SLL: hi_x' = ((hi_z >> n) | mask1) & hi_x
    * SRL: hi_x' = ((hi_z << n) | mask1) & hi_x
    */
-  tmp0 = is_srl ? bzla_bv_sll(mm, d_z->hi, n) : bzla_bv_srl(mm, d_z->hi, n);
-  tmp1 = bzla_bv_or(mm, tmp0, mask1);
-  (*res_d_x)->hi = bzla_bv_and(mm, tmp1, d_x->hi);
+  tmp0           = is_srl ? bzla_bv_sll(mm, hi_z, n) : bzla_bv_srl(mm, hi_z, n);
+  tmp1           = bzla_bv_or(mm, tmp0, mask1);
+  (*res_d_x)->hi = bzla_bv_and(mm, tmp1, hi_x);
   bzla_bv_free(mm, tmp0);
   bzla_bv_free(mm, tmp1);
 
@@ -820,16 +826,16 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
    *   SRL: mask2 = 0_[wn]   :: 1_[w-wn]
    *  )
    */
-  tmp0 = is_srl ? bzla_bv_srl(mm, d_x->lo, n) : bzla_bv_sll(mm, d_x->lo, n);
-  (*res_d_z)->lo = bzla_bv_or(mm, tmp0, d_z->lo);
+  tmp0           = is_srl ? bzla_bv_srl(mm, lo_x, n) : bzla_bv_sll(mm, lo_x, n);
+  (*res_d_z)->lo = bzla_bv_or(mm, tmp0, lo_z);
   bzla_bv_free(mm, tmp0);
 
   /**
    * SLL: hi_z' = (hi_x << n) & hi_z
    * SRL: hi_z' = (hi_x >> n) & hi_z
    */
-  tmp0 = is_srl ? bzla_bv_srl(mm, d_x->hi, n) : bzla_bv_sll(mm, d_x->hi, n);
-  (*res_d_z)->hi = bzla_bv_and(mm, tmp0, d_z->hi);
+  tmp0           = is_srl ? bzla_bv_srl(mm, hi_x, n) : bzla_bv_sll(mm, hi_x, n);
+  (*res_d_z)->hi = bzla_bv_and(mm, tmp0, hi_z);
   bzla_bv_free(mm, tmp0);
 
   bzla_bv_free(mm, mask1);
