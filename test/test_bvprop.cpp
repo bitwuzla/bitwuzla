@@ -284,7 +284,6 @@ class TestBvProp : public TestBvDomainCommon
               0,
               0,
               0,
-              false, /* not compositional but eq always returns true */
               res);
     ASSERT_TRUE(!bzla_bvdomain_is_fixed(d_mm, d_x)
                 || !bzla_bv_compare(d_x->lo, res_x->lo));
@@ -560,34 +559,137 @@ class TestBvProp : public TestBvDomainCommon
     bzla_mem_freestr(d_mm, str_res_z);
   }
 
-  void check_sat_fix_bits(Bzla *bzla, BoolectorNode *var, const char bits[])
+  /**
+   * Assert that fixed bits in the given result domain do not match in any
+   * satisfying assignment for var, i.e.,
+   *   (var | d->lo) != var || (var & d->hi) != var.
+   * This is a helper for the check_sat test below.
+   */
+  void fix_result_bits_for_check_sat(Bzla *bzla,
+                                     BoolectorNode *var,
+                                     BzlaBvDomain *d)
   {
     assert(bzla);
     assert(var);
-    assert(bits);
+    assert(d);
+    assert(bzla_bvdomain_is_valid(bzla->mm, d));
 
-    uint32_t idx;
-    uint32_t w = boolector_get_width(bzla, var);
-    BoolectorNode *eq, *slice, *one, *zero;
+    BoolectorNode *d_hi, *d_lo, *a, *o, *_or, *ne1, *ne2;
+    char *s_hi, *s_lo;
 
-    ASSERT_EQ(w, strlen(bits));
+    s_hi = bzla_bv_to_char(bzla->mm, d->hi);
+    s_lo = bzla_bv_to_char(bzla->mm, d->lo);
 
-    one  = boolector_const(bzla, "1");
-    zero = boolector_const(bzla, "0");
-    for (size_t i = 0; i < w; i++)
+    d_hi = boolector_const(bzla, s_hi);
+    d_lo = boolector_const(bzla, s_lo);
+
+    a = boolector_and(bzla, var, d_hi);
+    o = boolector_or(bzla, var, d_lo);
+
+    ne1 = boolector_ne(bzla, a, var);
+    ne2 = boolector_ne(bzla, o, var);
+
+    _or = boolector_or(bzla, ne1, ne2);
+
+    boolector_assert(bzla, _or);
+
+    boolector_release(bzla, _or);
+    boolector_release(bzla, ne1);
+    boolector_release(bzla, ne2);
+    boolector_release(bzla, o);
+    boolector_release(bzla, a);
+    boolector_release(bzla, d_hi);
+    boolector_release(bzla, d_lo);
+    bzla_mem_freestr(bzla->mm, s_hi);
+    bzla_mem_freestr(bzla->mm, s_lo);
+  }
+
+  /**
+   * Fix bits in var corresponding to the fixed bits in the given input domain.
+   * This is a helper for the check_sat test below.
+   */
+  void fix_domain_bits_for_check_sat(Bzla *bzla,
+                                     BoolectorNode *var,
+                                     BzlaBvDomain *d)
+  {
+    assert(bzla);
+    assert(var);
+    assert(d);
+    assert(bzla_bvdomain_is_valid(bzla->mm, d));
+
+    BoolectorNode *d_hi, *d_lo, *a, *o, *_and, *eq1, *eq2;
+    char *s_hi, *s_lo;
+
+    s_hi = bzla_bv_to_char(bzla->mm, d->hi);
+    s_lo = bzla_bv_to_char(bzla->mm, d->lo);
+
+    d_hi = boolector_const(bzla, s_hi);
+    d_lo = boolector_const(bzla, s_lo);
+
+    a = boolector_and(bzla, var, d_hi);
+    o = boolector_or(bzla, var, d_lo);
+
+    eq1 = boolector_eq(bzla, a, var);
+    eq2 = boolector_eq(bzla, o, var);
+
+    _and = boolector_and(bzla, eq1, eq2);
+
+    boolector_assert(bzla, _and);
+
+    boolector_release(bzla, _and);
+    boolector_release(bzla, eq1);
+    boolector_release(bzla, eq2);
+    boolector_release(bzla, o);
+    boolector_release(bzla, a);
+    boolector_release(bzla, d_hi);
+    boolector_release(bzla, d_lo);
+    bzla_mem_freestr(bzla->mm, s_hi);
+    bzla_mem_freestr(bzla->mm, s_lo);
+  }
+
+  void print_domains_for_check_sat(BzlaBvDomain *d_x,
+                                   BzlaBvDomain *d_y,
+                                   BzlaBvDomain *d_z,
+                                   BzlaBvDomain *d_c,
+                                   BzlaBvDomain *res_x,
+                                   BzlaBvDomain *res_y,
+                                   BzlaBvDomain *res_z,
+                                   BzlaBvDomain *res_c)
+  {
+    assert(d_x);
+    assert(d_z);
+    assert(res_x);
+    assert(res_z);
+
+    printf("\n");
+    printf("x: ");
+    print_domain(d_x, true);
+    if (d_y)
     {
-      idx = w - i - 1;
-      if (bits[i] != 'x')
-      {
-        slice = boolector_slice(bzla, var, idx, idx);
-        eq    = boolector_eq(bzla, slice, bits[i] == '1' ? one : zero);
-        boolector_assert(bzla, eq);
-        boolector_release(bzla, eq);
-        boolector_release(bzla, slice);
-      }
+      printf("y: ");
+      print_domain(d_y, true);
     }
-    boolector_release(bzla, one);
-    boolector_release(bzla, zero);
+    if (d_c)
+    {
+      printf("c: ");
+      print_domain(d_c, true);
+    }
+    printf("z: ");
+    print_domain(d_z, true);
+    printf("x': ");
+    print_domain(res_x, true);
+    if (res_y)
+    {
+      printf("y': ");
+      print_domain(res_y, true);
+    }
+    if (res_c)
+    {
+      printf("c': ");
+      print_domain(res_c, true);
+    }
+    printf("z': ");
+    print_domain(res_z, true);
   }
 
   void check_sat(
@@ -605,7 +707,6 @@ class TestBvProp : public TestBvDomainCommon
       BoolectorNode *(*extfun)(Bzla *, BoolectorNode *, uint32_t),
       uint32_t hi,
       uint32_t lo,
-      bool decompositional,
       bool valid)
   {
     assert(d_x);
@@ -619,27 +720,16 @@ class TestBvProp : public TestBvDomainCommon
 
     int32_t sat_res;
     uint32_t bwx, bwy, bwz;
-    char *str_x, *str_y, *str_z, *str_c;
-#if 0
-    char *str_res_x, *str_res_y, *str_res_z, *str_res_c;
-#endif
     Bzla *bzla;
     BoolectorNode *x, *y, *z, *c, *fun, *ofun, *_not, *eq;
     BoolectorSort swx, swy, swz, s1;
 
     swy = 0;
 
-    str_x = from_domain(d_mm, d_x);
-    str_y = 0;
-    str_z = from_domain(d_mm, d_z);
-    str_c = 0;
-#if 0
-    str_res_x = str_res_y = str_res_c = str_res_z = 0;
-#endif
-
     bzla = boolector_new();
     boolector_set_opt(bzla, BZLA_OPT_MODEL_GEN, 1);
     boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
+    boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, 0);
     bwx = bzla_bvdomain_get_width(d_x);
     swx = boolector_bitvec_sort(bzla, bwx);
     bwz = bzla_bvdomain_get_width(d_z);
@@ -652,18 +742,16 @@ class TestBvProp : public TestBvDomainCommon
 
     if (d_y)
     {
-      str_y = from_domain(d_mm, d_y);
-      bwy   = bzla_bvdomain_get_width(d_y);
-      swy   = boolector_bitvec_sort(bzla, bwy);
-      y     = boolector_var(bzla, swy, "y");
+      bwy = bzla_bvdomain_get_width(d_y);
+      swy = boolector_bitvec_sort(bzla, bwy);
+      y   = boolector_var(bzla, swy, "y");
     }
 
     if (d_c)
     {
       ASSERT_NE(y, nullptr);
-      str_c = from_domain(d_mm, d_c);
-      c     = boolector_var(bzla, s1, "c");
-      fun   = boolector_cond(bzla, c, x, y);
+      c   = boolector_var(bzla, s1, "c");
+      fun = boolector_cond(bzla, c, x, y);
     }
     else if (unfun)
     {
@@ -698,108 +786,74 @@ class TestBvProp : public TestBvDomainCommon
     boolector_release(bzla, fun);
     boolector_release(bzla, eq);
 
-    boolector_push(bzla, 1);
-    check_sat_fix_bits(bzla, x, str_x);
-    if (str_y)
-    {
-      check_sat_fix_bits(bzla, y, str_y);
-    }
-    check_sat_fix_bits(bzla, z, str_z);
-    if (str_c)
-    {
-      check_sat_fix_bits(bzla, c, str_c);
-    }
+    fix_domain_bits_for_check_sat(bzla, x, d_x);
+    if (d_y) fix_domain_bits_for_check_sat(bzla, y, d_y);
+    fix_domain_bits_for_check_sat(bzla, z, d_z);
+    if (d_c) fix_domain_bits_for_check_sat(bzla, c, d_c);
 
-    // boolector_dump_smt2 (bzla, stdout);
-    sat_res = boolector_sat(bzla);
-    boolector_pop(bzla, 1);
-
-    ASSERT_TRUE(sat_res != BZLA_RESULT_SAT
-                || (valid && is_valid(d_mm, res_x, res_y, res_z, res_c)));
-    ASSERT_TRUE(sat_res != BZLA_RESULT_UNSAT
-                || ((decompositional
-                     || (!valid && !is_valid(d_mm, res_x, res_y, res_z, res_c)))
-                    && (!decompositional || !valid
-                        || !is_fixed(d_mm, res_x, res_y, res_z, res_c))));
-
-    /* Check correctness of results res_* for valid domains. */
-#if 0
     if (valid)
     {
-      str_res_x = from_domain (d_mm, res_x);
-      str_res_z = from_domain (d_mm, res_z);
+      /* check fixed bits in result domains */
+
+      boolector_push(bzla, 1);
+      fix_result_bits_for_check_sat(bzla, x, res_x);
+      sat_res = boolector_sat(bzla);
+      if (sat_res != BZLA_RESULT_UNSAT)
+      {
+        print_domains_for_check_sat(
+            d_x, d_y, d_z, d_c, res_x, res_y, res_z, res_c);
+      }
+      ASSERT_TRUE(sat_res == BZLA_RESULT_UNSAT);
+      boolector_pop(bzla, 1);
+
       if (res_y)
       {
-        str_res_y = from_domain (d_mm, res_y);
+        boolector_push(bzla, 1);
+        fix_result_bits_for_check_sat(bzla, y, res_y);
+        sat_res = boolector_sat(bzla);
+        if (sat_res != BZLA_RESULT_UNSAT)
+        {
+          print_domains_for_check_sat(
+              d_x, d_y, d_z, d_c, res_x, res_y, res_z, res_c);
+        }
+        ASSERT_TRUE(sat_res == BZLA_RESULT_UNSAT);
+        boolector_pop(bzla, 1);
       }
+      boolector_push(bzla, 1);
+      fix_result_bits_for_check_sat(bzla, z, res_z);
+      sat_res = boolector_sat(bzla);
+      if (sat_res != BZLA_RESULT_UNSAT)
+      {
+        print_domains_for_check_sat(
+            d_x, d_y, d_z, d_c, res_x, res_y, res_z, res_c);
+      }
+      ASSERT_TRUE(sat_res == BZLA_RESULT_UNSAT);
+      boolector_pop(bzla, 1);
       if (res_c)
       {
-        str_res_c = from_domain (d_mm, res_c);
-      }
-      boolector_push (bzla, 1);
-      check_sat_fix_bits (bzla, x, str_res_x);
-      if (str_res_y)
-      {
-        check_sat_fix_bits (bzla, y, str_res_y);
-      }
-      check_sat_fix_bits (bzla, z, str_res_z);
-      if (str_res_c)
-      {
-        check_sat_fix_bits (bzla, c, str_res_c);
-      }
-      sat_res = boolector_sat (bzla);
-      if (sat_res != BZLA_RESULT_SAT)
-      {
-        printf ("\n");
-        printf ("x: ");
-        print_domain (d_x, true);
-        if (d_y)
+        boolector_push(bzla, 1);
+        fix_result_bits_for_check_sat(bzla, c, res_c);
+        sat_res = boolector_sat(bzla);
+        if (sat_res != BZLA_RESULT_UNSAT)
         {
-          printf ("y: ");
-          print_domain (d_y, true);
+          print_domains_for_check_sat(
+              d_x, d_y, d_z, d_c, res_x, res_y, res_z, res_c);
         }
-        if (d_c)
-        {
-          printf ("c: ");
-          print_domain (d_c, true);
-        }
-        printf ("z: ");
-        print_domain (d_z, true);
-        printf ("x': ");
-        print_domain (res_x, true);
-        if (res_y)
-        {
-          printf ("y': ");
-          print_domain (res_y, true);
-        }
-        if (res_c)
-        {
-          printf ("c': ");
-          print_domain (res_c, true);
-        }
-        printf ("z': ");
-        print_domain (res_z, true);
-      }
-      ASSERT_EQ (sat_res, BZLA_RESULT_SAT);
-      boolector_pop (bzla, 1);
-      bzla_mem_freestr (d_mm, str_res_x);
-      bzla_mem_freestr (d_mm, str_res_z);
-      if (str_res_y)
-      {
-        bzla_mem_freestr (d_mm, str_res_y);
-      }
-      if (str_res_c)
-      {
-        bzla_mem_freestr (d_mm, str_res_c);
+        ASSERT_TRUE(sat_res == BZLA_RESULT_UNSAT);
+        boolector_pop(bzla, 1);
       }
     }
-#endif
-
-    // printf ("sat_res %d\n", sat_res);
-    // if (sat_res == BOOLECTOR_SAT)
-    //{
-    //  boolector_print_model (bzla, "btor", stdout);
-    //}
+    else
+    {
+      /* fixed bits in input domains should already be UNSAT */
+      sat_res = boolector_sat(bzla);
+      if (sat_res != BZLA_RESULT_UNSAT)
+      {
+        print_domains_for_check_sat(
+            d_x, d_y, d_z, d_c, res_x, res_y, res_z, res_c);
+      }
+      ASSERT_TRUE(sat_res == BZLA_RESULT_UNSAT);
+    }
 
     boolector_release(bzla, x);
     if (c) boolector_release(bzla, c);
@@ -810,10 +864,6 @@ class TestBvProp : public TestBvDomainCommon
     boolector_release_sort(bzla, swz);
     boolector_release_sort(bzla, s1);
     boolector_delete(bzla);
-    bzla_mem_freestr(d_mm, str_x);
-    if (str_c) bzla_mem_freestr(d_mm, str_c);
-    if (str_y) bzla_mem_freestr(d_mm, str_y);
-    bzla_mem_freestr(d_mm, str_z);
   }
 
   void test_shift_const(uint32_t bw, bool is_srl)
@@ -854,7 +904,6 @@ class TestBvProp : public TestBvDomainCommon
                       0,
                       0,
                       0,
-                      false,
                       res);
             if (res)
             {
@@ -878,7 +927,6 @@ class TestBvProp : public TestBvDomainCommon
                       0,
                       0,
                       0,
-                      false,
                       res);
             if (res)
             {
@@ -956,7 +1004,6 @@ class TestBvProp : public TestBvDomainCommon
                       0,
                       0,
                       0,
-                      true,
                       res);
             if (res)
             {
@@ -980,7 +1027,6 @@ class TestBvProp : public TestBvDomainCommon
                       0,
                       0,
                       0,
-                      true,
                       res);
             if (res)
             {
@@ -1082,7 +1128,6 @@ class TestBvProp : public TestBvDomainCommon
                     0,
                     0,
                     0,
-                    false,
                     res);
 
           if (res)
@@ -1284,7 +1329,6 @@ class TestBvProp : public TestBvDomainCommon
                     0,
                     0,
                     0,
-                    true,
                     res);
           if (res)
           {
@@ -1361,7 +1405,6 @@ class TestBvProp : public TestBvDomainCommon
                   0,
                   0,
                   0,
-                  false,
                   res);
 
         if (bzla_bvdomain_is_valid(d_mm, res_z))
@@ -1441,7 +1484,6 @@ class TestBvProp : public TestBvDomainCommon
                       0,
                       upper,
                       lower,
-                      false,
                       res);
             if (res)
             {
@@ -1607,7 +1649,6 @@ class TestBvProp : public TestBvDomainCommon
                     boolector_sext,
                     n,
                     0,
-                    false,
                     res);
 
           ASSERT_TRUE(!bzla_bvdomain_is_fixed(d_mm, d_x)
@@ -1676,7 +1717,6 @@ class TestBvProp : public TestBvDomainCommon
                       0,
                       0,
                       0,
-                      true,
                       res);
             if (res) check_ite(res_x, res_y, res_z, res_c);
 
@@ -1730,7 +1770,6 @@ class TestBvProp : public TestBvDomainCommon
                     0,
                     0,
                     0,
-                    true,
                     res);
 
           if (bzla_bvdomain_is_fixed(d_mm, d_x)
@@ -1900,7 +1939,6 @@ class TestBvProp : public TestBvDomainCommon
                     0,
                     0,
                     0,
-                    true,
                     res);
           if (res)
           {
@@ -2326,7 +2364,6 @@ class TestBvProp : public TestBvDomainCommon
                     0,
                     0,
                     0,
-                    true,
                     res);
           if (res)
           {
@@ -2829,7 +2866,6 @@ class TestBvProp : public TestBvDomainCommon
                     0,
                     0,
                     0,
-                    true,
                     res);
           if (res)
           {
@@ -3202,7 +3238,6 @@ class TestBvProp : public TestBvDomainCommon
                     0,
                     0,
                     0,
-                    true,
                     res);
           if (res)
           {
