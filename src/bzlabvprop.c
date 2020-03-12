@@ -1697,9 +1697,15 @@ bzla_bvprop_sext(BzlaMemMgr *mm,
   assert(res_d_z);
 
   uint32_t wx, wn, wz, lo_x_lsb, hi_x_lsb;
+  BzlaBitVector *hi_x, *lo_x, *hi_z, *lo_z;
   BzlaBitVector *tmp0, *tmp1, *tmp2;
   BzlaBitVector *slice_lo_z_hi, *slice_hi_z_hi;
   BzlaBitVector *redor, *redand, *x_or_z, *x_and_z;
+
+  hi_x = d_x->hi;
+  lo_x = d_x->lo;
+  hi_z = d_z->hi;
+  lo_z = d_z->lo;
 
   *res_d_x = new_domain(mm);
   *res_d_z = new_domain(mm);
@@ -1709,8 +1715,8 @@ bzla_bvprop_sext(BzlaMemMgr *mm,
   wn = wz - wx;
   assert(wn);
 
-  lo_x_lsb = bzla_bv_get_bit(d_x->lo, wx - 1);
-  hi_x_lsb = bzla_bv_get_bit(d_x->hi, wx - 1);
+  lo_x_lsb = bzla_bv_get_bit(lo_x, wx - 1);
+  hi_x_lsb = bzla_bv_get_bit(hi_x, wx - 1);
 
   /* Note: The propagators for x and z from [1] are incorrect!
    * E.g. for x = 1 and z = 001 we expect an invalid result, but these
@@ -1718,20 +1724,20 @@ bzla_bvprop_sext(BzlaMemMgr *mm,
 
   if (wx > 1)
   {
-    tmp0   = bzla_bv_slice(mm, d_x->lo, wx - 2, 0);
-    tmp1   = bzla_bv_slice(mm, d_z->lo, wx - 2, 0);
+    tmp0   = bzla_bv_slice(mm, lo_x, wx - 2, 0);
+    tmp1   = bzla_bv_slice(mm, lo_z, wx - 2, 0);
     x_or_z = bzla_bv_or(mm, tmp0, tmp1);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
 
-    tmp0    = bzla_bv_slice(mm, d_x->hi, wx - 2, 0);
-    tmp1    = bzla_bv_slice(mm, d_z->hi, wx - 2, 0);
+    tmp0    = bzla_bv_slice(mm, hi_x, wx - 2, 0);
+    tmp1    = bzla_bv_slice(mm, hi_z, wx - 2, 0);
     x_and_z = bzla_bv_and(mm, tmp0, tmp1);
     bzla_bv_free(mm, tmp0);
     bzla_bv_free(mm, tmp1);
   }
-  slice_lo_z_hi = wx > 1 ? bzla_bv_slice(mm, d_z->lo, wz - 1, wx - 1) : d_z->lo;
-  slice_hi_z_hi = wx > 1 ? bzla_bv_slice(mm, d_z->hi, wz - 1, wx - 1) : d_z->hi;
+  slice_lo_z_hi = wx > 1 ? bzla_bv_slice(mm, lo_z, wz - 1, wx - 1) : lo_z;
+  slice_hi_z_hi = wx > 1 ? bzla_bv_slice(mm, hi_z, wz - 1, wx - 1) : hi_z;
 
   redor  = bzla_bv_redor(mm, slice_lo_z_hi);
   redand = bzla_bv_redand(mm, slice_hi_z_hi);
@@ -1740,7 +1746,7 @@ bzla_bvprop_sext(BzlaMemMgr *mm,
    * lo_x' = (lo_x[wx-1:wx-1] | redor (lo_z[wz-1:wx-1]))
    *         :: (lo_x[wx-2:0] | lo_z[wx-2:0])
    */
-  tmp1 = bzla_bv_slice(mm, d_x->lo, wx - 1, wx - 1);
+  tmp1 = bzla_bv_slice(mm, lo_x, wx - 1, wx - 1);
   tmp0 = bzla_bv_or(mm, tmp1, redor);
   bzla_bv_free(mm, tmp1);
   if (wx > 1)
@@ -1757,7 +1763,7 @@ bzla_bvprop_sext(BzlaMemMgr *mm,
    * hi_x' = (hi_x[wx-1:wx-1] & redand (hi_z[wz-1:wx-1]))
    *         :: (hi_x[wx-2:0] & hi_z[wx-2:0])
    */
-  tmp1 = bzla_bv_slice(mm, d_x->hi, wx - 1, wx - 1);
+  tmp1 = bzla_bv_slice(mm, hi_x, wx - 1, wx - 1);
   tmp0 = bzla_bv_and(mm, tmp1, redand);
   bzla_bv_free(mm, tmp1);
   if (wx > 1)
@@ -1832,14 +1838,14 @@ bzla_bvprop_sext(BzlaMemMgr *mm,
    * propagators produce x' = 1 and z' = 111. */
 
   uint32_t i, lo_z_bit, hi_z_bit;
-  BzlaBvDomain *tmp_x = bzla_bvdomain_new (mm, d_x->lo, d_x->hi);
+  BzlaBvDomain *tmp_x = bzla_bvdomain_new (mm, lo_x, hi_x);
 
   /**
    * lo_x' = lo_x | (lo_z & mask1) with mask1 = 0_[wn] :: ~0_[wx]
    * simplifies to
    * lo_x' = lo_x | lo_z[wx-1:0]
    */
-  slice = bzla_bv_slice (mm, d_z->lo, wx-1, 0);
+  slice = bzla_bv_slice (mm, lo_z, wx-1, 0);
   (*res_tmp_x)->lo = bzla_bv_or (mm, tmp_x->lo, slice);
   bzla_bv_free (mm, slice);
 
@@ -1848,7 +1854,7 @@ bzla_bvprop_sext(BzlaMemMgr *mm,
    * simplifies to
    * hi_x' = hi_x & hi_z[wx-1:0]
    */
-  slice = bzla_bv_slice (mm, d_z->hi, wx-1, 0);
+  slice = bzla_bv_slice (mm, hi_z, wx-1, 0);
   (*res_tmp_x)->hi = bzla_bv_and (mm, tmp_x->hi, slice);
   bzla_bv_free (mm, slice);
 
@@ -1861,7 +1867,7 @@ SEXT_SIGN_0:
      * lo_x' = uext(lo_x, wn) | lo_z
      */
     tmp0 = bzla_bv_uext(mm, tmp_x->lo, wn);
-    (*res_d_z)->lo = bzla_bv_or (mm, d_z->lo, tmp0);
+    (*res_d_z)->lo = bzla_bv_or (mm, lo_z, tmp0);
     bzla_bv_free (mm, tmp0);
 
     /**
@@ -1870,7 +1876,7 @@ SEXT_SIGN_0:
      * hi_z' = uext(hi_x, wn) & hi_z
      */
     tmp0 = bzla_bv_uext(mm, tmp_x->hi, wn);
-    (*res_d_z)->hi = bzla_bv_and (mm, d_z->hi, tmp0);
+    (*res_d_z)->hi = bzla_bv_and (mm, hi_z, tmp0);
     bzla_bv_free (mm, tmp0);
   }
   else if (lo_x_lsb && hi_x_lsb)  /* sign bit 1 */
@@ -1897,8 +1903,8 @@ SEXT_SIGN_1:
 
     for (i = wz - 1; i >= wx - 1; i--)
     {
-      lo_z_bit = bzla_bv_get_bit (d_z->lo, i);
-      hi_z_bit = bzla_bv_get_bit (d_z->hi, i);
+      lo_z_bit = bzla_bv_get_bit (lo_z, i);
+      hi_z_bit = bzla_bv_get_bit (hi_z, i);
       /* if exists z_i = 0 with i >= wx - 1 apply rule for zero sign bit */
       if (!lo_z_bit && !hi_z_bit)
       {
@@ -1918,7 +1924,7 @@ SEXT_SIGN_1:
      * lo_x' = lo_z | uext(lo_x, wn)
      */
     tmp0 = bzla_bv_uext (mm, tmp_x->lo, wn);
-    (*res_d_x)->lo = bzla_bv_or (mm, d_z->lo, tmp0);
+    (*res_d_x)->lo = bzla_bv_or (mm, lo_z, tmp0);
     bzla_bv_free (mm, tmp0);
 
     /**
@@ -1928,7 +1934,7 @@ SEXT_SIGN_1:
      */
     tmp0 = bzla_bv_ones (mm, wn);
     tmp1 = bzla_bv_concat (mm, tmp0, tmp_x->hi);
-    (*res_d_x)->lo = bzla_bv_and (mm, d_z->hi, tmp1);
+    (*res_d_x)->lo = bzla_bv_and (mm, hi_z, tmp1);
     bzla_bv_free (mm, tmp0);
     bzla_bv_free (mm, tmp1);
   }
