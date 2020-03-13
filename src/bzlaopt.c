@@ -938,6 +938,16 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "use constant bits propagation");
+  init_opt(bzla,
+           BZLA_OPT_PROP_CONST_DOMAINS,
+           false,
+           true,
+           "prop-const-domains",
+           0,
+           0,
+           0,
+           1,
+           "use domain propagators to determine constant bits");
 #if 0
   init_opt (bzla,
             BZLA_OPT_PROP_DOMAINS,

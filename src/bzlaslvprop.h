@@ -119,6 +119,8 @@ struct BzlaPropSolver
     /* constant bit information */
     uint64_t fixed_bits;
     uint64_t total_bits;
+    uint64_t updated_domains;
+    uint64_t updated_domains_children;
   } stats;
 
   struct

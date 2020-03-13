@@ -69,6 +69,9 @@ BzlaBvDomain *bzla_bvdomain_slice(BzlaMemMgr *mm,
                                   uint32_t hi,
                                   uint32_t lo);
 
+/** Invert fixed bits of domain 'd'. */
+BzlaBvDomain *bzla_bvdomain_not(BzlaMemMgr *mm, const BzlaBvDomain *d);
+
 /*----------------------------------------------------------------------------*/
 
 /** Get the width of the given domain.  */

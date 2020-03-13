@@ -630,6 +630,14 @@ enum BzlaOption
     */
   BZLA_OPT_PROP_CONST_BITS,
 
+  /*!
+    * **BZLA_OPT_PROP_CONST_DOMAINS**
+
+      Enable (``value``: 1) or disable (``value``: 0) domain propagators for
+      determining constant bits .
+    */
+  BZLA_OPT_PROP_CONST_DOMAINS,
+
 #if 0
   /*!
     * **BZLA_OPT_PROP_DOMAINS**

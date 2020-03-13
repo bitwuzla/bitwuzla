@@ -145,6 +145,18 @@ bzla_bvdomain_slice(BzlaMemMgr *mm,
   return res;
 }
 
+BzlaBvDomain *
+bzla_bvdomain_not(BzlaMemMgr *mm, const BzlaBvDomain *d)
+{
+  assert(mm);
+  assert(d);
+
+  BzlaBvDomain *res = new_domain(mm);
+  res->lo           = bzla_bv_not(mm, d->hi);
+  res->hi           = bzla_bv_not(mm, d->lo);
+  return res;
+}
+
 /* -------------------------------------------------------------------------- */
 
 uint32_t

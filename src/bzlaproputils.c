@@ -5696,7 +5696,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
              == bzla_node_bv_get_width(bzla, real_cur));
       assert(bzla_bv_get_width(d->lo)
              == bzla_node_bv_get_width(bzla, real_cur));
-      if (opt_prop_const_bits)
+      if (opt_prop_const_bits
+          && !bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_DOMAINS))
       {
         assert(real_cur->av);
         uint32_t bw = real_cur->av->width;

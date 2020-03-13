@@ -25,6 +25,7 @@
 #include "bzlaprintmodel.h"
 #include "bzlaproputils.h"
 #include "bzlaslsutils.h"
+#include "dumper/bzladumpsmt.h"
 #include "utils/bzlahash.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
@@ -416,6 +417,199 @@ bzla_prop_solver_init_domains(Bzla *bzla,
   BZLA_RELEASE_STACK(visit);
 }
 
+bool
+update_domain(Bzla *bzla,
+              BzlaIntHashTable *domains,
+              const BzlaNode *n,
+              BzlaBvDomain *old_domain,
+              BzlaBvDomain *new_domain)
+{
+  assert(domains);
+  assert(n);
+  assert(old_domain);
+
+  int32_t id;
+  BzlaHashTableData *d;
+  BzlaMemMgr *mm;
+
+  if (!new_domain) return false;
+  if (bzla_bvdomain_is_equal(old_domain, new_domain)) return false;
+
+  mm = bzla->mm;
+  id = bzla_node_get_id(bzla_node_real_addr(n));
+  d  = bzla_hashint_map_get(domains, id);
+  assert(d);
+  bzla_bvdomain_free(mm, d->as_ptr);
+  d->as_ptr = bzla_bvdomain_copy(mm, new_domain);
+
+  d = bzla_hashint_map_get(domains, -id);
+  assert(d);
+  bzla_bvdomain_free(mm, d->as_ptr);
+  d->as_ptr = bzla_bvdomain_not(mm, new_domain);
+  return true;
+}
+
+void
+propagate_domains(Bzla *bzla,
+                  BzlaNode *root,
+                  BzlaIntHashTable *domains,
+                  BzlaIntHashTable *cache)
+{
+  int32_t id, child_id;
+  uint32_t i;
+  BzlaNode *cur, *real_cur;
+  BzlaNodePtrStack visit;
+  BzlaBvDomain *d_cur, *d_res_cur, *d_e[3], *d_res_e[3];
+  BzlaMemMgr *mm;
+  BzlaPropSolver *slv;
+
+  slv = BZLA_PROP_SOLVER(bzla);
+  mm  = bzla->mm;
+  BZLA_INIT_STACK(mm, visit);
+  BZLA_PUSH_STACK(visit, root);
+
+  do
+  {
+    cur      = BZLA_POP_STACK(visit);
+    real_cur = bzla_node_real_addr(cur);
+    id       = bzla_node_get_id(real_cur);
+
+    if (bzla_hashint_table_contains(cache, id))
+    {
+      continue;
+    }
+
+    bzla_hashint_table_add(cache, id);
+
+    assert(bzla_hashint_map_contains(domains, id));
+    assert(bzla_hashint_map_contains(domains, -id));
+    d_cur = bzla_hashint_map_get(domains, id)->as_ptr;
+    assert(d_cur);
+
+    for (i = 0; i < real_cur->arity; ++i)
+    {
+      child_id = bzla_node_get_id(real_cur->e[i]);
+      assert(bzla_hashint_map_contains(domains, child_id));
+      d_e[i]     = bzla_hashint_map_get(domains, child_id)->as_ptr;
+      d_res_e[i] = 0;
+    }
+    d_res_cur = 0;
+
+    if (bzla_node_is_bv_slice(real_cur))
+    {
+      bzla_bvprop_slice(mm,
+                        d_e[0],
+                        d_cur,
+                        bzla_node_bv_slice_get_upper(real_cur),
+                        bzla_node_bv_slice_get_lower(real_cur),
+                        &d_res_e[0],
+                        &d_res_cur);
+    }
+    else if (bzla_node_is_bv_and(real_cur))
+    {
+      bzla_bvprop_and(
+          mm, d_e[0], d_e[1], d_cur, &d_res_e[0], &d_res_e[1], &d_res_cur);
+    }
+    else if (bzla_node_is_bv_eq(real_cur))
+    {
+      bzla_bvprop_eq(
+          mm, d_e[0], d_e[1], d_cur, &d_res_e[0], &d_res_e[1], &d_res_cur);
+    }
+    else if (bzla_node_is_bv_add(real_cur))
+    {
+      bzla_bvprop_add(
+          mm, d_e[0], d_e[1], d_cur, &d_res_e[0], &d_res_e[1], &d_res_cur);
+    }
+    else if (bzla_node_is_bv_mul(real_cur))
+    {
+      bzla_bvprop_mul(
+          mm, d_e[0], d_e[1], d_cur, &d_res_e[0], &d_res_e[1], &d_res_cur);
+    }
+    else if (bzla_node_is_bv_ult(real_cur))
+    {
+      bzla_bvprop_ult(
+          mm, d_e[0], d_e[1], d_cur, &d_res_e[0], &d_res_e[1], &d_res_cur);
+    }
+    else if (bzla_node_is_bv_sll(real_cur))
+    {
+      bzla_bvprop_sll(
+          mm, d_e[0], d_e[1], d_cur, &d_res_e[0], &d_res_e[1], &d_res_cur);
+    }
+    else if (bzla_node_is_bv_srl(real_cur))
+    {
+      bzla_bvprop_srl(
+          mm, d_e[0], d_e[1], d_cur, &d_res_e[0], &d_res_e[1], &d_res_cur);
+    }
+    else if (bzla_node_is_bv_udiv(real_cur))
+    {
+      bzla_bvprop_udiv(
+          mm, d_e[0], d_e[1], d_cur, &d_res_e[0], &d_res_e[1], &d_res_cur);
+    }
+    else if (bzla_node_is_bv_urem(real_cur))
+    {
+      bzla_bvprop_urem(
+          mm, d_e[0], d_e[1], d_cur, &d_res_e[0], &d_res_e[1], &d_res_cur);
+    }
+    else if (bzla_node_is_bv_concat(real_cur))
+    {
+      bzla_bvprop_concat(
+          mm, d_e[0], d_e[1], d_cur, &d_res_e[0], &d_res_e[1], &d_res_cur);
+    }
+    else if (bzla_node_is_bv_cond(real_cur))
+    {
+      bzla_bvprop_cond(mm,
+                       d_e[1],
+                       d_e[2],
+                       d_cur,
+                       d_e[0],
+                       &d_res_e[1],
+                       &d_res_e[2],
+                       &d_res_cur,
+                       &d_res_e[0]);
+    }
+
+#ifndef NDEBUG
+    if (d_res_cur)
+    {
+      assert(bzla_bvdomain_is_valid(mm, d_res_cur));
+    }
+    for (i = 0; i < real_cur->arity; ++i)
+    {
+      if (d_res_e[i])
+      {
+        assert(bzla_bvdomain_is_valid(mm, d_res_e[i]));
+      }
+    }
+#endif
+
+    if (update_domain(bzla, domains, real_cur, d_cur, d_res_cur))
+    {
+      ++slv->stats.updated_domains;
+    }
+
+    if (d_res_cur)
+    {
+      bzla_bvdomain_free(mm, d_res_cur);
+    }
+
+    for (i = 0; i < real_cur->arity; ++i)
+    {
+      if (update_domain(bzla, domains, real_cur->e[i], d_e[i], d_res_e[i]))
+      {
+        ++slv->stats.updated_domains_children;
+      }
+      if (d_res_e[i])
+      {
+        bzla_bvdomain_free(mm, d_res_e[i]);
+      }
+
+      BZLA_PUSH_STACK(visit, real_cur->e[i]);
+    }
+  } while (!BZLA_EMPTY_STACK(visit));
+
+  BZLA_RELEASE_STACK(visit);
+}
+
 /* This is an extra function in order to be able to test completeness
  * via test suite. */
 int32_t
@@ -431,6 +625,7 @@ bzla_prop_solver_sat(Bzla *bzla)
   BzlaPtrHashTableIterator it;
   BzlaIntHashTableIterator iit;
   BzlaPropSolver *slv;
+  BzlaIntHashTable *cache;
 
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
@@ -440,7 +635,7 @@ bzla_prop_solver_sat(Bzla *bzla)
   nprops              = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
 
-  if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
+  if (opt_prop_const_bits)
   {
     bzla_process_unsynthesized_constraints(bzla);
     if (bzla->found_constraint_false) goto UNSAT;
@@ -474,14 +669,23 @@ bzla_prop_solver_sat(Bzla *bzla)
       goto UNSAT;
 
     /* initialize propagator domains for inverse values / const bits handling */
-    if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
-    {
-      bzla_synthesize_exp(bzla, root, 0);
-    }
     if (opt_prop_const_bits)
     {
       bzla_prop_solver_init_domains(bzla, slv->domains, root);
     }
+  }
+
+  if (opt_prop_const_bits && bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_DOMAINS))
+  {
+    cache = bzla_hashint_table_new(bzla->mm);
+    bzla_iter_hashptr_init(&it, constraints);
+    bzla_iter_hashptr_queue(&it, bzla->assumptions);
+    while (bzla_iter_hashptr_has_next(&it))
+    {
+      root = bzla_iter_hashptr_next(&it);
+      propagate_domains(bzla, root, slv->domains, cache);
+    }
+    bzla_hashint_table_delete(cache);
   }
 
   for (;;)
@@ -756,6 +960,16 @@ print_stats_prop_solver(BzlaPropSolver *slv)
              slv->stats.fixed_bits,
              slv->stats.total_bits,
              (double) slv->stats.fixed_bits / slv->stats.total_bits * 100);
+  }
+
+  if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_DOMAINS))
+  {
+    BZLA_MSG(bzla->msg, 1, "");
+    BZLA_MSG(bzla->msg, 1, "updated domains: %zu", slv->stats.updated_domains);
+    BZLA_MSG(bzla->msg,
+             1,
+             "updated domains (children): %zu",
+             slv->stats.updated_domains_children);
   }
 }
 
