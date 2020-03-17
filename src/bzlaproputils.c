@@ -1356,7 +1356,7 @@ bzla_proputils_cons_udiv(Bzla *bzla,
   check_cons_dbg(bzla, udiv, t, s, idx_x, domains, true);
 #endif
   uint32_t bw;
-  BzlaBitVector *res, *tmp, *tmp_s, *zero, *one, *ones;
+  BzlaBitVector *res, *tmp, *y, *sub, *min, *max, *zero, *one, *ones;
   BzlaMemMgr *mm;
 
   mm   = bzla->mm;
@@ -1392,31 +1392,45 @@ bzla_proputils_cons_udiv(Bzla *bzla,
   }
   else
   {
-    /* -> t = 0 then res < 1...1
-     * -> t = 1...1 then choose random res
-     * -> else choose tmp_s s.t. res = tmp_s * t does not overflow */
     if (bzla_bv_is_zero(t))
     {
+      /* t = 0: res < 1...1 */
       tmp = bzla_bv_dec(mm, ones);
       res = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
       bzla_bv_free(mm, tmp);
     }
     else if (!bzla_bv_compare(t, ones))
     {
+      /* t = 1...1: choose random res */
       res = bzla_bv_new_random(mm, &bzla->rng, bw);
     }
     else
     {
-      tmp_s = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, ones);
-      while (bzla_bv_is_umulo(mm, tmp_s, t))
+      /* choose y * t <= res <= (y * t) + s - 1 such that
+       * y * t  and (y * t) + (s - 1) does not overflow */
+      y = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, ones);
+      while (bzla_bv_is_umulo(mm, y, t))
       {
-        tmp = bzla_bv_sub(mm, tmp_s, one);
-        bzla_bv_free(mm, tmp_s);
-        tmp_s = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, tmp);
+        tmp = bzla_bv_sub(mm, y, one);
+        bzla_bv_free(mm, y);
+        y = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, tmp);
         bzla_bv_free(mm, tmp);
       }
-      res = bzla_bv_mul(mm, tmp_s, t);
-      bzla_bv_free(mm, tmp_s);
+      sub = bzla_bv_dec(mm, s);
+      min = bzla_bv_mul(mm, y, t);
+      if (bzla_bv_is_uaddo(mm, min, sub))
+      {
+        max = bzla_bv_copy(mm, ones);
+      }
+      else
+      {
+        max = bzla_bv_add(mm, min, sub);
+      }
+      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, min, max);
+      bzla_bv_free(mm, y);
+      bzla_bv_free(mm, min);
+      bzla_bv_free(mm, max);
+      bzla_bv_free(mm, sub);
     }
   }
 
