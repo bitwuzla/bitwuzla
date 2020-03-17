@@ -70,6 +70,12 @@ typedef bool (*BzlaPropIsInvCond)(Bzla* bzla,
                                   uint32_t idx_x,
                                   BzlaBvDomain** d_res_x);
 
+typedef bool (*BzlaPropIsInvSlice)(Bzla* bzla,
+                                   const BzlaBvDomain* x,
+                                   const BzlaBitVector* t,
+                                   uint32_t upper,
+                                   uint32_t lower);
+
 typedef BzlaBitVector* (*BzlaPropComputeValue)(Bzla* bzla,
                                                BzlaNode* exp,
                                                BzlaBitVector* bv_t,

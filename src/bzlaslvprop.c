@@ -130,7 +130,8 @@ select_constraint(Bzla *bzla, uint32_t nmoves)
   assert(bzla_bv_is_zero(bzla_model_get_bv(bzla, res)));
 
   BZLALOG(1, "");
-  BZLALOG(1, "select constraint: %s", bzla_util_node2string(res));
+  BZLALOG(1, "***** select constraint: %s", bzla_util_node2string(res));
+  BZLALOG(1, "--------------------------------------------------------------");
 
   return res;
 }
