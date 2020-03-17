@@ -27,9 +27,9 @@ set(test_names
   overflow
   parseerror
   prop
+  propcomplete
   propcons
   propinv
-  propinvcomplete
   rotate
   queue
   satmgr
