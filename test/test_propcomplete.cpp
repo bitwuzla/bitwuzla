@@ -288,6 +288,56 @@ class TestPropInv : public TestBzla
     bzla_node_release(d_bzla, exp);
   }
 
+  /** Same as check_binary but for slice.  */
+  void check_slice(BzlaPropIsInvSlice is_inv_fun,
+                   BzlaPropComputeValue compute_value_fun)
+  {
+    bool is_inv;
+    uint32_t bw;
+    uint64_t up, lo, i, k;
+    BzlaNode *exp, *e;
+    BzlaBitVector *t, *x, *res;
+    BzlaSortId sort;
+
+    bw   = TEST_PROP_INV_COMPLETE_BW;
+    sort = bzla_sort_bv(d_bzla, bw);
+    e    = bzla_exp_var(d_bzla, sort, 0);
+    bzla_sort_release(d_bzla, sort);
+
+    for (lo = 0; lo < bw; lo++)
+    {
+      for (up = lo; up < bw; up++)
+      {
+        exp = bzla_exp_bv_slice(d_bzla, e, up, lo);
+        for (i = 0; i < (uint32_t)(1 << bw); i++)
+        {
+          x = bzla_bv_uint64_to_bv(d_mm, i, bw);
+          t = bzla_bv_slice(d_mm, x, up, lo);
+          for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
+          {
+            if (is_inv_fun)
+            {
+              is_inv = is_inv_fun(d_bzla, 0, t, up, lo);
+              assert(is_inv);
+            }
+            res = compute_value_fun(d_bzla, exp, t, x, 0, d_domains, 0);
+            ASSERT_NE(res, nullptr);
+            if (!bzla_bv_compare(res, x)) break;
+            bzla_bv_free(d_mm, res);
+            res = 0;
+          }
+          ASSERT_NE(res, nullptr);
+          ASSERT_EQ(bzla_bv_compare(res, x), 0);
+          bzla_bv_free(d_mm, res);
+          bzla_bv_free(d_mm, x);
+          bzla_bv_free(d_mm, t);
+        }
+        bzla_node_release(d_bzla, exp);
+      }
+    }
+    bzla_node_release(d_bzla, e);
+  }
+
   /**
    * Test if for a shift operation s0 <> s1 = t, the inverse value computation
    * for the first operand produces value s0, and the inverse value computation
@@ -2316,6 +2366,40 @@ class TestPropInvConst : public TestPropInv
     bzla_node_release(d_bzla, exp);
   }
 
+  /** Same as check_binary but for cond.  */
+  void check_slice(BzlaPropIsInvSlice is_inv_fun,
+                   BzlaPropComputeValue compute_value_fun)
+  {
+    uint32_t bw;
+    uint64_t up, lo, i;
+    BzlaNode *exp, *e;
+    BzlaBitVector *t, *x;
+    BzlaSortId sort;
+
+    bw   = TEST_PROP_INV_COMPLETE_BW;
+    sort = bzla_sort_bv(d_bzla, bw);
+    e    = bzla_exp_var(d_bzla, sort, 0);
+    bzla_sort_release(d_bzla, sort);
+
+    for (lo = 0; lo < bw; lo++)
+    {
+      for (up = lo; up < bw; up++)
+      {
+        exp = bzla_exp_bv_slice(d_bzla, e, up, lo);
+        for (i = 0; i < (uint32_t)(1 << bw); i++)
+        {
+          x = bzla_bv_uint64_to_bv(d_mm, i, bw);
+          t = bzla_bv_slice(d_mm, x, up, lo);
+          check_result_slice(is_inv_fun, compute_value_fun, exp, t, x, up, lo);
+          bzla_bv_free(d_mm, x);
+          bzla_bv_free(d_mm, t);
+        }
+        bzla_node_release(d_bzla, exp);
+      }
+    }
+    bzla_node_release(d_bzla, e);
+  }
+
   /**
    * Test if for a shift operation s0 <> s1 = t, the inverse value computation
    * for the first operand produces value s0, and the inverse value computation
@@ -2452,44 +2536,7 @@ TEST_F(TestPropInv, complete_concat)
 
 TEST_F(TestPropInv, complete_slice)
 {
-  uint32_t bw;
-  uint64_t up, lo, i, k;
-  BzlaNode *exp, *e;
-  BzlaBitVector *t, *x, *res;
-  BzlaSortId sort;
-
-  bw   = TEST_PROP_INV_COMPLETE_BW;
-  sort = bzla_sort_bv(d_bzla, bw);
-  e    = bzla_exp_var(d_bzla, sort, 0);
-  bzla_sort_release(d_bzla, sort);
-
-  for (lo = 0; lo < bw; lo++)
-  {
-    for (up = lo; up < bw; up++)
-    {
-      exp = bzla_exp_bv_slice(d_bzla, e, up, lo);
-      for (i = 0; i < (uint32_t)(1 << bw); i++)
-      {
-        x = bzla_bv_uint64_to_bv(d_mm, i, bw);
-        t = bzla_bv_slice(d_mm, x, up, lo);
-        for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
-        {
-          res = bzla_proputils_inv_slice(d_bzla, exp, t, x, 0, d_domains, 0);
-          ASSERT_NE(res, nullptr);
-          if (!bzla_bv_compare(res, x)) break;
-          bzla_bv_free(d_mm, res);
-          res = 0;
-        }
-        ASSERT_NE(res, nullptr);
-        ASSERT_EQ(bzla_bv_compare(res, x), 0);
-        bzla_bv_free(d_mm, res);
-        bzla_bv_free(d_mm, x);
-        bzla_bv_free(d_mm, t);
-      }
-      bzla_node_release(d_bzla, exp);
-    }
-  }
-  bzla_node_release(d_bzla, e);
+  check_slice(bzla_is_inv_slice, bzla_proputils_inv_slice);
 }
 
 TEST_F(TestPropInv, complete_cond)
@@ -2588,40 +2635,7 @@ TEST_F(TestPropInvConst, complete_cond_const)
 
 TEST_F(TestPropInvConst, complete_slice_const)
 {
-  uint32_t bw;
-  uint64_t up, lo, i;
-  BzlaNode *exp, *e;
-  BzlaBitVector *t, *x;
-  BzlaSortId sort;
-
-  bw   = TEST_PROP_INV_COMPLETE_BW;
-  sort = bzla_sort_bv(d_bzla, bw);
-  e    = bzla_exp_var(d_bzla, sort, 0);
-  bzla_sort_release(d_bzla, sort);
-
-  for (lo = 0; lo < bw; lo++)
-  {
-    for (up = lo; up < bw; up++)
-    {
-      exp = bzla_exp_bv_slice(d_bzla, e, up, lo);
-      for (i = 0; i < (uint32_t)(1 << bw); i++)
-      {
-        x = bzla_bv_uint64_to_bv(d_mm, i, bw);
-        t = bzla_bv_slice(d_mm, x, up, lo);
-        check_result_slice(bzla_is_inv_slice_const,
-                           bzla_proputils_inv_slice_const,
-                           exp,
-                           t,
-                           x,
-                           up,
-                           lo);
-        bzla_bv_free(d_mm, x);
-        bzla_bv_free(d_mm, t);
-      }
-      bzla_node_release(d_bzla, exp);
-    }
-  }
-  bzla_node_release(d_bzla, e);
+  check_slice(bzla_is_inv_slice_const, bzla_proputils_inv_slice_const);
 }
 
 /* ========================================================================== */
