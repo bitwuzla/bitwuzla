@@ -281,16 +281,10 @@ class TestPropComplete : public TestBzla
           t    = bzla_bv_ite(d_mm, s[0], s[1], s[2]);
           check_result_cond(
               is_inv_fun, compute_value_fun, exp, s[1], s[2], t, s[0], 0);
-          if (bzla_bv_is_one(s[0]))
-          {
-            check_result_cond(
-                is_inv_fun, compute_value_fun, exp, s[0], s[2], t, s[1], 1);
-          }
-          else
-          {
-            check_result_cond(
-                is_inv_fun, compute_value_fun, exp, s[0], s[1], t, s[2], 2);
-          }
+          check_result_cond(
+              is_inv_fun, compute_value_fun, exp, s[0], s[2], t, t, 1);
+          check_result_cond(
+              is_inv_fun, compute_value_fun, exp, s[0], s[1], t, t, 2);
           bzla_bv_free(d_mm, s[2]);
           bzla_bv_free(d_mm, t);
         }
@@ -1907,7 +1901,6 @@ class TestPropCompleteConst : public TestPropComplete
       bzla_bv_print(s1);
       std::cout << "idx_x: " << idx_x << std::endl;
     }
-    assert(res);
     ASSERT_NE(res, nullptr);
     ASSERT_EQ(bzla_bv_compare(res, x_bv), 0);
     bzla_bv_free(d_mm, res);
@@ -2388,9 +2381,9 @@ class TestPropCompleteConst : public TestPropComplete
           s[2] = bzla_bv_uint64_to_bv(d_mm, k, bw);
           t    = bzla_bv_ite(d_mm, s[0], s[1], s[2]);
           check_result_cond(
-              is_inv_fun, compute_value_fun, exp, s[0], s[1], t, s[2], 2);
+              is_inv_fun, compute_value_fun, exp, s[0], s[1], t, t, 2);
           check_result_cond(
-              is_inv_fun, compute_value_fun, exp, s[0], s[2], t, s[1], 1);
+              is_inv_fun, compute_value_fun, exp, s[0], s[2], t, t, 1);
           check_result_cond(
               is_inv_fun, compute_value_fun, exp, s[1], s[2], t, s[0], 0);
           bzla_bv_free(d_mm, s[2]);
@@ -2798,12 +2791,10 @@ TEST_F(TestPropCompleteConst, complete_concat_cons_const)
       bzla_exp_bv_concat, bzla_bv_concat, 0, bzla_proputils_cons_concat_const);
 }
 
-#if 0
-TEST_F (TestPropCompleteConst, complete_cond_cons_const)
+TEST_F(TestPropCompleteConst, complete_cond_cons_const)
 {
-  check_cond (0, bzla_proputils_cons_cond_const);
+  check_cond(0, bzla_proputils_cons_cond_const);
 }
-#endif
 
 TEST_F(TestPropCompleteConst, complete_slice_cons_const)
 {
