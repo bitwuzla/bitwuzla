@@ -131,7 +131,6 @@ class TestPropComplete : public TestBzla
       bzla_bv_print(s);
       std::cout << "idx_x: " << idx_x << std::endl;
     }
-    assert(res);
     ASSERT_NE(res, nullptr);
     ASSERT_EQ(bzla_bv_compare(res, x_bv), 0);
     bzla_bv_free(d_mm, res);
@@ -1809,7 +1808,7 @@ class TestPropCompleteConst : public TestPropComplete
 
   /** Helper for check_result_aux. */
   void check_result_n_tests(BzlaPropIsInv is_inv_fun,
-                            BzlaPropComputeValue inv_fun,
+                            BzlaPropComputeValue compute_value_fun,
                             BzlaNode *exp,
                             BzlaBitVector *s,
                             BzlaBitVector *t,
@@ -1845,7 +1844,7 @@ class TestPropCompleteConst : public TestPropComplete
         }
         assert(is_inv);
       }
-      res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
+      res = compute_value_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
       if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
       ASSERT_NE(res, nullptr);
       if (!bzla_bv_compare(res, x_bv)) break;
@@ -1894,6 +1893,21 @@ class TestPropCompleteConst : public TestPropComplete
       bzla_bv_free(d_mm, res);
       res = 0;
     }
+    if (!res)
+    {
+      std::cout << "x: ";
+      bzla_bv_print(x_bv);
+      std::cout << "domain x: ";
+      bzla_bvdomain_print(d_mm, x, true);
+      std::cout << "t: ";
+      bzla_bv_print(t);
+      std::cout << "s0: ";
+      bzla_bv_print(s0);
+      std::cout << "s1: ";
+      bzla_bv_print(s1);
+      std::cout << "idx_x: " << idx_x << std::endl;
+    }
+    assert(res);
     ASSERT_NE(res, nullptr);
     ASSERT_EQ(bzla_bv_compare(res, x_bv), 0);
     bzla_bv_free(d_mm, res);
@@ -2050,14 +2064,14 @@ class TestPropCompleteConst : public TestPropComplete
    * idx_x            : The index of operand 'x'.
    */
   void check_result(BzlaPropIsInv is_inv_fun,
-                    BzlaPropComputeValue inv_fun,
+                    BzlaPropComputeValue compute_value_fun,
                     BzlaNode *exp,
                     BzlaBitVector *s,
                     BzlaBitVector *t,
                     BzlaBitVector *x_bv,
                     uint32_t idx_x)
   {
-    assert(inv_fun);
+    assert(compute_value_fun);
     assert(exp);
     assert(bzla_node_is_regular(exp));
     assert(s);
@@ -2071,7 +2085,8 @@ class TestPropCompleteConst : public TestPropComplete
     for (uint32_t i = 0, bw = bzla_bv_get_width(x_bv); i < bw; ++i)
     {
       fixed_idx.push_back(i);
-      check_result_aux(is_inv_fun, inv_fun, exp, s, t, x_bv, idx_x, fixed_idx);
+      check_result_aux(
+          is_inv_fun, compute_value_fun, exp, s, t, x_bv, idx_x, fixed_idx);
       fixed_idx.clear();
     }
 
@@ -2083,7 +2098,7 @@ class TestPropCompleteConst : public TestPropComplete
         fixed_idx.push_back(i);
         fixed_idx.push_back(j);
         check_result_aux(
-            is_inv_fun, inv_fun, exp, s, t, x_bv, idx_x, fixed_idx);
+            is_inv_fun, compute_value_fun, exp, s, t, x_bv, idx_x, fixed_idx);
         fixed_idx.clear();
       }
     }
@@ -2099,7 +2114,7 @@ class TestPropCompleteConst : public TestPropComplete
           fixed_idx.push_back(j);
           fixed_idx.push_back(k);
           check_result_aux(
-              is_inv_fun, inv_fun, exp, s, t, x_bv, idx_x, fixed_idx);
+              is_inv_fun, compute_value_fun, exp, s, t, x_bv, idx_x, fixed_idx);
           fixed_idx.clear();
         }
       }
@@ -2300,15 +2315,15 @@ class TestPropCompleteConst : public TestPropComplete
    *              s0 <> s1.
    * is_inv_fun : The function to test if given operator is invertible with
    *              respect to s and t.
-   * inv_fun    : The function to compute the inverse value for x given s
-   *              and t considering const bits in x.
+   * compute_value_fun    : The function to compute the inverse value for x
+   * given s and t considering const bits in x.
    */
   void check_binary(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              const BzlaBitVector *),
                     BzlaPropIsInv is_inv_fun,
-                    BzlaPropComputeValue inv_fun)
+                    BzlaPropComputeValue compute_value_fun)
   {
     uint32_t bw;
     uint64_t i, j;
@@ -2330,8 +2345,8 @@ class TestPropCompleteConst : public TestPropComplete
       {
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         t    = bv_fun(d_mm, s[0], s[1]);
-        check_result(is_inv_fun, inv_fun, exp, s[0], t, s[1], 1);
-        check_result(is_inv_fun, inv_fun, exp, s[1], t, s[0], 0);
+        check_result(is_inv_fun, compute_value_fun, exp, s[0], t, s[1], 1);
+        check_result(is_inv_fun, compute_value_fun, exp, s[1], t, s[0], 0);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
       }
@@ -2430,22 +2445,20 @@ class TestPropCompleteConst : public TestPropComplete
    * for the first operand produces value s0, and the inverse value computation
    * for the second operand produces value s1.
    *
-   * exp_fun      : The function to create the node representing operation <>.
-   * bv_fun       : The function to create the bit-vector result of operation
-   *                s0 <> s1.
-   * is_inv_fun   : The function to test if given operator is invertible with
-   *                respect to s and t.
-   * inv_fun      : The function to compute the inverse value for x given s
-   *                and t.
-   * inv_fun_const: The function to compute the inverse value for x given s
-   *                and t using propagator domains.
+   * exp_fun   : The function to create the node representing operation <>.
+   * bv_fun    : The function to create the bit-vector result of operation
+   *             s0 <> s1.
+   * is_inv_fun: The function to test if given operator is invertible with
+   *             respect to s and t.
+   * compute_value_fun: The function to compute the inverse value for x given
+   *                    s and t.
    */
   void check_shift(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                    BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                             const BzlaBitVector *,
                                             const BzlaBitVector *),
                    BzlaPropIsInv is_inv_fun,
-                   BzlaPropComputeValue inv_fun_bv)
+                   BzlaPropComputeValue compute_value_fun)
   {
     uint32_t bw;
     uint64_t i, j;
@@ -2467,8 +2480,8 @@ class TestPropCompleteConst : public TestPropComplete
       {
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         x    = bv_fun(d_mm, s[0], s[1]);
-        check_result(is_inv_fun, inv_fun_bv, exp, s[0], x, s[1], 1);
-        check_result(is_inv_fun, inv_fun_bv, exp, s[1], x, s[0], 0);
+        check_result(is_inv_fun, compute_value_fun, exp, s[0], x, s[1], 1);
+        check_result(is_inv_fun, compute_value_fun, exp, s[1], x, s[0], 0);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, x);
       }
@@ -2491,7 +2504,7 @@ class TestPropCompleteConst : public TestPropComplete
 /* ========================================================================== */
 
 /* -------------------------------------------------------------------------- */
-/* Regular inverse value computation, no const bits, no propagator domains.   */
+/* Regular inverse value computation, no const bits.                          */
 /* -------------------------------------------------------------------------- */
 
 TEST_F(TestPropComplete, complete_add_inv)
@@ -2570,7 +2583,7 @@ TEST_F(TestPropComplete, complete_cond_inv)
 }
 
 /* -------------------------------------------------------------------------- */
-/* Regular consistent value computation, no const bits, no propagator domains.*/
+/* Regular consistent value computation, no const bits.                       */
 /* -------------------------------------------------------------------------- */
 
 TEST_F(TestPropComplete, complete_add_cons)
@@ -2635,10 +2648,10 @@ TEST_F(TestPropComplete, complete_cond_cons)
 }
 
 /* -------------------------------------------------------------------------- */
-/* Inverse value computation with propagator domains, no const bits.          */
+/* Inverse value computation with propagator domains, const bits.             */
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestPropCompleteConst, complete_add_const)
+TEST_F(TestPropCompleteConst, complete_add_inv_const)
 {
   check_binary(bzla_exp_bv_add,
                bzla_bv_add,
@@ -2646,7 +2659,7 @@ TEST_F(TestPropCompleteConst, complete_add_const)
                bzla_proputils_inv_add_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_and_const)
+TEST_F(TestPropCompleteConst, complete_and_inv_const)
 {
   check_binary(bzla_exp_bv_and,
                bzla_bv_and,
@@ -2654,7 +2667,7 @@ TEST_F(TestPropCompleteConst, complete_and_const)
                bzla_proputils_inv_and_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_eq_const)
+TEST_F(TestPropCompleteConst, complete_eq_inv_const)
 {
   check_binary(bzla_exp_eq,
                bzla_bv_eq,
@@ -2662,7 +2675,7 @@ TEST_F(TestPropCompleteConst, complete_eq_const)
                bzla_proputils_inv_eq_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_ult_const)
+TEST_F(TestPropCompleteConst, complete_ult_inv_const)
 {
   check_binary(bzla_exp_bv_ult,
                bzla_bv_ult,
@@ -2670,7 +2683,7 @@ TEST_F(TestPropCompleteConst, complete_ult_const)
                bzla_proputils_inv_ult_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_mul_const)
+TEST_F(TestPropCompleteConst, complete_mul_inv_const)
 {
   check_binary(bzla_exp_bv_mul,
                bzla_bv_mul,
@@ -2678,7 +2691,7 @@ TEST_F(TestPropCompleteConst, complete_mul_const)
                bzla_proputils_inv_mul_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_sll_const)
+TEST_F(TestPropCompleteConst, complete_sll_inv_const)
 {
   check_shift(bzla_exp_bv_sll,
               bzla_bv_sll,
@@ -2686,7 +2699,7 @@ TEST_F(TestPropCompleteConst, complete_sll_const)
               bzla_proputils_inv_sll_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_srl_const)
+TEST_F(TestPropCompleteConst, complete_srl_inv_const)
 {
   check_shift(bzla_exp_bv_srl,
               bzla_bv_srl,
@@ -2694,7 +2707,7 @@ TEST_F(TestPropCompleteConst, complete_srl_const)
               bzla_proputils_inv_srl_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_urem_const)
+TEST_F(TestPropCompleteConst, complete_urem_inv_const)
 {
   check_binary(bzla_exp_bv_urem,
                bzla_bv_urem,
@@ -2702,7 +2715,7 @@ TEST_F(TestPropCompleteConst, complete_urem_const)
                bzla_proputils_inv_urem_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_udiv_const)
+TEST_F(TestPropCompleteConst, complete_udiv_inv_const)
 {
   check_binary(bzla_exp_bv_udiv,
                bzla_bv_udiv,
@@ -2710,7 +2723,7 @@ TEST_F(TestPropCompleteConst, complete_udiv_const)
                bzla_proputils_inv_udiv_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_concat_const)
+TEST_F(TestPropCompleteConst, complete_concat_inv_const)
 {
   check_binary(bzla_exp_bv_concat,
                bzla_bv_concat,
@@ -2718,14 +2731,83 @@ TEST_F(TestPropCompleteConst, complete_concat_const)
                bzla_proputils_inv_concat_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_cond_const)
+TEST_F(TestPropCompleteConst, complete_cond_inv_const)
 {
   check_cond(bzla_is_inv_cond_const, bzla_proputils_inv_cond_const);
 }
 
-TEST_F(TestPropCompleteConst, complete_slice_const)
+TEST_F(TestPropCompleteConst, complete_slice_inv_const)
 {
   check_slice(bzla_is_inv_slice_const, bzla_proputils_inv_slice_const);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Consistent value computation with propagator domains, const bits.          */
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestPropCompleteConst, complete_add_cons_const)
+{
+  check_binary(bzla_exp_bv_add, bzla_bv_add, 0, bzla_proputils_cons_add_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_and_cons_const)
+{
+  check_binary(bzla_exp_bv_and, bzla_bv_and, 0, bzla_proputils_cons_and_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_eq_cons_const)
+{
+  check_binary(bzla_exp_eq, bzla_bv_eq, 0, bzla_proputils_cons_eq_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_ult_cons_const)
+{
+  check_binary(bzla_exp_bv_ult, bzla_bv_ult, 0, bzla_proputils_cons_ult_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_mul_cons_const)
+{
+  check_binary(bzla_exp_bv_mul, bzla_bv_mul, 0, bzla_proputils_cons_mul_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_sll_cons_const)
+{
+  check_shift(bzla_exp_bv_sll, bzla_bv_sll, 0, bzla_proputils_cons_sll_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_srl_cons_const)
+{
+  check_shift(bzla_exp_bv_srl, bzla_bv_srl, 0, bzla_proputils_cons_srl_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_urem_cons_const)
+{
+  check_binary(
+      bzla_exp_bv_urem, bzla_bv_urem, 0, bzla_proputils_cons_urem_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_udiv_cons_const)
+{
+  check_binary(
+      bzla_exp_bv_udiv, bzla_bv_udiv, 0, bzla_proputils_cons_udiv_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_concat_cons_const)
+{
+  check_binary(
+      bzla_exp_bv_concat, bzla_bv_concat, 0, bzla_proputils_cons_concat_const);
+}
+
+#if 0
+TEST_F (TestPropCompleteConst, complete_cond_cons_const)
+{
+  check_cond (0, bzla_proputils_cons_cond_const);
+}
+#endif
+
+TEST_F(TestPropCompleteConst, complete_slice_cons_const)
+{
+  check_slice(0, bzla_proputils_cons_slice_const);
 }
 
 /* ========================================================================== */
