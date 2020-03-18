@@ -2613,12 +2613,10 @@ TEST_F(TestPropComplete, complete_udiv_cons)
   check_binary(bzla_exp_bv_udiv, bzla_bv_udiv, 0, bzla_proputils_cons_udiv);
 }
 
-#if 0
-TEST_F (TestPropComplete, complete_urem_cons)
+TEST_F(TestPropComplete, complete_urem_cons)
 {
-  check_binary (bzla_exp_bv_urem, bzla_bv_urem, 0, bzla_proputils_cons_urem);
+  check_binary(bzla_exp_bv_urem, bzla_bv_urem, 0, bzla_proputils_cons_urem);
 }
-#endif
 
 TEST_F(TestPropComplete, complete_concat_cons)
 {

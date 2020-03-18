@@ -1463,38 +1463,50 @@ bzla_proputils_cons_urem(Bzla *bzla,
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_urem);
 
-  mm   = bzla->mm;
-  bw   = bzla_bv_get_width(t);
-  ones = bzla_bv_ones(mm, bw);
+  mm = bzla->mm;
+  bw = bzla_bv_get_width(t);
 
   if (idx_x)
   {
-    if (!bzla_bv_compare(t, ones))
+    if (bzla_bv_is_ones(t))
     {
       /* t = 1...1  ->  res = 0 */
+      res = bzla_bv_zero(mm, bw);
+    }
+    else if (bzla_rng_pick_with_prob(&bzla->rng, 100))
+    {
+      /* s % 0 = s = t */
       res = bzla_bv_zero(mm, bw);
     }
     else
     {
       /* else res > t */
-      tmp = bzla_bv_inc(mm, t);
-      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
+      ones = bzla_bv_ones(mm, bw);
+      tmp  = bzla_bv_inc(mm, t);
+      res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
       bzla_bv_free(mm, tmp);
+      bzla_bv_free(mm, ones);
     }
   }
   else
   {
-    if (!bzla_bv_compare(t, ones))
+    if (bzla_bv_is_ones(t))
     {
       /* t = 1...1  ->  res = 1...1 */
-      res = bzla_bv_copy(mm, ones);
+      res = bzla_bv_ones(mm, bw);
+    }
+    else if (bzla_rng_pick_with_prob(&bzla->rng, 100))
+    {
+      /* x % 0 = x = t */
+      res = bzla_bv_copy(mm, t);
     }
     else
     {
       /* else res >= t:
        * pick s > t such that x = s + t does not overflow -> t < s < ones - t */
-      max = bzla_bv_sub(mm, ones, t);
-      min = bzla_bv_inc(mm, t);
+      ones = bzla_bv_ones(mm, bw);
+      max  = bzla_bv_sub(mm, ones, t);
+      min  = bzla_bv_inc(mm, t);
       if (bzla_bv_compare(min, max) > 0)
       {
         res = bzla_bv_copy(mm, t);
@@ -1507,10 +1519,9 @@ bzla_proputils_cons_urem(Bzla *bzla,
       }
       bzla_bv_free(mm, min);
       bzla_bv_free(mm, max);
+      bzla_bv_free(mm, ones);
     }
   }
-
-  bzla_bv_free(mm, ones);
   return res;
 }
 
