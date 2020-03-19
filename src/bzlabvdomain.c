@@ -770,7 +770,7 @@ bzla_bvdomain_get_factor(BzlaMemMgr *mm,
                          BzlaRNG *rng)
 {
   WheelFactorizer wf;
-  BzlaBitVector *res;
+  BzlaBitVector *res, *last_fact;
   const BzlaBitVector *fact;
   BzlaBitVectorPtrStack factors;
   uint32_t i;
@@ -787,7 +787,16 @@ bzla_bvdomain_get_factor(BzlaMemMgr *mm,
     if ((!excl_min_val || bzla_bv_compare(fact, excl_min_val) > 0)
         && (!x || bzla_bvdomain_check_fixed_bits(mm, x, fact)))
     {
-      BZLA_PUSH_STACK(factors, bzla_bv_copy(mm, fact));
+      if (BZLA_EMPTY_STACK(factors))
+      {
+        BZLA_PUSH_STACK(factors, bzla_bv_copy(mm, fact));
+      }
+      else
+      {
+        last_fact = BZLA_TOP_STACK(factors);
+        assert(!bzla_bv_is_one(fact));
+        BZLA_PUSH_STACK(factors, bzla_bv_mul(mm, fact, last_fact));
+      }
       if (!rng)
       {
         break;
