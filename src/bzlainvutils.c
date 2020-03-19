@@ -19,6 +19,7 @@
 #include <assert.h>
 
 #include "bzlacore.h"
+#include "utils/bzlautil.h"
 
 /* -------------------------------------------------------------------------- */
 /* Check invertibility without considering constant bits in x.                */
@@ -1046,7 +1047,7 @@ bzla_is_inv_udiv_const(Bzla *bzla,
   res = bzla_is_inv_udiv(bzla, x, t, s, pos_x, 0);
   if (d_res_x) *d_res_x = 0;
 
-  if (res)
+  if (res && bzla_bvdomain_has_fixed_bits(mm, x))
   {
     /* x is constant */
     if (bzla_bvdomain_is_fixed(mm, x))
@@ -1222,6 +1223,187 @@ bzla_is_inv_ult_const(Bzla *bzla,
   return bzla_bv_compare(x->lo, s) <= 0;
 }
 
+struct WheelFactorizer
+{
+  bool done;
+  BzlaMemMgr *mm;
+  BzlaBitVector *num;
+  BzlaBitVector *fact;
+
+  BzlaBitVector *one;
+  BzlaBitVector *two;
+  BzlaBitVector *four;
+  BzlaBitVector *six;
+
+  size_t pos;
+  BzlaBitVector *inc[11];
+
+  uint64_t limit;
+};
+
+typedef struct WheelFactorizer WheelFactorizer;
+
+/* Wheel factorization for s % x = t with base {2, 3, 5}. */
+static void
+wfact_init(WheelFactorizer *wf,
+           BzlaMemMgr *mm,
+           const BzlaBitVector *n,
+           uint64_t limit)
+{
+  uint32_t bw;
+
+  bw = bzla_bv_get_width(n);
+
+  memset(wf, 0, sizeof(WheelFactorizer));
+
+  wf->mm = mm;
+
+  wf->done  = false;
+  wf->limit = limit;
+  wf->one   = bzla_bv_one(mm, bw);
+  wf->two   = bzla_bv_uint64_to_bv(mm, 2, bw);
+  wf->four  = bzla_bv_uint64_to_bv(mm, 4, bw);
+  wf->six   = bzla_bv_uint64_to_bv(mm, 6, bw);
+
+  wf->fact    = bzla_bv_copy(mm, wf->two);
+  wf->num     = bzla_bv_copy(mm, n);
+  wf->pos     = 0;
+  wf->inc[0]  = wf->one;
+  wf->inc[1]  = wf->two;
+  wf->inc[2]  = wf->two;
+  wf->inc[3]  = wf->four;
+  wf->inc[4]  = wf->two;
+  wf->inc[5]  = wf->four;
+  wf->inc[6]  = wf->two;
+  wf->inc[7]  = wf->four;
+  wf->inc[8]  = wf->six;
+  wf->inc[9]  = wf->two;
+  wf->inc[10] = wf->six;
+}
+
+static const BzlaBitVector *
+wfact_next(WheelFactorizer *wf)
+{
+  BzlaMemMgr *mm;
+  bool done, found_factor;
+  uint64_t limit, num_iterations;
+  BzlaBitVector *res, *fact_squared, *quot, *rem, *tmp;
+
+  if (wf->done)
+  {
+    return 0;
+  }
+
+  mm = wf->mm;
+
+  limit          = wf->limit;
+  num_iterations = 0;
+  res            = 0;
+  while (true)
+  {
+    ++num_iterations;
+    if (limit && num_iterations > limit)
+    {
+      res      = 0;
+      wf->done = true;
+      break;
+    }
+
+    /* sqrt(n) is the maximum factor. */
+    fact_squared = bzla_bv_mul(mm, wf->fact, wf->fact);
+    done         = bzla_bv_compare(fact_squared, wf->num) > 0;
+    bzla_bv_free(mm, fact_squared);
+
+    if (done)
+    {
+      res      = wf->num;
+      wf->done = true;
+      break;
+    }
+
+    bzla_bv_udiv_urem(mm, wf->num, wf->fact, &quot, &rem);
+    found_factor = bzla_bv_is_zero(rem);
+    bzla_bv_free(mm, rem);
+
+    if (found_factor)
+    {
+      bzla_bv_free(mm, wf->num);
+      wf->num = quot;
+      res     = wf->fact;
+      break;
+    }
+    else
+    {
+      bzla_bv_free(mm, quot);
+      tmp  = bzla_bv_add(mm, wf->fact, wf->inc[wf->pos]);
+      done = bzla_bv_compare(tmp, wf->fact) <= 0;
+      bzla_bv_free(mm, wf->fact);
+
+      wf->fact = tmp;
+      wf->pos  = (wf->pos == 10) ? 3 : wf->pos + 1;
+      if (done)
+      {
+        wf->done = true;
+        break;
+      }
+    }
+  }
+
+  return res;
+}
+
+void
+wfact_delete(WheelFactorizer *wf)
+{
+  bzla_bv_free(wf->mm, wf->one);
+  bzla_bv_free(wf->mm, wf->two);
+  bzla_bv_free(wf->mm, wf->four);
+  bzla_bv_free(wf->mm, wf->six);
+  bzla_bv_free(wf->mm, wf->fact);
+  bzla_bv_free(wf->mm, wf->num);
+}
+
+static BzlaBitVector *
+urem_get_fact(BzlaMemMgr *mm,
+              const BzlaBitVector *num,
+              const BzlaBvDomain *x,
+              const BzlaBitVector *t)
+{
+  WheelFactorizer wf;
+  BzlaBitVector *res;
+  const BzlaBitVector *fact;
+  //  BzlaBitVectorPtrStack factors;
+
+  /* Limit number of iterations by 10000. */
+  wfact_init(&wf, mm, num, 10000);
+
+  //  BZLA_INIT_STACK (mm, factors);
+  res = 0;
+  while (true)
+  {
+    fact = wfact_next(&wf);
+
+    if (!fact) break;
+    //    BZLA_PUSH_STACK (factors, bzla_bv_copy (mm, fact));
+
+    if (bzla_bv_compare(fact, t) > 0
+        && bzla_bvdomain_check_fixed_bits(mm, x, fact))
+    {
+      res = bzla_bv_copy(mm, fact);
+      break;
+    }
+  }
+
+  //  while (!BZLA_EMPTY_STACK (factors))
+  //  {
+  //    bzla_bv_free (mm, BZLA_POP_STACK (factors));
+  //  }
+  //  BZLA_RELEASE_STACK (factors);
+
+  wfact_delete(&wf);
+  return res;
+}
+
 bool
 bzla_is_inv_urem_const(Bzla *bzla,
                        const BzlaBvDomain *x,
@@ -1243,7 +1425,7 @@ bzla_is_inv_urem_const(Bzla *bzla,
   res = bzla_is_inv_urem(bzla, x, t, s, pos_x, 0);
   if (d_res_x) *d_res_x = 0;
 
-  if (res)
+  if (res && bzla_bvdomain_has_fixed_bits(mm, x))
   {
     if (bzla_bvdomain_is_fixed(mm, x))
     {
@@ -1255,7 +1437,7 @@ bzla_is_inv_urem_const(Bzla *bzla,
     {
       uint32_t bw;
       int32_t cmp;
-      BzlaBitVector *n_hi, *ones, *hi, *lo, *sub, *mul, *div, *bv;
+      BzlaBitVector *n, *n_hi, *ones, *hi, *sub, *mul, *bv;
 
       bw   = bzla_bv_get_width(t);
       ones = bzla_bv_ones(mm, bw);
@@ -1281,74 +1463,63 @@ bzla_is_inv_urem_const(Bzla *bzla,
           }
           else
           {
-            /**
-             * s > t:
+            /* s % x = t
              *
-             * x > t, x = (s - t) / n
-             * -> (s - t) / n > t and
-             * -> (s - t) / t > n
-             * -> 1 <= n < (s - t) / t
+             * s = x * n + t
              *
-             * bv division is truncating, thus:
-             *
-             *    1 <= n <= n_hi
-             *
-             * with: t = 0          : n_hi = s
-             *       (s - t) % t = 0: n_hi = (s - t) / t - 1 if > t else t + 1
-             *       (s - t) % t > 0: n_hi = (s - t) / t
-             */
-            sub = bzla_bv_sub(mm, s, t);
-            if (bzla_bv_is_zero(t))
+             * In general, x = s - t is always a solution with n = 1, but
+             * fixed bits of x may not match s - t. In this case, we look for a
+             * factor n s.t. x = (s - t) / n, where fixed bits match. */
+
+            assert(bzla_bv_compare(t, s) <= 0);
+
+            n = bzla_bv_sub(mm, s, t);
+
+            if (bzla_bvdomain_check_fixed_bits(mm, x, n))
             {
-              n_hi = bzla_bv_copy(mm, s);
+              /* Solution is x = s - t. */
+              bv = n;
             }
             else
             {
-              bzla_bv_udiv_urem(mm, sub, t, &div, &rem);
-              if (bzla_bv_is_zero(rem))
+              bv = 0;
+              if (bzla_bv_is_zero(t))
               {
-                n_hi = bzla_bv_dec(mm, div);
-                bzla_bv_free(mm, div);
-              }
-              else
-              {
-                n_hi = div;
-              }
-              bzla_bv_free(mm, rem);
-              assert(bzla_bv_compare(n_hi, one) >= 0);
-            }
-            hi = sub;
-            lo = bzla_bv_udiv(mm, sub, n_hi);
-            if (bzla_bv_compare(lo, t) <= 0)
-            {
-              bzla_bv_free(mm, lo);
-              lo = bzla_bv_inc(mm, t);
-            }
-            bzla_bv_free(mm, n_hi);
-            BzlaBvDomainGenerator gen;
-            bzla_bvdomain_gen_init_range(
-                mm, 0, &gen, (BzlaBvDomain *) x, lo, hi);
-            res = false;
-            while (bzla_bvdomain_gen_has_next(&gen))
-            {
-              bv = bzla_bvdomain_gen_next(&gen);
-              assert(bzla_bvdomain_check_fixed_bits(mm, x, bv));
-              rem = bzla_bv_urem(mm, s, bv);
-              if (bzla_bv_compare(rem, t) == 0)
-              {
-                res = true;
-                bzla_bv_free(mm, rem);
-                if (d_res_x)
+                BzlaBitVector *one = bzla_bv_one(mm, bw);
+                if (bzla_bvdomain_check_fixed_bits(mm, x, one))
                 {
-                  *d_res_x = bzla_bvdomain_new(mm, bv, hi);
+                  bv = one;
                 }
-                break;
+                else
+                {
+                  bzla_bv_free(mm, one);
+                }
               }
-              bzla_bv_free(mm, rem);
+              /* s - t does not match const bits of x. Find factor n of (s - t)
+               * s.t. n > t and n matches the const bits of x. Pick x = n.
+               */
+              if (!bv)
+              {
+                bv = urem_get_fact(mm, n, x, t);
+                assert(!bv || bzla_bvdomain_check_fixed_bits(mm, x, bv));
+              }
+              bzla_bv_free(mm, n);
             }
-            bzla_bvdomain_gen_delete(&gen);
-            bzla_bv_free(mm, hi);
-            bzla_bv_free(mm, lo);
+
+            res = bv != 0;
+            if (res && d_res_x)
+            {
+              *d_res_x = bzla_bvdomain_new(mm, bv, bv);
+            }
+            if (bv)
+            {
+#ifndef NDEBUG
+              BzlaBitVector *tmp = bzla_bv_urem(mm, s, bv);
+              assert(bzla_bv_compare(tmp, t) == 0);
+              bzla_bv_free(mm, tmp);
+#endif
+              bzla_bv_free(mm, bv);
+            }
           }
         }
       }

@@ -1845,6 +1845,16 @@ class TestPropCompleteConst : public TestPropComplete
       bzla_bv_free(d_mm, res);
       res = 0;
     }
+    if (!res)
+    {
+      std::cout << "x: ";
+      bzla_bvdomain_print(d_mm, x, true);
+      std::cout << "t: ";
+      bzla_bv_print(t);
+      std::cout << "s: ";
+      bzla_bv_print(s);
+      std::cout << "idx_x: " << idx_x << std::endl;
+    }
     ASSERT_NE(res, nullptr);
     ASSERT_EQ(bzla_bv_compare(res, x_bv), 0);
     bzla_bv_free(d_mm, res);

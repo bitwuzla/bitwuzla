@@ -4894,7 +4894,11 @@ bzla_proputils_inv_udiv_const(Bzla *bzla,
 
   x = bzla_hashint_map_get(domains, bzla_node_get_id(udiv->e[idx_x]))->as_ptr;
 
-  if (bzla_bvdomain_is_fixed(mm, x))
+  if (!bzla_bvdomain_has_fixed_bits(mm, x))
+  {
+    res = bzla_proputils_inv_udiv(bzla, udiv, t, s, idx_x, domains, d_res_x);
+  }
+  else if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
     tmp = idx_x ? bzla_bv_udiv(mm, s, x->lo) : bzla_bv_udiv(mm, x->lo, s);
@@ -5008,7 +5012,11 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
   assert(bzla_bv_get_width(t) == bw);
   assert(bzla_bvdomain_get_width(x) == bw);
 
-  if (bzla_bvdomain_is_fixed(mm, x))
+  if (!bzla_bvdomain_has_fixed_bits(mm, x))
+  {
+    res = bzla_proputils_inv_urem(bzla, urem, t, s, idx_x, domains, d_res_x);
+  }
+  else if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
     tmp = idx_x ? bzla_bv_urem(mm, s, x->lo) : bzla_bv_urem(mm, x->lo, s);
@@ -5062,26 +5070,12 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
       /* Pick x within range determined in is_inv, given as d_res_x->lo for the
        * lower bound and d_res_x->hi for the upper bound (both inclusive). */
       assert(d_res_x);
-      assert(bzla_bv_compare(d_res_x->lo, d_res_x->hi) <= 0);
-      BzlaBvDomainGenerator gen;
-      res = 0;
-      bzla_bvdomain_gen_init_range(
-          mm, &bzla->rng, &gen, x, d_res_x->lo, d_res_x->hi);
-      assert(bzla_bvdomain_gen_has_next(&gen));
-      for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_GEN_MAX_RAND; cnt++)
-      {
-        bv  = bzla_bvdomain_gen_random(&gen);
-        tmp = bzla_bv_urem(mm, s, bv);
-        if (bzla_bv_compare(tmp, t) == 0)
-        {
-          res = bzla_bv_copy(mm, bv);
-          bzla_bv_free(mm, tmp);
-          break;
-        }
-        bzla_bv_free(mm, tmp);
-      }
-      if (!res) res = bzla_bv_copy(mm, d_res_x->lo);
-      bzla_bvdomain_gen_delete(&gen);
+      res = bzla_bv_copy(mm, d_res_x->lo);
+#ifndef NDEBUG
+      BzlaBitVector *tmp = bzla_bv_urem(mm, s, res);
+      assert(bzla_bv_compare(tmp, t) == 0);
+      bzla_bv_free(mm, tmp);
+#endif
     }
     bzla_bv_free(mm, ones);
   }
