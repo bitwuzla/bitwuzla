@@ -766,15 +766,18 @@ bzla_bvdomain_get_factor(BzlaMemMgr *mm,
                          const BzlaBitVector *num,
                          const BzlaBvDomain *x,
                          const BzlaBitVector *excl_min_val,
-                         uint64_t limit)
+                         uint64_t limit,
+                         BzlaRNG *rng)
 {
   WheelFactorizer wf;
   BzlaBitVector *res;
   const BzlaBitVector *fact;
+  BzlaBitVectorPtrStack factors;
+  uint32_t i;
 
   wfact_init(&wf, mm, num, limit);
 
-  res = 0;
+  BZLA_INIT_STACK(mm, factors);
   while (true)
   {
     fact = wfact_next(&wf);
@@ -784,11 +787,37 @@ bzla_bvdomain_get_factor(BzlaMemMgr *mm,
     if ((!excl_min_val || bzla_bv_compare(fact, excl_min_val) > 0)
         && (!x || bzla_bvdomain_check_fixed_bits(mm, x, fact)))
     {
-      res = bzla_bv_copy(mm, fact);
-      break;
+      BZLA_PUSH_STACK(factors, bzla_bv_copy(mm, fact));
+      if (!rng)
+      {
+        break;
+      }
     }
   }
 
+  /* Pick factor from stack. Random if 'rng' is given. */
+  res = 0;
+  if (!BZLA_EMPTY_STACK(factors))
+  {
+    uint32_t pos = 0;
+    if (rng)
+    {
+      pos = bzla_rng_pick_rand(rng, 0, BZLA_COUNT_STACK(factors) - 1);
+    }
+
+    res = BZLA_PEEK_STACK(factors, pos);
+
+    /* Release all except for result. */
+    for (i = 0; i < BZLA_COUNT_STACK(factors); ++i)
+    {
+      if (i != pos)
+      {
+        bzla_bv_free(mm, BZLA_PEEK_STACK(factors, i));
+      }
+    }
+  }
+
+  BZLA_RELEASE_STACK(factors);
   wfact_delete(&wf);
   return res;
 }

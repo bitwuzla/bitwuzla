@@ -1319,7 +1319,7 @@ bzla_is_inv_urem_const(Bzla *bzla,
                */
               if (!bv)
               {
-                bv = bzla_bvdomain_get_factor(mm, n, x, t, 10000);
+                bv = bzla_bvdomain_get_factor(mm, n, x, t, 10000, &bzla->rng);
                 assert(!bv || bzla_bvdomain_check_fixed_bits(mm, x, bv));
               }
               bzla_bv_free(mm, n);

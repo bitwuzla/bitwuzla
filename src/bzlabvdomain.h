@@ -211,7 +211,8 @@ BzlaBitVector *bzla_bvdomain_get_factor(BzlaMemMgr *mm,
                                         const BzlaBitVector *num,
                                         const BzlaBvDomain *x,
                                         const BzlaBitVector *excl_min_val,
-                                        uint64_t limit);
+                                        uint64_t limit,
+                                        BzlaRNG *rng);
 
 /*----------------------------------------------------------------------------*/
 
