@@ -207,4 +207,12 @@ void bzla_bvdomain_gen_delete(const BzlaBvDomainGenerator *gen);
 
 /*----------------------------------------------------------------------------*/
 
+BzlaBitVector *bzla_bvdomain_get_factor(BzlaMemMgr *mm,
+                                        const BzlaBitVector *num,
+                                        const BzlaBvDomain *x,
+                                        const BzlaBitVector *excl_min_val,
+                                        uint64_t limit);
+
+/*----------------------------------------------------------------------------*/
+
 #endif

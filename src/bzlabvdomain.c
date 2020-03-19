@@ -620,3 +620,175 @@ bzla_bvdomain_gen_delete(const BzlaBvDomainGenerator *gen)
   if (gen->max) bzla_bv_free(gen->mm, gen->max);
 #endif
 }
+
+struct WheelFactorizer
+{
+  bool done;
+  BzlaMemMgr *mm;
+  BzlaBitVector *num;
+  BzlaBitVector *fact;
+
+  BzlaBitVector *one;
+  BzlaBitVector *two;
+  BzlaBitVector *four;
+  BzlaBitVector *six;
+
+  size_t pos;
+  BzlaBitVector *inc[11];
+
+  uint64_t limit;
+};
+
+typedef struct WheelFactorizer WheelFactorizer;
+
+/* Wheel factorization for s % x = t with base {2, 3, 5}. */
+static void
+wfact_init(WheelFactorizer *wf,
+           BzlaMemMgr *mm,
+           const BzlaBitVector *n,
+           uint64_t limit)
+{
+  uint32_t bw;
+
+  bw = bzla_bv_get_width(n);
+
+  memset(wf, 0, sizeof(WheelFactorizer));
+
+  wf->mm = mm;
+
+  wf->done  = false;
+  wf->limit = limit;
+  wf->one   = bzla_bv_one(mm, bw);
+  wf->two   = bzla_bv_uint64_to_bv(mm, 2, bw);
+  wf->four  = bzla_bv_uint64_to_bv(mm, 4, bw);
+  wf->six   = bzla_bv_uint64_to_bv(mm, 6, bw);
+
+  wf->fact    = bzla_bv_copy(mm, wf->two);
+  wf->num     = bzla_bv_copy(mm, n);
+  wf->pos     = 0;
+  wf->inc[0]  = wf->one;
+  wf->inc[1]  = wf->two;
+  wf->inc[2]  = wf->two;
+  wf->inc[3]  = wf->four;
+  wf->inc[4]  = wf->two;
+  wf->inc[5]  = wf->four;
+  wf->inc[6]  = wf->two;
+  wf->inc[7]  = wf->four;
+  wf->inc[8]  = wf->six;
+  wf->inc[9]  = wf->two;
+  wf->inc[10] = wf->six;
+}
+
+static const BzlaBitVector *
+wfact_next(WheelFactorizer *wf)
+{
+  BzlaMemMgr *mm;
+  bool done, found_factor;
+  uint64_t limit, num_iterations;
+  BzlaBitVector *res, *fact_squared, *quot, *rem, *tmp;
+
+  if (wf->done)
+  {
+    return 0;
+  }
+
+  mm = wf->mm;
+
+  limit          = wf->limit;
+  num_iterations = 0;
+  res            = 0;
+  while (true)
+  {
+    ++num_iterations;
+    if (limit && num_iterations > limit)
+    {
+      res      = 0;
+      wf->done = true;
+      break;
+    }
+
+    /* sqrt(n) is the maximum factor. */
+    fact_squared = bzla_bv_mul(mm, wf->fact, wf->fact);
+    done         = bzla_bv_compare(fact_squared, wf->num) > 0;
+    bzla_bv_free(mm, fact_squared);
+
+    if (done)
+    {
+      res      = wf->num;
+      wf->done = true;
+      break;
+    }
+
+    bzla_bv_udiv_urem(mm, wf->num, wf->fact, &quot, &rem);
+    found_factor = bzla_bv_is_zero(rem);
+    bzla_bv_free(mm, rem);
+
+    if (found_factor)
+    {
+      bzla_bv_free(mm, wf->num);
+      wf->num = quot;
+      res     = wf->fact;
+      break;
+    }
+    else
+    {
+      bzla_bv_free(mm, quot);
+      tmp  = bzla_bv_add(mm, wf->fact, wf->inc[wf->pos]);
+      done = bzla_bv_compare(tmp, wf->fact) <= 0;
+      bzla_bv_free(mm, wf->fact);
+
+      wf->fact = tmp;
+      wf->pos  = (wf->pos == 10) ? 3 : wf->pos + 1;
+      if (done)
+      {
+        wf->done = true;
+        break;
+      }
+    }
+  }
+
+  return res;
+}
+
+void
+wfact_delete(WheelFactorizer *wf)
+{
+  bzla_bv_free(wf->mm, wf->one);
+  bzla_bv_free(wf->mm, wf->two);
+  bzla_bv_free(wf->mm, wf->four);
+  bzla_bv_free(wf->mm, wf->six);
+  bzla_bv_free(wf->mm, wf->fact);
+  bzla_bv_free(wf->mm, wf->num);
+}
+
+BzlaBitVector *
+bzla_bvdomain_get_factor(BzlaMemMgr *mm,
+                         const BzlaBitVector *num,
+                         const BzlaBvDomain *x,
+                         const BzlaBitVector *excl_min_val,
+                         uint64_t limit)
+{
+  WheelFactorizer wf;
+  BzlaBitVector *res;
+  const BzlaBitVector *fact;
+
+  wfact_init(&wf, mm, num, limit);
+
+  res = 0;
+  while (true)
+  {
+    fact = wfact_next(&wf);
+
+    if (!fact) break;
+
+    if ((!excl_min_val || bzla_bv_compare(fact, excl_min_val) > 0)
+        && (!x || bzla_bvdomain_check_fixed_bits(mm, x, fact)))
+    {
+      res = bzla_bv_copy(mm, fact);
+      break;
+    }
+  }
+
+  wfact_delete(&wf);
+  return res;
+}
