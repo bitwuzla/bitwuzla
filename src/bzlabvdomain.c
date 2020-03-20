@@ -708,9 +708,16 @@ wfact_next(WheelFactorizer *wf)
     }
 
     /* sqrt(n) is the maximum factor. */
-    fact_squared = bzla_bv_mul(mm, wf->fact, wf->fact);
-    done         = bzla_bv_compare(fact_squared, wf->num) > 0;
-    bzla_bv_free(mm, fact_squared);
+    if (bzla_bv_is_umulo(mm, wf->fact, wf->fact))
+    {
+      done = true;
+    }
+    else
+    {
+      fact_squared = bzla_bv_mul(mm, wf->fact, wf->fact);
+      done         = bzla_bv_compare(fact_squared, wf->num) > 0;
+      bzla_bv_free(mm, fact_squared);
+    }
 
     if (done)
     {
@@ -770,10 +777,10 @@ bzla_bvdomain_get_factor(BzlaMemMgr *mm,
                          BzlaRNG *rng)
 {
   WheelFactorizer wf;
-  BzlaBitVector *res, *last_fact;
+  BzlaBitVector *res, *mul, *tmp, *f;
   const BzlaBitVector *fact;
   BzlaBitVectorPtrStack factors;
-  uint32_t i;
+  uint32_t i, j, n, cnt;
 
   wfact_init(&wf, mm, num, limit);
 
@@ -784,45 +791,68 @@ bzla_bvdomain_get_factor(BzlaMemMgr *mm,
 
     if (!fact) break;
 
-    if ((!excl_min_val || bzla_bv_compare(fact, excl_min_val) > 0)
-        && (!x || bzla_bvdomain_check_fixed_bits(mm, x, fact)))
+    BZLA_PUSH_STACK(factors, bzla_bv_copy(mm, fact));
+    if (!rng)
     {
-      if (BZLA_EMPTY_STACK(factors))
-      {
-        BZLA_PUSH_STACK(factors, bzla_bv_copy(mm, fact));
-      }
-      else
-      {
-        last_fact = BZLA_TOP_STACK(factors);
-        assert(!bzla_bv_is_one(fact));
-        BZLA_PUSH_STACK(factors, bzla_bv_mul(mm, fact, last_fact));
-      }
-      if (!rng)
-      {
-        break;
-      }
+      break;
     }
   }
 
-  /* Pick factor from stack. Random if 'rng' is given. */
+  /* Pick factor from stack. Random (combination) if 'rng' is given. */
   res = 0;
   if (!BZLA_EMPTY_STACK(factors))
   {
-    uint32_t pos = 0;
     if (rng)
     {
-      pos = bzla_rng_pick_rand(rng, 0, BZLA_COUNT_STACK(factors) - 1);
+      /* to determine all possible combinations can be very expensive, we'll
+       * try for a limited number of times, and if none matches, we return 0 */
+      for (cnt = 0; cnt < 1000; cnt++)
+      {
+        /* number of factors to combine */
+        n = bzla_rng_pick_rand(rng, 1, BZLA_COUNT_STACK(factors));
+        /* move selected factors to front of the stack and combine
+         * this ensures that we don't pick a factor twice, e.g., 2 2 3 can be
+         * combined into { 2, 3, 2*2, 2*3, 2*2*3 } */
+        for (i = 0, mul = 0; i < n; i++)
+        {
+          j = bzla_rng_pick_rand(rng, i, BZLA_COUNT_STACK(factors) - 1);
+          f = BZLA_PEEK_STACK(factors, j);
+          BZLA_POKE_STACK(factors, j, BZLA_PEEK_STACK(factors, i));
+          BZLA_POKE_STACK(factors, i, f);
+          if (mul)
+          {
+            tmp = bzla_bv_mul(mm, f, mul);
+            if (bzla_bv_compare(tmp, num) > 0)
+            {
+              bzla_bv_free(mm, tmp);
+              continue;
+            }
+            bzla_bv_free(mm, mul);
+            mul = tmp;
+          }
+          else
+          {
+            mul = bzla_bv_copy(mm, f);
+          }
+        }
+        if (bzla_bv_compare(mul, excl_min_val) > 0
+            && bzla_bvdomain_check_fixed_bits(mm, x, mul))
+        {
+          res = mul;
+          break;
+        }
+        bzla_bv_free(mm, mul);
+      }
     }
-
-    res = BZLA_PEEK_STACK(factors, pos);
+    else
+    {
+      res = BZLA_PEEK_STACK(factors, 0);
+    }
 
     /* Release all except for result. */
     for (i = 0; i < BZLA_COUNT_STACK(factors); ++i)
     {
-      if (i != pos)
-      {
-        bzla_bv_free(mm, BZLA_PEEK_STACK(factors, i));
-      }
+      bzla_bv_free(mm, BZLA_PEEK_STACK(factors, i));
     }
   }
 

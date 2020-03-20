@@ -24,7 +24,7 @@ class TestPropComplete : public TestBzla
 {
  protected:
   static constexpr uint32_t TEST_PROP_INV_COMPLETE_BW      = 4u;
-  static constexpr uint64_t TEST_PROP_INV_COMPLETE_N_TESTS = 10000u;
+  static constexpr uint64_t TEST_PROP_INV_COMPLETE_N_TESTS = 1000u;
 
   void SetUp() override
   {
@@ -131,6 +131,7 @@ class TestPropComplete : public TestBzla
       bzla_bv_print(s);
       std::cout << "idx_x: " << idx_x << std::endl;
     }
+    assert(res);
     ASSERT_NE(res, nullptr);
     ASSERT_EQ(bzla_bv_compare(res, x_bv), 0);
     bzla_bv_free(d_mm, res);
@@ -1847,8 +1848,10 @@ class TestPropCompleteConst : public TestPropComplete
     }
     if (!res)
     {
-      std::cout << "x: ";
+      std::cout << "domain x: ";
       bzla_bvdomain_print(d_mm, x, true);
+      std::cout << "x: ";
+      bzla_bv_print(x_bv);
       std::cout << "t: ";
       bzla_bv_print(t);
       std::cout << "s: ";

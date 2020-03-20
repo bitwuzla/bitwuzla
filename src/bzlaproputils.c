@@ -4998,7 +4998,7 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
                 d_res_x);
 #endif
   uint32_t bw, cnt;
-  BzlaBitVector *tmp, *res, *ones, *bv;
+  BzlaBitVector *tmp, *res, *ones, *one, *bv, *simple;
   BzlaBvDomain *x;
   BzlaMemMgr *mm;
 
@@ -5027,48 +5027,8 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
   }
   else if (idx_x)
   {
-    ones = bzla_bv_ones(mm, bw);
-    if (bzla_bv_compare(t, ones) == 0)
+    if (d_res_x)
     {
-      /* s % x = t = ones: s = ones, x = 0 */
-      res = bzla_bv_zero(mm, bw);
-    }
-    else if (bzla_bv_compare(s, t) == 0)
-    {
-      /* s = t and t != ones: x = 0 or random x > t */
-      if (bzla_bv_compare(x->hi, t) <= 0
-          || (bzla_bv_is_zero(x->lo) && bzla_rng_flip_coin(&bzla->rng)))
-      {
-        res = bzla_bv_zero(mm, bw);
-      }
-      else
-      {
-        BzlaBvDomainGenerator gen;
-        res = 0;
-        tmp = bzla_bv_inc(mm, t);
-        bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, tmp, 0);
-        bzla_bv_free(mm, tmp);
-        assert(bzla_bvdomain_gen_has_next(&gen));
-        while (bzla_bvdomain_gen_has_next(&gen))
-        {
-          bv  = bzla_bvdomain_gen_random(&gen);
-          tmp = bzla_bv_urem(mm, s, bv);
-          if (bzla_bv_compare(tmp, t) == 0)
-          {
-            res = bzla_bv_copy(mm, bv);
-            bzla_bv_free(mm, tmp);
-            break;
-          }
-          bzla_bv_free(mm, tmp);
-        }
-        assert(res);
-        bzla_bvdomain_gen_delete(&gen);
-      }
-    }
-    else
-    {
-      /* Pick x within range determined in is_inv, given as d_res_x->lo for the
-       * lower bound and d_res_x->hi for the upper bound (both inclusive). */
       assert(d_res_x);
       res = bzla_bv_copy(mm, d_res_x->lo);
 #ifndef NDEBUG
@@ -5077,7 +5037,93 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
       bzla_bv_free(mm, tmp);
 #endif
     }
-    bzla_bv_free(mm, ones);
+    else
+    {
+      one = bzla_bv_one(mm, bw);
+      if (bzla_bv_is_ones(t))
+      {
+        /* s % x = t = ones: s = ones, x = 0 */
+        res = bzla_bv_zero(mm, bw);
+      }
+      else if (bzla_bv_compare(s, t) == 0)
+      {
+        /* s = t and t != ones: x = 0 or random x > t */
+        if (bzla_bv_compare(x->hi, t) <= 0
+            || (bzla_bv_is_zero(x->lo) && bzla_rng_flip_coin(&bzla->rng)))
+        {
+          res = bzla_bv_zero(mm, bw);
+        }
+        else
+        {
+          BzlaBvDomainGenerator gen;
+          res = 0;
+          tmp = bzla_bv_inc(mm, t);
+          bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, tmp, 0);
+          bzla_bv_free(mm, tmp);
+          assert(bzla_bvdomain_gen_has_next(&gen));
+          while (bzla_bvdomain_gen_has_next(&gen))
+          {
+            bv  = bzla_bvdomain_gen_random(&gen);
+            tmp = bzla_bv_urem(mm, s, bv);
+            if (bzla_bv_compare(tmp, t) == 0)
+            {
+              res = bzla_bv_copy(mm, bv);
+              bzla_bv_free(mm, tmp);
+              break;
+            }
+            bzla_bv_free(mm, tmp);
+          }
+          assert(res);
+          bzla_bvdomain_gen_delete(&gen);
+        }
+      }
+      else
+      {
+        if (bzla_bv_is_zero(t) && bzla_bvdomain_check_fixed_bits(mm, x, one)
+            && bzla_rng_flip_coin(&bzla->rng))
+        {
+          /* special case: s % x = 0: one is a simple solution */
+          res = bzla_bv_copy(mm, one);
+        }
+        else
+        {
+          simple = bzla_bv_sub(mm, s, t); /* simplest solution: s - t */
+          if (bzla_bvdomain_check_fixed_bits(mm, x, simple)
+              && bzla_rng_flip_coin(&bzla->rng))
+          {
+            res = simple;
+          }
+          else
+          {
+            /* try to find some other factor within 10k iterations, else fall
+             * back to using the simple solution */
+            res = bzla_bvdomain_get_factor(mm, simple, x, t, 10000, &bzla->rng);
+            assert(!res || bzla_bvdomain_check_fixed_bits(mm, x, res));
+            if (res)
+            {
+              bzla_bv_free(mm, simple);
+            }
+            else
+            {
+              res = 0;
+              if (bzla_bvdomain_check_fixed_bits(mm, x, simple))
+              {
+                res = simple;
+              }
+              assert(res || bzla_bvdomain_check_fixed_bits(mm, x, one));
+              if (bzla_bv_is_zero(t)
+                  && bzla_bvdomain_check_fixed_bits(mm, x, one)
+                  && (!res || bzla_rng_flip_coin(&bzla->rng)))
+              {
+                res = bzla_bv_copy(mm, one);
+                bzla_bv_free(mm, simple);
+              }
+            }
+          }
+        }
+      }
+      bzla_bv_free(mm, one);
+    }
   }
   else
   {

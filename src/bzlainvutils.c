@@ -1256,13 +1256,10 @@ bzla_is_inv_urem_const(Bzla *bzla,
     {
       uint32_t bw;
       int32_t cmp;
-      BzlaBitVector *n, *n_hi, *ones, *hi, *sub, *mul, *bv;
+      BzlaBitVector *n, *n_hi, *ones, *hi, *sub, *mul, *bv, *one;
 
       bw   = bzla_bv_get_width(t);
       ones = bzla_bv_ones(mm, bw);
-#ifndef NDEBUG
-      BzlaBitVector *one = bzla_bv_one(mm, bw);
-#endif
       if (pos_x)
       {
         if (bzla_bv_compare(t, ones) == 0)
@@ -1294,51 +1291,48 @@ bzla_is_inv_urem_const(Bzla *bzla,
 
             n = bzla_bv_sub(mm, s, t);
 
-            if (bzla_bvdomain_check_fixed_bits(mm, x, n))
+            /* Is (s - t) a solution?
+             *
+             * -> if yes we do not store it in d_res_x to enforce that
+             *    inv_urem() selects one of several possible choices rather
+             *    than only this solution
+             */
+            res = bzla_bvdomain_check_fixed_bits(mm, x, n);
+            if (!res)
             {
-              /* Solution is x = s - t. */
-              bv = n;
-            }
-            else
-            {
-              bv = 0;
-              if (bzla_bv_is_zero(t))
+              bv  = 0;
+              one = bzla_bv_one(mm, bw);
+              if (bzla_bv_is_zero(t)
+                  && bzla_bvdomain_check_fixed_bits(mm, x, one))
               {
-                BzlaBitVector *one = bzla_bv_one(mm, bw);
-                if (bzla_bvdomain_check_fixed_bits(mm, x, one))
-                {
-                  bv = one;
-                }
-                else
-                {
-                  bzla_bv_free(mm, one);
-                }
+                /* we don't store it in d_res_x for the same reason as above */
+                res = true;
               }
-              /* s - t does not match const bits of x. Find factor n of (s - t)
-               * s.t. n > t and n matches the const bits of x. Pick x = n.
-               */
-              if (!bv)
+              else
               {
+                /* s - t does not match const bits of x and one is not a
+                 * possible solution. Find factor n of (s - t) s.t. n > t and n
+                 * matches the const bits of x. Pick x = n.  */
                 bv = bzla_bvdomain_get_factor(mm, n, x, t, 10000, &bzla->rng);
                 assert(!bv || bzla_bvdomain_check_fixed_bits(mm, x, bv));
-              }
-              bzla_bv_free(mm, n);
-            }
-
-            res = bv != 0;
-            if (res && d_res_x)
-            {
-              *d_res_x = bzla_bvdomain_new(mm, bv, bv);
-            }
-            if (bv)
-            {
+                res = bv != 0;
+                if (res)
+                {
+                  if (d_res_x)
+                  {
+                    *d_res_x = bzla_bvdomain_new(mm, bv, bv);
+                  }
 #ifndef NDEBUG
-              BzlaBitVector *tmp = bzla_bv_urem(mm, s, bv);
-              assert(bzla_bv_compare(tmp, t) == 0);
-              bzla_bv_free(mm, tmp);
+                  BzlaBitVector *tmp = bzla_bv_urem(mm, s, bv);
+                  assert(bzla_bv_compare(tmp, t) == 0);
+                  bzla_bv_free(mm, tmp);
 #endif
-              bzla_bv_free(mm, bv);
+                  bzla_bv_free(mm, bv);
+                }
+              }
+              bzla_bv_free(mm, one);
             }
+            bzla_bv_free(mm, n);
           }
         }
       }
@@ -1425,9 +1419,6 @@ bzla_is_inv_urem_const(Bzla *bzla,
           }
         }
       }
-#ifndef NDEBUG
-      bzla_bv_free(mm, one);
-#endif
       bzla_bv_free(mm, ones);
     }
   }
