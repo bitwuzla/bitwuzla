@@ -263,6 +263,13 @@ enum BzlaOption
   BZLA_OPT_BETA_REDUCE,
 
   /*!
+    * **BZLA_OPT_ELIMINATE_ITES**
+
+      Enable (``value``: 1) or disable (``value``: 0) ITE elimination.
+  */
+  BZLA_OPT_ELIMINATE_ITES,
+
+  /*!
     * **BZLA_OPT_ELIMINATE_SLICES**
 
       Enable (``value``: 1) or disable (``value``: 0) slice elimination on bit

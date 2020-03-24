@@ -46,10 +46,10 @@ set(libboolector_src_files
   parser/bzlabtor2.c
   parser/bzlasmt.c
   parser/bzlasmt2.c
-  preprocess/bzlapputils.c
   preprocess/bzlaack.c
   preprocess/bzlader.c
   preprocess/bzlaelimapplies.c
+  preprocess/bzlaelimites.c
   preprocess/bzlaelimslices.c
   preprocess/bzlaembed.c
   preprocess/bzlaextract.c
@@ -57,6 +57,7 @@ set(libboolector_src_files
   preprocess/bzlaminiscope.c
   preprocess/bzlanormadd.c
   preprocess/bzlanormquant.c
+  preprocess/bzlapputils.c
   preprocess/bzlapreprocess.c
   preprocess/bzlaskel.c
   preprocess/bzlaskolemize.c

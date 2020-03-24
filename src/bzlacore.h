@@ -220,6 +220,7 @@ struct Bzla
     double subst;
     double subst_rebuild;
     double elimapplies;
+    double elimites;
     double embedded;
     double slicing;
     double skel;

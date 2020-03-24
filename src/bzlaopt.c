@@ -460,6 +460,16 @@ bzla_opt_init_opts(Bzla *bzla)
   bzla->options[BZLA_OPT_BETA_REDUCE].options = opts;
 
   init_opt(bzla,
+           BZLA_OPT_ELIMINATE_ITES,
+           false,
+           true,
+           "eliminate-ites",
+           "ei",
+           1,
+           0,
+           1,
+           "eliminate ITEs");
+  init_opt(bzla,
            BZLA_OPT_ELIMINATE_SLICES,
            false,
            true,

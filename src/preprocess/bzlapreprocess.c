@@ -19,6 +19,7 @@
 #include "preprocess/bzlaack.h"
 #include "preprocess/bzlader.h"
 #include "preprocess/bzlaelimapplies.h"
+#include "preprocess/bzlaelimites.h"
 #include "preprocess/bzlaelimslices.h"
 #include "preprocess/bzlaembed.h"
 #include "preprocess/bzlaextract.h"
@@ -186,6 +187,11 @@ bzla_simplify(Bzla *bzla)
         bzla_opt_set(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
       }
       bzla_eliminate_applies(bzla);
+    }
+
+    if (bzla_opt_get(bzla, BZLA_OPT_ELIMINATE_ITES))
+    {
+      bzla_eliminate_ites(bzla);
     }
 
     /* add ackermann constraints for all uninterpreted functions */
