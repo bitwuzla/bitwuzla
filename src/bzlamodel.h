@@ -67,6 +67,15 @@ const BzlaPtrHashTable* bzla_model_get_fun_aux(Bzla* bzla,
                                                BzlaIntHashTable* fun_model,
                                                BzlaNode* exp);
 
+/**
+ * Get node representation of the model value of the given node.
+ *
+ * For bit-vector nodes, the returned node is a bit-vector const node.
+ * For arrays, the returned node is a write chain.
+ * For functions, the returned node is an ite chain over the argument values.
+ */
+BzlaNode* bzla_model_get_value(Bzla* bzla, BzlaNode* exp);
+
 /*------------------------------------------------------------------------*/
 
 void bzla_model_add_to_bv(Bzla* bzla,

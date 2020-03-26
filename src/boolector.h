@@ -2629,6 +2629,18 @@ int32_t boolector_fun_sort_check(Bzla *bzla,
 /*------------------------------------------------------------------------*/
 
 /*!
+  Get the node representation of the model value of a given expression.
+
+  :param bzla: Boolector instance.
+  :param node: Boolector node.
+  :return: A Boolector node representing the model value of the given node.
+
+  .. seealso::
+    boolector_set_opt for enabling model generation.
+*/
+BoolectorNode *boolector_get_value(Bzla *bzla, BoolectorNode *node);
+
+/*!
   Generate an assignment string for bit-vector expression if
   boolector_sat has returned BOOLECTOR_SAT and model generation has been
   enabled.

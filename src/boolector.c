@@ -5252,6 +5252,33 @@ boolector_fun_sort_check(Bzla *bzla,
 
 /*------------------------------------------------------------------------*/
 
+BoolectorNode *
+boolector_get_value(Bzla *bzla, BoolectorNode *node)
+{
+  BzlaNode *res;
+  BzlaNode *exp;
+
+  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT(
+      bzla->last_sat_result != BZLA_RESULT_SAT || !bzla->valid_assignments,
+      "cannot retrieve model if input formula is not SAT");
+  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
+             "model generation has not been enabled");
+  BZLA_ABORT(bzla->quantifiers->count,
+             "models are currently not supported with quantifiers");
+  BZLA_ABORT_ARG_NULL(exp);
+  BZLA_TRAPI_UNFUN(exp);
+  BZLA_ABORT_REFS_NOT_POS(exp);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
+  res = bzla_model_get_value(bzla, exp);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res, get_value, BZLA_CLONED_EXP(exp));
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
 const char *
 boolector_bv_assignment(Bzla *bzla, BoolectorNode *node)
 {

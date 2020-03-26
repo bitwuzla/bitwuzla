@@ -1330,6 +1330,117 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
 
 /*------------------------------------------------------------------------*/
 
+BzlaNode *
+bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+  assert(bzla->last_sat_result == BZLA_RESULT_SAT && bzla->valid_assignments);
+
+  uint32_t i, nparams;
+  BzlaNode *res, *tmp, *arg, *val, **params, *uf, *cond, *eq;
+  BzlaSortId sort, domain;
+  const BzlaPtrHashTable *model;
+  BzlaBitVectorTuple *tup;
+  BzlaPtrHashTableIterator it;
+  BzlaTupleSortIterator tit;
+
+  exp  = bzla_simplify_exp(bzla, exp);
+  sort = bzla_node_get_sort_id(exp);
+
+  if (bzla_node_is_bv(bzla, exp))
+  {
+    res = bzla_exp_bv_const(bzla, bzla_model_get_bv(bzla, exp));
+  }
+  else if ((bzla_node_is_lambda(exp) && bzla_node_fun_get_arity(bzla, exp) > 1)
+           || bzla_node_is_const_array(exp))
+  {
+    res = bzla_node_copy(bzla, exp);
+  }
+  else
+  {
+    assert(bzla_node_is_array(exp) || bzla_node_is_fun(exp));
+    model = bzla_model_get_fun(bzla, exp);
+    if (!model)
+    {
+      res = bzla_node_copy(bzla, exp);
+    }
+    else
+    {
+      if (bzla_node_is_array(exp))
+      {
+        res = bzla_exp_array(bzla, sort, 0);
+        bzla_iter_hashptr_init(&it, (BzlaPtrHashTable *) model);
+        while (bzla_iter_hashptr_has_next(&it))
+        {
+          val = bzla_exp_bv_const(bzla, it.bucket->data.as_ptr);
+          tup = (BzlaBitVectorTuple *) bzla_iter_hashptr_next(&it);
+          assert(tup->arity == 1);
+          arg = bzla_exp_bv_const(bzla, tup->bv[0]);
+          tmp = bzla_exp_write(bzla, res, arg, val);
+          bzla_node_release(bzla, arg);
+          bzla_node_release(bzla, val);
+          bzla_node_release(bzla, res);
+          res = tmp;
+        }
+      }
+      else
+      {
+        domain  = bzla_sort_fun_get_domain(bzla, sort);
+        nparams = bzla_node_fun_get_arity(bzla, exp);
+        BZLA_NEWN(bzla->mm, params, nparams);
+        /* create parameters x1, ..., xn for lambda */
+        i = 0;
+        bzla_iter_tuple_sort_init(&tit, bzla, domain);
+        while (bzla_iter_tuple_sort_has_next(&tit))
+        {
+          params[i++] =
+              bzla_exp_param(bzla, bzla_iter_tuple_sort_next(&tit), 0);
+        }
+        /* create base case: uf(x1, ..., xn) */
+        uf  = bzla_exp_uf(bzla, sort, 0);
+        res = bzla_exp_apply_n(bzla, uf, params, nparams);
+        bzla_node_release(bzla, uf);
+        /* create ite chain */
+        bzla_iter_hashptr_init(&it, (BzlaPtrHashTable *) model);
+        while (bzla_iter_hashptr_has_next(&it))
+        {
+          val = bzla_exp_bv_const(bzla, it.bucket->data.as_ptr);
+          tup = (BzlaBitVectorTuple *) bzla_iter_hashptr_next(&it);
+          assert(tup->arity == nparams);
+          cond = bzla_exp_true(bzla);
+          for (i = 0; i < nparams; i++)
+          {
+            arg = bzla_exp_bv_const(bzla, tup->bv[i]);
+            eq  = bzla_exp_eq(bzla, arg, params[i]);
+            tmp = bzla_exp_bv_and(bzla, cond, eq);
+            bzla_node_release(bzla, eq);
+            bzla_node_release(bzla, arg);
+            bzla_node_release(bzla, cond);
+            cond = tmp;
+          }
+          tmp = bzla_exp_cond(bzla, cond, val, res);
+          bzla_node_release(bzla, val);
+          bzla_node_release(bzla, cond);
+          bzla_node_release(bzla, res);
+          res = tmp;
+        }
+        tmp = bzla_exp_fun(bzla, params, nparams, res);
+        bzla_node_release(bzla, res);
+        res = tmp;
+        for (i = 0; i < nparams; i++)
+        {
+          bzla_node_release(bzla, params[i]);
+        }
+        BZLA_DELETEN(bzla->mm, params, nparams);
+      }
+    }
+  }
+  return res;
+}
+
+/*------------------------------------------------------------------------*/
+
 static void
 collect_nodes(Bzla *bzla,
               BzlaNode *roots[],
