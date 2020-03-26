@@ -5272,6 +5272,7 @@ boolector_get_value(Bzla *bzla, BoolectorNode *node)
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   res = bzla_model_get_value(bzla, exp);
+  bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
   BZLA_CHKCLONE_RES_PTR(res, get_value, BZLA_CLONED_EXP(exp));
