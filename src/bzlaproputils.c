@@ -5703,6 +5703,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   BzlaMemMgr *mm;
   uint32_t opt_prop_prob_use_inv_value;
   uint32_t opt_prop_const_bits;
+  bool opt_skip_no_progress;
 
   BzlaPropSelectPath select_path;
   BzlaPropIsInv is_inv_fun;
@@ -5724,6 +5725,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   opt_prop_prob_use_inv_value =
       bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE);
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
+  opt_skip_no_progress =
+      bzla_opt_get(bzla, BZLA_OPT_PROP_SKIP_NO_PROGRESS) != 0;
 
 #ifndef NBZLALOG
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
@@ -6047,6 +6050,18 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           2, "%s value: %s", pick_inv && is_inv ? "inverse" : "consistent", a);
       bzla_mem_freestr(bzla->mm, a);
 #endif
+
+      if (opt_skip_no_progress && !bzla_bv_compare(bv_s_new, bv_s[idx_x]))
+      {
+        if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+        {
+          BZLA_PROP_SOLVER(bzla)->stats.moves_skipped++;
+        }
+        bzla_bv_free(bzla->mm, bv_s_new);
+        bv_s_new = 0;
+        break;
+      }
+
       /* propagate down */
       bzla_bv_free(bzla->mm, bv_t);
       bv_t = bv_s_new;

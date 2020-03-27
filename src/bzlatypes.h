@@ -793,6 +793,14 @@ enum BzlaOption
     */
   BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT,
 
+  /*!
+    * **BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT**
+
+     Skip moves if target value is the same as current model.
+    */
+  BZLA_OPT_PROP_SKIP_NO_PROGRESS,
+
+
   /* --------------------------------------------------------------------- */
   /*!
     **AIGProp Engine Options**:

@@ -67,6 +67,7 @@ struct BzlaPropSolver
     /* Number of moves that were a consequence of entailed propagations from
      * recoverable conflicts. */
     uint32_t moves_entailed;
+    uint32_t moves_skipped;
     /* Number of recoverable conflicts.
      * A recoverable conflict is a conflict that does not involve bit-vector
      * constants. */

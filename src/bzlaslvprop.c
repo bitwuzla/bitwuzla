@@ -160,6 +160,10 @@ move(Bzla *bzla)
 
   BZLALOG(1, "*** move %u", slv->stats.moves + 1);
   BZLALOG(1, "unsatisfied roots: %u", slv->roots->count);
+  BZLALOG(1,
+          "satisfied roots:   %u",
+          bzla->assumptions->count + bzla->synthesized_constraints->count
+              + bzla->unsynthesized_constraints->count - slv->roots->count);
 
   nprops = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
 
@@ -217,9 +221,10 @@ move(Bzla *bzla)
   BZLALOG(1, "");
   BZLALOG(1, "move");
   BZLALOG(1,
-          "  input: %s%s",
+          "  input: %s%s (parents: %u)",
           bzla_node_is_regular(input) ? "" : "-",
-          bzla_util_node2string(input));
+          bzla_util_node2string(input),
+          bzla_node_real_addr(input)->parents);
   BZLALOG(1, "  prev. assignment: %s", a);
   bzla_mem_freestr(bzla->mm, a);
   a = bzla_bv_to_char(bzla->mm, assignment);
@@ -872,6 +877,7 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   BZLA_MSG(bzla->msg, 1, "");
   BZLA_MSG(bzla->msg, 1, "restarts: %u", slv->stats.restarts);
   BZLA_MSG(bzla->msg, 1, "moves: %u", slv->stats.moves);
+  BZLA_MSG(bzla->msg, 1, "    skipped moves: %u", slv->stats.moves_skipped);
   if (entailed)
     BZLA_MSG(bzla->msg, 1, "    entailed moves: %u", slv->stats.moves_entailed);
 

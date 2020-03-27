@@ -465,7 +465,7 @@ bzla_opt_init_opts(Bzla *bzla)
            true,
            "eliminate-ites",
            "ei",
-           1,
+           0,
            0,
            1,
            "eliminate ITEs");
@@ -1162,6 +1162,17 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "do not perform a propagation move when encountering a conflict"
            "during inverse computation");
+
+  init_opt(bzla,
+           BZLA_OPT_PROP_SKIP_NO_PROGRESS,
+           false,
+           true,
+           "prop-skip-no-progress",
+           0,
+           0,
+           0,
+           1,
+           "abort propagation if no progress is made");
 
   /* AIGPROP engine ------------------------------------------------------- */
   init_opt(bzla,
