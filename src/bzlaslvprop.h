@@ -42,10 +42,10 @@ struct BzlaPropSolver
    * other path since all bv operators are binary). These so-called entailed
    * propagations are pushed onto stack 'toprop'.
    */
-  BzlaPropInfoStack toprop;
+  BzlaPropEntailInfoStack toprop;
 
 #ifndef NDEBUG
-  BzlaPropInfoStack prop_path;
+  BzlaPropEntailInfoStack prop_path;
 #endif
 
   /* current probability for selecting the cond when either the

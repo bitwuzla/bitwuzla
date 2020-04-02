@@ -5613,7 +5613,7 @@ record_conflict(Bzla *bzla,
       /* recoverable conflict, push entailed propagation */
       if (prop_entailed != BZLA_PROP_ENTAILED_OFF)
       {
-        BzlaPropInfo prop = {exp, bzla_bv_copy(mm, t), 0};
+        BzlaPropEntailInfo prop = {exp, bzla_bv_copy(mm, t), 0};
         assert(exp->arity == 2 || exp->arity == 3);
         if (exp->arity == 2)
         {
@@ -5852,7 +5852,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 #ifndef NDEBUG
       if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
       {
-        BzlaPropInfo prop = {real_cur, bzla_bv_copy(bzla->mm, bv_t), idx_x};
+        BzlaPropEntailInfo prop = {
+            real_cur, bzla_bv_copy(bzla->mm, bv_t), idx_x};
         BZLA_PUSH_STACK(BZLA_PROP_SOLVER(bzla)->prop_path, prop);
       }
 #endif
@@ -6106,8 +6107,8 @@ DONE:
 
 void
 bzla_proputils_clone_prop_info_stack(BzlaMemMgr *mm,
-                                     BzlaPropInfoStack *stack,
-                                     BzlaPropInfoStack *res,
+                                     BzlaPropEntailInfoStack *stack,
+                                     BzlaPropEntailInfoStack *res,
                                      BzlaNodeMap *exp_map)
 {
   assert(mm);
@@ -6137,7 +6138,7 @@ bzla_proputils_clone_prop_info_stack(BzlaMemMgr *mm,
       cloned_bvexp = bzla_bv_copy(mm, BZLA_PEEK_STACK(*stack, i).bvexp);
       cloned_idx_x = BZLA_PEEK_STACK(*stack, i).idx_x;
       assert(cloned_idx_x == 0 || cloned_idx_x == 1);
-      BzlaPropInfo cloned_prop = {cloned_exp, cloned_bvexp, cloned_idx_x};
+      BzlaPropEntailInfo cloned_prop = {cloned_exp, cloned_bvexp, cloned_idx_x};
       BZLA_PUSH_STACK(*res, cloned_prop);
     }
   }
@@ -6146,14 +6147,15 @@ bzla_proputils_clone_prop_info_stack(BzlaMemMgr *mm,
 }
 
 void
-bzla_proputils_reset_prop_info_stack(BzlaMemMgr *mm, BzlaPropInfoStack *stack)
+bzla_proputils_reset_prop_info_stack(BzlaMemMgr *mm,
+                                     BzlaPropEntailInfoStack *stack)
 {
   assert(mm);
   assert(stack);
 
   while (!BZLA_EMPTY_STACK(*stack))
   {
-    BzlaPropInfo prop = BZLA_POP_STACK(*stack);
+    BzlaPropEntailInfo prop = BZLA_POP_STACK(*stack);
     bzla_bv_free(mm, prop.bvexp);
   }
   BZLA_RESET_STACK(*stack);

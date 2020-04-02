@@ -1503,12 +1503,13 @@ clone_aux_bzla(Bzla *bzla,
       CHKCLONE_MEM_INT_HASH_MAP(slv->roots, cslv->roots);
       CHKCLONE_MEM_INT_HASH_MAP(slv->score, cslv->score);
 
-      allocated += sizeof(BzlaPropSolver) + MEM_PTR_HASH_TABLE(cslv->roots)
-                   + MEM_PTR_HASH_TABLE(cslv->score)
+      allocated +=
+          sizeof(BzlaPropSolver) + MEM_PTR_HASH_TABLE(cslv->roots)
+          + MEM_PTR_HASH_TABLE(cslv->score)
 #ifndef NDEBUG
-                   + BZLA_SIZE_STACK(cslv->prop_path) * sizeof(BzlaPropInfo);
+          + BZLA_SIZE_STACK(cslv->prop_path) * sizeof(BzlaPropEntailInfo);
 #endif
-      +BZLA_SIZE_STACK(cslv->toprop) * sizeof(BzlaPropInfo);
+      +BZLA_SIZE_STACK(cslv->toprop) * sizeof(BzlaPropEntailInfo);
       for (i = 0; i < BZLA_COUNT_STACK(cslv->toprop); i++)
         allocated += MEM_BITVEC(BZLA_PEEK_STACK(cslv->toprop, i).bvexp);
     }

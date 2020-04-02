@@ -26,23 +26,25 @@
 
 /* maintain information about entailed propagations, e.g., when all children
  * of a node need to be updated with respect to the target value. */
-struct BzlaPropInfo
+struct BzlaPropEntailInfo
 {
   BzlaNode* exp;
   BzlaBitVector* bvexp; /* target value  */
   int32_t idx_x;        /* branch to take */
 };
-typedef struct BzlaPropInfo BzlaPropInfo;
+typedef struct BzlaPropEntailInfo BzlaPropEntailInfo;
 
-BZLA_DECLARE_STACK(BzlaPropInfo, BzlaPropInfo);
+BZLA_DECLARE_STACK(BzlaPropEntailInfo, BzlaPropEntailInfo);
 
 void bzla_proputils_clone_prop_info_stack(BzlaMemMgr* mm,
-                                          BzlaPropInfoStack* stack,
-                                          BzlaPropInfoStack* res,
+                                          BzlaPropEntailInfoStack* stack,
+                                          BzlaPropEntailInfoStack* res,
                                           BzlaNodeMap* exp_map);
 
 void bzla_proputils_reset_prop_info_stack(BzlaMemMgr* mm,
-                                          BzlaPropInfoStack* stack);
+                                          BzlaPropEntailInfoStack* stack);
+
+/*------------------------------------------------------------------------*/
 
 /*------------------------------------------------------------------------*/
 
