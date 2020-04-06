@@ -465,8 +465,8 @@ bzla_bvdomain_gen_init_range(BzlaMemMgr *mm,
                              BzlaRNG *rng,
                              BzlaBvDomainGenerator *gen,
                              const BzlaBvDomain *d,
-                             BzlaBitVector *min,
-                             BzlaBitVector *max)
+                             const BzlaBitVector *min,
+                             const BzlaBitVector *max)
 {
   assert(mm);
   assert(gen);

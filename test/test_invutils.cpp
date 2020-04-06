@@ -16,13 +16,13 @@ extern "C" {
 #include "boolector.h"
 #include "bzlabv.h"
 #include "bzlabvprop.h"
+#include "bzlaexp.h"
 #include "bzlainvutils.h"
 #include "bzlaproputils.h"
 }
 
 using CreateBinExpFunc   = std::add_pointer<decltype(boolector_and)>::type;
 using CreateSliceExpFunc = std::add_pointer<decltype(boolector_slice)>::type;
-using IsInvSlice = std::add_pointer<decltype(bzla_is_inv_slice_const)>::type;
 
 class TestInvUtils : public TestBzla
 {
@@ -69,20 +69,20 @@ class TestInvUtils : public TestBzla
     }
   }
 
-  void test_is_inv_binary_const(BzlaPropIsInv is_inv,
+  void test_is_inv_binary_const(BzlaPropIsInvFun is_inv,
                                 CreateBinExpFunc create_exp_func,
                                 uint32_t pos_x)
   {
     test_is_inv_binary(is_inv, create_exp_func, pos_x, true);
   }
 
-  void test_is_inv_binary(BzlaPropIsInv is_inv,
+  void test_is_inv_binary(BzlaPropIsInvFun is_inv,
                           CreateBinExpFunc create_exp_func,
                           uint32_t pos_x,
                           bool const_bits = false)
   {
     std::vector<std::string> x_values;
-    BzlaBvDomain *x, *d_res_x;
+    BzlaBvDomain *x;
     BzlaBitVector *s, *t;
     char *vs, *vt;
     bool res, status;
@@ -125,10 +125,16 @@ class TestInvUtils : public TestBzla
           t  = bzla_bv_uint64_to_bv(d_mm, j, bw_t);
           vt = bzla_bv_to_char(d_mm, t);
 
-          d_res_x = 0;
-          res     = is_inv(d_bzla, x, t, s, pos_x, &d_res_x);
-          status  = check_sat_is_inv_binary(create_exp_func, x, t, s, pos_x);
-          if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
+          BzlaPropInfo pi;
+          memset(&pi, 0, sizeof(BzlaPropInfo));
+          pi.pos_x         = pos_x;
+          pi.bv[1 - pos_x] = s;
+          pi.bvd[pos_x]    = x;
+          pi.target_value  = t;
+
+          res    = is_inv(d_bzla, &pi);
+          status = check_sat_is_inv_binary(create_exp_func, x, t, s, pos_x);
+          if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
           if (res != status)
           {
@@ -152,7 +158,7 @@ class TestInvUtils : public TestBzla
   void test_is_inv_cond(uint32_t pos_x, bool const_bits)
   {
     std::vector<std::string> x_values;
-    BzlaBvDomain *x, *d_res_x;
+    BzlaBvDomain *x;
     BzlaBitVector *s0, *s1, *t;
     char *vs0, *vs1, *vt;
     bool res, status;
@@ -207,18 +213,38 @@ class TestInvUtils : public TestBzla
             t  = bzla_bv_uint64_to_bv(d_mm, k, bw);
             vt = bzla_bv_to_char(d_mm, t);
 
-            d_res_x = 0;
-            if (const_bits)
+            BzlaPropInfo pi;
+            memset(&pi, 0, sizeof(BzlaPropInfo));
+            pi.pos_x      = pos_x;
+            pi.bvd[pos_x] = x;
+            if (pos_x == 0)
             {
-              res =
-                  bzla_is_inv_cond_const(d_bzla, x, t, s0, s1, pos_x, &d_res_x);
+              pi.bv[1] = s0;
+              pi.bv[2] = s1;
+            }
+            else if (pos_x == 1)
+            {
+              pi.bv[0] = s0;
+              pi.bv[2] = s1;
             }
             else
             {
-              res = bzla_is_inv_cond(d_bzla, x, t, s0, s1, pos_x, &d_res_x);
+              pi.bv[0] = s0;
+              pi.bv[1] = s1;
+            }
+            pi.bvd[pos_x]   = x;
+            pi.target_value = t;
+
+            if (const_bits)
+            {
+              res = bzla_is_inv_cond_const(d_bzla, &pi);
+            }
+            else
+            {
+              res = bzla_is_inv_cond(d_bzla, &pi);
             }
             status = check_sat_is_inv_cond(x, t, s0, s1, pos_x);
-            if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
+            if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
             if (res != status)
             {
@@ -243,7 +269,7 @@ class TestInvUtils : public TestBzla
     }
   }
 
-  void test_is_inv_slice(IsInvSlice is_inv, bool const_bits)
+  void test_is_inv_slice(BzlaPropIsInvFun is_inv, bool const_bits)
   {
     std::vector<std::string> x_values;
     BzlaBvDomain *x;
@@ -273,10 +299,26 @@ class TestInvUtils : public TestBzla
           uint32_t nval_t = 1 << bw_t;
           for (uint32_t i = 0; i < nval_t; ++i)
           {
-            t           = bzla_bv_uint64_to_bv(d_mm, i, bw_t);
-            vt          = bzla_bv_to_char(d_mm, t);
-            bool res    = is_inv(d_bzla, x, t, upper, lower);
+            t  = bzla_bv_uint64_to_bv(d_mm, i, bw_t);
+            vt = bzla_bv_to_char(d_mm, t);
+
+            BzlaSortId sort = bzla_sort_bv(d_bzla, bw_x);
+            BzlaNode *var   = bzla_exp_var(d_bzla, sort, nullptr);
+            bzla_sort_release(d_bzla, sort);
+            BzlaNode *slice =
+                bzla_node_create_bv_slice(d_bzla, var, upper, lower);
+            bzla_node_release(d_bzla, var);
+
+            BzlaPropInfo pi;
+            memset(&pi, 0, sizeof(BzlaPropInfo));
+            pi.exp          = slice;
+            pi.bvd[0]       = x;
+            pi.target_value = t;
+
+            bool res    = is_inv(d_bzla, &pi);
             bool status = check_sat_is_inv_slice(x, t, upper, lower);
+
+            bzla_node_release(d_bzla, slice);
 
             if (res != status)
             {

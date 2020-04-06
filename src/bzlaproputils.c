@@ -34,7 +34,7 @@ typedef int32_t (*BzlaPropSelectPath)(Bzla *,
  * set to their const value, and all other bits set to their value in res_x.
  */
 static void
-set_const_bits(BzlaMemMgr *mm, BzlaBvDomain *d, BzlaBitVector **res)
+set_const_bits(BzlaMemMgr *mm, const BzlaBvDomain *d, BzlaBitVector **res)
 {
   assert(d);
   assert(res);
@@ -843,68 +843,45 @@ record_cons_stats(Bzla *bzla, uint32_t *stats)
 
 #ifndef NDEBUG
 static void
-check_cons_dbg(Bzla *bzla,
-               BzlaNode *node,
-               BzlaBitVector *t,
-               BzlaBitVector *s,
-               int32_t idx_x,
-               BzlaIntHashTable *domains,
-               bool same_bw)
+check_cons_dbg(Bzla *bzla, BzlaPropInfo *pi, bool same_bw)
 {
   assert(bzla);
-  assert(node);
-  assert(bzla_node_is_regular(node));
-  assert(t);
-  assert(s);
-  assert(domains);
-  assert(!same_bw || bzla_bv_get_width(s) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(node->e[idx_x]));
+  assert(pi);
+  assert(bzla_node_is_regular(pi->exp));
+  assert(!same_bw
+         || bzla_bv_get_width(pi->bv[1 - pi->pos_x])
+                == bzla_bv_get_width(pi->target_value));
+  assert(pi->pos_x >= 0);
+  assert(pi->pos_x <= 1);
+  assert(!bzla_node_is_bv_const(pi->exp->e[pi->pos_x]));
 }
 #endif
 
 BzlaBitVector *
-bzla_proputils_cons_add(Bzla *bzla,
-                        BzlaNode *add,
-                        BzlaBitVector *t,
-                        BzlaBitVector *s,
-                        int32_t idx_x,
-                        BzlaIntHashTable *domains,
-                        BzlaBvDomain *d_res_x)
+bzla_proputils_cons_add(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, add, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
-  (void) add;
-  (void) s;
-  (void) idx_x;
-  (void) domains;
-  (void) d_res_x;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_add);
-  return bzla_bv_new_random(bzla->mm, &bzla->rng, bzla_bv_get_width(t));
+  return bzla_bv_new_random(
+      bzla->mm, &bzla->rng, bzla_bv_get_width(pi->target_value));
 }
 
 BzlaBitVector *
-bzla_proputils_cons_and(Bzla *bzla,
-                        BzlaNode *and,
-                        BzlaBitVector *t,
-                        BzlaBitVector *s,
-                        int32_t idx_x,
-                        BzlaIntHashTable *domains,
-                        BzlaBvDomain *d_res_x)
+bzla_proputils_cons_and(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, and, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
   uint32_t i, bw;
   BzlaBitVector *res;
   BzlaUIntStack dcbits;
   bool b;
+  const BzlaBitVector *t;
 
-  (void) s;
-  (void) domains;
-  (void) d_res_x;
+  t = pi->target_value;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_and);
 
@@ -912,7 +889,7 @@ bzla_proputils_cons_and(Bzla *bzla,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_AND_FLIP));
   BZLA_INIT_STACK(bzla->mm, dcbits);
 
-  res = bzla_bv_copy(bzla->mm, bzla_model_get_bv(bzla, and->e[idx_x]));
+  res = bzla_bv_copy(bzla->mm, pi->bv[pi->pos_x]);
 
   /* s & res = t
    * -> all bits set in t must be set in res
@@ -939,20 +916,11 @@ bzla_proputils_cons_and(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_eq(Bzla *bzla,
-                       BzlaNode *eq,
-                       BzlaBitVector *t,
-                       BzlaBitVector *s,
-                       int32_t idx_x,
-                       BzlaIntHashTable *domains,
-                       BzlaBvDomain *d_res_x)
+bzla_proputils_cons_eq(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, eq, t, s, idx_x, domains, false);
+  check_cons_dbg(bzla, pi, false);
 #endif
-  (void) t;
-  (void) domains;
-  (void) d_res_x;
 
   BzlaBitVector *res;
 
@@ -961,52 +929,44 @@ bzla_proputils_cons_eq(Bzla *bzla,
   if (bzla_rng_pick_with_prob(&bzla->rng,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_EQ_FLIP)))
   {
-    res = bzla_bv_copy(bzla->mm, bzla_model_get_bv(bzla, eq->e[idx_x]));
+    res = bzla_bv_copy(bzla->mm, pi->bv[pi->pos_x]);
     bzla_bv_flip_bit(
         res, bzla_rng_pick_rand(&bzla->rng, 0, bzla_bv_get_width(res) - 1));
   }
   else
   {
-    res = bzla_bv_new_random(bzla->mm, &bzla->rng, bzla_bv_get_width(s));
+    res = bzla_bv_new_random(
+        bzla->mm, &bzla->rng, bzla_bv_get_width(pi->bv[1 - pi->pos_x]));
   }
   return res;
 }
 
 static BzlaBitVector *
-cons_ult_aux(Bzla *bzla,
-             BzlaNode *ult,
-             BzlaBitVector *t,
-             BzlaBitVector *s,
-             int32_t idx_x,
-             BzlaIntHashTable *domains,
-             BzlaBvDomain *d_res_x,
-             bool with_const_bits)
+cons_ult_aux(Bzla *bzla, BzlaPropInfo *pi, bool with_const_bits)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, ult, t, s, idx_x, domains, false);
+  check_cons_dbg(bzla, pi, false);
 #endif
   bool isult;
   uint32_t bw;
   BzlaBitVector *ones, *zero, *tmp, *res;
   BzlaMemMgr *mm;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
   BzlaBvDomainGenerator gen;
-
-  (void) ult;
-  (void) d_res_x;
+  int32_t pos_x;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_ult);
 
   mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  x     = with_const_bits ? pi->bvd[pi->pos_x] : 0;
+  s     = pi->bv[1 - pi->pos_x];
+  t     = pi->target_value;
   bw    = bzla_bv_get_width(s);
   isult = !bzla_bv_is_zero(t);
 
-  x = with_const_bits
-          ? bzla_hashint_map_get(domains, bzla_node_get_id(ult->e[idx_x]))
-                ->as_ptr
-          : 0;
-
-  if (idx_x && isult)
+  if (pos_x == 1 && isult)
   {
     /* s < res = 1  ->  res > 0 */
     if (x)
@@ -1048,7 +1008,7 @@ cons_ult_aux(Bzla *bzla,
       bzla_bv_free(mm, ones);
     }
   }
-  else if (!idx_x && isult)
+  else if (pos_x == 0 && isult)
   {
     /* res < s = 1  ->  0 <= res < 1...1 */
     if (x)
@@ -1112,41 +1072,26 @@ cons_ult_aux(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_ult(Bzla *bzla,
-                        BzlaNode *ult,
-                        BzlaBitVector *t,
-                        BzlaBitVector *s,
-                        int32_t idx_x,
-                        BzlaIntHashTable *domains,
-                        BzlaBvDomain *d_res_x)
+bzla_proputils_cons_ult(Bzla *bzla, BzlaPropInfo *pi)
 {
-  return cons_ult_aux(bzla, ult, t, s, idx_x, domains, d_res_x, false);
+  return cons_ult_aux(bzla, pi, false);
 }
 
 BzlaBitVector *
-bzla_proputils_cons_sll(Bzla *bzla,
-                        BzlaNode *sll,
-                        BzlaBitVector *t,
-                        BzlaBitVector *s,
-                        int32_t idx_x,
-                        BzlaIntHashTable *domains,
-                        BzlaBvDomain *d_res_x)
+bzla_proputils_cons_sll(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, sll, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
   uint32_t bw, ctz_t, shift, max;
   BzlaBitVector *res, *bv_shift, *left, *right;
   BzlaMemMgr *mm;
-
-  (void) sll;
-  (void) s;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *t;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sll);
 
   mm    = bzla->mm;
+  t     = pi->target_value;
   bw    = bzla_bv_get_width(t);
   ctz_t = bzla_bv_get_num_trailing_zeros(t);
 
@@ -1163,7 +1108,7 @@ bzla_proputils_cons_sll(Bzla *bzla,
   }
   if (shift >= bw) shift = bw;
 
-  if (idx_x)
+  if (pi->pos_x)
   {
     res = bv_shift;
   }
@@ -1194,28 +1139,20 @@ bzla_proputils_cons_sll(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_srl(Bzla *bzla,
-                        BzlaNode *srl,
-                        BzlaBitVector *t,
-                        BzlaBitVector *s,
-                        int32_t idx_x,
-                        BzlaIntHashTable *domains,
-                        BzlaBvDomain *d_res_x)
+bzla_proputils_cons_srl(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, srl, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
   uint32_t bw, clz_t, shift, max;
   BzlaBitVector *res, *bv_shift, *left, *right;
   BzlaMemMgr *mm;
-
-  (void) s;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *t;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_srl);
 
   mm    = bzla->mm;
+  t     = pi->target_value;
   bw    = bzla_bv_get_width(t);
   clz_t = bzla_bv_get_num_leading_zeros(t);
 
@@ -1232,7 +1169,7 @@ bzla_proputils_cons_srl(Bzla *bzla,
   }
   if (shift >= bw) shift = bw;
 
-  if (idx_x)
+  if (pi->pos_x)
   {
     res = bv_shift;
   }
@@ -1263,30 +1200,20 @@ bzla_proputils_cons_srl(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_mul(Bzla *bzla,
-                        BzlaNode *mul,
-                        BzlaBitVector *t,
-                        BzlaBitVector *s,
-                        int32_t idx_x,
-                        BzlaIntHashTable *domains,
-                        BzlaBvDomain *d_res_x)
+bzla_proputils_cons_mul(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, mul, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
   uint32_t r, bw, ctz_res, ctz_t;
   BzlaBitVector *res, *tmp;
   BzlaMemMgr *mm;
-
-  (void) mul;
-  (void) s;
-  (void) idx_x;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *t;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_mul);
 
   mm  = bzla->mm;
+  t   = pi->target_value;
   bw  = bzla_bv_get_width(t);
   res = bzla_bv_new_random(mm, &bzla->rng, bw);
   if (!bzla_bv_is_zero(t))
@@ -1344,35 +1271,26 @@ bzla_proputils_cons_mul(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_udiv(Bzla *bzla,
-                         BzlaNode *udiv,
-                         BzlaBitVector *t,
-                         BzlaBitVector *s,
-                         int32_t idx_x,
-                         BzlaIntHashTable *domains,
-                         BzlaBvDomain *d_res_x)
+bzla_proputils_cons_udiv(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, udiv, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
   uint32_t bw;
-  BzlaBitVector *res, *tmp, *y, *sub, *min, *max, *zero, *one, *ones;
+  BzlaBitVector *res, *tmp, *y, *offset, *max, *zero, *one, *ones;
   BzlaMemMgr *mm;
+  const BzlaBitVector *t;
 
   mm   = bzla->mm;
+  t    = pi->target_value;
   bw   = bzla_bv_get_width(t);
   zero = bzla_bv_zero(mm, bw);
   one  = bzla_bv_one(mm, bw);
   ones = bzla_bv_ones(mm, bw);
 
-  (void) udiv;
-  (void) s;
-  (void) domains;
-  (void) d_res_x;
-
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_udiv);
 
-  if (idx_x)
+  if (pi->pos_x)
   {
     /* -> t = 1...1 then res = 0 or res = 1
      * -> else choose res s.t. res * t does not overflow */
@@ -1406,31 +1324,43 @@ bzla_proputils_cons_udiv(Bzla *bzla,
     }
     else
     {
-      /* choose y * t <= res <= (y * t) + s - 1 such that
-       * y * t  and (y * t) + (s - 1) does not overflow */
-      y = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, ones);
-      while (bzla_bv_is_umulo(mm, y, t))
+      /* Compute x = y * t + offset with
+       *   y \in [1, ones / t]
+       * and
+       *   offset \in [0, min(y - 1, ones - y * t)].
+       */
+      max = bzla_bv_udiv(mm, ones, t);
+      y   = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, max);
+      bzla_bv_free(mm, max);
+
+      assert(!bzla_bv_is_umulo(mm, y, t));
+      res = bzla_bv_mul(mm, y, t);
+
+      tmp = bzla_bv_sub(mm, ones, res);
+      max = bzla_bv_dec(mm, y);
+      bzla_bv_free(mm, y);
+
+      /* Make sure that adding the offset to (y * t) does not overflow. The
+       * maximum value of the offset is the minimum of (y - 1, ones - (y * t)).
+       */
+      if (bzla_bv_compare(tmp, max) < 0)
       {
-        tmp = bzla_bv_sub(mm, y, one);
-        bzla_bv_free(mm, y);
-        y = bzla_bv_new_random_range(mm, &bzla->rng, bw, one, tmp);
-        bzla_bv_free(mm, tmp);
-      }
-      sub = bzla_bv_dec(mm, s);
-      min = bzla_bv_mul(mm, y, t);
-      if (bzla_bv_is_uaddo(mm, min, sub))
-      {
-        max = bzla_bv_copy(mm, ones);
+        bzla_bv_free(mm, max);
+        max = tmp;
       }
       else
       {
-        max = bzla_bv_add(mm, min, sub);
+        bzla_bv_free(mm, tmp);
       }
-      res = bzla_bv_new_random_range(mm, &bzla->rng, bw, min, max);
-      bzla_bv_free(mm, y);
-      bzla_bv_free(mm, min);
+      /* Compute offset for adding to res. */
+      offset = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, max);
       bzla_bv_free(mm, max);
-      bzla_bv_free(mm, sub);
+
+      assert(!bzla_bv_is_uaddo(mm, res, offset));
+      tmp = bzla_bv_add(mm, res, offset);
+      bzla_bv_free(mm, res);
+      bzla_bv_free(mm, offset);
+      res = tmp;
     }
   }
 
@@ -1441,32 +1371,23 @@ bzla_proputils_cons_udiv(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_urem(Bzla *bzla,
-                         BzlaNode *urem,
-                         BzlaBitVector *t,
-                         BzlaBitVector *s,
-                         int32_t idx_x,
-                         BzlaIntHashTable *domains,
-                         BzlaBvDomain *d_res_x)
+bzla_proputils_cons_urem(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, urem, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
   uint32_t bw;
   BzlaBitVector *res, *ones, *tmp, *max, *min;
   BzlaMemMgr *mm;
-
-  (void) urem;
-  (void) s;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *t;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_urem);
 
   mm = bzla->mm;
+  t  = pi->target_value;
   bw = bzla_bv_get_width(t);
 
-  if (idx_x)
+  if (pi->pos_x)
   {
     if (bzla_bv_is_ones(t))
     {
@@ -1526,69 +1447,43 @@ bzla_proputils_cons_urem(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_concat(Bzla *bzla,
-                           BzlaNode *concat,
-                           BzlaBitVector *t,
-                           BzlaBitVector *s,
-                           int32_t idx_x,
-                           BzlaIntHashTable *domains,
-                           BzlaBvDomain *d_res_x)
+bzla_proputils_cons_concat(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, concat, t, s, idx_x, domains, false);
+  check_cons_dbg(bzla, pi, false);
 #endif
   int32_t bw_t, bw_s;
   BzlaBitVector *res;
-
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_concat);
+
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
 
   bw_t = bzla_bv_get_width(t);
   bw_s = bzla_bv_get_width(s);
 
-  res = idx_x ? bzla_bv_slice(bzla->mm, t, bw_t - bw_s - 1, 0)
-              : bzla_bv_slice(bzla->mm, t, bw_t - 1, bw_s);
+  res = pi->pos_x ? bzla_bv_slice(bzla->mm, t, bw_t - bw_s - 1, 0)
+                  : bzla_bv_slice(bzla->mm, t, bw_t - 1, bw_s);
   return res;
 }
 
 BzlaBitVector *
-bzla_proputils_cons_slice(Bzla *bzla,
-                          BzlaNode *slice,
-                          BzlaBitVector *t,
-                          BzlaBitVector *s,
-                          int32_t idx_x,
-                          BzlaIntHashTable *domains,
-                          BzlaBvDomain *d_res_x)
+bzla_proputils_cons_slice(Bzla *bzla, BzlaPropInfo *pi)
 {
-  return bzla_proputils_inv_slice(bzla, slice, t, s, idx_x, domains, d_res_x);
+  return bzla_proputils_inv_slice(bzla, pi);
 }
 
 BzlaBitVector *
-bzla_proputils_cons_cond(Bzla *bzla,
-                         BzlaNode *cond,
-                         BzlaBitVector *t,
-                         BzlaBitVector *s0,
-                         BzlaBitVector *s1,
-                         int32_t idx_x,
-                         BzlaIntHashTable *domains,
-                         BzlaBvDomain *d_res_x)
+bzla_proputils_cons_cond(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(cond);
-  assert(bzla_node_is_regular(cond));
-  assert(t);
-  assert(s0);
-  assert(s1);
-  assert(domains);
-  assert(!idx_x || bzla_bv_get_width(s0) == 1);
-  assert(idx_x || bzla_bv_get_width(s0) == bzla_bv_get_width(t));
-  assert(idx_x || bzla_bv_get_width(s1) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 2);
-  assert(!bzla_node_is_bv_const(cond->e[idx_x]));
-  (void) domains;
-  (void) d_res_x;
+  assert(pi);
+  assert(bzla_node_is_regular(pi->exp));
+  assert(pi->pos_x >= 0);
+  assert(pi->pos_x <= 2);
+  assert(!bzla_node_is_bv_const(pi->exp->e[pi->pos_x]));
 
   BzlaBitVector *res;
   BzlaMemMgr *mm;
@@ -1597,14 +1492,14 @@ bzla_proputils_cons_cond(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if (idx_x == 1 || idx_x == 2)
-  {
-    res = bzla_bv_copy(mm, t);
-  }
-  else
+  if (pi->pos_x == 0)
   {
     res = bzla_rng_flip_coin(&bzla->rng) ? bzla_bv_one(mm, 1)
                                          : bzla_bv_zero(mm, 1);
+  }
+  else
+  {
+    res = bzla_bv_copy(mm, pi->target_value);
   }
   return res;
 }
@@ -1614,54 +1509,43 @@ bzla_proputils_cons_cond(Bzla *bzla,
 /* ========================================================================== */
 
 BzlaBitVector *
-bzla_proputils_cons_add_const(Bzla *bzla,
-                              BzlaNode *add,
-                              BzlaBitVector *t,
-                              BzlaBitVector *s,
-                              int32_t idx_x,
-                              BzlaIntHashTable *domains,
-                              BzlaBvDomain *d_res_x)
+bzla_proputils_cons_add_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, add, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
-  (void) d_res_x;
 
   BzlaBitVector *res;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
   BzlaMemMgr *mm;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_add);
 
   mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_get_id(add->e[idx_x]))->as_ptr;
+  x  = pi->bvd[pi->pos_x];
   if (bzla_bvdomain_is_fixed(mm, x)) return bzla_bv_copy(mm, x->lo);
-  res = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
+  res = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(pi->target_value));
   set_const_bits(mm, x, &res);
   return res;
 }
 
 BzlaBitVector *
-bzla_proputils_cons_and_const(Bzla *bzla,
-                              BzlaNode *and,
-                              BzlaBitVector *t,
-                              BzlaBitVector *s,
-                              int32_t idx_x,
-                              BzlaIntHashTable *domains,
-                              BzlaBvDomain *d_res_x)
+bzla_proputils_cons_and_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, and, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
   BzlaBitVector *res;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *t;
   BzlaMemMgr *mm;
-  (void) d_res_x;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_and);
 
   mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_get_id(and->e[idx_x]))->as_ptr;
+  x  = pi->bvd[pi->pos_x];
+  t  = pi->target_value;
+
   if (bzla_bvdomain_is_fixed(mm, x)) return bzla_bv_copy(mm, x->lo);
 
   for (uint32_t i = 0, bw = bzla_bv_get_width(t); i < bw; i++)
@@ -1672,87 +1556,67 @@ bzla_proputils_cons_and_const(Bzla *bzla,
       return NULL;
     }
   }
-  res = bzla_proputils_cons_and(bzla, and, t, s, idx_x, domains, d_res_x);
+  res = bzla_proputils_cons_and(bzla, pi);
   set_const_bits(mm, x, &res);
   return res;
 }
 
 BzlaBitVector *
-bzla_proputils_cons_eq_const(Bzla *bzla,
-                             BzlaNode *eq,
-                             BzlaBitVector *t,
-                             BzlaBitVector *s,
-                             int32_t idx_x,
-                             BzlaIntHashTable *domains,
-                             BzlaBvDomain *d_res_x)
+bzla_proputils_cons_eq_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, eq, t, s, idx_x, domains, false);
+  check_cons_dbg(bzla, pi, false);
 #endif
   BzlaBitVector *res;
-  BzlaBvDomain *x;
-  (void) d_res_x;
+  const BzlaBvDomain *x;
 
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(eq->e[idx_x]))->as_ptr;
+  x = pi->bvd[pi->pos_x];
   if (bzla_bvdomain_is_fixed(bzla->mm, x))
   {
     record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_eq);
     return bzla_bv_copy(bzla->mm, x->lo);
   }
-  res = bzla_proputils_cons_eq(bzla, eq, t, s, idx_x, domains, d_res_x);
+  res = bzla_proputils_cons_eq(bzla, pi);
   set_const_bits(bzla->mm, x, &res);
   return res;
 }
 
 BzlaBitVector *
-bzla_proputils_cons_ult_const(Bzla *bzla,
-                              BzlaNode *ult,
-                              BzlaBitVector *t,
-                              BzlaBitVector *s,
-                              int32_t idx_x,
-                              BzlaIntHashTable *domains,
-                              BzlaBvDomain *d_res_x)
+bzla_proputils_cons_ult_const(Bzla *bzla, BzlaPropInfo *pi)
 {
-  return cons_ult_aux(bzla, ult, t, s, idx_x, domains, d_res_x, true);
+  return cons_ult_aux(bzla, pi, true);
 }
 
 BzlaBitVector *
-bzla_proputils_cons_sll_const(Bzla *bzla,
-                              BzlaNode *sll,
-                              BzlaBitVector *t,
-                              BzlaBitVector *s,
-                              int32_t idx_x,
-                              BzlaIntHashTable *domains,
-                              BzlaBvDomain *d_res_x)
+bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, sll, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
+  int32_t pos_x;
   uint32_t i, r, bw, bw_r, ctz_t, shift, max;
   BzlaBitVector *res, *left, *right, *zero, *tmp, *t_slice;
-  BzlaBvDomain *x, *x_slice;
+  BzlaBvDomain *x_slice;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *t;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
-
-  (void) sll;
-  (void) s;
-  (void) domains;
-  (void) d_res_x;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sll);
 
   mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
+  t     = pi->target_value;
   bw    = bzla_bv_get_width(t);
   ctz_t = bzla_bv_get_num_trailing_zeros(t);
 
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(sll->e[idx_x]))->as_ptr;
-
-  if (idx_x)
+  if (pos_x)
   {
     if (bw >= 64 && ctz_t == bw)
     {
       res = bzla_bv_new_random(mm, &bzla->rng, bw);
-      if (idx_x)
+      if (pos_x)
       {
         set_const_bits(mm, x, &res);
       }
@@ -1760,7 +1624,7 @@ bzla_proputils_cons_sll_const(Bzla *bzla,
     else
     {
       max = ctz_t < bw ? ctz_t : ((1u << bw) - 1);
-      if (idx_x)
+      if (pos_x)
       {
         tmp  = bzla_bv_uint64_to_bv(mm, max, bw);
         zero = bzla_bv_zero(mm, bw);
@@ -1842,42 +1706,35 @@ bzla_proputils_cons_sll_const(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_srl_const(Bzla *bzla,
-                              BzlaNode *srl,
-                              BzlaBitVector *t,
-                              BzlaBitVector *s,
-                              int32_t idx_x,
-                              BzlaIntHashTable *domains,
-                              BzlaBvDomain *d_res_x)
+bzla_proputils_cons_srl_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, srl, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
+  int32_t pos_x;
   uint32_t i, r, bw, bw_l, clz_t, shift, max;
   BzlaBitVector *res, *left, *right, *zero, *tmp, *t_slice;
-  BzlaBvDomain *x, *x_slice;
+  BzlaBvDomain *x_slice;
+  const BzlaBvDomain *x;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
-
-  (void) srl;
-  (void) s;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *t;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_srl);
 
   mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
   bw    = bzla_bv_get_width(t);
   clz_t = bzla_bv_get_num_leading_zeros(t);
 
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(srl->e[idx_x]))->as_ptr;
-
-  if (idx_x)
+  if (pos_x)
   {
     if (bw >= 64 && clz_t == bw)
     {
       res = bzla_bv_new_random(mm, &bzla->rng, bw);
-      if (idx_x)
+      if (pos_x)
       {
         set_const_bits(mm, x, &res);
       }
@@ -1885,7 +1742,7 @@ bzla_proputils_cons_srl_const(Bzla *bzla,
     else
     {
       max = clz_t < bw ? clz_t : ((1u << bw) - 1);
-      if (idx_x)
+      if (pos_x)
       {
         tmp  = bzla_bv_uint64_to_bv(mm, max, bw);
         zero = bzla_bv_zero(mm, bw);
@@ -1967,29 +1824,25 @@ bzla_proputils_cons_srl_const(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_mul_const(Bzla *bzla,
-                              BzlaNode *mul,
-                              BzlaBitVector *t,
-                              BzlaBitVector *s,
-                              int32_t idx_x,
-                              BzlaIntHashTable *domains,
-                              BzlaBvDomain *d_res_x)
+bzla_proputils_cons_mul_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, mul, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
   bool is_fixed, ctz_ok;
   uint32_t i, bw, ctz_t;
   BzlaBitVector *res, *one;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
+  const BzlaBitVector *t;
 
   mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_get_id(mul->e[idx_x]))->as_ptr;
+  t  = pi->target_value;
+  x  = pi->bvd[pi->pos_x];
   bw = bzla_bv_get_width(t);
 
-  res = bzla_proputils_cons_mul(bzla, mul, t, s, idx_x, domains, d_res_x);
+  res = bzla_proputils_cons_mul(bzla, pi);
 
   if (!bzla_bvdomain_check_fixed_bits(mm, x, res))
   {
@@ -2081,37 +1934,33 @@ bzla_proputils_cons_mul_const(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_udiv_const(Bzla *bzla,
-                               BzlaNode *udiv,
-                               BzlaBitVector *t,
-                               BzlaBitVector *s,
-                               int32_t idx_x,
-                               BzlaIntHashTable *domains,
-                               BzlaBvDomain *d_res_x)
+bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, udiv, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
+  int32_t pos_x;
   uint32_t bw;
   bool check_zero, check_one, check_t, force_t;
   BzlaBitVector *res, *min, *max, *tmp, *zero, *one, *ones;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *t;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
-  (void) s;
-  (void) d_res_x;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_udiv);
 
-  mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_get_id(udiv->e[idx_x]))->as_ptr;
-  bw = bzla_bv_get_width(t);
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
+  t     = pi->target_value;
+  bw    = bzla_bv_get_width(t);
 
   zero = bzla_bv_zero(mm, bw);
   one  = bzla_bv_one(mm, bw);
   ones = bzla_bv_ones(mm, bw);
 
-  if (idx_x)
+  if (pos_x)
   {
     if (!bzla_bv_compare(t, ones))
     {
@@ -2309,39 +2158,31 @@ bzla_proputils_cons_udiv_const(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_urem_const(Bzla *bzla,
-                               BzlaNode *urem,
-                               BzlaBitVector *t,
-                               BzlaBitVector *s,
-                               int32_t idx_x,
-                               BzlaIntHashTable *domains,
-                               BzlaBvDomain *d_res_x)
+bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, urem, t, s, idx_x, domains, true);
+  check_cons_dbg(bzla, pi, true);
 #endif
+  int32_t pos_x;
   uint32_t bw;
   bool check_t, check_zero;
   BzlaBitVector *res, *zero, *ones, *tmp, *max, *min;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *t;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
-  (void) urem;
-  (void) s;
-  (void) domains;
-  (void) d_res_x;
-
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_urem);
 
-  mm   = bzla->mm;
-  bw   = bzla_bv_get_width(t);
-  zero = bzla_bv_zero(mm, bw);
-  ones = bzla_bv_ones(mm, bw);
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+  bw    = bzla_bv_get_width(t);
+  zero  = bzla_bv_zero(mm, bw);
+  ones  = bzla_bv_ones(mm, bw);
 
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(urem->e[idx_x]))->as_ptr;
-
-  if (idx_x)
+  if (pos_x)
   {
     check_zero = bzla_bvdomain_check_fixed_bits(mm, x, zero);
     if (check_zero && bzla_rng_pick_with_prob(&bzla->rng, 100))
@@ -2468,44 +2309,39 @@ bzla_proputils_cons_urem_const(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_concat_const(Bzla *bzla,
-                                 BzlaNode *concat,
-                                 BzlaBitVector *t,
-                                 BzlaBitVector *s,
-                                 int32_t idx_x,
-                                 BzlaIntHashTable *domains,
-                                 BzlaBvDomain *d_res_x)
+bzla_proputils_cons_concat_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_cons_dbg(bzla, concat, t, s, idx_x, domains, false);
+  check_cons_dbg(bzla, pi, false);
 #endif
-  int32_t bw_t, bw_s, hi, lo;
+  int32_t pos_x, bw_t, bw_s, upper, lower;
   BzlaBitVector *res;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
   BzlaMemMgr *mm;
-
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_concat);
 
-  mm   = bzla->mm;
-  bw_t = bzla_bv_get_width(t);
-  bw_s = bzla_bv_get_width(s);
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+  bw_t  = bzla_bv_get_width(t);
+  bw_s  = bzla_bv_get_width(s);
 
-  if (idx_x)
+  if (pos_x == 1)
   {
-    hi = bw_t - bw_s - 1;
-    lo = 0;
+    upper = bw_t - bw_s - 1;
+    lower = 0;
   }
   else
   {
-    hi = bw_t - 1;
-    lo = bw_s;
+    upper = bw_t - 1;
+    lower = bw_s;
   }
 
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(concat->e[idx_x]))->as_ptr;
-  res = bzla_bv_slice(mm, t, hi, lo);
+  res = bzla_bv_slice(mm, t, upper, lower);
 
   if (!bzla_bvdomain_check_fixed_bits(mm, x, res))
   {
@@ -2517,70 +2353,51 @@ bzla_proputils_cons_concat_const(Bzla *bzla,
 }
 
 BzlaBitVector *
-bzla_proputils_cons_slice_const(Bzla *bzla,
-                                BzlaNode *slice,
-                                BzlaBitVector *t,
-                                BzlaBitVector *x_val,
-                                int32_t idx_x,
-                                BzlaIntHashTable *domains,
-                                BzlaBvDomain *d_res_x)
+bzla_proputils_cons_slice_const(Bzla *bzla, BzlaPropInfo *pi)
 {
-  BzlaHashTableData *d;
-  d = bzla_hashint_map_get(domains, bzla_node_get_id(slice->e[0]));
-  assert(d);
-  if (!bzla_is_inv_slice_const(bzla,
-                               d->as_ptr,
-                               t,
-                               bzla_node_bv_slice_get_upper(slice),
-                               bzla_node_bv_slice_get_lower(slice)))
+  if (!bzla_is_inv_slice_const(bzla, pi))
   {
     /* non-recoverable conflict */
     return NULL;
   }
-  return bzla_proputils_inv_slice_const(
-      bzla, slice, t, x_val, idx_x, domains, d_res_x);
+  return bzla_proputils_inv_slice_const(bzla, pi);
 }
 
 BzlaBitVector *
-bzla_proputils_cons_cond_const(Bzla *bzla,
-                               BzlaNode *cond,
-                               BzlaBitVector *t,
-                               BzlaBitVector *s0,
-                               BzlaBitVector *s1,
-                               int32_t idx_x,
-                               BzlaIntHashTable *domains,
-                               BzlaBvDomain *d_res_x)
+bzla_proputils_cons_cond_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(cond);
-  assert(bzla_node_is_regular(cond));
-  assert(t);
-  assert(s0);
-  assert(s1);
-  assert(domains);
-  assert(!idx_x || bzla_bv_get_width(s0) == 1);
-  assert(idx_x || bzla_bv_get_width(s0) == bzla_bv_get_width(t));
-  assert(idx_x || bzla_bv_get_width(s1) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 2);
-  assert(!bzla_node_is_bv_const(cond->e[idx_x]));
-  (void) domains;
-  (void) d_res_x;
+  assert(pi);
+  assert(bzla_node_is_regular(pi->exp));
+  assert(!pi->pos_x || bzla_bv_get_width(pi->bv[0]) == 1);
+  assert(pi->pos_x
+         || bzla_bv_get_width(pi->bv[1]) == bzla_bv_get_width(pi->bv[2]));
+  assert(pi->pos_x
+         || bzla_bv_get_width(pi->bv[2])
+                == bzla_bv_get_width(pi->target_value));
+  assert(pi->pos_x >= 0);
+  assert(pi->pos_x <= 2);
+  assert(!bzla_node_is_bv_const(pi->exp->e[pi->pos_x]));
 
+  int32_t pos_x;
   BzlaBitVector *res;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *t;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_cond);
 
-  mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_get_id(cond->e[idx_x]))->as_ptr;
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
 
-  if ((idx_x == 1 || idx_x == 2) && bzla_bvdomain_check_fixed_bits(mm, x, t))
+  if (pos_x != 0 && bzla_bvdomain_check_fixed_bits(mm, x, t))
   {
     res = bzla_bv_copy(mm, t);
   }
-  else if (idx_x == 0)
+  else if (pos_x == 0)
   {
     if (bzla_bvdomain_is_fixed(mm, x))
     {
@@ -2620,34 +2437,31 @@ record_inv_stats(Bzla *bzla, uint32_t *stats)
 #ifndef NDEBUG
 static void
 check_inv_dbg(Bzla *bzla,
-              BzlaNode *node,
-              BzlaBitVector *t,
-              BzlaBitVector *s,
-              int32_t idx_x,
-              BzlaIntHashTable *domains,
-              BzlaPropIsInv is_inv_fun,
-              BzlaPropIsInv is_inv_fun_const,
-              bool same_bw,
-              BzlaBvDomain *d_res_x)
+              BzlaPropInfo *pi,
+              BzlaPropIsInvFun is_inv_fun,
+              BzlaPropIsInvFun is_inv_fun_const,
+              bool same_bw)
 {
   assert(bzla);
-  assert(node);
-  assert(bzla_node_is_regular(node));
-  assert(t);
-  assert(s);
-  assert(domains);
-  assert(!same_bw || bzla_bv_get_width(s) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 1);
-  assert(!bzla_node_is_bv_const(node->e[idx_x]));
-  assert(is_inv_fun(bzla, 0, t, s, idx_x, 0));
-  (void) d_res_x;
-  assert(
-      !bzla_hashint_map_contains(domains, node->id)
-      || bzla_hashint_map_contains(domains, bzla_node_get_id(node->e[idx_x])));
-  BzlaHashTableData *x =
-      bzla_hashint_map_get(domains, bzla_node_get_id(node->e[idx_x]));
-  assert(!x || !bzla_bvdomain_has_fixed_bits(bzla->mm, x->as_ptr)
-         || is_inv_fun_const(bzla, x->as_ptr, t, s, idx_x, 0));
+  assert(pi->exp);
+  assert(bzla_node_is_regular(pi->exp));
+  assert(pi->target_value);
+
+  // for (size_t i = 0; i < pi->exp->arity; ++i)
+  //{
+  //  assert (pi->bv[i]);
+  //  assert (pi->bvd[i]);
+  //}
+
+  assert(!same_bw
+         || bzla_bv_get_width(pi->bv[1 - pi->pos_x])
+                == bzla_bv_get_width(pi->target_value));
+  assert(pi->pos_x >= 0);
+  assert(pi->pos_x <= 1);
+  assert(!bzla_node_is_bv_const(pi->exp->e[pi->pos_x]));
+  assert(is_inv_fun(bzla, pi));
+  assert(!bzla_bvdomain_has_fixed_bits(bzla->mm, pi->bvd[pi->pos_x])
+         || is_inv_fun_const(bzla, pi));
 }
 
 static void
@@ -2655,41 +2469,37 @@ check_result_binary_dbg(Bzla *bzla,
                         BzlaBitVector *(*fun)(BzlaMemMgr *,
                                               const BzlaBitVector *,
                                               const BzlaBitVector *),
-                        BzlaNode *exp,
-                        BzlaBitVector *s,
-                        BzlaBitVector *t,
-                        BzlaBitVector *res,
-                        int32_t idx_x,
+                        BzlaPropInfo *pi,
+                        const BzlaBitVector *res,
                         char *op)
 {
   assert(bzla);
   assert(fun);
-  assert(exp);
-  assert(s);
-  assert(t);
+  assert(pi);
   assert(res);
   assert(op);
 
-  (void) exp;
   (void) op;
 
+  const BzlaBitVector *s;
   BzlaBitVector *tmp;
   char *str_s, *str_t, *str_res;
 
-  tmp = idx_x ? fun(bzla->mm, s, res) : fun(bzla->mm, res, s);
+  s   = pi->bv[1 - pi->pos_x];
+  tmp = pi->pos_x ? fun(bzla->mm, s, res) : fun(bzla->mm, res, s);
 
-  assert(!bzla_bv_compare(tmp, t));
-  str_t   = bzla_bv_to_char(bzla->mm, t);
+  assert(!bzla_bv_compare(tmp, pi->target_value));
+  str_t   = bzla_bv_to_char(bzla->mm, pi->target_value);
   str_s   = bzla_bv_to_char(bzla->mm, s);
   str_res = bzla_bv_to_char(bzla->mm, res);
   BZLALOG(3,
           "prop (e[%d]): %s: %s := %s %s %s",
-          idx_x,
-          bzla_util_node2string(exp),
+          pi->pos_x,
+          bzla_util_node2string(pi->exp),
           str_t,
-          idx_x ? str_s : str_res,
+          pi->pos_x ? str_s : str_res,
           op,
-          idx_x ? str_res : str_s);
+          pi->pos_x ? str_res : str_s);
   bzla_bv_free(bzla->mm, tmp);
   bzla_mem_freestr(bzla->mm, str_t);
   bzla_mem_freestr(bzla->mm, str_s);
@@ -2702,39 +2512,23 @@ check_result_binary_dbg(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_add(Bzla *bzla,
-                       BzlaNode *add,
-                       BzlaBitVector *t,
-                       BzlaBitVector *s,
-                       int32_t idx_x,
-                       BzlaIntHashTable *domains,
-                       BzlaBvDomain *d_res_x)
+bzla_proputils_inv_add(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                add,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_add,
-                bzla_is_inv_add_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_add, bzla_is_inv_add_const, true);
 #endif
   BzlaBitVector *res;
-
-  (void) add;
-  (void) idx_x;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_add);
+
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
 
   /* invertibility condition: true, res = t - s */
   res = bzla_bv_sub(bzla->mm, t, s);
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_add, add, s, t, res, idx_x, "+");
+  check_result_binary_dbg(bzla, bzla_bv_add, pi, res, "+");
 #endif
   return res;
 }
@@ -2744,25 +2538,10 @@ bzla_proputils_inv_add(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_and(Bzla *bzla,
-                       BzlaNode *and,
-                       BzlaBitVector *t,
-                       BzlaBitVector *s,
-                       int32_t idx_x,
-                       BzlaIntHashTable *domains,
-                       BzlaBvDomain *d_res_x)
+bzla_proputils_inv_and(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                and,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_and,
-                bzla_is_inv_and_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_and, bzla_is_inv_and_const, true);
 #endif
   uint32_t i, bw;
   int32_t bit_and, bit_e;
@@ -2770,19 +2549,19 @@ bzla_proputils_inv_and(Bzla *bzla,
   BzlaMemMgr *mm;
   BzlaUIntStack dcbits;
   bool b;
-
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_and);
 
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
   b = bzla_rng_pick_with_prob(&bzla->rng,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_AND_FLIP));
   BZLA_INIT_STACK(mm, dcbits);
 
-  res = bzla_bv_copy(mm, bzla_model_get_bv(bzla, and->e[idx_x]));
+  res = bzla_bv_copy(mm, pi->bv[pi->pos_x]);
   assert(res);
 
   for (i = 0, bw = bzla_bv_get_width(t); i < bw; i++)
@@ -2817,7 +2596,7 @@ bzla_proputils_inv_and(Bzla *bzla,
             bzla_rng_pick_rand(&bzla->rng, 0, BZLA_COUNT_STACK(dcbits) - 1)));
 
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_and, and, s, t, res, idx_x, "AND");
+  check_result_binary_dbg(bzla, bzla_bv_and, pi, res, "AND");
 #endif
 
   BZLA_RELEASE_STACK(dcbits);
@@ -2829,33 +2608,18 @@ bzla_proputils_inv_and(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_eq(Bzla *bzla,
-                      BzlaNode *eq,
-                      BzlaBitVector *t,
-                      BzlaBitVector *s,
-                      int32_t idx_x,
-                      BzlaIntHashTable *domains,
-                      BzlaBvDomain *d_res_x)
+bzla_proputils_inv_eq(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                eq,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_eq,
-                bzla_is_inv_eq_const,
-                false,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_eq, bzla_is_inv_eq_const, false);
 #endif
   BzlaBitVector *res;
   BzlaMemMgr *mm;
-
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
+  s  = pi->bv[1 - pi->pos_x];
+  t  = pi->target_value;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_eq);
 
@@ -2874,7 +2638,7 @@ bzla_proputils_inv_eq(Bzla *bzla,
       do
       {
         if (res) bzla_bv_free(bzla->mm, res);
-        res = bzla_bv_copy(bzla->mm, bzla_model_get_bv(bzla, eq->e[idx_x]));
+        res = bzla_bv_copy(bzla->mm, pi->bv[pi->pos_x]);
         bzla_bv_flip_bit(
             res, bzla_rng_pick_rand(&bzla->rng, 0, bzla_bv_get_width(res) - 1));
       } while (!bzla_bv_compare(res, s));
@@ -2895,7 +2659,7 @@ bzla_proputils_inv_eq(Bzla *bzla,
   }
 
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_eq, eq, s, t, res, idx_x, "=");
+  check_result_binary_dbg(bzla, bzla_bv_eq, pi, res, "=");
 #endif
   return res;
 }
@@ -2905,36 +2669,22 @@ bzla_proputils_inv_eq(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_ult(Bzla *bzla,
-                       BzlaNode *ult,
-                       BzlaBitVector *t,
-                       BzlaBitVector *s,
-                       int32_t idx_x,
-                       BzlaIntHashTable *domains,
-                       BzlaBvDomain *d_res_x)
+bzla_proputils_inv_ult(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                ult,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_ult,
-                bzla_is_inv_ult_const,
-                false,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_ult, bzla_is_inv_ult_const, false);
 #endif
   bool isult;
+  int32_t pos_x;
   uint32_t bw;
   BzlaBitVector *res, *zero, *one, *ones, *tmp;
   BzlaMemMgr *mm;
+  const BzlaBitVector *s, *t;
 
-  (void) ult;
-  (void) domains;
-  (void) d_res_x;
-
-  mm = bzla->mm;
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
 
@@ -2946,7 +2696,7 @@ bzla_proputils_inv_ult(Bzla *bzla,
 
   res = 0;
 
-  if (idx_x)
+  if (pos_x)
   {
     /* s < x = t ---------------------------------------------------------- */
     assert(!isult || bzla_bv_compare(s, ones)); /* CONFLICT: 1...1 < x */
@@ -2982,7 +2732,7 @@ bzla_proputils_inv_ult(Bzla *bzla,
   }
 
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_ult, ult, s, t, res, idx_x, "<");
+  check_result_binary_dbg(bzla, bzla_bv_ult, pi, res, "<");
 #endif
   bzla_bv_free(mm, zero);
   bzla_bv_free(mm, one);
@@ -2995,39 +2745,25 @@ bzla_proputils_inv_ult(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_sll(Bzla *bzla,
-                       BzlaNode *sll,
-                       BzlaBitVector *t,
-                       BzlaBitVector *s,
-                       int32_t idx_x,
-                       BzlaIntHashTable *domains,
-                       BzlaBvDomain *d_res_x)
+bzla_proputils_inv_sll(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                sll,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_sll,
-                bzla_is_inv_sll_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_sll, bzla_is_inv_sll_const, true);
 #endif
+  int32_t pos_x;
   uint32_t bw, i, ctz_s, ctz_t, shift;
   BzlaBitVector *res, *tmp, *ones;
   BzlaMemMgr *mm;
-
-  (void) sll;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sll);
 
   res   = 0;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
   bw    = bzla_bv_get_width(t);
   ctz_t = bzla_bv_get_num_trailing_zeros(t);
 
@@ -3037,7 +2773,7 @@ bzla_proputils_inv_sll(Bzla *bzla,
    * -> identify possible shift value via zero LSB in t
    *    (considering zero LSB in s)
    * ------------------------------------------------------------------------ */
-  if (idx_x)
+  if (pos_x)
   {
     if (bzla_bv_is_zero(s) && bzla_bv_is_zero(t))
     {
@@ -3116,7 +2852,7 @@ bzla_proputils_inv_sll(Bzla *bzla,
     }
   }
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_sll, sll, s, t, res, idx_x, "<<");
+  check_result_binary_dbg(bzla, bzla_bv_sll, pi, res, "<<");
 #endif
   return res;
 }
@@ -3126,39 +2862,25 @@ bzla_proputils_inv_sll(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_srl(Bzla *bzla,
-                       BzlaNode *srl,
-                       BzlaBitVector *t,
-                       BzlaBitVector *s,
-                       int32_t idx_x,
-                       BzlaIntHashTable *domains,
-                       BzlaBvDomain *d_res_x)
+bzla_proputils_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                srl,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_srl,
-                bzla_is_inv_srl_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_srl, bzla_is_inv_srl_const, true);
 #endif
+  int32_t pos_x;
   uint32_t bw, i, clz_s, clz_t, shift;
   BzlaBitVector *res, *ones, *tmp;
   BzlaMemMgr *mm;
-
-  (void) srl;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
 
   res   = 0;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pi->pos_x];
+  t     = pi->target_value;
   bw    = bzla_bv_get_width(t);
   clz_t = bzla_bv_get_num_leading_zeros(t);
 
@@ -3168,7 +2890,7 @@ bzla_proputils_inv_srl(Bzla *bzla,
    * -> identify possible shift value via zero MSBs in t
    *    (considering zero MSBs in s)
    * ------------------------------------------------------------------------ */
-  if (idx_x)
+  if (pos_x)
   {
     if (bzla_bv_is_zero(s) && bzla_bv_is_zero(t))
     {
@@ -3248,7 +2970,7 @@ bzla_proputils_inv_srl(Bzla *bzla,
   }
 
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_srl, srl, s, t, res, idx_x, ">>");
+  check_result_binary_dbg(bzla, bzla_bv_srl, pi, res, ">>");
 #endif
   return res;
 }
@@ -3258,40 +2980,23 @@ bzla_proputils_inv_srl(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_mul(Bzla *bzla,
-                       BzlaNode *mul,
-                       BzlaBitVector *t,
-                       BzlaBitVector *s,
-                       int32_t idx_x,
-                       BzlaIntHashTable *domains,
-                       BzlaBvDomain *d_res_x)
+bzla_proputils_inv_mul(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                mul,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_mul,
-                bzla_is_inv_mul_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_mul, bzla_is_inv_mul_const, true);
 #endif
   int32_t lsb_s, ispow2_s;
   uint32_t i, j, bw;
   BzlaBitVector *res, *inv, *tmp, *tmp2;
   BzlaMemMgr *mm;
-
-  (void) mul;
-  (void) idx_x;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
 
+  s   = pi->bv[1 - pi->pos_x];
+  t   = pi->target_value;
   bw  = bzla_bv_get_width(t);
   res = 0;
 
@@ -3424,7 +3129,7 @@ bzla_proputils_inv_mul(Bzla *bzla,
   }
 
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_mul, mul, s, t, res, idx_x, "*");
+  check_result_binary_dbg(bzla, bzla_bv_mul, pi, res, "*");
 #endif
   return res;
 }
@@ -3434,41 +3139,27 @@ bzla_proputils_inv_mul(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_udiv(Bzla *bzla,
-                        BzlaNode *udiv,
-                        BzlaBitVector *t,
-                        BzlaBitVector *s,
-                        int32_t idx_x,
-                        BzlaIntHashTable *domains,
-                        BzlaBvDomain *d_res_x)
+bzla_proputils_inv_udiv(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                udiv,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_udiv,
-                bzla_is_inv_udiv_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_udiv, bzla_is_inv_udiv_const, true);
 #endif
+  int32_t pos_x;
   uint32_t bw;
   BzlaBitVector *res, *lo, *up, *one, *ones, *tmp;
   BzlaMemMgr *mm;
   BzlaRNG *rng;
-
-  (void) udiv;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_udiv);
 
-  rng = &bzla->rng;
-  bw  = bzla_bv_get_width(s);
+  rng   = &bzla->rng;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  bw    = bzla_bv_get_width(s);
 
   one  = bzla_bv_one(mm, bw);
   ones = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
@@ -3489,7 +3180,7 @@ bzla_proputils_inv_udiv(Bzla *bzla,
    *      + choose s s.t. s / x = t
    * -> else choose s s.t. s / x = t
    * ------------------------------------------------------------------------ */
-  if (idx_x)
+  if (pos_x)
   {
     if (!bzla_bv_compare(t, ones))
     {
@@ -3646,7 +3337,7 @@ bzla_proputils_inv_udiv(Bzla *bzla,
   bzla_bv_free(mm, ones);
   bzla_bv_free(mm, one);
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_udiv, udiv, s, t, res, idx_x, "/");
+  check_result_binary_dbg(bzla, bzla_bv_udiv, pi, res, "/");
 #endif
   return res;
 }
@@ -3656,40 +3347,25 @@ bzla_proputils_inv_udiv(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_urem(Bzla *bzla,
-                        BzlaNode *urem,
-                        BzlaBitVector *t,
-                        BzlaBitVector *s,
-                        int32_t idx_x,
-                        BzlaIntHashTable *domains,
-                        BzlaBvDomain *d_res_x)
+bzla_proputils_inv_urem(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                urem,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_urem,
-                bzla_is_inv_urem_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_urem, bzla_is_inv_urem_const, true);
 #endif
   uint32_t bw, cnt;
-  int32_t cmp;
+  int32_t cmp, pos_x;
   BzlaBitVector *res, *ones, *tmp, *tmp2, *one, *n, *mul, *n_hi, *sub;
   BzlaMemMgr *mm;
-
-  (void) urem;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_urem);
 
-  bw = bzla_bv_get_width(t);
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  bw    = bzla_bv_get_width(t);
 
   ones = bzla_bv_ones(mm, bw); /* 2^bw - 1 */
   one  = bzla_bv_one(mm, bw);
@@ -3705,7 +3381,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
    * -> if s > t, x = ((s - t) / n) > t, else conflict
    * -> if s < t, conflict
    * ------------------------------------------------------------------------ */
-  if (idx_x)
+  if (pos_x)
   {
     if (!bzla_bv_compare(t, ones))
     {
@@ -3948,7 +3624,7 @@ bzla_proputils_inv_urem(Bzla *bzla,
   bzla_bv_free(mm, ones);
 
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_urem, urem, s, t, res, idx_x, "%");
+  check_result_binary_dbg(bzla, bzla_bv_urem, pi, res, "%");
 #endif
   return res;
 }
@@ -3958,48 +3634,34 @@ bzla_proputils_inv_urem(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_concat(Bzla *bzla,
-                          BzlaNode *concat,
-                          BzlaBitVector *t,
-                          BzlaBitVector *s,
-                          int32_t idx_x,
-                          BzlaIntHashTable *domains,
-                          BzlaBvDomain *d_res_x)
+bzla_proputils_inv_concat(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                concat,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_concat,
-                bzla_is_inv_concat_const,
-                false,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_concat, bzla_is_inv_concat_const, false);
 #endif
+  int32_t pos_x;
   uint32_t bw_t, bw_s;
   BzlaBitVector *res, *tmp;
   BzlaMemMgr *mm;
-
-  (void) concat;
-  (void) domains;
-  (void) d_res_x;
+  const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_concat);
 
-  bw_t = bzla_bv_get_width(t);
-  bw_s = bzla_bv_get_width(s);
-  res  = 0;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  bw_t  = bzla_bv_get_width(t);
+  bw_s  = bzla_bv_get_width(s);
+  res   = 0;
 
   /* ------------------------------------------------------------------------
    * s o x = t
    *
    * -> slice x out of the lower bits of t
    * ------------------------------------------------------------------------ */
-  if (idx_x)
+  if (pos_x)
   {
     tmp = bzla_bv_slice(mm, t, bw_t - 1, bw_t - bw_s);
     assert(!bzla_bv_compare(tmp, s)); /* CONFLICT: s bits do not match t */
@@ -4018,7 +3680,7 @@ bzla_proputils_inv_concat(Bzla *bzla,
   }
   bzla_bv_free(mm, tmp);
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_concat, concat, s, t, res, idx_x, "o");
+  check_result_binary_dbg(bzla, bzla_bv_concat, pi, res, "o");
 #endif
   return res;
 }
@@ -4028,43 +3690,25 @@ bzla_proputils_inv_concat(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_slice(Bzla *bzla,
-                         BzlaNode *slice,
-                         BzlaBitVector *t,
-                         BzlaBitVector *x_val,
-                         int32_t idx_x,
-                         BzlaIntHashTable *domains,
-                         BzlaBvDomain *d_res_x)
+bzla_proputils_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
 {
-  assert(bzla);
-  assert(slice);
-  assert(bzla_node_is_regular(slice));
-  assert(t);
-  assert(x_val);
-  assert(!bzla_node_is_bv_const(slice->e[0]));
-  assert(bzla_is_inv_slice(bzla,
-                           0,
-                           t,
-                           bzla_node_bv_slice_get_upper(slice),
-                           bzla_node_bv_slice_get_lower(slice)));
+#ifndef NDEBUG
+  check_inv_dbg(bzla, pi, bzla_is_inv_slice, bzla_is_inv_slice_const, false);
+#endif
 
   uint32_t i, upper, lower, rlower, rupper, rboth, bw_x;
-  BzlaNode *e;
   BzlaBitVector *res;
+  const BzlaBitVector *t, *x;
   BzlaMemMgr *mm;
   bool bkeep, bflip;
-
-  (void) domains;
-  (void) idx_x;
-  (void) d_res_x;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_slice);
 
   /* invertibility condition: true */
 
   mm = bzla->mm;
-  e  = slice->e[0];
-  assert(e);
+  x  = pi->bv[0];
+  t  = pi->target_value;
 
   bflip = bzla_rng_pick_with_prob(
       &bzla->rng, bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_SLICE_FLIP));
@@ -4074,18 +3718,18 @@ bzla_proputils_inv_slice(Bzla *bzla,
                     &bzla->rng,
                     bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_SLICE_KEEP_DC));
 
-  upper = bzla_node_bv_slice_get_upper(slice);
-  lower = bzla_node_bv_slice_get_lower(slice);
+  upper = bzla_node_bv_slice_get_upper(pi->exp);
+  lower = bzla_node_bv_slice_get_lower(pi->exp);
 
-  res = bzla_bv_zero(mm, bzla_node_bv_get_width(bzla, e));
+  res = bzla_bv_zero(mm, bzla_node_bv_get_width(bzla, pi->exp->e[0]));
 
   /* keep previous value for don't care bits or set randomly with prob
    * BZLA_OPT_PROP_PROB_SLICE_KEEP_DC */
   for (i = 0; i < lower; i++)
-    bzla_bv_set_bit(res,
-                    i,
-                    bkeep ? bzla_bv_get_bit(x_val, i)
-                          : bzla_rng_pick_rand(&bzla->rng, 0, 1));
+    bzla_bv_set_bit(
+        res,
+        i,
+        bkeep ? bzla_bv_get_bit(x, i) : bzla_rng_pick_rand(&bzla->rng, 0, 1));
 
   /* set sliced bits to propagated value */
   for (i = lower; i <= upper; i++)
@@ -4095,10 +3739,10 @@ bzla_proputils_inv_slice(Bzla *bzla,
    * BZLA_OPT_PROP_PROB_SLICE_KEEP_DC */
   bw_x = bzla_bv_get_width(res);
   for (i = upper + 1; i < bw_x; i++)
-    bzla_bv_set_bit(res,
-                    i,
-                    bkeep ? bzla_bv_get_bit(x_val, i)
-                          : bzla_rng_pick_rand(&bzla->rng, 0, 1));
+    bzla_bv_set_bit(
+        res,
+        i,
+        bkeep ? bzla_bv_get_bit(x, i) : bzla_rng_pick_rand(&bzla->rng, 0, 1));
 
   if (bflip)
   {
@@ -4146,7 +3790,7 @@ bzla_proputils_inv_slice(Bzla *bzla,
   char *str_res = bzla_bv_to_char(mm, res);
   BZLALOG(3,
           "prop (xxxxx): %s: %s := %s[%d:%d]",
-          bzla_util_node2string(slice),
+          bzla_util_node2string(pi->exp),
           str_t,
           str_res,
           lower,
@@ -4162,46 +3806,31 @@ bzla_proputils_inv_slice(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_cond(Bzla *bzla,
-                        BzlaNode *cond,
-                        BzlaBitVector *t,
-                        BzlaBitVector *s0,
-                        BzlaBitVector *s1,
-                        int32_t idx_x,
-                        BzlaIntHashTable *domains,
-                        BzlaBvDomain *d_res_x)
+bzla_proputils_inv_cond(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(cond);
-  assert(bzla_node_is_regular(cond));
-  assert(t);
-  assert(s0);
-  assert(s1);
-  assert(!idx_x || bzla_bv_get_width(s0) == 1);
-  assert(idx_x || bzla_bv_get_width(s0) == bzla_bv_get_width(s1));
-  assert(idx_x || bzla_bv_get_width(s0) == bzla_bv_get_width(t));
-  assert(idx_x || !bzla_bv_compare(s0, t) || !bzla_bv_compare(s1, t));
-  assert(idx_x >= 0 && idx_x <= 2);
-  assert(!bzla_node_is_bv_const(cond->e[idx_x]));
-  (void) domains;
-  (void) d_res_x;
+  assert(pi->exp);
+  assert(bzla_node_is_regular(pi->exp));
+  assert(pi->pos_x || !bzla_bv_compare(pi->bv[1], pi->target_value)
+         || !bzla_bv_compare(pi->bv[2], pi->target_value));
+  assert(pi->pos_x >= 0);
+  assert(pi->pos_x <= 2);
+  assert(!bzla_node_is_bv_const(pi->exp->e[pi->pos_x]));
 
   int32_t cmp0, cmp1;
   BzlaBitVector *res;
   BzlaMemMgr *mm;
+  const BzlaBitVector *t;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_cond);
 
   mm = bzla->mm;
+  t  = pi->target_value;
 
-  if (idx_x == 1 || idx_x == 2)
+  if (pi->pos_x == 0)
   {
-    res = bzla_bv_copy(mm, t);
-  }
-  else
-  {
-    cmp0 = bzla_bv_compare(s0, t) == 0;
-    cmp1 = bzla_bv_compare(s1, t) == 0;
+    cmp0 = bzla_bv_compare(pi->bv[1], t) == 0;
+    cmp1 = bzla_bv_compare(pi->bv[2], t) == 0;
     if (cmp0 && cmp1)
     {
       res = bzla_rng_flip_coin(&bzla->rng) ? bzla_bv_one(mm, 1)
@@ -4216,6 +3845,10 @@ bzla_proputils_inv_cond(Bzla *bzla,
       assert(cmp1);
       res = bzla_bv_zero(mm, 1);
     }
+  }
+  else
+  {
+    res = bzla_bv_copy(mm, t);
   }
 #if 0
   BzlaBitVector *res, *s1, *s2;
@@ -4294,20 +3927,22 @@ bzla_proputils_inv_cond(Bzla *bzla,
 #ifndef NDEBUG
   char *str_res = bzla_bv_to_char(mm, res);
   char *str_t   = bzla_bv_to_char(bzla->mm, t);
-  char *str_s0  = bzla_bv_to_char(mm, s0);
-  char *str_s1  = bzla_bv_to_char(mm, s1);
+  char *str_s0  = bzla_bv_to_char(mm, pi->bv[0]);
+  char *str_s1  = bzla_bv_to_char(mm, pi->bv[1]);
+  char *str_s2  = bzla_bv_to_char(mm, pi->bv[2]);
   BZLALOG(3,
           "prop (e[%d]): %s: %s := %s ? %s : %s",
-          idx_x,
-          bzla_util_node2string(cond),
+          pi->pos_x,
+          bzla_util_node2string(pi->exp),
           str_t,
-          idx_x == 0 ? str_res : str_s0,
-          idx_x == 1 ? str_res : (idx_x == 0 ? str_s0 : str_s1),
-          idx_x == 2 ? str_res : str_s1);
+          pi->pos_x == 0 ? str_res : str_s0,
+          pi->pos_x == 1 ? str_res : str_s1,
+          pi->pos_x == 2 ? str_res : str_s2);
   bzla_mem_freestr(mm, str_t);
   bzla_mem_freestr(mm, str_res);
   bzla_mem_freestr(mm, str_s0);
   bzla_mem_freestr(mm, str_s1);
+  bzla_mem_freestr(mm, str_s2);
 #endif
   return res;
 }
@@ -4323,33 +3958,20 @@ bzla_proputils_inv_cond(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_add_const(Bzla *bzla,
-                             BzlaNode *add,
-                             BzlaBitVector *t,
-                             BzlaBitVector *s,
-                             int32_t idx_x,
-                             BzlaIntHashTable *domains,
-                             BzlaBvDomain *d_res_x)
+bzla_proputils_inv_add_const(Bzla *bzla, BzlaPropInfo *pi)
 {
-  assert(domains);
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                add,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_add,
-                bzla_is_inv_add_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_add, bzla_is_inv_add_const, true);
 #endif
-  BzlaBitVector *res;
-  BzlaBvDomain *x;
   BzlaMemMgr *mm;
+  BzlaBitVector *res;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_get_id(add->e[idx_x]))->as_ptr;
+  s  = pi->bv[1 - pi->pos_x];
+  t  = pi->target_value;
+  x  = pi->bvd[pi->pos_x];
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
@@ -4363,10 +3985,10 @@ bzla_proputils_inv_add_const(Bzla *bzla,
   }
   else
   {
-    res = bzla_proputils_inv_add(bzla, add, t, s, idx_x, domains, 0);
+    res = bzla_proputils_inv_add(bzla, pi);
   }
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_add, add, s, t, res, idx_x, "+");
+  check_result_binary_dbg(bzla, bzla_bv_add, pi, res, "+");
 #endif
   return res;
 }
@@ -4376,36 +3998,21 @@ bzla_proputils_inv_add_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_and_const(Bzla *bzla,
-                             BzlaNode *and,
-                             BzlaBitVector *t,
-                             BzlaBitVector *s,
-                             int32_t idx_x,
-                             BzlaIntHashTable *domains,
-                             BzlaBvDomain *d_res_x)
+bzla_proputils_inv_and_const(Bzla *bzla, BzlaPropInfo *pi)
 {
-  assert(domains);
-  assert(bzla_node_is_regular(and));
-  assert(
-      !bzla_hashint_map_contains(domains, and->id)
-      || bzla_hashint_map_contains(domains, bzla_node_get_id(and->e[idx_x])));
-  BzlaBitVector *tmp, *res;
-  BzlaBvDomain *x;
-  BzlaMemMgr *mm;
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                and,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_and,
-                bzla_is_inv_and_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_and, bzla_is_inv_and_const, true);
 #endif
+  BzlaMemMgr *mm;
+  BzlaBitVector *tmp, *res;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
+
   mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_get_id(and->e[idx_x]))->as_ptr;
+  s  = pi->bv[1 - pi->pos_x];
+  t  = pi->target_value;
+  x  = pi->bvd[pi->pos_x];
+
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
@@ -4418,11 +4025,11 @@ bzla_proputils_inv_and_const(Bzla *bzla,
   }
   else
   {
-    res = bzla_proputils_inv_and(bzla, and, t, s, idx_x, domains, 0);
+    res = bzla_proputils_inv_and(bzla, pi);
     set_const_bits(mm, x, &res);
   }
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_and, and, s, t, res, idx_x, "&");
+  check_result_binary_dbg(bzla, bzla_bv_and, pi, res, "&");
 #endif
   return res;
 }
@@ -4432,38 +4039,21 @@ bzla_proputils_inv_and_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_eq_const(Bzla *bzla,
-                            BzlaNode *eq,
-                            BzlaBitVector *t,
-                            BzlaBitVector *s,
-                            int32_t idx_x,
-                            BzlaIntHashTable *domains,
-                            BzlaBvDomain *d_res_x)
+bzla_proputils_inv_eq_const(Bzla *bzla, BzlaPropInfo *pi)
 {
-  assert(domains);
-  assert(bzla_node_is_regular(eq));
-  assert(!bzla_hashint_map_contains(domains, eq->id)
-         || bzla_hashint_map_contains(domains, bzla_node_get_id(eq->e[idx_x])));
-
-  BzlaBitVector *tmp, *res;
-  BzlaBvDomain *x;
-  BzlaBvDomainGenerator gen;
-  BzlaMemMgr *mm;
-
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                eq,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_eq,
-                bzla_is_inv_eq_const,
-                false,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_eq, bzla_is_inv_eq_const, false);
 #endif
+  BzlaMemMgr *mm;
+  BzlaBitVector *tmp, *res;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
+  BzlaBvDomainGenerator gen;
+
   mm = bzla->mm;
-  x  = bzla_hashint_map_get(domains, bzla_node_get_id(eq->e[idx_x]))->as_ptr;
+  s  = pi->bv[1 - pi->pos_x];
+  t  = pi->target_value;
+  x  = pi->bvd[pi->pos_x];
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
@@ -4491,7 +4081,7 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
     res = bzla_bv_copy(mm, s);
   }
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_eq, eq, s, t, res, idx_x, "=");
+  check_result_binary_dbg(bzla, bzla_bv_eq, pi, res, "=");
 #endif
   return res;
 }
@@ -4501,43 +4091,26 @@ bzla_proputils_inv_eq_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_ult_const(Bzla *bzla,
-                             BzlaNode *ult,
-                             BzlaBitVector *t,
-                             BzlaBitVector *s,
-                             int32_t idx_x,
-                             BzlaIntHashTable *domains,
-                             BzlaBvDomain *d_res_x)
+bzla_proputils_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi)
 {
-  assert(domains);
-  assert(bzla_node_is_regular(ult));
-  assert(
-      !bzla_hashint_map_contains(domains, ult->id)
-      || bzla_hashint_map_contains(domains, bzla_node_get_id(ult->e[idx_x])));
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                ult,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_ult,
-                bzla_is_inv_ult_const,
-                false,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_ult, bzla_is_inv_ult_const, false);
 #endif
   bool isult;
+  int32_t pos_x;
   uint32_t bw;
   BzlaBitVector *res, *zero, *one, *ones, *tmp;
   BzlaMemMgr *mm;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
   BzlaBvDomainGenerator gen;
 
-  (void) ult;
-  (void) domains;
-  (void) d_res_x;
-
   mm = bzla->mm;
+
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
 
@@ -4547,14 +4120,12 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
   ones  = bzla_bv_ones(mm, bw);
   isult = !bzla_bv_is_zero(t);
 
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(ult->e[idx_x]))->as_ptr;
-
   res = 0;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = idx_x ? bzla_bv_ult(mm, s, x->lo) : bzla_bv_ult(mm, x->lo, s);
+    tmp = pos_x ? bzla_bv_ult(mm, s, x->lo) : bzla_bv_ult(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
@@ -4563,7 +4134,7 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
   }
   else
   {
-    if (idx_x)
+    if (pos_x)
     {
       /* s < x = t ---------------------------------------------------------- */
       if (!isult)
@@ -4601,7 +4172,7 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
   }
 
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_ult, ult, s, t, res, idx_x, "<");
+  check_result_binary_dbg(bzla, bzla_bv_ult, pi, res, "<");
 #endif
   bzla_bv_free(mm, zero);
   bzla_bv_free(mm, one);
@@ -4614,56 +4185,45 @@ bzla_proputils_inv_ult_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_sll_const(Bzla *bzla,
-                             BzlaNode *sll,
-                             BzlaBitVector *t,
-                             BzlaBitVector *s,
-                             int32_t idx_x,
-                             BzlaIntHashTable *domains,
-                             BzlaBvDomain *d_res_x)
+bzla_proputils_inv_sll_const(Bzla *bzla, BzlaPropInfo *pi)
 {
-  assert(idx_x || d_res_x == 0);
-  assert(!idx_x || d_res_x);
+  assert(pi->pos_x || pi->res_x == 0);
+  assert(!pi->pos_x || pi->res_x);
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                sll,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_sll,
-                bzla_is_inv_sll_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_sll, bzla_is_inv_sll_const, true);
 #endif
+  int32_t pos_x;
   uint32_t cnt;
   BzlaBitVector *tmp, *res, *bv;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
-  mm  = bzla->mm;
-  res = 0;
-
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(sll->e[idx_x]))->as_ptr;
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+  res   = 0;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = idx_x ? bzla_bv_sll(mm, s, x->lo) : bzla_bv_sll(mm, x->lo, s);
+    tmp = pos_x ? bzla_bv_sll(mm, s, x->lo) : bzla_bv_sll(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sll);
     res = bzla_bv_copy(mm, x->lo);
   }
-  else if (idx_x)
+  else if (pos_x)
   {
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sll);
 
-    assert(d_res_x);
-    assert(bzla_bvdomain_is_fixed(mm, d_res_x));
-    bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, d_res_x->lo, 0);
+    assert(pi->res_x);
+    assert(bzla_bvdomain_is_fixed(mm, pi->res_x));
+    bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, pi->res_x->lo, 0);
     assert(bzla_bvdomain_gen_has_next(&gen));
     for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_GEN_MAX_RAND; cnt++)
     {
@@ -4677,17 +4237,17 @@ bzla_proputils_inv_sll_const(Bzla *bzla,
       }
       bzla_bv_free(mm, tmp);
     }
-    if (!res) res = bzla_bv_copy(mm, d_res_x->lo);
+    if (!res) res = bzla_bv_copy(mm, pi->res_x->lo);
     bzla_bvdomain_gen_delete(&gen);
   }
   else
   {
-    assert(d_res_x == 0);
-    res = bzla_proputils_inv_sll(bzla, sll, t, s, idx_x, domains, 0);
+    assert(pi->res_x == 0);
+    res = bzla_proputils_inv_sll(bzla, pi);
     set_const_bits(mm, x, &res);
   }
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_sll, sll, s, t, res, idx_x, "<<");
+  check_result_binary_dbg(bzla, bzla_bv_sll, pi, res, "<<");
 #endif
   return res;
 }
@@ -4697,56 +4257,45 @@ bzla_proputils_inv_sll_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_srl_const(Bzla *bzla,
-                             BzlaNode *srl,
-                             BzlaBitVector *t,
-                             BzlaBitVector *s,
-                             int32_t idx_x,
-                             BzlaIntHashTable *domains,
-                             BzlaBvDomain *d_res_x)
+bzla_proputils_inv_srl_const(Bzla *bzla, BzlaPropInfo *pi)
 {
-  assert(idx_x || d_res_x == 0);
-  assert(!idx_x || d_res_x);
+  assert(pi->pos_x || pi->res_x == 0);
+  assert(!pi->pos_x || pi->res_x);
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                srl,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_srl,
-                bzla_is_inv_srl_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_srl, bzla_is_inv_srl_const, true);
 #endif
+  int32_t pos_x;
   uint32_t cnt;
   BzlaBitVector *tmp, *res, *bv;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
-  mm  = bzla->mm;
-  res = 0;
-
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(srl->e[idx_x]))->as_ptr;
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+  res   = 0;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = idx_x ? bzla_bv_srl(mm, s, x->lo) : bzla_bv_srl(mm, x->lo, s);
+    tmp = pos_x ? bzla_bv_srl(mm, s, x->lo) : bzla_bv_srl(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
     res = bzla_bv_copy(mm, x->lo);
   }
-  else if (idx_x)
+  else if (pos_x)
   {
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
 
-    assert(d_res_x);
-    assert(bzla_bvdomain_is_fixed(mm, d_res_x));
-    bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, d_res_x->lo, 0);
+    assert(pi->res_x);
+    assert(bzla_bvdomain_is_fixed(mm, pi->res_x));
+    bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, pi->res_x->lo, 0);
     assert(bzla_bvdomain_gen_has_next(&gen));
     for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_GEN_MAX_RAND; cnt++)
     {
@@ -4760,17 +4309,17 @@ bzla_proputils_inv_srl_const(Bzla *bzla,
       }
       bzla_bv_free(mm, tmp);
     }
-    if (!res) res = bzla_bv_copy(mm, d_res_x->lo);
+    if (!res) res = bzla_bv_copy(mm, pi->res_x->lo);
     bzla_bvdomain_gen_delete(&gen);
   }
   else
   {
-    assert(d_res_x == 0);
-    res = bzla_proputils_inv_srl(bzla, srl, t, s, idx_x, domains, 0);
+    assert(pi->res_x == 0);
+    res = bzla_proputils_inv_srl(bzla, pi);
     set_const_bits(mm, x, &res);
   }
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_srl, srl, s, t, res, idx_x, ">>");
+  check_result_binary_dbg(bzla, bzla_bv_srl, pi, res, ">>");
 #endif
   return res;
 }
@@ -4780,33 +4329,20 @@ bzla_proputils_inv_srl_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_mul_const(Bzla *bzla,
-                             BzlaNode *mul,
-                             BzlaBitVector *t,
-                             BzlaBitVector *s,
-                             int32_t idx_x,
-                             BzlaIntHashTable *domains,
-                             BzlaBvDomain *d_res_x)
+bzla_proputils_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                mul,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_mul,
-                bzla_is_inv_mul_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_mul, bzla_is_inv_mul_const, true);
 #endif
   BzlaBitVector *tmp, *res;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
   BzlaMemMgr *mm;
 
   mm = bzla->mm;
-
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(mul->e[idx_x]))->as_ptr;
+  s  = pi->bv[1 - pi->pos_x];
+  t  = pi->target_value;
+  x  = pi->bvd[pi->pos_x];
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
@@ -4818,23 +4354,23 @@ bzla_proputils_inv_mul_const(Bzla *bzla,
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
     res = bzla_bv_copy(mm, x->lo);
   }
-  else if (d_res_x)
+  else if (pi->res_x)
   {
     record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
 
-    if (bzla_bvdomain_is_fixed(mm, d_res_x))
+    if (bzla_bvdomain_is_fixed(mm, pi->res_x))
     {
 #ifndef NDEBUG
-      tmp = bzla_bv_mul(mm, s, d_res_x->lo);
+      tmp = bzla_bv_mul(mm, s, pi->res_x->lo);
       assert(bzla_bv_compare(tmp, t) == 0);
       bzla_bv_free(mm, tmp);
 #endif
-      res = bzla_bv_copy(mm, d_res_x->lo);
+      res = bzla_bv_copy(mm, pi->res_x->lo);
     }
     else
     {
       res = bzla_bv_new_random(mm, &bzla->rng, bzla_bv_get_width(t));
-      set_const_bits(mm, d_res_x, &res);
+      set_const_bits(mm, pi->res_x, &res);
     }
   }
   else
@@ -4849,11 +4385,11 @@ bzla_proputils_inv_mul_const(Bzla *bzla,
     else
     {
       assert(!bzla_bvdomain_has_fixed_bits(mm, x));
-      res = bzla_proputils_inv_mul(bzla, mul, t, s, idx_x, domains, 0);
+      res = bzla_proputils_inv_mul(bzla, pi);
     }
   }
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_mul, mul, s, t, res, idx_x, "*");
+  check_result_binary_dbg(bzla, bzla_bv_mul, pi, res, "*");
 #endif
   return res;
 }
@@ -4863,45 +4399,34 @@ bzla_proputils_inv_mul_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_udiv_const(Bzla *bzla,
-                              BzlaNode *udiv,
-                              BzlaBitVector *t,
-                              BzlaBitVector *s,
-                              int32_t idx_x,
-                              BzlaIntHashTable *domains,
-                              BzlaBvDomain *d_res_x)
+bzla_proputils_inv_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                udiv,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_udiv,
-                bzla_is_inv_udiv_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_udiv, bzla_is_inv_udiv_const, true);
 #endif
+  int32_t pos_x;
   uint32_t bw;
   BzlaBitVector *tmp, *res;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
   BzlaMemMgr *mm;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_udiv);
 
-  mm = bzla->mm;
-
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(udiv->e[idx_x]))->as_ptr;
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
 
   if (!bzla_bvdomain_has_fixed_bits(mm, x))
   {
-    res = bzla_proputils_inv_udiv(bzla, udiv, t, s, idx_x, domains, d_res_x);
+    res = bzla_proputils_inv_udiv(bzla, pi);
   }
   else if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = idx_x ? bzla_bv_udiv(mm, s, x->lo) : bzla_bv_udiv(mm, x->lo, s);
+    tmp = pos_x ? bzla_bv_udiv(mm, s, x->lo) : bzla_bv_udiv(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
@@ -4911,16 +4436,16 @@ bzla_proputils_inv_udiv_const(Bzla *bzla,
   {
     BzlaBvDomainGenerator gen;
 
-    if (d_res_x)
+    if (pi->res_x)
     {
-      assert(d_res_x);
+      assert(pi->res_x);
       bzla_bvdomain_gen_init_range(
-          mm, &bzla->rng, &gen, x, d_res_x->lo, d_res_x->hi);
+          mm, &bzla->rng, &gen, x, pi->res_x->lo, pi->res_x->hi);
     }
     else if (bzla_bv_is_zero(s))
     {
       bw = bzla_bv_get_width(s);
-      if (idx_x)
+      if (pos_x)
       {
         if (bzla_bv_is_ones(t))
         {
@@ -4946,7 +4471,7 @@ bzla_proputils_inv_udiv_const(Bzla *bzla,
     else
     {
       assert(bzla_bv_is_zero(t));
-      if (idx_x)
+      if (pos_x)
       {
         /* x > s */
         tmp = bzla_bv_inc(mm, s);
@@ -4967,7 +4492,7 @@ bzla_proputils_inv_udiv_const(Bzla *bzla,
     bzla_bvdomain_gen_delete(&gen);
   }
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_udiv, udiv, s, t, res, idx_x, "/");
+  check_result_binary_dbg(bzla, bzla_bv_udiv, pi, res, "/");
 #endif
   return res;
 }
@@ -4977,36 +4502,25 @@ bzla_proputils_inv_udiv_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_urem_const(Bzla *bzla,
-                              BzlaNode *urem,
-                              BzlaBitVector *t,
-                              BzlaBitVector *s,
-                              int32_t idx_x,
-                              BzlaIntHashTable *domains,
-                              BzlaBvDomain *d_res_x)
+bzla_proputils_inv_urem_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla,
-                urem,
-                t,
-                s,
-                idx_x,
-                domains,
-                bzla_is_inv_urem,
-                bzla_is_inv_urem_const,
-                true,
-                d_res_x);
+  check_inv_dbg(bzla, pi, bzla_is_inv_urem, bzla_is_inv_urem_const, true);
 #endif
+  int32_t pos_x;
   uint32_t bw, cnt;
   BzlaBitVector *tmp, *res, *ones, *one, *bv, *simple;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
   BzlaMemMgr *mm;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_urem);
 
-  mm = bzla->mm;
-
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(urem->e[idx_x]))->as_ptr;
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
 
   bw = bzla_bv_get_width(s);
   assert(bzla_bv_get_width(t) == bw);
@@ -5014,23 +4528,23 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
 
   if (!bzla_bvdomain_has_fixed_bits(mm, x))
   {
-    res = bzla_proputils_inv_urem(bzla, urem, t, s, idx_x, domains, d_res_x);
+    res = bzla_proputils_inv_urem(bzla, pi);
   }
   else if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    tmp = idx_x ? bzla_bv_urem(mm, s, x->lo) : bzla_bv_urem(mm, x->lo, s);
+    tmp = pos_x ? bzla_bv_urem(mm, s, x->lo) : bzla_bv_urem(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
     res = bzla_bv_copy(mm, x->lo);
   }
-  else if (idx_x)
+  else if (pos_x)
   {
-    if (d_res_x)
+    if (pi->res_x)
     {
-      assert(d_res_x);
-      res = bzla_bv_copy(mm, d_res_x->lo);
+      assert(pi->res_x);
+      res = bzla_bv_copy(mm, pi->res_x->lo);
 #ifndef NDEBUG
       BzlaBitVector *tmp = bzla_bv_urem(mm, s, res);
       assert(bzla_bv_compare(tmp, t) == 0);
@@ -5139,15 +4653,16 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
     }
     else
     {
-      /* Pick x within range determined in is_inv, given as d_res_x->lo for the
-       * lower bound and d_res_x->hi for the upper bound (both inclusive). */
+      /* Pick x within range determined in is_inv, given as pi->res_x->lo for
+       * the
+       * lower bound and pi->res_x->hi for the upper bound (both inclusive). */
       BzlaBvDomainGenerator gen;
-      if (d_res_x)
+      if (pi->res_x)
       {
-        assert(bzla_bv_compare(d_res_x->lo, d_res_x->hi) <= 0);
-        res = bzla_bv_copy(mm, d_res_x->lo);
+        assert(bzla_bv_compare(pi->res_x->lo, pi->res_x->hi) <= 0);
+        res = bzla_bv_copy(mm, pi->res_x->lo);
         bzla_bvdomain_gen_init_range(
-            mm, &bzla->rng, &gen, x, d_res_x->lo, d_res_x->hi);
+            mm, &bzla->rng, &gen, x, pi->res_x->lo, pi->res_x->hi);
       }
       else
       {
@@ -5173,7 +4688,7 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
     bzla_bv_free(mm, ones);
   }
 #ifndef NDEBUG
-  check_result_binary_dbg(bzla, bzla_bv_urem, urem, s, t, res, idx_x, "%");
+  check_result_binary_dbg(bzla, bzla_bv_urem, pi, res, "%");
 #endif
   return res;
 }
@@ -5183,15 +4698,9 @@ bzla_proputils_inv_urem_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_concat_const(Bzla *bzla,
-                                BzlaNode *concat,
-                                BzlaBitVector *t,
-                                BzlaBitVector *s,
-                                int32_t idx_x,
-                                BzlaIntHashTable *domains,
-                                BzlaBvDomain *d_res_x)
+bzla_proputils_inv_concat_const(Bzla *bzla, BzlaPropInfo *pi)
 {
-  return bzla_proputils_inv_concat(bzla, concat, t, s, idx_x, domains, d_res_x);
+  return bzla_proputils_inv_concat(bzla, pi);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -5199,42 +4708,30 @@ bzla_proputils_inv_concat_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_slice_const(Bzla *bzla,
-                               BzlaNode *slice,
-                               BzlaBitVector *t,
-                               BzlaBitVector *x_val,
-                               int32_t idx_x,
-                               BzlaIntHashTable *domains,
-                               BzlaBvDomain *d_res_x)
+bzla_proputils_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(slice);
-  assert(bzla_node_is_regular(slice));
-  assert(t);
-  assert(domains);
-  assert(idx_x == 0);
-  assert(!bzla_node_is_bv_const(slice->e[0]));
-#ifndef NDEBUG
-  uint32_t upper = bzla_node_bv_slice_get_upper(slice);
-  uint32_t lower = bzla_node_bv_slice_get_lower(slice);
-#endif
-  assert(bzla_is_inv_slice(bzla, 0, t, upper, lower));
-  assert(bzla_hashint_map_contains(domains, bzla_node_get_id(slice->e[idx_x])));
+  assert(pi->exp);
+  assert(bzla_node_is_regular(pi->exp));
+  assert(pi->target_value);
+  assert(pi->pos_x == 0);
+  assert(!bzla_node_is_bv_const(pi->exp->e[0]));
+  assert(bzla_is_inv_slice(bzla, pi));
+  assert(pi->bvd[0]);
 
   BzlaBitVector *res;
-  BzlaBvDomain *x;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *t;
 
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(slice->e[idx_x]))->as_ptr;
-  assert(bzla_is_inv_slice_const(bzla,
-                                 x,
-                                 t,
-                                 bzla_node_bv_slice_get_upper(slice),
-                                 bzla_node_bv_slice_get_lower(slice)));
+  t = pi->target_value;
+  x = pi->bvd[0];
+  assert(bzla_is_inv_slice_const(bzla, pi));
 
-  res =
-      bzla_proputils_inv_slice(bzla, slice, t, x_val, idx_x, domains, d_res_x);
+  res = bzla_proputils_inv_slice(bzla, pi);
   set_const_bits(bzla->mm, x, &res);
 #ifndef NDEBUG
+  uint32_t upper        = bzla_node_bv_slice_get_upper(pi->exp);
+  uint32_t lower        = bzla_node_bv_slice_get_lower(pi->exp);
   BzlaMemMgr *mm        = bzla->mm;
   BzlaBitVector *tmpdbg = bzla_bv_slice(mm, res, upper, lower);
   assert(!bzla_bv_compare(tmpdbg, t));
@@ -5243,7 +4740,7 @@ bzla_proputils_inv_slice_const(Bzla *bzla,
   char *str_res = bzla_bv_to_char(mm, res);
   BZLALOG(3,
           "prop (xxxxx): %s: %s := %s[%d:%d]",
-          bzla_util_node2string(slice),
+          bzla_util_node2string(pi->exp),
           str_t,
           str_res,
           lower,
@@ -5259,68 +4756,61 @@ bzla_proputils_inv_slice_const(Bzla *bzla,
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_cond_const(Bzla *bzla,
-                              BzlaNode *cond,
-                              BzlaBitVector *t,
-                              BzlaBitVector *s0,
-                              BzlaBitVector *s1,
-                              int32_t idx_x,
-                              BzlaIntHashTable *domains,
-                              BzlaBvDomain *d_res_x)
+bzla_proputils_inv_cond_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(cond);
-  assert(bzla_node_is_regular(cond));
-  assert(t);
-  assert(s0);
-  assert(s1);
-  assert(domains);
-  assert(!idx_x || bzla_bv_get_width(s0) == 1);
-  assert(idx_x || bzla_bv_get_width(s0) == bzla_bv_get_width(s1));
-  assert(idx_x || bzla_bv_get_width(s0) == bzla_bv_get_width(t));
-  assert(idx_x >= 0 && idx_x <= 2);
-  assert(!bzla_node_is_bv_const(cond->e[idx_x]));
+  assert(pi->exp);
+  assert(bzla_node_is_regular(pi->exp));
+  assert(pi->target_value);
+  assert(pi->bv[0]);
+  assert(pi->bv[1]);
+  assert(pi->bv[2]);
+  assert(pi->pos_x >= 0);
+  assert(pi->pos_x <= 2);
+  assert(!bzla_node_is_bv_const(pi->exp->e[pi->pos_x]));
+  assert(pi->bvd[pi->pos_x]);
 
-  BzlaBitVector *tmp, *res;
-  BzlaBvDomain *x;
+  int32_t pos_x;
   BzlaMemMgr *mm;
+  BzlaBitVector *tmp, *res;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *t;
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_cond);
 
-  mm = bzla->mm;
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
 
-  assert(
-      !bzla_hashint_map_contains(domains, cond->id)
-      || bzla_hashint_map_contains(domains, bzla_node_get_id(cond->e[idx_x])));
-  x = bzla_hashint_map_get(domains, bzla_node_get_id(cond->e[idx_x]))->as_ptr;
-  assert(bzla_is_inv_cond_const(bzla, x, t, s0, s1, idx_x, 0));
+  assert(bzla_is_inv_cond_const(bzla, pi));
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
-    if (idx_x == 0)
+    if (pos_x == 0)
     {
-      tmp = bzla_bv_ite(mm, x->lo, s0, s1);
+      tmp = bzla_bv_ite(mm, x->lo, pi->bv[1], pi->bv[2]);
     }
-    else if (idx_x == 1)
+    else if (pos_x == 1)
     {
-      tmp = bzla_bv_ite(mm, s0, x->lo, s1);
+      tmp = bzla_bv_ite(mm, pi->bv[0], x->lo, pi->bv[2]);
     }
     else
     {
-      tmp = bzla_bv_ite(mm, s0, s1, x->lo);
+      tmp = bzla_bv_ite(mm, pi->bv[0], pi->bv[1], x->lo);
     }
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
     res = bzla_bv_copy(mm, x->lo);
   }
-  else if (d_res_x)
+  else if (pi->res_x)
   {
-    assert(idx_x || d_res_x);
+    assert(pos_x || pi->res_x);
     /* all non-random cases are determined in is_inv */
-    assert(bzla_bvdomain_is_fixed(mm, d_res_x));
-    res = bzla_bv_copy(mm, d_res_x->lo);
+    assert(bzla_bvdomain_is_fixed(mm, pi->res_x));
+    res = bzla_bv_copy(mm, pi->res_x->lo);
   }
   else
   {
@@ -5334,20 +4824,22 @@ bzla_proputils_inv_cond_const(Bzla *bzla,
 #ifndef NDEBUG
   char *str_res = bzla_bv_to_char(mm, res);
   char *str_t   = bzla_bv_to_char(bzla->mm, t);
-  char *str_s0  = bzla_bv_to_char(mm, s0);
-  char *str_s1  = bzla_bv_to_char(mm, s1);
+  char *str_s0  = bzla_bv_to_char(mm, pi->bv[0]);
+  char *str_s1  = bzla_bv_to_char(mm, pi->bv[1]);
+  char *str_s2  = bzla_bv_to_char(mm, pi->bv[2]);
   BZLALOG(3,
           "prop (e[%d]): %s: %s := %s ? %s : %s",
-          idx_x,
-          bzla_util_node2string(cond),
+          pos_x,
+          bzla_util_node2string(pi->exp),
           str_t,
-          idx_x == 0 ? str_res : str_s0,
-          idx_x == 1 ? str_res : (idx_x == 0 ? str_s0 : str_s1),
-          idx_x == 2 ? str_res : str_s1);
+          pos_x == 0 ? str_res : str_s0,
+          pos_x == 1 ? str_res : str_s1,
+          pos_x == 2 ? str_res : str_s2);
   bzla_mem_freestr(mm, str_t);
   bzla_mem_freestr(mm, str_res);
   bzla_mem_freestr(mm, str_s0);
   bzla_mem_freestr(mm, str_s1);
+  bzla_mem_freestr(mm, str_s2);
 #endif
   return res;
 }
@@ -5371,7 +4863,7 @@ static BzlaPropSelectPath kind_to_select_path[BZLA_NUM_OPS_NODE] = {
     [BZLA_COND_NODE]      = select_path_cond,
 };
 
-static BzlaPropComputeValue kind_to_cons[BZLA_NUM_OPS_NODE] = {
+static BzlaPropComputeValueFun kind_to_cons[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ADD_NODE]    = bzla_proputils_cons_add,
     [BZLA_BV_AND_NODE]    = bzla_proputils_cons_and,
     [BZLA_BV_CONCAT_NODE] = bzla_proputils_cons_concat,
@@ -5385,7 +4877,7 @@ static BzlaPropComputeValue kind_to_cons[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_UREM_NODE]   = bzla_proputils_cons_urem,
 };
 
-static BzlaPropComputeValue kind_to_cons_const[BZLA_NUM_OPS_NODE] = {
+static BzlaPropComputeValueFun kind_to_cons_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ADD_NODE]    = bzla_proputils_cons_add_const,
     [BZLA_BV_AND_NODE]    = bzla_proputils_cons_and_const,
     [BZLA_BV_CONCAT_NODE] = bzla_proputils_cons_concat_const,
@@ -5399,7 +4891,7 @@ static BzlaPropComputeValue kind_to_cons_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_UREM_NODE]   = bzla_proputils_cons_urem_const,
 };
 
-static BzlaPropComputeValue kind_to_inv[BZLA_NUM_OPS_NODE] = {
+static BzlaPropComputeValueFun kind_to_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ADD_NODE]    = bzla_proputils_inv_add,
     [BZLA_BV_AND_NODE]    = bzla_proputils_inv_and,
     [BZLA_BV_CONCAT_NODE] = bzla_proputils_inv_concat,
@@ -5413,7 +4905,7 @@ static BzlaPropComputeValue kind_to_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_UREM_NODE]   = bzla_proputils_inv_urem,
 };
 
-static BzlaPropComputeValue kind_to_inv_const[BZLA_NUM_OPS_NODE] = {
+static BzlaPropComputeValueFun kind_to_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ADD_NODE]    = bzla_proputils_inv_add_const,
     [BZLA_BV_AND_NODE]    = bzla_proputils_inv_and_const,
     [BZLA_BV_CONCAT_NODE] = bzla_proputils_inv_concat_const,
@@ -5428,7 +4920,7 @@ static BzlaPropComputeValue kind_to_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_COND_NODE]      = 0,  // special handling
 };
 
-static BzlaPropIsInv kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
+static BzlaPropIsInvFun kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ADD_NODE]    = 0,  // always invertible
     [BZLA_BV_AND_NODE]    = bzla_is_inv_and,
     [BZLA_BV_CONCAT_NODE] = bzla_is_inv_concat,
@@ -5443,7 +4935,7 @@ static BzlaPropIsInv kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_COND_NODE]      = 0,  // special handling
 };
 
-static BzlaPropIsInv kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
+static BzlaPropIsInvFun kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ADD_NODE]    = bzla_is_inv_add_const,
     [BZLA_BV_AND_NODE]    = bzla_is_inv_and_const,
     [BZLA_BV_CONCAT_NODE] = bzla_is_inv_concat_const,
@@ -5693,7 +5185,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   assert(bvroot);
 
   bool is_inv, pick_inv, has_fixed_bits;
-  int32_t i, idx_s, idx_s0, idx_s1, nconst;
+  int32_t i, nconst;
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
   BzlaIntHashTable *domains;
@@ -5704,9 +5196,10 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   uint32_t opt_prop_prob_use_inv_value;
   uint32_t opt_prop_const_bits;
   bool opt_skip_no_progress;
+  BzlaPropInfo pi;
 
   BzlaPropSelectPath select_path;
-  BzlaPropIsInv is_inv_fun;
+  BzlaPropIsInvFun is_inv_fun;
 
 #ifndef NBZLALOG
   char *a;
@@ -5813,10 +5306,13 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         bzla_bv_free(bzla->mm, tmp);
       }
 
+      pi.target_value = bv_t;
+
       /* check if all paths are const, if yes -> conflict */
       for (i = 0, nconst = 0; i < real_cur->arity; i++)
       {
-        bv_s[i] = (BzlaBitVector *) bzla_model_get_bv(bzla, real_cur->e[i]);
+        bv_s[i]  = (BzlaBitVector *) bzla_model_get_bv(bzla, real_cur->e[i]);
+        pi.bv[i] = bv_s[i];
         if (bzla_node_is_bv_const(real_cur->e[i])) nconst += 1;
       }
       if (nconst > real_cur->arity - 1) break;
@@ -5858,6 +5354,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       }
 #endif
 
+      pi.pos_x = idx_x;
+
       d              = 0;
       has_fixed_bits = false;
       if (opt_prop_const_bits)
@@ -5867,6 +5365,15 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         assert(d);
         has_fixed_bits = bzla_bvdomain_has_fixed_bits(mm, d->as_ptr);
         assert(d->as_ptr);
+
+        for (i = 0; i < real_cur->arity; ++i)
+        {
+          d = bzla_hashint_map_get(domains,
+                                   bzla_node_get_id(real_cur->e[idx_x]));
+          assert(d);
+          assert(d->as_ptr);
+          pi.bvd[i] = d->as_ptr;
+        }
       }
 
       /* 1) check invertibility
@@ -5881,41 +5388,12 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bv_s_new = 0;
       if (bzla_node_is_cond(real_cur))
       {
-        BzlaPropIsInvCond is_inv_cond =
+        BzlaPropIsInvFun is_inv_cond =
             has_fixed_bits ? bzla_is_inv_cond_const : bzla_is_inv_cond;
 
-        if (idx_x == 0)
-        {
-          is_inv = is_inv_cond(
-              bzla, d ? d->as_ptr : 0, bv_t, bv_s[1], bv_s[2], idx_x, &d_res_x);
-        }
-        else if (idx_x == 1)
-        {
-          is_inv = is_inv_cond(
-              bzla, d ? d->as_ptr : 0, bv_t, bv_s[0], bv_s[2], idx_x, &d_res_x);
-        }
-        else
-        {
-          is_inv = is_inv_cond(
-              bzla, d ? d->as_ptr : 0, bv_t, bv_s[0], bv_s[1], idx_x, &d_res_x);
-        }
+        is_inv = is_inv_cond(bzla, &pi);
 
         /* not invertible counts as conflict */
-        if (idx_x == 0)
-        {
-          idx_s0 = 1;
-          idx_s1 = 2;
-        }
-        else if (idx_x == 1)
-        {
-          idx_s0 = 0;
-          idx_s1 = 2;
-        }
-        else
-        {
-          idx_s0 = 0;
-          idx_s1 = 1;
-        }
         if (!is_inv)
         {
           if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x, true))
@@ -5930,7 +5408,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           }
         }
 
-        BzlaPropComputeValueCond compute_value_cond_fun;
+        BzlaPropComputeValueFun compute_value_cond_fun;
 
         if (pick_inv && is_inv)
         {
@@ -5945,14 +5423,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
                                        : bzla_proputils_cons_cond;
         }
         /* compute new assignment */
-        bv_s_new = compute_value_cond_fun(bzla,
-                                          real_cur,
-                                          bv_t,
-                                          bv_s[idx_s0],
-                                          bv_s[idx_s1],
-                                          idx_x,
-                                          domains,
-                                          d_res_x);
+        bv_s_new = compute_value_cond_fun(bzla, &pi);
       }
       else if (bzla_node_is_bv_slice(real_cur))
       {
@@ -5960,12 +5431,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         {
           assert(d);
           assert(d->as_ptr);
-          is_inv =
-              bzla_is_inv_slice_const(bzla,
-                                      d->as_ptr,
-                                      bv_t,
-                                      bzla_node_bv_slice_get_upper(real_cur),
-                                      bzla_node_bv_slice_get_lower(real_cur));
+          is_inv = bzla_is_inv_slice_const(bzla, &pi);
 
           if (!is_inv)
           {
@@ -5976,36 +5442,27 @@ bzla_proputils_select_move_prop(Bzla *bzla,
               break;
             }
           }
-          bv_s_new =
-              pick_inv && is_inv
-                  ? bzla_proputils_inv_slice_const(
-                      bzla, real_cur, bv_t, bv_s[0], idx_x, domains, d_res_x)
-                  : bzla_proputils_cons_slice(
-                      bzla, real_cur, bv_t, bv_s[0], idx_x, domains, d_res_x);
+          bv_s_new = pick_inv && is_inv
+                         ? bzla_proputils_inv_slice_const(bzla, &pi)
+                         : bzla_proputils_cons_slice(bzla, &pi);
         }
         else
         {
-          bv_s_new =
-              pick_inv && is_inv
-                  ? bzla_proputils_inv_slice(
-                      bzla, real_cur, bv_t, bv_s[0], idx_x, domains, d_res_x)
-                  : bzla_proputils_cons_slice(
-                      bzla, real_cur, bv_t, bv_s[0], idx_x, domains, d_res_x);
+          bv_s_new = pick_inv && is_inv ? bzla_proputils_inv_slice(bzla, &pi)
+                                        : bzla_proputils_cons_slice(bzla, &pi);
         }
       }
       else
       {
-        BzlaPropComputeValue inv_value_fun, cons_value_fun, compute_value_fun;
-
-        idx_s = idx_x ? 0 : 1;
+        BzlaPropComputeValueFun inv_value_fun, cons_value_fun,
+            compute_value_fun;
 
         is_inv_fun = has_fixed_bits ? kind_to_is_inv_const[real_cur->kind]
                                     : kind_to_is_inv[real_cur->kind];
         if (is_inv_fun)
         {
           assert(!opt_prop_const_bits || d);
-          is_inv = is_inv_fun(
-              bzla, d ? d->as_ptr : 0, bv_t, bv_s[idx_s], idx_x, &d_res_x);
+          is_inv = is_inv_fun(bzla, &pi);
         }
 
         if (!is_inv)
@@ -6029,9 +5486,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
                                        : kind_to_inv[real_cur->kind];
 
         compute_value_fun = pick_inv && is_inv ? inv_value_fun : cons_value_fun;
-
-        bv_s_new = compute_value_fun(
-            bzla, real_cur, bv_t, bv_s[idx_s], idx_x, domains, d_res_x);
+        bv_s_new          = compute_value_fun(bzla, &pi);
       }
 
       if (d_res_x)
@@ -6159,4 +5614,18 @@ bzla_proputils_reset_prop_info_stack(BzlaMemMgr *mm,
     bzla_bv_free(mm, prop.bvexp);
   }
   BZLA_RESET_STACK(*stack);
+}
+
+/* ========================================================================== */
+
+void
+bzla_propinfo_set_result(Bzla *bzla, BzlaPropInfo *pi, BzlaBvDomain *res)
+{
+  assert(bzla);
+  assert(pi);
+  if (pi->res_x)
+  {
+    bzla_bvdomain_free(bzla->mm, pi->res_x);
+  }
+  pi->res_x = res;
 }

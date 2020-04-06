@@ -611,7 +611,7 @@ char g_strbuf[BUFFER_SIZE];
 int32_t g_strbufpos = 0;
 
 char *
-bzla_util_node2string(BzlaNode *exp)
+bzla_util_node2string(const BzlaNode *exp)
 {
   Bzla *bzla;
   BzlaNode *real_exp;

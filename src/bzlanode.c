@@ -1371,14 +1371,14 @@ bzla_node_lambda_delete_static_rho(Bzla *bzla, BzlaNode *lambda)
 /*------------------------------------------------------------------------*/
 
 uint32_t
-bzla_node_bv_slice_get_upper(BzlaNode *slice)
+bzla_node_bv_slice_get_upper(const BzlaNode *slice)
 {
   assert(bzla_node_is_bv_slice(slice));
   return ((BzlaBVSliceNode *) bzla_node_real_addr(slice))->upper;
 }
 
 uint32_t
-bzla_node_bv_slice_get_lower(BzlaNode *slice)
+bzla_node_bv_slice_get_lower(const BzlaNode *slice)
 {
   assert(bzla_node_is_bv_slice(slice));
   return ((BzlaBVSliceNode *) bzla_node_real_addr(slice))->lower;

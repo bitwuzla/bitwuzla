@@ -24,27 +24,11 @@ extern "C" {
 using BzlaBinFun =
     std::add_pointer<BzlaNode *(Bzla *, BzlaNode *, BzlaNode *)>::type;
 
-using BzlaConsFun     = std::add_pointer<BzlaBitVector *(Bzla *,
-                                                     BzlaNode *,
-                                                     BzlaBitVector *,
-                                                     BzlaBitVector *,
-                                                     int32_t,
-                                                     BzlaIntHashTable *,
-                                                     BzlaBvDomain *)>::type;
-using BzlaConsCondFun = std::add_pointer<BzlaBitVector *(Bzla *,
-                                                         BzlaNode *,
-                                                         BzlaBitVector *,
-                                                         BzlaBitVector *,
-                                                         BzlaBitVector *,
-                                                         int32_t,
-                                                         BzlaIntHashTable *,
-                                                         BzlaBvDomain *)>::type;
-
 class TestPropCons : public TestPropCommon
 {
  protected:
   void test_binary(BzlaBinFun expr_fun,
-                   BzlaConsFun cons_fun,
+                   BzlaPropComputeValueFun cons_fun,
                    uint32_t pos_x,
                    bool fixed_bits)
   {
@@ -53,7 +37,6 @@ class TestPropCons : public TestPropCommon
     BzlaSortId sort_x, sort_s;
     BzlaBvDomain *d_x;
     BzlaBitVector *bv_s, *bv_t, *bv_x, *bv_cur_x;
-    BzlaIntHashTable *domains;
     BzlaBvDomainGenerator gen;
     BzlaRNG rng;
     BzlaSolver *slv_sat = nullptr, *slv_prop;
@@ -115,9 +98,6 @@ class TestPropCons : public TestPropCommon
         continue;
       }
 
-      domains = bzla_hashint_map_new(mm);
-      bzla_hashint_map_add(domains, bzla_node_get_id(x))->as_ptr = d_x;
-
       x_lo  = bzla_exp_bv_const(bzla, d_x->lo);
       x_hi  = bzla_exp_bv_const(bzla, d_x->hi);
       and_x = bzla_exp_bv_and(bzla, x_hi, x);
@@ -141,14 +121,17 @@ class TestPropCons : public TestPropCommon
             ++num_tests;
             bv_cur_x = bzla_bvdomain_gen_next(&gen);
 
-            bzla_model_init_bv(bzla, &bzla->bv_model);
-            bzla_model_init_fun(bzla, &bzla->fun_model);
-            bzla_model_add_to_bv(bzla, bzla->bv_model, x, bv_cur_x);
+            BzlaPropInfo pi;
+            memset(&pi, 0, sizeof(BzlaPropInfo));
+            pi.pos_x         = pos_x;
+            pi.exp           = expr;
+            pi.bv[pos_x]     = bv_cur_x;
+            pi.bv[1 - pos_x] = bv_s;
+            pi.bvd[pos_x]    = d_x;
+            pi.target_value  = bv_t;
 
             bzla->slv = slv_prop;
-            bv_x      = cons_fun(bzla, expr, bv_t, bv_s, pos_x, domains, 0);
-
-            bzla_model_delete(bzla);
+            bv_x      = cons_fun(bzla, &pi);
 
             expected_result = bv_x ? BZLA_RESULT_SAT : BZLA_RESULT_UNSAT;
 
@@ -222,7 +205,6 @@ class TestPropCons : public TestPropCommon
       bzla_node_release(bzla, eq_x1);
       bzla_node_release(bzla, eq_x2);
 
-      bzla_hashint_map_delete(domains);
       bzla_bvdomain_free(mm, d_x);
     }
 
@@ -238,14 +220,13 @@ class TestPropCons : public TestPropCommon
     log(ss.str());
   }
 
-  void test_slice(BzlaConsFun cons_fun, bool fixed_bits)
+  void test_slice(BzlaPropComputeValueFun cons_fun, bool fixed_bits)
   {
     uint32_t expected_result;
     Bzla *bzla;
     BzlaSortId sort_x;
     BzlaBvDomain *d_x;
     BzlaBitVector *bv_t, *bv_x, *bv_cur_x;
-    BzlaIntHashTable *domains;
     BzlaBvDomainGenerator gen;
     BzlaRNG rng;
     BzlaSolver *slv_sat = nullptr, *slv_prop;
@@ -283,9 +264,6 @@ class TestPropCons : public TestPropCommon
         continue;
       }
 
-      domains = bzla_hashint_map_new(mm);
-      bzla_hashint_map_add(domains, bzla_node_get_id(x))->as_ptr = d_x;
-
       x_lo  = bzla_exp_bv_const(bzla, d_x->lo);
       x_hi  = bzla_exp_bv_const(bzla, d_x->hi);
       and_x = bzla_exp_bv_and(bzla, x_hi, x);
@@ -321,14 +299,15 @@ class TestPropCons : public TestPropCommon
               ++num_tests;
               bv_cur_x = bzla_bvdomain_gen_next(&gen);
 
-              bzla_model_init_bv(bzla, &bzla->bv_model);
-              bzla_model_init_fun(bzla, &bzla->fun_model);
-              bzla_model_add_to_bv(bzla, bzla->bv_model, x, bv_cur_x);
+              BzlaPropInfo pi;
+              memset(&pi, 0, sizeof(BzlaPropInfo));
+              pi.exp          = expr;
+              pi.bv[0]        = bv_cur_x;
+              pi.bvd[0]       = d_x;
+              pi.target_value = bv_t;
 
               bzla->slv = slv_prop;
-              bv_x      = cons_fun(bzla, expr, bv_t, bv_cur_x, 0, domains, 0);
-
-              bzla_model_delete(bzla);
+              bv_x      = cons_fun(bzla, &pi);
 
               expected_result = bv_x ? BZLA_RESULT_SAT : BZLA_RESULT_UNSAT;
 
@@ -401,7 +380,6 @@ class TestPropCons : public TestPropCommon
       bzla_node_release(bzla, eq_x1);
       bzla_node_release(bzla, eq_x2);
 
-      bzla_hashint_map_delete(domains);
       bzla_bvdomain_free(mm, d_x);
     }
 
@@ -415,7 +393,9 @@ class TestPropCons : public TestPropCommon
     log(ss.str());
   }
 
-  void test_cond(BzlaConsCondFun cons_fun, uint32_t pos_x, bool fixed_bits)
+  void test_cond(BzlaPropComputeValueFun cons_fun,
+                 uint32_t pos_x,
+                 bool fixed_bits)
   {
     uint32_t expected_result;
     Bzla *bzla;
@@ -517,17 +497,31 @@ class TestPropCons : public TestPropCommon
               ++num_tests;
               bv_cur_x = bzla_bvdomain_gen_next(&gen);
 
-              bzla_model_init_bv(bzla, &bzla->bv_model);
-              bzla_model_init_fun(bzla, &bzla->fun_model);
-              bzla_model_add_to_bv(bzla, bzla->bv_model, x, bv_cur_x);
-              bzla_model_add_to_bv(bzla, bzla->bv_model, s1, bv_s1);
-              bzla_model_add_to_bv(bzla, bzla->bv_model, s2, bv_s2);
+              BzlaPropInfo pi;
+              memset(&pi, 0, sizeof(BzlaPropInfo));
+              pi.pos_x     = pos_x;
+              pi.exp       = expr;
+              pi.bv[pos_x] = bv_cur_x;
+              if (pos_x == 0)
+              {
+                pi.bv[1] = bv_s1;
+                pi.bv[2] = bv_s2;
+              }
+              else if (pos_x == 1)
+              {
+                pi.bv[0] = bv_s1;
+                pi.bv[2] = bv_s2;
+              }
+              else
+              {
+                pi.bv[0] = bv_s1;
+                pi.bv[1] = bv_s2;
+              }
+              pi.bvd[pos_x]   = d_x;
+              pi.target_value = bv_t;
 
               bzla->slv = slv_prop;
-              bv_x =
-                  cons_fun(bzla, expr, bv_t, bv_s1, bv_s2, pos_x, domains, 0);
-
-              bzla_model_delete(bzla);
+              bv_x      = cons_fun(bzla, &pi);
 
               expected_result = bv_x ? BZLA_RESULT_SAT : BZLA_RESULT_UNSAT;
 
@@ -607,7 +601,6 @@ class TestPropCons : public TestPropCommon
       bzla_node_release(bzla, eq_x1);
       bzla_node_release(bzla, eq_x2);
 
-      bzla_hashint_map_delete(domains);
       bzla_bvdomain_free(mm, d_x);
     }
 

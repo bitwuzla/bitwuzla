@@ -19,6 +19,7 @@
 #include <assert.h>
 
 #include "bzlacore.h"
+#include "bzlaproputils.h"
 #include "utils/bzlautil.h"
 
 /* -------------------------------------------------------------------------- */
@@ -38,22 +39,12 @@ typedef BzlaBitVector *(*BzlaBitVectorBinFun)(BzlaMemMgr *,
  * IC: true
  */
 bool
-bzla_is_inv_add(Bzla *bzla,
-                const BzlaBvDomain *x,
-                const BzlaBitVector *t,
-                const BzlaBitVector *s,
-                uint32_t pos_x,
-                BzlaBvDomain **d_res_x)
+bzla_is_inv_add(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
+  assert(pi);
   (void) bzla;
-  (void) x;
-  (void) t;
-  (void) s;
-  (void) pos_x;
-  (void) d_res_x;
+  (void) pi;
   return true;
 }
 
@@ -66,23 +57,19 @@ bzla_is_inv_add(Bzla *bzla,
  * IC: t & s = t
  */
 bool
-bzla_is_inv_and(Bzla *bzla,
-                const BzlaBvDomain *x,
-                const BzlaBitVector *t,
-                const BzlaBitVector *s,
-                uint32_t pos_x,
-                BzlaBvDomain **d_res_x)
+bzla_is_inv_and(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
-  (void) x;
-  (void) pos_x;
-  (void) d_res_x;
+  assert(pi);
+  (void) bzla;
 
   bool res;
+  const BzlaBitVector *s, *t;
   BzlaBitVector *t_and_s;
   BzlaMemMgr *mm;
+
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
 
   mm      = bzla->mm;
   t_and_s = bzla_bv_and(mm, t, s);
@@ -103,34 +90,33 @@ bzla_is_inv_and(Bzla *bzla,
  * IC: s = t[bw(t) - 1 : bw(t) - bw(s)]
  */
 bool
-bzla_is_inv_concat(Bzla *bzla,
-                   const BzlaBvDomain *x,
-                   const BzlaBitVector *t,
-                   const BzlaBitVector *s,
-                   uint32_t pos_x,
-                   BzlaBvDomain **d_res_x)
+bzla_is_inv_concat(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
-  (void) x;
-  (void) d_res_x;
+  assert(pi);
+  (void) bzla;
+  (void) pi;
 
+  const BzlaBitVector *s, *t;
   BzlaBitVector *slice;
   bool res;
   uint32_t bw_s, bw_t;
   BzlaMemMgr *mm;
 
-  mm   = bzla->mm;
+  mm = bzla->mm;
+
+  s    = pi->bv[1 - pi->pos_x];
+  t    = pi->target_value;
   bw_s = bzla_bv_get_width(s);
   bw_t = bzla_bv_get_width(t);
-  if (pos_x == 0)
+
+  if (pi->pos_x == 0)
   {
     slice = bzla_bv_slice(mm, t, bw_s - 1, 0);
   }
   else
   {
-    assert(pos_x == 1);
+    assert(pi->pos_x == 1);
     slice = bzla_bv_slice(mm, t, bw_t - 1, bw_t - bw_s);
   }
   res = bzla_bv_compare(s, slice) == 0;
@@ -147,22 +133,12 @@ bzla_is_inv_concat(Bzla *bzla,
  * IC: true
  */
 bool
-bzla_is_inv_eq(Bzla *bzla,
-               const BzlaBvDomain *x,
-               const BzlaBitVector *t,
-               const BzlaBitVector *s,
-               uint32_t pos_x,
-               BzlaBvDomain **d_res_x)
+bzla_is_inv_eq(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
+  assert(pi);
   (void) bzla;
-  (void) x;
-  (void) t;
-  (void) s;
-  (void) pos_x;
-  (void) d_res_x;
+  (void) pi;
   return true;
 }
 
@@ -175,23 +151,18 @@ bzla_is_inv_eq(Bzla *bzla,
  * IC: (-s | s ) & t = t
  */
 bool
-bzla_is_inv_mul(Bzla *bzla,
-                const BzlaBvDomain *x,
-                const BzlaBitVector *t,
-                const BzlaBitVector *s,
-                uint32_t pos_x,
-                BzlaBvDomain **d_res_x)
+bzla_is_inv_mul(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
-  (void) x;
-  (void) pos_x;
-  (void) d_res_x;
+  assert(pi);
 
   bool res;
+  const BzlaBitVector *s, *t;
   BzlaBitVector *neg_s, *neg_s_or_s, *and_t;
   BzlaMemMgr *mm;
+
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
 
   mm         = bzla->mm;
   neg_s      = bzla_bv_neg(mm, s);
@@ -219,27 +190,22 @@ bzla_is_inv_mul(Bzla *bzla,
  * (is_sll = false).
  */
 static bool
-is_inv_shift(Bzla *bzla,
-             const BzlaBvDomain *x,
-             const BzlaBitVector *t,
-             const BzlaBitVector *s,
-             uint32_t pos_x,
-             BzlaBvDomain **d_res_x,
-             bool is_sll)
+is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, bool is_sll)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
-  (void) x;
-  (void) d_res_x;
+  assert(pi);
 
   bool res;
   BzlaMemMgr *mm;
+  const BzlaBitVector *s, *t;
   BzlaBitVector *shift1, *shift2;
   uint32_t ctz_t, ctz_s;
   BzlaBitVectorBinFun shift1_fun, shift2_fun;
   uint32_t (*count_zero_fun)(const BzlaBitVector *);
   BzlaBitVector *(*ishift_fun)(BzlaMemMgr *, const BzlaBitVector *, uint64_t);
+
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
 
   if (is_sll)
   {
@@ -257,7 +223,7 @@ is_inv_shift(Bzla *bzla,
   }
 
   mm = bzla->mm;
-  if (pos_x == 0)
+  if (pi->pos_x == 0)
   {
     shift1 = shift1_fun(mm, t, s);
     shift2 = shift2_fun(mm, shift1, s);
@@ -267,7 +233,7 @@ is_inv_shift(Bzla *bzla,
   }
   else
   {
-    assert(pos_x == 1);
+    assert(pi->pos_x == 1);
 
     ctz_t = count_zero_fun(t);
     ctz_s = count_zero_fun(s);
@@ -294,31 +260,19 @@ is_inv_shift(Bzla *bzla,
 }
 
 bool
-bzla_is_inv_sll(Bzla *bzla,
-                const BzlaBvDomain *x,
-                const BzlaBitVector *t,
-                const BzlaBitVector *s,
-                uint32_t pos_x,
-                BzlaBvDomain **d_res_x)
+bzla_is_inv_sll(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
-  return is_inv_shift(bzla, x, t, s, pos_x, d_res_x, true);
+  assert(pi);
+  return is_inv_shift(bzla, pi, true);
 }
 
 bool
-bzla_is_inv_srl(Bzla *bzla,
-                const BzlaBvDomain *x,
-                const BzlaBitVector *t,
-                const BzlaBitVector *s,
-                uint32_t pos_x,
-                BzlaBvDomain **d_res_x)
+bzla_is_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
-  return is_inv_shift(bzla, x, t, s, pos_x, d_res_x, false);
+  assert(pi);
+  return is_inv_shift(bzla, pi, false);
 }
 
 /**
@@ -333,28 +287,25 @@ bzla_is_inv_srl(Bzla *bzla,
  * IC: t = 0 || s != ~0
  */
 bool
-bzla_is_inv_ult(Bzla *bzla,
-                const BzlaBvDomain *x,
-                const BzlaBitVector *t,
-                const BzlaBitVector *s,
-                uint32_t pos_x,
-                BzlaBvDomain **d_res_x)
+bzla_is_inv_ult(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
+  assert(pi);
   (void) bzla;
-  (void) x;
-  (void) d_res_x;
+
+  const BzlaBitVector *s, *t;
+
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
 
   bool res;
-  if (pos_x == 0)
+  if (pi->pos_x == 0)
   {
     res = bzla_bv_is_zero(t) || !bzla_bv_is_zero(s);
   }
   else
   {
-    assert(pos_x == 1);
+    assert(pi->pos_x == 1);
     res = bzla_bv_is_zero(t) || !bzla_bv_is_ones(s);
   }
   return res;
@@ -372,25 +323,21 @@ bzla_is_inv_ult(Bzla *bzla,
  * IC: s / (s / t) = t
  */
 bool
-bzla_is_inv_udiv(Bzla *bzla,
-                 const BzlaBvDomain *x,
-                 const BzlaBitVector *t,
-                 const BzlaBitVector *s,
-                 uint32_t pos_x,
-                 BzlaBvDomain **d_res_x)
+bzla_is_inv_udiv(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
-  (void) x;
-  (void) d_res_x;
+  assert(pi);
 
   bool res;
   BzlaBitVector *udiv;
+  const BzlaBitVector *s, *t;
   BzlaMemMgr *mm;
 
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
+
   mm = bzla->mm;
-  if (pos_x == 0)
+  if (pi->pos_x == 0)
   {
     BzlaBitVector *s_mul_t = bzla_bv_mul(mm, s, t);
     udiv                   = bzla_bv_udiv(mm, s_mul_t, s);
@@ -398,7 +345,7 @@ bzla_is_inv_udiv(Bzla *bzla,
   }
   else
   {
-    assert(pos_x == 1);
+    assert(pi->pos_x == 1);
     BzlaBitVector *s_udiv_t = bzla_bv_udiv(mm, s, t);
     udiv                    = bzla_bv_udiv(mm, s, s_udiv_t);
     bzla_bv_free(mm, s_udiv_t);
@@ -420,27 +367,23 @@ bzla_is_inv_udiv(Bzla *bzla,
  * IC: (t + t - s) & s >= t
  */
 bool
-bzla_is_inv_urem(Bzla *bzla,
-                 const BzlaBvDomain *x,
-                 const BzlaBitVector *t,
-                 const BzlaBitVector *s,
-                 uint32_t pos_x,
-                 BzlaBvDomain **d_res_x)
+bzla_is_inv_urem(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s);
-  (void) x;
-  (void) d_res_x;
+  assert(pi);
 
   bool res;
+  const BzlaBitVector *s, *t;
   BzlaBitVector *neg_s;
   BzlaMemMgr *mm;
+
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
 
   mm    = bzla->mm;
   neg_s = bzla_bv_neg(mm, s);
 
-  if (pos_x == 0)
+  if (pi->pos_x == 0)
   {
     BzlaBitVector *not_neg_s = bzla_bv_not(mm, neg_s);
     res                      = bzla_bv_compare(t, not_neg_s) <= 0;
@@ -448,7 +391,7 @@ bzla_is_inv_urem(Bzla *bzla,
   }
   else
   {
-    assert(pos_x == 1);
+    assert(pi->pos_x == 1);
     BzlaBitVector *t_add_t = bzla_bv_add(mm, t, t);
     BzlaBitVector *sub_s   = bzla_bv_add(mm, t_add_t, neg_s);
     BzlaBitVector *and_s   = bzla_bv_and(mm, sub_s, s);
@@ -477,35 +420,28 @@ bzla_is_inv_urem(Bzla *bzla,
  * s0 == false
  */
 bool
-bzla_is_inv_cond(Bzla *bzla,
-                 const BzlaBvDomain *x,
-                 const BzlaBitVector *t,
-                 const BzlaBitVector *s0,
-                 const BzlaBitVector *s1,
-                 uint32_t pos_x,
-                 BzlaBvDomain **d_res_x)
+bzla_is_inv_cond(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  assert(s0);
-  assert(s1);
-  (void) x;
+  assert(pi);
 
-  if (d_res_x) *d_res_x = 0;
+  int32_t pos_x;
+  const BzlaBitVector *t;
 
-  if (pos_x == 1 && bzla_bv_is_true(s0))
+  t     = pi->target_value;
+  pos_x = pi->pos_x;
+  bzla_propinfo_set_result(bzla, pi, 0);
+
+  if (pos_x == 0)
   {
-    return true;
+    return bzla_bv_compare(pi->bv[1], t) == 0
+           || bzla_bv_compare(pi->bv[2], t) == 0;
   }
-  else if (pos_x == 2 && bzla_bv_is_false(s0))
+  else if (pos_x == 1)
   {
-    return true;
+    return bzla_bv_is_true(pi->bv[0]) || bzla_bv_compare(pi->bv[2], t) == 0;
   }
-  else if (bzla_bv_compare(s0, t) == 0 || bzla_bv_compare(s1, t) == 0)
-  {
-    return true;
-  }
-  return false;
+  return bzla_bv_is_false(pi->bv[0]) || bzla_bv_compare(pi->bv[1], t) == 0;
 }
 
 /**
@@ -516,19 +452,10 @@ bzla_is_inv_cond(Bzla *bzla,
  * IC: true
  */
 bool
-bzla_is_inv_slice(Bzla *bzla,
-                  const BzlaBvDomain *x,
-                  const BzlaBitVector *t,
-                  uint32_t upper,
-                  uint32_t lower)
+bzla_is_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(t);
-  (void) bzla;
-  (void) x;
-  (void) t;
-  (void) upper;
-  (void) lower;
+  assert(pi);
   return true;
 }
 
@@ -586,28 +513,23 @@ check_const_domain_bits(BzlaMemMgr *mm,
  * IC: (((t - s) & hi_x) | lo_x) = t - s
  */
 bool
-bzla_is_inv_add_const(Bzla *bzla,
-                      const BzlaBvDomain *x,
-                      const BzlaBitVector *t,
-                      const BzlaBitVector *s,
-                      uint32_t pos_x,
-                      BzlaBvDomain **d_res_x)
+bzla_is_inv_add_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s);
-  (void) pos_x;
+  assert(pi);
 
   bool res;
+  const BzlaBitVector *s, *t;
   BzlaBitVector *sub;
   BzlaMemMgr *mm;
 
   mm = bzla->mm;
-  if (d_res_x) *d_res_x = 0;
+  bzla_propinfo_set_result(bzla, pi, 0);
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
 
   sub = bzla_bv_sub(mm, t, s);
-  res = bzla_bvdomain_check_fixed_bits(mm, x, sub);
+  res = bzla_bvdomain_check_fixed_bits(mm, pi->bvd[pi->pos_x], sub);
   bzla_bv_free(mm, sub);
   return res;
 }
@@ -626,26 +548,26 @@ bzla_is_inv_add_const(Bzla *bzla,
  * 2) s & t = t on all non-const bits of x
  */
 bool
-bzla_is_inv_and_const(Bzla *bzla,
-                      const BzlaBvDomain *x,
-                      const BzlaBitVector *t,
-                      const BzlaBitVector *s,
-                      uint32_t pos_x,
-                      BzlaBvDomain **d_res_x)
+bzla_is_inv_and_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s);
+  assert(pi);
 
   bool res;
+  const BzlaBitVector *s, *t;
+  int32_t pos_x;
   BzlaBitVector *and1, *and2, *and3, *mask;
+  const BzlaBvDomain *x;
   BzlaMemMgr *mm;
 
   mm = bzla->mm;
-  if (d_res_x) *d_res_x = 0;
+  bzla_propinfo_set_result(bzla, pi, 0);
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
 
-  if (!bzla_is_inv_and(bzla, x, t, s, pos_x, 0)) return false;
+  if (!bzla_is_inv_and(bzla, pi)) return false;
 
   mask = bzla_bv_xnor(mm, x->lo, x->hi);
   and1 = bzla_bv_and(mm, s, x->hi);
@@ -675,25 +597,25 @@ bzla_is_inv_and_const(Bzla *bzla,
  *     t_l = t[bw(x) - 1 : 0]
  */
 bool
-bzla_is_inv_concat_const(Bzla *bzla,
-                         const BzlaBvDomain *x,
-                         const BzlaBitVector *t,
-                         const BzlaBitVector *s,
-                         uint32_t pos_x,
-                         BzlaBvDomain **d_res_x)
+bzla_is_inv_concat_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s);
+  assert(pi);
 
   bool res;
+  int32_t pos_x;
   uint32_t bw_t, bw_s, bw_x;
   BzlaBitVector *t_h, *t_l, *t_and, *t_s, *and, * or ;
+  const BzlaBitVector *s, *t;
+  const BzlaBvDomain *x;
   BzlaMemMgr *mm;
 
   mm = bzla->mm;
-  if (d_res_x) *d_res_x = 0;
+  bzla_propinfo_set_result(bzla, pi, 0);
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
 
   bw_t = bzla_bv_get_width(t);
   bw_s = bzla_bv_get_width(s);
@@ -735,20 +657,19 @@ bzla_is_inv_concat_const(Bzla *bzla,
  * t = 1: ((s & hi_x) | lo_x) = s
  */
 bool
-bzla_is_inv_eq_const(Bzla *bzla,
-                     const BzlaBvDomain *x,
-                     const BzlaBitVector *t,
-                     const BzlaBitVector *s,
-                     uint32_t pos_x,
-                     BzlaBvDomain **d_res_x)
+bzla_is_inv_eq_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s);
-  (void) pos_x;
+  assert(pi);
+  int32_t pos_x;
+  const BzlaBitVector *s, *t;
+  const BzlaBvDomain *x;
 
-  if (d_res_x) *d_res_x = 0;
+  bzla_propinfo_set_result(bzla, pi, 0);
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
 
   if (bzla_bv_is_false(t))
   {
@@ -759,26 +680,25 @@ bzla_is_inv_eq_const(Bzla *bzla,
 }
 
 bool
-bzla_is_inv_mul_const(Bzla *bzla,
-                      const BzlaBvDomain *d_x,
-                      const BzlaBitVector *t,
-                      const BzlaBitVector *s,
-                      uint32_t pos_x,
-                      BzlaBvDomain **d_res_x)
+bzla_is_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(d_x);
-  assert(t);
-  assert(s);
-  (void) pos_x;
+  assert(pi);
 
   bool res = true, lsb_s;
   BzlaBitVector *mod_inv_s, *x;
   BzlaMemMgr *mm;
+  int32_t pos_x;
+  const BzlaBitVector *s, *t;
+  const BzlaBvDomain *d_x;
 
-  mm  = bzla->mm;
-  res = bzla_is_inv_mul(bzla, d_x, t, s, pos_x, 0);
-  if (d_res_x) *d_res_x = 0;
+  mm = bzla->mm;
+  bzla_propinfo_set_result(bzla, pi, 0);
+  pos_x = pi->pos_x;
+  d_x   = pi->bvd[pos_x];
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  res   = bzla_is_inv_mul(bzla, pi);
 
   if (res && !bzla_bv_is_zero(s) && bzla_bvdomain_has_fixed_bits(mm, d_x))
   {
@@ -799,9 +719,9 @@ bzla_is_inv_mul_const(Bzla *bzla,
         mod_inv_s = bzla_bv_mod_inverse(mm, s);
         x         = bzla_bv_mul(mm, mod_inv_s, t);
         res       = bzla_bvdomain_check_fixed_bits(mm, d_x, x);
-        if (d_res_x && res)
+        if (res)
         {
-          *d_res_x = bzla_bvdomain_new(mm, x, x);
+          bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, x, x));
         }
         bzla_bv_free(mm, x);
         bzla_bv_free(mm, mod_inv_s);
@@ -851,9 +771,9 @@ bzla_is_inv_mul_const(Bzla *bzla,
         bzla_bv_free(mm, hi);
 
         res = check_const_domain_bits(mm, d_tmp_x, d_x);
-        if (d_res_x && res)
+        if (res)
         {
-          *d_res_x = d_tmp_x;
+          bzla_propinfo_set_result(bzla, pi, d_tmp_x);
         }
         else
         {
@@ -885,19 +805,12 @@ bzla_is_inv_mul_const(Bzla *bzla,
  * (is_sll = false).
  */
 static bool
-is_inv_shift_const(Bzla *bzla,
-                   const BzlaBvDomain *x,
-                   const BzlaBitVector *t,
-                   const BzlaBitVector *s,
-                   uint32_t pos_x,
-                   BzlaBvDomain **d_res_x,
-                   bool is_sll)
+is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, bool is_sll)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s);
+  assert(pi);
 
+  int32_t pos_x;
   uint32_t cz_s, cz_t;
   bool res;
   BzlaBitVector *shift1, *shift2, *and, * or ;
@@ -906,24 +819,31 @@ is_inv_shift_const(Bzla *bzla,
   BzlaMemMgr *mm;
   BzlaBitVectorBinFun bv_fun;
   uint32_t (*count_zero_fun)(const BzlaBitVector *);
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
 
   if (is_sll)
   {
     bv_fun         = bzla_bv_sll;
     count_zero_fun = bzla_bv_get_num_trailing_zeros;
-    res            = bzla_is_inv_sll(bzla, x, t, s, pos_x, d_res_x);
+    res            = bzla_is_inv_sll(bzla, pi);
   }
   else
   {
     bv_fun         = bzla_bv_srl;
     count_zero_fun = bzla_bv_get_num_leading_zeros;
-    res            = bzla_is_inv_srl(bzla, x, t, s, pos_x, d_res_x);
+    res            = bzla_is_inv_srl(bzla, pi);
   }
 
   if (!res) return false;
 
   mm = bzla->mm;
-  if (d_res_x) *d_res_x = 0;
+  bzla_propinfo_set_result(bzla, pi, 0);
+
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
 
   if (pos_x == 0)
   {
@@ -944,9 +864,9 @@ is_inv_shift_const(Bzla *bzla,
     {
       shift1 = bv_fun(mm, s, x->lo);
       res    = bzla_bv_compare(shift1, t) == 0;
-      if (d_res_x && res)
+      if (res)
       {
-        *d_res_x = bzla_bvdomain_new(mm, x->lo, x->lo);
+        bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, x->lo, x->lo));
       }
       bzla_bv_free(mm, shift1);
     }
@@ -962,14 +882,14 @@ is_inv_shift_const(Bzla *bzla,
       if (bzla_bv_is_zero(t))
       {
         res = bzla_bv_compare(x->hi, min) >= 0 || bzla_bv_is_zero(s);
-        if (res && d_res_x)
+        if (res)
         {
           /* If s is zero, any value of x is an inverse. */
           bzla_bvdomain_gen_init_range(
               mm, &bzla->rng, &gen, x, bzla_bv_is_zero(s) ? 0 : min, 0);
           assert(bzla_bvdomain_gen_has_next(&gen));
-          bv       = bzla_bvdomain_gen_random(&gen);
-          *d_res_x = bzla_bvdomain_new(mm, bv, bv);
+          bv = bzla_bvdomain_gen_random(&gen);
+          bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, bv, bv));
           bzla_bvdomain_gen_delete(&gen);
         }
       }
@@ -984,68 +904,54 @@ is_inv_shift_const(Bzla *bzla,
           bzla_bv_free(mm, bv);
         }
 #endif
-        if (res && d_res_x)
+        if (res)
         {
-          *d_res_x = bzla_bvdomain_new(mm, min, min);
+          bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, min, min));
         }
       }
       bzla_bv_free(mm, min);
     }
   }
-  if (pos_x == 0 && d_res_x) assert(*d_res_x == 0);
+  assert(pos_x != 0 || pi->res_x == 0);
   return res;
 }
 
 bool
-bzla_is_inv_sll_const(Bzla *bzla,
-                      const BzlaBvDomain *x,
-                      const BzlaBitVector *t,
-                      const BzlaBitVector *s,
-                      uint32_t pos_x,
-                      BzlaBvDomain **d_res_x)
+bzla_is_inv_sll_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s);
-  return is_inv_shift_const(bzla, x, t, s, pos_x, d_res_x, true);
+  assert(pi);
+  return is_inv_shift_const(bzla, pi, true);
 }
 
 bool
-bzla_is_inv_srl_const(Bzla *bzla,
-                      const BzlaBvDomain *x,
-                      const BzlaBitVector *t,
-                      const BzlaBitVector *s,
-                      uint32_t pos_x,
-                      BzlaBvDomain **d_res_x)
+bzla_is_inv_srl_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s);
-  return is_inv_shift_const(bzla, x, t, s, pos_x, d_res_x, false);
+  assert(pi);
+  return is_inv_shift_const(bzla, pi, false);
 }
 
 bool
-bzla_is_inv_udiv_const(Bzla *bzla,
-                       const BzlaBvDomain *x,
-                       const BzlaBitVector *t,
-                       const BzlaBitVector *s,
-                       uint32_t pos_x,
-                       BzlaBvDomain **d_res_x)
+bzla_is_inv_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s);
+  assert(pi);
 
   bool res = true;
   BzlaBitVector *tmp, *min, *max, *inc;
   BzlaMemMgr *mm;
+  int32_t pos_x;
+  const BzlaBitVector *s, *t;
+  const BzlaBvDomain *x;
 
   mm  = bzla->mm;
-  res = bzla_is_inv_udiv(bzla, x, t, s, pos_x, 0);
-  if (d_res_x) *d_res_x = 0;
+  res = bzla_is_inv_udiv(bzla, pi);
+  bzla_propinfo_set_result(bzla, pi, 0);
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
 
   if (res && bzla_bvdomain_has_fixed_bits(mm, x))
   {
@@ -1103,9 +1009,9 @@ bzla_is_inv_udiv_const(Bzla *bzla,
           BzlaBvDomainGenerator dgen;
           bzla_bvdomain_gen_init_range(mm, &bzla->rng, &dgen, x, min, max);
           res = bzla_bvdomain_gen_has_next(&dgen);
-          if (d_res_x && res)
+          if (res)
           {
-            *d_res_x =
+            pi->res_x =
                 bzla_bvdomain_new(mm, bzla_bvdomain_gen_random(&dgen), max);
           }
           bzla_bvdomain_gen_delete(&dgen);
@@ -1155,9 +1061,9 @@ bzla_is_inv_udiv_const(Bzla *bzla,
             BzlaBvDomainGenerator dgen;
             bzla_bvdomain_gen_init_range(mm, &bzla->rng, &dgen, x, min, max);
             res = bzla_bvdomain_gen_has_next(&dgen);
-            if (d_res_x && res)
+            if (res)
             {
-              *d_res_x =
+              pi->res_x =
                   bzla_bvdomain_new(mm, bzla_bvdomain_gen_random(&dgen), max);
             }
             bzla_bvdomain_gen_delete(&dgen);
@@ -1188,19 +1094,20 @@ bzla_is_inv_udiv_const(Bzla *bzla,
  * t = 0: ~t -> (lo_x <= s)
  */
 bool
-bzla_is_inv_ult_const(Bzla *bzla,
-                      const BzlaBvDomain *x,
-                      const BzlaBitVector *t,
-                      const BzlaBitVector *s,
-                      uint32_t pos_x,
-                      BzlaBvDomain **d_res_x)
+bzla_is_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s);
+  assert(pi);
 
-  if (d_res_x) *d_res_x = 0;
+  int32_t pos_x;
+  const BzlaBitVector *s, *t;
+  const BzlaBvDomain *x;
+
+  bzla_propinfo_set_result(bzla, pi, 0);
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
 
   if (pos_x == 0)
   {
@@ -1224,25 +1131,25 @@ bzla_is_inv_ult_const(Bzla *bzla,
 }
 
 bool
-bzla_is_inv_urem_const(Bzla *bzla,
-                       const BzlaBvDomain *x,
-                       const BzlaBitVector *t,
-                       const BzlaBitVector *s,
-                       uint32_t pos_x,
-                       BzlaBvDomain **d_res_x)
+bzla_is_inv_urem_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s);
+  assert(pi);
 
   bool res;
   BzlaBitVector *rem;
   BzlaMemMgr *mm;
+  int32_t pos_x;
+  const BzlaBitVector *s, *t;
+  const BzlaBvDomain *x;
 
   mm  = bzla->mm;
-  res = bzla_is_inv_urem(bzla, x, t, s, pos_x, 0);
-  if (d_res_x) *d_res_x = 0;
+  res = bzla_is_inv_urem(bzla, pi);
+  bzla_propinfo_set_result(bzla, pi, 0);
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
 
   if (res && bzla_bvdomain_has_fixed_bits(mm, x))
   {
@@ -1318,10 +1225,8 @@ bzla_is_inv_urem_const(Bzla *bzla,
                 res = bv != 0;
                 if (res)
                 {
-                  if (d_res_x)
-                  {
-                    *d_res_x = bzla_bvdomain_new(mm, bv, bv);
-                  }
+                  bzla_propinfo_set_result(
+                      bzla, pi, bzla_bvdomain_new(mm, bv, bv));
 #ifndef NDEBUG
                   BzlaBitVector *tmp = bzla_bv_urem(mm, s, bv);
                   assert(bzla_bv_compare(tmp, t) == 0);
@@ -1403,10 +1308,8 @@ bzla_is_inv_urem_const(Bzla *bzla,
                 {
                   res = true;
                   bzla_bv_free(mm, rem);
-                  if (d_res_x)
-                  {
-                    *d_res_x = bzla_bvdomain_new(mm, bv, hi);
-                  }
+                  bzla_propinfo_set_result(
+                      bzla, pi, bzla_bvdomain_new(mm, bv, hi));
                   break;
                 }
                 bzla_bv_free(mm, rem);
@@ -1447,56 +1350,45 @@ bzla_is_inv_urem_const(Bzla *bzla,
  * check_fixed_bits(x,s) := ((s & hi_x) | lo_x) = s
  */
 bool
-bzla_is_inv_cond_const(Bzla *bzla,
-                       const BzlaBvDomain *x,
-                       const BzlaBitVector *t,
-                       const BzlaBitVector *s0,
-                       const BzlaBitVector *s1,
-                       uint32_t pos_x,
-                       BzlaBvDomain **d_res_x)
+bzla_is_inv_cond_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
-  assert(s0);
-  assert(s1);
+  assert(pi);
 
   bool cmp0, cmp1;
   BzlaMemMgr *mm;
+  int32_t pos_x;
+  const BzlaBitVector *t;
+  const BzlaBvDomain *x;
 
   mm = bzla->mm;
-  if (d_res_x) *d_res_x = 0;
+  bzla_propinfo_set_result(bzla, pi, 0);
+  t     = pi->target_value;
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
 
   if (pos_x == 1)
   {
-    /* s0: value for e[0] */
-    /* s1: value for e[2] */
-    if (bzla_bv_is_true(s0) && bzla_bvdomain_check_fixed_bits(bzla->mm, x, t))
+    if (bzla_bv_is_true(pi->bv[0])
+        && bzla_bvdomain_check_fixed_bits(bzla->mm, x, t))
     {
-      if (d_res_x)
-      {
-        *d_res_x = bzla_bvdomain_new(mm, t, t);
-      }
+      bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, t, t));
       return true;
     }
-    if (bzla_bv_is_false(s0) && bzla_bv_compare(s1, t) == 0)
+    if (bzla_bv_is_false(pi->bv[0]) && bzla_bv_compare(pi->bv[2], t) == 0)
     {
       return true;
     }
   }
   else if (pos_x == 2)
   {
-    /* s0: value for e[0] */
-    /* s1: value for e[1] */
-    if (bzla_bv_is_false(s0) && bzla_bvdomain_check_fixed_bits(bzla->mm, x, t))
+    if (bzla_bv_is_false(pi->bv[0])
+        && bzla_bvdomain_check_fixed_bits(bzla->mm, x, t))
     {
-      if (d_res_x)
-      {
-        *d_res_x = bzla_bvdomain_new(mm, t, t);
-      }
+      bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, t, t));
       return true;
     }
-    if (bzla_bv_is_true(s0) && bzla_bv_compare(s1, t) == 0)
+    if (bzla_bv_is_true(pi->bv[0]) && bzla_bv_compare(pi->bv[1], t) == 0)
     {
       return true;
     }
@@ -1507,8 +1399,8 @@ bzla_is_inv_cond_const(Bzla *bzla,
     /* s1: value for e[2] */
     bool res = false;
     assert(bzla_bvdomain_get_width(x) == 1);
-    cmp0 = bzla_bv_compare(s0, t) == 0;
-    cmp1 = bzla_bv_compare(s1, t) == 0;
+    cmp0 = bzla_bv_compare(pi->bv[1], t) == 0;
+    cmp1 = bzla_bv_compare(pi->bv[2], t) == 0;
     if (bzla_bvdomain_is_fixed_bit_true(x, 0))
     {
       res = cmp0;
@@ -1521,7 +1413,7 @@ bzla_is_inv_cond_const(Bzla *bzla,
     {
       res = cmp0 || cmp1;
     }
-    if (res && d_res_x)
+    if (res)
     {
       uint64_t val;
       if (cmp0 && cmp1)
@@ -1532,7 +1424,8 @@ bzla_is_inv_cond_const(Bzla *bzla,
       {
         val = cmp0 ? 1 : 0;
       }
-      *d_res_x = bzla_bvdomain_new_fixed_uint64(mm, val, 1);
+      bzla_propinfo_set_result(
+          bzla, pi, bzla_bvdomain_new_fixed_uint64(mm, val, 1));
     }
     return res;
   }
@@ -1549,19 +1442,22 @@ bzla_is_inv_cond_const(Bzla *bzla,
  * x[upper:lower] & m = t & m
  */
 bool
-bzla_is_inv_slice_const(Bzla *bzla,
-                        const BzlaBvDomain *x,
-                        const BzlaBitVector *t,
-                        uint32_t upper,
-                        uint32_t lower)
+bzla_is_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
-  assert(x);
-  assert(t);
+  assert(pi);
 
   bool res;
   BzlaBitVector *mask, *mask_sliced, *x_mask, *t_mask;
   BzlaMemMgr *mm;
+  const BzlaBvDomain *x;
+  uint32_t upper, lower;
+  const BzlaBitVector *t;
+
+  x     = pi->bvd[0];
+  t     = pi->target_value;
+  upper = bzla_node_bv_slice_get_upper(pi->exp);
+  lower = bzla_node_bv_slice_get_lower(pi->exp);
 
   mm          = bzla->mm;
   mask        = bzla_bv_xnor(mm, x->lo, x->hi);

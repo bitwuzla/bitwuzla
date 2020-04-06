@@ -80,7 +80,7 @@ bool bzla_util_file_has_suffix(const char *path, const char *suffix);
 
 /*------------------------------------------------------------------------*/
 
-char *bzla_util_node2string(BzlaNode *);
+char *bzla_util_node2string(const BzlaNode *);
 
 /*------------------------------------------------------------------------*/
 

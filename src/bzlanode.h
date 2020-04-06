@@ -725,8 +725,8 @@ void bzla_node_lambda_delete_static_rho(Bzla *bzla, BzlaNode *lambda);
 
 /*------------------------------------------------------------------------*/
 
-uint32_t bzla_node_bv_slice_get_upper(BzlaNode *slice);
-uint32_t bzla_node_bv_slice_get_lower(BzlaNode *slice);
+uint32_t bzla_node_bv_slice_get_upper(const BzlaNode *slice);
+uint32_t bzla_node_bv_slice_get_lower(const BzlaNode *slice);
 
 /*------------------------------------------------------------------------*/
 
