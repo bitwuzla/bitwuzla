@@ -2447,11 +2447,10 @@ check_inv_dbg(Bzla *bzla,
   assert(bzla_node_is_regular(pi->exp));
   assert(pi->target_value);
 
-  // for (size_t i = 0; i < pi->exp->arity; ++i)
-  //{
-  //  assert (pi->bv[i]);
-  //  assert (pi->bvd[i]);
-  //}
+  for (size_t i = 0; i < pi->exp->arity; ++i)
+  {
+    assert(pi->bv[i]);
+  }
 
   assert(!same_bw
          || bzla_bv_get_width(pi->bv[1 - pi->pos_x])
@@ -2460,7 +2459,8 @@ check_inv_dbg(Bzla *bzla,
   assert(pi->pos_x <= 1);
   assert(!bzla_node_is_bv_const(pi->exp->e[pi->pos_x]));
   assert(is_inv_fun(bzla, pi));
-  assert(!bzla_bvdomain_has_fixed_bits(bzla->mm, pi->bvd[pi->pos_x])
+  assert(!pi->bvd[pi->pos_x]
+         || !bzla_bvdomain_has_fixed_bits(bzla->mm, pi->bvd[pi->pos_x])
          || is_inv_fun_const(bzla, pi));
 }
 
