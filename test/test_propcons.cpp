@@ -530,6 +530,8 @@ class TestPropCons : public TestPropCommon
                 c_x  = bzla_exp_bv_const(bzla, bv_x);
                 eq_x = bzla_exp_eq(bzla, x, c_x);
                 bzla_assume_exp(bzla, eq_x);
+                bzla_node_release(bzla, c_x);
+                bzla_node_release(bzla, eq_x);
               }
 
               eq_t = bzla_exp_eq(bzla, expr, c_t);
@@ -565,6 +567,7 @@ class TestPropCons : public TestPropCommon
                 }
               }
 
+              assert(res == expected_result);
               ASSERT_EQ(res, expected_result);
 
               if (!slv_sat)
@@ -574,9 +577,7 @@ class TestPropCons : public TestPropCommon
 
               if (bv_x)
               {
-                bzla_node_release(bzla, c_x);
                 bzla_bv_free(mm, bv_x);
-                bzla_node_release(bzla, eq_x);
               }
 
               bzla_node_release(bzla, eq_t);
@@ -602,6 +603,7 @@ class TestPropCons : public TestPropCommon
       bzla_node_release(bzla, eq_x2);
 
       bzla_bvdomain_free(mm, d_x);
+      bzla_hashint_map_delete(domains);
     }
 
     bzla_node_release(bzla, x);

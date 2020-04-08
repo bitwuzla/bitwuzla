@@ -1497,6 +1497,12 @@ bzla_proputils_cons_cond(Bzla *bzla, BzlaPropInfo *pi)
     res = bzla_rng_flip_coin(&bzla->rng) ? bzla_bv_one(mm, 1)
                                          : bzla_bv_zero(mm, 1);
   }
+  else if ((pi->pos_x == 1 && bzla_bv_is_zero(pi->bv[0]))
+           || (pi->pos_x == 2 && bzla_bv_is_one(pi->bv[0])))
+  {
+    /* return current assignment for disabled branch */
+    res = bzla_bv_copy(mm, pi->bv[pi->pos_x]);
+  }
   else
   {
     res = bzla_bv_copy(mm, pi->target_value);
@@ -2393,7 +2399,13 @@ bzla_proputils_cons_cond_const(Bzla *bzla, BzlaPropInfo *pi)
   t     = pi->target_value;
   x     = pi->bvd[pos_x];
 
-  if (pos_x != 0 && bzla_bvdomain_check_fixed_bits(mm, x, t))
+  if ((pi->pos_x == 1 && bzla_bv_is_zero(pi->bv[0]))
+      || (pi->pos_x == 2 && bzla_bv_is_one(pi->bv[0])))
+  {
+    /* return current assignment for disabled branch */
+    res = bzla_bv_copy(mm, pi->bv[pi->pos_x]);
+  }
+  else if (pos_x != 0 && bzla_bvdomain_check_fixed_bits(mm, x, t))
   {
     res = bzla_bv_copy(mm, t);
   }
@@ -2412,8 +2424,8 @@ bzla_proputils_cons_cond_const(Bzla *bzla, BzlaPropInfo *pi)
   }
   else
   {
-    /* non-recoverable conflict */
-    res = NULL;
+    /* bits don't match, return current assignment */
+    res = bzla_bv_copy(mm, pi->bv[pi->pos_x]);
   }
   return res;
 }
@@ -3851,10 +3863,14 @@ bzla_proputils_inv_cond(Bzla *bzla, BzlaPropInfo *pi)
       res = bzla_bv_zero(mm, 1);
     }
   }
+  else if ((pi->pos_x == 1 && bzla_bv_is_zero(pi->bv[0]))
+           || (pi->pos_x == 2 && bzla_bv_is_one(pi->bv[0])))
+  {
+    /* return current assignment for disabled branch */
+    res = bzla_bv_copy(mm, pi->bv[pi->pos_x]);
+  }
   else
   {
-    assert((pi->pos_x == 1 && bzla_bv_is_one(pi->bv[0]))
-           || (pi->pos_x == 2 && bzla_bv_is_zero(pi->bv[0])));
     res = bzla_bv_copy(mm, t);
   }
 #if 0
@@ -4792,7 +4808,13 @@ bzla_proputils_inv_cond_const(Bzla *bzla, BzlaPropInfo *pi)
 
   assert(bzla_is_inv_cond_const(bzla, pi));
 
-  if (bzla_bvdomain_is_fixed(mm, x))
+  if ((pi->pos_x == 1 && bzla_bv_is_zero(pi->bv[0]))
+      || (pi->pos_x == 2 && bzla_bv_is_one(pi->bv[0])))
+  {
+    /* return current assignment for disabled branch */
+    res = bzla_bv_copy(mm, pi->bv[pi->pos_x]);
+  }
+  else if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
     if (pos_x == 0)

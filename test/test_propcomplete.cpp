@@ -178,8 +178,8 @@ class TestPropComplete : public TestBzla
 
     uint32_t idx_x;
     uint64_t k;
-    bool is_inv, is_cons_check;
-    BzlaBitVector *res;
+    bool is_inv;
+    BzlaBitVector *res, *tmp;
     const BzlaBitVector *x_bv, *s0, *s1, *t;
 
     /* the index of x, the operand we solve for */
@@ -192,26 +192,6 @@ class TestPropComplete : public TestBzla
     /* the expected assignment of x */
     x_bv = pi->bv[pi->pos_x];
 
-    is_cons_check = compute_value_fun == bzla_proputils_cons_cond
-                    || compute_value_fun == bzla_proputils_cons_cond_const;
-
-    if (is_cons_check)
-    {
-      if (idx_x != 0)
-      {
-        x_bv = t;
-      }
-    }
-    else
-    {
-      if ((idx_x == 1 && bzla_bv_is_zero(s0))
-          || (idx_x == 2 && bzla_bv_is_one(s0)))
-      {
-        assert(bzla_bv_compare(s1, t) == 0);
-        return;
-      }
-    }
-
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
       pi->res_x = 0;
@@ -223,6 +203,14 @@ class TestPropComplete : public TestBzla
       res = compute_value_fun(d_bzla, pi);
       if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       ASSERT_NE(res, nullptr);
+      if ((idx_x == 1 && bzla_bv_is_zero(s0))
+          || (idx_x == 2 && bzla_bv_is_one(s0)))
+      {
+        /* In case of cond, the implementation is not complete on purpose:
+         * We don't care about disabled branches, and will never produce all
+         * possible values for them. */
+        break;
+      }
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
       res = 0;
@@ -240,7 +228,12 @@ class TestPropComplete : public TestBzla
       std::cout << "idx_x: " << idx_x << std::endl;
     }
     ASSERT_NE(res, nullptr);
-    ASSERT_EQ(bzla_bv_compare(res, x_bv), 0);
+    tmp = bzla_bv_ite(d_mm,
+                      idx_x == 0 ? res : pi->bv[0],
+                      idx_x == 1 ? res : pi->bv[1],
+                      idx_x == 2 ? res : pi->bv[2]);
+    ASSERT_EQ(bzla_bv_compare(tmp, t), 0);
+    bzla_bv_free(d_mm, tmp);
     bzla_bv_free(d_mm, res);
   }
 
@@ -1955,10 +1948,9 @@ class TestPropCompleteConst : public TestPropComplete
     uint32_t idx_x;
     uint64_t k;
     bool is_inv;
-    BzlaBitVector *res;
+    BzlaBitVector *res, *tmp;
     const BzlaBitVector *s0, *s1, *t, *x_bv;
     const BzlaBvDomain *x;
-    bool is_cons_check;
 
     idx_x = pi->pos_x;
     x     = pi->bvd[idx_x];
@@ -1966,27 +1958,6 @@ class TestPropCompleteConst : public TestPropComplete
     s0    = pi->bv[idx_x == 0 ? 1 : 0];
     s1    = pi->bv[idx_x == 2 ? 1 : 2];
     t     = pi->target_value;
-
-    is_cons_check = compute_value_fun == bzla_proputils_cons_cond
-                    || compute_value_fun == bzla_proputils_cons_cond_const;
-
-    if (is_cons_check)
-    {
-      if (idx_x != 0)
-      {
-        if (!bzla_bvdomain_check_fixed_bits(d_mm, x, t)) return;
-        x_bv = t;
-      }
-    }
-    else
-    {
-      if ((idx_x == 1 && bzla_bv_is_zero(s0))
-          || (idx_x == 2 && bzla_bv_is_one(s0)))
-      {
-        assert(bzla_bv_compare(s1, t) == 0);
-        return;
-      }
-    }
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
@@ -1999,6 +1970,14 @@ class TestPropCompleteConst : public TestPropComplete
       res = compute_value_fun(d_bzla, pi);
       if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       ASSERT_NE(res, nullptr);
+      if ((idx_x == 1 && bzla_bv_is_zero(s0))
+          || (idx_x == 2 && bzla_bv_is_one(s0)))
+      {
+        /* In case of cond, the implementation is not complete on purpose:
+         * We don't care about disabled branches, and will never produce all
+         * possible values for them. */
+        break;
+      }
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
       res = 0;
@@ -2018,7 +1997,12 @@ class TestPropCompleteConst : public TestPropComplete
       std::cout << "idx_x: " << idx_x << std::endl;
     }
     ASSERT_NE(res, nullptr);
-    ASSERT_EQ(bzla_bv_compare(res, x_bv), 0);
+    tmp = bzla_bv_ite(d_mm,
+                      idx_x == 0 ? res : pi->bv[0],
+                      idx_x == 1 ? res : pi->bv[1],
+                      idx_x == 2 ? res : pi->bv[2]);
+    ASSERT_EQ(bzla_bv_compare(tmp, t), 0);
+    bzla_bv_free(d_mm, tmp);
     bzla_bv_free(d_mm, res);
   }
 
