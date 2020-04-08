@@ -3638,10 +3638,11 @@ bzla_proputils_inv_concat(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
   check_inv_dbg(bzla, pi, bzla_is_inv_concat, bzla_is_inv_concat_const, false);
+  BzlaBitVector *tmp;
 #endif
   int32_t pos_x;
   uint32_t bw_t, bw_s;
-  BzlaBitVector *res, *tmp;
+  BzlaBitVector *res;
   BzlaMemMgr *mm;
   const BzlaBitVector *s, *t;
 
@@ -3663,8 +3664,10 @@ bzla_proputils_inv_concat(Bzla *bzla, BzlaPropInfo *pi)
    * ------------------------------------------------------------------------ */
   if (pos_x)
   {
+#ifndef NDEBUG
     tmp = bzla_bv_slice(mm, t, bw_t - 1, bw_t - bw_s);
     assert(!bzla_bv_compare(tmp, s)); /* CONFLICT: s bits do not match t */
+#endif
     res = bzla_bv_slice(mm, t, bw_t - bw_s - 1, 0);
   }
   /* ------------------------------------------------------------------------
@@ -3674,12 +3677,14 @@ bzla_proputils_inv_concat(Bzla *bzla, BzlaPropInfo *pi)
    * ------------------------------------------------------------------------ */
   else
   {
+#ifndef NDEBUG
     tmp = bzla_bv_slice(mm, t, bw_s - 1, 0);
     assert(!bzla_bv_compare(tmp, s)); /* CONFLICT: s bits do not match t */
+#endif
     res = bzla_bv_slice(mm, t, bw_t - 1, bw_s);
   }
-  bzla_bv_free(mm, tmp);
 #ifndef NDEBUG
+  bzla_bv_free(mm, tmp);
   check_result_binary_dbg(bzla, bzla_bv_concat, pi, res, "o");
 #endif
   return res;
@@ -3817,7 +3822,7 @@ bzla_proputils_inv_cond(Bzla *bzla, BzlaPropInfo *pi)
   assert(pi->pos_x <= 2);
   assert(!bzla_node_is_bv_const(pi->exp->e[pi->pos_x]));
 
-  int32_t cmp0, cmp1;
+  bool cmp0, cmp1;
   BzlaBitVector *res;
   BzlaMemMgr *mm;
   const BzlaBitVector *t;
@@ -3848,6 +3853,8 @@ bzla_proputils_inv_cond(Bzla *bzla, BzlaPropInfo *pi)
   }
   else
   {
+    assert((pi->pos_x == 1 && bzla_bv_is_one(pi->bv[0]))
+           || (pi->pos_x == 2 && bzla_bv_is_zero(pi->bv[0])));
     res = bzla_bv_copy(mm, t);
   }
 #if 0
@@ -5306,6 +5313,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         bzla_bv_free(bzla->mm, tmp);
       }
 
+      memset(&pi, 0, sizeof(BzlaPropInfo));
+      pi.exp          = real_cur;
       pi.target_value = bv_t;
 
       /* check if all paths are const, if yes -> conflict */

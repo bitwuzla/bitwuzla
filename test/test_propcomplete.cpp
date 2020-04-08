@@ -64,6 +64,29 @@ class TestPropComplete : public TestBzla
     assert(d_domains->count == 0);
   }
 
+  void init_prop_info(BzlaPropInfo *pi,
+                      BzlaNode *exp,
+                      int32_t pos_x,
+                      BzlaBitVector *t,
+                      BzlaBitVector *s0,
+                      BzlaBitVector *s1,
+                      BzlaBitVector *s2,
+                      BzlaBvDomain *d0,
+                      BzlaBvDomain *d1,
+                      BzlaBvDomain *d2)
+  {
+    pi->exp          = exp;
+    pi->pos_x        = pos_x;
+    pi->target_value = t;
+    pi->bv[0]        = s0;
+    pi->bv[1]        = s1;
+    pi->bv[2]        = s2;
+    pi->bvd[0]       = d0;
+    pi->bvd[1]       = d1;
+    pi->bvd[2]       = d2;
+    pi->res_x        = 0;
+  }
+
   /**
    * Check the result of a previous inverse value computation. Given 's'
    * (the assignment of the other operand) and 't' (the target value of the
@@ -78,45 +101,43 @@ class TestPropComplete : public TestBzla
    * is_inv_fun: The function to test if given operator is invertible with
    *             respect to s and t.
    * inv_fun   : The function to compute the inverse value for x given s and t.
-   * exp       : The node representing the operation.
-   * s         : The assignment of the other operand.
-   * t         : The assignment of the output (the target value of the
-   *             operation).
-   * x_bv      : The expected assignment of the operand we solve for.
-   * idx_x     : The index of operand 'x'.
+   * pi        : The struct containing all information needed for is_inv checks
+   *             and invers/consistent value computation.
    */
-  void check_result(BzlaPropIsInv is_inv_fun,
-                    BzlaPropComputeValue inv_fun,
-                    BzlaNode *exp,
-                    BzlaBitVector *s,
-                    BzlaBitVector *t,
-                    BzlaBitVector *x_bv,
-                    uint32_t idx_x)
+  void check_result(BzlaPropIsInvFun is_inv_fun,
+                    BzlaPropComputeValueFun inv_fun,
+                    BzlaPropInfo *pi)
   {
     assert(inv_fun);
-    assert(exp);
-    assert(bzla_node_is_regular(exp));
-    assert(s);
-    assert(t);
-    assert(x_bv);
+    assert(pi);
     assert(d_domains);
 
     uint64_t k;
+    uint32_t idx_x;
     bool is_inv;
     BzlaBitVector *res;
-    BzlaBvDomain *x = 0, *d_res_x;
+    const BzlaBitVector *s, *t, *x_bv;
+
+    /* the index of x, the operand we solve for */
+    idx_x = pi->pos_x;
+    /* the assignment of the other operand */
+    s = pi->bv[idx_x ? 0 : 1];
+    /* the target value */
+    t = pi->target_value;
+    /* the expected assignment of x */
+    x_bv = pi->bv[idx_x];
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
-      d_res_x = 0;
+      pi->res_x = 0;
       if (is_inv_fun)
       {
-        is_inv = is_inv_fun(d_bzla, x, t, s, idx_x, &d_res_x);
+        is_inv = is_inv_fun(d_bzla, pi);
         assert(is_inv);
       }
-      res = inv_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
+      res = inv_fun(d_bzla, pi);
       ASSERT_NE(res, nullptr);
-      if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
+      if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
       res = 0;
@@ -131,7 +152,6 @@ class TestPropComplete : public TestBzla
       bzla_bv_print(s);
       std::cout << "idx_x: " << idx_x << std::endl;
     }
-    assert(res);
     ASSERT_NE(res, nullptr);
     ASSERT_EQ(bzla_bv_compare(res, x_bv), 0);
     bzla_bv_free(d_mm, res);
@@ -144,54 +164,80 @@ class TestPropComplete : public TestBzla
    *                    with respect to s0, s1 and t.
    * compute_value_fun: The function to compute the inverse value for x given
    *                    s0, s1 and t.
-   * exp       : The node representing the operation.
-   * s0, s1    : The assignment of other two operands:
-   *               - for idx_x = 0, assignment s0 is for e[1] and s1 for e[2]
-   *               - for idx_x = 1, assignment s0 is for e[0] and s1 for e[2]
-   *               - for idx_x = 2, assignment s0 is for e[0] and s1 for e[1]
-   * t          : The assignment of the output (the target value of the
-   *              operation).
-   * x_bv       : The expected assignment of the operand we solve for.
-   * idx_x      : The index of operand 'x'.
+   * pi               : The struct containing all information needed for is_inv
+   *                    checks and invers/consistent value computation.
    */
-  void check_result_cond(BzlaPropIsInvCond is_inv_fun,
-                         BzlaPropComputeValueCond compute_value_fun,
-                         BzlaNode *exp,
-                         BzlaBitVector *s0,
-                         BzlaBitVector *s1,
-                         BzlaBitVector *t,
-                         BzlaBitVector *x_bv,
-                         uint32_t idx_x)
+  void check_result_cond(BzlaPropIsInvFun is_inv_fun,
+                         BzlaPropComputeValueFun compute_value_fun,
+                         BzlaPropInfo *pi)
   {
     assert(compute_value_fun);
     assert(exp);
-    assert(bzla_node_is_regular(exp));
-    assert(s0);
-    assert(s1);
-    assert(t);
-    assert(x_bv);
+    assert(pi);
     assert(d_domains);
 
+    uint32_t idx_x;
     uint64_t k;
-    bool is_inv;
+    bool is_inv, is_cons_check;
     BzlaBitVector *res;
-    BzlaBvDomain *d_res_x;
+    const BzlaBitVector *x_bv, *s0, *s1, *t;
+
+    /* the index of x, the operand we solve for */
+    idx_x = pi->pos_x;
+    /* the assignment of the other operands */
+    s0 = pi->bv[idx_x == 0 ? 1 : 0];
+    s1 = pi->bv[idx_x == 2 ? 1 : 2];
+    /* the target value */
+    t = pi->target_value;
+    /* the expected assignment of x */
+    x_bv = pi->bv[pi->pos_x];
+
+    is_cons_check = compute_value_fun == bzla_proputils_cons_cond
+                    || compute_value_fun == bzla_proputils_cons_cond_const;
+
+    if (is_cons_check)
+    {
+      if (idx_x != 0)
+      {
+        x_bv = t;
+      }
+    }
+    else
+    {
+      if ((idx_x == 1 && bzla_bv_is_zero(s0))
+          || (idx_x == 2 && bzla_bv_is_one(s0)))
+      {
+        assert(bzla_bv_compare(s1, t) == 0);
+        return;
+      }
+    }
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
-      d_res_x = 0;
+      pi->res_x = 0;
       if (is_inv_fun)
       {
-        is_inv = is_inv_fun(d_bzla, 0, t, s0, s1, idx_x, &d_res_x);
+        is_inv = is_inv_fun(d_bzla, pi);
         assert(is_inv);
       }
-      res =
-          compute_value_fun(d_bzla, exp, t, s0, s1, idx_x, d_domains, d_res_x);
-      if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
+      res = compute_value_fun(d_bzla, pi);
+      if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       ASSERT_NE(res, nullptr);
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
       res = 0;
+    }
+    if (!res)
+    {
+      std::cout << "x: ";
+      bzla_bv_print(x_bv);
+      std::cout << "t: ";
+      bzla_bv_print(t);
+      std::cout << "s0: ";
+      bzla_bv_print(s0);
+      std::cout << "s1: ";
+      bzla_bv_print(s1);
+      std::cout << "idx_x: " << idx_x << std::endl;
     }
     ASSERT_NE(res, nullptr);
     ASSERT_EQ(bzla_bv_compare(res, x_bv), 0);
@@ -215,14 +261,15 @@ class TestPropComplete : public TestBzla
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              const BzlaBitVector *),
-                    BzlaPropIsInv is_inv_fun,
-                    BzlaPropComputeValue inv_fun)
+                    BzlaPropIsInvFun is_inv_fun,
+                    BzlaPropComputeValueFun inv_fun)
   {
     uint32_t bw;
     uint64_t i, j;
     BzlaNode *exp, *e[2];
     BzlaSortId sort;
     BzlaBitVector *s[2], *t;
+    BzlaPropInfo pi;
 
     bw   = TEST_PROP_INV_COMPLETE_BW;
     sort = bzla_sort_bv(d_bzla, bw);
@@ -238,8 +285,10 @@ class TestPropComplete : public TestBzla
       {
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         t    = bv_fun(d_mm, s[0], s[1]);
-        check_result(is_inv_fun, inv_fun, exp, s[0], t, s[1], 1);
-        check_result(is_inv_fun, inv_fun, exp, s[1], t, s[0], 0);
+        init_prop_info(&pi, exp, 0, t, s[0], s[1], 0, 0, 0, 0);
+        check_result(is_inv_fun, inv_fun, &pi);
+        init_prop_info(&pi, exp, 1, t, s[0], s[1], 0, 0, 0, 0);
+        check_result(is_inv_fun, inv_fun, &pi);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
       }
@@ -251,14 +300,15 @@ class TestPropComplete : public TestBzla
   }
 
   /** Same as check_binary but for cond.  */
-  void check_cond(BzlaPropIsInvCond is_inv_fun,
-                  BzlaPropComputeValueCond compute_value_fun)
+  void check_cond(BzlaPropIsInvFun is_inv_fun,
+                  BzlaPropComputeValueFun compute_value_fun)
   {
     uint32_t bw;
     uint64_t i, j, k;
     BzlaNode *exp, *e[3];
     BzlaSortId sort, sort1;
     BzlaBitVector *s[3], *t;
+    BzlaPropInfo pi;
 
     bw    = TEST_PROP_INV_COMPLETE_BW;
     sort  = bzla_sort_bv(d_bzla, bw);
@@ -280,12 +330,12 @@ class TestPropComplete : public TestBzla
         {
           s[2] = bzla_bv_uint64_to_bv(d_mm, k, bw);
           t    = bzla_bv_ite(d_mm, s[0], s[1], s[2]);
-          check_result_cond(
-              is_inv_fun, compute_value_fun, exp, s[1], s[2], t, s[0], 0);
-          check_result_cond(
-              is_inv_fun, compute_value_fun, exp, s[0], s[2], t, t, 1);
-          check_result_cond(
-              is_inv_fun, compute_value_fun, exp, s[0], s[1], t, t, 2);
+          init_prop_info(&pi, exp, 0, t, s[0], s[1], s[2], 0, 0, 0);
+          check_result_cond(is_inv_fun, compute_value_fun, &pi);
+          init_prop_info(&pi, exp, 1, t, s[0], s[1], s[2], 0, 0, 0);
+          check_result_cond(is_inv_fun, compute_value_fun, &pi);
+          init_prop_info(&pi, exp, 2, t, s[0], s[1], s[2], 0, 0, 0);
+          check_result_cond(is_inv_fun, compute_value_fun, &pi);
           bzla_bv_free(d_mm, s[2]);
           bzla_bv_free(d_mm, t);
         }
@@ -300,8 +350,8 @@ class TestPropComplete : public TestBzla
   }
 
   /** Same as check_binary but for slice.  */
-  void check_slice(BzlaPropIsInvSlice is_inv_fun,
-                   BzlaPropComputeValue compute_value_fun)
+  void check_slice(BzlaPropIsInvFun is_inv_fun,
+                   BzlaPropComputeValueFun compute_value_fun)
   {
     bool is_inv;
     uint32_t bw;
@@ -309,6 +359,7 @@ class TestPropComplete : public TestBzla
     BzlaNode *exp, *e;
     BzlaBitVector *t, *x, *res;
     BzlaSortId sort;
+    BzlaPropInfo pi;
 
     bw   = TEST_PROP_INV_COMPLETE_BW;
     sort = bzla_sort_bv(d_bzla, bw);
@@ -324,15 +375,19 @@ class TestPropComplete : public TestBzla
         {
           x = bzla_bv_uint64_to_bv(d_mm, i, bw);
           t = bzla_bv_slice(d_mm, x, up, lo);
+          init_prop_info(&pi, exp, 0, t, x, 0, 0, 0, 0, 0);
+          /* test and check result */
           for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
           {
+            pi.res_x = 0;
             if (is_inv_fun)
             {
-              is_inv = is_inv_fun(d_bzla, 0, t, up, lo);
+              is_inv = is_inv_fun(d_bzla, &pi);
               assert(is_inv);
             }
-            res = compute_value_fun(d_bzla, exp, t, x, 0, d_domains, 0);
+            res = compute_value_fun(d_bzla, &pi);
             ASSERT_NE(res, nullptr);
+            if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
             if (!bzla_bv_compare(res, x)) break;
             bzla_bv_free(d_mm, res);
             res = 0;
@@ -368,14 +423,15 @@ class TestPropComplete : public TestBzla
                    BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                             const BzlaBitVector *,
                                             const BzlaBitVector *),
-                   BzlaPropIsInv is_inv_fun,
-                   BzlaPropComputeValue inv_fun_bv)
+                   BzlaPropIsInvFun is_inv_fun,
+                   BzlaPropComputeValueFun inv_fun_bv)
   {
     uint32_t bw;
     uint64_t i, j;
     BzlaNode *exp, *e[2];
     BzlaSortId sort;
-    BzlaBitVector *s[2], *x;
+    BzlaBitVector *s[2], *t;
+    BzlaPropInfo pi;
 
     bw   = TEST_PROP_INV_COMPLETE_BW;
     sort = bzla_sort_bv(d_bzla, bw);
@@ -390,11 +446,13 @@ class TestPropComplete : public TestBzla
       for (j = 0; j < (uint32_t)(1 << bw); j++)
       {
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
-        x    = bv_fun(d_mm, s[0], s[1]);
-        check_result(is_inv_fun, inv_fun_bv, exp, s[0], x, s[1], 1);
-        check_result(is_inv_fun, inv_fun_bv, exp, s[1], x, s[0], 0);
+        t    = bv_fun(d_mm, s[0], s[1]);
+        init_prop_info(&pi, exp, 0, t, s[0], s[1], 0, 0, 0, 0);
+        check_result(is_inv_fun, inv_fun_bv, &pi);
+        init_prop_info(&pi, exp, 1, t, s[0], s[1], 0, 0, 0, 0);
+        check_result(is_inv_fun, inv_fun_bv, &pi);
         bzla_bv_free(d_mm, s[1]);
-        bzla_bv_free(d_mm, x);
+        bzla_bv_free(d_mm, t);
       }
       bzla_bv_free(d_mm, s[0]);
     }
@@ -416,29 +474,30 @@ class TestPropComplete : public TestBzla
     (void) bw;
     bool inv;
     uint64_t i, j;
-    BzlaNode *_and, *cand[2], *e[2], *ce[2];
+    BzlaNode *exp, *cexp[2], *e[2], *ce[2];
     BzlaSortId sort;
-    BzlaBitVector *bvand, *s[2], *res, *tmp, *tmp2;
+    BzlaBitVector *t, *s[2], *res, *tmp, *tmp2;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaSolver *slv              = 0;
-    BzlaPropComputeValue inv_fun = bzla_proputils_inv_and;
+    BzlaSolver *slv;
+    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_and;
+    BzlaPropInfo pi;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
     e[1] = bzla_exp_var(d_bzla, sort, 0);
     bzla_sort_release(d_bzla, sort);
-    _and = bzla_exp_bv_and(d_bzla, e[0], e[1]);
+    exp = bzla_exp_bv_and(d_bzla, e[0], e[1]);
 
     if (use_domains)
     {
       assert(d_domains);
       inv_fun = bzla_proputils_inv_and_const;
-      bzla_prop_solver_init_domains(d_bzla, d_domains, _and);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(_and->e[0])->id)
+               d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
       x1 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(_and->e[1])->id)
+               d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
     }
 
@@ -448,57 +507,63 @@ class TestPropComplete : public TestBzla
       s[1]    = bzla_bv_uint64_to_bv(d_mm, i, bw);
       ce[0]   = bzla_exp_bv_const(d_bzla, s[0]);
       ce[1]   = bzla_exp_bv_const(d_bzla, s[1]);
-      cand[0] = bzla_exp_bv_and(d_bzla, ce[0], e[1]);
-      cand[1] = bzla_exp_bv_and(d_bzla, e[0], ce[1]);
+      cexp[0] = bzla_exp_bv_and(d_bzla, ce[0], e[1]);
+      cexp[1] = bzla_exp_bv_and(d_bzla, e[0], ce[1]);
 
       for (j = 0; j < (uint32_t)(1 << bw); j++)
       {
-        bvand = bzla_bv_uint64_to_bv(d_mm, j, bw);
-        tmp   = bzla_bv_and(d_mm, s[0], bvand);
-        if (bzla_bv_compare(tmp, bvand))
+        t   = bzla_bv_uint64_to_bv(d_mm, j, bw);
+        tmp = bzla_bv_and(d_mm, s[0], t);
+        if (bzla_bv_compare(tmp, t))
         {
         PROP_INV_CONF_AND_TESTS:
           /* prop engine: all conflicts are treated as fixable */
-          inv = bzla_is_inv_and(d_bzla, x0, bvand, s[1], 0, 0);
-          res = inv ? inv_fun(d_bzla, _and, bvand, s[1], 0, d_domains, 0)
-                    : bzla_proputils_cons_and(
-                        d_bzla, _and, bvand, s[1], 0, d_domains, 0);
-          ASSERT_NE(res, nullptr);
-          tmp2 = bzla_bv_and(d_mm, bvand, res);
-          ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
-          bzla_bv_free(d_mm, res);
-          bzla_bv_free(d_mm, tmp2);
-
-          inv = bzla_is_inv_and(d_bzla, x0, bvand, s[1], 0, 0);
-          res = inv ? inv_fun(d_bzla, cand[1], bvand, s[1], 0, d_domains, 0)
-                    : bzla_proputils_cons_and(
-                        d_bzla, cand[1], bvand, s[1], 0, d_domains, 0);
-          ASSERT_NE(res, nullptr);
-          tmp2 = bzla_bv_and(d_mm, bvand, res);
-          ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
-          bzla_bv_free(d_mm, res);
-          bzla_bv_free(d_mm, tmp2);
 
           /* idx_x = 0 */
-          inv = bzla_is_inv_and(d_bzla, x1, bvand, s[0], 1, 0);
-          res = inv ? inv_fun(d_bzla, _and, bvand, s[0], 1, d_domains, 0)
-                    : bzla_proputils_cons_and(
-                        d_bzla, _and, bvand, s[0], 1, d_domains, 0);
+          init_prop_info(&pi, exp, 0, t, s[0], s[1], 0, x0, x1, 0);
+          inv = bzla_is_inv_and(d_bzla, &pi);
+          res =
+              inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_and(d_bzla, &pi);
           ASSERT_NE(res, nullptr);
-          tmp2 = bzla_bv_and(d_mm, bvand, res);
-          ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
+          tmp2 = bzla_bv_and(d_mm, t, res);
+          ASSERT_EQ(bzla_bv_compare(tmp2, t), 0);
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
+          if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
-          inv = bzla_is_inv_and(d_bzla, x1, bvand, s[0], 1, 0);
-          res = inv ? inv_fun(d_bzla, cand[0], bvand, s[0], 1, d_domains, 0)
-                    : bzla_proputils_cons_and(
-                        d_bzla, cand[0], bvand, s[0], 1, d_domains, 0);
+          init_prop_info(&pi, cexp[1], 0, t, s[0], s[1], 0, x0, x1, 0);
+          inv = bzla_is_inv_and(d_bzla, &pi);
+          res =
+              inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_and(d_bzla, &pi);
           ASSERT_NE(res, nullptr);
-          tmp2 = bzla_bv_and(d_mm, bvand, res);
-          ASSERT_EQ(bzla_bv_compare(tmp2, bvand), 0);
+          tmp2 = bzla_bv_and(d_mm, t, res);
+          ASSERT_EQ(bzla_bv_compare(tmp2, t), 0);
           bzla_bv_free(d_mm, res);
           bzla_bv_free(d_mm, tmp2);
+          if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+          /* idx_x = 1 */
+          init_prop_info(&pi, exp, 1, t, s[0], s[1], 0, x0, x1, 0);
+          inv = bzla_is_inv_and(d_bzla, &pi);
+          res =
+              inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_and(d_bzla, &pi);
+          ASSERT_NE(res, nullptr);
+          tmp2 = bzla_bv_and(d_mm, t, res);
+          ASSERT_EQ(bzla_bv_compare(tmp2, t), 0);
+          bzla_bv_free(d_mm, res);
+          bzla_bv_free(d_mm, tmp2);
+          if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+          init_prop_info(&pi, cexp[0], 1, t, s[0], s[1], 0, x0, x1, 0);
+          inv = bzla_is_inv_and(d_bzla, &pi);
+          res =
+              inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_and(d_bzla, &pi);
+          ASSERT_NE(res, nullptr);
+          tmp2 = bzla_bv_and(d_mm, t, res);
+          ASSERT_EQ(bzla_bv_compare(tmp2, t), 0);
+          bzla_bv_free(d_mm, res);
+          bzla_bv_free(d_mm, tmp2);
+          if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
           if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS)
             goto DONE;
@@ -514,11 +579,11 @@ class TestPropComplete : public TestBzla
           d_bzla->slv->api.delet(d_bzla->slv);
           d_bzla->slv = slv;
         }
-        bzla_bv_free(d_mm, bvand);
+        bzla_bv_free(d_mm, t);
         bzla_bv_free(d_mm, tmp);
       }
-      bzla_node_release(d_bzla, cand[0]);
-      bzla_node_release(d_bzla, cand[1]);
+      bzla_node_release(d_bzla, cexp[0]);
+      bzla_node_release(d_bzla, cexp[1]);
       bzla_node_release(d_bzla, ce[0]);
       bzla_node_release(d_bzla, ce[1]);
       bzla_bv_free(d_mm, s[0]);
@@ -527,7 +592,7 @@ class TestPropComplete : public TestBzla
 
     clear_domains();
 
-    bzla_node_release(d_bzla, _and);
+    bzla_node_release(d_bzla, exp);
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
   }
@@ -544,79 +609,85 @@ class TestPropComplete : public TestBzla
   {
     (void) bw;
     bool inv;
-    BzlaNode *ult, *e[2], *cult, *ce;
+    BzlaNode *exp, *e[2], *cexp, *ce;
     BzlaSortId sort;
-    BzlaBitVector *res, *bvult, *s, *zero, *bvmax;
+    BzlaBitVector *res, *t, *s, *zero, *bvmax;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaSolver *slv              = 0;
-    BzlaPropComputeValue inv_fun = bzla_proputils_inv_ult;
+    BzlaSolver *slv;
+    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_ult;
+    BzlaPropInfo pi;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
     e[1] = bzla_exp_var(d_bzla, sort, 0);
     bzla_sort_release(d_bzla, sort);
-    ult = bzla_exp_bv_ult(d_bzla, e[0], e[1]);
+    exp = bzla_exp_bv_ult(d_bzla, e[0], e[1]);
 
     if (use_domains)
     {
       assert(d_domains);
       inv_fun = bzla_proputils_inv_ult_const;
-      bzla_prop_solver_init_domains(d_bzla, d_domains, ult);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(ult->e[0])->id)
+               d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
       x1 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(ult->e[1])->id)
+               d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
     }
 
     zero  = bzla_bv_zero(d_mm, bw);
     bvmax = bzla_bv_ones(d_mm, bw);
-    bvult = bzla_bv_one(d_mm, 1);
+    t     = bzla_bv_one(d_mm, 1);
 
     /* prop engine: all conflicts are treated as fixable */
 
   PROP_INV_CONF_ULT_TESTS:
     /* 1...1 < e[1] */
-    s   = bzla_bv_ones(d_mm, bw);
-    inv = bzla_is_inv_ult(d_bzla, x1, bvult, s, 1, 0);
-    res = inv ? inv_fun(d_bzla, ult, bvult, s, 1, d_domains, 0)
-              : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 1, d_domains, 0);
+    s = bzla_bv_ones(d_mm, bw);
+    init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
+    inv = bzla_is_inv_ult(d_bzla, &pi);
+    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_ult(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
     ce   = bzla_exp_bv_const(d_bzla, s);
-    cult = bzla_exp_bv_ult(d_bzla, ce, e[1]);
-    inv  = bzla_is_inv_ult(d_bzla, x1, bvult, s, 1, 0);
-    res =
-        inv ? inv_fun(d_bzla, cult, bvult, s, 1, d_domains, 0)
-            : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 1, d_domains, 0);
+    cexp = bzla_exp_bv_ult(d_bzla, ce, e[1]);
+    init_prop_info(&pi, cexp, 1, t, s, 0, 0, x0, x1, 0);
+    inv = bzla_is_inv_ult(d_bzla, &pi);
+    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_ult(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
-    bzla_node_release(d_bzla, cult);
+    bzla_node_release(d_bzla, cexp);
     bzla_node_release(d_bzla, ce);
     bzla_bv_free(d_mm, s);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
     /* e[0] < 0 */
-    s   = bzla_bv_zero(d_mm, bw);
-    inv = bzla_is_inv_ult(d_bzla, x0, bvult, s, 0, 0);
-    res = inv ? inv_fun(d_bzla, ult, bvult, s, 0, d_domains, 0)
-              : bzla_proputils_cons_ult(d_bzla, ult, bvult, s, 0, d_domains, 0);
+    s = bzla_bv_zero(d_mm, bw);
+    init_prop_info(&pi, exp, 0, t, 0, s, 0, x0, x1, 0);
+    inv = bzla_is_inv_ult(d_bzla, &pi);
+    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_ult(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
     ce   = bzla_exp_bv_const(d_bzla, s);
-    cult = bzla_exp_bv_ult(d_bzla, e[0], ce);
-    inv  = bzla_is_inv_ult(d_bzla, x0, bvult, s, 0, 0);
-    res =
-        inv ? inv_fun(d_bzla, cult, bvult, s, 0, d_domains, 0)
-            : bzla_proputils_cons_ult(d_bzla, cult, bvult, s, 0, d_domains, 0);
+    cexp = bzla_exp_bv_ult(d_bzla, e[0], ce);
+    init_prop_info(&pi, cexp, 0, t, 0, s, 0, x0, x1, 0);
+    inv = bzla_is_inv_ult(d_bzla, &pi);
+    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_ult(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
-    bzla_node_release(d_bzla, cult);
+    bzla_node_release(d_bzla, cexp);
     bzla_node_release(d_bzla, ce);
     bzla_bv_free(d_mm, s);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
     if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS) goto DONE;
 
@@ -634,11 +705,11 @@ class TestPropComplete : public TestBzla
 
     clear_domains();
 
-    bzla_bv_free(d_mm, bvult);
+    bzla_bv_free(d_mm, t);
     bzla_bv_free(d_mm, zero);
     bzla_bv_free(d_mm, bvmax);
 
-    bzla_node_release(d_bzla, ult);
+    bzla_node_release(d_bzla, exp);
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
   }
@@ -963,7 +1034,7 @@ class TestPropComplete : public TestBzla
     uint32_t i, j, k, r;
     BzlaNode *mul, *e[2];
     BzlaSortId sort;
-    BzlaBitVector *bvmul, *s;
+    BzlaBitVector *t, *s;
     BzlaSolver *slv = 0;
 
     sort = bzla_sort_bv(d_bzla, bw);
@@ -975,51 +1046,51 @@ class TestPropComplete : public TestBzla
     /* prop engine: all conflicts are treated as fixable */
 
   PROP_INV_CONF_MUL_TESTS:
-    /* s = 0 but bvmul > 0 */
+    /* s = 0 but t > 0 */
     s = bzla_bv_zero(d_mm, bw);
     for (k = 0; k < 10; k++)
     {
-      bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
-      while (bzla_bv_is_zero(bvmul))
+      t = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+      while (bzla_bv_is_zero(t))
       {
-        bzla_bv_free(d_mm, bvmul);
-        bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+        bzla_bv_free(d_mm, t);
+        t = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
       }
-      check_conf_mul_result(mul, bvmul, s, use_domains);
-      bzla_bv_free(d_mm, bvmul);
+      check_conf_mul_result(mul, t, s, use_domains);
+      bzla_bv_free(d_mm, t);
     }
     bzla_bv_free(d_mm, s);
 
-    /* bvmul is odd but s is even */
+    /* t is odd but s is even */
     for (k = 0; k < 10; k++)
     {
-      bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
-      if (!bzla_bv_get_bit(bvmul, 0)) bzla_bv_set_bit(bvmul, 0, 1);
+      t = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+      if (!bzla_bv_get_bit(t, 0)) bzla_bv_set_bit(t, 0, 1);
       s = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
       if (bzla_bv_get_bit(s, 0)) bzla_bv_set_bit(s, 0, 0);
-      check_conf_mul_result(mul, bvmul, s, use_domains);
-      bzla_bv_free(d_mm, bvmul);
+      check_conf_mul_result(mul, t, s, use_domains);
+      bzla_bv_free(d_mm, t);
       bzla_bv_free(d_mm, s);
     }
 
-    /* s = 2^i and number of 0-LSBs in bvmul < i */
+    /* s = 2^i and number of 0-LSBs in t < i */
     for (k = 0; k < 10; k++)
     {
       for (i = 1; bw > 1 && i < bw; i++)
       {
         s = bzla_bv_zero(d_mm, bw);
         bzla_bv_set_bit(s, i, 1);
-        bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
-        r     = bzla_rng_pick_rand(&d_bzla->rng, 0, i - 1);
-        for (j = 0; j < r; j++) bzla_bv_set_bit(bvmul, j, 0);
-        if (!bzla_bv_get_bit(bvmul, r)) bzla_bv_set_bit(bvmul, r, 1);
-        check_conf_mul_result(mul, bvmul, s, use_domains);
-        bzla_bv_free(d_mm, bvmul);
+        t = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+        r = bzla_rng_pick_rand(&d_bzla->rng, 0, i - 1);
+        for (j = 0; j < r; j++) bzla_bv_set_bit(t, j, 0);
+        if (!bzla_bv_get_bit(t, r)) bzla_bv_set_bit(t, r, 1);
+        check_conf_mul_result(mul, t, s, use_domains);
+        bzla_bv_free(d_mm, t);
         bzla_bv_free(d_mm, s);
       }
     }
 
-    /* s = 2^i * m and number of 0-LSBs in bvmul < i */
+    /* s = 2^i * m and number of 0-LSBs in t < i */
     for (k = 0; k < 10; k++)
     {
       for (i = 0; bw > 1 && i < 10; i++)
@@ -1040,12 +1111,12 @@ class TestPropComplete : public TestBzla
           for (j = 0; j < bw; j++)
             if (bzla_bv_get_bit(s, j)) break;
         }
-        bvmul = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
-        r     = bzla_rng_pick_rand(&d_bzla->rng, 0, j - 1);
-        for (j = 0; j < r; j++) bzla_bv_set_bit(bvmul, j, 0);
-        if (!bzla_bv_get_bit(bvmul, r)) bzla_bv_set_bit(bvmul, r, 1);
-        check_conf_mul_result(mul, bvmul, s, use_domains);
-        bzla_bv_free(d_mm, bvmul);
+        t = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+        r = bzla_rng_pick_rand(&d_bzla->rng, 0, j - 1);
+        for (j = 0; j < r; j++) bzla_bv_set_bit(t, j, 0);
+        if (!bzla_bv_get_bit(t, r)) bzla_bv_set_bit(t, r, 1);
+        check_conf_mul_result(mul, t, s, use_domains);
+        bzla_bv_free(d_mm, t);
         bzla_bv_free(d_mm, s);
       }
     }
@@ -1177,29 +1248,30 @@ class TestPropComplete : public TestBzla
     (void) bw;
     bool inv;
     int32_t k;
-    BzlaNode *urem, *e[2], *curem, *ce;
+    BzlaNode *exp, *e[2], *cexp, *ce;
     BzlaSortId sort;
-    BzlaBitVector *res, *s, *bvurem, *bvmax, *zero, *two, *tmp, *tmp2;
+    BzlaBitVector *res, *s, *t, *bvmax, *zero, *two, *tmp, *tmp2;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaSolver *slv              = 0;
-    BzlaPropComputeValue inv_fun = bzla_proputils_inv_urem;
+    BzlaSolver *slv;
+    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_urem;
+    BzlaPropInfo pi;
 
     sort = bzla_sort_bv(d_bzla, bw);
     e[0] = bzla_exp_var(d_bzla, sort, 0);
     e[1] = bzla_exp_var(d_bzla, sort, 0);
     bzla_sort_release(d_bzla, sort);
-    urem = bzla_exp_bv_urem(d_bzla, e[0], e[1]);
+    exp = bzla_exp_bv_urem(d_bzla, e[0], e[1]);
 
     if (use_domains)
     {
       assert(d_domains);
       inv_fun = bzla_proputils_inv_urem_const;
-      bzla_prop_solver_init_domains(d_bzla, d_domains, urem);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(urem->e[0])->id)
+               d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
       x1 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(urem->e[1])->id)
+               d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
     }
 
@@ -1209,151 +1281,156 @@ class TestPropComplete : public TestBzla
     /* prop engine: all conflicts are treated as fixable */
 
   PROP_INV_CONF_UREM_TESTS:
-    /* s % e[1] = bvurem */
-    /* bvurem = 1...1 and s < 1...1 */
-    bvurem = bzla_bv_copy(d_mm, bvmax);
+    /* s % e[1] = t */
+    /* t = 1...1 and s < 1...1 */
+    t = bzla_bv_copy(d_mm, bvmax);
     for (k = 0; k < 10; k++)
     {
-      tmp   = bzla_bv_dec(d_mm, bvmax);
-      s     = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
-      ce    = bzla_exp_bv_const(d_bzla, s);
-      curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
-      res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains, 0)
-                : bzla_proputils_cons_urem(
-                    d_bzla, urem, bvurem, s, 1, d_domains, 0);
+      tmp = bzla_bv_dec(d_mm, bvmax);
+      s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
+      init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
+      inv = bzla_is_inv_urem(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains, 0)
-                : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, s, 1, d_domains, 0);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+      ce   = bzla_exp_bv_const(d_bzla, s);
+      cexp = bzla_exp_bv_urem(d_bzla, ce, e[1]);
+      init_prop_info(&pi, cexp, 1, t, s, 0, 0, x0, x1, 0);
+      inv = bzla_is_inv_urem(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
-      bzla_node_release(d_bzla, curem);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+      bzla_node_release(d_bzla, cexp);
       bzla_node_release(d_bzla, ce);
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, s);
     }
-    bzla_bv_free(d_mm, bvurem);
-    /* s < bvurem */
+    bzla_bv_free(d_mm, t);
+    /* s < t */
     for (k = 0; k < 10; k++)
     {
-      tmp    = bzla_bv_inc(d_mm, zero);
-      bvurem = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
+      tmp = bzla_bv_inc(d_mm, zero);
+      t   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
       bzla_bv_free(d_mm, tmp);
-      tmp = bzla_bv_dec(d_mm, bvurem);
+      tmp = bzla_bv_dec(d_mm, t);
       s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       bzla_bv_free(d_mm, tmp);
-      ce    = bzla_exp_bv_const(d_bzla, s);
-      curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
-      res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains, 0)
-                : bzla_proputils_cons_urem(
-                    d_bzla, urem, bvurem, s, 1, d_domains, 0);
+      init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
+      inv = bzla_is_inv_urem(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains, 0)
-                : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, s, 1, d_domains, 0);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+      ce   = bzla_exp_bv_const(d_bzla, s);
+      cexp = bzla_exp_bv_urem(d_bzla, ce, e[1]);
+      init_prop_info(&pi, cexp, 1, t, s, 0, 0, x0, x1, 0);
+      inv = bzla_is_inv_urem(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      bzla_node_release(d_bzla, curem);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+      bzla_node_release(d_bzla, cexp);
       bzla_node_release(d_bzla, ce);
       bzla_bv_free(d_mm, s);
-      bzla_bv_free(d_mm, bvurem);
+      bzla_bv_free(d_mm, t);
     }
-    /* s > bvurem and s - bvurem <= bvurem -> s > 2 * bvurem */
+    /* s > t and s - t <= t -> s > 2 * t */
     for (k = 0; bw > 1 && k < 10; k++)
     {
-      two    = bzla_bv_uint64_to_bv(d_mm, 2, bw);
-      tmp2   = bzla_bv_udiv(d_mm, bvmax, two);
-      tmp    = bzla_bv_uint64_to_bv(d_mm, 1, bw);
-      bvurem = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, tmp2);
+      two  = bzla_bv_uint64_to_bv(d_mm, 2, bw);
+      tmp2 = bzla_bv_udiv(d_mm, bvmax, two);
+      tmp  = bzla_bv_uint64_to_bv(d_mm, 1, bw);
+      t    = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, tmp2);
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, tmp2);
-      tmp  = bzla_bv_inc(d_mm, bvurem);
-      tmp2 = bzla_bv_mul(d_mm, bvurem, two);
+      tmp  = bzla_bv_inc(d_mm, t);
+      tmp2 = bzla_bv_mul(d_mm, t, two);
       s    = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, tmp2);
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, tmp2);
-      ce    = bzla_exp_bv_const(d_bzla, s);
-      curem = bzla_exp_bv_urem(d_bzla, ce, e[1]);
-      inv   = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
-      res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 1, d_domains, 0)
-                : bzla_proputils_cons_urem(
-                    d_bzla, urem, bvurem, s, 1, d_domains, 0);
+      init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
+      inv = bzla_is_inv_urem(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_bzla, x1, bvurem, s, 1, 0);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 1, d_domains, 0)
-                : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, s, 1, d_domains, 0);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+      ce   = bzla_exp_bv_const(d_bzla, s);
+      cexp = bzla_exp_bv_urem(d_bzla, ce, e[1]);
+      init_prop_info(&pi, cexp, 1, t, s, 0, 0, x0, x1, 0);
+      inv = bzla_is_inv_urem(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      bzla_node_release(d_bzla, curem);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+      bzla_node_release(d_bzla, cexp);
       bzla_node_release(d_bzla, ce);
       bzla_bv_free(d_mm, two);
-      bzla_bv_free(d_mm, bvurem);
+      bzla_bv_free(d_mm, t);
       bzla_bv_free(d_mm, s);
     }
 
-    /* e[0] % s = bvurem */
-    /* bvurem = 1...1 and s > 0 */
-    bvurem = bzla_bv_copy(d_mm, bvmax);
+    /* e[0] % s = t */
+    /* t = 1...1 and s > 0 */
+    t = bzla_bv_copy(d_mm, bvmax);
     for (k = 0; k < 10; k++)
     {
-      tmp   = bzla_bv_inc(d_mm, zero);
-      s     = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
-      ce    = bzla_exp_bv_const(d_bzla, s);
-      curem = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      inv   = bzla_is_inv_urem(d_bzla, x0, bvurem, s, 0, 0);
-      res   = inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains, 0)
-                : bzla_proputils_cons_urem(
-                    d_bzla, urem, bvurem, s, 0, d_domains, 0);
+      tmp = bzla_bv_inc(d_mm, zero);
+      s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
+      init_prop_info(&pi, exp, 0, t, 0, s, 0, x0, x1, 0);
+      inv = bzla_is_inv_urem(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
-      ASSERT_EQ(bzla_bv_compare(res, bvurem), 0);
+      ASSERT_EQ(bzla_bv_compare(res, t), 0);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_bzla, x0, bvurem, s, 0, 0);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains, 0)
-                : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, s, 0, d_domains, 0);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+      ce   = bzla_exp_bv_const(d_bzla, s);
+      cexp = bzla_exp_bv_urem(d_bzla, e[0], ce);
+      init_prop_info(&pi, cexp, 0, t, 0, s, 0, x0, x1, 0);
+      inv = bzla_is_inv_urem(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
-      ASSERT_EQ(bzla_bv_compare(res, bvurem), 0);
+      ASSERT_EQ(bzla_bv_compare(res, t), 0);
       bzla_bv_free(d_mm, res);
-      bzla_node_release(d_bzla, curem);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+      bzla_node_release(d_bzla, cexp);
       bzla_node_release(d_bzla, ce);
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, s);
     }
-    bzla_bv_free(d_mm, bvurem);
-    /* s > 0 and s <= bvurem */
+    bzla_bv_free(d_mm, t);
+    /* s > 0 and s <= t */
     for (k = 0; bw > 1 && k < 10; k++)
     {
-      tmp    = bzla_bv_inc(d_mm, zero);
-      bvurem = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
-      s      = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvurem);
-      ce     = bzla_exp_bv_const(d_bzla, s);
-      curem  = bzla_exp_bv_urem(d_bzla, e[0], ce);
-      inv    = bzla_is_inv_urem(d_bzla, x0, bvurem, s, 0, 0);
-      res    = inv ? inv_fun(d_bzla, urem, bvurem, s, 0, d_domains, 0)
-                : bzla_proputils_cons_urem(
-                    d_bzla, urem, bvurem, s, 0, d_domains, 0);
+      tmp = bzla_bv_inc(d_mm, zero);
+      t   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
+      s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, t);
+      init_prop_info(&pi, exp, 0, t, 0, s, 0, x0, x1, 0);
+      inv = bzla_is_inv_urem(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_urem(d_bzla, x0, bvurem, s, 0, 0);
-      res = inv ? inv_fun(d_bzla, curem, bvurem, s, 0, d_domains, 0)
-                : bzla_proputils_cons_urem(
-                    d_bzla, curem, bvurem, s, 0, d_domains, 0);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+      ce   = bzla_exp_bv_const(d_bzla, s);
+      cexp = bzla_exp_bv_urem(d_bzla, e[0], ce);
+      init_prop_info(&pi, cexp, 0, t, 0, s, 0, x0, x1, 0);
+      inv = bzla_is_inv_urem(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      bzla_node_release(d_bzla, curem);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+      bzla_node_release(d_bzla, cexp);
       bzla_node_release(d_bzla, ce);
       bzla_bv_free(d_mm, tmp);
-      bzla_bv_free(d_mm, bvurem);
+      bzla_bv_free(d_mm, t);
       bzla_bv_free(d_mm, s);
     }
 
@@ -1375,7 +1452,7 @@ class TestPropComplete : public TestBzla
 
     bzla_bv_free(d_mm, zero);
     bzla_bv_free(d_mm, bvmax);
-    bzla_node_release(d_bzla, urem);
+    bzla_node_release(d_bzla, exp);
     bzla_node_release(d_bzla, e[0]);
     bzla_node_release(d_bzla, e[1]);
   }
@@ -1394,12 +1471,13 @@ class TestPropComplete : public TestBzla
     bool inv;
     int32_t k, cnt;
     uint32_t i, j, bws[2];
-    BzlaNode *concat, *e[2], *ce[2], *cconcat[2];
+    BzlaNode *exp, *e[2], *ce[2], *cexp[2];
     BzlaSortId sorts[2];
-    BzlaBitVector *res, *bvconcat, *s[2], *tmp[2];
+    BzlaBitVector *res, *t, *s[2], *tmp[2];
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaSolver *slv              = 0;
-    BzlaPropComputeValue inv_fun = bzla_proputils_inv_concat;
+    BzlaSolver *slv;
+    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_concat;
+    BzlaPropInfo pi;
 
     /* prop engine: all conflicts are treated as fixable */
 
@@ -1413,26 +1491,25 @@ class TestPropComplete : public TestBzla
       sorts[1] = bzla_sort_bv(d_bzla, bw);
       e[0]     = bzla_exp_var(d_bzla, sorts[0], 0);
       e[1]     = bzla_exp_var(d_bzla, sorts[1], 0);
-      concat   = bzla_exp_bv_concat(d_bzla, e[0], e[1]);
-      bvconcat = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+      exp      = bzla_exp_bv_concat(d_bzla, e[0], e[1]);
+      t        = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
 
       if (use_domains)
       {
         assert(d_domains);
         inv_fun = bzla_proputils_inv_concat_const;
-        bzla_prop_solver_init_domains(d_bzla, d_domains, concat);
+        bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
         x0 = (BzlaBvDomain *) bzla_hashint_map_get(
-                 d_domains, bzla_node_real_addr(concat->e[0])->id)
+                 d_domains, bzla_node_real_addr(exp->e[0])->id)
                  ->as_ptr;
         x1 = (BzlaBvDomain *) bzla_hashint_map_get(
-                 d_domains, bzla_node_real_addr(concat->e[1])->id)
+                 d_domains, bzla_node_real_addr(exp->e[1])->id)
                  ->as_ptr;
       }
 
       for (j = 0; j < 2; j++)
       {
-        s[j] = bzla_bv_slice(
-            d_mm, bvconcat, j ? bws[1] - 1 : bw - 1, j ? 0 : bws[1]);
+        s[j] = bzla_bv_slice(d_mm, t, j ? bws[1] - 1 : bw - 1, j ? 0 : bws[1]);
         ASSERT_EQ(bzla_bv_get_width(s[j]), bws[j]);
         tmp[j] = bzla_bv_copy(d_mm, s[j]);
         cnt    = 0;
@@ -1448,45 +1525,44 @@ class TestPropComplete : public TestBzla
           }
         }
       }
-      ce[0]      = bzla_exp_bv_const(d_bzla, s[0]);
-      ce[1]      = bzla_exp_bv_const(d_bzla, s[1]);
-      cconcat[0] = bzla_exp_bv_concat(d_bzla, ce[0], e[1]);
-      cconcat[1] = bzla_exp_bv_concat(d_bzla, e[0], ce[1]);
+      ce[0]   = bzla_exp_bv_const(d_bzla, s[0]);
+      ce[1]   = bzla_exp_bv_const(d_bzla, s[1]);
+      cexp[0] = bzla_exp_bv_concat(d_bzla, ce[0], e[1]);
+      cexp[1] = bzla_exp_bv_concat(d_bzla, e[0], ce[1]);
       for (j = 0; j < 2; j++)
       {
-        inv = bzla_is_inv_concat(
-            d_bzla, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j, 0);
-        res = inv ? inv_fun(
-                  d_bzla, concat, bvconcat, s[j ? 0 : 1], j, d_domains, 0)
-                  : bzla_proputils_cons_concat(
-                      d_bzla, concat, bvconcat, s[j ? 0 : 1], j, d_domains, 0);
+        init_prop_info(
+            &pi, exp, j, t, j ? s[0] : 0, j ? 0 : s[1], 0, x0, x1, 0);
+        inv = bzla_is_inv_concat(d_bzla, &pi);
+        res = inv ? inv_fun(d_bzla, &pi)
+                  : bzla_proputils_cons_concat(d_bzla, &pi);
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
-        inv = bzla_is_inv_concat(
-            d_bzla, j ? x1 : x0, bvconcat, s[j ? 0 : 1], j, 0);
-        res = inv ? inv_fun(d_bzla,
-                            cconcat[j ? 0 : 1],
-                            bvconcat,
-                            s[j ? 0 : 1],
-                            j,
-                            d_domains,
-                            0)
-                  : bzla_proputils_cons_concat(d_bzla,
-                                               cconcat[j ? 0 : 1],
-                                               bvconcat,
-                                               s[j ? 0 : 1],
-                                               j,
-                                               d_domains,
-                                               0);
+        if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+        init_prop_info(&pi,
+                       cexp[j ? 0 : 1],
+                       j,
+                       t,
+                       j ? s[0] : 0,
+                       j ? 0 : s[1],
+                       0,
+                       x0,
+                       x1,
+                       0);
+        inv = bzla_is_inv_concat(d_bzla, &pi);
+        res = inv ? inv_fun(d_bzla, &pi)
+                  : bzla_proputils_cons_concat(d_bzla, &pi);
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
+        if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
       }
       for (j = 0; j < 2; j++)
       {
         bzla_sort_release(d_bzla, sorts[j]);
-        bzla_node_release(d_bzla, cconcat[j]);
+        bzla_node_release(d_bzla, cexp[j]);
         bzla_node_release(d_bzla, ce[j]);
         bzla_node_release(d_bzla, e[j]);
         bzla_bv_free(d_mm, s[j]);
@@ -1495,8 +1571,8 @@ class TestPropComplete : public TestBzla
 
       clear_domains();
 
-      bzla_node_release(d_bzla, concat);
-      bzla_bv_free(d_mm, bvconcat);
+      bzla_node_release(d_bzla, exp);
+      bzla_bv_free(d_mm, t);
     }
 
     if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS) goto DONE;
@@ -1523,164 +1599,167 @@ class TestPropComplete : public TestBzla
    * Given x * s = t and s * x = t, test if the consistent value and inverse
    * value computation always produces a 'legal' value t when solved for x.
    *
-   * mul           : The node representing the multiplication.
+   * exp           : The node representing the multiplication.
    * t             : The assignment of 'mul'.
    * s             : The assignment of one of the operands of 'mul'.
    * use_domains   : True if this check should be performed using propagator
    *                 domains (inv_fun_const).
    */
-  void check_conf_mul_result(BzlaNode *mul,
+  void check_conf_mul_result(BzlaNode *exp,
                              BzlaBitVector *t,
                              BzlaBitVector *s,
                              bool use_domains)
   {
     bool inv;
-    BzlaNode *cmul[2], *ce[2];
+    BzlaNode *cexp[2], *ce[2];
     BzlaBitVector *res;
-    BzlaBvDomain *x0 = 0, *x1 = 0, *d_res_x;
-    BzlaPropIsInv is_inv_fun     = bzla_is_inv_mul;
-    BzlaPropComputeValue inv_fun = bzla_proputils_inv_mul;
+    BzlaBvDomain *x0 = 0, *x1 = 0;
+    BzlaPropIsInvFun is_inv_fun     = bzla_is_inv_mul;
+    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_mul;
+    BzlaPropInfo pi;
 
     if (use_domains)
     {
       assert(d_domains);
       is_inv_fun = bzla_is_inv_mul_const;
       inv_fun    = bzla_proputils_inv_mul_const;
-      bzla_prop_solver_init_domains(d_bzla, d_domains, mul);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(mul->e[0])->id)
+               d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
       x1 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(mul->e[1])->id)
+               d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
     }
 
     ce[0]   = bzla_exp_bv_const(d_bzla, s);
     ce[1]   = bzla_exp_bv_const(d_bzla, s);
-    cmul[0] = bzla_exp_bv_mul(d_bzla, ce[0], mul->e[1]);
-    cmul[1] = bzla_exp_bv_mul(d_bzla, mul->e[0], ce[1]);
+    cexp[0] = bzla_exp_bv_mul(d_bzla, ce[0], exp->e[1]);
+    cexp[1] = bzla_exp_bv_mul(d_bzla, exp->e[0], ce[1]);
 
-    d_res_x = 0;
-    inv     = is_inv_fun(d_bzla, x0, t, s, 0, &d_res_x);
-    res =
-        inv ? inv_fun(d_bzla, mul, t, s, 0, d_domains, d_res_x)
-            : bzla_proputils_cons_mul(d_bzla, mul, t, s, 0, d_domains, d_res_x);
+    /* idx_x = 0 */
+    init_prop_info(&pi, exp, 0, t, 0, s, 0, x0, x1, 0);
+    inv = is_inv_fun(d_bzla, &pi);
+    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_mul(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
-    d_res_x = 0;
-    inv     = is_inv_fun(d_bzla, x0, t, s, 0, &d_res_x);
-    res     = inv ? inv_fun(d_bzla, cmul[1], t, s, 0, d_domains, d_res_x)
-              : bzla_proputils_cons_mul(
-                  d_bzla, cmul[1], t, s, 0, d_domains, d_res_x);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+    init_prop_info(&pi, cexp[1], 0, t, 0, s, 0, x0, x1, 0);
+    inv = is_inv_fun(d_bzla, &pi);
+    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_mul(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
-    if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
     if (bzla_bv_get_bit(t, 0))
     {
       ASSERT_EQ(bzla_bv_get_bit(res, 0), 1u);
     }
     bzla_bv_free(d_mm, res);
 
-    d_res_x = 0;
-    inv     = is_inv_fun(d_bzla, x1, t, s, 1, &d_res_x);
-    res =
-        inv ? inv_fun(d_bzla, mul, t, s, 1, d_domains, d_res_x)
-            : bzla_proputils_cons_mul(d_bzla, mul, t, s, 1, d_domains, d_res_x);
+    /* idx_x = 1 */
+    init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
+    inv = is_inv_fun(d_bzla, &pi);
+    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_mul(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
-    if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
-    d_res_x = 0;
-    inv     = is_inv_fun(d_bzla, x1, t, s, 1, &d_res_x);
-    res     = inv ? inv_fun(d_bzla, cmul[0], t, s, 1, d_domains, d_res_x)
-              : bzla_proputils_cons_mul(
-                  d_bzla, cmul[0], t, s, 1, d_domains, d_res_x);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+    init_prop_info(&pi, cexp[0], 1, t, s, 0, 0, x0, x1, 0);
+    inv = is_inv_fun(d_bzla, &pi);
+    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_mul(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     if (bzla_bv_get_bit(t, 0))
     {
       ASSERT_EQ(bzla_bv_get_bit(res, 0), 1u);
     }
     bzla_bv_free(d_mm, res);
-    if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
     clear_domains();
 
     bzla_node_release(d_bzla, ce[0]);
     bzla_node_release(d_bzla, ce[1]);
-    bzla_node_release(d_bzla, cmul[0]);
-    bzla_node_release(d_bzla, cmul[1]);
+    bzla_node_release(d_bzla, cexp[0]);
+    bzla_node_release(d_bzla, cexp[1]);
   }
 
   /**
    * Given x / s = t and s / x = t, test if the consistent value and inverse
    * value computation always produces a 'legal' value t when solved for x.
    *
-   * udiv          : The node representing the unsigned division.
-   * t             : The assignment of 'udiv'.
-   * s             : The assignment of one of the operands of udiv.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * exp        : The node representing the unsigned division.
+   * t          : The assignment of 'udiv'.
+   * s          : The assignment of one of the operands of udiv.
+   * use_domains: True if this check should be performed using propagator
+   *              domains (inv_fun_const).
    */
   void check_conf_udiv_result(uint32_t idx_x,
-                              BzlaNode *udiv,
+                              BzlaNode *exp,
                               BzlaBitVector *t,
                               BzlaBitVector *s,
                               bool use_domains)
   {
     bool inv;
-    BzlaNode *cudiv, *ce;
+    BzlaNode *cexp, *ce;
     BzlaBitVector *res;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaPropComputeValue inv_fun = bzla_proputils_inv_udiv;
+    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_udiv;
+    BzlaPropInfo pi;
 
     if (use_domains)
     {
       assert(d_domains);
       inv_fun = bzla_proputils_inv_udiv_const;
-      bzla_prop_solver_init_domains(d_bzla, d_domains, udiv);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(udiv->e[0])->id)
+               d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
       x1 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(udiv->e[1])->id)
+               d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
     }
 
     if (idx_x)
     {
-      ce    = bzla_exp_bv_const(d_bzla, s);
-      cudiv = bzla_exp_bv_udiv(d_bzla, ce, udiv->e[1]);
-      inv   = bzla_is_inv_udiv(d_bzla, x1, t, s, 1, 0);
-      res   = inv ? inv_fun(d_bzla, udiv, t, s, 1, d_domains, 0)
-                : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 1, d_domains, 0);
+      init_prop_info(&pi, exp, idx_x, t, s, 0, 0, x0, x1, 0);
+      inv = bzla_is_inv_udiv(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_udiv(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, t));
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_udiv(d_bzla, x1, t, s, 1, 0);
-      res =
-          inv ? inv_fun(d_bzla, cudiv, t, s, 1, d_domains, 0)
-              : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 1, d_domains, 0);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+      ce   = bzla_exp_bv_const(d_bzla, s);
+      cexp = bzla_exp_bv_udiv(d_bzla, ce, exp->e[1]);
+      init_prop_info(&pi, cexp, idx_x, t, s, 0, 0, x0, x1, 0);
+      inv = bzla_is_inv_udiv(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_udiv(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, t));
       bzla_bv_free(d_mm, res);
-      bzla_node_release(d_bzla, cudiv);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+      bzla_node_release(d_bzla, cexp);
       bzla_node_release(d_bzla, ce);
     }
     else
     {
-      ce    = bzla_exp_bv_const(d_bzla, s);
-      cudiv = bzla_exp_bv_udiv(d_bzla, udiv->e[0], ce);
-      inv   = bzla_is_inv_udiv(d_bzla, x0, t, s, 0, 0);
-      res   = inv ? inv_fun(d_bzla, udiv, t, s, 0, d_domains, 0)
-                : bzla_proputils_cons_udiv(d_bzla, udiv, t, s, 0, d_domains, 0);
+      init_prop_info(&pi, exp, idx_x, t, 0, s, 0, x0, x1, 0);
+      inv = bzla_is_inv_udiv(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_udiv(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = bzla_is_inv_udiv(d_bzla, x0, t, s, 0, 0);
-      res =
-          inv ? inv_fun(d_bzla, cudiv, t, s, 0, d_domains, 0)
-              : bzla_proputils_cons_udiv(d_bzla, cudiv, t, s, 0, d_domains, 0);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+      ce   = bzla_exp_bv_const(d_bzla, s);
+      cexp = bzla_exp_bv_udiv(d_bzla, exp->e[0], ce);
+      init_prop_info(&pi, cexp, idx_x, t, 0, s, 0, x0, x1, 0);
+      inv = bzla_is_inv_udiv(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_udiv(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      bzla_node_release(d_bzla, cudiv);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+      bzla_node_release(d_bzla, cexp);
       bzla_node_release(d_bzla, ce);
     }
 
@@ -1692,15 +1771,15 @@ class TestPropComplete : public TestBzla
    * consistent value and inverse value computation always produces a 'legal'
    * value t when solved for x.
    *
-   * shift     : The node representing the shift operation.
-   * s_vals    : A char* array representing the values for all operands of <>.
-   * t_val     : A char* representation of the target value of <>.
-   * rvalmax   : The maximum value of the inverse/consistent value.
+   * shift  : The node representing the shift operation.
+   * s_val  : A char* array representing the values for all operands of <>.
+   * t_val  : A char* representation of the target value of <>.
+   * rvalmax: The maximum value of the inverse/consistent value.
    */
   void check_conf_shift(uint32_t idx_x,
-                        BzlaNode *shift,
+                        BzlaNode *exp,
                         std::string op,
-                        const char *s_vals,
+                        const char *s_val,
                         const char *t_val,
                         uint64_t rvalmax,
                         bool use_domains)
@@ -1708,18 +1787,19 @@ class TestPropComplete : public TestBzla
     assert(d_domains);
 
     bool inv;
-    BzlaNode *cshift, *ce;
+    BzlaNode *cexp, *ce;
     BzlaBitVector *res, *t, *s;
     BzlaBvDomain *x0 = 0, *x1 = 0;
 
-    /* The function to create a node representing the shift operation. */
+    /* The function to create a node representing the exp operation. */
     BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *);
     /* The function to test if given operator is invertible w.r.t.  s and t. */
-    BzlaPropIsInv is_inv_fun;
+    BzlaPropIsInvFun is_inv_fun;
     /* The function to compute the inverse value for x. */
-    BzlaPropComputeValue inv_fun;
+    BzlaPropComputeValueFun inv_fun;
     /* The function to compute the consistent value for x. */
-    BzlaPropComputeValue cons_fun;
+    BzlaPropComputeValueFun cons_fun;
+    BzlaPropInfo pi;
 
     if (op == "sll")
     {
@@ -1742,50 +1822,56 @@ class TestPropComplete : public TestBzla
     if (use_domains)
     {
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(shift->e[0])->id)
+               d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
-      x1 = (BzlaBvDomain *) bzla_hashint_map_get(
-               d_domains, bzla_node_real_addr(shift->e[1])->id)
+      x0 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
     }
 
-    s  = bzla_bv_char_to_bv(d_mm, s_vals);
+    s  = bzla_bv_char_to_bv(d_mm, s_val);
     t  = bzla_bv_char_to_bv(d_mm, t_val);
     ce = bzla_exp_bv_const(d_bzla, s);
     if (idx_x)
     {
-      cshift = exp_fun(d_bzla, ce, shift->e[1]);
-      inv    = is_inv_fun(d_bzla, x1, t, s, 1, 0);
-      res    = inv ? inv_fun(d_bzla, shift, t, s, 1, d_domains, 0)
-                : cons_fun(d_bzla, shift, t, s, 1, d_domains, 0);
+      init_prop_info(&pi, exp, idx_x, t, s, 0, 0, x0, x1, 0);
+      inv = is_inv_fun(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
-      inv = is_inv_fun(d_bzla, x1, t, s, 1, 0);
-      res = inv ? inv_fun(d_bzla, cshift, t, s, 1, d_domains, 0)
-                : cons_fun(d_bzla, cshift, t, s, 1, d_domains, 0);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+      cexp = exp_fun(d_bzla, ce, exp->e[1]);
+      init_prop_info(&pi, cexp, idx_x, t, s, 0, 0, x0, x1, 0);
+      inv = is_inv_fun(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
     }
     else
     {
-      cshift = exp_fun(d_bzla, shift->e[0], ce);
-      inv    = is_inv_fun(d_bzla, x0, t, s, 0, 0);
-      res    = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains, 0)
-                : cons_fun(d_bzla, shift, t, s, 0, d_domains, 0);
+      init_prop_info(&pi, exp, idx_x, t, 0, s, 0, x0, x1, 0);
+      inv = is_inv_fun(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
-      inv = is_inv_fun(d_bzla, x0, t, s, 0, 0);
-      res = inv ? inv_fun(d_bzla, shift, t, s, 0, d_domains, 0)
-                : cons_fun(d_bzla, shift, t, s, 0, d_domains, 0);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+      cexp = exp_fun(d_bzla, exp->e[0], ce);
+      init_prop_info(&pi, cexp, idx_x, t, 0, s, 0, x0, x1, 0);
+      inv = is_inv_fun(d_bzla, &pi);
+      res = inv ? inv_fun(d_bzla, &pi) : cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
+      if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
     }
     bzla_bv_free(d_mm, t);
     bzla_bv_free(d_mm, s);
     bzla_node_release(d_bzla, ce);
-    bzla_node_release(d_bzla, cshift);
+    bzla_node_release(d_bzla, cexp);
   }
 };
 
@@ -1802,31 +1888,29 @@ class TestPropCompleteConst : public TestPropComplete
   }
 
   /** Helper for check_result_aux. */
-  void check_result_n_tests(BzlaPropIsInv is_inv_fun,
-                            BzlaPropComputeValue compute_value_fun,
-                            BzlaNode *exp,
-                            BzlaBitVector *s,
-                            BzlaBitVector *t,
-                            BzlaBitVector *x_bv,
-                            uint32_t idx_x)
+  void check_result_n_tests(BzlaPropIsInvFun is_inv_fun,
+                            BzlaPropComputeValueFun compute_value_fun,
+                            BzlaPropInfo *pi)
   {
+    uint32_t idx_x;
     uint64_t k;
     bool is_inv;
     BzlaBitVector *res;
-    BzlaBvDomain *d_res_x;
+    const BzlaBitVector *s, *t, *x_bv;
+    const BzlaBvDomain *x;
 
-    assert(bzla_hashint_map_contains(d_domains,
-                                     bzla_node_real_addr(exp->e[idx_x])->id));
-    BzlaBvDomain *x = (BzlaBvDomain *) bzla_hashint_map_get(
-                          d_domains, bzla_node_real_addr(exp->e[idx_x])->id)
-                          ->as_ptr;
+    idx_x = pi->pos_x;
+    x     = pi->bvd[idx_x];
+    x_bv  = pi->bv[idx_x];
+    s     = pi->bv[idx_x ? 0 : 1];
+    t     = pi->target_value;
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
-      d_res_x = 0;
+      pi->res_x = 0;
       if (is_inv_fun)
       {
-        is_inv = is_inv_fun(d_bzla, x, t, s, idx_x, &d_res_x);
+        is_inv = is_inv_fun(d_bzla, pi);
         if (!is_inv)
         {
           std::cout << "x: ";
@@ -1839,8 +1923,8 @@ class TestPropCompleteConst : public TestPropComplete
         }
         assert(is_inv);
       }
-      res = compute_value_fun(d_bzla, exp, t, s, idx_x, d_domains, d_res_x);
-      if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
+      res = compute_value_fun(d_bzla, pi);
+      if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       ASSERT_NE(res, nullptr);
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
@@ -1864,37 +1948,56 @@ class TestPropCompleteConst : public TestPropComplete
   }
 
   /** Helper for check_result_cond_aux. */
-  void check_result_cond_n_tests(BzlaPropIsInvCond is_inv_fun,
-                                 BzlaPropComputeValueCond compute_value_fun,
-                                 BzlaNode *exp,
-                                 BzlaBitVector *s0,
-                                 BzlaBitVector *s1,
-                                 BzlaBitVector *t,
-                                 BzlaBitVector *x_bv,
-                                 uint32_t idx_x)
+  void check_result_cond_n_tests(BzlaPropIsInvFun is_inv_fun,
+                                 BzlaPropComputeValueFun compute_value_fun,
+                                 BzlaPropInfo *pi)
   {
+    uint32_t idx_x;
     uint64_t k;
     bool is_inv;
     BzlaBitVector *res;
-    BzlaBvDomain *d_res_x;
+    const BzlaBitVector *s0, *s1, *t, *x_bv;
+    const BzlaBvDomain *x;
+    bool is_cons_check;
 
-    assert(bzla_hashint_map_contains(d_domains,
-                                     bzla_node_real_addr(exp->e[idx_x])->id));
-    BzlaBvDomain *x = (BzlaBvDomain *) bzla_hashint_map_get(
-                          d_domains, bzla_node_real_addr(exp->e[idx_x])->id)
-                          ->as_ptr;
+    idx_x = pi->pos_x;
+    x     = pi->bvd[idx_x];
+    x_bv  = pi->bv[idx_x];
+    s0    = pi->bv[idx_x == 0 ? 1 : 0];
+    s1    = pi->bv[idx_x == 2 ? 1 : 2];
+    t     = pi->target_value;
+
+    is_cons_check = compute_value_fun == bzla_proputils_cons_cond
+                    || compute_value_fun == bzla_proputils_cons_cond_const;
+
+    if (is_cons_check)
+    {
+      if (idx_x != 0)
+      {
+        if (!bzla_bvdomain_check_fixed_bits(d_mm, x, t)) return;
+        x_bv = t;
+      }
+    }
+    else
+    {
+      if ((idx_x == 1 && bzla_bv_is_zero(s0))
+          || (idx_x == 2 && bzla_bv_is_one(s0)))
+      {
+        assert(bzla_bv_compare(s1, t) == 0);
+        return;
+      }
+    }
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
-      d_res_x = 0;
+      pi->res_x = 0;
       if (is_inv_fun)
       {
-        is_inv = is_inv_fun(d_bzla, x, t, s0, s1, idx_x, &d_res_x);
+        is_inv = is_inv_fun(d_bzla, pi);
         assert(is_inv);
       }
-      res =
-          compute_value_fun(d_bzla, exp, t, s0, s1, idx_x, d_domains, d_res_x);
-      if (d_res_x) bzla_bvdomain_free(d_mm, d_res_x);
+      res = compute_value_fun(d_bzla, pi);
+      if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       ASSERT_NE(res, nullptr);
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
@@ -1920,33 +2023,28 @@ class TestPropCompleteConst : public TestPropComplete
   }
 
   /** Helper for check_result_slice_aux. */
-  void check_result_slice_n_tests(BzlaPropIsInvSlice is_inv_fun,
-                                  BzlaPropComputeValue compute_value_fun,
-                                  BzlaNode *exp,
-                                  BzlaBitVector *t,
-                                  BzlaBitVector *x_bv,
-                                  uint32_t upper,
-                                  uint32_t lower)
+  void check_result_slice_n_tests(BzlaPropIsInvFun is_inv_fun,
+                                  BzlaPropComputeValueFun compute_value_fun,
+                                  BzlaPropInfo *pi)
   {
     uint64_t k;
     bool is_inv;
     BzlaBitVector *res;
+    const BzlaBitVector *x_bv;
 
-    assert(bzla_hashint_map_contains(d_domains,
-                                     bzla_node_real_addr(exp->e[0])->id));
-    BzlaBvDomain *x = (BzlaBvDomain *) bzla_hashint_map_get(
-                          d_domains, bzla_node_real_addr(exp->e[0])->id)
-                          ->as_ptr;
+    x_bv = pi->bv[0];
 
     for (k = 0, res = 0; k < TEST_PROP_INV_COMPLETE_N_TESTS; k++)
     {
+      pi->res_x = 0;
       if (is_inv_fun)
       {
-        is_inv = is_inv_fun(d_bzla, x, t, upper, lower);
+        is_inv = is_inv_fun(d_bzla, pi);
         assert(is_inv);
       }
-      res = compute_value_fun(d_bzla, exp, t, x_bv, 0, d_domains, 0);
+      res = compute_value_fun(d_bzla, pi);
       ASSERT_NE(res, nullptr);
+      if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       if (!bzla_bv_compare(res, x_bv)) break;
       bzla_bv_free(d_mm, res);
       res = 0;
@@ -1957,92 +2055,92 @@ class TestPropCompleteConst : public TestPropComplete
   }
 
   /** Helper for check_result. */
-  void check_result_aux(BzlaPropIsInv is_inv_fun,
-                        BzlaPropComputeValue compute_value_fun,
-                        BzlaNode *exp,
-                        BzlaBitVector *s,
-                        BzlaBitVector *t,
-                        BzlaBitVector *x_bv,
-                        uint32_t idx_x,
+  void check_result_aux(BzlaPropIsInvFun is_inv_fun,
+                        BzlaPropComputeValueFun compute_value_fun,
+                        BzlaPropInfo *pi,
                         std::vector<uint32_t> &fixed_idx)
   {
-    BzlaBvDomain *x = 0;
-
-    bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+    bzla_prop_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
     assert(bzla_hashint_map_contains(d_domains,
-                                     bzla_node_real_addr(exp->e[idx_x])->id));
-    x = (BzlaBvDomain *) bzla_hashint_map_get(
-            d_domains, bzla_node_real_addr(exp->e[idx_x])->id)
-            ->as_ptr;
+                                     bzla_node_real_addr(pi->exp->e[0])->id));
+    assert(bzla_hashint_map_contains(d_domains,
+                                     bzla_node_real_addr(pi->exp->e[1])->id));
+    pi->bvd[0] = (BzlaBvDomain *) bzla_hashint_map_get(
+                     d_domains, bzla_node_real_addr(pi->exp->e[0])->id)
+                     ->as_ptr;
+    pi->bvd[1] = (BzlaBvDomain *) bzla_hashint_map_get(
+                     d_domains, bzla_node_real_addr(pi->exp->e[1])->id)
+                     ->as_ptr;
+    BzlaBvDomain *x = (BzlaBvDomain *) pi->bvd[pi->pos_x];
     assert(!bzla_bvdomain_has_fixed_bits(d_mm, x));
+    const BzlaBitVector *x_bv = pi->bv[pi->pos_x];
 
     for (uint32_t i : fixed_idx)
     {
       bzla_bvdomain_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
     }
 
-    check_result_n_tests(is_inv_fun, compute_value_fun, exp, s, t, x_bv, idx_x);
+    check_result_n_tests(is_inv_fun, compute_value_fun, pi);
     clear_domains();
   }
 
   /** Helper for check_result_cond. */
-  void check_result_cond_aux(BzlaPropIsInvCond is_inv_fun,
-                             BzlaPropComputeValueCond compute_value_fun,
-                             BzlaNode *exp,
-                             BzlaBitVector *s0,
-                             BzlaBitVector *s1,
-                             BzlaBitVector *t,
-                             BzlaBitVector *x_bv,
-                             uint32_t idx_x,
+  void check_result_cond_aux(BzlaPropIsInvFun is_inv_fun,
+                             BzlaPropComputeValueFun compute_value_fun,
+                             BzlaPropInfo *pi,
                              std::vector<uint32_t> &fixed_idx)
   {
-    BzlaBvDomain *x = 0;
-
-    bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+    bzla_prop_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
     assert(bzla_hashint_map_contains(d_domains,
-                                     bzla_node_real_addr(exp->e[idx_x])->id));
-    x = (BzlaBvDomain *) bzla_hashint_map_get(
-            d_domains, bzla_node_real_addr(exp->e[idx_x])->id)
-            ->as_ptr;
+                                     bzla_node_real_addr(pi->exp->e[0])->id));
+    assert(bzla_hashint_map_contains(d_domains,
+                                     bzla_node_real_addr(pi->exp->e[1])->id));
+    assert(bzla_hashint_map_contains(d_domains,
+                                     bzla_node_real_addr(pi->exp->e[2])->id));
+    pi->bvd[0] = (BzlaBvDomain *) bzla_hashint_map_get(
+                     d_domains, bzla_node_real_addr(pi->exp->e[0])->id)
+                     ->as_ptr;
+    pi->bvd[1] = (BzlaBvDomain *) bzla_hashint_map_get(
+                     d_domains, bzla_node_real_addr(pi->exp->e[1])->id)
+                     ->as_ptr;
+    pi->bvd[2] = (BzlaBvDomain *) bzla_hashint_map_get(
+                     d_domains, bzla_node_real_addr(pi->exp->e[2])->id)
+                     ->as_ptr;
+    BzlaBvDomain *x = (BzlaBvDomain *) pi->bvd[pi->pos_x];
     assert(!bzla_bvdomain_has_fixed_bits(d_mm, x));
+    const BzlaBitVector *x_bv = pi->bv[pi->pos_x];
 
     for (uint32_t i : fixed_idx)
     {
       bzla_bvdomain_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
     }
 
-    check_result_cond_n_tests(
-        is_inv_fun, compute_value_fun, exp, s0, s1, t, x_bv, idx_x);
+    check_result_cond_n_tests(is_inv_fun, compute_value_fun, pi);
     clear_domains();
   }
 
   /** Helper for check_result_slice. */
-  void check_result_slice_aux(BzlaPropIsInvSlice is_inv_fun,
-                              BzlaPropComputeValue compute_value_fun,
-                              BzlaNode *exp,
-                              BzlaBitVector *t,
-                              BzlaBitVector *x_bv,
-                              uint32_t upper,
-                              uint32_t lower,
+  void check_result_slice_aux(BzlaPropIsInvFun is_inv_fun,
+                              BzlaPropComputeValueFun compute_value_fun,
+                              BzlaPropInfo *pi,
                               std::vector<uint32_t> &fixed_idx)
   {
-    BzlaBvDomain *x = 0;
-
-    bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+    bzla_prop_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
     assert(bzla_hashint_map_contains(d_domains,
-                                     bzla_node_real_addr(exp->e[0])->id));
-    x = (BzlaBvDomain *) bzla_hashint_map_get(
-            d_domains, bzla_node_real_addr(exp->e[0])->id)
-            ->as_ptr;
+                                     bzla_node_real_addr(pi->exp->e[0])->id));
+    pi->bvd[0] = (BzlaBvDomain *) bzla_hashint_map_get(
+                     d_domains, bzla_node_real_addr(pi->exp->e[0])->id)
+                     ->as_ptr;
+    BzlaBvDomain *x = (BzlaBvDomain *) pi->bvd[pi->pos_x];
     assert(!bzla_bvdomain_has_fixed_bits(d_mm, x));
+    const BzlaBitVector *x_bv = pi->bv[pi->pos_x];
 
     for (uint32_t i : fixed_idx)
     {
       bzla_bvdomain_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
     }
 
-    check_result_slice_n_tests(
-        is_inv_fun, compute_value_fun, exp, t, x_bv, upper, lower);
+    check_result_slice_n_tests(is_inv_fun, compute_value_fun, pi);
     clear_domains();
   }
 
@@ -2062,37 +2160,24 @@ class TestPropCompleteConst : public TestPropComplete
    *                    with respect to s and t.
    * compute_value_fun: The function to compute the inverse value for x given s
    *                    and t.
-   * exp              : The node representing the operation.
-   * s                : The assignment of the other operand.
-   * t                : The assignment of the output (the target value of the
-   *                    operation).
-   * x_bv             : The expected assignment of the operand we solve for.
-   * idx_x            : The index of operand 'x'.
+   * pi               : The struct containing all information needed for is_inv
+   *                    checks and invers/consistent value computation.
    */
-  void check_result(BzlaPropIsInv is_inv_fun,
-                    BzlaPropComputeValue compute_value_fun,
-                    BzlaNode *exp,
-                    BzlaBitVector *s,
-                    BzlaBitVector *t,
-                    BzlaBitVector *x_bv,
-                    uint32_t idx_x)
+  void check_result(BzlaPropIsInvFun is_inv_fun,
+                    BzlaPropComputeValueFun compute_value_fun,
+                    BzlaPropInfo *pi)
   {
     assert(compute_value_fun);
-    assert(exp);
-    assert(bzla_node_is_regular(exp));
-    assert(s);
-    assert(t);
-    assert(x_bv);
-    assert(d_domains);
+    assert(pi);
 
     std::vector<uint32_t> fixed_idx;
+    const BzlaBitVector *x_bv = pi->bv[pi->pos_x];
 
     /* set one bit */
     for (uint32_t i = 0, bw = bzla_bv_get_width(x_bv); i < bw; ++i)
     {
       fixed_idx.push_back(i);
-      check_result_aux(
-          is_inv_fun, compute_value_fun, exp, s, t, x_bv, idx_x, fixed_idx);
+      check_result_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
       fixed_idx.clear();
     }
 
@@ -2103,8 +2188,7 @@ class TestPropCompleteConst : public TestPropComplete
       {
         fixed_idx.push_back(i);
         fixed_idx.push_back(j);
-        check_result_aux(
-            is_inv_fun, compute_value_fun, exp, s, t, x_bv, idx_x, fixed_idx);
+        check_result_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
         fixed_idx.clear();
       }
     }
@@ -2119,8 +2203,7 @@ class TestPropCompleteConst : public TestPropComplete
           fixed_idx.push_back(i);
           fixed_idx.push_back(j);
           fixed_idx.push_back(k);
-          check_result_aux(
-              is_inv_fun, compute_value_fun, exp, s, t, x_bv, idx_x, fixed_idx);
+          check_result_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
           fixed_idx.clear();
         }
       }
@@ -2134,48 +2217,23 @@ class TestPropCompleteConst : public TestPropComplete
    *                    with respect to s0, s1 and t.
    * compute_value_fun: The function to compute the inverse value for x given
    *                    s0, s1 and t.
-   * exp       : The node representing the operation.
-   * s0, s1    : The assignment of other two operands:
-   *               - for idx_x = 0, assignment s0 is for e[1] and s1 for e[2]
-   *               - for idx_x = 1, assignment s0 is for e[0] and s1 for e[2]
-   *               - for idx_x = 2, assignment s0 is for e[0] and s1 for e[1]
-   * t          : The assignment of the output (the target value of the
-   *              operation).
-   * x_bv       : The expected assignment of the operand we solve for.
-   * idx_x      : The index of operand 'x'.
+   * pi               : The struct containing all information needed for is_inv
+   *                    checks and invers/consistent value computation.
    */
-  void check_result_cond(BzlaPropIsInvCond is_inv_fun,
-                         BzlaPropComputeValueCond compute_value_fun,
-                         BzlaNode *exp,
-                         BzlaBitVector *s0,
-                         BzlaBitVector *s1,
-                         BzlaBitVector *t,
-                         BzlaBitVector *x_bv,
-                         uint32_t idx_x)
+  void check_result_cond(BzlaPropIsInvFun is_inv_fun,
+                         BzlaPropComputeValueFun compute_value_fun,
+                         BzlaPropInfo *pi)
   {
-    assert(exp);
-    assert(bzla_node_is_regular(exp));
-    assert(s0);
-    assert(s1);
-    assert(t);
-    assert(x_bv);
-    assert(d_domains);
+    assert(pi);
 
+    const BzlaBitVector *x_bv = pi->bv[pi->pos_x];
     std::vector<uint32_t> fixed_idx;
 
     /* set one bit */
     for (uint32_t i = 0, bw = bzla_bv_get_width(x_bv); i < bw; ++i)
     {
       fixed_idx.push_back(i);
-      check_result_cond_aux(is_inv_fun,
-                            compute_value_fun,
-                            exp,
-                            s0,
-                            s1,
-                            t,
-                            x_bv,
-                            idx_x,
-                            fixed_idx);
+      check_result_cond_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
       fixed_idx.clear();
     }
 
@@ -2186,15 +2244,7 @@ class TestPropCompleteConst : public TestPropComplete
       {
         fixed_idx.push_back(i);
         fixed_idx.push_back(j);
-        check_result_cond_aux(is_inv_fun,
-                              compute_value_fun,
-                              exp,
-                              s0,
-                              s1,
-                              t,
-                              x_bv,
-                              idx_x,
-                              fixed_idx);
+        check_result_cond_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
         fixed_idx.clear();
       }
     }
@@ -2209,15 +2259,7 @@ class TestPropCompleteConst : public TestPropComplete
           fixed_idx.push_back(i);
           fixed_idx.push_back(j);
           fixed_idx.push_back(k);
-          check_result_cond_aux(is_inv_fun,
-                                compute_value_fun,
-                                exp,
-                                s0,
-                                s1,
-                                t,
-                                x_bv,
-                                idx_x,
-                                fixed_idx);
+          check_result_cond_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
           fixed_idx.clear();
         }
       }
@@ -2235,36 +2277,21 @@ class TestPropCompleteConst : public TestPropComplete
    *                    with respect to upper, lower and t.
    * compute_value_fun: The function to compute the inverse value for x given
    *                    upper, lower and t.
-   * exp  : The node representing the operation.
-   * t    : The assignment of the output (the target value of the
-   *        operation).
-   * x_bv : The expected assignment of the operand we solve for.
-   * upper: The upper index of the slice range.
-   * lower: The lower index of the slice range.
+   * pi               : The struct containing all information needed for is_inv
+   *                    checks and invers/consistent value computation.
    */
-  void check_result_slice(BzlaPropIsInvSlice is_inv_fun,
-                          BzlaPropComputeValue compute_value_fun,
-                          BzlaNode *exp,
-                          BzlaBitVector *t,
-                          BzlaBitVector *x_bv,
-                          uint32_t upper,
-                          uint32_t lower)
+  void check_result_slice(BzlaPropIsInvFun is_inv_fun,
+                          BzlaPropComputeValueFun compute_value_fun,
+                          BzlaPropInfo *pi)
   {
-    assert(exp);
-    assert(bzla_node_is_regular(exp));
-    assert(t);
-    assert(x_bv);
-    assert(d_domains);
-    assert(upper >= lower);
-
     std::vector<uint32_t> fixed_idx;
+    const BzlaBitVector *x_bv = pi->bv[pi->pos_x];
 
     /* set one bit */
     for (uint32_t i = 0, bw = bzla_bv_get_width(x_bv); i < bw; ++i)
     {
       fixed_idx.push_back(i);
-      check_result_slice_aux(
-          is_inv_fun, compute_value_fun, exp, t, x_bv, upper, lower, fixed_idx);
+      check_result_slice_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
       fixed_idx.clear();
     }
 
@@ -2275,14 +2302,7 @@ class TestPropCompleteConst : public TestPropComplete
       {
         fixed_idx.push_back(i);
         fixed_idx.push_back(j);
-        check_result_slice_aux(is_inv_fun,
-                               compute_value_fun,
-                               exp,
-                               t,
-                               x_bv,
-                               upper,
-                               lower,
-                               fixed_idx);
+        check_result_slice_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
         fixed_idx.clear();
       }
     }
@@ -2297,14 +2317,7 @@ class TestPropCompleteConst : public TestPropComplete
           fixed_idx.push_back(i);
           fixed_idx.push_back(j);
           fixed_idx.push_back(k);
-          check_result_slice_aux(is_inv_fun,
-                                 compute_value_fun,
-                                 exp,
-                                 t,
-                                 x_bv,
-                                 upper,
-                                 lower,
-                                 fixed_idx);
+          check_result_slice_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
           fixed_idx.clear();
         }
       }
@@ -2316,26 +2329,27 @@ class TestPropCompleteConst : public TestPropComplete
    * for the first operand produces value s0, and the inverse value computation
    * for the second operand produces value s1.
    *
-   * exp_fun    : The function to create the node representing operation <>.
-   * bv_fun     : The function to create the bit-vector result of operation
-   *              s0 <> s1.
-   * is_inv_fun : The function to test if given operator is invertible with
-   *              respect to s and t.
-   * compute_value_fun    : The function to compute the inverse value for x
-   * given s and t considering const bits in x.
+   * exp_fun          : The function to create a node representing operation <>.
+   * bv_fun           : The function to create the bit-vector result of
+   *                    operation s0 <> s1.
+   * is_inv_fun       : The function to test if given operator is invertible
+   *                    with respect to s and t.
+   * compute_value_fun: The function to compute the inverse value for x
+   *                    given s and t considering const bits in x.
    */
   void check_binary(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              const BzlaBitVector *),
-                    BzlaPropIsInv is_inv_fun,
-                    BzlaPropComputeValue compute_value_fun)
+                    BzlaPropIsInvFun is_inv_fun,
+                    BzlaPropComputeValueFun compute_value_fun)
   {
     uint32_t bw;
     uint64_t i, j;
     BzlaNode *exp, *e[2];
     BzlaSortId sort;
     BzlaBitVector *s[2], *t;
+    BzlaPropInfo pi;
 
     bw   = TEST_PROP_INV_COMPLETE_BW;
     sort = bzla_sort_bv(d_bzla, bw);
@@ -2351,8 +2365,11 @@ class TestPropCompleteConst : public TestPropComplete
       {
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         t    = bv_fun(d_mm, s[0], s[1]);
-        check_result(is_inv_fun, compute_value_fun, exp, s[0], t, s[1], 1);
-        check_result(is_inv_fun, compute_value_fun, exp, s[1], t, s[0], 0);
+        /* domains are initialized later */
+        init_prop_info(&pi, exp, 1, t, s[0], s[1], 0, 0, 0, 0);
+        check_result(is_inv_fun, compute_value_fun, &pi);
+        init_prop_info(&pi, exp, 0, t, s[0], s[1], 0, 0, 0, 0);
+        check_result(is_inv_fun, compute_value_fun, &pi);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
       }
@@ -2364,14 +2381,15 @@ class TestPropCompleteConst : public TestPropComplete
   }
 
   /** Same as check_binary but for cond.  */
-  void check_cond(BzlaPropIsInvCond is_inv_fun,
-                  BzlaPropComputeValueCond compute_value_fun)
+  void check_cond(BzlaPropIsInvFun is_inv_fun,
+                  BzlaPropComputeValueFun compute_value_fun)
   {
     uint32_t bw;
     uint64_t i, j, k;
     BzlaNode *exp, *e[3];
     BzlaSortId sort, sort1;
     BzlaBitVector *s[3], *t;
+    BzlaPropInfo pi;
 
     bw    = TEST_PROP_INV_COMPLETE_BW;
     sort  = bzla_sort_bv(d_bzla, bw);
@@ -2393,12 +2411,13 @@ class TestPropCompleteConst : public TestPropComplete
         {
           s[2] = bzla_bv_uint64_to_bv(d_mm, k, bw);
           t    = bzla_bv_ite(d_mm, s[0], s[1], s[2]);
-          check_result_cond(
-              is_inv_fun, compute_value_fun, exp, s[0], s[1], t, t, 2);
-          check_result_cond(
-              is_inv_fun, compute_value_fun, exp, s[0], s[2], t, t, 1);
-          check_result_cond(
-              is_inv_fun, compute_value_fun, exp, s[1], s[2], t, s[0], 0);
+          /* domains are initialized later */
+          init_prop_info(&pi, exp, 2, t, s[0], s[1], s[2], 0, 0, 0);
+          check_result_cond(is_inv_fun, compute_value_fun, &pi);
+          init_prop_info(&pi, exp, 1, t, s[0], s[1], s[2], 0, 0, 0);
+          check_result_cond(is_inv_fun, compute_value_fun, &pi);
+          init_prop_info(&pi, exp, 2, t, s[0], s[1], s[2], 0, 0, 0);
+          check_result_cond(is_inv_fun, compute_value_fun, &pi);
           bzla_bv_free(d_mm, s[2]);
           bzla_bv_free(d_mm, t);
         }
@@ -2413,14 +2432,15 @@ class TestPropCompleteConst : public TestPropComplete
   }
 
   /** Same as check_binary but for cond.  */
-  void check_slice(BzlaPropIsInvSlice is_inv_fun,
-                   BzlaPropComputeValue compute_value_fun)
+  void check_slice(BzlaPropIsInvFun is_inv_fun,
+                   BzlaPropComputeValueFun compute_value_fun)
   {
     uint32_t bw;
     uint64_t up, lo, i;
     BzlaNode *exp, *e;
     BzlaBitVector *t, *x;
     BzlaSortId sort;
+    BzlaPropInfo pi;
 
     bw   = TEST_PROP_INV_COMPLETE_BW;
     sort = bzla_sort_bv(d_bzla, bw);
@@ -2436,7 +2456,9 @@ class TestPropCompleteConst : public TestPropComplete
         {
           x = bzla_bv_uint64_to_bv(d_mm, i, bw);
           t = bzla_bv_slice(d_mm, x, up, lo);
-          check_result_slice(is_inv_fun, compute_value_fun, exp, t, x, up, lo);
+          /* domains are initialized later */
+          init_prop_info(&pi, exp, 0, t, x, 0, 0, 0, 0, 0);
+          check_result_slice(is_inv_fun, compute_value_fun, &pi);
           bzla_bv_free(d_mm, x);
           bzla_bv_free(d_mm, t);
         }
@@ -2451,11 +2473,11 @@ class TestPropCompleteConst : public TestPropComplete
    * for the first operand produces value s0, and the inverse value computation
    * for the second operand produces value s1.
    *
-   * exp_fun   : The function to create the node representing operation <>.
-   * bv_fun    : The function to create the bit-vector result of operation
-   *             s0 <> s1.
-   * is_inv_fun: The function to test if given operator is invertible with
-   *             respect to s and t.
+   * exp_fun          : The function to create a node representing operation <>.
+   * bv_fun           : The function to create the bit-vector result of
+   *                    operation s0 <> s1.
+   * is_inv_fun       : The function to test if given operator is invertible
+   *                    with respect to s and t.
    * compute_value_fun: The function to compute the inverse value for x given
    *                    s and t.
    */
@@ -2463,14 +2485,15 @@ class TestPropCompleteConst : public TestPropComplete
                    BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                             const BzlaBitVector *,
                                             const BzlaBitVector *),
-                   BzlaPropIsInv is_inv_fun,
-                   BzlaPropComputeValue compute_value_fun)
+                   BzlaPropIsInvFun is_inv_fun,
+                   BzlaPropComputeValueFun compute_value_fun)
   {
     uint32_t bw;
     uint64_t i, j;
     BzlaNode *exp, *e[2];
     BzlaSortId sort;
-    BzlaBitVector *s[2], *x;
+    BzlaBitVector *s[2], *t;
+    BzlaPropInfo pi;
 
     bw   = TEST_PROP_INV_COMPLETE_BW;
     sort = bzla_sort_bv(d_bzla, bw);
@@ -2485,11 +2508,14 @@ class TestPropCompleteConst : public TestPropComplete
       for (j = 0; j < (uint32_t)(1 << bw); j++)
       {
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
-        x    = bv_fun(d_mm, s[0], s[1]);
-        check_result(is_inv_fun, compute_value_fun, exp, s[0], x, s[1], 1);
-        check_result(is_inv_fun, compute_value_fun, exp, s[1], x, s[0], 0);
+        t    = bv_fun(d_mm, s[0], s[1]);
+        /* domains are initialized later */
+        init_prop_info(&pi, exp, 0, t, s[0], s[1], 0, 0, 0, 0);
+        check_result(is_inv_fun, compute_value_fun, &pi);
+        init_prop_info(&pi, exp, 1, t, s[0], s[1], 0, 0, 0, 0);
+        check_result(is_inv_fun, compute_value_fun, &pi);
         bzla_bv_free(d_mm, s[1]);
-        bzla_bv_free(d_mm, x);
+        bzla_bv_free(d_mm, t);
       }
       bzla_bv_free(d_mm, s[0]);
     }
