@@ -4882,6 +4882,7 @@ static BzlaPropComputeValueFun kind_to_cons[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = bzla_proputils_cons_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_cons_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_cons_urem,
+    [BZLA_COND_NODE]      = bzla_proputils_cons_cond,
 };
 
 static BzlaPropComputeValueFun kind_to_cons_const[BZLA_NUM_OPS_NODE] = {
@@ -4896,6 +4897,7 @@ static BzlaPropComputeValueFun kind_to_cons_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = bzla_proputils_cons_srl_const,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_cons_udiv_const,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_cons_urem_const,
+    [BZLA_COND_NODE]      = bzla_proputils_cons_cond_const,
 };
 
 static BzlaPropComputeValueFun kind_to_inv[BZLA_NUM_OPS_NODE] = {
@@ -4910,6 +4912,7 @@ static BzlaPropComputeValueFun kind_to_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = bzla_proputils_inv_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_inv_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_inv_urem,
+    [BZLA_COND_NODE]      = bzla_proputils_inv_cond,
 };
 
 static BzlaPropComputeValueFun kind_to_inv_const[BZLA_NUM_OPS_NODE] = {
@@ -4924,7 +4927,7 @@ static BzlaPropComputeValueFun kind_to_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_SRL_NODE]    = bzla_proputils_inv_srl_const,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_inv_udiv_const,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_inv_urem_const,
-    [BZLA_COND_NODE]      = 0,  // special handling
+    [BZLA_COND_NODE]      = bzla_proputils_inv_cond_const,
 };
 
 static BzlaPropIsInvFun kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
@@ -4934,12 +4937,12 @@ static BzlaPropIsInvFun kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_EQ_NODE]     = 0,  // always invertible
     [BZLA_BV_MUL_NODE]    = bzla_is_inv_mul,
     [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult,
-    [BZLA_BV_SLICE_NODE]  = 0,  // always invertible
+    [BZLA_BV_SLICE_NODE]  = bzla_is_inv_slice,
     [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll,
     [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem,
-    [BZLA_COND_NODE]      = 0,  // special handling
+    [BZLA_COND_NODE]      = bzla_is_inv_cond,
 };
 
 static BzlaPropIsInvFun kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
@@ -4949,12 +4952,12 @@ static BzlaPropIsInvFun kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_EQ_NODE]     = bzla_is_inv_eq_const,
     [BZLA_BV_MUL_NODE]    = bzla_is_inv_mul_const,
     [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult_const,
-    [BZLA_BV_SLICE_NODE]  = 0,  // special handling
+    [BZLA_BV_SLICE_NODE]  = bzla_is_inv_slice_const,
     [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll_const,
     [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl_const,
     [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv_const,
     [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem_const,
-    [BZLA_COND_NODE]      = 0,  // special handling
+    [BZLA_COND_NODE]      = bzla_is_inv_cond_const,
 };
 
 /* ========================================================================== */
@@ -5198,7 +5201,6 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   BzlaIntHashTable *domains;
   BzlaHashTableData *d;
   BzlaBitVector *bv_s[3] = {0, 0, 0}, *bv_t, *bv_s_new, *tmp;
-  BzlaBvDomain *d_res_x;
   BzlaMemMgr *mm;
   uint32_t opt_prop_prob_use_inv_value;
   uint32_t opt_prop_const_bits;
@@ -5220,7 +5222,6 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   *assignment = 0;
   nprops      = 0;
   domains     = 0;
-  d_res_x     = 0;
 
   opt_prop_prob_use_inv_value =
       bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE);
@@ -5313,15 +5314,15 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         bzla_bv_free(bzla->mm, tmp);
       }
 
+      /* Reset propagation info struct. */
       memset(&pi, 0, sizeof(BzlaPropInfo));
-      pi.exp          = real_cur;
-      pi.target_value = bv_t;
 
       /* check if all paths are const, if yes -> conflict */
       for (i = 0, nconst = 0; i < real_cur->arity; i++)
       {
-        bv_s[i]  = (BzlaBitVector *) bzla_model_get_bv(bzla, real_cur->e[i]);
-        pi.bv[i] = bv_s[i];
+        bv_s[i]   = (BzlaBitVector *) bzla_model_get_bv(bzla, real_cur->e[i]);
+        pi.bv[i]  = bv_s[i];
+        pi.bvd[i] = 0;
         if (bzla_node_is_bv_const(real_cur->e[i])) nconst += 1;
       }
       if (nconst > real_cur->arity - 1) break;
@@ -5363,7 +5364,10 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       }
 #endif
 
-      pi.pos_x = idx_x;
+      pi.exp          = real_cur;
+      pi.pos_x        = idx_x;
+      pi.res_x        = 0;
+      pi.target_value = bv_t;
 
       d              = 0;
       has_fixed_bits = false;
@@ -5395,113 +5399,43 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
       is_inv   = true;
       bv_s_new = 0;
-      if (bzla_node_is_cond(real_cur))
+      BzlaPropComputeValueFun inv_value_fun, cons_value_fun, compute_value_fun;
+
+      is_inv_fun = has_fixed_bits ? kind_to_is_inv_const[real_cur->kind]
+                                  : kind_to_is_inv[real_cur->kind];
+      if (is_inv_fun)
       {
-        BzlaPropIsInvFun is_inv_cond =
-            has_fixed_bits ? bzla_is_inv_cond_const : bzla_is_inv_cond;
+        assert(!opt_prop_const_bits || d);
+        is_inv = is_inv_fun(bzla, &pi);
+      }
 
-        is_inv = is_inv_cond(bzla, &pi);
-
+      if (!is_inv)
+      {
         /* not invertible counts as conflict */
-        if (!is_inv)
+        if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x, true))
         {
-          if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x, true))
+          /* non-recoverable conflict */
+          if (pi.res_x)
           {
-            /* non-recoverable conflict */
-            if (d_res_x)
-            {
-              bzla_bvdomain_free(mm, d_res_x);
-              d_res_x = 0;
-            }
-            break;
+            bzla_bvdomain_free(mm, pi.res_x);
+            pi.res_x = 0;
           }
-        }
-
-        BzlaPropComputeValueFun compute_value_cond_fun;
-
-        if (pick_inv && is_inv)
-        {
-          compute_value_cond_fun = has_fixed_bits
-                                       ? bzla_proputils_inv_cond_const
-                                       : bzla_proputils_inv_cond;
-        }
-        else
-        {
-          compute_value_cond_fun = has_fixed_bits
-                                       ? bzla_proputils_cons_cond_const
-                                       : bzla_proputils_cons_cond;
-        }
-        /* compute new assignment */
-        bv_s_new = compute_value_cond_fun(bzla, &pi);
-      }
-      else if (bzla_node_is_bv_slice(real_cur))
-      {
-        if (has_fixed_bits)
-        {
-          assert(d);
-          assert(d->as_ptr);
-          is_inv = bzla_is_inv_slice_const(bzla, &pi);
-
-          if (!is_inv)
-          {
-            /* not invertible counts as conflict */
-            if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x, true))
-            {
-              /* non-recoverable conflict */
-              break;
-            }
-          }
-          bv_s_new = pick_inv && is_inv
-                         ? bzla_proputils_inv_slice_const(bzla, &pi)
-                         : bzla_proputils_cons_slice(bzla, &pi);
-        }
-        else
-        {
-          bv_s_new = pick_inv && is_inv ? bzla_proputils_inv_slice(bzla, &pi)
-                                        : bzla_proputils_cons_slice(bzla, &pi);
+          break;
         }
       }
-      else
+      /* compute new assignment */
+      cons_value_fun = has_fixed_bits ? kind_to_cons_const[real_cur->kind]
+                                      : kind_to_cons[real_cur->kind];
+      inv_value_fun = has_fixed_bits ? kind_to_inv_const[real_cur->kind]
+                                     : kind_to_inv[real_cur->kind];
+
+      compute_value_fun = pick_inv && is_inv ? inv_value_fun : cons_value_fun;
+      bv_s_new          = compute_value_fun(bzla, &pi);
+
+      if (pi.res_x)
       {
-        BzlaPropComputeValueFun inv_value_fun, cons_value_fun,
-            compute_value_fun;
-
-        is_inv_fun = has_fixed_bits ? kind_to_is_inv_const[real_cur->kind]
-                                    : kind_to_is_inv[real_cur->kind];
-        if (is_inv_fun)
-        {
-          assert(!opt_prop_const_bits || d);
-          is_inv = is_inv_fun(bzla, &pi);
-        }
-
-        if (!is_inv)
-        {
-          /* not invertible counts as conflict */
-          if (!record_conflict(bzla, real_cur, bv_t, bv_s, idx_x, true))
-          {
-            /* non-recoverable conflict */
-            if (d_res_x)
-            {
-              bzla_bvdomain_free(mm, d_res_x);
-              d_res_x = 0;
-            }
-            break;
-          }
-        }
-        /* compute new assignment */
-        cons_value_fun = has_fixed_bits ? kind_to_cons_const[real_cur->kind]
-                                        : kind_to_cons[real_cur->kind];
-        inv_value_fun = has_fixed_bits ? kind_to_inv_const[real_cur->kind]
-                                       : kind_to_inv[real_cur->kind];
-
-        compute_value_fun = pick_inv && is_inv ? inv_value_fun : cons_value_fun;
-        bv_s_new          = compute_value_fun(bzla, &pi);
-      }
-
-      if (d_res_x)
-      {
-        bzla_bvdomain_free(mm, d_res_x);
-        d_res_x = 0;
+        bzla_bvdomain_free(mm, pi.res_x);
+        pi.res_x = 0;
       }
       if (!bv_s_new)
       {
