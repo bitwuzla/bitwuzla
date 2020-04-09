@@ -5342,9 +5342,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       /* check if all paths are const, if yes -> conflict */
       for (i = 0, nconst = 0; i < real_cur->arity; i++)
       {
-        bv_s[i]   = (BzlaBitVector *) bzla_model_get_bv(bzla, real_cur->e[i]);
-        pi.bv[i]  = bv_s[i];
-        pi.bvd[i] = 0;
+        bv_s[i]  = (BzlaBitVector *) bzla_model_get_bv(bzla, real_cur->e[i]);
+        pi.bv[i] = bv_s[i];
         if (bzla_node_is_bv_const(real_cur->e[i])) nconst += 1;
       }
       if (nconst > real_cur->arity - 1) break;
@@ -5364,19 +5363,11 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bzla_mem_freestr(bzla->mm, a);
 #endif
 
-      /* we either select a consistent or inverse value
-       * as path assignment, depending on the given probability p
-       * -> if pick_inv then inverse else consistent */
-      pick_inv =
-          bzla_rng_pick_with_prob(&bzla->rng, opt_prop_prob_use_inv_value);
-#ifndef NBZLALOG
-      if (!pick_inv) ncons += 1;
-#endif
-
       /* select path */
       select_path = kind_to_select_path[real_cur->kind];
       if (idx_x == -1) idx_x = select_path(bzla, real_cur, bv_t, bv_s);
       assert(idx_x >= 0 && idx_x < real_cur->arity);
+
 #ifndef NDEBUG
       if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
       {
@@ -5391,7 +5382,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       pi.res_x        = 0;
       pi.target_value = bv_t;
 
-      d              = 0;
+      /* Initialize domains. */
       has_fixed_bits = false;
       if (opt_prop_const_bits)
       {
@@ -5419,15 +5410,26 @@ bzla_proputils_select_move_prop(Bzla *bzla,
        * 4) else compute inverse value
        */
 
-      is_inv   = true;
-      bv_s_new = 0;
       BzlaPropComputeValueFun inv_value_fun, cons_value_fun, compute_value_fun;
 
-      is_inv_fun = has_fixed_bits ? kind_to_is_inv_const[real_cur->kind]
-                                  : kind_to_is_inv[real_cur->kind];
+      if (has_fixed_bits)
+      {
+        is_inv_fun     = kind_to_is_inv_const[real_cur->kind];
+        cons_value_fun = kind_to_cons_const[real_cur->kind];
+        inv_value_fun  = kind_to_inv_const[real_cur->kind];
+      }
+      else
+      {
+        is_inv_fun     = kind_to_is_inv[real_cur->kind];
+        cons_value_fun = kind_to_cons[real_cur->kind];
+        inv_value_fun  = kind_to_inv[real_cur->kind];
+      }
+
+      /* Determine if there exists an inverse value. */
+      is_inv = true;
       if (is_inv_fun)
       {
-        assert(!opt_prop_const_bits || d);
+        assert(!opt_prop_const_bits || pi.bvd[pi.pos_x]);
         is_inv = is_inv_fun(bzla, &pi);
       }
 
@@ -5445,12 +5447,17 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           break;
         }
       }
-      /* compute new assignment */
-      cons_value_fun = has_fixed_bits ? kind_to_cons_const[real_cur->kind]
-                                      : kind_to_cons[real_cur->kind];
-      inv_value_fun = has_fixed_bits ? kind_to_inv_const[real_cur->kind]
-                                     : kind_to_inv[real_cur->kind];
 
+      /* we either select a consistent or inverse value
+       * as path assignment, depending on the given probability p
+       * -> if pick_inv then inverse else consistent */
+      pick_inv =
+          bzla_rng_pick_with_prob(&bzla->rng, opt_prop_prob_use_inv_value);
+#ifndef NBZLALOG
+      if (!pick_inv) ncons += 1;
+#endif
+
+      /* compute new assignment */
       compute_value_fun = pick_inv && is_inv ? inv_value_fun : cons_value_fun;
       bv_s_new          = compute_value_fun(bzla, &pi);
 
@@ -5459,6 +5466,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         bzla_bvdomain_free(mm, pi.res_x);
         pi.res_x = 0;
       }
+
       if (!bv_s_new)
       {
         (void) record_conflict(bzla, real_cur, bv_t, bv_s, idx_x, false);
@@ -5479,7 +5487,6 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           BZLA_PROP_SOLVER(bzla)->stats.moves_skipped++;
         }
         bzla_bv_free(bzla->mm, bv_s_new);
-        bv_s_new = 0;
         break;
       }
 
