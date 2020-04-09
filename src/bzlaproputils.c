@@ -5397,7 +5397,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       /* select path */
       if (is_sext)
       {
-        pos_x = 1;
+        pi.pos_x = 1;
+        pos_x    = 1;
       }
       else
       {
