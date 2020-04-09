@@ -3830,6 +3830,14 @@ bzla_proputils_inv_sign_extend(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 BzlaBitVector *
+bzla_proputils_cons_sign_extend(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  return 0;
+}
+
+BzlaBitVector *
 bzla_proputils_inv_sign_extend_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(pi->res_x);
@@ -5477,7 +5485,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         if (is_sext)
         {
           is_inv_fun     = bzla_is_inv_sign_extend_const;
-          cons_value_fun = bzla_proputils_inv_sign_extend_const;
+          cons_value_fun = bzla_proputils_cons_sign_extend;
           inv_value_fun  = bzla_proputils_inv_sign_extend_const;
         }
         else
@@ -5492,7 +5500,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         if (is_sext)
         {
           is_inv_fun     = bzla_is_inv_sign_extend;
-          cons_value_fun = bzla_proputils_inv_sign_extend;
+          cons_value_fun = bzla_proputils_cons_sign_extend;
           inv_value_fun  = bzla_proputils_inv_sign_extend;
         }
         else
