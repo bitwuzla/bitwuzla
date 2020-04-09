@@ -3818,6 +3818,24 @@ bzla_proputils_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
   return res;
 }
 
+BzlaBitVector *
+bzla_proputils_inv_sign_extend(Bzla *bzla, BzlaPropInfo *pi)
+{
+#ifndef NDEBUG
+  check_inv_dbg(
+      bzla, pi, bzla_is_inv_sign_extend, bzla_is_inv_sign_extend_const, false);
+#endif
+  assert(pi->res_x);
+  return bzla_bv_copy(bzla->mm, pi->res_x->lo);
+}
+
+BzlaBitVector *
+bzla_proputils_inv_sign_extend_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(pi->res_x);
+  return bzla_bv_copy(bzla->mm, pi->res_x->lo);
+}
+
 /* -------------------------------------------------------------------------- */
 /* INV: cond                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -5204,6 +5222,36 @@ record_conflict(Bzla *bzla,
 
 /* -------------------------------------------------------------------------- */
 
+static bool
+is_sign_extend(Bzla *bzla, BzlaNode *n)
+{
+  assert(bzla_node_is_regular(n));
+
+  uint32_t msb;
+  BzlaNode *ite, *t;
+
+  if (!bzla_node_is_bv_concat(n))
+  {
+    return false;
+  }
+
+  ite = n->e[0];
+  t   = n->e[1];
+  msb = bzla_node_bv_get_width(bzla, t) - 1;
+
+  if (bzla_node_is_inverted(ite) || !bzla_node_is_cond(ite)
+      || !bzla_node_is_bv_slice(ite->e[0]) || bzla_node_is_inverted(ite->e[0])
+      || ite->e[0]->e[0] != t || bzla_node_bv_slice_get_upper(ite->e[0]) != msb
+      || bzla_node_bv_slice_get_lower(ite->e[0]) != msb
+      || !bzla_node_is_bv_const_ones(bzla, ite->e[1])
+      || !bzla_node_is_bv_const_zero(bzla, ite->e[2]))
+  {
+    return false;
+  }
+
+  return true;
+}
+
 uint64_t
 bzla_proputils_select_move_prop(Bzla *bzla,
                                 BzlaNode *root,
@@ -5227,6 +5275,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   uint32_t opt_prop_prob_use_inv_value;
   uint32_t opt_prop_const_bits;
   bool opt_skip_no_progress;
+  bool is_sext;
   BzlaPropInfo pi;
 
   BzlaPropSelectPath select_path;
@@ -5363,10 +5412,21 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bzla_mem_freestr(bzla->mm, a);
 #endif
 
+      is_sext = is_sign_extend(bzla, real_cur);
+
       /* select path */
-      select_path = kind_to_select_path[real_cur->kind];
-      if (idx_x == -1) idx_x = select_path(bzla, real_cur, bv_t, bv_s);
-      assert(idx_x >= 0 && idx_x < real_cur->arity);
+      if (is_sext)
+      {
+        idx_x = 1;
+      }
+      else
+      {
+        select_path = kind_to_select_path[real_cur->kind];
+        if (idx_x == -1) idx_x = select_path(bzla, real_cur, bv_t, bv_s);
+      }
+
+      assert(idx_x >= 0);
+      assert(idx_x < real_cur->arity);
 
 #ifndef NDEBUG
       if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
@@ -5389,13 +5449,13 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         assert(domains);
         d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[idx_x]));
         assert(d);
-        has_fixed_bits = bzla_bvdomain_has_fixed_bits(mm, d->as_ptr);
         assert(d->as_ptr);
+
+        has_fixed_bits = bzla_bvdomain_has_fixed_bits(mm, d->as_ptr);
 
         for (i = 0; i < real_cur->arity; ++i)
         {
-          d = bzla_hashint_map_get(domains,
-                                   bzla_node_get_id(real_cur->e[idx_x]));
+          d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[i]));
           assert(d);
           assert(d->as_ptr);
           pi.bvd[i] = d->as_ptr;
@@ -5414,15 +5474,33 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
       if (has_fixed_bits)
       {
-        is_inv_fun     = kind_to_is_inv_const[real_cur->kind];
-        cons_value_fun = kind_to_cons_const[real_cur->kind];
-        inv_value_fun  = kind_to_inv_const[real_cur->kind];
+        if (is_sext)
+        {
+          is_inv_fun     = bzla_is_inv_sign_extend_const;
+          cons_value_fun = bzla_proputils_inv_sign_extend_const;
+          inv_value_fun  = bzla_proputils_inv_sign_extend_const;
+        }
+        else
+        {
+          is_inv_fun     = kind_to_is_inv_const[real_cur->kind];
+          cons_value_fun = kind_to_cons_const[real_cur->kind];
+          inv_value_fun  = kind_to_inv_const[real_cur->kind];
+        }
       }
       else
       {
-        is_inv_fun     = kind_to_is_inv[real_cur->kind];
-        cons_value_fun = kind_to_cons[real_cur->kind];
-        inv_value_fun  = kind_to_inv[real_cur->kind];
+        if (is_sext)
+        {
+          is_inv_fun     = bzla_is_inv_sign_extend;
+          cons_value_fun = bzla_proputils_inv_sign_extend;
+          inv_value_fun  = bzla_proputils_inv_sign_extend;
+        }
+        else
+        {
+          is_inv_fun     = kind_to_is_inv[real_cur->kind];
+          cons_value_fun = kind_to_cons[real_cur->kind];
+          inv_value_fun  = kind_to_inv[real_cur->kind];
+        }
       }
 
       /* Determine if there exists an inverse value. */

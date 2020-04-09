@@ -459,6 +459,52 @@ bzla_is_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
   return true;
 }
 
+/**
+ * Check invertibility condition (without considering const bits in x) for:
+ *
+ * sign_extend(x, n) = t_ext o t_x
+ *
+ * IC: (t_x[msb] == 1 /\ t_ext == ones) \/ (t_x[msb] == 0 /\ t_ext == zero)
+ */
+bool
+bzla_is_inv_sign_extend(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+
+  bool res = false;
+  BzlaMemMgr *mm;
+  uint32_t n, bw, msb;
+  const BzlaBitVector *t;
+  BzlaBitVector *t_ext, *t_x;
+
+  /* Note: pi->exp is a concat representing a sign_extend. pi->bv store the
+   * assignments to the concat's operands. */
+
+  mm = bzla->mm;
+  n  = bzla_bv_get_width(pi->bv[0]);
+  t  = pi->target_value;
+
+  bw    = bzla_bv_get_width(t);
+  t_ext = bzla_bv_slice(mm, t, bw - 1, bw - n);
+  t_x   = bzla_bv_slice(mm, t, bw - 1 - n, 0);
+  msb   = bzla_bv_get_width(t_x) - 1;
+
+  if (bzla_bv_get_bit(t_x, msb) == 1 && bzla_bv_is_ones(t_ext))
+  {
+    res       = true;
+    pi->res_x = bzla_bvdomain_new(mm, t_x, t_x);
+  }
+  else if (bzla_bv_get_bit(t_x, msb) == 0 && bzla_bv_is_zero(t_ext))
+  {
+    res       = true;
+    pi->res_x = bzla_bvdomain_new(mm, t_x, t_x);
+  }
+  bzla_bv_free(mm, t_ext);
+  bzla_bv_free(mm, t_x);
+  return res;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Check invertibility while considering constant bits in x.                  */
 /* -------------------------------------------------------------------------- */
@@ -1473,4 +1519,21 @@ bzla_is_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi)
   bzla_bv_free(mm, t_mask);
 
   return res;
+}
+
+/**
+ * Check invertibility condition (without considering const bits in x) for:
+ *
+ * sign_extend(x, n) = t_ext o t_x
+ *
+ * IC: (t_x[msb] == 1 /\ t_ext == ones) \/ (t_x[msb] == 0 /\ t_ext == zero)
+ */
+bool
+bzla_is_inv_sign_extend_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  if (!bzla_is_inv_sign_extend(bzla, pi)) return false;
+  return bzla_bvdomain_check_fixed_bits(
+      bzla->mm, pi->bvd[pi->pos_x], pi->res_x->lo);
 }
