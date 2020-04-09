@@ -5572,6 +5572,13 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bzla_bv_free(bzla->mm, bv_t);
       bv_t = bv_s_new;
       cur  = real_cur->e[idx_x];
+      assert(bzla_hashint_map_contains(domains, bzla_node_get_id(cur->e[i])));
+      assert(bzla_hashint_map_get(domains, bzla_node_get_id(cur->e[i]))),
+          assert(bzla_bvdomain_check_fixed_bits(
+              bzla->mm,
+              bzla_hashint_map_get(domains, bzla_node_get_id(cur->e[i]))
+                  ->as_ptr,
+              bv_t));
 
       nprops += 1;
       idx_x = -1;
