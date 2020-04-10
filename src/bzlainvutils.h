@@ -117,10 +117,16 @@ bool bzla_is_inv_srl_const(Bzla *bzla, BzlaPropInfo *pi);
 bool bzla_is_inv_udiv_const(Bzla *bzla, BzlaPropInfo *pi);
 
 /**
- * Check invertibility of x < s = t or s < x = t when solved for x with
- * respect to const bits in x.
+ * Check invertibility of unsigned x < s = t or s < x = t when solved for x
+ * with respect to const bits in x.
  */
 bool bzla_is_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi);
+
+/**
+ * Check invertibility of signed x < s = t or s < x = t when solved for x
+ * with respect to const bits in x.
+ */
+bool bzla_is_inv_slt_const(Bzla *bzla, BzlaPropInfo *pi);
 
 /**
  * Check invertibility of x % s = t or s % x = t when solved for x with

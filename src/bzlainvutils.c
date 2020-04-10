@@ -1163,8 +1163,8 @@ bzla_is_inv_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
 /**
  * Check invertibility condition with respect to const bits in x for:
  *
- * x < s = t
- * s < x = t
+ * x < s = t (unsigned)
+ * s < x = t (unsigned)
  *
  * IC pos_x = 0:
  * t = 1: t -> (s != 0 && lo_x < s)
@@ -1210,6 +1210,108 @@ bzla_is_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi)
   }
   /* s >= x */
   return bzla_bv_compare(x->lo, s) <= 0;
+}
+
+/**
+ * Check invertibility condition with respect to const bits in x for:
+ *
+ * x < s = t (signed)
+ * s < x = t (signed)
+ *
+ * IC pos_x = 0:
+ * t = 1:
+ * t -> (s != min_signed_value
+ *       && ((MSB(x) = 0 && lo_x < s)
+ *           || (MSB(x) != 0 && 1 o lo_x[bw-2:0] < s)))
+ * t = 0:
+ * ~t -> (MSB(x) = 1 && hi_x >= s)
+ *        || (MSB(x) != 1 && 0 o hi_x[bw-2:0] >= s))
+ *
+ *
+ * IC pos_x = 1:
+ * t = 1:
+ * t -> (s != max_signed_value && hi_x > s)
+ *       && ((MSB(x) = 1 && s < hi_x)
+ *           || (MSB(x) != 1 && s < 0 o hi_x[bw-2:0])))
+ * t = 0:
+ * ~t -> (MSB(x) = 0 && s >= lo_x)
+ *        || (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0]))
+ */
+bool
+bzla_is_inv_slt_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+
+  bool res;
+  int32_t pos_x;
+  uint32_t bw;
+  bool msb_false, msb_true;
+  BzlaBitVector *tmp;
+  const BzlaBitVector *s, *t;
+  const BzlaBvDomain *x;
+  BzlaMemMgr *mm;
+
+  bzla_propinfo_set_result(bzla, pi, 0);
+  pos_x = pi->pos_x;
+  x     = pi->bvd[pos_x];
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  bw    = bzla_bvdomain_get_width(x);
+  mm    = bzla->mm;
+
+  msb_false = bzla_bvdomain_is_fixed_bit_false(x, bw - 1);
+  msb_true  = bzla_bvdomain_is_fixed_bit_true(x, bw - 1);
+  if (pos_x == 0)
+  {
+    /* x < s */
+    if (bzla_bv_is_true(t))
+    {
+      if (bzla_bv_is_min_signed(s)) return false;
+      if (msb_false) return bzla_bv_signed_compare(mm, x->lo, s) == -1;
+      tmp = bzla_bv_copy(mm, x->lo);
+      bzla_bv_set_bit(tmp, bw - 1, 1);
+      res = !msb_false && bzla_bv_signed_compare(mm, tmp, s) == -1;
+      bzla_bv_free(mm, tmp);
+      return res;
+    }
+    /* x >= s */
+    if (msb_true)
+    {
+      return bzla_bv_signed_compare(mm, x->hi, s) >= 0;
+    }
+    tmp = bzla_bv_copy(mm, x->hi);
+    bzla_bv_set_bit(tmp, bw - 1, 0);
+    res = !msb_true && bzla_bv_signed_compare(mm, tmp, s) >= 0;
+    bzla_bv_free(mm, tmp);
+    return res;
+  }
+  assert(pos_x == 1);
+
+  /* s < x */
+  if (bzla_bv_is_true(t))
+  {
+    if (bzla_bv_is_max_signed(s)) return false;
+    if (msb_true)
+    {
+      return bzla_bv_signed_compare(mm, s, x->hi) == -1;
+    }
+    tmp = bzla_bv_copy(mm, x->hi);
+    bzla_bv_set_bit(tmp, bw - 1, 0);
+    res = !msb_true && bzla_bv_signed_compare(mm, s, tmp) == -1;
+    bzla_bv_free(mm, tmp);
+    return res;
+  }
+  /* s >= x */
+  if (msb_false)
+  {
+    return bzla_bv_signed_compare(mm, s, x->lo) >= 0;
+  }
+  tmp = bzla_bv_copy(mm, x->lo);
+  bzla_bv_set_bit(tmp, bw - 1, 1);
+  res = !msb_false && bzla_bv_signed_compare(mm, s, tmp) >= 0;
+  bzla_bv_free(mm, tmp);
+  return res;
 }
 
 bool

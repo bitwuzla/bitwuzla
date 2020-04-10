@@ -145,6 +145,7 @@ class TestInvUtils : public TestBzla
             std::cout << "s: " << vs << std::endl;
           }
 
+          assert(res == status);
           ASSERT_EQ(res, status);
           bzla_bv_free(d_mm, t);
           bzla_mem_freestr(d_mm, vt);
@@ -596,6 +597,12 @@ TEST_F(TestInvUtils, is_inv_ult_const)
 {
   test_is_inv_binary_const(bzla_is_inv_ult_const, boolector_ult, 0);
   test_is_inv_binary_const(bzla_is_inv_ult_const, boolector_ult, 1);
+}
+
+TEST_F(TestInvUtils, is_inv_slt_const)
+{
+  test_is_inv_binary_const(bzla_is_inv_slt_const, boolector_slt, 0);
+  test_is_inv_binary_const(bzla_is_inv_slt_const, boolector_slt, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_slice_const)
