@@ -279,11 +279,11 @@ bzla_is_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
  * Check invertibility condition (without considering const bits in x) for:
  *
  * pos_x = 0:
- * x < s = t
+ * x < s = t (unsigned)
  * IC: t = 0 || s != 0
  *
  * pos_x = 1:
- * s < x = t
+ * s < x = t (unsigned)
  * IC: t = 0 || s != ~0
  */
 bool
@@ -307,6 +307,42 @@ bzla_is_inv_ult(Bzla *bzla, BzlaPropInfo *pi)
   {
     assert(pi->pos_x == 1);
     res = bzla_bv_is_zero(t) || !bzla_bv_is_ones(s);
+  }
+  return res;
+}
+
+/**
+ * Check invertibility condition (without considering const bits in x) for:
+ *
+ * pos_x = 0:
+ * x < s = t (signed)
+ * IC: t = 0 || s != min_signed_value
+ *
+ * pos_x = 1:
+ * s < x = t (signed)
+ * IC: t = 0 || s != max_signed_value
+ */
+bool
+bzla_is_inv_slt(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  (void) bzla;
+
+  const BzlaBitVector *s, *t;
+
+  s = pi->bv[1 - pi->pos_x];
+  t = pi->target_value;
+
+  bool res;
+  if (pi->pos_x == 0)
+  {
+    res = bzla_bv_is_zero(t) || !bzla_bv_is_min_signed(s);
+  }
+  else
+  {
+    assert(pi->pos_x == 1);
+    res = bzla_bv_is_zero(t) || !bzla_bv_is_max_signed(s);
   }
   return res;
 }

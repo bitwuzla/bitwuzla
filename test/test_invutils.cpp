@@ -101,7 +101,8 @@ class TestInvUtils : public TestBzla
       x_values.push_back("xxx");
     }
 
-    if (create_exp_func == boolector_ult || create_exp_func == boolector_eq)
+    if (create_exp_func == boolector_ult || create_exp_func == boolector_slt
+        || create_exp_func == boolector_eq)
     {
       bw_t = 1;
     }
@@ -693,6 +694,12 @@ TEST_F(TestInvUtils, is_inv_ult)
 {
   test_is_inv_binary(bzla_is_inv_ult, boolector_ult, 0);
   test_is_inv_binary(bzla_is_inv_ult, boolector_ult, 1);
+}
+
+TEST_F(TestInvUtils, is_inv_slt)
+{
+  test_is_inv_binary(bzla_is_inv_slt, boolector_slt, 0);
+  test_is_inv_binary(bzla_is_inv_slt, boolector_slt, 1);
 }
 
 TEST_F(TestInvUtils, is_inv_urem)

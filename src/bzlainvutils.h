@@ -43,8 +43,11 @@ bool bzla_is_inv_srl(Bzla *bzla, BzlaPropInfo *pi);
 /** Check invertibility of x / s = t or s / x = t when solved for x. */
 bool bzla_is_inv_udiv(Bzla *bzla, BzlaPropInfo *pi);
 
-/** Check invertibility of x < s = t or s < x = t when solved for x. */
+/** Check invertibility of unsigned x < s = t or s < x = t when solved for x. */
 bool bzla_is_inv_ult(Bzla *bzla, BzlaPropInfo *pi);
+
+/** Check invertibility of signed x < s = t or s < x = t when solved for x. */
+bool bzla_is_inv_slt(Bzla *bzla, BzlaPropInfo *pi);
 
 /** Check invertibility of x % s = t or s % x = t when solved for x. */
 bool bzla_is_inv_urem(Bzla *bzla, BzlaPropInfo *pi);
