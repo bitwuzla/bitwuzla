@@ -2,7 +2,7 @@
  *
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2015 Armin Biere.
- *  Copyright (C) 2012-2019 Aina Niemetz.
+ *  Copyright (C) 2012-2020 Aina Niemetz.
  *  Copyright (C) 2012-2017 Mathias Preiner.
  *
  *  This file is part of Boolector.
@@ -42,19 +42,19 @@
 /*------------------------------------------------------------------------*/
 
 const char *const g_bzla_op2str[BZLA_NUM_OPS_NODE] = {
-    [BZLA_INVALID_NODE] = "invalid", [BZLA_BV_CONST_NODE] = "bvconst",
-    [BZLA_VAR_NODE] = "var",         [BZLA_PARAM_NODE] = "param",
-    [BZLA_BV_SLICE_NODE] = "slice",  [BZLA_BV_AND_NODE] = "and",
-    [BZLA_BV_EQ_NODE] = "beq",       [BZLA_FUN_EQ_NODE] = "feq",
-    [BZLA_BV_ADD_NODE] = "add",      [BZLA_BV_MUL_NODE] = "mul",
-    [BZLA_BV_ULT_NODE] = "ult",      [BZLA_BV_SLL_NODE] = "sll",
-    [BZLA_BV_SRL_NODE] = "srl",      [BZLA_BV_UDIV_NODE] = "udiv",
-    [BZLA_BV_UREM_NODE] = "urem",    [BZLA_BV_CONCAT_NODE] = "concat",
-    [BZLA_APPLY_NODE] = "apply",     [BZLA_FORALL_NODE] = "forall",
-    [BZLA_EXISTS_NODE] = "exists",   [BZLA_LAMBDA_NODE] = "lambda",
-    [BZLA_COND_NODE] = "cond",       [BZLA_ARGS_NODE] = "args",
-    [BZLA_UF_NODE] = "uf",           [BZLA_UPDATE_NODE] = "update",
-    [BZLA_PROXY_NODE] = "proxy",
+    [BZLA_INVALID_NODE] = "invalid",  [BZLA_BV_CONST_NODE] = "bvconst",
+    [BZLA_VAR_NODE] = "var",          [BZLA_PARAM_NODE] = "param",
+    [BZLA_BV_SLICE_NODE] = "slice",   [BZLA_BV_AND_NODE] = "and",
+    [BZLA_BV_EQ_NODE] = "beq",        [BZLA_FUN_EQ_NODE] = "feq",
+    [BZLA_BV_ADD_NODE] = "add",       [BZLA_BV_MUL_NODE] = "mul",
+    [BZLA_BV_ULT_NODE] = "ult",       [BZLA_BV_SLL_NODE] = "sll",
+    [BZLA_BV_SLT_NODE] = "slt",       [BZLA_BV_SRL_NODE] = "srl",
+    [BZLA_BV_UDIV_NODE] = "udiv",     [BZLA_BV_UREM_NODE] = "urem",
+    [BZLA_BV_CONCAT_NODE] = "concat", [BZLA_APPLY_NODE] = "apply",
+    [BZLA_FORALL_NODE] = "forall",    [BZLA_EXISTS_NODE] = "exists",
+    [BZLA_LAMBDA_NODE] = "lambda",    [BZLA_COND_NODE] = "cond",
+    [BZLA_ARGS_NODE] = "args",        [BZLA_UF_NODE] = "uf",
+    [BZLA_UPDATE_NODE] = "update",    [BZLA_PROXY_NODE] = "proxy",
 };
 
 /*------------------------------------------------------------------------*/
@@ -2127,7 +2127,8 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
 
     case BZLA_FUN_EQ_NODE:
     case BZLA_BV_EQ_NODE:
-    case BZLA_BV_ULT_NODE: sort = bzla_sort_bool(bzla); break;
+    case BZLA_BV_ULT_NODE:
+    case BZLA_BV_SLT_NODE: sort = bzla_sort_bool(bzla); break;
 
     case BZLA_APPLY_NODE:
       sort = bzla_sort_copy(
@@ -2472,6 +2473,16 @@ bzla_node_create_bv_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e[1] = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
   return create_exp(bzla, BZLA_BV_ULT_NODE, 2, e);
+}
+
+BzlaNode *
+bzla_node_create_bv_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *e[2];
+  e[0] = bzla_simplify_exp(bzla, e0);
+  e[1] = bzla_simplify_exp(bzla, e1);
+  assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e[0], e[1]));
+  return create_exp(bzla, BZLA_BV_SLT_NODE, 2, e);
 }
 
 BzlaNode *

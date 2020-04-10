@@ -350,6 +350,7 @@ bdcnode(BzlaDumpContext *bdc, BzlaNode *node, FILE *file)
     case BZLA_BV_SRL_NODE: op = "srl"; break;
     case BZLA_BV_UDIV_NODE: op = "udiv"; break;
     case BZLA_BV_ULT_NODE: op = "ult"; break;
+    case BZLA_BV_SLT_NODE: op = "slt"; break;
     case BZLA_BV_UREM_NODE: op = "urem"; break;
     case BZLA_BV_SLICE_NODE: op = "slice"; break;
     case BZLA_UF_NODE: op = bzla_node_is_uf_array(node) ? "array" : "uf"; break;

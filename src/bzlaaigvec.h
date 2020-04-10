@@ -2,7 +2,7 @@
  *
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2015 Armin Biere.
- *  Copyright (C) 2013-2019 Aina Niemetz.
+ *  Copyright (C) 2013-2020 Aina Niemetz.
  *  Copyright (C) 2014-2015 Mathias Preiner.
  *
  *  This file is part of Boolector.
@@ -104,6 +104,14 @@ BzlaAIGVec *bzla_aigvec_and(BzlaAIGVecMgr *avmgr,
  * width(result) = 1
  */
 BzlaAIGVec *bzla_aigvec_ult(BzlaAIGVecMgr *avmgr,
+                            BzlaAIGVec *av1,
+                            BzlaAIGVec *av2);
+/**
+ * Create an AIG vector representing av1 less than av2 (signed).
+ * width(av1) = width(av2)
+ * width(result) = 1
+ */
+BzlaAIGVec *bzla_aigvec_slt(BzlaAIGVecMgr *avmgr,
                             BzlaAIGVec *av1,
                             BzlaAIGVec *av2);
 /**

@@ -53,6 +53,7 @@ enum BzlaNodeKind
   BZLA_BV_MUL_NODE,
   BZLA_BV_ULT_NODE,
   BZLA_BV_SLL_NODE,
+  BZLA_BV_SLT_NODE,
   BZLA_BV_SRL_NODE,
   BZLA_BV_UDIV_NODE,
   BZLA_BV_UREM_NODE,
@@ -383,6 +384,13 @@ bzla_node_is_bv_ult(const BzlaNode *exp)
 {
   assert(exp);
   return bzla_node_real_addr(exp)->kind == BZLA_BV_ULT_NODE;
+}
+
+static inline bool
+bzla_node_is_bv_slt(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_real_addr(exp)->kind == BZLA_BV_SLT_NODE;
 }
 
 static inline bool
@@ -770,6 +778,8 @@ BzlaNode *bzla_node_create_bv_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 BzlaNode *bzla_node_create_bv_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 BzlaNode *bzla_node_create_bv_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
+
+BzlaNode *bzla_node_create_bv_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 BzlaNode *bzla_node_create_bv_sll(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 

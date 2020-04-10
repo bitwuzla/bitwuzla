@@ -453,28 +453,18 @@ extract_store (BzlaSMTDumpContext * sdc, BzlaNode * exp,
   }
 
 static const char *g_kind2smt[BZLA_NUM_OPS_NODE] = {
-    [BZLA_INVALID_NODE]   = "invalid",
-    [BZLA_BV_CONST_NODE]  = "bvconst",
-    [BZLA_VAR_NODE]       = "var",
-    [BZLA_PARAM_NODE]     = "param",
-    [BZLA_BV_SLICE_NODE]  = "extract",
-    [BZLA_BV_AND_NODE]    = "bvand",
-    [BZLA_FUN_EQ_NODE]    = "=",
-    [BZLA_BV_EQ_NODE]     = "=",
-    [BZLA_BV_ADD_NODE]    = "bvadd",
-    [BZLA_BV_MUL_NODE]    = "bvmul",
-    [BZLA_BV_ULT_NODE]    = "bvult",
-    [BZLA_BV_SLL_NODE]    = "bvshl",
-    [BZLA_BV_SRL_NODE]    = "bvlshr",
-    [BZLA_BV_UDIV_NODE]   = "bvudiv",
-    [BZLA_BV_UREM_NODE]   = "bvurem",
-    [BZLA_BV_CONCAT_NODE] = "concat",
-    [BZLA_APPLY_NODE]     = "apply",
-    [BZLA_LAMBDA_NODE]    = "lambda",
-    [BZLA_COND_NODE]      = "ite",
-    [BZLA_ARGS_NODE]      = "args",
-    [BZLA_UF_NODE]        = "uf",
-    [BZLA_PROXY_NODE]     = "proxy"};
+    [BZLA_INVALID_NODE] = "invalid",  [BZLA_BV_CONST_NODE] = "bvconst",
+    [BZLA_VAR_NODE] = "var",          [BZLA_PARAM_NODE] = "param",
+    [BZLA_BV_SLICE_NODE] = "extract", [BZLA_BV_AND_NODE] = "bvand",
+    [BZLA_FUN_EQ_NODE] = "=",         [BZLA_BV_EQ_NODE] = "=",
+    [BZLA_BV_ADD_NODE] = "bvadd",     [BZLA_BV_MUL_NODE] = "bvmul",
+    [BZLA_BV_ULT_NODE] = "bvult",     [BZLA_BV_SLT_NODE] = "bvslt",
+    [BZLA_BV_SLL_NODE] = "bvshl",     [BZLA_BV_SRL_NODE] = "bvlshr",
+    [BZLA_BV_UDIV_NODE] = "bvudiv",   [BZLA_BV_UREM_NODE] = "bvurem",
+    [BZLA_BV_CONCAT_NODE] = "concat", [BZLA_APPLY_NODE] = "apply",
+    [BZLA_LAMBDA_NODE] = "lambda",    [BZLA_COND_NODE] = "ite",
+    [BZLA_ARGS_NODE] = "args",        [BZLA_UF_NODE] = "uf",
+    [BZLA_PROXY_NODE] = "proxy"};
 
 static void
 collect_and_children(BzlaSMTDumpContext *sdc,
@@ -876,6 +866,10 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
               break;
             case BZLA_BV_ULT_NODE:
               op        = "bvult";
+              expect_bv = 1;
+              break;
+            case BZLA_BV_SLT_NODE:
+              op        = "bvslt";
               expect_bv = 1;
               break;
             case BZLA_BV_SLICE_NODE:
@@ -1475,7 +1469,7 @@ mark_boolean(BzlaSMTDumpContext *sdc, BzlaNodePtrStack *exps)
 
     /* these nodes are boolean by definition */
     if (bzla_node_is_bv_eq(cur) || bzla_node_is_fun_eq(cur)
-        || bzla_node_is_bv_ult(cur)
+        || bzla_node_is_bv_ult(cur) || bzla_node_is_bv_slt(cur)
         || cur == bzla_node_real_addr(sdc->bzla->true_exp)
         || bzla_node_is_quantifier(cur))
     {

@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2012-2017 Aina Niemetz.
+ *  Copyright (C) 2012-2020 Aina Niemetz.
  *  Copyright (C) 2012-2017 Mathias Preiner.
  *  Copyright (C) 2013 Armin Biere.
  *
@@ -394,6 +394,11 @@ beta_reduce(Bzla *bzla,
           bzla_node_release(bzla, e[0]);
           bzla_node_release(bzla, e[1]);
           break;
+        case BZLA_BV_SLT_NODE:
+          result = bzla_exp_bv_slt(bzla, e[1], e[0]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
         case BZLA_BV_SRL_NODE:
           result = bzla_exp_bv_srl(bzla, e[1], e[0]);
           bzla_node_release(bzla, e[0]);
@@ -735,6 +740,11 @@ beta_reduce_partial_aux(Bzla *bzla,
           break;
         case BZLA_BV_SLL_NODE:
           result = bzla_exp_bv_sll(bzla, e[1], e[0]);
+          bzla_node_release(bzla, e[0]);
+          bzla_node_release(bzla, e[1]);
+          break;
+        case BZLA_BV_SLT_NODE:
+          result = bzla_exp_bv_slt(bzla, e[1], e[0]);
           bzla_node_release(bzla, e[0]);
           bzla_node_release(bzla, e[1]);
           break;

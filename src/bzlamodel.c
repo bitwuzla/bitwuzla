@@ -1004,6 +1004,11 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
           bzla_bv_free(mm, e[0]);
           bzla_bv_free(mm, e[1]);
           break;
+        case BZLA_BV_SLT_NODE:
+          result = bzla_bv_slt(mm, e[1], e[0]);
+          bzla_bv_free(mm, e[0]);
+          bzla_bv_free(mm, e[1]);
+          break;
         case BZLA_BV_SRL_NODE:
           result = bzla_bv_srl(mm, e[1], e[0]);
           bzla_bv_free(mm, e[0]);

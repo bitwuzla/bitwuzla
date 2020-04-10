@@ -2,7 +2,7 @@
  *
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2015 Armin Biere.
- *  Copyright (C) 2013-2019 Aina Niemetz.
+ *  Copyright (C) 2013-2020 Aina Niemetz.
  *  Copyright (C) 2013-2015 Mathias Preiner.
  *
  *  This file is part of Boolector.
@@ -152,7 +152,7 @@ bzla_aigvec_and(BzlaAIGVecMgr *avmgr, BzlaAIGVec *av1, BzlaAIGVec *av2)
 }
 
 static BzlaAIG *
-lt_aigvec(BzlaAIGVecMgr *avmgr, BzlaAIGVec *av1, BzlaAIGVec *av2)
+ult_aigvec(BzlaAIGVecMgr *avmgr, BzlaAIGVec *av1, BzlaAIGVec *av2)
 {
   BzlaAIGMgr *amgr;
   BzlaAIG *res, *tmp, *term0, *term1;
@@ -190,8 +190,77 @@ bzla_aigvec_ult(BzlaAIGVecMgr *avmgr, BzlaAIGVec *av1, BzlaAIGVec *av2)
   assert(av1->width == av2->width);
   assert(av1->width > 0);
   result          = new_aigvec(avmgr, 1);
-  result->aigs[0] = lt_aigvec(avmgr, av1, av2);
+  result->aigs[0] = ult_aigvec(avmgr, av1, av2);
   return result;
+}
+
+BzlaAIGVec *
+bzla_aigvec_slt(BzlaAIGVecMgr *avmgr, BzlaAIGVec *av1, BzlaAIGVec *av2)
+{
+  assert(avmgr);
+  assert(av1);
+  assert(av2);
+  assert(av1->width == av2->width);
+
+  BzlaAIGVec *res;
+  BzlaAIGVec *sign1, *sign2, *sign1_inv, *sign2_inv, *r1, *r2, *av2_inv;
+  BzlaAIGVec *ult, *by_sign, *by_sign_inv, *eq_sign, *eq_sign_and_ult;
+  BzlaAIGVec *r, *r_inv;
+  uint32_t width;
+
+  width = av1->width;
+
+  if (width == 1)
+  {
+    av2_inv = bzla_aigvec_not(avmgr, av2);
+    res     = bzla_aigvec_and(avmgr, av1, av2_inv);
+    bzla_aigvec_release_delete(avmgr, av2_inv);
+  }
+  else
+  {
+    /* sign bits */
+    sign1 = bzla_aigvec_slice(avmgr, av1, width - 1, width - 1);
+    sign2 = bzla_aigvec_slice(avmgr, av2, width - 1, width - 1);
+    /* remainder without sign bits */
+    r1 = bzla_aigvec_slice(avmgr, av1, width - 2, 0);
+    r2 = bzla_aigvec_slice(avmgr, av2, width - 2, 0);
+    /* check if left remainder is unsigned less than right remainder */
+    ult = bzla_aigvec_ult(avmgr, r1, r2);
+
+    sign1_inv = bzla_aigvec_not(avmgr, sign1);
+    sign2_inv = bzla_aigvec_not(avmgr, sign2);
+
+    /* slt is true if left sign bit is 1 and right sign bit is 0 */
+    by_sign     = bzla_aigvec_and(avmgr, sign1, sign2_inv);
+    by_sign_inv = bzla_aigvec_not(avmgr, by_sign);
+    /* check if sign1 == sign2 */
+    r       = bzla_aigvec_and(avmgr, sign1_inv, sign2);
+    r_inv   = bzla_aigvec_not(avmgr, r);
+    eq_sign = bzla_aigvec_and(avmgr, by_sign_inv, r_inv);
+
+    /* if not determined by sign and sign bits are equal,
+     * ult determines result */
+    eq_sign_and_ult = bzla_aigvec_and(avmgr, eq_sign, ult);
+    /* by_sign \/ eq_sign_and_ult */
+    bzla_aigvec_invert(avmgr, eq_sign_and_ult);
+    res = bzla_aigvec_and(avmgr, by_sign_inv, eq_sign_and_ult);
+    bzla_aigvec_invert(avmgr, res);
+
+    bzla_aigvec_release_delete(avmgr, eq_sign_and_ult);
+    bzla_aigvec_release_delete(avmgr, eq_sign);
+    bzla_aigvec_release_delete(avmgr, r_inv);
+    bzla_aigvec_release_delete(avmgr, r);
+    bzla_aigvec_release_delete(avmgr, by_sign);
+    bzla_aigvec_release_delete(avmgr, by_sign_inv);
+    bzla_aigvec_release_delete(avmgr, ult);
+    bzla_aigvec_release_delete(avmgr, r2);
+    bzla_aigvec_release_delete(avmgr, r1);
+    bzla_aigvec_release_delete(avmgr, sign2_inv);
+    bzla_aigvec_release_delete(avmgr, sign2);
+    bzla_aigvec_release_delete(avmgr, sign1_inv);
+    bzla_aigvec_release_delete(avmgr, sign1);
+  }
+  return res;
 }
 
 BzlaAIGVec *

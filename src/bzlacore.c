@@ -3,7 +3,7 @@
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2017 Armin Biere.
  *  Copyright (C) 2012-2020 Mathias Preiner.
- *  Copyright (C) 2012-2019 Aina Niemetz.
+ *  Copyright (C) 2012-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -2666,6 +2666,9 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
             break;
           case BZLA_BV_SLL_NODE:
             cur->av = bzla_aigvec_sll(avmgr, av0, av1);
+            break;
+          case BZLA_BV_SLT_NODE:
+            cur->av = bzla_aigvec_slt(avmgr, av0, av1);
             break;
           case BZLA_BV_SRL_NODE:
             cur->av = bzla_aigvec_srl(avmgr, av0, av1);
