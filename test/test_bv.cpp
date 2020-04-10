@@ -2824,8 +2824,9 @@ TEST_F(TestBv, compare)
   {
     k = rand() % 16;
     do
+    {
       j = rand() % 16;
-    while (j == k);
+    } while (j == k);
     bv1 = bzla_bv_uint64_to_bv(d_mm, j, 4);
     bv2 = bzla_bv_uint64_to_bv(d_mm, k, 4);
     if (j > k)
@@ -2837,6 +2838,122 @@ TEST_F(TestBv, compare)
     {
       ASSERT_LT(bzla_bv_compare(bv1, bv2), 0);
       ASSERT_GT(bzla_bv_compare(bv2, bv1), 0);
+    }
+    bzla_bv_free(d_mm, bv1);
+    bzla_bv_free(d_mm, bv2);
+  }
+}
+
+TEST_F(TestBv, signed_compare)
+{
+  int32_t i, j, k;
+  BzlaBitVector *bv1, *bv2;
+
+  for (i = -8; i < 7; i++)
+  {
+    bv1 = bzla_bv_int64_to_bv(d_mm, i, 4);
+    bv2 = bzla_bv_int64_to_bv(d_mm, i, 4);
+    ASSERT_EQ(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+    bzla_bv_free(d_mm, bv1);
+    bzla_bv_free(d_mm, bv2);
+  }
+
+  for (i = -8; i < 7 - 1; i++)
+  {
+    bv1 = bzla_bv_int64_to_bv(d_mm, i, 4);
+    bv2 = bzla_bv_int64_to_bv(d_mm, i + 1, 4);
+    ASSERT_LT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+    ASSERT_GT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+    bzla_bv_free(d_mm, bv1);
+    bzla_bv_free(d_mm, bv2);
+  }
+
+  for (i = 0, j = 0, k = 0; i < 15; i++)
+  {
+    /* j <= 0, k <= 0 */
+    k = rand() % 9;
+    do
+    {
+      j = rand() % 9;
+    } while (j == k);
+    j   = -j;
+    k   = -k;
+    bv1 = bzla_bv_int64_to_bv(d_mm, j, 4);
+    bv2 = bzla_bv_int64_to_bv(d_mm, k, 4);
+    if (j > k)
+    {
+      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+    }
+    if (j < k)
+    {
+      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+    }
+    bzla_bv_free(d_mm, bv1);
+    bzla_bv_free(d_mm, bv2);
+
+    /* j <= 0, k >= 0 */
+    k = rand() % 8;
+    do
+    {
+      j = rand() % 9;
+    } while (j == k);
+    j   = -j;
+    bv1 = bzla_bv_int64_to_bv(d_mm, j, 4);
+    bv2 = bzla_bv_int64_to_bv(d_mm, k, 4);
+    if (j > k)
+    {
+      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+    }
+    if (j < k)
+    {
+      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+    }
+    bzla_bv_free(d_mm, bv1);
+    bzla_bv_free(d_mm, bv2);
+
+    /* j >= 0, k <= 0 */
+    k = rand() % 9;
+    do
+    {
+      j = rand() % 8;
+    } while (j == k);
+    k   = -k;
+    bv1 = bzla_bv_int64_to_bv(d_mm, j, 4);
+    bv2 = bzla_bv_int64_to_bv(d_mm, k, 4);
+    if (j > k)
+    {
+      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+    }
+    if (j < k)
+    {
+      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+    }
+    bzla_bv_free(d_mm, bv1);
+    bzla_bv_free(d_mm, bv2);
+
+    /* j >= 0, k >= 0 */
+    k = rand() % 8;
+    do
+    {
+      j = rand() % 8;
+    } while (j == k);
+    bv1 = bzla_bv_int64_to_bv(d_mm, -j, 4);
+    bv2 = bzla_bv_int64_to_bv(d_mm, -k, 4);
+    if (-j > -k)
+    {
+      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+    }
+    if (-j < -k)
+    {
+      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
     }
     bzla_bv_free(d_mm, bv1);
     bzla_bv_free(d_mm, bv2);

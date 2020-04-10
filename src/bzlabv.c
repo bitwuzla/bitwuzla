@@ -531,6 +531,24 @@ bzla_bv_compare(const BzlaBitVector *a, const BzlaBitVector *b)
 #endif
 }
 
+int32_t
+bzla_bv_signed_compare(BzlaMemMgr *mm,
+                       const BzlaBitVector *a,
+                       const BzlaBitVector *b)
+{
+  assert(a);
+  assert(b);
+
+  int32_t res;
+  BzlaBitVector *slt;
+
+  if (bzla_bv_compare(a, b) == 0) return 0;
+  slt = bzla_bv_slt(mm, a, b);
+  res = bzla_bv_is_one(slt) ? -1 : 1;
+  bzla_bv_free(mm, slt);
+  return res;
+}
+
 static uint32_t hash_primes[] = {333444569u, 76891121u, 456790003u};
 
 #define NPRIMES ((uint32_t)(sizeof hash_primes / sizeof *hash_primes))

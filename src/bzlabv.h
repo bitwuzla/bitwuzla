@@ -87,10 +87,18 @@ size_t bzla_bv_size(const BzlaBitVector *bv);
 void bzla_bv_free(BzlaMemMgr *mm, BzlaBitVector *bv);
 
 /**
- * Compare bit-vectors 'a' and 'b'.
+ * Compare bit-vectors 'a' and 'b' (unsigned).
  * Return 0 if 'a' and 'b' are equal, 1 if a > b, and -1 if a < b.
  */
 int32_t bzla_bv_compare(const BzlaBitVector *a, const BzlaBitVector *b);
+
+/**
+ * Compare bit-vectors 'a' and 'b' (signed).
+ * Return 0 if 'a' and 'b' are equal, 1 if a >s b, and -1 if a <s b.
+ */
+int32_t bzla_bv_signed_compare(BzlaMemMgr *mm,
+                               const BzlaBitVector *a,
+                               const BzlaBitVector *b);
 
 /** Return a hash value for the given bit-vector. */
 uint32_t bzla_bv_hash(const BzlaBitVector *bv);
