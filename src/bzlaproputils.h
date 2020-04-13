@@ -145,12 +145,7 @@ BzlaBitVector* bzla_proputils_cons_cond_const(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * add    : the Boolector node representing the + operation
- * t      : target value for 'add' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_add(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -164,12 +159,7 @@ BzlaBitVector* bzla_proputils_inv_add(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * and    : the Boolector node representing the & operation
- * t      : target value for 'and' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_and(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -183,12 +173,7 @@ BzlaBitVector* bzla_proputils_inv_and(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * eq     : the Boolector node representing the == operation
- * t      : target value for 'eq' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_eq(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -201,12 +186,7 @@ BzlaBitVector* bzla_proputils_inv_eq(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * ult    : the Boolector node representing the ult operation
- * t      : target value for 'ult' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_ult(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -219,12 +199,7 @@ BzlaBitVector* bzla_proputils_inv_ult(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * sll    : the Boolector node representing the << operation
- * t      : target value for 'sll' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_sll(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -237,12 +212,7 @@ BzlaBitVector* bzla_proputils_inv_sll(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * srl    : the Boolector node representing the >> operation
- * t      : target value for 'srl' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_srl(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -255,12 +225,7 @@ BzlaBitVector* bzla_proputils_inv_srl(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * mul    : the Boolector node representing the * operation
- * t      : target value for 'mul' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_mul(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -273,12 +238,7 @@ BzlaBitVector* bzla_proputils_inv_mul(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * udiv   : the Boolector node representing the / operation
- * t      : target value for 'udiv' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_udiv(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -291,12 +251,7 @@ BzlaBitVector* bzla_proputils_inv_udiv(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * urem   : the Boolector node representing the % operation
- * t      : target value for 'urem' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_urem(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -309,12 +264,7 @@ BzlaBitVector* bzla_proputils_inv_urem(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * concat : the Boolector node representing the o operation
- * t      : target value for 'concat' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_concat(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -327,12 +277,7 @@ BzlaBitVector* bzla_proputils_inv_concat(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 'x_val' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * slice  : the Boolector node representing the [:] operation
- * t      : target value for 'slice' (the 'output' value)
- * idx_x  : not used, in order to have a consistent interface for inverse
- *          value computation functions
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_slice(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -346,12 +291,7 @@ BzlaBitVector* bzla_proputils_inv_slice(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * cond   : the Boolector node representing the ite operation
- * t      : target value for 'cond' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: not used, in order to have a consistent interface for inverse
- *          value computation functions
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_cond(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -359,10 +299,43 @@ BzlaBitVector* bzla_proputils_inv_cond(Bzla* bzla, BzlaPropInfo* pi);
 /* Inverse value computation functions with respect to const bits.        */
 /*------------------------------------------------------------------------*/
 
+/**
+ * Determine inverse value for 'x' given 'x + s = t' or 's + x = t' with
+ * respect to const bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_add_const(Bzla* bzla, BzlaPropInfo* pi);
 
+/**
+ * Determine inverse value for 'x' given 'x & s = t' or 's & x = t' with
+ * respect to const bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_and_const(Bzla* bzla, BzlaPropInfo* pi);
 
+/**
+ * Determine inverse value for 'x' given 'x == s = t' or 's == x = t' with
+ * respect to const bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_eq_const(Bzla* bzla, BzlaPropInfo* pi);
 
 /**
@@ -372,28 +345,112 @@ BzlaBitVector* bzla_proputils_inv_eq_const(Bzla* bzla, BzlaPropInfo* pi);
  * Returns an inverse value for 'x' given values 's' (for the other operand)
  * and 't' (as the target value of the operation, the 'output' value).
  *
- * ult    : the Boolector node representing the ult operation
- * t      : target value for 'ult' (the 'output' value)
- * s      : (fixed) value of the other operand
- * idx_x  : the index of 'x', the operand we determine the value for
- * domains: a map maintaining node (id) to its propagator domain
+ * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_ult_const(Bzla* bzla, BzlaPropInfo* pi);
 
+/**
+ * Determine inverse value for 'x' given 'x << s = t' or 's << x = t' with
+ * respect to const bits..
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_sll_const(Bzla* bzla, BzlaPropInfo* pi);
 
+/**
+ * Determine inverse value for 'x' given 'x >> s = t' or 's >> x = t' with
+ * respect to const bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_srl_const(Bzla* bzla, BzlaPropInfo* pi);
 
+/**
+ * Determine inverse value for 'x' given 'x * s = t' or 's * x = t' with
+ * respect to const bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_mul_const(Bzla* bzla, BzlaPropInfo* pi);
 
+/**
+ * Determine inverse value for 'x' given 'x / s = t' or 's / x = t' with
+ * respect to const bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_udiv_const(Bzla* bzla, BzlaPropInfo* pi);
 
+/**
+ * Determine inverse value for 'x' given 'x % s = t' or 's % x = t' with
+ * respect to const bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_urem_const(Bzla* bzla, BzlaPropInfo* pi);
 
+/**
+ * Determine inverse value for 'x' given 'x o s = t' or 's o x = t' with
+ * respect to const bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_concat_const(Bzla* bzla, BzlaPropInfo* pi);
 
+/**
+ * Determine inverse value for 'x' given 'x[u:l] = t' with respect to const
+ * bits.
+ *
+ * Assertion: Operation is invertible given 't'.
+ *
+ * Returns an inverse value for 'x' given values 'x_val' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_slice_const(Bzla* bzla, BzlaPropInfo* pi);
 
+/**
+ * Determine inverse value for 'x' given 'c ? x : s = t' or 'c ? s : x = t'
+ * with respect to const bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
 BzlaBitVector* bzla_proputils_inv_cond_const(Bzla* bzla, BzlaPropInfo* pi);
 
 /*========================================================================*/
