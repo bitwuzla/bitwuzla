@@ -932,6 +932,7 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   BZLA_MSG(bzla->msg, 1, "%s (eq): %u", s_cons, slv->stats.cons_eq);
   BZLA_MSG(bzla->msg, 1, "%s (ult): %u", s_cons, slv->stats.cons_ult);
   BZLA_MSG(bzla->msg, 1, "%s (sll): %u", s_cons, slv->stats.cons_sll);
+  BZLA_MSG(bzla->msg, 1, "%s (slt): %u", s_cons, slv->stats.cons_slt);
   BZLA_MSG(bzla->msg, 1, "%s (srl): %u", s_cons, slv->stats.cons_srl);
   BZLA_MSG(bzla->msg, 1, "%s (mul): %u", s_cons, slv->stats.cons_mul);
   BZLA_MSG(bzla->msg, 1, "%s (udiv): %u", s_cons, slv->stats.cons_udiv);
@@ -949,6 +950,7 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   BZLA_MSG(bzla->msg, 1, "%s (eq): %u", s_inv, slv->stats.inv_eq);
   BZLA_MSG(bzla->msg, 1, "%s (ult): %u", s_inv, slv->stats.inv_ult);
   BZLA_MSG(bzla->msg, 1, "%s (sll): %u", s_inv, slv->stats.inv_sll);
+  BZLA_MSG(bzla->msg, 1, "%s (slt): %u", s_inv, slv->stats.inv_slt);
   BZLA_MSG(bzla->msg, 1, "%s (srl): %u", s_inv, slv->stats.inv_srl);
   BZLA_MSG(bzla->msg, 1, "%s (mul): %u", s_inv, slv->stats.inv_mul);
   BZLA_MSG(bzla->msg, 1, "%s (udiv): %u", s_inv, slv->stats.inv_udiv);

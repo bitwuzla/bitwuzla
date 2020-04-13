@@ -95,6 +95,7 @@ struct BzlaPropSolver
     uint32_t inv_eq;
     uint32_t inv_ult;
     uint32_t inv_sll;
+    uint32_t inv_slt;
     uint32_t inv_srl;
     uint32_t inv_mul;
     uint32_t inv_udiv;
@@ -109,6 +110,7 @@ struct BzlaPropSolver
     uint32_t cons_eq;
     uint32_t cons_ult;
     uint32_t cons_sll;
+    uint32_t cons_slt;
     uint32_t cons_srl;
     uint32_t cons_mul;
     uint32_t cons_udiv;

@@ -740,6 +740,14 @@ TEST_F(TestPropInv, inv_ult)
       bzla_exp_bv_ult, bzla_is_inv_ult, bzla_proputils_inv_ult, 1, false);
 }
 
+TEST_F(TestPropInv, inv_slt)
+{
+  test_binary(
+      bzla_exp_bv_slt, bzla_is_inv_slt, bzla_proputils_inv_slt, 0, false);
+  test_binary(
+      bzla_exp_bv_slt, bzla_is_inv_slt, bzla_proputils_inv_slt, 1, false);
+}
+
 TEST_F(TestPropInv, inv_urem)
 {
   test_binary(
