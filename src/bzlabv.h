@@ -32,12 +32,19 @@ BzlaBitVector *bzla_bv_new(BzlaMemMgr *mm, uint32_t bw);
 /** Create a new random bit-vector of given bit-width. */
 BzlaBitVector *bzla_bv_new_random(BzlaMemMgr *mm, BzlaRNG *rng, uint32_t bw);
 
-/** Create a new random bit-vector within the given value range. */
+/** Create a new random bit-vector within the given (unsigned) value range. */
 BzlaBitVector *bzla_bv_new_random_range(BzlaMemMgr *mm,
                                         BzlaRNG *rng,
                                         uint32_t bw,
                                         const BzlaBitVector *from,
                                         const BzlaBitVector *to);
+
+/** Create a new random bit-vector within the given (signed) value range. */
+BzlaBitVector *bzla_bv_new_random_signed_range(BzlaMemMgr *mm,
+                                               BzlaRNG *rng,
+                                               uint32_t bw,
+                                               const BzlaBitVector *from,
+                                               const BzlaBitVector *to);
 
 /**
  * Create a new bit-vecotr of given bit-width and randomly set bits within given

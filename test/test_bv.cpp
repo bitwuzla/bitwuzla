@@ -924,6 +924,42 @@ TEST_F(TestBv, new_random_range)
   }
 }
 
+TEST_F(TestBv, new_random_signed_range)
+{
+  uint32_t bw;
+  int64_t val;
+  BzlaBitVector *bv, *from, *to, *tmp;
+
+  for (bw = 1; bw <= 64; bw++)
+  {
+    from = bzla_bv_new_random(d_mm, d_rng, bw);
+    // from == to
+    bv  = bzla_bv_new_random_signed_range(d_mm, d_rng, bw, from, from);
+    val = bzla_bv_to_uint64(bv);
+    ASSERT_EQ(val, bzla_bv_to_uint64(from));
+    bzla_bv_free(d_mm, bv);
+    // from < to
+    to = bzla_bv_new_random(d_mm, d_rng, bw);
+    while (!bzla_bv_signed_compare(d_mm, from, to))
+    {
+      bzla_bv_free(d_mm, to);
+      to = bzla_bv_new_random(d_mm, d_rng, bw);
+    }
+    if (bzla_bv_signed_compare(d_mm, from, to) >= 0)
+    {
+      tmp  = to;
+      to   = from;
+      from = tmp;
+    }
+    bv = bzla_bv_new_random_signed_range(d_mm, d_rng, bw, from, to);
+    ASSERT_LE(bzla_bv_signed_compare(d_mm, from, bv), 0);
+    ASSERT_LE(bzla_bv_signed_compare(d_mm, bv, to), 0);
+    bzla_bv_free(d_mm, from);
+    bzla_bv_free(d_mm, to);
+    bzla_bv_free(d_mm, bv);
+  }
+}
+
 TEST_F(TestBv, new_random_bit_range)
 {
   new_random_bit_range_bitvec(1);

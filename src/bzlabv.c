@@ -202,6 +202,36 @@ bzla_bv_new_random_range(BzlaMemMgr *mm,
 }
 
 BzlaBitVector *
+bzla_bv_new_random_signed_range(BzlaMemMgr *mm,
+                                BzlaRNG *rng,
+                                uint32_t bw,
+                                const BzlaBitVector *from,
+                                const BzlaBitVector *to)
+{
+  assert(mm);
+  assert(rng);
+  assert(bw > 0);
+  assert(bw == from->width);
+  assert(from->width == to->width);
+  assert(bzla_bv_signed_compare(mm, from, to) <= 0);
+
+  BzlaBitVector *zero, *diff, *tmp, *res;
+
+  /* difference */
+  diff = bzla_bv_sub(mm, to, from);
+  /* pick from [0, diff] */
+  zero = bzla_bv_zero(mm, bw);
+  tmp  = bzla_bv_new_random_range(mm, rng, bw, zero, diff);
+  /* add picked value to from */
+  res = bzla_bv_add(mm, from, tmp);
+
+  bzla_bv_free(mm, tmp);
+  bzla_bv_free(mm, zero);
+  bzla_bv_free(mm, diff);
+  return res;
+}
+
+BzlaBitVector *
 bzla_bv_new_random_bit_range(
     BzlaMemMgr *mm, BzlaRNG *rng, uint32_t bw, uint32_t up, uint32_t lo)
 {
