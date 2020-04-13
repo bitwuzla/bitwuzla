@@ -213,7 +213,7 @@ bzla_bv_new_random_signed_range(BzlaMemMgr *mm,
   assert(bw > 0);
   assert(bw == from->width);
   assert(from->width == to->width);
-  assert(bzla_bv_signed_compare(mm, from, to) <= 0);
+  assert(bzla_bv_signed_compare(from, to) <= 0);
 
   BzlaBitVector *zero, *diff, *tmp, *res;
 
@@ -562,20 +562,31 @@ bzla_bv_compare(const BzlaBitVector *a, const BzlaBitVector *b)
 }
 
 int32_t
-bzla_bv_signed_compare(BzlaMemMgr *mm,
-                       const BzlaBitVector *a,
-                       const BzlaBitVector *b)
+bzla_bv_signed_compare(const BzlaBitVector *a, const BzlaBitVector *b)
 {
   assert(a);
   assert(b);
 
+  uint32_t bw, msb_a, msb_b;
   int32_t res;
   BzlaBitVector *slt;
 
-  if (bzla_bv_compare(a, b) == 0) return 0;
-  slt = bzla_bv_slt(mm, a, b);
-  res = bzla_bv_is_one(slt) ? -1 : 1;
-  bzla_bv_free(mm, slt);
+  bw    = a->width;
+  msb_a = bzla_bv_get_bit(a, bw - 1);
+  msb_b = bzla_bv_get_bit(b, bw - 1);
+
+  if (msb_a && !msb_b)
+  {
+    res = -1;
+  }
+  else if (!msb_a && msb_b)
+  {
+    res = 1;
+  }
+  else
+  {
+    res = bzla_bv_compare(a, b);
+  }
   return res;
 }
 

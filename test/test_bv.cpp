@@ -940,20 +940,20 @@ TEST_F(TestBv, new_random_signed_range)
     bzla_bv_free(d_mm, bv);
     // from < to
     to = bzla_bv_new_random(d_mm, d_rng, bw);
-    while (!bzla_bv_signed_compare(d_mm, from, to))
+    while (!bzla_bv_signed_compare(from, to))
     {
       bzla_bv_free(d_mm, to);
       to = bzla_bv_new_random(d_mm, d_rng, bw);
     }
-    if (bzla_bv_signed_compare(d_mm, from, to) >= 0)
+    if (bzla_bv_signed_compare(from, to) >= 0)
     {
       tmp  = to;
       to   = from;
       from = tmp;
     }
     bv = bzla_bv_new_random_signed_range(d_mm, d_rng, bw, from, to);
-    ASSERT_LE(bzla_bv_signed_compare(d_mm, from, bv), 0);
-    ASSERT_LE(bzla_bv_signed_compare(d_mm, bv, to), 0);
+    ASSERT_LE(bzla_bv_signed_compare(from, bv), 0);
+    ASSERT_LE(bzla_bv_signed_compare(bv, to), 0);
     bzla_bv_free(d_mm, from);
     bzla_bv_free(d_mm, to);
     bzla_bv_free(d_mm, bv);
@@ -2889,7 +2889,7 @@ TEST_F(TestBv, signed_compare)
   {
     bv1 = bzla_bv_int64_to_bv(d_mm, i, 4);
     bv2 = bzla_bv_int64_to_bv(d_mm, i, 4);
-    ASSERT_EQ(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
+    ASSERT_EQ(bzla_bv_signed_compare(bv1, bv2), 0);
     bzla_bv_free(d_mm, bv1);
     bzla_bv_free(d_mm, bv2);
   }
@@ -2898,8 +2898,8 @@ TEST_F(TestBv, signed_compare)
   {
     bv1 = bzla_bv_int64_to_bv(d_mm, i, 4);
     bv2 = bzla_bv_int64_to_bv(d_mm, i + 1, 4);
-    ASSERT_LT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
-    ASSERT_GT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+    ASSERT_LT(bzla_bv_signed_compare(bv1, bv2), 0);
+    ASSERT_GT(bzla_bv_signed_compare(bv2, bv1), 0);
     bzla_bv_free(d_mm, bv1);
     bzla_bv_free(d_mm, bv2);
   }
@@ -2918,13 +2918,13 @@ TEST_F(TestBv, signed_compare)
     bv2 = bzla_bv_int64_to_bv(d_mm, k, 4);
     if (j > k)
     {
-      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
-      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+      ASSERT_GT(bzla_bv_signed_compare(bv1, bv2), 0);
+      ASSERT_LT(bzla_bv_signed_compare(bv2, bv1), 0);
     }
     if (j < k)
     {
-      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
-      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+      ASSERT_LT(bzla_bv_signed_compare(bv1, bv2), 0);
+      ASSERT_GT(bzla_bv_signed_compare(bv2, bv1), 0);
     }
     bzla_bv_free(d_mm, bv1);
     bzla_bv_free(d_mm, bv2);
@@ -2940,13 +2940,13 @@ TEST_F(TestBv, signed_compare)
     bv2 = bzla_bv_int64_to_bv(d_mm, k, 4);
     if (j > k)
     {
-      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
-      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+      ASSERT_GT(bzla_bv_signed_compare(bv1, bv2), 0);
+      ASSERT_LT(bzla_bv_signed_compare(bv2, bv1), 0);
     }
     if (j < k)
     {
-      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
-      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+      ASSERT_LT(bzla_bv_signed_compare(bv1, bv2), 0);
+      ASSERT_GT(bzla_bv_signed_compare(bv2, bv1), 0);
     }
     bzla_bv_free(d_mm, bv1);
     bzla_bv_free(d_mm, bv2);
@@ -2962,13 +2962,13 @@ TEST_F(TestBv, signed_compare)
     bv2 = bzla_bv_int64_to_bv(d_mm, k, 4);
     if (j > k)
     {
-      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
-      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+      ASSERT_GT(bzla_bv_signed_compare(bv1, bv2), 0);
+      ASSERT_LT(bzla_bv_signed_compare(bv2, bv1), 0);
     }
     if (j < k)
     {
-      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
-      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+      ASSERT_LT(bzla_bv_signed_compare(bv1, bv2), 0);
+      ASSERT_GT(bzla_bv_signed_compare(bv2, bv1), 0);
     }
     bzla_bv_free(d_mm, bv1);
     bzla_bv_free(d_mm, bv2);
@@ -2983,13 +2983,13 @@ TEST_F(TestBv, signed_compare)
     bv2 = bzla_bv_int64_to_bv(d_mm, -k, 4);
     if (-j > -k)
     {
-      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
-      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+      ASSERT_GT(bzla_bv_signed_compare(bv1, bv2), 0);
+      ASSERT_LT(bzla_bv_signed_compare(bv2, bv1), 0);
     }
     if (-j < -k)
     {
-      ASSERT_LT(bzla_bv_signed_compare(d_mm, bv1, bv2), 0);
-      ASSERT_GT(bzla_bv_signed_compare(d_mm, bv2, bv1), 0);
+      ASSERT_LT(bzla_bv_signed_compare(bv1, bv2), 0);
+      ASSERT_GT(bzla_bv_signed_compare(bv2, bv1), 0);
     }
     bzla_bv_free(d_mm, bv1);
     bzla_bv_free(d_mm, bv2);

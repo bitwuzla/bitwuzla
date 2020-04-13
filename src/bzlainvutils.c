@@ -1268,21 +1268,21 @@ bzla_is_inv_slt_const(Bzla *bzla, BzlaPropInfo *pi)
     if (bzla_bv_is_true(t))
     {
       if (bzla_bv_is_min_signed(s)) return false;
-      if (msb_false) return bzla_bv_signed_compare(mm, x->lo, s) == -1;
+      if (msb_false) return bzla_bv_signed_compare(x->lo, s) == -1;
       tmp = bzla_bv_copy(mm, x->lo);
       bzla_bv_set_bit(tmp, bw - 1, 1);
-      res = !msb_false && bzla_bv_signed_compare(mm, tmp, s) == -1;
+      res = !msb_false && bzla_bv_signed_compare(tmp, s) == -1;
       bzla_bv_free(mm, tmp);
       return res;
     }
     /* x >= s */
     if (msb_true)
     {
-      return bzla_bv_signed_compare(mm, x->hi, s) >= 0;
+      return bzla_bv_signed_compare(x->hi, s) >= 0;
     }
     tmp = bzla_bv_copy(mm, x->hi);
     bzla_bv_set_bit(tmp, bw - 1, 0);
-    res = !msb_true && bzla_bv_signed_compare(mm, tmp, s) >= 0;
+    res = !msb_true && bzla_bv_signed_compare(tmp, s) >= 0;
     bzla_bv_free(mm, tmp);
     return res;
   }
@@ -1294,22 +1294,22 @@ bzla_is_inv_slt_const(Bzla *bzla, BzlaPropInfo *pi)
     if (bzla_bv_is_max_signed(s)) return false;
     if (msb_true)
     {
-      return bzla_bv_signed_compare(mm, s, x->hi) == -1;
+      return bzla_bv_signed_compare(s, x->hi) == -1;
     }
     tmp = bzla_bv_copy(mm, x->hi);
     bzla_bv_set_bit(tmp, bw - 1, 0);
-    res = !msb_true && bzla_bv_signed_compare(mm, s, tmp) == -1;
+    res = !msb_true && bzla_bv_signed_compare(s, tmp) == -1;
     bzla_bv_free(mm, tmp);
     return res;
   }
   /* s >= x */
   if (msb_false)
   {
-    return bzla_bv_signed_compare(mm, s, x->lo) >= 0;
+    return bzla_bv_signed_compare(s, x->lo) >= 0;
   }
   tmp = bzla_bv_copy(mm, x->lo);
   bzla_bv_set_bit(tmp, bw - 1, 1);
-  res = !msb_false && bzla_bv_signed_compare(mm, s, tmp) >= 0;
+  res = !msb_false && bzla_bv_signed_compare(s, tmp) >= 0;
   bzla_bv_free(mm, tmp);
   return res;
 }
