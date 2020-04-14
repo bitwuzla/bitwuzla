@@ -571,10 +571,11 @@ bzla_bvdomain_gen_init_range(BzlaMemMgr *mm,
     }
   }
 
-  gen->mm     = mm;
-  gen->domain = bzla_bvdomain_copy(mm, d);
-  gen->cur    = 0;
-  gen->rng    = rng;
+  gen->mm        = mm;
+  gen->domain    = bzla_bvdomain_copy(mm, d);
+  gen->cur       = 0;
+  gen->rng       = rng;
+  gen->is_random = true;
 #ifndef NDEBUG
   gen->min = bzla_bv_copy(mm, min);
   gen->max = bzla_bv_copy(mm, max);
@@ -595,6 +596,7 @@ bzla_bvdomain_gen_next(BzlaBvDomainGenerator *gen)
   assert(gen);
   assert(gen->bits);
   assert(bzla_bvdomain_gen_has_next(gen));
+  gen->is_random = false;
   return gen_next_bits(gen, false);
 }
 
@@ -603,6 +605,8 @@ bzla_bvdomain_gen_random(BzlaBvDomainGenerator *gen)
 {
   assert(gen);
   assert(gen->rng);
+  assert(bzla_bvdomain_gen_has_next(gen));
+  assert(gen->is_random);
   return gen_next_bits(gen, true);
 }
 

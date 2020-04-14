@@ -569,7 +569,6 @@ bzla_bv_signed_compare(const BzlaBitVector *a, const BzlaBitVector *b)
 
   uint32_t bw, msb_a, msb_b;
   int32_t res;
-  BzlaBitVector *slt;
 
   bw    = a->width;
   msb_a = bzla_bv_get_bit(a, bw - 1);
