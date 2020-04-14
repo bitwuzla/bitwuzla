@@ -141,7 +141,16 @@ void bzla_bvdomain_print(BzlaMemMgr *mm,
 const char *bzla_bvdomain_to_str(const BzlaBvDomain *d);
 
 /*----------------------------------------------------------------------------*/
-/* generator */
+
+BzlaBitVector *bzla_bvdomain_get_factor(BzlaMemMgr *mm,
+                                        const BzlaBitVector *num,
+                                        const BzlaBvDomain *x,
+                                        const BzlaBitVector *excl_min_val,
+                                        uint64_t limit,
+                                        BzlaRNG *rng);
+
+/*----------------------------------------------------------------------------*/
+/* Generator                                                                  */
 /*----------------------------------------------------------------------------*/
 
 /** A generator to enumerate all possible values of a given domain. */
@@ -162,7 +171,7 @@ struct BzlaBvDomainGenerator
 typedef struct BzlaBvDomainGenerator BzlaBvDomainGenerator;
 
 /**
- * Initialize domain generator.
+ * Initialize domain generator (for unsigned value enumeration).
  * mm : the associated memory manager
  * rng: the associated random number generator, may be 0
  * gen: the generator to be initialized
@@ -174,7 +183,8 @@ void bzla_bvdomain_gen_init(BzlaMemMgr *mm,
                             const BzlaBvDomain *d);
 
 /**
- * Initialize generator for values within given range (inclusive).
+ * Initialize generator for values within given range (inclusive),
+ * interpreted as unsigned.
  * mm : the associated memory manager
  * rng: the associated random number generator, may be 0
  * gen: the generator to be initialized
@@ -191,6 +201,7 @@ void bzla_bvdomain_gen_init_range(BzlaMemMgr *mm,
 
 /**
  * Return true if not all possible values have been generated yet.
+ *
  * Note: For bzla_bvdomain_gen_random(), this is always returns true if there
  *       are any values to enumerate (i.e., the initial call to
  *       bzla_bvdomain_gen_has_next() is true).
@@ -207,13 +218,69 @@ BzlaBitVector *bzla_bvdomain_gen_random(BzlaBvDomainGenerator *gen);
 void bzla_bvdomain_gen_delete(const BzlaBvDomainGenerator *gen);
 
 /*----------------------------------------------------------------------------*/
+/* Signed generator                                                           */
+/*----------------------------------------------------------------------------*/
 
-BzlaBitVector *bzla_bvdomain_get_factor(BzlaMemMgr *mm,
-                                        const BzlaBitVector *num,
-                                        const BzlaBvDomain *x,
-                                        const BzlaBitVector *excl_min_val,
-                                        uint64_t limit,
-                                        BzlaRNG *rng);
+/** A generator to enumerate all possible values of a given domain. */
+struct BzlaBvDomainSignedGenerator
+{
+  BzlaMemMgr *mm;                 /* the associated memory manager */
+  BzlaRNG *rng;                   /* the associated RNG (may be 0) */
+  BzlaBvDomain *domain;           /* the domain to enumerate values for */
+  BzlaBvDomainGenerator *gen_lo;  /* generator covering the lower range < 0 */
+  BzlaBvDomainGenerator *gen_hi;  /* generator covering the upper range >= 0 */
+  BzlaBvDomainGenerator *gen_cur; /* the currently active generator */
+};
+
+typedef struct BzlaBvDomainSignedGenerator BzlaBvDomainSignedGenerator;
+
+/**
+ * Initialize domain generator (for signed value enumeration).
+ * mm : the associated memory manager
+ * rng: the associated random number generator, may be 0
+ * gen: the generator to be initialized
+ * d  : the domain to enumerate values for
+ */
+void bzla_bvdomain_gen_signed_init(BzlaMemMgr *mm,
+                                   BzlaRNG *rng,
+                                   BzlaBvDomainSignedGenerator *gen,
+                                   const BzlaBvDomain *d);
+
+/**
+ * Initialize generator for values within given range (inclusive),
+ * interpreted as signed.
+ * mm : the associated memory manager
+ * rng: the associated random number generator, may be 0
+ * gen: the generator to be initialized
+ * d  : the domain to enumerate values for
+ * min: the minimum value to start enumeration with
+ * max: the maximum value to enumerate until
+ */
+void bzla_bvdomain_gen_signed_init_range(BzlaMemMgr *mm,
+                                         BzlaRNG *rng,
+                                         BzlaBvDomainSignedGenerator *gen,
+                                         const BzlaBvDomain *d,
+                                         const BzlaBitVector *min,
+                                         const BzlaBitVector *max);
+
+/**
+ * Return true if not all possible values have been generated yet.
+ *
+ * Note: For bzla_bvdomain_gen_signed_random(), this is always returns true if
+ *       there are any values to enumerate (i.e., the initial call to
+ *       bzla_bvdomain_gen_has_next() is true).
+ */
+bool bzla_bvdomain_gen_signed_has_next(BzlaBvDomainSignedGenerator *gen);
+
+/** Generate next element in the sequence. */
+BzlaBitVector *bzla_bvdomain_gen_signed_next(BzlaBvDomainSignedGenerator *gen);
+
+/** Generate random element in the sequence. */
+BzlaBitVector *bzla_bvdomain_gen_signed_random(
+    BzlaBvDomainSignedGenerator *gen);
+
+/** Delete generator and release all associated memory. */
+void bzla_bvdomain_gen_signed_delete(const BzlaBvDomainSignedGenerator *gen);
 
 /*----------------------------------------------------------------------------*/
 

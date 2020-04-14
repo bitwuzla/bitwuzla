@@ -625,6 +625,142 @@ bzla_bvdomain_gen_delete(const BzlaBvDomainGenerator *gen)
 #endif
 }
 
+/*----------------------------------------------------------------------------*/
+
+void
+bzla_bvdomain_gen_signed_init(BzlaMemMgr *mm,
+                              BzlaRNG *rng,
+                              BzlaBvDomainSignedGenerator *gen,
+                              const BzlaBvDomain *d)
+{
+  assert(mm);
+  assert(gen);
+  assert(d);
+  bzla_bvdomain_gen_signed_init_range(mm, rng, gen, d, 0, 0);
+}
+
+void
+bzla_bvdomain_gen_signed_init_range(BzlaMemMgr *mm,
+                                    BzlaRNG *rng,
+                                    BzlaBvDomainSignedGenerator *gen,
+                                    const BzlaBvDomain *d,
+                                    const BzlaBitVector *min,
+                                    const BzlaBitVector *max)
+{
+  assert(mm);
+  assert(gen);
+  assert(d);
+
+  uint32_t bw;
+  int32_t cmp_min, cmp_max;
+  BzlaBitVector *zero, *ones, *bvmin, *bvmax;
+
+  bw = bzla_bvdomain_get_width(d);
+
+  bvmin = !min ? bzla_bv_min_signed(mm, bw) : bzla_bv_copy(mm, min);
+  bvmax = !max ? bzla_bv_max_signed(mm, bw) : bzla_bv_copy(mm, max);
+  assert(bzla_bv_get_width(bvmin) == bw);
+  assert(bzla_bv_get_width(bvmax) == bw);
+
+  zero    = bzla_bv_zero(mm, bw);
+  ones    = bzla_bv_ones(mm, bw);
+  cmp_min = bzla_bv_signed_compare(bvmin, zero);
+  cmp_max = bzla_bv_signed_compare(bvmax, zero);
+
+  gen->mm      = mm;
+  gen->domain  = bzla_bvdomain_copy(mm, d);
+  gen->rng     = rng;
+  gen->gen_cur = 0;
+  gen->gen_lo  = 0;
+  gen->gen_hi  = 0;
+
+  if (cmp_min < 0)
+  {
+    BZLA_CNEW(mm, gen->gen_lo);
+    bzla_bvdomain_gen_init_range(
+        mm, rng, gen->gen_lo, d, bvmin, cmp_max < 0 ? bvmax : ones);
+    gen->gen_cur = gen->gen_lo;
+  }
+  if (cmp_max >= 0)
+  {
+    BZLA_CNEW(mm, gen->gen_hi);
+    bzla_bvdomain_gen_init_range(
+        mm, rng, gen->gen_hi, d, cmp_min >= 0 ? bvmin : zero, bvmax);
+    if (!gen->gen_cur) gen->gen_cur = gen->gen_hi;
+  }
+  bzla_bv_free(mm, zero);
+  bzla_bv_free(mm, ones);
+  bzla_bv_free(mm, bvmin);
+  bzla_bv_free(mm, bvmax);
+}
+
+bool
+bzla_bvdomain_gen_signed_has_next(BzlaBvDomainSignedGenerator *gen)
+{
+  assert(gen);
+
+  if (!gen->gen_cur) return false;
+  if (!bzla_bvdomain_gen_has_next(gen->gen_cur))
+  {
+    if (gen->gen_cur == gen->gen_lo && gen->gen_hi)
+    {
+      gen->gen_cur = gen->gen_hi;
+      return bzla_bvdomain_gen_has_next(gen->gen_cur);
+    }
+    return false;
+  }
+  return true;
+}
+
+BzlaBitVector *
+bzla_bvdomain_gen_signed_next(BzlaBvDomainSignedGenerator *gen)
+{
+  assert(gen);
+  assert(bzla_bvdomain_gen_signed_has_next(gen));
+  return bzla_bvdomain_gen_next(gen->gen_cur);
+}
+
+BzlaBitVector *
+bzla_bvdomain_gen_signed_random(BzlaBvDomainSignedGenerator *gen)
+{
+  assert(gen);
+  assert(gen->rng);
+  assert(gen->gen_lo || gen->gen_hi);
+  bool has_next_lo, has_next_hi;
+
+  if (gen->gen_lo) has_next_lo = bzla_bvdomain_gen_has_next(gen->gen_lo);
+  if (gen->gen_hi) has_next_hi = bzla_bvdomain_gen_has_next(gen->gen_hi);
+  if (has_next_lo && has_next_hi)
+  {
+    return bzla_bvdomain_gen_random(bzla_rng_flip_coin(gen->rng) ? gen->gen_lo
+                                                                 : gen->gen_hi);
+  }
+  if (has_next_lo)
+  {
+    return bzla_bvdomain_gen_random(gen->gen_lo);
+  }
+  assert(has_next_hi);
+  return bzla_bvdomain_gen_random(gen->gen_hi);
+}
+
+void
+bzla_bvdomain_gen_signed_delete(const BzlaBvDomainSignedGenerator *gen)
+{
+  assert(gen);
+  if (gen->gen_lo)
+  {
+    bzla_bvdomain_gen_delete(gen->gen_lo);
+    BZLA_DELETE(gen->mm, gen->gen_lo);
+  }
+  if (gen->gen_hi)
+  {
+    bzla_bvdomain_gen_delete(gen->gen_hi);
+    BZLA_DELETE(gen->mm, gen->gen_hi);
+  }
+  bzla_bvdomain_free(gen->mm, gen->domain);
+}
+
+/*----------------------------------------------------------------------------*/
 struct WheelFactorizer
 {
   bool done;
