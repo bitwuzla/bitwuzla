@@ -26,6 +26,36 @@ typedef int32_t (*BzlaPropSelectPath)(Bzla *, BzlaPropInfo *);
 
 /* ========================================================================== */
 
+bool
+bzla_is_sign_extend(Bzla *bzla, BzlaNode *n)
+{
+  uint32_t msb;
+  BzlaNode *ite, *t;
+
+  if (bzla_node_is_inverted(n) || !bzla_node_is_bv_concat(n))
+  {
+    return false;
+  }
+
+  ite = n->e[0];
+  t   = n->e[1];
+  msb = bzla_node_bv_get_width(bzla, t) - 1;
+
+  if (bzla_node_is_inverted(ite) || !bzla_node_is_cond(ite)
+      || !bzla_node_is_bv_slice(ite->e[0]) || bzla_node_is_inverted(ite->e[0])
+      || ite->e[0]->e[0] != t || bzla_node_bv_slice_get_upper(ite->e[0]) != msb
+      || bzla_node_bv_slice_get_lower(ite->e[0]) != msb
+      || !bzla_node_is_bv_const_ones(bzla, ite->e[1])
+      || !bzla_node_is_bv_const_zero(bzla, ite->e[2]))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+/* ========================================================================== */
+
 /**
  * Create a bit-vector with all bits that are const bits in domain d_res_x
  * set to their const value, and all other bits set to their value in res_x.
@@ -2834,6 +2864,210 @@ bzla_proputils_inv_eq(Bzla *bzla, BzlaPropInfo *pi)
 /* INV: ult                                                                   */
 /* -------------------------------------------------------------------------- */
 
+static BzlaBitVector *
+inv_ult_concat(Bzla *bzla, BzlaPropInfo *pi)
+{
+  bool isult;
+  int32_t pos_x;
+  uint32_t bw_x, bw_x0, bw_x1;
+  BzlaBitVector *res, *tmp, *bv_x0, *bv_x1, *bv_s0, *bv_s1;
+  BzlaBitVector *min, *max, *min_signed;
+  BzlaMemMgr *mm;
+  BzlaNode *exp_x, *real_exp_x, *x0, *x1;
+  const BzlaBitVector *s, *t, *x;
+
+  mm         = bzla->mm;
+  pos_x      = pi->pos_x;
+  x          = pi->bv[pos_x];
+  s          = pi->bv[1 - pos_x];
+  t          = pi->target_value;
+  exp_x      = pi->exp->e[pos_x];
+  real_exp_x = bzla_node_real_addr(exp_x);
+
+  if (!bzla_node_is_bv_concat(exp_x)) return 0;
+
+  isult = bzla_bv_is_true(t);
+
+  res = 0;
+
+  x0    = real_exp_x->e[0];
+  x1    = real_exp_x->e[1];
+  bw_x  = bzla_node_bv_get_width(bzla, exp_x);
+  bw_x0 = bzla_node_bv_get_width(bzla, x0);
+  bw_x1 = bzla_node_bv_get_width(bzla, x1);
+  assert(bw_x - bw_x1 == bw_x0);
+  bv_x0 = bzla_bv_slice(mm, x, bw_x - 1, bw_x1);
+  bv_x1 = bzla_bv_slice(mm, x, bw_x1 - 1, 0);
+  bv_s0 = bzla_bv_slice(mm, s, bw_x - 1, bw_x1);
+  bv_s1 = bzla_bv_slice(mm, s, bw_x1 - 1, 0);
+
+  if (bzla_is_sign_extend(bzla, exp_x))
+  {
+    min_signed = bzla_bv_min_signed(mm, bw_x1);
+
+    /* x < s = t */
+    if (pos_x == 0)
+    {
+      /* x0 o x1 < s0 o s1 */
+      if (isult)
+      {
+        min = bzla_bv_zero(mm, bw_x1);
+        /* s0 == zero -> pick x1 < min(min_signed, s1) */
+        if (bzla_bv_is_zero(bv_s0))
+        {
+          tmp = bzla_bv_compare(bv_s1, min_signed) < 0 ? bv_s1 : min_signed;
+          max = bzla_bv_is_zero(tmp) ? bzla_bv_copy(mm, tmp)
+                                     : bzla_bv_dec(mm, tmp);
+        }
+        /* s0 == ones -> pick x1 < max(min_signed, s1) */
+        else if (bzla_bv_is_ones(bv_s0))
+        {
+          max = bzla_bv_dec(
+              mm, bzla_bv_compare(min_signed, bv_s1) < 0 ? bv_s1 : min_signed);
+        }
+        /* pick x1 < min_signed */
+        else
+        {
+          max = bzla_bv_dec(mm, min_signed);
+        }
+
+        tmp = bzla_bv_new_random_range(mm, &bzla->rng, bw_x1, min, max);
+        res = bzla_bv_sext(mm, tmp, bw_x0);
+
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, min);
+        bzla_bv_free(mm, max);
+        assert(bzla_bv_compare(res, s) < 0);
+      }
+      /* x0 o x1 >= s0 o s1 */
+      else
+      {
+        max = bzla_bv_ones(mm, bw_x1);
+        /* s0 == zero -> pick x1 >= min(min_signed, s1) */
+        if (bzla_bv_is_zero(bv_s0))
+        {
+          min = bzla_bv_copy(
+              mm, bzla_bv_compare(min_signed, bv_s1) < 0 ? min_signed : bv_s1);
+        }
+        /* s1 == ones -> pick x1 >= max(min_signed, s1) */
+        else if (bzla_bv_is_ones(bv_s0))
+        {
+          min = bzla_bv_copy(
+              mm, bzla_bv_compare(min_signed, bv_s1) > 0 ? min_signed : bv_s1);
+        }
+        /* s0 > zero && s0 < ones -> pick x1 >= min_signed */
+        else
+        {
+          min = bzla_bv_copy(mm, min_signed);
+        }
+
+        tmp = bzla_bv_new_random_range(mm, &bzla->rng, bw_x1, min, max);
+        res = bzla_bv_sext(mm, tmp, bw_x0);
+
+        assert(bzla_bv_compare(res, s) >= 0);
+
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, min);
+        bzla_bv_free(mm, max);
+      }
+    }
+    /* s < x = t */
+    else
+    {
+      /* s0 o s1 < x0 o x1 */
+      if (isult)
+      {
+        max = bzla_bv_ones(mm, bw_x1);
+
+        /* s0 == zero
+         *  1) min_signed <= s1 -> pick x1 >= min_signed
+         *  2) else                pick x1 > s1
+         */
+        if (bzla_bv_is_zero(bv_s0))
+        {
+          min = bzla_bv_compare(min_signed, bv_s1) <= 0
+                    ? bzla_bv_copy(mm, min_signed)
+                    : bzla_bv_inc(mm, bv_s1);
+        }
+        /* s0 == ones
+         *  1) min_signed > 1 -> pick x1 >= min_signed
+         *  2) else              pick x1 > s1
+         */
+        else if (bzla_bv_is_ones(bv_s0))
+        {
+          min = bzla_bv_compare(min_signed, bv_s1) > 0
+                    ? bzla_bv_copy(mm, min_signed)
+                    : bzla_bv_inc(mm, bv_s1);
+        }
+        /* s0 > zero && s0 < ones -> pick x1 >= min_signed */
+        else
+        {
+          min = bzla_bv_copy(mm, min_signed);
+        }
+
+        tmp = bzla_bv_new_random_range(mm, &bzla->rng, bw_x1, min, max);
+        res = bzla_bv_sext(mm, tmp, bw_x0);
+        assert(bzla_bv_compare(s, res) < 0);
+
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, min);
+        bzla_bv_free(mm, max);
+      }
+      /* s0 o s1 >= x0 o x1 */
+      else
+      {
+        min = bzla_bv_zero(mm, bw_x1);
+        tmp = bzla_bv_dec(mm, min_signed);
+
+        /* s0 == zero
+         *  1) min_signed - 1 < s1 -> pick x1 <= min_signed - 1
+         *  2) else                   pick x1 <= s1
+         */
+        if (bzla_bv_is_zero(bv_s0))
+        {
+          max = bzla_bv_copy(mm, bzla_bv_compare(tmp, bv_s1) < 0 ? tmp : bv_s1);
+        }
+        /* s1 == ones
+         *  1) s1 >= min_signed -> pick x1 <= s1
+         *  2) else                pick x1 <= min_signed - 1
+         */
+        else if (bzla_bv_is_ones(bv_s0))
+        {
+          max = bzla_bv_copy(
+              mm, bzla_bv_compare(bv_s1, min_signed) >= 0 ? bv_s1 : tmp);
+        }
+        /* s1 > zero && s1 < ones -> pick x1 < min_signed */
+        else
+        {
+          max = bzla_bv_copy(mm, tmp);
+        }
+
+        bzla_bv_free(mm, tmp);
+        tmp = bzla_bv_new_random_range(mm, &bzla->rng, bw_x1, min, max);
+
+        res = bzla_bv_sext(mm, tmp, bw_x0);
+        assert(bzla_bv_compare(s, res) >= 0);
+
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, min);
+        bzla_bv_free(mm, max);
+      }
+    }
+
+    bzla_bv_free(mm, min_signed);
+  }
+  else
+  {
+  }
+
+  bzla_bv_free(mm, bv_x0);
+  bzla_bv_free(mm, bv_x1);
+  bzla_bv_free(mm, bv_s0);
+  bzla_bv_free(mm, bv_s1);
+
+  return res;
+}
+
 BzlaBitVector *
 bzla_proputils_inv_ult(Bzla *bzla, BzlaPropInfo *pi)
 {
@@ -2854,51 +3088,53 @@ bzla_proputils_inv_ult(Bzla *bzla, BzlaPropInfo *pi)
 
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
 
-  bw    = bzla_bv_get_width(s);
-  isult = !bzla_bv_is_zero(t);
-
-  res = 0;
-
-  if (pos_x)
+  res = inv_ult_concat(bzla, pi);
+  if (!res)
   {
-    /* s < x = t ---------------------------------------------------------- */
-    assert(!isult || !bzla_bv_is_ones(s)); /* CONFLICT: 1...1 < x */
-    if (!isult)
+    bw    = bzla_bv_get_width(s);
+    isult = !bzla_bv_is_zero(t);
+
+    if (pos_x)
     {
-      /* s >= x */
-      zero = bzla_bv_zero(mm, bw);
-      res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, s);
-      bzla_bv_free(mm, zero);
+      /* s < x = t ---------------------------------------------------------- */
+      assert(!isult || !bzla_bv_is_ones(s)); /* CONFLICT: 1...1 < x */
+      if (!isult)
+      {
+        /* s >= x */
+        zero = bzla_bv_zero(mm, bw);
+        res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, s);
+        bzla_bv_free(mm, zero);
+      }
+      else
+      {
+        /* s < x */
+        ones = bzla_bv_ones(mm, bw);
+        tmp  = bzla_bv_inc(mm, s);
+        res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, ones);
+      }
     }
     else
     {
-      /* s < x */
-      ones = bzla_bv_ones(mm, bw);
-      tmp  = bzla_bv_inc(mm, s);
-      res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
-      bzla_bv_free(mm, tmp);
-      bzla_bv_free(mm, ones);
-    }
-  }
-  else
-  {
-    /* x < s = t ---------------------------------------------------------- */
-    assert(!isult || !bzla_bv_is_zero(s)); /* CONFLICT: x < 0  */
-    if (!isult)
-    {
-      /* x >= s */
-      ones = bzla_bv_ones(mm, bw);
-      res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, s, ones);
-      bzla_bv_free(mm, ones);
-    }
-    else
-    {
-      /* x < s */
-      zero = bzla_bv_zero(mm, bw);
-      tmp  = bzla_bv_dec(mm, s);
-      res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
-      bzla_bv_free(mm, tmp);
-      bzla_bv_free(mm, zero);
+      /* x < s = t ---------------------------------------------------------- */
+      assert(!isult || !bzla_bv_is_zero(s)); /* CONFLICT: x < 0  */
+      if (!isult)
+      {
+        /* x >= s */
+        ones = bzla_bv_ones(mm, bw);
+        res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, s, ones);
+        bzla_bv_free(mm, ones);
+      }
+      else
+      {
+        /* x < s */
+        zero = bzla_bv_zero(mm, bw);
+        tmp  = bzla_bv_dec(mm, s);
+        res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, zero, tmp);
+        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, zero);
+      }
     }
   }
 
@@ -5570,36 +5806,6 @@ record_conflict(Bzla *bzla,
 
 /* -------------------------------------------------------------------------- */
 
-static bool
-is_sign_extend(Bzla *bzla, BzlaNode *n)
-{
-  assert(bzla_node_is_regular(n));
-
-  uint32_t msb;
-  BzlaNode *ite, *t;
-
-  if (!bzla_node_is_bv_concat(n))
-  {
-    return false;
-  }
-
-  ite = n->e[0];
-  t   = n->e[1];
-  msb = bzla_node_bv_get_width(bzla, t) - 1;
-
-  if (bzla_node_is_inverted(ite) || !bzla_node_is_cond(ite)
-      || !bzla_node_is_bv_slice(ite->e[0]) || bzla_node_is_inverted(ite->e[0])
-      || ite->e[0]->e[0] != t || bzla_node_bv_slice_get_upper(ite->e[0]) != msb
-      || bzla_node_bv_slice_get_lower(ite->e[0]) != msb
-      || !bzla_node_is_bv_const_ones(bzla, ite->e[1])
-      || !bzla_node_is_bv_const_zero(bzla, ite->e[2]))
-  {
-    return false;
-  }
-
-  return true;
-}
-
 uint64_t
 bzla_proputils_select_move_prop(Bzla *bzla,
                                 BzlaNode *root,
@@ -5760,7 +5966,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bzla_mem_freestr(bzla->mm, a);
 #endif
 
-      is_sext = is_sign_extend(bzla, real_cur);
+      is_sext = bzla_is_sign_extend(bzla, real_cur);
 
       pi.exp          = real_cur;
       pi.res_x        = 0;

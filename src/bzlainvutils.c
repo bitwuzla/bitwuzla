@@ -528,13 +528,13 @@ bzla_is_inv_sign_extend(Bzla *bzla, BzlaPropInfo *pi)
 
   if (bzla_bv_get_bit(t_x, msb) == 1 && bzla_bv_is_ones(t_ext))
   {
-    res       = true;
-    pi->res_x = bzla_bvdomain_new(mm, t_x, t_x);
+    res = true;
+    bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, t_x, t_x));
   }
   else if (bzla_bv_get_bit(t_x, msb) == 0 && bzla_bv_is_zero(t_ext))
   {
-    res       = true;
-    pi->res_x = bzla_bvdomain_new(mm, t_x, t_x);
+    res = true;
+    bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, t_x, t_x));
   }
   bzla_bv_free(mm, t_ext);
   bzla_bv_free(mm, t_x);

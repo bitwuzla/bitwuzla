@@ -25,6 +25,8 @@ extern "C" {
 using BzlaBinFun =
     std::add_pointer<BzlaNode *(Bzla *, BzlaNode *, BzlaNode *)>::type;
 
+using XFun = std::add_pointer<BzlaNode *(Bzla *, BzlaSortId)>::type;
+
 class TestPropInv : public TestPropCommon
 {
  protected:
@@ -32,7 +34,9 @@ class TestPropInv : public TestPropCommon
                    BzlaPropIsInvFun is_inv_fun,
                    BzlaPropComputeValueFun inv_fun,
                    uint32_t pos_x,
-                   bool fixed_bits)
+                   bool fixed_bits,
+                   XFun x_fun       = nullptr,
+                   uint32_t test_bw = TEST_PROPINV_BW)
   {
     bool is_inv;
     uint32_t expected_result;
@@ -61,15 +65,16 @@ class TestPropInv : public TestPropCommon
     {
       bzla_opt_set(bzla, BZLA_OPT_SLT_ELIM, 0);
     }
+    /* Disable rewriting in order to preserve sign extension structure. */
+    bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, 0);
 
+    sort_x = bzla_sort_bv(bzla, test_bw);
     if (expr_fun == bzla_exp_bv_concat)
     {
-      sort_x = bzla_sort_bv(bzla, TEST_PROPINV_BW);
-      sort_s = bzla_sort_bv(bzla, TEST_PROPINV_BW - 1);
+      sort_s = bzla_sort_bv(bzla, test_bw - 1);
     }
     else
     {
-      sort_x = bzla_sort_bv(bzla, TEST_PROPINV_BW);
       sort_s = bzla_sort_copy(bzla, sort_x);
     }
 
@@ -77,14 +82,28 @@ class TestPropInv : public TestPropCommon
 
     if (pos_x == 0)
     {
-      x    = bzla_exp_var(bzla, sort_x, "x");
+      if (x_fun)
+      {
+        x = x_fun(bzla, sort_x);
+      }
+      else
+      {
+        x = bzla_exp_var(bzla, sort_x, "x");
+      }
       s    = bzla_exp_var(bzla, sort_s, "s");
       expr = expr_fun(bzla, x, s);
     }
     else
     {
-      s    = bzla_exp_var(bzla, sort_s, "s");
-      x    = bzla_exp_var(bzla, sort_x, "x");
+      s = bzla_exp_var(bzla, sort_s, "s");
+      if (x_fun)
+      {
+        x = x_fun(bzla, sort_x);
+      }
+      else
+      {
+        x = bzla_exp_var(bzla, sort_x, "x");
+      }
       expr = expr_fun(bzla, s, x);
     }
 
@@ -144,13 +163,32 @@ class TestPropInv : public TestPropCommon
 
             if (is_inv)
             {
-              bzla->slv       = slv_prop;
-              bv_x            = inv_fun(bzla, &pi);
-              expected_result = BZLA_RESULT_SAT;
+              bzla->slv = slv_prop;
+              bv_x      = inv_fun(bzla, &pi);
 
-              c_x  = bzla_exp_bv_const(bzla, bv_x);
-              eq_x = bzla_exp_eq(bzla, x, c_x);
-              bzla_assume_exp(bzla, eq_x);
+              if (x_fun)
+              {
+                if (bv_x)
+                {
+                  expected_result = BZLA_RESULT_SAT;
+
+                  c_x  = bzla_exp_bv_const(bzla, bv_x);
+                  eq_x = bzla_exp_eq(bzla, x, c_x);
+                  bzla_assume_exp(bzla, eq_x);
+                }
+                else
+                {
+                  expected_result = BZLA_RESULT_UNSAT;
+                }
+              }
+              else
+              {
+                expected_result = BZLA_RESULT_SAT;
+
+                c_x  = bzla_exp_bv_const(bzla, bv_x);
+                eq_x = bzla_exp_eq(bzla, x, c_x);
+                bzla_assume_exp(bzla, eq_x);
+              }
             }
             else
             {
@@ -174,6 +212,8 @@ class TestPropInv : public TestPropCommon
 
             if (res != expected_result)
             {
+              std::cout << "is_sign_extend: " << bzla_is_sign_extend(bzla, x)
+                        << std::endl;
               std::cout << "d_x:    ";
               bzla_bvdomain_print(mm, d_x, true);
               std::cout << "cur_x:  ";
@@ -743,6 +783,82 @@ TEST_F(TestPropInv, inv_ult)
       bzla_exp_bv_ult, bzla_is_inv_ult, bzla_proputils_inv_ult, 0, false);
   test_binary(
       bzla_exp_bv_ult, bzla_is_inv_ult, bzla_proputils_inv_ult, 1, false);
+}
+
+static BzlaNode *
+create_ult_sext(Bzla *bzla, BzlaSortId sort)
+{
+  BzlaNode *var, *result;
+  BzlaSortId var_sort;
+  uint32_t bw    = bzla_sort_bv_get_width(bzla, sort);
+  uint32_t nsext = (bw > 3) ? 2 : 1;
+
+  var_sort = bzla_sort_bv(bzla, bw - nsext);
+  var      = bzla_exp_var(bzla, var_sort, 0);
+  result   = bzla_exp_bv_sext(bzla, var, nsext);
+  bzla_node_release(bzla, var);
+  bzla_sort_release(bzla, var_sort);
+  return result;
+}
+
+TEST_F(TestPropInv, inv_ult_sext)
+{
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              0,
+              false,
+              create_ult_sext,
+              2);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              1,
+              false,
+              create_ult_sext,
+              2);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              0,
+              false,
+              create_ult_sext,
+              3);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              1,
+              false,
+              create_ult_sext,
+              3);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              0,
+              false,
+              create_ult_sext,
+              4);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              1,
+              false,
+              create_ult_sext,
+              4);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              0,
+              false,
+              create_ult_sext,
+              5);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              1,
+              false,
+              create_ult_sext,
+              5);
 }
 
 TEST_F(TestPropInv, inv_slt)

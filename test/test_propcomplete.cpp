@@ -454,6 +454,60 @@ class TestPropComplete : public TestBzla
     bzla_node_release(d_bzla, exp);
   }
 
+  void check_inv_ult_sext(uint32_t bw = TEST_PROP_INV_COMPLETE_BW)
+  {
+    uint64_t i, j;
+    uint32_t pos_x, nsext;
+    BzlaNode *exp, *v, *e[2];
+    BzlaBitVector *s[2], *t, *bv_sext;
+    BzlaPropInfo pi;
+    BzlaSortId sort_v, sort;
+
+    nsext = bw > 3 ? 2 : 1;
+
+    /* Disable rewriting in order to preserve sign extension structure. */
+    bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
+
+    sort_v = bzla_sort_bv(d_bzla, bw - nsext);
+    sort   = bzla_sort_bv(d_bzla, bw);
+    v      = bzla_exp_var(d_bzla, sort_v, 0);
+
+    for (pos_x = 0; pos_x < 2; ++pos_x)
+    {
+      e[1 - pos_x] = bzla_exp_var(d_bzla, sort, 0);
+      e[pos_x]     = bzla_exp_bv_sext(d_bzla, v, nsext);
+      exp          = bzla_exp_bv_ult(d_bzla, e[0], e[1]);
+      bzla_node_release(d_bzla, e[0]);
+      bzla_node_release(d_bzla, e[1]);
+
+      for (i = 0; i < (uint32_t)(1 << (bw - nsext)); i++)
+      {
+        bv_sext  = bzla_bv_uint64_to_bv(d_mm, i, bw - nsext);
+        s[pos_x] = bzla_bv_sext(d_mm, bv_sext, nsext);
+        for (j = 0; j < (uint32_t)(1 << bw); j++)
+        {
+          s[1 - pos_x] = bzla_bv_uint64_to_bv(d_mm, j, bw);
+          t            = bzla_bv_ult(d_mm, s[0], s[1]);
+
+          /* domains are initialized later */
+          init_prop_info(&pi, exp, pos_x, t, s[0], s[1], 0, 0, 0, 0);
+          check_result(bzla_is_inv_ult, bzla_proputils_inv_ult, &pi);
+
+          bzla_bv_free(d_mm, s[1 - pos_x]);
+          bzla_bv_free(d_mm, t);
+        }
+        bzla_bv_free(d_mm, s[pos_x]);
+        bzla_bv_free(d_mm, bv_sext);
+      }
+
+      bzla_node_release(d_bzla, exp);
+    }
+
+    bzla_node_release(d_bzla, v);
+    bzla_sort_release(d_bzla, sort_v);
+    bzla_sort_release(d_bzla, sort);
+  }
+
   /**
    * Test if for x & s = t and s & x = t, the consistent value and inverse value
    * computation always produces t when solved for x.
@@ -2694,6 +2748,14 @@ TEST_F(TestPropComplete, complete_ult_inv)
 {
   check_binary(
       bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, bzla_proputils_inv_ult);
+}
+
+TEST_F(TestPropComplete, complete_ult_inv_sext)
+{
+  check_inv_ult_sext(2);
+  check_inv_ult_sext(3);
+  check_inv_ult_sext(5);
+  check_inv_ult_sext(6);
 }
 
 TEST_F(TestPropComplete, complete_slt_inv)
