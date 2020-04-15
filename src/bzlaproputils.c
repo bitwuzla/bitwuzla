@@ -1045,6 +1045,143 @@ bzla_proputils_cons_ult(Bzla *bzla, BzlaPropInfo *pi)
   return cons_ult_aux(bzla, pi, false);
 }
 
+static BzlaBitVector *
+cons_slt_aux(Bzla *bzla, BzlaPropInfo *pi, bool with_const_bits)
+{
+#ifndef NDEBUG
+  check_cons_dbg(bzla, pi, false);
+#endif
+  bool isslt;
+  uint32_t bw;
+  BzlaBitVector *max_signed, *min_signed, *tmp, *res;
+  BzlaMemMgr *mm;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
+  BzlaBvDomainSignedGenerator gen;
+  int32_t pos_x;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_slt);
+
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  x     = with_const_bits ? pi->bvd[pi->pos_x] : 0;
+  s     = pi->bv[1 - pi->pos_x];
+  t     = pi->target_value;
+  bw    = bzla_bv_get_width(s);
+  isslt = !bzla_bv_is_zero(t);
+
+  max_signed = bzla_bv_max_signed(mm, bw);
+  min_signed = bzla_bv_min_signed(mm, bw);
+  if (pos_x == 1 && isslt)
+  {
+    /* s < res = 1  ->  res > min_signed */
+    if (x)
+    {
+      if (bzla_bvdomain_is_fixed(mm, x))
+      {
+        if (bzla_bv_is_min_signed(x->lo))
+        {
+          /* non-recoverable conflict */
+          res = NULL;
+        }
+        else
+        {
+          res = bzla_bv_copy(mm, x->lo);
+        }
+      }
+      else
+      {
+        tmp = bzla_bv_inc(mm, min_signed);
+        bzla_bvdomain_gen_signed_init_range(
+            mm, &bzla->rng, &gen, x, tmp, max_signed);
+        if (!bzla_bvdomain_gen_signed_has_next(&gen))
+        {
+          /* non-recoverable conflict */
+          res = NULL;
+        }
+        else
+        {
+          res = bzla_bv_copy(mm, bzla_bvdomain_gen_signed_random(&gen));
+        }
+        bzla_bvdomain_gen_signed_delete(&gen);
+        bzla_bv_free(mm, tmp);
+      }
+    }
+    else
+    {
+      tmp = bzla_bv_inc(mm, min_signed);
+      res =
+          bzla_bv_new_random_signed_range(mm, &bzla->rng, bw, tmp, max_signed);
+      bzla_bv_free(mm, tmp);
+    }
+  }
+  else if (pos_x == 0 && isslt)
+  {
+    /* res < s = 1  ->  min_signed <= res < max_signed */
+    if (x)
+    {
+      if (bzla_bvdomain_is_fixed(mm, x))
+      {
+        if (bzla_bv_is_max_signed(x->lo))
+        {
+          /* non-recoverable conflict */
+          res = NULL;
+        }
+        else
+        {
+          res = bzla_bv_copy(mm, x->lo);
+        }
+      }
+      else
+      {
+        tmp = bzla_bv_dec(mm, max_signed);
+        bzla_bvdomain_gen_signed_init_range(
+            mm, &bzla->rng, &gen, x, min_signed, tmp);
+        if (!bzla_bvdomain_gen_signed_has_next(&gen))
+        {
+          /* non-recoverable conflict */
+          res = NULL;
+        }
+        else
+        {
+          res = bzla_bv_copy(mm, bzla_bvdomain_gen_signed_random(&gen));
+        }
+        bzla_bv_free(mm, tmp);
+        bzla_bvdomain_gen_signed_delete(&gen);
+      }
+    }
+    else
+    {
+      tmp = bzla_bv_dec(mm, max_signed);
+      res =
+          bzla_bv_new_random_signed_range(mm, &bzla->rng, bw, min_signed, tmp);
+      bzla_bv_free(mm, tmp);
+    }
+  }
+  else if (x && bzla_bvdomain_is_fixed(mm, x))
+  {
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else
+  {
+    res = bzla_bv_new_random(mm, &bzla->rng, bw);
+    if (x)
+    {
+      set_const_bits(mm, x, &res);
+    }
+  }
+
+  bzla_bv_free(mm, max_signed);
+  bzla_bv_free(mm, min_signed);
+  return res;
+}
+
+BzlaBitVector *
+bzla_proputils_cons_slt(Bzla *bzla, BzlaPropInfo *pi)
+{
+  return cons_slt_aux(bzla, pi, false);
+}
+
 BzlaBitVector *
 bzla_proputils_cons_sll(Bzla *bzla, BzlaPropInfo *pi)
 {

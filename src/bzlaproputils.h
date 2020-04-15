@@ -89,6 +89,8 @@ BzlaBitVector* bzla_proputils_cons_ult(Bzla* bzla, BzlaPropInfo* pi);
 
 BzlaBitVector* bzla_proputils_cons_sll(Bzla* bzla, BzlaPropInfo* pi);
 
+BzlaBitVector* bzla_proputils_cons_slt(Bzla* bzla, BzlaPropInfo* pi);
+
 BzlaBitVector* bzla_proputils_cons_srl(Bzla* bzla, BzlaPropInfo* pi);
 
 BzlaBitVector* bzla_proputils_cons_mul(Bzla* bzla, BzlaPropInfo* pi);
