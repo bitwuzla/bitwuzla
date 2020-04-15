@@ -591,8 +591,8 @@ class TestPropComplete : public TestBzla
   }
 
   /**
-   * Test if for x < s = t and s < x = t, the consistent value and inverse value
-   * computation always produces t when solved for x.
+   * Test if for x < s = t and s < x = t (unsigned), the consistent value and
+   * inverse value computation always produces t when solved for x.
    *
    * bw            : The bit-width to use.
    * use_domains   : True if this check should be performed using propagator
@@ -701,6 +701,122 @@ class TestPropComplete : public TestBzla
     bzla_bv_free(d_mm, t);
     bzla_bv_free(d_mm, zero);
     bzla_bv_free(d_mm, bvmax);
+
+    bzla_node_release(d_bzla, exp);
+    bzla_node_release(d_bzla, e[0]);
+    bzla_node_release(d_bzla, e[1]);
+  }
+
+  /**
+   * Test if for x < s = t and s < x = t (signed), the consistent value and
+   * inverse value computation always produces t when solved for x.
+   *
+   * bw            : The bit-width to use.
+   * use_domains   : True if this check should be performed using propagator
+   *                 domains (inv_fun_const).
+   */
+  void check_conf_slt(uint32_t bw, bool use_domains)
+  {
+    (void) bw;
+    BzlaNode *exp, *e[2], *cexp, *ce;
+    BzlaSortId sort;
+    BzlaBitVector *res, *t, *s, *min_signed, *max_signed;
+    BzlaBvDomain *x0 = 0, *x1 = 0;
+    BzlaSolver *slv;
+    BzlaPropInfo pi;
+
+    sort = bzla_sort_bv(d_bzla, bw);
+    e[0] = bzla_exp_var(d_bzla, sort, 0);
+    e[1] = bzla_exp_var(d_bzla, sort, 0);
+    bzla_sort_release(d_bzla, sort);
+    exp = bzla_exp_bv_slt(d_bzla, e[0], e[1]);
+
+    if (use_domains)
+    {
+      assert(d_domains);
+      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+      x0 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(exp->e[0])->id)
+               ->as_ptr;
+      x1 = (BzlaBvDomain *) bzla_hashint_map_get(
+               d_domains, bzla_node_real_addr(exp->e[1])->id)
+               ->as_ptr;
+    }
+
+    min_signed = bzla_bv_min_signed(d_mm, bw);
+    max_signed = bzla_bv_max_signed(d_mm, bw);
+    t          = bzla_bv_one(d_mm, 1);
+
+    /* prop engine: all conflicts are treated as fixable */
+
+  PROP_INV_CONF_SLT_TESTS:
+    /* 1...1 < e[1] */
+    s = bzla_bv_max_signed(d_mm, bw);
+    init_prop_info(&pi, exp, 1, t, s, s, 0, x0, x1, 0);
+    assert(!bzla_is_inv_slt(d_bzla, &pi));
+    res = bzla_proputils_cons_slt(d_bzla, &pi);
+    ASSERT_NE(res, nullptr);
+    assert(bzla_bv_signed_compare(res, min_signed) > 0);
+    ASSERT_GT(bzla_bv_signed_compare(res, min_signed), 0);
+    bzla_bv_free(d_mm, res);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+    ce   = bzla_exp_bv_const(d_bzla, s);
+    cexp = bzla_exp_bv_slt(d_bzla, ce, e[1]);
+    init_prop_info(&pi, cexp, 1, t, s, s, 0, x0, x1, 0);
+    assert(!bzla_is_inv_slt(d_bzla, &pi));
+    res = bzla_proputils_cons_slt(d_bzla, &pi);
+    ASSERT_NE(res, nullptr);
+    ASSERT_GT(bzla_bv_signed_compare(res, min_signed), 0);
+    bzla_bv_free(d_mm, res);
+    bzla_node_release(d_bzla, cexp);
+    bzla_node_release(d_bzla, ce);
+    bzla_bv_free(d_mm, s);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+    /* e[0] < min_signed */
+    s = bzla_bv_min_signed(d_mm, bw);
+    init_prop_info(&pi, exp, 0, t, s, s, 0, x0, x1, 0);
+    assert(!bzla_is_inv_slt(d_bzla, &pi));
+    res = bzla_proputils_cons_slt(d_bzla, &pi);
+    ASSERT_NE(res, nullptr);
+    assert(bzla_bv_signed_compare(res, max_signed) < 0);
+    ASSERT_LT(bzla_bv_signed_compare(res, max_signed), 0);
+    bzla_bv_free(d_mm, res);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+    ce   = bzla_exp_bv_const(d_bzla, s);
+    cexp = bzla_exp_bv_slt(d_bzla, e[0], ce);
+    init_prop_info(&pi, cexp, 0, t, s, s, 0, x0, x1, 0);
+    assert(!bzla_is_inv_slt(d_bzla, &pi));
+    res = bzla_proputils_cons_slt(d_bzla, &pi);
+    ASSERT_NE(res, nullptr);
+    ASSERT_LT(bzla_bv_signed_compare(res, max_signed), 0);
+    bzla_bv_free(d_mm, res);
+    bzla_node_release(d_bzla, cexp);
+    bzla_node_release(d_bzla, ce);
+    bzla_bv_free(d_mm, s);
+    if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
+
+    if (bzla_opt_get(d_bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_SLS) goto DONE;
+
+    /* sls engine: only fixable if non-const inputs */
+    slv         = d_bzla->slv;
+    d_bzla->slv = bzla_new_sls_solver(d_bzla);
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_SLS);
+
+    goto PROP_INV_CONF_SLT_TESTS;
+
+  DONE:
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+    d_bzla->slv->api.delet(d_bzla->slv);
+    d_bzla->slv = slv;
+
+    clear_domains();
+
+    bzla_bv_free(d_mm, t);
+    bzla_bv_free(d_mm, min_signed);
+    bzla_bv_free(d_mm, max_signed);
 
     bzla_node_release(d_bzla, exp);
     bzla_node_release(d_bzla, e[0]);
@@ -2546,6 +2662,12 @@ TEST_F(TestPropComplete, complete_ult_inv)
       bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, bzla_proputils_inv_ult);
 }
 
+TEST_F(TestPropComplete, complete_slt_inv)
+{
+  check_binary(
+      bzla_exp_bv_slt, bzla_bv_slt, bzla_is_inv_slt, bzla_proputils_inv_slt);
+}
+
 TEST_F(TestPropComplete, complete_sll_inv)
 {
   check_shift(
@@ -2620,6 +2742,11 @@ TEST_F(TestPropComplete, complete_eq_cons)
 TEST_F(TestPropComplete, complete_ult_cons)
 {
   check_binary(bzla_exp_bv_ult, bzla_bv_ult, 0, bzla_proputils_cons_ult);
+}
+
+TEST_F(TestPropComplete, complete_slt_cons)
+{
+  check_binary(bzla_exp_bv_slt, bzla_bv_slt, 0, bzla_proputils_cons_slt);
 }
 
 TEST_F(TestPropComplete, complete_sll_cons)
@@ -2697,6 +2824,14 @@ TEST_F(TestPropCompleteConst, complete_ult_inv_const)
                bzla_bv_ult,
                bzla_is_inv_ult_const,
                bzla_proputils_inv_ult_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_slt_inv_const)
+{
+  check_binary(bzla_exp_bv_slt,
+               bzla_bv_slt,
+               bzla_is_inv_slt_const,
+               bzla_proputils_inv_slt_const);
 }
 
 TEST_F(TestPropCompleteConst, complete_mul_inv_const)
@@ -2781,6 +2916,11 @@ TEST_F(TestPropCompleteConst, complete_ult_cons_const)
   check_binary(bzla_exp_bv_ult, bzla_bv_ult, 0, bzla_proputils_cons_ult_const);
 }
 
+TEST_F(TestPropCompleteConst, complete_slt_cons_const)
+{
+  check_binary(bzla_exp_bv_slt, bzla_bv_slt, 0, bzla_proputils_cons_slt_const);
+}
+
 TEST_F(TestPropCompleteConst, complete_mul_cons_const)
 {
   check_binary(bzla_exp_bv_mul, bzla_bv_mul, 0, bzla_proputils_cons_mul_const);
@@ -2856,6 +2996,16 @@ TEST_F(TestPropComplete, conf_ult)
   check_conf_ult(1, true);
   check_conf_ult(4, true);
   check_conf_ult(8, true);
+}
+
+TEST_F(TestPropComplete, conf_slt)
+{
+  check_conf_slt(1, false);
+  check_conf_slt(4, false);
+  check_conf_slt(8, false);
+  check_conf_slt(1, true);
+  check_conf_slt(4, true);
+  check_conf_slt(8, true);
 }
 
 TEST_F(TestPropComplete, conf_sll)

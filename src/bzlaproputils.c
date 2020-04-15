@@ -263,6 +263,49 @@ select_path_ult(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 static int32_t
+select_path_slt(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+
+  int32_t pos_x;
+  BzlaBitVector *max_signed, *t, **s;
+  BzlaMemMgr *mm;
+
+  mm = bzla->mm;
+  s  = (BzlaBitVector **) pi->bv;
+  t  = (BzlaBitVector *) pi->target_value;
+
+  pos_x = select_path_non_const(pi->exp);
+
+  if (pos_x == -1)
+  {
+    if (bzla_opt_get(bzla, BZLA_OPT_PROP_PATH_SEL)
+        == BZLA_PROP_PATH_SEL_ESSENTIAL)
+    {
+      max_signed = bzla_bv_max_signed(mm, bzla_bv_get_width(s[0]));
+      if (bzla_bv_is_one(t))
+      {
+        /* max_signed < s[1] */
+        if (!bzla_bv_compare(s[0], max_signed)) pos_x = 0;
+        /* s[0] < 0 */
+        if (bzla_bv_is_min_signed(s[1])) pos_x = pos_x == -1 ? 1 : -1;
+      }
+      bzla_bv_free(mm, max_signed);
+    }
+    if (pos_x == -1) pos_x = select_path_random(bzla, pi->exp);
+  }
+
+  assert(pos_x >= 0);
+  pi->pos_x = pos_x;
+#ifndef NBZLALOG
+  select_path_log(bzla, pi);
+#endif
+  assert(!bzla_node_is_bv_const(pi->exp->e[pos_x]));
+  return pos_x;
+}
+
+static int32_t
 select_path_sll(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
@@ -5201,6 +5244,7 @@ static BzlaPropSelectPath kind_to_select_path[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ULT_NODE]    = select_path_ult,
     [BZLA_BV_SLICE_NODE]  = select_path_slice,
     [BZLA_BV_SLL_NODE]    = select_path_sll,
+    [BZLA_BV_SLT_NODE]    = select_path_slt,
     [BZLA_BV_SRL_NODE]    = select_path_srl,
     [BZLA_BV_UDIV_NODE]   = select_path_udiv,
     [BZLA_BV_UREM_NODE]   = select_path_urem,
@@ -5216,6 +5260,7 @@ static BzlaPropComputeValueFun kind_to_cons[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ULT_NODE]    = bzla_proputils_cons_ult,
     [BZLA_BV_SLICE_NODE]  = bzla_proputils_cons_slice,
     [BZLA_BV_SLL_NODE]    = bzla_proputils_cons_sll,
+    [BZLA_BV_SLT_NODE]    = bzla_proputils_cons_slt,
     [BZLA_BV_SRL_NODE]    = bzla_proputils_cons_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_cons_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_cons_urem,
@@ -5231,6 +5276,7 @@ static BzlaPropComputeValueFun kind_to_cons_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ULT_NODE]    = bzla_proputils_cons_ult_const,
     [BZLA_BV_SLICE_NODE]  = bzla_proputils_cons_slice_const,
     [BZLA_BV_SLL_NODE]    = bzla_proputils_cons_sll_const,
+    [BZLA_BV_SLT_NODE]    = bzla_proputils_cons_slt_const,
     [BZLA_BV_SRL_NODE]    = bzla_proputils_cons_srl_const,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_cons_udiv_const,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_cons_urem_const,
@@ -5246,6 +5292,7 @@ static BzlaPropComputeValueFun kind_to_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ULT_NODE]    = bzla_proputils_inv_ult,
     [BZLA_BV_SLICE_NODE]  = bzla_proputils_inv_slice,
     [BZLA_BV_SLL_NODE]    = bzla_proputils_inv_sll,
+    [BZLA_BV_SLT_NODE]    = bzla_proputils_inv_slt,
     [BZLA_BV_SRL_NODE]    = bzla_proputils_inv_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_inv_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_inv_urem,
@@ -5261,6 +5308,7 @@ static BzlaPropComputeValueFun kind_to_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ULT_NODE]    = bzla_proputils_inv_ult_const,
     [BZLA_BV_SLICE_NODE]  = bzla_proputils_inv_slice_const,
     [BZLA_BV_SLL_NODE]    = bzla_proputils_inv_sll_const,
+    [BZLA_BV_SLT_NODE]    = bzla_proputils_inv_slt_const,
     [BZLA_BV_SRL_NODE]    = bzla_proputils_inv_srl_const,
     [BZLA_BV_UDIV_NODE]   = bzla_proputils_inv_udiv_const,
     [BZLA_BV_UREM_NODE]   = bzla_proputils_inv_urem_const,
@@ -5276,6 +5324,7 @@ static BzlaPropIsInvFun kind_to_is_inv[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult,
     [BZLA_BV_SLICE_NODE]  = bzla_is_inv_slice,
     [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll,
+    [BZLA_BV_SLT_NODE]    = bzla_is_inv_slt,
     [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl,
     [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv,
     [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem,
@@ -5291,6 +5340,7 @@ static BzlaPropIsInvFun kind_to_is_inv_const[BZLA_NUM_OPS_NODE] = {
     [BZLA_BV_ULT_NODE]    = bzla_is_inv_ult_const,
     [BZLA_BV_SLICE_NODE]  = bzla_is_inv_slice_const,
     [BZLA_BV_SLL_NODE]    = bzla_is_inv_sll_const,
+    [BZLA_BV_SLT_NODE]    = bzla_is_inv_slt_const,
     [BZLA_BV_SRL_NODE]    = bzla_is_inv_srl_const,
     [BZLA_BV_UDIV_NODE]   = bzla_is_inv_udiv_const,
     [BZLA_BV_UREM_NODE]   = bzla_is_inv_urem_const,
@@ -5409,6 +5459,7 @@ record_conflict(Bzla *bzla,
       case BZLA_BV_AND_NODE: str_o = "&"; break;
       case BZLA_BV_ULT_NODE: str_o = "<"; break;
       case BZLA_BV_SLL_NODE: str_o = "<<"; break;
+      case BZLA_BV_SLT_NODE: str_o = "<s"; break;
       case BZLA_BV_SRL_NODE: str_o = ">>"; break;
       case BZLA_BV_MUL_NODE: str_o = "*"; break;
       case BZLA_BV_UDIV_NODE: str_o = "/"; break;

@@ -253,6 +253,7 @@ bzla_lsutils_update_cone(Bzla *bzla,
       case BZLA_BV_EQ_NODE: bv = bzla_bv_eq(mm, e[0], e[1]); break;
       case BZLA_BV_ULT_NODE: bv = bzla_bv_ult(mm, e[0], e[1]); break;
       case BZLA_BV_SLL_NODE: bv = bzla_bv_sll(mm, e[0], e[1]); break;
+      case BZLA_BV_SLT_NODE: bv = bzla_bv_slt(mm, e[0], e[1]); break;
       case BZLA_BV_SRL_NODE: bv = bzla_bv_srl(mm, e[0], e[1]); break;
       case BZLA_BV_MUL_NODE: bv = bzla_bv_mul(mm, e[0], e[1]); break;
       case BZLA_BV_UDIV_NODE: bv = bzla_bv_udiv(mm, e[0], e[1]); break;
