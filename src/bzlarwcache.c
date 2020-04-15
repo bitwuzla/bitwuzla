@@ -1,6 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
+ *  Copyright (C) 2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -54,7 +55,8 @@ bzla_rw_cache_get(BzlaRwCache *rwc,
                   BzlaNodeKind kind,
                   int32_t nid0,
                   int32_t nid1,
-                  int32_t nid2)
+                  int32_t nid2,
+                  int32_t nid3)
 {
 #ifndef NDEBUG
   assert(!nid0 || is_valid_node(rwc->bzla, nid0));
@@ -64,9 +66,10 @@ bzla_rw_cache_get(BzlaRwCache *rwc,
     assert(!nid1 || is_valid_node(rwc->bzla, nid1));
     assert(!nid2 || is_valid_node(rwc->bzla, nid2));
   }
+  assert(!nid3 || is_valid_node(rwc->bzla, nid3));
 #endif
 
-  BzlaRwCacheTuple t   = {.kind = kind, .n = {nid0, nid1, nid2}};
+  BzlaRwCacheTuple t   = {.kind = kind, .n = {nid0, nid1, nid2, nid3}};
   BzlaPtrHashBucket *b = bzla_hashptr_table_get(rwc->cache, &t);
   if (b)
   {
@@ -82,6 +85,7 @@ bzla_rw_cache_add(BzlaRwCache *rwc,
                   int32_t nid0,
                   int32_t nid1,
                   int32_t nid2,
+                  int32_t nid3,
                   int32_t result)
 {
   assert(result);
@@ -94,6 +98,7 @@ bzla_rw_cache_add(BzlaRwCache *rwc,
   {
     assert(!nid1 || is_valid_node(rwc->bzla, nid1));
     assert(!nid2 || is_valid_node(rwc->bzla, nid2));
+    assert(!nid3 || is_valid_node(rwc->bzla, nid3));
   }
 #endif
 
@@ -107,14 +112,14 @@ bzla_rw_cache_add(BzlaRwCache *rwc,
   }
 
   int32_t cached_result_id;
-  if ((cached_result_id = bzla_rw_cache_get(rwc, kind, nid0, nid1, nid2)))
+  if ((cached_result_id = bzla_rw_cache_get(rwc, kind, nid0, nid1, nid2, nid3)))
   {
     /* This can only happen if the node corresponding to cached_result_id does
      * not exist anymore (= deallocated). */
     if (cached_result_id != result)
     {
       assert(bzla_node_get_by_id(rwc->bzla, cached_result_id) == 0);
-      BzlaRwCacheTuple t   = {.kind = kind, .n = {nid0, nid1, nid2}};
+      BzlaRwCacheTuple t   = {.kind = kind, .n = {nid0, nid1, nid2, nid3}};
       BzlaPtrHashBucket *b = bzla_hashptr_table_get(rwc->cache, &t);
       assert(b);
       BzlaRwCacheTuple *cached = b->key;
@@ -130,6 +135,7 @@ bzla_rw_cache_add(BzlaRwCache *rwc,
   t->n[0]   = nid0;
   t->n[1]   = nid1;
   t->n[2]   = nid2;
+  t->n[3]   = nid3;
   t->result = result;
   rwc->num_add++;
 

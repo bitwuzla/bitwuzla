@@ -3,7 +3,7 @@
  *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
  *  Copyright (C) 2007-2017 Armin Biere.
  *  Copyright (C) 2013-2020 Mathias Preiner.
- *  Copyright (C) 2014-2019 Aina Niemetz.
+ *  Copyright (C) 2014-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -123,13 +123,17 @@
 /* rewrite cache */
 
 static BzlaNode *
-check_rw_cache(
-    Bzla *bzla, BzlaNodeKind kind, int32_t id0, int32_t id1, int32_t id2)
+check_rw_cache(Bzla *bzla,
+               BzlaNodeKind kind,
+               int32_t id0,
+               int32_t id1,
+               int32_t id2,
+               int32_t id3)
 {
   BzlaNode *result = 0;
 
   int32_t cached_result_id =
-      bzla_rw_cache_get(bzla->rw_cache, kind, id0, id1, id2);
+      bzla_rw_cache_get(bzla->rw_cache, kind, id0, id1, id2, id3);
   if (cached_result_id)
   {
     result = bzla_node_get_by_id(bzla, cached_result_id);
@@ -6657,7 +6661,7 @@ rewrite_bv_slice_exp(Bzla *bzla, BzlaNode *e, uint32_t upper, uint32_t lower)
   assert(bzla_dbg_precond_slice_exp(bzla, e, upper, lower));
 
   result = check_rw_cache(
-      bzla, BZLA_BV_SLICE_NODE, bzla_node_get_id(e), upper, lower);
+      bzla, BZLA_BV_SLICE_NODE, bzla_node_get_id(e), upper, lower, 0);
 
   if (!result)
   {
@@ -6688,6 +6692,7 @@ rewrite_bv_slice_exp(Bzla *bzla, BzlaNode *e, uint32_t upper, uint32_t lower)
                         bzla_node_get_id(e),
                         upper,
                         lower,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -6712,8 +6717,8 @@ rewrite_eq_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   normalize_eq(bzla, &e0, &e1);
 
 SWAP_OPERANDS:
-  result =
-      check_rw_cache(bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+  result = check_rw_cache(
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -6771,6 +6776,7 @@ SWAP_OPERANDS:
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -6795,7 +6801,7 @@ rewrite_bv_ult_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   normalize_lt(bzla, &e0, &e1);
 
   result = check_rw_cache(
-      bzla, BZLA_BV_ULT_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+      bzla, BZLA_BV_ULT_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -6820,6 +6826,7 @@ rewrite_bv_ult_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
                         BZLA_BV_ULT_NODE,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
+                        0,
                         0,
                         bzla_node_get_id(result));
     }
@@ -6897,7 +6904,7 @@ rewrite_bv_and_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
 SWAP_OPERANDS:
   result = check_rw_cache(
-      bzla, BZLA_BV_AND_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+      bzla, BZLA_BV_AND_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -6953,6 +6960,7 @@ SWAP_OPERANDS:
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -6979,7 +6987,7 @@ rewrite_bv_add_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
 SWAP_OPERANDS:
   result = check_rw_cache(
-      bzla, BZLA_BV_ADD_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+      bzla, BZLA_BV_ADD_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -7026,6 +7034,7 @@ SWAP_OPERANDS:
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -7052,7 +7061,7 @@ rewrite_bv_mul_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
 SWAP_OPERANDS:
   result = check_rw_cache(
-      bzla, BZLA_BV_MUL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+      bzla, BZLA_BV_MUL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -7096,6 +7105,7 @@ SWAP_OPERANDS:
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -7119,8 +7129,12 @@ rewrite_bv_udiv_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_node_copy(bzla, e1);
   normalize_udiv(bzla, &e0, &e1);
 
-  result = check_rw_cache(
-      bzla, BZLA_BV_UDIV_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+  result = check_rw_cache(bzla,
+                          BZLA_BV_UDIV_NODE,
+                          bzla_node_get_id(e0),
+                          bzla_node_get_id(e1),
+                          0,
+                          0);
 
   if (!result)
   {
@@ -7148,6 +7162,7 @@ rewrite_bv_udiv_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -7171,8 +7186,12 @@ rewrite_bv_urem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_node_copy(bzla, e1);
   normalize_urem(bzla, &e0, &e1);
 
-  result = check_rw_cache(
-      bzla, BZLA_BV_UREM_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+  result = check_rw_cache(bzla,
+                          BZLA_BV_UREM_NODE,
+                          bzla_node_get_id(e0),
+                          bzla_node_get_id(e1),
+                          0,
+                          0);
 
   if (!result)
   {
@@ -7200,6 +7219,7 @@ rewrite_bv_urem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -7223,8 +7243,12 @@ rewrite_bv_concat_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_node_copy(bzla, e1);
   normalize_concat(bzla, &e0, &e1);
 
-  result = check_rw_cache(
-      bzla, BZLA_BV_CONCAT_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+  result = check_rw_cache(bzla,
+                          BZLA_BV_CONCAT_NODE,
+                          bzla_node_get_id(e0),
+                          bzla_node_get_id(e1),
+                          0,
+                          0);
 
   if (!result)
   {
@@ -7249,6 +7273,7 @@ rewrite_bv_concat_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -7269,7 +7294,7 @@ rewrite_bv_sll_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(bzla_dbg_precond_shift_exp(bzla, e0, e1));
 
   result = check_rw_cache(
-      bzla, BZLA_BV_SLL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+      bzla, BZLA_BV_SLL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -7291,6 +7316,7 @@ rewrite_bv_sll_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -7309,7 +7335,7 @@ rewrite_bv_srl_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(bzla_dbg_precond_shift_exp(bzla, e0, e1));
 
   result = check_rw_cache(
-      bzla, BZLA_BV_SRL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+      bzla, BZLA_BV_SRL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -7332,6 +7358,7 @@ rewrite_bv_srl_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -7350,7 +7377,7 @@ rewrite_apply_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(bzla_dbg_precond_apply_exp(bzla, e0, e1));
 
   result = check_rw_cache(
-      bzla, BZLA_APPLY_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+      bzla, BZLA_APPLY_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -7372,6 +7399,7 @@ rewrite_apply_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
                         BZLA_APPLY_NODE,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
+                        0,
                         0,
                         bzla_node_get_id(result));
     }
@@ -7412,7 +7440,7 @@ rewrite_forall_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
 
   result = check_rw_cache(
-      bzla, BZLA_FORALL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+      bzla, BZLA_FORALL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -7433,6 +7461,7 @@ rewrite_forall_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -7450,7 +7479,7 @@ rewrite_exists_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
 
   result = check_rw_cache(
-      bzla, BZLA_EXISTS_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+      bzla, BZLA_EXISTS_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -7470,6 +7499,7 @@ rewrite_exists_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
                         BZLA_EXISTS_NODE,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
+                        0,
                         0,
                         bzla_node_get_id(result));
     }
@@ -7499,7 +7529,8 @@ rewrite_cond_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
                           BZLA_COND_NODE,
                           bzla_node_get_id(e0),
                           bzla_node_get_id(e1),
-                          bzla_node_get_id(e2));
+                          bzla_node_get_id(e2),
+                          0);
 
   if (!result)
   {
@@ -7537,6 +7568,7 @@ rewrite_cond_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         bzla_node_get_id(e2),
+                        0,
                         bzla_node_get_id(result));
     }
   }

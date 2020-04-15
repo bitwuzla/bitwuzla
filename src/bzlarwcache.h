@@ -1,6 +1,7 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
+ *  Copyright (C) 2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -19,7 +20,7 @@
 struct BzlaRwCacheTuple
 {
   BzlaNodeKind kind;
-  int32_t n[3];
+  int32_t n[4];
   int32_t result;
 };
 
@@ -45,6 +46,7 @@ void bzla_rw_cache_add(BzlaRwCache *cache,
                        int32_t nid0,
                        int32_t nid1,
                        int32_t nid2,
+                       int32_t nid3,
                        int32_t result_nid);
 
 /* Check if we already cached a rewritten node. */
@@ -52,7 +54,8 @@ int32_t bzla_rw_cache_get(BzlaRwCache *cache,
                           BzlaNodeKind kind,
                           int32_t nid0,
                           int32_t nid1,
-                          int32_t nid2);
+                          int32_t nid2,
+                          int32_t nid3);
 
 /* Initialize the rewrite cache. */
 void bzla_rw_cache_init(BzlaRwCache *cache, Bzla *mm);
