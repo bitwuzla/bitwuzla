@@ -567,6 +567,7 @@ static BzlaNode *rewrite_bv_concat_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_bv_sll_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_bv_slt_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_bv_srl_exp(Bzla *, BzlaNode *, BzlaNode *);
+static BzlaNode *rewrite_fp_abs_exp(Bzla *, BzlaNode *);
 static BzlaNode *rewrite_apply_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_lambda_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_forall_exp(Bzla *, BzlaNode *, BzlaNode *);
@@ -4855,6 +4856,32 @@ apply_same_srl(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   return bzla_exp_bv_zero(bzla, bzla_node_get_sort_id(e0));
 }
 
+/* FP rules                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * match:  fp.abs(fp.abs(a)) or fp.abs(fp.neg(a))
+ * result: fp.abs(a)
+ */
+static inline bool
+applies_fp_abs(Bzla *bzla, BzlaNode *e0)
+{
+  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND
+         && (bzla_node_is_fp_abs(e0) || bzla_node_is_fp_neg(e0));
+}
+
+static inline BzlaNode *
+apply_fp_abs(Bzla *bzla, BzlaNode *e0)
+{
+  assert(applies_fp_abs(bzla, e0));
+  assert(bzla_node_is_regular(e0));
+  BzlaNode *result;
+  BZLA_INC_REC_RW_CALL(bzla);
+  result = rewrite_fp_abs_exp(bzla, e0->e[0]);
+  BZLA_DEC_REC_RW_CALL(bzla);
+  return result;
+}
+
 /* APPLY rules                                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -7367,6 +7394,49 @@ rewrite_bv_srl_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   return result;
 }
 
+/* -------------------------------------------------------------------------- */
+
+static BzlaNode *
+rewrite_fp_abs_exp(Bzla *bzla, BzlaNode *e0)
+{
+  assert(bzla);
+  assert(e0);
+
+  BzlaNode *result = 0;
+
+  e0 = bzla_simplify_exp(bzla, e0);
+
+  result =
+      check_rw_cache(bzla, BZLA_FP_ABS_NODE, bzla_node_get_id(e0), 0, 0, 0);
+
+  if (!result)
+  {
+    ADD_RW_RULE(fp_abs, e0);
+
+    assert(!result);
+    if (!result)
+    {
+      result = bzla_node_create_fp_abs(bzla, e0);
+    }
+    else
+    {
+    DONE:
+      bzla_rw_cache_add(bzla->rw_cache,
+                        BZLA_FP_ABS_NODE,
+                        bzla_node_get_id(e0),
+                        0,
+                        0,
+                        0,
+                        bzla_node_get_id(result));
+    }
+  }
+
+  assert(result);
+  return result;
+}
+
+/* -------------------------------------------------------------------------- */
+
 static BzlaNode *
 rewrite_apply_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
@@ -7596,6 +7666,27 @@ bzla_rewrite_slice_exp(Bzla *bzla,
   res          = rewrite_bv_slice_exp(bzla, exp, upper, lower);
   bzla->time.rewrite += bzla_util_time_stamp() - start;
   return res;
+}
+
+BzlaNode *
+bzla_rewrite_unary_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
+{
+  assert(bzla);
+  assert(kind);
+  assert(e0);
+  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+
+  BzlaNode *result;
+  double start = bzla_util_time_stamp();
+
+  switch (kind)
+  {
+    case BZLA_FP_ABS_NODE: result = rewrite_fp_abs_exp(bzla, e0); break;
+
+    default: assert(false);  // temporary
+  }
+  bzla->time.rewrite += bzla_util_time_stamp() - start;
+  return result;
 }
 
 BzlaNode *

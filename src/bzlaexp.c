@@ -1937,8 +1937,13 @@ bzla_exp_fp_abs(Bzla *bzla, BzlaNode *node)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  return bzla_node_create_fp_abs(bzla, node);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    result = bzla_rewrite_unary_exp(bzla, BZLA_FP_ABS_NODE, node);
+  else
+    result = bzla_node_create_fp_abs(bzla, node);
+  return result;
 }
 
 BzlaNode *
