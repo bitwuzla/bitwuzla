@@ -465,14 +465,14 @@ class TestPropComplete : public TestBzla
   void check_conf_and(uint32_t bw, bool use_domains)
   {
     (void) bw;
-    bool inv;
     uint64_t i, j;
     BzlaNode *exp, *cexp[2], *e[2], *ce[2];
     BzlaSortId sort;
     BzlaBitVector *t, *s[2], *res, *tmp, *tmp2;
     BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaSolver *slv;
-    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_and;
+    BzlaPropIsInvFun is_inv_fun      = 0;
+    BzlaPropComputeValueFun cons_fun = 0;
     BzlaPropInfo pi;
 
     sort = bzla_sort_bv(d_bzla, bw);
@@ -484,7 +484,8 @@ class TestPropComplete : public TestBzla
     if (use_domains)
     {
       assert(d_domains);
-      inv_fun = bzla_proputils_inv_and_const;
+      is_inv_fun = bzla_is_inv_and_const;
+      cons_fun   = bzla_proputils_cons_and_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
@@ -492,6 +493,11 @@ class TestPropComplete : public TestBzla
       x1 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
+    }
+    else
+    {
+      is_inv_fun = bzla_is_inv_and;
+      cons_fun   = bzla_proputils_cons_and;
     }
 
     for (i = 0; i < (uint32_t)(1 << bw); i++)
@@ -509,14 +515,13 @@ class TestPropComplete : public TestBzla
         tmp = bzla_bv_and(d_mm, s[0], t);
         if (bzla_bv_compare(tmp, t))
         {
-        PROP_INV_CONF_AND_TESTS:
+        PROP_COMPLETE_CONF_AND_TESTS:
           /* prop engine: all conflicts are treated as fixable */
 
           /* idx_x = 0 */
           init_prop_info(&pi, exp, 0, t, s[0], s[1], 0, x0, x1, 0);
-          inv = bzla_is_inv_and(d_bzla, &pi);
-          res =
-              inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_and(d_bzla, &pi);
+          assert(!is_inv_fun(d_bzla, &pi));
+          res = cons_fun(d_bzla, &pi);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, t, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, t), 0);
@@ -525,9 +530,8 @@ class TestPropComplete : public TestBzla
           if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
           init_prop_info(&pi, cexp[1], 0, t, s[0], s[1], 0, x0, x1, 0);
-          inv = bzla_is_inv_and(d_bzla, &pi);
-          res =
-              inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_and(d_bzla, &pi);
+          assert(!is_inv_fun(d_bzla, &pi));
+          res = cons_fun(d_bzla, &pi);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, t, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, t), 0);
@@ -537,9 +541,8 @@ class TestPropComplete : public TestBzla
 
           /* idx_x = 1 */
           init_prop_info(&pi, exp, 1, t, s[0], s[1], 0, x0, x1, 0);
-          inv = bzla_is_inv_and(d_bzla, &pi);
-          res =
-              inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_and(d_bzla, &pi);
+          assert(!is_inv_fun(d_bzla, &pi));
+          res = cons_fun(d_bzla, &pi);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, t, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, t), 0);
@@ -548,9 +551,8 @@ class TestPropComplete : public TestBzla
           if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
           init_prop_info(&pi, cexp[0], 1, t, s[0], s[1], 0, x0, x1, 0);
-          inv = bzla_is_inv_and(d_bzla, &pi);
-          res =
-              inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_and(d_bzla, &pi);
+          assert(!is_inv_fun(d_bzla, &pi));
+          res = cons_fun(d_bzla, &pi);
           ASSERT_NE(res, nullptr);
           tmp2 = bzla_bv_and(d_mm, t, res);
           ASSERT_EQ(bzla_bv_compare(tmp2, t), 0);
@@ -566,7 +568,7 @@ class TestPropComplete : public TestBzla
           d_bzla->slv = bzla_new_sls_solver(d_bzla);
           bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_SLS);
 
-          goto PROP_INV_CONF_AND_TESTS;
+          goto PROP_COMPLETE_CONF_AND_TESTS;
         DONE:
           bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
           d_bzla->slv->api.delet(d_bzla->slv);
@@ -601,13 +603,13 @@ class TestPropComplete : public TestBzla
   void check_conf_ult(uint32_t bw, bool use_domains)
   {
     (void) bw;
-    bool inv;
     BzlaNode *exp, *e[2], *cexp, *ce;
     BzlaSortId sort;
     BzlaBitVector *res, *t, *s, *zero, *bvmax;
     BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaSolver *slv;
-    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_ult;
+    BzlaPropIsInvFun is_inv_fun      = 0;
+    BzlaPropComputeValueFun cons_fun = 0;
     BzlaPropInfo pi;
 
     sort = bzla_sort_bv(d_bzla, bw);
@@ -619,7 +621,8 @@ class TestPropComplete : public TestBzla
     if (use_domains)
     {
       assert(d_domains);
-      inv_fun = bzla_proputils_inv_ult_const;
+      is_inv_fun = bzla_is_inv_ult_const;
+      cons_fun   = bzla_proputils_cons_ult_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
@@ -628,6 +631,11 @@ class TestPropComplete : public TestBzla
                d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
     }
+    else
+    {
+      is_inv_fun = bzla_is_inv_ult;
+      cons_fun   = bzla_proputils_cons_ult;
+    }
 
     zero  = bzla_bv_zero(d_mm, bw);
     bvmax = bzla_bv_ones(d_mm, bw);
@@ -635,12 +643,12 @@ class TestPropComplete : public TestBzla
 
     /* prop engine: all conflicts are treated as fixable */
 
-  PROP_INV_CONF_ULT_TESTS:
+  PROP_COMPLETE_CONF_ULT_TESTS:
     /* 1...1 < e[1] */
     s = bzla_bv_ones(d_mm, bw);
     init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
-    inv = bzla_is_inv_ult(d_bzla, &pi);
-    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_ult(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
@@ -649,8 +657,8 @@ class TestPropComplete : public TestBzla
     ce   = bzla_exp_bv_const(d_bzla, s);
     cexp = bzla_exp_bv_ult(d_bzla, ce, e[1]);
     init_prop_info(&pi, cexp, 1, t, s, 0, 0, x0, x1, 0);
-    inv = bzla_is_inv_ult(d_bzla, &pi);
-    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_ult(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_compare(res, zero), 0);
     bzla_bv_free(d_mm, res);
@@ -662,8 +670,8 @@ class TestPropComplete : public TestBzla
     /* e[0] < 0 */
     s = bzla_bv_zero(d_mm, bw);
     init_prop_info(&pi, exp, 0, t, 0, s, 0, x0, x1, 0);
-    inv = bzla_is_inv_ult(d_bzla, &pi);
-    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_ult(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
@@ -672,8 +680,8 @@ class TestPropComplete : public TestBzla
     ce   = bzla_exp_bv_const(d_bzla, s);
     cexp = bzla_exp_bv_ult(d_bzla, e[0], ce);
     init_prop_info(&pi, cexp, 0, t, 0, s, 0, x0, x1, 0);
-    inv = bzla_is_inv_ult(d_bzla, &pi);
-    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_ult(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_compare(res, bvmax), 0);
     bzla_bv_free(d_mm, res);
@@ -689,7 +697,7 @@ class TestPropComplete : public TestBzla
     d_bzla->slv = bzla_new_sls_solver(d_bzla);
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_SLS);
 
-    goto PROP_INV_CONF_ULT_TESTS;
+    goto PROP_COMPLETE_CONF_ULT_TESTS;
 
   DONE:
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
@@ -723,6 +731,8 @@ class TestPropComplete : public TestBzla
     BzlaBitVector *res, *t, *s, *min_signed, *max_signed;
     BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaSolver *slv;
+    BzlaPropIsInvFun is_inv_fun      = 0;
+    BzlaPropComputeValueFun cons_fun = 0;
     BzlaPropInfo pi;
 
     sort = bzla_sort_bv(d_bzla, bw);
@@ -734,6 +744,8 @@ class TestPropComplete : public TestBzla
     if (use_domains)
     {
       assert(d_domains);
+      is_inv_fun = bzla_is_inv_slt_const;
+      cons_fun   = bzla_proputils_cons_slt_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
@@ -742,6 +754,11 @@ class TestPropComplete : public TestBzla
                d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
     }
+    else
+    {
+      is_inv_fun = bzla_is_inv_slt;
+      cons_fun   = bzla_proputils_cons_slt;
+    }
 
     min_signed = bzla_bv_min_signed(d_mm, bw);
     max_signed = bzla_bv_max_signed(d_mm, bw);
@@ -749,12 +766,12 @@ class TestPropComplete : public TestBzla
 
     /* prop engine: all conflicts are treated as fixable */
 
-  PROP_INV_CONF_SLT_TESTS:
+  PROP_COMPLETE_CONF_SLT_TESTS:
     /* 1...1 < e[1] */
     s = bzla_bv_max_signed(d_mm, bw);
     init_prop_info(&pi, exp, 1, t, s, s, 0, x0, x1, 0);
-    assert(!bzla_is_inv_slt(d_bzla, &pi));
-    res = bzla_proputils_cons_slt(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     assert(bzla_bv_signed_compare(res, min_signed) > 0);
     ASSERT_GT(bzla_bv_signed_compare(res, min_signed), 0);
@@ -764,8 +781,8 @@ class TestPropComplete : public TestBzla
     ce   = bzla_exp_bv_const(d_bzla, s);
     cexp = bzla_exp_bv_slt(d_bzla, ce, e[1]);
     init_prop_info(&pi, cexp, 1, t, s, s, 0, x0, x1, 0);
-    assert(!bzla_is_inv_slt(d_bzla, &pi));
-    res = bzla_proputils_cons_slt(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     ASSERT_GT(bzla_bv_signed_compare(res, min_signed), 0);
     bzla_bv_free(d_mm, res);
@@ -777,8 +794,8 @@ class TestPropComplete : public TestBzla
     /* e[0] < min_signed */
     s = bzla_bv_min_signed(d_mm, bw);
     init_prop_info(&pi, exp, 0, t, s, s, 0, x0, x1, 0);
-    assert(!bzla_is_inv_slt(d_bzla, &pi));
-    res = bzla_proputils_cons_slt(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     assert(bzla_bv_signed_compare(res, max_signed) < 0);
     ASSERT_LT(bzla_bv_signed_compare(res, max_signed), 0);
@@ -788,8 +805,8 @@ class TestPropComplete : public TestBzla
     ce   = bzla_exp_bv_const(d_bzla, s);
     cexp = bzla_exp_bv_slt(d_bzla, e[0], ce);
     init_prop_info(&pi, cexp, 0, t, s, s, 0, x0, x1, 0);
-    assert(!bzla_is_inv_slt(d_bzla, &pi));
-    res = bzla_proputils_cons_slt(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     ASSERT_LT(bzla_bv_signed_compare(res, max_signed), 0);
     bzla_bv_free(d_mm, res);
@@ -805,7 +822,7 @@ class TestPropComplete : public TestBzla
     d_bzla->slv = bzla_new_sls_solver(d_bzla);
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_SLS);
 
-    goto PROP_INV_CONF_SLT_TESTS;
+    goto PROP_COMPLETE_CONF_SLT_TESTS;
 
   DONE:
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
@@ -1154,7 +1171,7 @@ class TestPropComplete : public TestBzla
 
     /* prop engine: all conflicts are treated as fixable */
 
-  PROP_INV_CONF_MUL_TESTS:
+  PROP_COMPLETE_CONF_MUL_TESTS:
     /* s = 0 but t > 0 */
     s = bzla_bv_zero(d_mm, bw);
     for (k = 0; k < 10; k++)
@@ -1236,7 +1253,7 @@ class TestPropComplete : public TestBzla
     slv         = d_bzla->slv;
     d_bzla->slv = bzla_new_sls_solver(d_bzla);
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_SLS);
-    goto PROP_INV_CONF_MUL_TESTS;
+    goto PROP_COMPLETE_CONF_MUL_TESTS;
 
   DONE:
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
@@ -1276,7 +1293,7 @@ class TestPropComplete : public TestBzla
 
     /* prop engine: all conflicts are treated as fixable */
 
-  PROP_INV_CONF_UDIV_TESTS:
+  PROP_COMPLETE_CONF_UDIV_TESTS:
     /* s / e[1] = bvudiv */
     /* s = 1...1 and bvudiv = 0 */
     s      = bzla_bv_copy(d_mm, bvmax);
@@ -1330,7 +1347,7 @@ class TestPropComplete : public TestBzla
     d_bzla->slv = bzla_new_sls_solver(d_bzla);
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_SLS);
 
-    goto PROP_INV_CONF_UDIV_TESTS;
+    goto PROP_COMPLETE_CONF_UDIV_TESTS;
   DONE:
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
     d_bzla->slv->api.delet(d_bzla->slv);
@@ -1355,14 +1372,14 @@ class TestPropComplete : public TestBzla
   void check_conf_urem(uint32_t bw, bool use_domains)
   {
     (void) bw;
-    bool inv;
     int32_t k;
     BzlaNode *exp, *e[2], *cexp, *ce;
     BzlaSortId sort;
     BzlaBitVector *res, *s, *t, *bvmax, *zero, *two, *tmp, *tmp2;
     BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaSolver *slv;
-    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_urem;
+    BzlaPropIsInvFun is_inv_fun      = 0;
+    BzlaPropComputeValueFun cons_fun = 0;
     BzlaPropInfo pi;
 
     sort = bzla_sort_bv(d_bzla, bw);
@@ -1374,7 +1391,8 @@ class TestPropComplete : public TestBzla
     if (use_domains)
     {
       assert(d_domains);
-      inv_fun = bzla_proputils_inv_urem_const;
+      is_inv_fun = bzla_is_inv_urem_const;
+      cons_fun   = bzla_proputils_cons_urem_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
@@ -1383,13 +1401,18 @@ class TestPropComplete : public TestBzla
                d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
     }
+    else
+    {
+      is_inv_fun = bzla_is_inv_urem;
+      cons_fun   = bzla_proputils_cons_urem;
+    }
 
     zero  = bzla_bv_zero(d_mm, bw);
     bvmax = bzla_bv_ones(d_mm, bw);
 
     /* prop engine: all conflicts are treated as fixable */
 
-  PROP_INV_CONF_UREM_TESTS:
+  PROP_COMPLETE_CONF_UREM_TESTS:
     /* s % e[1] = t */
     /* t = 1...1 and s < 1...1 */
     t = bzla_bv_copy(d_mm, bvmax);
@@ -1398,8 +1421,8 @@ class TestPropComplete : public TestBzla
       tmp = bzla_bv_dec(d_mm, bvmax);
       s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
-      inv = bzla_is_inv_urem(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
@@ -1408,8 +1431,8 @@ class TestPropComplete : public TestBzla
       ce   = bzla_exp_bv_const(d_bzla, s);
       cexp = bzla_exp_bv_urem(d_bzla, ce, e[1]);
       init_prop_info(&pi, cexp, 1, t, s, 0, 0, x0, x1, 0);
-      inv = bzla_is_inv_urem(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_TRUE(bzla_bv_is_zero(res));
       bzla_bv_free(d_mm, res);
@@ -1430,8 +1453,8 @@ class TestPropComplete : public TestBzla
       s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
       bzla_bv_free(d_mm, tmp);
       init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
-      inv = bzla_is_inv_urem(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
@@ -1439,8 +1462,8 @@ class TestPropComplete : public TestBzla
       ce   = bzla_exp_bv_const(d_bzla, s);
       cexp = bzla_exp_bv_urem(d_bzla, ce, e[1]);
       init_prop_info(&pi, cexp, 1, t, s, 0, 0, x0, x1, 0);
-      inv = bzla_is_inv_urem(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
@@ -1464,8 +1487,8 @@ class TestPropComplete : public TestBzla
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, tmp2);
       init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
-      inv = bzla_is_inv_urem(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
@@ -1473,8 +1496,8 @@ class TestPropComplete : public TestBzla
       ce   = bzla_exp_bv_const(d_bzla, s);
       cexp = bzla_exp_bv_urem(d_bzla, ce, e[1]);
       init_prop_info(&pi, cexp, 1, t, s, 0, 0, x0, x1, 0);
-      inv = bzla_is_inv_urem(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
@@ -1493,8 +1516,8 @@ class TestPropComplete : public TestBzla
       tmp = bzla_bv_inc(d_mm, zero);
       s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
       init_prop_info(&pi, exp, 0, t, 0, s, 0, x0, x1, 0);
-      inv = bzla_is_inv_urem(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_EQ(bzla_bv_compare(res, t), 0);
       bzla_bv_free(d_mm, res);
@@ -1503,8 +1526,8 @@ class TestPropComplete : public TestBzla
       ce   = bzla_exp_bv_const(d_bzla, s);
       cexp = bzla_exp_bv_urem(d_bzla, e[0], ce);
       init_prop_info(&pi, cexp, 0, t, 0, s, 0, x0, x1, 0);
-      inv = bzla_is_inv_urem(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_EQ(bzla_bv_compare(res, t), 0);
       bzla_bv_free(d_mm, res);
@@ -1522,8 +1545,8 @@ class TestPropComplete : public TestBzla
       t   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
       s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, t);
       init_prop_info(&pi, exp, 0, t, 0, s, 0, x0, x1, 0);
-      inv = bzla_is_inv_urem(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
@@ -1531,8 +1554,8 @@ class TestPropComplete : public TestBzla
       ce   = bzla_exp_bv_const(d_bzla, s);
       cexp = bzla_exp_bv_urem(d_bzla, e[0], ce);
       init_prop_info(&pi, cexp, 0, t, 0, s, 0, x0, x1, 0);
-      inv = bzla_is_inv_urem(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_urem(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
@@ -1550,7 +1573,7 @@ class TestPropComplete : public TestBzla
     d_bzla->slv = bzla_new_sls_solver(d_bzla);
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_SLS);
 
-    goto PROP_INV_CONF_UREM_TESTS;
+    goto PROP_COMPLETE_CONF_UREM_TESTS;
 
   DONE:
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
@@ -1577,7 +1600,6 @@ class TestPropComplete : public TestBzla
   void check_conf_concat(uint32_t bw, bool use_domains)
   {
     (void) bw;
-    bool inv;
     int32_t k, cnt;
     uint32_t i, j, bws[2];
     BzlaNode *exp, *e[2], *ce[2], *cexp[2];
@@ -1585,12 +1607,13 @@ class TestPropComplete : public TestBzla
     BzlaBitVector *res, *t, *s[2], *tmp[2];
     BzlaBvDomain *x0 = 0, *x1 = 0;
     BzlaSolver *slv;
-    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_concat;
+    BzlaPropIsInvFun is_inv_fun      = 0;
+    BzlaPropComputeValueFun cons_fun = 0;
     BzlaPropInfo pi;
 
     /* prop engine: all conflicts are treated as fixable */
 
-  PROP_INV_CONF_CONCAT_TESTS:
+  PROP_COMPLETE_CONF_CONCAT_TESTS:
 
     for (k = 0; bw > 1 && k < 10; k++)
     {
@@ -1606,7 +1629,8 @@ class TestPropComplete : public TestBzla
       if (use_domains)
       {
         assert(d_domains);
-        inv_fun = bzla_proputils_inv_concat_const;
+        is_inv_fun = bzla_is_inv_concat_const;
+        cons_fun   = bzla_proputils_cons_concat_const;
         bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
         x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                  d_domains, bzla_node_real_addr(exp->e[0])->id)
@@ -1614,6 +1638,11 @@ class TestPropComplete : public TestBzla
         x1 = (BzlaBvDomain *) bzla_hashint_map_get(
                  d_domains, bzla_node_real_addr(exp->e[1])->id)
                  ->as_ptr;
+      }
+      else
+      {
+        is_inv_fun = bzla_is_inv_concat;
+        cons_fun   = bzla_proputils_cons_concat;
       }
 
       for (j = 0; j < 2; j++)
@@ -1642,9 +1671,8 @@ class TestPropComplete : public TestBzla
       {
         init_prop_info(
             &pi, exp, j, t, j ? s[0] : 0, j ? 0 : s[1], 0, x0, x1, 0);
-        inv = bzla_is_inv_concat(d_bzla, &pi);
-        res = inv ? inv_fun(d_bzla, &pi)
-                  : bzla_proputils_cons_concat(d_bzla, &pi);
+        assert(!is_inv_fun(d_bzla, &pi));
+        res = cons_fun(d_bzla, &pi);
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
@@ -1660,9 +1688,8 @@ class TestPropComplete : public TestBzla
                        x0,
                        x1,
                        0);
-        inv = bzla_is_inv_concat(d_bzla, &pi);
-        res = inv ? inv_fun(d_bzla, &pi)
-                  : bzla_proputils_cons_concat(d_bzla, &pi);
+        assert(!is_inv_fun(d_bzla, &pi));
+        res = cons_fun(d_bzla, &pi);
         ASSERT_NE(res, nullptr);
         ASSERT_EQ(bzla_bv_compare(res, tmp[j]), 0);
         bzla_bv_free(d_mm, res);
@@ -1691,7 +1718,7 @@ class TestPropComplete : public TestBzla
     d_bzla->slv = bzla_new_sls_solver(d_bzla);
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_SLS);
 
-    goto PROP_INV_CONF_CONCAT_TESTS;
+    goto PROP_COMPLETE_CONF_CONCAT_TESTS;
 
   DONE:
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
@@ -1719,19 +1746,18 @@ class TestPropComplete : public TestBzla
                              BzlaBitVector *s,
                              bool use_domains)
   {
-    bool inv;
     BzlaNode *cexp[2], *ce[2];
     BzlaBitVector *res;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaPropIsInvFun is_inv_fun     = bzla_is_inv_mul;
-    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_mul;
+    BzlaPropIsInvFun is_inv_fun      = 0;
+    BzlaPropComputeValueFun cons_fun = 0;
     BzlaPropInfo pi;
 
     if (use_domains)
     {
       assert(d_domains);
       is_inv_fun = bzla_is_inv_mul_const;
-      inv_fun    = bzla_proputils_inv_mul_const;
+      cons_fun   = bzla_proputils_cons_mul_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
@@ -1739,6 +1765,11 @@ class TestPropComplete : public TestBzla
       x1 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
+    }
+    else
+    {
+      is_inv_fun = bzla_is_inv_mul;
+      cons_fun   = bzla_proputils_cons_mul;
     }
 
     ce[0]   = bzla_exp_bv_const(d_bzla, s);
@@ -1748,15 +1779,15 @@ class TestPropComplete : public TestBzla
 
     /* idx_x = 0 */
     init_prop_info(&pi, exp, 0, t, 0, s, 0, x0, x1, 0);
-    inv = is_inv_fun(d_bzla, &pi);
-    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_mul(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
     if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
     init_prop_info(&pi, cexp[1], 0, t, 0, s, 0, x0, x1, 0);
-    inv = is_inv_fun(d_bzla, &pi);
-    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_mul(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
@@ -1768,15 +1799,15 @@ class TestPropComplete : public TestBzla
 
     /* idx_x = 1 */
     init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
-    inv = is_inv_fun(d_bzla, &pi);
-    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_mul(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     bzla_bv_free(d_mm, res);
     if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
     init_prop_info(&pi, cexp[0], 1, t, s, 0, 0, x0, x1, 0);
-    inv = is_inv_fun(d_bzla, &pi);
-    res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_mul(d_bzla, &pi);
+    assert(!is_inv_fun(d_bzla, &pi));
+    res = cons_fun(d_bzla, &pi);
     ASSERT_NE(res, nullptr);
     if (bzla_bv_get_bit(t, 0))
     {
@@ -1809,17 +1840,18 @@ class TestPropComplete : public TestBzla
                               BzlaBitVector *s,
                               bool use_domains)
   {
-    bool inv;
     BzlaNode *cexp, *ce;
     BzlaBitVector *res;
     BzlaBvDomain *x0 = 0, *x1 = 0;
-    BzlaPropComputeValueFun inv_fun = bzla_proputils_inv_udiv;
+    BzlaPropIsInvFun is_inv_fun      = 0;
+    BzlaPropComputeValueFun cons_fun = 0;
     BzlaPropInfo pi;
 
     if (use_domains)
     {
       assert(d_domains);
-      inv_fun = bzla_proputils_inv_udiv_const;
+      is_inv_fun = bzla_is_inv_udiv_const;
+      cons_fun   = bzla_proputils_cons_udiv_const;
       bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
@@ -1828,12 +1860,17 @@ class TestPropComplete : public TestBzla
                d_domains, bzla_node_real_addr(exp->e[1])->id)
                ->as_ptr;
     }
+    else
+    {
+      is_inv_fun = bzla_is_inv_udiv;
+      cons_fun   = bzla_proputils_cons_udiv;
+    }
 
     if (idx_x)
     {
       init_prop_info(&pi, exp, idx_x, t, s, 0, 0, x0, x1, 0);
-      inv = bzla_is_inv_udiv(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_udiv(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, t));
       bzla_bv_free(d_mm, res);
@@ -1842,8 +1879,8 @@ class TestPropComplete : public TestBzla
       ce   = bzla_exp_bv_const(d_bzla, s);
       cexp = bzla_exp_bv_udiv(d_bzla, ce, exp->e[1]);
       init_prop_info(&pi, cexp, idx_x, t, s, 0, 0, x0, x1, 0);
-      inv = bzla_is_inv_udiv(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_udiv(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_FALSE(bzla_bv_is_umulo(d_mm, res, t));
       bzla_bv_free(d_mm, res);
@@ -1854,8 +1891,8 @@ class TestPropComplete : public TestBzla
     else
     {
       init_prop_info(&pi, exp, idx_x, t, 0, s, 0, x0, x1, 0);
-      inv = bzla_is_inv_udiv(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_udiv(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
@@ -1863,8 +1900,8 @@ class TestPropComplete : public TestBzla
       ce   = bzla_exp_bv_const(d_bzla, s);
       cexp = bzla_exp_bv_udiv(d_bzla, exp->e[0], ce);
       init_prop_info(&pi, cexp, idx_x, t, 0, s, 0, x0, x1, 0);
-      inv = bzla_is_inv_udiv(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : bzla_proputils_cons_udiv(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
@@ -1895,7 +1932,6 @@ class TestPropComplete : public TestBzla
   {
     assert(d_domains);
 
-    bool inv;
     BzlaNode *cexp, *ce;
     BzlaBitVector *res, *t, *s;
     BzlaBvDomain *x0 = 0, *x1 = 0;
@@ -1904,8 +1940,6 @@ class TestPropComplete : public TestBzla
     BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *);
     /* The function to test if given operator is invertible w.r.t.  s and t. */
     BzlaPropIsInvFun is_inv_fun;
-    /* The function to compute the inverse value for x. */
-    BzlaPropComputeValueFun inv_fun;
     /* The function to compute the consistent value for x. */
     BzlaPropComputeValueFun cons_fun;
     BzlaPropInfo pi;
@@ -1914,8 +1948,8 @@ class TestPropComplete : public TestBzla
     {
       exp_fun    = bzla_exp_bv_sll;
       is_inv_fun = use_domains ? bzla_is_inv_sll_const : bzla_is_inv_sll;
-      inv_fun =
-          use_domains ? bzla_proputils_inv_sll : bzla_proputils_inv_sll_const;
+      cons_fun =
+          use_domains ? bzla_proputils_cons_sll : bzla_proputils_cons_sll_const;
       cons_fun = bzla_proputils_cons_sll;
     }
     else
@@ -1923,8 +1957,8 @@ class TestPropComplete : public TestBzla
       assert(op == "srl");
       exp_fun    = bzla_exp_bv_srl;
       is_inv_fun = use_domains ? bzla_is_inv_srl_const : bzla_is_inv_srl;
-      inv_fun =
-          use_domains ? bzla_proputils_inv_srl : bzla_proputils_inv_srl_const;
+      cons_fun =
+          use_domains ? bzla_proputils_cons_srl : bzla_proputils_cons_srl_const;
       cons_fun = bzla_proputils_cons_srl;
     }
 
@@ -1944,8 +1978,8 @@ class TestPropComplete : public TestBzla
     if (idx_x)
     {
       init_prop_info(&pi, exp, idx_x, t, s, 0, 0, x0, x1, 0);
-      inv = is_inv_fun(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : cons_fun(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
@@ -1953,8 +1987,8 @@ class TestPropComplete : public TestBzla
 
       cexp = exp_fun(d_bzla, ce, exp->e[1]);
       init_prop_info(&pi, cexp, idx_x, t, s, 0, 0, x0, x1, 0);
-      inv = is_inv_fun(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : cons_fun(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       ASSERT_LE(bzla_bv_to_uint64(res), rvalmax);
       bzla_bv_free(d_mm, res);
@@ -1963,16 +1997,16 @@ class TestPropComplete : public TestBzla
     else
     {
       init_prop_info(&pi, exp, idx_x, t, 0, s, 0, x0, x1, 0);
-      inv = is_inv_fun(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : cons_fun(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
 
       cexp = exp_fun(d_bzla, exp->e[0], ce);
       init_prop_info(&pi, cexp, idx_x, t, 0, s, 0, x0, x1, 0);
-      inv = is_inv_fun(d_bzla, &pi);
-      res = inv ? inv_fun(d_bzla, &pi) : cons_fun(d_bzla, &pi);
+      assert(!is_inv_fun(d_bzla, &pi));
+      res = cons_fun(d_bzla, &pi);
       ASSERT_NE(res, nullptr);
       bzla_bv_free(d_mm, res);
       if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
