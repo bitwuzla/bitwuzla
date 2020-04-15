@@ -4423,6 +4423,102 @@ bzla_proputils_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 /* -------------------------------------------------------------------------- */
+/* INV: slt                                                                   */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+bzla_proputils_inv_slt_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+#ifndef NDEBUG
+  check_inv_dbg(bzla, pi, bzla_is_inv_slt, bzla_is_inv_slt_const, false);
+#endif
+  bool isslt;
+  int32_t pos_x;
+  uint32_t bw;
+  BzlaBitVector *res, *min_signed, *max_signed, *tmp;
+  BzlaMemMgr *mm;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *s, *t;
+  BzlaBvDomainSignedGenerator gen;
+
+  mm = bzla->mm;
+
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_slt);
+
+  bw         = bzla_bv_get_width(s);
+  min_signed = bzla_bv_min_signed(mm, bw);
+  max_signed = bzla_bv_max_signed(mm, bw);
+  isslt      = !bzla_bv_is_zero(t);
+
+  res = 0;
+
+  if (bzla_bvdomain_is_fixed(mm, x))
+  {
+#ifndef NDEBUG
+    tmp = pos_x ? bzla_bv_slt(mm, s, x->lo) : bzla_bv_slt(mm, x->lo, s);
+    assert(bzla_bv_compare(tmp, t) == 0);
+    bzla_bv_free(mm, tmp);
+#endif
+    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_slt);
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else
+  {
+    if (pos_x)
+    {
+      /* s < x = t ---------------------------------------------------------- */
+      if (!isslt)
+      {
+        /* s >= x */
+        bzla_bvdomain_gen_signed_init_range(
+            mm, &bzla->rng, &gen, x, min_signed, s);
+      }
+      else
+      {
+        /* s < x */
+        tmp = bzla_bv_inc(mm, s);
+        bzla_bvdomain_gen_signed_init_range(
+            mm, &bzla->rng, &gen, x, tmp, max_signed);
+        bzla_bv_free(mm, tmp);
+      }
+    }
+    else
+    {
+      /* x < s = t ---------------------------------------------------------- */
+      if (!isslt)
+      {
+        /* x >= s */
+        bzla_bvdomain_gen_signed_init_range(
+            mm, &bzla->rng, &gen, x, s, max_signed);
+      }
+      else
+      {
+        /* x < s */
+        tmp = bzla_bv_dec(mm, s);
+        bzla_bvdomain_gen_signed_init_range(
+            mm, &bzla->rng, &gen, x, min_signed, tmp);
+        bzla_bv_free(mm, tmp);
+      }
+    }
+    assert(bzla_bvdomain_gen_signed_has_next(&gen));
+    res = bzla_bv_copy(mm, bzla_bvdomain_gen_signed_random(&gen));
+    bzla_bvdomain_gen_signed_delete(&gen);
+  }
+
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_slt, pi, res, "<s");
+#endif
+  bzla_bv_free(mm, min_signed);
+  bzla_bv_free(mm, max_signed);
+  return res;
+}
+
+/* -------------------------------------------------------------------------- */
 /* INV: sll                                                                   */
 /* -------------------------------------------------------------------------- */
 

@@ -892,6 +892,20 @@ TEST_F(TestPropInv, inv_ult_const)
               true);
 }
 
+TEST_F(TestPropInv, inv_slt_const)
+{
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt_const,
+              bzla_proputils_inv_slt_const,
+              0,
+              true);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt_const,
+              bzla_proputils_inv_slt_const,
+              1,
+              true);
+}
+
 TEST_F(TestPropInv, inv_urem_const)
 {
   test_binary(bzla_exp_bv_urem,
