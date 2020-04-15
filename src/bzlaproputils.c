@@ -1699,6 +1699,12 @@ bzla_proputils_cons_ult_const(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 BzlaBitVector *
+bzla_proputils_cons_slt_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  return cons_slt_aux(bzla, pi, true);
+}
+
+BzlaBitVector *
 bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG

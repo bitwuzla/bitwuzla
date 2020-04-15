@@ -756,6 +756,12 @@ TEST_F(TestPropCons, cons_ult_const)
   test_binary(bzla_exp_bv_ult, bzla_proputils_cons_ult_const, 1, true);
 }
 
+TEST_F(TestPropCons, cons_slt_const)
+{
+  test_binary(bzla_exp_bv_slt, bzla_proputils_cons_slt_const, 0, true);
+  test_binary(bzla_exp_bv_slt, bzla_proputils_cons_slt_const, 1, true);
+}
+
 TEST_F(TestPropCons, cons_urem_const)
 {
   test_binary(bzla_exp_bv_urem, bzla_proputils_cons_urem_const, 0, true);
