@@ -54,6 +54,11 @@ class TestPropCons : public TestPropCommon
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
     bzla_opt_set(bzla, BZLA_OPT_CHK_MODEL, 0);
 
+    if (expr_fun == bzla_exp_bv_slt)
+    {
+      bzla_opt_set(bzla, BZLA_OPT_SLT_ELIM, 0);
+    }
+
     if (expr_fun == bzla_exp_bv_concat)
     {
       sort_x = bzla_sort_bv(bzla, TEST_PROPCONS_BW);

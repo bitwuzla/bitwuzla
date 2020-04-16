@@ -788,6 +788,7 @@ TEST_F(TestProp, one_complete_ult)
 
 TEST_F(TestProp, one_complete_slt)
 {
+  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
   prop_complete_binary(
       1, bzla_exp_bv_slt, bzla_bv_slt, bzla_is_inv_slt, bzla_proputils_inv_slt);
 }
@@ -879,6 +880,7 @@ TEST_F(TestPropConst, one_complete_ult_const)
 
 TEST_F(TestPropConst, one_complete_slt_const)
 {
+  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
   prop_complete_binary(1,
                        bzla_exp_bv_slt,
                        bzla_bv_slt,
@@ -1072,6 +1074,7 @@ TEST_F(TestProp, complete_ult)
 
 TEST_F(TestProp, complete_slt)
 {
+  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
   prop_complete_binary(
       2, bzla_exp_bv_slt, bzla_bv_slt, bzla_is_inv_slt, bzla_proputils_inv_slt);
 }
@@ -1168,6 +1171,7 @@ TEST_F(TestPropConst, complete_ult_const)
 
 TEST_F(TestPropConst, complete_slt_const)
 {
+  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
   prop_complete_binary(2,
                        bzla_exp_bv_slt,
                        bzla_bv_slt,
