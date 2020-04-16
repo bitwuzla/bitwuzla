@@ -1436,6 +1436,16 @@ bzla_opt_init_opts(Bzla *bzla)
            UINT32_MAX,
            "number of threads to use in the SAT solver");
   init_opt(bzla,
+           BZLA_OPT_SLT_ELIM,
+           true,
+           true,
+           "slt-elim",
+           0,
+           1,
+           0,
+           1,
+           "enable elimination of slt nodes");
+  init_opt(bzla,
            BZLA_OPT_SIMP_NORMAMLIZE_ADDERS,
            true,
            true,

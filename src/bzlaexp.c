@@ -985,10 +985,48 @@ bzla_exp_bv_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
-    result = bzla_rewrite_binary_exp(bzla, BZLA_BV_SLT_NODE, e0, e1);
+  if (bzla_opt_get(bzla, BZLA_OPT_SLT_ELIM))
+  {
+    BzlaNode *determined_by_sign, *eq_sign, *ult, *eq_sign_and_ult;
+    BzlaNode *s0, *s1, *r0, *r1, *l, *r;
+
+    uint32_t width;
+
+    e0 = bzla_simplify_exp(bzla, e0);
+    e1 = bzla_simplify_exp(bzla, e1);
+    assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e0, e1));
+
+    width = bzla_node_bv_get_width(bzla, e0);
+    if (width == 1) return bzla_exp_bv_and(bzla, e0, bzla_node_invert(e1));
+    s0                 = bzla_exp_bv_slice(bzla, e0, width - 1, width - 1);
+    s1                 = bzla_exp_bv_slice(bzla, e1, width - 1, width - 1);
+    r0                 = bzla_exp_bv_slice(bzla, e0, width - 2, 0);
+    r1                 = bzla_exp_bv_slice(bzla, e1, width - 2, 0);
+    ult                = bzla_exp_bv_ult(bzla, r0, r1);
+    determined_by_sign = bzla_exp_bv_and(bzla, s0, bzla_node_invert(s1));
+    l                  = bzla_node_copy(bzla, determined_by_sign);
+    r                  = bzla_exp_bv_and(bzla, bzla_node_invert(s0), s1);
+    eq_sign = bzla_exp_bv_and(bzla, bzla_node_invert(l), bzla_node_invert(r));
+    eq_sign_and_ult = bzla_exp_bv_and(bzla, eq_sign, ult);
+    result          = bzla_exp_bv_or(bzla, determined_by_sign, eq_sign_and_ult);
+    bzla_node_release(bzla, s0);
+    bzla_node_release(bzla, s1);
+    bzla_node_release(bzla, r0);
+    bzla_node_release(bzla, r1);
+    bzla_node_release(bzla, ult);
+    bzla_node_release(bzla, determined_by_sign);
+    bzla_node_release(bzla, l);
+    bzla_node_release(bzla, r);
+    bzla_node_release(bzla, eq_sign);
+    bzla_node_release(bzla, eq_sign_and_ult);
+  }
   else
-    result = bzla_node_create_bv_slt(bzla, e0, e1);
+  {
+    if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+      result = bzla_rewrite_binary_exp(bzla, BZLA_BV_SLT_NODE, e0, e1);
+    else
+      result = bzla_node_create_bv_slt(bzla, e0, e1);
+  }
 
   assert(result);
   return result;
