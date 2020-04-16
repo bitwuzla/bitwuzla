@@ -568,6 +568,7 @@ static BzlaNode *rewrite_bv_sll_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_bv_slt_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_bv_srl_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_abs_exp(Bzla *, BzlaNode *);
+static BzlaNode *rewrite_fp_tester_exp(Bzla *, BzlaNodeKind kind, BzlaNode *);
 static BzlaNode *rewrite_fp_neg_exp(Bzla *, BzlaNode *);
 static BzlaNode *rewrite_fp_min_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_apply_exp(Bzla *, BzlaNode *, BzlaNode *);
@@ -4885,6 +4886,34 @@ apply_fp_abs(Bzla *bzla, BzlaNode *e0)
 }
 
 /*
+ * match:  fp.isNan(fp.abs(a) or fp.isNaN(fp.neg(a)) or
+ *         fp.isNormal(fp.abs(a) or fp.isNormal(fp.neg(a)) or
+ *         fp.isSubnormal(fp.abs(a) or fp.isSubnormal(fp.neg(a)) or
+ *         fp.isZero(fp.abs(a) or fp.isZero(fp.neg(a)) or
+ *         fp.isInfinite(fp.abs(a) or fp.isInfinite(fp.neg(a))
+ * result: fp.is*(a)
+ */
+static inline bool
+applies_fp_tester(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
+{
+  (void) kind;
+  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND
+         && (bzla_node_is_fp_abs(e0) || bzla_node_is_fp_neg(e0));
+}
+
+static inline BzlaNode *
+apply_fp_tester(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
+{
+  assert(applies_fp_tester(bzla, kind, e0));
+  assert(bzla_node_is_regular(e0));
+  BzlaNode *result;
+  BZLA_INC_REC_RW_CALL(bzla);
+  result = rewrite_fp_tester_exp(bzla, kind, e0->e[0]);
+  BZLA_DEC_REC_RW_CALL(bzla);
+  return result;
+}
+
+/*
  * match:  fp.neg(fp.neg(a))
  * result: a
  */
@@ -7471,6 +7500,66 @@ rewrite_fp_neg_exp(Bzla *bzla, BzlaNode *e0)
 }
 
 static BzlaNode *
+rewrite_fp_tester_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
+{
+  assert(bzla);
+  assert(e0);
+
+  BzlaNode *result = 0;
+
+  e0 = bzla_simplify_exp(bzla, e0);
+
+  result = check_rw_cache(bzla, kind, bzla_node_get_id(e0), 0, 0, 0);
+
+  if (!result)
+  {
+    ADD_RW_RULE(fp_tester, kind, e0);
+
+    assert(!result);
+    if (!result)
+    {
+      switch (kind)
+      {
+        case BZLA_FP_IS_INF_NODE:
+          result = bzla_node_create_fp_is_inf(bzla, e0);
+          break;
+        case BZLA_FP_IS_NAN_NODE:
+          result = bzla_node_create_fp_is_nan(bzla, e0);
+          break;
+        case BZLA_FP_IS_NEG_NODE:
+          result = bzla_node_create_fp_is_neg(bzla, e0);
+          break;
+        case BZLA_FP_IS_POS_NODE:
+          result = bzla_node_create_fp_is_pos(bzla, e0);
+          break;
+        case BZLA_FP_IS_NORM_NODE:
+          result = bzla_node_create_fp_is_normal(bzla, e0);
+          break;
+        case BZLA_FP_IS_SUBNORM_NODE:
+          result = bzla_node_create_fp_is_subnormal(bzla, e0);
+          break;
+        default:
+          assert(kind == BZLA_FP_IS_ZERO_NODE);
+          result = bzla_node_create_fp_is_zero(bzla, e0);
+      }
+    }
+    else
+    {
+    DONE:
+      bzla_rw_cache_add(bzla->rw_cache,
+                        kind,
+                        bzla_node_get_id(e0),
+                        0,
+                        0,
+                        0,
+                        bzla_node_get_id(result));
+    }
+  }
+  assert(result);
+  return result;
+}
+
+static BzlaNode *
 rewrite_fp_min_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   assert(bzla);
@@ -7839,6 +7928,16 @@ bzla_rewrite_unary_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
   {
     case BZLA_FP_ABS_NODE: result = rewrite_fp_abs_exp(bzla, e0); break;
     case BZLA_FP_NEG_NODE: result = rewrite_fp_neg_exp(bzla, e0); break;
+
+    case BZLA_FP_IS_ZERO_NODE:
+    case BZLA_FP_IS_INF_NODE:
+    case BZLA_FP_IS_NAN_NODE:
+    case BZLA_FP_IS_NEG_NODE:
+    case BZLA_FP_IS_POS_NODE:
+    case BZLA_FP_IS_NORM_NODE:
+    case BZLA_FP_IS_SUBNORM_NODE:
+      result = rewrite_fp_tester_exp(bzla, kind, e0);
+      break;
 
     default: assert(false);  // temporary
   }

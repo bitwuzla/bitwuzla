@@ -1967,8 +1967,13 @@ bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *node)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  return bzla_node_create_fp_is_normal(bzla, node);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_NORM_NODE, node);
+  else
+    result = bzla_node_create_fp_is_normal(bzla, node);
+  return result;
 }
 
 BzlaNode *
@@ -1977,8 +1982,13 @@ bzla_exp_fp_is_subnormal(Bzla *bzla, BzlaNode *node)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  return bzla_node_create_fp_is_subnormal(bzla, node);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_SUBNORM_NODE, node);
+  else
+    result = bzla_node_create_fp_is_subnormal(bzla, node);
+  return result;
 }
 
 BzlaNode *
@@ -1987,8 +1997,13 @@ bzla_exp_fp_is_zero(Bzla *bzla, BzlaNode *node)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  return bzla_node_create_fp_is_zero(bzla, node);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_ZERO_NODE, node);
+  else
+    result = bzla_node_create_fp_is_zero(bzla, node);
+  return result;
 }
 
 BzlaNode *
@@ -1997,8 +2012,13 @@ bzla_exp_fp_is_inf(Bzla *bzla, BzlaNode *node)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  return bzla_node_create_fp_is_inf(bzla, node);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_INF_NODE, node);
+  else
+    result = bzla_node_create_fp_is_inf(bzla, node);
+  return result;
 }
 
 BzlaNode *
@@ -2007,8 +2027,13 @@ bzla_exp_fp_is_nan(Bzla *bzla, BzlaNode *node)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  return bzla_node_create_fp_is_nan(bzla, node);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_NAN_NODE, node);
+  else
+    result = bzla_node_create_fp_is_nan(bzla, node);
+  return result;
 }
 
 BzlaNode *
@@ -2017,8 +2042,13 @@ bzla_exp_fp_is_neg(Bzla *bzla, BzlaNode *node)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  return bzla_node_create_fp_is_neg(bzla, node);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_NEG_NODE, node);
+  else
+    result = bzla_node_create_fp_is_neg(bzla, node);
+  return result;
 }
 
 BzlaNode *
@@ -2027,8 +2057,13 @@ bzla_exp_fp_is_pos(Bzla *bzla, BzlaNode *node)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  return bzla_node_create_fp_is_pos(bzla, node);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_POS_NODE, node);
+  else
+    result = bzla_node_create_fp_is_pos(bzla, node);
+  return result;
 }
 
 BzlaNode *
