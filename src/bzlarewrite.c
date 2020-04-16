@@ -3343,18 +3343,19 @@ apply_const2_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
  * result: false
  */
 static inline bool
-applies_ult_false_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+applies_lt_false_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) bzla;
-  return bzla_node_is_bv_ult(e0) && bzla_node_is_bv_ult(e1)
+  return ((bzla_node_is_bv_ult(e0) && bzla_node_is_bv_ult(e1))
+          || (bzla_node_is_bv_slt(e0) && bzla_node_is_bv_slt(e1)))
          && !bzla_node_is_inverted(e0) && !bzla_node_is_inverted(e1)
          && e0->e[0] == e1->e[1] && e0->e[1] == e1->e[0];
 }
 
 static inline BzlaNode *
-apply_ult_false_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+apply_lt_false_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  assert(applies_ult_false_and(bzla, e0, e1));
+  assert(applies_lt_false_and(bzla, e0, e1));
   (void) e0;
   (void) e1;
   return bzla_exp_false(bzla);
@@ -3365,21 +3366,22 @@ apply_ult_false_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
  * result: a = b
  */
 static inline bool
-applies_ult_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+applies_lt_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   BzlaNode *real_e0, *real_e1;
   real_e0 = bzla_node_real_addr(e0);
   real_e1 = bzla_node_real_addr(e1);
-  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv_ult(real_e0)
-         && bzla_node_is_bv_ult(real_e1) && bzla_node_is_inverted(e0)
-         && bzla_node_is_inverted(e1) && real_e0->e[0] == real_e1->e[1]
-         && real_e0->e[1] == real_e1->e[0];
+  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND
+         && ((bzla_node_is_bv_ult(real_e0) && bzla_node_is_bv_ult(real_e1))
+             || (bzla_node_is_bv_slt(real_e0) && bzla_node_is_bv_slt(real_e1)))
+         && bzla_node_is_inverted(e0) && bzla_node_is_inverted(e1)
+         && real_e0->e[0] == real_e1->e[1] && real_e0->e[1] == real_e1->e[0];
 }
 
 static inline BzlaNode *
-apply_ult_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+apply_lt_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  assert(applies_ult_and(bzla, e0, e1));
+  assert(applies_lt_and(bzla, e0, e1));
   (void) e1;
 
   BzlaNode *result;
@@ -6892,8 +6894,8 @@ SWAP_OPERANDS:
       ADD_RW_RULE(bool_xnor_and, e0, e1);
       ADD_RW_RULE(resol1_and, e0, e1);
       ADD_RW_RULE(resol2_and, e0, e1);
-      ADD_RW_RULE(ult_false_and, e0, e1);
-      ADD_RW_RULE(ult_and, e0, e1);
+      ADD_RW_RULE(lt_false_and, e0, e1);
+      ADD_RW_RULE(lt_and, e0, e1);
       ADD_RW_RULE(contr_rec_and, e0, e1);
     }
     ADD_RW_RULE(subsum1_and, e0, e1);
