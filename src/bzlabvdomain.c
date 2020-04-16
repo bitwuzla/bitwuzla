@@ -726,7 +726,7 @@ bzla_bvdomain_gen_signed_random(BzlaBvDomainSignedGenerator *gen)
   assert(gen);
   assert(gen->rng);
   assert(gen->gen_lo || gen->gen_hi);
-  bool has_next_lo, has_next_hi;
+  bool has_next_lo = false, has_next_hi = false;
 
   if (gen->gen_lo) has_next_lo = bzla_bvdomain_gen_has_next(gen->gen_lo);
   if (gen->gen_hi) has_next_hi = bzla_bvdomain_gen_has_next(gen->gen_hi);
