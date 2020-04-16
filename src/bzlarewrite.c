@@ -2623,31 +2623,6 @@ apply_bool_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 }
 
 /*
- * match:  a < b, where len(a) = 1
- * result: a AND !b
- */
-static inline bool
-applies_bool_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  (void) e1;
-  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND
-         && bzla_node_bv_get_width(bzla, e0) == 1;
-}
-
-static inline BzlaNode *
-apply_bool_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
-{
-  assert(applies_bool_slt(bzla, e0, e1));
-
-  BzlaNode *result;
-
-  BZLA_INC_REC_RW_CALL(bzla);
-  result = rewrite_and_exp(bzla, e0, bzla_node_invert(e1));
-  BZLA_DEC_REC_RW_CALL(bzla);
-  return result;
-}
-
-/*
  * match:  (a::b) < (a::c)
  * result: b < c
  */
@@ -2695,6 +2670,75 @@ apply_concat_lower_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
   BZLA_INC_REC_RW_CALL(bzla);
   result = rewrite_ult_exp(bzla, e0->e[0], e1->e[0]);
+  BZLA_DEC_REC_RW_CALL(bzla);
+  return result;
+}
+
+/*
+ * match:  (x ? a : b) < (x : c : d), where either a = c or b = d
+ * result: x ? a < c : b < d
+ */
+static inline bool
+applies_bcond_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  BzlaNode *real_e0, *real_e1;
+  real_e0 = bzla_node_real_addr(e0);
+  real_e1 = bzla_node_real_addr(e1);
+  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv_cond(real_e0)
+         && bzla_node_is_bv_cond(real_e1)
+         && bzla_node_is_inverted(e0)
+                == bzla_node_is_inverted(e1)  // TODO: needed?
+         && real_e0->e[0] == real_e1->e[0]
+         && (real_e0->e[1] == real_e1->e[1] || real_e0->e[2] == real_e1->e[2]);
+}
+
+static inline BzlaNode *
+apply_bcond_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(applies_bcond_ult(bzla, e0, e1));
+
+  BzlaNode *result, *left, *right, *real_e0, *real_e1;
+
+  real_e0 = bzla_node_real_addr(e0);
+  real_e1 = bzla_node_real_addr(e1);
+  BZLA_INC_REC_RW_CALL(bzla);
+  left   = rewrite_ult_exp(bzla,
+                         bzla_node_cond_invert(e0, real_e0->e[1]),
+                         bzla_node_cond_invert(e1, real_e1->e[1]));
+  right  = rewrite_ult_exp(bzla,
+                          bzla_node_cond_invert(e0, real_e0->e[2]),
+                          bzla_node_cond_invert(e1, real_e1->e[2]));
+  result = rewrite_cond_exp(bzla, real_e0->e[0], left, right);
+  BZLA_DEC_REC_RW_CALL(bzla);
+  bzla_node_release(bzla, left);
+  bzla_node_release(bzla, right);
+  return result;
+}
+
+/* SLT rules                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * match:  a < b, where len(a) = 1
+ * result: a AND !b
+ */
+static inline bool
+applies_bool_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  (void) e1;
+  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND
+         && bzla_node_bv_get_width(bzla, e0) == 1;
+}
+
+static inline BzlaNode *
+apply_bool_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(applies_bool_slt(bzla, e0, e1));
+
+  BzlaNode *result;
+
+  BZLA_INC_REC_RW_CALL(bzla);
+  result = rewrite_and_exp(bzla, e0, bzla_node_invert(e1));
   BZLA_DEC_REC_RW_CALL(bzla);
   return result;
 }
@@ -2756,7 +2800,7 @@ apply_concat_lower_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
  * result: x ? a < c : b < d
  */
 static inline bool
-applies_bcond_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+applies_bcond_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   BzlaNode *real_e0, *real_e1;
   real_e0 = bzla_node_real_addr(e0);
@@ -2770,19 +2814,19 @@ applies_bcond_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 }
 
 static inline BzlaNode *
-apply_bcond_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+apply_bcond_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  assert(applies_bcond_ult(bzla, e0, e1));
+  assert(applies_bcond_slt(bzla, e0, e1));
 
   BzlaNode *result, *left, *right, *real_e0, *real_e1;
 
   real_e0 = bzla_node_real_addr(e0);
   real_e1 = bzla_node_real_addr(e1);
   BZLA_INC_REC_RW_CALL(bzla);
-  left   = rewrite_ult_exp(bzla,
+  left   = rewrite_slt_exp(bzla,
                          bzla_node_cond_invert(e0, real_e0->e[1]),
                          bzla_node_cond_invert(e1, real_e1->e[1]));
-  right  = rewrite_ult_exp(bzla,
+  right  = rewrite_slt_exp(bzla,
                           bzla_node_cond_invert(e0, real_e0->e[2]),
                           bzla_node_cond_invert(e1, real_e1->e[2]));
   result = rewrite_cond_exp(bzla, real_e0->e[0], left, right);
@@ -6790,6 +6834,7 @@ rewrite_slt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     ADD_RW_RULE(bool_slt, e0, e1);
     ADD_RW_RULE(concat_upper_slt, e0, e1);
     ADD_RW_RULE(concat_lower_slt, e0, e1);
+    ADD_RW_RULE(bcond_slt, e0, e1);
 
     assert(!result);
     if (!result)
