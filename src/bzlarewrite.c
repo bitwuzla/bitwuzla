@@ -2700,6 +2700,58 @@ apply_concat_lower_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 }
 
 /*
+ * match:  (a::b) < (a::c)
+ * result: b < c
+ */
+static inline bool
+applies_concat_upper_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+         && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
+         && !bzla_node_is_inverted(e1) && bzla_node_is_bv_concat(e0)
+         && e0->kind == e1->kind && e0->e[0] == e1->e[0];
+}
+
+static inline BzlaNode *
+apply_concat_upper_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(applies_concat_upper_slt(bzla, e0, e1));
+
+  BzlaNode *result;
+
+  BZLA_INC_REC_RW_CALL(bzla);
+  result = rewrite_slt_exp(bzla, e0->e[1], e1->e[1]);
+  BZLA_DEC_REC_RW_CALL(bzla);
+  return result;
+}
+
+/*
+ * match:  (b::a) < (c::a)
+ * result: b < c
+ */
+static inline bool
+applies_concat_lower_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+         && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
+         && !bzla_node_is_inverted(e1) && bzla_node_is_bv_concat(e0)
+         && e0->kind == e1->kind && e0->e[1] == e1->e[1];
+}
+
+static inline BzlaNode *
+apply_concat_lower_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(applies_concat_lower_slt(bzla, e0, e1));
+
+  BzlaNode *result;
+
+  BZLA_INC_REC_RW_CALL(bzla);
+  result = rewrite_slt_exp(bzla, e0->e[0], e1->e[0]);
+  BZLA_DEC_REC_RW_CALL(bzla);
+  return result;
+}
+
+/*
  * match:  (x ? a : b) < (x : c : d), where either a = c or b = d
  * result: x ? a < c : b < d
  */
@@ -6736,6 +6788,8 @@ rewrite_slt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_SLT_NODE, e0, e1);
     ADD_RW_RULE(false_lt, e0, e1);
     ADD_RW_RULE(bool_slt, e0, e1);
+    ADD_RW_RULE(concat_upper_slt, e0, e1);
+    ADD_RW_RULE(concat_lower_slt, e0, e1);
 
     assert(!result);
     if (!result)
