@@ -568,6 +568,7 @@ static BzlaNode *rewrite_bv_sll_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_bv_slt_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_bv_srl_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_abs_exp(Bzla *, BzlaNode *);
+static BzlaNode *rewrite_fp_neg_exp(Bzla *, BzlaNode *);
 static BzlaNode *rewrite_apply_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_lambda_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_forall_exp(Bzla *, BzlaNode *, BzlaNode *);
@@ -4882,6 +4883,25 @@ apply_fp_abs(Bzla *bzla, BzlaNode *e0)
   return result;
 }
 
+/*
+ * match:  fp.neg(fp.neg(a))
+ * result: a
+ */
+static inline bool
+applies_fp_neg(Bzla *bzla, BzlaNode *e0)
+{
+  (void) bzla;
+  return bzla_node_is_fp_neg(e0);
+}
+
+static inline BzlaNode *
+apply_fp_neg(Bzla *bzla, BzlaNode *e0)
+{
+  assert(applies_fp_neg(bzla, e0));
+  assert(bzla_node_is_regular(e0));
+  return bzla_node_copy(bzla, e0->e[0]);
+}
+
 /* APPLY rules                                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -7394,6 +7414,45 @@ rewrite_bv_srl_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   return result;
 }
 
+static BzlaNode *
+rewrite_fp_neg_exp(Bzla *bzla, BzlaNode *e0)
+{
+  assert(bzla);
+  assert(e0);
+
+  BzlaNode *result = 0;
+
+  e0 = bzla_simplify_exp(bzla, e0);
+
+  result =
+      check_rw_cache(bzla, BZLA_FP_NEG_NODE, bzla_node_get_id(e0), 0, 0, 0);
+
+  if (!result)
+  {
+    ADD_RW_RULE(fp_neg, e0);
+
+    assert(!result);
+    if (!result)
+    {
+      result = bzla_node_create_fp_neg(bzla, e0);
+    }
+    else
+    {
+    DONE:
+      bzla_rw_cache_add(bzla->rw_cache,
+                        BZLA_FP_NEG_NODE,
+                        bzla_node_get_id(e0),
+                        0,
+                        0,
+                        0,
+                        bzla_node_get_id(result));
+    }
+  }
+
+  assert(result);
+  return result;
+}
+
 /* -------------------------------------------------------------------------- */
 
 static BzlaNode *
@@ -7682,6 +7741,7 @@ bzla_rewrite_unary_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
   switch (kind)
   {
     case BZLA_FP_ABS_NODE: result = rewrite_fp_abs_exp(bzla, e0); break;
+    case BZLA_FP_NEG_NODE: result = rewrite_fp_neg_exp(bzla, e0); break;
 
     default: assert(false);  // temporary
   }
