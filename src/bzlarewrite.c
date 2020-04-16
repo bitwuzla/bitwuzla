@@ -664,11 +664,12 @@ apply_special_const_lhs_binary_exp(Bzla *bzla,
   BzlaBitVector *b0, *bv;
   BzlaMemMgr *mm;
   BzlaSpecialConstBitVector sc;
-  BzlaNode *result = 0, *real_e0, *real_e1, *left, *right, *tmp1, *tmp2, *tmp3;
+  BzlaNode *result, *real_e0, *real_e1, *left, *right, *tmp1, *tmp2, *tmp3;
   BzlaNode *tmp4, *eq;
   BzlaNodePtrStack stack;
   BzlaSortId sort;
 
+  result    = 0;
   mm        = bzla->mm;
   real_e0   = bzla_node_real_addr(e0);
   real_e1   = bzla_node_real_addr(e1);
@@ -687,9 +688,12 @@ apply_special_const_lhs_binary_exp(Bzla *bzla,
       {
         case BZLA_BV_EQ_NODE:
           if (width_e0 == 1)
-            result = bzla_exp_bv_not(bzla, e1);
-          else if (is_xor_exp(bzla, e1)) /* 0 == (a ^ b)  -->  a = b */
           {
+            result = bzla_exp_bv_not(bzla, e1);
+          }
+          else if (is_xor_exp(bzla, e1))
+          {
+            /* 0 == (a ^ b)  -->  a = b */
             if (bzla->rec_rw_calls < BZLA_REC_RW_BOUND)
             {
               BZLA_INC_REC_RW_CALL(bzla);
@@ -705,7 +709,8 @@ apply_special_const_lhs_binary_exp(Bzla *bzla,
           }
           else if (bzla_node_is_inverted(e1)
                    && real_e1->kind == BZLA_BV_AND_NODE)
-          { /* 0 == a | b  -->  a == 0 && b == 0 */
+          {
+            /* 0 == a | b  -->  a == 0 && b == 0 */
             if (bzla->rec_rw_calls < BZLA_REC_RW_BOUND)
             {
               BZLA_INC_REC_RW_CALL(bzla);
@@ -718,8 +723,15 @@ apply_special_const_lhs_binary_exp(Bzla *bzla,
             }
           }
           break;
-        case BZLA_BV_ULT_NODE: /* 0 < a --> a != 0 */
+        case BZLA_BV_ULT_NODE:
+          /* 0 < a --> a != 0 */
+          BZLA_INC_REC_RW_CALL(bzla);
           result = bzla_node_invert(rewrite_eq_exp(bzla, e0, e1));
+          BZLA_DEC_REC_RW_CALL(bzla);
+          break;
+        case BZLA_BV_SLT_NODE:
+          /* max_signed < a -> false */
+          if (width_e0 == 1) result = bzla_exp_false(bzla);
           break;
         case BZLA_BV_ADD_NODE: result = bzla_node_copy(bzla, e1); break;
         case BZLA_BV_MUL_NODE:
@@ -730,10 +742,12 @@ apply_special_const_lhs_binary_exp(Bzla *bzla,
           result = bzla_exp_bv_zero(bzla, bzla_node_get_sort_id(real_e0));
           break;
         case BZLA_BV_UDIV_NODE:
-          tmp2   = bzla_exp_bv_zero(bzla, bzla_node_get_sort_id(real_e0));
-          tmp4   = bzla_exp_bv_ones(bzla, bzla_node_get_sort_id(real_e0));
+          tmp2 = bzla_exp_bv_zero(bzla, bzla_node_get_sort_id(real_e0));
+          tmp4 = bzla_exp_bv_ones(bzla, bzla_node_get_sort_id(real_e0));
+          BZLA_INC_REC_RW_CALL(bzla);
           eq     = rewrite_eq_exp(bzla, e1, tmp2);
           result = rewrite_cond_exp(bzla, eq, tmp4, tmp2);
+          BZLA_DEC_REC_RW_CALL(bzla);
           bzla_node_release(bzla, tmp2);
           bzla_node_release(bzla, eq);
           bzla_node_release(bzla, tmp4);
@@ -741,17 +755,39 @@ apply_special_const_lhs_binary_exp(Bzla *bzla,
         default: break;
       }
       break;
+
     case BZLA_SPECIAL_CONST_BV_ONE_ONES:
       assert(width_e0 == 1);
       if (kind == BZLA_BV_AND_NODE || kind == BZLA_BV_EQ_NODE
           || kind == BZLA_BV_MUL_NODE)
+      {
         result = bzla_node_copy(bzla, e1);
+      }
       else if (kind == BZLA_BV_ULT_NODE)
+      {
         result = bzla_exp_false(bzla);
+      }
+      else if (kind == BZLA_BV_SLT_NODE)
+      {
+        /* min_signed < a -> a != min_signed */
+        BZLA_INC_REC_RW_CALL(bzla);
+        result = bzla_node_invert(rewrite_eq_exp(bzla, e0, e1));
+        BZLA_DEC_REC_RW_CALL(bzla);
+      }
       break;
+
     case BZLA_SPECIAL_CONST_BV_ONE:
-      if (kind == BZLA_BV_MUL_NODE) result = bzla_node_copy(bzla, e1);
+      if (kind == BZLA_BV_MUL_NODE)
+      {
+        result = bzla_node_copy(bzla, e1);
+      }
+      else if (width_e0 == 2 && kind == BZLA_BV_SLT_NODE)
+      {
+        /* max_signed < a -> false */
+        result = bzla_exp_false(bzla);
+      }
       break;
+
     case BZLA_SPECIAL_CONST_BV_ONES:
       if (kind == BZLA_BV_EQ_NODE)
       {
@@ -784,12 +820,38 @@ apply_special_const_lhs_binary_exp(Bzla *bzla,
         }
       }
       else if (kind == BZLA_BV_AND_NODE)
+      {
         result = bzla_node_copy(bzla, e1);
-      else if (kind == BZLA_BV_ULT_NODE) /* UNSIGNED_MAX < x */
+      }
+      else if (kind == BZLA_BV_ULT_NODE)
+      {
+        /* UNSIGNED_MAX < x */
         result = bzla_exp_false(bzla);
+      }
       else if (kind == BZLA_BV_MUL_NODE)
+      {
         result = bzla_exp_bv_neg(bzla, e1);
+      }
       break;
+
+    case BZLA_SPECIAL_CONST_BV_MIN_SIGNED:
+      if (kind == BZLA_BV_SLT_NODE)
+      {
+        /* min_signed < a -> a != min_signed */
+        BZLA_INC_REC_RW_CALL(bzla);
+        result = bzla_node_invert(rewrite_eq_exp(bzla, e0, e1));
+        BZLA_DEC_REC_RW_CALL(bzla);
+      }
+      break;
+
+    case BZLA_SPECIAL_CONST_BV_MAX_SIGNED:
+      if (kind == BZLA_BV_SLT_NODE)
+      {
+        /* max_signed < a -> false */
+        result = bzla_exp_false(bzla);
+      }
+      break;
+
     default:
       assert(sc == BZLA_SPECIAL_CONST_BV_NONE);
       if (kind == BZLA_BV_EQ_NODE && real_e1->kind == BZLA_BV_AND_NODE
@@ -954,9 +1016,12 @@ apply_special_const_rhs_binary_exp(Bzla *bzla,
       {
         case BZLA_BV_EQ_NODE:
           if (width_e0 == 1)
-            result = bzla_exp_bv_not(bzla, e0);
-          else if (is_xor_exp(bzla, e0)) /* (a ^ b) == 0 -->  a = b */
           {
+            result = bzla_exp_bv_not(bzla, e0);
+          }
+          else if (is_xor_exp(bzla, e0))
+          {
+            /* (a ^ b) == 0 -->  a = b */
             if (bzla->rec_rw_calls < BZLA_REC_RW_BOUND)
             {
               BZLA_INC_REC_RW_CALL(bzla);
@@ -972,7 +1037,8 @@ apply_special_const_rhs_binary_exp(Bzla *bzla,
           }
           else if (bzla_node_is_inverted(e0)
                    && real_e0->kind == BZLA_BV_AND_NODE)
-          { /*  a | b == 0  -->  a == 0 && b == 0 */
+          {
+            /*  a | b == 0  -->  a == 0 && b == 0 */
             if (bzla->rec_rw_calls < BZLA_REC_RW_BOUND)
             {
               BZLA_INC_REC_RW_CALL(bzla);
@@ -993,19 +1059,40 @@ apply_special_const_rhs_binary_exp(Bzla *bzla,
         case BZLA_BV_AND_NODE:
           result = bzla_exp_bv_zero(bzla, bzla_node_get_sort_id(real_e0));
           break;
-        case BZLA_BV_ULT_NODE: /* x < 0 */ result = bzla_exp_false(bzla); break;
+        case BZLA_BV_ULT_NODE:
+          /* x < 0 -> false */
+          result = bzla_exp_false(bzla);
+          break;
+        case BZLA_BV_SLT_NODE:
+          if (width_e0 == 1)
+          {
+            /* a < max_signed -> a != max_signed */
+            BZLA_INC_REC_RW_CALL(bzla);
+            result = bzla_node_invert(rewrite_eq_exp(bzla, e0, e1));
+            BZLA_DEC_REC_RW_CALL(bzla);
+          }
+          break;
         case BZLA_BV_UDIV_NODE:
           result = bzla_exp_bv_ones(bzla, bzla_node_get_sort_id(real_e0));
           break;
         default: break;
       }
       break;
+
     case BZLA_SPECIAL_CONST_BV_ONE_ONES:
       assert(width_e1 == 1);
       if (kind == BZLA_BV_AND_NODE || kind == BZLA_BV_EQ_NODE
           || kind == BZLA_BV_MUL_NODE || kind == BZLA_BV_UDIV_NODE)
+      {
         result = bzla_node_copy(bzla, e0);
+      }
+      else if (kind == BZLA_BV_SLT_NODE)
+      {
+        /* a < min_signed -> false */
+        result = bzla_exp_false(bzla);
+      }
       break;
+
     case BZLA_SPECIAL_CONST_BV_ONE:
       if (kind == BZLA_BV_MUL_NODE || kind == BZLA_BV_UDIV_NODE)
         result = bzla_node_copy(bzla, e0);
@@ -1019,12 +1106,22 @@ apply_special_const_rhs_binary_exp(Bzla *bzla,
         bzla_node_release(bzla, tmp1);
         BZLA_DEC_REC_RW_CALL(bzla);
       }
+      else if (width_e0 == 2 && kind == BZLA_BV_SLT_NODE)
+      {
+        /* a < max_signed -> a != max_signed */
+        BZLA_INC_REC_RW_CALL(bzla);
+        result = bzla_node_invert(rewrite_eq_exp(bzla, e0, e1));
+        BZLA_DEC_REC_RW_CALL(bzla);
+      }
       break;
+      break;
+
     case BZLA_SPECIAL_CONST_BV_ONES:
       if (kind == BZLA_BV_EQ_NODE)
       {
-        if (is_xnor_exp(bzla, e0)) /* (a XNOR b) == 1 -->  a = b */
+        if (is_xnor_exp(bzla, e0))
         {
+          /* (a XNOR b) == 1 -->  a = b */
           if (bzla->rec_rw_calls < BZLA_REC_RW_BOUND)
           {
             BZLA_INC_REC_RW_CALL(bzla);
@@ -1063,6 +1160,25 @@ apply_special_const_rhs_binary_exp(Bzla *bzla,
       else if (kind == BZLA_BV_MUL_NODE)
         result = bzla_exp_bv_neg(bzla, e0);
       break;
+
+    case BZLA_SPECIAL_CONST_BV_MIN_SIGNED:
+      if (kind == BZLA_BV_SLT_NODE)
+      {
+        /* a < min_signed -> false */
+        result = bzla_exp_false(bzla);
+      }
+      break;
+
+    case BZLA_SPECIAL_CONST_BV_MAX_SIGNED:
+      if (kind == BZLA_BV_SLT_NODE)
+      {
+        /* a < max_signed -> a != max_signed */
+        BZLA_INC_REC_RW_CALL(bzla);
+        result = bzla_node_invert(rewrite_eq_exp(bzla, e0, e1));
+        BZLA_DEC_REC_RW_CALL(bzla);
+      }
+      break;
+
     default:
       assert(sc == BZLA_SPECIAL_CONST_BV_NONE);
       if (kind == BZLA_BV_EQ_NODE && real_e0->kind == BZLA_BV_AND_NODE
@@ -6616,6 +6732,8 @@ rewrite_slt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   if (!result)
   {
     ADD_RW_RULE(const_binary_exp, BZLA_BV_SLT_NODE, e0, e1);
+    ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_SLT_NODE, e0, e1);
+    ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_SLT_NODE, e0, e1);
     ADD_RW_RULE(false_lt, e0, e1);
     ADD_RW_RULE(bool_slt, e0, e1);
 

@@ -3127,12 +3127,22 @@ bzla_bv_is_special_const(const BzlaBitVector *bv)
 
   if (bzla_bv_is_zero(bv)) return BZLA_SPECIAL_CONST_BV_ZERO;
   if (bzla_bv_is_one(bv))
+  {
     return bv->width == 1 ? BZLA_SPECIAL_CONST_BV_ONE_ONES
                           : BZLA_SPECIAL_CONST_BV_ONE;
+  }
   if (bzla_bv_is_ones(bv))
   {
     assert(bv->width > 1);
     return BZLA_SPECIAL_CONST_BV_ONES;
+  }
+  if (bzla_bv_is_min_signed(bv))
+  {
+    return BZLA_SPECIAL_CONST_BV_MIN_SIGNED;
+  }
+  if (bzla_bv_is_max_signed(bv))
+  {
+    return BZLA_SPECIAL_CONST_BV_MAX_SIGNED;
   }
   return BZLA_SPECIAL_CONST_BV_NONE;
 }

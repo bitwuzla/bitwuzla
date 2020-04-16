@@ -3818,44 +3818,70 @@ TEST_F(TestBv, is_special_const)
   bzla_bv_free(d_mm, bv);
 
   bv = bzla_bv_char_to_bv(d_mm, "10");
-  ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_NONE);
+  ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_MIN_SIGNED);
   bzla_bv_free(d_mm, bv);
 
   bv = bzla_bv_char_to_bv(d_mm, "11");
   ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ONES);
   bzla_bv_free(d_mm, bv);
 
-  bv = bzla_bv_char_to_bv(d_mm, "000");
-  ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ZERO);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "001");
-  ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ONE);
-  bzla_bv_free(d_mm, bv);
-
-  for (i = 2; i < 7; i++)
+  for (i = 0; i <= 7; i++)
   {
     bv = bzla_bv_uint64_to_bv(d_mm, i, 3);
-    ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_NONE);
+    if (i == 0)
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ZERO);
+    }
+    else if (i == 1)
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ONE);
+    }
+    else if (i == 4)
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_MIN_SIGNED);
+    }
+    else if (i == 3)
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_MAX_SIGNED);
+    }
+    else if (i == 7)
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ONES);
+    }
+    else
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_NONE);
+    }
     bzla_bv_free(d_mm, bv);
   }
 
-  bv = bzla_bv_char_to_bv(d_mm, "111");
-  ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ONES);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0000");
-  ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ZERO);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0001");
-  ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ONE);
-  bzla_bv_free(d_mm, bv);
-
-  for (i = 2; i < 15; i++)
+  for (i = 0; i <= 15; i++)
   {
     bv = bzla_bv_uint64_to_bv(d_mm, i, 4);
-    ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_NONE);
+    if (i == 0)
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ZERO);
+    }
+    else if (i == 1)
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ONE);
+    }
+    else if (i == 8)
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_MIN_SIGNED);
+    }
+    else if (i == 7)
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_MAX_SIGNED);
+    }
+    else if (i == 15)
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_ONES);
+    }
+    else
+    {
+      ASSERT_EQ(bzla_bv_is_special_const(bv), BZLA_SPECIAL_CONST_BV_NONE);
+    }
     bzla_bv_free(d_mm, bv);
   }
 
