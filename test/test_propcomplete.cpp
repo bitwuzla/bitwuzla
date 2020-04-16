@@ -508,6 +508,62 @@ class TestPropComplete : public TestBzla
     bzla_sort_release(d_bzla, sort);
   }
 
+  void check_inv_ult_concat(uint32_t bw = TEST_PROP_INV_COMPLETE_BW)
+  {
+    uint64_t i, j;
+    uint32_t pos_x, bw_v0;
+    BzlaNode *exp, *v0, *v1, *e[2];
+    BzlaBitVector *s[2], *t;
+    BzlaPropInfo pi;
+    BzlaSortId sort_v0, sort_v1, sort;
+
+    bw_v0 = bw / 2;
+
+    /* Disable rewriting in order to preserve sign extension structure. */
+    bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
+
+    sort_v0 = bzla_sort_bv(d_bzla, bw_v0);
+    sort_v1 = bzla_sort_bv(d_bzla, bw - bw_v0);
+    sort    = bzla_sort_bv(d_bzla, bw);
+    v0      = bzla_exp_var(d_bzla, sort_v0, 0);
+    v1      = bzla_exp_var(d_bzla, sort_v1, 0);
+
+    for (pos_x = 0; pos_x < 2; ++pos_x)
+    {
+      e[1 - pos_x] = bzla_exp_var(d_bzla, sort, 0);
+      e[pos_x]     = bzla_exp_bv_concat(d_bzla, v0, v1);
+      exp          = bzla_exp_bv_ult(d_bzla, e[0], e[1]);
+      bzla_node_release(d_bzla, e[0]);
+      bzla_node_release(d_bzla, e[1]);
+
+      for (i = 0; i < (uint32_t)(1 << bw); i++)
+      {
+        s[pos_x] = bzla_bv_uint64_to_bv(d_mm, i, bw);
+        for (j = 0; j < (uint32_t)(1 << bw); j++)
+        {
+          s[1 - pos_x] = bzla_bv_uint64_to_bv(d_mm, j, bw);
+          t            = bzla_bv_ult(d_mm, s[0], s[1]);
+
+          /* domains are initialized later */
+          init_prop_info(&pi, exp, pos_x, t, s[0], s[1], 0, 0, 0, 0);
+          check_result(bzla_is_inv_ult, bzla_proputils_inv_ult, &pi);
+
+          bzla_bv_free(d_mm, s[1 - pos_x]);
+          bzla_bv_free(d_mm, t);
+        }
+        bzla_bv_free(d_mm, s[pos_x]);
+      }
+
+      bzla_node_release(d_bzla, exp);
+    }
+
+    bzla_node_release(d_bzla, v0);
+    bzla_node_release(d_bzla, v1);
+    bzla_sort_release(d_bzla, sort_v0);
+    bzla_sort_release(d_bzla, sort_v1);
+    bzla_sort_release(d_bzla, sort);
+  }
+
   /**
    * Test if for x & s = t and s & x = t, the consistent value and inverse value
    * computation always produces t when solved for x.
@@ -2750,12 +2806,20 @@ TEST_F(TestPropComplete, complete_ult_inv)
       bzla_exp_bv_ult, bzla_bv_ult, bzla_is_inv_ult, bzla_proputils_inv_ult);
 }
 
-TEST_F(TestPropComplete, complete_ult_inv_sext)
+TEST_F(TestPropComplete, complete_ult_sext_inv)
 {
   check_inv_ult_sext(2);
   check_inv_ult_sext(3);
   check_inv_ult_sext(5);
   check_inv_ult_sext(6);
+}
+
+TEST_F(TestPropComplete, complete_ult_concat_inv)
+{
+  check_inv_ult_concat(2);
+  check_inv_ult_concat(3);
+  check_inv_ult_concat(5);
+  check_inv_ult_concat(6);
 }
 
 TEST_F(TestPropComplete, complete_slt_inv)

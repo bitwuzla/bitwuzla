@@ -801,6 +801,26 @@ create_ult_sext(Bzla *bzla, BzlaSortId sort)
   return result;
 }
 
+static BzlaNode *
+create_ult_concat(Bzla *bzla, BzlaSortId sort)
+{
+  BzlaNode *var0, *var1, *result;
+  BzlaSortId sort0, sort1;
+  uint32_t bw    = bzla_sort_bv_get_width(bzla, sort);
+  uint32_t bw_v0 = bw / 2;
+
+  sort0  = bzla_sort_bv(bzla, bw_v0);
+  sort1  = bzla_sort_bv(bzla, bw - bw_v0);
+  var0   = bzla_exp_var(bzla, sort0, 0);
+  var1   = bzla_exp_var(bzla, sort1, 0);
+  result = bzla_exp_bv_concat(bzla, var0, var1);
+  bzla_node_release(bzla, var0);
+  bzla_node_release(bzla, var1);
+  bzla_sort_release(bzla, sort0);
+  bzla_sort_release(bzla, sort1);
+  return result;
+}
+
 TEST_F(TestPropInv, inv_ult_sext)
 {
   test_binary(bzla_exp_bv_ult,
@@ -858,6 +878,66 @@ TEST_F(TestPropInv, inv_ult_sext)
               1,
               false,
               create_ult_sext,
+              5);
+}
+
+TEST_F(TestPropInv, inv_ult_concat)
+{
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              0,
+              false,
+              create_ult_concat,
+              2);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              1,
+              false,
+              create_ult_concat,
+              2);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              0,
+              false,
+              create_ult_concat,
+              3);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              1,
+              false,
+              create_ult_concat,
+              3);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              0,
+              false,
+              create_ult_concat,
+              4);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              1,
+              false,
+              create_ult_concat,
+              4);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              0,
+              false,
+              create_ult_concat,
+              5);
+  test_binary(bzla_exp_bv_ult,
+              bzla_is_inv_ult,
+              bzla_proputils_inv_ult,
+              1,
+              false,
+              create_ult_concat,
               5);
 }
 
