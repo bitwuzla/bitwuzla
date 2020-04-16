@@ -2159,9 +2159,14 @@ bzla_exp_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  return bzla_node_create_fp_lte(bzla, e0, e1);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    result = bzla_rewrite_binary_exp(bzla, BZLA_FP_LTE_NODE, e0, e1);
+  else
+    result = bzla_node_create_fp_lte(bzla, e0, e1);
+  return result;
 }
 
 BzlaNode *
