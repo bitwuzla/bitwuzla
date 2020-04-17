@@ -104,25 +104,25 @@ bool bzla_fp_is_inf(Bzla *bzla, const BzlaFloatingPoint *fp);
  * Create a floating-point constant node representing zero.
  * sign: false for +zero and true for -zero.
  */
-BzlaFloatingPoint *bzla_fp_make_zero(Bzla *bzla, BzlaSortId sort, bool sign);
+BzlaFloatingPoint *bzla_fp_zero(Bzla *bzla, BzlaSortId sort, bool sign);
 
 /**
  * Create a floating-point constant node representing infinity.
  * sign: false for +inf and true for -inf.
  */
-BzlaFloatingPoint *bzla_fp_make_inf(Bzla *bzla, BzlaSortId sort, bool sign);
+BzlaFloatingPoint *bzla_fp_inf(Bzla *bzla, BzlaSortId sort, bool sign);
 
 /**
  * Create a floating-point constant node representing nan.
  */
-BzlaFloatingPoint *bzla_fp_make_nan(Bzla *bzla, BzlaSortId sort);
+BzlaFloatingPoint *bzla_fp_nan(Bzla *bzla, BzlaSortId sort);
 
 /**
  * Create a floating-point constant node from a given bit-vector constant.
  */
-BzlaFloatingPoint *bzla_fp_make_const(Bzla *bzla,
-                                      BzlaSortId sort,
-                                      BzlaBitVector *bv_const);
+BzlaFloatingPoint *bzla_fp_from_bv(Bzla *bzla,
+                                   BzlaSortId sort,
+                                   BzlaBitVector *bv_const);
 
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */

@@ -56,7 +56,7 @@ class TestFpInternal : public TestBzla
     bzla_fp_as_bv(d_bzla, fp, &res_sign, &res_exp, &res_sig);
     if (bzla_fp_is_nan(d_bzla, fp))
     {
-      BzlaFloatingPoint *nan = bzla_fp_make_nan(d_bzla, sort_fp);
+      BzlaFloatingPoint *nan = bzla_fp_nan(d_bzla, sort_fp);
       ASSERT_EQ(bzla_fp_compare(fp, nan), 0);
       bzla_fp_free(d_bzla, nan);
     }

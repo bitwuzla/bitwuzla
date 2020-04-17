@@ -1792,7 +1792,7 @@ bzla_exp_fp_pos_zero(Bzla *bzla, BzlaSortId sort)
   BzlaNode *result;
   BzlaFloatingPoint *fp;
 
-  fp     = bzla_fp_make_zero(bzla, sort, false);
+  fp     = bzla_fp_zero(bzla, sort, false);
   result = exp_fp_const_aux(bzla, fp);
   bzla_fp_free(bzla, fp);
   return result;
@@ -1811,7 +1811,7 @@ bzla_exp_fp_neg_zero(Bzla *bzla, BzlaSortId sort)
   BzlaNode *result;
   BzlaFloatingPoint *fp;
 
-  fp     = bzla_fp_make_zero(bzla, sort, true);
+  fp     = bzla_fp_zero(bzla, sort, true);
   result = exp_fp_const_aux(bzla, fp);
   bzla_fp_free(bzla, fp);
   return result;
@@ -1830,7 +1830,7 @@ bzla_exp_fp_pos_inf(Bzla *bzla, BzlaSortId sort)
   BzlaNode *result;
   BzlaFloatingPoint *fp;
 
-  fp     = bzla_fp_make_inf(bzla, sort, false);
+  fp     = bzla_fp_inf(bzla, sort, false);
   result = exp_fp_const_aux(bzla, fp);
   bzla_fp_free(bzla, fp);
   return result;
@@ -1849,7 +1849,7 @@ bzla_exp_fp_neg_inf(Bzla *bzla, BzlaSortId sort)
   BzlaNode *result;
   BzlaFloatingPoint *fp;
 
-  fp     = bzla_fp_make_inf(bzla, sort, true);
+  fp     = bzla_fp_inf(bzla, sort, true);
   result = exp_fp_const_aux(bzla, fp);
   bzla_fp_free(bzla, fp);
   return result;
@@ -1868,7 +1868,7 @@ bzla_exp_fp_nan(Bzla *bzla, BzlaSortId sort)
   BzlaNode *result;
   BzlaFloatingPoint *fp;
 
-  fp     = bzla_fp_make_nan(bzla, sort);
+  fp     = bzla_fp_nan(bzla, sort);
   result = exp_fp_const_aux(bzla, fp);
   bzla_fp_free(bzla, fp);
   return result;
@@ -1921,7 +1921,7 @@ bzla_exp_fp_const(Bzla *bzla,
   ewidth = bzla_bv_get_width(bv_e1_exp);
   swidth = 1 + bzla_bv_get_width(bv_e2_sig);
   sort   = bzla_sort_fp(bzla, ewidth, swidth);
-  fp     = bzla_fp_make_const(bzla, sort, concat);
+  fp     = bzla_fp_from_bv(bzla, sort, concat);
   result = exp_fp_const_aux(bzla, fp);
 
   bzla_fp_free(bzla, fp);

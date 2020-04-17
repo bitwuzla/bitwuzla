@@ -3161,7 +3161,7 @@ bzla_fp_is_inf(Bzla *bzla, const BzlaFloatingPoint *fp)
 }
 
 BzlaFloatingPoint *
-bzla_fp_make_zero(Bzla *bzla, BzlaSortId sort, bool sign)
+bzla_fp_zero(Bzla *bzla, BzlaSortId sort, bool sign)
 {
   assert(bzla);
   assert(sort);
@@ -3184,7 +3184,7 @@ bzla_fp_make_zero(Bzla *bzla, BzlaSortId sort, bool sign)
 }
 
 BzlaFloatingPoint *
-bzla_fp_make_inf(Bzla *bzla, BzlaSortId sort, bool sign)
+bzla_fp_inf(Bzla *bzla, BzlaSortId sort, bool sign)
 {
   assert(bzla);
   assert(sort);
@@ -3206,7 +3206,7 @@ bzla_fp_make_inf(Bzla *bzla, BzlaSortId sort, bool sign)
 }
 
 BzlaFloatingPoint *
-bzla_fp_make_nan(Bzla *bzla, BzlaSortId sort)
+bzla_fp_nan(Bzla *bzla, BzlaSortId sort)
 {
   assert(bzla);
   assert(sort);
@@ -3227,7 +3227,7 @@ bzla_fp_make_nan(Bzla *bzla, BzlaSortId sort)
 }
 
 BzlaFloatingPoint *
-bzla_fp_make_const(Bzla *bzla, BzlaSortId sort, BzlaBitVector *bv_const)
+bzla_fp_from_bv(Bzla *bzla, BzlaSortId sort, BzlaBitVector *bv_const)
 {
   assert(bzla);
   assert(sort);
