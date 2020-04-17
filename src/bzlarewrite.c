@@ -576,6 +576,7 @@ static BzlaNode *rewrite_fp_max_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_lte_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_lt_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_rem_exp(Bzla *, BzlaNode *, BzlaNode *);
+static BzlaNode *rewrite_fp_sqrt_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_add_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_mul_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_div_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
@@ -677,6 +678,47 @@ apply_const_unary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
   {
     case BZLA_FP_ABS_NODE: fpres = bzla_fp_abs(bzla, bzla_fp_get_fp(e0)); break;
     case BZLA_FP_NEG_NODE: fpres = bzla_fp_neg(bzla, bzla_fp_get_fp(e0)); break;
+    default: assert(0);  // temporary
+  }
+  result = bzla_exp_fp_const_fp(bzla, fpres);
+  bzla_fp_free(bzla, fpres);
+  return result;
+}
+
+/*
+ * match:  binary fp op with two constants
+ * result: constant
+ */
+static inline bool
+applies_const_binary_fp_rm_exp(Bzla *bzla,
+                               BzlaNodeKind kind,
+                               BzlaNode *e0,
+                               BzlaNode *e1)
+{
+  (void) bzla;
+  (void) kind;
+  return bzla_node_is_rm_const(e0) && bzla_node_is_fp_const(e1);
+}
+
+static inline BzlaNode *
+apply_const_binary_fp_rm_exp(Bzla *bzla,
+                             BzlaNodeKind kind,
+                             BzlaNode *e0,
+                             BzlaNode *e1)
+{
+  assert(applies_const_binary_fp_rm_exp(bzla, kind, e0, e1));
+  assert(bzla_node_is_regular(e0));
+  assert(bzla_node_is_regular(e1));
+
+  BzlaFloatingPoint *fpres;
+  BzlaNode *result;
+
+  switch (kind)
+  {
+    case BZLA_FP_SQRT_NODE:
+      fpres =
+          bzla_fp_sqrt(bzla, bzla_node_rm_const_get_rm(e0), bzla_fp_get_fp(e1));
+      break;
     default: assert(0);  // temporary
   }
   result = bzla_exp_fp_const_fp(bzla, fpres);
@@ -7977,6 +8019,50 @@ rewrite_fp_rem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 }
 
 static BzlaNode *
+rewrite_fp_sqrt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+
+  BzlaNode *result = 0;
+
+  e0 = bzla_simplify_exp(bzla, e0);
+  e1 = bzla_simplify_exp(bzla, e1);
+
+  result = check_rw_cache(bzla,
+                          BZLA_FP_SQRT_NODE,
+                          bzla_node_get_id(e0),
+                          bzla_node_get_id(e1),
+                          0,
+                          0);
+
+  if (!result)
+  {
+    ADD_RW_RULE(const_binary_fp_rm_exp, BZLA_FP_SQRT_NODE, e0, e1);
+
+    assert(!result);
+    if (!result)
+    {
+      result = bzla_node_create_fp_sqrt(bzla, e0, e1);
+    }
+    else
+    {
+    DONE:
+      bzla_rw_cache_add(bzla->rw_cache,
+                        BZLA_FP_SQRT_NODE,
+                        bzla_node_get_id(e0),
+                        bzla_node_get_id(e1),
+                        0,
+                        0,
+                        bzla_node_get_id(result));
+    }
+  }
+  assert(result);
+  return result;
+}
+
+static BzlaNode *
 rewrite_fp_add_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
   assert(bzla);
@@ -8468,6 +8554,7 @@ bzla_rewrite_binary_exp(Bzla *bzla,
     case BZLA_FP_LTE_NODE: result = rewrite_fp_lte_exp(bzla, e0, e1); break;
     case BZLA_FP_LT_NODE: result = rewrite_fp_lt_exp(bzla, e0, e1); break;
     case BZLA_FP_REM_NODE: result = rewrite_fp_rem_exp(bzla, e0, e1); break;
+    case BZLA_FP_SQRT_NODE: result = rewrite_fp_sqrt_exp(bzla, e0, e1); break;
 
     case BZLA_APPLY_NODE: result = rewrite_apply_exp(bzla, e0, e1); break;
 

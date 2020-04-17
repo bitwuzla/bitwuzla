@@ -107,6 +107,8 @@ class BzlaFPBV
   static BzlaFPBV<is_signed> maxValue(const uint32_t &bw);
   static BzlaFPBV<is_signed> minValue(const uint32_t &bw);
 
+  BzlaFPBV<is_signed> operator=(const BzlaFPBV<is_signed> &other);
+
   /*** Operators ***/
   BzlaFPBV<is_signed> operator<<(const BzlaFPBV<is_signed> &op) const;
   BzlaFPBV<is_signed> operator>>(const BzlaFPBV<is_signed> &op) const;
@@ -284,6 +286,15 @@ BzlaFPBV<is_signed>::minValue(const uint32_t &bw)
   assert(bw);
   return is_signed ? bzla_bv_min_signed(s_bzla->mm, bw)
                    : bzla_bv_zero(s_bzla->mm, bw);
+}
+
+template <bool is_signed>
+BzlaFPBV<is_signed>
+BzlaFPBV<is_signed>::operator=(const BzlaFPBV<is_signed> &other)
+{
+  assert(s_bzla);
+  assert(d_bv);
+  return bzla_bv_copy(s_bzla->mm, other.d_bv);
 }
 
 template <bool is_signed>
@@ -3288,6 +3299,29 @@ bzla_fp_neg(Bzla *bzla, const BzlaFloatingPoint *fp)
                                         fp->size->significandWidth());
   res->fp =
       new BzlaUnpackedFloat(symfpu::negate<BzlaFPTraits>(*res->size, *fp->fp));
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) bzla;
+  (void) fp;
+  res = nullptr;
+#endif
+  return res;
+}
+
+BzlaFloatingPoint *
+bzla_fp_sqrt(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
+{
+  assert(bzla);
+  assert(fp);
+
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  BZLA_CNEW(bzla->mm, res);
+  res->size = new BzlaFloatingPointSize(fp->size->exponentWidth(),
+                                        fp->size->significandWidth());
+  res->fp   = new BzlaUnpackedFloat(
+      symfpu::sqrt<BzlaFPTraits>(*res->size, rm, *fp->fp));
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;

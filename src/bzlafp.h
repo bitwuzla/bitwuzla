@@ -137,6 +137,14 @@ BzlaFloatingPoint *bzla_fp_abs(Bzla *bzla, const BzlaFloatingPoint *fp);
 BzlaFloatingPoint *bzla_fp_neg(Bzla *bzla, const BzlaFloatingPoint *fp);
 
 /**
+ * Create a floating-point constant node representing the square root of the
+ * given floating-point constant w.r.t. to the given rounding mode.
+ */
+BzlaFloatingPoint *bzla_fp_sqrt(Bzla *bzla,
+                                const BzlaRoundingMode rm,
+                                const BzlaFloatingPoint *fp);
+
+/**
  * Create a floating-point constant node representing the addition of the
  * given floating-point constants w.r.t. given rounding mode.
  */
@@ -147,7 +155,7 @@ BzlaFloatingPoint *bzla_fp_add(Bzla *bzla,
 
 /**
  * Create a floating-point constant node representing the multiplication of the
- * given floating-point constants w.r.t. to given rounding mode.
+ * given floating-point constants w.r.t. to the given rounding mode.
  */
 BzlaFloatingPoint *bzla_fp_mul(Bzla *bzla,
                                const BzlaRoundingMode rm,
@@ -156,7 +164,7 @@ BzlaFloatingPoint *bzla_fp_mul(Bzla *bzla,
 
 /**
  * Create a floating-point constant node representing the division of the
- * given floating-point constants w.r.t. to given rounding mode.
+ * given floating-point constants w.r.t. to the given rounding mode.
  */
 BzlaFloatingPoint *bzla_fp_div(Bzla *bzla,
                                const BzlaRoundingMode rm,
