@@ -586,14 +586,14 @@ static BzlaNode *rewrite_cond_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
 /* -------------------------------------------------------------------------- */
 
 /*
- * match:  binary op with two constants
+ * match:  binary bv op with two constants
  * result: constant
  */
 static inline bool
-applies_const_binary_exp(Bzla *bzla,
-                         BzlaNodeKind kind,
-                         BzlaNode *e0,
-                         BzlaNode *e1)
+applies_const_binary_bv_exp(Bzla *bzla,
+                            BzlaNodeKind kind,
+                            BzlaNode *e0,
+                            BzlaNode *e1)
 {
   (void) bzla;
   (void) kind;
@@ -601,12 +601,12 @@ applies_const_binary_exp(Bzla *bzla,
 }
 
 static inline BzlaNode *
-apply_const_binary_exp(Bzla *bzla,
-                       BzlaNodeKind kind,
-                       BzlaNode *e0,
-                       BzlaNode *e1)
+apply_const_binary_bv_exp(Bzla *bzla,
+                          BzlaNodeKind kind,
+                          BzlaNode *e0,
+                          BzlaNode *e1)
 {
-  assert(applies_const_binary_exp(bzla, kind, e0, e1));
+  assert(applies_const_binary_bv_exp(bzla, kind, e0, e1));
 
   bool invert_b0, invert_b1;
   BzlaBitVector *b0, *b1, *bresult;
@@ -6944,7 +6944,7 @@ SWAP_OPERANDS:
   {
     if (!swap_ops)
     {
-      ADD_RW_RULE(const_binary_exp, kind, e0, e1);
+      ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
       /* We do not rewrite eq in the boolean case, as we cannot extract the
        * resulting XNOR on top level again and would therefore lose
        * substitutions.
@@ -7025,7 +7025,7 @@ rewrite_bv_ult_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_exp, BZLA_BV_ULT_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_ULT_NODE, e0, e1);
     ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_ULT_NODE, e0, e1);
     ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_ULT_NODE, e0, e1);
     ADD_RW_RULE(false_lt, e0, e1);
@@ -7130,7 +7130,7 @@ SWAP_OPERANDS:
   {
     if (!swap_ops)
     {
-      ADD_RW_RULE(const_binary_exp, BZLA_BV_AND_NODE, e0, e1);
+      ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_AND_NODE, e0, e1);
       ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_AND_NODE, e0, e1);
       ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_AND_NODE, e0, e1);
       ADD_RW_RULE(idem1_and, e0, e1);
