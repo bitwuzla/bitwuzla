@@ -1528,9 +1528,9 @@ normalize_substitution(Bzla *bzla,
   if (bzla_node_is_bv(bzla, real_left) && !bzla_node_is_bv_var(real_left)
       && !bzla_node_is_bv_var(real_right))
   {
-    if (bzla_rewrite_linear_term(bzla, left, &fc, left_result, &tmp))
+    if (bzla_rewrite_linear_bv_term(bzla, left, &fc, left_result, &tmp))
       *right_result = bzla_exp_bv_sub(bzla, right, tmp);
-    else if (bzla_rewrite_linear_term(bzla, right, &fc, left_result, &tmp))
+    else if (bzla_rewrite_linear_bv_term(bzla, right, &fc, left_result, &tmp))
       *right_result = bzla_exp_bv_sub(bzla, left, tmp);
     else
       return false;

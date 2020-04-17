@@ -1310,12 +1310,12 @@ apply_special_const_rhs_binary_exp(Bzla *bzla,
  * and 'factor' is odd?  We check whether this is possible but do not use
  * more than 'bound' recursive calls.  */
 static bool
-rewrite_linear_term_bounded(Bzla *bzla,
-                            BzlaNode *term,
-                            BzlaBitVector **factor_ptr,
-                            BzlaNode **lhs_ptr,
-                            BzlaNode **rhs_ptr,
-                            uint32_t *bound_ptr)
+rewrite_linear_bv_term_bounded(Bzla *bzla,
+                               BzlaNode *term,
+                               BzlaBitVector **factor_ptr,
+                               BzlaNode **lhs_ptr,
+                               BzlaNode **rhs_ptr,
+                               uint32_t *bound_ptr)
 {
   BzlaNode *tmp, *other;
   BzlaBitVector *factor;
@@ -1333,7 +1333,7 @@ rewrite_linear_term_bounded(Bzla *bzla,
      *      = (-factor) * lhs + (-1 -rhs)
      *      = (-factor) * lhs + ~rhs
      */
-    if (!rewrite_linear_term_bounded(
+    if (!rewrite_linear_bv_term_bounded(
             bzla, bzla_node_invert(term), &factor, lhs_ptr, rhs_ptr, bound_ptr))
       return false;
 
@@ -1343,7 +1343,7 @@ rewrite_linear_term_bounded(Bzla *bzla,
   }
   else if (term->kind == BZLA_BV_ADD_NODE)
   {
-    if (rewrite_linear_term_bounded(
+    if (rewrite_linear_bv_term_bounded(
             bzla, term->e[0], factor_ptr, lhs_ptr, &tmp, bound_ptr))
     {
       /* term = e0 + e1
@@ -1352,7 +1352,7 @@ rewrite_linear_term_bounded(Bzla *bzla,
        */
       other = term->e[1];
     }
-    else if (rewrite_linear_term_bounded(
+    else if (rewrite_linear_bv_term_bounded(
                  bzla, term->e[1], factor_ptr, lhs_ptr, &tmp, bound_ptr))
     {
       /* term = e0 + e1
@@ -1373,7 +1373,7 @@ rewrite_linear_term_bounded(Bzla *bzla,
   {
     if (is_odd_bv_const_exp(term->e[0]))
     {
-      if (!rewrite_linear_term_bounded(
+      if (!rewrite_linear_bv_term_bounded(
               bzla, term->e[1], &factor, lhs_ptr, &tmp, bound_ptr))
       {
         return false;
@@ -1388,7 +1388,7 @@ rewrite_linear_term_bounded(Bzla *bzla,
     }
     else if (is_odd_bv_const_exp(term->e[1]))
     {
-      if (!rewrite_linear_term_bounded(
+      if (!rewrite_linear_bv_term_bounded(
               bzla, term->e[0], &factor, lhs_ptr, &tmp, bound_ptr))
       {
         return false;
@@ -1428,11 +1428,11 @@ rewrite_linear_term_bounded(Bzla *bzla,
 }
 
 bool
-bzla_rewrite_linear_term(Bzla *bzla,
-                         BzlaNode *term,
-                         BzlaBitVector **fp,
-                         BzlaNode **lp,
-                         BzlaNode **rp)
+bzla_rewrite_linear_bv_term(Bzla *bzla,
+                            BzlaNode *term,
+                            BzlaBitVector **fp,
+                            BzlaNode **lp,
+                            BzlaNode **rp)
 {
   assert(bzla);
   assert(term);
@@ -1441,7 +1441,7 @@ bzla_rewrite_linear_term(Bzla *bzla,
   assert(rp);
   uint32_t bound = 100;
   bool res;
-  res = rewrite_linear_term_bounded(bzla, term, fp, lp, rp, &bound);
+  res = rewrite_linear_bv_term_bounded(bzla, term, fp, lp, rp, &bound);
   if (res) bzla->stats.linear_equations++;
   return res;
 }
