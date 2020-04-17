@@ -85,8 +85,6 @@ int32_t bzla_fp_compare(const BzlaFloatingPoint *a, const BzlaFloatingPoint *b);
 
 /* -------------------------------------------------------------------------- */
 
-BzlaFloatingPoint *bzla_fp_abs(Bzla *bzla, const BzlaFloatingPoint *fp);
-
 /** Returns true if given floating-point represents a zero value. */
 bool bzla_fp_is_zero(Bzla *bzla, const BzlaFloatingPoint *fp);
 
@@ -125,6 +123,18 @@ BzlaFloatingPoint *bzla_fp_nan(Bzla *bzla, BzlaSortId sort);
 BzlaFloatingPoint *bzla_fp_from_bv(Bzla *bzla,
                                    BzlaSortId sort,
                                    BzlaBitVector *bv_const);
+
+/**
+ * Create a floating-point constant node representing the absolute value
+ * of the given floating-point constant.
+ */
+BzlaFloatingPoint *bzla_fp_abs(Bzla *bzla, const BzlaFloatingPoint *fp);
+
+/**
+ * Create a floating-point constant node representing the negation of the
+ * given floating-point constant.
+ */
+BzlaFloatingPoint *bzla_fp_neg(Bzla *bzla, const BzlaFloatingPoint *fp);
 
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */

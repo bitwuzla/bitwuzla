@@ -3161,29 +3161,6 @@ bzla_fp_is_inf(Bzla *bzla, const BzlaFloatingPoint *fp)
 }
 
 BzlaFloatingPoint *
-bzla_fp_abs(Bzla *bzla, const BzlaFloatingPoint *fp)
-{
-  assert(bzla);
-  assert(fp);
-
-  BzlaFloatingPoint *res;
-#ifdef BZLA_USE_SYMFPU
-  BzlaFPWordBlaster::set_s_bzla(bzla);
-  BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(fp->size->exponentWidth(),
-                                        fp->size->significandWidth());
-  res->fp   = new BzlaUnpackedFloat(
-      symfpu::absolute<BzlaFPTraits>(*res->size, *fp->fp));
-  BzlaFPWordBlaster::unset_s_bzla();
-#else
-  (void) bzla;
-  (void) fp;
-  res = nullptr;
-#endif
-  return res;
-}
-
-BzlaFloatingPoint *
 bzla_fp_zero(Bzla *bzla, BzlaSortId sort, bool sign)
 {
   assert(bzla);
@@ -3269,6 +3246,52 @@ bzla_fp_from_bv(Bzla *bzla, BzlaSortId sort, BzlaBitVector *bv_const)
   (void) bzla;
   (void) sort;
   (void) bv_const;
+  res = nullptr;
+#endif
+  return res;
+}
+
+BzlaFloatingPoint *
+bzla_fp_abs(Bzla *bzla, const BzlaFloatingPoint *fp)
+{
+  assert(bzla);
+  assert(fp);
+
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  BZLA_CNEW(bzla->mm, res);
+  res->size = new BzlaFloatingPointSize(fp->size->exponentWidth(),
+                                        fp->size->significandWidth());
+  res->fp   = new BzlaUnpackedFloat(
+      symfpu::absolute<BzlaFPTraits>(*res->size, *fp->fp));
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) bzla;
+  (void) fp;
+  res = nullptr;
+#endif
+  return res;
+}
+
+BzlaFloatingPoint *
+bzla_fp_neg(Bzla *bzla, const BzlaFloatingPoint *fp)
+{
+  assert(bzla);
+  assert(fp);
+
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  BZLA_CNEW(bzla->mm, res);
+  res->size = new BzlaFloatingPointSize(fp->size->exponentWidth(),
+                                        fp->size->significandWidth());
+  res->fp =
+      new BzlaUnpackedFloat(symfpu::negate<BzlaFPTraits>(*res->size, *fp->fp));
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) bzla;
+  (void) fp;
   res = nullptr;
 #endif
   return res;

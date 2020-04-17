@@ -673,6 +673,7 @@ apply_const_unary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
   switch (kind)
   {
     case BZLA_FP_ABS_NODE: fpres = bzla_fp_abs(bzla, bzla_fp_get_fp(e0)); break;
+    case BZLA_FP_NEG_NODE: fpres = bzla_fp_neg(bzla, bzla_fp_get_fp(e0)); break;
     default: assert(0);  // temporary
   }
   result = bzla_exp_fp_const_fp(bzla, fpres);
@@ -7634,6 +7635,7 @@ rewrite_fp_neg_exp(Bzla *bzla, BzlaNode *e0)
   if (!result)
   {
     ADD_RW_RULE(fp_neg, e0);
+    ADD_RW_RULE(const_unary_fp_exp, BZLA_FP_NEG_NODE, e0);
 
     assert(!result);
     if (!result)
