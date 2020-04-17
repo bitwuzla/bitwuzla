@@ -5022,6 +5022,32 @@ apply_fp_rem_same_divisor(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   return result;
 }
 
+/*
+ * match:  fp.rem(a, fp.abs(b)) or fp.rem(a, fp.neg(b))
+ * result: fp.rem(a, b)
+ */
+static inline bool
+applies_fp_rem_sign_divisor(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  (void) bzla;
+  assert(bzla_node_is_regular(e0));
+  assert(bzla_node_is_regular(e1));
+
+  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND
+         && (bzla_node_is_fp_abs(e1) || bzla_node_is_fp_neg(e1));
+}
+
+static inline BzlaNode *
+apply_fp_rem_sign_divisor(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(applies_fp_rem_sign_divisor(bzla, e0, e1));
+  BzlaNode *result;
+  BZLA_INC_REC_RW_CALL(bzla);
+  result = rewrite_fp_rem_exp(bzla, e0, e1->e[0]);
+  BZLA_DEC_REC_RW_CALL(bzla);
+  return result;
+}
+
 /* APPLY rules                                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -7809,6 +7835,7 @@ rewrite_fp_rem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   if (!result)
   {
     ADD_RW_RULE(fp_rem_same_divisor, e0, e1);
+    ADD_RW_RULE(fp_rem_sign_divisor, e0, e1);
 
     assert(!result);
     if (!result)
