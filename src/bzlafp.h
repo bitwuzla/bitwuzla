@@ -100,6 +100,12 @@ bool bzla_fp_is_nan(Bzla *bzla, const BzlaFloatingPoint *fp);
 /** Returns true if given floating-point represents a infinite value. */
 bool bzla_fp_is_inf(Bzla *bzla, const BzlaFloatingPoint *fp);
 
+/** Returns true if given floating-point represents a negative value. */
+bool bzla_fp_is_neg(Bzla *bzla, const BzlaFloatingPoint *fp);
+
+/** Returns true if given floating-point represents a positive value. */
+bool bzla_fp_is_pos(Bzla *bzla, const BzlaFloatingPoint *fp);
+
 /**
  * Create a floating-point constant node representing zero.
  * sign: false for +zero and true for -zero.

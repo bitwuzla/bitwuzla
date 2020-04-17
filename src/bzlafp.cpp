@@ -3171,6 +3171,38 @@ bzla_fp_is_inf(Bzla *bzla, const BzlaFloatingPoint *fp)
   return res;
 }
 
+bool
+bzla_fp_is_neg(Bzla *bzla, const BzlaFloatingPoint *fp)
+{
+  assert(fp);
+  bool res = false;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  res = symfpu::isNegative(*fp->size, *fp->fp);
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) bzla;
+  (void) fp;
+#endif
+  return res;
+}
+
+bool
+bzla_fp_is_pos(Bzla *bzla, const BzlaFloatingPoint *fp)
+{
+  assert(fp);
+  bool res = false;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  res = symfpu::isPositive(*fp->size, *fp->fp);
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) bzla;
+  (void) fp;
+#endif
+  return res;
+}
+
 BzlaFloatingPoint *
 bzla_fp_zero(Bzla *bzla, BzlaSortId sort, bool sign)
 {

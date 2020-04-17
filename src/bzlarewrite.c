@@ -687,6 +687,55 @@ apply_const_unary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 }
 
 /*
+ * match:  unary tester fp op with one floating-point constant
+ * result: constant
+ */
+static inline bool
+applies_const_fp_tester_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
+{
+  (void) bzla;
+  (void) kind;
+  return bzla_node_is_fp_const(e0);
+}
+
+static inline BzlaNode *
+apply_const_fp_tester_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
+{
+  assert(applies_const_fp_tester_exp(bzla, kind, e0));
+  assert(bzla_node_is_regular(e0));
+
+  bool bres;
+  BzlaNode *result;
+
+  switch (kind)
+  {
+    case BZLA_FP_IS_INF_NODE:
+      bres = bzla_fp_is_inf(bzla, bzla_fp_get_fp(e0));
+      break;
+    case BZLA_FP_IS_NAN_NODE:
+      bres = bzla_fp_is_nan(bzla, bzla_fp_get_fp(e0));
+      break;
+    case BZLA_FP_IS_NEG_NODE:
+      bres = bzla_fp_is_neg(bzla, bzla_fp_get_fp(e0));
+      break;
+    case BZLA_FP_IS_POS_NODE:
+      bres = bzla_fp_is_pos(bzla, bzla_fp_get_fp(e0));
+      break;
+    case BZLA_FP_IS_NORM_NODE:
+      bres = bzla_fp_is_normal(bzla, bzla_fp_get_fp(e0));
+      break;
+    case BZLA_FP_IS_SUBNORM_NODE:
+      bres = bzla_fp_is_subnormal(bzla, bzla_fp_get_fp(e0));
+      break;
+    default:
+      assert(kind == BZLA_FP_IS_ZERO_NODE);
+      bres = bzla_fp_is_zero(bzla, bzla_fp_get_fp(e0));
+  }
+  result = bres ? bzla_exp_true(bzla) : bzla_exp_false(bzla);
+  return result;
+}
+
+/*
  * match:  binary fp op with two floating-point constants
  * result: constant
  */
@@ -7851,6 +7900,7 @@ rewrite_fp_tester_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 
   if (!result)
   {
+    ADD_RW_RULE(const_fp_tester_exp, kind, e0);
     ADD_RW_RULE(fp_tester, kind, e0);
 
     assert(!result);
