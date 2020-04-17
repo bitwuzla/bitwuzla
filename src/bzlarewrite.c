@@ -770,7 +770,9 @@ apply_const_binary_fp_bool_exp(Bzla *bzla,
     case BZLA_FP_LT_NODE:
       bres = bzla_fp_lt(bzla, bzla_fp_get_fp(e0), bzla_fp_get_fp(e1));
       break;
-    default: assert(0);  // temporary
+    default:
+      assert(kind == BZLA_FP_EQ_NODE);
+      bres = bzla_fp_eq(bzla, bzla_fp_get_fp(e0), bzla_fp_get_fp(e1));
   }
   result = bres ? bzla_exp_true(bzla) : bzla_exp_false(bzla);
   return result;
@@ -7232,7 +7234,9 @@ rewrite_eq_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_eq_exp(bzla, e0, e1));
-  kind = bzla_node_is_fun(e0) ? BZLA_FUN_EQ_NODE : BZLA_BV_EQ_NODE;
+  kind = bzla_node_is_fun(e0)
+             ? BZLA_FUN_EQ_NODE
+             : (bzla_node_is_bv(bzla, e0) ? BZLA_BV_EQ_NODE : BZLA_FP_EQ_NODE);
 
   e0 = bzla_node_copy(bzla, e0);
   e1 = bzla_node_copy(bzla, e1);
@@ -7247,6 +7251,7 @@ SWAP_OPERANDS:
     if (!swap_ops)
     {
       ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
+      ADD_RW_RULE(const_binary_fp_bool_exp, kind, e0, e1);
       /* We do not rewrite eq in the boolean case, as we cannot extract the
        * resulting XNOR on top level again and would therefore lose
        * substitutions.
