@@ -1613,13 +1613,33 @@ bzla_node_param_set_assigned_exp(BzlaNode *param, BzlaNode *exp)
 /*------------------------------------------------------------------------*/
 
 static bool
-is_sorted_bv_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
+is_sorted_binary_bv_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
 {
   if (!bzla_opt_get(bzla, BZLA_OPT_SORT_EXP)) return 1;
   if (!bzla_node_is_binary_commutative_bv_kind(kind)) return 1;
   if (e[0] == e[1]) return 1;
   if (bzla_node_invert(e[0]) == e[1] && bzla_node_is_inverted(e[1])) return 1;
   return bzla_node_real_addr(e[0])->id <= bzla_node_real_addr(e[1])->id;
+}
+
+static bool
+is_sorted_binary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
+{
+  if (!bzla_opt_get(bzla, BZLA_OPT_SORT_EXP)) return 1;
+  if (!bzla_node_is_binary_commutative_fp_kind(kind)) return 1;
+  if (e[1] == e[2]) return 1;
+  if (bzla_node_invert(e[1]) == e[2] && bzla_node_is_inverted(e[2])) return 1;
+  return bzla_node_real_addr(e[1])->id <= bzla_node_real_addr(e[2])->id;
+}
+
+static bool
+is_sorted_fp_fma_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
+{
+  if (!bzla_opt_get(bzla, BZLA_OPT_SORT_EXP)) return 1;
+  if (kind != BZLA_FP_FMA_NODE) return 1;
+  if (e[1] == e[2]) return 1;
+  if (bzla_node_invert(e[1]) == e[2] && bzla_node_is_inverted(e[2])) return 1;
+  return bzla_node_real_addr(e[1])->id <= bzla_node_real_addr(e[2])->id;
 }
 
 /*------------------------------------------------------------------------*/
@@ -1817,9 +1837,17 @@ find_bv_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
   assert(kind != BZLA_FP_TO_FP_INT_NODE);
   assert(kind != BZLA_FP_TO_FP_UINT_NODE);
 
-  if (!is_sorted_bv_exp(bzla, kind, e))
+  if (!is_sorted_binary_bv_exp(bzla, kind, e))
   {
     BZLA_SWAP(BzlaNode *, e[0], e[1]);
+  }
+  if (!is_sorted_binary_fp_exp(bzla, kind, e))
+  {
+    BZLA_SWAP(BzlaNode *, e[1], e[2]);
+  }
+  else if (!is_sorted_fp_fma_exp(bzla, kind, e))
+  {
+    BZLA_SWAP(BzlaNode *, e[1], e[2]);
   }
 
   hash = hash_bv_fp_exp(bzla, kind, arity, e);

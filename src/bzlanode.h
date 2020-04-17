@@ -208,7 +208,6 @@ struct BzlaRMConstNode
 {
   BZLA_NODE_STRUCT;
   BzlaRoundingMode rm;
-  // BzlaBitVector *rm;
 };
 typedef struct BzlaRMConstNode BzlaRMConstNode;
 
@@ -346,11 +345,24 @@ bzla_node_is_binary_kind(BzlaNodeKind kind)
   return kind >= BZLA_BV_AND_NODE && kind <= BZLA_LAMBDA_NODE;
 }
 
-/** Return true if given kind is a binary commutative kind (arity == 2). */
+/**
+ * Return true if given kind is a binary commutative bit-vector kind (arity ==
+ * 2).
+ */
 static inline bool
 bzla_node_is_binary_commutative_bv_kind(BzlaNodeKind kind)
 {
   return kind >= BZLA_BV_AND_NODE && kind <= BZLA_BV_MUL_NODE;
+}
+
+/**
+ * Return true if given kind is a binary commutative floating-point kind
+ * (arity == 2).
+ */
+static inline bool
+bzla_node_is_binary_commutative_fp_kind(BzlaNodeKind kind)
+{
+  return kind == BZLA_FP_ADD_NODE || kind == BZLA_FP_MUL_NODE;
 }
 
 /** Return true if given kind is a ternary kind (arity == 3). */
