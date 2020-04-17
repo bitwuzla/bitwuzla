@@ -593,7 +593,7 @@ static BzlaNode *rewrite_cond_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
 
 /*
  * match:  binary bv op with two constants
- * result: constant
+ * result: bit-vector constant
  */
 static inline bool
 applies_const_binary_bv_exp(Bzla *bzla,
@@ -656,7 +656,7 @@ apply_const_binary_bv_exp(Bzla *bzla,
 
 /*
  * match:  unary fp op with one floating-point constant
- * result: constant
+ * result: floating-point constant
  */
 static inline bool
 applies_const_unary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
@@ -688,7 +688,7 @@ apply_const_unary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 
 /*
  * match:  unary tester fp op with one floating-point constant
- * result: constant
+ * result: bool constant
  */
 static inline bool
 applies_const_fp_tester_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
@@ -736,8 +736,46 @@ apply_const_fp_tester_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 }
 
 /*
+ * match:  binary fp op with two floating-point constant
+ * result: bool constant
+ */
+static inline bool
+applies_const_binary_fp_bool_exp(Bzla *bzla,
+                                 BzlaNodeKind kind,
+                                 BzlaNode *e0,
+                                 BzlaNode *e1)
+{
+  (void) bzla;
+  (void) kind;
+  return bzla_node_is_fp_const(e0) && bzla_node_is_fp_const(e1);
+}
+
+static inline BzlaNode *
+apply_const_binary_fp_bool_exp(Bzla *bzla,
+                               BzlaNodeKind kind,
+                               BzlaNode *e0,
+                               BzlaNode *e1)
+{
+  assert(applies_const_binary_fp_bool_exp(bzla, kind, e0, e1));
+  assert(bzla_node_is_regular(e0));
+
+  bool bres;
+  BzlaNode *result;
+
+  switch (kind)
+  {
+    case BZLA_FP_LTE_NODE:
+      bres = bzla_fp_lte(bzla, bzla_fp_get_fp(e0), bzla_fp_get_fp(e1));
+      break;
+    default: assert(0);  // temporary
+  }
+  result = bres ? bzla_exp_true(bzla) : bzla_exp_false(bzla);
+  return result;
+}
+
+/*
  * match:  binary fp op with two floating-point constants
- * result: constant
+ * result: floating-point constant
  */
 static inline bool
 applies_const_binary_fp_rm_exp(Bzla *bzla,
@@ -782,7 +820,7 @@ apply_const_binary_fp_rm_exp(Bzla *bzla,
 
 /*
  * match:  binary fp op with one rounding mode and one floating-point constant
- * result: constant
+ * result: floating-point constant
  */
 static inline bool
 applies_const_binary_fp_exp(Bzla *bzla,
@@ -822,7 +860,7 @@ apply_const_binary_fp_exp(Bzla *bzla,
 
 /*
  * match:  ternary fp op with one rounding mode and two floating-point constants
- * result: constant
+ * result: floating-point constant
  */
 static inline bool
 applies_const_ternary_fp_exp(
@@ -875,7 +913,7 @@ apply_const_ternary_fp_exp(
 
 /*
  * match:  fp fma op with one rounding mode and three floating-point constants
- * result: constant
+ * result: floating-point constant
  */
 static inline bool
 applies_const_fp_fma_exp(
@@ -8044,6 +8082,7 @@ rewrite_fp_lte_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
   if (!result)
   {
+    ADD_RW_RULE(const_binary_fp_bool_exp, BZLA_FP_LTE_NODE, e0, e1);
     ADD_RW_RULE(fp_lte, e0, e1);
 
     assert(!result);

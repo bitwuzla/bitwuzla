@@ -106,6 +106,10 @@ bool bzla_fp_is_neg(Bzla *bzla, const BzlaFloatingPoint *fp);
 /** Returns true if given floating-point represents a positive value. */
 bool bzla_fp_is_pos(Bzla *bzla, const BzlaFloatingPoint *fp);
 
+/** Returns true if floating-point constant fp0 is less than or equal fp1. */
+bool bzla_fp_lte(Bzla *bzla,
+                 const BzlaFloatingPoint *fp0,
+                 const BzlaFloatingPoint *fp1);
 /**
  * Create a floating-point constant node representing zero.
  * sign: false for +zero and true for -zero.
