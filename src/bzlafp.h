@@ -154,6 +154,15 @@ BzlaFloatingPoint *bzla_fp_mul(Bzla *bzla,
                                const BzlaFloatingPoint *fp0,
                                const BzlaFloatingPoint *fp1);
 
+/**
+ * Create a floating-point constant node representing the division of the
+ * given floating-point constants w.r.t. to given rounding mode.
+ */
+BzlaFloatingPoint *bzla_fp_div(Bzla *bzla,
+                               const BzlaRoundingMode rm,
+                               const BzlaFloatingPoint *fp0,
+                               const BzlaFloatingPoint *fp1);
+
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */
 /* -------------------------------------------------------------------------- */

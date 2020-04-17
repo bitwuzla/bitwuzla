@@ -2307,10 +2307,15 @@ bzla_exp_fp_div(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   e2 = bzla_simplify_exp(bzla, e2);
-  return bzla_node_create_fp_div(bzla, e0, e1, e2);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    result = bzla_rewrite_ternary_exp(bzla, BZLA_FP_DIV_NODE, e0, e1, e2);
+  else
+    result = bzla_node_create_fp_div(bzla, e0, e1, e2);
+  return result;
 }
 
 BzlaNode *
