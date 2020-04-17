@@ -145,6 +145,14 @@ BzlaFloatingPoint *bzla_fp_sqrt(Bzla *bzla,
                                 const BzlaFloatingPoint *fp);
 
 /**
+ * Create a floating-point constant node representing the round to integral of
+ * the given floating-point constant w.r.t. to the given rounding mode.
+ */
+BzlaFloatingPoint *bzla_fp_rti(Bzla *bzla,
+                               const BzlaRoundingMode rm,
+                               const BzlaFloatingPoint *fp);
+
+/**
  * Create a floating-point constant node representing the addition of the
  * given floating-point constants w.r.t. given rounding mode.
  */

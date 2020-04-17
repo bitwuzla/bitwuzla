@@ -577,6 +577,7 @@ static BzlaNode *rewrite_fp_lte_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_lt_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_rem_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_sqrt_exp(Bzla *, BzlaNode *, BzlaNode *);
+static BzlaNode *rewrite_fp_rti_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_add_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_mul_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_div_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
@@ -718,6 +719,10 @@ apply_const_binary_fp_rm_exp(Bzla *bzla,
     case BZLA_FP_SQRT_NODE:
       fpres =
           bzla_fp_sqrt(bzla, bzla_node_rm_const_get_rm(e0), bzla_fp_get_fp(e1));
+      break;
+    case BZLA_FP_RTI_NODE:
+      fpres =
+          bzla_fp_rti(bzla, bzla_node_rm_const_get_rm(e0), bzla_fp_get_fp(e1));
       break;
     default: assert(0);  // temporary
   }
@@ -8063,6 +8068,46 @@ rewrite_fp_sqrt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 }
 
 static BzlaNode *
+rewrite_fp_rti_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+
+  BzlaNode *result = 0;
+
+  e0 = bzla_simplify_exp(bzla, e0);
+  e1 = bzla_simplify_exp(bzla, e1);
+
+  result = check_rw_cache(
+      bzla, BZLA_FP_RTI_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+
+  if (!result)
+  {
+    ADD_RW_RULE(const_binary_fp_rm_exp, BZLA_FP_RTI_NODE, e0, e1);
+
+    assert(!result);
+    if (!result)
+    {
+      result = bzla_node_create_fp_sqrt(bzla, e0, e1);
+    }
+    else
+    {
+    DONE:
+      bzla_rw_cache_add(bzla->rw_cache,
+                        BZLA_FP_RTI_NODE,
+                        bzla_node_get_id(e0),
+                        bzla_node_get_id(e1),
+                        0,
+                        0,
+                        bzla_node_get_id(result));
+    }
+  }
+  assert(result);
+  return result;
+}
+
+static BzlaNode *
 rewrite_fp_add_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
   assert(bzla);
@@ -8555,6 +8600,7 @@ bzla_rewrite_binary_exp(Bzla *bzla,
     case BZLA_FP_LT_NODE: result = rewrite_fp_lt_exp(bzla, e0, e1); break;
     case BZLA_FP_REM_NODE: result = rewrite_fp_rem_exp(bzla, e0, e1); break;
     case BZLA_FP_SQRT_NODE: result = rewrite_fp_sqrt_exp(bzla, e0, e1); break;
+    case BZLA_FP_RTI_NODE: result = rewrite_fp_rti_exp(bzla, e0, e1); break;
 
     case BZLA_APPLY_NODE: result = rewrite_apply_exp(bzla, e0, e1); break;
 
