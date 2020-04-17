@@ -825,6 +825,42 @@ apply_const_ternary_fp_exp(
 }
 
 /*
+ * match:  fp fma op with one rounding mode and three floating-point constants
+ * result: constant
+ */
+static inline bool
+applies_const_fp_fma_exp(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3)
+{
+  (void) bzla;
+  return bzla_node_is_rm_const(e0) && bzla_node_is_fp_const(e1)
+         && bzla_node_is_fp_const(e2) && bzla_node_is_fp_const(e3);
+}
+
+static inline BzlaNode *
+apply_const_fp_fma_exp(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3)
+{
+  assert(applies_const_fp_fma_exp(bzla, e0, e1, e2, e3));
+  assert(bzla_node_is_regular(e0));
+  assert(bzla_node_is_regular(e1));
+  assert(bzla_node_is_regular(e2));
+  assert(bzla_node_is_regular(e3));
+
+  BzlaFloatingPoint *fpres;
+  BzlaNode *result;
+
+  fpres  = bzla_fp_fma(bzla,
+                      bzla_node_rm_const_get_rm(e0),
+                      bzla_fp_get_fp(e1),
+                      bzla_fp_get_fp(e2),
+                      bzla_fp_get_fp(e3));
+  result = bzla_exp_fp_const_fp(bzla, fpres);
+  bzla_fp_free(bzla, fpres);
+  return result;
+}
+
+/*
  * match:  binary op with one constant
  * result: constant
  */
@@ -8681,4 +8717,54 @@ bzla_rewrite_ternary_exp(
   }
   bzla->time.rewrite += bzla_util_time_stamp() - start;
   return res;
+}
+
+BzlaNode *
+bzla_rewrite_fp_fma_exp(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3)
+{
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+  assert(e2);
+  assert(e3);
+  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+
+  BzlaNode *result = 0;
+
+  e0 = bzla_simplify_exp(bzla, e0);
+  e1 = bzla_simplify_exp(bzla, e1);
+  e2 = bzla_simplify_exp(bzla, e2);
+  e3 = bzla_simplify_exp(bzla, e3);
+
+  result = check_rw_cache(bzla,
+                          BZLA_FP_FMA_NODE,
+                          bzla_node_get_id(e0),
+                          bzla_node_get_id(e1),
+                          bzla_node_get_id(e2),
+                          bzla_node_get_id(e3));
+
+  if (!result)
+  {
+    ADD_RW_RULE(const_fp_fma_exp, e0, e1, e2, e3);
+
+    assert(!result);
+    if (!result)
+    {
+      result = bzla_node_create_fp_fma(bzla, e0, e1, e2, e3);
+    }
+    else
+    {
+    DONE:
+      bzla_rw_cache_add(bzla->rw_cache,
+                        BZLA_FP_FMA_NODE,
+                        bzla_node_get_id(e0),
+                        bzla_node_get_id(e1),
+                        bzla_node_get_id(e2),
+                        bzla_node_get_id(e3),
+                        bzla_node_get_id(result));
+    }
+  }
+  assert(result);
+  return result;
 }

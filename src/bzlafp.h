@@ -187,6 +187,17 @@ BzlaFloatingPoint *bzla_fp_div(Bzla *bzla,
                                const BzlaFloatingPoint *fp0,
                                const BzlaFloatingPoint *fp1);
 
+/**
+ * Create a floating-point constant node representing the fused multiplication
+ * and addition operation of the given floating-point constants w.r.t. to the
+ * given rounding mode.
+ */
+BzlaFloatingPoint *bzla_fp_fma(Bzla *bzla,
+                               const BzlaRoundingMode rm,
+                               const BzlaFloatingPoint *fp0,
+                               const BzlaFloatingPoint *fp1,
+                               const BzlaFloatingPoint *fp2);
+
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */
 /* -------------------------------------------------------------------------- */

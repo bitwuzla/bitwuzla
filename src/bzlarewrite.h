@@ -31,6 +31,9 @@ BzlaNode *bzla_rewrite_binary_exp(Bzla *bzla,
 BzlaNode *bzla_rewrite_ternary_exp(
     Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2);
 
+BzlaNode *bzla_rewrite_fp_fma_exp(
+    Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3);
+
 bool bzla_rewrite_linear_bv_term(Bzla *bzla,
                                  BzlaNode *term,
                                  BzlaBitVector **fp,
