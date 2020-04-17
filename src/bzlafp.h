@@ -153,6 +153,14 @@ BzlaFloatingPoint *bzla_fp_rti(Bzla *bzla,
                                const BzlaFloatingPoint *fp);
 
 /**
+ * Create a floating-point constant node representing the remainder operation
+ * of the given floating-point constants.
+ */
+BzlaFloatingPoint *bzla_fp_rem(Bzla *bzla,
+                               const BzlaFloatingPoint *fp0,
+                               const BzlaFloatingPoint *fp1);
+
+/**
  * Create a floating-point constant node representing the addition of the
  * given floating-point constants w.r.t. given rounding mode.
  */

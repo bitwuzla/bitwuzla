@@ -3355,6 +3355,34 @@ bzla_fp_rti(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
 }
 
 BzlaFloatingPoint *
+bzla_fp_rem(Bzla *bzla,
+            const BzlaFloatingPoint *fp0,
+            const BzlaFloatingPoint *fp1)
+{
+  assert(bzla);
+  assert(fp0);
+  assert(fp1);
+  assert(fp0->size->exponentWidth() == fp1->size->exponentWidth());
+  assert(fp0->size->significandWidth() == fp1->size->significandWidth());
+
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  BZLA_CNEW(bzla->mm, res);
+  res->size = new BzlaFloatingPointSize(fp0->size->exponentWidth(),
+                                        fp0->size->significandWidth());
+  res->fp   = new BzlaUnpackedFloat(
+      symfpu::remainder<BzlaFPTraits>(*res->size, *fp0->fp, *fp1->fp));
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) bzla;
+  (void) fp;
+  res = nullptr;
+#endif
+  return res;
+}
+
+BzlaFloatingPoint *
 bzla_fp_add(Bzla *bzla,
             const BzlaRoundingMode rm,
             const BzlaFloatingPoint *fp0,

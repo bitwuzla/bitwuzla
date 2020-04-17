@@ -655,7 +655,7 @@ apply_const_binary_bv_exp(Bzla *bzla,
 }
 
 /*
- * match:  unary fp op with one constant
+ * match:  unary fp op with one floating-point constant
  * result: constant
  */
 static inline bool
@@ -687,7 +687,7 @@ apply_const_unary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 }
 
 /*
- * match:  binary fp op with two constants
+ * match:  binary fp op with two floating-point constants
  * result: constant
  */
 static inline bool
@@ -732,7 +732,47 @@ apply_const_binary_fp_rm_exp(Bzla *bzla,
 }
 
 /*
- * match:  ternary fp op with three constants
+ * match:  binary fp op with one rounding mode and one floating-point constant
+ * result: constant
+ */
+static inline bool
+applies_const_binary_fp_exp(Bzla *bzla,
+                            BzlaNodeKind kind,
+                            BzlaNode *e0,
+                            BzlaNode *e1)
+{
+  (void) bzla;
+  (void) kind;
+  return bzla_node_is_fp_const(e0) && bzla_node_is_fp_const(e1);
+}
+
+static inline BzlaNode *
+apply_const_binary_fp_exp(Bzla *bzla,
+                          BzlaNodeKind kind,
+                          BzlaNode *e0,
+                          BzlaNode *e1)
+{
+  assert(applies_const_binary_fp_exp(bzla, kind, e0, e1));
+  assert(bzla_node_is_regular(e0));
+  assert(bzla_node_is_regular(e1));
+
+  BzlaFloatingPoint *fpres;
+  BzlaNode *result;
+
+  switch (kind)
+  {
+    case BZLA_FP_REM_NODE:
+      fpres = bzla_fp_rem(bzla, bzla_fp_get_fp(e0), bzla_fp_get_fp(e1));
+      break;
+    default: assert(0);  // temporary
+  }
+  result = bzla_exp_fp_const_fp(bzla, fpres);
+  bzla_fp_free(bzla, fpres);
+  return result;
+}
+
+/*
+ * match:  ternary fp op with one rounding mode and two floating-point constants
  * result: constant
  */
 static inline bool
@@ -7998,6 +8038,7 @@ rewrite_fp_rem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
   if (!result)
   {
+    ADD_RW_RULE(const_binary_fp_exp, BZLA_FP_REM_NODE, e0, e1);
     ADD_RW_RULE(fp_rem_same_divisor, e0, e1);
     ADD_RW_RULE(fp_rem_sign_divisor, e0, e1);
     ADD_RW_RULE(fp_rem_neg, e0, e1);
