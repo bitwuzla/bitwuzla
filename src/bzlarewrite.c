@@ -576,6 +576,7 @@ static BzlaNode *rewrite_fp_max_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_lte_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_lt_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_rem_exp(Bzla *, BzlaNode *, BzlaNode *);
+static BzlaNode *rewrite_fp_add_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_apply_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_lambda_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_forall_exp(Bzla *, BzlaNode *, BzlaNode *);
@@ -650,7 +651,7 @@ apply_const_binary_bv_exp(Bzla *bzla,
 }
 
 /*
- * match:  binary fp op with two constants
+ * match:  unary fp op with one constant
  * result: constant
  */
 static inline bool
@@ -674,6 +675,47 @@ apply_const_unary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
   {
     case BZLA_FP_ABS_NODE: fpres = bzla_fp_abs(bzla, bzla_fp_get_fp(e0)); break;
     case BZLA_FP_NEG_NODE: fpres = bzla_fp_neg(bzla, bzla_fp_get_fp(e0)); break;
+    default: assert(0);  // temporary
+  }
+  result = bzla_exp_fp_const_fp(bzla, fpres);
+  bzla_fp_free(bzla, fpres);
+  return result;
+}
+
+/*
+ * match:  ternary fp op with three constants
+ * result: constant
+ */
+static inline bool
+applies_const_ternary_fp_exp(
+    Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+  (void) bzla;
+  (void) kind;
+  return bzla_node_is_rm_const(e0) && bzla_node_is_fp_const(e1)
+         && bzla_node_is_fp_const(e2);
+}
+
+static inline BzlaNode *
+apply_const_ternary_fp_exp(
+    Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+  assert(applies_const_ternary_fp_exp(bzla, kind, e0, e1, e2));
+  assert(bzla_node_is_regular(e0));
+  assert(bzla_node_is_regular(e1));
+  assert(bzla_node_is_regular(e2));
+
+  BzlaFloatingPoint *fpres;
+  BzlaNode *result;
+
+  switch (kind)
+  {
+    case BZLA_FP_ADD_NODE:
+      fpres = bzla_fp_add(bzla,
+                          bzla_node_rm_const_get_rm(e0),
+                          bzla_fp_get_fp(e1),
+                          bzla_fp_get_fp(e2));
+      break;
     default: assert(0);  // temporary
   }
   result = bzla_exp_fp_const_fp(bzla, fpres);
@@ -7920,6 +7962,52 @@ rewrite_fp_rem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   return result;
 }
 
+static BzlaNode *
+rewrite_fp_add_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
+{
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+  assert(e2);
+
+  BzlaNode *result = 0;
+
+  e0 = bzla_simplify_exp(bzla, e0);
+  e1 = bzla_simplify_exp(bzla, e1);
+  e2 = bzla_simplify_exp(bzla, e2);
+
+  result = check_rw_cache(bzla,
+                          BZLA_FP_ADD_NODE,
+                          bzla_node_get_id(e0),
+                          bzla_node_get_id(e1),
+                          bzla_node_get_id(e2),
+                          0);
+
+  if (!result)
+  {
+    ADD_RW_RULE(const_ternary_fp_exp, BZLA_FP_ADD_NODE, e0, e1, e2);
+
+    assert(!result);
+    if (!result)
+    {
+      result = bzla_node_create_fp_add(bzla, e0, e1, e2);
+    }
+    else
+    {
+    DONE:
+      bzla_rw_cache_add(bzla->rw_cache,
+                        BZLA_FP_ADD_NODE,
+                        bzla_node_get_id(e0),
+                        bzla_node_get_id(e1),
+                        bzla_node_get_id(e2),
+                        0,
+                        bzla_node_get_id(result));
+    }
+  }
+  assert(result);
+  return result;
+}
+
 /* -------------------------------------------------------------------------- */
 
 static BzlaNode *
@@ -8295,17 +8383,20 @@ bzla_rewrite_ternary_exp(
     Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
   assert(bzla);
-  assert(kind);
-  assert(kind == BZLA_COND_NODE);
   assert(e0);
   assert(e1);
   assert(e2);
   assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
-  (void) kind;
 
   BzlaNode *res;
   double start = bzla_util_time_stamp();
-  res          = rewrite_cond_exp(bzla, e0, e1, e2);
+  switch (kind)
+  {
+    case BZLA_FP_ADD_NODE: res = rewrite_fp_add_exp(bzla, e0, e1, e2); break;
+    default:
+      assert(kind == BZLA_COND_NODE);
+      res = rewrite_cond_exp(bzla, e0, e1, e2);
+  }
   bzla->time.rewrite += bzla_util_time_stamp() - start;
   return res;
 }

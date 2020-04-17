@@ -136,6 +136,15 @@ BzlaFloatingPoint *bzla_fp_abs(Bzla *bzla, const BzlaFloatingPoint *fp);
  */
 BzlaFloatingPoint *bzla_fp_neg(Bzla *bzla, const BzlaFloatingPoint *fp);
 
+/**
+ * Create a floating-point constant node representing the addition of the
+ * given floating-point constants.
+ */
+BzlaFloatingPoint *bzla_fp_add(Bzla *bzla,
+                               const BzlaRoundingMode rm,
+                               const BzlaFloatingPoint *fp0,
+                               const BzlaFloatingPoint *fp1);
+
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */
 /* -------------------------------------------------------------------------- */
