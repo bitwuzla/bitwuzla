@@ -767,6 +767,9 @@ apply_const_binary_fp_bool_exp(Bzla *bzla,
     case BZLA_FP_LTE_NODE:
       bres = bzla_fp_lte(bzla, bzla_fp_get_fp(e0), bzla_fp_get_fp(e1));
       break;
+    case BZLA_FP_LT_NODE:
+      bres = bzla_fp_lt(bzla, bzla_fp_get_fp(e0), bzla_fp_get_fp(e1));
+      break;
     default: assert(0);  // temporary
   }
   result = bres ? bzla_exp_true(bzla) : bzla_exp_false(bzla);
@@ -8123,6 +8126,7 @@ rewrite_fp_lt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
   if (!result)
   {
+    ADD_RW_RULE(const_binary_fp_bool_exp, BZLA_FP_LT_NODE, e0, e1);
     ADD_RW_RULE(fp_lt, e0, e1);
 
     assert(!result);
