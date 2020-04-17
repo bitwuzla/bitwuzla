@@ -2375,8 +2375,17 @@ bzla_exp_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  return bzla_node_create_fp_to_fp_from_bv(bzla, node, sort);
+  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  {
+    result = bzla_rewrite_fp_to_fp_exp(bzla, BZLA_FP_TO_FP_BV_NODE, node, sort);
+  }
+  else
+  {
+    result = bzla_node_create_fp_to_fp_from_bv(bzla, node, sort);
+  }
+  return result;
 }
 
 BzlaNode *

@@ -736,6 +736,35 @@ apply_const_fp_tester_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 }
 
 /*
+ * match:  unary tester fp to_fp from bv op with one bit-vector constant
+ * result: floating-point constant
+ */
+static inline bool
+applies_const_fp_to_fp_bv_exp(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
+{
+  (void) bzla;
+  (void) sort;
+  return bzla_node_is_bv_const(e0);
+}
+
+static inline BzlaNode *
+apply_const_fp_to_fp_bv_exp(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
+{
+  assert(applies_const_fp_to_fp_bv_exp(bzla, e0, sort));
+
+  BzlaFloatingPoint *fpres;
+  BzlaBitVector *bits;
+  BzlaNode *result;
+
+  bits = bzla_node_is_regular(e0) ? bzla_node_bv_const_get_bits(e0)
+                                  : bzla_node_bv_const_get_invbits(e0);
+  fpres  = bzla_fp_from_bv(bzla, sort, bits);
+  result = bzla_exp_fp_const_fp(bzla, fpres);
+  bzla_fp_free(bzla, fpres);
+  return result;
+}
+
+/*
  * match:  binary fp op with two floating-point constant
  * result: bool constant
  */
@@ -7994,6 +8023,49 @@ rewrite_fp_tester_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 }
 
 static BzlaNode *
+rewrite_fp_to_fp_bv_exp(Bzla *bzla,
+                        BzlaNodeKind kind,
+                        BzlaNode *e0,
+                        BzlaSortId sort)
+{
+  assert(bzla);
+  assert(e0);
+  assert(sort);
+
+  BzlaNode *result = 0;
+  double start     = bzla_util_time_stamp();
+
+  e0 = bzla_simplify_exp(bzla, e0);
+
+  result = check_rw_cache(bzla, kind, bzla_node_get_id(e0), sort, 0, 0);
+
+  if (!result)
+  {
+    ADD_RW_RULE(const_fp_to_fp_bv_exp, e0, sort);
+
+    assert(!result);
+    if (!result)
+    {
+      result = bzla_node_create_fp_to_fp_from_bv(bzla, e0, sort);
+    }
+    else
+    {
+    DONE:
+      bzla_rw_cache_add(bzla->rw_cache,
+                        kind,
+                        bzla_node_get_id(e0),
+                        sort,
+                        0,
+                        0,
+                        bzla_node_get_id(result));
+    }
+  }
+  assert(result);
+  bzla->time.rewrite += bzla_util_time_stamp() - start;
+  return result;
+}
+
+static BzlaNode *
 rewrite_fp_min_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   assert(bzla);
@@ -8829,6 +8901,7 @@ bzla_rewrite_fp_fma_exp(
   assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
 
   BzlaNode *result = 0;
+  double start     = bzla_util_time_stamp();
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -8864,5 +8937,30 @@ bzla_rewrite_fp_fma_exp(
     }
   }
   assert(result);
+  bzla->time.rewrite += bzla_util_time_stamp() - start;
   return result;
+}
+
+BzlaNode *
+bzla_rewrite_fp_to_fp_exp(Bzla *bzla,
+                          BzlaNodeKind kind,
+                          BzlaNode *e0,
+                          BzlaSortId sort)
+{
+  assert(bzla);
+  assert(e0);
+  assert(sort);
+  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+
+  BzlaNode *res;
+  double start = bzla_util_time_stamp();
+  switch (kind)
+  {
+    case BZLA_FP_TO_FP_BV_NODE:
+      res = rewrite_fp_to_fp_bv_exp(bzla, kind, e0, sort);
+      break;
+    default: assert(0);
+  }
+  bzla->time.rewrite += bzla_util_time_stamp() - start;
+  return res;
 }

@@ -15,8 +15,11 @@
 
 /* Cache entry that stores the result of rewriting a node with kind 'kind' and
  * it's children 'n'.
- * Note: In the case of BZLA_SLICE_NODE n[1] and n[2] are the upper and lower
- * indices. */
+ *
+ * Note:
+ * - BZLA_SLICE_NODE: n[1] and n[2] are the upper and lower indices.
+ * - BZLA_FP_TO_FP_*_NODE: n[2] is the sort of the conversion.
+ */
 struct BzlaRwCacheTuple
 {
   BzlaNodeKind kind;

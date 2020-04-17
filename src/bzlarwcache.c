@@ -60,11 +60,15 @@ bzla_rw_cache_get(BzlaRwCache *rwc,
 {
 #ifndef NDEBUG
   assert(!nid0 || is_valid_node(rwc->bzla, nid0));
-  /* For slice nodes nid1 and nid2 correspond to the upper/lower indices. */
   if (kind != BZLA_BV_SLICE_NODE)
   {
+    /* For slice nodes nid1 and nid2 correspond to the upper/lower indices. */
     assert(!nid1 || is_valid_node(rwc->bzla, nid1));
-    assert(!nid2 || is_valid_node(rwc->bzla, nid2));
+    /* For to_fp nodes, nid2 correspond to the sort of the conversion. */
+    if (kind != BZLA_FP_TO_FP_BV_NODE)
+    {
+      assert(!nid2 || is_valid_node(rwc->bzla, nid2));
+    }
   }
   assert(!nid3 || is_valid_node(rwc->bzla, nid3));
 #endif
