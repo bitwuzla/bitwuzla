@@ -386,7 +386,7 @@ hash_bv_fp_exp(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
   uint32_t i;
 #ifndef NDEBUG
   if (bzla_opt_get(bzla, BZLA_OPT_SORT_EXP) > 0
-      && bzla_node_is_binary_commutative_kind(kind))
+      && bzla_node_is_binary_commutative_bv_kind(kind))
     assert(arity == 2),
         assert(bzla_node_real_addr(e[0])->id <= bzla_node_real_addr(e[1])->id);
 #else
@@ -1616,7 +1616,7 @@ static bool
 is_sorted_bv_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
 {
   if (!bzla_opt_get(bzla, BZLA_OPT_SORT_EXP)) return 1;
-  if (!bzla_node_is_binary_commutative_kind(kind)) return 1;
+  if (!bzla_node_is_binary_commutative_bv_kind(kind)) return 1;
   if (e[0] == e[1]) return 1;
   if (bzla_node_invert(e[0]) == e[1] && bzla_node_is_inverted(e[1])) return 1;
   return bzla_node_real_addr(e[0])->id <= bzla_node_real_addr(e[1])->id;
@@ -1842,7 +1842,7 @@ find_bv_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
       if (equal) break;
 #ifndef NDEBUG
       if (bzla_opt_get(bzla, BZLA_OPT_SORT_EXP) > 0
-          && bzla_node_is_binary_commutative_kind(kind))
+          && bzla_node_is_binary_commutative_bv_kind(kind))
         assert(arity == 2),
             assert(e[0] == e[1] || bzla_node_invert(e[0]) == e[1]
                    || !(cur->e[0] == e[1] && cur->e[1] == e[0]));
@@ -2498,7 +2498,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
 
 #ifndef NDEBUG
   if (bzla_opt_get(bzla, BZLA_OPT_SORT_EXP) > 0
-      && bzla_node_is_binary_commutative_kind(kind))
+      && bzla_node_is_binary_commutative_bv_kind(kind))
     assert(arity == 2),
         assert(bzla_node_real_addr(e[0])->id <= bzla_node_real_addr(e[1])->id);
 #endif

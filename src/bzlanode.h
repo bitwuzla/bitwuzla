@@ -348,7 +348,7 @@ bzla_node_is_binary_kind(BzlaNodeKind kind)
 
 /** Return true if given kind is a binary commutative kind (arity == 2). */
 static inline bool
-bzla_node_is_binary_commutative_kind(BzlaNodeKind kind)
+bzla_node_is_binary_commutative_bv_kind(BzlaNodeKind kind)
 {
   return kind >= BZLA_BV_AND_NODE && kind <= BZLA_BV_MUL_NODE;
 }
@@ -383,7 +383,8 @@ static inline bool
 bzla_node_is_binary_commutative(const BzlaNode *exp)
 {
   assert(exp);
-  return bzla_node_is_binary_commutative_kind(bzla_node_real_addr(exp)->kind);
+  return bzla_node_is_binary_commutative_bv_kind(
+      bzla_node_real_addr(exp)->kind);
 }
 
 /** Return true if given node is of ternary kind (arity == 3). */
