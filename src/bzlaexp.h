@@ -485,6 +485,9 @@ BzlaNode *bzla_exp_fp_const(Bzla *bzla,
                             BzlaNode *e1,
                             BzlaNode *e2);
 
+/* Create floating-point const from BzlaFloatingPoint. */
+BzlaNode *bzla_exp_fp_const_fp(Bzla *bzla, const BzlaFloatingPoint *fp);
+
 /** Create floating-point fp.isNormal. */
 BzlaNode *bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *exp);
 

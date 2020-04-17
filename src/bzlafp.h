@@ -85,6 +85,8 @@ int32_t bzla_fp_compare(const BzlaFloatingPoint *a, const BzlaFloatingPoint *b);
 
 /* -------------------------------------------------------------------------- */
 
+BzlaFloatingPoint *bzla_fp_abs(Bzla *bzla, const BzlaFloatingPoint *fp);
+
 /** Returns true if given floating-point represents a zero value. */
 bool bzla_fp_is_zero(Bzla *bzla, const BzlaFloatingPoint *fp);
 

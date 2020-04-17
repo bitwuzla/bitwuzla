@@ -18,6 +18,7 @@
 #include "bzlacore.h"
 #include "bzladbg.h"
 #include "bzlaexp.h"
+#include "bzlafp.h"
 #include "bzlalog.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
@@ -645,6 +646,37 @@ apply_const_binary_bv_exp(Bzla *bzla,
   if (invert_b1) bzla_bv_free(mm, b1);
   result = bzla_exp_bv_const(bzla, bresult);
   bzla_bv_free(mm, bresult);
+  return result;
+}
+
+/*
+ * match:  binary fp op with two constants
+ * result: constant
+ */
+static inline bool
+applies_const_unary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
+{
+  (void) bzla;
+  (void) kind;
+  return bzla_node_is_fp_const(e0);
+}
+
+static inline BzlaNode *
+apply_const_unary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
+{
+  assert(applies_const_unary_fp_exp(bzla, kind, e0));
+  assert(bzla_node_is_regular(e0));
+
+  BzlaFloatingPoint *fpres;
+  BzlaNode *result;
+
+  switch (kind)
+  {
+    case BZLA_FP_ABS_NODE: fpres = bzla_fp_abs(bzla, bzla_fp_get_fp(e0)); break;
+    default: assert(0);  // temporary
+  }
+  result = bzla_exp_fp_const_fp(bzla, fpres);
+  bzla_fp_free(bzla, fpres);
   return result;
 }
 
@@ -7213,7 +7245,7 @@ SWAP_OPERANDS:
   {
     if (!swap_ops)
     {
-      ADD_RW_RULE(const_binary_exp, BZLA_BV_ADD_NODE, e0, e1);
+      ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_ADD_NODE, e0, e1);
       ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_ADD_NODE, e0, e1);
       ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_ADD_NODE, e0, e1);
       ADD_RW_RULE(bool_add, e0, e1);
@@ -7287,7 +7319,7 @@ SWAP_OPERANDS:
   {
     if (!swap_ops)
     {
-      ADD_RW_RULE(const_binary_exp, BZLA_BV_MUL_NODE, e0, e1);
+      ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_MUL_NODE, e0, e1);
       ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_MUL_NODE, e0, e1);
       ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_MUL_NODE, e0, e1);
       ADD_RW_RULE(bool_mul, e0, e1);
@@ -7361,7 +7393,7 @@ rewrite_bv_udiv_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     // TODO what about non powers of 2, like divisor 3, which means that
     // some upper bits are 0 ...
 
-    ADD_RW_RULE(const_binary_exp, BZLA_BV_UDIV_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_UDIV_NODE, e0, e1);
     ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_UDIV_NODE, e0, e1);
     ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_UDIV_NODE, e0, e1);
     ADD_RW_RULE(bool_udiv, e0, e1);
@@ -7420,7 +7452,7 @@ rewrite_bv_urem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     // TODO what about non powers of 2, like modulo 3, which means that
     // all but the last two bits are zero
 
-    ADD_RW_RULE(const_binary_exp, BZLA_BV_UREM_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_UREM_NODE, e0, e1);
     ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_UREM_NODE, e0, e1);
     ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_UREM_NODE, e0, e1);
     ADD_RW_RULE(bool_urem, e0, e1);
@@ -7472,7 +7504,7 @@ rewrite_bv_concat_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_exp, BZLA_BV_CONCAT_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_CONCAT_NODE, e0, e1);
     ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_CONCAT_NODE, e0, e1);
     ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_CONCAT_NODE, e0, e1);
     ADD_RW_RULE(const_concat, e0, e1);
@@ -7518,7 +7550,7 @@ rewrite_bv_sll_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_exp, BZLA_BV_SLL_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_SLL_NODE, e0, e1);
     ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_SLL_NODE, e0, e1);
     ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_SLL_NODE, e0, e1);
     ADD_RW_RULE(const_sll, e0, e1);
@@ -7559,7 +7591,7 @@ rewrite_bv_srl_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_exp, BZLA_BV_SRL_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_SRL_NODE, e0, e1);
     ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_SRL_NODE, e0, e1);
     ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_SRL_NODE, e0, e1);
     ADD_RW_RULE(const_srl, e0, e1);
@@ -7904,6 +7936,7 @@ rewrite_fp_abs_exp(Bzla *bzla, BzlaNode *e0)
   if (!result)
   {
     ADD_RW_RULE(fp_abs, e0);
+    ADD_RW_RULE(const_unary_fp_exp, BZLA_FP_ABS_NODE, e0);
 
     assert(!result);
     if (!result)

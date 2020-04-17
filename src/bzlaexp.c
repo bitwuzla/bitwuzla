@@ -1774,7 +1774,7 @@ bzla_exp_rm_const(Bzla *bzla, BzlaRoundingMode rm)
 /*------------------------------------------------------------------------*/
 
 BzlaNode *
-exp_fp_const_aux(Bzla *bzla, const BzlaFloatingPoint *fp)
+bzla_exp_fp_const_fp(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   return bzla_node_create_fp_const(bzla, fp);
 }
@@ -1793,7 +1793,7 @@ bzla_exp_fp_pos_zero(Bzla *bzla, BzlaSortId sort)
   BzlaFloatingPoint *fp;
 
   fp     = bzla_fp_zero(bzla, sort, false);
-  result = exp_fp_const_aux(bzla, fp);
+  result = bzla_exp_fp_const_fp(bzla, fp);
   bzla_fp_free(bzla, fp);
   return result;
 }
@@ -1812,7 +1812,7 @@ bzla_exp_fp_neg_zero(Bzla *bzla, BzlaSortId sort)
   BzlaFloatingPoint *fp;
 
   fp     = bzla_fp_zero(bzla, sort, true);
-  result = exp_fp_const_aux(bzla, fp);
+  result = bzla_exp_fp_const_fp(bzla, fp);
   bzla_fp_free(bzla, fp);
   return result;
 }
@@ -1831,7 +1831,7 @@ bzla_exp_fp_pos_inf(Bzla *bzla, BzlaSortId sort)
   BzlaFloatingPoint *fp;
 
   fp     = bzla_fp_inf(bzla, sort, false);
-  result = exp_fp_const_aux(bzla, fp);
+  result = bzla_exp_fp_const_fp(bzla, fp);
   bzla_fp_free(bzla, fp);
   return result;
 }
@@ -1850,7 +1850,7 @@ bzla_exp_fp_neg_inf(Bzla *bzla, BzlaSortId sort)
   BzlaFloatingPoint *fp;
 
   fp     = bzla_fp_inf(bzla, sort, true);
-  result = exp_fp_const_aux(bzla, fp);
+  result = bzla_exp_fp_const_fp(bzla, fp);
   bzla_fp_free(bzla, fp);
   return result;
 }
@@ -1869,7 +1869,7 @@ bzla_exp_fp_nan(Bzla *bzla, BzlaSortId sort)
   BzlaFloatingPoint *fp;
 
   fp     = bzla_fp_nan(bzla, sort);
-  result = exp_fp_const_aux(bzla, fp);
+  result = bzla_exp_fp_const_fp(bzla, fp);
   bzla_fp_free(bzla, fp);
   return result;
 }
@@ -1922,7 +1922,7 @@ bzla_exp_fp_const(Bzla *bzla,
   swidth = 1 + bzla_bv_get_width(bv_e2_sig);
   sort   = bzla_sort_fp(bzla, ewidth, swidth);
   fp     = bzla_fp_from_bv(bzla, sort, concat);
-  result = exp_fp_const_aux(bzla, fp);
+  result = bzla_exp_fp_const_fp(bzla, fp);
 
   bzla_fp_free(bzla, fp);
   bzla_bv_free(bzla->mm, concat);
