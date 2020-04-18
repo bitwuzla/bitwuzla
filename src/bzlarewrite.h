@@ -39,6 +39,9 @@ BzlaNode *bzla_rewrite_unary_to_fp_exp(Bzla *bzla,
                                        BzlaNode *e0,
                                        BzlaSortId sort);
 
+BzlaNode *bzla_rewrite_binary_to_fp_exp(
+    Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort);
+
 bool bzla_rewrite_linear_bv_term(Bzla *bzla,
                                  BzlaNode *term,
                                  BzlaBitVector **fp,

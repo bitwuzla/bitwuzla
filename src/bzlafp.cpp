@@ -3607,6 +3607,31 @@ bzla_fp_fma(Bzla *bzla,
   return res;
 }
 
+BzlaFloatingPoint *
+bzla_fp_convert(Bzla *bzla,
+                BzlaSortId sort,
+                const BzlaRoundingMode rm,
+                const BzlaFloatingPoint *fp)
+{
+  assert(bzla);
+  assert(fp);
+
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  res     = bzla_fp_new(bzla, sort);
+  res->fp = new BzlaUnpackedFloat(symfpu::convertFloatToFloat<BzlaFPTraits>(
+      *fp->size, *res->size, rm, *fp->fp));
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) bzla;
+  (void) fp0;
+  (void) fp1;
+  res = nullptr;
+#endif
+  return res;
+}
+
 /* ========================================================================== */
 
 void *
