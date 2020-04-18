@@ -220,12 +220,32 @@ BzlaFloatingPoint *bzla_fp_fma(Bzla *bzla,
 
 /**
  * Create a floating-point constant of given sort converted from the given
- * floating-point constants w.r.t. to the given rounding mode.
+ * floating-point constant w.r.t. to the given rounding mode.
  */
 BzlaFloatingPoint *bzla_fp_convert(Bzla *bzla,
                                    BzlaSortId sort,
                                    const BzlaRoundingMode rm,
                                    const BzlaFloatingPoint *fp);
+
+/**
+ * Create a floating-point constant of given sort converted from the given
+ * bit-vector constant (interpreted as signed) w.r.t. to the given rounding
+ * mode.
+ */
+BzlaFloatingPoint *bzla_fp_convert_from_int(Bzla *bzla,
+                                            BzlaSortId sort,
+                                            const BzlaRoundingMode rm,
+                                            const BzlaBitVector *bv);
+
+/**
+ * Create a floating-point constant of given sort converted from the given
+ * bit-vector constant (interpreted as unsigned) w.r.t. to the given rounding
+ * mode.
+ */
+BzlaFloatingPoint *bzla_fp_convert_from_uint(Bzla *bzla,
+                                             BzlaSortId sort,
+                                             const BzlaRoundingMode rm,
+                                             const BzlaBitVector *bv);
 
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */

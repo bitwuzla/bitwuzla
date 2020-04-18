@@ -3614,6 +3614,7 @@ bzla_fp_convert(Bzla *bzla,
                 const BzlaFloatingPoint *fp)
 {
   assert(bzla);
+  assert(sort);
   assert(fp);
 
   BzlaFloatingPoint *res;
@@ -3625,8 +3626,66 @@ bzla_fp_convert(Bzla *bzla,
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
-  (void) fp0;
-  (void) fp1;
+  (void) rm;
+  (void) bv;
+  res = nullptr;
+#endif
+  return res;
+}
+
+BzlaFloatingPoint *
+bzla_fp_convert_from_uint(Bzla *bzla,
+                          BzlaSortId sort,
+                          const BzlaRoundingMode rm,
+                          const BzlaBitVector *bv)
+{
+  assert(bzla);
+  assert(sort);
+  assert(bv);
+
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  res = bzla_fp_new(bzla, sort);
+  /* Note: We must copy the bv here, because 1) the corresponding constructor
+   *       doesn't copy it but sets d_bv = bv and 2) the wrong constructor is
+   *       matched (const bool &val). */
+  res->fp = new BzlaUnpackedFloat(symfpu::convertUBVToFloat<BzlaFPTraits>(
+      *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) bzla;
+  (void) rm;
+  (void) bv;
+  res = nullptr;
+#endif
+  return res;
+}
+
+BzlaFloatingPoint *
+bzla_fp_convert_from_int(Bzla *bzla,
+                         BzlaSortId sort,
+                         const BzlaRoundingMode rm,
+                         const BzlaBitVector *bv)
+{
+  assert(bzla);
+  assert(sort);
+  assert(bv);
+
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  res = bzla_fp_new(bzla, sort);
+  /* Note: We must copy the bv here, because 1) the corresponding constructor
+   *       doesn't copy it but sets d_bv = bv and 2) the wrong constructor is
+   *       matched (const bool &val). */
+  res->fp = new BzlaUnpackedFloat(symfpu::convertSBVToFloat<BzlaFPTraits>(
+      *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
+  BzlaFPWordBlaster::unset_s_bzla();
+#else
+  (void) bzla;
+  (void) rm;
+  (void) bv;
   res = nullptr;
 #endif
   return res;
