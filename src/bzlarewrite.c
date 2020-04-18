@@ -8942,25 +8942,20 @@ bzla_rewrite_fp_fma_exp(
 }
 
 BzlaNode *
-bzla_rewrite_fp_to_fp_exp(Bzla *bzla,
-                          BzlaNodeKind kind,
-                          BzlaNode *e0,
-                          BzlaSortId sort)
+bzla_rewrite_unary_to_fp_exp(Bzla *bzla,
+                             BzlaNodeKind kind,
+                             BzlaNode *e0,
+                             BzlaSortId sort)
 {
   assert(bzla);
   assert(e0);
   assert(sort);
   assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+  assert(kind == BZLA_FP_TO_FP_BV_NODE);
 
   BzlaNode *res;
   double start = bzla_util_time_stamp();
-  switch (kind)
-  {
-    case BZLA_FP_TO_FP_BV_NODE:
-      res = rewrite_fp_to_fp_bv_exp(bzla, kind, e0, sort);
-      break;
-    default: assert(0);
-  }
+  res          = rewrite_fp_to_fp_bv_exp(bzla, kind, e0, sort);
   bzla->time.rewrite += bzla_util_time_stamp() - start;
   return res;
 }

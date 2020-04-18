@@ -2379,7 +2379,8 @@ bzla_exp_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
   {
-    result = bzla_rewrite_fp_to_fp_exp(bzla, BZLA_FP_TO_FP_BV_NODE, node, sort);
+    result =
+        bzla_rewrite_unary_to_fp_exp(bzla, BZLA_FP_TO_FP_BV_NODE, node, sort);
   }
   else
   {
