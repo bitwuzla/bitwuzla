@@ -1406,6 +1406,17 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "interactive parse mode");
   init_opt(bzla,
+           BZLA_OPT_LS_SHARE_SAT,
+           true,
+           true,
+           "ls-share-sat",
+           0,
+           0,
+           0,
+           1,
+           "share partial models determined via local search with "
+           "bit-blasting engine");
+  init_opt(bzla,
            BZLA_OPT_SAT_ENGINE_LGL_FORK,
            true,
            true,
@@ -1718,6 +1729,25 @@ bzla_opt_set(Bzla *bzla, const BzlaOption opt, uint32_t val)
       val = 0;
     }
     assert(!val || !bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL));
+  }
+  else if (val && opt == BZLA_OPT_LS_SHARE_SAT
+           && (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
+               || bzla_opt_get(bzla, BZLA_OPT_FUN_PRESLS)))
+  {
+    assert(bzla->bzla_sat_bzla_called == 0);
+    bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
+  }
+  else if (val && opt == BZLA_OPT_FUN_PREPROP
+           && bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT))
+  {
+    assert(bzla->bzla_sat_bzla_called == 0);
+    bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
+  }
+  else if (val && opt == BZLA_OPT_FUN_PRESLS
+           && bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT))
+  {
+    assert(bzla->bzla_sat_bzla_called == 0);
+    bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
   }
   else if (opt == BZLA_OPT_SAT_ENGINE)
   {
