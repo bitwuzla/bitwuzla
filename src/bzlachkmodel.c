@@ -288,8 +288,6 @@ bzla_check_model(BzlaCheckModelContext *ctx)
   while (clone->varsubst_constraints->count > 0)
     bzla_substitute_var_exps(clone);
 
-  bzla_opt_set(clone, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
-
   // bzla_print_model (bzla, "btor", stdout);
   sat_res = bzla_check_sat(clone, -1, -1);
   BZLA_ABORT(sat_res == BZLA_RESULT_UNSAT, "invalid model");
@@ -311,6 +309,7 @@ bzla_check_model_init(Bzla *bzla)
   bzla_opt_set(ctx->clone, BZLA_OPT_CHK_MODEL, 0);
   bzla_opt_set(ctx->clone, BZLA_OPT_CHK_FAILED_ASSUMPTIONS, 0);
   bzla_opt_set(ctx->clone, BZLA_OPT_PRINT_DIMACS, 0);
+  bzla_opt_set(ctx->clone, BZLA_OPT_EXTRACT_LAMBDAS, 0);
   bzla_set_term(ctx->clone, 0, 0);
 
   bzla_opt_set(ctx->clone, BZLA_OPT_ENGINE, BZLA_ENGINE_FUN);

@@ -2947,6 +2947,27 @@ update_sat_assignments (Bzla * bzla)
 }
 #endif
 
+static bool
+is_fp_logic(Bzla *bzla)
+{
+  BzlaNodeKind fp_ops[28] = {
+      BZLA_RM_EQ_NODE,       BZLA_FP_ABS_NODE,        BZLA_FP_IS_INF_NODE,
+      BZLA_FP_IS_NAN_NODE,   BZLA_FP_IS_NEG_NODE,     BZLA_FP_IS_NORM_NODE,
+      BZLA_FP_IS_POS_NODE,   BZLA_FP_IS_SUBNORM_NODE, BZLA_FP_IS_ZERO_NODE,
+      BZLA_FP_NEG_NODE,      BZLA_FP_TO_FP_BV_NODE,   BZLA_FP_EQ_NODE,
+      BZLA_FP_LTE_NODE,      BZLA_FP_LT_NODE,         BZLA_FP_MIN_NODE,
+      BZLA_FP_MAX_NODE,      BZLA_FP_SQRT_NODE,       BZLA_FP_REM_NODE,
+      BZLA_FP_RTI_NODE,      BZLA_FP_TO_SBV_NODE,     BZLA_FP_TO_UBV_NODE,
+      BZLA_FP_TO_FP_FP_NODE, BZLA_FP_TO_FP_INT_NODE,  BZLA_FP_TO_FP_UINT_NODE,
+      BZLA_FP_ADD_NODE,      BZLA_FP_MUL_NODE,        BZLA_FP_DIV_NODE,
+      BZLA_FP_FMA_NODE};
+  for (uint32_t i = 0; i < 28; i++)
+  {
+    if (bzla->ops[fp_ops[i]].cur > 0) return true;
+  }
+  return false;
+}
+
 int32_t
 bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 {
@@ -2979,6 +3000,13 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
     {
       bzla_assume_exp(bzla, BZLA_PEEK_STACK(bzla->assertions, i));
     }
+  }
+
+  // FIXME: this is temporary until we support FP handling with LOD for Lambdas
+  if (is_fp_logic(bzla))
+  {
+    BZLA_MSG(bzla->msg, 1, "found FP expressions, disable lambda extraction");
+    bzla_opt_set(bzla, BZLA_OPT_EXTRACT_LAMBDAS, 0);
   }
 
 #ifndef NDEBUG

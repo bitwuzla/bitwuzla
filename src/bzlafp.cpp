@@ -2183,6 +2183,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
   while (!to_visit.empty())
   {
     cur = bzla_node_real_addr(to_visit.back());
+    assert(!cur->parameterized);
     to_visit.pop_back();
 
     if (d_prop_map.find(cur) != d_prop_map.end()
