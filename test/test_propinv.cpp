@@ -224,7 +224,7 @@ class TestPropInv : public TestPropCommon
               bzla_bv_print(bv_t);
               std::cout << "pos_x:  " << pos_x << std::endl;
               std::cout << "inv_x:  ";
-              if (is_inv)
+              if (is_inv && bv_x)
               {
                 bzla_bv_print(bv_x);
               }
@@ -243,9 +243,16 @@ class TestPropInv : public TestPropCommon
 
             if (is_inv)
             {
-              bzla_node_release(bzla, c_x);
-              bzla_bv_free(mm, bv_x);
-              bzla_node_release(bzla, eq_x);
+              if (bv_x)
+              {
+                bzla_node_release(bzla, c_x);
+                bzla_bv_free(mm, bv_x);
+                bzla_node_release(bzla, eq_x);
+              }
+              else
+              {
+                assert(x_fun);
+              }
             }
 
             bzla_node_release(bzla, eq_t);
@@ -786,7 +793,7 @@ TEST_F(TestPropInv, inv_ult)
 }
 
 static BzlaNode *
-create_ult_sext(Bzla *bzla, BzlaSortId sort)
+create_sext(Bzla *bzla, BzlaSortId sort)
 {
   BzlaNode *var, *result;
   BzlaSortId var_sort;
@@ -802,7 +809,7 @@ create_ult_sext(Bzla *bzla, BzlaSortId sort)
 }
 
 static BzlaNode *
-create_ult_concat(Bzla *bzla, BzlaSortId sort)
+create_concat(Bzla *bzla, BzlaSortId sort)
 {
   BzlaNode *var0, *var1, *result;
   BzlaSortId sort0, sort1;
@@ -828,56 +835,56 @@ TEST_F(TestPropInv, inv_ult_sext)
               bzla_proputils_inv_ult,
               0,
               false,
-              create_ult_sext,
+              create_sext,
               2);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               1,
               false,
-              create_ult_sext,
+              create_sext,
               2);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               0,
               false,
-              create_ult_sext,
+              create_sext,
               3);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               1,
               false,
-              create_ult_sext,
+              create_sext,
               3);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               0,
               false,
-              create_ult_sext,
+              create_sext,
               4);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               1,
               false,
-              create_ult_sext,
+              create_sext,
               4);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               0,
               false,
-              create_ult_sext,
+              create_sext,
               5);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               1,
               false,
-              create_ult_sext,
+              create_sext,
               5);
 }
 
@@ -888,56 +895,176 @@ TEST_F(TestPropInv, inv_ult_concat)
               bzla_proputils_inv_ult,
               0,
               false,
-              create_ult_concat,
+              create_concat,
               2);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               1,
               false,
-              create_ult_concat,
+              create_concat,
               2);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               0,
               false,
-              create_ult_concat,
+              create_concat,
               3);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               1,
               false,
-              create_ult_concat,
+              create_concat,
               3);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               0,
               false,
-              create_ult_concat,
+              create_concat,
               4);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               1,
               false,
-              create_ult_concat,
+              create_concat,
               4);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               0,
               false,
-              create_ult_concat,
+              create_concat,
               5);
   test_binary(bzla_exp_bv_ult,
               bzla_is_inv_ult,
               bzla_proputils_inv_ult,
               1,
               false,
-              create_ult_concat,
+              create_concat,
+              5);
+}
+
+TEST_F(TestPropInv, inv_slt_sext)
+{
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              0,
+              false,
+              create_sext,
+              2);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              1,
+              false,
+              create_sext,
+              2);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              0,
+              false,
+              create_sext,
+              3);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              1,
+              false,
+              create_sext,
+              3);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              0,
+              false,
+              create_sext,
+              4);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              1,
+              false,
+              create_sext,
+              4);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              0,
+              false,
+              create_sext,
+              5);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              1,
+              false,
+              create_sext,
+              5);
+}
+
+TEST_F(TestPropInv, inv_slt_concat)
+{
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              0,
+              false,
+              create_concat,
+              2);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              1,
+              false,
+              create_concat,
+              2);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              0,
+              false,
+              create_concat,
+              3);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              1,
+              false,
+              create_concat,
+              3);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              0,
+              false,
+              create_concat,
+              4);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              1,
+              false,
+              create_concat,
+              4);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              0,
+              false,
+              create_concat,
+              5);
+  test_binary(bzla_exp_bv_slt,
+              bzla_is_inv_slt,
+              bzla_proputils_inv_slt,
+              1,
+              false,
+              create_concat,
               5);
 }
 

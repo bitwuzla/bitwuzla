@@ -454,7 +454,8 @@ class TestPropComplete : public TestBzla
     bzla_node_release(d_bzla, exp);
   }
 
-  void check_inv_ult_sext(uint32_t bw = TEST_PROP_INV_COMPLETE_BW)
+  void check_inv_lt_sext(uint32_t bw    = TEST_PROP_INV_COMPLETE_BW,
+                         bool is_signed = false)
   {
     uint64_t i, j;
     uint32_t pos_x, nsext;
@@ -462,8 +463,29 @@ class TestPropComplete : public TestBzla
     BzlaBitVector *s[2], *t, *bv_sext;
     BzlaPropInfo pi;
     BzlaSortId sort_v, sort;
+    BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *);
+    BzlaBitVector *(*bv_fun)(
+        BzlaMemMgr *, const BzlaBitVector *, const BzlaBitVector *);
+    BzlaPropIsInvFun is_inv_fun;
+    BzlaPropComputeValueFun inv_fun_bv;
 
     nsext = bw > 3 ? 2 : 1;
+
+    if (is_signed)
+    {
+      bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+      exp_fun    = bzla_exp_bv_slt;
+      bv_fun     = bzla_bv_slt;
+      is_inv_fun = bzla_is_inv_slt;
+      inv_fun_bv = bzla_proputils_inv_slt;
+    }
+    else
+    {
+      exp_fun    = bzla_exp_bv_ult;
+      bv_fun     = bzla_bv_ult;
+      is_inv_fun = bzla_is_inv_ult;
+      inv_fun_bv = bzla_proputils_inv_ult;
+    }
 
     /* Disable rewriting in order to preserve sign extension structure. */
     bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
@@ -476,7 +498,7 @@ class TestPropComplete : public TestBzla
     {
       e[1 - pos_x] = bzla_exp_var(d_bzla, sort, 0);
       e[pos_x]     = bzla_exp_bv_sext(d_bzla, v, nsext);
-      exp          = bzla_exp_bv_ult(d_bzla, e[0], e[1]);
+      exp          = exp_fun(d_bzla, e[0], e[1]);
       bzla_node_release(d_bzla, e[0]);
       bzla_node_release(d_bzla, e[1]);
 
@@ -487,11 +509,11 @@ class TestPropComplete : public TestBzla
         for (j = 0; j < (uint32_t)(1 << bw); j++)
         {
           s[1 - pos_x] = bzla_bv_uint64_to_bv(d_mm, j, bw);
-          t            = bzla_bv_ult(d_mm, s[0], s[1]);
+          t            = bv_fun(d_mm, s[0], s[1]);
 
           /* domains are initialized later */
           init_prop_info(&pi, exp, pos_x, t, s[0], s[1], 0, 0, 0, 0);
-          check_result(bzla_is_inv_ult, bzla_proputils_inv_ult, &pi);
+          check_result(is_inv_fun, inv_fun_bv, &pi);
 
           bzla_bv_free(d_mm, s[1 - pos_x]);
           bzla_bv_free(d_mm, t);
@@ -508,7 +530,8 @@ class TestPropComplete : public TestBzla
     bzla_sort_release(d_bzla, sort);
   }
 
-  void check_inv_ult_concat(uint32_t bw = TEST_PROP_INV_COMPLETE_BW)
+  void check_inv_lt_concat(uint32_t bw    = TEST_PROP_INV_COMPLETE_BW,
+                           bool is_signed = false)
   {
     uint64_t i, j;
     uint32_t pos_x, bw_v0;
@@ -516,8 +539,29 @@ class TestPropComplete : public TestBzla
     BzlaBitVector *s[2], *t;
     BzlaPropInfo pi;
     BzlaSortId sort_v0, sort_v1, sort;
+    BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *);
+    BzlaBitVector *(*bv_fun)(
+        BzlaMemMgr *, const BzlaBitVector *, const BzlaBitVector *);
+    BzlaPropIsInvFun is_inv_fun;
+    BzlaPropComputeValueFun inv_fun_bv;
 
     bw_v0 = bw / 2;
+
+    if (is_signed)
+    {
+      bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+      exp_fun    = bzla_exp_bv_slt;
+      bv_fun     = bzla_bv_slt;
+      is_inv_fun = bzla_is_inv_slt;
+      inv_fun_bv = bzla_proputils_inv_slt;
+    }
+    else
+    {
+      exp_fun    = bzla_exp_bv_ult;
+      bv_fun     = bzla_bv_ult;
+      is_inv_fun = bzla_is_inv_ult;
+      inv_fun_bv = bzla_proputils_inv_ult;
+    }
 
     /* Disable rewriting in order to preserve sign extension structure. */
     bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
@@ -532,7 +576,7 @@ class TestPropComplete : public TestBzla
     {
       e[1 - pos_x] = bzla_exp_var(d_bzla, sort, 0);
       e[pos_x]     = bzla_exp_bv_concat(d_bzla, v0, v1);
-      exp          = bzla_exp_bv_ult(d_bzla, e[0], e[1]);
+      exp          = exp_fun(d_bzla, e[0], e[1]);
       bzla_node_release(d_bzla, e[0]);
       bzla_node_release(d_bzla, e[1]);
 
@@ -542,11 +586,11 @@ class TestPropComplete : public TestBzla
         for (j = 0; j < (uint32_t)(1 << bw); j++)
         {
           s[1 - pos_x] = bzla_bv_uint64_to_bv(d_mm, j, bw);
-          t            = bzla_bv_ult(d_mm, s[0], s[1]);
+          t            = bv_fun(d_mm, s[0], s[1]);
 
           /* domains are initialized later */
           init_prop_info(&pi, exp, pos_x, t, s[0], s[1], 0, 0, 0, 0);
-          check_result(bzla_is_inv_ult, bzla_proputils_inv_ult, &pi);
+          check_result(is_inv_fun, inv_fun_bv, &pi);
 
           bzla_bv_free(d_mm, s[1 - pos_x]);
           bzla_bv_free(d_mm, t);
@@ -2808,18 +2852,34 @@ TEST_F(TestPropComplete, complete_ult_inv)
 
 TEST_F(TestPropComplete, complete_ult_sext_inv)
 {
-  check_inv_ult_sext(2);
-  check_inv_ult_sext(3);
-  check_inv_ult_sext(5);
-  check_inv_ult_sext(6);
+  check_inv_lt_sext(2);
+  check_inv_lt_sext(3);
+  check_inv_lt_sext(5);
+  check_inv_lt_sext(6);
 }
 
 TEST_F(TestPropComplete, complete_ult_concat_inv)
 {
-  check_inv_ult_concat(2);
-  check_inv_ult_concat(3);
-  check_inv_ult_concat(5);
-  check_inv_ult_concat(6);
+  check_inv_lt_concat(2);
+  check_inv_lt_concat(3);
+  check_inv_lt_concat(5);
+  check_inv_lt_concat(6);
+}
+
+TEST_F(TestPropComplete, complete_slt_sext_inv)
+{
+  check_inv_lt_sext(2, true);
+  check_inv_lt_sext(3, true);
+  check_inv_lt_sext(5, true);
+  check_inv_lt_sext(6, true);
+}
+
+TEST_F(TestPropComplete, complete_slt_concat_inv)
+{
+  check_inv_lt_concat(2, true);
+  check_inv_lt_concat(3, true);
+  check_inv_lt_concat(5, true);
+  check_inv_lt_concat(6, true);
 }
 
 TEST_F(TestPropComplete, complete_slt_inv)
