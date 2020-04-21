@@ -170,13 +170,12 @@ move(Bzla *bzla)
   bvroot = 0;
   do
   {
+    if (bvroot) bzla_bv_free(bzla->mm, bvroot);
     if (nprops && slv->stats.props >= nprops) goto DONE;
 
 #ifndef NDEBUG
     bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->prop_path);
 #endif
-
-    if (bvroot) bzla_bv_free(bzla->mm, bvroot);
 
 #ifndef NBZLALOG
     BZLALOG(1, "entailed propagations: %u", BZLA_COUNT_STACK(slv->toprop));
@@ -199,7 +198,7 @@ move(Bzla *bzla)
     {
       prop   = BZLA_POP_STACK(slv->toprop);
       root   = prop.exp;
-      bvroot = prop.bvexp;
+      bvroot = bzla_bv_copy(bzla->mm, prop.bvexp);
       idx_x  = prop.idx_x;
     }
 
