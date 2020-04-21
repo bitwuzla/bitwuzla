@@ -2561,7 +2561,7 @@ sat_fun_solver(BzlaFunSolver *slv)
       result = timed_sat_sat(bzla, slv->sat_limit);
       delta  = bzla_util_time_stamp() - start;
       BZLA_FUN_SOLVER(bzla)->time.prels_sat += delta;
-      if (result == BZLA_RESULT_SAT) goto DONE;
+      if (result == BZLA_RESULT_SAT || nass == 0) goto DONE;
       /* remove failed partial model assumptions from assumptions list */
       nsatass = nass;
       bzla_iter_hashptr_init(&pit, bzla->assumptions);
@@ -2576,6 +2576,7 @@ sat_fun_solver(BzlaFunSolver *slv)
       }
       BZLA_FUN_SOLVER(bzla)->stats.prels_n_sat_assumptions = nsatass;
     }
+    if (nass == nsatass) goto DONE; /* no failed assumptions, UNSAT */
   }
 
   if (bzla_terminate(bzla))
