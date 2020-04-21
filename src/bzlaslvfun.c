@@ -2442,9 +2442,10 @@ sat_fun_solver(BzlaFunSolver *slv)
       && bzla->lambdas->count == 0)
   {
     uint32_t nass = 0, nsatass = 0;
+    double start, delta;
     BzlaSolver *preslv;
     BzlaOptEngine eopt;
-    BzlaNodePtrStack visit;
+    BzlaNodePtrStack visit, assumptions;
     BzlaPtrHashTableIterator pit;
 
     if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP))
@@ -2465,6 +2466,8 @@ sat_fun_solver(BzlaFunSolver *slv)
     /* print prop/sls solver statistics */
     bzla->slv->api.print_stats(bzla->slv);
     bzla->slv->api.print_time_stats(bzla->slv);
+    /* delete prop/sls solver */
+    bzla->slv->api.delet(bzla->slv);
     /* reset */
     bzla->slv = (BzlaSolver *) slv;
     bzla_opt_set(bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_FUN);
@@ -2482,90 +2485,97 @@ sat_fun_solver(BzlaFunSolver *slv)
     {
       goto UNKNOWN;
     }
-    /* share partial models with the bit-blasting engine */
-    /* then, collect all inputs reachable from satisified roots (assertions
-     * and assumptions) */
-    if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP))
+    if (bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT))
     {
-      BzlaPropSolver *pslv = (BzlaPropSolver *) preslv;
-      assert(pslv->roots);
-      bzla_iter_hashint_init(&it, pslv->roots);
-    }
-    else
-    {
-      BzlaSLSSolver *pslv = (BzlaSLSSolver *) preslv;
-      assert(pslv->roots);
-      bzla_iter_hashint_init(&it, pslv->roots);
-    }
-    BZLA_INIT_STACK(mm, visit);
-    while (bzla_iter_hashint_has_next(&it))
-    {
-      assert(BZLA_EMPTY_STACK(visit));
-      cur = bzla_node_get_by_id(bzla, bzla_iter_hashint_next(&it));
-      if (bzla_bv_is_true(bzla_model_get_bv(bzla, cur)))
+      /* share partial models with the bit-blasting engine */
+      /* then, collect all inputs reachable from satisified roots (assertions
+       * and assumptions) */
+      BZLA_INIT_STACK(mm, visit);
+      BZLA_INIT_STACK(mm, assumptions);
+      bzla_iter_hashptr_init(&pit, bzla->unsynthesized_constraints);
+      bzla_iter_hashptr_queue(&pit, bzla->synthesized_constraints);
+      bzla_iter_hashptr_queue(&pit, bzla->assumptions);
+      while (bzla_iter_hashptr_has_next(&pit))
       {
-        BzlaIntHashTable *visited;
-        BzlaBitVector *bv;
-        BzlaNode *bvconst, *assumption;
-        visited = bzla_hashint_table_new(mm);
-        BZLA_PUSH_STACK(visit, cur);
-        while (!BZLA_EMPTY_STACK(visit))
-        {
-          cur      = BZLA_POP_STACK(visit);
-          real_cur = bzla_node_real_addr(cur);
-          if (bzla_hashint_table_contains(visited, real_cur->id)) continue;
-          bzla_hashint_table_add(visited, real_cur->id);
-          if (bzla_node_is_bv_var(real_cur))
-          {
-            assert(bzla_hashint_map_contains(bzla->bv_model, cur->id));
-            bv         = bzla_hashint_map_get(bzla->bv_model, cur->id)->as_ptr;
-            bvconst    = bzla_exp_bv_const(bzla, bv);
-            assumption = bzla_exp_eq(bzla, cur, bvconst);
-            bzla_assume_exp(bzla, assumption);
-            bzla_node_release(bzla, bvconst);
-            bzla_hashint_table_add(preprop_assumptions,
-                                   bzla_node_get_id(assumption));
-            nass += 1;
-          }
-          else
-          {
-            for (i = 0; i < real_cur->arity; i++)
-              BZLA_PUSH_STACK(visit, real_cur->e[i]);
-          }
-        }
-        bzla_hashint_table_delete(visited);
+        BZLA_PUSH_STACK(visit, bzla_iter_hashptr_next(&pit));
       }
-      BZLA_RESET_STACK(visit);
+      while (!BZLA_EMPTY_STACK(visit))
+      {
+        cur = BZLA_POP_STACK(visit);
+        if (bzla_bv_is_true(bzla_model_get_bv(bzla, cur)))
+        {
+          BzlaIntHashTable *visited;
+          const BzlaBitVector *bv;
+          BzlaNode *bvconst, *assumption;
+          visited = bzla_hashint_table_new(mm);
+          BZLA_PUSH_STACK(visit, cur);
+          while (!BZLA_EMPTY_STACK(visit))
+          {
+            cur      = BZLA_POP_STACK(visit);
+            real_cur = bzla_node_real_addr(cur);
+            if (bzla_hashint_table_contains(visited, real_cur->id)) continue;
+            bzla_hashint_table_add(visited, real_cur->id);
+            if (bzla_node_is_bv_var(real_cur))
+            {
+              bv         = bzla_model_get_bv(bzla, real_cur);
+              bvconst    = bzla_exp_bv_const(bzla, bv);
+              assumption = bzla_exp_eq(bzla, real_cur, bvconst);
+              bzla_node_release(bzla, bvconst);
+              bzla_hashint_table_add(preprop_assumptions,
+                                     bzla_node_get_id(assumption));
+              nass += 1;
+            }
+            else
+            {
+              for (i = 0; i < real_cur->arity; i++)
+                BZLA_PUSH_STACK(visit, real_cur->e[i]);
+            }
+          }
+          bzla_hashint_table_delete(visited);
+        }
+        BZLA_RESET_STACK(visit);
+      }
+      BZLA_FUN_SOLVER(bzla)->stats.prels_n_assumptions = nass;
+      BZLA_RELEASE_STACK(visit);
+      while (!BZLA_EMPTY_STACK(assumptions))
+      {
+        bzla_assume_exp(bzla, BZLA_POP_STACK(assumptions));
+      }
+      BZLA_RELEASE_STACK(assumptions);
     }
-    BZLA_FUN_SOLVER(bzla)->stats.prels_n_assumptions = nass;
-    BZLA_RELEASE_STACK(visit);
-    /* delete prop/sls solver */
-    preslv->api.delet(preslv);
+
     /* reset */
     bzla_model_delete(bzla);
-    /* call sat */
-    configure_sat_mgr(bzla);
-    bzla_process_unsynthesized_constraints(bzla);
-    if (bzla->found_constraint_false)
+
+    if (bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT))
     {
-      goto UNSAT;
-    }
-    bzla_add_again_assumptions(bzla);
-    result = timed_sat_sat(bzla, slv->sat_limit);
-    if (result == BZLA_RESULT_SAT) goto DONE;
-    /* remove failed partial model assumptions from assumptions list */
-    nsatass = nass;
-    bzla_iter_hashptr_init(&pit, bzla->assumptions);
-    while (bzla_iter_hashptr_has_next(&pit))
-    {
-      cur = bzla_iter_hashptr_next(&pit);
-      if (bzla_failed_exp(bzla, cur))
+      /* call sat */
+      configure_sat_mgr(bzla);
+      bzla_process_unsynthesized_constraints(bzla);
+      if (bzla->found_constraint_false)
       {
-        bzla_hashptr_table_remove(bzla->assumptions, cur, 0, 0);
-        nsatass -= 1;
+        goto UNSAT;
       }
+      bzla_add_again_assumptions(bzla);
+      start  = bzla_util_time_stamp();
+      result = timed_sat_sat(bzla, slv->sat_limit);
+      delta  = bzla_util_time_stamp() - start;
+      BZLA_FUN_SOLVER(bzla)->time.prels_sat += delta;
+      if (result == BZLA_RESULT_SAT) goto DONE;
+      /* remove failed partial model assumptions from assumptions list */
+      nsatass = nass;
+      bzla_iter_hashptr_init(&pit, bzla->assumptions);
+      while (bzla_iter_hashptr_has_next(&pit))
+      {
+        cur = bzla_iter_hashptr_next(&pit);
+        if (bzla_failed_exp(bzla, cur))
+        {
+          bzla_hashptr_table_remove(bzla->assumptions, cur, 0, 0);
+          nsatass -= 1;
+        }
+      }
+      BZLA_FUN_SOLVER(bzla)->stats.prels_n_sat_assumptions = nsatass;
     }
-    BZLA_FUN_SOLVER(bzla)->stats.prels_n_sat_assumptions = nsatass;
   }
 
   if (bzla_terminate(bzla))
@@ -2729,12 +2739,11 @@ print_stats_fun_solver(BzlaFunSolver *slv)
     BZLA_MSG(bzla->msg, 1, "preprop/presls statistics:");
     BZLA_MSG(bzla->msg,
              1,
-             "%4d assignments shared with bit-blasting engine",
+             "%7d assignments shared with bit-blasting engine",
              slv->stats.prels_n_assumptions);
     BZLA_MSG(bzla->msg,
              1,
-             "%4d assignments shared with bit-blasting engine that "
-             "contributed to result",
+             "%7d shared assignments that contributed to result",
              slv->stats.prels_n_sat_assumptions);
   }
 
@@ -2776,18 +2785,19 @@ print_stats_fun_solver(BzlaFunSolver *slv)
                  i);
       }
     }
+    BZLA_MSG(bzla->msg, 1, "");
+    BZLA_MSG(bzla->msg,
+             1,
+             "%7lld expression evaluations",
+             slv->stats.eval_exp_calls);
+    BZLA_MSG(bzla->msg,
+             1,
+             "%7lld partial beta reductions",
+             bzla->stats.betap_reduce_calls);
+    BZLA_MSG(bzla->msg, 1, "%7lld propagations", slv->stats.propagations);
+    BZLA_MSG(
+        bzla->msg, 1, "%7lld propagations down", slv->stats.propagations_down);
   }
-
-  BZLA_MSG(bzla->msg, 1, "");
-  BZLA_MSG(
-      bzla->msg, 1, "%7lld expression evaluations", slv->stats.eval_exp_calls);
-  BZLA_MSG(bzla->msg,
-           1,
-           "%7lld partial beta reductions",
-           bzla->stats.betap_reduce_calls);
-  BZLA_MSG(bzla->msg, 1, "%7lld propagations", slv->stats.propagations);
-  BZLA_MSG(
-      bzla->msg, 1, "%7lld propagations down", slv->stats.propagations_down);
 
   if (bzla_opt_get(bzla, BZLA_OPT_FUN_DUAL_PROP))
   {
@@ -2890,6 +2900,17 @@ print_time_stats_fun_solver(BzlaFunSolver *slv)
            "  %.2f seconds propagation cleanup",
            slv->time.prop_cleanup);
 
+  BZLA_MSG(bzla->msg, 1, "");
+  if ((bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
+       || bzla_opt_get(bzla, BZLA_OPT_FUN_PRESLS))
+      && bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT))
+  {
+    BZLA_MSG(bzla->msg,
+             1,
+             "%.2f seconds for preprop/presls SAT check with partial "
+             "assignment",
+             slv->time.sat);
+  }
   BZLA_MSG(bzla->msg, 1, "%.2f seconds in pure SAT solving", slv->time.sat);
   BZLA_MSG(bzla->msg, 1, "");
 }

@@ -82,6 +82,7 @@ struct BzlaFunSolver
     double find_conf_app;
     double check_extensionality;
     double prop_cleanup;
+    double prels_sat;
   } time;
 };
 
