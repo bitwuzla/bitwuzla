@@ -470,6 +470,7 @@ class TestPropComplete : public TestBzla
     BzlaPropComputeValueFun inv_fun_bv;
 
     nsext = bw > 3 ? 2 : 1;
+    bzla_opt_set(d_bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
 
     if (is_signed)
     {
@@ -546,6 +547,7 @@ class TestPropComplete : public TestBzla
     BzlaPropComputeValueFun inv_fun_bv;
 
     bw_v0 = bw / 2;
+    bzla_opt_set(d_bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
 
     if (is_signed)
     {

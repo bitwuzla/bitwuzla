@@ -794,11 +794,18 @@ enum BzlaOption
   BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT,
 
   /*!
-    * **BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT**
+    * **BZLA_OPT_PROP_SKIP_NO_PROGRESS**
 
      Skip moves if target value is the same as current model.
     */
   BZLA_OPT_PROP_SKIP_NO_PROGRESS,
+
+  /*!
+    * **BZLA_OPT_PROP_USE_INV_LT_CONCAT**
+
+     Use special inverse value functions for ult/slt over concats.
+    */
+  BZLA_OPT_PROP_USE_INV_LT_CONCAT,
 
 
   /* --------------------------------------------------------------------- */

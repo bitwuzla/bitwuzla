@@ -1174,6 +1174,17 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "abort propagation if no progress is made");
 
+  init_opt(bzla,
+           BZLA_OPT_PROP_USE_INV_LT_CONCAT,
+           false,
+           true,
+           "prop-use-inv-lt-concat",
+           0,
+           0,
+           0,
+           1,
+           "use special inverse value functions for slt/ult over concats");
+
   /* AIGPROP engine ------------------------------------------------------- */
   init_opt(bzla,
            BZLA_OPT_AIGPROP_USE_RESTARTS,
