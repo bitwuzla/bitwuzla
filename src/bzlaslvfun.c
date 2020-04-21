@@ -2535,7 +2535,8 @@ sat_fun_solver(BzlaFunSolver *slv)
         }
         BZLA_RESET_STACK(visit);
       }
-      BZLA_FUN_SOLVER(bzla)->stats.prels_n_assumptions = nass;
+      BZLA_FUN_SOLVER(bzla)->stats.prels_n_assumptions     = nass;
+      BZLA_FUN_SOLVER(bzla)->stats.prels_n_sat_assumptions = nass;
       BZLA_RELEASE_STACK(visit);
       while (!BZLA_EMPTY_STACK(assumptions))
       {
