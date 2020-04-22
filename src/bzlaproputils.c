@@ -27,7 +27,7 @@ typedef int32_t (*BzlaPropSelectPath)(Bzla *, BzlaPropInfo *);
 /* ========================================================================== */
 
 bool
-bzla_is_sign_extend(Bzla *bzla, BzlaNode *n)
+bzla_is_bv_sext(Bzla *bzla, BzlaNode *n)
 {
   uint32_t msb;
   BzlaNode *ite, *t;
@@ -3119,7 +3119,7 @@ inv_ult_concat(Bzla *bzla, BzlaPropInfo *pi)
   s0 = bzla_bv_slice(mm, s, bw_x - 1, bw_x1);
   s1 = bzla_bv_slice(mm, s, bw_x1 - 1, 0);
 
-  if (bzla_is_sign_extend(bzla, exp_x))
+  if (bzla_is_bv_sext(bzla, exp_x))
   {
     min_signed = bzla_bv_min_signed(mm, bw_x1);
 
@@ -3559,7 +3559,7 @@ inv_slt_concat(Bzla *bzla, BzlaPropInfo *pi, bool *conflict)
   s0 = bzla_bv_slice(mm, s, bw_x - 1, bw_x1);
   s1 = bzla_bv_slice(mm, s, bw_x1 - 1, 0);
 
-  if (bzla_is_sign_extend(bzla, exp_x))
+  if (bzla_is_bv_sext(bzla, exp_x))
   {
     min_signed = bzla_bv_min_signed(mm, bw_x1);
     max_signed = bzla_bv_max_signed(mm, bw_x1);
@@ -5049,18 +5049,17 @@ bzla_proputils_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 BzlaBitVector *
-bzla_proputils_inv_sign_extend(Bzla *bzla, BzlaPropInfo *pi)
+bzla_proputils_inv_sext(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(
-      bzla, pi, bzla_is_inv_sign_extend, bzla_is_inv_sign_extend_const, false);
+  check_inv_dbg(bzla, pi, bzla_is_inv_sext, bzla_is_inv_sex_const, false);
 #endif
   assert(pi->res_x);
   return bzla_bv_copy(bzla->mm, pi->res_x->lo);
 }
 
 BzlaBitVector *
-bzla_proputils_cons_sign_extend(Bzla *bzla, BzlaPropInfo *pi)
+bzla_proputils_cons_sext(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
@@ -5068,7 +5067,7 @@ bzla_proputils_cons_sign_extend(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 BzlaBitVector *
-bzla_proputils_inv_sign_extend_const(Bzla *bzla, BzlaPropInfo *pi)
+bzla_proputils_inv_sext_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(pi->res_x);
   return bzla_bv_copy(bzla->mm, pi->res_x->lo);
@@ -6663,7 +6662,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bzla_mem_freestr(bzla->mm, a);
 #endif
 
-      is_sext = bzla_is_sign_extend(bzla, real_cur);
+      is_sext = bzla_is_bv_sext(bzla, real_cur);
 
       pi.exp          = real_cur;
       pi.res_x        = 0;
@@ -6728,9 +6727,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       {
         if (is_sext)
         {
-          is_inv_fun     = bzla_is_inv_sign_extend_const;
-          cons_value_fun = bzla_proputils_cons_sign_extend;
-          inv_value_fun  = bzla_proputils_inv_sign_extend_const;
+          is_inv_fun     = bzla_is_inv_sext_const;
+          cons_value_fun = bzla_proputils_cons_sext;
+          inv_value_fun  = bzla_proputils_inv_sext_const;
         }
         else
         {
@@ -6743,9 +6742,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       {
         if (is_sext)
         {
-          is_inv_fun     = bzla_is_inv_sign_extend;
-          cons_value_fun = bzla_proputils_cons_sign_extend;
-          inv_value_fun  = bzla_proputils_inv_sign_extend;
+          is_inv_fun     = bzla_is_inv_sext;
+          cons_value_fun = bzla_proputils_cons_sext;
+          inv_value_fun  = bzla_proputils_inv_sext;
         }
         else
         {

@@ -503,7 +503,7 @@ bzla_is_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
  * IC: (t_x[msb] == 1 /\ t_ext == ones) \/ (t_x[msb] == 0 /\ t_ext == zero)
  */
 bool
-bzla_is_inv_sign_extend(Bzla *bzla, BzlaPropInfo *pi)
+bzla_is_inv_sext(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
@@ -1667,11 +1667,11 @@ bzla_is_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi)
  * IC: (t_x[msb] == 1 /\ t_ext == ones) \/ (t_x[msb] == 0 /\ t_ext == zero)
  */
 bool
-bzla_is_inv_sign_extend_const(Bzla *bzla, BzlaPropInfo *pi)
+bzla_is_inv_sext_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
-  if (!bzla_is_inv_sign_extend(bzla, pi)) return false;
+  if (!bzla_is_inv_sext(bzla, pi)) return false;
   return bzla_bvdomain_check_fixed_bits(
       bzla->mm, pi->bvd[pi->pos_x], pi->res_x->lo);
 }

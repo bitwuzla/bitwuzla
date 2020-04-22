@@ -24,7 +24,7 @@
 
 /*------------------------------------------------------------------------*/
 
-bool bzla_is_sign_extend(Bzla* bzla, BzlaNode* n);
+bool bzla_is_bv_sext(Bzla* bzla, BzlaNode* n);
 
 /* maintain information about entailed propagations, e.g., when all children
  * of a node need to be updated with respect to the target value. */

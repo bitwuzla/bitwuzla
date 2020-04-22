@@ -62,7 +62,7 @@ bool bzla_is_inv_cond(Bzla *bzla, BzlaPropInfo *pi);
 bool bzla_is_inv_slice(Bzla *bzla, BzlaPropInfo *pi);
 
 /** Check invertibility of sign_extend(x, n) = t when solved for x. */
-bool bzla_is_inv_sign_extend(Bzla *bzla, BzlaPropInfo *pi);
+bool bzla_is_inv_sext(Bzla *bzla, BzlaPropInfo *pi);
 
 /* -------------------------------------------------------------------------- */
 /* Check invertibility while considering constant bits in x.                  */
@@ -149,6 +149,6 @@ bool bzla_is_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi);
 /**
  * Check invertibility of sign_extend(x, n) = t when solved for x with respect
  * to const bits in x. */
-bool bzla_is_inv_sign_extend_const(Bzla *bzla, BzlaPropInfo *pi);
+bool bzla_is_inv_sext_const(Bzla *bzla, BzlaPropInfo *pi);
 
 #endif
