@@ -2576,8 +2576,8 @@ sat_fun_solver(BzlaFunSolver *slv)
         }
       }
       BZLA_FUN_SOLVER(bzla)->stats.prels_n_sat_assumptions = nsatass;
+      if (nass == nsatass) goto DONE; /* no failed assumptions, UNSAT */
     }
-    if (nass == nsatass) goto DONE; /* no failed assumptions, UNSAT */
   }
 
   if (bzla_terminate(bzla))
