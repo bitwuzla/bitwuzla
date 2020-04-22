@@ -814,6 +814,20 @@ enum BzlaOption
     */
   BZLA_OPT_PROP_INFER_INEQ_BOUNDS,
 
+  /*!
+    * **BZLA_OPT_PROP_SEXT**
+
+      Use sign_extend inverse value computation.
+    */
+  BZLA_OPT_PROP_SEXT,
+
+  /*!
+    * **BZLA_OPT_PROP_XOR**
+
+      Use xor inverse value computation.
+    */
+  BZLA_OPT_PROP_XOR,
+
 
   /* --------------------------------------------------------------------- */
   /*!

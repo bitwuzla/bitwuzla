@@ -2841,6 +2841,12 @@ TEST_F(TestPropComplete, complete_and_inv)
       bzla_exp_bv_and, bzla_bv_and, bzla_is_inv_and, bzla_proputils_inv_and);
 }
 
+TEST_F(TestPropComplete, complete_xor_inv)
+{
+  check_binary(
+      bzla_exp_bv_xor, bzla_bv_xor, bzla_is_inv_xor, bzla_proputils_inv_xor);
+}
+
 TEST_F(TestPropComplete, complete_eq_inv)
 {
   check_binary(bzla_exp_eq, bzla_bv_eq, bzla_is_inv_eq, bzla_proputils_inv_eq);
@@ -2957,6 +2963,11 @@ TEST_F(TestPropComplete, complete_and_cons)
   check_binary(bzla_exp_bv_and, bzla_bv_and, 0, bzla_proputils_cons_and);
 }
 
+TEST_F(TestPropComplete, complete_xor_cons)
+{
+  check_binary(bzla_exp_bv_xor, bzla_bv_xor, 0, bzla_proputils_cons_xor);
+}
+
 TEST_F(TestPropComplete, complete_eq_cons)
 {
   check_binary(bzla_exp_eq, bzla_bv_eq, 0, bzla_proputils_cons_eq);
@@ -3032,6 +3043,14 @@ TEST_F(TestPropCompleteConst, complete_and_inv_const)
                bzla_bv_and,
                bzla_is_inv_and_const,
                bzla_proputils_inv_and_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_xor_inv_const)
+{
+  check_binary(bzla_exp_bv_xor,
+               bzla_bv_xor,
+               bzla_is_inv_xor_const,
+               bzla_proputils_inv_xor_const);
 }
 
 TEST_F(TestPropCompleteConst, complete_eq_inv_const)
@@ -3129,6 +3148,11 @@ TEST_F(TestPropCompleteConst, complete_add_cons_const)
 TEST_F(TestPropCompleteConst, complete_and_cons_const)
 {
   check_binary(bzla_exp_bv_and, bzla_bv_and, 0, bzla_proputils_cons_and_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_xor_cons_const)
+{
+  check_binary(bzla_exp_bv_xor, bzla_bv_xor, 0, bzla_proputils_cons_xor_const);
 }
 
 TEST_F(TestPropCompleteConst, complete_eq_cons_const)

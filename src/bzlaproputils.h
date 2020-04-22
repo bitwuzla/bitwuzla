@@ -85,6 +85,8 @@ BzlaBitVector* bzla_proputils_cons_add(Bzla* bzla, BzlaPropInfo* pi);
 
 BzlaBitVector* bzla_proputils_cons_and(Bzla* bzla, BzlaPropInfo* pi);
 
+BzlaBitVector* bzla_proputils_cons_xor(Bzla* bzla, BzlaPropInfo* pi);
+
 BzlaBitVector* bzla_proputils_cons_eq(Bzla* bzla, BzlaPropInfo* pi);
 
 BzlaBitVector* bzla_proputils_cons_ult(Bzla* bzla, BzlaPropInfo* pi);
@@ -114,6 +116,8 @@ BzlaBitVector* bzla_proputils_cons_cond(Bzla* bzla, BzlaPropInfo* pi);
 BzlaBitVector* bzla_proputils_cons_add_const(Bzla* bzla, BzlaPropInfo* pi);
 
 BzlaBitVector* bzla_proputils_cons_and_const(Bzla* bzla, BzlaPropInfo* pi);
+
+BzlaBitVector* bzla_proputils_cons_xor_const(Bzla* bzla, BzlaPropInfo* pi);
 
 BzlaBitVector* bzla_proputils_cons_eq_const(Bzla* bzla, BzlaPropInfo* pi);
 
@@ -168,6 +172,20 @@ BzlaBitVector* bzla_proputils_inv_add(Bzla* bzla, BzlaPropInfo* pi);
  * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_and(Bzla* bzla, BzlaPropInfo* pi);
+
+/**
+ * Determine inverse value for 'x' given 'x ^ s = t' or 's ^ x = t'.
+ * Note that & is always invertible (if const bits are not considered).
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
+BzlaBitVector* bzla_proputils_inv_xor(Bzla* bzla, BzlaPropInfo* pi);
 
 /**
  * Determine inverse value for 'x' given 'x == s = t' or 's == x = t'.
@@ -343,6 +361,19 @@ BzlaBitVector* bzla_proputils_inv_add_const(Bzla* bzla, BzlaPropInfo* pi);
  * pi: The struct containing all information for inverse value computation.
  */
 BzlaBitVector* bzla_proputils_inv_and_const(Bzla* bzla, BzlaPropInfo* pi);
+
+/**
+ * Determine inverse value for 'x' given 'x ^ s = t' or 's ^ x = t' with
+ * respect to const bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
+BzlaBitVector* bzla_proputils_inv_xor_const(Bzla* bzla, BzlaPropInfo* pi);
 
 /**
  * Determine inverse value for 'x' given 'x == s = t' or 's == x = t' with

@@ -54,6 +54,38 @@ bzla_is_bv_sext(Bzla *bzla, BzlaNode *n)
   return true;
 }
 
+bool
+bzla_is_bv_xor(Bzla *bzla, BzlaNode *n, BzlaNode **res_a, BzlaNode **res_b)
+{
+  (void) bzla;
+
+  const BzlaNode *e0, *e1, *a, *b;
+
+  if (bzla_node_is_inverted(n) || !bzla_node_is_bv_and(n))
+  {
+    return false;
+  }
+
+  e0 = n->e[0];
+  e1 = n->e[1];
+  if (bzla_node_is_inverted(e0) && bzla_node_is_inverted(e1)
+      && bzla_node_is_bv_and(e0) && bzla_node_is_bv_and(e1))
+  {
+    a = bzla_node_real_addr(e0)->e[0];
+    b = bzla_node_real_addr(e0)->e[1];
+
+    if (bzla_node_invert(a) == bzla_node_real_addr(e1)->e[0]
+        && bzla_node_invert(b) == bzla_node_real_addr(e1)->e[1])
+    {
+      *res_a = bzla_node_real_addr(a);
+      *res_b = bzla_node_real_addr(b);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /* ========================================================================== */
 
 /**
@@ -957,6 +989,18 @@ bzla_proputils_cons_and(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 BzlaBitVector *
+bzla_proputils_cons_xor(Bzla *bzla, BzlaPropInfo *pi)
+{
+#ifndef NDEBUG
+  check_cons_dbg(bzla, pi, true);
+#endif
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_xor);
+  return bzla_bv_new_random(
+      bzla->mm, &bzla->rng, bzla_bv_get_width(pi->target_value));
+}
+
+BzlaBitVector *
 bzla_proputils_cons_eq(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
@@ -1654,6 +1698,16 @@ bzla_proputils_cons_slice(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 BzlaBitVector *
+bzla_proputils_cons_sext(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  (void) bzla;
+  (void) pi;
+  return 0;
+}
+
+BzlaBitVector *
 bzla_proputils_cons_cond(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
@@ -1742,6 +1796,22 @@ bzla_proputils_cons_and_const(Bzla *bzla, BzlaPropInfo *pi)
   }
   res = bzla_proputils_cons_and(bzla, pi);
   set_const_bits(mm, x, &res);
+  return res;
+}
+
+BzlaBitVector *
+bzla_proputils_cons_xor_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+#ifndef NDEBUG
+  check_cons_dbg(bzla, pi, true);
+#endif
+  BzlaBitVector *res;
+  BzlaBvDomainGenerator gen;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_xor);
+  bzla_bvdomain_gen_init(bzla->mm, &bzla->rng, &gen, pi->bvd[pi->pos_x]);
+  res = bzla_bv_copy(bzla->mm, bzla_bvdomain_gen_random(&gen));
+  bzla_bvdomain_gen_delete(&gen);
   return res;
 }
 
@@ -2554,6 +2624,16 @@ bzla_proputils_cons_slice_const(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 BzlaBitVector *
+bzla_proputils_cons_sext_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  (void) bzla;
+  (void) pi;
+  return 0;
+}
+
+BzlaBitVector *
 bzla_proputils_cons_cond_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
@@ -2797,6 +2877,20 @@ bzla_proputils_inv_and(Bzla *bzla, BzlaPropInfo *pi)
 
   BZLA_RELEASE_STACK(dcbits);
   return res;
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: xor                                                                   */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+bzla_proputils_inv_xor(Bzla *bzla, BzlaPropInfo *pi)
+{
+#ifndef NDEBUG
+  check_inv_dbg(bzla, pi, bzla_is_inv_xor, bzla_is_inv_xor_const, false);
+#endif
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_xor);
+  return bzla_bv_xor(bzla->mm, pi->bv[1 - pi->pos_x], pi->target_value);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -5048,27 +5142,16 @@ bzla_proputils_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
   return res;
 }
 
+/* -------------------------------------------------------------------------- */
+/* INV: sext                                                                  */
+/* -------------------------------------------------------------------------- */
+
 BzlaBitVector *
 bzla_proputils_inv_sext(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
-  check_inv_dbg(bzla, pi, bzla_is_inv_sext, bzla_is_inv_sex_const, false);
+  check_inv_dbg(bzla, pi, bzla_is_inv_sext, bzla_is_inv_sext_const, false);
 #endif
-  assert(pi->res_x);
-  return bzla_bv_copy(bzla->mm, pi->res_x->lo);
-}
-
-BzlaBitVector *
-bzla_proputils_cons_sext(Bzla *bzla, BzlaPropInfo *pi)
-{
-  assert(bzla);
-  assert(pi);
-  return 0;
-}
-
-BzlaBitVector *
-bzla_proputils_inv_sext_const(Bzla *bzla, BzlaPropInfo *pi)
-{
   assert(pi->res_x);
   return bzla_bv_copy(bzla->mm, pi->res_x->lo);
 }
@@ -5310,6 +5393,20 @@ bzla_proputils_inv_and_const(Bzla *bzla, BzlaPropInfo *pi)
   check_result_binary_dbg(bzla, bzla_bv_and, pi, res, "&");
 #endif
   return res;
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: xor                                                                   */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+bzla_proputils_inv_xor_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+#ifndef NDEBUG
+  check_inv_dbg(bzla, pi, bzla_is_inv_xor, bzla_is_inv_xor_const, true);
+#endif
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_xor);
+  return bzla_proputils_inv_xor(bzla, pi);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -6065,6 +6162,17 @@ bzla_proputils_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 /* -------------------------------------------------------------------------- */
+/* INV: sext                                                                  */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+bzla_proputils_inv_sext_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(pi->res_x);
+  return bzla_bv_copy(bzla->mm, pi->res_x->lo);
+}
+
+/* -------------------------------------------------------------------------- */
 /* INV: cond                                                                  */
 /* -------------------------------------------------------------------------- */
 
@@ -6515,6 +6623,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   assert(bvroot);
 
   bool is_inv, pick_inv, has_fixed_bits;
+  bool opt_prop_xor, opt_prop_sext;
   int32_t i, nconst;
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
@@ -6525,8 +6634,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   uint32_t opt_prop_prob_use_inv_value;
   uint32_t opt_prop_const_bits;
   bool opt_skip_no_progress;
-  bool is_sext;
+  bool is_sext, is_xor;
   BzlaPropInfo pi;
+  BzlaNode **children = 0, *xor_children[2];
 
   BzlaPropSelectPath select_path;
   BzlaPropIsInvFun is_inv_fun;
@@ -6549,6 +6659,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
   opt_skip_no_progress =
       bzla_opt_get(bzla, BZLA_OPT_PROP_SKIP_NO_PROGRESS) != 0;
+  opt_prop_xor  = bzla_opt_get(bzla, BZLA_OPT_PROP_XOR);
+  opt_prop_sext = bzla_opt_get(bzla, BZLA_OPT_PROP_SEXT);
 
 #ifndef NBZLALOG
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
@@ -6638,19 +6750,45 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       /* Reset propagation info struct. */
       memset(&pi, 0, sizeof(BzlaPropInfo));
 
+      is_sext = false;
+      is_xor  = false;
+      if (opt_prop_sext)
+      {
+        is_sext = bzla_is_bv_sext(bzla, real_cur);
+      }
+
+      if (opt_prop_xor && !is_sext)
+      {
+        xor_children[0] = 0;
+        xor_children[1] = 0;
+        is_xor =
+            bzla_is_bv_xor(bzla, real_cur, &xor_children[0], &xor_children[1]);
+      }
+
+      if (is_xor)
+      {
+        children = xor_children;
+      }
+      else
+      {
+        children = real_cur->e;
+      }
+
       /* check if all paths are const, if yes -> conflict */
       for (i = 0, nconst = 0; i < real_cur->arity; i++)
       {
-        bv_s[i]  = (BzlaBitVector *) bzla_model_get_bv(bzla, real_cur->e[i]);
+        bv_s[i]  = (BzlaBitVector *) bzla_model_get_bv(bzla, children[i]);
         pi.bv[i] = bv_s[i];
-        if (bzla_node_is_bv_const(real_cur->e[i])) nconst += 1;
+        if (bzla_node_is_bv_const(children[i])) nconst += 1;
       }
+
       if (nconst > real_cur->arity - 1) break;
+
       /* additionally, for ite, if condition and enabled branch are const
        * -> conflict */
-      if (bzla_node_is_cond(real_cur) && bzla_node_is_bv_const(real_cur->e[0])
-          && (bzla_node_is_bv_const(
-              real_cur == bzla->true_exp ? real_cur->e[1] : real_cur->e[2])))
+      if (bzla_node_is_cond(real_cur) && bzla_node_is_bv_const(children[0])
+          && (bzla_node_is_bv_const(real_cur == bzla->true_exp ? children[1]
+                                                               : children[2])))
       {
         break;
       }
@@ -6661,8 +6799,6 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       BZLALOG(2, "propagate: %s", a);
       bzla_mem_freestr(bzla->mm, a);
 #endif
-
-      is_sext = bzla_is_bv_sext(bzla, real_cur);
 
       pi.exp          = real_cur;
       pi.res_x        = 0;
@@ -6698,7 +6834,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       if (opt_prop_const_bits)
       {
         assert(domains);
-        d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[pos_x]));
+        d = bzla_hashint_map_get(domains, bzla_node_get_id(children[pos_x]));
         assert(d);
         assert(d->as_ptr);
 
@@ -6706,7 +6842,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
         for (i = 0; i < real_cur->arity; ++i)
         {
-          d = bzla_hashint_map_get(domains, bzla_node_get_id(real_cur->e[i]));
+          d = bzla_hashint_map_get(domains, bzla_node_get_id(children[i]));
           assert(d);
           assert(d->as_ptr);
           pi.bvd[i] = d->as_ptr;
@@ -6728,8 +6864,14 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         if (is_sext)
         {
           is_inv_fun     = bzla_is_inv_sext_const;
-          cons_value_fun = bzla_proputils_cons_sext;
+          cons_value_fun = bzla_proputils_cons_sext_const;
           inv_value_fun  = bzla_proputils_inv_sext_const;
+        }
+        else if (is_xor)
+        {
+          is_inv_fun     = bzla_is_inv_xor_const;
+          cons_value_fun = bzla_proputils_cons_xor;
+          inv_value_fun  = bzla_proputils_inv_xor_const;
         }
         else
         {
@@ -6745,6 +6887,12 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           is_inv_fun     = bzla_is_inv_sext;
           cons_value_fun = bzla_proputils_cons_sext;
           inv_value_fun  = bzla_proputils_inv_sext;
+        }
+        else if (is_xor)
+        {
+          is_inv_fun     = bzla_is_inv_xor;
+          cons_value_fun = bzla_proputils_cons_xor;
+          inv_value_fun  = bzla_proputils_inv_xor;
         }
         else
         {
@@ -6822,7 +6970,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       /* propagate down */
       bzla_bv_free(bzla->mm, bv_t);
       bv_t = bv_s_new;
-      cur  = real_cur->e[pos_x];
+      cur  = children[pos_x];
 #ifndef NDEBUG
       if (bzla_hashint_map_contains(domains, bzla_node_get_id(cur)))
       {

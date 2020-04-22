@@ -939,6 +939,7 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   BZLA_MSG(bzla->msg, 1, "%s (concat): %u", s_cons, slv->stats.cons_concat);
   BZLA_MSG(bzla->msg, 1, "%s (slice): %u", s_cons, slv->stats.cons_slice);
   BZLA_MSG(bzla->msg, 1, "%s (cond): %u", s_cons, slv->stats.cons_cond);
+  BZLA_MSG(bzla->msg, 1, "%s (xor): %u", s_cons, slv->stats.cons_xor);
 
   /* Inverse value computation stats. */
   BZLA_MSG(bzla->msg, 1, "");
@@ -957,6 +958,7 @@ print_stats_prop_solver(BzlaPropSolver *slv)
   BZLA_MSG(bzla->msg, 1, "%s (concat): %u", s_inv, slv->stats.inv_concat);
   BZLA_MSG(bzla->msg, 1, "%s (slice): %u", s_inv, slv->stats.inv_slice);
   BZLA_MSG(bzla->msg, 1, "%s (cond): %u", s_inv, slv->stats.inv_cond);
+  BZLA_MSG(bzla->msg, 1, "%s (xor): %u", s_inv, slv->stats.inv_xor);
 #endif
 
   if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))

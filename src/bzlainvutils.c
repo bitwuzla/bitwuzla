@@ -541,6 +541,24 @@ bzla_is_inv_sext(Bzla *bzla, BzlaPropInfo *pi)
   return res;
 }
 
+/**
+ * Check invertibility condition (without considering const bits in x) for:
+ *
+ * x ^ s = t
+ * s ^ x = t
+ *
+ * IC: true
+ */
+bool
+bzla_is_inv_xor(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  (void) bzla;
+  (void) pi;
+  return true;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Check invertibility while considering constant bits in x.                  */
 /* -------------------------------------------------------------------------- */
@@ -1660,7 +1678,7 @@ bzla_is_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 /**
- * Check invertibility condition (without considering const bits in x) for:
+ * Check invertibility condition with respect to const bits in x for:
  *
  * sign_extend(x, n) = t_ext o t_x
  *
@@ -1674,4 +1692,33 @@ bzla_is_inv_sext_const(Bzla *bzla, BzlaPropInfo *pi)
   if (!bzla_is_inv_sext(bzla, pi)) return false;
   return bzla_bvdomain_check_fixed_bits(
       bzla->mm, pi->bvd[pi->pos_x], pi->res_x->lo);
+}
+
+/**
+ * Check invertibility condition with respect to const bits in x for:
+ *
+ * x ^ s = t
+ * s ^ x = t
+ *
+ * IC: check_fixed_bits(x, s ^ t)
+ */
+bool
+bzla_is_inv_xor_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+
+  bool res;
+  uint32_t pos_x;
+  BzlaBitVector * xor ;
+  BzlaMemMgr *mm;
+
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+
+  xor = bzla_bv_xor(mm, pi->bv[1 - pos_x], pi->target_value);
+  res = bzla_bvdomain_check_fixed_bits(mm, pi->bvd[pos_x], xor);
+  bzla_bv_free(mm, xor);
+
+  return res;
 }

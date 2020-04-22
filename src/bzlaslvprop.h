@@ -103,6 +103,7 @@ struct BzlaPropSolver
     uint32_t inv_concat;
     uint32_t inv_slice;
     uint32_t inv_cond;
+    uint32_t inv_xor;
 
     /* Number of calls to consistent value computation functions. */
     uint32_t cons_add;
@@ -118,6 +119,7 @@ struct BzlaPropSolver
     uint32_t cons_concat;
     uint32_t cons_slice;
     uint32_t cons_cond;
+    uint32_t cons_xor;
 
     /* constant bit information */
     uint64_t fixed_bits;
