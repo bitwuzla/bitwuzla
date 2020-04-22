@@ -1185,6 +1185,17 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "use special inverse value functions for slt/ult over concats");
 
+  init_opt(bzla,
+           BZLA_OPT_PROP_INFER_INEQ_BOUNDS,
+           false,
+           true,
+           "prop-infer-ineq-bounds",
+           0,
+           0,
+           0,
+           1,
+           "use special inverse value functions for slt/ult over concats");
+
   /* AIGPROP engine ------------------------------------------------------- */
   init_opt(bzla,
            BZLA_OPT_AIGPROP_USE_RESTARTS,

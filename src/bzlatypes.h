@@ -807,6 +807,13 @@ enum BzlaOption
     */
   BZLA_OPT_PROP_USE_INV_LT_CONCAT,
 
+  /*!
+    * **BZLA_OPT_PROP_INFER_TOP_LEVEL_BOUNDS**
+
+     Infer bounds for inequalities based on satisfied top level inequalities.
+    */
+  BZLA_OPT_PROP_INFER_INEQ_BOUNDS,
+
 
   /* --------------------------------------------------------------------- */
   /*!
