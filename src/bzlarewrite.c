@@ -694,8 +694,9 @@ apply_const_unary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
   switch (kind)
   {
     case BZLA_FP_ABS_NODE: fpres = bzla_fp_abs(bzla, bzla_fp_get_fp(e0)); break;
-    case BZLA_FP_NEG_NODE: fpres = bzla_fp_neg(bzla, bzla_fp_get_fp(e0)); break;
-    default: assert(0);  // temporary
+    default:
+      assert(kind == BZLA_FP_NEG_NODE);
+      fpres = bzla_fp_neg(bzla, bzla_fp_get_fp(e0));
   }
   result = bzla_exp_fp_const_fp(bzla, fpres);
   bzla_fp_free(bzla, fpres);
@@ -933,11 +934,10 @@ apply_const_binary_fp_rm_exp(Bzla *bzla,
       fpres =
           bzla_fp_sqrt(bzla, bzla_node_rm_const_get_rm(e0), bzla_fp_get_fp(e1));
       break;
-    case BZLA_FP_RTI_NODE:
+    default:
+      assert(kind == BZLA_FP_RTI_NODE);
       fpres =
           bzla_fp_rti(bzla, bzla_node_rm_const_get_rm(e0), bzla_fp_get_fp(e1));
-      break;
-    default: assert(0);  // temporary
   }
   result = bzla_exp_fp_const_fp(bzla, fpres);
   bzla_fp_free(bzla, fpres);
@@ -1024,13 +1024,12 @@ apply_const_ternary_fp_exp(
                           bzla_fp_get_fp(e1),
                           bzla_fp_get_fp(e2));
       break;
-    case BZLA_FP_DIV_NODE:
+    default:
+      assert(kind == BZLA_FP_DIV_NODE);
       fpres = bzla_fp_div(bzla,
                           bzla_node_rm_const_get_rm(e0),
                           bzla_fp_get_fp(e1),
                           bzla_fp_get_fp(e2));
-      break;
-    default: assert(0);  // temporary
   }
   result = bzla_exp_fp_const_fp(bzla, fpres);
   bzla_fp_free(bzla, fpres);
@@ -8580,7 +8579,7 @@ rewrite_fp_rti_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     assert(!result);
     if (!result)
     {
-      result = bzla_node_create_fp_sqrt(bzla, e0, e1);
+      result = bzla_node_create_fp_rti(bzla, e0, e1);
     }
     else
     {
@@ -9024,9 +9023,6 @@ bzla_rewrite_unary_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 
   switch (kind)
   {
-    case BZLA_FP_ABS_NODE: result = rewrite_fp_abs_exp(bzla, e0); break;
-    case BZLA_FP_NEG_NODE: result = rewrite_fp_neg_exp(bzla, e0); break;
-
     case BZLA_FP_IS_ZERO_NODE:
     case BZLA_FP_IS_INF_NODE:
     case BZLA_FP_IS_NAN_NODE:
@@ -9037,7 +9033,10 @@ bzla_rewrite_unary_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
       result = rewrite_fp_tester_exp(bzla, kind, e0);
       break;
 
-    default: assert(false);  // temporary
+    case BZLA_FP_ABS_NODE: result = rewrite_fp_abs_exp(bzla, e0); break;
+    default:
+      assert(kind == BZLA_FP_NEG_NODE);
+      result = rewrite_fp_neg_exp(bzla, e0);
   }
   bzla->time.rewrite += bzla_util_time_stamp() - start;
   return result;
