@@ -140,6 +140,7 @@ class TestPropCons : public TestPropCommon
 
             expected_result = bv_x ? BZLA_RESULT_SAT : BZLA_RESULT_UNSAT;
 
+            c_x = eq_x = 0;
             if (bv_x)
             {
               c_x  = bzla_exp_bv_const(bzla, bv_x);
@@ -316,6 +317,7 @@ class TestPropCons : public TestPropCommon
 
               expected_result = bv_x ? BZLA_RESULT_SAT : BZLA_RESULT_UNSAT;
 
+              eq_x = c_x = 0;
               if (bv_x)
               {
                 c_x  = bzla_exp_bv_const(bzla, bv_x);

@@ -172,7 +172,7 @@ class TestProp : public TestBzla
     pi.pos_x = pos_x;
     pi.res_x = nullptr;
     is_inv   = is_inv_fun(d_bzla, &pi);
-    assert(is_inv);
+    ASSERT_TRUE(is_inv);
     res[pos_x] = inv_fun(d_bzla, &pi);
     if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
     pi.res_x = nullptr;
@@ -182,7 +182,7 @@ class TestProp : public TestBzla
     pi.bv[pos_x] = res[pos_x];
     pi.res_x     = nullptr;
     is_inv       = is_inv_fun(d_bzla, &pi);
-    assert(is_inv);
+    ASSERT_TRUE(is_inv);
     res[pos_s] = n == 1 ? bzla_bv_copy(d_mm, s) : inv_fun(d_bzla, &pi);
     if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
     ASSERT_NE(res[pos_s], nullptr);
@@ -383,7 +383,7 @@ class TestProp : public TestBzla
     pi.pos_x = pos_x;
     pi.res_x = nullptr;
     is_inv   = is_inv_fun(d_bzla, &pi);
-    assert(is_inv);
+    ASSERT_TRUE(is_inv);
     res[pos_x] = inv_fun(d_bzla, &pi);
     if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
     pi.res_x = nullptr;

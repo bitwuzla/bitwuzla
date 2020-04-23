@@ -162,6 +162,7 @@ class TestPropInv : public TestPropCommon
             is_inv = is_inv_fun(bzla, &pi);
             bv_x   = nullptr;
 
+            c_x = eq_x = 0;
             if (is_inv)
             {
               bzla->slv = slv_prop;
@@ -382,6 +383,7 @@ class TestPropInv : public TestPropCommon
               is_inv = is_inv_fun(bzla, &pi);
               bv_x   = nullptr;
 
+              c_x = eq_x = 0;
               if (is_inv)
               {
                 bzla->slv       = slv_prop;
@@ -607,6 +609,7 @@ class TestPropInv : public TestPropCommon
               is_inv = is_inv_fun(bzla, &pi);
               bv_x   = nullptr;
 
+              c_x = eq_x = 0;
               if (is_inv)
               {
                 bzla->slv       = slv_prop;
