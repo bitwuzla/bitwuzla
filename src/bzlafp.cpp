@@ -3163,7 +3163,7 @@ bzla_fp_is_inf(Bzla *bzla, const BzlaFloatingPoint *fp)
   bool res = false;
 #ifdef BZLA_USE_SYMFPU
   BzlaFPWordBlaster::set_s_bzla(bzla);
-  res = symfpu::isNaN(*fp->size, *fp->fp);
+  res = symfpu::isInfinite(*fp->size, *fp->fp);
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
