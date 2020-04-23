@@ -691,6 +691,12 @@ TEST_F(TestInvUtils, is_inv_srl)
   test_is_inv_binary(bzla_is_inv_srl, boolector_srl, 1);
 }
 
+TEST_F(TestInvUtils, is_inv_sra)
+{
+  test_is_inv_binary(bzla_is_inv_sra, boolector_sra, 0);
+  test_is_inv_binary(bzla_is_inv_sra, boolector_sra, 1);
+}
+
 TEST_F(TestInvUtils, is_inv_udiv)
 {
   test_is_inv_binary(bzla_is_inv_udiv, boolector_udiv, 0);

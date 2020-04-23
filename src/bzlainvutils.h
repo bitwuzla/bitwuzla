@@ -40,6 +40,9 @@ bool bzla_is_inv_sll(Bzla *bzla, BzlaPropInfo *pi);
 /** Check invertibility of x >> s = t or s >> x = t when solved for x. */
 bool bzla_is_inv_srl(Bzla *bzla, BzlaPropInfo *pi);
 
+/** Check invertibility of x >>a s = t or s >>a x = t when solved for x. */
+bool bzla_is_inv_sra(Bzla *bzla, BzlaPropInfo *pi);
+
 /** Check invertibility of x / s = t or s / x = t when solved for x. */
 bool bzla_is_inv_udiv(Bzla *bzla, BzlaPropInfo *pi);
 

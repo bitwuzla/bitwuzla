@@ -175,51 +175,89 @@ bzla_is_inv_mul(Bzla *bzla, BzlaPropInfo *pi)
   return res;
 }
 
+typedef enum
+{
+  BZLA_BV_SHIFT_SLL,
+  BZLA_BV_SHIFT_SRL,
+  BZLA_BV_SHIFT_SRA,
+} BzlaBvShiftKind;
+
 /**
  * Check invertibility condition (without considering const bits in x) for:
  *
- * pos_x = 0:
- * x << s = t
- * IC: (t >> s) << s = t
+ * SLL:
+ *   pos_x = 0:
+ *   x << s = t
+ *   IC: (t >> s) << s = t
  *
- * pos_x = 1:
- * s << x = t
- * IC: ctz(s) <= ctz(t) /\ ((t = 0) \/ (s << (ctz(t) - ctz(t))) = t)
+ *   pos_x = 1:
+ *   s << x = t
+ *   IC: ctz(s) <= ctz(t) /\ ((t = 0) \/ (s << (ctz(t) - ctz(t))) = t)
  *
- * Note: Above conditions are for left shift, right shift is analogously
- * (is_sll = false).
+ * SRL:
+ *   pos_x = 0:
+ *   x >> s = t
+ *   IC: (t << s) >> s = t
+ *
+ *   pos_x = 1:
+ *   s >> x = t
+ *   IC: clz(s) <= clz(t) /\ ((t = 0) \/ (s >> (ctz(t) - ctz(t))) = t)
+ *
+ * SRA:
+ *   pos_x = 0:
+ *   x >>a s = t
+ *   IC: (s < bw(s) => (t << s) >>a s = t) /\
+ *       (s >= bw(s) => (t = ones \/ t = 0))
+ *
+ *   pos_x = 1:
+ *   s >>a x = t
+ *   IC: (s[MSB] = 0 => clz(s) <= clz(t) /\
+ *                      ((t = 0) \/ (s >>a (ctz(t) - ctz(t))) = t)) /\
+ *       (s[MSB] = 1 => clo(s) <= clo(t) /\
+ *                      ((t = ones) \/ (s >>a (clo(t) - clo(t))) = t))
  */
 static bool
-is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, bool is_sll)
+is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
 {
   assert(bzla);
   assert(pi);
 
-  bool res;
+  bool res, is_signed = false;
   BzlaMemMgr *mm;
   const BzlaBitVector *s, *t;
-  BzlaBitVector *shift1, *shift2;
-  uint32_t ctz_t, ctz_s;
+  BzlaBitVector *shift1, *shift2, *bw_bv, *tmp;
+  int32_t cmp;
+  uint32_t bw, cnt_t, cnt_s;
   BzlaBitVectorBinFun shift1_fun, shift2_fun;
-  uint32_t (*count_zero_fun)(const BzlaBitVector *);
+  uint32_t (*count_fun)(const BzlaBitVector *);
   BzlaBitVector *(*ishift_fun)(BzlaMemMgr *, const BzlaBitVector *, uint64_t);
 
-  s = pi->bv[1 - pi->pos_x];
-  t = pi->target_value;
+  s  = pi->bv[1 - pi->pos_x];
+  t  = pi->target_value;
+  bw = bzla_bv_get_width(s);
 
-  if (is_sll)
+  if (kind == BZLA_BV_SHIFT_SLL)
   {
-    count_zero_fun = bzla_bv_get_num_trailing_zeros;
-    shift1_fun     = bzla_bv_srl;
-    shift2_fun     = bzla_bv_sll;
-    ishift_fun     = bzla_bv_sll_uint64;
+    count_fun  = bzla_bv_get_num_trailing_zeros;
+    shift1_fun = bzla_bv_srl;
+    shift2_fun = bzla_bv_sll;
+    ishift_fun = bzla_bv_sll_uint64;
+  }
+  else if (kind == BZLA_BV_SHIFT_SRL)
+  {
+    count_fun  = bzla_bv_get_num_leading_zeros;
+    shift1_fun = bzla_bv_sll;
+    shift2_fun = bzla_bv_srl;
+    ishift_fun = bzla_bv_srl_uint64;
   }
   else
   {
-    count_zero_fun = bzla_bv_get_num_leading_zeros;
-    shift1_fun     = bzla_bv_sll;
-    shift2_fun     = bzla_bv_srl;
-    ishift_fun     = bzla_bv_srl_uint64;
+    assert(kind == BZLA_BV_SHIFT_SRA);
+    is_signed = bzla_bv_get_bit(s, bw - 1) == 1;
+    count_fun = is_signed ? bzla_bv_get_num_leading_ones
+                          : bzla_bv_get_num_leading_zeros;
+    shift1_fun = bzla_bv_sll;
+    shift2_fun = bzla_bv_sra;
   }
 
   mm = bzla->mm;
@@ -230,29 +268,55 @@ is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, bool is_sll)
     res    = bzla_bv_compare(shift2, t) == 0;
     bzla_bv_free(mm, shift1);
     bzla_bv_free(mm, shift2);
+    bw_bv = bzla_bv_uint64_to_bv(mm, bw, bw);
+    cmp   = bzla_bv_compare(s, bw_bv);
+    if (cmp >= 0 && kind == BZLA_BV_SHIFT_SRA)
+    {
+      res = bzla_bv_is_zero(t) || bzla_bv_is_ones(t);
+    }
+    bzla_bv_free(mm, bw_bv);
   }
   else
   {
     assert(pi->pos_x == 1);
 
-    ctz_t = count_zero_fun(t);
-    ctz_s = count_zero_fun(s);
+    cnt_t = count_fun(t);
+    cnt_s = count_fun(s);
 
-    if (ctz_s > ctz_t)
+    if (cnt_s > cnt_t)
     {
       res = false;
     }
     else
     {
-      if (bzla_bv_is_zero(t))
+      if (kind == BZLA_BV_SHIFT_SRA)
       {
-        res = true;
+        if ((is_signed && bzla_bv_is_ones(t))
+            || (!is_signed && bzla_bv_is_zero(t)))
+        {
+          res = true;
+        }
+        else
+        {
+          tmp    = bzla_bv_uint64_to_bv(mm, cnt_t - cnt_s, bw);
+          shift1 = shift2_fun(mm, s, tmp);
+          res    = bzla_bv_compare(shift1, t) == 0;
+          bzla_bv_free(mm, shift1);
+          bzla_bv_free(mm, tmp);
+        }
       }
       else
       {
-        shift1 = ishift_fun(mm, s, ctz_t - ctz_s);
-        res    = bzla_bv_compare(shift1, t) == 0;
-        bzla_bv_free(mm, shift1);
+        if (bzla_bv_is_zero(t))
+        {
+          res = true;
+        }
+        else
+        {
+          shift1 = ishift_fun(mm, s, cnt_t - cnt_s);
+          res    = bzla_bv_compare(shift1, t) == 0;
+          bzla_bv_free(mm, shift1);
+        }
       }
     }
   }
@@ -264,7 +328,7 @@ bzla_is_inv_sll(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
-  return is_inv_shift(bzla, pi, true);
+  return is_inv_shift(bzla, pi, BZLA_BV_SHIFT_SLL);
 }
 
 bool
@@ -272,7 +336,15 @@ bzla_is_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
-  return is_inv_shift(bzla, pi, false);
+  return is_inv_shift(bzla, pi, BZLA_BV_SHIFT_SRL);
+}
+
+bool
+bzla_is_inv_sra(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  return is_inv_shift(bzla, pi, BZLA_BV_SHIFT_SRA);
 }
 
 /**
