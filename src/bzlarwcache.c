@@ -65,8 +65,7 @@ bzla_rw_cache_get(BzlaRwCache *rwc,
     /* For slice nodes nid1 and nid2 correspond to the upper/lower indices. */
     assert(!nid1 || is_valid_node(rwc->bzla, nid1));
     /* For to_fp nodes, nid2 correspond to the sort of the conversion. */
-    if (kind != BZLA_FP_TO_FP_BV_NODE && kind != BZLA_FP_TO_FP_INT_NODE
-        && kind != BZLA_FP_TO_FP_UINT_NODE)
+    if (!bzla_node_is_fp_to_fp_kind(kind))
     {
       assert(!nid2 || is_valid_node(rwc->bzla, nid2));
     }
@@ -103,8 +102,7 @@ bzla_rw_cache_add(BzlaRwCache *rwc,
     /* For slice nodes nid1 and nid2 correspond to the upper/lower indices. */
     assert(!nid1 || is_valid_node(rwc->bzla, nid1));
     /* For to_fp nodes, nid2 correspond to the sort of the conversion. */
-    if (kind != BZLA_FP_TO_FP_BV_NODE && kind != BZLA_FP_TO_FP_INT_NODE
-        && kind != BZLA_FP_TO_FP_UINT_NODE)
+    if (!bzla_node_is_fp_to_fp_kind(kind))
     {
       assert(!nid2 || is_valid_node(rwc->bzla, nid2));
     }

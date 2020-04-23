@@ -372,6 +372,16 @@ bzla_node_is_ternary_kind(BzlaNodeKind kind)
   return kind >= BZLA_COND_NODE && kind <= BZLA_UPDATE_NODE;
 }
 
+/**
+ * Return true if given node is a floating-point to_fp kind.
+ */
+static inline bool
+bzla_node_is_fp_to_fp_kind(BzlaNodeKind kind)
+{
+  return kind == BZLA_FP_TO_FP_FP_NODE || kind == BZLA_FP_TO_FP_BV_NODE
+         || kind == BZLA_FP_TO_FP_INT_NODE || kind == BZLA_FP_TO_FP_UINT_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 /** Return true if given node is of unary kind (arity == 1). */
