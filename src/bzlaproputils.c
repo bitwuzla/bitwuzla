@@ -2929,14 +2929,14 @@ bzla_proputils_inv_eq(Bzla *bzla, BzlaPropInfo *pi)
     if (bzla_rng_pick_with_prob(&bzla->rng,
                                 bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_EQ_FLIP)))
     {
-      res = 0;
-      do
+      res = bzla_bv_copy(bzla->mm, pi->bv[pi->pos_x]);
+      while (!bzla_bv_compare(res, s))
       {
         if (res) bzla_bv_free(bzla->mm, res);
         res = bzla_bv_copy(bzla->mm, pi->bv[pi->pos_x]);
         bzla_bv_flip_bit(
             res, bzla_rng_pick_rand(&bzla->rng, 0, bzla_bv_get_width(res) - 1));
-      } while (!bzla_bv_compare(res, s));
+      }
     }
     else
     {
