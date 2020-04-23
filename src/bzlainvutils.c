@@ -492,6 +492,8 @@ bzla_is_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
+  (void) bzla;
+  (void) pi;
   return true;
 }
 

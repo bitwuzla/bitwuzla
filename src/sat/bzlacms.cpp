@@ -142,8 +142,10 @@ class BzlaCMS : public SATSolver
     if (nomodel) return fixed(lit);
     const std::vector<lbool>& model = get_model();
     Lit l                           = import(lit);
-    uint32_t v                      = l.var();
+#ifndef NDEBUG
+    uint32_t v = l.var();
     assert(v < model.size());
+#endif
     int32_t res = model[l.var()] == l_True ? 1 : -1;
     return l.sign() ? -res : res;
   }
