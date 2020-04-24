@@ -294,7 +294,9 @@ BzlaFPBV<is_signed>::operator=(const BzlaFPBV<is_signed> &other)
 {
   assert(s_bzla);
   assert(d_bv);
-  return bzla_bv_copy(s_bzla->mm, other.d_bv);
+  bzla_bv_free(s_bzla->mm, d_bv);
+  d_bv = bzla_bv_copy(s_bzla->mm, other.d_bv);
+  return *this;
 }
 
 template <bool is_signed>
