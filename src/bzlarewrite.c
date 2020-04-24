@@ -582,7 +582,6 @@ static BzlaNode *rewrite_fp_add_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_mul_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_div_exp(Bzla *, BzlaNode *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_fp_to_fp_from_bv_exp(Bzla *bzla,
-                                              BzlaNodeKind kind,
                                               BzlaNode *e0,
                                               BzlaSortId sort);
 static BzlaNode *rewrite_fp_to_fp_from_fp_exp(Bzla *bzla,
@@ -2646,11 +2645,11 @@ applies_and_and_4_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 	 && !bzla_node_is_inverted (e1)
 	 && e0->kind == BZLA_BV_AND_NODE
 	 && e1->kind == BZLA_BV_AND_NODE
-	 && e0->e[0] == bzla_node_invert (e1->e[0]) 
+	 && e0->e[0] == bzla_node_invert (e1->e[0])
 	 && e0->e[1] == e1->e[1];
 }
 
-static inline BzlaNode * 
+static inline BzlaNode *
 apply_and_and_4_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 {
   assert (applies_and_and_4_eq (bzla, e0, e1));
@@ -7299,13 +7298,13 @@ normalize_cond(Bzla *bzla, BzlaNode **cond, BzlaNode **left, BzlaNode **right)
 static BzlaNode *
 rewrite_bv_slice_exp(Bzla *bzla, BzlaNode *e, uint32_t upper, uint32_t lower)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_BV_SLICE_NODE;
 
   e = bzla_simplify_exp(bzla, e);
   assert(bzla_dbg_precond_slice_exp(bzla, e, upper, lower));
 
-  result = check_rw_cache(
-      bzla, BZLA_BV_SLICE_NODE, bzla_node_get_id(e), upper, lower, 0);
+  result = check_rw_cache(bzla, kind, bzla_node_get_id(e), upper, lower, 0);
 
   if (!result)
   {
@@ -7332,7 +7331,7 @@ rewrite_bv_slice_exp(Bzla *bzla, BzlaNode *e, uint32_t upper, uint32_t lower)
      * rule. */
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_BV_SLICE_NODE,
+                        kind,
                         bzla_node_get_id(e),
                         upper,
                         lower,
@@ -7354,9 +7353,19 @@ rewrite_eq_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_eq_exp(bzla, e0, e1));
-  kind = bzla_node_is_fun(e0)
-             ? BZLA_FUN_EQ_NODE
-             : (bzla_node_is_bv(bzla, e0) ? BZLA_BV_EQ_NODE : BZLA_FP_EQ_NODE);
+  if (bzla_node_is_fun(e0))
+  {
+    kind = BZLA_FUN_EQ_NODE;
+  }
+  else if (bzla_node_is_bv(bzla, e0))
+  {
+    kind = BZLA_BV_EQ_NODE;
+  }
+  else
+  {
+    assert(bzla_node_is_fp(bzla, e0));
+    kind = BZLA_FP_EQ_NODE;
+  }
 
   e0 = bzla_node_copy(bzla, e0);
   e1 = bzla_node_copy(bzla, e1);
@@ -7437,7 +7446,8 @@ SWAP_OPERANDS:
 static BzlaNode *
 rewrite_bv_ult_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_BV_ULT_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -7448,13 +7458,13 @@ rewrite_bv_ult_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   normalize_lt(bzla, &e0, &e1);
 
   result = check_rw_cache(
-      bzla, BZLA_BV_ULT_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_ULT_NODE, e0, e1);
-    ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_ULT_NODE, e0, e1);
-    ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_ULT_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_lhs_binary_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
     ADD_RW_RULE(false_lt, e0, e1);
     ADD_RW_RULE(bool_ult, e0, e1);
     ADD_RW_RULE(concat_upper_ult, e0, e1);
@@ -7470,7 +7480,7 @@ rewrite_bv_ult_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_BV_ULT_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -7499,11 +7509,11 @@ rewrite_bv_slt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   normalize_lt(bzla, &e0, &e1);
 
   result = check_rw_cache(
-      bzla, BZLA_BV_SLT_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0);
+      bzla, BZLA_BV_SLT_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_exp, BZLA_BV_SLT_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_SLT_NODE, e0, e1);
     ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_SLT_NODE, e0, e1);
     ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_SLT_NODE, e0, e1);
     ADD_RW_RULE(false_lt, e0, e1);
@@ -7525,6 +7535,7 @@ rewrite_bv_slt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
+                        0,
                         bzla_node_get_id(result));
     }
   }
@@ -7538,8 +7549,9 @@ rewrite_bv_slt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static BzlaNode *
 rewrite_bv_and_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  bool swap_ops    = false;
-  BzlaNode *result = 0;
+  bool swap_ops     = false;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_BV_AND_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -7551,15 +7563,15 @@ rewrite_bv_and_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
 SWAP_OPERANDS:
   result = check_rw_cache(
-      bzla, BZLA_BV_AND_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
     if (!swap_ops)
     {
-      ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_AND_NODE, e0, e1);
-      ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_AND_NODE, e0, e1);
-      ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_AND_NODE, e0, e1);
+      ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
+      ADD_RW_RULE(special_const_lhs_binary_exp, kind, e0, e1);
+      ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
       ADD_RW_RULE(idem1_and, e0, e1);
       ADD_RW_RULE(contr1_and, e0, e1);
       ADD_RW_RULE(contr2_and, e0, e1);
@@ -7603,7 +7615,7 @@ SWAP_OPERANDS:
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_BV_AND_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -7621,8 +7633,9 @@ SWAP_OPERANDS:
 static BzlaNode *
 rewrite_bv_add_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  bool swap_ops    = false;
-  BzlaNode *result = 0;
+  bool swap_ops     = false;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_BV_ADD_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -7634,15 +7647,15 @@ rewrite_bv_add_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
 SWAP_OPERANDS:
   result = check_rw_cache(
-      bzla, BZLA_BV_ADD_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
     if (!swap_ops)
     {
-      ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_ADD_NODE, e0, e1);
-      ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_ADD_NODE, e0, e1);
-      ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_ADD_NODE, e0, e1);
+      ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
+      ADD_RW_RULE(special_const_lhs_binary_exp, kind, e0, e1);
+      ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
       ADD_RW_RULE(bool_add, e0, e1);
       ADD_RW_RULE(mult_add, e0, e1);
       ADD_RW_RULE(not_add, e0, e1);
@@ -7677,7 +7690,7 @@ SWAP_OPERANDS:
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_BV_ADD_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -7695,8 +7708,9 @@ SWAP_OPERANDS:
 static BzlaNode *
 rewrite_bv_mul_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  bool swap_ops    = false;
-  BzlaNode *result = 0;
+  bool swap_ops     = false;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_BV_MUL_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -7708,15 +7722,15 @@ rewrite_bv_mul_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
 SWAP_OPERANDS:
   result = check_rw_cache(
-      bzla, BZLA_BV_MUL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
     if (!swap_ops)
     {
-      ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_MUL_NODE, e0, e1);
-      ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_MUL_NODE, e0, e1);
-      ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_MUL_NODE, e0, e1);
+      ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
+      ADD_RW_RULE(special_const_lhs_binary_exp, kind, e0, e1);
+      ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
       ADD_RW_RULE(bool_mul, e0, e1);
 #if 0
       // TODO (ma): this increases mul nodes in the general case, needs restriction
@@ -7748,7 +7762,7 @@ SWAP_OPERANDS:
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_BV_MUL_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -7766,7 +7780,8 @@ SWAP_OPERANDS:
 static BzlaNode *
 rewrite_bv_udiv_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_BV_UDIV_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -7776,21 +7791,17 @@ rewrite_bv_udiv_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_node_copy(bzla, e1);
   normalize_udiv(bzla, &e0, &e1);
 
-  result = check_rw_cache(bzla,
-                          BZLA_BV_UDIV_NODE,
-                          bzla_node_get_id(e0),
-                          bzla_node_get_id(e1),
-                          0,
-                          0);
+  result = check_rw_cache(
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
     // TODO what about non powers of 2, like divisor 3, which means that
     // some upper bits are 0 ...
 
-    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_UDIV_NODE, e0, e1);
-    ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_UDIV_NODE, e0, e1);
-    ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_UDIV_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_lhs_binary_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
     ADD_RW_RULE(bool_udiv, e0, e1);
     ADD_RW_RULE(power2_udiv, e0, e1);
     ADD_RW_RULE(one_udiv, e0, e1);
@@ -7805,7 +7816,7 @@ rewrite_bv_udiv_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_BV_UDIV_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -7823,7 +7834,8 @@ rewrite_bv_udiv_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static BzlaNode *
 rewrite_bv_urem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_BV_UREM_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -7833,12 +7845,8 @@ rewrite_bv_urem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_node_copy(bzla, e1);
   normalize_urem(bzla, &e0, &e1);
 
-  result = check_rw_cache(bzla,
-                          BZLA_BV_UREM_NODE,
-                          bzla_node_get_id(e0),
-                          bzla_node_get_id(e1),
-                          0,
-                          0);
+  result = check_rw_cache(
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -7847,9 +7855,9 @@ rewrite_bv_urem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     // TODO what about non powers of 2, like modulo 3, which means that
     // all but the last two bits are zero
 
-    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_UREM_NODE, e0, e1);
-    ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_UREM_NODE, e0, e1);
-    ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_UREM_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_lhs_binary_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
     ADD_RW_RULE(bool_urem, e0, e1);
     ADD_RW_RULE(zero_urem, e0, e1);
 
@@ -7862,7 +7870,7 @@ rewrite_bv_urem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_BV_UREM_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -7880,7 +7888,8 @@ rewrite_bv_urem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static BzlaNode *
 rewrite_bv_concat_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_BV_CONCAT_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -7890,18 +7899,14 @@ rewrite_bv_concat_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_node_copy(bzla, e1);
   normalize_concat(bzla, &e0, &e1);
 
-  result = check_rw_cache(bzla,
-                          BZLA_BV_CONCAT_NODE,
-                          bzla_node_get_id(e0),
-                          bzla_node_get_id(e1),
-                          0,
-                          0);
+  result = check_rw_cache(
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_CONCAT_NODE, e0, e1);
-    ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_CONCAT_NODE, e0, e1);
-    ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_CONCAT_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_lhs_binary_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
     ADD_RW_RULE(const_concat, e0, e1);
     ADD_RW_RULE(slice_concat, e0, e1);
     ADD_RW_RULE(and_lhs_concat, e0, e1);
@@ -7916,7 +7921,7 @@ rewrite_bv_concat_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_BV_CONCAT_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -7934,20 +7939,21 @@ rewrite_bv_concat_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static BzlaNode *
 rewrite_bv_sll_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_BV_SLL_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_shift_exp(bzla, e0, e1));
 
   result = check_rw_cache(
-      bzla, BZLA_BV_SLL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_SLL_NODE, e0, e1);
-    ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_SLL_NODE, e0, e1);
-    ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_SLL_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_lhs_binary_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
     ADD_RW_RULE(const_sll, e0, e1);
 
     assert(!result);
@@ -7959,7 +7965,7 @@ rewrite_bv_sll_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_BV_SLL_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -7975,20 +7981,21 @@ rewrite_bv_sll_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static BzlaNode *
 rewrite_bv_srl_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_BV_SRL_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_shift_exp(bzla, e0, e1));
 
   result = check_rw_cache(
-      bzla, BZLA_BV_SRL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_bv_exp, BZLA_BV_SRL_NODE, e0, e1);
-    ADD_RW_RULE(special_const_lhs_binary_exp, BZLA_BV_SRL_NODE, e0, e1);
-    ADD_RW_RULE(special_const_rhs_binary_exp, BZLA_BV_SRL_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_lhs_binary_exp, kind, e0, e1);
+    ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
     ADD_RW_RULE(const_srl, e0, e1);
     // ADD_RW_RULE (zero_srl, e0, e1);
 
@@ -8001,7 +8008,7 @@ rewrite_bv_srl_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_BV_SRL_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8019,17 +8026,17 @@ rewrite_fp_neg_exp(Bzla *bzla, BzlaNode *e0)
   assert(bzla);
   assert(e0);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_NEG_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
 
-  result =
-      check_rw_cache(bzla, BZLA_FP_NEG_NODE, bzla_node_get_id(e0), 0, 0, 0);
+  result = check_rw_cache(bzla, kind, bzla_node_get_id(e0), 0, 0, 0);
 
   if (!result)
   {
     ADD_RW_RULE(fp_neg, e0);
-    ADD_RW_RULE(const_unary_fp_exp, BZLA_FP_NEG_NODE, e0);
+    ADD_RW_RULE(const_unary_fp_exp, kind, e0);
 
     assert(!result);
     if (!result)
@@ -8040,7 +8047,7 @@ rewrite_fp_neg_exp(Bzla *bzla, BzlaNode *e0)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_NEG_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         0,
                         0,
@@ -8114,17 +8121,15 @@ rewrite_fp_tester_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 }
 
 static BzlaNode *
-rewrite_fp_to_fp_from_bv_exp(Bzla *bzla,
-                             BzlaNodeKind kind,
-                             BzlaNode *e0,
-                             BzlaSortId sort)
+rewrite_fp_to_fp_from_bv_exp(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
 {
   assert(bzla);
   assert(e0);
   assert(sort);
 
-  BzlaNode *result = 0;
-  double start     = bzla_util_time_stamp();
+  BzlaNode *result  = 0;
+  double start      = bzla_util_time_stamp();
+  BzlaNodeKind kind = BZLA_FP_TO_FP_BV_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
 
@@ -8167,18 +8172,15 @@ rewrite_fp_to_fp_from_fp_exp(Bzla *bzla,
   assert(e1);
   assert(sort);
 
-  BzlaNode *result = 0;
-  double start     = bzla_util_time_stamp();
+  BzlaNode *result  = 0;
+  double start      = bzla_util_time_stamp();
+  BzlaNodeKind kind = BZLA_FP_TO_FP_FP_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
-  result = check_rw_cache(bzla,
-                          BZLA_FP_TO_FP_FP_NODE,
-                          bzla_node_get_id(e0),
-                          bzla_node_get_id(e1),
-                          sort,
-                          0);
+  result = check_rw_cache(
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), sort, 0);
 
   if (!result)
   {
@@ -8193,7 +8195,7 @@ rewrite_fp_to_fp_from_fp_exp(Bzla *bzla,
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_TO_FP_FP_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         sort,
@@ -8217,23 +8219,19 @@ rewrite_fp_to_fp_from_int_exp(Bzla *bzla,
   assert(e1);
   assert(sort);
 
-  BzlaNode *result = 0;
-  double start     = bzla_util_time_stamp();
+  BzlaNode *result  = 0;
+  double start      = bzla_util_time_stamp();
+  BzlaNodeKind kind = BZLA_FP_TO_FP_INT_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
-  result = check_rw_cache(bzla,
-                          BZLA_FP_TO_FP_INT_NODE,
-                          bzla_node_get_id(e0),
-                          bzla_node_get_id(e1),
-                          sort,
-                          0);
+  result = check_rw_cache(
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), sort, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(
-        const_fp_to_fp_from_int_exp, BZLA_FP_TO_FP_INT_NODE, e0, e1, sort);
+    ADD_RW_RULE(const_fp_to_fp_from_int_exp, kind, e0, e1, sort);
 
     assert(!result);
     if (!result)
@@ -8244,7 +8242,7 @@ rewrite_fp_to_fp_from_int_exp(Bzla *bzla,
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_TO_FP_INT_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         sort,
@@ -8268,23 +8266,19 @@ rewrite_fp_to_fp_from_uint_exp(Bzla *bzla,
   assert(e1);
   assert(sort);
 
-  BzlaNode *result = 0;
-  double start     = bzla_util_time_stamp();
+  BzlaNode *result  = 0;
+  double start      = bzla_util_time_stamp();
+  BzlaNodeKind kind = BZLA_FP_TO_FP_UINT_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
-  result = check_rw_cache(bzla,
-                          BZLA_FP_TO_FP_UINT_NODE,
-                          bzla_node_get_id(e0),
-                          bzla_node_get_id(e1),
-                          sort,
-                          0);
+  result = check_rw_cache(
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), sort, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(
-        const_fp_to_fp_from_int_exp, BZLA_FP_TO_FP_UINT_NODE, e0, e1, sort);
+    ADD_RW_RULE(const_fp_to_fp_from_int_exp, kind, e0, e1, sort);
 
     assert(!result);
     if (!result)
@@ -8295,7 +8289,7 @@ rewrite_fp_to_fp_from_uint_exp(Bzla *bzla,
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_TO_FP_UINT_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         sort,
@@ -8315,13 +8309,14 @@ rewrite_fp_min_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(e0);
   assert(e1);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_MIN_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
   result = check_rw_cache(
-      bzla, BZLA_FP_MIN_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -8336,7 +8331,7 @@ rewrite_fp_min_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_MIN_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8355,13 +8350,14 @@ rewrite_fp_max_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(e0);
   assert(e1);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_MAX_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
   result = check_rw_cache(
-      bzla, BZLA_FP_MAX_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -8376,7 +8372,7 @@ rewrite_fp_max_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_MAX_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8395,17 +8391,18 @@ rewrite_fp_lte_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(e0);
   assert(e1);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_LTE_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
   result = check_rw_cache(
-      bzla, BZLA_FP_LTE_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_fp_bool_exp, BZLA_FP_LTE_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_fp_bool_exp, kind, e0, e1);
     ADD_RW_RULE(fp_lte, e0, e1);
 
     assert(!result);
@@ -8417,7 +8414,7 @@ rewrite_fp_lte_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_LTE_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8436,17 +8433,18 @@ rewrite_fp_lt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(e0);
   assert(e1);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_LT_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
   result = check_rw_cache(
-      bzla, BZLA_FP_LT_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_fp_bool_exp, BZLA_FP_LT_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_fp_bool_exp, kind, e0, e1);
     ADD_RW_RULE(fp_lt, e0, e1);
 
     assert(!result);
@@ -8458,7 +8456,7 @@ rewrite_fp_lt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_LT_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8477,17 +8475,18 @@ rewrite_fp_rem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(e0);
   assert(e1);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_REM_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
   result = check_rw_cache(
-      bzla, BZLA_FP_REM_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_fp_exp, BZLA_FP_REM_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_fp_exp, kind, e0, e1);
     ADD_RW_RULE(fp_rem_same_divisor, e0, e1);
     ADD_RW_RULE(fp_rem_sign_divisor, e0, e1);
     ADD_RW_RULE(fp_rem_neg, e0, e1);
@@ -8501,7 +8500,7 @@ rewrite_fp_rem_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_REM_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8520,21 +8519,18 @@ rewrite_fp_sqrt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(e0);
   assert(e1);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_SQRT_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
-  result = check_rw_cache(bzla,
-                          BZLA_FP_SQRT_NODE,
-                          bzla_node_get_id(e0),
-                          bzla_node_get_id(e1),
-                          0,
-                          0);
+  result = check_rw_cache(
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_fp_rm_exp, BZLA_FP_SQRT_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_fp_rm_exp, kind, e0, e1);
 
     assert(!result);
     if (!result)
@@ -8545,7 +8541,7 @@ rewrite_fp_sqrt_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_SQRT_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8564,17 +8560,18 @@ rewrite_fp_rti_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(e0);
   assert(e1);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_RTI_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
   result = check_rw_cache(
-      bzla, BZLA_FP_RTI_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
-    ADD_RW_RULE(const_binary_fp_rm_exp, BZLA_FP_RTI_NODE, e0, e1);
+    ADD_RW_RULE(const_binary_fp_rm_exp, kind, e0, e1);
 
     assert(!result);
     if (!result)
@@ -8585,7 +8582,7 @@ rewrite_fp_rti_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_RTI_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8605,14 +8602,15 @@ rewrite_fp_add_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
   assert(e1);
   assert(e2);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_ADD_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   e2 = bzla_simplify_exp(bzla, e2);
 
   result = check_rw_cache(bzla,
-                          BZLA_FP_ADD_NODE,
+                          kind,
                           bzla_node_get_id(e0),
                           bzla_node_get_id(e1),
                           bzla_node_get_id(e2),
@@ -8620,7 +8618,7 @@ rewrite_fp_add_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 
   if (!result)
   {
-    ADD_RW_RULE(const_ternary_fp_exp, BZLA_FP_ADD_NODE, e0, e1, e2);
+    ADD_RW_RULE(const_ternary_fp_exp, kind, e0, e1, e2);
 
     assert(!result);
     if (!result)
@@ -8631,7 +8629,7 @@ rewrite_fp_add_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_ADD_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         bzla_node_get_id(e2),
@@ -8651,14 +8649,15 @@ rewrite_fp_mul_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
   assert(e1);
   assert(e2);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_MUL_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   e2 = bzla_simplify_exp(bzla, e2);
 
   result = check_rw_cache(bzla,
-                          BZLA_FP_MUL_NODE,
+                          kind,
                           bzla_node_get_id(e0),
                           bzla_node_get_id(e1),
                           bzla_node_get_id(e2),
@@ -8666,7 +8665,7 @@ rewrite_fp_mul_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 
   if (!result)
   {
-    ADD_RW_RULE(const_ternary_fp_exp, BZLA_FP_MUL_NODE, e0, e1, e2);
+    ADD_RW_RULE(const_ternary_fp_exp, kind, e0, e1, e2);
 
     assert(!result);
     if (!result)
@@ -8677,7 +8676,7 @@ rewrite_fp_mul_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_MUL_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         bzla_node_get_id(e2),
@@ -8697,14 +8696,15 @@ rewrite_fp_div_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
   assert(e1);
   assert(e2);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_DIV_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   e2 = bzla_simplify_exp(bzla, e2);
 
   result = check_rw_cache(bzla,
-                          BZLA_FP_DIV_NODE,
+                          kind,
                           bzla_node_get_id(e0),
                           bzla_node_get_id(e1),
                           bzla_node_get_id(e2),
@@ -8712,7 +8712,7 @@ rewrite_fp_div_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 
   if (!result)
   {
-    ADD_RW_RULE(const_ternary_fp_exp, BZLA_FP_DIV_NODE, e0, e1, e2);
+    ADD_RW_RULE(const_ternary_fp_exp, kind, e0, e1, e2);
 
     assert(!result);
     if (!result)
@@ -8723,7 +8723,7 @@ rewrite_fp_div_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_DIV_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         bzla_node_get_id(e2),
@@ -8743,17 +8743,17 @@ rewrite_fp_abs_exp(Bzla *bzla, BzlaNode *e0)
   assert(bzla);
   assert(e0);
 
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FP_ABS_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
 
-  result =
-      check_rw_cache(bzla, BZLA_FP_ABS_NODE, bzla_node_get_id(e0), 0, 0, 0);
+  result = check_rw_cache(bzla, kind, bzla_node_get_id(e0), 0, 0, 0);
 
   if (!result)
   {
     ADD_RW_RULE(fp_abs, e0);
-    ADD_RW_RULE(const_unary_fp_exp, BZLA_FP_ABS_NODE, e0);
+    ADD_RW_RULE(const_unary_fp_exp, kind, e0);
 
     assert(!result);
     if (!result)
@@ -8764,7 +8764,7 @@ rewrite_fp_abs_exp(Bzla *bzla, BzlaNode *e0)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FP_ABS_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         0,
                         0,
@@ -8782,14 +8782,15 @@ rewrite_fp_abs_exp(Bzla *bzla, BzlaNode *e0)
 static BzlaNode *
 rewrite_apply_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_APPLY_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_apply_exp(bzla, e0, e1));
 
   result = check_rw_cache(
-      bzla, BZLA_APPLY_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -8808,7 +8809,7 @@ rewrite_apply_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_APPLY_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8846,13 +8847,14 @@ rewrite_lambda_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static BzlaNode *
 rewrite_forall_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_FORALL_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
   result = check_rw_cache(
-      bzla, BZLA_FORALL_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -8869,7 +8871,7 @@ rewrite_forall_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_FORALL_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8885,13 +8887,14 @@ rewrite_forall_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static BzlaNode *
 rewrite_exists_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_EXISTS_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
 
   result = check_rw_cache(
-      bzla, BZLA_EXISTS_NODE, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
+      bzla, kind, bzla_node_get_id(e0), bzla_node_get_id(e1), 0, 0);
 
   if (!result)
   {
@@ -8908,7 +8911,7 @@ rewrite_exists_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_EXISTS_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         0,
@@ -8924,7 +8927,8 @@ rewrite_exists_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static BzlaNode *
 rewrite_cond_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
-  BzlaNode *result = 0;
+  BzlaNode *result  = 0;
+  BzlaNodeKind kind = BZLA_COND_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -8938,7 +8942,7 @@ rewrite_cond_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
   assert(bzla_node_is_regular(e0));
 
   result = check_rw_cache(bzla,
-                          BZLA_COND_NODE,
+                          kind,
                           bzla_node_get_id(e0),
                           bzla_node_get_id(e1),
                           bzla_node_get_id(e2),
@@ -8976,7 +8980,7 @@ rewrite_cond_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
     {
     DONE:
       bzla_rw_cache_add(bzla->rw_cache,
-                        BZLA_COND_NODE,
+                        kind,
                         bzla_node_get_id(e0),
                         bzla_node_get_id(e1),
                         bzla_node_get_id(e2),
@@ -9059,8 +9063,9 @@ bzla_rewrite_binary_exp(Bzla *bzla,
 
   switch (kind)
   {
+    case BZLA_BV_EQ_NODE:
     case BZLA_FUN_EQ_NODE:
-    case BZLA_BV_EQ_NODE: result = rewrite_eq_exp(bzla, e0, e1); break;
+    case BZLA_FP_EQ_NODE: result = rewrite_eq_exp(bzla, e0, e1); break;
 
     case BZLA_BV_ULT_NODE: result = rewrite_bv_ult_exp(bzla, e0, e1); break;
 
@@ -9198,7 +9203,7 @@ bzla_rewrite_unary_to_fp_exp(Bzla *bzla,
 
   BzlaNode *res;
   double start = bzla_util_time_stamp();
-  res          = rewrite_fp_to_fp_from_bv_exp(bzla, kind, e0, sort);
+  res          = rewrite_fp_to_fp_from_bv_exp(bzla, e0, sort);
   bzla->time.rewrite += bzla_util_time_stamp() - start;
   return res;
 }
