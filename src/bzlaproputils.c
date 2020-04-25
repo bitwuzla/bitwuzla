@@ -265,6 +265,22 @@ select_path_and(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 static int32_t
+select_path_xor(Bzla *bzla, BzlaNode *a, BzlaNode *b)
+{
+  if (bzla_node_is_bv_const(a))
+  {
+    assert(!bzla_node_is_bv_const(b));
+    return 1;
+  }
+  else if (bzla_node_is_bv_const(b))
+  {
+    assert(!bzla_node_is_bv_const(a));
+    return 0;
+  }
+  return bzla_rng_pick_rand(&bzla->rng, 0, 1);
+}
+
+static int32_t
 select_path_eq(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
@@ -6839,6 +6855,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
   for (;;)
   {
+    pos_x    = -1;
     real_cur = bzla_node_real_addr(cur);
 
 #ifndef NDEBUG
@@ -6954,13 +6971,16 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       /* select path */
       if (is_sext)
       {
-        pi.pos_x = 1;
-        pos_x    = 1;
+        pi.pos_x = pos_x = 1;
+      }
+      else if (is_xor)
+      {
+        pi.pos_x = pos_x = select_path_xor(bzla, children[0], children[1]);
       }
       else
       {
         select_path = kind_to_select_path[real_cur->kind];
-        if (pos_x == -1) pos_x = select_path(bzla, &pi);
+        pos_x       = select_path(bzla, &pi);
       }
       assert(pi.pos_x == pos_x);
 
@@ -7130,7 +7150,6 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 #endif
 
       nprops += 1;
-      pos_x = -1;
     }
   }
 
