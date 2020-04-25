@@ -97,6 +97,7 @@ struct BzlaPropSolver
     uint32_t inv_sll;
     uint32_t inv_slt;
     uint32_t inv_srl;
+    uint32_t inv_sra;
     uint32_t inv_mul;
     uint32_t inv_udiv;
     uint32_t inv_urem;

@@ -254,6 +254,19 @@ BzlaBitVector* bzla_proputils_inv_sll(Bzla* bzla, BzlaPropInfo* pi);
 BzlaBitVector* bzla_proputils_inv_srl(Bzla* bzla, BzlaPropInfo* pi);
 
 /**
+ * Determine inverse value for 'x' given 'x >>a s = t' or 's >>a x = t'.
+ * This inverse value computation does not consider constant bits.
+ *
+ * Assertion: Operation is invertible given 's' and 't'.
+ *
+ * Returns an inverse value for 'x' given values 's' (for the other operand)
+ * and 't' (as the target value of the operation, the 'output' value).
+ *
+ * pi: The struct containing all information for inverse value computation.
+ */
+BzlaBitVector* bzla_proputils_inv_sra(Bzla* bzla, BzlaPropInfo* pi);
+
+/**
  * Determine inverse value for 'x' given 'x * s = t' or 's * x = t'.
  * This inverse value computation does not consider constant bits.
  *

@@ -4137,8 +4137,8 @@ bzla_proputils_inv_sll(Bzla *bzla, BzlaPropInfo *pi)
       if (bzla_bv_is_zero(t))
       {
         /**
-         * x...x0 << x = 0...0
-         * -> choose random shift <= res < bw
+         * x...x << x = 0...0
+         * -> choose random shift <= res <= ones
          */
         ones = bzla_bv_ones(mm, bw);
         tmp  = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
@@ -4203,11 +4203,8 @@ bzla_proputils_inv_sll(Bzla *bzla, BzlaPropInfo *pi)
 /* -------------------------------------------------------------------------- */
 
 BzlaBitVector *
-bzla_proputils_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
+inv_srl_aux(Bzla *bzla, BzlaPropInfo *pi)
 {
-#ifndef NDEBUG
-  check_inv_dbg(bzla, pi, bzla_is_inv_srl, bzla_is_inv_srl_const, true);
-#endif
   int32_t pos_x;
   uint32_t bw, i, clz_s, clz_t, shift;
   BzlaBitVector *res, *ones, *tmp;
@@ -4215,8 +4212,6 @@ bzla_proputils_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
   const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
-
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
 
   res   = 0;
   pos_x = pi->pos_x;
@@ -4228,8 +4223,7 @@ bzla_proputils_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
   /* ------------------------------------------------------------------------
    * s >> x = t
    *
-   * -> identify possible shift value via zero MSBs in t
-   *    (considering zero MSBs in s)
+   * -> determine shift value via zero MSBs in t (considering zero MSBs in s)
    * ------------------------------------------------------------------------ */
   if (pos_x)
   {
@@ -4244,7 +4238,7 @@ bzla_proputils_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
        * clz(s) > clz(t) -> conflict
        *
        * -> shift = clz(t) - clz(s)
-       *      -> if t = 0 choose shift <= res < bw
+       *      -> if t = 0 choose shift <= res < ones
        *      -> else res = shift
        *           + if all remaining shifted bits match
        * -> else conflict
@@ -4255,8 +4249,8 @@ bzla_proputils_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
       if (bzla_bv_is_zero(t))
       {
         /**
-         * x...x0 >> x = 0...0
-         * -> choose random shift <= res < bw
+         * x...x >> x = 0...0
+         * -> choose random shift <= res <= ones
          */
         ones = bzla_bv_ones(mm, bw);
         tmp  = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
@@ -4309,9 +4303,154 @@ bzla_proputils_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
       bzla_bv_set_bit(res, i, bzla_rng_pick_rand(&bzla->rng, 0, 1));
     }
   }
+  return res;
+}
 
+BzlaBitVector *
+bzla_proputils_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
+{
+#ifndef NDEBUG
+  check_inv_dbg(bzla, pi, bzla_is_inv_srl, bzla_is_inv_srl_const, true);
+#endif
+  BzlaBitVector *res;
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
+  res = inv_srl_aux(bzla, pi);
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_srl, pi, res, ">>");
+#endif
+  return res;
+}
+
+/* -------------------------------------------------------------------------- */
+/* INV: sra                                                                   */
+/* -------------------------------------------------------------------------- */
+
+BzlaBitVector *
+bzla_proputils_inv_sra(Bzla *bzla, BzlaPropInfo *pi)
+{
+#ifndef NDEBUG
+  // check_inv_dbg (bzla, pi, bzla_is_inv_sra, bzla_is_inv_sra_const, true);
+#endif
+  bool is_signed;
+  int32_t pos_x;
+  uint32_t bw, i, cnt_s, cnt_t, shift;
+  BzlaBitVector *res, *ones, *tmp;
+  BzlaMemMgr *mm;
+  const BzlaBitVector *s, *t;
+
+  mm = bzla->mm;
+
+  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sra);
+
+  res   = 0;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pi->pos_x];
+  t     = pi->target_value;
+  bw    = bzla_bv_get_width(t);
+
+  /* ------------------------------------------------------------------------
+   * s >>a x = t
+   *
+   * -> determine shift value via zero/one MSBs in t
+   *    (considering zero/one MSBs in s)
+   * ------------------------------------------------------------------------ */
+  if (pos_x)
+  {
+    if (bzla_bv_get_bit(s, bw - 1) == 0)
+    {
+      res = inv_srl_aux(bzla, pi);
+    }
+    else
+    {
+      if (bzla_bv_is_ones(s) && bzla_bv_is_ones(t))
+      {
+        /* 1...1 >>a x = 1...1 -> choose random res */
+        res = bzla_bv_new_random(mm, &bzla->rng, bw);
+      }
+      else
+      {
+        cnt_t = bzla_bv_get_num_leading_ones(t);
+        cnt_s = bzla_bv_get_num_leading_ones(s);
+        assert(cnt_s <= cnt_t);
+        /**
+         * shift = clo(t) - clo(s)
+         *   -> if t = ones choose shift <= res < bw
+         *   -> else res = shift
+         */
+        shift = cnt_t - cnt_s;
+        if (bzla_bv_is_ones(t))
+        {
+          /**
+           * x...x >>a x = 1...1
+           * -> choose random shift <= res <= ones
+           */
+          ones = bzla_bv_ones(mm, bw);
+          tmp  = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
+          res  = bzla_bv_new_random_range(mm, &bzla->rng, bw, tmp, ones);
+          bzla_bv_free(mm, ones);
+          bzla_bv_free(mm, tmp);
+        }
+        else
+        {
+#ifndef NDEBUG
+          uint32_t j;
+          for (i = 0, j = shift, res = 0; i < bw - j; i++)
+          {
+            /* CONFLICT: shifted bits must match */
+            assert(bzla_bv_get_bit(s, bw - 1 - i)
+                   == bzla_bv_get_bit(t, bw - 1 - (j + i)));
+          }
+#endif
+          res = bzla_bv_uint64_to_bv(mm, (uint64_t) shift, bw);
+        }
+      }
+    }
+  }
+  /* ------------------------------------------------------------------------
+   * x >>a s = t
+   *
+   * -> x = t << s
+   *    set irrelevant LSBs (the ones that get shifted out) randomly
+   * ------------------------------------------------------------------------ */
+  else
+  {
+    /* actual value is small enough to fit into 32 bit (max bit width handled
+     * by Bitwuzla is INT32_MAX) */
+    if (bw > 64)
+    {
+      tmp   = bzla_bv_slice(mm, s, 32, 0);
+      shift = bzla_bv_to_uint64(tmp);
+      bzla_bv_free(mm, tmp);
+    }
+    else
+    {
+      shift = bzla_bv_to_uint64(s);
+    }
+
+    is_signed = bzla_bv_get_bit(t, bw - 1) == 1;
+    cnt_t     = is_signed ? bzla_bv_get_num_leading_ones(t)
+                      : bzla_bv_get_num_leading_zeros(t);
+    assert((shift >= bw || cnt_t >= shift) && (shift < bw || cnt_t == bw));
+
+    res = bzla_bv_sll(mm, t, s);
+    for (i = 0; i < shift && i < bw; i++)
+    {
+      if (i == bw - 1)
+      {
+        if (shift > 0 && is_signed)
+        {
+          bzla_bv_set_bit(res, i, 1);
+        }
+      }
+      else
+      {
+        bzla_bv_set_bit(res, i, bzla_rng_pick_rand(&bzla->rng, 0, 1));
+      }
+    }
+  }
+
+#ifndef NDEBUG
+  check_result_binary_dbg(bzla, bzla_bv_sra, pi, res, ">>a");
 #endif
   return res;
 }

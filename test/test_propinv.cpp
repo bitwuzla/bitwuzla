@@ -788,6 +788,14 @@ TEST_F(TestPropInv, inv_srl)
       bzla_exp_bv_srl, bzla_is_inv_srl, bzla_proputils_inv_srl, 1, false);
 }
 
+TEST_F(TestPropInv, inv_sra)
+{
+  test_binary(
+      bzla_exp_bv_sra, bzla_is_inv_sra, bzla_proputils_inv_sra, 0, false);
+  test_binary(
+      bzla_exp_bv_sra, bzla_is_inv_sra, bzla_proputils_inv_sra, 1, false);
+}
+
 TEST_F(TestPropInv, inv_udiv)
 {
   test_binary(
