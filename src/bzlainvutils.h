@@ -117,6 +117,12 @@ bool bzla_is_inv_sll_const(Bzla *bzla, BzlaPropInfo *pi);
 bool bzla_is_inv_srl_const(Bzla *bzla, BzlaPropInfo *pi);
 
 /**
+ * Check invertibility of x >>a s = t or s >>a x = t when solved for x with
+ * respect to const bits in x.
+ */
+bool bzla_is_inv_sra_const(Bzla *bzla, BzlaPropInfo *pi);
+
+/**
  * Check invertibility of x / s = t or s / x = t when solved for x with
  * respect to const bits in x.
  */

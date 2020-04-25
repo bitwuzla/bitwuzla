@@ -622,6 +622,12 @@ TEST_F(TestInvUtils, is_inv_srl_const)
   test_is_inv_binary_const(bzla_is_inv_srl_const, boolector_srl, 1);
 }
 
+TEST_F(TestInvUtils, is_inv_sra_const)
+{
+  test_is_inv_binary_const(bzla_is_inv_sra_const, boolector_sra, 0);
+  test_is_inv_binary_const(bzla_is_inv_sra_const, boolector_sra, 1);
+}
+
 TEST_F(TestInvUtils, is_inv_mul_const)
 {
   test_is_inv_binary_const(bzla_is_inv_mul_const, boolector_mul, 0);
