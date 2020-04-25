@@ -1212,6 +1212,20 @@ TEST_F(TestPropInv, inv_srl_const)
               true);
 }
 
+TEST_F(TestPropInv, inv_sra_const)
+{
+  test_binary(bzla_exp_bv_sra,
+              bzla_is_inv_sra_const,
+              bzla_proputils_inv_sra_const,
+              0,
+              true);
+  test_binary(bzla_exp_bv_sra,
+              bzla_is_inv_sra_const,
+              bzla_proputils_inv_sra_const,
+              1,
+              true);
+}
+
 TEST_F(TestPropInv, inv_udiv_const)
 {
   test_binary(bzla_exp_bv_udiv,
