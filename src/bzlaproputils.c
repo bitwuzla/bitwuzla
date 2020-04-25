@@ -1005,7 +1005,21 @@ check_cons_dbg(Bzla *bzla, BzlaPropInfo *pi, bool same_bw)
                 == bzla_bv_get_width(pi->target_value));
   assert(pi->pos_x >= 0);
   assert(pi->pos_x <= 1);
-  assert(!bzla_node_is_bv_const(pi->exp->e[pi->pos_x]));
+  BzlaNode *sra_e[2], *xor_e[2];
+  bool is_bv_sra = bzla_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
+  bool is_bv_xor = bzla_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
+  if (is_bv_sra)
+  {
+    assert(!bzla_node_is_bv_const(sra_e[pi->pos_x]));
+  }
+  else if (is_bv_xor)
+  {
+    assert(!bzla_node_is_bv_const(xor_e[pi->pos_x]));
+  }
+  else
+  {
+    assert(!bzla_node_is_bv_const(pi->exp->e[pi->pos_x]));
+  }
 }
 #endif
 
@@ -1497,6 +1511,75 @@ bzla_proputils_cons_srl(Bzla *bzla, BzlaPropInfo *pi)
     }
     bzla_bv_free(mm, bv_shift);
   }
+  return res;
+}
+
+BzlaBitVector *
+bzla_proputils_cons_sra(Bzla *bzla, BzlaPropInfo *pi)
+{
+#ifndef NDEBUG
+  check_cons_dbg(bzla, pi, true);
+#endif
+  bool is_signed;
+  uint32_t bw, cnt_t, shift, max;
+  BzlaBitVector *res, *bv_shift, *left, *right;
+  BzlaMemMgr *mm;
+  const BzlaBitVector *t;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sra);
+
+  mm = bzla->mm;
+  t  = pi->target_value;
+  bw = bzla_bv_get_width(t);
+
+  is_signed = bzla_bv_get_bit(t, bw - 1) == 1;
+  cnt_t     = is_signed ? bzla_bv_get_num_leading_ones(t)
+                    : bzla_bv_get_num_leading_zeros(t);
+
+  if (bw >= 64 && cnt_t == bw)
+  {
+    shift    = bw;
+    bv_shift = bzla_bv_new_random(mm, &bzla->rng, bw);
+  }
+  else
+  {
+    max      = cnt_t < bw ? cnt_t : ((1u << bw) - 1);
+    shift    = bzla_rng_pick_rand(&bzla->rng, 0, max);
+    bv_shift = bzla_bv_uint64_to_bv(mm, shift, bw);
+  }
+  if (shift >= bw) shift = bw;
+
+  if (pi->pos_x)
+  {
+    res = bzla_bv_is_zero(bv_shift) ? bzla_bv_copy(mm, bv_shift)
+                                    : bzla_bv_dec(mm, bv_shift);
+  }
+  else
+  {
+    if (shift == bw)
+    {
+      res = bzla_bv_new_random(mm, &bzla->rng, bw);
+      bzla_bv_set_bit(res, bw - 1, is_signed ? 1 : 0);
+    }
+    else
+    {
+      if (shift) shift -= 1;
+      if (shift == 0)
+      {
+        res = bzla_bv_copy(mm, t);
+      }
+      else
+      {
+        right = bzla_bv_new_random(mm, &bzla->rng, shift);
+        left  = bzla_bv_slice(mm, t, bw - 1 - shift, 0);
+        res   = bzla_bv_concat(mm, left, right);
+        bzla_bv_set_bit(res, bw - 1, is_signed ? 1 : 0);
+        bzla_bv_free(mm, left);
+        bzla_bv_free(mm, right);
+      }
+    }
+  }
+  bzla_bv_free(mm, bv_shift);
   return res;
 }
 

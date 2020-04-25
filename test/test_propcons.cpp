@@ -179,6 +179,7 @@ class TestPropCons : public TestPropCommon
               }
             }
 
+            assert(res == expected_result);
             ASSERT_EQ(res, expected_result);
 
             if (!slv_sat)
@@ -667,6 +668,12 @@ TEST_F(TestPropCons, cons_srl)
 {
   test_binary(bzla_exp_bv_srl, bzla_proputils_cons_srl, 0, false);
   test_binary(bzla_exp_bv_srl, bzla_proputils_cons_srl, 1, false);
+}
+
+TEST_F(TestPropCons, cons_sra)
+{
+  test_binary(bzla_exp_bv_sra, bzla_proputils_cons_sra, 0, false);
+  test_binary(bzla_exp_bv_sra, bzla_proputils_cons_sra, 1, false);
 }
 
 TEST_F(TestPropCons, cons_udiv)

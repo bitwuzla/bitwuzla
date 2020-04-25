@@ -114,6 +114,7 @@ struct BzlaPropSolver
     uint32_t cons_sll;
     uint32_t cons_slt;
     uint32_t cons_srl;
+    uint32_t cons_sra;
     uint32_t cons_mul;
     uint32_t cons_udiv;
     uint32_t cons_urem;
