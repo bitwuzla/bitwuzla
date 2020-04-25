@@ -5286,6 +5286,34 @@ apply_same_srl(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   return bzla_exp_bv_zero(bzla, bzla_node_get_sort_id(e0));
 }
 
+/* RM rules                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * match:  binary fp op with two floating-point constant
+ * result: bool constant
+ */
+static inline bool
+applies_const_rm_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  (void) bzla;
+  return bzla_node_is_rm_const(e0) && bzla_node_is_rm_const(e1);
+}
+
+static inline BzlaNode *
+apply_const_rm_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(applies_const_rm_eq(bzla, e0, e1));
+  assert(bzla_node_is_regular(e0));
+
+  BzlaNode *result;
+  bool bres;
+
+  bres   = bzla_node_rm_const_get_rm(e0) == bzla_node_rm_const_get_rm(e1);
+  result = bres ? bzla_exp_true(bzla) : bzla_exp_false(bzla);
+  return result;
+}
+
 /* FP rules                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -7361,6 +7389,10 @@ rewrite_eq_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   {
     kind = BZLA_BV_EQ_NODE;
   }
+  else if (bzla_node_is_rm(bzla, e0))
+  {
+    kind = BZLA_RM_EQ_NODE;
+  }
   else
   {
     assert(bzla_node_is_fp(bzla, e0));
@@ -7381,6 +7413,7 @@ SWAP_OPERANDS:
     {
       ADD_RW_RULE(const_binary_bv_exp, kind, e0, e1);
       ADD_RW_RULE(const_binary_fp_bool_exp, kind, e0, e1);
+      ADD_RW_RULE(const_rm_eq, e0, e1);
       /* We do not rewrite eq in the boolean case, as we cannot extract the
        * resulting XNOR on top level again and would therefore lose
        * substitutions.
@@ -9065,7 +9098,8 @@ bzla_rewrite_binary_exp(Bzla *bzla,
   {
     case BZLA_BV_EQ_NODE:
     case BZLA_FUN_EQ_NODE:
-    case BZLA_FP_EQ_NODE: result = rewrite_eq_exp(bzla, e0, e1); break;
+    case BZLA_FP_EQ_NODE:
+    case BZLA_RM_EQ_NODE: result = rewrite_eq_exp(bzla, e0, e1); break;
 
     case BZLA_BV_ULT_NODE: result = rewrite_bv_ult_exp(bzla, e0, e1); break;
 
