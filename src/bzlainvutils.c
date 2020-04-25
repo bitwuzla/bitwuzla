@@ -1027,7 +1027,6 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   const BzlaBvDomain *x;
   const BzlaBitVector *s, *t;
 
-  res       = true;
   is_signed = false;
   pos_x     = pi->pos_x;
   mm        = bzla->mm;

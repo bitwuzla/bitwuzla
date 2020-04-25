@@ -5768,11 +5768,9 @@ bzla_proputils_inv_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   check_inv_dbg(bzla, pi, bzla_is_inv_sll, bzla_is_inv_sll_const, true);
 #endif
   int32_t pos_x;
-  uint32_t cnt;
-  BzlaBitVector *tmp, *res, *bv;
+  BzlaBitVector *tmp, *res;
   const BzlaBvDomain *x;
   const BzlaBitVector *s, *t;
-  BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
   mm    = bzla->mm;
@@ -5798,22 +5796,7 @@ bzla_proputils_inv_sll_const(Bzla *bzla, BzlaPropInfo *pi)
 
     assert(pi->res_x);
     assert(bzla_bvdomain_is_fixed(mm, pi->res_x));
-    bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, pi->res_x->lo, 0);
-    assert(bzla_bvdomain_gen_has_next(&gen));
-    for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_GEN_MAX_RAND; cnt++)
-    {
-      bv  = bzla_bvdomain_gen_random(&gen);
-      tmp = bzla_bv_sll(mm, s, bv);
-      if (bzla_bv_compare(tmp, t) == 0)
-      {
-        res = bzla_bv_copy(mm, bv);
-        bzla_bv_free(mm, tmp);
-        break;
-      }
-      bzla_bv_free(mm, tmp);
-    }
-    if (!res) res = bzla_bv_copy(mm, pi->res_x->lo);
-    bzla_bvdomain_gen_delete(&gen);
+    res = bzla_bv_copy(mm, pi->res_x->lo);
   }
   else
   {
@@ -5840,11 +5823,9 @@ bzla_proputils_inv_srl_const(Bzla *bzla, BzlaPropInfo *pi)
   check_inv_dbg(bzla, pi, bzla_is_inv_srl, bzla_is_inv_srl_const, true);
 #endif
   int32_t pos_x;
-  uint32_t cnt;
-  BzlaBitVector *tmp, *res, *bv;
+  BzlaBitVector *tmp, *res;
   const BzlaBvDomain *x;
   const BzlaBitVector *s, *t;
-  BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
   mm    = bzla->mm;
@@ -5870,22 +5851,7 @@ bzla_proputils_inv_srl_const(Bzla *bzla, BzlaPropInfo *pi)
 
     assert(pi->res_x);
     assert(bzla_bvdomain_is_fixed(mm, pi->res_x));
-    bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, pi->res_x->lo, 0);
-    assert(bzla_bvdomain_gen_has_next(&gen));
-    for (cnt = 0, res = 0; cnt < BZLA_PROPUTILS_GEN_MAX_RAND; cnt++)
-    {
-      bv  = bzla_bvdomain_gen_random(&gen);
-      tmp = bzla_bv_srl(mm, s, bv);
-      if (bzla_bv_compare(tmp, t) == 0)
-      {
-        res = bzla_bv_copy(mm, bv);
-        bzla_bv_free(mm, tmp);
-        break;
-      }
-      bzla_bv_free(mm, tmp);
-    }
-    if (!res) res = bzla_bv_copy(mm, pi->res_x->lo);
-    bzla_bvdomain_gen_delete(&gen);
+    res = bzla_bv_copy(mm, pi->res_x->lo);
   }
   else
   {
