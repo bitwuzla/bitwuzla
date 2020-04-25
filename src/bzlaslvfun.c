@@ -17,11 +17,13 @@
 #include "bzladcr.h"
 #include "bzlaexp.h"
 #include "bzlalog.h"
+#include "bzlalsutils.h"
 #include "bzlamodel.h"
 #include "bzlaopt.h"
 #include "bzlaprintmodel.h"
 #include "bzlaslvprop.h"
 #include "bzlaslvsls.h"
+#include "preprocess/bzlapreprocess.h"
 #include "utils/bzlahash.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
@@ -2256,10 +2258,6 @@ check_and_resolve_conflicts(Bzla *bzla,
                                          (BzlaHashPtr) bzla_node_hash_by_id,
                                          (BzlaCmpPtr) bzla_node_compare_by_id);
 
-  /* initialize new bit vector model, which will be constructed while
-   * consistency checking. this also deletes the model from the previous run */
-  bzla_model_init_bv(bzla, &bzla->bv_model);
-
   BZLA_INIT_STACK(mm, prop_stack);
   BZLA_INIT_STACK(mm, top_applies);
   apply_search_cache = bzla_hashint_table_new(mm);
@@ -2339,7 +2337,7 @@ check_and_resolve_conflicts(Bzla *bzla,
     while (bzla_iter_hashint_has_next(&iit))
     {
       cur = bzla_node_get_by_id(bzla, bzla_iter_hashint_next(&iit));
-      if (bzla_node_is_apply(cur) && !cur->propagated)
+      if (bzla_node_is_apply(cur) && !bzla_node_real_addr(cur)->propagated)
         bzla_model_remove_from_bv(bzla, bzla->bv_model, cur);
     }
   }
@@ -2400,180 +2398,204 @@ reset_lemma_cache(BzlaFunSolver *slv)
                                        (BzlaCmpPtr) bzla_node_compare_by_id);
 }
 
-static bool
-sat_preprop(BzlaFunSolver *slv, BzlaSolverResult *result)
+static void
+mark_cone(Bzla *bzla,
+          BzlaNode *node,
+          BzlaIntHashTable *cone,
+          BzlaIntHashTable *roots,
+          BzlaNodePtrStack *false_roots)
+{
+  assert(bzla_lsutils_is_leaf_node(node));
+
+  BzlaNode *cur;
+  BzlaNodeIterator it;
+  BzlaNodePtrStack visit;
+  BzlaHashTableData *d;
+
+  BZLA_INIT_STACK(bzla->mm, visit);
+  BZLA_PUSH_STACK(visit, node);
+  while (!BZLA_EMPTY_STACK(visit))
+  {
+    cur = bzla_node_real_addr(BZLA_POP_STACK(visit));
+
+    if (bzla_hashint_table_contains(cone, cur->id)) continue;
+    bzla_hashint_table_add(cone, cur->id);
+
+    d = bzla_hashint_map_get(roots, cur->id);
+
+    if (d && d->flag)
+    {
+      BZLA_PUSH_STACK(*false_roots, cur);
+    }
+
+    bzla_iter_parent_init(&it, node);
+    while (bzla_iter_parent_has_next(&it))
+    {
+      BZLA_PUSH_STACK(visit, bzla_iter_parent_next(&it));
+    }
+  }
+  BZLA_RELEASE_STACK(visit);
+}
+
+static BzlaSolverResult
+sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
 {
   assert(slv);
 
-  bool done;
-  uint32_t i, nass = 0, nsatass = 0;
+  size_t i;
+  uint32_t nass = 0;
   double start, delta;
   BzlaSolver *preslv;
-  BzlaOptEngine eopt;
-  BzlaNodePtrStack visit, assumptions;
+  BzlaNodePtrStack assertions, roots_true, roots_false;
   BzlaIntHashTable *visited;
   const BzlaBitVector *bv;
-  BzlaNode *cur, *real_cur, *bvconst, *assumption;
-  BzlaIntHashTableIterator it;
-  BzlaPtrHashTableIterator pit;
-  BzlaIntHashTable *preprop_assumptions;
+  BzlaNode *root, *cur, *real_cur, *bvconst, *assumption;
+  BzlaPtrHashTableIterator it;
   Bzla *bzla;
   BzlaMemMgr *mm;
+  BzlaSolverResult result;
+  BzlaHashTableData *d;
 
   bzla = slv->bzla;
   assert(!bzla->inconsistent);
   mm = bzla->mm;
 
-  done    = false;
-  *result = BZLA_RESULT_UNKNOWN;
-
-  preprop_assumptions = bzla_hashint_table_new(mm);
-
-  if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP))
+  if (!*ls_slv)
   {
-    preslv = bzla_new_prop_solver(bzla);
-    eopt   = BZLA_ENGINE_PROP;
+    if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP))
+    {
+      *ls_slv = bzla_new_prop_solver(bzla);
+    }
+    else
+    {
+      *ls_slv = bzla_new_sls_solver(bzla);
+    }
   }
-  else
-  {
-    preslv = bzla_new_sls_solver(bzla);
-    eopt   = BZLA_ENGINE_SLS;
-  }
+
+  assert(*ls_slv);
+  preslv = *ls_slv;
 
   bzla->slv = preslv;
-  bzla_opt_set(bzla, BZLA_OPT_ENGINE, eopt);
-  *result = bzla->slv->api.sat(bzla->slv);
-  done    = *result == BZLA_RESULT_SAT || *result == BZLA_RESULT_UNSAT;
+  result    = preslv->api.sat(preslv);
+
   /* print prop/sls solver statistics */
-  bzla->slv->api.print_stats(bzla->slv);
-  bzla->slv->api.print_time_stats(bzla->slv);
-  /* delete prop/sls solver */
-  bzla->slv->api.delet(bzla->slv);
+  preslv->api.print_stats(preslv);
+  preslv->api.print_time_stats(preslv);
+
   /* reset */
   bzla->slv = (BzlaSolver *) slv;
-  bzla_opt_set(bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_FUN);
-  if (done)
+
+  BZLA_MSG(bzla->msg, 1, "");
+  BZLA_MSG(bzla->msg,
+           1,
+           "%s engine determined '%s'",
+           preslv->kind == BZLA_PROP_SOLVER_KIND ? "PROP" : "SLS",
+           result == BZLA_RESULT_SAT
+               ? "sat"
+               : (result == BZLA_RESULT_UNSAT ? "unsat" : "unknown"));
+
+  if (result == BZLA_RESULT_UNKNOWN && bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT)
+      && !bzla_terminate(bzla) && !bzla_get_sat_mgr(bzla)->inc_required)
   {
-    BZLA_MSG(bzla->msg, 1, "");
-    BZLA_MSG(bzla->msg,
-             1,
-             "%s engine determined %s",
-             eopt == BZLA_ENGINE_PROP ? "PROP" : "SLS",
-             *result == BZLA_RESULT_SAT ? "'sat'" : "'unsat'");
-    goto DONE;
-  }
-  if (bzla_terminate(bzla))
-  {
-    *result = BZLA_RESULT_UNKNOWN;
-    done    = true;
-    goto DONE;
-  }
-  if (bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT))
-  {
+    BZLA_INIT_STACK(mm, roots_true);
+    BZLA_INIT_STACK(mm, roots_false);
+
     /* share partial models with the bit-blasting engine */
     /* then, collect all inputs reachable from satisified roots (assertions
      * and assumptions) */
-    BZLA_INIT_STACK(mm, visit);
-    BZLA_INIT_STACK(mm, assumptions);
-    bzla_iter_hashptr_init(&pit, bzla->unsynthesized_constraints);
-    bzla_iter_hashptr_queue(&pit, bzla->synthesized_constraints);
-    bzla_iter_hashptr_queue(&pit, bzla->assumptions);
-    while (bzla_iter_hashptr_has_next(&pit))
+    BZLA_INIT_STACK(mm, assertions);
+    bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
+    bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
+    bzla_iter_hashptr_queue(&it, bzla->assumptions);
+
+    BzlaIntHashTable *roots = bzla_hashint_map_new(mm);
+    while (bzla_iter_hashptr_has_next(&it))
     {
-      BZLA_PUSH_STACK(visit, bzla_iter_hashptr_next(&pit));
-    }
-    while (!BZLA_EMPTY_STACK(visit))
-    {
-      cur = BZLA_POP_STACK(visit);
-      if (bzla_bv_is_true(bzla_model_get_bv(bzla, cur)))
+      root = bzla_iter_hashptr_next(&it);
+      d    = bzla_hashint_map_add(roots, bzla_node_real_addr(root)->id);
+      if (bzla_bv_is_true(bzla_model_get_bv(bzla, root)))
       {
-        visited = bzla_hashint_table_new(mm);
-        BZLA_PUSH_STACK(visit, cur);
-        while (!BZLA_EMPTY_STACK(visit))
+        d->flag = true;
+        BZLA_PUSH_STACK(roots_true, root);
+      }
+      else
+      {
+        d->flag = false;
+        BZLA_PUSH_STACK(roots_false, root);
+      }
+    }
+
+    BzlaIntHashTable *cone = bzla_hashint_table_new(mm);
+
+    visited = bzla_hashint_table_new(mm);
+    while (!BZLA_EMPTY_STACK(roots_false))
+    {
+      real_cur = bzla_node_real_addr(BZLA_POP_STACK(roots_false));
+      if (bzla_hashint_table_contains(visited, real_cur->id)) continue;
+      bzla_hashint_table_add(visited, real_cur->id);
+      if (bzla_lsutils_is_leaf_node(real_cur))
+      {
+        mark_cone(bzla, real_cur, cone, roots, &roots_false);
+      }
+      else
+      {
+        for (i = 0; i < real_cur->arity; i++)
         {
-          cur      = BZLA_POP_STACK(visit);
-          real_cur = bzla_node_real_addr(cur);
-          if (bzla_hashint_table_contains(visited, real_cur->id)) continue;
-          bzla_hashint_table_add(visited, real_cur->id);
-          if (bzla_node_is_bv_var(real_cur))
-          {
-            bv         = bzla_model_get_bv(bzla, real_cur);
-            bvconst    = bzla_exp_bv_const(bzla, bv);
-            assumption = bzla_exp_eq(bzla, real_cur, bvconst);
-            bzla_node_release(bzla, bvconst);
-            bzla_hashint_table_add(preprop_assumptions,
-                                   bzla_node_get_id(assumption));
-            nass += 1;
-          }
-          else
-          {
-            for (i = 0; i < real_cur->arity; i++)
-              BZLA_PUSH_STACK(visit, real_cur->e[i]);
-          }
+          BZLA_PUSH_STACK(roots_false, real_cur->e[i]);
         }
-        bzla_hashint_table_delete(visited);
       }
-      BZLA_RESET_STACK(visit);
     }
-    BZLA_FUN_SOLVER(bzla)->stats.prels_n_assumptions = nass;
-    BZLA_RELEASE_STACK(visit);
-    while (!BZLA_EMPTY_STACK(assumptions))
-    {
-      bzla_assume_exp(bzla, BZLA_POP_STACK(assumptions));
-    }
-    BZLA_RELEASE_STACK(assumptions);
-  }
+    BZLA_RELEASE_STACK(roots_false);
 
-  /* reset */
-  bzla_model_delete(bzla);
+    while (!BZLA_EMPTY_STACK(roots_true))
+    {
+      real_cur = bzla_node_real_addr(BZLA_POP_STACK(roots_true));
+      if (bzla_hashint_table_contains(cone, real_cur->id)) continue;
+      if (bzla_hashint_table_contains(visited, real_cur->id)) continue;
+      bzla_hashint_table_add(visited, real_cur->id);
 
-  if (bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT))
-  {
-    /* call sat */
-    configure_sat_mgr(bzla);
-    bzla_process_unsynthesized_constraints(bzla);
-    if (bzla->found_constraint_false)
-    {
-      *result = BZLA_RESULT_UNSAT;
-      done    = true;
-      goto DONE;
-    }
-    bzla_add_again_assumptions(bzla);
-    start   = bzla_util_time_stamp();
-    *result = timed_sat_sat(bzla, slv->sat_limit);
-    delta   = bzla_util_time_stamp() - start;
-    BZLA_FUN_SOLVER(bzla)->time.prels_sat += delta;
-    BZLA_FUN_SOLVER(bzla)->stats.prels_n_sat_assumptions = nass;
-    if (*result == BZLA_RESULT_SAT || nass == 0)
-    {
-      done = true;
-      goto DONE;
-    }
-    /* remove failed partial model assumptions from assumptions list */
-    nsatass = nass;
-    bzla_iter_hashptr_init(&pit, bzla->assumptions);
-    while (bzla_iter_hashptr_has_next(&pit))
-    {
-      cur = bzla_iter_hashptr_next(&pit);
-      if (bzla_failed_exp(bzla, cur))
+      if (bzla_lsutils_is_leaf_node(real_cur))
       {
-        bzla_hashptr_table_remove(bzla->assumptions, cur, 0, 0);
-        nsatass -= 1;
+        bv         = bzla_model_get_bv(bzla, real_cur);
+        bvconst    = bzla_exp_bv_const(bzla, bv);
+        assumption = bzla_exp_eq(bzla, real_cur, bvconst);
+        bzla_node_release(bzla, bvconst);
+        BZLA_PUSH_STACK(assertions, assumption);
+        nass += 1;
+      }
+      else
+      {
+        for (i = 0; i < real_cur->arity; i++)
+        {
+          BZLA_PUSH_STACK(roots_true, real_cur->e[i]);
+        }
       }
     }
-    BZLA_FUN_SOLVER(bzla)->stats.prels_n_sat_assumptions = nsatass;
-    assert(*result == BZLA_RESULT_UNSAT);
-    done = nass == nsatass; /* no failed assumptions, UNSAT */
+    bzla_hashint_table_delete(visited);
+    bzla_hashint_table_delete(cone);
+    bzla_hashint_map_delete(roots);
+    BZLA_RELEASE_STACK(roots_true);
+
+    BZLA_FUN_SOLVER(bzla)->stats.prels_n_assertions = nass;
+
+    BZLA_MSG(bzla->msg,
+             1,
+             "asserting %u model values",
+             BZLA_COUNT_STACK(assertions));
+
+    /* assert model values */
+    for (i = 0; i < BZLA_COUNT_STACK(assertions); ++i)
+    {
+      cur = BZLA_PEEK_STACK(assertions, i);
+      bzla_assert_exp(bzla, cur);
+      bzla_node_release(bzla, cur);
+    }
+    BZLA_RELEASE_STACK(assertions);
+
+    result = bzla_simplify(bzla);
   }
-DONE:
-  bzla_iter_hashint_init(&it, preprop_assumptions);
-  while (bzla_iter_hashint_has_next(&it))
-  {
-    bzla_node_release(bzla,
-                      bzla_node_get_by_id(bzla, bzla_iter_hashint_next(&it)));
-  }
-  bzla_hashint_table_delete(preprop_assumptions);
-  return done;
+
+  return result;
 }
 
 static BzlaSolverResult
@@ -2585,7 +2607,6 @@ sat_fun_solver(BzlaFunSolver *slv)
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
   uint32_t i;
-  bool done;
   BzlaSolverResult result;
   Bzla *bzla, *clone;
   BzlaNode *clone_root, *lemma;
@@ -2593,6 +2614,7 @@ sat_fun_solver(BzlaFunSolver *slv)
   BzlaIntHashTable *init_apps_cache;
   BzlaNodePtrStack init_apps;
   BzlaMemMgr *mm;
+  BzlaSolver *ls_slv = 0;
 
   bzla = slv->bzla;
   assert(!bzla->inconsistent);
@@ -2606,15 +2628,6 @@ sat_fun_solver(BzlaFunSolver *slv)
   clone      = 0;
   clone_root = 0;
   exp_map    = 0;
-
-  if ((bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
-       || bzla_opt_get(bzla, BZLA_OPT_FUN_PRESLS))
-      && bzla->ufs->count == 0 && bzla->feqs->count == 0
-      && bzla->lambdas->count == 0)
-  {
-    done = sat_preprop(slv, &result);
-    if (done) goto DONE;
-  }
 
   if (bzla_terminate(bzla))
   {
@@ -2644,6 +2657,14 @@ sat_fun_solver(BzlaFunSolver *slv)
       goto UNKNOWN;
     }
 
+    result = BZLA_RESULT_UNKNOWN;
+
+    if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
+        || bzla_opt_get(bzla, BZLA_OPT_FUN_PRESLS))
+    {
+      result = sat_prels(slv, &ls_slv);
+    }
+
     bzla_process_unsynthesized_constraints(bzla);
     if (bzla->found_constraint_false)
     {
@@ -2655,9 +2676,19 @@ sat_fun_solver(BzlaFunSolver *slv)
     assert(bzla_dbg_check_all_hash_tables_proxy_free(bzla));
     assert(bzla_dbg_check_all_hash_tables_simp_free(bzla));
 
-    /* make SAT call on bv skeleton */
-    bzla_add_again_assumptions(bzla);
-    result = timed_sat_sat(bzla, slv->sat_limit);
+    if (result == BZLA_RESULT_UNKNOWN)
+    {
+      /* make SAT call on bv skeleton */
+      bzla_add_again_assumptions(bzla);
+
+      result = timed_sat_sat(bzla, slv->sat_limit);
+
+      /* Initialize new bit vector model, which will be constructed while
+       * consistency checking. This also deletes the model from the previous
+       * run.
+       */
+      bzla_model_init_bv(bzla, &bzla->bv_model);
+    }
 
     if (result == BZLA_RESULT_UNSAT)
       goto DONE;
@@ -2721,6 +2752,12 @@ DONE:
     bzla_node_release(clone, clone_root);
     bzla_delete(clone);
   }
+  if (ls_slv)
+  {
+    bzla->slv = ls_slv;
+    ls_slv->api.delet(ls_slv);
+    bzla->slv = (BzlaSolver *) slv;
+  }
   return result;
 }
 
@@ -2771,11 +2808,7 @@ print_stats_fun_solver(BzlaFunSolver *slv)
     BZLA_MSG(bzla->msg,
              1,
              "%7d assignments shared with bit-blasting engine",
-             slv->stats.prels_n_assumptions);
-    BZLA_MSG(bzla->msg,
-             1,
-             "%7d shared assignments that contributed to result",
-             slv->stats.prels_n_sat_assumptions);
+             slv->stats.prels_n_assertions);
   }
 
   if (bzla->ufs->count || bzla->lambdas->count)
@@ -2940,7 +2973,7 @@ print_time_stats_fun_solver(BzlaFunSolver *slv)
              1,
              "%.2f seconds for preprop/presls SAT check with partial "
              "assignment",
-             slv->time.sat);
+             slv->time.prels_sat);
   }
   BZLA_MSG(bzla->msg, 1, "%.2f seconds in pure SAT solving", slv->time.sat);
   BZLA_MSG(bzla->msg, 1, "");

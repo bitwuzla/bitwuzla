@@ -9,6 +9,7 @@
 #ifndef BZLALSUTILS_H_INCLUDED
 #define BZLALSUTILS_H_INCLUDED
 
+#include "bzlaslv.h"
 #include "bzlatypes.h"
 #include "utils/bzlahashint.h"
 
@@ -31,5 +32,9 @@ void bzla_lsutils_update_cone(Bzla* bzla,
                               double* time_update_cone_reset,
                               double* time_update_cone_model_gen,
                               double* time_update_cone_compute_score);
+
+bool bzla_lsutils_is_leaf_node(BzlaNode* n);
+
+void bzla_lsutils_initialize_bv_model(BzlaSolver* slv);
 
 #endif

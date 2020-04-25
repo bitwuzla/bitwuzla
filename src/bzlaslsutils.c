@@ -10,6 +10,7 @@
 
 #include "bzlabv.h"
 #include "bzlalog.h"
+#include "bzlalsutils.h"
 #include "bzlamodel.h"
 #include "bzlanode.h"
 #include "utils/bzlautil.h"
@@ -401,8 +402,12 @@ recursively_compute_sls_score_node(Bzla *bzla,
     {
       bzla_hashint_map_add(mark, real_cur->id);
       BZLA_PUSH_STACK(stack, cur);
-      for (i = 0; i < real_cur->arity; i++)
-        BZLA_PUSH_STACK(stack, real_cur->e[i]);
+
+      if (!bzla_lsutils_is_leaf_node(real_cur))
+      {
+        for (i = 0; i < real_cur->arity; i++)
+          BZLA_PUSH_STACK(stack, real_cur->e[i]);
+      }
     }
     else
     {
@@ -459,6 +464,7 @@ bzla_slsutils_compute_sls_scores(Bzla *bzla,
 
   /* collect roots */
   bzla_iter_hashptr_init(&pit, bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_queue(&pit, bzla->synthesized_constraints);
   bzla_iter_hashptr_queue(&pit, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&pit))
     BZLA_PUSH_STACK(stack, bzla_iter_hashptr_next(&pit));
@@ -478,8 +484,11 @@ bzla_slsutils_compute_sls_scores(Bzla *bzla,
     {
       bzla_hashint_map_add(mark, real_cur->id);
       BZLA_PUSH_STACK(stack, cur);
-      for (i = 0; i < real_cur->arity; i++)
-        BZLA_PUSH_STACK(stack, real_cur->e[i]);
+      if (!bzla_lsutils_is_leaf_node(real_cur))
+      {
+        for (i = 0; i < real_cur->arity; i++)
+          BZLA_PUSH_STACK(stack, real_cur->e[i]);
+      }
     }
     else
     {

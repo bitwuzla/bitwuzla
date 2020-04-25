@@ -56,21 +56,10 @@ select_constraint(Bzla *bzla, uint32_t nmoves)
   assert(slv->roots->count);
 
 #ifndef NDEBUG
-  BzlaPtrHashTable *constraints;
   BzlaPtrHashTableIterator pit;
   BzlaNode *root;
-  if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
-  {
-    assert(bzla->unsynthesized_constraints->count == 0);
-    constraints = bzla->synthesized_constraints;
-  }
-  else
-  {
-    assert(bzla->synthesized_constraints->count == 0);
-    constraints = bzla->unsynthesized_constraints;
-  }
-
-  bzla_iter_hashptr_init(&pit, constraints);
+  bzla_iter_hashptr_init(&pit, bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_init(&pit, bzla->synthesized_constraints);
   bzla_iter_hashptr_queue(&pit, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&pit))
   {
@@ -136,6 +125,32 @@ select_constraint(Bzla *bzla, uint32_t nmoves)
   return res;
 }
 
+static void
+print_progress(BzlaPropSolver *slv)
+{
+  uint64_t num_total_roots;
+  Bzla *bzla;
+
+  bzla            = slv->bzla;
+  num_total_roots = bzla->assumptions->count
+                    + bzla->synthesized_constraints->count
+                    + bzla->unsynthesized_constraints->count;
+
+  BZLA_MSG(
+      bzla->msg,
+      1,
+      "%zu/%zu roots satisfied (%.1f%%), "
+      "moves: %u, "
+      "propagations: %zu, "
+      "model updates: %zu",
+      num_total_roots - slv->roots->count,
+      num_total_roots,
+      (double) (num_total_roots - slv->roots->count) / num_total_roots * 100,
+      slv->stats.moves,
+      slv->stats.props,
+      slv->stats.updates);
+}
+
 static bool
 move(Bzla *bzla)
 {
@@ -149,7 +164,7 @@ move(Bzla *bzla)
   BzlaIntHashTable *exps;
   BzlaPropEntailInfo prop;
   int32_t idx_x;
-  uint64_t props, nprops;
+  uint64_t props, nprops, cur_nprops;
 #ifndef NBZLALOG
   size_t i;
 #endif
@@ -164,14 +179,17 @@ move(Bzla *bzla)
           "satisfied roots:   %u",
           bzla->assumptions->count + bzla->synthesized_constraints->count
               + bzla->unsynthesized_constraints->count - slv->roots->count);
+  BZLALOG(1, "propagations: %zu", slv->stats.props);
+  BZLALOG(1, "moves skipped: %zu", slv->stats.moves_skipped);
 
-  nprops = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
+  nprops     = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
+  cur_nprops = slv->stats.props;
 
   bvroot = 0;
   do
   {
     if (bvroot) bzla_bv_free(bzla->mm, bvroot);
-    if (nprops && slv->stats.props >= nprops) goto DONE;
+    if (nprops && slv->stats.props - cur_nprops >= nprops) goto DONE;
 
 #ifndef NDEBUG
     bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->prop_path);
@@ -381,6 +399,7 @@ bzla_prop_solver_init_domains(Bzla *bzla,
     }
     else
     {
+      if (bzla_node_is_fun(real_cur) || bzla_node_is_args(real_cur)) continue;
       if (data->as_int) continue;
       if (bzla_hashint_map_contains(domains, real_cur->id)) continue;
       data->as_int = 1;
@@ -625,8 +644,7 @@ bzla_prop_solver_sat(Bzla *bzla)
   uint32_t j, max_steps;
   int32_t sat_result;
   uint32_t nprops, opt_prop_const_bits;
-  BzlaNode *root;
-  BzlaPtrHashTable *constraints;
+  BzlaNode *root, *not_root;
   BzlaPtrHashTableIterator it;
   BzlaIntHashTableIterator iit;
   BzlaPropSolver *slv;
@@ -644,16 +662,10 @@ bzla_prop_solver_sat(Bzla *bzla)
   {
     bzla_process_unsynthesized_constraints(bzla);
     if (bzla->found_constraint_false) goto UNSAT;
-    assert(bzla->unsynthesized_constraints->count == 0);
-    constraints = bzla->synthesized_constraints;
-  }
-  else
-  {
-    assert(bzla->synthesized_constraints->count == 0);
-    constraints = bzla->unsynthesized_constraints;
   }
 
-  bzla_iter_hashptr_init(&it, constraints);
+  bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
   while (bzla_iter_hashptr_has_next(&it))
   {
     root = bzla_iter_hashptr_next(&it);
@@ -666,12 +678,15 @@ bzla_prop_solver_sat(Bzla *bzla)
   bzla_iter_hashptr_init(&it, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&it))
   {
-    root = bzla_iter_hashptr_next(&it);
+    root     = bzla_iter_hashptr_next(&it);
+    not_root = bzla_node_invert(root);
 
     /* check for constraints occurring in both phases */
-    if (bzla_hashptr_table_get(constraints, bzla_node_invert(root))) goto UNSAT;
-    if (bzla_hashptr_table_get(bzla->assumptions, bzla_node_invert(root)))
+    if (bzla_hashptr_table_get(bzla->unsynthesized_constraints, not_root))
       goto UNSAT;
+    if (bzla_hashptr_table_get(bzla->synthesized_constraints, not_root))
+      goto UNSAT;
+    if (bzla_hashptr_table_get(bzla->assumptions, not_root)) goto UNSAT;
 
     /* initialize propagator domains for inverse values / const bits handling */
     if (opt_prop_const_bits)
@@ -683,7 +698,8 @@ bzla_prop_solver_sat(Bzla *bzla)
   if (opt_prop_const_bits && bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_DOMAINS))
   {
     cache = bzla_hashint_table_new(bzla->mm);
-    bzla_iter_hashptr_init(&it, constraints);
+    bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
+    bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
     bzla_iter_hashptr_queue(&it, bzla->assumptions);
     while (bzla_iter_hashptr_has_next(&it))
     {
@@ -700,11 +716,8 @@ bzla_prop_solver_sat(Bzla *bzla)
     /* collect unsatisfied roots (kept up-to-date in update_cone) */
     assert(!slv->roots);
     slv->roots = bzla_hashint_map_new(bzla->mm);
-    assert((bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS)
-            && bzla->unsynthesized_constraints->count == 0)
-           || (!bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS)
-               && bzla->synthesized_constraints->count == 0));
-    bzla_iter_hashptr_init(&it, constraints);
+    bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
+    bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
     bzla_iter_hashptr_queue(&it, bzla->assumptions);
     while (bzla_iter_hashptr_has_next(&it))
     {
@@ -755,6 +768,11 @@ bzla_prop_solver_sat(Bzla *bzla)
         goto DONE;
       }
 
+      if (j % 100 == 0)
+      {
+        print_progress(slv);
+      }
+
       if (!(move(bzla))) goto UNSAT;
 
       /* all constraints sat? */
@@ -782,6 +800,8 @@ UNSAT:
   sat_result = BZLA_RESULT_UNSAT;
 
 DONE:
+  print_progress(slv);
+
   if (slv->roots)
   {
     bzla_hashint_map_delete(slv->roots);
@@ -792,6 +812,7 @@ DONE:
     bzla_hashint_map_delete(slv->score);
     slv->score = 0;
   }
+  // TODO: domains shouldn't be deleted after every sat call
   if (slv->domains)
   {
     bzla_iter_hashint_init(&iit, slv->domains);
@@ -828,11 +849,6 @@ sat_prop_solver(BzlaPropSolver *slv)
     goto DONE;
   }
 
-  BZLA_ABORT(bzla->ufs->count != 0
-                 || (!bzla_opt_get(bzla, BZLA_OPT_BETA_REDUCE)
-                     && bzla->lambdas->count != 0),
-             "prop engine supports QF_BV only");
-
   /* Generate intial model, all bv vars are initialized with zero. We do
    * not have to consider model_for_all_nodes, but let this be handled by
    * the model generation (if enabled) after SAT has been determined. */
@@ -856,7 +872,7 @@ generate_model_prop_solver(BzlaPropSolver *slv,
   Bzla *bzla = slv->bzla;
 
   if (!reset && bzla->bv_model) return;
-  bzla_model_init_bv(bzla, &bzla->bv_model);
+  bzla_lsutils_initialize_bv_model((BzlaSolver *) slv);
   bzla_model_init_fun(bzla, &bzla->fun_model);
   bzla_model_generate(
       bzla, bzla->bv_model, bzla->fun_model, model_for_all_nodes);

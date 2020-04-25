@@ -98,8 +98,7 @@ bzla_lsutils_update_cone(Bzla *bzla,
   assert(roots);
   assert(exps);
   assert(exps->count);
-  assert(bzla_opt_get(bzla, BZLA_OPT_ENGINE) != BZLA_ENGINE_PROP
-         || update_roots);
+  assert(bzla->slv->kind != BZLA_PROP_SOLVER_KIND || update_roots);
   assert(time_update_cone);
   assert(time_update_cone_reset);
   assert(time_update_cone_model_gen);
@@ -124,6 +123,7 @@ bzla_lsutils_update_cone(Bzla *bzla,
   BzlaPtrHashTableIterator pit;
   BzlaNode *root;
   bzla_iter_hashptr_init(&pit, bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_queue(&pit, bzla->synthesized_constraints);
   bzla_iter_hashptr_queue(&pit, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&pit))
   {
@@ -147,7 +147,7 @@ bzla_lsutils_update_cone(Bzla *bzla,
   {
     exp = bzla_node_get_by_id(bzla, bzla_iter_hashint_next(&iit));
     assert(bzla_node_is_regular(exp));
-    assert(bzla_node_is_bv_var(exp));
+    assert(bzla_lsutils_is_leaf_node(exp));
     BZLA_PUSH_STACK(stack, exp);
   }
   cache = bzla_hashint_table_new(mm);
@@ -155,6 +155,10 @@ bzla_lsutils_update_cone(Bzla *bzla,
   {
     cur = BZLA_POP_STACK(stack);
     assert(bzla_node_is_regular(cur));
+
+    if (bzla_node_is_fun(cur) || bzla_node_is_args(cur) || cur->parameterized)
+      continue;
+
     if (bzla_hashint_table_contains(cache, cur->id)) continue;
     bzla_hashint_table_add(cache, cur->id);
     if (!bzla_hashint_table_contains(exps, cur->id)) BZLA_PUSH_STACK(cone, cur);
@@ -224,6 +228,7 @@ bzla_lsutils_update_cone(Bzla *bzla,
   for (i = 0; i < BZLA_COUNT_STACK(cone); i++)
   {
     cur = BZLA_PEEK_STACK(cone, i);
+
     assert(bzla_node_is_regular(cur));
     for (j = 0; j < cur->arity; j++)
     {
@@ -345,6 +350,7 @@ bzla_lsutils_update_cone(Bzla *bzla,
 
 #ifndef NDEBUG
   bzla_iter_hashptr_init(&pit, bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_queue(&pit, bzla->synthesized_constraints);
   bzla_iter_hashptr_queue(&pit, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&pit))
   {
@@ -356,4 +362,61 @@ bzla_lsutils_update_cone(Bzla *bzla,
   }
 #endif
   *time_update_cone += bzla_util_time_stamp() - start;
+}
+
+bool
+bzla_lsutils_is_leaf_node(BzlaNode *n)
+{
+  assert(n);
+  return bzla_node_is_bv_var(n) || bzla_node_is_apply(n)
+         || bzla_node_is_fun_eq(n);
+}
+
+/**
+ * Initialize model values for inputs (var, apply, feq) based on previous
+ * model or zero-initialize if no previous model exists.
+ */
+void
+bzla_lsutils_initialize_bv_model(BzlaSolver *slv)
+{
+  size_t i;
+  Bzla *bzla;
+  BzlaMemMgr *mm;
+  BzlaNode *cur;
+  BzlaIntHashTable *bv_model = 0, *cur_bv_model;
+  BzlaBitVector *cur_value;
+
+  bzla         = slv->bzla;
+  mm           = bzla->mm;
+  cur_bv_model = slv->bzla->bv_model;
+
+  bzla_model_init_bv(bzla, &bv_model);
+
+  for (i = 1; i < BZLA_COUNT_STACK(bzla->nodes_id_table); ++i)
+  {
+    cur = BZLA_PEEK_STACK(bzla->nodes_id_table, i);
+    if (!cur) continue;
+    if (bzla_lsutils_is_leaf_node(cur))
+    {
+      if (cur_bv_model && bzla_hashint_map_contains(cur_bv_model, cur->id))
+      {
+        cur_value = bzla_bv_copy(
+            mm, bzla_hashint_map_get(cur_bv_model, cur->id)->as_ptr);
+      }
+      else
+      {
+        cur_value = bzla_bv_zero(mm, bzla_node_bv_get_width(bzla, cur));
+      }
+#ifndef NBZLALOG
+      char *bits = bzla_bv_to_char(mm, cur_value);
+      BZLALOG(
+          2, "initialize model for %s to %s", bzla_util_node2string(cur), bits);
+      bzla_mem_freestr(mm, bits);
+#endif
+      bzla_model_add_to_bv(bzla, bv_model, cur, cur_value);
+      bzla_bv_free(mm, cur_value);
+    }
+  }
+  bzla_model_delete_bv(bzla, &bzla->bv_model);
+  bzla->bv_model = bv_model;
 }

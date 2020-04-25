@@ -10,6 +10,7 @@
 
 #include "bzlabv.h"
 #include "bzlainvutils.h"
+#include "bzlalsutils.h"
 #include "bzlanode.h"
 #include "bzlaprintmodel.h"
 #include "bzlaslsutils.h"
@@ -6871,7 +6872,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
     }
 #endif
 
-    if (bzla_node_is_bv_var(cur))
+    if (bzla_lsutils_is_leaf_node(cur))
     {
       *input      = real_cur;
       *assignment = bzla_node_is_inverted(cur) ? bzla_bv_not(bzla->mm, bv_t)

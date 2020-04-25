@@ -194,7 +194,7 @@ select_candidates(Bzla *bzla, BzlaNode *root, BzlaNodePtrStack *candidates)
     if (bzla_hashint_table_contains(mark, real_cur->id)) continue;
     bzla_hashint_table_add(mark, real_cur->id);
 
-    if (bzla_node_is_bv_var(real_cur))
+    if (bzla_lsutils_is_leaf_node(real_cur))
     {
       BZLA_PUSH_STACK(*candidates, real_cur);
       BZLALOG(1, "  %s", bzla_util_node2string(real_cur));
@@ -1413,7 +1413,6 @@ delete_sls_solver(BzlaSLSSolver *slv)
   assert(slv);
   assert(slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(slv->bzla);
-  assert(slv->bzla->slv == (BzlaSolver *) slv);
 
   Bzla *bzla;
   BzlaIntHashTableIterator it;
@@ -1470,7 +1469,6 @@ sat_sls_solver(BzlaSLSSolver *slv)
   assert(slv);
   assert(slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(slv->bzla);
-  assert(slv->bzla->slv == (BzlaSolver *) slv);
 
   int32_t j, max_steps, id, nmoves;
   uint32_t nprops;
@@ -1493,11 +1491,6 @@ sat_sls_solver(BzlaSLSSolver *slv)
     goto DONE;
   }
 
-  BZLA_ABORT(bzla->ufs->count != 0
-                 || (!bzla_opt_get(bzla, BZLA_OPT_BETA_REDUCE)
-                     && bzla->lambdas->count != 0),
-             "sls engine supports QF_BV only");
-
   /* Generate intial model, all bv vars are initialized with zero. We do
    * not have to consider model_for_all_nodes, but let this be handled by
    * the model generation (if enabled) after SAT has been determined. */
@@ -1506,14 +1499,12 @@ sat_sls_solver(BzlaSLSSolver *slv)
   /* init assertion weights of ALL roots */
   assert(!slv->weights);
   slv->weights = bzla_hashint_map_new(bzla->mm);
-  assert(bzla->synthesized_constraints->count == 0);
   bzla_iter_hashptr_init(&pit, bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_queue(&pit, bzla->synthesized_constraints);
   while (bzla_iter_hashptr_has_next(&pit))
   {
     root = bzla_iter_hashptr_next(&pit);
-    assert(!bzla_hashptr_table_get(bzla->unsynthesized_constraints,
-                                   bzla_node_invert(root)));
-    id = bzla_node_get_id(root);
+    id   = bzla_node_get_id(root);
     if (!bzla_hashint_map_contains(slv->weights, id))
     {
       BZLA_CNEW(bzla->mm, d);
@@ -1526,6 +1517,9 @@ sat_sls_solver(BzlaSLSSolver *slv)
   {
     root = bzla_iter_hashptr_next(&pit);
     if (bzla_hashptr_table_get(bzla->unsynthesized_constraints,
+                               bzla_node_invert(root)))
+      goto UNSAT;
+    if (bzla_hashptr_table_get(bzla->synthesized_constraints,
                                bzla_node_invert(root)))
       goto UNSAT;
     if (bzla_hashptr_table_get(bzla->assumptions, bzla_node_invert(root)))
@@ -1560,8 +1554,8 @@ sat_sls_solver(BzlaSLSSolver *slv)
     /* collect unsatisfied roots (kept up-to-date in update_cone) */
     assert(!slv->roots);
     slv->roots = bzla_hashint_map_new(bzla->mm);
-    assert(bzla->synthesized_constraints->count == 0);
     bzla_iter_hashptr_init(&pit, bzla->unsynthesized_constraints);
+    bzla_iter_hashptr_queue(&pit, bzla->synthesized_constraints);
     bzla_iter_hashptr_queue(&pit, bzla->assumptions);
     while (bzla_iter_hashptr_has_next(&pit))
     {
@@ -1647,14 +1641,13 @@ generate_model_sls_solver(BzlaSLSSolver *slv,
   assert(slv);
   assert(slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(slv->bzla);
-  assert(slv->bzla->slv == (BzlaSolver *) slv);
 
   Bzla *bzla;
 
   bzla = slv->bzla;
 
   if (!reset && bzla->bv_model) return;
-  bzla_model_init_bv(bzla, &bzla->bv_model);
+  bzla_lsutils_initialize_bv_model((BzlaSolver *) slv);
   bzla_model_init_fun(bzla, &bzla->fun_model);
   bzla_model_generate(
       bzla, bzla->bv_model, bzla->fun_model, model_for_all_nodes);
@@ -1666,7 +1659,6 @@ print_stats_sls_solver(BzlaSLSSolver *slv)
   assert(slv);
   assert(slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(slv->bzla);
-  assert(slv->bzla->slv == (BzlaSolver *) slv);
 
   Bzla *bzla;
 
@@ -1726,7 +1718,6 @@ print_time_stats_sls_solver(BzlaSLSSolver *slv)
   assert(slv);
   assert(slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(slv->bzla);
-  assert(slv->bzla->slv == (BzlaSolver *) slv);
 
   Bzla *bzla = slv->bzla;
 
