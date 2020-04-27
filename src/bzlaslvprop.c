@@ -634,6 +634,34 @@ propagate_domains(Bzla *bzla,
   BZLA_RELEASE_STACK(visit);
 }
 
+/* Note: We only want to synthesize the constraints but don't want to add them
+ * to the SAT solver. Hence, we do not call
+ * bzla_process_unsynthesized_constraints, but use this function.
+ */
+static void
+synthesize_constraints(Bzla *bzla)
+{
+  BzlaNode *cur;
+  BzlaAIGVec *av;
+  BzlaPtrHashTableIterator it;
+
+  bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    cur = bzla_iter_hashptr_next(&it);
+    bzla_synthesize_exp(bzla, cur, 0);
+    av = bzla_node_real_addr(cur)->av;
+    assert(av->width == 1);
+
+    if ((bzla_node_is_inverted(cur) && bzla_aig_is_true(av->aigs[0]))
+        || (bzla_node_is_regular(cur) && bzla_aig_is_false(av->aigs[0])))
+    {
+      bzla->found_constraint_false = true;
+      break;
+    }
+  }
+}
+
 /* This is an extra function in order to be able to test completeness
  * via test suite. */
 int32_t
@@ -662,7 +690,7 @@ bzla_prop_solver_sat(Bzla *bzla)
 
   if (opt_prop_const_bits)
   {
-    bzla_process_unsynthesized_constraints(bzla);
+    synthesize_constraints(bzla);
     if (bzla->found_constraint_false) goto UNSAT;
   }
 
