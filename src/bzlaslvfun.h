@@ -51,11 +51,8 @@ struct BzlaFunSolver
     uint32_t dp_failed_eqs;
     uint32_t dp_assumed_eqs;
 
-    /* number of assignments shared from local search  engine */
-    uint32_t prels_n_assertions;
-    /* number of assignments shared from local search engine that actually
-     * contributed to the sat result */
-    uint32_t prels_n_sat_assumptions;
+    /* number of assignments shared from local search engine */
+    uint32_t prels_shared;
 
     uint_least64_t eval_exp_calls;
     uint_least64_t propagations;

@@ -2438,13 +2438,12 @@ mark_cone(Bzla *bzla,
 }
 
 static BzlaSolverResult
-sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
+check_sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
 {
   assert(slv);
 
   size_t i;
-  uint32_t nass = 0;
-  double start, delta;
+  double start;
   BzlaSolver *preslv;
   BzlaNodePtrStack assertions, roots_true, roots_false;
   BzlaIntHashTable *visited;
@@ -2458,7 +2457,8 @@ sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
 
   bzla = slv->bzla;
   assert(!bzla->inconsistent);
-  mm = bzla->mm;
+  mm    = bzla->mm;
+  start = bzla_util_time_stamp();
 
   if (!*ls_slv)
   {
@@ -2473,8 +2473,7 @@ sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
   }
 
   assert(*ls_slv);
-  preslv = *ls_slv;
-
+  preslv    = *ls_slv;
   bzla->slv = preslv;
   result    = preslv->api.sat(preslv);
 
@@ -2494,20 +2493,23 @@ sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
                ? "sat"
                : (result == BZLA_RESULT_UNSAT ? "unsat" : "unknown"));
 
+  /* Use the partial model of the prels engine and determine input assignments
+   * that already satisfy constraints and separated from all other unsatisfied
+   * constraints. Assert these assignments to the bit-blasting engine. */
   if (result == BZLA_RESULT_UNKNOWN && bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT)
-      && !bzla_terminate(bzla) && !bzla_get_sat_mgr(bzla)->inc_required)
+      && !bzla_terminate(bzla)
+      /* We support model sharing for QF_BV only. */
+      && !bzla_get_sat_mgr(bzla)->inc_required)
   {
     BZLA_INIT_STACK(mm, roots_true);
     BZLA_INIT_STACK(mm, roots_false);
 
-    /* share partial models with the bit-blasting engine */
-    /* then, collect all inputs reachable from satisified roots (assertions
-     * and assumptions) */
     BZLA_INIT_STACK(mm, assertions);
     bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
     bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
     bzla_iter_hashptr_queue(&it, bzla->assumptions);
 
+    /* Collect all constraints. */
     BzlaIntHashTable *roots = bzla_hashint_map_new(mm);
     while (bzla_iter_hashptr_has_next(&it))
     {
@@ -2525,9 +2527,12 @@ sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
       }
     }
 
+    /* Traverse each unsatisfied constraint down to the inputs and mark cone of
+     * each input in function mark_cone. If a satisfied constraint is in the
+     * cone of a traversed input, it is handled as an unsatisfied constraints
+     * and therefore pushed onto the roots_false stack and continue. */
     BzlaIntHashTable *cone = bzla_hashint_table_new(mm);
-
-    visited = bzla_hashint_table_new(mm);
+    visited                = bzla_hashint_table_new(mm);
     while (!BZLA_EMPTY_STACK(roots_false))
     {
       real_cur = bzla_node_real_addr(BZLA_POP_STACK(roots_false));
@@ -2547,6 +2552,8 @@ sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
     }
     BZLA_RELEASE_STACK(roots_false);
 
+    /* Collect all remaining inputs that are separated from the unsatisfied
+     * constraints. */
     while (!BZLA_EMPTY_STACK(roots_true))
     {
       real_cur = bzla_node_real_addr(BZLA_POP_STACK(roots_true));
@@ -2561,7 +2568,6 @@ sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
         assumption = bzla_exp_eq(bzla, real_cur, bvconst);
         bzla_node_release(bzla, bvconst);
         BZLA_PUSH_STACK(assertions, assumption);
-        nass += 1;
       }
       else
       {
@@ -2576,7 +2582,7 @@ sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
     bzla_hashint_map_delete(roots);
     BZLA_RELEASE_STACK(roots_true);
 
-    BZLA_FUN_SOLVER(bzla)->stats.prels_n_assertions = nass;
+    BZLA_FUN_SOLVER(bzla)->stats.prels_shared = BZLA_COUNT_STACK(assertions);
 
     BZLA_MSG(bzla->msg,
              1,
@@ -2595,6 +2601,8 @@ sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
     result = bzla_simplify(bzla);
   }
 
+  slv->time.prels_sat += bzla_util_time_stamp() - start;
+
   return result;
 }
 
@@ -2607,6 +2615,7 @@ sat_fun_solver(BzlaFunSolver *slv)
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
   uint32_t i;
+  bool opt_prels;
   BzlaSolverResult result;
   Bzla *bzla, *clone;
   BzlaNode *clone_root, *lemma;
@@ -2616,9 +2625,12 @@ sat_fun_solver(BzlaFunSolver *slv)
   BzlaMemMgr *mm;
   BzlaSolver *ls_slv = 0;
 
-  bzla = slv->bzla;
+  bzla      = slv->bzla;
+  mm        = bzla->mm;
+  opt_prels = bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
+              || bzla_opt_get(bzla, BZLA_OPT_FUN_PRESLS);
+
   assert(!bzla->inconsistent);
-  mm = bzla->mm;
 
   /* make initial applies in bv skeleton global in order to prevent
    * traversing the whole formula every refinement round */
@@ -2659,10 +2671,9 @@ sat_fun_solver(BzlaFunSolver *slv)
 
     result = BZLA_RESULT_UNKNOWN;
 
-    if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
-        || bzla_opt_get(bzla, BZLA_OPT_FUN_PRESLS))
+    if (opt_prels)
     {
-      result = sat_prels(slv, &ls_slv);
+      result = check_sat_prels(slv, &ls_slv);
     }
 
     bzla_process_unsynthesized_constraints(bzla);
@@ -2808,7 +2819,7 @@ print_stats_fun_solver(BzlaFunSolver *slv)
     BZLA_MSG(bzla->msg,
              1,
              "%7d assignments shared with bit-blasting engine",
-             slv->stats.prels_n_assertions);
+             slv->stats.prels_shared);
   }
 
   if (bzla->ufs->count || bzla->lambdas->count)
