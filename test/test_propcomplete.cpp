@@ -100,15 +100,15 @@ class TestPropComplete : public TestBzla
    *
    * is_inv_fun: The function to test if given operator is invertible with
    *             respect to s and t.
-   * inv_fun   : The function to compute the inverse value for x given s and t.
+   * val_fun   : The function to compute the value for x given s and t.
    * pi        : The struct containing all information needed for is_inv checks
    *             and invers/consistent value computation.
    */
   void check_result(BzlaPropIsInvFun is_inv_fun,
-                    BzlaPropComputeValueFun inv_fun,
+                    BzlaPropComputeValueFun val_fun,
                     BzlaPropInfo *pi)
   {
-    assert(inv_fun);
+    assert(val_fun);
     assert(pi);
     assert(d_domains);
 
@@ -133,7 +133,7 @@ class TestPropComplete : public TestBzla
       {
         ASSERT_TRUE(is_inv_fun(d_bzla, pi));
       }
-      res = inv_fun(d_bzla, pi);
+      res = val_fun(d_bzla, pi);
       ASSERT_NE(res, nullptr);
       if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       if (!bzla_bv_compare(res, x_bv)) break;
@@ -158,18 +158,17 @@ class TestPropComplete : public TestBzla
   /**
    * Same as check_result but for cond.
    *
-   * is_inv_fun       : The function to test if given operator is invertible
-   *                    with respect to s0, s1 and t.
-   * compute_value_fun: The function to compute the inverse value for x given
-   *                    s0, s1 and t.
-   * pi               : The struct containing all information needed for is_inv
-   *                    checks and invers/consistent value computation.
+   * is_inv_fun: The function to test if given operator is invertible with
+   *             respect to s0, s1 and t.
+   * val_fun   : The function to compute the value for x given s0, s1 and t.
+   * pi        : The struct containing all information needed for is_inv checks
+   *             and invers/consistent value computation.
    */
   void check_result_cond(BzlaPropIsInvFun is_inv_fun,
-                         BzlaPropComputeValueFun compute_value_fun,
+                         BzlaPropComputeValueFun val_fun,
                          BzlaPropInfo *pi)
   {
-    assert(compute_value_fun);
+    assert(val_fun);
     assert(exp);
     assert(pi);
     assert(d_domains);
@@ -196,7 +195,7 @@ class TestPropComplete : public TestBzla
       {
         ASSERT_TRUE(is_inv_fun(d_bzla, pi));
       }
-      res = compute_value_fun(d_bzla, pi);
+      res = val_fun(d_bzla, pi);
       if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       ASSERT_NE(res, nullptr);
       if ((idx_x == 1 && bzla_bv_is_zero(s0))
@@ -243,15 +242,14 @@ class TestPropComplete : public TestBzla
    *             s0 <> s1.
    * is_inv_fun: The function to test if given operator is invertible with
    *             respect to s and t.
-   * inv_fun   : The function to compute the inverse value for x given s
-   *                and t.
+   * val_fun   : The function to compute the value for x given s and t.
    */
   void check_binary(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              const BzlaBitVector *),
                     BzlaPropIsInvFun is_inv_fun,
-                    BzlaPropComputeValueFun inv_fun)
+                    BzlaPropComputeValueFun val_fun)
   {
     uint32_t bw;
     uint64_t i, j;
@@ -275,9 +273,9 @@ class TestPropComplete : public TestBzla
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         t    = bv_fun(d_mm, s[0], s[1]);
         init_prop_info(&pi, exp, 0, t, s[0], s[1], 0, 0, 0, 0);
-        check_result(is_inv_fun, inv_fun, &pi);
+        check_result(is_inv_fun, val_fun, &pi);
         init_prop_info(&pi, exp, 1, t, s[0], s[1], 0, 0, 0, 0);
-        check_result(is_inv_fun, inv_fun, &pi);
+        check_result(is_inv_fun, val_fun, &pi);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
       }
@@ -289,8 +287,7 @@ class TestPropComplete : public TestBzla
   }
 
   /** Same as check_binary but for cond.  */
-  void check_cond(BzlaPropIsInvFun is_inv_fun,
-                  BzlaPropComputeValueFun compute_value_fun)
+  void check_cond(BzlaPropIsInvFun is_inv_fun, BzlaPropComputeValueFun val_fun)
   {
     uint32_t bw;
     uint64_t i, j, k;
@@ -320,11 +317,11 @@ class TestPropComplete : public TestBzla
           s[2] = bzla_bv_uint64_to_bv(d_mm, k, bw);
           t    = bzla_bv_ite(d_mm, s[0], s[1], s[2]);
           init_prop_info(&pi, exp, 0, t, s[0], s[1], s[2], 0, 0, 0);
-          check_result_cond(is_inv_fun, compute_value_fun, &pi);
+          check_result_cond(is_inv_fun, val_fun, &pi);
           init_prop_info(&pi, exp, 1, t, s[0], s[1], s[2], 0, 0, 0);
-          check_result_cond(is_inv_fun, compute_value_fun, &pi);
+          check_result_cond(is_inv_fun, val_fun, &pi);
           init_prop_info(&pi, exp, 2, t, s[0], s[1], s[2], 0, 0, 0);
-          check_result_cond(is_inv_fun, compute_value_fun, &pi);
+          check_result_cond(is_inv_fun, val_fun, &pi);
           bzla_bv_free(d_mm, s[2]);
           bzla_bv_free(d_mm, t);
         }
@@ -339,8 +336,7 @@ class TestPropComplete : public TestBzla
   }
 
   /** Same as check_binary but for slice.  */
-  void check_slice(BzlaPropIsInvFun is_inv_fun,
-                   BzlaPropComputeValueFun compute_value_fun)
+  void check_slice(BzlaPropIsInvFun is_inv_fun, BzlaPropComputeValueFun val_fun)
   {
     uint32_t bw;
     uint64_t up, lo, i, k;
@@ -372,7 +368,7 @@ class TestPropComplete : public TestBzla
             {
               assert(is_inv_fun(d_bzla, &pi));
             }
-            res = compute_value_fun(d_bzla, &pi);
+            res = val_fun(d_bzla, &pi);
             ASSERT_NE(res, nullptr);
             if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
             if (!bzla_bv_compare(res, x)) break;
@@ -401,17 +397,14 @@ class TestPropComplete : public TestBzla
    *                s0 <> s1.
    * is_inv_fun   : The function to test if given operator is invertible with
    *                respect to s and t.
-   * inv_fun      : The function to compute the inverse value for x given s
-   *                and t.
-   * inv_fun_const: The function to compute the inverse value for x given s
-   *                and t using propagator domains.
+   * val_fun      : The function to compute the value for x given s and t.
    */
   void check_shift(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                    BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                             const BzlaBitVector *,
                                             const BzlaBitVector *),
                    BzlaPropIsInvFun is_inv_fun,
-                   BzlaPropComputeValueFun inv_fun_bv)
+                   BzlaPropComputeValueFun val_fun)
   {
     uint32_t bw;
     uint64_t i, j;
@@ -435,9 +428,9 @@ class TestPropComplete : public TestBzla
         s[1] = bzla_bv_uint64_to_bv(d_mm, j, bw);
         t    = bv_fun(d_mm, s[0], s[1]);
         init_prop_info(&pi, exp, 0, t, s[0], s[1], 0, 0, 0, 0);
-        check_result(is_inv_fun, inv_fun_bv, &pi);
+        check_result(is_inv_fun, val_fun, &pi);
         init_prop_info(&pi, exp, 1, t, s[0], s[1], 0, 0, 0, 0);
-        check_result(is_inv_fun, inv_fun_bv, &pi);
+        check_result(is_inv_fun, val_fun, &pi);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
       }
@@ -461,7 +454,7 @@ class TestPropComplete : public TestBzla
     BzlaBitVector *(*bv_fun)(
         BzlaMemMgr *, const BzlaBitVector *, const BzlaBitVector *);
     BzlaPropIsInvFun is_inv_fun;
-    BzlaPropComputeValueFun inv_fun_bv;
+    BzlaPropComputeValueFun val_fun;
 
     nsext = bw > 3 ? 2 : 1;
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
@@ -472,14 +465,14 @@ class TestPropComplete : public TestBzla
       exp_fun    = bzla_exp_bv_slt;
       bv_fun     = bzla_bv_slt;
       is_inv_fun = bzla_is_inv_slt;
-      inv_fun_bv = bzla_proputils_inv_slt;
+      val_fun    = bzla_proputils_inv_slt;
     }
     else
     {
       exp_fun    = bzla_exp_bv_ult;
       bv_fun     = bzla_bv_ult;
       is_inv_fun = bzla_is_inv_ult;
-      inv_fun_bv = bzla_proputils_inv_ult;
+      val_fun    = bzla_proputils_inv_ult;
     }
 
     /* Disable rewriting in order to preserve sign extension structure. */
@@ -508,7 +501,7 @@ class TestPropComplete : public TestBzla
 
           /* domains are initialized later */
           init_prop_info(&pi, exp, pos_x, t, s[0], s[1], 0, 0, 0, 0);
-          check_result(is_inv_fun, inv_fun_bv, &pi);
+          check_result(is_inv_fun, val_fun, &pi);
 
           bzla_bv_free(d_mm, s[1 - pos_x]);
           bzla_bv_free(d_mm, t);
@@ -538,7 +531,7 @@ class TestPropComplete : public TestBzla
     BzlaBitVector *(*bv_fun)(
         BzlaMemMgr *, const BzlaBitVector *, const BzlaBitVector *);
     BzlaPropIsInvFun is_inv_fun;
-    BzlaPropComputeValueFun inv_fun_bv;
+    BzlaPropComputeValueFun val_fun;
 
     bw_v0 = bw / 2;
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
@@ -549,14 +542,14 @@ class TestPropComplete : public TestBzla
       exp_fun    = bzla_exp_bv_slt;
       bv_fun     = bzla_bv_slt;
       is_inv_fun = bzla_is_inv_slt;
-      inv_fun_bv = bzla_proputils_inv_slt;
+      val_fun    = bzla_proputils_inv_slt;
     }
     else
     {
       exp_fun    = bzla_exp_bv_ult;
       bv_fun     = bzla_bv_ult;
       is_inv_fun = bzla_is_inv_ult;
-      inv_fun_bv = bzla_proputils_inv_ult;
+      val_fun    = bzla_proputils_inv_ult;
     }
 
     /* Disable rewriting in order to preserve sign extension structure. */
@@ -586,7 +579,7 @@ class TestPropComplete : public TestBzla
 
           /* domains are initialized later */
           init_prop_info(&pi, exp, pos_x, t, s[0], s[1], 0, 0, 0, 0);
-          check_result(is_inv_fun, inv_fun_bv, &pi);
+          check_result(is_inv_fun, val_fun, &pi);
 
           bzla_bv_free(d_mm, s[1 - pos_x]);
           bzla_bv_free(d_mm, t);
@@ -609,8 +602,7 @@ class TestPropComplete : public TestBzla
    * computation always produces t when solved for x.
    *
    * bw            : The bit-width to use.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * use_domains   : True if this check should be performed w.r.t const bits.
    */
   void check_conf_and(uint32_t bw, bool use_domains)
   {
@@ -749,8 +741,7 @@ class TestPropComplete : public TestBzla
    * inverse value computation always produces t when solved for x.
    *
    * bw            : The bit-width to use.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * use_domains   : True if this check should be performed w.r.t. const bits.
    */
   void check_conf_ult(uint32_t bw, bool use_domains)
   {
@@ -874,8 +865,7 @@ class TestPropComplete : public TestBzla
    * inverse value computation always produces t when solved for x.
    *
    * bw            : The bit-width to use.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * use_domains   : True if this check should be performed w.r.t. const bits.
    */
   void check_conf_slt(uint32_t bw, bool use_domains)
   {
@@ -1002,8 +992,7 @@ class TestPropComplete : public TestBzla
    * shifted bits match the corresponding bits in the shifted operand.
    *
    * bw            : The bit-width to use.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * use_domains   : True if this check should be performed w.r.t. const bits.
    */
   void check_conf_sll(uint32_t bw, bool use_domains)
   {
@@ -1155,8 +1144,7 @@ class TestPropComplete : public TestBzla
    * shifted bits match the corresponding bits in the shifted operand.
    *
    * bw            : The bit-width to use.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * use_domains   : True if this check should be performed w.r.t. const bits.
    */
   void check_conf_srl(uint32_t bw, bool use_domains)
   {
@@ -1307,8 +1295,7 @@ class TestPropComplete : public TestBzla
    * value computation always produces a 'legal' value t when solved for x.
    *
    * bw            : The bit-width to use.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * use_domains   : True if this check should be performed w.r.t. const bits.
    */
   void check_conf_mul(uint32_t bw, bool use_domains)
   {
@@ -1426,8 +1413,7 @@ class TestPropComplete : public TestBzla
    * value computation always produces a 'legal' value t when solved for x.
    *
    * bw            : The bit-width to use.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * use_domains   : True if this check should be performed w.r.t. const bits.
    */
   void check_conf_udiv(uint32_t bw, bool use_domains)
   {
@@ -1522,8 +1508,7 @@ class TestPropComplete : public TestBzla
    * value computation always produces a 'legal' value t when solved for x.
    *
    * bw            : The bit-width to use.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * use_domains   : True if this check should be performed w.r.t. const bits.
    */
   void check_conf_urem(uint32_t bw, bool use_domains)
   {
@@ -1752,8 +1737,7 @@ class TestPropComplete : public TestBzla
    * value computation always produces a 'legal' value t when solved for x.
    *
    * bw            : The bit-width to use.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * use_domains   : True if this check should be performed w.r.t. const bits.
    */
   void check_conf_concat(uint32_t bw, bool use_domains)
   {
@@ -1898,8 +1882,7 @@ class TestPropComplete : public TestBzla
    * exp           : The node representing the multiplication.
    * t             : The assignment of 'mul'.
    * s             : The assignment of one of the operands of 'mul'.
-   * use_domains   : True if this check should be performed using propagator
-   *                 domains (inv_fun_const).
+   * use_domains   : True if this check should be performed w.r.t. const bits.
    */
   void check_conf_mul_result(BzlaNode *exp,
                              BzlaBitVector *t,
@@ -1991,8 +1974,7 @@ class TestPropComplete : public TestBzla
    * exp        : The node representing the unsigned division.
    * t          : The assignment of 'udiv'.
    * s          : The assignment of one of the operands of udiv.
-   * use_domains: True if this check should be performed using propagator
-   *              domains (inv_fun_const).
+   * use_domains: True if this check should be performed w.r.t. const bits.
    */
   void check_conf_udiv_result(uint32_t idx_x,
                               BzlaNode *exp,
@@ -2098,7 +2080,7 @@ class TestPropComplete : public TestBzla
 
     /* The function to create a node representing the exp operation. */
     BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *);
-    /* The function to test if given operator is invertible w.r.t.  s and t. */
+    /* The function to test if given operator is invertible w.r.t. s and t. */
     BzlaPropIsInvFun is_inv_fun;
     /* The function to compute the consistent value for x. */
     BzlaPropComputeValueFun cons_fun;
@@ -2192,7 +2174,7 @@ class TestPropCompleteConst : public TestPropComplete
 
   /** Helper for check_result_aux. */
   void check_result_n_tests(BzlaPropIsInvFun is_inv_fun,
-                            BzlaPropComputeValueFun compute_value_fun,
+                            BzlaPropComputeValueFun val_fun,
                             BzlaPropInfo *pi)
   {
     uint32_t idx_x;
@@ -2226,7 +2208,7 @@ class TestPropCompleteConst : public TestPropComplete
         }
         assert(is_inv);
       }
-      res = compute_value_fun(d_bzla, pi);
+      res = val_fun(d_bzla, pi);
       if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       ASSERT_NE(res, nullptr);
       if (!bzla_bv_compare(res, x_bv)) break;
@@ -2252,7 +2234,7 @@ class TestPropCompleteConst : public TestPropComplete
 
   /** Helper for check_result_cond_aux. */
   void check_result_cond_n_tests(BzlaPropIsInvFun is_inv_fun,
-                                 BzlaPropComputeValueFun compute_value_fun,
+                                 BzlaPropComputeValueFun val_fun,
                                  BzlaPropInfo *pi)
   {
     uint32_t idx_x;
@@ -2275,7 +2257,7 @@ class TestPropCompleteConst : public TestPropComplete
       {
         ASSERT_TRUE(is_inv_fun(d_bzla, pi));
       }
-      res = compute_value_fun(d_bzla, pi);
+      res = val_fun(d_bzla, pi);
       if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       ASSERT_NE(res, nullptr);
       if ((idx_x == 1 && bzla_bv_is_zero(s0))
@@ -2316,7 +2298,7 @@ class TestPropCompleteConst : public TestPropComplete
 
   /** Helper for check_result_slice_aux. */
   void check_result_slice_n_tests(BzlaPropIsInvFun is_inv_fun,
-                                  BzlaPropComputeValueFun compute_value_fun,
+                                  BzlaPropComputeValueFun val_fun,
                                   BzlaPropInfo *pi)
   {
     uint64_t k;
@@ -2332,7 +2314,7 @@ class TestPropCompleteConst : public TestPropComplete
       {
         ASSERT_TRUE(is_inv_fun(d_bzla, pi));
       }
-      res = compute_value_fun(d_bzla, pi);
+      res = val_fun(d_bzla, pi);
       ASSERT_NE(res, nullptr);
       if (pi->res_x) bzla_bvdomain_free(d_mm, pi->res_x);
       if (!bzla_bv_compare(res, x_bv)) break;
@@ -2346,7 +2328,7 @@ class TestPropCompleteConst : public TestPropComplete
 
   /** Helper for check_result. */
   void check_result_aux(BzlaPropIsInvFun is_inv_fun,
-                        BzlaPropComputeValueFun compute_value_fun,
+                        BzlaPropComputeValueFun val_fun,
                         BzlaPropInfo *pi,
                         std::vector<uint32_t> &fixed_idx)
   {
@@ -2370,13 +2352,13 @@ class TestPropCompleteConst : public TestPropComplete
       bzla_bvdomain_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
     }
 
-    check_result_n_tests(is_inv_fun, compute_value_fun, pi);
+    check_result_n_tests(is_inv_fun, val_fun, pi);
     clear_domains();
   }
 
   /** Helper for check_result_cond. */
   void check_result_cond_aux(BzlaPropIsInvFun is_inv_fun,
-                             BzlaPropComputeValueFun compute_value_fun,
+                             BzlaPropComputeValueFun val_fun,
                              BzlaPropInfo *pi,
                              std::vector<uint32_t> &fixed_idx)
   {
@@ -2405,13 +2387,13 @@ class TestPropCompleteConst : public TestPropComplete
       bzla_bvdomain_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
     }
 
-    check_result_cond_n_tests(is_inv_fun, compute_value_fun, pi);
+    check_result_cond_n_tests(is_inv_fun, val_fun, pi);
     clear_domains();
   }
 
   /** Helper for check_result_slice. */
   void check_result_slice_aux(BzlaPropIsInvFun is_inv_fun,
-                              BzlaPropComputeValueFun compute_value_fun,
+                              BzlaPropComputeValueFun val_fun,
                               BzlaPropInfo *pi,
                               std::vector<uint32_t> &fixed_idx)
   {
@@ -2430,7 +2412,7 @@ class TestPropCompleteConst : public TestPropComplete
       bzla_bvdomain_fix_bit(x, i, bzla_bv_get_bit(x_bv, i));
     }
 
-    check_result_slice_n_tests(is_inv_fun, compute_value_fun, pi);
+    check_result_slice_n_tests(is_inv_fun, val_fun, pi);
     clear_domains();
   }
 
@@ -2446,18 +2428,17 @@ class TestPropCompleteConst : public TestPropComplete
    * as inverse value, i.e., we essentially reverse the inverse value
    * computation with respect to the operands.
    *
-   * is_inv_fun       : The function to test if given operator is invertible
-   *                    with respect to s and t.
-   * compute_value_fun: The function to compute the inverse value for x given s
-   *                    and t.
-   * pi               : The struct containing all information needed for is_inv
-   *                    checks and invers/consistent value computation.
+   * is_inv_fun: The function to test if given operator is invertible with
+   *             respect to s and t.
+   * val_fun   : The function to compute the value for x given s and t.
+   * pi        : The struct containing all information needed for is_inv checks
+   *             and invers/consistent value computation.
    */
   void check_result(BzlaPropIsInvFun is_inv_fun,
-                    BzlaPropComputeValueFun compute_value_fun,
+                    BzlaPropComputeValueFun val_fun,
                     BzlaPropInfo *pi)
   {
-    assert(compute_value_fun);
+    assert(val_fun);
     assert(pi);
 
     std::vector<uint32_t> fixed_idx;
@@ -2467,7 +2448,7 @@ class TestPropCompleteConst : public TestPropComplete
     for (uint32_t i = 0, bw = bzla_bv_get_width(x_bv); i < bw; ++i)
     {
       fixed_idx.push_back(i);
-      check_result_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
+      check_result_aux(is_inv_fun, val_fun, pi, fixed_idx);
       fixed_idx.clear();
     }
 
@@ -2478,7 +2459,7 @@ class TestPropCompleteConst : public TestPropComplete
       {
         fixed_idx.push_back(i);
         fixed_idx.push_back(j);
-        check_result_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
+        check_result_aux(is_inv_fun, val_fun, pi, fixed_idx);
         fixed_idx.clear();
       }
     }
@@ -2493,7 +2474,7 @@ class TestPropCompleteConst : public TestPropComplete
           fixed_idx.push_back(i);
           fixed_idx.push_back(j);
           fixed_idx.push_back(k);
-          check_result_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
+          check_result_aux(is_inv_fun, val_fun, pi, fixed_idx);
           fixed_idx.clear();
         }
       }
@@ -2503,15 +2484,14 @@ class TestPropCompleteConst : public TestPropComplete
   /**
    * Same as check_result but for cond.
    *
-   * is_inv_fun       : The function to test if given operator is invertible
-   *                    with respect to s0, s1 and t.
-   * compute_value_fun: The function to compute the inverse value for x given
-   *                    s0, s1 and t.
-   * pi               : The struct containing all information needed for is_inv
-   *                    checks and invers/consistent value computation.
+   * is_inv_fun: The function to test if given operator is invertible with
+   *             respect to s0, s1 and t.
+   * val_fun   : The function to compute the value for x given s0, s1 and t.
+   * pi        : The struct containing all information needed for is_inv checks
+   *             and invers/consistent value computation.
    */
   void check_result_cond(BzlaPropIsInvFun is_inv_fun,
-                         BzlaPropComputeValueFun compute_value_fun,
+                         BzlaPropComputeValueFun val_fun,
                          BzlaPropInfo *pi)
   {
     assert(pi);
@@ -2523,7 +2503,7 @@ class TestPropCompleteConst : public TestPropComplete
     for (uint32_t i = 0, bw = bzla_bv_get_width(x_bv); i < bw; ++i)
     {
       fixed_idx.push_back(i);
-      check_result_cond_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
+      check_result_cond_aux(is_inv_fun, val_fun, pi, fixed_idx);
       fixed_idx.clear();
     }
 
@@ -2534,7 +2514,7 @@ class TestPropCompleteConst : public TestPropComplete
       {
         fixed_idx.push_back(i);
         fixed_idx.push_back(j);
-        check_result_cond_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
+        check_result_cond_aux(is_inv_fun, val_fun, pi, fixed_idx);
         fixed_idx.clear();
       }
     }
@@ -2549,7 +2529,7 @@ class TestPropCompleteConst : public TestPropComplete
           fixed_idx.push_back(i);
           fixed_idx.push_back(j);
           fixed_idx.push_back(k);
-          check_result_cond_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
+          check_result_cond_aux(is_inv_fun, val_fun, pi, fixed_idx);
           fixed_idx.clear();
         }
       }
@@ -2563,15 +2543,15 @@ class TestPropCompleteConst : public TestPropComplete
    * inverse value 'x_bv' while considering const bits in 'x' (which are
    * set to bits in 'x_bv').
    *
-   * is_inv_fun       : The function to test if given operator is invertible
-   *                    with respect to upper, lower and t.
-   * compute_value_fun: The function to compute the inverse value for x given
-   *                    upper, lower and t.
-   * pi               : The struct containing all information needed for is_inv
-   *                    checks and invers/consistent value computation.
+   * is_inv_fun: The function to test if given operator is invertible with
+   *             respect to upper, lower and t.
+   * val_fun   : The function to compute the value for x given upper, lower
+   *             and t.
+   * pi        : The struct containing all information needed for is_inv checks
+   *             and invers/consistent value computation.
    */
   void check_result_slice(BzlaPropIsInvFun is_inv_fun,
-                          BzlaPropComputeValueFun compute_value_fun,
+                          BzlaPropComputeValueFun val_fun,
                           BzlaPropInfo *pi)
   {
     std::vector<uint32_t> fixed_idx;
@@ -2581,7 +2561,7 @@ class TestPropCompleteConst : public TestPropComplete
     for (uint32_t i = 0, bw = bzla_bv_get_width(x_bv); i < bw; ++i)
     {
       fixed_idx.push_back(i);
-      check_result_slice_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
+      check_result_slice_aux(is_inv_fun, val_fun, pi, fixed_idx);
       fixed_idx.clear();
     }
 
@@ -2592,7 +2572,7 @@ class TestPropCompleteConst : public TestPropComplete
       {
         fixed_idx.push_back(i);
         fixed_idx.push_back(j);
-        check_result_slice_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
+        check_result_slice_aux(is_inv_fun, val_fun, pi, fixed_idx);
         fixed_idx.clear();
       }
     }
@@ -2607,7 +2587,7 @@ class TestPropCompleteConst : public TestPropComplete
           fixed_idx.push_back(i);
           fixed_idx.push_back(j);
           fixed_idx.push_back(k);
-          check_result_slice_aux(is_inv_fun, compute_value_fun, pi, fixed_idx);
+          check_result_slice_aux(is_inv_fun, val_fun, pi, fixed_idx);
           fixed_idx.clear();
         }
       }
@@ -2619,20 +2599,20 @@ class TestPropCompleteConst : public TestPropComplete
    * for the first operand produces value s0, and the inverse value computation
    * for the second operand produces value s1.
    *
-   * exp_fun          : The function to create a node representing operation <>.
-   * bv_fun           : The function to create the bit-vector result of
-   *                    operation s0 <> s1.
-   * is_inv_fun       : The function to test if given operator is invertible
-   *                    with respect to s and t.
-   * compute_value_fun: The function to compute the inverse value for x
-   *                    given s and t considering const bits in x.
+   * exp_fun    : The function to create a node representing operation <>.
+   * bv_fun     : The function to create the bit-vector result of
+   *              operation s0 <> s1.
+   * is_inv_fun : The function to test if given operator is invertible
+   *              with respect to s and t.
+   * val_fun    : The function to compute the value for x given s and t
+   *              considering const bits in x.
    */
   void check_binary(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                     BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                              const BzlaBitVector *,
                                              const BzlaBitVector *),
                     BzlaPropIsInvFun is_inv_fun,
-                    BzlaPropComputeValueFun compute_value_fun)
+                    BzlaPropComputeValueFun val_fun)
   {
     uint32_t bw;
     uint64_t i, j;
@@ -2657,9 +2637,9 @@ class TestPropCompleteConst : public TestPropComplete
         t    = bv_fun(d_mm, s[0], s[1]);
         /* domains are initialized later */
         init_prop_info(&pi, exp, 1, t, s[0], s[1], 0, 0, 0, 0);
-        check_result(is_inv_fun, compute_value_fun, &pi);
+        check_result(is_inv_fun, val_fun, &pi);
         init_prop_info(&pi, exp, 0, t, s[0], s[1], 0, 0, 0, 0);
-        check_result(is_inv_fun, compute_value_fun, &pi);
+        check_result(is_inv_fun, val_fun, &pi);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
       }
@@ -2671,8 +2651,7 @@ class TestPropCompleteConst : public TestPropComplete
   }
 
   /** Same as check_binary but for cond.  */
-  void check_cond(BzlaPropIsInvFun is_inv_fun,
-                  BzlaPropComputeValueFun compute_value_fun)
+  void check_cond(BzlaPropIsInvFun is_inv_fun, BzlaPropComputeValueFun val_fun)
   {
     uint32_t bw;
     uint64_t i, j, k;
@@ -2703,11 +2682,11 @@ class TestPropCompleteConst : public TestPropComplete
           t    = bzla_bv_ite(d_mm, s[0], s[1], s[2]);
           /* domains are initialized later */
           init_prop_info(&pi, exp, 2, t, s[0], s[1], s[2], 0, 0, 0);
-          check_result_cond(is_inv_fun, compute_value_fun, &pi);
+          check_result_cond(is_inv_fun, val_fun, &pi);
           init_prop_info(&pi, exp, 1, t, s[0], s[1], s[2], 0, 0, 0);
-          check_result_cond(is_inv_fun, compute_value_fun, &pi);
+          check_result_cond(is_inv_fun, val_fun, &pi);
           init_prop_info(&pi, exp, 2, t, s[0], s[1], s[2], 0, 0, 0);
-          check_result_cond(is_inv_fun, compute_value_fun, &pi);
+          check_result_cond(is_inv_fun, val_fun, &pi);
           bzla_bv_free(d_mm, s[2]);
           bzla_bv_free(d_mm, t);
         }
@@ -2722,8 +2701,7 @@ class TestPropCompleteConst : public TestPropComplete
   }
 
   /** Same as check_binary but for cond.  */
-  void check_slice(BzlaPropIsInvFun is_inv_fun,
-                   BzlaPropComputeValueFun compute_value_fun)
+  void check_slice(BzlaPropIsInvFun is_inv_fun, BzlaPropComputeValueFun val_fun)
   {
     uint32_t bw;
     uint64_t up, lo, i;
@@ -2748,7 +2726,7 @@ class TestPropCompleteConst : public TestPropComplete
           t = bzla_bv_slice(d_mm, x, up, lo);
           /* domains are initialized later */
           init_prop_info(&pi, exp, 0, t, x, 0, 0, 0, 0, 0);
-          check_result_slice(is_inv_fun, compute_value_fun, &pi);
+          check_result_slice(is_inv_fun, val_fun, &pi);
           bzla_bv_free(d_mm, x);
           bzla_bv_free(d_mm, t);
         }
@@ -2763,20 +2741,19 @@ class TestPropCompleteConst : public TestPropComplete
    * for the first operand produces value s0, and the inverse value computation
    * for the second operand produces value s1.
    *
-   * exp_fun          : The function to create a node representing operation <>.
-   * bv_fun           : The function to create the bit-vector result of
-   *                    operation s0 <> s1.
-   * is_inv_fun       : The function to test if given operator is invertible
-   *                    with respect to s and t.
-   * compute_value_fun: The function to compute the inverse value for x given
-   *                    s and t.
+   * exp_fun   : The function to create a node representing operation <>.
+   * bv_fun    : The function to create the bit-vector result of
+   *             operation s0 <> s1.
+   * is_inv_fun: The function to test if given operator is invertible
+   *             with respect to s and t.
+   * val_fun   : The function to compute the value for x given s and t.
    */
   void check_shift(BzlaNode *(*exp_fun)(Bzla *, BzlaNode *, BzlaNode *),
                    BzlaBitVector *(*bv_fun)(BzlaMemMgr *,
                                             const BzlaBitVector *,
                                             const BzlaBitVector *),
                    BzlaPropIsInvFun is_inv_fun,
-                   BzlaPropComputeValueFun compute_value_fun)
+                   BzlaPropComputeValueFun val_fun)
   {
     uint32_t bw;
     uint64_t i, j;
@@ -2801,9 +2778,9 @@ class TestPropCompleteConst : public TestPropComplete
         t    = bv_fun(d_mm, s[0], s[1]);
         /* domains are initialized later */
         init_prop_info(&pi, exp, 0, t, s[0], s[1], 0, 0, 0, 0);
-        check_result(is_inv_fun, compute_value_fun, &pi);
+        check_result(is_inv_fun, val_fun, &pi);
         init_prop_info(&pi, exp, 1, t, s[0], s[1], 0, 0, 0, 0);
-        check_result(is_inv_fun, compute_value_fun, &pi);
+        check_result(is_inv_fun, val_fun, &pi);
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
       }
