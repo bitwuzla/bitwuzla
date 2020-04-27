@@ -2016,8 +2016,8 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   check_cons_dbg(bzla, pi, true);
 #endif
   int32_t pos_x;
-  uint32_t i, r, bw, bw_r, ctz_t, max;
-  BzlaBitVector *res, *left, *right, *zero, *tmp, *t_slice;
+  uint32_t i, r, bw, bw_r, ctz_t;
+  BzlaBitVector *res, *left, *right, *zero, *max, *tmp, *t_slice;
   BzlaBvDomain *x_slice;
   const BzlaBvDomain *x;
   const BzlaBitVector *t;
@@ -2033,7 +2033,13 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   bw    = bzla_bv_get_width(t);
   ctz_t = bzla_bv_get_num_trailing_zeros(t);
 
-  if (pos_x)
+  if (bzla_bv_is_zero(t))
+  {
+    bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+    res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+    bzla_bvdomain_gen_delete(&gen);
+  }
+  else if (pos_x)
   {
     if (bw >= 64 && ctz_t == bw)
     {
@@ -2042,29 +2048,23 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
     }
     else
     {
-      max  = ctz_t < bw ? ctz_t : ((1u << bw) - 1);
-      tmp  = bzla_bv_uint64_to_bv(mm, max, bw);
+      assert(ctz_t < bw);
+      max  = bzla_bv_uint64_to_bv(mm, ctz_t, bw);
       zero = bzla_bv_zero(mm, bw);
-      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
+      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, max);
       if (!bzla_bvdomain_gen_has_next(&gen))
       {
         /* non-recoverable conflict */
         bzla_bv_free(mm, zero);
-        bzla_bv_free(mm, tmp);
+        bzla_bv_free(mm, max);
         bzla_bvdomain_gen_delete(&gen);
         return NULL;
       }
       res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
       bzla_bv_free(mm, zero);
-      bzla_bv_free(mm, tmp);
+      bzla_bv_free(mm, max);
       bzla_bvdomain_gen_delete(&gen);
     }
-  }
-  else if (bzla_bv_is_zero(t))
-  {
-    bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
-    res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
-    bzla_bvdomain_gen_delete(&gen);
   }
   else
   {
@@ -2123,8 +2123,8 @@ bzla_proputils_cons_srl_const(Bzla *bzla, BzlaPropInfo *pi)
   check_cons_dbg(bzla, pi, true);
 #endif
   int32_t pos_x;
-  uint32_t i, r, bw, bw_l, clz_t, max;
-  BzlaBitVector *res, *left, *right, *zero, *tmp, *t_slice;
+  uint32_t i, r, bw, bw_l, clz_t;
+  BzlaBitVector *res, *left, *right, *zero, *max, *tmp, *t_slice;
   BzlaBvDomain *x_slice;
   const BzlaBvDomain *x;
   BzlaBvDomainGenerator gen;
@@ -2140,37 +2140,29 @@ bzla_proputils_cons_srl_const(Bzla *bzla, BzlaPropInfo *pi)
   bw    = bzla_bv_get_width(t);
   clz_t = bzla_bv_get_num_leading_zeros(t);
 
-  if (pos_x)
-  {
-    if (bw >= 64 && clz_t == bw)
-    {
-      res = bzla_bv_new_random(mm, &bzla->rng, bw);
-      set_const_bits(mm, x, &res);
-    }
-    else
-    {
-      max  = clz_t < bw ? clz_t : ((1u << bw) - 1);
-      tmp  = bzla_bv_uint64_to_bv(mm, max, bw);
-      zero = bzla_bv_zero(mm, bw);
-      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
-      if (!bzla_bvdomain_gen_has_next(&gen))
-      {
-        /* non-recoverable conflict */
-        bzla_bv_free(mm, zero);
-        bzla_bv_free(mm, tmp);
-        bzla_bvdomain_gen_delete(&gen);
-        return NULL;
-      }
-      res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
-      bzla_bv_free(mm, zero);
-      bzla_bv_free(mm, tmp);
-      bzla_bvdomain_gen_delete(&gen);
-    }
-  }
-  else if (bzla_bv_is_zero(t))
+  if (bzla_bv_is_zero(t))
   {
     bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
     res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+    bzla_bvdomain_gen_delete(&gen);
+  }
+  else if (pos_x)
+  {
+    assert(clz_t < bw);
+    max  = bzla_bv_uint64_to_bv(mm, clz_t, bw);
+    zero = bzla_bv_zero(mm, bw);
+    bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, max);
+    if (!bzla_bvdomain_gen_has_next(&gen))
+    {
+      /* non-recoverable conflict */
+      bzla_bv_free(mm, zero);
+      bzla_bv_free(mm, max);
+      bzla_bvdomain_gen_delete(&gen);
+      return NULL;
+    }
+    res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+    bzla_bv_free(mm, zero);
+    bzla_bv_free(mm, max);
     bzla_bvdomain_gen_delete(&gen);
   }
   else
