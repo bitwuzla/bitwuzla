@@ -136,6 +136,7 @@ struct BzlaPropSolver
     double update_cone_reset;
     double update_cone_model_gen;
     double update_cone_compute_score;
+    double check_sat;
   } time;
 };
 

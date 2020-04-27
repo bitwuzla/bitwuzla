@@ -641,6 +641,7 @@ bzla_prop_solver_sat(Bzla *bzla)
 {
   assert(bzla);
 
+  double start;
   uint32_t j, max_steps;
   int32_t sat_result;
   uint32_t nprops, opt_prop_const_bits;
@@ -655,6 +656,7 @@ bzla_prop_solver_sat(Bzla *bzla)
   assert(slv->domains);
   assert(slv->domains->count == 0);
 
+  start               = bzla_util_time_stamp();
   nprops              = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
 
@@ -825,6 +827,9 @@ DONE:
   }
   bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->toprop);
   assert(BZLA_EMPTY_STACK(slv->prop_path));
+
+  slv->time.check_sat += bzla_util_time_stamp() - start;
+
   return sat_result;
 }
 
@@ -898,8 +903,8 @@ print_stats_prop_solver(BzlaPropSolver *slv)
 
   BZLA_MSG(bzla->msg,
            1,
-           "moves per second: %.2f",
-           (double) slv->stats.moves / (bzla->time.sat - bzla->time.simplify));
+           "moves per second: %.1f",
+           (double) slv->stats.moves / slv->time.check_sat);
   BZLA_MSG(bzla->msg, 1, "propagation (steps): %u", slv->stats.props);
   if (entailed)
     BZLA_MSG(bzla->msg,
@@ -914,8 +919,8 @@ print_stats_prop_solver(BzlaPropSolver *slv)
       bzla->msg, 1, "    inverse value propagations: %u", slv->stats.props_inv);
   BZLA_MSG(bzla->msg,
            1,
-           "propagation (steps) per second: %.2f",
-           (double) slv->stats.props / (bzla->time.sat - bzla->time.simplify));
+           "propagation (steps) per second: %.1f",
+           (double) slv->stats.props / slv->time.check_sat);
   BZLA_MSG(bzla->msg,
            1,
            "propagation conflicts (non-recoverable): %u",
@@ -936,6 +941,10 @@ print_stats_prop_solver(BzlaPropSolver *slv)
              slv->stats.fixed_conf - slv->stats.moves_entailed);
   }
   BZLA_MSG(bzla->msg, 1, "updates (cone): %u", slv->stats.updates);
+  BZLA_MSG(bzla->msg,
+           1,
+           "updates per second: %u",
+           slv->stats.updates / slv->time.check_sat);
 #ifndef NDEBUG
   char *s_cons = "    consistent fun calls";
   char *s_inv  = "    inverse fun calls";
