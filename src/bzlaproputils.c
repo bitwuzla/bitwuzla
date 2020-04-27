@@ -2084,6 +2084,7 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
     }
     if (BZLA_EMPTY_STACK(stack))
     {
+      /* non-recoverable conflict */
       BZLA_RELEASE_STACK(stack);
       return NULL;
     }
@@ -2180,6 +2181,147 @@ bzla_proputils_cons_srl_const(Bzla *bzla, BzlaPropInfo *pi)
     }
     if (BZLA_EMPTY_STACK(stack))
     {
+      /* non-recoverable conflict */
+      BZLA_RELEASE_STACK(stack);
+      return NULL;
+    }
+    r    = bzla_rng_pick_rand(&bzla->rng, 0, BZLA_COUNT_STACK(stack) - 1);
+    left = BZLA_PEEK_STACK(stack, r);
+    bw_l = bzla_bv_get_width(left);
+    if (bw == bw_l)
+    {
+      res = bzla_bv_copy(mm, left);
+    }
+    else
+    {
+      bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+      tmp   = bzla_bvdomain_gen_random(&gen);
+      right = bzla_bv_slice(mm, tmp, bw - 1 - bw_l, 0);
+      bzla_bvdomain_gen_delete(&gen);
+      res = bzla_bv_concat(mm, left, right);
+      bzla_bv_free(mm, right);
+    }
+
+    while (!BZLA_EMPTY_STACK(stack))
+    {
+      bzla_bv_free(mm, BZLA_POP_STACK(stack));
+    }
+    BZLA_RELEASE_STACK(stack);
+  }
+  return res;
+}
+
+BzlaBitVector *
+bzla_proputils_cons_sra_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+#ifndef NDEBUG
+  check_cons_dbg(bzla, pi, true);
+#endif
+  bool is_signed;
+  uint32_t i, r, pos_x, bw, bw_l, cnt_t;
+  BzlaBitVector *res, *left, *right, *tmp, *max, *t_slice;
+  const BzlaBvDomain *x;
+  BzlaBvDomain *x_slice;
+  BzlaBvDomainGenerator gen;
+  BzlaBvDomainSignedGenerator sgen;
+  BzlaMemMgr *mm;
+  const BzlaBitVector *t;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sra);
+
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+  bw    = bzla_bv_get_width(t);
+
+  is_signed = bzla_bv_get_bit(t, bw - 1) == 1;
+  cnt_t     = is_signed ? bzla_bv_get_num_leading_ones(t)
+                    : bzla_bv_get_num_leading_zeros(t);
+
+  if (!is_signed && bzla_bv_is_zero(t))
+  {
+    if (pos_x)
+    {
+      bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+      res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+      bzla_bvdomain_gen_delete(&gen);
+    }
+    else
+    {
+      tmp = bzla_bv_zero(mm, bw);
+      bzla_bvdomain_gen_signed_init_range(mm, &bzla->rng, &sgen, x, tmp, 0);
+      bzla_bv_free(mm, tmp);
+      if (!bzla_bvdomain_gen_signed_has_next(&sgen))
+      {
+        /* non-recoverable conflict */
+        bzla_bvdomain_gen_signed_delete(&sgen);
+        return NULL;
+      }
+      res = bzla_bv_copy(mm, bzla_bvdomain_gen_signed_random(&sgen));
+      bzla_bvdomain_gen_signed_delete(&sgen);
+    }
+  }
+  else if (is_signed && bzla_bv_is_ones(t))
+  {
+    if (pos_x)
+    {
+      bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
+      res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+      bzla_bvdomain_gen_delete(&gen);
+    }
+    else
+    {
+      tmp = bzla_bv_ones(mm, bw);
+      bzla_bvdomain_gen_signed_init_range(mm, &bzla->rng, &sgen, x, 0, tmp);
+      bzla_bv_free(mm, tmp);
+      if (!bzla_bvdomain_gen_signed_has_next(&sgen))
+      {
+        /* non-recoverable conflict */
+        bzla_bvdomain_gen_signed_delete(&sgen);
+        return NULL;
+      }
+      res = bzla_bv_copy(mm, bzla_bvdomain_gen_signed_random(&sgen));
+      bzla_bvdomain_gen_signed_delete(&sgen);
+    }
+  }
+  else if (pos_x)
+  {
+    max = bzla_bv_uint64_to_bv(mm, cnt_t - 1, bw);
+    bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, 0, max);
+    if (!bzla_bvdomain_gen_has_next(&gen))
+    {
+      /* non-recoverable conflict */
+      bzla_bv_free(mm, max);
+      bzla_bvdomain_gen_delete(&gen);
+      return NULL;
+    }
+    res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+    bzla_bv_free(mm, max);
+    bzla_bvdomain_gen_delete(&gen);
+  }
+  else
+  {
+    BzlaBitVectorPtrStack stack;
+    BZLA_INIT_STACK(mm, stack);
+
+    for (i = cnt_t - 1; i != UINT32_MAX; i--)
+    {
+      x_slice = bzla_bvdomain_slice(mm, x, bw - 1, i);
+      t_slice = bzla_bv_slice(mm, t, bw - 1 - i, 0);
+      if (bzla_bvdomain_check_fixed_bits(mm, x_slice, t_slice))
+      {
+        BZLA_PUSH_STACK(stack, t_slice);
+      }
+      else
+      {
+        bzla_bv_free(mm, t_slice);
+      }
+      bzla_bvdomain_free(mm, x_slice);
+    }
+    if (BZLA_EMPTY_STACK(stack))
+    {
+      /* non-recoverable conflict */
       BZLA_RELEASE_STACK(stack);
       return NULL;
     }
