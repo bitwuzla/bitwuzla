@@ -828,6 +828,13 @@ enum BzlaOption
     */
   BZLA_OPT_PROP_XOR,
 
+  /*!
+    * **BZLA_OPT_PROP_SRA**
+
+      Use xor inverse value computation.
+    */
+  BZLA_OPT_PROP_SRA,
+
 
   /* --------------------------------------------------------------------- */
   /*!

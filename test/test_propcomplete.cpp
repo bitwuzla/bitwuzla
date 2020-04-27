@@ -2332,17 +2332,32 @@ class TestPropCompleteConst : public TestPropComplete
                         BzlaPropInfo *pi,
                         std::vector<uint32_t> &fixed_idx)
   {
+    BzlaNode *children[2];
+
     bzla_prop_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
     assert(bzla_hashint_map_contains(d_domains,
                                      bzla_node_real_addr(pi->exp->e[0])->id));
     assert(bzla_hashint_map_contains(d_domains,
                                      bzla_node_real_addr(pi->exp->e[1])->id));
-    pi->bvd[0] = (BzlaBvDomain *) bzla_hashint_map_get(
-                     d_domains, bzla_node_real_addr(pi->exp->e[0])->id)
-                     ->as_ptr;
-    pi->bvd[1] = (BzlaBvDomain *) bzla_hashint_map_get(
-                     d_domains, bzla_node_real_addr(pi->exp->e[1])->id)
-                     ->as_ptr;
+
+    if (bzla_is_bv_sra(d_bzla, pi->exp, &children[0], &children[1]))
+    {
+      pi->bvd[0] = (BzlaBvDomain *) bzla_hashint_map_get(
+                       d_domains, bzla_node_real_addr(children[0])->id)
+                       ->as_ptr;
+      pi->bvd[1] = (BzlaBvDomain *) bzla_hashint_map_get(
+                       d_domains, bzla_node_real_addr(children[1])->id)
+                       ->as_ptr;
+    }
+    else
+    {
+      pi->bvd[0] = (BzlaBvDomain *) bzla_hashint_map_get(
+                       d_domains, bzla_node_real_addr(pi->exp->e[0])->id)
+                       ->as_ptr;
+      pi->bvd[1] = (BzlaBvDomain *) bzla_hashint_map_get(
+                       d_domains, bzla_node_real_addr(pi->exp->e[1])->id)
+                       ->as_ptr;
+    }
     BzlaBvDomain *x = (BzlaBvDomain *) pi->bvd[pi->pos_x];
     ASSERT_FALSE(bzla_bvdomain_has_fixed_bits(d_mm, x));
     const BzlaBitVector *x_bv = pi->bv[pi->pos_x];
@@ -2886,6 +2901,12 @@ TEST_F(TestPropComplete, complete_srl_inv)
       bzla_exp_bv_srl, bzla_bv_srl, bzla_is_inv_srl, bzla_proputils_inv_srl);
 }
 
+TEST_F(TestPropComplete, complete_sra_inv)
+{
+  check_shift(
+      bzla_exp_bv_sra, bzla_bv_sra, bzla_is_inv_sra, bzla_proputils_inv_sra);
+}
+
 TEST_F(TestPropComplete, complete_mul_inv)
 {
   check_binary(
@@ -2969,6 +2990,11 @@ TEST_F(TestPropComplete, complete_sll_cons)
 TEST_F(TestPropComplete, complete_srl_cons)
 {
   check_shift(bzla_exp_bv_srl, bzla_bv_srl, 0, bzla_proputils_cons_srl);
+}
+
+TEST_F(TestPropComplete, complete_sra_cons)
+{
+  check_shift(bzla_exp_bv_sra, bzla_bv_sra, 0, bzla_proputils_cons_sra);
 }
 
 TEST_F(TestPropComplete, complete_mul_cons)
@@ -3079,6 +3105,14 @@ TEST_F(TestPropCompleteConst, complete_srl_inv_const)
               bzla_proputils_inv_srl_const);
 }
 
+TEST_F(TestPropCompleteConst, complete_sra_inv_const)
+{
+  check_shift(bzla_exp_bv_sra,
+              bzla_bv_sra,
+              bzla_is_inv_sra_const,
+              bzla_proputils_inv_sra_const);
+}
+
 TEST_F(TestPropCompleteConst, complete_urem_inv_const)
 {
   check_binary(bzla_exp_bv_urem,
@@ -3161,6 +3195,11 @@ TEST_F(TestPropCompleteConst, complete_sll_cons_const)
 TEST_F(TestPropCompleteConst, complete_srl_cons_const)
 {
   check_shift(bzla_exp_bv_srl, bzla_bv_srl, 0, bzla_proputils_cons_srl_const);
+}
+
+TEST_F(TestPropCompleteConst, complete_sra_cons_const)
+{
+  check_shift(bzla_exp_bv_sra, bzla_bv_sra, 0, bzla_proputils_cons_sra_const);
 }
 
 TEST_F(TestPropCompleteConst, complete_urem_cons_const)

@@ -1218,6 +1218,17 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "use xor inverse value computation");
 
+  init_opt(bzla,
+           BZLA_OPT_PROP_SRA,
+           false,
+           true,
+           "prop-sra",
+           0,
+           0,
+           0,
+           1,
+           "use sra inverse value computation");
+
   /* AIGPROP engine ------------------------------------------------------- */
   init_opt(bzla,
            BZLA_OPT_AIGPROP_USE_RESTARTS,

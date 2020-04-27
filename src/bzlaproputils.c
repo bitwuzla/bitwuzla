@@ -623,6 +623,84 @@ DONE:
 }
 
 static int32_t
+select_path_sra(Bzla *bzla, BzlaPropInfo *pi, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(bzla);
+  assert(e0);
+  assert(e1);
+
+  bool is_signed;
+  int32_t pos_x, cmp;
+  uint32_t bw, cnt_t;
+  uint64_t i, j;
+  BzlaBitVector *t, **s, *bv_cnt_t;
+  BzlaMemMgr *mm;
+
+  pos_x = -1;
+  if (bzla_node_is_bv_const(e0))
+  {
+    pos_x = 1;
+  }
+  else if (bzla_node_is_bv_const(e1))
+  {
+    pos_x = 0;
+  }
+
+  mm = bzla->mm;
+  s  = (BzlaBitVector **) pi->bv;
+  t  = (BzlaBitVector *) pi->target_value;
+  bw = bzla_bv_get_width(t);
+  assert(bzla_bv_get_width(s[0]) == bw);
+  assert(bzla_bv_get_width(s[1]) == bw);
+
+  if (pos_x == -1)
+  {
+    if (bzla_opt_get(bzla, BZLA_OPT_PROP_PATH_SEL)
+        == BZLA_PROP_PATH_SEL_ESSENTIAL)
+    {
+      is_signed = bzla_bv_get_bit(t, bw - 1) == 1;
+      cnt_t     = is_signed ? bzla_bv_get_num_leading_ones(t)
+                        : bzla_bv_get_num_leading_zeros(t);
+      bv_cnt_t = bzla_bv_uint64_to_bv(mm, cnt_t, bw);
+
+      cmp = bzla_bv_compare(s[1], bv_cnt_t);
+      /* if shift is greater or equal to bit-width, result must be zero/ones
+       * s[1] and number of MSB 0-bits/1-bits in t must match */
+      if ((cnt_t == bw && cmp >= 0 && !bzla_bv_is_zero(t)
+           && !bzla_bv_is_ones(t))
+          || (cnt_t < bw && cmp > 0))
+      {
+        pos_x = 1;
+      }
+
+      if (cnt_t < bw)
+      {
+        /* s[0] and t (except for the bits shifted out) must match */
+        j = is_signed ? cnt_t - 1 : cnt_t;
+        assert(bw - j <= bw);
+        for (i = 0; i < bw - j; i++)
+        {
+          if (bzla_bv_get_bit(s[0], bw - 1 - i)
+              != bzla_bv_get_bit(t, bw - 1 - (j + i)))
+          {
+            pos_x = pos_x == -1 ? 0 : -1;
+            break;
+          }
+        }
+      }
+    }
+    if (pos_x == -1) pos_x = bzla_rng_pick_rand(&bzla->rng, 0, 1);
+  }
+  assert(pos_x >= 0);
+  pi->pos_x = pos_x;
+#ifndef NBZLALOG
+  select_path_log(bzla, pi);
+#endif
+  assert(!bzla_node_is_bv_const(pi->exp->e[pos_x]));
+  return pos_x;
+}
+
+static int32_t
 select_path_mul(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
@@ -1551,8 +1629,14 @@ bzla_proputils_cons_sra(Bzla *bzla, BzlaPropInfo *pi)
 
   if (pi->pos_x)
   {
-    res = bzla_bv_is_zero(bv_shift) ? bzla_bv_copy(mm, bv_shift)
-                                    : bzla_bv_dec(mm, bv_shift);
+    if (bzla_bv_is_zero(bv_shift) || cnt_t == bw)
+    {
+      res = bzla_bv_copy(mm, bv_shift);
+    }
+    else
+    {
+      res = bzla_bv_dec(mm, bv_shift);
+    }
   }
   else
   {
@@ -7075,7 +7159,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   assert(bvroot);
 
   bool is_inv, pick_inv, has_fixed_bits;
-  bool opt_prop_xor, opt_prop_sext;
+  bool opt_prop_xor, opt_prop_sext, opt_prop_sra;
   int32_t i, nconst;
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
@@ -7086,9 +7170,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   uint32_t opt_prop_prob_use_inv_value;
   uint32_t opt_prop_const_bits;
   bool opt_skip_no_progress;
-  bool is_sext, is_xor;
+  bool is_sext, is_xor, is_sra;
   BzlaPropInfo pi;
-  BzlaNode **children = 0, *xor_children[2];
+  BzlaNode **children = 0, *tmp_children[2];
 
   BzlaPropSelectPath select_path;
   BzlaPropIsInvFun is_inv_fun;
@@ -7113,6 +7197,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bzla_opt_get(bzla, BZLA_OPT_PROP_SKIP_NO_PROGRESS) != 0;
   opt_prop_xor  = bzla_opt_get(bzla, BZLA_OPT_PROP_XOR);
   opt_prop_sext = bzla_opt_get(bzla, BZLA_OPT_PROP_SEXT);
+  opt_prop_sra  = bzla_opt_get(bzla, BZLA_OPT_PROP_SRA);
 
 #ifndef NBZLALOG
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
@@ -7144,7 +7229,6 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
   for (;;)
   {
-    pos_x    = -1;
     real_cur = bzla_node_real_addr(cur);
 
 #ifndef NDEBUG
@@ -7203,24 +7287,36 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       /* Reset propagation info struct. */
       memset(&pi, 0, sizeof(BzlaPropInfo));
 
+      /* check if expression is a sign extension (if enabled) */
       is_sext = false;
-      is_xor  = false;
       if (opt_prop_sext)
       {
         is_sext = bzla_is_bv_sext(bzla, real_cur);
       }
 
+      /* check if expression is an xor (if enabled) */
+      is_xor = false;
       if (opt_prop_xor && !is_sext)
       {
-        xor_children[0] = 0;
-        xor_children[1] = 0;
+        tmp_children[0] = 0;
+        tmp_children[1] = 0;
         is_xor =
-            bzla_is_bv_xor(bzla, real_cur, &xor_children[0], &xor_children[1]);
+            bzla_is_bv_xor(bzla, real_cur, &tmp_children[0], &tmp_children[1]);
       }
 
-      if (is_xor)
+      /* check if expression is an arithmetic right shift (if enabled) */
+      is_sra = false;
+      if (opt_prop_sra && !is_sext && !is_xor)
       {
-        children = xor_children;
+        tmp_children[0] = 0;
+        tmp_children[1] = 0;
+        is_sra =
+            bzla_is_bv_sra(bzla, real_cur, &tmp_children[0], &tmp_children[1]);
+      }
+
+      if (is_xor || is_sra)
+      {
+        children = tmp_children;
       }
       else
       {
@@ -7265,6 +7361,10 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       else if (is_xor)
       {
         pi.pos_x = pos_x = select_path_xor(bzla, children[0], children[1]);
+      }
+      else if (is_sra)
+      {
+        pi.pos_x = pos_x = select_path_sra(bzla, &pi, children[0], children[1]);
       }
       else
       {
@@ -7329,6 +7429,12 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           cons_value_fun = bzla_proputils_cons_xor;
           inv_value_fun  = bzla_proputils_inv_xor_const;
         }
+        else if (is_sra)
+        {
+          is_inv_fun     = bzla_is_inv_sra_const;
+          cons_value_fun = bzla_proputils_cons_sra;
+          inv_value_fun  = bzla_proputils_inv_sra_const;
+        }
         else
         {
           is_inv_fun     = kind_to_is_inv_const[real_cur->kind];
@@ -7349,6 +7455,12 @@ bzla_proputils_select_move_prop(Bzla *bzla,
           is_inv_fun     = bzla_is_inv_xor;
           cons_value_fun = bzla_proputils_cons_xor;
           inv_value_fun  = bzla_proputils_inv_xor;
+        }
+        else if (is_sra)
+        {
+          is_inv_fun     = bzla_is_inv_sra;
+          cons_value_fun = bzla_proputils_cons_sra;
+          inv_value_fun  = bzla_proputils_inv_sra;
         }
         else
         {
