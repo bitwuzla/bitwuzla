@@ -672,7 +672,8 @@ bzla_prop_solver_sat(Bzla *bzla)
   double start;
   uint32_t j, max_steps;
   int32_t sat_result;
-  uint32_t nprops, opt_prop_const_bits;
+  uint32_t nprops, opt_prop_const_bits, opt_verbosity = 0;
+  uint64_t progress_steps, progress_steps_inc;
   BzlaNode *root, *not_root;
   BzlaPtrHashTableIterator it;
   BzlaIntHashTableIterator iit;
@@ -684,9 +685,13 @@ bzla_prop_solver_sat(Bzla *bzla)
   assert(slv->domains);
   assert(slv->domains->count == 0);
 
+  progress_steps     = 100;
+  progress_steps_inc = progress_steps * 10;
+
   start               = bzla_util_time_stamp();
   nprops              = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
+  opt_verbosity       = bzla_opt_get(bzla, BZLA_OPT_VERBOSITY);
 
   if (opt_prop_const_bits)
   {
@@ -798,9 +803,14 @@ bzla_prop_solver_sat(Bzla *bzla)
         goto DONE;
       }
 
-      if (j % 100 == 0)
+      if (opt_verbosity && j % progress_steps == 0)
       {
         print_progress(slv);
+        if (j <= 1000000 && j >= progress_steps_inc)
+        {
+          progress_steps = progress_steps_inc;
+          progress_steps_inc *= 10;
+        }
       }
 
       if (!(move(bzla))) goto UNSAT;
