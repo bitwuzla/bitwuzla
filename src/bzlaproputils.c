@@ -175,7 +175,7 @@ select_path_log(Bzla *bzla, BzlaPropInfo *pi)
   assert(bzla);
   assert(pi);
 
-  BzlaNode *exp;
+  BzlaNode *exp, *children[2];
   char *a;
   BzlaMemMgr *mm = bzla->mm;
 
@@ -187,8 +187,87 @@ select_path_log(Bzla *bzla, BzlaPropInfo *pi)
   for (size_t i = 0; i < exp->arity; i++)
   {
     a = bzla_bv_to_char(mm, pi->bv[i]);
+    if (bzla_opt_get(bzla, BZLA_OPT_PROP_SRA)
+        && bzla_is_bv_sra(bzla,
+                          bzla_node_real_addr((BzlaNode *) exp->e[i]),
+                          &children[0],
+                          &children[1]))
+    {
+      BZLALOG(2,
+              "       e[%zu]: %d sra %d %d (%s)",
+              i,
+              bzla_node_get_id(exp->e[i]),
+              bzla_node_get_id(children[0]),
+              bzla_node_get_id(children[1]),
+              a);
+    }
+    if (bzla_opt_get(bzla, BZLA_OPT_PROP_XOR)
+        && bzla_is_bv_xor(bzla,
+                          bzla_node_real_addr((BzlaNode *) exp->e[i]),
+                          &children[0],
+                          &children[1]))
+    {
+      BZLALOG(2,
+              "       e[%zu]: %d xor %d %d (%s)",
+              i,
+              bzla_node_get_id(exp->e[i]),
+              bzla_node_get_id(children[0]),
+              bzla_node_get_id(children[1]),
+              a);
+    }
+    else
+    {
+      BZLALOG(
+          2, "       e[%zu]: %s (%s)", i, bzla_util_node2string(exp->e[i]), a);
+    }
+    bzla_mem_freestr(mm, a);
+
+    if (pi->bvd[i])
+    {
+      BZLALOG(2, "       domain[%zu]: %s", i, bzla_bvdomain_to_str(pi->bvd[i]));
+    }
+  }
+
+  BZLALOG(2, "    * selected: %u", pi->pos_x);
+  if (pi->bvd[pi->pos_x])
+  {
+    BZLALOG(2,
+            "      domain[%u]: %s",
+            pi->pos_x,
+            bzla_bvdomain_to_str(pi->bvd[pi->pos_x]));
+  }
+}
+
+static void
+select_path_log_bin_aux(
+    Bzla *bzla, BzlaPropInfo *pi, BzlaNode *e0, BzlaNode *e1, char *op)
+{
+  assert(bzla);
+  assert(pi);
+  assert(e0);
+  assert(e1);
+
+  BzlaNode *exp;
+  char *a;
+  uint32_t arity = 2;
+  BzlaMemMgr *mm = bzla->mm;
+
+  exp = bzla_node_real_addr(pi->exp);
+
+  BZLALOG(2, "");
+  BZLALOG(2,
+          "select path: %d %s %d %d",
+          exp->id,
+          op,
+          bzla_node_get_id(e0),
+          bzla_node_get_id(e1));
+
+  for (size_t i = 0; i < arity; i++)
+  {
+    assert(i ? e1 : e0);
+    a = bzla_bv_to_char(mm, pi->bv[i]);
     BZLALOG(
-        2, "       e[%zu]: %s (%s)", i, bzla_util_node2string(exp->e[i]), a);
+        2, "       e[%zu]: %s (%s)", i, bzla_util_node2string(i ? e1 : e0), a);
     bzla_mem_freestr(mm, a);
 
     if (pi->bvd[i])
@@ -324,19 +403,28 @@ select_path_and(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 static int32_t
-select_path_xor(Bzla *bzla, BzlaNode *a, BzlaNode *b)
+select_path_xor(Bzla *bzla, BzlaPropInfo *pi, BzlaNode *e0, BzlaNode *e1)
 {
-  if (bzla_node_is_bv_const(a))
+  int32_t pos_x;
+
+  pos_x = -1;
+  if (bzla_node_is_bv_const(e0))
   {
-    assert(!bzla_node_is_bv_const(b));
-    return 1;
+    assert(!bzla_node_is_bv_const(e1));
+    pos_x = 1;
   }
-  else if (bzla_node_is_bv_const(b))
+  else if (bzla_node_is_bv_const(e1))
   {
-    assert(!bzla_node_is_bv_const(a));
-    return 0;
+    assert(!bzla_node_is_bv_const(e0));
+    pos_x = 0;
   }
-  return bzla_rng_pick_rand(&bzla->rng, 0, 1);
+  if (pos_x == -1) pos_x = bzla_rng_pick_rand(&bzla->rng, 0, 1);
+  pi->pos_x = pos_x;
+#ifndef NBZLALOG
+  select_path_log_bin_aux(bzla, pi, e0, e1, "xor");
+#endif
+  assert(!bzla_node_is_bv_const(pos_x ? e0 : e1));
+  return pos_x;
 }
 
 static int32_t
@@ -629,19 +717,20 @@ select_path_sra(Bzla *bzla, BzlaPropInfo *pi, BzlaNode *e0, BzlaNode *e1)
   assert(e0);
   assert(e1);
 
-  bool is_signed;
+  bool is_signed_s, is_signed_t;
   int32_t pos_x, cmp;
-  uint32_t bw, cnt_t;
+  uint32_t bw, cnt_t, cnt_s0;
   uint64_t i, j;
   BzlaBitVector *t, **s, *bv_cnt_t;
   BzlaMemMgr *mm;
 
   pos_x = -1;
+
   if (bzla_node_is_bv_const(e0))
   {
     pos_x = 1;
   }
-  else if (bzla_node_is_bv_const(e1))
+  if (bzla_node_is_bv_const(e1))
   {
     pos_x = 0;
   }
@@ -658,43 +747,64 @@ select_path_sra(Bzla *bzla, BzlaPropInfo *pi, BzlaNode *e0, BzlaNode *e1)
     if (bzla_opt_get(bzla, BZLA_OPT_PROP_PATH_SEL)
         == BZLA_PROP_PATH_SEL_ESSENTIAL)
     {
-      is_signed = bzla_bv_get_bit(t, bw - 1) == 1;
-      cnt_t     = is_signed ? bzla_bv_get_num_leading_ones(t)
-                        : bzla_bv_get_num_leading_zeros(t);
-      bv_cnt_t = bzla_bv_uint64_to_bv(mm, cnt_t, bw);
-
-      cmp = bzla_bv_compare(s[1], bv_cnt_t);
-      /* if shift is greater or equal to bit-width, result must be zero/ones
-       * s[1] and number of MSB 0-bits/1-bits in t must match */
-      if ((cnt_t == bw && cmp >= 0 && !bzla_bv_is_zero(t)
-           && !bzla_bv_is_ones(t))
-          || (cnt_t < bw && cmp > 0))
+      is_signed_t = bzla_bv_get_bit(t, bw - 1) == 1;
+      is_signed_s = bzla_bv_get_bit(s[0], bw - 1) == 1;
+      if (is_signed_t != is_signed_s)
       {
-        pos_x = 1;
+        pos_x = 0;
+        goto DONE;
+      }
+      if (is_signed_t)
+      {
+        cnt_s0 = bzla_bv_get_num_leading_ones(s[0]);
+        cnt_t  = bzla_bv_get_num_leading_ones(t);
+      }
+      else
+      {
+        cnt_s0 = bzla_bv_get_num_leading_zeros(s[0]);
+        cnt_t  = bzla_bv_get_num_leading_zeros(t);
+      }
+      if (cnt_s0 > cnt_t)
+      {
+        pos_x = 0;
+        goto DONE;
       }
 
+      bv_cnt_t = bzla_bv_uint64_to_bv(mm, cnt_t, bw);
+      cmp      = bzla_bv_compare(s[1], bv_cnt_t);
+      bzla_bv_free(mm, bv_cnt_t);
+      /* if shift is greater or equal to bit-width, result must be zero/ones
+       * s[1] and number of MSB 0-bits/1-bits in t must match */
+      if (cmp >= 0 && cnt_t != bw)
+      {
+        pos_x = 1;
+        goto DONE;
+      }
+
+      assert(cnt_t && cnt_s0);
       if (cnt_t < bw)
       {
         /* s[0] and t (except for the bits shifted out) must match */
-        j = is_signed ? cnt_t - 1 : cnt_t;
+        j = is_signed_t && cnt_t > cnt_s0 ? cnt_t - cnt_s0 - 1 : cnt_t - cnt_s0;
         assert(bw - j <= bw);
         for (i = 0; i < bw - j; i++)
         {
           if (bzla_bv_get_bit(s[0], bw - 1 - i)
               != bzla_bv_get_bit(t, bw - 1 - (j + i)))
           {
-            pos_x = pos_x == -1 ? 0 : -1;
-            break;
+            pos_x = 0;
+            goto DONE;
           }
         }
       }
     }
     if (pos_x == -1) pos_x = bzla_rng_pick_rand(&bzla->rng, 0, 1);
   }
+DONE:
   assert(pos_x >= 0);
   pi->pos_x = pos_x;
 #ifndef NBZLALOG
-  select_path_log(bzla, pi);
+  select_path_log_bin_aux(bzla, pi, e0, e1, "sra");
 #endif
   assert(!bzla_node_is_bv_const(pi->exp->e[pos_x]));
   return pos_x;
@@ -6952,11 +7062,33 @@ record_conflict(Bzla *bzla,
   (void) s;
 
   BzlaMemMgr *mm;
+  bool is_sra, is_xor;
   uint32_t idx_s = 0;
+  BzlaNode *children[2];
 
   mm = bzla->mm;
 
-  if (bzla_node_is_cond(exp))
+  if ((is_sra = bzla_is_bv_sra(bzla, exp, &children[0], &children[1])))
+  {
+    assert(children[0]);
+    assert(children[1]);
+    if (exp->arity > 1)
+    {
+      idx_s = idx_x ? 0 : 1;
+    }
+    is_recoverable = !bzla_node_is_bv_const(children[idx_s]);
+  }
+  else if ((is_xor = bzla_is_bv_xor(bzla, exp, &children[0], &children[1])))
+  {
+    assert(children[0]);
+    assert(children[1]);
+    if (exp->arity > 1)
+    {
+      idx_s = idx_x ? 0 : 1;
+    }
+    is_recoverable = !bzla_node_is_bv_const(children[idx_s]);
+  }
+  else if (bzla_node_is_cond(exp))
   {
     is_recoverable = idx_x != 0 || !bzla_node_is_bv_const(exp->e[1])
                      || !bzla_node_is_bv_const(exp->e[2]);
@@ -6973,7 +7105,59 @@ record_conflict(Bzla *bzla,
   char *str_s0, *str_s1;
   char *str_t = bzla_bv_to_char(mm, t);
   char *str_o = 0;
-  if (bzla_node_is_cond(exp))
+  if (is_sra)
+  {
+    assert(s[0]);
+    assert(s[1]);
+    BZLALOG(2, "");
+    str_s0 = bzla_bv_to_char(mm, s[idx_s]);
+    if (idx_x == 0)
+    {
+      BZLALOG(2,
+              "%srecoverable CONFLICT (@%d): %s := x >>a %s",
+              is_recoverable ? "" : "non-",
+              bzla_node_get_id(exp),
+              str_t,
+              str_s0);
+    }
+    else
+    {
+      BZLALOG(2,
+              "%srecoverable CONFLICT (@%d): %s := %s >>a x",
+              is_recoverable ? "" : "non-",
+              bzla_node_get_id(exp),
+              str_t,
+              str_s0);
+    }
+    bzla_mem_freestr(mm, str_s0);
+  }
+  else if (is_xor)
+  {
+    assert(s[0]);
+    assert(s[1]);
+    BZLALOG(2, "");
+    str_s0 = bzla_bv_to_char(mm, s[idx_s]);
+    if (idx_x == 0)
+    {
+      BZLALOG(2,
+              "%srecoverable CONFLICT (@%d): %s := x ^ %s",
+              is_recoverable ? "" : "non-",
+              bzla_node_get_id(exp),
+              str_t,
+              str_s0);
+    }
+    else
+    {
+      BZLALOG(2,
+              "%srecoverable CONFLICT (@%d): %s := %s ^ x",
+              is_recoverable ? "" : "non-",
+              bzla_node_get_id(exp),
+              str_t,
+              str_s0);
+    }
+    bzla_mem_freestr(mm, str_s0);
+  }
+  else if (bzla_node_is_cond(exp))
   {
     assert(s[1]);
     BZLALOG(2, "");
@@ -7160,7 +7344,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
   bool is_inv, pick_inv, has_fixed_bits;
   bool opt_prop_xor, opt_prop_sext, opt_prop_sra;
-  int32_t i, nconst;
+  int32_t i, arity, nconst;
   uint64_t nprops;
   BzlaNode *cur, *real_cur;
   BzlaIntHashTable *domains;
@@ -7316,22 +7500,24 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
       if (is_xor || is_sra)
       {
+        arity    = 2;
         children = tmp_children;
       }
       else
       {
+        arity    = real_cur->arity;
         children = real_cur->e;
       }
 
       /* check if all paths are const, if yes -> conflict */
-      for (i = 0, nconst = 0; i < real_cur->arity; i++)
+      for (i = 0, nconst = 0; i < arity; i++)
       {
         bv_s[i]  = (BzlaBitVector *) bzla_model_get_bv(bzla, children[i]);
         pi.bv[i] = bv_s[i];
         if (bzla_node_is_bv_const(children[i])) nconst += 1;
       }
 
-      if (nconst > real_cur->arity - 1) break;
+      if (nconst > arity - 1) break;
 
       /* additionally, for ite, if condition and enabled branch are const
        * -> conflict */
@@ -7360,11 +7546,11 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       }
       else if (is_xor)
       {
-        pi.pos_x = pos_x = select_path_xor(bzla, children[0], children[1]);
+        pos_x = select_path_xor(bzla, &pi, children[0], children[1]);
       }
       else if (is_sra)
       {
-        pi.pos_x = pos_x = select_path_sra(bzla, &pi, children[0], children[1]);
+        pos_x = select_path_sra(bzla, &pi, children[0], children[1]);
       }
       else
       {
@@ -7374,7 +7560,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       assert(pi.pos_x == pos_x);
 
       assert(pos_x >= 0);
-      assert(pos_x < real_cur->arity);
+      assert(pos_x < arity);
 
 #ifndef NDEBUG
       if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
@@ -7396,7 +7582,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
         has_fixed_bits = bzla_bvdomain_has_fixed_bits(mm, d->as_ptr);
 
-        for (i = 0; i < real_cur->arity; ++i)
+        for (i = 0; i < arity; ++i)
         {
           d = bzla_hashint_map_get(domains, bzla_node_get_id(children[i]));
           assert(d);

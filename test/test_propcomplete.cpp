@@ -2335,13 +2335,13 @@ class TestPropCompleteConst : public TestPropComplete
     BzlaNode *children[2];
 
     bzla_prop_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
-    assert(bzla_hashint_map_contains(d_domains,
-                                     bzla_node_real_addr(pi->exp->e[0])->id));
-    assert(bzla_hashint_map_contains(d_domains,
-                                     bzla_node_real_addr(pi->exp->e[1])->id));
-
     if (bzla_is_bv_sra(d_bzla, pi->exp, &children[0], &children[1]))
     {
+      assert(bzla_hashint_map_contains(d_domains,
+                                       bzla_node_real_addr(children[0])->id));
+      assert(bzla_hashint_map_contains(d_domains,
+                                       bzla_node_real_addr(children[1])->id));
+
       pi->bvd[0] = (BzlaBvDomain *) bzla_hashint_map_get(
                        d_domains, bzla_node_real_addr(children[0])->id)
                        ->as_ptr;
@@ -2351,6 +2351,11 @@ class TestPropCompleteConst : public TestPropComplete
     }
     else
     {
+      assert(bzla_hashint_map_contains(d_domains,
+                                       bzla_node_real_addr(pi->exp->e[0])->id));
+      assert(bzla_hashint_map_contains(d_domains,
+                                       bzla_node_real_addr(pi->exp->e[1])->id));
+
       pi->bvd[0] = (BzlaBvDomain *) bzla_hashint_map_get(
                        d_domains, bzla_node_real_addr(pi->exp->e[0])->id)
                        ->as_ptr;
