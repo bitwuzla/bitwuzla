@@ -7612,13 +7612,13 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         else if (is_xor)
         {
           is_inv_fun     = bzla_is_inv_xor_const;
-          cons_value_fun = bzla_proputils_cons_xor;
+          cons_value_fun = bzla_proputils_cons_xor_const;
           inv_value_fun  = bzla_proputils_inv_xor_const;
         }
         else if (is_sra)
         {
           is_inv_fun     = bzla_is_inv_sra_const;
-          cons_value_fun = bzla_proputils_cons_sra;
+          cons_value_fun = bzla_proputils_cons_sra_const;
           inv_value_fun  = bzla_proputils_inv_sra_const;
         }
         else
