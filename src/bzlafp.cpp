@@ -515,11 +515,8 @@ BzlaFPBV<is_signed>::operator<=(const BzlaFPBV<is_signed> &op) const
   assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  BzlaBitVector *res_bv = is_signed ? bzla_bv_slte(s_bzla->mm, d_bv, op.d_bv)
-                                    : bzla_bv_ulte(s_bzla->mm, d_bv, op.d_bv);
-  bool res = bzla_bv_is_true(res_bv);
-  bzla_bv_free(s_bzla->mm, res_bv);
-  return res;
+  return is_signed ? bzla_bv_signed_compare(d_bv, op.d_bv) <= 0
+                   : bzla_bv_compare(d_bv, op.d_bv) <= 0;
 }
 
 template <bool is_signed>
@@ -529,11 +526,8 @@ BzlaFPBV<is_signed>::operator>=(const BzlaFPBV<is_signed> &op) const
   assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  BzlaBitVector *res_bv = is_signed ? bzla_bv_sgte(s_bzla->mm, d_bv, op.d_bv)
-                                    : bzla_bv_ugte(s_bzla->mm, d_bv, op.d_bv);
-  bool res = bzla_bv_is_true(res_bv);
-  bzla_bv_free(s_bzla->mm, res_bv);
-  return res;
+  return is_signed ? bzla_bv_signed_compare(d_bv, op.d_bv) >= 0
+                   : bzla_bv_compare(d_bv, op.d_bv) >= 0;
 }
 
 template <bool is_signed>
@@ -543,11 +537,8 @@ BzlaFPBV<is_signed>::operator<(const BzlaFPBV<is_signed> &op) const
   assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  BzlaBitVector *res_bv = is_signed ? bzla_bv_slt(s_bzla->mm, d_bv, op.d_bv)
-                                    : bzla_bv_ult(s_bzla->mm, d_bv, op.d_bv);
-  bool res = bzla_bv_is_true(res_bv);
-  bzla_bv_free(s_bzla->mm, res_bv);
-  return res;
+  return is_signed ? bzla_bv_signed_compare(d_bv, op.d_bv) < 0
+                   : bzla_bv_compare(d_bv, op.d_bv) < 0;
 }
 
 template <bool is_signed>
@@ -557,11 +548,8 @@ BzlaFPBV<is_signed>::operator>(const BzlaFPBV<is_signed> &op) const
   assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  BzlaBitVector *res_bv = is_signed ? bzla_bv_sgt(s_bzla->mm, d_bv, op.d_bv)
-                                    : bzla_bv_ugt(s_bzla->mm, d_bv, op.d_bv);
-  bool res = bzla_bv_is_true(res_bv);
-  bzla_bv_free(s_bzla->mm, res_bv);
-  return res;
+  return is_signed ? bzla_bv_signed_compare(d_bv, op.d_bv) > 0
+                   : bzla_bv_compare(d_bv, op.d_bv) > 0;
 }
 
 template <bool is_signed>
