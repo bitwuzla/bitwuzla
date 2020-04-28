@@ -2428,7 +2428,7 @@ mark_cone(Bzla *bzla,
       BZLA_PUSH_STACK(*false_roots, cur);
     }
 
-    bzla_iter_parent_init(&it, node);
+    bzla_iter_parent_init(&it, cur);
     while (bzla_iter_parent_has_next(&it))
     {
       BZLA_PUSH_STACK(visit, bzla_iter_parent_next(&it));
@@ -2448,7 +2448,7 @@ check_sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
   BzlaNodePtrStack assertions, roots_true, roots_false;
   BzlaIntHashTable *visited;
   const BzlaBitVector *bv;
-  BzlaNode *root, *cur, *real_cur, *bvconst, *assumption;
+  BzlaNode *root, *cur, *real_cur, *bvconst, *assertion;
   BzlaPtrHashTableIterator it;
   Bzla *bzla;
   BzlaMemMgr *mm;
@@ -2563,11 +2563,11 @@ check_sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
 
       if (bzla_lsutils_is_leaf_node(real_cur))
       {
-        bv         = bzla_model_get_bv(bzla, real_cur);
-        bvconst    = bzla_exp_bv_const(bzla, bv);
-        assumption = bzla_exp_eq(bzla, real_cur, bvconst);
+        bv        = bzla_model_get_bv(bzla, real_cur);
+        bvconst   = bzla_exp_bv_const(bzla, bv);
+        assertion = bzla_exp_eq(bzla, real_cur, bvconst);
         bzla_node_release(bzla, bvconst);
-        BZLA_PUSH_STACK(assertions, assumption);
+        BZLA_PUSH_STACK(assertions, assertion);
       }
       else
       {

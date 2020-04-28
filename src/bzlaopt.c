@@ -1785,25 +1785,6 @@ bzla_opt_set(Bzla *bzla, const BzlaOption opt, uint32_t val)
     }
     assert(!val || !bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL));
   }
-  else if (val && opt == BZLA_OPT_LS_SHARE_SAT
-           && (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
-               || bzla_opt_get(bzla, BZLA_OPT_FUN_PRESLS)))
-  {
-    assert(bzla->bzla_sat_bzla_called == 0);
-    bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
-  }
-  else if (val && opt == BZLA_OPT_FUN_PREPROP
-           && bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT))
-  {
-    assert(bzla->bzla_sat_bzla_called == 0);
-    bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
-  }
-  else if (val && opt == BZLA_OPT_FUN_PRESLS
-           && bzla_opt_get(bzla, BZLA_OPT_LS_SHARE_SAT))
-  {
-    assert(bzla->bzla_sat_bzla_called == 0);
-    bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
-  }
   else if (opt == BZLA_OPT_SAT_ENGINE)
   {
     if (false
