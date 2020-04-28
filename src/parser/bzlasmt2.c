@@ -3482,6 +3482,7 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
     }
     else if (tag == BZLA_BANG_TAG_SMT2)
     {
+      if (!prev_item_was_lpar_smt2(parser)) return 0;
       item_cur->tag = BZLA_BANG_TAG_SMT2;
     }
     else
