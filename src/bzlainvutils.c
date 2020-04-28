@@ -236,6 +236,8 @@ is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   t  = pi->target_value;
   bw = bzla_bv_get_width(s);
 
+  ishift_fun = 0;
+
   if (kind == BZLA_BV_SHIFT_SLL)
   {
     count_fun  = bzla_bv_get_num_trailing_zeros;
@@ -313,6 +315,7 @@ is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
         }
         else
         {
+          assert(ishift_fun);
           shift1 = ishift_fun(mm, s, cnt_t - cnt_s);
           res    = bzla_bv_compare(shift1, t) == 0;
           bzla_bv_free(mm, shift1);

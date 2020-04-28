@@ -6229,21 +6229,22 @@ bzla_proputils_inv_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   check_inv_dbg(bzla, pi, bzla_is_inv_sll, bzla_is_inv_sll_const, true);
 #endif
   int32_t pos_x;
-  BzlaBitVector *tmp, *res;
+  BzlaBitVector *res;
   const BzlaBvDomain *x;
-  const BzlaBitVector *s, *t;
   BzlaMemMgr *mm;
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
-  s     = pi->bv[1 - pos_x];
-  t     = pi->target_value;
   x     = pi->bvd[pos_x];
   res   = 0;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
+    BzlaBitVector *tmp;
+    const BzlaBitVector *s, *t;
+    s   = pi->bv[1 - pos_x];
+    t   = pi->target_value;
     tmp = pos_x ? bzla_bv_sll(mm, s, x->lo) : bzla_bv_sll(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
@@ -6279,21 +6280,22 @@ static BzlaBitVector *
 inv_srl_const_aux(Bzla *bzla, BzlaPropInfo *pi)
 {
   int32_t pos_x;
-  BzlaBitVector *tmp, *res;
+  BzlaBitVector *res;
   const BzlaBvDomain *x;
-  const BzlaBitVector *s, *t;
   BzlaMemMgr *mm;
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
-  s     = pi->bv[1 - pos_x];
-  t     = pi->target_value;
   x     = pi->bvd[pos_x];
   res   = 0;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
+    BzlaBitVector *tmp;
+    const BzlaBitVector *s, *t;
+    s   = pi->bv[1 - pos_x];
+    t   = pi->target_value;
     tmp = pos_x ? bzla_bv_srl(mm, s, x->lo) : bzla_bv_srl(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
@@ -6342,22 +6344,23 @@ bzla_proputils_inv_sra_const(Bzla *bzla, BzlaPropInfo *pi)
   check_inv_dbg(bzla, pi, bzla_is_inv_sra, bzla_is_inv_sra_const, true);
 #endif
   int32_t pos_x;
-  BzlaBitVector *res, *tmp;
+  BzlaBitVector *res;
   const BzlaBvDomain *x;
   BzlaMemMgr *mm;
-  const BzlaBitVector *s, *t;
 
   mm = bzla->mm;
 
   res   = 0;
   pos_x = pi->pos_x;
   x     = pi->bvd[pos_x];
-  s     = pi->bv[1 - pi->pos_x];
-  t     = pi->target_value;
 
   if (bzla_bvdomain_is_fixed(mm, x))
   {
 #ifndef NDEBUG
+    BzlaBitVector *tmp;
+    const BzlaBitVector *s, *t;
+    s   = pi->bv[1 - pi->pos_x];
+    t   = pi->target_value;
     tmp = pos_x ? bzla_bv_sra(mm, s, x->lo) : bzla_bv_sra(mm, x->lo, s);
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
