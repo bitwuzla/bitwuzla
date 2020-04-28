@@ -1383,9 +1383,6 @@ normalize_substitution(Bzla *bzla,
 
   mm = bzla->mm;
 
-  // TODO: FP var handling
-  //       -> FP vars cannot be inverted
-
   /* boolean BV_NODE, force assignment (right_result) w.r.t. phase */
   if (bzla_node_is_bv_var(exp))
   {
