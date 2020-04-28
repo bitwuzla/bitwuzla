@@ -2301,7 +2301,7 @@ close_term(BzlaSMT2Parser *parser)
   if (tag != BZLA_LET_TAG_SMT2 && tag != BZLA_LETBIND_TAG_SMT2
       && tag != BZLA_PARLETBINDING_TAG_SMT2 && tag != BZLA_SORTED_VAR_TAG_SMT2
       && tag != BZLA_SORTED_VARS_TAG_SMT2 && tag != BZLA_FORALL_TAG_SMT2
-      && tag != BZLA_EXISTS_TAG_SMT2)
+      && tag != BZLA_EXISTS_TAG_SMT2 && tag != BZLA_BANG_TAG_SMT2)
   {
     for (i = 1; i <= nargs; i++)
       if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
@@ -2372,6 +2372,43 @@ close_term(BzlaSMT2Parser *parser)
     }
     exp = boolector_const_array(bzla, item_cur->sort, item_cur[1].exp);
     release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
+  }
+  else if (tag == BZLA_BANG_TAG_SMT2)
+  {
+    if (nargs != 3)
+    {
+      parser->perrcoo = item_cur->coo;
+      return !perr_smt2(
+          parser,
+          "invalid annotation syntax, expected 3 arguments got %u",
+          nargs);
+    }
+    if (item_cur[1].tag != BZLA_EXP_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[1].coo;
+      return !perr_smt2(
+          parser,
+          "invalid annotation syntax, expected expression as first argument");
+    }
+    if (item_cur[2].tag != BZLA_NAMED_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[2].coo;
+      return !perr_smt2(parser,
+                        "invalid annotation syntax, expected :named attribute "
+                        "as second argument");
+    }
+    if (item_cur[3].tag != BZLA_SYMBOL_TAG_SMT2)
+    {
+      parser->perrcoo = item_cur[3].coo;
+      return !perr_smt2(
+          parser,
+          "invalid annotation syntax, expected symbol as third argument");
+    }
+    tmp = item_cur[1].exp;
+    boolector_set_symbol(bzla, tmp, item_cur[3].node->name);
+    parser->work.top = item_cur;
+    item_open->tag   = BZLA_EXP_TAG_SMT2;
+    item_open->exp   = tmp;
   }
   /* CORE: NOT -------------------------------------------------------------- */
   else if (tag == BZLA_NOT_TAG_SMT2)
@@ -3443,6 +3480,10 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
     {
       if (!parse_open_term_as(parser, item_cur)) return 0;
     }
+    else if (tag == BZLA_BANG_TAG_SMT2)
+    {
+      item_cur->tag = BZLA_BANG_TAG_SMT2;
+    }
     else
     {
       assert(item_cur->node->name);
@@ -3593,6 +3634,26 @@ parse_open_term(BzlaSMT2Parser *parser, int32_t tag)
   {
     return !perr_smt2(
         parser, "expected sorted variable at '%s'", parser->token.start);
+  }
+  else if (tag == BZLA_NAMED_TAG_SMT2)
+  {
+    BzlaSMT2Item *q;
+    if (!read_symbol(parser, " after :named attribute", &sym))
+    {
+      return 0;
+    }
+    assert(sym);
+    if (sym->coo.x)
+    {
+      return !perr_smt2(parser,
+                        "symbol '%s' already defined at line %d column %d",
+                        sym->name,
+                        sym->coo.x,
+                        sym->coo.y);
+    }
+    sym->coo = parser->coo;
+    q        = push_item_smt2(parser, BZLA_SYMBOL_TAG_SMT2);
+    q->node  = sym;
   }
   else if (is_item_with_node_smt2(item_cur))
   {
