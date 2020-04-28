@@ -92,7 +92,7 @@ class TestProp : public TestBzla
    *             for operator <>.
    * is_inv_fun: The function to test if given operator is invertible with
    *             respect to s and t.
-   * inv_fun   : The function to compute the inverse value for x given s and t.
+   * val_fun   : The function to compute the value for x given s and t.
    */
   void prop_complete_binary_idx(
       uint32_t n,
@@ -106,7 +106,7 @@ class TestProp : public TestBzla
                                   const BzlaBitVector *,
                                   const BzlaBitVector *),
       BzlaPropIsInvFun is_inv_fun,
-      BzlaPropComputeValueFun inv_fun)
+      BzlaPropComputeValueFun val_fun)
   {
     bool is_inv;
     int32_t i, pos_s, sat_res;
@@ -189,7 +189,7 @@ class TestProp : public TestBzla
     pi.res_x = nullptr;
     is_inv   = is_inv_fun(d_bzla, &pi);
     ASSERT_TRUE(is_inv);
-    res[pos_x] = inv_fun(d_bzla, &pi);
+    res[pos_x] = val_fun(d_bzla, &pi);
     if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
     pi.res_x = nullptr;
     ASSERT_NE(res[pos_x], nullptr);
@@ -199,7 +199,7 @@ class TestProp : public TestBzla
     pi.res_x     = nullptr;
     is_inv       = is_inv_fun(d_bzla, &pi);
     ASSERT_TRUE(is_inv);
-    res[pos_s] = n == 1 ? bzla_bv_copy(d_mm, s) : inv_fun(d_bzla, &pi);
+    res[pos_s] = n == 1 ? bzla_bv_copy(d_mm, s) : val_fun(d_bzla, &pi);
     if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
     ASSERT_NE(res[pos_s], nullptr);
     /* Note: this is also tested within the inverse function(s) */
@@ -218,7 +218,7 @@ class TestProp : public TestBzla
         pi.res_x     = nullptr;
         is_inv       = is_inv_fun(d_bzla, &pi);
         assert(is_inv);
-        res[pos_x] = inv_fun(d_bzla, &pi);
+        res[pos_x] = val_fun(d_bzla, &pi);
         ASSERT_NE(res[pos_x], nullptr);
         if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
         if (!bzla_bv_compare(res[pos_x], x)) break;
@@ -293,7 +293,7 @@ class TestProp : public TestBzla
     BzlaBvDomain *d_x, *d_s0, *d_s1;
     BzlaSortId sort, sort1;
     BzlaPropIsInvFun is_inv_fun;
-    BzlaPropComputeValueFun inv_fun;
+    BzlaPropComputeValueFun val_fun;
     BzlaPropInfo pi;
 
     memset(&pi, 0, sizeof(BzlaPropInfo));
@@ -301,12 +301,12 @@ class TestProp : public TestBzla
     if (const_bits)
     {
       is_inv_fun = bzla_is_inv_cond_const;
-      inv_fun    = bzla_proputils_inv_cond_const;
+      val_fun    = bzla_proputils_inv_cond_const;
     }
     else
     {
       is_inv_fun = bzla_is_inv_cond;
-      inv_fun    = bzla_proputils_inv_cond;
+      val_fun    = bzla_proputils_inv_cond;
     }
 
     sort  = bzla_sort_bv(d_bzla, bw);
@@ -400,7 +400,7 @@ class TestProp : public TestBzla
     pi.res_x = nullptr;
     is_inv   = is_inv_fun(d_bzla, &pi);
     ASSERT_TRUE(is_inv);
-    res[pos_x] = inv_fun(d_bzla, &pi);
+    res[pos_x] = val_fun(d_bzla, &pi);
     if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
     pi.res_x = nullptr;
     ASSERT_NE(res[pos_x], nullptr);
@@ -437,7 +437,7 @@ class TestProp : public TestBzla
         assert(is_inv);
         if (n != 2)
         {
-          res[pos_s0] = inv_fun(d_bzla, &pi);
+          res[pos_s0] = val_fun(d_bzla, &pi);
           ASSERT_NE(res[pos_s0], nullptr);
           res[pos_s1] = bzla_bv_copy(d_mm, s1);
         }
@@ -450,7 +450,7 @@ class TestProp : public TestBzla
         if (n != 2)
         {
           res[pos_s0] = bzla_bv_copy(d_mm, s0);
-          res[pos_s1] = inv_fun(d_bzla, &pi);
+          res[pos_s1] = val_fun(d_bzla, &pi);
           ASSERT_NE(res[pos_s1], nullptr);
         }
       }
@@ -470,7 +470,7 @@ class TestProp : public TestBzla
          *            determine res[pos_s1] as c ? xs1 : res[pos_x] = t
          */
         res[pos_s0] = bzla_bv_copy(d_mm, s0);
-        res[pos_s1] = inv_fun(d_bzla, &pi);
+        res[pos_s1] = val_fun(d_bzla, &pi);
         ASSERT_NE(res[pos_s1], nullptr);
       }
     }
@@ -493,7 +493,7 @@ class TestProp : public TestBzla
         pi.res_x     = nullptr;
         is_inv       = is_inv_fun(d_bzla, &pi);
         assert(is_inv);
-        res[pos_x] = inv_fun(d_bzla, &pi);
+        res[pos_x] = val_fun(d_bzla, &pi);
         ASSERT_NE(res[pos_x], nullptr);
         if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
         if (!bzla_bv_compare(res[pos_x], x)) break;
@@ -549,7 +549,7 @@ class TestProp : public TestBzla
    *             for operator <>.
    * is_inv    : The function to test if given operator is invertible with
    *             respect to s and t.
-   * inv_fun   : The function to compute the inverse value for x given s and t.
+   * val_fun   : The function to compute the value for x given s and t.
    */
   void prop_complete_binary(uint32_t n,
                             BzlaNode *(*create_exp)(Bzla *,
@@ -559,7 +559,7 @@ class TestProp : public TestBzla
                                                         const BzlaBitVector *,
                                                         const BzlaBitVector *),
                             BzlaPropIsInvFun is_inv,
-                            BzlaPropComputeValueFun inv_fun)
+                            BzlaPropComputeValueFun val_fun)
   {
     uint32_t bw;
     uint64_t i, j, k;
@@ -582,9 +582,9 @@ class TestProp : public TestBzla
         for (k = 0; k < bw; k++)
         {
           prop_complete_binary_idx(
-              n, 1, bw, s[0], s[1], t, create_exp, create_bv, is_inv, inv_fun);
+              n, 1, bw, s[0], s[1], t, create_exp, create_bv, is_inv, val_fun);
           prop_complete_binary_idx(
-              n, 0, bw, s[1], s[0], t, create_exp, create_bv, is_inv, inv_fun);
+              n, 0, bw, s[1], s[0], t, create_exp, create_bv, is_inv, val_fun);
         }
         bzla_bv_free(d_mm, s[1]);
         bzla_bv_free(d_mm, t);
@@ -643,9 +643,9 @@ class TestProp : public TestBzla
    * Test if a solution for the slice operator can be found within one
    * propagation step, and then if it can be found within one move.
    *
-   * inv_fun   : The function to compute the inverse value for x given s and t.
+   * val_fun   : The function to compute the value for x given s and t.
    */
-  void prop_complete_slice(BzlaPropComputeValueFun inv_fun)
+  void prop_complete_slice(BzlaPropComputeValueFun val_fun)
   {
     int32_t sat_res;
     uint32_t bw;
@@ -699,7 +699,7 @@ class TestProp : public TestBzla
             /* -> first test local completeness
              *    we must find a solution within one move */
             pi.res_x = 0;
-            res      = inv_fun(d_bzla, &pi);
+            res      = val_fun(d_bzla, &pi);
             ASSERT_NE(res, nullptr);
             if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
             /* Note: this is also tested within inverse function */
@@ -711,7 +711,7 @@ class TestProp : public TestBzla
             for (k = 0, res = 0; k < TEST_PROP_COMPLETE_N_TESTS; k++)
             {
               pi.res_x = 0;
-              res      = inv_fun(d_bzla, &pi);
+              res      = val_fun(d_bzla, &pi);
               ASSERT_NE(res, nullptr);
               if (pi.res_x) bzla_bvdomain_free(d_mm, pi.res_x);
               if (!bzla_bv_compare(res, s)) break;
