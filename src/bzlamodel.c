@@ -1197,8 +1197,16 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
 
         case BZLA_UF_NODE:
           assert(bzla_node_is_apply(cur_parent));
-          result = bzla_model_get_bv_assignment(
-              bzla, bzla_node_get_simplified(bzla, cur_parent));
+          result = get_apply_value(bzla,
+                                   cur_parent,
+                                   real_cur,
+                                   bv_model,
+                                   fun_model,
+                                   param_model_cache);
+          if (!result)
+          {
+            result = bzla_bv_zero(mm, bzla_node_bv_get_width(bzla, cur_parent));
+          }
           break;
 
         case BZLA_UPDATE_NODE:
