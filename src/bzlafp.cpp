@@ -3212,7 +3212,8 @@ bzla_fp_eq(Bzla *bzla,
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
-  (void) fp;
+  (void) fp0;
+  (void) fp1;
 #endif
   return res;
 }
@@ -3235,7 +3236,8 @@ bzla_fp_lt(Bzla *bzla,
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
-  (void) fp;
+  (void) fp0;
+  (void) fp1;
 #endif
   return res;
 }
@@ -3258,7 +3260,8 @@ bzla_fp_lte(Bzla *bzla,
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
-  (void) fp;
+  (void) fp0;
+  (void) fp1;
 #endif
   return res;
 }
@@ -3417,6 +3420,7 @@ bzla_fp_sqrt(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
+  (void) rm;
   (void) fp;
   res = nullptr;
 #endif
@@ -3440,6 +3444,7 @@ bzla_fp_rti(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
+  (void) rm;
   (void) fp;
   res = nullptr;
 #endif
@@ -3468,7 +3473,8 @@ bzla_fp_rem(Bzla *bzla,
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
-  (void) fp;
+  (void) fp0;
+  (void) fp1;
   res = nullptr;
 #endif
   return res;
@@ -3497,6 +3503,7 @@ bzla_fp_add(Bzla *bzla,
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
+  (void) rm;
   (void) fp0;
   (void) fp1;
   res = nullptr;
@@ -3527,6 +3534,7 @@ bzla_fp_mul(Bzla *bzla,
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
+  (void) rm;
   (void) fp0;
   (void) fp1;
   res = nullptr;
@@ -3557,6 +3565,7 @@ bzla_fp_div(Bzla *bzla,
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
+  (void) rm;
   (void) fp0;
   (void) fp1;
   res = nullptr;
@@ -3591,6 +3600,7 @@ bzla_fp_fma(Bzla *bzla,
   BzlaFPWordBlaster::unset_s_bzla();
 #else
   (void) bzla;
+  (void) rm;
   (void) fp0;
   (void) fp1;
   res = nullptr;
@@ -3618,7 +3628,7 @@ bzla_fp_convert(Bzla *bzla,
 #else
   (void) bzla;
   (void) rm;
-  (void) bv;
+  (void) fp;
   res = nullptr;
 #endif
   return res;
