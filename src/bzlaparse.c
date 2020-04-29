@@ -89,6 +89,10 @@ parse_aux(Bzla *bzla,
       BZLA_MSG(bzla->msg, 1, "logic QF_ABVFP");
     else if (parse_res.logic == BZLA_LOGIC_QF_FP)
       BZLA_MSG(bzla->msg, 1, "logic QF_FP");
+    else if (parse_res.logic == BZLA_LOGIC_QF_BVFP)
+      BZLA_MSG(bzla->msg, 1, "logic QF_BVFP");
+    else if (parse_res.logic == BZLA_LOGIC_QF_UFFP)
+      BZLA_MSG(bzla->msg, 1, "logic QF_UFFP");
     else
     {
       assert(parse_res.logic == BZLA_LOGIC_QF_AUFBV);
