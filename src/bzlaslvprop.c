@@ -152,7 +152,7 @@ print_progress(BzlaPropSolver *slv)
 }
 
 static bool
-move(Bzla *bzla)
+move(Bzla *bzla, uint64_t nprops)
 {
   assert(bzla);
 
@@ -164,7 +164,7 @@ move(Bzla *bzla)
   BzlaIntHashTable *exps;
   BzlaPropEntailInfo prop;
   int32_t idx_x;
-  uint64_t props, nprops, cur_nprops;
+  uint64_t props;
 #ifndef NBZLALOG
   size_t i;
 #endif
@@ -182,14 +182,11 @@ move(Bzla *bzla)
   BZLALOG(1, "propagations: %zu", slv->stats.props);
   BZLALOG(1, "moves skipped: %zu", slv->stats.moves_skipped);
 
-  nprops     = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
-  cur_nprops = slv->stats.props;
-
   bvroot = 0;
   do
   {
     if (bvroot) bzla_bv_free(bzla->mm, bvroot);
-    if (nprops && slv->stats.props - cur_nprops >= nprops) goto DONE;
+    if (nprops && slv->stats.props >= nprops) goto DONE;
 
 #ifndef NDEBUG
     bzla_proputils_reset_prop_info_stack(slv->bzla->mm, &slv->prop_path);
@@ -673,7 +670,7 @@ bzla_prop_solver_sat(Bzla *bzla)
   uint32_t j, max_steps;
   int32_t sat_result;
   uint32_t nprops, opt_prop_const_bits, opt_verbosity = 0;
-  uint64_t progress_steps, progress_steps_inc;
+  uint64_t progress_steps, progress_steps_inc, nupdates;
   BzlaNode *root, *not_root;
   BzlaPtrHashTableIterator it;
   BzlaIntHashTableIterator iit;
@@ -690,8 +687,20 @@ bzla_prop_solver_sat(Bzla *bzla)
 
   start               = bzla_util_time_stamp();
   nprops              = bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS);
+  nupdates            = bzla_opt_get(bzla, BZLA_OPT_PROP_NUPDATES);
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
   opt_verbosity       = bzla_opt_get(bzla, BZLA_OPT_VERBOSITY);
+
+  if (nprops)
+  {
+    nprops += slv->stats.props;
+    BZLA_MSG(bzla->msg, 1, "Set propagation limit to %zu", nprops);
+  }
+  if (nupdates)
+  {
+    nupdates += slv->stats.updates;
+    BZLA_MSG(bzla->msg, 1, "Set model update limit to %zu", nupdates);
+  }
 
   if (opt_prop_const_bits)
   {
@@ -797,7 +806,8 @@ bzla_prop_solver_sat(Bzla *bzla)
          !bzla_opt_get(bzla, BZLA_OPT_PROP_USE_RESTARTS) || j < max_steps;
          j++)
     {
-      if (bzla_terminate(bzla) || (nprops && slv->stats.props >= nprops))
+      if (bzla_terminate(bzla) || (nprops && slv->stats.props >= nprops)
+          || (nupdates && slv->stats.updates >= nupdates))
       {
         sat_result = BZLA_RESULT_UNKNOWN;
         goto DONE;
@@ -813,7 +823,7 @@ bzla_prop_solver_sat(Bzla *bzla)
         }
       }
 
-      if (!(move(bzla))) goto UNSAT;
+      if (!(move(bzla, nprops))) goto UNSAT;
 
       /* all constraints sat? */
       if (!slv->roots->count) goto SAT;

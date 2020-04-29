@@ -614,6 +614,14 @@ enum BzlaOption
   BZLA_OPT_PROP_NPROPS,
 
   /*!
+    * **BZLA_OPT_PROP_NUPDATES**
+
+      Set the number of model value updates used as a limit for the propagation
+      engine. Disabled if 0.
+   */
+  BZLA_OPT_PROP_NUPDATES,
+
+  /*!
     * **BZLA_OPT_PROP_ENTAILED**
 
       Maintain a work queue with entailed propagations.
