@@ -2626,7 +2626,7 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
               BZLA_PUSH_STACK(exp_stack, wb);
             }
           }
-          else
+          else if (!bzla_node_is_fun(cur) && !cur->parameterized)
           {
             wb = bzla_fp_word_blast(bzla, cur);
             BZLA_PUSH_STACK(exp_stack, wb);
@@ -3059,6 +3059,13 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
              1,
              "no UFs or function equalities, enable beta-reduction=all");
     bzla_opt_set(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
+  }
+
+  /* Lambdas are not supported with FP right now since we can't handle FP
+   * expressions in bzla_eval_exp yet. */
+  if (is_fp_logic(bzla))
+  {
+    bzla_opt_set(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
   }
 
   // FIXME (ma): not sound with slice elimination. see red-vsl.proof3106.smt2

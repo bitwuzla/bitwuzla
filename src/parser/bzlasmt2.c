@@ -5191,20 +5191,22 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
     for (i = 0; i < BZLA_COUNT_STACK(args); i++)
     {
       s = BZLA_PEEK_STACK(args, i);
-      if (!boolector_is_bv_sort(parser->bzla, s))
+      if (!boolector_is_bv_sort(parser->bzla, s)
+          && !boolector_is_fp_sort(parser->bzla, s))
       {
         BZLA_RELEASE_STACK(args);
         return !perr_smt2(parser,
-                          "only bit-vector sorts "
+                          "only bit-vector or floating-point sorts "
                           "supported for arity > 0");
       }
     }
-    if (!boolector_is_bv_sort(parser->bzla, sort))
+    if (!boolector_is_bv_sort(parser->bzla, sort)
+        && !boolector_is_fp_sort(parser->bzla, sort))
     {
       BZLA_RELEASE_STACK(args);
       return !perr_smt2(parser,
-                        "only bit-vector sorts supported as return sort "
-                        "for arity > 0");
+                        "only bit-vector or floating-point sort supported as "
+                        "return sort for arity > 0");
     }
 
     s = boolector_fun_sort(

@@ -5685,15 +5685,19 @@ boolector_fun_sort(Bzla *bzla,
     BZLA_ABORT(!bzla_sort_is_valid(bzla, s),
                "'domain' sort at position %u is not a valid sort",
                i);
-    BZLA_ABORT(!bzla_sort_is_bv(bzla, s) && !bzla_sort_is_bool(bzla, s),
-               "'domain' sort at position %u must be a bool or bit vector sort",
+    BZLA_ABORT(!bzla_sort_is_bv(bzla, s) && !bzla_sort_is_bool(bzla, s)
+                   && !bzla_sort_is_fp(bzla, s),
+               "'domain' sort at position %u must be a bool, bit-vector, or "
+               "floating-point sort",
                i);
   }
   cos = BZLA_IMPORT_BOOLECTOR_SORT(codomain);
   BZLA_ABORT(!bzla_sort_is_valid(bzla, cos),
              "'codomain' sort is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, cos) && !bzla_sort_is_bool(bzla, cos),
-             "'codomain' sort must be a bool or bit vector sort");
+  BZLA_ABORT(
+      !bzla_sort_is_bv(bzla, cos) && !bzla_sort_is_bool(bzla, cos)
+          && !bzla_sort_is_fp(bzla, cos),
+      "'codomain' sort must be a bool, bit-vector, or floating-point sort");
 
   tup = boolector_tuple_sort(bzla, domain, arity);
 
