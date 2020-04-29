@@ -1194,8 +1194,10 @@ check_cons_dbg(Bzla *bzla, BzlaPropInfo *pi, bool same_bw)
   assert(pi->pos_x >= 0);
   assert(pi->pos_x <= 1);
   BzlaNode *sra_e[2], *xor_e[2];
-  bool is_bv_sra = bzla_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
-  bool is_bv_xor = bzla_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
+  bool is_bv_sra = bzla_opt_get(bzla, BZLA_OPT_PROP_SRA)
+                   && bzla_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
+  bool is_bv_xor = bzla_opt_get(bzla, BZLA_OPT_PROP_XOR)
+                   && bzla_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
   if (is_bv_sra)
   {
     assert(!bzla_node_is_bv_const(sra_e[pi->pos_x]));
@@ -3191,9 +3193,11 @@ check_inv_dbg(Bzla *bzla,
   uint32_t arity;
   BzlaNode *sra_e[2], *xor_e[2];
 
-  is_bv_sra = bzla_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
-  is_bv_xor = bzla_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
-  arity     = is_bv_sra ? 2 : pi->exp->arity;
+  is_bv_sra = bzla_opt_get(bzla, BZLA_OPT_PROP_SRA)
+              && bzla_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
+  is_bv_xor = bzla_opt_get(bzla, BZLA_OPT_PROP_XOR)
+              && bzla_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
+  arity = is_bv_sra ? 2 : pi->exp->arity;
 
   for (uint32_t i = 0; i < arity; ++i)
   {
