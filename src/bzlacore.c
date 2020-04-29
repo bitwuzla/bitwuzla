@@ -2750,6 +2750,9 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
             case BZLA_BV_ULT_NODE:
               cur->av = bzla_aigvec_ult(avmgr, av0, av1);
               break;
+            case BZLA_BV_SLT_NODE:
+              cur->av = bzla_aigvec_slt(avmgr, av0, av1);
+              break;
             case BZLA_BV_SLL_NODE:
               cur->av = bzla_aigvec_sll(avmgr, av0, av1);
               break;
