@@ -4,3 +4,4 @@
 (define-sort FP32 () Float32)
 (define-sort FP64 () Float64)
 (define-sort FP128 () Float128)
+(check-sat)
