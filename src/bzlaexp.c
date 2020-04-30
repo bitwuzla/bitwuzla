@@ -1932,6 +1932,49 @@ bzla_exp_fp_const(Bzla *bzla,
 }
 
 BzlaNode *
+bzla_exp_fp_fp(Bzla *bzla,
+               BzlaNode *e0_sign,
+               BzlaNode *e1_exp,
+               BzlaNode *e2_sig)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  assert(e0_sign);
+  assert(e1_exp);
+  assert(e2_sig);
+  assert(bzla == bzla_node_real_addr(e0_sign)->bzla);
+  assert(bzla == bzla_node_real_addr(e1_exp)->bzla);
+  assert(bzla == bzla_node_real_addr(e2_sig)->bzla);
+  assert(bzla_node_is_bv(bzla, e0_sign));
+  assert(bzla_node_is_bv(bzla, e1_exp));
+  assert(bzla_node_is_bv(bzla, e2_sig));
+  assert(bzla_node_bv_get_width(bzla, e0_sign) == 1);
+
+  uint32_t ewidth, swidth;
+  BzlaNode *result, *tmp, *concat;
+  BzlaSortId sort;
+
+  e0_sign = bzla_simplify_exp(bzla, e0_sign);
+  e1_exp  = bzla_simplify_exp(bzla, e1_exp);
+  e2_sig  = bzla_simplify_exp(bzla, e2_sig);
+
+  tmp    = bzla_exp_bv_concat(bzla, e0_sign, e1_exp);
+  concat = bzla_exp_bv_concat(bzla, tmp, e2_sig);
+
+  ewidth = bzla_node_bv_get_width(bzla, e1_exp);
+  swidth = 1 + bzla_node_bv_get_width(bzla, e2_sig);
+  sort   = bzla_sort_fp(bzla, ewidth, swidth);
+  result = bzla_exp_fp_to_fp_from_bv(bzla, concat, sort);
+
+  bzla_node_release(bzla, concat);
+  bzla_node_release(bzla, tmp);
+  bzla_sort_release(bzla, sort);
+  return result;
+}
+
+BzlaNode *
 bzla_exp_fp_abs(Bzla *bzla, BzlaNode *node)
 {
 #if !defined(BZLA_USE_SYMFPU)

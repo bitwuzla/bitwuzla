@@ -1675,6 +1675,25 @@ BoolectorNode *boolector_fp_const(Bzla *bzla,
                                   BoolectorNode *n2);
 
 /*!
+  Create a floating-point expression with exponent size ``width(n0) +
+  ``width(n2)`` and significand size ``width(n1)`` from a bit-vector
+  expression given as sign ``n0``, exponent ``n1`` and significand ``n2``.
+
+  :param bzla: Boolector instance.
+  :param n0:   The sign bit of the floating-point expression, represented as a
+               bit-vector expression of size one.
+  :param n1:   The exponent of the floating-point expression, represented as a
+               bit-vector expression.
+  :param n2:   The significand of the floating-point expression,
+               represented as a bit-vector expression.
+  :return:     A floating-point const.
+ */
+BoolectorNode *boolector_fp_fp(Bzla *bzla,
+                               BoolectorNode *n0,
+                               BoolectorNode *n1,
+                               BoolectorNode *n2);
+
+/*!
   Create the absolute value of a given floating-point node ``node``.
 
   :param bzla: Boolector instance.

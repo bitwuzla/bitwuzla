@@ -488,6 +488,17 @@ BzlaNode *bzla_exp_fp_const(Bzla *bzla,
 /* Create floating-point const from BzlaFloatingPoint. */
 BzlaNode *bzla_exp_fp_const_fp(Bzla *bzla, const BzlaFloatingPoint *fp);
 
+/**
+ * Create floating-point expression.
+ * e0: bit-vector expression of size 1 (sign bit)
+ * e1: bit-vector expression representing the exponent
+ * e2: bit-vector expression representing the significand
+ */
+BzlaNode *bzla_exp_fp_fp(Bzla *bzla,
+                         BzlaNode *e0_sign,
+                         BzlaNode *e1_exp,
+                         BzlaNode *e2_sig);
+
 /** Create floating-point fp.isNormal. */
 BzlaNode *bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *exp);
 

@@ -3165,6 +3165,46 @@ boolector_fp_const(Bzla *bzla,
 }
 
 BoolectorNode *
+boolector_fp_fp(Bzla *bzla,
+                BoolectorNode *n0,
+                BoolectorNode *n1,
+                BoolectorNode *n2)
+{
+  BzlaNode *e0, *e1, *e2, *res;
+
+  e0 = BZLA_IMPORT_BOOLECTOR_NODE(n0);
+  e1 = BZLA_IMPORT_BOOLECTOR_NODE(n1);
+  e2 = BZLA_IMPORT_BOOLECTOR_NODE(n2);
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT_ARG_NULL(e0);
+  BZLA_ABORT_ARG_NULL(e1);
+  BZLA_ABORT_ARG_NULL(e2);
+  BZLA_TRAPI_TERFUN(e0, e1, e2);
+  BZLA_ABORT_REFS_NOT_POS(e0);
+  BZLA_ABORT_REFS_NOT_POS(e1);
+  BZLA_ABORT_REFS_NOT_POS(e2);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
+  BZLA_ABORT_BZLA_MISMATCH(bzla, e2);
+  BZLA_ABORT_IS_NOT_BV(e0);
+  BZLA_ABORT_IS_NOT_BV(e1);
+  BZLA_ABORT_IS_NOT_BV(e2);
+  BZLA_ABORT(bzla_node_bv_get_width(bzla, e0) != 1,
+             "invalid bit-width for 'e0', expected size one");
+  res = bzla_exp_fp_fp(bzla, e0, e1, e2);
+  bzla_node_inc_ext_ref_counter(bzla, res);
+  BZLA_TRAPI_RETURN_NODE(res);
+#ifndef NDEBUG
+  BZLA_CHKCLONE_RES_PTR(res,
+                        fp_fp,
+                        BZLA_CLONED_EXP(e0),
+                        BZLA_CLONED_EXP(e1),
+                        BZLA_CLONED_EXP(e2));
+#endif
+  return BZLA_EXPORT_BOOLECTOR_NODE(res);
+}
+
+BoolectorNode *
 boolector_fp_abs(Bzla *bzla, BoolectorNode *node)
 {
   BzlaNode *exp, *res;

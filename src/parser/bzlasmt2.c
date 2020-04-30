@@ -3585,11 +3585,11 @@ close_term(BzlaSMT2Parser *parser)
     }
     for (i = 1; i <= nargs; i++)
     {
-      if (!boolector_is_bv_const(bzla, item_cur[i].exp))
+      if (!boolector_is_bv(bzla, item_cur[i].exp))
       {
         return !perr_smt2(
             parser,
-            "invalid argument to '%s', expected bit-vector constant",
+            "invalid argument to '%s', expected bit-vector expression",
             item_cur->node->name);
       }
     }
@@ -3598,8 +3598,18 @@ close_term(BzlaSMT2Parser *parser)
                         "first argument to '%s' invalid, expected "
                         "bit-vector sort of size 1",
                         item_cur->node->name);
-    exp = boolector_fp_const(
-        bzla, item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
+    if (boolector_is_bv_const(bzla, item_cur[1].exp)
+        && boolector_is_bv_const(bzla, item_cur[2].exp)
+        && boolector_is_bv_const(bzla, item_cur[3].exp))
+    {
+      exp = boolector_fp_const(
+          bzla, item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
+    }
+    else
+    {
+      exp = boolector_fp_fp(
+          bzla, item_cur[1].exp, item_cur[2].exp, item_cur[3].exp);
+    }
     assert(exp);
     release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
   }
