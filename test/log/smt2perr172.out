@@ -1,1 +1,1 @@
-log/smt2perr172.smt2:2:43: invalid argument to 'fp', expected bit-vector constant
+log/smt2perr172.smt2:2:43: first argument to 'fp' invalid, expected bit-vector sort of size 1
