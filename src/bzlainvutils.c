@@ -192,7 +192,7 @@ typedef enum
  *
  *   pos_x = 1:
  *   s << x = t
- *   IC: ctz(s) <= ctz(t) /\ ((t = 0) \/ (s << (ctz(t) - ctz(t))) = t)
+ *   IC: ctz(s) <= ctz(t) /\ ((t = 0) \/ (s << (ctz(t) - ctz(s))) = t)
  *
  * SRL:
  *   pos_x = 0:
@@ -201,7 +201,7 @@ typedef enum
  *
  *   pos_x = 1:
  *   s >> x = t
- *   IC: clz(s) <= clz(t) /\ ((t = 0) \/ (s >> (ctz(t) - ctz(t))) = t)
+ *   IC: clz(s) <= clz(t) /\ ((t = 0) \/ (s >> (clz(t) - clz(s))) = t)
  *
  * SRA:
  *   pos_x = 0:
@@ -212,9 +212,9 @@ typedef enum
  *   pos_x = 1:
  *   s >>a x = t
  *   IC: (s[MSB] = 0 => clz(s) <= clz(t) /\
- *                      ((t = 0) \/ (s >>a (ctz(t) - ctz(t))) = t)) /\
+ *                      ((t = 0) \/ (s >>a (clz(t) - clz(s))) = t)) /\
  *       (s[MSB] = 1 => clo(s) <= clo(t) /\
- *                      ((t = ones) \/ (s >>a (clo(t) - clo(t))) = t))
+ *                      ((t = ones) \/ (s >>a (clo(t) - clo(s))) = t))
  */
 static bool
 is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
@@ -996,8 +996,8 @@ bzla_is_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
  *   x >>a s = t
  *   IC: (s < bw(s) => (t << s) >>a s = t) /\
  *       (s >= bw(s) => (t = ones \/ t = 0)) /\
- *       (((hi_x >> s) & t = t /\ (lo_x1 >> s) | t = t) \/
- *        ((hi_x0 >> s) & t = t /\ (lo_x >> s) | t = t))
+ *       (((hi_x >>a s) & t = t /\ (lo_x1 >>a s) | t = t) \/
+ *        ((hi_x0 >>a s) & t = t /\ (lo_x >>a s) | t = t))
  *
  *   with lo_x1 = x[MSB] fixed ? lo_x : 1 o lo_x[MSB-1:LSB] and
  *        hi_x0 = x[MSB] fixed ? hi_x : 0 o hi_x[MSB-1:LSB]
