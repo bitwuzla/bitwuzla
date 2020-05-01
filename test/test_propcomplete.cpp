@@ -43,6 +43,8 @@ class TestPropComplete : public TestBzla
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_SLICE_FLIP, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_EQ_FLIP, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_AND_FLIP, 0);
+    bzla_opt_set(d_bzla, BZLA_OPT_PROP_SRA, 1);
+    bzla_opt_set(d_bzla, BZLA_OPT_PROP_XOR, 1);
 
     bzla_model_init_bv(d_bzla, &d_bzla->bv_model);
     bzla_model_init_fun(d_bzla, &d_bzla->fun_model);
