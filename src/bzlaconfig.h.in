@@ -19,6 +19,7 @@
 #define BZLA_RELEASED    "@TIME@"
 #define BZLA_VERSION     "@VERSION@"
 #define BZLA_GIT_ID      "@GIT_BRANCH@@GIT_SHA1@@GIT_DIRTY@"
+#define BZLA_LICENSE     "@LICENSE@"
 
 #endif
 

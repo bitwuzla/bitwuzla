@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.3)
 #-----------------------------------------------------------------------------#
 
 project(boolector)
-set(VERSION "3.2.1")
+set(VERSION "0.9999")
 string(TIMESTAMP TIME)
 
 #-----------------------------------------------------------------------------#
@@ -439,6 +439,10 @@ if(GIT_FOUND)
     endif()
   endif()
 endif()
+
+file(READ COPYING LICENSE NEWLINE_CONSUME)
+string(REGEX REPLACE "\n" "\\\\n" LICENSE "${LICENSE}")
+string(REGEX REPLACE "\"" "\\\\\"" LICENSE "${LICENSE}")
 
 # TODO: definitions added via add_definititions
 configure_file(

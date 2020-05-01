@@ -778,7 +778,7 @@ print_help(BzlaMainApp *app)
   aigprop = 0;
   quant   = 0;
 
-  fprintf(out, "usage: boolector [<option>...][<input>]\n");
+  fprintf(out, "usage: bitwuzla [<option>...][<input>]\n");
   fprintf(out, "\n");
   fprintf(out, "where <option> is one of the following:\n");
   fprintf(out, "\n");
@@ -1362,7 +1362,7 @@ boolector_main(int32_t argc, char **argv)
   if (g_verbosity)
   {
     if (inc) btormain_msg("incremental mode through command line option");
-    btormain_msg("Boolector Version %s %s", BZLA_VERSION, BZLA_GIT_ID);
+    btormain_msg("Bitwuzla Version %s %s", BZLA_VERSION, BZLA_GIT_ID);
     btormain_msg("%s", BZLA_CFLAGS);
     btormain_msg("released %s", BZLA_RELEASED);
     btormain_msg("compiled %s", BZLA_COMPILED);

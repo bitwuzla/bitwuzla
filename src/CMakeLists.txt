@@ -153,7 +153,7 @@ add_executable (boolector-bin ${boolector_src_files})
 target_link_libraries(boolector-bin boolector)
 set_target_properties(boolector-bin
   PROPERTIES
-    OUTPUT_NAME boolector
+    OUTPUT_NAME bitwuzla
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 install(TARGETS boolector-bin DESTINATION bin)
 

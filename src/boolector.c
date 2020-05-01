@@ -16,6 +16,7 @@
 #include "bzlaabort.h"
 #include "bzlachkclone.h"
 #include "bzlaclone.h"
+#include "bzlaconfig.h"
 #include "bzlacore.h"
 #include "bzlaexit.h"
 #include "bzlaexp.h"
@@ -6257,31 +6258,46 @@ boolector_copyright(Bzla *bzla)
 {
   /* do not trace, not necessary */
   BZLA_ABORT_ARG_NULL(bzla);
-  return "This software is\n"
-         "Copyright (c) 2007-2009 Robert Brummayer\n"
-         "Copyright (c) 2007-2018 Armin Biere\n"
-         "Copyright (c) 2012-2019 Aina Niemetz, Mathias Preiner\n"
+  return BZLA_LICENSE
+#if defined(BZLA_USE_LINGELING) || defined(BZLA_USE_PICOSAT)  \
+    || defined(BZLA_USE_MINISAT) || defined(BZLA_USE_CADICAL) \
+    || defined(BZLA_USE_CMS) || defined(BZLA_USE_GMP)
+      "\n\n"
+      "This version of Bitwuzla is linked against the following\n"
+      "third party libraries. For copyright information of each\n"
+      "library see the corresponding url.\n"
+#endif
 #ifdef BZLA_USE_LINGELING
-         "\n"
-         "This software is linked against Lingeling\n"
-         "Copyright (c) 2010-2018 Armin Biere\n"
+      "\n"
+      "  Lingeling\n"
+      "  https://github.com/arminbiere/lingeling\n"
 #endif
 #ifdef BZLA_USE_PICOSAT
-         "\n"
-         "This software is linked against PicoSAT\n"
-         "Copyright (c) 2006-2016 Armin Biere\n"
+      "\n"
+      "  PicoSAT\n"
+      "  http://fmv.jku.at/picosat\n"
 #endif
 #ifdef BZLA_USE_MINISAT
-         "\n"
-         "This software is linked against MiniSAT\n"
-         "Copyright (c) 2003-2013, Niklas Een, Niklas Sorensson\n"
+      "\n"
+      "  MiniSAT\n"
+      "  https://github.com/niklasso/minisat\n"
 #endif
 #ifdef BZLA_USE_CADICAL
-         "\n"
-         "This software is linked against CaDiCaL\n"
-         "Copyright (c) 2016-2019 Armin Biere\n"
+      "\n"
+      "  CaDiCaL\n"
+      "  https://github.com/arminbiere/cadical\n"
 #endif
-         "";
+#ifdef BZLA_USE_CMS
+      "\n"
+      "  CryptoMiniSat\n"
+      "  https://github.com/msoos/cryptominisat\n"
+#endif
+#ifdef BZLA_USE_GMP
+      "\n"
+      "  GMP - GNU Multiple Precision Arithmetic Library\n"
+      "  https://gmplib.org \n"
+#endif
+      "";
 }
 
 const char *
