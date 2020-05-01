@@ -1427,9 +1427,9 @@ bzla_is_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi)
  *
  * IC pos_x = 0:
  * t = 1:
- * t -> (s != min_signed_value
+ * t -> s != min_signed_value
  *       && ((MSB(x) = 0 && lo_x < s)
- *           || (MSB(x) != 0 && 1 o lo_x[bw-2:0] < s)))
+ *           || (MSB(x) != 0 && 1 o lo_x[bw-2:0] < s))
  * t = 0:
  * ~t -> (MSB(x) = 1 && hi_x >= s)
  *        || (MSB(x) != 1 && 0 o hi_x[bw-2:0] >= s))
@@ -1437,9 +1437,9 @@ bzla_is_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi)
  *
  * IC pos_x = 1:
  * t = 1:
- * t -> (s != max_signed_value && hi_x > s)
+ * t -> s != max_signed_value
  *       && ((MSB(x) = 1 && s < hi_x)
- *           || (MSB(x) != 1 && s < 0 o hi_x[bw-2:0])))
+ *           || (MSB(x) != 1 && s < 0 o hi_x[bw-2:0]))
  * t = 0:
  * ~t -> (MSB(x) = 0 && s >= lo_x)
  *        || (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0]))
