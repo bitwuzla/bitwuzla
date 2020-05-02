@@ -656,31 +656,6 @@ bzla_bvdomain_check_fixed_bits_val(BzlaMemMgr *mm,
   return res;
 }
 
-/** Check if const bits of domain 'd1' match const bits of domain 'd2'. */
-static bool
-check_const_domain_bits(BzlaMemMgr *mm,
-                        const BzlaBvDomain *d1,
-                        const BzlaBvDomain *d2)
-{
-  bool res;
-  BzlaBitVector *const_d1, *const_d2, *common, *masked_d1, *masked_d2;
-
-  const_d1  = bzla_bv_xnor(mm, d1->lo, d1->hi);
-  const_d2  = bzla_bv_xnor(mm, d2->lo, d2->hi);
-  common    = bzla_bv_and(mm, const_d1, const_d2);
-  masked_d1 = bzla_bv_and(mm, common, d1->lo);
-  masked_d2 = bzla_bv_and(mm, common, d2->lo);
-
-  res = bzla_bv_compare(masked_d1, masked_d2) == 0;
-
-  bzla_bv_free(mm, const_d1);
-  bzla_bv_free(mm, const_d2);
-  bzla_bv_free(mm, common);
-  bzla_bv_free(mm, masked_d1);
-  bzla_bv_free(mm, masked_d2);
-  return res;
-}
-
 /**
  * Check invertibility condition with respect to const bits in x for:
  *
@@ -906,11 +881,15 @@ bzla_is_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
       /* s even */
       else
       {
-        /* d_x = (t >> ctz(s)) * (s >> ctz(s))^-1 */
+        /* Check if relevant bits of
+         *   x' = (t >> ctz(s)) * (s >> ctz(s))^-1
+         * match corresponding constant bits of d_x, i.e.
+         * mcb(d_x[bw - ctz(s) - 1:0], x'[bw - ctz(s) - 1:0]). */
 
-        BzlaBitVector *tmp_s, *tmp_t, *tmp_x, *mask_lo, *mask_hi, *ones;
-        BzlaBitVector *lo, *hi, *mask_x, *mask_lohi, *masked_x;
-        BzlaBvDomain *d_tmp_x;
+        BzlaBitVector *tmp_s, *tmp_t, *tmp_x, *x_lo_sliced, *x_hi_sliced;
+        BzlaBitVector *lo, *hi, *mask_x;
+        BzlaBvDomain *d_tmp_x_sliced;
+        uint32_t bw   = bzla_bv_get_width(s);
         uint32_t tz_s = bzla_bv_get_num_trailing_zeros(s);
         assert(tz_s <= bzla_bv_get_num_trailing_zeros(t));
 
@@ -926,36 +905,30 @@ bzla_is_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
         bzla_bv_free(mm, tmp_t);
         bzla_bv_free(mm, mod_inv_s);
 
-        /* create domain of d_x with the most ctz(s) bits set to 'd_x'. */
-        ones      = bzla_bv_ones(mm, bzla_bv_get_width(tmp_x));
-        mask_x    = bzla_bv_srl_uint64(mm, ones, tz_s);
-        masked_x  = bzla_bv_and(mm, tmp_x, mask_x);
-        mask_lohi = bzla_bv_not(mm, mask_x);
-        mask_lo   = bzla_bv_and(mm, d_x->lo, mask_lohi);
-        mask_hi   = bzla_bv_and(mm, d_x->hi, mask_lohi);
-        lo        = bzla_bv_or(mm, mask_lo, masked_x);
-        hi        = bzla_bv_or(mm, mask_hi, masked_x);
-        d_tmp_x   = bzla_bvdomain_new(mm, lo, hi);
+        /* Check if relevant bits of tmp_x match corresponding constant bits of
+         * d_x, i.e. mcb(d_x[bw - ctz(s) - 1:0], tmp_x[bw - ctz(s) - 1:0]). */
+        d_tmp_x_sliced = bzla_bvdomain_slice(mm, d_x, bw - tz_s - 1, 0);
+        mask_x         = bzla_bv_slice(mm, tmp_x, bw - tz_s - 1, 0);
+        res = bzla_bvdomain_check_fixed_bits(mm, d_tmp_x_sliced, mask_x);
 
-        bzla_bv_free(mm, mask_lohi);
-        bzla_bv_free(mm, mask_x);
-        bzla_bv_free(mm, masked_x);
-        bzla_bv_free(mm, ones);
-        bzla_bv_free(mm, tmp_x);
-        bzla_bv_free(mm, mask_lo);
-        bzla_bv_free(mm, mask_hi);
-        bzla_bv_free(mm, lo);
-        bzla_bv_free(mm, hi);
-
-        res = check_const_domain_bits(mm, d_tmp_x, d_x);
         if (res)
         {
-          bzla_propinfo_set_result(bzla, pi, d_tmp_x);
+          /* Result domain is d_x[bw - 1:ctz(s)] o tmp_x[bw - ctz(s) - 1:0] */
+          x_lo_sliced = bzla_bv_slice(mm, d_x->lo, bw - 1, bw - tz_s);
+          x_hi_sliced = bzla_bv_slice(mm, d_x->hi, bw - 1, bw - tz_s);
+          lo          = bzla_bv_concat(mm, x_lo_sliced, mask_x);
+          hi          = bzla_bv_concat(mm, x_hi_sliced, mask_x);
+
+          bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, lo, hi));
+          bzla_bv_free(mm, lo);
+          bzla_bv_free(mm, hi);
+          bzla_bv_free(mm, x_lo_sliced);
+          bzla_bv_free(mm, x_hi_sliced);
         }
-        else
-        {
-          bzla_bvdomain_free(mm, d_tmp_x);
-        }
+
+        bzla_bvdomain_free(mm, d_tmp_x_sliced);
+        bzla_bv_free(mm, mask_x);
+        bzla_bv_free(mm, tmp_x);
       }
     }
   }
