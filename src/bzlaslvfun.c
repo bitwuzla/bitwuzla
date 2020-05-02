@@ -865,7 +865,8 @@ search_initial_applies_dual_prop(Bzla *bzla,
   BZLA_INIT_STACK(mm, stack);
   BZLA_INIT_STACK(mm, inputs);
 
-  bzla_iter_hashptr_init(&it, bzla->synthesized_constraints);
+  bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
   bzla_iter_hashptr_queue(&it, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&it))
   {
@@ -955,7 +956,8 @@ search_initial_applies_bv_skeleton(Bzla *bzla,
   mm = bzla->mm;
   BZLA_INIT_STACK(mm, stack);
 
-  bzla_iter_hashptr_init(&it, bzla->synthesized_constraints);
+  bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
   bzla_iter_hashptr_queue(&it, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&it))
   {
@@ -1023,7 +1025,8 @@ search_initial_applies_just(Bzla *bzla, BzlaNodePtrStack *top_applies)
 
   bzla_dcr_compute_scores(bzla);
 
-  bzla_iter_hashptr_init(&it, bzla->synthesized_constraints);
+  bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
   bzla_iter_hashptr_queue(&it, bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&it))
   {
@@ -2676,19 +2679,19 @@ sat_fun_solver(BzlaFunSolver *slv)
       result = check_sat_prels(slv, &ls_slv);
     }
 
-    bzla_process_unsynthesized_constraints(bzla);
-    if (bzla->found_constraint_false)
-    {
-    UNSAT:
-      result = BZLA_RESULT_UNSAT;
-      goto DONE;
-    }
-    assert(bzla->unsynthesized_constraints->count == 0);
-    assert(bzla_dbg_check_all_hash_tables_proxy_free(bzla));
-    assert(bzla_dbg_check_all_hash_tables_simp_free(bzla));
-
     if (result == BZLA_RESULT_UNKNOWN)
     {
+      bzla_process_unsynthesized_constraints(bzla);
+      if (bzla->found_constraint_false)
+      {
+      UNSAT:
+        result = BZLA_RESULT_UNSAT;
+        goto DONE;
+      }
+      assert(bzla->unsynthesized_constraints->count == 0);
+      assert(bzla_dbg_check_all_hash_tables_proxy_free(bzla));
+      assert(bzla_dbg_check_all_hash_tables_simp_free(bzla));
+
       /* make SAT call on bv skeleton */
       bzla_add_again_assumptions(bzla);
 
