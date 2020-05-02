@@ -4,7 +4,7 @@ source "$(dirname "$0")/setup-utils.sh"
 
 CMS_DIR=${DEPS_DIR}/cryptominisat
 
-download_github "msoos/cryptominisat" "5.6.3" "$CMS_DIR"
+download_github "msoos/cryptominisat" "5.7.0" "$CMS_DIR"
 cd ${CMS_DIR}
 
 mkdir build
@@ -15,4 +15,4 @@ cmake -DENABLE_PYTHON_INTERFACE=OFF \
       -DONLY_SIMPLE=ON \
       -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" \
       ..
-make libcryptominisat5 -j${NPROC} install
+make -j${NPROC} install
