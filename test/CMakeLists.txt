@@ -1210,7 +1210,7 @@ endif()
 
 
 get_target_property(BOOLECTOR_BINARY_PATH boolector-bin RUNTIME_OUTPUT_DIRECTORY)
-set(BOOLECTOR_BINARY "${BOOLECTOR_BINARY_PATH}/boolector")
+set(BOOLECTOR_BINARY "${BOOLECTOR_BINARY_PATH}/bitwuzla")
 set(RUN_TEST_CASE_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/run-test-case.py)
 
 macro(add_test_case option testcase)

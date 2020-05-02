@@ -44,7 +44,7 @@ class TestModelGen : public TestFile
     std::stringstream ss_cmd;
     ss_cmd << BZLA_CONTRIB_DIR << "bzlacheckmodel.py " << BZLA_OUT_DIR << name
            << ext << " " << d_log_file_name << " " << BZLA_BIN_DIR
-           << "boolector > /dev/null";
+           << "bitwuzla > /dev/null";
     ret_val = system(ss_cmd.str().c_str());
     ASSERT_EQ(ret_val, 0);
 #endif
