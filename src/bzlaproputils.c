@@ -2200,7 +2200,7 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   bw    = bzla_bv_get_width(t);
   ctz_t = bzla_bv_get_num_trailing_zeros(t);
 
-  if (bzla_bv_is_zero(t))
+  if (ctz_t == bw)
   {
     bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
     res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
@@ -2208,27 +2208,19 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   }
   else if (pos_x)
   {
-    if (bw >= 64 && ctz_t == bw)
+    assert(ctz_t < bw);
+    max = bzla_bv_uint64_to_bv(mm, ctz_t, bw);
+    bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, 0, max);
+    if (!bzla_bvdomain_gen_has_next(&gen))
     {
-      res = bzla_bv_new_random(mm, &bzla->rng, bw);
-      set_const_bits(mm, x, &res);
-    }
-    else
-    {
-      assert(ctz_t < bw);
-      max = bzla_bv_uint64_to_bv(mm, ctz_t, bw);
-      bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, 0, max);
-      if (!bzla_bvdomain_gen_has_next(&gen))
-      {
-        /* non-recoverable conflict */
-        bzla_bv_free(mm, max);
-        bzla_bvdomain_gen_delete(&gen);
-        return NULL;
-      }
-      res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+      /* non-recoverable conflict */
       bzla_bv_free(mm, max);
       bzla_bvdomain_gen_delete(&gen);
+      return NULL;
     }
+    res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+    bzla_bv_free(mm, max);
+    bzla_bvdomain_gen_delete(&gen);
   }
   else
   {
@@ -2305,7 +2297,7 @@ bzla_proputils_cons_srl_const(Bzla *bzla, BzlaPropInfo *pi)
   bw    = bzla_bv_get_width(t);
   clz_t = bzla_bv_get_num_leading_zeros(t);
 
-  if (bzla_bv_is_zero(t))
+  if (clz_t == bw)
   {
     bzla_bvdomain_gen_init(mm, &bzla->rng, &gen, x);
     res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
