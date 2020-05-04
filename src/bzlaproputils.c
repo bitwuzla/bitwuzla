@@ -2227,7 +2227,7 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
     BzlaBitVectorPtrStack stack;
     BZLA_INIT_STACK(mm, stack);
 
-    for (i = ctz_t; i != UINT32_MAX; i--)
+    for (i = 0; i <= ctz_t; i++)
     {
       x_slice = bzla_bvdomain_slice(mm, x, bw - 1 - i, 0);
       t_slice = bzla_bv_slice(mm, t, bw - 1, i);
@@ -2324,7 +2324,7 @@ bzla_proputils_cons_srl_const(Bzla *bzla, BzlaPropInfo *pi)
     BzlaBitVectorPtrStack stack;
     BZLA_INIT_STACK(mm, stack);
 
-    for (i = clz_t; i != UINT32_MAX; i--)
+    for (i = 0; i <= clz_t; i++)
     {
       x_slice = bzla_bvdomain_slice(mm, x, bw - 1, i);
       t_slice = bzla_bv_slice(mm, t, bw - 1 - i, 0);
