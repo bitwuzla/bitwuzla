@@ -2464,7 +2464,7 @@ bzla_proputils_cons_sra_const(Bzla *bzla, BzlaPropInfo *pi)
     BzlaBitVectorPtrStack stack;
     BZLA_INIT_STACK(mm, stack);
 
-    for (i = cnt_t - 1; i != UINT32_MAX; i--)
+    for (i = 0; i < cnt_t; i++)
     {
       x_slice = bzla_bvdomain_slice(mm, x, bw - 1, i);
       t_slice = bzla_bv_slice(mm, t, bw - 1 - i, 0);
