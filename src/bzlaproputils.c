@@ -1479,15 +1479,8 @@ cons_slt_aux(Bzla *bzla, BzlaPropInfo *pi, bool with_const_bits)
         tmp = bzla_bv_inc(mm, min_signed);
         bzla_bvdomain_gen_signed_init_range(
             mm, &bzla->rng, &gen, x, tmp, max_signed);
-        if (!bzla_bvdomain_gen_signed_has_next(&gen))
-        {
-          /* non-recoverable conflict */
-          res = NULL;
-        }
-        else
-        {
-          res = bzla_bv_copy(mm, bzla_bvdomain_gen_signed_random(&gen));
-        }
+        assert(bzla_bvdomain_gen_signed_has_next(&gen));
+        res = bzla_bv_copy(mm, bzla_bvdomain_gen_signed_random(&gen));
         bzla_bvdomain_gen_signed_delete(&gen);
         bzla_bv_free(mm, tmp);
       }
@@ -1522,15 +1515,8 @@ cons_slt_aux(Bzla *bzla, BzlaPropInfo *pi, bool with_const_bits)
         tmp = bzla_bv_dec(mm, max_signed);
         bzla_bvdomain_gen_signed_init_range(
             mm, &bzla->rng, &gen, x, min_signed, tmp);
-        if (!bzla_bvdomain_gen_signed_has_next(&gen))
-        {
-          /* non-recoverable conflict */
-          res = NULL;
-        }
-        else
-        {
-          res = bzla_bv_copy(mm, bzla_bvdomain_gen_signed_random(&gen));
-        }
+        assert(bzla_bvdomain_gen_signed_has_next(&gen));
+        res = bzla_bv_copy(mm, bzla_bvdomain_gen_signed_random(&gen));
         bzla_bv_free(mm, tmp);
         bzla_bvdomain_gen_signed_delete(&gen);
       }
