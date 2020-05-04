@@ -1035,14 +1035,17 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
               && (bzla_node_is_rm(bzla, real_cur->e[0])
                   || bzla_node_is_fp(bzla, real_cur->e[0]))))
       {
-#ifndef NDEBUG
-        BzlaNode *bv_node       = bzla_fp_word_blast(bzla, real_cur);
-        const BzlaBitVector *bv = bzla_model_get_bv(bzla, bv_node);
-        assert(bv);
-#endif
         assert(BZLA_COUNT_STACK(arg_stack));
         result = BZLA_POP_STACK(arg_stack);
-        assert(bzla_bv_compare(result, bv) == 0);
+#ifndef NDEBUG
+        if (!bzla_node_is_args(cur))
+        {
+          BzlaNode *bv_node       = bzla_fp_word_blast(bzla, real_cur);
+          const BzlaBitVector *bv = bzla_model_get_bv(bzla, bv_node);
+          assert(bv);
+          assert(bzla_bv_compare(result, bv) == 0);
+        }
+#endif
         goto CACHE_AND_PUSH_RESULT;
       }
 
