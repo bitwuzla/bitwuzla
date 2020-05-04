@@ -2588,7 +2588,7 @@ bzla_proputils_cons_mul_const(Bzla *bzla, BzlaPropInfo *pi)
       if (!bzla_bv_is_zero(t))
       {
         ctz_t = bzla_bv_get_num_trailing_zeros(t);
-        for (i = 0, ctz_ok = false; i < ctz_t; i++)
+        for (i = 0, ctz_ok = false; i <= ctz_t; i++)
         {
           if (!bzla_bvdomain_is_fixed_bit_false(x, i))
           {
@@ -2596,7 +2596,7 @@ bzla_proputils_cons_mul_const(Bzla *bzla, BzlaPropInfo *pi)
             break;
           }
         }
-        if (!ctz_ok && bzla_bvdomain_is_fixed_bit_false(x, ctz_t))
+        if (!ctz_ok)
         {
           /* non-recoverable conflict */
           bzla_bvdomain_gen_delete(&gen);
