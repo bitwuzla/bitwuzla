@@ -2742,7 +2742,7 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
       res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
       bzla_bvdomain_gen_delete(&gen);
     }
-    else if (!bzla_bv_compare(t, ones) || !bzla_bv_compare(t, one))
+    else if (!bzla_bv_compare(t, one))
     {
       /* t = 1: choose random res > 0 */
       bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, one, 0);
@@ -2876,7 +2876,7 @@ bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
       if (!bzla_bv_compare(t, ones))
       {
         /* t = 1...1  ->  res = 0 */
-        if (!bzla_bvdomain_check_fixed_bits(mm, x, zero))
+        if (!check_zero)
         {
           /* non-recoverable conflict*/
           res = NULL;
