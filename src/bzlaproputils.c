@@ -2033,7 +2033,7 @@ bzla_proputils_cons_sext(Bzla *bzla, BzlaPropInfo *pi)
   assert(pi);
   (void) bzla;
   (void) pi;
-  return 0;
+  return bzla_proputils_inv_sext_const(bzla, pi);
 }
 
 BzlaBitVector *
@@ -3051,8 +3051,12 @@ bzla_proputils_cons_sext_const(Bzla *bzla, BzlaPropInfo *pi)
   assert(bzla);
   assert(pi);
   (void) bzla;
-  (void) pi;
-  return 0;
+  if (!bzla_is_inv_sext_const(bzla, pi))
+  {
+    /* non-recoverable conflict */
+    return NULL;
+  }
+  return bzla_proputils_inv_sext_const(bzla, pi);
 }
 
 BzlaBitVector *
