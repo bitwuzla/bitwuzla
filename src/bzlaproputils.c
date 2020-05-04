@@ -2033,7 +2033,7 @@ bzla_proputils_cons_sext(Bzla *bzla, BzlaPropInfo *pi)
   assert(pi);
   (void) bzla;
   (void) pi;
-  return bzla_proputils_inv_sext_const(bzla, pi);
+  return bzla_proputils_inv_sext(bzla, pi);
 }
 
 BzlaBitVector *
