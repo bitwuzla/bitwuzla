@@ -2568,12 +2568,7 @@ bzla_proputils_cons_mul_const(Bzla *bzla, BzlaPropInfo *pi)
       }
       else
       {
-        if (!bzla_bvdomain_gen_has_next(&gen))
-        {
-          /* non-recoverable conflict */
-          bzla_bvdomain_gen_delete(&gen);
-          return NULL;
-        }
+        assert(bzla_bvdomain_gen_has_next(&gen));
         res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
         bzla_bv_set_bit(res, 0, 1);
       }
