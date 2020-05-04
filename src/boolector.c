@@ -6297,6 +6297,11 @@ boolector_copyright(Bzla *bzla)
       "  GMP - GNU Multiple Precision Arithmetic Library\n"
       "  https://gmplib.org \n"
 #endif
+#ifdef BZLA_USE_SYMFPU
+      "\n"
+      "  SymFPU\n"
+      "  https://github.com/martin-cs/symfpu \n"
+#endif
       "";
 }
 
