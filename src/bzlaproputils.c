@@ -1389,15 +1389,7 @@ cons_ult_aux(Bzla *bzla, BzlaPropInfo *pi, bool with_const_bits)
         ones = bzla_bv_ones(mm, bw);
         tmp  = bzla_bv_dec(mm, ones);
         bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, zero, tmp);
-        if (!bzla_bvdomain_gen_has_next(&gen))
-        {
-          /* non-recoverable conflict */
-          bzla_bvdomain_gen_delete(&gen);
-          bzla_bv_free(mm, tmp);
-          bzla_bv_free(mm, ones);
-          bzla_bv_free(mm, zero);
-          return NULL;
-        }
+        assert(bzla_bvdomain_gen_has_next(&gen));
         res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
         bzla_bv_free(mm, tmp);
         bzla_bv_free(mm, ones);
