@@ -730,17 +730,11 @@ bzla_is_inv_and_const(Bzla *bzla, BzlaPropInfo *pi)
 /**
  * Check invertibility condition with respect to const bits in x for:
  *
- * x o s = t
- * IC: (t_h & hi_x) | lo_x = t_h /\ s = t_l
- *     with
- *     t_h = t[bw(t) - 1 : bw(s)]
- *     t_l = t[bw(s) - 1 : 0]
+ * x o s = tx o ts
+ * IC: mcb(x, tx) /\ s = ts
  *
- * s o x = t
- * IC: (t_l & hi_x) | lo_x = t_l /\ s = t_h
- *     with
- *     t_h = t[bw(t) - 1 : bw(x)]
- *     t_l = t[bw(x) - 1 : 0]
+ * s o x = ts o tx
+ * IC: mcb(x, tx) /\ s = ts
  */
 bool
 bzla_is_inv_concat_const(Bzla *bzla, BzlaPropInfo *pi)
@@ -751,10 +745,12 @@ bzla_is_inv_concat_const(Bzla *bzla, BzlaPropInfo *pi)
   bool res;
   int32_t pos_x;
   uint32_t bw_t, bw_s, bw_x;
-  BzlaBitVector *t_h, *t_l, *t_and, *t_s, *and, * or ;
+  BzlaBitVector *t_x;
   const BzlaBitVector *s, *t;
   const BzlaBvDomain *x;
   BzlaMemMgr *mm;
+
+  if (!bzla_is_inv_concat(bzla, pi)) return false;
 
   mm = bzla->mm;
   bzla_propinfo_set_result(bzla, pi, 0);
@@ -769,26 +765,15 @@ bzla_is_inv_concat_const(Bzla *bzla, BzlaPropInfo *pi)
 
   if (pos_x == 0)
   {
-    t_h   = bzla_bv_slice(mm, t, bw_t - 1, bw_s);
-    t_l   = bzla_bv_slice(mm, t, bw_s - 1, 0);
-    t_and = t_h;
-    t_s   = t_l;
+    t_x = bzla_bv_slice(mm, t, bw_t - 1, bw_s);
   }
   else
   {
-    t_h   = bzla_bv_slice(mm, t, bw_t - 1, bw_x);
-    t_l   = bzla_bv_slice(mm, t, bw_x - 1, 0);
-    t_and = t_l;
-    t_s   = t_h;
+    t_x = bzla_bv_slice(mm, t, bw_x - 1, 0);
   }
 
-  and = bzla_bv_and(mm, t_and, x->hi);
-  or  = bzla_bv_or(mm, and, x->lo);
-  res = bzla_bv_compare(or, t_and) == 0 && bzla_bv_compare(s, t_s) == 0;
-  bzla_bv_free(mm, t_h);
-  bzla_bv_free(mm, t_l);
-  bzla_bv_free(mm, or);
-  bzla_bv_free(mm, and);
+  res = bzla_bvdomain_check_fixed_bits(mm, x, t_x);
+  bzla_bv_free(mm, t_x);
   return res;
 }
 
