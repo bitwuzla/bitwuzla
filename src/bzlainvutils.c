@@ -211,10 +211,8 @@ typedef enum
  *
  *   pos_x = 1:
  *   s >>a x = t
- *   IC: (s[MSB] = 0 => clz(s) <= clz(t) /\
- *                      ((t = 0) \/ (s >>a (clz(t) - clz(s))) = t)) /\
- *       (s[MSB] = 1 => clo(s) <= clo(t) /\
- *                      ((t = ones) \/ (s >>a (clo(t) - clo(s))) = t))
+ *   IC: (s[MSB] = 0 => is_inv_srl(s >> x = t)
+ *       /\ (s[MSB] = 1 => is_inv_srl(~s >> x = ~t)
  */
 static bool
 is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
@@ -222,19 +220,21 @@ is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   assert(bzla);
   assert(pi);
 
-  bool res, is_signed = false;
+  bool res;
   BzlaMemMgr *mm;
   const BzlaBitVector *s, *t;
-  BzlaBitVector *shift1, *shift2, *bw_bv, *tmp;
-  int32_t cmp;
+  BzlaBitVector *shift1, *shift2, *bw_bv, *not_s = 0, *not_t = 0;
+  int32_t pos_x, cmp;
   uint32_t bw, cnt_t, cnt_s;
   BzlaBitVectorBinFun shift1_fun, shift2_fun;
   uint32_t (*count_fun)(const BzlaBitVector *);
   BzlaBitVector *(*ishift_fun)(BzlaMemMgr *, const BzlaBitVector *, uint64_t);
 
-  s  = pi->bv[1 - pi->pos_x];
-  t  = pi->target_value;
-  bw = bzla_bv_get_width(s);
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  bw    = bzla_bv_get_width(s);
 
   ishift_fun = 0;
 
@@ -255,15 +255,30 @@ is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   else
   {
     assert(kind == BZLA_BV_SHIFT_SRA);
-    is_signed = bzla_bv_get_bit(s, bw - 1) == 1;
-    count_fun = is_signed ? bzla_bv_get_num_leading_ones
-                          : bzla_bv_get_num_leading_zeros;
-    shift1_fun = bzla_bv_sll;
-    shift2_fun = bzla_bv_sra;
+    if (pos_x == 1)
+    {
+      if (bzla_bv_get_bit(s, bw - 1) == 1)
+      {
+        not_s = bzla_bv_not(mm, s);
+        not_t = bzla_bv_not(mm, t);
+        s     = not_s;
+        t     = not_t;
+      }
+
+      count_fun  = bzla_bv_get_num_leading_zeros;
+      shift1_fun = bzla_bv_sll;
+      shift2_fun = bzla_bv_srl;
+      ishift_fun = bzla_bv_srl_uint64;
+      kind       = BZLA_BV_SHIFT_SRL;
+    }
+    else
+    {
+      shift1_fun = bzla_bv_sll;
+      shift2_fun = bzla_bv_sra;
+    }
   }
 
-  mm = bzla->mm;
-  if (pi->pos_x == 0)
+  if (pos_x == 0)
   {
     shift1 = shift1_fun(mm, t, s);
     shift2 = shift2_fun(mm, shift1, s);
@@ -280,7 +295,7 @@ is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   }
   else
   {
-    assert(pi->pos_x == 1);
+    assert(pos_x == 1);
 
     cnt_t = count_fun(t);
     cnt_s = count_fun(s);
@@ -291,37 +306,24 @@ is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
     }
     else
     {
-      if (kind == BZLA_BV_SHIFT_SRA)
+      if (bzla_bv_is_zero(t))
       {
-        if ((is_signed && bzla_bv_is_ones(t))
-            || (!is_signed && bzla_bv_is_zero(t)))
-        {
-          res = true;
-        }
-        else
-        {
-          tmp    = bzla_bv_uint64_to_bv(mm, cnt_t - cnt_s, bw);
-          shift1 = shift2_fun(mm, s, tmp);
-          res    = bzla_bv_compare(shift1, t) == 0;
-          bzla_bv_free(mm, shift1);
-          bzla_bv_free(mm, tmp);
-        }
+        res = true;
       }
       else
       {
-        if (bzla_bv_is_zero(t))
-        {
-          res = true;
-        }
-        else
-        {
-          assert(ishift_fun);
-          shift1 = ishift_fun(mm, s, cnt_t - cnt_s);
-          res    = bzla_bv_compare(shift1, t) == 0;
-          bzla_bv_free(mm, shift1);
-        }
+        assert(ishift_fun);
+        shift1 = ishift_fun(mm, s, cnt_t - cnt_s);
+        res    = bzla_bv_compare(shift1, t) == 0;
+        bzla_bv_free(mm, shift1);
       }
     }
+  }
+  if (not_s)
+  {
+    assert(not_t);
+    bzla_bv_free(mm, not_s);
+    bzla_bv_free(mm, not_t);
   }
   return res;
 }
@@ -968,8 +970,8 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   BzlaBvDomain *x_slice;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
-  BzlaBitVectorBinFun bv_fun;
-  uint32_t (*count_fun)(const BzlaBitVector *);
+  BzlaBitVectorBinFun bv_fun                   = 0;
+  uint32_t (*count_fun)(const BzlaBitVector *) = 0;
   const BzlaBvDomain *x;
   const BzlaBitVector *s, *t;
 
@@ -1044,6 +1046,7 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
     }
     else
     {
+      assert(bv_fun);
       shift_hi = bv_fun(mm, x->hi, s);
       shift_lo = bv_fun(mm, x->lo, s);
       and      = bzla_bv_and(mm, shift_hi, t);
@@ -1070,6 +1073,7 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
     }
     else
     {
+      assert(count_fun);
       cnt_s = count_fun(s);
       cnt_t = count_fun(t);
       assert(cnt_s <= cnt_t);
