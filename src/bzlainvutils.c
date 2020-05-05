@@ -928,7 +928,7 @@ bzla_is_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
  *   s << x = t
  *   IC: is_inv_sll /\
  *       ((t = 0) /\ (hi_x >= ctz(t) - ctz(s) \/ (s = 0)))
- *        \/ (ccb(x, ctz(t) - ctz(s)))
+ *        \/ (mcb(x, ctz(t) - ctz(s)))
  *
  * SRL:
  *   pos_x = 0:
@@ -941,28 +941,19 @@ bzla_is_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
  *   s >> x = t
  *   IC: is_inv_srl /\
  *       ((t = 0) /\ (hi_x >= clz(t) - clz(s) \/ (s = 0)))
- *        \/ (ccb(x, clz(t) - clz(s)))
+ *        \/ (mcb(x, clz(t) - clz(s)))
  *
  * SRA:
  *   pos_x = 0:
  *   x >>a s = t
- *   IC: (s < bw(s) => (t << s) >>a s = t) /\
- *       (s >= bw(s) => (t = ones \/ t = 0)) /\
- *       (((hi_x >>a s) & t = t /\ (lo_x1 >>a s) | t = t) \/
- *        ((hi_x0 >>a s) & t = t /\ (lo_x >>a s) | t = t))
- *
- *   with lo_x1 = x[MSB] fixed ? lo_x : 1 o lo_x[MSB-1:LSB] and
- *        hi_x0 = x[MSB] fixed ? hi_x : 0 o hi_x[MSB-1:LSB]
+ *   IC: is_inv_sra /\
+ *       (x[MSB] \in {0, 1} => t[MSB] = x[MSB]) /\ (s < bw => mcb(x[MSB:s],
+ * t[MSB - s : 0]))
  *
  *   pos_x = 1:
  *   s >>a x = t
  *   IC: is_inv_sra /\
- *       (s[MSB] = 0 => (((t = 0) /\ (hi_x >= clz(t) - clz(s) \/ (s = 0)))
- *                       \/ (ccb(x, clz(t) - clz(s)))) /\
- *       (s[MSB] = 1 => (((t = ones) /\ (hi_x >= clo(t) - clo(s) \/ (s = ones)))
- *                       \/ (ccb(x, clo(t) - clo(s))))
- *
- * where ccb(x, y) checks whether fixed bits of x match corresponding bits in y.
+ *       (s[MSB] = 0 => is_inv_srl) /\ (s[MSB] = 1 => is_inv_srl(~s >> x = ~t))
  */
 static bool
 is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
@@ -970,11 +961,10 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   assert(bzla);
   assert(pi);
 
-  int32_t cmp;
   uint32_t pos_x, bw, cnt_s, cnt_t, shift;
-  bool res, is_signed;
+  bool res;
   BzlaBitVector *shift_hi, *shift_lo, *and, * or, *tmp;
-  BzlaBitVector *bv, *min, *bw_bv;
+  BzlaBitVector *bv, *min, *bw_bv, *not_s = 0, *not_t = 0;
   BzlaBvDomain *x_slice;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
@@ -983,13 +973,12 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   const BzlaBvDomain *x;
   const BzlaBitVector *s, *t;
 
-  is_signed = false;
-  pos_x     = pi->pos_x;
-  mm        = bzla->mm;
-  x         = pi->bvd[pos_x];
-  s         = pi->bv[1 - pos_x];
-  t         = pi->target_value;
-  bw        = bzla_bv_get_width(s);
+  pos_x = pi->pos_x;
+  mm    = bzla->mm;
+  x     = pi->bvd[pos_x];
+  s     = pi->bv[1 - pos_x];
+  t     = pi->target_value;
+  bw    = bzla_bv_get_width(s);
 
   if (kind == BZLA_BV_SHIFT_SLL)
   {
@@ -1006,11 +995,23 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   else
   {
     assert(kind == BZLA_BV_SHIFT_SRA);
-    bv_fun    = bzla_bv_sra;
-    is_signed = bzla_bv_get_bit(s, bw - 1) == 1;
-    count_fun = is_signed ? bzla_bv_get_num_leading_ones
-                          : bzla_bv_get_num_leading_zeros;
     res = bzla_is_inv_sra(bzla, pi);
+
+    /* For pox_x = 1 we can use SRL to check invertibility of SRA. */
+    if (pos_x == 1)
+    {
+      if (res && bzla_bv_get_bit(s, bw - 1) == 1)
+      {
+        not_s = bzla_bv_not(mm, s);
+        not_t = bzla_bv_not(mm, t);
+        s     = not_s;
+        t     = not_t;
+      }
+
+      bv_fun    = bzla_bv_srl;
+      count_fun = bzla_bv_get_num_leading_zeros;
+      kind      = BZLA_BV_SHIFT_SRL;
+    }
   }
 
   if (!res) return false;
@@ -1052,16 +1053,6 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
       bzla_bv_free(mm, and);
       bzla_bv_free(mm, shift_lo);
       bzla_bv_free(mm, shift_hi);
-      if (res)
-      {
-        bw_bv = bzla_bv_uint64_to_bv(mm, bw, bw);
-        cmp   = bzla_bv_compare(s, bw_bv);
-        if (cmp >= 0 && kind == BZLA_BV_SHIFT_SRA)
-        {
-          res = bzla_bv_is_zero(t) || bzla_bv_is_ones(t);
-        }
-        bzla_bv_free(mm, bw_bv);
-      }
     }
   }
   else
@@ -1086,21 +1077,7 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
       /* Mininum number of bits required to shift left (right) s to match
        * trailing (leading) zeroes/ones of t. */
       min = bzla_bv_uint64_to_bv(mm, cnt_t - cnt_s, bzla_bv_get_width(s));
-      if (is_signed && kind == BZLA_BV_SHIFT_SRA && bzla_bv_is_ones(t))
-      {
-        res = bzla_bv_compare(x->hi, min) >= 0 || bzla_bv_is_ones(s);
-        if (res)
-        {
-          /* If s is ones, any value of x is an inverse. */
-          bzla_bvdomain_gen_init_range(
-              mm, &bzla->rng, &gen, x, bzla_bv_is_ones(s) ? 0 : min, 0);
-          assert(bzla_bvdomain_gen_has_next(&gen));
-          bv = bzla_bvdomain_gen_random(&gen);
-          bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, bv, bv));
-          bzla_bvdomain_gen_delete(&gen);
-        }
-      }
-      else if (!is_signed && bzla_bv_is_zero(t))
+      if (bzla_bv_is_zero(t))
       {
         res = bzla_bv_compare(x->hi, min) >= 0 || bzla_bv_is_zero(s);
         if (res)
@@ -1132,6 +1109,12 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
       }
       bzla_bv_free(mm, min);
     }
+  }
+  if (not_s)
+  {
+    assert(not_t);
+    bzla_bv_free(mm, not_s);
+    bzla_bv_free(mm, not_t);
   }
   assert(pos_x != 0 || pi->res_x == 0);
   return res;
