@@ -922,35 +922,29 @@ bzla_is_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
  * SLL:
  *   pos_x = 0:
  *   x << s = t
- *   IC: (t >> s) << s = t
- *       /\ (hi_x << s) & t = t
- *       /\ (lo_x << s) | t = t
+ *   IC: (t >> s) << s = t /\ mcb(x << s, t)
  *
  *   pos_x = 1:
  *   s << x = t
  *   IC: is_inv_sll /\
- *       ((t = 0) /\ (hi_x >= ctz(t) - ctz(s) \/ (s = 0)))
- *        \/ (mcb(x, ctz(t) - ctz(s)))
+ *       ((t = 0) => (hi_x >= ctz(t) - ctz(s) \/ (s = 0)))
+ *        /\ ((t != 0) => mcb(x, ctz(t) - ctz(s)))
  *
  * SRL:
  *   pos_x = 0:
  *   x >> s = t
- *   IC: (t << s) >> s = t
- *       /\ (hi_x >> s) & t = t
- *       /\ (lo_x >> s) | t = t
+ *   IC: (t << s) >> s = t /\ mcb(x >> s, t)
  *
  *   pos_x = 1:
  *   s >> x = t
  *   IC: is_inv_srl /\
- *       ((t = 0) /\ (hi_x >= clz(t) - clz(s) \/ (s = 0)))
- *        \/ (mcb(x, clz(t) - clz(s)))
+ *       ((t = 0) => (hi_x >= clz(t) - clz(s) \/ (s = 0)))
+ *        /\ ((t != 0) => mcb(x, clz(t) - clz(s)))
  *
  * SRA:
  *   pos_x = 0:
  *   x >>a s = t
- *   IC: is_inv_sra /\
- *       (x[MSB] \in {0, 1} => t[MSB] = x[MSB])
- *       /\ (s < bw => mcb(x[MSB:s], t[MSB - s : 0]))
+ *   IC: is_inv_sra /\ mcb(x >>a s, t)
  *
  *   pos_x = 1:
  *   s >>a x = t
@@ -963,11 +957,10 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   assert(bzla);
   assert(pi);
 
-  uint32_t pos_x, bw, cnt_s, cnt_t, shift;
+  uint32_t pos_x, bw, cnt_s, cnt_t;
   bool res;
-  BzlaBitVector *shift_hi, *shift_lo, *and, * or, *tmp;
-  BzlaBitVector *bv, *min, *bw_bv, *not_s = 0, *not_t = 0;
-  BzlaBvDomain *x_slice;
+  BzlaBitVector *shift_hi, *shift_lo, *and, * or ;
+  BzlaBitVector *bv, *min, *not_s = 0, *not_t = 0;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
   BzlaBitVectorBinFun bv_fun                   = 0;
@@ -1012,7 +1005,10 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
 
       bv_fun    = bzla_bv_srl;
       count_fun = bzla_bv_get_num_leading_zeros;
-      kind      = BZLA_BV_SHIFT_SRL;
+    }
+    else
+    {
+      bv_fun = bzla_bv_sra;
     }
   }
 
@@ -1020,43 +1016,19 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
 
   bzla_propinfo_set_result(bzla, pi, 0);
 
+  /* x <> s = t: mcb(x <> s, t) for <> in {<<, >>, >>a} */
   if (pos_x == 0)
   {
-    if (kind == BZLA_BV_SHIFT_SRA)
-    {
-      if (bzla_bvdomain_is_fixed_bit(x, bw - 1)
-          && bzla_bv_get_bit(t, bw - 1) != bzla_bv_get_bit(x->lo, bw - 1))
-      {
-        res = false;
-      }
-      else
-      {
-        bw_bv = bzla_bv_uint64_to_bv(mm, bw, bw);
-        if (bzla_bv_compare(s, bw_bv) < 0)
-        {
-          shift   = bzla_bv_to_uint64(s);
-          x_slice = bzla_bvdomain_slice(mm, x, bw - 1, shift);
-          tmp     = bzla_bv_slice(mm, t, bw - 1 - shift, 0);
-          res     = bzla_bvdomain_check_fixed_bits(mm, x_slice, tmp);
-          bzla_bv_free(mm, tmp);
-          bzla_bvdomain_free(mm, x_slice);
-        }
-        bzla_bv_free(mm, bw_bv);
-      }
-    }
-    else
-    {
-      assert(bv_fun);
-      shift_hi = bv_fun(mm, x->hi, s);
-      shift_lo = bv_fun(mm, x->lo, s);
-      and      = bzla_bv_and(mm, shift_hi, t);
-      or       = bzla_bv_or(mm, shift_lo, t);
-      res      = bzla_bv_compare(and, t) == 0 && bzla_bv_compare(or, t) == 0;
-      bzla_bv_free(mm, or);
-      bzla_bv_free(mm, and);
-      bzla_bv_free(mm, shift_lo);
-      bzla_bv_free(mm, shift_hi);
-    }
+    assert(bv_fun);
+    shift_hi = bv_fun(mm, x->hi, s);
+    shift_lo = bv_fun(mm, x->lo, s);
+    and      = bzla_bv_and(mm, shift_hi, t);
+    or       = bzla_bv_or(mm, shift_lo, t);
+    res      = bzla_bv_compare(and, t) == 0 && bzla_bv_compare(or, t) == 0;
+    bzla_bv_free(mm, or);
+    bzla_bv_free(mm, and);
+    bzla_bv_free(mm, shift_lo);
+    bzla_bv_free(mm, shift_hi);
   }
   else
   {
@@ -1078,7 +1050,7 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
       cnt_t = count_fun(t);
       assert(cnt_s <= cnt_t);
 
-      /* Mininum number of bits required to shift left (right) s to match
+      /* Minimum number of bits required to shift left (right) s to match
        * trailing (leading) zeroes/ones of t. */
       min = bzla_bv_uint64_to_bv(mm, cnt_t - cnt_s, bzla_bv_get_width(s));
       if (bzla_bv_is_zero(t))
