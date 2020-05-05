@@ -947,8 +947,8 @@ bzla_is_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
  *   pos_x = 0:
  *   x >>a s = t
  *   IC: is_inv_sra /\
- *       (x[MSB] \in {0, 1} => t[MSB] = x[MSB]) /\ (s < bw => mcb(x[MSB:s],
- * t[MSB - s : 0]))
+ *       (x[MSB] \in {0, 1} => t[MSB] = x[MSB])
+ *       /\ (s < bw => mcb(x[MSB:s], t[MSB - s : 0]))
  *
  *   pos_x = 1:
  *   s >>a x = t
