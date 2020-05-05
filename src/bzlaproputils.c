@@ -2136,11 +2136,24 @@ bzla_proputils_cons_xor_const(Bzla *bzla, BzlaPropInfo *pi)
 #endif
   BzlaBitVector *res;
   BzlaBvDomainGenerator gen;
+  const BzlaBvDomain *x;
+  BzlaMemMgr *mm;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_xor);
-  bzla_bvdomain_gen_init(bzla->mm, &bzla->rng, &gen, pi->bvd[pi->pos_x]);
-  res = bzla_bv_copy(bzla->mm, bzla_bvdomain_gen_random(&gen));
-  bzla_bvdomain_gen_delete(&gen);
+
+  mm = bzla->mm;
+  x  = pi->bvd[pi->pos_x];
+
+  if (bzla_bvdomain_is_fixed(mm, x))
+  {
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else
+  {
+    bzla_bvdomain_gen_init(bzla->mm, &bzla->rng, &gen, x);
+    res = bzla_bv_copy(bzla->mm, bzla_bvdomain_gen_random(&gen));
+    bzla_bvdomain_gen_delete(&gen);
+  }
   return res;
 }
 
