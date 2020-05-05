@@ -423,7 +423,7 @@ select_path_xor(Bzla *bzla, BzlaPropInfo *pi, BzlaNode *e0, BzlaNode *e1)
 #ifndef NBZLALOG
   select_path_log_bin_aux(bzla, pi, e0, e1, "xor");
 #endif
-  assert(!bzla_node_is_bv_const(pos_x ? e0 : e1));
+  assert(!bzla_node_is_bv_const(pos_x == 0 ? e0 : e1));
   return pos_x;
 }
 
