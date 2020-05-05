@@ -971,10 +971,11 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   assert(pi);
 
   int32_t cmp;
-  uint32_t pos_x, bw, cnt_s, cnt_t;
+  uint32_t pos_x, bw, cnt_s, cnt_t, shift;
   bool res, is_signed;
-  BzlaBitVector *shift_hi, *shift_lo, *hi, *lo, *and, * or ;
+  BzlaBitVector *shift_hi, *shift_lo, *and, * or, *tmp;
   BzlaBitVector *bv, *min, *bw_bv;
+  BzlaBvDomain *x_slice;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
   BzlaBitVectorBinFun bv_fun;
@@ -1020,38 +1021,32 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   {
     if (kind == BZLA_BV_SHIFT_SRA)
     {
-      hi = bzla_bv_copy(mm, x->hi);
-      lo = bzla_bv_copy(mm, x->lo);
-      if (!bzla_bvdomain_is_fixed_bit(x, bw - 1))
+      if (bzla_bvdomain_is_fixed_bit(x, bw - 1)
+          && bzla_bv_get_bit(t, bw - 1) != bzla_bv_get_bit(x->lo, bw - 1))
       {
-        bzla_bv_set_bit(hi, bw - 1, 0);
-        bzla_bv_set_bit(lo, bw - 1, 1);
+        res = false;
       }
-
-      shift_hi = bv_fun(mm, x->hi, s);
-      shift_lo = bv_fun(mm, lo, s);
-      and      = bzla_bv_and(mm, shift_hi, t);
-      or       = bzla_bv_or(mm, shift_lo, t);
-      res      = bzla_bv_compare(and, t) == 0 && bzla_bv_compare(or, t) == 0;
-      bzla_bv_free(mm, shift_hi);
-      bzla_bv_free(mm, shift_lo);
-      bzla_bv_free(mm, and);
-      bzla_bv_free(mm, or);
-
-      if (!res)
+      else
       {
-        shift_hi = bv_fun(mm, hi, s);
-        shift_lo = bv_fun(mm, x->lo, s);
-        and      = bzla_bv_and(mm, shift_hi, t);
-        or       = bzla_bv_or(mm, shift_lo, t);
-        res      = bzla_bv_compare(and, t) == 0 && bzla_bv_compare(or, t) == 0;
-        bzla_bv_free(mm, shift_hi);
-        bzla_bv_free(mm, shift_lo);
-        bzla_bv_free(mm, and);
-        bzla_bv_free(mm, or);
+        if (bw > 64)
+        {
+          tmp   = bzla_bv_slice(mm, s, 63, 0);
+          shift = bzla_bv_to_uint64(tmp);
+          bzla_bv_free(mm, tmp);
+        }
+        else
+        {
+          shift = bzla_bv_to_uint64(s);
+        }
+        if (shift < bw)
+        {
+          x_slice = bzla_bvdomain_slice(mm, x, bw - 1, shift);
+          tmp     = bzla_bv_slice(mm, t, bw - 1 - shift, 0);
+          res     = bzla_bvdomain_check_fixed_bits(mm, x_slice, tmp);
+          bzla_bv_free(mm, tmp);
+          bzla_bvdomain_free(mm, x_slice);
+        }
       }
-      bzla_bv_free(mm, hi);
-      bzla_bv_free(mm, lo);
     }
     else
     {
