@@ -577,7 +577,7 @@ bzla_is_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
  *
  * sign_extend(x, n) = t_ext o t_x
  *
- * IC: (t_x[msb] == 1 /\ t_ext == ones) \/ (t_x[msb] == 0 /\ t_ext == zero)
+ * IC: (t_ext == ones) \/ (t_ext == zero)
  */
 bool
 bzla_is_inv_sext(Bzla *bzla, BzlaPropInfo *pi)
@@ -587,7 +587,7 @@ bzla_is_inv_sext(Bzla *bzla, BzlaPropInfo *pi)
 
   bool res = false;
   BzlaMemMgr *mm;
-  uint32_t n, bw, msb;
+  uint32_t n, bw;
   const BzlaBitVector *t;
   BzlaBitVector *t_ext, *t_x;
 
@@ -601,14 +601,8 @@ bzla_is_inv_sext(Bzla *bzla, BzlaPropInfo *pi)
   bw    = bzla_bv_get_width(t);
   t_ext = bzla_bv_slice(mm, t, bw - 1, bw - n);
   t_x   = bzla_bv_slice(mm, t, bw - 1 - n, 0);
-  msb   = bzla_bv_get_width(t_x) - 1;
 
-  if (bzla_bv_get_bit(t_x, msb) == 1 && bzla_bv_is_ones(t_ext))
-  {
-    res = true;
-    bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, t_x, t_x));
-  }
-  else if (bzla_bv_get_bit(t_x, msb) == 0 && bzla_bv_is_zero(t_ext))
+  if (bzla_bv_is_zero(t_ext) || bzla_bv_is_ones(t_ext))
   {
     res = true;
     bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, t_x, t_x));
@@ -1801,9 +1795,7 @@ bzla_is_inv_cond_const(Bzla *bzla, BzlaPropInfo *pi)
  *
  * x[upper:lower] = t
  *
- * IC:
- * m = ~(lo_x ^ hi_x)[upper:lower]  ... mask out all non-constant bits
- * x[upper:lower] & m = t & m
+ * IC: mcb(x[upper:lower], t)
  */
 bool
 bzla_is_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi)
@@ -1812,7 +1804,7 @@ bzla_is_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi)
   assert(pi);
 
   bool res;
-  BzlaBitVector *mask, *mask_sliced, *x_mask, *t_mask;
+  BzlaBvDomain *x_sliced;
   BzlaMemMgr *mm;
   const BzlaBvDomain *x;
   uint32_t upper, lower;
@@ -1823,18 +1815,10 @@ bzla_is_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi)
   upper = bzla_node_bv_slice_get_upper(pi->exp);
   lower = bzla_node_bv_slice_get_lower(pi->exp);
 
-  mm          = bzla->mm;
-  mask        = bzla_bv_xnor(mm, x->lo, x->hi);
-  mask_sliced = bzla_bv_slice(mm, mask, upper, lower);
-
-  x_mask = bzla_bv_slice(mm, x->lo, upper, lower);
-  t_mask = bzla_bv_and(mm, mask_sliced, t);
-  res    = bzla_bv_compare(x_mask, t_mask) == 0;
-
-  bzla_bv_free(mm, mask);
-  bzla_bv_free(mm, mask_sliced);
-  bzla_bv_free(mm, x_mask);
-  bzla_bv_free(mm, t_mask);
+  mm       = bzla->mm;
+  x_sliced = bzla_bvdomain_slice(mm, x, upper, lower);
+  res      = bzla_bvdomain_check_fixed_bits(mm, x_sliced, t);
+  bzla_bvdomain_free(mm, x_sliced);
 
   return res;
 }
