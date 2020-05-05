@@ -1028,24 +1028,17 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
       }
       else
       {
-        if (bw > 64)
+        bw_bv = bzla_bv_uint64_to_bv(mm, bw, bw);
+        if (bzla_bv_compare(s, bw_bv) < 0)
         {
-          tmp   = bzla_bv_slice(mm, s, 63, 0);
-          shift = bzla_bv_to_uint64(tmp);
-          bzla_bv_free(mm, tmp);
-        }
-        else
-        {
-          shift = bzla_bv_to_uint64(s);
-        }
-        if (shift < bw)
-        {
+          shift   = bzla_bv_to_uint64(s);
           x_slice = bzla_bvdomain_slice(mm, x, bw - 1, shift);
           tmp     = bzla_bv_slice(mm, t, bw - 1 - shift, 0);
           res     = bzla_bvdomain_check_fixed_bits(mm, x_slice, tmp);
           bzla_bv_free(mm, tmp);
           bzla_bvdomain_free(mm, x_slice);
         }
+        bzla_bv_free(mm, bw_bv);
       }
     }
     else
