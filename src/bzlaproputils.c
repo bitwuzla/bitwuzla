@@ -2767,6 +2767,11 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
       res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
       bzla_bvdomain_gen_delete(&gen);
     }
+    else if (bzla_bv_compare(x->hi, t) < 0)
+    {
+      /* non-recoverable conflict */
+      res = NULL;
+    }
     else
     {
       /* simplest solution:
@@ -2775,48 +2780,56 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
        * remaining solutions:
        *   min <= x <= ones with min = x->lo / t * t if x->lo / t > 1 and
        *                         min = 2 * t otherwise */
-
-      if (bzla_bv_compare(x->hi, t) < 0)
+      /* pick x = t with prob=10% if possible */
+      check_t = bzla_bvdomain_check_fixed_bits(mm, x, t);
+      if (check_t && bzla_rng_pick_with_prob(&bzla->rng, 100))
       {
-        /* non-recoverable conflict */
-        res = NULL;
+        res = bzla_bv_copy(mm, t);
       }
       else
       {
-        /* pick x = t with prob=10% if possible */
-        check_t = bzla_bvdomain_check_fixed_bits(mm, x, t);
-        if (check_t && bzla_rng_pick_with_prob(&bzla->rng, 100))
+        force_t = false;
+        tmp     = bzla_bv_udiv(mm, x->lo, t);
+        if (bzla_bv_compare(tmp, one) <= 0)
         {
-          res = bzla_bv_copy(mm, t);
-        }
-        else
-        {
-          force_t = false;
-          tmp     = bzla_bv_udiv(mm, x->lo, t);
-          if (bzla_bv_compare(tmp, one) <= 0)
+          if (bzla_bv_is_uaddo(mm, t, t))
           {
-            if (bzla_bv_is_uaddo(mm, t, t))
-            {
-              /* x = t the only solution */
-              force_t = true;
-              min     = NULL;
-            }
-            else
-            {
-              min = bzla_bv_add(mm, t, t);
-            }
+            /* x = t the only solution */
+            force_t = true;
+            min     = NULL;
           }
           else
           {
-            min = bzla_bv_mul(mm, tmp, t);
+            min = bzla_bv_add(mm, t, t);
           }
-          bzla_bv_free(mm, tmp);
-          if (force_t)
+        }
+        else
+        {
+          min = bzla_bv_mul(mm, tmp, t);
+        }
+        bzla_bv_free(mm, tmp);
+        if (force_t)
+        {
+          if (!check_t)
+          {
+            /* non-recoverable conflict
+             * x = t the only solution but not possible */
+            res = NULL;
+          }
+          else
+          {
+            res = bzla_bv_copy(mm, t);
+          }
+        }
+        else
+        {
+          assert(min);
+          bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, min, ones);
+          if (!bzla_bvdomain_gen_has_next(&gen))
           {
             if (!check_t)
             {
-              /* non-recoverable conflict
-               * x = t the only solution but not possible */
+              /* non-recoverable conflict */
               res = NULL;
             }
             else
@@ -2826,28 +2839,11 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
           }
           else
           {
-            assert(min);
-            bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, min, ones);
-            if (!bzla_bvdomain_gen_has_next(&gen))
-            {
-              if (!check_t)
-              {
-                /* non-recoverable conflict */
-                res = NULL;
-              }
-              else
-              {
-                res = bzla_bv_copy(mm, t);
-              }
-            }
-            else
-            {
-              res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
-            }
-            bzla_bvdomain_gen_delete(&gen);
+            res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
           }
-          if (min) bzla_bv_free(mm, min);
+          bzla_bvdomain_gen_delete(&gen);
         }
+        if (min) bzla_bv_free(mm, min);
       }
     }
   }
