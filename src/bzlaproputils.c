@@ -2033,6 +2033,11 @@ bzla_proputils_cons_sext(Bzla *bzla, BzlaPropInfo *pi)
   assert(pi);
   (void) bzla;
   (void) pi;
+  if (!bzla_is_inv_sext(bzla, pi))
+  {
+    /* non-recoverable conflict */
+    return NULL;
+  }
   return bzla_proputils_inv_sext(bzla, pi);
 }
 
