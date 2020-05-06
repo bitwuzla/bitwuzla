@@ -1166,18 +1166,6 @@ bzla_is_inv_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
             max = tmp;
           }
 
-          if (bzla_bv_compare(x->lo, min) > 0)
-          {
-            bzla_bv_free(mm, min);
-            min = bzla_bv_copy(mm, x->lo);
-          }
-
-          if (bzla_bv_compare(x->hi, max) < 0)
-          {
-            bzla_bv_free(mm, max);
-            max = bzla_bv_copy(mm, x->hi);
-          }
-
           BzlaBvDomainGenerator dgen;
           bzla_bvdomain_gen_init_range(mm, &bzla->rng, &dgen, x, min, max);
           res = bzla_bvdomain_gen_has_next(&dgen);
