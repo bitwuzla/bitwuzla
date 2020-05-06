@@ -578,9 +578,10 @@ bzla_is_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
 /**
  * Check invertibility condition (without considering const bits in x) for:
  *
- * sign_extend(x, n) = t_ext o t_x
+ * sign_extend(x, n) = t
  *
  * IC: (t_ext == ones) \/ (t_ext == zero)
+ *     with t_ext = t[bw + n - 1 : bw - 1] (include MSB of tx part)
  */
 bool
 bzla_is_inv_sext(Bzla *bzla, BzlaPropInfo *pi)
@@ -602,7 +603,7 @@ bzla_is_inv_sext(Bzla *bzla, BzlaPropInfo *pi)
   t  = pi->target_value;
 
   bw    = bzla_bv_get_width(t);
-  t_ext = bzla_bv_slice(mm, t, bw - 1, bw - n);
+  t_ext = bzla_bv_slice(mm, t, bw - 1, bw - n - 1);
   t_x   = bzla_bv_slice(mm, t, bw - 1 - n, 0);
 
   if (bzla_bv_is_zero(t_ext) || bzla_bv_is_ones(t_ext))
