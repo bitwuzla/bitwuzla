@@ -227,7 +227,7 @@ is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   int32_t pos_x, cmp;
   uint32_t bw, cnt_t, cnt_s;
   BzlaBitVectorBinFun shift1_fun, shift2_fun;
-  uint32_t (*count_fun)(const BzlaBitVector *);
+  uint32_t (*count_fun)(const BzlaBitVector *) = 0;
   BzlaBitVector *(*ishift_fun)(BzlaMemMgr *, const BzlaBitVector *, uint64_t);
 
   mm    = bzla->mm;
@@ -296,6 +296,7 @@ is_inv_shift(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
   else
   {
     assert(pos_x == 1);
+    assert(count_fun);
 
     cnt_t = count_fun(t);
     cnt_s = count_fun(s);
