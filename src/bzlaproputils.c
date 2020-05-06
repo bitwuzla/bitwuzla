@@ -2732,25 +2732,25 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
     if (bzla_bv_is_zero(t))
     {
       /* t = 0: random res < 1...1 */
-      if (bzla_bvdomain_is_fixed(mm, x))
+      if (bzla_bv_is_ones(x->lo))
       {
-        if (bzla_bv_is_ones(x->lo))
-        {
-          /* non-recoverable conflict */
-          res = NULL;
-        }
-        else
-        {
-          res = bzla_bv_copy(mm, x->lo);
-        }
+        /* non-recoverable conflict */
+        res = NULL;
       }
       else
       {
-        max = bzla_bv_dec(mm, ones);
-        bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, 0, max);
-        res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
-        bzla_bv_free(mm, max);
-        bzla_bvdomain_gen_delete(&gen);
+        if (bzla_bvdomain_is_fixed(mm, x))
+        {
+          res = bzla_bv_copy(mm, x->lo);
+        }
+        else
+        {
+          max = bzla_bv_dec(mm, ones);
+          bzla_bvdomain_gen_init_range(mm, &bzla->rng, &gen, x, 0, max);
+          res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+          bzla_bv_free(mm, max);
+          bzla_bvdomain_gen_delete(&gen);
+        }
       }
     }
     else if (!bzla_bv_compare(t, ones))
