@@ -19,7 +19,7 @@ extern "C" {
 #include "bzlaslvprop.h"
 }
 
-#define TEST_PROPCONS_BW 4
+#define TEST_PROPCONS_BW 3
 
 using BzlaBinFun =
     std::add_pointer<BzlaNode *(Bzla *, BzlaNode *, BzlaNode *)>::type;
