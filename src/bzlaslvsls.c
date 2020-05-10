@@ -149,7 +149,7 @@ select_candidate_constraint(Bzla *bzla, uint32_t nmoves)
       BZLA_PUSH_STACK(stack, cur);
     }
     assert(BZLA_COUNT_STACK(stack));
-    r   = bzla_rng_pick_rand(&bzla->rng, 0, BZLA_COUNT_STACK(stack) - 1);
+    r   = bzla_rng_pick_rand(bzla->rng, 0, BZLA_COUNT_STACK(stack) - 1);
     res = stack.start[r];
     BZLA_RELEASE_STACK(stack);
   }
@@ -223,7 +223,7 @@ select_candidates(Bzla *bzla, BzlaNode *root, BzlaNodePtrStack *candidates)
             BZLA_PEEK_STACK(
                 controlling,
                 bzla_rng_pick_rand(
-                    &bzla->rng, 0, BZLA_COUNT_STACK(controlling) - 1)));
+                    bzla->rng, 0, BZLA_COUNT_STACK(controlling) - 1)));
       }
     }
     else
@@ -264,7 +264,7 @@ update_assertion_weights(Bzla *bzla)
 
   slv = BZLA_SLS_SOLVER(bzla);
 
-  if (bzla_rng_pick_with_prob(&bzla->rng, BZLA_SLS_PROB_SCORE_F))
+  if (bzla_rng_pick_with_prob(bzla->rng, BZLA_SLS_PROB_SCORE_F))
   {
     /* decrease the weight of all satisfied assertions */
     bzla_iter_hashint_init(&it, slv->weights);
@@ -612,7 +612,7 @@ select_flip_range_move(Bzla *bzla, BzlaNodePtrStack *candidates, int32_t gw)
       }
 
       /* range from MSB rather than LSB with given prob */
-      if (bzla_rng_pick_with_prob(&bzla->rng, BZLA_SLS_PROB_RANGE_MSB_VS_LSB))
+      if (bzla_rng_pick_with_prob(bzla->rng, BZLA_SLS_PROB_RANGE_MSB_VS_LSB))
       {
         clo = bw - 1 - cup;
         cup = bw - 1;
@@ -698,7 +698,7 @@ select_flip_segment_move(Bzla *bzla, BzlaNodePtrStack *candidates, int32_t gw)
         if (lo >= bw - 1) clo = bw < seg ? 0 : bw - seg;
 
         /* range from MSB rather than LSB with given prob */
-        if (bzla_rng_pick_with_prob(&bzla->rng, BZLA_SLS_PROB_SEG_MSB_VS_LSB))
+        if (bzla_rng_pick_with_prob(bzla->rng, BZLA_SLS_PROB_SEG_MSB_VS_LSB))
         {
           ctmp = clo;
           clo  = bw - 1 - cup;
@@ -776,13 +776,13 @@ select_rand_range_move(Bzla *bzla, BzlaNodePtrStack *candidates, int32_t gw)
       }
 
       /* range from MSB rather than LSB with given prob */
-      if (bzla_rng_pick_with_prob(&bzla->rng, BZLA_SLS_PROB_RANGE_MSB_VS_LSB))
+      if (bzla_rng_pick_with_prob(bzla->rng, BZLA_SLS_PROB_RANGE_MSB_VS_LSB))
       {
         clo = bw - 1 - cup;
         cup = bw - 1;
       }
       bzla_hashint_map_add(cans, can->id)->as_ptr =
-          bzla_bv_new_random_bit_range(bzla->mm, &bzla->rng, bw, cup, clo);
+          bzla_bv_new_random_bit_range(bzla->mm, bzla->rng, bw, cup, clo);
     }
 
     sc = try_move(bzla, bv_model, score, cans, &done);
@@ -920,7 +920,7 @@ select_move(Bzla *bzla, BzlaNodePtrStack *candidates)
           sizeof(BzlaSLSMove *),
           cmp_sls_moves_qsort);
 
-    rd = bzla_rng_pick_rand_dbl(&bzla->rng, 0, slv->sum_score);
+    rd = bzla_rng_pick_rand_dbl(bzla->rng, 0, slv->sum_score);
     m  = BZLA_PEEK_STACK(slv->moves, 0);
     for (i = 0, sum = 0; i < BZLA_COUNT_STACK(slv->moves); i++)
     {
@@ -949,7 +949,7 @@ select_move(Bzla *bzla, BzlaNodePtrStack *candidates)
     /* randomize if no best move was found */
     randomizeall =
         bzla_opt_get(bzla, BZLA_OPT_SLS_MOVE_RAND_ALL)
-            ? bzla_rng_pick_with_prob(&bzla->rng, BZLA_SLS_PROB_RAND_ALL_VS_ONE)
+            ? bzla_rng_pick_with_prob(bzla->rng, BZLA_SLS_PROB_RAND_ALL_VS_ONE)
             : false;
 
     if (randomizeall)
@@ -966,7 +966,7 @@ select_move(Bzla *bzla, BzlaNodePtrStack *candidates)
               bzla->mm, (BzlaBitVector *) bzla_model_get_bv(bzla, can), 0);
         else
           neigh = bzla_bv_new_random(
-              bzla->mm, &bzla->rng, bzla_node_bv_get_width(bzla, can));
+              bzla->mm, bzla->rng, bzla_node_bv_get_width(bzla, can));
 
         bzla_hashint_map_add(slv->max_cans, can->id)->as_ptr = neigh;
       }
@@ -978,7 +978,7 @@ select_move(Bzla *bzla, BzlaNodePtrStack *candidates)
 
       can = BZLA_PEEK_STACK(
           *candidates,
-          bzla_rng_pick_rand(&bzla->rng, 0, BZLA_COUNT_STACK(*candidates) - 1));
+          bzla_rng_pick_rand(bzla->rng, 0, BZLA_COUNT_STACK(*candidates) - 1));
       assert(bzla_node_is_regular(can));
 
       if (bzla_node_bv_get_width(bzla, can) == 1)
@@ -999,7 +999,7 @@ select_move(Bzla *bzla, BzlaNodePtrStack *candidates)
       else
       {
         neigh = bzla_bv_new_random(
-            bzla->mm, &bzla->rng, bzla_node_bv_get_width(bzla, can));
+            bzla->mm, bzla->rng, bzla_node_bv_get_width(bzla, can));
         bzla_hashint_map_add(slv->max_cans, can->id)->as_ptr = neigh;
       }
 
@@ -1045,7 +1045,7 @@ select_random_move(Bzla *bzla, BzlaNodePtrStack *candidates)
 
   /* select candidate(s) */
   if (bzla_opt_get(bzla, BZLA_OPT_SLS_MOVE_GW)
-      && bzla_rng_pick_with_prob(&bzla->rng, BZLA_SLS_PROB_SINGLE_VS_GW))
+      && bzla_rng_pick_with_prob(bzla->rng, BZLA_SLS_PROB_SINGLE_VS_GW))
   {
     pcans       = candidates;
     slv->max_gw = 1;
@@ -1056,7 +1056,7 @@ select_random_move(Bzla *bzla, BzlaNodePtrStack *candidates)
         cans,
         BZLA_PEEK_STACK(*candidates,
                         bzla_rng_pick_rand(
-                            &bzla->rng, 0, BZLA_COUNT_STACK(*candidates) - 1)));
+                            bzla->rng, 0, BZLA_COUNT_STACK(*candidates) - 1)));
     pcans       = &cans;
     slv->max_gw = 0;
   }
@@ -1070,7 +1070,7 @@ select_random_move(Bzla *bzla, BzlaNodePtrStack *candidates)
     assert(ass);
 
     bw = bzla_bv_get_width(ass);
-    r  = bzla_rng_pick_rand(&bzla->rng, 0, BZLA_SLS_MOVE_DONE - 1 + bw - 1);
+    r  = bzla_rng_pick_rand(bzla->rng, 0, BZLA_SLS_MOVE_DONE - 1 + bw - 1);
 
     if (r < bw)
       mk = BZLA_SLS_MOVE_FLIP;
@@ -1092,18 +1092,18 @@ select_random_move(Bzla *bzla, BzlaNodePtrStack *candidates)
       case BZLA_SLS_MOVE_DEC: neigh = bzla_bv_dec(bzla->mm, ass); break;
       case BZLA_SLS_MOVE_NOT: neigh = bzla_bv_not(bzla->mm, ass); break;
       case BZLA_SLS_MOVE_FLIP_RANGE:
-        up    = bzla_rng_pick_rand(&bzla->rng, bw > 1 ? 1 : 0, bw - 1);
+        up    = bzla_rng_pick_rand(bzla->rng, bw > 1 ? 1 : 0, bw - 1);
         neigh = bzla_bv_flipped_bit_range(bzla->mm, ass, up, 0);
         break;
       case BZLA_SLS_MOVE_FLIP_SEGMENT:
-        lo = bzla_rng_pick_rand(&bzla->rng, 0, bw - 1);
-        up = bzla_rng_pick_rand(&bzla->rng, lo < bw - 1 ? lo + 1 : lo, bw - 1);
+        lo = bzla_rng_pick_rand(bzla->rng, 0, bw - 1);
+        up = bzla_rng_pick_rand(bzla->rng, lo < bw - 1 ? lo + 1 : lo, bw - 1);
         neigh = bzla_bv_flipped_bit_range(bzla->mm, ass, up, lo);
         break;
       default:
         assert(mk == BZLA_SLS_MOVE_FLIP);
         neigh = bzla_bv_flipped_bit(
-            bzla->mm, ass, bzla_rng_pick_rand(&bzla->rng, 0, bw - 1));
+            bzla->mm, ass, bzla_rng_pick_rand(bzla->rng, 0, bw - 1));
         break;
     }
 
@@ -1206,7 +1206,7 @@ move(Bzla *bzla, uint32_t nmoves)
 
     if (bzla_opt_get(bzla, BZLA_OPT_SLS_MOVE_RAND_WALK)
         && bzla_rng_pick_with_prob(
-            &bzla->rng, bzla_opt_get(bzla, BZLA_OPT_SLS_PROB_MOVE_RAND_WALK)))
+            bzla->rng, bzla_opt_get(bzla, BZLA_OPT_SLS_PROB_MOVE_RAND_WALK)))
     {
     SLS_MOVE_RAND_WALK:
       select_random_move(bzla, &candidates);

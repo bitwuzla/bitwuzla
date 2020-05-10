@@ -41,7 +41,7 @@ class TestProp : public TestBzla
     d_bzla->slv       = bzla_new_prop_solver(d_bzla);
     d_bzla->slv->bzla = d_bzla;
     d_mm              = d_bzla->mm;
-    d_rng             = &d_bzla->rng;
+    d_rng             = d_bzla->rng;
     d_slv             = BZLA_PROP_SOLVER(d_bzla);
     d_domains         = BZLA_PROP_SOLVER(d_bzla)->domains;
 

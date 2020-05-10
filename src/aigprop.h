@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2018 Aina Niemetz.
+ *  Copyright (C) 2015-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -11,6 +11,7 @@
 #include "bzlaaig.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
+#include "utils/bzlamem.h"
 #include "utils/bzlarng.h"
 
 #define AIGPROP_UNKNOWN 0
@@ -25,8 +26,9 @@ struct AIGProp
   BzlaIntHashTable *score;
   BzlaIntHashTable *model;
   BzlaIntHashTable *parents;
+  BzlaMemMgr *mm;
 
-  BzlaRNG rng;
+  BzlaRNG *rng;
 
   uint32_t loglevel;
   uint32_t seed;

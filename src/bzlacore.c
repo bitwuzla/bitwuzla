@@ -693,7 +693,7 @@ bzla_new(void)
 
   bzla->word_blaster = bzla_fp_word_blaster_new(bzla);
 
-  bzla_rng_init(&bzla->rng, bzla_opt_get(bzla, BZLA_OPT_SEED));
+  bzla->rng = bzla_rng_new(mm, bzla_opt_get(bzla, BZLA_OPT_SEED));
 
   bzla->bv_assignments  = bzla_ass_new_bv_list(mm);
   bzla->fun_assignments = bzla_ass_new_fun_list(mm);
@@ -900,7 +900,7 @@ bzla_delete(Bzla *bzla)
   BzlaPtrHashTableIterator it;
 
   mm = bzla->mm;
-  bzla_rng_delete(&bzla->rng);
+  bzla_rng_delete(bzla->rng);
   bzla_fp_word_blaster_delete(bzla);
 
   if (bzla->slv) bzla->slv->api.delet(bzla->slv);

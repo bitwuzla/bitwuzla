@@ -1046,7 +1046,7 @@ is_inv_shift_const(Bzla *bzla, BzlaPropInfo *pi, BzlaBvShiftKind kind)
         {
           /* If s is zero, any value of x is an inverse. */
           bzla_bvdomain_gen_init_range(
-              mm, &bzla->rng, &gen, x, bzla_bv_is_zero(s) ? 0 : min, 0);
+              mm, bzla->rng, &gen, x, bzla_bv_is_zero(s) ? 0 : min, 0);
           assert(bzla_bvdomain_gen_has_next(&gen));
           bv = bzla_bvdomain_gen_random(&gen);
           bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new(mm, bv, bv));
@@ -1169,7 +1169,7 @@ bzla_is_inv_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
           }
 
           BzlaBvDomainGenerator dgen;
-          bzla_bvdomain_gen_init_range(mm, &bzla->rng, &dgen, x, min, max);
+          bzla_bvdomain_gen_init_range(mm, bzla->rng, &dgen, x, min, max);
           res = bzla_bvdomain_gen_has_next(&dgen);
           if (res)
           {
@@ -1221,7 +1221,7 @@ bzla_is_inv_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
             }
 
             BzlaBvDomainGenerator dgen;
-            bzla_bvdomain_gen_init_range(mm, &bzla->rng, &dgen, x, min, max);
+            bzla_bvdomain_gen_init_range(mm, bzla->rng, &dgen, x, min, max);
             res = bzla_bvdomain_gen_has_next(&dgen);
             if (res)
             {
@@ -1473,7 +1473,7 @@ bzla_is_inv_urem_const(Bzla *bzla, BzlaPropInfo *pi)
               /* s - t does not match const bits of x and one is not a
                * possible solution. Find factor n of (s - t) s.t. n > t and n
                * matches the const bits of x. Pick x = n.  */
-              bv = bzla_bvdomain_get_factor(mm, n, x, t, 10000, &bzla->rng);
+              bv = bzla_bvdomain_get_factor(mm, n, x, t, 10000, bzla->rng);
               assert(!bv || bzla_bvdomain_check_fixed_bits(mm, x, bv));
               res = bv != 0;
               if (res)
@@ -1670,7 +1670,7 @@ bzla_is_inv_cond_const(Bzla *bzla, BzlaPropInfo *pi)
       uint64_t val;
       if (cmp0 && cmp1)
       {
-        val = bzla_rng_flip_coin(&bzla->rng);
+        val = bzla_rng_flip_coin(bzla->rng);
       }
       else
       {

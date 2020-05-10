@@ -45,7 +45,7 @@ class TestPropInv : public TestPropCommon
     BzlaBvDomain *d_x;
     BzlaBitVector *bv_s, *bv_t, *bv_x, *bv_cur_x;
     BzlaBvDomainGenerator gen;
-    BzlaRNG rng;
+    BzlaRNG *rng;
     BzlaSolver *slv_sat = nullptr, *slv_prop;
     BzlaMemMgr *mm;
     BzlaNode *x, *s, *expr, *eq_t, *c_x, *c_s, *c_t, *eq_x, *eq_s;
@@ -54,6 +54,7 @@ class TestPropInv : public TestPropCommon
 
     bzla = bzla_new();
     mm   = bzla->mm;
+    rng  = bzla_rng_new(mm, 0);
 
     slv_prop       = bzla_new_prop_solver(bzla);
     slv_prop->bzla = bzla;
@@ -80,8 +81,6 @@ class TestPropInv : public TestPropCommon
     {
       sort_s = bzla_sort_copy(bzla, sort_x);
     }
-
-    bzla_rng_init(&rng, 0);
 
     if (pos_x == 0)
     {
@@ -146,7 +145,7 @@ class TestPropInv : public TestPropCommon
           bv_t = bzla_bv_char_to_bv(mm, tval.c_str());
           c_t  = bzla_exp_bv_const(bzla, bv_t);
 
-          bzla_bvdomain_gen_init(mm, &rng, &gen, d_x);
+          bzla_bvdomain_gen_init(mm, rng, &gen, d_x);
           while (bzla_bvdomain_gen_has_next(&gen))
           {
             ++num_tests;
@@ -287,6 +286,7 @@ class TestPropInv : public TestPropCommon
     bzla->slv = slv_prop;
     slv_prop->api.delet(slv_prop);
     bzla->slv = slv_sat;
+    bzla_rng_delete(rng);
     bzla_delete(bzla);
     std::stringstream ss;
     ss << "Number of tests (pos_x: " << pos_x << "): " << num_tests;
@@ -304,7 +304,7 @@ class TestPropInv : public TestPropCommon
     BzlaBvDomain *d_x;
     BzlaBitVector *bv_t, *bv_x, *bv_cur_x;
     BzlaBvDomainGenerator gen;
-    BzlaRNG rng;
+    BzlaRNG *rng;
     BzlaSolver *slv_sat = nullptr, *slv_prop;
     BzlaMemMgr *mm;
     BzlaNode *x, *expr, *eq_t, *c_x, *c_t, *eq_x;
@@ -313,6 +313,7 @@ class TestPropInv : public TestPropCommon
 
     bzla = bzla_new();
     mm   = bzla->mm;
+    rng  = bzla_rng_new(mm, 0);
 
     slv_prop       = bzla_new_prop_solver(bzla);
     slv_prop->bzla = bzla;
@@ -321,8 +322,6 @@ class TestPropInv : public TestPropCommon
     bzla_opt_set(bzla, BZLA_OPT_CHK_MODEL, 0);
 
     sort_x = bzla_sort_bv(bzla, TEST_PROPINV_BW);
-
-    bzla_rng_init(&rng, 0);
 
     x = bzla_exp_var(bzla, sort_x, "x");
     bzla_sort_release(bzla, sort_x);
@@ -369,7 +368,7 @@ class TestPropInv : public TestPropCommon
             bv_t = bzla_bv_char_to_bv(mm, tval.c_str());
             c_t  = bzla_exp_bv_const(bzla, bv_t);
 
-            bzla_bvdomain_gen_init(mm, &rng, &gen, d_x);
+            bzla_bvdomain_gen_init(mm, rng, &gen, d_x);
             while (bzla_bvdomain_gen_has_next(&gen))
             {
               ++num_tests;
@@ -475,6 +474,7 @@ class TestPropInv : public TestPropCommon
     bzla->slv = slv_prop;
     slv_prop->api.delet(slv_prop);
     bzla->slv = slv_sat;
+    bzla_rng_delete(rng);
     bzla_delete(bzla);
     std::stringstream ss;
     ss << "Number of tests (pos_x: 0): " << num_tests;
@@ -493,7 +493,7 @@ class TestPropInv : public TestPropCommon
     BzlaBvDomain *d_x;
     BzlaBitVector *bv_s1, *bv_t, *bv_s2, *bv_x, *bv_cur_x;
     BzlaBvDomainGenerator gen;
-    BzlaRNG rng;
+    BzlaRNG *rng;
     BzlaSolver *slv_sat = nullptr, *slv_prop;
     BzlaMemMgr *mm;
     BzlaNode *x, *s1, *s2, *expr, *eq_t, *c_x, *c_s1, *c_s2, *c_t, *eq_x;
@@ -502,6 +502,7 @@ class TestPropInv : public TestPropCommon
 
     bzla = bzla_new();
     mm   = bzla->mm;
+    rng  = bzla_rng_new(mm, 0);
 
     slv_prop       = bzla_new_prop_solver(bzla);
     slv_prop->bzla = bzla;
@@ -511,8 +512,6 @@ class TestPropInv : public TestPropCommon
 
     sort_bool = bzla_sort_bool(bzla);
     sort_bv   = bzla_sort_bv(bzla, TEST_PROPINV_BW);
-
-    bzla_rng_init(&rng, 0);
 
     if (pos_x == 0)
     {
@@ -579,7 +578,7 @@ class TestPropInv : public TestPropCommon
             bv_t = bzla_bv_char_to_bv(mm, tval.c_str());
             c_t  = bzla_exp_bv_const(bzla, bv_t);
 
-            bzla_bvdomain_gen_init(mm, &rng, &gen, d_x);
+            bzla_bvdomain_gen_init(mm, rng, &gen, d_x);
             while (bzla_bvdomain_gen_has_next(&gen))
             {
               ++num_tests;
@@ -715,6 +714,7 @@ class TestPropInv : public TestPropCommon
     bzla->slv = slv_prop;
     slv_prop->api.delet(slv_prop);
     bzla->slv = slv_sat;
+    bzla_rng_delete(rng);
     bzla_delete(bzla);
     std::stringstream ss;
     ss << "Number of tests (pos_x: " << pos_x << "): " << num_tests;

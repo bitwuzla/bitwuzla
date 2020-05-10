@@ -37,6 +37,10 @@
 #include "utils/bzlastack.h"
 #include "utils/bzlautil.h"
 
+#ifdef BZLA_USE_GMP
+#include <gmp.h>
+#endif
+
 BZLA_DECLARE_STACK(BzlaNodePtrStackPtr, BzlaNodePtrStack *);
 BZLA_DECLARE_STACK(BzlaPtrHashTablePtrPtr, BzlaPtrHashTable **);
 
@@ -920,8 +924,14 @@ clone_aux_bzla(Bzla *bzla,
   allocated = sizeof(Bzla);
 #endif
   memcpy(clone, bzla, sizeof(Bzla));
-  clone->mm = mm;
-  bzla_rng_clone(&bzla->rng, &clone->rng);
+  clone->mm  = mm;
+  clone->rng = bzla_rng_clone(bzla->rng, mm);
+#ifndef NDEBUG
+  allocated += sizeof(BzlaRNG);
+#ifdef BZLA_USE_GMP
+  allocated += sizeof(gmp_randstate_t);
+#endif
+#endif
 
   BZLA_CLR(&clone->cbs);
   bzla_opt_clone_opts(bzla, clone);
@@ -1539,20 +1549,6 @@ clone_aux_bzla(Bzla *bzla,
     }
     else if (clone->slv->kind == BZLA_AIGPROP_SOLVER_KIND)
     {
-      BzlaAIGPropSolver *slv  = BZLA_AIGPROP_SOLVER(bzla);
-      BzlaAIGPropSolver *cslv = BZLA_AIGPROP_SOLVER(clone);
-
-      if (slv->aprop)
-      {
-        assert(cslv->aprop);
-        CHKCLONE_MEM_PTR_HASH_TABLE(slv->aprop->roots, cslv->aprop->roots);
-        CHKCLONE_MEM_PTR_HASH_TABLE(slv->aprop->score, cslv->aprop->score);
-        CHKCLONE_MEM_PTR_HASH_TABLE(slv->aprop->model, cslv->aprop->model);
-        allocated += sizeof(AIGProp) + MEM_PTR_HASH_TABLE(cslv->aprop->roots)
-                     + MEM_PTR_HASH_TABLE(cslv->aprop->score)
-                     + MEM_PTR_HASH_TABLE(cslv->aprop->model);
-      }
-
       allocated += sizeof(BzlaAIGPropSolver);
     }
 

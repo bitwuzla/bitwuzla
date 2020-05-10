@@ -63,7 +63,7 @@ class TestBv : public TestBzla
   {
     TestBzla::SetUp();
     d_mm  = d_bzla->mm;
-    d_rng = &d_bzla->rng;
+    d_rng = d_bzla->rng;
   }
 
   void bv_to_hex_char_bitvec(FILE *g_logfile, const char *c)

@@ -104,7 +104,7 @@ select_constraint(Bzla *bzla, uint32_t nmoves)
     size_t j, r;
 
     j = 0;
-    r = bzla_rng_pick_rand(&bzla->rng, 0, slv->roots->count - 1);
+    r = bzla_rng_pick_rand(bzla->rng, 0, slv->roots->count - 1);
     bzla_iter_hashint_init(&it, slv->roots);
     while (bzla_iter_hashint_has_next(&it) && j <= r)
     {

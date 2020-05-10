@@ -1761,7 +1761,7 @@ bzla_opt_set(Bzla *bzla, const BzlaOption opt, uint32_t val)
 
   if (opt == BZLA_OPT_SEED)
   {
-    bzla_rng_init(&bzla->rng, val);
+    bzla_rng_init(bzla->rng, val);
   }
   else if (opt == BZLA_OPT_ENGINE)
   {

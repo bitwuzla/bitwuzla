@@ -1,6 +1,6 @@
 /*  Boolector: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2015-2019 Aina Niemetz.
+ *  Copyright (C) 2015-2020 Aina Niemetz.
  *
  *  This file is part of Boolector.
  *  See COPYING for more information on using this software.
@@ -136,7 +136,7 @@ compute_score_aig(AIGProp *aprop, BzlaAIG *aig)
   if (bzla_hashint_map_contains(aprop->score, curid))
     return bzla_hashint_map_get(aprop->score, curid)->as_dbl;
 
-  mm  = aprop->amgr->bzla->mm;
+  mm  = aprop->mm;
   res = 0.0;
 
   BZLA_INIT_STACK(mm, stack);
@@ -285,7 +285,7 @@ compute_scores(AIGProp *aprop)
 
   AIGPROPLOG(3, "*** compute scores");
 
-  mm = aprop->amgr->bzla->mm;
+  mm = aprop->mm;
 
   BZLA_INIT_STACK(mm, stack);
   cache = bzla_hashint_table_new(mm);
@@ -354,7 +354,7 @@ recursively_compute_assignment(AIGProp *aprop, BzlaAIG *aig)
 
   if (bzla_aig_is_const(aig)) return;
 
-  mm = aprop->amgr->bzla->mm;
+  mm = aprop->mm;
 
   cache = bzla_hashint_table_new(mm);
   BZLA_INIT_STACK(mm, stack);
@@ -425,7 +425,7 @@ aigprop_init_model(AIGProp *aprop)
   assert(aprop);
 
   if (aprop->model) aigprop_delete_model(aprop);
-  aprop->model = bzla_hashint_map_new(aprop->amgr->bzla->mm);
+  aprop->model = bzla_hashint_map_new(aprop->mm);
 }
 
 void
@@ -506,7 +506,7 @@ update_cone(AIGProp *aprop, BzlaAIG *aig, int32_t assignment)
 
   start = bzla_util_time_stamp();
 
-  mm = aprop->amgr->bzla->mm;
+  mm = aprop->mm;
 
 #ifndef NDEBUG
   BzlaIntHashTableIterator it;
@@ -708,7 +708,7 @@ select_root(AIGProp *aprop, uint32_t nmoves)
   BzlaIntHashTableIterator it;
   BzlaMemMgr *mm;
 
-  mm  = aprop->amgr->bzla->mm;
+  mm  = aprop->mm;
   res = 0;
 
   if (aprop->use_bandit)
@@ -758,7 +758,7 @@ select_root(AIGProp *aprop, uint32_t nmoves)
       BZLA_PUSH_STACK(stack, cur);
     }
     assert(BZLA_COUNT_STACK(stack));
-    r   = bzla_rng_pick_rand(&aprop->rng, 0, BZLA_COUNT_STACK(stack) - 1);
+    r   = bzla_rng_pick_rand(aprop->rng, 0, BZLA_COUNT_STACK(stack) - 1);
     res = stack.start[r];
     BZLA_RELEASE_STACK(stack);
   }
@@ -846,7 +846,7 @@ select_move(AIGProp *aprop, BzlaAIG *root, BzlaAIG **input, int32_t *assignment)
         else if (ass[0] == 1 && ass[1] == -1)
           eidx = 1;
         else
-          eidx = bzla_rng_pick_rand(&aprop->rng, 0, 1);
+          eidx = bzla_rng_pick_rand(aprop->rng, 0, 1);
       }
       if (asscur == 1)
         assnew = 1;
@@ -854,7 +854,7 @@ select_move(AIGProp *aprop, BzlaAIG *root, BzlaAIG **input, int32_t *assignment)
         assnew = -1;
       else
       {
-        assnew = bzla_rng_pick_rand(&aprop->rng, 0, 1);
+        assnew = bzla_rng_pick_rand(aprop->rng, 0, 1);
         if (!assnew) assnew = -1;
       }
 
@@ -932,7 +932,7 @@ aigprop_sat(AIGProp *aprop, BzlaIntHashTable *roots)
   sat_result = AIGPROP_UNKNOWN;
   nmoves     = 0;
 
-  mm           = aprop->amgr->bzla->mm;
+  mm           = aprop->mm;
   aprop->roots = roots;
 
   /* collect parents (for cone computation) */
@@ -1081,11 +1081,11 @@ aigprop_clone_aigprop(BzlaAIGMgr *clone, AIGProp *aprop)
 
   if (!aprop) return 0;
 
-  mm = clone->bzla->mm;
-
+  mm = bzla_mem_mgr_new();
   BZLA_CNEW(mm, res);
   memcpy(res, aprop, sizeof(AIGProp));
-  bzla_rng_clone(&res->rng, &aprop->rng);
+  res->mm   = mm;
+  res->rng  = bzla_rng_clone(aprop->rng, mm);
   res->amgr = clone;
   res->unsatroots =
       bzla_hashint_map_clone(mm, aprop->unsatroots, bzla_clone_data_as_int, 0);
@@ -1107,10 +1107,13 @@ aigprop_new_aigprop(BzlaAIGMgr *amgr,
   assert(amgr);
 
   AIGProp *res;
+  BzlaMemMgr *mm;
 
-  BZLA_CNEW(amgr->bzla->mm, res);
-  res->amgr = amgr;
-  bzla_rng_init(&res->rng, seed);
+  mm = bzla_mem_mgr_new();
+  BZLA_CNEW(mm, res);
+  res->amgr         = amgr;
+  res->mm           = mm;
+  res->rng          = bzla_rng_new(res->mm, seed);
   res->loglevel     = loglevel;
   res->seed         = seed;
   res->use_restarts = use_restarts;
@@ -1124,12 +1127,15 @@ void
 aigprop_delete_aigprop(AIGProp *aprop)
 {
   assert(aprop);
+  BzlaMemMgr *mm;
 
-  bzla_rng_delete(&aprop->rng);
+  bzla_rng_delete(aprop->rng);
   if (aprop->unsatroots) bzla_hashint_map_delete(aprop->unsatroots);
   if (aprop->score) bzla_hashint_map_delete(aprop->score);
   if (aprop->model) bzla_hashint_map_delete(aprop->model);
-  BZLA_DELETE(aprop->amgr->bzla->mm, aprop);
+  mm = aprop->mm;
+  BZLA_DELETE(mm, aprop);
+  bzla_mem_mgr_delete(mm);
 }
 
 #if 0

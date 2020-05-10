@@ -12,15 +12,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifdef BZLA_USE_GMP
 #include "utils/bzlamem.h"
-#endif
 
 struct BzlaRNG
 {
   uint32_t z, w;
-#ifdef BZLA_USE_GMP
   BzlaMemMgr* mm;
+  uint32_t seed;
+#ifdef BZLA_USE_GMP
   bool is_init;
   /* This is a bit ugly, but a workaround to not include gmp.h in this header
    * (including the GMP header causes compilation problems with gtest). */
@@ -29,6 +28,16 @@ struct BzlaRNG
 };
 
 typedef struct BzlaRNG BzlaRNG;
+
+/**
+ * Create and initialize a new RNG object.
+ *
+ * Note: Always use this function to create an RNG object!
+ *       If compiled with GMP, RNG object *must* be zero initialized, else
+ *       member is_init and gmp_state contain garbage, which leads to invalid
+ *       frees of the gmp_state. This function guarantees this.
+ */
+BzlaRNG* bzla_rng_new(BzlaMemMgr* mm, uint32_t seed);
 
 /**
  * Initialize RNG with given seed. If compiled with GMP, this additionally
@@ -43,7 +52,7 @@ void bzla_rng_init(BzlaRNG* rng, uint32_t seed);
  * objects that maintain an RNG struct (and thus memcpy the state of this object
  * to the cloned object when cloning) when compiled with GMP.
  */
-void bzla_rng_clone(BzlaRNG* rng, BzlaRNG* clone);
+BzlaRNG* bzla_rng_clone(BzlaRNG* rng, BzlaMemMgr* mm);
 
 /**
  * Delete allocated data members of the given RNG.

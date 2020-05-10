@@ -27,7 +27,7 @@ class TestBvDomainGen : public TestBvDomainCommon
   void SetUp() override
   {
     TestBvDomainCommon::SetUp();
-    bzla_rng_init(&d_rng, 0);
+    d_rng        = bzla_rng_new(d_mm, 0);
     d_num_consts = generate_consts(TEST_BVDOMAINGEN_BW, &d_xvalues);
     for (uint32_t i = 0; i < (1u << TEST_BVDOMAINGEN_BW); ++i)
     {
@@ -39,6 +39,7 @@ class TestBvDomainGen : public TestBvDomainCommon
   void TearDown() override
   {
     free_consts(TEST_BVDOMAINGEN_BW, d_num_consts, d_xvalues);
+    bzla_rng_delete(d_rng);
     TestBvDomainCommon::TearDown();
   }
 
@@ -62,7 +63,7 @@ class TestBvDomainGen : public TestBvDomainCommon
         BzlaBvDomainSignedGenerator *g;
         BZLA_NEW(d_mm, g);
         bzla_bvdomain_gen_signed_init_range(
-            d_mm, rand ? &d_rng : nullptr, g, d, bv_min, bv_max);
+            d_mm, rand ? d_rng : nullptr, g, d, bv_min, bv_max);
         gen = g;
       }
       else
@@ -70,7 +71,7 @@ class TestBvDomainGen : public TestBvDomainCommon
         BzlaBvDomainGenerator *g;
         BZLA_NEW(d_mm, g);
         bzla_bvdomain_gen_init_range(
-            d_mm, rand ? &d_rng : nullptr, g, d, bv_min, bv_max);
+            d_mm, rand ? d_rng : nullptr, g, d, bv_min, bv_max);
         gen = g;
       }
     }
@@ -80,14 +81,14 @@ class TestBvDomainGen : public TestBvDomainCommon
       {
         BzlaBvDomainSignedGenerator *g;
         BZLA_NEW(d_mm, g);
-        bzla_bvdomain_gen_signed_init(d_mm, rand ? &d_rng : nullptr, g, d);
+        bzla_bvdomain_gen_signed_init(d_mm, rand ? d_rng : nullptr, g, d);
         gen = g;
       }
       else
       {
         BzlaBvDomainGenerator *g;
         BZLA_NEW(d_mm, g);
-        bzla_bvdomain_gen_init(d_mm, rand ? &d_rng : nullptr, g, d);
+        bzla_bvdomain_gen_init(d_mm, rand ? d_rng : nullptr, g, d);
         gen = g;
       }
     }
@@ -122,7 +123,7 @@ class TestBvDomainGen : public TestBvDomainCommon
              || (is_signed
                  && !bzla_bvdomain_gen_signed_has_next(
                      static_cast<BzlaBvDomainSignedGenerator *>(gen))))
-            && bzla_rng_pick_with_prob(&d_rng, 500))
+            && bzla_rng_pick_with_prob(d_rng, 500))
         {
           res = is_signed ? bzla_bvdomain_gen_signed_next(
                     static_cast<BzlaBvDomainSignedGenerator *>(gen))
@@ -335,7 +336,7 @@ class TestBvDomainGen : public TestBvDomainCommon
   uint32_t d_num_consts;
   char **d_xvalues;
   std::vector<std::string> d_values;
-  BzlaRNG d_rng;
+  BzlaRNG *d_rng;
 };
 
 TEST_F(TestBvDomainGen, newdelete)
@@ -395,7 +396,7 @@ TEST_F(TestBvDomainGen, has_next_rand)
     for (i = 0; i < num_consts; i++)
     {
       d = bzla_bvdomain_new_from_char(d_mm, consts[i]);
-      bzla_bvdomain_gen_init(d_mm, &d_rng, &gen, d);
+      bzla_bvdomain_gen_init(d_mm, d_rng, &gen, d);
       ASSERT_TRUE(bzla_bvdomain_is_fixed(d_mm, d)
                   || bzla_bvdomain_gen_has_next(&gen));
       if (bzla_bvdomain_gen_has_next(&gen))
@@ -472,7 +473,7 @@ TEST_F(TestBvDomainGen, has_next_rand_signed)
     for (i = 0; i < num_consts; i++)
     {
       d = bzla_bvdomain_new_from_char(d_mm, consts[i]);
-      bzla_bvdomain_gen_signed_init(d_mm, &d_rng, &gen, d);
+      bzla_bvdomain_gen_signed_init(d_mm, d_rng, &gen, d);
       ASSERT_TRUE(bzla_bvdomain_is_fixed(d_mm, d)
                   || bzla_bvdomain_gen_signed_has_next(&gen));
       if (bzla_bvdomain_gen_signed_has_next(&gen))

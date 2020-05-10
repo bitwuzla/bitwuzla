@@ -33,7 +33,7 @@ class TestPropComplete : public TestBzla
     d_bzla->slv       = bzla_new_prop_solver(d_bzla);
     d_bzla->slv->bzla = d_bzla;
     d_mm              = d_bzla->mm;
-    d_rng             = &d_bzla->rng;
+    d_rng             = d_bzla->rng;
     d_domains         = BZLA_PROP_SOLVER(d_bzla)->domains;
 
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
@@ -1321,11 +1321,11 @@ class TestPropComplete : public TestBzla
     s = bzla_bv_zero(d_mm, bw);
     for (k = 0; k < 10; k++)
     {
-      t = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+      t = bzla_bv_new_random(d_mm, d_bzla->rng, bw);
       while (bzla_bv_is_zero(t))
       {
         bzla_bv_free(d_mm, t);
-        t = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+        t = bzla_bv_new_random(d_mm, d_bzla->rng, bw);
       }
       check_conf_mul_result(mul, t, s, use_domains);
       bzla_bv_free(d_mm, t);
@@ -1335,9 +1335,9 @@ class TestPropComplete : public TestBzla
     /* t is odd but s is even */
     for (k = 0; k < 10; k++)
     {
-      t = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+      t = bzla_bv_new_random(d_mm, d_bzla->rng, bw);
       if (!bzla_bv_get_bit(t, 0)) bzla_bv_set_bit(t, 0, 1);
-      s = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+      s = bzla_bv_new_random(d_mm, d_bzla->rng, bw);
       if (bzla_bv_get_bit(s, 0)) bzla_bv_set_bit(s, 0, 0);
       check_conf_mul_result(mul, t, s, use_domains);
       bzla_bv_free(d_mm, t);
@@ -1351,8 +1351,8 @@ class TestPropComplete : public TestBzla
       {
         s = bzla_bv_zero(d_mm, bw);
         bzla_bv_set_bit(s, i, 1);
-        t = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
-        r = bzla_rng_pick_rand(&d_bzla->rng, 0, i - 1);
+        t = bzla_bv_new_random(d_mm, d_bzla->rng, bw);
+        r = bzla_rng_pick_rand(d_bzla->rng, 0, i - 1);
         for (j = 0; j < r; j++) bzla_bv_set_bit(t, j, 0);
         if (!bzla_bv_get_bit(t, r)) bzla_bv_set_bit(t, r, 1);
         check_conf_mul_result(mul, t, s, use_domains);
@@ -1366,15 +1366,15 @@ class TestPropComplete : public TestBzla
     {
       for (i = 0; bw > 1 && i < 10; i++)
       {
-        s = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+        s = bzla_bv_new_random(d_mm, d_bzla->rng, bw);
         while (bzla_bv_power_of_two(s) >= 0)
         {
           bzla_bv_free(d_mm, s);
-          s = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+          s = bzla_bv_new_random(d_mm, d_bzla->rng, bw);
         }
         if (bzla_bv_get_bit(s, 0))
         {
-          r = bzla_rng_pick_rand(&d_bzla->rng, 1, bw - 1);
+          r = bzla_rng_pick_rand(d_bzla->rng, 1, bw - 1);
           for (j = 0; j < r; j++) bzla_bv_set_bit(s, j, 0);
         }
         else
@@ -1382,8 +1382,8 @@ class TestPropComplete : public TestBzla
           for (j = 0; j < bw; j++)
             if (bzla_bv_get_bit(s, j)) break;
         }
-        t = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
-        r = bzla_rng_pick_rand(&d_bzla->rng, 0, j - 1);
+        t = bzla_bv_new_random(d_mm, d_bzla->rng, bw);
+        r = bzla_rng_pick_rand(d_bzla->rng, 0, j - 1);
         for (j = 0; j < r; j++) bzla_bv_set_bit(t, j, 0);
         if (!bzla_bv_get_bit(t, r)) bzla_bv_set_bit(t, r, 1);
         check_conf_mul_result(mul, t, s, use_domains);
@@ -1449,11 +1449,11 @@ class TestPropComplete : public TestBzla
     for (k = 0; bw > 1 && k < 10; k++)
     {
       tmp = bzla_bv_uint64_to_bv(d_mm, 2, bw);
-      s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
+      s   = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, zero, tmp);
       bzla_bv_free(d_mm, tmp);
       tmp    = bzla_bv_inc(d_mm, s);
       tmp2   = bzla_bv_dec(d_mm, bvmax);
-      bvudiv = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, tmp2);
+      bvudiv = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, tmp, tmp2);
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, tmp2);
       check_conf_udiv_result(1, udiv, bvudiv, s, use_domains);
@@ -1466,7 +1466,7 @@ class TestPropComplete : public TestBzla
     {
       s      = bzla_bv_zero(d_mm, bw);
       tmp    = bzla_bv_dec(d_mm, bvmax);
-      bvudiv = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
+      bvudiv = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, zero, tmp);
       bzla_bv_free(d_mm, tmp);
       check_conf_udiv_result(0, udiv, bvudiv, s, use_domains);
       bzla_bv_free(d_mm, bvudiv);
@@ -1477,7 +1477,7 @@ class TestPropComplete : public TestBzla
     {
       bvudiv = bzla_bv_copy(d_mm, bvmax);
       tmp    = bzla_bv_uint64_to_bv(d_mm, 2, bw);
-      s      = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
+      s      = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, tmp, bvmax);
       bzla_bv_free(d_mm, tmp);
       check_conf_udiv_result(0, udiv, bvudiv, s, use_domains);
       bzla_bv_free(d_mm, bvudiv);
@@ -1563,7 +1563,7 @@ class TestPropComplete : public TestBzla
     for (k = 0; k < 10; k++)
     {
       tmp = bzla_bv_dec(d_mm, bvmax);
-      s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
+      s   = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, zero, tmp);
       init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
       ASSERT_FALSE(is_inv_fun(d_bzla, &pi));
       res = cons_fun(d_bzla, &pi);
@@ -1591,10 +1591,10 @@ class TestPropComplete : public TestBzla
     for (k = 0; k < 10; k++)
     {
       tmp = bzla_bv_inc(d_mm, zero);
-      t   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
+      t   = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, tmp, bvmax);
       bzla_bv_free(d_mm, tmp);
       tmp = bzla_bv_dec(d_mm, t);
-      s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, zero, tmp);
+      s   = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, zero, tmp);
       bzla_bv_free(d_mm, tmp);
       init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
       ASSERT_FALSE(is_inv_fun(d_bzla, &pi));
@@ -1622,12 +1622,12 @@ class TestPropComplete : public TestBzla
       two  = bzla_bv_uint64_to_bv(d_mm, 2, bw);
       tmp2 = bzla_bv_udiv(d_mm, bvmax, two);
       tmp  = bzla_bv_uint64_to_bv(d_mm, 1, bw);
-      t    = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, tmp2);
+      t    = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, tmp, tmp2);
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, tmp2);
       tmp  = bzla_bv_inc(d_mm, t);
       tmp2 = bzla_bv_mul(d_mm, t, two);
-      s    = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, tmp2);
+      s    = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, tmp, tmp2);
       bzla_bv_free(d_mm, tmp);
       bzla_bv_free(d_mm, tmp2);
       init_prop_info(&pi, exp, 1, t, s, 0, 0, x0, x1, 0);
@@ -1658,7 +1658,7 @@ class TestPropComplete : public TestBzla
     for (k = 0; k < 10; k++)
     {
       tmp = bzla_bv_inc(d_mm, zero);
-      s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
+      s   = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, tmp, bvmax);
       init_prop_info(&pi, exp, 0, t, 0, s, 0, x0, x1, 0);
       ASSERT_FALSE(is_inv_fun(d_bzla, &pi));
       res = cons_fun(d_bzla, &pi);
@@ -1686,8 +1686,8 @@ class TestPropComplete : public TestBzla
     for (k = 0; bw > 1 && k < 10; k++)
     {
       tmp = bzla_bv_inc(d_mm, zero);
-      t   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, bvmax);
-      s   = bzla_bv_new_random_range(d_mm, &d_bzla->rng, bw, tmp, t);
+      t   = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, tmp, bvmax);
+      s   = bzla_bv_new_random_range(d_mm, d_bzla->rng, bw, tmp, t);
       init_prop_info(&pi, exp, 0, t, 0, s, 0, x0, x1, 0);
       ASSERT_FALSE(is_inv_fun(d_bzla, &pi));
       res = cons_fun(d_bzla, &pi);
@@ -1762,14 +1762,14 @@ class TestPropComplete : public TestBzla
 
     for (k = 0; bw > 1 && k < 10; k++)
     {
-      bws[0]   = bzla_rng_pick_rand(&d_bzla->rng, 1, bw - 1);
+      bws[0]   = bzla_rng_pick_rand(d_bzla->rng, 1, bw - 1);
       bws[1]   = bw - bws[0];
       sorts[0] = bzla_sort_bv(d_bzla, bw);
       sorts[1] = bzla_sort_bv(d_bzla, bw);
       e[0]     = bzla_exp_var(d_bzla, sorts[0], 0);
       e[1]     = bzla_exp_var(d_bzla, sorts[1], 0);
       exp      = bzla_exp_bv_concat(d_bzla, e[0], e[1]);
-      t        = bzla_bv_new_random(d_mm, &d_bzla->rng, bw);
+      t        = bzla_bv_new_random(d_mm, d_bzla->rng, bw);
 
       if (use_domains)
       {
@@ -1800,7 +1800,7 @@ class TestPropComplete : public TestBzla
         {
           for (i = 0; i < bws[j]; i++)
           {
-            if (bzla_rng_pick_rand(&d_bzla->rng, 0, 5))
+            if (bzla_rng_pick_rand(d_bzla->rng, 0, 5))
             {
               bzla_bv_set_bit(s[j], i, bzla_bv_get_bit(s[j], i) ? 0 : 1);
               cnt += 1;

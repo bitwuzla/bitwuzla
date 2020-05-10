@@ -20,13 +20,28 @@
 #endif
 #include <stdint.h>
 
+BzlaRNG*
+bzla_rng_new(BzlaMemMgr* mm, uint32_t seed)
+{
+  assert(mm);
+  BzlaRNG* res;
+
+  BZLA_CNEW(mm, res);
+  res->mm   = mm;
+  res->seed = seed;
+  bzla_rng_init(res, seed);
+  return res;
+}
+
 void
 bzla_rng_init(BzlaRNG* rng, uint32_t seed)
 {
   assert(rng);
+  assert(rng->mm);
 
-  rng->w = seed;
-  rng->z = ~rng->w;
+  rng->seed = seed;
+  rng->w    = seed;
+  rng->z    = ~rng->w;
   rng->w <<= 1;
   rng->z <<= 1;
   rng->w += 1;
@@ -42,7 +57,6 @@ bzla_rng_init(BzlaRNG* rng, uint32_t seed)
   }
   else
   {
-    rng->mm        = bzla_mem_mgr_new();
     rng->gmp_state = bzla_mem_malloc(rng->mm, sizeof(gmp_randstate_t));
   }
   rng->is_init = true;
@@ -51,18 +65,24 @@ bzla_rng_init(BzlaRNG* rng, uint32_t seed)
 #endif
 }
 
-void
-bzla_rng_clone(BzlaRNG* rng, BzlaRNG* clone)
+BzlaRNG*
+bzla_rng_clone(BzlaRNG* rng, BzlaMemMgr* mm)
 {
-  (void) rng;
-  (void) clone;
-#ifdef BZLA_USE_GMP
+  assert(mm);
+  BzlaRNG* res;
+#ifndef BZLA_USE_GMP
+  res = bzla_rng_new(clone_mm, rng->seed);
+#else
   assert(rng->gmp_state);
-  clone->mm        = bzla_mem_mgr_new();
-  clone->gmp_state = bzla_mem_malloc(clone->mm, sizeof(gmp_randstate_t));
-  gmp_randinit_set(*((gmp_randstate_t*) clone->gmp_state),
+  BZLA_CNEW(mm, res);
+  res->mm        = mm;
+  res->seed      = rng->seed;
+  res->gmp_state = bzla_mem_malloc(res->mm, sizeof(gmp_randstate_t));
+  gmp_randinit_set(*((gmp_randstate_t*) res->gmp_state),
                    *((gmp_randstate_t*) rng->gmp_state));
+  rng->is_init = true;
 #endif
+  return res;
 }
 
 void
@@ -73,10 +93,10 @@ bzla_rng_delete(BzlaRNG* rng)
   assert(rng->gmp_state);
   gmp_randclear(*((gmp_randstate_t*) rng->gmp_state));
   bzla_mem_free(rng->mm, rng->gmp_state, sizeof(gmp_randstate_t));
-  bzla_mem_mgr_delete(rng->mm);
   rng->gmp_state = 0;
   rng->is_init   = false;
 #endif
+  BZLA_DELETE(rng->mm, rng);
 }
 
 uint32_t

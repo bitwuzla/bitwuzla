@@ -2338,16 +2338,16 @@ bzla_bv_udiv_urem(BzlaMemMgr *mm,
   uint32_t bw = a->width;
   if (bzla_bv_is_zero(b))
   {
-    q->val = bzla_bv_ones(mm, bw);
-    r->val = bzla_bv_copy(mm, a);
+    *q = bzla_bv_ones(mm, bw);
+    *r = bzla_bv_copy(mm, a);
   }
   else
   {
-    q = bzla_bv_new(mm, bw);
-    r = bzla_bv_new(mm, bw);
-    mpz_fdiv_qr(q->val, r->val, a->val, b->val);
-    mpz_fdiv_r_2exp(q->val, q->val, bw);
-    mpz_fdiv_r_2exp(r->val, r->val, bw);
+    *q = bzla_bv_new(mm, bw);
+    *r = bzla_bv_new(mm, bw);
+    mpz_fdiv_qr((*q)->val, (*r)->val, a->val, b->val);
+    mpz_fdiv_r_2exp((*q)->val, (*q)->val, bw);
+    mpz_fdiv_r_2exp((*r)->val, (*r)->val, bw);
   }
 #else
   assert(a->len == b->len);
