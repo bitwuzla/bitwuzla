@@ -317,6 +317,8 @@ if(USE_GMP)
   find_package(GMP)
   if(GMP_FOUND)
     add_definitions("-DBZLA_USE_GMP")
+  else()
+    message(FATAL_ERROR "GMP not found")
   endif()
 endif()
 
