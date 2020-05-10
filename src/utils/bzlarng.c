@@ -71,7 +71,7 @@ bzla_rng_clone(BzlaRNG* rng, BzlaMemMgr* mm)
   assert(mm);
   BzlaRNG* res;
 #ifndef BZLA_USE_GMP
-  res = bzla_rng_new(clone_mm, rng->seed);
+  res = bzla_rng_new(mm, rng->seed);
 #else
   assert(rng->gmp_state);
   BZLA_CNEW(mm, res);
