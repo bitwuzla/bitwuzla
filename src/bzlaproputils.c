@@ -2105,7 +2105,8 @@ bzla_proputils_cons_and_const(Bzla *bzla, BzlaPropInfo *pi)
 #ifndef NDEBUG
   check_cons_dbg(bzla, pi, true);
 #endif
-  BzlaBitVector *res;
+  bool conflict;
+  BzlaBitVector *res, *tmp;
   const BzlaBvDomain *x;
   const BzlaBitVector *t;
   BzlaMemMgr *mm;
@@ -2118,14 +2119,17 @@ bzla_proputils_cons_and_const(Bzla *bzla, BzlaPropInfo *pi)
 
   if (bzla_bvdomain_is_fixed(mm, x)) return bzla_bv_copy(mm, x->lo);
 
-  for (uint32_t i = 0, bw = bzla_bv_get_width(t); i < bw; i++)
+  /* If t & xhi != t, no consistent value exists. */
+  tmp      = bzla_bv_and(mm, t, x->hi);
+  conflict = bzla_bv_compare(t, tmp) != 0;
+  bzla_bv_free(mm, tmp);
+
+  if (conflict)
   {
-    if (bzla_bv_get_bit(t, i) && bzla_bvdomain_is_fixed_bit_false(x, i))
-    {
-      /* non-recoverable conflict */
-      return NULL;
-    }
+    /* non-recoverable conflict */
+    return NULL;
   }
+
   res = bzla_proputils_cons_and(bzla, pi);
   set_const_bits(mm, x, &res);
   return res;
