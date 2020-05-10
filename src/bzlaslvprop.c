@@ -372,8 +372,11 @@ bzla_prop_solver_init_domains(Bzla *bzla,
   BzlaMemMgr *mm;
   BzlaAIGVec *av;
   BzlaBvDomain *domain, *invdomain;
+  bool opt_prop_const_bits;
 
-  mm    = bzla->mm;
+  mm                  = bzla->mm;
+  opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS) != 0;
+
   cache = bzla_hashint_map_new(mm);
   BZLA_INIT_STACK(mm, visit);
 
@@ -408,13 +411,9 @@ bzla_prop_solver_init_domains(Bzla *bzla,
       invdomain = bzla_bvdomain_new_init(mm, bw);
       bzla_hashint_map_add(domains, -real_cur->id)->as_ptr = invdomain;
 
-      if (bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS))
+      if (opt_prop_const_bits)
       {
-        if (!real_cur->av)
-        {
-          bzla_synthesize_exp(bzla, real_cur, 0);
-        }
-        assert(real_cur->av);
+        assert(bzla_node_is_synth(real_cur));
         assert(real_cur->av->width == bw);
         av = real_cur->av;
         bw = av->width;

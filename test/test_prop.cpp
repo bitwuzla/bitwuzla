@@ -127,6 +127,7 @@ class TestProp : public TestBzla
 
     pos_s = pos_x ? 0 : 1;
 
+    bzla_synthesize_exp(d_bzla, eq, 0);
     bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
     if (bzla_is_bv_sra(d_bzla, exp, &children[0], &children[1]))
     {
@@ -334,6 +335,7 @@ class TestProp : public TestBzla
       pos_s1 = 1;
     }
 
+    bzla_synthesize_exp(d_bzla, eq, 0);
     bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
     assert((BzlaBvDomain *) bzla_hashint_map_get(
         d_domains, bzla_node_real_addr(exp->e[pos_x])->id));
@@ -683,6 +685,7 @@ class TestProp : public TestBzla
             bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, e, s_tmp);
             bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, exp, t_tmp);
 
+            bzla_synthesize_exp(d_bzla, eq, 0);
             bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
             assert((BzlaBvDomain *) bzla_hashint_map_get(
                 d_domains, bzla_node_real_addr(exp->e[0])->id));

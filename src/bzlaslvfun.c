@@ -2618,7 +2618,7 @@ sat_fun_solver(BzlaFunSolver *slv)
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
   uint32_t i;
-  bool opt_prels;
+  bool opt_prels, opt_prop_const_bits;
   BzlaSolverResult result;
   Bzla *bzla, *clone;
   BzlaNode *clone_root, *lemma;
@@ -2632,6 +2632,7 @@ sat_fun_solver(BzlaFunSolver *slv)
   mm        = bzla->mm;
   opt_prels = bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
               || bzla_opt_get(bzla, BZLA_OPT_FUN_PRESLS);
+  opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS) != 0;
 
   assert(!bzla->inconsistent);
 
@@ -2646,7 +2647,6 @@ sat_fun_solver(BzlaFunSolver *slv)
 
   if (bzla_terminate(bzla))
   {
-  UNKNOWN:
     result = BZLA_RESULT_UNKNOWN;
     goto DONE;
   }
@@ -2665,17 +2665,29 @@ sat_fun_solver(BzlaFunSolver *slv)
 
   while (true)
   {
+    result = BZLA_RESULT_UNKNOWN;
+
     if (bzla_terminate(bzla)
         || (slv->lod_limit > -1
             && slv->stats.lod_refinements >= (uint32_t) slv->lod_limit))
     {
-      goto UNKNOWN;
+      break;
     }
-
-    result = BZLA_RESULT_UNKNOWN;
 
     if (opt_prels)
     {
+      if (opt_prop_const_bits)
+      {
+        bzla_process_unsynthesized_constraints(bzla);
+        if (bzla->found_constraint_false)
+        {
+          result = BZLA_RESULT_UNSAT;
+          break;
+        }
+        assert(bzla->unsynthesized_constraints->count == 0);
+        assert(bzla_dbg_check_all_hash_tables_proxy_free(bzla));
+        assert(bzla_dbg_check_all_hash_tables_simp_free(bzla));
+      }
       result = check_sat_prels(slv, &ls_slv);
     }
 
@@ -2684,9 +2696,8 @@ sat_fun_solver(BzlaFunSolver *slv)
       bzla_process_unsynthesized_constraints(bzla);
       if (bzla->found_constraint_false)
       {
-      UNSAT:
         result = BZLA_RESULT_UNSAT;
-        goto DONE;
+        break;
       }
       assert(bzla->unsynthesized_constraints->count == 0);
       assert(bzla_dbg_check_all_hash_tables_proxy_free(bzla));
@@ -2705,12 +2716,14 @@ sat_fun_solver(BzlaFunSolver *slv)
     }
 
     if (result == BZLA_RESULT_UNSAT)
-      goto DONE;
+    {
+      break;
+    }
     else if (result == BZLA_RESULT_UNKNOWN)
     {
       assert(slv->sat_limit > -1 || bzla->cbs.term.done
              || bzla_opt_get(bzla, BZLA_OPT_PRINT_DIMACS));
-      goto DONE;
+      break;
     }
 
     assert(result == BZLA_RESULT_SAT);
@@ -2752,7 +2765,11 @@ sat_fun_solver(BzlaFunSolver *slv)
 
     /* may be set via insert_unsythesized_constraint
      * in case generated lemma is false */
-    if (bzla->inconsistent) goto UNSAT;
+    if (bzla->inconsistent)
+    {
+      result = BZLA_RESULT_UNSAT;
+      break;
+    }
   }
 
 DONE:
