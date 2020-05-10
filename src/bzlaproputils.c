@@ -1232,42 +1232,54 @@ bzla_proputils_cons_and(Bzla *bzla, BzlaPropInfo *pi)
   check_cons_dbg(bzla, pi, true);
 #endif
   uint32_t i, bw;
-  BzlaBitVector *res;
+  BzlaMemMgr *mm;
+  BzlaBitVector *res, *tmp;
   BzlaUIntStack dcbits;
   bool b;
   const BzlaBitVector *t;
 
-  t = pi->target_value;
+  mm = bzla->mm;
+  t  = pi->target_value;
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_and);
 
   b = bzla_rng_pick_with_prob(bzla->rng,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_AND_FLIP));
-  BZLA_INIT_STACK(bzla->mm, dcbits);
 
-  res = bzla_bv_copy(bzla->mm, pi->bv[pi->pos_x]);
-
-  /* s & res = t
-   * -> all bits set in t must be set in res
-   * -> all bits not set in t are chosen to be set randomly */
-  for (i = 0, bw = bzla_bv_get_width(t); i < bw; i++)
+  if (b)
   {
-    if (bzla_bv_get_bit(t, i))
-      bzla_bv_set_bit(res, i, 1);
-    else if (b)
-      BZLA_PUSH_STACK(dcbits, i);
-    else
-      bzla_bv_set_bit(res, i, bzla_rng_pick_rand(bzla->rng, 0, 1));
+    BZLA_INIT_STACK(mm, dcbits);
+    res = bzla_bv_copy(mm, pi->bv[pi->pos_x]);
+
+    /* s & res = t
+     * -> all bits set in t must be set in res
+     * -> all bits not set in t are chosen to be set randomly */
+    for (i = 0, bw = bzla_bv_get_width(t); i < bw; i++)
+    {
+      if (bzla_bv_get_bit(t, i))
+        bzla_bv_set_bit(res, i, 1);
+      else if (b)
+        BZLA_PUSH_STACK(dcbits, i);
+      else
+        bzla_bv_set_bit(res, i, bzla_rng_pick_rand(bzla->rng, 0, 1));
+    }
+
+    if (b && BZLA_COUNT_STACK(dcbits))
+      bzla_bv_flip_bit(
+          res,
+          BZLA_PEEK_STACK(
+              dcbits,
+              bzla_rng_pick_rand(bzla->rng, 0, BZLA_COUNT_STACK(dcbits) - 1)));
+    BZLA_RELEASE_STACK(dcbits);
+  }
+  else
+  {
+    bw  = bzla_bv_get_width(t);
+    tmp = bzla_bv_new_random(mm, bzla->rng, bw);
+    res = bzla_bv_or(mm, tmp, t);
+    bzla_bv_free(mm, tmp);
   }
 
-  if (b && BZLA_COUNT_STACK(dcbits))
-    bzla_bv_flip_bit(
-        res,
-        BZLA_PEEK_STACK(
-            dcbits,
-            bzla_rng_pick_rand(bzla->rng, 0, BZLA_COUNT_STACK(dcbits) - 1)));
-
-  BZLA_RELEASE_STACK(dcbits);
   return res;
 }
 
@@ -3346,7 +3358,7 @@ bzla_proputils_inv_and(Bzla *bzla, BzlaPropInfo *pi)
 #endif
   uint32_t i, bw;
   int32_t bit_and, bit_e;
-  BzlaBitVector *res;
+  BzlaBitVector *res, *tmp1, *tmp2, *mask;
   BzlaMemMgr *mm;
   BzlaUIntStack dcbits;
   bool b;
@@ -3360,47 +3372,67 @@ bzla_proputils_inv_and(Bzla *bzla, BzlaPropInfo *pi)
   t = pi->target_value;
   b = bzla_rng_pick_with_prob(bzla->rng,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_AND_FLIP));
-  BZLA_INIT_STACK(mm, dcbits);
 
-  res = bzla_bv_copy(mm, pi->bv[pi->pos_x]);
-  assert(res);
-
-  for (i = 0, bw = bzla_bv_get_width(t); i < bw; i++)
+  if (b)
   {
-    bit_and = bzla_bv_get_bit(t, i);
-    bit_e   = bzla_bv_get_bit(s, i);
+    BZLA_INIT_STACK(mm, dcbits);
 
-    assert(!bit_and || bit_e);
+    res = bzla_bv_copy(mm, pi->bv[pi->pos_x]);
+    assert(res);
 
-    /* ----------------------------------------------------------------------
-     * res & s = s & res = t
-     *
-     * -> all bits set in t and s must be set in res
-     * -> all bits not set in t but set in s must not be set in res
-     * -> all bits not set in s can be chosen to be set randomly
-     * ---------------------------------------------------------------------- */
-    if (bit_and)
-      bzla_bv_set_bit(res, i, 1);
-    else if (bit_e)
-      bzla_bv_set_bit(res, i, 0);
-    else if (b)
-      BZLA_PUSH_STACK(dcbits, i);
-    else
-      bzla_bv_set_bit(res, i, bzla_rng_pick_rand(bzla->rng, 0, 1));
+    for (i = 0, bw = bzla_bv_get_width(t); i < bw; i++)
+    {
+      bit_and = bzla_bv_get_bit(t, i);
+      bit_e   = bzla_bv_get_bit(s, i);
+
+      assert(!bit_and || bit_e);
+
+      /* ---------------------------------------------------------------------
+       * res & s = s & res = t
+       *
+       * -> all bits set in t and s must be set in res
+       * -> all bits not set in t but set in s must not be set in res
+       * -> all bits not set in s can be chosen to be set randomly
+       * -------------------------------------------------------------------- */
+      if (bit_and)
+        bzla_bv_set_bit(res, i, 1);
+      else if (bit_e)
+        bzla_bv_set_bit(res, i, 0);
+      else if (b)
+        BZLA_PUSH_STACK(dcbits, i);
+      else
+        bzla_bv_set_bit(res, i, bzla_rng_pick_rand(bzla->rng, 0, 1));
+    }
+
+    if (b && BZLA_COUNT_STACK(dcbits))
+      bzla_bv_flip_bit(
+          res,
+          BZLA_PEEK_STACK(
+              dcbits,
+              bzla_rng_pick_rand(bzla->rng, 0, BZLA_COUNT_STACK(dcbits) - 1)));
+
+    BZLA_RELEASE_STACK(dcbits);
   }
+  else
+  {
+    /* res = (t & s) | (~s & rand) */
+    bw   = bzla_bv_get_width(t);
+    tmp1 = bzla_bv_new_random(mm, bzla->rng, bw);
+    mask = bzla_bv_not(mm, s);
+    tmp2 = bzla_bv_and(mm, tmp1, mask);
+    bzla_bv_free(mm, mask);
+    bzla_bv_free(mm, tmp1);
 
-  if (b && BZLA_COUNT_STACK(dcbits))
-    bzla_bv_flip_bit(
-        res,
-        BZLA_PEEK_STACK(
-            dcbits,
-            bzla_rng_pick_rand(bzla->rng, 0, BZLA_COUNT_STACK(dcbits) - 1)));
+    tmp1 = bzla_bv_and(mm, t, s);
+    res  = bzla_bv_or(mm, tmp1, tmp2);
+    bzla_bv_free(mm, tmp1);
+    bzla_bv_free(mm, tmp2);
+  }
 
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_and, pi, res, "AND");
 #endif
 
-  BZLA_RELEASE_STACK(dcbits);
   return res;
 }
 
