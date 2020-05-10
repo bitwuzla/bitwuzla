@@ -2600,8 +2600,6 @@ check_sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
       bzla_node_release(bzla, cur);
     }
     BZLA_RELEASE_STACK(assertions);
-
-    result = bzla_simplify(bzla);
   }
 
   slv->time.prels_sat += bzla_util_time_stamp() - start;
