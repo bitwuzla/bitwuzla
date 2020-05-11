@@ -2649,8 +2649,6 @@ sat_fun_solver(BzlaFunSolver *slv)
     goto DONE;
   }
 
-  configure_sat_mgr(bzla);
-
   if (slv->assume_lemmas) reset_lemma_cache(slv);
 
   if (bzla->feqs->count > 0) add_function_inequality_constraints(bzla);
@@ -2679,6 +2677,7 @@ sat_fun_solver(BzlaFunSolver *slv)
 
     if (result == BZLA_RESULT_UNKNOWN)
     {
+      configure_sat_mgr(bzla);
       bzla_process_unsynthesized_constraints(bzla);
       if (bzla->found_constraint_false)
       {
