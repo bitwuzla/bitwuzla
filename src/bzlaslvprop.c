@@ -386,6 +386,8 @@ bzla_prop_solver_init_domains(Bzla *bzla,
     cur      = BZLA_POP_STACK(visit);
     real_cur = bzla_node_real_addr(cur);
 
+    if (bzla_hashint_map_contains(domains, real_cur->id)) continue;
+
     /* We do post order traversal even though it is not strictly necessary for
      * now, but it will be in the future (as soon as we use the propagators to
      * init the domains rather than the the AIG layer). */
@@ -397,12 +399,10 @@ bzla_prop_solver_init_domains(Bzla *bzla,
       for (i = 0; i < real_cur->arity; i++)
         BZLA_PUSH_STACK(visit, real_cur->e[i]);
     }
-    else
+    else if (!data->flag)
     {
       if (bzla_node_is_fun(real_cur) || bzla_node_is_args(real_cur)) continue;
-      if (data->as_int) continue;
-      if (bzla_hashint_map_contains(domains, real_cur->id)) continue;
-      data->as_int = 1;
+      data->flag = true;
 
       bw     = bzla_node_bv_get_width(bzla, real_cur);
       domain = bzla_bvdomain_new_init(mm, bw);
