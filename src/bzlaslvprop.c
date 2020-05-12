@@ -401,7 +401,9 @@ bzla_prop_solver_init_domains(Bzla *bzla,
     }
     else if (!data->flag)
     {
-      if (bzla_node_is_fun(real_cur) || bzla_node_is_args(real_cur)) continue;
+      if (bzla_node_is_fun(real_cur) || bzla_node_is_args(real_cur)
+          || real_cur->parameterized)
+        continue;
       data->flag = true;
 
       bw     = bzla_node_bv_get_width(bzla, real_cur);
