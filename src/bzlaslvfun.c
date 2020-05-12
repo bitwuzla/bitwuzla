@@ -2672,6 +2672,18 @@ sat_fun_solver(BzlaFunSolver *slv)
 
     if (opt_prels)
     {
+      if (opt_prop_const_bits)
+      {
+        bzla_process_unsynthesized_constraints(bzla);
+        if (bzla->found_constraint_false)
+        {
+          result = BZLA_RESULT_UNSAT;
+          break;
+        }
+        assert(bzla->unsynthesized_constraints->count == 0);
+        assert(bzla_dbg_check_all_hash_tables_proxy_free(bzla));
+        assert(bzla_dbg_check_all_hash_tables_simp_free(bzla));
+      }
       result = check_sat_prels(slv, &ls_slv);
     }
 
