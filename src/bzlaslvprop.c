@@ -128,7 +128,7 @@ select_constraint(Bzla *bzla, uint32_t nmoves)
 static void
 print_progress(BzlaPropSolver *slv)
 {
-  uint64_t num_total_roots;
+  uint64_t num_total_roots, num_unsat_roots;
   Bzla *bzla;
 
   bzla            = slv->bzla;
@@ -136,19 +136,20 @@ print_progress(BzlaPropSolver *slv)
                     + bzla->synthesized_constraints->count
                     + bzla->unsynthesized_constraints->count;
 
-  BZLA_MSG(
-      bzla->msg,
-      1,
-      "%zu/%zu roots satisfied (%.1f%%), "
-      "moves: %u, "
-      "propagations: %zu, "
-      "model updates: %zu",
-      num_total_roots - slv->roots->count,
-      num_total_roots,
-      (double) (num_total_roots - slv->roots->count) / num_total_roots * 100,
-      slv->stats.moves,
-      slv->stats.props,
-      slv->stats.updates);
+  num_unsat_roots = slv->roots ? slv->roots->count : 0;
+
+  BZLA_MSG(bzla->msg,
+           1,
+           "%zu/%zu roots satisfied (%.1f%%), "
+           "moves: %u, "
+           "propagations: %zu, "
+           "model updates: %zu",
+           num_total_roots - num_unsat_roots,
+           num_total_roots,
+           (double) (num_total_roots - num_unsat_roots) / num_total_roots * 100,
+           slv->stats.moves,
+           slv->stats.props,
+           slv->stats.updates);
 }
 
 static bool
@@ -396,14 +397,17 @@ bzla_prop_solver_init_domains(Bzla *bzla,
     {
       bzla_hashint_map_add(cache, real_cur->id);
       BZLA_PUSH_STACK(visit, cur);
-      for (i = 0; i < real_cur->arity; i++)
-        BZLA_PUSH_STACK(visit, real_cur->e[i]);
+      if (!bzla_lsutils_is_leaf_node(real_cur))
+      {
+        for (i = 0; i < real_cur->arity; i++)
+          BZLA_PUSH_STACK(visit, real_cur->e[i]);
+      }
     }
     else if (!data->flag)
     {
-      if (bzla_node_is_fun(real_cur) || bzla_node_is_args(real_cur)
-          || real_cur->parameterized)
-        continue;
+      assert(!bzla_node_is_fun(real_cur));
+      assert(!bzla_node_is_args(real_cur));
+      assert(!real_cur->parameterized);
       data->flag = true;
 
       bw     = bzla_node_bv_get_width(bzla, real_cur);
@@ -657,6 +661,13 @@ synthesize_constraints(Bzla *bzla)
       bzla->found_constraint_false = true;
       break;
     }
+  }
+
+  bzla_iter_hashptr_init(&it, bzla->assumptions);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    cur = bzla_iter_hashptr_next(&it);
+    bzla_synthesize_exp(bzla, cur, 0);
   }
 }
 
