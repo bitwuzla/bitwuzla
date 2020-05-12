@@ -1849,6 +1849,9 @@ bzla_clone_recursively_rebuild_exp(Bzla *bzla,
         case BZLA_BV_ULT_NODE:
           cur_clone = bzla_exp_bv_ult(clone, e[0], e[1]);
           break;
+        case BZLA_BV_SLT_NODE:
+          cur_clone = bzla_exp_bv_ult(clone, e[0], e[1]);
+          break;
         case BZLA_BV_SLL_NODE:
           cur_clone = bzla_exp_bv_sll(clone, e[0], e[1]);
           break;
