@@ -2643,6 +2643,8 @@ sat_fun_solver(BzlaFunSolver *slv)
   clone_root = 0;
   exp_map    = 0;
 
+  configure_sat_mgr(bzla);
+
   if (bzla_terminate(bzla))
   {
     result = BZLA_RESULT_UNKNOWN;
@@ -2689,7 +2691,6 @@ sat_fun_solver(BzlaFunSolver *slv)
 
     if (result == BZLA_RESULT_UNKNOWN)
     {
-      configure_sat_mgr(bzla);
       bzla_process_unsynthesized_constraints(bzla);
       if (bzla->found_constraint_false)
       {
