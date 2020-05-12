@@ -4208,28 +4208,35 @@ bzla_proputils_inv_ult(Bzla *bzla, BzlaPropInfo *pi)
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
 
   res = 0;
-  if (bzla_opt_get(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT))
-  {
-    res = inv_ult_concat(bzla, pi, false);
-  }
+  compute_ineq_bounds(bzla, pi, &min, &max);
 
-  if (!res)
+  if (min && max)
   {
-    compute_ineq_bounds(bzla, pi, &min, &max);
+    if (bzla_opt_get(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT))
+    {
+      res = inv_ult_concat(bzla, pi, false);
+      /* Result not in range min <= res <= max */
+      if (res
+          && (bzla_bv_compare(min, res) > 0 || bzla_bv_compare(res, max) > 0))
+      {
+        bzla_bv_free(mm, res);
+        res = 0;
+      }
+    }
 
-    if (min && max)
+    if (!res)
     {
       bw  = bzla_bv_get_width(pi->bv[pi->pos_x]);
       res = bzla_bv_new_random_range(mm, bzla->rng, bw, min, max);
+    }
 
-      bzla_bv_free(mm, min);
-      bzla_bv_free(mm, max);
-    }
-    else
-    {
-      /* conflicting bounds */
-      return 0;
-    }
+    bzla_bv_free(mm, min);
+    bzla_bv_free(mm, max);
+  }
+  else
+  {
+    /* conflicting bounds */
+    return 0;
   }
 
 #ifndef NDEBUG
@@ -4723,6 +4730,7 @@ bzla_proputils_inv_slt(Bzla *bzla, BzlaPropInfo *pi)
 #ifndef NDEBUG
   check_inv_dbg(bzla, pi, bzla_is_inv_slt, bzla_is_inv_slt_const, false);
 #endif
+  bool conflict = false;
   uint32_t bw;
   BzlaBitVector *res, *min = 0, *max = 0;
   BzlaMemMgr *mm;
@@ -4731,34 +4739,42 @@ bzla_proputils_inv_slt(Bzla *bzla, BzlaPropInfo *pi)
   record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_slt);
 
   res = 0;
+  compute_ineq_bounds(bzla, pi, &min, &max);
 
-  if (bzla_opt_get(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT))
+  if (min && max)
   {
-    bool conflict = false;
-    res           = inv_slt_concat(bzla, pi, false, &conflict);
-    if (conflict)
+    if (bzla_opt_get(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT))
     {
-      return 0;
+      res = inv_slt_concat(bzla, pi, false, &conflict);
+      if (conflict)
+      {
+        bzla_bv_free(mm, min);
+        bzla_bv_free(mm, max);
+        return 0;
+      }
+      /* Result not in range min <= res <= max */
+      if (res
+          && (bzla_bv_signed_compare(min, res) > 0
+              || bzla_bv_signed_compare(res, max) > 0))
+      {
+        bzla_bv_free(mm, res);
+        res = 0;
+      }
     }
-  }
 
-  if (!res)
-  {
-    compute_ineq_bounds(bzla, pi, &min, &max);
-
-    if (min && max)
+    if (!res)
     {
       bw  = bzla_bv_get_width(pi->bv[pi->pos_x]);
       res = bzla_bv_new_random_signed_range(mm, bzla->rng, bw, min, max);
+    }
 
-      bzla_bv_free(mm, min);
-      bzla_bv_free(mm, max);
-    }
-    else
-    {
-      /* conflicting bounds */
-      return 0;
-    }
+    bzla_bv_free(mm, min);
+    bzla_bv_free(mm, max);
+  }
+  else
+  {
+    /* conflicting bounds */
+    return 0;
   }
 
 #ifndef NDEBUG
@@ -6326,16 +6342,23 @@ bzla_proputils_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi)
   }
   else
   {
-    if (bzla_opt_get(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT))
-    {
-      res = inv_ult_concat(bzla, pi, true);
-    }
+    compute_ineq_bounds(bzla, pi, &min, &max);
 
-    if (!res)
+    if (min && max)
     {
-      compute_ineq_bounds(bzla, pi, &min, &max);
+      if (bzla_opt_get(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT))
+      {
+        res = inv_ult_concat(bzla, pi, true);
+        /* Result not in range min <= res <= max */
+        if (res
+            && (bzla_bv_compare(min, res) > 0 || bzla_bv_compare(res, max) > 0))
+        {
+          bzla_bv_free(mm, res);
+          res = 0;
+        }
+      }
 
-      if (min && max)
+      if (!res)
       {
         bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, min, max);
         if (bzla_bvdomain_gen_has_next(&gen))
@@ -6343,16 +6366,16 @@ bzla_proputils_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi)
           res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
         }
         bzla_bvdomain_gen_delete(&gen);
-
-        bzla_bv_free(mm, min);
-        bzla_bv_free(mm, max);
       }
 
-      if (!res)
-      {
-        /* conflict */
-        return 0;
-      }
+      bzla_bv_free(mm, min);
+      bzla_bv_free(mm, max);
+    }
+
+    if (!res)
+    {
+      /* conflict */
+      return 0;
     }
   }
 
@@ -6372,6 +6395,7 @@ bzla_proputils_inv_slt_const(Bzla *bzla, BzlaPropInfo *pi)
 #ifndef NDEBUG
   check_inv_dbg(bzla, pi, bzla_is_inv_slt, bzla_is_inv_slt_const, false);
 #endif
+  bool conflict = false;
   int32_t pos_x;
   BzlaBitVector *res, *min, *max;
   BzlaMemMgr *mm;
@@ -6402,21 +6426,30 @@ bzla_proputils_inv_slt_const(Bzla *bzla, BzlaPropInfo *pi)
   }
   else
   {
-    if (bzla_opt_get(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT))
+    compute_ineq_bounds(bzla, pi, &min, &max);
+
+    if (min && max)
     {
-      bool conflict = false;
-      res           = inv_slt_concat(bzla, pi, true, &conflict);
-      if (conflict)
+      if (bzla_opt_get(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT))
       {
-        return 0;
+        res = inv_slt_concat(bzla, pi, true, &conflict);
+        if (conflict)
+        {
+          bzla_bv_free(mm, min);
+          bzla_bv_free(mm, max);
+          return 0;
+        }
+        /* Result not in range min <= res <= max */
+        if (res
+            && (bzla_bv_signed_compare(min, res) > 0
+                || bzla_bv_signed_compare(res, max) > 0))
+        {
+          bzla_bv_free(mm, res);
+          res = 0;
+        }
       }
-    }
 
-    if (!res)
-    {
-      compute_ineq_bounds(bzla, pi, &min, &max);
-
-      if (min && max)
+      if (!res)
       {
         bzla_bvdomain_gen_signed_init_range(mm, bzla->rng, &gen, x, min, max);
         if (bzla_bvdomain_gen_signed_has_next(&gen))
@@ -6424,16 +6457,16 @@ bzla_proputils_inv_slt_const(Bzla *bzla, BzlaPropInfo *pi)
           res = bzla_bv_copy(mm, bzla_bvdomain_gen_signed_random(&gen));
         }
         bzla_bvdomain_gen_signed_delete(&gen);
-
-        bzla_bv_free(mm, min);
-        bzla_bv_free(mm, max);
       }
 
-      if (!res)
-      {
-        /* conflict */
-        return 0;
-      }
+      bzla_bv_free(mm, min);
+      bzla_bv_free(mm, max);
+    }
+
+    if (!res)
+    {
+      /* conflict */
+      return 0;
     }
   }
 
