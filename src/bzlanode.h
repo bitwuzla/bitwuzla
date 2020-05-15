@@ -1255,6 +1255,8 @@ BzlaNode *bzla_node_param_get_assigned_exp(BzlaNode *param);
 /** Instantiate given parameter. */
 BzlaNode *bzla_node_param_set_assigned_exp(BzlaNode *param, BzlaNode *exp);
 
+BzlaNode *bzla_node_mk_param_with_unique_symbol(Bzla *bzla, BzlaNode *node);
+
 /*------------------------------------------------------------------------*/
 
 /** Create a bit-vector constant. */

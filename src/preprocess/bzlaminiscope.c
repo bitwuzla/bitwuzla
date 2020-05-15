@@ -16,39 +16,6 @@
 #include "utils/bzlastack.h"
 #include "utils/bzlautil.h"
 
-static BzlaNode *
-mk_param_with_symbol(Bzla *bzla, BzlaNode *node)
-{
-  BzlaMemMgr *mm;
-  BzlaNode *result;
-  size_t len  = 0;
-  int32_t idx = 0;
-  char *sym, *buf = 0;
-
-  mm  = bzla->mm;
-  sym = bzla_node_get_symbol(bzla, node);
-  if (sym)
-  {
-    len = strlen(sym);
-    while (true)
-    {
-      len += 2 + bzla_util_num_digits(idx);
-      BZLA_NEWN(mm, buf, len);
-      sprintf(buf, "%s!%d", sym, idx);
-      if (bzla_hashptr_table_get(bzla->symbols, buf))
-      {
-        BZLA_DELETEN(mm, buf, len);
-        idx += 1;
-      }
-      else
-        break;
-    }
-  }
-  result = bzla_exp_param(bzla, node->sort_id, buf);
-  if (buf) BZLA_DELETEN(mm, buf, len);
-  return result;
-}
-
 static void
 miniscope(Bzla *bzla,
           BzlaNode *quant,
@@ -272,7 +239,7 @@ rebuild(Bzla *bzla, BzlaNode *root, BzlaPtrHashTable *pushed)
       if (real_cur->arity == 0)
       {
         if (bzla_node_is_param(real_cur))
-          result = mk_param_with_symbol(bzla, real_cur);
+          result = bzla_node_mk_param_with_unique_symbol(bzla, real_cur);
         else
           result = bzla_node_copy(bzla, real_cur);
       }

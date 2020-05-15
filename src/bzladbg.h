@@ -130,6 +130,8 @@ bool bzla_dbg_precond_apply_exp(Bzla* bzla,
                                 const BzlaNode* fun,
                                 const BzlaNode* args);
 
+void bzla_dbg_print_free_params(Bzla* bzla, BzlaNode* n);
+
 /*------------------------------------------------------------------------*/
 #endif
 /*------------------------------------------------------------------------*/

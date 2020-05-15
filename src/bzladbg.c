@@ -606,6 +606,29 @@ bzla_dbg_precond_apply_exp(Bzla *bzla,
   return true;
 }
 
+void
+bzla_dbg_print_free_params(Bzla *bzla, BzlaNode *n)
+{
+  BzlaPtrHashBucket *b;
+  BzlaIntHashTable *t;
+  BzlaIntHashTableIterator it;
+  BzlaNode *cur;
+  int32_t id;
+
+  b = bzla_hashptr_table_get(bzla->parameterized, n);
+
+  if (!b) return;
+
+  t = b->data.as_ptr;
+  bzla_iter_hashint_init(&it, t);
+  while (bzla_iter_hashint_has_next(&it))
+  {
+    id  = bzla_iter_hashint_next(&it);
+    cur = bzla_node_get_by_id(bzla, id);
+    printf("free param: %s\n", bzla_util_node2string(cur));
+  }
+}
+
 /*------------------------------------------------------------------------*/
 #endif
 /*------------------------------------------------------------------------*/

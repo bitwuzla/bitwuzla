@@ -1610,6 +1610,39 @@ bzla_node_param_set_assigned_exp(BzlaNode *param, BzlaNode *exp)
   return ((BzlaParamNode *) bzla_node_real_addr(param))->assigned_exp = exp;
 }
 
+BzlaNode *
+bzla_node_mk_param_with_unique_symbol(Bzla *bzla, BzlaNode *node)
+{
+  BzlaMemMgr *mm;
+  BzlaNode *result;
+  size_t len  = 0;
+  int32_t idx = 0;
+  char *sym, *buf = 0;
+
+  mm  = bzla->mm;
+  sym = bzla_node_get_symbol(bzla, node);
+  if (sym)
+  {
+    len = strlen(sym);
+    while (true)
+    {
+      len += 2 + bzla_util_num_digits(idx);
+      BZLA_NEWN(mm, buf, len);
+      sprintf(buf, "%s!%d", sym, idx);
+      if (bzla_hashptr_table_get(bzla->symbols, buf))
+      {
+        BZLA_DELETEN(mm, buf, len);
+        idx += 1;
+      }
+      else
+        break;
+    }
+  }
+  result = bzla_exp_param(bzla, node->sort_id, buf);
+  if (buf) BZLA_DELETEN(mm, buf, len);
+  return result;
+}
+
 /*------------------------------------------------------------------------*/
 
 static bool
