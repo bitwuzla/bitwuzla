@@ -7605,7 +7605,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   assert(root);
   assert(bvroot);
 
-  bool is_inv, pick_inv, has_fixed_bits;
+  bool is_inv, pick_inv, pick_rand, has_fixed_bits;
   bool opt_prop_xor, opt_prop_sext, opt_prop_sra;
   int32_t i, arity, nconst;
   uint64_t nprops;
@@ -7615,12 +7615,13 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   BzlaBitVector *bv_s[BZLA_NODE_MAX_CHILDREN] = {0, 0, 0};
   BzlaBitVector *bv_t, *bv_s_new, *tmp;
   BzlaMemMgr *mm;
-  uint32_t opt_prop_prob_use_inv_value;
+  uint32_t opt_prop_prob_use_inv_value, opt_prop_prob_fallback_rand_value;
   uint32_t opt_prop_const_bits;
   bool opt_skip_no_progress;
   bool is_sext, is_xor, is_sra;
   BzlaPropInfo pi;
   BzlaNode **children = 0, *tmp_children[2];
+  BzlaBvDomainGenerator gen;
 
   BzlaPropSelectPath select_path;
   BzlaPropIsInvFun is_inv_fun;
@@ -7640,6 +7641,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
   opt_prop_prob_use_inv_value =
       bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE);
+  opt_prop_prob_fallback_rand_value =
+      bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE);
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
   opt_skip_no_progress =
       bzla_opt_get(bzla, BZLA_OPT_PROP_SKIP_NO_PROGRESS) != 0;
@@ -7965,7 +7968,26 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       if (!bv_s_new)
       {
         (void) record_conflict(bzla, real_cur, bv_t, bv_s, pos_x, false);
-        break;
+        if (opt_prop_const_bits && opt_prop_prob_fallback_rand_value)
+        {
+          assert(bzla_bvdomain_has_fixed_bits(mm, pi.bvd[pi.pos_x]));
+          pick_rand = bzla_rng_pick_with_prob(
+              bzla->rng, opt_prop_prob_fallback_rand_value);
+          if (pick_rand)
+          {
+            bzla_bvdomain_gen_init(mm, bzla->rng, &gen, pi.bvd[pi.pos_x]);
+            if (bzla_bvdomain_gen_has_next(&gen))
+            {
+              bv_s_new = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+            }
+            bzla_bvdomain_gen_delete(&gen);
+          }
+        }
+
+        if (!bv_s_new)
+        {
+          break;
+        }
       }
 #ifndef NBZLALOG
       a = bzla_bv_to_char(bzla->mm, bv_s_new);
