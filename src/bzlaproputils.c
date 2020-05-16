@@ -7806,6 +7806,19 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       pi.res_x        = 0;
       pi.target_value = bv_t;
 
+      /* Initialize domains. */
+      if (opt_prop_const_bits)
+      {
+        assert(domains);
+        for (i = 0; i < arity; ++i)
+        {
+          d = bzla_hashint_map_get(domains, bzla_node_get_id(children[i]));
+          assert(d);
+          assert(d->as_ptr);
+          pi.bvd[i] = d->as_ptr;
+        }
+      }
+
       /* select path */
       if (is_sext)
       {
@@ -7838,24 +7851,10 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       }
 #endif
 
-      /* Initialize domains. */
       has_fixed_bits = false;
       if (opt_prop_const_bits)
       {
-        assert(domains);
-        d = bzla_hashint_map_get(domains, bzla_node_get_id(children[pos_x]));
-        assert(d);
-        assert(d->as_ptr);
-
-        has_fixed_bits = bzla_bvdomain_has_fixed_bits(mm, d->as_ptr);
-
-        for (i = 0; i < arity; ++i)
-        {
-          d = bzla_hashint_map_get(domains, bzla_node_get_id(children[i]));
-          assert(d);
-          assert(d->as_ptr);
-          pi.bvd[i] = d->as_ptr;
-        }
+        has_fixed_bits = bzla_bvdomain_has_fixed_bits(mm, pi.bvd[pos_x]);
       }
 
       /* 1) check invertibility
