@@ -7837,6 +7837,11 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         select_path = kind_to_select_path[real_cur->kind];
         pos_x       = select_path(bzla, &pi);
       }
+
+      if (!is_sext && nconst == 0 && bzla_rng_pick_with_prob(bzla->rng, 10))
+      {
+        pi.pos_x = pos_x = select_path_random(bzla, pi.exp);
+      }
       assert(pi.pos_x == pos_x);
 
       assert(pos_x >= 0);
