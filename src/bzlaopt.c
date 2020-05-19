@@ -1589,6 +1589,16 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "enable non-destructive term substitutions");
+  init_opt(bzla,
+           BZLA_OPT_UNSAT_CORES,
+           true,
+           true,
+           "unsat-cores",
+           0,
+           0,
+           0,
+           1,
+           "enable unsat cores");
 }
 
 void
@@ -1799,6 +1809,13 @@ bzla_opt_set(Bzla *bzla, const BzlaOption opt, uint32_t val)
                "is enabled");
     }
     assert(!val || !bzla_opt_get(bzla, BZLA_OPT_UCOPT));
+  }
+  else if (opt == BZLA_OPT_UNSAT_CORES)
+  {
+    if (val)
+    {
+      bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
+    }
   }
   else if (opt == BZLA_OPT_UCOPT)
   {

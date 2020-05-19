@@ -90,6 +90,7 @@ const char *const g_bzla_op2str[BZLA_NUM_OPS_NODE] = {
     [BZLA_FP_TO_FP_INT_NODE]  = "fptofpfromint",
     [BZLA_FP_TO_FP_UINT_NODE] = "fptofpfromuint",
     [BZLA_RM_CONST_NODE]      = "rmconst",
+    [BZLA_RM_EQ_NODE]         = "rmeq",
     [BZLA_APPLY_NODE]         = "apply",
     [BZLA_FORALL_NODE]        = "forall",
     [BZLA_EXISTS_NODE]        = "exists",

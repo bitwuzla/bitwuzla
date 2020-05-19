@@ -298,6 +298,8 @@ bool boolector_failed(Bzla *bzla, BoolectorNode *node);
 */
 BoolectorNode **boolector_get_failed_assumptions(Bzla *bzla);
 
+BoolectorNode **boolector_get_unsat_core(Bzla *bzla);
+
 /*!
   Add all assumptions as assertions.
 

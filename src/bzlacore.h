@@ -152,6 +152,7 @@ struct Bzla
   /* maintains non-simplified assumptions as assumed via boolector_assume,
    * this stack is needed for boolector_get_failed_assumptions only */
   BzlaNodePtrStack failed_assumptions;
+  BzlaNodePtrStack unsat_core;
 
   /* maintain assertions for different contexts push/pop */
   BzlaNodePtrStack assertions;
@@ -271,6 +272,8 @@ void bzla_reset_time(Bzla *bzla);
 
 /* Reset other statistics. */
 void bzla_reset_stats(Bzla *bzla);
+
+void bzla_reset_unsat_core(Bzla *bzla);
 
 /* Adds top level constraint. */
 void bzla_assert_exp(Bzla *bzla, BzlaNode *exp);

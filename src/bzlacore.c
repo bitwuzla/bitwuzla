@@ -760,6 +760,7 @@ bzla_new(void)
                              (BzlaHashPtr) bzla_node_hash_by_id,
                              (BzlaCmpPtr) bzla_node_compare_by_id);
   BZLA_INIT_STACK(mm, bzla->failed_assumptions);
+  BZLA_INIT_STACK(mm, bzla->unsat_core);
   bzla->parameterized =
       bzla_hashptr_table_new(mm,
                              (BzlaHashPtr) bzla_node_hash_by_id,
@@ -889,6 +890,22 @@ bzla_delete_varsubst_constraints(Bzla *bzla)
 }
 
 void
+bzla_reset_unsat_core(Bzla *bzla)
+{
+  size_t i;
+  BzlaNode *cur;
+
+  for (i = 0; i < BZLA_COUNT_STACK(bzla->unsat_core); i++)
+  {
+    cur = BZLA_PEEK_STACK(bzla->unsat_core, i);
+    if (!cur) continue;
+    bzla_node_dec_ext_ref_counter(bzla, cur);
+    bzla_node_release(bzla, cur);
+  }
+  BZLA_RESET_STACK(bzla->unsat_core);
+}
+
+void
 bzla_delete(Bzla *bzla)
 {
   assert(bzla);
@@ -939,6 +956,9 @@ bzla_delete(Bzla *bzla)
       bzla_node_release(bzla, BZLA_PEEK_STACK(bzla->failed_assumptions, i));
   }
   BZLA_RELEASE_STACK(bzla->failed_assumptions);
+
+  bzla_reset_unsat_core(bzla);
+  BZLA_RELEASE_STACK(bzla->unsat_core);
 
   for (i = 0; i < BZLA_COUNT_STACK(bzla->assertions); i++)
     bzla_node_release(bzla, BZLA_PEEK_STACK(bzla->assertions, i));
@@ -2997,7 +3017,8 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
    * corresponding context is popped. */
   if (BZLA_COUNT_STACK(bzla->assertions) > 0)
   {
-    assert(BZLA_COUNT_STACK(bzla->assertions_trail) > 0);
+    assert(BZLA_COUNT_STACK(bzla->assertions_trail) > 0
+           || bzla_opt_get(bzla, BZLA_OPT_UNSAT_CORES));
     uint32_t i;
     for (i = 0; i < BZLA_COUNT_STACK(bzla->assertions); i++)
     {

@@ -5658,6 +5658,8 @@ set_option_smt2(BzlaSMT2Parser *parser)
   {
     if (tag == BZLA_PRODUCE_MODELS_TAG_SMT2)
       o = BZLA_OPT_MODEL_GEN;
+    else if (tag == BZLA_PRODUCE_UNSAT_CORES_TAG_SMT2)
+      o = BZLA_OPT_UNSAT_CORES;
     else
     {
       opt = parser->token.start + 1;
@@ -5787,7 +5789,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
   BoolectorNode *exp = 0;
   BzlaSMT2Coo coo;
   BoolectorNodePtrStack exps;
-  BoolectorNode **failed_assumptions;
+  BoolectorNode **failed_assumptions, **unsat_core;
 
   coo.x = coo.y = 0;
   tag           = read_token_smt2(parser);
@@ -6036,6 +6038,29 @@ read_command_smt2(BzlaSMT2Parser *parser)
         }
       }
       failed_assumptions = 0;
+      fputs(")\n", parser->outfile);
+      fflush(parser->outfile);
+      break;
+
+    case BZLA_GET_UNSAT_CORE_TAG_SMT2:
+      if (!read_rpar_smt2(parser, " after 'get-unsat-assumptions'")) return 0;
+      if (parser->res->result != BOOLECTOR_UNSAT) break;
+      fputc('(', parser->outfile);
+      unsat_core = boolector_get_unsat_core(parser->bzla);
+      const char *sym;
+      bool printed_first = false;
+      for (i = 0; unsat_core[i] != 0; i++)
+      {
+        sym = boolector_get_symbol(parser->bzla, unsat_core[i]);
+        if (!sym) continue;
+        if (printed_first)
+        {
+          fputc(' ', parser->outfile);
+        }
+        fprintf(parser->outfile, "%s", sym);
+        printed_first = true;
+      }
+      unsat_core = 0;
       fputs(")\n", parser->outfile);
       fflush(parser->outfile);
       break;

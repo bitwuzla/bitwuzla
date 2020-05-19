@@ -479,7 +479,8 @@ boolector_assert(Bzla *bzla, BoolectorNode *node)
 
   /* all assertions at a context level > 0 are internally handled as
    * assumptions. */
-  if (BZLA_COUNT_STACK(bzla->assertions_trail) > 0)
+  if (BZLA_COUNT_STACK(bzla->assertions_trail) > 0
+      || bzla_opt_get(bzla, BZLA_OPT_UNSAT_CORES))
   {
     int32_t id = bzla_node_get_id(exp);
     if (!bzla_hashint_table_contains(bzla->assertions_cache, id))
@@ -580,6 +581,49 @@ boolector_get_failed_assumptions(Bzla *bzla)
   {
     BoolectorNode **cloneres;
     cloneres = boolector_get_failed_assumptions(bzla->clone);
+    for (i = 0; res[i] != NULL; i++)
+      bzla_chkclone_exp(bzla,
+                        bzla->clone,
+                        BZLA_IMPORT_BOOLECTOR_NODE(res[i]),
+                        BZLA_IMPORT_BOOLECTOR_NODE(cloneres[i]));
+    bzla_chkclone(bzla, bzla->clone);
+  }
+#endif
+  return res;
+}
+
+BoolectorNode **
+boolector_get_unsat_core(Bzla *bzla)
+{
+  BoolectorNode **res;
+  BzlaNode *cur;
+  uint32_t i;
+
+  BZLA_ABORT_ARG_NULL(bzla);
+  BZLA_ABORT(bzla->last_sat_result != BZLA_RESULT_UNSAT,
+             "cannot get unsat core if input formula is not UNSAT");
+  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_UNSAT_CORES),
+             "unsat core generation not enabled");
+
+  bzla_reset_unsat_core(bzla);
+  for (i = 0; i < BZLA_COUNT_STACK(bzla->assertions); i++)
+  {
+    cur = BZLA_PEEK_STACK(bzla->assertions, i);
+    if (!cur) continue;
+
+    if (bzla_failed_exp(bzla, cur))
+    {
+      BZLA_PUSH_STACK(bzla->unsat_core, bzla_node_copy(bzla, cur));
+      bzla_node_inc_ext_ref_counter(bzla, cur);
+    }
+  }
+  BZLA_PUSH_STACK(bzla->unsat_core, NULL);
+  res = (BoolectorNode **) bzla->unsat_core.start;
+#ifndef NDEBUG
+  if (bzla->clone)
+  {
+    BoolectorNode **cloneres;
+    cloneres = boolector_get_unsat_core(bzla->clone);
     for (i = 0; res[i] != NULL; i++)
       bzla_chkclone_exp(bzla,
                         bzla->clone,
