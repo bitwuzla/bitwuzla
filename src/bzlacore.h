@@ -134,6 +134,7 @@ struct Bzla
 
   bool inconsistent;
   bool found_constraint_false;
+  bool fp_synth_assume;
 
   uint32_t external_refs;        /* external references (library mode) */
   uint32_t bzla_sat_bzla_called; /* how often is bzla_check_sat been called */

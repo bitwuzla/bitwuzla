@@ -2138,6 +2138,19 @@ BzlaFPWordBlaster::~BzlaFPWordBlaster()
   }
 }
 
+static void
+add_constraint(Bzla *bzla, BzlaNode *n)
+{
+  if (bzla->fp_synth_assume)
+  {
+    bzla_assume_exp(bzla, n);
+  }
+  else
+  {
+    bzla_assert_exp(bzla, n);
+  }
+}
+
 BzlaNode *
 BzlaFPWordBlaster::word_blast(BzlaNode *node)
 {
@@ -2221,8 +2234,8 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         BzlaNode *then_imp = bzla_exp_implies(d_bzla, cur->e[0], then_eq);
         BzlaNode *else_imp =
             bzla_exp_implies(d_bzla, bzla_node_invert(cur->e[0]), else_eq);
-        bzla_assert_exp(d_bzla, then_imp);
-        bzla_assert_exp(d_bzla, else_imp);
+        add_constraint(d_bzla, then_imp);
+        add_constraint(d_bzla, else_imp);
         bzla_node_release(d_bzla, else_imp);
         bzla_node_release(d_bzla, then_imp);
         bzla_node_release(d_bzla, else_eq);
@@ -2238,7 +2251,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         BzlaFPSymRM var(cur);
         d_rm_map.emplace(bzla_node_copy(d_bzla, cur), var);
         BzlaFPSymProp assertion = var.valid();
-        bzla_assert_exp(d_bzla, assertion.getNode());
+        add_constraint(d_bzla, assertion.getNode());
       }
       else if (bzla_node_is_fp_const(cur))
       {
@@ -2272,7 +2285,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         BzlaSymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
         d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur), uf);
         BzlaFPSymProp assertion = uf.valid(sort);
-        bzla_assert_exp(d_bzla, assertion.getNode());
+        add_constraint(d_bzla, assertion.getNode());
 
         bzla_node_release(d_bzla, sig);
         bzla_node_release(d_bzla, exp);
