@@ -13,9 +13,11 @@ set(libboolector_src_files
   bzlachkmodel.c
   bzlachkfailed.c
   bzlaclone.c
+  bzlaconsutils.c
   bzlacore.c
   bzladbg.c
   bzladcr.c
+  bzlaessutils.c
   bzlaexp.c
   bzlainvutils.c
   bzlalsutils.c

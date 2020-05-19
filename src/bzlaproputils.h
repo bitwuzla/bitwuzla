@@ -77,6 +77,7 @@ uint64_t bzla_proputils_select_move_prop(Bzla* bzla,
 
 /*=========================================================================*/
 
+typedef bool (*BzlaPropIsEssFun)(Bzla* bzla, BzlaPropInfo* pi, uint32_t pos_x);
 typedef bool (*BzlaPropIsInvFun)(Bzla* bzla, BzlaPropInfo* pi);
 
 typedef BzlaBitVector* (*BzlaPropComputeValueFun)(Bzla* bzla, BzlaPropInfo* pi);

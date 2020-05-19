@@ -10,6 +10,7 @@ set(test_names
   bvprop
   comp
   constbits
+  essutils
   exp
   hash
   inc
