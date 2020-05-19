@@ -157,6 +157,8 @@ enum BzlaOption
         `CaDiCaL <https://fmv.jku.at/cadical>`_
       * BZLA_SAT_ENGINE_CMS:
         `CryptoMiniSat <https://github.com/msoos/cryptominisat>`_
+      * BZLA_SAT_ENGINE_KISSAT:
+        `Kissat <https://github.com/arminbiere/kissat>`_
       * BZLA_SAT_ENGINE_LINGELING:
         `Lingeling <https://fmv.jku.at/lingeling>`_
       * BZLA_SAT_ENGINE_MINISAT:
@@ -988,6 +990,7 @@ enum BzlaOptSatEngine
 {
   BZLA_SAT_ENGINE_LINGELING,
   BZLA_SAT_ENGINE_PICOSAT,
+  BZLA_SAT_ENGINE_KISSAT,
   BZLA_SAT_ENGINE_MINISAT,
   BZLA_SAT_ENGINE_CADICAL,
   BZLA_SAT_ENGINE_CMS,

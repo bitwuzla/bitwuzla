@@ -21,6 +21,7 @@
 #include "bzlacore.h"
 #include "sat/bzlacadical.h"
 #include "sat/bzlacms.h"
+#include "sat/bzlakissat.h"
 #include "sat/bzlalgl.h"
 #include "sat/bzlaminisat.h"
 #include "sat/bzlapicosat.h"
@@ -30,7 +31,7 @@
 
 #if !defined(BZLA_USE_LINGELING) && !defined(BZLA_USE_PICOSAT)  \
     && !defined(BZLA_USE_MINISAT) && !defined(BZLA_USE_CADICAL) \
-    && !defined(BZLA_USE_CMS)
+    && !defined(BZLA_USE_CMS) && !defined(BZLA_USE_KISSAT)
 #error "no SAT solver configured"
 #endif
 
@@ -305,6 +306,9 @@ bzla_sat_enable_solver(BzlaSATMgr *smgr)
 #endif
 #ifdef BZLA_USE_PICOSAT
     case BZLA_SAT_ENGINE_PICOSAT: bzla_sat_enable_picosat(smgr); break;
+#endif
+#ifdef BZLA_USE_KISSAT
+    case BZLA_SAT_ENGINE_KISSAT: bzla_sat_enable_kissat(smgr); break;
 #endif
 #ifdef BZLA_USE_MINISAT
     case BZLA_SAT_ENGINE_MINISAT: bzla_sat_enable_minisat(smgr); break;
