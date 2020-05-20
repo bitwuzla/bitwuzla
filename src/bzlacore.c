@@ -3164,7 +3164,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
         bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
         while (bzla_iter_hashptr_has_next(&it))
         {
-          cur = bzla_iter_hashptr_next(&it);
+          cur = bzla_node_real_addr(bzla_iter_hashptr_next(&it));
           BZLA_ABORT(cur->lambda_below || cur->apply_below,
                      "quantifiers with functions not supported yet");
         }
