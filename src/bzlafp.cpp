@@ -2138,6 +2138,7 @@ BzlaFPWordBlaster::~BzlaFPWordBlaster()
   }
 }
 
+#ifdef BZLA_USE_SYMFPU
 static void
 add_constraint(Bzla *bzla, BzlaNode *n)
 {
@@ -2150,6 +2151,7 @@ add_constraint(Bzla *bzla, BzlaNode *n)
     bzla_assert_exp(bzla, n);
   }
 }
+#endif
 
 BzlaNode *
 BzlaFPWordBlaster::word_blast(BzlaNode *node)
