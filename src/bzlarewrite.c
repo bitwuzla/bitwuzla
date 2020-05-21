@@ -8003,7 +8003,7 @@ rewrite_bv_srl_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     ADD_RW_RULE(special_const_lhs_binary_exp, kind, e0, e1);
     ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
     ADD_RW_RULE(const_srl, e0, e1);
-    // ADD_RW_RULE (zero_srl, e0, e1);
+    ADD_RW_RULE(same_srl, e0, e1);
 
     assert(!result);
     if (!result)
