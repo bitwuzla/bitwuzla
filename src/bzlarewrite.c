@@ -4616,8 +4616,8 @@ applies_neg_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   (void) e1;
   return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
-         && bzla_node_bv_is_neg(bzla, e0, 0)
-         && bzla_node_bv_is_neg(bzla, e1, 0);
+         && (bzla_node_bv_is_neg(bzla, e0, 0)
+             || bzla_node_bv_is_neg(bzla, e1, 0));
 }
 
 static inline BzlaNode *
@@ -4625,13 +4625,60 @@ apply_neg_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   assert(applies_neg_mul(bzla, e0, e1));
 
-  BzlaNode *result, *a, *b;
+  bool is_neg0, is_neg1;
+  BzlaNode *result, *tmp, *a, *b;
 
-  bzla_node_bv_is_neg(bzla, e0, &a);
-  bzla_node_bv_is_neg(bzla, e1, &b);
+  is_neg0 = bzla_node_bv_is_neg(bzla, e0, &a);
+  is_neg1 = bzla_node_bv_is_neg(bzla, e1, &b);
 
   BZLA_INC_REC_RW_CALL(bzla);
-  result = rewrite_bv_mul_exp(bzla, a, b);
+  if (is_neg0 && is_neg1)
+  {
+    result = rewrite_bv_mul_exp(bzla, a, b);
+  }
+  else if (is_neg0)
+  {
+    tmp    = rewrite_bv_mul_exp(bzla, a, e1);
+    result = bzla_exp_bv_neg(bzla, tmp);
+    bzla_node_release(bzla, tmp);
+  }
+  else
+  {
+    assert(is_neg1);
+    tmp    = rewrite_bv_mul_exp(bzla, e0, b);
+    result = bzla_exp_bv_neg(bzla, tmp);
+    bzla_node_release(bzla, tmp);
+  }
+  BZLA_DEC_REC_RW_CALL(bzla);
+  return result;
+}
+
+static inline bool
+applies_ones_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  (void) e1;
+  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+         && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
+         && (bzla_node_is_bv_const_ones(bzla, e0)
+             || bzla_node_is_bv_const_ones(bzla, e1));
+}
+
+static inline BzlaNode *
+apply_ones_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(applies_ones_mul(bzla, e0, e1));
+
+  BzlaNode *result;
+
+  BZLA_INC_REC_RW_CALL(bzla);
+  if (bzla_node_is_bv_const_ones(bzla, e0))
+  {
+    result = bzla_exp_bv_neg(bzla, e1);
+  }
+  else
+  {
+    result = bzla_exp_bv_neg(bzla, e0);
+  }
   BZLA_DEC_REC_RW_CALL(bzla);
   return result;
 }
@@ -7749,6 +7796,7 @@ SWAP_OPERANDS:
     ADD_RW_RULE(push_ite_mul, e0, e1);
     ADD_RW_RULE(sll_mul, e0, e1);
     ADD_RW_RULE(neg_mul, e0, e1);
+    ADD_RW_RULE(ones_mul, e0, e1);
 
     assert(!result);
 
