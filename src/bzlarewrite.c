@@ -4286,8 +4286,7 @@ applies_sll_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e1)
-         && bzla_node_is_bv_sll(e1) && bzla_node_is_bv_slice(e1->e[1])
-         && !bzla_node_is_inverted(e1->e[1]) && e0 == e1->e[1]->e[0];
+         && bzla_node_is_bv_sll(e1) && e0 == e1->e[1];
 }
 
 static inline BzlaNode *
@@ -7722,8 +7721,7 @@ SWAP_OPERANDS:
     ADD_RW_RULE(const_neg_lhs_add, e0, e1);
     ADD_RW_RULE(const_neg_rhs_add, e0, e1);
     ADD_RW_RULE(push_ite_add, e0, e1);
-    // TODO: enable when same bw shift is merged
-    // ADD_RW_RULE (sll_add, e0, e1);
+    ADD_RW_RULE(sll_add, e0, e1);
 
     assert(!result);
 
