@@ -15,6 +15,14 @@
 #include "bzlaproputils.h"
 #include "utils/bzlautil.h"
 
+/*
+ * Check if x is essential w.r.t. to t for:
+ *
+ * x + s = t
+ * s + x = t
+ *
+ * EC: mcb(s, t - x)
+ */
 bool
 bzla_is_ess_add(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x)
 {
@@ -25,9 +33,12 @@ bzla_is_ess_add(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x)
 }
 
 /*
- * Check consistency of x wrt const bits in s.
+ * Check if x is essential w.r.t. to t and constant bits in s for:
  *
- * mcb(s, t - x)
+ * x + s = t
+ * s + x = t
+ *
+ * EC: mcb(s, t - x)
  */
 bool
 bzla_is_ess_add_const(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x)
