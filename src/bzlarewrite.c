@@ -4302,6 +4302,37 @@ apply_sll_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   return result;
 }
 
+/*
+ * match:  a + (a * b)
+ * result: (a * (b + 1))
+ */
+static inline bool
+applies_mul_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+         && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e1)
+         && bzla_node_is_bv_mul(e1) && (e1->e[0] == e0 || e1->e[1] == e0);
+}
+
+static inline BzlaNode *
+apply_mul_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  assert(applies_mul_add(bzla, e0, e1));
+
+  BzlaNode *result, *b, *b_inc;
+
+  b = e1->e[0] == e0 ? e1->e[1] : e1->e[0];
+
+  BZLA_INC_REC_RW_CALL(bzla);
+
+  b_inc  = bzla_exp_bv_inc(bzla, b);
+  result = rewrite_bv_mul_exp(bzla, e0, b_inc);
+  bzla_node_release(bzla, b_inc);
+
+  BZLA_DEC_REC_RW_CALL(bzla);
+  return result;
+}
+
 static inline bool
 applies_push_ite_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
@@ -7722,6 +7753,7 @@ SWAP_OPERANDS:
     ADD_RW_RULE(const_neg_rhs_add, e0, e1);
     ADD_RW_RULE(push_ite_add, e0, e1);
     ADD_RW_RULE(sll_add, e0, e1);
+    ADD_RW_RULE(mul_add, e0, e1)
 
     assert(!result);
 
