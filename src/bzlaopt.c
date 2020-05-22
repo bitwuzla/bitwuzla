@@ -1599,6 +1599,16 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "enable unsat cores");
+  init_opt(bzla,
+           BZLA_OPT_SMT_COMP_MODE,
+           true,
+           true,
+           "smt-comp-mode",
+           0,
+           0,
+           0,
+           1,
+           "enable SMT-COMP mode");
 }
 
 void

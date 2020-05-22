@@ -444,7 +444,79 @@ typedef struct BzlaSMT2Parser
   /* SMT2 options */
   bool print_success;
   bool global_declarations;
+
+  bool track_mode_set;
+
+  int32_t parsed_logic_tag;
 } BzlaSMT2Parser;
+
+/*------------------------------------------------------------------------*/
+
+void
+configure_smt_comp_mode(BzlaSMT2Parser *parser)
+{
+  Bzla *bzla = parser->bzla;
+
+  if (parser->track_mode_set
+      || !boolector_get_opt(bzla, BZLA_OPT_SMT_COMP_MODE))
+    return;
+
+  /* incremental track */
+  if (parser->print_success || parser->scope_level > 0)
+  {
+    boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
+    boolector_set_opt(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
+    boolector_set_opt(bzla, BZLA_OPT_NONDESTR_SUBST, 1);
+    boolector_set_opt(bzla, BZLA_OPT_DECLSORT_BV_WIDTH, 16);
+    BZLA_MSG(parser->bzla->msg,
+             1,
+             "SMT-COMP mode: Configured for incremental track");
+  }
+  /* unsat core track */
+  else if (boolector_get_opt(bzla, BZLA_OPT_UNSAT_CORES))
+  {
+    BZLA_MSG(
+        parser->bzla->msg, 1, "SMT-COMP mode: Configured for unsat core track");
+  }
+  /* model validation track */
+  else if (boolector_get_opt(bzla, BZLA_OPT_MODEL_GEN))
+  {
+    boolector_set_opt(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
+    boolector_set_opt(bzla, BZLA_OPT_FUN_PREPROP, 1);
+    boolector_set_opt(bzla, BZLA_OPT_PROP_NPROPS, 10000);
+    boolector_set_opt(bzla, BZLA_OPT_PROP_NUPDATES, 2000000);
+    boolector_set_opt(bzla, BZLA_OPT_SIMP_NORMAMLIZE_ADDERS, 1);
+    BZLA_MSG(parser->bzla->msg,
+             1,
+             "SMT-COMP mode: Configured for model validation track");
+  }
+  /* single query track */
+  else
+  {
+    boolector_set_opt(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
+    boolector_set_opt(bzla, BZLA_OPT_SLT_ELIM, 0);
+    boolector_set_opt(bzla, BZLA_OPT_SIMP_NORMAMLIZE_ADDERS, 1);
+    boolector_set_opt(bzla, BZLA_OPT_DECLSORT_BV_WIDTH, 16);
+
+    switch (parser->parsed_logic_tag)
+    {
+      case BZLA_LOGIC_QF_BV_TAG_SMT2:
+      case BZLA_LOGIC_BV_TAG_SMT2:
+        boolector_set_opt(bzla, BZLA_OPT_FUN_PREPROP, 1);
+        boolector_set_opt(bzla, BZLA_OPT_PROP_CONST_BITS, 1);
+        boolector_set_opt(bzla, BZLA_OPT_PROP_NPROPS, 10000);
+        boolector_set_opt(bzla, BZLA_OPT_PROP_NUPDATES, 2000000);
+        break;
+    }
+
+    BZLA_MSG(parser->bzla->msg,
+             1,
+             "SMT-COMP mode: Configured for single query track");
+  }
+  parser->track_mode_set = true;
+}
+
+/*------------------------------------------------------------------------*/
 
 static int32_t
 xcoo_smt2(BzlaSMT2Parser *parser)
@@ -5845,6 +5917,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
       if (!(tag & BZLA_LOGIC_TAG_CLASS_SMT2))
         return !perr_smt2(
             parser, "expected logic at '%s'", parser->token.start);
+      parser->parsed_logic_tag = tag;
       switch (tag)
       {
         case BZLA_LOGIC_QF_BV_TAG_SMT2:
@@ -5888,11 +5961,13 @@ read_command_smt2(BzlaSMT2Parser *parser)
       break;
 
     case BZLA_CHECK_SAT_TAG_SMT2:
+      configure_smt_comp_mode(parser);
       if (!read_rpar_smt2(parser, " after 'check-sat'")) return 0;
       check_sat(parser);
       break;
 
     case BZLA_CHECK_SAT_ASSUMING_TAG_SMT2:
+      configure_smt_comp_mode(parser);
       if (!read_lpar_smt2(parser, " after 'check-sat-assuming'")) return 0;
       if (!boolector_get_opt(parser->bzla, BZLA_OPT_INCREMENTAL))
         return !perr_smt2(parser, "incremental solving is not enabled");
@@ -5958,6 +6033,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
       break;
 
     case BZLA_ASSERT_TAG_SMT2:
+      configure_smt_comp_mode(parser);
       if (!parse_term_smt2(parser, &exp, &coo)) return 0;
       assert(!parser->error);
       if (!boolector_is_bv(parser->bzla, exp)
@@ -6126,9 +6202,11 @@ read_command_smt2(BzlaSMT2Parser *parser)
       break;
 
     case BZLA_PUSH_TAG_SMT2:
+      level = 0;
       (void) parse_uint32_smt2(parser, true, &level);
       if (!read_rpar_smt2(parser, " after 'push'")) return 0;
       for (i = 0; i < level; i++) open_new_scope(parser);
+      configure_smt_comp_mode(parser);
       boolector_push(parser->bzla, level);
       print_success(parser);
       break;
