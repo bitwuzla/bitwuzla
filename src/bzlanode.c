@@ -1109,7 +1109,7 @@ bzla_node_set_to_proxy(Bzla *bzla, BzlaNode *exp)
   remove_from_nodes_unique_table_exp(bzla, exp);
   /* also updates op stats */
   erase_local_data_exp(bzla, exp);
-  assert(exp->arity <= 3);
+  assert(exp->arity <= BZLA_NODE_MAX_CHILDREN);
   BZLA_CLR(e);
   for (i = 0; i < exp->arity; i++) e[i] = exp->e[i];
   remove_from_hash_tables(bzla, exp, 1);

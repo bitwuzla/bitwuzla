@@ -2155,7 +2155,7 @@ bzla_set_simplified_exp(Bzla *bzla, BzlaNode *exp, BzlaNode *simplified)
   assert(bzla_node_is_regular(exp));
   assert(exp != bzla_node_real_addr(simplified));
   assert(!bzla_node_real_addr(simplified)->simplified);
-  assert(exp->arity <= 3);
+  assert(exp->arity <= 4);
   assert(bzla_node_get_sort_id(exp) == bzla_node_get_sort_id(simplified));
   assert(exp->parameterized || !bzla_node_real_addr(simplified)->parameterized);
   assert(!bzla_node_real_addr(simplified)->parameterized || exp->parameterized);
