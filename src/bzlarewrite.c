@@ -5337,6 +5337,32 @@ apply_same_srl(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   return bzla_exp_bv_zero(bzla, bzla_node_get_sort_id(e0));
 }
 
+/*
+ * match:  ~a >> a
+ * result: ones >> a
+ */
+static inline bool
+applies_not_same_srl(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  (void) bzla;
+  return !bzla_node_is_inverted(e1) && bzla_node_invert(e0) == e1;
+}
+
+static inline BzlaNode *
+apply_not_same_srl(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
+{
+  (void) e1;
+  assert(applies_not_same_srl(bzla, e0, e1));
+  BzlaNode *result, *ones;
+
+  ones = bzla_exp_bv_ones(bzla, bzla_node_get_sort_id(e0));
+  BZLA_INC_REC_RW_CALL(bzla);
+  result = rewrite_bv_srl_exp(bzla, ones, e1);
+  BZLA_DEC_REC_RW_CALL(bzla);
+  bzla_node_release(bzla, ones);
+  return result;
+}
+
 /* RM rules                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -8082,6 +8108,7 @@ rewrite_bv_srl_exp(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
     ADD_RW_RULE(special_const_rhs_binary_exp, kind, e0, e1);
     ADD_RW_RULE(const_srl, e0, e1);
     ADD_RW_RULE(same_srl, e0, e1);
+    ADD_RW_RULE(not_same_srl, e0, e1);
 
     assert(!result);
     if (!result)
