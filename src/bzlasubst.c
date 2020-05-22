@@ -226,6 +226,8 @@ rebuild_noproxy(Bzla *bzla, BzlaNode *node, BzlaIntHashTable *cache)
     case BZLA_VAR_NODE:
     case BZLA_UF_NODE:
     case BZLA_PARAM_NODE:
+    case BZLA_FP_CONST_NODE:
+    case BZLA_RM_CONST_NODE:
       d = bzla_hashint_map_get(cache, node->id);
       if (d && d->as_ptr)
       {
