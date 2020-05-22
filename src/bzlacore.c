@@ -1099,6 +1099,7 @@ bzla_process_unsynthesized_constraints(Bzla *bzla)
   assert(bzla);
   assert(!bzla->inconsistent);
 
+  BzlaPtrHashTableIterator it;
   BzlaPtrHashTable *uc, *sc;
   BzlaPtrHashBucket *bucket;
   BzlaNode *cur;
@@ -1108,6 +1109,17 @@ bzla_process_unsynthesized_constraints(Bzla *bzla)
   uc   = bzla->unsynthesized_constraints;
   sc   = bzla->synthesized_constraints;
   amgr = bzla_get_aig_mgr(bzla);
+
+  bzla_iter_hashptr_init(&it, bzla->inputs);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    cur = bzla_iter_hashptr_next(&it);
+    cur = bzla_node_get_simplified(bzla, cur);
+    if (bzla_node_is_fp(bzla, cur) || bzla_node_is_rm(bzla, cur))
+    {
+      bzla_synthesize_exp(bzla, cur, 0);
+    }
+  }
 
   while (uc->count > 0)
   {
@@ -1537,8 +1549,7 @@ normalize_substitution(Bzla *bzla,
     }
   }
 
-  if (bzla_node_is_inverted(exp) || !bzla_node_is_array_or_bv_eq(exp))
-    return false;
+  if (bzla_node_is_inverted(exp) || !bzla_node_is_eq(exp)) return false;
 
   left       = bzla_node_get_simplified(bzla, exp->e[0]);
   right      = bzla_node_get_simplified(bzla, exp->e[1]);

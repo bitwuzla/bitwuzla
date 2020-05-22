@@ -1661,9 +1661,10 @@ is_sorted_binary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
 {
   if (!bzla_opt_get(bzla, BZLA_OPT_SORT_EXP)) return 1;
   if (!bzla_node_is_binary_commutative_fp_kind(kind)) return 1;
+  assert(bzla_node_is_regular(e[1]));
+  assert(bzla_node_is_regular(e[2]));
   if (e[1] == e[2]) return 1;
-  if (bzla_node_invert(e[1]) == e[2] && bzla_node_is_inverted(e[2])) return 1;
-  return bzla_node_real_addr(e[1])->id <= bzla_node_real_addr(e[2])->id;
+  return e[1]->id <= e[2]->id;
 }
 
 static bool
@@ -1671,9 +1672,10 @@ is_sorted_fp_fma_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
 {
   if (!bzla_opt_get(bzla, BZLA_OPT_SORT_EXP)) return 1;
   if (kind != BZLA_FP_FMA_NODE) return 1;
+  assert(bzla_node_is_regular(e[1]));
+  assert(bzla_node_is_regular(e[2]));
   if (e[1] == e[2]) return 1;
-  if (bzla_node_invert(e[1]) == e[2] && bzla_node_is_inverted(e[2])) return 1;
-  return bzla_node_real_addr(e[1])->id <= bzla_node_real_addr(e[2])->id;
+  return e[1]->id <= e[2]->id;
 }
 
 /*------------------------------------------------------------------------*/

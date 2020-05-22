@@ -968,13 +968,6 @@ bzla_node_is_apply(const BzlaNode *exp)
   return bzla_node_real_addr(exp)->kind == BZLA_APPLY_NODE;
 }
 
-/** Return true if given node is an equality over functions or bit-vectors. */
-static inline bool
-bzla_node_is_array_or_bv_eq(const BzlaNode *exp)
-{
-  return bzla_node_is_fun_eq(exp) || bzla_node_is_bv_eq(exp);
-}
-
 /** Return true if given node is an equality over rounding modes. */
 static inline bool
 bzla_node_is_rm_eq(const BzlaNode *exp)
@@ -991,6 +984,14 @@ bzla_node_is_fp_eq(const BzlaNode *exp)
   assert(exp);
   exp = bzla_node_real_addr(exp);
   return exp->kind == BZLA_FP_EQ_NODE;
+}
+
+/** Return true if given node is an equality node. */
+static inline bool
+bzla_node_is_eq(const BzlaNode *exp)
+{
+  return bzla_node_is_fun_eq(exp) || bzla_node_is_bv_eq(exp)
+         || bzla_node_is_fp_eq(exp) || bzla_node_is_rm_eq(exp);
 }
 
 /*------------------------------------------------------------------------*/
