@@ -583,7 +583,7 @@ beta_reduce(Bzla *bzla,
             break;
           case BZLA_ARGS_NODE:
             assert(real_cur->arity >= 1);
-            assert(real_cur->arity <= 3);
+            assert(real_cur->arity <= BZLA_NODE_MAX_CHILDREN);
             if (real_cur->arity == 2)
             {
               next = e[0];
@@ -944,7 +944,7 @@ beta_reduce_partial_aux(Bzla *bzla,
           break;
         case BZLA_ARGS_NODE:
           assert(real_cur->arity >= 1);
-          assert(real_cur->arity <= 3);
+          assert(real_cur->arity <= BZLA_NODE_MAX_CHILDREN);
           if (real_cur->arity == 2)
           {
             next = e[0];

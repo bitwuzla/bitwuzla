@@ -2510,7 +2510,7 @@ new_args_exp_node(Bzla *bzla, uint32_t arity, BzlaNode *e[])
 {
   assert(bzla);
   assert(arity > 0);
-  assert(arity <= 3);
+  assert(arity <= BZLA_NODE_MAX_CHILDREN);
   assert(e);
 
   uint32_t i;

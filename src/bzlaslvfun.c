@@ -3129,7 +3129,7 @@ bzla_eval_exp(Bzla *bzla, BzlaNode *exp)
       assert(!bzla_node_is_args(real_cur));
       assert(!bzla_node_is_fun(real_cur));
       assert(real_cur->arity >= 1);
-      assert(real_cur->arity <= 3);
+      assert(real_cur->arity <= BZLA_NODE_MAX_CHILDREN);
       assert(real_cur->arity <= BZLA_COUNT_STACK(arg_stack));
 
       d->as_int = 1;

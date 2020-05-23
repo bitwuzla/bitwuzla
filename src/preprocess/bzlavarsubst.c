@@ -90,7 +90,7 @@ substitute_remove_cycles(Bzla *bzla, BzlaPtrHashTable *substs)
       else
       {
         assert(cur->arity >= 1);
-        assert(cur->arity <= 3);
+        assert(cur->arity <= BZLA_NODE_MAX_CHILDREN);
         for (i = 1; i <= cur->arity; i++)
           BZLA_PUSH_STACK(stack, cur->e[cur->arity - i]);
       }
@@ -129,7 +129,7 @@ substitute_remove_cycles(Bzla *bzla, BzlaPtrHashTable *substs)
       }
 
       assert(cur->arity >= 1);
-      assert(cur->arity <= 3);
+      assert(cur->arity <= BZLA_NODE_MAX_CHILDREN);
 
       if (!d)
       {
