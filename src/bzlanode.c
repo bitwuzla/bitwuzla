@@ -1198,7 +1198,7 @@ bzla_node_get_symbol(Bzla *bzla, const BzlaNode *exp)
   assert(bzla == bzla_node_real_addr(exp)->bzla);
   BzlaPtrHashBucket *b;
 
-  b = bzla_hashptr_table_get(bzla->node2symbol, bzla_node_real_addr(exp));
+  b = bzla_hashptr_table_get(bzla->node2symbol, exp);
   if (b) return b->data.as_str;
   return 0;
 }
@@ -1216,7 +1216,6 @@ bzla_node_set_symbol(Bzla *bzla, BzlaNode *exp, const char *symbol)
   BzlaPtrHashBucket *b;
   char *sym;
 
-  exp = bzla_node_real_addr(exp);
   sym = bzla_mem_strdup(bzla->mm, symbol);
   bzla_hashptr_table_add(bzla->symbols, sym)->data.as_ptr = exp;
   b = bzla_hashptr_table_get(bzla->node2symbol, exp);
