@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e -o pipefail
-
 BUILD_DIR="$(pwd)/build"
 BITWUZLA_BINARY="$BUILD_DIR/bin/bitwuzla"
 YEAR="2020"
@@ -17,7 +15,7 @@ rm -rf "$(pwd)/deps"
 
 ./configure.sh --no-minisat --no-picosat --no-cms --gmp --symfpu
 (
-  cd "$BUILD_DIR"
+  cd "$BUILD_DIR" || exit 1
   make -j $(nproc)
 )
 
