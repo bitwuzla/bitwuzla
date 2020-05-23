@@ -7616,7 +7616,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   BzlaBitVector *bv_t, *bv_s_new, *tmp;
   BzlaMemMgr *mm;
   uint32_t opt_prop_prob_use_inv_value, opt_prop_prob_fallback_rand_value;
-  uint32_t opt_prop_const_bits;
+  uint32_t opt_prop_const_bits, opt_prop_prob_random_input;
   bool opt_skip_no_progress;
   bool is_sext, is_xor, is_sra;
   BzlaPropInfo pi;
@@ -7643,6 +7643,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE);
   opt_prop_prob_fallback_rand_value =
       bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE);
+  opt_prop_prob_random_input =
+      bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_RANDOM_INPUT);
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS);
   opt_skip_no_progress =
       bzla_opt_get(bzla, BZLA_OPT_PROP_SKIP_NO_PROGRESS) != 0;
@@ -7838,7 +7840,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
         pos_x       = select_path(bzla, &pi);
       }
 
-      if (!is_sext && nconst == 0 && bzla_rng_pick_with_prob(bzla->rng, 10))
+      if (!is_sext && nconst == 0
+          && bzla_rng_pick_with_prob(bzla->rng, opt_prop_prob_random_input))
       {
         pi.pos_x = pos_x = select_path_random(bzla, pi.exp);
       }

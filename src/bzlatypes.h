@@ -793,6 +793,14 @@ enum BzlaOption
   BZLA_OPT_PROP_PROB_AND_FLIP,
 
   /*!
+    * **BZLA_OPT_PROP_PROB_RANDOM_INPUT**
+
+     Set probability with which a random input is chosen instead of an an
+     essential input.
+  */
+  BZLA_OPT_PROP_PROB_RANDOM_INPUT,
+
+  /*!
     * **BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT**
 
       | Do not perform a propagation move when running into a conflict during

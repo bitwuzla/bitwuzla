@@ -1059,6 +1059,17 @@ bzla_opt_init_opts(Bzla *bzla)
            "probability for producing inverse rather than consistent values "
            "(interpreted as <n>/1000)");
   init_opt(bzla,
+           BZLA_OPT_PROP_PROB_RANDOM_INPUT,
+           false,
+           false,
+           "prop-prob-rand-input",
+           0,
+           0,
+           0,
+           BZLA_PROB_100,
+           "probability for selecting a random input instead of an essential "
+           "input (interpreted as <n>/1000)");
+  init_opt(bzla,
            BZLA_OPT_PROP_PROB_FLIP_COND,
            false,
            false,
