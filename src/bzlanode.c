@@ -1586,14 +1586,16 @@ bool
 bzla_node_param_is_exists_var(BzlaNode *param)
 {
   assert(bzla_node_is_param(param));
-  return bzla_node_is_exists(bzla_node_param_get_binder(param));
+  return bzla_node_param_is_bound(param)
+         && bzla_node_is_exists(bzla_node_param_get_binder(param));
 }
 
 bool
 bzla_node_param_is_forall_var(BzlaNode *param)
 {
   assert(bzla_node_is_param(param));
-  return bzla_node_is_forall(bzla_node_param_get_binder(param));
+  return bzla_node_param_is_bound(param)
+         && bzla_node_is_forall(bzla_node_param_get_binder(param));
 }
 
 BzlaNode *
