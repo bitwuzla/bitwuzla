@@ -455,49 +455,34 @@ typedef struct BzlaSMT2Parser
 void
 configure_smt_comp_mode(BzlaSMT2Parser *parser)
 {
-  Bzla *bzla = parser->bzla;
+  const char *track = 0;
+  Bzla *bzla        = parser->bzla;
 
   if (parser->track_mode_set
       || !boolector_get_opt(bzla, BZLA_OPT_SMT_COMP_MODE))
     return;
 
+  boolector_set_opt(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
+
   /* incremental track */
   if (parser->print_success || parser->scope_level > 0)
   {
-    boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
-    boolector_set_opt(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
-    boolector_set_opt(bzla, BZLA_OPT_NONDESTR_SUBST, 1);
     boolector_set_opt(bzla, BZLA_OPT_DECLSORT_BV_WIDTH, 16);
-    BZLA_MSG(parser->bzla->msg,
-             1,
-             "SMT-COMP mode: Configured for incremental track");
+    boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
+    boolector_set_opt(bzla, BZLA_OPT_NONDESTR_SUBST, 1);
+    track = "incremental";
   }
   /* unsat core track */
   else if (boolector_get_opt(bzla, BZLA_OPT_UNSAT_CORES))
   {
-    BZLA_MSG(
-        parser->bzla->msg, 1, "SMT-COMP mode: Configured for unsat core track");
+    track = "unsat core";
   }
-  /* model validation track */
-  else if (boolector_get_opt(bzla, BZLA_OPT_MODEL_GEN))
-  {
-    boolector_set_opt(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
-    boolector_set_opt(bzla, BZLA_OPT_FUN_PREPROP, 1);
-    boolector_set_opt(bzla, BZLA_OPT_PROP_NPROPS, 10000);
-    boolector_set_opt(bzla, BZLA_OPT_PROP_NUPDATES, 2000000);
-    boolector_set_opt(bzla, BZLA_OPT_PROP_PROB_RANDOM_INPUT, 10);
-    boolector_set_opt(bzla, BZLA_OPT_SIMP_NORMAMLIZE_ADDERS, 1);
-    BZLA_MSG(parser->bzla->msg,
-             1,
-             "SMT-COMP mode: Configured for model validation track");
-  }
-  /* single query track */
+  /* single query track, model validation track */
   else
   {
-    boolector_set_opt(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
-    boolector_set_opt(bzla, BZLA_OPT_SLT_ELIM, 0);
-    boolector_set_opt(bzla, BZLA_OPT_SIMP_NORMAMLIZE_ADDERS, 1);
     boolector_set_opt(bzla, BZLA_OPT_DECLSORT_BV_WIDTH, 16);
+    boolector_set_opt(bzla, BZLA_OPT_SIMP_NORMAMLIZE_ADDERS, 1);
+    boolector_set_opt(bzla, BZLA_OPT_SLT_ELIM, 0);
 
     switch (parser->parsed_logic_tag)
     {
@@ -507,13 +492,21 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
         boolector_set_opt(bzla, BZLA_OPT_PROP_CONST_BITS, 1);
         boolector_set_opt(bzla, BZLA_OPT_PROP_NPROPS, 10000);
         boolector_set_opt(bzla, BZLA_OPT_PROP_NUPDATES, 2000000);
+        boolector_set_opt(bzla, BZLA_OPT_PROP_PROB_RANDOM_INPUT, 10);
         break;
     }
 
-    BZLA_MSG(parser->bzla->msg,
-             1,
-             "SMT-COMP mode: Configured for single query track");
+    if (boolector_get_opt(bzla, BZLA_OPT_MODEL_GEN))
+    {
+      track = "model validation";
+    }
+    else
+    {
+      track = "single query";
+    }
   }
+  BZLA_MSG(
+      parser->bzla->msg, 1, "SMT-COMP mode: Configured for %s track", track);
   parser->track_mode_set = true;
 }
 
