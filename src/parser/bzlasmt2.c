@@ -6027,7 +6027,6 @@ read_command_smt2(BzlaSMT2Parser *parser)
       break;
 
     case BZLA_ASSERT_TAG_SMT2:
-      configure_smt_comp_mode(parser);
       if (!parse_term_smt2(parser, &exp, &coo)) return 0;
       assert(!parser->error);
       if (!boolector_is_bv(parser->bzla, exp)
