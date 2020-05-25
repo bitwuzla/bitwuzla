@@ -5696,7 +5696,10 @@ set_option_smt2(BzlaSMT2Parser *parser)
       return 0;
     }
     else if (tag == BZLA_TRUE_TAG_SMT2)
+    {
       parser->print_success = true;
+      configure_smt_comp_mode(parser);
+    }
     else if (tag == BZLA_FALSE_TAG_SMT2)
       parser->print_success = false;
     else
