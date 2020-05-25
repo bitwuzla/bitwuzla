@@ -487,15 +487,17 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
     switch (parser->parsed_logic_tag)
     {
       case BZLA_LOGIC_QF_BV_TAG_SMT2:
+        boolector_set_opt(bzla, BZLA_OPT_PROP_INFER_INEQ_BOUNDS, 1);
+        boolector_set_opt(bzla, BZLA_OPT_PROP_SEXT, 1);
+        boolector_set_opt(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
+        /* fallthrough intended */
+
       case BZLA_LOGIC_BV_TAG_SMT2:
         boolector_set_opt(bzla, BZLA_OPT_FUN_PREPROP, 1);
         boolector_set_opt(bzla, BZLA_OPT_PROP_CONST_BITS, 1);
-        boolector_set_opt(bzla, BZLA_OPT_PROP_INFER_INEQ_BOUNDS, 1);
         boolector_set_opt(bzla, BZLA_OPT_PROP_NPROPS, 10000);
         boolector_set_opt(bzla, BZLA_OPT_PROP_NUPDATES, 2000000);
         boolector_set_opt(bzla, BZLA_OPT_PROP_PROB_RANDOM_INPUT, 10);
-        boolector_set_opt(bzla, BZLA_OPT_PROP_SEXT, 1);
-        boolector_set_opt(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
         break;
     }
 
