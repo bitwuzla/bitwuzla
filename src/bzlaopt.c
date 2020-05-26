@@ -1545,7 +1545,7 @@ bzla_opt_init_opts(Bzla *bzla)
            true,
            "slt-elim",
            0,
-           1,
+           0,
            0,
            1,
            "enable elimination of slt nodes");
