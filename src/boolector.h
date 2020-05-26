@@ -3065,29 +3065,6 @@ int32_t boolector_parse_btor2(Bzla *bzla,
                               int32_t *status);
 
 /*!
-  Parse input file in `SMT-LIB v1`_ format.
-
-  See boolector_parse.
-
-  :param bzla: Boolector instance.
-  :param infile: Input file.
-  :param infile_name: Input file name.
-  :param outfile: Input file.
-  :param error_msg: Error message.
-  :param status: Status of the input formula.
-  :return: In the incremental case (right now `SMT-LIB v1`_ only) the function
-           returns either BOOLECTOR_SAT, BOOLECTOR_UNSAT or BOOLECTOR_UNKNOWN,
-           otherwise it always returns BOOLECTOR_UNKNOWN. If a parse error
-           occurs the function returns BOOLECTOR_PARSE_ERROR.
-*/
-int32_t boolector_parse_smt1(Bzla *bzla,
-                             FILE *infile,
-                             const char *infile_name,
-                             FILE *outfile,
-                             char **error_msg,
-                             int32_t *status);
-
-/*!
   Parse input file in `SMT-LIB v2`_ format. See boolector_parse.
 
   :param bzla: Boolector instance.

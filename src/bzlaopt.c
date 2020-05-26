@@ -146,30 +146,6 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "incremental usage");
   init_opt(bzla,
-           BZLA_OPT_INCREMENTAL_SMT1,
-           false,
-           false,
-           "incremental-smt1",
-           "I",
-           BZLA_INCREMENTAL_SMT1_DFLT,
-           BZLA_INCREMENTAL_SMT1_MIN,
-           BZLA_INCREMENTAL_SMT1_MAX,
-           "incremental mode for SMT1");
-  opts = bzla_hashptr_table_new(
-      bzla->mm, (BzlaHashPtr) bzla_hash_str, (BzlaCmpPtr) strcmpoptval);
-  add_opt_help(mm,
-               opts,
-               "basic",
-               BZLA_INCREMENTAL_SMT1_BASIC,
-               "stop after first satisfiable formula");
-  add_opt_help(mm,
-               opts,
-               "continue",
-               BZLA_INCREMENTAL_SMT1_CONTINUE,
-               "solve all formulas");
-  bzla->options[BZLA_OPT_INCREMENTAL_SMT1].options = opts;
-
-  init_opt(bzla,
            BZLA_OPT_INPUT_FORMAT,
            false,
            false,
@@ -187,11 +163,6 @@ bzla_opt_init_opts(Bzla *bzla)
       mm, opts, "btor", BZLA_INPUT_FORMAT_BTOR, "force BTOR input format");
   add_opt_help(
       mm, opts, "btor2", BZLA_INPUT_FORMAT_BTOR2, "force BTOR2 input format");
-  add_opt_help(mm,
-               opts,
-               "smt1",
-               BZLA_INPUT_FORMAT_SMT1,
-               "force SMT-LIB v1 input format");
   add_opt_help(mm,
                opts,
                "smt2",

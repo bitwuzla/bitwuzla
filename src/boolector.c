@@ -6127,31 +6127,6 @@ boolector_parse_btor2(Bzla *bzla,
 }
 
 int32_t
-boolector_parse_smt1(Bzla *bzla,
-                     FILE *infile,
-                     const char *infile_name,
-                     FILE *outfile,
-                     char **error_msg,
-                     int32_t *status)
-{
-  int32_t res;
-
-  BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT_ARG_NULL(infile);
-  BZLA_ABORT_ARG_NULL(infile_name);
-  BZLA_ABORT_ARG_NULL(outfile);
-  BZLA_ABORT_ARG_NULL(error_msg);
-  BZLA_ABORT_ARG_NULL(status);
-  BZLA_ABORT(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
-             "file parsing must be done before creating expressions");
-  res = bzla_parse_smt1(bzla, infile, infile_name, outfile, error_msg, status);
-  /* shadow clone can not shadow boolector_parse* (parser uses API calls only,
-   * hence all API calls issued while parsing are already shadowed and the
-   * shadow clone already maintains the parsed formula) */
-  return res;
-}
-
-int32_t
 boolector_parse_smt2(Bzla *bzla,
                      FILE *infile,
                      const char *infile_name,

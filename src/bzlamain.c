@@ -70,7 +70,6 @@ enum BzlaMainOption
   BZLAMAIN_OPT_BTOR,
   BZLAMAIN_OPT_BTOR2,
   BZLAMAIN_OPT_SMT2,
-  BZLAMAIN_OPT_SMT1,
   BZLAMAIN_OPT_DUMP_BTOR,
 #if 0
   BZLAMAIN_OPT_DUMP_BTOR2,
@@ -306,18 +305,6 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "force SMT-LIB v2 input format");
-  btormain_init_opt(app,
-                    BZLAMAIN_OPT_SMT1,
-                    true,
-                    true,
-                    "smt1",
-                    0,
-                    0,
-                    0,
-                    1,
-                    false,
-                    BZLA_ARG_EXPECT_NONE,
-                    "force SMT-LIB v1 input format");
   btormain_init_opt(app,
                     BZLAMAIN_OPT_DUMP_BTOR,
                     true,
@@ -1185,10 +1172,6 @@ boolector_main(int32_t argc, char **argv)
           format = BZLA_INPUT_FORMAT_SMT2;
           goto SET_INPUT_FORMAT;
 
-        case BZLAMAIN_OPT_SMT1:
-          format = BZLA_INPUT_FORMAT_SMT1;
-          goto SET_INPUT_FORMAT;
-
         case BZLAMAIN_OPT_DUMP_BTOR:
           dump = BZLA_OUTPUT_FORMAT_BTOR;
         SET_OUTPUT_FORMAT:
@@ -1409,16 +1392,6 @@ boolector_main(int32_t argc, char **argv)
                                         g_app->outfile,
                                         &parse_err_msg,
                                         &parse_status);
-      break;
-    case BZLA_INPUT_FORMAT_SMT1:
-      if (g_verbosity)
-        btormain_msg("SMT-LIB v1 input forced through cmd line options");
-      parse_res = boolector_parse_smt1(bzla,
-                                       g_app->infile,
-                                       g_app->infile_name,
-                                       g_app->outfile,
-                                       &parse_err_msg,
-                                       &parse_status);
       break;
     case BZLA_INPUT_FORMAT_SMT2:
       if (g_verbosity)

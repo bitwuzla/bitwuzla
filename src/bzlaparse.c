@@ -18,7 +18,6 @@
 #include "bzlaopt.h"
 #include "parser/bzlabtor.h"
 #include "parser/bzlabtor2.h"
-#include "parser/bzlasmt.h"
 #include "parser/bzlasmt2.h"
 #include "utils/bzlamem.h"
 #include "utils/bzlastack.h"
@@ -207,17 +206,9 @@ bzla_parse(Bzla *bzla,
       assert(first && second);
       if (first == '(')
       {
-        if (second == 'b')
-        {
-          parser_api = bzla_parsesmt_parser_api();
-          sprintf(msg, "assuming SMT-LIB v1 input,  parsing '%s'", infile_name);
-        }
-        else
-        {
-          parser_api   = bzla_parsesmt2_parser_api();
-          *parsed_smt2 = true;
-          sprintf(msg, "assuming SMT-LIB v2 input,  parsing '%s'", infile_name);
-        }
+        parser_api   = bzla_parsesmt2_parser_api();
+        *parsed_smt2 = true;
+        sprintf(msg, "assuming SMT-LIB v2 input,  parsing '%s'", infile_name);
       }
       else
       {
@@ -294,27 +285,6 @@ bzla_parse_btor2(Bzla *bzla,
 
   const BzlaParserAPI *parser_api;
   parser_api = bzla_parsebtor2_parser_api();
-  return parse_aux(
-      bzla, infile, 0, infile_name, outfile, parser_api, error_msg, status, 0);
-}
-
-int32_t
-bzla_parse_smt1(Bzla *bzla,
-                FILE *infile,
-                const char *infile_name,
-                FILE *outfile,
-                char **error_msg,
-                int32_t *status)
-{
-  assert(bzla);
-  assert(infile);
-  assert(infile_name);
-  assert(outfile);
-  assert(error_msg);
-  assert(status);
-
-  const BzlaParserAPI *parser_api;
-  parser_api = bzla_parsesmt_parser_api();
   return parse_aux(
       bzla, infile, 0, infile_name, outfile, parser_api, error_msg, status, 0);
 }

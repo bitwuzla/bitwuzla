@@ -73,13 +73,6 @@ int32_t bzla_parse_btor2(Bzla *bzla,
                          char **error_msg,
                          int32_t *status);
 
-int32_t bzla_parse_smt1(Bzla *bzla,
-                        FILE *infile,
-                        const char *infile_name,
-                        FILE *outfile,
-                        char **error_msg,
-                        int32_t *status);
-
 int32_t bzla_parse_smt2(Bzla *bzla,
                         FILE *infile,
                         const char *infile_name,

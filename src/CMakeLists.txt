@@ -48,7 +48,6 @@ set(libboolector_src_files
   dumper/bzladumpsmt.c
   parser/bzlabtor.c
   parser/bzlabtor2.c
-  parser/bzlasmt.c
   parser/bzlasmt2.c
   preprocess/bzlaack.c
   preprocess/bzlader.c

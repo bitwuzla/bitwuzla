@@ -64,18 +64,6 @@ enum BzlaOption
   BZLA_OPT_INCREMENTAL,
 
   /*!
-    * **BZLA_OPT_INCREMENTAL_SMT1**
-
-      | Set incremental mode for SMT-LIB v1 input.
-
-      * BZLA_INCREMENTAL_SMT1_BASIC [default]:
-        stop after first satisfiable formula
-      * BZLA_INCREMENTAL_SMT1_CONTINUE:
-        solve all formulas
-  */
-  BZLA_OPT_INCREMENTAL_SMT1,
-
-  /*!
     * **BZLA_OPT_INPUT_FORMAT**
 
       | Force input file format.
@@ -86,8 +74,6 @@ enum BzlaOption
         `BTOR <http://fmv.jku.at/papers/BrummayerBiereLonsing-BPR08.pdf>`_ format
       * BZLA_INPUT_FORMAT_BTOR2:
         `BTOR2 <http://fmv.jku.at/papers/NiemetzPreinerWolfBiere-CAV18.pdf>`_ format
-      * BZLA_INPUT_FORMAT_SMT1:
-        `SMT-LIB v1 <http://smtlib.cs.uiowa.edu/papers/format-v1.2-r06.08.30.pdf>`_ format
       * BZLA_INPUT_FORMAT_SMT2:
         `SMT-LIB v2 <http://smtlib.cs.uiowa.edu/papers/smt-lib-reference-v2.0-r12.09.09.pdf>`_ format
   */
@@ -1022,7 +1008,6 @@ enum BzlaOptInputFormat
   BZLA_INPUT_FORMAT_NONE,
   BZLA_INPUT_FORMAT_BTOR,
   BZLA_INPUT_FORMAT_BTOR2,
-  BZLA_INPUT_FORMAT_SMT1,
   BZLA_INPUT_FORMAT_SMT2,
 };
 typedef enum BzlaOptInputFormat BzlaOptInputFormat;
