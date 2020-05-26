@@ -456,7 +456,7 @@ btormain_error(BzlaMainApp *app, char *msg, ...)
 
   va_list list;
   va_start(list, msg);
-  fputs("boolector: ", stderr);
+  fputs("bitwuzla: ", stderr);
   vfprintf(stderr, msg, list);
   fprintf(stderr, "\n");
   va_end(list);
@@ -470,7 +470,7 @@ btormain_msg(char *msg, ...)
 
   va_list list;
   va_start(list, msg);
-  fprintf(stdout, "[bzla>main] ");
+  fprintf(stdout, "[bitwuzla>main] ");
   vfprintf(stdout, msg, list);
   fprintf(stdout, "\n");
   va_end(list);
@@ -1454,7 +1454,7 @@ boolector_main(int32_t argc, char **argv)
     /* NOTE: do not use btormain_error here as 'parse_err_msg' must not be
      * treated as format string --- it might contain unescaped '%' due to
      * invalid user input. */
-    fprintf(stderr, "boolector: %s\n", parse_err_msg);
+    fprintf(stderr, "bitwuzla: %s\n", parse_err_msg);
     g_app->err = BZLA_ERR_EXIT;
     goto DONE;
   }

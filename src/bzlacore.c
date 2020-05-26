@@ -678,7 +678,7 @@ bzla_new(void)
 
   bzla->mm  = mm;
   bzla->msg = bzla_msg_new(bzla);
-  bzla_set_msg_prefix(bzla, "btor");
+  bzla_set_msg_prefix(bzla, "bitwuzla");
 
   BZLA_INIT_UNIQUE_TABLE(mm, bzla->nodes_unique_table);
   BZLA_INIT_SORT_UNIQUE_TABLE(mm, bzla->sorts_unique_table);
