@@ -9,6 +9,7 @@
 #include "bzlaproputils.h"
 
 #include "bzlabv.h"
+#include "bzlaconsutils.h"
 #include "bzlainvutils.h"
 #include "bzlalsutils.h"
 #include "bzlanode.h"
@@ -2141,31 +2142,22 @@ bzla_proputils_cons_and_const(Bzla *bzla, BzlaPropInfo *pi)
 #ifndef NDEBUG
   check_cons_dbg(bzla, pi, true);
 #endif
-  bool conflict;
-  BzlaBitVector *res, *tmp;
+  BzlaBitVector *res;
   const BzlaBvDomain *x;
-  const BzlaBitVector *t;
   BzlaMemMgr *mm;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_and);
-
-  mm = bzla->mm;
-  x  = pi->bvd[pi->pos_x];
-  t  = pi->target_value;
-
-  if (bzla_bvdomain_is_fixed(mm, x)) return bzla_bv_copy(mm, x->lo);
-
-  /* If t & xhi != t, no consistent value exists. */
-  tmp      = bzla_bv_and(mm, t, x->hi);
-  conflict = bzla_bv_compare(t, tmp) != 0;
-  bzla_bv_free(mm, tmp);
-
-  if (conflict)
+  if (!bzla_is_cons_and_const(bzla, pi))
   {
     /* non-recoverable conflict */
     return NULL;
   }
 
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_and);
+
+  mm = bzla->mm;
+  x  = pi->bvd[pi->pos_x];
+
+  if (bzla_bvdomain_is_fixed(mm, x)) return bzla_bv_copy(mm, x->lo);
   res = bzla_proputils_cons_and(bzla, pi);
   set_const_bits(mm, x, &res);
   return res;

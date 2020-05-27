@@ -15,6 +15,8 @@
 #include "bzlaproputils.h"
 #include "utils/bzlautil.h"
 
+/* -------------------------------------------------------------------------- */
+
 /*
  * Check if x is essential w.r.t. to t for:
  *
@@ -31,6 +33,8 @@ bzla_is_ess_add(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x)
   (void) pos_x;
   return false;
 }
+
+/* -------------------------------------------------------------------------- */
 
 /*
  * Check if x is essential w.r.t. to t and constant bits in s for:

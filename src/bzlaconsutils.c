@@ -15,7 +15,7 @@
 #include "bzlaproputils.h"
 
 /**
- * Check consistency condition (without considering const bits in x) for:
+ * Check consistency condition (with respect to const bits in x) for:
  *
  * x + s = t
  * s + x = t
@@ -23,7 +23,7 @@
  * IC: true
  */
 bool
-bzla_is_cons_add(Bzla *bzla, BzlaPropInfo *pi)
+bzla_is_cons_add_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
@@ -31,17 +31,33 @@ bzla_is_cons_add(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 /**
- * Check consistency condition with respect to const bits in x) for:
+ * Check consistency condition (with respect to const bits in x) for:
  *
- * x + s = t
- * s + x = t
+ * x & s = t
+ * s & x = t
  *
- * IC: mcb(x, t-s)
+ * IC: t & xhi = t
  */
 bool
-bzla_is_cons_add_const(Bzla *bzla, BzlaPropInfo *pi)
+bzla_is_cons_and_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
-  return true;
+
+  bool res;
+  uint32_t pos_x;
+  const BzlaBitVector *t;
+  BzlaBitVector *tmp;
+  const BzlaBvDomain *x;
+  BzlaMemMgr *mm;
+
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+
+  tmp = bzla_bv_and(mm, t, x->hi);
+  res = bzla_bv_compare(t, tmp) == 0;
+  bzla_bv_free(mm, tmp);
+  return res;
 }
