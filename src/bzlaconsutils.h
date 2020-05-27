@@ -18,5 +18,6 @@ bool bzla_is_cons_and_const(Bzla *bzla, BzlaPropInfo *pi);
 bool bzla_is_cons_xor_const(Bzla *bzla, BzlaPropInfo *pi);
 bool bzla_is_cons_eq_const(Bzla *bzla, BzlaPropInfo *pi);
 bool bzla_is_cons_ult_const(Bzla *bzla, BzlaPropInfo *pi);
+bool bzla_is_cons_slt_const(Bzla *bzla, BzlaPropInfo *pi);
 
 #endif
