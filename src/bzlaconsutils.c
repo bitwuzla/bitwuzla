@@ -77,3 +77,50 @@ bzla_is_cons_xor_const(Bzla *bzla, BzlaPropInfo *pi)
   assert(pi);
   return true;
 }
+
+/**
+ * Check consistency condition (with respect to const bits in x) for:
+ *
+ * (x = s) = t
+ * (s = x) = t
+ *
+ * IC: true
+ */
+bool
+bzla_is_cons_eq_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  return true;
+}
+
+/**
+ * Check consistency condition (with respect to const bits in x) for:
+ *
+ * x < s = t
+ * s < x = t
+ *
+ * IC:
+ * pos_x = 0: ~t \/ xlo != ones
+ * pos_x = 1: ~t \/ xhi != 0
+ */
+bool
+bzla_is_cons_ult_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+
+  uint32_t pos_x;
+  const BzlaBitVector *t;
+  const BzlaBvDomain *x;
+
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+
+  if (pos_x == 0)
+  {
+    return bzla_bv_is_zero(t) || !bzla_bv_is_ones(x->lo);
+  }
+  return bzla_bv_is_zero(t) || !bzla_bv_is_zero(x->hi);
+}

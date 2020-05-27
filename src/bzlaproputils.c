@@ -1378,11 +1378,7 @@ cons_ult_aux(Bzla *bzla, BzlaPropInfo *pi, bool with_const_bits)
     {
       if (bzla_bvdomain_is_fixed(mm, x))
       {
-        if (bzla_bv_is_zero(x->lo))
-        {
-          /* non-recoverable conflict */
-          return NULL;
-        }
+        assert(!bzla_bv_is_zero(x->lo));
         res = bzla_bv_copy(mm, x->lo);
       }
       else
@@ -1413,11 +1409,7 @@ cons_ult_aux(Bzla *bzla, BzlaPropInfo *pi, bool with_const_bits)
     {
       if (bzla_bvdomain_is_fixed(mm, x))
       {
-        if (bzla_bv_is_ones(x->lo))
-        {
-          /* non-recoverable conflict */
-          return NULL;
-        }
+        assert(!bzla_bv_is_ones(x->lo));
         res = bzla_bv_copy(mm, x->lo);
       }
       else
@@ -2215,6 +2207,11 @@ bzla_proputils_cons_eq_const(Bzla *bzla, BzlaPropInfo *pi)
 BzlaBitVector *
 bzla_proputils_cons_ult_const(Bzla *bzla, BzlaPropInfo *pi)
 {
+  if (!bzla_is_cons_ult_const(bzla, pi))
+  {
+    /* non-recoverable conflict */
+    return NULL;
+  }
   return cons_ult_aux(bzla, pi, true);
 }
 
