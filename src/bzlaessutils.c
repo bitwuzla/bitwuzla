@@ -10,8 +10,8 @@
 
 #include <assert.h>
 
-#include "bzlaconsutils.h"
 #include "bzlacore.h"
+#include "bzlainvutils.h"
 #include "bzlaproputils.h"
 #include "utils/bzlautil.h"
 
@@ -49,7 +49,7 @@ bzla_is_ess_add_const(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x)
   bool res;
   uint32_t tmp = pi->pos_x;
   pi->pos_x    = 1 - pos_x;
-  res          = !bzla_is_cons_add_const(bzla, pi);
+  res          = !bzla_is_inv_add_const(bzla, pi);
   pi->pos_x    = tmp;
   return res;
 }
