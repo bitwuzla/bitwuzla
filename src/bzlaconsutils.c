@@ -61,3 +61,19 @@ bzla_is_cons_and_const(Bzla *bzla, BzlaPropInfo *pi)
   bzla_bv_free(mm, tmp);
   return res;
 }
+
+/**
+ * Check consistency condition (with respect to const bits in x) for:
+ *
+ * x ^ s = t
+ * s ^ x = t
+ *
+ * IC: true
+ */
+bool
+bzla_is_cons_xor_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  return true;
+}
