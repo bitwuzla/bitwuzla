@@ -519,3 +519,74 @@ bzla_is_cons_sra_const(Bzla *bzla, BzlaPropInfo *pi)
   }
   return res;
 }
+
+/**
+ * Check consistency condition (with respect to const bits in x) for:
+ *
+ * x * s = t
+ * s * x = t
+ *
+ * IC:
+ * (t != 0 => xhi != 0) /\ (odd(t) => xhi[lsb] != 0) /\
+ * (!odd(t) => \exists y. (mcb(x, y) /\ ctz(t) >= ctz(y))
+ */
+bool
+bzla_is_cons_mul_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+
+  bool res;
+  uint32_t i, pos_x, ctz_t, bw;
+  const BzlaBitVector *t;
+  const BzlaBvDomain *x;
+  BzlaBitVector *tmp;
+  BzlaBvDomainGenerator gen;
+  BzlaMemMgr *mm;
+
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+
+  bzla_propinfo_set_result(bzla, pi, 0);
+
+  if (!bzla_bv_is_zero(t) && bzla_bv_is_zero(x->hi)) return false;
+
+  if (bzla_bv_get_bit(t, 0) && bzla_bv_get_bit(x->hi, 0) == 0) return false;
+
+  mm  = bzla->mm;
+  res = true;
+  bw  = bzla_bv_get_width(t);
+
+  if (bzla_bv_get_bit(t, 0) == 0 && !bzla_bvdomain_is_fixed(mm, x))
+  {
+    tmp = bzla_bv_one(mm, bw);
+    bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, tmp, 0);
+    bzla_bv_free(mm, tmp);
+    tmp = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+    bzla_bvdomain_gen_delete(&gen);
+    ctz_t = bzla_bv_get_num_trailing_zeros(t);
+    for (i = 0, res = false; i <= ctz_t; i++)
+    {
+      if (!bzla_bvdomain_is_fixed_bit_false(x, i))
+      {
+        res = true;
+        break;
+      }
+    }
+    if (res)
+    {
+      if (ctz_t < bw)
+      {
+        do
+        {
+          i = bzla_rng_pick_rand(bzla->rng, 0, ctz_t);
+        } while (bzla_bvdomain_is_fixed_bit_false(x, i));
+        bzla_bv_set_bit(tmp, i, 1);
+      }
+      bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new_fixed(mm, tmp));
+    }
+    bzla_bv_free(mm, tmp);
+  }
+  return res;
+}
