@@ -134,9 +134,11 @@ class TestPropCons : public TestPropCommon
             pi.bv[1 - pos_x] = bv_s;
             pi.bvd[pos_x]    = d_x;
             pi.target_value  = bv_t;
+            pi.res_x         = 0;
 
             bzla->slv = slv_prop;
             bv_x      = cons_fun(bzla, &pi);
+            if (pi.res_x) bzla_bvdomain_free(mm, pi.res_x);
 
             expected_result = bv_x ? BZLA_RESULT_SAT : BZLA_RESULT_UNSAT;
 

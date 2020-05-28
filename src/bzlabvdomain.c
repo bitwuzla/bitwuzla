@@ -157,6 +157,21 @@ bzla_bvdomain_not(BzlaMemMgr *mm, const BzlaBvDomain *d)
   return res;
 }
 
+BzlaBvDomain *
+bzla_bvdomain_sll(BzlaMemMgr *mm,
+                  const BzlaBvDomain *d,
+                  const BzlaBitVector *bv)
+{
+  assert(mm);
+  assert(d);
+  assert(bv);
+
+  BzlaBvDomain *res = new_domain(mm);
+  res->lo           = bzla_bv_sll(mm, d->hi, bv);
+  res->hi           = bzla_bv_sll(mm, d->lo, bv);
+  return res;
+}
+
 /* -------------------------------------------------------------------------- */
 
 uint32_t

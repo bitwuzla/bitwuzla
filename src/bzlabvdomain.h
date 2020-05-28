@@ -72,6 +72,11 @@ BzlaBvDomain *bzla_bvdomain_slice(BzlaMemMgr *mm,
 /** Invert fixed bits of domain 'd'. */
 BzlaBvDomain *bzla_bvdomain_not(BzlaMemMgr *mm, const BzlaBvDomain *d);
 
+/** Shift fixed bits of domain 'd' by 'bv'. */
+BzlaBvDomain *bzla_bvdomain_sll(BzlaMemMgr *mm,
+                                const BzlaBvDomain *d,
+                                const BzlaBitVector *bv);
+
 /*----------------------------------------------------------------------------*/
 
 /** Get the width of the given domain.  */

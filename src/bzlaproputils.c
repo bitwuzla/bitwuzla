@@ -2227,6 +2227,12 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
+  if (!bzla_is_cons_sll_const(bzla, pi))
+  {
+    /* non-recoverable conflict */
+    return NULL;
+  }
+
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sll);
 
   mm    = bzla->mm;
@@ -2243,46 +2249,15 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   else if (pos_x)
   {
     assert(ctz_t < bw);
-    max = bzla_bv_uint64_to_bv(mm, ctz_t, bw);
-    bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, 0, max);
-    if (!bzla_bvdomain_gen_has_next(&gen))
-    {
-      /* non-recoverable conflict */
-      bzla_bv_free(mm, max);
-      bzla_bvdomain_gen_delete(&gen);
-      return NULL;
-    }
-    res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
-    bzla_bv_free(mm, max);
-    bzla_bvdomain_gen_delete(&gen);
+    assert(pi->res_x);
+    /* pi->res_x caches result */
+    res = bzla_bv_copy(mm, pi->res_x->lo);
   }
   else
   {
-    BzlaBitVectorPtrStack stack;
-    BZLA_INIT_STACK(mm, stack);
-
-    for (i = 0; i <= ctz_t; i++)
-    {
-      x_slice = bzla_bvdomain_slice(mm, x, bw - 1 - i, 0);
-      t_slice = bzla_bv_slice(mm, t, bw - 1, i);
-      if (bzla_bvdomain_check_fixed_bits(mm, x_slice, t_slice))
-      {
-        BZLA_PUSH_STACK(stack, t_slice);
-      }
-      else
-      {
-        bzla_bv_free(mm, t_slice);
-      }
-      bzla_bvdomain_free(mm, x_slice);
-    }
-    if (BZLA_EMPTY_STACK(stack))
-    {
-      /* non-recoverable conflict */
-      BZLA_RELEASE_STACK(stack);
-      return NULL;
-    }
-    r     = bzla_rng_pick_rand(bzla->rng, 0, BZLA_COUNT_STACK(stack) - 1);
-    right = BZLA_PEEK_STACK(stack, r);
+    assert(pi->res_x);
+    /* pi->res_x caches shifted bits of results, remaining bits are random */
+    right = pi->res_x->lo;
     bw_r  = bzla_bv_get_width(right);
     if (bw == bw_r)
     {
@@ -2296,12 +2271,6 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
       bzla_bv_free(mm, left);
       bzla_bv_free(mm, tmp);
     }
-
-    while (!BZLA_EMPTY_STACK(stack))
-    {
-      bzla_bv_free(mm, BZLA_POP_STACK(stack));
-    }
-    BZLA_RELEASE_STACK(stack);
   }
   return res;
 }
