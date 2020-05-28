@@ -175,11 +175,11 @@ bzla_is_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   assert(pi);
 
   bool res;
-  uint32_t i, pos_x, bw, ctz_t;
+  uint32_t i, pos_x, bw, bw_r, ctz_t;
   const BzlaBitVector *t;
   const BzlaBvDomain *x;
   BzlaBvDomain *x_slice;
-  BzlaBitVector *max, *t_slice, *r;
+  BzlaBitVector *max, *t_slice, *right, *left, *tmp;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
@@ -218,9 +218,25 @@ bzla_is_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
       res = !BZLA_EMPTY_STACK(stack);
       if (res)
       {
-        i = bzla_rng_pick_rand(bzla->rng, 0, BZLA_COUNT_STACK(stack) - 1);
-        r = BZLA_PEEK_STACK(stack, i);
-        bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new_fixed(mm, r));
+        i     = bzla_rng_pick_rand(bzla->rng, 0, BZLA_COUNT_STACK(stack) - 1);
+        right = BZLA_PEEK_STACK(stack, i);
+        bw_r  = bzla_bv_get_width(right);
+        if (bw == bw_r)
+        {
+          bzla_propinfo_set_result(
+              bzla, pi, bzla_bvdomain_new_fixed(mm, right));
+        }
+        else
+        {
+          bzla_bvdomain_gen_init(mm, bzla->rng, &gen, x);
+          tmp  = bzla_bvdomain_gen_random(&gen);
+          left = bzla_bv_slice(mm, tmp, bw - 1, bw_r);
+          bzla_bvdomain_gen_delete(&gen);
+          tmp = bzla_bv_concat(mm, left, right);
+          bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new_fixed(mm, tmp));
+          bzla_bv_free(mm, tmp);
+          bzla_bv_free(mm, left);
+        }
       }
       while (!BZLA_EMPTY_STACK(stack))
       {

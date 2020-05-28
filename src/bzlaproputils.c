@@ -2219,12 +2219,10 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   check_cons_dbg(bzla, pi, true);
 #endif
   int32_t pos_x;
-  uint32_t i, r, bw, bw_r, ctz_t;
-  BzlaBitVector *res, *left, *right, *max, *tmp, *t_slice;
-  BzlaBvDomain *x_slice;
+  uint32_t bw, ctz_t;
+  BzlaBitVector *res;
   const BzlaBvDomain *x;
   const BzlaBitVector *t;
-  BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
   if (!bzla_is_cons_sll_const(bzla, pi))
@@ -2246,31 +2244,11 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
   {
     res = bvdomain_random(bzla, x);
   }
-  else if (pos_x)
+  else
   {
     assert(ctz_t < bw);
     assert(pi->res_x);
-    /* pi->res_x caches result */
     res = bzla_bv_copy(mm, pi->res_x->lo);
-  }
-  else
-  {
-    assert(pi->res_x);
-    /* pi->res_x caches shifted bits of results, remaining bits are random */
-    right = pi->res_x->lo;
-    bw_r  = bzla_bv_get_width(right);
-    if (bw == bw_r)
-    {
-      res = bzla_bv_copy(mm, right);
-    }
-    else
-    {
-      tmp  = bvdomain_random(bzla, x);
-      left = bzla_bv_slice(mm, tmp, bw - 1, bw_r);
-      res  = bzla_bv_concat(mm, left, right);
-      bzla_bv_free(mm, left);
-      bzla_bv_free(mm, tmp);
-    }
   }
   return res;
 }
