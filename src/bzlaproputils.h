@@ -154,6 +154,9 @@ BzlaBitVector* bzla_proputils_cons_slice_const(Bzla* bzla, BzlaPropInfo* pi);
 
 BzlaBitVector* bzla_proputils_cons_cond_const(Bzla* bzla, BzlaPropInfo* pi);
 
+BzlaBitVector* bzla_proputils_cons_udiv_const_pos0_aux(Bzla* bzla,
+                                                       BzlaPropInfo* pi);
+
 /*------------------------------------------------------------------------*/
 /* Inverse value computation functions as implemented for CAV'16.         */
 /*------------------------------------------------------------------------*/

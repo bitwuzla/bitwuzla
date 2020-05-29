@@ -2415,20 +2415,133 @@ bzla_proputils_cons_mul_const(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 BzlaBitVector *
+bzla_proputils_cons_udiv_const_pos0_aux(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  assert(pi->pos_x == 0);
+
+  uint32_t i, bw;
+  const BzlaBitVector *t;
+  const BzlaBvDomain *x;
+  BzlaBitVector *res;
+  BzlaBitVector *min, *max, *s_min, *s_max, *s_tmp, *tmp;
+  BzlaBitVector *ones, *one;
+  BzlaBvDomainGenerator gen;
+  BzlaMemMgr *mm;
+
+  /* remaining solutions other than x = t:
+   * min <= x <= ones with min = x->lo / t * t if x->lo / t > 1 and
+   *                       min = 2 * t otherwise */
+
+  mm = bzla->mm;
+  t  = pi->target_value;
+  x  = pi->bvd[0];
+  bw = bzla_bv_get_width(t);
+
+  one = bzla_bv_one(mm, bw);
+
+  res = NULL;
+  min = NULL;
+
+  tmp = bzla_bv_udiv(mm, x->lo, t);
+  if (bzla_bv_compare(tmp, one) <= 0)
+  {
+    if (bzla_bv_is_uaddo(mm, t, t))
+    {
+      /* x = t the only solution */
+      bzla_bv_free(mm, tmp);
+      bzla_bv_free(mm, one);
+      return NULL;
+    }
+    else
+    {
+      min = bzla_bv_add(mm, t, t);
+    }
+  }
+  else
+  {
+    min = bzla_bv_mul(mm, tmp, t);
+  }
+  bzla_bv_free(mm, tmp);
+
+  /* min / t <= s <= x->hi / t */
+  ones  = bzla_bv_ones(mm, bw);
+  s_min = bzla_bv_udiv(mm, min, t);
+  s_max = bzla_bv_udiv(mm, x->hi, t);
+  if (bzla_bv_compare(s_min, s_max) > 0)
+  {
+    bzla_bv_free(mm, s_max);
+    s_max = bzla_bv_copy(mm, ones);
+  }
+  bzla_bv_free(mm, min);
+  min = NULL;
+  for (i = 0; i < 20; i++)
+  {
+    s_tmp = bzla_bv_new_random_range(mm, bzla->rng, bw, s_min, s_max);
+    if (bzla_bv_is_umulo(mm, s_tmp, t))
+    {
+      bzla_bv_free(mm, s_tmp);
+      continue;
+    }
+    /* for s_tmp, min = s_tmp * t and max = min + s - 1 */
+    min = bzla_bv_mul(mm, s_tmp, t);
+    tmp = bzla_bv_add(mm, s_tmp, min);
+    if (bzla_bv_compare(min, tmp) > 0)
+    {
+      max = bzla_bv_copy(mm, ones);
+    }
+    else
+    {
+      max = bzla_bv_dec(mm, tmp);
+    }
+    bzla_bv_free(mm, tmp);
+    bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, min, max);
+    if (bzla_bvdomain_gen_has_next(&gen))
+    {
+      res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+      bzla_bv_free(mm, s_tmp);
+      bzla_bv_free(mm, min);
+      min = NULL;
+      bzla_bv_free(mm, max);
+      bzla_bvdomain_gen_delete(&gen);
+      break;
+    }
+    bzla_bv_free(mm, s_tmp);
+    bzla_bv_free(mm, min);
+    min = NULL;
+    bzla_bv_free(mm, max);
+    bzla_bvdomain_gen_delete(&gen);
+  }
+  bzla_bv_free(mm, s_min);
+  bzla_bv_free(mm, s_max);
+  if (min) bzla_bv_free(mm, min);
+  bzla_bv_free(mm, ones);
+  bzla_bv_free(mm, one);
+
+  return res;
+}
+
+BzlaBitVector *
 bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
   check_cons_dbg(bzla, pi, true);
 #endif
   int32_t pos_x;
-  uint32_t i, bw;
-  bool check_zero, check_one, check_t, force_t;
-  BzlaBitVector *res, *min, *max, *s_min, *s_max, *tmp, *s_tmp, *zero, *one,
-      *ones;
+  uint32_t bw;
+  bool check_zero, check_one, check_t;
+  BzlaBitVector *res, *max, *zero, *one, *ones;
   const BzlaBvDomain *x;
   const BzlaBitVector *t;
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
+
+  if (!bzla_is_cons_udiv_const(bzla, pi))
+  {
+    /* non-recoverable conflict */
+    return NULL;
+  }
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_udiv);
 
@@ -2442,26 +2555,24 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
   one  = bzla_bv_one(mm, bw);
   ones = bzla_bv_ones(mm, bw);
 
-  if (pos_x)
+  if (bzla_bvdomain_is_fixed(mm, x))
   {
-    if (!bzla_bv_compare(t, ones))
+    res = bzla_bv_copy(mm, x->lo);
+  }
+  else if (pos_x)
+  {
+    if (bzla_bv_is_ones(t))
     {
       /* t = 1...1 then res = 0 or res = 1 */
 
+      assert(!pi->res_x);
       check_zero = bzla_bvdomain_check_fixed_bits(mm, x, zero);
       check_one  = bzla_bvdomain_check_fixed_bits(mm, x, one);
 
       if (!check_zero)
       {
-        if (!check_one)
-        {
-          /* non-recoverable conflict */
-          res = NULL;
-        }
-        else
-        {
-          res = bzla_bv_one(mm, bw);
-        }
+        assert(check_one);
+        res = bzla_bv_one(mm, bw);
       }
       else if (!check_one)
       {
@@ -2475,38 +2586,9 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
     }
     else
     {
-      /* choose res s.t. res * t does not overflow */
-      if (bzla_bv_is_umulo(mm, x->lo, t))
-      {
-        /* non-recoverable conflict */
-        res = NULL;
-      }
-      else if (bzla_bvdomain_is_fixed(mm, x))
-      {
-        res = bzla_bv_copy(mm, x->lo);
-      }
-      else
-      {
-        bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, one, 0);
-        res = bzla_bvdomain_gen_random(&gen);
-        while (bzla_bv_is_umulo(mm, res, t))
-        {
-          max = bzla_bv_dec(mm, res);
-          bzla_bvdomain_gen_delete(&gen);
-          bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, one, max);
-          if (!bzla_bvdomain_gen_has_next(&gen))
-          {
-            /* non-recoverable conflict */
-            res = NULL;
-            bzla_bv_free(mm, max);
-            break;
-          }
-          res = bzla_bvdomain_gen_random(&gen);
-          bzla_bv_free(mm, max);
-        }
-        if (res) res = bzla_bv_copy(mm, res);
-        bzla_bvdomain_gen_delete(&gen);
-      }
+      assert(!bzla_bv_is_umulo(mm, x->lo, t));
+      assert(pi->res_x);
+      res = bzla_bv_copy(mm, pi->res_x->lo);
     }
   }
   else
@@ -2514,30 +2596,18 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
     if (bzla_bv_is_zero(t))
     {
       /* t = 0: random res < 1...1 */
-      if (bzla_bv_is_ones(x->lo))
-      {
-        /* non-recoverable conflict */
-        res = NULL;
-      }
-      else
-      {
-        if (bzla_bvdomain_is_fixed(mm, x))
-        {
-          res = bzla_bv_copy(mm, x->lo);
-        }
-        else
-        {
-          max = bzla_bv_dec(mm, ones);
-          bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, 0, max);
-          res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
-          bzla_bv_free(mm, max);
-          bzla_bvdomain_gen_delete(&gen);
-        }
-      }
+      assert(!pi->res_x);
+      assert(!bzla_bv_is_ones(x->lo));
+      max = bzla_bv_dec(mm, ones);
+      bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, 0, max);
+      res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+      bzla_bv_free(mm, max);
+      bzla_bvdomain_gen_delete(&gen);
     }
     else if (!bzla_bv_compare(t, ones))
     {
       /* t = 1...1: choose random res */
+      assert(!pi->res_x);
       bzla_bvdomain_gen_init(mm, bzla->rng, &gen, x);
       res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
       bzla_bvdomain_gen_delete(&gen);
@@ -2545,23 +2615,22 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
     else if (!bzla_bv_compare(t, one))
     {
       /* t = 1: choose random res > 0 */
+      assert(!pi->res_x);
       bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, one, 0);
       res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
       bzla_bvdomain_gen_delete(&gen);
     }
-    else if (bzla_bv_compare(x->hi, t) < 0)
-    {
-      /* non-recoverable conflict */
-      res = NULL;
-    }
     else
     {
+      assert(bzla_bv_compare(x->hi, t) >= 0);
+
       /* simplest solution:
        *   x = t
        *
-       * remaining solutions:
+       * remaining solutions (determined in is_cons_udiv_const):
        *   min <= x <= ones with min = x->lo / t * t if x->lo / t > 1 and
        *                         min = 2 * t otherwise */
+
       /* pick x = t with prob=10% if possible */
       check_t = bzla_bvdomain_check_fixed_bits(mm, x, t);
       if (check_t && bzla_rng_pick_with_prob(bzla->rng, 100))
@@ -2570,121 +2639,20 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
       }
       else
       {
-        force_t = false;
-        tmp     = bzla_bv_udiv(mm, x->lo, t);
-        if (bzla_bv_compare(tmp, one) <= 0)
+        if (pi->res_x)
         {
-          if (bzla_bv_is_uaddo(mm, t, t))
+          res = bzla_bv_copy(mm, pi->res_x->lo);
+        }
+        else
+        {
+          res = bzla_proputils_cons_udiv_const_pos0_aux(bzla, pi);
+          if (!res)
           {
             /* x = t the only solution */
-            force_t = true;
-            min     = NULL;
-          }
-          else
-          {
-            min = bzla_bv_add(mm, t, t);
-          }
-        }
-        else
-        {
-          min = bzla_bv_mul(mm, tmp, t);
-        }
-        bzla_bv_free(mm, tmp);
-        if (force_t)
-        {
-          if (!check_t)
-          {
-            /* non-recoverable conflict
-             * x = t the only solution but not possible */
-            res = NULL;
-          }
-          else
-          {
+            assert(check_t);
             res = bzla_bv_copy(mm, t);
           }
         }
-        else
-        {
-          assert(min);
-          res = NULL;
-          /* min / t <= s <= x->hi / t */
-          s_min = bzla_bv_udiv(mm, min, t);
-          s_max = bzla_bv_udiv(mm, x->hi, t);
-          if (bzla_bv_compare(s_min, s_max) > 0)
-          {
-            bzla_bv_free(mm, s_max);
-            s_max = bzla_bv_copy(mm, ones);
-          }
-          bzla_bv_free(mm, min);
-          min = NULL;
-          for (i = 0; i < 20; i++)
-          {
-            s_tmp = bzla_bv_new_random_range(mm, bzla->rng, bw, s_min, s_max);
-            if (bzla_bv_is_umulo(mm, s_tmp, t))
-            {
-              bzla_bv_free(mm, s_tmp);
-              continue;
-            }
-            /* for s_tmp, min = s_tmp * t and max = min + s - 1 */
-            min = bzla_bv_mul(mm, s_tmp, t);
-            tmp = bzla_bv_add(mm, s_tmp, min);
-            if (bzla_bv_compare(min, tmp) > 0)
-            {
-              max = bzla_bv_copy(mm, ones);
-            }
-            else
-            {
-              max = bzla_bv_dec(mm, tmp);
-            }
-            bzla_bv_free(mm, tmp);
-            bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, min, max);
-            if (bzla_bvdomain_gen_has_next(&gen))
-            {
-              res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
-              bzla_bv_free(mm, s_tmp);
-              bzla_bv_free(mm, min);
-              min = NULL;
-              bzla_bv_free(mm, max);
-              bzla_bvdomain_gen_delete(&gen);
-              break;
-            }
-            bzla_bv_free(mm, s_tmp);
-            bzla_bv_free(mm, min);
-            min = NULL;
-            bzla_bv_free(mm, max);
-            bzla_bvdomain_gen_delete(&gen);
-          }
-          if (!res && check_t)
-          {
-            /* fall back to simple solution if possible, else conflict
-             * (note: conflicts can be false positives) */
-            res = bzla_bv_copy(mm, t);
-          }
-          bzla_bv_free(mm, s_min);
-          bzla_bv_free(mm, s_max);
-
-#if 0
-          bzla_bvdomain_gen_init_range (mm, bzla->rng, &gen, x, min, ones);
-          if (!bzla_bvdomain_gen_has_next (&gen))
-          {
-            if (!check_t)
-            {
-              /* non-recoverable conflict */
-              res = NULL;
-            }
-            else
-            {
-              res = bzla_bv_copy (mm, t);
-            }
-          }
-          else
-          {
-            res = bzla_bv_copy (mm, bzla_bvdomain_gen_random (&gen));
-          }
-          bzla_bvdomain_gen_delete (&gen);
-#endif
-        }
-        if (min) bzla_bv_free(mm, min);
       }
     }
   }
