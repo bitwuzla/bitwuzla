@@ -709,3 +709,111 @@ bzla_is_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
   }
   return res;
 }
+
+/**
+ * Check consistency condition (with respect to const bits in x) for:
+ *
+ * x / s = t
+ * s / x = t
+ *
+ * IC:
+ *
+ * pos_x = 0:
+ * (t = ones => mcb(x, ones)) /\
+ * (t != ones =>
+ *   (t > (ones - t) => mcb (x, t)) /\
+ *   (t < (ones - t) => mcb(x, t) \/ \exists y. (mcb(x, y) /\ y> 2*t))
+ *
+ * pos_x = 1:
+ * mcb(x, 0) \/
+ * ((t = ones => mcb(x, 0)) /\ (t != ones => \exists y. (mcb(x, y) /\ y > t)))
+ */
+bool
+bzla_is_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+
+  bool res, check;
+  int32_t cmp_t;
+  uint32_t pos_x, bw, t_is_ones;
+  const BzlaBitVector *t;
+  const BzlaBvDomain *x;
+  BzlaBitVector *tmp, *bv_res;
+  BzlaBitVector *zero, *ones;
+  BzlaBvDomainGenerator gen;
+  BzlaMemMgr *mm;
+
+  mm = bzla->mm;
+
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+  bw    = bzla_bv_get_width(t);
+
+  bzla_propinfo_set_result(bzla, pi, 0);
+
+  res       = true;
+  t_is_ones = bzla_bv_is_ones(t);
+
+  if (pos_x == 0)
+  {
+    check = bzla_bvdomain_check_fixed_bits(mm, x, t);
+
+    if (t_is_ones && !check) return false;
+
+    ones  = bzla_bv_ones(mm, bw);
+    tmp   = bzla_bv_sub(mm, ones, t);
+    cmp_t = bzla_bv_compare(t, tmp);
+    bzla_bv_free(mm, tmp);
+    bzla_bv_free(mm, ones);
+
+    if (cmp_t > 0 && !check)
+    {
+      return false;
+    }
+
+    if (cmp_t < 0 && !check)
+    {
+      /* x > t:
+       * pick s > t such that x = s + t does not overflow -> t < s < ones - t
+       * -> 2*t + 1 <= x <= ones */
+      bv_res = bzla_proputils_cons_urem_const_pos0_aux(bzla, pi);
+      res    = bv_res != NULL;
+      if (res)
+      {
+        bzla_propinfo_set_result(bzla, pi, bzla_bvdomain_new_fixed(mm, bv_res));
+        bzla_bv_free(mm, bv_res);
+      }
+    }
+  }
+  else
+  {
+    zero  = bzla_bv_zero(mm, bw);
+    check = bzla_bvdomain_check_fixed_bits(mm, x, zero);
+    if (!check)
+    {
+      if (t_is_ones)
+      {
+        res = false;
+      }
+      else
+      {
+        tmp = bzla_bv_inc(mm, t);
+        bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, tmp, 0);
+        res = bzla_bvdomain_gen_has_next(&gen);
+        if (res)
+        {
+          bzla_propinfo_set_result(
+              bzla,
+              pi,
+              bzla_bvdomain_new_fixed(mm, bzla_bvdomain_gen_random(&gen)));
+        }
+        bzla_bv_free(mm, tmp);
+        bzla_bvdomain_gen_delete(&gen);
+      }
+    }
+    bzla_bv_free(mm, zero);
+  }
+  return res;
+}

@@ -2663,6 +2663,46 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
 }
 
 BzlaBitVector *
+bzla_proputils_cons_urem_const_pos0_aux(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+  assert(pi->pos_x == 0);
+
+  int32_t pos_x;
+  BzlaBitVector *res, *tmp, *min;
+  const BzlaBvDomain *x;
+  const BzlaBitVector *t;
+  BzlaBvDomainGenerator gen;
+  BzlaMemMgr *mm;
+
+  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_urem);
+
+  mm    = bzla->mm;
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+
+  /* x > t:
+   * pick s > t such that x = s + t does not overflow -> t < s < ones - t
+   * -> 2*t + 1 <= x <= ones */
+  res = NULL;
+  min = bzla_bv_inc(mm, t);
+  assert(!bzla_bv_is_uaddo(mm, min, t));
+  tmp = bzla_bv_add(mm, min, t);
+  bzla_bv_free(mm, min);
+  min = tmp;
+  bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, min, 0);
+  if (bzla_bvdomain_gen_has_next(&gen))
+  {
+    res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+  }
+  bzla_bvdomain_gen_delete(&gen);
+  bzla_bv_free(mm, tmp);
+  return res;
+}
+
+BzlaBitVector *
 bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
 {
 #ifndef NDEBUG
@@ -2671,11 +2711,16 @@ bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
   int32_t pos_x;
   uint32_t bw;
   bool check_t, check_zero;
-  BzlaBitVector *res, *zero, *ones, *tmp, *max, *min;
+  BzlaBitVector *res, *zero, *ones, *max, *min;
   const BzlaBvDomain *x;
   const BzlaBitVector *t;
-  BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
+
+  if (!bzla_is_cons_urem_const(bzla, pi))
+  {
+    /* non-recoverable conflict */
+    return NULL;
+  }
 
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_urem);
 
@@ -2699,39 +2744,18 @@ bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
       if (!bzla_bv_compare(t, ones))
       {
         /* t = 1...1  ->  res = 0 */
-        if (!check_zero)
-        {
-          /* non-recoverable conflict*/
-          res = NULL;
-        }
-        else
-        {
-          res = bzla_bv_copy(mm, zero);
-        }
+        assert(check_zero);
+        res = bzla_bv_copy(mm, zero);
+      }
+      else if (!pi->res_x)
+      {
+        assert(check_zero);
+        res = bzla_bv_copy(mm, zero);
       }
       else
       {
         /* else res > t */
-        tmp = bzla_bv_inc(mm, t);
-        bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, tmp, 0);
-        if (!bzla_bvdomain_gen_has_next(&gen))
-        {
-          if (!check_zero)
-          {
-            /* non-recoverable conflict*/
-            res = NULL;
-          }
-          else
-          {
-            res = bzla_bv_copy(mm, zero);
-          }
-        }
-        else
-        {
-          res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
-        }
-        bzla_bv_free(mm, tmp);
-        bzla_bvdomain_gen_delete(&gen);
+        res = bzla_bv_copy(mm, pi->res_x->lo);
       }
     }
   }
@@ -2740,15 +2764,8 @@ bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
     if (!bzla_bv_compare(t, ones))
     {
       /* t = 1...1  ->  res = 1...1 */
-      if (!bzla_bvdomain_check_fixed_bits(mm, x, ones))
-      {
-        /* non-recoverable conflict*/
-        res = NULL;
-      }
-      else
-      {
-        res = bzla_bv_copy(mm, ones);
-      }
+      assert(bzla_bvdomain_check_fixed_bits(mm, x, ones));
+      res = bzla_bv_copy(mm, ones);
     }
     else
     {
@@ -2760,15 +2777,8 @@ bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
       min = bzla_bv_inc(mm, t);
       if (bzla_bv_compare(min, max) > 0)
       {
-        if (!bzla_bvdomain_check_fixed_bits(mm, x, t))
-        {
-          /* non-recoverable conflict*/
-          res = NULL;
-        }
-        else
-        {
-          res = bzla_bv_copy(mm, t);
-        }
+        assert(bzla_bvdomain_check_fixed_bits(mm, x, t));
+        res = bzla_bv_copy(mm, t);
       }
       else
       {
@@ -2777,30 +2787,18 @@ bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
         {
           res = bzla_bv_copy(mm, t);
         }
+        else if (pi->res_x)
+        {
+          res = bzla_bv_copy(mm, pi->res_x->lo);
+        }
         else
         {
-          assert(!bzla_bv_is_uaddo(mm, min, t));
-          tmp = bzla_bv_add(mm, min, t);
-          bzla_bv_free(mm, min);
-          min = tmp;
-          bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, min, ones);
-          if (!bzla_bvdomain_gen_has_next(&gen))
+          res = bzla_proputils_cons_urem_const_pos0_aux(bzla, pi);
+          if (!res)
           {
-            if (!check_t)
-            {
-              /* non-recoverable conflict*/
-              res = NULL;
-            }
-            else
-            {
-              res = bzla_bv_copy(mm, t);
-            }
+            assert(check_t);
+            res = bzla_bv_copy(mm, t);
           }
-          else
-          {
-            res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
-          }
-          bzla_bvdomain_gen_delete(&gen);
         }
       }
       bzla_bv_free(mm, min);
