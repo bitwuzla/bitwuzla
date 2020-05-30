@@ -817,3 +817,48 @@ bzla_is_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
   }
   return res;
 }
+
+/**
+ * Check consistency condition (with respect to const bits in x) for:
+ *
+ * x o s = t
+ * s o x = t
+ *
+ * IC:
+ * pos_x = 0: mcb(x, t[msb : bw(s)])
+ * pos_x = 1: mcb(x, t[msb - bw(s): lsb])
+ */
+bool
+bzla_is_cons_concat_const(Bzla *bzla, BzlaPropInfo *pi)
+{
+  assert(bzla);
+  assert(pi);
+
+  bool res;
+  uint32_t pos_x, bw_t, bw_s;
+  const BzlaBitVector *t;
+  const BzlaBvDomain *x;
+  BzlaBitVector *tmp;
+  BzlaMemMgr *mm;
+
+  mm = bzla->mm;
+
+  pos_x = pi->pos_x;
+  t     = pi->target_value;
+  x     = pi->bvd[pos_x];
+  bw_t  = bzla_bv_get_width(t);
+  bw_s  = bzla_bv_get_width(pi->bv[1 - pos_x]);
+
+  if (pos_x == 0)
+  {
+    tmp = bzla_bv_slice(mm, t, bw_t - 1, bw_s);
+  }
+  else
+  {
+    tmp = bzla_bv_slice(mm, t, bw_t - 1 - bw_s, 0);
+  }
+  res = bzla_bvdomain_check_fixed_bits(mm, x, tmp);
+  bzla_bv_free(mm, tmp);
+
+  return res;
+}

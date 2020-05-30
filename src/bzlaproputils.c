@@ -2823,6 +2823,12 @@ bzla_proputils_cons_concat_const(Bzla *bzla, BzlaPropInfo *pi)
   BzlaMemMgr *mm;
   const BzlaBitVector *s, *t;
 
+  if (!bzla_is_cons_concat_const(bzla, pi))
+  {
+    /* non-recoverable conflict */
+    return NULL;
+  }
+
   record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_concat);
 
   mm    = bzla->mm;
@@ -2846,12 +2852,7 @@ bzla_proputils_cons_concat_const(Bzla *bzla, BzlaPropInfo *pi)
 
   res = bzla_bv_slice(mm, t, upper, lower);
 
-  if (!bzla_bvdomain_check_fixed_bits(mm, x, res))
-  {
-    /* non-recoverable conflict */
-    bzla_bv_free(mm, res);
-    res = NULL;
-  }
+  assert(bzla_bvdomain_check_fixed_bits(mm, x, res));
   return res;
 }
 

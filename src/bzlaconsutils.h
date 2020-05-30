@@ -25,5 +25,6 @@ bool bzla_is_cons_sra_const(Bzla *bzla, BzlaPropInfo *pi);
 bool bzla_is_cons_mul_const(Bzla *bzla, BzlaPropInfo *pi);
 bool bzla_is_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi);
 bool bzla_is_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi);
+bool bzla_is_cons_concat_const(Bzla *bzla, BzlaPropInfo *pi);
 
 #endif
