@@ -2887,7 +2887,6 @@ bzla_add_again_assumptions(Bzla *bzla)
   BzlaNodePtrStack stack;
   BzlaPtrHashTable *assumptions;
   BzlaPtrHashTableIterator it;
-  BzlaPtrHashBucket *b;
   BzlaAIG *aig;
   BzlaSATMgr *smgr;
   BzlaAIGMgr *amgr;
@@ -2903,23 +2902,16 @@ bzla_add_again_assumptions(Bzla *bzla)
                                        (BzlaHashPtr) bzla_node_hash_by_id,
                                        (BzlaCmpPtr) bzla_node_compare_by_id);
 
-  bzla->fp_synth_assume = true;
-  /* Note: Do not user an iterator here since assumptions can get added while
-   * synthesizing FP expresssions and the iterator may miss some of them in
-   * certain cases (last iteration). For now we directly iterate over the
-   * buckets until we have a fix for the iterators. */
-  for (b = bzla->assumptions->first; b; b = b->next)
+  bzla_iter_hashptr_init(&it, bzla->assumptions);
+  while (bzla_iter_hashptr_has_next(&it))
   {
-    exp = b->key;
+    exp = bzla_iter_hashptr_next(&it);
     assert(!bzla_node_is_simplified(exp));
 
     if (bzla_node_is_inverted(exp) || !bzla_node_is_bv_and(exp))
     {
       if (!bzla_hashptr_table_get(assumptions, exp))
-      {
-        bzla_synthesize_exp(bzla, exp, 0);
         bzla_hashptr_table_add(assumptions, exp);
-      }
     }
     else
     {
@@ -2937,10 +2929,7 @@ bzla_add_again_assumptions(Bzla *bzla)
           if (!bzla_node_is_inverted(e) && bzla_node_is_bv_and(e))
             BZLA_PUSH_STACK(stack, e);
           else if (!bzla_hashptr_table_get(assumptions, e))
-          {
-            bzla_synthesize_exp(bzla, e, 0);
             bzla_hashptr_table_add(assumptions, e);
-          }
         }
       }
     }
@@ -2966,7 +2955,6 @@ bzla_add_again_assumptions(Bzla *bzla)
   BZLA_RELEASE_STACK(stack);
   bzla_hashptr_table_delete(assumptions);
   bzla_hashint_table_delete(mark);
-  bzla->fp_synth_assume = false;
 }
 
 #if 0
