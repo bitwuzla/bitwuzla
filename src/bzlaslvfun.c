@@ -585,14 +585,14 @@ sat_aux_bzla_dual_prop(Bzla *bzla)
 
   if (bzla->valid_assignments == 1) bzla_reset_incremental_usage(bzla);
 
+  bzla_add_again_assumptions(bzla);
+
   assert(bzla->synthesized_constraints->count == 0);
   assert(bzla->unsynthesized_constraints->count == 0);
   assert(bzla->embedded_constraints->count == 0);
   assert(bzla_dbg_check_all_hash_tables_proxy_free(bzla));
   assert(bzla_dbg_check_all_hash_tables_simp_free(bzla));
   assert(bzla_dbg_check_assumptions_simp_free(bzla));
-
-  bzla_add_again_assumptions(bzla);
 
   result = timed_sat_sat(bzla, -1);
 
@@ -2691,6 +2691,10 @@ sat_fun_solver(BzlaFunSolver *slv)
 
     if (result == BZLA_RESULT_UNKNOWN)
     {
+      /* Word-blasting may add new constraints. Make sure that these also get
+       * synthesized. */
+      bzla_add_again_assumptions(bzla);
+
       bzla_process_unsynthesized_constraints(bzla);
       if (bzla->found_constraint_false)
       {
@@ -2702,8 +2706,6 @@ sat_fun_solver(BzlaFunSolver *slv)
       assert(bzla_dbg_check_all_hash_tables_simp_free(bzla));
 
       /* make SAT call on bv skeleton */
-      bzla_add_again_assumptions(bzla);
-
       result = timed_sat_sat(bzla, slv->sat_limit);
 
       /* Initialize new bit vector model, which will be constructed while
