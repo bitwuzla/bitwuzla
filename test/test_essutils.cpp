@@ -617,6 +617,11 @@ TEST_F(TestEssUtils, is_ess_and_const)
   test_is_ess_binary_const(bzla_is_ess_and_const, boolector_bv_and, 0);
 }
 
+TEST_F(TestEssUtils, is_ess_xor_const)
+{
+  test_is_ess_binary_const(bzla_is_ess_xor_const, boolector_bv_xor, 0);
+}
+
 TEST_F(TestEssUtils, is_ess_concat_const)
 {
   test_is_ess_binary_const(bzla_is_ess_concat_const, boolector_bv_concat, 0);
@@ -697,6 +702,11 @@ TEST_F(TestEssUtils, is_ess_add)
 TEST_F(TestEssUtils, is_ess_and)
 {
   test_is_ess_binary(bzla_is_ess_and, boolector_bv_and, 0);
+}
+
+TEST_F(TestEssUtils, is_ess_xor)
+{
+  test_is_ess_binary(bzla_is_ess_xor, boolector_bv_xor, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_concat)

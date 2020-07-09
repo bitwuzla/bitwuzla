@@ -30,6 +30,8 @@ bzla_is_ess_add(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x)
 {
   assert(bzla);
   assert(pi);
+  (void) bzla;
+  (void) pi;
   (void) pos_x;
   return false;
 }
@@ -56,6 +58,28 @@ bzla_is_ess_and(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x)
   res          = !bzla_is_inv_and(bzla, pi);
   pi->pos_x    = tmp;
   return res;
+}
+
+/*
+ * Check if x is essential w.r.t. to t.
+ *
+ * x ^ s = t
+ * s ^ x = t
+ *
+ * EC:
+ * pos_x = 0: !is_inv (x ^ s = t) when solved for s
+ * pos_x = 1: !is_inv (s ^ x = t) when solved for s
+ */
+bool
+bzla_is_ess_xor(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x)
+{
+  assert(bzla);
+  assert(pi);
+
+  (void) bzla;
+  (void) pi;
+  (void) pos_x;
+  return false;
 }
 
 /*
@@ -422,6 +446,30 @@ bzla_is_ess_and_const(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x)
   uint32_t tmp = pi->pos_x;
   pi->pos_x    = 1 - pos_x;
   res          = !bzla_is_inv_and_const(bzla, pi);
+  pi->pos_x    = tmp;
+  return res;
+}
+
+/*
+ * Check if x is essential w.r.t. to t and constant bits in s for:
+ *
+ * x ^ s = t
+ * s ^ x = t
+ *
+ * EC:
+ * pos_x = 0: !is_inv (x & s = t) when solved for s (w.r.t. const bits in s)
+ * pos_x = 1: !is_inv (s & x = t) when solved for s (w.r.t. const bits in s)
+ */
+bool
+bzla_is_ess_xor_const(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x)
+{
+  assert(bzla);
+  assert(pi);
+
+  bool res;
+  uint32_t tmp = pi->pos_x;
+  pi->pos_x    = 1 - pos_x;
+  res          = !bzla_is_inv_xor_const(bzla, pi);
   pi->pos_x    = tmp;
   return res;
 }

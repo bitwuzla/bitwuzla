@@ -21,6 +21,9 @@ bool bzla_is_ess_add(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x);
 /** Check if x is essential w.r.t. to t for x & s = t or s & x = t. */
 bool bzla_is_ess_and(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x);
 
+/** Check if x is essential w.r.t. to t for x ^ s = t or s ^ x = t. */
+bool bzla_is_ess_xor(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x);
+
 /** Check if x is essential w.r.t. to t for x o s = t or s o x = t. */
 bool bzla_is_ess_concat(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x);
 
@@ -73,6 +76,12 @@ bool bzla_is_ess_add_const(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x);
  * or s & x = t.
  */
 bool bzla_is_ess_and_const(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x);
+
+/**
+ * Check if x is essential w.r.t. to t and constant bits in s for x ^ s = t
+ * or s ^ x = t.
+ */
+bool bzla_is_ess_xor_const(Bzla *bzla, BzlaPropInfo *pi, uint32_t pos_x);
 
 /**
  * Check if x is essential w.r.t. to t and constant bits in s for x o s = t
