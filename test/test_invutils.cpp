@@ -583,6 +583,11 @@ TEST_F(TestInvUtils, is_inv_and_const)
   test_is_inv_binary_const(bzla_is_inv_and_const, boolector_bv_and, 0);
 }
 
+TEST_F(TestInvUtils, is_inv_xor_const)
+{
+  test_is_inv_binary_const(bzla_is_inv_xor_const, boolector_bv_xor, 0);
+}
+
 TEST_F(TestInvUtils, is_inv_concat_const)
 {
   test_is_inv_binary_const(bzla_is_inv_concat_const, boolector_bv_concat, 0);
@@ -663,6 +668,11 @@ TEST_F(TestInvUtils, is_inv_add)
 TEST_F(TestInvUtils, is_inv_and)
 {
   test_is_inv_binary(bzla_is_inv_and, boolector_bv_and, 0);
+}
+
+TEST_F(TestInvUtils, is_inv_xor)
+{
+  test_is_inv_binary(bzla_is_inv_xor, boolector_bv_xor, 0);
 }
 
 TEST_F(TestInvUtils, is_inv_concat)
