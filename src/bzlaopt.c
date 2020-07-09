@@ -992,11 +992,6 @@ bzla_opt_init_opts(Bzla *bzla)
       bzla->mm, (BzlaHashPtr) bzla_hash_str, (BzlaCmpPtr) strcmpoptval);
   add_opt_help(mm,
                opts,
-               "controlling",
-               BZLA_PROP_PATH_SEL_CONTROLLING,
-               "select path based on controlling inputs");
-  add_opt_help(mm,
-               opts,
                "essential",
                BZLA_PROP_PATH_SEL_ESSENTIAL,
                "select path based on essential inputs");

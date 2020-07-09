@@ -674,8 +674,6 @@ enum BzlaOption
 
       Select mode for path selection.
 
-      * BZLA_PROP_PATH_SEL_CONTROLLING:
-        select path based on controlling inputs
       * BZLA_PROP_PATH_SEL_ESSENTIAL [default]:
         select path based on essential inputs
       * BZLA_PROP_PATH_SEL_RANDOM:
@@ -1059,8 +1057,7 @@ typedef enum BzlaOptSLSStrat BzlaOptSLSStrat;
 
 enum BzlaOptPropPathSel
 {
-  BZLA_PROP_PATH_SEL_CONTROLLING = 1,
-  BZLA_PROP_PATH_SEL_ESSENTIAL,
+  BZLA_PROP_PATH_SEL_ESSENTIAL = 1,
   BZLA_PROP_PATH_SEL_RANDOM,
 };
 typedef enum BzlaOptPropPathSel BzlaOptPropPathSel;
