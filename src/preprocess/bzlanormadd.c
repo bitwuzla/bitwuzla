@@ -1,8 +1,8 @@
-/*  Boolector: Satisfiability Modulo Theories (SMT) solver.
+/*  Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
  *  Copyright (C) 2018 Mathias Preiner.
  *
- *  This file is part of Boolector.
+ *  This file is part of Bitwuzla.
  *  See COPYING for more information on using this software.
  */
 

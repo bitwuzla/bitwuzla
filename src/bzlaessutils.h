@@ -2,7 +2,7 @@
  *
  *  Copyright (C) 2020 Aina Niemetz.
  *
- *  This file is part of Boolector.
+ *  This file is part of Bitwuzla.
  *  See COPYING for more information on using this software.
  */
 
