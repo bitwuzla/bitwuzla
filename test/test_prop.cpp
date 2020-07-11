@@ -254,6 +254,7 @@ class TestProp : public TestBzla
     ASSERT_EQ(sat_res, BZLA_RESULT_SAT);
     TEST_PROP_LOG(
         "moves %u n %u\n", ((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
+    assert(((BzlaPropSolver *) d_bzla->slv)->stats.moves <= n);
     ASSERT_LE(((BzlaPropSolver *) d_bzla->slv)->stats.moves, n);
     bzla_reset_incremental_usage(d_bzla);
   }
@@ -1286,7 +1287,7 @@ TEST_F(TestPropConst, complete_concat_const)
                        bzla_proputils_inv_concat_const);
 }
 
-TEST_F(TestPropConst, complete_cond_const) { prop_complete_cond(10, true); }
+TEST_F(TestPropConst, complete_cond_const) { prop_complete_cond(25, true); }
 
 TEST_F(TestPropConst, complete_slice_const)
 {
