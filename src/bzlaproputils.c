@@ -2714,6 +2714,7 @@ bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
   BzlaBitVector *res, *zero, *ones, *max, *min;
   const BzlaBvDomain *x;
   const BzlaBitVector *t;
+  BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
   if (!bzla_is_cons_urem_const(bzla, pi))
@@ -2750,7 +2751,25 @@ bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
       else if (!pi->res_x)
       {
         assert(check_zero);
-        res = bzla_bv_copy(mm, zero);
+        if (bzla_rng_flip_coin(bzla->rng))
+        {
+          res = bzla_bv_copy(mm, zero);
+        }
+        else
+        {
+          min = bzla_bv_inc(mm, t);
+          bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, min, 0);
+          if (!bzla_bvdomain_gen_has_next(&gen))
+          {
+            res = bzla_bv_copy(mm, zero);
+          }
+          else
+          {
+            res = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
+          }
+          bzla_bv_free(mm, min);
+          bzla_bvdomain_gen_delete(&gen);
+        }
       }
       else
       {
