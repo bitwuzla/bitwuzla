@@ -560,7 +560,7 @@ bzla_is_cons_mul_const(Bzla *bzla, BzlaPropInfo *pi)
 
   if (bzla_bv_get_bit(t, 0) == 0 && !bzla_bvdomain_is_fixed(mm, x))
   {
-    tmp = bzla_bv_one(mm, bw);
+    tmp = bzla_bv_is_zero(t) ? bzla_bv_zero(mm, bw) : bzla_bv_one(mm, bw);
     bzla_bvdomain_gen_init_range(mm, bzla->rng, &gen, x, tmp, 0);
     bzla_bv_free(mm, tmp);
     tmp = bzla_bv_copy(mm, bzla_bvdomain_gen_random(&gen));
