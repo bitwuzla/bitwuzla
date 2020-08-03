@@ -514,8 +514,9 @@ boolector_assume(Bzla *bzla, BoolectorNode *node)
              "'exp' must have bit-width one");
   BZLA_ABORT(bzla_node_real_addr(exp)->parameterized,
              "assumption must not be parameterized");
-  BZLA_PUSH_STACK(bzla->failed_assumptions, bzla_node_copy(bzla, exp));
+
   bzla_assume_exp(bzla, exp);
+  BZLA_PUSH_STACK(bzla->failed_assumptions, bzla_node_copy(bzla, exp));
 #ifndef NDEBUG
   BZLA_CHKCLONE_NORES(assume, BZLA_CLONED_EXP(exp));
 #endif
