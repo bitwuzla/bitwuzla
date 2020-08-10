@@ -386,65 +386,65 @@ class TestEssUtils : public TestBzla
                                BzlaBitVector *x,
                                uint32_t pos_x)
   {
-    BoolectorSort sx;
-    BoolectorNode *nx, *nxlo, *nxhi, *ns, *nt;
+    BoolectorSort sort;
+    BoolectorNode *ns, *nslo, *nshi, *nvx, *nvt;
     BoolectorNode *andhi, *orlo, *eq, *exp;
     char *vx, *vt, *vslo, *vshi;
 
     Bzla *bzla = boolector_new();
 
-    boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
-
     vx = bzla_bv_to_char(d_mm, x);
     vt = bzla_bv_to_char(d_mm, t);
 
-    sx = boolector_bv_sort(bzla, bzla_bv_get_width(s->lo));
-    nx = boolector_var(bzla, sx, 0);
+    sort = boolector_bv_sort(bzla, bzla_bv_get_width(s->lo));
+    ns   = boolector_var(bzla, sort, 0);
 
     vslo = bzla_bv_to_char(d_mm, s->lo);
-    nxlo = boolector_bv_const(bzla, vslo);
+    nslo = boolector_bv_const(bzla, vslo);
 
     vshi = bzla_bv_to_char(d_mm, s->hi);
-    nxhi = boolector_bv_const(bzla, vshi);
+    nshi = boolector_bv_const(bzla, vshi);
 
-    /* assume const bits for s */
-    andhi = boolector_bv_and(bzla, nx, nxhi);
-    eq    = boolector_eq(bzla, andhi, nx);
-    boolector_assume(bzla, eq);
+    /* assert const bits for s */
+    andhi = boolector_bv_and(bzla, ns, nshi);
+    eq    = boolector_eq(bzla, andhi, ns);
+    boolector_assert(bzla, eq);
     boolector_release(bzla, eq);
 
-    orlo = boolector_bv_or(bzla, nx, nxlo);
-    eq   = boolector_eq(bzla, orlo, nx);
-    boolector_assume(bzla, eq);
+    orlo = boolector_bv_or(bzla, ns, nslo);
+    eq   = boolector_eq(bzla, orlo, ns);
+    boolector_assert(bzla, eq);
     boolector_release(bzla, eq);
 
     /* s <> x = t  for operator <> */
 
-    ns = boolector_bv_const(bzla, vx);
-    nt = boolector_bv_const(bzla, vt);
+    nvx = boolector_bv_const(bzla, vx);
+    nvt = boolector_bv_const(bzla, vt);
 
     if (pos_x == 0)
-      exp = create_exp_func(bzla, nx, ns);
+    {
+      exp = create_exp_func(bzla, ns, nvx);
+    }
     else
     {
       assert(pos_x == 1);
-      exp = create_exp_func(bzla, ns, nx);
+      exp = create_exp_func(bzla, nvx, ns);
     }
 
-    eq = boolector_eq(bzla, exp, nt);
-    boolector_assume(bzla, eq);
+    eq = boolector_eq(bzla, exp, nvt);
+    boolector_assert(bzla, eq);
     boolector_release(bzla, eq);
 
     int32_t status = boolector_sat(bzla);
     assert(status == BOOLECTOR_SAT || status == BOOLECTOR_UNSAT);
 
-    boolector_release_sort(bzla, sx);
+    boolector_release_sort(bzla, sort);
     boolector_release(bzla, exp);
-    boolector_release(bzla, nx);
-    boolector_release(bzla, nxlo);
-    boolector_release(bzla, nxhi);
     boolector_release(bzla, ns);
-    boolector_release(bzla, nt);
+    boolector_release(bzla, nslo);
+    boolector_release(bzla, nshi);
+    boolector_release(bzla, nvx);
+    boolector_release(bzla, nvt);
     boolector_release(bzla, andhi);
     boolector_release(bzla, orlo);
 
@@ -464,14 +464,12 @@ class TestEssUtils : public TestBzla
                              uint32_t pos_x)
   {
     BoolectorSort ss0, ss1;
-    BoolectorNode *nx, *ns0lo, *ns0hi, *ns1lo, *ns1hi, *ns0, *ns1, *nt;
+    BoolectorNode *nvx, *ns0lo, *ns0hi, *ns1lo, *ns1hi, *ns0, *ns1, *nvt;
     BoolectorNode *ands0hi, *ands1hi, *ors0lo, *ors1lo, *eq, *eqs, *exp;
     char *vx, *vt, *vs0lo, *vs1lo, *vs0hi, *vs1hi;
     int32_t status;
 
     Bzla *bzla = boolector_new();
-
-    boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
 
     vx = bzla_bv_to_char(d_mm, x);
     vt = bzla_bv_to_char(d_mm, t);
@@ -494,24 +492,24 @@ class TestEssUtils : public TestBzla
     vs1hi = bzla_bv_to_char(d_mm, s1->hi);
     ns1hi = boolector_bv_const(bzla, vs1hi);
 
-    nx = boolector_bv_const(bzla, vx);
-    nt = boolector_bv_const(bzla, vt);
+    nvx = boolector_bv_const(bzla, vx);
+    nvt = boolector_bv_const(bzla, vt);
 
     if (pos_x == 0)
     {
-      exp = boolector_cond(bzla, nx, ns0, ns1);
+      exp = boolector_cond(bzla, nvx, ns0, ns1);
     }
     else if (pos_x == 1)
     {
-      exp = boolector_cond(bzla, ns0, nx, ns1);
+      exp = boolector_cond(bzla, ns0, nvx, ns1);
     }
     else
     {
       assert(pos_x == 2);
-      exp = boolector_cond(bzla, ns0, ns1, nx);
+      exp = boolector_cond(bzla, ns0, ns1, nvx);
     }
 
-    eq = boolector_eq(bzla, exp, nt);
+    eq = boolector_eq(bzla, exp, nvt);
     boolector_assert(bzla, eq);
     boolector_release(bzla, eq);
 
@@ -545,14 +543,14 @@ class TestEssUtils : public TestBzla
     boolector_release_sort(bzla, ss0);
     boolector_release_sort(bzla, ss1);
     boolector_release(bzla, exp);
-    boolector_release(bzla, nx);
+    boolector_release(bzla, nvx);
     boolector_release(bzla, ns0lo);
     boolector_release(bzla, ns0hi);
     boolector_release(bzla, ns1lo);
     boolector_release(bzla, ns1hi);
     boolector_release(bzla, ns0);
     boolector_release(bzla, ns1);
-    boolector_release(bzla, nt);
+    boolector_release(bzla, nvt);
 
     bzla_mem_freestr(d_mm, vx);
     bzla_mem_freestr(d_mm, vt);
@@ -569,31 +567,29 @@ class TestEssUtils : public TestBzla
                               uint32_t upper,
                               uint32_t lower)
   {
-    BoolectorNode *nx, *nt;
+    BoolectorNode *nvx, *nvt;
     BoolectorNode *eq, *exp;
     char *vt, *vx;
 
     Bzla *bzla = boolector_new();
 
-    boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
-
     vt = bzla_bv_to_char(d_mm, t);
     vx = bzla_bv_to_char(d_mm, x);
 
-    nt = boolector_bv_const(bzla, vt);
-    nx = boolector_bv_const(bzla, vx);
+    nvt = boolector_bv_const(bzla, vt);
+    nvx = boolector_bv_const(bzla, vx);
 
-    exp = boolector_bv_slice(bzla, nx, upper, lower);
-    eq  = boolector_eq(bzla, exp, nt);
-    boolector_assume(bzla, eq);
+    exp = boolector_bv_slice(bzla, nvx, upper, lower);
+    eq  = boolector_eq(bzla, exp, nvt);
+    boolector_assert(bzla, eq);
     boolector_release(bzla, eq);
 
     int32_t status = boolector_sat(bzla);
     assert(status == BOOLECTOR_SAT || status == BOOLECTOR_UNSAT);
 
     boolector_release(bzla, exp);
-    boolector_release(bzla, nx);
-    boolector_release(bzla, nt);
+    boolector_release(bzla, nvx);
+    boolector_release(bzla, nvt);
 
     bzla_mem_freestr(d_mm, vt);
     bzla_mem_freestr(d_mm, vx);

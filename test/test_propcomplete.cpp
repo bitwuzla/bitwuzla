@@ -171,7 +171,6 @@ class TestPropComplete : public TestBzla
                          BzlaPropInfo *pi)
   {
     assert(val_fun);
-    assert(exp);
     assert(pi);
     assert(d_domains);
 
