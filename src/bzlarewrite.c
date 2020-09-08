@@ -5426,17 +5426,18 @@ apply_fp_abs(Bzla *bzla, BzlaNode *e0)
  * result: fp.is*(a)
  */
 static inline bool
-applies_fp_tester(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
+applies_fp_tester_sign_ops(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 {
   (void) kind;
-  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND
+  return bzla->rec_rw_calls < BZLA_REC_RW_BOUND && kind != BZLA_FP_IS_POS_NODE
+         && kind != BZLA_FP_IS_NEG_NODE
          && (bzla_node_is_fp_abs(e0) || bzla_node_is_fp_neg(e0));
 }
 
 static inline BzlaNode *
-apply_fp_tester(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
+apply_fp_tester_sign_ops(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
 {
-  assert(applies_fp_tester(bzla, kind, e0));
+  assert(applies_fp_tester_sign_ops(bzla, kind, e0));
   assert(bzla_node_is_regular(e0));
   BzlaNode *result;
   BZLA_INC_REC_RW_CALL(bzla);
@@ -8185,7 +8186,7 @@ rewrite_fp_tester_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
   if (!result)
   {
     ADD_RW_RULE(const_fp_tester_exp, kind, e0);
-    ADD_RW_RULE(fp_tester, kind, e0);
+    ADD_RW_RULE(fp_tester_sign_ops, kind, e0);
 
     assert(!result);
     if (!result)
