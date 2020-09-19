@@ -1,0 +1,51 @@
+1 array 1 2
+2 array 1 2
+3 var 2 i1
+4 var 2 i2
+5 var 2 i3
+6 var 2 i4
+7 var 2 i
+8 var 2 j
+9 var 2 k
+10 var 1 e1
+11 var 1 e2
+12 write 1 2 1 7 10
+13 write 1 2 2 8 11
+14 eq 1 3 4
+15 eq 1 3 5
+16 eq 1 3 6
+17 eq 1 4 5
+18 eq 1 4 6
+19 eq 1 5 6
+20 and 1 -14 -15
+21 and 1 -16 -17
+22 and 1 -18 -19
+23 and 1 20 21
+24 and 1 22 23
+25 eq 1 7 8
+26 eq 1 7 9
+27 eq 1 8 9
+28 and 1 -25 -26
+29 and 1 -27 28
+30 and 1 24 29
+31 read 1 1 9
+32 read 1 2 9
+33 eq 1 31 32
+34 and 1 30 -33
+35 read 1 12 3
+36 read 1 13 3
+37 eq 1 35 36
+38 and 1 34 37
+39 read 1 12 4
+40 read 1 13 4
+41 eq 1 39 40
+42 and 1 38 41
+43 read 1 12 5
+44 read 1 13 5
+45 eq 1 43 44
+46 and 1 42 45
+47 read 1 12 6
+48 read 1 13 6
+49 eq 1 47 48
+50 and 1 46 49
+51 root 1 50

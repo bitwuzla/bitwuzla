@@ -1,0 +1,5 @@
+1 var 1 a
+2 var 1 b
+3 urem 1 1 2
+4 and 1 2 3
+5 root 1 4

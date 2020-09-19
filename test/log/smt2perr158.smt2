@@ -1,0 +1,2 @@
+(assert
+(bvnot bvnot)

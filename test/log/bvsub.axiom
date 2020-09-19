@@ -1,0 +1,1 @@
+(bvsub s t) abbreviates (bvadd s (bvneg t))

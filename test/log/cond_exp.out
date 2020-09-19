@@ -1,0 +1,5 @@
+1 var 1 v1
+2 var 32 v2
+3 constd 32 926225716
+4 cond 32 1 2 3
+5 root 32 4

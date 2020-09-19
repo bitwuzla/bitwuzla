@@ -1,0 +1,22 @@
+; product automaton of 'automaton even' and 'automaton odd'
+1 var 2 stateeven
+2 constd 2 2
+3 var 1 input
+4 one 2
+5 add 2 1 4
+6 sub 2 1 4
+7 const 2 11
+8 eq 1 1 7 
+9 cond 2 8 6 5 
+10 cond 2 3 9 1 
+11 next 2 1 10 
+
+12 var 1 stateodd
+13 const 1 1
+14 cond 1 3 -12 12
+15 next 1 12 14
+
+16 eq 1 1 2
+17 eq 1 12 13
+18 and 1 16 17
+19 root 1 18 

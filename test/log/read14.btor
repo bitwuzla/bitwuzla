@@ -1,0 +1,7 @@
+1 var 4 i
+2 array 2 4
+3 read 2 2 1
+4 concat 4 3 3
+5 read 2 2 4
+6 redxor 1 5
+7 root 1 6

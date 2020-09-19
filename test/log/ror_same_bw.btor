@@ -1,0 +1,21 @@
+1 var 109 mbtvar37
+2 slice 1 1 108 108
+3 slice 108 1 107 0
+4 zero 107
+5 zero 1
+6 constd 32 14776
+7 zero 27
+8 var 75 mbtvar3
+9 slice 5 8 72 68
+10 concat 32 7 9
+11 ror 32 6 10
+12 concat 33 5 11
+13 var 68 mbtvar14
+14 slice 32 13 60 29
+15 concat 33 5 14
+16 add 33 12 15
+17 slice 1 16 32 32
+18 concat 108 4 17
+19 ult 1 3 18
+20 and 1 -2 -19
+21 root 1 20

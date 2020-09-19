@@ -1,0 +1,1 @@
+log/smt2perr105.smt2:2:10: first (array) argument of 'store' has element bit-width 2 but the third (stored bit-vector) argument has bit-width 1

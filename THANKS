@@ -1,0 +1,22 @@
+Thanks to:
+
++ Sergiusz Bazanski a fix in the contrib/setup-* scripts in 2019.
+
++ Nina Engelhardt for fixing --stop-first handling in btormc in 2020.
+
++ Marco Gario for fixing a race condition in the build system in 2018.
+
++ Felix Griesau for a fix in the contrib/setup-* scripts in 2020.
+
++ Jannis Harder for fixing instructions and scripts for building Boolector for
+  64-bit Windows in 2020.
+
++ Andrew V. Jones for
+  - setting up a patch set for building Boolector for Windows in 2019
+  - fixes in contrib/setup-* scripts and the build system in 2019
+  - adding termination support for CaDiCaL in 2019
+  - fixing instructions and scripts for building Boolector for 64-bit Windows
+    in 2020
+  - providing a Dockerfile for Boolector in 2020
+  - fixes/additions in Boolector's C and Python API in 2019 and 2020
+  - fixing #136 in 2020

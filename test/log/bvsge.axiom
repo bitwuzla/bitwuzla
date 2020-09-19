@@ -1,0 +1,1 @@
+    (bvsge s t) abbreviates (bvsle t s)

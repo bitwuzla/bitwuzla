@@ -1,0 +1,1 @@
+log/smt2perr143.smt2:1:24: expected ')' to close '(_ extract' at 'expected_rpar_and_not_a_symbol'

@@ -1,0 +1,19 @@
+1 array 3 3
+2 var 3
+3 var 3
+4 var 3
+5 var 3
+6 var 3
+7 var 3
+8 write 3 3 1 2 3
+9 write 3 3 1 4 5
+10 read 3 8 6
+11 read 3 9 7
+12 eq 1 2 6
+13 eq 1 4 7
+14 eq 1 6 7
+15 eq 1 10 11
+16 and 1 -12 -13
+17 and 1 14 16
+18 and 1 -15 17
+19 root 1 18

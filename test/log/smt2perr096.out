@@ -1,0 +1,1 @@
+log/smt2perr096.smt2:1:10: second argument of 'ite' is bit-vector of width 16 and third argument is bit-vector of width 15

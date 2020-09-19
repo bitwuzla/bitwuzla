@@ -1,0 +1,7 @@
+1 var 2 counter
+2 one 2
+3 add 2 1 2
+4 next 2 1 3
+
+5 eq 1 1 -1
+6 root 1 5

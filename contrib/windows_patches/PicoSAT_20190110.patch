@@ -1,0 +1,59 @@
+diff -bur picosat-965/app.c picosat-965_windows/app.c
+--- picosat-965/app.c	2016-01-13 07:19:13.000000000 +0000
++++ picosat-965_windows/app.c	2018-08-14 15:48:55.470486400 +0100
+@@ -397,12 +397,14 @@
+ static void
+ alarm_triggered (int sig)
+ {
++#ifdef NWINDOWS
+   (void) sig;
+   assert (sig == SIGALRM);
+   assert (time_limit_in_seconds);
+   assert (!ought_to_be_interrupted);
+   ought_to_be_interrupted = 1;
+   assert (!interrupt_notified);
++#endif
+ }
+ 
+ static int
+@@ -429,18 +431,22 @@
+ static void
+ setalarm ()
+ {
++#ifdef NWINDOWS
+   assert (time_limit_in_seconds > 0);
+   sig_alarm_handler = signal (SIGALRM, alarm_triggered);
+   alarm (time_limit_in_seconds);
+   assert (picosat);
+   picosat_set_interrupt (picosat, 0, interrupt_call_back);
++#endif
+ }
+ 
+ static void
+ resetalarm ()
+ {
++#ifdef NWINDOWS
+   assert (time_limit_in_seconds > 0);
+   (void) signal (SIGALRM, sig_term_handler);
++#endif
+ }
+ 
+ static void
+diff -bur picosat-965/configure.sh picosat-965_windows/configure.sh
+--- picosat-965/configure.sh	2016-01-13 07:19:13.000000000 +0000
++++ picosat-965_windows/configure.sh	2018-08-14 15:48:03.798262200 +0100
+@@ -77,12 +77,13 @@
+ 
+ [ "X$CC" = X ] && CC=gcc
+ 
+-if [ X"$CFLAGS" = X ]
++if [ TRUE ]
+ then
+   case X"$CC" in
+     *wine*|*mingw*) CFLAGS="-DNGETRUSAGE -DNALLSIGNALS";;
+     *);;
+   esac
++  CFLAGS="$CFLAGS -DNGETRUSAGE -DNALLSIGNALS"
+   [ $log = yes ] && CFLAGS="$CFLAGS -DLOGGING"
+   [ $stats = yes ] && CFLAGS="$CFLAGS -DSTATS"
+   [ $trace = yes ] && CFLAGS="$CFLAGS -DTRACE"

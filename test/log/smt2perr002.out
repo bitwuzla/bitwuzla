@@ -1,0 +1,1 @@
+log/smt2perr002.smt2:2:12: first argument of 'bvsle' is bit-vector of width 2 but argument 2 is a bit-vector of width 1

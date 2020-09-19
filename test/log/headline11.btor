@@ -1,0 +1,17 @@
+1 array 32 16
+2 array 32 16
+3 array 32 16
+4 var 32
+5 var 32
+6 var 32
+7 mul 32 4 5
+8 mul 32 4 6
+9 mul 32 5 6
+10 mul 32 7 8
+11 mul 32 9 10
+12 var 16
+13 write 32 16 1 12 11
+14 var 1
+15 acond 32 16 14 2 3
+16 ne 1 13 15
+17 root 1 16

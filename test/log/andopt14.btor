@@ -1,0 +1,7 @@
+1 var 8
+2 var 8
+3 and 8 1 2
+4 and 8 -3 2
+5 and 8 -1 2
+6 ne 1 4 5
+7 root 1 6

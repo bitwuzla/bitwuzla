@@ -1,0 +1,23 @@
+1 var 1
+2 var 4
+3 var 4
+4 var 4
+
+17 udiv 4 2 3
+18 udiv 4 3 4
+19 cond 4 1 17 18
+20 cond 4 1 2 4
+21 udiv 4 20 3
+
+22 eq 1 19 21
+
+23 udiv 4 3 4
+24 udiv 4 2 3
+25 cond 4 1 23 24
+26 cond 4 1 4 2
+27 udiv 4 26 3
+
+28 eq 1 25 27
+
+31 or 1 -22 -28 
+32 root 1 31 

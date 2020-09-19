@@ -1,0 +1,14 @@
+1 array 1 1
+2 array 1 1
+3 var 1
+4 var 1
+5 var 1
+6 var 1
+9 eq 1 3 5
+10 eq 1 4 6
+11 and 1 9 10
+12 read 1 1 3
+13 read 1 2 3
+14 eq 1 12 13
+15 and 1 11 14
+16 root 1 -15

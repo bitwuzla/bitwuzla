@@ -1,0 +1,1 @@
+log/smt2perr164.smt2:1:13: argument 1 of 'or' is a bit-vector of width 2

@@ -1,0 +1,15 @@
+100 save i
+105 save s
+110 read n
+120 load i
+130 le n
+140 jmp 170
+150 write s
+160 exit s
+170 load s
+180 add i
+190 save s
+200 load i
+210 add 1
+220 save i
+230 goto 130

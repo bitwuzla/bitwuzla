@@ -1,0 +1,5 @@
+    (bvsle s t) abbreviates
+      (or (and (= (extract[|m-1|:|m-1|] s) bit1)
+               (= (extract[|m-1|:|m-1|] t) bit0))
+          (and (= (extract[|m-1|:|m-1|] s) (extract[|m-1|:|m-1|] t))
+               (bvule s t)))

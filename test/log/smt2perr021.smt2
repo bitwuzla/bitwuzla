@@ -1,0 +1,1 @@
+  ä ; <--- non printable character

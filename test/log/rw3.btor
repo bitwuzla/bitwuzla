@@ -1,0 +1,5 @@
+1 constd 8 1
+2 var 8
+3 mul 8 1 2
+4 eq 1 2 3
+5 root 1 4

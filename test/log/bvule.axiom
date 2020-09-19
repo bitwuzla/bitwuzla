@@ -1,0 +1,1 @@
+(bvule s t) abbreviates (or (bvult s t) (= s t))

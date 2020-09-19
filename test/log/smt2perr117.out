@@ -1,0 +1,1 @@
+log/smt2perr117.smt2:1:10: resulting bit-width of 'zero_extend' too large

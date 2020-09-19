@@ -1,0 +1,10 @@
+1 var 32
+2 var 32
+3 var 32
+4 add 32 1 2
+5 add 32 4 3
+6 add 32 2 3
+7 add 32 1 6
+8 var 1
+9 cond 32 8 5 7
+10 root 32 9

@@ -1,0 +1,86 @@
+0 rem bubblesort array 'a'
+0 save a
+100 rem read n
+110 rem set array size 'n'
+110 load 2
+120 save n
+130 load 0
+140 save k
+150 rem start outer loop
+150 load k 
+160 ge n
+170 rem jump to end of outer loop
+170 jmp 1040
+180 load 0
+190 save i
+200 rem start inner loop
+200 load i
+210 add 1
+220 save j
+230 ge n
+240 rem jump to end of inner loop
+240 jmp 1000
+250 load a
+260 add i
+270 rem reg. 'w' stores address of array element to read/write
+270 save w
+280 peek w
+290 rem read a[i] and save in reg. 's'
+290 save s
+300 load a
+310 add j
+320 save w
+330 peek w
+340 rem accu holds elem a[j]
+340 ge s
+350 rem if a[i] > a[j] then swap else next iteration
+350 jmp 900
+360 rem start swapping: reg 's' stores a[i], accu stores a[j]
+360 save t
+370 load a
+380 add i
+385 save w
+390 load t
+395 poke w
+400 load a
+410 add j
+420 save w
+430 load s
+440 poke w
+450 rem end swapping
+900 load i
+910 add 1
+920 save i
+930 goto 200
+940 rem end inner loop
+1000 load k
+1010 add 1
+1020 save k
+1030 goto 150
+1040 rem end: outer loop -> check if sorted
+1040 load 0
+1060 save i
+1070 rem start loop
+1080 load i
+1090 add 1
+1100 save j
+1110 ge n
+1120 rem jump to end loop
+1130 jmp 1290
+1140 load a
+1150 add i
+1160 save w
+1170 peek w
+1180 save s
+1190 load a
+1200 add j
+1210 save w
+1220 peek w
+1230 lt s
+1240 jmp 1300
+1250 load i
+1260 add 1
+1270 save i
+1280 goto 1080
+1290 exit 0
+1300 exit 1

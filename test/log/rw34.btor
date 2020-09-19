@@ -1,0 +1,13 @@
+1 array 8 8
+2 array 8 8
+3 array 8 8
+4 var 1
+5 var 1
+6 var 8
+7 acond 8 8 -4 1 2
+8 read 8 3 6
+9 read 8 7 6
+10 ne 1 8 9
+11 eq 1 3 7
+12 and 1 10 11
+13 root 1 12

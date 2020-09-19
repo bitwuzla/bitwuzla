@@ -1,0 +1,9 @@
+1 zero 1 
+2 var 31 
+3 concat 32 1 2
+4 var 30
+5 ones 2 
+6 concat 32 4 5
+7 udiv 32 3 6
+8 slice 1 7 31 31
+9 root 1 8

@@ -1,0 +1,7 @@
+1 var 8
+2 var 5
+3 one 1
+4 var 2
+5 concat 6 2 3
+6 concat 8 5 4
+7 ult 1 1 6

@@ -1,0 +1,13 @@
+1 var 8
+2 var 8
+3 var 4 
+4 var 4 
+5 concat 16 1 -2 
+6 concat 8 3 -4
+7 concat 24 5 -6
+
+8 concat 20 5 -3
+9 concat 24 8 4
+
+10 ne 1 7 9 
+11 root 1 10

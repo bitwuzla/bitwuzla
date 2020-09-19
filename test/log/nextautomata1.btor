@@ -1,0 +1,15 @@
+; the automaton accepts if the number of 1's
+; is greater than 0 and even
+1 var 2 state
+2 constd 2 2
+3 eq 1 1 2
+4 root 1 3
+5 var 1 input
+6 one 2
+7 add 2 1 6
+8 sub 2 1 6
+9 const 2 11
+10 eq 1 1 9 
+11 cond 2 10 8 7
+12 cond 2 5 11 1 
+13 next 2 1 12

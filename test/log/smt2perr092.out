@@ -1,0 +1,1 @@
+log/smt2perr092.smt2:2:10: second argument of 'ite' is an array but third not

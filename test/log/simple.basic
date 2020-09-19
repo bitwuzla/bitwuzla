@@ -1,0 +1,7 @@
+10 load 100
+20 add 1
+30 save a
+40 ne a
+50 jmp 70
+60 exit 0
+70 exit 1

@@ -1,0 +1,9 @@
+1 array 8 8
+2 var 8
+3 const 8 00000000
+4 add 8 2 3
+5 write 8 8 1 4 4
+6 read 8 5 2
+7 read 8 1 2
+8 eq 1 6 7
+9 root 1 -8

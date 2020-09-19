@@ -1,0 +1,1 @@
+log/smt2perr100.smt2:2:10: first (array) argument of 'select' has index bit-width 16 but the second (index) argument has bit-width 32

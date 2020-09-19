@@ -1,0 +1,24 @@
+1 array 8 3 
+2 const 1 0
+3 const 1 1
+4 var 1
+5 var 1 
+6 var 2 
+7 var 2
+8 concat 2 4 2 
+9 concat 3 8 5 
+10 concat 3 3 6
+11 concat 3 7 3 
+12 read 8 1 -9 
+13 read 8 1 -10 
+14 read 8 1 -11 
+15 eq 1 9 10 
+16 eq 1 10 11 
+17 and 1 15 16 
+18 eq 1 12 13
+19 eq 1 12 14
+20 eq 1 13 14
+21 or 1 -18 -19
+22 or 1 21 -20
+23 and 1 17 22 
+24 root 1 23 

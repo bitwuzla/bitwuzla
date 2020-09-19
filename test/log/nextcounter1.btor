@@ -1,0 +1,12 @@
+1 var 8 counter
+2 constd 8 127
+3 constd 8 1
+4 eq 1 1 2
+5 add 8 1 3
+6 cond 8 4 1 5
+7 next 8 1 6
+
+8 constd 8 128 
+9 eq 1 1 8
+10 root 1 9
+

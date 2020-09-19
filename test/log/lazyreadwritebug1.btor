@@ -1,0 +1,8 @@
+1 array 2 1
+2 const 1 0
+3 const 2 00
+4 write 2 1 1 -2 -3
+5 write 2 1 4 2 3
+6 read 2 5 -2
+7 slice 1 6 0 0
+8 root 1 7

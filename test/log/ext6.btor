@@ -1,0 +1,8 @@
+1 array 8 8
+2 array 8 8
+3 array 8 8
+4 eq 1 1 2
+5 eq 1 2 3
+6 eq 1 1 3
+7 implies 1 4 6
+8 root 1 -7

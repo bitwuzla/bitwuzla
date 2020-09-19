@@ -1,0 +1,1 @@
+(declare-fun f ()

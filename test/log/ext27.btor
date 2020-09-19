@@ -1,0 +1,22 @@
+1 array 1 2
+2 var 2 i
+3 var 2 j
+4 var 2 k
+5 var 1 ei
+6 var 1 ej
+7 var 1 ek1
+8 var 1 ek2
+9 write 1 2 1 4 7
+10 write 1 2 9 2 5
+11 write 1 2 1 4 8
+12 write 1 2 11 3 6
+13 eq 1 2 3
+14 eq 1 7 8
+15 eq 1 10 12
+16 and 1 -13 -14
+17 and 1 15 16
+18 eq 1 2 4
+19 eq 1 3 4
+20 and 1 -18 -19
+21 and 1 17 20
+22 root 1 21

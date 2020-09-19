@@ -1,0 +1,1 @@
+log/smt2perr094.smt2:3:10: second argument of 'ite' is array with index bit-vectors of width 1 and third argument is array with index bit-vectors of width 2

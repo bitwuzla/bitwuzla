@@ -1,0 +1,13 @@
+1 array 1 1 
+2 var 1
+3 var 1
+4 and 1 2 3
+5 read 1 1 4
+6 var 1
+7 var 1
+8 and 1 6 7
+9 read 1 1 -8
+10 eq 1 4 8
+11 eq 1 5 9
+12 implies 1 10 11
+13 root 1 -12

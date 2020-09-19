@@ -1,0 +1,10 @@
+1 var 4
+2 var 4
+3 constd 4 1
+4 constd 4 2
+5 constd 4 3
+6 mul 4 -2 4
+7 mul 4 -1 5
+8 add 4 6 7
+9 eq 1 -8 3
+10 root 1 9

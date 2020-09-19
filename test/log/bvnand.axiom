@@ -1,0 +1,1 @@
+    (bvnand s t) abbreviates (bvnot (bvand s t))

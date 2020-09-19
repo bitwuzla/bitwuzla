@@ -1,0 +1,8 @@
+1 var 17
+2 uext 34 1 17
+3 var 17
+4 uext 34 3 17
+5 mul 34 2 4
+6 constd 34 4294967295
+7 eq 1 5 6
+8 root 1 7

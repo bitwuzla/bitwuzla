@@ -1,0 +1,1 @@
+log/smt2perr026.smt2:1:14: expected symbol after 'declare-fun' at '"a string is not a symbol"'

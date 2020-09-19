@@ -1,0 +1,9 @@
+10 read a
+20 read d
+30 load d
+40 poke a
+50 peek a
+60 ne d
+70 jmp 90
+80 exit 0
+90 exit 1

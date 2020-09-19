@@ -1,0 +1,1 @@
+log/smt2perr081.smt2:3:10: first argument of '=' is an array of bit-vectors of width 1 but argument 2 is an array of bit-vectors of width 8

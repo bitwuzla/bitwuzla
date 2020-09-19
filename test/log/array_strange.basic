@@ -1,0 +1,36 @@
+0 rem write value i at indices i and check if array[i] == i
+0 rem line 1070 buggy: 'eq' instead of 'ne' -> instance should be SAT
+0 save a
+110 rem read n
+120 load 8
+130 save n
+170 load 0
+175 save i
+176 load i
+177 ge n
+178 jmp 1010
+180 load a
+185 add i
+190 save w
+200 load i
+210 poke w
+220 add 1
+225 save i
+230 goto 176
+1000 rem check:
+1010 load 0
+1020 save i
+1021 load i
+1022 ge n
+1023 jmp 1150
+1030 load a
+1040 add i
+1050 save w
+1060 peek w
+1070 eq i
+1080 jmp 1140
+1090 add 1
+1100 save i
+1130 goto 1021
+1140 exit 1
+1150 exit 0

@@ -1,0 +1,6 @@
+(set-logic BV)
+(declare-fun _substvar_12_ () Bool)
+(declare-const v6 Bool)
+(declare-const v12 Bool)
+(assert (or (forall ((q0 Bool) (q1 Bool) (q2 Bool)) (not (= v6 q1 true v12 q0 q1 v6 q2))) _substvar_12_))
+(check-sat)

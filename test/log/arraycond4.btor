@@ -1,0 +1,20 @@
+1 array 1 1
+2 array 1 1
+3 var 1 v11
+4 const 1 0
+5 const 1 1
+6 read 1 1 4
+7 read 1 1 5
+8 read 1 2 4
+9 read 1 2 5
+10 and 1 -6 -7
+11 and 1 8 9
+12 eq 1 3 4
+13 acond 1 1 12 1 2
+14 read 1 13 4
+15 read 1 13 5
+16 and 1 14 15
+17 and 1 10 11
+18 and 1 16 17
+19 eq 1 4 18
+20 root 1 -19

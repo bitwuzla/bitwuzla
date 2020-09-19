@@ -1,0 +1,31 @@
+10 rem setup :
+20 read p
+30 peek p
+40 save a
+50 read q
+60 peek q
+70 save b
+100 rem the real program starts here:
+101 peek p
+102 save t
+103 peek q
+104 poke p
+105 load t
+106 poke q
+200 rem and again:
+201 peek p
+202 save t
+203 peek q
+204 poke p
+205 load t
+206 poke q
+1000 rem now check that nothing changed:
+1001 peek p
+1002 eq a
+1003 jmp 1005
+1004 exit 0
+1005 peek q
+1006 eq b
+1007 jmp 1009
+1008 exit 1
+1009 exit 0

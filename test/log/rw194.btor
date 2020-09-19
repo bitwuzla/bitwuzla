@@ -1,0 +1,9 @@
+1 var 4 
+2 var 4 
+3 var 4
+4 concat 8 2 1
+5 concat 8 3 1
+6 ult 1 -4 -5
+7 ult 1 -2 -3
+8 ne 1 6 7
+9 root 1 8

@@ -1,0 +1,17 @@
+; Hacker's Delight, page 156, signed integer remaind by 2^3
+1 var 32
+2 constd 5 2
+3 constd 5 3
+4 constd 5 29 
+5 constd 32 8 
+6 srem 32 1 5
+
+7 sra 32 1 2
+8 srl 32 7 4
+9 add 32 1 8
+10 neg 32 5
+11 and 32 9 10 
+12 sub 32 1 11
+
+13 eq 1 6 12 
+14 root 1 -13

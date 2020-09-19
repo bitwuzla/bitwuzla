@@ -1,0 +1,15 @@
+1 var 31 
+2 var 1 
+3 constd 32 103
+4 concat 32 1 2
+5 eq 1 3 4
+
+6 slice 31 3 31 1 
+7 slice 1 3 0 0
+8 eq 1 1 6
+9 eq 1 2 7
+10 and 1 8 9
+
+11 eq 1 5 10
+12 root 1 -11
+

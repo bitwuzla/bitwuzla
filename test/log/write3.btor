@@ -1,0 +1,18 @@
+1 array 4 4
+2 var 4
+3 var 4
+4 var 4
+5 var 4
+6 var 4
+7 var 4
+8 var 4
+9 var 4
+10 write 4 4 1 2 3
+11 write 4 4 10 4 5
+12 write 4 4 11 6 7
+13 read 4 12 8
+14 read 4 12 9
+15 eq 1 8 9
+16 eq 1 13 14
+17 and 1 15 -16
+18 root 1 17

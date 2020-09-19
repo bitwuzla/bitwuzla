@@ -1,0 +1,10 @@
+1 array 1 1
+2 var 1
+3 var 1
+4 read 1 1 2
+5 read 1 1 3
+6 ult 1 4 5
+7 ult 1 2 3
+8 and 1 6 7
+9 array 1 1
+10 root 1 8

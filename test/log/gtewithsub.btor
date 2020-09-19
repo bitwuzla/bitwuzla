@@ -1,0 +1,26 @@
+1 var 8 a
+2 var 8 b
+3 uext 9 1 1
+4 uext 9 -2 1
+5 add 9 3 4
+6 consth 9 1
+7 add 9 5 6
+8 slice 1 7 8 8
+9 ugte 1 1 2
+
+10 iff 1 9 8
+
+;20 var 9 s
+;21 eq 1 20 7
+
+;30 var 1 c
+;31 eq 1 30 8
+
+;40 var 1 g
+;41 eq 1 40 9
+
+;50 and 1 21 31
+;51 and 1 41 -10
+;52 and 1 50 51
+
+100 root 1 -10

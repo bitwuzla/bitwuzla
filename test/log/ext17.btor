@@ -1,0 +1,14 @@
+1 array 1 1
+2 array 1 1
+3 const 1 0
+4 const 1 1
+5 read 1 1 3
+6 read 1 1 4
+7 ulte 1 5 6
+9 read 1 2 3
+10 read 1 2 4
+11 ulte 1 9 10
+13 ne 1 1 2
+14 and 1 7 11
+15 and 1 13 14
+16 root 1 15

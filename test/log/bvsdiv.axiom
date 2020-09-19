@@ -1,0 +1,10 @@
+(bvsdiv s t) abbreviates
+  (let (?msb_s (extract[|m-1|:|m-1|] s))
+  (let (?msb_t (extract[|m-1|:|m-1|] t))
+  (ite (and (= ?msb_s bit0) (= ?msb_t bit0))
+       (bvudiv s t)
+  (ite (and (= ?msb_s bit1) (= ?msb_t bit0))
+       (bvneg (bvudiv (bvneg s) t))
+  (ite (and (= ?msb_s bit0) (= ?msb_t bit1))
+       (bvneg (bvudiv s (bvneg t)))
+       (bvudiv (bvneg s) (bvneg t)))))))

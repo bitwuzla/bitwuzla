@@ -1,0 +1,33 @@
+1 array 8 8
+2 array 8 8
+3 array 8 8
+4 array 8 8
+5 var 1
+6 var 1
+7 var 1
+8 var 1
+9 var 8
+10 or 1 5 6
+11 or 1 7 8
+12 acond 8 8 10 1 2
+13 acond 8 8 11 3 4
+14 read 8 1 9
+15 read 8 2 9
+16 read 8 12 9
+17 read 8 3 9
+18 read 8 4 9
+19 read 8 13 9
+20 ne 1 14 16
+21 ne 1 15 16
+22 ne 1 17 19
+23 ne 1 18 19 
+24 and 1 20 10 
+25 and 1 21 -10
+26 and 1 22 11 
+27 and 1 23 -11
+28 or 1 24 25
+29 or 1 26 27
+30 or 1 28 29
+31 root 1 30 
+
+

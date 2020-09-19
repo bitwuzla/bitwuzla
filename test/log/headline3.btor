@@ -1,0 +1,12 @@
+1 var 8
+2 var 3
+3 zero 1
+4 var 1
+5 one 1
+6 var 2
+7 concat 4 2 3
+8 concat 5 7 4
+9 concat 6 8 5
+10 concat 8 9 6
+11 ult 1 10 1
+12 root 1 11

@@ -1,0 +1,5 @@
+(
+  declare-fun
+    g
+      (
+        ü

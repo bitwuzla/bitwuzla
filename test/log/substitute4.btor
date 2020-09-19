@@ -1,0 +1,14 @@
+1 zero 1
+2 var 1
+3 eq 1 -1 2
+4 var 1
+5 var 1
+6 eq 1 5 2
+7 and 1 4 -6
+8 and 1 3 -7
+9 eq 1 5 1
+10 and 1 8 9
+11 eq 1 2 1
+12 and 1 4 -11
+13 and 1 10 -12
+14 root 1 13

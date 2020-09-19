@@ -1,0 +1,6 @@
+(set-logic QF_BV)
+(declare-fun x () (_ BitVec 32))
+(declare-fun y () (_ BitVec 32))
+(assert (distinct (bvnot (bvadd x y)) (bvadd (bvnot x) (bvnot y))))
+(check-sat)
+(exit)

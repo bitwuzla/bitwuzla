@@ -1,0 +1,25 @@
+1 zero 32
+2 array 32 12 MaSt0p11093th1
+3 constd 12 28
+5 write 32 12 2 3 1
+6 constd 12 20
+8 write 32 12 5 6 1
+9 constd 12 12
+11 write 32 12 8 9 1
+12 zero 12
+14 write 32 12 11 12 1
+15 constd 12 16
+17 var 32 _substvar_10_
+18 write 32 12 14 15 17
+19 apply 32 18 12
+20 eq 1 1 19
+21 root 1 20
+22 constd 32 12
+23 var 32 _substvar_11_
+24 add 32 22 23
+25 eq 1 17 24
+26 root 1 25
+27 write 32 12 5 15 1
+28 apply 32 27 15
+29 eq 1 23 28
+30 root 1 29

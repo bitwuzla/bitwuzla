@@ -1,0 +1,7 @@
+(set-option :incremental false)
+(set-logic QF_BV)
+(declare-fun a () (_ BitVec 6))
+(declare-fun b () (_ BitVec 6))
+(declare-fun c () (_ BitVec 6))
+(assert (not (= (bvmul a (bvmul b c)) (bvmul (bvmul a b) c))))
+(check-sat)

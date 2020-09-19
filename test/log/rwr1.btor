@@ -1,0 +1,48 @@
+1 const 7 0000001
+2 const 7 0000010
+3 const 1 1
+4 const 1 0
+5 var 32 search_val
+6 var 7 search_index
+7 array 32 7
+8 write 32 7 7 6 5
+9 const 7 0000000
+10 const 7 0000000
+11 var 7 
+12 read 32 8 10
+13 ult 1 12 5
+14 cond 1 13 3 4
+15 eq 1 3 14
+16 and 1 3 15
+17 cond 7 16 11 9
+18 add 7 1 -17
+19 const 7 0000000
+20 add 7 19 18
+21 udiv 7 20 2
+22 add 7 17 21
+23 const 7 0000000
+24 read 32 8 22
+25 ult 1 24 5
+26 cond 1 25 3 4
+27 eq 1 3 26
+28 and 1 3 27
+29 cond 7 28 23 17
+30 const 7 0000000
+31 const 1 0
+32 cond 7 31 30 29
+33 add 7 1 -32
+34 const 7 0000000
+35 add 7 34 33
+36 udiv 7 35 2
+37 add 7 32 36
+38 read 32 8 37
+39 eq 1 5 38
+40 and 1 3 39
+41 cond 1 40 3 4
+42 const 1 1
+43 and 1 42 -41
+44 const 1 1
+45 and 1 44 43
+46 eq 1 45 4
+47 and 1 3 46
+48 root 1 -47

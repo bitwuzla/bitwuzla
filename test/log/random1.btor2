@@ -1,0 +1,78 @@
+; This is the BTOR2 version of src/tests/log/random1.btor.
+; The comment lines show the corresponding BTOR encoding.
+
+1 sort bitvec 1
+2 sort bitvec 2
+3 sort bitvec 3
+4 sort bitvec 4
+5 sort bitvec 5
+6 sort array 2 1
+
+; 1 const 1 0
+7 const 1 0
+
+; 2 const 2 00
+8 const 2 00
+
+; 3 array 1 2
+9 input 6
+
+; 4 write 1 2 3 2 1
+10 write 6 9 8 7
+
+; 5 write 1 2 4 2 -1
+11 write 6 10 8 -7
+
+; 6 eq 1 4 5
+12 eq 1 10 11
+
+; 7 and 1 1 6
+13 and 1 7 12
+
+; 8 and 1 1 7
+14 and 1 7 13
+
+; 9 and 1 1 -8
+15 and 1 7 -14
+
+; 10 and 1 1 9
+16 and 1 7 15
+
+; 11 and 1 -1 -10
+17 and 1 -7 -16
+
+; 12 write 1 2 5 -2 1
+18 write 6 11 -8 7
+
+; 13 var 1
+19 input 1
+
+; 14 and 1 1 -13
+20 and 1 7 -19
+
+; 15 and 1 -1 -14
+21 and 1 -7 -20
+
+; 16 concat 2 1 -15
+22 concat 2 7 -21
+
+; 17 read 1 12 16
+23 read 1 18 22
+
+; 18 and 1 1 17
+24 and 1 7 23
+
+; 19 and 1 -1 -18
+25 and 1 -7 -24
+
+; 20 and 1 -1 19
+26 and 1 -7 25
+
+; 21 and 1 -1 20
+27 and 1 -7 26
+
+; 22 and 1 -11 -21
+28 and 1 -17 -27
+
+; 23 root 1 -22
+29 constraint -28

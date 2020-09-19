@@ -1,0 +1,15 @@
+1 var 8 
+2 constd 8 7
+3 add 8 1 2
+4 add 8 2 3 
+5 constd 8 5
+6 mul 8 4 5
+
+7 mul 8 2 5
+8 mul 8 5 1 
+9 mul 8 2 5
+10 add 8 7 8
+11 add 8 10 9
+
+12 eq 1 6 11
+13 root 1 -12

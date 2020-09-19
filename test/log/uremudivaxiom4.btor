@@ -1,0 +1,30 @@
+; b != 0  => (q = a / b && r = a % b => a = q * b + r && r < b )
+;  19  18 20    9   5   14  10   6   17  11   7   8   15  12 
+
+1 var 4 a
+2 var 4 b
+3 var 4 q
+4 var 4 r
+
+5 udiv 4 1 2
+6 urem 4 1 2
+7 mul 4 2 3
+8 add 4 4 7
+
+9 eq 1 3 5
+10 eq 1 4 6
+11 eq 1 1 8
+12 ult 1 4 2
+
+14 and 1 9 10
+15 and 1 11 12
+16 and 1 15 15
+
+17 implies 1 14 16   ; but not the other way!
+
+18 zero 4
+19 eq 1 2 18
+
+20 implies 1 -19 17
+
+21 root 1 -20

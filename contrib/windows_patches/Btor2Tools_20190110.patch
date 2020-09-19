@@ -1,0 +1,16 @@
+diff --git a/configure.sh b/configure.sh
+--- a/configure.sh
++++ b/configure.sh
+@@ -70,10 +70,10 @@ done
+ 
+ [ X"$CC" = X ] && CC=gcc
+ 
+-if [ X"$CFLAGS" = X ]
++if [ TRUE ]
+ then
+   [ $debug = unknown ] && debug=no
+-  CFLAGS="-W -Wall -Wextra -Wredundant-decls -std=gnu99"
++  CFLAGS="$CFLAGS -W -Wall -Wextra -Wredundant-decls -std=gnu99"
+   [ $static = yes ] && CFLAGS="$CFLAGS -static"
+   [ $shared = yes ] && CFLAGS="$CFLAGS -fPIC"
+   [ $flags = none ] || CFLAGS="$CFLAGS $flags"

@@ -1,0 +1,8 @@
+1 var 1
+2 zero 6
+3 var 2
+4 concat 8 2 3
+5 slice 2 -4 3 2
+6 slice 1 -5 1 1
+7 and 1 1 6
+8 root 1 7

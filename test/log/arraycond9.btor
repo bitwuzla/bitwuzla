@@ -1,0 +1,8 @@
+1 array 8 8
+2 array 8 8
+3 var 1
+4 acond 8 8 3 1 2
+5 eq 1 1 4
+6 eq 1 2 4
+7 and 1 -5 -6
+8 root 1 7

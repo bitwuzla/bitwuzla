@@ -1,0 +1,1 @@
+    (bvugt s t) abbreviates (bvult t s)

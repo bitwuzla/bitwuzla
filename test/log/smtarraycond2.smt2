@@ -1,0 +1,10 @@
+(set-option :incremental false)
+(set-logic QF_AUFBV)
+(declare-fun a () (Array (_ BitVec 32) (_ BitVec 8)))
+(declare-fun b () (Array (_ BitVec 32) (_ BitVec 8)))
+(declare-fun i () (_ BitVec 32))
+(declare-fun v () (_ BitVec 8))
+(declare-fun c () Bool)
+(assert (not (= (ite c (store a i v) (store b i v)) (store (ite c a b) i v))))
+(check-sat)
+

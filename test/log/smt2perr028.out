@@ -1,0 +1,1 @@
+log/smt2perr028.smt2:1:16: expected '(' after function name at 'not-a-left-paranthesis'

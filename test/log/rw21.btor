@@ -1,0 +1,12 @@
+1 var 1
+2 var 8
+3 var 8
+4 var 8
+5 cond 8 1 2 3
+6 cond 8 1 2 4
+7 udiv 8 5 6
+8 udiv 8 2 2
+9 udiv 8 3 4
+10 cond 8 1 8 9
+11 ne 1 7 10
+12 root 1 11

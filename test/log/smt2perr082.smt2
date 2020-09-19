@@ -1,0 +1,2 @@
+(declare-fun a () (Array (_ BitVec 1) (_ BitVec 1)))
+(assert (distinct (_ bv0 2) a))

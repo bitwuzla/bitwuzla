@@ -1,0 +1,1 @@
+log/smt2perr142.smt2:2:3: first parameter '0' of '(_ extract' smaller than second '1'
