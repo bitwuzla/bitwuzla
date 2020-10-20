@@ -2272,13 +2272,11 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_BV_AND_TAG_SMT2
          || item_cur->tag == BZLA_BV_OR_TAG_SMT2
          || item_cur->tag == BZLA_BV_XOR_TAG_SMT2
-         || item_cur->tag == BZLA_BV_XNOR_TAG_SMT2
          || item_cur->tag == BZLA_BV_ADD_TAG_SMT2
          || item_cur->tag == BZLA_BV_SUB_TAG_SMT2
          || item_cur->tag == BZLA_BV_MUL_TAG_SMT2);
 
   BoolectorNode *old, *exp;
-  bool is_xnor = false;
   uint32_t i;
 
   if (nargs < 2)
@@ -2298,13 +2296,6 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
     return 0;
   }
 
-  /* (bvxnor a b c d) == (bvnot (bvxor a b c d)) */
-  if (fun == boolector_bv_xnor)
-  {
-    is_xnor = true;
-    fun     = boolector_bv_xor;
-  }
-
   for (i = 1, exp = 0; i <= nargs; i++)
   {
     if (exp)
@@ -2317,13 +2308,6 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
       exp = boolector_copy(parser->bzla, item_cur[i].exp);
   }
   assert(exp);
-
-  if (is_xnor)
-  {
-    old = exp;
-    exp = boolector_bv_not(parser->bzla, exp);
-    boolector_release(parser->bzla, old);
-  }
 
   release_exp_and_overwrite(parser, item_open, item_cur, nargs, exp);
 
@@ -3456,7 +3440,7 @@ close_term(BzlaSMT2Parser *parser)
   /* BV: XNOR --------------------------------------------------------------- */
   else if (tag == BZLA_BV_XNOR_TAG_SMT2)
   {
-    if (!close_term_bin_bv_left_associative(
+    if (!close_term_bin_bv_fun(
             parser, item_open, item_cur, nargs, boolector_bv_xnor))
     {
       return 0;
