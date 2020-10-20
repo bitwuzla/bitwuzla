@@ -406,8 +406,7 @@ bzla_print_model_aufbv(Bzla *bzla, const char *format, FILE *file)
 
   base = bzla_opt_get(bzla, BZLA_OPT_OUTPUT_NUMBER_FORMAT);
 
-  if (!strcmp(format, "smt2"))
-    fprintf(file, "(model%s", bzla->inputs->count ? "\n" : " ");
+  if (!strcmp(format, "smt2")) fprintf(file, "(\n");
 
   bzla_iter_hashptr_init(&it, bzla->inputs);
   while (bzla_iter_hashptr_has_next(&it))
