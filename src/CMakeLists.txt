@@ -44,7 +44,8 @@ set(libbitwuzla_src_files
   bzlaslvaigprop.c
   bzlaslvfun.c
   bzlaslvprop.c
-  bzlaslvquant.c
+  #  bzlaslvquant.c
+  bzlaslvquantn.c
   bzlaslvsls.c
   bzlasort.c
   bzlasubst.c

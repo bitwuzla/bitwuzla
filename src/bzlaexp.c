@@ -2945,11 +2945,13 @@ bzla_exp_forall_n(Bzla *bzla, BzlaNode *params[], uint32_t n, BzlaNode *body)
 BzlaNode *
 bzla_exp_exists(Bzla *bzla, BzlaNode *param, BzlaNode *body)
 {
-  return quantifier_exp(bzla, BZLA_EXISTS_NODE, param, body);
+  return bzla_node_invert(
+      quantifier_exp(bzla, BZLA_FORALL_NODE, param, bzla_node_invert(body)));
 }
 
 BzlaNode *
 bzla_exp_exists_n(Bzla *bzla, BzlaNode *params[], uint32_t n, BzlaNode *body)
 {
-  return quantifier_n_exp(bzla, BZLA_EXISTS_NODE, params, n, body);
+  return bzla_node_invert(quantifier_n_exp(
+      bzla, BZLA_FORALL_NODE, params, n, bzla_node_invert(body)));
 }

@@ -84,6 +84,10 @@ parse_aux(Bitwuzla *bitwuzla,
     {
       BZLA_MSG(bmsg, 1, "logic BV");
     }
+    else if (parse_res.logic == BZLA_LOGIC_FP)
+    {
+      BZLA_MSG(bmsg, 1, "logic FP");
+    }
     else if (parse_res.logic == BZLA_LOGIC_QF_UFBV)
     {
       BZLA_MSG(bmsg, 1, "logic QF_UFBV");

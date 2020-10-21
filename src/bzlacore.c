@@ -28,7 +28,7 @@
 #include "bzlaslvaigprop.h"
 #include "bzlaslvfun.h"
 #include "bzlaslvprop.h"
-#include "bzlaslvquant.h"
+#include "bzlaslvquantn.h"
 #include "bzlaslvsls.h"
 #include "bzlasubst.h"
 #include "preprocess/bzlapreprocess.h"
@@ -2410,6 +2410,12 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
          * lazy_synthesize is disabled */
         if (!opt_lazy_synth) goto PUSH_CHILDREN;
       }
+      else if (bzla_node_is_quantifier(cur))
+      {
+        cur->av = bzla_aigvec_var(avmgr, bzla_node_bv_get_width(bzla, cur));
+        BZLALOG(2, "  synthesized: %s", bzla_util_node2string(cur));
+        bzla_aigvec_to_sat_tseitin(avmgr, cur->av);
+      }
       /* we stop at function nodes as they will be lazily synthesized and
        * encoded during consistency checking */
       else if (bzla_node_is_fun(cur) && opt_lazy_synth)
@@ -2924,16 +2930,16 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
       else if ((engine == BZLA_ENGINE_QUANT && bzla->quantifiers->count > 0)
                || bzla->quantifiers->count > 0)
       {
-        BzlaPtrHashTableIterator it;
-        BzlaNode *cur;
-        bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
-        bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
-        while (bzla_iter_hashptr_has_next(&it))
-        {
-          cur = bzla_node_real_addr(bzla_iter_hashptr_next(&it));
-          BZLA_ABORT(cur->lambda_below || cur->apply_below,
-                     "quantifiers with functions not supported yet");
-        }
+        // BzlaPtrHashTableIterator it;
+        // BzlaNode *cur;
+        // bzla_iter_hashptr_init (&it, bzla->unsynthesized_constraints);
+        // bzla_iter_hashptr_queue (&it, bzla->synthesized_constraints);
+        // while (bzla_iter_hashptr_has_next (&it))
+        //{
+        //  cur = bzla_node_real_addr (bzla_iter_hashptr_next (&it));
+        //  BZLA_ABORT (cur->lambda_below || cur->apply_below,
+        //              "quantifiers with functions not supported yet");
+        //}
         bzla->slv = bzla_new_quantifier_solver(bzla);
       }
       else

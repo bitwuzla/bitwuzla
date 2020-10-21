@@ -3269,7 +3269,8 @@ bzla_node_create_forall(Bzla *bzla, BzlaNode *param, BzlaNode *body)
 BzlaNode *
 bzla_node_create_exists(Bzla *bzla, BzlaNode *param, BzlaNode *body)
 {
-  return bzla_node_create_quantifier(bzla, BZLA_EXISTS_NODE, param, body);
+  return bzla_node_invert(bzla_node_create_quantifier(
+      bzla, BZLA_FORALL_NODE, param, bzla_node_invert(body)));
 }
 
 BzlaNode *

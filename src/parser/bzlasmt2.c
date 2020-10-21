@@ -332,8 +332,8 @@ typedef enum BzlaSMT2Tag
   BZLA_LOGIC_BV_TAG_SMT2            = 35 + BZLA_LOGIC_TAG_CLASS_SMT2,
   BZLA_LOGIC_UFBV_TAG_SMT2          = 36 + BZLA_LOGIC_TAG_CLASS_SMT2,
   BZLA_LOGIC_ABV_TAG_SMT2           = 37 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_ALL_TAG_SMT2           = 38 + BZLA_LOGIC_TAG_CLASS_SMT2,
-
+  BZLA_LOGIC_FP_TAG_SMT2            = 38 + BZLA_LOGIC_TAG_CLASS_SMT2,
+  BZLA_LOGIC_ALL_TAG_SMT2           = 39 + BZLA_LOGIC_TAG_CLASS_SMT2,
 } BzlaSMT2Tag;
 
 typedef struct BzlaSMT2Coo
@@ -1205,6 +1205,7 @@ insert_logics_smt2(BzlaSMT2Parser *parser)
   INSERT("BV", BZLA_LOGIC_BV_TAG_SMT2);
   INSERT("UFBV", BZLA_LOGIC_UFBV_TAG_SMT2);
   INSERT("ABV", BZLA_LOGIC_ABV_TAG_SMT2);
+  INSERT("FP", BZLA_LOGIC_FP_TAG_SMT2);
   INSERT("ALL", BZLA_LOGIC_ALL_TAG_SMT2);
   INSERT("ALL_SUPPORTED", BZLA_LOGIC_ALL_TAG_SMT2);
 }
@@ -5799,6 +5800,10 @@ read_command_smt2(BzlaSMT2Parser *parser)
 
         case BZLA_LOGIC_QF_UFFP_TAG_SMT2:
           parser->res->logic = BZLA_LOGIC_QF_UFFP;
+          break;
+
+        case BZLA_LOGIC_FP_TAG_SMT2:
+          parser->res->logic = BZLA_LOGIC_FP;
           break;
 
         case BZLA_LOGIC_ALL_TAG_SMT2:
