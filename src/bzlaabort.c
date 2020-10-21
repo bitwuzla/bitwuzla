@@ -6,11 +6,10 @@
  *  See COPYING for more information on using this software.
  */
 
-#include "bzlaabort.h"
-
 #include <assert.h>
 #include <stdio.h>
 
+#include "bzlaabortold.h"
 #include "bzlaexit.h"
 #include "bzlatypes.h"
 #include "utils/bzlamem.h"

@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bzlaabort.h"
 #include "bzlaaig.h"
 #include "bzlaaigvec.h"
 #include "bzlabeta.h"
@@ -28,6 +27,7 @@
 #include "bzlalog.h"
 #include "bzlarewrite.h"
 #include "bzlarm.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlanodeiter.h"

@@ -18,10 +18,10 @@
 
 extern "C" {
 
-#include "bzlaabort.h"
 #include "bzlaopt.h"
 #include "bzlasat.h"
 #include "sat/bzlacms.h"
+#include "utils/bzlaabort.h"
 
 using namespace CMSat;
 

@@ -9,7 +9,6 @@
 
 #include "bzlachkmodel.h"
 
-#include "bzlaabort.h"
 #include "bzlaclone.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
@@ -20,6 +19,7 @@
 #include "bzlasubst.h"
 #include "preprocess/bzlapreprocess.h"
 #include "preprocess/bzlavarsubst.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlautil.h"
 

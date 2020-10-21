@@ -9,7 +9,6 @@
 
 #include "bzlaslvfun.h"
 
-#include "bzlaabort.h"
 #include "bzlabeta.h"
 #include "bzlaclone.h"
 #include "bzlacore.h"
@@ -24,6 +23,7 @@
 #include "bzlaslvprop.h"
 #include "bzlaslvsls.h"
 #include "preprocess/bzlapreprocess.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlahash.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"

@@ -10,7 +10,6 @@
 
 #include <math.h>
 
-#include "bzlaabort.h"
 #include "bzlaaigvec.h"
 #include "bzlabv.h"
 #include "bzlabvprop.h"
@@ -26,6 +25,7 @@
 #include "bzlaproputils.h"
 #include "bzlaslsutils.h"
 #include "dumper/bzladumpsmt.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlahash.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"

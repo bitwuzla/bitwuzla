@@ -13,7 +13,6 @@
 
 #include <limits.h>
 
-#include "bzlaabort.h"
 #ifndef NDEBUG
 #include "bzlachkfailed.h"
 #include "bzlachkmodel.h"
@@ -35,6 +34,7 @@
 #include "bzlasubst.h"
 #include "preprocess/bzlapreprocess.h"
 #include "preprocess/bzlavarsubst.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlanodeiter.h"
 #include "utils/bzlautil.h"

@@ -26,9 +26,9 @@
 
 extern "C" {
 
-#include "bzlaabort.h"
 #include "bzlasat.h"
 #include "sat/bzlaminisat.h"
+#include "utils/bzlaabort.h"
 
 using namespace Minisat;
 

@@ -16,7 +16,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include "bzlaabort.h"
 #include "bzlaconfig.h"
 #include "bzlacore.h"
 #include "sat/bzlacadical.h"
@@ -25,6 +24,7 @@
 #include "sat/bzlalgl.h"
 #include "sat/bzlaminisat.h"
 #include "sat/bzlapicosat.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlautil.h"
 
 /*------------------------------------------------------------------------*/

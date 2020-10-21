@@ -10,8 +10,8 @@
 
 #include "bzladumpaig.h"
 
-#include "bzlaabort.h"
 #include "bzlaaigvec.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlanodeiter.h"
 #include "utils/bzlautil.h"
 

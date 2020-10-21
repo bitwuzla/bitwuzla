@@ -13,7 +13,7 @@
 
 #include "boolector.h"
 
-#include "bzlaabort.h"
+#include "bzlaabortold.h"
 #include "bzlachkclone.h"
 #include "bzlaclone.h"
 #include "bzlaconfig.h"
@@ -62,7 +62,8 @@ inc_sort_ext_ref_counter(Bzla *bzla, BzlaSortId id)
   BzlaSort *sort;
   sort = bzla_sort_get_by_id(bzla, id);
 
-  BZLA_ABORT(sort->ext_refs == INT32_MAX, "Node reference counter overflow");
+  BZLA_ABORT_OLD(sort->ext_refs == INT32_MAX,
+                 "Node reference counter overflow");
   sort->ext_refs += 1;
   bzla->external_refs += 1;
 }
@@ -170,8 +171,8 @@ boolector_set_bzla_id(Bzla *bzla, BoolectorNode *node, int32_t id)
   exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI_UNFUN_EXT(exp, "%d", id);
-  BZLA_ABORT(!bzla_node_is_bv_var(exp) && !bzla_node_is_uf_array(exp),
-             "'exp' is neither BV/array variable nor UF");
+  BZLA_ABORT_OLD(!bzla_node_is_bv_var(exp) && !bzla_node_is_uf_array(exp),
+                 "'exp' is neither BV/array variable nor UF");
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   bzla_node_set_bzla_id(bzla, exp, id);
 #ifndef NDEBUG
@@ -203,13 +204,13 @@ boolector_print_value_smt2(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI_UNFUN_EXT(exp, "%s", symbol_str);
   BZLA_ABORT_ARG_NULL(file);
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       bzla->last_sat_result != BZLA_RESULT_SAT || !bzla->valid_assignments,
       "cannot retrieve model if input formula is not SAT");
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
-             "model generation has not been enabled");
-  BZLA_ABORT(bzla->quantifiers->count,
-             "models are currently not supported with quantifiers");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
+                 "model generation has not been enabled");
+  BZLA_ABORT_OLD(bzla->quantifiers->count,
+                 "models are currently not supported with quantifiers");
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   bzla_print_value_smt2(bzla, exp, symbol_str, file);
 #ifndef NDEBUG
@@ -396,7 +397,7 @@ void
 boolector_set_trapi(Bzla *bzla, FILE *apitrace)
 {
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT(bzla->apitrace, "API trace already set");
+  BZLA_ABORT_OLD(bzla->apitrace, "API trace already set");
   bzla->apitrace = apitrace;
 }
 
@@ -414,8 +415,8 @@ boolector_push(Bzla *bzla, uint32_t level)
 {
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u", level);
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
-             "incremental usage has not been enabled");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
+                 "incremental usage has not been enabled");
 
   if (level == 0) return;
 
@@ -432,12 +433,12 @@ boolector_pop(Bzla *bzla, uint32_t level)
 {
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u", level);
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
-             "incremental usage has not been enabled");
-  BZLA_ABORT(level > BZLA_COUNT_STACK(bzla->assertions_trail),
-             "can not pop more levels (%u) than created via push (%u).",
-             level,
-             BZLA_COUNT_STACK(bzla->assertions_trail));
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
+                 "incremental usage has not been enabled");
+  BZLA_ABORT_OLD(level > BZLA_COUNT_STACK(bzla->assertions_trail),
+                 "can not pop more levels (%u) than created via push (%u).",
+                 level,
+                 BZLA_COUNT_STACK(bzla->assertions_trail));
 
   if (level == 0) return;
 
@@ -470,12 +471,12 @@ boolector_assert(Bzla *bzla, BoolectorNode *node)
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_BV(exp);
-  BZLA_ABORT(bzla_node_bv_get_width(bzla, exp) != 1,
-             "'exp' must have bit-width one");
-  BZLA_ABORT(!bzla_sort_is_bool(bzla, bzla_node_real_addr(exp)->sort_id),
-             "'exp' must have bit-width one");
-  BZLA_ABORT(bzla_node_real_addr(exp)->parameterized,
-             "assertion must not be parameterized");
+  BZLA_ABORT_OLD(bzla_node_bv_get_width(bzla, exp) != 1,
+                 "'exp' must have bit-width one");
+  BZLA_ABORT_OLD(!bzla_sort_is_bool(bzla, bzla_node_real_addr(exp)->sort_id),
+                 "'exp' must have bit-width one");
+  BZLA_ABORT_OLD(bzla_node_real_addr(exp)->parameterized,
+                 "assertion must not be parameterized");
 
   /* all assertions at a context level > 0 are internally handled as
    * assumptions. */
@@ -505,15 +506,15 @@ boolector_assume(Bzla *bzla, BoolectorNode *node)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(exp);
   BZLA_TRAPI_UNFUN(exp);
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
-             "incremental usage has not been enabled");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
+                 "incremental usage has not been enabled");
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_BV(exp);
-  BZLA_ABORT(!bzla_sort_is_bool(bzla, bzla_node_real_addr(exp)->sort_id),
-             "'exp' must have bit-width one");
-  BZLA_ABORT(bzla_node_real_addr(exp)->parameterized,
-             "assumption must not be parameterized");
+  BZLA_ABORT_OLD(!bzla_sort_is_bool(bzla, bzla_node_real_addr(exp)->sort_id),
+                 "'exp' must have bit-width one");
+  BZLA_ABORT_OLD(bzla_node_real_addr(exp)->parameterized,
+                 "assumption must not be parameterized");
 
   bzla_assume_exp(bzla, exp);
   BZLA_PUSH_STACK(bzla->failed_assumptions, bzla_node_copy(bzla, exp));
@@ -530,18 +531,20 @@ boolector_failed(Bzla *bzla, BoolectorNode *node)
 
   exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT(bzla->last_sat_result != BZLA_RESULT_UNSAT,
-             "cannot check failed assumptions if input formula is not UNSAT");
+  BZLA_ABORT_OLD(
+      bzla->last_sat_result != BZLA_RESULT_UNSAT,
+      "cannot check failed assumptions if input formula is not UNSAT");
   BZLA_ABORT_ARG_NULL(exp);
   BZLA_TRAPI_UNFUN(exp);
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
-             "incremental usage has not been enabled");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
+                 "incremental usage has not been enabled");
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_BV(exp);
-  BZLA_ABORT(bzla_node_bv_get_width(bzla, exp) != 1,
-             "'exp' must have bit-width one");
-  BZLA_ABORT(!bzla_is_assumption_exp(bzla, exp), "'exp' must be an assumption");
+  BZLA_ABORT_OLD(bzla_node_bv_get_width(bzla, exp) != 1,
+                 "'exp' must have bit-width one");
+  BZLA_ABORT_OLD(!bzla_is_assumption_exp(bzla, exp),
+                 "'exp' must be an assumption");
   res = bzla_failed_exp(bzla, exp);
   BZLA_TRAPI_RETURN_BOOL(res);
 #ifndef NDEBUG
@@ -559,8 +562,9 @@ boolector_get_failed_assumptions(Bzla *bzla)
   uint32_t i;
 
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT(bzla->last_sat_result != BZLA_RESULT_UNSAT,
-             "cannot check failed assumptions if input formula is not UNSAT");
+  BZLA_ABORT_OLD(
+      bzla->last_sat_result != BZLA_RESULT_UNSAT,
+      "cannot check failed assumptions if input formula is not UNSAT");
 
   BZLA_INIT_STACK(bzla->mm, failed);
   for (i = 0; i < BZLA_COUNT_STACK(bzla->failed_assumptions); i++)
@@ -601,10 +605,10 @@ boolector_get_unsat_core(Bzla *bzla)
   uint32_t i;
 
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT(bzla->last_sat_result != BZLA_RESULT_UNSAT,
-             "cannot get unsat core if input formula is not UNSAT");
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_UNSAT_CORES),
-             "unsat core generation not enabled");
+  BZLA_ABORT_OLD(bzla->last_sat_result != BZLA_RESULT_UNSAT,
+                 "cannot get unsat core if input formula is not UNSAT");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_UNSAT_CORES),
+                 "unsat core generation not enabled");
 
   bzla_reset_unsat_core(bzla);
   for (i = 0; i < BZLA_COUNT_STACK(bzla->assertions); i++)
@@ -641,7 +645,7 @@ boolector_fixate_assumptions(Bzla *bzla)
 {
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("");
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       !bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
       "incremental usage has not been enabled, no assumptions available");
   bzla_fixate_assumptions(bzla);
@@ -655,7 +659,7 @@ boolector_reset_assumptions(Bzla *bzla)
 {
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("");
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       !bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
       "incremental usage has not been enabled, no assumptions available");
   bzla_reset_assumptions(bzla);
@@ -673,10 +677,10 @@ boolector_sat(Bzla *bzla)
 
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("");
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL)
-                 && bzla->bzla_sat_bzla_called > 0,
-             "incremental usage has not been enabled."
-             "'boolector_sat' may only be called once");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL)
+                     && bzla->bzla_sat_bzla_called > 0,
+                 "incremental usage has not been enabled."
+                 "'boolector_sat' may only be called once");
   res = bzla_check_sat(bzla, -1, -1);
   BZLA_TRAPI_RETURN_INT(res);
 #ifndef NDEBUG
@@ -691,10 +695,10 @@ boolector_limited_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
   int32_t res;
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%d %d", lod_limit, sat_limit);
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL)
-                 && bzla->bzla_sat_bzla_called > 0,
-             "incremental usage has not been enabled."
-             "'boolector_limited_sat' may only be called once");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL)
+                     && bzla->bzla_sat_bzla_called > 0,
+                 "incremental usage has not been enabled."
+                 "'boolector_limited_sat' may only be called once");
   res = bzla_check_sat(bzla, lod_limit, sat_limit);
   BZLA_TRAPI_RETURN_INT(res);
 #ifndef NDEBUG
@@ -732,7 +736,7 @@ boolector_set_sat_solver(Bzla *bzla, const char *solver)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%s", solver);
   BZLA_ABORT_ARG_NULL(solver);
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       bzla->bzla_sat_bzla_called > 0,
       "setting the SAT solver must be done before calling 'boolector_sat'");
 
@@ -745,7 +749,7 @@ boolector_set_sat_solver(Bzla *bzla, const char *solver)
     sat_engine = ((BzlaOptHelp *) b->data.as_ptr)->val;
   }
   else
-    BZLA_ABORT(1, "invalid sat engine '%s' selected", solver);
+    BZLA_ABORT_OLD(1, "invalid sat engine '%s' selected", solver);
 
   if (false
 #ifndef BZLA_USE_LINGELING
@@ -785,8 +789,8 @@ boolector_set_opt(Bzla *bzla, BzlaOption opt, uint32_t val)
 {
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u %s %u", opt, bzla_opt_get_lng(bzla, opt), val);
-  BZLA_ABORT(!bzla_opt_is_valid(bzla, opt), "invalid option");
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(!bzla_opt_is_valid(bzla, opt), "invalid option");
+  BZLA_ABORT_OLD(
       val < bzla_opt_get_min(bzla, opt) || val > bzla_opt_get_max(bzla, opt),
       "invalid option value '%u' for option '%s'",
       val,
@@ -796,40 +800,42 @@ boolector_set_opt(Bzla *bzla, BzlaOption opt, uint32_t val)
   {
     if (opt == BZLA_OPT_INCREMENTAL)
     {
-      BZLA_ABORT(bzla->bzla_sat_bzla_called > 0,
-                 "enabling/disabling incremental usage must be done "
-                 "before calling 'bitwuzla_check_sat'");
-      BZLA_ABORT(bzla_opt_get(bzla, BZLA_OPT_UCOPT),
-                 "incremental solving cannot be enabled "
-                 "if unconstrained optimization is enabled");
+      BZLA_ABORT_OLD(bzla->bzla_sat_bzla_called > 0,
+                     "enabling/disabling incremental usage must be done "
+                     "before calling 'bitwuzla_check_sat'");
+      BZLA_ABORT_OLD(bzla_opt_get(bzla, BZLA_OPT_UCOPT),
+                     "incremental solving cannot be enabled "
+                     "if unconstrained optimization is enabled");
     }
     else if (opt == BZLA_OPT_UCOPT)
     {
-      BZLA_ABORT(bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
-                 "Unconstrained optimization cannot be enabled "
-                 "if model generation is enabled");
-      BZLA_ABORT(bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
-                 "Unconstrained optimization cannot be enabled "
-                 "in incremental mode");
+      BZLA_ABORT_OLD(bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
+                     "Unconstrained optimization cannot be enabled "
+                     "if model generation is enabled");
+      BZLA_ABORT_OLD(bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
+                     "Unconstrained optimization cannot be enabled "
+                     "in incremental mode");
     }
     else if (opt == BZLA_OPT_FUN_DUAL_PROP)
     {
-      BZLA_ABORT(bzla_opt_get(bzla, BZLA_OPT_FUN_JUST),
-                 "enabling multiple optimization techniques is not allowed");
-      BZLA_ABORT(bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST),
-                 "Non-destructive substitution is not supported with dual "
-                 "propagation");
+      BZLA_ABORT_OLD(
+          bzla_opt_get(bzla, BZLA_OPT_FUN_JUST),
+          "enabling multiple optimization techniques is not allowed");
+      BZLA_ABORT_OLD(bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST),
+                     "Non-destructive substitution is not supported with dual "
+                     "propagation");
     }
     else if (opt == BZLA_OPT_FUN_JUST)
     {
-      BZLA_ABORT(bzla_opt_get(bzla, BZLA_OPT_FUN_DUAL_PROP),
-                 "enabling multiple optimization techniques is not allowed");
+      BZLA_ABORT_OLD(
+          bzla_opt_get(bzla, BZLA_OPT_FUN_DUAL_PROP),
+          "enabling multiple optimization techniques is not allowed");
     }
     else if (opt == BZLA_OPT_NONDESTR_SUBST)
     {
-      BZLA_ABORT(bzla_opt_get(bzla, BZLA_OPT_FUN_DUAL_PROP),
-                 "Non-destructive substitution is not supported with dual "
-                 "propagation");
+      BZLA_ABORT_OLD(bzla_opt_get(bzla, BZLA_OPT_FUN_DUAL_PROP),
+                     "Non-destructive substitution is not supported with dual "
+                     "propagation");
     }
   }
 
@@ -875,7 +881,7 @@ boolector_set_opt(Bzla *bzla, BzlaOption opt, uint32_t val)
 
   if (opt == BZLA_OPT_REWRITE_LEVEL)
   {
-    BZLA_ABORT(
+    BZLA_ABORT_OLD(
         BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
         "setting rewrite level must be done before creating expressions");
   }
@@ -892,7 +898,7 @@ boolector_get_opt(Bzla *bzla, BzlaOption opt)
   uint32_t res;
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u %s", opt, bzla_opt_get_lng(bzla, opt));
-  BZLA_ABORT(!bzla_opt_is_valid(bzla, opt), "invalid option");
+  BZLA_ABORT_OLD(!bzla_opt_is_valid(bzla, opt), "invalid option");
   res = bzla_opt_get(bzla, opt);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
@@ -907,7 +913,7 @@ boolector_get_opt_min(Bzla *bzla, BzlaOption opt)
   uint32_t res;
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u %s", opt, bzla_opt_get_lng(bzla, opt));
-  BZLA_ABORT(!bzla_opt_is_valid(bzla, opt), "invalid option");
+  BZLA_ABORT_OLD(!bzla_opt_is_valid(bzla, opt), "invalid option");
   res = bzla_opt_get_min(bzla, opt);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
@@ -922,7 +928,7 @@ boolector_get_opt_max(Bzla *bzla, BzlaOption opt)
   uint32_t res;
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u %s", opt, bzla_opt_get_lng(bzla, opt));
-  BZLA_ABORT(!bzla_opt_is_valid(bzla, opt), "invalid option");
+  BZLA_ABORT_OLD(!bzla_opt_is_valid(bzla, opt), "invalid option");
   res = bzla_opt_get_max(bzla, opt);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
@@ -937,7 +943,7 @@ boolector_get_opt_dflt(Bzla *bzla, BzlaOption opt)
   uint32_t res;
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u %s", opt, bzla_opt_get_lng(bzla, opt));
-  BZLA_ABORT(!bzla_opt_is_valid(bzla, opt), "invalid option");
+  BZLA_ABORT_OLD(!bzla_opt_is_valid(bzla, opt), "invalid option");
   res = bzla_opt_get_dflt(bzla, opt);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
@@ -952,7 +958,7 @@ boolector_get_opt_lng(Bzla *bzla, BzlaOption opt)
   const char *res;
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u %s", opt, bzla_opt_get_lng(bzla, opt));
-  BZLA_ABORT(!bzla_opt_is_valid(bzla, opt), "invalid option");
+  BZLA_ABORT_OLD(!bzla_opt_is_valid(bzla, opt), "invalid option");
   res = bzla_opt_get_lng(bzla, opt);
   BZLA_TRAPI_RETURN_STR(res);
 #ifndef NDEBUG
@@ -967,7 +973,7 @@ boolector_get_opt_shrt(Bzla *bzla, BzlaOption opt)
   const char *res;
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u %s", opt, bzla_opt_get_lng(bzla, opt));
-  BZLA_ABORT(!bzla_opt_is_valid(bzla, opt), "invalid option");
+  BZLA_ABORT_OLD(!bzla_opt_is_valid(bzla, opt), "invalid option");
   res = bzla_opt_get_shrt(bzla, opt);
   BZLA_TRAPI_RETURN_STR(res);
 #ifndef NDEBUG
@@ -982,7 +988,7 @@ boolector_get_opt_desc(Bzla *bzla, BzlaOption opt)
   const char *res;
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u %s", opt, bzla_opt_get_lng(bzla, opt));
-  BZLA_ABORT(!bzla_opt_is_valid(bzla, opt), "invalid option");
+  BZLA_ABORT_OLD(!bzla_opt_is_valid(bzla, opt), "invalid option");
   res = bzla_opt_get_desc(bzla, opt);
   BZLA_TRAPI_RETURN_STR(res);
 #ifndef NDEBUG
@@ -1025,7 +1031,7 @@ boolector_next_opt(Bzla *bzla, BzlaOption opt)
   BzlaOption res;
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u %s", opt, bzla_opt_get_lng(bzla, opt));
-  BZLA_ABORT(!bzla_opt_is_valid(bzla, opt), "invalid option");
+  BZLA_ABORT_OLD(!bzla_opt_is_valid(bzla, opt), "invalid option");
   res = bzla_opt_next(bzla, opt);
   BZLA_TRAPI_RETURN_INT(res);
 #ifndef NDEBUG
@@ -1140,9 +1146,9 @@ boolector_implies(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
   BZLA_ABORT_IS_NOT_BV(e0);
   BZLA_ABORT_IS_NOT_BV(e1);
-  BZLA_ABORT(bzla_node_bv_get_width(bzla, e0) != 1
-                 || bzla_node_bv_get_width(bzla, e1) != 1,
-             "bit-width of 'e0' and 'e1' must be 1");
+  BZLA_ABORT_OLD(bzla_node_bv_get_width(bzla, e0) != 1
+                     || bzla_node_bv_get_width(bzla, e1) != 1,
+                 "bit-width of 'e0' and 'e1' must be 1");
   res = bzla_exp_implies(bzla, e0, e1);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1169,9 +1175,9 @@ boolector_iff(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
   BZLA_ABORT_IS_NOT_BV(e0);
   BZLA_ABORT_IS_NOT_BV(e1);
-  BZLA_ABORT(bzla_node_bv_get_width(bzla, e0) != 1
-                 || bzla_node_bv_get_width(bzla, e1) != 1,
-             "bit-width of 'e0' and 'e1' must not be unequal to 1");
+  BZLA_ABORT_OLD(bzla_node_bv_get_width(bzla, e0) != 1
+                     || bzla_node_bv_get_width(bzla, e1) != 1,
+                 "bit-width of 'e0' and 'e1' must not be unequal to 1");
   res = bzla_exp_iff(bzla, e0, e1);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1198,14 +1204,14 @@ boolector_eq(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   BZLA_ABORT_REFS_NOT_POS(e1);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
-  BZLA_ABORT(bzla_node_get_sort_id(e0) != bzla_node_get_sort_id(e1)
-                 || bzla_node_real_addr(e0)->is_array
-                        != bzla_node_real_addr(e1)->is_array,
-             "nodes must have equal sorts");
-  BZLA_ABORT(bzla_sort_is_fun(bzla, bzla_node_get_sort_id(e0))
-                 && (bzla_node_real_addr(e0)->parameterized
-                     || bzla_node_real_addr(e1)->parameterized),
-             "parameterized function equalities not supported");
+  BZLA_ABORT_OLD(bzla_node_get_sort_id(e0) != bzla_node_get_sort_id(e1)
+                     || bzla_node_real_addr(e0)->is_array
+                            != bzla_node_real_addr(e1)->is_array,
+                 "nodes must have equal sorts");
+  BZLA_ABORT_OLD(bzla_sort_is_fun(bzla, bzla_node_get_sort_id(e0))
+                     && (bzla_node_real_addr(e0)->parameterized
+                         || bzla_node_real_addr(e1)->parameterized),
+                 "parameterized function equalities not supported");
   res = bzla_exp_eq(bzla, e0, e1);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1230,12 +1236,12 @@ boolector_ne(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   BZLA_ABORT_REFS_NOT_POS(e1);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
-  BZLA_ABORT(bzla_node_get_sort_id(e0) != bzla_node_get_sort_id(e1),
-             "nodes must have equal sorts");
-  BZLA_ABORT(bzla_sort_is_fun(bzla, bzla_node_get_sort_id(e0))
-                 && (bzla_node_real_addr(e0)->parameterized
-                     || bzla_node_real_addr(e1)->parameterized),
-             "parameterized function equalities not supported");
+  BZLA_ABORT_OLD(bzla_node_get_sort_id(e0) != bzla_node_get_sort_id(e1),
+                 "nodes must have equal sorts");
+  BZLA_ABORT_OLD(bzla_sort_is_fun(bzla, bzla_node_get_sort_id(e0))
+                     && (bzla_node_real_addr(e0)->parameterized
+                         || bzla_node_real_addr(e1)->parameterized),
+                 "parameterized function equalities not supported");
   res = bzla_exp_ne(bzla, e0, e1);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1256,7 +1262,7 @@ boolector_bv_const(Bzla *bzla, const char *bits)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%s", bits);
   BZLA_ABORT_ARG_NULL(bits);
-  BZLA_ABORT(*bits == '\0', "'bits' must not be empty");
+  BZLA_ABORT_OLD(*bits == '\0', "'bits' must not be empty");
   bv  = bzla_bv_char_to_bv(bzla->mm, (char *) bits);
   res = bzla_exp_bv_const(bzla, bv);
   bzla_node_inc_ext_ref_counter(bzla, res);
@@ -1279,16 +1285,16 @@ boolector_bv_constd(Bzla *bzla, BoolectorSort sort, const char *str)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT " %s", sort, str);
   BZLA_ABORT_ARG_NULL(str);
-  BZLA_ABORT(*str == '\0', "'str' must not be empty");
+  BZLA_ABORT_OLD(*str == '\0', "'str' must not be empty");
 
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
   w = bzla_sort_bv_get_width(bzla, s);
-  BZLA_ABORT(!bzla_util_check_dec_to_bv(bzla->mm, str, w),
-             "'%s' does not fit into a bit-vector of size %u",
-             str,
-             w);
+  BZLA_ABORT_OLD(!bzla_util_check_dec_to_bv(bzla->mm, str, w),
+                 "'%s' does not fit into a bit-vector of size %u",
+                 str,
+                 w);
   bv  = bzla_bv_constd(bzla->mm, str, w);
   res = bzla_exp_bv_const(bzla, bv);
   assert(bzla_node_get_sort_id(res) == s);
@@ -1312,16 +1318,16 @@ boolector_bv_consth(Bzla *bzla, BoolectorSort sort, const char *str)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%s", str);
   BZLA_ABORT_ARG_NULL(str);
-  BZLA_ABORT(*str == '\0', "'str' must not be empty");
+  BZLA_ABORT_OLD(*str == '\0', "'str' must not be empty");
 
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
   w = bzla_sort_bv_get_width(bzla, s);
-  BZLA_ABORT(!bzla_util_check_hex_to_bv(bzla->mm, str, w),
-             "'%s' does not fit into a bit-vector of size %u",
-             str,
-             w);
+  BZLA_ABORT_OLD(!bzla_util_check_hex_to_bv(bzla->mm, str, w),
+                 "'%s' does not fit into a bit-vector of size %u",
+                 str,
+                 w);
   bv  = bzla_bv_consth(bzla->mm, str, w);
   res = bzla_exp_bv_const(bzla, bv);
   assert(bzla_node_get_sort_id(res) == s);
@@ -1442,8 +1448,8 @@ boolector_bv_zero(Bzla *bzla, BoolectorSort sort)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
   res = bzla_exp_bv_zero(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1462,8 +1468,8 @@ boolector_bv_ones(Bzla *bzla, BoolectorSort sort)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
   res = bzla_exp_bv_ones(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1482,8 +1488,8 @@ boolector_bv_one(Bzla *bzla, BoolectorSort sort)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
   res = bzla_exp_bv_one(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1502,8 +1508,8 @@ boolector_bv_min_signed(Bzla *bzla, BoolectorSort sort)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
   res = bzla_exp_bv_min_signed(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1522,8 +1528,8 @@ boolector_bv_max_signed(Bzla *bzla, BoolectorSort sort)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
   res = bzla_exp_bv_max_signed(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1542,8 +1548,8 @@ boolector_bv_unsigned_int(Bzla *bzla, uint32_t u, BoolectorSort sort)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u " BZLA_TRAPI_SORT_FMT, u, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
   res = bzla_exp_bv_unsigned(bzla, u, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1562,8 +1568,8 @@ boolector_bv_int(Bzla *bzla, int32_t i, BoolectorSort sort)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%d " BZLA_TRAPI_SORT_FMT, i, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit vector sort");
   res = bzla_exp_bv_int(bzla, i, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1632,16 +1638,16 @@ boolector_var(Bzla *bzla, BoolectorSort sort, const char *symbol)
   BzlaSortId s;
 
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(
       !bzla_sort_is_bv(bzla, s) && !bzla_sort_is_rm(bzla, s)
           && !bzla_sort_is_fp(bzla, s),
       "'sort' is not a bit-vector, rounding mode or floating-point sort");
   symb = mk_unique_symbol(bzla, symbol);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT " %s", sort, bzla, symb);
-  BZLA_ABORT(symb && bzla_hashptr_table_get(bzla->symbols, (char *) symb),
-             "symbol '%s' is already in use in the current context",
-             symb);
+  BZLA_ABORT_OLD(symb && bzla_hashptr_table_get(bzla->symbols, (char *) symb),
+                 "symbol '%s' is already in use in the current context",
+                 symb);
   res = bzla_exp_var(bzla, s, symb);
   bzla_mem_freestr(bzla->mm, symb);
   bzla_node_inc_ext_ref_counter(bzla, res);
@@ -1664,16 +1670,16 @@ boolector_array(Bzla *bzla, BoolectorSort sort, const char *symbol)
 
   symb = mk_unique_symbol(bzla, symbol);
   s    = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(
       !bzla_sort_is_fun(bzla, s)
           || bzla_sort_tuple_get_arity(bzla, bzla_sort_fun_get_domain(bzla, s))
                  != 1,
       "'sort' is not an array sort");
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT " %s", sort, bzla, symb);
-  BZLA_ABORT(symb && bzla_hashptr_table_get(bzla->symbols, symb),
-             "symbol '%s' is already in use in the current context",
-             symb);
+  BZLA_ABORT_OLD(symb && bzla_hashptr_table_get(bzla->symbols, symb),
+                 "symbol '%s' is already in use in the current context",
+                 symb);
   res = bzla_exp_array(bzla, s, symb);
   bzla_mem_freestr(bzla->mm, symb);
   bzla_node_inc_ext_ref_counter(bzla, res);
@@ -1696,8 +1702,8 @@ boolector_const_array(Bzla *bzla, BoolectorSort sort, BoolectorNode *value)
   val = BZLA_IMPORT_BOOLECTOR_NODE(value);
 
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(
       !bzla_sort_is_fun(bzla, s)
           || bzla_sort_tuple_get_arity(bzla, bzla_sort_fun_get_domain(bzla, s))
                  != 1,
@@ -1710,8 +1716,9 @@ boolector_const_array(Bzla *bzla, BoolectorSort sort, BoolectorNode *value)
   BZLA_ABORT_REFS_NOT_POS(val);
   BZLA_ABORT_BZLA_MISMATCH(bzla, val);
   BZLA_ABORT_IS_NOT_BV(val);
-  BZLA_ABORT(bzla_node_get_sort_id(val) != bzla_sort_array_get_element(bzla, s),
-             "sort of 'value' does not match element sort of array");
+  BZLA_ABORT_OLD(
+      bzla_node_get_sort_id(val) != bzla_sort_array_get_element(bzla, s),
+      "sort of 'value' does not match element sort of array");
 
   res = bzla_exp_const_array(bzla, s, val);
 
@@ -1736,17 +1743,17 @@ boolector_uf(Bzla *bzla, BoolectorSort sort, const char *symbol)
   symb = mk_unique_symbol(bzla, symbol);
   s    = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT "%s", sort, bzla, symb);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fun(bzla, s),
-             "%ssort%s%s%s%s must be a function sort",
-             symbol ? "" : "'",
-             symbol ? "" : "'",
-             symbol ? " '" : "",
-             symbol ? symbol : "",
-             symbol ? "'" : "");
-  BZLA_ABORT(symb && bzla_hashptr_table_get(bzla->symbols, symb),
-             "symbol '%s' is already in use in the current context",
-             symb);
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fun(bzla, s),
+                 "%ssort%s%s%s%s must be a function sort",
+                 symbol ? "" : "'",
+                 symbol ? "" : "'",
+                 symbol ? " '" : "",
+                 symbol ? symbol : "",
+                 symbol ? "'" : "");
+  BZLA_ABORT_OLD(symb && bzla_hashptr_table_get(bzla->symbols, symb),
+                 "symbol '%s' is already in use in the current context",
+                 symb);
 
   res = bzla_exp_uf(bzla, s, symb);
   bzla_mem_freestr(bzla->mm, symb);
@@ -1882,9 +1889,9 @@ boolector_bv_slice(Bzla *bzla,
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_BV(exp);
-  BZLA_ABORT(upper < lower, "'upper' must not be < 'lower'");
-  BZLA_ABORT((uint32_t) upper >= bzla_node_bv_get_width(bzla, exp),
-             "'upper' must not be >= width of 'exp'");
+  BZLA_ABORT_OLD(upper < lower, "'upper' must not be < 'lower'");
+  BZLA_ABORT_OLD((uint32_t) upper >= bzla_node_bv_get_width(bzla, exp),
+                 "'upper' must not be >= width of 'exp'");
   res = bzla_exp_bv_slice(bzla, exp, upper, lower);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1906,12 +1913,12 @@ boolector_bv_uext(Bzla *bzla, BoolectorNode *node, uint32_t width)
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_BV(exp);
-  BZLA_ABORT(width > UINT32_MAX - bzla_node_bv_get_width(bzla, exp),
-             "extending 'exp' (width %u) by %u bits exceeds maximum "
-             "bit-width of %u",
-             bzla_node_bv_get_width(bzla, exp),
-             width,
-             UINT32_MAX);
+  BZLA_ABORT_OLD(width > UINT32_MAX - bzla_node_bv_get_width(bzla, exp),
+                 "extending 'exp' (width %u) by %u bits exceeds maximum "
+                 "bit-width of %u",
+                 bzla_node_bv_get_width(bzla, exp),
+                 width,
+                 UINT32_MAX);
   res = bzla_exp_bv_uext(bzla, exp, width);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -1933,12 +1940,12 @@ boolector_bv_sext(Bzla *bzla, BoolectorNode *node, uint32_t width)
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_BV(exp);
-  BZLA_ABORT(width > UINT32_MAX - bzla_node_bv_get_width(bzla, exp),
-             "extending 'exp' (width %u) by %u bits exceeds maximum "
-             "bit-width of %u",
-             bzla_node_bv_get_width(bzla, exp),
-             width,
-             UINT32_MAX);
+  BZLA_ABORT_OLD(width > UINT32_MAX - bzla_node_bv_get_width(bzla, exp),
+                 "extending 'exp' (width %u) by %u bits exceeds maximum "
+                 "bit-width of %u",
+                 bzla_node_bv_get_width(bzla, exp),
+                 width,
+                 UINT32_MAX);
   res = bzla_exp_bv_sext(bzla, exp, width);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -2520,10 +2527,11 @@ boolector_bv_sll(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   }
   else
   {
-    BZLA_ABORT(!bzla_util_is_power_of_2(width0),
-               "bit-width of 'e0' must be a power of 2");
-    BZLA_ABORT(bzla_util_log_2(width0) != width1,
-               "bit-width of 'e1' must be equal to log2(bit-width of 'e0')");
+    BZLA_ABORT_OLD(!bzla_util_is_power_of_2(width0),
+                   "bit-width of 'e0' must be a power of 2");
+    BZLA_ABORT_OLD(
+        bzla_util_log_2(width0) != width1,
+        "bit-width of 'e1' must be equal to log2(bit-width of 'e0')");
     BzlaNode *tmp_e1 = bzla_exp_bv_uext(bzla, e1, width0 - width1);
     res              = bzla_exp_bv_sll(bzla, e0, tmp_e1);
     bzla_node_release(bzla, tmp_e1);
@@ -2562,10 +2570,11 @@ boolector_bv_srl(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   }
   else
   {
-    BZLA_ABORT(!bzla_util_is_power_of_2(width0),
-               "bit-width of 'e0' must be a power of 2");
-    BZLA_ABORT(bzla_util_log_2(width0) != width1,
-               "bit-width of 'e1' must be equal to log2(bit-width of 'e0')");
+    BZLA_ABORT_OLD(!bzla_util_is_power_of_2(width0),
+                   "bit-width of 'e0' must be a power of 2");
+    BZLA_ABORT_OLD(
+        bzla_util_log_2(width0) != width1,
+        "bit-width of 'e1' must be equal to log2(bit-width of 'e0')");
     BzlaNode *tmp_e1 = bzla_exp_bv_uext(bzla, e1, width0 - width1);
     res              = bzla_exp_bv_srl(bzla, e0, tmp_e1);
     bzla_node_release(bzla, tmp_e1);
@@ -2604,10 +2613,11 @@ boolector_bv_sra(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   }
   else
   {
-    BZLA_ABORT(!bzla_util_is_power_of_2(width0),
-               "bit-width of 'e0' must be a power of 2");
-    BZLA_ABORT(bzla_util_log_2(width0) != width1,
-               "bit-width of 'e1' must be equal to log2(bit-width of 'e0')");
+    BZLA_ABORT_OLD(!bzla_util_is_power_of_2(width0),
+                   "bit-width of 'e0' must be a power of 2");
+    BZLA_ABORT_OLD(
+        bzla_util_log_2(width0) != width1,
+        "bit-width of 'e1' must be equal to log2(bit-width of 'e0')");
     BzlaNode *tmp_e1 = bzla_exp_bv_uext(bzla, e1, width0 - width1);
     res              = bzla_exp_bv_sra(bzla, e0, tmp_e1);
     bzla_node_release(bzla, tmp_e1);
@@ -2646,10 +2656,11 @@ boolector_bv_rol(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   }
   else
   {
-    BZLA_ABORT(!bzla_util_is_power_of_2(width0),
-               "bit-width of 'e0' must be a power of 2");
-    BZLA_ABORT(bzla_util_log_2(width0) != width1,
-               "bit-width of 'e1' must be equal to log2(bit-width of 'e0')");
+    BZLA_ABORT_OLD(!bzla_util_is_power_of_2(width0),
+                   "bit-width of 'e0' must be a power of 2");
+    BZLA_ABORT_OLD(
+        bzla_util_log_2(width0) != width1,
+        "bit-width of 'e1' must be equal to log2(bit-width of 'e0')");
     BzlaNode *tmp_e1 = bzla_exp_bv_uext(bzla, e1, width0 - width1);
     res              = bzla_exp_bv_rol(bzla, e0, tmp_e1);
     bzla_node_release(bzla, tmp_e1);
@@ -2688,10 +2699,11 @@ boolector_bv_ror(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   }
   else
   {
-    BZLA_ABORT(!bzla_util_is_power_of_2(width0),
-               "bit-width of 'e0' must be a power of 2");
-    BZLA_ABORT(bzla_util_log_2(width0) != width1,
-               "bit-width of 'e1' must be equal to log2(bit-width of 'e0')");
+    BZLA_ABORT_OLD(!bzla_util_is_power_of_2(width0),
+                   "bit-width of 'e0' must be a power of 2");
+    BZLA_ABORT_OLD(
+        bzla_util_log_2(width0) != width1,
+        "bit-width of 'e1' must be equal to log2(bit-width of 'e0')");
     BzlaNode *tmp_e1 = bzla_exp_bv_uext(bzla, e1, width0 - width1);
     res              = bzla_exp_bv_ror(bzla, e0, tmp_e1);
     bzla_node_release(bzla, tmp_e1);
@@ -3005,9 +3017,9 @@ boolector_bv_concat(Bzla *bzla, BoolectorNode *n0, BoolectorNode *n1)
   BZLA_ABORT_BZLA_MISMATCH(bzla, e1);
   BZLA_ABORT_IS_NOT_BV(e0);
   BZLA_ABORT_IS_NOT_BV(e1);
-  BZLA_ABORT(bzla_node_bv_get_width(bzla, e0)
-                 > UINT32_MAX - bzla_node_bv_get_width(bzla, e1),
-             "bit-width of result is too large");
+  BZLA_ABORT_OLD(bzla_node_bv_get_width(bzla, e0)
+                     > UINT32_MAX - bzla_node_bv_get_width(bzla, e1),
+                 "bit-width of result is too large");
   res = bzla_exp_bv_concat(bzla, e0, e1);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -3030,8 +3042,9 @@ boolector_bv_repeat(Bzla *bzla, BoolectorNode *node, uint32_t n)
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_BV(exp);
-  BZLA_ABORT(((uint32_t)(UINT32_MAX / n)) < bzla_node_bv_get_width(bzla, exp),
-             "resulting bit-width of 'repeat' too large");
+  BZLA_ABORT_OLD(
+      ((uint32_t)(UINT32_MAX / n)) < bzla_node_bv_get_width(bzla, exp),
+      "resulting bit-width of 'repeat' too large");
   res = bzla_exp_bv_repeat(bzla, exp, n);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -3050,9 +3063,9 @@ boolector_rm_const(Bzla *bzla, BzlaRoundingMode rm)
 
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("");
-  BZLA_ABORT(rm != BZLA_RM_RNA && rm != BZLA_RM_RNE && rm != BZLA_RM_RTN
-                 && rm != BZLA_RM_RTP && rm != BZLA_RM_RTZ,
-             "invalid valur for rounding mode");
+  BZLA_ABORT_OLD(rm != BZLA_RM_RNA && rm != BZLA_RM_RNE && rm != BZLA_RM_RTN
+                     && rm != BZLA_RM_RTP && rm != BZLA_RM_RTZ,
+                 "invalid valur for rounding mode");
   res = bzla_exp_rm_const(bzla, rm);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -3073,8 +3086,9 @@ boolector_fp_pos_zero(Bzla *bzla, BoolectorSort sort)
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
   res = bzla_exp_fp_pos_zero(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -3093,8 +3107,9 @@ boolector_fp_neg_zero(Bzla *bzla, BoolectorSort sort)
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
   res = bzla_exp_fp_neg_zero(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -3113,8 +3128,9 @@ boolector_fp_pos_inf(Bzla *bzla, BoolectorSort sort)
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
   res = bzla_exp_fp_pos_inf(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -3133,8 +3149,9 @@ boolector_fp_neg_inf(Bzla *bzla, BoolectorSort sort)
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
   res = bzla_exp_fp_neg_inf(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -3153,8 +3170,9 @@ boolector_fp_nan(Bzla *bzla, BoolectorSort sort)
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
   res = bzla_exp_fp_nan(bzla, s);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -3189,14 +3207,14 @@ boolector_fp_const(Bzla *bzla,
   BZLA_ABORT_IS_NOT_BV(e0);
   BZLA_ABORT_IS_NOT_BV(e1);
   BZLA_ABORT_IS_NOT_BV(e2);
-  BZLA_ABORT(!bzla_node_is_bv_const(e0),
-             "invalid argument for 'e0', expected bit-vector constant");
-  BZLA_ABORT(!bzla_node_is_bv_const(e1),
-             "invalid argument for 'e1', expected bit-vector constant");
-  BZLA_ABORT(!bzla_node_is_bv_const(e2),
-             "invalid argument for 'e2', expected bit-vector constant");
-  BZLA_ABORT(bzla_node_bv_get_width(bzla, e0) != 1,
-             "invalid bit-width for 'e0', expected size one");
+  BZLA_ABORT_OLD(!bzla_node_is_bv_const(e0),
+                 "invalid argument for 'e0', expected bit-vector constant");
+  BZLA_ABORT_OLD(!bzla_node_is_bv_const(e1),
+                 "invalid argument for 'e1', expected bit-vector constant");
+  BZLA_ABORT_OLD(!bzla_node_is_bv_const(e2),
+                 "invalid argument for 'e2', expected bit-vector constant");
+  BZLA_ABORT_OLD(bzla_node_bv_get_width(bzla, e0) != 1,
+                 "invalid bit-width for 'e0', expected size one");
   res = bzla_exp_fp_const(bzla, e0, e1, e2);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -3235,8 +3253,8 @@ boolector_fp_fp(Bzla *bzla,
   BZLA_ABORT_IS_NOT_BV(e0);
   BZLA_ABORT_IS_NOT_BV(e1);
   BZLA_ABORT_IS_NOT_BV(e2);
-  BZLA_ABORT(bzla_node_bv_get_width(bzla, e0) != 1,
-             "invalid bit-width for 'e0', expected size one");
+  BZLA_ABORT_OLD(bzla_node_bv_get_width(bzla, e0) != 1,
+                 "invalid bit-width for 'e0', expected size one");
   res = bzla_exp_fp_fp(bzla, e0, e1, e2);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -3986,15 +4004,16 @@ boolector_fp_to_fp_from_bv(Bzla *bzla, BoolectorNode *node, BoolectorSort sort)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(exp);
   BZLA_TRAPI_UNFUN_EXT(exp, BZLA_TRAPI_SORT_FMT, s);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_BV(exp);
   bw = bzla_node_bv_get_width(bzla, exp);
   eb = bzla_sort_fp_get_exp_width(bzla, s);
   sb = bzla_sort_fp_get_sig_width(bzla, s);
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       bw != eb + sb,
       "bit-width '%u' of bit-vector expression doesn't match significand and "
       "exponent bit-width '%u + %u'",
@@ -4026,8 +4045,9 @@ boolector_fp_to_fp_from_fp(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(e0);
   BZLA_ABORT_ARG_NULL(e1);
   BZLA_TRAPI_BINFUN_EXT(e0, e1, BZLA_TRAPI_SORT_FMT, s);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
   BZLA_ABORT_REFS_NOT_POS(e0);
   BZLA_ABORT_REFS_NOT_POS(e1);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
@@ -4060,8 +4080,9 @@ boolector_fp_to_fp_from_int(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(e0);
   BZLA_ABORT_ARG_NULL(e1);
   BZLA_TRAPI_BINFUN_EXT(e0, e1, BZLA_TRAPI_SORT_FMT, s);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
   BZLA_ABORT_REFS_NOT_POS(e0);
   BZLA_ABORT_REFS_NOT_POS(e1);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
@@ -4094,8 +4115,9 @@ boolector_fp_to_fp_from_uint(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(e0);
   BZLA_ABORT_ARG_NULL(e1);
   BZLA_TRAPI_BINFUN_EXT(e0, e1, BZLA_TRAPI_SORT_FMT, s);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
   BZLA_ABORT_REFS_NOT_POS(e0);
   BZLA_ABORT_REFS_NOT_POS(e1);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e0);
@@ -4119,7 +4141,7 @@ boolector_fp_to_fp_from_real(Bzla *bzla,
                              const char *real,
                              BoolectorSort sort)
 {
-  BZLA_ABORT(true, "to_fp from real not supported");
+  BZLA_ABORT_OLD(true, "to_fp from real not supported");
   BzlaNode *exp, *res;
   BzlaSortId s;
 
@@ -4128,8 +4150,9 @@ boolector_fp_to_fp_from_real(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(exp);
   BZLA_TRAPI_UNFUN_EXT(exp, BZLA_TRAPI_SORT_FMT, s);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   BZLA_ABORT_IS_NOT_RM(exp);
@@ -4162,7 +4185,7 @@ boolector_read(Bzla *bzla, BoolectorNode *n_array, BoolectorNode *n_index)
   BZLA_ABORT_BZLA_MISMATCH(bzla, e_index);
   BZLA_ABORT_IS_NOT_ARRAY(e_array);
   BZLA_ABORT_IS_NOT_BV(e_index);
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       bzla_sort_array_get_index(bzla, bzla_node_get_sort_id(e_array))
           != bzla_node_get_sort_id(e_index),
       "index bit-width of 'e_array' and bit-width of 'e_index' must be equal");
@@ -4202,12 +4225,13 @@ boolector_write(Bzla *bzla,
   BZLA_ABORT_IS_NOT_ARRAY(e_array);
   BZLA_ABORT_IS_FUN_OR_ARRAY(e_index);
   BZLA_ABORT_IS_FUN_OR_ARRAY(e_value);
-  BZLA_ABORT(bzla_sort_array_get_index(bzla, bzla_node_get_sort_id(e_array))
-                 != bzla_node_get_sort_id(e_index),
-             "index sort of 'e_array' and 'e_index' must be equal");
-  BZLA_ABORT(bzla_sort_array_get_element(bzla, bzla_node_get_sort_id(e_array))
-                 != bzla_node_get_sort_id(e_value),
-             "element sort of 'e_array' and 'e_value' must be equal");
+  BZLA_ABORT_OLD(bzla_sort_array_get_index(bzla, bzla_node_get_sort_id(e_array))
+                     != bzla_node_get_sort_id(e_index),
+                 "index sort of 'e_array' and 'e_index' must be equal");
+  BZLA_ABORT_OLD(
+      bzla_sort_array_get_element(bzla, bzla_node_get_sort_id(e_array))
+          != bzla_node_get_sort_id(e_value),
+      "element sort of 'e_array' and 'e_value' must be equal");
   res = bzla_exp_write(bzla, e_array, e_index, e_value);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -4247,10 +4271,10 @@ boolector_cond(Bzla *bzla,
   BZLA_ABORT_BZLA_MISMATCH(bzla, e_if);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e_else);
   BZLA_ABORT_IS_NOT_BV(e_cond);
-  BZLA_ABORT(bzla_node_bv_get_width(bzla, e_cond) != 1,
-             "bit-width of 'e_cond' must be equal to 1");
-  BZLA_ABORT(bzla_node_get_sort_id(e_if) != bzla_node_get_sort_id(e_else),
-             "sorts of 'e_if' and 'e_else' branch must be equal");
+  BZLA_ABORT_OLD(bzla_node_bv_get_width(bzla, e_cond) != 1,
+                 "bit-width of 'e_cond' must be equal to 1");
+  BZLA_ABORT_OLD(bzla_node_get_sort_id(e_if) != bzla_node_get_sort_id(e_else),
+                 "sorts of 'e_if' and 'e_else' branch must be equal");
   res = bzla_exp_cond(bzla, e_cond, e_if, e_else);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -4278,14 +4302,14 @@ boolector_param(Bzla *bzla, BoolectorSort sort, const char *symbol)
   symb = mk_unique_symbol(bzla, symbol);
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT " %s", sort, bzla, symb);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(
       !bzla_sort_is_bv(bzla, s) && !bzla_sort_is_rm(bzla, s)
           && !bzla_sort_is_fp(bzla, s),
       "only bit-vector, rounding mode or floating-point arguments supported");
-  BZLA_ABORT(symb && bzla_hashptr_table_get(bzla->symbols, symb),
-             "symbol '%s' is already in use in the current context",
-             symb);
+  BZLA_ABORT_OLD(symb && bzla_hashptr_table_get(bzla->symbols, symb),
+                 "symbol '%s' is already in use in the current context",
+                 symb);
   res = bzla_exp_param(bzla, s, symb);
   bzla_mem_freestr(bzla->mm, symb);
   bzla_node_inc_ext_ref_counter(bzla, res);
@@ -4314,24 +4338,24 @@ boolector_fun(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(exp);
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
-  BZLA_ABORT(paramc < 1, "'paramc' must not be < 1");
+  BZLA_ABORT_OLD(paramc < 1, "'paramc' must not be < 1");
 
   BZLA_TRAPI_PRINT("%s %p %u ", __FUNCTION__ + 10, bzla, paramc);
   for (i = 0; i < paramc; i++)
   {
-    BZLA_ABORT(!params[i] || !bzla_node_is_param(params[i]),
-               "'params[%u]' is not a parameter",
-               i);
-    BZLA_ABORT(bzla_node_param_is_bound(params[i]),
-               "'params[%u]' already bound");
+    BZLA_ABORT_OLD(!params[i] || !bzla_node_is_param(params[i]),
+                   "'params[%u]' is not a parameter",
+                   i);
+    BZLA_ABORT_OLD(bzla_node_param_is_bound(params[i]),
+                   "'params[%u]' already bound");
     BZLA_ABORT_REFS_NOT_POS(params[i]);
     BZLA_TRAPI_PRINT(BZLA_TRAPI_NODE_FMT, BZLA_TRAPI_NODE_ID(params[i]));
   }
   BZLA_TRAPI_PRINT(BZLA_TRAPI_NODE_FMT, BZLA_TRAPI_NODE_ID(exp));
   BZLA_TRAPI_PRINT("\n");
 
-  BZLA_ABORT(bzla_node_is_uf(bzla_simplify_exp(bzla, exp)),
-             "expected bit vector term as function body");
+  BZLA_ABORT_OLD(bzla_node_is_uf(bzla_simplify_exp(bzla, exp)),
+                 "expected bit vector term as function body");
   res = bzla_exp_fun(bzla, params, paramc, exp);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -4369,15 +4393,16 @@ boolector_apply(Bzla *bzla,
   BZLA_TRAPI_PRINT(BZLA_TRAPI_NODE_FMT, BZLA_TRAPI_NODE_ID(e_fun));
   BZLA_TRAPI_PRINT("\n");
 
-  BZLA_ABORT(!bzla_sort_is_fun(bzla, bzla_node_get_sort_id(e_fun)),
-             "'e_fun' must be a function");
-  BZLA_ABORT((uint32_t) argc != bzla_node_fun_get_arity(bzla, e_fun),
-             "number of arguments must be equal to the number of parameters in "
-             "'e_fun'");
-  BZLA_ABORT(argc < 1, "'argc' must not be < 1");
-  BZLA_ABORT(argc >= 1 && !args, "no arguments given but argc defined > 0");
+  BZLA_ABORT_OLD(!bzla_sort_is_fun(bzla, bzla_node_get_sort_id(e_fun)),
+                 "'e_fun' must be a function");
+  BZLA_ABORT_OLD(
+      (uint32_t) argc != bzla_node_fun_get_arity(bzla, e_fun),
+      "number of arguments must be equal to the number of parameters in "
+      "'e_fun'");
+  BZLA_ABORT_OLD(argc < 1, "'argc' must not be < 1");
+  BZLA_ABORT_OLD(argc >= 1 && !args, "no arguments given but argc defined > 0");
   fcheck = bzla_fun_sort_check(bzla, args, argc, e_fun);
-  BZLA_ABORT(fcheck >= 0, "invalid argument given at position %d", fcheck);
+  BZLA_ABORT_OLD(fcheck >= 0, "invalid argument given at position %d", fcheck);
   res = bzla_exp_apply_n(bzla, e_fun, args, argc);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
@@ -4474,26 +4499,26 @@ boolector_forall(Bzla *bzla,
   BZLA_TRAPI_PRINT("%s %p %u ", __FUNCTION__ + 10, bzla, paramc);
   for (i = 0; i < paramc; i++)
   {
-    BZLA_ABORT(!params[i] || !bzla_node_is_param(params[i]),
-               "'params[%u]' is not a parameter",
-               i);
-    BZLA_ABORT(bzla_node_param_is_bound(params[i]),
-               "'params[%u]' already bound");
+    BZLA_ABORT_OLD(!params[i] || !bzla_node_is_param(params[i]),
+                   "'params[%u]' is not a parameter",
+                   i);
+    BZLA_ABORT_OLD(bzla_node_param_is_bound(params[i]),
+                   "'params[%u]' already bound");
     BZLA_ABORT_REFS_NOT_POS(params[i]);
     BZLA_ABORT_BZLA_MISMATCH(bzla, params[i]);
     BZLA_TRAPI_PRINT(BZLA_TRAPI_NODE_FMT, BZLA_TRAPI_NODE_ID(params[i]));
   }
   BZLA_TRAPI_PRINT(BZLA_TRAPI_NODE_FMT, BZLA_TRAPI_NODE_ID(body));
   BZLA_TRAPI_PRINT("\n");
-  BZLA_ABORT(!params_distinct(bzla, params, paramc),
-             "given parameters are not distinct");
+  BZLA_ABORT_OLD(!params_distinct(bzla, params, paramc),
+                 "given parameters are not distinct");
 
   BZLA_ABORT_REFS_NOT_POS(body);
   BZLA_ABORT_BZLA_MISMATCH(bzla, body);
-  BZLA_ABORT(!bzla_sort_is_bool(bzla, bzla_node_real_addr(body)->sort_id),
-             "body of forall must be bit width 1, but has "
-             "%u instead",
-             bzla_node_bv_get_width(bzla, body));
+  BZLA_ABORT_OLD(!bzla_sort_is_bool(bzla, bzla_node_real_addr(body)->sort_id),
+                 "body of forall must be bit width 1, but has "
+                 "%u instead",
+                 bzla_node_bv_get_width(bzla, body));
 
   res = bzla_exp_forall_n(bzla, params, paramc, body);
   bzla_node_inc_ext_ref_counter(bzla, res);
@@ -4526,26 +4551,26 @@ boolector_exists(Bzla *bzla,
   BZLA_TRAPI_PRINT("%s %p %u ", __FUNCTION__ + 10, bzla, paramc);
   for (i = 0; i < paramc; i++)
   {
-    BZLA_ABORT(!params[i] || !bzla_node_is_param(params[i]),
-               "'params[%u]' is not a parameter",
-               i);
-    BZLA_ABORT(bzla_node_param_is_bound(params[i]),
-               "'params[%u]' already bound");
+    BZLA_ABORT_OLD(!params[i] || !bzla_node_is_param(params[i]),
+                   "'params[%u]' is not a parameter",
+                   i);
+    BZLA_ABORT_OLD(bzla_node_param_is_bound(params[i]),
+                   "'params[%u]' already bound");
     BZLA_ABORT_REFS_NOT_POS(params[i]);
     BZLA_ABORT_BZLA_MISMATCH(bzla, params[i]);
     BZLA_TRAPI_PRINT(BZLA_TRAPI_NODE_FMT, BZLA_TRAPI_NODE_ID(params[i]));
   }
   BZLA_TRAPI_PRINT(BZLA_TRAPI_NODE_FMT, BZLA_TRAPI_NODE_ID(body));
   BZLA_TRAPI_PRINT("\n");
-  BZLA_ABORT(!params_distinct(bzla, params, paramc),
-             "given parameters are not distinct");
+  BZLA_ABORT_OLD(!params_distinct(bzla, params, paramc),
+                 "given parameters are not distinct");
 
   BZLA_ABORT_REFS_NOT_POS(body);
   BZLA_ABORT_BZLA_MISMATCH(bzla, body);
-  BZLA_ABORT(!bzla_sort_is_bool(bzla, bzla_node_real_addr(body)->sort_id),
-             "body of exists must be bit width 1, but has "
-             "%u instead",
-             bzla_node_bv_get_width(bzla, body));
+  BZLA_ABORT_OLD(!bzla_sort_is_bool(bzla, bzla_node_real_addr(body)->sort_id),
+                 "body of exists must be bit width 1, but has "
+                 "%u instead",
+                 bzla_node_bv_get_width(bzla, body));
 
   res = bzla_exp_exists_n(bzla, params, paramc, body);
   bzla_node_inc_ext_ref_counter(bzla, res);
@@ -4632,8 +4657,8 @@ boolector_array_get_index_sort(Bzla *bzla, const BoolectorNode *node)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(node);
   exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
-  BZLA_ABORT(!bzla_node_is_array(bzla_simplify_exp(bzla, exp)),
-             "node must be an array node");
+  BZLA_ABORT_OLD(!bzla_node_is_array(bzla_simplify_exp(bzla, exp)),
+                 "node must be an array node");
   BZLA_TRAPI_UNFUN(exp);
   sort = bzla_node_get_sort_id(exp);
   res  = bzla_sort_array_get_index(bzla, sort);
@@ -4653,8 +4678,8 @@ boolector_array_get_element_sort(Bzla *bzla, const BoolectorNode *node)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(node);
   exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
-  BZLA_ABORT(!bzla_node_is_array(bzla_simplify_exp(bzla, exp)),
-             "node must be an array node");
+  BZLA_ABORT_OLD(!bzla_node_is_array(bzla_simplify_exp(bzla, exp)),
+                 "node must be an array node");
   BZLA_TRAPI_UNFUN(exp);
   sort = bzla_node_get_sort_id(exp);
   res  = bzla_sort_array_get_element(bzla, sort);
@@ -4674,8 +4699,8 @@ boolector_fun_get_domain_sort(Bzla *bzla, const BoolectorNode *node)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(node);
   exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
-  BZLA_ABORT(!bzla_node_is_fun(bzla_simplify_exp(bzla, exp)),
-             "node must be a function node");
+  BZLA_ABORT_OLD(!bzla_node_is_fun(bzla_simplify_exp(bzla, exp)),
+                 "node must be a function node");
   BZLA_TRAPI_UNFUN(exp);
   res =
       ((BzlaFunSort) bzla_sort_get_by_id(bzla, bzla_node_get_sort_id(exp))->fun)
@@ -4696,8 +4721,8 @@ boolector_fun_get_codomain_sort(Bzla *bzla, const BoolectorNode *node)
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(node);
   exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
-  BZLA_ABORT(!bzla_node_is_fun(bzla_simplify_exp(bzla, exp)),
-             "node must be a function node");
+  BZLA_ABORT_OLD(!bzla_node_is_fun(bzla_simplify_exp(bzla, exp)),
+                 "node must be a function node");
   BZLA_TRAPI_UNFUN(exp);
   res =
       ((BzlaFunSort) bzla_sort_get_by_id(bzla, bzla_node_get_sort_id(exp))->fun)
@@ -4716,10 +4741,10 @@ boolector_match_node_by_id(Bzla *bzla, int32_t id)
 {
   BzlaNode *res;
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT(id <= 0, "node id must be > 0");
+  BZLA_ABORT_OLD(id <= 0, "node id must be > 0");
   BZLA_TRAPI("%d", id);
   res = bzla_node_match_by_id(bzla, id);
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       !res,
       "invalid node id '%d', no matching node in given Boolector instance",
       id);
@@ -4746,9 +4771,10 @@ boolector_match_node_by_symbol(Bzla *bzla, const char *symbol)
     res  = bzla_node_match_by_symbol(bzla, symb);
     bzla_mem_freestr(bzla->mm, symb);
   }
-  BZLA_ABORT(!res,
-             "invalid symbol'%s', no matching node in given Boolector instance",
-             symbol);
+  BZLA_ABORT_OLD(
+      !res,
+      "invalid symbol'%s', no matching node in given Boolector instance",
+      symbol);
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
@@ -4767,8 +4793,8 @@ boolector_match_node(Bzla *bzla, BoolectorNode *node)
   BZLA_TRAPI_UNFUN(exp);
   BZLA_ABORT_REFS_NOT_POS(exp);
   res = bzla_node_match(bzla, exp);
-  BZLA_ABORT(!res,
-             "invalid node, no matching node in given Boolector instance");
+  BZLA_ABORT_OLD(!res,
+                 "invalid node, no matching node in given Boolector instance");
   bzla_node_inc_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_NODE(res);
 #ifndef NDEBUG
@@ -4865,8 +4891,8 @@ boolector_array_get_index_width(Bzla *bzla, BoolectorNode *n_array)
   BZLA_ABORT_REFS_NOT_POS(e_array);
   BZLA_ABORT_BZLA_MISMATCH(bzla, e_array);
   BZLA_ABORT_IS_NOT_ARRAY(e_array);
-  BZLA_ABORT(bzla_node_fun_get_arity(bzla, e_array) > 1,
-             "'n_array' is a function with arity > 1");
+  BZLA_ABORT_OLD(bzla_node_fun_get_arity(bzla, e_array) > 1,
+                 "'n_array' is a function with arity > 1");
   res = bzla_node_array_get_index_width(bzla, e_array);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
@@ -4889,7 +4915,8 @@ boolector_bv_const_get_bits(Bzla *bzla, BoolectorNode *node)
   BZLA_ABORT_ARG_NULL(node);
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
-  BZLA_ABORT(!bzla_node_is_bv_const(exp), "argument is not a constant node");
+  BZLA_ABORT_OLD(!bzla_node_is_bv_const(exp),
+                 "argument is not a constant node");
   real = bzla_node_real_addr(exp);
   /* representations of bits of const nodes are maintained analogously
    * to bv assignment strings */
@@ -4942,8 +4969,8 @@ boolector_fun_get_arity(Bzla *bzla, BoolectorNode *node)
   BZLA_TRAPI_UNFUN(exp);
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
-  BZLA_ABORT(!bzla_node_is_fun(bzla_simplify_exp(bzla, exp)),
-             "given expression is not a function node");
+  BZLA_ABORT_OLD(!bzla_node_is_fun(bzla_simplify_exp(bzla, exp)),
+                 "given expression is not a function node");
   res = bzla_node_fun_get_arity(bzla, exp);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
@@ -5159,8 +5186,8 @@ boolector_is_bound_param(Bzla *bzla, BoolectorNode *node)
   BZLA_TRAPI_UNFUN(exp);
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
-  BZLA_ABORT(!bzla_node_is_param(bzla_simplify_exp(bzla, exp)),
-             "given expression is not a parameter node");
+  BZLA_ABORT_OLD(!bzla_node_is_param(bzla_simplify_exp(bzla, exp)),
+                 "given expression is not a parameter node");
   res = bzla_node_param_is_bound(exp);
   BZLA_TRAPI_RETURN_BOOL(res);
 #ifndef NDEBUG
@@ -5225,8 +5252,8 @@ boolector_fun_sort_check(Bzla *bzla,
   e_fun = BZLA_IMPORT_BOOLECTOR_NODE(n_fun);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(e_fun);
-  BZLA_ABORT(argc < 1, "'argc' must not be < 1");
-  BZLA_ABORT(argc >= 1 && !args, "no arguments given but argc defined > 0");
+  BZLA_ABORT_OLD(argc < 1, "'argc' must not be < 1");
+  BZLA_ABORT_OLD(argc >= 1 && !args, "no arguments given but argc defined > 0");
 
   BZLA_TRAPI_PRINT("%s %p %u ", __FUNCTION__ + 10, bzla, argc);
   for (i = 0; i < argc; i++)
@@ -5261,13 +5288,13 @@ boolector_get_value(Bzla *bzla, BoolectorNode *node)
 
   exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       bzla->last_sat_result != BZLA_RESULT_SAT || !bzla->valid_assignments,
       "cannot retrieve model if input formula is not SAT");
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
-             "model generation has not been enabled");
-  BZLA_ABORT(bzla->quantifiers->count,
-             "models are currently not supported with quantifiers");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
+                 "model generation has not been enabled");
+  BZLA_ABORT_OLD(bzla->quantifiers->count,
+                 "models are currently not supported with quantifiers");
   BZLA_ABORT_ARG_NULL(exp);
   BZLA_TRAPI_UNFUN(exp);
   BZLA_ABORT_REFS_NOT_POS(exp);
@@ -5292,13 +5319,13 @@ boolector_bv_assignment(Bzla *bzla, BoolectorNode *node)
 
   exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       bzla->last_sat_result != BZLA_RESULT_SAT || !bzla->valid_assignments,
       "cannot retrieve model if input formula is not SAT");
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
-             "model generation has not been enabled");
-  BZLA_ABORT(bzla->quantifiers->count,
-             "models are currently not supported with quantifiers");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
+                 "model generation has not been enabled");
+  BZLA_ABORT_OLD(bzla->quantifiers->count,
+                 "models are currently not supported with quantifiers");
   BZLA_ABORT_ARG_NULL(exp);
   BZLA_TRAPI_UNFUN(exp);
   BZLA_ABORT_REFS_NOT_POS(exp);
@@ -5506,11 +5533,11 @@ boolector_array_assignment(Bzla *bzla,
 
   e_array = BZLA_IMPORT_BOOLECTOR_NODE(n_array);
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       bzla->last_sat_result != BZLA_RESULT_SAT || !bzla->valid_assignments,
       "cannot retrieve model if input formula is not SAT");
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
-             "model generation has not been enabled");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
+                 "model generation has not been enabled");
   BZLA_ABORT_ARG_NULL(e_array);
   BZLA_TRAPI_UNFUN(e_array);
   BZLA_ABORT_ARG_NULL(indices);
@@ -5559,10 +5586,10 @@ boolector_free_array_assignment(Bzla *bzla,
 
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%p %p %u", indices, values, size);
-  BZLA_ABORT(size && !indices, "size > 0 but 'indices' are zero");
-  BZLA_ABORT(size && !values, "size > 0 but 'values' are zero");
-  BZLA_ABORT(!size && indices, "non zero 'indices' but 'size == 0'");
-  BZLA_ABORT(!size && values, "non zero 'values' but 'size == 0'");
+  BZLA_ABORT_OLD(size && !indices, "size > 0 but 'indices' are zero");
+  BZLA_ABORT_OLD(size && !values, "size > 0 but 'values' are zero");
+  BZLA_ABORT_OLD(!size && indices, "non zero 'indices' but 'size == 0'");
+  BZLA_ABORT_OLD(!size && values, "non zero 'values' but 'size == 0'");
   if (!size)
   {
     return;
@@ -5570,10 +5597,10 @@ boolector_free_array_assignment(Bzla *bzla,
 
   funass =
       bzla_ass_get_fun((const char **) indices, (const char **) values, size);
-  BZLA_ABORT(size != funass->size,
-             "wrong size given, expected %u, but got %u",
-             funass->size,
-             size);
+  BZLA_ABORT_OLD(size != funass->size,
+                 "wrong size given, expected %u, but got %u",
+                 funass->size,
+                 size);
 #ifndef NDEBUG
   char **cindices, **cvalues;
   cindices = funass->cloned_indices;
@@ -5597,11 +5624,11 @@ boolector_uf_assignment(Bzla *bzla,
 
   e_uf = BZLA_IMPORT_BOOLECTOR_NODE(n_uf);
   BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(
       bzla->last_sat_result != BZLA_RESULT_SAT || !bzla->valid_assignments,
       "cannot retrieve model if input formula is not SAT");
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
-             "model generation has not been enabled");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
+                 "model generation has not been enabled");
   BZLA_ABORT_ARG_NULL(e_uf);
   BZLA_TRAPI_UNFUN(e_uf);
   BZLA_ABORT_ARG_NULL(args);
@@ -5650,15 +5677,15 @@ boolector_free_uf_assignment(Bzla *bzla,
 
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%p %p %u", args, values, size);
-  BZLA_ABORT(size && !args, "size > 0 but 'args' are zero");
-  BZLA_ABORT(size && !values, "size > 0 but 'values' are zero");
-  BZLA_ABORT(!size && args, "non zero 'args' but 'size == 0'");
-  BZLA_ABORT(!size && values, "non zero 'values' but 'size == 0'");
+  BZLA_ABORT_OLD(size && !args, "size > 0 but 'args' are zero");
+  BZLA_ABORT_OLD(size && !values, "size > 0 but 'values' are zero");
+  BZLA_ABORT_OLD(!size && args, "non zero 'args' but 'size == 0'");
+  BZLA_ABORT_OLD(!size && values, "non zero 'values' but 'size == 0'");
   funass = bzla_ass_get_fun((const char **) args, (const char **) values, size);
-  BZLA_ABORT(size != funass->size,
-             "wrong size given, expected %u, but got %u",
-             funass->size,
-             size);
+  BZLA_ABORT_OLD(size != funass->size,
+                 "wrong size given, expected %u, but got %u",
+                 funass->size,
+                 size);
 #ifndef NDEBUG
   char **cargs, **cvalues;
   cargs   = funass->cloned_indices;
@@ -5677,14 +5704,14 @@ boolector_print_model(Bzla *bzla, char *format, FILE *file)
   BZLA_ABORT_ARG_NULL(format);
   BZLA_TRAPI("%s", format);
   BZLA_ABORT_ARG_NULL(file);
-  BZLA_ABORT(strcmp(format, "btor") && strcmp(format, "smt2"),
-             "invalid model output format: %s",
-             format);
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(strcmp(format, "btor") && strcmp(format, "smt2"),
+                 "invalid model output format: %s",
+                 format);
+  BZLA_ABORT_OLD(
       bzla->last_sat_result != BZLA_RESULT_SAT || !bzla->valid_assignments,
       "cannot retrieve model if input formula is not SAT");
-  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
-             "model generation has not been enabled");
+  BZLA_ABORT_OLD(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN),
+                 "model generation has not been enabled");
   bzla_print_model(bzla, format, file);
 #ifndef NDEBUG
   BZLA_CHKCLONE_NORES(print_model, format, file);
@@ -5714,7 +5741,7 @@ boolector_bv_sort(Bzla *bzla, uint32_t width)
 {
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u", width);
-  BZLA_ABORT(width == 0, "'width' must be > 0");
+  BZLA_ABORT_OLD(width == 0, "'width' must be > 0");
 
   BzlaSortId res;
   res = bzla_sort_bv(bzla, width);
@@ -5731,8 +5758,8 @@ boolector_fp_sort(Bzla *bzla, uint32_t ewidth, uint32_t swidth)
 {
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_TRAPI("%u %u", ewidth, swidth);
-  BZLA_ABORT(ewidth == 0, "'ewidth' must be > 0");
-  BZLA_ABORT(swidth == 0, "'swidth' must be > 0");
+  BZLA_ABORT_OLD(ewidth == 0, "'ewidth' must be > 0");
+  BZLA_ABORT_OLD(swidth == 0, "'swidth' must be > 0");
 
   BzlaSortId res;
   res = bzla_sort_fp(bzla, ewidth, swidth);
@@ -5778,7 +5805,7 @@ boolector_fun_sort(Bzla *bzla,
 {
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(domain);
-  BZLA_ABORT(arity <= 0, "'arity' must be > 0");
+  BZLA_ABORT_OLD(arity <= 0, "'arity' must be > 0");
 
   uint32_t i;
   BzlaSortId res, tup, cos, s;
@@ -5796,19 +5823,20 @@ boolector_fun_sort(Bzla *bzla,
   for (i = 0; i < arity; i++)
   {
     s = BZLA_IMPORT_BOOLECTOR_SORT(domain[i]);
-    BZLA_ABORT(!bzla_sort_is_valid(bzla, s),
-               "'domain' sort at position %u is not a valid sort",
-               i);
-    BZLA_ABORT(!bzla_sort_is_bv(bzla, s) && !bzla_sort_is_bool(bzla, s)
-                   && !bzla_sort_is_fp(bzla, s),
-               "'domain' sort at position %u must be a bool, bit-vector, or "
-               "floating-point sort",
-               i);
+    BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s),
+                   "'domain' sort at position %u is not a valid sort",
+                   i);
+    BZLA_ABORT_OLD(
+        !bzla_sort_is_bv(bzla, s) && !bzla_sort_is_bool(bzla, s)
+            && !bzla_sort_is_fp(bzla, s),
+        "'domain' sort at position %u must be a bool, bit-vector, or "
+        "floating-point sort",
+        i);
   }
   cos = BZLA_IMPORT_BOOLECTOR_SORT(codomain);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, cos),
-             "'codomain' sort is not a valid sort");
-  BZLA_ABORT(
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, cos),
+                 "'codomain' sort is not a valid sort");
+  BZLA_ABORT_OLD(
       !bzla_sort_is_bv(bzla, cos) && !bzla_sort_is_bool(bzla, cos)
           && !bzla_sort_is_fp(bzla, cos),
       "'codomain' sort must be a bool, bit-vector, or floating-point sort");
@@ -5837,13 +5865,15 @@ boolector_array_sort(Bzla *bzla, BoolectorSort index, BoolectorSort element)
   is = BZLA_IMPORT_BOOLECTOR_SORT(index);
   es = BZLA_IMPORT_BOOLECTOR_SORT(element);
 
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, is), "'index' sort is not a valid sort");
-  BZLA_ABORT(bzla_sort_is_fun(bzla, is),
-             "array sorts with array/function 'index' sort not supported");
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, es),
-             "'element' sort is not a valid sort");
-  BZLA_ABORT(bzla_sort_is_fun(bzla, es),
-             "array sorts with array/function 'element' sort not supported");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, is),
+                 "'index' sort is not a valid sort");
+  BZLA_ABORT_OLD(bzla_sort_is_fun(bzla, is),
+                 "array sorts with array/function 'index' sort not supported");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, es),
+                 "'element' sort is not a valid sort");
+  BZLA_ABORT_OLD(
+      bzla_sort_is_fun(bzla, es),
+      "array sorts with array/function 'element' sort not supported");
 
   res = bzla_sort_array(bzla, is, es);
   inc_sort_ext_ref_counter(bzla, res);
@@ -5861,7 +5891,7 @@ boolector_copy_sort(Bzla *bzla, BoolectorSort sort)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, BZLA_IMPORT_BOOLECTOR_SORT(sort), bzla);
 
   BzlaSortId s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
   BzlaSortId res = bzla_sort_copy(bzla, s);
   inc_sort_ext_ref_counter(bzla, res);
   BZLA_TRAPI_RETURN_SORT(res);
@@ -5878,7 +5908,7 @@ boolector_release_sort(Bzla *bzla, BoolectorSort sort)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, BZLA_IMPORT_BOOLECTOR_SORT(sort), bzla);
 
   BzlaSortId s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
   dec_sort_ext_ref_counter(bzla, s);
   bzla_sort_release(bzla, s);
 #ifndef NDEBUG
@@ -5921,7 +5951,7 @@ boolector_is_array_sort(Bzla *bzla, BoolectorSort sort)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
 
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
 
   res = bzla_sort_is_array(bzla, s);
   BZLA_TRAPI_RETURN_BOOL(res);
@@ -5941,7 +5971,7 @@ boolector_is_bv_sort(Bzla *bzla, BoolectorSort sort)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
 
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
 
   res = bzla_sort_is_bv(bzla, s);
   BZLA_TRAPI_RETURN_BOOL(res);
@@ -5961,7 +5991,7 @@ boolector_is_fp_sort(Bzla *bzla, BoolectorSort sort)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
 
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
 
   res = bzla_sort_is_fp(bzla, s);
   BZLA_TRAPI_RETURN_BOOL(res);
@@ -5981,7 +6011,7 @@ boolector_is_rm_sort(Bzla *bzla, BoolectorSort sort)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
 
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
 
   res = bzla_sort_is_rm(bzla, s);
   BZLA_TRAPI_RETURN_BOOL(res);
@@ -6001,7 +6031,7 @@ boolector_is_fun_sort(Bzla *bzla, BoolectorSort sort)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
 
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
 
   res = bzla_sort_is_fun(bzla, s);
   BZLA_TRAPI_RETURN_BOOL(res);
@@ -6021,8 +6051,8 @@ boolector_bv_sort_get_width(Bzla *bzla, BoolectorSort sort)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
 
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit-vector sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_bv(bzla, s), "'sort' is not a bit-vector sort");
 
   res = bzla_sort_bv_get_width(bzla, s);
   BZLA_TRAPI_RETURN_UINT(res);
@@ -6042,8 +6072,9 @@ boolector_fp_sort_get_exp_width(Bzla *bzla, BoolectorSort sort)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
 
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
 
   res = bzla_sort_fp_get_exp_width(bzla, s);
   BZLA_TRAPI_RETURN_UINT(res);
@@ -6063,8 +6094,9 @@ boolector_fp_sort_get_sig_width(Bzla *bzla, BoolectorSort sort)
   BZLA_TRAPI(BZLA_TRAPI_SORT_FMT, sort, bzla);
   s = BZLA_IMPORT_BOOLECTOR_SORT(sort);
 
-  BZLA_ABORT(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT(!bzla_sort_is_fp(bzla, s), "'sort' is not a floating-point sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
+  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
+                 "'sort' is not a floating-point sort");
 
   res = bzla_sort_fp_get_sig_width(bzla, s);
   BZLA_TRAPI_RETURN_UINT(res);
@@ -6095,8 +6127,8 @@ boolector_parse(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(outfile);
   BZLA_ABORT_ARG_NULL(error_msg);
   BZLA_ABORT_ARG_NULL(status);
-  BZLA_ABORT(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
-             "file parsing must be done before creating expressions");
+  BZLA_ABORT_OLD(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
+                 "file parsing must be done before creating expressions");
   res = bzla_parse(
       bzla, infile, infile_name, outfile, error_msg, status, parsed_smt2);
   /* shadow clone can not shadow boolector_parse* (parser uses API calls only,
@@ -6121,8 +6153,8 @@ boolector_parse_btor(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(outfile);
   BZLA_ABORT_ARG_NULL(error_msg);
   BZLA_ABORT_ARG_NULL(status);
-  BZLA_ABORT(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
-             "file parsing must be done before creating expressions");
+  BZLA_ABORT_OLD(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
+                 "file parsing must be done before creating expressions");
   res = bzla_parse_btor(bzla, infile, infile_name, outfile, error_msg, status);
   /* shadow clone can not shadow boolector_parse* (parser uses API calls only,
    * hence all API calls issued while parsing are already shadowed and the
@@ -6146,8 +6178,8 @@ boolector_parse_btor2(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(outfile);
   BZLA_ABORT_ARG_NULL(error_msg);
   BZLA_ABORT_ARG_NULL(status);
-  BZLA_ABORT(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
-             "file parsing must be done before creating expressions");
+  BZLA_ABORT_OLD(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
+                 "file parsing must be done before creating expressions");
   res = bzla_parse_btor2(bzla, infile, infile_name, outfile, error_msg, status);
   /* shadow clone can not shadow boolector_parse* (parser uses API calls only,
    * hence all API calls issued while parsing are already shadowed and the
@@ -6171,8 +6203,8 @@ boolector_parse_smt2(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(outfile);
   BZLA_ABORT_ARG_NULL(error_msg);
   BZLA_ABORT_ARG_NULL(status);
-  BZLA_ABORT(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
-             "file parsing must be done before creating expressions");
+  BZLA_ABORT_OLD(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
+                 "file parsing must be done before creating expressions");
   res = bzla_parse_smt2(bzla, infile, infile_name, outfile, error_msg, status);
   /* shadow clone can not shadow boolector_parse* (parser uses API calls only,
    * hence all API calls issued while parsing are already shadowed and the
@@ -6206,9 +6238,9 @@ boolector_dump_btor(Bzla *bzla, FILE *file)
   BZLA_TRAPI("");
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(file);
-  BZLA_ABORT(!bzla_dumpbtor_can_be_dumped(bzla),
-             "formula cannot be dumped in BTOR format as it does "
-             "not support uninterpreted functions yet.");
+  BZLA_ABORT_OLD(!bzla_dumpbtor_can_be_dumped(bzla),
+                 "formula cannot be dumped in BTOR format as it does "
+                 "not support uninterpreted functions yet.");
   BZLA_WARN(bzla->assumptions->count > 0,
             "dumping in incremental mode only captures the current state "
             "of the input formula without assumptions");
@@ -6271,8 +6303,8 @@ boolector_dump_aiger_ascii(Bzla *bzla, FILE *file, bool merge_roots)
   BZLA_TRAPI("%d", merge_roots);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(file);
-  BZLA_ABORT(bzla->lambdas->count > 0 || bzla->ufs->count > 0,
-             "dumping to ASCII AIGER is supported for QF_BV only");
+  BZLA_ABORT_OLD(bzla->lambdas->count > 0 || bzla->ufs->count > 0,
+                 "dumping to ASCII AIGER is supported for QF_BV only");
   BZLA_WARN(bzla->assumptions->count > 0,
             "dumping in incremental mode only captures the current state "
             "of the input formula without assumptions");
@@ -6288,8 +6320,8 @@ boolector_dump_aiger_binary(Bzla *bzla, FILE *file, bool merge_roots)
   BZLA_TRAPI("%d", merge_roots);
   BZLA_ABORT_ARG_NULL(bzla);
   BZLA_ABORT_ARG_NULL(file);
-  BZLA_ABORT(bzla->lambdas->count > 0 || bzla->ufs->count > 0,
-             "dumping to binary AIGER is supported for QF_BV only");
+  BZLA_ABORT_OLD(bzla->lambdas->count > 0 || bzla->ufs->count > 0,
+                 "dumping to binary AIGER is supported for QF_BV only");
   BZLA_WARN(bzla->assumptions->count > 0,
             "dumping in incremental mode only captures the current state "
             "of the input formula without assumptions");

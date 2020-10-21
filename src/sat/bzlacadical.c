@@ -9,7 +9,7 @@
 
 #include "sat/bzlacadical.h"
 
-#include "bzlaabort.h"
+#include "utils/bzlaabort.h"
 
 /*------------------------------------------------------------------------*/
 #ifdef BZLA_USE_CADICAL

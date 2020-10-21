@@ -9,7 +9,6 @@
 #include "bzlaslvaigprop.h"
 
 #include "aigprop.h"
-#include "bzlaabort.h"
 #include "bzlaclone.h"
 #include "bzlacore.h"
 #include "bzladbg.h"
@@ -17,6 +16,7 @@
 #include "bzlaopt.h"
 #include "bzlaprintmodel.h"
 #include "bzlaslvprop.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
 

@@ -12,7 +12,6 @@
 #include <vector>
 
 extern "C" {
-#include "bzlaabort.h"
 #include "bzlabv.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
@@ -20,6 +19,7 @@ extern "C" {
 #include "bzlanode.h"
 #include "bzlarm.h"
 #include "bzlasort.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlamem.h"
 #include "utils/bzlautil.h"
 }

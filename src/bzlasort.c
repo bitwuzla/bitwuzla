@@ -14,9 +14,9 @@
 #include <limits.h>
 #include <stdio.h>
 
-#include "bzlaabort.h"
 #include "bzlacore.h"
 #include "bzlanode.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlautil.h"
 
 #define BZLA_SORT_UNIQUE_TABLE_LIMIT 30

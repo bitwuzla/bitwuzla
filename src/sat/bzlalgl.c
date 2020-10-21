@@ -18,9 +18,9 @@
 #include <ctype.h>
 #include <limits.h>
 
-#include "bzlaabort.h"
 #include "bzlacore.h"
 #include "bzlaopt.h"
+#include "utils/bzlaabort.h"
 
 #define BZLA_LGL_SIMP_DELAY 10000
 #define BZLA_LGL_MIN_BLIMIT 50000

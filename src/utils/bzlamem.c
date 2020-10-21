@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bzlaabort.h"
+#include "utils/bzlaabort.h"
 
 /*------------------------------------------------------------------------*/
 

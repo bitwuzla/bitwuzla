@@ -11,7 +11,7 @@
 
 #include "sat/bzlakissat.h"
 
-#include "bzlaabort.h"
+#include "utils/bzlaabort.h"
 
 /*------------------------------------------------------------------------*/
 #ifdef BZLA_USE_KISSAT

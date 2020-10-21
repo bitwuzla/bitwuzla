@@ -13,11 +13,11 @@
 
 #include <limits.h>
 
-#include "bzlaabort.h"
 #include "bzlacore.h"
 #include "bzladbg.h"
 #include "bzlafp.h"
 #include "bzlarewrite.h"
+#include "utils/bzlaabort.h"
 
 /*------------------------------------------------------------------------*/
 

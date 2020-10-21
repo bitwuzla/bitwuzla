@@ -9,7 +9,6 @@
 
 #include "bzlaslvquant.h"
 
-#include "bzlaabort.h"
 #include "bzlabeta.h"
 #include "bzlabv.h"
 #include "bzlaclone.h"
@@ -23,6 +22,7 @@
 #include "preprocess/bzlaminiscope.h"
 #include "preprocess/bzlanormquant.h"
 #include "preprocess/bzlaskolemize.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlanodeiter.h"
 #include "utils/bzlautil.h"

@@ -11,7 +11,6 @@
 
 #include <math.h>
 
-#include "bzlaabort.h"
 #include "bzlabv.h"
 #include "bzlaclone.h"
 #include "bzlacore.h"
@@ -22,6 +21,7 @@
 #include "bzlaprintmodel.h"
 #include "bzlaproputils.h"
 #include "bzlaslsutils.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlanodeiter.h"
