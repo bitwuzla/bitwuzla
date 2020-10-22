@@ -1169,8 +1169,8 @@ bitwuzla_sort_fun_get_domain(Bitwuzla *bitwuzla, BitwuzlaSort sort)
   BZLA_CHECK_SORT(bzla, bzla_sort);
   BZLA_CHECK_SORT_IS_FUN(bzla, bzla_sort);
 
-  BzlaSortId res = bzla_sort_fun_get_domain(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_SORT(res);
+  /* Note: We don't need to increase the ref counter here. */
+  return BZLA_EXPORT_BITWUZLA_SORT(bzla_sort_fun_get_domain(bzla, bzla_sort));
 }
 
 BitwuzlaSort
@@ -1183,8 +1183,8 @@ bitwuzla_sort_fun_get_codomain(Bitwuzla *bitwuzla, BitwuzlaSort sort)
   BZLA_CHECK_SORT(bzla, bzla_sort);
   BZLA_CHECK_SORT_IS_FUN(bzla, bzla_sort);
 
-  BzlaSortId res = bzla_sort_fun_get_codomain(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_SORT(res);
+  /* Note: We don't need to increase the ref counter here. */
+  return BZLA_EXPORT_BITWUZLA_SORT(bzla_sort_fun_get_codomain(bzla, bzla_sort));
 }
 
 uint32_t
@@ -1281,176 +1281,270 @@ bitwuzla_sort_is_rm(Bitwuzla *bitwuzla, BitwuzlaSort sort)
 /* -------------------------------------------------------------------------- */
 
 Bitwuzla *
-bitwuzla_get_bitwuzla(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
+bitwuzla_get_bitwuzla(BitwuzlaTerm *term)
 {
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  Bzla *res = bzla_node_get_bzla(bzla_term);
+  return BZLA_EXPORT_BITWUZLA(res);
+}
+
+BitwuzlaSort
+bitwuzla_get_sort(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  /* Note: We don't need to increase the ref counter here. */
+  return BZLA_EXPORT_BITWUZLA_SORT(bzla_node_get_sort_id(bzla_term));
 }
 
 const char *
 bitwuzla_get_symbol(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return remove_unique_symbol_prefix(bzla,
+                                     bzla_node_get_symbol(bzla, bzla_term));
 }
 
 void
 bitwuzla_set_symbol(Bitwuzla *bitwuzla, BitwuzlaTerm *term, const char *symbol)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
+  BZLA_CHECK_ARG_NOT_NULL(term);
 
-BitwuzlaSort
-bitwuzla_get_sort(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+
+  char *s = mk_unique_symbol(bzla, symbol);
+  if (bzla_hashptr_table_get(bzla->symbols, s))
+  {
+    BZLA_WARN(true, "symbol %s already defined, will not set symbol", symbol);
+  }
+  else
+  {
+    bzla_node_set_symbol(bzla, bzla_term, s);
+  }
+  bzla_mem_freestr(bzla->mm, s);
 }
 
 bool
-bitwuzla_is_value(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
+bitwuzla_is_array(BitwuzlaTerm *term)
 {
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  return bzla_node_is_array(bzla_term);
 }
 
 bool
-bitwuzla_is_bv_value(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
+bitwuzla_is_const(BitwuzlaTerm *term)
 {
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  return bzla_node_is_var(bzla_term);
+}
+
+bool
+bitwuzla_is_fun(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  return bzla_node_is_fun(bzla_term);
+}
+
+bool
+bitwuzla_is_var(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  return bzla_node_is_param(bzla_term);
+}
+
+bool
+bitwuzla_is_bv_value(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  return bzla_node_is_bv_const(bzla_term);
+}
+
+bool
+bitwuzla_is_fp_value(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  return bzla_node_is_fp_const(bzla_term);
+}
+
+bool
+bitwuzla_is_rm_value(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  return bzla_node_is_rm_const(bzla_term);
 }
 
 bool
 bitwuzla_is_bv_value_zero(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_is_bv_const_zero(bzla, bzla_term);
 }
 
 bool
 bitwuzla_is_bv_value_one(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_is_bv_const_one(bzla, bzla_term);
 }
 
 bool
 bitwuzla_is_bv_value_ones(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_is_bv_const_ones(bzla, bzla_term);
 }
 
 bool
 bitwuzla_is_bv_value_min_signed(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_is_bv_const_min_signed(bzla, bzla_term);
 }
 
 bool
 bitwuzla_is_bv_value_max_signed(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
+  BZLA_CHECK_ARG_NOT_NULL(term);
 
-bool
-bitwuzla_is_fp_value(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_is_bv_const_max_signed(bzla, bzla_term);
 }
 
 bool
 bitwuzla_is_fp_value_pos_zero(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_is_fp_const_pos_zero(bzla, bzla_term);
 }
 
 bool
 bitwuzla_is_fp_value_neg_zero(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_is_fp_const_neg_zero(bzla, bzla_term);
 }
 
 bool
 bitwuzla_is_fp_value_pos_inf(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_is_fp_const_pos_inf(bzla, bzla_term);
 }
 
 bool
 bitwuzla_is_fp_value_neg_inf(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_is_fp_const_neg_inf(bzla, bzla_term);
 }
 
 bool
 bitwuzla_is_fp_value_nan(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_is_fp_const_neg_inf(bzla, bzla_term);
 }
 
 bool
-bitwuzla_is_rm_value(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
+bitwuzla_is_const_array(BitwuzlaTerm *term)
 {
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
+  BZLA_CHECK_ARG_NOT_NULL(term);
 
-bool
-bitwuzla_is_array(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_is_bv(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_is_fp(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_is_fun(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_is_rm(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_is_const(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_is_var(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  return bzla_node_is_const_array(bzla_term);
 }
