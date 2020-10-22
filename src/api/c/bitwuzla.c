@@ -114,6 +114,9 @@
 #define BZLA_CHECK_SORT_IS_FP(bzla, sort) \
   BZLA_ABORT(!bzla_sort_is_fp(bzla, sort), "expected floating-point sort")
 
+#define BZLA_CHECK_SORT_IS_FUN(bzla, sort) \
+  BZLA_ABORT(!bzla_sort_is_fun(bzla, sort), "expected function sort")
+
 #define BZLA_CHECK_SORT_IS_ARRAY(bzla, sort)                        \
   BZLA_ABORT(!bzla_sort_is_fun(bzla, sort)                          \
                  || bzla_sort_tuple_get_arity(                      \
@@ -1117,95 +1120,160 @@ bitwuzla_dump_smt2(Bitwuzla *bitwuzla, FILE *file)
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */
 
-BitwuzlaSort
-bitwuzla_sort_get_domain(Bitwuzla *bitwuzla, BitwuzlaSort sort)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-BitwuzlaSort
-bitwuzla_sort_get_codomain(Bitwuzla *bitwuzla, BitwuzlaSort sort)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-uint32_t
-bitwuzla_sort_bv_get_width(Bitwuzla *bitwuzla, BitwuzlaSort sort)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-uint32_t
-bitwuzla_sort_fun_get_arity(Bitwuzla *bitwuzla, BitwuzlaSort sort)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_sort_is_equal(Bitwuzla *bitwuzla, BitwuzlaSort sort0, BitwuzlaSort s1)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_sort_is_array(Bitwuzla *bitwuzla, BitwuzlaSort sort)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_sort_is_bv(Bitwuzla *bitwuzla, BitwuzlaSort sort)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_sort_is_fp(Bitwuzla *bitwuzla, BitwuzlaSort sort)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_sort_is_fun(Bitwuzla *bitwuzla, BitwuzlaSort sort)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
-bool
-bitwuzla_sort_is_rm(Bitwuzla *bitwuzla, BitwuzlaSort sort)
-{
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
-}
-
 uint32_t
 bitwuzla_sort_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaSort sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
+
+  return bzla_sort_bv_get_width(bzla, bzla_sort);
 }
 
 uint32_t
 bitwuzla_sort_fp_get_exp_size(Bitwuzla *bitwuzla, BitwuzlaSort sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+
+  return bzla_sort_fp_get_exp_width(bzla, bzla_sort);
 }
 
 uint32_t
 bitwuzla_sort_fp_get_sig_size(Bitwuzla *bitwuzla, BitwuzlaSort sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+
+  return bzla_sort_fp_get_sig_width(bzla, bzla_sort);
+}
+
+BitwuzlaSort
+bitwuzla_sort_fun_get_domain(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FUN(bzla, bzla_sort);
+
+  BzlaSortId res = bzla_sort_fun_get_domain(bzla, bzla_sort);
+  BZLA_RETURN_BITWUZLA_SORT(res);
+}
+
+BitwuzlaSort
+bitwuzla_sort_fun_get_codomain(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FUN(bzla, bzla_sort);
+
+  BzlaSortId res = bzla_sort_fun_get_codomain(bzla, bzla_sort);
+  BZLA_RETURN_BITWUZLA_SORT(res);
+}
+
+uint32_t
+bitwuzla_sort_fun_get_arity(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FUN(bzla, bzla_sort);
+
+  return bzla_sort_fun_get_arity(bzla, bzla_sort);
+}
+
+bool
+bitwuzla_sort_is_equal(Bitwuzla *bitwuzla,
+                       BitwuzlaSort sort0,
+                       BitwuzlaSort sort1)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla            = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort0 = BZLA_IMPORT_BITWUZLA_SORT(sort0);
+  BzlaSortId bzla_sort1 = BZLA_IMPORT_BITWUZLA_SORT(sort1);
+  BZLA_CHECK_SORT(bzla, bzla_sort0);
+  BZLA_CHECK_SORT(bzla, bzla_sort1);
+
+  return bzla_sort0 == bzla_sort1;
+}
+
+bool
+bitwuzla_sort_is_array(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+
+  return bzla_sort_is_array(bzla, bzla_sort);
+}
+
+bool
+bitwuzla_sort_is_bv(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+
+  return bzla_sort_is_bv(bzla, bzla_sort);
+}
+
+bool
+bitwuzla_sort_is_fp(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+
+  return bzla_sort_is_fp(bzla, bzla_sort);
+}
+
+bool
+bitwuzla_sort_is_fun(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+
+  return bzla_sort_is_fun(bzla, bzla_sort);
+}
+
+bool
+bitwuzla_sort_is_rm(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+
+  return bzla_sort_is_rm(bzla, bzla_sort);
 }
 
 /* -------------------------------------------------------------------------- */

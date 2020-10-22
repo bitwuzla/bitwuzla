@@ -249,23 +249,23 @@ void bitwuzla_dump_smt2(Bitwuzla *bitwuzla, FILE *file);
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */
 
-BitwuzlaSort bitwuzla_sort_get_domain(Bitwuzla *bitwuzla, BitwuzlaSort sort);
-BitwuzlaSort bitwuzla_sort_get_codomain(Bitwuzla *bitwuzla, BitwuzlaSort sort);
-uint32_t bitwuzla_sort_bv_get_width(Bitwuzla *bitwuzla, BitwuzlaSort sort);
+uint32_t bitwuzla_sort_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
+uint32_t bitwuzla_sort_fp_get_exp_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
+uint32_t bitwuzla_sort_fp_get_sig_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
+BitwuzlaSort bitwuzla_sort_fun_get_domain(Bitwuzla *bitwuzla,
+                                          BitwuzlaSort sort);
+BitwuzlaSort bitwuzla_sort_fun_get_codomain(Bitwuzla *bitwuzla,
+                                            BitwuzlaSort sort);
 uint32_t bitwuzla_sort_fun_get_arity(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 
 bool bitwuzla_sort_is_equal(Bitwuzla *bitwuzla,
                             BitwuzlaSort sort0,
-                            BitwuzlaSort s1);
+                            BitwuzlaSort sort1);
 bool bitwuzla_sort_is_array(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 bool bitwuzla_sort_is_bv(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 bool bitwuzla_sort_is_fp(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 bool bitwuzla_sort_is_fun(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 bool bitwuzla_sort_is_rm(Bitwuzla *bitwuzla, BitwuzlaSort sort);
-
-uint32_t bitwuzla_sort_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
-uint32_t bitwuzla_sort_fp_get_exp_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
-uint32_t bitwuzla_sort_fp_get_sig_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTerm                                                               */
