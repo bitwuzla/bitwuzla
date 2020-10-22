@@ -25,8 +25,11 @@ void bzla_abort_warn(
     bzla_abort_warn(true, __FILE__, __FUNCTION__, ##msg); \
   }
 
-#define BZLA_CHECK_ARG_NOT_NULL(arg) \
-  BZLA_ABORT((arg) == NULL, "argument '%s' must not be NULL", #arg);
+#define BZLA_WARN(condition, msg...)                       \
+  if (condition)                                           \
+  {                                                        \
+    bzla_abort_warn(false, __FILE__, __FUNCTION__, ##msg); \
+  }
 
 /* -------------------------------------------------------------------------- */
 #endif

@@ -43,6 +43,7 @@ set(libboolector_src_files
   bzlafp.cpp
   bzlasynth.c
   bzlatrapi.c
+  api/c/bitwuzla.c
   dumper/bzladumpaig.c
   dumper/bzladumpbtor.c
   dumper/bzladumpsmt.c

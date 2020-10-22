@@ -329,6 +329,20 @@ bzla_node_is_synth(const BzlaNode *node)
   return bzla_node_real_addr(node)->av != 0;
 }
 
+/** Return number of external references. */
+static inline uint32_t
+bzla_node_get_ext_refs(const BzlaNode *node)
+{
+  return bzla_node_real_addr(node)->ext_refs;
+}
+
+/** Return associated bzla instance. */
+static inline Bzla *
+bzla_node_get_bzla(const BzlaNode *node)
+{
+  return bzla_node_real_addr(node)->bzla;
+}
+
 /*------------------------------------------------------------------------*/
 
 /** Return true if given kind is a unary kind (arity == 1). */
