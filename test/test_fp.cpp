@@ -131,3 +131,60 @@ TEST_F(TestFpInternal, fp_as_bv)
     }
   }
 }
+
+TEST_F(TestFpInternal, fp_is_const)
+{
+  BzlaSortId f16      = bzla_sort_fp(d_bzla, 5, 11);
+  BzlaSortId f32      = bzla_sort_fp(d_bzla, 8, 24);
+  BzlaSortId f64      = bzla_sort_fp(d_bzla, 11, 53);
+  BzlaSortId f128     = bzla_sort_fp(d_bzla, 15, 113);
+  BzlaSortId sorts[4] = {f16, f32, f64, f128};
+
+  for (uint32_t i = 0; i < 4; i++)
+  {
+    BzlaNode *pzero = bzla_exp_fp_pos_zero(d_bzla, sorts[i]);
+    ASSERT_TRUE(bzla_node_is_fp_const_pos_zero(d_bzla, pzero));
+    ASSERT_TRUE(!bzla_node_is_fp_const_neg_zero(d_bzla, pzero));
+    ASSERT_TRUE(!bzla_node_is_fp_const_pos_inf(d_bzla, pzero));
+    ASSERT_TRUE(!bzla_node_is_fp_const_neg_inf(d_bzla, pzero));
+    ASSERT_TRUE(!bzla_node_is_fp_const_nan(d_bzla, pzero));
+    bzla_node_release(d_bzla, pzero);
+
+    BzlaNode *nzero = bzla_exp_fp_neg_zero(d_bzla, sorts[i]);
+    ASSERT_TRUE(!bzla_node_is_fp_const_pos_zero(d_bzla, nzero));
+    ASSERT_TRUE(bzla_node_is_fp_const_neg_zero(d_bzla, nzero));
+    ASSERT_TRUE(!bzla_node_is_fp_const_pos_inf(d_bzla, nzero));
+    ASSERT_TRUE(!bzla_node_is_fp_const_neg_inf(d_bzla, nzero));
+    ASSERT_TRUE(!bzla_node_is_fp_const_nan(d_bzla, nzero));
+    bzla_node_release(d_bzla, nzero);
+
+    BzlaNode *pinf = bzla_exp_fp_pos_inf(d_bzla, sorts[i]);
+    ASSERT_TRUE(!bzla_node_is_fp_const_pos_zero(d_bzla, pinf));
+    ASSERT_TRUE(!bzla_node_is_fp_const_neg_zero(d_bzla, pinf));
+    ASSERT_TRUE(bzla_node_is_fp_const_pos_inf(d_bzla, pinf));
+    ASSERT_TRUE(!bzla_node_is_fp_const_neg_inf(d_bzla, pinf));
+    ASSERT_TRUE(!bzla_node_is_fp_const_nan(d_bzla, pinf));
+    bzla_node_release(d_bzla, pinf);
+
+    BzlaNode *ninf = bzla_exp_fp_neg_inf(d_bzla, sorts[i]);
+    ASSERT_TRUE(!bzla_node_is_fp_const_pos_zero(d_bzla, ninf));
+    ASSERT_TRUE(!bzla_node_is_fp_const_neg_zero(d_bzla, ninf));
+    ASSERT_TRUE(!bzla_node_is_fp_const_pos_inf(d_bzla, ninf));
+    ASSERT_TRUE(bzla_node_is_fp_const_neg_inf(d_bzla, ninf));
+    ASSERT_TRUE(!bzla_node_is_fp_const_nan(d_bzla, ninf));
+    bzla_node_release(d_bzla, ninf);
+
+    BzlaNode *nan = bzla_exp_fp_nan(d_bzla, sorts[i]);
+    ASSERT_TRUE(!bzla_node_is_fp_const_pos_zero(d_bzla, nan));
+    ASSERT_TRUE(!bzla_node_is_fp_const_neg_zero(d_bzla, nan));
+    ASSERT_TRUE(!bzla_node_is_fp_const_pos_inf(d_bzla, nan));
+    ASSERT_TRUE(!bzla_node_is_fp_const_neg_inf(d_bzla, nan));
+    ASSERT_TRUE(bzla_node_is_fp_const_nan(d_bzla, nan));
+    bzla_node_release(d_bzla, nan);
+  }
+
+  bzla_sort_release(d_bzla, f16);
+  bzla_sort_release(d_bzla, f32);
+  bzla_sort_release(d_bzla, f64);
+  bzla_sort_release(d_bzla, f128);
+}

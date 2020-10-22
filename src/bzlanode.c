@@ -306,6 +306,78 @@ bzla_node_bv_is_neg(Bzla *bzla, BzlaNode *exp, BzlaNode **res)
 /*------------------------------------------------------------------------*/
 
 bool
+bzla_node_is_fp_const_pos_zero(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  if (!bzla_node_is_fp_const(exp)) return false;
+
+  BzlaFloatingPoint *fp = ((BzlaFPConstNode *) bzla_node_real_addr(exp))->fp;
+  return bzla_fp_is_zero(bzla, fp) && bzla_fp_is_pos(bzla, fp);
+}
+
+bool
+bzla_node_is_fp_const_neg_zero(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  if (!bzla_node_is_fp_const(exp)) return false;
+
+  BzlaFloatingPoint *fp = ((BzlaFPConstNode *) bzla_node_real_addr(exp))->fp;
+  return bzla_fp_is_zero(bzla, fp) && bzla_fp_is_neg(bzla, fp);
+}
+
+bool
+bzla_node_is_fp_const_pos_inf(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  if (!bzla_node_is_fp_const(exp)) return false;
+
+  BzlaFloatingPoint *fp = ((BzlaFPConstNode *) bzla_node_real_addr(exp))->fp;
+  return bzla_fp_is_inf(bzla, fp) && bzla_fp_is_pos(bzla, fp);
+}
+
+bool
+bzla_node_is_fp_const_neg_inf(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  if (!bzla_node_is_fp_const(exp)) return false;
+
+  BzlaFloatingPoint *fp = ((BzlaFPConstNode *) bzla_node_real_addr(exp))->fp;
+  return bzla_fp_is_inf(bzla, fp) && bzla_fp_is_neg(bzla, fp);
+}
+
+bool
+bzla_node_is_fp_const_nan(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  if (!bzla_node_is_fp_const(exp)) return false;
+
+  BzlaFloatingPoint *fp = ((BzlaFPConstNode *) bzla_node_real_addr(exp))->fp;
+  return bzla_fp_is_nan(bzla, fp);
+}
+
+/*------------------------------------------------------------------------*/
+
+bool
 bzla_node_is_bv(Bzla *bzla, const BzlaNode *exp)
 {
   assert(bzla);

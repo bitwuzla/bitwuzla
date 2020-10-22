@@ -1031,6 +1031,19 @@ bool bzla_node_is_bv_const_max_signed(Bzla *bzla, BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 
+/** Return true if given node is a floating-point constant representing +0. */
+bool bzla_node_is_fp_const_pos_zero(Bzla *bzla, BzlaNode *exp);
+/** Return true if given node is a floating-point constant representing -0. */
+bool bzla_node_is_fp_const_neg_zero(Bzla *bzla, BzlaNode *exp);
+/** Return true if given node is a floating-point constant representing +oo. */
+bool bzla_node_is_fp_const_pos_inf(Bzla *bzla, BzlaNode *exp);
+/** Return true if given node is a floating-point constant representing -oo. */
+bool bzla_node_is_fp_const_neg_inf(Bzla *bzla, BzlaNode *exp);
+/** Return true if given node is a floating-point constant representing NaN. */
+bool bzla_node_is_fp_const_nan(Bzla *bzla, BzlaNode *exp);
+
+/*------------------------------------------------------------------------*/
+
 /** Get the id of a given node (negative if inverted). */
 static inline int32_t
 bzla_node_get_id(const BzlaNode *exp)
