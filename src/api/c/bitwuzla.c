@@ -11,6 +11,10 @@
 #include "bzlaconfig.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
+#include "bzlamodel.h"
+#include "bzlaprintmodel.h"
+#include "dumper/bzladumpsmt.h"
+#include "preprocess/bzlapreprocess.h"
 #include "utils/bzlaabort.h"
 #include "utils/bzlautil.h"
 
@@ -55,9 +59,28 @@
 
 /* -------------------------------------------------------------------------- */
 
-#define BZLA_CHECK_INCREMENTAL(bzla)                    \
+#define BZLA_CHECK_OPT_INCREMENTAL(bzla)                \
   BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL), \
              "incremental usage not enabled");
+
+#define BZLA_CHECK_OPT_PRODUCE_MODELS(bzla)           \
+  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN), \
+             "model production not enabled");
+
+#define BZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(bzla)        \
+  BZLA_ABORT(!bzla_opt_get(bzla, BZLA_OPT_UNSAT_CORES), \
+             "unsat core production not enabled");
+
+#define BZLA_CHECK_UNSAT(bzla, what)                     \
+  BZLA_ABORT(bzla->last_sat_result != BZLA_RESULT_UNSAT, \
+             "cannot %s if input formula is not unsat",  \
+             what);
+
+#define BZLA_CHECK_SAT(bzla, what)                                          \
+  BZLA_ABORT(                                                               \
+      bzla->last_sat_result != BZLA_RESULT_SAT || !bzla->valid_assignments, \
+      "cannot %s if input formula is not sat",                              \
+      what);
 
 /* -------------------------------------------------------------------------- */
 
@@ -821,7 +844,7 @@ bitwuzla_push(Bitwuzla *bitwuzla, uint32_t nlevels)
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BZLA_CHECK_INCREMENTAL(bzla);
+  BZLA_CHECK_OPT_INCREMENTAL(bzla);
   if (nlevels)
   {
     for (uint32_t i = 0; i < nlevels; i++)
@@ -839,7 +862,7 @@ bitwuzla_pop(Bitwuzla *bitwuzla, uint32_t nlevels)
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BZLA_CHECK_INCREMENTAL(bzla);
+  BZLA_CHECK_OPT_INCREMENTAL(bzla);
   BZLA_ABORT(
       nlevels > BZLA_COUNT_STACK(bzla->assertions_trail),
       "number of levels to pop (%u) greater than number of pushed levels (%u)",
@@ -901,7 +924,7 @@ bitwuzla_assume(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
   BZLA_CHECK_ARG_NOT_NULL(term);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BZLA_CHECK_INCREMENTAL(bzla);
+  BZLA_CHECK_OPT_INCREMENTAL(bzla);
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
@@ -913,15 +936,14 @@ bitwuzla_assume(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 }
 
 bool
-bitwuzla_failed(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
+bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(term);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BZLA_CHECK_INCREMENTAL(bzla);
-  BZLA_ABORT(bzla->last_sat_result != BZLA_RESULT_UNSAT,
-             "cannot check failed assumptions if input formula is not UNSAT");
+  BZLA_CHECK_OPT_INCREMENTAL(bzla);
+  BZLA_CHECK_UNSAT(bzla, "check for unsat assumptions");
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
@@ -933,65 +955,162 @@ bitwuzla_failed(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 }
 
 BitwuzlaTerm **
-bitwuzla_get_failed_assumptions(Bitwuzla *bitwuzla)
+bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_INCREMENTAL(bzla);
+  BZLA_CHECK_UNSAT(bzla, "get unsat assumptions");
+
+  BzlaNodePtrStack unsat_assumptions;
+  BZLA_INIT_STACK(bzla->mm, unsat_assumptions);
+  for (uint32_t i = 0; i < BZLA_COUNT_STACK(bzla->failed_assumptions); i++)
+  {
+    BzlaNode *assumption = BZLA_PEEK_STACK(bzla->failed_assumptions, i);
+    if (assumption == NULL) continue;
+    assert(bzla_hashptr_table_get(bzla->orig_assumptions, assumption));
+    if (bzla_failed_exp(bzla, assumption))
+    {
+      BZLA_PUSH_STACK(unsat_assumptions, assumption);
+    }
+    else
+    {
+      bzla_node_release(bzla, assumption);
+    }
+  }
+  BZLA_PUSH_STACK(unsat_assumptions, NULL);
+  BZLA_RELEASE_STACK(bzla->failed_assumptions);
+  bzla->failed_assumptions = unsat_assumptions;
+
+  return (BitwuzlaTerm **) bzla->failed_assumptions.start;
 }
 
 BitwuzlaTerm **
 bitwuzla_get_unsat_core(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_INCREMENTAL(bzla);
+  BZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(bzla);
+  BZLA_CHECK_UNSAT(bzla, "get unsat core");
+
+  bzla_reset_unsat_core(bzla);
+
+  for (uint32_t i = 0; i < BZLA_COUNT_STACK(bzla->assertions); i++)
+  {
+    BzlaNode *cur = BZLA_PEEK_STACK(bzla->assertions, i);
+    if (cur == NULL) continue;
+
+    if (bzla_failed_exp(bzla, cur))
+    {
+      BZLA_PUSH_STACK(bzla->unsat_core, bzla_node_copy(bzla, cur));
+      bzla_node_inc_ext_ref_counter(bzla, cur);
+    }
+  }
+  BZLA_PUSH_STACK(bzla->unsat_core, NULL);
+  return (BitwuzlaTerm **) bzla->unsat_core.start;
 }
 
 void
 bitwuzla_fixate_assumptions(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_INCREMENTAL(bzla);
+  bzla_fixate_assumptions(bzla);
 }
 
 void
 bitwuzla_reset_assumptions(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_INCREMENTAL(bzla);
+  bzla_reset_assumptions(bzla);
 }
 
-void
-bitwuzla_simplify(void)
+BitwuzlaResult
+bitwuzla_simplify(Bitwuzla *bitwuzla)
 {
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla                = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSolverResult bzla_res = bzla_simplify(bzla);
+  if (bzla_res == BZLA_RESULT_SAT) return BITWUZLA_SAT;
+  if (bzla_res == BZLA_RESULT_UNSAT) return BITWUZLA_UNSAT;
+  assert(bzla_res == BZLA_RESULT_UNKNOWN);
+  return BITWUZLA_UNKNOWN;
 }
 
 BitwuzlaResult
 bitwuzla_check_sat(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  if (bzla->bzla_sat_bzla_called > 0)
+  {
+    BZLA_CHECK_OPT_INCREMENTAL(bzla);
+  }
+  BzlaSolverResult bzla_res = bzla_check_sat(bzla, -1, -1);
+  if (bzla_res == BZLA_RESULT_SAT) return BITWUZLA_SAT;
+  if (bzla_res == BZLA_RESULT_UNSAT) return BITWUZLA_UNSAT;
+  assert(bzla_res == BZLA_RESULT_UNKNOWN);
+  return BITWUZLA_UNKNOWN;
 }
 
 BitwuzlaTerm *
 bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_PRODUCE_MODELS(bzla);
+  BZLA_CHECK_SAT(bzla, "retrieve model");
+  BZLA_ABORT(bzla->quantifiers->count,
+             "'get-value' is currently not supported with quantifiers");
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+
+  BzlaNode *res = bzla_model_get_value(bzla, bzla_term);
+  BZLA_RETURN_BITWUZLA_TERM(res);
 }
 
 void
 bitwuzla_print_model(Bitwuzla *bitwuzla, char *format, FILE *file)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(format);
+  BZLA_CHECK_ARG_NOT_NULL(file);
+  BZLA_CHECK_ARG_STR_NOT_EMPTY(format);
+  BZLA_ABORT(strcmp(format, "btor") && strcmp(format, "smt2"),
+             "invalid model output format: %s",
+             format);
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_PRODUCE_MODELS(bzla);
+  BZLA_CHECK_SAT(bzla, "print model");
+  bzla_print_model(bzla, format, file);
 }
 
 void
 bitwuzla_dump_smt2(Bitwuzla *bitwuzla, FILE *file)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  // TODO
+  BZLA_CHECK_ARG_NOT_NULL(file);
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_WARN(bzla->assumptions->count > 0,
+            "dumping in incremental mode only captures the current state "
+            "of the input formula without assumptions");
+  bzla_dumpsmt_dump(bzla, file);
 }
 
 /* -------------------------------------------------------------------------- */

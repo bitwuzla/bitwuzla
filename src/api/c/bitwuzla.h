@@ -127,9 +127,9 @@ typedef enum BitwuzlaKind BitwuzlaKind;
 
 enum BitwuzlaResult
 {
-  BITWUZLA_SAT,
-  BITWUZLA_UNSAT,
-  BITWUZLA_UNKNOWN,
+  BITWUZLA_SAT     = 10,
+  BITWUZLA_UNSAT   = 20,
+  BITWUZLA_UNKNOWN = 0,
 };
 typedef enum BitwuzlaResult BitwuzlaResult;
 
@@ -227,15 +227,15 @@ void bitwuzla_pop(Bitwuzla *bitwuzla, uint32_t nlevels);
 
 void bitwuzla_assert(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
 void bitwuzla_assume(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_failed(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
 
-BitwuzlaTerm **bitwuzla_get_failed_assumptions(Bitwuzla *bitwuzla);
+BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla);
 BitwuzlaTerm **bitwuzla_get_unsat_core(Bitwuzla *bitwuzla);
 
 void bitwuzla_fixate_assumptions(Bitwuzla *bitwuzla);
 void bitwuzla_reset_assumptions(Bitwuzla *bitwuzla);
 
-void bitwuzla_simplify(void);
+BitwuzlaResult bitwuzla_simplify(Bitwuzla *bitwuzla);
 
 BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
 
