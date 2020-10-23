@@ -6129,7 +6129,8 @@ boolector_parse(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(status);
   BZLA_ABORT_OLD(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
                  "file parsing must be done before creating expressions");
-  res = bzla_parse(
+  *error_msg = NULL;
+  res        = bzla_parse(
       bzla, infile, infile_name, outfile, error_msg, status, parsed_smt2);
   /* shadow clone can not shadow boolector_parse* (parser uses API calls only,
    * hence all API calls issued while parsing are already shadowed and the

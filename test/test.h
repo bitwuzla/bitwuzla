@@ -175,14 +175,14 @@ class TestFile : public TestBoolector
                               &parsed_smt2);
     if (d_expect_parse_error)
     {
-      ASSERT_EQ(sat_res, BOOLECTOR_PARSE_ERROR);
+      ASSERT_NE(parse_err, nullptr);
       std::string err_msg = parse_err;
       size_t pos          = err_msg.find("log/");
       fprintf(d_log_file, "%s\n", err_msg.substr(pos).c_str());
     }
     else
     {
-      ASSERT_NE(sat_res, BOOLECTOR_PARSE_ERROR);
+      ASSERT_EQ(parse_err, nullptr);
     }
 
     if (d_dump)
@@ -201,7 +201,7 @@ class TestFile : public TestBoolector
       }
     }
 
-    if (d_check_sat && sat_res == BOOLECTOR_PARSE_UNKNOWN)
+    if (d_check_sat && sat_res == BOOLECTOR_UNKNOWN)
     {
       sat_res = boolector_sat(d_bzla);
       fprintf(d_log_file,

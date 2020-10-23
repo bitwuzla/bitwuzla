@@ -1422,7 +1422,7 @@ boolector_main(int32_t argc, char **argv)
       boolector_get_opt(g_app->bzla, BZLA_OPT_QUANT_DUAL_SOLVER) == 1
       && g_app->bzla->quantifiers->count > 0;
 
-  if (parse_res == BOOLECTOR_PARSE_ERROR)
+  if (parse_err_msg)
   {
     /* NOTE: do not use btormain_error here as 'parse_err_msg' must not be
      * treated as format string --- it might contain unescaped '%' due to
@@ -1506,7 +1506,7 @@ boolector_main(int32_t argc, char **argv)
   }
 
   /* call sat (if not yet called) */
-  if (parse_res == BOOLECTOR_PARSE_UNKNOWN && !boolector_terminate(bzla)
+  if (parse_res == BOOLECTOR_UNKNOWN && !boolector_terminate(bzla)
       && !parsed_smt2)
   {
     sat_res = boolector_sat(bzla);

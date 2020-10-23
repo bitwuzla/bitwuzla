@@ -68,13 +68,12 @@ parse_aux(Bzla *bzla,
   if ((emsg = parser_api->parse(
            parser, prefix, infile, infile_name, outfile, &parse_res)))
   {
-    res                   = BOOLECTOR_PARSE_ERROR;
     bzla->parse_error_msg = bzla_mem_strdup(bzla->mm, emsg);
     *error_msg            = bzla->parse_error_msg;
   }
   else
   {
-    res = parse_res.nsatcalls ? parse_res.result : BOOLECTOR_PARSE_UNKNOWN;
+    res = parse_res.result;
 
     if (parse_res.logic == BZLA_LOGIC_QF_BV)
       BZLA_MSG(bzla->msg, 1, "logic QF_BV");

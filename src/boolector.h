@@ -45,20 +45,6 @@ extern "C" {
     boolector_sat, boolector_limited_sat, boolector_simplify
 */
 #define BOOLECTOR_UNSAT BZLA_RESULT_UNSAT
-/*!
-  Preprocessor constant representing status ``parse error``.
-
-  .. seealso::
-    boolector_parse
-*/
-#define BOOLECTOR_PARSE_ERROR 1
-/*!
-  Preprocessor constant representing status ``parse unknown``.
-
-  .. seealso::
-    boolector_parse
-*/
-#define BOOLECTOR_PARSE_UNKNOWN 2
 
 /*------------------------------------------------------------------------*/
 
@@ -3023,8 +3009,8 @@ uint32_t boolector_fp_sort_get_sig_width(Bzla *bzla, BoolectorSort sort);
   :return: In the incremental case or in case of SMT-LIB v2 (which requires a
            'check-sat' command), the function returns either BOOLECTOR_SAT,
            BOOLECTOR_UNSAT or BOOLECTOR_UNKNOWN. Otherwise, it always returns
-           BOOLECTOR_PARSE_UNKNOWN. If a parse error occurs the function
-           returns BOOLECTOR_PARSE_ERROR.
+           BOOLECTOR_UNKNOWN. If a parse error occurs, this is indicated by a
+           non-NULL error message, passed via output parameter 'error_msg'.
 */
 int32_t boolector_parse(Bzla *bzla,
                         FILE *infile,
@@ -3045,8 +3031,7 @@ int32_t boolector_parse(Bzla *bzla,
   :param outfile: Output file.
   :param error_msg: Error message.
   :param status: Status of the input formula.
-  :return: BOOLECTOR_UNKNOWN or BOOLECTOR_PARSE_ERROR if a parse error
-           occurred.
+  :return: BOOLECTOR_UNKNOWN
 */
 int32_t boolector_parse_btor(Bzla *bzla,
                              FILE *infile,
@@ -3066,8 +3051,7 @@ int32_t boolector_parse_btor(Bzla *bzla,
   :param outfile: Output file.
   :param error_msg: Error message.
   :param status: Status of the input formula.
-  :return: BOOLECTOR_UNKNOWN or BOOLECTOR_PARSE_ERROR if a parse error
-           occurred.
+  :return: BOOLECTOR_UNKNOWN
 */
 int32_t boolector_parse_btor2(Bzla *bzla,
                               FILE *infile,
@@ -3085,8 +3069,7 @@ int32_t boolector_parse_btor2(Bzla *bzla,
   :param outfile: Output file.
   :param error_msg: Error message.
   :param status: Status of the input formula.
-  :return: BOOLECTOR_UNKNOWN or BOOLECTOR_PARSE_ERROR if a parse error
-           occurred.
+  :return: BOOLECTOR_SAT, BOOLECTOR_UNSAT or BOOLECTOR_UNKNOWN
 */
 int32_t boolector_parse_smt2(Bzla *bzla,
                              FILE *infile,
