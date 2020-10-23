@@ -38,6 +38,7 @@ struct QuantSolverState
    * get_active_quantifiers). The flag indiciates the current polarity of
    * the quantifier. */
   BzlaPtrHashTable *active_quantifiers;
+  BzlaPtrHashTable *inactive_quantifiers;
   BzlaPtrHashTable *deps;
 
   BzlaPtrHashTable *instantiated;
@@ -56,6 +57,8 @@ struct QuantSolverState
   BzlaPtrHashTable *lemma_cache;
 
   BzlaPtrHashTable *ce_literals;
+
+  bool added_lemma;
 };
 
 typedef struct QuantSolverState QuantSolverState;
@@ -68,6 +71,10 @@ new_quant_solver_state(Bzla *bzla)
 
   state->bzla = bzla;
   state->active_quantifiers =
+      bzla_hashptr_table_new(bzla->mm,
+                             (BzlaHashPtr) bzla_node_hash_by_id,
+                             (BzlaCmpPtr) bzla_node_compare_by_id);
+  state->inactive_quantifiers =
       bzla_hashptr_table_new(bzla->mm,
                              (BzlaHashPtr) bzla_node_hash_by_id,
                              (BzlaCmpPtr) bzla_node_compare_by_id);
@@ -135,6 +142,7 @@ delete_quant_solver_state(QuantSolverState *state)
 
   bzla_iter_hashptr_init(&it, state->added_skolemization_lemmas);
   bzla_iter_hashptr_queue(&it, state->lemma_cache);
+  bzla_iter_hashptr_queue(&it, state->inactive_quantifiers);
   while (bzla_iter_hashptr_has_next(&it))
   {
     bzla_node_release(bzla, bzla_iter_hashptr_next(&it));
@@ -2792,14 +2800,18 @@ get_active_quantifiers(QuantSolverState *state)
 
     if (bzla_node_is_quantifier(cur))
     {
-      assert(!bzla_hashptr_table_get(quantifiers, cur));
-      value = bzla_model_get_bv_assignment(bzla, cur);
-      assert(value);
-      bool phase = bzla_bv_is_true(value);
-      bzla_bv_free(mm, value);
-      bzla_hashptr_table_add(quantifiers, cur)->data.flag = phase;
-      printf(
-          "  %s (%s)\n", bzla_util_node2string(cur), phase ? "true" : "false");
+      if (!bzla_hashptr_table_get(state->inactive_quantifiers, cur))
+      {
+        assert(!bzla_hashptr_table_get(quantifiers, cur));
+        value = bzla_model_get_bv_assignment(bzla, cur);
+        assert(value);
+        bool phase = bzla_bv_is_true(value);
+        bzla_bv_free(mm, value);
+        bzla_hashptr_table_add(quantifiers, cur)->data.flag = phase;
+        printf("  %s (%s)\n",
+               bzla_util_node2string(cur),
+               phase ? "true" : "false");
+      }
     }
     else
     {
@@ -3439,6 +3451,18 @@ get_value(Bzla *bzla, BzlaNode *n)
   return value;
 }
 
+void
+add_lemma(QuantSolverState *state, BzlaNode *lem)
+{
+  if (bzla_hashptr_table_get(state->lemma_cache, lem))
+  {
+    return;
+  }
+  bzla_assert_exp(state->bzla, lem);
+  bzla_hashptr_table_add(state->lemma_cache, bzla_node_copy(state->bzla, lem));
+  state->added_lemma = true;
+}
+
 // l_i => P[t]
 void
 add_value_instantiation_lemma(QuantSolverState *state, BzlaNode *q)
@@ -3479,7 +3503,15 @@ add_value_instantiation_lemma(QuantSolverState *state, BzlaNode *q)
 
   lemma = bzla_exp_implies(bzla, q, inst);
   bzla_node_release(bzla, inst);
-  BZLA_PUSH_STACK(state->lemmas_pending, lemma);
+  add_lemma(state, lemma);
+}
+
+void
+set_inactive(QuantSolverState *state, BzlaNode *q)
+{
+  assert(!bzla_hashptr_table_get(state->inactive_quantifiers, q));
+  bzla_hashptr_table_add(state->inactive_quantifiers, q);
+  printf("Set inactive: %s\n", bzla_util_node2string(q));
 }
 
 bool
@@ -3496,6 +3528,7 @@ check_active_quantifiers(QuantSolverState *state)
   BZLA_INIT_STACK(bzla->mm, assumptions);
   BZLA_INIT_STACK(bzla->mm, insts);
 
+  bzla_reset_incremental_usage(bzla);
   bzla_iter_hashptr_init(&it, state->active_quantifiers);
   while (bzla_iter_hashptr_has_next(&it))
   {
@@ -3504,21 +3537,18 @@ check_active_quantifiers(QuantSolverState *state)
     if (is_forall(state, q))
     {
       BZLA_PUSH_STACK(to_check, q);
-      bzla_assert_exp(bzla, get_ce_lemma(state, q));
+      add_lemma(state, get_ce_lemma(state, q));
       bzla_assume_exp(bzla, get_ce_literal(state, q));
     }
     else
     {
       assert(is_exists(state, q));
-      bzla_assert_exp(bzla, get_skolemization_lemma(state, q));
-      //      bzla_assume_exp (bzla, bzla_node_invert (q));
+      add_lemma(state, get_skolemization_lemma(state, q));
     }
   }
 
-  // inst = bzla_exp_bv_and_n (bzla, insts.start, BZLA_COUNT_STACK (insts));
-  // bzla_assume_exp (bzla, bzla_node_invert (inst));
-
   printf("Check for counterexamples: ");
+  fflush(stdout);
   BzlaSolverResult res = bzla->slv->api.sat(bzla->slv);
   if (res == BZLA_RESULT_SAT)
   {
@@ -3541,12 +3571,13 @@ check_active_quantifiers(QuantSolverState *state)
       {
         printf("  failed: %s\n", bzla_util_node2string(q));
         ++num_failed;
+        set_inactive(state, q);
       }
     }
     done = num_failed == BZLA_COUNT_STACK(to_check);
   }
   BZLA_RELEASE_STACK(to_check);
-  bzla_reset_assumptions(bzla);
+  bzla_reset_incremental_usage(bzla);
   return done;
 }
 
@@ -3702,19 +3733,14 @@ check_quantifiers(BzlaQuantSolver *slv)
     // printf ("\n");
     // bzla_dumpsmt_dump (state->bzla, stdout);
     // printf ("\n");
-    if (state->bzla->inconsistent)
-    {
-      res = BZLA_RESULT_UNSAT;
-      break;
-    }
-
     res = state->bzla->slv->api.sat(state->bzla->slv);
 
     if (res == BZLA_RESULT_SAT)
     {
       printf("\n");
       get_active_quantifiers(state);
-      done = check_active_quantifiers(state);
+      state->added_lemma = false;
+      done               = check_active_quantifiers(state);
 
       if (done)
       {
@@ -3722,7 +3748,7 @@ check_quantifiers(BzlaQuantSolver *slv)
         break;
       }
 
-      if (!add_pending_lemmas(state))
+      if (!state->added_lemma)  // add_pending_lemmas (state))
       {
         BZLA_MSG(state->bzla->msg, 1, "no new lemmas added");
         printf("** No new lemmas added\n");
@@ -3735,6 +3761,13 @@ check_quantifiers(BzlaQuantSolver *slv)
       res = BZLA_RESULT_UNSAT;
       break;
     }
+
+    if (state->bzla->inconsistent)
+    {
+      res = BZLA_RESULT_UNSAT;
+      break;
+    }
+
     ++i;
     // if (i == 5) abort();
   }
