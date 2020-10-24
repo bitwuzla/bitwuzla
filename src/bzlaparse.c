@@ -1,19 +1,14 @@
-/*  Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
+/**
+ * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
- *  Copyright (C) 2007-2014 Armin Biere.
- *  Copyright (C) 2012-2020 Aina Niemetz.
- *  Copyright (C) 2012-2020 Mathias Preiner.
- *
- *  This file is part of Bitwuzla.
- *  See COPYING for more information on using this software.
+ * This file is part of Bitwuzla.
+ * See COPYING for more information on using this software.
  */
 
 #include "bzlaparse.h"
 
 #include <ctype.h>
 
-#include "boolector.h"
 #include "bzlacore.h"
 #include "bzlaopt.h"
 #include "parser/bzlabtor.h"
@@ -59,7 +54,7 @@ parse_aux(Bzla *bzla,
   int32_t res;
   char *emsg;
 
-  res        = BOOLECTOR_UNKNOWN;
+  res        = BITWUZLA_UNKNOWN;
   *error_msg = 0;
 
   BZLA_MSG(bzla->msg, 1, "%s", msg);
@@ -97,13 +92,13 @@ parse_aux(Bzla *bzla,
       BZLA_MSG(bzla->msg, 1, "logic QF_AUFBV");
     }
 
-    if (parse_res.status == BOOLECTOR_SAT)
+    if (parse_res.status == BITWUZLA_SAT)
       BZLA_MSG(bzla->msg, 1, "status sat");
-    else if (parse_res.status == BOOLECTOR_UNSAT)
+    else if (parse_res.status == BITWUZLA_UNSAT)
       BZLA_MSG(bzla->msg, 1, "status unsat");
     else
     {
-      assert(parse_res.status == BOOLECTOR_UNKNOWN);
+      assert(parse_res.status == BITWUZLA_UNKNOWN);
       BZLA_MSG(bzla->msg, 1, "status unknown");
     }
   }

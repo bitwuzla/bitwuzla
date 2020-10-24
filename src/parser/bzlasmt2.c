@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+#include "boolector.h"  // TODO remove
 #include "bzlabv.h"
 #include "bzlacore.h"
 #include "bzlamsg.h"
@@ -28,6 +29,7 @@ BZLA_DECLARE_STACK(BoolectorNodePtr, BoolectorNode *);
 
 /*------------------------------------------------------------------------*/
 
+BzlaMsg *boolector_get_bzla_msg(Bzla *bzla);
 void boolector_print_value_smt2(Bzla *, BoolectorNode *, char *, FILE *);
 void boolector_var_mark_bool(Bzla *, BoolectorNode *);
 

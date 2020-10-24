@@ -10,6 +10,7 @@
 #include <inttypes.h>
 #include <limits.h>
 
+#include "boolector.h"  // TODO remove
 #include "btor2parser/btor2parser.h"
 #include "bzlamsg.h"
 #include "bzlaparse.h"
@@ -20,6 +21,7 @@
 
 /*------------------------------------------------------------------------*/
 
+BzlaMsg *boolector_get_bzla_msg(Bzla *bzla);
 void boolector_set_bzla_id(Bzla *, BoolectorNode *, int32_t);
 
 void boolector_add_output(Bzla *, BoolectorNode *);

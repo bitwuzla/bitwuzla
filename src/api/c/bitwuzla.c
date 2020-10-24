@@ -300,10 +300,6 @@ static BzlaOption bzla_options[BITWUZLA_OPT_NUM_OPTS] = {
              "term '%s' is not associated with given solver instance", \
              #term);
 
-#define BZLA_CHECK_TERM_IS_ARRAY_AT_IDX(term, idx) \
-  BZLA_ABORT(                                      \
-      !bzla_node_is_array(term), "expected array term at index %u", (idx))
-
 #define BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, term, idx)   \
   BZLA_ABORT(!bzla_node_is_rm(bzla, term),              \
              "expected rounding-mode term at index %u", \
@@ -334,10 +330,6 @@ static BzlaOption bzla_options[BITWUZLA_OPT_NUM_OPTS] = {
              "expected floating-point term at index %u", \
              (idx))
 
-#define BZLA_CHECK_TERM_IS_VAR_AT_IDX(term, idx) \
-  BZLA_ABORT(                                    \
-      !bzla_node_is_param(term), "expected variable term at index %u", (idx))
-
 #define BZLA_CHECK_TERM_IS_RM(bzla, term) \
   BZLA_ABORT(!bzla_node_is_rm(bzla, term), "expected rounding-mode term")
 
@@ -346,16 +338,45 @@ static BzlaOption bzla_options[BITWUZLA_OPT_NUM_OPTS] = {
              "expected rounding-mode term at index %u", \
              (idx))
 
-#define BZLA_CHECK_TERM_IS_BV_VAL(bzla, term) \
-  BZLA_ABORT(!bzla_node_is_bv_const(term), "expected bit-vector value")
+#define BZLA_CHECK_TERM_IS_ARRAY_AT_IDX(term, idx)                            \
+  BZLA_ABORT(                                                                 \
+      !bzla_node_is_array(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
+      "expected array term at index %u",                                      \
+      (idx))
 
-#define BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(term, idx) \
-  BZLA_ABORT(                                        \
-      bzla_node_is_fun(term), "unexpected function term at index %u", (idx))
+#define BZLA_CHECK_TERM_IS_BV_VAL(term)                              \
+  BZLA_ABORT(!bzla_node_is_bv_const(                                 \
+                 bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
+             "expected bit-vector value")
 
-#define BZLA_CHECK_TERM_NOT_IS_PARAMETERIZED(bzla, term) \
-  BZLA_ABORT(bzla_node_real_addr(term)->parameterized,   \
-             "term must not be parameterized");
+#define BZLA_CHECK_TERM_IS_VAR(term)                                          \
+  BZLA_ABORT(                                                                 \
+      !bzla_node_is_param(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
+      "expected variable term")
+
+#define BZLA_CHECK_TERM_IS_VAR_AT_IDX(term, idx)                              \
+  BZLA_ABORT(                                                                 \
+      !bzla_node_is_param(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
+      "expected variable term at index %u",                                   \
+      (idx))
+
+#define BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(term, idx)                       \
+  BZLA_ABORT(                                                              \
+      bzla_node_is_fun(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
+      "unexpected function term at index %u",                              \
+      (idx))
+
+#define BZLA_CHECK_TERM_NOT_IS_PARAMETERIZED(term)                           \
+  BZLA_ABORT(                                                                \
+      bzla_node_real_addr(bzla_simplify_exp(bzla_node_get_bzla(term), term)) \
+          ->parameterized,                                                   \
+      "term must not be parameterized");
+
+#define BZLA_CHECK_TERM_NOT_IS_UF_AT_IDX(term, idx)                       \
+  BZLA_ABORT(                                                             \
+      bzla_node_is_uf(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
+      "unexpected function term at index %u",                             \
+      (idx))
 
 #define BZLA_CHECK_TERM_NOT_IS_VAR_BOUND_AT_IDX(term, idx) \
   BZLA_ABORT(bzla_node_param_is_bound(term),               \
@@ -985,9 +1006,9 @@ bitwuzla_mk_fp_value(Bitwuzla *bitwuzla,
   BZLA_CHECK_TERM_IS_BV(bzla, sign);
   BZLA_CHECK_TERM_IS_BV(bzla, exp);
   BZLA_CHECK_TERM_IS_BV(bzla, sig);
-  BZLA_CHECK_TERM_IS_BV_VAL(bzla, sign);
-  BZLA_CHECK_TERM_IS_BV_VAL(bzla, exp);
-  BZLA_CHECK_TERM_IS_BV_VAL(bzla, sig);
+  BZLA_CHECK_TERM_IS_BV_VAL(sign);
+  BZLA_CHECK_TERM_IS_BV_VAL(exp);
+  BZLA_CHECK_TERM_IS_BV_VAL(sig);
   BZLA_ABORT(
       bzla_node_bv_get_width(bzla, sign) != 1,
       "invalid bit-vector size for argument 'bv_sign', expected size one");
@@ -1537,6 +1558,40 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       res = bzla_exp_cond(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
       break;
 
+    case BITWUZLA_KIND_APPLY: {
+      BZLA_CHECK_ARG_CNT("apply", 2, argc);
+      BzlaNodePtrStack params;
+      BZLA_INIT_STACK(bzla->mm, params);
+      uint32_t paramc = argc - 1;
+      for (uint32_t i = 0; i < paramc; i++)
+      {
+        BZLA_PUSH_STACK(params, bzla_args[i]);
+      }
+      BZLA_ABORT(
+          bzla_node_fun_get_arity(bzla, bzla_args[paramc]) != argc - 1,
+          "number of given arguments to function must match arity of function");
+      BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(bzla_args[paramc], paramc);
+      res = bzla_exp_apply_n(bzla, bzla_args[paramc], params.start, paramc);
+      BZLA_RELEASE_STACK(params);
+    }
+    break;
+    case BITWUZLA_KIND_LAMBDA: {
+      BZLA_CHECK_ARG_CNT("lambda", 2, argc);
+      BzlaNodePtrStack params;
+      BZLA_INIT_STACK(bzla->mm, params);
+      uint32_t paramc = argc - 1;
+      for (uint32_t i = 0; i < paramc; i++)
+      {
+        BZLA_PUSH_STACK(params, bzla_args[i]);
+      }
+      BZLA_ABORT(!vars_distinct(bzla, params.start, paramc),
+                 "given variables are not distinct");
+      BZLA_CHECK_TERM_NOT_IS_UF_AT_IDX(bzla_args[paramc], paramc);
+      res = bzla_exp_fun(bzla, params.start, paramc, bzla_args[paramc]);
+      BZLA_RELEASE_STACK(params);
+    }
+    break;
+
     case BITWUZLA_KIND_FORALL: {
       BZLA_ABORT(argc < 2,
                  "invalid argument count for kind 'forall', expected at least "
@@ -1633,7 +1688,7 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
     case BITWUZLA_KIND_BV_EXTRACT:
       BZLA_CHECK_ARG_CNT("bv_extract", argc, 1);
       BZLA_CHECK_IDX_CNT("bv_extract", idxc, 2);
-      BZLA_ABORT(idxs[0] > idxs[1], "upper index must be >= lower index");
+      BZLA_ABORT(idxs[0] < idxs[1], "upper index must be >= lower index");
       BZLA_CHECK_ARGS_SORT(bzla, bzla_args, argc, 1, bzla_sort_is_bv);
       res = bzla_exp_bv_slice(bzla, bzla_args[0], idxs[0], idxs[1]);
       break;
@@ -1788,6 +1843,7 @@ bitwuzla_mk_const(Bitwuzla *bitwuzla, BitwuzlaSort sort, const char *symbol)
     res = bzla_exp_var(bzla, bzla_sort, s);
   }
   bzla_mem_freestr(bzla->mm, s);
+  (void) bzla_hashptr_table_add(bzla->inputs, bzla_node_copy(bzla, res));
   BZLA_RETURN_BITWUZLA_TERM(res);
 }
 
@@ -1893,7 +1949,7 @@ bitwuzla_assert(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
   assert(bzla_node_get_ext_refs(bzla_term));
   BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
   BZLA_CHECK_TERM_IS_BOOL(bzla, bzla_term);
-  BZLA_CHECK_TERM_NOT_IS_PARAMETERIZED(bzla, bzla_term);
+  BZLA_CHECK_TERM_NOT_IS_PARAMETERIZED(bzla_term);
 
   /* Note: All assertions at a context level > 0 are internally handled as
    *       assumptions. */
@@ -1926,7 +1982,7 @@ bitwuzla_assume(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
   assert(bzla_node_get_ext_refs(bzla_term));
   BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
   BZLA_CHECK_TERM_IS_BOOL(bzla, bzla_term);
-  BZLA_CHECK_TERM_NOT_IS_PARAMETERIZED(bzla, bzla_term);
+  BZLA_CHECK_TERM_NOT_IS_PARAMETERIZED(bzla_term);
 
   bzla_assume_exp(bzla, bzla_term);
 }
@@ -2251,6 +2307,35 @@ bitwuzla_sort_fp_get_sig_size(Bitwuzla *bitwuzla, BitwuzlaSort sort)
 }
 
 BitwuzlaSort
+bitwuzla_sort_array_get_index(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_ARRAY(bzla, bzla_sort);
+
+  /* Note: We don't need to increase the ref counter here. */
+  return BZLA_EXPORT_BITWUZLA_SORT(bzla_sort_array_get_index(bzla, bzla_sort));
+}
+
+BitwuzlaSort
+bitwuzla_sort_array_get_element(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_ARRAY(bzla, bzla_sort);
+
+  /* Note: We don't need to increase the ref counter here. */
+  return BZLA_EXPORT_BITWUZLA_SORT(
+      bzla_sort_array_get_element(bzla, bzla_sort));
+}
+
+BitwuzlaSort
 bitwuzla_sort_fun_get_domain(Bitwuzla *bitwuzla, BitwuzlaSort sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
@@ -2383,7 +2468,7 @@ bitwuzla_get_bitwuzla(BitwuzlaTerm *term)
 }
 
 BitwuzlaSort
-bitwuzla_get_sort(BitwuzlaTerm *term)
+bitwuzla_term_get_sort(BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(term);
 
@@ -2403,6 +2488,7 @@ bitwuzla_term_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
   BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  BZLA_CHECK_TERM_IS_BV(bzla, bzla_term);
   return bzla_node_bv_get_width(bzla, bzla_term);
 }
 
@@ -2416,6 +2502,7 @@ bitwuzla_term_fp_get_exp_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
   BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  BZLA_CHECK_TERM_IS_FP(bzla, bzla_term);
   return bzla_node_fp_get_exp_width(bzla, bzla_term);
 }
 
@@ -2429,6 +2516,7 @@ bitwuzla_term_fp_get_sig_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
   BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  BZLA_CHECK_TERM_IS_FP(bzla, bzla_term);
   return bzla_node_fp_get_sig_width(bzla, bzla_term);
 }
 
@@ -2478,7 +2566,8 @@ bitwuzla_term_is_array(BitwuzlaTerm *term)
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  return bzla_node_is_array(bzla_term);
+  return bzla_node_is_array(
+      bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
 }
 
 bool
@@ -2488,7 +2577,8 @@ bitwuzla_term_is_const(BitwuzlaTerm *term)
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  return bzla_node_is_var(bzla_term);
+  return bzla_node_is_var(
+      bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
 }
 
 bool
@@ -2498,7 +2588,8 @@ bitwuzla_term_is_fun(BitwuzlaTerm *term)
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  return bzla_node_is_fun(bzla_term);
+  return bzla_node_is_fun(
+      bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
 }
 
 bool
@@ -2508,7 +2599,20 @@ bitwuzla_term_is_var(BitwuzlaTerm *term)
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  return bzla_node_is_param(bzla_term);
+  return bzla_node_is_param(
+      bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
+}
+
+bool
+bitwuzla_term_is_bound_var(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_IS_VAR(bzla_term);
+  return bzla_node_param_is_bound(
+      bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
 }
 
 bool
@@ -2518,7 +2622,8 @@ bitwuzla_term_is_bv_value(BitwuzlaTerm *term)
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  return bzla_node_is_bv_const(bzla_term);
+  return bzla_node_is_bv_const(
+      bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
 }
 
 bool
@@ -2528,7 +2633,8 @@ bitwuzla_term_is_fp_value(BitwuzlaTerm *term)
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  return bzla_node_is_fp_const(bzla_term);
+  return bzla_node_is_fp_const(
+      bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
 }
 
 bool
@@ -2538,7 +2644,8 @@ bitwuzla_term_is_rm_value(BitwuzlaTerm *term)
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  return bzla_node_is_rm_const(bzla_term);
+  return bzla_node_is_rm_const(
+      bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
 }
 
 bool
@@ -2678,5 +2785,35 @@ bitwuzla_term_is_const_array(BitwuzlaTerm *term)
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  return bzla_node_is_const_array(bzla_term);
+  return bzla_node_is_const_array(
+      bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
+}
+
+/* parser only -------------------------------------------------------------- */
+
+BzlaMsg *
+bitwuzla_get_bzla_msg(Bitwuzla *bitwuzla)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  return bzla->msg;
+}
+
+/* bzla parser only --------------------------------------------------------- */
+
+void
+bitwuzla_set_bzla_id(Bitwuzla *bitwuzla, BitwuzlaTerm *term, int32_t id)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+
+  BZLA_ABORT(
+      !bzla_node_is_bv_var(bzla_term) && !bzla_node_is_uf_array(bzla_term),
+      "expected bit-vector/array variable or UF");
+  bzla_node_set_bzla_id(bzla, bzla_term, id);
 }

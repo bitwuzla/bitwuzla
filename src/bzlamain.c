@@ -874,22 +874,22 @@ print_static_stats(int32_t sat_res)
   bzlamain_msg("%.1f seconds real", real);
 #endif
   bzlamain_msg("%s",
-               sat_res == BOOLECTOR_SAT
+               sat_res == BITWUZLA_SAT
                    ? "sat"
-                   : (sat_res == BOOLECTOR_UNSAT ? "unsat" : "unknown"));
+                   : (sat_res == BITWUZLA_UNSAT ? "unsat" : "unknown"));
 }
 
 static void
 print_sat_result(BitwuzlaMainApp *app, int32_t sat_result)
 {
   assert(app);
-  if (sat_result == BOOLECTOR_UNSAT)
+  if (sat_result == BITWUZLA_UNSAT)
     fprintf(app->outfile, "unsat\n");
-  else if (sat_result == BOOLECTOR_SAT)
+  else if (sat_result == BITWUZLA_SAT)
     fprintf(app->outfile, "sat\n");
   else
   {
-    assert(sat_result == BOOLECTOR_UNKNOWN);
+    assert(sat_result == BITWUZLA_UNKNOWN);
     fprintf(app->outfile, "unknown\n");
   }
 }
@@ -1005,8 +1005,8 @@ bitwuzla_main(int32_t argc, char **argv)
   mm       = g_app->mm;
 
   res           = BZLA_UNKNOWN_EXIT;
-  parsed_status = BOOLECTOR_UNKNOWN;
-  sat_res       = BOOLECTOR_UNKNOWN;
+  parsed_status = BITWUZLA_UNKNOWN;
+  sat_res       = BITWUZLA_UNKNOWN;
 
   inc    = 0;
   mgen   = bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS);
@@ -1445,20 +1445,20 @@ bitwuzla_main(int32_t argc, char **argv)
   /* incremental mode */
   if (inc)
   {
-    if (parse_res == BOOLECTOR_SAT)
+    if (parse_res == BITWUZLA_SAT)
     {
       if (g_verbosity) bzlamain_msg("one formula SAT in incremental mode");
-      sat_res = BOOLECTOR_SAT;
+      sat_res = BITWUZLA_SAT;
     }
-    else if (parse_res == BOOLECTOR_UNSAT)
+    else if (parse_res == BITWUZLA_UNSAT)
     {
       if (g_verbosity) bzlamain_msg("all formulas UNSAT in incremental mode");
-      sat_res = BOOLECTOR_UNSAT;
+      sat_res = BITWUZLA_UNSAT;
     }
 
     if (g_verbosity) bzlamain_print_stats(bitwuzla);
 
-    if (pmodel && sat_res == BOOLECTOR_SAT)
+    if (pmodel && sat_res == BITWUZLA_SAT)
     {
       assert(bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS));
       format = bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_OUTPUT_FORMAT);
@@ -1508,7 +1508,7 @@ bitwuzla_main(int32_t argc, char **argv)
   }
 
   /* call sat (if not yet called) */
-  if (parse_res == BOOLECTOR_UNKNOWN && !bzla_terminate(bzla) && !parsed_smt2)
+  if (parse_res == BITWUZLA_UNKNOWN && !bzla_terminate(bzla) && !parsed_smt2)
   {
     sat_res = bitwuzla_check_sat(bitwuzla);
     print_sat_result(g_app, sat_res);
@@ -1516,15 +1516,15 @@ bitwuzla_main(int32_t argc, char **argv)
   else
     sat_res = parse_res;
 
-  assert(bzla_terminate(bzla) || sat_res != BOOLECTOR_UNKNOWN
+  assert(bzla_terminate(bzla) || sat_res != BITWUZLA_UNKNOWN
          || bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_PRINT_DIMACS));
 
   /* check if status is equal to benchmark status (if provided) */
-  if (sat_res == BOOLECTOR_SAT && parsed_status == BOOLECTOR_UNSAT)
+  if (sat_res == BITWUZLA_SAT && parsed_status == BITWUZLA_UNSAT)
     bzlamain_error(g_app,
                    "'sat' but status of benchmark in '%s' is 'unsat'",
                    g_app->infile_name);
-  else if (sat_res == BOOLECTOR_UNSAT && parsed_status == BOOLECTOR_SAT)
+  else if (sat_res == BITWUZLA_UNSAT && parsed_status == BITWUZLA_SAT)
     bzlamain_error(g_app,
                    "'unsat' but status of benchmark in '%s' is 'sat'",
                    g_app->infile_name);
@@ -1537,7 +1537,7 @@ bitwuzla_main(int32_t argc, char **argv)
   }
 
   /* print model */
-  if (pmodel && sat_res == BOOLECTOR_SAT)
+  if (pmodel && sat_res == BITWUZLA_SAT)
   {
     assert(bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS));
     format = bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_OUTPUT_FORMAT);
@@ -1556,9 +1556,9 @@ DONE:
     res = BZLA_SUCC_EXIT;
   else if (g_app->err)
     res = BZLA_ERR_EXIT;
-  else if (sat_res == BOOLECTOR_UNSAT)
+  else if (sat_res == BITWUZLA_UNSAT)
     res = BZLA_UNSAT_EXIT;
-  else if (sat_res == BOOLECTOR_SAT)
+  else if (sat_res == BITWUZLA_SAT)
     res = BZLA_SAT_EXIT;
 
   assert(res == BZLA_ERR_EXIT || res == BZLA_SUCC_EXIT || res == BZLA_SAT_EXIT

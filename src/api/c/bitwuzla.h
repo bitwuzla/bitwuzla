@@ -149,6 +149,7 @@ typedef enum BitwuzlaOption BitwuzlaOption;
 enum BitwuzlaKind
 {
   BITWUZLA_KIND_AND,
+  BITWUZLA_KIND_APPLY,
   BITWUZLA_KIND_ARRAY_SELECT,
   BITWUZLA_KIND_ARRAY_STORE,
   BITWUZLA_KIND_BV_ADD,
@@ -226,6 +227,7 @@ enum BitwuzlaKind
   BITWUZLA_KIND_IFF,
   BITWUZLA_KIND_IMPLIES,
   BITWUZLA_KIND_ITE,
+  BITWUZLA_KIND_LAMBDA,
   BITWUZLA_KIND_NOT,
   BITWUZLA_KIND_OR,
   BITWUZLA_KIND_XOR,
@@ -424,6 +426,10 @@ BitwuzlaResult bitwuzla_parse_format(Bitwuzla *bitwuzla,
 uint32_t bitwuzla_sort_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 uint32_t bitwuzla_sort_fp_get_exp_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 uint32_t bitwuzla_sort_fp_get_sig_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
+BitwuzlaSort bitwuzla_sort_array_get_index(Bitwuzla *bitwuzla,
+                                           BitwuzlaSort sort);
+BitwuzlaSort bitwuzla_sort_array_get_element(Bitwuzla *bitwuzla,
+                                             BitwuzlaSort sort);
 BitwuzlaSort bitwuzla_sort_fun_get_domain(Bitwuzla *bitwuzla,
                                           BitwuzlaSort sort);
 BitwuzlaSort bitwuzla_sort_fun_get_codomain(Bitwuzla *bitwuzla,
@@ -459,6 +465,7 @@ bool bitwuzla_term_is_array(BitwuzlaTerm *term);
 bool bitwuzla_term_is_const(BitwuzlaTerm *term);
 bool bitwuzla_term_is_fun(BitwuzlaTerm *term);
 bool bitwuzla_term_is_var(BitwuzlaTerm *term);
+bool bitwuzla_term_is_bound_var(BitwuzlaTerm *term);
 
 bool bitwuzla_term_is_bv_value(BitwuzlaTerm *term);
 bool bitwuzla_term_is_fp_value(BitwuzlaTerm *term);

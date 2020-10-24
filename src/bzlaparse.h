@@ -1,12 +1,8 @@
-/*  Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
+/**
+ * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
- *  Copyright (C) 2007-2012 Armin Biere.
- *  Copyright (C) 2013-2020 Mathias Preiner.
- *  Copyright (C) 2015-2018 Aina Niemetz.
- *
- *  This file is part of Bitwuzla.
- *  See COPYING for more information on using this software.
+ * This file is part of Bitwuzla.
+ * See COPYING for more information on using this software.
  */
 
 #ifndef BZLAPARSE_H_INCLUDED
@@ -14,7 +10,7 @@
 
 #include <stdio.h>
 
-#include "boolector.h"
+#include "api/c/bitwuzla.h"
 #include "bzlalogic.h"
 #include "bzlamsg.h"
 #include "utils/bzlastack.h"
@@ -80,5 +76,5 @@ int32_t bzla_parse_smt2(Bzla *bzla,
                         char **error_msg,
                         int32_t *status);
 
-BzlaMsg *boolector_get_bzla_msg(Bzla *bzla);
+BzlaMsg *bitwuzla_get_bzla_msg(Bitwuzla *bitwuzla);
 #endif
