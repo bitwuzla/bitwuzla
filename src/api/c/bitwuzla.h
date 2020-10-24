@@ -443,40 +443,42 @@ bool bitwuzla_sort_is_rm(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 /* BitwuzlaTerm                                                               */
 /* -------------------------------------------------------------------------- */
 
-Bitwuzla *bitwuzla_get_bitwuzla(BitwuzlaTerm *term);
-BitwuzlaSort bitwuzla_get_sort(BitwuzlaTerm *term);
+Bitwuzla *bitwuzla_term_get_bitwuzla(BitwuzlaTerm *term);
+BitwuzlaSort bitwuzla_term_get_sort(BitwuzlaTerm *term);
 
-const char *bitwuzla_get_symbol(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-void bitwuzla_set_symbol(Bitwuzla *bitwuzla,
-                         BitwuzlaTerm *term,
-                         const char *symbol);
+const char *bitwuzla_term_get_symbol(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+void bitwuzla_term_set_symbol(Bitwuzla *bitwuzla,
+                              BitwuzlaTerm *term,
+                              const char *symbol);
 
-bool bitwuzla_is_array(BitwuzlaTerm *term);
-bool bitwuzla_is_const(BitwuzlaTerm *term);
-bool bitwuzla_is_fun(BitwuzlaTerm *term);
-bool bitwuzla_is_var(BitwuzlaTerm *term);
+bool bitwuzla_term_is_array(BitwuzlaTerm *term);
+bool bitwuzla_term_is_const(BitwuzlaTerm *term);
+bool bitwuzla_term_is_fun(BitwuzlaTerm *term);
+bool bitwuzla_term_is_var(BitwuzlaTerm *term);
 
-bool bitwuzla_is_bv_value(BitwuzlaTerm *term);
-bool bitwuzla_is_fp_value(BitwuzlaTerm *term);
-bool bitwuzla_is_rm_value(BitwuzlaTerm *term);
+bool bitwuzla_term_is_bv_value(BitwuzlaTerm *term);
+bool bitwuzla_term_is_fp_value(BitwuzlaTerm *term);
+bool bitwuzla_term_is_rm_value(BitwuzlaTerm *term);
 
-bool bitwuzla_is_bv(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_is_fp(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_is_rm(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_bv(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_fp(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_rm(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
 
-bool bitwuzla_is_bv_value_zero(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_is_bv_value_one(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_is_bv_value_ones(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_is_bv_value_min_signed(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_is_bv_value_max_signed(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_bv_value_zero(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_bv_value_one(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_bv_value_ones(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_bv_value_min_signed(Bitwuzla *bitwuzla,
+                                          BitwuzlaTerm *term);
+bool bitwuzla_term_is_bv_value_max_signed(Bitwuzla *bitwuzla,
+                                          BitwuzlaTerm *term);
 
-bool bitwuzla_is_fp_value_pos_zero(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_is_fp_value_neg_zero(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_is_fp_value_pos_inf(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_is_fp_value_neg_inf(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_is_fp_value_nan(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_fp_value_pos_zero(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_fp_value_neg_zero(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_fp_value_pos_inf(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_fp_value_neg_inf(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_fp_value_nan(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
 
-bool bitwuzla_is_const_array(BitwuzlaTerm *term);
+bool bitwuzla_term_is_const_array(BitwuzlaTerm *term);
 
 /* -------------------------------------------------------------------------- */
 
