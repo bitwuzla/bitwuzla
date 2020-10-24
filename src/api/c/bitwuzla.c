@@ -2393,6 +2393,45 @@ bitwuzla_get_sort(BitwuzlaTerm *term)
   return BZLA_EXPORT_BITWUZLA_SORT(bzla_node_get_sort_id(bzla_term));
 }
 
+uint32_t
+bitwuzla_term_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_bv_get_width(bzla, bzla_term);
+}
+
+uint32_t
+bitwuzla_term_fp_get_exp_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_fp_get_exp_width(bzla, bzla_term);
+}
+
+uint32_t
+bitwuzla_term_fp_get_sig_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  return bzla_node_fp_get_sig_width(bzla, bzla_term);
+}
+
 const char *
 bitwuzla_term_get_symbol(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {

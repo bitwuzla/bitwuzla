@@ -446,6 +446,10 @@ bool bitwuzla_sort_is_rm(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 Bitwuzla *bitwuzla_term_get_bitwuzla(BitwuzlaTerm *term);
 BitwuzlaSort bitwuzla_term_get_sort(BitwuzlaTerm *term);
 
+uint32_t bitwuzla_term_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+uint32_t bitwuzla_term_fp_get_exp_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+uint32_t bitwuzla_term_fp_get_sig_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+
 const char *bitwuzla_term_get_symbol(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
 void bitwuzla_term_set_symbol(Bitwuzla *bitwuzla,
                               BitwuzlaTerm *term,

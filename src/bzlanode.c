@@ -1391,9 +1391,26 @@ bzla_node_bv_get_width(Bzla *bzla, const BzlaNode *exp)
 {
   assert(bzla);
   assert(exp);
-  assert(!bzla_node_is_fun(exp));
-  assert(!bzla_node_is_args(exp));
+  assert(bzla_node_is_bv(bzla, exp));
   return bzla_sort_bv_get_width(bzla, bzla_node_get_sort_id(exp));
+}
+
+uint32_t
+bzla_node_fp_get_exp_width(Bzla *bzla, const BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+  assert(bzla_node_is_fp(bzla, exp));
+  return bzla_sort_fp_get_exp_width(bzla, bzla_node_get_sort_id(exp));
+}
+
+uint32_t
+bzla_node_fp_get_sig_width(Bzla *bzla, const BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+  assert(bzla_node_is_fp(bzla, exp));
+  return bzla_sort_fp_get_sig_width(bzla, bzla_node_get_sort_id(exp));
 }
 
 uint32_t

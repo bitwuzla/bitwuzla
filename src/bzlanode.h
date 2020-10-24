@@ -1183,8 +1183,12 @@ uint32_t bzla_node_hash_by_id(const BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 
-/** Get the bit width of a bit vector expression */
+/** Get the bit width of a bit-vector expression. */
 uint32_t bzla_node_bv_get_width(Bzla *bzla, const BzlaNode *exp);
+/** Get the bit width of the exponent of a floating-point expression. */
+uint32_t bzla_node_fp_get_exp_width(Bzla *bzla, const BzlaNode *exp);
+/** Get the bit width of the significand of a floating-point expression. */
+uint32_t bzla_node_fp_get_sig_width(Bzla *bzla, const BzlaNode *exp);
 /** Get the bit width of the array elements / function return value. */
 uint32_t bzla_node_fun_get_width(Bzla *bzla, const BzlaNode *exp);
 /** Get the index width of an array expression */
