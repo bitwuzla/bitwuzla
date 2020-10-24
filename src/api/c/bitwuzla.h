@@ -409,6 +409,14 @@ BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
                               int32_t *parsed_status,
                               bool *parsed_smt2);
 
+BitwuzlaResult bitwuzla_parse_format(Bitwuzla *bitwuzla,
+                                     const char *format,
+                                     FILE *infile,
+                                     const char *infile_name,
+                                     FILE *outfile,
+                                     char **error_msg,
+                                     int32_t *parsed_status);
+
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */

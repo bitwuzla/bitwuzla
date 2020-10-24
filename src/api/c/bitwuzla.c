@@ -2161,6 +2161,52 @@ bitwuzla_parse(Bitwuzla *bitwuzla,
   return BITWUZLA_UNKNOWN;
 }
 
+BitwuzlaResult
+bitwuzla_parse_format(Bitwuzla *bitwuzla,
+                      const char *format,
+                      FILE *infile,
+                      const char *infile_name,
+                      FILE *outfile,
+                      char **error_msg,
+                      int32_t *parsed_status)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(infile);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(infile_name);
+  BZLA_CHECK_ARG_NOT_NULL(outfile);
+  BZLA_CHECK_ARG_NOT_NULL(error_msg);
+  BZLA_CHECK_ARG_NOT_NULL(parsed_status);
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_ABORT(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
+             "file parsing must be done before creating expressions");
+  int32_t bzla_res = 0;
+  if (strcmp(format, "smt2") == 0)
+  {
+    bzla_res = bzla_parse_smt2(
+        bzla, infile, infile_name, outfile, error_msg, parsed_status);
+  }
+  else if (strcmp(format, "btor") == 0)
+  {
+    bzla_res = bzla_parse_btor(
+        bzla, infile, infile_name, outfile, error_msg, parsed_status);
+  }
+  else if (strcmp(format, "btor2") == 0)
+  {
+    bzla_res = bzla_parse_btor2(
+        bzla, infile, infile_name, outfile, error_msg, parsed_status);
+  }
+  else
+  {
+    BZLA_ABORT(
+        true, "unknown format '%s', expected one of 'smt2', 'bzla' or 'btor2 ");
+  }
+  if (bzla_res == BZLA_RESULT_SAT) return BITWUZLA_SAT;
+  if (bzla_res == BZLA_RESULT_UNSAT) return BITWUZLA_UNSAT;
+  assert(bzla_res == BZLA_RESULT_UNKNOWN);
+  return BITWUZLA_UNKNOWN;
+}
+
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */

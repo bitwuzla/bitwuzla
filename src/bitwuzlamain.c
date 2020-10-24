@@ -5,11 +5,12 @@
  * See COPYING for more information on using this software.
  */
 
-#ifndef BZLAMAIN_H_INCLUDED
-#define BZLAMAIN_H_INCLUDED
-
 #include <stdint.h>
 
-int32_t bitwuzla_main(int32_t argc, char **argv);
+#include "bzlamain.h"
 
-#endif
+int32_t
+main(int32_t argc, char **argv)
+{
+  return bitwuzla_main(argc, argv);
+}

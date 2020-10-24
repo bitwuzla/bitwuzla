@@ -87,7 +87,7 @@ set(libboolector_src_files
 )
 
 set(boolector_src_files
-  boolectormain.c
+  bitwuzlamain.c
   bzlamain.c
 )
 

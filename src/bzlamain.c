@@ -1,12 +1,8 @@
-/*  Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
+/**
+ * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2007-2009 Robert Daniel Brummayer.
- *  Copyright (C) 2007-2016 Armin Biere.
- *  Copyright (C) 2012-2019 Aina Niemetz.
- *  Copyright (C) 2012-2020 Mathias Preiner.
- *
- *  This file is part of Bitwuzla.
- *  See COPYING for more information on using this software.
+ * This file is part of Bitwuzla.
+ * See COPYING for more information on using this software.
  */
 
 #include "bzlamain.h"
@@ -20,7 +16,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "boolector.h"
+#include "api/c/bitwuzla.h"
 #include "bzlaconfig.h"
 #include "bzlacore.h"
 #include "bzlaexit.h"
@@ -32,8 +28,8 @@
 #include "utils/bzlastack.h"
 #include "utils/bzlautil.h"
 
-typedef struct BzlaMainApp BzlaMainApp;
-static BzlaMainApp *g_app;
+typedef struct BitwuzlaMainApp BitwuzlaMainApp;
+static BitwuzlaMainApp *g_app;
 
 bool g_dual_threads;
 static double g_start_time_real;
@@ -56,7 +52,7 @@ BZLA_DECLARE_STACK(BzlaOption, BzlaOption);
 
 /*------------------------------------------------------------------------*/
 
-enum BzlaMainOption
+enum BitwuzlaMainOption
 {
   BZLAMAIN_OPT_HELP,
   BZLAMAIN_OPT_COPYRIGHT,
@@ -81,7 +77,7 @@ enum BzlaMainOption
   /* this MUST be the last entry! */
   BZLAMAIN_OPT_NUM_OPTS,
 };
-typedef enum BzlaMainOption BzlaMainOption;
+typedef enum BitwuzlaMainOption BitwuzlaMainOption;
 
 typedef struct BzlaMainOpt
 {
@@ -100,9 +96,9 @@ typedef struct BzlaMainOpt
 
 /*------------------------------------------------------------------------*/
 
-struct BzlaMainApp
+struct BitwuzlaMainApp
 {
-  Bzla *bzla;
+  Bitwuzla *bitwuzla;
   BzlaMemMgr *mm;
   BzlaMainOpt *options;
   bool done;
@@ -118,8 +114,8 @@ struct BzlaMainApp
 /*------------------------------------------------------------------------*/
 
 static void
-btormain_init_opt(BzlaMainApp *app,
-                  BzlaMainOption opt,
+bzlamain_init_opt(BitwuzlaMainApp *app,
+                  BitwuzlaMainOption opt,
                   bool general,
                   bool isflag,
                   char *lng,
@@ -152,13 +148,13 @@ btormain_init_opt(BzlaMainApp *app,
 }
 
 static void
-btormain_init_opts(BzlaMainApp *app)
+bzlamain_init_opts(BitwuzlaMainApp *app)
 {
   assert(app);
 
   BZLA_CNEWN(app->mm, app->options, BZLAMAIN_OPT_NUM_OPTS);
 
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_HELP,
                     true,
                     true,
@@ -170,7 +166,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "print this message and exit");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_COPYRIGHT,
                     true,
                     true,
@@ -182,7 +178,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "print copyright and exit");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_VERSION,
                     true,
                     true,
@@ -194,7 +190,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "print version and exit");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_TIME,
                     true,
                     false,
@@ -206,7 +202,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_INT,
                     "set time limit");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_OUTPUT,
                     true,
                     false,
@@ -219,7 +215,7 @@ btormain_init_opts(BzlaMainApp *app)
                     BZLA_ARG_EXPECT_STR,
                     "set output file for dumping");
 #ifdef BZLA_USE_LINGELING
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_LGL_NOFORK,
                     true,
                     true,
@@ -232,7 +228,7 @@ btormain_init_opts(BzlaMainApp *app)
                     BZLA_ARG_EXPECT_NONE,
                     "do not use 'fork/clone' for Lingeling");
 #endif
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_HEX,
                     true,
                     true,
@@ -244,7 +240,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "force hexadecimal number output");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_DEC,
                     true,
                     true,
@@ -256,7 +252,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "force decimal number output");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_BIN,
                     true,
                     true,
@@ -268,7 +264,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "force binary number output");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_BTOR,
                     true,
                     true,
@@ -280,7 +276,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "force BTOR input format");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_BTOR2,
                     true,
                     true,
@@ -293,7 +289,7 @@ btormain_init_opts(BzlaMainApp *app)
                     BZLA_ARG_EXPECT_NONE,
                     "force BTOR2 input format");
 
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_SMT2,
                     true,
                     true,
@@ -305,7 +301,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "force SMT-LIB v2 input format");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_DUMP_BTOR,
                     true,
                     true,
@@ -318,12 +314,12 @@ btormain_init_opts(BzlaMainApp *app)
                     BZLA_ARG_EXPECT_NONE,
                     "dump formula in BTOR format");
 #if 0
-  btormain_init_opt (app, BZLAMAIN_OPT_DUMP_BTOR2, true, true,
+  bzlamain_init_opt (app, BZLAMAIN_OPT_DUMP_BTOR2, true, true,
                      "dump-btor2", "db2", 0, 0, 1,
                      false, BZLA_ARG_EXPECT_NONE,
                      "dump formula in BTOR 2.0 format");
 #endif
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_DUMP_SMT,
                     true,
                     true,
@@ -335,7 +331,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "dump formula in SMT-LIB v2 format");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_DUMP_AAG,
                     true,
                     true,
@@ -347,7 +343,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "dump QF_BV formula in ascii AIGER format");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_DUMP_AIG,
                     true,
                     true,
@@ -359,7 +355,7 @@ btormain_init_opts(BzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "dump QF_BV formula in binary AIGER format");
-  btormain_init_opt(app,
+  bzlamain_init_opt(app,
                     BZLAMAIN_OPT_DUMP_AIGER_MERGE,
                     true,
                     true,
@@ -374,11 +370,11 @@ btormain_init_opts(BzlaMainApp *app)
 }
 
 static bool
-btormain_opt_has_str_arg(const char *opt, BzlaOpt *bzla_opts)
+bzlamain_opt_has_str_arg(const char *opt, BzlaOpt *bzla_opts)
 {
   assert(opt);
 
-  BzlaMainOption mopt;
+  BitwuzlaMainOption mopt;
   BzlaMainOpt *mo;
   size_t i;
 
@@ -389,7 +385,7 @@ btormain_opt_has_str_arg(const char *opt, BzlaOpt *bzla_opts)
         || (mo->lng && strcmp(mo->lng, opt) == 0))
       return g_app->options[mopt].arg == BZLA_ARG_EXPECT_STR;
   }
-  for (i = 0; i < BZLA_OPT_NUM_OPTS; i++)
+  for (i = 0; i < BITWUZLA_OPT_NUM_OPTS; i++)
   {
     if (((bzla_opts[i].shrt && strcmp(opt, bzla_opts[i].shrt) == 0)
          || strcmp(opt, bzla_opts[i].lng) == 0)
@@ -399,29 +395,36 @@ btormain_opt_has_str_arg(const char *opt, BzlaOpt *bzla_opts)
   return false;
 }
 
+static void
+bzlamain_print_stats(Bitwuzla *bitwuzla)
+{
+  bzla_sat_print_stats(bzla_get_sat_mgr((Bzla *) bitwuzla));
+  bzla_print_stats((Bzla *) bitwuzla);
+}
+
 /*------------------------------------------------------------------------*/
 
-static BzlaMainApp *
-btormain_new_btormain(Bzla *bzla)
+static BitwuzlaMainApp *
+bzlamain_new_bzlamain(Bitwuzla *bitwuzla)
 {
-  assert(bzla);
+  assert(bitwuzla);
 
-  BzlaMainApp *res;
+  BitwuzlaMainApp *res;
   BzlaMemMgr *mm;
 
   mm = bzla_mem_mgr_new();
   BZLA_CNEWN(mm, res, 1);
   res->mm          = mm;
-  res->bzla        = bzla;
+  res->bitwuzla    = bitwuzla;
   res->infile      = stdin;
   res->infile_name = "<stdin>";
   res->outfile     = stdout;
-  btormain_init_opts(res);
+  bzlamain_init_opts(res);
   return res;
 }
 
 static void
-btormain_delete_btormain(BzlaMainApp *app)
+bzlamain_delete_bzlamain(BitwuzlaMainApp *app)
 {
   assert(app);
 
@@ -429,7 +432,7 @@ btormain_delete_btormain(BzlaMainApp *app)
 
   mm = app->mm;
   BZLA_DELETEN(mm, app->options, BZLAMAIN_OPT_NUM_OPTS);
-  boolector_delete(app->bzla);
+  bitwuzla_delete(app->bitwuzla);
   BZLA_DELETE(mm, app);
   bzla_mem_mgr_delete(mm);
 }
@@ -437,7 +440,7 @@ btormain_delete_btormain(BzlaMainApp *app)
 /*------------------------------------------------------------------------*/
 
 static void
-btormain_error(BzlaMainApp *app, char *msg, ...)
+bzlamain_error(BitwuzlaMainApp *app, char *msg, ...)
 {
   assert(app);
 
@@ -451,7 +454,7 @@ btormain_error(BzlaMainApp *app, char *msg, ...)
 }
 
 static void
-btormain_msg(char *msg, ...)
+bzlamain_msg(char *msg, ...)
 {
   assert(msg);
 
@@ -521,7 +524,7 @@ get_opt_vals_string(BzlaMemMgr *mm, BzlaOpt *bo)
 }
 
 static void
-print_opt_line_fmt(BzlaMainApp *app,
+print_opt_line_fmt(BitwuzlaMainApp *app,
                    char *str,
                    char *prefix,
                    size_t prefix_len,
@@ -573,7 +576,7 @@ print_opt_line_fmt(BzlaMainApp *app,
 }
 
 static void
-print_opt(BzlaMainApp *app,
+print_opt(BitwuzlaMainApp *app,
           const char *lng,
           const char *shrt,
           bool isflag,
@@ -599,9 +602,11 @@ print_opt(BzlaMainApp *app,
     sprintf(paramstr, "<seconds>");
   else if (!strcmp(lng, "output"))
     sprintf(paramstr, "<file>");
-  else if (!strcmp(lng, boolector_get_opt_lng(app->bzla, BZLA_OPT_ENGINE))
-           || !strcmp(lng,
-                      boolector_get_opt_lng(app->bzla, BZLA_OPT_SAT_ENGINE)))
+  else if (!strcmp(lng,
+                   bzla_opt_get_lng((Bzla *) app->bitwuzla, BZLA_OPT_ENGINE))
+           || !strcmp(
+               lng,
+               bzla_opt_get_lng((Bzla *) app->bitwuzla, BZLA_OPT_SAT_ENGINE)))
     sprintf(paramstr, "<engine>");
   else if (!isflag)
   {
@@ -680,7 +685,7 @@ print_opt(BzlaMainApp *app,
 }
 
 void
-print_opt_help(BzlaMainApp *app,
+print_opt_help(BitwuzlaMainApp *app,
                const char *shrt,
                const char *lng,
                const char *desc,
@@ -744,16 +749,18 @@ print_opt_help(BzlaMainApp *app,
   "\n\n"
 
 static void
-print_help(BzlaMainApp *app)
+print_help(BitwuzlaMainApp *app)
 {
   assert(app);
 
   BzlaOption o;
   BzlaOptionStack ostack;
-  BzlaMainOption mo;
+  BitwuzlaMainOption mo;
   FILE *out;
   char *s, *fun, *sls, *prop, *aigprop, *quant;
   size_t i;
+
+  Bzla *bzla = (Bzla *) app->bitwuzla;
 
   BZLA_INIT_STACK(app->mm, ostack);
 
@@ -795,17 +802,17 @@ print_help(BzlaMainApp *app)
   for (i = 0; i < BZLA_COUNT_STACK(ostack); i++)
   {
     o = BZLA_PEEK_STACK(ostack, i);
-    s = get_opt_vals_string(app->mm, &app->bzla->options[o]);
-    print_opt(app,
-              app->bzla->options[o].lng,
-              app->bzla->options[o].shrt,
-              app->bzla->options[o].isflag,
-              app->bzla->options[o].dflt,
-              get_opt_val_string(app->bzla->options[o].options,
-                                 app->bzla->options[o].dflt),
-              s,
-              app->bzla->options[o].desc,
-              true);
+    s = get_opt_vals_string(app->mm, &bzla->options[o]);
+    print_opt(
+        app,
+        bzla->options[o].lng,
+        bzla->options[o].shrt,
+        bzla->options[o].isflag,
+        bzla->options[o].dflt,
+        get_opt_val_string(bzla->options[o].options, bzla->options[o].dflt),
+        s,
+        bzla->options[o].desc,
+        true);
     if (s) bzla_mem_freestr(app->mm, s);
   }
 #ifdef BZLA_USE_LINGELING
@@ -816,36 +823,35 @@ print_help(BzlaMainApp *app)
 
   fprintf(out, BITWUZLA_OPTS_INFO_MSG);
 
-  for (o = boolector_first_opt(app->bzla); boolector_has_opt(app->bzla, o);
-       o = boolector_next_opt(app->bzla, o))
+  for (o = bzla_opt_first(bzla); bzla_opt_is_valid(bzla, o);
+       o = bzla_opt_next(bzla, o))
   {
-    if (app->bzla->options[o].internal) continue;
+    if (bzla->options[o].internal) continue;
 
     if (o == BZLA_OPT_AUTO_CLEANUP || o == BZLA_OPT_BETA_REDUCE
         || o == BZLA_OPT_INCREMENTAL || o == BZLA_OPT_INPUT_FORMAT
         || o == BZLA_OPT_ENGINE || o == BZLA_OPT_REWRITE_LEVEL
         || o == BZLA_OPT_SORT_EXP
-        || (!fun && (fun = strstr(app->bzla->options[o].lng, "fun:")))
-        || (!sls && (sls = strstr(app->bzla->options[o].lng, "sls:")))
-        || (!prop && (prop = strstr(app->bzla->options[o].lng, "prop:")))
-        || (!aigprop
-            && (aigprop = strstr(app->bzla->options[o].lng, "aigprop:")))
-        || (!quant && (quant = strstr(app->bzla->options[o].lng, "quant:"))))
+        || (!fun && (fun = strstr(bzla->options[o].lng, "fun:")))
+        || (!sls && (sls = strstr(bzla->options[o].lng, "sls:")))
+        || (!prop && (prop = strstr(bzla->options[o].lng, "prop:")))
+        || (!aigprop && (aigprop = strstr(bzla->options[o].lng, "aigprop:")))
+        || (!quant && (quant = strstr(bzla->options[o].lng, "quant:"))))
     {
       fprintf(out, "\n");
     }
 
-    s = get_opt_vals_string(app->mm, &app->bzla->options[o]);
-    print_opt(app,
-              app->bzla->options[o].lng,
-              app->bzla->options[o].shrt,
-              app->bzla->options[o].isflag,
-              app->bzla->options[o].dflt,
-              get_opt_val_string(app->bzla->options[o].options,
-                                 app->bzla->options[o].dflt),
-              s,
-              app->bzla->options[o].desc,
-              true);
+    s = get_opt_vals_string(app->mm, &bzla->options[o]);
+    print_opt(
+        app,
+        bzla->options[o].lng,
+        bzla->options[o].shrt,
+        bzla->options[o].isflag,
+        bzla->options[o].dflt,
+        get_opt_val_string(bzla->options[o].options, bzla->options[o].dflt),
+        s,
+        bzla->options[o].desc,
+        true);
     if (s) bzla_mem_freestr(app->mm, s);
   }
 
@@ -860,21 +866,21 @@ print_static_stats(int32_t sat_res)
   double real    = bzla_util_current_time() - g_start_time_real;
   double process = bzla_util_time_stamp();
   if (g_dual_threads)
-    btormain_msg("%.1f seconds process, %.0f%% utilization",
+    bzlamain_msg("%.1f seconds process, %.0f%% utilization",
                  process,
                  real > 0 ? (100 * process) / real / 2 : 0.0);
   else
-    btormain_msg("%.1f seconds process", process);
-  btormain_msg("%.1f seconds real", real);
+    bzlamain_msg("%.1f seconds process", process);
+  bzlamain_msg("%.1f seconds real", real);
 #endif
-  btormain_msg("%s",
+  bzlamain_msg("%s",
                sat_res == BOOLECTOR_SAT
                    ? "sat"
                    : (sat_res == BOOLECTOR_UNSAT ? "unsat" : "unknown"));
 }
 
 static void
-print_sat_result(BzlaMainApp *app, int32_t sat_result)
+print_sat_result(BitwuzlaMainApp *app, int32_t sat_result)
 {
   assert(app);
   if (sat_result == BOOLECTOR_UNSAT)
@@ -909,10 +915,10 @@ catch_sig(int32_t sig)
     g_caught_sig = true;
     if (g_verbosity > 0)
     {
-      boolector_print_stats(g_app->bzla);
+      bzlamain_print_stats(g_app->bitwuzla);
       print_static_stats(0);
     }
-    btormain_msg("CAUGHT SIGNAL %d", sig);
+    bzlamain_msg("CAUGHT SIGNAL %d", sig);
     fputs("unknown\n", stdout);
     fflush(stdout);
   }
@@ -944,10 +950,10 @@ catch_alarm(int32_t sig)
   assert(sig == SIGALRM);
   if (g_set_alarm > 0)
   {
-    btormain_msg("ALARM TRIGGERED: time limit %d seconds reached", g_set_alarm);
+    bzlamain_msg("ALARM TRIGGERED: time limit %d seconds reached", g_set_alarm);
     if (g_verbosity > 0)
     {
-      boolector_print_stats(g_app->bzla);
+      bzlamain_print_stats(g_app->bitwuzla);
       print_static_stats(0);
     }
     fputs("unknown\n", stdout);
@@ -969,15 +975,14 @@ set_alarm(void)
 /*------------------------------------------------------------------------*/
 
 int32_t
-boolector_main(int32_t argc, char **argv)
+bitwuzla_main(int32_t argc, char **argv)
 {
   size_t i, len;
   int32_t res;
-  int32_t parse_res, parse_status;
+  int32_t parse_res, parsed_status;
   int32_t sat_res;
   uint32_t format, mgen, pmodel, inc, dump;
   uint32_t val;
-  bool dump_merge;
   char *cmd, *parse_err_msg;
   BzlaParsedOpt *po;
   BzlaParsedOptPtrStack opts;
@@ -985,45 +990,40 @@ boolector_main(int32_t argc, char **argv)
   BzlaParsedInputPtrStack infiles;
   BzlaOption bopt;
   BzlaOpt *bo;
-  BzlaMainOption bmopt;
+  BitwuzlaMainOption bmopt;
   BzlaMainOpt *bmo;
   BzlaMemMgr *mm;
   Bzla *bzla;
+  Bitwuzla *bitwuzla;
   BzlaPtrHashBucket *b;
 
   g_start_time_real = bzla_util_current_time();
 
-  g_app = btormain_new_btormain(boolector_new());
-  bzla  = g_app->bzla;
-  mm    = g_app->mm;
+  g_app    = bzlamain_new_bzlamain(bitwuzla_new());
+  bitwuzla = g_app->bitwuzla;
+  bzla     = (Bzla *) bitwuzla;
+  mm       = g_app->mm;
 
-  res          = BZLA_UNKNOWN_EXIT;
-  parse_status = BOOLECTOR_UNKNOWN;
-  sat_res      = BOOLECTOR_UNKNOWN;
+  res           = BZLA_UNKNOWN_EXIT;
+  parsed_status = BOOLECTOR_UNKNOWN;
+  sat_res       = BOOLECTOR_UNKNOWN;
 
   inc    = 0;
-  mgen   = boolector_get_opt(bzla, BZLA_OPT_MODEL_GEN);
+  mgen   = bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS);
   pmodel = 0;
   dump   = 0;
-
-  dump_merge = false;
 
   BZLA_INIT_STACK(mm, opts);
   BZLA_INIT_STACK(mm, infiles);
 
-  bzla_optparse_parse(mm,
-                      argc,
-                      argv,
-                      &opts,
-                      &infiles,
-                      g_app->bzla->options,
-                      btormain_opt_has_str_arg);
+  bzla_optparse_parse(
+      mm, argc, argv, &opts, &infiles, bzla->options, bzlamain_opt_has_str_arg);
 
   /* input file ======================================================= */
 
   if (BZLA_COUNT_STACK(infiles) > 1)
   {
-    btormain_error(g_app, "multiple input files");
+    bzlamain_error(g_app, "multiple input files");
     goto DONE;
   }
   else if (BZLA_COUNT_STACK(infiles) == 1)
@@ -1060,7 +1060,7 @@ boolector_main(int32_t argc, char **argv)
 
     if (!g_app->infile)
     {
-      btormain_error(g_app, "can not read '%s'", g_app->infile_name);
+      bzlamain_error(g_app, "can not read '%s'", g_app->infile_name);
       goto DONE;
     }
   }
@@ -1088,14 +1088,14 @@ boolector_main(int32_t argc, char **argv)
       /* check opt */
       if (po->isdisable && !bmo->candisable)
       {
-        btormain_error(g_app, "invalid option '%s'", po->orig.start);
+        bzlamain_error(g_app, "invalid option '%s'", po->orig.start);
         goto DONE;
       }
       if (bmo->arg == BZLA_ARG_EXPECT_NONE)
       {
         if (BZLA_ARG_IS_UNEXPECTED(bmo->arg, po->readval, po->isdisable))
         {
-          btormain_error(
+          bzlamain_error(
               g_app, "option '%s' does not expect an argument", po->orig.start);
           goto DONE;
         }
@@ -1104,12 +1104,12 @@ boolector_main(int32_t argc, char **argv)
       {
         if (BZLA_ARG_IS_MISSING(bmo->arg, bmo->candisable, po->readval))
         {
-          btormain_error(g_app, "missing argument for '%s'", po->orig.start);
+          bzlamain_error(g_app, "missing argument for '%s'", po->orig.start);
           goto DONE;
         }
         if (BZLA_ARG_IS_INVALID(bmo->arg, bmo->candisable, po->readval))
         {
-          btormain_error(
+          bzlamain_error(
               g_app, "invalid argument for '%s', expected int", po->orig.start);
           goto DONE;
         }
@@ -1120,12 +1120,12 @@ boolector_main(int32_t argc, char **argv)
         case BZLAMAIN_OPT_HELP: print_help(g_app); goto DONE;
 
         case BZLAMAIN_OPT_COPYRIGHT:
-          fprintf(g_app->outfile, "%s", boolector_copyright(bzla));
+          fprintf(g_app->outfile, "%s", bitwuzla_copyright(bitwuzla));
           g_app->done = true;
           goto DONE;
 
         case BZLAMAIN_OPT_VERSION:
-          fprintf(g_app->outfile, "%s\n", boolector_version(bzla));
+          fprintf(g_app->outfile, "%s\n", bitwuzla_version(bitwuzla));
           g_app->done = true;
           goto DONE;
 
@@ -1134,20 +1134,21 @@ boolector_main(int32_t argc, char **argv)
         case BZLAMAIN_OPT_OUTPUT:
           if (g_app->close_outfile)
           {
-            btormain_error(g_app, "multiple output files");
+            bzlamain_error(g_app, "multiple output files");
             goto DONE;
           }
           g_app->outfile_name = po->valstr;
           break;
 
         case BZLAMAIN_OPT_LGL_NOFORK:
-          boolector_set_opt(bzla, BZLA_OPT_SAT_ENGINE_LGL_FORK, 0);
+          bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_SAT_ENGINE_LGL_FORK, 0);
           break;
 
         case BZLAMAIN_OPT_HEX:
           format = BZLA_OUTPUT_BASE_HEX;
         SET_OUTPUT_NUMBER_FORMAT:
-          boolector_set_opt(bzla, BZLA_OPT_OUTPUT_NUMBER_FORMAT, format);
+          bitwuzla_set_option(
+              bitwuzla, BITWUZLA_OPT_OUTPUT_NUMBER_FORMAT, format);
           break;
 
         case BZLAMAIN_OPT_DEC:
@@ -1161,7 +1162,7 @@ boolector_main(int32_t argc, char **argv)
         case BZLAMAIN_OPT_BTOR:
           format = BZLA_INPUT_FORMAT_BTOR;
         SET_INPUT_FORMAT:
-          boolector_set_opt(bzla, BZLA_OPT_INPUT_FORMAT, format);
+          bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_INPUT_FORMAT, format);
           break;
 
         case BZLAMAIN_OPT_BTOR2:
@@ -1175,8 +1176,8 @@ boolector_main(int32_t argc, char **argv)
         case BZLAMAIN_OPT_DUMP_BTOR:
           dump = BZLA_OUTPUT_FORMAT_BTOR;
         SET_OUTPUT_FORMAT:
-          boolector_set_opt(bzla, BZLA_OPT_OUTPUT_FORMAT, dump);
-          boolector_set_opt(bzla, BZLA_OPT_PARSE_INTERACTIVE, 0);
+          bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_OUTPUT_FORMAT, dump);
+          bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PARSE_INTERACTIVE, 0);
           break;
 #if 0
               case BZLAMAIN_OPT_DUMP_BTOR2:
@@ -1194,8 +1195,6 @@ boolector_main(int32_t argc, char **argv)
         case BZLAMAIN_OPT_DUMP_AIG:
           dump = BZLA_OUTPUT_FORMAT_AIGER_BINARY;
           goto SET_OUTPUT_FORMAT;
-
-        case BZLAMAIN_OPT_DUMP_AIGER_MERGE: dump_merge = true; break;
 
         default:
           /* get rid of compiler warnings, should be unreachable */
@@ -1219,7 +1218,7 @@ boolector_main(int32_t argc, char **argv)
       /* check opt */
       if (!bo)
       {
-        btormain_error(g_app, "invalid option '%s'", po->orig.start);
+        bzlamain_error(g_app, "invalid option '%s'", po->orig.start);
         goto DONE;
       }
       if ((bo->options
@@ -1228,7 +1227,7 @@ boolector_main(int32_t argc, char **argv)
               && BZLA_ARG_IS_MISSING(
                   BZLA_ARG_EXPECT_INT, bo->isflag, po->readval)))
       {
-        btormain_error(g_app, "missing argument for '%s'", po->orig.start);
+        bzlamain_error(g_app, "missing argument for '%s'", po->orig.start);
         goto DONE;
       }
       if (bo->options)
@@ -1242,7 +1241,7 @@ boolector_main(int32_t argc, char **argv)
         {
           char *s = get_opt_vals_string(mm, bo);
           assert(s);
-          btormain_error(g_app,
+          bzlamain_error(g_app,
                          "invalid argument '%s' for '%s', expected one of '%s'",
                          po->valstr,
                          po->orig.start,
@@ -1251,13 +1250,13 @@ boolector_main(int32_t argc, char **argv)
           goto DONE;
         }
 
-        boolector_set_opt(bzla, bopt, ((BzlaOptHelp *) b->data.as_ptr)->val);
+        bzla_opt_set(bzla, bopt, ((BzlaOptHelp *) b->data.as_ptr)->val);
       }
       else
       {
         if (BZLA_ARG_IS_INVALID(BZLA_ARG_EXPECT_INT, bo->isflag, po->readval))
         {
-          btormain_error(
+          bzlamain_error(
               g_app, "invalid argument for '%s', expected int", po->orig.start);
           goto DONE;
         }
@@ -1272,7 +1271,7 @@ boolector_main(int32_t argc, char **argv)
               pmodel = 0;
             }
             else
-              boolector_set_opt(bzla, bopt, 0);
+              bzla_opt_set(bzla, bopt, 0);
           }
           else
           {
@@ -1290,27 +1289,34 @@ boolector_main(int32_t argc, char **argv)
                   pmodel = 1;
                 }
                 break;
-              case BZLA_OPT_VERBOSITY:
-              case BZLA_OPT_LOGLEVEL:
+              case BITWUZLA_OPT_VERBOSITY:
+              case BITWUZLA_OPT_LOGLEVEL:
                 if (BZLA_ARG_READ_IS_INT(po->readval))
-                  boolector_set_opt(bzla, bopt, po->val);
+                {
+                  bzla_opt_set(bzla, bopt, po->val);
+                }
                 else
-                  boolector_set_opt(
-                      bzla, bopt, boolector_get_opt(bzla, bopt) + 1);
+                {
+                  bzla_opt_set(bzla, bopt, bzla_opt_get(bzla, bopt) + 1);
+                }
                 break;
               default:
                 assert(bopt != BZLA_OPT_NUM_OPTS);
                 if (BZLA_ARG_READ_IS_INT(po->readval))
-                  boolector_set_opt(bzla, bopt, po->val);
+                {
+                  bzla_opt_set(bzla, bopt, po->val);
+                }
                 else
-                  boolector_set_opt(bzla, bopt, 1);
+                {
+                  bzla_opt_set(bzla, bopt, 1);
+                }
             }
           }
         }
         else
         {
           assert(BZLA_ARG_READ_IS_INT(po->readval));
-          boolector_set_opt(bzla, bopt, po->val);
+          bzla_opt_set(bzla, bopt, po->val);
         }
       }
     }
@@ -1318,39 +1324,40 @@ boolector_main(int32_t argc, char **argv)
 
   assert(!g_app->done && !g_app->err);
 
-  g_verbosity = boolector_get_opt(g_app->bzla, BZLA_OPT_VERBOSITY);
+  g_verbosity = bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_VERBOSITY);
 
   /* open output file */
   if (g_app->outfile_name)
   {
     if (!strcmp(g_app->outfile_name, g_app->infile_name))
     {
-      btormain_error(g_app, "input and output file must not be the same");
+      bzlamain_error(g_app, "input and output file must not be the same");
       goto DONE;
     }
 
     g_app->outfile = fopen(g_app->outfile_name, "w");
     if (!g_app->outfile)
     {
-      btormain_error(g_app, "can not create '%s'", g_app->outfile_name);
+      bzlamain_error(g_app, "can not create '%s'", g_app->outfile_name);
       goto DONE;
     }
     g_app->close_outfile = true;
   }
 
   // TODO: disabling model generation not yet supported (ma)
-  if (mgen > 0) boolector_set_opt(bzla, BZLA_OPT_MODEL_GEN, mgen);
+  if (mgen > 0)
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS, mgen);
 
   /* print verbose info and set signal handlers */
   if (g_verbosity)
   {
-    if (inc) btormain_msg("incremental mode through command line option");
-    btormain_msg("Bitwuzla Version %s %s", BZLA_VERSION, BZLA_GIT_ID);
-    btormain_msg("%s", BZLA_CFLAGS);
-    btormain_msg("released %s", BZLA_RELEASED);
-    btormain_msg("compiled %s", BZLA_COMPILED);
-    if (*BZLA_CC) btormain_msg("%s", BZLA_CC);
-    btormain_msg("setting signal handlers");
+    if (inc) bzlamain_msg("incremental mode through command line option");
+    bzlamain_msg("Bitwuzla Version %s %s", BZLA_VERSION, BZLA_GIT_ID);
+    bzlamain_msg("%s", BZLA_CFLAGS);
+    bzlamain_msg("released %s", BZLA_RELEASED);
+    bzlamain_msg("compiled %s", BZLA_COMPILED);
+    if (*BZLA_CC) bzlamain_msg("%s", BZLA_CC);
+    bzlamain_msg("setting signal handlers");
   }
 #ifdef BZLA_HAVE_SIGNALS
   set_sig_handlers();
@@ -1359,72 +1366,75 @@ boolector_main(int32_t argc, char **argv)
   if (g_set_alarm)
   {
     if (g_verbosity)
-      btormain_msg("setting time limit to %d seconds", g_set_alarm);
+      bzlamain_msg("setting time limit to %d seconds", g_set_alarm);
     set_alarm();
   }
   else if (g_verbosity)
-    btormain_msg("no time limit given");
+    bzlamain_msg("no time limit given");
 #endif
 
-  if (inc && g_verbosity) btormain_msg("starting incremental mode");
+  if (inc && g_verbosity) bzlamain_msg("starting incremental mode");
 
   /* parse */
   bool parsed_smt2 = false;
-  val              = boolector_get_opt(bzla, BZLA_OPT_INPUT_FORMAT);
+  val              = bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_INPUT_FORMAT);
   switch (val)
   {
     case BZLA_INPUT_FORMAT_BTOR:
       if (g_verbosity)
-        btormain_msg("BTOR input forced through cmd line options");
-      parse_res = boolector_parse_btor(bzla,
-                                       g_app->infile,
-                                       g_app->infile_name,
-                                       g_app->outfile,
-                                       &parse_err_msg,
-                                       &parse_status);
-      break;
-    case BZLA_INPUT_FORMAT_BTOR2:
-      if (g_verbosity)
-        btormain_msg("BTOR2 input forced through cmd line options");
-      parse_res = boolector_parse_btor2(bzla,
+        bzlamain_msg("BTOR input forced through cmd line options");
+      parse_res = bitwuzla_parse_format(bitwuzla,
+                                        "btor",
                                         g_app->infile,
                                         g_app->infile_name,
                                         g_app->outfile,
                                         &parse_err_msg,
-                                        &parse_status);
+                                        &parsed_status);
+      break;
+    case BZLA_INPUT_FORMAT_BTOR2:
+      if (g_verbosity)
+        bzlamain_msg("BTOR2 input forced through cmd line options");
+      parse_res = bitwuzla_parse_format(bitwuzla,
+                                        "btor2",
+                                        g_app->infile,
+                                        g_app->infile_name,
+                                        g_app->outfile,
+                                        &parse_err_msg,
+                                        &parsed_status);
       break;
     case BZLA_INPUT_FORMAT_SMT2:
       if (g_verbosity)
-        btormain_msg("SMT-LIB v2 input forced through cmd line options");
-      parse_res   = boolector_parse_smt2(bzla,
-                                       g_app->infile,
-                                       g_app->infile_name,
-                                       g_app->outfile,
-                                       &parse_err_msg,
-                                       &parse_status);
+        bzlamain_msg("SMT-LIB v2 input forced through cmd line options");
+      parse_res   = bitwuzla_parse_format(bitwuzla,
+                                        "smt2",
+                                        g_app->infile,
+                                        g_app->infile_name,
+                                        g_app->outfile,
+                                        &parse_err_msg,
+                                        &parsed_status);
       parsed_smt2 = true;
       break;
 
     default:
-      parse_res = boolector_parse(bzla,
-                                  g_app->infile,
-                                  g_app->infile_name,
-                                  g_app->outfile,
-                                  &parse_err_msg,
-                                  &parse_status,
-                                  &parsed_smt2);
+      parse_res = bitwuzla_parse(bitwuzla,
+                                 g_app->infile,
+                                 g_app->infile_name,
+                                 g_app->outfile,
+                                 &parse_err_msg,
+                                 &parsed_status,
+                                 &parsed_smt2);
   }
 
   /* verbosity may have been increased via input (set-option) */
-  g_verbosity = boolector_get_opt(bzla, BZLA_OPT_VERBOSITY);
+  g_verbosity = bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_VERBOSITY);
 
   g_dual_threads =
-      boolector_get_opt(g_app->bzla, BZLA_OPT_QUANT_DUAL_SOLVER) == 1
-      && g_app->bzla->quantifiers->count > 0;
+      bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_QUANT_DUAL_SOLVER) == 1
+      && bzla->quantifiers->count > 0;
 
   if (parse_err_msg)
   {
-    /* NOTE: do not use btormain_error here as 'parse_err_msg' must not be
+    /* NOTE: do not use bzlamain_error here as 'parse_err_msg' must not be
      * treated as format string --- it might contain unescaped '%' due to
      * invalid user input. */
     fprintf(stderr, "bitwuzla: %s\n", parse_err_msg);
@@ -1437,119 +1447,108 @@ boolector_main(int32_t argc, char **argv)
   {
     if (parse_res == BOOLECTOR_SAT)
     {
-      if (g_verbosity) btormain_msg("one formula SAT in incremental mode");
+      if (g_verbosity) bzlamain_msg("one formula SAT in incremental mode");
       sat_res = BOOLECTOR_SAT;
     }
     else if (parse_res == BOOLECTOR_UNSAT)
     {
-      if (g_verbosity) btormain_msg("all formulas UNSAT in incremental mode");
+      if (g_verbosity) bzlamain_msg("all formulas UNSAT in incremental mode");
       sat_res = BOOLECTOR_UNSAT;
     }
 
-    if (g_verbosity) boolector_print_stats(bzla);
+    if (g_verbosity) bzlamain_print_stats(bitwuzla);
 
     if (pmodel && sat_res == BOOLECTOR_SAT)
     {
-      assert(boolector_get_opt(bzla, BZLA_OPT_MODEL_GEN));
-      format = boolector_get_opt(bzla, BZLA_OPT_OUTPUT_FORMAT);
+      assert(bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS));
+      format = bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_OUTPUT_FORMAT);
       if (format == BZLA_OUTPUT_FORMAT_BTOR || !parsed_smt2)
       {
-        boolector_print_model(bzla, "btor", g_app->outfile);
+        bitwuzla_print_model(bitwuzla, "btor", g_app->outfile);
       }
       else
       {
-        boolector_print_model(bzla, "smt2", g_app->outfile);
+        bitwuzla_print_model(bitwuzla, "smt2", g_app->outfile);
       }
-      // boolector_print_model (
-      //    bzla, val || parsed_smt2 ? "smt2" : "btor", g_app->outfile);
     }
 
 #ifdef BZLA_TIME_STATISTICS
-    if (g_verbosity) btormain_msg("%.1f seconds", bzla_util_time_stamp());
+    if (g_verbosity) bzlamain_msg("%.1f seconds", bzla_util_time_stamp());
 #endif
     goto DONE;
   }
   /* we don't dump formula(s) in incremental mode */
   else if (dump)
   {
-    (void) boolector_simplify(bzla);
+    (void) bitwuzla_simplify(bitwuzla);
 
     switch (dump)
     {
       case BZLA_OUTPUT_FORMAT_BTOR:
-        if (g_verbosity) btormain_msg("dumping BTOR expressions");
-        boolector_dump_btor(bzla, g_app->outfile);
+        if (g_verbosity) bzlamain_msg("dumping BTOR expressions");
+        bitwuzla_dump_formula(bitwuzla, "btor", g_app->outfile);
         break;
-#if 0
-          case BZLA_OUTPUT_FORMAT_BTOR2:
-            if (g_verbosity) btormain_msg ("dumping BTOR 2.0 expressions");
-            boolector_dump_btor2 (bzla, g_app->outfile);
-            break;
-#endif
       case BZLA_OUTPUT_FORMAT_SMT2:
-        if (g_verbosity) btormain_msg("dumping in SMT 2.0 format");
-        boolector_dump_smt2(bzla, g_app->outfile);
+        if (g_verbosity) bzlamain_msg("dumping in SMT 2.0 format");
+        bitwuzla_dump_formula(bitwuzla, "smt2", g_app->outfile);
         break;
       case BZLA_OUTPUT_FORMAT_AIGER_ASCII:
-        if (g_verbosity) btormain_msg("dumping in ascii AIGER format");
-        boolector_dump_aiger_ascii(bzla, g_app->outfile, dump_merge);
+        if (g_verbosity) bzlamain_msg("dumping in ascii AIGER format");
+        bitwuzla_dump_formula(bitwuzla, "aiger_ascii", g_app->outfile);
         break;
       default:
         assert(dump == BZLA_OUTPUT_FORMAT_AIGER_BINARY);
-        if (g_verbosity) btormain_msg("dumping in binary AIGER format");
-        boolector_dump_aiger_binary(bzla, g_app->outfile, dump_merge);
+        if (g_verbosity) bzlamain_msg("dumping in binary AIGER format");
+        bitwuzla_dump_formula(bitwuzla, "aiger_binary", g_app->outfile);
     }
 
-    if (g_verbosity) boolector_print_stats(bzla);
+    if (g_verbosity) bzlamain_print_stats(bitwuzla);
 
     goto DONE;
   }
 
   /* call sat (if not yet called) */
-  if (parse_res == BOOLECTOR_UNKNOWN && !boolector_terminate(bzla)
-      && !parsed_smt2)
+  if (parse_res == BOOLECTOR_UNKNOWN && !bzla_terminate(bzla) && !parsed_smt2)
   {
-    sat_res = boolector_sat(bzla);
+    sat_res = bitwuzla_check_sat(bitwuzla);
     print_sat_result(g_app, sat_res);
   }
   else
     sat_res = parse_res;
 
-  assert(boolector_terminate(bzla) || sat_res != BOOLECTOR_UNKNOWN
-         || boolector_get_opt(bzla, BZLA_OPT_PRINT_DIMACS));
+  assert(bzla_terminate(bzla) || sat_res != BOOLECTOR_UNKNOWN
+         || bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_PRINT_DIMACS));
 
   /* check if status is equal to benchmark status (if provided) */
-  if (sat_res == BOOLECTOR_SAT && parse_status == BOOLECTOR_UNSAT)
-    btormain_error(g_app,
+  if (sat_res == BOOLECTOR_SAT && parsed_status == BOOLECTOR_UNSAT)
+    bzlamain_error(g_app,
                    "'sat' but status of benchmark in '%s' is 'unsat'",
                    g_app->infile_name);
-  else if (sat_res == BOOLECTOR_UNSAT && parse_status == BOOLECTOR_SAT)
-    btormain_error(g_app,
+  else if (sat_res == BOOLECTOR_UNSAT && parsed_status == BOOLECTOR_SAT)
+    bzlamain_error(g_app,
                    "'unsat' but status of benchmark in '%s' is 'sat'",
                    g_app->infile_name);
 
   /* print stats */
   if (g_verbosity)
   {
-    boolector_print_stats(bzla);
+    bzlamain_print_stats(bitwuzla);
     print_static_stats(sat_res);
   }
 
   /* print model */
   if (pmodel && sat_res == BOOLECTOR_SAT)
   {
-    assert(boolector_get_opt(bzla, BZLA_OPT_MODEL_GEN));
-    format = boolector_get_opt(bzla, BZLA_OPT_OUTPUT_FORMAT);
+    assert(bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS));
+    format = bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_OUTPUT_FORMAT);
     if (format == BZLA_OUTPUT_FORMAT_BTOR || !parsed_smt2)
     {
-      boolector_print_model(bzla, "btor", g_app->outfile);
+      bitwuzla_print_model(bitwuzla, "btor", g_app->outfile);
     }
     else
     {
-      boolector_print_model(bzla, "smt2", g_app->outfile);
+      bitwuzla_print_model(bitwuzla, "smt2", g_app->outfile);
     }
-    // boolector_print_model (
-    //     bzla, val || parsed_smt2 ? "smt2" : "btor", g_app->outfile);
   }
 
 DONE:
@@ -1571,7 +1570,7 @@ DONE:
     pclose(g_app->infile);
   if (g_app->close_outfile) fclose(g_app->outfile);
 
-  if (!boolector_get_opt(bzla, BZLA_OPT_EXIT_CODES))
+  if (!bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_EXIT_CODES))
   {
     switch (res)
     {
@@ -1598,7 +1597,7 @@ DONE:
   }
   BZLA_RELEASE_STACK(infiles);
 
-  btormain_delete_btormain(g_app);
+  bzlamain_delete_bzlamain(g_app);
 #ifdef BZLA_HAVE_SIGNALS
   reset_sig_handlers();
 #endif
