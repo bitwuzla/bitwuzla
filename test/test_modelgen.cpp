@@ -11,7 +11,6 @@
 #include "test.h"
 
 extern "C" {
-#include "boolector.h"
 #include "bzlaconfig.h"
 }
 
@@ -32,11 +31,11 @@ class TestModelGen : public TestFile
     assert(rwl >= 0);
     assert(rwl <= 3);
 
-    boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
-    boolector_set_opt(d_bzla, BZLA_OPT_MODEL_GEN, 1);
+    bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
+    bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
     d_get_model = true;
 
-    run_test(name, ext, BOOLECTOR_UNKNOWN);
+    run_test(name, ext, BITWUZLA_UNKNOWN);
     fclose(d_log_file);
     d_log_file = nullptr;
 

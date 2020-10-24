@@ -14,16 +14,14 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
-class TestComp : public TestBoolector
+class TestComp : public TestBitwuzla
 {
  protected:
   static constexpr uint32_t BZLA_TEST_COMP_LOW  = 1;
   static constexpr uint32_t BZLA_TEST_COMP_HIGH = 4;
 
   void u_comp_test(int32_t (*func)(int32_t, int32_t),
-                   BoolectorNode *(*btorfun)(Bzla *,
-                                             BoolectorNode *,
-                                             BoolectorNode *),
+                   BitwuzlaKind kind,
                    int32_t low,
                    int32_t high,
                    uint32_t rwl)
@@ -48,26 +46,23 @@ class TestComp : public TestBoolector
         {
           result = func(i, j);
 
-          if (d_bzla) boolector_delete(d_bzla);
-          d_bzla = boolector_new();
-          boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          if (d_bzla) bitwuzla_delete(d_bzla);
+          d_bzla = bitwuzla_new();
+          bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
 
-          BoolectorSort sort = boolector_bv_sort(d_bzla, num_bits);
-          BoolectorNode *const1, *const2, *bfun;
+          BitwuzlaSort sort = bitwuzla_mk_bv_sort(d_bzla, num_bits);
+          BitwuzlaTerm *const1, *const2, *bfun;
 
-          const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
-          const2 = boolector_bv_unsigned_int(d_bzla, j, sort);
-          bfun   = btorfun(d_bzla, const1, const2);
-          boolector_assert(d_bzla, bfun);
+          const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, i);
+          const2 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, j);
 
-          sat_res = boolector_sat(d_bzla);
-          ASSERT_TRUE((result && sat_res == BOOLECTOR_SAT)
-                      || (!result && sat_res == BOOLECTOR_UNSAT));
-          boolector_release_sort(d_bzla, sort);
-          boolector_release(d_bzla, const1);
-          boolector_release(d_bzla, const2);
-          boolector_release(d_bzla, bfun);
-          boolector_delete(d_bzla);
+          bfun = bitwuzla_mk_term2(d_bzla, kind, const1, const2);
+          bitwuzla_assert(d_bzla, bfun);
+
+          sat_res = bitwuzla_check_sat(d_bzla);
+          ASSERT_TRUE((result && sat_res == BITWUZLA_SAT)
+                      || (!result && sat_res == BITWUZLA_UNSAT));
+          bitwuzla_delete(d_bzla);
           d_bzla = nullptr;
         }
       }
@@ -75,9 +70,7 @@ class TestComp : public TestBoolector
   }
 
   void s_comp_test(int32_t (*func)(int32_t, int32_t),
-                   BoolectorNode *(*btorfun)(Bzla *,
-                                             BoolectorNode *,
-                                             BoolectorNode *),
+                   BitwuzlaKind kind,
                    int32_t low,
                    int32_t high,
                    uint32_t rwl)
@@ -102,34 +95,31 @@ class TestComp : public TestBoolector
         {
           result = func(i, j);
 
-          if (d_bzla) boolector_delete(d_bzla);
-          d_bzla = boolector_new();
-          boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          if (d_bzla) bitwuzla_delete(d_bzla);
+          d_bzla = bitwuzla_new();
+          bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
 
-          BoolectorSort sort = boolector_bv_sort(d_bzla, num_bits);
-          BoolectorNode *const1, *const2, *bfun;
+          BitwuzlaSort sort = bitwuzla_mk_bv_sort(d_bzla, num_bits);
+          BitwuzlaTerm *const1, *const2, *bfun;
 
-          const1 = boolector_bv_int(d_bzla, i, sort);
-          const2 = boolector_bv_int(d_bzla, j, sort);
-          bfun   = btorfun(d_bzla, const1, const2);
-          boolector_assert(d_bzla, bfun);
+          const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, (uint32_t) i);
+          const2 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, (uint32_t) j);
 
-          sat_res = boolector_sat(d_bzla);
-          ASSERT_TRUE(sat_res == BOOLECTOR_SAT || sat_res == BOOLECTOR_UNSAT);
-          if (sat_res == BOOLECTOR_SAT)
+          bfun = bitwuzla_mk_term2(d_bzla, kind, const1, const2);
+          bitwuzla_assert(d_bzla, bfun);
+
+          sat_res = bitwuzla_check_sat(d_bzla);
+          ASSERT_TRUE(sat_res == BITWUZLA_SAT || sat_res == BITWUZLA_UNSAT);
+          if (sat_res == BITWUZLA_SAT)
           {
             ASSERT_TRUE(result > 0);
           }
           else
           {
-            ASSERT_EQ(sat_res, BOOLECTOR_UNSAT);
+            ASSERT_EQ(sat_res, BITWUZLA_UNSAT);
             ASSERT_TRUE(result == 0);
           }
-          boolector_release_sort(d_bzla, sort);
-          boolector_release(d_bzla, const1);
-          boolector_release(d_bzla, const2);
-          boolector_release(d_bzla, bfun);
-          boolector_delete(d_bzla);
+          bitwuzla_delete(d_bzla);
           d_bzla = nullptr;
         }
       }
@@ -151,80 +141,96 @@ class TestComp : public TestBoolector
 
 TEST_F(TestComp, test_eq_1)
 {
-  u_comp_test(eq, boolector_eq, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  u_comp_test(eq, boolector_eq, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  u_comp_test(
+      eq, BITWUZLA_KIND_EQUAL, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  u_comp_test(
+      eq, BITWUZLA_KIND_EQUAL, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_ne_1)
 {
-  u_comp_test(ne, boolector_ne, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  u_comp_test(ne, boolector_ne, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  u_comp_test(
+      ne, BITWUZLA_KIND_DISTINCT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  u_comp_test(
+      ne, BITWUZLA_KIND_DISTINCT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_ult)
 {
-  u_comp_test(lt, boolector_bv_ult, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  u_comp_test(lt, boolector_bv_ult, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  u_comp_test(
+      lt, BITWUZLA_KIND_BV_ULT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  u_comp_test(
+      lt, BITWUZLA_KIND_BV_ULT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_ulte)
 {
   u_comp_test(
-      lte, boolector_bv_ulte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+      lte, BITWUZLA_KIND_BV_ULE, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
   u_comp_test(
-      lte, boolector_bv_ulte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+      lte, BITWUZLA_KIND_BV_ULE, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_ugt)
 {
-  u_comp_test(gt, boolector_bv_ugt, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  u_comp_test(gt, boolector_bv_ugt, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  u_comp_test(
+      gt, BITWUZLA_KIND_BV_UGT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  u_comp_test(
+      gt, BITWUZLA_KIND_BV_UGT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_ugte)
 {
   u_comp_test(
-      gte, boolector_bv_ugte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+      gte, BITWUZLA_KIND_BV_UGE, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
   u_comp_test(
-      gte, boolector_bv_ugte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+      gte, BITWUZLA_KIND_BV_UGE, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_eq_2)
 {
-  s_comp_test(eq, boolector_eq, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  s_comp_test(eq, boolector_eq, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  s_comp_test(
+      eq, BITWUZLA_KIND_EQUAL, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  s_comp_test(
+      eq, BITWUZLA_KIND_EQUAL, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_ne_2)
 {
-  s_comp_test(ne, boolector_ne, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  s_comp_test(ne, boolector_ne, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  s_comp_test(
+      ne, BITWUZLA_KIND_DISTINCT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  s_comp_test(
+      ne, BITWUZLA_KIND_DISTINCT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_slt)
 {
-  s_comp_test(lt, boolector_bv_slt, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  s_comp_test(lt, boolector_bv_slt, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  s_comp_test(
+      lt, BITWUZLA_KIND_BV_SLT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  s_comp_test(
+      lt, BITWUZLA_KIND_BV_SLT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_slte)
 {
   s_comp_test(
-      lte, boolector_bv_slte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+      lte, BITWUZLA_KIND_BV_SLE, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
   s_comp_test(
-      lte, boolector_bv_slte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+      lte, BITWUZLA_KIND_BV_SLE, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_sgt)
 {
-  s_comp_test(gt, boolector_bv_sgt, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
-  s_comp_test(gt, boolector_bv_sgt, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+  s_comp_test(
+      gt, BITWUZLA_KIND_BV_SGT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+  s_comp_test(
+      gt, BITWUZLA_KIND_BV_SGT, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }
 
 TEST_F(TestComp, test_sgte)
 {
   s_comp_test(
-      gte, boolector_bv_sgte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
+      gte, BITWUZLA_KIND_BV_SGE, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 1);
   s_comp_test(
-      gte, boolector_bv_sgte, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
+      gte, BITWUZLA_KIND_BV_SGE, BZLA_TEST_COMP_LOW, BZLA_TEST_COMP_HIGH, 0);
 }

@@ -31,7 +31,118 @@ typedef enum BitwuzlaBVBase BitwuzlaBVBase;
 
 enum BitwuzlaOption
 {
+  BITWUZLA_OPT_INCREMENTAL,
   BITWUZLA_OPT_PRODUCE_MODELS,
+  BITWUZLA_OPT_INPUT_FORMAT,
+  BITWUZLA_OPT_OUTPUT_NUMBER_FORMAT,
+  BITWUZLA_OPT_OUTPUT_FORMAT,
+  BITWUZLA_OPT_ENGINE,
+  BITWUZLA_OPT_SAT_ENGINE,
+  BITWUZLA_OPT_PRETTY_PRINT,
+  BITWUZLA_OPT_EXIT_CODES,
+  BITWUZLA_OPT_SEED,
+  BITWUZLA_OPT_VERBOSITY,
+  BITWUZLA_OPT_LOGLEVEL,
+  BITWUZLA_OPT_REWRITE_LEVEL,
+  BITWUZLA_OPT_SKELETON_PREPROC,
+  BITWUZLA_OPT_ACKERMANN,
+  BITWUZLA_OPT_BETA_REDUCE,
+  BITWUZLA_OPT_ELIMINATE_ITES,
+  BITWUZLA_OPT_ELIMINATE_SLICES,
+  BITWUZLA_OPT_VAR_SUBST,
+  BITWUZLA_OPT_UCOPT,
+  BITWUZLA_OPT_MERGE_LAMBDAS,
+  BITWUZLA_OPT_EXTRACT_LAMBDAS,
+  BITWUZLA_OPT_NORMALIZE,
+  BITWUZLA_OPT_NORMALIZE_ADD,
+  BITWUZLA_OPT_FUN_PREPROP,
+  BITWUZLA_OPT_FUN_PRESLS,
+  BITWUZLA_OPT_FUN_DUAL_PROP,
+  BITWUZLA_OPT_FUN_DUAL_PROP_QSORT,
+  BITWUZLA_OPT_FUN_JUST,
+  BITWUZLA_OPT_FUN_JUST_HEURISTIC,
+  BITWUZLA_OPT_FUN_LAZY_SYNTHESIZE,
+  BITWUZLA_OPT_FUN_EAGER_LEMMAS,
+  BITWUZLA_OPT_FUN_STORE_LAMBDAS,
+  BITWUZLA_OPT_PRINT_DIMACS,
+  BITWUZLA_OPT_SLS_NFLIPS,
+  BITWUZLA_OPT_SLS_STRATEGY,
+  BITWUZLA_OPT_SLS_JUST,
+  BITWUZLA_OPT_SLS_MOVE_GW,
+  BITWUZLA_OPT_SLS_MOVE_RANGE,
+  BITWUZLA_OPT_SLS_MOVE_SEGMENT,
+  BITWUZLA_OPT_SLS_MOVE_RAND_WALK,
+  BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK,
+  BITWUZLA_OPT_SLS_MOVE_RAND_ALL,
+  BITWUZLA_OPT_SLS_MOVE_RAND_RANGE,
+  BITWUZLA_OPT_SLS_MOVE_PROP,
+  BITWUZLA_OPT_SLS_MOVE_PROP_N_PROP,
+  BITWUZLA_OPT_SLS_MOVE_PROP_N_SLS,
+  BITWUZLA_OPT_SLS_MOVE_PROP_FORCE_RW,
+  BITWUZLA_OPT_SLS_MOVE_INC_MOVE_TEST,
+  BITWUZLA_OPT_SLS_USE_RESTARTS,
+  BITWUZLA_OPT_SLS_USE_BANDIT,
+  BITWUZLA_OPT_PROP_NPROPS,
+  BITWUZLA_OPT_PROP_NUPDATES,
+  BITWUZLA_OPT_PROP_ENTAILED,
+  BITWUZLA_OPT_PROP_CONST_BITS,
+  BITWUZLA_OPT_PROP_CONST_DOMAINS,
+  BITWUZLA_OPT_PROP_USE_RESTARTS,
+  BITWUZLA_OPT_PROP_USE_BANDIT,
+  BITWUZLA_OPT_PROP_PATH_SEL,
+  BITWUZLA_OPT_PROP_PROB_USE_INV_VALUE,
+  BITWUZLA_OPT_PROP_PROB_FLIP_COND,
+  BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST,
+  BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA,
+  BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL,
+  BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
+  BITWUZLA_OPT_PROP_PROB_CONC_FLIP,
+  BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
+  BITWUZLA_OPT_PROP_PROB_EQ_FLIP,
+  BITWUZLA_OPT_PROP_PROB_AND_FLIP,
+  BITWUZLA_OPT_PROP_PROB_RANDOM_INPUT,
+  BITWUZLA_OPT_PROP_NO_MOVE_ON_CONFLICT,
+  BITWUZLA_OPT_PROP_SKIP_NO_PROGRESS,
+  BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT,
+  BITWUZLA_OPT_PROP_INFER_INEQ_BOUNDS,
+  BITWUZLA_OPT_PROP_SEXT,
+  BITWUZLA_OPT_PROP_XOR,
+  BITWUZLA_OPT_PROP_SRA,
+  BITWUZLA_OPT_AIGPROP_USE_RESTARTS,
+  BITWUZLA_OPT_AIGPROP_USE_BANDIT,
+  BITWUZLA_OPT_AIGPROP_NPROPS,
+  BITWUZLA_OPT_QUANT_SYNTH,
+  BITWUZLA_OPT_QUANT_DUAL_SOLVER,
+  BITWUZLA_OPT_QUANT_SYNTH_LIMIT,
+  BITWUZLA_OPT_QUANT_SYNTH_QI,
+  BITWUZLA_OPT_QUANT_DER,
+  BITWUZLA_OPT_QUANT_CER,
+  BITWUZLA_OPT_QUANT_MINISCOPE,
+  /* internal options --------------------------------------------------- */
+  BITWUZLA_OPT_SORT_EXP,
+  BITWUZLA_OPT_SORT_AIG,
+  BITWUZLA_OPT_SORT_AIGVEC,
+  BITWUZLA_OPT_SIMPLIFY_CONSTRAINTS,
+  BITWUZLA_OPT_CHECK_UNSAT_ASSUMPTIONS,
+  BITWUZLA_OPT_CHECK_MODEL,
+  BITWUZLA_OPT_CHECK_UNCONSTRAINED,
+  BITWUZLA_OPT_LS_SHARE_SAT,
+  BITWUZLA_OPT_PARSE_INTERACTIVE,
+  BITWUZLA_OPT_SAT_ENGINE_LGL_FORK,
+  BITWUZLA_OPT_SAT_ENGINE_CADICAL_FREEZE,
+  BITWUZLA_OPT_SAT_ENGINE_N_THREADS,
+  BITWUZLA_OPT_SLT_ELIM,
+  BITWUZLA_OPT_SIMP_NORMAMLIZE_ADDERS,
+  BITWUZLA_OPT_DECLSORT_BV_WIDTH,
+  BITWUZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
+  BITWUZLA_OPT_QUANT_FIXSYNTH,
+  BITWUZLA_OPT_RW_ZERO_LOWER_SLICE,
+  BITWUZLA_OPT_NONDESTR_SUBST,
+  BITWUZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE,
+  BITWUZLA_OPT_PRODUCE_UNSAT_CORES,
+  BITWUZLA_OPT_SMT_COMP_MODE,
+  /* this MUST be the last entry! */
+  BITWUZLA_OPT_NUM_OPTS,
 };
 typedef enum BitwuzlaOption BitwuzlaOption;
 
@@ -61,11 +172,11 @@ enum BitwuzlaKind
   BITWUZLA_KIND_BV_SADD_OVERFLOW,
   BITWUZLA_KIND_BV_SDIV_OVERFLOW,
   BITWUZLA_KIND_BV_SDIV,
-  BITWUZLA_KIND_BV_SGEQ,
+  BITWUZLA_KIND_BV_SGE,
   BITWUZLA_KIND_BV_SGT,
   BITWUZLA_KIND_BV_SHL,
   BITWUZLA_KIND_BV_SHR,
-  BITWUZLA_KIND_BV_SLEQ,
+  BITWUZLA_KIND_BV_SLE,
   BITWUZLA_KIND_BV_SLT,
   BITWUZLA_KIND_BV_SMOD,
   BITWUZLA_KIND_BV_SMUL_OVERFLOW,
@@ -74,9 +185,9 @@ enum BitwuzlaKind
   BITWUZLA_KIND_BV_SUB,
   BITWUZLA_KIND_BV_UADD_OVERFLOW,
   BITWUZLA_KIND_BV_UDIV,
-  BITWUZLA_KIND_BV_UGEQ,
+  BITWUZLA_KIND_BV_UGE,
   BITWUZLA_KIND_BV_UGT,
-  BITWUZLA_KIND_BV_ULEQ,
+  BITWUZLA_KIND_BV_ULE,
   BITWUZLA_KIND_BV_ULT,
   BITWUZLA_KIND_BV_UMUL_OVERFLOW,
   BITWUZLA_KIND_BV_UREM,
@@ -206,6 +317,10 @@ BitwuzlaTerm *bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
                                    const char *value,
                                    BitwuzlaBVBase base);
 
+BitwuzlaTerm *bitwuzla_mk_bv_value_uint32(Bitwuzla *bitwuzla,
+                                          BitwuzlaSort sort,
+                                          uint32_t value);
+
 BitwuzlaTerm *bitwuzla_mk_fp_value(Bitwuzla *bitwuzla,
                                    BitwuzlaTerm *bv_sign,
                                    BitwuzlaTerm *bv_exponent,
@@ -213,10 +328,36 @@ BitwuzlaTerm *bitwuzla_mk_fp_value(Bitwuzla *bitwuzla,
 
 BitwuzlaTerm *bitwuzla_mk_rm_value(Bitwuzla *bitwuzla, BitwuzlaRoundingMode rm);
 
+BitwuzlaTerm *bitwuzla_mk_term1(Bitwuzla *bitwuzla,
+                                BitwuzlaKind kind,
+                                BitwuzlaTerm *arg);
+
+BitwuzlaTerm *bitwuzla_mk_term2(Bitwuzla *bitwuzla,
+                                BitwuzlaKind kind,
+                                BitwuzlaTerm *arg0,
+                                BitwuzlaTerm *arg1);
+
+BitwuzlaTerm *bitwuzla_mk_term3(Bitwuzla *bitwuzla,
+                                BitwuzlaKind kind,
+                                BitwuzlaTerm *arg0,
+                                BitwuzlaTerm *arg1,
+                                BitwuzlaTerm *arg2);
+
 BitwuzlaTerm *bitwuzla_mk_term(Bitwuzla *bitwuzla,
                                BitwuzlaKind kind,
                                uint32_t argc,
                                BitwuzlaTerm *args[]);
+
+BitwuzlaTerm *bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
+                                         BitwuzlaKind kind,
+                                         BitwuzlaTerm *arg,
+                                         uint32_t idx);
+
+BitwuzlaTerm *bitwuzla_mk_term1_indexed2(Bitwuzla *bitwuzla,
+                                         BitwuzlaKind kind,
+                                         BitwuzlaTerm *arg,
+                                         uint32_t idx0,
+                                         uint32_t idx1);
 
 BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                                        BitwuzlaKind kind,
@@ -256,9 +397,17 @@ BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
 
 BitwuzlaTerm *bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
 
-void bitwuzla_print_model(Bitwuzla *bitwuzla, char *format, FILE *file);
+void bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file);
 
-void bitwuzla_dump_smt2(Bitwuzla *bitwuzla, FILE *file);
+void bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
+
+BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
+                              FILE *infile,
+                              const char *infile_name,
+                              FILE *outfile,
+                              char **error_msg,
+                              int32_t *parsed_status,
+                              bool *parsed_smt2);
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaSort                                                               */

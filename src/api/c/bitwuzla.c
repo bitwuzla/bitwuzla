@@ -12,11 +12,129 @@
 #include "bzlacore.h"
 #include "bzlaexp.h"
 #include "bzlamodel.h"
+#include "bzlaparse.h"
 #include "bzlaprintmodel.h"
+#include "dumper/bzladumpaig.h"
+#include "dumper/bzladumpbtor.h"
 #include "dumper/bzladumpsmt.h"
 #include "preprocess/bzlapreprocess.h"
 #include "utils/bzlaabort.h"
 #include "utils/bzlautil.h"
+
+/* -------------------------------------------------------------------------- */
+
+static BzlaOption bzla_options[BITWUZLA_OPT_NUM_OPTS] = {
+    BZLA_OPT_INCREMENTAL,
+    BZLA_OPT_MODEL_GEN,
+    BZLA_OPT_INPUT_FORMAT,
+    BZLA_OPT_OUTPUT_NUMBER_FORMAT,
+    BZLA_OPT_OUTPUT_FORMAT,
+    BZLA_OPT_ENGINE,
+    BZLA_OPT_SAT_ENGINE,
+    BZLA_OPT_PRETTY_PRINT,
+    BZLA_OPT_EXIT_CODES,
+    BZLA_OPT_SEED,
+    BZLA_OPT_VERBOSITY,
+    BZLA_OPT_LOGLEVEL,
+    BZLA_OPT_REWRITE_LEVEL,
+    BZLA_OPT_SKELETON_PREPROC,
+    BZLA_OPT_ACKERMANN,
+    BZLA_OPT_BETA_REDUCE,
+    BZLA_OPT_ELIMINATE_ITES,
+    BZLA_OPT_ELIMINATE_SLICES,
+    BZLA_OPT_VAR_SUBST,
+    BZLA_OPT_UCOPT,
+    BZLA_OPT_MERGE_LAMBDAS,
+    BZLA_OPT_EXTRACT_LAMBDAS,
+    BZLA_OPT_NORMALIZE,
+    BZLA_OPT_NORMALIZE_ADD,
+    BZLA_OPT_FUN_PREPROP,
+    BZLA_OPT_FUN_PRESLS,
+    BZLA_OPT_FUN_DUAL_PROP,
+    BZLA_OPT_FUN_DUAL_PROP_QSORT,
+    BZLA_OPT_FUN_JUST,
+    BZLA_OPT_FUN_JUST_HEURISTIC,
+    BZLA_OPT_FUN_LAZY_SYNTHESIZE,
+    BZLA_OPT_FUN_EAGER_LEMMAS,
+    BZLA_OPT_FUN_STORE_LAMBDAS,
+    BZLA_OPT_PRINT_DIMACS,
+    BZLA_OPT_SLS_NFLIPS,
+    BZLA_OPT_SLS_STRATEGY,
+    BZLA_OPT_SLS_JUST,
+    BZLA_OPT_SLS_MOVE_GW,
+    BZLA_OPT_SLS_MOVE_RANGE,
+    BZLA_OPT_SLS_MOVE_SEGMENT,
+    BZLA_OPT_SLS_MOVE_RAND_WALK,
+    BZLA_OPT_SLS_PROB_MOVE_RAND_WALK,
+    BZLA_OPT_SLS_MOVE_RAND_ALL,
+    BZLA_OPT_SLS_MOVE_RAND_RANGE,
+    BZLA_OPT_SLS_MOVE_PROP,
+    BZLA_OPT_SLS_MOVE_PROP_N_PROP,
+    BZLA_OPT_SLS_MOVE_PROP_N_SLS,
+    BZLA_OPT_SLS_MOVE_PROP_FORCE_RW,
+    BZLA_OPT_SLS_MOVE_INC_MOVE_TEST,
+    BZLA_OPT_SLS_USE_RESTARTS,
+    BZLA_OPT_SLS_USE_BANDIT,
+    BZLA_OPT_PROP_NPROPS,
+    BZLA_OPT_PROP_NUPDATES,
+    BZLA_OPT_PROP_ENTAILED,
+    BZLA_OPT_PROP_CONST_BITS,
+    BZLA_OPT_PROP_CONST_DOMAINS,
+    BZLA_OPT_PROP_USE_RESTARTS,
+    BZLA_OPT_PROP_USE_BANDIT,
+    BZLA_OPT_PROP_PATH_SEL,
+    BZLA_OPT_PROP_PROB_USE_INV_VALUE,
+    BZLA_OPT_PROP_PROB_FLIP_COND,
+    BZLA_OPT_PROP_PROB_FLIP_COND_CONST,
+    BZLA_OPT_PROP_FLIP_COND_CONST_DELTA,
+    BZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL,
+    BZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
+    BZLA_OPT_PROP_PROB_CONC_FLIP,
+    BZLA_OPT_PROP_PROB_SLICE_FLIP,
+    BZLA_OPT_PROP_PROB_EQ_FLIP,
+    BZLA_OPT_PROP_PROB_AND_FLIP,
+    BZLA_OPT_PROP_PROB_RANDOM_INPUT,
+    BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT,
+    BZLA_OPT_PROP_SKIP_NO_PROGRESS,
+    BZLA_OPT_PROP_USE_INV_LT_CONCAT,
+    BZLA_OPT_PROP_INFER_INEQ_BOUNDS,
+    BZLA_OPT_PROP_SEXT,
+    BZLA_OPT_PROP_XOR,
+    BZLA_OPT_PROP_SRA,
+    BZLA_OPT_AIGPROP_USE_RESTARTS,
+    BZLA_OPT_AIGPROP_USE_BANDIT,
+    BZLA_OPT_AIGPROP_NPROPS,
+    BZLA_OPT_QUANT_SYNTH,
+    BZLA_OPT_QUANT_DUAL_SOLVER,
+    BZLA_OPT_QUANT_SYNTH_LIMIT,
+    BZLA_OPT_QUANT_SYNTH_QI,
+    BZLA_OPT_QUANT_DER,
+    BZLA_OPT_QUANT_CER,
+    BZLA_OPT_QUANT_MINISCOPE,
+    /* internal options --------------------------------------------------- */
+    BZLA_OPT_SORT_EXP,
+    BZLA_OPT_SORT_AIG,
+    BZLA_OPT_SORT_AIGVEC,
+    BZLA_OPT_SIMPLIFY_CONSTRAINTS,
+    BZLA_OPT_CHK_FAILED_ASSUMPTIONS,
+    BZLA_OPT_CHK_MODEL,
+    BZLA_OPT_CHK_UNCONSTRAINED,
+    BZLA_OPT_LS_SHARE_SAT,
+    BZLA_OPT_PARSE_INTERACTIVE,
+    BZLA_OPT_SAT_ENGINE_LGL_FORK,
+    BZLA_OPT_SAT_ENGINE_CADICAL_FREEZE,
+    BZLA_OPT_SAT_ENGINE_N_THREADS,
+    BZLA_OPT_SLT_ELIM,
+    BZLA_OPT_SIMP_NORMAMLIZE_ADDERS,
+    BZLA_OPT_DECLSORT_BV_WIDTH,
+    BZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
+    BZLA_OPT_QUANT_FIXSYNTH,
+    BZLA_OPT_RW_ZERO_LOWER_SLICE,
+    BZLA_OPT_NONDESTR_SUBST,
+    BZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE,
+    BZLA_OPT_UNSAT_CORES,
+    BZLA_OPT_SMT_COMP_MODE,
+};
 
 /* -------------------------------------------------------------------------- */
 
@@ -31,8 +149,7 @@
 #define BZLA_IMPORT_BITWUZLA_SORT(sort) (((BzlaSortId)(long) (sort)))
 #define BZLA_EXPORT_BITWUZLA_SORT(sort) (((BitwuzlaSort)(long) (sort)))
 
-#define BZLA_IMPORT_BITWUZLA_OPTION(option) (((BzlaOption)(option)))
-#define BZLA_EXPORT_BITWUZLA_OPTION(option) (((BitwuzlaOption)(option)))
+#define BZLA_IMPORT_BITWUZLA_OPTION(option) (bzla_options[option])
 
 #define BZLA_IMPORT_BITWUZLA_RM(rm)                                \
   (rm == BITWUZLA_RM_RNA                                           \
@@ -91,8 +208,8 @@
 #define BZLA_CHECK_ARG_NOT_ZERO(arg) \
   BZLA_ABORT(arg == 0, "argument '%s' must be > 0", #arg)
 
-#define BZLA_CHECK_ARG_STR_NOT_EMPTY(arg) \
-  BZLA_ABORT(*arg == '\0', "expected non-empty string")
+#define BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(arg) \
+  BZLA_ABORT(arg == NULL || *arg == '\0', "expected non-empty string")
 
 #define BZLA_CHECK_ARG_CNT(kind, expected, argc)                               \
   BZLA_ABORT(                                                                  \
@@ -134,7 +251,7 @@
   }
 
 #define BZLA_CHECK_OPTION(bzla, opt) \
-  BZLA_ABORT(bzla_opt_is_valid(bzla, opt), "invalid option")
+  BZLA_ABORT(!bzla_opt_is_valid(bzla, opt), "invalid option")
 
 #define BZLA_CHECK_OPTION_VALUE(bzla, opt, value)                              \
   BZLA_ABORT(                                                                  \
@@ -790,7 +907,7 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
                      BitwuzlaBVBase base)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  BZLA_CHECK_ARG_STR_NOT_EMPTY(value);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(value);
 
   Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
@@ -826,6 +943,21 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
   }
   BzlaNode *res = bzla_exp_bv_const(bzla, bv);
   assert(bzla_node_get_sort_id(res) == bzla_sort);
+  BZLA_RETURN_BITWUZLA_TERM(res);
+}
+
+BitwuzlaTerm *
+bitwuzla_mk_bv_value_uint32(Bitwuzla *bitwuzla,
+                            BitwuzlaSort sort,
+                            uint32_t value)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
+  BzlaNode *res = bzla_exp_bv_unsigned(bzla, value, bzla_sort);
   BZLA_RETURN_BITWUZLA_TERM(res);
 }
 
@@ -873,6 +1005,34 @@ bitwuzla_mk_rm_value(Bitwuzla *bitwuzla, BitwuzlaRoundingMode rm)
   Bzla *bzla    = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaNode *res = bzla_exp_rm_const(bzla, BZLA_IMPORT_BITWUZLA_RM(rm));
   BZLA_RETURN_BITWUZLA_TERM(res);
+}
+
+BitwuzlaTerm *
+bitwuzla_mk_term1(Bitwuzla *bitwuzla, BitwuzlaKind kind, BitwuzlaTerm *arg)
+{
+  BitwuzlaTerm *args[] = {arg};
+  return bitwuzla_mk_term(bitwuzla, kind, 1, args);
+}
+
+BitwuzlaTerm *
+bitwuzla_mk_term2(Bitwuzla *bitwuzla,
+                  BitwuzlaKind kind,
+                  BitwuzlaTerm *arg0,
+                  BitwuzlaTerm *arg1)
+{
+  BitwuzlaTerm *args[] = {arg0, arg1};
+  return bitwuzla_mk_term(bitwuzla, kind, 2, args);
+}
+
+BitwuzlaTerm *
+bitwuzla_mk_term3(Bitwuzla *bitwuzla,
+                  BitwuzlaKind kind,
+                  BitwuzlaTerm *arg0,
+                  BitwuzlaTerm *arg1,
+                  BitwuzlaTerm *arg2)
+{
+  BitwuzlaTerm *args[] = {arg0, arg1, arg2};
+  return bitwuzla_mk_term(bitwuzla, kind, 3, args);
 }
 
 BitwuzlaTerm *
@@ -1029,7 +1189,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
     case BITWUZLA_KIND_BV_MUL:
       BZLA_CHECK_ARG_CNT("bv_nand", 2, argc);
       BZLA_CHECK_ARGS_SORT(bzla, bzla_args, argc, 0, bzla_sort_is_bv);
-      res = bzla_exp_bv_nand(bzla, bzla_args[0], bzla_args[1]);
+      res = bzla_exp_bv_mul(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_UMUL_OVERFLOW:
@@ -1056,13 +1216,13 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       res = bzla_exp_bv_slt(bzla, bzla_args[0], bzla_args[1]);
       break;
 
-    case BITWUZLA_KIND_BV_ULEQ:
+    case BITWUZLA_KIND_BV_ULE:
       BZLA_CHECK_ARG_CNT("bv_uleq", 2, argc);
       BZLA_CHECK_ARGS_SORT(bzla, bzla_args, argc, 0, bzla_sort_is_bv);
       res = bzla_exp_bv_ulte(bzla, bzla_args[0], bzla_args[1]);
       break;
 
-    case BITWUZLA_KIND_BV_SLEQ:
+    case BITWUZLA_KIND_BV_SLE:
       BZLA_CHECK_ARG_CNT("bv_sleq", 2, argc);
       BZLA_CHECK_ARGS_SORT(bzla, bzla_args, argc, 0, bzla_sort_is_bv);
       res = bzla_exp_bv_slte(bzla, bzla_args[0], bzla_args[1]);
@@ -1080,13 +1240,13 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       res = bzla_exp_bv_sgt(bzla, bzla_args[0], bzla_args[1]);
       break;
 
-    case BITWUZLA_KIND_BV_UGEQ:
+    case BITWUZLA_KIND_BV_UGE:
       BZLA_CHECK_ARG_CNT("bv_ugeq", 2, argc);
       BZLA_CHECK_ARGS_SORT(bzla, bzla_args, argc, 0, bzla_sort_is_bv);
       res = bzla_exp_bv_ugte(bzla, bzla_args[0], bzla_args[1]);
       break;
 
-    case BITWUZLA_KIND_BV_SGEQ:
+    case BITWUZLA_KIND_BV_SGE:
       BZLA_CHECK_ARG_CNT("bv_sgeq", 2, argc);
       BZLA_CHECK_ARGS_SORT(bzla, bzla_args, argc, 0, bzla_sort_is_bv);
       res = bzla_exp_bv_sgte(bzla, bzla_args[0], bzla_args[1]);
@@ -1424,6 +1584,29 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
     default: BZLA_ABORT(true, "unexpected operator kind");
   }
   BZLA_RETURN_BITWUZLA_TERM(res);
+}
+
+BitwuzlaTerm *
+bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
+                           BitwuzlaKind kind,
+                           BitwuzlaTerm *arg,
+                           uint32_t idx)
+{
+  BitwuzlaTerm *args[] = {arg};
+  uint32_t idxs[]      = {idx};
+  return bitwuzla_mk_term_indexed(bitwuzla, kind, 1, args, 1, idxs);
+}
+
+BitwuzlaTerm *
+bitwuzla_mk_term1_indexed2(Bitwuzla *bitwuzla,
+                           BitwuzlaKind kind,
+                           BitwuzlaTerm *arg,
+                           uint32_t idx0,
+                           uint32_t idx1)
+{
+  BitwuzlaTerm *args[] = {arg};
+  uint32_t idxs[]      = {idx0, idx1};
+  return bitwuzla_mk_term_indexed(bitwuzla, kind, 1, args, 2, idxs);
 }
 
 BitwuzlaTerm *
@@ -1897,12 +2080,11 @@ bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 }
 
 void
-bitwuzla_print_model(Bitwuzla *bitwuzla, char *format, FILE *file)
+bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  BZLA_CHECK_ARG_NOT_NULL(format);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(format);
   BZLA_CHECK_ARG_NOT_NULL(file);
-  BZLA_CHECK_ARG_STR_NOT_EMPTY(format);
   BZLA_ABORT(strcmp(format, "btor") && strcmp(format, "smt2"),
              "invalid model output format: %s",
              format);
@@ -1914,7 +2096,7 @@ bitwuzla_print_model(Bitwuzla *bitwuzla, char *format, FILE *file)
 }
 
 void
-bitwuzla_dump_smt2(Bitwuzla *bitwuzla, FILE *file)
+bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(file);
@@ -1923,7 +2105,60 @@ bitwuzla_dump_smt2(Bitwuzla *bitwuzla, FILE *file)
   BZLA_WARN(bzla->assumptions->count > 0,
             "dumping in incremental mode only captures the current state "
             "of the input formula without assumptions");
-  bzla_dumpsmt_dump(bzla, file);
+  if (strcmp(format, "smt2") == 0)
+  {
+    bzla_dumpsmt_dump(bzla, file);
+  }
+  else if (strcmp(format, "btor") == 0)
+  {
+    bzla_dumpbtor_dump(bzla, file, 1);
+  }
+  else if (strcmp(format, "aiger_ascii") == 0)
+  {
+    bzla_dumpaig_dump(bzla, false, file, true);
+  }
+  else if (strcmp(format, "aiger_binary") == 0)
+  {
+    bzla_dumpaig_dump(bzla, true, file, true);
+  }
+  else
+  {
+    BZLA_ABORT(true,
+               "unknown format '%s', expected one of 'smt2', 'bzla', "
+               "'aiger_ascii' or 'aiger_binary'");
+  }
+}
+
+BitwuzlaResult
+bitwuzla_parse(Bitwuzla *bitwuzla,
+               FILE *infile,
+               const char *infile_name,
+               FILE *outfile,
+               char **error_msg,
+               int32_t *parsed_status,
+               bool *parsed_smt2)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(infile);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(infile_name);
+  BZLA_CHECK_ARG_NOT_NULL(outfile);
+  BZLA_CHECK_ARG_NOT_NULL(error_msg);
+  BZLA_CHECK_ARG_NOT_NULL(parsed_status);
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_ABORT(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
+             "file parsing must be done before creating expressions");
+  int32_t bzla_res = bzla_parse(bzla,
+                                infile,
+                                infile_name,
+                                outfile,
+                                error_msg,
+                                parsed_status,
+                                parsed_smt2);
+  if (bzla_res == BZLA_RESULT_SAT) return BITWUZLA_SAT;
+  if (bzla_res == BZLA_RESULT_UNSAT) return BITWUZLA_UNSAT;
+  assert(bzla_res == BZLA_RESULT_UNKNOWN);
+  return BITWUZLA_UNKNOWN;
 }
 
 /* -------------------------------------------------------------------------- */

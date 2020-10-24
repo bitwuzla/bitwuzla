@@ -16,7 +16,7 @@ extern "C" {
 #include "bzlafp.h"
 }
 
-class TestFp : public TestBoolector
+class TestFp : public TestBitwuzla
 {
 };
 
@@ -86,34 +86,27 @@ class TestFpInternal : public TestBzla
 
 TEST_F(TestFp, sort_fp)
 {
-  BoolectorSort f16, f32, f64, f128;
+  BitwuzlaSort f16, f32, f64, f128;
 
-  f16 = boolector_fp_sort(d_bzla, 5, 11);
-  ASSERT_TRUE(boolector_is_fp_sort(d_bzla, f16));
+  f16 = bitwuzla_mk_fp_sort(d_bzla, 5, 11);
+  ASSERT_TRUE(bitwuzla_sort_is_fp(d_bzla, f16));
 
-  f32 = boolector_fp_sort(d_bzla, 8, 24);
-  ASSERT_TRUE(boolector_is_fp_sort(d_bzla, f32));
+  f32 = bitwuzla_mk_fp_sort(d_bzla, 8, 24);
+  ASSERT_TRUE(bitwuzla_sort_is_fp(d_bzla, f32));
 
-  f64 = boolector_fp_sort(d_bzla, 11, 53);
-  ASSERT_TRUE(boolector_is_fp_sort(d_bzla, f64));
+  f64 = bitwuzla_mk_fp_sort(d_bzla, 11, 53);
+  ASSERT_TRUE(bitwuzla_sort_is_fp(d_bzla, f64));
 
-  f128 = boolector_fp_sort(d_bzla, 15, 113);
-  ASSERT_TRUE(boolector_is_fp_sort(d_bzla, f128));
-
-  boolector_release_sort(d_bzla, f16);
-  boolector_release_sort(d_bzla, f32);
-  boolector_release_sort(d_bzla, f64);
-  boolector_release_sort(d_bzla, f128);
+  f128 = bitwuzla_mk_fp_sort(d_bzla, 15, 113);
+  ASSERT_TRUE(bitwuzla_sort_is_fp(d_bzla, f128));
 }
 
 TEST_F(TestFp, sort_rm)
 {
-  BoolectorSort rm;
+  BitwuzlaSort rm;
 
-  rm = boolector_rm_sort(d_bzla);
-  ASSERT_TRUE(boolector_is_rm_sort(d_bzla, rm));
-
-  boolector_release_sort(d_bzla, rm);
+  rm = bitwuzla_mk_rm_sort(d_bzla);
+  ASSERT_TRUE(bitwuzla_sort_is_rm(d_bzla, rm));
 }
 
 TEST_F(TestFpInternal, fp_as_bv)

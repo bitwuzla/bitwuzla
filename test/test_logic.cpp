@@ -16,7 +16,7 @@ extern "C" {
 
 #define BZLA_TEST_RED_LOGIC_XOR(a, b) (((a) || (b)) && !((a) && (b)))
 
-class TestLogic : public TestBoolector
+class TestLogic : public TestBitwuzla
 {
  protected:
   static constexpr uint32_t BZLA_TEST_LOGIC_LOW  = 1;
@@ -40,39 +40,32 @@ class TestLogic : public TestBoolector
       max = bzla_util_pow_2(num_bits);
       for (i = 0; i < (uint32_t) max; i++)
       {
-        BoolectorSort sort;
-        BoolectorNode *const1, *const2, *eq, *inv;
+        if (d_bzla) bitwuzla_delete(d_bzla);
+        d_bzla = bitwuzla_new();
 
-        if (d_bzla) boolector_delete(d_bzla);
-        d_bzla = boolector_new();
-
-        boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+        bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
 
         result = ~i & (max - 1);
 
-        sort   = boolector_bv_sort(d_bzla, num_bits);
-        const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
-        const2 = boolector_bv_unsigned_int(d_bzla, result, sort);
-        inv    = boolector_bv_not(d_bzla, const1);
-        eq     = boolector_eq(d_bzla, inv, const2);
-        boolector_assert(d_bzla, eq);
+        BitwuzlaSort sort    = bitwuzla_mk_bv_sort(d_bzla, num_bits);
+        BitwuzlaTerm *const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, i);
+        BitwuzlaTerm *const2 =
+            bitwuzla_mk_bv_value_uint32(d_bzla, sort, result);
+        BitwuzlaTerm *inv =
+            bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_BV_NOT, const1);
+        BitwuzlaTerm *eq =
+            bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, inv, const2);
+        bitwuzla_assert(d_bzla, eq);
 
-        ASSERT_EQ(boolector_sat(d_bzla), BOOLECTOR_SAT);
-        boolector_release(d_bzla, inv);
-        boolector_release(d_bzla, eq);
-        boolector_release(d_bzla, const1);
-        boolector_release(d_bzla, const2);
-        boolector_release_sort(d_bzla, sort);
-        boolector_delete(d_bzla);
+        ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
+        bitwuzla_delete(d_bzla);
         d_bzla = nullptr;
       }
     }
   }
 
   void binary_logic_test(uint32_t (*func)(uint32_t, uint32_t),
-                         BoolectorNode *(*bzla_fun)(Bzla *,
-                                                    BoolectorNode *,
-                                                    BoolectorNode *),
+                         BitwuzlaKind kind,
                          int32_t low,
                          int32_t high,
                          uint32_t rwl)
@@ -94,31 +87,24 @@ class TestLogic : public TestBoolector
       {
         for (j = 0; j < (uint32_t) max; j++)
         {
-          BoolectorSort sort;
-          BoolectorNode *const1, *const2, *const3, *eq, *bfun;
-
-          if (d_bzla) boolector_delete(d_bzla);
-          d_bzla = boolector_new();
-          boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          if (d_bzla) bitwuzla_delete(d_bzla);
+          d_bzla = bitwuzla_new();
+          bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
 
           result = func(i, j);
 
-          sort   = boolector_bv_sort(d_bzla, num_bits);
-          const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
-          const2 = boolector_bv_unsigned_int(d_bzla, j, sort);
-          bfun   = bzla_fun(d_bzla, const1, const2);
-          const3 = boolector_bv_unsigned_int(d_bzla, result, sort);
-          eq     = boolector_eq(d_bzla, bfun, const3);
-          boolector_assert(d_bzla, eq);
+          BitwuzlaSort sort    = bitwuzla_mk_bv_sort(d_bzla, num_bits);
+          BitwuzlaTerm *const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, i);
+          BitwuzlaTerm *const2 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, j);
+          BitwuzlaTerm *bfun = bitwuzla_mk_term2(d_bzla, kind, const1, const2);
+          BitwuzlaTerm *const3 =
+              bitwuzla_mk_bv_value_uint32(d_bzla, sort, result);
+          BitwuzlaTerm *eq =
+              bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, bfun, const3);
+          bitwuzla_assert(d_bzla, eq);
 
-          ASSERT_EQ(boolector_sat(d_bzla), BOOLECTOR_SAT);
-          boolector_release(d_bzla, eq);
-          boolector_release(d_bzla, const1);
-          boolector_release(d_bzla, const2);
-          boolector_release(d_bzla, const3);
-          boolector_release(d_bzla, bfun);
-          boolector_release_sort(d_bzla, sort);
-          boolector_delete(d_bzla);
+          ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
+          bitwuzla_delete(d_bzla);
           d_bzla = nullptr;
         }
       }
@@ -145,31 +131,25 @@ class TestLogic : public TestBoolector
         {
           for (j = 0; j < (uint32_t) max; j++)
           {
-            BoolectorSort sort;
-            BoolectorNode *const1, *const2, *const3, *eq, *xnor;
-
-            if (d_bzla) boolector_delete(d_bzla);
-            d_bzla = boolector_new();
-            boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+            if (d_bzla) bitwuzla_delete(d_bzla);
+            d_bzla = bitwuzla_new();
+            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
 
             result = ~(i ^ j) & (max - 1);
 
-            sort   = boolector_bv_sort(d_bzla, num_bits);
-            const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
-            const2 = boolector_bv_unsigned_int(d_bzla, j, sort);
-            xnor   = boolector_bv_xnor(d_bzla, const1, const2);
-            const3 = boolector_bv_unsigned_int(d_bzla, result, sort);
-            eq     = boolector_eq(d_bzla, xnor, const3);
-            boolector_assert(d_bzla, eq);
+            BitwuzlaSort sort    = bitwuzla_mk_bv_sort(d_bzla, num_bits);
+            BitwuzlaTerm *const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, i);
+            BitwuzlaTerm *const2 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, j);
+            BitwuzlaTerm *xnor   = bitwuzla_mk_term2(
+                d_bzla, BITWUZLA_KIND_BV_XNOR, const1, const2);
+            BitwuzlaTerm *const3 =
+                bitwuzla_mk_bv_value_uint32(d_bzla, sort, result);
+            BitwuzlaTerm *eq =
+                bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, xnor, const3);
+            bitwuzla_assert(d_bzla, eq);
 
-            ASSERT_EQ(boolector_sat(d_bzla), BOOLECTOR_SAT);
-            boolector_release(d_bzla, eq);
-            boolector_release(d_bzla, const1);
-            boolector_release(d_bzla, const2);
-            boolector_release(d_bzla, const3);
-            boolector_release(d_bzla, xnor);
-            boolector_release_sort(d_bzla, sort);
-            boolector_delete(d_bzla);
+            ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
+            bitwuzla_delete(d_bzla);
             d_bzla = nullptr;
           }
         }
@@ -178,7 +158,7 @@ class TestLogic : public TestBoolector
   }
 
   void red_logic_test(uint32_t (*func)(uint32_t, uint32_t),
-                      BoolectorNode *(*bzla_fun)(Bzla *, BoolectorNode *),
+                      BitwuzlaKind kind,
                       int32_t low,
                       int32_t high,
                       uint32_t rwl)
@@ -198,27 +178,21 @@ class TestLogic : public TestBoolector
       max = bzla_util_pow_2(num_bits);
       for (i = 0; i < (uint32_t) max; i++)
       {
-        BoolectorSort sort;
-        BoolectorNode *const1, *bfun;
-
-        if (d_bzla) boolector_delete(d_bzla);
-        d_bzla = boolector_new();
-        boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+        if (d_bzla) bitwuzla_delete(d_bzla);
+        d_bzla = bitwuzla_new();
+        bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
 
         result = func(i, (uint32_t) num_bits);
 
-        sort   = boolector_bv_sort(d_bzla, num_bits);
-        const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
-        bfun   = bzla_fun(d_bzla, const1);
-        boolector_assert(d_bzla, bfun);
+        BitwuzlaSort sort    = bitwuzla_mk_bv_sort(d_bzla, num_bits);
+        BitwuzlaTerm *const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, i);
+        BitwuzlaTerm *bfun   = bitwuzla_mk_term1(d_bzla, kind, const1);
+        bitwuzla_assert(d_bzla, bfun);
 
-        sat_res = boolector_sat(d_bzla);
-        ASSERT_TRUE((result && sat_res == BOOLECTOR_SAT)
-                    || (!result && sat_res == BOOLECTOR_UNSAT));
-        boolector_release(d_bzla, const1);
-        boolector_release(d_bzla, bfun);
-        boolector_release_sort(d_bzla, sort);
-        boolector_delete(d_bzla);
+        sat_res = bitwuzla_check_sat(d_bzla);
+        ASSERT_TRUE((result && sat_res == BITWUZLA_SAT)
+                    || (!result && sat_res == BITWUZLA_UNSAT));
+        bitwuzla_delete(d_bzla);
         d_bzla = nullptr;
       }
     }
@@ -272,25 +246,25 @@ TEST_F(TestLogic, not )
 TEST_F(TestLogic, and)
 {
   binary_logic_test(
-      _and, boolector_bv_and, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 1);
+      _and, BITWUZLA_KIND_BV_AND, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 1);
   binary_logic_test(
-      _and, boolector_bv_and, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 0);
+      _and, BITWUZLA_KIND_BV_AND, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 0);
 }
 
 TEST_F(TestLogic, or)
 {
   binary_logic_test(
-      _or, boolector_bv_or, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 1);
+      _or, BITWUZLA_KIND_BV_OR, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 1);
   binary_logic_test(
-      _or, boolector_bv_or, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 0);
+      _or, BITWUZLA_KIND_BV_OR, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 0);
 }
 
 TEST_F(TestLogic, xor)
 {
   binary_logic_test(
-      _xor, boolector_bv_xor, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 1);
+      _xor, BITWUZLA_KIND_BV_XOR, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 1);
   binary_logic_test(
-      _xor, boolector_bv_xor, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 0);
+      _xor, BITWUZLA_KIND_BV_XOR, BZLA_TEST_LOGIC_LOW, BZLA_TEST_LOGIC_HIGH, 0);
 }
 
 TEST_F(TestLogic, xnor)
@@ -302,12 +276,12 @@ TEST_F(TestLogic, xnor)
 TEST_F(TestLogic, redand)
 {
   red_logic_test(redand,
-                 boolector_bv_redand,
+                 BITWUZLA_KIND_BV_REDAND,
                  BZLA_TEST_RED_LOGIC_LOW,
                  BZLA_TEST_RED_LOGIC_HIGH,
                  1);
   red_logic_test(redand,
-                 boolector_bv_redand,
+                 BITWUZLA_KIND_BV_REDAND,
                  BZLA_TEST_RED_LOGIC_LOW,
                  BZLA_TEST_RED_LOGIC_HIGH,
                  0);
@@ -316,12 +290,12 @@ TEST_F(TestLogic, redand)
 TEST_F(TestLogic, redor)
 {
   red_logic_test(redor,
-                 boolector_bv_redor,
+                 BITWUZLA_KIND_BV_REDOR,
                  BZLA_TEST_RED_LOGIC_LOW,
                  BZLA_TEST_RED_LOGIC_HIGH,
                  1);
   red_logic_test(redor,
-                 boolector_bv_redor,
+                 BITWUZLA_KIND_BV_REDOR,
                  BZLA_TEST_RED_LOGIC_LOW,
                  BZLA_TEST_RED_LOGIC_HIGH,
                  0);
@@ -330,12 +304,12 @@ TEST_F(TestLogic, redor)
 TEST_F(TestLogic, redxor)
 {
   red_logic_test(redxor,
-                 boolector_bv_redxor,
+                 BITWUZLA_KIND_BV_REDXOR,
                  BZLA_TEST_RED_LOGIC_LOW,
                  BZLA_TEST_RED_LOGIC_HIGH,
                  1);
   red_logic_test(redxor,
-                 boolector_bv_redxor,
+                 BITWUZLA_KIND_BV_REDXOR,
                  BZLA_TEST_RED_LOGIC_LOW,
                  BZLA_TEST_RED_LOGIC_HIGH,
                  0);

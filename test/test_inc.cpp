@@ -9,152 +9,138 @@
  *  See COPYING for more information on using this software.
  */
 
+#include <sstream>
+
 #include "test.h"
 
 extern "C" {
 #include "bzlaopt.h"
 }
 
-class TestInc : public TestBoolector
+class TestInc : public TestBitwuzla
 {
  protected:
   void test_inc_counter(uint32_t w, bool nondet)
   {
     assert(w > 0);
 
-    BoolectorNode *nonzero, *allzero, *one, *oracle;
-    BoolectorNode *current, *next, *inc;
-    BoolectorSort s;
-    char name[100];
+    std::stringstream name;
     uint32_t i;
     int32_t res;
 
-    boolector_set_opt(d_bzla, BZLA_OPT_INCREMENTAL, 1);
-    s       = boolector_bv_sort(d_bzla, w);
-    one     = boolector_bv_one(d_bzla, s);
-    current = boolector_bv_zero(d_bzla, s);
-    boolector_release_sort(d_bzla, s);
+    bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+
+    BitwuzlaSort s        = bitwuzla_mk_bv_sort(d_bzla, w);
+    BitwuzlaTerm *one     = bitwuzla_mk_bv_one(d_bzla, s);
+    BitwuzlaTerm *current = bitwuzla_mk_bv_zero(d_bzla, s);
 
     i = 0;
-
     for (;;)
     {
-      inc = boolector_bv_add(d_bzla, current, one);
+      BitwuzlaTerm *inc =
+          bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, current, one);
+      BitwuzlaTerm *next, *oracle;
 
       if (nondet)
       {
-        sprintf(name, "oracle%d", i);
+        name << oracle << i;
         if (i)
         {
-          s      = boolector_bool_sort(d_bzla);
-          oracle = boolector_var(d_bzla, s, name);
-          boolector_release_sort(d_bzla, s);
+          s      = bitwuzla_mk_bool_sort(d_bzla);
+          oracle = bitwuzla_mk_const(d_bzla, s, name.str().c_str());
         }
 
         else
-          oracle = boolector_true(d_bzla);
-        next = boolector_cond(d_bzla, oracle, inc, current);
-        boolector_release(d_bzla, oracle);
+        {
+          oracle = bitwuzla_mk_true(d_bzla);
+        }
+        next =
+            bitwuzla_mk_term3(d_bzla, BITWUZLA_KIND_ITE, oracle, inc, current);
       }
       else
-        next = boolector_copy(d_bzla, inc);
+      {
+        next = inc;
+      }
 
-      boolector_release(d_bzla, inc);
-      boolector_release(d_bzla, current);
       current = next;
 
-      nonzero = boolector_bv_redor(d_bzla, current);
-      allzero = boolector_bv_not(d_bzla, nonzero);
-      boolector_release(d_bzla, nonzero);
+      BitwuzlaTerm *nonzero =
+          bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_BV_REDOR, current);
+      BitwuzlaTerm *allzero =
+          bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_BV_NOT, nonzero);
 
       i++;
 
-      boolector_assume(d_bzla, allzero);
+      bitwuzla_assume(d_bzla, allzero);
 
-      res = boolector_sat(d_bzla);
-      if (res == BOOLECTOR_SAT)
+      res = bitwuzla_check_sat(d_bzla);
+      if (res == BITWUZLA_SAT)
       {
-        boolector_release(d_bzla, allzero);
         break;
       }
-      ASSERT_EQ(res, BOOLECTOR_UNSAT);
-      ASSERT_TRUE(boolector_failed(d_bzla, allzero));
+      ASSERT_EQ(res, BITWUZLA_UNSAT);
+      ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, allzero));
       ASSERT_LT(i, (uint32_t)(1 << w));
-      boolector_release(d_bzla, allzero);
     }
 
     ASSERT_EQ(i, (uint32_t)(1 << w));
-
-    boolector_release(d_bzla, one);
-    boolector_release(d_bzla, current);
   }
 
   void test_inc_lt(uint32_t w)
   {
     assert(w > 0);
 
-    BoolectorNode *prev, *next, *lt;
-    BoolectorSort s;
-    char name[100];
+    BitwuzlaTerm *prev, *next, *lt;
+    BitwuzlaSort s;
+    std::stringstream name;
     uint32_t i;
     int32_t res;
 
-    boolector_set_opt(d_bzla, BZLA_OPT_INCREMENTAL, 1);
+    bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
 
     i    = 0;
     prev = 0;
     for (;;)
     {
       i++;
-
-      sprintf(name, "%d", i);
-      s    = boolector_bv_sort(d_bzla, w);
-      next = boolector_var(d_bzla, s, name);
-      boolector_release_sort(d_bzla, s);
+      name << i;
+      s    = bitwuzla_mk_bv_sort(d_bzla, w);
+      next = bitwuzla_mk_const(d_bzla, s, name.str().c_str());
 
       if (prev)
       {
-        lt = boolector_bv_ult(d_bzla, prev, next);
-        boolector_assert(d_bzla, lt);
-        boolector_release(d_bzla, lt);
-        boolector_release(d_bzla, prev);
+        lt = bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ULT, prev, next);
+        bitwuzla_assert(d_bzla, lt);
       }
 
       prev = next;
 
-      res = boolector_sat(d_bzla);
-      if (res == BOOLECTOR_UNSAT) break;
+      res = bitwuzla_check_sat(d_bzla);
+      if (res == BITWUZLA_UNSAT) break;
 
-      ASSERT_EQ(res, BOOLECTOR_SAT);
+      ASSERT_EQ(res, BITWUZLA_SAT);
       ASSERT_LE(i, (uint32_t)(1 << w));
     }
 
     ASSERT_EQ(i, (uint32_t)(1 << w) + 1);
-
-    boolector_release(d_bzla, prev);
   }
 };
 
 TEST_F(TestInc, true_false)
 {
-  BoolectorNode *ff;
-  BoolectorNode *tt;
+  BitwuzlaTerm *ff = bitwuzla_mk_false(d_bzla);
+  BitwuzlaTerm *tt = bitwuzla_mk_true(d_bzla);
   int32_t res;
 
-  ff = boolector_false(d_bzla);
-  tt = boolector_true(d_bzla);
-  boolector_set_opt(d_bzla, BZLA_OPT_INCREMENTAL, 1);
-  boolector_assume(d_bzla, tt);
-  res = boolector_sat(d_bzla);
-  ASSERT_EQ(res, BOOLECTOR_SAT);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+  bitwuzla_assume(d_bzla, tt);
+  res = bitwuzla_check_sat(d_bzla);
+  ASSERT_EQ(res, BITWUZLA_SAT);
 
-  boolector_assume(d_bzla, ff);
-  res = boolector_sat(d_bzla);
-  ASSERT_EQ(res, BOOLECTOR_UNSAT);
-  ASSERT_TRUE(boolector_failed(d_bzla, ff));
-
-  boolector_release(d_bzla, ff);
-  boolector_release(d_bzla, tt);
+  bitwuzla_assume(d_bzla, ff);
+  res = bitwuzla_check_sat(d_bzla);
+  ASSERT_EQ(res, BITWUZLA_UNSAT);
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, ff));
 }
 
 TEST_F(TestInc, count1) { test_inc_counter(1, false); }
@@ -190,71 +176,56 @@ TEST_F(TestInc, lt8) { test_inc_lt(8); }
 TEST_F(TestInc, assume_assert1)
 {
   int32_t sat_result;
-  BoolectorNode *array, *index1, *index2, *read1, *read2, *eq_index, *ne_read;
-  BoolectorSort s, as;
-
-  boolector_set_opt(d_bzla, BZLA_OPT_INCREMENTAL, 1);
-  boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
-  s        = boolector_bool_sort(d_bzla);
-  as       = boolector_array_sort(d_bzla, s, s);
-  array    = boolector_array(d_bzla, as, "array1");
-  index1   = boolector_var(d_bzla, s, "index1");
-  index2   = boolector_var(d_bzla, s, "index2");
-  read1    = boolector_read(d_bzla, array, index1);
-  read2    = boolector_read(d_bzla, array, index2);
-  eq_index = boolector_eq(d_bzla, index1, index2);
-  ne_read  = boolector_ne(d_bzla, read1, read2);
-  boolector_assert(d_bzla, ne_read);
-  sat_result = boolector_sat(d_bzla);
-  ASSERT_EQ(sat_result, BOOLECTOR_SAT);
-  boolector_assume(d_bzla, eq_index);
-  sat_result = boolector_sat(d_bzla);
-  ASSERT_EQ(sat_result, BOOLECTOR_UNSAT);
-  ASSERT_TRUE(boolector_failed(d_bzla, eq_index));
-  sat_result = boolector_sat(d_bzla);
-  ASSERT_EQ(sat_result, BOOLECTOR_SAT);
-  boolector_release(d_bzla, array);
-  boolector_release(d_bzla, index1);
-  boolector_release(d_bzla, index2);
-  boolector_release(d_bzla, read1);
-  boolector_release(d_bzla, read2);
-  boolector_release(d_bzla, eq_index);
-  boolector_release(d_bzla, ne_read);
-  boolector_release_sort(d_bzla, s);
-  boolector_release_sort(d_bzla, as);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+  BitwuzlaSort s       = bitwuzla_mk_bool_sort(d_bzla);
+  BitwuzlaSort as      = bitwuzla_mk_array_sort(d_bzla, s, s);
+  BitwuzlaTerm *array  = bitwuzla_mk_const(d_bzla, as, "array1");
+  BitwuzlaTerm *index1 = bitwuzla_mk_const(d_bzla, s, "index1");
+  BitwuzlaTerm *index2 = bitwuzla_mk_const(d_bzla, s, "index2");
+  BitwuzlaTerm *read1 =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_ARRAY_SELECT, array, index1);
+  BitwuzlaTerm *read2 =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_ARRAY_SELECT, array, index2);
+  BitwuzlaTerm *eq_index =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, index1, index2);
+  BitwuzlaTerm *ne_read =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_DISTINCT, read1, read2);
+  bitwuzla_assert(d_bzla, ne_read);
+  sat_result = bitwuzla_check_sat(d_bzla);
+  ASSERT_EQ(sat_result, BITWUZLA_SAT);
+  bitwuzla_assume(d_bzla, eq_index);
+  sat_result = bitwuzla_check_sat(d_bzla);
+  ASSERT_EQ(sat_result, BITWUZLA_UNSAT);
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, eq_index));
+  sat_result = bitwuzla_check_sat(d_bzla);
+  ASSERT_EQ(sat_result, BITWUZLA_SAT);
 }
 
 TEST_F(TestInc, lemmas_on_demand1)
 {
   int32_t sat_result;
-  BoolectorNode *array, *index1, *index2, *read1, *read2, *eq, *ne;
-  BoolectorSort s, as;
 
-  boolector_set_opt(d_bzla, BZLA_OPT_INCREMENTAL, 1);
-  boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
-  s      = boolector_bool_sort(d_bzla);
-  as     = boolector_array_sort(d_bzla, s, s);
-  array  = boolector_array(d_bzla, as, "array1");
-  index1 = boolector_var(d_bzla, s, "index1");
-  index2 = boolector_var(d_bzla, s, "index2");
-  read1  = boolector_read(d_bzla, array, index1);
-  read2  = boolector_read(d_bzla, array, index2);
-  eq     = boolector_eq(d_bzla, index1, index2);
-  ne     = boolector_ne(d_bzla, read1, read2);
-  boolector_assert(d_bzla, eq);
-  boolector_assume(d_bzla, ne);
-  sat_result = boolector_sat(d_bzla);
-  ASSERT_EQ(sat_result, BOOLECTOR_UNSAT);
-  ASSERT_TRUE(boolector_failed(d_bzla, ne));
-  sat_result = boolector_sat(d_bzla);
-  ASSERT_EQ(sat_result, BOOLECTOR_SAT);
-  boolector_release(d_bzla, array);
-  boolector_release(d_bzla, index1);
-  boolector_release(d_bzla, index2);
-  boolector_release(d_bzla, read1);
-  boolector_release(d_bzla, read2);
-  boolector_release(d_bzla, eq);
-  boolector_release(d_bzla, ne);
-  boolector_release_sort(d_bzla, s);
-  boolector_release_sort(d_bzla, as);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+  BitwuzlaSort s       = bitwuzla_mk_bool_sort(d_bzla);
+  BitwuzlaSort as      = bitwuzla_mk_array_sort(d_bzla, s, s);
+  BitwuzlaTerm *array  = bitwuzla_mk_const(d_bzla, as, "array1");
+  BitwuzlaTerm *index1 = bitwuzla_mk_const(d_bzla, s, "index1");
+  BitwuzlaTerm *index2 = bitwuzla_mk_const(d_bzla, s, "index2");
+  BitwuzlaTerm *read1 =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_ARRAY_SELECT, array, index1);
+  BitwuzlaTerm *read2 =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_ARRAY_SELECT, array, index2);
+  BitwuzlaTerm *eq =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, index1, index2);
+  BitwuzlaTerm *ne =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_DISTINCT, read1, read2);
+  bitwuzla_assert(d_bzla, eq);
+  bitwuzla_assume(d_bzla, ne);
+  sat_result = bitwuzla_check_sat(d_bzla);
+  ASSERT_EQ(sat_result, BITWUZLA_UNSAT);
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, ne));
+  sat_result = bitwuzla_check_sat(d_bzla);
+  ASSERT_EQ(sat_result, BITWUZLA_SAT);
 }

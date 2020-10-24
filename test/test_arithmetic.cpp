@@ -14,16 +14,14 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
-class TestArith : public TestBoolector
+class TestArith : public TestBitwuzla
 {
  protected:
   static constexpr uint32_t BZLA_TEST_ARITHMETIC_LOW  = 1;
   static constexpr uint32_t BZLA_TEST_ARITHMETIC_HIGH = 4;
 
   void u_arithmetic_test(int32_t (*func)(int32_t, int32_t),
-                         BoolectorNode* (*btorfun)(Bzla*,
-                                                   BoolectorNode*,
-                                                   BoolectorNode*),
+                         BitwuzlaKind kind,
                          int32_t low,
                          int32_t high,
                          uint32_t rwl)
@@ -49,28 +47,23 @@ class TestArith : public TestBoolector
 
           if (result < max)
           {
-            if (d_bzla) boolector_delete(d_bzla);
-            d_bzla = boolector_new();
-            boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+            if (d_bzla) bitwuzla_delete(d_bzla);
+            d_bzla = bitwuzla_new();
+            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
 
-            BoolectorSort sort = boolector_bv_sort(d_bzla, num_bits);
-            BoolectorNode *const1, *const2, *const3, *bfun, *eq;
+            BitwuzlaSort sort = bitwuzla_mk_bv_sort(d_bzla, num_bits);
 
-            const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
-            const2 = boolector_bv_unsigned_int(d_bzla, j, sort);
-            bfun   = btorfun(d_bzla, const1, const2);
-            const3 = boolector_bv_unsigned_int(d_bzla, result, sort);
-            eq     = boolector_eq(d_bzla, bfun, const3);
-            boolector_assert(d_bzla, eq);
+            BitwuzlaTerm *const1, *const2, *const3, *bfun, *eq;
+            const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, i);
+            const2 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, j);
+            bfun   = bitwuzla_mk_term2(d_bzla, kind, const1, const2);
+            const3 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, result);
+            eq = bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, bfun, const3);
 
-            ASSERT_EQ(boolector_sat(d_bzla), BOOLECTOR_SAT);
-            boolector_release_sort(d_bzla, sort);
-            boolector_release(d_bzla, const1);
-            boolector_release(d_bzla, const2);
-            boolector_release(d_bzla, const3);
-            boolector_release(d_bzla, bfun);
-            boolector_release(d_bzla, eq);
-            boolector_delete(d_bzla);
+            bitwuzla_assert(d_bzla, eq);
+
+            ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
+            bitwuzla_delete(d_bzla);
             d_bzla = nullptr;
           }
         }
@@ -79,9 +72,7 @@ class TestArith : public TestBoolector
   }
 
   void s_arithmetic_test(int32_t (*func)(int32_t, int32_t),
-                         BoolectorNode* (*btorfun)(Bzla*,
-                                                   BoolectorNode*,
-                                                   BoolectorNode*),
+                         BitwuzlaKind kind,
                          int32_t low,
                          int32_t high,
                          uint32_t rwl)
@@ -107,28 +98,24 @@ class TestArith : public TestBoolector
 
           if (result >= -max && result < max)
           {
-            if (d_bzla) boolector_delete(d_bzla);
-            d_bzla = boolector_new();
-            boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+            if (d_bzla) bitwuzla_delete(d_bzla);
+            d_bzla = bitwuzla_new();
+            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
 
-            BoolectorSort sort = boolector_bv_sort(d_bzla, num_bits);
-            BoolectorNode *const1, *const2, *const3, *bfun, *eq;
+            BitwuzlaSort sort = bitwuzla_mk_bv_sort(d_bzla, num_bits);
+            BitwuzlaTerm *const1, *const2, *const3, *bfun, *eq;
 
-            const1 = boolector_bv_int(d_bzla, i, sort);
-            const2 = boolector_bv_int(d_bzla, j, sort);
-            bfun   = btorfun(d_bzla, const1, const2);
-            const3 = boolector_bv_int(d_bzla, result, sort);
-            eq     = boolector_eq(d_bzla, bfun, const3);
-            boolector_assert(d_bzla, eq);
+            const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, (uint32_t) i);
+            const2 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, (uint32_t) j);
 
-            ASSERT_EQ(boolector_sat(d_bzla), BOOLECTOR_SAT);
-            boolector_release_sort(d_bzla, sort);
-            boolector_release(d_bzla, const1);
-            boolector_release(d_bzla, const2);
-            boolector_release(d_bzla, const3);
-            boolector_release(d_bzla, bfun);
-            boolector_release(d_bzla, eq);
-            boolector_delete(d_bzla);
+            bfun = bitwuzla_mk_term2(d_bzla, kind, const1, const2);
+            const3 =
+                bitwuzla_mk_bv_value_uint32(d_bzla, sort, (uint32_t) result);
+            eq = bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, bfun, const3);
+            bitwuzla_assert(d_bzla, eq);
+
+            ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
+            bitwuzla_delete(d_bzla);
             d_bzla = nullptr;
           }
         }
@@ -163,12 +150,12 @@ class TestArith : public TestBoolector
 TEST_F(TestArith, add_u)
 {
   u_arithmetic_test(add,
-                    boolector_bv_add,
+                    BITWUZLA_KIND_BV_ADD,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   u_arithmetic_test(add,
-                    boolector_bv_add,
+                    BITWUZLA_KIND_BV_ADD,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -177,12 +164,12 @@ TEST_F(TestArith, add_u)
 TEST_F(TestArith, sub_u)
 {
   u_arithmetic_test(sub,
-                    boolector_bv_sub,
+                    BITWUZLA_KIND_BV_SUB,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   u_arithmetic_test(sub,
-                    boolector_bv_sub,
+                    BITWUZLA_KIND_BV_SUB,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -191,12 +178,12 @@ TEST_F(TestArith, sub_u)
 TEST_F(TestArith, mul_u)
 {
   u_arithmetic_test(mul,
-                    boolector_bv_mul,
+                    BITWUZLA_KIND_BV_MUL,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   u_arithmetic_test(mul,
-                    boolector_bv_mul,
+                    BITWUZLA_KIND_BV_MUL,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -205,12 +192,12 @@ TEST_F(TestArith, mul_u)
 TEST_F(TestArith, udiv_u)
 {
   u_arithmetic_test(divide,
-                    boolector_bv_udiv,
+                    BITWUZLA_KIND_BV_UDIV,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   u_arithmetic_test(divide,
-                    boolector_bv_udiv,
+                    BITWUZLA_KIND_BV_UDIV,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -219,12 +206,12 @@ TEST_F(TestArith, udiv_u)
 TEST_F(TestArith, urem_u)
 {
   u_arithmetic_test(rem,
-                    boolector_bv_urem,
+                    BITWUZLA_KIND_BV_UREM,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   u_arithmetic_test(rem,
-                    boolector_bv_urem,
+                    BITWUZLA_KIND_BV_UREM,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -233,12 +220,12 @@ TEST_F(TestArith, urem_u)
 TEST_F(TestArith, add_s)
 {
   s_arithmetic_test(add,
-                    boolector_bv_add,
+                    BITWUZLA_KIND_BV_ADD,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   s_arithmetic_test(add,
-                    boolector_bv_add,
+                    BITWUZLA_KIND_BV_ADD,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -247,12 +234,12 @@ TEST_F(TestArith, add_s)
 TEST_F(TestArith, sub_s)
 {
   s_arithmetic_test(sub,
-                    boolector_bv_sub,
+                    BITWUZLA_KIND_BV_SUB,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   s_arithmetic_test(sub,
-                    boolector_bv_sub,
+                    BITWUZLA_KIND_BV_SUB,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -261,12 +248,12 @@ TEST_F(TestArith, sub_s)
 TEST_F(TestArith, mul_s)
 {
   s_arithmetic_test(mul,
-                    boolector_bv_mul,
+                    BITWUZLA_KIND_BV_MUL,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   s_arithmetic_test(mul,
-                    boolector_bv_mul,
+                    BITWUZLA_KIND_BV_MUL,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -275,12 +262,12 @@ TEST_F(TestArith, mul_s)
 TEST_F(TestArith, sdiv_s)
 {
   s_arithmetic_test(divide,
-                    boolector_bv_sdiv,
+                    BITWUZLA_KIND_BV_SDIV,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   s_arithmetic_test(divide,
-                    boolector_bv_sdiv,
+                    BITWUZLA_KIND_BV_SDIV,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);
@@ -289,12 +276,12 @@ TEST_F(TestArith, sdiv_s)
 TEST_F(TestArith, srem_s)
 {
   s_arithmetic_test(rem,
-                    boolector_bv_srem,
+                    BITWUZLA_KIND_BV_SREM,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     1);
   s_arithmetic_test(rem,
-                    boolector_bv_srem,
+                    BITWUZLA_KIND_BV_SREM,
                     BZLA_TEST_ARITHMETIC_LOW,
                     BZLA_TEST_ARITHMETIC_HIGH,
                     0);

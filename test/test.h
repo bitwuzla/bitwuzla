@@ -18,6 +18,7 @@
 #include "gtest/gtest.h"
 
 extern "C" {
+#include "api/c/bitwuzla.h"
 #include "boolector.h"
 #include "bzlabvprop.h"
 #include "bzlaconfig.h"
@@ -121,25 +122,25 @@ class TestBzla : public TestCommon
   Bzla *d_bzla = nullptr;
 };
 
-class TestBoolector : public TestCommon
+class TestBitwuzla : public TestCommon
 {
  protected:
-  void SetUp() override { d_bzla = boolector_new(); }
+  void SetUp() override { d_bzla = bitwuzla_new(); }
 
   void TearDown() override
   {
     if (d_bzla)
     {
-      boolector_delete(d_bzla);
+      bitwuzla_delete(d_bzla);
     }
 
     TestCommon::TearDown();
   }
 
-  Bzla *d_bzla = nullptr;
+  Bitwuzla *d_bzla = nullptr;
 };
 
-class TestFile : public TestBoolector
+class TestFile : public TestBitwuzla
 {
  protected:
   void run_test(const char *name, int32_t expected, uint32_t verbosity = 0u)
@@ -155,7 +156,7 @@ class TestFile : public TestBoolector
 
     std::stringstream ss_in;
     FILE *f_in;
-    int32_t parse_status;
+    int32_t parsed_status;
     char *parse_err;
     int32_t sat_res;
     bool parsed_smt2;
@@ -164,15 +165,15 @@ class TestFile : public TestBoolector
     f_in = fopen(ss_in.str().c_str(), "r");
     assert(f_in);
 
-    boolector_set_opt(d_bzla, BZLA_OPT_VERBOSITY, verbosity);
+    bitwuzla_set_option(d_bzla, BITWUZLA_OPT_VERBOSITY, verbosity);
 
-    sat_res = boolector_parse(d_bzla,
-                              f_in,
-                              ss_in.str().c_str(),
-                              d_log_file,
-                              &parse_err,
-                              &parse_status,
-                              &parsed_smt2);
+    sat_res = bitwuzla_parse(d_bzla,
+                             f_in,
+                             ss_in.str().c_str(),
+                             d_log_file,
+                             &parse_err,
+                             &parsed_status,
+                             &parsed_smt2);
     if (d_expect_parse_error)
     {
       ASSERT_NE(parse_err, nullptr);
@@ -188,36 +189,26 @@ class TestFile : public TestBoolector
     if (d_dump)
     {
       assert(d_log_file);
-      if (d_dump_format == "btor")
-      {
-        boolector_simplify(d_bzla);
-        boolector_dump_btor(d_bzla, d_log_file);
-      }
-      else
-      {
-        assert(d_dump_format == "smt2");
-        boolector_simplify(d_bzla);
-        boolector_dump_smt2(d_bzla, d_log_file);
-      }
+      bitwuzla_simplify(d_bzla);
+      bitwuzla_dump_formula(d_bzla, d_dump_format.c_str(), d_log_file);
     }
 
-    if (d_check_sat && sat_res == BOOLECTOR_UNKNOWN)
+    if (d_check_sat && sat_res == BITWUZLA_UNKNOWN)
     {
-      sat_res = boolector_sat(d_bzla);
+      sat_res = bitwuzla_check_sat(d_bzla);
       fprintf(d_log_file,
               "%s\n",
-              sat_res == BOOLECTOR_SAT
+              sat_res == BITWUZLA_SAT
                   ? "sat"
-                  : (sat_res == BOOLECTOR_UNSAT ? "unsat" : "unknown"));
+                  : (sat_res == BITWUZLA_UNSAT ? "unsat" : "unknown"));
     }
 
     if (d_get_model)
     {
-      boolector_print_model(
-          d_bzla, (char *) d_model_format.c_str(), d_log_file);
+      bitwuzla_print_model(d_bzla, (char *) d_model_format.c_str(), d_log_file);
     }
 
-    if (expected != BOOLECTOR_UNKNOWN)
+    if (expected != BITWUZLA_UNKNOWN)
     {
       ASSERT_EQ(sat_res, expected);
     }

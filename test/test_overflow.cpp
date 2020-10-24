@@ -16,22 +16,11 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
-class TestOverflow : public TestBzla
+class TestOverflow : public TestBitwuzla
 {
  protected:
   static constexpr uint32_t BZLA_TEST_OVERFLOW_LOW  = 1;
   static constexpr uint32_t BZLA_TEST_OVERFLOW_HIGH = 4;
-
-  enum Op
-  {
-    UADD,
-    SADD,
-    USUB,
-    SSUB,
-    UMUL,
-    SMUL,
-    SDIV
-  };
 
   int32_t add(int32_t x, int32_t y) { return x + y; }
 
@@ -45,15 +34,16 @@ class TestOverflow : public TestBzla
     return x / y;
   }
 
-  void u_overflow_test(Op op, int32_t low, int32_t high, uint32_t rwl)
+  void u_overflow_test(BitwuzlaKind kind,
+                       int32_t low,
+                       int32_t high,
+                       uint32_t rwl)
   {
     assert(low > 0);
     assert(low <= high);
 
-    BoolectorNode *(*bzla_fun)(Bzla *, BoolectorNode *, BoolectorNode *);
-
     int32_t i, j, num_bits, max, result;
-    bool overflow_test, overflow_boolector;
+    bool overflow_test, overflow_bzla;
     int32_t sat_res;
 
     for (num_bits = low; num_bits <= high; num_bits++)
@@ -63,93 +53,68 @@ class TestOverflow : public TestBzla
       {
         for (j = 0; j < max; j++)
         {
-          BoolectorSort sort;
-          BoolectorNode *const1, *const2, *bfun;
+          if (d_bzla) bitwuzla_delete(d_bzla);
+          d_bzla = bitwuzla_new();
 
-          if (d_bzla) boolector_delete(d_bzla);
-          d_bzla = boolector_new();
+          bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
 
-          boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          overflow_test = false;
+          overflow_bzla = false;
 
-          overflow_test      = false;
-          overflow_boolector = false;
-
-          switch (op)
+          switch (kind)
           {
-            case UADD:
-              bzla_fun = boolector_bv_uaddo;
-              result   = add(i, j);
-              break;
-            case SADD:
-              bzla_fun = boolector_bv_saddo;
-              result   = add(i, j);
-              break;
-            case USUB:
-              bzla_fun = boolector_bv_usubo;
-              result   = sub(i, j);
-              break;
-            case SSUB:
-              bzla_fun = boolector_bv_ssubo;
-              result   = sub(i, j);
-              break;
-            case UMUL:
-              bzla_fun = boolector_bv_umulo;
-              result   = mul(i, j);
-              break;
-            case SMUL:
-              bzla_fun = boolector_bv_smulo;
-              result   = mul(i, j);
-              break;
+            case BITWUZLA_KIND_BV_UADD_OVERFLOW:
+            case BITWUZLA_KIND_BV_SADD_OVERFLOW: result = add(i, j); break;
+            case BITWUZLA_KIND_BV_USUB_OVERFLOW:
+            case BITWUZLA_KIND_BV_SSUB_OVERFLOW: result = sub(i, j); break;
+            case BITWUZLA_KIND_BV_UMUL_OVERFLOW:
+            case BITWUZLA_KIND_BV_SMUL_OVERFLOW: result = mul(i, j); break;
             default:
-              assert(op == SDIV);
-              bzla_fun = boolector_bv_sdivo;
-              result   = div(i, j);
+              assert(kind == BITWUZLA_KIND_BV_SDIV_OVERFLOW);
+              result = div(i, j);
           }
 
           if (result < 0 || result >= max) overflow_test = true;
 
-          sort   = boolector_bv_sort(d_bzla, num_bits);
-          const1 = boolector_bv_unsigned_int(d_bzla, i, sort);
-          const2 = boolector_bv_unsigned_int(d_bzla, j, sort);
-          bfun   = bzla_fun(d_bzla, const1, const2);
-          boolector_assert(d_bzla, bfun);
+          BitwuzlaSort sort    = bitwuzla_mk_bv_sort(d_bzla, num_bits);
+          BitwuzlaTerm *const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, i);
+          BitwuzlaTerm *const2 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, j);
+          BitwuzlaTerm *bfun = bitwuzla_mk_term2(d_bzla, kind, const1, const2);
+          bitwuzla_assert(d_bzla, bfun);
 
-          sat_res = boolector_sat(d_bzla);
-          ASSERT_TRUE(sat_res == BOOLECTOR_SAT || sat_res == BOOLECTOR_UNSAT);
-          if (sat_res == BOOLECTOR_SAT)
+          sat_res = bitwuzla_check_sat(d_bzla);
+          ASSERT_TRUE(sat_res == BITWUZLA_SAT || sat_res == BITWUZLA_UNSAT);
+          if (sat_res == BITWUZLA_SAT)
           {
-            overflow_boolector = true;
+            overflow_bzla = true;
           }
-          if (overflow_boolector)
+          if (overflow_bzla)
           {
             ASSERT_TRUE(overflow_test);
           }
           if (overflow_test)
           {
-            ASSERT_TRUE(overflow_boolector);
+            ASSERT_TRUE(overflow_bzla);
           }
 
-          boolector_release_sort(d_bzla, sort);
-          boolector_release(d_bzla, const1);
-          boolector_release(d_bzla, const2);
-          boolector_release(d_bzla, bfun);
-          boolector_delete(d_bzla);
+          bitwuzla_delete(d_bzla);
           d_bzla = nullptr;
         }
       }
     }
   }
 
-  void s_overflow_test(
-      Op op, bool exclude_second_zero, int32_t low, int32_t high, uint32_t rwl)
+  void s_overflow_test(BitwuzlaKind kind,
+                       bool exclude_second_zero,
+                       int32_t low,
+                       int32_t high,
+                       uint32_t rwl)
   {
     assert(low > 0);
     assert(low <= high);
 
-    BoolectorNode *(*bzla_fun)(Bzla *, BoolectorNode *, BoolectorNode *);
-
     int32_t i, j;
-    bool overflow_test, overflow_boolector;
+    bool overflow_test, overflow_bzla;
     int32_t result, num_bits, max;
     int32_t sat_res;
 
@@ -162,77 +127,54 @@ class TestOverflow : public TestBzla
         {
           if (!exclude_second_zero || j != 0)
           {
-            BoolectorSort sort;
-            BoolectorNode *const1, *const2, *bfun;
+            if (d_bzla) bitwuzla_delete(d_bzla);
+            d_bzla = bitwuzla_new();
 
-            if (d_bzla) boolector_delete(d_bzla);
-            d_bzla = boolector_new();
+            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
 
-            boolector_set_opt(d_bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+            overflow_test = false;
+            overflow_bzla = false;
 
-            overflow_test      = false;
-            overflow_boolector = false;
-
-            switch (op)
+            switch (kind)
             {
-              case UADD:
-                bzla_fun = boolector_bv_uaddo;
-                result   = add(i, j);
-                break;
-              case SADD:
-                bzla_fun = boolector_bv_saddo;
-                result   = add(i, j);
-                break;
-              case USUB:
-                bzla_fun = boolector_bv_usubo;
-                result   = sub(i, j);
-                break;
-              case SSUB:
-                bzla_fun = boolector_bv_ssubo;
-                result   = sub(i, j);
-                break;
-              case UMUL:
-                bzla_fun = boolector_bv_umulo;
-                result   = mul(i, j);
-                break;
-              case SMUL:
-                bzla_fun = boolector_bv_smulo;
-                result   = mul(i, j);
-                break;
+              case BITWUZLA_KIND_BV_UADD_OVERFLOW:
+              case BITWUZLA_KIND_BV_SADD_OVERFLOW: result = add(i, j); break;
+              case BITWUZLA_KIND_BV_USUB_OVERFLOW:
+              case BITWUZLA_KIND_BV_SSUB_OVERFLOW: result = sub(i, j); break;
+              case BITWUZLA_KIND_BV_UMUL_OVERFLOW:
+              case BITWUZLA_KIND_BV_SMUL_OVERFLOW: result = mul(i, j); break;
               default:
-                assert(op == SDIV);
-                bzla_fun = boolector_bv_sdivo;
-                result   = div(i, j);
+                assert(kind == BITWUZLA_KIND_BV_SDIV_OVERFLOW);
+                result = div(i, j);
             }
 
             if (!(result >= -max && result < max)) overflow_test = true;
 
-            sort   = boolector_bv_sort(d_bzla, num_bits);
-            const1 = boolector_bv_int(d_bzla, i, sort);
-            const2 = boolector_bv_int(d_bzla, j, sort);
-            bfun   = bzla_fun(d_bzla, const1, const2);
-            boolector_assert(d_bzla, bfun);
+            BitwuzlaSort sort = bitwuzla_mk_bv_sort(d_bzla, num_bits);
+            BitwuzlaTerm *const1 =
+                bitwuzla_mk_bv_value_uint32(d_bzla, sort, (uint32_t) i);
+            BitwuzlaTerm *const2 =
+                bitwuzla_mk_bv_value_uint32(d_bzla, sort, (uint32_t) j);
+            BitwuzlaTerm *bfun =
+                bitwuzla_mk_term2(d_bzla, kind, const1, const2);
+            bitwuzla_assert(d_bzla, bfun);
 
-            sat_res = boolector_sat(d_bzla);
-            ASSERT_TRUE(sat_res == BOOLECTOR_SAT || sat_res == BOOLECTOR_UNSAT);
-            if (sat_res == BOOLECTOR_SAT)
+            sat_res = bitwuzla_check_sat(d_bzla);
+            ASSERT_TRUE(sat_res == BITWUZLA_SAT || sat_res == BITWUZLA_UNSAT);
+            if (sat_res == BITWUZLA_SAT)
             {
-              overflow_boolector = true;
+              overflow_bzla = true;
             }
-            if (overflow_boolector)
+            if (overflow_bzla)
             {
               ASSERT_TRUE(overflow_test);
             }
             if (overflow_test)
             {
-              ASSERT_TRUE(overflow_boolector);
+              ASSERT_TRUE(overflow_bzla);
             }
 
-            boolector_release_sort(d_bzla, sort);
-            boolector_release(d_bzla, const1);
-            boolector_release(d_bzla, const2);
-            boolector_release(d_bzla, bfun);
-            boolector_delete(d_bzla);
+            bitwuzla_delete(d_bzla);
             d_bzla = nullptr;
           }
         }
@@ -243,50 +185,92 @@ class TestOverflow : public TestBzla
 
 TEST_F(TestOverflow, uaddo)
 {
-  u_overflow_test(UADD, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 1);
-  u_overflow_test(UADD, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 0);
+  u_overflow_test(BITWUZLA_KIND_BV_UADD_OVERFLOW,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  1);
+  u_overflow_test(BITWUZLA_KIND_BV_UADD_OVERFLOW,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  0);
 }
 
 TEST_F(TestOverflow, usubo)
 {
-  u_overflow_test(USUB, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 1);
-  u_overflow_test(USUB, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 0);
+  u_overflow_test(BITWUZLA_KIND_BV_USUB_OVERFLOW,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  1);
+  u_overflow_test(BITWUZLA_KIND_BV_USUB_OVERFLOW,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  0);
 }
 
 TEST_F(TestOverflow, umulo)
 {
-  u_overflow_test(UMUL, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 1);
-  u_overflow_test(UMUL, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 0);
+  u_overflow_test(BITWUZLA_KIND_BV_UMUL_OVERFLOW,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  1);
+  u_overflow_test(BITWUZLA_KIND_BV_UMUL_OVERFLOW,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  0);
 }
 
 TEST_F(TestOverflow, saddo)
 {
-  s_overflow_test(
-      SADD, false, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 1);
-  s_overflow_test(
-      SADD, false, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 0);
+  s_overflow_test(BITWUZLA_KIND_BV_SADD_OVERFLOW,
+                  false,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  1);
+  s_overflow_test(BITWUZLA_KIND_BV_SADD_OVERFLOW,
+                  false,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  0);
 }
 
 TEST_F(TestOverflow, ssubo)
 {
-  s_overflow_test(
-      SSUB, false, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 1);
-  s_overflow_test(
-      SSUB, false, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 0);
+  s_overflow_test(BITWUZLA_KIND_BV_SSUB_OVERFLOW,
+                  false,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  1);
+  s_overflow_test(BITWUZLA_KIND_BV_SSUB_OVERFLOW,
+                  false,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  0);
 }
 
 TEST_F(TestOverflow, smulo)
 {
-  s_overflow_test(
-      SMUL, false, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 1);
-  s_overflow_test(
-      SMUL, false, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 0);
+  s_overflow_test(BITWUZLA_KIND_BV_SMUL_OVERFLOW,
+                  false,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  1);
+  s_overflow_test(BITWUZLA_KIND_BV_SMUL_OVERFLOW,
+                  false,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  0);
 }
 
 TEST_F(TestOverflow, sdivo)
 {
-  s_overflow_test(
-      SDIV, true, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 1);
-  s_overflow_test(
-      SDIV, true, BZLA_TEST_OVERFLOW_LOW, BZLA_TEST_OVERFLOW_HIGH, 0);
+  s_overflow_test(BITWUZLA_KIND_BV_SDIV_OVERFLOW,
+                  true,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  1);
+  s_overflow_test(BITWUZLA_KIND_BV_SDIV_OVERFLOW,
+                  true,
+                  BZLA_TEST_OVERFLOW_LOW,
+                  BZLA_TEST_OVERFLOW_HIGH,
+                  0);
 }

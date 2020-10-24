@@ -12,68 +12,39 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
-class TestRotate : public TestBoolector
+class TestRotate : public TestBitwuzla
 {
  protected:
   void test_rot(uint32_t bw, uint32_t nbits, bool is_left)
   {
-    bool ispow2;
     int32_t res;
-    uint32_t bw_log2;
-    BoolectorSort sort, sort_log2;
-    BoolectorNode *rot0, *rot0_e1;
-    BoolectorNode *rot1, *rot1_e1;
-    BoolectorNode *roti;
-    BoolectorNode *e0;
-    BoolectorNode *ne0, *ne1, *ne2;
-    BoolectorNode *(*fun)(Bzla *, BoolectorNode *, BoolectorNode *);
-    BoolectorNode *(*funi)(Bzla *, BoolectorNode *, uint32_t);
+    BitwuzlaKind kind, kindi;
 
-    fun  = is_left ? boolector_bv_rol : boolector_bv_ror;
-    funi = is_left ? boolector_bv_roli : boolector_bv_rori;
+    BitwuzlaSort sort = bitwuzla_mk_bv_sort(d_bzla, bw);
+    BitwuzlaTerm *e0  = bitwuzla_mk_const(d_bzla, sort, "e0");
 
-    ispow2 = bzla_util_is_power_of_2(bw);
-    sort   = boolector_bv_sort(d_bzla, bw);
-    e0     = boolector_var(d_bzla, sort, "e0");
-
-    roti = funi(d_bzla, e0, nbits);
-
-    rot0_e1 = boolector_bv_unsigned_int(d_bzla, nbits, sort);
-    rot0    = fun(d_bzla, e0, rot0_e1);
-
-    ne0 = boolector_ne(d_bzla, rot0, roti);
-
-    if (ispow2)
+    if (is_left)
     {
-      bw_log2 = bzla_util_log_2(bw);
-      if (bw_log2)
-      {
-        sort_log2 = boolector_bv_sort(d_bzla, bw_log2);
-        rot1_e1   = boolector_bv_unsigned_int(d_bzla, nbits, sort_log2);
-        rot1      = fun(d_bzla, e0, rot1_e1);
-        ne1       = boolector_ne(d_bzla, rot1, rot0);
-        ne2       = boolector_ne(d_bzla, rot1, roti);
-        boolector_assert(d_bzla, ne1);
-        boolector_assert(d_bzla, ne2);
-        boolector_release(d_bzla, ne1);
-        boolector_release(d_bzla, ne2);
-        boolector_release(d_bzla, rot1);
-        boolector_release(d_bzla, rot1_e1);
-        boolector_release_sort(d_bzla, sort_log2);
-      }
+      kind  = BITWUZLA_KIND_BV_ROL;
+      kindi = BITWUZLA_KIND_BV_ROLI;
+    }
+    else
+    {
+      kind  = BITWUZLA_KIND_BV_ROR;
+      kindi = BITWUZLA_KIND_BV_RORI;
     }
 
-    boolector_assert(d_bzla, ne0);
-    res = boolector_sat(d_bzla);
-    (void) res;
-    assert(res == BOOLECTOR_UNSAT);
+    BitwuzlaTerm *roti = bitwuzla_mk_term1_indexed1(d_bzla, kindi, e0, nbits);
+    BitwuzlaTerm *rot0 = bitwuzla_mk_term2(
+        d_bzla, kind, e0, bitwuzla_mk_bv_value_uint32(d_bzla, sort, nbits));
 
-    boolector_release(d_bzla, ne0);
-    boolector_release(d_bzla, rot0);
-    boolector_release(d_bzla, rot0_e1);
-    boolector_release(d_bzla, roti);
-    boolector_release(d_bzla, e0);
-    boolector_release_sort(d_bzla, sort);
+    BitwuzlaTerm *ne0 =
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_DISTINCT, rot0, roti);
+
+    bitwuzla_assert(d_bzla, ne0);
+    res = bitwuzla_check_sat(d_bzla);
+    (void) res;
+    assert(res == BITWUZLA_UNSAT);
   }
 };
 
