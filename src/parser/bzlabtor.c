@@ -309,7 +309,7 @@ parse_exp(BzlaBZLAParser *parser,
     else
     {
       assert(bitwuzla_term_is_bv(res));
-      width_res = bitwuzla_term_bv_get_size(parser->bitwuzla, res);
+      width_res = bitwuzla_term_bv_get_size(res);
     }
 
     assert(expected_width == width_res);
@@ -595,7 +595,7 @@ parse_consth(BzlaBZLAParser *parser, uint32_t width)
   res = bitwuzla_mk_bv_value(parser->bitwuzla, sort, tmp, BITWUZLA_BV_BASE_BIN);
   bzla_mem_freestr(parser->mem, tmp);
 
-  assert(bitwuzla_term_bv_get_size(parser->bitwuzla, res) == width);
+  assert(bitwuzla_term_bv_get_size(res) == width);
 
   return res;
 }
@@ -683,7 +683,7 @@ parse_constd(BzlaBZLAParser *parser, uint32_t width)
   res = bitwuzla_mk_bv_value(parser->bitwuzla, sort, tmp, BITWUZLA_BV_BASE_BIN);
   bzla_mem_freestr(parser->mem, tmp);
 
-  assert(bitwuzla_term_bv_get_size(parser->bitwuzla, res) == width);
+  assert(bitwuzla_term_bv_get_size(res) == width);
 
   return res;
 }
@@ -749,7 +749,7 @@ parse_unary(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
   if (!(tmp = parse_exp(parser, width, false, true, 0))) return 0;
 
   res = bitwuzla_mk_term1(parser->bitwuzla, kind, tmp);
-  assert(bitwuzla_term_bv_get_size(parser->bitwuzla, res) == width);
+  assert(bitwuzla_term_bv_get_size(res) == width);
 
   return res;
 }
@@ -791,14 +791,14 @@ parse_redunary(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
 
   if (!(tmp = parse_exp(parser, 0, false, true, 0))) return 0;
 
-  if (bitwuzla_term_bv_get_size(parser->bitwuzla, tmp) == 1)
+  if (bitwuzla_term_bv_get_size(tmp) == 1)
   {
     (void) perr_btor(parser, "argument of reduction operation of width 1");
     return 0;
   }
 
   res = bitwuzla_mk_term1(parser->bitwuzla, kind, tmp);
-  assert(bitwuzla_term_bv_get_size(parser->bitwuzla, res) == 1);
+  assert(bitwuzla_term_bv_get_size(res) == 1);
 
   return res;
 }
@@ -842,7 +842,7 @@ parse_binary(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
     goto RELEASE_L_AND_RETURN_ERROR;
 
   res = bitwuzla_mk_term2(parser->bitwuzla, kind, l, r);
-  assert(bitwuzla_term_bv_get_size(parser->bitwuzla, res) == width);
+  assert(bitwuzla_term_bv_get_size(res) == width);
 
   return res;
 }
@@ -946,7 +946,7 @@ parse_logical(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
 
   if (!(l = parse_exp(parser, 0, false, true, 0))) return 0;
 
-  if (bitwuzla_term_bv_get_size(parser->bitwuzla, l) != 1)
+  if (bitwuzla_term_bv_get_size(l) != 1)
   {
   BIT_WIDTH_ERROR_RELEASE_L_AND_RETURN:
     (void) perr_btor(parser, "expected argument of bit width '1'");
@@ -959,13 +959,13 @@ parse_logical(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
   if (!(r = parse_exp(parser, 0, false, true, 0)))
     goto RELEASE_L_AND_RETURN_ERROR;
 
-  if (bitwuzla_term_bv_get_size(parser->bitwuzla, r) != 1)
+  if (bitwuzla_term_bv_get_size(r) != 1)
   {
     goto BIT_WIDTH_ERROR_RELEASE_L_AND_RETURN;
   }
 
   res = bitwuzla_mk_term2(parser->bitwuzla, kind, l, r);
-  assert(bitwuzla_term_bv_get_size(parser->bitwuzla, res) == 1);
+  assert(bitwuzla_term_bv_get_size(res) == 1);
 
   return res;
 }
@@ -1035,7 +1035,7 @@ parse_compare_and_overflow(BzlaBZLAParser *parser,
   }
 
   res = bitwuzla_mk_term2(parser->bitwuzla, kind, l, r);
-  assert(bitwuzla_term_bv_get_size(parser->bitwuzla, res) == 1);
+  assert(bitwuzla_term_bv_get_size(res) == 1);
   return res;
 }
 
@@ -1167,8 +1167,8 @@ parse_concat(BzlaBZLAParser *parser, uint32_t width)
   if (!(r = parse_exp(parser, 0, false, true, 0)))
     goto RELEASE_L_AND_RETURN_ERROR;
 
-  lwidth = bitwuzla_term_bv_get_size(parser->bitwuzla, l);
-  rwidth = bitwuzla_term_bv_get_size(parser->bitwuzla, r);
+  lwidth = bitwuzla_term_bv_get_size(l);
+  rwidth = bitwuzla_term_bv_get_size(r);
 
   if (lwidth + rwidth != width)
   {
@@ -1182,7 +1182,7 @@ parse_concat(BzlaBZLAParser *parser, uint32_t width)
   }
 
   res = bitwuzla_mk_term2(parser->bitwuzla, BITWUZLA_KIND_BV_CONCAT, l, r);
-  assert(bitwuzla_term_bv_get_size(parser->bitwuzla, res) == width);
+  assert(bitwuzla_term_bv_get_size(res) == width);
   return res;
 }
 
@@ -1209,7 +1209,7 @@ parse_shift(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
   if (!(r = parse_exp(parser, 0, false, true, &lit)))
     goto RELEASE_L_AND_RETURN_ERROR;
 
-  rw = bitwuzla_term_bv_get_size(parser->bitwuzla, r);
+  rw = bitwuzla_term_bv_get_size(r);
   if (width != rw)
   {
     if (bzla_util_is_power_of_2(width))
@@ -1238,7 +1238,7 @@ parse_shift(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
     }
   }
   res = bitwuzla_mk_term2(parser->bitwuzla, kind, l, r);
-  assert(bitwuzla_term_bv_get_size(parser->bitwuzla, res) == width);
+  assert(bitwuzla_term_bv_get_size(res) == width);
   return res;
 }
 
@@ -1367,7 +1367,7 @@ parse_slice(BzlaBZLAParser *parser, uint32_t width)
     return 0;
   }
 
-  argwidth = bitwuzla_term_bv_get_size(parser->bitwuzla, arg);
+  argwidth = bitwuzla_term_bv_get_size(arg);
 
   if (parse_non_negative_int(parser, &upper)) goto RELEASE_ARG_AND_RETURN_ERROR;
 
@@ -1562,7 +1562,7 @@ parse_ext(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
 
   if (!(arg = parse_exp(parser, 0, false, true, 0))) return 0;
 
-  awidth = bitwuzla_term_bv_get_size(parser->bitwuzla, arg);
+  awidth = bitwuzla_term_bv_get_size(arg);
 
   if (parse_space(parser))
   {
@@ -1584,7 +1584,7 @@ parse_ext(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
   }
 
   res = bitwuzla_mk_term1_indexed1(parser->bitwuzla, kind, arg, ewidth);
-  assert(bitwuzla_term_bv_get_size(parser->bitwuzla, res) == width);
+  assert(bitwuzla_term_bv_get_size(res) == width);
   return res;
 }
 
