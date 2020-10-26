@@ -338,6 +338,11 @@ static BzlaOption bzla_options[BITWUZLA_OPT_NUM_OPTS] = {
              "expected rounding-mode term at index %u", \
              (idx))
 
+#define BZLA_CHECK_TERM_IS_ARRAY(term)                                        \
+  BZLA_ABORT(                                                                 \
+      !bzla_node_is_array(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
+      "expected array term")
+
 #define BZLA_CHECK_TERM_IS_ARRAY_AT_IDX(term, idx)                            \
   BZLA_ABORT(                                                                 \
       !bzla_node_is_array(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
@@ -358,6 +363,17 @@ static BzlaOption bzla_options[BITWUZLA_OPT_NUM_OPTS] = {
   BZLA_ABORT(                                                                 \
       !bzla_node_is_param(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
       "expected variable term at index %u",                                   \
+      (idx))
+
+#define BZLA_CHECK_TERM_IS_FUN(term)                                        \
+  BZLA_ABORT(                                                               \
+      !bzla_node_is_fun(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
+      "unexpected function term at index")
+
+#define BZLA_CHECK_TERM_IS_FUN_AT_IDX(term, idx)                            \
+  BZLA_ABORT(                                                               \
+      !bzla_node_is_fun(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
+      "expected function term at index %u",                                 \
       (idx))
 
 #define BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(term, idx)                       \
@@ -725,8 +741,8 @@ bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla, uint32_t exp_size, uint32_t sig_size)
 BitwuzlaSort
 bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
                      uint32_t arity,
-                     BitwuzlaSort codomain,
-                     BitwuzlaSort domain[])
+                     BitwuzlaSort domain[],
+                     BitwuzlaSort codomain)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_ZERO(arity);
@@ -964,6 +980,7 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
   }
   BzlaNode *res = bzla_exp_bv_const(bzla, bv);
   assert(bzla_node_get_sort_id(res) == bzla_sort);
+  bzla_bv_free(bzla->mm, bv);
   BZLA_RETURN_BITWUZLA_TERM(res);
 }
 
@@ -1559,22 +1576,27 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       break;
 
     case BITWUZLA_KIND_APPLY: {
-      BZLA_CHECK_ARG_CNT("apply", 2, argc);
+      BZLA_ABORT(argc < 2,
+                 "invalid argument count for kind 'apply', expected at least "
+                 "2, got %u",
+                 argc);
       BzlaNodePtrStack params;
       BZLA_INIT_STACK(bzla->mm, params);
       uint32_t paramc = argc - 1;
       for (uint32_t i = 0; i < paramc; i++)
       {
+        BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(bzla_args[i], i);
         BZLA_PUSH_STACK(params, bzla_args[i]);
       }
       BZLA_ABORT(
           bzla_node_fun_get_arity(bzla, bzla_args[paramc]) != argc - 1,
           "number of given arguments to function must match arity of function");
-      BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(bzla_args[paramc], paramc);
+      BZLA_CHECK_TERM_IS_FUN_AT_IDX(bzla_args[paramc], paramc);
       res = bzla_exp_apply_n(bzla, bzla_args[paramc], params.start, paramc);
       BZLA_RELEASE_STACK(params);
     }
     break;
+
     case BITWUZLA_KIND_LAMBDA: {
       BZLA_CHECK_ARG_CNT("lambda", 2, argc);
       BzlaNodePtrStack params;
@@ -2478,6 +2500,58 @@ bitwuzla_term_get_sort(BitwuzlaTerm *term)
   return BZLA_EXPORT_BITWUZLA_SORT(bzla_node_get_sort_id(bzla_term));
 }
 
+BitwuzlaSort
+bitwuzla_term_array_get_index_sort(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_IS_ARRAY(bzla_term);
+  /* Note: We don't need to increase the ref counter here. */
+  return BZLA_EXPORT_BITWUZLA_SORT(bzla_sort_array_get_index(
+      bzla_node_get_bzla(bzla_term), bzla_node_get_sort_id(bzla_term)));
+}
+
+BitwuzlaSort
+bitwuzla_term_array_get_element_sort(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_IS_ARRAY(bzla_term);
+  /* Note: We don't need to increase the ref counter here. */
+  return BZLA_EXPORT_BITWUZLA_SORT(bzla_sort_array_get_element(
+      bzla_node_get_bzla(bzla_term), bzla_node_get_sort_id(bzla_term)));
+}
+
+BitwuzlaSort
+bitwuzla_term_fun_get_domain_sort(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_IS_FUN(bzla_term);
+  /* Note: We don't need to increase the ref counter here. */
+  return BZLA_EXPORT_BITWUZLA_SORT(bzla_sort_fun_get_domain(
+      bzla_node_get_bzla(bzla_term), bzla_node_get_sort_id(bzla_term)));
+}
+
+BitwuzlaSort
+bitwuzla_term_fun_get_codomain_sort(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_IS_FUN(bzla_term);
+  /* Note: We don't need to increase the ref counter here. */
+  return BZLA_EXPORT_BITWUZLA_SORT(bzla_sort_fun_get_codomain(
+      bzla_node_get_bzla(bzla_term), bzla_node_get_sort_id(bzla_term)));
+}
+
 uint32_t
 bitwuzla_term_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
 {
@@ -2646,6 +2720,39 @@ bitwuzla_term_is_rm_value(BitwuzlaTerm *term)
   assert(bzla_node_get_ext_refs(bzla_term));
   return bzla_node_is_rm_const(
       bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
+}
+
+bool
+bitwuzla_term_is_bv(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  Bzla *bzla = bzla_node_get_bzla(bzla_term);
+  return bzla_node_is_bv(bzla, bzla_simplify_exp(bzla, bzla_term));
+}
+
+bool
+bitwuzla_term_is_fp(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  Bzla *bzla = bzla_node_get_bzla(bzla_term);
+  return bzla_node_is_fp(bzla, bzla_simplify_exp(bzla, bzla_term));
+}
+
+bool
+bitwuzla_term_is_rm(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  Bzla *bzla = bzla_node_get_bzla(bzla_term);
+  return bzla_node_is_rm(bzla, bzla_simplify_exp(bzla, bzla_term));
 }
 
 bool

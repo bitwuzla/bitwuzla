@@ -425,12 +425,27 @@ bdcnode(BzlaDumpContext *bdc, BzlaNode *node, FILE *file)
     if (bzla_node_is_uf_array(node) || bzla_node_is_fun_cond(node)
         || bzla_node_is_update(node))
     {
-      fprintf(file, " %d", bzla_node_fun_get_width(bdc->bzla, node));
-      fprintf(file, " %d", bzla_node_array_get_index_width(bdc->bzla, node));
+      fprintf(
+          file,
+          " %d",
+          bzla_sort_bv_get_width(bdc->bzla,
+                                 bzla_sort_fun_get_codomain(
+                                     bdc->bzla, bzla_node_get_sort_id(node))));
+      fprintf(
+          file,
+          " %d",
+          bzla_sort_bv_get_width(bdc->bzla,
+                                 bzla_sort_array_get_index(
+                                     bdc->bzla, bzla_node_get_sort_id(node))));
     }
     else if (bzla_node_is_lambda(node))
     {
-      fprintf(file, " %d", bzla_node_fun_get_width(bdc->bzla, node));
+      fprintf(
+          file,
+          " %d",
+          bzla_sort_bv_get_width(bdc->bzla,
+                                 bzla_sort_fun_get_codomain(
+                                     bdc->bzla, bzla_node_get_sort_id(node))));
       fprintf(file, " %d", bzla_node_bv_get_width(bdc->bzla, node->e[0]));
     }
     else if (!bzla_node_is_uf(node))
@@ -793,7 +808,9 @@ bzla_dumpbtor_dump_bdc(BzlaDumpContext *bdc, FILE *file)
     if (bdc->version == 1)
     {
       if (bzla_sort_is_fun(bdc->bzla, bzla_node_get_sort_id(node)))
-        len = bzla_node_fun_get_width(bdc->bzla, node);
+        len = bzla_sort_bv_get_width(
+            bdc->bzla,
+            bzla_sort_fun_get_codomain(bdc->bzla, bzla_node_get_sort_id(node)));
       else
         len = bzla_node_bv_get_width(bdc->bzla, node);
       fprintf(file, "%d root %u %d\n", id, len, bdcid(bdc, node));

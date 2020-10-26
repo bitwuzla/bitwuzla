@@ -2434,15 +2434,6 @@ void boolector_set_symbol(Bzla *bzla, BoolectorNode *node, const char *symbol);
 uint32_t boolector_bv_get_width(Bzla *bzla, BoolectorNode *node);
 
 /*!
-  Get the bit width of indices of ``n_array``.
-
-  :param bzla: Boolector instance.
-  :param n_array: Array operand.
-  :return: Bit width of indices of ``n_array``
-*/
-uint32_t boolector_array_get_index_width(Bzla *bzla, BoolectorNode *n_array);
-
-/*!
   Get the bits of a bit-vector constant node as a bit string.
   Must be freed via boolector_free_bits.
 

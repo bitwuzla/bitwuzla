@@ -1413,31 +1413,6 @@ bzla_node_fp_get_sig_width(Bzla *bzla, const BzlaNode *exp)
   return bzla_sort_fp_get_sig_width(bzla, bzla_node_get_sort_id(exp));
 }
 
-uint32_t
-bzla_node_fun_get_width(Bzla *bzla, const BzlaNode *exp)
-{
-  assert(bzla);
-  assert(exp);
-  assert(bzla_node_is_regular(exp));
-
-  assert(bzla_sort_is_fun(bzla, bzla_node_get_sort_id(exp)));
-  return bzla_sort_bv_get_width(
-      bzla, bzla_sort_fun_get_codomain(bzla, bzla_node_get_sort_id(exp)));
-}
-
-uint32_t
-bzla_node_array_get_index_width(Bzla *bzla, const BzlaNode *e_array)
-{
-  assert(bzla);
-  assert(e_array);
-  assert(bzla == bzla_node_real_addr(e_array)->bzla);
-
-  assert(bzla_sort_is_array(bzla, bzla_node_get_sort_id(e_array))
-         || bzla_sort_is_fun(bzla, bzla_node_get_sort_id(e_array)));
-  return bzla_sort_bv_get_width(
-      bzla, bzla_sort_array_get_index(bzla, bzla_node_get_sort_id(e_array)));
-}
-
 /*------------------------------------------------------------------------*/
 
 BzlaBitVector *

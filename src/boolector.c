@@ -4868,35 +4868,13 @@ boolector_bv_get_width(Bzla *bzla, BoolectorNode *node)
   BZLA_ABORT_REFS_NOT_POS(exp);
   BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
   if (bzla_sort_is_fun(bzla, bzla_node_get_sort_id(exp)))
-    res = bzla_node_fun_get_width(bzla, exp);
+    res = bzla_sort_bv_get_width(
+        bzla, bzla_sort_fun_get_codomain(bzla, bzla_node_get_sort_id(exp)));
   else
     res = bzla_node_bv_get_width(bzla, exp);
   BZLA_TRAPI_RETURN_UINT(res);
 #ifndef NDEBUG
   BZLA_CHKCLONE_RES_UINT(res, bv_get_width, BZLA_CLONED_EXP(exp));
-#endif
-  return res;
-}
-
-uint32_t
-boolector_array_get_index_width(Bzla *bzla, BoolectorNode *n_array)
-{
-  uint32_t res;
-  BzlaNode *e_array;
-
-  e_array = BZLA_IMPORT_BOOLECTOR_NODE(n_array);
-  BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT_ARG_NULL(e_array);
-  BZLA_TRAPI_UNFUN(e_array);
-  BZLA_ABORT_REFS_NOT_POS(e_array);
-  BZLA_ABORT_BZLA_MISMATCH(bzla, e_array);
-  BZLA_ABORT_IS_NOT_ARRAY(e_array);
-  BZLA_ABORT_OLD(bzla_node_fun_get_arity(bzla, e_array) > 1,
-                 "'n_array' is a function with arity > 1");
-  res = bzla_node_array_get_index_width(bzla, e_array);
-  BZLA_TRAPI_RETURN_UINT(res);
-#ifndef NDEBUG
-  BZLA_CHKCLONE_RES_UINT(res, array_get_index_width, BZLA_CLONED_EXP(e_array));
 #endif
   return res;
 }

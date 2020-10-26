@@ -300,8 +300,19 @@ parse_exp(BzlaBZLAParser *parser,
 
   if (expected_width)
   {
-    width_res = bitwuzla_term_bv_get_size(parser->bitwuzla, res);
+    if (bitwuzla_term_is_fun(res))
+    {
+      BitwuzlaSort sort = bitwuzla_term_fun_get_codomain_sort(res);
+      assert(bitwuzla_sort_is_bv(parser->bitwuzla, sort));
+      width_res = bitwuzla_sort_bv_get_size(parser->bitwuzla, sort);
+    }
+    else
+    {
+      assert(bitwuzla_term_is_bv(res));
+      width_res = bitwuzla_term_bv_get_size(parser->bitwuzla, res);
+    }
 
+    assert(expected_width == width_res);
     if (expected_width != width_res)
     {
       (void) perr_btor(parser,
@@ -1316,10 +1327,8 @@ parse_acond(BzlaBZLAParser *parser, uint32_t width)
   if (!(t = parse_array_exp(parser, width))) goto RELEASE_C_AND_RETURN_ERROR;
 
   if (idxwidth
-      != bitwuzla_sort_bv_get_size(
-          parser->bitwuzla,
-          bitwuzla_sort_array_get_index(parser->bitwuzla,
-                                        bitwuzla_term_get_sort(t))))
+      != bitwuzla_sort_bv_get_size(parser->bitwuzla,
+                                   bitwuzla_term_array_get_index_sort(t)))
   {
     (void) perr_btor(parser, "mismatch of index bit width of 'then' array");
   RELEASE_C_AND_T_AND_RETURN_ERROR:
@@ -1332,10 +1341,8 @@ parse_acond(BzlaBZLAParser *parser, uint32_t width)
     goto RELEASE_C_AND_T_AND_RETURN_ERROR;
 
   if (idxwidth
-      != bitwuzla_sort_bv_get_size(
-          parser->bitwuzla,
-          bitwuzla_sort_array_get_index(parser->bitwuzla,
-                                        bitwuzla_term_get_sort(e))))
+      != bitwuzla_sort_bv_get_size(parser->bitwuzla,
+                                   bitwuzla_term_array_get_index_sort(e)))
   {
     (void) perr_btor(parser, "mismatch of index bit width of 'else' array");
     goto RELEASE_C_AND_T_AND_RETURN_ERROR;
@@ -1413,9 +1420,7 @@ parse_read(BzlaBZLAParser *parser, uint32_t width)
   }
 
   idxwidth = bitwuzla_sort_bv_get_size(
-      parser->bitwuzla,
-      bitwuzla_sort_array_get_index(parser->bitwuzla,
-                                    bitwuzla_term_get_sort(array)));
+      parser->bitwuzla, bitwuzla_term_array_get_index_sort(array));
   if (!(idx = parse_exp(parser, idxwidth, false, true, 0)))
     goto RELEASE_ARRAY_AND_RETURN_ERROR;
 
@@ -1455,7 +1460,8 @@ parse_write(BzlaBZLAParser *parser, uint32_t width)
     goto RELEASE_ARRAY_AND_RETURN_ERROR;
   }
 
-  valwidth = bitwuzla_term_bv_get_size(parser->bitwuzla, array);
+  valwidth = bitwuzla_sort_bv_get_size(
+      parser->bitwuzla, bitwuzla_term_array_get_element_sort(array));
   if (!(val = parse_exp(parser, valwidth, false, true, 0)))
     goto RELEASE_ARRAY_AND_IDX_AND_RETURN_ERROR;
 
@@ -1498,7 +1504,7 @@ parse_lambda(BzlaBZLAParser *parser, uint32_t width)
 
   res = bitwuzla_mk_term(parser->bitwuzla, BITWUZLA_KIND_LAMBDA, 2, args);
 
-  BZLA_DELETE(parser->mem, args);
+  BZLA_DELETEN(parser->mem, args, 2);
   parser->found_lambdas = true;
   BZLA_PUSH_STACK(parser->lambdas, res);
   return res;

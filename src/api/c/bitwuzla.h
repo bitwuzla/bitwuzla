@@ -295,8 +295,8 @@ BitwuzlaSort bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
                                  uint32_t sig_size);
 BitwuzlaSort bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
                                   uint32_t arity,
-                                  BitwuzlaSort codomain,
-                                  BitwuzlaSort domain[]);
+                                  BitwuzlaSort domain[],
+                                  BitwuzlaSort codomain);
 BitwuzlaSort bitwuzla_mk_rm_sort(Bitwuzla *bitwuzla);
 
 BitwuzlaTerm *bitwuzla_mk_true(Bitwuzla *bitwuzla);
@@ -451,6 +451,10 @@ bool bitwuzla_sort_is_rm(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 
 Bitwuzla *bitwuzla_term_get_bitwuzla(BitwuzlaTerm *term);
 BitwuzlaSort bitwuzla_term_get_sort(BitwuzlaTerm *term);
+BitwuzlaSort bitwuzla_term_array_get_index_sort(BitwuzlaTerm *term);
+BitwuzlaSort bitwuzla_term_array_get_element_sort(BitwuzlaTerm *term);
+BitwuzlaSort bitwuzla_term_fun_get_domain_sort(BitwuzlaTerm *term);
+BitwuzlaSort bitwuzla_term_fun_get_codomain_sort(BitwuzlaTerm *term);
 
 uint32_t bitwuzla_term_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
 uint32_t bitwuzla_term_fp_get_exp_size(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
@@ -471,9 +475,9 @@ bool bitwuzla_term_is_bv_value(BitwuzlaTerm *term);
 bool bitwuzla_term_is_fp_value(BitwuzlaTerm *term);
 bool bitwuzla_term_is_rm_value(BitwuzlaTerm *term);
 
-bool bitwuzla_term_is_bv(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_term_is_fp(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
-bool bitwuzla_term_is_rm(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+bool bitwuzla_term_is_bv(BitwuzlaTerm *term);
+bool bitwuzla_term_is_fp(BitwuzlaTerm *term);
+bool bitwuzla_term_is_rm(BitwuzlaTerm *term);
 
 bool bitwuzla_term_is_bv_value_zero(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
 bool bitwuzla_term_is_bv_value_one(Bitwuzla *bitwuzla, BitwuzlaTerm *term);

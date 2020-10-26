@@ -313,8 +313,11 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
     /* zero-initialized default value */
     if (!default_value)
     {
-      default_value =
-          bzla_bv_new(bzla->mm, bzla_node_fun_get_width(bzla, node));
+      default_value = bzla_bv_new(
+          bzla->mm,
+          bzla_sort_bv_get_width(
+              bzla,
+              bzla_sort_fun_get_codomain(bzla, bzla_node_get_sort_id(node))));
     }
 
     /* print default value */

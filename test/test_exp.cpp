@@ -498,12 +498,30 @@ TEST_F(TestExp, array)
 
   ASSERT_EQ(exp1, exp2);
   ASSERT_NE(exp1, exp3);
-  ASSERT_EQ(bzla_node_fun_get_width(d_bzla, exp1), 32u);
-  ASSERT_EQ(bzla_node_fun_get_width(d_bzla, exp2), 32u);
-  ASSERT_EQ(bzla_node_fun_get_width(d_bzla, exp3), 32u);
-  ASSERT_EQ(bzla_node_array_get_index_width(d_bzla, exp1), 8u);
-  ASSERT_EQ(bzla_node_array_get_index_width(d_bzla, exp2), 8u);
-  ASSERT_EQ(bzla_node_array_get_index_width(d_bzla, exp3), 8u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_fun_get_codomain(
+                                       d_bzla, bzla_node_get_sort_id(exp1))),
+            32u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_fun_get_codomain(
+                                       d_bzla, bzla_node_get_sort_id(exp2))),
+            32u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_fun_get_codomain(
+                                       d_bzla, bzla_node_get_sort_id(exp3))),
+            32u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_array_get_element(
+                                       d_bzla, bzla_node_get_sort_id(exp1))),
+            32u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_array_get_element(
+                                       d_bzla, bzla_node_get_sort_id(exp2))),
+            32u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_array_get_element(
+                                       d_bzla, bzla_node_get_sort_id(exp3))),
+            32u);
   bzla_dumpbtor_dump_node(d_bzla, d_log_file, exp2);
   bzla_node_release(d_bzla, exp1);
   bzla_node_release(d_bzla, exp2);
@@ -804,8 +822,14 @@ TEST_F(TestExp, read)
   exp4 = bzla_exp_read(d_bzla, exp1, exp2);
 
   ASSERT_EQ(exp4, exp3);
-  ASSERT_EQ(bzla_node_fun_get_width(d_bzla, exp1), 32u);
-  ASSERT_EQ(bzla_node_array_get_index_width(d_bzla, exp1), 8u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_fun_get_codomain(
+                                       d_bzla, bzla_node_get_sort_id(exp1))),
+            32u);
+  ASSERT_EQ(bzla_sort_bv_get_width(
+                d_bzla,
+                bzla_sort_array_get_index(d_bzla, bzla_node_get_sort_id(exp1))),
+            8u);
   ASSERT_EQ(bzla_node_bv_get_width(d_bzla, exp2), 8u);
   ASSERT_EQ(bzla_node_bv_get_width(d_bzla, exp3), 32u);
   ASSERT_EQ(bzla_node_bv_get_width(d_bzla, exp4), 32u);
@@ -877,12 +901,24 @@ TEST_F(TestExp, write)
 
   ASSERT_EQ(exp4, exp5);
   ASSERT_NE(exp4, exp6);
-  ASSERT_EQ(bzla_node_fun_get_width(d_bzla, exp1), 1u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_fun_get_codomain(
+                                       d_bzla, bzla_node_get_sort_id(exp1))),
+            1u);
   ASSERT_EQ(bzla_node_bv_get_width(d_bzla, exp2), 1u);
   ASSERT_EQ(bzla_node_bv_get_width(d_bzla, exp3), 1u);
-  ASSERT_EQ(bzla_node_fun_get_width(d_bzla, exp4), 1u);
-  ASSERT_EQ(bzla_node_fun_get_width(d_bzla, exp5), 1u);
-  ASSERT_EQ(bzla_node_fun_get_width(d_bzla, exp6), 1u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_fun_get_codomain(
+                                       d_bzla, bzla_node_get_sort_id(exp4))),
+            1u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_fun_get_codomain(
+                                       d_bzla, bzla_node_get_sort_id(exp5))),
+            1u);
+  ASSERT_EQ(bzla_sort_bv_get_width(d_bzla,
+                                   bzla_sort_fun_get_codomain(
+                                       d_bzla, bzla_node_get_sort_id(exp6))),
+            1u);
   ASSERT_EQ(bzla_node_bv_get_width(d_bzla, exp7), 1u);
   bzla_dumpbtor_dump_node(d_bzla, d_log_file, exp7);
   bzla_sort_release(d_bzla, sort);
