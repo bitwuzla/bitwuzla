@@ -1953,9 +1953,6 @@ check_bv_or_fp_args_smt2(BzlaSMT2Parser *parser,
                          bool check_fp)
 {
   uint32_t i;
-  // TODO FP enable when floating-point sort and RoundingMode sorts are
-  // implemented
-  // BoolectorSort sort;
   (void) check_fp;
   char *is_str, *expected_str;
   bool is_err;
@@ -1963,9 +1960,6 @@ check_bv_or_fp_args_smt2(BzlaSMT2Parser *parser,
   for (i = start; i <= nargs; i++)
   {
     is_err = false;
-    // TODO FP enable when floating-point sort and RoundingMode sorts are
-    // implemented
-    // sort = boolector_get_sort (parser->bzla, p[i].exp);
     if (boolector_is_array(parser->bzla, p[i].exp))
     {
       is_str       = "an array";
@@ -1978,28 +1972,26 @@ check_bv_or_fp_args_smt2(BzlaSMT2Parser *parser,
       expected_str = "bit-vector";
       is_err       = true;
     }
-    // TODO FP enable when RoundingMode sort is implemented
-    // else if (boolector_is_rm_sort (parser->bzla, sort))
-    //{
-    //  is_str = "a rounding mode term";
-    //  expected_str = "bit-vector";
-    //  is_err = true;
-    //}
+    else if (boolector_is_rm(parser->bzla, p[i].exp))
+    {
+      is_str       = "a rounding mode term";
+      expected_str = "bit-vector";
+      is_err       = true;
+    }
     else
     {
-      // TODO FP enable when floating-point sort is implemented
-      // if (check_fp && boolector_is_bv_sort (parser->bzla, sort))
-      //{
-      //  is_str = "a bit-vector term";
-      //  expected_str = "floating-point";
-      //  is_err = true;
-      //}
-      // else if (!check_fp && boolector_is_fp_sort (parser->bzla, sort))
-      //{
-      //  is_str = "a floating-point term";
-      //  expected_str = "bit-vector";
-      //  is_err = true;
-      //}
+      if (check_fp && boolector_is_bv(parser->bzla, p[i].exp))
+      {
+        is_str       = "a bit-vector term";
+        expected_str = "floating-point";
+        is_err       = true;
+      }
+      else if (!check_fp && boolector_is_fp(parser->bzla, p[i].exp))
+      {
+        is_str       = "a floating-point term";
+        expected_str = "bit-vector";
+        is_err       = true;
+      }
     }
 
     if (is_err)
