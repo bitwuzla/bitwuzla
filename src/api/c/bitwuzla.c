@@ -144,7 +144,7 @@ static BzlaOption bzla_options[BITWUZLA_OPT_NUM_OPTS] = {
 #define BZLA_IMPORT_BITWUZLA_TERM(term) (((BzlaNode *) (term)))
 #define BZLA_IMPORT_BITWUZLA_TERMS(terms) (((BzlaNode **) (terms)))
 #define BZLA_EXPORT_BITWUZLA_TERM(node) (((BitwuzlaTerm *) (node)))
-#define BZLA_EXPORT_BITWUZLA_TERMS(terms) (((BitwuzlaTerm **) (terms)))
+#define BZLA_EXPORT_BITWUZLA_TERMS(terms) (((const BitwuzlaTerm **) (terms)))
 
 #define BZLA_IMPORT_BITWUZLA_SORT(sort) (((BzlaSortId)(long) (sort)))
 #define BZLA_EXPORT_BITWUZLA_SORT(sort) (((BitwuzlaSort)(long) (sort)))
@@ -2028,7 +2028,7 @@ bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
   return bzla_failed_exp(bzla, bzla_term);
 }
 
-BitwuzlaTerm **
+const BitwuzlaTerm **
 bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
@@ -2060,7 +2060,7 @@ bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla)
   return BZLA_EXPORT_BITWUZLA_TERMS(bzla->failed_assumptions.start);
 }
 
-BitwuzlaTerm **
+const BitwuzlaTerm **
 bitwuzla_get_unsat_core(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
