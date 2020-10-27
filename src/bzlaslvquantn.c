@@ -3641,7 +3641,6 @@ get_model(QuantSolverState *state, BzlaNode *q)
   BzlaNode *backref = find_backref(state, q);
   b                 = bzla_hashptr_table_get(state->skolems, backref);
   assert(b);
-  // bzla_model_get_fun
 
   //  b = bzla_hashptr_table_get (state->instances, backref);
   //  assert (b);
@@ -4113,7 +4112,9 @@ check_quantifiers(BzlaQuantSolver *slv)
       get_active_quantifiers(state);
       state->added_lemma = false;
 
-      if (check_active_quantifiers(state))
+      done = check_active_quantifiers(state);
+
+      if (done && !state->added_lemma)
       {
         res = BZLA_RESULT_SAT;
         break;
