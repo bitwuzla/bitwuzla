@@ -37,18 +37,30 @@ log(const char *fmt, ...)
   va_list ap;
   va_start(ap, fmt);
   vfprintf(stdout, fmt, ap);
+  fflush(stdout);
   va_end(ap);
 }
 
 #else
 
-static void
-log(const char *fmt, ...)
-{
-  (void) fmt;
-}
+#define log(...)         \
+  while (false)          \
+  {                      \
+    printf(__VA_ARGS__); \
+  }
 
 #endif
+
+/*------------------------------------------------------------------------*/
+
+struct Instance
+{
+  BzlaNode *instance;
+  BzlaNode *q;
+  BzlaNode *args;
+};
+
+typedef struct Instance Instance;
 
 /*------------------------------------------------------------------------*/
 /* Solver State                                                           */
@@ -64,6 +76,7 @@ struct QuantSolverState
   BzlaPtrHashTable *inactive_quantifiers;
   BzlaPtrHashTable *deps;
   BzlaPtrHashTable *backrefs;
+  BzlaPtrHashTable *instances;
 
   BzlaPtrHashTable *instantiated;
 
@@ -106,6 +119,10 @@ new_quant_solver_state(Bzla *bzla)
                                        (BzlaHashPtr) bzla_node_hash_by_id,
                                        (BzlaCmpPtr) bzla_node_compare_by_id);
   state->backrefs =
+      bzla_hashptr_table_new(bzla->mm,
+                             (BzlaHashPtr) bzla_node_hash_by_id,
+                             (BzlaCmpPtr) bzla_node_compare_by_id);
+  state->instances =
       bzla_hashptr_table_new(bzla->mm,
                              (BzlaHashPtr) bzla_node_hash_by_id,
                              (BzlaCmpPtr) bzla_node_compare_by_id);
@@ -153,6 +170,7 @@ delete_quant_solver_state(QuantSolverState *state)
   // TODO: proper cleanup
   bzla_hashptr_table_delete(state->deps);
   bzla_hashptr_table_delete(state->instantiated);
+  bzla_hashptr_table_delete(state->instances);
   // end
 
   bzla_iter_hashptr_init(&it, state->skolems);
@@ -2782,6 +2800,56 @@ simplify (Bzla *bzla, BzlaNode *g)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+BzlaNode *
+find_backref(QuantSolverState *state, BzlaNode *q)
+{
+  BzlaPtrHashBucket *b;
+
+  while ((b = bzla_hashptr_table_get(state->backrefs, q)))
+  {
+    q = b->data.as_ptr;
+  }
+
+  return q;
+}
+
+void
+add_backref(QuantSolverState *state, BzlaNode *qfrom, BzlaNode *qto)
+{
+  BzlaPtrHashBucket *b;
+  BzlaNode *backref;
+  BzlaNodePtrStack *instances;
+
+  backref = find_backref(state, qto);
+
+  if ((b = bzla_hashptr_table_get(state->backrefs, qfrom)))
+  {
+    assert(b->data.as_ptr == backref);
+  }
+  else
+  {
+    bzla_hashptr_table_add(state->backrefs, bzla_node_copy(state->bzla, qfrom))
+        ->data.as_ptr = bzla_node_copy(state->bzla, backref);
+
+#if 0
+    if ((b = bzla_hashptr_table_get(state->instances, backref)))
+    {
+      instances = b->data.as_ptr;
+    }
+    else
+    {
+      b = bzla_hashptr_table_add(state->instances, backref);
+      BZLA_CNEW(state->bzla->mm, instances);
+      BZLA_INIT_STACK(state->bzla->mm, *instances);
+      b->data.as_ptr = instances;
+    }
+    BZLA_PUSH_STACK (*instances, qfrom);
+#endif
+    //    log ("::: %s -> %s\n", bzla_util_node2string(qfrom),
+    //    bzla_util_node2string(qto));
+  }
+}
+
 static void
 get_active_quantifiers(QuantSolverState *state)
 {
@@ -2838,9 +2906,10 @@ get_active_quantifiers(QuantSolverState *state)
         bool phase = bzla_bv_is_true(value);
         bzla_bv_free(mm, value);
         bzla_hashptr_table_add(quantifiers, cur)->data.flag = phase;
-        log("  %s (%s)\n",
+        log("  %s (%s) (instance: %s)\n",
             bzla_util_node2string(cur),
-            phase ? "true" : "false");
+            phase ? "true" : "false",
+            bzla_util_node2string(find_backref(state, cur)));
       }
     }
     else
@@ -2952,6 +3021,17 @@ substitute(Bzla *bzla,
       {
         subst     = b->data.as_ptr;
         d->as_ptr = bzla_node_copy(bzla, subst);
+
+        /* Keep track of instantiated variables */
+        if (bzla_node_is_param(real_cur)
+            && bzla_node_param_is_forall_var(real_cur))
+        {
+          bzla_hashptr_table_add(backref, real_cur)->data.as_ptr =
+              bzla_node_copy(bzla, subst);
+          // printf ("backref: %s -> %s\n", bzla_util_node2string(real_cur),
+          // bzla_util_node2string(subst));
+        }
+
         continue;
       }
 
@@ -3036,10 +3116,21 @@ substitute(Bzla *bzla,
           {
             bzla_hashptr_table_add(backref, real_cur)->data.as_ptr =
                 bzla_node_copy(bzla, result);
+            // printf ("backref: %s -> %s\n", bzla_util_node2string(real_cur),
+            // bzla_util_node2string(result));
           }
         }
       }
       assert(bzla_node_get_sort_id(real_cur) == bzla_node_get_sort_id(result));
+
+      if (bzla_node_is_param(real_cur)
+          && bzla_node_param_is_forall_var(real_cur))
+      {
+        bzla_hashptr_table_add(backref, real_cur)->data.as_ptr =
+            bzla_node_copy(bzla, result);
+        //  printf ("backref: %s -> %s\n", bzla_util_node2string(real_cur),
+        //  bzla_util_node2string(result));
+      }
 
       d->as_ptr = result;
     }
@@ -3058,117 +3149,91 @@ substitute(Bzla *bzla,
   return result;
 }
 
-BzlaNode *
-find_backref(QuantSolverState *state, BzlaNode *q)
+void
+add_instance(QuantSolverState *state,
+             BzlaNode *q,
+             BzlaNode *qi,
+             BzlaPtrHashTable *substs)
 {
-  BzlaPtrHashBucket *b;
+  Bzla *bzla;
+  BzlaNode *cur;
+  BzlaPtrHashBucket *b, *bi;
+  BzlaNodePtrStack args;
+  BzlaNodePtrStack *qdeps, *qideps;
 
-  while ((b = bzla_hashptr_table_get(state->backrefs, q)))
+  bzla = state->bzla;
+
+  if (q == qi)
   {
-    q = b->data.as_ptr;
+    return;
   }
 
-  return q;
-}
-
-void
-add_backref(QuantSolverState *state, BzlaNode *qfrom, BzlaNode *qto)
-{
-  BzlaPtrHashBucket *b;
-  BzlaNode *backref;
-
-  backref = find_backref(state, qto);
-
-  if ((b = bzla_hashptr_table_get(state->backrefs, qfrom)))
+  if ((bi = bzla_hashptr_table_get(state->deps, qi)))
   {
-    assert(b->data.as_ptr == backref);
+    // TODO: check if we need to do anything here
+    // log("******* already added\n");
+    return;
   }
   else
   {
-    bzla_hashptr_table_add(state->backrefs, bzla_node_copy(state->bzla, qfrom))
-        ->data.as_ptr = bzla_node_copy(state->bzla, backref);
-    log("::: %s -> %s\n",
-        bzla_util_node2string(qfrom),
-        bzla_util_node2string(qto));
+    bi = bzla_hashptr_table_add(state->deps, qi);
+  }
+
+  b = bzla_hashptr_table_get(state->deps, q);
+  assert(b);
+  qdeps = b->data.as_ptr;
+
+  BZLA_CNEW(bzla->mm, qideps);
+  BZLA_INIT_STACK(bzla->mm, *qideps);
+  bi->data.as_ptr = qideps;
+
+  log("Add new instance: %s\n", bzla_util_node2string(qi));
+  for (size_t i = 0, size = BZLA_COUNT_STACK(*qdeps); i < size; ++i)
+  {
+    cur = BZLA_PEEK_STACK(*qdeps, i);
+    if ((b = bzla_hashptr_table_get(substs, cur)))
+    {
+      BZLA_PUSH_STACK(*qideps, bzla_node_copy(bzla, b->data.as_ptr));
+      log("  dep: %s -> %s\n",
+          bzla_util_node2string(cur),
+          bzla_util_node2string(b->data.as_ptr));
+    }
+    else
+    {
+      BZLA_PUSH_STACK(*qideps, bzla_node_copy(bzla, cur));
+      log("  dep: %s\n", bzla_util_node2string(cur));
+    }
   }
 }
 
 BzlaNode *
-instantiate(QuantSolverState *state, BzlaNode *n, BzlaPtrHashTable *substs)
+instantiate(QuantSolverState *state, BzlaNode *q, BzlaPtrHashTable *substs)
 {
+  assert(bzla_node_is_quantifier(q));
+
   Bzla *bzla;
   BzlaPtrHashTable *backref;
-  BzlaNode *q, *qnew, *result, *var;
-  BzlaPtrHashTableIterator it, iit;
-  BzlaNodePtrStack *deps, *insts;
-  BzlaPtrHashBucket *b;
+  BzlaNode *qi, *result;
+  BzlaPtrHashTableIterator it;
 
   bzla    = state->bzla;
   backref = bzla_hashptr_table_new(bzla->mm,
                                    (BzlaHashPtr) bzla_node_hash_by_id,
                                    (BzlaCmpPtr) bzla_node_compare_by_id);
 
-  result = substitute(bzla, n, substs, backref);
+  result = substitute(bzla, q, substs, backref);
 
   bzla_iter_hashptr_init(&it, backref);
   while (bzla_iter_hashptr_has_next(&it))
   {
-    qnew = it.bucket->data.as_ptr;
-    q    = bzla_iter_hashptr_next(&it);
+    qi = it.bucket->data.as_ptr;
+    q  = bzla_iter_hashptr_next(&it);
 
-    add_backref(state, qnew, q);
+    if (!bzla_node_is_quantifier(q)) continue;
 
-    // if ((b = bzla_hashptr_table_get(state->instantiated, qnew)))
-    //{
-    //  // TODO: check that it's the same instantiation
-    //  // it might happen that different instantiations yield the same term
-    //}
-    // else
-    //{
-    //  assert (bzla_hashptr_table_get(state->deps, q));
-    //  deps = bzla_hashptr_table_get(state->deps, q)->data.as_ptr;
-
-    //  //log ("Instantiated %s with (%s):\n", bzla_util_node2string(q),
-    //  bzla_util_node2string(qnew)); BZLA_CNEW(bzla->mm, insts);
-    //  BZLA_INIT_STACK (bzla->mm, *insts);
-    //  for (size_t i = 0, size = BZLA_COUNT_STACK (*deps); i < size; ++i)
-    //  {
-    //    var = BZLA_PEEK_STACK(*deps, i);
-    //    if ((b = bzla_hashptr_table_get(substs, var)))
-    //    {
-    //      BZLA_PUSH_STACK (*insts, bzla_node_copy (bzla, b->data.as_ptr));
-    //      //log ("  %s -> %s\n", bzla_util_node2string(var),
-    //      bzla_util_node2string(b->data.as_ptr));
-    //    }
-    //  }
-    //  bzla_hashptr_table_add (state->instantiated, bzla_node_copy (bzla,
-    //  qnew))->data.as_ptr = insts;
-    //}
-    bzla_node_release(bzla, qnew);
-
-#if 0
-    if (q->parameterized && !bzla_hashptr_table_get (state->deps, qnew))
-    {
-      //log ("%s instantiated with:\n", bzla_util_node2string(q));
-      bzla_iter_hashptr_init(&iit, substs);
-      while (bzla_iter_hashptr_has_next(&iit))
-      {
-        BzlaNode *subst = iit.bucket->data.as_ptr;
-        BzlaNode *cur = bzla_iter_hashptr_next(&iit);
-        //log ("%s -> %s\n", bzla_util_node2string(cur), bzla_util_node2string(subst));
-      }
-      BZLA_CNEW(bzla->mm, vars);
-      BZLA_INIT_STACK (bzla->mm, *vars);
-      deps = bzla_hashptr_table_get(state->deps, q)->data.as_ptr;
-
-      for (size_t i = 0, size = BZLA_COUNT_STACK (*deps); i < size; ++i)
-      {
-        BZLA_PUSH_STACK(*vars, bzla_node_copy (bzla, BZLA_PEEK_STACK(*deps, i)));
-      }
-      bzla_hashptr_table_add(state->deps, bzla_node_copy (bzla, qnew))->data.as_ptr = vars;
-    }
-    bzla_node_release (bzla, qnew);
-#endif
+    add_backref(state, qi, q);
+    add_instance(state, q, qi, backref);
+    bzla_node_release(bzla, qi);
   }
 
   return result;
@@ -3210,16 +3275,56 @@ get_inst_constant(QuantSolverState *state, BzlaNode *q)
   return sk;
 }
 
-// required setup
-//
-// compute dependencies for all variables (filter through depending on polarity)
-// create fresh skolems for each variable (used for instantiation)
-// create UFs for each variable? -> skolemization lemmas
-//
-// questions:
-//
-// 1) how do we get the function models for each existential variable?
-//    -> we need concrete input/output pairs
+BzlaNode *
+mk_skolem_aux(QuantSolverState *state, BzlaNode *q, const char *sym)
+{
+  Bzla *bzla;
+  BzlaNode *backref, *cur, *sk, *app;
+  BzlaNodePtrStack *deps;
+  BzlaPtrHashBucket *b;
+  BzlaSortIdStack sorts;
+  BzlaSortId domain, codomain, sort;
+
+  bzla = state->bzla;
+
+  if ((b = bzla_hashptr_table_get(state->deps, q)))
+  {
+    BZLA_INIT_STACK(state->bzla->mm, sorts);
+    backref = find_backref(state, q);
+
+    log("# SKOLEM UF: %s\n", bzla_util_node2string(q));
+    // log ("# backref: %s\n", bzla_util_node2string(backref));
+
+    deps = b->data.as_ptr;
+    for (size_t i = 0, size = BZLA_COUNT_STACK(*deps); i < size; ++i)
+    {
+      cur = BZLA_PEEK_STACK(*deps, i);
+      log("  %s\n", bzla_util_node2string(cur));
+      assert(!bzla_node_is_param(cur));
+      BZLA_PUSH_STACK(sorts, bzla_node_get_sort_id(cur));
+    }
+
+    if ((b = bzla_hashptr_table_get(state->skolems, backref)))
+    {
+      sk = b->data.as_ptr;
+    }
+    else
+    {
+      domain   = bzla_sort_tuple(bzla, sorts.start, BZLA_COUNT_STACK(sorts));
+      codomain = bzla_node_get_sort_id(q->e[0]);
+      sort     = bzla_sort_fun(bzla, domain, codomain);
+      bzla_sort_release(bzla, domain);
+      sk = bzla_exp_uf(bzla, sort, sym);
+      bzla_hashptr_table_add(state->skolems, bzla_node_copy(bzla, backref))
+          ->data.as_ptr = sk;
+    }
+
+    app = bzla_exp_apply_n(bzla, sk, deps->start, BZLA_COUNT_STACK(*deps));
+    BZLA_RELEASE_STACK(sorts);
+    return app;
+  }
+  return 0;
+}
 
 BzlaNode *
 mk_skolem(QuantSolverState *state, BzlaNode *q, const char *sym)
@@ -3234,77 +3339,12 @@ mk_skolem(QuantSolverState *state, BzlaNode *q, const char *sym)
   bzla = state->bzla;
   sort = bzla_node_get_sort_id(q->e[0]);
 
-//  if ((b = bzla_hashptr_table_get(state->instantiated, q)))
-//  {
-//
-//    vars = b->data.as_ptr;
-//
-//    BZLA_INIT_STACK (bzla->mm, args);
-//    BZLA_INIT_STACK (bzla->mm, arg_sorts);
-//    for (size_t i = 0, size = BZLA_COUNT_STACK (*vars); i < size; ++i)
-//    {
-//      var = BZLA_PEEK_STACK(*vars, i);
-//      quant = bzla_node_param_get_binder(var);
-//
-//      if (is_forall(state, quant))
-//      {
-//        BZLA_PUSH_STACK(args, get_inst_constant(state, quant));
-//        BZLA_PUSH_STACK(arg_sorts,
-//        bzla_node_get_sort_id(BZLA_TOP_STACK(args)));
-//      }
-//    }
-//
-//    domain = bzla_sort_tuple(bzla, arg_sorts.start, BZLA_COUNT_STACK
-//    (arg_sorts)); fun_sort = bzla_sort_fun(bzla, domain, sort);
-//    bzla_sort_release(bzla, domain);
-//
-//    uf = bzla_exp_uf(bzla, fun_sort, sym);
-//    bzla_sort_release(bzla, fun_sort);
-//
-//    sk = bzla_exp_apply_n(bzla, uf, args.start, BZLA_COUNT_STACK(args));
-//
-//    bzla_node_release(bzla, uf);
-//    BZLA_RELEASE_STACK(args);
-//    BZLA_RELEASE_STACK(arg_sorts);
-//    return sk;
-//
-//  }
-#if 0
-  if ((b = bzla_hashptr_table_get (state->deps, q)))
+  sk = mk_skolem_aux(state, q, sym);
+  if (!sk)
   {
-    vars = b->data.as_ptr;
-
-    BZLA_INIT_STACK (bzla->mm, args);
-    BZLA_INIT_STACK (bzla->mm, arg_sorts);
-    for (size_t i = 0, size = BZLA_COUNT_STACK (*vars); i < size; ++i)
-    {
-      var = BZLA_PEEK_STACK(*vars, i);
-      quant = bzla_node_param_get_binder(var);
-
-      if (is_forall(state, quant))
-      {
-        BZLA_PUSH_STACK(args, get_inst_constant(state, quant));
-        BZLA_PUSH_STACK(arg_sorts, bzla_node_get_sort_id(BZLA_TOP_STACK(args)));
-      }
-    }
-
-    domain = bzla_sort_tuple(bzla, arg_sorts.start, BZLA_COUNT_STACK (arg_sorts));
-    fun_sort = bzla_sort_fun(bzla, domain, sort);
-    bzla_sort_release(bzla, domain);
-
-    uf = bzla_exp_uf(bzla, fun_sort, sym);
-    bzla_sort_release(bzla, fun_sort);
-
-    sk = bzla_exp_apply_n(bzla, uf, args.start, BZLA_COUNT_STACK(args));
-
-    bzla_node_release(bzla, uf);
-    BZLA_RELEASE_STACK(args);
-    BZLA_RELEASE_STACK(arg_sorts);
-    return sk;
+    sk = bzla_node_create_var(bzla, sort, sym);
   }
-#endif
-
-  return bzla_node_create_var(bzla, sort, sym);
+  return sk;
 }
 
 BzlaNode *
@@ -3374,7 +3414,7 @@ get_ce_literal(QuantSolverState *state, BzlaNode *q)
   return lit;
 }
 
-bool
+static bool
 add_pending_lemmas(QuantSolverState *state)
 {
   bool added_lemma = false;
@@ -3429,9 +3469,8 @@ get_skolemization_lemma(QuantSolverState *state, BzlaNode *q)
         bzla_util_node2string(sk));
   }
 
-  body = bzla_node_binder_get_body(q);
   // inst = substitute (bzla, body, map, true, 0);
-  inst = instantiate(state, body, map);
+  inst = instantiate(state, q, map);
   bzla_hashptr_table_delete(map);
   assert(!bzla_node_real_addr(inst)->parameterized);
 
@@ -3467,7 +3506,10 @@ get_ce_lemma(QuantSolverState *state, BzlaNode *q)
     return b->data.as_ptr;
   }
 
-  log("Add CE lemma: %s\n", bzla_util_node2string(q));
+  log("Add CE lemma: %s (%s)\n",
+      bzla_util_node2string(q),
+      bzla_util_node2string(find_backref(state, q)));
+
   bzla = state->bzla;
   map  = bzla_hashptr_table_new(bzla->mm,
                                (BzlaHashPtr) bzla_node_hash_by_id,
@@ -3481,8 +3523,7 @@ get_ce_lemma(QuantSolverState *state, BzlaNode *q)
     bzla_hashptr_table_add(map, cur->e[0])->data.as_ptr = ic;
   }
 
-  body = bzla_node_binder_get_body(q);
-  inst = instantiate(state, body, map);
+  inst = instantiate(state, q, map);
   bzla_hashptr_table_delete(map);
   assert(!bzla_node_real_addr(inst)->parameterized);
 
@@ -3523,7 +3564,7 @@ add_lemma(QuantSolverState *state, BzlaNode *lem)
 {
   if (bzla_hashptr_table_get(state->lemma_cache, lem))
   {
-    log("Duplicate lemma: %s\n", bzla_util_node2string(lem));
+    // log ("Duplicate lemma: %s\n", bzla_util_node2string (lem));
     return;
   }
   // log ("Add lemma: %s\n", bzla_util_node2string(lem));
@@ -3563,9 +3604,8 @@ add_value_instantiation_lemma(QuantSolverState *state, BzlaNode *q)
         bzla_util_node2string(value));
   }
 
-  body = bzla_node_binder_get_body(q);
   // inst = substitute (bzla, body, map, true, 0);
-  inst = instantiate(state, body, map);
+  inst = instantiate(state, q, map);
   // TODO: release values?
   bzla_hashptr_table_delete(map);
   assert(!bzla_node_real_addr(inst)->parameterized);
@@ -3575,12 +3615,44 @@ add_value_instantiation_lemma(QuantSolverState *state, BzlaNode *q)
   add_lemma(state, lemma);
 }
 
-void
+static void
 set_inactive(QuantSolverState *state, BzlaNode *q)
 {
   assert(!bzla_hashptr_table_get(state->inactive_quantifiers, q));
   bzla_hashptr_table_add(state->inactive_quantifiers, q);
   log("Set inactive: %s\n", bzla_util_node2string(q));
+}
+
+static bool
+is_inactive(QuantSolverState *state, BzlaNode *q)
+{
+  return bzla_hashptr_table_get(state->inactive_quantifiers, q) != 0;
+}
+
+void
+get_model(QuantSolverState *state, BzlaNode *q)
+{
+  Bzla *bzla;
+  BzlaNode *cur;
+  BzlaNodePtrStack *instances;
+  BzlaPtrHashBucket *b;
+
+  bzla              = state->bzla;
+  BzlaNode *backref = find_backref(state, q);
+  b                 = bzla_hashptr_table_get(state->skolems, backref);
+  assert(b);
+  // bzla_model_get_fun
+
+  //  b = bzla_hashptr_table_get (state->instances, backref);
+  //  assert (b);
+  //  log("model for: %s\n", bzla_util_node2string(q));
+  //  instances = b->data.as_ptr;
+  //  for (size_t i = 0, size = BZLA_COUNT_STACK (*instances); i < size; ++i)
+  //  {
+  //    cur = BZLA_PEEK_STACK(*instances, i);
+  //    log ("  value: %s\n", bzla_util_node2string(get_value(bzla,
+  //    get_skolem(state, cur))));
+  //  }
 }
 
 bool
@@ -3590,14 +3662,13 @@ check_active_quantifiers(QuantSolverState *state)
   Bzla *bzla;
   BzlaNode *q, *lit;
   BzlaPtrHashTableIterator it;
-  BzlaNodePtrStack to_check, assumptions, insts;
+  BzlaNodePtrStack to_check, to_synth;
+  BzlaSolverResult res;
 
   bzla = state->bzla;
+  BZLA_INIT_STACK(bzla->mm, to_synth);
   BZLA_INIT_STACK(bzla->mm, to_check);
-  BZLA_INIT_STACK(bzla->mm, assumptions);
-  BZLA_INIT_STACK(bzla->mm, insts);
 
-  bzla_reset_incremental_usage(bzla);
   bzla_iter_hashptr_init(&it, state->active_quantifiers);
   while (bzla_iter_hashptr_has_next(&it))
   {
@@ -3605,29 +3676,38 @@ check_active_quantifiers(QuantSolverState *state)
 
     if (is_forall(state, q))
     {
-      BZLA_PUSH_STACK(to_check, q);
-      add_lemma(state, get_ce_lemma(state, q));
-      bzla_assume_exp(bzla, get_ce_literal(state, q));
+      if (!is_inactive(state, q))
+      {
+        add_lemma(state, get_ce_lemma(state, q));
+        BZLA_PUSH_STACK(to_check, q);
+      }
     }
     else
     {
       assert(is_exists(state, q));
+      BZLA_PUSH_STACK(to_synth, q);
       add_lemma(state, get_skolemization_lemma(state, q));
     }
   }
 
 #if 1
-  BzlaSolverResult res;
+  for (size_t i = 0, size = BZLA_COUNT_STACK(to_synth); i < size; ++i)
+  {
+    q = BZLA_PEEK_STACK(to_synth, i);
+    get_model(state, q);
+  }
+#endif
+
   size_t num_inactive = 0;
   for (size_t i = 0, size = BZLA_COUNT_STACK(to_check); i < size; ++i)
   {
-    bzla_reset_incremental_usage(bzla);
     q   = BZLA_PEEK_STACK(to_check, i);
     lit = get_ce_literal(state, q);
+
+    bzla_reset_incremental_usage(bzla);
     bzla_assume_exp(bzla, lit);
 
     log("Check for counterexamples (%s): ", bzla_util_node2string(q));
-    fflush(stdout);
 
     res = bzla->slv->api.sat(bzla->slv);
 
@@ -3635,6 +3715,7 @@ check_active_quantifiers(QuantSolverState *state)
     {
       log("sat\n");
       add_value_instantiation_lemma(state, q);
+      continue;
     }
     else
     {
@@ -3642,56 +3723,58 @@ check_active_quantifiers(QuantSolverState *state)
       bzla->last_sat_result = BZLA_RESULT_UNSAT;  // hack
       if (bzla_failed_exp(bzla, lit))
       {
-        log("  failed: %s\n", bzla_util_node2string(q));
-        ++num_inactive;
-        // set_inactive(state, q);
-      }
-    }
-  }
-
-  done = num_inactive == BZLA_COUNT_STACK(to_check);
-#else
-  log("Check for counterexamples (%s): ", bzla_util_node2string(q));
-  fflush(stdout);
-  BzlaSolverResult res = bzla->slv->api.sat(bzla->slv);
-  if (res == BZLA_RESULT_SAT)
-  {
-    log("sat\n");
-    for (size_t i = 0, size = BZLA_COUNT_STACK(to_check); i < size; ++i)
-    {
-      q = BZLA_PEEK_STACK(to_check, i);
-      add_value_instantiation_lemma(state, q);
-    }
-  }
-  else
-  {
-    log("unsat\n");
-
-    bzla->last_sat_result = BZLA_RESULT_UNSAT;  // hack
-
-    size_t num_inactive = 0;
-    for (size_t i = 0, size = BZLA_COUNT_STACK(to_check); i < size; ++i)
-    {
-      q   = BZLA_PEEK_STACK(to_check, i);
-      lit = get_ce_literal(state, q);
-
-      if (bzla_failed_exp(bzla, lit))
-      {
-        log("  failed: %s\n", bzla_util_node2string(q));
         ++num_inactive;
         set_inactive(state, q);
       }
     }
-
-    done = num_inactive == BZLA_COUNT_STACK(to_check);
   }
-#endif
-  BZLA_RELEASE_STACK(to_check);
-  bzla_reset_incremental_usage(bzla);
+  done = num_inactive == BZLA_COUNT_STACK(to_check);
+
+  BZLA_RELEASE_STACK(to_synth);
   return done;
 }
 
-void
+static void
+compute_variable_dependencies_aux(Bzla *bzla,
+                                  BzlaNode *q,
+                                  BzlaNodePtrStack *free_vars)
+{
+  BzlaNode *cur;
+  BzlaNodePtrStack visit;
+  BzlaIntHashTable *cache;
+
+  cache = bzla_hashint_table_new(bzla->mm);
+
+  BZLA_INIT_STACK(bzla->mm, visit);
+  BZLA_PUSH_STACK(visit, q);
+  while (!BZLA_EMPTY_STACK(visit))
+  {
+    cur = bzla_node_real_addr(BZLA_POP_STACK(visit));
+
+    if (!cur->parameterized || bzla_hashint_table_contains(cache, cur->id))
+    {
+      continue;
+    }
+    bzla_hashint_table_add(cache, cur->id);
+
+    if (bzla_node_is_quantifier(cur))
+    {
+      bzla_hashint_table_add(cache, cur->e[0]->id);
+    }
+    else if (bzla_node_is_param(cur) && bzla_node_param_is_forall_var(cur))
+    {
+      BZLA_PUSH_STACK(*free_vars, cur);
+      log("  %s\n", bzla_util_node2string(cur));
+    }
+
+    for (uint32_t i = 0; i < cur->arity; ++i)
+    {
+      BZLA_PUSH_STACK(visit, cur->e[i]);
+    }
+  }
+}
+
+static void
 compute_variable_dependencies(QuantSolverState *state)
 {
   uint32_t id;
@@ -3699,9 +3782,8 @@ compute_variable_dependencies(QuantSolverState *state)
   BzlaNode *q, *cur;
   BzlaPtrHashTableIterator it;
   BzlaIntHashTableIterator iit;
-  BzlaIntHashTable *free_vars;
   BzlaPtrHashBucket *b;
-  BzlaNodePtrStack *vars;
+  BzlaNodePtrStack *free_vars;
 
   bzla = state->bzla;
 
@@ -3709,28 +3791,23 @@ compute_variable_dependencies(QuantSolverState *state)
   while (bzla_iter_hashptr_has_next(&it))
   {
     q = bzla_iter_hashptr_next(&it);
-    if (!q->parameterized) continue;
+    if (!q->parameterized)
+    {
+      log("skip: %s\n", bzla_util_node2string(q));
+      continue;
+    }
     if (bzla_hashptr_table_get(state->deps, q)) continue;
 
     log("Dependencies for %s:\n", bzla_util_node2string(q));
 
     b = bzla_hashptr_table_get(bzla->parameterized, q);
     assert(b);
-    free_vars = b->data.as_ptr;
 
-    BZLA_CNEW(bzla->mm, vars);
-    BZLA_INIT_STACK(bzla->mm, *vars);
-
-    bzla_iter_hashint_init(&iit, free_vars);
-    while (bzla_iter_hashint_has_next(&iit))
-    {
-      id  = bzla_iter_hashint_next(&iit);
-      cur = bzla_node_get_by_id(bzla, id);
-      BZLA_PUSH_STACK(*vars, bzla_node_copy(bzla, cur));
-      log("  %s\n", bzla_util_node2string(cur));
-    }
-
-    bzla_hashptr_table_add(state->deps, q)->data.as_ptr = vars;
+    BZLA_CNEW(bzla->mm, free_vars);
+    BZLA_INIT_STACK(bzla->mm, *free_vars);
+    compute_variable_dependencies_aux(bzla, q, free_vars);
+    assert(!BZLA_EMPTY_STACK(*free_vars));
+    bzla_hashptr_table_add(state->deps, q)->data.as_ptr = free_vars;
   }
 }
 
@@ -3816,6 +3893,193 @@ compute_variable_dependencies (QuantSolverState *state)
 }
 #endif
 
+static bool
+check_ce_literals(QuantSolverState *state)
+{
+  Bzla *bzla;
+  BzlaNode *q, *lit;
+  BzlaPtrHashTableIterator it;
+  BzlaSolverResult res;
+  size_t num_inactive = 0, num_active = 0;
+
+  bzla = state->bzla;
+
+  bzla_iter_hashptr_init(&it, state->active_quantifiers);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    q = bzla_iter_hashptr_next(&it);
+
+    //    if (q != find_backref(state, q)) continue;
+
+    if (is_forall(state, q))
+    {
+      ++num_active;
+
+      if (bzla_hashptr_table_get(state->inactive_quantifiers, q))
+      {
+        ++num_inactive;
+        continue;
+      }
+
+      lit = get_ce_literal(state, q);
+
+      bzla_reset_incremental_usage(bzla);
+      bzla_assume_exp(bzla, lit);
+      res = bzla->slv->api.sat(bzla->slv);
+
+      if (res == BZLA_RESULT_UNSAT)
+      {
+        bzla->last_sat_result = BZLA_RESULT_UNSAT;  // hack
+        if (bzla_failed_exp(bzla, lit))
+        {
+          set_inactive(state, q);
+          ++num_inactive;
+        }
+      }
+    }
+  }
+
+  return num_active == num_inactive;
+}
+
+static BzlaSolverResult
+check_ground_formulas(QuantSolverState *state)
+{
+  Bzla *bzla;
+  BzlaSolverResult res;
+  BzlaPtrHashTableIterator it;
+  BzlaPtrHashTable *assumptions, *filter;
+  BzlaNode *q, *lit;
+  size_t i;
+
+  bzla = state->bzla;
+
+  if (bzla->inconsistent)
+  {
+    log("Ground formulas inconsistent\n");
+    return BZLA_RESULT_UNSAT;
+  }
+
+  assumptions = bzla_hashptr_table_new(bzla->mm,
+                                       (BzlaHashPtr) bzla_node_hash_by_id,
+                                       (BzlaCmpPtr) bzla_node_compare_by_id);
+  filter      = bzla_hashptr_table_new(bzla->mm,
+                                  (BzlaHashPtr) bzla_node_hash_by_id,
+                                  (BzlaCmpPtr) bzla_node_compare_by_id);
+
+  bzla_iter_hashptr_init(&it, state->ce_literals);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    lit = it.bucket->data.as_ptr;
+    q   = bzla_iter_hashptr_next(&it);
+    if (bzla_hashptr_table_get(state->inactive_quantifiers, q)) continue;
+    bzla_hashptr_table_add(assumptions, lit)->data.as_ptr = q;
+  }
+
+  i = 0;
+  while (true)
+  {
+    ++i;
+    log("\nGround check: %zu (%u assumptions): ", i, assumptions->count);
+
+    bzla_reset_incremental_usage(bzla);
+    bzla_iter_hashptr_init(&it, assumptions);
+    while (bzla_iter_hashptr_has_next(&it))
+    {
+      lit = bzla_iter_hashptr_next(&it);
+      bzla_assume_exp(bzla, lit);
+    }
+
+    res = bzla->slv->api.sat(bzla->slv);
+
+    if (res == BZLA_RESULT_SAT)
+    {
+      log("sat\n");
+      break;
+    }
+    else
+    {
+      log("unsat\n");
+      bzla->last_sat_result = BZLA_RESULT_UNSAT;  // hack
+
+      bool failed = false;
+      bzla_iter_hashptr_init(&it, assumptions);
+      while (bzla_iter_hashptr_has_next(&it))
+      {
+        q   = it.bucket->data.as_ptr;
+        lit = bzla_iter_hashptr_next(&it);
+        if (bzla_failed_exp(bzla, lit))
+        {
+          log("  failed: %s (instance: %s)\n",
+              bzla_util_node2string(q),
+              bzla_util_node2string(find_backref(state, q)));
+          bzla_hashptr_table_remove(assumptions, lit, 0, 0);
+          failed = true;
+        }
+      }
+
+#if 0
+      failed = false;
+      bzla_iter_hashptr_init (&it, assumptions);
+      while (bzla_iter_hashptr_has_next (&it))
+      {
+        q   = it.bucket->data.as_ptr;
+        lit = bzla_iter_hashptr_next (&it);
+
+        bzla_reset_incremental_usage (bzla);
+        bzla_assume_exp (bzla, lit);
+
+        res = bzla->slv->api.sat (bzla->slv);
+        if (res == BZLA_RESULT_UNSAT)
+        {
+          bzla->last_sat_result = BZLA_RESULT_UNSAT;  // hack
+          if (bzla_failed_exp (bzla, lit))
+          {
+            log ("  failed: %s (instance: %s)\n",
+                 bzla_util_node2string (q),
+                 bzla_util_node2string (find_backref (state, q)));
+            bzla_hashptr_table_remove (assumptions, lit, 0, 0);
+            set_inactive (state, q);
+            failed = true;
+          }
+        }
+      }
+#endif
+
+      if (!failed)
+      {
+        break;
+      }
+
+#if 0
+      bool failed = false;
+      bzla_iter_hashptr_init(&it, assumptions);
+      while (bzla_iter_hashptr_has_next(&it))
+      {
+        q = it.bucket->data.as_ptr;
+        lit = bzla_iter_hashptr_next(&it);
+
+        if (bzla_failed_exp(bzla, lit))
+        {
+          log("  failed: %s (instance: %s)\n", bzla_util_node2string(q), bzla_util_node2string(find_backref(state, q)));
+          bzla_hashptr_table_remove(assumptions, lit, 0, 0);
+          failed = true;
+        }
+      }
+
+      /* No assumption failed, ground formulas are unsat. */
+      if (!failed)
+      {
+        break;
+      }
+#endif
+    }
+  }
+
+  bzla_hashptr_table_delete(assumptions);
+  return res;
+}
+
 static BzlaSolverResult
 check_quantifiers(BzlaQuantSolver *slv)
 {
@@ -3827,6 +4091,7 @@ check_quantifiers(BzlaQuantSolver *slv)
   {
     slv->bzla->slv = 0;
     Bzla *solver   = bzla_clone(slv->bzla);
+    bzla_set_msg_prefix(solver, "quant");
     bzla_opt_set(solver, BZLA_OPT_INCREMENTAL, 1);
     bzla_opt_set(solver, BZLA_OPT_MODEL_GEN, 1);
     slv->bzla->slv = (BzlaSolver *) slv;
@@ -3837,28 +4102,24 @@ check_quantifiers(BzlaQuantSolver *slv)
 
   compute_variable_dependencies(state);
 
-  size_t i = 0;
   while (true)
   {
-    // log ("\n");
-    // bzla_dumpsmt_dump (state->bzla, stdout);
-    // log ("\n");
-    res = state->bzla->slv->api.sat(state->bzla->slv);
-
+    // bzla_reset_incremental_usage (state->bzla);
+    // res = state->bzla->slv->api.sat (state->bzla->slv);
+    res = check_ground_formulas(state);
     if (res == BZLA_RESULT_SAT)
     {
       log("\n");
       get_active_quantifiers(state);
       state->added_lemma = false;
-      done               = check_active_quantifiers(state);
 
-      if (done)
+      if (check_active_quantifiers(state))
       {
         res = BZLA_RESULT_SAT;
         break;
       }
 
-      if (!state->added_lemma)  // add_pending_lemmas (state))
+      if (!state->added_lemma)
       {
         BZLA_MSG(state->bzla->msg, 1, "no new lemmas added");
         log("** No new lemmas added\n");
@@ -3871,15 +4132,6 @@ check_quantifiers(BzlaQuantSolver *slv)
       res = BZLA_RESULT_UNSAT;
       break;
     }
-
-    if (state->bzla->inconsistent)
-    {
-      res = BZLA_RESULT_UNSAT;
-      break;
-    }
-
-    ++i;
-    // if (i == 5) abort();
   }
 
   return res;
@@ -3950,7 +4202,6 @@ print_time_stats_quant_solver(BzlaQuantSolver *slv)
   (void) slv;
 }
 
-/* Note: Models are always printed in SMT2 format. */
 static void
 print_model_quant_solver(BzlaQuantSolver *slv, const char *format, FILE *file)
 {
