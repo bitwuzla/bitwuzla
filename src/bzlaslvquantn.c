@@ -3279,8 +3279,8 @@ BzlaNode *
 mk_skolem_aux(QuantSolverState *state, BzlaNode *q, const char *sym)
 {
   Bzla *bzla;
-  BzlaNode *backref, *cur, *sk, *app;
-  BzlaNodePtrStack *deps;
+  BzlaNode *result = 0, *backref, *cur, *sk;
+  BzlaNodePtrStack *deps, args;
   BzlaPtrHashBucket *b;
   BzlaSortIdStack sorts;
   BzlaSortId domain, codomain, sort;
@@ -3290,40 +3290,54 @@ mk_skolem_aux(QuantSolverState *state, BzlaNode *q, const char *sym)
   if ((b = bzla_hashptr_table_get(state->deps, q)))
   {
     BZLA_INIT_STACK(state->bzla->mm, sorts);
-    backref = find_backref(state, q);
+    BZLA_INIT_STACK(state->bzla->mm, args);
 
     log("# SKOLEM UF: %s\n", bzla_util_node2string(q));
     // log ("# backref: %s\n", bzla_util_node2string(backref));
 
+    /* Collect sorts of universal variable dependencies. */
     deps = b->data.as_ptr;
     for (size_t i = 0, size = BZLA_COUNT_STACK(*deps); i < size; ++i)
     {
       cur = BZLA_PEEK_STACK(*deps, i);
-      log("  %s\n", bzla_util_node2string(cur));
-      assert(!bzla_node_is_param(cur));
-      BZLA_PUSH_STACK(sorts, bzla_node_get_sort_id(cur));
+      if (bzla_node_is_param(cur))
+      {
+        assert(is_exists(state, bzla_node_param_get_binder(cur)));
+      }
+      else
+      {
+        log("  %s\n", bzla_util_node2string(cur));
+        BZLA_PUSH_STACK(sorts, bzla_node_get_sort_id(cur));
+        BZLA_PUSH_STACK(args, cur);
+      }
     }
 
-    if ((b = bzla_hashptr_table_get(state->skolems, backref)))
+    if (!BZLA_EMPTY_STACK(sorts))
     {
-      sk = b->data.as_ptr;
-    }
-    else
-    {
-      domain   = bzla_sort_tuple(bzla, sorts.start, BZLA_COUNT_STACK(sorts));
-      codomain = bzla_node_get_sort_id(q->e[0]);
-      sort     = bzla_sort_fun(bzla, domain, codomain);
-      bzla_sort_release(bzla, domain);
-      sk = bzla_exp_uf(bzla, sort, sym);
-      bzla_hashptr_table_add(state->skolems, bzla_node_copy(bzla, backref))
-          ->data.as_ptr = sk;
+      backref = find_backref(state, q);
+      if ((b = bzla_hashptr_table_get(state->skolems, backref)))
+      {
+        sk = b->data.as_ptr;
+      }
+      else
+      {
+        domain   = bzla_sort_tuple(bzla, sorts.start, BZLA_COUNT_STACK(sorts));
+        codomain = bzla_node_get_sort_id(q->e[0]);
+        sort     = bzla_sort_fun(bzla, domain, codomain);
+        bzla_sort_release(bzla, domain);
+        sk = bzla_exp_uf(bzla, sort, sym);
+        bzla_hashptr_table_add(state->skolems, bzla_node_copy(bzla, backref))
+            ->data.as_ptr = sk;
+      }
+      assert(BZLA_COUNT_STACK(args) == bzla_node_fun_get_arity(bzla, sk));
+
+      result = bzla_exp_apply_n(bzla, sk, args.start, BZLA_COUNT_STACK(args));
     }
 
-    app = bzla_exp_apply_n(bzla, sk, deps->start, BZLA_COUNT_STACK(*deps));
     BZLA_RELEASE_STACK(sorts);
-    return app;
+    BZLA_RELEASE_STACK(args);
   }
-  return 0;
+  return result;
 }
 
 BzlaNode *
