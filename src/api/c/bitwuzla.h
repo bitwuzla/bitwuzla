@@ -267,8 +267,7 @@ typedef enum BitwuzlaRoundingMode BitwuzlaRoundingMode;
 
 typedef struct Bitwuzla Bitwuzla;
 typedef struct BitwuzlaTerm BitwuzlaTerm;
-typedef struct BitwuzlaAnonymous BitwuzlaAnonymous;
-typedef BitwuzlaAnonymous *BitwuzlaSort;
+typedef uint32_t BitwuzlaSort;
 
 /* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
@@ -454,11 +453,13 @@ BitwuzlaSort bitwuzla_term_get_sort(BitwuzlaTerm *term);
 BitwuzlaSort bitwuzla_term_array_get_index_sort(BitwuzlaTerm *term);
 BitwuzlaSort bitwuzla_term_array_get_element_sort(BitwuzlaTerm *term);
 BitwuzlaSort bitwuzla_term_fun_get_domain_sort(BitwuzlaTerm *term);
+const BitwuzlaSort *bitwuzla_term_fun_get_domain_sorts(BitwuzlaTerm *term);
 BitwuzlaSort bitwuzla_term_fun_get_codomain_sort(BitwuzlaTerm *term);
 
 uint32_t bitwuzla_term_bv_get_size(BitwuzlaTerm *term);
 uint32_t bitwuzla_term_fp_get_exp_size(BitwuzlaTerm *term);
 uint32_t bitwuzla_term_fp_get_sig_size(BitwuzlaTerm *term);
+uint32_t bitwuzla_term_fun_get_arity(BitwuzlaTerm *term);
 
 const char *bitwuzla_term_get_symbol(BitwuzlaTerm *term);
 void bitwuzla_term_set_symbol(BitwuzlaTerm *term, const char *symbol);

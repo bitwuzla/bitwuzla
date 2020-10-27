@@ -761,6 +761,7 @@ bzla_new(void)
                              (BzlaCmpPtr) bzla_node_compare_by_id);
   BZLA_INIT_STACK(mm, bzla->failed_assumptions);
   BZLA_INIT_STACK(mm, bzla->unsat_core);
+  BZLA_INIT_STACK(mm, bzla->fun_domain_sorts);
   bzla->parameterized =
       bzla_hashptr_table_new(mm,
                              (BzlaHashPtr) bzla_node_hash_by_id,
@@ -959,6 +960,7 @@ bzla_delete(Bzla *bzla)
 
   bzla_reset_unsat_core(bzla);
   BZLA_RELEASE_STACK(bzla->unsat_core);
+  BZLA_RELEASE_STACK(bzla->fun_domain_sorts);
 
   for (i = 0; i < BZLA_COUNT_STACK(bzla->assertions); i++)
     bzla_node_release(bzla, BZLA_PEEK_STACK(bzla->assertions, i));

@@ -146,8 +146,9 @@ static BzlaOption bzla_options[BITWUZLA_OPT_NUM_OPTS] = {
 #define BZLA_EXPORT_BITWUZLA_TERM(node) (((BitwuzlaTerm *) (node)))
 #define BZLA_EXPORT_BITWUZLA_TERMS(terms) (((const BitwuzlaTerm **) (terms)))
 
-#define BZLA_IMPORT_BITWUZLA_SORT(sort) (((BzlaSortId)(long) (sort)))
-#define BZLA_EXPORT_BITWUZLA_SORT(sort) (((BitwuzlaSort)(long) (sort)))
+#define BZLA_IMPORT_BITWUZLA_SORT(sort) (((BzlaSortId)(sort)))
+#define BZLA_EXPORT_BITWUZLA_SORT(sort) (((BitwuzlaSort)(sort)))
+#define BZLA_EXPORT_BITWUZLA_SORTS(sorts) (((const BitwuzlaSort *) (sorts)))
 
 #define BZLA_IMPORT_BITWUZLA_OPTION(option) (bzla_options[option])
 
@@ -408,7 +409,7 @@ inc_ext_refs_sort(Bzla *bzla, BzlaSortId id)
   assert(bzla);
   assert(id);
   BzlaSort *sort = bzla_sort_get_by_id(bzla, id);
-  BZLA_ABORT(sort->ext_refs == INT32_MAX, "Node reference counter overflow");
+  BZLA_ABORT(sort->ext_refs == INT32_MAX, "sort reference counter overflow");
   sort->ext_refs += 1;
   bzla->external_refs += 1;
 }
@@ -2070,7 +2071,7 @@ bitwuzla_get_unsat_core(Bitwuzla *bitwuzla)
   BZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(bzla);
   BZLA_CHECK_UNSAT(bzla, "get unsat core");
 
-  bzla_reset_unsat_core(bzla);
+  BZLA_RESET_STACK(bzla->unsat_core);
 
   for (uint32_t i = 0; i < BZLA_COUNT_STACK(bzla->assertions); i++)
   {
@@ -2539,6 +2540,34 @@ bitwuzla_term_fun_get_domain_sort(BitwuzlaTerm *term)
       bzla_node_get_bzla(bzla_term), bzla_node_get_sort_id(bzla_term)));
 }
 
+const BitwuzlaSort *
+bitwuzla_term_fun_get_domain_sorts(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_IS_FUN(bzla_term);
+  Bzla *bzla     = bzla_node_get_bzla(bzla_term);
+  uint32_t arity = bzla_node_fun_get_arity(bzla, bzla_term);
+  BZLA_RESET_STACK(bzla->fun_domain_sorts);
+  BzlaTupleSort *tuple_sort =
+      &bzla_sort_get_by_id(
+           bzla,
+           bzla_sort_fun_get_domain(bzla, bzla_node_get_sort_id(bzla_term)))
+           ->tuple;
+  assert(arity == tuple_sort->num_elements);
+  for (uint32_t i = 0; i < arity; i++)
+  {
+    BzlaSortId id = tuple_sort->elements[i]->id;
+    BZLA_PUSH_STACK(bzla->fun_domain_sorts, id);
+    bzla_sort_copy(bzla, id);
+    inc_ext_refs_sort(bzla, id);
+  }
+  BZLA_PUSH_STACK(bzla->fun_domain_sorts, 0);
+  return BZLA_EXPORT_BITWUZLA_SORTS(bzla->fun_domain_sorts.start);
+}
+
 BitwuzlaSort
 bitwuzla_term_fun_get_codomain_sort(BitwuzlaTerm *term)
 {
@@ -2586,6 +2615,18 @@ bitwuzla_term_fp_get_sig_size(BitwuzlaTerm *term)
   Bzla *bzla = bzla_node_get_bzla(bzla_term);
   BZLA_CHECK_TERM_IS_FP(bzla, bzla_term);
   return bzla_node_fp_get_sig_width(bzla, bzla_term);
+}
+
+uint32_t
+bitwuzla_term_fun_get_arity(BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  Bzla *bzla = bzla_node_get_bzla(bzla_term);
+  BZLA_CHECK_TERM_IS_FUN(bzla_term);
+  return bzla_node_fun_get_arity(bzla, bzla_term);
 }
 
 const char *

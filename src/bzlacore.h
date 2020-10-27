@@ -153,6 +153,9 @@ struct Bzla
    * this stack is needed for boolector_get_failed_assumptions only */
   BzlaNodePtrStack failed_assumptions;
   BzlaNodePtrStack unsat_core;
+  /* maintain current query for function domain sorts, valid until next
+   * API call to retrieve domain sorts of a function */
+  BzlaSortIdStack fun_domain_sorts;
 
   /* maintain assertions for different contexts push/pop */
   BzlaNodePtrStack assertions;
@@ -273,7 +276,8 @@ void bzla_reset_time(Bzla *bzla);
 /* Reset other statistics. */
 void bzla_reset_stats(Bzla *bzla);
 
-void bzla_reset_unsat_core(Bzla *bzla);
+void bzla_reset_unsat_core(
+    Bzla *bzla);  // TODO (an) remove as soon as old API is removed
 
 /* Adds top level constraint. */
 void bzla_assert_exp(Bzla *bzla, BzlaNode *exp);
