@@ -1703,29 +1703,6 @@ bzla_node_param_set_binder(BzlaNode *param, BzlaNode *binder)
 {
   assert(bzla_node_is_param(param));
   assert(!binder || bzla_node_is_binder(binder));
-
-  BzlaNode *q;
-
-  /* param is not bound anymore, remove from exists/forall vars tables */
-  if (!binder)
-  {
-    q = bzla_node_param_get_binder(param);
-    if (q)
-    {
-      if (bzla_node_is_exists(q))
-        bzla_hashptr_table_remove(param->bzla->exists_vars, param, 0, 0);
-      else if (bzla_node_is_forall(q))
-        bzla_hashptr_table_remove(param->bzla->forall_vars, param, 0, 0);
-    }
-  }
-  /* param is bound, add to exists/forall vars tables */
-  else
-  {
-    if (bzla_node_is_exists(binder))
-      (void) bzla_hashptr_table_add(param->bzla->exists_vars, param);
-    else if (bzla_node_is_forall(binder))
-      (void) bzla_hashptr_table_add(param->bzla->forall_vars, param);
-  }
   ((BzlaParamNode *) bzla_node_real_addr(param))->binder = binder;
 }
 

@@ -283,11 +283,6 @@ bzla_opt_init_opts(Bzla *bzla)
                "sls",
                BZLA_ENGINE_SLS,
                "use the score-based local search engine (QF_BV only)");
-  add_opt_help(mm,
-               opts,
-               "quant",
-               BZLA_ENGINE_QUANT,
-               "use the quantifier engine (BV only)");
   bzla->options[BZLA_OPT_ENGINE].options = opts;
 
   init_opt(bzla,

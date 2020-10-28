@@ -1404,7 +1404,7 @@ extract_macros(Bzla *bzla)
   BzlaNode *body, *fun_body, *lambda_body;
   uint32_t num_extracted = 0;
 
-  if (bzla->forall_vars->count == 0) return;
+  if (bzla->quantifiers->count == 0) return;
 
   start = bzla_util_time_stamp();
   bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);

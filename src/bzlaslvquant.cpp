@@ -10,7 +10,6 @@
 extern "C" {
 #include "bzlaslvquant.h"
 
-#include "bzlaabort.h"
 #include "bzlabeta.h"
 #include "bzlabv.h"
 #include "bzlaclone.h"
@@ -21,11 +20,13 @@ extern "C" {
 #include "bzlaslvfun.h"
 #include "bzlasynth.h"
 #include "dumper/bzladumpsmt.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlanodeiter.h"
 #include "utils/bzlautil.h"
 }
 
 #include <cstdarg>
+#include <memory>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
@@ -68,10 +69,8 @@ qlog(const char *fmt, ...)
 class QuantSolverState
 {
  public:
-  QuantSolverState() = default;
+  QuantSolverState(Bzla *bzla) : d_bzla(bzla){};
   ~QuantSolverState();
-
-  void initialize(Bzla *bzla);
 
   void get_active_quantifiers();
   bool is_forall(BzlaNode *q);
@@ -110,6 +109,7 @@ class QuantSolverState
 
  private:
   Bzla *d_bzla;
+
   /* Contains currently active quantifiers (populatd by
    * get_active_quantifiers). The mapped bool indicates the current polarity of
    * the quantifier. */
@@ -133,7 +133,6 @@ class QuantSolverState
   NodeSet d_lemma_cache;
 
   bool d_added_lemma;
-  bool d_initialized;
 };
 
 QuantSolverState::~QuantSolverState()
@@ -192,29 +191,6 @@ QuantSolverState::~QuantSolverState()
   {
     bzla_node_release(d_bzla, l);
   }
-
-  bzla_delete(d_bzla);
-}
-
-void
-QuantSolverState::initialize(Bzla *bzla)
-{
-  BzlaSolver *slv;
-
-  if (d_initialized) return;
-
-  slv       = bzla->slv;
-  bzla->slv = 0;
-
-  d_bzla = bzla_clone(slv->bzla);
-  bzla_set_msg_prefix(d_bzla, "quant");
-  bzla_opt_set(d_bzla, BZLA_OPT_INCREMENTAL, 1);
-  bzla_opt_set(d_bzla, BZLA_OPT_MODEL_GEN, 1);
-
-  bzla->slv = slv;
-
-  d_bzla->slv   = bzla_new_fun_solver(d_bzla);
-  d_initialized = true;
 }
 
 /*------------------------------------------------------------------------*/
@@ -223,10 +199,8 @@ struct BzlaQuantSolver
 {
   BZLA_SOLVER_STRUCT;
 
-  QuantSolverState state;
+  std::unique_ptr<QuantSolverState> d_state;
 };
-
-typedef struct BzlaQuantSolver BzlaQuantSolver;
 
 /*------------------------------------------------------------------------*/
 
@@ -551,9 +525,11 @@ QuantSolverState::instantiate(BzlaNode *q, const NodeMap<BzlaNode *> &substs)
 
   for (auto [q, qi] : backref)
   {
-    if (!bzla_node_is_quantifier(q)) continue;
-    add_backref(qi, q);
-    add_instance(q, qi, backref);
+    if (bzla_node_is_quantifier(q))
+    {
+      add_backref(qi, q);
+      add_instance(q, qi, backref);
+    }
     bzla_node_release(d_bzla, qi);
   }
 
@@ -744,7 +720,7 @@ QuantSolverState::get_ce_lemma(BzlaNode *q)
   assert(bzla_node_is_regular(q));
   assert(!q->parameterized);
 
-  BzlaNode *cur, *ic, *inst, *lemma;
+  BzlaNode *cur, *ic, *inst, *lem;
   BzlaNodeIterator it;
   NodeMap<BzlaNode *> map;
 
@@ -772,12 +748,11 @@ QuantSolverState::get_ce_lemma(BzlaNode *q)
 
   inst = instantiate(q, map);
   assert(!bzla_node_real_addr(inst)->parameterized);
-
-  lemma = bzla_exp_implies(d_bzla, get_ce_literal(q), bzla_node_invert(inst));
+  lem = bzla_exp_implies(d_bzla, get_ce_literal(q), bzla_node_invert(inst));
   bzla_node_release(d_bzla, inst);
-  d_ce_lemmas.emplace(bzla_node_copy(d_bzla, q), lemma);
+  d_ce_lemmas.emplace(bzla_node_copy(d_bzla, q), lem);
 
-  return lemma;
+  return lem;
 }
 
 BzlaNode *
@@ -824,7 +799,7 @@ QuantSolverState::add_value_instantiation_lemma(BzlaNode *q)
   assert(bzla_node_is_regular(q));
   assert(!q->parameterized);
 
-  BzlaNode *cur, *ic, *inst, *lemma, *value;
+  BzlaNode *cur, *ic, *inst, *lem, *value;
   BzlaNodeIterator it;
   NodeMap<BzlaNode *> map;
 
@@ -842,7 +817,6 @@ QuantSolverState::add_value_instantiation_lemma(BzlaNode *q)
          bzla_util_node2string(value));
   }
 
-  // inst = substitute (bzla, body, map, true, 0);
   inst = instantiate(q, map);
   assert(!bzla_node_real_addr(inst)->parameterized);
 
@@ -851,9 +825,10 @@ QuantSolverState::add_value_instantiation_lemma(BzlaNode *q)
     bzla_node_release(d_bzla, p.second);
   }
 
-  lemma = bzla_exp_implies(d_bzla, q, inst);
+  lem = bzla_exp_implies(d_bzla, q, inst);
   bzla_node_release(d_bzla, inst);
-  add_lemma(lemma);
+  add_lemma(lem);
+  bzla_node_release(d_bzla, lem);
 }
 
 bool
@@ -879,10 +854,6 @@ QuantSolverState::is_inactive(BzlaNode *q)
 void
 get_model(QuantSolverState *state, BzlaNode *q)
 {
-  Bzla *bzla;
-  BzlaNode *cur;
-  BzlaPtrHashBucket *b;
-
   //  bzla              = state->bzla;
   //  BzlaNode *backref = state->find_backref (q);
   //  b                 = bzla_hashptr_table_get (state->skolems, backref);
@@ -931,6 +902,7 @@ QuantSolverState::check_active_quantifiers()
   {
     lit = get_ce_literal(q);
 
+    // TODO: this resets all assumptions, we should only remove the addded ones
     bzla_reset_incremental_usage(d_bzla);
     bzla_assume_exp(d_bzla, lit);
 
@@ -1049,6 +1021,7 @@ QuantSolverState::check_ground_formulas()
     ++i;
     qlog("\nGround check: %zu (%u assumptions): ", i, assumptions.size());
 
+    // TODO: this resets all assumptions, we should only remove the addded ones
     bzla_reset_incremental_usage(d_bzla);
     for (auto &p : assumptions)
     {
@@ -1096,15 +1069,21 @@ QuantSolverState::check_ground_formulas()
   return res;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 static BzlaSolverResult
-check_quantifiers(BzlaQuantSolver *slv)
+check_sat_quant_solver(BzlaQuantSolver *slv)
 {
+  assert(slv);
+  assert(slv->kind == BZLA_QUANT_SOLVER_KIND);
+  assert(slv->bzla);
+  assert(slv->bzla->qslv == (BzlaSolver *) slv);
+
   bool done;
   BzlaSolverResult res;
 
-  QuantSolverState &state = slv->state;
+  QuantSolverState &state = *slv->d_state.get();
 
-  state.initialize(slv->bzla);
   state.compute_variable_dependencies();
 
   while (true)
@@ -1136,25 +1115,6 @@ check_quantifiers(BzlaQuantSolver *slv)
     }
   }
 
-  return res;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-static BzlaSolverResult
-check_sat_quant_solver(BzlaQuantSolver *slv)
-{
-  assert(slv);
-  assert(slv->kind == BZLA_QUANT_SOLVER_KIND);
-  assert(slv->bzla);
-  assert(slv->bzla->slv == (BzlaSolver *) slv);
-
-  BzlaSolverResult res;
-
-  BZLA_ABORT(bzla_opt_get(slv->bzla, BZLA_OPT_INCREMENTAL),
-             "incremental mode not supported for BV");
-
-  res = check_quantifiers(slv);
   return res;
 }
 
@@ -1217,6 +1177,7 @@ bzla_new_quantifier_solver(Bzla *bzla)
   assert(bzla);
 
   BzlaQuantSolver *slv = new BzlaQuantSolver();
+  slv->d_state.reset(new QuantSolverState(bzla));
 
   slv->kind      = BZLA_QUANT_SOLVER_KIND;
   slv->bzla      = bzla;

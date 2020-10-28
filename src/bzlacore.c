@@ -28,7 +28,7 @@
 #include "bzlaslvaigprop.h"
 #include "bzlaslvfun.h"
 #include "bzlaslvprop.h"
-#include "bzlaslvquantn.h"
+#include "bzlaslvquant.h"
 #include "bzlaslvsls.h"
 #include "bzlasubst.h"
 #include "preprocess/bzlapreprocess.h"
@@ -718,14 +718,6 @@ bzla_new(void)
       bzla_hashptr_table_new(mm,
                              (BzlaHashPtr) bzla_node_hash_by_id,
                              (BzlaCmpPtr) bzla_node_compare_by_id);
-  bzla->exists_vars =
-      bzla_hashptr_table_new(mm,
-                             (BzlaHashPtr) bzla_node_hash_by_id,
-                             (BzlaCmpPtr) bzla_node_compare_by_id);
-  bzla->forall_vars =
-      bzla_hashptr_table_new(mm,
-                             (BzlaHashPtr) bzla_node_hash_by_id,
-                             (BzlaCmpPtr) bzla_node_compare_by_id);
   bzla->feqs = bzla_hashptr_table_new(mm,
                                       (BzlaHashPtr) bzla_node_hash_by_id,
                                       (BzlaCmpPtr) bzla_node_compare_by_id);
@@ -927,6 +919,7 @@ bzla_delete(Bzla *bzla)
   bzla_fp_word_blaster_delete(bzla);
 
   if (bzla->slv) bzla->slv->api.delet(bzla->slv);
+  if (bzla->qslv) bzla->qslv->api.delet(bzla->qslv);
 
   bzla_ass_delete_bv_list(
       bzla->bv_assignments,
@@ -1036,10 +1029,6 @@ bzla_delete(Bzla *bzla)
   bzla_hashptr_table_delete(bzla->ufs);
   bzla_hashptr_table_delete(bzla->lambdas);
   bzla_hashptr_table_delete(bzla->quantifiers);
-  assert(bzla->exists_vars->count == 0);
-  bzla_hashptr_table_delete(bzla->exists_vars);
-  assert(bzla->forall_vars->count == 0);
-  bzla_hashptr_table_delete(bzla->forall_vars);
   bzla_hashptr_table_delete(bzla->feqs);
   bzla_hashptr_table_delete(bzla->parameterized);
 #ifndef NDEBUG
@@ -2881,12 +2870,16 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
              1,
              "found %s, disable slice elimination",
              bzla->ufs->count > 0 ? "UFs" : "quantifiers");
+    // TODO: check if this is still the case
     bzla_opt_set(bzla, BZLA_OPT_PP_ELIMINATE_EXTRACTS, 0);
   }
 
   /* set options for quantifiers */
   if (bzla->quantifiers->count > 0)
   {
+    bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
+    bzla_opt_set(bzla, BZLA_OPT_PRODUCE_MODELS, 1);
+
     bzla_opt_set(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION, 0);
     bzla_opt_set(bzla, BZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
   }
@@ -2927,21 +2920,6 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
                    "Quantifiers not supported for -E aigprop");
         bzla->slv = bzla_new_aigprop_solver(bzla);
       }
-      else if ((engine == BZLA_ENGINE_QUANT && bzla->quantifiers->count > 0)
-               || bzla->quantifiers->count > 0)
-      {
-        // BzlaPtrHashTableIterator it;
-        // BzlaNode *cur;
-        // bzla_iter_hashptr_init (&it, bzla->unsynthesized_constraints);
-        // bzla_iter_hashptr_queue (&it, bzla->synthesized_constraints);
-        // while (bzla_iter_hashptr_has_next (&it))
-        //{
-        //  cur = bzla_node_real_addr (bzla_iter_hashptr_next (&it));
-        //  BZLA_ABORT (cur->lambda_below || cur->apply_below,
-        //              "quantifiers with functions not supported yet");
-        //}
-        bzla->slv = bzla_new_quantifier_solver(bzla);
-      }
       else
       {
         bzla->slv = bzla_new_fun_solver(bzla);
@@ -2951,14 +2929,26 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
       }
     }
 
-    assert(bzla->slv);
-    res = bzla->slv->api.sat(bzla->slv);
+    if (bzla->quantifiers->count > 0)
+    {
+      if (!bzla->qslv)
+      {
+        bzla->qslv = bzla_new_quantifier_solver(bzla);
+      }
+      res = bzla->qslv->api.sat(bzla->qslv);
+    }
+    else
+    {
+      assert(bzla->slv);
+      res = bzla->slv->api.sat(bzla->slv);
+    }
   }
   bzla->last_sat_result = res;
   bzla->bzla_sat_bzla_called++;
   bzla->valid_assignments = 1;
 
-  if (bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS) && res == BZLA_RESULT_SAT)
+  if (bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS) && res == BZLA_RESULT_SAT
+      && bzla->quantifiers->count == 0)
   {
     switch (bzla_opt_get(bzla, BZLA_OPT_ENGINE))
     {

@@ -1221,12 +1221,6 @@ clone_aux_bzla(Bzla *bzla,
   CLONE_PTR_HASH_TABLE_DATA(quantifiers, bzla_clone_data_as_int);
   assert((allocated += MEM_PTR_HASH_TABLE(bzla->quantifiers))
          == clone->mm->allocated);
-  CLONE_PTR_HASH_TABLE(exists_vars);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->exists_vars))
-         == clone->mm->allocated);
-  CLONE_PTR_HASH_TABLE(forall_vars);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->forall_vars))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE_DATA(feqs, bzla_clone_data_as_int);
   assert((allocated += MEM_PTR_HASH_TABLE(bzla->feqs)) == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE_DATA(substitutions, bzla_clone_data_as_node_ptr);
