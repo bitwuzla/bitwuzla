@@ -107,6 +107,10 @@ class QuantSolverState
 
   bool added_new_lemmas() const;
 
+  void reset_assumptions();
+  void assume(BzlaNode *n);
+  void save_assumptions();
+
  private:
   Bzla *d_bzla;
 
@@ -133,6 +137,8 @@ class QuantSolverState
   NodeSet d_lemma_cache;
 
   bool d_added_lemma;
+
+  std::vector<BzlaNode *> d_assumptions;
 };
 
 QuantSolverState::~QuantSolverState()
@@ -204,6 +210,35 @@ struct BzlaQuantSolver
 
 /*------------------------------------------------------------------------*/
 
+void
+QuantSolverState::reset_assumptions()
+{
+  BzlaNode *simp;
+  for (BzlaNode *n : d_assumptions)
+  {
+    // qlog("reset assume: %s\n", bzla_util_node2string(n));
+    assert(bzla_hashptr_table_get(d_bzla->orig_assumptions, n));
+    bzla_hashptr_table_remove(d_bzla->orig_assumptions, n, 0, 0);
+
+    simp = bzla_simplify_exp(d_bzla, n);
+    assert(bzla_hashptr_table_get(d_bzla->assumptions, simp));
+    bzla_hashptr_table_remove(d_bzla->assumptions, simp, 0, 0);
+    bzla_node_release(d_bzla, n);
+    bzla_node_release(d_bzla, simp);
+  }
+  d_assumptions.clear();
+
+  bzla_reset_functions_with_model(d_bzla);
+}
+
+void
+QuantSolverState::assume(BzlaNode *n)
+{
+  // qlog("assume: %s\n", bzla_util_node2string(n));
+  bzla_assume_exp(d_bzla, n);
+  d_assumptions.push_back(n);
+}
+
 BzlaNode *
 QuantSolverState::find_backref(BzlaNode *q)
 {
@@ -252,6 +287,7 @@ QuantSolverState::get_active_quantifiers()
 
   /* collect all reachable function equalities */
   bzla_iter_hashptr_init(&it, d_bzla->synthesized_constraints);
+  bzla_iter_hashptr_queue(&it, d_bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&it))
   {
     visit.push_back(static_cast<BzlaNode *>(bzla_iter_hashptr_next(&it)));
@@ -902,9 +938,7 @@ QuantSolverState::check_active_quantifiers()
   {
     lit = get_ce_literal(q);
 
-    // TODO: this resets all assumptions, we should only remove the addded ones
-    bzla_reset_incremental_usage(d_bzla);
-    bzla_assume_exp(d_bzla, lit);
+    assume(lit);
 
     qlog("Check for counterexamples (%s): ", bzla_util_node2string(q));
 
@@ -914,7 +948,6 @@ QuantSolverState::check_active_quantifiers()
     {
       qlog("sat\n");
       add_value_instantiation_lemma(q);
-      continue;
     }
     else
     {
@@ -926,6 +959,8 @@ QuantSolverState::check_active_quantifiers()
         set_inactive(q);
       }
     }
+
+    reset_assumptions();
   }
   done = num_inactive == to_check.size();
 
@@ -1021,11 +1056,9 @@ QuantSolverState::check_ground_formulas()
     ++i;
     qlog("\nGround check: %zu (%u assumptions): ", i, assumptions.size());
 
-    // TODO: this resets all assumptions, we should only remove the addded ones
-    bzla_reset_incremental_usage(d_bzla);
     for (auto &p : assumptions)
     {
-      bzla_assume_exp(d_bzla, p.first);
+      assume(p.first);
     }
 
     res = d_bzla->slv->api.sat(d_bzla->slv);
@@ -1033,6 +1066,7 @@ QuantSolverState::check_ground_formulas()
     if (res == BZLA_RESULT_SAT)
     {
       qlog("sat\n");
+      reset_assumptions();
       break;
     }
     else
@@ -1059,6 +1093,8 @@ QuantSolverState::check_ground_formulas()
           ++it;
         }
       }
+
+      reset_assumptions();
 
       if (!failed)
       {
@@ -1097,7 +1133,7 @@ check_sat_quant_solver(BzlaQuantSolver *slv)
       {
         if (done)
         {
-          qlog("** No new counterexamples found\n");
+          qlog("** No new counterexamples found, all quantifiers inactive\n");
           res = BZLA_RESULT_SAT;
         }
         else

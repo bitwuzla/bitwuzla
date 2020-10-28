@@ -1660,8 +1660,8 @@ bzla_reset_assumptions(Bzla *bzla)
                              (BzlaCmpPtr) bzla_node_compare_by_id);
 }
 
-static void
-reset_functions_with_model(Bzla *bzla)
+void
+bzla_reset_functions_with_model(Bzla *bzla)
 {
   BzlaNode *cur;
   uint32_t i;
@@ -1690,7 +1690,7 @@ bzla_reset_incremental_usage(Bzla *bzla)
   assert(bzla);
 
   bzla_reset_assumptions(bzla);
-  reset_functions_with_model(bzla);
+  bzla_reset_functions_with_model(bzla);
   bzla->valid_assignments = 0;
   bzla_model_delete(bzla);
 }
@@ -2875,7 +2875,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
   }
 
   /* set options for quantifiers */
-  if (bzla->quantifiers->count > 0)
+  if (bzla->quantifiers->count > 0 && bzla->bzla_sat_bzla_called == 0)
   {
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
     bzla_opt_set(bzla, BZLA_OPT_PRODUCE_MODELS, 1);

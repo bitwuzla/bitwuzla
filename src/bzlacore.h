@@ -270,6 +270,9 @@ void bzla_fixate_assumptions(Bzla *bzla);
 /* Resets assumptions */
 void bzla_reset_assumptions(Bzla *bzla);
 
+/* Resets current function models. */
+void bzla_reset_functions_with_model(Bzla *bzla);
+
 /* Solves instance, but with lemmas on demand limit 'lod_limit' and conflict
  * limit for the underlying SAT solver 'sat_limit'. */
 int32_t bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit);
