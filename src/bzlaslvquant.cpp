@@ -95,7 +95,6 @@ class QuantSolverState
 
   BzlaNode *get_skolem(BzlaNode *q);
   BzlaNode *mk_skolem(BzlaNode *q, const char *sym);
-  BzlaNode *mk_skolem_aux(BzlaNode *q, const char *sym);
 
   BzlaNode *get_inst_constant(BzlaNode *q);
   BzlaNode *get_skolemization_lemma(BzlaNode *q);
@@ -591,7 +590,7 @@ QuantSolverState::get_inst_constant(BzlaNode *q)
 }
 
 BzlaNode *
-QuantSolverState::mk_skolem_aux(BzlaNode *q, const char *sym)
+QuantSolverState::mk_skolem(BzlaNode *q, const char *sym)
 {
   BzlaNode *result = 0, *backref, *sk;
   BzlaSortId domain, codomain, sort;
@@ -642,23 +641,13 @@ QuantSolverState::mk_skolem_aux(BzlaNode *q, const char *sym)
       result = bzla_exp_apply_n(d_bzla, sk, args.data(), args.size());
     }
   }
-  return result;
-}
 
-BzlaNode *
-QuantSolverState::mk_skolem(BzlaNode *q, const char *sym)
-{
-  BzlaNode *sk;
-  BzlaSortId sort;
-
-  sort = bzla_node_get_sort_id(q->e[0]);
-
-  sk = mk_skolem_aux(q, sym);
-  if (!sk)
+  if (!result)
   {
-    sk = bzla_node_create_var(d_bzla, sort, sym);
+    result = bzla_node_create_var(d_bzla, bzla_node_get_sort_id(q->e[0]), sym);
   }
-  return sk;
+
+  return result;
 }
 
 BzlaNode *
@@ -1098,61 +1087,10 @@ QuantSolverState::check_ground_formulas()
         }
       }
 
-#if 0
-      failed = false;
-      bzla_iter_hashptr_init (&it, assumptions);
-      while (bzla_iter_hashptr_has_next (&it))
-      {
-        q   = it.bucket->data.as_ptr;
-        lit = bzla_iter_hashptr_next (&it);
-
-        bzla_reset_incremental_usage (bzla);
-        bzla_assume_exp (bzla, lit);
-
-        res = bzla->slv->api.sat (bzla->slv);
-        if (res == BZLA_RESULT_UNSAT)
-        {
-          bzla->last_sat_result = BZLA_RESULT_UNSAT;  // hack
-          if (bzla_failed_exp (bzla, lit))
-          {
-            log ("  failed: %s (instance: %s)\n",
-                 bzla_util_node2string (q),
-                 bzla_util_node2string (find_backref (state, q)));
-            bzla_hashptr_table_remove (assumptions, lit, 0, 0);
-            set_inactive (state, q);
-            failed = true;
-          }
-        }
-      }
-#endif
-
       if (!failed)
       {
         break;
       }
-
-#if 0
-      bool failed = false;
-      bzla_iter_hashptr_init(&it, assumptions);
-      while (bzla_iter_hashptr_has_next(&it))
-      {
-        q = it.bucket->data.as_ptr;
-        lit = bzla_iter_hashptr_next(&it);
-
-        if (bzla_failed_exp(bzla, lit))
-        {
-          log("  failed: %s (instance: %s)\n", bzla_util_node2string(q), bzla_util_node2string(find_backref(state, q)));
-          bzla_hashptr_table_remove(assumptions, lit, 0, 0);
-          failed = true;
-        }
-      }
-
-      /* No assumption failed, ground formulas are unsat. */
-      if (!failed)
-      {
-        break;
-      }
-#endif
     }
   }
   return res;
