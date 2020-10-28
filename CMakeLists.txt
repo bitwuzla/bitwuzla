@@ -126,7 +126,7 @@ set_option(USE_SYMFPU OFF)
 #       bzlaconfig.h and they are else not yet added to CMAKE_C(XX)_FLAGS at
 #       file generation time (configure_file).
 add_required_c_flag("-std=gnu99")
-add_required_cxx_flag("-std=gnu++11")
+add_required_cxx_flag("-std=gnu++17")
 
 add_check_c_cxx_flag("-W")
 add_check_c_cxx_flag("-Wall")
