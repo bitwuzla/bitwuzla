@@ -118,6 +118,8 @@ class QuantSolverState
    * get_active_quantifiers). The mapped bool indicates the current polarity of
    * the quantifier. */
   NodeMap<bool> d_active_quantifiers;
+
+  // TODO: check if reset is needed in case of incremental
   NodeSet d_inactive_quantifiers;
 
   NodeMap<std::vector<BzlaNode *>> d_deps;
@@ -305,11 +307,9 @@ QuantSolverState::get_active_quantifiers()
 
     cache.emplace(cur);
 
-    // TODO: check if this is required
-    assert(bzla_node_is_synth(cur));
-
     if (bzla_node_is_quantifier(cur))
     {
+      assert(bzla_node_is_synth(cur));
       if (d_inactive_quantifiers.find(cur) == d_inactive_quantifiers.end())
       {
         assert(d_active_quantifiers.find(cur) == d_active_quantifiers.end());
