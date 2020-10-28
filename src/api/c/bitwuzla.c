@@ -1654,8 +1654,6 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
         BZLA_CHECK_TERM_NOT_IS_VAR_BOUND_AT_IDX(bzla_args[i], i);
         BZLA_PUSH_STACK(params, bzla_args[i]);
       }
-      BZLA_ABORT(!vars_distinct(bzla, params.start, paramc),
-                 "given variables are not distinct");
       BZLA_CHECK_TERM_NOT_IS_UF_AT_IDX(bzla_args[paramc], paramc);
       res = bzla_exp_fun(bzla, params.start, paramc, bzla_args[paramc]);
       BZLA_RELEASE_STACK(params);
@@ -1760,6 +1758,8 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
     case BITWUZLA_KIND_BV_EXTRACT:
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
           "bv_extract", bzla_args, 1, argc, 2, idxc, 0, bzla_sort_is_bv, true);
+      BZLA_ABORT(idxs[0] > bzla_node_bv_get_width(bzla, bzla_args[0]),
+                 "upper index must be < bit-vector size of given term");
       BZLA_ABORT(idxs[0] < idxs[1], "upper index must be >= lower index");
       res = bzla_exp_bv_slice(bzla, bzla_args[0], idxs[0], idxs[1]);
       break;
@@ -1883,7 +1883,7 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
     case BITWUZLA_KIND_FP_TO_FP_FROM_INT: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED("fp_to_fp_from_int",
                                     bzla_args,
-                                    1,
+                                    2,
                                     argc,
                                     2,
                                     idxc,
@@ -1900,7 +1900,7 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
     case BITWUZLA_KIND_FP_TO_FP_FROM_UINT: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED("fp_to_fp_from_uint",
                                     bzla_args,
-                                    1,
+                                    2,
                                     argc,
                                     2,
                                     idxc,
