@@ -3270,3 +3270,19 @@ bitwuzla_set_bzla_id(Bitwuzla *bitwuzla, BitwuzlaTerm *term, int32_t id)
       "expected bit-vector/array variable or UF");
   bzla_node_set_bzla_id(bzla, bzla_term, id);
 }
+
+/* bzla parser only --------------------------------------------------------- */
+
+void
+bitwuzla_add_output(Bitwuzla *bitwuzla, BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+
+  BZLA_PUSH_STACK(bzla->outputs, bzla_node_copy(bzla, bzla_term));
+}
