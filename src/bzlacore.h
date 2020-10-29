@@ -170,8 +170,6 @@ struct Bzla
   Bzla *clone; /* shadow clone (debugging only) */
 #endif
 
-  char *parse_error_msg;
-
   FILE *apitrace;
   int8_t close_apitrace;
 

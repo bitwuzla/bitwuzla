@@ -361,7 +361,6 @@ typedef struct BzlaSMT2Item
 
 BZLA_DECLARE_STACK(BzlaSMT2Item, BzlaSMT2Item);
 BZLA_DECLARE_STACK(BzlaSMT2NodePtr, BzlaSMT2Node *);
-BZLA_DECLARE_STACK(BzlaPtr, Bzla *);
 BZLA_DECLARE_STACK(BitwuzlaSort, BitwuzlaSort);
 
 /*------------------------------------------------------------------------*/

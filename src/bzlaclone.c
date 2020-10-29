@@ -1597,7 +1597,6 @@ clone_aux_bzla(Bzla *bzla,
   clone->word_blaster = bzla_fp_word_blaster_clone(bzla, clone, emap);
   assert(allocated == clone->mm->allocated);
 
-  clone->parse_error_msg = NULL;
 #ifndef NDEBUG
   clone->clone = NULL;
 #endif

@@ -2482,7 +2482,7 @@ bitwuzla_parse(Bitwuzla *bitwuzla,
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BZLA_ABORT(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
              "file parsing must be done before creating expressions");
-  int32_t bzla_res = bzla_parse(bzla,
+  int32_t bzla_res = bzla_parse(bitwuzla,
                                 infile,
                                 infile_name,
                                 outfile,
@@ -2518,17 +2518,17 @@ bitwuzla_parse_format(Bitwuzla *bitwuzla,
   if (strcmp(format, "smt2") == 0)
   {
     bzla_res = bzla_parse_smt2(
-        bzla, infile, infile_name, outfile, error_msg, parsed_status);
+        bitwuzla, infile, infile_name, outfile, error_msg, parsed_status);
   }
   else if (strcmp(format, "btor") == 0)
   {
     bzla_res = bzla_parse_btor(
-        bzla, infile, infile_name, outfile, error_msg, parsed_status);
+        bitwuzla, infile, infile_name, outfile, error_msg, parsed_status);
   }
   else if (strcmp(format, "btor2") == 0)
   {
     bzla_res = bzla_parse_btor2(
-        bzla, infile, infile_name, outfile, error_msg, parsed_status);
+        bitwuzla, infile, infile_name, outfile, error_msg, parsed_status);
   }
   else
   {

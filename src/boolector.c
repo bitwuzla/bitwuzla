@@ -6035,8 +6035,13 @@ boolector_parse(Bzla *bzla,
   BZLA_ABORT_OLD(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
                  "file parsing must be done before creating expressions");
   *error_msg = NULL;
-  res        = bzla_parse(
-      bzla, infile, infile_name, outfile, error_msg, status, parsed_smt2);
+  res        = bzla_parse((Bitwuzla *) bzla,
+                   infile,
+                   infile_name,
+                   outfile,
+                   error_msg,
+                   status,
+                   parsed_smt2);
   /* shadow clone can not shadow boolector_parse* (parser uses API calls only,
    * hence all API calls issued while parsing are already shadowed and the
    * shadow clone already maintains the parsed formula) */
@@ -6061,7 +6066,8 @@ boolector_parse_btor(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(status);
   BZLA_ABORT_OLD(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
                  "file parsing must be done before creating expressions");
-  res = bzla_parse_btor(bzla, infile, infile_name, outfile, error_msg, status);
+  res = bzla_parse_btor(
+      (Bitwuzla *) bzla, infile, infile_name, outfile, error_msg, status);
   /* shadow clone can not shadow boolector_parse* (parser uses API calls only,
    * hence all API calls issued while parsing are already shadowed and the
    * shadow clone already maintains the parsed formula) */
@@ -6086,7 +6092,8 @@ boolector_parse_btor2(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(status);
   BZLA_ABORT_OLD(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
                  "file parsing must be done before creating expressions");
-  res = bzla_parse_btor2(bzla, infile, infile_name, outfile, error_msg, status);
+  res = bzla_parse_btor2(
+      (Bitwuzla *) bzla, infile, infile_name, outfile, error_msg, status);
   /* shadow clone can not shadow boolector_parse* (parser uses API calls only,
    * hence all API calls issued while parsing are already shadowed and the
    * shadow clone already maintains the parsed formula) */
@@ -6111,7 +6118,8 @@ boolector_parse_smt2(Bzla *bzla,
   BZLA_ABORT_ARG_NULL(status);
   BZLA_ABORT_OLD(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
                  "file parsing must be done before creating expressions");
-  res = bzla_parse_smt2(bzla, infile, infile_name, outfile, error_msg, status);
+  res = bzla_parse_smt2(
+      (Bitwuzla *) bzla, infile, infile_name, outfile, error_msg, status);
   /* shadow clone can not shadow boolector_parse* (parser uses API calls only,
    * hence all API calls issued while parsing are already shadowed and the
    * shadow clone already maintains the parsed formula) */

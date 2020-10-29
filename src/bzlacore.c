@@ -923,8 +923,6 @@ bzla_delete(Bzla *bzla)
 
   if (bzla->slv) bzla->slv->api.delet(bzla->slv);
 
-  if (bzla->parse_error_msg) bzla_mem_freestr(mm, bzla->parse_error_msg);
-
   bzla_ass_delete_bv_list(
       bzla->bv_assignments,
       bzla_opt_get(bzla, BZLA_OPT_AUTO_CLEANUP)

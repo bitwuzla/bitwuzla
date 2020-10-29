@@ -47,7 +47,7 @@ struct BzlaParserAPI
   BzlaParse parse;
 };
 
-int32_t bzla_parse(Bzla *bzla,
+int32_t bzla_parse(Bitwuzla *bitwuzla,
                    FILE *infile,
                    const char *infile_name,
                    FILE *outfile,
@@ -55,21 +55,21 @@ int32_t bzla_parse(Bzla *bzla,
                    int32_t *status,
                    bool *parsed_smt2);
 
-int32_t bzla_parse_btor(Bzla *bzla,
+int32_t bzla_parse_btor(Bitwuzla *bitwuzla,
                         FILE *infile,
                         const char *infile_name,
                         FILE *outfile,
                         char **error_msg,
                         int32_t *status);
 
-int32_t bzla_parse_btor2(Bzla *bzla,
+int32_t bzla_parse_btor2(Bitwuzla *bitwuzla,
                          FILE *infile,
                          const char *infile_name,
                          FILE *outfile,
                          char **error_msg,
                          int32_t *status);
 
-int32_t bzla_parse_smt2(Bzla *bzla,
+int32_t bzla_parse_smt2(Bitwuzla *bitwuzla,
                         FILE *infile,
                         const char *infile_name,
                         FILE *outfile,
