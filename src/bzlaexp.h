@@ -674,17 +674,6 @@ BzlaNode *bzla_exp_fp_to_fp_from_uint(Bzla *bzla,
                                       BzlaNode *e1,
                                       BzlaSortId sort);
 
-/**
- * Create floating-point to-fp from double wrt to given rounding mode.
- * exp:  rounding mode
- * real: the real operand represented as a string
- * sort: floating-point sort
- */
-BzlaNode *bzla_exp_fp_to_fp_from_real(Bzla *bzla,
-                                      BzlaNode *exp,
-                                      const char *real,
-                                      BzlaSortId sort);
-
 /*------------------------------------------------------------------------*/
 
 /* Array read on array 'e_array' at position 'e_index'.

@@ -679,6 +679,7 @@ TEST_F(TestApi, mk_term_check_args)
   std::vector<BitwuzlaTerm *> lambda_args2_inv_1 = {d_bv_const8, d_bv_const8};
   std::vector<BitwuzlaTerm *> lambda_args2_inv_2 = {d_bvar, d_bv_const8};
   std::vector<BitwuzlaTerm *> lambda_args2_inv_3 = {d_var, d_fun};
+  std::vector<BitwuzlaTerm *> lambda_args3_inv   = {d_var, d_var, d_bv_const8};
 
   std::vector<BitwuzlaTerm *> fp_args1_inv      = {d_bv_one1};
   std::vector<BitwuzlaTerm *> fp_args2_inv      = {d_bv_zero8, d_bv_const8};
@@ -1524,6 +1525,11 @@ TEST_F(TestApi, mk_term_check_args)
                                 lambda_args2_inv_3.size(),
                                 lambda_args2_inv_3.data()),
                error_fun_term);
+  ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
+                                BITWUZLA_KIND_LAMBDA,
+                                lambda_args3_inv.size(),
+                                lambda_args3_inv.data()),
+               error_dvar_term);
   // indexed
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_EXTRACT,

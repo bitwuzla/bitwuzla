@@ -63,7 +63,7 @@ perr_btor2(BzlaBTOR2Parser *parser, uint64_t lineno, const char *fmt, ...)
 /*------------------------------------------------------------------------*/
 
 static BzlaBTOR2Parser *
-new_btor2_parser(Bzla *bzla)
+new_btor2_parser(Bitwuzla *bitwuzla)
 {
   BzlaMemMgr *mm = bzla_mem_mgr_new();
   BzlaBTOR2Parser *res;
@@ -72,7 +72,7 @@ new_btor2_parser(Bzla *bzla)
   BZLA_CLR(res);
 
   res->mm   = mm;
-  res->bzla = bzla;
+  res->bzla = (Bzla *) bitwuzla;  // TODO workaround, remove
   res->bfr  = btor2parser_new();
 
   return res;

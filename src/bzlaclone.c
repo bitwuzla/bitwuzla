@@ -680,6 +680,35 @@ bzla_clone_node_ptr_stack(BzlaMemMgr *mm,
   assert(BZLA_SIZE_STACK(*stack) == BZLA_SIZE_STACK(*res));
 }
 
+void
+bzla_clone_sort_id_stack(BzlaMemMgr *mm,
+                         BzlaSortIdStack *stack,
+                         BzlaSortIdStack *res)
+{
+  assert(mm);
+  assert(stack);
+  assert(res);
+
+  BZLA_INIT_STACK(mm, *res);
+  assert(BZLA_SIZE_STACK(*stack) || !BZLA_COUNT_STACK(*stack));
+  if (BZLA_SIZE_STACK(*stack))
+  {
+    BZLA_NEWN(mm, res->start, BZLA_SIZE_STACK(*stack));
+    res->top = res->start;
+    res->end = res->start + BZLA_SIZE_STACK(*stack);
+
+    /* sort id stack is zero terminated */
+    for (uint32_t i = 0, n = BZLA_COUNT_STACK(*stack) - 1; i < n; i++)
+    {
+      assert((*stack).start[i]);
+      BZLA_PUSH_STACK(*res, BZLA_PEEK_STACK(*stack, i));
+    }
+    BZLA_PUSH_STACK(*res, 0);
+  }
+  assert(BZLA_COUNT_STACK(*stack) == BZLA_COUNT_STACK(*res));
+  assert(BZLA_SIZE_STACK(*stack) == BZLA_SIZE_STACK(*res));
+}
+
 static void
 clone_nodes_id_table(Bzla *bzla,
                      Bzla *clone,
@@ -1234,6 +1263,15 @@ clone_aux_bzla(Bzla *bzla,
       mm, &bzla->failed_assumptions, &clone->failed_assumptions, emap, true);
   assert((allocated +=
           BZLA_SIZE_STACK(bzla->failed_assumptions) * sizeof(BzlaNode *))
+         == clone->mm->allocated);
+  bzla_clone_node_ptr_stack(
+      mm, &bzla->unsat_core, &clone->unsat_core, emap, true);
+  assert((allocated += BZLA_SIZE_STACK(bzla->unsat_core) * sizeof(BzlaNode *))
+         == clone->mm->allocated);
+  bzla_clone_sort_id_stack(
+      mm, &bzla->fun_domain_sorts, &clone->fun_domain_sorts);
+  assert((allocated +=
+          BZLA_SIZE_STACK(bzla->fun_domain_sorts) * sizeof(BzlaSortId))
          == clone->mm->allocated);
 
   clone->assertions_cache =

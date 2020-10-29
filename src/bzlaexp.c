@@ -2504,26 +2504,6 @@ bzla_exp_fp_to_fp_from_uint(Bzla *bzla,
   return result;
 }
 
-BzlaNode *
-bzla_exp_fp_to_fp_from_real(Bzla *bzla,
-                            BzlaNode *node,
-                            const char *real,
-                            BzlaSortId sort)
-{
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
-  assert(bzla == bzla_node_real_addr(node)->bzla);
-  assert(real);
-  assert(sort);
-  /// FP STUB
-  (void) node;
-  (void) real;
-  (void) sort;
-  return bzla_exp_true(bzla);
-  ////
-}
-
 /*------------------------------------------------------------------------*/
 
 BzlaNode *

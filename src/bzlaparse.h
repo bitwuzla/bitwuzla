@@ -21,7 +21,7 @@ typedef struct BzlaParser BzlaParser;
 typedef struct BzlaParseResult BzlaParseResult;
 typedef struct BzlaParserAPI BzlaParserAPI;
 
-typedef BzlaParser *(*BzlaInitParser)(Bzla *);
+typedef BzlaParser *(*BzlaInitParser)(Bitwuzla *);
 
 typedef void (*BzlaResetParser)(void *);
 

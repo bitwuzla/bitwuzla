@@ -4135,37 +4135,6 @@ boolector_fp_to_fp_from_uint(Bzla *bzla,
   return BZLA_EXPORT_BOOLECTOR_NODE(res);
 }
 
-BoolectorNode *
-boolector_fp_to_fp_from_real(Bzla *bzla,
-                             BoolectorNode *node,
-                             const char *real,
-                             BoolectorSort sort)
-{
-  BZLA_ABORT_OLD(true, "to_fp from real not supported");
-  BzlaNode *exp, *res;
-  BzlaSortId s;
-
-  exp = BZLA_IMPORT_BOOLECTOR_NODE(node);
-  s   = BZLA_IMPORT_BOOLECTOR_SORT(sort);
-  BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT_ARG_NULL(exp);
-  BZLA_TRAPI_UNFUN_EXT(exp, BZLA_TRAPI_SORT_FMT, s);
-  BZLA_ABORT_OLD(!bzla_sort_is_valid(bzla, s), "'sort' is not a valid sort");
-  BZLA_ABORT_OLD(!bzla_sort_is_fp(bzla, s),
-                 "'sort' is not a floating-point sort");
-  BZLA_ABORT_REFS_NOT_POS(exp);
-  BZLA_ABORT_BZLA_MISMATCH(bzla, exp);
-  BZLA_ABORT_IS_NOT_RM(exp);
-  res = bzla_exp_fp_to_fp_from_real(bzla, exp, real, s);
-  bzla_node_inc_ext_ref_counter(bzla, res);
-  BZLA_TRAPI_RETURN_NODE(res);
-#ifndef NDEBUG
-  BZLA_CHKCLONE_RES_PTR(
-      res, fp_to_fp_from_real, BZLA_CLONED_EXP(exp), real, sort);
-#endif
-  return BZLA_EXPORT_BOOLECTOR_NODE(res);
-}
-
 /*------------------------------------------------------------------------*/
 
 BoolectorNode *
@@ -5210,48 +5179,6 @@ boolector_is_fun(Bzla *bzla, BoolectorNode *node)
   BZLA_TRAPI_RETURN_BOOL(res);
 #ifndef NDEBUG
   BZLA_CHKCLONE_RES_BOOL(res, is_fun, BZLA_CLONED_EXP(exp));
-#endif
-  return res;
-}
-
-/*------------------------------------------------------------------------*/
-
-int32_t
-boolector_fun_sort_check(Bzla *bzla,
-                         BoolectorNode **arg_nodes,
-                         uint32_t argc,
-                         BoolectorNode *n_fun)
-{
-  BzlaNode **args, *e_fun;
-  uint32_t i;
-  int32_t res;
-
-  args  = BZLA_IMPORT_BOOLECTOR_NODE_ARRAY(arg_nodes);
-  e_fun = BZLA_IMPORT_BOOLECTOR_NODE(n_fun);
-  BZLA_ABORT_ARG_NULL(bzla);
-  BZLA_ABORT_ARG_NULL(e_fun);
-  BZLA_ABORT_OLD(argc < 1, "'argc' must not be < 1");
-  BZLA_ABORT_OLD(argc >= 1 && !args, "no arguments given but argc defined > 0");
-
-  BZLA_TRAPI_PRINT("%s %p %u ", __FUNCTION__ + 10, bzla, argc);
-  for (i = 0; i < argc; i++)
-  {
-    BZLA_ABORT_ARG_NULL(args[i]);
-    BZLA_ABORT_REFS_NOT_POS(args[i]);
-    BZLA_ABORT_BZLA_MISMATCH(bzla, args[i]);
-    BZLA_TRAPI_PRINT(BZLA_TRAPI_NODE_FMT, BZLA_TRAPI_NODE_ID(args[i]));
-  }
-  BZLA_TRAPI_PRINT(BZLA_TRAPI_NODE_FMT, BZLA_TRAPI_NODE_ID(e_fun));
-  BZLA_TRAPI_PRINT("\n");
-
-  res = bzla_fun_sort_check(bzla, args, argc, e_fun);
-  BZLA_TRAPI_RETURN_INT(res);
-#ifndef NDEBUG
-  BoolectorNode *carg_nodes[argc];
-  for (i = 0; bzla->clone && i < argc; i++)
-    carg_nodes[i] = BZLA_CLONED_EXP(args[i]);
-  BZLA_CHKCLONE_RES_INT(
-      res, fun_sort_check, carg_nodes, argc, BZLA_CLONED_EXP(e_fun));
 #endif
   return res;
 }

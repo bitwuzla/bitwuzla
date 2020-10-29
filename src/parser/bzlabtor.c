@@ -1010,9 +1010,7 @@ parse_compare_and_overflow(BzlaBZLAParser *parser,
   if (!(r = parse_exp(parser, 0, can_be_array, true, 0)))
     goto RELEASE_L_AND_RETURN_ERROR;
 
-  if (!bitwuzla_sort_is_equal(parser->bitwuzla,
-                              bitwuzla_term_get_sort(l),
-                              bitwuzla_term_get_sort(r)))
+  if (!bitwuzla_term_is_equal_sort(l, r))
   {
     (void) perr_btor(parser, "operands have different sort");
   RELEASE_L_AND_R_AND_RETURN_ZERO:
@@ -1648,7 +1646,7 @@ find_parser(BzlaBZLAParser *parser, const char *op)
 }
 
 static BzlaBZLAParser *
-new_bzla_parser(Bzla *bzla)
+new_bzla_parser(Bitwuzla *bitwuzla)
 {
   BzlaMemMgr *mem = bzla_mem_mgr_new();
   BzlaBZLAParser *res;
@@ -1657,7 +1655,7 @@ new_bzla_parser(Bzla *bzla)
   BZLA_CLR(res);
 
   res->mem      = mem;
-  res->bitwuzla = (Bitwuzla *) bzla;  // TODO workaround, cleanup
+  res->bitwuzla = bitwuzla;
 
   BZLA_NEWN(mem, res->parsers, SIZE_PARSERS);
   BZLA_NEWN(mem, res->ops, SIZE_PARSERS);

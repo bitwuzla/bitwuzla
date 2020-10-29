@@ -2589,23 +2589,6 @@ bool boolector_is_fun(Bzla *bzla, BoolectorNode *node);
 /*------------------------------------------------------------------------*/
 
 /*!
-  Check if sorts of given arguments matches the function signature.
-
-  :param bzla: Boolector instance.
-  :param arg_nodes: Arguments to be checked.
-  :param argc: Number of arguments to be checked.
-  :param n_fun: Function expression.
-  :return: -1 if all sorts are correct, otherwise it returns the position of
-           the incorrect argument.
-*/
-int32_t boolector_fun_sort_check(Bzla *bzla,
-                                 BoolectorNode **arg_nodes,
-                                 uint32_t argc,
-                                 BoolectorNode *n_fun);
-
-/*------------------------------------------------------------------------*/
-
-/*!
   Get the node representation of the model value of a given expression.
 
   :param bzla: Boolector instance.
