@@ -465,6 +465,16 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
              "expected bit-vector term at index %u",  \
              (idx))
 
+#define BZLA_CHECK_TERM_IS_BV_LAMBDA_AT_IDX(bzla, term, idx)                \
+  BZLA_ABORT(                                                               \
+      !bzla_node_is_bv(bzla, term)                                          \
+          && (!bzla_node_is_fun(term)                                       \
+              || !bzla_sort_is_bv(bzla,                                     \
+                                  bzla_sort_fun_get_codomain(               \
+                                      bzla, bzla_node_get_sort_id(term)))), \
+      "expected bit-vector term or bit-vector function term at index %u",   \
+      (idx))
+
 #define BZLA_CHECK_TERM_IS_FP(bzla, term) \
   BZLA_ABORT(!bzla_node_is_fp(bzla, term), "expected floating-point term")
 
@@ -1795,7 +1805,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       BZLA_ABORT(!vars_distinct(bzla, params.start, paramc),
                  "given variables are not distinct");
       BZLA_CHECK_TERM_NOT_IS_UF_AT_IDX(bzla_args[paramc], paramc);
-      BZLA_CHECK_TERM_IS_BV_AT_IDX(bzla, bzla_args[paramc], paramc);
+      BZLA_CHECK_TERM_IS_BV_LAMBDA_AT_IDX(bzla, bzla_args[paramc], paramc);
       res = bzla_exp_fun(bzla, params.start, paramc, bzla_args[paramc]);
       BZLA_RELEASE_STACK(params);
     }

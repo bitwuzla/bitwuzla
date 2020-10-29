@@ -29,25 +29,31 @@ class TestApi : public TestBitwuzla
     d_fun_domain_sort = {d_bv_sort8, d_fp_sort16, d_bv_sort32};
     d_fun_sort        = bitwuzla_mk_fun_sort(
         d_bzla, d_fun_domain_sort.size(), d_fun_domain_sort.data(), d_bv_sort8);
-    d_true       = bitwuzla_mk_true(d_bzla);
-    d_bv_one1    = bitwuzla_mk_bv_one(d_bzla, d_bv_sort1);
-    d_bv_ones23  = bitwuzla_mk_bv_one(d_bzla, d_bv_sort23);
-    d_bv_zero8   = bitwuzla_mk_bv_zero(d_bzla, d_bv_sort8);
-    d_fp_pzero32 = bitwuzla_mk_fp_pos_zero(d_bzla, d_fp_sort32);
+    d_fun_sort_fp = bitwuzla_mk_fun_sort(d_bzla,
+                                         d_fun_domain_sort.size(),
+                                         d_fun_domain_sort.data(),
+                                         d_fp_sort16);
+    d_true        = bitwuzla_mk_true(d_bzla);
+    d_bv_one1     = bitwuzla_mk_bv_one(d_bzla, d_bv_sort1);
+    d_bv_ones23   = bitwuzla_mk_bv_one(d_bzla, d_bv_sort23);
+    d_bv_zero8    = bitwuzla_mk_bv_zero(d_bzla, d_bv_sort8);
+    d_fp_pzero32  = bitwuzla_mk_fp_pos_zero(d_bzla, d_fp_sort32);
 
     d_bv_const8  = bitwuzla_mk_const(d_bzla, d_bv_sort8, "bv_const");
     d_fp_const16 = bitwuzla_mk_const(d_bzla, d_fp_sort16, "fp_const");
     d_rm_const   = bitwuzla_mk_const(d_bzla, d_rm_sort, "rm_const");
     d_fun        = bitwuzla_mk_const(d_bzla, d_fun_sort, "fun");
+    d_fun_fp     = bitwuzla_mk_const(d_bzla, d_fun_sort_fp, "fun_fp");
     d_array_fpbv = bitwuzla_mk_const(d_bzla, d_arr_sort_fpbv, "array_fpbv");
     d_array      = bitwuzla_mk_const(d_bzla, d_array_sort_bv, "array");
-    d_var        = bitwuzla_mk_var(d_bzla, d_bv_sort8, "var");
+    d_var1       = bitwuzla_mk_var(d_bzla, d_bv_sort8, "var1");
+    d_var2       = bitwuzla_mk_var(d_bzla, d_bv_sort8, "var2");
     d_bvar       = bitwuzla_mk_var(d_bzla, d_bv_sort8, "bvar");
 
-    d_lambda_body =
+    BitwuzlaTerm *lambda_body =
         bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, d_bvar, d_bv_const8);
     d_lambda =
-        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_LAMBDA, d_bvar, d_lambda_body);
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_LAMBDA, d_bvar, lambda_body);
   }
 
   /* sorts */
@@ -65,6 +71,7 @@ class TestApi : public TestBitwuzla
 
   std::vector<BitwuzlaSort> d_fun_domain_sort;
   BitwuzlaSort d_fun_sort;
+  BitwuzlaSort d_fun_sort_fp;
 
   /* terms */
   BitwuzlaTerm *d_true;
@@ -77,12 +84,13 @@ class TestApi : public TestBitwuzla
   BitwuzlaTerm *d_fp_const16;
   BitwuzlaTerm *d_rm_const;
   BitwuzlaTerm *d_fun;
+  BitwuzlaTerm *d_fun_fp;
   BitwuzlaTerm *d_array_fpbv;
   BitwuzlaTerm *d_array;
-  BitwuzlaTerm *d_var;
+  BitwuzlaTerm *d_var1;
+  BitwuzlaTerm *d_var2;
   BitwuzlaTerm *d_bvar;
 
-  BitwuzlaTerm *d_lambda_body;
   BitwuzlaTerm *d_lambda;
 };
 
@@ -179,7 +187,7 @@ TEST_F(TestApi, mk_term_check_cnt)
   std::vector<BitwuzlaTerm *> fp_args2_rm = {d_rm_const, d_fp_const16};
   std::vector<BitwuzlaTerm *> fp_args3_rm = {
       d_rm_const, d_fp_const16, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fun_args1 = {d_var};
+  std::vector<BitwuzlaTerm *> fun_args1 = {d_var1};
 
   std::vector<uint32_t> idxs1    = {1};
   std::vector<uint32_t> idxs2    = {2, 0};
@@ -678,8 +686,21 @@ TEST_F(TestApi, mk_term_check_args)
 
   std::vector<BitwuzlaTerm *> lambda_args2_inv_1 = {d_bv_const8, d_bv_const8};
   std::vector<BitwuzlaTerm *> lambda_args2_inv_2 = {d_bvar, d_bv_const8};
-  std::vector<BitwuzlaTerm *> lambda_args2_inv_3 = {d_var, d_fun};
-  std::vector<BitwuzlaTerm *> lambda_args3_inv   = {d_var, d_var, d_bv_const8};
+  std::vector<BitwuzlaTerm *> lambda_args2_inv_3 = {d_var1, d_fun};
+  std::vector<BitwuzlaTerm *> lambda_args3_inv_1 = {
+      d_var1, d_var1, d_bv_const8};
+
+  BitwuzlaTerm *lambda_body =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, d_var2, d_bv_const8);
+  std::vector<BitwuzlaTerm *> lambda_args3_inv_2 = {
+      d_var1,
+      d_var2,
+      bitwuzla_mk_term2_indexed2(d_bzla,
+                                 BITWUZLA_KIND_FP_TO_FP_FROM_UINT,
+                                 d_rm_const,
+                                 lambda_body,
+                                 5,
+                                 8)};
 
   std::vector<BitwuzlaTerm *> fp_args1_inv      = {d_bv_one1};
   std::vector<BitwuzlaTerm *> fp_args2_inv      = {d_bv_zero8, d_bv_const8};
@@ -709,9 +730,9 @@ TEST_F(TestApi, mk_term_check_args)
       d_fp_pzero32, d_bv_zero8, d_bv_ones23};
 
   std::vector<BitwuzlaTerm *> quant_args2_inv_1 = {d_true, d_true};
-  std::vector<BitwuzlaTerm *> quant_args2_inv_2 = {d_var, d_bv_const8};
+  std::vector<BitwuzlaTerm *> quant_args2_inv_2 = {d_var1, d_bv_const8};
   std::vector<BitwuzlaTerm *> quant_args2_inv_3 = {d_bvar, d_bv_const8};
-  std::vector<BitwuzlaTerm *> quant_args3_inv   = {d_var, d_var, d_bv_const8};
+  std::vector<BitwuzlaTerm *> quant_args3_inv   = {d_var1, d_var1, d_bv_const8};
 
   std::vector<uint32_t> bv_idxs1                 = {3};
   std::vector<uint32_t> bv_idxs2                 = {2, 0};
@@ -1527,9 +1548,14 @@ TEST_F(TestApi, mk_term_check_args)
                error_fun_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_LAMBDA,
-                                lambda_args3_inv.size(),
-                                lambda_args3_inv.data()),
+                                lambda_args3_inv_1.size(),
+                                lambda_args3_inv_1.data()),
                error_dvar_term);
+  ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
+                                BITWUZLA_KIND_LAMBDA,
+                                lambda_args3_inv_2.size(),
+                                lambda_args3_inv_2.data()),
+               "expected bit-vector term or bit-vector function term");
   // indexed
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
                                         BITWUZLA_KIND_BV_EXTRACT,
