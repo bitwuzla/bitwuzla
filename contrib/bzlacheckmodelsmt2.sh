@@ -1,6 +1,6 @@
 #!/bin/bash
 
-die () 
+die ()
 {
   echo "*** $(basename $0): $*" 1>&2
   exit 1
@@ -23,10 +23,10 @@ do
       echo
       exit
       ;;
-    -*|[0-9]*) 
+    -*|[0-9]*)
       die "invalid option: $1"
       ;;
-    *) 
+    *)
       if [ x"$INFILE" = x ]; then
         INFILE=$1
       else
@@ -37,16 +37,16 @@ do
 done
 
 MODEL="$1"
-BOOLECTOR="$2"
+BITWUZLA="$2"
 
-[ -z "$BOOLECTOR" ] && die "no Boolector binary specified"
-[ ! -e "$BOOLECTOR" ] && die "given Boolector binary does not exist"
+[ -z "$BITWUZLA" ] && die "no Bitwuzla binary specified"
+[ ! -e "$BITWUZLA" ] && die "given Bitwuzla binary does not exist"
 
 cat $INFILE | sed 's/\(check-sat\)|\(exit\)//' >> $TMPFILE
 cat $MODEL | sed 's/sat//' >> $TMPFILE
 echo "(check-sat)" >> $TMPFILE
 echo "(exit)" >> $TMPFILE
-"${BOOLECTOR}" ${TMPFILE}
+"${BITWUZLA}" ${TMPFILE}
 ret=$?
 if [[ $ret = 10 ]]; then
   exit 0
