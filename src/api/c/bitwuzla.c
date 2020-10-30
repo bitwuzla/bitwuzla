@@ -1256,9 +1256,9 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
 }
 
 BitwuzlaTerm *
-bitwuzla_mk_bv_value_uint32(Bitwuzla *bitwuzla,
+bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
                             BitwuzlaSort sort,
-                            uint32_t value)
+                            uint64_t value)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
 
@@ -1266,7 +1266,10 @@ bitwuzla_mk_bv_value_uint32(Bitwuzla *bitwuzla,
   BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
   BZLA_CHECK_SORT(bzla, bzla_sort);
   BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
-  BzlaNode *res = bzla_exp_bv_unsigned(bzla, value, bzla_sort);
+  BzlaBitVector *bv = bzla_bv_uint64_to_bv(
+      bzla->mm, value, bzla_sort_bv_get_width(bzla, bzla_sort));
+  BzlaNode *res = bzla_exp_bv_const(bzla, bv);
+  bzla_bv_free(bzla->mm, bv);
   BZLA_RETURN_BITWUZLA_TERM(res);
 }
 

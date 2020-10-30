@@ -53,8 +53,8 @@ class TestComp : public TestBitwuzla
           BitwuzlaSort sort = bitwuzla_mk_bv_sort(d_bzla, num_bits);
           BitwuzlaTerm *const1, *const2, *bfun;
 
-          const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, i);
-          const2 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, j);
+          const1 = bitwuzla_mk_bv_value_uint64(d_bzla, sort, i);
+          const2 = bitwuzla_mk_bv_value_uint64(d_bzla, sort, j);
 
           bfun = bitwuzla_mk_term2(d_bzla, kind, const1, const2);
           bitwuzla_assert(d_bzla, bfun);
@@ -102,8 +102,8 @@ class TestComp : public TestBitwuzla
           BitwuzlaSort sort = bitwuzla_mk_bv_sort(d_bzla, num_bits);
           BitwuzlaTerm *const1, *const2, *bfun;
 
-          const1 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, (uint32_t) i);
-          const2 = bitwuzla_mk_bv_value_uint32(d_bzla, sort, (uint32_t) j);
+          const1 = bitwuzla_mk_bv_value_uint64(d_bzla, sort, (uint64_t) i);
+          const2 = bitwuzla_mk_bv_value_uint64(d_bzla, sort, (uint64_t) j);
 
           bfun = bitwuzla_mk_term2(d_bzla, kind, const1, const2);
           bitwuzla_assert(d_bzla, bfun);

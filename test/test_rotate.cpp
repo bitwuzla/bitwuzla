@@ -36,7 +36,7 @@ class TestRotate : public TestBitwuzla
 
     BitwuzlaTerm *roti = bitwuzla_mk_term1_indexed1(d_bzla, kindi, e0, nbits);
     BitwuzlaTerm *rot0 = bitwuzla_mk_term2(
-        d_bzla, kind, e0, bitwuzla_mk_bv_value_uint32(d_bzla, sort, nbits));
+        d_bzla, kind, e0, bitwuzla_mk_bv_value_uint64(d_bzla, sort, nbits));
 
     BitwuzlaTerm *ne0 =
         bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_DISTINCT, rot0, roti);

@@ -323,9 +323,9 @@ BitwuzlaTerm *bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
                                    const char *value,
                                    BitwuzlaBVBase base);
 
-BitwuzlaTerm *bitwuzla_mk_bv_value_uint32(Bitwuzla *bitwuzla,
+BitwuzlaTerm *bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
                                           BitwuzlaSort sort,
-                                          uint32_t value);
+                                          uint64_t value);
 
 BitwuzlaTerm *bitwuzla_mk_fp_value(Bitwuzla *bitwuzla,
                                    BitwuzlaTerm *bv_sign,
