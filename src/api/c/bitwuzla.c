@@ -333,9 +333,9 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
 #define BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(arg) \
   BZLA_ABORT(arg == NULL || *arg == '\0', "expected non-empty string")
 
-#define BZLA_CHECK_ARG_CNT(kind, expected, argc)                               \
+#define BZLA_CHECK_ARG_CNT(kind, nary, expected, argc)                         \
   BZLA_ABORT(                                                                  \
-      (argc) != (expected),                                                    \
+      (nary && (argc) < expected) || (!nary && (argc) != (expected)),          \
       "invalid number of arguments for kind '%s', expected '%u' and got '%u'", \
       kind,                                                                    \
       expected,                                                                \
@@ -366,10 +366,10 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
   } while (0)
 
 #define BZLA_CHECK_MK_TERM_ARGS(                                   \
-    kind, args, expected, argc, start, sort_check, match)          \
+    kind, nary, args, expected, argc, start, sort_check, match)    \
   do                                                               \
   {                                                                \
-    BZLA_CHECK_ARG_CNT(kind, expected, argc);                      \
+    BZLA_CHECK_ARG_CNT(kind, nary, expected, argc);                \
     for (int64_t i = 0, j = 1; i < argc; i++, j++)                 \
     {                                                              \
       BZLA_CHECK_ARG_NOT_NULL_AT_IDX(args[i], i);                  \
@@ -389,7 +389,7 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
   do                                                                           \
   {                                                                            \
     BZLA_CHECK_MK_TERM_ARGS(                                                   \
-        kind, args, expected, argc, start, sort_check, match);                 \
+        kind, false, args, expected, argc, start, sort_check, match);          \
     BZLA_CHECK_IDX_CNT(kind, idxc_expected, idxc);                             \
   } while (0)
 
@@ -632,6 +632,106 @@ vars_distinct(Bzla *bzla, BzlaNode *vars[], uint32_t paramc)
     bzla_hashint_table_add(cache, bzla_node_get_id(vars[i]));
   }
   bzla_hashint_table_delete(cache);
+  return res;
+}
+
+static BzlaNode *
+mk_term_left_assoc(Bzla *bzla,
+                   BzlaNode *args[],
+                   uint32_t argc,
+                   BzlaNode *(*fun)(Bzla *, BzlaNode *, BzlaNode *) )
+{
+  assert(argc >= 2);
+  BzlaNode *res, *tmp;
+
+  res = fun(bzla, args[0], args[1]);
+  for (uint32_t i = 2; i < argc; i++)
+  {
+    tmp = fun(bzla, res, args[i]);
+    bzla_node_release(bzla, res);
+    res = tmp;
+  }
+  assert(res);
+  return res;
+}
+
+static BzlaNode *
+mk_term_right_assoc(Bzla *bzla,
+                    BzlaNode *args[],
+                    uint32_t argc,
+                    BzlaNode *(*fun)(Bzla *, BzlaNode *, BzlaNode *) )
+{
+  assert(argc >= 2);
+  BzlaNode *res, *tmp;
+  res = bzla_node_copy(bzla, args[argc - 1]);
+  for (uint32_t i = 1; i < argc; ++i)
+  {
+    tmp = fun(bzla, args[argc - i - 1], res);
+    bzla_node_release(bzla, res);
+    res = tmp;
+  }
+  assert(res);
+  return res;
+}
+
+static BzlaNode *
+mk_term_pairwise(Bzla *bzla,
+                 BzlaNode *args[],
+                 uint32_t argc,
+                 BzlaNode *(*fun)(Bzla *, BzlaNode *, BzlaNode *) )
+{
+  assert(argc >= 2);
+  BzlaNode *res, *tmp, *old;
+
+  res = 0;
+  for (uint32_t i = 0; i < argc - 1; i++)
+  {
+    for (uint32_t j = i + 1; j < argc; j++)
+    {
+      tmp = fun(bzla, args[i], args[j]);
+      if (res)
+      {
+        old = res;
+        res = bzla_exp_bv_and(bzla, old, tmp);
+        bzla_node_release(bzla, old);
+        bzla_node_release(bzla, tmp);
+      }
+      else
+      {
+        res = tmp;
+      }
+    }
+  }
+  assert(res);
+  return res;
+}
+
+static BzlaNode *
+mk_term_chained(Bzla *bzla,
+                BzlaNode *args[],
+                uint32_t argc,
+                BzlaNode *(*fun)(Bzla *, BzlaNode *, BzlaNode *) )
+{
+  assert(argc >= 2);
+  BzlaNode *res, *tmp, *old;
+
+  res = 0;
+  for (uint32_t i = 0, j = 1; j < argc; i++, j++)
+  {
+    tmp = fun(bzla, args[i], args[j]);
+    if (res)
+    {
+      old = res;
+      res = bzla_exp_bv_and(bzla, old, tmp);
+      bzla_node_release(bzla, old);
+      bzla_node_release(bzla, tmp);
+    }
+    else
+    {
+      res = tmp;
+    }
+  }
+  assert(res);
   return res;
 }
 
@@ -1259,308 +1359,350 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
   switch (kind)
   {
     case BITWUZLA_KIND_EQUAL:
-      BZLA_CHECK_MK_TERM_ARGS("equal", bzla_args, 2, argc, 0, sort_any, true);
-      res = bzla_exp_eq(bzla, bzla_args[0], bzla_args[1]);
+      BZLA_CHECK_MK_TERM_ARGS(
+          "equal", true, bzla_args, 2, argc, 0, sort_any, true);
+      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_eq);
       break;
 
     case BITWUZLA_KIND_DISTINCT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "distinct", bzla_args, 2, argc, 0, sort_any, true);
-      res = bzla_exp_ne(bzla, bzla_args[0], bzla_args[1]);
+          "distinct", true, bzla_args, 2, argc, 0, sort_any, true);
+      res = mk_term_pairwise(bzla, bzla_args, argc, bzla_exp_ne);
       break;
 
     case BITWUZLA_KIND_IMPLIES:
       BZLA_CHECK_MK_TERM_ARGS(
-          "implies", bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
-      res = bzla_exp_implies(bzla, bzla_args[0], bzla_args[1]);
+          "implies", true, bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
+      res = mk_term_right_assoc(bzla, bzla_args, argc, bzla_exp_implies);
       break;
 
     case BITWUZLA_KIND_IFF:
       BZLA_CHECK_MK_TERM_ARGS(
-          "iff", bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
+          "iff", false, bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
       res = bzla_exp_iff(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_NOT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "not", bzla_args, 1, argc, 0, bzla_sort_is_bool, true);
+          "not", false, bzla_args, 1, argc, 0, bzla_sort_is_bool, true);
       res = bzla_exp_bv_not(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_AND:
       BZLA_CHECK_MK_TERM_ARGS(
-          "and", bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
-      res = bzla_exp_bv_and(bzla, bzla_args[0], bzla_args[1]);
+          "and", true, bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
+      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_and);
       break;
 
     case BITWUZLA_KIND_OR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "or", bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
-      res = bzla_exp_bv_or(bzla, bzla_args[0], bzla_args[1]);
+          "or", true, bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
+      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_or);
       break;
 
     case BITWUZLA_KIND_XOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "xor", bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
-      res = bzla_exp_bv_xor(bzla, bzla_args[0], bzla_args[1]);
+          "xor", true, bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
+      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_xor);
       break;
 
     case BITWUZLA_KIND_BV_NOT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_not", bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
+          "bv_not", false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_not(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_BV_NEG:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_neg", bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
+          "bv_neg", false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_neg(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_BV_REDOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_redor", bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
+          "bv_redor", false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_redor(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_BV_REDXOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_redxor", bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
+          "bv_redxor", false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_redxor(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_BV_REDAND:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_redand", bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
+          "bv_redand", false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_redand(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_BV_XOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_xor", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_xor(bzla, bzla_args[0], bzla_args[1]);
+          "bv_xor", true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_xor);
       break;
 
     case BITWUZLA_KIND_BV_XNOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_xnor", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_xnor", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_xnor(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_AND:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_and", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_and(bzla, bzla_args[0], bzla_args[1]);
+          "bv_and", true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_and);
       break;
 
     case BITWUZLA_KIND_BV_NAND:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_nand", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_nand", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_nand(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_OR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_or", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_or(bzla, bzla_args[0], bzla_args[1]);
+          "bv_or", true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_or);
       break;
 
     case BITWUZLA_KIND_BV_NOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_nor", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_nor", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_nor(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_ADD:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_add", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_add(bzla, bzla_args[0], bzla_args[1]);
+          "bv_add", true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_add);
       break;
 
     case BITWUZLA_KIND_BV_UADD_OVERFLOW:
-      BZLA_CHECK_MK_TERM_ARGS(
-          "bv_uadd_overflow", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      BZLA_CHECK_MK_TERM_ARGS("bv_uadd_overflow",
+                              false,
+                              bzla_args,
+                              2,
+                              argc,
+                              0,
+                              bzla_sort_is_bv,
+                              true);
       res = bzla_exp_bv_uaddo(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SADD_OVERFLOW:
-      BZLA_CHECK_MK_TERM_ARGS(
-          "bv_sadd_overflow", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      BZLA_CHECK_ARG_CNT("bv_sadd_overflow", 2, argc);
+      BZLA_CHECK_MK_TERM_ARGS("bv_sadd_overflow",
+                              false,
+                              bzla_args,
+                              2,
+                              argc,
+                              0,
+                              bzla_sort_is_bv,
+                              true);
       res = bzla_exp_bv_saddo(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_MUL:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_mul", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_mul(bzla, bzla_args[0], bzla_args[1]);
+          "bv_mul", true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_mul);
       break;
 
     case BITWUZLA_KIND_BV_UMUL_OVERFLOW:
-      BZLA_CHECK_MK_TERM_ARGS(
-          "bv_umul_overflow", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      BZLA_CHECK_MK_TERM_ARGS("bv_umul_overflow",
+                              false,
+                              bzla_args,
+                              2,
+                              argc,
+                              0,
+                              bzla_sort_is_bv,
+                              true);
       res = bzla_exp_bv_umulo(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SMUL_OVERFLOW:
-      BZLA_CHECK_MK_TERM_ARGS(
-          "bv_smul_overflow", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      BZLA_CHECK_MK_TERM_ARGS("bv_smul_overflow",
+                              false,
+                              bzla_args,
+                              2,
+                              argc,
+                              0,
+                              bzla_sort_is_bv,
+                              true);
       res = bzla_exp_bv_smulo(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_ULT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_ult", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_ult", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_ult(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SLT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_slt", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_slt", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_slt(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_ULE:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_ule", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_ule", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_ulte(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SLE:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_sle", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_sle", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_slte(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_UGT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_ugt", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_ugt", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_ugt(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SGT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_sgt", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_sgt", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_sgt(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_UGE:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_uge", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_uge", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_ugte(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SGE:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_sge", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_sge", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_sgte(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SHL:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_shl", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_shl", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_sll(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SHR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_shr", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_shr", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_srl(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_ASHR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_ashr", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_ashr", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_sra(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SUB:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_sub", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_sub", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_sub(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_USUB_OVERFLOW:
-      BZLA_CHECK_MK_TERM_ARGS(
-          "bv_usub_overflow", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      BZLA_CHECK_MK_TERM_ARGS("bv_usub_overflow",
+                              false,
+                              bzla_args,
+                              2,
+                              argc,
+                              0,
+                              bzla_sort_is_bv,
+                              true);
       res = bzla_exp_bv_usubo(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SSUB_OVERFLOW:
-      BZLA_CHECK_MK_TERM_ARGS(
-          "bv_ssub_overflow", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      BZLA_CHECK_MK_TERM_ARGS("bv_ssub_overflow",
+                              false,
+                              bzla_args,
+                              2,
+                              argc,
+                              0,
+                              bzla_sort_is_bv,
+                              true);
       res = bzla_exp_bv_ssubo(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_UDIV:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_udiv", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_udiv", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_udiv(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SDIV:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_sdiv", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_sdiv", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_sdiv(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SDIV_OVERFLOW:
-      BZLA_CHECK_MK_TERM_ARGS(
-          "bv_sdiv_overflow", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      BZLA_CHECK_MK_TERM_ARGS("bv_sdiv_overflow",
+                              false,
+                              bzla_args,
+                              2,
+                              argc,
+                              0,
+                              bzla_sort_is_bv,
+                              true);
       res = bzla_exp_bv_sdivo(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_UREM:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_urem", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_urem", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_urem(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SREM:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_srem", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_srem", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_srem(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_SMOD:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_smod", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_smod", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_smod(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_ROL:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_rol", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_rol", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_rol(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_ROR:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_ror", bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+          "bv_ror", false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_ror(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_BV_INC:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_inc", bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
+          "bv_inc", false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_inc(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_BV_DEC:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_dec", bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
+          "bv_dec", false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_dec(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_BV_CONCAT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "bv_concat", bzla_args, 2, argc, 0, bzla_sort_is_bv, false);
-      res = bzla_exp_bv_concat(bzla, bzla_args[0], bzla_args[1]);
+          "bv_concat", true, bzla_args, 2, argc, 0, bzla_sort_is_bv, false);
+      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_concat);
       break;
 
     case BITWUZLA_KIND_FP_FP:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_fp", bzla_args, 3, argc, 0, bzla_sort_is_bv, false);
+          "fp_fp", false, bzla_args, 3, argc, 0, bzla_sort_is_bv, false);
       BZLA_ABORT(
           bzla_node_bv_get_width(bzla, bzla_args[0]) != 1,
           "invalid bit-vector size for argument at index 0, expected size 1");
@@ -1569,151 +1711,157 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
 
     case BITWUZLA_KIND_FP_ABS:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_abs", bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
+          "fp_abs", false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_abs(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_FP_NEG:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_neg", bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
+          "fp_neg", false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_neg(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_FP_IS_NORMAL:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_is_normal", bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
+          "fp_is_normal", false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_is_normal(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_FP_IS_SUBNORMAL:
-      BZLA_CHECK_MK_TERM_ARGS(
-          "fp_is_subnormal", bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
+      BZLA_CHECK_MK_TERM_ARGS("fp_is_subnormal",
+                              false,
+                              bzla_args,
+                              1,
+                              argc,
+                              0,
+                              bzla_sort_is_fp,
+                              true);
       res = bzla_exp_fp_is_subnormal(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_FP_IS_NAN:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_is_nan", bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
+          "fp_is_nan", false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_is_nan(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_FP_IS_ZERO:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_is_zero", bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
+          "fp_is_zero", false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_is_zero(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_FP_IS_INF:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_is_inf", bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
+          "fp_is_inf", false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_is_inf(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_FP_IS_NEG:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_is_neg", bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
+          "fp_is_neg", false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_is_neg(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_FP_IS_POS:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_is_pos", bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
+          "fp_is_pos", false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_is_pos(bzla, bzla_args[0]);
       break;
 
     case BITWUZLA_KIND_FP_MIN:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_min", bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
+          "fp_min", false, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_min(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_FP_MAX:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_max", bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
+          "fp_max", false, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_max(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_FP_REM:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_rem", bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
+          "fp_rem", false, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
       res = bzla_exp_fp_rem(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_FP_EQ:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_eq", bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_fpeq(bzla, bzla_args[0], bzla_args[1]);
+          "fp_eq", true, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
+      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_fp_fpeq);
       break;
 
     case BITWUZLA_KIND_FP_LEQ:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_leq", bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_lte(bzla, bzla_args[0], bzla_args[1]);
+          "fp_leq", true, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
+      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_fp_lte);
       break;
 
     case BITWUZLA_KIND_FP_LT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_lt", bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_lt(bzla, bzla_args[0], bzla_args[1]);
+          "fp_lt", true, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
+      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_fp_lt);
       break;
 
     case BITWUZLA_KIND_FP_GEQ:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_geq", bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_gte(bzla, bzla_args[0], bzla_args[1]);
+          "fp_geq", true, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
+      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_fp_gte);
       break;
 
     case BITWUZLA_KIND_FP_GT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_gt", bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_gt(bzla, bzla_args[0], bzla_args[1]);
+          "fp_gt", true, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
+      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_fp_gt);
       break;
 
     case BITWUZLA_KIND_FP_SQRT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_sqrt", bzla_args, 2, argc, 1, bzla_sort_is_fp, true);
+          "fp_sqrt", false, bzla_args, 2, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       res = bzla_exp_fp_sqrt(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_FP_RTI:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_rti", bzla_args, 2, argc, 1, bzla_sort_is_fp, true);
+          "fp_rti", false, bzla_args, 2, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       res = bzla_exp_fp_rti(bzla, bzla_args[0], bzla_args[1]);
       break;
 
     case BITWUZLA_KIND_FP_ADD:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_add", bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
+          "fp_add", false, bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       res = bzla_exp_fp_add(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
       break;
 
     case BITWUZLA_KIND_FP_SUB:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_sub", bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
+          "fp_sub", false, bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       res = bzla_exp_fp_sub(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
       break;
 
     case BITWUZLA_KIND_FP_MUL:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_mul", bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
+          "fp_mul", false, bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       res = bzla_exp_fp_mul(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
       break;
 
     case BITWUZLA_KIND_FP_DIV:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_div", bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
+          "fp_div", false, bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       res = bzla_exp_fp_div(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
       break;
 
     case BITWUZLA_KIND_FP_FMA:
       BZLA_CHECK_MK_TERM_ARGS(
-          "fp_fma", bzla_args, 4, argc, 1, bzla_sort_is_fp, true);
+          "fp_fma", false, bzla_args, 4, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       res = bzla_exp_fp_fma(
           bzla, bzla_args[0], bzla_args[1], bzla_args[2], bzla_args[3]);
@@ -1721,7 +1869,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
 
     case BITWUZLA_KIND_ARRAY_SELECT:
       BZLA_CHECK_MK_TERM_ARGS(
-          "array_select", bzla_args, 2, argc, 0, sort_any, false);
+          "array_select", false, bzla_args, 2, argc, 0, sort_any, false);
       BZLA_CHECK_TERM_IS_ARRAY_AT_IDX(bzla_args[0], 0);
       BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(bzla_args[1], 1);
       BZLA_ABORT(
@@ -1733,7 +1881,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
 
     case BITWUZLA_KIND_ARRAY_STORE:
       BZLA_CHECK_MK_TERM_ARGS(
-          "array_store", bzla_args, 3, argc, 0, sort_any, false);
+          "array_store", false, bzla_args, 3, argc, 0, sort_any, false);
       BZLA_CHECK_TERM_IS_ARRAY_AT_IDX(bzla_args[0], 0);
       BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(bzla_args[1], 1);
       BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(bzla_args[2], 2);
@@ -1749,7 +1897,8 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       break;
 
     case BITWUZLA_KIND_ITE:
-      BZLA_CHECK_MK_TERM_ARGS("ite", bzla_args, 3, argc, 1, sort_any, true);
+      BZLA_CHECK_MK_TERM_ARGS(
+          "ite", false, bzla_args, 3, argc, 1, sort_any, true);
       BZLA_CHECK_TERM_IS_BOOL_AT_IDX(bzla, bzla_args[0], 0);
       res = bzla_exp_cond(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
       break;

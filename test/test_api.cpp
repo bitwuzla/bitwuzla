@@ -183,6 +183,7 @@ TEST_F(TestApi, mk_term_check_cnt)
   std::vector<BitwuzlaTerm *> bv_args2    = {d_bv_zero8, d_bv_const8};
   std::vector<BitwuzlaTerm *> ite_args2   = {d_true, d_bv_const8};
   std::vector<BitwuzlaTerm *> fp_args1    = {d_fp_const16};
+  std::vector<BitwuzlaTerm *> fp_args1_rm = {d_rm_const};
   std::vector<BitwuzlaTerm *> fp_args2    = {d_fp_const16, d_fp_const16};
   std::vector<BitwuzlaTerm *> fp_args2_rm = {d_rm_const, d_fp_const16};
   std::vector<BitwuzlaTerm *> fp_args3_rm = {
@@ -433,7 +434,7 @@ TEST_F(TestApi, mk_term_check_cnt)
       error_arg_cnt);
   ASSERT_DEATH(
       bitwuzla_mk_term(
-          d_bzla, BITWUZLA_KIND_FP_EQ, fp_args3_rm.size(), fp_args3_rm.data()),
+          d_bzla, BITWUZLA_KIND_FP_EQ, fp_args1_rm.size(), fp_args1_rm.data()),
       error_arg_cnt);
   ASSERT_DEATH(
       bitwuzla_mk_term(
@@ -445,11 +446,11 @@ TEST_F(TestApi, mk_term_check_cnt)
       error_arg_cnt);
   ASSERT_DEATH(
       bitwuzla_mk_term(
-          d_bzla, BITWUZLA_KIND_FP_GEQ, fp_args3_rm.size(), fp_args3_rm.data()),
+          d_bzla, BITWUZLA_KIND_FP_GEQ, fp_args1.size(), fp_args1.data()),
       error_arg_cnt);
   ASSERT_DEATH(
       bitwuzla_mk_term(
-          d_bzla, BITWUZLA_KIND_FP_GT, fp_args3_rm.size(), fp_args3_rm.data()),
+          d_bzla, BITWUZLA_KIND_FP_GT, fp_args1.size(), fp_args1.data()),
       error_arg_cnt);
   ASSERT_DEATH(
       bitwuzla_mk_term(
@@ -482,11 +483,11 @@ TEST_F(TestApi, mk_term_check_cnt)
       error_arg_cnt);
   ASSERT_DEATH(
       bitwuzla_mk_term(
-          d_bzla, BITWUZLA_KIND_FP_LEQ, fp_args3_rm.size(), fp_args3_rm.data()),
+          d_bzla, BITWUZLA_KIND_FP_LEQ, fp_args1.size(), fp_args1.data()),
       error_arg_cnt);
   ASSERT_DEATH(
       bitwuzla_mk_term(
-          d_bzla, BITWUZLA_KIND_FP_LT, fp_args3_rm.size(), fp_args3_rm.data()),
+          d_bzla, BITWUZLA_KIND_FP_LT, fp_args1.size(), fp_args1.data()),
       error_arg_cnt);
   ASSERT_DEATH(
       bitwuzla_mk_term(

@@ -1438,6 +1438,7 @@ bitwuzla_main(int32_t argc, char **argv)
      * treated as format string --- it might contain unescaped '%' due to
      * invalid user input. */
     fprintf(stderr, "bitwuzla: %s\n", parse_err_msg);
+    free(parse_err_msg);
     g_app->err = BZLA_ERR_EXIT;
     goto DONE;
   }

@@ -2109,7 +2109,6 @@ close_term_bin_bool(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_XOR_TAG_SMT2);
 
   BitwuzlaTerm *exp;
-  uint32_t i;
 
   if (nargs < 2)
   {
@@ -2119,36 +2118,11 @@ close_term_bin_bool(BzlaSMT2Parser *parser,
 
   if (!check_boolean_args_smt2(parser, item_cur, nargs)) return 0;
 
-  if (item_cur->tag == BZLA_IMPLIES_TAG_SMT2) /* right-associative */
-  {
-    for (i = nargs, exp = 0; i >= 1; i--)
-    {
-      if (exp)
-      {
-        exp = bitwuzla_mk_term2(parser->bitwuzla, kind, item_cur[i].exp, exp);
-      }
-      else
-      {
-        exp = item_cur[i].exp;
-      }
-    }
-  }
-  else
-  {
-    for (i = 1, exp = 0; i <= nargs; i++)
-    {
-      if (exp)
-      {
-        exp = bitwuzla_mk_term2(parser->bitwuzla, kind, exp, item_cur[i].exp);
-      }
-      else
-      {
-        exp = item_cur[i].exp;
-      }
-    }
-  }
-  assert(exp);
-
+  BitwuzlaTermPtrStack args;
+  BZLA_INIT_STACK(parser->mem, args);
+  for (uint32_t i = 1; i <= nargs; i++) BZLA_PUSH_STACK(args, item_cur[i].exp);
+  exp = bitwuzla_mk_term(parser->bitwuzla, kind, nargs, args.start);
+  BZLA_RELEASE_STACK(args);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
 
   return 1;
@@ -2216,7 +2190,6 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_BV_MUL_TAG_SMT2);
 
   BitwuzlaTerm *exp;
-  uint32_t i;
 
   if (nargs < 2)
   {
@@ -2235,19 +2208,11 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
     return 0;
   }
 
-  for (i = 1, exp = 0; i <= nargs; i++)
-  {
-    if (exp)
-    {
-      exp = bitwuzla_mk_term2(parser->bitwuzla, kind, exp, item_cur[i].exp);
-    }
-    else
-    {
-      exp = item_cur[i].exp;
-    }
-  }
-  assert(exp);
-
+  BitwuzlaTermPtrStack args;
+  BZLA_INIT_STACK(parser->mem, args);
+  for (uint32_t i = 1; i <= nargs; i++) BZLA_PUSH_STACK(args, item_cur[i].exp);
+  exp = bitwuzla_mk_term(parser->bitwuzla, kind, nargs, args.start);
+  BZLA_RELEASE_STACK(args);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
 
   return 1;
@@ -2555,20 +2520,17 @@ close_term_bin_fp_fun_chainable(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_GEQ_TAG_SMT2
          || item_cur->tag == BZLA_FP_GT_TAG_SMT2);
 
-  uint32_t i;
-  BitwuzlaTerm *exp, *tmp;
+  BitwuzlaTermPtrStack args;
+  BitwuzlaTerm *exp;
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
+  BZLA_INIT_STACK(parser->mem, args);
   if (!check_fp_args_smt2(parser, item_cur, nargs)) return 0;
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
-  exp = bitwuzla_mk_term2(bitwuzla, kind, item_cur[1].exp, item_cur[2].exp);
-  for (i = 3; i <= nargs; i++)
-  {
-    tmp =
-        bitwuzla_mk_term2(bitwuzla, kind, item_cur[i - 1].exp, item_cur[i].exp);
-    exp = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_AND, exp, tmp);
-  }
+  for (uint32_t i = 1; i <= nargs; i++) BZLA_PUSH_STACK(args, item_cur[i].exp);
+  exp = bitwuzla_mk_term(bitwuzla, kind, nargs, args.start);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
+  BZLA_RELEASE_STACK(args);
   return 1;
 }
 
@@ -2778,7 +2740,7 @@ close_term(BzlaSMT2Parser *parser)
 
   BitwuzlaTerm *exp, *tmp;
   int32_t open, tag;
-  uint32_t i, j, width, nargs;
+  uint32_t i, width, nargs;
   BzlaSMT2Item *item_open;
   BzlaSMT2Item *item_cur;
   BzlaSMT2Node *sym;
@@ -3016,14 +2978,12 @@ close_term(BzlaSMT2Parser *parser)
       return !perr_smt2(parser, "only one argument to '='");
     }
     if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
-    exp = bitwuzla_mk_term2(
-        bitwuzla, BITWUZLA_KIND_EQUAL, item_cur[1].exp, item_cur[2].exp);
-    for (i = 3; i <= nargs; i++)
-    {
-      tmp = bitwuzla_mk_term2(
-          bitwuzla, BITWUZLA_KIND_EQUAL, item_cur[i - 1].exp, item_cur[i].exp);
-      exp = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_AND, exp, tmp);
-    }
+    BitwuzlaTermPtrStack args;
+    BZLA_INIT_STACK(parser->mem, args);
+    for (uint32_t i = 1; i <= nargs; i++)
+      BZLA_PUSH_STACK(args, item_cur[i].exp);
+    exp = bitwuzla_mk_term(bitwuzla, BITWUZLA_KIND_EQUAL, nargs, args.start);
+    BZLA_RELEASE_STACK(args);
     release_exp_and_overwrite(parser, item_open, item_cur, exp);
   }
   /* CORE: DISTINCT --------------------------------------------------------- */
@@ -3040,24 +3000,12 @@ close_term(BzlaSMT2Parser *parser)
       return !perr_smt2(parser, "only one argument to 'distinct'");
     }
     if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
-    exp = 0;
-    for (i = 1; i < nargs; i++)
-    {
-      for (j = i + 1; j <= nargs; j++)
-      {
-        tmp = bitwuzla_mk_term2(
-            bitwuzla, BITWUZLA_KIND_DISTINCT, item_cur[i].exp, item_cur[j].exp);
-        if (exp)
-        {
-          exp = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_AND, exp, tmp);
-        }
-        else
-        {
-          exp = tmp;
-        }
-      }
-    }
-    assert(exp);
+    BitwuzlaTermPtrStack args;
+    BZLA_INIT_STACK(parser->mem, args);
+    for (uint32_t i = 1; i <= nargs; i++)
+      BZLA_PUSH_STACK(args, item_cur[i].exp);
+    exp = bitwuzla_mk_term(bitwuzla, BITWUZLA_KIND_DISTINCT, nargs, args.start);
+    BZLA_RELEASE_STACK(args);
     release_exp_and_overwrite(parser, item_open, item_cur, exp);
   }
   /* CORE: ITE -------------------------------------------------------------- */
