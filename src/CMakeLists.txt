@@ -1,4 +1,4 @@
-set(libboolector_src_files
+set(libcbitwuzla_src_files
   aigprop.c
   boolector.c
   bzlaabort.c
@@ -86,90 +86,90 @@ set(libboolector_src_files
   utils/bzlautil.c
 )
 
-set(boolector_src_files
+set(cbitwuzla_src_files
   bitwuzlamain.c
   bzlamain.c
 )
 
 #-----------------------------------------------------------------------------#
-# boolector library
+# CBitwuzla library
 
-add_library(boolector ${libboolector_src_files})
-target_link_libraries(boolector ${LIBRARIES})
-target_include_directories(boolector
+add_library(cbitwuzla ${libcbitwuzla_src_files})
+target_link_libraries(cbitwuzla ${LIBRARIES})
+target_include_directories(cbitwuzla
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)
 
-target_include_directories(boolector PRIVATE ${Btor2Tools_INCLUDE_DIR})
-target_link_libraries(boolector ${Btor2Tools_LIBRARIES})
+target_include_directories(cbitwuzla PRIVATE ${Btor2Tools_INCLUDE_DIR})
+target_link_libraries(cbitwuzla ${Btor2Tools_LIBRARIES})
 
 if(GMP_FOUND)
-  target_include_directories(boolector PRIVATE ${GMP_INCLUDE_DIR})
-  target_link_libraries(boolector ${GMP_LIBRARIES})
+  target_include_directories(cbitwuzla PRIVATE ${GMP_INCLUDE_DIR})
+  target_link_libraries(cbitwuzla ${GMP_LIBRARIES})
 endif()
 
 if(Lingeling_FOUND)
-  target_include_directories(boolector PRIVATE ${Lingeling_INCLUDE_DIR})
-  target_link_libraries(boolector ${Lingeling_LIBRARIES})
+  target_include_directories(cbitwuzla PRIVATE ${Lingeling_INCLUDE_DIR})
+  target_link_libraries(cbitwuzla ${Lingeling_LIBRARIES})
 endif()
 
 if(CaDiCaL_FOUND)
-  target_include_directories(boolector PRIVATE ${CaDiCaL_INCLUDE_DIR})
-  target_link_libraries(boolector ${CaDiCaL_LIBRARIES})
+  target_include_directories(cbitwuzla PRIVATE ${CaDiCaL_INCLUDE_DIR})
+  target_link_libraries(cbitwuzla ${CaDiCaL_LIBRARIES})
 endif()
 
 if(CryptoMiniSat_FOUND)
-  target_include_directories(boolector PRIVATE ${CryptoMiniSat_INCLUDE_DIR})
-  target_link_libraries(boolector ${CryptoMiniSat_LIBRARIES})
+  target_include_directories(cbitwuzla PRIVATE ${CryptoMiniSat_INCLUDE_DIR})
+  target_link_libraries(cbitwuzla ${CryptoMiniSat_LIBRARIES})
 endif()
 
 if(PicoSAT_FOUND)
-  target_include_directories(boolector PRIVATE ${PicoSAT_INCLUDE_DIR})
-  target_link_libraries(boolector ${PicoSAT_LIBRARIES})
+  target_include_directories(cbitwuzla PRIVATE ${PicoSAT_INCLUDE_DIR})
+  target_link_libraries(cbitwuzla ${PicoSAT_LIBRARIES})
 endif()
 
 if(Kissat_FOUND)
-  target_include_directories(boolector PRIVATE ${Kissat_INCLUDE_DIR})
-  target_link_libraries(boolector ${Kissat_LIBRARIES})
+  target_include_directories(cbitwuzla PRIVATE ${Kissat_INCLUDE_DIR})
+  target_link_libraries(cbitwuzla ${Kissat_LIBRARIES})
 endif()
 
 if(MiniSat_FOUND)
-  target_include_directories(boolector PRIVATE ${MiniSat_INCLUDE_DIR})
-  target_link_libraries(boolector ${MiniSat_LIBRARIES})
+  target_include_directories(cbitwuzla PRIVATE ${MiniSat_INCLUDE_DIR})
+  target_link_libraries(cbitwuzla ${MiniSat_LIBRARIES})
 endif()
 
-install(TARGETS boolector
-  EXPORT boolector-export
+install(TARGETS cbitwuzla
+  EXPORT cbitwuzla-export
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
-install(EXPORT boolector-export
-  FILE BoolectorTargets.cmake
-  NAMESPACE Boolector::
-  DESTINATION lib/cmake/Boolector)
+install(EXPORT cbitwuzla-export
+  FILE CBitwuzlaTargets.cmake
+  NAMESPACE CBitwuzla::
+  DESTINATION lib/cmake/CBitwuzla)
 
 # Install header files
-install(FILES boolector.h bzlatypes.h DESTINATION include/boolector)
+install(FILES api/c/bitwuzla.h DESTINATION include/cbitwuzla)
 
 #-----------------------------------------------------------------------------#
-# boolector
+# CBitwuzla binary
 
-add_executable (boolector-bin ${boolector_src_files})
-target_link_libraries(boolector-bin boolector)
-set_target_properties(boolector-bin
+add_executable (cbitwuzla-bin ${cbitwuzla_src_files})
+target_link_libraries(cbitwuzla-bin cbitwuzla)
+set_target_properties(cbitwuzla-bin
   PROPERTIES
-    OUTPUT_NAME bitwuzla
+    OUTPUT_NAME cbitwuzla
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-install(TARGETS boolector-bin DESTINATION bin)
+install(TARGETS cbitwuzla-bin DESTINATION bin)
 
 #-----------------------------------------------------------------------------#
 # Static binaries
 
 if(NOT BUILD_SHARED_LIBS AND NOT APPLE)
   set(BZLA_STATIC_FLAGS "-static")
-  set(STATIC_TARGETS boolector-bin)
+  set(STATIC_TARGETS cbitwuzla-bin)
 
   if(HAVE_NO_EXPORT_DYNAMIC)
     set(BZLA_STATIC_FLAGS "${BZLA_STATIC_FLAGS} -Wl,--no-export-dynamic")

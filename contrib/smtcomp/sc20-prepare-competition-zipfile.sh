@@ -1,7 +1,7 @@
 #!/bin/sh
 
 BUILD_DIR="$(pwd)/build"
-BITWUZLA_BINARY="$BUILD_DIR/bin/bitwuzla"
+BITWUZLA_BINARY="$BUILD_DIR/bin/cbitwuzla"
 YEAR="2020"
 
 [ -d "$BUILD_DIR" ] && echo "build directory already exists" && exit 1
@@ -20,9 +20,9 @@ rm -rf "$(pwd)/deps"
 )
 
 b=$($BITWUZLA_BINARY -v /dev/null | grep -i version | grep -i bitwuzla | awk '{print $(NF-1);exit}')
-version=bitwuzla-${b}
+version=cbitwuzla-${b}
 
-dir="/tmp/bitwuzla-smtcomp"
+dir="/tmp/cbitwuzla-smtcomp"
 rm -rf $dir
 RUN_DEFAULT="$dir/bin/starexec_run_default"
 DESCRIPTION="$dir/starexec_description.txt"
@@ -33,10 +33,10 @@ cp "$BITWUZLA_BINARY" "$dir/bin"
 
 cat > "$RUN_DEFAULT" << EOF
 #!/bin/sh
-./bitwuzla --smt-comp-mode \$1
+./cbitwuzla --smt-comp-mode \$1
 EOF
 
-echo "Bitwuzla $YEAR" > "$DESCRIPTION"
+echo "CBitwuzla $YEAR" > "$DESCRIPTION"
 chmod +x "$RUN_DEFAULT"
 tar -C "$dir" -zcf "$archive" .
 ls -l "$archive"

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.3)
 
 #-----------------------------------------------------------------------------#
 
-project(boolector)
+project(cbitwuzla)
 set(VERSION "0.9999")
 string(TIMESTAMP TIME)
 
@@ -131,6 +131,7 @@ option(USE_GMP        "Use GMP for bit-vector implementation" OFF)
 #-----------------------------------------------------------------------------#
 
 # Automatically build shared libraries if Python bindings are enabled.
+# Disabled until migrated to new API
 #if(PYTHON)
 #  if(USE_PYTHON2)
 #    find_package(PythonInterp 2.7 REQUIRED)
@@ -145,7 +146,7 @@ option(USE_GMP        "Use GMP for bit-vector implementation" OFF)
 #    REQUIRED)
 #
 #  # Produce a python module that only links against system libraries. SAT
-#  # solvers and libboolector should be included in the module itself.
+#  # solvers and libcbitwuzla should be included in the module itself.
 #  if(NOT BUILD_SHARED_LIBS)
 #    add_check_c_cxx_flag("-fPIC")
 #    # Disable MiniSat since the static library is not compiled with -fPIC by
@@ -242,7 +243,7 @@ if(GCOV)
   setup_target_for_coverage_lcov(
     NAME coverage
     EXECUTABLE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test
-    DEPENDENCIES boolector-bin)
+    DEPENDENCIES cbitwuzla-bin)
 endif()
 
 if(GPROF)
@@ -489,39 +490,41 @@ enable_testing()
 include_directories(src ${CMAKE_CURRENT_BINARY_DIR}/src)
 add_subdirectory(src)
 add_subdirectory(test)
+# Disabled until migrated to new API
 #if(PYTHON)
 #  add_subdirectory(src/api/python)
 #endif()
-#add_subdirectory(examples/api/c)
+# Disabled until migrated to new API
+# add_subdirectory(examples/api/c)
 
 #-----------------------------------------------------------------------------#
 
-set(ARCHIVE_NAME "boolector-${VERSION}")
+set(ARCHIVE_NAME "cbitwuzla-${VERSION}")
 add_custom_target(dist
     COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD
         | xz > ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar.xz
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 #-----------------------------------------------------------------------------#
-# Install config and configversion for Boolector to add support for
-# find_package(Boolector).
+# Install config and configversion for CBitwuzla to add support for
+# find_package(CBitwuzla).
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-  ${CMAKE_CURRENT_BINARY_DIR}/BoolectorConfigVersion.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/CBitwuzlaConfigVersion.cmake
   VERSION ${VERSION}
   COMPATIBILITY SameMajorVersion
 )
 
 # Install the config, configversion and custom find modules
 install(FILES
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/BoolectorConfig.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/BoolectorConfigVersion.cmake
-  DESTINATION lib/cmake/Boolector
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/CBitwuzlaConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/CBitwuzlaConfigVersion.cmake
+  DESTINATION lib/cmake/CBitwuzla
 )
 
 #-----------------------------------------------------------------------------#
-# Print Boolector configuration
+# Print CBitwuzla configuration
 
 if(NOT WIN32)
   string(ASCII 27 Esc)
