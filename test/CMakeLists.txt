@@ -3,7 +3,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/tests)
 set(test_names
   aig
   aigvec
-  api
   arithmetic
   bv
   bvdomain
@@ -43,7 +42,7 @@ set(test_names
 )
 
 if(SymFPU_FOUND)
-  list(APPEND test_names fp)
+  list(APPEND test_names api fp)
 endif()
 
 foreach(test ${test_names})

@@ -973,13 +973,13 @@ parse_logical(BzlaBZLAParser *parser, BitwuzlaKind kind, uint32_t width)
 static BitwuzlaTerm *
 parse_implies(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_binary(parser, BITWUZLA_KIND_IMPLIES, width);
+  return parse_logical(parser, BITWUZLA_KIND_IMPLIES, width);
 }
 
 static BitwuzlaTerm *
 parse_iff(BzlaBZLAParser *parser, uint32_t width)
 {
-  return parse_binary(parser, BITWUZLA_KIND_IFF, width);
+  return parse_logical(parser, BITWUZLA_KIND_IFF, width);
 }
 
 static BitwuzlaTerm *
