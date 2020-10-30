@@ -440,6 +440,8 @@ BitwuzlaResult bitwuzla_parse_format(Bitwuzla *bitwuzla,
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */
 
+size_t bitwuzla_sort_hash(Bitwuzla *bitwuzla, const BitwuzlaSort sort);
+
 uint32_t bitwuzla_sort_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 uint32_t bitwuzla_sort_fp_get_exp_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 uint32_t bitwuzla_sort_fp_get_sig_size(Bitwuzla *bitwuzla, BitwuzlaSort sort);
@@ -465,6 +467,8 @@ bool bitwuzla_sort_is_rm(Bitwuzla *bitwuzla, BitwuzlaSort sort);
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTerm                                                               */
 /* -------------------------------------------------------------------------- */
+
+size_t bitwuzla_term_hash(const BitwuzlaTerm *term);
 
 Bitwuzla *bitwuzla_term_get_bitwuzla(const BitwuzlaTerm *term);
 BitwuzlaSort bitwuzla_term_get_sort(const BitwuzlaTerm *term);

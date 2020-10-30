@@ -2694,6 +2694,17 @@ bitwuzla_parse_format(Bitwuzla *bitwuzla,
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */
 
+size_t
+bitwuzla_sort_hash(Bitwuzla *bitwuzla, const BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  return sort;
+}
+
 uint32_t
 bitwuzla_sort_bv_get_size(Bitwuzla *bitwuzla, BitwuzlaSort sort)
 {
@@ -2882,6 +2893,16 @@ bitwuzla_sort_is_rm(Bitwuzla *bitwuzla, BitwuzlaSort sort)
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTerm                                                               */
 /* -------------------------------------------------------------------------- */
+
+size_t
+bitwuzla_term_hash(const BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  return bzla_node_get_id(bzla_term);
+}
 
 Bitwuzla *
 bitwuzla_term_get_bitwuzla(const BitwuzlaTerm *term)
