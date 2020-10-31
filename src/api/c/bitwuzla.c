@@ -1409,6 +1409,12 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_xor);
       break;
 
+    case BITWUZLA_KIND_BV_COMP:
+      BZLA_CHECK_MK_TERM_ARGS(
+          "bv_comp", true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
+      res = bzla_exp_eq(bzla, bzla_args[0], bzla_args[1]);
+      break;
+
     case BITWUZLA_KIND_BV_NOT:
       BZLA_CHECK_MK_TERM_ARGS(
           "bv_not", false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);

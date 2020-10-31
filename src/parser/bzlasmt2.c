@@ -3298,7 +3298,7 @@ close_term(BzlaSMT2Parser *parser)
   else if (tag == BZLA_BV_COMP_TAG_SMT2)
   {
     if (!close_term_bin_bv_fun(
-            parser, item_open, item_cur, nargs, BITWUZLA_KIND_EQUAL))
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_COMP))
     {
       return 0;
     }
