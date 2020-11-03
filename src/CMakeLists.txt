@@ -1,6 +1,5 @@
 set(libcbitwuzla_src_files
   aigprop.c
-  bzlaabort.c
   bzlaaig.c
   bzlaaigvec.c
   bzlaass.c
@@ -83,6 +82,7 @@ set(libcbitwuzla_src_files
   utils/bzlarng.c
   utils/bzlaunionfind.c
   utils/bzlautil.c
+  utils/bzlaabort.c
 )
 
 set(cbitwuzla_src_files

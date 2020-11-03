@@ -1,4 +1,4 @@
-/*
+/**
  * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
  * This file is part of Bitwuzla.
