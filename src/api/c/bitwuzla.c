@@ -737,6 +737,18 @@ mk_term_chained(Bzla *bzla,
 
 /* -------------------------------------------------------------------------- */
 
+static void
+abort_aux(const char *msg)
+{
+  if (bzla_abort_callback.cb_fun)
+    ((void (*)(const char *)) bzla_abort_callback.cb_fun)(msg);
+}
+
+BzlaAbortCallback bzla_abort_callback = {.abort_fun = abort_aux,
+                                         .cb_fun    = bzla_abort_fun};
+
+/* -------------------------------------------------------------------------- */
+
 #define BZLA_RETURN_BITWUZLA_SORT(sort) \
   assert(res);                          \
   inc_ext_refs_sort(bzla, res);         \
@@ -838,6 +850,13 @@ bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   bzla_set_term(BZLA_IMPORT_BITWUZLA(bitwuzla), fun, state);
+}
+
+void
+bitwuzla_set_abort_callback(void (*fun)(const char *msg))
+{
+  bzla_abort_callback.abort_fun = abort_aux;
+  bzla_abort_callback.cb_fun    = fun;
 }
 
 void

@@ -11,7 +11,8 @@
 #include "test.h"
 
 extern "C" {
-#include "boolector.h"
+#include "bzlabv.h"
+#include "bzlaexp.h"
 #include "utils/bzlamem.h"
 #include "utils/bzlautil.h"
 }
@@ -64,6 +65,7 @@ class TestMisc : public TestMm
     assert(low <= high);
 
     Bzla *bzla;
+    BzlaBitVector *resultbv;
     int32_t i        = 0;
     int32_t j        = 0;
     char *result     = 0;
@@ -76,28 +78,30 @@ class TestMisc : public TestMm
       {
         for (j = i; j >= 0; j--)
         {
-          BoolectorSort sort;
-          BoolectorNode *const1, *const2, *slice, *eq;
+          BzlaSortId sort;
+          BzlaNode *const1, *const2, *slice, *eq;
 
-          bzla = boolector_new();
-          boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          bzla = bzla_new();
+          bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
 
-          result = mk_slice(x, i, j, num_bits);
+          result   = mk_slice(x, i, j, num_bits);
+          resultbv = bzla_bv_char_to_bv(d_mm, result);
 
-          sort   = boolector_bv_sort(bzla, high);
-          const1 = boolector_bv_unsigned_int(bzla, x, sort);
-          slice  = boolector_bv_slice(bzla, const1, i, j);
-          const2 = boolector_bv_const(bzla, result);
-          eq     = boolector_eq(bzla, slice, const2);
-          boolector_assert(bzla, eq);
+          sort   = bzla_sort_bv(bzla, high);
+          const1 = bzla_exp_bv_unsigned(bzla, x, sort);
+          slice  = bzla_exp_bv_slice(bzla, const1, i, j);
+          const2 = bzla_exp_bv_const(bzla, resultbv);
+          eq     = bzla_exp_eq(bzla, slice, const2);
+          bzla_assert_exp(bzla, eq);
 
-          ASSERT_EQ(boolector_sat(bzla), BOOLECTOR_SAT);
-          boolector_release_sort(bzla, sort);
-          boolector_release(bzla, const1);
-          boolector_release(bzla, const2);
-          boolector_release(bzla, slice);
-          boolector_release(bzla, eq);
-          boolector_delete(bzla);
+          ASSERT_EQ(bzla_check_sat(bzla, -1, -1), BZLA_RESULT_SAT);
+          bzla_bv_free(d_mm, resultbv);
+          bzla_sort_release(bzla, sort);
+          bzla_node_release(bzla, const1);
+          bzla_node_release(bzla, const2);
+          bzla_node_release(bzla, slice);
+          bzla_node_release(bzla, eq);
+          bzla_delete(bzla);
           bzla_mem_freestr(d_mm, result);
         }
       }
@@ -136,7 +140,8 @@ class TestMisc : public TestMm
     assert(low <= high);
 
     Bzla *bzla;
-    BoolectorNode *(*bzla_fun)(Bzla *, BoolectorNode *, uint32_t);
+    BzlaNode *(*bzla_fun)(Bzla *, BzlaNode *, uint32_t);
+    BzlaBitVector *resultbv;
 
     int32_t i        = 0;
     int32_t j        = 0;
@@ -144,7 +149,7 @@ class TestMisc : public TestMm
     char *result     = 0;
     int32_t num_bits = 0;
 
-    bzla_fun = ext_mode == UEXT ? boolector_bv_uext : boolector_bv_sext;
+    bzla_fun = ext_mode == UEXT ? bzla_exp_bv_uext : bzla_exp_bv_sext;
 
     for (num_bits = low; num_bits <= high; num_bits++)
     {
@@ -153,29 +158,31 @@ class TestMisc : public TestMm
       {
         for (j = 0; j < num_bits; j++)
         {
-          BoolectorSort sort;
-          BoolectorNode *const1, *const2, *eq, *bfun;
+          BzlaSortId sort;
+          BzlaNode *const1, *const2, *eq, *bfun;
 
-          bzla = boolector_new();
-          boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          bzla = bzla_new();
+          bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
 
           result =
               ext_mode == UEXT ? uext(i, j, num_bits) : sext(i, j, num_bits);
+          resultbv = bzla_bv_char_to_bv(d_mm, result);
 
-          sort   = boolector_bv_sort(bzla, num_bits);
-          const1 = boolector_bv_unsigned_int(bzla, i, sort);
+          sort   = bzla_sort_bv(bzla, num_bits);
+          const1 = bzla_exp_bv_unsigned(bzla, i, sort);
           bfun   = bzla_fun(bzla, const1, j);
-          const2 = boolector_bv_const(bzla, result);
-          eq     = boolector_eq(bzla, bfun, const2);
-          boolector_assert(bzla, eq);
+          const2 = bzla_exp_bv_const(bzla, resultbv);
+          eq     = bzla_exp_eq(bzla, bfun, const2);
+          bzla_assert_exp(bzla, eq);
 
-          ASSERT_EQ(boolector_sat(bzla), BOOLECTOR_SAT);
-          boolector_release_sort(bzla, sort);
-          boolector_release(bzla, const1);
-          boolector_release(bzla, const2);
-          boolector_release(bzla, bfun);
-          boolector_release(bzla, eq);
-          boolector_delete(bzla);
+          ASSERT_EQ(bzla_check_sat(bzla, -1, -1), BZLA_RESULT_SAT);
+          bzla_bv_free(d_mm, resultbv);
+          bzla_sort_release(bzla, sort);
+          bzla_node_release(bzla, const1);
+          bzla_node_release(bzla, const2);
+          bzla_node_release(bzla, bfun);
+          bzla_node_release(bzla, eq);
+          bzla_delete(bzla);
           bzla_mem_freestr(d_mm, result);
         }
       }
@@ -210,6 +217,7 @@ class TestMisc : public TestMm
     assert(low <= high);
 
     Bzla *bzla;
+    BzlaBitVector *resultbv;
     int32_t i        = 0;
     int32_t j        = 0;
     int32_t max      = 0;
@@ -223,30 +231,32 @@ class TestMisc : public TestMm
       {
         for (j = 0; j < max; j++)
         {
-          BoolectorSort sort;
-          BoolectorNode *const1, *const2, *const3, *eq, *concat;
+          BzlaSortId sort;
+          BzlaNode *const1, *const2, *const3, *eq, *concat;
 
-          bzla = boolector_new();
-          boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          bzla = bzla_new();
+          bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
 
-          result = mk_concat(i, j, num_bits);
+          result   = mk_concat(i, j, num_bits);
+          resultbv = bzla_bv_char_to_bv(d_mm, result);
 
-          sort   = boolector_bv_sort(bzla, num_bits);
-          const1 = boolector_bv_unsigned_int(bzla, i, sort);
-          const2 = boolector_bv_unsigned_int(bzla, j, sort);
-          concat = boolector_bv_concat(bzla, const1, const2);
-          const3 = boolector_bv_const(bzla, result);
-          eq     = boolector_eq(bzla, concat, const3);
-          boolector_assert(bzla, eq);
+          sort   = bzla_sort_bv(bzla, num_bits);
+          const1 = bzla_exp_bv_unsigned(bzla, i, sort);
+          const2 = bzla_exp_bv_unsigned(bzla, j, sort);
+          concat = bzla_exp_bv_concat(bzla, const1, const2);
+          const3 = bzla_exp_bv_const(bzla, resultbv);
+          eq     = bzla_exp_eq(bzla, concat, const3);
+          bzla_assert_exp(bzla, eq);
 
-          ASSERT_EQ(boolector_sat(bzla), BOOLECTOR_SAT);
-          boolector_release_sort(bzla, sort);
-          boolector_release(bzla, const1);
-          boolector_release(bzla, const2);
-          boolector_release(bzla, const3);
-          boolector_release(bzla, concat);
-          boolector_release(bzla, eq);
-          boolector_delete(bzla);
+          ASSERT_EQ(bzla_check_sat(bzla, -1, -1), BZLA_RESULT_SAT);
+          bzla_bv_free(d_mm, resultbv);
+          bzla_sort_release(bzla, sort);
+          bzla_node_release(bzla, const1);
+          bzla_node_release(bzla, const2);
+          bzla_node_release(bzla, const3);
+          bzla_node_release(bzla, concat);
+          bzla_node_release(bzla, eq);
+          bzla_delete(bzla);
           bzla_mem_freestr(d_mm, result);
         }
       }
@@ -275,34 +285,34 @@ class TestMisc : public TestMm
         {
           for (k = 0; k <= 1; k++)
           {
-            BoolectorSort sort, sort1;
-            BoolectorNode *const1, *const2, *const3, *const4, *eq, *cond;
+            BzlaSortId sort, sort1;
+            BzlaNode *const1, *const2, *const3, *const4, *eq, *cond;
 
-            bzla = boolector_new();
-            boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+            bzla = bzla_new();
+            bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
 
             result = k ? i : j;
 
-            sort   = boolector_bv_sort(bzla, num_bits);
-            sort1  = boolector_bv_sort(bzla, 1);
-            const1 = boolector_bv_unsigned_int(bzla, i, sort);
-            const2 = boolector_bv_unsigned_int(bzla, j, sort);
-            const3 = boolector_bv_unsigned_int(bzla, k, sort1);
-            cond   = boolector_cond(bzla, const3, const1, const2);
-            const4 = boolector_bv_unsigned_int(bzla, result, sort);
-            eq     = boolector_eq(bzla, cond, const4);
-            boolector_assert(bzla, eq);
+            sort   = bzla_sort_bv(bzla, num_bits);
+            sort1  = bzla_sort_bv(bzla, 1);
+            const1 = bzla_exp_bv_unsigned(bzla, i, sort);
+            const2 = bzla_exp_bv_unsigned(bzla, j, sort);
+            const3 = bzla_exp_bv_unsigned(bzla, k, sort1);
+            cond   = bzla_exp_cond(bzla, const3, const1, const2);
+            const4 = bzla_exp_bv_unsigned(bzla, result, sort);
+            eq     = bzla_exp_eq(bzla, cond, const4);
+            bzla_assert_exp(bzla, eq);
 
-            ASSERT_EQ(boolector_sat(bzla), BOOLECTOR_SAT);
-            boolector_release_sort(bzla, sort);
-            boolector_release_sort(bzla, sort1);
-            boolector_release(bzla, const1);
-            boolector_release(bzla, const2);
-            boolector_release(bzla, const3);
-            boolector_release(bzla, const4);
-            boolector_release(bzla, cond);
-            boolector_release(bzla, eq);
-            boolector_delete(bzla);
+            ASSERT_EQ(bzla_check_sat(bzla, -1, -1), BZLA_RESULT_SAT);
+            bzla_sort_release(bzla, sort);
+            bzla_sort_release(bzla, sort1);
+            bzla_node_release(bzla, const1);
+            bzla_node_release(bzla, const2);
+            bzla_node_release(bzla, const3);
+            bzla_node_release(bzla, const4);
+            bzla_node_release(bzla, cond);
+            bzla_node_release(bzla, eq);
+            bzla_delete(bzla);
           }
         }
       }
@@ -327,42 +337,42 @@ class TestMisc : public TestMm
       {
         for (j = 0; j < max; j++)
         {
-          BoolectorSort elem_sort, index_sort, array_sort;
-          BoolectorNode *const1, *const2, *const3, *const4;
-          BoolectorNode *eq1, *eq2, *array, *read1, *read2;
+          BzlaSortId elem_sort, index_sort, array_sort;
+          BzlaNode *const1, *const2, *const3, *const4;
+          BzlaNode *eq1, *eq2, *array, *read1, *read2;
 
-          bzla = boolector_new();
-          boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          bzla = bzla_new();
+          bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
 
-          elem_sort  = boolector_bv_sort(bzla, num_bits);
-          index_sort = boolector_bv_sort(bzla, 1);
-          array_sort = boolector_array_sort(bzla, index_sort, elem_sort);
-          array      = boolector_array(bzla, array_sort, "array");
-          const1     = boolector_false(bzla);
-          const2     = boolector_true(bzla);
-          const3     = boolector_bv_unsigned_int(bzla, i, elem_sort);
-          const4     = boolector_bv_unsigned_int(bzla, j, elem_sort);
-          read1      = boolector_read(bzla, array, const1);
-          read2      = boolector_read(bzla, array, const2);
-          eq1        = boolector_eq(bzla, const3, read1);
-          eq2        = boolector_eq(bzla, const4, read2);
-          boolector_assert(bzla, eq1);
-          boolector_assert(bzla, eq2);
+          elem_sort  = bzla_sort_bv(bzla, num_bits);
+          index_sort = bzla_sort_bv(bzla, 1);
+          array_sort = bzla_sort_array(bzla, index_sort, elem_sort);
+          array      = bzla_exp_array(bzla, array_sort, "array");
+          const1     = bzla_exp_false(bzla);
+          const2     = bzla_exp_true(bzla);
+          const3     = bzla_exp_bv_unsigned(bzla, i, elem_sort);
+          const4     = bzla_exp_bv_unsigned(bzla, j, elem_sort);
+          read1      = bzla_exp_read(bzla, array, const1);
+          read2      = bzla_exp_read(bzla, array, const2);
+          eq1        = bzla_exp_eq(bzla, const3, read1);
+          eq2        = bzla_exp_eq(bzla, const4, read2);
+          bzla_assert_exp(bzla, eq1);
+          bzla_assert_exp(bzla, eq2);
 
-          ASSERT_EQ(boolector_sat(bzla), BOOLECTOR_SAT);
-          boolector_release_sort(bzla, elem_sort);
-          boolector_release_sort(bzla, index_sort);
-          boolector_release_sort(bzla, array_sort);
-          boolector_release(bzla, eq1);
-          boolector_release(bzla, eq2);
-          boolector_release(bzla, read1);
-          boolector_release(bzla, read2);
-          boolector_release(bzla, const1);
-          boolector_release(bzla, const2);
-          boolector_release(bzla, const3);
-          boolector_release(bzla, const4);
-          boolector_release(bzla, array);
-          boolector_delete(bzla);
+          ASSERT_EQ(bzla_check_sat(bzla, -1, -1), BZLA_RESULT_SAT);
+          bzla_sort_release(bzla, elem_sort);
+          bzla_sort_release(bzla, index_sort);
+          bzla_sort_release(bzla, array_sort);
+          bzla_node_release(bzla, eq1);
+          bzla_node_release(bzla, eq2);
+          bzla_node_release(bzla, read1);
+          bzla_node_release(bzla, read2);
+          bzla_node_release(bzla, const1);
+          bzla_node_release(bzla, const2);
+          bzla_node_release(bzla, const3);
+          bzla_node_release(bzla, const4);
+          bzla_node_release(bzla, array);
+          bzla_delete(bzla);
         }
       }
     }

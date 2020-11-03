@@ -285,6 +285,8 @@ void bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
                                        int32_t (*fun)(void *),
                                        void *state);
 
+void bitwuzla_set_abort_callback(void (*fun)(const char *msg));
+
 void bitwuzla_set_option(Bitwuzla *bitwuzla,
                          BitwuzlaOption option,
                          uint32_t val);

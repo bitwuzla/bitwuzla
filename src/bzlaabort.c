@@ -62,7 +62,9 @@ bzla_abort_warn(
   assert(i <= BUFFER_LEN);
   snprintf(buffer + i, BUFFER_LEN - i, "\n");
   if (abort)
+  {
     bzla_abort_callback.abort_fun(buffer);
+  }
   else
   {
     fflush(stdout);

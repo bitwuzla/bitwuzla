@@ -1,6 +1,5 @@
 set(libcbitwuzla_src_files
   aigprop.c
-  boolector.c
   bzlaabort.c
   bzlaaig.c
   bzlaaigvec.c

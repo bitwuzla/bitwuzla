@@ -19,7 +19,6 @@
 
 extern "C" {
 #include "api/c/bitwuzla.h"
-#include "boolector.h"
 #include "bzlabvprop.h"
 #include "bzlaconfig.h"
 #include "bzlacore.h"

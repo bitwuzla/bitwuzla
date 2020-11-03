@@ -825,30 +825,45 @@ bzla_set_term(Bzla *bzla, int32_t (*fun)(void *), void *state)
 }
 
 static void
-release_all_ext_exp_refs(Bzla *bzla)
+release_all_exp_refs(Bzla *bzla, bool internal)
 {
   assert(bzla);
 
   uint32_t i, cnt;
   BzlaNode *exp;
 
-  for (i = 1, cnt = BZLA_COUNT_STACK(bzla->nodes_id_table); i <= cnt; i++)
+  cnt = BZLA_COUNT_STACK(bzla->nodes_id_table);
+  if (internal)
+  {
+    for (i = 1; i <= cnt; i++)
+    {
+      exp = BZLA_PEEK_STACK(bzla->nodes_id_table, cnt - i);
+      if (!exp) continue;
+      if (bzla_node_is_simplified(exp)) exp->simplified = 0;
+    }
+  }
+  for (i = 1; i <= cnt; i++)
   {
     if (!(exp = BZLA_PEEK_STACK(bzla->nodes_id_table, cnt - i))) continue;
-    if (exp->ext_refs)
+    assert(exp->ext_refs <= exp->refs);
+    bzla->external_refs -= exp->ext_refs;
+    if (internal)
     {
-      assert(exp->ext_refs <= exp->refs);
-      exp->refs = exp->refs - exp->ext_refs + 1;
-      bzla->external_refs -= exp->ext_refs;
-      assert(exp->refs > 0);
-      exp->ext_refs = 0;
-      bzla_node_release(bzla, exp);
+      exp->refs = 1;
     }
+    else
+    {
+      exp->refs = exp->refs - exp->ext_refs + 1;
+    }
+    assert(exp->refs > 0);
+    exp->ext_refs = 0;
+    bzla_node_release(bzla, exp);
+    assert(!internal || !BZLA_PEEK_STACK(bzla->nodes_id_table, cnt - i));
   }
 }
 
 static void
-release_all_ext_sort_refs(Bzla *bzla)
+release_all_sort_refs(Bzla *bzla, bool internal)
 {
   assert(bzla);
 
@@ -862,8 +877,15 @@ release_all_ext_sort_refs(Bzla *bzla)
     if (!sort) continue;
     assert(sort->refs);
     assert(sort->ext_refs <= sort->refs);
-    sort->refs = sort->refs - sort->ext_refs + 1;
     bzla->external_refs -= sort->ext_refs;
+    if (internal)
+    {
+      sort->refs = 1;
+    }
+    else
+    {
+      sort->refs = sort->refs - sort->ext_refs + 1;
+    }
     assert(sort->refs > 0);
     sort->ext_refs = 0;
     bzla_sort_release(bzla, sort->id);
@@ -873,8 +895,8 @@ release_all_ext_sort_refs(Bzla *bzla)
 void
 bzla_release_all_ext_refs(Bzla *bzla)
 {
-  release_all_ext_exp_refs(bzla);
-  release_all_ext_sort_refs(bzla);
+  release_all_exp_refs(bzla, false);
+  release_all_sort_refs(bzla, false);
 }
 
 void
@@ -911,7 +933,7 @@ bzla_delete(Bzla *bzla)
 {
   assert(bzla);
 
-  uint32_t i, cnt;
+  uint32_t i;
   BzlaNodePtrStack stack;
   BzlaMemMgr *mm;
   BzlaNode *exp;
@@ -996,32 +1018,14 @@ bzla_delete(Bzla *bzla)
   BZLA_RELEASE_STACK(stack);
 
   if (bzla_opt_get(bzla, BZLA_OPT_AUTO_CLEANUP) && bzla->external_refs)
-    release_all_ext_exp_refs(bzla);
-
+    release_all_exp_refs(bzla, false);
   if (bzla_opt_get(bzla, BZLA_OPT_AUTO_CLEANUP_INTERNAL))
-  {
-    cnt = BZLA_COUNT_STACK(bzla->nodes_id_table);
-    for (i = 1; i <= cnt; i++)
-    {
-      exp = BZLA_PEEK_STACK(bzla->nodes_id_table, cnt - i);
-      if (!exp) continue;
-      if (bzla_node_is_simplified(exp)) exp->simplified = 0;
-    }
-    for (i = 1; i <= cnt; i++)
-    {
-      exp = BZLA_PEEK_STACK(bzla->nodes_id_table, cnt - i);
-      if (!exp) continue;
-      assert(exp->refs);
-      exp->refs = 1;
-      bzla->external_refs -= exp->ext_refs;
-      exp->ext_refs = 0;
-      bzla_node_release(bzla, exp);
-      assert(!BZLA_PEEK_STACK(bzla->nodes_id_table, cnt - i));
-    }
-  }
+    release_all_exp_refs(bzla, true);
 
   if (bzla_opt_get(bzla, BZLA_OPT_AUTO_CLEANUP) && bzla->external_refs)
-    release_all_ext_sort_refs(bzla);
+    release_all_sort_refs(bzla, false);
+  if (bzla_opt_get(bzla, BZLA_OPT_AUTO_CLEANUP_INTERNAL))
+    release_all_sort_refs(bzla, true);
 
   assert(getenv("BZLALEAK") || bzla->external_refs == 0);
 

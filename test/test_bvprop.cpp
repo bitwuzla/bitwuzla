@@ -278,10 +278,9 @@ class TestBvProp : public TestBvDomainCommon
               res_y,
               res_z,
               0,
-              0,
-              boolector_bv_concat,
-              0,
-              0,
+              2,
+              false,
+              BITWUZLA_KIND_BV_CONCAT,
               0,
               0,
               res);
@@ -565,86 +564,76 @@ class TestBvProp : public TestBvDomainCommon
    *   (var | d->lo) != var || (var & d->hi) != var.
    * This is a helper for the check_sat test below.
    */
-  void fix_result_bits_for_check_sat(Bzla *bzla,
-                                     BoolectorNode *var,
+  void fix_result_bits_for_check_sat(Bitwuzla *bitwuzla,
+                                     BitwuzlaTerm *var,
                                      BzlaBvDomain *d)
   {
-    assert(bzla);
+    assert(bitwuzla);
     assert(var);
     assert(d);
-    assert(bzla_bvdomain_is_valid(bzla->mm, d));
+    assert(bzla_bvdomain_is_valid(d_mm, d));
 
-    BoolectorNode *d_hi, *d_lo, *a, *o, *_or, *ne1, *ne2;
+    BitwuzlaTerm *d_hi, *d_lo, *a, *o, *_or, *ne1, *ne2;
+    BitwuzlaSort sort;
     char *s_hi, *s_lo;
 
-    s_hi = bzla_bv_to_char(bzla->mm, d->hi);
-    s_lo = bzla_bv_to_char(bzla->mm, d->lo);
+    sort = bitwuzla_mk_bv_sort(bitwuzla, bzla_bvdomain_get_width(d));
+    s_hi = bzla_bv_to_char(d_mm, d->hi);
+    s_lo = bzla_bv_to_char(d_mm, d->lo);
 
-    d_hi = boolector_bv_const(bzla, s_hi);
-    d_lo = boolector_bv_const(bzla, s_lo);
+    d_hi = bitwuzla_mk_bv_value(bitwuzla, sort, s_hi, BITWUZLA_BV_BASE_BIN);
+    d_lo = bitwuzla_mk_bv_value(bitwuzla, sort, s_lo, BITWUZLA_BV_BASE_BIN);
 
-    a = boolector_bv_and(bzla, var, d_hi);
-    o = boolector_bv_or(bzla, var, d_lo);
+    a = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_AND, var, d_hi);
+    o = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_OR, var, d_lo);
 
-    ne1 = boolector_ne(bzla, a, var);
-    ne2 = boolector_ne(bzla, o, var);
+    ne1 = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_DISTINCT, a, var);
+    ne2 = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_DISTINCT, o, var);
 
-    _or = boolector_bv_or(bzla, ne1, ne2);
+    _or = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_OR, ne1, ne2);
 
-    boolector_assert(bzla, _or);
+    bitwuzla_assert(bitwuzla, _or);
 
-    boolector_release(bzla, _or);
-    boolector_release(bzla, ne1);
-    boolector_release(bzla, ne2);
-    boolector_release(bzla, o);
-    boolector_release(bzla, a);
-    boolector_release(bzla, d_hi);
-    boolector_release(bzla, d_lo);
-    bzla_mem_freestr(bzla->mm, s_hi);
-    bzla_mem_freestr(bzla->mm, s_lo);
+    bzla_mem_freestr(d_mm, s_hi);
+    bzla_mem_freestr(d_mm, s_lo);
   }
 
   /**
    * Fix bits in var corresponding to the fixed bits in the given input domain.
    * This is a helper for the check_sat test below.
    */
-  void fix_domain_bits_for_check_sat(Bzla *bzla,
-                                     BoolectorNode *var,
+  void fix_domain_bits_for_check_sat(Bitwuzla *bitwuzla,
+                                     BitwuzlaTerm *var,
                                      BzlaBvDomain *d)
   {
-    assert(bzla);
+    assert(bitwuzla);
     assert(var);
     assert(d);
-    assert(bzla_bvdomain_is_valid(bzla->mm, d));
+    assert(bzla_bvdomain_is_valid(d_mm, d));
 
-    BoolectorNode *d_hi, *d_lo, *a, *o, *_and, *eq1, *eq2;
+    BitwuzlaTerm *d_hi, *d_lo, *a, *o, *_and, *eq1, *eq2;
+    BitwuzlaSort sort;
     char *s_hi, *s_lo;
 
-    s_hi = bzla_bv_to_char(bzla->mm, d->hi);
-    s_lo = bzla_bv_to_char(bzla->mm, d->lo);
+    sort = bitwuzla_mk_bv_sort(bitwuzla, bzla_bvdomain_get_width(d));
+    s_hi = bzla_bv_to_char(d_mm, d->hi);
+    s_lo = bzla_bv_to_char(d_mm, d->lo);
 
-    d_hi = boolector_bv_const(bzla, s_hi);
-    d_lo = boolector_bv_const(bzla, s_lo);
+    d_hi = bitwuzla_mk_bv_value(bitwuzla, sort, s_hi, BITWUZLA_BV_BASE_BIN);
+    d_lo = bitwuzla_mk_bv_value(bitwuzla, sort, s_lo, BITWUZLA_BV_BASE_BIN);
 
-    a = boolector_bv_and(bzla, var, d_hi);
-    o = boolector_bv_or(bzla, var, d_lo);
+    a = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_AND, var, d_hi);
+    o = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_OR, var, d_lo);
 
-    eq1 = boolector_eq(bzla, a, var);
-    eq2 = boolector_eq(bzla, o, var);
+    eq1 = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_EQUAL, a, var);
+    eq2 = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_EQUAL, o, var);
 
-    _and = boolector_bv_and(bzla, eq1, eq2);
+    _and = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_AND, eq1, eq2);
 
-    boolector_assert(bzla, _and);
+    bitwuzla_assert(bitwuzla, _and);
 
-    boolector_release(bzla, _and);
-    boolector_release(bzla, eq1);
-    boolector_release(bzla, eq2);
-    boolector_release(bzla, o);
-    boolector_release(bzla, a);
-    boolector_release(bzla, d_hi);
-    boolector_release(bzla, d_lo);
-    bzla_mem_freestr(bzla->mm, s_hi);
-    bzla_mem_freestr(bzla->mm, s_lo);
+    bzla_mem_freestr(d_mm, s_hi);
+    bzla_mem_freestr(d_mm, s_lo);
   }
 
   void print_domains_for_check_sat(BzlaBvDomain *d_x,
@@ -692,178 +681,172 @@ class TestBvProp : public TestBvDomainCommon
     print_domain(res_z, true);
   }
 
-  void check_sat(
-      BzlaBvDomain *d_x,
-      BzlaBvDomain *d_y,
-      BzlaBvDomain *d_z,
-      BzlaBvDomain *d_c,
-      BzlaBvDomain *res_x,
-      BzlaBvDomain *res_y,
-      BzlaBvDomain *res_z,
-      BzlaBvDomain *res_c,
-      BoolectorNode *(*unfun)(Bzla *, BoolectorNode *),
-      BoolectorNode *(*binfun)(Bzla *, BoolectorNode *, BoolectorNode *),
-      BoolectorNode *(*binofun)(Bzla *, BoolectorNode *, BoolectorNode *),
-      BoolectorNode *(*extfun)(Bzla *, BoolectorNode *, uint32_t),
-      uint32_t hi,
-      uint32_t lo,
-      bool valid)
+  void check_sat(BzlaBvDomain *d_x,
+                 BzlaBvDomain *d_y,
+                 BzlaBvDomain *d_z,
+                 BzlaBvDomain *d_c,
+                 BzlaBvDomain *res_x,
+                 BzlaBvDomain *res_y,
+                 BzlaBvDomain *res_z,
+                 BzlaBvDomain *res_c,
+                 uint32_t arity,
+                 bool is_overflow,
+                 BitwuzlaKind kind,
+                 uint32_t hi,
+                 uint32_t lo,
+                 bool valid)
   {
     assert(d_x);
     assert(d_z);
     assert(res_x);
     assert(res_z);
-    assert(!d_c || (!unfun && !binfun && !extfun));
-    assert(!d_y || d_c || binfun || extfun);
-    assert(!extfun || hi);
-    assert(!binofun || binfun);
+    assert(!d_c || arity == 3);
+    assert(!d_y || d_c || arity == 2 || kind == BITWUZLA_KIND_BV_SIGN_EXTEND);
+    assert(kind != BITWUZLA_KIND_BV_SIGN_EXTEND || hi);
+    assert(!is_overflow || kind == BITWUZLA_KIND_BV_ADD
+           || kind == BITWUZLA_KIND_BV_MUL);
 
-    int32_t sat_res;
+    BitwuzlaResult sat_res;
     uint32_t bwx, bwy, bwz;
-    Bzla *bzla;
-    BoolectorNode *x, *y, *z, *c, *fun, *ofun, *_not, *eq;
-    BoolectorSort swx, swy, swz, s1;
+    BitwuzlaTerm *x, *y, *z, *c, *fun, *ofun, *_not, *eq;
+    BitwuzlaSort swx, swy, swz, s1;
 
     swy = 0;
 
-    bzla = boolector_new();
-    boolector_set_opt(bzla, BZLA_OPT_MODEL_GEN, 1);
-    boolector_set_opt(bzla, BZLA_OPT_INCREMENTAL, 1);
-    boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, 0);
+    Bitwuzla *bitwuzla = bitwuzla_new();
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_INCREMENTAL, 1);
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
     bwx = bzla_bvdomain_get_width(d_x);
-    swx = boolector_bv_sort(bzla, bwx);
+    swx = bitwuzla_mk_bv_sort(bitwuzla, bwx);
     bwz = bzla_bvdomain_get_width(d_z);
-    swz = boolector_bv_sort(bzla, bwz);
-    s1  = boolector_bv_sort(bzla, 1);
-    x   = boolector_var(bzla, swx, "x");
-    z   = boolector_var(bzla, swz, "z");
+    swz = bitwuzla_mk_bv_sort(bitwuzla, bwz);
+    s1  = bitwuzla_mk_bv_sort(bitwuzla, 1);
+    x   = bitwuzla_mk_const(bitwuzla, swx, "x");
+    z   = bitwuzla_mk_const(bitwuzla, swz, "z");
     y   = 0;
     c   = 0;
 
     if (d_y)
     {
       bwy = bzla_bvdomain_get_width(d_y);
-      swy = boolector_bv_sort(bzla, bwy);
-      y   = boolector_var(bzla, swy, "y");
+      swy = bitwuzla_mk_bv_sort(bitwuzla, bwy);
+      y   = bitwuzla_mk_const(bitwuzla, swy, "y");
     }
 
     if (d_c)
     {
       ASSERT_NE(y, nullptr);
-      c   = boolector_var(bzla, s1, "c");
-      fun = boolector_cond(bzla, c, x, y);
+      c   = bitwuzla_mk_const(bitwuzla, s1, "c");
+      fun = bitwuzla_mk_term3(bitwuzla, BITWUZLA_KIND_ITE, c, x, y);
     }
-    else if (unfun)
+    else if (kind == BITWUZLA_KIND_BV_SIGN_EXTEND)
     {
-      ASSERT_TRUE(!binfun && !extfun);
-      fun = unfun(bzla, x);
+      fun = bitwuzla_mk_term1_indexed1(bitwuzla, kind, x, hi);
     }
-    else if (binfun)
+    else if (kind == BITWUZLA_KIND_BV_EXTRACT)
     {
-      ASSERT_NE(y, nullptr);
-      ASSERT_TRUE(!unfun && !extfun);
-      fun = binfun(bzla, x, y);
-      if (binofun)
-      {
-        ofun = binofun(bzla, x, y);
-        _not = boolector_bv_not(bzla, ofun);
-        boolector_assert(bzla, _not);
-        boolector_release(bzla, _not);
-        boolector_release(bzla, ofun);
-      }
+      fun = bitwuzla_mk_term1_indexed2(bitwuzla, kind, x, hi, lo);
     }
-    else if (extfun)
+    else if (arity == 1)
     {
-      ASSERT_TRUE(!unfun && !binfun);
-      fun = extfun(bzla, x, hi);
+      fun = bitwuzla_mk_term1(bitwuzla, kind, x);
     }
     else
     {
-      fun = boolector_bv_slice(bzla, x, hi, lo);
+      assert(arity == 2);
+      ASSERT_NE(y, nullptr);
+      fun = bitwuzla_mk_term2(bitwuzla, kind, x, y);
+      if (is_overflow)
+      {
+        if (kind == BITWUZLA_KIND_BV_ADD)
+        {
+          ofun =
+              bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_UADD_OVERFLOW, x, y);
+        }
+        else
+        {
+          assert(kind == BITWUZLA_KIND_BV_MUL);
+          ofun =
+              bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_UMUL_OVERFLOW, x, y);
+        }
+        _not = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_BV_NOT, ofun);
+        bitwuzla_assert(bitwuzla, _not);
+      }
     }
-    eq = boolector_eq(bzla, fun, z);
-    boolector_assert(bzla, eq);
-    boolector_release(bzla, fun);
-    boolector_release(bzla, eq);
+    eq = bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_EQUAL, fun, z);
+    bitwuzla_assert(bitwuzla, eq);
 
-    fix_domain_bits_for_check_sat(bzla, x, d_x);
-    if (d_y) fix_domain_bits_for_check_sat(bzla, y, d_y);
-    fix_domain_bits_for_check_sat(bzla, z, d_z);
-    if (d_c) fix_domain_bits_for_check_sat(bzla, c, d_c);
+    fix_domain_bits_for_check_sat(bitwuzla, x, d_x);
+    if (d_y) fix_domain_bits_for_check_sat(bitwuzla, y, d_y);
+    fix_domain_bits_for_check_sat(bitwuzla, z, d_z);
+    if (d_c) fix_domain_bits_for_check_sat(bitwuzla, c, d_c);
 
     if (valid)
     {
       /* check fixed bits in result domains */
 
-      boolector_push(bzla, 1);
-      fix_result_bits_for_check_sat(bzla, x, res_x);
-      sat_res = boolector_sat(bzla);
-      if (sat_res != BZLA_RESULT_UNSAT)
+      bitwuzla_push(bitwuzla, 1);
+      fix_result_bits_for_check_sat(bitwuzla, x, res_x);
+      sat_res = bitwuzla_check_sat(bitwuzla);
+      if (sat_res != BITWUZLA_UNSAT)
       {
         print_domains_for_check_sat(
             d_x, d_y, d_z, d_c, res_x, res_y, res_z, res_c);
       }
-      ASSERT_TRUE(sat_res == BZLA_RESULT_UNSAT);
-      boolector_pop(bzla, 1);
+      ASSERT_TRUE(sat_res == BITWUZLA_UNSAT);
+      bitwuzla_pop(bitwuzla, 1);
 
       if (res_y)
       {
-        boolector_push(bzla, 1);
-        fix_result_bits_for_check_sat(bzla, y, res_y);
-        sat_res = boolector_sat(bzla);
-        if (sat_res != BZLA_RESULT_UNSAT)
+        bitwuzla_push(bitwuzla, 1);
+        fix_result_bits_for_check_sat(bitwuzla, y, res_y);
+        sat_res = bitwuzla_check_sat(bitwuzla);
+        if (sat_res != BITWUZLA_UNSAT)
         {
           print_domains_for_check_sat(
               d_x, d_y, d_z, d_c, res_x, res_y, res_z, res_c);
         }
-        ASSERT_TRUE(sat_res == BZLA_RESULT_UNSAT);
-        boolector_pop(bzla, 1);
+        ASSERT_TRUE(sat_res == BITWUZLA_UNSAT);
+        bitwuzla_pop(bitwuzla, 1);
       }
-      boolector_push(bzla, 1);
-      fix_result_bits_for_check_sat(bzla, z, res_z);
-      sat_res = boolector_sat(bzla);
-      if (sat_res != BZLA_RESULT_UNSAT)
+      bitwuzla_push(bitwuzla, 1);
+      fix_result_bits_for_check_sat(bitwuzla, z, res_z);
+      sat_res = bitwuzla_check_sat(bitwuzla);
+      if (sat_res != BITWUZLA_UNSAT)
       {
         print_domains_for_check_sat(
             d_x, d_y, d_z, d_c, res_x, res_y, res_z, res_c);
       }
-      ASSERT_TRUE(sat_res == BZLA_RESULT_UNSAT);
-      boolector_pop(bzla, 1);
+      ASSERT_TRUE(sat_res == BITWUZLA_UNSAT);
+      bitwuzla_pop(bitwuzla, 1);
       if (res_c)
       {
-        boolector_push(bzla, 1);
-        fix_result_bits_for_check_sat(bzla, c, res_c);
-        sat_res = boolector_sat(bzla);
-        if (sat_res != BZLA_RESULT_UNSAT)
+        bitwuzla_push(bitwuzla, 1);
+        fix_result_bits_for_check_sat(bitwuzla, c, res_c);
+        sat_res = bitwuzla_check_sat(bitwuzla);
+        if (sat_res != BITWUZLA_UNSAT)
         {
           print_domains_for_check_sat(
               d_x, d_y, d_z, d_c, res_x, res_y, res_z, res_c);
         }
-        ASSERT_TRUE(sat_res == BZLA_RESULT_UNSAT);
-        boolector_pop(bzla, 1);
+        ASSERT_TRUE(sat_res == BITWUZLA_UNSAT);
+        bitwuzla_pop(bitwuzla, 1);
       }
     }
     else
     {
       /* fixed bits in input domains should already be UNSAT */
-      sat_res = boolector_sat(bzla);
-      if (sat_res != BZLA_RESULT_UNSAT)
+      sat_res = bitwuzla_check_sat(bitwuzla);
+      if (sat_res != BITWUZLA_UNSAT)
       {
         print_domains_for_check_sat(
             d_x, d_y, d_z, d_c, res_x, res_y, res_z, res_c);
       }
-      ASSERT_TRUE(sat_res == BZLA_RESULT_UNSAT);
+      ASSERT_TRUE(sat_res == BITWUZLA_UNSAT);
     }
 
-    boolector_release(bzla, x);
-    if (c) boolector_release(bzla, c);
-    if (y) boolector_release(bzla, y);
-    boolector_release(bzla, z);
-    boolector_release_sort(bzla, swx);
-    if (y) boolector_release_sort(bzla, swy);
-    boolector_release_sort(bzla, swz);
-    boolector_release_sort(bzla, s1);
-    boolector_delete(bzla);
+    bitwuzla_delete(bitwuzla);
   }
 
   void test_shift_const(uint32_t bw, bool is_srl)
@@ -898,10 +881,9 @@ class TestBvProp : public TestBvDomainCommon
                       0,
                       res_z,
                       0,
-                      0,
-                      boolector_bv_srl,
-                      0,
-                      0,
+                      2,
+                      false,
+                      BITWUZLA_KIND_BV_SHR,
                       0,
                       0,
                       res);
@@ -921,10 +903,9 @@ class TestBvProp : public TestBvDomainCommon
                       0,
                       res_z,
                       0,
-                      0,
-                      boolector_bv_sll,
-                      0,
-                      0,
+                      2,
+                      false,
+                      BITWUZLA_KIND_BV_SHL,
                       0,
                       0,
                       res);
@@ -998,10 +979,9 @@ class TestBvProp : public TestBvDomainCommon
                       res_y,
                       res_z,
                       0,
-                      0,
-                      boolector_bv_srl,
-                      0,
-                      0,
+                      2,
+                      false,
+                      BITWUZLA_KIND_BV_SHR,
                       0,
                       0,
                       res);
@@ -1021,10 +1001,9 @@ class TestBvProp : public TestBvDomainCommon
                       res_y,
                       res_z,
                       0,
-                      0,
-                      boolector_bv_sll,
-                      0,
-                      0,
+                      2,
+                      false,
+                      BITWUZLA_KIND_BV_SHL,
                       0,
                       0,
                       res);
@@ -1065,7 +1044,6 @@ class TestBvProp : public TestBvDomainCommon
     BzlaBitVector *tmp;
     BzlaBvDomain *d_x, *d_y, *d_z;
     BzlaBvDomain *res_x, *res_y, *res_z;
-    BoolectorNode *(*boolectorfun)(Bzla *, BoolectorNode *, BoolectorNode *);
     BzlaBitVector *(*bvfun)(
         BzlaMemMgr *, const BzlaBitVector *, const BzlaBitVector *);
     bool (*bvpropfun)(BzlaMemMgr *,
@@ -1090,27 +1068,28 @@ class TestBvProp : public TestBvDomainCommon
 
         for (uint32_t k = 0; k < num_consts; k++)
         {
+          BitwuzlaKind kind;
           d_y   = bzla_bvdomain_new_from_char(d_mm, consts[k]);
           str_y = consts[k];
 
           if (op == TEST_BVPROP_AND)
           {
-            boolectorfun = boolector_bv_and;
-            bvpropfun    = bzla_bvprop_and;
-            bvfun        = bzla_bv_and;
+            kind      = BITWUZLA_KIND_BV_AND;
+            bvpropfun = bzla_bvprop_and;
+            bvfun     = bzla_bv_and;
           }
           else if (op == TEST_BVPROP_OR)
           {
-            boolectorfun = boolector_bv_or;
-            bvpropfun    = bzla_bvprop_or;
-            bvfun        = bzla_bv_or;
+            kind      = BITWUZLA_KIND_BV_OR;
+            bvpropfun = bzla_bvprop_or;
+            bvfun     = bzla_bv_or;
           }
           else
           {
             ASSERT_EQ(op, TEST_BVPROP_XOR);
-            boolectorfun = boolector_bv_xor;
-            bvpropfun    = bzla_bvprop_xor;
-            bvfun        = bzla_bv_xor;
+            kind      = BITWUZLA_KIND_BV_XOR;
+            bvpropfun = bzla_bvprop_xor;
+            bvfun     = bzla_bv_xor;
           }
 
           res = bvpropfun(d_mm, d_x, d_y, d_z, &res_x, &res_y, &res_z);
@@ -1122,10 +1101,9 @@ class TestBvProp : public TestBvDomainCommon
                     res_y,
                     res_z,
                     0,
-                    0,
-                    boolectorfun,
-                    0,
-                    0,
+                    2,
+                    false,
+                    kind,
                     0,
                     0,
                     res);
@@ -1323,10 +1301,9 @@ class TestBvProp : public TestBvDomainCommon
                     res_y,
                     res_z,
                     0,
-                    0,
-                    boolector_eq,
-                    0,
-                    0,
+                    2,
+                    false,
+                    BITWUZLA_KIND_EQUAL,
                     0,
                     0,
                     res);
@@ -1399,10 +1376,9 @@ class TestBvProp : public TestBvDomainCommon
                   0,
                   res_z,
                   0,
-                  boolector_bv_not,
-                  0,
-                  0,
-                  0,
+                  1,
+                  false,
+                  BITWUZLA_KIND_BV_NOT,
                   0,
                   0,
                   res);
@@ -1478,10 +1454,9 @@ class TestBvProp : public TestBvDomainCommon
                       0,
                       res_z,
                       0,
-                      0,
-                      0,
-                      0,
-                      0,
+                      1,
+                      false,
+                      BITWUZLA_KIND_BV_EXTRACT,
                       upper,
                       lower,
                       res);
@@ -1643,10 +1618,9 @@ class TestBvProp : public TestBvDomainCommon
                     0,
                     res_z,
                     0,
-                    0,
-                    0,
-                    0,
-                    boolector_bv_sext,
+                    1,
+                    false,
+                    BITWUZLA_KIND_BV_SIGN_EXTEND,
                     n,
                     0,
                     res);
@@ -1711,10 +1685,9 @@ class TestBvProp : public TestBvDomainCommon
                       res_y,
                       res_z,
                       res_c,
-                      0,
-                      0,
-                      0,
-                      0,
+                      3,
+                      false,
+                      BITWUZLA_KIND_ITE,
                       0,
                       0,
                       res);
@@ -1764,10 +1737,9 @@ class TestBvProp : public TestBvDomainCommon
                     res_y,
                     res_z,
                     0,
-                    0,
-                    boolector_bv_add,
-                    no_overflows ? boolector_bv_uaddo : 0,
-                    0,
+                    2,
+                    no_overflows,
+                    BITWUZLA_KIND_BV_ADD,
                     0,
                     0,
                     res);
@@ -1933,10 +1905,9 @@ class TestBvProp : public TestBvDomainCommon
                     res_y,
                     res_z,
                     0,
-                    0,
-                    boolector_bv_mul,
-                    no_overflows ? boolector_bv_umulo : 0,
-                    0,
+                    2,
+                    no_overflows,
+                    BITWUZLA_KIND_BV_MUL,
                     0,
                     0,
                     res);
@@ -2358,10 +2329,9 @@ class TestBvProp : public TestBvDomainCommon
                     res_y,
                     res_z,
                     0,
-                    0,
-                    boolector_bv_udiv,
-                    0,
-                    0,
+                    2,
+                    false,
+                    BITWUZLA_KIND_BV_UDIV,
                     0,
                     0,
                     res);
@@ -2860,10 +2830,9 @@ class TestBvProp : public TestBvDomainCommon
                     res_y,
                     res_z,
                     0,
-                    0,
-                    boolector_bv_urem,
-                    0,
-                    0,
+                    2,
+                    false,
+                    BITWUZLA_KIND_BV_UREM,
                     0,
                     0,
                     res);
@@ -3232,10 +3201,9 @@ class TestBvProp : public TestBvDomainCommon
                     res_y,
                     res_z,
                     0,
-                    0,
-                    boolector_bv_ult,
-                    0,
-                    0,
+                    2,
+                    false,
+                    BITWUZLA_KIND_BV_ULT,
                     0,
                     0,
                     res);

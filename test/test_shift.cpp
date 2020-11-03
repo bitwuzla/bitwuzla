@@ -18,125 +18,92 @@ extern "C" {
 class TestShift : public TestCommon
 {
  protected:
-  void test_shift(
-      uint32_t bw,
-      const char *shift,
-      BoolectorNode *(*shift_fun)(Bzla *, BoolectorNode *, BoolectorNode *),
-      BoolectorNode *(*fun)(Bzla *, BoolectorNode *, BoolectorNode *) )
+  void test_shift(uint32_t bw,
+                  const char *shift,
+                  BitwuzlaKind kind_shift,
+                  BitwuzlaKind kind)
   {
     assert(bw > 1);
     assert(bw == strlen(shift));
 
     int32_t res;
-    uint32_t bw_log2, ushift;
-    BoolectorSort sort;
-    BoolectorNode *res_shift0, *shift0;
-    BoolectorNode *res_shift1;
-    BoolectorNode *res_shift2;
-    BoolectorNode *e0;
-    BoolectorNode *ne0, *ne1, *ne2;
-    BoolectorNode *two, *tmp;
-    Bzla *bzla;
+    uint32_t ushift;
+    BitwuzlaSort sort;
+    BitwuzlaTerm *res_shift0, *shift0;
+    BitwuzlaTerm *res_shift1;
+    BitwuzlaTerm *e0, *ne0;
+    BitwuzlaTerm *two;
 
-    bzla = boolector_new();
-    boolector_set_opt(bzla, BZLA_OPT_REWRITE_LEVEL, 0);
-    boolector_set_opt(bzla, BZLA_OPT_MODEL_GEN, 1);
+    Bitwuzla *bitwuzla = bitwuzla_new();
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
 
-    sort   = boolector_bv_sort(bzla, bw);
-    e0     = boolector_var(bzla, sort, "e0");
+    sort   = bitwuzla_mk_bv_sort(bitwuzla, bw);
+    e0     = bitwuzla_mk_const(bitwuzla, sort, "e0");
     ushift = std::stol(shift, nullptr, 2);
 
-    shift0     = boolector_bv_const(bzla, shift);
-    res_shift0 = shift_fun(bzla, e0, shift0);
+    shift0 = bitwuzla_mk_bv_value(bitwuzla, sort, shift, BITWUZLA_BV_BASE_BIN);
+    res_shift0 = bitwuzla_mk_term2(bitwuzla, kind_shift, e0, shift0);
 
-    res_shift1 = boolector_copy(bzla, e0);
-    two        = boolector_bv_unsigned_int(bzla, 2u, sort);
+    res_shift1 = e0;
+    two        = bitwuzla_mk_bv_value_uint64(bitwuzla, sort, 2u);
     for (uint32_t i = 0; i < ushift; ++i)
     {
-      tmp = fun(bzla, res_shift1, two);
-      boolector_release(bzla, res_shift1);
-      res_shift1 = tmp;
+      res_shift1 = bitwuzla_mk_term2(bitwuzla, kind, res_shift1, two);
     }
-    if (shift_fun == boolector_bv_sra)
+    if (kind_shift == BITWUZLA_KIND_BV_ASHR)
     {
       /* if msb = 1, shift in 1 bits instead of 0 bits */
       if (ushift > 0)
       {
-        BoolectorNode *msb = boolector_bv_slice(bzla, e0, bw - 1, bw - 1);
+        BitwuzlaTerm *msb = bitwuzla_mk_term1_indexed2(
+            bitwuzla, BITWUZLA_KIND_BV_EXTRACT, e0, bw - 1, bw - 1);
         if (ushift < bw)
         {
-          BoolectorNode *slice =
-              boolector_bv_slice(bzla, res_shift1, bw - ushift - 1, 0);
-          BoolectorSort sort_sra_ones = boolector_bv_sort(bzla, ushift);
-          BoolectorNode *ones         = boolector_bv_ones(bzla, sort_sra_ones);
-          boolector_release_sort(bzla, sort_sra_ones);
-          BoolectorNode *concat = boolector_bv_concat(bzla, ones, slice);
-          boolector_release(bzla, slice);
-          boolector_release(bzla, ones);
-          tmp = boolector_cond(bzla, msb, concat, res_shift1);
-          boolector_release(bzla, concat);
-          boolector_release(bzla, res_shift1);
-          res_shift1 = tmp;
+          BitwuzlaTerm *slice =
+              bitwuzla_mk_term1_indexed2(bitwuzla,
+                                         BITWUZLA_KIND_BV_EXTRACT,
+                                         res_shift1,
+                                         bw - ushift - 1,
+                                         0);
+          BitwuzlaSort sort_sra_ones = bitwuzla_mk_bv_sort(bitwuzla, ushift);
+          BitwuzlaTerm *ones = bitwuzla_mk_bv_ones(bitwuzla, sort_sra_ones);
+          BitwuzlaTerm *concat =
+              bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_CONCAT, ones, slice);
+          res_shift1 = bitwuzla_mk_term3(
+              bitwuzla, BITWUZLA_KIND_ITE, msb, concat, res_shift1);
         }
         else
         {
-          BoolectorNode *ones = boolector_bv_ones(bzla, sort);
-          tmp                 = boolector_cond(bzla, msb, ones, res_shift1);
-          boolector_release(bzla, ones);
-          boolector_release(bzla, res_shift1);
-          res_shift1 = tmp;
+          res_shift1 = bitwuzla_mk_term3(bitwuzla,
+                                         BITWUZLA_KIND_ITE,
+                                         msb,
+                                         bitwuzla_mk_bv_ones(bitwuzla, sort),
+                                         res_shift1);
         }
-        boolector_release(bzla, msb);
       }
     }
 
-    ne0 = boolector_ne(bzla, res_shift0, res_shift1);
-    boolector_assert(bzla, ne0);
+    ne0 = bitwuzla_mk_term2(
+        bitwuzla, BITWUZLA_KIND_DISTINCT, res_shift0, res_shift1);
+    bitwuzla_assert(bitwuzla, ne0);
 
-    if (bzla_util_is_power_of_2(bw))
+    res = bitwuzla_check_sat(bitwuzla);
+    if (res == BITWUZLA_SAT)
     {
-      bw_log2 = bzla_util_log_2(bw);
-      if (bw_log2 && ushift < (1u << bw_log2))
-      {
-        BoolectorSort sort_log2 = boolector_bv_sort(bzla, bw_log2);
-        BoolectorNode *shift2_e1 =
-            boolector_bv_unsigned_int(bzla, ushift, sort_log2);
-        res_shift2 = shift_fun(bzla, e0, shift2_e1);
-        ne1        = boolector_ne(bzla, res_shift2, res_shift0);
-        ne2        = boolector_ne(bzla, res_shift2, res_shift1);
-        boolector_assert(bzla, ne1);
-        boolector_assert(bzla, ne2);
-        boolector_release(bzla, ne1);
-        boolector_release(bzla, ne2);
-        boolector_release(bzla, res_shift2);
-        boolector_release(bzla, shift2_e1);
-        boolector_release_sort(bzla, sort_log2);
-      }
+      BitwuzlaTerm *val_e0         = bitwuzla_get_value(bitwuzla, e0);
+      BitwuzlaTerm *val_res_shift0 = bitwuzla_get_value(bitwuzla, res_shift0);
+      BitwuzlaTerm *val_shift0     = bitwuzla_get_value(bitwuzla, shift0);
+      BitwuzlaTerm *val_res_shift1 = bitwuzla_get_value(bitwuzla, res_shift1);
+
+      bitwuzla_term_dump(val_e0, "btor", stdout);
+      bitwuzla_term_dump(val_res_shift0, "btor", stdout);
+      bitwuzla_term_dump(val_shift0, "btor", stdout);
+      bitwuzla_term_dump(val_res_shift1, "btor", stdout);
     }
+    assert(res == BITWUZLA_UNSAT);
 
-    res = boolector_sat(bzla);
-    if (res == BOOLECTOR_SAT)
-    {
-      const char *se0    = boolector_bv_assignment(bzla, e0);
-      const char *res_s0 = boolector_bv_assignment(bzla, res_shift0);
-      const char *s0     = boolector_bv_assignment(bzla, shift0);
-      const char *res_s1 = boolector_bv_assignment(bzla, res_shift1);
-      printf("e0 %s\n", se0);
-      printf("s0 %s\n", s0);
-      printf("res_shift0 %s\n", res_s0);
-      printf("res_shift1 %s\n", res_s1);
-    }
-    assert(res == BOOLECTOR_UNSAT);
-
-    boolector_release(bzla, ne0);
-    boolector_release(bzla, two);
-    boolector_release(bzla, res_shift0);
-    boolector_release(bzla, shift0);
-    boolector_release(bzla, res_shift1);
-    boolector_release(bzla, e0);
-    boolector_release_sort(bzla, sort);
-
-    boolector_delete(bzla);
+    bitwuzla_delete(bitwuzla);
   }
 };
 
@@ -146,8 +113,8 @@ TEST_F(TestShift, sll_2)
   {
     test_shift(2,
                std::bitset<2>(i).to_string().c_str(),
-               boolector_bv_sll,
-               boolector_bv_mul);
+               BITWUZLA_KIND_BV_SHL,
+               BITWUZLA_KIND_BV_MUL);
   }
 }
 
@@ -157,8 +124,8 @@ TEST_F(TestShift, sll_3)
   {
     test_shift(3,
                std::bitset<3>(i).to_string().c_str(),
-               boolector_bv_sll,
-               boolector_bv_mul);
+               BITWUZLA_KIND_BV_SHL,
+               BITWUZLA_KIND_BV_MUL);
   }
 }
 
@@ -168,8 +135,8 @@ TEST_F(TestShift, sll_4)
   {
     test_shift(4,
                std::bitset<4>(i).to_string().c_str(),
-               boolector_bv_sll,
-               boolector_bv_mul);
+               BITWUZLA_KIND_BV_SHL,
+               BITWUZLA_KIND_BV_MUL);
   }
 }
 
@@ -179,8 +146,8 @@ TEST_F(TestShift, sll_5)
   {
     test_shift(5,
                std::bitset<5>(i).to_string().c_str(),
-               boolector_bv_sll,
-               boolector_bv_mul);
+               BITWUZLA_KIND_BV_SHL,
+               BITWUZLA_KIND_BV_MUL);
   }
 }
 
@@ -190,8 +157,8 @@ TEST_F(TestShift, sll_8)
   {
     test_shift(8,
                std::bitset<8>(i).to_string().c_str(),
-               boolector_bv_sll,
-               boolector_bv_mul);
+               BITWUZLA_KIND_BV_SHL,
+               BITWUZLA_KIND_BV_MUL);
   }
 }
 
@@ -201,8 +168,8 @@ TEST_F(TestShift, srl_2)
   {
     test_shift(2,
                std::bitset<2>(i).to_string().c_str(),
-               boolector_bv_srl,
-               boolector_bv_udiv);
+               BITWUZLA_KIND_BV_SHR,
+               BITWUZLA_KIND_BV_UDIV);
   }
 }
 
@@ -212,8 +179,8 @@ TEST_F(TestShift, srl_3)
   {
     test_shift(3,
                std::bitset<3>(i).to_string().c_str(),
-               boolector_bv_srl,
-               boolector_bv_udiv);
+               BITWUZLA_KIND_BV_SHR,
+               BITWUZLA_KIND_BV_UDIV);
   }
 }
 
@@ -223,8 +190,8 @@ TEST_F(TestShift, srl_4)
   {
     test_shift(4,
                std::bitset<4>(i).to_string().c_str(),
-               boolector_bv_srl,
-               boolector_bv_udiv);
+               BITWUZLA_KIND_BV_SHR,
+               BITWUZLA_KIND_BV_UDIV);
   }
 }
 
@@ -234,8 +201,8 @@ TEST_F(TestShift, srl_5)
   {
     test_shift(5,
                std::bitset<5>(i).to_string().c_str(),
-               boolector_bv_srl,
-               boolector_bv_udiv);
+               BITWUZLA_KIND_BV_SHR,
+               BITWUZLA_KIND_BV_UDIV);
   }
 }
 
@@ -245,8 +212,8 @@ TEST_F(TestShift, srl_8)
   {
     test_shift(8,
                std::bitset<8>(i).to_string().c_str(),
-               boolector_bv_srl,
-               boolector_bv_udiv);
+               BITWUZLA_KIND_BV_SHR,
+               BITWUZLA_KIND_BV_UDIV);
   }
 }
 
@@ -256,8 +223,8 @@ TEST_F(TestShift, sra_2)
   {
     test_shift(2,
                std::bitset<2>(i).to_string().c_str(),
-               boolector_bv_sra,
-               boolector_bv_udiv);
+               BITWUZLA_KIND_BV_ASHR,
+               BITWUZLA_KIND_BV_UDIV);
   }
 }
 
@@ -267,8 +234,8 @@ TEST_F(TestShift, sra_3)
   {
     test_shift(3,
                std::bitset<3>(i).to_string().c_str(),
-               boolector_bv_sra,
-               boolector_bv_udiv);
+               BITWUZLA_KIND_BV_ASHR,
+               BITWUZLA_KIND_BV_UDIV);
   }
 }
 
@@ -278,8 +245,8 @@ TEST_F(TestShift, sra_4)
   {
     test_shift(4,
                std::bitset<4>(i).to_string().c_str(),
-               boolector_bv_sra,
-               boolector_bv_udiv);
+               BITWUZLA_KIND_BV_ASHR,
+               BITWUZLA_KIND_BV_UDIV);
   }
 }
 
@@ -289,8 +256,8 @@ TEST_F(TestShift, sra_5)
   {
     test_shift(5,
                std::bitset<5>(i).to_string().c_str(),
-               boolector_bv_sra,
-               boolector_bv_udiv);
+               BITWUZLA_KIND_BV_ASHR,
+               BITWUZLA_KIND_BV_UDIV);
   }
 }
 
@@ -300,7 +267,7 @@ TEST_F(TestShift, sra_8)
   {
     test_shift(8,
                std::bitset<8>(i).to_string().c_str(),
-               boolector_bv_sra,
-               boolector_bv_udiv);
+               BITWUZLA_KIND_BV_ASHR,
+               BITWUZLA_KIND_BV_UDIV);
   }
 }

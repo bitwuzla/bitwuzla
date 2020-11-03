@@ -38,7 +38,7 @@ class TestSMTAxioms : public TestFile
   {
     std::stringstream ss_name;
     ss_name << "smtaxiom" << s << i;
-    run_test(ss_name.str().c_str(), ".smt2", BOOLECTOR_UNSAT);
+    run_test(ss_name.str().c_str(), ".smt2", BZLA_RESULT_UNSAT);
     TearDown();
     SetUp();
   }

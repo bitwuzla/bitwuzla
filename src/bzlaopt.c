@@ -80,10 +80,10 @@ init_opt(Bzla *bzla,
       v = max;
     if (v == val) return;
     /* we need to trace options set via ENV vars */
-    if (!internal)
-      boolector_set_opt(bzla, opt, v);
-    else
-      bzla_opt_set(bzla, opt, v);
+    // if (!internal)
+    //  boolector_set_opt (bzla, opt, v);
+    // else
+    bzla_opt_set(bzla, opt, v);
   }
 }
 

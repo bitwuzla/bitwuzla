@@ -12,7 +12,6 @@
 #include "test.h"
 
 extern "C" {
-#include "boolector.h"
 #include "bzlabv.h"
 #include "bzlabvprop.h"
 #include "bzlaessutils.h"
@@ -20,8 +19,8 @@ extern "C" {
 #include "bzlaproputils.h"
 }
 
-using CreateBinExpFunc   = std::add_pointer<decltype(boolector_bv_and)>::type;
-using CreateSliceExpFunc = std::add_pointer<decltype(boolector_bv_slice)>::type;
+using CreateBinExpFunc   = std::add_pointer<decltype(bzla_exp_bv_and)>::type;
+using CreateSliceExpFunc = std::add_pointer<decltype(bzla_exp_bv_slice)>::type;
 
 class TestEssUtils : public TestBzla
 {
@@ -83,7 +82,6 @@ class TestEssUtils : public TestBzla
     std::vector<std::string> s_values;
     BzlaBvDomain *s;
     BzlaBitVector *x, *t;
-    char *vx, *vt;
     bool res, status;
     uint32_t pos_s, nval_x, nval_t;
 
@@ -105,13 +103,12 @@ class TestEssUtils : public TestBzla
       s_values.push_back("xxx");
     }
 
-    if (create_exp_func == boolector_bv_ult
-        || create_exp_func == boolector_bv_slt
-        || create_exp_func == boolector_eq)
+    if (create_exp_func == bzla_exp_bv_ult || create_exp_func == bzla_exp_bv_slt
+        || create_exp_func == bzla_exp_eq)
     {
       bw_t = 1;
     }
-    else if (create_exp_func == boolector_bv_concat)
+    else if (create_exp_func == bzla_exp_bv_concat)
     {
       bw_s = 2; /* decrease number of tests for concat */
       bw_t = bw_s + bw_x;
@@ -124,12 +121,10 @@ class TestEssUtils : public TestBzla
       s = bzla_bvdomain_new_from_char(d_mm, s_value.c_str());
       for (uint32_t i = 0; i < nval_x; i++)
       {
-        x  = bzla_bv_uint64_to_bv(d_mm, i, bw_s);
-        vx = bzla_bv_to_char(d_mm, x);
+        x = bzla_bv_uint64_to_bv(d_mm, i, bw_s);
         for (uint32_t j = 0; j < nval_t; j++)
         {
-          t  = bzla_bv_uint64_to_bv(d_mm, j, bw_t);
-          vt = bzla_bv_to_char(d_mm, t);
+          t = bzla_bv_uint64_to_bv(d_mm, j, bw_t);
 
           BzlaPropInfo pi;
           memset(&pi, 0, sizeof(BzlaPropInfo));
@@ -144,21 +139,23 @@ class TestEssUtils : public TestBzla
 
           if (res != status)
           {
+            char *vx = bzla_bv_to_char(d_mm, x);
+            char *vt = bzla_bv_to_char(d_mm, t);
             std::cout << "pos_x: " << pos_x << std::endl;
             std::cout << "pos_s: " << pos_s << std::endl;
             std::cout << "t: " << vt << std::endl;
             std::cout << "s: " << s_value << std::endl;
             std::cout << "x: " << vx << std::endl;
             std::cout << "is_ess(" << pos_x << "): " << res << std::endl;
+            bzla_mem_freestr(d_mm, vx);
+            bzla_mem_freestr(d_mm, vt);
           }
 
           assert(res == status);
           ASSERT_EQ(res, status);
           bzla_bv_free(d_mm, t);
-          bzla_mem_freestr(d_mm, vt);
         }
         bzla_bv_free(d_mm, x);
-        bzla_mem_freestr(d_mm, vx);
       }
       bzla_bvdomain_free(d_mm, s);
     }
@@ -386,75 +383,64 @@ class TestEssUtils : public TestBzla
                                BzlaBitVector *x,
                                uint32_t pos_x)
   {
-    BoolectorSort sort;
-    BoolectorNode *ns, *nslo, *nshi, *nvx, *nvt;
-    BoolectorNode *andhi, *orlo, *eq, *exp;
-    char *vx, *vt, *vslo, *vshi;
+    BzlaSortId sort;
+    BzlaNode *ns, *nslo, *nshi, *nx, *nt;
+    BzlaNode *andhi, *orlo, *eq, *exp;
 
-    Bzla *bzla = boolector_new();
+    Bzla *bzla = bzla_new();
 
-    vx = bzla_bv_to_char(d_mm, x);
-    vt = bzla_bv_to_char(d_mm, t);
+    sort = bzla_sort_bv(bzla, bzla_bv_get_width(s->lo));
+    ns   = bzla_exp_var(bzla, sort, 0);
 
-    sort = boolector_bv_sort(bzla, bzla_bv_get_width(s->lo));
-    ns   = boolector_var(bzla, sort, 0);
-
-    vslo = bzla_bv_to_char(d_mm, s->lo);
-    nslo = boolector_bv_const(bzla, vslo);
-
-    vshi = bzla_bv_to_char(d_mm, s->hi);
-    nshi = boolector_bv_const(bzla, vshi);
+    nslo = bzla_exp_bv_const(bzla, s->lo);
+    nshi = bzla_exp_bv_const(bzla, s->hi);
 
     /* assert const bits for s */
-    andhi = boolector_bv_and(bzla, ns, nshi);
-    eq    = boolector_eq(bzla, andhi, ns);
-    boolector_assert(bzla, eq);
-    boolector_release(bzla, eq);
+    andhi = bzla_exp_bv_and(bzla, ns, nshi);
+    eq    = bzla_exp_eq(bzla, andhi, ns);
+    bzla_assert_exp(bzla, eq);
+    bzla_node_release(bzla, eq);
 
-    orlo = boolector_bv_or(bzla, ns, nslo);
-    eq   = boolector_eq(bzla, orlo, ns);
-    boolector_assert(bzla, eq);
-    boolector_release(bzla, eq);
+    orlo = bzla_exp_bv_or(bzla, ns, nslo);
+    eq   = bzla_exp_eq(bzla, orlo, ns);
+    bzla_assert_exp(bzla, eq);
+    bzla_node_release(bzla, eq);
 
     /* s <> x = t  for operator <> */
 
-    nvx = boolector_bv_const(bzla, vx);
-    nvt = boolector_bv_const(bzla, vt);
+    nx = bzla_exp_bv_const(bzla, x);
+    nt = bzla_exp_bv_const(bzla, t);
 
     if (pos_x == 0)
     {
-      exp = create_exp_func(bzla, ns, nvx);
+      exp = create_exp_func(bzla, ns, nx);
     }
     else
     {
       assert(pos_x == 1);
-      exp = create_exp_func(bzla, nvx, ns);
+      exp = create_exp_func(bzla, nx, ns);
     }
 
-    eq = boolector_eq(bzla, exp, nvt);
-    boolector_assert(bzla, eq);
-    boolector_release(bzla, eq);
+    eq = bzla_exp_eq(bzla, exp, nt);
+    bzla_assert_exp(bzla, eq);
+    bzla_node_release(bzla, eq);
 
-    int32_t status = boolector_sat(bzla);
-    assert(status == BOOLECTOR_SAT || status == BOOLECTOR_UNSAT);
+    int32_t status = bzla_check_sat(bzla, -1, -1);
+    assert(status == BZLA_RESULT_SAT || status == BZLA_RESULT_UNSAT);
 
-    boolector_release_sort(bzla, sort);
-    boolector_release(bzla, exp);
-    boolector_release(bzla, ns);
-    boolector_release(bzla, nslo);
-    boolector_release(bzla, nshi);
-    boolector_release(bzla, nvx);
-    boolector_release(bzla, nvt);
-    boolector_release(bzla, andhi);
-    boolector_release(bzla, orlo);
+    bzla_sort_release(bzla, sort);
+    bzla_node_release(bzla, exp);
+    bzla_node_release(bzla, ns);
+    bzla_node_release(bzla, nslo);
+    bzla_node_release(bzla, nshi);
+    bzla_node_release(bzla, nx);
+    bzla_node_release(bzla, nt);
+    bzla_node_release(bzla, andhi);
+    bzla_node_release(bzla, orlo);
 
-    bzla_mem_freestr(d_mm, vx);
-    bzla_mem_freestr(d_mm, vt);
-    bzla_mem_freestr(d_mm, vslo);
-    bzla_mem_freestr(d_mm, vshi);
-    boolector_delete(bzla);
+    bzla_delete(bzla);
 
-    return status == BOOLECTOR_UNSAT;
+    return status == BZLA_RESULT_UNSAT;
   }
 
   bool check_sat_is_ess_cond(BzlaBitVector *x,
@@ -463,103 +449,89 @@ class TestEssUtils : public TestBzla
                              BzlaBvDomain *s1,
                              uint32_t pos_x)
   {
-    BoolectorSort ss0, ss1;
-    BoolectorNode *nvx, *ns0lo, *ns0hi, *ns1lo, *ns1hi, *ns0, *ns1, *nvt;
-    BoolectorNode *ands0hi, *ands1hi, *ors0lo, *ors1lo, *eq, *eqs, *exp;
-    char *vx, *vt, *vs0lo, *vs1lo, *vs0hi, *vs1hi;
+    BzlaSortId ss0, ss1;
+    BzlaNode *nx, *ns0lo, *ns0hi, *ns1lo, *ns1hi, *ns0, *ns1, *nt;
+    BzlaNode *ands0hi, *ands1hi, *ors0lo, *ors1lo, *eq, *eqs, *exp;
     int32_t status;
 
-    Bzla *bzla = boolector_new();
+    Bzla *bzla = bzla_new();
 
-    vx = bzla_bv_to_char(d_mm, x);
-    vt = bzla_bv_to_char(d_mm, t);
+    ss0 = bzla_sort_bv(bzla, bzla_bv_get_width(s0->lo));
+    ns0 = bzla_exp_var(bzla, ss0, "s0");
 
-    ss0 = boolector_bv_sort(bzla, bzla_bv_get_width(s0->lo));
-    ns0 = boolector_var(bzla, ss0, "s0");
+    ss1 = bzla_sort_bv(bzla, bzla_bv_get_width(s1->lo));
+    ns1 = bzla_exp_var(bzla, ss1, "s1");
 
-    ss1 = boolector_bv_sort(bzla, bzla_bv_get_width(s1->lo));
-    ns1 = boolector_var(bzla, ss1, "s1");
+    ns0lo = bzla_exp_bv_const(bzla, s0->lo);
 
-    vs0lo = bzla_bv_to_char(d_mm, s0->lo);
-    ns0lo = boolector_bv_const(bzla, vs0lo);
+    ns1lo = bzla_exp_bv_const(bzla, s1->lo);
 
-    vs1lo = bzla_bv_to_char(d_mm, s1->lo);
-    ns1lo = boolector_bv_const(bzla, vs1lo);
+    ns0hi = bzla_exp_bv_const(bzla, s0->hi);
 
-    vs0hi = bzla_bv_to_char(d_mm, s0->hi);
-    ns0hi = boolector_bv_const(bzla, vs0hi);
+    ns1hi = bzla_exp_bv_const(bzla, s1->hi);
 
-    vs1hi = bzla_bv_to_char(d_mm, s1->hi);
-    ns1hi = boolector_bv_const(bzla, vs1hi);
-
-    nvx = boolector_bv_const(bzla, vx);
-    nvt = boolector_bv_const(bzla, vt);
+    nx = bzla_exp_bv_const(bzla, x);
+    nt = bzla_exp_bv_const(bzla, t);
 
     if (pos_x == 0)
     {
-      exp = boolector_cond(bzla, nvx, ns0, ns1);
+      exp = bzla_exp_cond(bzla, nx, ns0, ns1);
     }
     else if (pos_x == 1)
     {
-      exp = boolector_cond(bzla, ns0, nvx, ns1);
+      exp = bzla_exp_cond(bzla, ns0, nx, ns1);
     }
     else
     {
       assert(pos_x == 2);
-      exp = boolector_cond(bzla, ns0, ns1, nvx);
+      exp = bzla_exp_cond(bzla, ns0, ns1, nx);
     }
 
-    eq = boolector_eq(bzla, exp, nvt);
-    boolector_assert(bzla, eq);
-    boolector_release(bzla, eq);
+    eq = bzla_exp_eq(bzla, exp, nt);
+    bzla_assert_exp(bzla, eq);
+    bzla_node_release(bzla, eq);
 
     /* assert const bits for s0 and check */
-    ands0hi = boolector_bv_and(bzla, ns0, ns0hi);
-    eqs     = boolector_eq(bzla, ands0hi, ns0);
-    boolector_assert(bzla, eqs);
-    boolector_release(bzla, eqs);
-    boolector_release(bzla, ands0hi);
-    ors0lo = boolector_bv_or(bzla, ns0, ns0lo);
-    eqs    = boolector_eq(bzla, ors0lo, ns0);
-    boolector_assert(bzla, eqs);
-    boolector_release(bzla, eqs);
-    boolector_release(bzla, ors0lo);
+    ands0hi = bzla_exp_bv_and(bzla, ns0, ns0hi);
+    eqs     = bzla_exp_eq(bzla, ands0hi, ns0);
+    bzla_assert_exp(bzla, eqs);
+    bzla_node_release(bzla, eqs);
+    bzla_node_release(bzla, ands0hi);
+    ors0lo = bzla_exp_bv_or(bzla, ns0, ns0lo);
+    eqs    = bzla_exp_eq(bzla, ors0lo, ns0);
+    bzla_assert_exp(bzla, eqs);
+    bzla_node_release(bzla, eqs);
+    bzla_node_release(bzla, ors0lo);
     /* assert const bits for s1 */
-    ands1hi = boolector_bv_and(bzla, ns1, ns1hi);
-    eqs     = boolector_eq(bzla, ands1hi, ns1);
-    boolector_assert(bzla, eqs);
-    boolector_release(bzla, eqs);
-    ors1lo = boolector_bv_or(bzla, ns1, ns1lo);
-    eqs    = boolector_eq(bzla, ors1lo, ns1);
-    boolector_assert(bzla, eqs);
-    boolector_release(bzla, eqs);
+    ands1hi = bzla_exp_bv_and(bzla, ns1, ns1hi);
+    eqs     = bzla_exp_eq(bzla, ands1hi, ns1);
+    bzla_assert_exp(bzla, eqs);
+    bzla_node_release(bzla, eqs);
+    ors1lo = bzla_exp_bv_or(bzla, ns1, ns1lo);
+    eqs    = bzla_exp_eq(bzla, ors1lo, ns1);
+    bzla_assert_exp(bzla, eqs);
+    bzla_node_release(bzla, eqs);
 
-    status = boolector_sat(bzla);
-    assert(status == BOOLECTOR_SAT || status == BOOLECTOR_UNSAT);
+    status = bzla_check_sat(bzla, -1, -1);
+    assert(status == BZLA_RESULT_SAT || status == BZLA_RESULT_UNSAT);
 
-    boolector_release(bzla, ands1hi);
-    boolector_release(bzla, ors1lo);
+    bzla_node_release(bzla, ands1hi);
+    bzla_node_release(bzla, ors1lo);
 
-    boolector_release_sort(bzla, ss0);
-    boolector_release_sort(bzla, ss1);
-    boolector_release(bzla, exp);
-    boolector_release(bzla, nvx);
-    boolector_release(bzla, ns0lo);
-    boolector_release(bzla, ns0hi);
-    boolector_release(bzla, ns1lo);
-    boolector_release(bzla, ns1hi);
-    boolector_release(bzla, ns0);
-    boolector_release(bzla, ns1);
-    boolector_release(bzla, nvt);
+    bzla_sort_release(bzla, ss0);
+    bzla_sort_release(bzla, ss1);
+    bzla_node_release(bzla, exp);
+    bzla_node_release(bzla, nx);
+    bzla_node_release(bzla, ns0lo);
+    bzla_node_release(bzla, ns0hi);
+    bzla_node_release(bzla, ns1lo);
+    bzla_node_release(bzla, ns1hi);
+    bzla_node_release(bzla, ns0);
+    bzla_node_release(bzla, ns1);
+    bzla_node_release(bzla, nt);
 
-    bzla_mem_freestr(d_mm, vx);
-    bzla_mem_freestr(d_mm, vt);
-    bzla_mem_freestr(d_mm, vs0lo);
-    bzla_mem_freestr(d_mm, vs0hi);
-    bzla_mem_freestr(d_mm, vs1lo);
-    bzla_mem_freestr(d_mm, vs1hi);
-    boolector_delete(bzla);
-    return status == BOOLECTOR_UNSAT;
+    bzla_delete(bzla);
+    return status == BZLA_RESULT_UNSAT;
   }
 
   bool check_sat_is_ess_slice(BzlaBitVector *x,
@@ -567,35 +539,29 @@ class TestEssUtils : public TestBzla
                               uint32_t upper,
                               uint32_t lower)
   {
-    BoolectorNode *nvx, *nvt;
-    BoolectorNode *eq, *exp;
-    char *vt, *vx;
+    BzlaNode *nx, *nt;
+    BzlaNode *eq, *exp;
 
-    Bzla *bzla = boolector_new();
+    Bzla *bzla = bzla_new();
 
-    vt = bzla_bv_to_char(d_mm, t);
-    vx = bzla_bv_to_char(d_mm, x);
+    nt = bzla_exp_bv_const(bzla, t);
+    nx = bzla_exp_bv_const(bzla, x);
 
-    nvt = boolector_bv_const(bzla, vt);
-    nvx = boolector_bv_const(bzla, vx);
+    exp = bzla_exp_bv_slice(bzla, nx, upper, lower);
+    eq  = bzla_exp_eq(bzla, exp, nt);
+    bzla_assert_exp(bzla, eq);
+    bzla_node_release(bzla, eq);
 
-    exp = boolector_bv_slice(bzla, nvx, upper, lower);
-    eq  = boolector_eq(bzla, exp, nvt);
-    boolector_assert(bzla, eq);
-    boolector_release(bzla, eq);
+    int32_t status = bzla_check_sat(bzla, -1, -1);
+    assert(status == BZLA_RESULT_SAT || status == BZLA_RESULT_UNSAT);
 
-    int32_t status = boolector_sat(bzla);
-    assert(status == BOOLECTOR_SAT || status == BOOLECTOR_UNSAT);
+    bzla_node_release(bzla, exp);
+    bzla_node_release(bzla, nx);
+    bzla_node_release(bzla, nt);
 
-    boolector_release(bzla, exp);
-    boolector_release(bzla, nvx);
-    boolector_release(bzla, nvt);
+    bzla_delete(bzla);
 
-    bzla_mem_freestr(d_mm, vt);
-    bzla_mem_freestr(d_mm, vx);
-    boolector_delete(bzla);
-
-    return status == BOOLECTOR_UNSAT;
+    return status == BZLA_RESULT_UNSAT;
   }
 
   BzlaMemMgr *d_mm;
@@ -605,40 +571,40 @@ class TestEssUtils : public TestBzla
 
 TEST_F(TestEssUtils, is_ess_add_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_add_const, boolector_bv_add, 0);
+  test_is_ess_binary_const(bzla_is_ess_add_const, bzla_exp_bv_add, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_and_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_and_const, boolector_bv_and, 0);
+  test_is_ess_binary_const(bzla_is_ess_and_const, bzla_exp_bv_and, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_xor_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_xor_const, boolector_bv_xor, 0);
+  test_is_ess_binary_const(bzla_is_ess_xor_const, bzla_exp_bv_xor, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_concat_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_concat_const, boolector_bv_concat, 0);
-  test_is_ess_binary_const(bzla_is_ess_concat_const, boolector_bv_concat, 1);
+  test_is_ess_binary_const(bzla_is_ess_concat_const, bzla_exp_bv_concat, 0);
+  test_is_ess_binary_const(bzla_is_ess_concat_const, bzla_exp_bv_concat, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_eq_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_eq_const, boolector_eq, 0);
+  test_is_ess_binary_const(bzla_is_ess_eq_const, bzla_exp_eq, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_ult_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_ult_const, boolector_bv_ult, 0);
-  test_is_ess_binary_const(bzla_is_ess_ult_const, boolector_bv_ult, 1);
+  test_is_ess_binary_const(bzla_is_ess_ult_const, bzla_exp_bv_ult, 0);
+  test_is_ess_binary_const(bzla_is_ess_ult_const, bzla_exp_bv_ult, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_slt_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_slt_const, boolector_bv_slt, 0);
-  test_is_ess_binary_const(bzla_is_ess_slt_const, boolector_bv_slt, 1);
+  test_is_ess_binary_const(bzla_is_ess_slt_const, bzla_exp_bv_slt, 0);
+  test_is_ess_binary_const(bzla_is_ess_slt_const, bzla_exp_bv_slt, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_slice_const)
@@ -648,37 +614,37 @@ TEST_F(TestEssUtils, is_ess_slice_const)
 
 TEST_F(TestEssUtils, is_ess_sll_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_sll_const, boolector_bv_sll, 0);
-  test_is_ess_binary_const(bzla_is_ess_sll_const, boolector_bv_sll, 1);
+  test_is_ess_binary_const(bzla_is_ess_sll_const, bzla_exp_bv_sll, 0);
+  test_is_ess_binary_const(bzla_is_ess_sll_const, bzla_exp_bv_sll, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_srl_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_srl_const, boolector_bv_srl, 0);
-  test_is_ess_binary_const(bzla_is_ess_srl_const, boolector_bv_srl, 1);
+  test_is_ess_binary_const(bzla_is_ess_srl_const, bzla_exp_bv_srl, 0);
+  test_is_ess_binary_const(bzla_is_ess_srl_const, bzla_exp_bv_srl, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_sra_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_sra_const, boolector_bv_sra, 0);
-  test_is_ess_binary_const(bzla_is_ess_sra_const, boolector_bv_sra, 1);
+  test_is_ess_binary_const(bzla_is_ess_sra_const, bzla_exp_bv_sra, 0);
+  test_is_ess_binary_const(bzla_is_ess_sra_const, bzla_exp_bv_sra, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_mul_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_mul_const, boolector_bv_mul, 0);
+  test_is_ess_binary_const(bzla_is_ess_mul_const, bzla_exp_bv_mul, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_urem_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_urem_const, boolector_bv_urem, 0);
-  test_is_ess_binary_const(bzla_is_ess_urem_const, boolector_bv_urem, 1);
+  test_is_ess_binary_const(bzla_is_ess_urem_const, bzla_exp_bv_urem, 0);
+  test_is_ess_binary_const(bzla_is_ess_urem_const, bzla_exp_bv_urem, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_udiv_const)
 {
-  test_is_ess_binary_const(bzla_is_ess_udiv_const, boolector_bv_udiv, 0);
-  test_is_ess_binary_const(bzla_is_ess_udiv_const, boolector_bv_udiv, 1);
+  test_is_ess_binary_const(bzla_is_ess_udiv_const, bzla_exp_bv_udiv, 0);
+  test_is_ess_binary_const(bzla_is_ess_udiv_const, bzla_exp_bv_udiv, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_cond_const)
@@ -692,33 +658,33 @@ TEST_F(TestEssUtils, is_ess_cond_const)
 
 TEST_F(TestEssUtils, is_ess_add)
 {
-  test_is_ess_binary(bzla_is_ess_add, boolector_bv_add, 0);
+  test_is_ess_binary(bzla_is_ess_add, bzla_exp_bv_add, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_and)
 {
-  test_is_ess_binary(bzla_is_ess_and, boolector_bv_and, 0);
+  test_is_ess_binary(bzla_is_ess_and, bzla_exp_bv_and, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_xor)
 {
-  test_is_ess_binary(bzla_is_ess_xor, boolector_bv_xor, 0);
+  test_is_ess_binary(bzla_is_ess_xor, bzla_exp_bv_xor, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_concat)
 {
-  test_is_ess_binary(bzla_is_ess_concat, boolector_bv_concat, 0);
-  test_is_ess_binary(bzla_is_ess_concat, boolector_bv_concat, 1);
+  test_is_ess_binary(bzla_is_ess_concat, bzla_exp_bv_concat, 0);
+  test_is_ess_binary(bzla_is_ess_concat, bzla_exp_bv_concat, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_eq)
 {
-  test_is_ess_binary(bzla_is_ess_eq, boolector_eq, 0);
+  test_is_ess_binary(bzla_is_ess_eq, bzla_exp_eq, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_mul)
 {
-  test_is_ess_binary(bzla_is_ess_mul, boolector_bv_mul, 0);
+  test_is_ess_binary(bzla_is_ess_mul, bzla_exp_bv_mul, 0);
 }
 
 TEST_F(TestEssUtils, is_ess_slice)
@@ -728,44 +694,44 @@ TEST_F(TestEssUtils, is_ess_slice)
 
 TEST_F(TestEssUtils, is_ess_sll)
 {
-  test_is_ess_binary(bzla_is_ess_sll, boolector_bv_sll, 0);
-  test_is_ess_binary(bzla_is_ess_sll, boolector_bv_sll, 1);
+  test_is_ess_binary(bzla_is_ess_sll, bzla_exp_bv_sll, 0);
+  test_is_ess_binary(bzla_is_ess_sll, bzla_exp_bv_sll, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_srl)
 {
-  test_is_ess_binary(bzla_is_ess_srl, boolector_bv_srl, 0);
-  test_is_ess_binary(bzla_is_ess_srl, boolector_bv_srl, 1);
+  test_is_ess_binary(bzla_is_ess_srl, bzla_exp_bv_srl, 0);
+  test_is_ess_binary(bzla_is_ess_srl, bzla_exp_bv_srl, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_sra)
 {
-  test_is_ess_binary(bzla_is_ess_sra, boolector_bv_sra, 0);
-  test_is_ess_binary(bzla_is_ess_sra, boolector_bv_sra, 1);
+  test_is_ess_binary(bzla_is_ess_sra, bzla_exp_bv_sra, 0);
+  test_is_ess_binary(bzla_is_ess_sra, bzla_exp_bv_sra, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_udiv)
 {
-  test_is_ess_binary(bzla_is_ess_udiv, boolector_bv_udiv, 0);
-  test_is_ess_binary(bzla_is_ess_udiv, boolector_bv_udiv, 1);
+  test_is_ess_binary(bzla_is_ess_udiv, bzla_exp_bv_udiv, 0);
+  test_is_ess_binary(bzla_is_ess_udiv, bzla_exp_bv_udiv, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_ult)
 {
-  test_is_ess_binary(bzla_is_ess_ult, boolector_bv_ult, 0);
-  test_is_ess_binary(bzla_is_ess_ult, boolector_bv_ult, 1);
+  test_is_ess_binary(bzla_is_ess_ult, bzla_exp_bv_ult, 0);
+  test_is_ess_binary(bzla_is_ess_ult, bzla_exp_bv_ult, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_slt)
 {
-  test_is_ess_binary(bzla_is_ess_slt, boolector_bv_slt, 0);
-  test_is_ess_binary(bzla_is_ess_slt, boolector_bv_slt, 1);
+  test_is_ess_binary(bzla_is_ess_slt, bzla_exp_bv_slt, 0);
+  test_is_ess_binary(bzla_is_ess_slt, bzla_exp_bv_slt, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_urem)
 {
-  test_is_ess_binary(bzla_is_ess_urem, boolector_bv_urem, 0);
-  test_is_ess_binary(bzla_is_ess_urem, boolector_bv_urem, 1);
+  test_is_ess_binary(bzla_is_ess_urem, bzla_exp_bv_urem, 0);
+  test_is_ess_binary(bzla_is_ess_urem, bzla_exp_bv_urem, 1);
 }
 
 TEST_F(TestEssUtils, is_ess_cond)
