@@ -607,8 +607,8 @@ bzla_util_file_has_suffix(const char *path, const char *suffix)
     return "buffer exceeded";               \
   }
 
-char g_strbuf[BUFFER_SIZE];
-int32_t g_strbufpos = 0;
+char g_bzla_strbuf[BUFFER_SIZE];
+int32_t g_bzla_strbufpos = 0;
 
 char *
 bzla_util_node2string(const BzlaNode *exp)
@@ -670,11 +670,11 @@ bzla_util_node2string(const BzlaNode *exp)
   }
 
   assert(cur_len == strlen(strbuf));
-  if (g_strbufpos + cur_len + 1 > BUFFER_SIZE - 1) g_strbufpos = 0;
+  if (g_bzla_strbufpos + cur_len + 1 > BUFFER_SIZE - 1) g_bzla_strbufpos = 0;
 
-  bufstart = g_strbuf + g_strbufpos;
+  bufstart = g_bzla_strbuf + g_bzla_strbufpos;
   sprintf(bufstart, "%s", strbuf);
-  g_strbufpos += cur_len + 1;
+  g_bzla_strbufpos += cur_len + 1;
 
   return bufstart;
 }
