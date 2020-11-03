@@ -594,7 +594,7 @@ mk_unique_symbol(Bzla *bzla, const char *symbol)
   if (bzla->num_push_pop)
   {
     len = strlen(symbol) + 1;
-    len += strlen("BZla_@");
+    len += strlen("BZLA_@");
     len += bzla_util_num_digits(bzla->num_push_pop);
     BZLA_CNEWN(bzla->mm, res, len);
     sprintf(res, "BZLA_%u@%s", bzla->num_push_pop, symbol);
