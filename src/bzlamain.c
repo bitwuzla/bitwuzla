@@ -48,6 +48,8 @@ static void (*sig_bus_handler)(int32_t);
 static void (*sig_alrm_handler)(int32_t);
 #endif
 
+/*------------------------------------------------------------------------*/
+
 BZLA_DECLARE_STACK(BzlaOption, BzlaOption);
 
 /*------------------------------------------------------------------------*/
@@ -110,6 +112,10 @@ struct BitwuzlaMainApp
   char *outfile_name;
   bool close_outfile;
 };
+
+/*------------------------------------------------------------------------*/
+
+Bzla *bitwuzla_get_bzla(Bitwuzla *bitwuzla);
 
 /*------------------------------------------------------------------------*/
 
@@ -398,8 +404,8 @@ bzlamain_opt_has_str_arg(const char *opt, BzlaOpt *bzla_opts)
 static void
 bzlamain_print_stats(Bitwuzla *bitwuzla)
 {
-  bzla_sat_print_stats(bzla_get_sat_mgr((Bzla *) bitwuzla));
-  bzla_print_stats((Bzla *) bitwuzla);
+  bzla_sat_print_stats(bzla_get_sat_mgr(bitwuzla_get_bzla(bitwuzla)));
+  bzla_print_stats(bitwuzla_get_bzla(bitwuzla));
 }
 
 /*------------------------------------------------------------------------*/
@@ -1001,7 +1007,7 @@ bitwuzla_main(int32_t argc, char **argv)
 
   g_app    = bzlamain_new_bzlamain(bitwuzla_new());
   bitwuzla = g_app->bitwuzla;
-  bzla     = (Bzla *) bitwuzla;
+  bzla     = bitwuzla_get_bzla(bitwuzla);
   mm       = g_app->mm;
 
   res           = BZLA_UNKNOWN_EXIT;
@@ -1016,8 +1022,13 @@ bitwuzla_main(int32_t argc, char **argv)
   BZLA_INIT_STACK(mm, opts);
   BZLA_INIT_STACK(mm, infiles);
 
-  bzla_optparse_parse(
-      mm, argc, argv, &opts, &infiles, bzla->options, bzlamain_opt_has_str_arg);
+  bzla_optparse_parse(mm,
+                      argc,
+                      argv,
+                      &opts,
+                      &infiles,
+                      bitwuzla_get_bzla(bitwuzla)->options,
+                      bzlamain_opt_has_str_arg);
 
   /* input file ======================================================= */
 

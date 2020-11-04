@@ -1259,20 +1259,6 @@ clone_aux_bzla(Bzla *bzla,
   CLONE_PTR_HASH_TABLE(orig_assumptions);
   assert((allocated += MEM_PTR_HASH_TABLE(bzla->orig_assumptions))
          == clone->mm->allocated);
-  bzla_clone_node_ptr_stack(
-      mm, &bzla->failed_assumptions, &clone->failed_assumptions, emap, true);
-  assert((allocated +=
-          BZLA_SIZE_STACK(bzla->failed_assumptions) * sizeof(BzlaNode *))
-         == clone->mm->allocated);
-  bzla_clone_node_ptr_stack(
-      mm, &bzla->unsat_core, &clone->unsat_core, emap, true);
-  assert((allocated += BZLA_SIZE_STACK(bzla->unsat_core) * sizeof(BzlaNode *))
-         == clone->mm->allocated);
-  bzla_clone_sort_id_stack(
-      mm, &bzla->fun_domain_sorts, &clone->fun_domain_sorts);
-  assert((allocated +=
-          BZLA_SIZE_STACK(bzla->fun_domain_sorts) * sizeof(BzlaSortId))
-         == clone->mm->allocated);
 
   clone->assertions_cache =
       bzla_hashint_table_clone(clone->mm, bzla->assertions_cache);

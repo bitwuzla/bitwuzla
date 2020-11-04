@@ -23,6 +23,29 @@
 
 /* -------------------------------------------------------------------------- */
 
+BZLA_DECLARE_STACK(BitwuzlaTermPtr, BitwuzlaTerm *);
+BZLA_DECLARE_STACK(BitwuzlaSort, BitwuzlaSort);
+
+/* -------------------------------------------------------------------------- */
+
+struct Bitwuzla
+{
+  /* Maintain non-simplified assumptions as assumed via bitwuzla_assume. */
+  BitwuzlaTermPtrStack d_unsat_assumptions;
+  /* Maintain unsat core of the current bitwuzla_get_unsat_core query. */
+  BitwuzlaTermPtrStack d_unsat_core;
+  /* Maintain domain sorts of current bitwuzla_term_fun_get_domain_sorts query.
+   */
+  BitwuzlaSortStack d_fun_domain_sorts;
+  /* Maintain domain sorts of current bitwuzla_sort_fun_get_domain_sorts query.
+   */
+  BitwuzlaSortStack d_sort_fun_domain_sorts;
+  /* Internal solver. */
+  Bzla *d_bzla;
+  /* API memory manager. */
+  BzlaMemMgr *d_mm;
+};
+
 static BzlaOption bzla_options[BITWUZLA_OPT_NUM_OPTS] = {
     BZLA_OPT_INCREMENTAL,
     BZLA_OPT_MODEL_GEN,
@@ -252,8 +275,8 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
 
 /* -------------------------------------------------------------------------- */
 
-#define BZLA_IMPORT_BITWUZLA(bitwuzla) ((Bzla *) (bitwuzla))
-#define BZLA_EXPORT_BITWUZLA(bzla) ((Bitwuzla *) (bzla))
+#define BZLA_IMPORT_BITWUZLA(bitwuzla) (bitwuzla->d_bzla)
+#define BZLA_EXPORT_BITWUZLA(bzla) ((Bitwuzla *) (bzla)->bitwuzla)
 
 #define BZLA_IMPORT_BITWUZLA_TERM(term) (((BzlaNode *) (term)))
 #define BZLA_IMPORT_BITWUZLA_TERMS(terms) (((BzlaNode **) (terms)))
@@ -766,16 +789,33 @@ BzlaAbortCallback bzla_abort_callback = {.abort_fun = abort_aux,
 Bitwuzla *
 bitwuzla_new(void)
 {
-  Bzla *bzla = bzla_new();
-  bzla_opt_set(bzla, BZLA_OPT_AUTO_CLEANUP, 1);
-  return BZLA_EXPORT_BITWUZLA(bzla);
+  Bitwuzla *res;
+  BzlaMemMgr *mm = bzla_mem_mgr_new();
+  BZLA_NEW(mm, res);
+  res->d_mm             = mm;
+  res->d_bzla           = bzla_new();
+  res->d_bzla->bitwuzla = res;
+  BZLA_INIT_STACK(mm, res->d_unsat_assumptions);
+  BZLA_INIT_STACK(mm, res->d_unsat_core);
+  BZLA_INIT_STACK(mm, res->d_fun_domain_sorts);
+  BZLA_INIT_STACK(mm, res->d_sort_fun_domain_sorts);
+  bzla_opt_set(res->d_bzla, BZLA_OPT_AUTO_CLEANUP, 1);
+  return res;
 }
 
 void
 bitwuzla_delete(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  bzla_delete(BZLA_IMPORT_BITWUZLA(bitwuzla));
+
+  BZLA_RELEASE_STACK(bitwuzla->d_unsat_assumptions);
+  BZLA_RELEASE_STACK(bitwuzla->d_unsat_core);
+  BZLA_RELEASE_STACK(bitwuzla->d_fun_domain_sorts);
+  BZLA_RELEASE_STACK(bitwuzla->d_sort_fun_domain_sorts);
+  bzla_delete(bitwuzla->d_bzla);
+  BzlaMemMgr *mm = bitwuzla->d_mm;
+  BZLA_DELETE(mm, bitwuzla);
+  bzla_mem_mgr_delete(mm);
 }
 
 const char *
@@ -2470,27 +2510,29 @@ bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla)
   BZLA_CHECK_OPT_INCREMENTAL(bzla);
   BZLA_CHECK_UNSAT(bzla, "get unsat assumptions");
 
-  BzlaNodePtrStack unsat_assumptions;
+  BitwuzlaTermPtrStack unsat_assumptions;
   BZLA_INIT_STACK(bzla->mm, unsat_assumptions);
-  for (uint32_t i = 0; i < BZLA_COUNT_STACK(bzla->failed_assumptions); i++)
+  for (uint32_t i = 0; i < BZLA_COUNT_STACK(bitwuzla->d_unsat_assumptions); i++)
   {
-    BzlaNode *assumption = BZLA_PEEK_STACK(bzla->failed_assumptions, i);
+    BitwuzlaTerm *assumption =
+        BZLA_PEEK_STACK(bitwuzla->d_unsat_assumptions, i);
     if (assumption == NULL) continue;
-    assert(bzla_hashptr_table_get(bzla->orig_assumptions, assumption));
-    if (bzla_failed_exp(bzla, assumption))
+    BzlaNode *bzla_assumption = BZLA_IMPORT_BITWUZLA_TERM(assumption);
+    assert(bzla_hashptr_table_get(bzla->orig_assumptions, bzla_assumption));
+    if (bzla_failed_exp(bzla, bzla_assumption))
     {
-      BZLA_PUSH_STACK(unsat_assumptions, assumption);
+      BZLA_PUSH_STACK(unsat_assumptions, BZLA_EXPORT_BITWUZLA_TERM(assumption));
     }
     else
     {
-      bzla_node_release(bzla, assumption);
+      bzla_node_release(bzla, bzla_assumption);
     }
   }
   BZLA_PUSH_STACK(unsat_assumptions, NULL);
-  BZLA_RELEASE_STACK(bzla->failed_assumptions);
-  bzla->failed_assumptions = unsat_assumptions;
+  BZLA_RELEASE_STACK(bitwuzla->d_unsat_assumptions);
+  bitwuzla->d_unsat_assumptions = unsat_assumptions;
 
-  return BZLA_EXPORT_BITWUZLA_TERMS(bzla->failed_assumptions.start);
+  return (const BitwuzlaTerm **) bitwuzla->d_unsat_assumptions.start;
 }
 
 const BitwuzlaTerm **
@@ -2503,7 +2545,7 @@ bitwuzla_get_unsat_core(Bitwuzla *bitwuzla)
   BZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(bzla);
   BZLA_CHECK_UNSAT(bzla, "get unsat core");
 
-  BZLA_RESET_STACK(bzla->unsat_core);
+  BZLA_RESET_STACK(bitwuzla->d_unsat_core);
 
   for (uint32_t i = 0; i < BZLA_COUNT_STACK(bzla->assertions); i++)
   {
@@ -2512,12 +2554,13 @@ bitwuzla_get_unsat_core(Bitwuzla *bitwuzla)
 
     if (bzla_failed_exp(bzla, cur))
     {
-      BZLA_PUSH_STACK(bzla->unsat_core, bzla_node_copy(bzla, cur));
+      BZLA_PUSH_STACK(bitwuzla->d_unsat_core,
+                      BZLA_EXPORT_BITWUZLA_TERM(bzla_node_copy(bzla, cur)));
       bzla_node_inc_ext_ref_counter(bzla, cur);
     }
   }
-  BZLA_PUSH_STACK(bzla->unsat_core, NULL);
-  return BZLA_EXPORT_BITWUZLA_TERMS(bzla->unsat_core.start);
+  BZLA_PUSH_STACK(bitwuzla->d_unsat_core, NULL);
+  return (const BitwuzlaTerm **) bitwuzla->d_unsat_core.start;
 }
 
 void
@@ -2826,7 +2869,7 @@ bitwuzla_sort_fun_get_domain_sorts(Bitwuzla *bitwuzla, BitwuzlaSort sort)
   BZLA_CHECK_SORT_IS_FUN(bzla, bzla_sort);
 
   uint32_t arity = bzla_sort_fun_get_arity(bzla, bzla_sort);
-  BZLA_RESET_STACK(bzla->sort_fun_domain_sorts);
+  BZLA_RESET_STACK(bitwuzla->d_sort_fun_domain_sorts);
   BzlaTupleSort *tuple_sort =
       &bzla_sort_get_by_id(bzla, bzla_sort_fun_get_domain(bzla, bzla_sort))
            ->tuple;
@@ -2834,12 +2877,13 @@ bitwuzla_sort_fun_get_domain_sorts(Bitwuzla *bitwuzla, BitwuzlaSort sort)
   for (uint32_t i = 0; i < arity; i++)
   {
     BzlaSortId id = tuple_sort->elements[i]->id;
-    BZLA_PUSH_STACK(bzla->sort_fun_domain_sorts, id);
+    BZLA_PUSH_STACK(bitwuzla->d_sort_fun_domain_sorts,
+                    BZLA_EXPORT_BITWUZLA_SORT(id));
     bzla_sort_copy(bzla, id);
     inc_ext_refs_sort(bzla, id);
   }
-  BZLA_PUSH_STACK(bzla->sort_fun_domain_sorts, 0);
-  return BZLA_EXPORT_BITWUZLA_SORTS(bzla->sort_fun_domain_sorts.start);
+  BZLA_PUSH_STACK(bitwuzla->d_sort_fun_domain_sorts, 0);
+  return bitwuzla->d_sort_fun_domain_sorts.start;
 }
 
 BitwuzlaSort
@@ -3028,9 +3072,10 @@ bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term)
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
   BZLA_CHECK_TERM_IS_FUN(bzla_term);
-  Bzla *bzla     = bzla_node_get_bzla(bzla_term);
-  uint32_t arity = bzla_node_fun_get_arity(bzla, bzla_term);
-  BZLA_RESET_STACK(bzla->fun_domain_sorts);
+  Bzla *bzla         = bzla_node_get_bzla(bzla_term);
+  Bitwuzla *bitwuzla = BZLA_EXPORT_BITWUZLA(bzla);
+  uint32_t arity     = bzla_node_fun_get_arity(bzla, bzla_term);
+  BZLA_RESET_STACK(bitwuzla->d_fun_domain_sorts);
   BzlaTupleSort *tuple_sort =
       &bzla_sort_get_by_id(
            bzla,
@@ -3040,12 +3085,13 @@ bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term)
   for (uint32_t i = 0; i < arity; i++)
   {
     BzlaSortId id = tuple_sort->elements[i]->id;
-    BZLA_PUSH_STACK(bzla->fun_domain_sorts, id);
+    BZLA_PUSH_STACK(bitwuzla->d_fun_domain_sorts,
+                    BZLA_EXPORT_BITWUZLA_SORT(id));
     bzla_sort_copy(bzla, id);
     inc_ext_refs_sort(bzla, id);
   }
-  BZLA_PUSH_STACK(bzla->fun_domain_sorts, 0);
-  return BZLA_EXPORT_BITWUZLA_SORTS(bzla->fun_domain_sorts.start);
+  BZLA_PUSH_STACK(bitwuzla->d_fun_domain_sorts, 0);
+  return bitwuzla->d_fun_domain_sorts.start;
 }
 
 BitwuzlaSort
@@ -3417,6 +3463,14 @@ bitwuzla_term_dump(const BitwuzlaTerm *term, const char *format, FILE *file)
   {
     BZLA_ABORT(true, "unknown format '%s', expected one of 'smt2' or 'bzla'");
   }
+}
+
+/* main only ---------------------------------------------------------------- */
+
+Bzla *
+bitwuzla_get_bzla(Bitwuzla *bitwuzla)
+{
+  return bitwuzla->d_bzla;
 }
 
 /* parser only -------------------------------------------------------------- */

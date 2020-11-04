@@ -759,10 +759,6 @@ bzla_new(void)
       bzla_hashptr_table_new(mm,
                              (BzlaHashPtr) bzla_node_hash_by_id,
                              (BzlaCmpPtr) bzla_node_compare_by_id);
-  BZLA_INIT_STACK(mm, bzla->failed_assumptions);
-  BZLA_INIT_STACK(mm, bzla->unsat_core);
-  BZLA_INIT_STACK(mm, bzla->fun_domain_sorts);
-  BZLA_INIT_STACK(mm, bzla->sort_fun_domain_sorts);
   bzla->parameterized =
       bzla_hashptr_table_new(mm,
                              (BzlaHashPtr) bzla_node_hash_by_id,
@@ -914,22 +910,6 @@ bzla_delete_varsubst_constraints(Bzla *bzla)
 }
 
 void
-bzla_reset_unsat_core(Bzla *bzla)
-{
-  size_t i;
-  BzlaNode *cur;
-
-  for (i = 0; i < BZLA_COUNT_STACK(bzla->unsat_core); i++)
-  {
-    cur = BZLA_PEEK_STACK(bzla->unsat_core, i);
-    if (!cur) continue;
-    bzla_node_dec_ext_ref_counter(bzla, cur);
-    bzla_node_release(bzla, cur);
-  }
-  BZLA_RESET_STACK(bzla->unsat_core);
-}
-
-void
 bzla_delete(Bzla *bzla)
 {
   assert(bzla);
@@ -972,17 +952,6 @@ bzla_delete(Bzla *bzla)
   bzla_hashptr_table_delete(bzla->synthesized_constraints);
   bzla_hashptr_table_delete(bzla->assumptions);
   bzla_hashptr_table_delete(bzla->orig_assumptions);
-  for (i = 0; i < BZLA_COUNT_STACK(bzla->failed_assumptions); i++)
-  {
-    if (BZLA_PEEK_STACK(bzla->failed_assumptions, i))
-      bzla_node_release(bzla, BZLA_PEEK_STACK(bzla->failed_assumptions, i));
-  }
-  BZLA_RELEASE_STACK(bzla->failed_assumptions);
-
-  bzla_reset_unsat_core(bzla);
-  BZLA_RELEASE_STACK(bzla->unsat_core);
-  BZLA_RELEASE_STACK(bzla->fun_domain_sorts);
-  BZLA_RELEASE_STACK(bzla->sort_fun_domain_sorts);
 
   for (i = 0; i < BZLA_COUNT_STACK(bzla->assertions); i++)
     bzla_node_release(bzla, BZLA_PEEK_STACK(bzla->assertions, i));
@@ -1677,7 +1646,6 @@ bzla_reset_assumptions(Bzla *bzla)
   assert(bzla);
 
   BzlaPtrHashTableIterator it;
-  uint32_t i;
 
   BZLALOG(2, "reset assumptions");
 
@@ -1695,13 +1663,6 @@ bzla_reset_assumptions(Bzla *bzla)
       bzla_hashptr_table_new(bzla->mm,
                              (BzlaHashPtr) bzla_node_hash_by_id,
                              (BzlaCmpPtr) bzla_node_compare_by_id);
-
-  for (i = 0; i < BZLA_COUNT_STACK(bzla->failed_assumptions); i++)
-  {
-    if (BZLA_PEEK_STACK(bzla->failed_assumptions, i))
-      bzla_node_release(bzla, BZLA_PEEK_STACK(bzla->failed_assumptions, i));
-  }
-  BZLA_RESET_STACK(bzla->failed_assumptions);
 }
 
 static void

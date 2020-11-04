@@ -89,6 +89,8 @@ typedef struct BzlaConstraintStats BzlaConstraintStats;
 
 struct Bzla
 {
+  void *bitwuzla;
+
   BzlaMemMgr *mm;
   BzlaSolver *slv;
   BzlaCallbacks cbs;
@@ -149,16 +151,6 @@ struct Bzla
   BzlaPtrHashTable *assumptions;
   /* maintains the non-simplified (original) assumptions */
   BzlaPtrHashTable *orig_assumptions;
-  /* maintains non-simplified assumptions as assumed via boolector_assume,
-   * this stack is needed for boolector_get_failed_assumptions only */
-  BzlaNodePtrStack failed_assumptions;
-  BzlaNodePtrStack unsat_core;
-  /* maintain current query for function domain sorts on a given function node,
-   * valid until next API call to retrieve domain sorts of a function node */
-  BzlaSortIdStack fun_domain_sorts;
-  /* maintain current query for function domain sorts on a given function sort,
-   * valid until next API call to retrieve domain sorts of a function sort */
-  BzlaSortIdStack sort_fun_domain_sorts;
 
   /* maintain assertions for different contexts push/pop */
   BzlaNodePtrStack assertions;
@@ -276,9 +268,6 @@ void bzla_reset_time(Bzla *bzla);
 
 /* Reset other statistics. */
 void bzla_reset_stats(Bzla *bzla);
-
-void bzla_reset_unsat_core(
-    Bzla *bzla);  // TODO (an) remove as soon as old API is removed
 
 /* Adds top level constraint. */
 void bzla_assert_exp(Bzla *bzla, BzlaNode *exp);
