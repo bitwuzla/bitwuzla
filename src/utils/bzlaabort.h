@@ -22,7 +22,6 @@ void bzla_abort_warn(
 #define BZLA_ABORT(condition, msg...)                     \
   if (condition)                                          \
   {                                                       \
-    assert(0);                                            \
     bzla_abort_warn(true, __FILE__, __FUNCTION__, ##msg); \
   }
 

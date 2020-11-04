@@ -2815,6 +2815,33 @@ bitwuzla_sort_fun_get_domain(Bitwuzla *bitwuzla, BitwuzlaSort sort)
   return BZLA_EXPORT_BITWUZLA_SORT(bzla_sort_fun_get_domain(bzla, bzla_sort));
 }
 
+const BitwuzlaSort *
+bitwuzla_sort_fun_get_domain_sorts(Bitwuzla *bitwuzla, BitwuzlaSort sort)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT(bzla, bzla_sort);
+  BZLA_CHECK_SORT_IS_FUN(bzla, bzla_sort);
+
+  uint32_t arity = bzla_sort_fun_get_arity(bzla, bzla_sort);
+  BZLA_RESET_STACK(bzla->sort_fun_domain_sorts);
+  BzlaTupleSort *tuple_sort =
+      &bzla_sort_get_by_id(bzla, bzla_sort_fun_get_domain(bzla, bzla_sort))
+           ->tuple;
+  assert(arity == tuple_sort->num_elements);
+  for (uint32_t i = 0; i < arity; i++)
+  {
+    BzlaSortId id = tuple_sort->elements[i]->id;
+    BZLA_PUSH_STACK(bzla->sort_fun_domain_sorts, id);
+    bzla_sort_copy(bzla, id);
+    inc_ext_refs_sort(bzla, id);
+  }
+  BZLA_PUSH_STACK(bzla->sort_fun_domain_sorts, 0);
+  return BZLA_EXPORT_BITWUZLA_SORTS(bzla->sort_fun_domain_sorts.start);
+}
+
 BitwuzlaSort
 bitwuzla_sort_fun_get_codomain(Bitwuzla *bitwuzla, BitwuzlaSort sort)
 {

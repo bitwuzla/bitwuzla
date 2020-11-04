@@ -454,6 +454,8 @@ BitwuzlaSort bitwuzla_sort_array_get_element(Bitwuzla *bitwuzla,
                                              BitwuzlaSort sort);
 BitwuzlaSort bitwuzla_sort_fun_get_domain(Bitwuzla *bitwuzla,
                                           BitwuzlaSort sort);
+const BitwuzlaSort *bitwuzla_sort_fun_get_domain_sorts(Bitwuzla *bitwuzla,
+                                                       BitwuzlaSort sort);
 BitwuzlaSort bitwuzla_sort_fun_get_codomain(Bitwuzla *bitwuzla,
                                             BitwuzlaSort sort);
 uint32_t bitwuzla_sort_fun_get_arity(Bitwuzla *bitwuzla, BitwuzlaSort sort);
