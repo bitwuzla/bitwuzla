@@ -86,7 +86,7 @@ class TestFpInternal : public TestBzla
 
 TEST_F(TestFp, sort_fp)
 {
-  BitwuzlaSort f16, f32, f64, f128;
+  BitwuzlaSort *f16, *f32, *f64, *f128;
 
   f16 = bitwuzla_mk_fp_sort(d_bzla, 5, 11);
   ASSERT_TRUE(bitwuzla_sort_is_fp(d_bzla, f16));
@@ -103,7 +103,7 @@ TEST_F(TestFp, sort_fp)
 
 TEST_F(TestFp, sort_rm)
 {
-  BitwuzlaSort rm;
+  BitwuzlaSort *rm;
 
   rm = bitwuzla_mk_rm_sort(d_bzla);
   ASSERT_TRUE(bitwuzla_sort_is_rm(d_bzla, rm));

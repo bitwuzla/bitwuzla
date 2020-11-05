@@ -30,7 +30,7 @@ class TestInc : public TestBitwuzla
 
     bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
 
-    BitwuzlaSort s        = bitwuzla_mk_bv_sort(d_bzla, w);
+    BitwuzlaSort *s       = bitwuzla_mk_bv_sort(d_bzla, w);
     BitwuzlaTerm *one     = bitwuzla_mk_bv_one(d_bzla, s);
     BitwuzlaTerm *current = bitwuzla_mk_bv_zero(d_bzla, s);
 
@@ -91,7 +91,7 @@ class TestInc : public TestBitwuzla
     assert(w > 0);
 
     BitwuzlaTerm *prev, *next, *lt;
-    BitwuzlaSort s;
+    BitwuzlaSort *s;
     std::stringstream name;
     uint32_t i;
     int32_t res;
@@ -178,8 +178,8 @@ TEST_F(TestInc, assume_assert1)
   int32_t sat_result;
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
-  BitwuzlaSort s       = bitwuzla_mk_bool_sort(d_bzla);
-  BitwuzlaSort as      = bitwuzla_mk_array_sort(d_bzla, s, s);
+  BitwuzlaSort *s      = bitwuzla_mk_bool_sort(d_bzla);
+  BitwuzlaSort *as     = bitwuzla_mk_array_sort(d_bzla, s, s);
   BitwuzlaTerm *array  = bitwuzla_mk_const(d_bzla, as, "array1");
   BitwuzlaTerm *index1 = bitwuzla_mk_const(d_bzla, s, "index1");
   BitwuzlaTerm *index2 = bitwuzla_mk_const(d_bzla, s, "index2");
@@ -208,8 +208,8 @@ TEST_F(TestInc, lemmas_on_demand1)
 
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
-  BitwuzlaSort s       = bitwuzla_mk_bool_sort(d_bzla);
-  BitwuzlaSort as      = bitwuzla_mk_array_sort(d_bzla, s, s);
+  BitwuzlaSort *s      = bitwuzla_mk_bool_sort(d_bzla);
+  BitwuzlaSort *as     = bitwuzla_mk_array_sort(d_bzla, s, s);
   BitwuzlaTerm *array  = bitwuzla_mk_const(d_bzla, as, "array1");
   BitwuzlaTerm *index1 = bitwuzla_mk_const(d_bzla, s, "index1");
   BitwuzlaTerm *index2 = bitwuzla_mk_const(d_bzla, s, "index2");

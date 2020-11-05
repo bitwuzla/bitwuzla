@@ -28,7 +28,7 @@ class TestShift : public TestCommon
 
     int32_t res;
     uint32_t ushift;
-    BitwuzlaSort sort;
+    BitwuzlaSort *sort;
     BitwuzlaTerm *res_shift0, *shift0;
     BitwuzlaTerm *res_shift1;
     BitwuzlaTerm *e0, *ne0;
@@ -66,7 +66,7 @@ class TestShift : public TestCommon
                                          res_shift1,
                                          bw - ushift - 1,
                                          0);
-          BitwuzlaSort sort_sra_ones = bitwuzla_mk_bv_sort(bitwuzla, ushift);
+          BitwuzlaSort *sort_sra_ones = bitwuzla_mk_bv_sort(bitwuzla, ushift);
           BitwuzlaTerm *ones = bitwuzla_mk_bv_ones(bitwuzla, sort_sra_ones);
           BitwuzlaTerm *concat =
               bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_CONCAT, ones, slice);

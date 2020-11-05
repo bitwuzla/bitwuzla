@@ -574,7 +574,7 @@ class TestBvProp : public TestBvDomainCommon
     assert(bzla_bvdomain_is_valid(d_mm, d));
 
     BitwuzlaTerm *d_hi, *d_lo, *a, *o, *_or, *ne1, *ne2;
-    BitwuzlaSort sort;
+    BitwuzlaSort *sort;
     char *s_hi, *s_lo;
 
     sort = bitwuzla_mk_bv_sort(bitwuzla, bzla_bvdomain_get_width(d));
@@ -612,7 +612,7 @@ class TestBvProp : public TestBvDomainCommon
     assert(bzla_bvdomain_is_valid(d_mm, d));
 
     BitwuzlaTerm *d_hi, *d_lo, *a, *o, *_and, *eq1, *eq2;
-    BitwuzlaSort sort;
+    BitwuzlaSort *sort;
     char *s_hi, *s_lo;
 
     sort = bitwuzla_mk_bv_sort(bitwuzla, bzla_bvdomain_get_width(d));
@@ -709,7 +709,7 @@ class TestBvProp : public TestBvDomainCommon
     BitwuzlaResult sat_res;
     uint32_t bwx, bwy, bwz;
     BitwuzlaTerm *x, *y, *z, *c, *fun, *ofun, *_not, *eq;
-    BitwuzlaSort swx, swy, swz, s1;
+    BitwuzlaSort *swx, *swy, *swz, *s1;
 
     swy = 0;
 

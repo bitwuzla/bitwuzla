@@ -1,1 +1,1 @@
-log/smt2perr114.smt2:1:10: first argument of 'bvand' is of sort 1 but argument 2 is of sort 2
+log/smt2perr114.smt2:1:10: sorts of arguments 1 and 2 of 'bvand' do not match

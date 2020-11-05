@@ -20,8 +20,8 @@ class TestRotate : public TestBitwuzla
     int32_t res;
     BitwuzlaKind kind, kindi;
 
-    BitwuzlaSort sort = bitwuzla_mk_bv_sort(d_bzla, bw);
-    BitwuzlaTerm *e0  = bitwuzla_mk_const(d_bzla, sort, "e0");
+    BitwuzlaSort *sort = bitwuzla_mk_bv_sort(d_bzla, bw);
+    BitwuzlaTerm *e0   = bitwuzla_mk_const(d_bzla, sort, "e0");
 
     if (is_left)
     {
