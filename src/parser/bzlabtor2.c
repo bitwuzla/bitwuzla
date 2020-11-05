@@ -303,7 +303,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
       case BTOR2_TAG_input:
         assert(line->nargs == 0);
         term = bitwuzla_mk_const(bitwuzla, sort, line->symbol);
-        if (bitwuzla_sort_is_array(bitwuzla, sort))
+        if (bitwuzla_sort_is_array(sort))
         {
           found_arrays = true;
         }

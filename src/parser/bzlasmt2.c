@@ -1997,8 +1997,7 @@ check_fp_args_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p, uint32_t nargs)
 static bool
 check_rm_arg_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p, uint32_t idx)
 {
-  if (!bitwuzla_sort_is_rm(parser->bitwuzla,
-                           bitwuzla_term_get_sort(p[idx].exp)))
+  if (!bitwuzla_sort_is_rm(bitwuzla_term_get_sort(p[idx].exp)))
   {
     parser->perrcoo = p[idx].coo;
     return !perr_smt2(parser,
@@ -2610,7 +2609,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   if (item_cur->tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
   {
     /* (_ to_fp_unsigned eb sb) RoundingMode (_ BitVec m) */
-    if (!bitwuzla_sort_is_bv(bitwuzla, s))
+    if (!bitwuzla_sort_is_bv(s))
     {
       return !perr_smt2(parser,
                         "invalid argument to '%s', expected bit-vector term",
@@ -2622,13 +2621,13 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   else
   {
     assert(item_cur->tag == BZLA_FP_TO_FP_TAG_SMT2);
-    if (bitwuzla_sort_is_bv(bitwuzla, s))
+    if (bitwuzla_sort_is_bv(s))
     {
       /* (_ to_fp eb sb) RoundingMode (_ BitVec m) */
       exp = bitwuzla_mk_term_indexed(
           bitwuzla, BITWUZLA_KIND_FP_TO_FP_FROM_INT, 2, args, 2, idxs);
     }
-    else if (bitwuzla_sort_is_fp(bitwuzla, s))
+    else if (bitwuzla_sort_is_fp(s))
     {
       /* (_ to_fp eb sb) RoundingMode (_ FloatingPoint mb nb) */
       exp = bitwuzla_mk_term_indexed(
@@ -2819,7 +2818,6 @@ close_term(BzlaSMT2Parser *parser)
       {
         assert(domain_sorts[i]);
         if (!bitwuzla_sort_is_equal(
-                bitwuzla,
                 domain_sorts[i],
                 bitwuzla_term_get_sort(BZLA_PEEK_STACK(fargs, i))))
         {
@@ -5050,7 +5048,7 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
   /* bit-vector/array variable */
   if (BZLA_EMPTY_STACK(args))
   {
-    if (bitwuzla_sort_is_fun(bitwuzla, sort))
+    if (bitwuzla_sort_is_fun(sort))
     {
       fun->exp = bitwuzla_mk_const(bitwuzla, sort, fun->name);
       BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
@@ -5080,8 +5078,7 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
     for (i = 0; i < BZLA_COUNT_STACK(args); i++)
     {
       s = BZLA_PEEK_STACK(args, i);
-      if (!bitwuzla_sort_is_bv(bitwuzla, s)
-          && !bitwuzla_sort_is_fp(bitwuzla, s))
+      if (!bitwuzla_sort_is_bv(s) && !bitwuzla_sort_is_fp(s))
       {
         BZLA_RELEASE_STACK(args);
         return !perr_smt2(parser,
@@ -5089,8 +5086,7 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
                           "supported for arity > 0");
       }
     }
-    if (!bitwuzla_sort_is_bv(bitwuzla, sort)
-        && !bitwuzla_sort_is_fp(bitwuzla, sort))
+    if (!bitwuzla_sort_is_bv(sort) && !bitwuzla_sort_is_fp(sort))
     {
       BZLA_RELEASE_STACK(args);
       return !perr_smt2(parser,
@@ -5197,7 +5193,7 @@ define_fun_smt2(BzlaSMT2Parser *parser)
   /* parse return sort */
   tag = read_token_smt2(parser);
   if (!parse_sort(parser, tag, true, &sort)) return 0;
-  if (bitwuzla_sort_is_array(bitwuzla, sort))
+  if (bitwuzla_sort_is_array(sort))
   {
     if (nargs)
     {
@@ -5839,8 +5835,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
       if (!parse_term_smt2(parser, &exp, &coo)) return 0;
       assert(!parser->error);
       if (!bitwuzla_term_is_bv(exp)
-          || bitwuzla_sort_bv_get_size(bitwuzla, bitwuzla_term_get_sort(exp))
-                 != 1)
+          || bitwuzla_sort_bv_get_size(bitwuzla_term_get_sort(exp)) != 1)
       {
         parser->perrcoo = coo;
         return !perr_smt2(parser, "assert argument is not a formula");

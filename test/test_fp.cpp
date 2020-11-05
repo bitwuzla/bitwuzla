@@ -89,16 +89,16 @@ TEST_F(TestFp, sort_fp)
   BitwuzlaSort *f16, *f32, *f64, *f128;
 
   f16 = bitwuzla_mk_fp_sort(d_bzla, 5, 11);
-  ASSERT_TRUE(bitwuzla_sort_is_fp(d_bzla, f16));
+  ASSERT_TRUE(bitwuzla_sort_is_fp(f16));
 
   f32 = bitwuzla_mk_fp_sort(d_bzla, 8, 24);
-  ASSERT_TRUE(bitwuzla_sort_is_fp(d_bzla, f32));
+  ASSERT_TRUE(bitwuzla_sort_is_fp(f32));
 
   f64 = bitwuzla_mk_fp_sort(d_bzla, 11, 53);
-  ASSERT_TRUE(bitwuzla_sort_is_fp(d_bzla, f64));
+  ASSERT_TRUE(bitwuzla_sort_is_fp(f64));
 
   f128 = bitwuzla_mk_fp_sort(d_bzla, 15, 113);
-  ASSERT_TRUE(bitwuzla_sort_is_fp(d_bzla, f128));
+  ASSERT_TRUE(bitwuzla_sort_is_fp(f128));
 }
 
 TEST_F(TestFp, sort_rm)
@@ -106,7 +106,7 @@ TEST_F(TestFp, sort_rm)
   BitwuzlaSort *rm;
 
   rm = bitwuzla_mk_rm_sort(d_bzla);
-  ASSERT_TRUE(bitwuzla_sort_is_rm(d_bzla, rm));
+  ASSERT_TRUE(bitwuzla_sort_is_rm(rm));
 }
 
 TEST_F(TestFpInternal, fp_as_bv)

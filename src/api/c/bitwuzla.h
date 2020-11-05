@@ -443,35 +443,26 @@ BitwuzlaResult bitwuzla_parse_format(Bitwuzla *bitwuzla,
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */
 
-size_t bitwuzla_sort_hash(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
+size_t bitwuzla_sort_hash(const BitwuzlaSort *sort);
 
-uint32_t bitwuzla_sort_bv_get_size(Bitwuzla *bitwuzla,
-                                   const BitwuzlaSort *sort);
-uint32_t bitwuzla_sort_fp_get_exp_size(Bitwuzla *bitwuzla,
-                                       const BitwuzlaSort *sort);
-uint32_t bitwuzla_sort_fp_get_sig_size(Bitwuzla *bitwuzla,
-                                       const BitwuzlaSort *sort);
-BitwuzlaSort *bitwuzla_sort_array_get_index(Bitwuzla *bitwuzla,
-                                            const BitwuzlaSort *sort);
-BitwuzlaSort *bitwuzla_sort_array_get_element(Bitwuzla *bitwuzla,
-                                              const BitwuzlaSort *sort);
-BitwuzlaSort *bitwuzla_sort_fun_get_domain(Bitwuzla *bitwuzla,
-                                           const BitwuzlaSort *sort);
+uint32_t bitwuzla_sort_bv_get_size(const BitwuzlaSort *sort);
+uint32_t bitwuzla_sort_fp_get_exp_size(const BitwuzlaSort *sort);
+uint32_t bitwuzla_sort_fp_get_sig_size(const BitwuzlaSort *sort);
+BitwuzlaSort *bitwuzla_sort_array_get_index(const BitwuzlaSort *sort);
+BitwuzlaSort *bitwuzla_sort_array_get_element(const BitwuzlaSort *sort);
+BitwuzlaSort *bitwuzla_sort_fun_get_domain(const BitwuzlaSort *sort);
 const BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(
-    Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
-BitwuzlaSort *bitwuzla_sort_fun_get_codomain(Bitwuzla *bitwuzla,
-                                             const BitwuzlaSort *sort);
-uint32_t bitwuzla_sort_fun_get_arity(Bitwuzla *bitwuzla,
-                                     const BitwuzlaSort *sort);
+    const BitwuzlaSort *sort);
+BitwuzlaSort *bitwuzla_sort_fun_get_codomain(const BitwuzlaSort *sort);
+uint32_t bitwuzla_sort_fun_get_arity(const BitwuzlaSort *sort);
 
-bool bitwuzla_sort_is_equal(Bitwuzla *bitwuzla,
-                            const BitwuzlaSort *sort0,
+bool bitwuzla_sort_is_equal(const BitwuzlaSort *sort0,
                             const BitwuzlaSort *sort1);
-bool bitwuzla_sort_is_array(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
-bool bitwuzla_sort_is_bv(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
-bool bitwuzla_sort_is_fp(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
-bool bitwuzla_sort_is_fun(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
-bool bitwuzla_sort_is_rm(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
+bool bitwuzla_sort_is_array(const BitwuzlaSort *sort);
+bool bitwuzla_sort_is_bv(const BitwuzlaSort *sort);
+bool bitwuzla_sort_is_fp(const BitwuzlaSort *sort);
+bool bitwuzla_sort_is_fun(const BitwuzlaSort *sort);
+bool bitwuzla_sort_is_rm(const BitwuzlaSort *sort);
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTerm                                                               */
