@@ -43,6 +43,7 @@ struct Info
 
 BZLA_DECLARE_STACK(BzlaInfo, Info);
 BZLA_DECLARE_STACK(BitwuzlaTermPtr, BitwuzlaTerm *);
+BZLA_DECLARE_STACK(BitwuzlaTermConstPtr, const BitwuzlaTerm *);
 
 struct BzlaBZLAParser
 {
@@ -1469,7 +1470,8 @@ static BitwuzlaTerm *
 parse_lambda(BzlaBZLAParser *parser, uint32_t width)
 {
   uint32_t paramwidth;
-  BitwuzlaTerm **args, *exp, *res;
+  const BitwuzlaTerm **args;
+  BitwuzlaTerm *exp, *res;
 
   paramwidth = 0;
 
@@ -1511,7 +1513,7 @@ parse_apply(BzlaBZLAParser *parser, uint32_t width)
 {
   uint32_t i, arity;
   BitwuzlaTerm *res, *fun, *arg;
-  BitwuzlaTermPtrStack args;
+  BitwuzlaTermConstPtrStack args;
 
   if (parse_space(parser)) return 0;
 

@@ -69,7 +69,7 @@ class TestApi : public TestBitwuzla
   BitwuzlaSort *d_arr_sort_fpbv;
   BitwuzlaSort *d_array_sort_bv;
 
-  std::vector<BitwuzlaSort *> d_fun_domain_sort;
+  std::vector<const BitwuzlaSort *> d_fun_domain_sort;
   BitwuzlaSort *d_fun_sort;
   BitwuzlaSort *d_fun_sort_fp;
 
@@ -137,11 +137,11 @@ TEST_F(TestApi, mk_term_check_null)
 {
   const char *error_not_null = "must not be NULL";
 
-  std::vector<BitwuzlaTerm *> bv_args2 = {d_bv_zero8, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> bv_args2 = {d_bv_zero8, d_bv_const8};
 
-  std::vector<BitwuzlaTerm *> null_death_args1 = {nullptr};
-  std::vector<BitwuzlaTerm *> null_death_args2 = {d_bv_zero8, nullptr};
-  std::vector<BitwuzlaTerm *> null_death_args3 = {
+  std::vector<const BitwuzlaTerm *> null_death_args1 = {nullptr};
+  std::vector<const BitwuzlaTerm *> null_death_args2 = {d_bv_zero8, nullptr};
+  std::vector<const BitwuzlaTerm *> null_death_args3 = {
       d_rm_const, nullptr, d_fp_const16};
 
   // mk_term
@@ -193,22 +193,22 @@ TEST_F(TestApi, mk_term_check_cnt)
 {
   const char *error_arg_cnt = "invalid number of arguments";
 
-  std::vector<BitwuzlaTerm *> apply_args1 = {d_bv_one1};
-  std::vector<BitwuzlaTerm *> apply_args2 = {d_bv_const8, d_fun};
-  std::vector<BitwuzlaTerm *> array_args1 = {d_array_fpbv};
-  std::vector<BitwuzlaTerm *> bool_args1  = {d_true};
-  std::vector<BitwuzlaTerm *> bool_args2  = {d_true, d_true};
-  std::vector<BitwuzlaTerm *> bv_args1    = {d_bv_one1};
-  std::vector<BitwuzlaTerm *> bv_args1_rm = {d_rm_const};
-  std::vector<BitwuzlaTerm *> bv_args2    = {d_bv_zero8, d_bv_const8};
-  std::vector<BitwuzlaTerm *> ite_args2   = {d_true, d_bv_const8};
-  std::vector<BitwuzlaTerm *> fp_args1    = {d_fp_const16};
-  std::vector<BitwuzlaTerm *> fp_args1_rm = {d_rm_const};
-  std::vector<BitwuzlaTerm *> fp_args2    = {d_fp_const16, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fp_args2_rm = {d_rm_const, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fp_args3_rm = {
+  std::vector<const BitwuzlaTerm *> apply_args1 = {d_bv_one1};
+  std::vector<const BitwuzlaTerm *> apply_args2 = {d_bv_const8, d_fun};
+  std::vector<const BitwuzlaTerm *> array_args1 = {d_array_fpbv};
+  std::vector<const BitwuzlaTerm *> bool_args1  = {d_true};
+  std::vector<const BitwuzlaTerm *> bool_args2  = {d_true, d_true};
+  std::vector<const BitwuzlaTerm *> bv_args1    = {d_bv_one1};
+  std::vector<const BitwuzlaTerm *> bv_args1_rm = {d_rm_const};
+  std::vector<const BitwuzlaTerm *> bv_args2    = {d_bv_zero8, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> ite_args2   = {d_true, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> fp_args1    = {d_fp_const16};
+  std::vector<const BitwuzlaTerm *> fp_args1_rm = {d_rm_const};
+  std::vector<const BitwuzlaTerm *> fp_args2    = {d_fp_const16, d_fp_const16};
+  std::vector<const BitwuzlaTerm *> fp_args2_rm = {d_rm_const, d_fp_const16};
+  std::vector<const BitwuzlaTerm *> fp_args3_rm = {
       d_rm_const, d_fp_const16, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fun_args1 = {d_var1};
+  std::vector<const BitwuzlaTerm *> fun_args1 = {d_var1};
 
   std::vector<uint32_t> idxs1    = {1};
   std::vector<uint32_t> idxs2    = {2, 0};
@@ -673,47 +673,52 @@ TEST_F(TestApi, mk_term_check_args)
   const char *error_arr_element_sort =
       "sort of element term does not match element sort of array";
 
-  std::vector<BitwuzlaTerm *> array_select_args2_inv_1 = {d_fp_const16,
-                                                          d_array_fpbv};
-  std::vector<BitwuzlaTerm *> array_select_args2_inv_2 = {d_array_fpbv,
-                                                          d_bv_const8};
+  std::vector<const BitwuzlaTerm *> array_select_args2_inv_1 = {d_fp_const16,
+                                                                d_array_fpbv};
+  std::vector<const BitwuzlaTerm *> array_select_args2_inv_2 = {d_array_fpbv,
+                                                                d_bv_const8};
 
-  std::vector<BitwuzlaTerm *> array_store_args3_inv_1 = {
+  std::vector<const BitwuzlaTerm *> array_store_args3_inv_1 = {
       d_fp_const16, d_array_fpbv, d_bv_const8};
-  std::vector<BitwuzlaTerm *> array_store_args3_inv_2 = {
+  std::vector<const BitwuzlaTerm *> array_store_args3_inv_2 = {
       d_array_fpbv, d_bv_const8, d_bv_const8};
-  std::vector<BitwuzlaTerm *> array_store_args3_inv_3 = {
+  std::vector<const BitwuzlaTerm *> array_store_args3_inv_3 = {
       d_array_fpbv, d_fp_const16, d_fp_const16};
 
-  std::vector<BitwuzlaTerm *> apply_args3_inv_1 = {d_bv_const8, d_fun, d_fun};
-  std::vector<BitwuzlaTerm *> apply_args3_inv_2 = {
+  std::vector<const BitwuzlaTerm *> apply_args3_inv_1 = {
+      d_bv_const8, d_fun, d_fun};
+  std::vector<const BitwuzlaTerm *> apply_args3_inv_2 = {
       d_bv_const8, d_bv_const8, d_fp_pzero32, d_fun};
 
-  std::vector<BitwuzlaTerm *> bool_args1_inv = {d_bv_const8};
-  std::vector<BitwuzlaTerm *> bool_args2_inv = {d_fp_pzero32, d_fp_pzero32};
-  std::vector<BitwuzlaTerm *> bool_args2_mis = {d_true, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> bool_args1_inv = {d_bv_const8};
+  std::vector<const BitwuzlaTerm *> bool_args2_inv = {d_fp_pzero32,
+                                                      d_fp_pzero32};
+  std::vector<const BitwuzlaTerm *> bool_args2_mis = {d_true, d_bv_const8};
 
-  std::vector<BitwuzlaTerm *> bv_args1          = {d_bv_const8};
-  std::vector<BitwuzlaTerm *> bv_args1_inv      = {d_fp_const16};
-  std::vector<BitwuzlaTerm *> bv_args2_inv      = {d_fp_const16, d_fp_const16};
-  std::vector<BitwuzlaTerm *> bv_args2_mis      = {d_bv_one1, d_bv_const8};
-  std::vector<BitwuzlaTerm *> bv_args2_rm_inv_1 = {d_bv_const8, d_bv_const8};
-  std::vector<BitwuzlaTerm *> bv_args2_rm_inv_2 = {d_rm_const, d_fp_const16};
+  std::vector<const BitwuzlaTerm *> bv_args1     = {d_bv_const8};
+  std::vector<const BitwuzlaTerm *> bv_args1_inv = {d_fp_const16};
+  std::vector<const BitwuzlaTerm *> bv_args2_inv = {d_fp_const16, d_fp_const16};
+  std::vector<const BitwuzlaTerm *> bv_args2_mis = {d_bv_one1, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> bv_args2_rm_inv_1 = {d_bv_const8,
+                                                         d_bv_const8};
+  std::vector<const BitwuzlaTerm *> bv_args2_rm_inv_2 = {d_rm_const,
+                                                         d_fp_const16};
 
-  std::vector<BitwuzlaTerm *> ite_death_args3_1 = {
+  std::vector<const BitwuzlaTerm *> ite_death_args3_1 = {
       d_true, d_bv_const8, d_bv_one1};
-  std::vector<BitwuzlaTerm *> ite_args3_inv_2 = {
+  std::vector<const BitwuzlaTerm *> ite_args3_inv_2 = {
       d_bv_const8, d_bv_const8, d_bv_const8};
 
-  std::vector<BitwuzlaTerm *> lambda_args2_inv_1 = {d_bv_const8, d_bv_const8};
-  std::vector<BitwuzlaTerm *> lambda_args2_inv_2 = {d_bvar, d_bv_const8};
-  std::vector<BitwuzlaTerm *> lambda_args2_inv_3 = {d_var1, d_fun};
-  std::vector<BitwuzlaTerm *> lambda_args3_inv_1 = {
+  std::vector<const BitwuzlaTerm *> lambda_args2_inv_1 = {d_bv_const8,
+                                                          d_bv_const8};
+  std::vector<const BitwuzlaTerm *> lambda_args2_inv_2 = {d_bvar, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> lambda_args2_inv_3 = {d_var1, d_fun};
+  std::vector<const BitwuzlaTerm *> lambda_args3_inv_1 = {
       d_var1, d_var1, d_bv_const8};
 
   BitwuzlaTerm *lambda_body =
       bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, d_var2, d_bv_const8);
-  std::vector<BitwuzlaTerm *> lambda_args3_inv_2 = {
+  std::vector<const BitwuzlaTerm *> lambda_args3_inv_2 = {
       d_var1,
       d_var2,
       bitwuzla_mk_term2_indexed2(d_bzla,
@@ -723,37 +728,40 @@ TEST_F(TestApi, mk_term_check_args)
                                  5,
                                  8)};
 
-  std::vector<BitwuzlaTerm *> fp_args1_inv      = {d_bv_one1};
-  std::vector<BitwuzlaTerm *> fp_args2_inv      = {d_bv_zero8, d_bv_const8};
-  std::vector<BitwuzlaTerm *> fp_args2_mis      = {d_fp_pzero32, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fp_args2_rm_inv_1 = {d_bv_const8, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fp_args2_rm_inv_2 = {d_rm_const, d_bv_const8};
-  std::vector<BitwuzlaTerm *> fp_args3_rm_mis   = {
+  std::vector<const BitwuzlaTerm *> fp_args1_inv = {d_bv_one1};
+  std::vector<const BitwuzlaTerm *> fp_args2_inv = {d_bv_zero8, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> fp_args2_mis = {d_fp_pzero32, d_fp_const16};
+  std::vector<const BitwuzlaTerm *> fp_args2_rm_inv_1 = {d_bv_const8,
+                                                         d_fp_const16};
+  std::vector<const BitwuzlaTerm *> fp_args2_rm_inv_2 = {d_rm_const,
+                                                         d_bv_const8};
+  std::vector<const BitwuzlaTerm *> fp_args3_rm_mis   = {
       d_rm_const, d_fp_pzero32, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fp_args3_rm_inv_1 = {
+  std::vector<const BitwuzlaTerm *> fp_args3_rm_inv_1 = {
       d_fp_const16, d_fp_const16, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fp_args3_rm_inv_2 = {
+  std::vector<const BitwuzlaTerm *> fp_args3_rm_inv_2 = {
       d_rm_const, d_bv_zero8, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fp_args4_mis = {
+  std::vector<const BitwuzlaTerm *> fp_args4_mis = {
       d_rm_const, d_fp_pzero32, d_fp_const16, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fp_args4_rm_inv_1 = {
+  std::vector<const BitwuzlaTerm *> fp_args4_rm_inv_1 = {
       d_rm_const, d_bv_zero8, d_fp_const16, d_fp_const16};
-  std::vector<BitwuzlaTerm *> fp_args4_rm_inv_2 = {
+  std::vector<const BitwuzlaTerm *> fp_args4_rm_inv_2 = {
       d_fp_const16, d_fp_const16, d_fp_const16, d_fp_const16};
 
-  std::vector<BitwuzlaTerm *> fp_fp_args3_inv_1 = {
+  std::vector<const BitwuzlaTerm *> fp_fp_args3_inv_1 = {
       d_bv_const8, d_bv_zero8, d_bv_ones23};
-  std::vector<BitwuzlaTerm *> fp_fp_args3_inv_2 = {
+  std::vector<const BitwuzlaTerm *> fp_fp_args3_inv_2 = {
       d_bv_one1, d_fp_pzero32, d_bv_ones23};
-  std::vector<BitwuzlaTerm *> fp_fp_args3_inv_3 = {
+  std::vector<const BitwuzlaTerm *> fp_fp_args3_inv_3 = {
       d_bv_one1, d_bv_zero8, d_fp_pzero32};
-  std::vector<BitwuzlaTerm *> fp_fp_args3_inv_4 = {
+  std::vector<const BitwuzlaTerm *> fp_fp_args3_inv_4 = {
       d_fp_pzero32, d_bv_zero8, d_bv_ones23};
 
-  std::vector<BitwuzlaTerm *> quant_args2_inv_1 = {d_true, d_true};
-  std::vector<BitwuzlaTerm *> quant_args2_inv_2 = {d_var1, d_bv_const8};
-  std::vector<BitwuzlaTerm *> quant_args2_inv_3 = {d_bvar, d_bv_const8};
-  std::vector<BitwuzlaTerm *> quant_args3_inv   = {d_var1, d_var1, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> quant_args2_inv_1 = {d_true, d_true};
+  std::vector<const BitwuzlaTerm *> quant_args2_inv_2 = {d_var1, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> quant_args2_inv_3 = {d_bvar, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> quant_args3_inv   = {
+      d_var1, d_var1, d_bv_const8};
 
   std::vector<uint32_t> bv_idxs1                 = {3};
   std::vector<uint32_t> bv_idxs2                 = {2, 0};
