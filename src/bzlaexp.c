@@ -192,7 +192,7 @@ bzla_exp_const_array(Bzla *bzla, BzlaSortId sort, BzlaNode *value)
   assert(bzla_sort_array_get_element(bzla, sort)
          == bzla_node_get_sort_id(value));
   assert(value);
-  assert(bzla_sort_is_bv(bzla, bzla_node_get_sort_id(value)));
+  assert(!bzla_sort_is_fun(bzla, bzla_node_get_sort_id(value)));
 
   BzlaNode *exp, *param;
   BzlaSortId idxsort;
