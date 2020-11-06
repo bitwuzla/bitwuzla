@@ -18,8 +18,6 @@
 #include "bzlatypes.h"
 #include "utils/bzlamem.h"
 
-struct BzlaAIGMap;
-
 /*------------------------------------------------------------------------*/
 
 struct BzlaAIGVec

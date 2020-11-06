@@ -22,8 +22,6 @@
 #include "utils/bzlamem.h"
 #include "utils/bzlastack.h"
 
-struct BzlaAIGMap;
-
 /*------------------------------------------------------------------------*/
 
 struct BzlaAIG

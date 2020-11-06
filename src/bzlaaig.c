@@ -20,7 +20,6 @@
 #include "bzlacore.h"
 #include "bzlasat.h"
 #include "utils/bzlaabort.h"
-#include "utils/bzlaaigmap.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlautil.h"
 

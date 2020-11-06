@@ -71,7 +71,6 @@ set(libcbitwuzla_src_files
   sat/bzlaminisat.cpp
   sat/bzlapicosat.c
   sat/bzlakissat.c
-  utils/bzlaaigmap.c
   utils/bzlahashint.c
   utils/bzlahashptr.c
   utils/bzlamem.c
