@@ -224,10 +224,64 @@ is_boolean(BzlaSMTDumpContext *sdc, BzlaNode *exp)
 }
 
 void
-bzla_dumpsmt_dump_const_value(Bzla *bzla,
-                              const BzlaBitVector *bits,
-                              uint32_t base,
-                              FILE *file)
+bzla_dumpsmt_dump_const_rm_value(Bzla *bzla,
+                                 const BzlaBitVector *bits,
+                                 FILE *file)
+{
+  assert(bzla);
+  assert(bits);
+
+  BzlaRoundingMode rm = bzla_bv_to_uint64(bits);
+  assert(rm < BZLA_RM_MAX);
+
+  switch (rm)
+  {
+    case BZLA_RM_RNA: fprintf(file, "RNA"); break;
+    case BZLA_RM_RNE: fprintf(file, "RNE"); break;
+    case BZLA_RM_RTN: fprintf(file, "RTN"); break;
+    case BZLA_RM_RTP: fprintf(file, "RTP"); break;
+    default: assert(rm == BZLA_RM_RTZ); fprintf(file, "RTZ");
+  }
+}
+
+void
+bzla_dumpsmt_dump_const_fp_value(Bzla *bzla,
+                                 const BzlaBitVector *bits,
+                                 uint32_t esize,
+                                 uint32_t ssize,
+                                 FILE *file)
+{
+  assert(bzla);
+  assert(bits);
+
+  BzlaBitVector *sign, *exp, *sig;
+  char *sign_str, *exp_str, *sig_str;
+  uint32_t msb = bzla_bv_get_width(bits) - 1;
+
+  sign = bzla_bv_slice(bzla->mm, bits, msb, msb);
+  exp  = bzla_bv_slice(bzla->mm, bits, msb - 1, ssize - 1);
+  assert(bzla_bv_get_width(exp) == esize);
+  sig = bzla_bv_slice(bzla->mm, bits, ssize - 2, 0);
+  assert(bzla_bv_get_width(sig) == ssize - 1);
+
+  sign_str = bzla_bv_to_char(bzla->mm, sign);
+  exp_str  = bzla_bv_to_char(bzla->mm, exp);
+  sig_str  = bzla_bv_to_char(bzla->mm, sig);
+  fprintf(file, "(fp #b%s #b%s #b%s)", sign_str, exp_str, sig_str);
+
+  bzla_mem_freestr(bzla->mm, sign_str);
+  bzla_mem_freestr(bzla->mm, exp_str);
+  bzla_mem_freestr(bzla->mm, sig_str);
+  bzla_bv_free(bzla->mm, sign);
+  bzla_bv_free(bzla->mm, exp);
+  bzla_bv_free(bzla->mm, sig);
+}
+
+void
+bzla_dumpsmt_dump_const_bv_value(Bzla *bzla,
+                                 const BzlaBitVector *bits,
+                                 uint32_t base,
+                                 FILE *file)
 {
   assert(bzla);
   assert(bits);
@@ -256,7 +310,7 @@ bzla_dumpsmt_dump_const_value(Bzla *bzla,
 }
 
 static void
-dump_const_value_aux_smt(BzlaSMTDumpContext *sdc, BzlaBitVector *bits)
+dump_const_bv_value_aux_smt(BzlaSMTDumpContext *sdc, BzlaBitVector *bits)
 {
   assert(sdc);
   assert(bits);
@@ -306,7 +360,9 @@ dump_const_value_aux_smt(BzlaSMTDumpContext *sdc, BzlaBitVector *bits)
     fprintf(file, "#x%s", val);
   }
   else
-    bzla_dumpsmt_dump_const_value(sdc->bzla, bits, base, file);
+  {
+    bzla_dumpsmt_dump_const_bv_value(sdc->bzla, bits, base, file);
+  }
 }
 
 void
@@ -358,6 +414,8 @@ bzla_dumpsmt_dump_sort(BzlaSort *sort, FILE *file)
       /* print co-domain */
       bzla_dumpsmt_dump_sort(sort->fun.codomain, file);
       break;
+
+    case BZLA_RM_SORT: fprintf(file, "RoundingMode"); break;
 
     default: assert(0);
   }
@@ -754,19 +812,39 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
       if (is_const(real_exp))
       {
         if (exp == sdc->bzla->true_exp && !expect_bv)
+        {
           fputs("true", sdc->file);
+        }
         else if (exp == bzla_node_invert(sdc->bzla->true_exp) && !expect_bv)
+        {
           fputs("false", sdc->file);
+        }
         else if (bzla_node_is_inverted(exp))
         {
           bits =
               bzla_bv_not(sdc->bzla->mm, bzla_node_bv_const_get_bits(real_exp));
-          dump_const_value_aux_smt(sdc, bits);
+          dump_const_bv_value_aux_smt(sdc, bits);
           bzla_bv_free(sdc->bzla->mm, bits);
+        }
+        else if (bzla_node_is_rm_const(real_exp))
+        {
+          bzla_dumpsmt_dump_const_rm_value(
+              sdc->bzla, bzla_node_bv_const_get_bits(real_exp), sdc->file);
+        }
+        else if (bzla_node_is_fp_const(real_exp))
+        {
+          bzla_dumpsmt_dump_const_fp_value(
+              sdc->bzla,
+              bzla_node_bv_const_get_bits(real_exp),
+              bzla_node_fp_get_exp_width(sdc->bzla, real_exp),
+              bzla_node_fp_get_sig_width(sdc->bzla, real_exp),
+              sdc->file);
         }
         else
         {
-          dump_const_value_aux_smt(sdc, bzla_node_bv_const_get_bits(real_exp));
+          assert(bzla_node_is_bv_const(real_exp));
+          dump_const_bv_value_aux_smt(sdc,
+                                      bzla_node_bv_const_get_bits(real_exp));
         }
 
         /* close zero extend */
@@ -780,7 +858,7 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
         open_sexp(sdc);
         fputs("= ", sdc->file);
         bits = bzla_bv_one(sdc->bzla->mm, 1);
-        dump_const_value_aux_smt(sdc, bits);
+        dump_const_bv_value_aux_smt(sdc, bits);
         bzla_bv_free(sdc->bzla->mm, bits);
         fputc(' ', sdc->file);
       }
@@ -1113,11 +1191,11 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
       {
         fputc(' ', sdc->file);
         bits = bzla_bv_one(sdc->bzla->mm, 1);
-        dump_const_value_aux_smt(sdc, bits);
+        dump_const_bv_value_aux_smt(sdc, bits);
         bzla_bv_free(sdc->bzla->mm, bits);
         fputc(' ', sdc->file);
         bits = bzla_bv_new(sdc->bzla->mm, 1);
-        dump_const_value_aux_smt(sdc, bits);
+        dump_const_bv_value_aux_smt(sdc, bits);
         bzla_bv_free(sdc->bzla->mm, bits);
         close_sexp(sdc);
       }

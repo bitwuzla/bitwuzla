@@ -24,10 +24,20 @@ void bzla_dumpsmt_dump_node(Bzla* bzla,
 
 void bzla_dumpsmt_dump(Bzla* bzla, FILE* file);
 
-void bzla_dumpsmt_dump_const_value(Bzla* bzla,
-                                   const BzlaBitVector* bits,
-                                   uint32_t base,
-                                   FILE* file);
+void bzla_dumpsmt_dump_const_bv_value(Bzla* bzla,
+                                      const BzlaBitVector* bits,
+                                      uint32_t base,
+                                      FILE* file);
+
+void bzla_dumpsmt_dump_const_fp_value(Bzla* bzla,
+                                      const BzlaBitVector* bits,
+                                      uint32_t esize,
+                                      uint32_t ssize,
+                                      FILE* file);
+
+void bzla_dumpsmt_dump_const_rm_value(Bzla* bzla,
+                                      const BzlaBitVector* bits,
+                                      FILE* file);
 
 void bzla_dumpsmt_dump_sort_node(BzlaNode* exp, FILE* file);
 void bzla_dumpsmt_dump_sort(BzlaSort* sort, FILE* file);

@@ -137,14 +137,14 @@ bzla_print_node_model(Bzla *bzla,
 
       bzla_dumpsmt_dump_sort_node(input, file);
       fprintf(file, " ");
-      bzla_dumpsmt_dump_const_value(bzla, bv_value, base, file);
+      bzla_dumpsmt_dump_const_bv_value(bzla, bv_value, base, file);
       fprintf(file, ")\n");
     }
   }
 }
 
 void
-bzla_print_bv_model(
+bzla_print_bvfp_model(
     Bzla *bzla, BzlaNode *node, const char *format, uint32_t base, FILE *file)
 {
   assert(bzla);
@@ -189,7 +189,23 @@ bzla_print_bv_model(
     {
       bzla_dumpsmt_dump_sort_node(node, file);
       fprintf(file, " ");
-      bzla_dumpsmt_dump_const_value(bzla, ass, base, file);
+      if (bzla_node_is_rm(bzla, node))
+      {
+        bzla_dumpsmt_dump_const_rm_value(bzla, ass, file);
+      }
+      else if (bzla_node_is_fp(bzla, node))
+      {
+        bzla_dumpsmt_dump_const_fp_value(bzla,
+                                         ass,
+                                         bzla_node_fp_get_exp_width(bzla, node),
+                                         bzla_node_fp_get_sig_width(bzla, node),
+                                         file);
+      }
+      else
+      {
+        assert(bzla_node_is_bv(bzla, node));
+        bzla_dumpsmt_dump_const_bv_value(bzla, ass, base, file);
+      }
     }
     fprintf(file, ")\n");
   }
@@ -267,7 +283,7 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
   if (bzla_node_is_const_array(node))
   {
     fprintf(file, "%6c", ' ');
-    bzla_dumpsmt_dump_const_value(
+    bzla_dumpsmt_dump_const_bv_value(
         bzla, bzla_model_get_bv(bzla, node->e[1]), base, file);
   }
   else
@@ -289,7 +305,7 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
         {
           if (args->arity > 1) fprintf(file, "\n%8c", ' ');
           fprintf(file, "(= %s_x%d ", s, x);
-          bzla_dumpsmt_dump_const_value(bzla, args->bv[i], base, file);
+          bzla_dumpsmt_dump_const_bv_value(bzla, args->bv[i], base, file);
           fprintf(file, ")%s", i + 1 == args->arity ? "" : " ");
         }
         if (args->arity > 1)
@@ -305,7 +321,7 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
         continue;
       }
       fprintf(file, " ");
-      bzla_dumpsmt_dump_const_value(bzla, assignment, base, file);
+      bzla_dumpsmt_dump_const_bv_value(bzla, assignment, base, file);
       fprintf(file, "\n");
       nparens += 1;
     }
@@ -322,7 +338,7 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
 
     /* print default value */
     fprintf(file, "%6c", ' ');
-    bzla_dumpsmt_dump_const_value(bzla, default_value, base, file);
+    bzla_dumpsmt_dump_const_bv_value(bzla, default_value, base, file);
     bzla_bv_free(bzla->mm, default_value);
   }
 
@@ -395,7 +411,7 @@ bzla_print_fun_model(
 /*------------------------------------------------------------------------*/
 
 void
-bzla_print_model_aufbv(Bzla *bzla, const char *format, FILE *file)
+bzla_print_model_aufbvfp(Bzla *bzla, const char *format, FILE *file)
 {
   assert(bzla);
   assert(bzla->last_sat_result == BZLA_RESULT_SAT);
@@ -416,9 +432,13 @@ bzla_print_model_aufbv(Bzla *bzla, const char *format, FILE *file)
   {
     cur = bzla_iter_hashptr_next(&it);
     if (bzla_node_is_fun(bzla_simplify_exp(bzla, cur)))
+    {
       bzla_print_fun_model(bzla, cur, format, base, file);
+    }
     else
-      bzla_print_bv_model(bzla, cur, format, base, file);
+    {
+      bzla_print_bvfp_model(bzla, cur, format, base, file);
+    }
   }
 
   if (!strcmp(format, "smt2")) fprintf(file, ")\n");
@@ -465,7 +485,7 @@ print_bv_value_smt2(
   }
   else
   {
-    bzla_dumpsmt_dump_const_value(bzla, ass, base, file);
+    bzla_dumpsmt_dump_const_bv_value(bzla, ass, base, file);
   }
   fprintf(file, ")");
 }
@@ -516,17 +536,17 @@ print_fun_value_smt2(
     {
       for (i = 0; i < args->arity; i++)
       {
-        bzla_dumpsmt_dump_const_value(bzla, args->bv[i], base, file);
+        bzla_dumpsmt_dump_const_bv_value(bzla, args->bv[i], base, file);
         fprintf(file, ")%s", i + 1 == args->arity ? "" : " ");
       }
       fprintf(file, ") ");
     }
     else
     {
-      bzla_dumpsmt_dump_const_value(bzla, args->bv[0], base, file);
+      bzla_dumpsmt_dump_const_bv_value(bzla, args->bv[0], base, file);
       fprintf(file, ") ");
     }
-    bzla_dumpsmt_dump_const_value(bzla, assignment, base, file);
+    bzla_dumpsmt_dump_const_bv_value(bzla, assignment, base, file);
     fprintf(file, ")");
   }
 

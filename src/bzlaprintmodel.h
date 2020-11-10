@@ -21,9 +21,9 @@ void bzla_print_node_model(Bzla* bzla,
                            FILE* file);
 void bzla_print_fun_model(
     Bzla* bzla, BzlaNode* node, const char* format, uint32_t base, FILE* file);
-void bzla_print_bv_model(
+void bzla_print_bvfp_model(
     Bzla* bzla, BzlaNode* node, const char* format, uint32_t base, FILE* file);
-void bzla_print_model_aufbv(Bzla* bzla, const char* format, FILE* file);
+void bzla_print_model_aufbvfp(Bzla* bzla, const char* format, FILE* file);
 
 void bzla_print_value_smt2(Bzla* bzla,
                            BzlaNode* exp,

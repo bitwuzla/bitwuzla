@@ -354,7 +354,7 @@ print_time_stats_aigprop_solver(BzlaAIGPropSolver *slv)
 static void
 print_model(BzlaAIGPropSolver *slv, const char *format, FILE *file)
 {
-  bzla_print_model_aufbv(slv->bzla, format, file);
+  bzla_print_model_aufbvfp(slv->bzla, format, file);
 }
 
 BzlaSolver *

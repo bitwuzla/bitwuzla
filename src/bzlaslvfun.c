@@ -3013,7 +3013,7 @@ print_time_stats_fun_solver(BzlaFunSolver *slv)
 static void
 print_model_fun_solver(BzlaFunSolver *slv, const char *format, FILE *file)
 {
-  bzla_print_model_aufbv(slv->bzla, format, file);
+  bzla_print_model_aufbvfp(slv->bzla, format, file);
 }
 
 BzlaSolver *

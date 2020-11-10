@@ -1104,7 +1104,7 @@ print_time_stats_prop_solver(BzlaPropSolver *slv)
 static void
 print_model_prop_solver(BzlaPropSolver *slv, const char *format, FILE *file)
 {
-  bzla_print_model_aufbv(slv->bzla, format, file);
+  bzla_print_model_aufbvfp(slv->bzla, format, file);
 }
 
 BzlaSolver *

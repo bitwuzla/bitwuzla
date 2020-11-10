@@ -1744,7 +1744,7 @@ print_time_stats_sls_solver(BzlaSLSSolver *slv)
 static void
 print_model_sls_solver(BzlaSLSSolver *slv, const char *format, FILE *file)
 {
-  bzla_print_model_aufbv(slv->bzla, format, file);
+  bzla_print_model_aufbvfp(slv->bzla, format, file);
 }
 
 BzlaSolver *
