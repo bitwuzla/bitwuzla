@@ -2638,28 +2638,20 @@ bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla)
   BZLA_CHECK_OPT_INCREMENTAL(bzla);
   BZLA_CHECK_UNSAT(bzla, "get unsat assumptions");
 
-  BitwuzlaTermPtrStack unsat_assumptions;
-  BZLA_INIT_STACK(bzla->mm, unsat_assumptions);
-  for (uint32_t i = 0; i < BZLA_COUNT_STACK(bitwuzla->d_unsat_assumptions); i++)
+  BZLA_RESET_STACK(bitwuzla->d_unsat_assumptions);
+
+  BzlaPtrHashTableIterator it;
+  bzla_iter_hashptr_init(&it, bzla->orig_assumptions);
+  while (bzla_iter_hashptr_has_next(&it))
   {
-    BitwuzlaTerm *assumption =
-        BZLA_PEEK_STACK(bitwuzla->d_unsat_assumptions, i);
-    if (assumption == NULL) continue;
-    BzlaNode *bzla_assumption = BZLA_IMPORT_BITWUZLA_TERM(assumption);
-    assert(bzla_hashptr_table_get(bzla->orig_assumptions, bzla_assumption));
+    BzlaNode *bzla_assumption = bzla_iter_hashptr_next(&it);
     if (bzla_failed_exp(bzla, bzla_assumption))
     {
-      BZLA_PUSH_STACK(unsat_assumptions, BZLA_EXPORT_BITWUZLA_TERM(assumption));
-    }
-    else
-    {
-      bzla_node_release(bzla, bzla_assumption);
+      BZLA_PUSH_STACK(bitwuzla->d_unsat_assumptions,
+                      BZLA_EXPORT_BITWUZLA_TERM(bzla_assumption));
     }
   }
-  BZLA_PUSH_STACK(unsat_assumptions, NULL);
-  BZLA_RELEASE_STACK(bitwuzla->d_unsat_assumptions);
-  bitwuzla->d_unsat_assumptions = unsat_assumptions;
-
+  BZLA_PUSH_STACK(bitwuzla->d_unsat_assumptions, NULL);
   return (const BitwuzlaTerm **) bitwuzla->d_unsat_assumptions.start;
 }
 

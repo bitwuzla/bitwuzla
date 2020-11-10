@@ -45,18 +45,28 @@ class TestApi : public TestBitwuzla
     d_bv_const8  = bitwuzla_mk_const(d_bzla, d_bv_sort8, "bv_const8");
     d_fp_const16 = bitwuzla_mk_const(d_bzla, d_fp_sort16, "fp_const16");
     d_rm_const   = bitwuzla_mk_const(d_bzla, d_rm_sort, "rm_const");
+
     d_fun        = bitwuzla_mk_const(d_bzla, d_fun_sort, "fun");
     d_fun_fp     = bitwuzla_mk_const(d_bzla, d_fun_sort_fp, "fun_fp");
     d_array_fpbv = bitwuzla_mk_const(d_bzla, d_arr_sort_fpbv, "array_fpbv");
     d_array      = bitwuzla_mk_const(d_bzla, d_arr_sort_bv, "array");
+
     d_var1       = bitwuzla_mk_var(d_bzla, d_bv_sort8, "var1");
     d_var2       = bitwuzla_mk_var(d_bzla, d_bv_sort8, "var2");
-    d_bvar       = bitwuzla_mk_var(d_bzla, d_bv_sort8, "bvar");
+    d_bv_var     = bitwuzla_mk_var(d_bzla, d_bv_sort8, "bv_var");
+    d_bool_var =
+        bitwuzla_mk_var(d_bzla, bitwuzla_mk_bool_sort(d_bzla), "bool_var");
 
     BitwuzlaTerm *lambda_body =
-        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, d_bvar, d_bv_const8);
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, d_bv_var, d_bv_const8);
     d_lambda =
-        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_LAMBDA, d_bvar, lambda_body);
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_LAMBDA, d_bv_var, lambda_body);
+    d_bool_lambda_body =
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, d_bool_var, d_true);
+    d_bool_lambda = bitwuzla_mk_term2(
+        d_bzla, BITWUZLA_KIND_LAMBDA, d_bool_var, d_bool_lambda_body);
+    d_bool_apply =
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_APPLY, d_true, d_bool_lambda);
 
     /* associated with other Bitwuzla instance */
     d_other_bzla            = bitwuzla_new();
@@ -68,6 +78,7 @@ class TestApi : public TestBitwuzla
     d_other_bv_zero8    = bitwuzla_mk_bv_zero(d_other_bzla, d_other_bv_sort8);
     d_other_arr_sort_bv = bitwuzla_mk_array_sort(
         d_other_bzla, d_other_bv_sort8, d_other_bv_sort8);
+    d_other_true = bitwuzla_mk_true(d_other_bzla);
   }
 
   /* sorts */
@@ -96,15 +107,21 @@ class TestApi : public TestBitwuzla
   BitwuzlaTerm *d_bv_const8;
   BitwuzlaTerm *d_fp_const16;
   BitwuzlaTerm *d_rm_const;
+
   BitwuzlaTerm *d_fun;
   BitwuzlaTerm *d_fun_fp;
   BitwuzlaTerm *d_array_fpbv;
   BitwuzlaTerm *d_array;
+
   BitwuzlaTerm *d_var1;
   BitwuzlaTerm *d_var2;
-  BitwuzlaTerm *d_bvar;
+  BitwuzlaTerm *d_bv_var;
+  BitwuzlaTerm *d_bool_var;
 
   BitwuzlaTerm *d_lambda;
+  BitwuzlaTerm *d_bool_lambda;
+  BitwuzlaTerm *d_bool_lambda_body;
+  BitwuzlaTerm *d_bool_apply;
 
   /* not associated with d_bzla */
   Bitwuzla *d_other_bzla;
@@ -115,6 +132,7 @@ class TestApi : public TestBitwuzla
   std::vector<const BitwuzlaSort *> d_other_fun_domain_sort;
   BitwuzlaTerm *d_other_bv_one1;
   BitwuzlaTerm *d_other_bv_zero8;
+  BitwuzlaTerm *d_other_true;
 
   /* error messages */
   const char *d_error_not_null = "must not be NULL";
@@ -128,15 +146,19 @@ class TestApi : public TestBitwuzla
   const char *d_error_unexp_fun_sort = "unexpected function sort";
   const char *d_error_zero           = "must be > 0";
   const char *d_error_bv_fit         = "does not fit into a bit-vector of size";
+  const char *d_error_exp_bool_term  = "expected boolean term";
   const char *d_error_exp_bv_term    = "expected bit-vector term";
   const char *d_error_exp_bv_value   = "expected bit-vector value";
   const char *d_error_exp_rm_term    = "expected rounding-mode term";
   const char *d_error_exp_arr_term   = "expected array term";
-  const char *d_error_exp_bool_term  = "expected boolean term";
+  const char *d_error_exp_assumption = "must be an assumption";
   const char *d_error_rm             = "invalid rounding mode";
   const char *d_error_unexp_arr_term = "unexpected array term";
   const char *d_error_unexp_fun_term = "unexpected function term";
-  const char *d_error_incremental    = "incremental usage not enabled";
+  const char *d_error_unexp_param_term = "term must not be parameterized";
+  const char *d_error_incremental      = "incremental usage not enabled";
+  const char *d_error_unsat            = "if input formula is not unsat";
+  const char *d_error_sat              = "if input formula is not sat";
 };
 
 TEST_F(TestApi, mk_array_sort)
@@ -995,7 +1017,8 @@ TEST_F(TestApi, mk_term_check_args)
 
   std::vector<const BitwuzlaTerm *> lambda_args2_inv_1 = {d_bv_const8,
                                                           d_bv_const8};
-  std::vector<const BitwuzlaTerm *> lambda_args2_inv_2 = {d_bvar, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> lambda_args2_inv_2 = {d_bv_var,
+                                                          d_bv_const8};
   std::vector<const BitwuzlaTerm *> lambda_args2_inv_3 = {d_var1, d_fun};
   std::vector<const BitwuzlaTerm *> lambda_args3_inv_1 = {
       d_var1, d_var1, d_bv_const8};
@@ -1043,7 +1066,7 @@ TEST_F(TestApi, mk_term_check_args)
 
   std::vector<const BitwuzlaTerm *> quant_args2_inv_1 = {d_true, d_true};
   std::vector<const BitwuzlaTerm *> quant_args2_inv_2 = {d_var1, d_bv_const8};
-  std::vector<const BitwuzlaTerm *> quant_args2_inv_3 = {d_bvar, d_bv_const8};
+  std::vector<const BitwuzlaTerm *> quant_args2_inv_3 = {d_bv_var, d_bv_const8};
   std::vector<const BitwuzlaTerm *> quant_args3_inv   = {
       d_var1, d_var1, d_bv_const8};
 
@@ -2097,6 +2120,120 @@ TEST_F(TestApi, pop)
   ASSERT_DEATH(bitwuzla_pop(nullptr, 2), d_error_not_null);
 
   ASSERT_NO_FATAL_FAILURE(bitwuzla_pop(d_bzla, 0));
+}
+
+TEST_F(TestApi, assert)
+{
+  ASSERT_DEATH(bitwuzla_assert(nullptr, d_true), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_assert(d_bzla, nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_assert(d_bzla, d_other_true), d_error_solver);
+  ASSERT_DEATH(bitwuzla_assert(d_bzla, d_bv_const8), d_error_exp_bool_term);
+
+  ASSERT_DEATH(bitwuzla_assert(d_bzla, d_bool_var), d_error_unexp_param_term);
+  ASSERT_DEATH(bitwuzla_assert(d_bzla, d_bool_lambda), d_error_exp_bool_term);
+  ASSERT_DEATH(bitwuzla_assert(d_bzla, d_bool_lambda_body),
+               d_error_unexp_param_term);
+
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_assert(d_bzla, d_bool_apply));
+
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_assert(d_bzla, d_bv_one1));
+}
+
+TEST_F(TestApi, assume)
+{
+  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bv_const1), d_error_incremental);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+
+  ASSERT_DEATH(bitwuzla_assume(nullptr, d_true), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_assume(d_bzla, nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_other_true), d_error_solver);
+  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bv_const8), d_error_exp_bool_term);
+
+  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bool_var), d_error_unexp_param_term);
+  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bool_lambda), d_error_exp_bool_term);
+  ASSERT_DEATH(bitwuzla_assume(d_bzla, d_bool_lambda_body),
+               d_error_unexp_param_term);
+
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_assume(d_bzla, d_bool_apply));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_assume(d_bzla, d_bv_one1));
+}
+
+TEST_F(TestApi, is_unsat_assumption)
+{
+  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1),
+               d_error_incremental);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+
+  ASSERT_DEATH(bitwuzla_is_unsat_assumption(nullptr, d_true), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, nullptr), d_error_not_null);
+
+  bitwuzla_assert(d_bzla, d_true);
+  bitwuzla_assume(d_bzla, d_bv_const1);
+  bitwuzla_check_sat(d_bzla);
+  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1),
+               d_error_unsat);
+
+  bitwuzla_assume(d_bzla, d_bv_const1);
+  bitwuzla_assume(d_bzla,
+                  bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_NOT, d_bv_const1));
+  bitwuzla_check_sat(d_bzla);
+  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_other_true),
+               d_error_solver);
+  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const8),
+               d_error_exp_bool_term);
+  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_true),
+               d_error_exp_assumption);
+
+  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_bool_var),
+               d_error_exp_assumption);
+  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_bool_lambda),
+               d_error_exp_bool_term);
+  ASSERT_DEATH(bitwuzla_is_unsat_assumption(d_bzla, d_bool_lambda_body),
+               d_error_exp_assumption);
+
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
+}
+
+TEST_F(TestApi, get_unsat_assumptions)
+{
+  ASSERT_DEATH(bitwuzla_get_unsat_assumptions(d_bzla), d_error_incremental);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+
+  ASSERT_DEATH(bitwuzla_get_unsat_assumptions(nullptr), d_error_not_null);
+
+  bitwuzla_assert(d_bzla, d_true);
+  bitwuzla_assume(d_bzla, d_bv_const1);
+  bitwuzla_check_sat(d_bzla);
+  ASSERT_DEATH(bitwuzla_get_unsat_assumptions(d_bzla), d_error_unsat);
+
+  BitwuzlaTerm *not_bv_const1 =
+      bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_NOT, d_bv_const1);
+  BitwuzlaTerm *and_bv_const1 =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_AND, d_true, d_bv_const1);
+  BitwuzlaTerm *eq_bv_const8 =
+      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, d_bv_const8, d_bv_zero8);
+  bitwuzla_assume(d_bzla, d_bv_const1);
+  bitwuzla_assume(d_bzla, not_bv_const1);
+  bitwuzla_assume(d_bzla, and_bv_const1);
+  bitwuzla_assume(d_bzla, eq_bv_const8);
+  bitwuzla_check_sat(d_bzla);
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, not_bv_const1));
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, and_bv_const1));
+  ASSERT_FALSE(bitwuzla_is_unsat_assumption(d_bzla, eq_bv_const8));
+  const BitwuzlaTerm **unsat_assumptions =
+      bitwuzla_get_unsat_assumptions(d_bzla);
+  size_t i = 0;
+  for (; unsat_assumptions[i] != nullptr; i++)
+  {
+    ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, unsat_assumptions[i]));
+  }
+  ASSERT_GT(i, 0);
+  for (i = 0; unsat_assumptions[i] != nullptr; i++)
+  {
+    bitwuzla_assert(d_bzla, unsat_assumptions[i]);
+  }
+  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
 }
 
 TEST_F(TestApi, sort_fun_get_domain_sorts)
