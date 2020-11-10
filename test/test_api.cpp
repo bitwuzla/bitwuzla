@@ -57,6 +57,12 @@ class TestApi : public TestBitwuzla
     d_bool_var =
         bitwuzla_mk_var(d_bzla, bitwuzla_mk_bool_sort(d_bzla), "bool_var");
 
+    d_not_bv_const1 = bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_NOT, d_bv_const1);
+    d_and_bv_const1 =
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_AND, d_true, d_bv_const1);
+    d_eq_bv_const8 =
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, d_bv_const8, d_bv_zero8);
+
     BitwuzlaTerm *lambda_body =
         bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, d_bv_var, d_bv_const8);
     d_lambda =
@@ -118,6 +124,9 @@ class TestApi : public TestBitwuzla
   BitwuzlaTerm *d_bv_var;
   BitwuzlaTerm *d_bool_var;
 
+  BitwuzlaTerm *d_not_bv_const1;
+  BitwuzlaTerm *d_and_bv_const1;
+  BitwuzlaTerm *d_eq_bv_const8;
   BitwuzlaTerm *d_lambda;
   BitwuzlaTerm *d_bool_lambda;
   BitwuzlaTerm *d_bool_lambda_body;
@@ -160,6 +169,64 @@ class TestApi : public TestBitwuzla
   const char *d_error_unsat            = "if input formula is not unsat";
   const char *d_error_sat              = "if input formula is not sat";
 };
+
+TEST_F(TestApi, set_option)
+{
+  Bitwuzla *bzla_inc   = bitwuzla_new();
+  Bitwuzla *bzla_dp    = bitwuzla_new();
+  Bitwuzla *bzla_just  = bitwuzla_new();
+  Bitwuzla *bzla_mg    = bitwuzla_new();
+  Bitwuzla *bzla_non   = bitwuzla_new();
+  Bitwuzla *bzla_uc    = bitwuzla_new();
+  Bitwuzla *bzla_ucopt = bitwuzla_new();
+
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_set_option(bzla_inc, BITWUZLA_OPT_INCREMENTAL, 1));
+  ASSERT_DEATH(bitwuzla_set_option(bzla_inc, BITWUZLA_OPT_UCOPT, 1),
+               "unconstrained optimization cannot be enabled in incremental "
+               "mode");
+  bitwuzla_check_sat(bzla_inc);
+  ASSERT_DEATH(bitwuzla_set_option(bzla_inc, BITWUZLA_OPT_INCREMENTAL, 0),
+               "enabling/disabling incremental usage after having called "
+               "'bitwuzla_check_sat' is not allowed");
+
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_set_option(bzla_dp, BITWUZLA_OPT_FUN_DUAL_PROP, 1));
+  ASSERT_DEATH(bitwuzla_set_option(bzla_dp, BITWUZLA_OPT_FUN_JUST, 1),
+               "enabling multiple optimization techniques is not allowed");
+  ASSERT_DEATH(
+      bitwuzla_set_option(bzla_dp, BITWUZLA_OPT_NONDESTR_SUBST, 1),
+      "non-destructive substitution is not supported with dual propagation");
+
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_set_option(bzla_just, BITWUZLA_OPT_FUN_JUST, 1));
+  ASSERT_DEATH(bitwuzla_set_option(bzla_just, BITWUZLA_OPT_FUN_DUAL_PROP, 1),
+               "enabling multiple optimization techniques is not allowed");
+
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_set_option(bzla_mg, BITWUZLA_OPT_PRODUCE_MODELS, 1));
+  ASSERT_DEATH(bitwuzla_set_option(bzla_mg, BITWUZLA_OPT_UCOPT, 1),
+               "unconstrained optimization cannot be enabled if model "
+               "generation is enabled");
+
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_set_option(bzla_non, BITWUZLA_OPT_NONDESTR_SUBST, 1));
+  ASSERT_DEATH(
+      bitwuzla_set_option(bzla_non, BITWUZLA_OPT_FUN_DUAL_PROP, 1),
+      "non-destructive substitution is not supported with dual propagation");
+
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_set_option(bzla_ucopt, BITWUZLA_OPT_UCOPT, 1));
+  ASSERT_DEATH(bitwuzla_set_option(bzla_ucopt, BITWUZLA_OPT_INCREMENTAL, 1),
+               "incremental solving cannot be enabled if unconstrained "
+               "optimization is enabled");
+  ASSERT_DEATH(bitwuzla_set_option(bzla_ucopt, BITWUZLA_OPT_PRODUCE_MODELS, 1),
+               "model generation cannot be enabled if unconstrained "
+               "optimization is enabled");
+
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_set_option(bzla_uc, BITWUZLA_OPT_PRODUCE_UNSAT_CORES, 1));
+}
 
 TEST_F(TestApi, mk_array_sort)
 {
@@ -2206,21 +2273,15 @@ TEST_F(TestApi, get_unsat_assumptions)
   bitwuzla_check_sat(d_bzla);
   ASSERT_DEATH(bitwuzla_get_unsat_assumptions(d_bzla), d_error_unsat);
 
-  BitwuzlaTerm *not_bv_const1 =
-      bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_NOT, d_bv_const1);
-  BitwuzlaTerm *and_bv_const1 =
-      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_AND, d_true, d_bv_const1);
-  BitwuzlaTerm *eq_bv_const8 =
-      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, d_bv_const8, d_bv_zero8);
   bitwuzla_assume(d_bzla, d_bv_const1);
-  bitwuzla_assume(d_bzla, not_bv_const1);
-  bitwuzla_assume(d_bzla, and_bv_const1);
-  bitwuzla_assume(d_bzla, eq_bv_const8);
+  bitwuzla_assume(d_bzla, d_not_bv_const1);
+  bitwuzla_assume(d_bzla, d_and_bv_const1);
+  bitwuzla_assume(d_bzla, d_eq_bv_const8);
   bitwuzla_check_sat(d_bzla);
   ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
-  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, not_bv_const1));
-  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, and_bv_const1));
-  ASSERT_FALSE(bitwuzla_is_unsat_assumption(d_bzla, eq_bv_const8));
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_not_bv_const1));
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_and_bv_const1));
+  ASSERT_FALSE(bitwuzla_is_unsat_assumption(d_bzla, d_eq_bv_const8));
   const BitwuzlaTerm **unsat_ass = bitwuzla_get_unsat_assumptions(d_bzla);
   size_t i = 0;
   for (; unsat_ass[i] != nullptr; i++)
@@ -2250,29 +2311,84 @@ TEST_F(TestApi, get_unsat_core)
   bitwuzla_check_sat(d_bzla);
   ASSERT_DEATH(bitwuzla_get_unsat_core(d_bzla), d_error_unsat);
 
-  BitwuzlaTerm *not_bv_const1 =
-      bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_NOT, d_bv_const1);
-  BitwuzlaTerm *and_bv_const1 =
-      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_AND, d_true, d_bv_const1);
-  BitwuzlaTerm *eq_bv_const8 =
-      bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, d_bv_const8, d_bv_zero8);
   bitwuzla_assume(d_bzla, d_bv_const1);
-  bitwuzla_assert(d_bzla, not_bv_const1);
-  bitwuzla_assume(d_bzla, and_bv_const1);
-  bitwuzla_assert(d_bzla, eq_bv_const8);
+  bitwuzla_assert(d_bzla, d_not_bv_const1);
+  bitwuzla_assume(d_bzla, d_and_bv_const1);
+  bitwuzla_assert(d_bzla, d_eq_bv_const8);
   bitwuzla_check_sat(d_bzla);
   ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
-  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, and_bv_const1));
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_and_bv_const1));
   const BitwuzlaTerm **unsat_core = bitwuzla_get_unsat_core(d_bzla);
   const BitwuzlaTerm **unsat_ass  = bitwuzla_get_unsat_assumptions(d_bzla);
-  ASSERT_TRUE(unsat_core[0] == not_bv_const1);
+  ASSERT_TRUE(unsat_core[0] == d_not_bv_const1);
   ASSERT_TRUE(unsat_core[1] == nullptr);
   ASSERT_TRUE(unsat_ass[0] == d_bv_const1);
-  ASSERT_TRUE(unsat_ass[1] == and_bv_const1);
+  ASSERT_TRUE(unsat_ass[1] == d_and_bv_const1);
   ASSERT_TRUE(unsat_ass[2] == nullptr);
   ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
   bitwuzla_assert(d_bzla, unsat_ass[0]);
   ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
+}
+
+TEST_F(TestApi, fixate_assumptions)
+{
+  ASSERT_DEATH(bitwuzla_fixate_assumptions(d_bzla), d_error_incremental);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+
+  ASSERT_DEATH(bitwuzla_fixate_assumptions(nullptr), d_error_not_null);
+
+  bitwuzla_assume(d_bzla, d_bv_const1);
+  bitwuzla_assert(d_bzla, d_not_bv_const1);
+  bitwuzla_assume(d_bzla, d_and_bv_const1);
+  bitwuzla_assert(d_bzla, d_eq_bv_const8);
+  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_and_bv_const1));
+  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
+  bitwuzla_assume(d_bzla, d_bv_const1);
+  bitwuzla_assume(d_bzla, d_and_bv_const1);
+  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
+  bitwuzla_fixate_assumptions(d_bzla);
+  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
+}
+
+TEST_F(TestApi, reset_assumptions)
+{
+  ASSERT_DEATH(bitwuzla_reset_assumptions(d_bzla), d_error_incremental);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+
+  ASSERT_DEATH(bitwuzla_reset_assumptions(nullptr), d_error_not_null);
+
+  bitwuzla_assume(d_bzla, d_bv_const1);
+  bitwuzla_assert(d_bzla, d_not_bv_const1);
+  bitwuzla_assume(d_bzla, d_and_bv_const1);
+  bitwuzla_assert(d_bzla, d_eq_bv_const8);
+  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_UNSAT);
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
+  ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_and_bv_const1));
+  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
+  bitwuzla_assume(d_bzla, d_bv_const1);
+  bitwuzla_assume(d_bzla, d_and_bv_const1);
+  bitwuzla_reset_assumptions(d_bzla);
+  ASSERT_EQ(bitwuzla_check_sat(d_bzla), BITWUZLA_SAT);
+}
+
+TEST_F(TestApi, simplify)
+{
+  ASSERT_DEATH(bitwuzla_simplify(nullptr), d_error_not_null);
+  bitwuzla_assert(d_bzla, d_bv_const1);
+  bitwuzla_assert(d_bzla, d_and_bv_const1);
+  ASSERT_TRUE(bitwuzla_simplify(d_bzla) == BITWUZLA_SAT);
+}
+
+TEST_F(TestApi, check_sat)
+{
+  ASSERT_DEATH(bitwuzla_check_sat(nullptr), d_error_not_null);
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_check_sat(d_bzla));
+  ASSERT_DEATH(bitwuzla_check_sat(d_bzla), d_error_incremental);
+
+  bitwuzla_set_option(d_other_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_check_sat(d_other_bzla));
 }
 
 TEST_F(TestApi, sort_fun_get_domain_sorts)

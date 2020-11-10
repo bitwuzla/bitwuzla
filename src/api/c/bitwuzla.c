@@ -1011,50 +1011,69 @@ bitwuzla_set_option(Bitwuzla *bitwuzla, BitwuzlaOption option, uint32_t value)
   BZLA_CHECK_OPTION(bzla, opt);
   BZLA_CHECK_OPTION_VALUE(bzla, opt, value);
 
-#if 0
+  if (option == BITWUZLA_OPT_INCREMENTAL)
+  {
+    BZLA_ABORT(bzla->bzla_sat_bzla_called > 0,
+               "enabling/disabling incremental usage after having called "
+               "'bitwuzla_check_sat' is not allowed");
+  }
+
   if (value)
   {
-    if (opt == BZLA_OPT_INCREMENTAL)
+    if (option == BITWUZLA_OPT_INCREMENTAL)
     {
-      BZLA_ABORT (bzla->bzla_sat_bzla_called > 0,
-                      "enabling/disabling incremental usage must be done "
-                      "before calling 'bitwuzla_check_sat'");
-      BZLA_ABORT (bzla_opt_get (bzla, BZLA_OPT_UCOPT),
-                      "incremental solving cannot be enabled "
-                      "if unconstrained optimization is enabled");
+      BZLA_ABORT(
+          bzla_opt_get(bzla, BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_UCOPT)),
+          "incremental solving cannot be enabled "
+          "if unconstrained optimization is enabled");
     }
-    else if (opt == BZLA_OPT_UCOPT)
+    else if (option == BITWUZLA_OPT_UCOPT)
     {
-      BZLA_ABORT (bzla_opt_get (bzla, BZLA_OPT_MODEL_GEN),
-                      "unconstrained optimization cannot be enabled "
-                      "if model generation is enabled");
-      BZLA_ABORT (bzla_opt_get (bzla, BZLA_OPT_INCREMENTAL),
-                      "unconstrained optimization cannot be enabled "
-                      "in incremental mode");
+      BZLA_ABORT(
+          bzla_opt_get(
+              bzla, BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_PRODUCE_MODELS)),
+          "unconstrained optimization cannot be enabled "
+          "if model generation is enabled");
+      BZLA_ABORT(
+          bzla_opt_get(bzla,
+                       BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_INCREMENTAL)),
+          "unconstrained optimization cannot be enabled "
+          "in incremental mode");
     }
-    else if (opt == BZLA_OPT_FUN_DUAL_PROP)
+    else if (option == BITWUZLA_OPT_FUN_DUAL_PROP)
     {
-      BZLA_ABORT (
-          bzla_opt_get (bzla, BZLA_OPT_FUN_JUST),
+      BZLA_ABORT(bzla_opt_get(
+                     bzla, BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_FUN_JUST)),
+                 "enabling multiple optimization techniques is not allowed");
+      BZLA_ABORT(
+          bzla_opt_get(
+              bzla, BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_NONDESTR_SUBST)),
+          "non-destructive substitution is not supported with dual "
+          "propagation");
+    }
+    else if (option == BITWUZLA_OPT_FUN_JUST)
+    {
+      BZLA_ABORT(
+          bzla_opt_get(bzla,
+                       BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_FUN_DUAL_PROP)),
           "enabling multiple optimization techniques is not allowed");
-      BZLA_ABORT (bzla_opt_get (bzla, BZLA_OPT_NONDESTR_SUBST),
-                      "Non-destructive substitution is not supported with dual "
-                      "propagation");
     }
-    else if (opt == BZLA_OPT_FUN_JUST)
+    else if (option == BITWUZLA_OPT_NONDESTR_SUBST)
     {
-      BZLA_ABORT (
-          bzla_opt_get (bzla, BZLA_OPT_FUN_DUAL_PROP),
-          "enabling multiple optimization techniques is not allowed");
+      BZLA_ABORT(
+          bzla_opt_get(bzla,
+                       BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_FUN_DUAL_PROP)),
+          "non-destructive substitution is not supported with dual "
+          "propagation");
     }
-    else if (opt == BZLA_OPT_NONDESTR_SUBST)
+    else if (option == BITWUZLA_OPT_PRODUCE_MODELS)
     {
-      BZLA_ABORT (bzla_opt_get (bzla, BZLA_OPT_FUN_DUAL_PROP),
-                      "non-destructive substitution is not supported with dual "
-                      "propagation");
+      BZLA_ABORT(
+          bzla_opt_get(bzla, BZLA_IMPORT_BITWUZLA_OPTION(BITWUZLA_OPT_UCOPT)),
+          "model generation cannot be enabled "
+          "if unconstrained optimization is enabled");
     }
   }
-#endif
   uint32_t val = bzla_opt_get(bzla, opt);
 
   if (opt == BZLA_OPT_SAT_ENGINE)
