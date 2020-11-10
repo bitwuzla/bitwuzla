@@ -1429,7 +1429,7 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
     case BITWUZLA_BV_BASE_BIN: {
       for (const char *p = value; *p; p++)
       {
-        BZLA_ABORT(*p != '1' && *p != '0', "invalid binary string");
+        BZLA_ABORT(*p != '1' && *p != '0', "invalid binary string '%s'", value);
       }
       BZLA_ABORT(size < strlen(value),
                  "value '%s' does not fit into a bit-vector of size %u",
@@ -1447,11 +1447,17 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
       break;
     }
 
-    case BITWUZLA_BV_BASE_DEC:
-      for (const char *p = value; *p; p++)
+    case BITWUZLA_BV_BASE_DEC: {
+      const char *p = value;
+      if (*p && p[0] == '-')
+      {
+        ++p;
+      }
+      BZLA_ABORT(!*p, "invalid decimal string '%s'", value);
+      for (; *p; p++)
       {
         /* 48-57: 0-9 */
-        BZLA_ABORT(*p < 48 || *p > 57, "invalid decimal string");
+        BZLA_ABORT(*p < '0' || *p > '9', "invalid decimal string '%s'", value);
       }
       BZLA_ABORT(!bzla_util_check_dec_to_bv(bzla->mm, value, size),
                  "value '%s' does not fit into a bit-vector of size %u",
@@ -1459,14 +1465,19 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
                  size);
       bv = bzla_bv_constd(bzla->mm, value, size);
       break;
+    }
 
-    case BITWUZLA_BV_BASE_HEX:
+    default:
+      BZLA_ABORT(base != BITWUZLA_BV_BASE_HEX,
+                 "invalid base for numerical string '%s'",
+                 value);
       for (const char *p = value; *p; p++)
       {
         /* 48-57: 0-9, 65-70: A-F, 97-102: a-f */
         BZLA_ABORT((*p < 48 || *p > 57) && (*p < 65 || *p > 70)
                        && (*p < 97 || *p > 102),
-                   "invalid hex string");
+                   "invalid hex string '%s'",
+                   value);
       }
       BZLA_ABORT(!bzla_util_check_hex_to_bv(bzla->mm, value, size),
                  "value '%s' does not fit into a bit-vector of size %u",
@@ -1474,8 +1485,6 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
                  size);
       bv = bzla_bv_consth(bzla->mm, value, size);
       break;
-
-    default: BZLA_ABORT(true, "invalid base for numerical string");
   }
   BzlaNode *res = bzla_exp_bv_const(bzla, bv);
   assert(bzla_node_get_sort_id(res) == bzla_sort);
