@@ -284,6 +284,7 @@ bool bitwuzla_terminate(Bitwuzla *bitwuzla);
 void bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
                                        int32_t (*fun)(void *),
                                        void *state);
+void *bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla);
 
 void bitwuzla_set_abort_callback(void (*fun)(const char *msg));
 

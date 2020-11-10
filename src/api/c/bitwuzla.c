@@ -993,6 +993,13 @@ bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
   bzla_set_term(BZLA_IMPORT_BITWUZLA(bitwuzla), fun, state);
 }
 
+void *
+bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  return bzla_get_term_state(BZLA_IMPORT_BITWUZLA(bitwuzla));
+}
+
 void
 bitwuzla_set_abort_callback(void (*fun)(const char *msg))
 {

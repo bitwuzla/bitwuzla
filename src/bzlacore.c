@@ -821,6 +821,13 @@ bzla_set_term(Bzla *bzla, int32_t (*fun)(void *), void *state)
   bzla_sat_mgr_set_term(smgr, terminate_aux_bzla, bzla);
 }
 
+void *
+bzla_get_term_state(Bzla *bzla)
+{
+  assert(bzla);
+  return bzla->cbs.term.state;
+}
+
 static void
 release_all_exp_refs(Bzla *bzla, bool internal)
 {
