@@ -24,6 +24,7 @@
 /* -------------------------------------------------------------------------- */
 
 BZLA_DECLARE_STACK(BitwuzlaTermPtr, BitwuzlaTerm *);
+BZLA_DECLARE_STACK(BitwuzlaTermConstPtr, const BitwuzlaTerm *);
 BZLA_DECLARE_STACK(BitwuzlaSortPtr, BitwuzlaSort *);
 
 /* -------------------------------------------------------------------------- */
@@ -31,6 +32,8 @@ BZLA_DECLARE_STACK(BitwuzlaSortPtr, BitwuzlaSort *);
 struct Bitwuzla
 {
   /* Non-simplified assumptions as assumed via bitwuzla_assume. */
+  BitwuzlaTermConstPtrStack d_assumptions;
+  /* Unsat assumptions of current bitwuzla_get_unsat_assumptions query. */
   BitwuzlaTermPtrStack d_unsat_assumptions;
   /* Unsat core of the current bitwuzla_get_unsat_core query. */
   BitwuzlaTermPtrStack d_unsat_core;
@@ -807,7 +810,7 @@ mk_term_chained(Bzla *bzla,
   return res;
 }
 
-BitwuzlaSort *
+static BitwuzlaSort *
 wrap_sort(Bitwuzla *bitwuzla, BzlaSortId bzla_sort)
 {
   assert(bitwuzla);
@@ -826,6 +829,17 @@ wrap_sort(Bitwuzla *bitwuzla, BzlaSortId bzla_sort)
     bzla_hashint_map_add(bitwuzla->d_sort_map, bzla_sort)->as_ptr = res;
   }
   return res;
+}
+
+static void
+reset_assumptions(Bitwuzla *bitwuzla)
+{
+  assert(bitwuzla);
+  assert(bitwuzla->d_bzla);
+  if (bitwuzla->d_bzla->valid_assignments)
+  {
+    BZLA_RESET_STACK(bitwuzla->d_assumptions);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -872,6 +886,7 @@ bitwuzla_new(void)
   res->d_bzla           = bzla_new();
   res->d_bzla->bitwuzla = res;
   res->d_sort_map       = bzla_hashint_map_new(mm);
+  BZLA_INIT_STACK(mm, res->d_assumptions);
   BZLA_INIT_STACK(mm, res->d_unsat_assumptions);
   BZLA_INIT_STACK(mm, res->d_unsat_core);
   BZLA_INIT_STACK(mm, res->d_fun_domain_sorts);
@@ -893,6 +908,7 @@ bitwuzla_delete(Bitwuzla *bitwuzla)
     BZLA_DELETE(bitwuzla->d_mm, sort);
   }
   bzla_hashint_map_delete(bitwuzla->d_sort_map);
+  BZLA_RELEASE_STACK(bitwuzla->d_assumptions);
   BZLA_RELEASE_STACK(bitwuzla->d_unsat_assumptions);
   BZLA_RELEASE_STACK(bitwuzla->d_unsat_core);
   BZLA_RELEASE_STACK(bitwuzla->d_fun_domain_sorts);
@@ -2567,6 +2583,8 @@ bitwuzla_assert(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(term);
 
+  reset_assumptions(bitwuzla);
+
   Bzla *bzla          = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
@@ -2598,6 +2616,8 @@ bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(term);
 
+  reset_assumptions(bitwuzla);
+
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BZLA_CHECK_OPT_INCREMENTAL(bzla);
 
@@ -2608,6 +2628,7 @@ bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
   BZLA_CHECK_TERM_NOT_IS_PARAMETERIZED(bzla_term);
 
   bzla_assume_exp(bzla, bzla_term);
+  BZLA_PUSH_STACK(bitwuzla->d_assumptions, term);
 }
 
 bool
@@ -2640,11 +2661,10 @@ bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla)
 
   BZLA_RESET_STACK(bitwuzla->d_unsat_assumptions);
 
-  BzlaPtrHashTableIterator it;
-  bzla_iter_hashptr_init(&it, bzla->orig_assumptions);
-  while (bzla_iter_hashptr_has_next(&it))
+  for (size_t i = 0; i < BZLA_COUNT_STACK(bitwuzla->d_assumptions); i++)
   {
-    BzlaNode *bzla_assumption = bzla_iter_hashptr_next(&it);
+    BzlaNode *bzla_assumption =
+        BZLA_IMPORT_BITWUZLA_TERM(BZLA_PEEK_STACK(bitwuzla->d_assumptions, i));
     if (bzla_failed_exp(bzla, bzla_assumption))
     {
       BZLA_PUSH_STACK(bitwuzla->d_unsat_assumptions,
@@ -2708,6 +2728,8 @@ bitwuzla_simplify(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
 
+  reset_assumptions(bitwuzla);
+
   Bzla *bzla                = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSolverResult bzla_res = bzla_simplify(bzla);
   if (bzla_res == BZLA_RESULT_SAT) return BITWUZLA_SAT;
@@ -2720,6 +2742,8 @@ BitwuzlaResult
 bitwuzla_check_sat(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  reset_assumptions(bitwuzla);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
   if (bzla->bzla_sat_bzla_called > 0)
