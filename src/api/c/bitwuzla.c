@@ -1426,7 +1426,7 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
   BzlaBitVector *bv;
   switch (base)
   {
-    case BITWUZLA_BV_BASE_BIN:
+    case BITWUZLA_BV_BASE_BIN: {
       for (const char *p = value; *p; p++)
       {
         BZLA_ABORT(*p != '1' && *p != '0', "invalid binary string");
@@ -1435,8 +1435,17 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
                  "value '%s' does not fit into a bit-vector of size %u",
                  value,
                  size);
-      bv = bzla_bv_char_to_bv(bzla->mm, value);
+      bv               = bzla_bv_char_to_bv(bzla->mm, value);
+      uint32_t bv_size = bzla_bv_get_width(bv);
+
+      if (bv_size < size)
+      {
+        BzlaBitVector *ext = bzla_bv_uext(bzla->mm, bv, size - bv_size);
+        bzla_bv_free(bzla->mm, bv);
+        bv = ext;
+      }
       break;
+    }
 
     case BITWUZLA_BV_BASE_DEC:
       for (const char *p = value; *p; p++)
