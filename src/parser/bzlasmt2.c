@@ -5887,12 +5887,13 @@ read_command_smt2(BzlaSMT2Parser *parser)
       fflush(parser->outfile);
       break;
 
-    case BZLA_GET_UNSAT_ASSUMPTIONS_TAG_SMT2:
+    case BZLA_GET_UNSAT_ASSUMPTIONS_TAG_SMT2: {
       if (!read_rpar_smt2(parser, " after 'get-unsat-assumptions'")) return 0;
       if (parser->res->result != BITWUZLA_UNSAT) break;
       fputc('(', parser->outfile);
-      failed_assumptions = bitwuzla_get_unsat_assumptions(bitwuzla);
-      for (i = 0; failed_assumptions[i] != 0; i++)
+      size_t size;
+      failed_assumptions = bitwuzla_get_unsat_assumptions(bitwuzla, &size);
+      for (i = 0; i < size; ++i)
       {
         if (i > 0) fputc(' ', parser->outfile);
         const char *symbol = bitwuzla_term_get_symbol(failed_assumptions[i]);
@@ -5909,15 +5910,17 @@ read_command_smt2(BzlaSMT2Parser *parser)
       fputs(")\n", parser->outfile);
       fflush(parser->outfile);
       break;
+    }
 
-    case BZLA_GET_UNSAT_CORE_TAG_SMT2:
+    case BZLA_GET_UNSAT_CORE_TAG_SMT2: {
       if (!read_rpar_smt2(parser, " after 'get-unsat-assumptions'")) return 0;
       if (parser->res->result != BITWUZLA_UNSAT) break;
       fputc('(', parser->outfile);
-      unsat_core = bitwuzla_get_unsat_core(bitwuzla);
+      size_t size;
+      unsat_core = bitwuzla_get_unsat_core(bitwuzla, &size);
       const char *sym;
       bool printed_first = false;
-      for (i = 0; unsat_core[i] != 0; i++)
+      for (i = 0; i < size; ++i)
       {
         sym = bitwuzla_term_get_symbol(unsat_core[i]);
         if (!sym) continue;
@@ -5932,6 +5935,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
       fputs(")\n", parser->outfile);
       fflush(parser->outfile);
       break;
+    }
 
     case BZLA_GET_VALUE_TAG_SMT2:
       if (!read_lpar_smt2(parser, " after 'get-value'")) return 0;

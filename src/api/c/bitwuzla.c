@@ -2677,9 +2677,10 @@ bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
 }
 
 const BitwuzlaTerm **
-bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla)
+bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(size);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BZLA_CHECK_OPT_INCREMENTAL(bzla);
@@ -2697,14 +2698,15 @@ bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla)
                       BZLA_EXPORT_BITWUZLA_TERM(bzla_assumption));
     }
   }
-  BZLA_PUSH_STACK(bitwuzla->d_unsat_assumptions, NULL);
+  *size = BZLA_COUNT_STACK(bitwuzla->d_unsat_assumptions);
   return (const BitwuzlaTerm **) bitwuzla->d_unsat_assumptions.start;
 }
 
 const BitwuzlaTerm **
-bitwuzla_get_unsat_core(Bitwuzla *bitwuzla)
+bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(size);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BZLA_CHECK_OPT_INCREMENTAL(bzla);
@@ -2725,7 +2727,7 @@ bitwuzla_get_unsat_core(Bitwuzla *bitwuzla)
       bzla_node_inc_ext_ref_counter(bzla, cur);
     }
   }
-  BZLA_PUSH_STACK(bitwuzla->d_unsat_core, NULL);
+  *size = BZLA_COUNT_STACK(bitwuzla->d_unsat_core);
   return (const BitwuzlaTerm **) bitwuzla->d_unsat_core.start;
 }
 

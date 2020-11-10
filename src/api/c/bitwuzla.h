@@ -414,8 +414,9 @@ void bitwuzla_assert(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 void bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 
-const BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla);
-const BitwuzlaTerm **bitwuzla_get_unsat_core(Bitwuzla *bitwuzla);
+const BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla,
+                                                    size_t *size);
+const BitwuzlaTerm **bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
 
 void bitwuzla_fixate_assumptions(Bitwuzla *bitwuzla);
 void bitwuzla_reset_assumptions(Bitwuzla *bitwuzla);
