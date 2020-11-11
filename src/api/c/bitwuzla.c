@@ -3638,8 +3638,7 @@ bitwuzla_term_is_fp_value_nan(const BitwuzlaTerm *term)
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  return bzla_node_is_fp_const_neg_inf(bzla_node_get_bzla(bzla_term),
-                                       bzla_term);
+  return bzla_node_is_fp_const_nan(bzla_node_get_bzla(bzla_term), bzla_term);
 }
 
 bool
@@ -3657,6 +3656,7 @@ void
 bitwuzla_term_dump(const BitwuzlaTerm *term, const char *format, FILE *file)
 {
   BZLA_CHECK_ARG_NOT_NULL(term);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(format);
   BZLA_CHECK_ARG_NOT_NULL(file);
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
@@ -3672,7 +3672,8 @@ bitwuzla_term_dump(const BitwuzlaTerm *term, const char *format, FILE *file)
   }
   else
   {
-    BZLA_ABORT(true, "unknown format '%s', expected one of 'smt2' or 'bzla'");
+    BZLA_ABORT(
+        true, "unknown format '%s', expected one of 'smt2' or 'bzla'", format);
   }
 }
 
