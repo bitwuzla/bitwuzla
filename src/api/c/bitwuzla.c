@@ -2820,12 +2820,12 @@ void
 bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(format);
   BZLA_CHECK_ARG_NOT_NULL(file);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BZLA_WARN(bzla->assumptions->count > 0,
-            "dumping in incremental mode only captures the current state "
-            "of the input formula without assumptions");
+  BZLA_ABORT(bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL),
+             "dumping in incremental mode is currently not supported");
   if (strcmp(format, "smt2") == 0)
   {
     bzla_dumpsmt_dump(bzla, file);
@@ -2846,7 +2846,8 @@ bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file)
   {
     BZLA_ABORT(true,
                "unknown format '%s', expected one of 'smt2', 'bzla', "
-               "'aiger_ascii' or 'aiger_binary'");
+               "'aiger_ascii' or 'aiger_binary'",
+               format);
   }
 }
 
@@ -2865,10 +2866,11 @@ bitwuzla_parse(Bitwuzla *bitwuzla,
   BZLA_CHECK_ARG_NOT_NULL(outfile);
   BZLA_CHECK_ARG_NOT_NULL(error_msg);
   BZLA_CHECK_ARG_NOT_NULL(parsed_status);
+  BZLA_CHECK_ARG_NOT_NULL(parsed_smt2);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BZLA_ABORT(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
-             "file parsing must be done before creating expressions");
+             "file parsing after having created expressions is not allowed");
   int32_t bzla_res = bzla_parse(bitwuzla,
                                 infile,
                                 infile_name,
@@ -2892,6 +2894,7 @@ bitwuzla_parse_format(Bitwuzla *bitwuzla,
                       int32_t *parsed_status)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(format);
   BZLA_CHECK_ARG_NOT_NULL(infile);
   BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(infile_name);
   BZLA_CHECK_ARG_NOT_NULL(outfile);
@@ -2900,7 +2903,7 @@ bitwuzla_parse_format(Bitwuzla *bitwuzla,
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BZLA_ABORT(BZLA_COUNT_STACK(bzla->nodes_id_table) > 2,
-             "file parsing must be done before creating expressions");
+             "file parsing after having created expressions is not allowed");
   int32_t bzla_res = 0;
   if (strcmp(format, "smt2") == 0)
   {

@@ -190,6 +190,7 @@ class TestApi : public TestBitwuzla
   const char *d_error_produce_models   = "model production not enabled";
   const char *d_error_unsat            = "if input formula is not unsat";
   const char *d_error_sat              = "if input formula is not sat";
+  const char *d_error_format           = "unknown format";
   const char *d_error_inc_quant =
       "incremental solving is currently not supported with quantifiers";
 };
@@ -2454,6 +2455,8 @@ TEST_F(TestApi, print_model)
   ASSERT_DEATH(bitwuzla_print_model(nullptr, "btor", stdout), d_error_not_null);
   ASSERT_DEATH(bitwuzla_print_model(d_bzla, nullptr, stdout), d_error_exp_str);
   ASSERT_DEATH(bitwuzla_print_model(d_bzla, "smt2", nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_print_model(d_bzla, "asdf", stdout),
+               "invalid model output format");
 
   bitwuzla_assert(d_bzla, d_bv_const1);
   bitwuzla_assume(d_bzla, d_not_bv_const1);
@@ -2469,6 +2472,187 @@ TEST_F(TestApi, print_model)
   ASSERT_NO_FATAL_FAILURE(bitwuzla_print_model(d_other_bzla, "btor", stdout));
   ASSERT_NO_FATAL_FAILURE(bitwuzla_print_model(d_other_bzla, "smt2", stdout));
 }
+
+TEST_F(TestApi, dump_formula)
+{
+  ASSERT_DEATH(bitwuzla_dump_formula(nullptr, "btor", stdout),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_dump_formula(d_bzla, nullptr, stdout), d_error_exp_str);
+  ASSERT_DEATH(bitwuzla_dump_formula(d_bzla, "smt2", nullptr),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_dump_formula(d_bzla, "asdf", stdout), d_error_format);
+
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+
+  bitwuzla_assert(d_bzla, d_bv_const1);
+  bitwuzla_assert(
+      d_bzla,
+      bitwuzla_mk_term2(
+          d_bzla,
+          BITWUZLA_KIND_EQUAL,
+          bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_APPLY, d_bv_const8, d_lambda),
+          d_bv_zero8));
+
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(d_bzla, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(d_bzla, "smt2", stdout));
+
+  bitwuzla_assert(d_other_bzla, d_other_exists);
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(d_other_bzla, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(d_other_bzla, "smt2", stdout));
+  bitwuzla_set_option(d_other_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
+  ASSERT_DEATH(bitwuzla_dump_formula(d_other_bzla, "btor", stdout),
+               "dumping in incremental mode is currently not supported");
+}
+
+TEST_F(TestApi, parse)
+{
+  bool is_smt2;
+  int32_t status;
+  char *error_msg;
+  std::string infile_name = "fp_regr1.smt2";
+  std::stringstream ss;
+  ss << BZLA_OUT_DIR << infile_name;
+  FILE *infile = fopen(ss.str().c_str(), "r");
+
+  ASSERT_DEATH(bitwuzla_parse(nullptr,
+                              infile,
+                              infile_name.c_str(),
+                              stdout,
+                              &error_msg,
+                              &status,
+                              &is_smt2),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parse(d_bzla,
+                              nullptr,
+                              infile_name.c_str(),
+                              stdout,
+                              &error_msg,
+                              &status,
+                              &is_smt2),
+               d_error_not_null);
+  ASSERT_DEATH(
+      bitwuzla_parse(
+          d_bzla, infile, nullptr, stdout, &error_msg, &status, &is_smt2),
+      d_error_exp_str);
+  ASSERT_DEATH(bitwuzla_parse(d_bzla,
+                              infile,
+                              infile_name.c_str(),
+                              stdout,
+                              nullptr,
+                              &status,
+                              &is_smt2),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parse(d_bzla,
+                              infile,
+                              infile_name.c_str(),
+                              stdout,
+                              &error_msg,
+                              nullptr,
+                              &is_smt2),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parse(d_bzla,
+                              infile,
+                              infile_name.c_str(),
+                              stdout,
+                              &error_msg,
+                              &status,
+                              nullptr),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parse(d_bzla,
+                              infile,
+                              infile_name.c_str(),
+                              stdout,
+                              &error_msg,
+                              &status,
+                              &is_smt2),
+               "file parsing after having created expressions is not allowed");
+
+  Bitwuzla *bzla = bitwuzla_new();
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_parse(bzla,
+                                         infile,
+                                         infile_name.c_str(),
+                                         stdout,
+                                         &error_msg,
+                                         &status,
+                                         &is_smt2));
+  ASSERT_TRUE(is_smt2);
+}
+
+TEST_F(TestApi, parse_format)
+{
+  int32_t status;
+  char *error_msg;
+  std::string infile_name = "fp_regr1.smt2";
+  std::stringstream ss;
+  ss << BZLA_OUT_DIR << infile_name;
+  FILE *infile = fopen(ss.str().c_str(), "r");
+
+  ASSERT_DEATH(bitwuzla_parse_format(nullptr,
+                                     "btor",
+                                     infile,
+                                     infile_name.c_str(),
+                                     stdout,
+                                     &error_msg,
+                                     &status),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
+                                     nullptr,
+                                     infile,
+                                     infile_name.c_str(),
+                                     stdout,
+                                     &error_msg,
+                                     &status),
+               d_error_exp_str);
+  ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
+                                     "smt2",
+                                     nullptr,
+                                     infile_name.c_str(),
+                                     stdout,
+                                     &error_msg,
+                                     &status),
+               d_error_not_null);
+  ASSERT_DEATH(
+      bitwuzla_parse_format(
+          d_bzla, "btor", infile, nullptr, stdout, &error_msg, &status),
+      d_error_exp_str);
+  ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
+                                     "smt2",
+                                     infile,
+                                     infile_name.c_str(),
+                                     stdout,
+                                     nullptr,
+                                     &status),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
+                                     "btor",
+                                     infile,
+                                     infile_name.c_str(),
+                                     stdout,
+                                     &error_msg,
+                                     nullptr),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_parse_format(d_bzla,
+                                     "smt2",
+                                     infile,
+                                     infile_name.c_str(),
+                                     stdout,
+                                     &error_msg,
+                                     &status),
+               "file parsing after having created expressions is not allowed");
+
+  Bitwuzla *bzla = bitwuzla_new();
+  ASSERT_DEATH(bitwuzla_parse_format(bzla,
+                                     "asdf",
+                                     infile,
+                                     infile_name.c_str(),
+                                     stdout,
+                                     &error_msg,
+                                     &status),
+               d_error_format);
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_parse_format(
+      bzla, "smt2", infile, infile_name.c_str(), stdout, &error_msg, &status));
+}
+
 TEST_F(TestApi, sort_fun_get_domain_sorts)
 {
   ASSERT_DEATH(bitwuzla_sort_fun_get_domain_sorts(nullptr), d_error_not_null);
