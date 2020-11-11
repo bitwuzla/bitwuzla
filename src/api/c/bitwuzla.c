@@ -3379,6 +3379,7 @@ void
 bitwuzla_term_set_symbol(BitwuzlaTerm *term, const char *symbol)
 {
   BZLA_CHECK_ARG_NOT_NULL(term);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(symbol);
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
@@ -3405,6 +3406,8 @@ bitwuzla_term_is_equal_sort(const BitwuzlaTerm *term0,
 
   BzlaNode *bzla_term0 = BZLA_IMPORT_BITWUZLA_TERM(term0);
   BzlaNode *bzla_term1 = BZLA_IMPORT_BITWUZLA_TERM(term1);
+  BZLA_ABORT(bzla_term0->bzla != bzla_term1->bzla,
+             "given terms are not associated with the same solver instance");
   assert(bzla_node_get_ext_refs(bzla_term0));
   assert(bzla_node_get_ext_refs(bzla_term0));
   return bzla_node_get_sort_id(bzla_term0) == bzla_node_get_sort_id(bzla_term1);
@@ -3428,8 +3431,8 @@ bitwuzla_term_is_const(const BitwuzlaTerm *term)
 
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  return bzla_node_is_var(
-      bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term));
+  bzla_term = bzla_simplify_exp(bzla_node_get_bzla(bzla_term), bzla_term);
+  return bzla_node_is_var(bzla_term) || bzla_node_is_uf(bzla_term);
 }
 
 bool

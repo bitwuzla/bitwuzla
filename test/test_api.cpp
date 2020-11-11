@@ -37,7 +37,7 @@ class TestApi : public TestBitwuzla
                                          d_fp_sort16);
     d_true        = bitwuzla_mk_true(d_bzla);
     d_bv_one1     = bitwuzla_mk_bv_one(d_bzla, d_bv_sort1);
-    d_bv_ones23   = bitwuzla_mk_bv_one(d_bzla, d_bv_sort23);
+    d_bv_ones23   = bitwuzla_mk_bv_ones(d_bzla, d_bv_sort23);
     d_bv_zero8    = bitwuzla_mk_bv_zero(d_bzla, d_bv_sort8);
     d_fp_pzero32  = bitwuzla_mk_fp_pos_zero(d_bzla, d_fp_sort32);
 
@@ -50,6 +50,11 @@ class TestApi : public TestBitwuzla
     d_fun_fp     = bitwuzla_mk_const(d_bzla, d_fun_sort_fp, "fun_fp");
     d_array_fpbv = bitwuzla_mk_const(d_bzla, d_arr_sort_fpbv, "array_fpbv");
     d_array      = bitwuzla_mk_const(d_bzla, d_arr_sort_bv, "array");
+    d_store      = bitwuzla_mk_term3(d_bzla,
+                                BITWUZLA_KIND_ARRAY_STORE,
+                                d_array,
+                                bitwuzla_mk_const(d_bzla, d_bv_sort32, ""),
+                                d_bv_zero8);
 
     d_var1      = bitwuzla_mk_var(d_bzla, d_bv_sort8, "var1");
     d_var2      = bitwuzla_mk_var(d_bzla, d_bv_sort8, "var2");
@@ -136,6 +141,7 @@ class TestApi : public TestBitwuzla
   BitwuzlaTerm *d_fun_fp;
   BitwuzlaTerm *d_array_fpbv;
   BitwuzlaTerm *d_array;
+  BitwuzlaTerm *d_store;
 
   BitwuzlaTerm *d_var1;
   BitwuzlaTerm *d_var2;
@@ -179,8 +185,11 @@ class TestApi : public TestBitwuzla
   const char *d_error_exp_bool_term  = "expected boolean term";
   const char *d_error_exp_bv_term    = "expected bit-vector term";
   const char *d_error_exp_bv_value   = "expected bit-vector value";
+  const char *d_error_exp_fp_term    = "expected floating-point term";
   const char *d_error_exp_rm_term    = "expected rounding-mode term";
   const char *d_error_exp_arr_term   = "expected array term";
+  const char *d_error_exp_fun_term   = "expected function term";
+  const char *d_error_exp_var_term   = "expected variable term";
   const char *d_error_exp_assumption = "must be an assumption";
   const char *d_error_rm             = "invalid rounding mode";
   const char *d_error_unexp_arr_term = "unexpected array term";
@@ -1068,7 +1077,6 @@ TEST_F(TestApi, mk_term_check_args)
   const char *error_mis_sort  = "mismatching sort";
   const char *error_bvar_term = "expected unbound variable term";
   const char *error_dvar_term = "given variables are not distinct";
-  const char *error_var_term  = "expected variable term";
 
   const char *error_arr_index_sort =
       "sort of index term does not match index sort of array";
@@ -1918,7 +1926,7 @@ TEST_F(TestApi, mk_term_check_args)
                                 BITWUZLA_KIND_EXISTS,
                                 quant_args2_inv_1.size(),
                                 quant_args2_inv_1.data()),
-               error_var_term);
+               d_error_exp_var_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_EXISTS,
                                 quant_args2_inv_2.size(),
@@ -1938,7 +1946,7 @@ TEST_F(TestApi, mk_term_check_args)
                                 BITWUZLA_KIND_FORALL,
                                 quant_args2_inv_1.size(),
                                 quant_args2_inv_1.data()),
-               error_var_term);
+               d_error_exp_var_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_FORALL,
                                 quant_args2_inv_2.size(),
@@ -1968,7 +1976,7 @@ TEST_F(TestApi, mk_term_check_args)
                                 BITWUZLA_KIND_LAMBDA,
                                 lambda_args2_inv_1.size(),
                                 lambda_args2_inv_1.data()),
-               error_var_term);
+               d_error_exp_var_term);
   ASSERT_DEATH(bitwuzla_mk_term(d_bzla,
                                 BITWUZLA_KIND_LAMBDA,
                                 lambda_args2_inv_2.size(),
@@ -2738,26 +2746,6 @@ TEST_F(TestApi, sort_fun_get_domain_sorts)
   ASSERT_EQ(domain_sorts[3], nullptr);
 }
 
-TEST_F(TestApi, term_fun_get_domain_sorts)
-{
-  BitwuzlaTerm *bv_term = bitwuzla_mk_const(d_bzla, d_bv_sort32, "bv");
-
-  ASSERT_DEATH(bitwuzla_term_fun_get_domain_sorts(nullptr), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_term_fun_get_domain_sorts(bv_term),
-               "expected function term");
-
-  const BitwuzlaSort **index_sorts =
-      bitwuzla_term_fun_get_domain_sorts(d_array);
-  ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort32, index_sorts[0]));
-  ASSERT_EQ(index_sorts[1], nullptr);
-
-  const BitwuzlaSort **domain_sorts = bitwuzla_term_fun_get_domain_sorts(d_fun);
-  ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort8, domain_sorts[0]));
-  ASSERT_TRUE(bitwuzla_sort_is_equal(d_fp_sort16, domain_sorts[1]));
-  ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort32, domain_sorts[2]));
-  ASSERT_EQ(domain_sorts[3], nullptr);
-}
-
 TEST_F(TestApi, sort_fun_get_codomain)
 {
   ASSERT_DEATH(bitwuzla_sort_fun_get_codomain(nullptr), d_error_not_null);
@@ -2804,4 +2792,257 @@ TEST_F(TestApi, sort_is_fun)
 TEST_F(TestApi, sort_is_rm)
 {
   ASSERT_DEATH(bitwuzla_sort_is_rm(nullptr), d_error_not_null);
+}
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaTerm                                                               */
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestApi, term_hash)
+{
+  ASSERT_DEATH(bitwuzla_term_hash(nullptr), d_error_not_null);
+}
+
+TEST_F(TestApi, term_get_bitwuzla)
+{
+  ASSERT_DEATH(bitwuzla_term_get_bitwuzla(nullptr), d_error_not_null);
+}
+
+TEST_F(TestApi, term_get_sort)
+{
+  ASSERT_DEATH(bitwuzla_term_get_sort(nullptr), d_error_not_null);
+}
+
+TEST_F(TestApi, term_array_get_index_sort)
+{
+  ASSERT_DEATH(bitwuzla_term_array_get_index_sort(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_array_get_index_sort(d_bv_zero8),
+               d_error_exp_arr_term);
+  ASSERT_TRUE(
+      bitwuzla_sort_is_fp(bitwuzla_term_array_get_index_sort(d_array_fpbv)));
+}
+
+TEST_F(TestApi, term_array_get_element_sort)
+{
+  ASSERT_DEATH(bitwuzla_term_array_get_element_sort(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_array_get_element_sort(d_bv_zero8),
+               d_error_exp_arr_term);
+  ASSERT_TRUE(
+      bitwuzla_sort_is_bv(bitwuzla_term_array_get_element_sort(d_array_fpbv)));
+}
+
+TEST_F(TestApi, term_fun_get_domain_sort)
+{
+  ASSERT_DEATH(bitwuzla_term_fun_get_domain_sort(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_fun_get_domain_sort(d_bv_zero8),
+               d_error_exp_fun_term);
+}
+
+TEST_F(TestApi, term_fun_get_domain_sorts)
+{
+  BitwuzlaTerm *bv_term = bitwuzla_mk_const(d_bzla, d_bv_sort32, "bv");
+
+  ASSERT_DEATH(bitwuzla_term_fun_get_domain_sorts(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_fun_get_domain_sorts(bv_term),
+               "expected function term");
+
+  const BitwuzlaSort **index_sorts =
+      bitwuzla_term_fun_get_domain_sorts(d_array);
+  ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort32, index_sorts[0]));
+  ASSERT_EQ(index_sorts[1], nullptr);
+
+  const BitwuzlaSort **domain_sorts = bitwuzla_term_fun_get_domain_sorts(d_fun);
+  ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort8, domain_sorts[0]));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(d_fp_sort16, domain_sorts[1]));
+  ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort32, domain_sorts[2]));
+  ASSERT_EQ(domain_sorts[3], nullptr);
+}
+
+TEST_F(TestApi, term_fun_get_codomain_sort)
+{
+  ASSERT_DEATH(bitwuzla_term_fun_get_codomain_sort(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_fun_get_codomain_sort(d_bv_zero8),
+               d_error_exp_fun_term);
+}
+
+TEST_F(TestApi, term_bv_get_size)
+{
+  ASSERT_DEATH(bitwuzla_term_bv_get_size(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_bv_get_size(d_fp_const16), d_error_exp_bv_term);
+  ASSERT_EQ(bitwuzla_term_bv_get_size(d_bv_zero8), 8);
+}
+
+TEST_F(TestApi, term_fp_get_exp_size)
+{
+  ASSERT_DEATH(bitwuzla_term_fp_get_exp_size(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_fp_get_exp_size(d_bv_const8), d_error_exp_fp_term);
+  ASSERT_EQ(bitwuzla_term_fp_get_exp_size(d_fp_const16), 5);
+}
+
+TEST_F(TestApi, term_fp_get_sig_size)
+{
+  ASSERT_DEATH(bitwuzla_term_fp_get_sig_size(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_fp_get_sig_size(d_bv_const8), d_error_exp_fp_term);
+  ASSERT_EQ(bitwuzla_term_fp_get_sig_size(d_fp_const16), 11);
+}
+
+TEST_F(TestApi, term_fun_get_arity)
+{
+  ASSERT_DEATH(bitwuzla_term_fun_get_arity(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_fun_get_arity(d_bv_const8), d_error_exp_fun_term);
+  ASSERT_EQ(bitwuzla_term_fun_get_arity(d_fun), 3);
+}
+
+TEST_F(TestApi, term_get_symbol)
+{
+  ASSERT_DEATH(bitwuzla_term_get_symbol(nullptr), d_error_not_null);
+  ASSERT_EQ(std::string(bitwuzla_term_get_symbol(d_fun)), std::string("fun"));
+}
+
+TEST_F(TestApi, term_set_symbol)
+{
+  ASSERT_DEATH(bitwuzla_term_set_symbol(nullptr, "fun"), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_set_symbol(d_fun, nullptr), d_error_exp_str);
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_term_set_symbol(d_fun, "funfun"));
+  ASSERT_EQ(std::string(bitwuzla_term_get_symbol(d_fun)),
+            std::string("funfun"));
+}
+
+TEST_F(TestApi, term_is_equal_sort)
+{
+  ASSERT_DEATH(bitwuzla_term_is_equal_sort(nullptr, d_bv_const1),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_is_equal_sort(d_bv_const1, nullptr),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_is_equal_sort(d_bv_const8, d_other_bv_const8),
+               "given terms are not associated with the same solver instance");
+  ASSERT_TRUE(bitwuzla_term_is_equal_sort(d_bv_const8, d_bv_zero8));
+  ASSERT_FALSE(bitwuzla_term_is_equal_sort(d_bv_const1, d_bv_zero8));
+}
+
+TEST_F(TestApi, term_is_const)
+{
+  ASSERT_DEATH(bitwuzla_term_is_const(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_const(d_array));
+  ASSERT_TRUE(bitwuzla_term_is_const(d_fun));
+  ASSERT_TRUE(bitwuzla_term_is_const(d_bv_const1));
+  ASSERT_TRUE(bitwuzla_term_is_const(d_fp_const16));
+  ASSERT_TRUE(bitwuzla_term_is_const(d_rm_const));
+  ASSERT_FALSE(bitwuzla_term_is_const(d_bv_one1));
+  ASSERT_FALSE(bitwuzla_term_is_const(d_store));
+}
+
+TEST_F(TestApi, term_is_var)
+{
+  ASSERT_DEATH(bitwuzla_term_is_var(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_var(d_var1));
+  ASSERT_TRUE(bitwuzla_term_is_var(d_bound_var));
+  ASSERT_FALSE(bitwuzla_term_is_var(d_fp_pzero32));
+}
+
+TEST_F(TestApi, term_is_bound_var)
+{
+  ASSERT_DEATH(bitwuzla_term_is_bound_var(nullptr), d_error_not_null);
+  ASSERT_FALSE(bitwuzla_term_is_bound_var(d_var1));
+  ASSERT_TRUE(bitwuzla_term_is_bound_var(d_bound_var));
+  ASSERT_DEATH(bitwuzla_term_is_bound_var(d_fp_pzero32), d_error_exp_var_term);
+}
+
+TEST_F(TestApi, term_is_array)
+{
+  ASSERT_DEATH(bitwuzla_term_is_array(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_array(d_array));
+  ASSERT_TRUE(bitwuzla_term_is_array(d_store));
+  ASSERT_FALSE(bitwuzla_term_is_array(d_fun));
+  ASSERT_FALSE(bitwuzla_term_is_array(d_fp_pzero32));
+}
+
+TEST_F(TestApi, term_is_bv)
+{
+  ASSERT_DEATH(bitwuzla_term_is_bv(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_bv(d_bv_zero8));
+  ASSERT_FALSE(bitwuzla_term_is_bv(d_fp_pzero32));
+}
+
+TEST_F(TestApi, term_is_fp)
+{
+  ASSERT_DEATH(bitwuzla_term_is_fp(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_fp(d_fp_pzero32));
+  ASSERT_FALSE(bitwuzla_term_is_fp(d_bv_zero8));
+}
+
+TEST_F(TestApi, term_is_fun)
+{
+  ASSERT_DEATH(bitwuzla_term_is_fun(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_fun(d_fun));
+  ASSERT_TRUE(bitwuzla_term_is_fun(d_array));
+  ASSERT_FALSE(bitwuzla_term_is_fun(d_fp_pzero32));
+}
+
+TEST_F(TestApi, term_is_rm)
+{
+  ASSERT_DEATH(bitwuzla_term_is_rm(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_rm(d_rm_const));
+  ASSERT_FALSE(bitwuzla_term_is_rm(d_bv_zero8));
+}
+
+TEST_F(TestApi, term_is_bv_value)
+{
+  ASSERT_DEATH(bitwuzla_term_is_bv_value(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_bv_value(d_bv_zero8));
+  ASSERT_FALSE(bitwuzla_term_is_bv_value(d_bv_const1));
+}
+
+TEST_F(TestApi, term_is_fp_value)
+{
+  ASSERT_DEATH(bitwuzla_term_is_fp_value(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_fp_value(d_fp_pzero32));
+  ASSERT_FALSE(bitwuzla_term_is_fp_value(d_fp_const16));
+}
+
+TEST_F(TestApi, term_is_rm_value)
+{
+  ASSERT_DEATH(bitwuzla_term_is_rm_value(nullptr), d_error_not_null);
+  ASSERT_TRUE(
+      bitwuzla_term_is_rm_value(bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNE)));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value(d_rm_const));
+}
+
+TEST_F(TestApi, term_is_bv_value_zero)
+{
+  ASSERT_DEATH(bitwuzla_term_is_bv_value_zero(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_bv_value_zero(d_bv_zero8));
+  ASSERT_FALSE(bitwuzla_term_is_bv_value_zero(d_bv_one1));
+}
+
+TEST_F(TestApi, term_is_bv_value_one)
+{
+  ASSERT_DEATH(bitwuzla_term_is_bv_value_one(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_bv_value_one(d_bv_one1));
+  ASSERT_FALSE(bitwuzla_term_is_bv_value_one(d_bv_zero8));
+}
+
+TEST_F(TestApi, term_is_bv_value_ones)
+{
+  ASSERT_DEATH(bitwuzla_term_is_bv_value_ones(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_bv_value_ones(d_bv_ones23));
+  ASSERT_TRUE(bitwuzla_term_is_bv_value_ones(d_bv_one1));
+  ASSERT_FALSE(bitwuzla_term_is_bv_value_ones(d_bv_zero8));
+}
+
+TEST_F(TestApi, term_is_bv_valuemin_signed)
+{
+  ASSERT_DEATH(bitwuzla_term_is_bv_value_min_signed(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_bv_value_min_signed(
+      bitwuzla_mk_bv_min_signed(d_bzla, d_bv_sort8)));
+  ASSERT_TRUE(bitwuzla_term_is_bv_value_min_signed(d_bv_one1));
+  ASSERT_FALSE(bitwuzla_term_is_bv_value_min_signed(d_bv_ones23));
+}
+
+TEST_F(TestApi, term_is_bv_value_max_signed)
+{
+  ASSERT_DEATH(bitwuzla_term_is_bv_value_max_signed(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_bv_value_max_signed(
+      bitwuzla_mk_bv_max_signed(d_bzla, d_bv_sort8)));
+  ASSERT_FALSE(bitwuzla_term_is_bv_value_max_signed(d_bv_one1));
 }
