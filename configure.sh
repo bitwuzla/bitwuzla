@@ -26,8 +26,6 @@ picosat=unknown
 gcov=no
 gprof=no
 python=no
-py2=no
-py3=no
 timestats=no
 
 docs=no
@@ -65,8 +63,6 @@ where <option> is one of the following:
   --gprof           compile with -pg
 
   --python          compile python API
-  --py2             prefer Python 2.7
-  --py3             prefer Python 3
   --time-stats      compile with time statistics
 
   --symfpu          use SymFPU for FP support
@@ -152,8 +148,6 @@ do
     --gprof) gprof=yes;;
 
     --python)     python=yes;;
-    --py2)        py2=yes;;
-    --py3)        py3=yes;;
     --time-stats) timestats=yes;;
 
     --symfpu) symfpu=yes;;
@@ -215,8 +209,6 @@ cmake_opts="$CMAKE_OPTS"
 [ $gprof = yes ] && cmake_opts="$cmake_opts -DGPROF=ON"
 
 [ $python = yes ] && cmake_opts="$cmake_opts -DPYTHON=ON"
-[ $py2 = yes ] && cmake_opts="$cmake_opts -DUSE_PYTHON2=ON"
-[ $py3 = yes ] && cmake_opts="$cmake_opts -DUSE_PYTHON3=ON"
 [ $timestats = yes ] && cmake_opts="$cmake_opts -DTIME_STATS=ON"
 
 [ $docs = yes ] && cmake_opts="$cmake_opts -DDOCS=ON"

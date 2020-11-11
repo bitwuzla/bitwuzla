@@ -106,7 +106,7 @@ option3vl(CHECK      "Enable assertions even for optimized compilation")
 option3vl(GCOV       "Compile with coverage support")
 option3vl(GPROF      "Compile with profiling support")
 option3vl(LOG        "Compile with logging support (default for Debug builds)")
-#option3vl(PYTHON     "Build Python API")
+option3vl(PYTHON     "Build Python API")
 option3vl(TIME_STATS "Compile with time statistics")
 option3vl(DOCS       "Build API documentation")
 
@@ -124,37 +124,31 @@ option(ONLY_LINGELING "Only use Lingeling" OFF)
 option(ONLY_MINISAT   "Only use MiniSat" OFF)
 option(ONLY_PICOSAT   "Only use PicoSAT" OFF)
 option(ONLY_KISSAT    "Only use Kissat" OFF)
-#option(USE_PYTHON2    "Prefer Python 2.7" )
-#option(USE_PYTHON3    "Prefer Python 3" )
 
 #-----------------------------------------------------------------------------#
 
 # Automatically build shared libraries if Python bindings are enabled.
-# Disabled until migrated to new API
-#if(PYTHON)
-#  if(USE_PYTHON2)
-#    find_package(PythonInterp 2.7 REQUIRED)
-#  elseif(USE_PYTHON3)
-#    find_package(PythonInterp 3 REQUIRED)
-#  else()
-#    find_package(PythonInterp REQUIRED)
-#  endif()
-#  # Explicitly check for a compatible version of Python libs.
-#  find_package(PythonLibs
-#    ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}
-#    REQUIRED)
-#
-#  # Produce a python module that only links against system libraries. SAT
-#  # solvers and libbitwuzla should be included in the module itself.
-#  if(NOT BUILD_SHARED_LIBS)
-#    add_check_c_cxx_flag("-fPIC")
-#    # Disable MiniSat since the static library is not compiled with -fPIC by
-#    # default.
-#    message(STATUS "Disabling MiniSat for static Python builds. "
-#                   "Use --shared if you need MiniSat.")
-#    set_option(USE_MINISAT OFF)
-#  endif()
-#endif()
+if(PYTHON)
+  find_package(PythonInterp 3 REQUIRED)
+  # Explicitly check for a compatible version of Python libs.
+  find_package(PythonLibs
+    ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}
+    REQUIRED)
+
+  # TODO: static GMP library is not compiled with -fPIC, falling back to shared
+  # libraries for now.
+  ## Produce a python module that only links against system libraries. SAT
+  ## solvers and libcbitwuzla should be included in the module itself.
+  #if(NOT BUILD_SHARED_LIBS)
+  #  add_check_c_cxx_flag("-fPIC")
+  #  # Disable MiniSat since the static library is not compiled with -fPIC by
+  #  # default.
+  #  message(STATUS "Disabling MiniSat for static Python builds. "
+  #                 "Use --shared if you need MiniSat.")
+  #  set_option(USE_MINISAT OFF)
+  #endif()
+  set(BUILD_SHARED_LIBS ON)
+endif()
 
 if(ASAN)
   # -fsanitize=address requires CMAKE_REQUIRED_FLAGS to be explicitely set,
@@ -469,9 +463,9 @@ include_directories(src ${CMAKE_CURRENT_BINARY_DIR}/src)
 add_subdirectory(src)
 add_subdirectory(test)
 # Disabled until migrated to new API
-#if(PYTHON)
-#  add_subdirectory(src/api/python)
-#endif()
+if(PYTHON)
+  add_subdirectory(src/api/python)
+endif()
 # Disabled until migrated to new API
 # add_subdirectory(examples/api/c)
 
@@ -539,7 +533,7 @@ config_info_bool("Assertions enabled" CHECK)
 config_info_bool("gcov support" GCOV)
 config_info_bool("gprof support" GPROF)
 config_info_bool("Logging support" LOG)
-#config_info_bool("Python bindings" PYTHON)
+config_info_bool("Python bindings" PYTHON)
 config_info_bool("Time statistics" TIME_STATS)
 config_info_bool("Build API documentation" DOCS)
 config_info_bool("CaDiCaL" CaDiCaL_FOUND)
