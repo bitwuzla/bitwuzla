@@ -2794,6 +2794,21 @@ TEST_F(TestApi, sort_is_rm)
   ASSERT_DEATH(bitwuzla_sort_is_rm(nullptr), d_error_not_null);
 }
 
+TEST_F(TestApi, regr1)
+{
+  std::vector<const BitwuzlaSort *> domain({d_bv_sort8});
+  BitwuzlaSort *fun_sort =
+      bitwuzla_mk_fun_sort(d_bzla, domain.size(), domain.data(), d_bv_sort8);
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_mk_array_sort(d_bzla, d_bv_sort8, d_bv_sort8));
+  std::vector<const BitwuzlaTerm *> args(
+      {bitwuzla_mk_const(d_bzla, fun_sort, "f"),
+       bitwuzla_mk_const(d_bzla, d_bv_sort8, "x")});
+  ASSERT_DEATH(
+      bitwuzla_mk_term(d_bzla, BITWUZLA_KIND_APPLY, args.size(), args.data()),
+      d_error_unexp_fun_term);
+}
+
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTerm                                                               */
 /* -------------------------------------------------------------------------- */
