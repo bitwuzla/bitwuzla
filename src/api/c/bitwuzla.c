@@ -2694,7 +2694,7 @@ bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
   return bzla_failed_exp(bzla, bzla_term);
 }
 
-const BitwuzlaTerm **
+BitwuzlaTerm **
 bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
@@ -2717,10 +2717,10 @@ bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size)
     }
   }
   *size = BZLA_COUNT_STACK(bitwuzla->d_unsat_assumptions);
-  return (const BitwuzlaTerm **) bitwuzla->d_unsat_assumptions.start;
+  return bitwuzla->d_unsat_assumptions.start;
 }
 
-const BitwuzlaTerm **
+BitwuzlaTerm **
 bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
@@ -2746,7 +2746,7 @@ bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size)
     }
   }
   *size = BZLA_COUNT_STACK(bitwuzla->d_unsat_core);
-  return (const BitwuzlaTerm **) bitwuzla->d_unsat_core.start;
+  return bitwuzla->d_unsat_core.start;
 }
 
 void
@@ -3053,7 +3053,7 @@ bitwuzla_sort_fun_get_domain(const BitwuzlaSort *sort)
                                    bzla_sort_fun_get_domain(bzla, bzla_sort));
 }
 
-const BitwuzlaSort **
+BitwuzlaSort **
 bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort)
 {
   BZLA_CHECK_ARG_NOT_NULL(sort);
@@ -3079,7 +3079,7 @@ bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort)
     inc_ext_refs_sort(bzla, id);
   }
   BZLA_PUSH_STACK(bitwuzla->d_sort_fun_domain_sorts, 0);
-  return (const BitwuzlaSort **) bitwuzla->d_sort_fun_domain_sorts.start;
+  return bitwuzla->d_sort_fun_domain_sorts.start;
 }
 
 BitwuzlaSort *

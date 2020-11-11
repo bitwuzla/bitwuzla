@@ -414,9 +414,8 @@ void bitwuzla_assert(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 void bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 
-const BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla,
-                                                    size_t *size);
-const BitwuzlaTerm **bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
+BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
+BitwuzlaTerm **bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
 
 void bitwuzla_fixate_assumptions(Bitwuzla *bitwuzla);
 void bitwuzla_reset_assumptions(Bitwuzla *bitwuzla);
@@ -459,8 +458,7 @@ uint32_t bitwuzla_sort_fp_get_sig_size(const BitwuzlaSort *sort);
 BitwuzlaSort *bitwuzla_sort_array_get_index(const BitwuzlaSort *sort);
 BitwuzlaSort *bitwuzla_sort_array_get_element(const BitwuzlaSort *sort);
 BitwuzlaSort *bitwuzla_sort_fun_get_domain(const BitwuzlaSort *sort);
-const BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(
-    const BitwuzlaSort *sort);
+BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort);
 BitwuzlaSort *bitwuzla_sort_fun_get_codomain(const BitwuzlaSort *sort);
 uint32_t bitwuzla_sort_fun_get_arity(const BitwuzlaSort *sort);
 

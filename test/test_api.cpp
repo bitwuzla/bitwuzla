@@ -2313,8 +2313,7 @@ TEST_F(TestApi, get_unsat_assumptions)
   ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_not_bv_const1));
   ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_and_bv_const1));
   ASSERT_FALSE(bitwuzla_is_unsat_assumption(d_bzla, d_eq_bv_const8));
-  const BitwuzlaTerm **unsat_ass =
-      bitwuzla_get_unsat_assumptions(d_bzla, &size);
+  BitwuzlaTerm **unsat_ass = bitwuzla_get_unsat_assumptions(d_bzla, &size);
   size_t i = 0;
   for (; i < size; ++i)
   {
@@ -2352,12 +2351,11 @@ TEST_F(TestApi, get_unsat_core)
   bitwuzla_check_sat(d_bzla);
   ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_bv_const1));
   ASSERT_TRUE(bitwuzla_is_unsat_assumption(d_bzla, d_and_bv_const1));
-  const BitwuzlaTerm **unsat_core = bitwuzla_get_unsat_core(d_bzla, &size);
+  BitwuzlaTerm **unsat_core = bitwuzla_get_unsat_core(d_bzla, &size);
   ASSERT_TRUE(unsat_core[0] == d_not_bv_const1);
   ASSERT_TRUE(size == 1);
 
-  const BitwuzlaTerm **unsat_ass =
-      bitwuzla_get_unsat_assumptions(d_bzla, &size);
+  BitwuzlaTerm **unsat_ass = bitwuzla_get_unsat_assumptions(d_bzla, &size);
   ASSERT_TRUE(unsat_ass[0] == d_bv_const1);
   ASSERT_TRUE(unsat_ass[1] == d_and_bv_const1);
   ASSERT_TRUE(size == 2);
@@ -2669,12 +2667,12 @@ TEST_F(TestApi, sort_fun_get_domain_sorts)
   ASSERT_DEATH(bitwuzla_sort_fun_get_domain_sorts(d_bv_sort32),
                d_error_exp_fun_sort);
 
-  const BitwuzlaSort **index_sorts =
+  BitwuzlaSort **index_sorts =
       bitwuzla_sort_fun_get_domain_sorts(d_arr_sort_bv);
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort32, index_sorts[0]));
   ASSERT_EQ(index_sorts[1], nullptr);
 
-  const BitwuzlaSort **domain_sorts =
+  BitwuzlaSort **domain_sorts =
       bitwuzla_sort_fun_get_domain_sorts(d_fun_sort);
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort8, domain_sorts[0]));
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_fp_sort16, domain_sorts[1]));

@@ -5667,7 +5667,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
   BitwuzlaTerm *exp = 0;
   BzlaSMT2Coo coo;
   BitwuzlaTermPtrStack exps;
-  const BitwuzlaTerm **failed_assumptions, **unsat_core;
+  BitwuzlaTerm **failed_assumptions, **unsat_core;
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
   coo.x = coo.y = 0;
