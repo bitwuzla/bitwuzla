@@ -2161,13 +2161,13 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       BzlaNodePtrStack apply_args;
       BZLA_INIT_STACK(bzla->mm, apply_args);
       uint32_t apply_argc = argc - 1;
-      for (uint32_t i = 0; i < apply_argc; i++)
+      for (uint32_t i = 1; i <= apply_argc; i++)
       {
         BZLA_CHECK_ARG_NOT_NULL_AT_IDX(bzla_args[i], i);
         BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(bzla_args[i], i);
         BZLA_PUSH_STACK(apply_args, bzla_args[i]);
       }
-      BzlaNode *fun = bzla_args[apply_argc];
+      BzlaNode *fun = bzla_args[0];
       BZLA_CHECK_TERM_IS_FUN_AT_IDX(fun, apply_argc);
       BZLA_ABORT(
           bzla_node_fun_get_arity(bzla, fun) != argc - 1,

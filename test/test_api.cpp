@@ -83,7 +83,7 @@ class TestApi : public TestBitwuzla
     d_bool_lambda = bitwuzla_mk_term2(
         d_bzla, BITWUZLA_KIND_LAMBDA, d_bool_var, d_bool_lambda_body);
     d_bool_apply =
-        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_APPLY, d_true, d_bool_lambda);
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_APPLY, d_bool_lambda, d_true);
 
     /* associated with other Bitwuzla instance */
     d_other_bzla            = bitwuzla_new();
@@ -621,7 +621,7 @@ TEST_F(TestApi, mk_term_check_cnt)
   const char *error_arg_cnt = "invalid number of arguments";
 
   std::vector<const BitwuzlaTerm *> apply_args1 = {d_bv_one1};
-  std::vector<const BitwuzlaTerm *> apply_args2 = {d_bv_const8, d_fun};
+  std::vector<const BitwuzlaTerm *> apply_args2 = {d_fun, d_bv_const8};
   std::vector<const BitwuzlaTerm *> array_args1 = {d_array_fpbv};
   std::vector<const BitwuzlaTerm *> bool_args1  = {d_true};
   std::vector<const BitwuzlaTerm *> bool_args2  = {d_true, d_true};
@@ -1108,9 +1108,9 @@ TEST_F(TestApi, mk_term_check_args)
       d_array_fpbv, d_fp_const16, d_fp_const16};
 
   std::vector<const BitwuzlaTerm *> apply_args3_inv_1 = {
-      d_bv_const8, d_fun, d_fun};
+      d_fun, d_bv_const8, d_fun};
   std::vector<const BitwuzlaTerm *> apply_args3_inv_2 = {
-      d_bv_const8, d_bv_const8, d_fp_pzero32, d_fun};
+      d_fun, d_bv_const8, d_bv_const8, d_fp_pzero32};
 
   std::vector<const BitwuzlaTerm *> bool_args1_inv = {d_bv_const8};
   std::vector<const BitwuzlaTerm *> bool_args2_inv = {d_fp_pzero32,
@@ -2522,7 +2522,7 @@ TEST_F(TestApi, dump_formula)
       bitwuzla_mk_term2(
           d_bzla,
           BITWUZLA_KIND_EQUAL,
-          bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_APPLY, d_bv_const8, d_lambda),
+          bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_APPLY, d_lambda, d_bv_const8),
           d_bv_zero8));
 
   ASSERT_NO_FATAL_FAILURE(bitwuzla_dump_formula(d_bzla, "btor", stdout));
