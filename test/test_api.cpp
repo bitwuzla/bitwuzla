@@ -195,6 +195,10 @@ class TestApi : public TestBitwuzla
       "incremental solving is currently not supported with quantifiers";
 };
 
+/* -------------------------------------------------------------------------- */
+/* Bitwuzla                                                                   */
+/* -------------------------------------------------------------------------- */
+
 TEST_F(TestApi, set_option)
 {
   Bitwuzla *bzla_inc   = bitwuzla_new();
@@ -2661,6 +2665,60 @@ TEST_F(TestApi, parse_format)
       bzla, "smt2", infile, infile_name.c_str(), stdout, &error_msg, &status));
 }
 
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaSort                                                               */
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestApi, sort_hash)
+{
+  ASSERT_DEATH(bitwuzla_sort_hash(nullptr), d_error_not_null);
+}
+
+TEST_F(TestApi, sort_bv_get_size)
+{
+  ASSERT_DEATH(bitwuzla_sort_bv_get_size(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_bv_get_size(d_fp_sort16), d_error_exp_bv_sort);
+  ASSERT_EQ(bitwuzla_sort_bv_get_size(d_bv_sort8), 8);
+}
+
+TEST_F(TestApi, sort_fp_get_exp_size)
+{
+  ASSERT_DEATH(bitwuzla_sort_fp_get_exp_size(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_fp_get_exp_size(d_bv_sort8), d_error_exp_fp_sort);
+  ASSERT_EQ(bitwuzla_sort_fp_get_exp_size(d_fp_sort16), 5);
+}
+
+TEST_F(TestApi, sort_fp_get_sig_size)
+{
+  ASSERT_DEATH(bitwuzla_sort_fp_get_sig_size(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_fp_get_sig_size(d_bv_sort8), d_error_exp_fp_sort);
+  ASSERT_EQ(bitwuzla_sort_fp_get_sig_size(d_fp_sort16), 11);
+}
+
+TEST_F(TestApi, sort_array_get_index)
+{
+  ASSERT_DEATH(bitwuzla_sort_array_get_index(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_array_get_index(d_bv_sort23),
+               d_error_exp_arr_sort);
+  ASSERT_TRUE(
+      bitwuzla_sort_is_bv(bitwuzla_sort_array_get_index(d_arr_sort_bvfp)));
+}
+
+TEST_F(TestApi, sort_array_get_element)
+{
+  ASSERT_DEATH(bitwuzla_sort_array_get_element(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_array_get_element(d_bv_sort23),
+               d_error_exp_arr_sort);
+  ASSERT_TRUE(
+      bitwuzla_sort_is_fp(bitwuzla_sort_array_get_element(d_arr_sort_bvfp)));
+}
+
+TEST_F(TestApi, sort_fun_get_domain)
+{
+  ASSERT_DEATH(bitwuzla_sort_fun_get_domain(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_fun_get_domain(d_bv_sort32), d_error_exp_fun_sort);
+}
+
 TEST_F(TestApi, sort_fun_get_domain_sorts)
 {
   ASSERT_DEATH(bitwuzla_sort_fun_get_domain_sorts(nullptr), d_error_not_null);
@@ -2698,4 +2756,52 @@ TEST_F(TestApi, term_fun_get_domain_sorts)
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_fp_sort16, domain_sorts[1]));
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort32, domain_sorts[2]));
   ASSERT_EQ(domain_sorts[3], nullptr);
+}
+
+TEST_F(TestApi, sort_fun_get_codomain)
+{
+  ASSERT_DEATH(bitwuzla_sort_fun_get_codomain(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_fun_get_codomain(d_bv_sort32),
+               d_error_exp_fun_sort);
+}
+
+TEST_F(TestApi, sort_fun_get_arity)
+{
+  ASSERT_DEATH(bitwuzla_sort_fun_get_arity(nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_fun_get_arity(d_bv_sort32), d_error_exp_fun_sort);
+  ASSERT_EQ(bitwuzla_sort_fun_get_arity(d_fun_sort), 3);
+}
+
+TEST_F(TestApi, sort_is_equal)
+{
+  ASSERT_DEATH(bitwuzla_sort_is_equal(nullptr, d_bv_sort1), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_is_equal(d_bv_sort1, nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_is_equal(d_bv_sort1, d_other_bv_sort1),
+               "given sorts are not associated with the same solver instance");
+  ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort1, d_bv_sort1));
+}
+
+TEST_F(TestApi, sort_is_array)
+{
+  ASSERT_DEATH(bitwuzla_sort_is_array(nullptr), d_error_not_null);
+}
+
+TEST_F(TestApi, sort_is_bv)
+{
+  ASSERT_DEATH(bitwuzla_sort_is_bv(nullptr), d_error_not_null);
+}
+
+TEST_F(TestApi, sort_is_fp)
+{
+  ASSERT_DEATH(bitwuzla_sort_is_fp(nullptr), d_error_not_null);
+}
+
+TEST_F(TestApi, sort_is_fun)
+{
+  ASSERT_DEATH(bitwuzla_sort_is_fun(nullptr), d_error_not_null);
+}
+
+TEST_F(TestApi, sort_is_rm)
+{
+  ASSERT_DEATH(bitwuzla_sort_is_rm(nullptr), d_error_not_null);
 }

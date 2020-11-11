@@ -3116,7 +3116,7 @@ bitwuzla_sort_is_equal(const BitwuzlaSort *sort0, const BitwuzlaSort *sort1)
   BZLA_CHECK_ARG_NOT_NULL(sort0);
   BZLA_CHECK_ARG_NOT_NULL(sort1);
   BZLA_ABORT(sort0->d_bzla != sort1->d_bzla,
-             "given sorts are not associated with the same solver object");
+             "given sorts are not associated with the same solver instance");
 
   Bzla *bzla            = BZLA_IMPORT_BITWUZLA(sort0->d_bzla);
   BzlaSortId bzla_sort0 = BZLA_IMPORT_BITWUZLA_SORT(sort0);
