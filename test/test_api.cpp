@@ -59,7 +59,7 @@ class TestApi : public TestBitwuzla
     d_store      = bitwuzla_mk_term3(d_bzla,
                                 BITWUZLA_KIND_ARRAY_STORE,
                                 d_array,
-                                bitwuzla_mk_const(d_bzla, d_bv_sort32, ""),
+                                bitwuzla_mk_const(d_bzla, d_bv_sort32, "store"),
                                 d_bv_zero8);
 
     d_var1      = bitwuzla_mk_var(d_bzla, d_bv_sort8, "var1");
