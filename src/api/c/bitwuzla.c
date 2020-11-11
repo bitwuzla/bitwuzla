@@ -3663,7 +3663,6 @@ bitwuzla_term_dump(const BitwuzlaTerm *term, const char *format, FILE *file)
   Bzla *bzla          = bzla_node_get_bzla(bzla_term);
   if (strcmp(format, "smt2") == 0)
   {
-    bzla_dumpsmt_dump(bzla, file);
     bzla_dumpsmt_dump_node(bzla, file, bzla_simplify_exp(bzla, bzla_term), 0);
   }
   else if (strcmp(format, "btor") == 0)

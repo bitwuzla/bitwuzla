@@ -3143,3 +3143,19 @@ TEST_F(TestApi, term_is_const_array)
   ASSERT_FALSE(bitwuzla_term_is_const_array(d_array));
   ASSERT_FALSE(bitwuzla_term_is_const_array(d_array_fpbv));
 }
+
+TEST_F(TestApi, term_dump)
+{
+  ASSERT_DEATH(bitwuzla_term_dump(nullptr, "btor", stdout), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_dump(d_and_bv_const1, nullptr, stdout),
+               d_error_exp_str);
+  ASSERT_DEATH(bitwuzla_term_dump(d_and_bv_const1, "smt2", nullptr),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_dump(d_and_bv_const1, "asdf", stdout),
+               d_error_format);
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_and_bv_const1, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_and_bv_const1, "smt2", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_other_exists, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_other_exists, "smt2", stdout));
+  std::cout << std::endl;
+}
