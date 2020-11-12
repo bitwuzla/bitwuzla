@@ -5594,7 +5594,7 @@ applies_fp_rem_neg(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline BzlaNode *
 apply_fp_rem_neg(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  assert(applies_fp_rem_sign_divisor(bzla, e0, e1));
+  assert(applies_fp_rem_neg(bzla, e0, e1));
   BzlaNode *result, *rem;
   BZLA_INC_REC_RW_CALL(bzla);
   rem    = rewrite_fp_rem_exp(bzla, e0->e[0], e1);
