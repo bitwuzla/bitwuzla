@@ -3406,7 +3406,7 @@ bitwuzla_term_is_equal_sort(const BitwuzlaTerm *term0,
 
   BzlaNode *bzla_term0 = BZLA_IMPORT_BITWUZLA_TERM(term0);
   BzlaNode *bzla_term1 = BZLA_IMPORT_BITWUZLA_TERM(term1);
-  BZLA_ABORT(bzla_term0->bzla != bzla_term1->bzla,
+  BZLA_ABORT(bzla_node_get_bzla(bzla_term0) != bzla_node_get_bzla(bzla_term1),
              "given terms are not associated with the same solver instance");
   assert(bzla_node_get_ext_refs(bzla_term0));
   assert(bzla_node_get_ext_refs(bzla_term0));
