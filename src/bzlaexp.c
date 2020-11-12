@@ -2422,6 +2422,8 @@ bzla_exp_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  assert(bzla_node_bv_get_width(bzla, node)
+         == bzla_sort_fp_get_bv_width(bzla, sort));
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)

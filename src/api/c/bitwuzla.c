@@ -37,6 +37,8 @@ struct Bitwuzla
   BitwuzlaTermPtrStack d_unsat_assumptions;
   /* Unsat core of the current bitwuzla_get_unsat_core query. */
   BitwuzlaTermPtrStack d_unsat_core;
+  /* Indices populated by bitwuzla_term_get_indices. */
+  uint32_t d_term_indices[2];
   /* Domain sorts of current bitwuzla_term_fun_get_domain_sorts query. */
   BitwuzlaSortPtrStack d_fun_domain_sorts;
   /* Domain sorts of current bitwuzla_sort_fun_get_domain_sorts query. */
@@ -2453,6 +2455,9 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                                     0,
                                     bzla_sort_is_bv,
                                     true);
+      BZLA_ABORT(
+          idxs[0] + idxs[1] != bzla_node_bv_get_width(bzla, bzla_args[0]),
+          "size of bit-vector does not match given floating-point format");
       BzlaSortId sort = bzla_sort_fp(bzla, idxs[0], idxs[1]);
       res             = bzla_exp_fp_to_fp_from_bv(bzla, bzla_args[0], sort);
       bzla_sort_release(bzla, sort);
@@ -3221,6 +3226,54 @@ bitwuzla_term_hash(const BitwuzlaTerm *term)
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
   return bzla_node_get_id(bzla_term);
+}
+
+uint32_t *
+bitwuzla_term_get_indices(const BitwuzlaTerm *term, size_t *size)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  BzlaNode *bzla_term = bzla_node_real_addr(BZLA_IMPORT_BITWUZLA_TERM(term));
+  Bzla *bzla          = bzla_node_get_bzla(bzla_term);
+  Bitwuzla *bitwuzla  = BZLA_EXPORT_BITWUZLA(bzla);
+  BZLA_ABORT(!bzla_node_is_indexed(bzla_term),
+             "cannot get indices of non-indexed term");
+
+  BzlaSortId sort = bzla_node_get_sort_id(bzla_term);
+  switch (bzla_node_get_kind(bzla_term))
+  {
+    case BZLA_FP_TO_FP_FP_NODE:
+    case BZLA_FP_TO_FP_BV_NODE:
+    case BZLA_FP_TO_FP_INT_NODE:
+    case BZLA_FP_TO_FP_UINT_NODE:
+      bitwuzla->d_term_indices[0] = bzla_sort_fp_get_exp_width(bzla, sort);
+      bitwuzla->d_term_indices[1] = bzla_sort_fp_get_sig_width(bzla, sort);
+      *size                       = 2;
+      break;
+
+    case BZLA_FP_TO_SBV_NODE:
+    case BZLA_FP_TO_UBV_NODE:
+      bitwuzla->d_term_indices[0] = bzla_sort_bv_get_width(bzla, sort);
+      *size                       = 1;
+      break;
+
+    default:
+      BZLA_ABORT(bzla_node_get_kind(bzla_term) != BZLA_BV_SLICE_NODE,
+                 "unhandled internal kind.");
+      bitwuzla->d_term_indices[0] = bzla_node_bv_slice_get_upper(bzla_term);
+      bitwuzla->d_term_indices[1] = bzla_node_bv_slice_get_lower(bzla_term);
+      *size                       = 2;
+  }
+
+  return bitwuzla->d_term_indices;
+}
+
+bool
+bitwuzla_term_is_indexed(const BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(term);
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  return bzla_node_is_indexed(bzla_term);
 }
 
 Bitwuzla *

@@ -396,6 +396,16 @@ bzla_node_is_fp_to_fp_kind(BzlaNodeKind kind)
          || kind == BZLA_FP_TO_FP_INT_NODE || kind == BZLA_FP_TO_FP_UINT_NODE;
 }
 
+/** Return true if given node kind is indexed. */
+static inline bool
+bzla_node_is_indexed_kind(BzlaNodeKind kind)
+{
+  return kind == BZLA_BV_SLICE_NODE || kind == BZLA_FP_TO_UBV_NODE
+         || kind == BZLA_FP_TO_SBV_NODE || kind == BZLA_FP_TO_FP_FP_NODE
+         || kind == BZLA_FP_TO_FP_BV_NODE || kind == BZLA_FP_TO_FP_INT_NODE
+         || kind == BZLA_FP_TO_FP_UINT_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 /** Return true if given node is of unary kind (arity == 1). */
@@ -445,6 +455,14 @@ bzla_node_is_proxy(const BzlaNode *exp)
 {
   assert(exp);
   return bzla_node_real_addr(exp)->kind == BZLA_PROXY_NODE;
+}
+
+/** Return true if given node is indexed. */
+static inline bool
+bzla_node_is_indexed(const BzlaNode *exp)
+{
+  assert(exp);
+  return bzla_node_is_indexed_kind(bzla_node_real_addr(exp)->kind);
 }
 
 /*------------------------------------------------------------------------*/
@@ -1057,6 +1075,13 @@ static inline int32_t
 bzla_node_get_tag(const BzlaNode *exp)
 {
   return (int32_t)((uintptr_t) 3 & (uintptr_t) exp);
+}
+
+/** Get the node kind. */
+static inline BzlaNodeKind
+bzla_node_get_kind(const BzlaNode *exp)
+{
+  return bzla_node_real_addr(exp)->kind;
 }
 
 /*========================================================================*/

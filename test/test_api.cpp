@@ -3233,3 +3233,70 @@ TEST_F(TestApi, reset)
   ASSERT_EQ(BITWUZLA_SAT, bitwuzla_check_sat(bzla));
   bitwuzla_delete(bzla);
 }
+
+TEST_F(TestApi, indexed)
+{
+  BitwuzlaSort *fp_sort = bitwuzla_mk_fp_sort(d_bzla, 5, 11);
+  BitwuzlaSort *bv_sort = bitwuzla_mk_bv_sort(d_bzla, 8);
+  BitwuzlaTerm *fp_term = bitwuzla_mk_const(d_bzla, fp_sort, 0);
+  BitwuzlaTerm *bv_term = bitwuzla_mk_const(d_bzla, bv_sort, 0);
+  BitwuzlaTerm *rm      = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNE);
+
+  size_t size;
+  uint32_t *indices;
+  BitwuzlaTerm *idx;
+
+  idx = bitwuzla_mk_term2_indexed1(
+      d_bzla, BITWUZLA_KIND_FP_TO_SBV, rm, fp_term, 8);
+  ASSERT_TRUE(bitwuzla_term_is_indexed(idx));
+  indices = bitwuzla_term_get_indices(idx, &size);
+  ASSERT_EQ(size, 1);
+  ASSERT_EQ(indices[0], 8);
+
+  idx = bitwuzla_mk_term2_indexed1(
+      d_bzla, BITWUZLA_KIND_FP_TO_UBV, rm, fp_term, 9);
+  ASSERT_TRUE(bitwuzla_term_is_indexed(idx));
+  indices = bitwuzla_term_get_indices(idx, &size);
+  ASSERT_EQ(size, 1);
+  ASSERT_EQ(indices[0], 9);
+
+  idx = bitwuzla_mk_term1_indexed2(
+      d_bzla, BITWUZLA_KIND_FP_TO_FP_FROM_BV, bv_term, 3, 5);
+  ASSERT_TRUE(bitwuzla_term_is_indexed(idx));
+  indices = bitwuzla_term_get_indices(idx, &size);
+  ASSERT_EQ(size, 2);
+  ASSERT_EQ(indices[0], 3);
+  ASSERT_EQ(indices[1], 5);
+
+  idx = bitwuzla_mk_term2_indexed2(
+      d_bzla, BITWUZLA_KIND_FP_TO_FP_FROM_FP, rm, fp_term, 7, 18);
+  ASSERT_TRUE(bitwuzla_term_is_indexed(idx));
+  indices = bitwuzla_term_get_indices(idx, &size);
+  ASSERT_EQ(size, 2);
+  ASSERT_EQ(indices[0], 7);
+  ASSERT_EQ(indices[1], 18);
+
+  idx = bitwuzla_mk_term2_indexed2(
+      d_bzla, BITWUZLA_KIND_FP_TO_FP_FROM_INT, rm, bv_term, 8, 24);
+  ASSERT_TRUE(bitwuzla_term_is_indexed(idx));
+  indices = bitwuzla_term_get_indices(idx, &size);
+  ASSERT_EQ(size, 2);
+  ASSERT_EQ(indices[0], 8);
+  ASSERT_EQ(indices[1], 24);
+
+  idx = bitwuzla_mk_term2_indexed2(
+      d_bzla, BITWUZLA_KIND_FP_TO_FP_FROM_UINT, rm, bv_term, 5, 11);
+  ASSERT_TRUE(bitwuzla_term_is_indexed(idx));
+  indices = bitwuzla_term_get_indices(idx, &size);
+  ASSERT_EQ(size, 2);
+  ASSERT_EQ(indices[0], 5);
+  ASSERT_EQ(indices[1], 11);
+
+  idx = bitwuzla_mk_term1_indexed2(
+      d_bzla, BITWUZLA_KIND_BV_EXTRACT, bv_term, 6, 0);
+  ASSERT_TRUE(bitwuzla_term_is_indexed(idx));
+  indices = bitwuzla_term_get_indices(idx, &size);
+  ASSERT_EQ(size, 2);
+  ASSERT_EQ(indices[0], 6);
+  ASSERT_EQ(indices[1], 0);
+}

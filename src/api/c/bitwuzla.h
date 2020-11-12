@@ -477,6 +477,9 @@ bool bitwuzla_sort_is_rm(const BitwuzlaSort *sort);
 
 size_t bitwuzla_term_hash(const BitwuzlaTerm *term);
 
+uint32_t *bitwuzla_term_get_indices(const BitwuzlaTerm *term, size_t *size);
+bool bitwuzla_term_is_indexed(const BitwuzlaTerm *term);
+
 Bitwuzla *bitwuzla_term_get_bitwuzla(const BitwuzlaTerm *term);
 BitwuzlaSort *bitwuzla_term_get_sort(const BitwuzlaTerm *term);
 BitwuzlaSort *bitwuzla_term_array_get_index_sort(const BitwuzlaTerm *term);
