@@ -1439,7 +1439,7 @@ extract_lambdas(Bzla *bzla,
  * handled right now. If that happens Bitwuzla aborts with an error message
  * about extensional lambdas. However, this is not a problem since we would
  * abort anyways since we only support pure quantified BV right now. */
-void
+static void
 extract_macros(Bzla *bzla)
 {
   double start;
