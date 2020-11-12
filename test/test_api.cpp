@@ -3216,3 +3216,20 @@ TEST_F(TestApi, term_dump)
   ASSERT_NO_FATAL_FAILURE(bitwuzla_term_dump(d_other_exists, "smt2", stdout));
   std::cout << std::endl;
 }
+
+TEST_F(TestApi, reset)
+{
+  Bitwuzla *bzla                         = bitwuzla_new();
+  BitwuzlaSort *s                        = bitwuzla_mk_bv_sort(bzla, 8);
+  BitwuzlaTerm *x                        = bitwuzla_mk_const(bzla, s, "x");
+  std::vector<const BitwuzlaTerm *> args = {x, x};
+  bitwuzla_assert(
+      bzla,
+      bitwuzla_mk_term(bzla, BITWUZLA_KIND_DISTINCT, args.size(), args.data()));
+  ASSERT_EQ(BITWUZLA_UNSAT, bitwuzla_check_sat(bzla));
+  bitwuzla_reset(bzla);
+  s = bitwuzla_mk_bv_sort(bzla, 8);
+  x = bitwuzla_mk_const(bzla, s, "x");
+  ASSERT_EQ(BITWUZLA_SAT, bitwuzla_check_sat(bzla));
+  bitwuzla_delete(bzla);
+}

@@ -276,6 +276,7 @@ typedef struct BitwuzlaSort BitwuzlaSort;
 
 Bitwuzla *bitwuzla_new(void);
 void bitwuzla_delete(Bitwuzla *bitwuzla);
+void bitwuzla_reset(Bitwuzla *bitwuzla);
 
 const char *bitwuzla_copyright(Bitwuzla *bitwuzla);
 const char *bitwuzla_version(Bitwuzla *bitwuzla);

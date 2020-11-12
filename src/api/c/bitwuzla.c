@@ -878,30 +878,34 @@ BzlaAbortCallback bzla_abort_callback = {.abort_fun = abort_aux,
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
 
+static void
+init(Bitwuzla *bitwuzla, BzlaMemMgr *mm)
+{
+  bitwuzla->d_mm             = mm;
+  bitwuzla->d_bzla           = bzla_new();
+  bitwuzla->d_bzla->bitwuzla = bitwuzla;
+  bitwuzla->d_sort_map       = bzla_hashint_map_new(mm);
+  BZLA_INIT_STACK(mm, bitwuzla->d_assumptions);
+  BZLA_INIT_STACK(mm, bitwuzla->d_unsat_assumptions);
+  BZLA_INIT_STACK(mm, bitwuzla->d_unsat_core);
+  BZLA_INIT_STACK(mm, bitwuzla->d_fun_domain_sorts);
+  BZLA_INIT_STACK(mm, bitwuzla->d_sort_fun_domain_sorts);
+  bzla_opt_set(bitwuzla->d_bzla, BZLA_OPT_AUTO_CLEANUP, 1);
+}
+
 Bitwuzla *
 bitwuzla_new(void)
 {
   Bitwuzla *res;
   BzlaMemMgr *mm = bzla_mem_mgr_new();
   BZLA_NEW(mm, res);
-  res->d_mm             = mm;
-  res->d_bzla           = bzla_new();
-  res->d_bzla->bitwuzla = res;
-  res->d_sort_map       = bzla_hashint_map_new(mm);
-  BZLA_INIT_STACK(mm, res->d_assumptions);
-  BZLA_INIT_STACK(mm, res->d_unsat_assumptions);
-  BZLA_INIT_STACK(mm, res->d_unsat_core);
-  BZLA_INIT_STACK(mm, res->d_fun_domain_sorts);
-  BZLA_INIT_STACK(mm, res->d_sort_fun_domain_sorts);
-  bzla_opt_set(res->d_bzla, BZLA_OPT_AUTO_CLEANUP, 1);
+  init(res, mm);
   return res;
 }
 
-void
-bitwuzla_delete(Bitwuzla *bitwuzla)
+static void
+reset(Bitwuzla *bitwuzla)
 {
-  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-
   BzlaIntHashTableIterator it;
   bzla_iter_hashint_init(&it, bitwuzla->d_sort_map);
   while (bzla_iter_hashint_has_next(&it))
@@ -917,9 +921,24 @@ bitwuzla_delete(Bitwuzla *bitwuzla)
   BZLA_RELEASE_STACK(bitwuzla->d_fun_domain_sorts);
   BZLA_RELEASE_STACK(bitwuzla->d_sort_fun_domain_sorts);
   bzla_delete(bitwuzla->d_bzla);
+}
+
+void
+bitwuzla_delete(Bitwuzla *bitwuzla)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  reset(bitwuzla);
   BzlaMemMgr *mm = bitwuzla->d_mm;
   BZLA_DELETE(mm, bitwuzla);
   bzla_mem_mgr_delete(mm);
+}
+
+void
+bitwuzla_reset(Bitwuzla *bitwuzla)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  reset(bitwuzla);
+  init(bitwuzla, bitwuzla->d_mm);
 }
 
 const char *
