@@ -2798,6 +2798,18 @@ close_term(BzlaSMT2Parser *parser)
     {
       BitwuzlaTermConstPtrStack fargs;
       BZLA_INIT_STACK(parser->mem, fargs);
+
+      BitwuzlaTerm *fun = item_cur[0].exp;
+      if (nargs != bitwuzla_term_fun_get_arity(fun))
+      {
+        BZLA_RELEASE_STACK(fargs);
+        return !perr_smt2(parser, "invalid number of arguments");
+      }
+
+      const BitwuzlaSort **domain_sorts =
+          bitwuzla_term_fun_get_domain_sorts(fun);
+
+      BZLA_PUSH_STACK(fargs, fun);
       for (i = 1; i <= nargs; i++)
       {
         if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
@@ -2807,27 +2819,15 @@ close_term(BzlaSMT2Parser *parser)
           return !perr_smt2(parser, "expected expression");
         }
         BZLA_PUSH_STACK(fargs, item_cur[i].exp);
-      }
-      BitwuzlaTerm *fun = item_cur[0].exp;
-      if (nargs != bitwuzla_term_fun_get_arity(fun))
-      {
-        BZLA_RELEASE_STACK(fargs);
-        return !perr_smt2(parser, "invalid number of arguments");
-      }
-      const BitwuzlaSort **domain_sorts =
-          bitwuzla_term_fun_get_domain_sorts(fun);
-      for (i = 0; i < nargs; i++)
-      {
-        assert(domain_sorts[i]);
+        assert(domain_sorts[i - 1]);
         if (!bitwuzla_sort_is_equal(
-                domain_sorts[i],
+                domain_sorts[i - 1],
                 bitwuzla_term_get_sort(BZLA_PEEK_STACK(fargs, i))))
         {
           BZLA_RELEASE_STACK(fargs);
           return !perr_smt2(parser, "invalid sort for argument %d", i);
         }
       }
-      BZLA_PUSH_STACK(fargs, fun);
       parser->work.top = item_cur;
       item_open->tag   = BZLA_EXP_TAG_SMT2;
       item_open->exp   = bitwuzla_mk_term(

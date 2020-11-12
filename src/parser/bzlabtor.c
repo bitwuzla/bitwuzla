@@ -1529,6 +1529,7 @@ parse_apply(BzlaBZLAParser *parser, uint32_t width)
   }
 
   arity = bitwuzla_sort_fun_get_arity(bitwuzla_term_get_sort(fun));
+  BZLA_PUSH_STACK(args, fun);
   for (i = 0; i < arity; i++)
   {
     arg = parse_exp(parser, 0, false, true, 0);
@@ -1539,7 +1540,6 @@ parse_apply(BzlaBZLAParser *parser, uint32_t width)
 
     BZLA_PUSH_STACK(args, arg);
   }
-  BZLA_PUSH_STACK(args, fun);
 
   res = bitwuzla_mk_term(parser->bitwuzla,
                          BITWUZLA_KIND_APPLY,
