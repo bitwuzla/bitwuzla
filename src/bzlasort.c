@@ -144,29 +144,14 @@ equal_sort(const BzlaSort *a, const BzlaSort *b)
   switch (a->kind)
   {
     default:
-#if 0
-      case BZLA_BOOL_SORT:
-      default:
-        assert (a->kind == BZLA_BOOL_SORT);
-        break;
-#endif
     case BZLA_BV_SORT:
       if (a->bitvec.width != b->bitvec.width) return 0;
       break;
-#if 0
-      case BZLA_ARRAY_SORT:
-        if (a->array.index->id != b->array.index->id) return 0;
-        if (a->array.element->id != b->array.element->id) return 0;
-        break;
 
-      case BZLA_LST_SORT:
-        if (a->lst.head->id != b->lst.head->id) return 0;
-        if (a->lst.tail->id != b->lst.tail->id) return 0;
-        break;
-#endif
     case BZLA_FUN_SORT:
       if (a->fun.domain->id != b->fun.domain->id) return 0;
       if (a->fun.codomain->id != b->fun.codomain->id) return 0;
+      if (a->fun.is_array != b->fun.is_array) return 0;
       break;
 
     case BZLA_TUPLE_SORT:
@@ -346,36 +331,11 @@ create_sort(Bzla *bzla, BzlaSortUniqueTable *table, BzlaSort *pattern)
 
   switch (pattern->kind)
   {
-#if 0
-      case BZLA_BOOL_SORT:
-	res->kind = BZLA_BOOL_SORT;
-	break;
-#endif
     case BZLA_BV_SORT:
       res->kind         = BZLA_BV_SORT;
       res->bitvec.width = pattern->bitvec.width;
       break;
-#if 0
-      case BZLA_ARRAY_SORT:
-	res->kind = BZLA_ARRAY_SORT;
-	res->array.index = copy_sort (pattern->array.index);
-	res->array.element = copy_sort (pattern->array.element);
-#ifndef NDEBUG
-	res->array.index->parents++;
-	res->array.element->parents++;
-#endif
-	break;
 
-      case BZLA_LST_SORT:
-	res->kind = BZLA_LST_SORT;
-	res->lst.head = copy_sort (pattern->lst.head);
-	res->lst.tail = copy_sort (pattern->lst.tail);
-#ifndef NDEBUG
-	res->lst.head->parents++;
-	res->lst.tail->parents++;
-#endif
-	break;
-#endif
     case BZLA_FP_SORT:
       res->kind         = BZLA_FP_SORT;
       res->fp.width_exp = pattern->fp.width_exp;
@@ -386,6 +346,7 @@ create_sort(Bzla *bzla, BzlaSortUniqueTable *table, BzlaSort *pattern)
       res->kind         = BZLA_FUN_SORT;
       res->fun.domain   = copy_sort(pattern->fun.domain);
       res->fun.codomain = copy_sort(pattern->fun.codomain);
+      res->fun.is_array = pattern->fun.is_array;
 #ifndef NDEBUG
       res->fun.domain->parents++;
       res->fun.codomain->parents++;
@@ -461,6 +422,57 @@ bzla_sort_bv(Bzla *bzla, uint32_t width)
   return res->id;
 }
 
+static BzlaSortId
+sort_fun_aux(Bzla *bzla,
+             BzlaSortId domain_id,
+             BzlaSortId codomain_id,
+             bool is_array)
+{
+  assert(bzla);
+  assert(domain_id);
+
+  BzlaSort *domain, *codomain, *res, **pos, pattern;
+  BzlaSortUniqueTable *table;
+
+  table = &bzla->sorts_unique_table;
+
+  domain = bzla_sort_get_by_id(bzla, domain_id);
+  assert(domain);
+  assert(domain->refs > 0);
+  assert(domain->table == table);
+  assert(domain->kind == BZLA_TUPLE_SORT);
+  codomain = bzla_sort_get_by_id(bzla, codomain_id);
+  assert(codomain);
+  assert(codomain->refs > 0);
+  assert(codomain->table == table);
+
+  BZLA_CLR(&pattern);
+  pattern.kind         = BZLA_FUN_SORT;
+  pattern.fun.domain   = domain;
+  pattern.fun.codomain = codomain;
+  pattern.fun.is_array = is_array;
+  pos                  = find_sort(table, &pattern);
+  assert(pos);
+  res = *pos;
+  if (!res)
+  {
+    if (BZLA_FULL_SORT_UNIQUE_TABLE(table))
+    {
+      enlarge_sorts_unique_table(table);
+      pos = find_sort(table, &pattern);
+      assert(pos);
+      res = *pos;
+      assert(!res);
+    }
+    res            = create_sort(bzla, table, &pattern);
+    res->fun.arity = domain->tuple.num_elements;
+    *pos           = res;
+  }
+  inc_sort_ref_counter(res);
+
+  return res->id;
+}
+
 BzlaSortId
 bzla_sort_array(Bzla *bzla, BzlaSortId index_id, BzlaSortId element_id)
 {
@@ -469,52 +481,11 @@ bzla_sort_array(Bzla *bzla, BzlaSortId index_id, BzlaSortId element_id)
   assert(element_id < BZLA_COUNT_STACK(bzla->sorts_unique_table.id2sort));
 
   BzlaSortId tup, res;
-  BzlaSort *s;
 
   tup = bzla_sort_tuple(bzla, &index_id, 1);
-  res = bzla_sort_fun(bzla, tup, element_id);
+  res = sort_fun_aux(bzla, tup, element_id, true);
   bzla_sort_release(bzla, tup);
-  s               = bzla_sort_get_by_id(bzla, res);
-  s->fun.is_array = true;
   return res;
-#if 0
-  BzlaSort * res, ** pos, pattern, *index, *element;
-  BzlaSortUniqueTable *table;
-
-  table = &bzla->sorts_unique_table;
-
-  index = bzla_sort_get_by_id (bzla, index_id);
-  assert (index);
-  assert (index->refs > 0);
-  assert (index->table == table);
-  element = bzla_sort_get_by_id (bzla, element_id);
-  assert (element);
-  assert (element->refs > 0);
-  assert (element->table == table);
-
-  BZLA_CLR (&pattern);
-  pattern.kind = BZLA_ARRAY_SORT;
-  pattern.array.index = index;
-  pattern.array.element = element;
-  pos = find_sort (table, &pattern);
-  assert (pos);
-  res = *pos;
-  if (!res) 
-    {
-      if (BZLA_FULL_SORT_UNIQUE_TABLE (table))
-	{
-	  enlarge_sorts_unique_table (table);
-	  pos = find_sort (table, &pattern);
-	  assert (pos);
-	  res = *pos;
-	  assert (!res);
-	}
-      res = create_sort (bzla, table, &pattern);
-      *pos = res;
-    }
-  inc_sort_ref_counter (res);
-  return res->id;
-#endif
 }
 
 #if 0
@@ -641,48 +612,7 @@ bzla_sort_rm(Bzla *bzla)
 BzlaSortId
 bzla_sort_fun(Bzla *bzla, BzlaSortId domain_id, BzlaSortId codomain_id)
 {
-  assert(bzla);
-  assert(domain_id);
-
-  BzlaSort *domain, *codomain, *res, **pos, pattern;
-  BzlaSortUniqueTable *table;
-
-  table = &bzla->sorts_unique_table;
-
-  domain = bzla_sort_get_by_id(bzla, domain_id);
-  assert(domain);
-  assert(domain->refs > 0);
-  assert(domain->table == table);
-  assert(domain->kind == BZLA_TUPLE_SORT);
-  codomain = bzla_sort_get_by_id(bzla, codomain_id);
-  assert(codomain);
-  assert(codomain->refs > 0);
-  assert(codomain->table == table);
-
-  BZLA_CLR(&pattern);
-  pattern.kind         = BZLA_FUN_SORT;
-  pattern.fun.domain   = domain;
-  pattern.fun.codomain = codomain;
-  pos                  = find_sort(table, &pattern);
-  assert(pos);
-  res = *pos;
-  if (!res)
-  {
-    if (BZLA_FULL_SORT_UNIQUE_TABLE(table))
-    {
-      enlarge_sorts_unique_table(table);
-      pos = find_sort(table, &pattern);
-      assert(pos);
-      res = *pos;
-      assert(!res);
-    }
-    res            = create_sort(bzla, table, &pattern);
-    res->fun.arity = domain->tuple.num_elements;
-    *pos           = res;
-  }
-  inc_sort_ref_counter(res);
-
-  return res->id;
+  return sort_fun_aux(bzla, domain_id, codomain_id, false);
 }
 
 BzlaSortId

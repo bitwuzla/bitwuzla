@@ -127,12 +127,6 @@ BzlaSortId bzla_sort_array(Bzla *bzla,
                            BzlaSortId index_id,
                            BzlaSortId element_id);
 
-#if 0
-BzlaSortId bzla_sort_lst (Bzla * bzla,
-                          BzlaSortId head_id,
-                          BzlaSortId tail_id);
-#endif
-
 BzlaSortId bzla_sort_fun(Bzla *bzla,
                          BzlaSortId domain_id,
                          BzlaSortId codomain_id);

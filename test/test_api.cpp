@@ -2854,6 +2854,23 @@ TEST_F(TestApi, regr1)
       d_error_unexp_fun_term);
 }
 
+TEST_F(TestApi, regr2)
+{
+  std::vector<const BitwuzlaSort *> domain({d_bv_sort8});
+  BitwuzlaSort *fun_sort =
+      bitwuzla_mk_fun_sort(d_bzla, domain.size(), domain.data(), d_bv_sort8);
+  BitwuzlaSort *array_sort =
+      bitwuzla_mk_array_sort(d_bzla, d_bv_sort8, d_bv_sort8);
+  ASSERT_NE(fun_sort, array_sort);
+  BitwuzlaTerm *fun   = bitwuzla_mk_const(d_bzla, fun_sort, 0);
+  BitwuzlaTerm *array = bitwuzla_mk_const(d_bzla, array_sort, 0);
+  ASSERT_EQ(array_sort, bitwuzla_term_get_sort(array));
+  ASSERT_EQ(fun_sort, bitwuzla_term_get_sort(fun));
+  ASSERT_NE(bitwuzla_term_get_sort(fun), bitwuzla_term_get_sort(array));
+  ASSERT_TRUE(bitwuzla_term_is_fun(fun));
+  ASSERT_TRUE(bitwuzla_term_is_array(array));
+}
+
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTerm                                                               */
 /* -------------------------------------------------------------------------- */

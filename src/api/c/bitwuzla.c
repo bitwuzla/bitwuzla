@@ -824,9 +824,11 @@ wrap_sort(Bitwuzla *bitwuzla, BzlaSortId bzla_sort)
   else
   {
     BZLA_NEW(bitwuzla->d_mm, res);
-    res->d_bzla_sort                                              = bzla_sort;
-    res->d_bzla                                                   = bitwuzla;
-    bzla_hashint_map_add(bitwuzla->d_sort_map, bzla_sort)->as_ptr = res;
+    res->d_bzla_sort = bzla_sort;
+    res->d_bzla      = bitwuzla;
+    bzla_hashint_map_add(bitwuzla->d_sort_map,
+                         bzla_sort_copy(bitwuzla->d_bzla, bzla_sort))
+        ->as_ptr = res;
   }
   return res;
 }
@@ -904,6 +906,7 @@ bitwuzla_delete(Bitwuzla *bitwuzla)
   bzla_iter_hashint_init(&it, bitwuzla->d_sort_map);
   while (bzla_iter_hashint_has_next(&it))
   {
+    bzla_sort_release(bitwuzla->d_bzla, it.t->keys[it.cur_pos]);
     BitwuzlaSort *sort = bzla_iter_hashint_next_data(&it)->as_ptr;
     BZLA_DELETE(bitwuzla->d_mm, sort);
   }
@@ -3217,12 +3220,31 @@ bitwuzla_term_get_sort(const BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(term);
 
+  BitwuzlaSort *sort;
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
-  /* Note: We don't need to increase the ref counter here. */
-  return BZLA_EXPORT_BITWUZLA_SORT(
-      BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)),
-      bzla_node_get_sort_id(bzla_term));
+  Bzla *bzla = bzla_node_get_bzla(bzla_term);
+
+  BzlaSortId bzla_sort = bzla_node_get_sort_id(bzla_term);
+  if (bzla_node_is_array(bzla_term))
+  {
+    BzlaSortId array_sort =
+        bzla_sort_array(bzla,
+                        bzla_sort_array_get_index(bzla, bzla_sort),
+                        bzla_sort_array_get_element(bzla, bzla_sort));
+
+    sort = BZLA_EXPORT_BITWUZLA_SORT(
+        BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)), array_sort);
+
+    bzla_sort_release(bzla, array_sort);
+  }
+  else
+  {
+    sort = BZLA_EXPORT_BITWUZLA_SORT(
+        BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)), bzla_sort);
+  }
+
+  return sort;
 }
 
 BitwuzlaSort *

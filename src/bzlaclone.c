@@ -302,29 +302,23 @@ clone_sorts_unique_table(Bzla *bzla, Bzla *clone)
 
     switch (sort->kind)
     {
-#if 0
-	  case BZLA_BOOL_SORT:
-	    cid = bzla_sort_bool (clone);
-	    break;
-#endif
       case BZLA_BV_SORT: cid = bzla_sort_bv(clone, sort->bitvec.width); break;
       case BZLA_FP_SORT:
         cid = bzla_sort_fp(clone, sort->fp.width_exp, sort->fp.width_sig);
         break;
-#if 0
-	  case BZLA_LST_SORT:
-	    cid = bzla_sort_lst (clone, sort->lst.head->id, sort->lst.tail->id);
-	    break;
-
-	  case BZLA_ARRAY_SORT:
-	    cid = bzla_sort_array (clone, sort->array.index->id,
-				   sort->array.element->id);
-	    break;
-#endif
       case BZLA_FUN_SORT:
         assert(BZLA_PEEK_STACK(res->id2sort, sort->fun.domain->id));
-        cid =
-            bzla_sort_fun(clone, sort->fun.domain->id, sort->fun.codomain->id);
+        if (sort->fun.is_array)
+        {
+          cid = bzla_sort_array(clone,
+                                sort->fun.domain->tuple.elements[0]->id,
+                                sort->fun.codomain->id);
+        }
+        else
+        {
+          cid = bzla_sort_fun(
+              clone, sort->fun.domain->id, sort->fun.codomain->id);
+        }
         break;
 
       case BZLA_RM_SORT: cid = bzla_sort_rm(clone); break;
@@ -1704,7 +1698,15 @@ bzla_clone_recursively_rebuild_sort(Bzla *bzla, Bzla *clone, BzlaSortId sort)
         case BZLA_FUN_SORT:
           s0 = bzla_hashint_map_get(map, s->fun.domain->id)->as_int;
           s1 = bzla_hashint_map_get(map, s->fun.codomain->id)->as_int;
-          r  = bzla_sort_fun(clone, s0, s1);
+          if (s->fun.is_array)
+          {
+            r = bzla_sort_array(
+                clone, bzla_sort_array_get_index(clone, s0), s1);
+          }
+          else
+          {
+            r = bzla_sort_fun(clone, s0, s1);
+          }
           break;
         case BZLA_TUPLE_SORT:
           for (i = 0; i < s->tuple.num_elements; i++)

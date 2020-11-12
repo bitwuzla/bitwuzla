@@ -169,14 +169,18 @@ bzla_exp_array(Bzla *bzla, BzlaSortId sort, const char *symbol)
 {
   assert(bzla);
   assert(sort);
-  assert(bzla_sort_is_fun(bzla, sort));
+  assert(bzla_sort_is_fun(bzla, sort));  // TODO: maybe check is_array
   assert(bzla_sort_tuple_get_arity(bzla, bzla_sort_fun_get_domain(bzla, sort))
          == 1);
 
   BzlaNode *exp;
 
-  exp           = bzla_exp_uf(bzla, sort, symbol);
+  BzlaSort *asort = bzla_sort_get_by_id(bzla, sort);
+  BzlaSortId fsort =
+      bzla_sort_fun(bzla, asort->fun.domain->id, asort->fun.codomain->id);
+  exp           = bzla_exp_uf(bzla, fsort, symbol);
   exp->is_array = 1;
+  bzla_sort_release(bzla, fsort);
 
   return exp;
 }
