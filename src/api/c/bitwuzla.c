@@ -1322,7 +1322,7 @@ bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla, uint32_t exp_size, uint32_t sig_size)
 BitwuzlaSort *
 bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
                      uint32_t arity,
-                     const BitwuzlaSort *domain[],
+                     BitwuzlaSort *domain[],
                      const BitwuzlaSort *codomain)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
@@ -1685,7 +1685,7 @@ bitwuzla_mk_term1(Bitwuzla *bitwuzla,
                   const BitwuzlaTerm *arg)
 {
   const BitwuzlaTerm *args[] = {arg};
-  return bitwuzla_mk_term(bitwuzla, kind, 1, args);
+  return bitwuzla_mk_term(bitwuzla, kind, 1, (BitwuzlaTerm **) args);
 }
 
 BitwuzlaTerm *
@@ -1695,7 +1695,7 @@ bitwuzla_mk_term2(Bitwuzla *bitwuzla,
                   const BitwuzlaTerm *arg1)
 {
   const BitwuzlaTerm *args[] = {arg0, arg1};
-  return bitwuzla_mk_term(bitwuzla, kind, 2, args);
+  return bitwuzla_mk_term(bitwuzla, kind, 2, (BitwuzlaTerm **) args);
 }
 
 BitwuzlaTerm *
@@ -1706,14 +1706,14 @@ bitwuzla_mk_term3(Bitwuzla *bitwuzla,
                   const BitwuzlaTerm *arg2)
 {
   const BitwuzlaTerm *args[] = {arg0, arg1, arg2};
-  return bitwuzla_mk_term(bitwuzla, kind, 3, args);
+  return bitwuzla_mk_term(bitwuzla, kind, 3, (BitwuzlaTerm **) args);
 }
 
 BitwuzlaTerm *
 bitwuzla_mk_term(Bitwuzla *bitwuzla,
                  BitwuzlaKind kind,
                  uint32_t argc,
-                 const BitwuzlaTerm *args[])
+                 BitwuzlaTerm *args[])
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
 
@@ -2344,7 +2344,8 @@ bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
 {
   const BitwuzlaTerm *args[] = {arg};
   uint32_t idxs[]            = {idx};
-  return bitwuzla_mk_term_indexed(bitwuzla, kind, 1, args, 1, idxs);
+  return bitwuzla_mk_term_indexed(
+      bitwuzla, kind, 1, (BitwuzlaTerm **) args, 1, idxs);
 }
 
 BitwuzlaTerm *
@@ -2356,7 +2357,8 @@ bitwuzla_mk_term1_indexed2(Bitwuzla *bitwuzla,
 {
   const BitwuzlaTerm *args[] = {arg};
   uint32_t idxs[]            = {idx0, idx1};
-  return bitwuzla_mk_term_indexed(bitwuzla, kind, 1, args, 2, idxs);
+  return bitwuzla_mk_term_indexed(
+      bitwuzla, kind, 1, (BitwuzlaTerm **) args, 2, idxs);
 }
 
 BitwuzlaTerm *
@@ -2368,7 +2370,8 @@ bitwuzla_mk_term2_indexed1(Bitwuzla *bitwuzla,
 {
   const BitwuzlaTerm *args[] = {arg0, arg1};
   uint32_t idxs[]            = {idx};
-  return bitwuzla_mk_term_indexed(bitwuzla, kind, 2, args, 1, idxs);
+  return bitwuzla_mk_term_indexed(
+      bitwuzla, kind, 2, (BitwuzlaTerm **) args, 1, idxs);
 }
 
 BitwuzlaTerm *
@@ -2381,14 +2384,15 @@ bitwuzla_mk_term2_indexed2(Bitwuzla *bitwuzla,
 {
   const BitwuzlaTerm *args[] = {arg0, arg1};
   uint32_t idxs[]            = {idx0, idx1};
-  return bitwuzla_mk_term_indexed(bitwuzla, kind, 2, args, 2, idxs);
+  return bitwuzla_mk_term_indexed(
+      bitwuzla, kind, 2, (BitwuzlaTerm **) args, 2, idxs);
 }
 
 BitwuzlaTerm *
 bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                          BitwuzlaKind kind,
                          uint32_t argc,
-                         const BitwuzlaTerm *args[],
+                         BitwuzlaTerm *args[],
                          uint32_t idxc,
                          uint32_t idxs[])
 {
@@ -3376,7 +3380,7 @@ bitwuzla_term_fun_get_domain_sort(const BitwuzlaTerm *term)
                                bzla_node_get_sort_id(bzla_term)));
 }
 
-const BitwuzlaSort **
+BitwuzlaSort **
 bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term)
 {
   BZLA_CHECK_ARG_NOT_NULL(term);
@@ -3403,7 +3407,7 @@ bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term)
     inc_ext_refs_sort(bzla, id);
   }
   BZLA_PUSH_STACK(bitwuzla->d_fun_domain_sorts, 0);
-  return (const BitwuzlaSort **) bitwuzla->d_fun_domain_sorts.start;
+  return bitwuzla->d_fun_domain_sorts.start;
 }
 
 BitwuzlaSort *

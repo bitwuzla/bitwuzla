@@ -306,7 +306,7 @@ BitwuzlaSort *bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
                                   uint32_t sig_size);
 BitwuzlaSort *bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
                                    uint32_t arity,
-                                   const BitwuzlaSort *domain[],
+                                   BitwuzlaSort *domain[],
                                    const BitwuzlaSort *codomain);
 BitwuzlaSort *bitwuzla_mk_rm_sort(Bitwuzla *bitwuzla);
 
@@ -365,7 +365,7 @@ BitwuzlaTerm *bitwuzla_mk_term3(Bitwuzla *bitwuzla,
 BitwuzlaTerm *bitwuzla_mk_term(Bitwuzla *bitwuzla,
                                BitwuzlaKind kind,
                                uint32_t argc,
-                               const BitwuzlaTerm *args[]);
+                               BitwuzlaTerm *args[]);
 
 BitwuzlaTerm *bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
                                          BitwuzlaKind kind,
@@ -394,7 +394,7 @@ BitwuzlaTerm *bitwuzla_mk_term2_indexed2(Bitwuzla *bitwuzla,
 BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                                        BitwuzlaKind kind,
                                        uint32_t argc,
-                                       const BitwuzlaTerm *args[],
+                                       BitwuzlaTerm *args[],
                                        uint32_t idxc,
                                        uint32_t idxs[]);
 
@@ -487,8 +487,7 @@ BitwuzlaSort *bitwuzla_term_get_sort(const BitwuzlaTerm *term);
 BitwuzlaSort *bitwuzla_term_array_get_index_sort(const BitwuzlaTerm *term);
 BitwuzlaSort *bitwuzla_term_array_get_element_sort(const BitwuzlaTerm *term);
 BitwuzlaSort *bitwuzla_term_fun_get_domain_sort(const BitwuzlaTerm *term);
-const BitwuzlaSort **bitwuzla_term_fun_get_domain_sorts(
-    const BitwuzlaTerm *term);
+BitwuzlaSort **bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term);
 BitwuzlaSort *bitwuzla_term_fun_get_codomain_sort(const BitwuzlaTerm *term);
 
 uint32_t bitwuzla_term_bv_get_size(const BitwuzlaTerm *term);
