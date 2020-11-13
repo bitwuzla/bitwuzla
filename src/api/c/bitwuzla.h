@@ -244,6 +244,8 @@ enum BitwuzlaKind
   BITWUZLA_KIND_FP_TO_FP_FROM_UINT,
   BITWUZLA_KIND_FP_TO_SBV,
   BITWUZLA_KIND_FP_TO_UBV,
+
+  BITWUZLA_NUM_KINDS,
 };
 typedef enum BitwuzlaKind BitwuzlaKind;
 
