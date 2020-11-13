@@ -272,6 +272,12 @@ typedef struct Bitwuzla Bitwuzla;
 typedef struct BitwuzlaTerm BitwuzlaTerm;
 typedef struct BitwuzlaSort BitwuzlaSort;
 
+// TODO: option enums (check bzlatypes.h)
+//
+// BitwuzlaTerm* bitwuzla_substitute(Bitwuzla *bitwuzla, BitwuzlaTerm *term,
+// const BitwuzlaTerm *terms[], const BitwuzlaTerm *substs[]) maybe parallel
+// substitute on multiple terms?
+
 /* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -479,6 +485,9 @@ bool bitwuzla_sort_is_rm(const BitwuzlaSort *sort);
 
 size_t bitwuzla_term_hash(const BitwuzlaTerm *term);
 
+BitwuzlaKind bitwuzla_term_get_kind(const BitwuzlaTerm *term);
+BitwuzlaTerm **bitwuzla_term_get_children(const BitwuzlaTerm *term,
+                                          size_t *size);
 uint32_t *bitwuzla_term_get_indices(const BitwuzlaTerm *term, size_t *size);
 bool bitwuzla_term_is_indexed(const BitwuzlaTerm *term);
 
@@ -506,6 +515,7 @@ bool bitwuzla_term_is_const(const BitwuzlaTerm *term);
 bool bitwuzla_term_is_fun(const BitwuzlaTerm *term);
 bool bitwuzla_term_is_var(const BitwuzlaTerm *term);
 bool bitwuzla_term_is_bound_var(const BitwuzlaTerm *term);
+bool bitwuzla_term_is_value(const BitwuzlaTerm *term);
 
 bool bitwuzla_term_is_bv_value(const BitwuzlaTerm *term);
 bool bitwuzla_term_is_fp_value(const BitwuzlaTerm *term);

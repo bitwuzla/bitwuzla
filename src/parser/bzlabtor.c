@@ -301,7 +301,7 @@ parse_exp(BzlaBZLAParser *parser,
 
   if (expected_width)
   {
-    if (bitwuzla_term_is_fun(res))
+    if (bitwuzla_term_is_fun(res) || bitwuzla_term_is_array(res))
     {
       BitwuzlaSort *sort = bitwuzla_term_fun_get_codomain_sort(res);
       assert(bitwuzla_sort_is_bv(sort));
@@ -482,7 +482,7 @@ parse_fun_exp(BzlaBZLAParser *parser, uint32_t width)
   res = parse_exp(parser, width, true, false, 0);
   if (!res) return 0;
 
-  if (bitwuzla_term_is_fun(res)) return res;
+  if (bitwuzla_term_is_fun(res) || bitwuzla_term_is_array(res)) return res;
 
   (void) perr_btor(parser, "expected function expression");
 

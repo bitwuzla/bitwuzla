@@ -3046,8 +3046,8 @@ TEST_F(TestApi, term_is_fun)
 {
   ASSERT_DEATH(bitwuzla_term_is_fun(nullptr), d_error_not_null);
   ASSERT_TRUE(bitwuzla_term_is_fun(d_fun));
-  ASSERT_TRUE(bitwuzla_term_is_fun(d_array));
-  ASSERT_TRUE(bitwuzla_term_is_fun(d_array_fpbv));
+  ASSERT_FALSE(bitwuzla_term_is_fun(d_array));
+  ASSERT_FALSE(bitwuzla_term_is_fun(d_array_fpbv));
   ASSERT_FALSE(bitwuzla_term_is_fun(d_fp_pzero32));
 }
 
@@ -3287,4 +3287,346 @@ TEST_F(TestApi, indexed)
   ASSERT_EQ(size, 2);
   ASSERT_EQ(indices[0], 6);
   ASSERT_EQ(indices[1], 0);
+}
+
+TEST_F(TestApi, terms)
+{
+  BitwuzlaSort *fp_sort    = bitwuzla_mk_fp_sort(d_bzla, 5, 11);
+  BitwuzlaSort *bv_sort    = bitwuzla_mk_bv_sort(d_bzla, 16);
+  BitwuzlaSort *bool_sort  = bitwuzla_mk_bool_sort(d_bzla);
+  BitwuzlaSort *array_sort = bitwuzla_mk_array_sort(d_bzla, bv_sort, bv_sort);
+  std::vector<BitwuzlaSort *> domain = {
+      bv_sort,
+      bv_sort,
+      bv_sort,
+  };
+  BitwuzlaSort *fun_sort =
+      bitwuzla_mk_fun_sort(d_bzla, domain.size(), domain.data(), bv_sort);
+
+  std::vector<BitwuzlaTerm *> fp_args = {
+      bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNA),
+      bitwuzla_mk_const(d_bzla, fp_sort, nullptr),
+      bitwuzla_mk_const(d_bzla, fp_sort, nullptr),
+      bitwuzla_mk_const(d_bzla, fp_sort, nullptr),
+  };
+
+  std::vector<BitwuzlaTerm *> bv_args = {
+      bitwuzla_mk_const(d_bzla, bv_sort, nullptr),
+      bitwuzla_mk_const(d_bzla, bv_sort, nullptr),
+      bitwuzla_mk_const(d_bzla, bv_sort, nullptr),
+      bitwuzla_mk_const(d_bzla, bv_sort, nullptr),
+  };
+
+  std::vector<BitwuzlaTerm *> bool_args = {
+      bitwuzla_mk_const(d_bzla, bool_sort, nullptr),
+      bitwuzla_mk_const(d_bzla, bool_sort, nullptr),
+  };
+
+  BitwuzlaKind kind;
+  BitwuzlaTerm *term;
+  for (size_t i = 0; i < BITWUZLA_NUM_KINDS; ++i)
+  {
+    kind = static_cast<BitwuzlaKind>(i);
+
+    term = nullptr;
+    switch (kind)
+    {
+      // Boolean
+      case BITWUZLA_KIND_NOT:
+        term = bitwuzla_mk_term1(d_bzla, kind, bool_args[0]);
+        break;
+
+      case BITWUZLA_KIND_AND:
+      case BITWUZLA_KIND_IFF:
+      case BITWUZLA_KIND_IMPLIES:
+      case BITWUZLA_KIND_OR:
+      case BITWUZLA_KIND_XOR:
+        term =
+            bitwuzla_mk_term(d_bzla, kind, bool_args.size(), bool_args.data());
+        break;
+
+      // BV Unary
+      case BITWUZLA_KIND_BV_DEC:
+      case BITWUZLA_KIND_BV_INC:
+      case BITWUZLA_KIND_BV_NEG:
+      case BITWUZLA_KIND_BV_NOT:
+      case BITWUZLA_KIND_BV_REDAND:
+      case BITWUZLA_KIND_BV_REDOR:
+      case BITWUZLA_KIND_BV_REDXOR:
+        term = bitwuzla_mk_term(d_bzla, kind, 1, bv_args.data());
+        break;
+
+      // BV Binary
+      case BITWUZLA_KIND_BV_ASHR:
+      case BITWUZLA_KIND_BV_COMP:
+      case BITWUZLA_KIND_BV_NAND:
+      case BITWUZLA_KIND_BV_NOR:
+      case BITWUZLA_KIND_BV_ROL:
+      case BITWUZLA_KIND_BV_ROR:
+      case BITWUZLA_KIND_BV_SADD_OVERFLOW:
+      case BITWUZLA_KIND_BV_SDIV_OVERFLOW:
+      case BITWUZLA_KIND_BV_SDIV:
+      case BITWUZLA_KIND_BV_SGE:
+      case BITWUZLA_KIND_BV_SGT:
+      case BITWUZLA_KIND_BV_SHL:
+      case BITWUZLA_KIND_BV_SHR:
+      case BITWUZLA_KIND_BV_SLE:
+      case BITWUZLA_KIND_BV_SLT:
+      case BITWUZLA_KIND_BV_SMOD:
+      case BITWUZLA_KIND_BV_SMUL_OVERFLOW:
+      case BITWUZLA_KIND_BV_SREM:
+      case BITWUZLA_KIND_BV_SSUB_OVERFLOW:
+      case BITWUZLA_KIND_BV_SUB:
+      case BITWUZLA_KIND_BV_UADD_OVERFLOW:
+      case BITWUZLA_KIND_BV_UDIV:
+      case BITWUZLA_KIND_BV_UGE:
+      case BITWUZLA_KIND_BV_UGT:
+      case BITWUZLA_KIND_BV_ULE:
+      case BITWUZLA_KIND_BV_ULT:
+      case BITWUZLA_KIND_BV_UMUL_OVERFLOW:
+      case BITWUZLA_KIND_BV_UREM:
+      case BITWUZLA_KIND_BV_USUB_OVERFLOW:
+      case BITWUZLA_KIND_BV_XNOR:
+        term = bitwuzla_mk_term(d_bzla, kind, 2, bv_args.data());
+        break;
+
+      // BV Binary+
+      case BITWUZLA_KIND_BV_ADD:
+      case BITWUZLA_KIND_BV_AND:
+      case BITWUZLA_KIND_BV_CONCAT:
+      case BITWUZLA_KIND_BV_MUL:
+      case BITWUZLA_KIND_BV_OR:
+      case BITWUZLA_KIND_BV_XOR:
+        term = bitwuzla_mk_term(d_bzla, kind, bv_args.size(), bv_args.data());
+        break;
+
+      case BITWUZLA_KIND_DISTINCT:
+      case BITWUZLA_KIND_EQUAL:
+        term = bitwuzla_mk_term(d_bzla, kind, 2, bv_args.data());
+        break;
+
+      // BV indexed
+      case BITWUZLA_KIND_BV_EXTRACT:
+        term = bitwuzla_mk_term1_indexed2(d_bzla, kind, bv_args[0], 3, 2);
+        break;
+
+      case BITWUZLA_KIND_BV_REPEAT:
+      case BITWUZLA_KIND_BV_ROLI:
+      case BITWUZLA_KIND_BV_RORI:
+      case BITWUZLA_KIND_BV_SIGN_EXTEND:
+      case BITWUZLA_KIND_BV_ZERO_EXTEND:
+        term = bitwuzla_mk_term1_indexed1(d_bzla, kind, bv_args[0], 5);
+        break;
+
+      // Arrays
+      case BITWUZLA_KIND_ARRAY_SELECT: {
+        std::vector<BitwuzlaTerm *> args = {
+            bitwuzla_mk_const(d_bzla, array_sort, nullptr),
+            bv_args[0],
+        };
+        term = bitwuzla_mk_term(d_bzla, kind, args.size(), args.data());
+        break;
+      }
+
+      case BITWUZLA_KIND_ARRAY_STORE: {
+        std::vector<BitwuzlaTerm *> args = {
+            bitwuzla_mk_const(d_bzla, array_sort, nullptr),
+            bv_args[0],
+            bv_args[1],
+        };
+        term = bitwuzla_mk_term(d_bzla, kind, args.size(), args.data());
+        break;
+      }
+
+      case BITWUZLA_KIND_APPLY: {
+        std::vector<BitwuzlaTerm *> args = {
+            bitwuzla_mk_const(d_bzla, fun_sort, nullptr),
+            bv_args[0],
+            bv_args[1],
+            bv_args[2],
+        };
+        term = bitwuzla_mk_term(d_bzla, kind, args.size(), args.data());
+        break;
+      }
+
+      // Binder
+      case BITWUZLA_KIND_EXISTS:
+      case BITWUZLA_KIND_FORALL:
+      case BITWUZLA_KIND_LAMBDA: {
+        std::vector<BitwuzlaTerm *> args = {
+            bitwuzla_mk_var(d_bzla, bv_sort, nullptr),
+            bitwuzla_mk_var(d_bzla, bv_sort, nullptr),
+        };
+        // body
+        args.push_back(bitwuzla_mk_term(
+            d_bzla, BITWUZLA_KIND_BV_SLT, args.size(), args.data()));
+        term = bitwuzla_mk_term(d_bzla, kind, args.size(), args.data());
+        break;
+      }
+
+      // FP Unary
+      case BITWUZLA_KIND_FP_ABS:
+      case BITWUZLA_KIND_FP_IS_INF:
+      case BITWUZLA_KIND_FP_IS_NAN:
+      case BITWUZLA_KIND_FP_IS_NEG:
+      case BITWUZLA_KIND_FP_IS_NORMAL:
+      case BITWUZLA_KIND_FP_IS_POS:
+      case BITWUZLA_KIND_FP_IS_SUBNORMAL:
+      case BITWUZLA_KIND_FP_IS_ZERO:
+      case BITWUZLA_KIND_FP_NEG:
+        term = bitwuzla_mk_term1(d_bzla, kind, fp_args[1]);
+        break;
+
+      // FP Binary
+      case BITWUZLA_KIND_FP_EQ:
+      case BITWUZLA_KIND_FP_GEQ:
+      case BITWUZLA_KIND_FP_GT:
+      case BITWUZLA_KIND_FP_LEQ:
+      case BITWUZLA_KIND_FP_LT:
+      case BITWUZLA_KIND_FP_MAX:
+      case BITWUZLA_KIND_FP_MIN:
+      case BITWUZLA_KIND_FP_REM:
+        term = bitwuzla_mk_term(d_bzla, kind, 2, fp_args.data() + 1);
+        break;
+
+      case BITWUZLA_KIND_FP_SQRT:
+      case BITWUZLA_KIND_FP_RTI:
+        term = bitwuzla_mk_term(d_bzla, kind, 2, fp_args.data());
+        break;
+
+      // FP Ternary
+      case BITWUZLA_KIND_FP_ADD:
+      case BITWUZLA_KIND_FP_DIV:
+      case BITWUZLA_KIND_FP_MUL:
+      case BITWUZLA_KIND_FP_SUB:
+        term = bitwuzla_mk_term(d_bzla, kind, 3, fp_args.data());
+        break;
+
+      case BITWUZLA_KIND_FP_FP: {
+        std::vector<BitwuzlaTerm *> args = {
+            bool_args[0],
+            bv_args[0],
+            bv_args[1],
+        };
+        term = bitwuzla_mk_term(d_bzla, kind, args.size(), args.data());
+        break;
+      }
+
+      // FP Quaternery
+      case BITWUZLA_KIND_FP_FMA:
+        term = bitwuzla_mk_term(d_bzla, kind, fp_args.size(), fp_args.data());
+        break;
+
+      // FP indexed
+      case BITWUZLA_KIND_FP_TO_FP_FROM_BV:
+        term = bitwuzla_mk_term1_indexed2(d_bzla, kind, bv_args[0], 5, 11);
+        break;
+
+      case BITWUZLA_KIND_FP_TO_FP_FROM_INT:
+      case BITWUZLA_KIND_FP_TO_FP_FROM_UINT:
+        term = bitwuzla_mk_term2_indexed2(
+            d_bzla, kind, fp_args[0], bv_args[0], 5, 11);
+        break;
+
+      case BITWUZLA_KIND_FP_TO_FP_FROM_FP:
+        term = bitwuzla_mk_term2_indexed2(
+            d_bzla, kind, fp_args[0], fp_args[1], 5, 11);
+        break;
+
+      case BITWUZLA_KIND_FP_TO_SBV:
+      case BITWUZLA_KIND_FP_TO_UBV:
+        term = bitwuzla_mk_term2_indexed1(
+            d_bzla, kind, fp_args[0], fp_args[1], 16);
+        break;
+
+      // Others
+      case BITWUZLA_KIND_ITE: {
+        std::vector<BitwuzlaTerm *> args = {
+            bool_args[0],
+            bv_args[0],
+            bv_args[1],
+        };
+        term = bitwuzla_mk_term(d_bzla, kind, args.size(), args.data());
+        break;
+      }
+
+      default: break;
+    }
+    // Unhandled BitwuzlaKind
+    ASSERT_NE(term, nullptr);
+
+    size_t size;
+    BitwuzlaTerm **children = bitwuzla_term_get_children(term, &size);
+
+    if (bitwuzla_term_is_const(term) || bitwuzla_term_is_var(term)
+        || bitwuzla_term_is_value(term))
+    {
+      assert(size == 0);
+      ASSERT_EQ(size, 0);
+      ASSERT_EQ(children, nullptr);
+      continue;
+    }
+
+    ASSERT_GT(size, 0);
+    ASSERT_NE(children, nullptr);
+    for (size_t i = 0; i < size; ++i)
+    {
+      ASSERT_NE(children[i], nullptr);
+    }
+
+    BitwuzlaTerm *tterm;
+    if (bitwuzla_term_is_const_array(term))
+    {
+      ASSERT_EQ(size, 1);
+      tterm = bitwuzla_mk_const_array(
+          d_bzla, bitwuzla_term_get_sort(term), children[0]);
+    }
+    else
+    {
+      kind = bitwuzla_term_get_kind(term);
+      if (bitwuzla_term_is_indexed(term))
+      {
+        size_t num_indices;
+        uint32_t *indices = bitwuzla_term_get_indices(term, &num_indices);
+        tterm             = bitwuzla_mk_term_indexed(
+            d_bzla, kind, size, children, num_indices, indices);
+      }
+      else if (kind == BITWUZLA_KIND_LAMBDA || kind == BITWUZLA_KIND_FORALL
+               || kind == BITWUZLA_KIND_EXISTS)
+      {
+        // TODO: variables are already bound and can't be passed to mk_term
+        // create new vars and substitute
+        tterm = term;
+      }
+      else
+      {
+        assert(kind != BITWUZLA_KIND_BV_NOT || size == 1);
+        tterm = bitwuzla_mk_term(d_bzla, kind, size, children);
+      }
+    }
+    ASSERT_EQ(tterm, term);
+  }
+
+  size_t size;
+  BitwuzlaTerm *t;
+
+  t = bitwuzla_mk_const(d_bzla, bv_sort, nullptr);
+  ASSERT_DEATH(bitwuzla_term_get_kind(t), "cannot get kind");
+  ASSERT_EQ(bitwuzla_term_get_children(t, &size), nullptr);
+  ASSERT_EQ(size, 0);
+
+  t = bitwuzla_mk_var(d_bzla, bv_sort, nullptr);
+  ASSERT_DEATH(bitwuzla_term_get_kind(t), "cannot get kind");
+  ASSERT_EQ(bitwuzla_term_get_children(t, &size), nullptr);
+  ASSERT_EQ(size, 0);
+
+  t = bitwuzla_mk_bv_value(d_bzla, bv_sort, "43", BITWUZLA_BV_BASE_DEC);
+  ASSERT_DEATH(bitwuzla_term_get_kind(t), "cannot get kind");
+  ASSERT_EQ(bitwuzla_term_get_children(t, &size), nullptr);
+  ASSERT_EQ(size, 0);
+
+  t = bitwuzla_mk_const_array(d_bzla, array_sort, t);
+  ASSERT_DEATH(bitwuzla_term_get_kind(t), "cannot get kind");
+  ASSERT_NE(bitwuzla_term_get_children(t, &size), nullptr);
+  ASSERT_EQ(size, 1);
 }
