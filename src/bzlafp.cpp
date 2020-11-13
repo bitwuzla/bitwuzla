@@ -1756,7 +1756,7 @@ BzlaFPSymRM::BzlaFPSymRM(BzlaNode *node)
   }
   else
   {
-    assert(bzla_node_is_rm_var(node));
+    assert(bzla_node_is_rm(s_bzla, node));
     BzlaSortId sort = bzla_sort_bv(s_bzla, BZLA_RM_BW);
     std::stringstream ss;
     ss << "_rm_var_" << bzla_node_get_id(node) << "_";
