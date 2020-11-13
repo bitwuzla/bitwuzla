@@ -775,6 +775,18 @@ remove_from_hash_tables(Bzla *bzla, BzlaNode *exp, bool keep_symbol)
     }
   }
 
+  if (!keep_symbol
+      && bzla_hashptr_table_get(bzla->node2symbol, bzla_node_invert(exp)))
+  {
+    bzla_hashptr_table_remove(
+        bzla->node2symbol, bzla_node_invert(exp), 0, &data);
+    if (data.as_str[0] != 0)
+    {
+      bzla_hashptr_table_remove(bzla->symbols, data.as_str, 0, 0);
+      bzla_mem_freestr(bzla->mm, data.as_str);
+    }
+  }
+
   if (bzla_hashptr_table_get(bzla->parameterized, exp))
   {
     bzla_hashptr_table_remove(bzla->parameterized, exp, 0, &data);
