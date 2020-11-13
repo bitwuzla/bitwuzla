@@ -472,7 +472,7 @@ create_function_inequality(Bzla *bzla, BzlaNode *feq)
   while (bzla_iter_tuple_sort_has_next(&it))
   {
     sort = bzla_iter_tuple_sort_next(&it);
-    assert(bzla_sort_is_bv(bzla, sort));
+    assert(!bzla_sort_is_fun(bzla, sort));
     var = bzla_exp_var(bzla, sort, 0);
     BZLA_PUSH_STACK(args, var);
   }
