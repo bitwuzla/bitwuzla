@@ -272,11 +272,7 @@ typedef struct Bitwuzla Bitwuzla;
 typedef struct BitwuzlaTerm BitwuzlaTerm;
 typedef struct BitwuzlaSort BitwuzlaSort;
 
-// TODO: option enums (check bzlatypes.h)
-//
-// BitwuzlaTerm* bitwuzla_substitute(Bitwuzla *bitwuzla, BitwuzlaTerm *term,
-// const BitwuzlaTerm *terms[], const BitwuzlaTerm *substs[]) maybe parallel
-// substitute on multiple terms?
+// TODO: add more option enums (check bzlatypes.h)
 
 /* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
@@ -454,6 +450,19 @@ BitwuzlaResult bitwuzla_parse_format(Bitwuzla *bitwuzla,
                                      FILE *outfile,
                                      char **error_msg,
                                      int32_t *parsed_status);
+
+BitwuzlaTerm *bitwuzla_substitute_term(Bitwuzla *bitwuzla,
+                                       const BitwuzlaTerm *term,
+                                       size_t map_size,
+                                       BitwuzlaTerm *map_keys[],
+                                       BitwuzlaTerm *map_values[]);
+
+void bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
+                               size_t terms_size,
+                               BitwuzlaTerm *terms[],
+                               size_t map_size,
+                               BitwuzlaTerm *map_keys[],
+                               BitwuzlaTerm *map_values[]);
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaSort                                                               */

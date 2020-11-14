@@ -3630,3 +3630,125 @@ TEST_F(TestApi, terms)
   ASSERT_NE(bitwuzla_term_get_children(t, &size), nullptr);
   ASSERT_EQ(size, 1);
 }
+
+TEST_F(TestApi, substitute)
+{
+  BitwuzlaSort *bv_sort              = bitwuzla_mk_bv_sort(d_bzla, 16);
+  BitwuzlaSort *bool_sort            = bitwuzla_mk_bool_sort(d_bzla);
+  std::vector<BitwuzlaSort *> domain = {
+      bv_sort,
+      bv_sort,
+      bv_sort,
+  };
+  BitwuzlaSort *fun_sort =
+      bitwuzla_mk_fun_sort(d_bzla, domain.size(), domain.data(), bool_sort);
+  BitwuzlaSort *array_sort = bitwuzla_mk_array_sort(d_bzla, bv_sort, bv_sort);
+
+  BitwuzlaTerm *bv_const = bitwuzla_mk_const(d_bzla, bv_sort, 0);
+  BitwuzlaTerm *bv_value =
+      bitwuzla_mk_bv_value(d_bzla, bv_sort, "143", BITWUZLA_BV_BASE_DEC);
+
+  BitwuzlaTerm *result;
+
+  // simple substitution const -> value
+  {
+    std::vector<BitwuzlaTerm *> keys   = {bv_const};
+    std::vector<BitwuzlaTerm *> values = {bv_value};
+    result                             = bitwuzla_substitute_term(
+        d_bzla, bv_const, keys.size(), keys.data(), values.data());
+    ASSERT_EQ(result, bv_value);
+  }
+
+  // (sdiv x y) -> (sdiv value y)
+  {
+    BitwuzlaTerm *x = bitwuzla_mk_const(d_bzla, bv_sort, 0);
+    BitwuzlaTerm *y = bitwuzla_mk_const(d_bzla, bv_sort, 0);
+
+    std::vector<BitwuzlaTerm *> keys   = {x};
+    std::vector<BitwuzlaTerm *> values = {bv_value};
+
+    result = bitwuzla_substitute_term(
+        d_bzla,
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_SDIV, x, y),
+        keys.size(),
+        keys.data(),
+        values.data());
+    ASSERT_EQ(result,
+              bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_SDIV, bv_value, y));
+  }
+
+  // cyclic substitution check
+  {
+    BitwuzlaTerm *x = bitwuzla_mk_const(d_bzla, bv_sort, 0);
+    BitwuzlaTerm *y = bitwuzla_mk_const(d_bzla, bv_sort, 0);
+
+    std::vector<BitwuzlaTerm *> keys   = {x, y};
+    std::vector<BitwuzlaTerm *> values = {
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, y, bv_value),
+        bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_BV_NEG, x)};
+
+    ASSERT_DEATH(bitwuzla_substitute_term(
+                     d_bzla,
+                     bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, x, y),
+                     keys.size(),
+                     keys.data(),
+                     values.data()),
+                 "cyclic substitution detected");
+  }
+
+  // partial substitution of variables in quantified formula
+  {
+    std::vector<BitwuzlaTerm *> args = {
+        bitwuzla_mk_const(d_bzla, fun_sort, 0),
+        bitwuzla_mk_var(d_bzla, bv_sort, "x"),
+        bitwuzla_mk_var(d_bzla, bv_sort, "y"),
+        bitwuzla_mk_var(d_bzla, bv_sort, "z"),
+    };
+    args.push_back(bitwuzla_mk_term(
+        d_bzla, BITWUZLA_KIND_APPLY, args.size(), args.data()));
+    BitwuzlaTerm *q = bitwuzla_mk_term(
+        d_bzla, BITWUZLA_KIND_FORALL, args.size() - 1, args.data() + 1);
+
+    std::vector<BitwuzlaTerm *> keys   = {args[1], args[2]};
+    std::vector<BitwuzlaTerm *> values = {
+        bitwuzla_mk_const(d_bzla, bv_sort, 0),
+        bitwuzla_mk_const(d_bzla, bv_sort, 0),
+    };
+
+    // Build expected
+    std::vector<BitwuzlaTerm *> args_expected = {
+        args[0],
+        values[0],
+        values[1],
+        bitwuzla_mk_var(d_bzla, bv_sort, 0),
+    };
+    args_expected.push_back(bitwuzla_mk_term(d_bzla,
+                                             BITWUZLA_KIND_APPLY,
+                                             args_expected.size(),
+                                             args_expected.data()));
+    BitwuzlaTerm *expected =
+        bitwuzla_mk_term(d_bzla, BITWUZLA_KIND_FORALL, 2, &args_expected[3]);
+
+    result = bitwuzla_substitute_term(
+        d_bzla, q, keys.size(), keys.data(), values.data());
+    ASSERT_EQ(result, expected);
+  }
+
+  // substitute term in constant array
+  {
+    BitwuzlaTerm *term = bitwuzla_mk_const(d_bzla, bv_sort, 0);
+    BitwuzlaTerm *const_array =
+        bitwuzla_mk_const_array(d_bzla, array_sort, term);
+
+    std::vector<BitwuzlaTerm *> keys   = {term};
+    std::vector<BitwuzlaTerm *> values = {bv_value};
+
+    result = bitwuzla_substitute_term(
+        d_bzla, const_array, keys.size(), keys.data(), values.data());
+
+    BitwuzlaTerm *expected =
+        bitwuzla_mk_const_array(d_bzla, array_sort, bv_value);
+    ASSERT_EQ(result, expected);
+    ASSERT_TRUE(bitwuzla_term_is_const_array(result));
+  }
+}

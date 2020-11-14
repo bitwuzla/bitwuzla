@@ -15,6 +15,7 @@
 #include "bzladbg.h"
 #include "bzlaexp.h"
 #include "bzlalog.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlanodeiter.h"
@@ -659,4 +660,363 @@ bzla_substitute_and_rebuild(Bzla *bzla, BzlaPtrHashTable *substs)
   BZLA_RELEASE_STACK(root_stack);
 
   assert(bzla_dbg_check_lambdas_static_rho_proxy_free(bzla));
+}
+
+BzlaNode *
+bzla_substitute_nodes_node_map(Bzla *bzla,
+                               BzlaNode *root,
+                               BzlaNodeMap *substs,
+                               BzlaIntHashTable *node_map)
+{
+  assert(bzla);
+  assert(root);
+  assert(substs);
+
+  int32_t i;
+  BzlaMemMgr *mm;
+  BzlaNode *cur, *real_cur, *subst, *result, **e;
+  BzlaNodePtrStack visit, args, cleanup;
+  BzlaIntHashTable *mark, *mark_subst;
+  BzlaHashTableData *d;
+  BzlaNodeMapIterator it;
+
+  mm         = bzla->mm;
+  mark       = bzla_hashint_map_new(mm);
+  mark_subst = bzla_hashint_map_new(mm);
+  BZLA_INIT_STACK(mm, visit);
+  BZLA_INIT_STACK(mm, args);
+  BZLA_INIT_STACK(mm, cleanup);
+  BZLA_PUSH_STACK(visit, root);
+
+  while (!BZLA_EMPTY_STACK(visit))
+  {
+    cur      = BZLA_POP_STACK(visit);
+    real_cur = bzla_node_real_addr(cur);
+    d        = bzla_hashint_map_get(mark, real_cur->id);
+    if (!d)
+    {
+      subst = bzla_nodemap_mapped(substs, real_cur);
+      if (subst)
+      {
+        /* if this assertion fails we have a cyclic substitution */
+        assert(!bzla_hashint_map_get(mark, bzla_node_real_addr(subst)->id)
+               || bzla_hashint_map_get(mark, bzla_node_real_addr(subst)->id)
+                      ->as_ptr);
+        BZLA_PUSH_STACK(visit, bzla_node_cond_invert(cur, subst));
+        bzla_hashint_table_add(mark_subst, bzla_node_real_addr(subst)->id);
+        continue;
+      }
+
+      (void) bzla_hashint_map_add(mark, real_cur->id);
+      BZLA_PUSH_STACK(visit, cur);
+      for (i = real_cur->arity - 1; i >= 0; i--)
+        BZLA_PUSH_STACK(visit, real_cur->e[i]);
+    }
+    else if (!d->as_ptr)
+    {
+      args.top -= real_cur->arity;
+      e = args.top;
+
+      if (real_cur->arity == 0)
+      {
+        if (bzla_node_is_param(real_cur)
+            /* Do not create new param if 'real_cur' is already a
+             * substitution */
+            && !bzla_hashint_table_contains(mark_subst, real_cur->id))
+        {
+          // TODO: make unique symbol !<num>++
+          result = bzla_exp_param(bzla, real_cur->sort_id, 0);
+        }
+        else
+          result = bzla_node_copy(bzla, real_cur);
+      }
+      else if (bzla_node_is_bv_slice(real_cur))
+      {
+        result = bzla_exp_bv_slice(bzla,
+                                   e[0],
+                                   bzla_node_bv_slice_get_upper(real_cur),
+                                   bzla_node_bv_slice_get_lower(real_cur));
+      }
+      else if (bzla_node_is_fp_to_sbv(real_cur))
+      {
+        result = bzla_exp_fp_to_sbv(
+            bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
+      }
+      else if (bzla_node_is_fp_to_ubv(real_cur))
+      {
+        result = bzla_exp_fp_to_ubv(
+            bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
+      }
+      else if (bzla_node_is_fp_to_fp_from_bv(real_cur))
+      {
+        result = bzla_exp_fp_to_fp_from_bv(
+            bzla, e[0], bzla_node_get_sort_id(real_cur));
+      }
+      else if (bzla_node_is_fp_to_fp_from_fp(real_cur))
+      {
+        result = bzla_exp_fp_to_fp_from_fp(
+            bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
+      }
+      else if (bzla_node_is_fp_to_fp_from_sbv(real_cur))
+      {
+        result = bzla_exp_fp_to_fp_from_sbv(
+            bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
+      }
+      else if (bzla_node_is_fp_to_fp_from_ubv(real_cur))
+      {
+        result = bzla_exp_fp_to_fp_from_ubv(
+            bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
+      }
+      else
+      {
+        /* if the param of a quantifier gets subtituted by a non-param,
+         * we do not create a quantifier, but return the body instead */
+        if (bzla_node_is_quantifier(real_cur) && !bzla_node_is_param(e[0]))
+        {
+          result = bzla_node_copy(bzla, e[1]);
+        }
+        else
+        {
+          result = bzla_exp_create(bzla, real_cur->kind, e, real_cur->arity);
+        }
+      }
+      for (i = 0; i < real_cur->arity; i++) bzla_node_release(bzla, e[i]);
+
+      d->as_ptr = bzla_node_copy(bzla, result);
+      BZLA_PUSH_STACK(cleanup, result);
+      if (node_map)
+      {
+        assert(!bzla_hashint_map_contains(node_map, real_cur->id));
+        bzla_hashint_map_add(node_map, real_cur->id)->as_int =
+            bzla_node_real_addr(result)->id;
+      }
+    PUSH_RESULT:
+      assert(real_cur->sort_id == bzla_node_real_addr(result)->sort_id);
+      BZLA_PUSH_STACK(args, bzla_node_cond_invert(cur, result));
+    }
+    else
+    {
+      assert(d->as_ptr);
+      result = bzla_node_copy(bzla, d->as_ptr);
+      goto PUSH_RESULT;
+    }
+  }
+  assert(BZLA_COUNT_STACK(args) == 1);
+  result = BZLA_POP_STACK(args);
+
+  /* update 'node_map' for substituted nodes */
+  if (node_map)
+  {
+    bzla_iter_nodemap_init(&it, substs);
+    while (bzla_iter_nodemap_has_next(&it))
+    {
+      subst = it.it.bucket->data.as_ptr;
+      while (bzla_nodemap_mapped(substs, subst))
+        subst = bzla_nodemap_mapped(substs, subst);
+      cur = bzla_iter_nodemap_next(&it);
+      assert(!bzla_hashint_map_contains(node_map, cur->id));
+      bzla_hashint_map_add(node_map, cur->id)->as_int =
+          bzla_node_real_addr(subst)->id;
+    }
+  }
+
+  while (!BZLA_EMPTY_STACK(cleanup))
+    bzla_node_release(bzla, BZLA_POP_STACK(cleanup));
+  BZLA_RELEASE_STACK(cleanup);
+  BZLA_RELEASE_STACK(visit);
+  BZLA_RELEASE_STACK(args);
+  bzla_hashint_map_delete(mark);
+  bzla_hashint_map_delete(mark_subst);
+  return result;
+}
+
+BzlaNode *
+bzla_substitute_nodes(Bzla *bzla, BzlaNode *root, BzlaNodeMap *substs)
+{
+  return bzla_substitute_nodes_node_map(bzla, root, substs, 0);
+}
+
+BzlaNode *
+bzla_substitute_node(Bzla *bzla,
+                     BzlaNode *root,
+                     BzlaNode *node,
+                     BzlaNode *subst)
+{
+  BzlaNodeMap *map = bzla_nodemap_new(bzla);
+  bzla_nodemap_map(map, node, subst);
+  BzlaNode *result = bzla_substitute_nodes_node_map(bzla, root, map, 0);
+  bzla_nodemap_delete(map);
+  return result;
+}
+
+void
+bzla_substitute_terms(Bzla *bzla,
+                      size_t terms_size,
+                      BzlaNode *terms[],
+                      size_t map_size,
+                      BzlaNode *map_keys[],
+                      BzlaNode *map_values[])
+{
+  size_t i;
+  BzlaIntHashTable *map, *cache;
+  BzlaNodePtrStack visit;
+  BzlaNode *e[4];
+
+  BZLA_INIT_STACK(bzla->mm, visit);
+  map   = bzla_hashint_map_new(bzla->mm);
+  cache = bzla_hashint_map_new(bzla->mm);
+
+  for (i = 0; i < map_size; ++i)
+  {
+    assert(bzla_node_is_regular(map_keys[i]));
+    assert(map_keys[i]->arity == 0); /* we expect var/uf/params only */
+    bzla_hashint_map_add(map, map_keys[i]->id)->as_ptr = map_values[i];
+  }
+
+  for (i = 0; i < terms_size; ++i)
+  {
+    BZLA_PUSH_STACK(visit, terms[i]);
+  }
+
+  BzlaNode *cur, *result;
+  BzlaHashTableData *d, *ds, *dd;
+  while (!BZLA_EMPTY_STACK(visit))
+  {
+    cur = bzla_node_real_addr(BZLA_POP_STACK(visit));
+    d   = bzla_hashint_map_get(cache, cur->id);
+    ds  = bzla_hashint_map_get(map, cur->id);
+
+    if (!d)
+    {
+      bzla_hashint_map_add(cache, cur->id);
+      BZLA_PUSH_STACK(visit, cur);
+
+      if (ds)
+      {
+        BZLA_PUSH_STACK(visit, ds->as_ptr);
+      }
+      else
+      {
+        for (i = 0; i < cur->arity; ++i)
+        {
+          BZLA_PUSH_STACK(visit, cur->e[i]);
+        }
+      }
+    }
+    else if (!d->as_ptr)
+    {
+      result = 0;
+      if (ds)
+      {
+        dd = bzla_hashint_map_get(cache, bzla_node_real_addr(ds->as_ptr)->id);
+        if (dd && !dd->as_ptr)
+        {
+          BZLA_ABORT(true, "cyclic substitution detected");
+        }
+        result =
+            bzla_node_copy(bzla, bzla_node_cond_invert(ds->as_ptr, dd->as_ptr));
+      }
+      else
+      {
+        for (i = 0; i < cur->arity; ++i)
+        {
+          dd = bzla_hashint_map_get(cache, bzla_node_real_addr(cur->e[i])->id);
+          assert(dd);
+          e[i] = bzla_node_cond_invert(cur->e[i], dd->as_ptr);
+        }
+
+        if (cur->arity == 0)
+        {
+          if (bzla_node_is_param(cur))
+          {
+            result = bzla_exp_param(bzla, cur->sort_id, 0);
+          }
+          else
+          {
+            result = bzla_node_copy(bzla, cur);
+          }
+        }
+        else if (bzla_node_is_bv_slice(cur))
+        {
+          result = bzla_exp_bv_slice(bzla,
+                                     e[0],
+                                     bzla_node_bv_slice_get_upper(cur),
+                                     bzla_node_bv_slice_get_lower(cur));
+        }
+        else if (bzla_node_is_fp_to_sbv(cur))
+        {
+          result =
+              bzla_exp_fp_to_sbv(bzla, e[0], e[1], bzla_node_get_sort_id(cur));
+        }
+        else if (bzla_node_is_fp_to_ubv(cur))
+        {
+          result =
+              bzla_exp_fp_to_ubv(bzla, e[0], e[1], bzla_node_get_sort_id(cur));
+        }
+        else if (bzla_node_is_fp_to_fp_from_bv(cur))
+        {
+          result =
+              bzla_exp_fp_to_fp_from_bv(bzla, e[0], bzla_node_get_sort_id(cur));
+        }
+        else if (bzla_node_is_fp_to_fp_from_fp(cur))
+        {
+          result = bzla_exp_fp_to_fp_from_fp(
+              bzla, e[0], e[1], bzla_node_get_sort_id(cur));
+        }
+        else if (bzla_node_is_fp_to_fp_from_sbv(cur))
+        {
+          result = bzla_exp_fp_to_fp_from_sbv(
+              bzla, e[0], e[1], bzla_node_get_sort_id(cur));
+        }
+        else if (bzla_node_is_fp_to_fp_from_ubv(cur))
+        {
+          result = bzla_exp_fp_to_fp_from_ubv(
+              bzla, e[0], e[1], bzla_node_get_sort_id(cur));
+        }
+        else
+        {
+          /* if the param of a quantifier gets subtituted by a non-param,
+           * we do not create a quantifier, but return the body instead */
+          if (bzla_node_is_quantifier(cur) && !bzla_node_is_param(e[0]))
+          {
+            result = bzla_node_copy(bzla, e[1]);
+          }
+          else
+          {
+            result = bzla_exp_create(bzla, cur->kind, e, cur->arity);
+          }
+        }
+
+        if (bzla_node_is_lambda(cur) && bzla_node_is_lambda(result))
+        {
+          /* copy static_rho for new lambda */
+          if (bzla_node_lambda_get_static_rho(cur)
+              && !bzla_node_lambda_get_static_rho(result))
+          {
+            bzla_node_lambda_set_static_rho(
+                result, bzla_node_lambda_copy_static_rho(bzla, cur));
+          }
+          result->is_array = cur->is_array;
+        }
+      }
+
+      d->as_ptr = result;
+    }
+  }
+
+  for (i = 0; i < terms_size; ++i)
+  {
+    d = bzla_hashint_map_get(cache, bzla_node_real_addr(terms[i])->id);
+    assert(d);
+    terms[i] = bzla_node_copy(bzla, bzla_node_cond_invert(terms[i], d->as_ptr));
+  }
+
+  for (i = 0; i < cache->size; ++i)
+  {
+    if (!cache->data[i].as_ptr) continue;
+    bzla_node_release(bzla, cache->data[i].as_ptr);
+  }
+  bzla_hashint_map_delete(map);
+  bzla_hashint_map_delete(cache);
+  BZLA_RELEASE_STACK(visit);
 }

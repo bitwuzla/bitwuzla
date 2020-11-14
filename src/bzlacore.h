@@ -338,24 +338,6 @@ void bzla_delete_substitutions(Bzla *);
 void bzla_insert_substitution(Bzla *, BzlaNode *, BzlaNode *, bool);
 BzlaNode *bzla_find_substitution(Bzla *, BzlaNode *);
 
-/* Create a new node with 'node' substituted by 'subst' in root. */
-BzlaNode *bzla_substitute_node(Bzla *bzla,
-                               BzlaNode *root,
-                               BzlaNode *node,
-                               BzlaNode *subst);
-
-/* Create a new node with 'substs' substituted in root. */
-BzlaNode *bzla_substitute_nodes(Bzla *bzla,
-                                BzlaNode *root,
-                                BzlaNodeMap *substs);
-
-/* Create a new term with 'substs' substituted in root. If 'node_map' is given
- * it creates an id map from old nodes to new nodes. */
-BzlaNode *bzla_substitute_nodes_node_map(Bzla *bzla,
-                                         BzlaNode *root,
-                                         BzlaNodeMap *substs,
-                                         BzlaIntHashTable *node_map);
-
 // TODO (ma): make these functions public until we have a common framework for
 //            calling sat simplify etc.
 void bzla_reset_incremental_usage(Bzla *bzla);

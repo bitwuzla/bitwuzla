@@ -14,6 +14,7 @@
 #include "bzlamodel.h"
 #include "bzlaparse.h"
 #include "bzlaprintmodel.h"
+#include "bzlasubst.h"
 #include "dumper/bzladumpaig.h"
 #include "dumper/bzladumpbtor.h"
 #include "dumper/bzladumpsmt.h"
@@ -3006,6 +3007,69 @@ bitwuzla_parse_format(Bitwuzla *bitwuzla,
   if (bzla_res == BZLA_RESULT_UNSAT) return BITWUZLA_UNSAT;
   assert(bzla_res == BZLA_RESULT_UNKNOWN);
   return BITWUZLA_UNKNOWN;
+}
+
+BitwuzlaTerm *
+bitwuzla_substitute_term(Bitwuzla *bitwuzla,
+                         const BitwuzlaTerm *term,
+                         size_t map_size,
+                         BitwuzlaTerm *map_keys[],
+                         BitwuzlaTerm *map_values[])
+{
+  BitwuzlaTerm *terms[1] = {(BitwuzlaTerm *) term};
+  bitwuzla_substitute_terms(bitwuzla, 1, terms, map_size, map_keys, map_values);
+  return terms[0];
+}
+
+void
+bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
+                          size_t terms_size,
+                          BitwuzlaTerm *terms[],
+                          size_t map_size,
+                          BitwuzlaTerm *map_keys[],
+                          BitwuzlaTerm *map_values[])
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_ABORT(terms_size == 0, "no terms to substitute");
+  BZLA_ABORT(map_size == 0, "empty substitution map");
+
+  BzlaNode *t;
+  Bzla *bzla                 = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaNode **bzla_map_keys   = BZLA_IMPORT_BITWUZLA_TERMS(map_keys);
+  BzlaNode **bzla_map_values = BZLA_IMPORT_BITWUZLA_TERMS(map_values);
+
+  for (size_t i = 0; i < map_size; ++i)
+  {
+    t = bzla_simplify_exp(bzla, bzla_map_keys[i]);
+    BZLA_ABORT(bzla_node_is_inverted(t)
+                   || (!bzla_node_is_param(t) && !bzla_node_is_var(t)
+                       && !bzla_node_is_uf(t)),
+               "expected variable or constant as key at index %u",
+               i);
+  }
+
+  BzlaNodePtrStack bzla_terms;
+  BZLA_INIT_STACK(bzla->mm, bzla_terms);
+  for (size_t i = 0; i < terms_size; ++i)
+  {
+    BZLA_PUSH_STACK(bzla_terms, BZLA_IMPORT_BITWUZLA_TERM(terms[i]));
+  }
+
+  bzla_substitute_terms(bzla,
+                        terms_size,
+                        bzla_terms.start,
+                        map_size,
+                        bzla_map_keys,
+                        bzla_map_values);
+
+  /* Replace terms[i] with substitutions. */
+  for (size_t i = 0; i < terms_size; ++i)
+  {
+    t        = BZLA_PEEK_STACK(bzla_terms, i);
+    terms[i] = BZLA_EXPORT_BITWUZLA_TERM(t);
+    bzla_node_inc_ext_ref_counter(bzla, t);
+  }
+  BZLA_RELEASE_STACK(bzla_terms);
 }
 
 /* -------------------------------------------------------------------------- */
