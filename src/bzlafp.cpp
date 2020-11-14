@@ -3642,9 +3642,6 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
   /* Note: We must copy the bv here, because 1) the corresponding constructor
    *       doesn't copy it but sets d_bv = bv and 2) the wrong constructor is
    *       matched (const bool &val). */
-  std::cout << "bv ";
-  bzla_bv_print(bv);
-  std::cout << std::endl;
   res->fp = new BzlaUnpackedFloat(symfpu::convertSBVToFloat<BzlaFPTraits>(
       *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
 #else
