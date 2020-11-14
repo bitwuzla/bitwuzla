@@ -1054,14 +1054,14 @@ TEST_F(TestApi, mk_term_check_cnt)
                                         fp_idxs2.data()),
                error_arg_cnt);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
-                                        BITWUZLA_KIND_FP_TO_FP_FROM_INT,
+                                        BITWUZLA_KIND_FP_TO_FP_FROM_SBV,
                                         bv_args1_rm.size(),
                                         bv_args1_rm.data(),
                                         fp_idxs2.size(),
                                         fp_idxs2.data()),
                error_arg_cnt);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
-                                        BITWUZLA_KIND_FP_TO_FP_FROM_UINT,
+                                        BITWUZLA_KIND_FP_TO_FP_FROM_UBV,
                                         bv_args1_rm.size(),
                                         bv_args1_rm.data(),
                                         fp_idxs2.size(),
@@ -1139,7 +1139,7 @@ TEST_F(TestApi, mk_term_check_args)
       d_var1,
       d_var2,
       bitwuzla_mk_term2_indexed2(d_bzla,
-                                 BITWUZLA_KIND_FP_TO_FP_FROM_UINT,
+                                 BITWUZLA_KIND_FP_TO_FP_FROM_UBV,
                                  d_rm_const,
                                  lambda_body,
                                  5,
@@ -2100,28 +2100,28 @@ TEST_F(TestApi, mk_term_check_args)
                                         fp_idxs2.data()),
                error_inv_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
-                                        BITWUZLA_KIND_FP_TO_FP_FROM_INT,
+                                        BITWUZLA_KIND_FP_TO_FP_FROM_SBV,
                                         bv_args2_rm_inv_1.size(),
                                         bv_args2_rm_inv_1.data(),
                                         fp_idxs2.size(),
                                         fp_idxs2.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
-                                        BITWUZLA_KIND_FP_TO_FP_FROM_INT,
+                                        BITWUZLA_KIND_FP_TO_FP_FROM_SBV,
                                         bv_args2_rm_inv_2.size(),
                                         bv_args2_rm_inv_2.data(),
                                         fp_idxs2.size(),
                                         fp_idxs2.data()),
                error_inv_sort);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
-                                        BITWUZLA_KIND_FP_TO_FP_FROM_UINT,
+                                        BITWUZLA_KIND_FP_TO_FP_FROM_UBV,
                                         bv_args2_rm_inv_1.size(),
                                         bv_args2_rm_inv_1.data(),
                                         fp_idxs2.size(),
                                         fp_idxs2.data()),
                d_error_exp_rm_term);
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_bzla,
-                                        BITWUZLA_KIND_FP_TO_FP_FROM_UINT,
+                                        BITWUZLA_KIND_FP_TO_FP_FROM_UBV,
                                         bv_args2_rm_inv_2.size(),
                                         bv_args2_rm_inv_2.data(),
                                         fp_idxs2.size(),
@@ -3265,7 +3265,7 @@ TEST_F(TestApi, indexed)
   ASSERT_EQ(indices[1], 18);
 
   idx = bitwuzla_mk_term2_indexed2(
-      d_bzla, BITWUZLA_KIND_FP_TO_FP_FROM_INT, rm, bv_term, 8, 24);
+      d_bzla, BITWUZLA_KIND_FP_TO_FP_FROM_SBV, rm, bv_term, 8, 24);
   ASSERT_TRUE(bitwuzla_term_is_indexed(idx));
   indices = bitwuzla_term_get_indices(idx, &size);
   ASSERT_EQ(size, 2);
@@ -3273,7 +3273,7 @@ TEST_F(TestApi, indexed)
   ASSERT_EQ(indices[1], 24);
 
   idx = bitwuzla_mk_term2_indexed2(
-      d_bzla, BITWUZLA_KIND_FP_TO_FP_FROM_UINT, rm, bv_term, 5, 11);
+      d_bzla, BITWUZLA_KIND_FP_TO_FP_FROM_UBV, rm, bv_term, 5, 11);
   ASSERT_TRUE(bitwuzla_term_is_indexed(idx));
   indices = bitwuzla_term_get_indices(idx, &size);
   ASSERT_EQ(size, 2);
@@ -3522,8 +3522,8 @@ TEST_F(TestApi, terms)
         term = bitwuzla_mk_term1_indexed2(d_bzla, kind, bv_args[0], 5, 11);
         break;
 
-      case BITWUZLA_KIND_FP_TO_FP_FROM_INT:
-      case BITWUZLA_KIND_FP_TO_FP_FROM_UINT:
+      case BITWUZLA_KIND_FP_TO_FP_FROM_SBV:
+      case BITWUZLA_KIND_FP_TO_FP_FROM_UBV:
         term = bitwuzla_mk_term2_indexed2(
             d_bzla, kind, fp_args[0], bv_args[0], 5, 11);
         break;

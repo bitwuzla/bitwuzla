@@ -2463,7 +2463,7 @@ bzla_exp_fp_to_fp_from_fp(Bzla *bzla,
 }
 
 BzlaNode *
-bzla_exp_fp_to_fp_from_int(Bzla *bzla,
+bzla_exp_fp_to_fp_from_sbv(Bzla *bzla,
                            BzlaNode *e0,
                            BzlaNode *e1,
                            BzlaSortId sort)
@@ -2477,20 +2477,20 @@ bzla_exp_fp_to_fp_from_int(Bzla *bzla,
   if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
   {
     result = bzla_rewrite_binary_to_fp_exp(
-        bzla, BZLA_FP_TO_FP_INT_NODE, e0, e1, sort);
+        bzla, BZLA_FP_TO_FP_SBV_NODE, e0, e1, sort);
   }
   else
   {
-    result = bzla_node_create_fp_to_fp_from_int(bzla, e0, e1, sort);
+    result = bzla_node_create_fp_to_fp_from_sbv(bzla, e0, e1, sort);
   }
   return result;
 }
 
 BzlaNode *
-bzla_exp_fp_to_fp_from_uint(Bzla *bzla,
-                            BzlaNode *e0,
-                            BzlaNode *e1,
-                            BzlaSortId sort)
+bzla_exp_fp_to_fp_from_ubv(Bzla *bzla,
+                           BzlaNode *e0,
+                           BzlaNode *e1,
+                           BzlaSortId sort)
 {
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
@@ -2501,11 +2501,11 @@ bzla_exp_fp_to_fp_from_uint(Bzla *bzla,
   if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
   {
     result = bzla_rewrite_binary_to_fp_exp(
-        bzla, BZLA_FP_TO_FP_UINT_NODE, e0, e1, sort);
+        bzla, BZLA_FP_TO_FP_UBV_NODE, e0, e1, sort);
   }
   else
   {
-    result = bzla_node_create_fp_to_fp_from_uint(bzla, e0, e1, sort);
+    result = bzla_node_create_fp_to_fp_from_ubv(bzla, e0, e1, sort);
   }
   return result;
 }

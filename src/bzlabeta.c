@@ -542,16 +542,16 @@ beta_reduce(Bzla *bzla,
             bzla_node_release(bzla, e[0]);
             bzla_node_release(bzla, e[1]);
             break;
-          case BZLA_FP_TO_FP_INT_NODE:
+          case BZLA_FP_TO_FP_SBV_NODE:
             assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
-            result = bzla_exp_fp_to_fp_from_int(
+            result = bzla_exp_fp_to_fp_from_sbv(
                 bzla, e[1], e[0], bzla_node_get_sort_id(cur));
             bzla_node_release(bzla, e[0]);
             bzla_node_release(bzla, e[1]);
             break;
-          case BZLA_FP_TO_FP_UINT_NODE:
+          case BZLA_FP_TO_FP_UBV_NODE:
             assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
-            result = bzla_exp_fp_to_fp_from_uint(
+            result = bzla_exp_fp_to_fp_from_ubv(
                 bzla, e[1], e[0], bzla_node_get_sort_id(cur));
             bzla_node_release(bzla, e[0]);
             bzla_node_release(bzla, e[1]);

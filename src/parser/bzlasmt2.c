@@ -2616,7 +2616,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
                         item_cur->node->name);
     }
     exp = bitwuzla_mk_term_indexed(
-        bitwuzla, BITWUZLA_KIND_FP_TO_FP_FROM_UINT, 2, args, 2, idxs);
+        bitwuzla, BITWUZLA_KIND_FP_TO_FP_FROM_UBV, 2, args, 2, idxs);
   }
   else
   {
@@ -2625,7 +2625,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
     {
       /* (_ to_fp eb sb) RoundingMode (_ BitVec m) */
       exp = bitwuzla_mk_term_indexed(
-          bitwuzla, BITWUZLA_KIND_FP_TO_FP_FROM_INT, 2, args, 2, idxs);
+          bitwuzla, BITWUZLA_KIND_FP_TO_FP_FROM_SBV, 2, args, 2, idxs);
     }
     else if (bitwuzla_sort_is_fp(s))
     {

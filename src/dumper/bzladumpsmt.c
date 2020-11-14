@@ -562,8 +562,8 @@ static const char *g_kind2smt[BZLA_NUM_OPS_NODE] = {
     [BZLA_FP_TO_SBV_NODE]     = "fp.to_sbv",
     [BZLA_FP_TO_UBV_NODE]     = "fp.to_ubv",
     [BZLA_FP_TO_FP_FP_NODE]   = "to_fp",
-    [BZLA_FP_TO_FP_INT_NODE]  = "to_fp",
-    [BZLA_FP_TO_FP_UINT_NODE] = "to_fp_unsigned",
+    [BZLA_FP_TO_FP_SBV_NODE]  = "to_fp",
+    [BZLA_FP_TO_FP_UBV_NODE]  = "to_fp_unsigned",
     [BZLA_RM_EQ_NODE]         = "=",
     [BZLA_FUN_EQ_NODE]        = "=",
     [BZLA_APPLY_NODE]         = "apply",
@@ -1097,10 +1097,10 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
         bzla_dumpsmt_dump_sort_node(real_exp, sdc->file);
         fputs(") ", sdc->file);
       }
-      else if (bzla_node_is_fp_to_fp_from_int(real_exp)
+      else if (bzla_node_is_fp_to_fp_from_sbv(real_exp)
                || bzla_node_is_fp_to_fp_from_bv(real_exp)
                || bzla_node_is_fp_to_fp_from_fp(real_exp)
-               || bzla_node_is_fp_to_fp_from_uint(real_exp))
+               || bzla_node_is_fp_to_fp_from_ubv(real_exp))
       {
         BzlaSort *sort =
             bzla_sort_get_by_id(sdc->bzla, bzla_node_get_sort_id(real_exp));

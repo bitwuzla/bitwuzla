@@ -84,8 +84,8 @@ enum BzlaNodeKind
   BZLA_FP_TO_SBV_NODE,
   BZLA_FP_TO_UBV_NODE,
   BZLA_FP_TO_FP_FP_NODE,
-  BZLA_FP_TO_FP_INT_NODE,
-  BZLA_FP_TO_FP_UINT_NODE,
+  BZLA_FP_TO_FP_SBV_NODE,
+  BZLA_FP_TO_FP_UBV_NODE,
   BZLA_RM_EQ_NODE,  /* equality over rounding modes */
   BZLA_FUN_EQ_NODE, /* equality over uf/arrays */
   BZLA_APPLY_NODE,
@@ -393,7 +393,7 @@ static inline bool
 bzla_node_is_fp_to_fp_kind(BzlaNodeKind kind)
 {
   return kind == BZLA_FP_TO_FP_FP_NODE || kind == BZLA_FP_TO_FP_BV_NODE
-         || kind == BZLA_FP_TO_FP_INT_NODE || kind == BZLA_FP_TO_FP_UINT_NODE;
+         || kind == BZLA_FP_TO_FP_SBV_NODE || kind == BZLA_FP_TO_FP_UBV_NODE;
 }
 
 /** Return true if given node kind is indexed. */
@@ -402,8 +402,8 @@ bzla_node_is_indexed_kind(BzlaNodeKind kind)
 {
   return kind == BZLA_BV_SLICE_NODE || kind == BZLA_FP_TO_UBV_NODE
          || kind == BZLA_FP_TO_SBV_NODE || kind == BZLA_FP_TO_FP_FP_NODE
-         || kind == BZLA_FP_TO_FP_BV_NODE || kind == BZLA_FP_TO_FP_INT_NODE
-         || kind == BZLA_FP_TO_FP_UINT_NODE;
+         || kind == BZLA_FP_TO_FP_BV_NODE || kind == BZLA_FP_TO_FP_SBV_NODE
+         || kind == BZLA_FP_TO_FP_UBV_NODE;
 }
 
 /*------------------------------------------------------------------------*/
@@ -849,10 +849,10 @@ bzla_node_is_fp_to_fp_from_fp(const BzlaNode *exp)
  * (signed bit-vector) node.
  */
 static inline bool
-bzla_node_is_fp_to_fp_from_int(const BzlaNode *exp)
+bzla_node_is_fp_to_fp_from_sbv(const BzlaNode *exp)
 {
   assert(exp);
-  return bzla_node_real_addr(exp)->kind == BZLA_FP_TO_FP_INT_NODE;
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_TO_FP_SBV_NODE;
 }
 
 /**
@@ -860,10 +860,10 @@ bzla_node_is_fp_to_fp_from_int(const BzlaNode *exp)
  * (unsigned bit-vector) node.
  */
 static inline bool
-bzla_node_is_fp_to_fp_from_uint(const BzlaNode *exp)
+bzla_node_is_fp_to_fp_from_ubv(const BzlaNode *exp)
 {
   assert(exp);
-  return bzla_node_real_addr(exp)->kind == BZLA_FP_TO_FP_UINT_NODE;
+  return bzla_node_real_addr(exp)->kind == BZLA_FP_TO_FP_UBV_NODE;
 }
 
 /*------------------------------------------------------------------------*/
@@ -1495,16 +1495,16 @@ BzlaNode *bzla_node_create_fp_to_fp_from_fp(Bzla *bzla,
                                             BzlaSortId sort);
 
 /** Create to_fp from machine integer (signed bit-vector) node. */
-BzlaNode *bzla_node_create_fp_to_fp_from_int(Bzla *bzla,
+BzlaNode *bzla_node_create_fp_to_fp_from_sbv(Bzla *bzla,
                                              BzlaNode *e0,
                                              BzlaNode *e1,
                                              BzlaSortId sort);
 
 /** Create to_fp from unsigned machine integer (unsigned bit-vector) node. */
-BzlaNode *bzla_node_create_fp_to_fp_from_uint(Bzla *bzla,
-                                              BzlaNode *e0,
-                                              BzlaNode *e1,
-                                              BzlaSortId sort);
+BzlaNode *bzla_node_create_fp_to_fp_from_ubv(Bzla *bzla,
+                                             BzlaNode *e0,
+                                             BzlaNode *e1,
+                                             BzlaSortId sort);
 
 /*========================================================================*/
 

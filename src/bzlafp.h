@@ -232,7 +232,7 @@ BzlaFloatingPoint *bzla_fp_convert(Bzla *bzla,
  * bit-vector constant (interpreted as signed) w.r.t. to the given rounding
  * mode.
  */
-BzlaFloatingPoint *bzla_fp_convert_from_int(Bzla *bzla,
+BzlaFloatingPoint *bzla_fp_convert_from_sbv(Bzla *bzla,
                                             BzlaSortId sort,
                                             const BzlaRoundingMode rm,
                                             const BzlaBitVector *bv);
@@ -242,10 +242,10 @@ BzlaFloatingPoint *bzla_fp_convert_from_int(Bzla *bzla,
  * bit-vector constant (interpreted as unsigned) w.r.t. to the given rounding
  * mode.
  */
-BzlaFloatingPoint *bzla_fp_convert_from_uint(Bzla *bzla,
-                                             BzlaSortId sort,
-                                             const BzlaRoundingMode rm,
-                                             const BzlaBitVector *bv);
+BzlaFloatingPoint *bzla_fp_convert_from_ubv(Bzla *bzla,
+                                            BzlaSortId sort,
+                                            const BzlaRoundingMode rm,
+                                            const BzlaBitVector *bv);
 
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */

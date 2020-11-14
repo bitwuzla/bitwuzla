@@ -2597,7 +2597,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                 d_rm_map.at(cur->e[0]),
                 d_unpacked_float_map.at(cur->e[1])));
       }
-      else if (bzla_node_is_fp_to_fp_from_int(cur))
+      else if (bzla_node_is_fp_to_fp_from_sbv(cur))
       {
         assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
         assert(bzla_node_is_bv(d_bzla, cur->e[1]));
@@ -2607,7 +2607,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
                                          d_rm_map.at(cur->e[0]),
                                          BzlaFPSymBV<true>(cur->e[1])));
       }
-      else if (bzla_node_is_fp_to_fp_from_uint(cur))
+      else if (bzla_node_is_fp_to_fp_from_ubv(cur))
       {
         assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
         assert(bzla_node_is_bv(d_bzla, cur->e[1]));
@@ -3598,10 +3598,10 @@ bzla_fp_convert(Bzla *bzla,
 }
 
 BzlaFloatingPoint *
-bzla_fp_convert_from_uint(Bzla *bzla,
-                          BzlaSortId sort,
-                          const BzlaRoundingMode rm,
-                          const BzlaBitVector *bv)
+bzla_fp_convert_from_ubv(Bzla *bzla,
+                         BzlaSortId sort,
+                         const BzlaRoundingMode rm,
+                         const BzlaBitVector *bv)
 {
   assert(bzla);
   assert(sort);
@@ -3626,7 +3626,7 @@ bzla_fp_convert_from_uint(Bzla *bzla,
 }
 
 BzlaFloatingPoint *
-bzla_fp_convert_from_int(Bzla *bzla,
+bzla_fp_convert_from_sbv(Bzla *bzla,
                          BzlaSortId sort,
                          const BzlaRoundingMode rm,
                          const BzlaBitVector *bv)
@@ -3642,6 +3642,9 @@ bzla_fp_convert_from_int(Bzla *bzla,
   /* Note: We must copy the bv here, because 1) the corresponding constructor
    *       doesn't copy it but sets d_bv = bv and 2) the wrong constructor is
    *       matched (const bool &val). */
+  std::cout << "bv ";
+  bzla_bv_print(bv);
+  std::cout << std::endl;
   res->fp = new BzlaUnpackedFloat(symfpu::convertSBVToFloat<BzlaFPTraits>(
       *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
 #else

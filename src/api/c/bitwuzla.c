@@ -381,8 +381,8 @@ static const char *bitwuzla_kind_to_str[BITWUZLA_NUM_KINDS] = {
     "BITWUZLA_KIND_BV_ZERO_EXTEND",
     "BITWUZLA_KIND_FP_TO_FP_FROM_BV",
     "BITWUZLA_KIND_FP_TO_FP_FROM_FP",
-    "BITWUZLA_KIND_FP_TO_FP_FROM_INT",
-    "BITWUZLA_KIND_FP_TO_FP_FROM_UINT",
+    "BITWUZLA_KIND_FP_TO_FP_FROM_SBV",
+    "BITWUZLA_KIND_FP_TO_FP_FROM_UBV",
     "BITWUZLA_KIND_FP_TO_SBV",
     "BITWUZLA_KIND_FP_TO_UBV",
 };
@@ -2516,22 +2516,22 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
     }
     break;
 
-    case BITWUZLA_KIND_FP_TO_FP_FROM_INT: {
+    case BITWUZLA_KIND_FP_TO_FP_FROM_SBV: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
           kind, bzla_args, 2, argc, 2, idxc, 1, bzla_sort_is_bv, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       BzlaSortId sort = bzla_sort_fp(bzla, idxs[0], idxs[1]);
-      res = bzla_exp_fp_to_fp_from_int(bzla, bzla_args[0], bzla_args[1], sort);
+      res = bzla_exp_fp_to_fp_from_sbv(bzla, bzla_args[0], bzla_args[1], sort);
       bzla_sort_release(bzla, sort);
     }
     break;
 
-    case BITWUZLA_KIND_FP_TO_FP_FROM_UINT: {
+    case BITWUZLA_KIND_FP_TO_FP_FROM_UBV: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
           kind, bzla_args, 2, argc, 2, idxc, 1, bzla_sort_is_bv, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       BzlaSortId sort = bzla_sort_fp(bzla, idxs[0], idxs[1]);
-      res = bzla_exp_fp_to_fp_from_uint(bzla, bzla_args[0], bzla_args[1], sort);
+      res = bzla_exp_fp_to_fp_from_ubv(bzla, bzla_args[0], bzla_args[1], sort);
       bzla_sort_release(bzla, sort);
     }
     break;
@@ -3312,10 +3312,8 @@ bitwuzla_term_get_kind(const BitwuzlaTerm *term)
     case BZLA_FP_TO_SBV_NODE: kind = BITWUZLA_KIND_FP_TO_SBV; break;
     case BZLA_FP_TO_UBV_NODE: kind = BITWUZLA_KIND_FP_TO_UBV; break;
     case BZLA_FP_TO_FP_FP_NODE: kind = BITWUZLA_KIND_FP_TO_FP_FROM_FP; break;
-    case BZLA_FP_TO_FP_INT_NODE: kind = BITWUZLA_KIND_FP_TO_FP_FROM_INT; break;
-    case BZLA_FP_TO_FP_UINT_NODE:
-      kind = BITWUZLA_KIND_FP_TO_FP_FROM_UINT;
-      break;
+    case BZLA_FP_TO_FP_SBV_NODE: kind = BITWUZLA_KIND_FP_TO_FP_FROM_SBV; break;
+    case BZLA_FP_TO_FP_UBV_NODE: kind = BITWUZLA_KIND_FP_TO_FP_FROM_UBV; break;
 
     case BZLA_APPLY_NODE:
       if (bzla_node_is_array(bzla_term->e[0]))
@@ -3450,8 +3448,8 @@ bitwuzla_term_get_indices(const BitwuzlaTerm *term, size_t *size)
   {
     case BZLA_FP_TO_FP_FP_NODE:
     case BZLA_FP_TO_FP_BV_NODE:
-    case BZLA_FP_TO_FP_INT_NODE:
-    case BZLA_FP_TO_FP_UINT_NODE:
+    case BZLA_FP_TO_FP_SBV_NODE:
+    case BZLA_FP_TO_FP_UBV_NODE:
       bitwuzla->d_term_indices[0] = bzla_sort_fp_get_exp_width(bzla, sort);
       bitwuzla->d_term_indices[1] = bzla_sort_fp_get_sig_width(bzla, sort);
       *size                       = 2;

@@ -657,7 +657,7 @@ BzlaNode *bzla_exp_fp_to_fp_from_fp(Bzla *bzla,
  * e1:   bit-vector operand
  * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_to_fp_from_int(Bzla *bzla,
+BzlaNode *bzla_exp_fp_to_fp_from_sbv(Bzla *bzla,
                                      BzlaNode *e0,
                                      BzlaNode *e1,
                                      BzlaSortId sort);
@@ -669,10 +669,10 @@ BzlaNode *bzla_exp_fp_to_fp_from_int(Bzla *bzla,
  * e1:   bit-vector operand
  * sort: floating-point sort
  */
-BzlaNode *bzla_exp_fp_to_fp_from_uint(Bzla *bzla,
-                                      BzlaNode *e0,
-                                      BzlaNode *e1,
-                                      BzlaSortId sort);
+BzlaNode *bzla_exp_fp_to_fp_from_ubv(Bzla *bzla,
+                                     BzlaNode *e0,
+                                     BzlaNode *e1,
+                                     BzlaSortId sort);
 
 /*------------------------------------------------------------------------*/
 

@@ -588,14 +588,14 @@ static BzlaNode *rewrite_fp_to_fp_from_fp_exp(Bzla *bzla,
                                               BzlaNode *e0,
                                               BzlaNode *e1,
                                               BzlaSortId sort);
-static BzlaNode *rewrite_fp_to_fp_from_int_exp(Bzla *bzla,
+static BzlaNode *rewrite_fp_to_fp_from_sbv_exp(Bzla *bzla,
                                                BzlaNode *e0,
                                                BzlaNode *e1,
                                                BzlaSortId sort);
-static BzlaNode *rewrite_fp_to_fp_from_uint_exp(Bzla *bzla,
-                                                BzlaNode *e0,
-                                                BzlaNode *e1,
-                                                BzlaSortId sort);
+static BzlaNode *rewrite_fp_to_fp_from_ubv_exp(Bzla *bzla,
+                                               BzlaNode *e0,
+                                               BzlaNode *e1,
+                                               BzlaSortId sort);
 static BzlaNode *rewrite_apply_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_lambda_exp(Bzla *, BzlaNode *, BzlaNode *);
 static BzlaNode *rewrite_forall_exp(Bzla *, BzlaNode *, BzlaNode *);
@@ -819,7 +819,7 @@ apply_const_fp_to_fp_from_fp_exp(Bzla *bzla,
  * result: floating-point constant
  */
 static inline bool
-applies_const_fp_to_fp_from_int_exp(
+applies_const_fp_to_fp_from_sbv_exp(
     Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
   (void) bzla;
@@ -829,10 +829,10 @@ applies_const_fp_to_fp_from_int_exp(
 }
 
 static inline BzlaNode *
-apply_const_fp_to_fp_from_int_exp(
+apply_const_fp_to_fp_from_sbv_exp(
     Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
-  assert(applies_const_fp_to_fp_from_int_exp(bzla, kind, e0, e1, sort));
+  assert(applies_const_fp_to_fp_from_sbv_exp(bzla, kind, e0, e1, sort));
 
   BzlaFloatingPoint *fpres;
   BzlaBitVector *bits;
@@ -840,15 +840,15 @@ apply_const_fp_to_fp_from_int_exp(
 
   bits = bzla_node_is_regular(e1) ? bzla_node_bv_const_get_bits(e1)
                                   : bzla_node_bv_const_get_invbits(e1);
-  if (kind == BZLA_FP_TO_FP_INT_NODE)
+  if (kind == BZLA_FP_TO_FP_SBV_NODE)
   {
-    fpres = bzla_fp_convert_from_int(
+    fpres = bzla_fp_convert_from_sbv(
         bzla, sort, bzla_node_rm_const_get_rm(e0), bits);
   }
   else
   {
-    assert(kind == BZLA_FP_TO_FP_UINT_NODE);
-    fpres = bzla_fp_convert_from_uint(
+    assert(kind == BZLA_FP_TO_FP_UBV_NODE);
+    fpres = bzla_fp_convert_from_ubv(
         bzla, sort, bzla_node_rm_const_get_rm(e0), bits);
   }
   result = bzla_exp_fp_const_fp(bzla, fpres);
@@ -8321,7 +8321,7 @@ rewrite_fp_to_fp_from_fp_exp(Bzla *bzla,
 }
 
 static BzlaNode *
-rewrite_fp_to_fp_from_int_exp(Bzla *bzla,
+rewrite_fp_to_fp_from_sbv_exp(Bzla *bzla,
                               BzlaNode *e0,
                               BzlaNode *e1,
                               BzlaSortId sort)
@@ -8333,7 +8333,7 @@ rewrite_fp_to_fp_from_int_exp(Bzla *bzla,
 
   BzlaNode *result  = 0;
   double start      = bzla_util_time_stamp();
-  BzlaNodeKind kind = BZLA_FP_TO_FP_INT_NODE;
+  BzlaNodeKind kind = BZLA_FP_TO_FP_SBV_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -8343,12 +8343,12 @@ rewrite_fp_to_fp_from_int_exp(Bzla *bzla,
 
   if (!result)
   {
-    ADD_RW_RULE(const_fp_to_fp_from_int_exp, kind, e0, e1, sort);
+    ADD_RW_RULE(const_fp_to_fp_from_sbv_exp, kind, e0, e1, sort);
 
     assert(!result);
     if (!result)
     {
-      result = bzla_node_create_fp_to_fp_from_int(bzla, e0, e1, sort);
+      result = bzla_node_create_fp_to_fp_from_sbv(bzla, e0, e1, sort);
     }
     else
     {
@@ -8368,10 +8368,10 @@ rewrite_fp_to_fp_from_int_exp(Bzla *bzla,
 }
 
 static BzlaNode *
-rewrite_fp_to_fp_from_uint_exp(Bzla *bzla,
-                               BzlaNode *e0,
-                               BzlaNode *e1,
-                               BzlaSortId sort)
+rewrite_fp_to_fp_from_ubv_exp(Bzla *bzla,
+                              BzlaNode *e0,
+                              BzlaNode *e1,
+                              BzlaSortId sort)
 {
   assert(bzla);
   assert(e0);
@@ -8380,7 +8380,7 @@ rewrite_fp_to_fp_from_uint_exp(Bzla *bzla,
 
   BzlaNode *result  = 0;
   double start      = bzla_util_time_stamp();
-  BzlaNodeKind kind = BZLA_FP_TO_FP_UINT_NODE;
+  BzlaNodeKind kind = BZLA_FP_TO_FP_UBV_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -8390,12 +8390,12 @@ rewrite_fp_to_fp_from_uint_exp(Bzla *bzla,
 
   if (!result)
   {
-    ADD_RW_RULE(const_fp_to_fp_from_int_exp, kind, e0, e1, sort);
+    ADD_RW_RULE(const_fp_to_fp_from_sbv_exp, kind, e0, e1, sort);
 
     assert(!result);
     if (!result)
     {
-      result = bzla_node_create_fp_to_fp_from_uint(bzla, e0, e1, sort);
+      result = bzla_node_create_fp_to_fp_from_ubv(bzla, e0, e1, sort);
     }
     else
     {
@@ -9334,11 +9334,11 @@ bzla_rewrite_binary_to_fp_exp(
   double start = bzla_util_time_stamp();
   switch (kind)
   {
-    case BZLA_FP_TO_FP_INT_NODE:
-      res = rewrite_fp_to_fp_from_int_exp(bzla, e0, e1, sort);
+    case BZLA_FP_TO_FP_SBV_NODE:
+      res = rewrite_fp_to_fp_from_sbv_exp(bzla, e0, e1, sort);
       break;
-    case BZLA_FP_TO_FP_UINT_NODE:
-      res = rewrite_fp_to_fp_from_uint_exp(bzla, e0, e1, sort);
+    case BZLA_FP_TO_FP_UBV_NODE:
+      res = rewrite_fp_to_fp_from_ubv_exp(bzla, e0, e1, sort);
       break;
     default:
       assert(kind == BZLA_FP_TO_FP_FP_NODE);
