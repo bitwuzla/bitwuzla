@@ -862,6 +862,8 @@ bzla_substitute_terms(Bzla *bzla,
   BzlaNodePtrStack visit;
   BzlaNode *e[4];
 
+  if (terms_size == 0 || map_size == 0) return;
+
   BZLA_INIT_STACK(bzla->mm, visit);
   map   = bzla_hashint_map_new(bzla->mm);
   cache = bzla_hashint_map_new(bzla->mm);

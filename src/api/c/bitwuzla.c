@@ -3033,41 +3033,47 @@ bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
   BZLA_ABORT(terms_size == 0, "no terms to substitute");
   BZLA_ABORT(map_size == 0, "empty substitution map");
 
-  BzlaNode *t;
+  BzlaNode *k, *v;
   Bzla *bzla                 = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaNode **bzla_map_keys   = BZLA_IMPORT_BITWUZLA_TERMS(map_keys);
   BzlaNode **bzla_map_values = BZLA_IMPORT_BITWUZLA_TERMS(map_values);
 
+  BzlaNodePtrStack keys, values;
+  BZLA_INIT_STACK(bzla->mm, keys);
+  BZLA_INIT_STACK(bzla->mm, values);
   for (size_t i = 0; i < map_size; ++i)
   {
-    t = bzla_simplify_exp(bzla, bzla_map_keys[i]);
-    BZLA_ABORT(bzla_node_is_inverted(t)
-                   || (!bzla_node_is_param(t) && !bzla_node_is_var(t)
-                       && !bzla_node_is_uf(t)),
+    k = bzla_map_keys[i];
+    v = bzla_map_values[i];
+    BZLA_ABORT(bzla_node_is_inverted(k)
+                   || (!bzla_node_is_param(k) && !bzla_node_is_var(k)
+                       && !bzla_node_is_uf(k)),
                "expected variable or constant as key at index %u",
                i);
+    BZLA_PUSH_STACK(keys, k);
+    BZLA_PUSH_STACK(values, bzla_simplify_exp(bzla, v));
   }
 
   BzlaNodePtrStack bzla_terms;
   BZLA_INIT_STACK(bzla->mm, bzla_terms);
   for (size_t i = 0; i < terms_size; ++i)
   {
-    BZLA_PUSH_STACK(bzla_terms, BZLA_IMPORT_BITWUZLA_TERM(terms[i]));
+    BZLA_PUSH_STACK(
+        bzla_terms,
+        bzla_simplify_exp(bzla, BZLA_IMPORT_BITWUZLA_TERM(terms[i])));
   }
 
-  bzla_substitute_terms(bzla,
-                        terms_size,
-                        bzla_terms.start,
-                        map_size,
-                        bzla_map_keys,
-                        bzla_map_values);
+  bzla_substitute_terms(
+      bzla, terms_size, bzla_terms.start, map_size, keys.start, values.start);
+  BZLA_RELEASE_STACK(keys);
+  BZLA_RELEASE_STACK(values);
 
   /* Replace terms[i] with substitutions. */
   for (size_t i = 0; i < terms_size; ++i)
   {
-    t        = BZLA_PEEK_STACK(bzla_terms, i);
-    terms[i] = BZLA_EXPORT_BITWUZLA_TERM(t);
-    bzla_node_inc_ext_ref_counter(bzla, t);
+    k        = BZLA_PEEK_STACK(bzla_terms, i);
+    terms[i] = BZLA_EXPORT_BITWUZLA_TERM(k);
+    bzla_node_inc_ext_ref_counter(bzla, k);
   }
   BZLA_RELEASE_STACK(bzla_terms);
 }
