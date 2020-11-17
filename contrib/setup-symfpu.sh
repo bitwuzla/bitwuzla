@@ -4,7 +4,7 @@ source "$(dirname "$0")/setup-utils.sh"
 
 SYMFPU_DIR="${DEPS_DIR}/symfpu"
 
-commit="1273dc9379b36af1461fe04aa453db82408006cf"
+commit="8fbe139bf0071cbe0758d2f6690a546c69ff0053"
 
 # Download and build symfpu
 git clone https://github.com/martin-cs/symfpu.git "${SYMFPU_DIR}"
