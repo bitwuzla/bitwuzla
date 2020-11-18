@@ -1342,6 +1342,7 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
   BzlaSortId sort, domain;
   const BzlaPtrHashTable *model;
   BzlaBitVectorTuple *tup;
+  BzlaBitVector *bv_val;
   BzlaPtrHashTableIterator it;
   BzlaTupleSortIterator tit;
 
@@ -1369,13 +1370,40 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
     {
       if (bzla_node_is_array(exp))
       {
-        res = bzla_exp_array(bzla, sort, 0);
+        /* Check for const array. */
+        res = 0;
         bzla_iter_hashptr_init(&it, (BzlaPtrHashTable *) model);
         while (bzla_iter_hashptr_has_next(&it))
         {
-          val = bzla_exp_bv_const(bzla, it.bucket->data.as_ptr);
-          tup = (BzlaBitVectorTuple *) bzla_iter_hashptr_next(&it);
-          assert(tup->arity == 1);
+          bv_val = it.bucket->data.as_ptr;
+          tup    = bzla_iter_hashptr_next(&it);
+          if (tup->arity == 0)
+          {
+            val = bzla_exp_bv_const(bzla, bv_val);
+            res = bzla_exp_const_array(bzla, sort, val);
+            bzla_node_release(bzla, val);
+            break;
+          }
+        }
+
+        /* Create fresh base array if no const array was found. */
+        if (!res)
+        {
+          res = bzla_exp_array(bzla, sort, 0);
+        }
+
+        /* Build write chains on top of base array. */
+        bzla_iter_hashptr_init(&it, (BzlaPtrHashTable *) model);
+        while (bzla_iter_hashptr_has_next(&it))
+        {
+          bv_val = it.bucket->data.as_ptr;
+          tup    = bzla_iter_hashptr_next(&it);
+          /* Skip const array. */
+          if (tup->arity == 0)
+          {
+            continue;
+          }
+          val = bzla_exp_bv_const(bzla, bv_val);
           arg = bzla_exp_bv_const(bzla, tup->bv[0]);
           tmp = bzla_exp_write(bzla, res, arg, val);
           bzla_node_release(bzla, arg);
