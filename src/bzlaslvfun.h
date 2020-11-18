@@ -22,6 +22,7 @@ struct BzlaFunSolver
 
   BzlaPtrHashTable *lemmas;
   BzlaNodePtrStack cur_lemmas;
+  BzlaNodePtrStack constraints;
 
   BzlaPtrHashTable *score; /* dcr score */
 

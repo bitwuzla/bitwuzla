@@ -1466,6 +1466,7 @@ clone_aux_bzla(Bzla *bzla,
 
       allocated += MEM_PTR_HASH_TABLE(slv->lemmas);
       allocated += BZLA_SIZE_STACK(slv->cur_lemmas) * sizeof(BzlaNode *);
+      allocated += BZLA_SIZE_STACK(slv->constraints) * sizeof(BzlaNode *);
 
       if (slv->score)
       {

@@ -58,6 +58,9 @@ clone_fun_solver(Bzla *clone, BzlaFunSolver *slv, BzlaNodeMap *exp_map)
   bzla_clone_node_ptr_stack(
       clone->mm, &slv->cur_lemmas, &res->cur_lemmas, exp_map, false);
 
+  bzla_clone_node_ptr_stack(
+      clone->mm, &slv->constraints, &res->constraints, exp_map, false);
+
   if (slv->score)
   {
     h = bzla_opt_get(bzla, BZLA_OPT_FUN_JUST_HEURISTIC);
@@ -149,6 +152,11 @@ delete_fun_solver(BzlaFunSolver *slv)
   }
 
   BZLA_RELEASE_STACK(slv->cur_lemmas);
+  while (!BZLA_EMPTY_STACK(slv->constraints))
+  {
+    bzla_node_release(bzla, BZLA_POP_STACK(slv->constraints));
+  }
+  BZLA_RELEASE_STACK(slv->constraints);
   BZLA_RELEASE_STACK(slv->stats.lemmas_size);
   BZLA_DELETE(bzla->mm, slv);
   bzla->slv = 0;
@@ -932,21 +940,19 @@ add_lemma_to_dual_prop_clone(Bzla *bzla,
 /*------------------------------------------------------------------------*/
 
 static void
-search_initial_applies_bv_skeleton(Bzla *bzla,
+search_initial_applies_bv_skeleton(BzlaFunSolver *slv,
                                    BzlaNodePtrStack *applies,
                                    BzlaIntHashTable *cache)
 {
-  assert(bzla);
-  assert(bzla->slv);
-  assert(bzla->slv->kind == BZLA_FUN_SOLVER_KIND);
+  assert(slv);
   assert(applies);
 
   double start;
   uint32_t i;
   BzlaNode *cur;
   BzlaNodePtrStack stack;
-  BzlaPtrHashTableIterator it;
   BzlaMemMgr *mm;
+  Bzla *bzla = slv->bzla;
 
   start = bzla_util_time_stamp();
 
@@ -956,12 +962,9 @@ search_initial_applies_bv_skeleton(Bzla *bzla,
   mm = bzla->mm;
   BZLA_INIT_STACK(mm, stack);
 
-  bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
-  bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
-  bzla_iter_hashptr_queue(&it, bzla->assumptions);
-  while (bzla_iter_hashptr_has_next(&it))
+  for (size_t j = 0; j < BZLA_COUNT_STACK(slv->constraints); ++j)
   {
-    cur = bzla_iter_hashptr_next(&it);
+    cur = BZLA_PEEK_STACK(slv->constraints, j);
     BZLA_PUSH_STACK(stack, cur);
 
     while (!BZLA_EMPTY_STACK(stack))
@@ -985,7 +988,9 @@ search_initial_applies_bv_skeleton(Bzla *bzla,
 
       for (i = 0; i < cur->arity; i++) BZLA_PUSH_STACK(stack, cur->e[i]);
     }
+    bzla_node_release(bzla, BZLA_PEEK_STACK(slv->constraints, j));
   }
+  BZLA_RESET_STACK(slv->constraints);
 
   BZLA_RELEASE_STACK(stack);
   BZLA_FUN_SOLVER(bzla)->time.search_init_apps +=
@@ -2293,7 +2298,7 @@ check_and_resolve_conflicts(Bzla *bzla,
     init_apps = &top_applies;
   }
   else
-    search_initial_applies_bv_skeleton(bzla, init_apps, init_apps_cache);
+    search_initial_applies_bv_skeleton(slv, init_apps, init_apps_cache);
 
   /* For non-extensional problems, our model generation is able to compute
    * values for applies that are not reachable from assertions. However, for
@@ -2661,6 +2666,16 @@ sat_fun_solver(BzlaFunSolver *slv)
     clone = new_exp_layer_clone_for_dual_prop(bzla, &exp_map, &clone_root);
   }
 
+  BzlaPtrHashTableIterator it;
+  bzla_iter_hashptr_init(&it, bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_queue(&it, bzla->synthesized_constraints);
+  bzla_iter_hashptr_queue(&it, bzla->assumptions);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    BZLA_PUSH_STACK(slv->constraints,
+                    bzla_node_copy(bzla, bzla_iter_hashptr_next(&it)));
+  }
+
   while (true)
   {
     result = BZLA_RESULT_UNKNOWN;
@@ -2748,6 +2763,7 @@ sat_fun_solver(BzlaFunSolver *slv)
         bzla_insert_unsynthesized_constraint(bzla, lemma);
       if (clone)
         add_lemma_to_dual_prop_clone(bzla, clone, &clone_root, lemma, exp_map);
+      BZLA_PUSH_STACK(slv->constraints, bzla_node_copy(bzla, lemma));
     }
     BZLA_RESET_STACK(slv->cur_lemmas);
 
@@ -3044,6 +3060,7 @@ bzla_new_fun_solver(Bzla *bzla)
                                        (BzlaHashPtr) bzla_node_hash_by_id,
                                        (BzlaCmpPtr) bzla_node_compare_by_id);
   BZLA_INIT_STACK(bzla->mm, slv->cur_lemmas);
+  BZLA_INIT_STACK(bzla->mm, slv->constraints);
 
   BZLA_INIT_STACK(bzla->mm, slv->stats.lemmas_size);
 
