@@ -21,7 +21,7 @@
   bzla_node_is_inverted(c) ? bzla_node_bv_const_get_invbits(c) \
                            : bzla_node_bv_const_get_bits(c)
 
-inline static void
+static void
 extract_base_addr_offset(BzlaNode *bvadd, BzlaNode **base, BzlaNode **offset)
 {
   assert(bzla_node_is_regular(bvadd));
@@ -386,7 +386,7 @@ is_itoi_pattern(BzlaNode *index, BzlaNode *value)
   return index == value;
 }
 
-inline static bool
+static bool
 is_itoip1_pattern(BzlaNode *index, BzlaNode *value)
 {
   bool res;
@@ -398,7 +398,7 @@ is_itoip1_pattern(BzlaNode *index, BzlaNode *value)
   return res;
 }
 
-inline static bool
+static bool
 is_cpy_pattern(BzlaNode *index, BzlaNode *value)
 {
   BzlaNode *bvadd, *dst_addr, *off;
@@ -466,7 +466,7 @@ is_abs_set_pattern(BzlaNode *index, BzlaNode *prev_index)
  *   dst1 := write(dst0, dst_addr + c + 1, read(dst0, src_addr + c + 1))
  *   dst2 := write(dst1, dst_addr + c + 2, read(dst1, src_addr + c + 2))
  */
-inline static bool
+static bool
 is_copy_pattern(BzlaNode *index,
                 BzlaNode *value,
                 BzlaNode *prev_index,
@@ -831,7 +831,7 @@ collect_indices_top_eqs(Bzla *bzla, BzlaPtrHashTable *map_value_index)
   }
 }
 
-void
+static void
 find_ranges(Bzla *bzla,
             BzlaNodePtrStack *stack,
             BzlaNodePtrStack *ranges,
