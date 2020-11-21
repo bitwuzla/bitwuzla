@@ -268,7 +268,7 @@ void *bzla_fp_word_blaster_clone(Bzla *bzla, Bzla *clone, BzlaNodeMap *exp_map);
  */
 void bzla_fp_word_blaster_delete(Bzla *bzla);
 
-/** Word-blast given Boolean expression. */
+/** Word-blast given floating-point/rounding mode expression. */
 BzlaNode *bzla_fp_word_blast(Bzla *bzla, BzlaNode *node);
 
 #endif
