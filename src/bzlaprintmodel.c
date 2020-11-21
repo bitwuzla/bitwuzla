@@ -10,6 +10,7 @@
 #include "bzlaprintmodel.h"
 
 #include "bzlamodel.h"
+#include "bzlarm.h"
 #include "bzlatypes.h"
 #include "dumper/bzladumpsmt.h"
 #include "utils/bzlautil.h"
@@ -143,6 +144,32 @@ bzla_print_node_model(Bzla *bzla,
   }
 }
 
+static void
+dump_const_value(Bzla *bzla,
+                 BzlaSortId sort,
+                 const BzlaBitVector *assignment,
+                 uint32_t base,
+                 FILE *file)
+{
+  if (bzla_sort_is_rm(bzla, sort))
+  {
+    bzla_dumpsmt_dump_const_rm_value(bzla, assignment, file);
+  }
+  else if (bzla_sort_is_fp(bzla, sort))
+  {
+    bzla_dumpsmt_dump_const_fp_value(bzla,
+                                     assignment,
+                                     bzla_sort_fp_get_exp_width(bzla, sort),
+                                     bzla_sort_fp_get_sig_width(bzla, sort),
+                                     file);
+  }
+  else
+  {
+    assert(bzla_sort_is_bv(bzla, sort));
+    bzla_dumpsmt_dump_const_bv_value(bzla, assignment, base, file);
+  }
+}
+
 void
 bzla_print_bvfp_model(
     Bzla *bzla, BzlaNode *node, const char *format, uint32_t base, FILE *file)
@@ -189,23 +216,7 @@ bzla_print_bvfp_model(
     {
       bzla_dumpsmt_dump_sort_node(node, file);
       fprintf(file, " ");
-      if (bzla_node_is_rm(bzla, node))
-      {
-        bzla_dumpsmt_dump_const_rm_value(bzla, ass, file);
-      }
-      else if (bzla_node_is_fp(bzla, node))
-      {
-        bzla_dumpsmt_dump_const_fp_value(bzla,
-                                         ass,
-                                         bzla_node_fp_get_exp_width(bzla, node),
-                                         bzla_node_fp_get_sig_width(bzla, node),
-                                         file);
-      }
-      else
-      {
-        assert(bzla_node_is_bv(bzla, node));
-        bzla_dumpsmt_dump_const_bv_value(bzla, ass, base, file);
-      }
+      dump_const_value(bzla, bzla_node_get_sort_id(node), ass, base, file);
     }
     fprintf(file, ")\n");
   }
@@ -240,7 +251,7 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
   BzlaPtrHashTableIterator it;
   BzlaBitVectorTuple *args;
   BzlaBitVector *assignment, *default_value;
-  BzlaSortId sort;
+  BzlaSortId codomain;
   BzlaTupleSortIterator iit;
 
   fun_model = (BzlaPtrHashTable *) bzla_model_get_fun(
@@ -265,19 +276,25 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
   node = bzla_simplify_exp(bzla, node);
   assert(bzla_node_is_regular(node));
   assert(bzla_node_is_fun(node));
-  bzla_iter_tuple_sort_init(
-      &iit, bzla, bzla_sort_fun_get_domain(bzla, bzla_node_get_sort_id(node)));
+
+  BzlaSortId domain =
+      bzla_sort_fun_get_domain(bzla, bzla_node_get_sort_id(node));
+
+  bzla_iter_tuple_sort_init(&iit, bzla, domain);
   x = 0;
   while (bzla_iter_tuple_sort_has_next(&iit))
   {
-    sort = bzla_iter_tuple_sort_next(&iit);
-    fprintf(file, "\n%3c", ' ');
-    print_param_smt2(s, x, bzla_sort_get_by_id(bzla, sort), file);
+    codomain = bzla_iter_tuple_sort_next(&iit);
+    if (x > 0)
+    {
+      fputc(' ', file);
+    }
+    print_param_smt2(s, x, bzla_sort_get_by_id(bzla, codomain), file);
     x++;
   }
   fprintf(file, ") ");
-  sort = bzla_sort_fun_get_codomain(bzla, bzla_node_get_sort_id(node));
-  bzla_dumpsmt_dump_sort(bzla_sort_get_by_id(bzla, sort), file);
+  codomain = bzla_sort_fun_get_codomain(bzla, bzla_node_get_sort_id(node));
+  bzla_dumpsmt_dump_sort(bzla_sort_get_by_id(bzla, codomain), file);
   fprintf(file, "\n");
 
   if (bzla_node_is_const_array(node))
@@ -291,6 +308,7 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
     /* fun model as ite over args and assignments */
     assignment    = 0;
     default_value = 0;
+    BzlaSort *domain_sort = bzla_sort_get_by_id(bzla, domain);
     bzla_iter_hashptr_init(&it, fun_model);
     while (bzla_iter_hashptr_has_next(&it))
     {
@@ -304,8 +322,12 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
         for (i = 0; i < args->arity; i++, x++)
         {
           if (args->arity > 1) fprintf(file, "\n%8c", ' ');
-          fprintf(file, "(= %s_x%d ", s, x);
-          bzla_dumpsmt_dump_const_bv_value(bzla, args->bv[i], base, file);
+          fprintf(file, "(= _x%d ", x);
+          dump_const_value(bzla,
+                           domain_sort->tuple.elements[i]->id,
+                           args->bv[i],
+                           base,
+                           file);
           fprintf(file, ")%s", i + 1 == args->arity ? "" : " ");
         }
         if (args->arity > 1)
@@ -321,7 +343,7 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
         continue;
       }
       fprintf(file, " ");
-      bzla_dumpsmt_dump_const_bv_value(bzla, assignment, base, file);
+      dump_const_value(bzla, codomain, assignment, base, file);
       fprintf(file, "\n");
       nparens += 1;
     }
@@ -329,16 +351,27 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
     /* zero-initialized default value */
     if (!default_value)
     {
-      default_value = bzla_bv_new(
-          bzla->mm,
-          bzla_sort_bv_get_width(
-              bzla,
-              bzla_sort_fun_get_codomain(bzla, bzla_node_get_sort_id(node))));
+      uint32_t size;
+
+      if (bzla_sort_is_fp(bzla, codomain))
+      {
+        size = bzla_sort_fp_get_bv_width(bzla, codomain);
+      }
+      else if (bzla_sort_is_rm(bzla, codomain))
+      {
+        size = BZLA_RM_BW;
+      }
+      else
+      {
+        assert(bzla_sort_is_bv(bzla, codomain));
+        size = bzla_sort_bv_get_width(bzla, codomain);
+      }
+      default_value = bzla_bv_new(bzla->mm, size);
     }
 
     /* print default value */
     fprintf(file, "%6c", ' ');
-    bzla_dumpsmt_dump_const_bv_value(bzla, default_value, base, file);
+    dump_const_value(bzla, codomain, default_value, base, file);
     bzla_bv_free(bzla->mm, default_value);
   }
 
