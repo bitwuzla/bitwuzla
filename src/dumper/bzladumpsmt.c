@@ -828,14 +828,16 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
         }
         else if (bzla_node_is_rm_const(real_exp))
         {
+          BzlaNode *bv_const = bzla_fp_word_blast(sdc->bzla, real_exp);
           bzla_dumpsmt_dump_const_rm_value(
-              sdc->bzla, bzla_node_bv_const_get_bits(real_exp), sdc->file);
+              sdc->bzla, bzla_node_bv_const_get_bits(bv_const), sdc->file);
         }
         else if (bzla_node_is_fp_const(real_exp))
         {
+          BzlaNode *bv_const = bzla_fp_word_blast(sdc->bzla, real_exp);
           bzla_dumpsmt_dump_const_fp_value(
               sdc->bzla,
-              bzla_node_bv_const_get_bits(real_exp),
+              bzla_node_bv_const_get_bits(bv_const),
               bzla_node_fp_get_exp_width(sdc->bzla, real_exp),
               bzla_node_fp_get_sig_width(sdc->bzla, real_exp),
               sdc->file);
