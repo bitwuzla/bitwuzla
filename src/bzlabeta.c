@@ -157,6 +157,69 @@ bzla_beta_unassign_params(Bzla *bzla, BzlaNode *lambda)
   } while (bzla_node_is_lambda(lambda));
 }
 
+static BzlaNode *
+rebuild_node(Bzla *bzla, BzlaNode *n, BzlaNode **exps)
+{
+  BzlaNode *result = 0, *e[4] = {0, 0, 0, 0};
+
+  if (n->arity == 2)
+  {
+    e[0] = exps[1];
+    e[1] = exps[0];
+  }
+  else if (n->arity == 3)
+  {
+    e[0] = exps[2];
+    e[1] = exps[1];
+    e[2] = exps[0];
+  }
+  else if (n->arity == 4)
+  {
+    e[0] = exps[3];
+    e[1] = exps[2];
+    e[2] = exps[1];
+    e[3] = exps[0];
+  }
+  else
+  {
+    assert(n->arity == 1);
+    e[0] = exps[0];
+  }
+
+  switch (n->kind)
+  {
+    case BZLA_BV_SLICE_NODE:
+      result = bzla_exp_bv_slice(bzla,
+                                 e[0],
+                                 bzla_node_bv_slice_get_upper(n),
+                                 bzla_node_bv_slice_get_lower(n));
+      break;
+    case BZLA_FP_TO_SBV_NODE:
+      result = bzla_exp_fp_to_sbv(bzla, e[0], e[1], bzla_node_get_sort_id(n));
+      break;
+    case BZLA_FP_TO_UBV_NODE:
+      result = bzla_exp_fp_to_ubv(bzla, e[0], e[1], bzla_node_get_sort_id(n));
+      break;
+    case BZLA_FP_TO_FP_BV_NODE:
+      result = bzla_exp_fp_to_fp_from_bv(bzla, e[0], bzla_node_get_sort_id(n));
+      break;
+    case BZLA_FP_TO_FP_FP_NODE:
+      result =
+          bzla_exp_fp_to_fp_from_fp(bzla, e[0], e[1], bzla_node_get_sort_id(n));
+      break;
+    case BZLA_FP_TO_FP_SBV_NODE:
+      result = bzla_exp_fp_to_fp_from_sbv(
+          bzla, e[0], e[1], bzla_node_get_sort_id(n));
+      break;
+    case BZLA_FP_TO_FP_UBV_NODE:
+      result = bzla_exp_fp_to_fp_from_ubv(
+          bzla, e[0], e[1], bzla_node_get_sort_id(n));
+      break;
+    default: result = bzla_exp_create(bzla, n->kind, e, n->arity);
+  }
+  return result;
+}
+
 /* We distinguish the following options for (un)bounded reduction:
  *
  *   BETA_RED_LAMBDA_MERGE: merge lambda chains
@@ -379,228 +442,6 @@ beta_reduce(Bzla *bzla,
 
         switch (real_cur->kind)
         {
-          case BZLA_BV_SLICE_NODE:
-            result = bzla_exp_bv_slice(bzla,
-                                       e[0],
-                                       bzla_node_bv_slice_get_upper(real_cur),
-                                       bzla_node_bv_slice_get_lower(real_cur));
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_BV_AND_NODE:
-            result = bzla_exp_bv_and(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_BV_EQ_NODE:
-          case BZLA_FP_EQ_NODE:
-          case BZLA_FUN_EQ_NODE:
-          case BZLA_RM_EQ_NODE:
-            result = bzla_exp_eq(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_BV_ADD_NODE:
-            result = bzla_exp_bv_add(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_BV_MUL_NODE:
-            result = bzla_exp_bv_mul(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_BV_ULT_NODE:
-            result = bzla_exp_bv_ult(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_BV_SLL_NODE:
-            result = bzla_exp_bv_sll(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_BV_SLT_NODE:
-            result = bzla_exp_bv_slt(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_BV_SRL_NODE:
-            result = bzla_exp_bv_srl(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_BV_UDIV_NODE:
-            result = bzla_exp_bv_udiv(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_BV_UREM_NODE:
-            result = bzla_exp_bv_urem(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_BV_CONCAT_NODE:
-            result = bzla_exp_bv_concat(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_ABS_NODE:
-            result = bzla_exp_fp_abs(bzla, e[0]);
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_FP_IS_INF_NODE:
-            result = bzla_exp_fp_is_inf(bzla, e[0]);
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_FP_IS_NAN_NODE:
-            result = bzla_exp_fp_is_nan(bzla, e[0]);
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_FP_IS_NEG_NODE:
-            result = bzla_exp_fp_is_nan(bzla, e[0]);
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_FP_IS_NORM_NODE:
-            result = bzla_exp_fp_is_normal(bzla, e[0]);
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_FP_IS_POS_NODE:
-            result = bzla_exp_fp_is_pos(bzla, e[0]);
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_FP_IS_SUBNORM_NODE:
-            result = bzla_exp_fp_is_subnormal(bzla, e[0]);
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_FP_IS_ZERO_NODE:
-            result = bzla_exp_fp_is_zero(bzla, e[0]);
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_FP_NEG_NODE:
-            result = bzla_exp_fp_is_neg(bzla, e[0]);
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_FP_LTE_NODE:
-            result = bzla_exp_fp_lte(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_LT_NODE:
-            result = bzla_exp_fp_lt(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_MIN_NODE:
-            result = bzla_exp_fp_min(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_MAX_NODE:
-            result = bzla_exp_fp_max(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_SQRT_NODE:
-            result = bzla_exp_fp_sqrt(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_REM_NODE:
-            result = bzla_exp_fp_rem(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_RTI_NODE:
-            result = bzla_exp_fp_rti(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_TO_SBV_NODE:
-            assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
-            result = bzla_exp_fp_to_sbv(
-                bzla, e[1], e[0], bzla_node_get_sort_id(cur));
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_TO_UBV_NODE:
-            assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
-            result = bzla_exp_fp_to_ubv(
-                bzla, e[1], e[0], bzla_node_get_sort_id(cur));
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_TO_FP_BV_NODE:
-            assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
-            result = bzla_exp_fp_to_fp_from_bv(
-                bzla, e[0], bzla_node_get_sort_id(cur));
-            bzla_node_release(bzla, e[0]);
-            break;
-          case BZLA_FP_TO_FP_FP_NODE:
-            assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
-            result = bzla_exp_fp_to_fp_from_fp(
-                bzla, e[1], e[0], bzla_node_get_sort_id(cur));
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_TO_FP_SBV_NODE:
-            assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
-            result = bzla_exp_fp_to_fp_from_sbv(
-                bzla, e[1], e[0], bzla_node_get_sort_id(cur));
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_TO_FP_UBV_NODE:
-            assert(bzla_sort_is_fp(bzla, bzla_node_get_sort_id(cur)));
-            result = bzla_exp_fp_to_fp_from_ubv(
-                bzla, e[1], e[0], bzla_node_get_sort_id(cur));
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_FP_ADD_NODE:
-            result = bzla_exp_fp_add(bzla, e[2], e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            bzla_node_release(bzla, e[2]);
-            break;
-          case BZLA_FP_MUL_NODE:
-            result = bzla_exp_fp_mul(bzla, e[2], e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            bzla_node_release(bzla, e[2]);
-            break;
-          case BZLA_FP_DIV_NODE:
-            result = bzla_exp_fp_div(bzla, e[2], e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            bzla_node_release(bzla, e[2]);
-            break;
-          case BZLA_FP_FMA_NODE:
-            result = bzla_exp_fp_fma(bzla, e[3], e[2], e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            bzla_node_release(bzla, e[2]);
-            bzla_node_release(bzla, e[3]);
-            break;
-          case BZLA_ARGS_NODE:
-            assert(real_cur->arity >= 1);
-            assert(real_cur->arity <= BZLA_NODE_MAX_CHILDREN);
-            if (real_cur->arity == 2)
-            {
-              next = e[0];
-              e[0] = e[1];
-              e[1] = next;
-            }
-            else if (real_cur->arity == 3)
-            {
-              next = e[0];
-              e[0] = e[2];
-              e[2] = next;
-            }
-            result = bzla_exp_args(bzla, e, real_cur->arity);
-            bzla_node_release(bzla, e[0]);
-            if (real_cur->arity >= 2) bzla_node_release(bzla, e[1]);
-            if (real_cur->arity >= 3) bzla_node_release(bzla, e[2]);
-            break;
           case BZLA_APPLY_NODE:
             if (bzla_node_is_fun(e[1]))
             {
@@ -617,9 +458,6 @@ beta_reduce(Bzla *bzla,
             if (cache && mode == BETA_RED_FULL
                 && bzla_node_is_lambda(real_cur->e[0]))
               cache_beta_result(bzla, cache, real_cur->e[0], e[0], result);
-
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
             break;
           case BZLA_LAMBDA_NODE:
             /* function equalities and conditionals always expect a lambda
@@ -649,31 +487,13 @@ beta_reduce(Bzla *bzla,
             {
               result = bzla_node_copy(bzla, e[0]);
             }
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
             break;
-          case BZLA_UPDATE_NODE:
-            result = bzla_exp_update(bzla, e[2], e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            bzla_node_release(bzla, e[2]);
-            break;
-          case BZLA_FORALL_NODE:
-            result = bzla_exp_forall(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          case BZLA_EXISTS_NODE:
-            result = bzla_exp_exists(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            break;
-          default:
-            assert(bzla_node_is_cond(real_cur));
-            result = bzla_exp_cond(bzla, e[2], e[1], e[0]);
-            bzla_node_release(bzla, e[0]);
-            bzla_node_release(bzla, e[1]);
-            bzla_node_release(bzla, e[2]);
+          default: result = rebuild_node(bzla, real_cur, e);
+        }
+
+        for (i = 0; i < real_cur->arity; ++i)
+        {
+          bzla_node_release(bzla, e[i]);
         }
 
         assert(!bzla_node_is_simplified(result));
@@ -879,107 +699,22 @@ beta_reduce_partial_aux(Bzla *bzla,
 
       switch (real_cur->kind)
       {
-        case BZLA_BV_SLICE_NODE:
-          result = bzla_exp_bv_slice(bzla,
-                                     e[0],
-                                     bzla_node_bv_slice_get_upper(real_cur),
-                                     bzla_node_bv_slice_get_lower(real_cur));
-          bzla_node_release(bzla, e[0]);
-          break;
-        case BZLA_BV_AND_NODE:
-          result = bzla_exp_bv_and(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_BV_EQ_NODE:
-        case BZLA_FUN_EQ_NODE:
-          result = bzla_exp_eq(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_BV_ADD_NODE:
-          result = bzla_exp_bv_add(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_BV_MUL_NODE:
-          result = bzla_exp_bv_mul(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_BV_ULT_NODE:
-          result = bzla_exp_bv_ult(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_BV_SLL_NODE:
-          result = bzla_exp_bv_sll(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_BV_SLT_NODE:
-          result = bzla_exp_bv_slt(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_BV_SRL_NODE:
-          result = bzla_exp_bv_srl(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_BV_UDIV_NODE:
-          result = bzla_exp_bv_udiv(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_BV_UREM_NODE:
-          result = bzla_exp_bv_urem(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_BV_CONCAT_NODE:
-          result = bzla_exp_bv_concat(bzla, e[1], e[0]);
-          bzla_node_release(bzla, e[0]);
-          bzla_node_release(bzla, e[1]);
-          break;
-        case BZLA_ARGS_NODE:
-          assert(real_cur->arity >= 1);
-          assert(real_cur->arity <= BZLA_NODE_MAX_CHILDREN);
-          if (real_cur->arity == 2)
-          {
-            next = e[0];
-            e[0] = e[1];
-            e[1] = next;
-          }
-          else if (real_cur->arity == 3)
-          {
-            next = e[0];
-            e[0] = e[2];
-            e[2] = next;
-          }
-          result = bzla_exp_args(bzla, e, real_cur->arity);
-          bzla_node_release(bzla, e[0]);
-          if (real_cur->arity >= 2) bzla_node_release(bzla, e[1]);
-          if (real_cur->arity >= 3) bzla_node_release(bzla, e[2]);
-          break;
         case BZLA_APPLY_NODE:
           if (bzla_node_is_fun(e[1]))
           {
             result = bzla_node_create_apply(bzla, e[1], e[0]);
-            bzla_node_release(bzla, e[1]);
           }
           else
-            result = e[1];
-          bzla_node_release(bzla, e[0]);
+          {
+            result = bzla_node_copy(bzla, e[1]);
+          }
           break;
         case BZLA_LAMBDA_NODE:
           /* lambdas are always reduced to some term without e[1] */
           assert(!bzla_node_real_addr(e[0])->parameterized);
-          result = e[0];
-          bzla_node_release(bzla, e[1]);
+          result = bzla_node_copy(bzla, e[0]);
           break;
-        default:
-          assert(bzla_node_is_cond(real_cur));
+        case BZLA_COND_NODE:
           /* only condition rebuilt, evaluate and choose branch */
           assert(!bzla_node_real_addr(e[0])->parameterized);
           eval_res = bzla_eval_exp(bzla, e[0]);
@@ -1031,6 +766,13 @@ beta_reduce_partial_aux(Bzla *bzla,
            * overhead. */
           bzla_hashint_map_remove(mark, real_cur->id, 0);
           continue;
+
+        default: result = rebuild_node(bzla, real_cur, e);
+      }
+
+      for (i = 0; i < real_cur->arity; ++i)
+      {
+        bzla_node_release(bzla, e[i]);
       }
 
       d->as_ptr = bzla_node_copy(bzla, result);
