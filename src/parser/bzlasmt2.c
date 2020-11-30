@@ -5408,7 +5408,7 @@ echo_smt2(BzlaSMT2Parser *parser)
   if (tag != BZLA_STRING_CONSTANT_TAG_SMT2)
     return !perr_smt2(parser, "expected string after 'echo'");
 
-  fprintf(parser->outfile, "%s", parser->token.start);
+  fprintf(parser->outfile, "%s\n", parser->token.start);
   fflush(parser->outfile);
   return skip_sexprs(parser, 1);
 }
