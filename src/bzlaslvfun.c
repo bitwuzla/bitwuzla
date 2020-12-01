@@ -970,8 +970,6 @@ search_initial_applies_bv_skeleton(BzlaFunSolver *slv,
     while (!BZLA_EMPTY_STACK(stack))
     {
       cur = BZLA_POP_STACK(stack);
-      assert(!bzla_node_is_simplified(cur)
-             || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
       cur = bzla_node_real_addr(bzla_node_get_simplified(bzla, cur));
 
       if (bzla_hashint_table_contains(cache, cur->id)) continue;
@@ -3126,6 +3124,17 @@ bzla_eval_exp(Bzla *bzla, BzlaNode *exp)
         result = bzla_bv_copy(mm, bzla_node_bv_const_get_bits(real_cur));
         goto EVAL_EXP_PUSH_RESULT;
       }
+      /* Word-blast FP nodes and do evaluation on BV representation */
+      else if (bzla_node_is_fp(bzla, real_cur)
+               || bzla_node_is_rm(bzla, real_cur)
+               || (real_cur->arity
+                   && (bzla_node_is_rm(bzla, real_cur->e[0])
+                       || bzla_node_is_fp(bzla, real_cur->e[0]))))
+      {
+        next = bzla_fp_word_blast(bzla, real_cur);
+        BZLA_PUSH_STACK(work_stack, next);
+        continue;
+      }
       /* substitute param with its assignment */
       else if (bzla_node_is_param(real_cur))
       {
@@ -3186,6 +3195,11 @@ bzla_eval_exp(Bzla *bzla, BzlaNode *exp)
           break;
         case BZLA_BV_ULT_NODE:
           result = bzla_bv_ult(mm, e[1], e[0]);
+          bzla_bv_free(mm, e[0]);
+          bzla_bv_free(mm, e[1]);
+          break;
+        case BZLA_BV_SLT_NODE:
+          result = bzla_bv_slt(mm, e[1], e[0]);
           bzla_bv_free(mm, e[0]);
           bzla_bv_free(mm, e[1]);
           break;
