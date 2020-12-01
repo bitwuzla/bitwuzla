@@ -101,6 +101,7 @@ typedef struct BzlaMainOpt
 struct BitwuzlaMainApp
 {
   Bitwuzla *bitwuzla;
+  Bzla *bzla;
   BzlaMemMgr *mm;
   BzlaMainOpt *options;
   bool done;
@@ -422,6 +423,7 @@ bzlamain_new_bzlamain(Bitwuzla *bitwuzla)
   BZLA_CNEWN(mm, res, 1);
   res->mm          = mm;
   res->bitwuzla    = bitwuzla;
+  res->bzla        = bitwuzla_get_bzla(bitwuzla);
   res->infile      = stdin;
   res->infile_name = "<stdin>";
   res->outfile     = stdout;
@@ -608,11 +610,8 @@ print_opt(BitwuzlaMainApp *app,
     sprintf(paramstr, "<seconds>");
   else if (!strcmp(lng, "output"))
     sprintf(paramstr, "<file>");
-  else if (!strcmp(lng,
-                   bzla_opt_get_lng((Bzla *) app->bitwuzla, BZLA_OPT_ENGINE))
-           || !strcmp(
-               lng,
-               bzla_opt_get_lng((Bzla *) app->bitwuzla, BZLA_OPT_SAT_ENGINE)))
+  else if (!strcmp(lng, bzla_opt_get_lng(app->bzla, BZLA_OPT_ENGINE))
+           || !strcmp(lng, bzla_opt_get_lng(app->bzla, BZLA_OPT_SAT_ENGINE)))
     sprintf(paramstr, "<engine>");
   else if (!isflag)
   {
@@ -766,7 +765,7 @@ print_help(BitwuzlaMainApp *app)
   char *s, *fun, *sls, *prop, *aigprop, *quant;
   size_t i;
 
-  Bzla *bzla = (Bzla *) app->bitwuzla;
+  Bzla *bzla = app->bzla;
 
   BZLA_INIT_STACK(app->mm, ostack);
 
