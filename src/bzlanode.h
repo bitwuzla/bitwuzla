@@ -266,6 +266,8 @@ bool bzla_node_is_bv(Bzla *bzla, const BzlaNode *exp);
 bool bzla_node_is_rm(Bzla *bzla, const BzlaNode *exp);
 /** Return true if given node is a floating-point node. */
 bool bzla_node_is_fp(Bzla *bzla, const BzlaNode *exp);
+/** Return true if given node needs to be word-blasted. */
+bool bzla_node_fp_needs_word_blast(Bzla *bzla, const BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 

@@ -829,6 +829,27 @@ get_apply_value(Bzla *bzla,
   return result;
 }
 
+static bool
+argument_needs_word_blast(Bzla *bzla, const BzlaNode *args)
+{
+  assert(bzla_node_is_args(args));
+
+  BzlaNode *arg;
+  BzlaArgsIterator it;
+
+  bzla_iter_args_init(&it, args);
+  while (bzla_iter_args_has_next(&it))
+  {
+    arg = bzla_iter_args_next(&it);
+    if (bzla_node_fp_needs_word_blast(bzla, arg))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /* Note: don't forget to free resulting bit vector! */
 BzlaBitVector *
 bzla_model_recursively_compute_assignment(Bzla *bzla,
@@ -843,11 +864,11 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
 
   uint32_t i, num_args, pos;
   BzlaMemMgr *mm;
-  BzlaNodePtrStack work_stack, reset;
+  BzlaNodePtrStack work_stack, reset, cleanup_expanded;
   BzlaVoidPtrStack arg_stack;
-  BzlaNode *cur, *real_cur, *next, *cur_parent, *wb;
+  BzlaNode *cur, *real_cur, *next, *cur_parent;
   BzlaHashTableData *d, dd;
-  BzlaIntHashTable *assigned, *reset_st, *param_model_cache;
+  BzlaIntHashTable *assigned, *reset_st, *param_model_cache, *expanded;
   BzlaBitVector *result = 0, *inv_result, **e;
   BzlaBitVectorTuple *t;
   BzlaIntHashTable *mark;
@@ -856,6 +877,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
   mm = bzla->mm;
 
   assigned = bzla_hashint_map_new(mm);
+  expanded = bzla_hashint_table_new(mm);
 
   /* model cache for parameterized nodes */
   param_model_cache = bzla_hashint_map_new(mm);
@@ -870,6 +892,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
   BZLA_INIT_STACK(mm, work_stack);
   BZLA_INIT_STACK(mm, arg_stack);
   BZLA_INIT_STACK(mm, reset);
+  BZLA_INIT_STACK(mm, cleanup_expanded);
 
   BZLA_PUSH_STACK(work_stack, exp);
   BZLA_PUSH_STACK(work_stack, 0);
@@ -879,8 +902,6 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
     cur_parent = BZLA_POP_STACK(work_stack);
     cur        = BZLA_POP_STACK(work_stack);
     real_cur   = bzla_node_real_addr(cur);
-    // TODO(ma): check if this is an issue for nondestructive subst
-    // assert (!bzla_node_is_simplified (real_cur));
 
     if (bzla_hashint_map_contains(bv_model, real_cur->id)
         || bzla_hashint_map_contains(param_model_cache, real_cur->id))
@@ -958,35 +979,6 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
       BZLA_PUSH_STACK(work_stack, cur);
       BZLA_PUSH_STACK(work_stack, cur_parent);
       md = bzla_hashint_map_add(mark, real_cur->id);
-      if (bzla_node_is_rm(bzla, real_cur) || bzla_node_is_fp(bzla, real_cur)
-          || (real_cur->arity
-              && (bzla_node_is_fp(bzla, real_cur->e[0])
-                  || bzla_node_is_rm(bzla, real_cur->e[0]))))
-      {
-        if (bzla_node_is_args(cur))
-        {
-          BzlaArgsIterator it;
-          bzla_iter_args_init(&it, cur);
-          while (bzla_iter_args_has_next(&it))
-          {
-            next = bzla_iter_args_next(&it);
-            if (bzla_node_is_rm(bzla, next) || bzla_node_is_fp(bzla, next))
-            {
-              next = bzla_fp_word_blast(bzla, next);
-              BZLA_PUSH_STACK(work_stack, next);
-              BZLA_PUSH_STACK(work_stack, cur_parent);
-            }
-          }
-        }
-        else
-        {
-          next = bzla_fp_word_blast(bzla, real_cur);
-          assert(next);
-          BZLA_PUSH_STACK(work_stack, next);
-          BZLA_PUSH_STACK(work_stack, cur_parent);
-        }
-        continue;
-      }
 
       /* special handling for conditionals:
        *  1) push condition
@@ -1007,21 +999,32 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
         BZLA_PUSH_STACK(work_stack, real_cur->e[2]);
         BZLA_PUSH_STACK(work_stack, real_cur);
       }
+      else if (bzla_node_is_apply(real_cur)
+               && (bzla_node_is_fp(bzla, real_cur)
+                   || bzla_node_is_rm(bzla, real_cur)
+                   || argument_needs_word_blast(bzla, real_cur->e[1])))
+      {
+        next = bzla_beta_reduce_full(bzla, real_cur, 0);
+        next = bzla_node_cond_invert(cur, next);
+        BZLA_PUSH_STACK(work_stack, next);
+        BZLA_PUSH_STACK(work_stack, cur_parent);
+        BZLA_PUSH_STACK(cleanup_expanded, next);
+        bzla_hashint_table_add(expanded, real_cur->id);
+      }
+      /* For FP terms we need to ensure that we have word blasted them. */
+      else if (bzla_node_fp_needs_word_blast(bzla, real_cur))
+      {
+        next = bzla_fp_word_blast(bzla, real_cur);
+        assert(next);
+        BZLA_PUSH_STACK(work_stack, next);
+        BZLA_PUSH_STACK(work_stack, cur_parent);
+      }
       else
       {
         for (i = 0; i < real_cur->arity; i++)
         {
           BZLA_PUSH_STACK(work_stack, real_cur->e[i]);
           BZLA_PUSH_STACK(work_stack, real_cur);
-          /* Additionally, push bit-vector representation of floating-point
-           * node to evaluate first. */
-          if (bzla_node_is_rm(bzla, real_cur->e[i])
-              || bzla_node_is_fp(bzla, real_cur->e[i]))
-          {
-            wb = bzla_fp_word_blast(bzla, real_cur->e[i]);
-            BZLA_PUSH_STACK(work_stack, wb);
-            BZLA_PUSH_STACK(work_stack, real_cur);
-          }
         }
       }
     }
@@ -1030,21 +1033,21 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
       assert(!bzla_node_is_param(real_cur));
       assert(real_cur->arity <= BZLA_NODE_MAX_CHILDREN);
 
-      if (bzla_node_is_rm(bzla, real_cur) || bzla_node_is_fp(bzla, real_cur)
-          || (real_cur->arity
-              && (bzla_node_is_rm(bzla, real_cur->e[0])
-                  || bzla_node_is_fp(bzla, real_cur->e[0]))))
+      /* Check if real_cur is an expanded FP fucntion application. */
+      if (bzla_hashint_table_contains(expanded, real_cur->id))
+      {
+        result = BZLA_POP_STACK(arg_stack);
+        goto CACHE_AND_PUSH_RESULT;
+      }
+      else if (bzla_node_fp_needs_word_blast(bzla, real_cur))
       {
         assert(BZLA_COUNT_STACK(arg_stack));
         result = BZLA_POP_STACK(arg_stack);
 #ifndef NDEBUG
-        if (!bzla_node_is_args(cur))
-        {
-          BzlaNode *bv_node       = bzla_fp_word_blast(bzla, real_cur);
-          const BzlaBitVector *bv = bzla_model_get_bv(bzla, bv_node);
-          assert(bv);
-          assert(bzla_bv_compare(result, bv) == 0);
-        }
+        BzlaNode *bv_node       = bzla_fp_word_blast(bzla, real_cur);
+        const BzlaBitVector *bv = bzla_model_get_bv(bzla, bv_node);
+        assert(bv);
+        assert(bzla_bv_compare(result, bv) == 0);
 #endif
         goto CACHE_AND_PUSH_RESULT;
       }
@@ -1324,6 +1327,13 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
   bzla_hashint_map_delete(reset_st);
   bzla_hashint_map_delete(param_model_cache);
   bzla_hashint_map_delete(mark);
+  bzla_hashint_table_delete(expanded);
+
+  while (!BZLA_EMPTY_STACK(cleanup_expanded))
+  {
+    bzla_node_release(bzla, BZLA_POP_STACK(cleanup_expanded));
+  }
+  BZLA_RELEASE_STACK(cleanup_expanded);
 
   return result;
 }

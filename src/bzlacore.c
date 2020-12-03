@@ -2424,31 +2424,10 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
 
         bzla_hashint_table_add(cache, cur->id);
         BZLA_PUSH_STACK(exp_stack, cur);
-        if (bzla_node_is_rm(bzla, cur) || bzla_node_is_fp(bzla, cur)
-            || (cur->arity
-                && (bzla_node_is_rm(bzla, cur->e[0])
-                    || bzla_node_is_fp(bzla, cur->e[0]))))
+        if (bzla_node_fp_needs_word_blast(bzla, cur))
         {
-          if (bzla_node_is_args(cur))
-          {
-            BzlaArgsIterator it;
-            bzla_iter_args_init(&it, cur);
-            while (bzla_iter_args_has_next(&it))
-            {
-              wb = bzla_iter_args_next(&it);
-              if (bzla_node_is_rm(bzla, wb) || bzla_node_is_fp(bzla, wb))
-              {
-                wb = bzla_fp_word_blast(bzla, wb);
-                BZLA_PUSH_STACK(exp_stack, wb);
-              }
-              BZLA_PUSH_STACK(exp_stack, wb);
-            }
-          }
-          else if (!bzla_node_is_fun(cur) && !cur->parameterized)
-          {
-            wb = bzla_fp_word_blast(bzla, cur);
-            BZLA_PUSH_STACK(exp_stack, wb);
-          }
+          wb = bzla_fp_word_blast(bzla, cur);
+          BZLA_PUSH_STACK(exp_stack, wb);
         }
         for (j = 1; j <= cur->arity; j++)
         {
@@ -2480,10 +2459,7 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
     {
       /* FP nodes are now word-blasted. Set AIG vector of FP node to AIG vector
        * of word-blasted bit-vector node. */
-      if (bzla_node_is_rm(bzla, cur) || bzla_node_is_fp(bzla, cur)
-          || (cur->arity
-              && (bzla_node_is_rm(bzla, cur->e[0])
-                  || bzla_node_is_fp(bzla, cur->e[0]))))
+      if (bzla_node_fp_needs_word_blast(bzla, cur))
       {
         wb         = bzla_fp_word_blast(bzla, cur);
         invert_av0 = bzla_node_is_inverted(wb);

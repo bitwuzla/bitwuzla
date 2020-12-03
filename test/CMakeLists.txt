@@ -1194,6 +1194,7 @@ if(SymFPU_FOUND)
     "fp_regr1.smt2"
     "fp_regr2.smt2"
     "fp_regr3.smt2"
+    "fp_regr4.smt2"
   )
 
   list(APPEND unsat_testcases
@@ -1205,6 +1206,10 @@ if(SymFPU_FOUND)
     "fp_misc.smt2"
     "fp_nan.smt2"
     "fp_zero.smt2"
+  )
+
+  list(APPEND cmp_testcases
+    "fp_regr5.smt2 -i"
   )
 endif()
 

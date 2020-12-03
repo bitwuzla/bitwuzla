@@ -3125,11 +3125,7 @@ bzla_eval_exp(Bzla *bzla, BzlaNode *exp)
         goto EVAL_EXP_PUSH_RESULT;
       }
       /* Word-blast FP nodes and do evaluation on BV representation */
-      else if (bzla_node_is_fp(bzla, real_cur)
-               || bzla_node_is_rm(bzla, real_cur)
-               || (real_cur->arity
-                   && (bzla_node_is_rm(bzla, real_cur->e[0])
-                       || bzla_node_is_fp(bzla, real_cur->e[0]))))
+      else if (bzla_node_fp_needs_word_blast(bzla, real_cur))
       {
         next = bzla_fp_word_blast(bzla, real_cur);
         BZLA_PUSH_STACK(work_stack, next);

@@ -401,6 +401,25 @@ bzla_node_is_fp(Bzla *bzla, const BzlaNode *exp)
   return bzla_sort_is_fp(bzla, bzla_node_get_sort_id(exp));
 }
 
+bool
+bzla_node_fp_needs_word_blast(Bzla *bzla, const BzlaNode *exp)
+{
+  assert(exp);
+  exp = bzla_node_real_addr(exp);
+
+  if (exp->parameterized) return false;
+
+  return bzla_node_is_fp(bzla, exp) || bzla_node_is_rm(bzla, exp)
+         || exp->kind == BZLA_FP_EQ_NODE || exp->kind == BZLA_FP_IS_INF_NODE
+         || exp->kind == BZLA_FP_IS_NAN_NODE || exp->kind == BZLA_FP_IS_NEG_NODE
+         || exp->kind == BZLA_FP_IS_NORM_NODE
+         || exp->kind == BZLA_FP_IS_POS_NODE
+         || exp->kind == BZLA_FP_IS_SUBNORM_NODE
+         || exp->kind == BZLA_FP_IS_ZERO_NODE || exp->kind == BZLA_FP_LTE_NODE
+         || exp->kind == BZLA_FP_LT_NODE || exp->kind == BZLA_FP_TO_SBV_NODE
+         || exp->kind == BZLA_FP_TO_UBV_NODE || exp->kind == BZLA_RM_EQ_NODE;
+}
+
 /*------------------------------------------------------------------------*/
 
 static void
