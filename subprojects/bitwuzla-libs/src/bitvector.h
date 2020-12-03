@@ -1,11 +1,12 @@
 #include <gmp.h>
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
 namespace bzlals {
 
-class RNG;
+// class RNG;
 
 class BitVector
 {
@@ -20,13 +21,13 @@ class BitVector
                          const BitVector& e);
 
   BitVector(uint32_t size);
-  BitVector(uint32_t size, RNG& rng);
-  BitVector(uint32_t size,
-            RNG& rng,
-            const BitVector& from,
-            const BitVector& to,
-            bool is_signed = false);
-  BitVector(uint32_t size, RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
+  // BitVector(uint32_t size, RNG& rng);
+  // BitVector(uint32_t size,
+  //          RNG& rng,
+  //          const BitVector& from,
+  //          const BitVector& to,
+  //          bool is_signed = false);
+  // BitVector(uint32_t size, RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
   BitVector(uint32_t size, const std::string& bin_str);
   BitVector(uint32_t size, uint64_t value);
   // should this deep copy by default? or do we need an extra copy for this?
@@ -101,7 +102,7 @@ class BitVector
 
  private:
   uint32_t d_size;
-  mpz_t d_val;
+  std::unique_ptr<mpz_t> d_val;
 };
 
 }  // namespace bzlals
