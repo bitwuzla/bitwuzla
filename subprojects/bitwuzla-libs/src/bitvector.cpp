@@ -1,6 +1,27 @@
 #include "bitvector.h"
 
+#include <gmpxx.h>
+
+#include <cassert>
+
 namespace bzlals {
+
+struct BzlalsMPZ
+{
+  /** Construct a zero-initialized GMP value. */
+  BzlalsMPZ() { mpz_init(d_mpz_t); }
+  /** Construct a GMP value from given binary string. */
+  BzlalsMPZ(const std::string& bin_str)
+  {
+    mpz_init_set_str(d_mpz_t, bin_str.c_str(), 2);
+  }
+
+  /** Destructor. */
+  ~BzlalsMPZ() { mpz_clear(d_mpz_t); }
+
+  /** The GMP integer value. */
+  mpz_t d_mpz_t;
+};
 
 BitVector
 BitVector::mk_zero(uint32_t size)
@@ -40,7 +61,8 @@ BitVector::bvite(const BitVector& c, const BitVector& t, const BitVector& e)
 
 BitVector::BitVector(uint32_t size) : d_size(size)
 {
-  // TODO
+  assert(size > 0);
+  d_val.reset(new BzlalsMPZ());
 }
 
 // BitVector::BitVector(uint32_t size, RNG& rng){}
@@ -50,7 +72,8 @@ BitVector::BitVector(uint32_t size) : d_size(size)
 
 BitVector::BitVector(uint32_t size, const std::string& bin_str) : d_size(size)
 {
-  // TODO
+  assert(bin_str.size() <= size);
+  d_val.reset(new BzlalsMPZ(bin_str));
 }
 
 BitVector::BitVector(uint32_t size, uint64_t value) : d_size(size)

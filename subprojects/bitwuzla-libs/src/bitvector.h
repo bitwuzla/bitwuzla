@@ -1,10 +1,13 @@
-#include <gmp.h>
+#ifndef BZLALS__BITVECTOR_H
+#define BZLALS__BITVECTOR_H
 
 #include <cstdint>
 #include <memory>
 #include <string>
 
 namespace bzlals {
+
+struct BzlalsMPZ;
 
 // class RNG;
 
@@ -102,7 +105,9 @@ class BitVector
 
  private:
   uint32_t d_size;
-  std::unique_ptr<mpz_t> d_val;
+  std::unique_ptr<BzlalsMPZ> d_val;
 };
 
 }  // namespace bzlals
+
+#endif
