@@ -149,20 +149,26 @@ BitVector::signed_compare(const BitVector& other) const
 bool
 BitVector::get_bit(uint32_t idx) const
 {
-  // TODO
-  return false;
+  return mpz_tstbit(d_val->d_mpz, idx);
 }
 
 void
 BitVector::set_bit(uint32_t idx, bool value)
 {
-  // TODO
+  if (value)
+  {
+    mpz_setbit(d_val->d_mpz, idx);
+  }
+  else
+  {
+    mpz_clrbit(d_val->d_mpz, idx);
+  }
 }
 
 void
 BitVector::flip_bit(uint32_t idx)
 {
-  // TODO
+  mpz_combit(d_val->d_mpz, idx);
 }
 
 bool

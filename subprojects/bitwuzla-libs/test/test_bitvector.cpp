@@ -88,4 +88,20 @@ TEST_F(TestBitVector, compare)
   }
 }
 
+TEST_F(TestBitVector, set_get_flip_bit)
+{
+  for (uint32_t i = 1; i < 32; ++i)
+  {
+    BitVector bv(i, *d_rng);
+    uint32_t n  = d_rng->pick<uint32_t>(0, i - 1);
+    uint32_t v  = bv.get_bit(n);
+    uint32_t vv = d_rng->flip_coin() ? 1 : 0;
+    bv.set_bit(n, vv);
+    EXPECT_EQ(bv.get_bit(n), vv);
+    EXPECT_TRUE(v == vv || bv.get_bit(n) == (((~v) << 31) >> 31));
+    bv.flip_bit(n);
+    EXPECT_EQ(bv.get_bit(n), (((~vv) << 31) >> 31));
+  }
+}
+
 }  // namespace bzlals
