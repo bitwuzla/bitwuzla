@@ -1195,6 +1195,7 @@ if(SymFPU_FOUND)
     "fp_regr2.smt2"
     "fp_regr3.smt2"
     "fp_regr4.smt2"
+    "fp_regr6.smt2"
   )
 
   list(APPEND unsat_testcases

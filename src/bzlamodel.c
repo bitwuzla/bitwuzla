@@ -869,6 +869,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
   BzlaNode *cur, *real_cur, *next, *cur_parent;
   BzlaHashTableData *d, dd;
   BzlaIntHashTable *assigned, *reset_st, *param_model_cache, *expanded;
+  BzlaIntHashTable *wblasted;
   BzlaBitVector *result = 0, *inv_result, **e;
   BzlaBitVectorTuple *t;
   BzlaIntHashTable *mark;
@@ -878,6 +879,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
 
   assigned = bzla_hashint_map_new(mm);
   expanded = bzla_hashint_table_new(mm);
+  wblasted = bzla_hashint_table_new(mm);
 
   /* model cache for parameterized nodes */
   param_model_cache = bzla_hashint_map_new(mm);
@@ -1018,6 +1020,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
         assert(next);
         BZLA_PUSH_STACK(work_stack, next);
         BZLA_PUSH_STACK(work_stack, cur_parent);
+        bzla_hashint_table_add(wblasted, real_cur->id);
       }
       else
       {
@@ -1039,7 +1042,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
         result = BZLA_POP_STACK(arg_stack);
         goto CACHE_AND_PUSH_RESULT;
       }
-      else if (bzla_node_fp_needs_word_blast(bzla, real_cur))
+      else if (bzla_hashint_table_contains(wblasted, real_cur->id))
       {
         assert(BZLA_COUNT_STACK(arg_stack));
         result = BZLA_POP_STACK(arg_stack);
@@ -1328,6 +1331,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
   bzla_hashint_map_delete(param_model_cache);
   bzla_hashint_map_delete(mark);
   bzla_hashint_table_delete(expanded);
+  bzla_hashint_table_delete(wblasted);
 
   while (!BZLA_EMPTY_STACK(cleanup_expanded))
   {
