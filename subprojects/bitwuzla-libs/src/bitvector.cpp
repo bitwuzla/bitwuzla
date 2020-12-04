@@ -3,6 +3,7 @@
 #include <gmpxx.h>
 
 #include <cassert>
+#include <sstream>
 
 namespace bzlals {
 
@@ -116,8 +117,15 @@ BitVector::~BitVector()
 std::string
 BitVector::to_string() const
 {
-  // TODO
-  return "";
+  std::stringstream res;
+  char* tmp     = mpz_get_str(0, 2, d_val->d_mpz_t);
+  uint32_t n    = strlen(tmp);
+  uint32_t diff = d_size - n;
+  assert(n <= d_size);
+  res << std::string(diff, '0') << tmp;
+  assert(res.str().size() == d_size);
+  free(tmp);
+  return res.str();
 }
 
 int32_t

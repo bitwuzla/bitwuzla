@@ -38,6 +38,7 @@ class BitVector
 
   ~BitVector();
 
+  /** Return a string representation of this bit-vector. */
   std::string to_string() const;
 
   uint32_t get_size() const { return d_size; }
