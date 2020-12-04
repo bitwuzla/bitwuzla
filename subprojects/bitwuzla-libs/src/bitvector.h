@@ -23,6 +23,7 @@ class BitVector
                          const BitVector& t,
                          const BitVector& e);
 
+  /** Construct a zero bit-vector of given size. */
   BitVector(uint32_t size);
   // BitVector(uint32_t size, RNG& rng);
   // BitVector(uint32_t size,
@@ -31,16 +32,30 @@ class BitVector
   //          const BitVector& to,
   //          bool is_signed = false);
   // BitVector(uint32_t size, RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
-  BitVector(uint32_t size, const std::string& bin_str);
+  /**
+   * Construct a bit-vector of given size from given binary string.
+   * size : The bit-vector size, must be >= the length of 'value'.
+   * value: A binary string representing the value of the bit-vector. If the
+   *        length of this string is > 'size', the value is zero extended.
+   */
+  BitVector(uint32_t size, const std::string& value);
+  /**
+   * Construct a bit-vector of given size from given uint64 value.
+   * size : The bit-vector size.
+   * value: A uint64 representing the bit-vector value, if the value can not be
+   *        represented with 'size' bits, it is truncated.
+   */
   BitVector(uint32_t size, uint64_t value);
   // should this deep copy by default? or do we need an extra copy for this?
   BitVector(BitVector& other);
 
+  /** Destructor. */
   ~BitVector();
 
   /** Return a string representation of this bit-vector. */
   std::string to_string() const;
 
+  /** Return the size of this bit-vector. */
   uint32_t get_size() const { return d_size; }
 
   int32_t compare(const BitVector& other) const;

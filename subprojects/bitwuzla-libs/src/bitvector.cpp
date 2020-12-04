@@ -109,10 +109,7 @@ BitVector::BitVector(BitVector& other)
   // TODO
 }
 
-BitVector::~BitVector()
-{
-  // TODO
-}
+BitVector::~BitVector() {}
 
 std::string
 BitVector::to_string() const
