@@ -54,15 +54,15 @@ TEST_F(TestBitVector, compare)
   {
     BitVector bv1(4, i);
     BitVector bv2(4, i);
-    ASSERT_EQ(bv1.compare(bv2), 0);
+    EXPECT_EQ(bv1.compare(bv2), 0);
   }
 
   for (uint32_t i = 0; i < 15 - 1; ++i)
   {
     BitVector bv1(4, i);
     BitVector bv2(4, i + 1);
-    ASSERT_LT(bv1.compare(bv2), 0);
-    ASSERT_GT(bv2.compare(bv1), 0);
+    EXPECT_LT(bv1.compare(bv2), 0);
+    EXPECT_GT(bv2.compare(bv1), 0);
   }
 
   for (uint32_t i = 0, j = 0; i < 15; ++i)
@@ -77,15 +77,124 @@ TEST_F(TestBitVector, compare)
     BitVector bv2(4, k);
     if (j > k)
     {
-      ASSERT_GT(bv1.compare(bv2), 0);
-      ASSERT_LT(bv2.compare(bv1), 0);
+      EXPECT_GT(bv1.compare(bv2), 0);
+      EXPECT_LT(bv2.compare(bv1), 0);
     }
     if (j < k)
     {
-      ASSERT_LT(bv1.compare(bv2), 0);
-      ASSERT_GT(bv2.compare(bv1), 0);
+      EXPECT_LT(bv1.compare(bv2), 0);
+      EXPECT_GT(bv2.compare(bv1), 0);
     }
   }
+  ASSERT_DEATH(BitVector(1).compare(BitVector(2)), "");
+}
+
+TEST_F(TestBitVector, signed_compare)
+{
+  for (int32_t i = -8; i < 7; ++i)
+  {
+    BitVector bv1(4, i);
+    BitVector bv2(4, i);
+    EXPECT_EQ(bv1.signed_compare(bv2), 0);
+  }
+
+  for (int32_t i = -8; i < 7 - 1; i++)
+  {
+    BitVector bv1(4, i);
+    BitVector bv2(4, i + 1);
+    EXPECT_LT(bv1.signed_compare(bv2), 0);
+    EXPECT_GT(bv2.signed_compare(bv1), 0);
+  }
+
+  for (int32_t i = 0, j = 0; i < 15; i++)
+  {
+    /* j <= 0, k <= 0 */
+    int32_t k = rand() % 9;
+    do
+    {
+      j = rand() % 9;
+    } while (j == k);
+    j = -j;
+    k = -k;
+    BitVector bv1(4, j);
+    BitVector bv2(4, k);
+    if (j > k)
+    {
+      EXPECT_GT(bv1.signed_compare(bv2), 0);
+      EXPECT_LT(bv2.signed_compare(bv1), 0);
+    }
+    if (j < k)
+    {
+      EXPECT_LT(bv1.signed_compare(bv2), 0);
+      EXPECT_GT(bv2.signed_compare(bv1), 0);
+    }
+
+    {
+      /* j <= 0, k >= 0 */
+      k = rand() % 8;
+      do
+      {
+        j = rand() % 9;
+      } while (j == k);
+      j = -j;
+      BitVector bv1(4, j);
+      BitVector bv2(4, k);
+      if (j > k)
+      {
+        EXPECT_GT(bv1.signed_compare(bv2), 0);
+        EXPECT_LT(bv2.signed_compare(bv1), 0);
+      }
+      if (j < k)
+      {
+        EXPECT_LT(bv1.signed_compare(bv2), 0);
+        EXPECT_GT(bv2.signed_compare(bv1), 0);
+      }
+    }
+
+    {
+      /* j >= 0, k <= 0 */
+      k = rand() % 9;
+      do
+      {
+        j = rand() % 8;
+      } while (j == k);
+      k = -k;
+      BitVector bv1(4, j);
+      BitVector bv2(4, k);
+      if (j > k)
+      {
+        EXPECT_GT(bv1.signed_compare(bv2), 0);
+        EXPECT_LT(bv2.signed_compare(bv1), 0);
+      }
+      if (j < k)
+      {
+        EXPECT_LT(bv1.signed_compare(bv2), 0);
+        EXPECT_GT(bv2.signed_compare(bv1), 0);
+      }
+    }
+
+    {
+      /* j >= 0, k >= 0 */
+      k = rand() % 8;
+      do
+      {
+        j = rand() % 8;
+      } while (j == k);
+      BitVector bv1(4, -j);
+      BitVector bv2(4, -k);
+      if (-j > -k)
+      {
+        EXPECT_GT(bv1.signed_compare(bv2), 0);
+        EXPECT_LT(bv2.signed_compare(bv1), 0);
+      }
+      if (-j < -k)
+      {
+        EXPECT_LT(bv1.signed_compare(bv2), 0);
+        EXPECT_GT(bv2.signed_compare(bv1), 0);
+      }
+    }
+  }
+  ASSERT_DEATH(BitVector(1).signed_compare(BitVector(2)), "");
 }
 
 TEST_F(TestBitVector, set_get_flip_bit)

@@ -136,14 +136,27 @@ BitVector::to_string() const
 int32_t
 BitVector::compare(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz);
 }
 
 int32_t
 BitVector::signed_compare(const BitVector& other) const
 {
-  // TODO
-  return 0;
+  assert(d_size == other.d_size);
+
+  uint32_t msb_a = get_bit(d_size - 1);
+  uint32_t msb_b = other.get_bit(d_size - 1);
+
+  if (msb_a && !msb_b)
+  {
+    return -1;
+  }
+  if (!msb_a && msb_b)
+  {
+    return 1;
+  }
+  return compare(other);
 }
 
 bool
