@@ -31,4 +31,44 @@ TEST_F(TestBitVector, to_string)
   EXPECT_EQ(BitVector(16, 123412341234).to_string(), "1110000111110010");
 }
 
+TEST_F(TestBitVector, compare)
+{
+  for (uint32_t i = 0; i < 15; ++i)
+  {
+    BitVector bv1(4, i);
+    BitVector bv2(4, i);
+    ASSERT_EQ(bv1.compare(bv2), 0);
+  }
+
+  for (uint32_t i = 0; i < 15 - 1; ++i)
+  {
+    BitVector bv1(4, i);
+    BitVector bv2(4, i + 1);
+    ASSERT_LT(bv1.compare(bv2), 0);
+    ASSERT_GT(bv2.compare(bv1), 0);
+  }
+
+  for (uint32_t i = 0, j = 0; i < 15; ++i)
+  {
+    uint32_t k = rand() % 16;
+    do
+    {
+      j = rand() % 16;
+    } while (j == k);
+
+    BitVector bv1(4, j);
+    BitVector bv2(4, k);
+    if (j > k)
+    {
+      ASSERT_GT(bv1.compare(bv2), 0);
+      ASSERT_LT(bv2.compare(bv1), 0);
+    }
+    if (j < k)
+    {
+      ASSERT_LT(bv1.compare(bv2), 0);
+      ASSERT_GT(bv2.compare(bv1), 0);
+    }
+  }
+}
+
 }  // namespace bzlals

@@ -58,7 +58,17 @@ class BitVector
   /** Return the size of this bit-vector. */
   uint32_t get_size() const { return d_size; }
 
+  /**
+   * Compare this bit-vector with given bit-vector.
+   * Return 0 if 'this' and 'other' are equal, -1 if 'this' is unsigned less
+   * than 'other', and 1 if 'this' is unsigned greater than 'other'.
+   */
   int32_t compare(const BitVector& other) const;
+  /**
+   * Compare this bit-vector with given bit-vector.
+   * Return 0 if 'this' and 'other' are equal, -1 if 'this' is signed less
+   * than 'other', and 1 if 'this' is signed greater than 'other'.
+   */
   int32_t signed_compare(const BitVector& other) const;
 
   bool get_bit(uint32_t idx) const;

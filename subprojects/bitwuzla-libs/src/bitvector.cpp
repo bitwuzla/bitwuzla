@@ -128,8 +128,7 @@ BitVector::to_string() const
 int32_t
 BitVector::compare(const BitVector& other) const
 {
-  // TODO
-  return 0;
+  return mpz_cmp(d_val->d_mpz_t, other.d_val->d_mpz_t);
 }
 
 int32_t
