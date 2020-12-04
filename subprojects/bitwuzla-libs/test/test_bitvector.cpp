@@ -1,10 +1,16 @@
 #include "bitvector.h"
+#include "gmprandstate.h"
 #include "gtest/gtest.h"
+#include "rng.h"
 
 namespace bzlals {
 
 class TestBitVector : public ::testing::Test
 {
+ protected:
+  void SetUp() override { d_rng.reset(new RNG(1234)); }
+
+  std::unique_ptr<RNG> d_rng;
 };
 
 TEST_F(TestBitVector, ctor_dtor)
@@ -19,6 +25,17 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_DEATH(BitVector(2, "101010"), "<= size");
   ASSERT_DEATH(BitVector(6, "123412"), "is_bin_str");
   ASSERT_DEATH(BitVector(0, 1234), "> 0");
+}
+
+TEST_F(TestBitVector, ctor_rand)
+{
+  for (uint32_t size = 1; size <= 64; ++size)
+  {
+    BitVector bv1(size, *d_rng);
+    BitVector bv2(size, *d_rng);
+    BitVector bv3(size, *d_rng);
+    assert(bv1.compare(bv2) || bv1.compare(bv3) || bv2.compare(bv3));
+  }
 }
 
 TEST_F(TestBitVector, to_string)

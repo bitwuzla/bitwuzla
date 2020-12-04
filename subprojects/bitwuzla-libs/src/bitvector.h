@@ -7,9 +7,8 @@
 
 namespace bzlals {
 
-struct BzlalsMPZ;
-
-// class RNG;
+struct GMPMpz;
+class RNG;
 
 class BitVector
 {
@@ -25,13 +24,13 @@ class BitVector
 
   /** Construct a zero bit-vector of given size. */
   BitVector(uint32_t size);
-  // BitVector(uint32_t size, RNG& rng);
+  BitVector(uint32_t size, const RNG& rng);
   // BitVector(uint32_t size,
-  //          RNG& rng,
+  //          const RNG& rng,
   //          const BitVector& from,
   //          const BitVector& to,
   //          bool is_signed = false);
-  // BitVector(uint32_t size, RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
+  // BitVector(uint32_t size, const RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
   /**
    * Construct a bit-vector of given size from given binary string.
    * size : The bit-vector size, must be >= the length of 'value'.
@@ -131,7 +130,7 @@ class BitVector
 
  private:
   uint32_t d_size;
-  std::unique_ptr<BzlalsMPZ> d_val;
+  std::unique_ptr<GMPMpz> d_val;
 };
 
 }  // namespace bzlals

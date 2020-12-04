@@ -5,6 +5,9 @@
 #include <cassert>
 #include <sstream>
 
+#include "gmprandstate.h"
+#include "rng.h"
+
 namespace bzlals {
 
 namespace {
@@ -19,27 +22,27 @@ is_bin_str(std::string str)
 }
 }  // namespace
 
-struct BzlalsMPZ
+struct GMPMpz
 {
   /** Construct a zero-initialized GMP value. */
-  BzlalsMPZ() { mpz_init(d_mpz_t); }
+  GMPMpz() { mpz_init(d_mpz); }
   /** Construct a GMP value from given binary string. */
-  BzlalsMPZ(const std::string& value)
+  GMPMpz(const std::string& value)
   {
-    mpz_init_set_str(d_mpz_t, value.c_str(), 2);
+    mpz_init_set_str(d_mpz, value.c_str(), 2);
   }
   /** Construct a GMP value from given uint64 value. */
-  BzlalsMPZ(uint64_t size, uint64_t value)
+  GMPMpz(uint64_t size, uint64_t value)
   {
-    mpz_init_set_ui(d_mpz_t, value);
-    mpz_fdiv_r_2exp(d_mpz_t, d_mpz_t, size);
+    mpz_init_set_ui(d_mpz, value);
+    mpz_fdiv_r_2exp(d_mpz, d_mpz, size);
   }
 
   /** Destructor. */
-  ~BzlalsMPZ() { mpz_clear(d_mpz_t); }
+  ~GMPMpz() { mpz_clear(d_mpz); }
 
   /** The GMP integer value. */
-  mpz_t d_mpz_t;
+  mpz_t d_mpz;
 };
 
 BitVector
@@ -81,25 +84,30 @@ BitVector::bvite(const BitVector& c, const BitVector& t, const BitVector& e)
 BitVector::BitVector(uint32_t size) : d_size(size)
 {
   assert(size > 0);
-  d_val.reset(new BzlalsMPZ());
+  d_val.reset(new GMPMpz());
 }
 
-// BitVector::BitVector(uint32_t size, RNG& rng){}
+BitVector::BitVector(uint32_t size, const RNG& rng) : BitVector(size)
+{
+  mpz_urandomb(d_val->d_mpz, rng.d_gmp_state->d_gmp_randstate, size);
+  mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, size);
+}
+
 // BitVector::BitVector(uint32_t size, RNG& rng, const BitVector& from, const
 // BitVector& to, bool is_signed = false){} BitVector::BitVector(uint32_t size,
 // RNG& rng, uint32_t idx_hi, uint32_t idx_lo){}
 
-BitVector::BitVector(uint32_t size, const std::string& str) : d_size(size)
+BitVector::BitVector(uint32_t size, const std::string& value) : d_size(size)
 {
-  assert(str.size() <= size);
-  assert(is_bin_str(str));
-  d_val.reset(new BzlalsMPZ(str));
+  assert(value.size() <= size);
+  assert(is_bin_str(value));
+  d_val.reset(new GMPMpz(value));
 }
 
 BitVector::BitVector(uint32_t size, uint64_t value) : d_size(size)
 {
   assert(size > 0);
-  d_val.reset(new BzlalsMPZ(size, value));
+  d_val.reset(new GMPMpz(size, value));
 }
 
 // should this deep copy by default? or do we need an extra copy for
@@ -115,7 +123,7 @@ std::string
 BitVector::to_string() const
 {
   std::stringstream res;
-  char* tmp     = mpz_get_str(0, 2, d_val->d_mpz_t);
+  char* tmp     = mpz_get_str(0, 2, d_val->d_mpz);
   uint32_t n    = strlen(tmp);
   uint32_t diff = d_size - n;
   assert(n <= d_size);
@@ -128,7 +136,7 @@ BitVector::to_string() const
 int32_t
 BitVector::compare(const BitVector& other) const
 {
-  return mpz_cmp(d_val->d_mpz_t, other.d_val->d_mpz_t);
+  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz);
 }
 
 int32_t
