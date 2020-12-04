@@ -267,8 +267,7 @@ bzla_check_model(BzlaCheckModelContext *ctx)
               bzla_node_get_symbol(clone, cur),
               bzla_util_node2string(model));
 
-      if (bzla_node_is_fp(clone, real_simp_clone)
-          || bzla_node_is_rm(clone, real_simp_clone))
+      if (bzla_node_fp_needs_word_blast(clone, real_simp_clone))
       {
         wb = bzla_fp_word_blast(clone, real_simp_clone);
         eq = bzla_exp_eq(clone, wb, model);
