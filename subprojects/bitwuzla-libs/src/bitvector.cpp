@@ -6,14 +6,32 @@
 
 namespace bzlals {
 
+namespace {
+bool
+is_bin_str(std::string str)
+{
+  for (const char& c : str)
+  {
+    if (c != '0' && c != '1') return false;
+  }
+  return true;
+}
+}  // namespace
+
 struct BzlalsMPZ
 {
   /** Construct a zero-initialized GMP value. */
   BzlalsMPZ() { mpz_init(d_mpz_t); }
   /** Construct a GMP value from given binary string. */
-  BzlalsMPZ(const std::string& bin_str)
+  BzlalsMPZ(const std::string& value)
   {
-    mpz_init_set_str(d_mpz_t, bin_str.c_str(), 2);
+    mpz_init_set_str(d_mpz_t, value.c_str(), 2);
+  }
+  /** Construct a GMP value from given uint64 value. */
+  BzlalsMPZ(uint64_t size, uint64_t value)
+  {
+    mpz_init_set_ui(d_mpz_t, value);
+    mpz_fdiv_r_2exp(d_mpz_t, d_mpz_t, size);
   }
 
   /** Destructor. */
@@ -70,15 +88,17 @@ BitVector::BitVector(uint32_t size) : d_size(size)
 // BitVector& to, bool is_signed = false){} BitVector::BitVector(uint32_t size,
 // RNG& rng, uint32_t idx_hi, uint32_t idx_lo){}
 
-BitVector::BitVector(uint32_t size, const std::string& bin_str) : d_size(size)
+BitVector::BitVector(uint32_t size, const std::string& str) : d_size(size)
 {
-  assert(bin_str.size() <= size);
-  d_val.reset(new BzlalsMPZ(bin_str));
+  assert(str.size() <= size);
+  assert(is_bin_str(str));
+  d_val.reset(new BzlalsMPZ(str));
 }
 
 BitVector::BitVector(uint32_t size, uint64_t value) : d_size(size)
 {
-  // TODO
+  assert(size > 0);
+  d_val.reset(new BzlalsMPZ(size, value));
 }
 
 // should this deep copy by default? or do we need an extra copy for
