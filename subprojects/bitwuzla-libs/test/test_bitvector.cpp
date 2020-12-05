@@ -1,4 +1,5 @@
 #include "bitvector.h"
+#include "gmpmpz.h"
 #include "gmprandstate.h"
 #include "gtest/gtest.h"
 #include "rng.h"
@@ -11,8 +12,28 @@ class TestBitVector : public ::testing::Test
   static constexpr uint32_t N_BITVEC_TESTS = 100000;
   void SetUp() override { d_rng.reset(new RNG(1234)); }
 
+  void test_concat(uint32_t size);
   std::unique_ptr<RNG> d_rng;
 };
+
+void
+TestBitVector::test_concat(uint32_t size)
+{
+  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  {
+    uint32_t size1 = d_rng->pick<uint32_t>(1, size - 1);
+    uint32_t size2 = size - size1;
+    BitVector bv1(size1, *d_rng);
+    BitVector bv2(size2, *d_rng);
+    BitVector res = bv1.bvconcat(bv2);
+    ASSERT_EQ(res.get_size(), size1 + size2);
+    uint64_t u1   = bv1.to_uint64();
+    uint64_t u2   = bv2.to_uint64();
+    uint64_t u    = (u1 << size2) | u2;
+    uint64_t ures = res.to_uint64();
+    ASSERT_EQ(u, ures);
+  }
+}
 
 TEST_F(TestBitVector, ctor_dtor)
 {
@@ -225,6 +246,15 @@ TEST_F(TestBitVector, set_get_flip_bit)
     bv.flip_bit(n);
     ASSERT_EQ(bv.get_bit(n), (((~vv) << 31) >> 31));
   }
+}
+
+TEST_F(TestBitVector, concat)
+{
+  test_concat(2);
+  test_concat(7);
+  test_concat(31);
+  test_concat(33);
+  test_concat(64);
 }
 
 }  // namespace bzlals

@@ -22,6 +22,8 @@ class BitVector
                          const BitVector& t,
                          const BitVector& e);
 
+  /** Default constructor. */
+  BitVector();
   /** Construct a zero bit-vector of given size. */
   BitVector(uint32_t size);
   BitVector(uint32_t size, const RNG& rng);
@@ -45,8 +47,8 @@ class BitVector
    *        represented with 'size' bits, it is truncated.
    */
   BitVector(uint32_t size, uint64_t value);
-  // should this deep copy by default? or do we need an extra copy for this?
-  BitVector(BitVector& other);
+  /** Copy constructor. */
+  BitVector(const BitVector& other);
 
   /** Destructor. */
   ~BitVector();
@@ -134,8 +136,8 @@ class BitVector
   BitVector bvsext(uint32_t n) const;
 
  private:
-  uint32_t d_size;
-  std::unique_ptr<GMPMpz> d_val;
+  uint32_t d_size               = 0;
+  std::unique_ptr<GMPMpz> d_val = nullptr;
 };
 
 }  // namespace bzlals

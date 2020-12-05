@@ -1,10 +1,9 @@
 #include "bitvector.h"
 
-#include <gmpxx.h>
-
 #include <cassert>
 #include <sstream>
 
+#include "gmpmpz.h"
 #include "gmprandstate.h"
 #include "rng.h"
 
@@ -21,29 +20,6 @@ is_bin_str(std::string str)
   return true;
 }
 }  // namespace
-
-struct GMPMpz
-{
-  /** Construct a zero-initialized GMP value. */
-  GMPMpz() { mpz_init(d_mpz); }
-  /** Construct a GMP value from given binary string. */
-  GMPMpz(const std::string& value)
-  {
-    mpz_init_set_str(d_mpz, value.c_str(), 2);
-  }
-  /** Construct a GMP value from given uint64 value. */
-  GMPMpz(uint64_t size, uint64_t value)
-  {
-    mpz_init_set_ui(d_mpz, value);
-    mpz_fdiv_r_2exp(d_mpz, d_mpz, size);
-  }
-
-  /** Destructor. */
-  ~GMPMpz() { mpz_clear(d_mpz); }
-
-  /** The GMP integer value. */
-  mpz_t d_mpz;
-};
 
 BitVector
 BitVector::mk_zero(uint32_t size)
@@ -81,6 +57,8 @@ BitVector::bvite(const BitVector& c, const BitVector& t, const BitVector& e)
   // TODO
 }
 
+BitVector::BitVector() : d_size(0), d_val(nullptr) {}
+
 BitVector::BitVector(uint32_t size) : d_size(size)
 {
   assert(size > 0);
@@ -110,11 +88,10 @@ BitVector::BitVector(uint32_t size, uint64_t value) : d_size(size)
   d_val.reset(new GMPMpz(size, value));
 }
 
-// should this deep copy by default? or do we need an extra copy for
-// this?
-BitVector::BitVector(BitVector& other)
+BitVector::BitVector(const BitVector& other)
 {
-  // TODO
+  d_size = other.d_size;
+  mpz_set(d_val->d_mpz, other.d_val->d_mpz);
 }
 
 BitVector::~BitVector() {}
@@ -476,7 +453,12 @@ BitVector::bvsrem(const BitVector& other) const
 BitVector
 BitVector::bvconcat(const BitVector& other) const
 {
-  // TODO
+  uint32_t size = d_size + other.d_size;
+  BitVector res(size);
+  mpz_mul_2exp(res.d_val->d_mpz, d_val->d_mpz, other.d_size);
+  mpz_add(res.d_val->d_mpz, res.d_val->d_mpz, other.d_val->d_mpz);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, size);
+  return res;
 }
 
 BitVector
