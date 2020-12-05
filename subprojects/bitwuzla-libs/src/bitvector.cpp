@@ -24,31 +24,38 @@ is_bin_str(std::string str)
 BitVector
 BitVector::mk_zero(uint32_t size)
 {
-  // TODO
+  return BitVector(size);
 }
 
 BitVector
 BitVector::mk_one(uint32_t size)
 {
-  // TODO
+  return BitVector(size, 1);
 }
 
 BitVector
 BitVector::mk_ones(uint32_t size)
 {
-  // TODO
+  BitVector res = BitVector::mk_one(size);
+  mpz_mul_2exp(res.d_val->d_mpz, res.d_val->d_mpz, size);
+  mpz_sub_ui(res.d_val->d_mpz, res.d_val->d_mpz, 1);
+  return res;
 }
 
 BitVector
 BitVector::mk_min_signed(uint32_t size)
 {
-  // TODO
+  BitVector res = BitVector::mk_zero(size);
+  res.set_bit(size - 1, true);
+  return res;
 }
 
 BitVector
 BitVector::mk_max_signed(uint32_t size)
 {
-  // TODO
+  BitVector res = BitVector::mk_ones(size);
+  res.set_bit(size - 1, false);
+  return res;
 }
 
 BitVector
@@ -91,10 +98,20 @@ BitVector::BitVector(uint32_t size, uint64_t value) : d_size(size)
 BitVector::BitVector(const BitVector& other)
 {
   d_size = other.d_size;
+  d_val.reset(new GMPMpz());
   mpz_set(d_val->d_mpz, other.d_val->d_mpz);
 }
 
 BitVector::~BitVector() {}
+
+BitVector&
+BitVector::operator=(const BitVector& other)
+{
+  if (&other == this) return *this;
+  d_size = other.d_size;
+  d_val.reset(new GMPMpz());
+  mpz_set(d_val->d_mpz, other.d_val->d_mpz);
+}
 
 std::string
 BitVector::to_string() const
@@ -185,36 +202,47 @@ BitVector::is_false() const
 bool
 BitVector::is_zero() const
 {
-  // TODO
-  return false;
+  return mpz_cmp_ui(d_val->d_mpz, 0) == 0;
 }
 
 bool
 BitVector::is_ones() const
 {
-  // TODO
-  return false;
+  uint32_t n = mpz_size(d_val->d_mpz);
+  if (n == 0) return false;  // zero
+  uint64_t m = d_size / mp_bits_per_limb;
+  if (d_size % mp_bits_per_limb) m += 1;
+  if (m != n) return false;  // less limbs used than expected, not ones
+  uint64_t max = mp_bits_per_limb == 64 ? UINT64_MAX : UINT32_MAX;
+  for (uint32_t i = 0; i < n - 1; ++i)
+  {
+    mp_limb_t limb = mpz_getlimbn(d_val->d_mpz, i);
+    if (((uint64_t) limb) != max) return false;
+  }
+  mp_limb_t limb = mpz_getlimbn(d_val->d_mpz, n - 1);
+  if (d_size == (uint32_t) mp_bits_per_limb) return ((uint64_t) limb) == max;
+  m = mp_bits_per_limb - d_size % mp_bits_per_limb;
+  return ((uint64_t) limb) == (max >> m);
 }
 
 bool
 BitVector::is_one() const
 {
-  // TODO
-  return false;
+  return mpz_cmp_ui(d_val->d_mpz, 1) == 0;
 }
 
 bool
 BitVector::is_min_signed() const
 {
-  // TODO
-  return false;
+  if (mpz_scan1(d_val->d_mpz, 0) != d_size - 1) return false;
+  return true;
 }
 
 bool
 BitVector::is_max_signed() const
 {
-  // TODO
-  return false;
+  if (mpz_scan0(d_val->d_mpz, 0) != d_size - 1) return false;
+  return true;
 }
 
 bool

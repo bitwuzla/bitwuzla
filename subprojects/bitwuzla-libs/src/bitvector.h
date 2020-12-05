@@ -26,6 +26,7 @@ class BitVector
   BitVector();
   /** Construct a zero bit-vector of given size. */
   BitVector(uint32_t size);
+  /** Construct a random bit-vector of given size. */
   BitVector(uint32_t size, const RNG& rng);
   // BitVector(uint32_t size,
   //          const RNG& rng,
@@ -52,6 +53,9 @@ class BitVector
 
   /** Destructor. */
   ~BitVector();
+
+  /** Copy assignment operator. */
+  BitVector& operator=(const BitVector& other);
 
   /** Return a string representation of this bit-vector. */
   std::string to_string() const;
