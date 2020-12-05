@@ -8,6 +8,7 @@ namespace bzlals {
 class TestBitVector : public ::testing::Test
 {
  protected:
+  static constexpr uint32_t N_BITVEC_TESTS = 100000;
   void SetUp() override { d_rng.reset(new RNG(1234)); }
 
   std::unique_ptr<RNG> d_rng;
@@ -40,12 +41,25 @@ TEST_F(TestBitVector, ctor_rand)
 
 TEST_F(TestBitVector, to_string)
 {
-  EXPECT_EQ(BitVector(1).to_string(), "0");
-  EXPECT_EQ(BitVector(10).to_string(), "0000000000");
-  EXPECT_EQ(BitVector(6, "101010").to_string(), "101010");
-  EXPECT_EQ(BitVector(8, "101010").to_string(), "00101010");
-  EXPECT_EQ(BitVector(16, 1234).to_string(), "0000010011010010");
-  EXPECT_EQ(BitVector(16, 123412341234).to_string(), "1110000111110010");
+  ASSERT_EQ(BitVector(1).to_string(), "0");
+  ASSERT_EQ(BitVector(10).to_string(), "0000000000");
+  ASSERT_EQ(BitVector(6, "101010").to_string(), "101010");
+  ASSERT_EQ(BitVector(8, "101010").to_string(), "00101010");
+  ASSERT_EQ(BitVector(16, 1234).to_string(), "0000010011010010");
+  ASSERT_EQ(BitVector(16, 123412341234).to_string(), "1110000111110010");
+}
+
+TEST_F(TestBitVector, to_uint64)
+{
+  for (uint64_t i = 0; i < N_BITVEC_TESTS; ++i)
+  {
+    uint64_t x = (d_rng->pick<uint64_t>() << 32) | d_rng->pick<uint64_t>();
+    BitVector bv(64, x);
+    uint64_t y = bv.to_uint64();
+    ASSERT_EQ(x, y);
+  }
+  ASSERT_NO_FATAL_FAILURE(BitVector(28).to_uint64());
+  ASSERT_DEATH(BitVector(128).to_uint64(), "");
 }
 
 TEST_F(TestBitVector, compare)
@@ -54,15 +68,15 @@ TEST_F(TestBitVector, compare)
   {
     BitVector bv1(4, i);
     BitVector bv2(4, i);
-    EXPECT_EQ(bv1.compare(bv2), 0);
+    ASSERT_EQ(bv1.compare(bv2), 0);
   }
 
   for (uint32_t i = 0; i < 15 - 1; ++i)
   {
     BitVector bv1(4, i);
     BitVector bv2(4, i + 1);
-    EXPECT_LT(bv1.compare(bv2), 0);
-    EXPECT_GT(bv2.compare(bv1), 0);
+    ASSERT_LT(bv1.compare(bv2), 0);
+    ASSERT_GT(bv2.compare(bv1), 0);
   }
 
   for (uint32_t i = 0, j = 0; i < 15; ++i)
@@ -77,13 +91,13 @@ TEST_F(TestBitVector, compare)
     BitVector bv2(4, k);
     if (j > k)
     {
-      EXPECT_GT(bv1.compare(bv2), 0);
-      EXPECT_LT(bv2.compare(bv1), 0);
+      ASSERT_GT(bv1.compare(bv2), 0);
+      ASSERT_LT(bv2.compare(bv1), 0);
     }
     if (j < k)
     {
-      EXPECT_LT(bv1.compare(bv2), 0);
-      EXPECT_GT(bv2.compare(bv1), 0);
+      ASSERT_LT(bv1.compare(bv2), 0);
+      ASSERT_GT(bv2.compare(bv1), 0);
     }
   }
   ASSERT_DEATH(BitVector(1).compare(BitVector(2)), "");
@@ -95,15 +109,15 @@ TEST_F(TestBitVector, signed_compare)
   {
     BitVector bv1(4, i);
     BitVector bv2(4, i);
-    EXPECT_EQ(bv1.signed_compare(bv2), 0);
+    ASSERT_EQ(bv1.signed_compare(bv2), 0);
   }
 
   for (int32_t i = -8; i < 7 - 1; i++)
   {
     BitVector bv1(4, i);
     BitVector bv2(4, i + 1);
-    EXPECT_LT(bv1.signed_compare(bv2), 0);
-    EXPECT_GT(bv2.signed_compare(bv1), 0);
+    ASSERT_LT(bv1.signed_compare(bv2), 0);
+    ASSERT_GT(bv2.signed_compare(bv1), 0);
   }
 
   for (int32_t i = 0, j = 0; i < 15; i++)
@@ -120,13 +134,13 @@ TEST_F(TestBitVector, signed_compare)
     BitVector bv2(4, k);
     if (j > k)
     {
-      EXPECT_GT(bv1.signed_compare(bv2), 0);
-      EXPECT_LT(bv2.signed_compare(bv1), 0);
+      ASSERT_GT(bv1.signed_compare(bv2), 0);
+      ASSERT_LT(bv2.signed_compare(bv1), 0);
     }
     if (j < k)
     {
-      EXPECT_LT(bv1.signed_compare(bv2), 0);
-      EXPECT_GT(bv2.signed_compare(bv1), 0);
+      ASSERT_LT(bv1.signed_compare(bv2), 0);
+      ASSERT_GT(bv2.signed_compare(bv1), 0);
     }
 
     {
@@ -141,13 +155,13 @@ TEST_F(TestBitVector, signed_compare)
       BitVector bv2(4, k);
       if (j > k)
       {
-        EXPECT_GT(bv1.signed_compare(bv2), 0);
-        EXPECT_LT(bv2.signed_compare(bv1), 0);
+        ASSERT_GT(bv1.signed_compare(bv2), 0);
+        ASSERT_LT(bv2.signed_compare(bv1), 0);
       }
       if (j < k)
       {
-        EXPECT_LT(bv1.signed_compare(bv2), 0);
-        EXPECT_GT(bv2.signed_compare(bv1), 0);
+        ASSERT_LT(bv1.signed_compare(bv2), 0);
+        ASSERT_GT(bv2.signed_compare(bv1), 0);
       }
     }
 
@@ -163,13 +177,13 @@ TEST_F(TestBitVector, signed_compare)
       BitVector bv2(4, k);
       if (j > k)
       {
-        EXPECT_GT(bv1.signed_compare(bv2), 0);
-        EXPECT_LT(bv2.signed_compare(bv1), 0);
+        ASSERT_GT(bv1.signed_compare(bv2), 0);
+        ASSERT_LT(bv2.signed_compare(bv1), 0);
       }
       if (j < k)
       {
-        EXPECT_LT(bv1.signed_compare(bv2), 0);
-        EXPECT_GT(bv2.signed_compare(bv1), 0);
+        ASSERT_LT(bv1.signed_compare(bv2), 0);
+        ASSERT_GT(bv2.signed_compare(bv1), 0);
       }
     }
 
@@ -184,13 +198,13 @@ TEST_F(TestBitVector, signed_compare)
       BitVector bv2(4, -k);
       if (-j > -k)
       {
-        EXPECT_GT(bv1.signed_compare(bv2), 0);
-        EXPECT_LT(bv2.signed_compare(bv1), 0);
+        ASSERT_GT(bv1.signed_compare(bv2), 0);
+        ASSERT_LT(bv2.signed_compare(bv1), 0);
       }
       if (-j < -k)
       {
-        EXPECT_LT(bv1.signed_compare(bv2), 0);
-        EXPECT_GT(bv2.signed_compare(bv1), 0);
+        ASSERT_LT(bv1.signed_compare(bv2), 0);
+        ASSERT_GT(bv2.signed_compare(bv1), 0);
       }
     }
   }
@@ -206,10 +220,10 @@ TEST_F(TestBitVector, set_get_flip_bit)
     uint32_t v  = bv.get_bit(n);
     uint32_t vv = d_rng->flip_coin() ? 1 : 0;
     bv.set_bit(n, vv);
-    EXPECT_EQ(bv.get_bit(n), vv);
-    EXPECT_TRUE(v == vv || bv.get_bit(n) == (((~v) << 31) >> 31));
+    ASSERT_EQ(bv.get_bit(n), vv);
+    ASSERT_TRUE(v == vv || bv.get_bit(n) == (((~v) << 31) >> 31));
     bv.flip_bit(n);
-    EXPECT_EQ(bv.get_bit(n), (((~vv) << 31) >> 31));
+    ASSERT_EQ(bv.get_bit(n), (((~vv) << 31) >> 31));
   }
 }
 

@@ -53,6 +53,11 @@ class BitVector
 
   /** Return a string representation of this bit-vector. */
   std::string to_string() const;
+  /**
+   * Return a uint64_t representation of this bit-vector.
+   * Size of this bit-vector must be <= 64.
+   */
+  uint64_t to_uint64() const;
 
   /** Return the size of this bit-vector. */
   uint32_t get_size() const { return d_size; }

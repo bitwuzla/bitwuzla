@@ -133,6 +133,13 @@ BitVector::to_string() const
   return res.str();
 }
 
+uint64_t
+BitVector::to_uint64() const
+{
+  assert(d_size <= 64);
+  return mpz_get_ui(d_val->d_mpz);
+}
+
 int32_t
 BitVector::compare(const BitVector& other) const
 {
