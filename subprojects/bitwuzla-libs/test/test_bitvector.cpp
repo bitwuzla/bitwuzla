@@ -68,6 +68,7 @@ TEST_F(TestBitVector, to_string)
   ASSERT_EQ(BitVector(8, "101010").to_string(), "00101010");
   ASSERT_EQ(BitVector(16, 1234).to_string(), "0000010011010010");
   ASSERT_EQ(BitVector(16, 123412341234).to_string(), "1110000111110010");
+  ASSERT_EQ(BitVector(16, UINT64_MAX).to_string(), "1111111111111111");
 }
 
 TEST_F(TestBitVector, to_uint64)
