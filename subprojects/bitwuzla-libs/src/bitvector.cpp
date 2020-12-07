@@ -316,7 +316,10 @@ BitVector::bvneg() const
 BitVector
 BitVector::bvnot() const
 {
-  // TODO
+  BitVector res(d_size);
+  mpz_com(res.d_val->d_mpz, d_val->d_mpz);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector

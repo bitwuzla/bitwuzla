@@ -12,17 +12,338 @@ namespace bzlals {
 class TestBitVector : public ::testing::Test
 {
  protected:
+  enum Kind
+  {
+    ADD,
+    AND,
+    ASHR,
+    DEC,
+    EQ,
+    IMPLIES,
+    ITE,
+    INC,
+    MUL,
+    NAND,
+    NE,
+    NEG,
+    NOR,
+    NOT,
+    OR,
+    REDAND,
+    REDOR,
+    SDIV,
+    SGT,
+    SGE,
+    SHL,
+    SHR,
+    SLT,
+    SLE,
+    SREM,
+    SUB,
+    UDIV,
+    UGT,
+    UGE,
+    ULT,
+    ULE,
+    UREM,
+    XNOR,
+    XOR,
+  };
+
   static constexpr uint32_t N_BITVEC_TESTS = 100000;
   void SetUp() override { d_rng.reset(new RNG(1234)); }
+
+  static uint64_t _add(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _and(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _ashr(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _dec(uint64_t x, uint32_t size);
+  static uint64_t _eq(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _implies(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _ite(uint64_t c, uint64_t t, uint64_t e, uint32_t size);
+  static uint64_t _inc(uint64_t x, uint32_t size);
+  static uint64_t _mul(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _nand(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _ne(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _neg(uint64_t x, uint32_t size);
+  static uint64_t _nor(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _not(uint64_t x, uint32_t size);
+  static uint64_t _or(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _redand(uint64_t x, uint32_t size);
+  static uint64_t _redor(uint64_t x, uint32_t size);
+  static int64_t _sdiv(int64_t x, int64_t y, uint32_t size);
+  static int64_t _sgt(int64_t x, int64_t y, uint32_t size);
+  static int64_t _sge(int64_t x, int64_t y, uint32_t size);
+  static uint64_t _shl(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _shr(uint64_t x, uint64_t y, uint32_t size);
+  static int64_t _slt(int64_t x, int64_t y, uint32_t size);
+  static int64_t _sle(int64_t x, int64_t y, uint32_t size);
+  static int64_t _srem(int64_t x, int64_t y, uint32_t size);
+  static uint64_t _sub(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _udiv(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _ugt(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _uge(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _ult(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _ule(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _urem(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _xnor(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t _xor(uint64_t x, uint64_t y, uint32_t size);
 
   BitVector mk_ones(uint32_t size);
   BitVector mk_min_signed(uint32_t size);
   BitVector mk_max_signed(uint32_t size);
   void test_count(uint32_t size, bool leading, bool zeros);
   void test_count_aux(const std::string& val, bool leading, bool zeros);
+  void test_unary(Kind kind, uint32_t size);
   void test_concat(uint32_t size);
   std::unique_ptr<RNG> d_rng;
 };
+
+uint64_t
+TestBitVector::_not(uint64_t x, uint32_t size)
+{
+  return ~x % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_neg(uint64_t x, uint32_t size)
+{
+  return -x % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_redand(uint64_t x, uint32_t size)
+{
+  uint64_t a = UINT64_MAX << size;
+  return (x + a) == UINT64_MAX;
+}
+
+uint64_t
+TestBitVector::_redor(uint64_t x, uint32_t size)
+{
+  (void) size;
+  return x != 0;
+}
+
+uint64_t
+TestBitVector::_inc(uint64_t x, uint32_t size)
+{
+  return (x + 1) % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_dec(uint64_t x, uint32_t size)
+{
+  return (x - 1) % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_add(uint64_t x, uint64_t y, uint32_t size)
+{
+  return (x + y) % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_sub(uint64_t x, uint64_t y, uint32_t size)
+{
+  return (x - y) % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_and(uint64_t x, uint64_t y, uint32_t size)
+{
+  (void) size;
+  return x & y;
+}
+
+uint64_t
+TestBitVector::_nand(uint64_t x, uint64_t y, uint32_t size)
+{
+  assert(size <= 64);
+  uint32_t shift = 64 - size;
+  return (((~(x & y)) << shift) >> shift);
+}
+
+uint64_t
+TestBitVector::_or(uint64_t x, uint64_t y, uint32_t size)
+{
+  (void) size;
+  return x | y;
+}
+
+uint64_t
+TestBitVector::_nor(uint64_t x, uint64_t y, uint32_t size)
+{
+  assert(size <= 64);
+  uint32_t shift = 64 - size;
+  return ((~(x | y)) << shift) >> shift;
+}
+
+uint64_t
+TestBitVector::_xnor(uint64_t x, uint64_t y, uint32_t size)
+{
+  assert(size <= 64);
+  uint32_t shift = 64 - size;
+  return ((~(x ^ y)) << shift) >> shift;
+}
+
+uint64_t
+TestBitVector::_implies(uint64_t x, uint64_t y, uint32_t size)
+{
+  assert(size == 1);
+  (void) size;
+  return ((~x | y) << 63) >> 63;
+}
+
+uint64_t
+TestBitVector::_xor(uint64_t x, uint64_t y, uint32_t size)
+{
+  (void) size;
+  return x ^ y;
+}
+
+uint64_t
+TestBitVector::_eq(uint64_t x, uint64_t y, uint32_t size)
+{
+  (void) size;
+  return x == y;
+}
+
+uint64_t
+TestBitVector::_ne(uint64_t x, uint64_t y, uint32_t size)
+{
+  (void) size;
+  return x != y;
+}
+
+uint64_t
+TestBitVector::_ult(uint64_t x, uint64_t y, uint32_t size)
+{
+  (void) size;
+  return x < y;
+}
+
+uint64_t
+TestBitVector::_ule(uint64_t x, uint64_t y, uint32_t size)
+{
+  (void) size;
+  return x <= y;
+}
+
+uint64_t
+TestBitVector::_ugt(uint64_t x, uint64_t y, uint32_t size)
+{
+  (void) size;
+  return x > y;
+}
+
+uint64_t
+TestBitVector::_uge(uint64_t x, uint64_t y, uint32_t size)
+{
+  (void) size;
+  return x >= y;
+}
+
+int64_t
+TestBitVector::_slt(int64_t x, int64_t y, uint32_t size)
+{
+  (void) size;
+  return x < y;
+}
+
+int64_t
+TestBitVector::_sle(int64_t x, int64_t y, uint32_t size)
+{
+  (void) size;
+  return x <= y;
+}
+
+int64_t
+TestBitVector::_sgt(int64_t x, int64_t y, uint32_t size)
+{
+  (void) size;
+  return x > y;
+}
+
+int64_t
+TestBitVector::_sge(int64_t x, int64_t y, uint32_t size)
+{
+  (void) size;
+  return x >= y;
+}
+
+uint64_t
+TestBitVector::_shl(uint64_t x, uint64_t y, uint32_t size)
+{
+  assert(size <= 64);
+  if (y >= size) return 0;
+  return (x << y) % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_shr(uint64_t x, uint64_t y, uint32_t size)
+{
+  assert(size <= 64);
+  if (y >= size) return 0;
+  return (x >> y) % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_ashr(uint64_t x, uint64_t y, uint32_t size)
+{
+  assert(size <= 64);
+  uint64_t max = pow(2, size);
+  if ((x >> (size - 1)) & 1)
+  {
+    if (y > size) return ~0 % max;
+    return ~((~x % max) >> y) % max;
+  }
+  if (y > size) return 0;
+  return (x >> y) % max;
+}
+
+uint64_t
+TestBitVector::_mul(uint64_t x, uint64_t y, uint32_t size)
+{
+  return (x * y) % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_udiv(uint64_t x, uint64_t y, uint32_t size)
+{
+  if (y == 0) return UINT64_MAX % (uint64_t) pow(2, size);
+  return (x / y) % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_urem(uint64_t x, uint64_t y, uint32_t size)
+{
+  if (y == 0) return x;
+  return (x % y) % (uint64_t) pow(2, size);
+}
+
+int64_t
+TestBitVector::_sdiv(int64_t x, int64_t y, uint32_t size)
+{
+  if (y == 0)
+  {
+    return x < 0 ? 1 : UINT64_MAX % (uint64_t) pow(2, size);
+  }
+  return (x / y) % (uint64_t) pow(2, size);
+}
+
+int64_t
+TestBitVector::_srem(int64_t x, int64_t y, uint32_t size)
+{
+  if (y == 0) return x % (uint64_t) pow(2, size);
+  return (x % y) % (uint64_t) pow(2, size);
+}
+
+uint64_t
+TestBitVector::_ite(uint64_t c, uint64_t t, uint64_t e, uint32_t size)
+{
+  (void) size;
+  return c ? t : e;
+}
 
 BitVector
 TestBitVector::mk_ones(uint32_t size)
@@ -153,6 +474,28 @@ TestBitVector::test_count(uint32_t size, bool leading, bool zeros)
       ss << v << std::string(size - 16, '1') << v;
       test_count_aux(ss.str(), leading, zeros);
     }
+  }
+}
+
+void
+TestBitVector::test_unary(TestBitVector::Kind kind, uint32_t size)
+{
+  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  {
+    uint64_t ares;
+    BitVector res;
+    BitVector bv(size, *d_rng);
+    uint64_t a = bv.to_uint64();
+    switch (kind)
+    {
+      case NOT:
+        res  = bv.bvnot();
+        ares = _not(a, size);
+        break;
+      default: assert(false);
+    }
+    uint64_t bres = res.to_uint64();
+    ASSERT_EQ(ares, bres);
   }
 }
 
@@ -871,6 +1214,13 @@ TEST_F(TestBitVector, count_leading_ones)
   test_count(176, true, false);
 }
 
+TEST_F(TestBitVector, not)
+{
+  test_unary(NOT, 1);
+  test_unary(NOT, 7);
+  test_unary(NOT, 31);
+  test_unary(NOT, 33);
+}
 TEST_F(TestBitVector, concat)
 {
   test_concat(2);
