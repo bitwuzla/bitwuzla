@@ -13,6 +13,8 @@ class RNG;
 class BitVector
 {
  public:
+  static BitVector mk_true();
+  static BitVector mk_false();
   static BitVector mk_zero(uint32_t size);
   static BitVector mk_one(uint32_t size);
   static BitVector mk_ones(uint32_t size);

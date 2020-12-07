@@ -754,4 +754,46 @@ TEST_F(TestBitVector, concat)
   test_concat(64);
 }
 
+TEST_F(TestBitVector, is_true)
+{
+  BitVector bv1 = BitVector::mk_true();
+  ASSERT_TRUE(bv1.is_true());
+  for (int32_t i = 1; i < 32; ++i)
+  {
+    BitVector bv2 = BitVector::mk_one(i);
+    BitVector bv3(i, d_rng->pick<uint32_t>(1, (1 << i) - 1));
+    if (i > 1)
+    {
+      ASSERT_FALSE(bv2.is_true());
+      ASSERT_FALSE(bv3.is_true());
+    }
+    else
+    {
+      ASSERT_TRUE(bv3.is_true());
+      ASSERT_TRUE(bv3.is_true());
+    }
+  }
+}
+
+TEST_F(TestBitVector, is_false)
+{
+  BitVector bv1 = BitVector::mk_false();
+  ASSERT_TRUE(bv1.is_false());
+  for (int32_t i = 1; i < 32; ++i)
+  {
+    BitVector bv2 = BitVector::mk_zero(i);
+    BitVector bv3(i, d_rng->pick<uint32_t>(1, (1 << i) - 1));
+    if (i > 1)
+    {
+      ASSERT_FALSE(bv2.is_false());
+      ASSERT_FALSE(bv3.is_false());
+    }
+    else
+    {
+      ASSERT_TRUE(bv2.is_false());
+      ASSERT_FALSE(bv3.is_false());
+    }
+  }
+}
+
 }  // namespace bzlals

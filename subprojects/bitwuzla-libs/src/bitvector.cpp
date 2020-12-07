@@ -22,6 +22,18 @@ is_bin_str(std::string str)
 }  // namespace
 
 BitVector
+BitVector::mk_true()
+{
+  return mk_one(1);
+}
+
+BitVector
+BitVector::mk_false()
+{
+  return mk_zero(1);
+}
+
+BitVector
 BitVector::mk_zero(uint32_t size)
 {
   return BitVector(size);
@@ -188,15 +200,15 @@ BitVector::flip_bit(uint32_t idx)
 bool
 BitVector::is_true() const
 {
-  // TODO
-  return false;
+  if (d_size > 1) return false;
+  return get_bit(0);
 }
 
 bool
 BitVector::is_false() const
 {
-  // TODO
-  return false;
+  if (d_size > 1) return false;
+  return !get_bit(0);
 }
 
 bool
