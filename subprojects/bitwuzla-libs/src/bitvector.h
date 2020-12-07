@@ -142,6 +142,14 @@ class BitVector
   BitVector bvsext(uint32_t n) const;
 
  private:
+  /**
+   * Count leading zeros or ones.
+   * zeros: True to determine number of leading zeros, false to count number
+   *        of leading ones.
+   */
+  uint32_t count_leading(bool zeros) const;
+  uint32_t get_limb(void* limb, uint32_t nbits_rem, bool zeros) const;
+
   uint32_t d_size               = 0;
   std::unique_ptr<GMPMpz> d_val = nullptr;
 };

@@ -1,3 +1,4 @@
+#include <bitset>
 #include <iostream>
 
 #include "bitvector.h"
@@ -17,6 +18,8 @@ class TestBitVector : public ::testing::Test
   BitVector mk_ones(uint32_t size);
   BitVector mk_min_signed(uint32_t size);
   BitVector mk_max_signed(uint32_t size);
+  void test_count(uint32_t size, bool leading, bool zeros);
+  void test_count_aux(const std::string& val, bool leading, bool zeros);
   void test_concat(uint32_t size);
   std::unique_ptr<RNG> d_rng;
 };
@@ -55,6 +58,102 @@ TestBitVector::mk_max_signed(uint32_t size)
   BitVector r(64, UINT64_MAX);
   BitVector l(size - 64, (((uint64_t) 1) << (size - 1 - 64)) - 1);
   return l.bvconcat(r);
+}
+
+void
+TestBitVector::test_count_aux(const std::string& val, bool leading, bool zeros)
+{
+  uint32_t size     = val.size();
+  uint32_t expected = 0;
+  char c            = zeros ? '0' : '1';
+  BitVector bv(size, val);
+  if (leading)
+  {
+    for (expected = 0; expected < size && val[expected] == c; ++expected)
+      ;
+    if (zeros)
+    {
+      ASSERT_EQ(bv.count_leading_zeros(), expected);
+    }
+    else
+    {
+      ASSERT_EQ(bv.count_leading_ones(), expected);
+    }
+  }
+  else
+  {
+    for (expected = 0; expected < size && val[size - 1 - expected] == c;
+         ++expected)
+      ;
+    assert(zeros);
+    ASSERT_EQ(bv.count_trailing_zeros(), expected);
+  }
+}
+
+void
+TestBitVector::test_count(uint32_t size, bool leading, bool zeros)
+{
+  if (size == 8)
+  {
+    for (uint64_t i = 0; i < (1u << 8); ++i)
+    {
+      std::stringstream ss;
+      ss << std::bitset<8>(i).to_string();
+      test_count_aux(ss.str(), leading, zeros);
+    }
+  }
+  else
+  {
+    // concat 8-bit value with 0s to create value for bv
+    for (uint64_t i = 0; i < (1u << 8); ++i)
+    {
+      std::stringstream ss;
+      std::string v = std::bitset<8>(i).to_string();
+      ss << v << std::string(size - 8, '0');
+      test_count_aux(ss.str(), leading, zeros);
+    }
+
+    for (uint64_t i = 0; i < (1u << 8); ++i)
+    {
+      std::stringstream ss;
+      std::string v = std::bitset<8>(i).to_string();
+      ss << std::string(size - 8, '0') << v;
+      test_count_aux(ss.str(), leading, zeros);
+    }
+
+    for (uint64_t i = 0; i < (1u << 8); ++i)
+    {
+      std::stringstream ss;
+      std::string v = std::bitset<8>(i).to_string();
+      ss << v << std::string(size - 16, '0') << v;
+      test_count_aux(ss.str(), leading, zeros);
+    }
+
+    // concat 8-bit values with 1s to create value for bv
+    for (uint64_t i = 0; i < (1u << 8); ++i)
+    {
+      std::stringstream ss;
+      std::string v = std::bitset<8>(i).to_string();
+      ss << v << std::string(size - 8, '1');
+      test_count_aux(ss.str(), leading, zeros);
+    }
+
+    for (uint64_t i = 0; i < (1u << 8); ++i)
+    {
+      std::stringstream ss;
+      std::string v = std::bitset<8>(i).to_string();
+      ss << std::string(size - 8, '1') << v;
+      test_count_aux(ss.str(), leading, zeros);
+    }
+
+    for (uint64_t i = 0; i < (1u << 8); ++i)
+    {
+      std::stringstream ss;
+      std::string v = std::bitset<8>(i).to_string();
+      ss << v << std::string(size - 16, '1') << v;
+      test_count_aux(ss.str(), leading, zeros);
+    }
+  }
 }
 
 void
@@ -743,6 +842,33 @@ TEST_F(TestBitVector, is_min_signed)
     ASSERT_EQ(bv1.compare(bv2), 0);
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
+}
+
+TEST_F(TestBitVector, count_trailing_zeros)
+{
+  test_count(8, false, true);
+  test_count(64, false, true);
+  test_count(76, false, true);
+  test_count(128, false, true);
+  test_count(176, false, true);
+}
+
+TEST_F(TestBitVector, count_leading_zeros)
+{
+  test_count(8, true, true);
+  test_count(64, true, true);
+  test_count(76, true, true);
+  test_count(128, true, true);
+  test_count(176, true, true);
+}
+
+TEST_F(TestBitVector, count_leading_ones)
+{
+  test_count(8, true, false);
+  test_count(64, true, false);
+  test_count(76, true, false);
+  test_count(128, true, false);
+  test_count(176, true, false);
 }
 
 TEST_F(TestBitVector, concat)

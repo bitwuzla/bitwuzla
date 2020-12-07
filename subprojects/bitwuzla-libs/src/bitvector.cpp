@@ -19,6 +19,22 @@ is_bin_str(std::string str)
   }
   return true;
 }
+
+#if !defined(__GNUC__) && !defined(__clang__)
+static uint32_t
+clz_limb(uint32_t nbits_per_limb, mp_limb_t limb)
+{
+  uint32_t w;
+  mp_limb_t mask;
+  mp_limb_t one = 1u;
+  for (w = 0, mask = 0; w < nbits_per_limb; ++w)
+  {
+    mask += (one << w);
+    if ((limb & ~mask) == 0) break;
+  }
+  return nbits_per_limb - 1 - w;
+}
+#endif
 }  // namespace
 
 BitVector
@@ -274,22 +290,21 @@ BitVector::is_umul_overflow(const BitVector& other) const
 uint32_t
 BitVector::count_trailing_zeros() const
 {
-  // TODO
-  return 0;
+  uint32_t res = mpz_scan1(d_val->d_mpz, 0);
+  if (res > d_size) res = d_size;
+  return res;
 }
 
 uint32_t
 BitVector::count_leading_zeros() const
 {
-  // TODO
-  return 0;
+  count_leading(true);
 }
 
 uint32_t
 BitVector::count_leading_ones() const
 {
-  // TODO
-  return 0;
+  count_leading(false);
 }
 
 BitVector
@@ -517,6 +532,73 @@ BitVector
 BitVector::bvsext(uint32_t n) const
 {
   // TODO
+}
+
+uint32_t
+BitVector::count_leading(bool zeros) const
+{
+  uint32_t res = 0;
+  mp_limb_t limb;
+
+  uint32_t nbits_per_limb = mp_bits_per_limb;
+  /* The number of bits that spill over into the most significant limb,
+   * assuming that all bits are represented). Zero if the bit-width is a
+   * multiple of n_bits_per_limb. */
+  uint32_t nbits_rem = d_size % nbits_per_limb;
+  /* The number of limbs required to represent the actual value.
+   * Zero limbs are disregarded. */
+  uint32_t n_limbs = get_limb(&limb, nbits_rem, zeros);
+  if (n_limbs == 0) return d_size;
+#if defined(__GNUC__) || defined(__clang__)
+  res = nbits_per_limb == 64 ? __builtin_clzll(limb) : __builtin_clz(limb);
+#else
+  res = clz_limb(nbits_per_limb, limb);
+#endif
+  /* Number of limbs required when representing all bits. */
+  uint32_t n_limbs_total = d_size / nbits_per_limb + 1;
+  uint32_t nbits_pad     = nbits_per_limb - nbits_rem;
+  res += (n_limbs_total - n_limbs) * nbits_per_limb - nbits_pad;
+  return res;
+}
+
+uint32_t
+BitVector::get_limb(void* limb, uint32_t nbits_rem, bool zeros) const
+{
+  mp_limb_t* gmp_limb = static_cast<mp_limb_t*>(limb);
+  /* GMP normalizes the limbs, the left most (most significant) is never 0 */
+  uint32_t i, n_limbs, n_limbs_total;
+  mp_limb_t res = 0u, mask;
+
+  n_limbs = mpz_size(d_val->d_mpz);
+
+  /* for leading zeros */
+  if (zeros)
+  {
+    *gmp_limb = n_limbs ? mpz_getlimbn(d_val->d_mpz, n_limbs - 1) : 0;
+    return n_limbs;
+  }
+
+  /* for leading ones */
+  n_limbs_total = d_size / mp_bits_per_limb + (nbits_rem ? 1 : 0);
+  if (n_limbs != n_limbs_total)
+  {
+    /* no leading ones, simulate */
+    *gmp_limb = nbits_rem ? ~(~((mp_limb_t) 0) << nbits_rem) : ~((mp_limb_t) 0);
+    return n_limbs_total;
+  }
+  mask = ~((mp_limb_t) 0) << nbits_rem;
+  for (i = 0; i < n_limbs; i++)
+  {
+    res = mpz_getlimbn(d_val->d_mpz, n_limbs - 1 - i);
+    if (nbits_rem && i == 0)
+    {
+      res = res | mask;
+    }
+    res = ~res;
+    if (res > 0) break;
+  }
+  *gmp_limb = res;
+  return n_limbs - i;
 }
 
 }  // namespace bzlals
