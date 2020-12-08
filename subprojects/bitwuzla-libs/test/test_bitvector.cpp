@@ -32,6 +32,7 @@ class TestBitVector : public ::testing::Test
     REDAND,
     REDOR,
     SDIV,
+    SEXT,
     SGT,
     SGE,
     SHL,
@@ -48,6 +49,7 @@ class TestBitVector : public ::testing::Test
     UREM,
     XNOR,
     XOR,
+    ZEXT,
   };
 
   static constexpr uint32_t N_BITVEC_TESTS = 100000;
@@ -97,6 +99,7 @@ class TestBitVector : public ::testing::Test
   void test_binary(Kind kind, uint32_t size);
   void test_binary_signed(Kind kind, uint32_t size);
   void test_concat(uint32_t size);
+  void test_extend(Kind kind, uint32_t size);
   void test_extract(uint32_t size);
   void test_shift(Kind kind,
                   const std::string& to_shift,
@@ -481,6 +484,30 @@ TestBitVector::test_count(uint32_t size, bool leading, bool zeros)
       ss << v << std::string(size - 16, '1') << v;
       test_count_aux(ss.str(), leading, zeros);
     }
+  }
+}
+
+void
+TestBitVector::test_extend(Kind kind, uint32_t size)
+{
+  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  {
+    uint32_t n = d_rng->pick<uint32_t>(0, size - 1);
+    BitVector bv(size - n, *d_rng);
+    BitVector res;
+
+    switch (kind)
+    {
+      case ZEXT: res = bv.bvzext(n); break;
+
+      default: assert(false);
+    }
+    ASSERT_EQ(bv.get_size() + n, res.get_size());
+    std::string res_str = res.to_string();
+    std::string bv_str  = bv.to_string();
+    uint32_t len        = size - n;
+    ASSERT_EQ(bv_str.compare(0, len, res_str, n, len), 0);
+    ASSERT_EQ(std::string(n, '0').compare(0, n, res_str, 0, n), 0);
   }
 }
 
@@ -1283,6 +1310,47 @@ TEST_F(TestBitVector, signed_compare)
   ASSERT_DEATH(BitVector(1).signed_compare(BitVector(2)), "");
 }
 
+TEST_F(TestBitVector, is_true)
+{
+  BitVector bv1 = BitVector::mk_true();
+  ASSERT_TRUE(bv1.is_true());
+  for (int32_t i = 1; i < 32; ++i)
+  {
+    BitVector bv2 = BitVector::mk_one(i);
+    BitVector bv3(i, d_rng->pick<uint32_t>(1, (1 << i) - 1));
+    if (i > 1)
+    {
+      ASSERT_FALSE(bv2.is_true());
+      ASSERT_FALSE(bv3.is_true());
+    }
+    else
+    {
+      ASSERT_TRUE(bv3.is_true());
+      ASSERT_TRUE(bv3.is_true());
+    }
+  }
+}
+
+TEST_F(TestBitVector, is_false)
+{
+  BitVector bv1 = BitVector::mk_false();
+  ASSERT_TRUE(bv1.is_false());
+  for (int32_t i = 1; i < 32; ++i)
+  {
+    BitVector bv2 = BitVector::mk_zero(i);
+    BitVector bv3(i, d_rng->pick<uint32_t>(1, (1 << i) - 1));
+    if (i > 1)
+    {
+      ASSERT_FALSE(bv2.is_false());
+      ASSERT_FALSE(bv3.is_false());
+    }
+    else
+    {
+      ASSERT_TRUE(bv2.is_false());
+      ASSERT_FALSE(bv3.is_false());
+    }
+  }
+}
 TEST_F(TestBitVector, set_get_flip_bit)
 {
   for (uint32_t i = 1; i < 32; ++i)
@@ -2340,46 +2408,16 @@ TEST_F(TestBitVector, xnor)
   test_binary(XNOR, 33);
 }
 
-TEST_F(TestBitVector, is_true)
+TEST_F(TestBitVector, zext)
 {
-  BitVector bv1 = BitVector::mk_true();
-  ASSERT_TRUE(bv1.is_true());
-  for (int32_t i = 1; i < 32; ++i)
-  {
-    BitVector bv2 = BitVector::mk_one(i);
-    BitVector bv3(i, d_rng->pick<uint32_t>(1, (1 << i) - 1));
-    if (i > 1)
-    {
-      ASSERT_FALSE(bv2.is_true());
-      ASSERT_FALSE(bv3.is_true());
-    }
-    else
-    {
-      ASSERT_TRUE(bv3.is_true());
-      ASSERT_TRUE(bv3.is_true());
-    }
-  }
-}
-
-TEST_F(TestBitVector, is_false)
-{
-  BitVector bv1 = BitVector::mk_false();
-  ASSERT_TRUE(bv1.is_false());
-  for (int32_t i = 1; i < 32; ++i)
-  {
-    BitVector bv2 = BitVector::mk_zero(i);
-    BitVector bv3(i, d_rng->pick<uint32_t>(1, (1 << i) - 1));
-    if (i > 1)
-    {
-      ASSERT_FALSE(bv2.is_false());
-      ASSERT_FALSE(bv3.is_false());
-    }
-    else
-    {
-      ASSERT_TRUE(bv2.is_false());
-      ASSERT_FALSE(bv3.is_false());
-    }
-  }
+  test_extend(ZEXT, 2);
+  test_extend(ZEXT, 3);
+  test_extend(ZEXT, 4);
+  test_extend(ZEXT, 5);
+  test_extend(ZEXT, 6);
+  test_extend(ZEXT, 7);
+  test_extend(ZEXT, 31);
+  test_extend(ZEXT, 33);
 }
 
 }  // namespace bzlals

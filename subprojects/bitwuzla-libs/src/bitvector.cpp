@@ -734,7 +734,10 @@ BitVector::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 BitVector
 BitVector::bvzext(uint32_t n) const
 {
-  // TODO
+  uint32_t size = d_size + n;
+  BitVector res(size);
+  mpz_set(res.d_val->d_mpz, d_val->d_mpz);
+  return res;
 }
 
 BitVector
