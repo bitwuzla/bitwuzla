@@ -613,6 +613,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _sub(0, a2, size);
         break;
 
+      case UDIV:
+        res  = zero.bvudiv(bv2);
+        ares = _udiv(0, a2, size);
+        break;
+
       case ULT:
         res  = zero.bvult(bv2);
         ares = _ult(0, a2, size);
@@ -715,6 +720,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _sub(a1, 0, size);
         break;
 
+      case UDIV:
+        res  = bv1.bvudiv(zero);
+        ares = _udiv(a1, 0, size);
+        break;
+
       case ULT:
         res  = bv1.bvult(zero);
         ares = _ult(a1, 0, size);
@@ -815,6 +825,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
       case SUB:
         res  = bv1.bvsub(bv2);
         ares = _sub(a1, a2, size);
+        break;
+
+      case UDIV:
+        res  = bv1.bvudiv(bv2);
+        ares = _udiv(a1, a2, size);
         break;
 
       case ULT:
@@ -2198,6 +2213,14 @@ TEST_F(TestBitVector, sub)
   test_binary(SUB, 7);
   test_binary(SUB, 31);
   test_binary(SUB, 33);
+}
+
+TEST_F(TestBitVector, udiv)
+{
+  test_binary(UDIV, 1);
+  test_binary(UDIV, 7);
+  test_binary(UDIV, 31);
+  test_binary(UDIV, 33);
 }
 
 TEST_F(TestBitVector, ult)
