@@ -139,6 +139,7 @@ BitVector::operator=(const BitVector& other)
   d_size = other.d_size;
   d_val.reset(new GMPMpz());
   mpz_set(d_val->d_mpz, other.d_val->d_mpz);
+  return *this;
 }
 
 std::string
@@ -310,7 +311,10 @@ BitVector::count_leading_ones() const
 BitVector
 BitVector::bvneg() const
 {
-  // TODO
+  BitVector res = bvnot();
+  mpz_add_ui(res.d_val->d_mpz, res.d_val->d_mpz, 1);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector

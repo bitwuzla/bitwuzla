@@ -488,10 +488,16 @@ TestBitVector::test_unary(TestBitVector::Kind kind, uint32_t size)
     uint64_t a = bv.to_uint64();
     switch (kind)
     {
+      case NEG:
+        res  = bv.bvneg();
+        ares = _neg(a, size);
+        break;
+
       case NOT:
         res  = bv.bvnot();
         ares = _not(a, size);
         break;
+
       default: assert(false);
     }
     uint64_t bres = res.to_uint64();
@@ -1214,6 +1220,14 @@ TEST_F(TestBitVector, count_leading_ones)
   test_count(176, true, false);
 }
 
+TEST_F(TestBitVector, neg)
+{
+  test_unary(NEG, 1);
+  test_unary(NEG, 7);
+  test_unary(NEG, 31);
+  test_unary(NEG, 33);
+}
+
 TEST_F(TestBitVector, not)
 {
   test_unary(NOT, 1);
@@ -1221,6 +1235,7 @@ TEST_F(TestBitVector, not)
   test_unary(NOT, 31);
   test_unary(NOT, 33);
 }
+
 TEST_F(TestBitVector, concat)
 {
   test_concat(2);
