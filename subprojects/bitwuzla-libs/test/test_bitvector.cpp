@@ -495,10 +495,18 @@ TestBitVector::test_extend(Kind kind, uint32_t size)
     uint32_t n = d_rng->pick<uint32_t>(0, size - 1);
     BitVector bv(size - n, *d_rng);
     BitVector res;
+    char c = 0;
 
     switch (kind)
     {
-      case ZEXT: res = bv.bvzext(n); break;
+      case ZEXT:
+        res = bv.bvzext(n);
+        c   = '0';
+        break;
+      case SEXT:
+        res = bv.bvsext(n);
+        c   = bv.get_msb() ? '1' : '0';
+        break;
 
       default: assert(false);
     }
@@ -507,7 +515,7 @@ TestBitVector::test_extend(Kind kind, uint32_t size)
     std::string bv_str  = bv.to_string();
     uint32_t len        = size - n;
     ASSERT_EQ(bv_str.compare(0, len, res_str, n, len), 0);
-    ASSERT_EQ(std::string(n, '0').compare(0, n, res_str, 0, n), 0);
+    ASSERT_EQ(std::string(n, c).compare(0, n, res_str, 0, n), 0);
   }
 }
 
@@ -1986,6 +1994,18 @@ TEST_F(TestBitVector, sdiv)
   test_binary_signed(SDIV, 7);
   test_binary_signed(SDIV, 31);
   test_binary_signed(SDIV, 33);
+}
+
+TEST_F(TestBitVector, sext)
+{
+  test_extend(SEXT, 2);
+  test_extend(SEXT, 3);
+  test_extend(SEXT, 4);
+  test_extend(SEXT, 5);
+  test_extend(SEXT, 6);
+  test_extend(SEXT, 7);
+  test_extend(SEXT, 31);
+  test_extend(SEXT, 33);
 }
 
 TEST_F(TestBitVector, shl)

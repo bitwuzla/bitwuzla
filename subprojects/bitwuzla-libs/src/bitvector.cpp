@@ -734,6 +734,7 @@ BitVector::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 BitVector
 BitVector::bvzext(uint32_t n) const
 {
+  if (n == 0) return *this;
   uint32_t size = d_size + n;
   BitVector res(size);
   mpz_set(res.d_val->d_mpz, d_val->d_mpz);
@@ -743,7 +744,12 @@ BitVector::bvzext(uint32_t n) const
 BitVector
 BitVector::bvsext(uint32_t n) const
 {
-  // TODO
+  if (n == 0) return *this;
+  if (get_msb())
+  {
+    return mk_ones(n).bvconcat(*this);
+  }
+  return bvzext(n);
 }
 
 uint32_t
