@@ -488,6 +488,16 @@ TestBitVector::test_unary(TestBitVector::Kind kind, uint32_t size)
     uint64_t a = bv.to_uint64();
     switch (kind)
     {
+      case DEC:
+        res  = bv.bvdec();
+        ares = _dec(a, size);
+        break;
+
+      case INC:
+        res  = bv.bvinc();
+        ares = _inc(a, size);
+        break;
+
       case NEG:
         res  = bv.bvneg();
         ares = _neg(a, size);
@@ -1218,6 +1228,22 @@ TEST_F(TestBitVector, count_leading_ones)
   test_count(76, true, false);
   test_count(128, true, false);
   test_count(176, true, false);
+}
+
+TEST_F(TestBitVector, dec)
+{
+  test_unary(DEC, 1);
+  test_unary(DEC, 7);
+  test_unary(DEC, 31);
+  test_unary(DEC, 33);
+}
+
+TEST_F(TestBitVector, inc)
+{
+  test_unary(INC, 1);
+  test_unary(INC, 7);
+  test_unary(INC, 31);
+  test_unary(INC, 33);
 }
 
 TEST_F(TestBitVector, neg)

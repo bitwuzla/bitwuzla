@@ -329,13 +329,19 @@ BitVector::bvnot() const
 BitVector
 BitVector::bvinc() const
 {
-  // TODO
+  BitVector res(d_size);
+  mpz_add_ui(res.d_val->d_mpz, d_val->d_mpz, 1);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector
 BitVector::bvdec() const
 {
-  // TODO
+  BitVector res(d_size);
+  mpz_sub_ui(res.d_val->d_mpz, d_val->d_mpz, 1);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector
