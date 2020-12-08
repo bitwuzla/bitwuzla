@@ -591,10 +591,24 @@ BitVector::bvshl(const BitVector& other) const
 }
 
 BitVector
+BitVector::bvshr(uint32_t shift) const
+{
+  BitVector res(d_size);
+  if (shift >= d_size) return res;
+  mpz_fdiv_q_2exp(res.d_val->d_mpz, d_val->d_mpz, shift);
+  return res;
+}
+
+BitVector
 BitVector::bvshr(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  // TODO
+  uint32_t shift;
+  if (other.shift_is_uint64(&shift))
+  {
+    return bvshr(shift);
+  }
+  return BitVector(d_size);
 }
 
 BitVector

@@ -130,6 +130,7 @@ class BitVector
   BitVector bvsge(const BitVector& other) const;
   BitVector bvshl(uint32_t shift) const;
   BitVector bvshl(const BitVector& other) const;
+  BitVector bvshr(uint32_t shift) const;
   BitVector bvshr(const BitVector& other) const;
   BitVector bvashr(const BitVector& other) const;
   BitVector bvmul(const BitVector& other) const;
