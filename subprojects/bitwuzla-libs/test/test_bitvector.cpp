@@ -508,6 +508,16 @@ TestBitVector::test_unary(TestBitVector::Kind kind, uint32_t size)
         ares = _not(a, size);
         break;
 
+      case REDAND:
+        res  = bv.bvredand();
+        ares = _redand(a, size);
+        break;
+
+      case REDOR:
+        res  = bv.bvredor();
+        ares = _redor(a, size);
+        break;
+
       default: assert(false);
     }
     uint64_t bres = res.to_uint64();
@@ -1260,6 +1270,22 @@ TEST_F(TestBitVector, not)
   test_unary(NOT, 7);
   test_unary(NOT, 31);
   test_unary(NOT, 33);
+}
+
+TEST_F(TestBitVector, redand)
+{
+  test_unary(REDAND, 1);
+  test_unary(REDAND, 7);
+  test_unary(REDAND, 31);
+  test_unary(REDAND, 33);
+}
+
+TEST_F(TestBitVector, redor)
+{
+  test_unary(REDOR, 1);
+  test_unary(REDOR, 7);
+  test_unary(REDOR, 31);
+  test_unary(REDOR, 33);
 }
 
 TEST_F(TestBitVector, concat)

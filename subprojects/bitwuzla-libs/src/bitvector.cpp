@@ -347,13 +347,19 @@ BitVector::bvdec() const
 BitVector
 BitVector::bvredand() const
 {
-  // TODO
+  return is_ones() ? mk_true() : mk_false();
 }
 
 BitVector
 BitVector::bvredor() const
 {
-  // TODO
+  mp_limb_t limb;
+  for (size_t i = 0, n = mpz_size(d_val->d_mpz); i < n; ++i)
+  {
+    limb = mpz_getlimbn(d_val->d_mpz, i);
+    if (((uint64_t) limb) != 0) return mk_true();
+  }
+  return mk_false();
 }
 
 BitVector
