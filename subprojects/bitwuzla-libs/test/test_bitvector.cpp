@@ -573,6 +573,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _implies(0, a2, size);
         break;
 
+      case MUL:
+        res  = zero.bvmul(bv2);
+        ares = _mul(0, a2, size);
+        break;
+
       case NAND:
         res  = zero.bvnand(bv2);
         ares = _nand(0, a2, size);
@@ -670,6 +675,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _implies(a1, 0, size);
         break;
 
+      case MUL:
+        res  = bv1.bvmul(zero);
+        ares = _mul(a1, 0, size);
+        break;
+
       case NAND:
         res  = bv1.bvnand(zero);
         ares = _nand(a1, 0, size);
@@ -765,6 +775,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
       case IMPLIES:
         res  = bv1.bvimplies(bv2);
         ares = _implies(a1, a2, size);
+        break;
+
+      case MUL:
+        res  = bv1.bvmul(bv2);
+        ares = _mul(a1, a2, size);
         break;
 
       case NAND:
@@ -1796,6 +1811,14 @@ TEST_F(TestBitVector, extract)
 }
 
 TEST_F(TestBitVector, implies) { test_binary(IMPLIES, 1); }
+
+TEST_F(TestBitVector, mul)
+{
+  test_binary(MUL, 1);
+  test_binary(MUL, 7);
+  test_binary(MUL, 31);
+  test_binary(MUL, 33);
+}
 
 TEST_F(TestBitVector, nand)
 {
