@@ -111,6 +111,7 @@ class TestBitVector : public ::testing::Test
                                  uint64_t a2,
                                  bool expected);
   void test_is_umul_overflow(uint32_t size);
+  void test_ite(uint32_t size);
   void test_shift(Kind kind,
                   const std::string& to_shift,
                   const std::string& shift,
@@ -600,6 +601,25 @@ TestBitVector::test_is_umul_overflow(uint32_t size)
       test_is_umul_overflow_aux(size, 4294967530, 4294967530, true);
       break;
     default: assert(false);
+  }
+}
+
+void
+TestBitVector::test_ite(uint32_t size)
+{
+  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  {
+    BitVector bv_cond(1, *d_rng);
+    BitVector bv_then(size, *d_rng);
+    BitVector bv_else(size, *d_rng);
+    BitVector res = BitVector::bvite(bv_cond, bv_then, bv_else);
+
+    uint64_t a_cond = bv_cond.to_uint64();
+    uint64_t a_then = bv_then.to_uint64();
+    uint64_t a_else = bv_else.to_uint64();
+    uint64_t a_res  = _ite(a_cond, a_then, a_else, size);
+    uint64_t b_res  = res.to_uint64();
+    ASSERT_EQ(a_res, b_res);
   }
 }
 
@@ -2046,6 +2066,14 @@ TEST_F(TestBitVector, is_umul_overflow)
   test_is_umul_overflow(7);
   test_is_umul_overflow(31);
   test_is_umul_overflow(33);
+}
+
+TEST_F(TestBitVector, ite)
+{
+  test_ite(1);
+  test_ite(7);
+  test_ite(31);
+  test_ite(33);
 }
 
 TEST_F(TestBitVector, mul)

@@ -89,8 +89,9 @@ BitVector::mk_max_signed(uint32_t size)
 BitVector
 BitVector::bvite(const BitVector& c, const BitVector& t, const BitVector& e)
 {
+  assert(c.d_size == 1);
   assert(t.d_size == e.d_size);
-  // TODO
+  return c.is_true() ? t : e;
 }
 
 BitVector::BitVector() : d_size(0), d_val(nullptr) {}
