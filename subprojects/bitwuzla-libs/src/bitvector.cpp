@@ -692,7 +692,22 @@ BitVector
 BitVector::bvsrem(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  // TODO
+  bool is_signed       = get_msb();
+  bool is_signed_other = other.get_msb();
+
+  if (is_signed && !is_signed_other)
+  {
+    return bvneg().bvurem(other).bvneg();
+  }
+  if (!is_signed && is_signed_other)
+  {
+    return bvurem(other.bvneg());
+  }
+  if (is_signed && is_signed_other)
+  {
+    return bvneg().bvurem(other.bvneg()).bvneg();
+  }
+  return bvurem(other);
 }
 
 BitVector

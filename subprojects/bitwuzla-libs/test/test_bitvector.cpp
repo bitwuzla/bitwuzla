@@ -934,6 +934,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
         ares = _sge(0, a2, size);
         break;
 
+      case SREM:
+        res  = zero.bvsrem(bv2);
+        ares = _srem(0, a2, size);
+        break;
+
       default: assert(false);
     }
     bres = res.to_uint64();
@@ -966,6 +971,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
         ares = _sge(a1, 0, size);
         break;
 
+      case SREM:
+        res  = bv1.bvsrem(zero);
+        ares = _srem(a1, 0, size);
+        break;
+
       default: assert(false);
     }
     bres = res.to_uint64();
@@ -996,6 +1006,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
       case SGE:
         res  = bv1.bvsge(bv2);
         ares = _sge(a1, a2, size);
+        break;
+
+      case SREM:
+        res  = bv1.bvsrem(bv2);
+        ares = _srem(a1, a2, size);
         break;
 
       default: assert(false);
@@ -2251,6 +2266,14 @@ TEST_F(TestBitVector, sub)
   test_binary(SUB, 7);
   test_binary(SUB, 31);
   test_binary(SUB, 33);
+}
+
+TEST_F(TestBitVector, srem)
+{
+  test_binary_signed(SREM, 1);
+  test_binary_signed(SREM, 7);
+  test_binary_signed(SREM, 31);
+  test_binary_signed(SREM, 33);
 }
 
 TEST_F(TestBitVector, udiv)
