@@ -97,6 +97,7 @@ class TestBitVector : public ::testing::Test
   void test_binary(Kind kind, uint32_t size);
   void test_binary_signed(Kind kind, uint32_t size);
   void test_concat(uint32_t size);
+  void test_extract(uint32_t size);
   std::unique_ptr<RNG> d_rng;
 };
 
@@ -974,6 +975,27 @@ TestBitVector::test_concat(uint32_t size)
   }
 }
 
+void
+TestBitVector::test_extract(uint32_t size)
+{
+  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  {
+    BitVector bv(size, *d_rng);
+    uint32_t lo = rand() % size;
+    uint32_t hi = rand() % (size - lo) + lo;
+    ASSERT_GE(hi, lo);
+    ASSERT_LT(hi, size);
+    ASSERT_LT(lo, size);
+
+    BitVector res = bv.bvextract(hi, lo);
+    ASSERT_EQ(res.get_size(), hi - lo + 1);
+    std::string res_str = res.to_string();
+    std::string bv_str  = bv.to_string();
+    uint32_t len        = hi - lo + 1;
+    ASSERT_EQ(bv_str.compare(size - hi - 1, len, res_str, 0, len), 0);
+  }
+}
+
 TEST_F(TestBitVector, ctor_dtor)
 {
   ASSERT_NO_FATAL_FAILURE(BitVector(1));
@@ -1749,6 +1771,14 @@ TEST_F(TestBitVector, eq)
   test_binary(EQ, 7);
   test_binary(EQ, 31);
   test_binary(EQ, 33);
+}
+
+TEST_F(TestBitVector, extract)
+{
+  test_extract(1);
+  test_extract(7);
+  test_extract(31);
+  test_extract(33);
 }
 
 TEST_F(TestBitVector, implies) { test_binary(IMPLIES, 1); }
