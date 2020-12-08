@@ -95,6 +95,7 @@ class TestBitVector : public ::testing::Test
   void test_count_aux(const std::string& val, bool leading, bool zeros);
   void test_unary(Kind kind, uint32_t size);
   void test_binary(Kind kind, uint32_t size);
+  void test_binary_signed(Kind kind, uint32_t size);
   void test_concat(uint32_t size);
   std::unique_ptr<RNG> d_rng;
 };
@@ -582,6 +583,26 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _or(0, a2, size);
         break;
 
+      case SLT:
+        res  = zero.bvslt(bv2);
+        ares = _slt(0, a2, size);
+        break;
+
+      case SLE:
+        res  = zero.bvsle(bv2);
+        ares = _sle(0, a2, size);
+        break;
+
+      case SGT:
+        res  = zero.bvsgt(bv2);
+        ares = _sgt(0, a2, size);
+        break;
+
+      case SGE:
+        res  = zero.bvsge(bv2);
+        ares = _sge(0, a2, size);
+        break;
+
       case SUB:
         res  = zero.bvsub(bv2);
         ares = _sub(0, a2, size);
@@ -662,6 +683,26 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
       case OR:
         res  = bv1.bvor(zero);
         ares = _or(a1, 0, size);
+        break;
+
+      case SLT:
+        res  = bv1.bvslt(zero);
+        ares = _slt(a1, 0, size);
+        break;
+
+      case SLE:
+        res  = bv1.bvsle(zero);
+        ares = _sle(a1, 0, size);
+        break;
+
+      case SGT:
+        res  = bv1.bvsgt(zero);
+        ares = _sgt(a1, 0, size);
+        break;
+
+      case SGE:
+        res  = bv1.bvsge(zero);
+        ares = _sge(a1, 0, size);
         break;
 
       case SUB:
@@ -746,6 +787,26 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _or(a1, a2, size);
         break;
 
+      case SLT:
+        res  = bv1.bvslt(bv2);
+        ares = _slt(a1, a2, size);
+        break;
+
+      case SLE:
+        res  = bv1.bvsle(bv2);
+        ares = _sle(a1, a2, size);
+        break;
+
+      case SGT:
+        res  = bv1.bvsgt(bv2);
+        ares = _sgt(a1, a2, size);
+        break;
+
+      case SGE:
+        res  = bv1.bvsge(bv2);
+        ares = _sge(a1, a2, size);
+        break;
+
       case SUB:
         res  = bv1.bvsub(bv2);
         ares = _sub(a1, a2, size);
@@ -779,6 +840,112 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
       case XNOR:
         res  = bv1.bvxnor(bv2);
         ares = _xnor(a1, a2, size);
+        break;
+
+      default: assert(false);
+    }
+    bres = res.to_uint64();
+    ASSERT_EQ(ares, bres);
+  }
+}
+
+void
+TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
+{
+  assert(size < 64);
+  BitVector zero = BitVector::mk_zero(size);
+
+  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  {
+    int64_t ares, bres;
+    BitVector res;
+    BitVector bv1(size, *d_rng);
+    BitVector bv2(size, *d_rng);
+    int64_t a1 = bv1.to_uint64();
+    int64_t a2 = bv2.to_uint64();
+    if (bv1.get_bit(size - 1))
+    {
+      a1 = (UINT64_MAX << size) | a1;
+    }
+    if (bv2.get_bit(size - 1))
+    {
+      a2 = (UINT64_MAX << size) | a2;
+    }
+    /* test for x = 0 explicitly */
+    switch (kind)
+    {
+      case SLT:
+        res  = zero.bvslt(bv2);
+        ares = _slt(0, a2, size);
+        break;
+
+      case SLE:
+        res  = zero.bvsle(bv2);
+        ares = _sle(0, a2, size);
+        break;
+
+      case SGT:
+        res  = zero.bvsgt(bv2);
+        ares = _sgt(0, a2, size);
+        break;
+
+      case SGE:
+        res  = zero.bvsge(bv2);
+        ares = _sge(0, a2, size);
+        break;
+
+      default: assert(false);
+    }
+    bres = res.to_uint64();
+    ASSERT_EQ(ares, bres);
+    /* test for y = 0 explicitly */
+    switch (kind)
+    {
+      case SLT:
+        res  = bv1.bvslt(zero);
+        ares = _slt(a1, 0, size);
+        break;
+
+      case SLE:
+        res  = bv1.bvsle(zero);
+        ares = _sle(a1, 0, size);
+        break;
+
+      case SGT:
+        res  = bv1.bvsgt(zero);
+        ares = _sgt(a1, 0, size);
+        break;
+
+      case SGE:
+        res  = bv1.bvsge(zero);
+        ares = _sge(a1, 0, size);
+        break;
+
+      default: assert(false);
+    }
+    bres = res.to_uint64();
+    ASSERT_EQ(ares, bres);
+    /* test x, y random */
+    switch (kind)
+    {
+      case SLT:
+        res  = bv1.bvslt(bv2);
+        ares = _slt(a1, a2, size);
+        break;
+
+      case SLE:
+        res  = bv1.bvsle(bv2);
+        ares = _sle(a1, a2, size);
+        break;
+
+      case SGT:
+        res  = bv1.bvsgt(bv2);
+        ares = _sgt(a1, a2, size);
+        break;
+
+      case SGE:
+        res  = bv1.bvsge(bv2);
+        ares = _sge(a1, a2, size);
         break;
 
       default: assert(false);
@@ -1616,6 +1783,38 @@ TEST_F(TestBitVector, nor)
   test_binary(NOR, 7);
   test_binary(NOR, 31);
   test_binary(NOR, 33);
+}
+
+TEST_F(TestBitVector, slt)
+{
+  test_binary_signed(SLT, 1);
+  test_binary_signed(SLT, 7);
+  test_binary_signed(SLT, 31);
+  test_binary_signed(SLT, 33);
+}
+
+TEST_F(TestBitVector, sle)
+{
+  test_binary_signed(SLE, 1);
+  test_binary_signed(SLE, 7);
+  test_binary_signed(SLE, 31);
+  test_binary_signed(SLE, 33);
+}
+
+TEST_F(TestBitVector, sgt)
+{
+  test_binary_signed(SGT, 1);
+  test_binary_signed(SGT, 7);
+  test_binary_signed(SGT, 31);
+  test_binary_signed(SGT, 33);
+}
+
+TEST_F(TestBitVector, sge)
+{
+  test_binary_signed(SGE, 1);
+  test_binary_signed(SGE, 7);
+  test_binary_signed(SGE, 31);
+  test_binary_signed(SGE, 33);
 }
 
 TEST_F(TestBitVector, sub)

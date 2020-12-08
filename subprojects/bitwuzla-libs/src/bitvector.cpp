@@ -89,6 +89,7 @@ BitVector::mk_max_signed(uint32_t size)
 BitVector
 BitVector::bvite(const BitVector& c, const BitVector& t, const BitVector& e)
 {
+  assert(t.d_size == e.d_size);
   // TODO
 }
 
@@ -365,6 +366,7 @@ BitVector::bvredor() const
 BitVector
 BitVector::bvadd(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   BitVector res(d_size);
   mpz_add(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
@@ -374,6 +376,7 @@ BitVector::bvadd(const BitVector& other) const
 BitVector
 BitVector::bvsub(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   BitVector res(d_size);
   mpz_sub(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
@@ -383,6 +386,7 @@ BitVector::bvsub(const BitVector& other) const
 BitVector
 BitVector::bvand(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   BitVector res(d_size);
   mpz_and(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
@@ -392,6 +396,7 @@ BitVector::bvand(const BitVector& other) const
 BitVector
 BitVector::bvimplies(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   assert(d_size == 1);
   assert(other.d_size == 1);
   return is_false() || other.is_true() ? mk_true() : mk_false();
@@ -400,6 +405,7 @@ BitVector::bvimplies(const BitVector& other) const
 BitVector
 BitVector::bvnand(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   BitVector res(d_size);
   mpz_and(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
   mpz_com(res.d_val->d_mpz, res.d_val->d_mpz);
@@ -410,6 +416,7 @@ BitVector::bvnand(const BitVector& other) const
 BitVector
 BitVector::bvnor(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   BitVector res(d_size);
   mpz_ior(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
   mpz_com(res.d_val->d_mpz, res.d_val->d_mpz);
@@ -420,6 +427,7 @@ BitVector::bvnor(const BitVector& other) const
 BitVector
 BitVector::bvor(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   BitVector res(d_size);
   mpz_ior(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
@@ -429,6 +437,7 @@ BitVector::bvor(const BitVector& other) const
 BitVector
 BitVector::bvxnor(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   BitVector res(d_size);
   mpz_xor(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
   mpz_com(res.d_val->d_mpz, res.d_val->d_mpz);
@@ -439,6 +448,7 @@ BitVector::bvxnor(const BitVector& other) const
 BitVector
 BitVector::bvxor(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   BitVector res(d_size);
   mpz_xor(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
@@ -448,6 +458,7 @@ BitVector::bvxor(const BitVector& other) const
 BitVector
 BitVector::bveq(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) == 0 ? mk_true()
                                                         : mk_false();
 }
@@ -455,6 +466,7 @@ BitVector::bveq(const BitVector& other) const
 BitVector
 BitVector::bvne(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) != 0 ? mk_true()
                                                         : mk_false();
 }
@@ -462,12 +474,14 @@ BitVector::bvne(const BitVector& other) const
 BitVector
 BitVector::bvult(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) < 0 ? mk_true() : mk_false();
 }
 
 BitVector
 BitVector::bvule(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) <= 0 ? mk_true()
                                                         : mk_false();
 }
@@ -475,6 +489,7 @@ BitVector::bvule(const BitVector& other) const
 BitVector
 BitVector::bvugt(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) > 0 ? mk_true() : mk_false();
 }
 
@@ -488,72 +503,124 @@ BitVector::bvuge(const BitVector& other) const
 BitVector
 BitVector::bvslt(const BitVector& other) const
 {
-  // TODO
+  assert(d_size == other.d_size);
+  bool msb       = get_bit(d_size - 1);
+  bool msb_other = other.get_bit(d_size - 1);
+  if (msb && !msb_other)
+  {
+    return mk_true();
+  }
+  if (!msb && msb_other)
+  {
+    return mk_false();
+  }
+  return bvult(other);
 }
 
 BitVector
 BitVector::bvsle(const BitVector& other) const
 {
-  // TODO
+  assert(d_size == other.d_size);
+  bool msb       = get_bit(d_size - 1);
+  bool msb_other = other.get_bit(d_size - 1);
+  if (msb && !msb_other)
+  {
+    return mk_true();
+  }
+  if (!msb && msb_other)
+  {
+    return mk_false();
+  }
+  return bvule(other);
 }
 
 BitVector
 BitVector::bvsgt(const BitVector& other) const
 {
-  // TODO
+  assert(d_size == other.d_size);
+  bool msb       = get_bit(d_size - 1);
+  bool msb_other = other.get_bit(d_size - 1);
+  if (msb && !msb_other)
+  {
+    return mk_false();
+  }
+  if (!msb && msb_other)
+  {
+    return mk_true();
+  }
+  return bvugt(other);
 }
 
 BitVector
 BitVector::bvsge(const BitVector& other) const
 {
-  // TODO
+  assert(d_size == other.d_size);
+  bool msb       = get_bit(d_size - 1);
+  bool msb_other = other.get_bit(d_size - 1);
+  if (msb && !msb_other)
+  {
+    return mk_false();
+  }
+  if (!msb && msb_other)
+  {
+    return mk_true();
+  }
+  return bvuge(other);
 }
 
 BitVector
 BitVector::bvshl(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   // TODO
 }
 
 BitVector
 BitVector::bvshr(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   // TODO
 }
 
 BitVector
 BitVector::bvashr(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   // TODO
 }
 
 BitVector
 BitVector::bvmul(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   // TODO
 }
 
 BitVector
 BitVector::bvudiv(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   // TODO
 }
 
 BitVector
 BitVector::bvurem(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   // TODO
 }
 
 BitVector
 BitVector::bvsdiv(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   // TODO
 }
 
 BitVector
 BitVector::bvsrem(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   // TODO
 }
 
