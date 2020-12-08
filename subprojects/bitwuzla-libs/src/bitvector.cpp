@@ -647,7 +647,11 @@ BitVector
 BitVector::bvurem(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  // TODO
+  if (other.is_zero()) return *this;
+  BitVector res(d_size);
+  mpz_fdiv_r(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector

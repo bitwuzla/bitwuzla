@@ -638,6 +638,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _uge(0, a2, size);
         break;
 
+      case UREM:
+        res  = zero.bvurem(bv2);
+        ares = _urem(0, a2, size);
+        break;
+
       case XOR:
         res  = zero.bvxor(bv2);
         ares = _xor(0, a2, size);
@@ -745,6 +750,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _uge(a1, 0, size);
         break;
 
+      case UREM:
+        res  = bv1.bvurem(zero);
+        ares = _urem(a1, 0, size);
+        break;
+
       case XOR:
         res  = bv1.bvxor(zero);
         ares = _xor(a1, 0, size);
@@ -850,6 +860,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
       case UGE:
         res  = bv1.bvuge(bv2);
         ares = _uge(a1, a2, size);
+        break;
+
+      case UREM:
+        res  = bv1.bvurem(bv2);
+        ares = _urem(a1, a2, size);
         break;
 
       case XOR:
@@ -2253,6 +2268,14 @@ TEST_F(TestBitVector, uge)
   test_binary(UGE, 7);
   test_binary(UGE, 31);
   test_binary(UGE, 33);
+}
+
+TEST_F(TestBitVector, urem)
+{
+  test_binary(UREM, 1);
+  test_binary(UREM, 7);
+  test_binary(UREM, 31);
+  test_binary(UREM, 33);
 }
 
 TEST_F(TestBitVector, xor)
