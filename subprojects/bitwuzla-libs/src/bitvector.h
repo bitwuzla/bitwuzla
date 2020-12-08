@@ -128,6 +128,7 @@ class BitVector
   BitVector bvsle(const BitVector& other) const;
   BitVector bvsgt(const BitVector& other) const;
   BitVector bvsge(const BitVector& other) const;
+  BitVector bvshl(uint32_t shift) const;
   BitVector bvshl(const BitVector& other) const;
   BitVector bvshr(const BitVector& other) const;
   BitVector bvashr(const BitVector& other) const;
@@ -149,6 +150,11 @@ class BitVector
    */
   uint32_t count_leading(bool zeros) const;
   uint32_t get_limb(void* limb, uint32_t nbits_rem, bool zeros) const;
+  /**
+   * Return true if this bit-vector can be represented with a uint64_t.
+   * If true, uint64_t representation is stored in 'res'.
+   */
+  bool shift_is_uint64(uint32_t* res) const;
 
   uint32_t d_size               = 0;
   std::unique_ptr<GMPMpz> d_val = nullptr;

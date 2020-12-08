@@ -98,6 +98,10 @@ class TestBitVector : public ::testing::Test
   void test_binary_signed(Kind kind, uint32_t size);
   void test_concat(uint32_t size);
   void test_extract(uint32_t size);
+  void test_shift(Kind kind,
+                  const std::string& to_shift,
+                  const std::string& shift,
+                  const std::string& expected);
   std::unique_ptr<RNG> d_rng;
 };
 
@@ -584,24 +588,9 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _or(0, a2, size);
         break;
 
-      case SLT:
-        res  = zero.bvslt(bv2);
-        ares = _slt(0, a2, size);
-        break;
-
-      case SLE:
-        res  = zero.bvsle(bv2);
-        ares = _sle(0, a2, size);
-        break;
-
-      case SGT:
-        res  = zero.bvsgt(bv2);
-        ares = _sgt(0, a2, size);
-        break;
-
-      case SGE:
-        res  = zero.bvsge(bv2);
-        ares = _sge(0, a2, size);
+      case SHL:
+        res  = zero.bvshl(bv2);
+        ares = _shl(0, a2, size);
         break;
 
       case SUB:
@@ -686,24 +675,9 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _or(a1, 0, size);
         break;
 
-      case SLT:
-        res  = bv1.bvslt(zero);
-        ares = _slt(a1, 0, size);
-        break;
-
-      case SLE:
-        res  = bv1.bvsle(zero);
-        ares = _sle(a1, 0, size);
-        break;
-
-      case SGT:
-        res  = bv1.bvsgt(zero);
-        ares = _sgt(a1, 0, size);
-        break;
-
-      case SGE:
-        res  = bv1.bvsge(zero);
-        ares = _sge(a1, 0, size);
+      case SHL:
+        res  = bv1.bvshl(zero);
+        ares = _shl(a1, 0, size);
         break;
 
       case SUB:
@@ -788,24 +762,9 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _or(a1, a2, size);
         break;
 
-      case SLT:
-        res  = bv1.bvslt(bv2);
-        ares = _slt(a1, a2, size);
-        break;
-
-      case SLE:
-        res  = bv1.bvsle(bv2);
-        ares = _sle(a1, a2, size);
-        break;
-
-      case SGT:
-        res  = bv1.bvsgt(bv2);
-        ares = _sgt(a1, a2, size);
-        break;
-
-      case SGE:
-        res  = bv1.bvsge(bv2);
-        ares = _sge(a1, a2, size);
+      case SHL:
+        res  = bv1.bvshl(bv2);
+        ares = _shl(a1, a2, size);
         break;
 
       case SUB:
@@ -994,6 +953,29 @@ TestBitVector::test_extract(uint32_t size)
     uint32_t len        = hi - lo + 1;
     ASSERT_EQ(bv_str.compare(size - hi - 1, len, res_str, 0, len), 0);
   }
+}
+
+void
+TestBitVector::test_shift(Kind kind,
+                          const std::string& to_shift,
+                          const std::string& shift,
+                          const std::string& expected)
+{
+  assert(to_shift.size() == shift.size());
+  assert(to_shift.size() == expected.size());
+
+  BitVector bv(to_shift.size(), to_shift);
+  BitVector bv_shift(shift.size(), shift);
+  BitVector bv_expected(expected.size(), expected);
+  BitVector res;
+  switch (kind)
+  {
+    case SHL: res = bv.bvshl(bv_shift); break;
+
+    default: assert(false);
+  }
+
+  ASSERT_EQ(res.compare(bv_expected), 0);
 }
 
 TEST_F(TestBitVector, ctor_dtor)
@@ -1813,6 +1795,106 @@ TEST_F(TestBitVector, nor)
   test_binary(NOR, 7);
   test_binary(NOR, 31);
   test_binary(NOR, 33);
+}
+
+TEST_F(TestBitVector, shl)
+{
+  test_binary(SHL, 2);
+  test_binary(SHL, 8);
+  test_binary(SHL, 16);
+  test_binary(SHL, 32);
+
+  for (uint32_t i = 0, size = 2; i < (1u << size); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << size); ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::bitset<2>(i).to_string() << std::string(j, '0');
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(expected.size() - size, size);
+      test_shift(SHL,
+                 std::bitset<2>(i).to_string().c_str(),
+                 std::bitset<2>(j).to_string().c_str(),
+                 expected.c_str());
+    }
+  }
+
+  for (uint32_t i = 0, bw = 3; i < (1u << bw); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << bw); ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::bitset<3>(i).to_string() << std::string(j, '0');
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(expected.size() - bw, bw);
+      test_shift(SHL,
+                 std::bitset<3>(i).to_string().c_str(),
+                 std::bitset<3>(j).to_string().c_str(),
+                 expected.c_str());
+    }
+  }
+
+  for (uint32_t i = 0, bw = 8; i < (1u << bw); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << bw); ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::bitset<8>(i).to_string() << std::string(j, '0');
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(expected.size() - bw, bw);
+      test_shift(SHL,
+                 std::bitset<8>(i).to_string().c_str(),
+                 std::bitset<8>(j).to_string().c_str(),
+                 expected.c_str());
+    }
+  }
+
+  for (uint32_t i = 0, bw = 65; i < (1u << bw); ++i)
+  {
+    /* shift value fits into uint64_t */
+    for (uint64_t j = 0; j < 32; ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::bitset<65>(i).to_string() << std::string(j, '0');
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(expected.size() - bw, bw);
+      test_shift(SHL,
+                 std::bitset<65>(i).to_string().c_str(),
+                 std::bitset<65>(j).to_string().c_str(),
+                 expected.c_str());
+    }
+    /* shift value doesn't fit into uint64_t */
+    {
+      test_shift(SHL,
+                 std::bitset<65>(i).to_string().c_str(),
+                 std::bitset<65>(0u).set(64, 1).to_string().c_str(),
+                 std::string(bw, '0').c_str());
+    }
+  }
+
+  for (uint32_t i = 0, bw = 128; i < (1u << bw); ++i)
+  {
+    /* shift value fits into uint64_t */
+    for (uint64_t j = 0; j < 32; ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::bitset<128>(i).to_string() << std::string(j, '0');
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(expected.size() - bw, bw);
+      test_shift(SHL,
+                 std::bitset<128>(i).to_string().c_str(),
+                 std::bitset<128>(j).to_string().c_str(),
+                 expected.c_str());
+    }
+    /* shift value doesn't fit into uint64_t */
+    for (uint64_t j = 64; j < 128; ++j)
+    {
+      test_shift(SHL,
+                 std::bitset<128>(i).to_string().c_str(),
+                 std::bitset<128>(0u).set(j, 1).to_string().c_str(),
+                 std::string(bw, '0').c_str());
+    }
+  }
 }
 
 TEST_F(TestBitVector, slt)

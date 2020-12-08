@@ -569,10 +569,25 @@ BitVector::bvsge(const BitVector& other) const
 }
 
 BitVector
+BitVector::bvshl(uint32_t shift) const
+{
+  BitVector res(d_size);
+  if (shift >= d_size) return res;
+  mpz_mul_2exp(res.d_val->d_mpz, d_val->d_mpz, shift);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
+}
+
+BitVector
 BitVector::bvshl(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  // TODO
+  uint32_t shift;
+  if (other.shift_is_uint64(&shift))
+  {
+    return bvshl(shift);
+  }
+  return BitVector(d_size);
 }
 
 BitVector
@@ -722,6 +737,24 @@ BitVector::get_limb(void* limb, uint32_t nbits_rem, bool zeros) const
   }
   *gmp_limb = res;
   return n_limbs - i;
+}
+
+bool
+BitVector::shift_is_uint64(uint32_t* res) const
+{
+  if (d_size <= 64)
+  {
+    *res = to_uint64();
+    return true;
+  }
+
+  uint32_t clz = count_leading_zeros();
+  if (clz < d_size - 64) return false;
+
+  BitVector shift = bvextract(clz < d_size ? d_size - 1 - clz : 0, 0);
+  assert(shift.d_size <= 64);
+  *res = shift.to_uint64();
+  return true;
 }
 
 }  // namespace bzlals
