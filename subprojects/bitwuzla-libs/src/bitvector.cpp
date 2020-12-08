@@ -374,7 +374,10 @@ BitVector::bvadd(const BitVector& other) const
 BitVector
 BitVector::bvsub(const BitVector& other) const
 {
-  // TODO
+  BitVector res(d_size);
+  mpz_sub(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector

@@ -547,6 +547,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _add(0, a2, size);
         break;
 
+      case SUB:
+        res  = zero.bvsub(bv2);
+        ares = _sub(0, a2, size);
+        break;
+
       default: assert(false);
     }
     bres = res.to_uint64();
@@ -559,6 +564,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _add(a1, 0, size);
         break;
 
+      case SUB:
+        res  = bv1.bvsub(zero);
+        ares = _sub(a1, 0, size);
+        break;
+
       default: assert(false);
     }
     bres = res.to_uint64();
@@ -569,6 +579,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
       case ADD:
         res  = bv1.bvadd(bv2);
         ares = _add(a1, a2, size);
+        break;
+
+      case SUB:
+        res  = bv1.bvsub(bv2);
+        ares = _sub(a1, a2, size);
         break;
 
       default: assert(false);
@@ -1356,6 +1371,14 @@ TEST_F(TestBitVector, concat)
   test_concat(31);
   test_concat(33);
   test_concat(64);
+}
+
+TEST_F(TestBitVector, sub)
+{
+  test_binary(SUB, 1);
+  test_binary(SUB, 7);
+  test_binary(SUB, 31);
+  test_binary(SUB, 33);
 }
 
 TEST_F(TestBitVector, is_true)
