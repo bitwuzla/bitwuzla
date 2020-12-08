@@ -547,9 +547,39 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _add(0, a2, size);
         break;
 
+      case AND:
+        res  = zero.bvand(bv2);
+        ares = _and(0, a2, size);
+        break;
+
+      case NAND:
+        res  = zero.bvnand(bv2);
+        ares = _nand(0, a2, size);
+        break;
+
+      case NOR:
+        res  = zero.bvnor(bv2);
+        ares = _nor(0, a2, size);
+        break;
+
+      case OR:
+        res  = zero.bvor(bv2);
+        ares = _or(0, a2, size);
+        break;
+
       case SUB:
         res  = zero.bvsub(bv2);
         ares = _sub(0, a2, size);
+        break;
+
+      case XOR:
+        res  = zero.bvxor(bv2);
+        ares = _xor(0, a2, size);
+        break;
+
+      case XNOR:
+        res  = zero.bvxnor(bv2);
+        ares = _xnor(0, a2, size);
         break;
 
       default: assert(false);
@@ -564,9 +594,39 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _add(a1, 0, size);
         break;
 
+      case AND:
+        res  = bv1.bvand(zero);
+        ares = _and(a1, 0, size);
+        break;
+
+      case NAND:
+        res  = bv1.bvnand(zero);
+        ares = _nand(a1, 0, size);
+        break;
+
+      case OR:
+        res  = bv1.bvor(zero);
+        ares = _or(a1, 0, size);
+        break;
+
+      case NOR:
+        res  = bv1.bvnor(zero);
+        ares = _nor(a1, 0, size);
+        break;
+
       case SUB:
         res  = bv1.bvsub(zero);
         ares = _sub(a1, 0, size);
+        break;
+
+      case XOR:
+        res  = bv1.bvxor(zero);
+        ares = _xor(a1, 0, size);
+        break;
+
+      case XNOR:
+        res  = bv1.bvxnor(zero);
+        ares = _xnor(a1, 0, size);
         break;
 
       default: assert(false);
@@ -581,9 +641,39 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _add(a1, a2, size);
         break;
 
+      case AND:
+        res  = bv1.bvand(bv2);
+        ares = _and(a1, a2, size);
+        break;
+
+      case NAND:
+        res  = bv1.bvnand(bv2);
+        ares = _nand(a1, a2, size);
+        break;
+
+      case OR:
+        res  = bv1.bvor(bv2);
+        ares = _or(a1, a2, size);
+        break;
+
+      case NOR:
+        res  = bv1.bvnor(bv2);
+        ares = _nor(a1, a2, size);
+        break;
+
       case SUB:
         res  = bv1.bvsub(bv2);
         ares = _sub(a1, a2, size);
+        break;
+
+      case XOR:
+        res  = bv1.bvxor(bv2);
+        ares = _xor(a1, a2, size);
+        break;
+
+      case XNOR:
+        res  = bv1.bvxnor(bv2);
+        ares = _xnor(a1, a2, size);
         break;
 
       default: assert(false);
@@ -1364,6 +1454,14 @@ TEST_F(TestBitVector, add)
   test_binary(ADD, 33);
 }
 
+TEST_F(TestBitVector, and)
+{
+  test_binary(AND, 1);
+  test_binary(AND, 7);
+  test_binary(AND, 31);
+  test_binary(AND, 33);
+}
+
 TEST_F(TestBitVector, concat)
 {
   test_concat(2);
@@ -1373,12 +1471,52 @@ TEST_F(TestBitVector, concat)
   test_concat(64);
 }
 
+TEST_F(TestBitVector, nand)
+{
+  test_binary(NAND, 1);
+  test_binary(NAND, 7);
+  test_binary(NAND, 31);
+  test_binary(NAND, 33);
+}
+
+TEST_F(TestBitVector, or)
+{
+  test_binary(OR, 1);
+  test_binary(OR, 7);
+  test_binary(OR, 31);
+  test_binary(OR, 33);
+}
+
+TEST_F(TestBitVector, nor)
+{
+  test_binary(NOR, 1);
+  test_binary(NOR, 7);
+  test_binary(NOR, 31);
+  test_binary(NOR, 33);
+}
+
 TEST_F(TestBitVector, sub)
 {
   test_binary(SUB, 1);
   test_binary(SUB, 7);
   test_binary(SUB, 31);
   test_binary(SUB, 33);
+}
+
+TEST_F(TestBitVector, xor)
+{
+  test_binary(XOR, 1);
+  test_binary(XOR, 7);
+  test_binary(XOR, 31);
+  test_binary(XOR, 33);
+}
+
+TEST_F(TestBitVector, xnor)
+{
+  test_binary(XNOR, 1);
+  test_binary(XNOR, 7);
+  test_binary(XNOR, 31);
+  test_binary(XNOR, 33);
 }
 
 TEST_F(TestBitVector, is_true)

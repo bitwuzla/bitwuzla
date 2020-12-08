@@ -383,7 +383,10 @@ BitVector::bvsub(const BitVector& other) const
 BitVector
 BitVector::bvand(const BitVector& other) const
 {
-  // TODO
+  BitVector res(d_size);
+  mpz_and(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector
@@ -395,31 +398,49 @@ BitVector::bvimplies(const BitVector& other) const
 BitVector
 BitVector::bvnand(const BitVector& other) const
 {
-  // TODO
+  BitVector res(d_size);
+  mpz_and(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_com(res.d_val->d_mpz, res.d_val->d_mpz);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector
 BitVector::bvnor(const BitVector& other) const
 {
-  // TODO
+  BitVector res(d_size);
+  mpz_ior(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_com(res.d_val->d_mpz, res.d_val->d_mpz);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector
 BitVector::bvor(const BitVector& other) const
 {
-  // TODO
+  BitVector res(d_size);
+  mpz_ior(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector
 BitVector::bvxnor(const BitVector& other) const
 {
-  // TODO
+  BitVector res(d_size);
+  mpz_xor(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_com(res.d_val->d_mpz, res.d_val->d_mpz);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector
 BitVector::bvxor(const BitVector& other) const
 {
-  // TODO
+  BitVector res(d_size);
+  mpz_xor(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+  return res;
 }
 
 BitVector
