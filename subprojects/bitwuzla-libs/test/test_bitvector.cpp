@@ -552,9 +552,24 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _and(0, a2, size);
         break;
 
+      case EQ:
+        res  = zero.bveq(bv2);
+        ares = _eq(0, a2, size);
+        break;
+
+      case IMPLIES:
+        res  = zero.bvimplies(bv2);
+        ares = _implies(0, a2, size);
+        break;
+
       case NAND:
         res  = zero.bvnand(bv2);
         ares = _nand(0, a2, size);
+        break;
+
+      case NE:
+        res  = zero.bvne(bv2);
+        ares = _ne(0, a2, size);
         break;
 
       case NOR:
@@ -599,19 +614,34 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _and(a1, 0, size);
         break;
 
+      case EQ:
+        res  = bv1.bveq(zero);
+        ares = _eq(a1, 0, size);
+        break;
+
+      case IMPLIES:
+        res  = bv1.bvimplies(zero);
+        ares = _implies(a1, 0, size);
+        break;
+
       case NAND:
         res  = bv1.bvnand(zero);
         ares = _nand(a1, 0, size);
         break;
 
-      case OR:
-        res  = bv1.bvor(zero);
-        ares = _or(a1, 0, size);
+      case NE:
+        res  = bv1.bvne(zero);
+        ares = _ne(a1, 0, size);
         break;
 
       case NOR:
         res  = bv1.bvnor(zero);
         ares = _nor(a1, 0, size);
+        break;
+
+      case OR:
+        res  = bv1.bvor(zero);
+        ares = _or(a1, 0, size);
         break;
 
       case SUB:
@@ -646,19 +676,34 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _and(a1, a2, size);
         break;
 
+      case EQ:
+        res  = bv1.bveq(bv2);
+        ares = _eq(a1, a2, size);
+        break;
+
+      case IMPLIES:
+        res  = bv1.bvimplies(bv2);
+        ares = _implies(a1, a2, size);
+        break;
+
       case NAND:
         res  = bv1.bvnand(bv2);
         ares = _nand(a1, a2, size);
         break;
 
-      case OR:
-        res  = bv1.bvor(bv2);
-        ares = _or(a1, a2, size);
+      case NE:
+        res  = bv1.bvne(bv2);
+        ares = _ne(a1, a2, size);
         break;
 
       case NOR:
         res  = bv1.bvnor(bv2);
         ares = _nor(a1, a2, size);
+        break;
+
+      case OR:
+        res  = bv1.bvor(bv2);
+        ares = _or(a1, a2, size);
         break;
 
       case SUB:
@@ -1471,12 +1516,30 @@ TEST_F(TestBitVector, concat)
   test_concat(64);
 }
 
+TEST_F(TestBitVector, eq)
+{
+  test_binary(EQ, 1);
+  test_binary(EQ, 7);
+  test_binary(EQ, 31);
+  test_binary(EQ, 33);
+}
+
+TEST_F(TestBitVector, implies) { test_binary(IMPLIES, 1); }
+
 TEST_F(TestBitVector, nand)
 {
   test_binary(NAND, 1);
   test_binary(NAND, 7);
   test_binary(NAND, 31);
   test_binary(NAND, 33);
+}
+
+TEST_F(TestBitVector, ne)
+{
+  test_binary(NE, 1);
+  test_binary(NE, 7);
+  test_binary(NE, 31);
+  test_binary(NE, 33);
 }
 
 TEST_F(TestBitVector, or)

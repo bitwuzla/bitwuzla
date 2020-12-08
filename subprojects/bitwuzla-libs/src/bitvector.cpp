@@ -392,7 +392,9 @@ BitVector::bvand(const BitVector& other) const
 BitVector
 BitVector::bvimplies(const BitVector& other) const
 {
-  // TODO
+  assert(d_size == 1);
+  assert(other.d_size == 1);
+  return is_false() || other.is_true() ? mk_true() : mk_false();
 }
 
 BitVector
@@ -446,13 +448,15 @@ BitVector::bvxor(const BitVector& other) const
 BitVector
 BitVector::bveq(const BitVector& other) const
 {
-  // TODO
+  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) == 0 ? mk_true()
+                                                        : mk_false();
 }
 
 BitVector
 BitVector::bvne(const BitVector& other) const
 {
-  // TODO
+  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) != 0 ? mk_true()
+                                                        : mk_false();
 }
 
 BitVector
