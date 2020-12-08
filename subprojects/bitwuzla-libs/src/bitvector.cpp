@@ -312,13 +312,13 @@ BitVector::count_trailing_zeros() const
 uint32_t
 BitVector::count_leading_zeros() const
 {
-  count_leading(true);
+  return count_leading(true);
 }
 
 uint32_t
 BitVector::count_leading_ones() const
 {
-  count_leading(false);
+  return count_leading(false);
 }
 
 BitVector
