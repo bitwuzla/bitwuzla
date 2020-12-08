@@ -86,6 +86,8 @@ class BitVector
   bool get_bit(uint32_t idx) const;
   void set_bit(uint32_t idx, bool value);
   void flip_bit(uint32_t idx);
+  bool get_lsb() const;
+  bool get_msb() const;
 
   bool is_true() const;
   bool is_false() const;

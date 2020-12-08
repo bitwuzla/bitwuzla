@@ -909,6 +909,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
     /* test for x = 0 explicitly */
     switch (kind)
     {
+      case SDIV:
+        res  = zero.bvsdiv(bv2);
+        ares = _sdiv(0, a2, size);
+        break;
+
       case SLT:
         res  = zero.bvslt(bv2);
         ares = _slt(0, a2, size);
@@ -936,6 +941,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
     /* test for y = 0 explicitly */
     switch (kind)
     {
+      case SDIV:
+        res  = bv1.bvsdiv(zero);
+        ares = _sdiv(a1, 0, size);
+        break;
+
       case SLT:
         res  = bv1.bvslt(zero);
         ares = _slt(a1, 0, size);
@@ -963,6 +973,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
     /* test x, y random */
     switch (kind)
     {
+      case SDIV:
+        res  = bv1.bvsdiv(bv2);
+        ares = _sdiv(a1, a2, size);
+        break;
+
       case SLT:
         res  = bv1.bvslt(bv2);
         ares = _slt(a1, a2, size);
@@ -1880,6 +1895,14 @@ TEST_F(TestBitVector, nor)
   test_binary(NOR, 7);
   test_binary(NOR, 31);
   test_binary(NOR, 33);
+}
+
+TEST_F(TestBitVector, sdiv)
+{
+  test_binary_signed(SDIV, 1);
+  test_binary_signed(SDIV, 7);
+  test_binary_signed(SDIV, 31);
+  test_binary_signed(SDIV, 33);
 }
 
 TEST_F(TestBitVector, shl)

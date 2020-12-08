@@ -176,8 +176,8 @@ BitVector::signed_compare(const BitVector& other) const
 {
   assert(d_size == other.d_size);
 
-  uint32_t msb_a = get_bit(d_size - 1);
-  uint32_t msb_b = other.get_bit(d_size - 1);
+  uint32_t msb_a = get_msb();
+  uint32_t msb_b = other.get_msb();
 
   if (msb_a && !msb_b)
   {
@@ -213,6 +213,18 @@ void
 BitVector::flip_bit(uint32_t idx)
 {
   mpz_combit(d_val->d_mpz, idx);
+}
+
+bool
+BitVector::get_lsb() const
+{
+  return get_bit(0);
+}
+
+bool
+BitVector::get_msb() const
+{
+  return get_bit(d_size - 1);
 }
 
 bool
@@ -504,8 +516,8 @@ BitVector
 BitVector::bvslt(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  bool msb       = get_bit(d_size - 1);
-  bool msb_other = other.get_bit(d_size - 1);
+  bool msb       = get_msb();
+  bool msb_other = other.get_msb();
   if (msb && !msb_other)
   {
     return mk_true();
@@ -521,8 +533,8 @@ BitVector
 BitVector::bvsle(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  bool msb       = get_bit(d_size - 1);
-  bool msb_other = other.get_bit(d_size - 1);
+  bool msb       = get_msb();
+  bool msb_other = other.get_msb();
   if (msb && !msb_other)
   {
     return mk_true();
@@ -538,8 +550,8 @@ BitVector
 BitVector::bvsgt(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  bool msb       = get_bit(d_size - 1);
-  bool msb_other = other.get_bit(d_size - 1);
+  bool msb       = get_msb();
+  bool msb_other = other.get_msb();
   if (msb && !msb_other)
   {
     return mk_false();
@@ -555,8 +567,8 @@ BitVector
 BitVector::bvsge(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  bool msb       = get_bit(d_size - 1);
-  bool msb_other = other.get_bit(d_size - 1);
+  bool msb       = get_msb();
+  bool msb_other = other.get_msb();
   if (msb && !msb_other)
   {
     return mk_false();
@@ -615,7 +627,7 @@ BitVector
 BitVector::bvashr(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  if (get_bit(d_size - 1))
+  if (get_msb())
   {
     return bvnot().bvshr(other).bvnot();
   }
@@ -658,7 +670,22 @@ BitVector
 BitVector::bvsdiv(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  // TODO
+  bool is_signed       = get_msb();
+  bool is_signed_other = other.get_msb();
+
+  if (is_signed && !is_signed_other)
+  {
+    return bvneg().bvudiv(other).bvneg();
+  }
+  if (!is_signed && is_signed_other)
+  {
+    return bvudiv(other.bvneg()).bvneg();
+  }
+  if (is_signed && is_signed_other)
+  {
+    return bvneg().bvudiv(other.bvneg());
+  }
+  return bvudiv(other);
 }
 
 BitVector
