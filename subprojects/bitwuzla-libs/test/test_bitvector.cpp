@@ -101,6 +101,16 @@ class TestBitVector : public ::testing::Test
   void test_concat(uint32_t size);
   void test_extend(Kind kind, uint32_t size);
   void test_extract(uint32_t size);
+  void test_is_uadd_overflow_aux(uint32_t size,
+                                 uint64_t a1,
+                                 uint64_t a2,
+                                 bool expected);
+  void test_is_uadd_overflow(uint32_t size);
+  void test_is_umul_overflow_aux(uint32_t size,
+                                 uint64_t a1,
+                                 uint64_t a2,
+                                 bool expected);
+  void test_is_umul_overflow(uint32_t size);
   void test_shift(Kind kind,
                   const std::string& to_shift,
                   const std::string& shift,
@@ -516,6 +526,80 @@ TestBitVector::test_extend(Kind kind, uint32_t size)
     uint32_t len        = size - n;
     ASSERT_EQ(bv_str.compare(0, len, res_str, n, len), 0);
     ASSERT_EQ(std::string(n, c).compare(0, n, res_str, 0, n), 0);
+  }
+}
+
+void
+TestBitVector::test_is_uadd_overflow_aux(uint32_t size,
+                                         uint64_t a1,
+                                         uint64_t a2,
+                                         bool expected)
+{
+  BitVector bv1(size, a1);
+  BitVector bv2(size, a2);
+  ASSERT_EQ(bv1.is_uadd_overflow(bv2), expected);
+}
+
+void
+TestBitVector::test_is_uadd_overflow(uint32_t size)
+{
+  switch (size)
+  {
+    case 1:
+      test_is_uadd_overflow_aux(size, 0, 0, false);
+      test_is_uadd_overflow_aux(size, 0, 1, false);
+      test_is_uadd_overflow_aux(size, 1, 1, true);
+      break;
+    case 7:
+      test_is_uadd_overflow_aux(size, 3, 6, false);
+      test_is_uadd_overflow_aux(size, 126, 2, true);
+      break;
+    case 31:
+      test_is_uadd_overflow_aux(size, 15, 78, false);
+      test_is_uadd_overflow_aux(size, 2147483647, 2147483650, true);
+      break;
+    case 33:
+      test_is_uadd_overflow_aux(size, 15, 78, false);
+      test_is_uadd_overflow_aux(size, 4294967295, 4294967530, true);
+      break;
+    default: assert(false);
+  }
+}
+
+void
+TestBitVector::test_is_umul_overflow_aux(uint32_t size,
+                                         uint64_t a1,
+                                         uint64_t a2,
+                                         bool expected)
+{
+  BitVector bv1(size, a1);
+  BitVector bv2(size, a2);
+  ASSERT_EQ(bv1.is_umul_overflow(bv2), expected);
+}
+
+void
+TestBitVector::test_is_umul_overflow(uint32_t size)
+{
+  switch (size)
+  {
+    case 1:
+      test_is_umul_overflow_aux(size, 0, 0, false);
+      test_is_umul_overflow_aux(size, 0, 1, false);
+      test_is_umul_overflow_aux(size, 1, 1, false);
+      break;
+    case 7:
+      test_is_umul_overflow_aux(size, 3, 6, false);
+      test_is_umul_overflow_aux(size, 124, 2, true);
+      break;
+    case 31:
+      test_is_umul_overflow_aux(size, 15, 78, false);
+      test_is_umul_overflow_aux(size, 1073742058, 2, true);
+      break;
+    case 33:
+      test_is_umul_overflow_aux(size, 15, 78, false);
+      test_is_umul_overflow_aux(size, 4294967530, 4294967530, true);
+      break;
+    default: assert(false);
   }
 }
 
@@ -1947,6 +2031,22 @@ TEST_F(TestBitVector, extract)
 }
 
 TEST_F(TestBitVector, implies) { test_binary(IMPLIES, 1); }
+
+TEST_F(TestBitVector, is_uadd_overflow)
+{
+  test_is_uadd_overflow(1);
+  test_is_uadd_overflow(7);
+  test_is_uadd_overflow(31);
+  test_is_uadd_overflow(33);
+}
+
+TEST_F(TestBitVector, is_umul_overflow)
+{
+  test_is_umul_overflow(1);
+  test_is_umul_overflow(7);
+  test_is_umul_overflow(31);
+  test_is_umul_overflow(33);
+}
 
 TEST_F(TestBitVector, mul)
 {

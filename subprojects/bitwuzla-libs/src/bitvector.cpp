@@ -290,14 +290,30 @@ BitVector::is_max_signed() const
 bool
 BitVector::is_uadd_overflow(const BitVector& other) const
 {
-  // TODO
-  return false;
+  assert(d_size == other.d_size);
+  mpz_t add;
+  mpz_init(add);
+  mpz_add(add, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_fdiv_q_2exp(add, add, d_size);
+  bool res = mpz_cmp_ui(add, 0) != 0;
+  mpz_clear(add);
+  return res;
 }
 
 bool
 BitVector::is_umul_overflow(const BitVector& other) const
 {
-  // TODO
+  assert(d_size == other.d_size);
+  if (d_size > 1)
+  {
+    mpz_t mul;
+    mpz_init(mul);
+    mpz_mul(mul, d_val->d_mpz, other.d_val->d_mpz);
+    mpz_fdiv_q_2exp(mul, mul, d_size);
+    bool res = mpz_cmp_ui(mul, 0) != 0;
+    mpz_clear(mul);
+    return res;
+  }
   return false;
 }
 
