@@ -615,7 +615,11 @@ BitVector
 BitVector::bvashr(const BitVector& other) const
 {
   assert(d_size == other.d_size);
-  // TODO
+  if (get_bit(d_size - 1))
+  {
+    return bvnot().bvshr(other).bvnot();
+  }
+  return bvshr(other);
 }
 
 BitVector
