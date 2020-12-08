@@ -1002,6 +1002,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
         BZLA_PUSH_STACK(work_stack, real_cur);
       }
       else if (bzla_node_is_apply(real_cur)
+               && bzla_node_is_lambda(real_cur->e[0])
                && (bzla_node_is_fp(bzla, real_cur)
                    || bzla_node_is_rm(bzla, real_cur)
                    || argument_needs_word_blast(bzla, real_cur->e[1])))

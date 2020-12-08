@@ -1,0 +1,6 @@
+(set-logic QF_BVFP)
+(define-fun cast_fp32_sint16 ((f Float32)) (_ BitVec 32) ((_ sign_extend 16) ((_ extract 15 0) ((_ fp.to_sbv 40) RTZ f))))
+(declare-fun v_4$$0 () Float32)
+(assert (= (_ bv0 32) (cast_fp32_sint16 v_4$$0)))
+(check-sat)
+(exit)
