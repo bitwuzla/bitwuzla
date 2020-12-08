@@ -94,6 +94,7 @@ class TestBitVector : public ::testing::Test
   void test_count(uint32_t size, bool leading, bool zeros);
   void test_count_aux(const std::string& val, bool leading, bool zeros);
   void test_unary(Kind kind, uint32_t size);
+  void test_binary(Kind kind, uint32_t size);
   void test_concat(uint32_t size);
   std::unique_ptr<RNG> d_rng;
 };
@@ -521,6 +522,58 @@ TestBitVector::test_unary(TestBitVector::Kind kind, uint32_t size)
       default: assert(false);
     }
     uint64_t bres = res.to_uint64();
+    ASSERT_EQ(ares, bres);
+  }
+}
+
+void
+TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
+{
+  BitVector zero = BitVector::mk_zero(size);
+
+  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  {
+    uint64_t ares, bres;
+    BitVector res;
+    BitVector bv1(size, *d_rng);
+    BitVector bv2(size, *d_rng);
+    uint64_t a1 = bv1.to_uint64();
+    uint64_t a2 = bv2.to_uint64();
+    /* test for x = 0 explicitly */
+    switch (kind)
+    {
+      case ADD:
+        res  = zero.bvadd(bv2);
+        ares = _add(0, a2, size);
+        break;
+
+      default: assert(false);
+    }
+    bres = res.to_uint64();
+    ASSERT_EQ(ares, bres);
+    /* test for y = 0 explicitly */
+    switch (kind)
+    {
+      case ADD:
+        res  = bv1.bvadd(zero);
+        ares = _add(a1, 0, size);
+        break;
+
+      default: assert(false);
+    }
+    bres = res.to_uint64();
+    ASSERT_EQ(ares, bres);
+    /* test x, y random */
+    switch (kind)
+    {
+      case ADD:
+        res  = bv1.bvadd(bv2);
+        ares = _add(a1, a2, size);
+        break;
+
+      default: assert(false);
+    }
+    bres = res.to_uint64();
     ASSERT_EQ(ares, bres);
   }
 }
@@ -1264,7 +1317,7 @@ TEST_F(TestBitVector, neg)
   test_unary(NEG, 33);
 }
 
-TEST_F(TestBitVector, not)
+TEST_F(TestBitVector, not )
 {
   test_unary(NOT, 1);
   test_unary(NOT, 7);
@@ -1286,6 +1339,14 @@ TEST_F(TestBitVector, redor)
   test_unary(REDOR, 7);
   test_unary(REDOR, 31);
   test_unary(REDOR, 33);
+}
+
+TEST_F(TestBitVector, add)
+{
+  test_binary(ADD, 1);
+  test_binary(ADD, 7);
+  test_binary(ADD, 31);
+  test_binary(ADD, 33);
 }
 
 TEST_F(TestBitVector, concat)
