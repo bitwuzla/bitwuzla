@@ -462,25 +462,27 @@ BitVector::bvne(const BitVector& other) const
 BitVector
 BitVector::bvult(const BitVector& other) const
 {
-  // TODO
+  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) < 0 ? mk_true() : mk_false();
 }
 
 BitVector
 BitVector::bvule(const BitVector& other) const
 {
-  // TODO
+  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) <= 0 ? mk_true()
+                                                        : mk_false();
 }
 
 BitVector
 BitVector::bvugt(const BitVector& other) const
 {
-  // TODO
+  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) > 0 ? mk_true() : mk_false();
 }
 
 BitVector
 BitVector::bvuge(const BitVector& other) const
 {
-  // TODO
+  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) >= 0 ? mk_true()
+                                                        : mk_false();
 }
 
 BitVector

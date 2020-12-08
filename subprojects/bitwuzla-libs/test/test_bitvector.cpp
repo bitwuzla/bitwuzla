@@ -587,6 +587,26 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _sub(0, a2, size);
         break;
 
+      case ULT:
+        res  = zero.bvult(bv2);
+        ares = _ult(0, a2, size);
+        break;
+
+      case ULE:
+        res  = zero.bvule(bv2);
+        ares = _ule(0, a2, size);
+        break;
+
+      case UGT:
+        res  = zero.bvugt(bv2);
+        ares = _ugt(0, a2, size);
+        break;
+
+      case UGE:
+        res  = zero.bvuge(bv2);
+        ares = _uge(0, a2, size);
+        break;
+
       case XOR:
         res  = zero.bvxor(bv2);
         ares = _xor(0, a2, size);
@@ -649,6 +669,26 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
         ares = _sub(a1, 0, size);
         break;
 
+      case ULT:
+        res  = bv1.bvult(zero);
+        ares = _ult(a1, 0, size);
+        break;
+
+      case ULE:
+        res  = bv1.bvule(zero);
+        ares = _ule(a1, 0, size);
+        break;
+
+      case UGT:
+        res  = bv1.bvugt(zero);
+        ares = _ugt(a1, 0, size);
+        break;
+
+      case UGE:
+        res  = bv1.bvuge(zero);
+        ares = _uge(a1, 0, size);
+        break;
+
       case XOR:
         res  = bv1.bvxor(zero);
         ares = _xor(a1, 0, size);
@@ -709,6 +749,26 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
       case SUB:
         res  = bv1.bvsub(bv2);
         ares = _sub(a1, a2, size);
+        break;
+
+      case ULT:
+        res  = bv1.bvult(bv2);
+        ares = _ult(a1, a2, size);
+        break;
+
+      case ULE:
+        res  = bv1.bvule(bv2);
+        ares = _ule(a1, a2, size);
+        break;
+
+      case UGT:
+        res  = bv1.bvugt(bv2);
+        ares = _ugt(a1, a2, size);
+        break;
+
+      case UGE:
+        res  = bv1.bvuge(bv2);
+        ares = _uge(a1, a2, size);
         break;
 
       case XOR:
@@ -1564,6 +1624,38 @@ TEST_F(TestBitVector, sub)
   test_binary(SUB, 7);
   test_binary(SUB, 31);
   test_binary(SUB, 33);
+}
+
+TEST_F(TestBitVector, ult)
+{
+  test_binary(ULT, 1);
+  test_binary(ULT, 7);
+  test_binary(ULT, 31);
+  test_binary(ULT, 33);
+}
+
+TEST_F(TestBitVector, ule)
+{
+  test_binary(ULE, 1);
+  test_binary(ULE, 7);
+  test_binary(ULE, 31);
+  test_binary(ULE, 33);
+}
+
+TEST_F(TestBitVector, ugt)
+{
+  test_binary(UGT, 1);
+  test_binary(UGT, 7);
+  test_binary(UGT, 31);
+  test_binary(UGT, 33);
+}
+
+TEST_F(TestBitVector, uge)
+{
+  test_binary(UGE, 1);
+  test_binary(UGE, 7);
+  test_binary(UGE, 31);
+  test_binary(UGE, 33);
 }
 
 TEST_F(TestBitVector, xor)
