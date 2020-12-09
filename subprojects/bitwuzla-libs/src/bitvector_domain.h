@@ -85,13 +85,13 @@ class BitVectorDomain
    * Bits that are not fixed are set to 0. If a bit is '1' in 'lo' and '0' in
    * 'hi', the domain is invalid.
    */
-  BitVector lo;
+  BitVector d_lo;
   /**
    * The upper bound of this bit-vector domain.
    * Bits that are not fixed are set to 1. If a bit is '1' in 'lo' and '0' in
    * 'hi', the domain is invalid.
    */
-  BitVector hi;
+  BitVector d_hi;
 };
 
 }  // namespace bzlals

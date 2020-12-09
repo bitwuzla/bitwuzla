@@ -9,6 +9,8 @@
 
 namespace bzlals {
 
+/* -------------------------------------------------------------------------- */
+
 class TestBitVector : public ::testing::Test
 {
  protected:
@@ -1400,6 +1402,8 @@ TestBitVector::test_shift(Kind kind,
   ASSERT_EQ(res.compare(bv_expected), 0);
 }
 
+/* -------------------------------------------------------------------------- */
+
 TEST_F(TestBitVector, ctor_dtor)
 {
   ASSERT_NO_FATAL_FAILURE(BitVector(1));
@@ -2778,5 +2782,7 @@ TEST_F(TestBitVector, zext)
   test_extend(ZEXT, 31);
   test_extend(ZEXT, 33);
 }
+
+/* -------------------------------------------------------------------------- */
 
 }  // namespace bzlals

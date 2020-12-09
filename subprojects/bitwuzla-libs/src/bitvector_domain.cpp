@@ -5,8 +5,8 @@
 namespace bzlals {
 
 BitVectorDomain::BitVectorDomain(uint32_t size)
+    : d_lo(BitVector::mk_zero(size)), d_hi(BitVector::mk_ones(size))
 {
-  // TODO
 }
 
 BitVectorDomain::BitVectorDomain(const BitVector &lo, const BitVector &hi)
