@@ -133,4 +133,24 @@ TEST_F(TestBitVectorDomain, is_fixed_bit)
   }
 }
 
+TEST_F(TestBitVectorDomain, is_fixed_bit_true)
+{
+  BitVectorDomain d(BitVector(4, "1000"), BitVector(4, "1110"));
+  ASSERT_TRUE(d.is_fixed_bit_true(3));
+  for (uint32_t i = 0; i < 3; ++i)
+  {
+    ASSERT_FALSE(d.is_fixed_bit_true(i));
+  }
+}
+
+TEST_F(TestBitVectorDomain, is_fixed_bit_false)
+{
+  BitVectorDomain d(BitVector(4, "1000"), BitVector(4, "1110"));
+  ASSERT_TRUE(d.is_fixed_bit_false(0));
+  for (uint32_t i = 1; i < 4; ++i)
+  {
+    ASSERT_FALSE(d.is_fixed_bit_false(i));
+  }
+}
+
 }  // namespace bzlals
