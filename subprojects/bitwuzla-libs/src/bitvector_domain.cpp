@@ -49,7 +49,8 @@ BitVectorDomain::~BitVectorDomain()
 uint32_t
 BitVectorDomain::get_size() const
 {
-  // TODO
+  assert(d_lo.get_size() == d_hi.get_size());
+  return d_lo.get_size();
 }
 
 bool
