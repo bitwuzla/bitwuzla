@@ -110,6 +110,15 @@ BitVectorDomain::match_fixed_bits(const BitVector &bv) const
   return bv.bvand(d_hi).bvor(d_lo).compare(bv) == 0;
 }
 
+BitVectorDomain &
+BitVectorDomain::operator=(const BitVectorDomain &other)
+{
+  if (&other == this) return *this;
+  d_lo = other.d_lo;
+  d_hi = other.d_hi;
+  return *this;
+}
+
 bool
 BitVectorDomain::operator==(const BitVectorDomain &other) const
 {
@@ -119,7 +128,7 @@ BitVectorDomain::operator==(const BitVectorDomain &other) const
 BitVectorDomain
 BitVectorDomain::bvnot() const
 {
-  // TODO
+  return BitVectorDomain(d_hi.bvnot(), d_lo.bvnot());
 }
 
 BitVectorDomain

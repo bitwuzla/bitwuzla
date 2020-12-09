@@ -53,6 +53,8 @@ class BitVectorDomain
    */
   bool match_fixed_bits(const BitVector &bv) const;
 
+  /** Copy assignment operator. */
+  BitVectorDomain &operator=(const BitVectorDomain &other);
   /** Equality comparison operator. */
   bool operator==(const BitVectorDomain &other) const;
 

@@ -1,4 +1,5 @@
 #include <bitset>
+#include <cmath>
 
 #include "bitvector_domain.h"
 #include "gmpmpz.h"
@@ -9,8 +10,52 @@ namespace bzlals {
 class TestBitVectorDomain : public ::testing::Test
 {
  protected:
-  void test_match_fixed_bits(const std::string& value);
+  static void gen_all_combinations(size_t size,
+                                   const std::vector<char> &bits,
+                                   std::vector<std::string> &values);
+  static void gen_xvalues(uint32_t bw, std::vector<std::string> &values);
+  static void gen_values(uint32_t bw, std::vector<std::string> &values);
+  void test_match_fixed_bits(const std::string &value);
 };
+
+void
+TestBitVectorDomain::gen_all_combinations(size_t size,
+                                          const std::vector<char> &bits,
+                                          std::vector<std::string> &values)
+{
+  size_t num_values;
+  size_t num_bits = bits.size();
+  std::vector<size_t> psizes;
+
+  num_values = pow(num_bits, size);
+  for (size_t i = 0; i < size; ++i)
+  {
+    psizes.push_back(num_values / pow(num_bits, i + 1));
+  }
+
+  /* Generate all combinations of 'bits'. */
+  for (size_t row = 0; row < num_values; ++row)
+  {
+    std::string val;
+    for (size_t col = 0; col < size; ++col)
+    {
+      val += bits[(row / psizes[col]) % num_bits];
+    }
+    values.push_back(val);
+  }
+}
+
+void
+TestBitVectorDomain::gen_xvalues(uint32_t bw, std::vector<std::string> &values)
+{
+  gen_all_combinations(bw, {'x', '0', '1'}, values);
+}
+
+void
+TestBitVectorDomain::gen_values(uint32_t bw, std::vector<std::string> &values)
+{
+  gen_all_combinations(bw, {'0', '1'}, values);
+}
 
 void
 TestBitVectorDomain::test_match_fixed_bits(const std::string& value)
@@ -230,6 +275,44 @@ TEST_F(TestBitVectorDomain, eq)
   ASSERT_TRUE(d2 == d3);
   ASSERT_FALSE(d1 == d2);
   ASSERT_FALSE(d1 == d3);
+}
+
+TEST_F(TestBitVectorDomain, not )
+{
+  std::vector<std::string> consts;
+  gen_xvalues(3, consts);
+
+  for (const std::string &c : consts)
+  {
+    for (int32_t i = 2; i >= 0; --i)
+    {
+      for (int32_t j = i; j >= 0; --j)
+      {
+        BitVectorDomain d(c);
+        BitVectorDomain dnot = d.bvnot();
+        ASSERT_EQ(d.get_size(), dnot.get_size());
+        for (uint32_t k = 0, n = d.get_size(); k < n; ++k)
+        {
+          if (c[n - k - 1] == 'x')
+          {
+            ASSERT_FALSE(d.is_fixed_bit(k));
+            ASSERT_FALSE(dnot.is_fixed_bit(k));
+          }
+          else if (c[n - k - 1] == '1')
+          {
+            ASSERT_TRUE(d.is_fixed_bit_true(k));
+            ASSERT_TRUE(dnot.is_fixed_bit_false(k));
+          }
+          else
+          {
+            assert(c[n - k - 1] == '0');
+            ASSERT_TRUE(d.is_fixed_bit_false(k));
+            ASSERT_TRUE(dnot.is_fixed_bit_true(k));
+          }
+        }
+      }
+    }
+  }
 }
 
 }  // namespace bzlals
