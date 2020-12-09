@@ -7,6 +7,10 @@
 
 namespace bzlals {
 
+/**
+ * A GMP gmp_randstate_t wrapper.
+ * We use this to avoid having to include gmp headers in header files.
+ */
 struct GMPRandState
 {
   /** Constructor. */
