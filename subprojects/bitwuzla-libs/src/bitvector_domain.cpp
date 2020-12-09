@@ -107,7 +107,7 @@ BitVectorDomain::fix_bit(uint32_t idx, bool value)
 bool
 BitVectorDomain::match_fixed_bits(const BitVector &bv) const
 {
-  // TODO
+  return bv.bvand(d_hi).bvor(d_lo).compare(bv) == 0;
 }
 
 bool

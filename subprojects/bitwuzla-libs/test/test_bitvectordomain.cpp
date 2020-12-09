@@ -1,3 +1,5 @@
+#include <bitset>
+
 #include "bitvector_domain.h"
 #include "gmpmpz.h"
 #include "gtest/gtest.h"
@@ -6,7 +8,31 @@ namespace bzlals {
 
 class TestBitVectorDomain : public ::testing::Test
 {
+ protected:
+  void test_match_fixed_bits(const std::string& value);
 };
+
+void
+TestBitVectorDomain::test_match_fixed_bits(const std::string& value)
+{
+  assert(value.size() == 3);
+  BitVectorDomain d(value);
+  for (uint32_t i = 0; i < (1u << 3); ++i)
+  {
+    bool expected      = true;
+    std::string bv_val = std::bitset<3>(i).to_string();
+    BitVector bv(3, bv_val);
+    for (uint32_t j = 0; j < 3; ++j)
+    {
+      if ((d.is_fixed_bit_false(j) && bv_val[2 - j] != '0')
+          || (d.is_fixed_bit_true(j) && bv_val[2 - j] != '1'))
+      {
+        expected = false;
+      }
+    }
+    ASSERT_EQ(d.match_fixed_bits(bv), expected);
+  }
+}
 
 TEST_F(TestBitVectorDomain, ctor_dtor)
 {
@@ -178,6 +204,24 @@ TEST_F(TestBitVectorDomain, fix_bit)
   ASSERT_DEATH(d.fix_bit(5, true), "< get_size");
 }
 
+TEST_F(TestBitVectorDomain, match_fixed_bits)
+{
+  for (uint32_t i = 0; i < 3; ++i)
+  {
+    for (uint32_t j = 0; j < 3; ++j)
+    {
+      for (uint32_t k = 0; k < 3; ++k)
+      {
+        std::stringstream ss;
+        ss << (i == 0 ? '0' : (i == 1 ? '1' : 'x'))
+           << (j == 0 ? '0' : (j == 1 ? '1' : 'x'))
+           << (k == 0 ? '0' : (k == 1 ? '1' : 'x'));
+        test_match_fixed_bits(ss.str());
+      }
+    }
+  }
+}
+
 TEST_F(TestBitVectorDomain, eq)
 {
   BitVectorDomain d1("xxxx");
@@ -187,4 +231,5 @@ TEST_F(TestBitVectorDomain, eq)
   ASSERT_FALSE(d1 == d2);
   ASSERT_FALSE(d1 == d3);
 }
+
 }  // namespace bzlals
