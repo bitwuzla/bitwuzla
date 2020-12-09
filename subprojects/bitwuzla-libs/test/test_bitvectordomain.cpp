@@ -131,6 +131,7 @@ TEST_F(TestBitVectorDomain, is_fixed_bit)
   {
     ASSERT_FALSE(d.is_fixed_bit(i));
   }
+  ASSERT_DEATH(d.is_fixed_bit(5), "< get_size");
 }
 
 TEST_F(TestBitVectorDomain, is_fixed_bit_true)
@@ -141,6 +142,7 @@ TEST_F(TestBitVectorDomain, is_fixed_bit_true)
   {
     ASSERT_FALSE(d.is_fixed_bit_true(i));
   }
+  ASSERT_DEATH(d.is_fixed_bit(5), "< get_size");
 }
 
 TEST_F(TestBitVectorDomain, is_fixed_bit_false)
@@ -151,6 +153,38 @@ TEST_F(TestBitVectorDomain, is_fixed_bit_false)
   {
     ASSERT_FALSE(d.is_fixed_bit_false(i));
   }
+  ASSERT_DEATH(d.is_fixed_bit(5), "< get_size");
 }
 
+TEST_F(TestBitVectorDomain, fix_bit)
+{
+  BitVectorDomain d("xxxx");
+  ASSERT_NO_FATAL_FAILURE(d.fix_bit(0, true));
+  ASSERT_EQ(d, BitVectorDomain("xxx1"));
+  ASSERT_NO_FATAL_FAILURE(d.fix_bit(0, false));
+  ASSERT_EQ(d, BitVectorDomain("xxx0"));
+  ASSERT_NO_FATAL_FAILURE(d.fix_bit(1, true));
+  ASSERT_EQ(d, BitVectorDomain("xx10"));
+  ASSERT_NO_FATAL_FAILURE(d.fix_bit(1, false));
+  ASSERT_EQ(d, BitVectorDomain("xx00"));
+  ASSERT_NO_FATAL_FAILURE(d.fix_bit(2, true));
+  ASSERT_EQ(d, BitVectorDomain("x100"));
+  ASSERT_NO_FATAL_FAILURE(d.fix_bit(2, false));
+  ASSERT_EQ(d, BitVectorDomain("x000"));
+  ASSERT_NO_FATAL_FAILURE(d.fix_bit(3, true));
+  ASSERT_EQ(d, BitVectorDomain("1000"));
+  ASSERT_NO_FATAL_FAILURE(d.fix_bit(3, false));
+  ASSERT_EQ(d, BitVectorDomain("0000"));
+  ASSERT_DEATH(d.fix_bit(5, true), "< get_size");
+}
+
+TEST_F(TestBitVectorDomain, eq)
+{
+  BitVectorDomain d1("xxxx");
+  BitVectorDomain d2("x10x");
+  BitVectorDomain d3("x10x");
+  ASSERT_TRUE(d2 == d3);
+  ASSERT_FALSE(d1 == d2);
+  ASSERT_FALSE(d1 == d3);
+}
 }  // namespace bzlals
