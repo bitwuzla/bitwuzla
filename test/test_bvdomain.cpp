@@ -18,7 +18,7 @@ extern "C" {
 class TestBvDomain : public TestBvDomainCommon
 {
  protected:
-  void test_is_consistent(const char *d_val)
+  void test_check_fixed_bits(const char *d_val)
   {
     assert(strlen(d_val) == 3);
     BzlaBvDomain *d = bzla_bvdomain_new_from_char(d_mm, d_val);
@@ -35,7 +35,7 @@ class TestBvDomain : public TestBvDomainCommon
           expected = false;
         }
       }
-      ASSERT_EQ(bzla_bvdomain_is_consistent(d, bv), expected);
+      ASSERT_EQ(bzla_bvdomain_check_fixed_bits(d_mm, d, bv), expected);
       bzla_bv_free(d_mm, bv);
     }
     bzla_bvdomain_free(d_mm, d);
@@ -188,7 +188,7 @@ TEST_F(TestBvDomain, new_fixed)
   bzla_bv_free(d_mm, bv);
 }
 
-TEST_F(TestBvDomain, is_consistent)
+TEST_F(TestBvDomain, check_fixed_bits)
 {
   for (uint32_t i = 0; i < 3; ++i)
   {
@@ -200,7 +200,7 @@ TEST_F(TestBvDomain, is_consistent)
         ss << (i == 0 ? '0' : (i == 1 ? '1' : 'x'))
            << (j == 0 ? '0' : (j == 1 ? '1' : 'x'))
            << (k == 0 ? '0' : (k == 1 ? '1' : 'x'));
-        test_is_consistent(ss.str().c_str());
+        test_check_fixed_bits(ss.str().c_str());
       }
     }
   }

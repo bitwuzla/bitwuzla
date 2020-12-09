@@ -112,13 +112,6 @@ bool bzla_bvdomain_is_fixed_bit_true(const BzlaBvDomain *d, uint32_t pos);
 bool bzla_bvdomain_is_fixed_bit_false(const BzlaBvDomain *d, uint32_t pos);
 
 /**
- * Check if fixed bit of given domain are consistent with given bit-vector,
- * i.e., if a bit is fixed to a value in the domain, it must have the same
- * value in the bit-vector.
- */
-bool bzla_bvdomain_is_consistent(BzlaBvDomain *d, BzlaBitVector *bv);
-
-/**
  * Check if all fixed bits of domain 'd' match with their corresponding bits
  * of bit-vector 'bv'.
  */

@@ -267,34 +267,6 @@ bzla_bvdomain_check_fixed_bits(BzlaMemMgr *mm,
 
 /* -------------------------------------------------------------------------- */
 
-/* Check if fixed bit of given domain are consistent with given bit-vector,
- * i.e., if a bit is fixed to a value in the domain, it must have the same
- * value in the bit-vector. */
-bool
-bzla_bvdomain_is_consistent(BzlaBvDomain *d, BzlaBitVector *bv)
-{
-  assert(d);
-  assert(bv);
-
-  uint32_t i, bw;
-
-  bw = bzla_bv_get_width(bv);
-  assert(bzla_bv_get_width(d->lo) == bw);
-  assert(bzla_bv_get_width(d->hi) == bw);
-
-  for (i = 0; i < bw; i++)
-  {
-    if (bzla_bvdomain_is_fixed_bit(d, i)
-        && bzla_bv_get_bit(d->lo, i) != bzla_bv_get_bit(bv, i))
-    {
-      return false;
-    }
-  }
-  return true;
-}
-
-/* -------------------------------------------------------------------------- */
-
 char *
 bzla_bvdomain_to_char(BzlaMemMgr *mm, const BzlaBvDomain *d)
 {
