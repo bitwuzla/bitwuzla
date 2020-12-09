@@ -68,7 +68,7 @@ BitVectorDomain::is_fixed() const
 bool
 BitVectorDomain::has_fixed_bits() const
 {
-  // TODO
+  return d_lo.bvxnor(d_hi).bvredor().is_true();
 }
 
 bool

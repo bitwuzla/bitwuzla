@@ -96,4 +96,30 @@ TEST_F(TestBitVectorDomain, is_fixed)
   ASSERT_FALSE(
       BitVectorDomain(BitVector(4, "1001"), BitVector(4, "0110")).is_fixed());
 }
+
+TEST_F(TestBitVectorDomain, has_fixed_bits)
+{
+  ASSERT_FALSE(BitVectorDomain(1).has_fixed_bits());
+  ASSERT_FALSE(BitVectorDomain(10).has_fixed_bits());
+  ASSERT_TRUE(
+      BitVectorDomain(BitVector(10, 4), BitVector(10, 5)).has_fixed_bits());
+  ASSERT_TRUE(BitVectorDomain("00000000").has_fixed_bits());
+  ASSERT_TRUE(BitVectorDomain("11111111").has_fixed_bits());
+  ASSERT_TRUE(BitVectorDomain("10110100").has_fixed_bits());
+  ASSERT_TRUE(BitVectorDomain("x01xxxxx").has_fixed_bits());
+  ASSERT_FALSE(BitVectorDomain("xxxxxxxx").has_fixed_bits());
+  ASSERT_TRUE(BitVectorDomain(BitVector(4, "0000")).has_fixed_bits());
+  ASSERT_TRUE(BitVectorDomain(BitVector(8, "1010")).has_fixed_bits());
+  ASSERT_TRUE(BitVectorDomain(4, 0).has_fixed_bits());
+  ASSERT_TRUE(BitVectorDomain(8, 5).has_fixed_bits());
+  ASSERT_TRUE(BitVectorDomain(BitVectorDomain(8, 5)).has_fixed_bits());
+  ASSERT_FALSE(BitVectorDomain(BitVector(4, "1000"), BitVector(4, "0111"))
+                   .has_fixed_bits());
+  ASSERT_FALSE(BitVectorDomain(BitVector(4, "0100"), BitVector(4, "1011"))
+                   .has_fixed_bits());
+  ASSERT_FALSE(BitVectorDomain(BitVector(4, "0110"), BitVector(4, "1001"))
+                   .has_fixed_bits());
+  ASSERT_FALSE(BitVectorDomain(BitVector(4, "1001"), BitVector(4, "0110"))
+                   .has_fixed_bits());
+}
 }  // namespace bzlals
