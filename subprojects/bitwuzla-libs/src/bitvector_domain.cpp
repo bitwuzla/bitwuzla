@@ -56,7 +56,7 @@ BitVectorDomain::get_size() const
 bool
 BitVectorDomain::is_valid() const
 {
-  // TODO
+  return d_lo.bvnot().bvor(d_hi).is_ones();
 }
 
 bool
