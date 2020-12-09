@@ -62,7 +62,7 @@ BitVectorDomain::is_valid() const
 bool
 BitVectorDomain::is_fixed() const
 {
-  // TODO
+  return d_lo.compare(d_hi) == 0;
 }
 
 bool
