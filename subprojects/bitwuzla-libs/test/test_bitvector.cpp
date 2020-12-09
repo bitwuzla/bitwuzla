@@ -1685,6 +1685,7 @@ TEST_F(TestBitVector, set_get_flip_bit)
     bv.flip_bit(n);
     ASSERT_EQ(bv.get_bit(n), (((~vv) << 31) >> 31));
   }
+  ASSERT_DEATH(BitVector(5).get_bit(5), "< get_size");
 }
 
 TEST_F(TestBitVector, is_zero)

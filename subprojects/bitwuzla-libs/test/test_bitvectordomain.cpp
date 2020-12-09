@@ -122,4 +122,15 @@ TEST_F(TestBitVectorDomain, has_fixed_bits)
   ASSERT_FALSE(BitVectorDomain(BitVector(4, "1001"), BitVector(4, "0110"))
                    .has_fixed_bits());
 }
+
+TEST_F(TestBitVectorDomain, is_fixed_bit)
+{
+  BitVectorDomain d(BitVector(4, "1000"), BitVector(4, "1111"));
+  ASSERT_TRUE(d.is_fixed_bit(3));
+  for (uint32_t i = 0; i < 3; ++i)
+  {
+    ASSERT_FALSE(d.is_fixed_bit(i));
+  }
+}
+
 }  // namespace bzlals

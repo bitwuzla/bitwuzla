@@ -74,7 +74,8 @@ BitVectorDomain::has_fixed_bits() const
 bool
 BitVectorDomain::is_fixed_bit(uint32_t idx)
 {
-  // TODO
+  assert(idx < get_size());
+  return d_lo.get_bit(idx) == d_hi.get_bit(idx);
 }
 
 bool

@@ -207,6 +207,7 @@ BitVector::signed_compare(const BitVector& other) const
 bool
 BitVector::get_bit(uint32_t idx) const
 {
+  assert(idx < get_size());
   return mpz_tstbit(d_val->d_mpz, idx);
 }
 
