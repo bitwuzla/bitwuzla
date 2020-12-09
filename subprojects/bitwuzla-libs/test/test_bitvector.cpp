@@ -1414,6 +1414,7 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_NO_FATAL_FAILURE(BitVector(16, 123412341234));
   ASSERT_DEATH(BitVector(0), "> 0");
   ASSERT_DEATH(BitVector(2, "101010"), "<= size");
+  ASSERT_DEATH(BitVector(2, ""), "empty");
   ASSERT_DEATH(BitVector(6, "123412"), "is_bin_str");
   ASSERT_DEATH(BitVector(0, 1234), "> 0");
 }

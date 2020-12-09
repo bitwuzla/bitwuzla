@@ -115,6 +115,7 @@ BitVector::BitVector(uint32_t size, const RNG& rng) : BitVector(size)
 BitVector::BitVector(uint32_t size, const std::string& value) : d_size(size)
 {
   assert(value.size() <= size);
+  assert(!value.empty());
   assert(is_bin_str(value));
   d_val.reset(new GMPMpz(value));
 }

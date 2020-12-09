@@ -1,5 +1,8 @@
 #include "bitvector_domain.h"
 
+#include <algorithm>
+#include <cassert>
+
 #include "gmpmpz.h"
 
 namespace bzlals {
@@ -10,33 +13,37 @@ BitVectorDomain::BitVectorDomain(uint32_t size)
 }
 
 BitVectorDomain::BitVectorDomain(const BitVector &lo, const BitVector &hi)
+    : d_lo(lo), d_hi(hi)
 {
-  // TODO
+  assert(lo.get_size() == hi.get_size());
 }
 
 BitVectorDomain::BitVectorDomain(const std::string &value)
 {
-  // TODO
+  uint32_t size = value.size();
+  assert(size > 0);
+  std::string lo(value);
+  std::string hi(value);
+  std::replace(lo.begin(), lo.end(), 'x', '0');
+  std::replace(hi.begin(), hi.end(), 'x', '1');
+  d_lo = BitVector(size, lo);
+  d_hi = BitVector(size, hi);
 }
 
-BitVectorDomain::BitVectorDomain(const BitVector &bv)
-{
-  // TODO
-}
+BitVectorDomain::BitVectorDomain(const BitVector &bv) : d_lo(bv), d_hi(bv) {}
 
 BitVectorDomain::BitVectorDomain(uint32_t size, uint64_t value)
+    : BitVectorDomain(BitVector(size, value))
 {
-  // TODO
 }
 
 BitVectorDomain::BitVectorDomain(const BitVectorDomain &other)
+    : d_lo(other.d_lo), d_hi(other.d_hi)
 {
-  // TODO
 }
 
 BitVectorDomain::~BitVectorDomain()
 {
-  // TODO
 }
 
 uint32_t
