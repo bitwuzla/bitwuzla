@@ -315,4 +315,51 @@ TEST_F(TestBitVectorDomain, not )
   }
 }
 
+TEST_F(TestBitVectorDomain, shl)
+{
+  std::vector<std::string> consts;
+  gen_xvalues(3, consts);
+
+  for (const std::string &c : consts)
+  {
+    for (int32_t i = 2; i >= 0; --i)
+    {
+      for (int32_t j = i; j >= 0; --j)
+      {
+        BitVectorDomain d(c);
+        for (int32_t k = 0; k < 3; ++k)
+        {
+          BitVectorDomain dshl = d.bvshl(BitVector(3, k));
+          ASSERT_EQ(d.get_size(), dshl.get_size());
+          for (int32_t l = 0, n = d.get_size(); l < n; ++l)
+          {
+            if (l < k)
+            {
+              ASSERT_TRUE(dshl.is_fixed_bit_false(l));
+            }
+            else
+            {
+              if (c[n + k - l - 1] == 'x')
+              {
+                assert(!dshl.is_fixed_bit(l));
+                ASSERT_FALSE(dshl.is_fixed_bit(l));
+              }
+              else if (c[n + k - l - 1] == '1')
+              {
+                ASSERT_TRUE(dshl.is_fixed_bit_true(l));
+              }
+              else
+              {
+                assert(c[n + k - l - 1] == '0');
+                ASSERT_TRUE(dshl.is_fixed_bit_false(l));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  ASSERT_DEATH(BitVectorDomain(3).bvshl(BitVector(4)),
+               "get_size\\(\\) == get_size\\(\\)");
+}
 }  // namespace bzlals

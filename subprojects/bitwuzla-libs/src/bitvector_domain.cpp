@@ -134,7 +134,8 @@ BitVectorDomain::bvnot() const
 BitVectorDomain
 BitVectorDomain::bvshl(const BitVector &shift) const
 {
-  // TODO
+  assert(shift.get_size() == get_size());
+  return BitVectorDomain(d_lo.bvshl(shift), d_hi.bvshl(shift));
 }
 
 BitVectorDomain
