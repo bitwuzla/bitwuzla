@@ -144,6 +144,18 @@ BitVector::operator=(const BitVector& other)
   return *this;
 }
 
+bool
+BitVector::operator==(const BitVector& other)
+{
+  return compare(other) == 0;
+}
+
+bool
+BitVector::operator!=(const BitVector& other)
+{
+  return compare(other) != 0;
+}
+
 std::string
 BitVector::to_string() const
 {

@@ -72,6 +72,11 @@ class BitVector
   /** Copy assignment operator. */
   BitVector& operator=(const BitVector& other);
 
+  /** Equality comparison operator. */
+  bool operator==(const BitVector& other);
+  /** Disequality comparison operator. */
+  bool operator!=(const BitVector& other);
+
   /** Return a string representation of this bit-vector. */
   std::string to_string() const;
   /**

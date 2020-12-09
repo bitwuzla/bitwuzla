@@ -1456,6 +1456,7 @@ TEST_F(TestBitVector, compare)
     BitVector bv1(4, i);
     BitVector bv2(4, i);
     ASSERT_EQ(bv1.compare(bv2), 0);
+    ASSERT_TRUE(bv1 == bv2);
   }
 
   for (uint32_t i = 0; i < 15 - 1; ++i)
@@ -1464,6 +1465,8 @@ TEST_F(TestBitVector, compare)
     BitVector bv2(4, i + 1);
     ASSERT_LT(bv1.compare(bv2), 0);
     ASSERT_GT(bv2.compare(bv1), 0);
+    ASSERT_FALSE(bv1 == bv2);
+    ASSERT_TRUE(bv1 != bv2);
   }
 
   for (uint32_t i = 0, j = 0; i < 15; ++i)
@@ -1480,11 +1483,15 @@ TEST_F(TestBitVector, compare)
     {
       ASSERT_GT(bv1.compare(bv2), 0);
       ASSERT_LT(bv2.compare(bv1), 0);
+      ASSERT_FALSE(bv1 == bv2);
+      ASSERT_TRUE(bv1 != bv2);
     }
     if (j < k)
     {
       ASSERT_LT(bv1.compare(bv2), 0);
       ASSERT_GT(bv2.compare(bv1), 0);
+      ASSERT_FALSE(bv1 == bv2);
+      ASSERT_TRUE(bv1 != bv2);
     }
   }
   ASSERT_DEATH(BitVector(1).compare(BitVector(2)), "");
@@ -1497,6 +1504,7 @@ TEST_F(TestBitVector, signed_compare)
     BitVector bv1(4, i);
     BitVector bv2(4, i);
     ASSERT_EQ(bv1.signed_compare(bv2), 0);
+    ASSERT_TRUE(bv1 == bv2);
   }
 
   for (int32_t i = -8; i < 7 - 1; i++)
@@ -1505,6 +1513,8 @@ TEST_F(TestBitVector, signed_compare)
     BitVector bv2(4, i + 1);
     ASSERT_LT(bv1.signed_compare(bv2), 0);
     ASSERT_GT(bv2.signed_compare(bv1), 0);
+    ASSERT_FALSE(bv1 == bv2);
+    ASSERT_TRUE(bv1 != bv2);
   }
 
   for (int32_t i = 0, j = 0; i < 15; i++)
@@ -1523,11 +1533,15 @@ TEST_F(TestBitVector, signed_compare)
     {
       ASSERT_GT(bv1.signed_compare(bv2), 0);
       ASSERT_LT(bv2.signed_compare(bv1), 0);
+      ASSERT_FALSE(bv1 == bv2);
+      ASSERT_TRUE(bv1 != bv2);
     }
     if (j < k)
     {
       ASSERT_LT(bv1.signed_compare(bv2), 0);
       ASSERT_GT(bv2.signed_compare(bv1), 0);
+      ASSERT_FALSE(bv1 == bv2);
+      ASSERT_TRUE(bv1 != bv2);
     }
 
     {
@@ -1544,11 +1558,15 @@ TEST_F(TestBitVector, signed_compare)
       {
         ASSERT_GT(bv1.signed_compare(bv2), 0);
         ASSERT_LT(bv2.signed_compare(bv1), 0);
+        ASSERT_FALSE(bv1 == bv2);
+        ASSERT_TRUE(bv1 != bv2);
       }
       if (j < k)
       {
         ASSERT_LT(bv1.signed_compare(bv2), 0);
         ASSERT_GT(bv2.signed_compare(bv1), 0);
+        ASSERT_FALSE(bv1 == bv2);
+        ASSERT_TRUE(bv1 != bv2);
       }
     }
 
@@ -1566,11 +1584,15 @@ TEST_F(TestBitVector, signed_compare)
       {
         ASSERT_GT(bv1.signed_compare(bv2), 0);
         ASSERT_LT(bv2.signed_compare(bv1), 0);
+        ASSERT_FALSE(bv1 == bv2);
+        ASSERT_TRUE(bv1 != bv2);
       }
       if (j < k)
       {
         ASSERT_LT(bv1.signed_compare(bv2), 0);
         ASSERT_GT(bv2.signed_compare(bv1), 0);
+        ASSERT_FALSE(bv1 == bv2);
+        ASSERT_TRUE(bv1 != bv2);
       }
     }
 
@@ -1587,11 +1609,15 @@ TEST_F(TestBitVector, signed_compare)
       {
         ASSERT_GT(bv1.signed_compare(bv2), 0);
         ASSERT_LT(bv2.signed_compare(bv1), 0);
+        ASSERT_FALSE(bv1 == bv2);
+        ASSERT_TRUE(bv1 != bv2);
       }
       if (-j < -k)
       {
         ASSERT_LT(bv1.signed_compare(bv2), 0);
         ASSERT_GT(bv2.signed_compare(bv1), 0);
+        ASSERT_FALSE(bv1 == bv2);
+        ASSERT_TRUE(bv1 != bv2);
       }
     }
   }
