@@ -525,6 +525,7 @@ BitVector::bvugt(const BitVector& other) const
 BitVector
 BitVector::bvuge(const BitVector& other) const
 {
+  assert(d_size == other.d_size);
   return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) >= 0 ? mk_true()
                                                         : mk_false();
 }

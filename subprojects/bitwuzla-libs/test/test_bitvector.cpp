@@ -539,6 +539,8 @@ TestBitVector::test_is_uadd_overflow_aux(uint32_t size,
   BitVector bv1(size, a1);
   BitVector bv2(size, a2);
   ASSERT_EQ(bv1.is_uadd_overflow(bv2), expected);
+  ASSERT_DEATH(bv1.is_uadd_overflow(BitVector(size + 1, *d_rng)),
+               "d_size == other.d_size");
 }
 
 void
@@ -576,6 +578,8 @@ TestBitVector::test_is_umul_overflow_aux(uint32_t size,
   BitVector bv1(size, a1);
   BitVector bv2(size, a2);
   ASSERT_EQ(bv1.is_umul_overflow(bv2), expected);
+  ASSERT_DEATH(bv1.is_umul_overflow(BitVector(size + 1, *d_rng)),
+               "d_size == other.d_size");
 }
 
 void
@@ -621,6 +625,18 @@ TestBitVector::test_ite(uint32_t size)
     uint64_t b_res  = res.to_uint64();
     ASSERT_EQ(a_res, b_res);
   }
+  ASSERT_DEATH(
+      BitVector::bvite(
+          BitVector(8, *d_rng), BitVector(8, *d_rng), BitVector(8, *d_rng)),
+      "c.d_size == 1");
+  ASSERT_DEATH(
+      BitVector::bvite(
+          BitVector(1, *d_rng), BitVector(8, *d_rng), BitVector(16, *d_rng)),
+      "t.d_size == e.d_size");
+  ASSERT_DEATH(
+      BitVector::bvite(
+          BitVector(1, *d_rng), BitVector(16, *d_rng), BitVector(8, *d_rng)),
+      "t.d_size == e.d_size");
 }
 
 void
@@ -1021,6 +1037,117 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
     bres = res.to_uint64();
     ASSERT_EQ(ares, bres);
   }
+  /* death tests */
+  switch (kind)
+  {
+    case ADD:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvadd(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case AND:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvand(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case ASHR:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvashr(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case EQ:
+      ASSERT_DEATH(BitVector(size, *d_rng).bveq(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case IMPLIES:
+      ASSERT_DEATH(
+          BitVector(size, *d_rng).bvimplies(BitVector(size + 1, *d_rng)),
+          "d_size == other.d_size");
+      break;
+
+    case MUL:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvmul(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case NAND:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvnand(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case NE:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvne(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case NOR:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvnor(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case OR:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvor(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case SHL:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvshl(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case SHR:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvshr(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case SUB:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvsub(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case UDIV:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvudiv(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case ULT:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvult(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case ULE:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvule(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case UGT:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvugt(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case UGE:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvuge(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case UREM:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvurem(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case XOR:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvxor(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case XNOR:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvxnor(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    default: assert(false);
+  }
 }
 
 void
@@ -1157,6 +1284,41 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
     bres = res.to_uint64();
     ASSERT_EQ(ares, bres);
   }
+  /* death tests */
+  switch (kind)
+  {
+    case SDIV:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvsdiv(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case SLT:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvslt(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case SLE:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvsle(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case SGT:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvsgt(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case SGE:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvsge(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    case SREM:
+      ASSERT_DEATH(BitVector(size, *d_rng).bvsrem(BitVector(size + 1, *d_rng)),
+                   "d_size == other.d_size");
+      break;
+
+    default: assert(false);
+  }
 }
 
 void
@@ -1270,7 +1432,7 @@ TEST_F(TestBitVector, to_uint64)
     ASSERT_EQ(x, y);
   }
   ASSERT_NO_FATAL_FAILURE(BitVector(28).to_uint64());
-  ASSERT_DEATH(BitVector(128).to_uint64(), "");
+  ASSERT_DEATH(BitVector(128).to_uint64(), "d_size <= 64");
 }
 
 TEST_F(TestBitVector, compare)
@@ -1419,7 +1581,8 @@ TEST_F(TestBitVector, signed_compare)
       }
     }
   }
-  ASSERT_DEATH(BitVector(1).signed_compare(BitVector(2)), "");
+  ASSERT_DEATH(BitVector(1).signed_compare(BitVector(2)),
+               "d_size == other.d_size");
 }
 
 TEST_F(TestBitVector, is_true)
