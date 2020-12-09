@@ -145,6 +145,8 @@ class BitVector
   BitVector bvzext(uint32_t n) const;
   BitVector bvsext(uint32_t n) const;
 
+  BitVector bvmodinv() const;
+
  private:
   /**
    * Count leading zeros or ones.

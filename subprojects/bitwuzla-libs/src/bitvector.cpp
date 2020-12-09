@@ -770,6 +770,38 @@ BitVector::bvsext(uint32_t n) const
   return bvzext(n);
 }
 
+BitVector
+BitVector::bvmodinv() const
+{
+  assert(get_lsb());  // must be odd
+  BitVector res(d_size);
+  if (d_size == 1)
+  {
+    mpz_init_set_ui(res.d_val->d_mpz, 1);
+  }
+  else
+  {
+    mpz_t two;
+    mpz_init(two);
+    mpz_init(res.d_val->d_mpz);
+    mpz_setbit(two, d_size);
+    mpz_invert(res.d_val->d_mpz, d_val->d_mpz, two);
+    mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
+    mpz_clear(two);
+  }
+
+#ifndef NDEBUG
+  mpz_t ty;
+  assert(res.d_size == d_size);
+  mpz_init(ty);
+  mpz_mul(ty, d_val->d_mpz, res.d_val->d_mpz);
+  mpz_fdiv_r_2exp(ty, ty, d_size);
+  assert(!mpz_cmp_ui(ty, 1));
+  mpz_clear(ty);
+#endif
+  return res;
+}
+
 uint32_t
 BitVector::count_leading(bool zeros) const
 {

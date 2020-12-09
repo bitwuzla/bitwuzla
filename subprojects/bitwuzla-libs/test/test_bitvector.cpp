@@ -52,7 +52,8 @@ class TestBitVector : public ::testing::Test
     ZEXT,
   };
 
-  static constexpr uint32_t N_BITVEC_TESTS = 100000;
+  static constexpr uint32_t N_TESTS        = 100000;
+  static constexpr uint32_t N_MODINV_TESTS = 100000;
   void SetUp() override { d_rng.reset(new RNG(1234)); }
 
   static uint64_t _add(uint64_t x, uint64_t y, uint32_t size);
@@ -112,6 +113,7 @@ class TestBitVector : public ::testing::Test
                                  bool expected);
   void test_is_umul_overflow(uint32_t size);
   void test_ite(uint32_t size);
+  void test_modinv(uint32_t size);
   void test_shift(Kind kind,
                   const std::string& to_shift,
                   const std::string& shift,
@@ -501,7 +503,7 @@ TestBitVector::test_count(uint32_t size, bool leading, bool zeros)
 void
 TestBitVector::test_extend(Kind kind, uint32_t size)
 {
-  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint32_t n = d_rng->pick<uint32_t>(0, size - 1);
     BitVector bv(size - n, *d_rng);
@@ -611,7 +613,7 @@ TestBitVector::test_is_umul_overflow(uint32_t size)
 void
 TestBitVector::test_ite(uint32_t size)
 {
-  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     BitVector bv_cond(1, *d_rng);
     BitVector bv_then(size, *d_rng);
@@ -640,9 +642,21 @@ TestBitVector::test_ite(uint32_t size)
 }
 
 void
+TestBitVector::test_modinv(uint32_t size)
+{
+  for (uint32_t i = 0; i < N_MODINV_TESTS; ++i)
+  {
+    BitVector bv(size, *d_rng);
+    bv.set_bit(0, 1);  // must be odd
+    BitVector res = bv.bvmodinv();
+    ASSERT_TRUE(bv.bvmul(res).is_one());
+  }
+}
+
+void
 TestBitVector::test_unary(TestBitVector::Kind kind, uint32_t size)
 {
-  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint64_t ares;
     BitVector res;
@@ -692,7 +706,7 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
 {
   BitVector zero = BitVector::mk_zero(size);
 
-  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint64_t ares, bres;
     BitVector res;
@@ -1156,7 +1170,7 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
   assert(size < 64);
   BitVector zero = BitVector::mk_zero(size);
 
-  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     int64_t ares, bres;
     BitVector res;
@@ -1324,7 +1338,7 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
 void
 TestBitVector::test_concat(uint32_t size)
 {
-  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint32_t size1 = d_rng->pick<uint32_t>(1, size - 1);
     uint32_t size2 = size - size1;
@@ -1343,7 +1357,7 @@ TestBitVector::test_concat(uint32_t size)
 void
 TestBitVector::test_extract(uint32_t size)
 {
-  for (uint32_t i = 0; i < N_BITVEC_TESTS; ++i)
+  for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     BitVector bv(size, *d_rng);
     uint32_t lo = rand() % size;
@@ -1424,7 +1438,7 @@ TEST_F(TestBitVector, to_string)
 
 TEST_F(TestBitVector, to_uint64)
 {
-  for (uint64_t i = 0; i < N_BITVEC_TESTS; ++i)
+  for (uint64_t i = 0; i < N_TESTS; ++i)
   {
     uint64_t x = (d_rng->pick<uint64_t>() << 32) | d_rng->pick<uint64_t>();
     BitVector bv(64, x);
@@ -2232,6 +2246,14 @@ TEST_F(TestBitVector, is_umul_overflow)
 }
 
 TEST_F(TestBitVector, ite)
+{
+  test_ite(1);
+  test_ite(7);
+  test_ite(31);
+  test_ite(33);
+}
+
+TEST_F(TestBitVector, modinv)
 {
   test_ite(1);
   test_ite(7);
