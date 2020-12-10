@@ -1,6 +1,7 @@
 #include "bitvector.h"
 
 #include <cassert>
+#include <iostream>
 #include <sstream>
 
 #include "gmpmpz.h"
@@ -108,9 +109,58 @@ BitVector::BitVector(uint32_t size, const RNG& rng) : BitVector(size)
   mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, size);
 }
 
-// BitVector::BitVector(uint32_t size, RNG& rng, const BitVector& from, const
-// BitVector& to, bool is_signed = false){} BitVector::BitVector(uint32_t size,
-// RNG& rng, uint32_t idx_hi, uint32_t idx_lo){}
+BitVector::BitVector(uint32_t size,
+                     const RNG& rng,
+                     const BitVector& from,
+                     const BitVector& to,
+                     bool is_signed)
+    : BitVector(size)
+{
+  assert(is_signed || from.compare(to) <= 0);
+  assert(!is_signed || from.signed_compare(to) <= 0);
+  mpz_t _to;
+  if (is_signed)
+  {
+    BitVector sto   = to.bvsub(from);
+    BitVector sfrom = mk_zero(size);
+    mpz_init_set(_to, sto.d_val->d_mpz);
+    mpz_sub(_to, _to, sfrom.d_val->d_mpz);
+  }
+  else
+  {
+    mpz_init_set(_to, to.d_val->d_mpz);
+    mpz_sub(_to, _to, from.d_val->d_mpz);
+  }
+  mpz_add_ui(_to, _to, 1);
+  mpz_urandomm(d_val->d_mpz, rng.d_gmp_state->d_gmp_randstate, _to);
+  if (is_signed)
+  {
+    // add from to picked value
+    mpz_add(d_val->d_mpz, d_val->d_mpz, from.d_val->d_mpz);
+    mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
+  }
+  else
+  {
+    mpz_add(d_val->d_mpz, d_val->d_mpz, from.d_val->d_mpz);
+  }
+  mpz_clear(_to);
+}
+
+BitVector::BitVector(uint32_t size,
+                     const RNG& rng,
+                     uint32_t idx_hi,
+                     uint32_t idx_lo)
+    : BitVector(size, rng)
+{
+  for (uint32_t i = 0; i < idx_lo; ++i)
+  {
+    set_bit(i, false);
+  }
+  for (uint32_t i = idx_hi; i < d_size; ++i)
+  {
+    set_bit(i, false);
+  }
+}
 
 BitVector::BitVector(uint32_t size, const std::string& value) : d_size(size)
 {

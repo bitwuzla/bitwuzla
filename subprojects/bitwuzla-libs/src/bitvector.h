@@ -43,12 +43,26 @@ class BitVector
   BitVector(uint32_t size);
   /** Construct a random bit-vector of given size. */
   BitVector(uint32_t size, const RNG& rng);
-  // BitVector(uint32_t size,
-  //          const RNG& rng,
-  //          const BitVector& from,
-  //          const BitVector& to,
-  //          bool is_signed = false);
-  // BitVector(uint32_t size, const RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
+  /**
+   * Construct a random bit-vector of given size with the given range.
+   * size     : The size of the bit-vector.
+   * rng      : Random number generator.
+   * from     : Lower bound of given range (inclusive).
+   * to       : Upper bound of given range (inclusive).
+   * is_signed: True to interpret the given range as signed, else unsigned.
+   */
+  BitVector(uint32_t size,
+            const RNG& rng,
+            const BitVector& from,
+            const BitVector& to,
+            bool is_signed = false);
+
+  /**
+   * Construct a new bit-vector of given size and randomly set bits within given
+   * index range. Bits outside of given index range are initialized with zero.
+   */
+  BitVector(uint32_t size, const RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
+
   /**
    * Construct a bit-vector of given size from given binary string.
    * size : The bit-vector size, must be >= the length of 'value'.

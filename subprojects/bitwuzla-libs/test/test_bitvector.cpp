@@ -96,6 +96,7 @@ class TestBitVector : public ::testing::Test
   BitVector mk_ones(uint32_t size);
   BitVector mk_min_signed(uint32_t size);
   BitVector mk_max_signed(uint32_t size);
+  void test_ctor_random_bit_range(uint32_t size);
   void test_count(uint32_t size, bool leading, bool zeros);
   void test_count_aux(const std::string& val, bool leading, bool zeros);
   void test_unary(Kind kind, uint32_t size);
@@ -404,6 +405,40 @@ TestBitVector::mk_max_signed(uint32_t size)
   BitVector r(64, UINT64_MAX);
   BitVector l(size - 64, (((uint64_t) 1) << (size - 1 - 64)) - 1);
   return l.bvconcat(r);
+}
+
+void
+TestBitVector::test_ctor_random_bit_range(uint32_t size)
+{
+  for (uint32_t i = 0; i < N_TESTS; ++i)
+  {
+    uint32_t up, lo;
+    lo = d_rng->pick<uint32_t>(0, size - 1);
+    up = lo == size - 1 ? size - 1 : d_rng->pick<uint32_t>(lo + 1, size - 1);
+    BitVector bv1(size, *d_rng, up, lo);
+    BitVector bv2(size, *d_rng, up, lo);
+    BitVector bv3(size, *d_rng, up, lo);
+    for (uint32_t j = lo; j <= up; ++j)
+    {
+      if (bv1.get_bit(j) != bv2.get_bit(j) || bv1.get_bit(j) != bv3.get_bit(j)
+          || bv2.get_bit(j) != bv3.get_bit(j))
+      {
+        break;
+      }
+    }
+    for (uint32_t j = 0; j < lo; ++j)
+    {
+      assert(bv1.get_bit(j) == 0);
+      assert(bv2.get_bit(j) == 0);
+      assert(bv3.get_bit(j) == 0);
+    }
+    for (uint32_t j = up + 1; j < size; j++)
+    {
+      assert(bv1.get_bit(j) == 0);
+      assert(bv2.get_bit(j) == 0);
+      assert(bv3.get_bit(j) == 0);
+    }
+  }
 }
 
 void
@@ -1433,6 +1468,68 @@ TEST_F(TestBitVector, ctor_rand)
     BitVector bv3(size, *d_rng);
     assert(bv1.compare(bv2) || bv1.compare(bv3) || bv2.compare(bv3));
   }
+}
+
+TEST_F(TestBitVector, ctor_random_range)
+{
+  for (uint32_t size = 1; size <= 64; ++size)
+  {
+    BitVector from(size, *d_rng);
+    // from == to
+    BitVector bv1(size, *d_rng, from, from);
+    ASSERT_EQ(bv1.to_uint64(), from.to_uint64());
+    // from < to
+    BitVector to(size, *d_rng);
+    while (from.compare(to) == 0)
+    {
+      to = BitVector(size, *d_rng);
+    }
+    if (to.to_uint64() < from.to_uint64())
+    {
+      BitVector tmp = to;
+      to            = from;
+      from          = tmp;
+    }
+
+    BitVector bv2(size, *d_rng, from, to);
+    ASSERT_GE(bv2.to_uint64(), from.to_uint64());
+    ASSERT_LE(bv2.to_uint64(), to.to_uint64());
+  }
+}
+
+TEST_F(TestBitVector, ctor_random_signed_range)
+{
+  for (uint32_t size = 1; size <= 64; size++)
+  {
+    BitVector from(size, *d_rng);
+    // from == to
+    BitVector bv1(size, *d_rng, from, from, true);
+    assert(bv1.to_uint64() == from.to_uint64());
+    ASSERT_EQ(bv1.to_uint64(), from.to_uint64());
+    // from < to
+    BitVector to(size, *d_rng);
+    while (from.signed_compare(to) == 0)
+    {
+      to = BitVector(size, *d_rng);
+    }
+    if (from.signed_compare(to) >= 0)
+    {
+      BitVector tmp = to;
+      to            = from;
+      from          = tmp;
+    }
+    BitVector bv2(size, *d_rng, from, to, true);
+    ASSERT_LE(from.signed_compare(bv2), 0);
+    ASSERT_LE(bv2.signed_compare(to), 0);
+  }
+}
+
+TEST_F(TestBitVector, ctor_random_bit_range)
+{
+  test_ctor_random_bit_range(1);
+  test_ctor_random_bit_range(7);
+  test_ctor_random_bit_range(31);
+  test_ctor_random_bit_range(33);
 }
 
 TEST_F(TestBitVector, to_string)
