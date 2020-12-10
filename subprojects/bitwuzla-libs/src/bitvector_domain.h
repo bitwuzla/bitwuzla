@@ -5,10 +5,14 @@
 
 namespace bzlals {
 
+class BitVectorDomainGenerator;
+
 /*----------------------------------------------------------------------------*/
 
 class BitVectorDomain
 {
+  friend BitVectorDomainGenerator;
+
  public:
   /** Construct a bit-vector domain of given size. */
   BitVectorDomain(uint32_t size);
@@ -144,20 +148,27 @@ class BitVectorDomainGenerator
   /** Return true if not all possible values have been generated yet. */
   bool has_next() const;
   /** Generate next element in the sequence. */
-  BitVector &next();
+  BitVector next();
   /** Generate random element in the sequence. */
-  BitVector &random();
+  BitVector random();
 
  private:
-  BitVectorDomain d_domain; /* the domain to enumerate values for */
-  RNG *d_rng;               /* the associated RNG (may be 0) */
+  BitVector generate_next(bool random);
+  /* The domain to enumerate values for. */
+  BitVectorDomain d_domain;
+  /* The associated RNG (may be 0). */
+  RNG *d_rng = nullptr;
+#ifndef NDEBUG
+  /* We only need to cache these for debugging purposes. */
   BitVector d_min;          /* the min value (in case of ranged init) */
   BitVector d_max;          /* the max value (in case of ranged init) */
-  BitVector d_bits;         /* unconstrained bits, LSB is farthest right. */
-  BitVector d_bits_min;     /* min value of unconstrained bits */
-  BitVector d_bits_max;     /* max value of unconstrained bits */
-  BitVector d_cur;          /* current value */
-  bool d_is_random;         /* true if this a random domain generator */
+#endif
+  /* Unconstrained bits, most LSB is farthest right. */
+  std::unique_ptr<BitVector> d_bits = nullptr;
+  /* Min value of unconstrained bits. */
+  std::unique_ptr<BitVector> d_bits_min = nullptr;
+  /* Max value of unconstrained bits. */
+  std::unique_ptr<BitVector> d_bits_max = nullptr;
 };
 
 /*----------------------------------------------------------------------------*/

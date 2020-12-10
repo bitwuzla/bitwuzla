@@ -1,17 +1,16 @@
 #include <bitset>
 #include <iostream>
 
-#include "bitvector.h"
-#include "gmpmpz.h"
 #include "gmprandstate.h"
-#include "gtest/gtest.h"
 #include "rng.h"
+#include "test.h"
 
 namespace bzlals {
+namespace test {
 
 /* -------------------------------------------------------------------------- */
 
-class TestBitVector : public ::testing::Test
+class TestBitVector : public TestCommon
 {
  protected:
   enum Kind
@@ -2889,4 +2888,5 @@ TEST_F(TestBitVector, zext)
 
 /* -------------------------------------------------------------------------- */
 
+}  // namespace test
 }  // namespace bzlals
