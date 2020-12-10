@@ -141,7 +141,9 @@ BitVectorDomain::bvshl(const BitVector &shift) const
 BitVectorDomain
 BitVectorDomain::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 {
-  // TODO
+  assert(idx_hi >= idx_lo);
+  return BitVectorDomain(d_lo.bvextract(idx_hi, idx_lo),
+                         d_hi.bvextract(idx_hi, idx_lo));
 }
 
 std::string

@@ -341,7 +341,6 @@ TEST_F(TestBitVectorDomain, shl)
             {
               if (c[n + k - l - 1] == 'x')
               {
-                assert(!dshl.is_fixed_bit(l));
                 ASSERT_FALSE(dshl.is_fixed_bit(l));
               }
               else if (c[n + k - l - 1] == '1')
@@ -361,5 +360,40 @@ TEST_F(TestBitVectorDomain, shl)
   }
   ASSERT_DEATH(BitVectorDomain(3).bvshl(BitVector(4)),
                "get_size\\(\\) == get_size\\(\\)");
+}
+
+TEST_F(TestBitVectorDomain, extract)
+{
+  std::vector<std::string> consts;
+  gen_xvalues(3, consts);
+
+  for (const std::string &c : consts)
+  {
+    for (int32_t i = 2; i >= 0; --i)
+    {
+      for (int32_t j = i; j >= 0; --j)
+      {
+        BitVectorDomain d(c);
+        BitVectorDomain dext = d.bvextract(i, j);
+        ASSERT_EQ(dext.get_size(), i - j + 1);
+        for (int32_t k = 0, n = d.get_size(), m = dext.get_size(); k < m; ++k)
+        {
+          if (c[n - k - j - 1] == 'x')
+          {
+            ASSERT_FALSE(dext.is_fixed_bit(k));
+          }
+          else if (c[n - k - j - 1] == '1')
+          {
+            ASSERT_TRUE(dext.is_fixed_bit_true(k));
+          }
+          else
+          {
+            assert(c[n - k - j - 1] == '0');
+            ASSERT_TRUE(dext.is_fixed_bit_false(k));
+          }
+        }
+      }
+    }
+  }
 }
 }  // namespace bzlals

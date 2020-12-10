@@ -756,6 +756,7 @@ BitVector::bvconcat(const BitVector& other) const
 BitVector
 BitVector::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 {
+  assert(idx_hi >= idx_lo);
   uint32_t size = idx_hi - idx_lo + 1;
   BitVector res(size);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, d_val->d_mpz, idx_hi + 1);

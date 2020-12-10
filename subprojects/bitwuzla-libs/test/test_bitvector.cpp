@@ -1375,6 +1375,11 @@ TestBitVector::test_extract(uint32_t size)
     uint32_t len        = hi - lo + 1;
     ASSERT_EQ(bv_str.compare(size - hi - 1, len, res_str, 0, len), 0);
   }
+  if (size > 1)
+  {
+    ASSERT_DEATH(BitVector(size, *d_rng).bvextract(size - 2, size - 1),
+                 "idx_hi >= idx_lo");
+  }
 }
 
 void
