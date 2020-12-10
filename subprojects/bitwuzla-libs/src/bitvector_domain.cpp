@@ -149,7 +149,24 @@ BitVectorDomain::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 std::string
 BitVectorDomain::to_string() const
 {
-  // TODO
+  std::string res(d_lo.to_string());
+  std::string hi(d_hi.to_string());
+  for (uint32_t i = 0, size = get_size(); i < size; ++i)
+  {
+    if (res[i] != hi[i])
+    {
+      if (res[i] == '0' && hi[i] == '1')
+      {
+        res[i] = 'x';
+      }
+      else
+      {
+        assert(res[i] == '1' && hi[i] == '0');
+        res[i] = 'i';
+      }
+    }
+  }
+  return res;
 }
 
 }  // namespace bzlals
