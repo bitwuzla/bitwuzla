@@ -163,7 +163,6 @@ struct BzlaBvDomainGenerator
   BzlaBvDomain *domain;    /* the domain to enumerate values for */
   BzlaBitVector *min;      /* the min value (in case of ranged init) */
   BzlaBitVector *max;      /* the max value (in case of ranged init) */
-  bool is_random;          /* true if this a random domain generator */
 };
 
 typedef struct BzlaBvDomainGenerator BzlaBvDomainGenerator;
@@ -200,7 +199,7 @@ void bzla_bvdomain_gen_init_range(BzlaMemMgr *mm,
 /**
  * Return true if not all possible values have been generated yet.
  *
- * Note: For bzla_bvdomain_gen_random(), this is always returns true if there
+ * Note: For bzla_bvdomain_gen_random(), this always returns true if there
  *       are any values to enumerate (i.e., the initial call to
  *       bzla_bvdomain_gen_has_next() is true).
  */
