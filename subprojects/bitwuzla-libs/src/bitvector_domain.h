@@ -5,6 +5,8 @@
 
 namespace bzlals {
 
+/*----------------------------------------------------------------------------*/
+
 class BitVectorDomain
 {
  public:
@@ -95,6 +97,70 @@ class BitVectorDomain
    */
   BitVector d_hi;
 };
+
+/*----------------------------------------------------------------------------*/
+
+class BitVectorDomainGenerator
+{
+ public:
+  /**
+   * Construct generator for values within the range defined by the given
+   * bit-vector domain, interpreted as unsigned.
+   * domain: The domain to enumerate values for.
+   */
+  BitVectorDomainGenerator(const BitVectorDomain &domain);
+  /**
+   * Construct generator for values within given range (inclusive),
+   * interpreted as unsigned.
+   * domain: The domain to enumerate values for.
+   * min   : The minimum value to start enumeration with.
+   * max   : The maximum value to enumerate until.
+   */
+  BitVectorDomainGenerator(const BitVectorDomain &domain,
+                           const BitVector &min,
+                           const BitVector &max);
+  /**
+   * Construct generator for values within the range defined by the given
+   * bit-vector domain, interpreted as unsigned.
+   * domain: The domain to enumerate values for.
+   * rng   : The associated random number generator.
+   */
+  BitVectorDomainGenerator(const BitVectorDomain &domain, RNG *rng);
+  /**
+   * Construct generator for values within given range (inclusive),
+   * interpreted as unsigned.
+   * domain: The domain to enumerate values for.
+   * rng   : The associated random number generator.
+   * min   : The minimum value to start enumeration with.
+   * max   : The maximum value to enumerate until.
+   */
+  BitVectorDomainGenerator(const BitVectorDomain &domain,
+                           RNG *rng,
+                           const BitVector &min,
+                           const BitVector &max);
+  /** Destructor. */
+  ~BitVectorDomainGenerator();
+
+  /** Return true if not all possible values have been generated yet. */
+  bool has_next() const;
+  /** Generate next element in the sequence. */
+  BitVector &next();
+  /** Generate random element in the sequence. */
+  BitVector &random();
+
+ private:
+  BitVectorDomain d_domain; /* the domain to enumerate values for */
+  RNG *d_rng;               /* the associated RNG (may be 0) */
+  BitVector d_min;          /* the min value (in case of ranged init) */
+  BitVector d_max;          /* the max value (in case of ranged init) */
+  BitVector d_bits;         /* unconstrained bits, LSB is farthest right. */
+  BitVector d_bits_min;     /* min value of unconstrained bits */
+  BitVector d_bits_max;     /* max value of unconstrained bits */
+  BitVector d_cur;          /* current value */
+  bool d_is_random;         /* true if this a random domain generator */
+};
+
+/*----------------------------------------------------------------------------*/
 
 }  // namespace bzlals
 

@@ -7,6 +7,8 @@
 
 namespace bzlals {
 
+/*----------------------------------------------------------------------------*/
+
 BitVectorDomain::BitVectorDomain(uint32_t size)
     : d_lo(BitVector::mk_zero(size)), d_hi(BitVector::mk_ones(size))
 {
@@ -167,6 +169,59 @@ BitVectorDomain::to_string() const
     }
   }
   return res;
+}
+
+/*----------------------------------------------------------------------------*/
+
+BitVectorDomainGenerator::BitVectorDomainGenerator(
+    const BitVectorDomain &domain)
+    : d_domain(domain), d_rng(nullptr)
+{
+  // TODO
+}
+
+BitVectorDomainGenerator::BitVectorDomainGenerator(
+    const BitVectorDomain &domain, const BitVector &min, const BitVector &max)
+    : d_domain(domain), d_rng(nullptr), d_min(min), d_max(max)
+{
+  // TODO
+}
+
+BitVectorDomainGenerator::BitVectorDomainGenerator(
+    const BitVectorDomain &domain, RNG *rng)
+    : d_domain(domain), d_rng(rng)
+{
+  // TODO
+}
+
+BitVectorDomainGenerator::BitVectorDomainGenerator(
+    const BitVectorDomain &domain,
+    RNG *rng,
+    const BitVector &min,
+    const BitVector &max)
+    : d_domain(domain), d_rng(rng), d_min(min), d_max(max)
+{
+  // TODO
+}
+
+BitVectorDomainGenerator::~BitVectorDomainGenerator() {}
+
+bool
+BitVectorDomainGenerator::has_next() const
+{
+  // TODO
+}
+
+BitVector &
+BitVectorDomainGenerator::next()
+{
+  // TODO
+}
+
+BitVector &
+BitVectorDomainGenerator::random()
+{
+  // TODO
 }
 
 }  // namespace bzlals
