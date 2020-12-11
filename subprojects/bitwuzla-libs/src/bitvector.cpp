@@ -178,8 +178,11 @@ BitVector::BitVector(uint32_t size, uint64_t value) : d_size(size)
 
 BitVector::BitVector(const BitVector& other)
 {
-  d_size = other.d_size;
-  d_val.reset(new GMPMpz());
+  if (d_size != other.d_size)
+  {
+    d_size = other.d_size;
+    d_val.reset(new GMPMpz());
+  }
   mpz_set(d_val->d_mpz, other.d_val->d_mpz);
 }
 
@@ -189,8 +192,11 @@ BitVector&
 BitVector::operator=(const BitVector& other)
 {
   if (&other == this) return *this;
-  d_size = other.d_size;
-  d_val.reset(new GMPMpz());
+  if (d_size != other.d_size)
+  {
+    d_size = other.d_size;
+    d_val.reset(new GMPMpz());
+  }
   mpz_set(d_val->d_mpz, other.d_val->d_mpz);
   return *this;
 }
