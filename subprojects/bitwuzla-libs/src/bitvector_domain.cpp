@@ -5,6 +5,8 @@
 #include <iostream>
 
 #include "gmpmpz.h"
+#include "gmprandstate.h"
+#include "rng.h"
 
 namespace bzlals {
 
@@ -368,5 +370,115 @@ BitVectorDomainGenerator::generate_next(bool random)
   assert(res.compare(d_max) <= 0);
 #endif
   return res;
+}
+
+BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
+    const BitVectorDomain &domain)
+    : BitVectorDomainSignedGenerator(
+        domain,
+        nullptr,
+        BitVector::mk_min_signed(domain.get_size()),
+        BitVector::mk_max_signed(domain.get_size()))
+{
+}
+
+BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
+    const BitVectorDomain &domain, const BitVector &min, const BitVector &max)
+    : BitVectorDomainSignedGenerator(domain, nullptr, min, max)
+{
+}
+
+BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
+    const BitVectorDomain &domain, RNG *rng)
+    : BitVectorDomainSignedGenerator(
+        domain,
+        rng,
+        BitVector::mk_min_signed(domain.get_size()),
+        BitVector::mk_max_signed(domain.get_size()))
+{
+}
+
+BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
+    const BitVectorDomain &domain,
+    RNG *rng,
+    const BitVector &min,
+    const BitVector &max)
+    : d_rng(rng)
+{
+  uint32_t size          = domain.get_size();
+  BitVector zero         = BitVector::mk_zero(size);
+  BitVector ones         = BitVector::mk_ones(size);
+  int32_t min_scomp_zero = min.signed_compare(zero);
+  int32_t max_scomp_zero = max.signed_compare(zero);
+  if (min_scomp_zero < 0)
+  {
+    d_gen_lo.reset(new BitVectorDomainGenerator(
+        domain, rng, min, max_scomp_zero < 0 ? max : ones));
+    d_gen_cur = d_gen_lo.get();
+  }
+  if (max_scomp_zero >= 0)
+  {
+    d_gen_hi.reset(new BitVectorDomainGenerator(
+        domain, rng, min_scomp_zero >= 0 ? min : zero, max));
+    if (d_gen_cur == nullptr) d_gen_cur = d_gen_hi.get();
+  }
+}
+
+BitVectorDomainSignedGenerator::~BitVectorDomainSignedGenerator() {}
+
+bool
+BitVectorDomainSignedGenerator::has_next()
+{
+  if (d_gen_cur == nullptr) return false;
+  if (!d_gen_cur->has_next())
+  {
+    if (d_gen_cur == d_gen_lo.get() && d_gen_hi)
+    {
+      d_gen_cur = d_gen_hi.get();
+      return d_gen_cur->has_next();
+    }
+    return false;
+  }
+  return true;
+}
+
+bool
+BitVectorDomainSignedGenerator::has_random()
+{
+  if (d_gen_cur == nullptr) return false;
+  if (!d_gen_cur->has_random())
+  {
+    if (d_gen_cur == d_gen_lo.get() && d_gen_hi)
+    {
+      d_gen_cur = d_gen_hi.get();
+      return d_gen_cur->has_random();
+    }
+    return false;
+  }
+  return true;
+}
+
+BitVector
+BitVectorDomainSignedGenerator::next()
+{
+  assert(has_next());
+  return d_gen_cur->next();
+}
+
+BitVector
+BitVectorDomainSignedGenerator::random()
+{
+  bool has_random_lo = d_gen_lo ? d_gen_lo->has_random() : false;
+  bool has_random_hi = d_gen_hi ? d_gen_hi->has_random() : false;
+  if (has_random_lo && has_random_hi)
+  {
+    return d_rng->flip_coin() ? d_gen_lo->random() : d_gen_hi->random();
+  }
+  if (has_random_lo)
+  {
+    return d_gen_lo->random();
+  }
+  assert(has_random_hi);
+  return d_gen_hi->random();
 }
 }  // namespace bzlals

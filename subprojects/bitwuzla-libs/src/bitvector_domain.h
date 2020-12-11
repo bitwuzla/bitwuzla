@@ -173,6 +173,67 @@ class BitVectorDomainGenerator
   std::unique_ptr<BitVector> d_bits_max = nullptr;
 };
 
+class BitVectorDomainSignedGenerator
+{
+ public:
+  /**
+   * Construct generator for values within the range defined by the given
+   * bit-vector domain, interpreted as signed.
+   * domain: The domain to enumerate values for.
+   */
+  BitVectorDomainSignedGenerator(const BitVectorDomain &domain);
+  /**
+   * Construct generator for values within given range (inclusive),
+   * interpreted as signed.
+   * domain: The domain to enumerate values for.
+   * min   : The minimum value to start enumeration with.
+   * max   : The maximum value to enumerate until.
+   */
+  BitVectorDomainSignedGenerator(const BitVectorDomain &domain,
+                                 const BitVector &min,
+                                 const BitVector &max);
+  /**
+   * Construct generator for values within the range defined by the given
+   * bit-vector domain, interpreted as signed.
+   * domain: The domain to enumerate values for.
+   * rng   : The associated random number generator.
+   */
+  BitVectorDomainSignedGenerator(const BitVectorDomain &domain, RNG *rng);
+  /**
+   * Construct generator for values within given range (inclusive),
+   * interpreted as signed.
+   * domain: The domain to enumerate values for.
+   * rng   : The associated random number generator.
+   * min   : The minimum value to start enumeration with.
+   * max   : The maximum value to enumerate until.
+   */
+  BitVectorDomainSignedGenerator(const BitVectorDomain &domain,
+                                 RNG *rng,
+                                 const BitVector &min,
+                                 const BitVector &max);
+  /** Destructor. */
+  ~BitVectorDomainSignedGenerator();
+
+  /** Return true if not all possible values have been generated yet. */
+  bool has_next();
+  /** Return true if generating random values is possible. */
+  bool has_random();
+  /** Generate next element in the sequence. */
+  BitVector next();
+  /** Generate random element in the sequence. */
+  BitVector random();
+
+ private:
+  /* The associated RNG (may be 0). */
+  RNG *d_rng = nullptr;
+  /** The generator covering the lower range < 0. */
+  std::unique_ptr<BitVectorDomainGenerator> d_gen_lo = nullptr;
+  /** The generator covering the upper range >= 0. */
+  std::unique_ptr<BitVectorDomainGenerator> d_gen_hi = nullptr;
+  /** The currently active generator. */
+  BitVectorDomainGenerator *d_gen_cur = nullptr;
+};
+
 /*----------------------------------------------------------------------------*/
 
 }  // namespace bzlals
