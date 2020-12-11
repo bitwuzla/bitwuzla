@@ -303,6 +303,7 @@ BitVectorDomainGenerator::has_next() const
 BitVector
 BitVectorDomainGenerator::next()
 {
+  assert(has_next());
   return generate_next(false);
 }
 
