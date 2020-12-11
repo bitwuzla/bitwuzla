@@ -183,18 +183,47 @@ TEST_F(TestBitVectorDomainGen, has_next)
 {
   for (uint32_t size = 1; size <= 8; ++size)
   {
-    std::vector<std::string> values;
-    gen_xvalues(size, values);
+    std::vector<std::string> xvalues;
+    gen_xvalues(size, xvalues);
 
-    for (uint32_t i = 0, n = values.size(); i < n; ++i)
+    for (uint32_t i = 0, n = xvalues.size(); i < n; ++i)
     {
-      BitVectorDomain d(values[i]);
+      BitVectorDomain d(xvalues[i]);
       BitVectorDomainGenerator gen(d);
       assert(d.is_fixed() || gen.has_next());
       ASSERT_TRUE(d.is_fixed() || gen.has_next());
       while (gen.has_next())
       {
         ASSERT_NO_FATAL_FAILURE(gen.next());
+      }
+    }
+  }
+}
+
+TEST_F(TestBitVectorDomainGen, has_next_rand)
+{
+  for (uint32_t size = 1; size <= 8; ++size)
+  {
+    std::vector<std::string> xvalues;
+    gen_xvalues(size, xvalues);
+
+    for (uint32_t i = 0, n = xvalues.size(); i < n; ++i)
+    {
+      BitVectorDomain d(xvalues[i]);
+      BitVectorDomainGenerator gen(d, d_rng.get());
+      assert(d.is_fixed() || gen.has_next());
+      ASSERT_TRUE(d.is_fixed() || gen.has_next());
+      while (gen.has_next())
+      {
+        ASSERT_NO_FATAL_FAILURE(gen.next());
+      }
+      if (gen.has_next())
+      {
+        for (uint32_t n_tests = 2 * n; n_tests != 0; --n_tests)
+        {
+          ASSERT_TRUE(gen.has_next());
+          ASSERT_NO_FATAL_FAILURE(gen.random());
+        }
       }
     }
   }
