@@ -229,7 +229,12 @@ TEST_F(TestBitVectorDomainGen, has_next_rand)
   }
 }
 
-TEST_F(TestBitVectorDomainGen, next) { test_next(false); }
+TEST_F(TestBitVectorDomainGen, next)
+{
+  test_next(false);
+  ASSERT_DEATH(BitVectorDomainGenerator(BitVector::mk_ones(4)).next(),
+               "has_next");
+}
 
 }  // namespace test
 }  // namespace bzlals
