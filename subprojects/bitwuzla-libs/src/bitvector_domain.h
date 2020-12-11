@@ -147,6 +147,8 @@ class BitVectorDomainGenerator
 
   /** Return true if not all possible values have been generated yet. */
   bool has_next() const;
+  /** Return true if generating random values is possible. */
+  bool has_random() const;
   /** Generate next element in the sequence. */
   BitVector next();
   /** Generate random element in the sequence. */

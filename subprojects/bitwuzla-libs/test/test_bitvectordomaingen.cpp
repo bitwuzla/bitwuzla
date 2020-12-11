@@ -95,10 +95,12 @@ TestBitVectorDomainGen::test_next_aux(const std::string& str_d,
 
   if (random)
   {
-    ASSERT_TRUE(expected.size() || gen->has_next());
+    ASSERT_TRUE(expected.size() || !gen->has_random());
     std::unordered_set<std::string> results;
     while (results.size() < expected.size())
     {
+      assert(gen->has_random());
+      ASSERT_TRUE(gen->has_random());
       BitVector res       = gen->random();
       std::string res_str = res.to_string();
       ASSERT_NE(std::find(expected.begin(), expected.end(), res_str),
@@ -194,13 +196,13 @@ TEST_F(TestBitVectorDomainGen, has_next)
       ASSERT_TRUE(d.is_fixed() || gen.has_next());
       while (gen.has_next())
       {
-        ASSERT_NO_FATAL_FAILURE(gen.next());
+        gen.next();
       }
     }
   }
 }
 
-TEST_F(TestBitVectorDomainGen, has_next_rand)
+TEST_F(TestBitVectorDomainGen, has_random)
 {
   for (uint32_t size = 1; size <= 8; ++size)
   {
@@ -211,18 +213,13 @@ TEST_F(TestBitVectorDomainGen, has_next_rand)
     {
       BitVectorDomain d(xvalues[i]);
       BitVectorDomainGenerator gen(d, d_rng.get());
-      assert(d.is_fixed() || gen.has_next());
-      ASSERT_TRUE(d.is_fixed() || gen.has_next());
-      while (gen.has_next())
-      {
-        ASSERT_NO_FATAL_FAILURE(gen.next());
-      }
+      ASSERT_TRUE(d.is_fixed() || gen.has_random());
       if (gen.has_next())
       {
-        for (uint32_t n_tests = 2 * n; n_tests != 0; --n_tests)
+        for (uint32_t j = 0; j < size; ++j)
         {
-          ASSERT_TRUE(gen.has_next());
-          ASSERT_NO_FATAL_FAILURE(gen.random());
+          ASSERT_TRUE(gen.has_random());
+          gen.random();
         }
       }
     }
@@ -234,6 +231,13 @@ TEST_F(TestBitVectorDomainGen, next)
   test_next(false);
   ASSERT_DEATH(BitVectorDomainGenerator(BitVector::mk_ones(4)).next(),
                "has_next");
+}
+
+TEST_F(TestBitVectorDomainGen, random)
+{
+  test_next(true);
+  ASSERT_DEATH(BitVectorDomainGenerator(BitVector::mk_ones(4)).random(),
+               "has_random");
 }
 
 }  // namespace test

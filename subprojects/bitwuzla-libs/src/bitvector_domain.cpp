@@ -300,6 +300,15 @@ BitVectorDomainGenerator::has_next() const
   return d_bits && d_bits->compare(*d_bits_max) <= 0;
 }
 
+bool
+BitVectorDomainGenerator::has_random() const
+{
+  assert(d_bits == nullptr
+         || (d_bits_min && d_bits_min->compare(*d_bits_min) >= 0));
+  assert(!d_bits_min || d_bits_max);
+  return d_bits_min && d_bits_min->compare(*d_bits_max) <= 0;
+}
+
 BitVector
 BitVectorDomainGenerator::next()
 {
@@ -310,6 +319,7 @@ BitVectorDomainGenerator::next()
 BitVector
 BitVectorDomainGenerator::random()
 {
+  assert(has_random());
   return generate_next(true);
 }
 
