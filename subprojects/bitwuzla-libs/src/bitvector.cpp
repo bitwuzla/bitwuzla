@@ -116,34 +116,7 @@ BitVector::BitVector(uint32_t size,
                      bool is_signed)
     : BitVector(size)
 {
-  assert(is_signed || from.compare(to) <= 0);
-  assert(!is_signed || from.signed_compare(to) <= 0);
-  mpz_t _to;
-  if (is_signed)
-  {
-    BitVector sto   = to.bvsub(from);
-    BitVector sfrom = mk_zero(size);
-    mpz_init_set(_to, sto.d_val->d_mpz);
-    mpz_sub(_to, _to, sfrom.d_val->d_mpz);
-  }
-  else
-  {
-    mpz_init_set(_to, to.d_val->d_mpz);
-    mpz_sub(_to, _to, from.d_val->d_mpz);
-  }
-  mpz_add_ui(_to, _to, 1);
-  mpz_urandomm(d_val->d_mpz, rng.d_gmp_state->d_gmp_randstate, _to);
-  if (is_signed)
-  {
-    // add from to picked value
-    mpz_add(d_val->d_mpz, d_val->d_mpz, from.d_val->d_mpz);
-    mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
-  }
-  else
-  {
-    mpz_add(d_val->d_mpz, d_val->d_mpz, from.d_val->d_mpz);
-  }
-  mpz_clear(_to);
+  iset(rng, from, to, is_signed);
 }
 
 BitVector::BitVector(uint32_t size,
@@ -199,6 +172,58 @@ BitVector::operator=(const BitVector& other)
   }
   mpz_set(d_val->d_mpz, other.d_val->d_mpz);
   return *this;
+}
+
+void
+BitVector::iset(uint64_t value)
+{
+  assert(d_size);
+  mpz_set_ui(d_val->d_mpz, value);
+}
+
+void
+BitVector::iset(const BitVector& other)
+{
+  assert(d_size == other.d_size);
+  mpz_set(d_val->d_mpz, other.d_val->d_mpz);
+}
+
+void
+BitVector::iset(const RNG& rng,
+                const BitVector& from,
+                const BitVector& to,
+                bool is_signed)
+{
+  assert(d_size == from.d_size);
+  assert(d_size == to.d_size);
+  assert(is_signed || from.compare(to) <= 0);
+  assert(!is_signed || from.signed_compare(to) <= 0);
+  mpz_t _to;
+  if (is_signed)
+  {
+    BitVector sto   = to.bvsub(from);
+    BitVector sfrom = mk_zero(d_size);
+    mpz_init_set(_to, sto.d_val->d_mpz);
+    mpz_sub(_to, _to, sfrom.d_val->d_mpz);
+  }
+  else
+  {
+    mpz_init_set(_to, to.d_val->d_mpz);
+    mpz_sub(_to, _to, from.d_val->d_mpz);
+  }
+  mpz_add_ui(_to, _to, 1);
+  mpz_urandomm(d_val->d_mpz, rng.d_gmp_state->d_gmp_randstate, _to);
+  if (is_signed)
+  {
+    // add from to picked value
+    mpz_add(d_val->d_mpz, d_val->d_mpz, from.d_val->d_mpz);
+    mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
+  }
+  else
+  {
+    mpz_add(d_val->d_mpz, d_val->d_mpz, from.d_val->d_mpz);
+  }
+  mpz_clear(_to);
 }
 
 bool

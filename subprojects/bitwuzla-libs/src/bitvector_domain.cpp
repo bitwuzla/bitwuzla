@@ -340,8 +340,9 @@ BitVectorDomainGenerator::generate_next(bool random)
     assert(d_rng);
     assert(d_bits_min);
     assert(d_bits_max);
-    d_bits.reset(new BitVector(
-        d_bits_min->get_size(), *d_rng, *d_bits_min, *d_bits_max));
+    if (d_bits == nullptr) d_bits.reset(new BitVector(d_bits_min->get_size()));
+    assert(d_bits->get_size() == d_bits_min->get_size());
+    d_bits->iset(*d_rng, *d_bits_min, *d_bits_max, false);
   }
 
   for (uint32_t i = 0, j = 0; i < size; ++i)
@@ -356,11 +357,19 @@ BitVectorDomainGenerator::generate_next(bool random)
   if (d_bits->compare(*d_bits_max) == 0)
   {
     /* random never terminates and bits start again at bits_min. */
-    d_bits.reset(random ? new BitVector(*d_bits_min) : nullptr);
+
+    if (random)
+    {
+      d_bits->iset(*d_bits_min);
+    }
+    else
+    {
+      d_bits.reset(nullptr);
+    }
   }
   else
   {
-    d_bits.reset(new BitVector(d_bits->bvinc()));
+    d_bits->ibvinc(*d_bits);
   }
 
   assert(d_bits == nullptr || d_bits->compare(*d_bits_min) >= 0);

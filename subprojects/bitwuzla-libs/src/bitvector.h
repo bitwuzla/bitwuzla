@@ -86,6 +86,19 @@ class BitVector
   /** Copy assignment operator. */
   BitVector& operator=(const BitVector& other);
 
+  /** Set the value of this bit-vector to the given unsigned (in place). */
+  void iset(uint64_t value);
+  /** Set the value of this bit-vector to the value of 'other' (in place). */
+  void iset(const BitVector& other);
+  /**
+   * Set the value of this bit-vector to a random value between 'from' and 'to'
+   * (in place).
+   */
+  void iset(const RNG& rng,
+            const BitVector& from,
+            const BitVector& to,
+            bool is_signed);
+
   /** Equality comparison operator. */
   bool operator==(const BitVector& other);
   /** Disequality comparison operator. */
