@@ -203,6 +203,7 @@ TestBitVectorDomainGen::test_next_signed_aux(const std::string& str_d,
   }
   else
   {
+    assert(!str_max.empty());
     BitVector min(str_min.size(), str_min);
     BitVector max(str_max.size(), str_max);
     gen.reset(new BitVectorDomainSignedGenerator(
@@ -243,6 +244,7 @@ TestBitVectorDomainGen::test_next_signed_aux(const std::string& str_d,
       ASSERT_LT(i, expected.size());
       BitVector exp(expected[i].size(), expected[i]);
       i += 1;
+      assert(res.compare(exp) == 0);
       ASSERT_EQ(res.compare(exp), 0);
     }
     assert(i == expected.size());
@@ -288,11 +290,11 @@ TestBitVectorDomainGen::test_next(bool random, bool is_signed)
         generate_expected(xvalues[i], zero, ones);
     if (is_signed)
     {
-      test_next_aux(xvalues[i], "", "", expected, random);
+      test_next_signed_aux(xvalues[i], "", "", expected, random);
     }
     else
     {
-      test_next_signed_aux(xvalues[i], "", "", expected, random);
+      test_next_aux(xvalues[i], "", "", expected, random);
     }
   }
 }
