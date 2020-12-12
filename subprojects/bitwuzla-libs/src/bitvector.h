@@ -159,6 +159,8 @@ class BitVector
   /** Get number of leading ones (counted from msb). */
   uint32_t count_leading_ones() const;
 
+  /** Bit-vector operations. ------------------------------------------------ */
+
   /** Negation. */
   BitVector bvneg() const;
   /** Bit-wise not. */
@@ -210,11 +212,11 @@ class BitVector
   BitVector bvsgt(const BitVector& other) const;
   /** Signed greater than or equal. */
   BitVector bvsge(const BitVector& other) const;
-  /** Logical left shift. Shift value is given as an unsigned ingeger. */
+  /** Logical left shift. Shift value is given as an unsigned integer. */
   BitVector bvshl(uint32_t shift) const;
   /** Logical left shift. Shift value is given as a bit-vector. */
   BitVector bvshl(const BitVector& other) const;
-  /** Logical right shift. Shift value is given as an unsigned ingeger. */
+  /** Logical right shift. Shift value is given as an unsigned integer. */
   BitVector bvshr(uint32_t shift) const;
   /** Logical right shift. Shift value is given as a bit-vector. */
   BitVector bvshr(const BitVector& other) const;
@@ -264,6 +266,139 @@ class BitVector
    *       must be (and is, in this case) always 1.
    */
   BitVector bvmodinv() const;
+
+  /** In place versions of bit-vector operations. --------------------------- */
+
+  /** Negation (in place). */
+  void ibvneg(const BitVector& bv) const;
+  /** Bit-wise not (in placeconst BitVector& bv. */
+  void ibvnot(const BitVector& bv) const;
+  /** Increment (in placeconst BitVector& bv. */
+  void ibvinc(const BitVector& bv) const;
+  /** Decrement (in placeconst BitVector& bv. */
+  void ibvdec(const BitVector& bv) const;
+  /**
+   * And reduction (in place).
+   * Returns true bit-vector if all bits are 1, else false.
+   */
+  void ibvredand(const BitVector& bv) const;
+  /**
+   * Or reduction (in place).
+   * Returns true bit-vector if one bit is 1, else false.
+   */
+  void ibvredor(const BitVector& bv) const;
+
+  /** Addition (in place). */
+  void ibvadd(const BitVector& bv0, const BitVector& bv1) const;
+  /** Subtraction (in place). */
+  void ibvsub(const BitVector& bv0, const BitVector& bv1) const;
+  /** Bit-wise and (in place). */
+  void ibvand(const BitVector& bv0, const BitVector& bv1) const;
+  /** Implication (in place). */
+  void ibvimplies(const BitVector& bv0, const BitVector& bv1) const;
+  /** Bit-wise nand (in place). */
+  void ibvnand(const BitVector& bv0, const BitVector& bv1) const;
+  /** Bit-wise nor (in place). */
+  void ibvnor(const BitVector& bv0, const BitVector& bv1) const;
+  /** Bit-wise or (in place). */
+  void ibvor(const BitVector& bv0, const BitVector& bv1) const;
+  /** Bit-wise xnor (in place). */
+  void ibvxnor(const BitVector& bv0, const BitVector& bv1) const;
+  /** Bit-wise xor (in place). */
+  void ibvxor(const BitVector& bv0, const BitVector& bv1) const;
+  /** Equality (in place). */
+  void ibveq(const BitVector& bv0, const BitVector& bv1) const;
+  /** Disequality (in place). */
+  void ibvne(const BitVector& bv0, const BitVector& bv1) const;
+  /** Unsigned less than (in place). */
+  void ibvult(const BitVector& bv0, const BitVector& bv1) const;
+  /** Unsigned less than or equal (in place). */
+  void ibvule(const BitVector& bv0, const BitVector& bv1) const;
+  /** Unsigned greater than (in place). */
+  void ibvugt(const BitVector& bv0, const BitVector& bv1) const;
+  /** Unsigned greater than or equal (in place). */
+  void ibvuge(const BitVector& bv0, const BitVector& bv1) const;
+  /** Signed less than (in place). */
+  void ibvslt(const BitVector& bv0, const BitVector& bv1) const;
+  /** Signed less than or equal (in place). */
+  void ibvsle(const BitVector& bv0, const BitVector& bv1) const;
+  /** Signed greater than (in place). */
+  void ibvsgt(const BitVector& bv0, const BitVector& bv1) const;
+  /** Signed greater than or equal (in place). */
+  void ibvsge(const BitVector& bv0, const BitVector& bv1) const;
+  /**
+   * Logical left shift (in place).
+   * Shift value is given as an unsigned integer.
+   */
+  void ibvshl(const BitVector& bv1, uint32_t shift) const;
+  /**
+   * Logical left shift (in place).
+   * Shift value is given as a bit-vector.
+   */
+  void ibvshl(const BitVector& bv0, const BitVector& bv1) const;
+  /**
+   * Logical right shift (in place).
+   * Shift value is given as an unsigned integer.
+   */
+  void ibvshr(const BitVector& bv1, uint32_t shift) const;
+  /**
+   * Logical right shift (in place).
+   * Shift value is given as a bit-vector.
+   */
+  void ibvshr(const BitVector& bv0, const BitVector& bv1) const;
+  /** Arithmetic right shift (in place). */
+  void ibvashr(const BitVector& bv0, const BitVector& bv1) const;
+  /** Multiplication (in place). */
+  void ibvmul(const BitVector& bv0, const BitVector& bv1) const;
+  /** Unsigned division (in place). */
+  void ibvudiv(const BitVector& bv0, const BitVector& bv1) const;
+  /** Unsigned remainder (in place). */
+  void ibvurem(const BitVector& bv0, const BitVector& bv1) const;
+  /** Signed division (in place). */
+  void ibvsdiv(const BitVector& bv0, const BitVector& bv1) const;
+  /** Signed remainder (in place). */
+  void ibvsrem(const BitVector& bv0, const BitVector& bv1) const;
+
+  /**
+   * Concatenation (in place).
+   * Bit-vector 'bv1' is concatenated (at the right, the lsb side) to 'bv0'.
+   */
+  void ibvconcat(const BitVector& bv0, const BitVector& bv1) const;
+
+  /**
+   * Extract a bit range from bit-vector 'bv' (in place).
+   * idx_hi: The upper bit-index of the range (inclusive).
+   * idx_lo: The lower bit-index of the range (inclusive).
+   */
+  void ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo) const;
+
+  /**
+   * Zero extension (in place).
+   * n: The number of bits to extend bit-vector 'bv' with.
+   */
+  void ibvzext(const BitVector& bv, uint32_t n) const;
+  /**
+   * Sign extension (in place).
+   * n: The number of bits to extend bit-vector 'bv' with.
+   */
+  void ibvsext(const BitVector& bv, uint32_t n) const;
+
+  /**
+   * Create a if-then-else over the given bit-vectors (in place).
+   * c: The condition.
+   * t: The then branch.
+   * e: The else branch.
+   */
+  void ibvite(const BitVector& c, const BitVector& t, const BitVector& e);
+
+  /**
+   * Calculate modular inverse for this bit-vector by means of the Extended
+   * Euclidian Algorithm (in place).
+   *
+   * Note: Bit-vector 'bv' must be odd. The greatest common divisor
+   *       gcd (c, 2^bw) must be (and is, in this case) always 1.
+   */
+  void ibvmodinv(const BitVector& bv) const;
 
  private:
   /**

@@ -98,12 +98,12 @@ class TestBitVector : public TestCommon
   void test_ctor_random_bit_range(uint32_t size);
   void test_count(uint32_t size, bool leading, bool zeros);
   void test_count_aux(const std::string& val, bool leading, bool zeros);
-  void test_unary(Kind kind, uint32_t size);
-  void test_binary(Kind kind, uint32_t size);
-  void test_binary_signed(Kind kind, uint32_t size);
-  void test_concat(uint32_t size);
-  void test_extend(Kind kind, uint32_t size);
-  void test_extract(uint32_t size);
+  void test_unary(Kind kind, uint32_t size, bool in_place);
+  void test_binary(Kind kind, uint32_t size, bool in_place);
+  void test_binary_signed(Kind kind, uint32_t size, bool in_place);
+  void test_concat(uint32_t size, bool in_place);
+  void test_extend(Kind kind, uint32_t size, bool in_place);
+  void test_extract(uint32_t size, bool in_place);
   void test_is_uadd_overflow_aux(uint32_t size,
                                  uint64_t a1,
                                  uint64_t a2,
@@ -114,12 +114,13 @@ class TestBitVector : public TestCommon
                                  uint64_t a2,
                                  bool expected);
   void test_is_umul_overflow(uint32_t size);
-  void test_ite(uint32_t size);
-  void test_modinv(uint32_t size);
+  void test_ite(uint32_t size, bool in_place);
+  void test_modinv(uint32_t size, bool in_place);
   void test_shift(Kind kind,
                   const std::string& to_shift,
                   const std::string& shift,
-                  const std::string& expected);
+                  const std::string& expected,
+                  bool in_place);
   std::unique_ptr<RNG> d_rng;
 };
 
@@ -537,24 +538,38 @@ TestBitVector::test_count(uint32_t size, bool leading, bool zeros)
 }
 
 void
-TestBitVector::test_extend(Kind kind, uint32_t size)
+TestBitVector::test_extend(Kind kind, uint32_t size, bool in_place)
 {
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint32_t n = d_rng->pick<uint32_t>(0, size - 1);
     BitVector bv(size - n, *d_rng);
-    BitVector res;
+    BitVector res(size);
     char c = 0;
 
     switch (kind)
     {
       case ZEXT:
-        res = bv.bvzext(n);
-        c   = '0';
+        if (in_place)
+        {
+          res.ibvzext(bv, n);
+        }
+        else
+        {
+          res = bv.bvzext(n);
+        }
+        c = '0';
         break;
       case SEXT:
-        res = bv.bvsext(n);
-        c   = bv.get_msb() ? '1' : '0';
+        if (in_place)
+        {
+          res.ibvsext(bv, n);
+        }
+        else
+        {
+          res = bv.bvsext(n);
+        }
+        c = bv.get_msb() ? '1' : '0';
         break;
 
       default: assert(false);
@@ -647,14 +662,23 @@ TestBitVector::test_is_umul_overflow(uint32_t size)
 }
 
 void
-TestBitVector::test_ite(uint32_t size)
+TestBitVector::test_ite(uint32_t size, bool in_place)
 {
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     BitVector bv_cond(1, *d_rng);
     BitVector bv_then(size, *d_rng);
     BitVector bv_else(size, *d_rng);
-    BitVector res = BitVector::bvite(bv_cond, bv_then, bv_else);
+    BitVector res(size);
+
+    if (in_place)
+    {
+      res.ibvite(bv_cond, bv_then, bv_else);
+    }
+    else
+    {
+      res = BitVector::bvite(bv_cond, bv_then, bv_else);
+    }
 
     uint64_t a_cond = bv_cond.to_uint64();
     uint64_t a_then = bv_then.to_uint64();
@@ -663,70 +687,127 @@ TestBitVector::test_ite(uint32_t size)
     uint64_t b_res  = res.to_uint64();
     ASSERT_EQ(a_res, b_res);
   }
-  ASSERT_DEATH(
-      BitVector::bvite(
-          BitVector(8, *d_rng), BitVector(8, *d_rng), BitVector(8, *d_rng)),
-      "c.d_size == 1");
-  ASSERT_DEATH(
-      BitVector::bvite(
-          BitVector(1, *d_rng), BitVector(8, *d_rng), BitVector(16, *d_rng)),
-      "t.d_size == e.d_size");
-  ASSERT_DEATH(
-      BitVector::bvite(
-          BitVector(1, *d_rng), BitVector(16, *d_rng), BitVector(8, *d_rng)),
-      "t.d_size == e.d_size");
+  BitVector b1(1, *d_rng);
+  BitVector b8(8, *d_rng);
+  BitVector b16(16, *d_rng);
+  if (in_place)
+  {
+    ASSERT_DEATH(b8.ibvite(b8, b8, b8), "c.d_size == 1");
+    ASSERT_DEATH(b8.ibvite(b1, b8, b16), "d_size == e.d_size");
+    ASSERT_DEATH(b8.ibvite(b1, b16, b8), "d_size == t.d_size");
+  }
+  else
+  {
+    ASSERT_DEATH(BitVector::bvite(b8, b8, b8), "c.d_size == 1");
+    ASSERT_DEATH(BitVector::bvite(b1, b8, b16), "t.d_size == e.d_size");
+    ASSERT_DEATH(BitVector::bvite(b1, b16, b8), "t.d_size == e.d_size");
+  }
 }
 
 void
-TestBitVector::test_modinv(uint32_t size)
+TestBitVector::test_modinv(uint32_t size, bool in_place)
 {
   for (uint32_t i = 0; i < N_MODINV_TESTS; ++i)
   {
     BitVector bv(size, *d_rng);
     bv.set_bit(0, 1);  // must be odd
-    BitVector res = bv.bvmodinv();
+    BitVector res(size);
+    if (in_place)
+    {
+      res.ibvmodinv(bv);
+    }
+    else
+    {
+      res = bv.bvmodinv();
+    }
     ASSERT_TRUE(bv.bvmul(res).is_one());
   }
 }
 
 void
-TestBitVector::test_unary(TestBitVector::Kind kind, uint32_t size)
+TestBitVector::test_unary(TestBitVector::Kind kind,
+                          uint32_t size,
+                          bool in_place)
 {
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint64_t ares;
-    BitVector res;
+    BitVector res(size);
     BitVector bv(size, *d_rng);
     uint64_t a = bv.to_uint64();
     switch (kind)
     {
       case DEC:
-        res  = bv.bvdec();
+        if (in_place)
+        {
+          res.ibvdec(bv);
+        }
+        else
+        {
+          res = bv.bvdec();
+        }
         ares = _dec(a, size);
         break;
 
       case INC:
-        res  = bv.bvinc();
+        if (in_place)
+        {
+          res.ibvinc(bv);
+        }
+        else
+        {
+          res = bv.bvinc();
+        }
         ares = _inc(a, size);
         break;
 
       case NEG:
-        res  = bv.bvneg();
+        if (in_place)
+        {
+          res.ibvneg(bv);
+        }
+        else
+        {
+          res = bv.bvneg();
+        }
         ares = _neg(a, size);
         break;
 
       case NOT:
-        res  = bv.bvnot();
+        if (in_place)
+        {
+          res.ibvnot(bv);
+        }
+        else
+        {
+          res = bv.bvnot();
+        }
         ares = _not(a, size);
         break;
 
       case REDAND:
-        res  = bv.bvredand();
+        if (in_place)
+        {
+          res = BitVector(1);
+          res.ibvredand(bv);
+        }
+        else
+        {
+          res = bv.bvredand();
+        }
         ares = _redand(a, size);
         break;
 
       case REDOR:
-        res  = bv.bvredor();
+        if (in_place)
+        {
+          res = BitVector(1);
+          res.ibvredor(bv);
+        }
+        else
+        {
+          res = bv.bvredor();
+        }
         ares = _redor(a, size);
         break;
 
@@ -738,462 +819,585 @@ TestBitVector::test_unary(TestBitVector::Kind kind, uint32_t size)
 }
 
 void
-TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
+TestBitVector::test_binary(TestBitVector::Kind kind,
+                           uint32_t size,
+                           bool in_place)
 {
   BitVector zero = BitVector::mk_zero(size);
 
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint64_t ares, bres;
-    BitVector res;
+    BitVector res(size);
     BitVector bv1(size, *d_rng);
     BitVector bv2(size, *d_rng);
-    uint64_t a1 = bv1.to_uint64();
-    uint64_t a2 = bv2.to_uint64();
-    /* test for x = 0 explicitly */
-    switch (kind)
+    uint64_t a1                                          = bv1.to_uint64();
+    uint64_t a2                                          = bv2.to_uint64();
+    std::vector<std::pair<BitVector, BitVector>> bv_args = {
+        std::make_pair(zero, bv2),
+        std::make_pair(bv1, zero),
+        std::make_pair(bv1, bv2)};
+    std::vector<std::pair<uint64_t, uint64_t>> int_args = {
+        std::make_pair(0, a2), std::make_pair(a1, 0), std::make_pair(a1, a2)};
+
+    for (uint32_t i = 0; i < 3; ++i)
     {
-      case ADD:
-        res  = zero.bvadd(bv2);
-        ares = _add(0, a2, size);
-        break;
+      const BitVector& b1 = bv_args[i].first;
+      const BitVector& b2 = bv_args[i].second;
+      uint64_t i1         = int_args[i].first;
+      uint64_t i2         = int_args[i].second;
+      switch (kind)
+      {
+        case ADD:
+          if (in_place)
+          {
+            res.ibvadd(b1, b2);
+          }
+          else
+          {
+            res = b1.bvadd(b2);
+          }
+          ares = _add(i1, i2, size);
+          break;
 
-      case AND:
-        res  = zero.bvand(bv2);
-        ares = _and(0, a2, size);
-        break;
+        case AND:
+          if (in_place)
+          {
+            res.ibvand(b1, b2);
+          }
+          else
+          {
+            res = b1.bvand(b2);
+          }
+          ares = _and(i1, i2, size);
+          break;
 
-      case ASHR:
-        res  = zero.bvashr(bv2);
-        ares = _ashr(0, a2, size);
-        break;
+        case ASHR:
+          if (in_place)
+          {
+            res.ibvashr(b1, b2);
+          }
+          else
+          {
+            res = b1.bvashr(b2);
+          }
+          ares = _ashr(i1, i2, size);
+          break;
 
-      case EQ:
-        res  = zero.bveq(bv2);
-        ares = _eq(0, a2, size);
-        break;
+        case EQ:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibveq(b1, b2);
+          }
+          else
+          {
+            res = b1.bveq(b2);
+          }
+          ares = _eq(i1, i2, size);
+          break;
 
-      case IMPLIES:
-        res  = zero.bvimplies(bv2);
-        ares = _implies(0, a2, size);
-        break;
+        case IMPLIES:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibvimplies(b1, b2);
+          }
+          else
+          {
+            res = b1.bvimplies(b2);
+          }
+          ares = _implies(i1, i2, size);
+          break;
 
-      case MUL:
-        res  = zero.bvmul(bv2);
-        ares = _mul(0, a2, size);
-        break;
+        case MUL:
+          if (in_place)
+          {
+            res.ibvmul(b1, b2);
+          }
+          else
+          {
+            res = b1.bvmul(b2);
+          }
+          ares = _mul(i1, i2, size);
+          break;
 
-      case NAND:
-        res  = zero.bvnand(bv2);
-        ares = _nand(0, a2, size);
-        break;
+        case NAND:
+          if (in_place)
+          {
+            res.ibvnand(b1, b2);
+          }
+          else
+          {
+            res = b1.bvnand(b2);
+          }
+          ares = _nand(i1, i2, size);
+          break;
 
-      case NE:
-        res  = zero.bvne(bv2);
-        ares = _ne(0, a2, size);
-        break;
+        case NE:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibvne(b1, b2);
+          }
+          else
+          {
+            res = b1.bvne(b2);
+          }
+          ares = _ne(i1, i2, size);
+          break;
 
-      case NOR:
-        res  = zero.bvnor(bv2);
-        ares = _nor(0, a2, size);
-        break;
+        case NOR:
+          if (in_place)
+          {
+            res.ibvnor(b1, b2);
+          }
+          else
+          {
+            res = b1.bvnor(b2);
+          }
+          ares = _nor(i1, i2, size);
+          break;
 
-      case OR:
-        res  = zero.bvor(bv2);
-        ares = _or(0, a2, size);
-        break;
+        case OR:
+          if (in_place)
+          {
+            res.ibvor(b1, b2);
+          }
+          else
+          {
+            res = b1.bvor(b2);
+          }
+          ares = _or(i1, i2, size);
+          break;
 
-      case SHL:
-        res  = zero.bvshl(bv2);
-        ares = _shl(0, a2, size);
-        break;
+        case SHL:
+          if (in_place)
+          {
+            res.ibvshl(b1, b2);
+          }
+          else
+          {
+            res = b1.bvshl(b2);
+          }
+          ares = _shl(i1, i2, size);
+          break;
 
-      case SHR:
-        res  = zero.bvshr(bv2);
-        ares = _shr(0, a2, size);
-        break;
+        case SHR:
+          if (in_place)
+          {
+            res.ibvshr(b1, b2);
+          }
+          else
+          {
+            res = b1.bvshr(b2);
+          }
+          ares = _shr(i1, i2, size);
+          break;
 
-      case SUB:
-        res  = zero.bvsub(bv2);
-        ares = _sub(0, a2, size);
-        break;
+        case SUB:
+          if (in_place)
+          {
+            res.ibvsub(b1, b2);
+          }
+          else
+          {
+            res = b1.bvsub(b2);
+          }
+          ares = _sub(i1, i2, size);
+          break;
 
-      case UDIV:
-        res  = zero.bvudiv(bv2);
-        ares = _udiv(0, a2, size);
-        break;
+        case UDIV:
+          if (in_place)
+          {
+            res.ibvudiv(b1, b2);
+          }
+          else
+          {
+            res = b1.bvudiv(b2);
+          }
+          ares = _udiv(i1, i2, size);
+          break;
 
-      case ULT:
-        res  = zero.bvult(bv2);
-        ares = _ult(0, a2, size);
-        break;
+        case ULT:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibvult(b1, b2);
+          }
+          else
+          {
+            res = b1.bvult(b2);
+          }
+          ares = _ult(i1, i2, size);
+          break;
 
-      case ULE:
-        res  = zero.bvule(bv2);
-        ares = _ule(0, a2, size);
-        break;
+        case ULE:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibvule(b1, b2);
+          }
+          else
+          {
+            res = b1.bvule(b2);
+          }
+          ares = _ule(i1, i2, size);
+          break;
 
-      case UGT:
-        res  = zero.bvugt(bv2);
-        ares = _ugt(0, a2, size);
-        break;
+        case UGT:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibvugt(b1, b2);
+          }
+          else
+          {
+            res = b1.bvugt(b2);
+          }
+          ares = _ugt(i1, i2, size);
+          break;
 
-      case UGE:
-        res  = zero.bvuge(bv2);
-        ares = _uge(0, a2, size);
-        break;
+        case UGE:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibvuge(b1, b2);
+          }
+          else
+          {
+            res = b1.bvuge(b2);
+          }
+          ares = _uge(i1, i2, size);
+          break;
 
-      case UREM:
-        res  = zero.bvurem(bv2);
-        ares = _urem(0, a2, size);
-        break;
+        case UREM:
+          if (in_place)
+          {
+            res.ibvurem(b1, b2);
+          }
+          else
+          {
+            res = b1.bvurem(b2);
+          }
+          ares = _urem(i1, i2, size);
+          break;
 
-      case XOR:
-        res  = zero.bvxor(bv2);
-        ares = _xor(0, a2, size);
-        break;
+        case XOR:
+          if (in_place)
+          {
+            res.ibvxor(b1, b2);
+          }
+          else
+          {
+            res = b1.bvxor(b2);
+          }
+          ares = _xor(i1, i2, size);
+          break;
 
-      case XNOR:
-        res  = zero.bvxnor(bv2);
-        ares = _xnor(0, a2, size);
-        break;
+        case XNOR:
+          if (in_place)
+          {
+            res.ibvxnor(b1, b2);
+          }
+          else
+          {
+            res = b1.bvxnor(b2);
+          }
+          ares = _xnor(i1, i2, size);
+          break;
 
-      default: assert(false);
+        default: assert(false);
+      }
+      bres = res.to_uint64();
+      assert(ares == bres);
+      ASSERT_EQ(ares, bres);
     }
-    bres = res.to_uint64();
-    ASSERT_EQ(ares, bres);
-    /* test for y = 0 explicitly */
-    switch (kind)
-    {
-      case ADD:
-        res  = bv1.bvadd(zero);
-        ares = _add(a1, 0, size);
-        break;
-
-      case AND:
-        res  = bv1.bvand(zero);
-        ares = _and(a1, 0, size);
-        break;
-
-      case ASHR:
-        res  = bv1.bvashr(zero);
-        ares = _ashr(a1, 0, size);
-        break;
-
-      case EQ:
-        res  = bv1.bveq(zero);
-        ares = _eq(a1, 0, size);
-        break;
-
-      case IMPLIES:
-        res  = bv1.bvimplies(zero);
-        ares = _implies(a1, 0, size);
-        break;
-
-      case MUL:
-        res  = bv1.bvmul(zero);
-        ares = _mul(a1, 0, size);
-        break;
-
-      case NAND:
-        res  = bv1.bvnand(zero);
-        ares = _nand(a1, 0, size);
-        break;
-
-      case NE:
-        res  = bv1.bvne(zero);
-        ares = _ne(a1, 0, size);
-        break;
-
-      case NOR:
-        res  = bv1.bvnor(zero);
-        ares = _nor(a1, 0, size);
-        break;
-
-      case OR:
-        res  = bv1.bvor(zero);
-        ares = _or(a1, 0, size);
-        break;
-
-      case SHL:
-        res  = bv1.bvshl(zero);
-        ares = _shl(a1, 0, size);
-        break;
-
-      case SHR:
-        res  = bv1.bvshr(zero);
-        ares = _shr(a1, 0, size);
-        break;
-
-      case SUB:
-        res  = bv1.bvsub(zero);
-        ares = _sub(a1, 0, size);
-        break;
-
-      case UDIV:
-        res  = bv1.bvudiv(zero);
-        ares = _udiv(a1, 0, size);
-        break;
-
-      case ULT:
-        res  = bv1.bvult(zero);
-        ares = _ult(a1, 0, size);
-        break;
-
-      case ULE:
-        res  = bv1.bvule(zero);
-        ares = _ule(a1, 0, size);
-        break;
-
-      case UGT:
-        res  = bv1.bvugt(zero);
-        ares = _ugt(a1, 0, size);
-        break;
-
-      case UGE:
-        res  = bv1.bvuge(zero);
-        ares = _uge(a1, 0, size);
-        break;
-
-      case UREM:
-        res  = bv1.bvurem(zero);
-        ares = _urem(a1, 0, size);
-        break;
-
-      case XOR:
-        res  = bv1.bvxor(zero);
-        ares = _xor(a1, 0, size);
-        break;
-
-      case XNOR:
-        res  = bv1.bvxnor(zero);
-        ares = _xnor(a1, 0, size);
-        break;
-
-      default: assert(false);
-    }
-    bres = res.to_uint64();
-    ASSERT_EQ(ares, bres);
-    /* test x, y random */
-    switch (kind)
-    {
-      case ADD:
-        res  = bv1.bvadd(bv2);
-        ares = _add(a1, a2, size);
-        break;
-
-      case AND:
-        res  = bv1.bvand(bv2);
-        ares = _and(a1, a2, size);
-        break;
-
-      case ASHR:
-        res  = bv1.bvashr(bv2);
-        ares = _ashr(a1, a2, size);
-        break;
-
-      case EQ:
-        res  = bv1.bveq(bv2);
-        ares = _eq(a1, a2, size);
-        break;
-
-      case IMPLIES:
-        res  = bv1.bvimplies(bv2);
-        ares = _implies(a1, a2, size);
-        break;
-
-      case MUL:
-        res  = bv1.bvmul(bv2);
-        ares = _mul(a1, a2, size);
-        break;
-
-      case NAND:
-        res  = bv1.bvnand(bv2);
-        ares = _nand(a1, a2, size);
-        break;
-
-      case NE:
-        res  = bv1.bvne(bv2);
-        ares = _ne(a1, a2, size);
-        break;
-
-      case NOR:
-        res  = bv1.bvnor(bv2);
-        ares = _nor(a1, a2, size);
-        break;
-
-      case OR:
-        res  = bv1.bvor(bv2);
-        ares = _or(a1, a2, size);
-        break;
-
-      case SHL:
-        res  = bv1.bvshl(bv2);
-        ares = _shl(a1, a2, size);
-        break;
-
-      case SHR:
-        res  = bv1.bvshr(bv2);
-        ares = _shr(a1, a2, size);
-        break;
-
-      case SUB:
-        res  = bv1.bvsub(bv2);
-        ares = _sub(a1, a2, size);
-        break;
-
-      case UDIV:
-        res  = bv1.bvudiv(bv2);
-        ares = _udiv(a1, a2, size);
-        break;
-
-      case ULT:
-        res  = bv1.bvult(bv2);
-        ares = _ult(a1, a2, size);
-        break;
-
-      case ULE:
-        res  = bv1.bvule(bv2);
-        ares = _ule(a1, a2, size);
-        break;
-
-      case UGT:
-        res  = bv1.bvugt(bv2);
-        ares = _ugt(a1, a2, size);
-        break;
-
-      case UGE:
-        res  = bv1.bvuge(bv2);
-        ares = _uge(a1, a2, size);
-        break;
-
-      case UREM:
-        res  = bv1.bvurem(bv2);
-        ares = _urem(a1, a2, size);
-        break;
-
-      case XOR:
-        res  = bv1.bvxor(bv2);
-        ares = _xor(a1, a2, size);
-        break;
-
-      case XNOR:
-        res  = bv1.bvxnor(bv2);
-        ares = _xnor(a1, a2, size);
-        break;
-
-      default: assert(false);
-    }
-    bres = res.to_uint64();
-    ASSERT_EQ(ares, bres);
   }
+  BitVector res(size);
+  BitVector b1(size, *d_rng);
+  BitVector b2(size + 1, *d_rng);
   /* death tests */
   switch (kind)
   {
     case ADD:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvadd(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvadd(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvadd(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvadd(b2), "d_size == .*d_size");
+      }
       break;
 
     case AND:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvand(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvand(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvand(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvand(b2), "d_size == .*d_size");
+      }
       break;
 
     case ASHR:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvashr(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvashr(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvashr(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvashr(b2), "d_size == .*d_size");
+      }
       break;
 
     case EQ:
-      ASSERT_DEATH(BitVector(size, *d_rng).bveq(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(res.ibveq(b1, b1), "d_size == 1");
+        }
+        ASSERT_DEATH(BitVector(1).ibveq(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibveq(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bveq(b2), "d_size == .*d_size");
+      }
       break;
 
     case IMPLIES:
-      ASSERT_DEATH(
-          BitVector(size, *d_rng).bvimplies(BitVector(size + 1, *d_rng)),
-          "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(res.ibvimplies(b1, b1), "d_size == 1");
+        }
+        ASSERT_DEATH(BitVector(1).ibvimplies(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvimplies(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvimplies(b2), "d_size == .*d_size");
+      }
       break;
 
     case MUL:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvmul(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvmul(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvmul(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvmul(b2), "d_size == .*d_size");
+      }
       break;
 
     case NAND:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvnand(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvnand(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvnand(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvnand(b2), "d_size == .*d_size");
+      }
       break;
 
     case NE:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvne(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(res.ibvne(b1, b1), "d_size == 1");
+        }
+        ASSERT_DEATH(BitVector(1).ibvne(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvne(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvne(b2), "d_size == .*d_size");
+      }
       break;
 
     case NOR:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvnor(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvnor(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvnor(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvnor(b2), "d_size == .*d_size");
+      }
       break;
 
     case OR:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvor(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvor(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvor(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvor(b2), "d_size == .*d_size");
+      }
       break;
 
     case SHL:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvshl(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvshl(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvshl(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvshl(b2), "d_size == .*d_size");
+      }
       break;
 
     case SHR:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvshr(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvshr(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvshr(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvshr(b2), "d_size == .*d_size");
+      }
       break;
 
     case SUB:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvsub(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvsub(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvsub(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvsub(b2), "d_size == .*d_size");
+      }
       break;
 
     case UDIV:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvudiv(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvudiv(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvudiv(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvudiv(b2), "d_size == .*d_size");
+      }
       break;
 
     case ULT:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvult(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(res.ibvult(b1, b1), "d_size == 1");
+        }
+        ASSERT_DEATH(BitVector(1).ibvult(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvult(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvult(b2), "d_size == .*d_size");
+      }
       break;
 
     case ULE:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvule(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(res.ibvule(b1, b1), "d_size == 1");
+        }
+        ASSERT_DEATH(BitVector(1).ibvule(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvule(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvule(b2), "d_size == .*d_size");
+      }
       break;
 
     case UGT:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvugt(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(res.ibvugt(b1, b1), "d_size == 1");
+        }
+        ASSERT_DEATH(BitVector(1).ibvugt(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvugt(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvugt(b2), "d_size == .*d_size");
+      }
       break;
 
     case UGE:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvuge(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(res.ibvuge(b1, b1), "d_size == ");
+        }
+        ASSERT_DEATH(BitVector(1).ibvuge(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvuge(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvuge(b2), "d_size == .*d_size");
+      }
       break;
 
     case UREM:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvurem(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvurem(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvurem(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvurem(b2), "d_size == .*d_size");
+      }
       break;
 
     case XOR:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvxor(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvxor(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvxor(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvxor(b2), "d_size == .*d_size");
+      }
       break;
 
     case XNOR:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvxnor(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(res.ibvxnor(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(res.ibvxnor(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvxnor(b2), "d_size == .*d_size");
+      }
       break;
 
     default: assert(false);
@@ -1201,7 +1405,9 @@ TestBitVector::test_binary(TestBitVector::Kind kind, uint32_t size)
 }
 
 void
-TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
+TestBitVector::test_binary_signed(TestBitVector::Kind kind,
+                                  uint32_t size,
+                                  bool in_place)
 {
   assert(size < 64);
   BitVector zero = BitVector::mk_zero(size);
@@ -1209,7 +1415,7 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     int64_t ares, bres;
-    BitVector res;
+    BitVector res(size);
     BitVector bv1(size, *d_rng);
     BitVector bv2(size, *d_rng);
     int64_t a1 = bv1.to_uint64();
@@ -1222,149 +1428,194 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
     {
       a2 = (UINT64_MAX << size) | a2;
     }
-    /* test for x = 0 explicitly */
-    switch (kind)
+    std::vector<std::pair<BitVector, BitVector>> bv_args = {
+        std::make_pair(zero, bv2),
+        std::make_pair(bv1, zero),
+        std::make_pair(bv1, bv2)};
+    std::vector<std::pair<uint64_t, uint64_t>> int_args = {
+        std::make_pair(0, a2), std::make_pair(a1, 0), std::make_pair(a1, a2)};
+
+    for (uint32_t i = 0; i < 3; ++i)
     {
-      case SDIV:
-        res  = zero.bvsdiv(bv2);
-        ares = _sdiv(0, a2, size);
-        break;
+      const BitVector& b1 = bv_args[i].first;
+      const BitVector& b2 = bv_args[i].second;
+      uint64_t i1         = int_args[i].first;
+      uint64_t i2         = int_args[i].second;
+      switch (kind)
+      {
+        case SDIV:
+          if (in_place)
+          {
+            res.ibvsdiv(b1, b2);
+          }
+          else
+          {
+            res = b1.bvsdiv(b2);
+          }
+          ares = _sdiv(i1, i2, size);
+          break;
 
-      case SLT:
-        res  = zero.bvslt(bv2);
-        ares = _slt(0, a2, size);
-        break;
+        case SLT:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibvslt(b1, b2);
+          }
+          else
+          {
+            res = b1.bvslt(b2);
+          }
+          ares = _slt(i1, i2, size);
+          break;
 
-      case SLE:
-        res  = zero.bvsle(bv2);
-        ares = _sle(0, a2, size);
-        break;
+        case SLE:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibvsle(b1, b2);
+          }
+          else
+          {
+            res = b1.bvsle(b2);
+          }
+          ares = _sle(i1, i2, size);
+          break;
 
-      case SGT:
-        res  = zero.bvsgt(bv2);
-        ares = _sgt(0, a2, size);
-        break;
+        case SGT:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibvsgt(b1, b2);
+          }
+          else
+          {
+            res = b1.bvsgt(b2);
+          }
+          ares = _sgt(i1, i2, size);
+          break;
 
-      case SGE:
-        res  = zero.bvsge(bv2);
-        ares = _sge(0, a2, size);
-        break;
+        case SGE:
+          if (in_place)
+          {
+            res = BitVector(1);
+            res.ibvsge(b1, b2);
+          }
+          else
+          {
+            res = b1.bvsge(b2);
+          }
+          ares = _sge(i1, i2, size);
+          break;
 
-      case SREM:
-        res  = zero.bvsrem(bv2);
-        ares = _srem(0, a2, size);
-        break;
+        case SREM:
+          if (in_place)
+          {
+            res.ibvsrem(b1, b2);
+          }
+          else
+          {
+            res = b1.bvsrem(b2);
+          }
+          ares = _srem(i1, i2, size);
+          break;
 
-      default: assert(false);
+        default: assert(false);
+      }
+      bres = res.to_uint64();
+      ASSERT_EQ(ares, bres);
     }
-    bres = res.to_uint64();
-    ASSERT_EQ(ares, bres);
-    /* test for y = 0 explicitly */
-    switch (kind)
-    {
-      case SDIV:
-        res  = bv1.bvsdiv(zero);
-        ares = _sdiv(a1, 0, size);
-        break;
-
-      case SLT:
-        res  = bv1.bvslt(zero);
-        ares = _slt(a1, 0, size);
-        break;
-
-      case SLE:
-        res  = bv1.bvsle(zero);
-        ares = _sle(a1, 0, size);
-        break;
-
-      case SGT:
-        res  = bv1.bvsgt(zero);
-        ares = _sgt(a1, 0, size);
-        break;
-
-      case SGE:
-        res  = bv1.bvsge(zero);
-        ares = _sge(a1, 0, size);
-        break;
-
-      case SREM:
-        res  = bv1.bvsrem(zero);
-        ares = _srem(a1, 0, size);
-        break;
-
-      default: assert(false);
-    }
-    bres = res.to_uint64();
-    ASSERT_EQ(ares, bres);
-    /* test x, y random */
-    switch (kind)
-    {
-      case SDIV:
-        res  = bv1.bvsdiv(bv2);
-        ares = _sdiv(a1, a2, size);
-        break;
-
-      case SLT:
-        res  = bv1.bvslt(bv2);
-        ares = _slt(a1, a2, size);
-        break;
-
-      case SLE:
-        res  = bv1.bvsle(bv2);
-        ares = _sle(a1, a2, size);
-        break;
-
-      case SGT:
-        res  = bv1.bvsgt(bv2);
-        ares = _sgt(a1, a2, size);
-        break;
-
-      case SGE:
-        res  = bv1.bvsge(bv2);
-        ares = _sge(a1, a2, size);
-        break;
-
-      case SREM:
-        res  = bv1.bvsrem(bv2);
-        ares = _srem(a1, a2, size);
-        break;
-
-      default: assert(false);
-    }
-    bres = res.to_uint64();
-    ASSERT_EQ(ares, bres);
   }
+  BitVector b1(size, *d_rng);
+  BitVector b2(size + 1, *d_rng);
   /* death tests */
   switch (kind)
   {
     case SDIV:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvsdiv(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(BitVector(size).ibvsdiv(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(size).ibvsdiv(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvsdiv(b2), "d_size == .*d_size");
+      }
       break;
 
     case SLT:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvslt(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(BitVector(size).ibvslt(b1, b1), "d_size == 1");
+        }
+        ASSERT_DEATH(BitVector(1).ibvslt(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvslt(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvslt(b2), "d_size == .*d_size");
+      }
       break;
 
     case SLE:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvsle(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(BitVector(size).ibvsle(b1, b1), "d_size == 1");
+        }
+        ASSERT_DEATH(BitVector(1).ibvsle(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvsle(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvsle(b2), "d_size == .*d_size");
+      }
       break;
 
     case SGT:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvsgt(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(BitVector(size).ibvsgt(b1, b1), "d_size == 1");
+        }
+        ASSERT_DEATH(BitVector(1).ibvsgt(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvsgt(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvsgt(b2), "d_size == .*d_size");
+      }
       break;
 
     case SGE:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvsge(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        if (size > 1)
+        {
+          ASSERT_DEATH(BitVector(size).ibvsge(b1, b1), "d_size == 1");
+        }
+        ASSERT_DEATH(BitVector(1).ibvsge(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvsge(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvsge(b2), "d_size == .*d_size");
+      }
       break;
 
     case SREM:
-      ASSERT_DEATH(BitVector(size, *d_rng).bvsrem(BitVector(size + 1, *d_rng)),
-                   "d_size == other.d_size");
+      if (in_place)
+      {
+        ASSERT_DEATH(BitVector(size).ibvsrem(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(size).ibvsrem(b2, b1), "d_size == .*d_size");
+      }
+      else
+      {
+        ASSERT_DEATH(b1.bvsrem(b2), "d_size == .*d_size");
+      }
       break;
 
     default: assert(false);
@@ -1372,7 +1623,7 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind, uint32_t size)
 }
 
 void
-TestBitVector::test_concat(uint32_t size)
+TestBitVector::test_concat(uint32_t size, bool in_place)
 {
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
@@ -1380,7 +1631,15 @@ TestBitVector::test_concat(uint32_t size)
     uint32_t size2 = size - size1;
     BitVector bv1(size1, *d_rng);
     BitVector bv2(size2, *d_rng);
-    BitVector res = bv1.bvconcat(bv2);
+    BitVector res(size);
+    if (in_place)
+    {
+      res.ibvconcat(bv1, bv2);
+    }
+    else
+    {
+      res = bv1.bvconcat(bv2);
+    }
     ASSERT_EQ(res.get_size(), size1 + size2);
     uint64_t u1   = bv1.to_uint64();
     uint64_t u2   = bv2.to_uint64();
@@ -1391,7 +1650,7 @@ TestBitVector::test_concat(uint32_t size)
 }
 
 void
-TestBitVector::test_extract(uint32_t size)
+TestBitVector::test_extract(uint32_t size, bool in_place)
 {
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
@@ -1402,7 +1661,15 @@ TestBitVector::test_extract(uint32_t size)
     ASSERT_LT(hi, size);
     ASSERT_LT(lo, size);
 
-    BitVector res = bv.bvextract(hi, lo);
+    BitVector res(hi - lo + 1);
+    if (in_place)
+    {
+      res.ibvextract(bv, hi, lo);
+    }
+    else
+    {
+      res = bv.bvextract(hi, lo);
+    }
     ASSERT_EQ(res.get_size(), hi - lo + 1);
     std::string res_str = res.to_string();
     std::string bv_str  = bv.to_string();
@@ -1420,24 +1687,53 @@ void
 TestBitVector::test_shift(Kind kind,
                           const std::string& to_shift,
                           const std::string& shift,
-                          const std::string& expected)
+                          const std::string& expected,
+                          bool in_place)
 {
-  assert(to_shift.size() == shift.size());
-  assert(to_shift.size() == expected.size());
+  uint32_t size = to_shift.size();
+  assert(size == shift.size());
+  assert(size == expected.size());
 
   BitVector bv(to_shift.size(), to_shift);
   BitVector bv_shift(shift.size(), shift);
   BitVector bv_expected(expected.size(), expected);
-  BitVector res;
+  BitVector res(size);
   switch (kind)
   {
-    case ASHR: res = bv.bvashr(bv_shift); break;
-    case SHL: res = bv.bvshl(bv_shift); break;
-    case SHR: res = bv.bvshr(bv_shift); break;
-
+    case ASHR:
+      if (in_place)
+      {
+        res.ibvashr(bv, bv_shift);
+      }
+      else
+      {
+        res = bv.bvashr(bv_shift);
+      }
+      break;
+    case SHL:
+      if (in_place)
+      {
+        res.ibvshl(bv, bv_shift);
+      }
+      else
+      {
+        res = bv.bvshl(bv_shift);
+      }
+      break;
+    case SHR:
+      if (in_place)
+      {
+        res.ibvshr(bv, bv_shift);
+      }
+      else
+      {
+        res = bv.bvshr(bv_shift);
+      }
+      break;
     default: assert(false);
   }
 
+  assert(res.compare(bv_expected) == 0);
   ASSERT_EQ(res.compare(bv_expected), 0);
 }
 
@@ -2273,94 +2569,94 @@ TEST_F(TestBitVector, count_leading_ones)
 
 TEST_F(TestBitVector, dec)
 {
-  test_unary(DEC, 1);
-  test_unary(DEC, 7);
-  test_unary(DEC, 31);
-  test_unary(DEC, 33);
+  test_unary(DEC, 1, false);
+  test_unary(DEC, 7, false);
+  test_unary(DEC, 31, false);
+  test_unary(DEC, 33, false);
 }
 
 TEST_F(TestBitVector, inc)
 {
-  test_unary(INC, 1);
-  test_unary(INC, 7);
-  test_unary(INC, 31);
-  test_unary(INC, 33);
+  test_unary(INC, 1, false);
+  test_unary(INC, 7, false);
+  test_unary(INC, 31, false);
+  test_unary(INC, 33, false);
 }
 
 TEST_F(TestBitVector, neg)
 {
-  test_unary(NEG, 1);
-  test_unary(NEG, 7);
-  test_unary(NEG, 31);
-  test_unary(NEG, 33);
+  test_unary(NEG, 1, false);
+  test_unary(NEG, 7, false);
+  test_unary(NEG, 31, false);
+  test_unary(NEG, 33, false);
 }
 
 TEST_F(TestBitVector, not )
 {
-  test_unary(NOT, 1);
-  test_unary(NOT, 7);
-  test_unary(NOT, 31);
-  test_unary(NOT, 33);
+  test_unary(NOT, 1, false);
+  test_unary(NOT, 7, false);
+  test_unary(NOT, 31, false);
+  test_unary(NOT, 33, false);
 }
 
 TEST_F(TestBitVector, redand)
 {
-  test_unary(REDAND, 1);
-  test_unary(REDAND, 7);
-  test_unary(REDAND, 31);
-  test_unary(REDAND, 33);
+  test_unary(REDAND, 1, false);
+  test_unary(REDAND, 7, false);
+  test_unary(REDAND, 31, false);
+  test_unary(REDAND, 33, false);
 }
 
 TEST_F(TestBitVector, redor)
 {
-  test_unary(REDOR, 1);
-  test_unary(REDOR, 7);
-  test_unary(REDOR, 31);
-  test_unary(REDOR, 33);
+  test_unary(REDOR, 1, false);
+  test_unary(REDOR, 7, false);
+  test_unary(REDOR, 31, false);
+  test_unary(REDOR, 33, false);
 }
 
 TEST_F(TestBitVector, add)
 {
-  test_binary(ADD, 1);
-  test_binary(ADD, 7);
-  test_binary(ADD, 31);
-  test_binary(ADD, 33);
+  test_binary(ADD, 1, false);
+  test_binary(ADD, 7, false);
+  test_binary(ADD, 31, false);
+  test_binary(ADD, 33, false);
 }
 
 TEST_F(TestBitVector, and)
 {
-  test_binary(AND, 1);
-  test_binary(AND, 7);
-  test_binary(AND, 31);
-  test_binary(AND, 33);
+  test_binary(AND, 1, false);
+  test_binary(AND, 7, false);
+  test_binary(AND, 31, false);
+  test_binary(AND, 33, false);
 }
 
 TEST_F(TestBitVector, concat)
 {
-  test_concat(2);
-  test_concat(7);
-  test_concat(31);
-  test_concat(33);
-  test_concat(64);
+  test_concat(2, false);
+  test_concat(7, false);
+  test_concat(31, false);
+  test_concat(33, false);
+  test_concat(64, false);
 }
 
 TEST_F(TestBitVector, eq)
 {
-  test_binary(EQ, 1);
-  test_binary(EQ, 7);
-  test_binary(EQ, 31);
-  test_binary(EQ, 33);
+  test_binary(EQ, 1, false);
+  test_binary(EQ, 7, false);
+  test_binary(EQ, 31, false);
+  test_binary(EQ, 33, false);
 }
 
 TEST_F(TestBitVector, extract)
 {
-  test_extract(1);
-  test_extract(7);
-  test_extract(31);
-  test_extract(33);
+  test_extract(1, false);
+  test_extract(7, false);
+  test_extract(31, false);
+  test_extract(33, false);
 }
 
-TEST_F(TestBitVector, implies) { test_binary(IMPLIES, 1); }
+TEST_F(TestBitVector, implies) { test_binary(IMPLIES, 1, false); }
 
 TEST_F(TestBitVector, is_uadd_overflow)
 {
@@ -2380,86 +2676,86 @@ TEST_F(TestBitVector, is_umul_overflow)
 
 TEST_F(TestBitVector, ite)
 {
-  test_ite(1);
-  test_ite(7);
-  test_ite(31);
-  test_ite(33);
+  test_ite(1, false);
+  test_ite(7, false);
+  test_ite(31, false);
+  test_ite(33, false);
 }
 
 TEST_F(TestBitVector, modinv)
 {
-  test_ite(1);
-  test_ite(7);
-  test_ite(31);
-  test_ite(33);
+  test_ite(1, false);
+  test_ite(7, false);
+  test_ite(31, false);
+  test_ite(33, false);
 }
 
 TEST_F(TestBitVector, mul)
 {
-  test_binary(MUL, 1);
-  test_binary(MUL, 7);
-  test_binary(MUL, 31);
-  test_binary(MUL, 33);
+  test_binary(MUL, 1, false);
+  test_binary(MUL, 7, false);
+  test_binary(MUL, 31, false);
+  test_binary(MUL, 33, false);
 }
 
 TEST_F(TestBitVector, nand)
 {
-  test_binary(NAND, 1);
-  test_binary(NAND, 7);
-  test_binary(NAND, 31);
-  test_binary(NAND, 33);
+  test_binary(NAND, 1, false);
+  test_binary(NAND, 7, false);
+  test_binary(NAND, 31, false);
+  test_binary(NAND, 33, false);
 }
 
 TEST_F(TestBitVector, ne)
 {
-  test_binary(NE, 1);
-  test_binary(NE, 7);
-  test_binary(NE, 31);
-  test_binary(NE, 33);
+  test_binary(NE, 1, false);
+  test_binary(NE, 7, false);
+  test_binary(NE, 31, false);
+  test_binary(NE, 33, false);
 }
 
 TEST_F(TestBitVector, or)
 {
-  test_binary(OR, 1);
-  test_binary(OR, 7);
-  test_binary(OR, 31);
-  test_binary(OR, 33);
+  test_binary(OR, 1, false);
+  test_binary(OR, 7, false);
+  test_binary(OR, 31, false);
+  test_binary(OR, 33, false);
 }
 
 TEST_F(TestBitVector, nor)
 {
-  test_binary(NOR, 1);
-  test_binary(NOR, 7);
-  test_binary(NOR, 31);
-  test_binary(NOR, 33);
+  test_binary(NOR, 1, false);
+  test_binary(NOR, 7, false);
+  test_binary(NOR, 31, false);
+  test_binary(NOR, 33, false);
 }
 
 TEST_F(TestBitVector, sdiv)
 {
-  test_binary_signed(SDIV, 1);
-  test_binary_signed(SDIV, 7);
-  test_binary_signed(SDIV, 31);
-  test_binary_signed(SDIV, 33);
+  test_binary_signed(SDIV, 1, false);
+  test_binary_signed(SDIV, 7, false);
+  test_binary_signed(SDIV, 31, false);
+  test_binary_signed(SDIV, 33, false);
 }
 
 TEST_F(TestBitVector, sext)
 {
-  test_extend(SEXT, 2);
-  test_extend(SEXT, 3);
-  test_extend(SEXT, 4);
-  test_extend(SEXT, 5);
-  test_extend(SEXT, 6);
-  test_extend(SEXT, 7);
-  test_extend(SEXT, 31);
-  test_extend(SEXT, 33);
+  test_extend(SEXT, 2, false);
+  test_extend(SEXT, 3, false);
+  test_extend(SEXT, 4, false);
+  test_extend(SEXT, 5, false);
+  test_extend(SEXT, 6, false);
+  test_extend(SEXT, 7, false);
+  test_extend(SEXT, 31, false);
+  test_extend(SEXT, 33, false);
 }
 
 TEST_F(TestBitVector, shl)
 {
-  test_binary(SHL, 2);
-  test_binary(SHL, 8);
-  test_binary(SHL, 16);
-  test_binary(SHL, 32);
+  test_binary(SHL, 2, false);
+  test_binary(SHL, 8, false);
+  test_binary(SHL, 16, false);
+  test_binary(SHL, 32, false);
 
   for (uint32_t i = 0, size = 2; i < (1u << size); ++i)
   {
@@ -2472,7 +2768,8 @@ TEST_F(TestBitVector, shl)
       test_shift(SHL,
                  std::bitset<2>(i).to_string().c_str(),
                  std::bitset<2>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
   }
 
@@ -2487,7 +2784,8 @@ TEST_F(TestBitVector, shl)
       test_shift(SHL,
                  std::bitset<3>(i).to_string().c_str(),
                  std::bitset<3>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
   }
 
@@ -2502,7 +2800,8 @@ TEST_F(TestBitVector, shl)
       test_shift(SHL,
                  std::bitset<8>(i).to_string().c_str(),
                  std::bitset<8>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
   }
 
@@ -2518,14 +2817,16 @@ TEST_F(TestBitVector, shl)
       test_shift(SHL,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
     /* shift value doesn't fit into uint64_t */
     {
       test_shift(SHL,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
+                 std::string(bw, '0').c_str(),
+                 false);
     }
   }
 
@@ -2541,7 +2842,8 @@ TEST_F(TestBitVector, shl)
       test_shift(SHL,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
     /* shift value doesn't fit into uint64_t */
     for (uint64_t j = 64; j < 128; ++j)
@@ -2549,17 +2851,18 @@ TEST_F(TestBitVector, shl)
       test_shift(SHL,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(0u).set(j, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
+                 std::string(bw, '0').c_str(),
+                 false);
     }
   }
 }
 
 TEST_F(TestBitVector, shr)
 {
-  test_binary(SHR, 2);
-  test_binary(SHR, 8);
-  test_binary(SHR, 16);
-  test_binary(SHR, 32);
+  test_binary(SHR, 2, false);
+  test_binary(SHR, 8, false);
+  test_binary(SHR, 16, false);
+  test_binary(SHR, 32, false);
 
   for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
   {
@@ -2572,7 +2875,8 @@ TEST_F(TestBitVector, shr)
       test_shift(SHR,
                  std::bitset<2>(i).to_string().c_str(),
                  std::bitset<2>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
   }
 
@@ -2587,7 +2891,8 @@ TEST_F(TestBitVector, shr)
       test_shift(SHR,
                  std::bitset<3>(i).to_string().c_str(),
                  std::bitset<3>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
   }
 
@@ -2602,7 +2907,8 @@ TEST_F(TestBitVector, shr)
       test_shift(SHR,
                  std::bitset<8>(i).to_string().c_str(),
                  std::bitset<8>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
   }
 
@@ -2618,14 +2924,16 @@ TEST_F(TestBitVector, shr)
       test_shift(SHR,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
     /* shift value doesn't fit into uint64_t */
     {
       test_shift(SHR,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
+                 std::string(bw, '0').c_str(),
+                 false);
     }
   }
 
@@ -2641,24 +2949,26 @@ TEST_F(TestBitVector, shr)
       test_shift(SHR,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
     /* shift value doesn't fit into uint64_t */
     {
       test_shift(SHR,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(0u).set(120, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
+                 std::string(bw, '0').c_str(),
+                 false);
     }
   }
 }
 
 TEST_F(TestBitVector, ashr)
 {
-  test_binary(ASHR, 2);
-  test_binary(ASHR, 8);
-  test_binary(ASHR, 16);
-  test_binary(ASHR, 32);
+  test_binary(ASHR, 2, false);
+  test_binary(ASHR, 8, false);
+  test_binary(ASHR, 16, false);
+  test_binary(ASHR, 32, false);
 
   for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
   {
@@ -2673,7 +2983,8 @@ TEST_F(TestBitVector, ashr)
       test_shift(ASHR,
                  std::bitset<2>(i).to_string().c_str(),
                  std::bitset<2>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
   }
 
@@ -2690,7 +3001,8 @@ TEST_F(TestBitVector, ashr)
       test_shift(ASHR,
                  std::bitset<3>(i).to_string().c_str(),
                  std::bitset<3>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
   }
 
@@ -2707,7 +3019,8 @@ TEST_F(TestBitVector, ashr)
       test_shift(ASHR,
                  std::bitset<8>(i).to_string().c_str(),
                  std::bitset<8>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
   }
 
@@ -2725,14 +3038,16 @@ TEST_F(TestBitVector, ashr)
       test_shift(ASHR,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
     /* shift value doesn't fit into uint64_t */
     {
       test_shift(ASHR,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
+                 std::string(bw, '0').c_str(),
+                 false);
     }
   }
 
@@ -2750,140 +3065,783 @@ TEST_F(TestBitVector, ashr)
       test_shift(ASHR,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(j).to_string().c_str(),
-                 expected.c_str());
+                 expected.c_str(),
+                 false);
     }
     /* shift value doesn't fit into uint64_t */
     {
       test_shift(ASHR,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(0u).set(120, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
+                 std::string(bw, '0').c_str(),
+                 false);
     }
   }
 }
 
 TEST_F(TestBitVector, slt)
 {
-  test_binary_signed(SLT, 1);
-  test_binary_signed(SLT, 7);
-  test_binary_signed(SLT, 31);
-  test_binary_signed(SLT, 33);
+  test_binary_signed(SLT, 1, false);
+  test_binary_signed(SLT, 7, false);
+  test_binary_signed(SLT, 31, false);
+  test_binary_signed(SLT, 33, false);
 }
 
 TEST_F(TestBitVector, sle)
 {
-  test_binary_signed(SLE, 1);
-  test_binary_signed(SLE, 7);
-  test_binary_signed(SLE, 31);
-  test_binary_signed(SLE, 33);
+  test_binary_signed(SLE, 1, false);
+  test_binary_signed(SLE, 7, false);
+  test_binary_signed(SLE, 31, false);
+  test_binary_signed(SLE, 33, false);
 }
 
 TEST_F(TestBitVector, sgt)
 {
-  test_binary_signed(SGT, 1);
-  test_binary_signed(SGT, 7);
-  test_binary_signed(SGT, 31);
-  test_binary_signed(SGT, 33);
+  test_binary_signed(SGT, 1, false);
+  test_binary_signed(SGT, 7, false);
+  test_binary_signed(SGT, 31, false);
+  test_binary_signed(SGT, 33, false);
 }
 
 TEST_F(TestBitVector, sge)
 {
-  test_binary_signed(SGE, 1);
-  test_binary_signed(SGE, 7);
-  test_binary_signed(SGE, 31);
-  test_binary_signed(SGE, 33);
+  test_binary_signed(SGE, 1, false);
+  test_binary_signed(SGE, 7, false);
+  test_binary_signed(SGE, 31, false);
+  test_binary_signed(SGE, 33, false);
 }
 
 TEST_F(TestBitVector, sub)
 {
-  test_binary(SUB, 1);
-  test_binary(SUB, 7);
-  test_binary(SUB, 31);
-  test_binary(SUB, 33);
+  test_binary(SUB, 1, false);
+  test_binary(SUB, 7, false);
+  test_binary(SUB, 31, false);
+  test_binary(SUB, 33, false);
 }
 
 TEST_F(TestBitVector, srem)
 {
-  test_binary_signed(SREM, 1);
-  test_binary_signed(SREM, 7);
-  test_binary_signed(SREM, 31);
-  test_binary_signed(SREM, 33);
+  test_binary_signed(SREM, 1, false);
+  test_binary_signed(SREM, 7, false);
+  test_binary_signed(SREM, 31, false);
+  test_binary_signed(SREM, 33, false);
 }
 
 TEST_F(TestBitVector, udiv)
 {
-  test_binary(UDIV, 1);
-  test_binary(UDIV, 7);
-  test_binary(UDIV, 31);
-  test_binary(UDIV, 33);
+  test_binary(UDIV, 1, false);
+  test_binary(UDIV, 7, false);
+  test_binary(UDIV, 31, false);
+  test_binary(UDIV, 33, false);
 }
 
 TEST_F(TestBitVector, ult)
 {
-  test_binary(ULT, 1);
-  test_binary(ULT, 7);
-  test_binary(ULT, 31);
-  test_binary(ULT, 33);
+  test_binary(ULT, 1, false);
+  test_binary(ULT, 7, false);
+  test_binary(ULT, 31, false);
+  test_binary(ULT, 33, false);
 }
 
 TEST_F(TestBitVector, ule)
 {
-  test_binary(ULE, 1);
-  test_binary(ULE, 7);
-  test_binary(ULE, 31);
-  test_binary(ULE, 33);
+  test_binary(ULE, 1, false);
+  test_binary(ULE, 7, false);
+  test_binary(ULE, 31, false);
+  test_binary(ULE, 33, false);
 }
 
 TEST_F(TestBitVector, ugt)
 {
-  test_binary(UGT, 1);
-  test_binary(UGT, 7);
-  test_binary(UGT, 31);
-  test_binary(UGT, 33);
+  test_binary(UGT, 1, false);
+  test_binary(UGT, 7, false);
+  test_binary(UGT, 31, false);
+  test_binary(UGT, 33, false);
 }
 
 TEST_F(TestBitVector, uge)
 {
-  test_binary(UGE, 1);
-  test_binary(UGE, 7);
-  test_binary(UGE, 31);
-  test_binary(UGE, 33);
+  test_binary(UGE, 1, false);
+  test_binary(UGE, 7, false);
+  test_binary(UGE, 31, false);
+  test_binary(UGE, 33, false);
 }
 
 TEST_F(TestBitVector, urem)
 {
-  test_binary(UREM, 1);
-  test_binary(UREM, 7);
-  test_binary(UREM, 31);
-  test_binary(UREM, 33);
+  test_binary(UREM, 1, false);
+  test_binary(UREM, 7, false);
+  test_binary(UREM, 31, false);
+  test_binary(UREM, 33, false);
 }
 
 TEST_F(TestBitVector, xor)
 {
-  test_binary(XOR, 1);
-  test_binary(XOR, 7);
-  test_binary(XOR, 31);
-  test_binary(XOR, 33);
+  test_binary(XOR, 1, false);
+  test_binary(XOR, 7, false);
+  test_binary(XOR, 31, false);
+  test_binary(XOR, 33, false);
 }
 
 TEST_F(TestBitVector, xnor)
 {
-  test_binary(XNOR, 1);
-  test_binary(XNOR, 7);
-  test_binary(XNOR, 31);
-  test_binary(XNOR, 33);
+  test_binary(XNOR, 1, false);
+  test_binary(XNOR, 7, false);
+  test_binary(XNOR, 31, false);
+  test_binary(XNOR, 33, false);
 }
 
 TEST_F(TestBitVector, zext)
 {
-  test_extend(ZEXT, 2);
-  test_extend(ZEXT, 3);
-  test_extend(ZEXT, 4);
-  test_extend(ZEXT, 5);
-  test_extend(ZEXT, 6);
-  test_extend(ZEXT, 7);
-  test_extend(ZEXT, 31);
-  test_extend(ZEXT, 33);
+  test_extend(ZEXT, 2, false);
+  test_extend(ZEXT, 3, false);
+  test_extend(ZEXT, 4, false);
+  test_extend(ZEXT, 5, false);
+  test_extend(ZEXT, 6, false);
+  test_extend(ZEXT, 7, false);
+  test_extend(ZEXT, 31, false);
+  test_extend(ZEXT, 33, false);
+}
+
+TEST_F(TestBitVector, idec)
+{
+  test_unary(DEC, 1, true);
+  test_unary(DEC, 7, true);
+  test_unary(DEC, 31, true);
+  test_unary(DEC, 33, true);
+}
+
+TEST_F(TestBitVector, iinc)
+{
+  test_unary(INC, 1, true);
+  test_unary(INC, 7, true);
+  test_unary(INC, 31, true);
+  test_unary(INC, 33, true);
+}
+
+TEST_F(TestBitVector, ineg)
+{
+  test_unary(NEG, 1, true);
+  test_unary(NEG, 7, true);
+  test_unary(NEG, 31, true);
+  test_unary(NEG, 33, true);
+}
+
+TEST_F(TestBitVector, inot)
+{
+  test_unary(NOT, 1, true);
+  test_unary(NOT, 7, true);
+  test_unary(NOT, 31, true);
+  test_unary(NOT, 33, true);
+}
+
+TEST_F(TestBitVector, iredand)
+{
+  test_unary(REDAND, 1, true);
+  test_unary(REDAND, 7, true);
+  test_unary(REDAND, 31, true);
+  test_unary(REDAND, 33, true);
+}
+
+TEST_F(TestBitVector, iredor)
+{
+  test_unary(REDOR, 1, true);
+  test_unary(REDOR, 7, true);
+  test_unary(REDOR, 31, true);
+  test_unary(REDOR, 33, true);
+}
+
+TEST_F(TestBitVector, iadd)
+{
+  test_binary(ADD, 1, true);
+  test_binary(ADD, 7, true);
+  test_binary(ADD, 31, true);
+  test_binary(ADD, 33, true);
+}
+
+TEST_F(TestBitVector, iand)
+{
+  test_binary(AND, 1, true);
+  test_binary(AND, 7, true);
+  test_binary(AND, 31, true);
+  test_binary(AND, 33, true);
+}
+
+TEST_F(TestBitVector, iconcat)
+{
+  test_concat(2, true);
+  test_concat(7, true);
+  test_concat(31, true);
+  test_concat(33, true);
+  test_concat(64, true);
+}
+
+TEST_F(TestBitVector, ieq)
+{
+  test_binary(EQ, 1, true);
+  test_binary(EQ, 7, true);
+  test_binary(EQ, 31, true);
+  test_binary(EQ, 33, true);
+}
+
+TEST_F(TestBitVector, iextract)
+{
+  test_extract(1, true);
+  test_extract(7, true);
+  test_extract(31, true);
+  test_extract(33, true);
+}
+
+TEST_F(TestBitVector, iimplies) { test_binary(IMPLIES, 1, true); }
+
+TEST_F(TestBitVector, iite)
+{
+  test_ite(1, true);
+  test_ite(7, true);
+  test_ite(31, true);
+  test_ite(33, true);
+}
+
+TEST_F(TestBitVector, imodinv)
+{
+  test_ite(1, true);
+  test_ite(7, true);
+  test_ite(31, true);
+  test_ite(33, true);
+}
+
+TEST_F(TestBitVector, imul)
+{
+  test_binary(MUL, 1, true);
+  test_binary(MUL, 7, true);
+  test_binary(MUL, 31, true);
+  test_binary(MUL, 33, true);
+}
+
+TEST_F(TestBitVector, inand)
+{
+  test_binary(NAND, 1, true);
+  test_binary(NAND, 7, true);
+  test_binary(NAND, 31, true);
+  test_binary(NAND, 33, true);
+}
+
+TEST_F(TestBitVector, ine)
+{
+  test_binary(NE, 1, true);
+  test_binary(NE, 7, true);
+  test_binary(NE, 31, true);
+  test_binary(NE, 33, true);
+}
+
+TEST_F(TestBitVector, ior)
+{
+  test_binary(OR, 1, true);
+  test_binary(OR, 7, true);
+  test_binary(OR, 31, true);
+  test_binary(OR, 33, true);
+}
+
+TEST_F(TestBitVector, inor)
+{
+  test_binary(NOR, 1, true);
+  test_binary(NOR, 7, true);
+  test_binary(NOR, 31, true);
+  test_binary(NOR, 33, true);
+}
+
+TEST_F(TestBitVector, isdiv)
+{
+  test_binary_signed(SDIV, 1, true);
+  test_binary_signed(SDIV, 7, true);
+  test_binary_signed(SDIV, 31, true);
+  test_binary_signed(SDIV, 33, true);
+}
+
+TEST_F(TestBitVector, isext)
+{
+  test_extend(SEXT, 2, true);
+  test_extend(SEXT, 3, true);
+  test_extend(SEXT, 4, true);
+  test_extend(SEXT, 5, true);
+  test_extend(SEXT, 6, true);
+  test_extend(SEXT, 7, true);
+  test_extend(SEXT, 31, true);
+  test_extend(SEXT, 33, true);
+}
+
+TEST_F(TestBitVector, ishl)
+{
+  test_binary(SHL, 2, true);
+  test_binary(SHL, 8, true);
+  test_binary(SHL, 16, true);
+  test_binary(SHL, 32, true);
+
+  for (uint32_t i = 0, size = 2; i < (1u << size); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << size); ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::bitset<2>(i).to_string() << std::string(j, '0');
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(expected.size() - size, size);
+      test_shift(SHL,
+                 std::bitset<2>(i).to_string(),
+                 std::bitset<2>(j).to_string(),
+                 expected,
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 3; i < (1u << bw); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << bw); ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::bitset<3>(i).to_string() << std::string(j, '0');
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(expected.size() - bw, bw);
+      test_shift(SHL,
+                 std::bitset<3>(i).to_string(),
+                 std::bitset<3>(j).to_string(),
+                 expected,
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 8; i < (1u << bw); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << bw); ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::bitset<8>(i).to_string() << std::string(j, '0');
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(expected.size() - bw, bw);
+      test_shift(SHL,
+                 std::bitset<8>(i).to_string(),
+                 std::bitset<8>(j).to_string(),
+                 expected,
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 65; i < (1u << bw); ++i)
+  {
+    /* shift value fits into uint64_t */
+    for (uint64_t j = 0; j < 32; ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::bitset<65>(i).to_string() << std::string(j, '0');
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(expected.size() - bw, bw);
+      test_shift(SHL,
+                 std::bitset<65>(i).to_string(),
+                 std::bitset<65>(j).to_string(),
+                 expected,
+                 true);
+    }
+    /* shift value doesn't fit into uint64_t */
+    {
+      test_shift(SHL,
+                 std::bitset<65>(i).to_string(),
+                 std::bitset<65>(0u).set(64, 1).to_string(),
+                 std::string(bw, '0'),
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 128; i < (1u << bw); ++i)
+  {
+    /* shift value fits into uint64_t */
+    for (uint64_t j = 0; j < 32; ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::bitset<128>(i).to_string() << std::string(j, '0');
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(expected.size() - bw, bw);
+      test_shift(SHL,
+                 std::bitset<128>(i).to_string(),
+                 std::bitset<128>(j).to_string(),
+                 expected,
+                 true);
+    }
+    /* shift value doesn't fit into uint64_t */
+    for (uint64_t j = 64; j < 128; ++j)
+    {
+      test_shift(SHL,
+                 std::bitset<128>(i).to_string(),
+                 std::bitset<128>(0u).set(j, 1).to_string(),
+                 std::string(bw, '0'),
+                 true);
+    }
+  }
+}
+
+TEST_F(TestBitVector, ishr)
+{
+  test_binary(SHR, 2, true);
+  test_binary(SHR, 8, true);
+  test_binary(SHR, 16, true);
+  test_binary(SHR, 32, true);
+
+  for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << bw); ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::string(j, '0') << std::bitset<2>(i).to_string();
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(0, bw);
+      test_shift(SHR,
+                 std::bitset<2>(i).to_string(),
+                 std::bitset<2>(j).to_string(),
+                 expected,
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 3; i < (1u << bw); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << bw); ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::string(j, '0') << std::bitset<3>(i).to_string();
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(0, bw);
+      test_shift(SHR,
+                 std::bitset<3>(i).to_string(),
+                 std::bitset<3>(j).to_string(),
+                 expected,
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 8; i < (1u << bw); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << bw); ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::string(j, '0') << std::bitset<8>(i).to_string();
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(0, bw);
+      test_shift(SHR,
+                 std::bitset<8>(i).to_string(),
+                 std::bitset<8>(j).to_string(),
+                 expected,
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 65; i < (1u << bw); ++i)
+  {
+    /* shift value fits into uint64_t */
+    for (uint64_t j = 0; j < 32; ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::string(j, '0') << std::bitset<65>(i).to_string();
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(0, bw);
+      test_shift(SHR,
+                 std::bitset<65>(i).to_string(),
+                 std::bitset<65>(j).to_string(),
+                 expected,
+                 true);
+    }
+    /* shift value doesn't fit into uint64_t */
+    {
+      test_shift(SHR,
+                 std::bitset<65>(i).to_string(),
+                 std::bitset<65>(0u).set(64, 1).to_string(),
+                 std::string(bw, '0'),
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 128; i < (1u << bw); ++i)
+  {
+    /* shift value fits into uint64_t */
+    for (uint64_t j = 0; j < 32; ++j)
+    {
+      std::stringstream ss_expected;
+      ss_expected << std::string(j, '0') << std::bitset<128>(i).to_string();
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(0, bw);
+      test_shift(SHR,
+                 std::bitset<128>(i).to_string(),
+                 std::bitset<128>(j).to_string(),
+                 expected,
+                 true);
+    }
+    /* shift value doesn't fit into uint64_t */
+    {
+      test_shift(SHR,
+                 std::bitset<128>(i).to_string(),
+                 std::bitset<128>(0u).set(120, 1).to_string(),
+                 std::string(bw, '0'),
+                 true);
+    }
+  }
+}
+
+TEST_F(TestBitVector, iashr)
+{
+  test_binary(ASHR, 2, true);
+  test_binary(ASHR, 8, true);
+  test_binary(ASHR, 16, true);
+  test_binary(ASHR, 32, true);
+
+  for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << bw); ++j)
+    {
+      std::stringstream ss_expected;
+      std::bitset<2> bits_i(i);
+      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
+                  << bits_i.to_string();
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(0, bw);
+      test_shift(ASHR,
+                 std::bitset<2>(i).to_string(),
+                 std::bitset<2>(j).to_string(),
+                 expected,
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 3; i < (1u << bw); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << bw); ++j)
+    {
+      std::stringstream ss_expected;
+      std::bitset<3> bits_i(i);
+      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
+                  << bits_i.to_string();
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(0, bw);
+      test_shift(ASHR,
+                 std::bitset<3>(i).to_string(),
+                 std::bitset<3>(j).to_string(),
+                 expected,
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 8; i < (1u << bw); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << bw); ++j)
+    {
+      std::stringstream ss_expected;
+      std::bitset<8> bits_i(i);
+      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
+                  << bits_i.to_string();
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(0, bw);
+      test_shift(ASHR,
+                 std::bitset<8>(i).to_string(),
+                 std::bitset<8>(j).to_string(),
+                 expected,
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 65; i < (1u << bw); ++i)
+  {
+    /* shift value fits into uint64_t */
+    for (uint64_t j = 0; j < 32; ++j)
+    {
+      std::stringstream ss_expected;
+      std::bitset<65> bits_i(i);
+      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
+                  << bits_i.to_string();
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(0, bw);
+      test_shift(ASHR,
+                 std::bitset<65>(i).to_string(),
+                 std::bitset<65>(j).to_string(),
+                 expected,
+                 true);
+    }
+    /* shift value doesn't fit into uint64_t */
+    {
+      test_shift(ASHR,
+                 std::bitset<65>(i).to_string(),
+                 std::bitset<65>(0u).set(64, 1).to_string(),
+                 std::string(bw, '0'),
+                 true);
+    }
+  }
+
+  for (uint32_t i = 0, bw = 128; i < (1u << bw); ++i)
+  {
+    /* shift value fits into uint64_t */
+    for (uint64_t j = 0; j < 32; ++j)
+    {
+      std::stringstream ss_expected;
+      std::bitset<128> bits_i(i);
+      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
+                  << bits_i.to_string();
+      std::string expected = ss_expected.str();
+      expected             = expected.substr(0, bw);
+      test_shift(ASHR,
+                 std::bitset<128>(i).to_string(),
+                 std::bitset<128>(j).to_string(),
+                 expected,
+                 true);
+    }
+    /* shift value doesn't fit into uint64_t */
+    {
+      test_shift(ASHR,
+                 std::bitset<128>(i).to_string(),
+                 std::bitset<128>(0u).set(120, 1).to_string(),
+                 std::string(bw, '0'),
+                 true);
+    }
+  }
+}
+
+TEST_F(TestBitVector, islt)
+{
+  test_binary_signed(SLT, 1, true);
+  test_binary_signed(SLT, 7, true);
+  test_binary_signed(SLT, 31, true);
+  test_binary_signed(SLT, 33, true);
+}
+
+TEST_F(TestBitVector, isle)
+{
+  test_binary_signed(SLE, 1, true);
+  test_binary_signed(SLE, 7, true);
+  test_binary_signed(SLE, 31, true);
+  test_binary_signed(SLE, 33, true);
+}
+
+TEST_F(TestBitVector, isgt)
+{
+  test_binary_signed(SGT, 1, true);
+  test_binary_signed(SGT, 7, true);
+  test_binary_signed(SGT, 31, true);
+  test_binary_signed(SGT, 33, true);
+}
+
+TEST_F(TestBitVector, isge)
+{
+  test_binary_signed(SGE, 1, true);
+  test_binary_signed(SGE, 7, true);
+  test_binary_signed(SGE, 31, true);
+  test_binary_signed(SGE, 33, true);
+}
+
+TEST_F(TestBitVector, isub)
+{
+  test_binary(SUB, 1, true);
+  test_binary(SUB, 7, true);
+  test_binary(SUB, 31, true);
+  test_binary(SUB, 33, true);
+}
+
+TEST_F(TestBitVector, isrem)
+{
+  test_binary_signed(SREM, 1, true);
+  test_binary_signed(SREM, 7, true);
+  test_binary_signed(SREM, 31, true);
+  test_binary_signed(SREM, 33, true);
+}
+
+TEST_F(TestBitVector, iudiv)
+{
+  test_binary(UDIV, 1, true);
+  test_binary(UDIV, 7, true);
+  test_binary(UDIV, 31, true);
+  test_binary(UDIV, 33, true);
+}
+
+TEST_F(TestBitVector, iult)
+{
+  test_binary(ULT, 1, true);
+  test_binary(ULT, 7, true);
+  test_binary(ULT, 31, true);
+  test_binary(ULT, 33, true);
+}
+
+TEST_F(TestBitVector, iule)
+{
+  test_binary(ULE, 1, true);
+  test_binary(ULE, 7, true);
+  test_binary(ULE, 31, true);
+  test_binary(ULE, 33, true);
+}
+
+TEST_F(TestBitVector, iugt)
+{
+  test_binary(UGT, 1, true);
+  test_binary(UGT, 7, true);
+  test_binary(UGT, 31, true);
+  test_binary(UGT, 33, true);
+}
+
+TEST_F(TestBitVector, iuge)
+{
+  test_binary(UGE, 1, true);
+  test_binary(UGE, 7, true);
+  test_binary(UGE, 31, true);
+  test_binary(UGE, 33, true);
+}
+
+TEST_F(TestBitVector, iurem)
+{
+  test_binary(UREM, 1, true);
+  test_binary(UREM, 7, true);
+  test_binary(UREM, 31, true);
+  test_binary(UREM, 33, true);
+}
+TEST_F(TestBitVector, ixor)
+{
+  test_binary(XOR, 1, true);
+  test_binary(XOR, 7, true);
+  test_binary(XOR, 31, true);
+  test_binary(XOR, 33, true);
+}
+
+TEST_F(TestBitVector, ixnor)
+{
+  test_binary(XNOR, 1, true);
+  test_binary(XNOR, 7, true);
+  test_binary(XNOR, 31, true);
+  test_binary(XNOR, 33, true);
+}
+
+TEST_F(TestBitVector, izext)
+{
+  test_extend(ZEXT, 2, true);
+  test_extend(ZEXT, 3, true);
+  test_extend(ZEXT, 4, true);
+  test_extend(ZEXT, 5, true);
+  test_extend(ZEXT, 6, true);
+  test_extend(ZEXT, 7, true);
+  test_extend(ZEXT, 31, true);
+  test_extend(ZEXT, 33, true);
+}
+
+TEST_F(TestBitVector, add32)
+{
+  BitVector res;
+  BitVector a0(32, *d_rng);
+  BitVector a1(32, *d_rng);
+  for (uint32_t i = 0; i < 10000000; ++i)
+  {
+    res = a0.bvadd(a1);
+  }
+}
+
+TEST_F(TestBitVector, iadd32)
+{
+  BitVector res(32);
+  BitVector a0(32, *d_rng);
+  BitVector a1(32, *d_rng);
+  for (uint32_t i = 0; i < 10000000; ++i)
+  {
+    res.ibvadd(a0, a1);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
