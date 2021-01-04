@@ -40,6 +40,7 @@ class BitVectorDomain
   /**
    * Return true if this bit-vector domain has fixed bits, i.e., bits that are
    * assigned to the same value in both 'hi' and 'lo'.
+   * Note: This check may only be called on VALID domains.
    */
   bool has_fixed_bits() const;
   /** Return true if bit at given index is fixed. */
@@ -100,6 +101,8 @@ class BitVectorDomain
    * 'hi', the domain is invalid.
    */
   BitVector d_hi;
+  /** True if this domain has fixed bits. */
+  bool d_has_fixed_bits = false;
 };
 
 /*----------------------------------------------------------------------------*/

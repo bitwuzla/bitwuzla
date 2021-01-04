@@ -21,6 +21,7 @@ BitVectorDomain::BitVectorDomain(const BitVector &lo, const BitVector &hi)
     : d_lo(lo), d_hi(hi)
 {
   assert(lo.get_size() == hi.get_size());
+  d_has_fixed_bits = !d_lo.is_zero() || !d_hi.is_ones();
 }
 
 BitVectorDomain::BitVectorDomain(const std::string &value)
@@ -33,9 +34,13 @@ BitVectorDomain::BitVectorDomain(const std::string &value)
   std::replace(hi.begin(), hi.end(), 'x', '1');
   d_lo = BitVector(size, lo);
   d_hi = BitVector(size, hi);
+  d_has_fixed_bits = !d_lo.is_zero() || !d_hi.is_ones();
 }
 
-BitVectorDomain::BitVectorDomain(const BitVector &bv) : d_lo(bv), d_hi(bv) {}
+BitVectorDomain::BitVectorDomain(const BitVector &bv) : d_lo(bv), d_hi(bv)
+{
+  d_has_fixed_bits = true;
+}
 
 BitVectorDomain::BitVectorDomain(uint32_t size, uint64_t value)
     : BitVectorDomain(BitVector(size, value))
@@ -45,6 +50,7 @@ BitVectorDomain::BitVectorDomain(uint32_t size, uint64_t value)
 BitVectorDomain::BitVectorDomain(const BitVectorDomain &other)
     : d_lo(other.d_lo), d_hi(other.d_hi)
 {
+  d_has_fixed_bits = !d_lo.is_zero() || !d_hi.is_ones();
 }
 
 BitVectorDomain::~BitVectorDomain()
@@ -73,7 +79,8 @@ BitVectorDomain::is_fixed() const
 bool
 BitVectorDomain::has_fixed_bits() const
 {
-  return d_lo.bvxnor(d_hi).bvredor().is_true();
+  assert(is_valid());
+  return d_has_fixed_bits;
 }
 
 bool

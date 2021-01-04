@@ -142,14 +142,18 @@ TEST_F(TestBitVectorDomain, has_fixed_bits)
   ASSERT_TRUE(BitVectorDomain(4, 0).has_fixed_bits());
   ASSERT_TRUE(BitVectorDomain(8, 5).has_fixed_bits());
   ASSERT_TRUE(BitVectorDomain(BitVectorDomain(8, 5)).has_fixed_bits());
-  ASSERT_FALSE(BitVectorDomain(BitVector(4, "1000"), BitVector(4, "0111"))
-                   .has_fixed_bits());
-  ASSERT_FALSE(BitVectorDomain(BitVector(4, "0100"), BitVector(4, "1011"))
-                   .has_fixed_bits());
-  ASSERT_FALSE(BitVectorDomain(BitVector(4, "0110"), BitVector(4, "1001"))
-                   .has_fixed_bits());
-  ASSERT_FALSE(BitVectorDomain(BitVector(4, "1001"), BitVector(4, "0110"))
-                   .has_fixed_bits());
+  ASSERT_DEATH(BitVectorDomain(BitVector(4, "1000"), BitVector(4, "0111"))
+                   .has_fixed_bits(),
+               "is_valid");
+  ASSERT_DEATH(BitVectorDomain(BitVector(4, "0100"), BitVector(4, "1011"))
+                   .has_fixed_bits(),
+               "is_valid");
+  ASSERT_DEATH(BitVectorDomain(BitVector(4, "0110"), BitVector(4, "1001"))
+                   .has_fixed_bits(),
+               "is_valid");
+  ASSERT_DEATH(BitVectorDomain(BitVector(4, "1001"), BitVector(4, "0110"))
+                   .has_fixed_bits(),
+               "is_valid");
 }
 
 TEST_F(TestBitVectorDomain, is_fixed_bit)
