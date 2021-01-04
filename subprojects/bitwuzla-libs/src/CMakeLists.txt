@@ -1,6 +1,7 @@
 set(libbzlals_src_files
   bitvector.cpp
   bitvector_domain.cpp
+  bitvector_op.cpp
   rng.cpp
 )
 

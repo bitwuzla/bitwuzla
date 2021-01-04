@@ -16,6 +16,47 @@ namespace test {
 
 class TestCommon : public ::testing::Test
 {
+ protected:
+  enum Kind
+  {
+    ADD,
+    AND,
+    ASHR,
+    CONCAT,
+    DEC,
+    EQ,
+    IMPLIES,
+    ITE,
+    INC,
+    MUL,
+    NAND,
+    NE,
+    NEG,
+    NOR,
+    NOT,
+    OR,
+    REDAND,
+    REDOR,
+    SDIV,
+    SEXT,
+    SGT,
+    SGE,
+    SHL,
+    SHR,
+    SLT,
+    SLE,
+    SREM,
+    SUB,
+    UDIV,
+    UGT,
+    UGE,
+    ULT,
+    ULE,
+    UREM,
+    XNOR,
+    XOR,
+    ZEXT,
+  };
 };
 
 /* -------------------------------------------------------------------------- */

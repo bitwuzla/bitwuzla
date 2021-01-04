@@ -6,6 +6,7 @@ set(test_names
   bv
   bvdomain
   bvdomaingen
+  bvopisinv
 )
 
 foreach(test ${test_names})
