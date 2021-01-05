@@ -20,7 +20,7 @@ BitVectorDomain::BitVectorDomain(uint32_t size)
 BitVectorDomain::BitVectorDomain(const BitVector &lo, const BitVector &hi)
     : d_lo(lo), d_hi(hi)
 {
-  assert(lo.get_size() == hi.get_size());
+  assert(lo.size() == hi.size());
   d_has_fixed_bits = !d_lo.is_zero() || !d_hi.is_ones();
 }
 
@@ -58,10 +58,10 @@ BitVectorDomain::~BitVectorDomain()
 }
 
 uint32_t
-BitVectorDomain::get_size() const
+BitVectorDomain::size() const
 {
-  assert(d_lo.get_size() == d_hi.get_size());
-  return d_lo.get_size();
+  assert(d_lo.size() == d_hi.size());
+  return d_lo.size();
 }
 
 bool
@@ -86,14 +86,14 @@ BitVectorDomain::has_fixed_bits() const
 bool
 BitVectorDomain::is_fixed_bit(uint32_t idx)
 {
-  assert(idx < get_size());
+  assert(idx < size());
   return d_lo.get_bit(idx) == d_hi.get_bit(idx);
 }
 
 bool
 BitVectorDomain::is_fixed_bit_true(uint32_t idx)
 {
-  assert(idx < get_size());
+  assert(idx < size());
   bool b = d_lo.get_bit(idx);
   if (!b) return false;
   return b == d_hi.get_bit(idx);
@@ -102,7 +102,7 @@ BitVectorDomain::is_fixed_bit_true(uint32_t idx)
 bool
 BitVectorDomain::is_fixed_bit_false(uint32_t idx)
 {
-  assert(idx < get_size());
+  assert(idx < size());
   bool b = d_lo.get_bit(idx);
   if (b) return false;
   return b == d_hi.get_bit(idx);
@@ -111,7 +111,7 @@ BitVectorDomain::is_fixed_bit_false(uint32_t idx)
 void
 BitVectorDomain::fix_bit(uint32_t idx, bool value)
 {
-  assert(idx < get_size());
+  assert(idx < size());
   d_lo.set_bit(idx, value);
   d_hi.set_bit(idx, value);
 }
@@ -146,7 +146,7 @@ BitVectorDomain::bvnot() const
 BitVectorDomain
 BitVectorDomain::bvshl(const BitVector &shift) const
 {
-  assert(shift.get_size() == get_size());
+  assert(shift.size() == size());
   return BitVectorDomain(d_lo.bvshl(shift), d_hi.bvshl(shift));
 }
 
@@ -163,7 +163,7 @@ BitVectorDomain::to_string() const
 {
   std::string res(d_lo.to_string());
   std::string hi(d_hi.to_string());
-  for (uint32_t i = 0, size = get_size(); i < size; ++i)
+  for (uint32_t i = 0, n = size(); i < n; ++i)
   {
     if (res[i] != hi[i])
     {
@@ -209,7 +209,7 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
     : d_domain(domain), d_rng(rng)
 {
   uint32_t cnt          = 0;
-  uint32_t size         = domain.get_size();
+  uint32_t size         = domain.size();
   const BitVector &hi   = d_domain.d_hi;
   const BitVector &lo   = d_domain.d_lo;
   const BitVector &mmin = lo.compare(min) <= 0 ? min : lo;
@@ -337,7 +337,7 @@ BitVectorDomainGenerator::generate_next(bool random)
 {
   assert(random || d_bits);
 
-  uint32_t size = d_domain.get_size();
+  uint32_t size = d_domain.size();
   BitVector res(d_domain.d_lo);
 
   /* Random always resets d_bits to a random value between d_bits_min and
@@ -347,8 +347,8 @@ BitVectorDomainGenerator::generate_next(bool random)
     assert(d_rng);
     assert(d_bits_min);
     assert(d_bits_max);
-    if (d_bits == nullptr) d_bits.reset(new BitVector(d_bits_min->get_size()));
-    assert(d_bits->get_size() == d_bits_min->get_size());
+    if (d_bits == nullptr) d_bits.reset(new BitVector(d_bits_min->size()));
+    assert(d_bits->size() == d_bits_min->size());
     d_bits->iset(*d_rng, *d_bits_min, *d_bits_max, false);
   }
 
@@ -390,11 +390,10 @@ BitVectorDomainGenerator::generate_next(bool random)
 
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
     const BitVectorDomain &domain)
-    : BitVectorDomainSignedGenerator(
-        domain,
-        nullptr,
-        BitVector::mk_min_signed(domain.get_size()),
-        BitVector::mk_max_signed(domain.get_size()))
+    : BitVectorDomainSignedGenerator(domain,
+                                     nullptr,
+                                     BitVector::mk_min_signed(domain.size()),
+                                     BitVector::mk_max_signed(domain.size()))
 {
 }
 
@@ -406,11 +405,10 @@ BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
 
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
     const BitVectorDomain &domain, RNG *rng)
-    : BitVectorDomainSignedGenerator(
-        domain,
-        rng,
-        BitVector::mk_min_signed(domain.get_size()),
-        BitVector::mk_max_signed(domain.get_size()))
+    : BitVectorDomainSignedGenerator(domain,
+                                     rng,
+                                     BitVector::mk_min_signed(domain.size()),
+                                     BitVector::mk_max_signed(domain.size()))
 {
 }
 
@@ -421,7 +419,7 @@ BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
     const BitVector &max)
     : d_rng(rng)
 {
-  uint32_t size          = domain.get_size();
+  uint32_t size          = domain.size();
   BitVector zero         = BitVector::mk_zero(size);
   BitVector ones         = BitVector::mk_ones(size);
   int32_t min_scomp_zero = min.signed_compare(zero);

@@ -113,7 +113,7 @@ class BitVector
   uint64_t to_uint64() const;
 
   /** Return the size of this bit-vector. */
-  uint32_t get_size() const { return d_size; }
+  uint32_t size() const { return d_size; }
 
   /**
    * Compare this bit-vector with given bit-vector.

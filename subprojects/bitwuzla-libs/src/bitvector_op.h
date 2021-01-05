@@ -9,7 +9,7 @@ namespace bzlals {
 class BitVectorOp
 {
  public:
-  /* Constructor. */
+  /** Constructor. */
   BitVectorOp(uint32_t size)
       : d_assignment(BitVector::mk_zero(size)), d_domain(BitVectorDomain(size))
   {
@@ -18,24 +18,44 @@ class BitVectorOp
       : d_assignment(assignment), d_domain(domain)
   {
   }
-  /* Destructor. */
+  /** Destructor. */
   virtual ~BitVectorOp() {}
 
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   */
   virtual bool is_invertible(const BitVector& t, uint32_t pos_x) = 0;
+
+  /** Access child at given index. */
   BitVectorOp*& operator[](uint32_t pos) const;
-  uint32_t get_arity() const { return 2; }
+
+  /** Return the arity of this operation. */
+  uint32_t arity() const { return 2; }
+  /** Get the assignment of this operation. */
+  const BitVector& assignment() const { return d_assignment; }
+  /** Get the domain of this operation. */
+  const BitVectorDomain& domain() const { return d_domain; }
 
  protected:
+  std::unique_ptr<BitVectorOp*[]> d_children = nullptr;
   BitVector d_assignment;
   BitVectorDomain d_domain;
-  std::unique_ptr<BitVectorOp*[]> d_children = nullptr;
 };
 
 class BitVectorAdd : public BitVectorOp
 {
  public:
+  /** Constructors. */
   BitVectorAdd(uint32_t size);
   BitVectorAdd(const BitVector& assignment, const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: mfb(x, t - s)
+   */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 };
 

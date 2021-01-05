@@ -30,7 +30,12 @@ class BitVectorDomain
   ~BitVectorDomain();
 
   /** Return the size of this bit-vector. */
-  uint32_t get_size() const;
+  uint32_t size() const;
+
+  /** Get the lower bound of this domain. */
+  const BitVector &get_lo() const { return d_lo; }
+  /** Get the upper bound of this domain. */
+  const BitVector &get_hi() const { return d_hi; }
 
   /** Return true if this bit-vector domain is valid, i.e., ~lo | hi == ones. */
   bool is_valid() const;

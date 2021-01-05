@@ -574,7 +574,7 @@ TestBitVector::test_extend(Kind kind, uint32_t size, bool in_place)
 
       default: assert(false);
     }
-    ASSERT_EQ(bv.get_size() + n, res.get_size());
+    ASSERT_EQ(bv.size() + n, res.size());
     std::string res_str = res.to_string();
     std::string bv_str  = bv.to_string();
     uint32_t len        = size - n;
@@ -1640,7 +1640,7 @@ TestBitVector::test_concat(uint32_t size, bool in_place)
     {
       res = bv1.bvconcat(bv2);
     }
-    ASSERT_EQ(res.get_size(), size1 + size2);
+    ASSERT_EQ(res.size(), size1 + size2);
     uint64_t u1   = bv1.to_uint64();
     uint64_t u2   = bv2.to_uint64();
     uint64_t u    = (u1 << size2) | u2;
@@ -1670,7 +1670,7 @@ TestBitVector::test_extract(uint32_t size, bool in_place)
     {
       res = bv.bvextract(hi, lo);
     }
-    ASSERT_EQ(res.get_size(), hi - lo + 1);
+    ASSERT_EQ(res.size(), hi - lo + 1);
     std::string res_str = res.to_string();
     std::string bv_str  = bv.to_string();
     uint32_t len        = hi - lo + 1;
@@ -2068,6 +2068,7 @@ TEST_F(TestBitVector, is_false)
     }
   }
 }
+
 TEST_F(TestBitVector, set_get_flip_bit)
 {
   for (uint32_t i = 1; i < 32; ++i)
@@ -2082,7 +2083,7 @@ TEST_F(TestBitVector, set_get_flip_bit)
     bv.flip_bit(n);
     ASSERT_EQ(bv.get_bit(n), (((~vv) << 31) >> 31));
   }
-  ASSERT_DEATH(BitVector(5).get_bit(5), "< get_size");
+  ASSERT_DEATH(BitVector(5).get_bit(5), "< size");
 }
 
 TEST_F(TestBitVector, is_zero)

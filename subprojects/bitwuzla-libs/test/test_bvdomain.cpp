@@ -54,26 +54,26 @@ TEST_F(TestBitVectorDomain, ctor_dtor)
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain(BitVectorDomain(8, 5)));
   ASSERT_DEATH(BitVectorDomain(0), "size > 0");
   ASSERT_DEATH(BitVectorDomain(BitVector(10, 4), BitVector(11, 5)),
-               "lo.get_size\\(\\) == hi.get_size\\(\\)");
+               "lo.size\\(\\) == hi.size\\(\\)");
   ASSERT_DEATH(BitVectorDomain(""), "size > 0");
   ASSERT_DEATH(BitVectorDomain("12345"), "is_bin_str");
 }
 
-TEST_F(TestBitVectorDomain, get_size)
+TEST_F(TestBitVectorDomain, size)
 {
-  ASSERT_EQ(BitVectorDomain(1).get_size(), 1);
-  ASSERT_EQ(BitVectorDomain(10).get_size(), 10);
-  ASSERT_EQ(BitVectorDomain(BitVector(10, 4), BitVector(10, 5)).get_size(), 10);
-  ASSERT_EQ(BitVectorDomain("00000000").get_size(), 8);
-  ASSERT_EQ(BitVectorDomain("11111111").get_size(), 8);
-  ASSERT_EQ(BitVectorDomain("10110100").get_size(), 8);
-  ASSERT_EQ(BitVectorDomain("x01xxxxx").get_size(), 8);
-  ASSERT_EQ(BitVectorDomain("xxxxxxxx").get_size(), 8);
-  ASSERT_EQ(BitVectorDomain(BitVector(4, "0000")).get_size(), 4);
-  ASSERT_EQ(BitVectorDomain(BitVector(8, "1010")).get_size(), 8);
-  ASSERT_EQ(BitVectorDomain(4, 0).get_size(), 4);
-  ASSERT_EQ(BitVectorDomain(8, 5).get_size(), 8);
-  ASSERT_EQ(BitVectorDomain(BitVectorDomain(8, 5)).get_size(), 8);
+  ASSERT_EQ(BitVectorDomain(1).size(), 1);
+  ASSERT_EQ(BitVectorDomain(10).size(), 10);
+  ASSERT_EQ(BitVectorDomain(BitVector(10, 4), BitVector(10, 5)).size(), 10);
+  ASSERT_EQ(BitVectorDomain("00000000").size(), 8);
+  ASSERT_EQ(BitVectorDomain("11111111").size(), 8);
+  ASSERT_EQ(BitVectorDomain("10110100").size(), 8);
+  ASSERT_EQ(BitVectorDomain("x01xxxxx").size(), 8);
+  ASSERT_EQ(BitVectorDomain("xxxxxxxx").size(), 8);
+  ASSERT_EQ(BitVectorDomain(BitVector(4, "0000")).size(), 4);
+  ASSERT_EQ(BitVectorDomain(BitVector(8, "1010")).size(), 8);
+  ASSERT_EQ(BitVectorDomain(4, 0).size(), 4);
+  ASSERT_EQ(BitVectorDomain(8, 5).size(), 8);
+  ASSERT_EQ(BitVectorDomain(BitVectorDomain(8, 5)).size(), 8);
 }
 
 TEST_F(TestBitVectorDomain, is_valid)
@@ -164,7 +164,7 @@ TEST_F(TestBitVectorDomain, is_fixed_bit)
   {
     ASSERT_FALSE(d.is_fixed_bit(i));
   }
-  ASSERT_DEATH(d.is_fixed_bit(5), "< get_size");
+  ASSERT_DEATH(d.is_fixed_bit(5), "< size");
 }
 
 TEST_F(TestBitVectorDomain, is_fixed_bit_true)
@@ -175,7 +175,7 @@ TEST_F(TestBitVectorDomain, is_fixed_bit_true)
   {
     ASSERT_FALSE(d.is_fixed_bit_true(i));
   }
-  ASSERT_DEATH(d.is_fixed_bit(5), "< get_size");
+  ASSERT_DEATH(d.is_fixed_bit(5), "< size");
 }
 
 TEST_F(TestBitVectorDomain, is_fixed_bit_false)
@@ -186,7 +186,7 @@ TEST_F(TestBitVectorDomain, is_fixed_bit_false)
   {
     ASSERT_FALSE(d.is_fixed_bit_false(i));
   }
-  ASSERT_DEATH(d.is_fixed_bit(5), "< get_size");
+  ASSERT_DEATH(d.is_fixed_bit(5), "< size");
 }
 
 TEST_F(TestBitVectorDomain, fix_bit)
@@ -208,7 +208,7 @@ TEST_F(TestBitVectorDomain, fix_bit)
   ASSERT_EQ(d, BitVectorDomain("1000"));
   ASSERT_NO_FATAL_FAILURE(d.fix_bit(3, false));
   ASSERT_EQ(d, BitVectorDomain("0000"));
-  ASSERT_DEATH(d.fix_bit(5, true), "< get_size");
+  ASSERT_DEATH(d.fix_bit(5, true), "< size");
 }
 
 TEST_F(TestBitVectorDomain, match_fixed_bits)
@@ -252,8 +252,8 @@ TEST_F(TestBitVectorDomain, not )
       {
         BitVectorDomain d(c);
         BitVectorDomain dnot = d.bvnot();
-        ASSERT_EQ(d.get_size(), dnot.get_size());
-        for (uint32_t k = 0, n = d.get_size(); k < n; ++k)
+        ASSERT_EQ(d.size(), dnot.size());
+        for (uint32_t k = 0, n = d.size(); k < n; ++k)
         {
           if (c[n - k - 1] == 'x')
           {
@@ -292,8 +292,8 @@ TEST_F(TestBitVectorDomain, shl)
         for (int32_t k = 0; k < 3; ++k)
         {
           BitVectorDomain dshl = d.bvshl(BitVector(3, k));
-          ASSERT_EQ(d.get_size(), dshl.get_size());
-          for (int32_t l = 0, n = d.get_size(); l < n; ++l)
+          ASSERT_EQ(d.size(), dshl.size());
+          for (int32_t l = 0, n = d.size(); l < n; ++l)
           {
             if (l < k)
             {
@@ -321,7 +321,7 @@ TEST_F(TestBitVectorDomain, shl)
     }
   }
   ASSERT_DEATH(BitVectorDomain(3).bvshl(BitVector(4)),
-               "get_size\\(\\) == get_size\\(\\)");
+               "size\\(\\) == size\\(\\)");
 }
 
 TEST_F(TestBitVectorDomain, extract)
@@ -337,8 +337,8 @@ TEST_F(TestBitVectorDomain, extract)
       {
         BitVectorDomain d(c);
         BitVectorDomain dext = d.bvextract(i, j);
-        ASSERT_EQ(dext.get_size(), i - j + 1);
-        for (int32_t k = 0, n = d.get_size(), m = dext.get_size(); k < m; ++k)
+        ASSERT_EQ(dext.size(), i - j + 1);
+        for (int32_t k = 0, n = d.size(), m = dext.size(); k < m; ++k)
         {
           if (c[n - k - j - 1] == 'x')
           {

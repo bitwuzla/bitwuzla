@@ -10,8 +10,8 @@ class TestBvOpIsInv : public TestBvDomainCommon
   void SetUp() override
   {
     TestBvDomainCommon::SetUp();
-    gen_xvalues(TEST_BW, d_xvalues);
     gen_values(TEST_BW, d_values);
+    gen_xvalues(TEST_BW, d_xvalues);
   }
 
   bool check_sat_binary(Kind kind,
@@ -36,9 +36,9 @@ TestBvOpIsInv::check_sat_binary(Kind kind,
                                 uint32_t pos_x)
 {
   BitVectorDomainGenerator gen(x);
-  while (gen.has_next())
+  do
   {
-    BitVector val = gen.next();
+    BitVector val = gen.has_next() ? gen.next() : x.get_lo();
     BitVector res;
     switch (kind)
     {
@@ -72,9 +72,8 @@ TestBvOpIsInv::check_sat_binary(Kind kind,
       case XOR: res = pos_x ? s.bvxor(val) : val.bvxor(s); break;
       default: assert(false);
     }
-    std::cout << "x " << x.to_string() << " s " << s.to_string() << " t " << t.to_string() << " pos_x " << pos_x << " res " << res.to_string() << std::endl;
     if (t.compare(res) == 0) return true;
-  }
+  } while (gen.has_next());
   return false;
 }
 
@@ -90,7 +89,7 @@ TestBvOpIsInv::test_binary(Kind kind, uint32_t pos_x, bool const_bits)
 
   if (const_bits)
   {
-    x_values = d_values;
+    x_values = d_xvalues;
   }
   else
   {
@@ -149,7 +148,13 @@ TestBvOpIsInv::test_binary(Kind kind, uint32_t pos_x, bool const_bits)
   }
 }
 
-TEST_F(TestBvOpIsInv, add) { test_binary<BitVectorAdd>(ADD, 0, false); }
+TEST_F(TestBvOpIsInv, add)
+{
+  test_binary<BitVectorAdd>(ADD, 0, false);
+  test_binary<BitVectorAdd>(ADD, 1, false);
+  test_binary<BitVectorAdd>(ADD, 0, true);
+  test_binary<BitVectorAdd>(ADD, 1, false);
+}
 
 }  // namespace test
 }  // namespace bzlals
