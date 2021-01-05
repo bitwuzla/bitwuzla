@@ -13,10 +13,12 @@ class BitVectorOp
   BitVectorOp(uint32_t size)
       : d_assignment(BitVector::mk_zero(size)), d_domain(BitVectorDomain(size))
   {
+    d_children.reset(new BitVectorOp*[arity()]);
   }
   BitVectorOp(const BitVector& assignment, const BitVectorDomain& domain)
       : d_assignment(assignment), d_domain(domain)
   {
+    d_children.reset(new BitVectorOp*[arity()]);
   }
   /** Destructor. */
   virtual ~BitVectorOp() {}
