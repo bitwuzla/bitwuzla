@@ -172,5 +172,13 @@ TEST_F(TestBvOpIsInv, concat)
   test_binary<BitVectorConcat>(CONCAT, 1, true);
 }
 
+TEST_F(TestBvOpIsInv, eq)
+{
+  test_binary<BitVectorEq>(EQ, 0, false);
+  test_binary<BitVectorEq>(EQ, 1, false);
+  test_binary<BitVectorEq>(EQ, 0, true);
+  test_binary<BitVectorEq>(EQ, 1, true);
+}
+
 }  // namespace test
 }  // namespace bzlals

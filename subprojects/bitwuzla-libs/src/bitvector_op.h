@@ -104,5 +104,23 @@ class BitVectorConcat : public BitVectorOp
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 };
 
+class BitVectorEq : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorEq(uint32_t size);
+  BitVectorEq(const BitVector& assignment, const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits:
+   *  t = 0: (hi_x != lo_x) || (hi_x != s)
+   *  t = 1: mfb(x, s)
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+};
+
 }  // namespace bzlals
 #endif

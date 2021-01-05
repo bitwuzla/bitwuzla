@@ -118,4 +118,35 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
+BitVectorEq::BitVectorEq(uint32_t size) : BitVectorOp(size) {}
+
+BitVectorEq::BitVectorEq(const BitVector& assignment,
+                         const BitVectorDomain& domain)
+    : BitVectorOp(assignment, domain)
+{
+}
+
+bool
+BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  uint32_t pos_s           = 1 - pos_x;
+  const BitVector& s       = d_children[pos_s]->assignment();
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+
+  if (d_children[pos_x]->domain().has_fixed_bits())
+  {
+    /* IC: t = 0: (hi_x != lo_x) || (hi_x != s)
+     *     t = 1: mfb(x, s) */
+    if (t.is_false())
+    {
+      return x.hi().compare(x.lo()) || x.hi().compare(s);
+    }
+    return x.match_fixed_bits(s);
+  }
+  /* IC: true */
+  return true;
+}
+
+/* -------------------------------------------------------------------------- */
+
 }  // namespace bzlals
