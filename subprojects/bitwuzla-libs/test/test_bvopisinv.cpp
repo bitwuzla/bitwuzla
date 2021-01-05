@@ -1,4 +1,6 @@
 #include "bitvector_op.h"
+#include "gmprandstate.h"
+#include "rng.h"
 #include "test.h"
 
 namespace bzlals {
@@ -12,6 +14,7 @@ class TestBvOpIsInv : public TestBvDomainCommon
     TestBvDomainCommon::SetUp();
     gen_values(TEST_BW, d_values);
     gen_xvalues(TEST_BW, d_xvalues);
+    d_rng.reset(new RNG(1234));
   }
 
   bool check_sat_binary(Kind kind,
@@ -26,6 +29,7 @@ class TestBvOpIsInv : public TestBvDomainCommon
   static constexpr uint32_t TEST_BW = 3;
   std::vector<std::string> d_values;
   std::vector<std::string> d_xvalues;
+  std::unique_ptr<RNG> d_rng;
 };
 
 bool
@@ -122,13 +126,13 @@ TestBvOpIsInv::test_binary(Kind kind, uint32_t pos_x, bool const_bits)
         BitVector t(bw_t, j);
         /* For this test, we don't care about current assignment and domain of
          * the op, thus we initialize them with 0 and 'x..x', respectively. */
-        T op(bw_t);
+        T op(d_rng.get(), bw_t);
         /* For this test, we don't care about the current assignment of x, thus
          * we initialize it with 0. */
-        op[pos_x] = new T(BitVector::mk_zero(bw_x), x);
+        op[pos_x] = new T(d_rng.get(), BitVector::mk_zero(bw_x), x);
         /* For this test, we don't care about the current assignment of x, thus
          * we initialize it with 0. */
-        op[1 - pos_x] = new T(s, BitVectorDomain(bw_s));
+        op[1 - pos_x] = new T(d_rng.get(), s, BitVectorDomain(bw_s));
 
         bool res    = op.is_invertible(t, pos_x);
         bool status = check_sat_binary(kind, x, t, s, pos_x);
@@ -186,6 +190,14 @@ TEST_F(TestBvOpIsInv, mul)
   test_binary<BitVectorMul>(MUL, 1, false);
   test_binary<BitVectorMul>(MUL, 0, true);
   test_binary<BitVectorMul>(MUL, 1, true);
+}
+
+TEST_F(TestBvOpIsInv, shl)
+{
+  test_binary<BitVectorShl>(SHL, 0, false);
+  test_binary<BitVectorShl>(SHL, 1, false);
+  test_binary<BitVectorShl>(SHL, 0, true);
+  test_binary<BitVectorShl>(SHL, 1, true);
 }
 
 }  // namespace test

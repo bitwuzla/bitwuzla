@@ -6,20 +6,16 @@
 
 namespace bzlals {
 
+class RNG;
+
 class BitVectorOp
 {
  public:
   /** Constructor. */
-  BitVectorOp(uint32_t size)
-      : d_assignment(BitVector::mk_zero(size)), d_domain(BitVectorDomain(size))
-  {
-    d_children.reset(new BitVectorOp*[arity()]);
-  }
-  BitVectorOp(const BitVector& assignment, const BitVectorDomain& domain)
-      : d_assignment(assignment), d_domain(domain)
-  {
-    d_children.reset(new BitVectorOp*[arity()]);
-  }
+  BitVectorOp(RNG* rng, uint32_t size);
+  BitVectorOp(RNG* rng,
+              const BitVector& assignment,
+              const BitVectorDomain& domain);
   /** Destructor. */
   virtual ~BitVectorOp() {}
 
@@ -41,6 +37,7 @@ class BitVectorOp
 
  protected:
   std::unique_ptr<BitVectorOp*[]> d_children = nullptr;
+  RNG* d_rng                                 = nullptr;
   BitVector d_assignment;
   BitVectorDomain d_domain;
 };
@@ -49,8 +46,10 @@ class BitVectorAdd : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorAdd(uint32_t size);
-  BitVectorAdd(const BitVector& assignment, const BitVectorDomain& domain);
+  BitVectorAdd(RNG* rng, uint32_t size);
+  BitVectorAdd(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -69,8 +68,10 @@ class BitVectorAnd : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorAnd(uint32_t size);
-  BitVectorAnd(const BitVector& assignment, const BitVectorDomain& domain);
+  BitVectorAnd(RNG* rng, uint32_t size);
+  BitVectorAnd(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -94,8 +95,10 @@ class BitVectorConcat : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorConcat(uint32_t size);
-  BitVectorConcat(const BitVector& assignment, const BitVectorDomain& domain);
+  BitVectorConcat(RNG* rng, uint32_t size);
+  BitVectorConcat(RNG* rng,
+                  const BitVector& assignment,
+                  const BitVectorDomain& domain);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -120,8 +123,10 @@ class BitVectorEq : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorEq(uint32_t size);
-  BitVectorEq(const BitVector& assignment, const BitVectorDomain& domain);
+  BitVectorEq(RNG* rng, uint32_t size);
+  BitVectorEq(RNG* rng,
+              const BitVector& assignment,
+              const BitVectorDomain& domain);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -142,8 +147,10 @@ class BitVectorMul : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorMul(uint32_t size);
-  BitVectorMul(const BitVector& assignment, const BitVectorDomain& domain);
+  BitVectorMul(RNG* rng, uint32_t size);
+  BitVectorMul(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -159,5 +166,63 @@ class BitVectorMul : public BitVectorOp
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
 };
 
+/**
+ * w/o const bits (IC_shift):
+ *   SHR:
+ *     pos_x = 0: (t << s) >> s = t
+ *     pos_x = 1: clz(s) <= clz(t) &&
+ *                ((t = 0) || (s >> (clz(t) - clz(s))) = t)
+ *
+ *   ASHR:
+ *     pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
+ *                (s >= bw(s) => (t = ones || t = 0))
+ *     pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
+ *                (s[msb] = 1 => IC_shr(~s >> x = ~t)
+ *
+ * with const bits:
+ *   SHR:
+ *     pos_x = 0: (t << s) >> s = t && mfb(x >> s, t)
+ *
+ *     pos_x = 1: IC_shr &&
+ *                ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
+ *                ((t != 0) => mfb(x, clz(t) - clz(s)))
+ *
+ *   ASHR:
+ *     pos_x = 0: IC_ashr && mfb(x >>a s, t)
+ *
+ *     pos_x = 1: IC_ashr &&
+ *                (s[msb] = 0 => IC_shr) &&
+ *                (s[msb] = 1 => IC_shr(~s >> x = ~t))
+ */
+
+class BitVectorShl : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorShl(RNG* rng, uint32_t size);
+  BitVectorShl(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o const bits (IC_wo):
+   *     pos_x = 0: (t >> s) << s = t
+   *     pos_x = 1: ctz(s) <= ctz(t) &&
+   *                ((t = 0) || (s << (ctz(t) - ctz(s))) = t)
+   *
+   * with const bits:
+   *     pos_x = 0: IC_wo && mfb(x << s, t)
+   *     pos_x = 1: IC_wo &&
+   *                ((t = 0) => (hi_x >= ctz(t) - ctz(s) || (s = 0))) &&
+   *                ((t != 0) => mfb(x, ctz(t) - ctz(s)))
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
+};
 }  // namespace bzlals
 #endif
