@@ -180,5 +180,13 @@ TEST_F(TestBvOpIsInv, eq)
   test_binary<BitVectorEq>(EQ, 1, true);
 }
 
+TEST_F(TestBvOpIsInv, mul)
+{
+  test_binary<BitVectorMul>(MUL, 0, false);
+  test_binary<BitVectorMul>(MUL, 1, false);
+  test_binary<BitVectorMul>(MUL, 0, true);
+  test_binary<BitVectorMul>(MUL, 1, true);
+}
+
 }  // namespace test
 }  // namespace bzlals

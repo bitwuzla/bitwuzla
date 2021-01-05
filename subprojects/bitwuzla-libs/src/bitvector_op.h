@@ -122,5 +122,26 @@ class BitVectorEq : public BitVectorOp
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 };
 
+class BitVectorMul : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorMul(uint32_t size);
+  BitVectorMul(const BitVector& assignment, const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: ((-s | s) & t) = t
+   * with const bits: (((-s | s) & t) = t) &&
+   *                  (s = 0 || ((odd(s) => mfb(x, t * s^-1)) &&
+   *                            (!odd(s) => mfb (x << c, y << c))))
+   *                  with c = ctz(s) and y = (t >> c) * (s >> c)^-1
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  /** Cached inverse result. */
+  std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+};
+
 }  // namespace bzlals
 #endif

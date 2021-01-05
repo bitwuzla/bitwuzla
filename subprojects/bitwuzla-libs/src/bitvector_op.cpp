@@ -149,4 +149,73 @@ BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
+BitVectorMul::BitVectorMul(uint32_t size) : BitVectorOp(size) {}
+
+BitVectorMul::BitVectorMul(const BitVector& assignment,
+                           const BitVectorDomain& domain)
+    : BitVectorOp(assignment, domain)
+{
+}
+
+bool
+BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  uint32_t pos_s           = 1 - pos_x;
+  const BitVector& s       = d_children[pos_s]->assignment();
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+
+  bool check = s.bvneg().bvor(s).bvand(t).compare(t) == 0;
+
+  if (check && d_children[pos_x]->domain().has_fixed_bits())
+  {
+    /* IC: (((-s | s) & t) = t) &&
+     *     (s = 0 || ((odd(s) => mfb(x, t * s^-1)) &&
+     *               (!odd(s) => mfb (x << c, y << c))))
+     *     with c = ctz(s) and y = (t >> c) * (s >> c)^-1 */
+    if (!s.is_zero())
+    {
+      if (x.is_fixed())
+      {
+        return x.lo().bvmul(s).compare(t) == 0;
+      }
+
+      /** s odd */
+      if (s.get_lsb())
+      {
+        BitVector inv = s.bvmodinv().bvmul(t);
+        if (x.match_fixed_bits(inv))
+        {
+          d_inverse.reset(new BitVectorDomain(inv));
+          return true;
+        }
+        return false;
+      }
+
+      /** s even */
+      /* Check if relevant bits of
+       *   y = (t >> ctz(s)) * (s >> ctz(s))^-1
+       * match corresponding constant bits of x, i.e.,
+       * mfb(x[bw - ctz(s) - 1:0], y[bw - ctz(s) - 1:0]). */
+      uint32_t bw             = x.size();
+      uint32_t ctz            = s.count_trailing_zeros();
+      BitVectorDomain x_prime = x.bvextract(bw - ctz - 1, 0);
+      BitVector y             = t.bvshr(ctz).bvmul(s.bvshr(ctz).bvmodinv());
+      BitVector y_ext         = y.bvextract(bw - ctz - 1, 0);
+      if (x_prime.match_fixed_bits(y_ext))
+      {
+        /* Result domain is x[bw - 1:ctz(s)] o y[bw - ctz(s) - 1:0] */
+        d_inverse.reset(
+            new BitVectorDomain(x.lo().bvextract(bw - 1, ctz).bvconcat(y),
+                                x.hi().bvextract(bw - 1, ctz).bvconcat(y)));
+        return true;
+      }
+      return false;
+    }
+    return true;
+  }
+  /* IC: ((-s | s) & t) = t */
+  return check;
+}
+
+/* -------------------------------------------------------------------------- */
 }  // namespace bzlals
