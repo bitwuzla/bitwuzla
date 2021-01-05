@@ -59,6 +59,10 @@ class BitVectorAdd : public BitVectorOp
    * with const bits: mfb(x, t - s)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 class BitVectorAnd : public BitVectorOp
@@ -80,6 +84,10 @@ class BitVectorAnd : public BitVectorOp
    * 2) s & t = t on all non-const bits of x
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 class BitVectorConcat : public BitVectorOp
@@ -102,6 +110,10 @@ class BitVectorConcat : public BitVectorOp
    * with const bits: mfb(x, tx) && s = ts
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 class BitVectorEq : public BitVectorOp
@@ -120,6 +132,10 @@ class BitVectorEq : public BitVectorOp
    *  t = 1: mfb(x, s)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 class BitVectorMul : public BitVectorOp

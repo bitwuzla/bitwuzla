@@ -37,7 +37,13 @@ BitVectorAdd::is_invertible(const BitVector& t, uint32_t pos_x)
     uint32_t pos_s           = 1 - pos_x;
     const BitVector& s       = d_children[pos_s]->assignment();
     const BitVectorDomain& x = d_children[pos_x]->domain();
-    return x.match_fixed_bits(t.bvsub(s));
+    BitVector sub            = t.bvsub(s);
+    if (x.match_fixed_bits(sub))
+    {
+      d_inverse.reset(new BitVector(sub));
+      return true;
+    }
+    return false;
   }
   return true;
 }
@@ -63,6 +69,15 @@ BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
 
   if (check && d_children[pos_x]->domain().has_fixed_bits())
   {
+    if (x.is_fixed())
+    {
+      if (x.lo().bvand(s).compare(t) == 0)
+      {
+        d_inverse.reset(new BitVector(x.lo()));
+        return true;
+      }
+      return false;
+    }
     /* IC: (t & s) = t && ((s & hi_x) & m) = (t & m)
      *     with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits */
     BitVector mask = x.lo().bvxnor(x.hi());
@@ -108,7 +123,12 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
   if (check && d_children[pos_x]->domain().has_fixed_bits())
   {
     /* IC: s = ts && mfb(x, tx) */
-    return x.match_fixed_bits(tx);
+    if (x.match_fixed_bits(tx))
+    {
+      d_inverse.reset(new BitVector(tx));
+      return true;
+    }
+    return false;
   }
   /* IC: s = ts
    *   pos_x = 0: ts = t[bw(s) - 1 : 0]
@@ -135,6 +155,15 @@ BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
 
   if (d_children[pos_x]->domain().has_fixed_bits())
   {
+    if (x.is_fixed())
+    {
+      if (x.lo().bveq(s).compare(t) == 0)
+      {
+        d_inverse.reset(new BitVector(x.lo()));
+        return true;
+      }
+      return false;
+    }
     /* IC: t = 0: (hi_x != lo_x) || (hi_x != s)
      *     t = 1: mfb(x, s) */
     if (t.is_false())
@@ -168,17 +197,22 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
 
   if (check && d_children[pos_x]->domain().has_fixed_bits())
   {
+    if (x.is_fixed())
+    {
+      if (x.lo().bvmul(s).compare(t) == 0)
+      {
+        d_inverse.reset(new BitVectorDomain(x));
+        return true;
+      }
+      return false;
+    }
+
     /* IC: (((-s | s) & t) = t) &&
      *     (s = 0 || ((odd(s) => mfb(x, t * s^-1)) &&
      *               (!odd(s) => mfb (x << c, y << c))))
      *     with c = ctz(s) and y = (t >> c) * (s >> c)^-1 */
     if (!s.is_zero())
     {
-      if (x.is_fixed())
-      {
-        return x.lo().bvmul(s).compare(t) == 0;
-      }
-
       /** s odd */
       if (s.get_lsb())
       {
