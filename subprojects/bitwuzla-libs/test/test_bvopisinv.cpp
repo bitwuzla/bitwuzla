@@ -38,7 +38,7 @@ TestBvOpIsInv::check_sat_binary(Kind kind,
   BitVectorDomainGenerator gen(x);
   do
   {
-    BitVector val = gen.has_next() ? gen.next() : x.get_lo();
+    BitVector val = gen.has_next() ? gen.next() : x.lo();
     BitVector res;
     switch (kind)
     {
@@ -153,7 +153,15 @@ TEST_F(TestBvOpIsInv, add)
   test_binary<BitVectorAdd>(ADD, 0, false);
   test_binary<BitVectorAdd>(ADD, 1, false);
   test_binary<BitVectorAdd>(ADD, 0, true);
-  test_binary<BitVectorAdd>(ADD, 1, false);
+  test_binary<BitVectorAdd>(ADD, 1, true);
+}
+
+TEST_F(TestBvOpIsInv, and)
+{
+  test_binary<BitVectorAnd>(AND, 0, false);
+  test_binary<BitVectorAnd>(AND, 1, false);
+  test_binary<BitVectorAnd>(AND, 0, true);
+  test_binary<BitVectorAnd>(AND, 1, true);
 }
 
 }  // namespace test

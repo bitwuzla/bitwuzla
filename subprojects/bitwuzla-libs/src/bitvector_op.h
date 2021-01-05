@@ -61,5 +61,26 @@ class BitVectorAdd : public BitVectorOp
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 };
 
+class BitVectorAnd : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorAnd(uint32_t size);
+  BitVectorAnd(const BitVector& assignment, const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: (t & s) = t
+   * with const bits: (t & s) = t && ((s & hi_x) & m) = (t & m)
+   *                  with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits
+   *
+   * Intuition:
+   * 1) x & s = t on all const bits of x
+   * 2) s & t = t on all non-const bits of x
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+};
+
 }  // namespace bzlals
 #endif
