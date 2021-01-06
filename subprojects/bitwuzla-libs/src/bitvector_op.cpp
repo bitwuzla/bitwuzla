@@ -324,6 +324,8 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
      *                ((t != 0) => mfb(x, ctz(t) - ctz(s))) */
     if (pos_x == 0)
     {
+      // TODO can't we reuse x.bvshl(s)? domain gen -> select random value
+      // for value computation
       return x.bvshl(s).match_fixed_bits(t);
     }
     if (t.is_zero())
@@ -346,6 +348,82 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
   /* IC_wo: pos_x = 0: (t >> s) << s = t
    *        pos_x = 1: ctz(s) <= ctz(t) &&
    *                   ((t = 0) || (s << (ctz(t) - ctz(s))) = t) */
+  return check;
+}
+
+/* -------------------------------------------------------------------------- */
+
+BitVectorShr::BitVectorShr(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+
+BitVectorShr::BitVectorShr(RNG* rng,
+                           const BitVector& assignment,
+                           const BitVectorDomain& domain)
+    : BitVectorOp(rng, assignment, domain)
+{
+}
+
+bool
+BitVectorShr::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  uint32_t pos_s           = 1 - pos_x;
+  const BitVector& s       = d_children[pos_s]->assignment();
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  uint32_t clz_t           = t.count_leading_zeros();
+  uint32_t clz_s           = s.count_leading_zeros();
+  bool check;
+
+  if (pos_x == 0)
+  {
+    check = t.bvshl(s).bvshr(s).compare(t) == 0;
+  }
+  else
+  {
+    check = clz_s <= clz_t
+            && (t.is_zero() || s.bvshr(clz_t - clz_s).compare(t) == 0);
+  }
+
+  if (check && d_children[pos_x]->domain().has_fixed_bits())
+  {
+    if (x.is_fixed())
+    {
+      if ((pos_x == 0 && x.lo().bvshr(s).compare(t) == 0)
+          || (pos_x == 1 && s.bvshr(x.lo()).compare(t) == 0))
+      {
+        d_inverse.reset(new BitVector(x.lo()));
+        return true;
+      }
+      return false;
+    }
+    /* IC: pos_x = 0: IC_wo && mfb(x >> s, t)
+     *     pos_x = 1: IC_wo &&
+     *                ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
+     *                ((t != 0) => mfb(x, clz(t) - clz(s))) */
+    if (pos_x == 0)
+    {
+      // TODO can't we reuse x.bvshr(s)? domain gen -> select random value
+      // for value computation
+      return x.bvshr(s).match_fixed_bits(t);
+    }
+    if (t.is_zero())
+    {
+      uint32_t bw    = x.size();
+      bool s_is_zero = s.is_zero();
+      BitVector min  = BitVector(bw, clz_t - clz_s);
+      if (s_is_zero || x.hi().compare(min) >= 0)
+      {
+        BitVectorDomainGenerator gen(
+            x, d_rng, s_is_zero ? x.lo() : min, x.hi());
+        assert(gen.has_random());
+        d_inverse.reset(new BitVector(gen.random()));
+        return true;
+      }
+      return false;
+    }
+    return x.match_fixed_bits(BitVector(x.size(), clz_t - clz_s));
+  }
+  /* IC_wo: pos_x = 0: (t << s) >> s = t
+   *        pos_x = 1: clz(s) <= clz(t) &&
+   *                   ((t = 0) || (s >> (clz(t) - clz(s))) = t) */
   return check;
 }
 

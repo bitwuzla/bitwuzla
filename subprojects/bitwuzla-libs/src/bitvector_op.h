@@ -168,11 +168,6 @@ class BitVectorMul : public BitVectorOp
 
 /**
  * w/o const bits (IC_shift):
- *   SHR:
- *     pos_x = 0: (t << s) >> s = t
- *     pos_x = 1: clz(s) <= clz(t) &&
- *                ((t = 0) || (s >> (clz(t) - clz(s))) = t)
- *
  *   ASHR:
  *     pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
  *                (s >= bw(s) => (t = ones || t = 0))
@@ -180,13 +175,6 @@ class BitVectorMul : public BitVectorOp
  *                (s[msb] = 1 => IC_shr(~s >> x = ~t)
  *
  * with const bits:
- *   SHR:
- *     pos_x = 0: (t << s) >> s = t && mfb(x >> s, t)
- *
- *     pos_x = 1: IC_shr &&
- *                ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
- *                ((t != 0) => mfb(x, clz(t) - clz(s)))
- *
  *   ASHR:
  *     pos_x = 0: IC_ashr && mfb(x >>a s, t)
  *
@@ -224,5 +212,36 @@ class BitVectorShl : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
+
+class BitVectorShr : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorShr(RNG* rng, uint32_t size);
+  BitVectorShr(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o const bits (IC_wo):
+   *     pos_x = 0: (t << s) >> s = t
+   *     pos_x = 1: clz(s) <= clz(t) &&
+   *                ((t = 0) || (s >> (clz(t) - clz(s))) = t)
+   *
+   * with const bits:
+   *     pos_x = 0: IC_wo && mfb(x >> s, t)
+   *     pos_x = 1: IC_wo &&
+   *                ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
+   *                ((t != 0) => mfb(x, clz(t) - clz(s)))
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
+};
+
 }  // namespace bzlals
 #endif
