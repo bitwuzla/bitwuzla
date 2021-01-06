@@ -85,7 +85,7 @@ BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
 
   bool check = t.bvand(s).compare(t) == 0;
 
-  if (check && d_children[pos_x]->domain().has_fixed_bits())
+  if (check && x.has_fixed_bits())
   {
     if (x.is_fixed())
     {
@@ -142,7 +142,7 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
     tx    = t.bvextract(bw_t - bw_s - 1, 0);
   }
 
-  if (check && d_children[pos_x]->domain().has_fixed_bits())
+  if (check && x.has_fixed_bits())
   {
     /* IC: s = ts && mfb(x, tx) */
     if (x.match_fixed_bits(tx))
@@ -176,7 +176,7 @@ BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
 
-  if (d_children[pos_x]->domain().has_fixed_bits())
+  if (x.has_fixed_bits())
   {
     if (x.is_fixed())
     {
@@ -219,7 +219,7 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
 
   bool check = s.bvneg().bvor(s).bvand(t).compare(t) == 0;
 
-  if (check && d_children[pos_x]->domain().has_fixed_bits())
+  if (check && x.has_fixed_bits())
   {
     if (x.is_fixed())
     {
@@ -292,8 +292,8 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
-  uint32_t ctz_t           = t.count_trailing_zeros();
-  uint32_t ctz_s           = s.count_trailing_zeros();
+  uint32_t ctz_t           = 0;
+  uint32_t ctz_s           = 0;
   bool check;
 
   if (pos_x == 0)
@@ -302,11 +302,13 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
   }
   else
   {
+    ctz_t = t.count_trailing_zeros();
+    ctz_s = s.count_trailing_zeros();
     check = ctz_s <= ctz_t
             && (t.is_zero() || s.bvshl(ctz_t - ctz_s).compare(t) == 0);
   }
 
-  if (check && d_children[pos_x]->domain().has_fixed_bits())
+  if (check && x.has_fixed_bits())
   {
     if (x.is_fixed())
     {
@@ -368,8 +370,19 @@ BitVectorShr::is_invertible(const BitVector& t, uint32_t pos_x)
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
-  uint32_t clz_t           = t.count_leading_zeros();
-  uint32_t clz_s           = s.count_leading_zeros();
+  return is_invertible(d_rng, t, s, x, pos_x, d_inverse);
+}
+
+bool
+BitVectorShr::is_invertible(RNG* rng,
+                            const BitVector& t,
+                            const BitVector& s,
+                            const BitVectorDomain& x,
+                            uint32_t pos_x,
+                            std::unique_ptr<BitVector>& inverse)
+{
+  uint32_t clz_t = 0;
+  uint32_t clz_s = 0;
   bool check;
 
   if (pos_x == 0)
@@ -378,18 +391,20 @@ BitVectorShr::is_invertible(const BitVector& t, uint32_t pos_x)
   }
   else
   {
+    clz_t = t.count_leading_zeros();
+    clz_s = s.count_leading_zeros();
     check = clz_s <= clz_t
             && (t.is_zero() || s.bvshr(clz_t - clz_s).compare(t) == 0);
   }
 
-  if (check && d_children[pos_x]->domain().has_fixed_bits())
+  if (check && x.has_fixed_bits())
   {
     if (x.is_fixed())
     {
       if ((pos_x == 0 && x.lo().bvshr(s).compare(t) == 0)
           || (pos_x == 1 && s.bvshr(x.lo()).compare(t) == 0))
       {
-        d_inverse.reset(new BitVector(x.lo()));
+        inverse.reset(new BitVector(x.lo()));
         return true;
       }
       return false;
@@ -411,10 +426,9 @@ BitVectorShr::is_invertible(const BitVector& t, uint32_t pos_x)
       BitVector min  = BitVector(bw, clz_t - clz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
       {
-        BitVectorDomainGenerator gen(
-            x, d_rng, s_is_zero ? x.lo() : min, x.hi());
+        BitVectorDomainGenerator gen(x, rng, s_is_zero ? x.lo() : min, x.hi());
         assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
+        inverse.reset(new BitVector(gen.random()));
         return true;
       }
       return false;
@@ -424,6 +438,70 @@ BitVectorShr::is_invertible(const BitVector& t, uint32_t pos_x)
   /* IC_wo: pos_x = 0: (t << s) >> s = t
    *        pos_x = 1: clz(s) <= clz(t) &&
    *                   ((t = 0) || (s >> (clz(t) - clz(s))) = t) */
+  return check;
+}
+
+/* -------------------------------------------------------------------------- */
+
+BitVectorAshr::BitVectorAshr(RNG* rng, uint32_t size) : BitVectorOp(rng, size)
+{
+}
+
+BitVectorAshr::BitVectorAshr(RNG* rng,
+                             const BitVector& assignment,
+                             const BitVectorDomain& domain)
+    : BitVectorOp(rng, assignment, domain)
+{
+}
+
+bool
+BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  uint32_t pos_s           = 1 - pos_x;
+  const BitVector& s       = d_children[pos_s]->assignment();
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  BitVector snot, tnot, sshr;
+  bool check;
+
+  /* IC:
+   * w/o const bits (IC_wo):
+   *     pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
+   *                (s >= bw(s) => (t = ones || t = 0))
+   *     pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
+   *                (s[msb] = 1 => IC_shr(~s >> x = ~t)
+   *
+   * with const bits:
+   *     pos_x = 0: IC_wo && mfb(x >>a s, t)
+   *     pos_x = 1: IC_wo &&
+   *                (s[msb ] = 0 => IC_shr) &&
+   *                (s[msb] = 1 => IC_shr(~s >> x = ~t))
+   */
+  if (pos_x == 1)
+  {
+    if (s.get_msb())
+    {
+      return BitVectorShr::is_invertible(
+          d_rng, t.bvnot(), s.bvnot(), x, pos_x, d_inverse);
+    }
+    return BitVectorShr::is_invertible(d_rng, t, s, x, pos_x, d_inverse);
+  }
+
+  uint32_t bw = s.size();
+  if (s.compare(BitVector(bw, bw)) < 0)
+  {
+    check = t.bvshl(s).bvashr(s).compare(t) == 0;
+  }
+  else
+  {
+    check = t.is_zero() || t.is_ones();
+  }
+
+  if (check && x.has_fixed_bits())
+  {
+    // TODO can't we reuse x.bvashr(s)? domain gen -> select random value
+    // for value computation
+    return x.bvashr(s).match_fixed_bits(t);
+  }
   return check;
 }
 

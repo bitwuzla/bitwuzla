@@ -208,6 +208,13 @@ TEST_F(TestBvOpIsInv, shr)
   test_binary<BitVectorShr>(SHR, 1, true);
 }
 
+TEST_F(TestBvOpIsInv, ashr)
+{
+  test_binary<BitVectorAshr>(ASHR, 0, false);
+  test_binary<BitVectorAshr>(ASHR, 1, false);
+  test_binary<BitVectorAshr>(ASHR, 0, true);
+  test_binary<BitVectorAshr>(ASHR, 1, true);
+}
 
 }  // namespace test
 }  // namespace bzlals

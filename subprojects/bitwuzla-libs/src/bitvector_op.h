@@ -59,6 +59,9 @@ class BitVectorAdd : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
+
  private:
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
@@ -85,6 +88,9 @@ class BitVectorAnd : public BitVectorOp
    * 2) s & t = t on all non-const bits of x
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
 
  private:
   /** Cached inverse result. */
@@ -114,6 +120,9 @@ class BitVectorConcat : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
+
  private:
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
@@ -137,6 +146,9 @@ class BitVectorEq : public BitVectorOp
    *  t = 1: mfb(x, s)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
 
  private:
   /** Cached inverse result. */
@@ -162,26 +174,13 @@ class BitVectorMul : public BitVectorOp
    *                  with c = ctz(s) and y = (t >> c) * (s >> c)^-1
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVectorDomain* inverse() { return d_inverse.get(); }
+
   /** Cached inverse result. */
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
 };
-
-/**
- * w/o const bits (IC_shift):
- *   ASHR:
- *     pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
- *                (s >= bw(s) => (t = ones || t = 0))
- *     pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
- *                (s[msb] = 1 => IC_shr(~s >> x = ~t)
- *
- * with const bits:
- *   ASHR:
- *     pos_x = 0: IC_ashr && mfb(x >>a s, t)
- *
- *     pos_x = 1: IC_ashr &&
- *                (s[msb] = 0 => IC_shr) &&
- *                (s[msb] = 1 => IC_shr(~s >> x = ~t))
- */
 
 class BitVectorShl : public BitVectorOp
 {
@@ -208,6 +207,9 @@ class BitVectorShl : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
+
  private:
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
@@ -216,14 +218,9 @@ class BitVectorShl : public BitVectorOp
 class BitVectorShr : public BitVectorOp
 {
  public:
-  /** Constructors. */
-  BitVectorShr(RNG* rng, uint32_t size);
-  BitVectorShr(RNG* rng,
-               const BitVector& assignment,
-               const BitVectorDomain& domain);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * bits, target value t and assignment s of the operator at index 1 - pos_x.
    *
    * w/o const bits (IC_wo):
    *     pos_x = 0: (t << s) >> s = t
@@ -236,7 +233,60 @@ class BitVectorShr : public BitVectorOp
    *                ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
    *                ((t != 0) => mfb(x, clz(t) - clz(s)))
    */
+  static bool is_invertible(RNG* rng,
+                            const BitVector& t,
+                            const BitVector& s,
+                            const BitVectorDomain& x,
+                            uint32_t pos_x,
+                            std::unique_ptr<BitVector>& inverse);
+
+  /** Constructors. */
+  BitVectorShr(RNG* rng, uint32_t size);
+  BitVectorShr(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits, target value t and assignment s of at d_children[1 - pos_x].
+   */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
+};
+
+class BitVectorAshr : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorAshr(RNG* rng, uint32_t size);
+  BitVectorAshr(RNG* rng,
+                const BitVector& assignment,
+                const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o const bits (IC_wo):
+   *     pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
+   *                (s >= bw(s) => (t = ones || t = 0))
+   *     pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
+   *                (s[msb] = 1 => IC_shr(~s >> x = ~t)
+   *
+   * with const bits:
+   *     pos_x = 0: IC_wo && mfb(x >>a s, t)
+   *     pos_x = 1: IC_wo &&
+   *                (s[msb ] = 0 => IC_shr) &&
+   *                (s[msb] = 1 => IC_shr(~s >> x = ~t))
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
 
  private:
   /** Cached inverse result. */
