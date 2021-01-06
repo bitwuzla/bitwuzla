@@ -84,6 +84,11 @@ class BitVectorDomain
    * domain by the shift value represented as bit-vector 'bv'.
    */
   BitVectorDomain bvshr(const BitVector &shift) const;
+  /**
+   * Create a bit-vector domain that represents an arithmetic right shift of
+   * this domain by the shift value represented as bit-vector 'bv'.
+   */
+  BitVectorDomain bvashr(const BitVector &shift) const;
 
   /**
    * Extract a bit range from this bit-vector domain.

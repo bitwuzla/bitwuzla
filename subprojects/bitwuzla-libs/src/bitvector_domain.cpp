@@ -158,6 +158,13 @@ BitVectorDomain::bvshr(const BitVector &shift) const
 }
 
 BitVectorDomain
+BitVectorDomain::bvashr(const BitVector &shift) const
+{
+  assert(shift.size() == size());
+  return BitVectorDomain(d_lo.bvashr(shift), d_hi.bvashr(shift));
+}
+
+BitVectorDomain
 BitVectorDomain::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 {
   assert(idx_hi >= idx_lo);
