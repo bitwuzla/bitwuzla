@@ -47,7 +47,7 @@ BzlaBitVector *bzla_bv_new_random_signed_range(BzlaMemMgr *mm,
                                                const BzlaBitVector *to);
 
 /**
- * Create a new bit-vecotr of given bit-width and randomly set bits within given
+ * Create a new bit-vector of given bit-width and randomly set bits within given
  * index range. Bits outside of given index range are initialized with zero.
  */
 BzlaBitVector *bzla_bv_new_random_bit_range(
