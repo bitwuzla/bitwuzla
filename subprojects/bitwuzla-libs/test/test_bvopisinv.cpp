@@ -224,5 +224,13 @@ TEST_F(TestBvOpIsInv, udiv)
   test_binary<BitVectorUdiv>(UDIV, 1, true);
 }
 
+TEST_F(TestBvOpIsInv, ult)
+{
+  test_binary<BitVectorUlt>(ULT, 0, false);
+  test_binary<BitVectorUlt>(ULT, 1, false);
+  test_binary<BitVectorUlt>(ULT, 0, true);
+  test_binary<BitVectorUlt>(ULT, 1, true);
+}
+
 }  // namespace test
 }  // namespace bzlals

@@ -79,10 +79,10 @@ class BitVectorAnd : public BitVectorOp
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
    *
-   * w/o  const bits: (t & s) = t
-   * with const bits: (t & s) = t && ((s & hi_x) & m) = (t & m)
-   *                  with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits
-   *
+   * w/o const bits (IC_wo): (t & s) = t
+   * with const bits       : IC_wo && ((s & hi_x) & m) = (t & m)
+   *                         with m = ~(lo_x ^ hi_x)
+   *                              ... mask out all non-const bits
    * Intuition:
    * 1) x & s = t on all const bits of x
    * 2) s & t = t on all non-const bits of x
@@ -167,10 +167,11 @@ class BitVectorMul : public BitVectorOp
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
    *
-   * w/o  const bits: ((-s | s) & t) = t
-   * with const bits: (((-s | s) & t) = t) &&
-   *                  (s = 0 || ((odd(s) => mfb(x, t * s^-1)) &&
-   *                            (!odd(s) => mfb (x << c, y << c))))
+   * w/o const bits (IC_wo): ((-s | s) & t) = t
+   * with const bits       : IC_wo &&
+   *                         (s = 0 ||
+   *                          ((odd(s) => mfb(x, t * s^-1)) &&
+   *                           (!odd(s) => mfb (x << c, y << c))))
    *                  with c = ctz(s) and y = (t >> c) * (s >> c)^-1
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
@@ -331,5 +332,36 @@ class BitVectorUdiv : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
 };
+
+class BitVectorUlt : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorUlt(RNG* rng, uint32_t size);
+  BitVectorUlt(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o const bits (IC_wo):
+   *     pos_x = 0: t = 0 || s != 0
+   *     pos_x = 1: t = 0 || s != ones
+   *
+   * with const bits:
+   *     pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
+   *     pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
+};
+
 }  // namespace bzlals
 #endif

@@ -629,4 +629,50 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
 }
 
 /* -------------------------------------------------------------------------- */
+
+BitVectorUlt::BitVectorUlt(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+
+BitVectorUlt::BitVectorUlt(RNG* rng,
+                           const BitVector& assignment,
+                           const BitVectorDomain& domain)
+    : BitVectorOp(rng, assignment, domain)
+{
+}
+
+bool
+BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  uint32_t pos_s           = 1 - pos_x;
+  const BitVector& s       = d_children[pos_s]->assignment();
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+
+  /* IC: pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
+   *     pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s) */
+  if (x.has_fixed_bits())
+  {
+    if (pos_x == 0)
+    {
+      if (t.is_true())
+      {
+        return !s.is_zero() && x.lo().compare(s) < 0;
+      }
+      return x.hi().compare(s) >= 0;
+    }
+    if (t.is_true())
+    {
+      return !s.is_ones() && x.hi().compare(s) > 0;
+    }
+    return x.lo().compare(s) <= 0;
+  }
+
+  /* IC_wo: pos_x = 0: t = 0 || s != 0
+   *        pos_x = 1: t = 0 || s != ones */
+  if (pos_x == 0)
+  {
+    return t.is_false() || !s.is_zero();
+  }
+  return t.is_false() || !s.is_ones();
+}
+
+/* -------------------------------------------------------------------------- */
 }  // namespace bzlals
