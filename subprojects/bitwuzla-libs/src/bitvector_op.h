@@ -275,7 +275,7 @@ class BitVectorAshr : public BitVectorOp
    *     pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
    *                (s >= bw(s) => (t = ones || t = 0))
    *     pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
-   *                (s[msb] = 1 => IC_shr(~s >> x = ~t)
+   *                (s[msb] = 1 => IC_shr(~s >> x = ~t))
    *
    * with const bits:
    *     pos_x = 0: IC_wo && mfb(x >>a s, t)
@@ -293,5 +293,43 @@ class BitVectorAshr : public BitVectorOp
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
+class BitVectorUdiv : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorUdiv(RNG* rng, uint32_t size);
+  BitVectorUdiv(RNG* rng,
+                const BitVector& assignment,
+                const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o const bits (IC_wo):
+   *     pos_x = 0: (s * t) / s = t
+   *     pos_x = 1: s / (s / t) = t
+   *
+   * with const bits:
+   *     pos_x = 0: IC_wo &&
+   *                (t = 0 => lo_x < s) &&
+   *                ((t != 0 && s != 0 ) => \exists y. (
+   *                    mfb(x, y) && (~c => y < s * t + 1) && (c => y <= ones)))
+   *                with c = umulo(s, t + 1) && uaddo(t, 1)
+   *     pos_x = 1: IC_wo &&
+   *                (t != ones => hi_x > 0) &&
+   *                ((s != 0 || t != 0) => (s / hi_x <= t) && \exists y. (
+   *                    mfb(x, y) &&
+   *                    (t = ones => y <= s / t) &&
+   *                    (t != ones => y > t + 1 && y <= s / t)))
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVectorDomain* inverse() { return d_inverse.get(); }
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+};
 }  // namespace bzlals
 #endif

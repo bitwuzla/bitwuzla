@@ -91,7 +91,6 @@ BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
     {
       if (x.lo().bvand(s).compare(t) == 0)
       {
-        d_inverse.reset(new BitVector(x.lo()));
         return true;
       }
       return false;
@@ -182,7 +181,6 @@ BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
     {
       if (x.lo().bveq(s).compare(t) == 0)
       {
-        d_inverse.reset(new BitVector(x.lo()));
         return true;
       }
       return false;
@@ -225,7 +223,6 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
     {
       if (x.lo().bvmul(s).compare(t) == 0)
       {
-        d_inverse.reset(new BitVectorDomain(x));
         return true;
       }
       return false;
@@ -315,7 +312,6 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
       if ((pos_x == 0 && x.lo().bvshl(s).compare(t) == 0)
           || (pos_x == 1 && s.bvshl(x.lo()).compare(t) == 0))
       {
-        d_inverse.reset(new BitVector(x.lo()));
         return true;
       }
       return false;
@@ -404,7 +400,6 @@ BitVectorShr::is_invertible(RNG* rng,
       if ((pos_x == 0 && x.lo().bvshr(s).compare(t) == 0)
           || (pos_x == 1 && s.bvshr(x.lo()).compare(t) == 0))
       {
-        inverse.reset(new BitVector(x.lo()));
         return true;
       }
       return false;
@@ -502,6 +497,134 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
     // for value computation
     return x.bvashr(s).match_fixed_bits(t);
   }
+  return check;
+}
+
+/* -------------------------------------------------------------------------- */
+
+BitVectorUdiv::BitVectorUdiv(RNG* rng, uint32_t size) : BitVectorOp(rng, size)
+{
+}
+
+BitVectorUdiv::BitVectorUdiv(RNG* rng,
+                             const BitVector& assignment,
+                             const BitVectorDomain& domain)
+    : BitVectorOp(rng, assignment, domain)
+{
+}
+
+bool
+BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  uint32_t pos_s           = 1 - pos_x;
+  const BitVector& s       = d_children[pos_s]->assignment();
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  BitVector s_mul_t, s_udiv_t;
+  bool check;
+
+  if (pos_x == 0)
+  {
+    s_mul_t = s.bvmul(t);
+    check   = s_mul_t.bvudiv(s).compare(t) == 0;
+  }
+  else
+  {
+    s_udiv_t = s.bvudiv(t);
+    check    = s.bvudiv(s_udiv_t).compare(t) == 0;
+  }
+
+  if (check && x.has_fixed_bits())
+  {
+    if (x.is_fixed())
+    {
+      if ((pos_x == 0 && x.lo().bvudiv(s).compare(t) == 0)
+          || (pos_x == 1 && s.bvudiv(x.lo()).compare(t) == 0))
+      {
+        return true;
+      }
+      return false;
+    }
+
+    /* IC: pos_x = 0: IC_wo &&
+     *                (t = 0 => lo_x < s) &&
+     *                ((t != 0 && s != 0 ) => \exists y. (
+     *                    mfb(x, y) && (~c => y < s * t + 1) &&
+     *                    (c => y <= ones)))
+     *                with c = umulo(s, t + 1) && uaddo(t, 1)
+     *     pos_x = 1: IC_wo &&
+     *                (t != ones => hi_x > 0) &&   ... covered by is_fixed check
+     *                ((s != 0 || t != 0) => (s / hi_x <= t) && \exists y. (
+     *                    mfb(x, y) &&
+     *                    (t = ones => y <= s / t) &&
+     *                    (t != ones => y > t + 1 && y <= s / t)))
+     */
+    if (pos_x == 0)
+    {
+      if (t.is_zero())
+      {
+        return x.lo().compare(s) < 0;
+      }
+      else if (!s.is_zero())
+      {
+        BitVector& min = s_mul_t;
+        BitVector max  = min.bvadd(s);
+        if (max.compare(min) < 0)
+        {
+          max = BitVector::mk_ones(s.size());
+        }
+        else
+        {
+          max.ibvdec(max);
+        }
+
+        BitVectorDomainGenerator gen(x, d_rng, min, max);
+        if (gen.has_next())
+        {
+          d_inverse.reset(new BitVectorDomain(gen.random(), max));
+          return true;
+        }
+        return false;
+      }
+      return true;
+    }
+    else if (!s.is_zero() || !t.is_zero())
+    {
+      uint32_t bw = s.size();
+      BitVector min, max;
+      if (s.bvudiv(x.hi()).compare(t) > 0)
+      {
+        return false;
+      }
+
+      if (t.is_ones())
+      {
+        min = BitVector::mk_zero(bw);
+        max = s.is_ones() ? BitVector::mk_one(bw) : min;
+      }
+      else if (s.compare(t) == 0)
+      {
+        min = BitVector::mk_one(bw);
+        max = min;
+      }
+      else
+      {
+        min = t.bvinc();
+        min.ibvudiv(s, min);
+        min.ibvinc(min);
+        max = s_udiv_t;
+      }
+      BitVectorDomainGenerator gen(x, d_rng, min, max);
+      if (gen.has_next())
+      {
+        d_inverse.reset(new BitVectorDomain(gen.random(), max));
+        return true;
+      }
+      return false;
+    }
+    return true;
+  }
+  /* IC_wo: pos_x = 0: (s * t) / s = t
+   *        pos_x = 1: s / (s / t) = t  */
   return check;
 }
 
