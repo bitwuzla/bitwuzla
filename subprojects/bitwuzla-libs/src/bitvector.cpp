@@ -90,6 +90,9 @@ BitVector::mk_max_signed(uint32_t size)
 BitVector
 BitVector::bvite(const BitVector& c, const BitVector& t, const BitVector& e)
 {
+  assert(!c.is_null());
+  assert(!t.is_null());
+  assert(!e.is_null());
   assert(c.d_size == 1);
   assert(t.d_size == e.d_size);
   return c.is_true() ? t : e;
@@ -164,6 +167,7 @@ BitVector::~BitVector() {}
 BitVector&
 BitVector::operator=(const BitVector& other)
 {
+  assert(!other.is_null());
   if (&other == this) return *this;
   if (d_size != other.d_size)
   {
@@ -177,15 +181,18 @@ BitVector::operator=(const BitVector& other)
 void
 BitVector::iset(uint64_t value)
 {
+  assert(!is_null());
   assert(d_size);
   mpz_set_ui(d_val->d_mpz, value);
 }
 
 void
-BitVector::iset(const BitVector& other)
+BitVector::iset(const BitVector& bv)
 {
-  assert(d_size == other.d_size);
-  mpz_set(d_val->d_mpz, other.d_val->d_mpz);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  mpz_set(d_val->d_mpz, bv.d_val->d_mpz);
 }
 
 void
@@ -194,6 +201,9 @@ BitVector::iset(const RNG& rng,
                 const BitVector& to,
                 bool is_signed)
 {
+  assert(!is_null());
+  assert(!from.is_null());
+  assert(!to.is_null());
   assert(d_size == from.d_size);
   assert(d_size == to.d_size);
   assert(is_signed || from.compare(to) <= 0);
@@ -227,20 +237,21 @@ BitVector::iset(const RNG& rng,
 }
 
 bool
-BitVector::operator==(const BitVector& other)
+BitVector::operator==(const BitVector& bv)
 {
-  return compare(other) == 0;
+  return compare(bv) == 0;
 }
 
 bool
-BitVector::operator!=(const BitVector& other)
+BitVector::operator!=(const BitVector& bv)
 {
-  return compare(other) != 0;
+  return compare(bv) != 0;
 }
 
 std::string
 BitVector::to_string() const
 {
+  assert(!is_null());
   std::stringstream res;
   char* tmp     = mpz_get_str(0, 2, d_val->d_mpz);
   uint32_t n    = strlen(tmp);
@@ -255,24 +266,29 @@ BitVector::to_string() const
 uint64_t
 BitVector::to_uint64() const
 {
+  assert(!is_null());
   assert(d_size <= 64);
   return mpz_get_ui(d_val->d_mpz);
 }
 
 int32_t
-BitVector::compare(const BitVector& other) const
+BitVector::compare(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
-  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  return mpz_cmp(d_val->d_mpz, bv.d_val->d_mpz);
 }
 
 int32_t
-BitVector::signed_compare(const BitVector& other) const
+BitVector::signed_compare(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
 
   uint32_t msb_a = get_msb();
-  uint32_t msb_b = other.get_msb();
+  uint32_t msb_b = bv.get_msb();
 
   if (msb_a && !msb_b)
   {
@@ -282,12 +298,13 @@ BitVector::signed_compare(const BitVector& other) const
   {
     return 1;
   }
-  return compare(other);
+  return compare(bv);
 }
 
 bool
 BitVector::get_bit(uint32_t idx) const
 {
+  assert(!is_null());
   assert(idx < size());
   return mpz_tstbit(d_val->d_mpz, idx);
 }
@@ -295,6 +312,7 @@ BitVector::get_bit(uint32_t idx) const
 void
 BitVector::set_bit(uint32_t idx, bool value)
 {
+  assert(!is_null());
   if (value)
   {
     mpz_setbit(d_val->d_mpz, idx);
@@ -308,24 +326,28 @@ BitVector::set_bit(uint32_t idx, bool value)
 void
 BitVector::flip_bit(uint32_t idx)
 {
+  assert(!is_null());
   mpz_combit(d_val->d_mpz, idx);
 }
 
 bool
 BitVector::get_lsb() const
 {
+  assert(!is_null());
   return get_bit(0);
 }
 
 bool
 BitVector::get_msb() const
 {
+  assert(!is_null());
   return get_bit(d_size - 1);
 }
 
 bool
 BitVector::is_true() const
 {
+  assert(!is_null());
   if (d_size > 1) return false;
   return get_bit(0);
 }
@@ -333,6 +355,7 @@ BitVector::is_true() const
 bool
 BitVector::is_false() const
 {
+  assert(!is_null());
   if (d_size > 1) return false;
   return !get_bit(0);
 }
@@ -340,12 +363,14 @@ BitVector::is_false() const
 bool
 BitVector::is_zero() const
 {
+  assert(!is_null());
   return mpz_cmp_ui(d_val->d_mpz, 0) == 0;
 }
 
 bool
 BitVector::is_ones() const
 {
+  assert(!is_null());
   uint32_t n = mpz_size(d_val->d_mpz);
   if (n == 0) return false;  // zero
   uint64_t m = d_size / mp_bits_per_limb;
@@ -366,12 +391,14 @@ BitVector::is_ones() const
 bool
 BitVector::is_one() const
 {
+  assert(!is_null());
   return mpz_cmp_ui(d_val->d_mpz, 1) == 0;
 }
 
 bool
 BitVector::is_min_signed() const
 {
+  assert(!is_null());
   if (mpz_scan1(d_val->d_mpz, 0) != d_size - 1) return false;
   return true;
 }
@@ -379,17 +406,19 @@ BitVector::is_min_signed() const
 bool
 BitVector::is_max_signed() const
 {
+  assert(!is_null());
   if (mpz_scan0(d_val->d_mpz, 0) != d_size - 1) return false;
   return true;
 }
 
 bool
-BitVector::is_uadd_overflow(const BitVector& other) const
+BitVector::is_uadd_overflow(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(d_size == bv.d_size);
   mpz_t add;
   mpz_init(add);
-  mpz_add(add, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_add(add, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_q_2exp(add, add, d_size);
   bool res = mpz_cmp_ui(add, 0) != 0;
   mpz_clear(add);
@@ -397,14 +426,15 @@ BitVector::is_uadd_overflow(const BitVector& other) const
 }
 
 bool
-BitVector::is_umul_overflow(const BitVector& other) const
+BitVector::is_umul_overflow(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(d_size == bv.d_size);
   if (d_size > 1)
   {
     mpz_t mul;
     mpz_init(mul);
-    mpz_mul(mul, d_val->d_mpz, other.d_val->d_mpz);
+    mpz_mul(mul, d_val->d_mpz, bv.d_val->d_mpz);
     mpz_fdiv_q_2exp(mul, mul, d_size);
     bool res = mpz_cmp_ui(mul, 0) != 0;
     mpz_clear(mul);
@@ -416,6 +446,7 @@ BitVector::is_umul_overflow(const BitVector& other) const
 uint32_t
 BitVector::count_trailing_zeros() const
 {
+  assert(!is_null());
   uint32_t res = mpz_scan1(d_val->d_mpz, 0);
   if (res > d_size) res = d_size;
   return res;
@@ -424,18 +455,21 @@ BitVector::count_trailing_zeros() const
 uint32_t
 BitVector::count_leading_zeros() const
 {
+  assert(!is_null());
   return count_leading(true);
 }
 
 uint32_t
 BitVector::count_leading_ones() const
 {
+  assert(!is_null());
   return count_leading(false);
 }
 
 BitVector
 BitVector::bvneg() const
 {
+  assert(!is_null());
   BitVector res = bvnot();
   mpz_add_ui(res.d_val->d_mpz, res.d_val->d_mpz, 1);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
@@ -445,6 +479,7 @@ BitVector::bvneg() const
 BitVector
 BitVector::bvnot() const
 {
+  assert(!is_null());
   BitVector res(d_size);
   mpz_com(res.d_val->d_mpz, d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
@@ -454,6 +489,7 @@ BitVector::bvnot() const
 BitVector
 BitVector::bvinc() const
 {
+  assert(!is_null());
   BitVector res(d_size);
   mpz_add_ui(res.d_val->d_mpz, d_val->d_mpz, 1);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
@@ -463,6 +499,7 @@ BitVector::bvinc() const
 BitVector
 BitVector::bvdec() const
 {
+  assert(!is_null());
   BitVector res(d_size);
   mpz_sub_ui(res.d_val->d_mpz, d_val->d_mpz, 1);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
@@ -472,12 +509,14 @@ BitVector::bvdec() const
 BitVector
 BitVector::bvredand() const
 {
+  assert(!is_null());
   return is_ones() ? mk_true() : mk_false();
 }
 
 BitVector
 BitVector::bvredor() const
 {
+  assert(!is_null());
   mp_limb_t limb;
   for (size_t i = 0, n = mpz_size(d_val->d_mpz); i < n; ++i)
   {
@@ -488,148 +527,176 @@ BitVector::bvredor() const
 }
 
 BitVector
-BitVector::bvadd(const BitVector& other) const
+BitVector::bvadd(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   BitVector res(d_size);
-  mpz_add(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_add(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bvsub(const BitVector& other) const
+BitVector::bvsub(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   BitVector res(d_size);
-  mpz_sub(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_sub(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bvand(const BitVector& other) const
+BitVector::bvand(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   BitVector res(d_size);
-  mpz_and(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_and(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bvimplies(const BitVector& other) const
+BitVector::bvimplies(const BitVector& bv) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == 1);
-  assert(d_size == other.d_size);
-  return is_false() || other.is_true() ? mk_true() : mk_false();
+  assert(d_size == bv.d_size);
+  return is_false() || bv.is_true() ? mk_true() : mk_false();
 }
 
 BitVector
-BitVector::bvnand(const BitVector& other) const
+BitVector::bvnand(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   BitVector res(d_size);
-  mpz_and(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_and(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_com(res.d_val->d_mpz, res.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bvnor(const BitVector& other) const
+BitVector::bvnor(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   BitVector res(d_size);
-  mpz_ior(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_ior(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_com(res.d_val->d_mpz, res.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bvor(const BitVector& other) const
+BitVector::bvor(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   BitVector res(d_size);
-  mpz_ior(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_ior(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bvxnor(const BitVector& other) const
+BitVector::bvxnor(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   BitVector res(d_size);
-  mpz_xor(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_xor(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_com(res.d_val->d_mpz, res.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bvxor(const BitVector& other) const
+BitVector::bvxor(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   BitVector res(d_size);
-  mpz_xor(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_xor(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bveq(const BitVector& other) const
+BitVector::bveq(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
-  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) == 0 ? mk_true()
-                                                        : mk_false();
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  return mpz_cmp(d_val->d_mpz, bv.d_val->d_mpz) == 0 ? mk_true() : mk_false();
 }
 
 BitVector
-BitVector::bvne(const BitVector& other) const
+BitVector::bvne(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
-  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) != 0 ? mk_true()
-                                                        : mk_false();
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  return mpz_cmp(d_val->d_mpz, bv.d_val->d_mpz) != 0 ? mk_true() : mk_false();
 }
 
 BitVector
-BitVector::bvult(const BitVector& other) const
+BitVector::bvult(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
-  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) < 0 ? mk_true() : mk_false();
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  return mpz_cmp(d_val->d_mpz, bv.d_val->d_mpz) < 0 ? mk_true() : mk_false();
 }
 
 BitVector
-BitVector::bvule(const BitVector& other) const
+BitVector::bvule(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
-  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) <= 0 ? mk_true()
-                                                        : mk_false();
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  return mpz_cmp(d_val->d_mpz, bv.d_val->d_mpz) <= 0 ? mk_true() : mk_false();
 }
 
 BitVector
-BitVector::bvugt(const BitVector& other) const
+BitVector::bvugt(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
-  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) > 0 ? mk_true() : mk_false();
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  return mpz_cmp(d_val->d_mpz, bv.d_val->d_mpz) > 0 ? mk_true() : mk_false();
 }
 
 BitVector
-BitVector::bvuge(const BitVector& other) const
+BitVector::bvuge(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
-  return mpz_cmp(d_val->d_mpz, other.d_val->d_mpz) >= 0 ? mk_true()
-                                                        : mk_false();
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  return mpz_cmp(d_val->d_mpz, bv.d_val->d_mpz) >= 0 ? mk_true() : mk_false();
 }
 
 BitVector
-BitVector::bvslt(const BitVector& other) const
+BitVector::bvslt(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   bool msb       = get_msb();
-  bool msb_other = other.get_msb();
+  bool msb_other = bv.get_msb();
   if (msb && !msb_other)
   {
     return mk_true();
@@ -638,15 +705,17 @@ BitVector::bvslt(const BitVector& other) const
   {
     return mk_false();
   }
-  return bvult(other);
+  return bvult(bv);
 }
 
 BitVector
-BitVector::bvsle(const BitVector& other) const
+BitVector::bvsle(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   bool msb       = get_msb();
-  bool msb_other = other.get_msb();
+  bool msb_other = bv.get_msb();
   if (msb && !msb_other)
   {
     return mk_true();
@@ -655,15 +724,17 @@ BitVector::bvsle(const BitVector& other) const
   {
     return mk_false();
   }
-  return bvule(other);
+  return bvule(bv);
 }
 
 BitVector
-BitVector::bvsgt(const BitVector& other) const
+BitVector::bvsgt(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   bool msb       = get_msb();
-  bool msb_other = other.get_msb();
+  bool msb_other = bv.get_msb();
   if (msb && !msb_other)
   {
     return mk_false();
@@ -672,15 +743,17 @@ BitVector::bvsgt(const BitVector& other) const
   {
     return mk_true();
   }
-  return bvugt(other);
+  return bvugt(bv);
 }
 
 BitVector
-BitVector::bvsge(const BitVector& other) const
+BitVector::bvsge(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   bool msb       = get_msb();
-  bool msb_other = other.get_msb();
+  bool msb_other = bv.get_msb();
   if (msb && !msb_other)
   {
     return mk_false();
@@ -689,12 +762,13 @@ BitVector::bvsge(const BitVector& other) const
   {
     return mk_true();
   }
-  return bvuge(other);
+  return bvuge(bv);
 }
 
 BitVector
 BitVector::bvshl(uint32_t shift) const
 {
+  assert(!is_null());
   BitVector res(d_size);
   if (shift >= d_size) return res;
   mpz_mul_2exp(res.d_val->d_mpz, d_val->d_mpz, shift);
@@ -703,11 +777,13 @@ BitVector::bvshl(uint32_t shift) const
 }
 
 BitVector
-BitVector::bvshl(const BitVector& other) const
+BitVector::bvshl(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   uint32_t shift;
-  if (other.shift_is_uint64(&shift))
+  if (bv.shift_is_uint64(&shift))
   {
     return bvshl(shift);
   }
@@ -717,6 +793,7 @@ BitVector::bvshl(const BitVector& other) const
 BitVector
 BitVector::bvshr(uint32_t shift) const
 {
+  assert(!is_null());
   BitVector res(d_size);
   if (shift >= d_size) return res;
   mpz_fdiv_q_2exp(res.d_val->d_mpz, d_val->d_mpz, shift);
@@ -724,11 +801,13 @@ BitVector::bvshr(uint32_t shift) const
 }
 
 BitVector
-BitVector::bvshr(const BitVector& other) const
+BitVector::bvshr(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   uint32_t shift;
-  if (other.shift_is_uint64(&shift))
+  if (bv.shift_is_uint64(&shift))
   {
     return bvshr(shift);
   }
@@ -736,99 +815,113 @@ BitVector::bvshr(const BitVector& other) const
 }
 
 BitVector
-BitVector::bvashr(const BitVector& other) const
+BitVector::bvashr(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   if (get_msb())
   {
-    return bvnot().bvshr(other).bvnot();
+    return bvnot().bvshr(bv).bvnot();
   }
-  return bvshr(other);
+  return bvshr(bv);
 }
 
 BitVector
-BitVector::bvmul(const BitVector& other) const
+BitVector::bvmul(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   BitVector res(d_size);
-  mpz_mul(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_mul(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bvudiv(const BitVector& other) const
+BitVector::bvudiv(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
-  if (other.is_zero()) return mk_ones(d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  if (bv.is_zero()) return mk_ones(d_size);
   BitVector res(d_size);
-  mpz_fdiv_q(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_fdiv_q(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bvurem(const BitVector& other) const
+BitVector::bvurem(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
-  if (other.is_zero()) return *this;
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  if (bv.is_zero()) return *this;
   BitVector res(d_size);
-  mpz_fdiv_r(res.d_val->d_mpz, d_val->d_mpz, other.d_val->d_mpz);
+  mpz_fdiv_r(res.d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, d_size);
   return res;
 }
 
 BitVector
-BitVector::bvsdiv(const BitVector& other) const
+BitVector::bvsdiv(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   bool is_signed       = get_msb();
-  bool is_signed_other = other.get_msb();
+  bool is_signed_other = bv.get_msb();
 
   if (is_signed && !is_signed_other)
   {
-    return bvneg().bvudiv(other).bvneg();
+    return bvneg().bvudiv(bv).bvneg();
   }
   if (!is_signed && is_signed_other)
   {
-    return bvudiv(other.bvneg()).bvneg();
+    return bvudiv(bv.bvneg()).bvneg();
   }
   if (is_signed && is_signed_other)
   {
-    return bvneg().bvudiv(other.bvneg());
+    return bvneg().bvudiv(bv.bvneg());
   }
-  return bvudiv(other);
+  return bvudiv(bv);
 }
 
 BitVector
-BitVector::bvsrem(const BitVector& other) const
+BitVector::bvsrem(const BitVector& bv) const
 {
-  assert(d_size == other.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   bool is_signed       = get_msb();
-  bool is_signed_other = other.get_msb();
+  bool is_signed_other = bv.get_msb();
 
   if (is_signed && !is_signed_other)
   {
-    return bvneg().bvurem(other).bvneg();
+    return bvneg().bvurem(bv).bvneg();
   }
   if (!is_signed && is_signed_other)
   {
-    return bvurem(other.bvneg());
+    return bvurem(bv.bvneg());
   }
   if (is_signed && is_signed_other)
   {
-    return bvneg().bvurem(other.bvneg()).bvneg();
+    return bvneg().bvurem(bv.bvneg()).bvneg();
   }
-  return bvurem(other);
+  return bvurem(bv);
 }
 
 BitVector
-BitVector::bvconcat(const BitVector& other) const
+BitVector::bvconcat(const BitVector& bv) const
 {
-  uint32_t size = d_size + other.d_size;
+  assert(!is_null());
+  assert(!bv.is_null());
+  uint32_t size = d_size + bv.d_size;
   BitVector res(size);
-  mpz_mul_2exp(res.d_val->d_mpz, d_val->d_mpz, other.d_size);
-  mpz_add(res.d_val->d_mpz, res.d_val->d_mpz, other.d_val->d_mpz);
+  mpz_mul_2exp(res.d_val->d_mpz, d_val->d_mpz, bv.d_size);
+  mpz_add(res.d_val->d_mpz, res.d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_r_2exp(res.d_val->d_mpz, res.d_val->d_mpz, size);
   return res;
 }
@@ -836,6 +929,7 @@ BitVector::bvconcat(const BitVector& other) const
 BitVector
 BitVector::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 {
+  assert(!is_null());
   assert(idx_hi >= idx_lo);
   uint32_t size = idx_hi - idx_lo + 1;
   BitVector res(size);
@@ -847,6 +941,7 @@ BitVector::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 BitVector
 BitVector::bvzext(uint32_t n) const
 {
+  assert(!is_null());
   if (n == 0) return *this;
   uint32_t size = d_size + n;
   BitVector res(size);
@@ -857,6 +952,7 @@ BitVector::bvzext(uint32_t n) const
 BitVector
 BitVector::bvsext(uint32_t n) const
 {
+  assert(!is_null());
   if (n == 0) return *this;
   if (get_msb())
   {
@@ -868,6 +964,7 @@ BitVector::bvsext(uint32_t n) const
 BitVector
 BitVector::bvmodinv() const
 {
+  assert(!is_null());
   assert(get_lsb());  // must be odd
   BitVector res(d_size);
   if (d_size == 1)
@@ -901,6 +998,8 @@ BitVector::bvmodinv() const
 void
 BitVector::ibvneg(const BitVector& bv) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == bv.d_size);
   ibvnot(bv);
   mpz_add_ui(d_val->d_mpz, d_val->d_mpz, 1);
@@ -910,6 +1009,8 @@ BitVector::ibvneg(const BitVector& bv) const
 void
 BitVector::ibvnot(const BitVector& bv) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == bv.d_size);
   assert(d_size == bv.d_size);
   mpz_com(d_val->d_mpz, bv.d_val->d_mpz);
@@ -919,6 +1020,8 @@ BitVector::ibvnot(const BitVector& bv) const
 void
 BitVector::ibvinc(const BitVector& bv) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == bv.d_size);
   mpz_add_ui(d_val->d_mpz, bv.d_val->d_mpz, 1);
   mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
@@ -927,6 +1030,8 @@ BitVector::ibvinc(const BitVector& bv) const
 void
 BitVector::ibvdec(const BitVector& bv) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == bv.d_size);
   mpz_sub_ui(d_val->d_mpz, bv.d_val->d_mpz, 1);
   mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
@@ -935,6 +1040,8 @@ BitVector::ibvdec(const BitVector& bv) const
 void
 BitVector::ibvredand(const BitVector& bv) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == 1);
   if (bv.is_ones())
   {
@@ -949,6 +1056,8 @@ BitVector::ibvredand(const BitVector& bv) const
 void
 BitVector::ibvredor(const BitVector& bv) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == 1);
   mp_limb_t limb;
   for (size_t i = 0, n = mpz_size(bv.d_val->d_mpz); i < n; ++i)
@@ -966,6 +1075,9 @@ BitVector::ibvredor(const BitVector& bv) const
 void
 BitVector::ibvadd(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   mpz_add(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_val->d_mpz);
@@ -975,6 +1087,9 @@ BitVector::ibvadd(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvsub(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   mpz_sub(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_val->d_mpz);
@@ -984,6 +1099,9 @@ BitVector::ibvsub(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvand(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   mpz_and(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_val->d_mpz);
@@ -993,6 +1111,9 @@ BitVector::ibvand(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvimplies(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
@@ -1009,6 +1130,9 @@ BitVector::ibvimplies(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvnand(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   mpz_and(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_val->d_mpz);
@@ -1019,6 +1143,9 @@ BitVector::ibvnand(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvnor(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   mpz_ior(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_val->d_mpz);
@@ -1029,6 +1156,9 @@ BitVector::ibvnor(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvor(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   mpz_ior(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_val->d_mpz);
@@ -1038,6 +1168,9 @@ BitVector::ibvor(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvxnor(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   mpz_xor(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_val->d_mpz);
@@ -1048,6 +1181,9 @@ BitVector::ibvxnor(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvxor(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   mpz_xor(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_val->d_mpz);
@@ -1057,6 +1193,9 @@ BitVector::ibvxor(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibveq(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(bv0.d_size == bv1.d_size);
   if (mpz_cmp(bv0.d_val->d_mpz, bv1.d_val->d_mpz) == 0)
@@ -1072,6 +1211,9 @@ BitVector::ibveq(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvne(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(bv0.d_size == bv1.d_size);
   if (mpz_cmp(bv0.d_val->d_mpz, bv1.d_val->d_mpz) != 0)
@@ -1087,6 +1229,9 @@ BitVector::ibvne(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvult(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(bv0.d_size == bv1.d_size);
   if (mpz_cmp(bv0.d_val->d_mpz, bv1.d_val->d_mpz) < 0)
@@ -1102,6 +1247,9 @@ BitVector::ibvult(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvule(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(bv0.d_size == bv1.d_size);
   if (mpz_cmp(bv0.d_val->d_mpz, bv1.d_val->d_mpz) <= 0)
@@ -1117,6 +1265,9 @@ BitVector::ibvule(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvugt(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(bv0.d_size == bv1.d_size);
   if (mpz_cmp(bv0.d_val->d_mpz, bv1.d_val->d_mpz) > 0)
@@ -1132,6 +1283,9 @@ BitVector::ibvugt(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvuge(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(bv0.d_size == bv1.d_size);
   if (mpz_cmp(bv0.d_val->d_mpz, bv1.d_val->d_mpz) >= 0)
@@ -1147,6 +1301,9 @@ BitVector::ibvuge(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvslt(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(bv0.d_size == bv1.d_size);
   bool msb_bv0 = bv0.get_msb();
@@ -1168,6 +1325,9 @@ BitVector::ibvslt(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvsle(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(bv0.d_size == bv1.d_size);
   bool msb_bv0 = bv0.get_msb();
@@ -1189,6 +1349,9 @@ BitVector::ibvsle(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvsgt(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(bv0.d_size == bv1.d_size);
   bool msb_bv0 = bv0.get_msb();
@@ -1210,6 +1373,9 @@ BitVector::ibvsgt(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == 1);
   assert(bv0.d_size == bv1.d_size);
   bool msb_bv0 = bv0.get_msb();
@@ -1231,6 +1397,8 @@ BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvshl(const BitVector& bv, uint32_t shift) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == bv.d_size);
   if (shift >= d_size)
   {
@@ -1246,6 +1414,9 @@ BitVector::ibvshl(const BitVector& bv, uint32_t shift) const
 void
 BitVector::ibvshl(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   uint32_t shift;
@@ -1260,22 +1431,27 @@ BitVector::ibvshl(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvshr(const BitVector& bv0, uint32_t shift) const
+BitVector::ibvshr(const BitVector& bv, uint32_t shift) const
 {
-  assert(d_size == bv0.d_size);
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   if (shift >= d_size)
   {
     mpz_set_ui(d_val->d_mpz, 0);
   }
   else
   {
-    mpz_fdiv_q_2exp(d_val->d_mpz, bv0.d_val->d_mpz, shift);
+    mpz_fdiv_q_2exp(d_val->d_mpz, bv.d_val->d_mpz, shift);
   }
 }
 
 void
 BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   uint32_t shift;
@@ -1292,6 +1468,9 @@ BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   if (bv0.get_msb())
@@ -1309,6 +1488,9 @@ BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvmul(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   mpz_mul(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_val->d_mpz);
@@ -1318,6 +1500,9 @@ BitVector::ibvmul(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvudiv(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   if (bv1.is_zero())
@@ -1336,6 +1521,9 @@ BitVector::ibvudiv(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvurem(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   if (!bv1.is_zero())
@@ -1352,6 +1540,9 @@ BitVector::ibvurem(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   bool is_signed_bv0 = bv0.get_msb();
@@ -1383,6 +1574,9 @@ BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size);
   assert(d_size == bv1.d_size);
   bool is_signed_bv0 = bv0.get_msb();
@@ -1414,6 +1608,9 @@ BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1) const
 void
 BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1) const
 {
+  assert(!is_null());
+  assert(!bv0.is_null());
+  assert(!bv1.is_null());
   assert(d_size == bv0.d_size + bv1.d_size);
   mpz_mul_2exp(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_size);
   mpz_add(d_val->d_mpz, d_val->d_mpz, bv1.d_val->d_mpz);
@@ -1425,6 +1622,8 @@ BitVector::ibvextract(const BitVector& bv,
                       uint32_t idx_hi,
                       uint32_t idx_lo) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == idx_hi - idx_lo + 1);
   mpz_fdiv_r_2exp(d_val->d_mpz, bv.d_val->d_mpz, idx_hi + 1);
   mpz_fdiv_q_2exp(d_val->d_mpz, d_val->d_mpz, idx_lo);
@@ -1433,6 +1632,8 @@ BitVector::ibvextract(const BitVector& bv,
 void
 BitVector::ibvzext(const BitVector& bv, uint32_t n) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == bv.d_size + n);
   mpz_set(d_val->d_mpz, bv.d_val->d_mpz);
 }
@@ -1440,6 +1641,8 @@ BitVector::ibvzext(const BitVector& bv, uint32_t n) const
 void
 BitVector::ibvsext(const BitVector& bv, uint32_t n) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == bv.d_size + n);
   if (n > 0)
   {
@@ -1466,6 +1669,10 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n) const
 void
 BitVector::ibvite(const BitVector& c, const BitVector& t, const BitVector& e)
 {
+  assert(!is_null());
+  assert(!c.is_null());
+  assert(!t.is_null());
+  assert(!e.is_null());
   assert(c.d_size == 1);
   assert(d_size == t.d_size);
   assert(d_size == e.d_size);
@@ -1482,6 +1689,8 @@ BitVector::ibvite(const BitVector& c, const BitVector& t, const BitVector& e)
 void
 BitVector::ibvmodinv(const BitVector& bv) const
 {
+  assert(!is_null());
+  assert(!bv.is_null());
   assert(d_size == bv.d_size);
   assert(bv.get_lsb());  // must be odd
   if (d_size == 1)
@@ -1513,6 +1722,7 @@ BitVector::ibvmodinv(const BitVector& bv) const
 uint32_t
 BitVector::count_leading(bool zeros) const
 {
+  assert(!is_null());
   uint32_t res = 0;
   mp_limb_t limb;
 
@@ -1540,6 +1750,7 @@ BitVector::count_leading(bool zeros) const
 uint32_t
 BitVector::get_limb(void* limb, uint32_t nbits_rem, bool zeros) const
 {
+  assert(!is_null());
   mp_limb_t* gmp_limb = static_cast<mp_limb_t*>(limb);
   /* GMP normalizes the limbs, the left most (most significant) is never 0 */
   uint32_t i, n_limbs, n_limbs_total;

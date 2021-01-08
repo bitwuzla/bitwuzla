@@ -593,7 +593,7 @@ TestBitVector::test_is_uadd_overflow_aux(uint32_t size,
   BitVector bv2(size, a2);
   ASSERT_EQ(bv1.is_uadd_overflow(bv2), expected);
   ASSERT_DEATH(bv1.is_uadd_overflow(BitVector(size + 1, *d_rng)),
-               "d_size == other.d_size");
+               "d_size == bv.d_size");
 }
 
 void
@@ -632,7 +632,7 @@ TestBitVector::test_is_umul_overflow_aux(uint32_t size,
   BitVector bv2(size, a2);
   ASSERT_EQ(bv1.is_umul_overflow(bv2), expected);
   ASSERT_DEATH(bv1.is_umul_overflow(BitVector(size + 1, *d_rng)),
-               "d_size == other.d_size");
+               "d_size == bv.d_size");
 }
 
 void
@@ -2024,7 +2024,7 @@ TEST_F(TestBitVector, signed_compare)
     }
   }
   ASSERT_DEATH(BitVector(1).signed_compare(BitVector(2)),
-               "d_size == other.d_size");
+               "d_size == bv.d_size");
 }
 
 TEST_F(TestBitVector, is_true)

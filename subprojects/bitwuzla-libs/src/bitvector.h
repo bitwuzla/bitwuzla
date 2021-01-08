@@ -86,10 +86,13 @@ class BitVector
   /** Copy assignment operator. */
   BitVector& operator=(const BitVector& other);
 
+  /** Return true if this is an uninitialized bit-vector. */
+  bool is_null() const { return d_val == nullptr; }
+
   /** Set the value of this bit-vector to the given unsigned (in place). */
   void iset(uint64_t value);
-  /** Set the value of this bit-vector to the value of 'other' (in place). */
-  void iset(const BitVector& other);
+  /** Set the value of this bit-vector to the value of 'bv' (in place). */
+  void iset(const BitVector& bv);
   /**
    * Set the value of this bit-vector to a random value between 'from' and 'to'
    * (in place).
@@ -100,9 +103,9 @@ class BitVector
             bool is_signed);
 
   /** Equality comparison operator. */
-  bool operator==(const BitVector& other);
+  bool operator==(const BitVector& bv);
   /** Disequality comparison operator. */
-  bool operator!=(const BitVector& other);
+  bool operator!=(const BitVector& bv);
 
   /** Return a string representation of this bit-vector. */
   std::string to_string() const;
@@ -117,16 +120,16 @@ class BitVector
 
   /**
    * Compare this bit-vector with given bit-vector.
-   * Return 0 if 'this' and 'other' are equal, -1 if 'this' is unsigned less
-   * than 'other', and 1 if 'this' is unsigned greater than 'other'.
+   * Return 0 if 'this' and 'bv' are equal, -1 if 'this' is unsigned less
+   * than 'bv', and 1 if 'this' is unsigned greater than 'bv'.
    */
-  int32_t compare(const BitVector& other) const;
+  int32_t compare(const BitVector& bv) const;
   /**
    * Compare this bit-vector with given bit-vector.
-   * Return 0 if 'this' and 'other' are equal, -1 if 'this' is signed less
-   * than 'other', and 1 if 'this' is signed greater than 'other'.
+   * Return 0 if 'this' and 'bv' are equal, -1 if 'this' is signed less
+   * than 'bv', and 1 if 'this' is signed greater than 'bv'.
    */
-  int32_t signed_compare(const BitVector& other) const;
+  int32_t signed_compare(const BitVector& bv) const;
 
   /** Return true if the bit at given index is 1, and false otherwise. */
   bool get_bit(uint32_t idx) const;
@@ -158,12 +161,12 @@ class BitVector
    * Return true if the addition of this and the given bit-vector produces an
    * overflow.
    */
-  bool is_uadd_overflow(const BitVector& other) const;
+  bool is_uadd_overflow(const BitVector& bv) const;
   /**
    * Return true if a the multiplication of this and the given bit-vector
    * produces an overflow.
    */
-  bool is_umul_overflow(const BitVector& other) const;
+  bool is_umul_overflow(const BitVector& bv) const;
 
   /** Get number of trailing zeros (counted from lsb). */
   uint32_t count_trailing_zeros() const;
@@ -188,70 +191,70 @@ class BitVector
   BitVector bvredor() const;
 
   /** Addition. */
-  BitVector bvadd(const BitVector& other) const;
+  BitVector bvadd(const BitVector& bv) const;
   /** Subtraction. */
-  BitVector bvsub(const BitVector& other) const;
+  BitVector bvsub(const BitVector& bv) const;
   /** Bit-wise and. */
-  BitVector bvand(const BitVector& other) const;
+  BitVector bvand(const BitVector& bv) const;
   /** Implication. */
-  BitVector bvimplies(const BitVector& other) const;
+  BitVector bvimplies(const BitVector& bv) const;
   /** Bit-wise nand. */
-  BitVector bvnand(const BitVector& other) const;
+  BitVector bvnand(const BitVector& bv) const;
   /** Bit-wise nor. */
-  BitVector bvnor(const BitVector& other) const;
+  BitVector bvnor(const BitVector& bv) const;
   /** Bit-wise or. */
-  BitVector bvor(const BitVector& other) const;
+  BitVector bvor(const BitVector& bv) const;
   /** Bit-wise xnor. */
-  BitVector bvxnor(const BitVector& other) const;
+  BitVector bvxnor(const BitVector& bv) const;
   /** Bit-wise xor. */
-  BitVector bvxor(const BitVector& other) const;
+  BitVector bvxor(const BitVector& bv) const;
   /** Equality. */
-  BitVector bveq(const BitVector& other) const;
+  BitVector bveq(const BitVector& bv) const;
   /** Disequality. */
-  BitVector bvne(const BitVector& other) const;
+  BitVector bvne(const BitVector& bv) const;
   /** Unsigned less than. */
-  BitVector bvult(const BitVector& other) const;
+  BitVector bvult(const BitVector& bv) const;
   /** Unsigned less than or equal. */
-  BitVector bvule(const BitVector& other) const;
+  BitVector bvule(const BitVector& bv) const;
   /** Unsigned greater than. */
-  BitVector bvugt(const BitVector& other) const;
+  BitVector bvugt(const BitVector& bv) const;
   /** Unsigned greater than or equal. */
-  BitVector bvuge(const BitVector& other) const;
+  BitVector bvuge(const BitVector& bv) const;
   /** Signed less than. */
-  BitVector bvslt(const BitVector& other) const;
+  BitVector bvslt(const BitVector& bv) const;
   /** Signed less than or equal. */
-  BitVector bvsle(const BitVector& other) const;
+  BitVector bvsle(const BitVector& bv) const;
   /** Signed greater than. */
-  BitVector bvsgt(const BitVector& other) const;
+  BitVector bvsgt(const BitVector& bv) const;
   /** Signed greater than or equal. */
-  BitVector bvsge(const BitVector& other) const;
+  BitVector bvsge(const BitVector& bv) const;
   /** Logical left shift. Shift value is given as an unsigned integer. */
   BitVector bvshl(uint32_t shift) const;
   /** Logical left shift. Shift value is given as a bit-vector. */
-  BitVector bvshl(const BitVector& other) const;
+  BitVector bvshl(const BitVector& bv) const;
   /** Logical right shift. Shift value is given as an unsigned integer. */
   BitVector bvshr(uint32_t shift) const;
   /** Logical right shift. Shift value is given as a bit-vector. */
-  BitVector bvshr(const BitVector& other) const;
+  BitVector bvshr(const BitVector& bv) const;
   /** Arithmetic right shift. */
-  BitVector bvashr(const BitVector& other) const;
+  BitVector bvashr(const BitVector& bv) const;
   /** Multiplication. */
-  BitVector bvmul(const BitVector& other) const;
+  BitVector bvmul(const BitVector& bv) const;
   /** Unsigned division. */
-  BitVector bvudiv(const BitVector& other) const;
+  BitVector bvudiv(const BitVector& bv) const;
   /** Unsigned remainder. */
-  BitVector bvurem(const BitVector& other) const;
+  BitVector bvurem(const BitVector& bv) const;
   /** Signed division. */
-  BitVector bvsdiv(const BitVector& other) const;
+  BitVector bvsdiv(const BitVector& bv) const;
   /** Signed remainder. */
-  BitVector bvsrem(const BitVector& other) const;
+  BitVector bvsrem(const BitVector& bv) const;
 
   /**
    * Concatenation.
    * Given bit-vector is concatenated (at the right, the lsb side) to this
    * bit-vector.
    */
-  BitVector bvconcat(const BitVector& other) const;
+  BitVector bvconcat(const BitVector& bv) const;
 
   /**
    * Extract a bit range from this bit-vector.
