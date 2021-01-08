@@ -1717,6 +1717,31 @@ BitVector::ibvmodinv(const BitVector& bv) const
 #endif
 }
 
+void
+BitVector::bvudivurem(const BitVector& bv,
+                      BitVector* quot,
+                      BitVector* rem) const
+{
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+
+  if (bv.is_zero())
+  {
+    *quot = mk_ones(d_size);
+    *rem  = *this;
+  }
+  else
+  {
+    *quot = mk_zero(d_size);
+    *rem  = mk_zero(d_size);
+    mpz_fdiv_qr(
+        quot->d_val->d_mpz, rem->d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
+    mpz_fdiv_r_2exp(quot->d_val->d_mpz, quot->d_val->d_mpz, d_size);
+    mpz_fdiv_r_2exp(rem->d_val->d_mpz, rem->d_val->d_mpz, d_size);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 
 uint32_t

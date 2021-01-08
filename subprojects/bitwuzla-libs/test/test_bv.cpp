@@ -121,6 +121,7 @@ class TestBitVector : public TestCommon
                   const std::string& shift,
                   const std::string& expected,
                   bool in_place);
+  void test_udivurem(uint32_t size);
   std::unique_ptr<RNG> d_rng;
 };
 
@@ -1735,6 +1736,45 @@ TestBitVector::test_shift(Kind kind,
 
   assert(res.compare(bv_expected) == 0);
   ASSERT_EQ(res.compare(bv_expected), 0);
+}
+
+void
+TestBitVector::test_udivurem(uint32_t size)
+{
+  BitVector zero = BitVector::mk_zero(size);
+  for (uint32_t i = 0; i < N_TESTS; ++i)
+  {
+    BitVector q, r;
+    BitVector bv1(size, *d_rng);
+    BitVector bv2(size, *d_rng);
+    uint64_t a1 = bv1.to_uint64();
+    uint64_t a2 = bv2.to_uint64();
+    uint64_t ares_div, ares_rem, bres_div, bres_rem;
+    /* test for x = 0 explicitly */
+    zero.bvudivurem(bv2, &q, &r);
+    ares_div = _udiv(0, a2, size);
+    ares_rem = _urem(0, a2, size);
+    bres_div = q.to_uint64();
+    bres_rem = r.to_uint64();
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+    /* test for y = 0 explicitly */
+    bv1.bvudivurem(zero, &q, &r);
+    ares_div = _udiv(a1, 0, size);
+    ares_rem = _urem(a1, 0, size);
+    bres_div = q.to_uint64();
+    bres_rem = r.to_uint64();
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+    /* test x, y random */
+    bv1.bvudivurem(bv2, &q, &r);
+    ares_div = _udiv(a1, a2, size);
+    ares_rem = _urem(a1, a2, size);
+    bres_div = q.to_uint64();
+    bres_rem = r.to_uint64();
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -3843,6 +3883,14 @@ TEST_F(TestBitVector, iadd32)
   {
     res.ibvadd(a0, a1);
   }
+}
+
+TEST_F(TestBitVector, udivurem)
+{
+  test_udivurem(1);
+  test_udivurem(7);
+  test_udivurem(31);
+  test_udivurem(33);
 }
 
 /* -------------------------------------------------------------------------- */
