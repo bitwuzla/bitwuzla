@@ -363,5 +363,43 @@ class BitVectorUlt : public BitVectorOp
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
+class BitVectorSlt : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorSlt(RNG* rng, uint32_t size);
+  BitVectorSlt(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o const bits (IC_wo):
+   *     pos_x = 0: t = 0 || s != min_signed_value
+   *     pos_x = 1: t = 0 || s != max_signed_value
+   *
+   * with const bits:
+   *     pos_x = 0: t = 1 => (s != min_signed_value &&
+   *                 ((MSB(x) = 0 && lo_x < s) ||
+   *                  (MSB(x) != 0 && 1 o lo_x[bw-2:0] < s))) &&
+   *                t = 0 => ((MSB(x) = 1 && hi_x >= s) ||
+   *                          (MSB(x) != 1 && 0 o hi_x[bw-2:0] >= s))))
+   *     pos_x = 1: t = 1 => (s != max_signed_value &&
+   *                          ((MSB(x) = 1 && s < hi_x) ||
+   *                           (MSB(x) != 1 && s < 0 o hi_x[bw-2:0])))
+   *                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
+   *                          (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0])))
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
+};
+
 }  // namespace bzlals
 #endif

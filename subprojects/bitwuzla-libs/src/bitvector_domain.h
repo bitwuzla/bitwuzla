@@ -49,11 +49,11 @@ class BitVectorDomain
    */
   bool has_fixed_bits() const;
   /** Return true if bit at given index is fixed. */
-  bool is_fixed_bit(uint32_t idx);
+  bool is_fixed_bit(uint32_t idx) const;
   /** Return true if bit at given index is fixed and true. */
-  bool is_fixed_bit_true(uint32_t idx);
+  bool is_fixed_bit_true(uint32_t idx) const;
   /** Return true if bit at given index is fixed and false. */
-  bool is_fixed_bit_false(uint32_t idx);
+  bool is_fixed_bit_false(uint32_t idx) const;
 
   /** Fix bit at given index to given value. */
   void fix_bit(uint32_t idx, bool value);

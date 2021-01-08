@@ -675,4 +675,87 @@ BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
 }
 
 /* -------------------------------------------------------------------------- */
+
+BitVectorSlt::BitVectorSlt(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+
+BitVectorSlt::BitVectorSlt(RNG* rng,
+                           const BitVector& assignment,
+                           const BitVectorDomain& domain)
+    : BitVectorOp(rng, assignment, domain)
+{
+}
+
+bool
+BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  uint32_t pos_s           = 1 - pos_x;
+  const BitVector& s       = d_children[pos_s]->assignment();
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+
+  /* IC: pos_x = 0: t = 1 => (s != min_signed_value &&
+   *                 ((MSB(x) = 0 && lo_x < s) ||
+   *                  (MSB(x) != 0 && 1 o lo_x[bw-2:0] < s))) &&
+   *                t = 0 => ((MSB(x) = 1 && hi_x >= s) ||
+   *                          (MSB(x) != 1 && 0 o hi_x[bw-2:0] >= s))))
+   *     pos_x = 1: t = 1 => (s != max_signed_value &&
+   *                          ((MSB(x) = 1 && s < hi_x) ||
+   *                           (MSB(x) != 1 && s < 0 o hi_x[bw-2:0])))
+   *                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
+   *                          (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0]))) */
+  if (x.has_fixed_bits())
+  {
+    uint32_t msb   = x.size() - 1;
+    bool msb_false = x.is_fixed_bit_false(msb);
+    bool msb_true  = x.is_fixed_bit_true(msb);
+    if (pos_x == 0)
+    {
+      if (t.is_true())
+      {
+        if (s.is_min_signed()) return false;
+        if (msb_false)
+        {
+          return x.lo().signed_compare(s) < 0;
+        }
+        BitVector tmp(x.lo());
+        tmp.set_bit(msb, true);
+        return tmp.signed_compare(s) < 0;
+      }
+      if (msb_true)
+      {
+        return x.hi().signed_compare(s) >= 0;
+      }
+      BitVector tmp(x.hi());
+      tmp.set_bit(msb, false);
+      return tmp.signed_compare(s) >= 0;
+    }
+    if (t.is_true())
+    {
+      if (s.is_max_signed()) return false;
+      if (msb_true)
+      {
+        return s.signed_compare(x.hi()) < 0;
+      }
+      BitVector tmp(x.hi());
+      tmp.set_bit(msb, false);
+      return s.signed_compare(tmp) < 0;
+    }
+    if (msb_false)
+    {
+      return s.signed_compare(x.lo()) >= 0;
+    }
+    BitVector tmp(x.lo());
+    tmp.set_bit(msb, true);
+    return s.signed_compare(tmp) >= 0;
+  }
+
+  /* IC_wo: pos_x = 0: t = 0 || s != min_signed_value
+   *        pos_x = 1: t = 0 || s != max_signed_value */
+  if (pos_x == 0)
+  {
+    return t.is_false() || !s.is_min_signed();
+  }
+  return t.is_false() || !s.is_max_signed();
+}
+
+/* -------------------------------------------------------------------------- */
 }  // namespace bzlals

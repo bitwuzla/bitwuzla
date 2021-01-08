@@ -84,14 +84,14 @@ BitVectorDomain::has_fixed_bits() const
 }
 
 bool
-BitVectorDomain::is_fixed_bit(uint32_t idx)
+BitVectorDomain::is_fixed_bit(uint32_t idx) const
 {
   assert(idx < size());
   return d_lo.get_bit(idx) == d_hi.get_bit(idx);
 }
 
 bool
-BitVectorDomain::is_fixed_bit_true(uint32_t idx)
+BitVectorDomain::is_fixed_bit_true(uint32_t idx) const
 {
   assert(idx < size());
   bool b = d_lo.get_bit(idx);
@@ -100,7 +100,7 @@ BitVectorDomain::is_fixed_bit_true(uint32_t idx)
 }
 
 bool
-BitVectorDomain::is_fixed_bit_false(uint32_t idx)
+BitVectorDomain::is_fixed_bit_false(uint32_t idx) const
 {
   assert(idx < size());
   bool b = d_lo.get_bit(idx);
