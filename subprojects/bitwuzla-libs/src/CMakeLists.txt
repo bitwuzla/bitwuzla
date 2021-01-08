@@ -3,6 +3,7 @@ set(libbzlals_src_files
   bitvector_domain.cpp
   bitvector_op.cpp
   rng.cpp
+  wheel_factorizer.cpp
 )
 
 #-----------------------------------------------------------------------------#

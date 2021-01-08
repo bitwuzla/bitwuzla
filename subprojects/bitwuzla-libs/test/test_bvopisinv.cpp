@@ -240,5 +240,13 @@ TEST_F(TestBvOpIsInv, slt)
   test_binary<BitVectorSlt>(SLT, 1, true);
 }
 
+TEST_F(TestBvOpIsInv, urem)
+{
+  test_binary<BitVectorUrem>(UREM, 0, false);
+  test_binary<BitVectorUrem>(UREM, 1, false);
+  test_binary<BitVectorUrem>(UREM, 0, true);
+  test_binary<BitVectorUrem>(UREM, 1, true);
+}
+
 }  // namespace test
 }  // namespace bzlals

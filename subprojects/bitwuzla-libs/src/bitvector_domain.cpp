@@ -7,6 +7,7 @@
 #include "gmpmpz.h"
 #include "gmprandstate.h"
 #include "rng.h"
+#include "wheel_factorizer.h"
 
 namespace bzlals {
 
@@ -170,6 +171,78 @@ BitVectorDomain::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
   assert(idx_hi >= idx_lo);
   return BitVectorDomain(d_lo.bvextract(idx_hi, idx_lo),
                          d_hi.bvextract(idx_hi, idx_lo));
+}
+
+BitVector
+BitVectorDomain::get_factor(RNG *rng,
+                            const BitVector &num,
+                            const BitVector &excl_min,
+                            uint64_t limit) const
+{
+  WheelFactorizer wf(num, limit);
+  std::vector<BitVector *> factors;
+
+  while (true)
+  {
+    BitVector *fact = wf.next();
+    if (!fact) break;
+    factors.push_back(fact);
+    if (rng == nullptr) break;
+  }
+
+  /* Pick factor from stack. Random (combination) if 'rng' is given. */
+  if (!factors.empty())
+  {
+    uint32_t n_factors = factors.size();
+    if (rng)
+    {
+      /* To determine all possible combinations can be very expensive. We'll
+       * try for a limited number of times, and if none matches, we return 0. */
+      for (uint32_t cnt = 0; cnt < 1000; ++cnt)
+      {
+        /* number of factors to combine */
+        uint32_t n = rng->pick<uint32_t>(1, n_factors);
+        /* Move selected factors to front of the stack and combine.
+         * This ensures that we don't pick a factor twice, e.g., 2 2 3 can be
+         * combined into { 2, 3, 2*2, 2*3, 2*2*3 }. */
+        BitVector mul(num.size());
+        for (uint32_t i = 0; i < n; ++i)
+        {
+          uint32_t j = rng->pick<uint32_t>(i, n_factors - 1);
+          if (i != j)
+          {
+            BitVector *f = factors[j];
+            factors[j]   = factors[i];
+            factors[i]   = f;
+          }
+          if (!mul.is_zero())
+          {
+            BitVector tmp = factors[i]->bvmul(mul);
+            if (tmp.compare(num) > 0)
+            {
+              continue;
+            }
+            mul.iset(tmp);
+          }
+          else
+          {
+            mul.iset(*factors[i]);
+          }
+        }
+        assert(!mul.is_null());
+        if (mul.compare(excl_min) > 0 && match_fixed_bits(mul))
+        {
+          return mul;
+        }
+      }
+    }
+    else
+    {
+      assert(n_factors == 1);
+      return *factors[0];
+    }
+  }
+  return BitVector();
 }
 
 std::string

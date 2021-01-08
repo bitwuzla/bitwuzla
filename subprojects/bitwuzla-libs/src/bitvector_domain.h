@@ -98,6 +98,16 @@ class BitVectorDomain
   BitVectorDomain bvextract(uint32_t idx_hi, uint32_t idx_lo) const;
 
   /**
+   * Determine a random factor of 'num' > 't'.
+   * Returns a null bit-vector if no such factor exists, or if computation
+   * exceeds 'limit' iterations in the wheel factorizer.
+   */
+  BitVector get_factor(RNG *rng,
+                       const BitVector &num,
+                       const BitVector &excl_min,
+                       uint64_t limit) const;
+
+  /**
    * Return a string representation of this bit-vector domain.
    * Unset bits are represented as 'x', invalid bits are represented as 'i'.
    */

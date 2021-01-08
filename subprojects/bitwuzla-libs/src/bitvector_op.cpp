@@ -1,6 +1,7 @@
 #include "bitvector_op.h"
 
 #include <cassert>
+#include <iostream>
 
 #include "gmpmpz.h"
 
@@ -755,6 +756,162 @@ BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
     return t.is_false() || !s.is_min_signed();
   }
   return t.is_false() || !s.is_max_signed();
+}
+
+/* -------------------------------------------------------------------------- */
+
+BitVectorUrem::BitVectorUrem(RNG* rng, uint32_t size) : BitVectorOp(rng, size)
+{
+}
+
+BitVectorUrem::BitVectorUrem(RNG* rng,
+                             const BitVector& assignment,
+                             const BitVectorDomain& domain)
+    : BitVectorOp(rng, assignment, domain)
+{
+}
+
+bool
+BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  uint32_t pos_s           = 1 - pos_x;
+  const BitVector& s       = d_children[pos_s]->assignment();
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  bool check;
+
+  if (pos_x == 0)
+  {
+    check = s.bvneg().bvnot().compare(t) >= 0;
+  }
+  else
+  {
+    check = t.bvadd(t).bvsub(s).bvand(s).compare(t) >= 0;
+  }
+
+  if (check && x.has_fixed_bits())
+  {
+    if (x.is_fixed())
+    {
+      if ((pos_x == 0 && x.lo().bvurem(s).compare(t) == 0)
+          || (pos_x == 1 && s.bvurem(x.lo()).compare(t) == 0))
+      {
+        return true;
+      }
+      return false;
+    }
+    /* IC: pos_x = 0: IC_wo &&
+     *                ((s = 0 || t = ones) => mfb(x, t)) &&
+     *                ((s != 0 && t != ones) => \exists y. (
+     *                    mfb(x, s * y + t) && !umulo(s, y) && !uaddo(s *y, t)))
+     *     pos_x = 1: IC_wo &&
+     *                (s = t => (lo_x = 0 || hi_x > t)) &&
+     *                (s != t => \exists y. (
+     *                    mfb(x, y) && y > t && (s - t) mod y = 0) */
+    if (pos_x == 0)
+    {
+      if (s.is_zero() || t.is_ones())
+      {
+        return x.match_fixed_bits(t);
+      }
+      else
+      {
+        assert(s.compare(t) > 0);
+        if (!x.match_fixed_bits(t))
+        {
+          /* simplest solution (0 <= res < s: res = t) does not apply, thus
+           * x = s * n + t with n s.t. (s * n + t) does not overflow */
+          uint32_t bw    = x.size();
+          BitVector ones = BitVector::mk_ones(bw);
+          if (ones.bvsub(s).compare(t) < 0)
+          {
+            /* overflow for n = 1 -> only simplest solution possible, but
+             * simplest possible solution not applicable */
+            return false;
+          }
+          else
+          {
+            /* x = s * n + t, with n s.t. (s * n + t) does not overflow
+             * -> n <= (~0 - t) / s (truncated)
+             * -> ~0 - s * n >= t                                       */
+
+            /* n_hi = (~0 - t) / s */
+            BitVector n_hi = ones.bvsub(t).bvudiv(s);
+            assert(!n_hi.is_zero());
+            /* ~0 - s * n_hi < t ? decrease n_hi until >= t */
+            BitVector mul = s.bvmul(n_hi);
+            BitVector sub = ones.bvsub(mul);
+            while (sub.compare(t) < 0)
+            {
+              n_hi.ibvdec(n_hi);
+              mul.ibvmul(s, n_hi);
+              sub.ibvsub(ones, mul);
+            }
+            /* hi = s * n_hi + t (upper bound for x) */
+            BitVector hi = mul.bvadd(t);
+            /* x->lo <= x <= hi */
+            BitVectorDomainGenerator gen(x, d_rng, x.lo(), hi);
+            while (gen.has_next())
+            {
+              BitVector bv = gen.next();
+              assert(x.match_fixed_bits(bv));
+              BitVector rem = bv.bvurem(s);
+              if (rem.compare(t) == 0)
+              {
+                d_inverse.reset(new BitVectorDomain(bv, hi));
+                return true;
+              }
+            }
+            return false;
+          }
+        }
+        return true;
+      }
+    }
+    if (s.compare(t) == 0)
+    {
+      /* s = t: x = 0 or random x > t */
+      return x.lo().is_zero() || x.hi().compare(t) > 0;
+    }
+    /* s % x = t
+     *
+     * s = x * n + t
+     *
+     * In general, x = s - t is always a solution with n = 1, but
+     * fixed bits of x may not match s - t. In this case, we look for a
+     * factor n s.t. x = (s - t) / n, where fixed bits match. */
+    assert(t.compare(s) <= 0);
+    BitVector n = s.bvsub(t);
+    /* Is (s - t) a solution?
+     *
+     * -> if yes we do not store it in d_res_x to enforce that
+     *    inv_urem() selects one of several possible choices rather
+     *    than only this solution
+     */
+    if (!x.match_fixed_bits(n))
+    {
+      if (t.is_zero() && x.match_fixed_bits(BitVector::mk_one(x.size())))
+      {
+        /* we don't store it in d_res_x for the same reason as above */
+        return true;
+      }
+      /* s - t does not match const bits of x and one is not a
+       * possible solution. Find factor n of (s - t) s.t. n > t and n
+       * matches the const bits of x. Pick x = n.  */
+      BitVector bv = x.get_factor(d_rng, n, t, 10000);
+      assert(bv.is_null() || x.match_fixed_bits(bv));
+      if (!bv.is_null())
+      {
+        assert(s.bvurem(bv).compare(t) == 0);
+        d_inverse.reset(new BitVectorDomain(bv));
+        return true;
+      }
+      return false;
+    }
+    return true;
+  }
+  /* IC_wo: pos_x = 0: ~(-s) >= t
+   *        pos_x = 1: (t + t - s) & s >= t */
+  return check;
 }
 
 /* -------------------------------------------------------------------------- */

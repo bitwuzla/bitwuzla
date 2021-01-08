@@ -401,5 +401,41 @@ class BitVectorSlt : public BitVectorOp
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
+class BitVectorUrem : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorUrem(RNG* rng, uint32_t size);
+  BitVectorUrem(RNG* rng,
+                const BitVector& assignment,
+                const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o const bits (IC_wo):
+   *     pos_x = 0: ~(-s) >= t
+   *     pos_x = 1: (t + t - s) & s >= t
+   *
+   * with const bits:
+   *     pos_x = 0: IC_wo &&
+   *                ((s = 0 || t = ones) => mfb(x, t)) &&
+   *                ((s != 0 && t != ones) => \exists y. (
+   *                    mfb(x, s * y + t) && !umulo(s, y) && !uaddo(s *y, t)))
+   *     pos_x = 1: IC_wo &&
+   *                (s = t => (lo_x = 0 || hi_x > t)) &&
+   *                (s != t => \exists y. (
+   *                    mfb(x, y) && y > t && (s - t) mod y = 0)
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVectorDomain* inverse() { return d_inverse.get(); }
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+};
+
 }  // namespace bzlals
 #endif
