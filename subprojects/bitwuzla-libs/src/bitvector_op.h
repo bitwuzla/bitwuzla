@@ -12,11 +12,31 @@ class BitVectorOp
 {
  public:
   /** Constructor. */
-  BitVectorOp(RNG* rng, uint32_t arity, uint32_t size);
+  BitVectorOp(RNG* rng, uint32_t size, BitVectorOp* child0);
   BitVectorOp(RNG* rng,
-              uint32_t arity,
+              uint32_t size,
+              BitVectorOp* child0,
+              BitVectorOp* child1);
+  BitVectorOp(RNG* rng,
+              uint32_t size,
+              BitVectorOp* child0,
+              BitVectorOp* child1,
+              BitVectorOp* child2);
+  BitVectorOp(RNG* rng,
               const BitVector& assignment,
-              const BitVectorDomain& domain);
+              const BitVectorDomain& domain,
+              BitVectorOp* child0);
+  BitVectorOp(RNG* rng,
+              const BitVector& assignment,
+              const BitVectorDomain& domain,
+              BitVectorOp* child0,
+              BitVectorOp* child1);
+  BitVectorOp(RNG* rng,
+              const BitVector& assignment,
+              const BitVectorDomain& domain,
+              BitVectorOp* child0,
+              BitVectorOp* child1,
+              BitVectorOp* child2);
   /** Destructor. */
   virtual ~BitVectorOp() {}
 
@@ -26,8 +46,8 @@ class BitVectorOp
    */
   virtual bool is_invertible(const BitVector& t, uint32_t pos_x) = 0;
 
-  /** Access child at given index. */
-  BitVectorOp*& operator[](uint32_t pos) const;
+  /** Get child at given index. */
+  BitVectorOp* operator[](uint32_t pos) const;
 
   /** Return the arity of this operation. */
   uint32_t arity() const { return d_arity; }
@@ -48,10 +68,15 @@ class BitVectorAdd : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorAdd(RNG* rng, uint32_t size);
+  BitVectorAdd(RNG* rng,
+               uint32_t size,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   BitVectorAdd(RNG* rng,
                const BitVector& assignment,
-               const BitVectorDomain& domain);
+               const BitVectorDomain& domain,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -73,10 +98,15 @@ class BitVectorAnd : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorAnd(RNG* rng, uint32_t size);
+  BitVectorAnd(RNG* rng,
+               uint32_t size,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   BitVectorAnd(RNG* rng,
                const BitVector& assignment,
-               const BitVectorDomain& domain);
+               const BitVectorDomain& domain,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -103,10 +133,15 @@ class BitVectorConcat : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorConcat(RNG* rng, uint32_t size);
+  BitVectorConcat(RNG* rng,
+                  uint32_t size,
+                  BitVectorOp* child0,
+                  BitVectorOp* child1);
   BitVectorConcat(RNG* rng,
                   const BitVector& assignment,
-                  const BitVectorDomain& domain);
+                  const BitVectorDomain& domain,
+                  BitVectorOp* child0,
+                  BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -134,10 +169,15 @@ class BitVectorEq : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorEq(RNG* rng, uint32_t size);
+  BitVectorEq(RNG* rng,
+              uint32_t size,
+              BitVectorOp* child0,
+              BitVectorOp* child1);
   BitVectorEq(RNG* rng,
               const BitVector& assignment,
-              const BitVectorDomain& domain);
+              const BitVectorDomain& domain,
+              BitVectorOp* child0,
+              BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -161,10 +201,15 @@ class BitVectorMul : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorMul(RNG* rng, uint32_t size);
+  BitVectorMul(RNG* rng,
+               uint32_t size,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   BitVectorMul(RNG* rng,
                const BitVector& assignment,
-               const BitVectorDomain& domain);
+               const BitVectorDomain& domain,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -189,10 +234,15 @@ class BitVectorShl : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorShl(RNG* rng, uint32_t size);
+  BitVectorShl(RNG* rng,
+               uint32_t size,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   BitVectorShl(RNG* rng,
                const BitVector& assignment,
-               const BitVectorDomain& domain);
+               const BitVectorDomain& domain,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -244,10 +294,15 @@ class BitVectorShr : public BitVectorOp
                             std::unique_ptr<BitVector>& inverse);
 
   /** Constructors. */
-  BitVectorShr(RNG* rng, uint32_t size);
+  BitVectorShr(RNG* rng,
+               uint32_t size,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   BitVectorShr(RNG* rng,
                const BitVector& assignment,
-               const BitVectorDomain& domain);
+               const BitVectorDomain& domain,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits, target value t and assignment s of at d_children[1 - pos_x].
@@ -266,10 +321,15 @@ class BitVectorAshr : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorAshr(RNG* rng, uint32_t size);
+  BitVectorAshr(RNG* rng,
+                uint32_t size,
+                BitVectorOp* child0,
+                BitVectorOp* child1);
   BitVectorAshr(RNG* rng,
                 const BitVector& assignment,
-                const BitVectorDomain& domain);
+                const BitVectorDomain& domain,
+                BitVectorOp* child0,
+                BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -300,10 +360,15 @@ class BitVectorUdiv : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorUdiv(RNG* rng, uint32_t size);
+  BitVectorUdiv(RNG* rng,
+                uint32_t size,
+                BitVectorOp* child0,
+                BitVectorOp* child1);
   BitVectorUdiv(RNG* rng,
                 const BitVector& assignment,
-                const BitVectorDomain& domain);
+                const BitVectorDomain& domain,
+                BitVectorOp* child0,
+                BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -339,10 +404,15 @@ class BitVectorUlt : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorUlt(RNG* rng, uint32_t size);
+  BitVectorUlt(RNG* rng,
+               uint32_t size,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   BitVectorUlt(RNG* rng,
                const BitVector& assignment,
-               const BitVectorDomain& domain);
+               const BitVectorDomain& domain,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -369,10 +439,15 @@ class BitVectorSlt : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorSlt(RNG* rng, uint32_t size);
+  BitVectorSlt(RNG* rng,
+               uint32_t size,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   BitVectorSlt(RNG* rng,
                const BitVector& assignment,
-               const BitVectorDomain& domain);
+               const BitVectorDomain& domain,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -407,10 +482,15 @@ class BitVectorUrem : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorUrem(RNG* rng, uint32_t size);
+  BitVectorUrem(RNG* rng,
+                uint32_t size,
+                BitVectorOp* child0,
+                BitVectorOp* child1);
   BitVectorUrem(RNG* rng,
                 const BitVector& assignment,
-                const BitVectorDomain& domain);
+                const BitVectorDomain& domain,
+                BitVectorOp* child0,
+                BitVectorOp* child1);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
@@ -443,10 +523,17 @@ class BitVectorIte : public BitVectorOp
 {
  public:
   /** Constructors. */
-  BitVectorIte(RNG* rng, uint32_t size);
+  BitVectorIte(RNG* rng,
+               uint32_t size,
+               BitVectorOp* child0,
+               BitVectorOp* child1,
+               BitVectorOp* child2);
   BitVectorIte(RNG* rng,
                const BitVector& assignment,
-               const BitVectorDomain& domain);
+               const BitVectorDomain& domain,
+               BitVectorOp* child0,
+               BitVectorOp* child1,
+               BitVectorOp* child2);
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.

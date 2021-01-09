@@ -135,7 +135,7 @@ TestBvOpIsInv::test_binary(Kind kind, uint32_t pos_x, bool const_bits)
   else
   {
     /* x is unconstrained (no const bits) */
-    x_values.push_back("xxx");
+    x_values.push_back(std::string(bw_x, 'x'));
   }
 
   if (kind == ULT || kind == SLT || kind == EQ)
@@ -161,15 +161,20 @@ TestBvOpIsInv::test_binary(Kind kind, uint32_t pos_x, bool const_bits)
       {
         /* Target value of the operation (op). */
         BitVector t(bw_t, j);
-        /* For this test, we don't care about current assignment and domain of
-         * the op, thus we initialize them with 0 and 'x..x', respectively. */
-        T op(d_rng.get(), bw_t);
         /* For this test, we don't care about the current assignment of x, thus
          * we initialize it with 0. */
-        op[pos_x] = new T(d_rng.get(), BitVector::mk_zero(bw_x), x);
-        /* For this test, we don't care about the domain of 0, thus we
+        BitVectorOp* op_x =
+            new T(d_rng.get(), BitVector::mk_zero(bw_x), x, nullptr, nullptr);
+        /* For this test, we don't care about the domain of s, thus we
          * initialize it with an unconstrained domain. */
-        op[1 - pos_x] = new T(d_rng.get(), s, BitVectorDomain(bw_s));
+        BitVectorOp* op_s =
+            new T(d_rng.get(), s, BitVectorDomain(bw_s), nullptr, nullptr);
+        /* For this test, we don't care about current assignment and domain of
+         * the op, thus we initialize them with 0 and 'x..x', respectively. */
+        T op(d_rng.get(),
+             bw_t,
+             pos_x == 0 ? op_x : op_s,
+             pos_x == 1 ? op_x : op_s);
 
         bool res    = op.is_invertible(t, pos_x);
         bool status = check_sat_binary(kind, x, t, s, pos_x);
@@ -208,7 +213,7 @@ TestBvOpIsInv::test_ite(uint32_t pos_x, bool const_bits)
     }
     else
     {
-      x_values.push_back("xxx");
+      x_values.push_back(std::string(bw, 'x'));
     }
   }
   else
@@ -243,18 +248,35 @@ TestBvOpIsInv::test_ite(uint32_t pos_x, bool const_bits)
         {
           BitVector t(bw, k);
 
-          /* For this test, we don't care about current assignment and domain of
-           * the op, thus we initialize them with 0 and 'x..x', respectively. */
-          BitVectorIte op(d_rng.get(), bw);
           /* For this test, we don't care about the current assignment of x,
            * thus we initialize it with 0. */
-          op[pos_x] = new BitVectorIte(d_rng.get(), BitVector::mk_zero(bw), x);
+          BitVectorOp* op_x = new BitVectorIte(d_rng.get(),
+                                               BitVector::mk_zero(bw),
+                                               x,
+                                               nullptr,
+                                               nullptr,
+                                               nullptr);
           /* For this test, we don't care about the domain of 0, thus we
            * initialize it with an unconstrained domain. */
-          op[pos_s0] =
-              new BitVectorIte(d_rng.get(), s0, BitVectorDomain(bw_s0));
-          op[pos_s1] =
-              new BitVectorIte(d_rng.get(), s1, BitVectorDomain(bw_s0));
+          BitVectorOp* op_s0 = new BitVectorIte(d_rng.get(),
+                                                s0,
+                                                BitVectorDomain(bw_s0),
+                                                nullptr,
+                                                nullptr,
+                                                nullptr);
+          BitVectorOp* op_s1 = new BitVectorIte(d_rng.get(),
+                                                s1,
+                                                BitVectorDomain(bw_s0),
+                                                nullptr,
+                                                nullptr,
+                                                nullptr);
+          /* For this test, we don't care about current assignment and domain of
+           * the op, thus we initialize them with 0 and 'x..x', respectively. */
+          BitVectorIte op(d_rng.get(),
+                          bw,
+                          pos_x == 0 ? op_x : op_s0,
+                          pos_x == 1 ? op_x : (pos_x == 2 ? op_s1 : op_s0),
+                          pos_x == 2 ? op_x : op_s1);
 
           bool res    = op.is_invertible(t, pos_x);
           bool status = check_sat_ite(x, t, s0, s1, pos_x);
