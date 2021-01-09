@@ -12,8 +12,9 @@ class BitVectorOp
 {
  public:
   /** Constructor. */
-  BitVectorOp(RNG* rng, uint32_t size);
+  BitVectorOp(RNG* rng, uint32_t arity, uint32_t size);
   BitVectorOp(RNG* rng,
+              uint32_t arity,
               const BitVector& assignment,
               const BitVectorDomain& domain);
   /** Destructor. */
@@ -29,7 +30,7 @@ class BitVectorOp
   BitVectorOp*& operator[](uint32_t pos) const;
 
   /** Return the arity of this operation. */
-  uint32_t arity() const { return 2; }
+  uint32_t arity() const { return d_arity; }
   /** Get the assignment of this operation. */
   const BitVector& assignment() const { return d_assignment; }
   /** Get the domain of this operation. */
@@ -38,6 +39,7 @@ class BitVectorOp
  protected:
   std::unique_ptr<BitVectorOp*[]> d_children = nullptr;
   RNG* d_rng                                 = nullptr;
+  uint32_t d_arity                           = 2;
   BitVector d_assignment;
   BitVectorDomain d_domain;
 };
@@ -426,6 +428,48 @@ class BitVectorUrem : public BitVectorOp
    *                (s = t => (lo_x = 0 || hi_x > t)) &&
    *                (s != t => \exists y. (
    *                    mfb(x, y) && y > t && (s - t) mod y = 0)
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVectorDomain* inverse() { return d_inverse.get(); }
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+};
+
+class BitVectorIte : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorIte(RNG* rng, uint32_t size);
+  BitVectorIte(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * ite(_c, _t, _e)
+   *
+   * w/o const bits (IC_wo):
+   *     pos_x = 0: s0 == t || s1 == t
+   *                with s0 the value for '_t' branch and s1 the value for '_e'
+   *     pos_x = 1: s0 == true
+   *                with s0 the value for '_c'
+   *     pos_x = 2: s0 == false
+   *                with s0 the value for '_c'
+   *
+   * with const bits:
+   *     pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
+   *                (is_fixed_true(x) && s0 = t) ||
+   *                (is_fixed_false(x) && s1 = t)
+   *                with s0 the value for '_t' and s1 the value for '_e'
+   *     pos_x = 1: s0 = true && mfb(x, t)
+   *                with s0 the value for '_c'
+   *     pos_x = 2: s0 == false && mfb(x, t)
+   *                with s0 the value for '_c'
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 

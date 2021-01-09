@@ -9,22 +9,24 @@ namespace bzlals {
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorOp::BitVectorOp(RNG* rng, uint32_t size)
+BitVectorOp::BitVectorOp(RNG* rng, uint32_t arity, uint32_t size)
     : d_rng(rng),
+      d_arity(arity),
       d_assignment(BitVector::mk_zero(size)),
       d_domain(BitVectorDomain(size))
 {
   assert(rng);
-  d_children.reset(new BitVectorOp*[arity()]);
+  d_children.reset(new BitVectorOp*[d_arity]);
 }
 
 BitVectorOp::BitVectorOp(RNG* rng,
+                         uint32_t arity,
                          const BitVector& assignment,
                          const BitVectorDomain& domain)
-    : d_rng(rng), d_assignment(assignment), d_domain(domain)
+    : d_rng(rng), d_arity(arity), d_assignment(assignment), d_domain(domain)
 {
   assert(rng);
-  d_children.reset(new BitVectorOp*[arity()]);
+  d_children.reset(new BitVectorOp*[d_arity]);
 }
 
 BitVectorOp*&
@@ -37,12 +39,14 @@ BitVectorOp::operator[](uint32_t pos) const
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorAdd::BitVectorAdd(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+BitVectorAdd::BitVectorAdd(RNG* rng, uint32_t size) : BitVectorOp(rng, 2, size)
+{
+}
 
 BitVectorAdd::BitVectorAdd(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -68,12 +72,14 @@ BitVectorAdd::is_invertible(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorAnd::BitVectorAnd(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+BitVectorAnd::BitVectorAnd(RNG* rng, uint32_t size) : BitVectorOp(rng, 2, size)
+{
+}
 
 BitVectorAnd::BitVectorAnd(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -108,14 +114,14 @@ BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
 /* -------------------------------------------------------------------------- */
 
 BitVectorConcat::BitVectorConcat(RNG* rng, uint32_t size)
-    : BitVectorOp(rng, size)
+    : BitVectorOp(rng, 2, size)
 {
 }
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
                                  const BitVector& assignment,
                                  const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -138,6 +144,7 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
   }
   else
   {
+    assert(pos_x == 1);
     check = t.bvextract(bw_t - 1, bw_t - bw_s).compare(s) == 0;
     tx    = t.bvextract(bw_t - bw_s - 1, 0);
   }
@@ -160,12 +167,12 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorEq::BitVectorEq(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+BitVectorEq::BitVectorEq(RNG* rng, uint32_t size) : BitVectorOp(rng, 2, size) {}
 
 BitVectorEq::BitVectorEq(RNG* rng,
                          const BitVector& assignment,
                          const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -200,12 +207,14 @@ BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorMul::BitVectorMul(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+BitVectorMul::BitVectorMul(RNG* rng, uint32_t size) : BitVectorOp(rng, 2, size)
+{
+}
 
 BitVectorMul::BitVectorMul(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -275,12 +284,14 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorShl::BitVectorShl(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+BitVectorShl::BitVectorShl(RNG* rng, uint32_t size) : BitVectorOp(rng, 2, size)
+{
+}
 
 BitVectorShl::BitVectorShl(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -300,6 +311,7 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
   }
   else
   {
+    assert(pos_x == 1);
     ctz_t = t.count_trailing_zeros();
     ctz_s = s.count_trailing_zeros();
     check = ctz_s <= ctz_t
@@ -352,12 +364,14 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorShr::BitVectorShr(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+BitVectorShr::BitVectorShr(RNG* rng, uint32_t size) : BitVectorOp(rng, 2, size)
+{
+}
 
 BitVectorShr::BitVectorShr(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -388,6 +402,7 @@ BitVectorShr::is_invertible(RNG* rng,
   }
   else
   {
+    assert(pos_x == 1);
     clz_t = t.count_leading_zeros();
     clz_s = s.count_leading_zeros();
     check = clz_s <= clz_t
@@ -439,14 +454,15 @@ BitVectorShr::is_invertible(RNG* rng,
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorAshr::BitVectorAshr(RNG* rng, uint32_t size) : BitVectorOp(rng, size)
+BitVectorAshr::BitVectorAshr(RNG* rng, uint32_t size)
+    : BitVectorOp(rng, 2, size)
 {
 }
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
                              const BitVector& assignment,
                              const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -503,14 +519,15 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorUdiv::BitVectorUdiv(RNG* rng, uint32_t size) : BitVectorOp(rng, size)
+BitVectorUdiv::BitVectorUdiv(RNG* rng, uint32_t size)
+    : BitVectorOp(rng, 2, size)
 {
 }
 
 BitVectorUdiv::BitVectorUdiv(RNG* rng,
                              const BitVector& assignment,
                              const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -530,6 +547,7 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
   }
   else
   {
+    assert(pos_x == 1);
     s_udiv_t = s.bvudiv(t);
     check    = s.bvudiv(s_udiv_t).compare(t) == 0;
   }
@@ -631,12 +649,14 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorUlt::BitVectorUlt(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+BitVectorUlt::BitVectorUlt(RNG* rng, uint32_t size) : BitVectorOp(rng, 2, size)
+{
+}
 
 BitVectorUlt::BitVectorUlt(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -659,6 +679,7 @@ BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
       }
       return x.hi().compare(s) >= 0;
     }
+    assert(pos_x == 1);
     if (t.is_true())
     {
       return !s.is_ones() && x.hi().compare(s) > 0;
@@ -672,17 +693,20 @@ BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
   {
     return t.is_false() || !s.is_zero();
   }
+  assert(pos_x == 1);
   return t.is_false() || !s.is_ones();
 }
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorSlt::BitVectorSlt(RNG* rng, uint32_t size) : BitVectorOp(rng, size) {}
+BitVectorSlt::BitVectorSlt(RNG* rng, uint32_t size) : BitVectorOp(rng, 2, size)
+{
+}
 
 BitVectorSlt::BitVectorSlt(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -729,6 +753,7 @@ BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
       tmp.set_bit(msb, false);
       return tmp.signed_compare(s) >= 0;
     }
+    assert(pos_x == 1);
     if (t.is_true())
     {
       if (s.is_max_signed()) return false;
@@ -755,19 +780,21 @@ BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
   {
     return t.is_false() || !s.is_min_signed();
   }
+  assert(pos_x == 1);
   return t.is_false() || !s.is_max_signed();
 }
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorUrem::BitVectorUrem(RNG* rng, uint32_t size) : BitVectorOp(rng, size)
+BitVectorUrem::BitVectorUrem(RNG* rng, uint32_t size)
+    : BitVectorOp(rng, 2, size)
 {
 }
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
                              const BitVector& assignment,
                              const BitVectorDomain& domain)
-    : BitVectorOp(rng, assignment, domain)
+    : BitVectorOp(rng, 2, assignment, domain)
 {
 }
 
@@ -785,6 +812,7 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
   }
   else
   {
+    assert(pos_x == 1);
     check = t.bvadd(t).bvsub(s).bvand(s).compare(t) >= 0;
   }
 
@@ -914,5 +942,78 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
   return check;
 }
 
+/* -------------------------------------------------------------------------- */
+
+BitVectorIte::BitVectorIte(RNG* rng, uint32_t size) : BitVectorOp(rng, 3, size)
+{
+}
+
+BitVectorIte::BitVectorIte(RNG* rng,
+                           const BitVector& assignment,
+                           const BitVectorDomain& domain)
+    : BitVectorOp(rng, 3, assignment, domain)
+{
+}
+
+bool
+BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  uint32_t pos_s0          = pos_x == 0 ? 1 : 0;
+  uint32_t pos_s1          = pos_x == 2 ? 1 : 2;
+  const BitVector& s0      = d_children[pos_s0]->assignment();
+  const BitVector& s1      = d_children[pos_s1]->assignment();
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+
+  /* IC:
+   *
+   * with const bits:
+   *     pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
+   *                (is_fixed_true(x) && s0 = t) ||
+   *                (is_fixed_false(x) && s1 = t)
+   *                with s0 the value for '_t' and s1 the value for '_e'
+   *     pos_x = 1: s0 = true && mfb(x, t)
+   *                with s0 the value for '_c'
+   *     pos_x = 2: s0 == false && mfb(x, t)
+   *                with s0 the value for '_c'
+   */
+  if (x.has_fixed_bits())
+  {
+    if (pos_x == 0)
+    {
+      if (x.is_fixed())
+      {
+        if (x.is_fixed_bit_true(0))
+        {
+          return s0.compare(t) == 0;
+        }
+        return s1.compare(t) == 0;
+      }
+      return s0.compare(t) == 0 || s1.compare(t) == 0;
+    }
+    if (pos_x == 1)
+    {
+      return s0.is_true() && x.match_fixed_bits(t);
+    }
+    assert(pos_x == 2);
+    return s0.is_false() && x.match_fixed_bits(t);
+  }
+  /* IC_wo:
+   *     pos_x = 0: s0 == t || s1 == t
+   *                with s0 the value for '_t' branch and s1 the value for '_e'
+   *     pos_x = 1: s0 == true
+   *                with s0 the value for '_c'
+   *     pos_x = 2: s0 == false
+   *                with s0 the value for '_c' */
+  if (pos_x == 0)
+  {
+    return s0.compare(t) == 0 || s1.compare(t) == 0;
+  }
+  if (pos_x == 1)
+  {
+    return s0.is_true();
+  }
+  assert(pos_x == 2);
+  return s0.is_false();
+}
 /* -------------------------------------------------------------------------- */
 }  // namespace bzlals

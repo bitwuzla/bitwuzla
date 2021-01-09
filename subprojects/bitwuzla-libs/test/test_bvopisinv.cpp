@@ -22,9 +22,15 @@ class TestBvOpIsInv : public TestBvDomainCommon
                         const BitVector& t,
                         const BitVector& s,
                         uint32_t pos_x);
+  bool check_sat_ite(const BitVectorDomain& x,
+                     const BitVector& t,
+                     const BitVector& s0,
+                     const BitVector& s1,
+                     uint32_t pos_x);
 
   template <class T>
   void test_binary(Kind kind, uint32_t pos_x, bool const_bits);
+  void test_ite(uint32_t pos_x, bool const_bits);
 
   static constexpr uint32_t TEST_BW = 3;
   std::vector<std::string> d_values;
@@ -81,6 +87,37 @@ TestBvOpIsInv::check_sat_binary(Kind kind,
   return false;
 }
 
+bool
+TestBvOpIsInv::check_sat_ite(const BitVectorDomain& x,
+                             const BitVector& t,
+                             const BitVector& s0,
+                             const BitVector& s1,
+                             uint32_t pos_x)
+{
+  BitVectorDomainGenerator gen(x);
+  do
+  {
+    BitVector val = gen.has_next() ? gen.next() : x.lo();
+    BitVector res;
+    if (pos_x == 0)
+    {
+      res = BitVector::bvite(val, s0, s1);
+    }
+    else if (pos_x == 1)
+    {
+      if (s0.is_false()) return false;
+      res = BitVector::bvite(s0, val, s1);
+    }
+    else
+    {
+      if (s0.is_true()) return false;
+      res = BitVector::bvite(s0, s1, val);
+    }
+    if (t.compare(res) == 0) return true;
+  } while (gen.has_next());
+  return false;
+}
+
 template <class T>
 void
 TestBvOpIsInv::test_binary(Kind kind, uint32_t pos_x, bool const_bits)
@@ -130,8 +167,8 @@ TestBvOpIsInv::test_binary(Kind kind, uint32_t pos_x, bool const_bits)
         /* For this test, we don't care about the current assignment of x, thus
          * we initialize it with 0. */
         op[pos_x] = new T(d_rng.get(), BitVector::mk_zero(bw_x), x);
-        /* For this test, we don't care about the current assignment of x, thus
-         * we initialize it with 0. */
+        /* For this test, we don't care about the domain of 0, thus we
+         * initialize it with an unconstrained domain. */
         op[1 - pos_x] = new T(d_rng.get(), s, BitVectorDomain(bw_s));
 
         bool res    = op.is_invertible(t, pos_x);
@@ -147,6 +184,94 @@ TestBvOpIsInv::test_binary(Kind kind, uint32_t pos_x, bool const_bits)
 
         delete op[pos_x];
         delete op[1 - pos_x];
+      }
+    }
+  }
+}
+
+void
+TestBvOpIsInv::test_ite(uint32_t pos_x, bool const_bits)
+{
+  std::vector<std::string> x_values;
+  uint32_t bw_s0, bw_s1, bw = TEST_BW;
+  uint32_t n_vals, n_vals_s0, n_vals_s1;
+  uint32_t pos_s0 = pos_x == 0 ? 1 : 0;
+  uint32_t pos_s1 = pos_x == 2 ? 1 : 2;
+
+  if (pos_x)
+  {
+    bw_s0 = 1;
+    bw_s1 = bw;
+    if (const_bits)
+    {
+      x_values = d_xvalues;
+    }
+    else
+    {
+      x_values.push_back("xxx");
+    }
+  }
+  else
+  {
+    bw_s0 = bw;
+    bw_s1 = bw;
+    if (const_bits)
+    {
+      x_values.push_back("x");
+      x_values.push_back("0");
+      x_values.push_back("1");
+    }
+    else
+    {
+      x_values.push_back("x");
+    }
+  }
+  n_vals    = 1 << bw;
+  n_vals_s0 = 1 << bw_s0;
+  n_vals_s1 = 1 << bw_s1;
+
+  for (const std::string& x_value : x_values)
+  {
+    BitVectorDomain x(x_value);
+    for (uint32_t i = 0; i < n_vals_s0; i++)
+    {
+      BitVector s0(bw_s0, i);
+      for (uint32_t j = 0; j < n_vals_s1; j++)
+      {
+        BitVector s1(bw_s1, j);
+        for (uint32_t k = 0; k < n_vals; k++)
+        {
+          BitVector t(bw, k);
+
+          /* For this test, we don't care about current assignment and domain of
+           * the op, thus we initialize them with 0 and 'x..x', respectively. */
+          BitVectorIte op(d_rng.get(), bw);
+          /* For this test, we don't care about the current assignment of x,
+           * thus we initialize it with 0. */
+          op[pos_x] = new BitVectorIte(d_rng.get(), BitVector::mk_zero(bw), x);
+          /* For this test, we don't care about the domain of 0, thus we
+           * initialize it with an unconstrained domain. */
+          op[pos_s0] =
+              new BitVectorIte(d_rng.get(), s0, BitVectorDomain(bw_s0));
+          op[pos_s1] =
+              new BitVectorIte(d_rng.get(), s1, BitVectorDomain(bw_s0));
+
+          bool res    = op.is_invertible(t, pos_x);
+          bool status = check_sat_ite(x, t, s0, s1, pos_x);
+          if (res != status)
+          {
+            std::cout << "pos_x: " << pos_x << std::endl;
+            std::cout << "t: " << t.to_string() << std::endl;
+            std::cout << "x: " << x_value << std::endl;
+            std::cout << "s0: " << s0.to_string() << std::endl;
+            std::cout << "s1: " << s1.to_string() << std::endl;
+          }
+          ASSERT_EQ(res, status);
+
+          delete op[pos_x];
+          delete op[pos_s0];
+          delete op[pos_s1];
+        }
       }
     }
   }
@@ -248,5 +373,14 @@ TEST_F(TestBvOpIsInv, urem)
   test_binary<BitVectorUrem>(UREM, 1, true);
 }
 
+TEST_F(TestBvOpIsInv, ite)
+{
+  test_ite(0, false);
+  test_ite(1, false);
+  test_ite(2, false);
+  test_ite(0, true);
+  test_ite(1, true);
+  test_ite(2, true);
+}
 }  // namespace test
 }  // namespace bzlals
