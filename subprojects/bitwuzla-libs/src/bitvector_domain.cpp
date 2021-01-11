@@ -582,4 +582,11 @@ BitVectorDomainSignedGenerator::random()
   assert(has_random_hi);
   return d_gen_hi->random();
 }
+
+std::ostream &
+operator<<(std::ostream &out, const BitVectorDomain &d)
+{
+  out << d.to_string();
+  return out;
+}
 }  // namespace bzlals

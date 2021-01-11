@@ -130,6 +130,8 @@ class BitVectorDomain
   bool d_has_fixed_bits = false;
 };
 
+std::ostream &operator<<(std::ostream &out, const BitVectorDomain &d);
+
 /*----------------------------------------------------------------------------*/
 
 class BitVectorDomainGenerator
