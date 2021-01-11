@@ -1017,9 +1017,8 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
       /* s = t: x = 0 or random x > t */
       return x.lo().is_zero() || x.hi().compare(t) > 0;
     }
-    /* s % x = t
-     *
-     * s = x * n + t
+
+    /* s = x * n + t
      *
      * In general, x = s - t is always a solution with n = 1, but
      * fixed bits of x may not match s - t. In this case, we look for a
@@ -1028,20 +1027,19 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
     BitVector n = s.bvsub(t);
     /* Is (s - t) a solution?
      *
-     * -> if yes we do not store it in d_res_x to enforce that
-     *    inv_urem() selects one of several possible choices rather
-     *    than only this solution
+     * -> if yes we do not cache the result to enforce that inverse() selects
+     *    one of several possible choices rather than only this solution
      */
     if (!x.match_fixed_bits(n))
     {
       if (t.is_zero() && x.match_fixed_bits(BitVector::mk_one(x.size())))
       {
-        /* we don't store it in d_res_x for the same reason as above */
+        /* we don't cache the result for the same reason as above */
         return true;
       }
-      /* s - t does not match const bits of x and one is not a
-       * possible solution. Find factor n of (s - t) s.t. n > t and n
-       * matches the const bits of x. Pick x = n.  */
+      /* s - t does not match const bits of x and one is not a possible
+       * solution. Find factor n of (s - t) s.t. n > t and n matches the const
+       * bits of x. Pick x = n.  */
       BitVector bv = x.get_factor(d_rng, n, t, 10000);
       assert(bv.is_null() || x.match_fixed_bits(bv));
       if (!bv.is_null())

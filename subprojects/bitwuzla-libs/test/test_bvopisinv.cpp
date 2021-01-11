@@ -32,7 +32,7 @@ class TestBvOpIsInv : public TestBvDomainCommon
   void test_binary(Kind kind, uint32_t pos_x, bool const_bits);
   void test_ite(uint32_t pos_x, bool const_bits);
 
-  static constexpr uint32_t TEST_BW = 3;
+  static constexpr uint32_t TEST_BW = 4;
   std::vector<std::string> d_values;
   std::vector<std::string> d_xvalues;
   std::unique_ptr<RNG> d_rng;

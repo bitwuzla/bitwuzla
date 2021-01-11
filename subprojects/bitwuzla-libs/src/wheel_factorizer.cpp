@@ -26,7 +26,7 @@ WheelFactorizer::WheelFactorizer(const BitVector& n, uint64_t limit)
   d_inc[10]   = &d_six;
 }
 
-BitVector*
+const BitVector*
 WheelFactorizer::next()
 {
   if (d_done) return nullptr;

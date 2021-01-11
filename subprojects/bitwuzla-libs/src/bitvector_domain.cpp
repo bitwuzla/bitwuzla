@@ -180,13 +180,13 @@ BitVectorDomain::get_factor(RNG *rng,
                             uint64_t limit) const
 {
   WheelFactorizer wf(num, limit);
-  std::vector<BitVector *> factors;
+  std::vector<BitVector> factors;
 
   while (true)
   {
-    BitVector *fact = wf.next();
+    const BitVector *fact = wf.next();
     if (!fact) break;
-    factors.push_back(fact);
+    factors.emplace_back(*fact);
     if (rng == nullptr) break;
   }
 
@@ -211,13 +211,12 @@ BitVectorDomain::get_factor(RNG *rng,
           uint32_t j = rng->pick<uint32_t>(i, n_factors - 1);
           if (i != j)
           {
-            BitVector *f = factors[j];
-            factors[j]   = factors[i];
-            factors[i]   = f;
+            std::swap(factors[i], factors[j]);
           }
           if (!mul.is_zero())
           {
-            BitVector tmp = factors[i]->bvmul(mul);
+            assert(!factors[i].is_umul_overflow(mul));
+            BitVector tmp = factors[i].bvmul(mul);
             if (tmp.compare(num) > 0)
             {
               continue;
@@ -226,7 +225,7 @@ BitVectorDomain::get_factor(RNG *rng,
           }
           else
           {
-            mul.iset(*factors[i]);
+            mul.iset(factors[i]);
           }
         }
         assert(!mul.is_null());
@@ -239,7 +238,7 @@ BitVectorDomain::get_factor(RNG *rng,
     else
     {
       assert(n_factors == 1);
-      return *factors[0];
+      return factors[0];
     }
   }
   return BitVector();
