@@ -1831,4 +1831,11 @@ BitVector::shift_is_uint64(uint32_t* res) const
   return true;
 }
 
+std::ostream&
+operator<<(std::ostream& out, const BitVector& bv)
+{
+  out << bv.to_string();
+  return out;
+}
+
 }  // namespace bzlals

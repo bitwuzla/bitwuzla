@@ -163,7 +163,7 @@ class BitVector
    */
   bool is_uadd_overflow(const BitVector& bv) const;
   /**
-   * Return true if a the multiplication of this and the given bit-vector
+   * Return true if the multiplication of this and the given bit-vector
    * produces an overflow.
    */
   bool is_umul_overflow(const BitVector& bv) const;
@@ -446,6 +446,8 @@ class BitVector
   /** The bit-vector value. */
   std::unique_ptr<GMPMpz> d_val = nullptr;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVector& bv);
 
 }  // namespace bzlals
 
