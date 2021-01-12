@@ -53,6 +53,13 @@ class TestBitVector : public TestCommon
     ZEXT,
   };
 
+  enum BvFunKind
+  {
+    DEFAULT,
+    INPLACE_CHAINABLE,
+    INPLACE_NOT_CHAINABLE,
+  };
+
   static constexpr uint32_t N_TESTS        = 100000;
   static constexpr uint32_t N_MODINV_TESTS = 100000;
   void SetUp() override { d_rng.reset(new RNG(1234)); }
@@ -98,12 +105,12 @@ class TestBitVector : public TestCommon
   void test_ctor_random_bit_range(uint32_t size);
   void test_count(uint32_t size, bool leading, bool zeros);
   void test_count_aux(const std::string& val, bool leading, bool zeros);
-  void test_unary(Kind kind, uint32_t size, bool in_place);
-  void test_binary(Kind kind, uint32_t size, bool in_place);
-  void test_binary_signed(Kind kind, uint32_t size, bool in_place);
-  void test_concat(uint32_t size, bool in_place);
-  void test_extend(Kind kind, uint32_t size, bool in_place);
-  void test_extract(uint32_t size, bool in_place);
+  void test_unary(BvFunKind fun_kind, Kind kind, uint32_t size);
+  void test_binary(BvFunKind fun_kind, Kind kind, uint32_t size);
+  void test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size);
+  void test_concat(BvFunKind fun_kind, uint32_t size);
+  void test_extend(BvFunKind fun_kind, Kind kind, uint32_t size);
+  void test_extract(BvFunKind fun_kind, uint32_t size);
   void test_is_uadd_overflow_aux(uint32_t size,
                                  uint64_t a1,
                                  uint64_t a2,
@@ -114,13 +121,13 @@ class TestBitVector : public TestCommon
                                  uint64_t a2,
                                  bool expected);
   void test_is_umul_overflow(uint32_t size);
-  void test_ite(uint32_t size, bool in_place);
-  void test_modinv(uint32_t size, bool in_place);
-  void test_shift(Kind kind,
+  void test_ite(BvFunKind fun_kind, uint32_t size);
+  void test_modinv(BvFunKind fun_kind, uint32_t size);
+  void test_shift(BvFunKind fun_kind,
+                  Kind kind,
                   const std::string& to_shift,
                   const std::string& shift,
-                  const std::string& expected,
-                  bool in_place);
+                  const std::string& expected);
   void test_udivurem(uint32_t size);
   std::unique_ptr<RNG> d_rng;
 };
@@ -539,7 +546,7 @@ TestBitVector::test_count(uint32_t size, bool leading, bool zeros)
 }
 
 void
-TestBitVector::test_extend(Kind kind, uint32_t size, bool in_place)
+TestBitVector::test_extend(BvFunKind fun_kind, Kind kind, uint32_t size)
 {
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
@@ -551,7 +558,11 @@ TestBitVector::test_extend(Kind kind, uint32_t size, bool in_place)
     switch (kind)
     {
       case ZEXT:
-        if (in_place)
+        if (fun_kind == INPLACE_CHAINABLE)
+        {
+          // TODO
+        }
+        else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
           res.ibvzext(bv, n);
         }
@@ -562,7 +573,11 @@ TestBitVector::test_extend(Kind kind, uint32_t size, bool in_place)
         c = '0';
         break;
       case SEXT:
-        if (in_place)
+        if (fun_kind == INPLACE_CHAINABLE)
+        {
+          // TODO
+        }
+        else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
           res.ibvsext(bv, n);
         }
@@ -663,7 +678,7 @@ TestBitVector::test_is_umul_overflow(uint32_t size)
 }
 
 void
-TestBitVector::test_ite(uint32_t size, bool in_place)
+TestBitVector::test_ite(BvFunKind fun_kind, uint32_t size)
 {
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
@@ -672,7 +687,11 @@ TestBitVector::test_ite(uint32_t size, bool in_place)
     BitVector bv_else(size, *d_rng);
     BitVector res(size);
 
-    if (in_place)
+    if (fun_kind == INPLACE_CHAINABLE)
+    {
+      // TODO
+    }
+    else if (fun_kind == INPLACE_NOT_CHAINABLE)
     {
       res.ibvite(bv_cond, bv_then, bv_else);
     }
@@ -691,7 +710,11 @@ TestBitVector::test_ite(uint32_t size, bool in_place)
   BitVector b1(1, *d_rng);
   BitVector b8(8, *d_rng);
   BitVector b16(16, *d_rng);
-  if (in_place)
+  if (fun_kind == INPLACE_CHAINABLE)
+  {
+    // TODO
+  }
+  else if (fun_kind == INPLACE_NOT_CHAINABLE)
   {
     ASSERT_DEATH(b8.ibvite(b8, b8, b8), "c.d_size == 1");
     ASSERT_DEATH(b8.ibvite(b1, b8, b16), "d_size == e.d_size");
@@ -706,14 +729,18 @@ TestBitVector::test_ite(uint32_t size, bool in_place)
 }
 
 void
-TestBitVector::test_modinv(uint32_t size, bool in_place)
+TestBitVector::test_modinv(BvFunKind fun_kind, uint32_t size)
 {
   for (uint32_t i = 0; i < N_MODINV_TESTS; ++i)
   {
     BitVector bv(size, *d_rng);
     bv.set_bit(0, 1);  // must be odd
-    BitVector res(size);
-    if (in_place)
+    BitVector res(bv);
+    if (fun_kind == INPLACE_CHAINABLE)
+    {
+      // TODO
+    }
+    else if (fun_kind == INPLACE_NOT_CHAINABLE)
     {
       res.ibvmodinv(bv);
     }
@@ -726,20 +753,22 @@ TestBitVector::test_modinv(uint32_t size, bool in_place)
 }
 
 void
-TestBitVector::test_unary(TestBitVector::Kind kind,
-                          uint32_t size,
-                          bool in_place)
+TestBitVector::test_unary(BvFunKind fun_kind, Kind kind, uint32_t size)
 {
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint64_t ares;
-    BitVector res(size);
     BitVector bv(size, *d_rng);
+    BitVector res(bv);
     uint64_t a = bv.to_uint64();
     switch (kind)
     {
       case DEC:
-        if (in_place)
+        if (fun_kind == INPLACE_CHAINABLE)
+        {
+          // TODO
+        }
+        else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
           res.ibvdec(bv);
         }
@@ -751,7 +780,11 @@ TestBitVector::test_unary(TestBitVector::Kind kind,
         break;
 
       case INC:
-        if (in_place)
+        if (fun_kind == INPLACE_CHAINABLE)
+        {
+          // TODO
+        }
+        else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
           res.ibvinc(bv);
         }
@@ -763,7 +796,11 @@ TestBitVector::test_unary(TestBitVector::Kind kind,
         break;
 
       case NEG:
-        if (in_place)
+        if (fun_kind == INPLACE_CHAINABLE)
+        {
+          (void) res.ibvneg();
+        }
+        else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
           res.ibvneg(bv);
         }
@@ -775,7 +812,11 @@ TestBitVector::test_unary(TestBitVector::Kind kind,
         break;
 
       case NOT:
-        if (in_place)
+        if (fun_kind == INPLACE_CHAINABLE)
+        {
+          // TODO
+        }
+        else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
           res.ibvnot(bv);
         }
@@ -787,7 +828,11 @@ TestBitVector::test_unary(TestBitVector::Kind kind,
         break;
 
       case REDAND:
-        if (in_place)
+        if (fun_kind == INPLACE_CHAINABLE)
+        {
+          // TODO
+        }
+        else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
           res = BitVector(1);
           res.ibvredand(bv);
@@ -800,7 +845,11 @@ TestBitVector::test_unary(TestBitVector::Kind kind,
         break;
 
       case REDOR:
-        if (in_place)
+        if (fun_kind == INPLACE_CHAINABLE)
+        {
+          // TODO
+        }
+        else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
           res = BitVector(1);
           res.ibvredor(bv);
@@ -820,18 +869,18 @@ TestBitVector::test_unary(TestBitVector::Kind kind,
 }
 
 void
-TestBitVector::test_binary(TestBitVector::Kind kind,
-                           uint32_t size,
-                           bool in_place)
+TestBitVector::test_binary(BvFunKind fun_kind,
+                           TestBitVector::Kind kind,
+                           uint32_t size)
 {
   BitVector zero = BitVector::mk_zero(size);
 
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint64_t ares, bres;
-    BitVector res(size);
     BitVector bv1(size, *d_rng);
     BitVector bv2(size, *d_rng);
+    BitVector res(bv1);
     uint64_t a1                                          = bv1.to_uint64();
     uint64_t a2                                          = bv2.to_uint64();
     std::vector<std::pair<BitVector, BitVector>> bv_args = {
@@ -850,7 +899,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       switch (kind)
       {
         case ADD:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvadd(b1, b2);
           }
@@ -862,7 +915,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case AND:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvand(b1, b2);
           }
@@ -874,7 +931,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case ASHR:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvashr(b1, b2);
           }
@@ -886,7 +947,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case EQ:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibveq(b1, b2);
@@ -899,7 +964,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case IMPLIES:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibvimplies(b1, b2);
@@ -912,7 +981,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case MUL:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvmul(b1, b2);
           }
@@ -924,7 +997,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case NAND:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvnand(b1, b2);
           }
@@ -936,7 +1013,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case NE:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibvne(b1, b2);
@@ -949,7 +1030,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case NOR:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvnor(b1, b2);
           }
@@ -961,7 +1046,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case OR:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvor(b1, b2);
           }
@@ -973,7 +1062,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case SHL:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvshl(b1, b2);
           }
@@ -985,7 +1078,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case SHR:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvshr(b1, b2);
           }
@@ -997,7 +1094,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case SUB:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvsub(b1, b2);
           }
@@ -1009,7 +1110,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case UDIV:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvudiv(b1, b2);
           }
@@ -1021,7 +1126,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case ULT:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibvult(b1, b2);
@@ -1034,7 +1143,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case ULE:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibvule(b1, b2);
@@ -1047,7 +1160,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case UGT:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibvugt(b1, b2);
@@ -1060,7 +1177,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case UGE:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibvuge(b1, b2);
@@ -1073,7 +1194,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case UREM:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvurem(b1, b2);
           }
@@ -1085,7 +1210,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case XOR:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvxor(b1, b2);
           }
@@ -1097,7 +1226,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
           break;
 
         case XNOR:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvxnor(b1, b2);
           }
@@ -1115,14 +1248,18 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       ASSERT_EQ(ares, bres);
     }
   }
-  BitVector res(size);
   BitVector b1(size, *d_rng);
   BitVector b2(size + 1, *d_rng);
+  BitVector res(b1);
   /* death tests */
   switch (kind)
   {
     case ADD:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvadd(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvadd(b2, b1), "d_size == .*d_size");
@@ -1134,7 +1271,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case AND:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvand(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvand(b2, b1), "d_size == .*d_size");
@@ -1146,7 +1287,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case ASHR:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvashr(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvashr(b2, b1), "d_size == .*d_size");
@@ -1158,7 +1303,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case EQ:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1174,7 +1323,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case IMPLIES:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1190,7 +1343,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case MUL:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvmul(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvmul(b2, b1), "d_size == .*d_size");
@@ -1202,7 +1359,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case NAND:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvnand(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvnand(b2, b1), "d_size == .*d_size");
@@ -1214,7 +1375,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case NE:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1230,7 +1395,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case NOR:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvnor(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvnor(b2, b1), "d_size == .*d_size");
@@ -1242,7 +1411,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case OR:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvor(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvor(b2, b1), "d_size == .*d_size");
@@ -1254,7 +1427,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case SHL:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvshl(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvshl(b2, b1), "d_size == .*d_size");
@@ -1266,7 +1443,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case SHR:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvshr(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvshr(b2, b1), "d_size == .*d_size");
@@ -1278,7 +1459,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case SUB:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvsub(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvsub(b2, b1), "d_size == .*d_size");
@@ -1290,7 +1475,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case UDIV:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvudiv(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvudiv(b2, b1), "d_size == .*d_size");
@@ -1302,7 +1491,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case ULT:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1318,7 +1511,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case ULE:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1334,7 +1531,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case UGT:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1350,7 +1551,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case UGE:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1366,7 +1571,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case UREM:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvurem(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvurem(b2, b1), "d_size == .*d_size");
@@ -1378,7 +1587,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case XOR:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvxor(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvxor(b2, b1), "d_size == .*d_size");
@@ -1390,7 +1603,11 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
       break;
 
     case XNOR:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(res.ibvxnor(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(res.ibvxnor(b2, b1), "d_size == .*d_size");
@@ -1406,9 +1623,7 @@ TestBitVector::test_binary(TestBitVector::Kind kind,
 }
 
 void
-TestBitVector::test_binary_signed(TestBitVector::Kind kind,
-                                  uint32_t size,
-                                  bool in_place)
+TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
 {
   assert(size < 64);
   BitVector zero = BitVector::mk_zero(size);
@@ -1416,9 +1631,9 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     int64_t ares, bres;
-    BitVector res(size);
     BitVector bv1(size, *d_rng);
     BitVector bv2(size, *d_rng);
+    BitVector res(bv1);
     int64_t a1 = bv1.to_uint64();
     int64_t a2 = bv2.to_uint64();
     if (bv1.get_bit(size - 1))
@@ -1445,7 +1660,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
       switch (kind)
       {
         case SDIV:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvsdiv(b1, b2);
           }
@@ -1457,7 +1676,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
           break;
 
         case SLT:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibvslt(b1, b2);
@@ -1470,7 +1693,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
           break;
 
         case SLE:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibvsle(b1, b2);
@@ -1483,7 +1710,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
           break;
 
         case SGT:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibvsgt(b1, b2);
@@ -1496,7 +1727,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
           break;
 
         case SGE:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res = BitVector(1);
             res.ibvsge(b1, b2);
@@ -1509,7 +1744,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
           break;
 
         case SREM:
-          if (in_place)
+          if (fun_kind == INPLACE_CHAINABLE)
+          {
+            // TODO
+          }
+          else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
             res.ibvsrem(b1, b2);
           }
@@ -1532,7 +1771,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
   switch (kind)
   {
     case SDIV:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(BitVector(size).ibvsdiv(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(size).ibvsdiv(b2, b1), "d_size == .*d_size");
@@ -1544,7 +1787,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
       break;
 
     case SLT:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1560,7 +1807,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
       break;
 
     case SLE:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1576,7 +1827,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
       break;
 
     case SGT:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1592,7 +1847,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
       break;
 
     case SGE:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         if (size > 1)
         {
@@ -1608,7 +1867,11 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
       break;
 
     case SREM:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         ASSERT_DEATH(BitVector(size).ibvsrem(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(size).ibvsrem(b2, b1), "d_size == .*d_size");
@@ -1624,7 +1887,7 @@ TestBitVector::test_binary_signed(TestBitVector::Kind kind,
 }
 
 void
-TestBitVector::test_concat(uint32_t size, bool in_place)
+TestBitVector::test_concat(BvFunKind fun_kind, uint32_t size)
 {
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
@@ -1633,7 +1896,11 @@ TestBitVector::test_concat(uint32_t size, bool in_place)
     BitVector bv1(size1, *d_rng);
     BitVector bv2(size2, *d_rng);
     BitVector res(size);
-    if (in_place)
+    if (fun_kind == INPLACE_CHAINABLE)
+    {
+      // TODO
+    }
+    else if (fun_kind == INPLACE_NOT_CHAINABLE)
     {
       res.ibvconcat(bv1, bv2);
     }
@@ -1651,7 +1918,7 @@ TestBitVector::test_concat(uint32_t size, bool in_place)
 }
 
 void
-TestBitVector::test_extract(uint32_t size, bool in_place)
+TestBitVector::test_extract(BvFunKind fun_kind, uint32_t size)
 {
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
@@ -1663,7 +1930,11 @@ TestBitVector::test_extract(uint32_t size, bool in_place)
     ASSERT_LT(lo, size);
 
     BitVector res(hi - lo + 1);
-    if (in_place)
+    if (fun_kind == INPLACE_CHAINABLE)
+    {
+      // TODO
+    }
+    else if (fun_kind == INPLACE_NOT_CHAINABLE)
     {
       res.ibvextract(bv, hi, lo);
     }
@@ -1685,11 +1956,11 @@ TestBitVector::test_extract(uint32_t size, bool in_place)
 }
 
 void
-TestBitVector::test_shift(Kind kind,
+TestBitVector::test_shift(BvFunKind fun_kind,
+                          Kind kind,
                           const std::string& to_shift,
                           const std::string& shift,
-                          const std::string& expected,
-                          bool in_place)
+                          const std::string& expected)
 {
   uint32_t size = to_shift.size();
   assert(size == shift.size());
@@ -1698,11 +1969,15 @@ TestBitVector::test_shift(Kind kind,
   BitVector bv(to_shift.size(), to_shift);
   BitVector bv_shift(shift.size(), shift);
   BitVector bv_expected(expected.size(), expected);
-  BitVector res(size);
+  BitVector res(bv);
   switch (kind)
   {
     case ASHR:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         res.ibvashr(bv, bv_shift);
       }
@@ -1712,7 +1987,11 @@ TestBitVector::test_shift(Kind kind,
       }
       break;
     case SHL:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         res.ibvshl(bv, bv_shift);
       }
@@ -1722,7 +2001,11 @@ TestBitVector::test_shift(Kind kind,
       }
       break;
     case SHR:
-      if (in_place)
+      if (fun_kind == INPLACE_CHAINABLE)
+      {
+        // TODO
+      }
+      else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
         res.ibvshr(bv, bv_shift);
       }
@@ -2608,96 +2891,98 @@ TEST_F(TestBitVector, count_leading_ones)
   test_count(176, true, false);
 }
 
+/* -------------------------------------------------------------------------- */
+
 TEST_F(TestBitVector, dec)
 {
-  test_unary(DEC, 1, false);
-  test_unary(DEC, 7, false);
-  test_unary(DEC, 31, false);
-  test_unary(DEC, 33, false);
+  test_unary(DEFAULT, DEC, 1);
+  test_unary(DEFAULT, DEC, 7);
+  test_unary(DEFAULT, DEC, 31);
+  test_unary(DEFAULT, DEC, 33);
 }
 
 TEST_F(TestBitVector, inc)
 {
-  test_unary(INC, 1, false);
-  test_unary(INC, 7, false);
-  test_unary(INC, 31, false);
-  test_unary(INC, 33, false);
+  test_unary(DEFAULT, INC, 1);
+  test_unary(DEFAULT, INC, 7);
+  test_unary(DEFAULT, INC, 31);
+  test_unary(DEFAULT, INC, 33);
 }
 
 TEST_F(TestBitVector, neg)
 {
-  test_unary(NEG, 1, false);
-  test_unary(NEG, 7, false);
-  test_unary(NEG, 31, false);
-  test_unary(NEG, 33, false);
+  test_unary(DEFAULT, NEG, 1);
+  test_unary(DEFAULT, NEG, 7);
+  test_unary(DEFAULT, NEG, 31);
+  test_unary(DEFAULT, NEG, 33);
 }
 
 TEST_F(TestBitVector, not )
 {
-  test_unary(NOT, 1, false);
-  test_unary(NOT, 7, false);
-  test_unary(NOT, 31, false);
-  test_unary(NOT, 33, false);
+  test_unary(DEFAULT, NOT, 1);
+  test_unary(DEFAULT, NOT, 7);
+  test_unary(DEFAULT, NOT, 31);
+  test_unary(DEFAULT, NOT, 33);
 }
 
 TEST_F(TestBitVector, redand)
 {
-  test_unary(REDAND, 1, false);
-  test_unary(REDAND, 7, false);
-  test_unary(REDAND, 31, false);
-  test_unary(REDAND, 33, false);
+  test_unary(DEFAULT, REDAND, 1);
+  test_unary(DEFAULT, REDAND, 7);
+  test_unary(DEFAULT, REDAND, 31);
+  test_unary(DEFAULT, REDAND, 33);
 }
 
 TEST_F(TestBitVector, redor)
 {
-  test_unary(REDOR, 1, false);
-  test_unary(REDOR, 7, false);
-  test_unary(REDOR, 31, false);
-  test_unary(REDOR, 33, false);
+  test_unary(DEFAULT, REDOR, 1);
+  test_unary(DEFAULT, REDOR, 7);
+  test_unary(DEFAULT, REDOR, 31);
+  test_unary(DEFAULT, REDOR, 33);
 }
 
 TEST_F(TestBitVector, add)
 {
-  test_binary(ADD, 1, false);
-  test_binary(ADD, 7, false);
-  test_binary(ADD, 31, false);
-  test_binary(ADD, 33, false);
+  test_binary(DEFAULT, ADD, 1);
+  test_binary(DEFAULT, ADD, 7);
+  test_binary(DEFAULT, ADD, 31);
+  test_binary(DEFAULT, ADD, 33);
 }
 
 TEST_F(TestBitVector, and)
 {
-  test_binary(AND, 1, false);
-  test_binary(AND, 7, false);
-  test_binary(AND, 31, false);
-  test_binary(AND, 33, false);
+  test_binary(DEFAULT, AND, 1);
+  test_binary(DEFAULT, AND, 7);
+  test_binary(DEFAULT, AND, 31);
+  test_binary(DEFAULT, AND, 33);
 }
 
 TEST_F(TestBitVector, concat)
 {
-  test_concat(2, false);
-  test_concat(7, false);
-  test_concat(31, false);
-  test_concat(33, false);
-  test_concat(64, false);
+  test_concat(DEFAULT, 2);
+  test_concat(DEFAULT, 7);
+  test_concat(DEFAULT, 31);
+  test_concat(DEFAULT, 33);
+  test_concat(DEFAULT, 64);
 }
 
 TEST_F(TestBitVector, eq)
 {
-  test_binary(EQ, 1, false);
-  test_binary(EQ, 7, false);
-  test_binary(EQ, 31, false);
-  test_binary(EQ, 33, false);
+  test_binary(DEFAULT, EQ, 1);
+  test_binary(DEFAULT, EQ, 7);
+  test_binary(DEFAULT, EQ, 31);
+  test_binary(DEFAULT, EQ, 33);
 }
 
 TEST_F(TestBitVector, extract)
 {
-  test_extract(1, false);
-  test_extract(7, false);
-  test_extract(31, false);
-  test_extract(33, false);
+  test_extract(DEFAULT, 1);
+  test_extract(DEFAULT, 7);
+  test_extract(DEFAULT, 31);
+  test_extract(DEFAULT, 33);
 }
 
-TEST_F(TestBitVector, implies) { test_binary(IMPLIES, 1, false); }
+TEST_F(TestBitVector, implies) { test_binary(DEFAULT, IMPLIES, 1); }
 
 TEST_F(TestBitVector, is_uadd_overflow)
 {
@@ -2717,86 +3002,86 @@ TEST_F(TestBitVector, is_umul_overflow)
 
 TEST_F(TestBitVector, ite)
 {
-  test_ite(1, false);
-  test_ite(7, false);
-  test_ite(31, false);
-  test_ite(33, false);
+  test_ite(DEFAULT, 1);
+  test_ite(DEFAULT, 7);
+  test_ite(DEFAULT, 31);
+  test_ite(DEFAULT, 33);
 }
 
 TEST_F(TestBitVector, modinv)
 {
-  test_ite(1, false);
-  test_ite(7, false);
-  test_ite(31, false);
-  test_ite(33, false);
+  test_ite(DEFAULT, 1);
+  test_ite(DEFAULT, 7);
+  test_ite(DEFAULT, 31);
+  test_ite(DEFAULT, 33);
 }
 
 TEST_F(TestBitVector, mul)
 {
-  test_binary(MUL, 1, false);
-  test_binary(MUL, 7, false);
-  test_binary(MUL, 31, false);
-  test_binary(MUL, 33, false);
+  test_binary(DEFAULT, MUL, 1);
+  test_binary(DEFAULT, MUL, 7);
+  test_binary(DEFAULT, MUL, 31);
+  test_binary(DEFAULT, MUL, 33);
 }
 
 TEST_F(TestBitVector, nand)
 {
-  test_binary(NAND, 1, false);
-  test_binary(NAND, 7, false);
-  test_binary(NAND, 31, false);
-  test_binary(NAND, 33, false);
+  test_binary(DEFAULT, NAND, 1);
+  test_binary(DEFAULT, NAND, 7);
+  test_binary(DEFAULT, NAND, 31);
+  test_binary(DEFAULT, NAND, 33);
 }
 
 TEST_F(TestBitVector, ne)
 {
-  test_binary(NE, 1, false);
-  test_binary(NE, 7, false);
-  test_binary(NE, 31, false);
-  test_binary(NE, 33, false);
+  test_binary(DEFAULT, NE, 1);
+  test_binary(DEFAULT, NE, 7);
+  test_binary(DEFAULT, NE, 31);
+  test_binary(DEFAULT, NE, 33);
 }
 
 TEST_F(TestBitVector, or)
 {
-  test_binary(OR, 1, false);
-  test_binary(OR, 7, false);
-  test_binary(OR, 31, false);
-  test_binary(OR, 33, false);
+  test_binary(DEFAULT, OR, 1);
+  test_binary(DEFAULT, OR, 7);
+  test_binary(DEFAULT, OR, 31);
+  test_binary(DEFAULT, OR, 33);
 }
 
 TEST_F(TestBitVector, nor)
 {
-  test_binary(NOR, 1, false);
-  test_binary(NOR, 7, false);
-  test_binary(NOR, 31, false);
-  test_binary(NOR, 33, false);
+  test_binary(DEFAULT, NOR, 1);
+  test_binary(DEFAULT, NOR, 7);
+  test_binary(DEFAULT, NOR, 31);
+  test_binary(DEFAULT, NOR, 33);
 }
 
 TEST_F(TestBitVector, sdiv)
 {
-  test_binary_signed(SDIV, 1, false);
-  test_binary_signed(SDIV, 7, false);
-  test_binary_signed(SDIV, 31, false);
-  test_binary_signed(SDIV, 33, false);
+  test_binary_signed(DEFAULT, SDIV, 1);
+  test_binary_signed(DEFAULT, SDIV, 7);
+  test_binary_signed(DEFAULT, SDIV, 31);
+  test_binary_signed(DEFAULT, SDIV, 33);
 }
 
 TEST_F(TestBitVector, sext)
 {
-  test_extend(SEXT, 2, false);
-  test_extend(SEXT, 3, false);
-  test_extend(SEXT, 4, false);
-  test_extend(SEXT, 5, false);
-  test_extend(SEXT, 6, false);
-  test_extend(SEXT, 7, false);
-  test_extend(SEXT, 31, false);
-  test_extend(SEXT, 33, false);
+  test_extend(DEFAULT, SEXT, 2);
+  test_extend(DEFAULT, SEXT, 3);
+  test_extend(DEFAULT, SEXT, 4);
+  test_extend(DEFAULT, SEXT, 5);
+  test_extend(DEFAULT, SEXT, 6);
+  test_extend(DEFAULT, SEXT, 7);
+  test_extend(DEFAULT, SEXT, 31);
+  test_extend(DEFAULT, SEXT, 33);
 }
 
 TEST_F(TestBitVector, shl)
 {
-  test_binary(SHL, 2, false);
-  test_binary(SHL, 8, false);
-  test_binary(SHL, 16, false);
-  test_binary(SHL, 32, false);
+  test_binary(DEFAULT, SHL, 2);
+  test_binary(DEFAULT, SHL, 8);
+  test_binary(DEFAULT, SHL, 16);
+  test_binary(DEFAULT, SHL, 32);
 
   for (uint32_t i = 0, size = 2; i < (1u << size); ++i)
   {
@@ -2806,11 +3091,11 @@ TEST_F(TestBitVector, shl)
       ss_expected << std::bitset<2>(i).to_string() << std::string(j, '0');
       std::string expected = ss_expected.str();
       expected             = expected.substr(expected.size() - size, size);
-      test_shift(SHL,
+      test_shift(DEFAULT,
+                 SHL,
                  std::bitset<2>(i).to_string().c_str(),
                  std::bitset<2>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
   }
 
@@ -2822,11 +3107,11 @@ TEST_F(TestBitVector, shl)
       ss_expected << std::bitset<3>(i).to_string() << std::string(j, '0');
       std::string expected = ss_expected.str();
       expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(SHL,
+      test_shift(DEFAULT,
+                 SHL,
                  std::bitset<3>(i).to_string().c_str(),
                  std::bitset<3>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
   }
 
@@ -2838,11 +3123,11 @@ TEST_F(TestBitVector, shl)
       ss_expected << std::bitset<8>(i).to_string() << std::string(j, '0');
       std::string expected = ss_expected.str();
       expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(SHL,
+      test_shift(DEFAULT,
+                 SHL,
                  std::bitset<8>(i).to_string().c_str(),
                  std::bitset<8>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
   }
 
@@ -2855,19 +3140,19 @@ TEST_F(TestBitVector, shl)
       ss_expected << std::bitset<65>(i).to_string() << std::string(j, '0');
       std::string expected = ss_expected.str();
       expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(SHL,
+      test_shift(DEFAULT,
+                 SHL,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
     /* shift value doesn't fit into uint64_t */
     {
-      test_shift(SHL,
+      test_shift(DEFAULT,
+                 SHL,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str(),
-                 false);
+                 std::string(bw, '0').c_str());
     }
   }
 
@@ -2880,30 +3165,30 @@ TEST_F(TestBitVector, shl)
       ss_expected << std::bitset<128>(i).to_string() << std::string(j, '0');
       std::string expected = ss_expected.str();
       expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(SHL,
+      test_shift(DEFAULT,
+                 SHL,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
     /* shift value doesn't fit into uint64_t */
     for (uint64_t j = 64; j < 128; ++j)
     {
-      test_shift(SHL,
+      test_shift(DEFAULT,
+                 SHL,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(0u).set(j, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str(),
-                 false);
+                 std::string(bw, '0').c_str());
     }
   }
 }
 
 TEST_F(TestBitVector, shr)
 {
-  test_binary(SHR, 2, false);
-  test_binary(SHR, 8, false);
-  test_binary(SHR, 16, false);
-  test_binary(SHR, 32, false);
+  test_binary(DEFAULT, SHR, 2);
+  test_binary(DEFAULT, SHR, 8);
+  test_binary(DEFAULT, SHR, 16);
+  test_binary(DEFAULT, SHR, 32);
 
   for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
   {
@@ -2913,11 +3198,11 @@ TEST_F(TestBitVector, shr)
       ss_expected << std::string(j, '0') << std::bitset<2>(i).to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(SHR,
+      test_shift(DEFAULT,
+                 SHR,
                  std::bitset<2>(i).to_string().c_str(),
                  std::bitset<2>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
   }
 
@@ -2929,11 +3214,11 @@ TEST_F(TestBitVector, shr)
       ss_expected << std::string(j, '0') << std::bitset<3>(i).to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(SHR,
+      test_shift(DEFAULT,
+                 SHR,
                  std::bitset<3>(i).to_string().c_str(),
                  std::bitset<3>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
   }
 
@@ -2945,11 +3230,11 @@ TEST_F(TestBitVector, shr)
       ss_expected << std::string(j, '0') << std::bitset<8>(i).to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(SHR,
+      test_shift(DEFAULT,
+                 SHR,
                  std::bitset<8>(i).to_string().c_str(),
                  std::bitset<8>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
   }
 
@@ -2962,19 +3247,19 @@ TEST_F(TestBitVector, shr)
       ss_expected << std::string(j, '0') << std::bitset<65>(i).to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(SHR,
+      test_shift(DEFAULT,
+                 SHR,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
     /* shift value doesn't fit into uint64_t */
     {
-      test_shift(SHR,
+      test_shift(DEFAULT,
+                 SHR,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str(),
-                 false);
+                 std::string(bw, '0').c_str());
     }
   }
 
@@ -2987,29 +3272,29 @@ TEST_F(TestBitVector, shr)
       ss_expected << std::string(j, '0') << std::bitset<128>(i).to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(SHR,
+      test_shift(DEFAULT,
+                 SHR,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
     /* shift value doesn't fit into uint64_t */
     {
-      test_shift(SHR,
+      test_shift(DEFAULT,
+                 SHR,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(0u).set(120, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str(),
-                 false);
+                 std::string(bw, '0').c_str());
     }
   }
 }
 
 TEST_F(TestBitVector, ashr)
 {
-  test_binary(ASHR, 2, false);
-  test_binary(ASHR, 8, false);
-  test_binary(ASHR, 16, false);
-  test_binary(ASHR, 32, false);
+  test_binary(DEFAULT, ASHR, 2);
+  test_binary(DEFAULT, ASHR, 8);
+  test_binary(DEFAULT, ASHR, 16);
+  test_binary(DEFAULT, ASHR, 32);
 
   for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
   {
@@ -3021,11 +3306,11 @@ TEST_F(TestBitVector, ashr)
                   << bits_i.to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(ASHR,
+      test_shift(DEFAULT,
+                 ASHR,
                  std::bitset<2>(i).to_string().c_str(),
                  std::bitset<2>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
   }
 
@@ -3039,11 +3324,11 @@ TEST_F(TestBitVector, ashr)
                   << bits_i.to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(ASHR,
+      test_shift(DEFAULT,
+                 ASHR,
                  std::bitset<3>(i).to_string().c_str(),
                  std::bitset<3>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
   }
 
@@ -3057,11 +3342,11 @@ TEST_F(TestBitVector, ashr)
                   << bits_i.to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(ASHR,
+      test_shift(DEFAULT,
+                 ASHR,
                  std::bitset<8>(i).to_string().c_str(),
                  std::bitset<8>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
   }
 
@@ -3076,19 +3361,19 @@ TEST_F(TestBitVector, ashr)
                   << bits_i.to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(ASHR,
+      test_shift(DEFAULT,
+                 ASHR,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
     /* shift value doesn't fit into uint64_t */
     {
-      test_shift(ASHR,
+      test_shift(DEFAULT,
+                 ASHR,
                  std::bitset<65>(i).to_string().c_str(),
                  std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str(),
-                 false);
+                 std::string(bw, '0').c_str());
     }
   }
 
@@ -3103,320 +3388,329 @@ TEST_F(TestBitVector, ashr)
                   << bits_i.to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(ASHR,
+      test_shift(DEFAULT,
+                 ASHR,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(j).to_string().c_str(),
-                 expected.c_str(),
-                 false);
+                 expected.c_str());
     }
     /* shift value doesn't fit into uint64_t */
     {
-      test_shift(ASHR,
+      test_shift(DEFAULT,
+                 ASHR,
                  std::bitset<128>(i).to_string().c_str(),
                  std::bitset<128>(0u).set(120, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str(),
-                 false);
+                 std::string(bw, '0').c_str());
     }
   }
 }
 
 TEST_F(TestBitVector, slt)
 {
-  test_binary_signed(SLT, 1, false);
-  test_binary_signed(SLT, 7, false);
-  test_binary_signed(SLT, 31, false);
-  test_binary_signed(SLT, 33, false);
+  test_binary_signed(DEFAULT, SLT, 1);
+  test_binary_signed(DEFAULT, SLT, 7);
+  test_binary_signed(DEFAULT, SLT, 31);
+  test_binary_signed(DEFAULT, SLT, 33);
 }
 
 TEST_F(TestBitVector, sle)
 {
-  test_binary_signed(SLE, 1, false);
-  test_binary_signed(SLE, 7, false);
-  test_binary_signed(SLE, 31, false);
-  test_binary_signed(SLE, 33, false);
+  test_binary_signed(DEFAULT, SLE, 1);
+  test_binary_signed(DEFAULT, SLE, 7);
+  test_binary_signed(DEFAULT, SLE, 31);
+  test_binary_signed(DEFAULT, SLE, 33);
 }
 
 TEST_F(TestBitVector, sgt)
 {
-  test_binary_signed(SGT, 1, false);
-  test_binary_signed(SGT, 7, false);
-  test_binary_signed(SGT, 31, false);
-  test_binary_signed(SGT, 33, false);
+  test_binary_signed(DEFAULT, SGT, 1);
+  test_binary_signed(DEFAULT, SGT, 7);
+  test_binary_signed(DEFAULT, SGT, 31);
+  test_binary_signed(DEFAULT, SGT, 33);
 }
 
 TEST_F(TestBitVector, sge)
 {
-  test_binary_signed(SGE, 1, false);
-  test_binary_signed(SGE, 7, false);
-  test_binary_signed(SGE, 31, false);
-  test_binary_signed(SGE, 33, false);
+  test_binary_signed(DEFAULT, SGE, 1);
+  test_binary_signed(DEFAULT, SGE, 7);
+  test_binary_signed(DEFAULT, SGE, 31);
+  test_binary_signed(DEFAULT, SGE, 33);
 }
 
 TEST_F(TestBitVector, sub)
 {
-  test_binary(SUB, 1, false);
-  test_binary(SUB, 7, false);
-  test_binary(SUB, 31, false);
-  test_binary(SUB, 33, false);
+  test_binary(DEFAULT, SUB, 1);
+  test_binary(DEFAULT, SUB, 7);
+  test_binary(DEFAULT, SUB, 31);
+  test_binary(DEFAULT, SUB, 33);
 }
 
 TEST_F(TestBitVector, srem)
 {
-  test_binary_signed(SREM, 1, false);
-  test_binary_signed(SREM, 7, false);
-  test_binary_signed(SREM, 31, false);
-  test_binary_signed(SREM, 33, false);
+  test_binary_signed(DEFAULT, SREM, 1);
+  test_binary_signed(DEFAULT, SREM, 7);
+  test_binary_signed(DEFAULT, SREM, 31);
+  test_binary_signed(DEFAULT, SREM, 33);
 }
 
 TEST_F(TestBitVector, udiv)
 {
-  test_binary(UDIV, 1, false);
-  test_binary(UDIV, 7, false);
-  test_binary(UDIV, 31, false);
-  test_binary(UDIV, 33, false);
+  test_binary(DEFAULT, UDIV, 1);
+  test_binary(DEFAULT, UDIV, 7);
+  test_binary(DEFAULT, UDIV, 31);
+  test_binary(DEFAULT, UDIV, 33);
 }
 
 TEST_F(TestBitVector, ult)
 {
-  test_binary(ULT, 1, false);
-  test_binary(ULT, 7, false);
-  test_binary(ULT, 31, false);
-  test_binary(ULT, 33, false);
+  test_binary(DEFAULT, ULT, 1);
+  test_binary(DEFAULT, ULT, 7);
+  test_binary(DEFAULT, ULT, 31);
+  test_binary(DEFAULT, ULT, 33);
 }
 
 TEST_F(TestBitVector, ule)
 {
-  test_binary(ULE, 1, false);
-  test_binary(ULE, 7, false);
-  test_binary(ULE, 31, false);
-  test_binary(ULE, 33, false);
+  test_binary(DEFAULT, ULE, 1);
+  test_binary(DEFAULT, ULE, 7);
+  test_binary(DEFAULT, ULE, 31);
+  test_binary(DEFAULT, ULE, 33);
 }
 
 TEST_F(TestBitVector, ugt)
 {
-  test_binary(UGT, 1, false);
-  test_binary(UGT, 7, false);
-  test_binary(UGT, 31, false);
-  test_binary(UGT, 33, false);
+  test_binary(DEFAULT, UGT, 1);
+  test_binary(DEFAULT, UGT, 7);
+  test_binary(DEFAULT, UGT, 31);
+  test_binary(DEFAULT, UGT, 33);
 }
 
 TEST_F(TestBitVector, uge)
 {
-  test_binary(UGE, 1, false);
-  test_binary(UGE, 7, false);
-  test_binary(UGE, 31, false);
-  test_binary(UGE, 33, false);
+  test_binary(DEFAULT, UGE, 1);
+  test_binary(DEFAULT, UGE, 7);
+  test_binary(DEFAULT, UGE, 31);
+  test_binary(DEFAULT, UGE, 33);
 }
 
 TEST_F(TestBitVector, urem)
 {
-  test_binary(UREM, 1, false);
-  test_binary(UREM, 7, false);
-  test_binary(UREM, 31, false);
-  test_binary(UREM, 33, false);
+  test_binary(DEFAULT, UREM, 1);
+  test_binary(DEFAULT, UREM, 7);
+  test_binary(DEFAULT, UREM, 31);
+  test_binary(DEFAULT, UREM, 33);
 }
 
 TEST_F(TestBitVector, xor)
 {
-  test_binary(XOR, 1, false);
-  test_binary(XOR, 7, false);
-  test_binary(XOR, 31, false);
-  test_binary(XOR, 33, false);
+  test_binary(DEFAULT, XOR, 1);
+  test_binary(DEFAULT, XOR, 7);
+  test_binary(DEFAULT, XOR, 31);
+  test_binary(DEFAULT, XOR, 33);
 }
 
 TEST_F(TestBitVector, xnor)
 {
-  test_binary(XNOR, 1, false);
-  test_binary(XNOR, 7, false);
-  test_binary(XNOR, 31, false);
-  test_binary(XNOR, 33, false);
+  test_binary(DEFAULT, XNOR, 1);
+  test_binary(DEFAULT, XNOR, 7);
+  test_binary(DEFAULT, XNOR, 31);
+  test_binary(DEFAULT, XNOR, 33);
 }
 
 TEST_F(TestBitVector, zext)
 {
-  test_extend(ZEXT, 2, false);
-  test_extend(ZEXT, 3, false);
-  test_extend(ZEXT, 4, false);
-  test_extend(ZEXT, 5, false);
-  test_extend(ZEXT, 6, false);
-  test_extend(ZEXT, 7, false);
-  test_extend(ZEXT, 31, false);
-  test_extend(ZEXT, 33, false);
+  test_extend(DEFAULT, ZEXT, 2);
+  test_extend(DEFAULT, ZEXT, 3);
+  test_extend(DEFAULT, ZEXT, 4);
+  test_extend(DEFAULT, ZEXT, 5);
+  test_extend(DEFAULT, ZEXT, 6);
+  test_extend(DEFAULT, ZEXT, 7);
+  test_extend(DEFAULT, ZEXT, 31);
+  test_extend(DEFAULT, ZEXT, 33);
 }
+
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestBitVector, idec)
 {
-  test_unary(DEC, 1, true);
-  test_unary(DEC, 7, true);
-  test_unary(DEC, 31, true);
-  test_unary(DEC, 33, true);
+  test_unary(INPLACE_NOT_CHAINABLE, DEC, 1);
+  test_unary(INPLACE_NOT_CHAINABLE, DEC, 7);
+  test_unary(INPLACE_NOT_CHAINABLE, DEC, 31);
+  test_unary(INPLACE_NOT_CHAINABLE, DEC, 33);
 }
 
 TEST_F(TestBitVector, iinc)
 {
-  test_unary(INC, 1, true);
-  test_unary(INC, 7, true);
-  test_unary(INC, 31, true);
-  test_unary(INC, 33, true);
+  test_unary(INPLACE_NOT_CHAINABLE, INC, 1);
+  test_unary(INPLACE_NOT_CHAINABLE, INC, 7);
+  test_unary(INPLACE_NOT_CHAINABLE, INC, 31);
+  test_unary(INPLACE_NOT_CHAINABLE, INC, 33);
 }
 
 TEST_F(TestBitVector, ineg)
 {
-  test_unary(NEG, 1, true);
-  test_unary(NEG, 7, true);
-  test_unary(NEG, 31, true);
-  test_unary(NEG, 33, true);
+  test_unary(INPLACE_NOT_CHAINABLE, NEG, 1);
+  test_unary(INPLACE_NOT_CHAINABLE, NEG, 7);
+  test_unary(INPLACE_NOT_CHAINABLE, NEG, 31);
+  test_unary(INPLACE_NOT_CHAINABLE, NEG, 33);
+  test_unary(INPLACE_CHAINABLE, NEG, 1);
+  test_unary(INPLACE_CHAINABLE, NEG, 7);
+  test_unary(INPLACE_CHAINABLE, NEG, 31);
+  test_unary(INPLACE_CHAINABLE, NEG, 33);
 }
 
 TEST_F(TestBitVector, inot)
 {
-  test_unary(NOT, 1, true);
-  test_unary(NOT, 7, true);
-  test_unary(NOT, 31, true);
-  test_unary(NOT, 33, true);
+  test_unary(INPLACE_NOT_CHAINABLE, NOT, 1);
+  test_unary(INPLACE_NOT_CHAINABLE, NOT, 7);
+  test_unary(INPLACE_NOT_CHAINABLE, NOT, 31);
+  test_unary(INPLACE_NOT_CHAINABLE, NOT, 33);
 }
 
 TEST_F(TestBitVector, iredand)
 {
-  test_unary(REDAND, 1, true);
-  test_unary(REDAND, 7, true);
-  test_unary(REDAND, 31, true);
-  test_unary(REDAND, 33, true);
+  test_unary(INPLACE_NOT_CHAINABLE, REDAND, 1);
+  test_unary(INPLACE_NOT_CHAINABLE, REDAND, 7);
+  test_unary(INPLACE_NOT_CHAINABLE, REDAND, 31);
+  test_unary(INPLACE_NOT_CHAINABLE, REDAND, 33);
 }
 
 TEST_F(TestBitVector, iredor)
 {
-  test_unary(REDOR, 1, true);
-  test_unary(REDOR, 7, true);
-  test_unary(REDOR, 31, true);
-  test_unary(REDOR, 33, true);
+  test_unary(INPLACE_NOT_CHAINABLE, REDOR, 1);
+  test_unary(INPLACE_NOT_CHAINABLE, REDOR, 7);
+  test_unary(INPLACE_NOT_CHAINABLE, REDOR, 31);
+  test_unary(INPLACE_NOT_CHAINABLE, REDOR, 33);
 }
 
 TEST_F(TestBitVector, iadd)
 {
-  test_binary(ADD, 1, true);
-  test_binary(ADD, 7, true);
-  test_binary(ADD, 31, true);
-  test_binary(ADD, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, ADD, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, ADD, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, ADD, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, ADD, 33);
 }
 
 TEST_F(TestBitVector, iand)
 {
-  test_binary(AND, 1, true);
-  test_binary(AND, 7, true);
-  test_binary(AND, 31, true);
-  test_binary(AND, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, AND, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, AND, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, AND, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, AND, 33);
 }
 
 TEST_F(TestBitVector, iconcat)
 {
-  test_concat(2, true);
-  test_concat(7, true);
-  test_concat(31, true);
-  test_concat(33, true);
-  test_concat(64, true);
+  test_concat(INPLACE_NOT_CHAINABLE, 2);
+  test_concat(INPLACE_NOT_CHAINABLE, 7);
+  test_concat(INPLACE_NOT_CHAINABLE, 31);
+  test_concat(INPLACE_NOT_CHAINABLE, 33);
+  test_concat(INPLACE_NOT_CHAINABLE, 64);
 }
 
 TEST_F(TestBitVector, ieq)
 {
-  test_binary(EQ, 1, true);
-  test_binary(EQ, 7, true);
-  test_binary(EQ, 31, true);
-  test_binary(EQ, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, EQ, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, EQ, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, EQ, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, EQ, 33);
 }
 
 TEST_F(TestBitVector, iextract)
 {
-  test_extract(1, true);
-  test_extract(7, true);
-  test_extract(31, true);
-  test_extract(33, true);
+  test_extract(INPLACE_NOT_CHAINABLE, 1);
+  test_extract(INPLACE_NOT_CHAINABLE, 7);
+  test_extract(INPLACE_NOT_CHAINABLE, 31);
+  test_extract(INPLACE_NOT_CHAINABLE, 33);
 }
 
-TEST_F(TestBitVector, iimplies) { test_binary(IMPLIES, 1, true); }
+TEST_F(TestBitVector, iimplies)
+{
+  test_binary(INPLACE_NOT_CHAINABLE, IMPLIES, 1);
+}
 
 TEST_F(TestBitVector, iite)
 {
-  test_ite(1, true);
-  test_ite(7, true);
-  test_ite(31, true);
-  test_ite(33, true);
+  test_ite(INPLACE_NOT_CHAINABLE, 1);
+  test_ite(INPLACE_NOT_CHAINABLE, 7);
+  test_ite(INPLACE_NOT_CHAINABLE, 31);
+  test_ite(INPLACE_NOT_CHAINABLE, 33);
 }
 
 TEST_F(TestBitVector, imodinv)
 {
-  test_ite(1, true);
-  test_ite(7, true);
-  test_ite(31, true);
-  test_ite(33, true);
+  test_ite(INPLACE_NOT_CHAINABLE, 1);
+  test_ite(INPLACE_NOT_CHAINABLE, 7);
+  test_ite(INPLACE_NOT_CHAINABLE, 31);
+  test_ite(INPLACE_NOT_CHAINABLE, 33);
 }
 
 TEST_F(TestBitVector, imul)
 {
-  test_binary(MUL, 1, true);
-  test_binary(MUL, 7, true);
-  test_binary(MUL, 31, true);
-  test_binary(MUL, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, MUL, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, MUL, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, MUL, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, MUL, 33);
 }
 
 TEST_F(TestBitVector, inand)
 {
-  test_binary(NAND, 1, true);
-  test_binary(NAND, 7, true);
-  test_binary(NAND, 31, true);
-  test_binary(NAND, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, NAND, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, NAND, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, NAND, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, NAND, 33);
 }
 
 TEST_F(TestBitVector, ine)
 {
-  test_binary(NE, 1, true);
-  test_binary(NE, 7, true);
-  test_binary(NE, 31, true);
-  test_binary(NE, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, NE, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, NE, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, NE, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, NE, 33);
 }
 
 TEST_F(TestBitVector, ior)
 {
-  test_binary(OR, 1, true);
-  test_binary(OR, 7, true);
-  test_binary(OR, 31, true);
-  test_binary(OR, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, OR, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, OR, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, OR, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, OR, 33);
 }
 
 TEST_F(TestBitVector, inor)
 {
-  test_binary(NOR, 1, true);
-  test_binary(NOR, 7, true);
-  test_binary(NOR, 31, true);
-  test_binary(NOR, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, NOR, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, NOR, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, NOR, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, NOR, 33);
 }
 
 TEST_F(TestBitVector, isdiv)
 {
-  test_binary_signed(SDIV, 1, true);
-  test_binary_signed(SDIV, 7, true);
-  test_binary_signed(SDIV, 31, true);
-  test_binary_signed(SDIV, 33, true);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SDIV, 1);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SDIV, 7);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SDIV, 31);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SDIV, 33);
 }
 
 TEST_F(TestBitVector, isext)
 {
-  test_extend(SEXT, 2, true);
-  test_extend(SEXT, 3, true);
-  test_extend(SEXT, 4, true);
-  test_extend(SEXT, 5, true);
-  test_extend(SEXT, 6, true);
-  test_extend(SEXT, 7, true);
-  test_extend(SEXT, 31, true);
-  test_extend(SEXT, 33, true);
+  test_extend(INPLACE_NOT_CHAINABLE, SEXT, 2);
+  test_extend(INPLACE_NOT_CHAINABLE, SEXT, 3);
+  test_extend(INPLACE_NOT_CHAINABLE, SEXT, 4);
+  test_extend(INPLACE_NOT_CHAINABLE, SEXT, 5);
+  test_extend(INPLACE_NOT_CHAINABLE, SEXT, 6);
+  test_extend(INPLACE_NOT_CHAINABLE, SEXT, 7);
+  test_extend(INPLACE_NOT_CHAINABLE, SEXT, 31);
+  test_extend(INPLACE_NOT_CHAINABLE, SEXT, 33);
 }
 
 TEST_F(TestBitVector, ishl)
 {
-  test_binary(SHL, 2, true);
-  test_binary(SHL, 8, true);
-  test_binary(SHL, 16, true);
-  test_binary(SHL, 32, true);
+  test_binary(INPLACE_NOT_CHAINABLE, SHL, 2);
+  test_binary(INPLACE_NOT_CHAINABLE, SHL, 8);
+  test_binary(INPLACE_NOT_CHAINABLE, SHL, 16);
+  test_binary(INPLACE_NOT_CHAINABLE, SHL, 32);
 
   for (uint32_t i = 0, size = 2; i < (1u << size); ++i)
   {
@@ -3426,11 +3720,11 @@ TEST_F(TestBitVector, ishl)
       ss_expected << std::bitset<2>(i).to_string() << std::string(j, '0');
       std::string expected = ss_expected.str();
       expected             = expected.substr(expected.size() - size, size);
-      test_shift(SHL,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHL,
                  std::bitset<2>(i).to_string(),
                  std::bitset<2>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
   }
 
@@ -3442,11 +3736,11 @@ TEST_F(TestBitVector, ishl)
       ss_expected << std::bitset<3>(i).to_string() << std::string(j, '0');
       std::string expected = ss_expected.str();
       expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(SHL,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHL,
                  std::bitset<3>(i).to_string(),
                  std::bitset<3>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
   }
 
@@ -3458,11 +3752,11 @@ TEST_F(TestBitVector, ishl)
       ss_expected << std::bitset<8>(i).to_string() << std::string(j, '0');
       std::string expected = ss_expected.str();
       expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(SHL,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHL,
                  std::bitset<8>(i).to_string(),
                  std::bitset<8>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
   }
 
@@ -3475,19 +3769,19 @@ TEST_F(TestBitVector, ishl)
       ss_expected << std::bitset<65>(i).to_string() << std::string(j, '0');
       std::string expected = ss_expected.str();
       expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(SHL,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHL,
                  std::bitset<65>(i).to_string(),
                  std::bitset<65>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
     /* shift value doesn't fit into uint64_t */
     {
-      test_shift(SHL,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHL,
                  std::bitset<65>(i).to_string(),
                  std::bitset<65>(0u).set(64, 1).to_string(),
-                 std::string(bw, '0'),
-                 true);
+                 std::string(bw, '0'));
     }
   }
 
@@ -3500,30 +3794,30 @@ TEST_F(TestBitVector, ishl)
       ss_expected << std::bitset<128>(i).to_string() << std::string(j, '0');
       std::string expected = ss_expected.str();
       expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(SHL,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHL,
                  std::bitset<128>(i).to_string(),
                  std::bitset<128>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
     /* shift value doesn't fit into uint64_t */
     for (uint64_t j = 64; j < 128; ++j)
     {
-      test_shift(SHL,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHL,
                  std::bitset<128>(i).to_string(),
                  std::bitset<128>(0u).set(j, 1).to_string(),
-                 std::string(bw, '0'),
-                 true);
+                 std::string(bw, '0'));
     }
   }
 }
 
 TEST_F(TestBitVector, ishr)
 {
-  test_binary(SHR, 2, true);
-  test_binary(SHR, 8, true);
-  test_binary(SHR, 16, true);
-  test_binary(SHR, 32, true);
+  test_binary(INPLACE_NOT_CHAINABLE, SHR, 2);
+  test_binary(INPLACE_NOT_CHAINABLE, SHR, 8);
+  test_binary(INPLACE_NOT_CHAINABLE, SHR, 16);
+  test_binary(INPLACE_NOT_CHAINABLE, SHR, 32);
 
   for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
   {
@@ -3533,11 +3827,11 @@ TEST_F(TestBitVector, ishr)
       ss_expected << std::string(j, '0') << std::bitset<2>(i).to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(SHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHR,
                  std::bitset<2>(i).to_string(),
                  std::bitset<2>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
   }
 
@@ -3549,11 +3843,11 @@ TEST_F(TestBitVector, ishr)
       ss_expected << std::string(j, '0') << std::bitset<3>(i).to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(SHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHR,
                  std::bitset<3>(i).to_string(),
                  std::bitset<3>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
   }
 
@@ -3565,11 +3859,11 @@ TEST_F(TestBitVector, ishr)
       ss_expected << std::string(j, '0') << std::bitset<8>(i).to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(SHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHR,
                  std::bitset<8>(i).to_string(),
                  std::bitset<8>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
   }
 
@@ -3582,19 +3876,19 @@ TEST_F(TestBitVector, ishr)
       ss_expected << std::string(j, '0') << std::bitset<65>(i).to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(SHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHR,
                  std::bitset<65>(i).to_string(),
                  std::bitset<65>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
     /* shift value doesn't fit into uint64_t */
     {
-      test_shift(SHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHR,
                  std::bitset<65>(i).to_string(),
                  std::bitset<65>(0u).set(64, 1).to_string(),
-                 std::string(bw, '0'),
-                 true);
+                 std::string(bw, '0'));
     }
   }
 
@@ -3607,29 +3901,29 @@ TEST_F(TestBitVector, ishr)
       ss_expected << std::string(j, '0') << std::bitset<128>(i).to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(SHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHR,
                  std::bitset<128>(i).to_string(),
                  std::bitset<128>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
     /* shift value doesn't fit into uint64_t */
     {
-      test_shift(SHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 SHR,
                  std::bitset<128>(i).to_string(),
                  std::bitset<128>(0u).set(120, 1).to_string(),
-                 std::string(bw, '0'),
-                 true);
+                 std::string(bw, '0'));
     }
   }
 }
 
 TEST_F(TestBitVector, iashr)
 {
-  test_binary(ASHR, 2, true);
-  test_binary(ASHR, 8, true);
-  test_binary(ASHR, 16, true);
-  test_binary(ASHR, 32, true);
+  test_binary(INPLACE_NOT_CHAINABLE, ASHR, 2);
+  test_binary(INPLACE_NOT_CHAINABLE, ASHR, 8);
+  test_binary(INPLACE_NOT_CHAINABLE, ASHR, 16);
+  test_binary(INPLACE_NOT_CHAINABLE, ASHR, 32);
 
   for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
   {
@@ -3641,11 +3935,11 @@ TEST_F(TestBitVector, iashr)
                   << bits_i.to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(ASHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 ASHR,
                  std::bitset<2>(i).to_string(),
                  std::bitset<2>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
   }
 
@@ -3659,11 +3953,11 @@ TEST_F(TestBitVector, iashr)
                   << bits_i.to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(ASHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 ASHR,
                  std::bitset<3>(i).to_string(),
                  std::bitset<3>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
   }
 
@@ -3677,11 +3971,11 @@ TEST_F(TestBitVector, iashr)
                   << bits_i.to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(ASHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 ASHR,
                  std::bitset<8>(i).to_string(),
                  std::bitset<8>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
   }
 
@@ -3696,19 +3990,19 @@ TEST_F(TestBitVector, iashr)
                   << bits_i.to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(ASHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 ASHR,
                  std::bitset<65>(i).to_string(),
                  std::bitset<65>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
     /* shift value doesn't fit into uint64_t */
     {
-      test_shift(ASHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 ASHR,
                  std::bitset<65>(i).to_string(),
                  std::bitset<65>(0u).set(64, 1).to_string(),
-                 std::string(bw, '0'),
-                 true);
+                 std::string(bw, '0'));
     }
   }
 
@@ -3723,145 +4017,147 @@ TEST_F(TestBitVector, iashr)
                   << bits_i.to_string();
       std::string expected = ss_expected.str();
       expected             = expected.substr(0, bw);
-      test_shift(ASHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 ASHR,
                  std::bitset<128>(i).to_string(),
                  std::bitset<128>(j).to_string(),
-                 expected,
-                 true);
+                 expected);
     }
     /* shift value doesn't fit into uint64_t */
     {
-      test_shift(ASHR,
+      test_shift(INPLACE_NOT_CHAINABLE,
+                 ASHR,
                  std::bitset<128>(i).to_string(),
                  std::bitset<128>(0u).set(120, 1).to_string(),
-                 std::string(bw, '0'),
-                 true);
+                 std::string(bw, '0'));
     }
   }
 }
 
 TEST_F(TestBitVector, islt)
 {
-  test_binary_signed(SLT, 1, true);
-  test_binary_signed(SLT, 7, true);
-  test_binary_signed(SLT, 31, true);
-  test_binary_signed(SLT, 33, true);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SLT, 1);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SLT, 7);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SLT, 31);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SLT, 33);
 }
 
 TEST_F(TestBitVector, isle)
 {
-  test_binary_signed(SLE, 1, true);
-  test_binary_signed(SLE, 7, true);
-  test_binary_signed(SLE, 31, true);
-  test_binary_signed(SLE, 33, true);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SLE, 1);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SLE, 7);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SLE, 31);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SLE, 33);
 }
 
 TEST_F(TestBitVector, isgt)
 {
-  test_binary_signed(SGT, 1, true);
-  test_binary_signed(SGT, 7, true);
-  test_binary_signed(SGT, 31, true);
-  test_binary_signed(SGT, 33, true);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SGT, 1);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SGT, 7);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SGT, 31);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SGT, 33);
 }
 
 TEST_F(TestBitVector, isge)
 {
-  test_binary_signed(SGE, 1, true);
-  test_binary_signed(SGE, 7, true);
-  test_binary_signed(SGE, 31, true);
-  test_binary_signed(SGE, 33, true);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SGE, 1);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SGE, 7);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SGE, 31);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SGE, 33);
 }
 
 TEST_F(TestBitVector, isub)
 {
-  test_binary(SUB, 1, true);
-  test_binary(SUB, 7, true);
-  test_binary(SUB, 31, true);
-  test_binary(SUB, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, SUB, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, SUB, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, SUB, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, SUB, 33);
 }
 
 TEST_F(TestBitVector, isrem)
 {
-  test_binary_signed(SREM, 1, true);
-  test_binary_signed(SREM, 7, true);
-  test_binary_signed(SREM, 31, true);
-  test_binary_signed(SREM, 33, true);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SREM, 1);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SREM, 7);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SREM, 31);
+  test_binary_signed(INPLACE_NOT_CHAINABLE, SREM, 33);
 }
 
 TEST_F(TestBitVector, iudiv)
 {
-  test_binary(UDIV, 1, true);
-  test_binary(UDIV, 7, true);
-  test_binary(UDIV, 31, true);
-  test_binary(UDIV, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, UDIV, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, UDIV, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, UDIV, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, UDIV, 33);
 }
 
 TEST_F(TestBitVector, iult)
 {
-  test_binary(ULT, 1, true);
-  test_binary(ULT, 7, true);
-  test_binary(ULT, 31, true);
-  test_binary(ULT, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, ULT, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, ULT, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, ULT, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, ULT, 33);
 }
 
 TEST_F(TestBitVector, iule)
 {
-  test_binary(ULE, 1, true);
-  test_binary(ULE, 7, true);
-  test_binary(ULE, 31, true);
-  test_binary(ULE, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, ULE, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, ULE, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, ULE, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, ULE, 33);
 }
 
 TEST_F(TestBitVector, iugt)
 {
-  test_binary(UGT, 1, true);
-  test_binary(UGT, 7, true);
-  test_binary(UGT, 31, true);
-  test_binary(UGT, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, UGT, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, UGT, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, UGT, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, UGT, 33);
 }
 
 TEST_F(TestBitVector, iuge)
 {
-  test_binary(UGE, 1, true);
-  test_binary(UGE, 7, true);
-  test_binary(UGE, 31, true);
-  test_binary(UGE, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, UGE, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, UGE, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, UGE, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, UGE, 33);
 }
 
 TEST_F(TestBitVector, iurem)
 {
-  test_binary(UREM, 1, true);
-  test_binary(UREM, 7, true);
-  test_binary(UREM, 31, true);
-  test_binary(UREM, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, UREM, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, UREM, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, UREM, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, UREM, 33);
 }
 TEST_F(TestBitVector, ixor)
 {
-  test_binary(XOR, 1, true);
-  test_binary(XOR, 7, true);
-  test_binary(XOR, 31, true);
-  test_binary(XOR, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, XOR, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, XOR, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, XOR, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, XOR, 33);
 }
 
 TEST_F(TestBitVector, ixnor)
 {
-  test_binary(XNOR, 1, true);
-  test_binary(XNOR, 7, true);
-  test_binary(XNOR, 31, true);
-  test_binary(XNOR, 33, true);
+  test_binary(INPLACE_NOT_CHAINABLE, XNOR, 1);
+  test_binary(INPLACE_NOT_CHAINABLE, XNOR, 7);
+  test_binary(INPLACE_NOT_CHAINABLE, XNOR, 31);
+  test_binary(INPLACE_NOT_CHAINABLE, XNOR, 33);
 }
 
 TEST_F(TestBitVector, izext)
 {
-  test_extend(ZEXT, 2, true);
-  test_extend(ZEXT, 3, true);
-  test_extend(ZEXT, 4, true);
-  test_extend(ZEXT, 5, true);
-  test_extend(ZEXT, 6, true);
-  test_extend(ZEXT, 7, true);
-  test_extend(ZEXT, 31, true);
-  test_extend(ZEXT, 33, true);
+  test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 2);
+  test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 3);
+  test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 4);
+  test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 5);
+  test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 6);
+  test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 7);
+  test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 31);
+  test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 33);
 }
+
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestBitVector, add32)
 {
@@ -3884,6 +4180,8 @@ TEST_F(TestBitVector, iadd32)
     res.ibvadd(a0, a1);
   }
 }
+
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestBitVector, udivurem)
 {

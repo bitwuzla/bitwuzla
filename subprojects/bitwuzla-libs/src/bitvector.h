@@ -285,8 +285,18 @@ class BitVector
 
   /** In place versions of bit-vector operations. --------------------------- */
 
-  /** Negation (in place). */
+  /**
+   * Negation (in place).
+   * Bit-wise negation of 'bv', result is stored in this bit-vector.
+   */
   void ibvneg(const BitVector& bv);
+  /**
+   * Negation (in place).
+   * Bit-wise negation of this bit-vector, result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvneg();
+
   /** Bit-wise not (in placeconst BitVector& bv. */
   void ibvnot(const BitVector& bv);
   /** Increment (in placeconst BitVector& bv. */

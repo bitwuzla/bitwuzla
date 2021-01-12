@@ -1717,6 +1717,16 @@ BitVector::ibvmodinv(const BitVector& bv)
 
 /* -------------------------------------------------------------------------- */
 
+const BitVector&
+BitVector::ibvneg()
+{
+  assert(!is_null());
+  ibvneg(*this);
+  return *this;
+}
+
+/* -------------------------------------------------------------------------- */
+
 void
 BitVector::bvudivurem(const BitVector& bv,
                       BitVector* quot,
