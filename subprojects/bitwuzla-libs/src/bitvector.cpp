@@ -996,7 +996,7 @@ BitVector::bvmodinv() const
 /* -------------------------------------------------------------------------- */
 
 void
-BitVector::ibvneg(const BitVector& bv) const
+BitVector::ibvneg(const BitVector& bv)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1007,7 +1007,7 @@ BitVector::ibvneg(const BitVector& bv) const
 }
 
 void
-BitVector::ibvnot(const BitVector& bv) const
+BitVector::ibvnot(const BitVector& bv)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1018,7 +1018,7 @@ BitVector::ibvnot(const BitVector& bv) const
 }
 
 void
-BitVector::ibvinc(const BitVector& bv) const
+BitVector::ibvinc(const BitVector& bv)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1028,7 +1028,7 @@ BitVector::ibvinc(const BitVector& bv) const
 }
 
 void
-BitVector::ibvdec(const BitVector& bv) const
+BitVector::ibvdec(const BitVector& bv)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1038,7 +1038,7 @@ BitVector::ibvdec(const BitVector& bv) const
 }
 
 void
-BitVector::ibvredand(const BitVector& bv) const
+BitVector::ibvredand(const BitVector& bv)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1054,7 +1054,7 @@ BitVector::ibvredand(const BitVector& bv) const
 }
 
 void
-BitVector::ibvredor(const BitVector& bv) const
+BitVector::ibvredor(const BitVector& bv)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1073,7 +1073,7 @@ BitVector::ibvredor(const BitVector& bv) const
 }
 
 void
-BitVector::ibvadd(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvadd(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1085,7 +1085,7 @@ BitVector::ibvadd(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvsub(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvsub(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1097,7 +1097,7 @@ BitVector::ibvsub(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvand(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvand(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1109,7 +1109,7 @@ BitVector::ibvand(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvimplies(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvimplies(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1128,7 +1128,7 @@ BitVector::ibvimplies(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvnand(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvnand(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1141,7 +1141,7 @@ BitVector::ibvnand(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvnor(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvnor(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1154,7 +1154,7 @@ BitVector::ibvnor(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvor(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvor(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1166,7 +1166,7 @@ BitVector::ibvor(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvxnor(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvxnor(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1179,7 +1179,7 @@ BitVector::ibvxnor(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvxor(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvxor(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1191,7 +1191,7 @@ BitVector::ibvxor(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibveq(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibveq(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1209,7 +1209,7 @@ BitVector::ibveq(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvne(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvne(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1227,7 +1227,7 @@ BitVector::ibvne(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvult(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvult(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1245,7 +1245,7 @@ BitVector::ibvult(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvule(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvule(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1263,7 +1263,7 @@ BitVector::ibvule(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvugt(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvugt(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1281,7 +1281,7 @@ BitVector::ibvugt(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvuge(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvuge(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1299,7 +1299,7 @@ BitVector::ibvuge(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvslt(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvslt(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1323,7 +1323,7 @@ BitVector::ibvslt(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvsle(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvsle(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1347,7 +1347,7 @@ BitVector::ibvsle(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvsgt(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvsgt(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1371,7 +1371,7 @@ BitVector::ibvsgt(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1395,7 +1395,7 @@ BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvshl(const BitVector& bv, uint32_t shift) const
+BitVector::ibvshl(const BitVector& bv, uint32_t shift)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1412,7 +1412,7 @@ BitVector::ibvshl(const BitVector& bv, uint32_t shift) const
 }
 
 void
-BitVector::ibvshl(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvshl(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1431,7 +1431,7 @@ BitVector::ibvshl(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvshr(const BitVector& bv, uint32_t shift) const
+BitVector::ibvshr(const BitVector& bv, uint32_t shift)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1447,7 +1447,7 @@ BitVector::ibvshr(const BitVector& bv, uint32_t shift) const
 }
 
 void
-BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1466,7 +1466,7 @@ BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1486,7 +1486,7 @@ BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvmul(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvmul(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1498,7 +1498,7 @@ BitVector::ibvmul(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvudiv(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvudiv(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1519,7 +1519,7 @@ BitVector::ibvudiv(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvurem(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvurem(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1538,7 +1538,7 @@ BitVector::ibvurem(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1572,7 +1572,7 @@ BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1606,7 +1606,7 @@ BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1) const
+BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
   assert(!bv0.is_null());
@@ -1618,9 +1618,7 @@ BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1) const
 }
 
 void
-BitVector::ibvextract(const BitVector& bv,
-                      uint32_t idx_hi,
-                      uint32_t idx_lo) const
+BitVector::ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1630,7 +1628,7 @@ BitVector::ibvextract(const BitVector& bv,
 }
 
 void
-BitVector::ibvzext(const BitVector& bv, uint32_t n) const
+BitVector::ibvzext(const BitVector& bv, uint32_t n)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1639,7 +1637,7 @@ BitVector::ibvzext(const BitVector& bv, uint32_t n) const
 }
 
 void
-BitVector::ibvsext(const BitVector& bv, uint32_t n) const
+BitVector::ibvsext(const BitVector& bv, uint32_t n)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1687,7 +1685,7 @@ BitVector::ibvite(const BitVector& c, const BitVector& t, const BitVector& e)
 }
 
 void
-BitVector::ibvmodinv(const BitVector& bv) const
+BitVector::ibvmodinv(const BitVector& bv)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -1716,6 +1714,8 @@ BitVector::ibvmodinv(const BitVector& bv) const
   mpz_clear(ty);
 #endif
 }
+
+/* -------------------------------------------------------------------------- */
 
 void
 BitVector::bvudivurem(const BitVector& bv,

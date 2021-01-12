@@ -286,118 +286,118 @@ class BitVector
   /** In place versions of bit-vector operations. --------------------------- */
 
   /** Negation (in place). */
-  void ibvneg(const BitVector& bv) const;
+  void ibvneg(const BitVector& bv);
   /** Bit-wise not (in placeconst BitVector& bv. */
-  void ibvnot(const BitVector& bv) const;
+  void ibvnot(const BitVector& bv);
   /** Increment (in placeconst BitVector& bv. */
-  void ibvinc(const BitVector& bv) const;
+  void ibvinc(const BitVector& bv);
   /** Decrement (in placeconst BitVector& bv. */
-  void ibvdec(const BitVector& bv) const;
+  void ibvdec(const BitVector& bv);
   /**
    * And reduction (in place).
    * Returns true bit-vector if all bits are 1, else false.
    */
-  void ibvredand(const BitVector& bv) const;
+  void ibvredand(const BitVector& bv);
   /**
    * Or reduction (in place).
    * Returns true bit-vector if one bit is 1, else false.
    */
-  void ibvredor(const BitVector& bv) const;
+  void ibvredor(const BitVector& bv);
 
   /** Addition (in place). */
-  void ibvadd(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvadd(const BitVector& bv0, const BitVector& bv1);
   /** Subtraction (in place). */
-  void ibvsub(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvsub(const BitVector& bv0, const BitVector& bv1);
   /** Bit-wise and (in place). */
-  void ibvand(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvand(const BitVector& bv0, const BitVector& bv1);
   /** Implication (in place). */
-  void ibvimplies(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvimplies(const BitVector& bv0, const BitVector& bv1);
   /** Bit-wise nand (in place). */
-  void ibvnand(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvnand(const BitVector& bv0, const BitVector& bv1);
   /** Bit-wise nor (in place). */
-  void ibvnor(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvnor(const BitVector& bv0, const BitVector& bv1);
   /** Bit-wise or (in place). */
-  void ibvor(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvor(const BitVector& bv0, const BitVector& bv1);
   /** Bit-wise xnor (in place). */
-  void ibvxnor(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvxnor(const BitVector& bv0, const BitVector& bv1);
   /** Bit-wise xor (in place). */
-  void ibvxor(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvxor(const BitVector& bv0, const BitVector& bv1);
   /** Equality (in place). */
-  void ibveq(const BitVector& bv0, const BitVector& bv1) const;
+  void ibveq(const BitVector& bv0, const BitVector& bv1);
   /** Disequality (in place). */
-  void ibvne(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvne(const BitVector& bv0, const BitVector& bv1);
   /** Unsigned less than (in place). */
-  void ibvult(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvult(const BitVector& bv0, const BitVector& bv1);
   /** Unsigned less than or equal (in place). */
-  void ibvule(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvule(const BitVector& bv0, const BitVector& bv1);
   /** Unsigned greater than (in place). */
-  void ibvugt(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvugt(const BitVector& bv0, const BitVector& bv1);
   /** Unsigned greater than or equal (in place). */
-  void ibvuge(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvuge(const BitVector& bv0, const BitVector& bv1);
   /** Signed less than (in place). */
-  void ibvslt(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvslt(const BitVector& bv0, const BitVector& bv1);
   /** Signed less than or equal (in place). */
-  void ibvsle(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvsle(const BitVector& bv0, const BitVector& bv1);
   /** Signed greater than (in place). */
-  void ibvsgt(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvsgt(const BitVector& bv0, const BitVector& bv1);
   /** Signed greater than or equal (in place). */
-  void ibvsge(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvsge(const BitVector& bv0, const BitVector& bv1);
   /**
    * Logical left shift (in place).
    * Shift value is given as an unsigned integer.
    */
-  void ibvshl(const BitVector& bv1, uint32_t shift) const;
+  void ibvshl(const BitVector& bv1, uint32_t shift);
   /**
    * Logical left shift (in place).
    * Shift value is given as a bit-vector.
    */
-  void ibvshl(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvshl(const BitVector& bv0, const BitVector& bv1);
   /**
    * Logical right shift (in place).
    * Shift value is given as an unsigned integer.
    */
-  void ibvshr(const BitVector& bv1, uint32_t shift) const;
+  void ibvshr(const BitVector& bv1, uint32_t shift);
   /**
    * Logical right shift (in place).
    * Shift value is given as a bit-vector.
    */
-  void ibvshr(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvshr(const BitVector& bv0, const BitVector& bv1);
   /** Arithmetic right shift (in place). */
-  void ibvashr(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvashr(const BitVector& bv0, const BitVector& bv1);
   /** Multiplication (in place). */
-  void ibvmul(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvmul(const BitVector& bv0, const BitVector& bv1);
   /** Unsigned division (in place). */
-  void ibvudiv(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvudiv(const BitVector& bv0, const BitVector& bv1);
   /** Unsigned remainder (in place). */
-  void ibvurem(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvurem(const BitVector& bv0, const BitVector& bv1);
   /** Signed division (in place). */
-  void ibvsdiv(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvsdiv(const BitVector& bv0, const BitVector& bv1);
   /** Signed remainder (in place). */
-  void ibvsrem(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvsrem(const BitVector& bv0, const BitVector& bv1);
 
   /**
    * Concatenation (in place).
    * Bit-vector 'bv1' is concatenated (at the right, the lsb side) to 'bv0'.
    */
-  void ibvconcat(const BitVector& bv0, const BitVector& bv1) const;
+  void ibvconcat(const BitVector& bv0, const BitVector& bv1);
 
   /**
    * Extract a bit range from bit-vector 'bv' (in place).
    * idx_hi: The upper bit-index of the range (inclusive).
    * idx_lo: The lower bit-index of the range (inclusive).
    */
-  void ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo) const;
+  void ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo);
 
   /**
    * Zero extension (in place).
    * n: The number of bits to extend bit-vector 'bv' with.
    */
-  void ibvzext(const BitVector& bv, uint32_t n) const;
+  void ibvzext(const BitVector& bv, uint32_t n);
   /**
    * Sign extension (in place).
    * n: The number of bits to extend bit-vector 'bv' with.
    */
-  void ibvsext(const BitVector& bv, uint32_t n) const;
+  void ibvsext(const BitVector& bv, uint32_t n);
 
   /**
    * Create a if-then-else over the given bit-vectors (in place).
@@ -414,7 +414,9 @@ class BitVector
    * Note: Bit-vector 'bv' must be odd. The greatest common divisor
    *       gcd (c, 2^bw) must be (and is, in this case) always 1.
    */
-  void ibvmodinv(const BitVector& bv) const;
+  void ibvmodinv(const BitVector& bv);
+
+  /** Merged bit-vector operations. ----------------------------------------- */
 
   /**
    * Calculate the unsigned division and remainder of this bit-vector with 'bv'.
