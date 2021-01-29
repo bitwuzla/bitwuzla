@@ -286,62 +286,78 @@ class BitVector
   /** in-place versions of bit-vector operations. --------------------------- */
 
   /**
-   * Two's complement negation (in-place).
+   * Two's complement negation (in-place) of 'bv'.
    * Result is stored in this bit-vector.
    */
   void ibvneg(const BitVector& bv);
   /**
-   * Two's complement negation (in-place, chainable).
+   * Two's complement negation (in-place, chainable) of this bit-vector.
    * Result is stored in this bit-vector.
    * Returns a reference to this bit-vector.
    */
   const BitVector& ibvneg();
 
-  /** Bit-wise negation (in-place). */
+  /**
+   * Bit-wise negation (in-place) of 'bv'.
+   * Result is stored in this bit-vector.
+   */
   void ibvnot(const BitVector& bv);
   /**
-   * Bit-wise negation (in-place, chainable).
+   * Bit-wise negation (in-place, chainable) of this bit-vector.
    * Result is stored in this bit-vector.
    * Returns a reference to this bit-vector.
    */
   const BitVector& ibvnot();
 
   /**
-   * Increment (in-place).
+   * Increment (in-place) of 'bv'.
    * Result is stored in this bit-vector.
    */
   void ibvinc(const BitVector& bv);
   /**
-   * Increment (in-place, chainable).
+   * Increment (in-place, chainable) of this bit-vector.
    * Result is stored in this bit-vector.
    * Returns a reference to this bit-vector.
    */
   const BitVector& ibvinc();
 
   /**
-   * Decrement (in-place).
+   * Decrement (in-place) of 'bv'.
    * Result is stored in this bit-vector.
    */
   void ibvdec(const BitVector& bv);
   /**
-   * Decrement (in-place, chainable).
+   * Decrement (in-place, chainable) of this bit-vector.
    * Result is stored in this bit-vector.
    * Returns a reference to this bit-vector.
    */
   const BitVector& ibvdec();
 
   /**
-   * And reduction (in-place).
+   * And reduction (in-place) of 'bv'.
    * Result is a true bit-vector if all bits of 'bv' are 1, else a false
    * bit-vector.
    * Result is stored in this bit-vector.
    */
   void ibvredand(const BitVector& bv);
   /**
-   * Or reduction (in-place).
+   * And reduction (in-place, chainable) of this bit-vector.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvredand();
+
+  /**
+   * Or reduction (in-place) of 'bv'.
    * Returns true bit-vector if one bit is 1, else false.
    */
   void ibvredor(const BitVector& bv);
+  /**
+   * Or reduction (in-place, chainable) of this bit-vector.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvredor();
 
   /**
    * Addition (in-place)  'bv0' and 'bv1'.

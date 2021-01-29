@@ -830,7 +830,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind, uint32_t size)
       case REDAND:
         if (fun_kind == INPLACE_CHAINABLE)
         {
-          assert(false);
+          (void) res.ibvredand();
         }
         else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
@@ -847,7 +847,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind, uint32_t size)
       case REDOR:
         if (fun_kind == INPLACE_CHAINABLE)
         {
-          assert(false);
+          (void) res.ibvredor();
         }
         else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
@@ -864,6 +864,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind, uint32_t size)
       default: assert(false);
     }
     uint64_t bres = res.to_uint64();
+    assert(ares == bres);
     ASSERT_EQ(ares, bres);
   }
 }
@@ -1310,10 +1311,6 @@ TestBitVector::test_binary(BvFunKind fun_kind,
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(res.ibveq(b1, b1), "d_size == 1");
-        }
         ASSERT_DEATH(BitVector(1).ibveq(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(1).ibveq(b2, b1), "d_size == .*d_size");
       }
@@ -1330,12 +1327,8 @@ TestBitVector::test_binary(BvFunKind fun_kind,
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(res.ibvimplies(b1, b1), "d_size == 1");
-        }
-        ASSERT_DEATH(BitVector(1).ibvimplies(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(BitVector(1).ibvimplies(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH(BitVector(1).ibvimplies(b1, b2), "bv1.d_size == 1");
+        ASSERT_DEATH(BitVector(1).ibvimplies(b2, b1), "bv0.d_size == 1");
       }
       else
       {
@@ -1382,10 +1375,6 @@ TestBitVector::test_binary(BvFunKind fun_kind,
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(res.ibvne(b1, b1), "d_size == 1");
-        }
         ASSERT_DEATH(BitVector(1).ibvne(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(1).ibvne(b2, b1), "d_size == .*d_size");
       }
@@ -1498,10 +1487,6 @@ TestBitVector::test_binary(BvFunKind fun_kind,
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(res.ibvult(b1, b1), "d_size == 1");
-        }
         ASSERT_DEATH(BitVector(1).ibvult(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(1).ibvult(b2, b1), "d_size == .*d_size");
       }
@@ -1518,10 +1503,6 @@ TestBitVector::test_binary(BvFunKind fun_kind,
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(res.ibvule(b1, b1), "d_size == 1");
-        }
         ASSERT_DEATH(BitVector(1).ibvule(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(1).ibvule(b2, b1), "d_size == .*d_size");
       }
@@ -1538,10 +1519,6 @@ TestBitVector::test_binary(BvFunKind fun_kind,
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(res.ibvugt(b1, b1), "d_size == 1");
-        }
         ASSERT_DEATH(BitVector(1).ibvugt(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(1).ibvugt(b2, b1), "d_size == .*d_size");
       }
@@ -1558,10 +1535,6 @@ TestBitVector::test_binary(BvFunKind fun_kind,
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(res.ibvuge(b1, b1), "d_size == ");
-        }
         ASSERT_DEATH(BitVector(1).ibvuge(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(1).ibvuge(b2, b1), "d_size == .*d_size");
       }
@@ -1794,10 +1767,6 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(BitVector(size).ibvslt(b1, b1), "d_size == 1");
-        }
         ASSERT_DEATH(BitVector(1).ibvslt(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(1).ibvslt(b2, b1), "d_size == .*d_size");
       }
@@ -1814,10 +1783,6 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(BitVector(size).ibvsle(b1, b1), "d_size == 1");
-        }
         ASSERT_DEATH(BitVector(1).ibvsle(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(1).ibvsle(b2, b1), "d_size == .*d_size");
       }
@@ -1834,10 +1799,6 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(BitVector(size).ibvsgt(b1, b1), "d_size == 1");
-        }
         ASSERT_DEATH(BitVector(1).ibvsgt(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(1).ibvsgt(b2, b1), "d_size == .*d_size");
       }
@@ -1854,10 +1815,6 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        if (size > 1)
-        {
-          ASSERT_DEATH(BitVector(size).ibvsge(b1, b1), "d_size == 1");
-        }
         ASSERT_DEATH(BitVector(1).ibvsge(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(BitVector(1).ibvsge(b2, b1), "d_size == .*d_size");
       }
@@ -3586,6 +3543,10 @@ TEST_F(TestBitVector, iredand)
   test_unary(INPLACE_NOT_CHAINABLE, REDAND, 7);
   test_unary(INPLACE_NOT_CHAINABLE, REDAND, 31);
   test_unary(INPLACE_NOT_CHAINABLE, REDAND, 33);
+  test_unary(INPLACE_CHAINABLE, REDAND, 1);
+  test_unary(INPLACE_CHAINABLE, REDAND, 7);
+  test_unary(INPLACE_CHAINABLE, REDAND, 31);
+  test_unary(INPLACE_CHAINABLE, REDAND, 33);
 }
 
 TEST_F(TestBitVector, iredor)
@@ -3594,6 +3555,10 @@ TEST_F(TestBitVector, iredor)
   test_unary(INPLACE_NOT_CHAINABLE, REDOR, 7);
   test_unary(INPLACE_NOT_CHAINABLE, REDOR, 31);
   test_unary(INPLACE_NOT_CHAINABLE, REDOR, 33);
+  test_unary(INPLACE_CHAINABLE, REDOR, 1);
+  test_unary(INPLACE_CHAINABLE, REDOR, 7);
+  test_unary(INPLACE_CHAINABLE, REDOR, 31);
+  test_unary(INPLACE_CHAINABLE, REDOR, 33);
 }
 
 TEST_F(TestBitVector, iadd)
