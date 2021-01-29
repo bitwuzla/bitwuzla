@@ -814,7 +814,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind, uint32_t size)
       case NOT:
         if (fun_kind == INPLACE_CHAINABLE)
         {
-          // TODO
+          (void) res.ibvnot();
         }
         else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
@@ -3565,6 +3565,10 @@ TEST_F(TestBitVector, inot)
   test_unary(INPLACE_NOT_CHAINABLE, NOT, 7);
   test_unary(INPLACE_NOT_CHAINABLE, NOT, 31);
   test_unary(INPLACE_NOT_CHAINABLE, NOT, 33);
+  test_unary(INPLACE_CHAINABLE, NOT, 1);
+  test_unary(INPLACE_CHAINABLE, NOT, 7);
+  test_unary(INPLACE_CHAINABLE, NOT, 31);
+  test_unary(INPLACE_CHAINABLE, NOT, 33);
 }
 
 TEST_F(TestBitVector, iredand)

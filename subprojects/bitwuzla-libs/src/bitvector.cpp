@@ -466,6 +466,10 @@ BitVector::count_leading_ones() const
   return count_leading(false);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Bit-vector operations.                                                     */
+/* -------------------------------------------------------------------------- */
+
 BitVector
 BitVector::bvneg() const
 {
@@ -993,6 +997,8 @@ BitVector::bvmodinv() const
   return res;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Bit-vector operations, in-place, not chainable.                            */
 /* -------------------------------------------------------------------------- */
 
 void
@@ -1716,12 +1722,22 @@ BitVector::ibvmodinv(const BitVector& bv)
 }
 
 /* -------------------------------------------------------------------------- */
+/* Bit-vector operations, in-place, chainable.                                */
+/* -------------------------------------------------------------------------- */
 
 const BitVector&
 BitVector::ibvneg()
 {
   assert(!is_null());
   ibvneg(*this);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvnot()
+{
+  assert(!is_null());
+  ibvnot(*this);
   return *this;
 }
 
