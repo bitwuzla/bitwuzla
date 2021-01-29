@@ -1813,6 +1813,26 @@ BitVector::ibvsub(const BitVector& bv)
   return *this;
 }
 
+const BitVector&
+BitVector::ibvxnor(const BitVector& bv)
+{
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  ibvxnor(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvxor(const BitVector& bv)
+{
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  ibvxor(*this, bv);
+  return *this;
+}
+
 /* -------------------------------------------------------------------------- */
 
 void

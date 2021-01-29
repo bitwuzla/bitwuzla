@@ -421,10 +421,30 @@ class BitVector
    */
   const BitVector& ibvsub(const BitVector& bv);
 
-  /** Bit-wise xnor (in-place). */
+  /**
+   * Bit-wise xnor (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvxnor(const BitVector& bv0, const BitVector& bv1);
-  /** Bit-wise xor (in-place). */
+  /**
+   * Bit-wise xnor (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvxnor(const BitVector& bv);
+
+  /**
+   * Bit-wise xor (in-place).
+   * Result is stored in this bit-vector.
+   */
   void ibvxor(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Bit-wise xor (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvxor(const BitVector& bv);
+
   /** Equality (in-place). */
   void ibveq(const BitVector& bv0, const BitVector& bv1);
   /** Disequality (in-place). */
