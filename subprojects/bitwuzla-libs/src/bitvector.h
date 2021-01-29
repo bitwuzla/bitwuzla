@@ -355,10 +355,18 @@ class BitVector
    */
   const BitVector& ibvadd(const BitVector& bv);
 
-  /** Subtraction (in-place). */
-  void ibvsub(const BitVector& bv0, const BitVector& bv1);
-  /** Bit-wise and (in-place). */
+  /**
+   * Bit-wise and (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvand(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Bit-wise and (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvand(const BitVector& bv);
+
   /** Implication (in-place). */
   void ibvimplies(const BitVector& bv0, const BitVector& bv1);
   /** Bit-wise nand (in-place). */
@@ -367,6 +375,19 @@ class BitVector
   void ibvnor(const BitVector& bv0, const BitVector& bv1);
   /** Bit-wise or (in-place). */
   void ibvor(const BitVector& bv0, const BitVector& bv1);
+
+  /**
+   * Subtraction (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
+  void ibvsub(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Subtraction (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvsub(const BitVector& bv);
+
   /** Bit-wise xnor (in-place). */
   void ibvxnor(const BitVector& bv0, const BitVector& bv1);
   /** Bit-wise xor (in-place). */

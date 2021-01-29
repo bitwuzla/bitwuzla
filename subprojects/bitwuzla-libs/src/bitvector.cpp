@@ -1762,7 +1762,27 @@ BitVector::ibvadd(const BitVector& bv)
 {
   assert(!is_null());
   assert(!bv.is_null());
+  assert(d_size == bv.d_size);
   ibvadd(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvsub(const BitVector& bv)
+{
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  ibvsub(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvand(const BitVector& bv)
+{
+  assert(!is_null());
+  assert(!bv.is_null());
+  ibvand(*this, bv);
   return *this;
 }
 

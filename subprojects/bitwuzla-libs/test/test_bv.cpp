@@ -918,7 +918,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
         case AND:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            res.ibvand(b1, b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1097,7 +1097,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
         case SUB:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            res.ibvsub(b1, b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1258,7 +1258,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     case ADD:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(res.ibvadd(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -1274,7 +1274,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     case AND:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(res.ibvand(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -1462,7 +1462,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     case SUB:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(res.ibvsub(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -3614,6 +3614,10 @@ TEST_F(TestBitVector, iand)
   test_binary(INPLACE_NOT_CHAINABLE, AND, 7);
   test_binary(INPLACE_NOT_CHAINABLE, AND, 31);
   test_binary(INPLACE_NOT_CHAINABLE, AND, 33);
+  test_binary(INPLACE_CHAINABLE, AND, 1);
+  test_binary(INPLACE_CHAINABLE, AND, 7);
+  test_binary(INPLACE_CHAINABLE, AND, 31);
+  test_binary(INPLACE_CHAINABLE, AND, 33);
 }
 
 TEST_F(TestBitVector, iconcat)
@@ -4089,6 +4093,10 @@ TEST_F(TestBitVector, isub)
   test_binary(INPLACE_NOT_CHAINABLE, SUB, 7);
   test_binary(INPLACE_NOT_CHAINABLE, SUB, 31);
   test_binary(INPLACE_NOT_CHAINABLE, SUB, 33);
+  test_binary(INPLACE_CHAINABLE, SUB, 1);
+  test_binary(INPLACE_CHAINABLE, SUB, 7);
+  test_binary(INPLACE_CHAINABLE, SUB, 31);
+  test_binary(INPLACE_CHAINABLE, SUB, 33);
 }
 
 TEST_F(TestBitVector, isrem)
