@@ -766,7 +766,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind, uint32_t size)
       case DEC:
         if (fun_kind == INPLACE_CHAINABLE)
         {
-          // TODO
+          (void) res.ibvdec();
         }
         else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
@@ -782,7 +782,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind, uint32_t size)
       case INC:
         if (fun_kind == INPLACE_CHAINABLE)
         {
-          // TODO
+          (void) res.ibvinc();
         }
         else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
@@ -3537,6 +3537,10 @@ TEST_F(TestBitVector, idec)
   test_unary(INPLACE_NOT_CHAINABLE, DEC, 7);
   test_unary(INPLACE_NOT_CHAINABLE, DEC, 31);
   test_unary(INPLACE_NOT_CHAINABLE, DEC, 33);
+  test_unary(INPLACE_CHAINABLE, DEC, 1);
+  test_unary(INPLACE_CHAINABLE, DEC, 7);
+  test_unary(INPLACE_CHAINABLE, DEC, 31);
+  test_unary(INPLACE_CHAINABLE, DEC, 33);
 }
 
 TEST_F(TestBitVector, iinc)
@@ -3545,6 +3549,10 @@ TEST_F(TestBitVector, iinc)
   test_unary(INPLACE_NOT_CHAINABLE, INC, 7);
   test_unary(INPLACE_NOT_CHAINABLE, INC, 31);
   test_unary(INPLACE_NOT_CHAINABLE, INC, 33);
+  test_unary(INPLACE_CHAINABLE, INC, 1);
+  test_unary(INPLACE_CHAINABLE, INC, 7);
+  test_unary(INPLACE_CHAINABLE, INC, 31);
+  test_unary(INPLACE_CHAINABLE, INC, 33);
 }
 
 TEST_F(TestBitVector, ineg)

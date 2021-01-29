@@ -1741,6 +1741,22 @@ BitVector::ibvnot()
   return *this;
 }
 
+const BitVector&
+BitVector::ibvinc()
+{
+  assert(!is_null());
+  ibvinc(*this);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvdec()
+{
+  assert(!is_null());
+  ibvdec(*this);
+  return *this;
+}
+
 /* -------------------------------------------------------------------------- */
 
 void

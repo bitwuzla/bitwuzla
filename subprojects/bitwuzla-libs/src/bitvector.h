@@ -306,10 +306,30 @@ class BitVector
    */
   const BitVector& ibvnot();
 
-  /** Increment (in-place). */
+  /**
+   * Increment (in-place).
+   * Result is stored in this bit-vector.
+   */
   void ibvinc(const BitVector& bv);
-  /** Decrement (in-place). */
+  /**
+   * Increment (in-place, chainable).
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvinc();
+
+  /**
+   * Decrement (in-place).
+   * Result is stored in this bit-vector.
+   */
   void ibvdec(const BitVector& bv);
+  /**
+   * Decrement (in-place, chainable).
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvdec();
+
   /**
    * And reduction (in-place).
    * Returns true bit-vector if all bits are 1, else false.
