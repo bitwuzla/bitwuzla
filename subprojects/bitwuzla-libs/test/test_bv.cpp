@@ -830,7 +830,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind, uint32_t size)
       case REDAND:
         if (fun_kind == INPLACE_CHAINABLE)
         {
-          // TODO
+          assert(false);
         }
         else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
@@ -847,7 +847,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind, uint32_t size)
       case REDOR:
         if (fun_kind == INPLACE_CHAINABLE)
         {
-          // TODO
+          assert(false);
         }
         else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
@@ -880,9 +880,9 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     uint64_t ares, bres;
     BitVector bv1(size, *d_rng);
     BitVector bv2(size, *d_rng);
-    BitVector res(bv1);
-    uint64_t a1                                          = bv1.to_uint64();
-    uint64_t a2                                          = bv2.to_uint64();
+    uint64_t a1 = bv1.to_uint64();
+    uint64_t a2 = bv2.to_uint64();
+
     std::vector<std::pair<BitVector, BitVector>> bv_args = {
         std::make_pair(zero, bv2),
         std::make_pair(bv1, zero),
@@ -896,12 +896,13 @@ TestBitVector::test_binary(BvFunKind fun_kind,
       const BitVector& b2 = bv_args[i].second;
       uint64_t i1         = int_args[i].first;
       uint64_t i2         = int_args[i].second;
+      BitVector res(b1);
       switch (kind)
       {
         case ADD:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            (void) res.ibvadd(b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -3601,6 +3602,10 @@ TEST_F(TestBitVector, iadd)
   test_binary(INPLACE_NOT_CHAINABLE, ADD, 7);
   test_binary(INPLACE_NOT_CHAINABLE, ADD, 31);
   test_binary(INPLACE_NOT_CHAINABLE, ADD, 33);
+  test_binary(INPLACE_CHAINABLE, ADD, 1);
+  test_binary(INPLACE_CHAINABLE, ADD, 7);
+  test_binary(INPLACE_CHAINABLE, ADD, 31);
+  test_binary(INPLACE_CHAINABLE, ADD, 33);
 }
 
 TEST_F(TestBitVector, iand)

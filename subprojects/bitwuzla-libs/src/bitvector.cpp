@@ -1757,6 +1757,15 @@ BitVector::ibvdec()
   return *this;
 }
 
+const BitVector&
+BitVector::ibvadd(const BitVector& bv)
+{
+  assert(!is_null());
+  assert(!bv.is_null());
+  ibvadd(*this, bv);
+  return *this;
+}
+
 /* -------------------------------------------------------------------------- */
 
 void

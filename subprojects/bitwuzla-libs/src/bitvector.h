@@ -332,7 +332,9 @@ class BitVector
 
   /**
    * And reduction (in-place).
-   * Returns true bit-vector if all bits are 1, else false.
+   * Result is a true bit-vector if all bits of 'bv' are 1, else a false
+   * bit-vector.
+   * Result is stored in this bit-vector.
    */
   void ibvredand(const BitVector& bv);
   /**
@@ -341,8 +343,18 @@ class BitVector
    */
   void ibvredor(const BitVector& bv);
 
-  /** Addition (in-place). */
+  /**
+   * Addition (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvadd(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Addition (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvadd(const BitVector& bv);
+
   /** Subtraction (in-place). */
   void ibvsub(const BitVector& bv0, const BitVector& bv1);
   /** Bit-wise and (in-place). */
