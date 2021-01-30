@@ -1782,6 +1782,13 @@ BitVector::ibvand(const BitVector& bv)
 }
 
 const BitVector&
+BitVector::ibvimplies(const BitVector& bv)
+{
+  ibvimplies(*this, bv);
+  return *this;
+}
+
+const BitVector&
 BitVector::ibvnand(const BitVector& bv)
 {
   ibvnand(*this, bv);

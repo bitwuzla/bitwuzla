@@ -384,10 +384,16 @@ class BitVector
   const BitVector& ibvand(const BitVector& bv);
 
   /**
-   * Implication (in-place).
+   * Implication (in-place) of 'bv0' and 'bv1'.
    * Result is stored in this bit-vector.
    */
   void ibvimplies(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Implication (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvimplies(const BitVector& bv);
 
   /**
    * Bit-wise nand (in-place) of 'bv0' and 'bv1'.

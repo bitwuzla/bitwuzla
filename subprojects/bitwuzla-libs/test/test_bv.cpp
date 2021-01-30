@@ -968,7 +968,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
         case IMPLIES:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            (void) res.ibvimplies(b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1323,7 +1323,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     case IMPLIES:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(BitVector(1).ibvimplies(b2), "bv1.d_size == 1");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -3613,6 +3613,7 @@ TEST_F(TestBitVector, iextract)
 TEST_F(TestBitVector, iimplies)
 {
   test_binary(INPLACE_NOT_CHAINABLE, IMPLIES, 1);
+  test_binary(INPLACE_CHAINABLE, IMPLIES, 1);
 }
 
 TEST_F(TestBitVector, iite)
