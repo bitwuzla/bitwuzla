@@ -123,11 +123,12 @@ class TestBitVector : public TestCommon
   void test_is_umul_overflow(uint32_t size);
   void test_ite(BvFunKind fun_kind, uint32_t size);
   void test_modinv(BvFunKind fun_kind, uint32_t size);
-  void test_shift(BvFunKind fun_kind,
-                  Kind kind,
-                  const std::string& to_shift,
-                  const std::string& shift,
-                  const std::string& expected);
+  void test_shift_aux(BvFunKind fun_kind,
+                      Kind kind,
+                      const std::string& to_shift,
+                      const std::string& shift,
+                      const std::string& expected);
+  void test_shift(BvFunKind fun_kind, Kind kind);
   void test_udivurem(uint32_t size);
   std::unique_ptr<RNG> d_rng;
 };
@@ -1903,11 +1904,11 @@ TestBitVector::test_extract(BvFunKind fun_kind, uint32_t size)
 }
 
 void
-TestBitVector::test_shift(BvFunKind fun_kind,
-                          Kind kind,
-                          const std::string& to_shift,
-                          const std::string& shift,
-                          const std::string& expected)
+TestBitVector::test_shift_aux(BvFunKind fun_kind,
+                              Kind kind,
+                              const std::string& to_shift,
+                              const std::string& shift,
+                              const std::string& expected)
 {
   uint32_t size = to_shift.size();
   assert(size == shift.size());
@@ -1966,6 +1967,214 @@ TestBitVector::test_shift(BvFunKind fun_kind,
 
   assert(res.compare(bv_expected) == 0);
   ASSERT_EQ(res.compare(bv_expected), 0);
+}
+
+void
+TestBitVector::test_shift(BvFunKind fun_kind, Kind kind)
+{
+  for (uint32_t i = 0, size = 2; i < (1u << size); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << size); ++j)
+    {
+      std::stringstream ss_expected;
+      if (kind == SHL)
+      {
+        ss_expected << std::bitset<2>(i).to_string() << std::string(j, '0');
+      }
+      else if (kind == SHR)
+      {
+        ss_expected << std::string(j, '0') << std::bitset<2>(i).to_string();
+      }
+      else
+      {
+        assert(kind == ASHR);
+        std::bitset<2> bits_i(i);
+        ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
+                    << bits_i.to_string();
+      }
+      std::string expected = ss_expected.str();
+      if (kind == SHL)
+      {
+        expected = expected.substr(expected.size() - size, size);
+      }
+      else
+      {
+        expected = expected.substr(0, size);
+      }
+      test_shift_aux(fun_kind,
+                     kind,
+                     std::bitset<2>(i).to_string().c_str(),
+                     std::bitset<2>(j).to_string().c_str(),
+                     expected.c_str());
+    }
+  }
+
+  for (uint32_t i = 0, size = 3; i < (1u << size); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << size); ++j)
+    {
+      std::stringstream ss_expected;
+      if (kind == SHL)
+      {
+        ss_expected << std::bitset<3>(i).to_string() << std::string(j, '0');
+      }
+      else if (kind == SHR)
+      {
+        ss_expected << std::string(j, '0') << std::bitset<3>(i).to_string();
+      }
+      else
+      {
+        assert(kind == ASHR);
+        std::bitset<3> bits_i(i);
+        ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
+                    << bits_i.to_string();
+      }
+      std::string expected = ss_expected.str();
+      if (kind == SHL)
+      {
+        expected = expected.substr(expected.size() - size, size);
+      }
+      else
+      {
+        expected = expected.substr(0, size);
+      }
+      test_shift_aux(fun_kind,
+                     kind,
+                     std::bitset<3>(i).to_string().c_str(),
+                     std::bitset<3>(j).to_string().c_str(),
+                     expected.c_str());
+    }
+  }
+
+  for (uint32_t i = 0, size = 8; i < (1u << size); ++i)
+  {
+    for (uint32_t j = 0; j < (1u << size); ++j)
+    {
+      std::stringstream ss_expected;
+      if (kind == SHL)
+      {
+        ss_expected << std::bitset<8>(i).to_string() << std::string(j, '0');
+      }
+      else if (kind == SHR)
+      {
+        ss_expected << std::string(j, '0') << std::bitset<8>(i).to_string();
+      }
+      else
+      {
+        assert(kind == ASHR);
+        std::bitset<8> bits_i(i);
+        ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
+                    << bits_i.to_string();
+      }
+      std::string expected = ss_expected.str();
+      if (kind == SHL)
+      {
+        expected = expected.substr(expected.size() - size, size);
+      }
+      else
+      {
+        expected = expected.substr(0, size);
+      }
+      test_shift_aux(fun_kind,
+                     kind,
+                     std::bitset<8>(i).to_string().c_str(),
+                     std::bitset<8>(j).to_string().c_str(),
+                     expected.c_str());
+    }
+  }
+
+  for (uint32_t i = 0, size = 65; i < (1u << size); ++i)
+  {
+    /* shift value fits into uint64_t */
+    for (uint64_t j = 0; j < 32; ++j)
+    {
+      std::stringstream ss_expected;
+      if (kind == SHL)
+      {
+        ss_expected << std::bitset<65>(i).to_string() << std::string(j, '0');
+      }
+      else if (kind == SHR)
+      {
+        ss_expected << std::string(j, '0') << std::bitset<65>(i).to_string();
+      }
+      else
+      {
+        assert(kind == ASHR);
+        std::bitset<65> bits_i(i);
+        ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
+                    << bits_i.to_string();
+      }
+      std::string expected = ss_expected.str();
+      if (kind == SHL)
+      {
+        expected = expected.substr(expected.size() - size, size);
+      }
+      else
+      {
+        expected = expected.substr(0, size);
+      }
+      test_shift_aux(fun_kind,
+                     kind,
+                     std::bitset<65>(i).to_string().c_str(),
+                     std::bitset<65>(j).to_string().c_str(),
+                     expected.c_str());
+    }
+    /* shift value doesn't fit into uint64_t */
+    {
+      test_shift_aux(fun_kind,
+                     kind,
+                     std::bitset<65>(i).to_string().c_str(),
+                     std::bitset<65>(0u).set(64, 1).to_string().c_str(),
+                     std::string(size, '0').c_str());
+    }
+  }
+
+  for (uint32_t i = 0, size = 128; i < (1u << size); ++i)
+  {
+    /* shift value fits into uint64_t */
+    for (uint64_t j = 0; j < 32; ++j)
+    {
+      std::stringstream ss_expected;
+      if (kind == SHL)
+      {
+        ss_expected << std::bitset<128>(i).to_string() << std::string(j, '0');
+      }
+      else if (kind == SHR)
+      {
+        ss_expected << std::string(j, '0') << std::bitset<128>(i).to_string();
+      }
+      else
+      {
+        assert(kind == ASHR);
+        std::bitset<128> bits_i(i);
+        ss_expected << std::string(j, bits_i[size - 1] == 1 ? '1' : '0')
+                    << bits_i.to_string();
+      }
+      std::string expected = ss_expected.str();
+      if (kind == SHL)
+      {
+        expected = expected.substr(expected.size() - size, size);
+      }
+      else
+      {
+        expected = expected.substr(0, size);
+      }
+      test_shift_aux(fun_kind,
+                     kind,
+                     std::bitset<128>(i).to_string().c_str(),
+                     std::bitset<128>(j).to_string().c_str(),
+                     expected.c_str());
+    }
+    /* shift value doesn't fit into uint64_t */
+    for (uint64_t j = 64; j < 128; ++j)
+    {
+      test_shift_aux(fun_kind,
+                     kind,
+                     std::bitset<128>(i).to_string().c_str(),
+                     std::bitset<128>(0u).set(j, 1).to_string().c_str(),
+                     std::string(size, '0').c_str());
+    }
+  }
 }
 
 void
@@ -3029,105 +3238,7 @@ TEST_F(TestBitVector, shl)
   test_binary(DEFAULT, SHL, 8);
   test_binary(DEFAULT, SHL, 16);
   test_binary(DEFAULT, SHL, 32);
-
-  for (uint32_t i = 0, size = 2; i < (1u << size); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << size); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::bitset<2>(i).to_string() << std::string(j, '0');
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(expected.size() - size, size);
-      test_shift(DEFAULT,
-                 SHL,
-                 std::bitset<2>(i).to_string().c_str(),
-                 std::bitset<2>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 3; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::bitset<3>(i).to_string() << std::string(j, '0');
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(DEFAULT,
-                 SHL,
-                 std::bitset<3>(i).to_string().c_str(),
-                 std::bitset<3>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 8; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::bitset<8>(i).to_string() << std::string(j, '0');
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(DEFAULT,
-                 SHL,
-                 std::bitset<8>(i).to_string().c_str(),
-                 std::bitset<8>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 65; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::bitset<65>(i).to_string() << std::string(j, '0');
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(DEFAULT,
-                 SHL,
-                 std::bitset<65>(i).to_string().c_str(),
-                 std::bitset<65>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift(DEFAULT,
-                 SHL,
-                 std::bitset<65>(i).to_string().c_str(),
-                 std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 128; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::bitset<128>(i).to_string() << std::string(j, '0');
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(DEFAULT,
-                 SHL,
-                 std::bitset<128>(i).to_string().c_str(),
-                 std::bitset<128>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-    /* shift value doesn't fit into uint64_t */
-    for (uint64_t j = 64; j < 128; ++j)
-    {
-      test_shift(DEFAULT,
-                 SHL,
-                 std::bitset<128>(i).to_string().c_str(),
-                 std::bitset<128>(0u).set(j, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
-    }
-  }
+  test_shift(DEFAULT, SHL);
 }
 
 TEST_F(TestBitVector, shr)
@@ -3136,104 +3247,7 @@ TEST_F(TestBitVector, shr)
   test_binary(DEFAULT, SHR, 8);
   test_binary(DEFAULT, SHR, 16);
   test_binary(DEFAULT, SHR, 32);
-
-  for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::string(j, '0') << std::bitset<2>(i).to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(DEFAULT,
-                 SHR,
-                 std::bitset<2>(i).to_string().c_str(),
-                 std::bitset<2>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 3; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::string(j, '0') << std::bitset<3>(i).to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(DEFAULT,
-                 SHR,
-                 std::bitset<3>(i).to_string().c_str(),
-                 std::bitset<3>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 8; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::string(j, '0') << std::bitset<8>(i).to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(DEFAULT,
-                 SHR,
-                 std::bitset<8>(i).to_string().c_str(),
-                 std::bitset<8>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 65; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::string(j, '0') << std::bitset<65>(i).to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(DEFAULT,
-                 SHR,
-                 std::bitset<65>(i).to_string().c_str(),
-                 std::bitset<65>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift(DEFAULT,
-                 SHR,
-                 std::bitset<65>(i).to_string().c_str(),
-                 std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 128; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::string(j, '0') << std::bitset<128>(i).to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(DEFAULT,
-                 SHR,
-                 std::bitset<128>(i).to_string().c_str(),
-                 std::bitset<128>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift(DEFAULT,
-                 SHR,
-                 std::bitset<128>(i).to_string().c_str(),
-                 std::bitset<128>(0u).set(120, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
-    }
-  }
+  test_shift(DEFAULT, SHR);
 }
 
 TEST_F(TestBitVector, ashr)
@@ -3242,114 +3256,7 @@ TEST_F(TestBitVector, ashr)
   test_binary(DEFAULT, ASHR, 8);
   test_binary(DEFAULT, ASHR, 16);
   test_binary(DEFAULT, ASHR, 32);
-
-  for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      std::bitset<2> bits_i(i);
-      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
-                  << bits_i.to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(DEFAULT,
-                 ASHR,
-                 std::bitset<2>(i).to_string().c_str(),
-                 std::bitset<2>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 3; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      std::bitset<3> bits_i(i);
-      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
-                  << bits_i.to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(DEFAULT,
-                 ASHR,
-                 std::bitset<3>(i).to_string().c_str(),
-                 std::bitset<3>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 8; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      std::bitset<8> bits_i(i);
-      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
-                  << bits_i.to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(DEFAULT,
-                 ASHR,
-                 std::bitset<8>(i).to_string().c_str(),
-                 std::bitset<8>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 65; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      std::bitset<65> bits_i(i);
-      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
-                  << bits_i.to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(DEFAULT,
-                 ASHR,
-                 std::bitset<65>(i).to_string().c_str(),
-                 std::bitset<65>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift(DEFAULT,
-                 ASHR,
-                 std::bitset<65>(i).to_string().c_str(),
-                 std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
-    }
-  }
-
-  for (uint32_t i = 0, bw = 128; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      std::bitset<128> bits_i(i);
-      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
-                  << bits_i.to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(DEFAULT,
-                 ASHR,
-                 std::bitset<128>(i).to_string().c_str(),
-                 std::bitset<128>(j).to_string().c_str(),
-                 expected.c_str());
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift(DEFAULT,
-                 ASHR,
-                 std::bitset<128>(i).to_string().c_str(),
-                 std::bitset<128>(0u).set(120, 1).to_string().c_str(),
-                 std::string(bw, '0').c_str());
-    }
-  }
+  test_shift(DEFAULT, ASHR);
 }
 
 TEST_F(TestBitVector, slt)
@@ -3707,105 +3614,7 @@ TEST_F(TestBitVector, ishl)
   test_binary(INPLACE_NOT_CHAINABLE, SHL, 8);
   test_binary(INPLACE_NOT_CHAINABLE, SHL, 16);
   test_binary(INPLACE_NOT_CHAINABLE, SHL, 32);
-
-  for (uint32_t i = 0, size = 2; i < (1u << size); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << size); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::bitset<2>(i).to_string() << std::string(j, '0');
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(expected.size() - size, size);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHL,
-                 std::bitset<2>(i).to_string(),
-                 std::bitset<2>(j).to_string(),
-                 expected);
-    }
-  }
-
-  for (uint32_t i = 0, bw = 3; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::bitset<3>(i).to_string() << std::string(j, '0');
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHL,
-                 std::bitset<3>(i).to_string(),
-                 std::bitset<3>(j).to_string(),
-                 expected);
-    }
-  }
-
-  for (uint32_t i = 0, bw = 8; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::bitset<8>(i).to_string() << std::string(j, '0');
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHL,
-                 std::bitset<8>(i).to_string(),
-                 std::bitset<8>(j).to_string(),
-                 expected);
-    }
-  }
-
-  for (uint32_t i = 0, bw = 65; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::bitset<65>(i).to_string() << std::string(j, '0');
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHL,
-                 std::bitset<65>(i).to_string(),
-                 std::bitset<65>(j).to_string(),
-                 expected);
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHL,
-                 std::bitset<65>(i).to_string(),
-                 std::bitset<65>(0u).set(64, 1).to_string(),
-                 std::string(bw, '0'));
-    }
-  }
-
-  for (uint32_t i = 0, bw = 128; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::bitset<128>(i).to_string() << std::string(j, '0');
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(expected.size() - bw, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHL,
-                 std::bitset<128>(i).to_string(),
-                 std::bitset<128>(j).to_string(),
-                 expected);
-    }
-    /* shift value doesn't fit into uint64_t */
-    for (uint64_t j = 64; j < 128; ++j)
-    {
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHL,
-                 std::bitset<128>(i).to_string(),
-                 std::bitset<128>(0u).set(j, 1).to_string(),
-                 std::string(bw, '0'));
-    }
-  }
+  test_shift(INPLACE_NOT_CHAINABLE, SHL);
 }
 
 TEST_F(TestBitVector, ishr)
@@ -3814,104 +3623,7 @@ TEST_F(TestBitVector, ishr)
   test_binary(INPLACE_NOT_CHAINABLE, SHR, 8);
   test_binary(INPLACE_NOT_CHAINABLE, SHR, 16);
   test_binary(INPLACE_NOT_CHAINABLE, SHR, 32);
-
-  for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::string(j, '0') << std::bitset<2>(i).to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHR,
-                 std::bitset<2>(i).to_string(),
-                 std::bitset<2>(j).to_string(),
-                 expected);
-    }
-  }
-
-  for (uint32_t i = 0, bw = 3; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::string(j, '0') << std::bitset<3>(i).to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHR,
-                 std::bitset<3>(i).to_string(),
-                 std::bitset<3>(j).to_string(),
-                 expected);
-    }
-  }
-
-  for (uint32_t i = 0, bw = 8; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::string(j, '0') << std::bitset<8>(i).to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHR,
-                 std::bitset<8>(i).to_string(),
-                 std::bitset<8>(j).to_string(),
-                 expected);
-    }
-  }
-
-  for (uint32_t i = 0, bw = 65; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::string(j, '0') << std::bitset<65>(i).to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHR,
-                 std::bitset<65>(i).to_string(),
-                 std::bitset<65>(j).to_string(),
-                 expected);
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHR,
-                 std::bitset<65>(i).to_string(),
-                 std::bitset<65>(0u).set(64, 1).to_string(),
-                 std::string(bw, '0'));
-    }
-  }
-
-  for (uint32_t i = 0, bw = 128; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      ss_expected << std::string(j, '0') << std::bitset<128>(i).to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHR,
-                 std::bitset<128>(i).to_string(),
-                 std::bitset<128>(j).to_string(),
-                 expected);
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 SHR,
-                 std::bitset<128>(i).to_string(),
-                 std::bitset<128>(0u).set(120, 1).to_string(),
-                 std::string(bw, '0'));
-    }
-  }
+  test_shift(INPLACE_NOT_CHAINABLE, SHR);
 }
 
 TEST_F(TestBitVector, iashr)
@@ -3920,114 +3632,7 @@ TEST_F(TestBitVector, iashr)
   test_binary(INPLACE_NOT_CHAINABLE, ASHR, 8);
   test_binary(INPLACE_NOT_CHAINABLE, ASHR, 16);
   test_binary(INPLACE_NOT_CHAINABLE, ASHR, 32);
-
-  for (uint32_t i = 0, bw = 2; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      std::bitset<2> bits_i(i);
-      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
-                  << bits_i.to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 ASHR,
-                 std::bitset<2>(i).to_string(),
-                 std::bitset<2>(j).to_string(),
-                 expected);
-    }
-  }
-
-  for (uint32_t i = 0, bw = 3; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      std::bitset<3> bits_i(i);
-      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
-                  << bits_i.to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 ASHR,
-                 std::bitset<3>(i).to_string(),
-                 std::bitset<3>(j).to_string(),
-                 expected);
-    }
-  }
-
-  for (uint32_t i = 0, bw = 8; i < (1u << bw); ++i)
-  {
-    for (uint32_t j = 0; j < (1u << bw); ++j)
-    {
-      std::stringstream ss_expected;
-      std::bitset<8> bits_i(i);
-      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
-                  << bits_i.to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 ASHR,
-                 std::bitset<8>(i).to_string(),
-                 std::bitset<8>(j).to_string(),
-                 expected);
-    }
-  }
-
-  for (uint32_t i = 0, bw = 65; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      std::bitset<65> bits_i(i);
-      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
-                  << bits_i.to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 ASHR,
-                 std::bitset<65>(i).to_string(),
-                 std::bitset<65>(j).to_string(),
-                 expected);
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 ASHR,
-                 std::bitset<65>(i).to_string(),
-                 std::bitset<65>(0u).set(64, 1).to_string(),
-                 std::string(bw, '0'));
-    }
-  }
-
-  for (uint32_t i = 0, bw = 128; i < (1u << bw); ++i)
-  {
-    /* shift value fits into uint64_t */
-    for (uint64_t j = 0; j < 32; ++j)
-    {
-      std::stringstream ss_expected;
-      std::bitset<128> bits_i(i);
-      ss_expected << std::string(j, bits_i[bw - 1] == 1 ? '1' : '0')
-                  << bits_i.to_string();
-      std::string expected = ss_expected.str();
-      expected             = expected.substr(0, bw);
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 ASHR,
-                 std::bitset<128>(i).to_string(),
-                 std::bitset<128>(j).to_string(),
-                 expected);
-    }
-    /* shift value doesn't fit into uint64_t */
-    {
-      test_shift(INPLACE_NOT_CHAINABLE,
-                 ASHR,
-                 std::bitset<128>(i).to_string(),
-                 std::bitset<128>(0u).set(120, 1).to_string(),
-                 std::string(bw, '0'));
-    }
-  }
+  test_shift(INPLACE_NOT_CHAINABLE, ASHR);
 }
 
 TEST_F(TestBitVector, islt)
