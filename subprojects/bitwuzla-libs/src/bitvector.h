@@ -588,27 +588,75 @@ class BitVector
   const BitVector& ibvsge(const BitVector& bv);
 
   /**
-   * Logical left shift (in-place).
+   * Logical left shift (in-place) of 'bv' by 'shift'.
    * Shift value is given as an unsigned integer.
+   * Result is stored in this bit-vector.
    */
-  void ibvshl(const BitVector& bv1, uint32_t shift);
+  void ibvshl(const BitVector& bv, uint32_t shift);
   /**
-   * Logical left shift (in-place).
+   * Logical left shift (in-place) of this bit-vector by 'shift'.
+   * Shift value is given as an unsigned integer.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvshl(uint32_t shift);
+
+  /**
+   * Logical left shift (in-place) of 'bv0' by 'bv1'.
    * Shift value is given as a bit-vector.
+   * Result is stored in this bit-vector.
    */
   void ibvshl(const BitVector& bv0, const BitVector& bv1);
   /**
-   * Logical right shift (in-place).
-   * Shift value is given as an unsigned integer.
-   */
-  void ibvshr(const BitVector& bv1, uint32_t shift);
-  /**
-   * Logical right shift (in-place).
+   * Logical left shift (in-place) of this bit-vector by 'bv'.
    * Shift value is given as a bit-vector.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvshl(const BitVector& bv);
+
+  /**
+   * Logical right shift (in-place) of 'bv' by 'shift'.
+   * Shift value is given as an unsigned integer.
+   * Result is stored in this bit-vector.
+   */
+  void ibvshr(const BitVector& bv, uint32_t shift);
+  /**
+   * Logical right shift (in-place) of this bit-vector by 'shift'.
+   * Shift value is given as an unsigned integer.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvshr(uint32_t shift);
+
+  /**
+   * Logical right shift (in-place) of 'bv0' by 'bv1'.
+   * Shift value is given as a bit-vector.
+   * Result is stored in this bit-vector.
    */
   void ibvshr(const BitVector& bv0, const BitVector& bv1);
-  /** Arithmetic right shift (in-place). */
+  /**
+   * Logical right shift (in-place) of this bit-vector by 'bv'.
+   * Shift value is given as a bit-vector.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvshr(const BitVector& bv);
+
+  /**
+   * Arithmetic right shift (in-place) of 'bv0' by 'bv1'.
+   * Shift value is given as a bit-vector.
+   * Result is stored in this bit-vector.
+   */
   void ibvashr(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Arithmetic right shift (in-place) of this bit-vector by 'bv'.
+   * Shift value is given as a bit-vector.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvashr(const BitVector& bv);
+
   /** Multiplication (in-place). */
   void ibvmul(const BitVector& bv0, const BitVector& bv1);
   /** Unsigned division (in-place). */

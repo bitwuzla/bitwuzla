@@ -1900,6 +1900,41 @@ BitVector::ibvsge(const BitVector& bv)
   return *this;
 }
 
+const BitVector&
+BitVector::ibvshl(uint32_t shift)
+{
+  ibvshl(*this, shift);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvshl(const BitVector& bv)
+{
+  ibvshl(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvshr(uint32_t shift)
+{
+  ibvshr(*this, shift);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvshr(const BitVector& bv)
+{
+  ibvshr(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvashr(const BitVector& bv)
+{
+  ibvashr(*this, bv);
+  return *this;
+}
+
 /* -------------------------------------------------------------------------- */
 
 void

@@ -937,7 +937,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
         case ASHR:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            (void) res.ibvashr(b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1065,7 +1065,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
         case SHL:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            (void) res.ibvshl(b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1081,7 +1081,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
         case SHR:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            (void) res.ibvshr(b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1926,7 +1926,7 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
     case ASHR:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        (void) res.ibvashr(bv_shift);
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -1940,7 +1940,7 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
     case SHL:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        (void) res.ibvshl(bv_shift);
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -1968,7 +1968,7 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
     case SHR:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        (void) res.ibvshr(bv_shift);
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -3656,6 +3656,12 @@ TEST_F(TestBitVector, ishl)
   test_binary(INPLACE_NOT_CHAINABLE, SHL, 32);
   test_shift(INPLACE_NOT_CHAINABLE, SHL, true);
   test_shift(INPLACE_NOT_CHAINABLE, SHL, false);
+  test_binary(INPLACE_CHAINABLE, SHL, 2);
+  test_binary(INPLACE_CHAINABLE, SHL, 8);
+  test_binary(INPLACE_CHAINABLE, SHL, 16);
+  test_binary(INPLACE_CHAINABLE, SHL, 32);
+  test_shift(INPLACE_CHAINABLE, SHL, true);
+  test_shift(INPLACE_CHAINABLE, SHL, false);
 }
 
 TEST_F(TestBitVector, ishr)
@@ -3666,6 +3672,12 @@ TEST_F(TestBitVector, ishr)
   test_binary(INPLACE_NOT_CHAINABLE, SHR, 32);
   test_shift(INPLACE_NOT_CHAINABLE, SHR, true);
   test_shift(INPLACE_NOT_CHAINABLE, SHR, false);
+  test_binary(INPLACE_CHAINABLE, SHR, 2);
+  test_binary(INPLACE_CHAINABLE, SHR, 8);
+  test_binary(INPLACE_CHAINABLE, SHR, 16);
+  test_binary(INPLACE_CHAINABLE, SHR, 32);
+  test_shift(INPLACE_CHAINABLE, SHR, true);
+  test_shift(INPLACE_CHAINABLE, SHR, false);
 }
 
 TEST_F(TestBitVector, iashr)
@@ -3675,6 +3687,11 @@ TEST_F(TestBitVector, iashr)
   test_binary(INPLACE_NOT_CHAINABLE, ASHR, 16);
   test_binary(INPLACE_NOT_CHAINABLE, ASHR, 32);
   test_shift(INPLACE_NOT_CHAINABLE, ASHR, false);
+  test_binary(INPLACE_CHAINABLE, ASHR, 2);
+  test_binary(INPLACE_CHAINABLE, ASHR, 8);
+  test_binary(INPLACE_CHAINABLE, ASHR, 16);
+  test_binary(INPLACE_CHAINABLE, ASHR, 32);
+  test_shift(INPLACE_CHAINABLE, ASHR, false);
 }
 
 TEST_F(TestBitVector, islt)
