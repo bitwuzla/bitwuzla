@@ -127,8 +127,9 @@ class TestBitVector : public TestCommon
                       Kind kind,
                       const std::string& to_shift,
                       const std::string& shift,
-                      const std::string& expected);
-  void test_shift(BvFunKind fun_kind, Kind kind);
+                      const std::string& expected,
+                      bool shift_by_int);
+  void test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int);
   void test_udivurem(uint32_t size);
   std::unique_ptr<RNG> d_rng;
 };
@@ -1908,7 +1909,8 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
                               Kind kind,
                               const std::string& to_shift,
                               const std::string& shift,
-                              const std::string& expected)
+                              const std::string& expected,
+                              bool shift_by_int)
 {
   uint32_t size = to_shift.size();
   assert(size == shift.size());
@@ -1918,6 +1920,7 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
   BitVector bv_shift(shift.size(), shift);
   BitVector bv_expected(expected.size(), expected);
   BitVector res(bv);
+  uint32_t int_shift = strtoul(shift.c_str(), nullptr, 2);
   switch (kind)
   {
     case ASHR:
@@ -1941,11 +1944,25 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        res.ibvshl(bv, bv_shift);
+        if (shift_by_int)
+        {
+          res.ibvshl(bv, int_shift);
+        }
+        else
+        {
+          res.ibvshl(bv, bv_shift);
+        }
       }
       else
       {
-        res = bv.bvshl(bv_shift);
+        if (shift_by_int)
+        {
+          res = bv.bvshl(int_shift);
+        }
+        else
+        {
+          res = bv.bvshl(bv_shift);
+        }
       }
       break;
     case SHR:
@@ -1955,11 +1972,25 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
-        res.ibvshr(bv, bv_shift);
+        if (shift_by_int)
+        {
+          res.ibvshr(bv, int_shift);
+        }
+        else
+        {
+          res.ibvshr(bv, bv_shift);
+        }
       }
       else
       {
-        res = bv.bvshr(bv_shift);
+        if (shift_by_int)
+        {
+          res = bv.bvshr(int_shift);
+        }
+        else
+        {
+          res = bv.bvshr(bv_shift);
+        }
       }
       break;
     default: assert(false);
@@ -1970,7 +2001,7 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
 }
 
 void
-TestBitVector::test_shift(BvFunKind fun_kind, Kind kind)
+TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
 {
   for (uint32_t i = 0, size = 2; i < (1u << size); ++i)
   {
@@ -2005,7 +2036,8 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind)
                      kind,
                      std::bitset<2>(i).to_string().c_str(),
                      std::bitset<2>(j).to_string().c_str(),
-                     expected.c_str());
+                     expected.c_str(),
+                     shift_by_int);
     }
   }
 
@@ -2042,7 +2074,8 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind)
                      kind,
                      std::bitset<3>(i).to_string().c_str(),
                      std::bitset<3>(j).to_string().c_str(),
-                     expected.c_str());
+                     expected.c_str(),
+                     shift_by_int);
     }
   }
 
@@ -2079,7 +2112,8 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind)
                      kind,
                      std::bitset<8>(i).to_string().c_str(),
                      std::bitset<8>(j).to_string().c_str(),
-                     expected.c_str());
+                     expected.c_str(),
+                     shift_by_int);
     }
   }
 
@@ -2117,7 +2151,8 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind)
                      kind,
                      std::bitset<65>(i).to_string().c_str(),
                      std::bitset<65>(j).to_string().c_str(),
-                     expected.c_str());
+                     expected.c_str(),
+                     shift_by_int);
     }
     /* shift value doesn't fit into uint64_t */
     {
@@ -2125,7 +2160,8 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind)
                      kind,
                      std::bitset<65>(i).to_string().c_str(),
                      std::bitset<65>(0u).set(64, 1).to_string().c_str(),
-                     std::string(size, '0').c_str());
+                     std::string(size, '0').c_str(),
+                     shift_by_int);
     }
   }
 
@@ -2163,7 +2199,8 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind)
                      kind,
                      std::bitset<128>(i).to_string().c_str(),
                      std::bitset<128>(j).to_string().c_str(),
-                     expected.c_str());
+                     expected.c_str(),
+                     shift_by_int);
     }
     /* shift value doesn't fit into uint64_t */
     for (uint64_t j = 64; j < 128; ++j)
@@ -2172,7 +2209,8 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind)
                      kind,
                      std::bitset<128>(i).to_string().c_str(),
                      std::bitset<128>(0u).set(j, 1).to_string().c_str(),
-                     std::string(size, '0').c_str());
+                     std::string(size, '0').c_str(),
+                     shift_by_int);
     }
   }
 }
@@ -3238,7 +3276,8 @@ TEST_F(TestBitVector, shl)
   test_binary(DEFAULT, SHL, 8);
   test_binary(DEFAULT, SHL, 16);
   test_binary(DEFAULT, SHL, 32);
-  test_shift(DEFAULT, SHL);
+  test_shift(DEFAULT, SHL, true);
+  test_shift(DEFAULT, SHL, false);
 }
 
 TEST_F(TestBitVector, shr)
@@ -3247,7 +3286,8 @@ TEST_F(TestBitVector, shr)
   test_binary(DEFAULT, SHR, 8);
   test_binary(DEFAULT, SHR, 16);
   test_binary(DEFAULT, SHR, 32);
-  test_shift(DEFAULT, SHR);
+  test_shift(DEFAULT, SHR, true);
+  test_shift(DEFAULT, SHR, false);
 }
 
 TEST_F(TestBitVector, ashr)
@@ -3256,7 +3296,7 @@ TEST_F(TestBitVector, ashr)
   test_binary(DEFAULT, ASHR, 8);
   test_binary(DEFAULT, ASHR, 16);
   test_binary(DEFAULT, ASHR, 32);
-  test_shift(DEFAULT, ASHR);
+  test_shift(DEFAULT, ASHR, false);
 }
 
 TEST_F(TestBitVector, slt)
@@ -3614,7 +3654,8 @@ TEST_F(TestBitVector, ishl)
   test_binary(INPLACE_NOT_CHAINABLE, SHL, 8);
   test_binary(INPLACE_NOT_CHAINABLE, SHL, 16);
   test_binary(INPLACE_NOT_CHAINABLE, SHL, 32);
-  test_shift(INPLACE_NOT_CHAINABLE, SHL);
+  test_shift(INPLACE_NOT_CHAINABLE, SHL, true);
+  test_shift(INPLACE_NOT_CHAINABLE, SHL, false);
 }
 
 TEST_F(TestBitVector, ishr)
@@ -3623,7 +3664,8 @@ TEST_F(TestBitVector, ishr)
   test_binary(INPLACE_NOT_CHAINABLE, SHR, 8);
   test_binary(INPLACE_NOT_CHAINABLE, SHR, 16);
   test_binary(INPLACE_NOT_CHAINABLE, SHR, 32);
-  test_shift(INPLACE_NOT_CHAINABLE, SHR);
+  test_shift(INPLACE_NOT_CHAINABLE, SHR, true);
+  test_shift(INPLACE_NOT_CHAINABLE, SHR, false);
 }
 
 TEST_F(TestBitVector, iashr)
@@ -3632,7 +3674,7 @@ TEST_F(TestBitVector, iashr)
   test_binary(INPLACE_NOT_CHAINABLE, ASHR, 8);
   test_binary(INPLACE_NOT_CHAINABLE, ASHR, 16);
   test_binary(INPLACE_NOT_CHAINABLE, ASHR, 32);
-  test_shift(INPLACE_NOT_CHAINABLE, ASHR);
+  test_shift(INPLACE_NOT_CHAINABLE, ASHR, false);
 }
 
 TEST_F(TestBitVector, islt)
