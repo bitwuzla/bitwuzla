@@ -456,7 +456,7 @@ class BitVector
   const BitVector& ibvxnor(const BitVector& bv);
 
   /**
-   * Bit-wise xor (in-place).
+   * Bit-wise xor (in-place) of 'bv0' and 'bv1'.
    * Result is stored in this bit-vector.
    */
   void ibvxor(const BitVector& bv0, const BitVector& bv1);
@@ -467,26 +467,126 @@ class BitVector
    */
   const BitVector& ibvxor(const BitVector& bv);
 
-  /** Equality (in-place). */
+  /**
+   * Equality (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibveq(const BitVector& bv0, const BitVector& bv1);
-  /** Disequality (in-place). */
+  /**
+   * Equality (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibveq(const BitVector& bv);
+
+  /**
+   * Disequality (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvne(const BitVector& bv0, const BitVector& bv1);
-  /** Unsigned less than (in-place). */
+  /**
+   * Disequality (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvne(const BitVector& bv);
+
+  /**
+   * Unsigned less than (in-place) of 'bv0' and 'bv1.
+   * Result is stored in this bit-vector.
+   */
   void ibvult(const BitVector& bv0, const BitVector& bv1);
-  /** Unsigned less than or equal (in-place). */
+  /**
+   * Unsigned less than (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvult(const BitVector& bv);
+
+  /**
+   * Unsigned less than or equal (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvule(const BitVector& bv0, const BitVector& bv1);
-  /** Unsigned greater than (in-place). */
+  /**
+   * Unsigned less than or equal (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvule(const BitVector& bv);
+
+  /**
+   * Unsigned greater than (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvugt(const BitVector& bv0, const BitVector& bv1);
-  /** Unsigned greater than or equal (in-place). */
+  /**
+   * Unsigned greater than (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvugt(const BitVector& bv);
+
+  /**
+   * Unsigned greater than or equal (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvuge(const BitVector& bv0, const BitVector& bv1);
-  /** Signed less than (in-place). */
+  /**
+   * Unsigned greater than or equal (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvuge(const BitVector& bv);
+
+  /**
+   * Signed less than (in-place) of 'bv0' and 'bv1.
+   * Result is stored in this bit-vector.
+   */
   void ibvslt(const BitVector& bv0, const BitVector& bv1);
-  /** Signed less than or equal (in-place). */
+  /**
+   * Signed less than (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvslt(const BitVector& bv);
+
+  /**
+   * Signed less than or equal (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvsle(const BitVector& bv0, const BitVector& bv1);
-  /** Signed greater than (in-place). */
+  /**
+   * Signed less than or equal (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvsle(const BitVector& bv);
+
+  /**
+   * Signed greater than (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvsgt(const BitVector& bv0, const BitVector& bv1);
-  /** Signed greater than or equal (in-place). */
+  /**
+   * Signed greater than (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvsgt(const BitVector& bv);
+
+  /**
+   * Signed greater than or equal (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvsge(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Signed greater than or equal (in-place) of this bit-vector and 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvsge(const BitVector& bv);
+
   /**
    * Logical left shift (in-place).
    * Shift value is given as an unsigned integer.

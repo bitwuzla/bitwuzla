@@ -1830,6 +1830,76 @@ BitVector::ibvxor(const BitVector& bv)
   return *this;
 }
 
+const BitVector&
+BitVector::ibveq(const BitVector& bv)
+{
+  ibveq(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvne(const BitVector& bv)
+{
+  ibvne(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvult(const BitVector& bv)
+{
+  ibvult(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvule(const BitVector& bv)
+{
+  ibvule(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvugt(const BitVector& bv)
+{
+  ibvugt(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvuge(const BitVector& bv)
+{
+  ibvuge(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvslt(const BitVector& bv)
+{
+  ibvslt(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvsle(const BitVector& bv)
+{
+  ibvsle(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvsgt(const BitVector& bv)
+{
+  ibvsgt(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvsge(const BitVector& bv)
+{
+  ibvsge(*this, bv);
+  return *this;
+}
+
 /* -------------------------------------------------------------------------- */
 
 void
