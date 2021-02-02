@@ -1018,7 +1018,6 @@ BitVector::ibvnot(const BitVector& bv)
   assert(!is_null());
   assert(!bv.is_null());
   assert(d_size == bv.d_size);
-  assert(d_size == bv.d_size);
   mpz_com(d_val->d_mpz, bv.d_val->d_mpz);
   mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
 }
@@ -1966,6 +1965,20 @@ const BitVector&
 BitVector::ibvurem(const BitVector& bv)
 {
   ibvurem(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvsdiv(const BitVector& bv)
+{
+  ibvsdiv(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvsrem(const BitVector& bv)
+{
+  ibvsrem(*this, bv);
   return *this;
 }
 

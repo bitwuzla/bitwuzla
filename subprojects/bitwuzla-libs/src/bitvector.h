@@ -698,8 +698,24 @@ class BitVector
    * Result is stored in this bit-vector.
    */
   void ibvsdiv(const BitVector& bv0, const BitVector& bv1);
-  /** Signed remainder (in-place). */
+  /**
+   * Signed division (in-place) of this bit-vector by 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvsdiv(const BitVector& bv);
+
+  /**
+   * Signed remainder (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvsrem(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Signed remainder (in-place) of this bit-vector by 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvsrem(const BitVector& bv);
 
   /**
    * Concatenation (in-place).

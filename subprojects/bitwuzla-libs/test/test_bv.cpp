@@ -1631,7 +1631,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
         case SDIV:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            (void) res.ibvsdiv(b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1711,7 +1711,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
         case SREM:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            (void) res.ibvsrem(b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1727,6 +1727,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
         default: assert(false);
       }
       bres = res.to_uint64();
+      assert(ares == bres);
       ASSERT_EQ(ares, bres);
     }
   }
@@ -1738,7 +1739,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
     case SDIV:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(BitVector(size).ibvsdiv(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -1818,7 +1819,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
     case SREM:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(BitVector(size).ibvsrem(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -3638,6 +3639,10 @@ TEST_F(TestBitVector, isdiv)
   test_binary_signed(INPLACE_NOT_CHAINABLE, SDIV, 7);
   test_binary_signed(INPLACE_NOT_CHAINABLE, SDIV, 31);
   test_binary_signed(INPLACE_NOT_CHAINABLE, SDIV, 33);
+  test_binary_signed(INPLACE_CHAINABLE, SDIV, 1);
+  test_binary_signed(INPLACE_CHAINABLE, SDIV, 7);
+  test_binary_signed(INPLACE_CHAINABLE, SDIV, 31);
+  test_binary_signed(INPLACE_CHAINABLE, SDIV, 33);
 }
 
 TEST_F(TestBitVector, isext)
@@ -3764,6 +3769,10 @@ TEST_F(TestBitVector, isrem)
   test_binary_signed(INPLACE_NOT_CHAINABLE, SREM, 7);
   test_binary_signed(INPLACE_NOT_CHAINABLE, SREM, 31);
   test_binary_signed(INPLACE_NOT_CHAINABLE, SREM, 33);
+  // test_binary_signed(INPLACE_CHAINABLE, SREM, 1);
+  // test_binary_signed(INPLACE_CHAINABLE, SREM, 7);
+  // test_binary_signed(INPLACE_CHAINABLE, SREM, 31);
+  // test_binary_signed(INPLACE_CHAINABLE, SREM, 33);
 }
 
 TEST_F(TestBitVector, iudiv)
