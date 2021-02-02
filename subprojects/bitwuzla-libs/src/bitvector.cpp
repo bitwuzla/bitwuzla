@@ -969,7 +969,7 @@ BitVector
 BitVector::bvmodinv() const
 {
   assert(!is_null());
-  assert(get_lsb());  // must be odd
+  assert(get_lsb()); /* must be odd */
   BitVector res(d_size);
   if (d_size == 1)
   {
@@ -1065,16 +1065,17 @@ BitVector::ibvredor(const BitVector& bv)
   assert(!is_null());
   assert(!bv.is_null());
   mp_limb_t limb;
+  uint32_t val = 0;
   for (size_t i = 0, n = mpz_size(bv.d_val->d_mpz); i < n; ++i)
   {
     limb = mpz_getlimbn(bv.d_val->d_mpz, i);
     if (((uint64_t) limb) != 0)
     {
-      mpz_set_ui(d_val->d_mpz, 1);
-      return;
+      val = 1;
+      break;
     }
   }
-  mpz_set_ui(d_val->d_mpz, 0);
+  mpz_set_ui(d_val->d_mpz, val);
   d_size = 1;
 }
 
@@ -1481,8 +1482,9 @@ BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1)
   assert(d_size == bv1.d_size);
   if (bv0.get_msb())
   {
+    BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
     ibvnot(bv0);
-    ibvshr(*this, bv1);
+    ibvshr(*this, b1);
     ibvnot(*this);
   }
   else
@@ -1556,20 +1558,23 @@ BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1)
 
   if (is_signed_bv0 && !is_signed_bv1)
   {
+    BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
     ibvneg(bv0);
-    ibvudiv(*this, bv1);
+    ibvudiv(*this, b1);
     ibvneg(*this);
   }
   else if (!is_signed_bv0 && is_signed_bv1)
   {
+    BitVector b0(bv0); /* copy to guard against the case when bv0 == *this */
     ibvneg(bv1);
-    ibvudiv(bv0, *this);
+    ibvudiv(b0, *this);
     ibvneg(*this);
   }
   else if (is_signed_bv0 && is_signed_bv1)
   {
+    BitVector b1neg(bv1.bvneg());
     ibvneg(bv0);
-    ibvudiv(*this, bv1.bvneg());
+    ibvudiv(*this, b1neg);
   }
   else
   {
@@ -1590,19 +1595,22 @@ BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1)
 
   if (is_signed_bv0 && !is_signed_bv1)
   {
+    BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
     ibvneg(bv0);
-    ibvurem(*this, bv1);
+    ibvurem(*this, b1);
     ibvneg(*this);
   }
   else if (!is_signed_bv0 && is_signed_bv1)
   {
+    BitVector b0(bv0); /* copy to guard against the case when bv0 == *this */
     ibvneg(bv1);
-    ibvurem(bv0, *this);
+    ibvurem(b0, *this);
   }
   else if (is_signed_bv0 && is_signed_bv1)
   {
+    BitVector b1neg(bv1.bvneg());
     ibvneg(bv0);
-    ibvurem(*this, bv1.bvneg());
+    ibvurem(*this, b1neg);
     ibvneg(*this);
   }
   else
@@ -1618,8 +1626,9 @@ BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
   assert(!bv0.is_null());
   assert(!bv1.is_null());
   assert(d_size == bv0.d_size + bv1.d_size);
-  mpz_mul_2exp(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_size);
-  mpz_add(d_val->d_mpz, d_val->d_mpz, bv1.d_val->d_mpz);
+  BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
+  mpz_mul_2exp(d_val->d_mpz, bv0.d_val->d_mpz, b1.d_size);
+  mpz_add(d_val->d_mpz, d_val->d_mpz, b1.d_val->d_mpz);
   mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
 }
 
@@ -1647,7 +1656,7 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n)
 {
   assert(!is_null());
   assert(!bv.is_null());
-  assert(d_size == bv.d_size + n);
+  uint32_t size = bv.d_size;
   if (n > 0)
   {
     if (bv.get_msb())
@@ -1655,7 +1664,7 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n)
       mpz_set_ui(d_val->d_mpz, 1);
       mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, n);
       mpz_sub_ui(d_val->d_mpz, d_val->d_mpz, 1);
-      mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, bv.d_size);
+      mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, size);
       mpz_add(d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
       mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
     }
@@ -1668,6 +1677,7 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n)
   {
     mpz_set(d_val->d_mpz, bv.d_val->d_mpz);
   }
+  d_size = size + n;
 }
 
 void
@@ -1696,7 +1706,10 @@ BitVector::ibvmodinv(const BitVector& bv)
   assert(!is_null());
   assert(!bv.is_null());
   assert(d_size == bv.d_size);
-  assert(bv.get_lsb());  // must be odd
+  assert(bv.get_lsb()); /* must be odd */
+#ifndef NDEBUG
+  BitVector b(bv); /* copy to guard against the case when bv == *this */
+#endif
   if (d_size == 1)
   {
     mpz_set_ui(d_val->d_mpz, 1);
@@ -1712,9 +1725,9 @@ BitVector::ibvmodinv(const BitVector& bv)
   }
 #ifndef NDEBUG
   mpz_t ty;
-  assert(d_size == bv.d_size);
+  assert(d_size == b.d_size);
   mpz_init(ty);
-  mpz_mul(ty, bv.d_val->d_mpz, d_val->d_mpz);
+  mpz_mul(ty, b.d_val->d_mpz, d_val->d_mpz);
   mpz_fdiv_r_2exp(ty, ty, d_size);
   assert(!mpz_cmp_ui(ty, 1));
   mpz_clear(ty);
