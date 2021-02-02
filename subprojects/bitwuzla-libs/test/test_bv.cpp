@@ -985,7 +985,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
         case MUL:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            (void) res.ibvmul(b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1113,7 +1113,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
         case UDIV:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            (void) res.ibvudiv(b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1193,7 +1193,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
         case UREM:
           if (fun_kind == INPLACE_CHAINABLE)
           {
-            // TODO
+            (void) res.ibvurem(b2);
           }
           else if (fun_kind == INPLACE_NOT_CHAINABLE)
           {
@@ -1334,7 +1334,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     case MUL:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(res.ibvmul(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -1462,7 +1462,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     case UDIV:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(res.ibvudiv(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -1542,7 +1542,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     case UREM:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(res.ibvurem(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -3578,6 +3578,10 @@ TEST_F(TestBitVector, imul)
   test_binary(INPLACE_NOT_CHAINABLE, MUL, 7);
   test_binary(INPLACE_NOT_CHAINABLE, MUL, 31);
   test_binary(INPLACE_NOT_CHAINABLE, MUL, 33);
+  test_binary(INPLACE_CHAINABLE, MUL, 1);
+  test_binary(INPLACE_CHAINABLE, MUL, 7);
+  test_binary(INPLACE_CHAINABLE, MUL, 31);
+  test_binary(INPLACE_CHAINABLE, MUL, 33);
 }
 
 TEST_F(TestBitVector, inand)
@@ -3768,6 +3772,10 @@ TEST_F(TestBitVector, iudiv)
   test_binary(INPLACE_NOT_CHAINABLE, UDIV, 7);
   test_binary(INPLACE_NOT_CHAINABLE, UDIV, 31);
   test_binary(INPLACE_NOT_CHAINABLE, UDIV, 33);
+  test_binary(INPLACE_CHAINABLE, UDIV, 1);
+  test_binary(INPLACE_CHAINABLE, UDIV, 7);
+  test_binary(INPLACE_CHAINABLE, UDIV, 31);
+  test_binary(INPLACE_CHAINABLE, UDIV, 33);
 }
 
 TEST_F(TestBitVector, iult)
@@ -3824,6 +3832,10 @@ TEST_F(TestBitVector, iurem)
   test_binary(INPLACE_NOT_CHAINABLE, UREM, 7);
   test_binary(INPLACE_NOT_CHAINABLE, UREM, 31);
   test_binary(INPLACE_NOT_CHAINABLE, UREM, 33);
+  test_binary(INPLACE_CHAINABLE, UREM, 1);
+  test_binary(INPLACE_CHAINABLE, UREM, 7);
+  test_binary(INPLACE_CHAINABLE, UREM, 31);
+  test_binary(INPLACE_CHAINABLE, UREM, 33);
 }
 TEST_F(TestBitVector, ixor)
 {

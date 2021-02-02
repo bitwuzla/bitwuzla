@@ -657,13 +657,46 @@ class BitVector
    */
   const BitVector& ibvashr(const BitVector& bv);
 
-  /** Multiplication (in-place). */
+  /**
+   * Multiplication (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvmul(const BitVector& bv0, const BitVector& bv1);
-  /** Unsigned division (in-place). */
+  /**
+   * Multiplication (in-place) of this bit-vector by 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvmul(const BitVector& bv);
+
+  /**
+   * Unsigned division (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvudiv(const BitVector& bv0, const BitVector& bv1);
-  /** Unsigned remainder (in-place). */
+  /**
+   * Unsigned division (in-place) of this bit-vector by 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvudiv(const BitVector& bv);
+
+  /**
+   * Unsigned remainder (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvurem(const BitVector& bv0, const BitVector& bv1);
-  /** Signed division (in-place). */
+  /**
+   * Unsigned division (in-place) of this bit-vector by 'bv'.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvurem(const BitVector& bv);
+
+  /**
+   * Signed division (in-place) of 'bv0' and 'bv1'.
+   * Result is stored in this bit-vector.
+   */
   void ibvsdiv(const BitVector& bv0, const BitVector& bv1);
   /** Signed remainder (in-place). */
   void ibvsrem(const BitVector& bv0, const BitVector& bv1);

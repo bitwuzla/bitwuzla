@@ -1935,6 +1935,27 @@ BitVector::ibvashr(const BitVector& bv)
   return *this;
 }
 
+const BitVector&
+BitVector::ibvmul(const BitVector& bv)
+{
+  ibvmul(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvudiv(const BitVector& bv)
+{
+  ibvudiv(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvurem(const BitVector& bv)
+{
+  ibvurem(*this, bv);
+  return *this;
+}
+
 /* -------------------------------------------------------------------------- */
 
 void
