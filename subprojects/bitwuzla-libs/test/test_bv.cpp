@@ -554,7 +554,7 @@ TestBitVector::test_extend(BvFunKind fun_kind, Kind kind, uint32_t size)
   {
     uint32_t n = d_rng->pick<uint32_t>(0, size - 1);
     BitVector bv(size - n, *d_rng);
-    BitVector res(size);
+    BitVector res(bv);
     char c = 0;
 
     switch (kind)
@@ -562,7 +562,7 @@ TestBitVector::test_extend(BvFunKind fun_kind, Kind kind, uint32_t size)
       case ZEXT:
         if (fun_kind == INPLACE_CHAINABLE)
         {
-          // TODO
+          (void) res.ibvzext(n);
         }
         else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
@@ -577,7 +577,7 @@ TestBitVector::test_extend(BvFunKind fun_kind, Kind kind, uint32_t size)
       case SEXT:
         if (fun_kind == INPLACE_CHAINABLE)
         {
-          // TODO
+          (void) res.ibvsext(n);
         }
         else if (fun_kind == INPLACE_NOT_CHAINABLE)
         {
@@ -3665,6 +3665,14 @@ TEST_F(TestBitVector, isext)
   test_extend(INPLACE_NOT_CHAINABLE, SEXT, 7);
   test_extend(INPLACE_NOT_CHAINABLE, SEXT, 31);
   test_extend(INPLACE_NOT_CHAINABLE, SEXT, 33);
+  test_extend(INPLACE_CHAINABLE, SEXT, 2);
+  test_extend(INPLACE_CHAINABLE, SEXT, 3);
+  test_extend(INPLACE_CHAINABLE, SEXT, 4);
+  test_extend(INPLACE_CHAINABLE, SEXT, 5);
+  test_extend(INPLACE_CHAINABLE, SEXT, 6);
+  test_extend(INPLACE_CHAINABLE, SEXT, 7);
+  test_extend(INPLACE_CHAINABLE, SEXT, 31);
+  test_extend(INPLACE_CHAINABLE, SEXT, 33);
 }
 
 TEST_F(TestBitVector, ishl)
@@ -3890,6 +3898,14 @@ TEST_F(TestBitVector, izext)
   test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 7);
   test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 31);
   test_extend(INPLACE_NOT_CHAINABLE, ZEXT, 33);
+  test_extend(INPLACE_CHAINABLE, ZEXT, 2);
+  test_extend(INPLACE_CHAINABLE, ZEXT, 3);
+  test_extend(INPLACE_CHAINABLE, ZEXT, 4);
+  test_extend(INPLACE_CHAINABLE, ZEXT, 5);
+  test_extend(INPLACE_CHAINABLE, ZEXT, 6);
+  test_extend(INPLACE_CHAINABLE, ZEXT, 7);
+  test_extend(INPLACE_CHAINABLE, ZEXT, 31);
+  test_extend(INPLACE_CHAINABLE, ZEXT, 33);
 }
 
 /* -------------------------------------------------------------------------- */

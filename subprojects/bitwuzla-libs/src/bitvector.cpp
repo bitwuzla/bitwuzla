@@ -1659,16 +1659,18 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n)
 {
   assert(!is_null());
   assert(!bv.is_null());
-  uint32_t size = bv.d_size;
   if (n > 0)
   {
     if (bv.get_msb())
     {
+      uint32_t size = bv.d_size;
+      BitVector b(bv); /* copy to guard against the case when bv == *this */
       mpz_set_ui(d_val->d_mpz, 1);
       mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, n);
       mpz_sub_ui(d_val->d_mpz, d_val->d_mpz, 1);
       mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, size);
-      mpz_add(d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
+      mpz_add(d_val->d_mpz, d_val->d_mpz, b.d_val->d_mpz);
+      d_size = size + n;
       mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
     }
     else
@@ -1680,7 +1682,6 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n)
   {
     mpz_set(d_val->d_mpz, bv.d_val->d_mpz);
   }
-  d_size = size + n;
 }
 
 void
@@ -1997,6 +1998,20 @@ const BitVector&
 BitVector::ibvextract(uint32_t idx_hi, uint32_t idx_lo)
 {
   ibvextract(*this, idx_hi, idx_lo);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvzext(uint32_t n)
+{
+  ibvzext(*this, n);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvsext(uint32_t n)
+{
+  ibvsext(*this, n);
   return *this;
 }
 

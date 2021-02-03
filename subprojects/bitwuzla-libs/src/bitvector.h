@@ -748,15 +748,28 @@ class BitVector
   const BitVector& ibvextract(uint32_t idx_hi, uint32_t idx_lo);
 
   /**
-   * Zero extension (in-place).
+   * Zero extension (in-place) of 'bv'.
    * n: The number of bits to extend bit-vector 'bv' with.
    */
   void ibvzext(const BitVector& bv, uint32_t n);
+  /**
+   * Zero extension (in-place) of this bit-vector.
+   * Result is stored in this bit-vector.
+   * n: The number of bits to extend bit-vector 'bv' with.
+   */
+  const BitVector& ibvzext(uint32_t n);
+
   /**
    * Sign extension (in-place).
    * n: The number of bits to extend bit-vector 'bv' with.
    */
   void ibvsext(const BitVector& bv, uint32_t n);
+  /**
+   * Sign extension (in-place) of this bit-vector.
+   * Result is stored in this bit-vector.
+   * n: The number of bits to extend bit-vector 'bv' with.
+   */
+  const BitVector& ibvsext(uint32_t n);
 
   /**
    * Create a if-then-else over the given bit-vectors (in-place).
