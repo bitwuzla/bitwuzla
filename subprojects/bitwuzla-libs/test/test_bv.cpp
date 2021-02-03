@@ -1286,7 +1286,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     case ASHR:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(res.ibvashr(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -1414,7 +1414,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     case SHL:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(res.ibvshl(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
@@ -1430,7 +1430,7 @@ TestBitVector::test_binary(BvFunKind fun_kind,
     case SHR:
       if (fun_kind == INPLACE_CHAINABLE)
       {
-        // TODO
+        ASSERT_DEATH(res.ibvshr(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_NOT_CHAINABLE)
       {
