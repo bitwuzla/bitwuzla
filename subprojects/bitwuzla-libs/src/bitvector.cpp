@@ -1001,7 +1001,7 @@ BitVector::bvmodinv() const
 /* Bit-vector operations, in-place, requires all operands as arguments.       */
 /* -------------------------------------------------------------------------- */
 
-const BitVector&
+BitVector&
 BitVector::ibvneg(const BitVector& bv)
 {
   assert(!is_null());
@@ -1013,7 +1013,7 @@ BitVector::ibvneg(const BitVector& bv)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvnot(const BitVector& bv)
 {
   assert(!is_null());
@@ -1024,7 +1024,7 @@ BitVector::ibvnot(const BitVector& bv)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvinc(const BitVector& bv)
 {
   assert(!is_null());
@@ -1035,7 +1035,7 @@ BitVector::ibvinc(const BitVector& bv)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvdec(const BitVector& bv)
 {
   assert(!is_null());
@@ -1046,7 +1046,7 @@ BitVector::ibvdec(const BitVector& bv)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvredand(const BitVector& bv)
 {
   assert(!is_null());
@@ -1063,7 +1063,7 @@ BitVector::ibvredand(const BitVector& bv)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvredor(const BitVector& bv)
 {
   assert(!is_null());
@@ -1084,7 +1084,7 @@ BitVector::ibvredor(const BitVector& bv)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvadd(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1097,7 +1097,7 @@ BitVector::ibvadd(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsub(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1110,7 +1110,7 @@ BitVector::ibvsub(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvand(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1123,7 +1123,7 @@ BitVector::ibvand(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvimplies(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1143,7 +1143,7 @@ BitVector::ibvimplies(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvnand(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1157,7 +1157,7 @@ BitVector::ibvnand(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvnor(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1171,7 +1171,7 @@ BitVector::ibvnor(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvor(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1184,7 +1184,7 @@ BitVector::ibvor(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvxnor(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1198,7 +1198,7 @@ BitVector::ibvxnor(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvxor(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1211,7 +1211,7 @@ BitVector::ibvxor(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibveq(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1230,7 +1230,7 @@ BitVector::ibveq(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvne(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1249,7 +1249,7 @@ BitVector::ibvne(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvult(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1268,7 +1268,7 @@ BitVector::ibvult(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvule(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1287,7 +1287,7 @@ BitVector::ibvule(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvugt(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1306,7 +1306,7 @@ BitVector::ibvugt(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvuge(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1325,7 +1325,7 @@ BitVector::ibvuge(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvslt(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1350,7 +1350,7 @@ BitVector::ibvslt(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsle(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1376,7 +1376,7 @@ BitVector::ibvsle(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsgt(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1402,7 +1402,7 @@ BitVector::ibvsgt(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1428,7 +1428,7 @@ BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvshl(const BitVector& bv, uint32_t shift)
 {
   assert(!is_null());
@@ -1446,7 +1446,7 @@ BitVector::ibvshl(const BitVector& bv, uint32_t shift)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvshl(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1466,7 +1466,7 @@ BitVector::ibvshl(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvshr(const BitVector& bv, uint32_t shift)
 {
   assert(!is_null());
@@ -1483,7 +1483,7 @@ BitVector::ibvshr(const BitVector& bv, uint32_t shift)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1503,7 +1503,7 @@ BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1516,15 +1516,13 @@ BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1)
     if (&bv1 == this)
     {
       BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
-      ibvnot(bv0);
-      ibvshr(*this, b1);
+      ibvnot(bv0).ibvshr(b1);
     }
     else
     {
-      ibvnot(bv0);
-      ibvshr(*this, bv1);
+      ibvnot(bv0).ibvshr(bv1);
     }
-    ibvnot(*this);
+    ibvnot();
   }
   else
   {
@@ -1533,7 +1531,7 @@ BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvmul(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1546,7 +1544,7 @@ BitVector::ibvmul(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvudiv(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1568,7 +1566,7 @@ BitVector::ibvudiv(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvurem(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1588,7 +1586,7 @@ BitVector::ibvurem(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1604,13 +1602,11 @@ BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1)
     if (&bv1 == this)
     {
       BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
-      ibvneg(bv0);
-      ibvudiv(*this, b1);
+      ibvneg(bv0).ibvudiv(b1);
     }
     else
     {
-      ibvneg(bv0);
-      ibvudiv(*this, bv1);
+      ibvneg(bv0).ibvudiv(bv1);
     }
     ibvneg(*this);
   }
@@ -1619,21 +1615,18 @@ BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1)
     if (&bv0 == this)
     {
       BitVector b0(bv0); /* copy to guard against the case when bv0 == *this */
-      ibvneg(bv1);
-      ibvudiv(b0, *this);
+      ibvneg(bv1).ibvudiv(b0, *this);
     }
     else
     {
-      ibvneg(bv1);
-      ibvudiv(bv0, *this);
+      ibvneg(bv1).ibvudiv(bv0, *this);
     }
     ibvneg(*this);
   }
   else if (is_signed_bv0 && is_signed_bv1)
   {
     BitVector b1neg(bv1.bvneg());
-    ibvneg(bv0);
-    ibvudiv(*this, b1neg);
+    ibvneg(bv0).ibvudiv(b1neg);
   }
   else
   {
@@ -1642,7 +1635,7 @@ BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1658,13 +1651,11 @@ BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1)
     if (&bv1 == this)
     {
       BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
-      ibvneg(bv0);
-      ibvurem(*this, b1);
+      ibvneg(bv0).ibvurem(b1);
     }
     else
     {
-      ibvneg(bv0);
-      ibvurem(*this, bv1);
+      ibvneg(bv0).ibvurem(bv1);
     }
     ibvneg(*this);
   }
@@ -1673,21 +1664,17 @@ BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1)
     if (&bv0 == this)
     {
       BitVector b0(bv0); /* copy to guard against the case when bv0 == *this */
-      ibvneg(bv1);
-      ibvurem(b0, *this);
+      ibvneg(bv1).ibvurem(b0, *this);
     }
     else
     {
-      ibvneg(bv1);
-      ibvurem(bv0, *this);
+      ibvneg(bv1).ibvurem(bv0, *this);
     }
   }
   else if (is_signed_bv0 && is_signed_bv1)
   {
     BitVector b1neg(bv1.bvneg());
-    ibvneg(bv0);
-    ibvurem(*this, b1neg);
-    ibvneg(*this);
+    ibvneg(bv0).ibvurem(b1neg).ibvneg();
   }
   else
   {
@@ -1696,7 +1683,7 @@ BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -1718,7 +1705,7 @@ BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo)
 {
   assert(!is_null());
@@ -1729,7 +1716,7 @@ BitVector::ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvzext(const BitVector& bv, uint32_t n)
 {
   assert(!is_null());
@@ -1739,7 +1726,7 @@ BitVector::ibvzext(const BitVector& bv, uint32_t n)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsext(const BitVector& bv, uint32_t n)
 {
   assert(!is_null());
@@ -1781,7 +1768,7 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvite(const BitVector& c, const BitVector& t, const BitVector& e)
 {
   assert(!is_null());
@@ -1802,7 +1789,7 @@ BitVector::ibvite(const BitVector& c, const BitVector& t, const BitVector& e)
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvmodinv(const BitVector& bv)
 {
   assert(!is_null());
@@ -1841,273 +1828,273 @@ BitVector::ibvmodinv(const BitVector& bv)
 /* Bit-vector operations, in-place, 'this' is first argument.                 */
 /* -------------------------------------------------------------------------- */
 
-const BitVector&
+BitVector&
 BitVector::ibvneg()
 {
   ibvneg(*this);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvnot()
 {
   ibvnot(*this);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvinc()
 {
   ibvinc(*this);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvdec()
 {
   ibvdec(*this);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvredand()
 {
   ibvredand(*this);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvredor()
 {
   ibvredor(*this);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvadd(const BitVector& bv)
 {
   ibvadd(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvand(const BitVector& bv)
 {
   ibvand(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvimplies(const BitVector& bv)
 {
   ibvimplies(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvnand(const BitVector& bv)
 {
   ibvnand(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvnor(const BitVector& bv)
 {
   ibvnor(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvor(const BitVector& bv)
 {
   ibvor(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsub(const BitVector& bv)
 {
   ibvsub(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvxnor(const BitVector& bv)
 {
   ibvxnor(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvxor(const BitVector& bv)
 {
   ibvxor(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibveq(const BitVector& bv)
 {
   ibveq(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvne(const BitVector& bv)
 {
   ibvne(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvult(const BitVector& bv)
 {
   ibvult(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvule(const BitVector& bv)
 {
   ibvule(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvugt(const BitVector& bv)
 {
   ibvugt(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvuge(const BitVector& bv)
 {
   ibvuge(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvslt(const BitVector& bv)
 {
   ibvslt(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsle(const BitVector& bv)
 {
   ibvsle(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsgt(const BitVector& bv)
 {
   ibvsgt(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsge(const BitVector& bv)
 {
   ibvsge(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvshl(uint32_t shift)
 {
   ibvshl(*this, shift);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvshl(const BitVector& bv)
 {
   ibvshl(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvshr(uint32_t shift)
 {
   ibvshr(*this, shift);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvshr(const BitVector& bv)
 {
   ibvshr(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvashr(const BitVector& bv)
 {
   ibvashr(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvmul(const BitVector& bv)
 {
   ibvmul(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvudiv(const BitVector& bv)
 {
   ibvudiv(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvurem(const BitVector& bv)
 {
   ibvurem(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsdiv(const BitVector& bv)
 {
   ibvsdiv(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsrem(const BitVector& bv)
 {
   ibvsrem(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvconcat(const BitVector& bv)
 {
   ibvconcat(*this, bv);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvextract(uint32_t idx_hi, uint32_t idx_lo)
 {
   ibvextract(*this, idx_hi, idx_lo);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvzext(uint32_t n)
 {
   ibvzext(*this, n);
   return *this;
 }
 
-const BitVector&
+BitVector&
 BitVector::ibvsext(uint32_t n)
 {
   ibvsext(*this, n);
@@ -2116,10 +2103,8 @@ BitVector::ibvsext(uint32_t n)
 
 /* -------------------------------------------------------------------------- */
 
-const BitVector&
-BitVector::bvudivurem(const BitVector& bv,
-                      BitVector* quot,
-                      BitVector* rem) const
+void
+BitVector::bvudivurem(const BitVector& bv, BitVector* quot, BitVector* rem)
 {
   assert(!is_null());
   assert(!bv.is_null());
@@ -2139,7 +2124,6 @@ BitVector::bvudivurem(const BitVector& bv,
     mpz_fdiv_r_2exp(quot->d_val->d_mpz, quot->d_val->d_mpz, d_size);
     mpz_fdiv_r_2exp(rem->d_val->d_mpz, rem->d_val->d_mpz, d_size);
   }
-  return *this;
 }
 
 /* -------------------------------------------------------------------------- */
