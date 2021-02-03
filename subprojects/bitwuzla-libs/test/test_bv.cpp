@@ -1845,10 +1845,10 @@ TestBitVector::test_concat(BvFunKind fun_kind, uint32_t size)
     uint32_t size2 = size - size1;
     BitVector bv1(size1, *d_rng);
     BitVector bv2(size2, *d_rng);
-    BitVector res(size);
+    BitVector res(bv1);
     if (fun_kind == INPLACE_CHAINABLE)
     {
-      // TODO
+      (void) res.ibvconcat(bv2);
     }
     else if (fun_kind == INPLACE_NOT_CHAINABLE)
     {
@@ -1863,6 +1863,7 @@ TestBitVector::test_concat(BvFunKind fun_kind, uint32_t size)
     uint64_t u2   = bv2.to_uint64();
     uint64_t u    = (u1 << size2) | u2;
     uint64_t ures = res.to_uint64();
+    assert(u == ures);
     ASSERT_EQ(u, ures);
   }
 }
@@ -3529,6 +3530,11 @@ TEST_F(TestBitVector, iconcat)
   test_concat(INPLACE_NOT_CHAINABLE, 31);
   test_concat(INPLACE_NOT_CHAINABLE, 33);
   test_concat(INPLACE_NOT_CHAINABLE, 64);
+  test_concat(INPLACE_CHAINABLE, 2);
+  test_concat(INPLACE_CHAINABLE, 7);
+  test_concat(INPLACE_CHAINABLE, 31);
+  test_concat(INPLACE_CHAINABLE, 33);
+  test_concat(INPLACE_CHAINABLE, 64);
 }
 
 TEST_F(TestBitVector, ieq)

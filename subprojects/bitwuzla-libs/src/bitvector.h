@@ -718,10 +718,19 @@ class BitVector
   const BitVector& ibvsrem(const BitVector& bv);
 
   /**
-   * Concatenation (in-place).
+   * Concatenation (in-place) of 'bv0' and 'bv1'.
    * Bit-vector 'bv1' is concatenated (at the right, the lsb side) to 'bv0'.
+   * Result is stored in this bit-vector.
    */
   void ibvconcat(const BitVector& bv0, const BitVector& bv1);
+  /**
+   * Concatenation (in-place) of this bit-vector and 'bv'.
+   * Bit-vector 'bv' is concatenated (at the right, the lsb side) to this
+   * bit-vector.
+   * Result is stored in this bit-vector.
+   * Returns a reference to this bit-vector.
+   */
+  const BitVector& ibvconcat(const BitVector& bv);
 
   /**
    * Extract a bit range from bit-vector 'bv' (in-place).

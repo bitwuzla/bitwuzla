@@ -1340,16 +1340,17 @@ BitVector::ibvsle(const BitVector& bv0, const BitVector& bv1)
   if (msb_bv0 && !msb_bv1)
   {
     mpz_set_ui(d_val->d_mpz, 1);
+    d_size = 1;
   }
   else if (!msb_bv0 && msb_bv1)
   {
     mpz_set_ui(d_val->d_mpz, 0);
+    d_size = 1;
   }
   else
   {
     ibvule(bv0, bv1);
   }
-  d_size = 1;
 }
 
 void
@@ -1364,16 +1365,17 @@ BitVector::ibvsgt(const BitVector& bv0, const BitVector& bv1)
   if (msb_bv0 && !msb_bv1)
   {
     mpz_set_ui(d_val->d_mpz, 0);
+    d_size = 1;
   }
   else if (!msb_bv0 && msb_bv1)
   {
     mpz_set_ui(d_val->d_mpz, 1);
+    d_size = 1;
   }
   else
   {
     ibvugt(bv0, bv1);
   }
-  d_size = 1;
 }
 
 void
@@ -1388,16 +1390,17 @@ BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1)
   if (msb_bv0 && !msb_bv1)
   {
     mpz_set_ui(d_val->d_mpz, 0);
+    d_size = 1;
   }
   else if (!msb_bv0 && msb_bv1)
   {
     mpz_set_ui(d_val->d_mpz, 1);
+    d_size = 1;
   }
   else
   {
     ibvuge(bv0, bv1);
   }
-  d_size = 1;
 }
 
 void
@@ -1624,10 +1627,11 @@ BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
   assert(!is_null());
   assert(!bv0.is_null());
   assert(!bv1.is_null());
-  assert(d_size == bv0.d_size + bv1.d_size);
+  BitVector b0(bv0); /* copy to guard against the case when bv0 == *this */
   BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
-  mpz_mul_2exp(d_val->d_mpz, bv0.d_val->d_mpz, b1.d_size);
+  mpz_mul_2exp(d_val->d_mpz, b0.d_val->d_mpz, b1.d_size);
   mpz_add(d_val->d_mpz, d_val->d_mpz, b1.d_val->d_mpz);
+  d_size = b0.d_size + b1.d_size;
   mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
 }
 
@@ -1979,6 +1983,13 @@ const BitVector&
 BitVector::ibvsrem(const BitVector& bv)
 {
   ibvsrem(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvconcat(const BitVector& bv)
+{
+  ibvconcat(*this, bv);
   return *this;
 }
 
