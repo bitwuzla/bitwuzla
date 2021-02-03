@@ -1880,10 +1880,10 @@ TestBitVector::test_extract(BvFunKind fun_kind, uint32_t size)
     ASSERT_LT(hi, size);
     ASSERT_LT(lo, size);
 
-    BitVector res(hi - lo + 1);
+    BitVector res(bv);
     if (fun_kind == INPLACE_CHAINABLE)
     {
-      // TODO
+      (void) res.ibvextract(hi, lo);
     }
     else if (fun_kind == INPLACE_NOT_CHAINABLE)
     {
@@ -3555,6 +3555,10 @@ TEST_F(TestBitVector, iextract)
   test_extract(INPLACE_NOT_CHAINABLE, 7);
   test_extract(INPLACE_NOT_CHAINABLE, 31);
   test_extract(INPLACE_NOT_CHAINABLE, 33);
+  test_extract(INPLACE_CHAINABLE, 1);
+  test_extract(INPLACE_CHAINABLE, 7);
+  test_extract(INPLACE_CHAINABLE, 31);
+  test_extract(INPLACE_CHAINABLE, 33);
 }
 
 TEST_F(TestBitVector, iimplies)

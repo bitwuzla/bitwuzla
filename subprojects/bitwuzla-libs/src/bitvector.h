@@ -734,10 +734,18 @@ class BitVector
 
   /**
    * Extract a bit range from bit-vector 'bv' (in-place).
+   * Result is stored in this bit-vector.
    * idx_hi: The upper bit-index of the range (inclusive).
    * idx_lo: The lower bit-index of the range (inclusive).
    */
   void ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo);
+  /**
+   * Extract a bit range from this bit-vector (in-place).
+   * Result is stored in this bit-vector.
+   * idx_hi: The upper bit-index of the range (inclusive).
+   * idx_lo: The lower bit-index of the range (inclusive).
+   */
+  const BitVector& ibvextract(uint32_t idx_hi, uint32_t idx_lo);
 
   /**
    * Zero extension (in-place).

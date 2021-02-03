@@ -1640,9 +1640,9 @@ BitVector::ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo)
 {
   assert(!is_null());
   assert(!bv.is_null());
-  assert(d_size == idx_hi - idx_lo + 1);
   mpz_fdiv_r_2exp(d_val->d_mpz, bv.d_val->d_mpz, idx_hi + 1);
   mpz_fdiv_q_2exp(d_val->d_mpz, d_val->d_mpz, idx_lo);
+  d_size = idx_hi - idx_lo + 1;
 }
 
 void
@@ -1650,8 +1650,8 @@ BitVector::ibvzext(const BitVector& bv, uint32_t n)
 {
   assert(!is_null());
   assert(!bv.is_null());
-  assert(d_size == bv.d_size + n);
   mpz_set(d_val->d_mpz, bv.d_val->d_mpz);
+  d_size = bv.d_size + n;
 }
 
 void
@@ -1990,6 +1990,13 @@ const BitVector&
 BitVector::ibvconcat(const BitVector& bv)
 {
   ibvconcat(*this, bv);
+  return *this;
+}
+
+const BitVector&
+BitVector::ibvextract(uint32_t idx_hi, uint32_t idx_lo)
+{
+  ibvextract(*this, idx_hi, idx_lo);
   return *this;
 }
 
