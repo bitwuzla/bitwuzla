@@ -1484,9 +1484,17 @@ BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1)
   assert(d_size == bv1.d_size);
   if (bv0.get_msb())
   {
-    BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
-    ibvnot(bv0);
-    ibvshr(*this, b1);
+    if (&bv1 == this)
+    {
+      BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
+      ibvnot(bv0);
+      ibvshr(*this, b1);
+    }
+    else
+    {
+      ibvnot(bv0);
+      ibvshr(*this, bv1);
+    }
     ibvnot(*this);
   }
   else
@@ -1560,16 +1568,32 @@ BitVector::ibvsdiv(const BitVector& bv0, const BitVector& bv1)
 
   if (is_signed_bv0 && !is_signed_bv1)
   {
-    BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
-    ibvneg(bv0);
-    ibvudiv(*this, b1);
+    if (&bv1 == this)
+    {
+      BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
+      ibvneg(bv0);
+      ibvudiv(*this, b1);
+    }
+    else
+    {
+      ibvneg(bv0);
+      ibvudiv(*this, bv1);
+    }
     ibvneg(*this);
   }
   else if (!is_signed_bv0 && is_signed_bv1)
   {
-    BitVector b0(bv0); /* copy to guard against the case when bv0 == *this */
-    ibvneg(bv1);
-    ibvudiv(b0, *this);
+    if (&bv0 == this)
+    {
+      BitVector b0(bv0); /* copy to guard against the case when bv0 == *this */
+      ibvneg(bv1);
+      ibvudiv(b0, *this);
+    }
+    else
+    {
+      ibvneg(bv1);
+      ibvudiv(bv0, *this);
+    }
     ibvneg(*this);
   }
   else if (is_signed_bv0 && is_signed_bv1)
@@ -1597,16 +1621,32 @@ BitVector::ibvsrem(const BitVector& bv0, const BitVector& bv1)
 
   if (is_signed_bv0 && !is_signed_bv1)
   {
-    BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
-    ibvneg(bv0);
-    ibvurem(*this, b1);
+    if (&bv1 == this)
+    {
+      BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
+      ibvneg(bv0);
+      ibvurem(*this, b1);
+    }
+    else
+    {
+      ibvneg(bv0);
+      ibvurem(*this, bv1);
+    }
     ibvneg(*this);
   }
   else if (!is_signed_bv0 && is_signed_bv1)
   {
-    BitVector b0(bv0); /* copy to guard against the case when bv0 == *this */
-    ibvneg(bv1);
-    ibvurem(b0, *this);
+    if (&bv0 == this)
+    {
+      BitVector b0(bv0); /* copy to guard against the case when bv0 == *this */
+      ibvneg(bv1);
+      ibvurem(b0, *this);
+    }
+    else
+    {
+      ibvneg(bv1);
+      ibvurem(bv0, *this);
+    }
   }
   else if (is_signed_bv0 && is_signed_bv1)
   {
@@ -1627,11 +1667,18 @@ BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
   assert(!is_null());
   assert(!bv0.is_null());
   assert(!bv1.is_null());
-  BitVector b0(bv0); /* copy to guard against the case when bv0 == *this */
-  BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
-  mpz_mul_2exp(d_val->d_mpz, b0.d_val->d_mpz, b1.d_size);
-  mpz_add(d_val->d_mpz, d_val->d_mpz, b1.d_val->d_mpz);
-  d_size = b0.d_size + b1.d_size;
+  if (&bv1 == this)
+  {
+    BitVector b1(bv1); /* copy to guard against the case when bv1 == *this */
+    mpz_mul_2exp(d_val->d_mpz, bv0.d_val->d_mpz, b1.d_size);
+    mpz_add(d_val->d_mpz, d_val->d_mpz, b1.d_val->d_mpz);
+  }
+  else
+  {
+    mpz_mul_2exp(d_val->d_mpz, bv0.d_val->d_mpz, bv1.d_size);
+    mpz_add(d_val->d_mpz, d_val->d_mpz, bv1.d_val->d_mpz);
+  }
+  d_size = bv0.d_size + bv1.d_size;
   mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
 }
 
@@ -1664,12 +1711,23 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n)
     if (bv.get_msb())
     {
       uint32_t size = bv.d_size;
-      BitVector b(bv); /* copy to guard against the case when bv == *this */
-      mpz_set_ui(d_val->d_mpz, 1);
-      mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, n);
-      mpz_sub_ui(d_val->d_mpz, d_val->d_mpz, 1);
-      mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, size);
-      mpz_add(d_val->d_mpz, d_val->d_mpz, b.d_val->d_mpz);
+      if (&bv == this)
+      {
+        BitVector b(bv); /* copy to guard against the case when bv == *this */
+        mpz_set_ui(d_val->d_mpz, 1);
+        mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, n);
+        mpz_sub_ui(d_val->d_mpz, d_val->d_mpz, 1);
+        mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, size);
+        mpz_add(d_val->d_mpz, d_val->d_mpz, b.d_val->d_mpz);
+      }
+      else
+      {
+        mpz_set_ui(d_val->d_mpz, 1);
+        mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, n);
+        mpz_sub_ui(d_val->d_mpz, d_val->d_mpz, 1);
+        mpz_mul_2exp(d_val->d_mpz, d_val->d_mpz, size);
+        mpz_add(d_val->d_mpz, d_val->d_mpz, bv.d_val->d_mpz);
+      }
       d_size = size + n;
       mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, d_size);
     }
