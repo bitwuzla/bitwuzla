@@ -772,6 +772,7 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
   uint64_t ares;
   BitVector b(bv);
   BitVector res(bv);
+  BitVector tres;
   uint64_t a = bv.to_uint64();
   switch (kind)
   {
@@ -783,6 +784,9 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
       else if (fun_kind == INPLACE_ALL)
       {
         (void) res.ibvdec(b);
+        // test with *this as argument
+        tres = bv;
+        (void) tres.ibvdec(tres);
       }
       else
       {
@@ -799,6 +803,9 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
       else if (fun_kind == INPLACE_ALL)
       {
         (void) res.ibvinc(b);
+        // test with *this as argument
+        tres = bv;
+        (void) tres.ibvinc(tres);
       }
       else
       {
@@ -815,6 +822,9 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
       else if (fun_kind == INPLACE_ALL)
       {
         (void) res.ibvneg(b);
+        // test with *this as argument
+        tres = bv;
+        (void) tres.ibvneg(tres);
       }
       else
       {
@@ -831,6 +841,9 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
       else if (fun_kind == INPLACE_ALL)
       {
         (void) res.ibvnot(b);
+        // test with *this as argument
+        tres = bv;
+        (void) tres.ibvnot(tres);
       }
       else
       {
@@ -847,6 +860,9 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
       else if (fun_kind == INPLACE_ALL)
       {
         (void) res.ibvredand(b);
+        // test with *this as argument
+        tres = bv;
+        (void) tres.ibvredand(tres);
       }
       else
       {
@@ -863,6 +879,9 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
       else if (fun_kind == INPLACE_ALL)
       {
         (void) res.ibvredor(b);
+        // test with *this as argument
+        tres = bv;
+        (void) tres.ibvredor(tres);
       }
       else
       {
@@ -873,9 +892,8 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
 
     default: assert(false);
   }
-  uint64_t bres = res.to_uint64();
-  assert(ares == bres);
-  ASSERT_EQ(ares, bres);
+  ASSERT_EQ(ares, res.to_uint64());
+  ASSERT_TRUE(tres.is_null() || ares == tres.to_uint64());
 }
 
 void
