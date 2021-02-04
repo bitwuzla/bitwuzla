@@ -105,7 +105,11 @@ class TestBitVector : public TestCommon
   void test_ctor_random_bit_range(uint32_t size);
   void test_count(uint32_t size, bool leading, bool zeros);
   void test_count_aux(const std::string& val, bool leading, bool zeros);
-  void test_unary(BvFunKind fun_kind, Kind kind, uint32_t size);
+  void test_unary_aux(BvFunKind fun_kind,
+                      Kind kind,
+                      uint32_t size,
+                      const BitVector& bv);
+  void test_unary(BvFunKind fun_kind, Kind kind);
   void test_binary(BvFunKind fun_kind, Kind kind, uint32_t size);
   void test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size);
   void test_concat(BvFunKind fun_kind, uint32_t size);
@@ -755,117 +759,136 @@ TestBitVector::test_modinv(BvFunKind fun_kind, uint32_t size)
 }
 
 void
-TestBitVector::test_unary(BvFunKind fun_kind, Kind kind, uint32_t size)
+TestBitVector::test_unary_aux(BvFunKind fun_kind,
+                              Kind kind,
+                              uint32_t size,
+                              const BitVector& bv)
 {
+  uint64_t ares;
+  BitVector res(bv);
+  uint64_t a = bv.to_uint64();
+  switch (kind)
+  {
+    case DEC:
+      if (fun_kind == INPLACE_THIS)
+      {
+        (void) res.ibvdec();
+      }
+      else if (fun_kind == INPLACE_ALL)
+      {
+        (void) res.ibvdec(bv);
+      }
+      else
+      {
+        res = bv.bvdec();
+      }
+      ares = _dec(a, size);
+      break;
+
+    case INC:
+      if (fun_kind == INPLACE_THIS)
+      {
+        (void) res.ibvinc();
+      }
+      else if (fun_kind == INPLACE_ALL)
+      {
+        (void) res.ibvinc(bv);
+      }
+      else
+      {
+        res = bv.bvinc();
+      }
+      ares = _inc(a, size);
+      break;
+
+    case NEG:
+      if (fun_kind == INPLACE_THIS)
+      {
+        (void) res.ibvneg();
+      }
+      else if (fun_kind == INPLACE_ALL)
+      {
+        (void) res.ibvneg(bv);
+      }
+      else
+      {
+        res = bv.bvneg();
+      }
+      ares = _neg(a, size);
+      break;
+
+    case NOT:
+      if (fun_kind == INPLACE_THIS)
+      {
+        (void) res.ibvnot();
+      }
+      else if (fun_kind == INPLACE_ALL)
+      {
+        (void) res.ibvnot(bv);
+      }
+      else
+      {
+        res = bv.bvnot();
+      }
+      ares = _not(a, size);
+      break;
+
+    case REDAND:
+      if (fun_kind == INPLACE_THIS)
+      {
+        (void) res.ibvredand();
+      }
+      else if (fun_kind == INPLACE_ALL)
+      {
+        (void) res.ibvredand(bv);
+      }
+      else
+      {
+        res = bv.bvredand();
+      }
+      ares = _redand(a, size);
+      break;
+
+    case REDOR:
+      if (fun_kind == INPLACE_THIS)
+      {
+        (void) res.ibvredor();
+      }
+      else if (fun_kind == INPLACE_ALL)
+      {
+        (void) res.ibvredor(bv);
+      }
+      else
+      {
+        res = bv.bvredor();
+      }
+      ares = _redor(a, size);
+      break;
+
+    default: assert(false);
+  }
+  uint64_t bres = res.to_uint64();
+  assert(ares == bres);
+  ASSERT_EQ(ares, bres);
+}
+
+void
+TestBitVector::test_unary(BvFunKind fun_kind, Kind kind)
+{
+  /* test all values for bit-widths 1 - 4 */
+  for (uint32_t size = 1; size <= 4; ++size)
+  {
+    for (uint32_t i = 0, n = 1 << 4; i < n; ++i)
+    {
+      test_unary_aux(fun_kind, kind, size, BitVector(size, i));
+    }
+  }
+  /* test random values for bit-widths 16, 32, 35 */
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
-    uint64_t ares;
-    BitVector bv(size, *d_rng);
-    BitVector res(bv);
-    uint64_t a = bv.to_uint64();
-    switch (kind)
-    {
-      case DEC:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvdec();
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvdec(bv);
-        }
-        else
-        {
-          res = bv.bvdec();
-        }
-        ares = _dec(a, size);
-        break;
-
-      case INC:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvinc();
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvinc(bv);
-        }
-        else
-        {
-          res = bv.bvinc();
-        }
-        ares = _inc(a, size);
-        break;
-
-      case NEG:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvneg();
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvneg(bv);
-        }
-        else
-        {
-          res = bv.bvneg();
-        }
-        ares = _neg(a, size);
-        break;
-
-      case NOT:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvnot();
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvnot(bv);
-        }
-        else
-        {
-          res = bv.bvnot();
-        }
-        ares = _not(a, size);
-        break;
-
-      case REDAND:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvredand();
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvredand(bv);
-        }
-        else
-        {
-          res = bv.bvredand();
-        }
-        ares = _redand(a, size);
-        break;
-
-      case REDOR:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvredor();
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvredor(bv);
-        }
-        else
-        {
-          res = bv.bvredor();
-        }
-        ares = _redor(a, size);
-        break;
-
-      default: assert(false);
-    }
-    uint64_t bres = res.to_uint64();
-    assert(ares == bres);
-    ASSERT_EQ(ares, bres);
+    test_unary_aux(fun_kind, kind, 16, BitVector(16, *d_rng));
+    test_unary_aux(fun_kind, kind, 32, BitVector(32, *d_rng));
+    test_unary_aux(fun_kind, kind, 35, BitVector(35, *d_rng));
   }
 }
 
@@ -3101,53 +3124,17 @@ TEST_F(TestBitVector, count_leading_ones)
 
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestBitVector, dec)
-{
-  test_unary(DEFAULT, DEC, 1);
-  test_unary(DEFAULT, DEC, 7);
-  test_unary(DEFAULT, DEC, 31);
-  test_unary(DEFAULT, DEC, 33);
-}
+TEST_F(TestBitVector, dec) { test_unary(DEFAULT, DEC); }
 
-TEST_F(TestBitVector, inc)
-{
-  test_unary(DEFAULT, INC, 1);
-  test_unary(DEFAULT, INC, 7);
-  test_unary(DEFAULT, INC, 31);
-  test_unary(DEFAULT, INC, 33);
-}
+TEST_F(TestBitVector, inc) { test_unary(DEFAULT, INC); }
 
-TEST_F(TestBitVector, neg)
-{
-  test_unary(DEFAULT, NEG, 1);
-  test_unary(DEFAULT, NEG, 7);
-  test_unary(DEFAULT, NEG, 31);
-  test_unary(DEFAULT, NEG, 33);
-}
+TEST_F(TestBitVector, neg) { test_unary(DEFAULT, NEG); }
 
-TEST_F(TestBitVector, not )
-{
-  test_unary(DEFAULT, NOT, 1);
-  test_unary(DEFAULT, NOT, 7);
-  test_unary(DEFAULT, NOT, 31);
-  test_unary(DEFAULT, NOT, 33);
-}
+TEST_F(TestBitVector, not ) { test_unary(DEFAULT, NOT); }
 
-TEST_F(TestBitVector, redand)
-{
-  test_unary(DEFAULT, REDAND, 1);
-  test_unary(DEFAULT, REDAND, 7);
-  test_unary(DEFAULT, REDAND, 31);
-  test_unary(DEFAULT, REDAND, 33);
-}
+TEST_F(TestBitVector, redand) { test_unary(DEFAULT, REDAND); }
 
-TEST_F(TestBitVector, redor)
-{
-  test_unary(DEFAULT, REDOR, 1);
-  test_unary(DEFAULT, REDOR, 7);
-  test_unary(DEFAULT, REDOR, 31);
-  test_unary(DEFAULT, REDOR, 33);
-}
+TEST_F(TestBitVector, redor) { test_unary(DEFAULT, REDOR); }
 
 TEST_F(TestBitVector, add)
 {
@@ -3441,74 +3428,38 @@ TEST_F(TestBitVector, zext)
 
 TEST_F(TestBitVector, idec)
 {
-  test_unary(INPLACE_ALL, DEC, 1);
-  test_unary(INPLACE_ALL, DEC, 7);
-  test_unary(INPLACE_ALL, DEC, 31);
-  test_unary(INPLACE_ALL, DEC, 33);
-  test_unary(INPLACE_THIS, DEC, 1);
-  test_unary(INPLACE_THIS, DEC, 7);
-  test_unary(INPLACE_THIS, DEC, 31);
-  test_unary(INPLACE_THIS, DEC, 33);
+  test_unary(INPLACE_ALL, DEC);
+  test_unary(INPLACE_THIS, DEC);
 }
 
 TEST_F(TestBitVector, iinc)
 {
-  test_unary(INPLACE_ALL, INC, 1);
-  test_unary(INPLACE_ALL, INC, 7);
-  test_unary(INPLACE_ALL, INC, 31);
-  test_unary(INPLACE_ALL, INC, 33);
-  test_unary(INPLACE_THIS, INC, 1);
-  test_unary(INPLACE_THIS, INC, 7);
-  test_unary(INPLACE_THIS, INC, 31);
-  test_unary(INPLACE_THIS, INC, 33);
+  test_unary(INPLACE_ALL, INC);
+  test_unary(INPLACE_THIS, INC);
 }
 
 TEST_F(TestBitVector, ineg)
 {
-  test_unary(INPLACE_ALL, NEG, 1);
-  test_unary(INPLACE_ALL, NEG, 7);
-  test_unary(INPLACE_ALL, NEG, 31);
-  test_unary(INPLACE_ALL, NEG, 33);
-  test_unary(INPLACE_THIS, NEG, 1);
-  test_unary(INPLACE_THIS, NEG, 7);
-  test_unary(INPLACE_THIS, NEG, 31);
-  test_unary(INPLACE_THIS, NEG, 33);
+  test_unary(INPLACE_ALL, NEG);
+  test_unary(INPLACE_THIS, NEG);
 }
 
 TEST_F(TestBitVector, inot)
 {
-  test_unary(INPLACE_ALL, NOT, 1);
-  test_unary(INPLACE_ALL, NOT, 7);
-  test_unary(INPLACE_ALL, NOT, 31);
-  test_unary(INPLACE_ALL, NOT, 33);
-  test_unary(INPLACE_THIS, NOT, 1);
-  test_unary(INPLACE_THIS, NOT, 7);
-  test_unary(INPLACE_THIS, NOT, 31);
-  test_unary(INPLACE_THIS, NOT, 33);
+  test_unary(INPLACE_ALL, NOT);
+  test_unary(INPLACE_THIS, NOT);
 }
 
 TEST_F(TestBitVector, iredand)
 {
-  test_unary(INPLACE_ALL, REDAND, 1);
-  test_unary(INPLACE_ALL, REDAND, 7);
-  test_unary(INPLACE_ALL, REDAND, 31);
-  test_unary(INPLACE_ALL, REDAND, 33);
-  test_unary(INPLACE_THIS, REDAND, 1);
-  test_unary(INPLACE_THIS, REDAND, 7);
-  test_unary(INPLACE_THIS, REDAND, 31);
-  test_unary(INPLACE_THIS, REDAND, 33);
+  test_unary(INPLACE_ALL, REDAND);
+  test_unary(INPLACE_THIS, REDAND);
 }
 
 TEST_F(TestBitVector, iredor)
 {
-  test_unary(INPLACE_ALL, REDOR, 1);
-  test_unary(INPLACE_ALL, REDOR, 7);
-  test_unary(INPLACE_ALL, REDOR, 31);
-  test_unary(INPLACE_ALL, REDOR, 33);
-  test_unary(INPLACE_THIS, REDOR, 1);
-  test_unary(INPLACE_THIS, REDOR, 7);
-  test_unary(INPLACE_THIS, REDOR, 31);
-  test_unary(INPLACE_THIS, REDOR, 33);
+  test_unary(INPLACE_ALL, REDOR);
+  test_unary(INPLACE_THIS, REDOR);
 }
 
 TEST_F(TestBitVector, iadd)
