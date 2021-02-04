@@ -107,16 +107,18 @@ class TestBitVector : public TestCommon
   void test_count_aux(const std::string& val, bool leading, bool zeros);
   void test_unary_aux(BvFunKind fun_kind,
                       Kind kind,
-                      uint32_t size,
                       const BitVector& bv);
   void test_unary(BvFunKind fun_kind, Kind kind);
   void test_binary_aux(BvFunKind fun_kind,
                        Kind kind,
-                       uint32_t size,
                        const BitVector& bv0,
                        const BitVector& bv1);
   void test_binary(BvFunKind fun_kind, Kind kind);
-  void test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size);
+  void test_binary_signed_aux(BvFunKind fun_kind,
+                              Kind kind,
+                              const BitVector& bv0,
+                              const BitVector& bv1);
+  void test_binary_signed(BvFunKind fun_kind, Kind kind);
   void test_concat(BvFunKind fun_kind, uint32_t size);
   void test_extend(BvFunKind fun_kind, Kind kind, uint32_t size);
   void test_extract(BvFunKind fun_kind, uint32_t size);
@@ -766,13 +768,13 @@ TestBitVector::test_modinv(BvFunKind fun_kind, uint32_t size)
 void
 TestBitVector::test_unary_aux(BvFunKind fun_kind,
                               Kind kind,
-                              uint32_t size,
                               const BitVector& bv)
 {
   uint64_t ares;
   BitVector b(bv);
   BitVector res(bv);
   BitVector tres;
+  uint32_t size = bv.size();
   uint64_t a = bv.to_uint64();
   switch (kind)
   {
@@ -904,29 +906,30 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind)
   {
     for (uint32_t i = 0, n = 1 << size; i < n; ++i)
     {
-      test_unary_aux(fun_kind, kind, size, BitVector(size, i));
+      test_unary_aux(fun_kind, kind, BitVector(size, i));
     }
   }
   /* test random values for bit-widths 16, 32, 35 */
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
-    test_unary_aux(fun_kind, kind, 16, BitVector(16, *d_rng));
-    test_unary_aux(fun_kind, kind, 32, BitVector(32, *d_rng));
-    test_unary_aux(fun_kind, kind, 35, BitVector(35, *d_rng));
+    test_unary_aux(fun_kind, kind, BitVector(16, *d_rng));
+    test_unary_aux(fun_kind, kind, BitVector(32, *d_rng));
+    test_unary_aux(fun_kind, kind, BitVector(35, *d_rng));
   }
 }
 
 void
 TestBitVector::test_binary_aux(BvFunKind fun_kind,
                                TestBitVector::Kind kind,
-                               uint32_t size,
                                const BitVector& bv0,
                                const BitVector& bv1)
 {
-  BitVector zero = BitVector::mk_zero(size);
+  assert(bv0.size() == bv1.size());
 
-  uint64_t a0 = bv0.to_uint64();
-  uint64_t a1 = bv1.to_uint64();
+  uint32_t size  = bv0.size();
+  BitVector zero = BitVector::mk_zero(size);
+  uint64_t a0    = bv0.to_uint64();
+  uint64_t a1    = bv1.to_uint64();
 
   std::vector<std::pair<BitVector, BitVector>> bv_args = {
       std::make_pair(zero, bv1),
@@ -1447,8 +1450,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
     {
       for (uint32_t j = 0, m = 1 << size; j < m; ++j)
       {
-        test_binary_aux(
-            fun_kind, kind, size, BitVector(size, i), BitVector(size, j));
+        test_binary_aux(fun_kind, kind, BitVector(size, i), BitVector(size, j));
       }
     }
     if (kind == IMPLIES) return;
@@ -1457,11 +1459,11 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     test_binary_aux(
-        fun_kind, kind, 16, BitVector(16, *d_rng), BitVector(16, *d_rng));
+        fun_kind, kind, BitVector(16, *d_rng), BitVector(16, *d_rng));
     test_binary_aux(
-        fun_kind, kind, 32, BitVector(32, *d_rng), BitVector(32, *d_rng));
+        fun_kind, kind, BitVector(32, *d_rng), BitVector(32, *d_rng));
     test_binary_aux(
-        fun_kind, kind, 35, BitVector(35, *d_rng), BitVector(35, *d_rng));
+        fun_kind, kind, BitVector(35, *d_rng), BitVector(35, *d_rng));
   }
   /* death tests */
   BitVector b1(33, *d_rng);
@@ -1809,201 +1811,230 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
 }
 
 void
-TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
+TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
+                                      Kind kind,
+                                      const BitVector& bv0,
+                                      const BitVector& bv1)
 {
-  assert(size < 64);
-  BitVector zero = BitVector::mk_zero(size);
+  assert(bv0.size() == bv1.size());
 
+  uint32_t size  = bv0.size();
+  BitVector zero = BitVector::mk_zero(size);
+  BitVector b1(bv0);
+  BitVector b2(bv1);
+  int64_t a1 = b1.to_uint64();
+  int64_t a2 = b2.to_uint64();
+  if (b1.get_bit(size - 1))
+  {
+    a1 = (UINT64_MAX << size) | a1;
+  }
+  if (b2.get_bit(size - 1))
+  {
+    a2 = (UINT64_MAX << size) | a2;
+  }
+  std::vector<std::pair<BitVector, BitVector>> bv_args = {
+      std::make_pair(zero, b2),
+      std::make_pair(b1, zero),
+      std::make_pair(b1, b2)};
+  std::vector<std::pair<uint64_t, uint64_t>> int_args = {
+      std::make_pair(0, a2), std::make_pair(a1, 0), std::make_pair(a1, a2)};
+
+  for (uint32_t i = 0; i < 3; ++i)
+  {
+    const BitVector& b1 = bv_args[i].first;
+    const BitVector& b2 = bv_args[i].second;
+    uint64_t i1         = int_args[i].first;
+    uint64_t i2         = int_args[i].second;
+    BitVector res(b1);
+    BitVector tres;
+    uint64_t ares, atres;
+    switch (kind)
+    {
+      case SDIV:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvsdiv(b2);
+          // test with *this as argument
+          tres = b1;
+          (void) tres.ibvsdiv(tres);
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvsdiv(b1, b2);
+          // test with *this as arguments
+          tres = b1;
+          (void) tres.ibvsdiv(tres, tres);
+        }
+        else
+        {
+          res = b1.bvsdiv(b2);
+        }
+        ares  = _sdiv(i1, i2, size);
+        atres = _sdiv(i1, i1, size);
+        break;
+
+      case SLT:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvslt(b2);
+          // test with *this as argument
+          tres = b1;
+          (void) tres.ibvslt(tres);
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvslt(b1, b2);
+          // test with *this as arguments
+          tres = b1;
+          (void) tres.ibvslt(tres, tres);
+        }
+        else
+        {
+          res = b1.bvslt(b2);
+        }
+        ares  = _slt(i1, i2, size);
+        atres = _slt(i1, i1, size);
+        break;
+
+      case SLE:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvsle(b2);
+          // test with *this as argument
+          tres = b1;
+          (void) tres.ibvsle(tres);
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvsle(b1, b2);
+          // test with *this as arguments
+          tres = b1;
+          (void) tres.ibvsle(tres, tres);
+        }
+        else
+        {
+          res = b1.bvsle(b2);
+        }
+        ares  = _sle(i1, i2, size);
+        atres = _sle(i1, i1, size);
+        break;
+
+      case SGT:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvsgt(b2);
+          // test with *this as argument
+          tres = b1;
+          (void) tres.ibvsgt(tres);
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvsgt(b1, b2);
+          // test with *this as arguments
+          tres = b1;
+          (void) tres.ibvsgt(tres, tres);
+        }
+        else
+        {
+          res = b1.bvsgt(b2);
+        }
+        ares  = _sgt(i1, i2, size);
+        atres = _sgt(i1, i1, size);
+        break;
+
+      case SGE:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvsge(b2);
+          // test with *this as argument
+          tres = b1;
+          (void) tres.ibvsge(tres);
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvsge(b1, b2);
+          // test with *this as arguments
+          tres = b1;
+          (void) tres.ibvsge(tres, tres);
+        }
+        else
+        {
+          res = b1.bvsge(b2);
+        }
+        ares  = _sge(i1, i2, size);
+        atres = _sge(i1, i1, size);
+        break;
+
+      case SREM:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvsrem(b2);
+          // test with *this as argument
+          tres = b1;
+          (void) tres.ibvsrem(tres);
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvsrem(b1, b2);
+          // test with *this as arguments
+          tres = b1;
+          (void) tres.ibvsrem(tres, tres);
+        }
+        else
+        {
+          res = b1.bvsrem(b2);
+        }
+        ares  = _srem(i1, i2, size);
+        atres = _srem(i1, i1, size);
+        break;
+
+      default: assert(false);
+    }
+    ASSERT_EQ(ares, res.to_uint64());
+    ASSERT_TRUE(tres.is_null() || atres == tres.to_uint64());
+  }
+}
+
+void
+TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
+{
+  /* test all values for bit-widths 1 - 4 */
+  for (uint32_t size = 1; size <= 4; ++size)
+  {
+    for (uint32_t i = 0, n = 1 << size; i < n; ++i)
+    {
+      for (uint32_t j = 0, m = 1 << size; j < m; ++j)
+      {
+        test_binary_signed_aux(
+            fun_kind, kind, BitVector(size, i), BitVector(size, j));
+      }
+    }
+    if (kind == IMPLIES) return;
+  }
+  /* test random values for bit-widths 16, 32, 35 */
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
-    BitVector bv1(size, *d_rng);
-    BitVector bv2(size, *d_rng);
-    int64_t a1 = bv1.to_uint64();
-    int64_t a2 = bv2.to_uint64();
-    if (bv1.get_bit(size - 1))
-    {
-      a1 = (UINT64_MAX << size) | a1;
-    }
-    if (bv2.get_bit(size - 1))
-    {
-      a2 = (UINT64_MAX << size) | a2;
-    }
-    std::vector<std::pair<BitVector, BitVector>> bv_args = {
-        std::make_pair(zero, bv2),
-        std::make_pair(bv1, zero),
-        std::make_pair(bv1, bv2)};
-    std::vector<std::pair<uint64_t, uint64_t>> int_args = {
-        std::make_pair(0, a2), std::make_pair(a1, 0), std::make_pair(a1, a2)};
-
-    for (uint32_t i = 0; i < 3; ++i)
-    {
-      const BitVector& b1 = bv_args[i].first;
-      const BitVector& b2 = bv_args[i].second;
-      uint64_t i1         = int_args[i].first;
-      uint64_t i2         = int_args[i].second;
-      BitVector res(b1);
-      BitVector tres;
-      uint64_t ares, atres;
-      switch (kind)
-      {
-        case SDIV:
-          if (fun_kind == INPLACE_THIS)
-          {
-            (void) res.ibvsdiv(b2);
-            // test with *this as argument
-            tres = b1;
-            (void) tres.ibvsdiv(tres);
-          }
-          else if (fun_kind == INPLACE_ALL)
-          {
-            (void) res.ibvsdiv(b1, b2);
-            // test with *this as arguments
-            tres = b1;
-            (void) tres.ibvsdiv(tres, tres);
-          }
-          else
-          {
-            res = b1.bvsdiv(b2);
-          }
-          ares  = _sdiv(i1, i2, size);
-          atres = _sdiv(i1, i1, size);
-          break;
-
-        case SLT:
-          if (fun_kind == INPLACE_THIS)
-          {
-            (void) res.ibvslt(b2);
-            // test with *this as argument
-            tres = b1;
-            (void) tres.ibvslt(tres);
-          }
-          else if (fun_kind == INPLACE_ALL)
-          {
-            (void) res.ibvslt(b1, b2);
-            // test with *this as arguments
-            tres = b1;
-            (void) tres.ibvslt(tres, tres);
-          }
-          else
-          {
-            res = b1.bvslt(b2);
-          }
-          ares  = _slt(i1, i2, size);
-          atres = _slt(i1, i1, size);
-          break;
-
-        case SLE:
-          if (fun_kind == INPLACE_THIS)
-          {
-            (void) res.ibvsle(b2);
-            // test with *this as argument
-            tres = b1;
-            (void) tres.ibvsle(tres);
-          }
-          else if (fun_kind == INPLACE_ALL)
-          {
-            (void) res.ibvsle(b1, b2);
-            // test with *this as arguments
-            tres = b1;
-            (void) tres.ibvsle(tres, tres);
-          }
-          else
-          {
-            res = b1.bvsle(b2);
-          }
-          ares  = _sle(i1, i2, size);
-          atres = _sle(i1, i1, size);
-          break;
-
-        case SGT:
-          if (fun_kind == INPLACE_THIS)
-          {
-            (void) res.ibvsgt(b2);
-            // test with *this as argument
-            tres = b1;
-            (void) tres.ibvsgt(tres);
-          }
-          else if (fun_kind == INPLACE_ALL)
-          {
-            (void) res.ibvsgt(b1, b2);
-            // test with *this as arguments
-            tres = b1;
-            (void) tres.ibvsgt(tres, tres);
-          }
-          else
-          {
-            res = b1.bvsgt(b2);
-          }
-          ares  = _sgt(i1, i2, size);
-          atres = _sgt(i1, i1, size);
-          break;
-
-        case SGE:
-          if (fun_kind == INPLACE_THIS)
-          {
-            (void) res.ibvsge(b2);
-            // test with *this as argument
-            tres = b1;
-            (void) tres.ibvsge(tres);
-          }
-          else if (fun_kind == INPLACE_ALL)
-          {
-            (void) res.ibvsge(b1, b2);
-            // test with *this as arguments
-            tres = b1;
-            (void) tres.ibvsge(tres, tres);
-          }
-          else
-          {
-            res = b1.bvsge(b2);
-          }
-          ares  = _sge(i1, i2, size);
-          atres = _sge(i1, i1, size);
-          break;
-
-        case SREM:
-          if (fun_kind == INPLACE_THIS)
-          {
-            (void) res.ibvsrem(b2);
-            // test with *this as argument
-            tres = b1;
-            (void) tres.ibvsrem(tres);
-          }
-          else if (fun_kind == INPLACE_ALL)
-          {
-            (void) res.ibvsrem(b1, b2);
-            // test with *this as arguments
-            tres = b1;
-            (void) tres.ibvsrem(tres, tres);
-          }
-          else
-          {
-            res = b1.bvsrem(b2);
-          }
-          ares  = _srem(i1, i2, size);
-          atres = _srem(i1, i1, size);
-          break;
-
-        default: assert(false);
-      }
-      ASSERT_EQ(ares, res.to_uint64());
-      ASSERT_TRUE(tres.is_null() || atres == tres.to_uint64());
-    }
+    test_binary_signed_aux(
+        fun_kind, kind, BitVector(16, *d_rng), BitVector(16, *d_rng));
+    test_binary_signed_aux(
+        fun_kind, kind, BitVector(32, *d_rng), BitVector(32, *d_rng));
+    test_binary_signed_aux(
+        fun_kind, kind, BitVector(35, *d_rng), BitVector(35, *d_rng));
   }
-  BitVector b1(size, *d_rng);
-  BitVector b2(size + 1, *d_rng);
   /* death tests */
+  BitVector b1(33, *d_rng);
+  BitVector b2(34, *d_rng);
   switch (kind)
   {
     case SDIV:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(BitVector(size).ibvsdiv(b2), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsdiv(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_ALL)
       {
-        ASSERT_DEATH(BitVector(size).ibvsdiv(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(BitVector(size).ibvsdiv(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsdiv(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsdiv(b2, b1), "d_size == .*d_size");
       }
       else
       {
@@ -2018,8 +2049,8 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
       }
       else if (fun_kind == INPLACE_ALL)
       {
-        ASSERT_DEATH(BitVector(1).ibvslt(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(BitVector(1).ibvslt(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvslt(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvslt(b2, b1), "d_size == .*d_size");
       }
       else
       {
@@ -2034,8 +2065,8 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
       }
       else if (fun_kind == INPLACE_ALL)
       {
-        ASSERT_DEATH(BitVector(1).ibvsle(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(BitVector(1).ibvsle(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsle(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsle(b2, b1), "d_size == .*d_size");
       }
       else
       {
@@ -2050,8 +2081,8 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
       }
       else if (fun_kind == INPLACE_ALL)
       {
-        ASSERT_DEATH(BitVector(1).ibvsgt(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(BitVector(1).ibvsgt(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsgt(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsgt(b2, b1), "d_size == .*d_size");
       }
       else
       {
@@ -2066,8 +2097,8 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
       }
       else if (fun_kind == INPLACE_ALL)
       {
-        ASSERT_DEATH(BitVector(1).ibvsge(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(BitVector(1).ibvsge(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsge(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsge(b2, b1), "d_size == .*d_size");
       }
       else
       {
@@ -2078,12 +2109,12 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind, uint32_t size)
     case SREM:
       if (fun_kind == INPLACE_THIS)
       {
-        ASSERT_DEATH(BitVector(size).ibvsrem(b2), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsrem(b2), "d_size == .*d_size");
       }
       else if (fun_kind == INPLACE_ALL)
       {
-        ASSERT_DEATH(BitVector(size).ibvsrem(b1, b2), "d_size == .*d_size");
-        ASSERT_DEATH(BitVector(size).ibvsrem(b2, b1), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsrem(b1, b2), "d_size == .*d_size");
+        ASSERT_DEATH(b1.ibvsrem(b2, b1), "d_size == .*d_size");
       }
       else
       {
@@ -3458,13 +3489,7 @@ TEST_F(TestBitVector, or) { test_binary(DEFAULT, OR); }
 
 TEST_F(TestBitVector, nor) { test_binary(DEFAULT, NOR); }
 
-TEST_F(TestBitVector, sdiv)
-{
-  test_binary_signed(DEFAULT, SDIV, 1);
-  test_binary_signed(DEFAULT, SDIV, 7);
-  test_binary_signed(DEFAULT, SDIV, 31);
-  test_binary_signed(DEFAULT, SDIV, 33);
-}
+TEST_F(TestBitVector, sdiv) { test_binary_signed(DEFAULT, SDIV); }
 
 TEST_F(TestBitVector, sext)
 {
@@ -3498,47 +3523,17 @@ TEST_F(TestBitVector, ashr)
   test_shift(DEFAULT, ASHR, false);
 }
 
-TEST_F(TestBitVector, slt)
-{
-  test_binary_signed(DEFAULT, SLT, 1);
-  test_binary_signed(DEFAULT, SLT, 7);
-  test_binary_signed(DEFAULT, SLT, 31);
-  test_binary_signed(DEFAULT, SLT, 33);
-}
+TEST_F(TestBitVector, slt) { test_binary_signed(DEFAULT, SLT); }
 
-TEST_F(TestBitVector, sle)
-{
-  test_binary_signed(DEFAULT, SLE, 1);
-  test_binary_signed(DEFAULT, SLE, 7);
-  test_binary_signed(DEFAULT, SLE, 31);
-  test_binary_signed(DEFAULT, SLE, 33);
-}
+TEST_F(TestBitVector, sle) { test_binary_signed(DEFAULT, SLE); }
 
-TEST_F(TestBitVector, sgt)
-{
-  test_binary_signed(DEFAULT, SGT, 1);
-  test_binary_signed(DEFAULT, SGT, 7);
-  test_binary_signed(DEFAULT, SGT, 31);
-  test_binary_signed(DEFAULT, SGT, 33);
-}
+TEST_F(TestBitVector, sgt) { test_binary_signed(DEFAULT, SGT); }
 
-TEST_F(TestBitVector, sge)
-{
-  test_binary_signed(DEFAULT, SGE, 1);
-  test_binary_signed(DEFAULT, SGE, 7);
-  test_binary_signed(DEFAULT, SGE, 31);
-  test_binary_signed(DEFAULT, SGE, 33);
-}
+TEST_F(TestBitVector, sge) { test_binary_signed(DEFAULT, SGE); }
 
 TEST_F(TestBitVector, sub) { test_binary(DEFAULT, SUB); }
 
-TEST_F(TestBitVector, srem)
-{
-  test_binary_signed(DEFAULT, SREM, 1);
-  test_binary_signed(DEFAULT, SREM, 7);
-  test_binary_signed(DEFAULT, SREM, 31);
-  test_binary_signed(DEFAULT, SREM, 33);
-}
+TEST_F(TestBitVector, srem) { test_binary_signed(DEFAULT, SREM); }
 
 TEST_F(TestBitVector, udiv) { test_binary(DEFAULT, UDIV); }
 
@@ -3704,14 +3699,8 @@ TEST_F(TestBitVector, inor)
 
 TEST_F(TestBitVector, isdiv)
 {
-  test_binary_signed(INPLACE_ALL, SDIV, 1);
-  test_binary_signed(INPLACE_ALL, SDIV, 7);
-  test_binary_signed(INPLACE_ALL, SDIV, 31);
-  test_binary_signed(INPLACE_ALL, SDIV, 33);
-  test_binary_signed(INPLACE_THIS, SDIV, 1);
-  test_binary_signed(INPLACE_THIS, SDIV, 7);
-  test_binary_signed(INPLACE_THIS, SDIV, 31);
-  test_binary_signed(INPLACE_THIS, SDIV, 33);
+  test_binary_signed(INPLACE_ALL, SDIV);
+  test_binary_signed(INPLACE_THIS, SDIV);
 }
 
 TEST_F(TestBitVector, isext)
@@ -3764,50 +3753,26 @@ TEST_F(TestBitVector, iashr)
 
 TEST_F(TestBitVector, islt)
 {
-  test_binary_signed(INPLACE_ALL, SLT, 1);
-  test_binary_signed(INPLACE_ALL, SLT, 7);
-  test_binary_signed(INPLACE_ALL, SLT, 31);
-  test_binary_signed(INPLACE_ALL, SLT, 33);
-  test_binary_signed(INPLACE_THIS, SLT, 1);
-  test_binary_signed(INPLACE_THIS, SLT, 7);
-  test_binary_signed(INPLACE_THIS, SLT, 31);
-  test_binary_signed(INPLACE_THIS, SLT, 33);
+  test_binary_signed(INPLACE_ALL, SLT);
+  test_binary_signed(INPLACE_THIS, SLT);
 }
 
 TEST_F(TestBitVector, isle)
 {
-  test_binary_signed(INPLACE_ALL, SLE, 1);
-  test_binary_signed(INPLACE_ALL, SLE, 7);
-  test_binary_signed(INPLACE_ALL, SLE, 31);
-  test_binary_signed(INPLACE_ALL, SLE, 33);
-  test_binary_signed(INPLACE_THIS, SLE, 1);
-  test_binary_signed(INPLACE_THIS, SLE, 7);
-  test_binary_signed(INPLACE_THIS, SLE, 31);
-  test_binary_signed(INPLACE_THIS, SLE, 33);
+  test_binary_signed(INPLACE_ALL, SLE);
+  test_binary_signed(INPLACE_THIS, SLE);
 }
 
 TEST_F(TestBitVector, isgt)
 {
-  test_binary_signed(INPLACE_ALL, SGT, 1);
-  test_binary_signed(INPLACE_ALL, SGT, 7);
-  test_binary_signed(INPLACE_ALL, SGT, 31);
-  test_binary_signed(INPLACE_ALL, SGT, 33);
-  test_binary_signed(INPLACE_THIS, SGT, 1);
-  test_binary_signed(INPLACE_THIS, SGT, 7);
-  test_binary_signed(INPLACE_THIS, SGT, 31);
-  test_binary_signed(INPLACE_THIS, SGT, 33);
+  test_binary_signed(INPLACE_ALL, SGT);
+  test_binary_signed(INPLACE_THIS, SGT);
 }
 
 TEST_F(TestBitVector, isge)
 {
-  test_binary_signed(INPLACE_ALL, SGE, 1);
-  test_binary_signed(INPLACE_ALL, SGE, 7);
-  test_binary_signed(INPLACE_ALL, SGE, 31);
-  test_binary_signed(INPLACE_ALL, SGE, 33);
-  test_binary_signed(INPLACE_THIS, SGE, 1);
-  test_binary_signed(INPLACE_THIS, SGE, 7);
-  test_binary_signed(INPLACE_THIS, SGE, 31);
-  test_binary_signed(INPLACE_THIS, SGE, 33);
+  test_binary_signed(INPLACE_ALL, SGE);
+  test_binary_signed(INPLACE_THIS, SGE);
 }
 
 TEST_F(TestBitVector, isub)
@@ -3818,14 +3783,8 @@ TEST_F(TestBitVector, isub)
 
 TEST_F(TestBitVector, isrem)
 {
-  test_binary_signed(INPLACE_ALL, SREM, 1);
-  test_binary_signed(INPLACE_ALL, SREM, 7);
-  test_binary_signed(INPLACE_ALL, SREM, 31);
-  test_binary_signed(INPLACE_ALL, SREM, 33);
-  test_binary_signed(INPLACE_THIS, SREM, 1);
-  test_binary_signed(INPLACE_THIS, SREM, 7);
-  test_binary_signed(INPLACE_THIS, SREM, 31);
-  test_binary_signed(INPLACE_THIS, SREM, 33);
+  test_binary_signed(INPLACE_ALL, SREM);
+  test_binary_signed(INPLACE_THIS, SREM);
 }
 
 TEST_F(TestBitVector, iudiv)
