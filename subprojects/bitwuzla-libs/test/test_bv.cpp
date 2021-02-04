@@ -700,16 +700,13 @@ TestBitVector::test_ite(BvFunKind fun_kind, uint32_t size)
     BitVector bv_else(size, *d_rng);
     BitVector res(size);
 
-    if (fun_kind == INPLACE_THIS)
-    {
-      // TODO
-    }
-    else if (fun_kind == INPLACE_ALL)
+    if (fun_kind == INPLACE_ALL)
     {
       (void) res.ibvite(bv_cond, bv_then, bv_else);
     }
     else
     {
+      assert(fun_kind == DEFAULT);
       res = BitVector::bvite(bv_cond, bv_then, bv_else);
     }
 
@@ -723,11 +720,7 @@ TestBitVector::test_ite(BvFunKind fun_kind, uint32_t size)
   BitVector b1(1, *d_rng);
   BitVector b8(8, *d_rng);
   BitVector b16(16, *d_rng);
-  if (fun_kind == INPLACE_THIS)
-  {
-    // TODO
-  }
-  else if (fun_kind == INPLACE_ALL)
+  if (fun_kind == INPLACE_ALL)
   {
     ASSERT_DEATH(b8.ibvite(b8, b8, b8), "c.d_size == 1");
     ASSERT_DEATH(b8.ibvite(b1, b8, b16), "d_size == e.d_size");
@@ -735,6 +728,7 @@ TestBitVector::test_ite(BvFunKind fun_kind, uint32_t size)
   }
   else
   {
+    assert(fun_kind == DEFAULT);
     ASSERT_DEATH(BitVector::bvite(b8, b8, b8), "c.d_size == 1");
     ASSERT_DEATH(BitVector::bvite(b1, b8, b16), "t.d_size == e.d_size");
     ASSERT_DEATH(BitVector::bvite(b1, b16, b8), "t.d_size == e.d_size");
