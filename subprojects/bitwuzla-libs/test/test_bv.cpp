@@ -119,7 +119,10 @@ class TestBitVector : public TestCommon
                               const BitVector& bv0,
                               const BitVector& bv1);
   void test_binary_signed(BvFunKind fun_kind, Kind kind);
-  void test_concat(BvFunKind fun_kind, uint32_t size);
+  void test_concat_aux(BvFunKind fun_kind,
+                       const BitVector& bv0,
+                       const BitVector& bv1);
+  void test_concat(BvFunKind fun_kind);
   void test_extend(BvFunKind fun_kind, Kind kind, uint32_t size);
   void test_extract(BvFunKind fun_kind, uint32_t size);
   void test_is_uadd_overflow_aux(uint32_t size,
@@ -2003,7 +2006,6 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
             fun_kind, kind, BitVector(size, i), BitVector(size, j));
       }
     }
-    if (kind == IMPLIES) return;
   }
   /* test random values for bit-widths 16, 32, 35 */
   for (uint32_t i = 0; i < N_TESTS; ++i)
@@ -2121,41 +2123,75 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
 }
 
 void
-TestBitVector::test_concat(BvFunKind fun_kind, uint32_t size)
+TestBitVector::test_concat_aux(BvFunKind fun_kind,
+                               const BitVector& bv0,
+                               const BitVector& bv1)
 {
-  for (uint32_t i = 0; i < N_TESTS; ++i)
+  uint32_t size0 = bv0.size();
+  uint32_t size1 = bv1.size();
+  uint32_t size  = size0 + size1;
+  BitVector bv(size / 2, *d_rng);
+  BitVector res(bv0);
+  BitVector tres;
+  if (fun_kind == INPLACE_THIS)
   {
-    uint32_t size1 = d_rng->pick<uint32_t>(1, size - 1);
-    uint32_t size2 = size - size1;
-    BitVector bv1(size1, *d_rng);
-    BitVector bv2(size2, *d_rng);
-    BitVector bv(size / 2, *d_rng);
-    BitVector res(bv1);
-    BitVector tres;
-    if (fun_kind == INPLACE_THIS)
-    {
-      (void) res.ibvconcat(bv2);
-      // test with *this as argument
-      tres = bv;
-      (void) tres.ibvconcat(tres);
+    (void) res.ibvconcat(bv1);
+    // test with *this as argument
+    tres = bv;
+    (void) tres.ibvconcat(tres);
     }
     else if (fun_kind == INPLACE_ALL)
     {
-      (void) res.ibvconcat(bv1, bv2);
+      (void) res.ibvconcat(bv0, bv1);
       // test with *this as arguments
       tres = bv;
       (void) tres.ibvconcat(tres, tres);
     }
     else
     {
-      res = bv1.bvconcat(bv2);
+      res = bv0.bvconcat(bv1);
     }
-    ASSERT_EQ(res.size(), size1 + size2);
+    ASSERT_EQ(res.size(), size0 + size1);
+    uint64_t u0 = bv0.to_uint64();
     uint64_t u1 = bv1.to_uint64();
-    uint64_t u2 = bv2.to_uint64();
     uint64_t u  = bv.to_uint64();
-    ASSERT_EQ((u1 << size2) | u2, res.to_uint64());
+    ASSERT_EQ((u0 << size1) | u1, res.to_uint64());
     ASSERT_TRUE(tres.is_null() || ((u << (size / 2)) | u) == tres.to_uint64());
+}
+
+void
+TestBitVector::test_concat(BvFunKind fun_kind)
+{
+  /* test all values for bit-widths 1 - 4 */
+  for (uint32_t size = 2; size <= 8; ++size)
+  {
+    uint32_t size0 = d_rng->pick<uint32_t>(1, size - 1);
+    uint32_t size1 = size - size0;
+    for (uint32_t i = 0, n = 1 << size0; i < n; ++i)
+    {
+      for (uint32_t j = 0, m = 1 << size1; j < m; ++j)
+      {
+        test_concat_aux(fun_kind, BitVector(size, i), BitVector(size, j));
+      }
+    }
+  }
+  /* test random values for bit-widths 16, 32, 35 */
+  for (uint32_t i = 0; i < N_TESTS; ++i)
+  {
+    uint32_t size0, size1;
+
+    size0 = d_rng->pick<uint32_t>(1, 16 - 1);
+    size1 = 16 - size0;
+    test_concat_aux(
+        fun_kind, BitVector(size0, *d_rng), BitVector(size1, *d_rng));
+    size0 = d_rng->pick<uint32_t>(1, 32 - 1);
+    size1 = 32 - size0;
+    test_concat_aux(
+        fun_kind, BitVector(size0, *d_rng), BitVector(size1, *d_rng));
+    size0 = d_rng->pick<uint32_t>(1, 35 - 1);
+    size1 = 35 - size0;
+    test_concat_aux(
+        fun_kind, BitVector(size0, *d_rng), BitVector(size1, *d_rng));
   }
 }
 
@@ -3420,14 +3456,7 @@ TEST_F(TestBitVector, add) { test_binary(DEFAULT, ADD); }
 
 TEST_F(TestBitVector, and) { test_binary(DEFAULT, AND); }
 
-TEST_F(TestBitVector, concat)
-{
-  test_concat(DEFAULT, 2);
-  test_concat(DEFAULT, 7);
-  test_concat(DEFAULT, 31);
-  test_concat(DEFAULT, 33);
-  test_concat(DEFAULT, 64);
-}
+TEST_F(TestBitVector, concat) { test_concat(DEFAULT); }
 
 TEST_F(TestBitVector, eq) { test_binary(DEFAULT, EQ); }
 
@@ -3609,16 +3638,8 @@ TEST_F(TestBitVector, iand)
 
 TEST_F(TestBitVector, iconcat)
 {
-  test_concat(INPLACE_ALL, 2);
-  test_concat(INPLACE_ALL, 7);
-  test_concat(INPLACE_ALL, 31);
-  test_concat(INPLACE_ALL, 33);
-  test_concat(INPLACE_ALL, 64);
-  test_concat(INPLACE_THIS, 2);
-  test_concat(INPLACE_THIS, 7);
-  test_concat(INPLACE_THIS, 31);
-  test_concat(INPLACE_THIS, 33);
-  test_concat(INPLACE_THIS, 64);
+  test_concat(INPLACE_ALL);
+  test_concat(INPLACE_THIS);
 }
 
 TEST_F(TestBitVector, ieq)
