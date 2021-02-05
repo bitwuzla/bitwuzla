@@ -123,7 +123,11 @@ class TestBitVector : public TestCommon
                        const BitVector& bv0,
                        const BitVector& bv1);
   void test_concat(BvFunKind fun_kind);
-  void test_extend(BvFunKind fun_kind, Kind kind, uint32_t size);
+  void test_extend_aux(BvFunKind fun_kind,
+                       Kind kind,
+                       const BitVector& bv,
+                       uint32_t n);
+  void test_extend(BvFunKind fun_kind, Kind kind);
   void test_extract(BvFunKind fun_kind, uint32_t size);
   void test_is_uadd_overflow_aux(uint32_t size,
                                  uint64_t a1,
@@ -562,56 +566,81 @@ TestBitVector::test_count(uint32_t size, bool leading, bool zeros)
 }
 
 void
-TestBitVector::test_extend(BvFunKind fun_kind, Kind kind, uint32_t size)
+TestBitVector::test_extend_aux(BvFunKind fun_kind,
+                               Kind kind,
+                               const BitVector& bv,
+                               uint32_t n)
 {
-  for (uint32_t i = 0; i < N_TESTS; ++i)
+  uint32_t size = bv.size();
+  BitVector res(bv);
+  char c = 0;
+
+  switch (kind)
+  {
+    case ZEXT:
+      if (fun_kind == INPLACE_THIS)
+      {
+        (void) res.ibvzext(n);
+      }
+      else if (fun_kind == INPLACE_ALL)
+      {
+        (void) res.ibvzext(bv, n);
+      }
+      else
+      {
+        res = bv.bvzext(n);
+      }
+      c = '0';
+      break;
+    case SEXT:
+      if (fun_kind == INPLACE_THIS)
+      {
+        (void) res.ibvsext(n);
+      }
+      else if (fun_kind == INPLACE_ALL)
+      {
+        (void) res.ibvsext(bv, n);
+      }
+      else
+      {
+        res = bv.bvsext(n);
+      }
+      c = bv.get_msb() ? '1' : '0';
+      break;
+
+    default: assert(false);
+  }
+  ASSERT_EQ(size + n, res.size());
+  std::string res_str = res.to_string();
+  std::string bv_str  = bv.to_string();
+  uint32_t len        = size - n;
+  ASSERT_EQ(bv_str.compare(0, len, res_str, n, len), 0);
+  ASSERT_EQ(std::string(n, c).compare(0, n, res_str, 0, n), 0);
+}
+
+void
+TestBitVector::test_extend(BvFunKind fun_kind, Kind kind)
+{
+  /* test all values for bit-widths 2 - 8 */
+  for (uint32_t size = 2; size <= 8; ++size)
   {
     uint32_t n = d_rng->pick<uint32_t>(0, size - 1);
-    BitVector bv(size - n, *d_rng);
-    BitVector res(bv);
-    char c = 0;
-
-    switch (kind)
+    for (uint32_t i = 0, m = 1 << size; i < m; ++i)
     {
-      case ZEXT:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvzext(n);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvzext(bv, n);
-        }
-        else
-        {
-          res = bv.bvzext(n);
-        }
-        c = '0';
-        break;
-      case SEXT:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvsext(n);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvsext(bv, n);
-        }
-        else
-        {
-          res = bv.bvsext(n);
-        }
-        c = bv.get_msb() ? '1' : '0';
-        break;
-
-      default: assert(false);
+      test_extend_aux(fun_kind, kind, BitVector(size - n, i), n);
     }
-    ASSERT_EQ(bv.size() + n, res.size());
-    std::string res_str = res.to_string();
-    std::string bv_str  = bv.to_string();
-    uint32_t len        = size - n;
-    ASSERT_EQ(bv_str.compare(0, len, res_str, n, len), 0);
-    ASSERT_EQ(std::string(n, c).compare(0, n, res_str, 0, n), 0);
+  }
+  /* test random values for bit-widths 16, 32, 35 */
+  for (uint32_t i = 0; i < N_TESTS; ++i)
+  {
+    uint32_t n;
+
+    n = d_rng->pick<uint32_t>(0, 16 - 1);
+    test_extend_aux(fun_kind, kind, BitVector(16 - n, *d_rng), n);
+    n = d_rng->pick<uint32_t>(0, 32 - 1);
+    test_extend_aux(fun_kind, kind, BitVector(32 - n, *d_rng), n);
+    n = d_rng->pick<uint32_t>(0, 35 - 1);
+    test_extend_aux(fun_kind, kind, BitVector(35 - n, *d_rng), n);
   }
 }
 
@@ -2162,7 +2191,7 @@ TestBitVector::test_concat_aux(BvFunKind fun_kind,
 void
 TestBitVector::test_concat(BvFunKind fun_kind)
 {
-  /* test all values for bit-widths 1 - 4 */
+  /* test all values for bit-widths 2 - 8 */
   for (uint32_t size = 2; size <= 8; ++size)
   {
     uint32_t size0 = d_rng->pick<uint32_t>(1, size - 1);
@@ -3514,17 +3543,7 @@ TEST_F(TestBitVector, nor) { test_binary(DEFAULT, NOR); }
 
 TEST_F(TestBitVector, sdiv) { test_binary_signed(DEFAULT, SDIV); }
 
-TEST_F(TestBitVector, sext)
-{
-  test_extend(DEFAULT, SEXT, 2);
-  test_extend(DEFAULT, SEXT, 3);
-  test_extend(DEFAULT, SEXT, 4);
-  test_extend(DEFAULT, SEXT, 5);
-  test_extend(DEFAULT, SEXT, 6);
-  test_extend(DEFAULT, SEXT, 7);
-  test_extend(DEFAULT, SEXT, 31);
-  test_extend(DEFAULT, SEXT, 33);
-}
+TEST_F(TestBitVector, sext) { test_extend(DEFAULT, SEXT); }
 
 TEST_F(TestBitVector, shl)
 {
@@ -3574,17 +3593,7 @@ TEST_F(TestBitVector, xor) { test_binary(DEFAULT, XOR); }
 
 TEST_F(TestBitVector, xnor) { test_binary(DEFAULT, XNOR); }
 
-TEST_F(TestBitVector, zext)
-{
-  test_extend(DEFAULT, ZEXT, 2);
-  test_extend(DEFAULT, ZEXT, 3);
-  test_extend(DEFAULT, ZEXT, 4);
-  test_extend(DEFAULT, ZEXT, 5);
-  test_extend(DEFAULT, ZEXT, 6);
-  test_extend(DEFAULT, ZEXT, 7);
-  test_extend(DEFAULT, ZEXT, 31);
-  test_extend(DEFAULT, ZEXT, 33);
-}
+TEST_F(TestBitVector, zext) { test_extend(DEFAULT, ZEXT); }
 
 /* -------------------------------------------------------------------------- */
 
@@ -3720,22 +3729,8 @@ TEST_F(TestBitVector, isdiv)
 
 TEST_F(TestBitVector, isext)
 {
-  test_extend(INPLACE_ALL, SEXT, 2);
-  test_extend(INPLACE_ALL, SEXT, 3);
-  test_extend(INPLACE_ALL, SEXT, 4);
-  test_extend(INPLACE_ALL, SEXT, 5);
-  test_extend(INPLACE_ALL, SEXT, 6);
-  test_extend(INPLACE_ALL, SEXT, 7);
-  test_extend(INPLACE_ALL, SEXT, 31);
-  test_extend(INPLACE_ALL, SEXT, 33);
-  test_extend(INPLACE_THIS, SEXT, 2);
-  test_extend(INPLACE_THIS, SEXT, 3);
-  test_extend(INPLACE_THIS, SEXT, 4);
-  test_extend(INPLACE_THIS, SEXT, 5);
-  test_extend(INPLACE_THIS, SEXT, 6);
-  test_extend(INPLACE_THIS, SEXT, 7);
-  test_extend(INPLACE_THIS, SEXT, 31);
-  test_extend(INPLACE_THIS, SEXT, 33);
+  test_extend(INPLACE_ALL, SEXT);
+  test_extend(INPLACE_THIS, SEXT);
 }
 
 TEST_F(TestBitVector, ishl)
@@ -3851,22 +3846,8 @@ TEST_F(TestBitVector, ixnor)
 
 TEST_F(TestBitVector, izext)
 {
-  test_extend(INPLACE_ALL, ZEXT, 2);
-  test_extend(INPLACE_ALL, ZEXT, 3);
-  test_extend(INPLACE_ALL, ZEXT, 4);
-  test_extend(INPLACE_ALL, ZEXT, 5);
-  test_extend(INPLACE_ALL, ZEXT, 6);
-  test_extend(INPLACE_ALL, ZEXT, 7);
-  test_extend(INPLACE_ALL, ZEXT, 31);
-  test_extend(INPLACE_ALL, ZEXT, 33);
-  test_extend(INPLACE_THIS, ZEXT, 2);
-  test_extend(INPLACE_THIS, ZEXT, 3);
-  test_extend(INPLACE_THIS, ZEXT, 4);
-  test_extend(INPLACE_THIS, ZEXT, 5);
-  test_extend(INPLACE_THIS, ZEXT, 6);
-  test_extend(INPLACE_THIS, ZEXT, 7);
-  test_extend(INPLACE_THIS, ZEXT, 31);
-  test_extend(INPLACE_THIS, ZEXT, 33);
+  test_extend(INPLACE_ALL, ZEXT);
+  test_extend(INPLACE_THIS, ZEXT);
 }
 
 /* -------------------------------------------------------------------------- */
