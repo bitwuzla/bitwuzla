@@ -140,7 +140,11 @@ class TestBitVector : public TestCommon
                                  uint64_t a2,
                                  bool expected);
   void test_is_umul_overflow(uint32_t size);
-  void test_ite(BvFunKind fun_kind, uint32_t size);
+  void test_ite_aux(BvFunKind fun_kind,
+                    const BitVector& bv0,
+                    const BitVector& b1,
+                    const BitVector& bv2);
+  void test_ite(BvFunKind fun_kind);
   void test_modinv(BvFunKind fun_kind, uint32_t size);
   void test_shift_aux(BvFunKind fun_kind,
                       Kind kind,
@@ -724,32 +728,82 @@ TestBitVector::test_is_umul_overflow(uint32_t size)
 }
 
 void
-TestBitVector::test_ite(BvFunKind fun_kind, uint32_t size)
+TestBitVector::test_ite_aux(BvFunKind fun_kind,
+                            const BitVector& bv0,
+                            const BitVector& bv1,
+                            const BitVector& bv2)
 {
+  assert(bv0.size() == 1);
+  assert(bv1.size() == bv2.size());
+  uint32_t size = bv0.size();
+  BitVector b0(bv0);
+  BitVector b1(bv1);
+  BitVector b2(bv2);
+  BitVector res(size);
+  BitVector tres0, tres1;
+
+  if (fun_kind == INPLACE_ALL)
+  {
+    (void) res.ibvite(b0, b1, b2);
+    // test with *this as arguments
+    tres0 = b0;
+    tres1 = b1;
+    (void) tres0.ibvite(tres0, b1, b2);
+    (void) tres1.ibvite(b0, tres1, tres1);
+  }
+  else
+  {
+    assert(fun_kind == DEFAULT);
+    res = BitVector::bvite(b0, b1, b2);
+  }
+
+  uint64_t a0    = b0.to_uint64();
+  uint64_t a1    = b1.to_uint64();
+  uint64_t a2    = b2.to_uint64();
+  uint64_t ares  = _ite(a0, a1, a2, size);
+  uint64_t atres = _ite(a0, a1, a1, size);
+  ASSERT_EQ(ares, res.to_uint64());
+  ASSERT_TRUE(tres0.is_null() || ares == tres0.to_uint64());
+  ASSERT_TRUE(tres1.is_null() || atres == tres1.to_uint64());
+}
+
+void
+TestBitVector::test_ite(BvFunKind fun_kind)
+{
+  /* test all values for bit-widths 1 - 4 */
+  for (uint32_t k = 0; k < 2; ++k)
+  {
+    for (uint32_t size = 1; size <= 4; ++size)
+    {
+      for (uint32_t i = 0, n = 1 << size; i < n; ++i)
+      {
+        for (uint32_t j = 0, m = 1 << size; j < m; ++j)
+        {
+          test_ite_aux(fun_kind,
+                       BitVector(1, k),
+                       BitVector(size, i),
+                       BitVector(size, j));
+        }
+      }
+    }
+  }
+  /* test random values for bit-widths 16, 32, 35 */
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
-    BitVector bv_cond(1, *d_rng);
-    BitVector bv_then(size, *d_rng);
-    BitVector bv_else(size, *d_rng);
-    BitVector res(size);
-
-    if (fun_kind == INPLACE_ALL)
-    {
-      (void) res.ibvite(bv_cond, bv_then, bv_else);
-    }
-    else
-    {
-      assert(fun_kind == DEFAULT);
-      res = BitVector::bvite(bv_cond, bv_then, bv_else);
-    }
-
-    uint64_t a_cond = bv_cond.to_uint64();
-    uint64_t a_then = bv_then.to_uint64();
-    uint64_t a_else = bv_else.to_uint64();
-    uint64_t a_res  = _ite(a_cond, a_then, a_else, size);
-    uint64_t b_res  = res.to_uint64();
-    ASSERT_EQ(a_res, b_res);
+    test_ite_aux(fun_kind,
+                 BitVector(1, *d_rng),
+                 BitVector(16, *d_rng),
+                 BitVector(16, *d_rng));
+    test_ite_aux(fun_kind,
+                 BitVector(1, *d_rng),
+                 BitVector(32, *d_rng),
+                 BitVector(32, *d_rng));
+    test_ite_aux(fun_kind,
+                 BitVector(1, *d_rng),
+                 BitVector(35, *d_rng),
+                 BitVector(35, *d_rng));
   }
+  /* death tests */
   BitVector b1(1, *d_rng);
   BitVector b8(8, *d_rng);
   BitVector b16(16, *d_rng);
@@ -3524,21 +3578,9 @@ TEST_F(TestBitVector, is_umul_overflow)
   test_is_umul_overflow(33);
 }
 
-TEST_F(TestBitVector, ite)
-{
-  test_ite(DEFAULT, 1);
-  test_ite(DEFAULT, 7);
-  test_ite(DEFAULT, 31);
-  test_ite(DEFAULT, 33);
-}
+TEST_F(TestBitVector, ite) { test_ite(DEFAULT); }
 
-TEST_F(TestBitVector, modinv)
-{
-  test_ite(DEFAULT, 1);
-  test_ite(DEFAULT, 7);
-  test_ite(DEFAULT, 31);
-  test_ite(DEFAULT, 33);
-}
+TEST_F(TestBitVector, modinv) { test_ite(DEFAULT); }
 
 TEST_F(TestBitVector, mul) { test_binary(DEFAULT, MUL); }
 
@@ -3678,21 +3720,9 @@ TEST_F(TestBitVector, iimplies)
   test_binary(INPLACE_THIS, IMPLIES);
 }
 
-TEST_F(TestBitVector, iite)
-{
-  test_ite(INPLACE_ALL, 1);
-  test_ite(INPLACE_ALL, 7);
-  test_ite(INPLACE_ALL, 31);
-  test_ite(INPLACE_ALL, 33);
-}
+TEST_F(TestBitVector, iite) { test_ite(INPLACE_ALL); }
 
-TEST_F(TestBitVector, imodinv)
-{
-  test_ite(INPLACE_ALL, 1);
-  test_ite(INPLACE_ALL, 7);
-  test_ite(INPLACE_ALL, 31);
-  test_ite(INPLACE_ALL, 33);
-}
+TEST_F(TestBitVector, imodinv) { test_ite(INPLACE_ALL); }
 
 TEST_F(TestBitVector, imul)
 {
