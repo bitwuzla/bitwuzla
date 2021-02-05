@@ -1776,8 +1776,7 @@ BitVector::ibvite(const BitVector& c, const BitVector& t, const BitVector& e)
   assert(!t.is_null());
   assert(!e.is_null());
   assert(c.d_size == 1);
-  assert(d_size == t.d_size);
-  assert(d_size == e.d_size);
+  assert(e.d_size == t.d_size);
   if (c.is_true())
   {
     mpz_set(d_val->d_mpz, t.d_val->d_mpz);
@@ -1786,6 +1785,7 @@ BitVector::ibvite(const BitVector& c, const BitVector& t, const BitVector& e)
   {
     mpz_set(d_val->d_mpz, e.d_val->d_mpz);
   }
+  d_size = t.d_size;
   return *this;
 }
 

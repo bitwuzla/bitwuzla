@@ -811,8 +811,8 @@ TestBitVector::test_ite(BvFunKind fun_kind)
   if (fun_kind == INPLACE_ALL)
   {
     ASSERT_DEATH(b8.ibvite(b8, b8, b8), "c.d_size == 1");
-    ASSERT_DEATH(b8.ibvite(b1, b8, b16), "d_size == e.d_size");
-    ASSERT_DEATH(b8.ibvite(b1, b16, b8), "d_size == t.d_size");
+    ASSERT_DEATH(b8.ibvite(b1, b8, b16), "e.d_size == t.d_size");
+    ASSERT_DEATH(b8.ibvite(b1, b16, b8), "e.d_size == t.d_size");
   }
   else
   {
