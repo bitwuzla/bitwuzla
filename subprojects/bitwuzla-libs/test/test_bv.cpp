@@ -827,13 +827,17 @@ void
 TestBitVector::test_modinv_aux(BvFunKind fun_kind, const BitVector& bv)
 {
   BitVector res(bv);
+  BitVector tres;
   if (fun_kind == INPLACE_THIS)
   {
-    // TODO
+    (void) res.ibvmodinv();
   }
   else if (fun_kind == INPLACE_ALL)
   {
     (void) res.ibvmodinv(bv);
+    // test with *this as argument
+    tres = bv;
+    (void) tres.ibvmodinv(tres);
   }
   else
   {
@@ -841,6 +845,7 @@ TestBitVector::test_modinv_aux(BvFunKind fun_kind, const BitVector& bv)
   }
 
   ASSERT_TRUE(bv.bvmul(res).is_one());
+  ASSERT_TRUE(tres.is_null() || bv.bvmul(tres).is_one());
 }
 
 void
@@ -3748,7 +3753,11 @@ TEST_F(TestBitVector, iimplies)
 
 TEST_F(TestBitVector, iite) { test_ite(INPLACE_ALL); }
 
-TEST_F(TestBitVector, imodinv) { test_modinv(INPLACE_ALL); }
+TEST_F(TestBitVector, imodinv)
+{
+  test_modinv(INPLACE_ALL);
+  test_modinv(INPLACE_THIS);
+}
 
 TEST_F(TestBitVector, imul)
 {

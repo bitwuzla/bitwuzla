@@ -2101,6 +2101,13 @@ BitVector::ibvsext(uint32_t n)
   return *this;
 }
 
+BitVector&
+BitVector::ibvmodinv()
+{
+  ibvmodinv(*this);
+  return *this;
+}
+
 /* -------------------------------------------------------------------------- */
 
 void
