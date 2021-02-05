@@ -68,7 +68,7 @@ BitVectorDomain::size() const
 bool
 BitVectorDomain::is_valid() const
 {
-  return d_lo.bvnot().bvor(d_hi).is_ones();
+  return d_lo.bvnot().ibvor(d_hi).is_ones();
 }
 
 bool
@@ -120,7 +120,7 @@ BitVectorDomain::fix_bit(uint32_t idx, bool value)
 bool
 BitVectorDomain::match_fixed_bits(const BitVector &bv) const
 {
-  return bv.bvand(d_hi).bvor(d_lo).compare(bv) == 0;
+  return bv.bvand(d_hi).ibvor(d_lo).compare(bv) == 0;
 }
 
 BitVectorDomain &
