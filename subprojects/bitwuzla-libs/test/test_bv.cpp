@@ -145,7 +145,8 @@ class TestBitVector : public TestCommon
                     const BitVector& b1,
                     const BitVector& bv2);
   void test_ite(BvFunKind fun_kind);
-  void test_modinv(BvFunKind fun_kind, uint32_t size);
+  void test_modinv_aux(BvFunKind fun_kind, const BitVector& bv);
+  void test_modinv(BvFunKind fun_kind);
   void test_shift_aux(BvFunKind fun_kind,
                       Kind kind,
                       const std::string& to_shift,
@@ -823,26 +824,51 @@ TestBitVector::test_ite(BvFunKind fun_kind)
 }
 
 void
-TestBitVector::test_modinv(BvFunKind fun_kind, uint32_t size)
+TestBitVector::test_modinv_aux(BvFunKind fun_kind, const BitVector& bv)
 {
-  for (uint32_t i = 0; i < N_MODINV_TESTS; ++i)
+  BitVector res(bv);
+  if (fun_kind == INPLACE_THIS)
   {
-    BitVector bv(size, *d_rng);
+    // TODO
+  }
+  else if (fun_kind == INPLACE_ALL)
+  {
+    (void) res.ibvmodinv(bv);
+  }
+  else
+  {
+    res = bv.bvmodinv();
+  }
+
+  ASSERT_TRUE(bv.bvmul(res).is_one());
+}
+
+void
+TestBitVector::test_modinv(BvFunKind fun_kind)
+{
+  /* test all values for bit-widths 1 - 4 */
+  for (uint32_t size = 1; size <= 4; ++size)
+  {
+    for (uint32_t i = 0, n = 1 << size; i < n; ++i)
+    {
+      if ((i & 1) == 0) continue;
+      test_modinv_aux(fun_kind, BitVector(size, i));
+    }
+  }
+  /* test random values for bit-widths 16, 32, 35 */
+  for (uint32_t i = 0; i < N_TESTS; ++i)
+  {
+    BitVector bv;
+
+    bv = BitVector(16, *d_rng);
     bv.set_bit(0, 1);  // must be odd
-    BitVector res(bv);
-    if (fun_kind == INPLACE_THIS)
-    {
-      // TODO
-    }
-    else if (fun_kind == INPLACE_ALL)
-    {
-      (void) res.ibvmodinv(bv);
-    }
-    else
-    {
-      res = bv.bvmodinv();
-    }
-    ASSERT_TRUE(bv.bvmul(res).is_one());
+    test_modinv_aux(fun_kind, bv);
+    bv = BitVector(32, *d_rng);
+    bv.set_bit(0, 1);  // must be odd
+    test_modinv_aux(fun_kind, bv);
+    bv = BitVector(35, *d_rng);
+    bv.set_bit(0, 1);  // must be odd
+    test_modinv_aux(fun_kind, bv);
   }
 }
 
@@ -3580,7 +3606,7 @@ TEST_F(TestBitVector, is_umul_overflow)
 
 TEST_F(TestBitVector, ite) { test_ite(DEFAULT); }
 
-TEST_F(TestBitVector, modinv) { test_ite(DEFAULT); }
+TEST_F(TestBitVector, modinv) { test_modinv(DEFAULT); }
 
 TEST_F(TestBitVector, mul) { test_binary(DEFAULT, MUL); }
 
@@ -3722,7 +3748,7 @@ TEST_F(TestBitVector, iimplies)
 
 TEST_F(TestBitVector, iite) { test_ite(INPLACE_ALL); }
 
-TEST_F(TestBitVector, imodinv) { test_ite(INPLACE_ALL); }
+TEST_F(TestBitVector, imodinv) { test_modinv(INPLACE_ALL); }
 
 TEST_F(TestBitVector, imul)
 {
