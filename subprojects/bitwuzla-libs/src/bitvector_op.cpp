@@ -164,7 +164,7 @@ BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
     /* IC: (t & s) = t && ((s & hi_x) & m) = (t & m)
      *     with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits */
     BitVector mask = x.lo().bvxnor(x.hi());
-    return s.bvand(x.hi()).bvand(mask).compare(t.bvand(mask)) == 0;
+    return s.bvand(x.hi()).ibvand(mask).compare(t.bvand(mask)) == 0;
   }
   /* IC: (t & s) = t */
   return check;
@@ -303,7 +303,7 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
 
-  bool check = s.bvneg().bvor(s).bvand(t).compare(t) == 0;
+  bool check = s.bvneg().ibvor(s).ibvand(t).compare(t) == 0;
 
   if (check && x.has_fixed_bits())
   {
@@ -325,7 +325,7 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
       /** s odd */
       if (s.get_lsb())
       {
-        BitVector inv = s.bvmodinv().bvmul(t);
+        BitVector inv = s.bvmodinv().ibvmul(t);
         if (x.match_fixed_bits(inv))
         {
           d_inverse.reset(new BitVectorDomain(inv));
@@ -342,14 +342,14 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
       uint32_t bw             = x.size();
       uint32_t ctz            = s.count_trailing_zeros();
       BitVectorDomain x_prime = x.bvextract(bw - ctz - 1, 0);
-      BitVector y             = t.bvshr(ctz).bvmul(s.bvshr(ctz).bvmodinv());
+      BitVector y             = t.bvshr(ctz).ibvmul(s.bvshr(ctz).ibvmodinv());
       BitVector y_ext         = y.bvextract(bw - ctz - 1, 0);
       if (x_prime.match_fixed_bits(y_ext))
       {
         /* Result domain is x[bw - 1:ctz(s)] o y[bw - ctz(s) - 1:0] */
         d_inverse.reset(
-            new BitVectorDomain(x.lo().bvextract(bw - 1, ctz).bvconcat(y),
-                                x.hi().bvextract(bw - 1, ctz).bvconcat(y)));
+            new BitVectorDomain(x.lo().bvextract(bw - 1, ctz).ibvconcat(y),
+                                x.hi().bvextract(bw - 1, ctz).ibvconcat(y)));
         return true;
       }
       return false;
@@ -391,7 +391,7 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
 
   if (pos_x == 0)
   {
-    check = t.bvshr(s).bvshl(s).compare(t) == 0;
+    check = t.bvshr(s).ibvshl(s).compare(t) == 0;
   }
   else
   {
@@ -488,7 +488,7 @@ BitVectorShr::is_invertible(RNG* rng,
 
   if (pos_x == 0)
   {
-    check = t.bvshl(s).bvshr(s).compare(t) == 0;
+    check = t.bvshl(s).ibvshr(s).compare(t) == 0;
   }
   else
   {
@@ -596,7 +596,7 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
   uint32_t bw = s.size();
   if (s.compare(BitVector(bw, bw)) < 0)
   {
-    check = t.bvshl(s).bvashr(s).compare(t) == 0;
+    check = t.bvshl(s).ibvashr(s).compare(t) == 0;
   }
   else
   {
@@ -924,12 +924,12 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
 
   if (pos_x == 0)
   {
-    check = s.bvneg().bvnot().compare(t) >= 0;
+    check = s.bvneg().ibvnot().compare(t) >= 0;
   }
   else
   {
     assert(pos_x == 1);
-    check = t.bvadd(t).bvsub(s).bvand(s).compare(t) >= 0;
+    check = t.bvadd(t).ibvsub(s).ibvand(s).compare(t) >= 0;
   }
 
   if (check && x.has_fixed_bits())
@@ -979,7 +979,7 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
              * -> ~0 - s * n >= t                                       */
 
             /* n_hi = (~0 - t) / s */
-            BitVector n_hi = ones.bvsub(t).bvudiv(s);
+            BitVector n_hi = ones.bvsub(t).ibvudiv(s);
             assert(!n_hi.is_zero());
             /* ~0 - s * n_hi < t ? decrease n_hi until >= t */
             BitVector mul = s.bvmul(n_hi);
