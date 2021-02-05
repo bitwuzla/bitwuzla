@@ -128,7 +128,8 @@ class TestBitVector : public TestCommon
                        const BitVector& bv,
                        uint32_t n);
   void test_extend(BvFunKind fun_kind, Kind kind);
-  void test_extract(BvFunKind fun_kind, uint32_t size);
+  void test_extract_aux(BvFunKind fun_kind, const BitVector& bv);
+  void test_extract(BvFunKind fun_kind);
   void test_is_uadd_overflow_aux(uint32_t size,
                                  uint64_t a1,
                                  uint64_t a2,
@@ -2225,22 +2226,21 @@ TestBitVector::test_concat(BvFunKind fun_kind)
 }
 
 void
-TestBitVector::test_extract(BvFunKind fun_kind, uint32_t size)
+TestBitVector::test_extract_aux(BvFunKind fun_kind, const BitVector& bv)
 {
-  for (uint32_t i = 0; i < N_TESTS; ++i)
-  {
-    BitVector bv(size, *d_rng);
-    BitVector tres;
-    uint32_t lo = rand() % size;
-    uint32_t hi = rand() % (size - lo) + lo;
-    ASSERT_GE(hi, lo);
-    ASSERT_LT(hi, size);
-    ASSERT_LT(lo, size);
+  uint32_t size = bv.size();
 
-    BitVector res(bv);
-    if (fun_kind == INPLACE_THIS)
-    {
-      (void) res.ibvextract(hi, lo);
+  BitVector tres;
+  uint32_t lo = d_rng->pick<uint32_t>(0, size - 1);
+  uint32_t hi = d_rng->pick<uint32_t>(lo, size - 1);
+  ASSERT_GE(hi, lo);
+  ASSERT_LT(hi, size);
+  ASSERT_LT(lo, size);
+
+  BitVector res(bv);
+  if (fun_kind == INPLACE_THIS)
+  {
+    (void) res.ibvextract(hi, lo);
     }
     else if (fun_kind == INPLACE_ALL)
     {
@@ -2264,12 +2264,27 @@ TestBitVector::test_extract(BvFunKind fun_kind, uint32_t size)
       std::string tres_str = tres.to_string();
       ASSERT_EQ(bv_str.compare(size - hi - 1, len, tres_str, 0, len), 0);
     }
-  }
-  if (size > 1)
+}
+
+void
+TestBitVector::test_extract(BvFunKind fun_kind)
+{
+  /* test all values for bit-widths 1 - 8 */
+  for (uint32_t size = 1; size <= 8; ++size)
   {
-    ASSERT_DEATH(BitVector(size, *d_rng).bvextract(size - 2, size - 1),
-                 "idx_hi >= idx_lo");
+    for (uint32_t i = 0, n = 1 << size; i < n; ++i)
+    {
+      test_extract_aux(fun_kind, BitVector(size, i));
+    }
   }
+  /* test random values for bit-widths 16, 32, 35 */
+  for (uint32_t i = 0; i < N_TESTS; ++i)
+  {
+    test_extract_aux(fun_kind, BitVector(16, i));
+    test_extract_aux(fun_kind, BitVector(32, i));
+    test_extract_aux(fun_kind, BitVector(35, i));
+  }
+  ASSERT_DEATH(BitVector(33, *d_rng).bvextract(31, 32), "idx_hi >= idx_lo");
 }
 
 void
@@ -3489,13 +3504,7 @@ TEST_F(TestBitVector, concat) { test_concat(DEFAULT); }
 
 TEST_F(TestBitVector, eq) { test_binary(DEFAULT, EQ); }
 
-TEST_F(TestBitVector, extract)
-{
-  test_extract(DEFAULT, 1);
-  test_extract(DEFAULT, 7);
-  test_extract(DEFAULT, 31);
-  test_extract(DEFAULT, 33);
-}
+TEST_F(TestBitVector, extract) { test_extract(DEFAULT); }
 
 TEST_F(TestBitVector, implies) { test_binary(DEFAULT, IMPLIES); }
 
@@ -3659,14 +3668,8 @@ TEST_F(TestBitVector, ieq)
 
 TEST_F(TestBitVector, iextract)
 {
-  test_extract(INPLACE_ALL, 1);
-  test_extract(INPLACE_ALL, 7);
-  test_extract(INPLACE_ALL, 31);
-  test_extract(INPLACE_ALL, 33);
-  test_extract(INPLACE_THIS, 1);
-  test_extract(INPLACE_THIS, 7);
-  test_extract(INPLACE_THIS, 31);
-  test_extract(INPLACE_THIS, 33);
+  test_extract(INPLACE_ALL);
+  test_extract(INPLACE_THIS);
 }
 
 TEST_F(TestBitVector, iimplies)
