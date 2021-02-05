@@ -693,7 +693,7 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
         }
         else
         {
-          max.ibvdec(max);
+          max.ibvdec();
         }
 
         BitVectorDomainGenerator gen(x, d_rng, min, max);
@@ -728,8 +728,7 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
       else
       {
         min = t.bvinc();
-        min.ibvudiv(s, min);
-        min.ibvinc(min);
+        min.ibvudiv(s, min).ibvinc();
         max = s_udiv_t;
       }
       BitVectorDomainGenerator gen(x, d_rng, min, max);
@@ -987,7 +986,7 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
             BitVector sub = ones.bvsub(mul);
             while (sub.compare(t) < 0)
             {
-              n_hi.ibvdec(n_hi);
+              n_hi.ibvdec();
               mul.ibvmul(s, n_hi);
               sub.ibvsub(ones, mul);
             }

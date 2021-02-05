@@ -462,7 +462,7 @@ BitVectorDomainGenerator::generate_next(bool random)
   }
   else
   {
-    d_bits->ibvinc(*d_bits);
+    d_bits->ibvinc();
   }
 
   assert(d_bits == nullptr || d_bits->compare(*d_bits_min) >= 0);
