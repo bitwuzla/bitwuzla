@@ -581,7 +581,8 @@ bzla_is_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
  * sign_extend(x, n) = t
  *
  * IC: (t_ext == ones) \/ (t_ext == zero)
- *     with t_ext = t[bw + n - 1 : bw - 1] (include MSB of tx part)
+ *     with t_x  = t[t_size - 1 - n : 0]
+ *     and t_ext = t[bw_t - 1, bw_t - 1 - n] (includes MSB of t_x)
  */
 bool
 bzla_is_inv_sext(Bzla *bzla, BzlaPropInfo *pi)
@@ -1722,7 +1723,7 @@ bzla_is_inv_slice_const(Bzla *bzla, BzlaPropInfo *pi)
  *
  * sign_extend(x, n) = t_ext o t_x
  *
- * IC: (t_x[msb] == 1 /\ t_ext == ones) \/ (t_x[msb] == 0 /\ t_ext == zero)
+ * IC: ((t_ext == ones) \/ (t_ext == zero)) /\ check_fixed_bits(x, t_x)
  */
 bool
 bzla_is_inv_sext_const(Bzla *bzla, BzlaPropInfo *pi)
