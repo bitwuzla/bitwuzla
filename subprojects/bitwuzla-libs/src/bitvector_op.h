@@ -519,6 +519,36 @@ class BitVectorUrem : public BitVectorOp
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
 };
 
+class BitVectorXor : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorXor(RNG* rng,
+               uint32_t size,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
+  BitVectorXor(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain,
+               BitVectorOp* child0,
+               BitVectorOp* child1);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: mfb(x, s^t)
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVectorDomain* inverse() { return d_inverse.get(); }
+
+ private:
+  /** Cached inverse result. */
+  std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+};
+
 class BitVectorIte : public BitVectorOp
 {
  public:

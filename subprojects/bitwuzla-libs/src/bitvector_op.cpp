@@ -1058,6 +1058,40 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
+BitVectorXor::BitVectorXor(RNG* rng,
+                           uint32_t size,
+                           BitVectorOp* child0,
+                           BitVectorOp* child1)
+    : BitVectorOp(rng, size, child0, child1)
+{
+}
+
+BitVectorXor::BitVectorXor(RNG* rng,
+                           const BitVector& assignment,
+                           const BitVectorDomain& domain,
+                           BitVectorOp* child0,
+                           BitVectorOp* child1)
+    : BitVectorOp(rng, assignment, domain, child0, child1)
+{
+}
+
+bool
+BitVectorXor::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+
+  /* IC_wo: true */
+  if (!x.has_fixed_bits()) return true;
+
+  uint32_t pos_s     = 1 - pos_x;
+  const BitVector& s = d_children[pos_s]->assignment();
+
+  /* IC: mfb(x, s^t) */
+  return x.match_fixed_bits(s.bvxor(t));
+}
+
+/* -------------------------------------------------------------------------- */
+
 BitVectorIte::BitVectorIte(RNG* rng,
                            uint32_t size,
                            BitVectorOp* child0,

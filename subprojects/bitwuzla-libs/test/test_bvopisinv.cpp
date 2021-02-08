@@ -395,6 +395,14 @@ TEST_F(TestBvOpIsInv, urem)
   test_binary<BitVectorUrem>(UREM, 1, true);
 }
 
+TEST_F(TestBvOpIsInv, xor)
+{
+  test_binary<BitVectorXor>(XOR, 0, false);
+  test_binary<BitVectorXor>(XOR, 1, false);
+  test_binary<BitVectorXor>(XOR, 0, true);
+  test_binary<BitVectorXor>(XOR, 1, true);
+}
+
 TEST_F(TestBvOpIsInv, ite)
 {
   test_ite(0, false);
