@@ -542,11 +542,11 @@ class BitVectorXor : public BitVectorOp
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVectorDomain* inverse() { return d_inverse.get(); }
+  BitVector* inverse() { return d_inverse.get(); }
 
  private:
   /** Cached inverse result. */
-  std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 class BitVectorIte : public BitVectorOp
@@ -596,6 +596,39 @@ class BitVectorIte : public BitVectorOp
  private:
   /** Cached inverse result. */
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+};
+
+class BitVectorExtract : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorExtract(
+      RNG* rng, uint32_t size, BitVectorOp* child0, uint32_t hi, uint32_t lo);
+  BitVectorExtract(RNG* rng,
+                   const BitVector& assignment,
+                   const BitVectorDomain& domain,
+                   BitVectorOp* child0,
+                   uint32_t hi,
+                   uint32_t lo);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: mfb(x[hi:lo], t)
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
+
+ private:
+  /** The upper index. */
+  uint32_t d_hi;
+  /** The lower index. */
+  uint32_t d_lo;
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 }  // namespace bzlals

@@ -1171,5 +1171,38 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
   assert(pos_x == 2);
   return s0.is_false();
 }
+
+/* -------------------------------------------------------------------------- */
+
+BitVectorExtract::BitVectorExtract(
+    RNG* rng, uint32_t size, BitVectorOp* child0, uint32_t hi, uint32_t lo)
+    : BitVectorOp(rng, size, child0), d_hi(hi), d_lo(lo)
+{
+}
+
+BitVectorExtract::BitVectorExtract(RNG* rng,
+                                   const BitVector& assignment,
+                                   const BitVectorDomain& domain,
+                                   BitVectorOp* child0,
+                                   uint32_t hi,
+                                   uint32_t lo)
+    : BitVectorOp(rng, assignment, domain, child0), d_hi(hi), d_lo(lo)
+{
+}
+
+bool
+BitVectorExtract::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  (void) pos_x;
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+
+  /* IC_wo: true */
+  if (!x.has_fixed_bits()) return true;
+  // TODO: maybe we should cache the domain extraction
+  /* IC: mfb(x[hi:lo], t) */
+  return x.bvextract(d_hi, d_lo).match_fixed_bits(t);
+}
+
 /* -------------------------------------------------------------------------- */
 }  // namespace bzlals
