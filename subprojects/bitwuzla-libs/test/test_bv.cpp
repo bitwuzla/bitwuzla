@@ -1,8 +1,6 @@
 #include <bitset>
 #include <iostream>
 
-#include "gmprandstate.h"
-#include "rng.h"
 #include "test.h"
 
 namespace bzlals {

@@ -2,8 +2,6 @@
 #include <string>
 #include <unordered_set>
 
-#include "gmprandstate.h"
-#include "rng.h"
 #include "test.h"
 
 namespace bzlals {
