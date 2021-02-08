@@ -1120,10 +1120,7 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
   const BitVector& s1      = d_children[pos_s1]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
 
-  /* IC:
-   *
-   * with const bits:
-   *     pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
+  /* IC: pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
    *                (is_fixed_true(x) && s0 = t) ||
    *                (is_fixed_false(x) && s1 = t)
    *                with s0 the value for '_t' and s1 the value for '_e'
@@ -1153,13 +1150,14 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
     assert(pos_x == 2);
     return s0.is_false() && x.match_fixed_bits(t);
   }
-  /* IC_wo:
-   *     pos_x = 0: s0 == t || s1 == t
-   *                with s0 the value for '_t' branch and s1 the value for '_e'
-   *     pos_x = 1: s0 == true
-   *                with s0 the value for '_c'
-   *     pos_x = 2: s0 == false
-   *                with s0 the value for '_c' */
+
+  /* IC_wo: pos_x = 0: s0 == t || s1 == t
+   *                   with s0 the value for the '_t' branch
+   *                   and s1 the value for the '_e' branch
+   *        pos_x = 1: s0 == true
+   *                   with s0 the value for condition '_c'
+   *        pos_x = 2: s0 == false
+   *                   with s0 the value for condition '_c' */
   if (pos_x == 0)
   {
     return s0.compare(t) == 0 || s1.compare(t) == 0;
@@ -1202,6 +1200,50 @@ BitVectorExtract::is_invertible(const BitVector& t, uint32_t pos_x)
   // TODO: maybe we should cache the domain extraction
   /* IC: mfb(x[hi:lo], t) */
   return x.bvextract(d_hi, d_lo).match_fixed_bits(t);
+}
+
+/* -------------------------------------------------------------------------- */
+
+BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
+                                         uint32_t size,
+                                         BitVectorOp* child0,
+                                         uint32_t n)
+    : BitVectorOp(rng, size, child0), d_n(n)
+{
+}
+
+BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
+                                         const BitVector& assignment,
+                                         const BitVectorDomain& domain,
+                                         BitVectorOp* child0,
+                                         uint32_t n)
+    : BitVectorOp(rng, assignment, domain, child0), d_n(n)
+{
+}
+
+bool
+BitVectorSignExtend::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  (void) pos_x;
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  uint32_t size            = t.size();
+  BitVector t_x            = t.bvextract(size - 1 - d_n, 0);
+  BitVector t_ext          = t.bvextract(size - 1, size - 1 - d_n);
+
+  bool check = t_ext.is_zero() || t_ext.is_ones();
+
+  if (check && x.has_fixed_bits())
+  {
+    /* IC: IC_wo && mfb(x, t_x) */
+    check = x.match_fixed_bits(t_x);
+  }
+  if (check) d_inverse.reset(new BitVector(t_x));
+  /* IC_wo: t_ext == ones || t_ext == zero
+   *         and t_x   = t[t_size - 1 - n : 0]
+   *         and t_ext = t[t_size - 1, t_size - 1 - n]
+   *         (i.e., it includes MSB of t_x) */
+  return check;
 }
 
 /* -------------------------------------------------------------------------- */

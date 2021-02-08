@@ -631,5 +631,37 @@ class BitVectorExtract : public BitVectorOp
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
+class BitVectorSignExtend : public BitVectorOp
+{
+ public:
+  /** Constructors. */
+  BitVectorSignExtend(RNG* rng, uint32_t size, BitVectorOp* child0, uint32_t n);
+  BitVectorSignExtend(RNG* rng,
+                      const BitVector& assignment,
+                      const BitVectorDomain& domain,
+                      BitVectorOp* child0,
+                      uint32_t n);
+  /**
+   * Check invertibility condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits (IC_wo): t_ext == ones || t_ext == zero
+   *                          and t_x   = t[t_size - 1 - n : 0]
+   *                          and t_ext = t[t_size - 1, t_size - 1 - n]
+   *                          (i.e., it includes MSB of t_x)
+   *
+   * with const bits: IC_wo && mfb(x, t_x)
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /** Get the cached inverse result. */
+  BitVector* inverse() { return d_inverse.get(); }
+
+ private:
+  /** The number of bits to extend with. */
+  uint32_t d_n;
+  /** Cached inverse result. */
+  std::unique_ptr<BitVector> d_inverse = nullptr;
+};
 }  // namespace bzlals
 #endif

@@ -31,11 +31,13 @@ class TestBvOpIsInv : public TestBvDomainCommon
                          const BitVector& t,
                          uint32_t hi,
                          uint32_t lo);
+  bool check_sat_sext(const BitVectorDomain& x, const BitVector& t, uint32_t n);
 
   template <class T>
   void test_binary(Kind kind, uint32_t pos_x, bool const_bits);
   void test_ite(uint32_t pos_x, bool const_bits);
   void test_extract(bool const_bits);
+  void test_sext(bool const_bits);
 
   static constexpr uint32_t TEST_BW = 4;
   std::vector<std::string> d_values;
@@ -134,6 +136,21 @@ TestBvOpIsInv::check_sat_extract(const BitVectorDomain& x,
   {
     BitVector val = gen.has_next() ? gen.next() : x.lo();
     BitVector res = val.bvextract(hi, lo);
+    if (t.compare(res) == 0) return true;
+  } while (gen.has_next());
+  return false;
+}
+
+bool
+TestBvOpIsInv::check_sat_sext(const BitVectorDomain& x,
+                              const BitVector& t,
+                              uint32_t n)
+{
+  BitVectorDomainGenerator gen(x);
+  do
+  {
+    BitVector val = gen.has_next() ? gen.next() : x.lo();
+    BitVector res = val.bvsext(n);
     if (t.compare(res) == 0) return true;
   } while (gen.has_next());
   return false;
@@ -375,6 +392,57 @@ TestBvOpIsInv::test_extract(bool const_bits)
   }
 }
 
+void
+TestBvOpIsInv::test_sext(bool const_bits)
+{
+  std::vector<std::string> x_values;
+  uint32_t bw_x = TEST_BW;
+
+  if (const_bits)
+  {
+    x_values = d_values;
+  }
+  else
+  {
+    /* x is unconstrained (no const bits) */
+    x_values.push_back(std::string(bw_x, 'x'));
+  }
+
+  for (const std::string& x_value : x_values)
+  {
+    BitVectorDomain x(x_value);
+    for (uint32_t n = 1; n <= bw_x; ++n)
+    {
+      uint32_t bw_t = bw_x + n;
+      for (uint32_t i = 0, m = 1 << bw_t; i < m; ++i)
+      {
+        BitVector t(bw_t, i);
+        /* For this test, we don't care about the current assignment of x,
+         * thus we initialize it with 0. */
+        BitVectorOp* op_x = new BitVectorSignExtend(
+            d_rng.get(), BitVector::mk_zero(bw_x), x, nullptr, n);
+        /* For this test, we don't care about current assignment and domain
+         * of the op, thus we initialize them with 0 and 'x..x',
+         * respectively. */
+        BitVectorSignExtend op(d_rng.get(), bw_t, op_x, n);
+
+        bool res    = op.is_invertible(t, 0);
+        bool status = check_sat_sext(x, t, n);
+
+        if (res != status)
+        {
+          std::cout << "n: " << n << std::endl;
+          std::cout << "t: " << t.to_string() << std::endl;
+          std::cout << "x: " << x_value << std::endl;
+        }
+        ASSERT_EQ(res, status);
+
+        delete op_x;
+      }
+    }
+  }
+}
+
 TEST_F(TestBvOpIsInv, add)
 {
   test_binary<BitVectorAdd>(ADD, 0, false);
@@ -493,6 +561,12 @@ TEST_F(TestBvOpIsInv, extract)
 {
   test_extract(false);
   test_extract(true);
+}
+
+TEST_F(TestBvOpIsInv, sext)
+{
+  test_sext(false);
+  test_sext(true);
 }
 
 }  // namespace test
