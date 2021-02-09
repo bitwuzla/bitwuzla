@@ -91,7 +91,7 @@ class BitVectorAdd : public BitVectorOp
    * w/o  const bits: true
    * with const bits: mfb(x, t - s)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -137,7 +137,7 @@ class BitVectorAnd : public BitVectorOp
    * 1) x & s = t on all const bits of x
    * 2) s & t = t on all non-const bits of x
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -177,7 +177,7 @@ class BitVectorConcat : public BitVectorOp
    *
    * with const bits: mfb(x, tx) && s = ts
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -223,7 +223,7 @@ class BitVectorEq : public BitVectorOp
    *  t = 0: (hi_x != lo_x) || (hi_x != s)
    *  t = 1: mfb(x, s)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -261,7 +261,7 @@ class BitVectorMul : public BitVectorOp
    *                           (!odd(s) => mfb (x << c, y << c))))
    *                  with c = ctz(s) and y = (t >> c) * (s >> c)^-1
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -314,7 +314,7 @@ class BitVectorShl : public BitVectorOp
    *                ((t = 0) => (hi_x >= ctz(t) - ctz(s) || (s = 0))) &&
    *                ((t != 0) => mfb(x, ctz(t) - ctz(s)))
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -383,7 +383,7 @@ class BitVectorShr : public BitVectorOp
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits, target value t and assignment s of at d_children[1 - pos_x].
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /** Get the cached inverse result. */
   BitVector* inverse() override { return d_inverse.get(); }
@@ -424,7 +424,7 @@ class BitVectorAshr : public BitVectorOp
    *                (s[msb ] = 0 => IC_shr) &&
    *                (s[msb] = 1 => IC_shr(~s >> x = ~t))
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -479,7 +479,7 @@ class BitVectorUdiv : public BitVectorOp
    *                    (t = ones => y <= s / t) &&
    *                    (t != ones => y > t + 1 && y <= s / t)))
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -528,7 +528,7 @@ class BitVectorUlt : public BitVectorOp
    *     pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
    *     pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -575,7 +575,7 @@ class BitVectorSlt : public BitVectorOp
    *                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
    *                          (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0])))
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -620,7 +620,7 @@ class BitVectorUrem : public BitVectorOp
    *                (s != t => \exists y. (
    *                    mfb(x, y) && y > t && (s - t) mod y = 0)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -664,7 +664,7 @@ class BitVectorXor : public BitVectorOp
    * w/o  const bits: true
    * with const bits: mfb(x, s^t)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -717,7 +717,7 @@ class BitVectorIte : public BitVectorOp
    *     pos_x = 2: s0 == false && mfb(x, t)
    *                with s0 the value for '_c'
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -756,7 +756,7 @@ class BitVectorExtract : public BitVectorOp
    * w/o  const bits: true
    * with const bits: mfb(x[hi:lo], t)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
@@ -797,7 +797,7 @@ class BitVectorSignExtend : public BitVectorOp
    *
    * with const bits: IC_wo && mfb(x, t_x)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x);
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
    * Check consistency condition for x at index pos_x with respect to constant
