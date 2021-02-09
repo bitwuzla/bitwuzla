@@ -854,10 +854,110 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorAshr::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
-  return true;
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  if (!x.has_fixed_bits()) return true;
+
+  /**
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits:
+   *     pos_x = 0:
+   *     ((t = 0 \/ t = ones) => \exists y. (y[msb] = t[msb] /\ mcb(x, y))) /\
+   *     ((t != 0 /\ t != ones) => \exists y. (
+   *        c => y <= clo(t) /\ ~c => y <= clz(t) /\ mcb(x, y))
+   *     with c = ((t << y)[msb] = 1)
+   *
+   *     pos_x = 1:
+   *     t = 0 \/ t = ones \/
+   *     \exists y. (c => y < clo(t) /\ ~c => y < clz(t) /\ mcb(x, y)
+   *     with c = (t[msb] = 1)
+   */
+
+  bool is_signed = t.get_msb();
+  uint32_t cnt_t = is_signed ? t.count_leading_ones() : t.count_leading_zeros();
+  uint32_t size  = t.size();
+
+  if (x.is_fixed())
+  {
+    if (pos_x == 0)
+    {
+      uint32_t cnt_x = is_signed ? x.lo().count_leading_ones()
+                                 : x.lo().count_leading_zeros();
+      return x.lo().bvashr(cnt_t - cnt_x).compare(t) == 0;
+    }
+    return t.is_zero() || t.is_ones()
+           || BitVector(size, cnt_t).compare(x.lo()) > 0;
+  }
+
+  if (!is_signed && t.is_zero())
+  {
+    if (pos_x == 0)
+    {
+      BitVectorDomainSignedGenerator gen(
+          x, d_rng, BitVector::mk_zero(size), BitVector::mk_max_signed(size));
+      bool res = gen.has_random();
+      if (res)
+      {
+        d_consistent.reset(new BitVector(gen.random()));
+      }
+      return res;
+    }
+    return true;
+  }
+
+  if (is_signed && t.is_ones())
+  {
+    if (pos_x == 0)
+    {
+      BitVectorDomainSignedGenerator gen(
+          x, d_rng, BitVector::mk_min_signed(size), BitVector::mk_ones(size));
+      bool res = gen.has_random();
+      if (res)
+      {
+        d_consistent.reset(new BitVector(gen.random()));
+      }
+      return res;
+    }
+    return true;
+  }
+
+  if (pos_x)
+  {
+    BitVectorDomainGenerator gen(x, d_rng, x.lo(), BitVector(size, cnt_t - 1));
+    bool res = gen.has_random();
+    if (res)
+    {
+      d_consistent.reset(new BitVector(gen.random()));
+    }
+    return res;
+  }
+  std::vector<BitVector> stack;
+
+  for (uint32_t i = 0; i < cnt_t; ++i)
+  {
+    BitVectorDomain x_slice = x.bvextract(size - 1, i);
+    BitVector t_slice       = t.bvextract(size - 1 - i, 0);
+    if (x_slice.match_fixed_bits(t_slice)) stack.push_back(t_slice);
+  }
+  bool res = !stack.empty();
+  if (res)
+  {
+    uint32_t i         = d_rng->pick<uint32_t>(0, stack.size() - 1);
+    BitVector& left    = stack[i];
+    uint32_t size_left = left.size();
+    if (size == size_left)
+    {
+      d_consistent.reset(new BitVector(left));
+    }
+    else
+    {
+      BitVectorDomainGenerator gen(x, d_rng);
+      assert(gen.has_random());
+      d_consistent.reset(new BitVector(
+          left.bvconcat(gen.random().ibvextract(size - 1 - size_left, 0))));
+    }
+  }
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */

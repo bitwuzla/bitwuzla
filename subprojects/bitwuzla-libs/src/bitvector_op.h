@@ -426,16 +426,31 @@ class BitVectorAshr : public BitVectorOp
   /**
    * CC:
    *   w/o  const bits: true
-   *   with const bits: TODO
+   *   with const bits:
+   *     pos_x = 0:
+   *     ((t = 0 \/ t = ones) => \exists y. (y[msb] = t[msb] /\ mcb(x, y))) /\
+   *     ((t != 0 /\ t != ones) => \exists y. (
+   *        c => y <= clo(t) /\ ~c => y <= clz(t) /\ mcb(x, y))
+   *     with c = ((t << y)[msb] = 1)
+   *
+   *     pos_x = 1:
+   *     t = 0 \/ t = ones \/
+   *     \exists y. (c => y < clo(t) /\ ~c => y < clz(t) /\ mcb(x, y)
+   *     with c = (t[msb] = 1)
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
   /** Get the cached inverse result. */
   BitVector* inverse() override { return d_inverse.get(); }
 
+  /** Get the cached consistent result. */
+  BitVector* consistent() override { return d_consistent.get(); }
+
  private:
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
+  /** Cached consistent result. */
+  std::unique_ptr<BitVector> d_consistent = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */
