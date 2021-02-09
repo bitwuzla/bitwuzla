@@ -248,10 +248,17 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorConcat::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
-  return true;
+  /* CC: mfb(x, tx)
+   * with pos_x = 0: tx = t[bw(t) - 1 : bw(t) - bw(x)]
+   *      pos_x = 1: tx = t[bw(x) - 1 : 0] */
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  uint32_t bw_t            = t.size();
+  uint32_t bw_x            = x.size();
+  if (pos_x == 0)
+  {
+    return x.match_fixed_bits(t.bvextract(bw_t - 1, bw_t - bw_x));
+  }
+  return x.match_fixed_bits(t.bvextract(bw_x - 1, 0));
 }
 
 /* -------------------------------------------------------------------------- */

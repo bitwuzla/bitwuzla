@@ -188,7 +188,10 @@ class BitVectorConcat : public BitVectorOp
    * bits and target value t.
    *
    * w/o  const bits: true
-   * with const bits: TODO
+   *
+   * with const bits: mfb(x, tx)
+   *   pos_x = 0: tx = t[bw(t) - 1 : bw(t) - bw(x)]
+   *   pos_x = 1: tx = t[bw(x) - 1 : 0]
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
