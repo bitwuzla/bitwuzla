@@ -135,7 +135,7 @@ class BitVectorAnd : public BitVectorOp
    * bits and target value t.
    *
    * w/o  const bits: true
-   * with const bits: TODO
+   * with const bits: t & hi_x = t
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 

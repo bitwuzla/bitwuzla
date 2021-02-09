@@ -181,10 +181,9 @@ BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorAnd::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
-  return true;
+  /* CC: t & hi_x = t */
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  return t.compare(t.bvand(x.hi())) == 0;
 }
 
 /* -------------------------------------------------------------------------- */
