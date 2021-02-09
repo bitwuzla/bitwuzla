@@ -373,16 +373,23 @@ class BitVectorShr : public BitVectorOp
   /**
    * CC:
    *   w/o  const bits: true
-   *   with const bits: TODO
+   *   with const bits:
+   *     pos_x = 0: \exists y. (y <= clz(t) /\ mcb(x >> y, t))
+   *     pos_x = 1: t = 0 \/ \exists y. (y <= clz(t) /\ mcb(x, y))
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
   /** Get the cached inverse result. */
   BitVector* inverse() override { return d_inverse.get(); }
 
+  /** Get the cached consistent result. */
+  BitVector* consistent() override { return d_consistent.get(); }
+
  private:
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
+  /** Cached consistent result. */
+  std::unique_ptr<BitVector> d_consistent = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */

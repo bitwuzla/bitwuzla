@@ -54,5 +54,13 @@ TEST_F(TestBvOpIsCons, shl)
   test_binary<BitVectorShl>(IS_CONS, SHL, 0, true);
   test_binary<BitVectorShl>(IS_CONS, SHL, 1, true);
 }
+
+TEST_F(TestBvOpIsCons, shr)
+{
+  test_binary<BitVectorShr>(IS_CONS, SHR, 0, false);
+  test_binary<BitVectorShr>(IS_CONS, SHR, 1, false);
+  test_binary<BitVectorShr>(IS_CONS, SHR, 0, true);
+  test_binary<BitVectorShr>(IS_CONS, SHR, 1, true);
+}
 }
 }

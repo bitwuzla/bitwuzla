@@ -545,6 +545,7 @@ BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
 {
   /* CC: pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x << y, t))
    *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y)) */
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
   uint32_t ctz_t           = t.count_trailing_zeros();
   uint32_t size            = t.size();
@@ -705,9 +706,67 @@ BitVectorShr::is_invertible(RNG* rng,
 bool
 BitVectorShr::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
+  /* CC: pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x >> y, t))
+   *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y)) */
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  uint32_t clz_t           = t.count_leading_zeros();
+  uint32_t size            = t.size();
+
+  if (clz_t != size)
+  {
+    if (pos_x == 0)
+    {
+      if (x.is_fixed())
+      {
+        uint32_t clz_x = x.lo().count_leading_zeros();
+        return x.lo().bvshr(clz_t - clz_x).compare(t) == 0;
+      }
+
+      std::vector<BitVector> stack;
+
+      for (uint32_t i = 0; i <= clz_t; ++i)
+      {
+        BitVectorDomain x_slice = x.bvextract(size - 1, i);
+        BitVector t_slice       = t.bvextract(size - 1 - i, 0);
+        if (x_slice.match_fixed_bits(t_slice)) stack.push_back(t_slice);
+      }
+      bool res = !stack.empty();
+      if (res)
+      {
+        uint32_t i         = d_rng->pick<uint32_t>(0, stack.size() - 1);
+        BitVector& left    = stack[i];
+        uint32_t size_left = left.size();
+        if (size == size_left)
+        {
+          d_consistent.reset(new BitVector(left));
+        }
+        else
+        {
+          BitVectorDomainGenerator gen(x, d_rng);
+          assert(gen.has_random());
+          d_consistent.reset(new BitVector(left.ibvconcat(
+              gen.random().ibvextract(size - 1 - size_left, 0))));
+        }
+      }
+      return res;
+    }
+    else
+    {
+      if (x.is_fixed())
+      {
+        return BitVector(size, clz_t).compare(x.lo()) >= 0;
+      }
+
+      BitVectorDomainGenerator gen(x, d_rng, x.lo(), BitVector(size, clz_t));
+      bool res = gen.has_random();
+      if (res)
+      {
+        d_consistent.reset(new BitVector(gen.random()));
+      }
+      return res;
+    }
+  }
   return true;
 }
 
