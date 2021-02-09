@@ -183,8 +183,10 @@ BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorAnd::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  /* CC: t & hi_x = t */
   const BitVectorDomain& x = d_children[pos_x]->domain();
+  if (!x.has_fixed_bits()) return true;
+
+  /* CC: t & hi_x = t */
   return t.compare(t.bvand(x.hi())) == 0;
 }
 
@@ -250,10 +252,13 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorConcat::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  if (!x.has_fixed_bits()) return true;
+
   /* CC: mfb(x, tx)
    * with pos_x = 0: tx = t[bw(t) - 1 : bw(t) - bw(x)]
    *      pos_x = 1: tx = t[bw(x) - 1 : 0] */
-  const BitVectorDomain& x = d_children[pos_x]->domain();
+
   uint32_t bw_t            = t.size();
   uint32_t bw_x            = x.size();
   if (pos_x == 0)
@@ -406,10 +411,12 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorMul::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  if (!x.has_fixed_bits()) return true;
+
   /* CC: (t != 0 => xhi != 0) &&
    *     (odd(t) => xhi[lsb] != 0) &&
    *     (!odd(t) => \exists y. (mcb(x, y) && ctz(t) >= ctz(y)) */
-  const BitVectorDomain& x = d_children[pos_x]->domain();
 
   if (x.hi().is_zero()) return t.is_zero();
 
@@ -543,10 +550,12 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  if (!x.has_fixed_bits()) return true;
+
   /* CC: pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x << y, t))
    *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y)) */
 
-  const BitVectorDomain& x = d_children[pos_x]->domain();
   uint32_t ctz_t           = t.count_trailing_zeros();
   uint32_t size            = t.size();
 
@@ -706,10 +715,12 @@ BitVectorShr::is_invertible(RNG* rng,
 bool
 BitVectorShr::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  if (!x.has_fixed_bits()) return true;
+
   /* CC: pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x >> y, t))
    *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y)) */
 
-  const BitVectorDomain& x = d_children[pos_x]->domain();
   uint32_t clz_t           = t.count_leading_zeros();
   uint32_t size            = t.size();
 
