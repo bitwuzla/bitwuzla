@@ -227,7 +227,7 @@ TestBvOp::check_sat_binary(Kind kind,
     BitVector xval = gen.has_next() ? gen.next() : x.lo();
     if (kind == IS_CONS)
     {
-      BitVectorDomainGenerator gens(x.size());
+      BitVectorDomainGenerator gens(s.size());
       while (gens.has_next())
       {
         res = check_sat_binary_aux(op_kind, xval, gens.next(), pos_x);
