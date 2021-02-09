@@ -1,0 +1,39 @@
+on: [push, pull_request]
+name: CI
+
+jobs:
+  build:
+    name: debug
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Install Packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libgmp-dev \
+            libgtest-dev
+          cd /usr/src/googletest
+          sudo cmake .
+          sudo cmake --build . --target install
+          cd -
+
+      - name: Configure
+        run: |
+          ./configure.sh -g
+
+      - name: Build
+        run: make -j2
+        working-directory: build
+
+      - name: Run CTest
+        run: ctest -j2
+        env:
+          ARGS: --output-on-failure
+        working-directory: build
