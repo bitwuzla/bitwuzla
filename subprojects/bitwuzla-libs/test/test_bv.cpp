@@ -2392,15 +2392,36 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
     case ASHR:
       if (fun_kind == INPLACE_THIS)
       {
-        (void) res.ibvashr(bv_shift);
+        if (shift_by_int)
+        {
+          (void) res.ibvashr(int_shift);
+        }
+        else
+        {
+          (void) res.ibvashr(bv_shift);
+        }
       }
       else if (fun_kind == INPLACE_ALL)
       {
-        (void) res.ibvashr(bv, bv_shift);
+        if (shift_by_int)
+        {
+          (void) res.ibvashr(bv, int_shift);
+        }
+        else
+        {
+          (void) res.ibvashr(bv, bv_shift);
+        }
       }
       else
       {
-        res = bv.bvashr(bv_shift);
+        if (shift_by_int)
+        {
+          res = bv.bvashr(int_shift);
+        }
+        else
+        {
+          res = bv.bvashr(bv_shift);
+        }
       }
       break;
     case SHL:
@@ -3642,6 +3663,7 @@ TEST_F(TestBitVector, shr)
 TEST_F(TestBitVector, ashr)
 {
   test_binary(DEFAULT, ASHR);
+  test_shift(DEFAULT, ASHR, true);
   test_shift(DEFAULT, ASHR, false);
 }
 

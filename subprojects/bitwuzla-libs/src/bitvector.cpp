@@ -819,6 +819,21 @@ BitVector::bvshr(const BitVector& bv) const
 }
 
 BitVector
+BitVector::bvashr(uint32_t shift) const
+{
+  assert(!is_null());
+  if (shift >= d_size)
+  {
+    return get_msb() ? mk_ones(d_size) : mk_zero(d_size);
+  }
+  if (get_msb())
+  {
+    return bvnot().bvshr(shift).bvnot();
+  }
+  return bvshr(shift);
+}
+
+BitVector
 BitVector::bvashr(const BitVector& bv) const
 {
   assert(!is_null());
@@ -1504,6 +1519,23 @@ BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1)
 }
 
 BitVector&
+BitVector::ibvashr(const BitVector& bv, uint32_t shift)
+{
+  assert(!is_null());
+  assert(!bv.is_null());
+  assert(d_size == bv.d_size);
+  if (bv.get_msb())
+  {
+    ibvnot(bv).ibvshr(shift).ibvnot();
+  }
+  else
+  {
+    ibvshr(bv, shift);
+  }
+  return *this;
+}
+
+BitVector&
 BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!is_null());
@@ -2028,6 +2060,13 @@ BitVector&
 BitVector::ibvshr(const BitVector& bv)
 {
   ibvshr(*this, bv);
+  return *this;
+}
+
+BitVector&
+BitVector::ibvashr(uint32_t shift)
+{
+  ibvashr(*this, shift);
   return *this;
 }
 

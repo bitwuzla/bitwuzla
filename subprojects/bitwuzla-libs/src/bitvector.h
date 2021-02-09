@@ -238,7 +238,9 @@ class BitVector
   BitVector bvshr(uint32_t shift) const;
   /** Logical right shift. Shift value is given as a bit-vector. */
   BitVector bvshr(const BitVector& bv) const;
-  /** Arithmetic right shift. */
+  /** Arightmetic right shift. Shift value is given as an unsigned integer. */
+  BitVector bvashr(uint32_t shift) const;
+  /** Arithmetic right shift. Shift value is given as a bit-vector. */
   BitVector bvashr(const BitVector& bv) const;
   /** Multiplication. */
   BitVector bvmul(const BitVector& bv) const;
@@ -476,6 +478,17 @@ class BitVector
    * Shift value is given as a bit-vector.
    */
   BitVector& ibvshr(const BitVector& bv);
+
+  /**
+   * Arithmetic right shift (in-place) of 'bv' by 'shift'.
+   * Shift value is given as an unsigned integer.
+   */
+  BitVector& ibvashr(const BitVector& bv0, uint32_t shift);
+  /**
+   * Arithmetic right shift (in-place) of this bit-vector by 'shift'.
+   * Shift value is given as an unsigned integer.
+   */
+  BitVector& ibvashr(uint32_t shift);
 
   /**
    * Arithmetic right shift (in-place) of 'bv0' by 'bv1'.
