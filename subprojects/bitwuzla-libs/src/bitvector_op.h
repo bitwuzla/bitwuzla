@@ -90,20 +90,16 @@ class BitVectorAdd : public BitVectorOp
                BitVectorOp* child0,
                BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: mfb(x, t - s)
+   * IC:
+   *   w/o  const bits: true
+   *   with const bits: mfb(x, t - s)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: true
+   * IC:
+   *   w/o  const bits: true
+   *   with const bits: true
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -131,11 +127,9 @@ class BitVectorAnd : public BitVectorOp
                BitVectorOp* child0,
                BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o const bits (IC_wo): (t & s) = t
-   * with const bits       : IC_wo && ((s & hi_x) & m) = (t & m)
+   * IC:
+   *   w/o const bits (IC_wo): (t & s) = t
+   *   with const bits       : IC_wo && ((s & hi_x) & m) = (t & m)
    *                         with m = ~(lo_x ^ hi_x)
    *                              ... mask out all non-const bits
    * Intuition:
@@ -145,11 +139,9 @@ class BitVectorAnd : public BitVectorOp
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: t & hi_x = t
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: t & hi_x = t
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 };
@@ -170,29 +162,25 @@ class BitVectorConcat : public BitVectorOp
                   BitVectorOp* child0,
                   BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
    * x o s = tx o ts
    * s o x = ts o tx
    *
-   * w/o  const bits: s = ts
-   *   pos_x = 0: ts = t[bw(s) - 1 : 0]
-   *   pos_x = 1: ts = t[bw(t) - 1 : bw(t) - bw(s)]
+   * IC:
+   *   w/o  const bits: s = ts
+   *     pos_x = 0: ts = t[bw(s) - 1 : 0]
+   *     pos_x = 1: ts = t[bw(t) - 1 : bw(t) - bw(s)]
    *
    * with const bits: mfb(x, tx) && s = ts
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * CC:
+   *   w/o  const bits: true
    *
-   * w/o  const bits: true
-   *
-   * with const bits: mfb(x, tx)
-   *   pos_x = 0: tx = t[bw(t) - 1 : bw(t) - bw(x)]
-   *   pos_x = 1: tx = t[bw(x) - 1 : 0]
+   *   with const bits: mfb(x, tx)
+   *     pos_x = 0: tx = t[bw(t) - 1 : bw(t) - bw(x)]
+   *     pos_x = 1: tx = t[bw(x) - 1 : 0]
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -220,22 +208,18 @@ class BitVectorEq : public BitVectorOp
               BitVectorOp* child0,
               BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits:
-   *  t = 0: (hi_x != lo_x) || (hi_x != s)
-   *  t = 1: mfb(x, s)
+   * IC:
+   *   w/o  const bits: true
+   *   with const bits:
+   *    t = 0: (hi_x != lo_x) || (hi_x != s)
+   *    t = 1: mfb(x, s)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: true
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: true
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 };
@@ -256,26 +240,22 @@ class BitVectorMul : public BitVectorOp
                BitVectorOp* child0,
                BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o const bits (IC_wo): ((-s | s) & t) = t
-   * with const bits       : IC_wo &&
-   *                         (s = 0 ||
-   *                          ((odd(s) => mfb(x, t * s^-1)) &&
-   *                           (!odd(s) => mfb (x << c, y << c))))
-   *                  with c = ctz(s) and y = (t >> c) * (s >> c)^-1
+   * IC:
+   *   w/o const bits (IC_wo): ((-s | s) & t) = t
+   *   with const bits       : IC_wo &&
+   *                           (s = 0 ||
+   *                            ((odd(s) => mfb(x, t * s^-1)) &&
+   *                             (!odd(s) => mfb (x << c, y << c))))
+   *                    with c = ctz(s) and y = (t >> c) * (s >> c)^-1
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: (t != 0 => xhi != 0) &&
-   *                  (odd(t) => xhi[lsb] != 0) &&
-   *                  (!odd(t) => \exists y. (mcb(x, y) && ctz(t) >= ctz(y))
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: (t != 0 => xhi != 0) &&
+   *                    (odd(t) => xhi[lsb] != 0) &&
+   *                    (!odd(t) => \exists y. (mcb(x, y) && ctz(t) >= ctz(y))
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -305,28 +285,24 @@ class BitVectorShl : public BitVectorOp
                BitVectorOp* child0,
                BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * IC:
+   *   w/o const bits (IC_wo):
+   *       pos_x = 0: (t >> s) << s = t
+   *       pos_x = 1: ctz(s) <= ctz(t) &&
+   *                  ((t = 0) || (s << (ctz(t) - ctz(s))) = t)
    *
-   * w/o const bits (IC_wo):
-   *     pos_x = 0: (t >> s) << s = t
-   *     pos_x = 1: ctz(s) <= ctz(t) &&
-   *                ((t = 0) || (s << (ctz(t) - ctz(s))) = t)
-   *
-   * with const bits:
-   *     pos_x = 0: IC_wo && mfb(x << s, t)
-   *     pos_x = 1: IC_wo &&
-   *                ((t = 0) => (hi_x >= ctz(t) - ctz(s) || (s = 0))) &&
-   *                ((t != 0) => mfb(x, ctz(t) - ctz(s)))
+   *   with const bits:
+   *       pos_x = 0: IC_wo && mfb(x << s, t)
+   *       pos_x = 1: IC_wo &&
+   *                  ((t = 0) => (hi_x >= ctz(t) - ctz(s) || (s = 0))) &&
+   *                  ((t != 0) => mfb(x, ctz(t) - ctz(s)))
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -344,19 +320,8 @@ class BitVectorShr : public BitVectorOp
 {
  public:
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits, target value t and assignment s of the operator at index 1 - pos_x.
-   *
-   * w/o const bits (IC_wo):
-   *     pos_x = 0: (t << s) >> s = t
-   *     pos_x = 1: clz(s) <= clz(t) &&
-   *                ((t = 0) || (s >> (clz(t) - clz(s))) = t)
-   *
-   * with const bits:
-   *     pos_x = 0: IC_wo && mfb(x >> s, t)
-   *     pos_x = 1: IC_wo &&
-   *                ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
-   *                ((t != 0) => mfb(x, clz(t) - clz(s)))
+   * Additional interface / helper for is_invertible.
+   * Cached result is stored in 'inverse'.
    */
   static bool is_invertible(RNG* rng,
                             const BitVector& t,
@@ -364,15 +329,6 @@ class BitVectorShr : public BitVectorOp
                             const BitVectorDomain& x,
                             uint32_t pos_x,
                             std::unique_ptr<BitVector>& inverse);
-
-  /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
-   */
-  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
   /** Constructors. */
   BitVectorShr(RNG* rng,
@@ -384,11 +340,28 @@ class BitVectorShr : public BitVectorOp
                const BitVectorDomain& domain,
                BitVectorOp* child0,
                BitVectorOp* child1);
+
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits, target value t and assignment s of at d_children[1 - pos_x].
+   * IC:
+   *   w/o const bits (IC_wo):
+   *       pos_x = 0: (t << s) >> s = t
+   *       pos_x = 1: clz(s) <= clz(t) &&
+   *                  ((t = 0) || (s >> (clz(t) - clz(s))) = t)
+   *
+   *   with const bits:
+   *       pos_x = 0: IC_wo && mfb(x >> s, t)
+   *       pos_x = 1: IC_wo &&
+   *                  ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
+   *                  ((t != 0) => mfb(x, clz(t) - clz(s)))
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+
+  /**
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
   /** Get the cached inverse result. */
   BitVector* inverse() override { return d_inverse.get(); }
@@ -414,29 +387,25 @@ class BitVectorAshr : public BitVectorOp
                 BitVectorOp* child0,
                 BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * IC:
+   *   w/o const bits (IC_wo):
+   *       pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
+   *                  (s >= bw(s) => (t = ones || t = 0))
+   *       pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
+   *                  (s[msb] = 1 => IC_shr(~s >> x = ~t))
    *
-   * w/o const bits (IC_wo):
-   *     pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
-   *                (s >= bw(s) => (t = ones || t = 0))
-   *     pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
-   *                (s[msb] = 1 => IC_shr(~s >> x = ~t))
-   *
-   * with const bits:
-   *     pos_x = 0: IC_wo && mfb(x >>a s, t)
-   *     pos_x = 1: IC_wo &&
-   *                (s[msb ] = 0 => IC_shr) &&
-   *                (s[msb] = 1 => IC_shr(~s >> x = ~t))
+   *   with const bits:
+   *       pos_x = 0: IC_wo && mfb(x >>a s, t)
+   *       pos_x = 1: IC_wo &&
+   *                  (s[msb ] = 0 => IC_shr) &&
+   *                  (s[msb] = 1 => IC_shr(~s >> x = ~t))
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -464,34 +433,30 @@ class BitVectorUdiv : public BitVectorOp
                 BitVectorOp* child0,
                 BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * IC:
+   *   w/o const bits (IC_wo):
+   *       pos_x = 0: (s * t) / s = t
+   *       pos_x = 1: s / (s / t) = t
    *
-   * w/o const bits (IC_wo):
-   *     pos_x = 0: (s * t) / s = t
-   *     pos_x = 1: s / (s / t) = t
-   *
-   * with const bits:
-   *     pos_x = 0: IC_wo &&
-   *                (t = 0 => lo_x < s) &&
-   *                ((t != 0 && s != 0 ) => \exists y. (
+   *   with const bits:
+   *       pos_x = 0: IC_wo &&
+   *                  (t = 0 => lo_x < s) &&
+   *                  ((t != 0 && s != 0 ) => \exists y. (
    *                    mfb(x, y) && (~c => y < s * t + 1) && (c => y <= ones)))
-   *                with c = umulo(s, t + 1) && uaddo(t, 1)
-   *     pos_x = 1: IC_wo &&
-   *                (t != ones => hi_x > 0) &&
-   *                ((s != 0 || t != 0) => (s / hi_x <= t) && \exists y. (
-   *                    mfb(x, y) &&
-   *                    (t = ones => y <= s / t) &&
-   *                    (t != ones => y > t + 1 && y <= s / t)))
+   *                  with c = umulo(s, t + 1) && uaddo(t, 1)
+   *       pos_x = 1: IC_wo &&
+   *                  (t != ones => hi_x > 0) &&
+   *                  ((s != 0 || t != 0) => (s / hi_x <= t) && \exists y. (
+   *                      mfb(x, y) &&
+   *                      (t = ones => y <= s / t) &&
+   *                      (t != ones => y > t + 1 && y <= s / t)))
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -522,25 +487,21 @@ class BitVectorUlt : public BitVectorOp
                BitVectorOp* child0,
                BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * IC:
+   *   w/o const bits (IC_wo):
+   *       pos_x = 0: t = 0 || s != 0
+   *       pos_x = 1: t = 0 || s != ones
    *
-   * w/o const bits (IC_wo):
-   *     pos_x = 0: t = 0 || s != 0
-   *     pos_x = 1: t = 0 || s != ones
-   *
-   * with const bits:
-   *     pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
-   *     pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
+   *   with const bits:
+   *       pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
+   *       pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 };
@@ -561,33 +522,29 @@ class BitVectorSlt : public BitVectorOp
                BitVectorOp* child0,
                BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * IC:
+   *   w/o const bits (IC_wo):
+   *       pos_x = 0: t = 0 || s != min_signed_value
+   *       pos_x = 1: t = 0 || s != max_signed_value
    *
-   * w/o const bits (IC_wo):
-   *     pos_x = 0: t = 0 || s != min_signed_value
-   *     pos_x = 1: t = 0 || s != max_signed_value
-   *
-   * with const bits:
-   *     pos_x = 0: t = 1 => (s != min_signed_value &&
-   *                 ((MSB(x) = 0 && lo_x < s) ||
-   *                  (MSB(x) != 0 && 1 o lo_x[bw-2:0] < s))) &&
-   *                t = 0 => ((MSB(x) = 1 && hi_x >= s) ||
-   *                          (MSB(x) != 1 && 0 o hi_x[bw-2:0] >= s))))
-   *     pos_x = 1: t = 1 => (s != max_signed_value &&
-   *                          ((MSB(x) = 1 && s < hi_x) ||
-   *                           (MSB(x) != 1 && s < 0 o hi_x[bw-2:0])))
-   *                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
-   *                          (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0])))
+   *   with const bits:
+   *       pos_x = 0: t = 1 => (s != min_signed_value &&
+   *                   ((MSB(x) = 0 && lo_x < s) ||
+   *                    (MSB(x) != 0 && 1 o lo_x[bw-2:0] < s))) &&
+   *                  t = 0 => ((MSB(x) = 1 && hi_x >= s) ||
+   *                            (MSB(x) != 1 && 0 o hi_x[bw-2:0] >= s))))
+   *       pos_x = 1: t = 1 => (s != max_signed_value &&
+   *                            ((MSB(x) = 1 && s < hi_x) ||
+   *                             (MSB(x) != 1 && s < 0 o hi_x[bw-2:0])))
+   *                  t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
+   *                            (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0])))
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 };
@@ -608,31 +565,27 @@ class BitVectorUrem : public BitVectorOp
                 BitVectorOp* child0,
                 BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * IC:
+   *   w/o const bits (IC_wo):
+   *       pos_x = 0: ~(-s) >= t
+   *       pos_x = 1: (t + t - s) & s >= t
    *
-   * w/o const bits (IC_wo):
-   *     pos_x = 0: ~(-s) >= t
-   *     pos_x = 1: (t + t - s) & s >= t
-   *
-   * with const bits:
-   *     pos_x = 0: IC_wo &&
-   *                ((s = 0 || t = ones) => mfb(x, t)) &&
-   *                ((s != 0 && t != ones) => \exists y. (
-   *                    mfb(x, s * y + t) && !umulo(s, y) && !uaddo(s *y, t)))
-   *     pos_x = 1: IC_wo &&
-   *                (s = t => (lo_x = 0 || hi_x > t)) &&
-   *                (s != t => \exists y. (
-   *                    mfb(x, y) && y > t && (s - t) mod y = 0)
+   *   with const bits:
+   *       pos_x = 0: IC_wo &&
+   *                  ((s = 0 || t = ones) => mfb(x, t)) &&
+   *                  ((s != 0 && t != ones) => \exists y. (
+   *                      mfb(x, s * y + t) && !umulo(s, y) && !uaddo(s *y, t)))
+   *       pos_x = 1: IC_wo &&
+   *                  (s = t => (lo_x = 0 || hi_x > t)) &&
+   *                  (s != t => \exists y. (
+   *                      mfb(x, y) && y > t && (s - t) mod y = 0)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
+   * CC:
+   *  w/o  const bits: true
+   *  with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -663,20 +616,16 @@ class BitVectorXor : public BitVectorOp
                BitVectorOp* child0,
                BitVectorOp* child1);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: mfb(x, s^t)
+   * IC:
+   *   w/o  const bits: true
+   *   with const bits: mfb(x, s^t)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 };
@@ -699,37 +648,34 @@ class BitVectorIte : public BitVectorOp
                BitVectorOp* child1,
                BitVectorOp* child2);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
    * ite(_c, _t, _e)
    *
-   * w/o const bits (IC_wo):
-   *     pos_x = 0: s0 == t || s1 == t
-   *                with s0 the value for '_t' branch and s1 the value for '_e'
-   *     pos_x = 1: s0 == true
-   *                with s0 the value for '_c'
-   *     pos_x = 2: s0 == false
-   *                with s0 the value for '_c'
+   * IC:
+   *   w/o const bits (IC_wo):
+   *       pos_x = 0: s0 == t || s1 == t
+   *                  with s0 the value for '_t' branch
+   *                  and s1 the value for '_e'
+   *       pos_x = 1: s0 == true
+   *                  with s0 the value for '_c'
+   *       pos_x = 2: s0 == false
+   *                  with s0 the value for '_c'
    *
-   * with const bits:
-   *     pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
-   *                (is_fixed_true(x) && s0 = t) ||
-   *                (is_fixed_false(x) && s1 = t)
-   *                with s0 the value for '_t' and s1 the value for '_e'
-   *     pos_x = 1: s0 = true && mfb(x, t)
-   *                with s0 the value for '_c'
-   *     pos_x = 2: s0 == false && mfb(x, t)
-   *                with s0 the value for '_c'
+   *   with const bits:
+   *       pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
+   *                  (is_fixed_true(x) && s0 = t) ||
+   *                  (is_fixed_false(x) && s1 = t)
+   *                  with s0 the value for '_t' and s1 the value for '_e'
+   *       pos_x = 1: s0 = true && mfb(x, t)
+   *                  with s0 the value for '_c'
+   *       pos_x = 2: s0 == false && mfb(x, t)
+   *                  with s0 the value for '_c'
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -755,20 +701,16 @@ class BitVectorExtract : public BitVectorOp
                    uint32_t hi,
                    uint32_t lo);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: mfb(x[hi:lo], t)
+   * IC:
+   *   w/o  const bits: true
+   *   with const bits: mfb(x[hi:lo], t)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -792,24 +734,20 @@ class BitVectorSignExtend : public BitVectorOp
                       BitVectorOp* child0,
                       uint32_t n);
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * IC:
+   *   w/o  const bits (IC_wo): t_ext == ones || t_ext == zero
+   *                            and t_x   = t[t_size - 1 - n : 0]
+   *                            and t_ext = t[t_size - 1, t_size - 1 - n]
+   *                            (i.e., it includes MSB of t_x)
    *
-   * w/o  const bits (IC_wo): t_ext == ones || t_ext == zero
-   *                          and t_x   = t[t_size - 1 - n : 0]
-   *                          and t_ext = t[t_size - 1, t_size - 1 - n]
-   *                          (i.e., it includes MSB of t_x)
-   *
-   * with const bits: IC_wo && mfb(x, t_x)
+   *   with const bits: IC_wo && mfb(x, t_x)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
-   *
-   * w/o  const bits: true
-   * with const bits: TODO
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
