@@ -120,6 +120,7 @@ class TestBvOp : public TestBvDomainCommon
  protected:
   enum Kind
   {
+    IS_CONS,
     IS_INV,
   };
 
@@ -131,6 +132,10 @@ class TestBvOp : public TestBvDomainCommon
     d_rng.reset(new RNG(1234));
   }
 
+  BitVector check_sat_binary_aux(OpKind op_kind,
+                                 const BitVector& x,
+                                 const BitVector& s,
+                                 uint32_t pos_x);
   bool check_sat_binary(Kind kind,
                         OpKind op_kind,
                         const BitVectorDomain& x,
@@ -165,6 +170,48 @@ class TestBvOp : public TestBvDomainCommon
   std::unique_ptr<RNG> d_rng;
 };
 
+BitVector
+TestBvOp::check_sat_binary_aux(OpKind op_kind,
+                               const BitVector& x,
+                               const BitVector& s,
+                               uint32_t pos_x)
+{
+  BitVector res;
+  switch (op_kind)
+  {
+    case ADD: res = pos_x ? s.bvadd(x) : x.bvadd(s); break;
+    case AND: res = pos_x ? s.bvand(x) : x.bvand(s); break;
+    case ASHR: res = pos_x ? s.bvashr(x) : x.bvashr(s); break;
+    case CONCAT: res = pos_x ? s.bvconcat(x) : x.bvconcat(s); break;
+    case EQ: res = pos_x ? s.bveq(x) : x.bveq(s); break;
+    case IMPLIES: res = pos_x ? s.bvimplies(x) : x.bvimplies(s); break;
+    case MUL: res = pos_x ? s.bvmul(x) : x.bvmul(s); break;
+    case NAND: res = pos_x ? s.bvnand(x) : x.bvnand(s); break;
+    case NE: res = pos_x ? s.bvne(x) : x.bvne(s); break;
+    case NOR: res = pos_x ? s.bvnor(x) : x.bvnor(s); break;
+    case OR: res = pos_x ? s.bvor(x) : x.bvor(s); break;
+    case SDIV: res = pos_x ? s.bvsdiv(x) : x.bvsdiv(s); break;
+    case SGT: res = pos_x ? s.bvsgt(x) : x.bvsgt(s); break;
+    case SGE: res = pos_x ? s.bvsge(x) : x.bvsge(s); break;
+    case SHL: res = pos_x ? s.bvshl(x) : x.bvshl(s); break;
+    case SHR: res = pos_x ? s.bvshr(x) : x.bvshr(s); break;
+    case SLT: res = pos_x ? s.bvslt(x) : x.bvslt(s); break;
+    case SLE: res = pos_x ? s.bvsle(x) : x.bvsle(s); break;
+    case SREM: res = pos_x ? s.bvsrem(x) : x.bvsrem(s); break;
+    case SUB: res = pos_x ? s.bvsub(x) : x.bvsub(s); break;
+    case UDIV: res = pos_x ? s.bvudiv(x) : x.bvudiv(s); break;
+    case UGT: res = pos_x ? s.bvugt(x) : x.bvugt(s); break;
+    case UGE: res = pos_x ? s.bvuge(x) : x.bvuge(s); break;
+    case ULT: res = pos_x ? s.bvult(x) : x.bvult(s); break;
+    case ULE: res = pos_x ? s.bvule(x) : x.bvule(s); break;
+    case UREM: res = pos_x ? s.bvurem(x) : x.bvurem(s); break;
+    case XNOR: res = pos_x ? s.bvxnor(x) : x.bvxnor(s); break;
+    case XOR: res = pos_x ? s.bvxor(x) : x.bvxor(s); break;
+    default: assert(false);
+  }
+  return res;
+}
+
 bool
 TestBvOp::check_sat_binary(Kind kind,
                            OpKind op_kind,
@@ -176,41 +223,22 @@ TestBvOp::check_sat_binary(Kind kind,
   BitVectorDomainGenerator gen(x);
   do
   {
-    BitVector val = gen.has_next() ? gen.next() : x.lo();
     BitVector res;
-    switch (op_kind)
+    BitVector xval = gen.has_next() ? gen.next() : x.lo();
+    if (kind == IS_CONS)
     {
-      case ADD: res = pos_x ? s.bvadd(val) : val.bvadd(s); break;
-      case AND: res = pos_x ? s.bvand(val) : val.bvand(s); break;
-      case ASHR: res = pos_x ? s.bvashr(val) : val.bvashr(s); break;
-      case CONCAT: res = pos_x ? s.bvconcat(val) : val.bvconcat(s); break;
-      case EQ: res = pos_x ? s.bveq(val) : val.bveq(s); break;
-      case IMPLIES: res = pos_x ? s.bvimplies(val) : val.bvimplies(s); break;
-      case MUL: res = pos_x ? s.bvmul(val) : val.bvmul(s); break;
-      case NAND: res = pos_x ? s.bvnand(val) : val.bvnand(s); break;
-      case NE: res = pos_x ? s.bvne(val) : val.bvne(s); break;
-      case NOR: res = pos_x ? s.bvnor(val) : val.bvnor(s); break;
-      case OR: res = pos_x ? s.bvor(val) : val.bvor(s); break;
-      case SDIV: res = pos_x ? s.bvsdiv(val) : val.bvsdiv(s); break;
-      case SGT: res = pos_x ? s.bvsgt(val) : val.bvsgt(s); break;
-      case SGE: res = pos_x ? s.bvsge(val) : val.bvsge(s); break;
-      case SHL: res = pos_x ? s.bvshl(val) : val.bvshl(s); break;
-      case SHR: res = pos_x ? s.bvshr(val) : val.bvshr(s); break;
-      case SLT: res = pos_x ? s.bvslt(val) : val.bvslt(s); break;
-      case SLE: res = pos_x ? s.bvsle(val) : val.bvsle(s); break;
-      case SREM: res = pos_x ? s.bvsrem(val) : val.bvsrem(s); break;
-      case SUB: res = pos_x ? s.bvsub(val) : val.bvsub(s); break;
-      case UDIV: res = pos_x ? s.bvudiv(val) : val.bvudiv(s); break;
-      case UGT: res = pos_x ? s.bvugt(val) : val.bvugt(s); break;
-      case UGE: res = pos_x ? s.bvuge(val) : val.bvuge(s); break;
-      case ULT: res = pos_x ? s.bvult(val) : val.bvult(s); break;
-      case ULE: res = pos_x ? s.bvule(val) : val.bvule(s); break;
-      case UREM: res = pos_x ? s.bvurem(val) : val.bvurem(s); break;
-      case XNOR: res = pos_x ? s.bvxnor(val) : val.bvxnor(s); break;
-      case XOR: res = pos_x ? s.bvxor(val) : val.bvxor(s); break;
-      default: assert(false);
+      BitVectorDomainGenerator gens(x.size());
+      while (gens.has_next())
+      {
+        res = check_sat_binary_aux(op_kind, xval, gens.next(), pos_x);
+        if (t.compare(res) == 0) return true;
+      }
     }
-    if (t.compare(res) == 0) return true;
+    else
+    {
+      res = check_sat_binary_aux(op_kind, xval, s, pos_x);
+      if (t.compare(res) == 0) return true;
+    }
   } while (gen.has_next());
   return false;
 }
@@ -341,7 +369,8 @@ TestBvOp::test_binary(Kind kind,
              pos_x == 0 ? op_x : op_s,
              pos_x == 1 ? op_x : op_s);
 
-        bool res    = op.is_invertible(t, pos_x);
+        bool res    = kind == IS_INV ? op.is_invertible(t, pos_x)
+                                     : op.is_consistent(t, pos_x);
         bool status = check_sat_binary(kind, op_kind, x, t, s, pos_x);
         if (res != status)
         {

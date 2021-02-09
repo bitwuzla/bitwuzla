@@ -123,6 +123,14 @@ BitVectorAdd::is_invertible(const BitVector& t, uint32_t pos_x)
   return true;
 }
 
+bool
+BitVectorAdd::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  return true;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorAnd::BitVectorAnd(RNG* rng,
@@ -168,6 +176,15 @@ BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
   }
   /* IC: (t & s) = t */
   return check;
+}
+
+bool
+BitVectorAnd::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -229,6 +246,15 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
   return check;
 }
 
+bool
+BitVectorConcat::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorEq::BitVectorEq(RNG* rng,
@@ -274,6 +300,15 @@ BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
     return x.match_fixed_bits(s);
   }
   /* IC: true */
+  return true;
+}
+
+bool
+BitVectorEq::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
   return true;
 }
 
@@ -360,6 +395,15 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
   return check;
 }
 
+bool
+BitVectorMul::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorShl::BitVectorShl(RNG* rng,
@@ -444,6 +488,15 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
    *        pos_x = 1: ctz(s) <= ctz(t) &&
    *                   ((t = 0) || (s << (ctz(t) - ctz(s))) = t) */
   return check;
+}
+
+bool
+BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -542,6 +595,15 @@ BitVectorShr::is_invertible(RNG* rng,
   return check;
 }
 
+bool
+BitVectorShr::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
@@ -610,6 +672,15 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
     return x.bvashr(s).match_fixed_bits(t);
   }
   return check;
+}
+
+bool
+BitVectorAshr::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -746,6 +817,15 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
   return check;
 }
 
+bool
+BitVectorUdiv::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorUlt::BitVectorUlt(RNG* rng,
@@ -800,6 +880,15 @@ BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
   }
   assert(pos_x == 1);
   return t.is_false() || !s.is_ones();
+}
+
+bool
+BitVectorUlt::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -893,6 +982,15 @@ BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
   }
   assert(pos_x == 1);
   return t.is_false() || !s.is_max_signed();
+}
+
+bool
+BitVectorSlt::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1056,6 +1154,15 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
   return check;
 }
 
+bool
+BitVectorUrem::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorXor::BitVectorXor(RNG* rng,
@@ -1088,6 +1195,15 @@ BitVectorXor::is_invertible(const BitVector& t, uint32_t pos_x)
 
   /* IC: mfb(x, s^t) */
   return x.match_fixed_bits(s.bvxor(t));
+}
+
+bool
+BitVectorXor::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1170,6 +1286,15 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
   return s0.is_false();
 }
 
+bool
+BitVectorIte::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorExtract::BitVectorExtract(
@@ -1200,6 +1325,15 @@ BitVectorExtract::is_invertible(const BitVector& t, uint32_t pos_x)
   // TODO: maybe we should cache the domain extraction
   /* IC: mfb(x[hi:lo], t) */
   return x.bvextract(d_hi, d_lo).match_fixed_bits(t);
+}
+
+bool
+BitVectorExtract::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1244,6 +1378,15 @@ BitVectorSignExtend::is_invertible(const BitVector& t, uint32_t pos_x)
    *         and t_ext = t[t_size - 1, t_size - 1 - n]
    *         (i.e., it includes MSB of t_x) */
   return check;
+}
+
+bool
+BitVectorSignExtend::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  (void) t;
+  (void) pos_x;
+  // TODO
+  return true;
 }
 
 /* -------------------------------------------------------------------------- */

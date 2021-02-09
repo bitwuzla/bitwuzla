@@ -86,6 +86,15 @@ class BitVectorAdd : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: true
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
+
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
 
@@ -120,6 +129,15 @@ class BitVectorAnd : public BitVectorOp
    * 2) s & t = t on all non-const bits of x
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
@@ -157,6 +175,15 @@ class BitVectorConcat : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
+
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
 
@@ -188,6 +215,15 @@ class BitVectorEq : public BitVectorOp
    *  t = 1: mfb(x, s)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
@@ -222,6 +258,15 @@ class BitVectorMul : public BitVectorOp
    *                  with c = ctz(s) and y = (t >> c) * (s >> c)^-1
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
   BitVectorDomain* inverse() { return d_inverse.get(); }
@@ -260,6 +305,15 @@ class BitVectorShl : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
+
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
 
@@ -292,6 +346,15 @@ class BitVectorShr : public BitVectorOp
                             const BitVectorDomain& x,
                             uint32_t pos_x,
                             std::unique_ptr<BitVector>& inverse);
+
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Constructors. */
   BitVectorShr(RNG* rng,
@@ -348,6 +411,15 @@ class BitVectorAshr : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
+
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
 
@@ -392,6 +464,15 @@ class BitVectorUdiv : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
+
   /** Get the cached inverse result. */
   BitVectorDomain* inverse() { return d_inverse.get(); }
 
@@ -426,6 +507,15 @@ class BitVectorUlt : public BitVectorOp
    *     pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
@@ -470,6 +560,15 @@ class BitVectorSlt : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
+
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
 
@@ -511,6 +610,15 @@ class BitVectorUrem : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
+
   /** Get the cached inverse result. */
   BitVectorDomain* inverse() { return d_inverse.get(); }
 
@@ -540,6 +648,15 @@ class BitVectorXor : public BitVectorOp
    * with const bits: mfb(x, s^t)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
@@ -590,6 +707,15 @@ class BitVectorIte : public BitVectorOp
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
+
   /** Get the cached inverse result. */
   BitVectorDomain* inverse() { return d_inverse.get(); }
 
@@ -618,6 +744,15 @@ class BitVectorExtract : public BitVectorOp
    * with const bits: mfb(x[hi:lo], t)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
@@ -653,6 +788,15 @@ class BitVectorSignExtend : public BitVectorOp
    * with const bits: IC_wo && mfb(x, t_x)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x);
+
+  /**
+   * Check consistency condition for x at index pos_x with respect to constant
+   * bits and target value t.
+   *
+   * w/o  const bits: true
+   * with const bits: TODO
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
   BitVector* inverse() { return d_inverse.get(); }
