@@ -46,5 +46,13 @@ TEST_F(TestBvOpIsCons, mul)
   test_binary<BitVectorMul>(IS_CONS, MUL, 0, true);
   test_binary<BitVectorMul>(IS_CONS, MUL, 1, true);
 }
+
+TEST_F(TestBvOpIsCons, shl)
+{
+  test_binary<BitVectorShl>(IS_CONS, SHL, 0, false);
+  test_binary<BitVectorShl>(IS_CONS, SHL, 1, false);
+  test_binary<BitVectorShl>(IS_CONS, SHL, 0, true);
+  test_binary<BitVectorShl>(IS_CONS, SHL, 1, true);
+}
 }
 }

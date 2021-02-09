@@ -543,9 +543,66 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
+  /* CC: pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x << y, t))
+   *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y)) */
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  uint32_t ctz_t           = t.count_trailing_zeros();
+  uint32_t size            = t.size();
+
+  if (ctz_t != size)
+  {
+    if (pos_x == 0)
+    {
+      if (x.is_fixed())
+      {
+        uint32_t ctz_x = x.lo().count_trailing_zeros();
+        return x.lo().bvshl(ctz_t - ctz_x).compare(t) == 0;
+      }
+
+      std::vector<BitVector> stack;
+
+      for (uint32_t i = 0; i <= ctz_t; ++i)
+      {
+        BitVectorDomain x_slice = x.bvextract(size - 1 - i, 0);
+        BitVector t_slice       = t.bvextract(size - 1, i);
+        if (x_slice.match_fixed_bits(t_slice)) stack.push_back(t_slice);
+      }
+      bool res = !stack.empty();
+      if (res)
+      {
+        uint32_t i          = d_rng->pick<uint32_t>(0, stack.size() - 1);
+        BitVector& right    = stack[i];
+        uint32_t size_right = right.size();
+        if (size == size_right)
+        {
+          d_consistent.reset(new BitVector(right));
+        }
+        else
+        {
+          BitVectorDomainGenerator gen(x, d_rng);
+          assert(gen.has_random());
+          d_consistent.reset(new BitVector(
+              gen.random().ibvextract(size - 1, size_right).ibvconcat(right)));
+        }
+      }
+      return res;
+    }
+    else
+    {
+      if (x.is_fixed())
+      {
+        return BitVector(size, ctz_t).compare(x.lo()) >= 0;
+      }
+
+      BitVectorDomainGenerator gen(x, d_rng, x.lo(), BitVector(size, ctz_t));
+      bool res = gen.has_random();
+      if (res)
+      {
+        d_consistent.reset(new BitVector(gen.random()));
+      }
+      return res;
+    }
+  }
   return true;
 }
 
