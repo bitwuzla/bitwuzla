@@ -8,6 +8,8 @@ namespace bzlals {
 
 class RNG;
 
+/* -------------------------------------------------------------------------- */
+
 class BitVectorOp
 {
  public:
@@ -64,6 +66,8 @@ class BitVectorOp
   BitVectorDomain d_domain;
 };
 
+/* -------------------------------------------------------------------------- */
+
 class BitVectorAdd : public BitVectorOp
 {
  public:
@@ -102,6 +106,8 @@ class BitVectorAdd : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
+
+/* -------------------------------------------------------------------------- */
 
 class BitVectorAnd : public BitVectorOp
 {
@@ -146,6 +152,8 @@ class BitVectorAnd : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
+
+/* -------------------------------------------------------------------------- */
 
 class BitVectorConcat : public BitVectorOp
 {
@@ -192,6 +200,8 @@ class BitVectorConcat : public BitVectorOp
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
+/* -------------------------------------------------------------------------- */
+
 class BitVectorEq : public BitVectorOp
 {
  public:
@@ -232,6 +242,8 @@ class BitVectorEq : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
+
+/* -------------------------------------------------------------------------- */
 
 class BitVectorMul : public BitVectorOp
 {
@@ -274,6 +286,8 @@ class BitVectorMul : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
 };
+
+/* -------------------------------------------------------------------------- */
 
 class BitVectorShl : public BitVectorOp
 {
@@ -321,6 +335,8 @@ class BitVectorShl : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
+
+/* -------------------------------------------------------------------------- */
 
 class BitVectorShr : public BitVectorOp
 {
@@ -380,6 +396,8 @@ class BitVectorShr : public BitVectorOp
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
+/* -------------------------------------------------------------------------- */
+
 class BitVectorAshr : public BitVectorOp
 {
  public:
@@ -427,6 +445,8 @@ class BitVectorAshr : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
+
+/* -------------------------------------------------------------------------- */
 
 class BitVectorUdiv : public BitVectorOp
 {
@@ -481,6 +501,8 @@ class BitVectorUdiv : public BitVectorOp
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
 };
 
+/* -------------------------------------------------------------------------- */
+
 class BitVectorUlt : public BitVectorOp
 {
  public:
@@ -524,6 +546,8 @@ class BitVectorUlt : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
+
+/* -------------------------------------------------------------------------- */
 
 class BitVectorSlt : public BitVectorOp
 {
@@ -577,6 +601,8 @@ class BitVectorSlt : public BitVectorOp
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
+/* -------------------------------------------------------------------------- */
+
 class BitVectorUrem : public BitVectorOp
 {
  public:
@@ -627,6 +653,8 @@ class BitVectorUrem : public BitVectorOp
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
 };
 
+/* -------------------------------------------------------------------------- */
+
 class BitVectorXor : public BitVectorOp
 {
  public:
@@ -665,6 +693,8 @@ class BitVectorXor : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
+
+/* -------------------------------------------------------------------------- */
 
 class BitVectorIte : public BitVectorOp
 {
@@ -724,6 +754,8 @@ class BitVectorIte : public BitVectorOp
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
 };
 
+/* -------------------------------------------------------------------------- */
+
 class BitVectorExtract : public BitVectorOp
 {
  public:
@@ -766,6 +798,8 @@ class BitVectorExtract : public BitVectorOp
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
+/* -------------------------------------------------------------------------- */
+
 class BitVectorSignExtend : public BitVectorOp
 {
  public:
@@ -807,5 +841,8 @@ class BitVectorSignExtend : public BitVectorOp
   /** Cached inverse result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
 };
+
+/* -------------------------------------------------------------------------- */
+
 }  // namespace bzlals
 #endif
