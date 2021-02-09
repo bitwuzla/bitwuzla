@@ -48,6 +48,9 @@ class BitVectorOp
    */
   virtual bool is_invertible(const BitVector& t, uint32_t pos_x) = 0;
 
+  /** Get the cached inverse result. */
+  virtual BitVector* inverse() { return nullptr; }
+
   /** Get child at given index. */
   BitVectorOp* operator[](uint32_t pos) const;
 
@@ -100,7 +103,7 @@ class BitVectorAdd : public BitVectorOp
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
+  BitVector* inverse() override { return d_inverse.get(); }
 
  private:
   /** Cached inverse result. */
@@ -144,13 +147,6 @@ class BitVectorAnd : public BitVectorOp
    * with const bits: t & hi_x = t
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x);
-
-  /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
-
- private:
-  /** Cached inverse result. */
-  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -196,7 +192,7 @@ class BitVectorConcat : public BitVectorOp
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
+  BitVector* inverse() override { return d_inverse.get(); }
 
  private:
   /** Cached inverse result. */
@@ -237,13 +233,6 @@ class BitVectorEq : public BitVectorOp
    * with const bits: true
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x);
-
-  /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
-
- private:
-  /** Cached inverse result. */
-  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -279,12 +268,17 @@ class BitVectorMul : public BitVectorOp
    * bits and target value t.
    *
    * w/o  const bits: true
-   * with const bits: TODO
+   * with const bits: (t != 0 => xhi != 0) &&
+   *                  (odd(t) => xhi[lsb] != 0) &&
+   *                  (!odd(t) => \exists y. (mcb(x, y) && ctz(t) >= ctz(y))
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVectorDomain* inverse() { return d_inverse.get(); }
+  BitVector* inverse() override
+  {
+    return nullptr; /* TODO choose from d_inverse */
+  }
 
   /** Cached inverse result. */
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
@@ -332,7 +326,7 @@ class BitVectorShl : public BitVectorOp
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
+  BitVector* inverse() override { return d_inverse.get(); }
 
  private:
   /** Cached inverse result. */
@@ -392,7 +386,7 @@ class BitVectorShr : public BitVectorOp
   bool is_invertible(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
+  BitVector* inverse() override { return d_inverse.get(); }
 
  private:
   /** Cached inverse result. */
@@ -442,7 +436,7 @@ class BitVectorAshr : public BitVectorOp
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
+  BitVector* inverse() override { return d_inverse.get(); }
 
  private:
   /** Cached inverse result. */
@@ -497,7 +491,10 @@ class BitVectorUdiv : public BitVectorOp
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVectorDomain* inverse() { return d_inverse.get(); }
+  BitVector* inverse() override
+  {
+    return nullptr; /* TODO choose from d_inverse */
+  }
 
  private:
   /** Cached inverse result. */
@@ -541,13 +538,6 @@ class BitVectorUlt : public BitVectorOp
    * with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x);
-
-  /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
-
- private:
-  /** Cached inverse result. */
-  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -595,13 +585,6 @@ class BitVectorSlt : public BitVectorOp
    * with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x);
-
-  /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
-
- private:
-  /** Cached inverse result. */
-  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -649,7 +632,10 @@ class BitVectorUrem : public BitVectorOp
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVectorDomain* inverse() { return d_inverse.get(); }
+  BitVector* inverse() override
+  {
+    return nullptr; /* TODO choose from d_inverse */
+  }
 
  private:
   /** Cached inverse result. */
@@ -688,13 +674,6 @@ class BitVectorXor : public BitVectorOp
    * with const bits: TODO
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x);
-
-  /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
-
- private:
-  /** Cached inverse result. */
-  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -750,11 +729,10 @@ class BitVectorIte : public BitVectorOp
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVectorDomain* inverse() { return d_inverse.get(); }
-
- private:
-  /** Cached inverse result. */
-  std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+  BitVector* inverse() override
+  {
+    return nullptr; /* TODO choose from d_inverse */
+  }
 };
 
 /* -------------------------------------------------------------------------- */
@@ -789,16 +767,11 @@ class BitVectorExtract : public BitVectorOp
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
-  /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
-
  private:
   /** The upper index. */
   uint32_t d_hi;
   /** The lower index. */
   uint32_t d_lo;
-  /** Cached inverse result. */
-  std::unique_ptr<BitVector> d_inverse = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -836,7 +809,7 @@ class BitVectorSignExtend : public BitVectorOp
   bool is_consistent(const BitVector& t, uint32_t pos_x);
 
   /** Get the cached inverse result. */
-  BitVector* inverse() { return d_inverse.get(); }
+  BitVector* inverse() override { return d_inverse.get(); }
 
  private:
   /** The number of bits to extend with. */
