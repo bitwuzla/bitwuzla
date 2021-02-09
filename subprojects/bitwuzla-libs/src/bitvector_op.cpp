@@ -4,6 +4,8 @@
 #include <iostream>
 
 #include "gmpmpz.h"
+#include "gmprandstate.h"
+#include "rng.h"
 
 namespace bzlals {
 
@@ -404,9 +406,51 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorMul::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
+  /* CC: (t != 0 => xhi != 0) &&
+   *     (odd(t) => xhi[lsb] != 0) &&
+   *     (!odd(t) => \exists y. (mcb(x, y) && ctz(t) >= ctz(y)) */
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+
+  if (x.hi().is_zero()) return t.is_zero();
+
+  bool is_odd = t.get_lsb();
+  if (is_odd && !x.hi().get_lsb()) return false;
+
+  if (!is_odd && x.has_fixed_bits())
+  {
+    uint32_t size  = t.size();
+    uint32_t ctz_t = t.count_trailing_zeros();
+    BitVectorDomainGenerator gen(
+        x,
+        d_rng,
+        t.is_zero() ? BitVector::mk_zero(size) : BitVector::mk_one(size),
+        x.hi());
+    assert(gen.has_random() || x.is_fixed());
+    BitVector tmp = gen.has_random() ? gen.random() : x.lo();
+    bool res      = false;
+    for (uint32_t i = 0; i < size && i <= ctz_t; ++i)
+    {
+      if (!x.is_fixed_bit_false(i))
+      {
+        res = true;
+        break;
+      }
+    }
+    if (res)
+    {
+      if (ctz_t < size)
+      {
+        uint32_t i;
+        do
+        {
+          i = d_rng->pick<uint32_t>(0, ctz_t);
+        } while (x.is_fixed_bit_false(i));
+        tmp.set_bit(i, true);
+      }
+      d_consistent.reset(new BitVector(tmp));
+    }
+    return res;
+  }
   return true;
 }
 

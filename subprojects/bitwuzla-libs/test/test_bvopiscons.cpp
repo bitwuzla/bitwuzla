@@ -38,5 +38,13 @@ TEST_F(TestBvOpIsCons, eq)
   test_binary<BitVectorEq>(IS_CONS, EQ, 0, true);
   test_binary<BitVectorEq>(IS_CONS, EQ, 1, true);
 }
+
+TEST_F(TestBvOpIsCons, mul)
+{
+  test_binary<BitVectorMul>(IS_CONS, MUL, 0, false);
+  test_binary<BitVectorMul>(IS_CONS, MUL, 1, false);
+  test_binary<BitVectorMul>(IS_CONS, MUL, 0, true);
+  test_binary<BitVectorMul>(IS_CONS, MUL, 1, true);
+}
 }
 }

@@ -55,6 +55,8 @@ class BitVectorOp
 
   /** Get the cached inverse result. */
   virtual BitVector* inverse() { return nullptr; }
+  /** Get the cached consistent result. */
+  virtual BitVector* consistent() { return nullptr; }
 
   /** Get child at given index. */
   BitVectorOp* operator[](uint32_t pos) const;
@@ -265,8 +267,13 @@ class BitVectorMul : public BitVectorOp
     return nullptr; /* TODO choose from d_inverse */
   }
 
+  /** Get the cached consistent result. */
+  BitVector* consistent() override { return d_consistent.get(); }
+
   /** Cached inverse result. */
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+  /** Cached consistent result. */
+  std::unique_ptr<BitVector> d_consistent = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */
