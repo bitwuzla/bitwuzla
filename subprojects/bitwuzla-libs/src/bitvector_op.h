@@ -556,7 +556,8 @@ class BitVectorUlt : public BitVectorOp
   /**
    * CC:
    *   w/o  const bits: true
-   *   with const bits: TODO
+   *   with const bits: pos_x = 0: ~t \/ xlo != ones
+   *                    pos_x = 1: ~t \/ xhi != 0
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 };

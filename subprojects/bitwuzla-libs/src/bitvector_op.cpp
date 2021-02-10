@@ -1311,10 +1311,19 @@ BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorUlt::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
-  return true;
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  if (!x.has_fixed_bits()) return true;
+
+  /**
+   * CC: pos_x = 0: ~t || x_lo != ones
+   *     pos_x = 1: ~t || x_hi != 0
+   */
+
+  if (pos_x == 0)
+  {
+    return t.is_false() || !x.lo().is_ones();
+  }
+  return t.is_false() || !x.hi().is_zero();
 }
 
 /* -------------------------------------------------------------------------- */

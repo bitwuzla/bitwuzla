@@ -78,5 +78,13 @@ TEST_F(TestBvOpIsCons, udiv)
   test_binary<BitVectorUdiv>(IS_CONS, UDIV, 0, true);
   test_binary<BitVectorUdiv>(IS_CONS, UDIV, 1, true);
 }
+
+TEST_F(TestBvOpIsCons, ult)
+{
+  test_binary<BitVectorUlt>(IS_CONS, ULT, 0, false);
+  test_binary<BitVectorUlt>(IS_CONS, ULT, 1, false);
+  test_binary<BitVectorUlt>(IS_CONS, ULT, 0, true);
+  test_binary<BitVectorUlt>(IS_CONS, ULT, 1, true);
+}
 }
 }
