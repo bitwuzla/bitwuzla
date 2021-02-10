@@ -120,5 +120,11 @@ TEST_F(TestBvOpIsCons, ite)
   test_ite(IS_CONS, 1, true);
   test_ite(IS_CONS, 2, true);
 }
+
+TEST_F(TestBvOpIsCons, extract)
+{
+  test_extract(IS_CONS, false);
+  test_extract(IS_CONS, true);
+}
 }  // namespace test
 }  // namespace bzlals

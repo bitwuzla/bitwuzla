@@ -582,7 +582,7 @@ TestBvOp::test_extract(Kind kind, bool const_bits)
            * respectively. */
           BitVectorExtract op(d_rng.get(), bw_t, op_x, hi, lo);
 
-          bool res    = op.is_invertible(t, 0);
+          bool res = IS_INV ? op.is_invertible(t, 0) : op.is_consistent(t, 0);
           bool status = check_sat_extract(kind, x, t, hi, lo);
 
           if (res != status)
