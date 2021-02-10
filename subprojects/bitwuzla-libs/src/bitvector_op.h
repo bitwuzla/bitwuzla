@@ -131,8 +131,8 @@ class BitVectorAnd : public BitVectorOp
   /**
    * IC:
    *   w/o const bits (IC_wo): (t & s) = t
-   *   with const bits       : IC_wo && ((s & hi_x) & m) = (t & m)
-   *                         with m = ~(lo_x ^ hi_x)
+   *   with const bits       : IC_wo && ((s & x_hi) & m) = (t & m)
+   *                         with m = ~(x_lo ^ x_hi)
    *                              ... mask out all non-const bits
    * Intuition:
    * 1) x & s = t on all const bits of x
@@ -143,7 +143,7 @@ class BitVectorAnd : public BitVectorOp
   /**
    * CC:
    *   w/o  const bits: true
-   *   with const bits: t & hi_x = t
+   *   with const bits: t & x_hi = t
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 };
@@ -213,7 +213,7 @@ class BitVectorEq : public BitVectorOp
    * IC:
    *   w/o  const bits: true
    *   with const bits:
-   *    t = 0: (hi_x != lo_x) || (hi_x != s)
+   *    t = 0: (x_hi != x_lo) || (x_hi != s)
    *    t = 1: mfb(x, s)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
@@ -255,9 +255,9 @@ class BitVectorMul : public BitVectorOp
   /**
    * CC:
    *   w/o  const bits: true
-   *   with const bits: (t != 0 => xhi != 0) &&
-   *                    (odd(t) => xhi[lsb] != 0) &&
-   *                    (!odd(t) => \exists y. (mcb(x, y) && ctz(t) >= ctz(y))
+   *   with const bits: (t != 0 => x_hi != 0) &&
+   *                    (odd(t) => x_hi[lsb] != 0) &&
+   *                    (!odd(t) => \exists y. (mfb(x, y) && ctz(t) >= ctz(y))
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -301,7 +301,7 @@ class BitVectorShl : public BitVectorOp
    *   with const bits:
    *       pos_x = 0: IC_wo && mfb(x << s, t)
    *       pos_x = 1: IC_wo &&
-   *                  ((t = 0) => (hi_x >= ctz(t) - ctz(s) || (s = 0))) &&
+   *                  ((t = 0) => (x_hi >= ctz(t) - ctz(s) || (s = 0))) &&
    *                  ((t != 0) => mfb(x, ctz(t) - ctz(s)))
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
@@ -310,8 +310,8 @@ class BitVectorShl : public BitVectorOp
    * CC:
    *   w/o  const bits: true
    *   with const bits:
-   *     pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x << y, t))
-   *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y))
+   *     pos_x = 0: \exists y. (y <= ctz(t) && mfb(x << y, t))
+   *     pos_x = 1: t = 0 || \exists y. (y <= ctz(t) && mfb(x, y))
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -365,7 +365,7 @@ class BitVectorShr : public BitVectorOp
    *   with const bits:
    *       pos_x = 0: IC_wo && mfb(x >> s, t)
    *       pos_x = 1: IC_wo &&
-   *                  ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
+   *                  ((t = 0) => (x_hi >= clz(t) - clz(s) || (s = 0))) &&
    *                  ((t != 0) => mfb(x, clz(t) - clz(s)))
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
@@ -374,8 +374,8 @@ class BitVectorShr : public BitVectorOp
    * CC:
    *   w/o  const bits: true
    *   with const bits:
-   *     pos_x = 0: \exists y. (y <= clz(t) /\ mcb(x >> y, t))
-   *     pos_x = 1: t = 0 \/ \exists y. (y <= clz(t) /\ mcb(x, y))
+   *     pos_x = 0: \exists y. (y <= clz(t) && mfb(x >> y, t))
+   *     pos_x = 1: t = 0 || \exists y. (y <= clz(t) && mfb(x, y))
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -428,14 +428,14 @@ class BitVectorAshr : public BitVectorOp
    *   w/o  const bits: true
    *   with const bits:
    *     pos_x = 0:
-   *     ((t = 0 \/ t = ones) => \exists y. (y[msb] = t[msb] /\ mcb(x, y))) /\
-   *     ((t != 0 /\ t != ones) => \exists y. (
-   *        c => y <= clo(t) /\ ~c => y <= clz(t) /\ mcb(x, y))
+   *     ((t = 0 || t = ones) => \exists y. (y[msb] = t[msb] && mfb(x, y))) &&
+   *     ((t != 0 && t != ones) => \exists y. (
+   *        c => y <= clo(t) && ~c => y <= clz(t) && mfb(x, y))
    *     with c = ((t << y)[msb] = 1)
    *
    *     pos_x = 1:
-   *     t = 0 \/ t = ones \/
-   *     \exists y. (c => y < clo(t) /\ ~c => y < clz(t) /\ mcb(x, y)
+   *     t = 0 || t = ones ||
+   *     \exists y. (c => y < clo(t) && ~c => y < clz(t) && mfb(x, y)
    *     with c = (t[msb] = 1)
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
@@ -476,13 +476,13 @@ class BitVectorUdiv : public BitVectorOp
    *
    *   with const bits:
    *       pos_x = 0: IC_wo &&
-   *                  (t = 0 => lo_x < s) &&
+   *                  (t = 0 => x_lo < s) &&
    *                  ((t != 0 && s != 0 ) => \exists y. (
    *                    mfb(x, y) && (~c => y < s * t + 1) && (c => y <= ones)))
    *                  with c = umulo(s, t + 1) && uaddo(t, 1)
    *       pos_x = 1: IC_wo &&
-   *                  (t != ones => hi_x > 0) &&
-   *                  ((s != 0 || t != 0) => (s / hi_x <= t) && \exists y. (
+   *                  (t != ones => x_hi > 0) &&
+   *                  ((s != 0 || t != 0) => (s / x_hi <= t) && \exists y. (
    *                      mfb(x, y) &&
    *                      (t = ones => y <= s / t) &&
    *                      (t != ones => y > t + 1 && y <= s / t)))
@@ -492,7 +492,19 @@ class BitVectorUdiv : public BitVectorOp
   /**
    * CC:
    *   w/o  const bits: true
-   *   with const bits: TODO
+   *
+   *   with const bits:
+   *     pos_x = 0:
+   *       (t != ones => x_hi >= t) && (t = 0 => x_lo != ones) &&
+   *       ((t != 0 && t != ones && t != 1 && !mfb(x, t)) =>
+   *        (!mulo(2, t) && \exists y,o.(mfb(x, y*t + o) && y >= 1 && o <= c
+   *         && !mulo(y, t) && !addo(y * t, o))))
+   *     with c = min(y − 1, x_hi − y * t)
+   *
+   *     pos_x = 1:
+   *       (t = ones => (mfb(x, 0) || mfb(x, 1))) &&
+   *       (t != ones => (!mulo(x_lo, t) &&
+   *                  \exists y. (y > 0 && mfb(x, y) && !mulo(y, t))))
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -502,9 +514,16 @@ class BitVectorUdiv : public BitVectorOp
     return nullptr; /* TODO choose from d_inverse */
   }
 
+  /** Get the cached consistent result. */
+  BitVector* consistent() override { return d_consistent.get(); }
+
  private:
+  /** Try to find a consistent value for pos_x = 0 other than x = t. */
+  BitVector consistent_value_pos0_aux(const BitVector& t);
   /** Cached inverse result. */
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+  /** Cached consistent result. */
+  std::unique_ptr<BitVector> d_consistent = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -529,8 +548,8 @@ class BitVectorUlt : public BitVectorOp
    *       pos_x = 1: t = 0 || s != ones
    *
    *   with const bits:
-   *       pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
-   *       pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
+   *       pos_x = 0: t = 1 => (s != 0 && x_lo < s) && t = 0 => (x_hi >= s)
+   *       pos_x = 1: t = 1 => (s != ones && x_hi > s) && t = 0 => (x_lo <= s)
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
@@ -565,15 +584,15 @@ class BitVectorSlt : public BitVectorOp
    *
    *   with const bits:
    *       pos_x = 0: t = 1 => (s != min_signed_value &&
-   *                   ((MSB(x) = 0 && lo_x < s) ||
-   *                    (MSB(x) != 0 && 1 o lo_x[bw-2:0] < s))) &&
-   *                  t = 0 => ((MSB(x) = 1 && hi_x >= s) ||
-   *                            (MSB(x) != 1 && 0 o hi_x[bw-2:0] >= s))))
+   *                   ((MSB(x) = 0 && x_lo < s) ||
+   *                    (MSB(x) != 0 && 1 o x_lo[bw-2:0] < s))) &&
+   *                  t = 0 => ((MSB(x) = 1 && x_hi >= s) ||
+   *                            (MSB(x) != 1 && 0 o x_hi[bw-2:0] >= s))))
    *       pos_x = 1: t = 1 => (s != max_signed_value &&
-   *                            ((MSB(x) = 1 && s < hi_x) ||
-   *                             (MSB(x) != 1 && s < 0 o hi_x[bw-2:0])))
-   *                  t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
-   *                            (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0])))
+   *                            ((MSB(x) = 1 && s < x_hi) ||
+   *                             (MSB(x) != 1 && s < 0 o x_hi[bw-2:0])))
+   *                  t = 0 => ((MSB(x) = 0 && s >= x_lo) ||
+   *                            (MSB(x) != 0 && s >= 1 o x_lo[bw-2:0])))
    */
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
@@ -612,7 +631,7 @@ class BitVectorUrem : public BitVectorOp
    *                  ((s != 0 && t != ones) => \exists y. (
    *                      mfb(x, s * y + t) && !umulo(s, y) && !uaddo(s *y, t)))
    *       pos_x = 1: IC_wo &&
-   *                  (s = t => (lo_x = 0 || hi_x > t)) &&
+   *                  (s = t => (x_lo = 0 || x_hi > t)) &&
    *                  (s != t => \exists y. (
    *                      mfb(x, y) && y > t && (s - t) mod y = 0)
    */

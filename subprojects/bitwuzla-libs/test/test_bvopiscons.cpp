@@ -70,5 +70,13 @@ TEST_F(TestBvOpIsCons, ashr)
   test_binary<BitVectorAshr>(IS_CONS, ASHR, 0, true);
   test_binary<BitVectorAshr>(IS_CONS, ASHR, 1, true);
 }
+
+TEST_F(TestBvOpIsCons, udiv)
+{
+  test_binary<BitVectorUdiv>(IS_CONS, UDIV, 0, false);
+  test_binary<BitVectorUdiv>(IS_CONS, UDIV, 1, false);
+  test_binary<BitVectorUdiv>(IS_CONS, UDIV, 0, true);
+  test_binary<BitVectorUdiv>(IS_CONS, UDIV, 1, true);
+}
 }
 }
