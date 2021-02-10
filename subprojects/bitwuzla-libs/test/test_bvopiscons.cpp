@@ -103,5 +103,13 @@ TEST_F(TestBvOpIsCons, slt)
   test_binary<BitVectorSlt>(IS_CONS, SLT, 1, true);
 }
 
+TEST_F(TestBvOpIsCons, xor)
+{
+  test_binary<BitVectorXor>(IS_CONS, XOR, 0, false);
+  test_binary<BitVectorXor>(IS_CONS, XOR, 1, false);
+  test_binary<BitVectorXor>(IS_CONS, XOR, 0, true);
+  test_binary<BitVectorXor>(IS_CONS, XOR, 1, true);
+}
+
 }  // namespace test
 }  // namespace bzlals

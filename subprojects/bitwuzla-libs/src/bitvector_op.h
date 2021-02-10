@@ -705,7 +705,7 @@ class BitVectorXor : public BitVectorOp
   /**
    * CC:
    *   w/o  const bits: true
-   *   with const bits: TODO
+   *   with const bits: true
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 };

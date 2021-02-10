@@ -1776,9 +1776,7 @@ BitVectorXor::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorXor::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
+  /** CC: true */
   return true;
 }
 
