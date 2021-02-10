@@ -110,7 +110,7 @@ BitVectorAdd::is_invertible(const BitVector& t, uint32_t pos_x)
 {
   if (d_children[pos_x]->domain().has_fixed_bits())
   {
-    /* IC: mfb(x, t - s) */
+    /** IC: mfb(x, t - s) */
     uint32_t pos_s           = 1 - pos_x;
     const BitVector& s       = d_children[pos_s]->assignment();
     const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -171,12 +171,14 @@ BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
       }
       return false;
     }
-    /* IC: (t & s) = t && ((s & hi_x) & m) = (t & m)
-     *     with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits */
+    /**
+     * IC: IC_wo && ((s & hi_x) & m) = (t & m)
+     *     with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits
+     */
     BitVector mask = x.lo().bvxnor(x.hi());
     return s.bvand(x.hi()).ibvand(mask).compare(t.bvand(mask)) == 0;
   }
-  /* IC: (t & s) = t */
+  /** IC_wo: (t & s) = t */
   return check;
 }
 
@@ -235,7 +237,7 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
 
   if (check && x.has_fixed_bits())
   {
-    /* IC: s = ts && mfb(x, tx) */
+    /** IC: IC_wo && mfb(x, tx) */
     if (x.match_fixed_bits(tx))
     {
       d_inverse.reset(new BitVector(tx));
@@ -243,9 +245,11 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
     }
     return false;
   }
-  /* IC: s = ts
+  /**
+   * IC_wo: s = ts
    *   pos_x = 0: ts = t[bw(s) - 1 : 0]
-   *   pos_x = 1: ts = t[bw(t) - 1 : bw(t) - bw(s)] */
+   *   pos_x = 1: ts = t[bw(t) - 1 : bw(t) - bw(s)]
+   */
   return check;
 }
 
@@ -255,9 +259,11 @@ BitVectorConcat::is_consistent(const BitVector& t, uint32_t pos_x)
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
-  /* CC: mfb(x, tx)
+  /**
+   * CC: mfb(x, tx)
    * with pos_x = 0: tx = t[bw(t) - 1 : bw(t) - bw(x)]
-   *      pos_x = 1: tx = t[bw(x) - 1 : 0] */
+   *      pos_x = 1: tx = t[bw(x) - 1 : 0]
+   */
 
   uint32_t bw_t            = t.size();
   uint32_t bw_x            = x.size();
@@ -304,15 +310,17 @@ BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
       }
       return false;
     }
-    /* IC: t = 0: (hi_x != lo_x) || (hi_x != s)
-     *     t = 1: mfb(x, s) */
+    /**
+     * IC: t = 0: (hi_x != lo_x) || (hi_x != s)
+     *     t = 1: mfb(x, s)
+     */
     if (t.is_false())
     {
       return x.hi().compare(x.lo()) || x.hi().compare(s);
     }
     return x.match_fixed_bits(s);
   }
-  /* IC: true */
+  /** IC: true */
   return true;
 }
 
@@ -364,13 +372,15 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
       return false;
     }
 
-    /* IC: (((-s | s) & t) = t) &&
+    /**
+     * IC: IC_wo &&
      *     (s = 0 || ((odd(s) => mfb(x, t * s^-1)) &&
      *               (!odd(s) => mfb (x << c, y << c))))
-     *     with c = ctz(s) and y = (t >> c) * (s >> c)^-1 */
+     *     with c = ctz(s) and y = (t >> c) * (s >> c)^-1
+     */
     if (!s.is_zero())
     {
-      /** s odd */
+      /*-- s odd --*/
       if (s.get_lsb())
       {
         BitVector inv = s.bvmodinv().ibvmul(t);
@@ -382,7 +392,7 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
         return false;
       }
 
-      /** s even */
+      /*-- s even --*/
       /* Check if relevant bits of
        *   y = (t >> ctz(s)) * (s >> ctz(s))^-1
        * match corresponding constant bits of x, i.e.,
@@ -404,7 +414,7 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
     }
     return true;
   }
-  /* IC: ((-s | s) & t) = t */
+  /** IC_wo: ((-s | s) & t) = t */
   return check;
 }
 
@@ -414,9 +424,11 @@ BitVectorMul::is_consistent(const BitVector& t, uint32_t pos_x)
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
-  /* CC: (t != 0 => xhi != 0) &&
+  /**
+   * CC: (t != 0 => xhi != 0) &&
    *     (odd(t) => xhi[lsb] != 0) &&
-   *     (!odd(t) => \exists y. (mcb(x, y) && ctz(t) >= ctz(y)) */
+   *     (!odd(t) => \exists y. (mcb(x, y) && ctz(t) >= ctz(y))
+   */
 
   if (x.hi().is_zero()) return t.is_zero();
 
@@ -514,10 +526,12 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
       }
       return false;
     }
-    /* IC: pos_x = 0: IC_wo && mfb(x << s, t)
+    /**
+     * IC: pos_x = 0: IC_wo && mfb(x << s, t)
      *     pos_x = 1: IC_wo &&
      *                ((t = 0) => (hi_x >= ctz(t) - ctz(s) || (s = 0))) &&
-     *                ((t != 0) => mfb(x, ctz(t) - ctz(s))) */
+     *                ((t != 0) => mfb(x, ctz(t) - ctz(s)))
+     */
     if (pos_x == 0)
     {
       // TODO can't we reuse x.bvshl(s)? domain gen -> select random value
@@ -541,9 +555,11 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
     }
     return x.match_fixed_bits(BitVector(x.size(), ctz_t - ctz_s));
   }
-  /* IC_wo: pos_x = 0: (t >> s) << s = t
+  /**
+   * IC_wo: pos_x = 0: (t >> s) << s = t
    *        pos_x = 1: ctz(s) <= ctz(t) &&
-   *                   ((t = 0) || (s << (ctz(t) - ctz(s))) = t) */
+   *                   ((t = 0) || (s << (ctz(t) - ctz(s))) = t)
+   */
   return check;
 }
 
@@ -553,8 +569,10 @@ BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
-  /* CC: pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x << y, t))
-   *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y)) */
+  /**
+   * CC: pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x << y, t))
+   *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y))
+   */
 
   uint32_t ctz_t           = t.count_trailing_zeros();
   uint32_t size            = t.size();
@@ -680,10 +698,12 @@ BitVectorShr::is_invertible(RNG* rng,
       }
       return false;
     }
-    /* IC: pos_x = 0: IC_wo && mfb(x >> s, t)
+    /**
+     * IC: pos_x = 0: IC_wo && mfb(x >> s, t)
      *     pos_x = 1: IC_wo &&
      *                ((t = 0) => (hi_x >= clz(t) - clz(s) || (s = 0))) &&
-     *                ((t != 0) => mfb(x, clz(t) - clz(s))) */
+     *                ((t != 0) => mfb(x, clz(t) - clz(s)))
+     */
     if (pos_x == 0)
     {
       // TODO can't we reuse x.bvshr(s)? domain gen -> select random value
@@ -706,9 +726,11 @@ BitVectorShr::is_invertible(RNG* rng,
     }
     return x.match_fixed_bits(BitVector(x.size(), clz_t - clz_s));
   }
-  /* IC_wo: pos_x = 0: (t << s) >> s = t
+  /**
+   * IC_wo: pos_x = 0: (t << s) >> s = t
    *        pos_x = 1: clz(s) <= clz(t) &&
-   *                   ((t = 0) || (s >> (clz(t) - clz(s))) = t) */
+   *                   ((t = 0) || (s >> (clz(t) - clz(s))) = t)
+   */
   return check;
 }
 
@@ -809,19 +831,19 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
   BitVector snot, tnot, sshr;
   bool check;
 
-  /* IC:
-   * w/o const bits (IC_wo):
-   *     pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
-   *                (s >= bw(s) => (t = ones || t = 0))
-   *     pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
-   *                (s[msb] = 1 => IC_shr(~s >> x = ~t)
+  /**
+   * IC_wo: pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
+   *                   (s >= bw(s) => (t = ones || t = 0))
+   *        pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
+   *                   (s[msb] = 1 => IC_shr(~s >> x = ~t)
    *
-   * with const bits:
+   * IC:
    *     pos_x = 0: IC_wo && mfb(x >>a s, t)
    *     pos_x = 1: IC_wo &&
    *                (s[msb ] = 0 => IC_shr) &&
    *                (s[msb] = 1 => IC_shr(~s >> x = ~t))
    */
+
   if (pos_x == 1)
   {
     if (s.get_msb())
@@ -1012,7 +1034,8 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
       return false;
     }
 
-    /* IC: pos_x = 0: IC_wo &&
+    /**
+     * IC: pos_x = 0: IC_wo &&
      *                (t = 0 => lo_x < s) &&
      *                ((t != 0 && s != 0 ) => \exists y. (
      *                    mfb(x, y) && (~c => y < s * t + 1) &&
@@ -1089,8 +1112,10 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
     }
     return true;
   }
-  /* IC_wo: pos_x = 0: (s * t) / s = t
-   *        pos_x = 1: s / (s / t) = t  */
+  /**
+   * IC_wo: pos_x = 0: (s * t) / s = t
+   *        pos_x = 1: s / (s / t) = t
+   */
   return check;
 }
 
@@ -1278,8 +1303,10 @@ BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
 
-  /* IC: pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
-   *     pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s) */
+  /**
+   * IC: pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
+   *     pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
+   */
   if (x.has_fixed_bits())
   {
     if (pos_x == 0)
@@ -1298,8 +1325,10 @@ BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
     return x.lo().compare(s) <= 0;
   }
 
-  /* IC_wo: pos_x = 0: t = 0 || s != 0
-   *        pos_x = 1: t = 0 || s != ones */
+  /**
+   * IC_wo: pos_x = 0: t = 0 || s != 0
+   *        pos_x = 1: t = 0 || s != ones
+   */
   if (pos_x == 0)
   {
     return t.is_false() || !s.is_zero();
@@ -1352,7 +1381,8 @@ BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
 
-  /* IC: pos_x = 0: t = 1 => (s != min_signed_value &&
+  /**
+   * IC: pos_x = 0: t = 1 => (s != min_signed_value &&
    *                 ((MSB(x) = 0 && lo_x < s) ||
    *                  (MSB(x) != 0 && 1 o lo_x[bw-2:0] < s))) &&
    *                t = 0 => ((MSB(x) = 1 && hi_x >= s) ||
@@ -1361,7 +1391,8 @@ BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
    *                          ((MSB(x) = 1 && s < hi_x) ||
    *                           (MSB(x) != 1 && s < 0 o hi_x[bw-2:0])))
    *                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
-   *                          (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0]))) */
+   *                          (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0])))
+   */
   if (x.has_fixed_bits())
   {
     uint32_t msb   = x.size() - 1;
@@ -1409,8 +1440,10 @@ BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
     return s.signed_compare(tmp) >= 0;
   }
 
-  /* IC_wo: pos_x = 0: t = 0 || s != min_signed_value
-   *        pos_x = 1: t = 0 || s != max_signed_value */
+  /**
+   * IC_wo: pos_x = 0: t = 0 || s != min_signed_value
+   *        pos_x = 1: t = 0 || s != max_signed_value
+   */
   if (pos_x == 0)
   {
     return t.is_false() || !s.is_min_signed();
@@ -1476,14 +1509,16 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
       }
       return false;
     }
-    /* IC: pos_x = 0: IC_wo &&
+    /**
+     * IC: pos_x = 0: IC_wo &&
      *                ((s = 0 || t = ones) => mfb(x, t)) &&
      *                ((s != 0 && t != ones) => \exists y. (
      *                    mfb(x, s * y + t) && !umulo(s, y) && !uaddo(s *y, t)))
      *     pos_x = 1: IC_wo &&
      *                (s = t => (lo_x = 0 || hi_x > t)) &&
      *                (s != t => \exists y. (
-     *                    mfb(x, y) && y > t && (s - t) mod y = 0) */
+     *                    mfb(x, y) && y > t && (s - t) mod y = 0)
+     */
     if (pos_x == 0)
     {
       if (s.is_zero() || t.is_ones())
@@ -1584,8 +1619,10 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
     }
     return true;
   }
-  /* IC_wo: pos_x = 0: ~(-s) >= t
-   *        pos_x = 1: (t + t - s) & s >= t */
+  /**
+   * IC_wo: pos_x = 0: ~(-s) >= t
+   *        pos_x = 1: (t + t - s) & s >= t
+   */
   return check;
 }
 
@@ -1622,13 +1659,13 @@ BitVectorXor::is_invertible(const BitVector& t, uint32_t pos_x)
 {
   const BitVectorDomain& x = d_children[pos_x]->domain();
 
-  /* IC_wo: true */
+  /** IC_wo: true */
   if (!x.has_fixed_bits()) return true;
 
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
 
-  /* IC: mfb(x, s^t) */
+  /** IC: mfb(x, s^t) */
   return x.match_fixed_bits(s.bvxor(t));
 }
 
@@ -1671,7 +1708,8 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
   const BitVector& s1      = d_children[pos_s1]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
 
-  /* IC: pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
+  /**
+   * IC: pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
    *                (is_fixed_true(x) && s0 = t) ||
    *                (is_fixed_false(x) && s1 = t)
    *                with s0 the value for '_t' and s1 the value for '_e'
@@ -1702,13 +1740,15 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
     return s0.is_false() && x.match_fixed_bits(t);
   }
 
-  /* IC_wo: pos_x = 0: s0 == t || s1 == t
+  /**
+   * IC_wo: pos_x = 0: s0 == t || s1 == t
    *                   with s0 the value for the '_t' branch
    *                   and s1 the value for the '_e' branch
    *        pos_x = 1: s0 == true
    *                   with s0 the value for condition '_c'
    *        pos_x = 2: s0 == false
-   *                   with s0 the value for condition '_c' */
+   *                   with s0 the value for condition '_c'
+   */
   if (pos_x == 0)
   {
     return s0.compare(t) == 0 || s1.compare(t) == 0;
@@ -1755,10 +1795,10 @@ BitVectorExtract::is_invertible(const BitVector& t, uint32_t pos_x)
 
   const BitVectorDomain& x = d_children[pos_x]->domain();
 
-  /* IC_wo: true */
+  /** IC_wo: true */
   if (!x.has_fixed_bits()) return true;
   // TODO: maybe we should cache the domain extraction
-  /* IC: mfb(x[hi:lo], t) */
+  /** IC: mfb(x[hi:lo], t) */
   return x.bvextract(d_hi, d_lo).match_fixed_bits(t);
 }
 
@@ -1804,14 +1844,16 @@ BitVectorSignExtend::is_invertible(const BitVector& t, uint32_t pos_x)
 
   if (check && x.has_fixed_bits())
   {
-    /* IC: IC_wo && mfb(x, t_x) */
+    /** IC: IC_wo && mfb(x, t_x) */
     check = x.match_fixed_bits(t_x);
   }
   if (check) d_inverse.reset(new BitVector(t_x));
-  /* IC_wo: t_ext == ones || t_ext == zero
+  /**
+   * IC_wo: t_ext == ones || t_ext == zero
    *         and t_x   = t[t_size - 1 - n : 0]
    *         and t_ext = t[t_size - 1, t_size - 1 - n]
-   *         (i.e., it includes MSB of t_x) */
+   *         (i.e., it includes MSB of t_x)
+   */
   return check;
 }
 
