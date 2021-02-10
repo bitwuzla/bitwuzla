@@ -559,8 +559,8 @@ class BitVectorUlt : public BitVectorOp
   /**
    * CC:
    *   w/o  const bits: true
-   *   with const bits: pos_x = 0: ~t \/ xlo != ones
-   *                    pos_x = 1: ~t \/ xhi != 0
+   *   with const bits: pos_x = 0: t = false || x_lo != ones
+   *                    pos_x = 1: t = false || x_hi != 0
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 };
@@ -603,7 +603,8 @@ class BitVectorSlt : public BitVectorOp
   /**
    * CC:
    *   w/o  const bits: true
-   *   with const bits: TODO
+   *   with const bits: pos_x = 0: t = false || (const(x) => x_lo != smax)
+   *                    pos_x = 1: t = false || (const(x) => x_lo != smin)
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 };

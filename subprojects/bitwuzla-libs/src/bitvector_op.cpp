@@ -1462,10 +1462,21 @@ BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorSlt::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
-  return true;
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  if (!x.has_fixed_bits()) return true;
+
+  /**
+   * CC:pos_x = 0: t = false || (const(x) => x_lo != smax)
+   *    pos_x = 1: t = false || (const(x) => x_lo != smin)
+   */
+
+  if (pos_x == 0)
+  {
+    return t.is_false() || !x.is_fixed()
+           || x.lo().compare(BitVector::mk_max_signed(x.size())) != 0;
+  }
+  return t.is_false() || !x.is_fixed()
+         || x.lo().compare(BitVector::mk_min_signed(x.size())) != 0;
 }
 
 /* -------------------------------------------------------------------------- */
