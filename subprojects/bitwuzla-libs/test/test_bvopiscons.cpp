@@ -126,5 +126,11 @@ TEST_F(TestBvOpIsCons, extract)
   test_extract(IS_CONS, false);
   test_extract(IS_CONS, true);
 }
+
+TEST_F(TestBvOpIsCons, sext)
+{
+  test_sext(IS_CONS, false);
+  test_sext(IS_CONS, true);
+}
 }  // namespace test
 }  // namespace bzlals

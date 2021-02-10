@@ -1967,10 +1967,8 @@ BitVectorSignExtend::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorSignExtend::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
-  return true;
+  /** CC: IC */
+  return is_invertible(t, pos_x);
 }
 
 /* -------------------------------------------------------------------------- */

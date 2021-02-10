@@ -635,7 +635,7 @@ TestBvOp::test_sext(Kind kind, bool const_bits)
          * respectively. */
         BitVectorSignExtend op(d_rng.get(), bw_t, op_x, n);
 
-        bool res    = op.is_invertible(t, 0);
+        bool res    = IS_INV ? op.is_invertible(t, 0) : op.is_consistent(t, 0);
         bool status = check_sat_sext(kind, x, t, n);
 
         if (res != status)
