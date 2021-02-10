@@ -1815,10 +1815,12 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
    *                (is_fixed_true(x) && s0 = t) ||
    *                (is_fixed_false(x) && s1 = t)
    *                with s0 the value for '_t' and s1 the value for '_e'
-   *     pos_x = 1: s0 = true && mfb(x, t)
-   *                with s0 the value for '_c'
-   *     pos_x = 2: s0 == false && mfb(x, t)
-   *                with s0 the value for '_c'
+   *     pos_x = 1: (s0 = true && mfb(x, t)) ||
+   *                (s0 = false && s1 = t)
+   *                with s0 the value for '_c' and s1 the value for '_e'
+   *     pos_x = 2: (s0 == false && mfb(x, t)) ||
+   *                (s1 == true && s1 = t)
+   *                with s0 the value for '_c' and s1 the value for '_t'
    */
   if (x.has_fixed_bits())
   {
@@ -1836,10 +1838,12 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
     }
     if (pos_x == 1)
     {
-      return s0.is_true() && x.match_fixed_bits(t);
+      return (s0.is_true() && x.match_fixed_bits(t))
+             || (s0.is_false() && s1.compare(t) == 0);
     }
     assert(pos_x == 2);
-    return s0.is_false() && x.match_fixed_bits(t);
+    return (s0.is_false() && x.match_fixed_bits(t))
+           || (s0.is_true() && s1.compare(t) == 0);
   }
 
   /**
@@ -1857,10 +1861,10 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
   }
   if (pos_x == 1)
   {
-    return s0.is_true();
+    return s0.is_true() || s1.compare(t) == 0;
   }
   assert(pos_x == 2);
-  return s0.is_false();
+  return s0.is_false() || s1.compare(t) == 0;
 }
 
 bool

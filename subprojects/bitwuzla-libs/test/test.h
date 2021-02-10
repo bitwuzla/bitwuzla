@@ -262,12 +262,12 @@ TestBvOp::check_sat_ite(Kind kind,
     }
     else if (pos_x == 1)
     {
-      if (s0.is_false()) return false;
+      if (s0.is_false() && s1.compare(t) != 0) return false;
       res = BitVector::bvite(s0, val, s1);
     }
     else
     {
-      if (s0.is_true()) return false;
+      if (s0.is_true() && s1.compare(t) != 0) return false;
       res = BitVector::bvite(s0, s1, val);
     }
     if (t.compare(res) == 0) return true;
