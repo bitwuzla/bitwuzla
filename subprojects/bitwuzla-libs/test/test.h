@@ -254,23 +254,75 @@ TestBvOp::check_sat_ite(Kind kind,
   BitVectorDomainGenerator gen(x);
   do
   {
-    BitVector val = gen.has_next() ? gen.next() : x.lo();
-    BitVector res;
+    BitVector xval = gen.has_next() ? gen.next() : x.lo();
     if (pos_x == 0)
     {
-      res = BitVector::bvite(val, s0, s1);
+      if (kind == IS_CONS)
+      {
+        BitVectorDomainGenerator gens0(s0.size());
+        while (gens0.has_next())
+        {
+          BitVector s0val = gens0.next();
+          BitVectorDomainGenerator gens1(s1.size());
+          while (gens1.has_next())
+          {
+            BitVector res = BitVector::bvite(xval, s0val, gens1.next());
+            if (t.compare(res) == 0) return true;
+          }
+        }
+      }
+      else
+      {
+        BitVector res = BitVector::bvite(xval, s0, s1);
+        if (t.compare(res) == 0) return true;
+      }
     }
     else if (pos_x == 1)
     {
-      if (s0.is_false() && s1.compare(t) != 0) return false;
-      res = BitVector::bvite(s0, val, s1);
+      if (kind == IS_CONS)
+      {
+        BitVectorDomainGenerator gens0(s0.size());
+        while (gens0.has_next())
+        {
+          BitVector s0val = gens0.next();
+          BitVectorDomainGenerator gens1(s1.size());
+          while (gens1.has_next())
+          {
+            BitVector res = BitVector::bvite(s0val, xval, gens1.next());
+            if (t.compare(res) == 0) return true;
+          }
+        }
+      }
+      else
+      {
+        if (s0.is_false() && s1.compare(t) != 0) return false;
+        BitVector res = BitVector::bvite(s0, xval, s1);
+        if (t.compare(res) == 0) return true;
+      }
     }
     else
     {
-      if (s0.is_true() && s1.compare(t) != 0) return false;
-      res = BitVector::bvite(s0, s1, val);
+      if (kind == IS_CONS)
+      {
+        BitVectorDomainGenerator gens0(s0.size());
+        while (gens0.has_next())
+        {
+          BitVector s0val = gens0.next();
+          BitVectorDomainGenerator gens1(s1.size());
+          while (gens1.has_next())
+          {
+            BitVector res = BitVector::bvite(s0val, gens1.next(), xval);
+            if (t.compare(res) == 0) return true;
+          }
+        }
+      }
+      else
+      {
+        if (s0.is_true() && s1.compare(t) != 0) return false;
+        BitVector res = BitVector::bvite(s0, s1, xval);
+        if (t.compare(res) == 0) return true;
+      }
     }
-    if (t.compare(res) == 0) return true;
   } while (gen.has_next());
   return false;
 }
@@ -472,7 +524,8 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x, bool const_bits)
                           pos_x == 1 ? op_x : (pos_x == 2 ? op_s1 : op_s0),
                           pos_x == 2 ? op_x : op_s1);
 
-          bool res    = op.is_invertible(t, pos_x);
+          bool res    = kind == IS_INV ? op.is_invertible(t, pos_x)
+                                       : op.is_consistent(t, pos_x);
           bool status = check_sat_ite(kind, x, t, s0, s1, pos_x);
           if (res != status)
           {

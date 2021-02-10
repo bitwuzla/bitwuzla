@@ -1777,6 +1777,8 @@ bool
 BitVectorXor::is_consistent(const BitVector& t, uint32_t pos_x)
 {
   /** CC: true */
+  (void) t;
+  (void) pos_x;
   return true;
 }
 
@@ -1870,9 +1872,9 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorIte::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  /** CC: true */
   (void) t;
   (void) pos_x;
-  // TODO
   return true;
 }
 
