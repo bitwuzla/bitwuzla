@@ -518,7 +518,10 @@ class BitVectorUdiv : public BitVectorOp
   BitVector* consistent() override { return d_consistent.get(); }
 
  private:
-  /** Try to find a consistent value for pos_x = 0 other than x = t. */
+  /**
+   * Try to find a consistent value for pos_x = 0 other than x = t.
+   * Returns a null bit-vector if no such value can be found.
+   */
   BitVector consistent_value_pos0_aux(const BitVector& t);
   /** Cached inverse result. */
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
@@ -641,7 +644,17 @@ class BitVectorUrem : public BitVectorOp
   /**
    * CC:
    *  w/o  const bits: true
-   *  with const bits: TODO
+   *
+   *  with const bits:
+   *     pos_x = 0: (t = ones => mfb(x, ones)) &&
+   *                (t != ones =>
+   *                  (t > (ones - t) => mfb (x, t)) &&
+   *                  (t < (ones - t) => mfb(x, t) ||
+   *                   \exists y. (mfb(x, y) && y> 2*t))
+   *
+   *     pos_x = 1: mfb(x, 0) ||
+   *                ((t = ones => mfb(x, 0)) &&
+   *                 (t != ones => \exists y. (mfb(x, y) && y > t)))
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
@@ -651,9 +664,19 @@ class BitVectorUrem : public BitVectorOp
     return nullptr; /* TODO choose from d_inverse */
   }
 
+  /** Get the cached consistent result. */
+  BitVector* consistent() override { return d_consistent.get(); }
+
  private:
+  /**
+   * Pick a consistent value for pos_x = 0 with x > t.
+   * Returns a null bit-vector if no such value can be found.
+   */
+  BitVector consistent_value_pos0_aux(const BitVector& t);
   /** Cached inverse result. */
   std::unique_ptr<BitVectorDomain> d_inverse = nullptr;
+  /** Cached consistent result. */
+  std::unique_ptr<BitVector> d_consistent = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */

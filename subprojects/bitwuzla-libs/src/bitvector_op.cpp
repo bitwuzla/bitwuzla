@@ -1638,10 +1638,94 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorUrem::is_consistent(const BitVector& t, uint32_t pos_x)
 {
-  (void) t;
-  (void) pos_x;
-  // TODO
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  if (!x.has_fixed_bits()) return true;
+
+  /* CC: pos_x = 0: (t = ones => mfb(x, ones)) &&
+   *                (t != ones =>
+   *                  (t > (ones - t) => mfb (x, t)) &&
+   *                  (t < (ones - t) => mfb(x, t) ||
+   *                   \exists y. (mfb(x, y) && y> 2*t))
+   *
+   *     pos_x = 1: mfb(x, 0) ||
+   *                ((t = ones => mfb(x, 0)) &&
+   *                 (t != ones => \exists y. (mfb(x, y) && y > t))) */
+
+  bool t_is_ones = t.is_ones();
+  uint32_t size  = t.size();
+
+  if (pos_x == 0)
+  {
+    bool mfb = x.match_fixed_bits(t);
+
+    if (t_is_ones && !mfb) return false;
+
+    int32_t cmp_t = t.compare(BitVector::mk_ones(size).ibvsub(t));
+
+    if (cmp_t > 0 && !mfb)
+    {
+      return false;
+    }
+
+    if (cmp_t < 0 && !mfb)
+    {
+      /* x > t:
+       * pick s > t such that x = s + t does not overflow -> t < s < ones - t
+       * -> 2*t + 1 <= x <= ones */
+      BitVector bvres = consistent_value_pos0_aux(t);
+      bool res        = !bvres.is_null();
+      if (res)
+      {
+        d_consistent.reset(new BitVector(bvres));
+      }
+      return res;
+    }
+  }
+  else
+  {
+    if (!x.match_fixed_bits(BitVector::mk_zero(size)))
+    {
+      if (t_is_ones)
+      {
+        return false;
+      }
+      BitVector min = t.bvinc();
+      if (x.is_fixed() && x.lo().compare(min) >= 0)
+      {
+        return true;
+      }
+      BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
+      bool res = gen.has_random();
+      if (res)
+      {
+        d_consistent.reset(new BitVector(gen.random()));
+      }
+      return res;
+    }
+  }
   return true;
+}
+
+BitVector
+BitVectorUrem::consistent_value_pos0_aux(const BitVector& t)
+{
+  /* x > t:
+   * pick s > t such that x = s + t does not overflow -> t < s < ones - t
+   * -> 2*t + 1 <= x <= ones */
+  const BitVectorDomain& x = d_children[0]->domain();
+  BitVector min            = t.bvinc();
+  assert(!min.is_uadd_overflow(t));
+  min.ibvadd(t);
+  if (x.is_fixed() && x.lo().compare(min) >= 0)
+  {
+    return x.lo();
+  }
+  BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
+  if (gen.has_random())
+  {
+    return gen.random();
+  }
+  return BitVector();
 }
 
 /* -------------------------------------------------------------------------- */

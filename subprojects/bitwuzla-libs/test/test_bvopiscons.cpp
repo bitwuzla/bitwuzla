@@ -86,5 +86,13 @@ TEST_F(TestBvOpIsCons, ult)
   test_binary<BitVectorUlt>(IS_CONS, ULT, 0, true);
   test_binary<BitVectorUlt>(IS_CONS, ULT, 1, true);
 }
+
+TEST_F(TestBvOpIsCons, urem)
+{
+  test_binary<BitVectorUrem>(IS_CONS, UREM, 0, false);
+  test_binary<BitVectorUrem>(IS_CONS, UREM, 1, false);
+  test_binary<BitVectorUrem>(IS_CONS, UREM, 0, true);
+  test_binary<BitVectorUrem>(IS_CONS, UREM, 1, true);
+}
 }
 }
