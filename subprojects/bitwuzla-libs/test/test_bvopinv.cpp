@@ -19,5 +19,11 @@ TEST_F(TestBvOpInv, and)
   test_binary<BitVectorAnd>(INV, AND, 1);
 }
 
+TEST_F(TestBvOpInv, concat)
+{
+  test_binary<BitVectorConcat>(INV, CONCAT, 0);
+  test_binary<BitVectorConcat>(INV, CONCAT, 1);
+}
+
 }  // namespace test
 }  // namespace bzlals

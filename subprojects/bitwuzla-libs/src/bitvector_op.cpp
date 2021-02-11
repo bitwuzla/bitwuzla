@@ -273,8 +273,8 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
 
   /**
    * IC_wo: s = ts
-   *   pos_x = 0: ts = t[bw(s) - 1 : 0]
-   *   pos_x = 1: ts = t[bw(t) - 1 : bw(t) - bw(s)]
+   *   pos_x = 0: ts = t[size(s) - 1 : 0]
+   *   pos_x = 1: ts = t[size(t) - 1 : size(t) - size(s)]
    */
   if (pos_x == 0)
   {
@@ -313,8 +313,8 @@ BitVectorConcat::is_consistent(const BitVector& t, uint32_t pos_x)
 
   /**
    * CC: mfb(x, tx)
-   * with pos_x = 0: tx = t[bw(t) - 1 : bw(t) - bw(x)]
-   *      pos_x = 1: tx = t[bw(x) - 1 : 0]
+   * with pos_x = 0: tx = t[size(t) - 1 : size(t) - size(x)]
+   *      pos_x = 1: tx = t[size(x) - 1 : 0]
    */
 
   uint32_t bw_t            = t.size();
@@ -324,6 +324,31 @@ BitVectorConcat::is_consistent(const BitVector& t, uint32_t pos_x)
     return x.match_fixed_bits(t.bvextract(bw_t - 1, bw_t - bw_x));
   }
   return x.match_fixed_bits(t.bvextract(bw_x - 1, 0));
+}
+
+const BitVector&
+BitVectorConcat::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t pos_s     = 1 - pos_x;
+  const BitVector& s = d_children[pos_s]->assignment();
+  if (d_inverse == nullptr)
+  {
+    if (pos_x == 0)
+    {
+      /** inverse value: t[size(t) - 1: size(s)] */
+      d_inverse.reset(new BitVector(t.bvextract(t.size() - 1, s.size())));
+    }
+    else
+    {
+      /** inverse value: t[size(x) - 1: 0] */
+      d_inverse.reset(new BitVector(t.bvextract(x.size() - 1, 0)));
+    }
+  }
+  assert(pos_x == 1 || t.compare(d_inverse->bvconcat(s)) == 0);
+  assert(pos_x == 0 || t.compare(s.bvconcat(*d_inverse)) == 0);
+  return *d_inverse;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -459,18 +484,18 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
       /* Check if relevant bits of
        *   y = (t >> ctz(s)) * (s >> ctz(s))^-1
        * match corresponding constant bits of x, i.e.,
-       * mfb(x[bw - ctz(s) - 1:0], y[bw - ctz(s) - 1:0]). */
-      uint32_t bw             = x.size();
+       * mfb(x[size - ctz(s) - 1:0], y[size - ctz(s) - 1:0]). */
+      uint32_t size             = x.size();
       uint32_t ctz            = s.count_trailing_zeros();
-      BitVectorDomain x_prime = x.bvextract(bw - ctz - 1, 0);
+      BitVectorDomain x_prime = x.bvextract(size - ctz - 1, 0);
       BitVector y             = t.bvshr(ctz).ibvmul(s.bvshr(ctz).ibvmodinv());
-      BitVector y_ext         = y.bvextract(bw - ctz - 1, 0);
+      BitVector y_ext         = y.bvextract(size - ctz - 1, 0);
       if (x_prime.match_fixed_bits(y_ext))
       {
-        /* Result domain is x[bw - 1:ctz(s)] o y[bw - ctz(s) - 1:0] */
+        /* Result domain is x[size - 1:ctz(s)] o y[size - ctz(s) - 1:0] */
         d_inverse_domain.reset(
-            new BitVectorDomain(x.lo().bvextract(bw - 1, ctz).ibvconcat(y),
-                                x.hi().bvextract(bw - 1, ctz).ibvconcat(y)));
+            new BitVectorDomain(x.lo().bvextract(size - 1, ctz).ibvconcat(y),
+                                x.hi().bvextract(size - 1, ctz).ibvconcat(y)));
         return true;
       }
       return false;
@@ -615,9 +640,9 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
     }
     if (t.is_zero())
     {
-      uint32_t bw    = x.size();
+      uint32_t size    = x.size();
       bool s_is_zero = s.is_zero();
-      BitVector min  = BitVector(bw, ctz_t - ctz_s);
+      BitVector min  = BitVector(size, ctz_t - ctz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
       {
         BitVectorDomainGenerator gen(
@@ -794,9 +819,9 @@ BitVectorShr::is_invertible(RNG* rng,
     }
     if (t.is_zero())
     {
-      uint32_t bw    = x.size();
+      uint32_t size    = x.size();
       bool s_is_zero = s.is_zero();
-      BitVector min  = BitVector(bw, clz_t - clz_s);
+      BitVector min  = BitVector(size, clz_t - clz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
       {
         BitVectorDomainGenerator gen(x, rng, s_is_zero ? x.lo() : min, x.hi());
@@ -913,8 +938,8 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
   bool ic_wo;
 
   /**
-   * IC_wo: pos_x = 0: (s < bw(s) => (t << s) >>a s = t) &&
-   *                   (s >= bw(s) => (t = ones || t = 0))
+   * IC_wo: pos_x = 0: (s < size(s) => (t << s) >>a s = t) &&
+   *                   (s >= size(s) => (t = ones || t = 0))
    *        pos_x = 1: (s[msb] = 0 => IC_shr(s >> x = t) &&
    *                   (s[msb] = 1 => IC_shr(~s >> x = ~t)
    *
@@ -935,8 +960,8 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
     return BitVectorShr::is_invertible(d_rng, t, s, x, pos_x, d_inverse);
   }
 
-  uint32_t bw = s.size();
-  if (s.compare(BitVector(bw, bw)) < 0)
+  uint32_t size = s.size();
+  if (s.compare(BitVector(size, size)) < 0)
   {
     ic_wo = t.bvshl(s).ibvashr(s).compare(t) == 0;
   }
@@ -1170,7 +1195,7 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
     }
     else if (!s.is_zero() || !t.is_zero())
     {
-      uint32_t bw = s.size();
+      uint32_t size = s.size();
       BitVector min, max;
       if (s.bvudiv(x.hi()).compare(t) > 0)
       {
@@ -1179,12 +1204,12 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
 
       if (t.is_ones())
       {
-        min = BitVector::mk_zero(bw);
-        max = s.is_ones() ? BitVector::mk_one(bw) : min;
+        min = BitVector::mk_zero(size);
+        max = s.is_ones() ? BitVector::mk_one(size) : min;
       }
       else if (s.compare(t) == 0)
       {
-        min = BitVector::mk_one(bw);
+        min = BitVector::mk_one(size);
         max = min;
       }
       else
@@ -1484,14 +1509,14 @@ BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
   /**
    * IC: pos_x = 0: t = 1 => (s != min_signed_value &&
    *                 ((MSB(x) = 0 && lo_x < s) ||
-   *                  (MSB(x) != 0 && 1 o lo_x[bw-2:0] < s))) &&
+   *                  (MSB(x) != 0 && 1 o lo_x[size-2:0] < s))) &&
    *                t = 0 => ((MSB(x) = 1 && hi_x >= s) ||
-   *                          (MSB(x) != 1 && 0 o hi_x[bw-2:0] >= s))))
+   *                          (MSB(x) != 1 && 0 o hi_x[size-2:0] >= s))))
    *     pos_x = 1: t = 1 => (s != max_signed_value &&
    *                          ((MSB(x) = 1 && s < hi_x) ||
-   *                           (MSB(x) != 1 && s < 0 o hi_x[bw-2:0])))
+   *                           (MSB(x) != 1 && s < 0 o hi_x[size-2:0])))
    *                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
-   *                          (MSB(x) != 0 && s >= 1 o lo_x[bw-2:0])))
+   *                          (MSB(x) != 0 && s >= 1 o lo_x[size-2:0])))
    */
   if (x.has_fixed_bits())
   {
@@ -1654,8 +1679,8 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
         {
           /* simplest solution (0 <= res < s: res = t) does not apply, thus
            * x = s * n + t with n s.t. (s * n + t) does not overflow */
-          uint32_t bw    = x.size();
-          BitVector ones = BitVector::mk_ones(bw);
+          uint32_t size    = x.size();
+          BitVector ones = BitVector::mk_ones(size);
           if (ones.bvsub(s).compare(t) < 0)
           {
             /* overflow for n = 1 -> only simplest solution possible, but
