@@ -159,10 +159,10 @@ class TestBvOp : public TestBvDomainCommon
                       uint32_t n);
 
   template <class T>
-  void test_binary(Kind kind, OpKind op_kind, uint32_t pos_x, bool const_bits);
-  void test_ite(Kind kind, uint32_t pos_x, bool const_bits);
-  void test_extract(Kind kind, bool const_bits);
-  void test_sext(Kind kind, bool const_bits);
+  void test_binary(Kind kind, OpKind op_kind, uint32_t pos_x);
+  void test_ite(Kind kind, uint32_t pos_x);
+  void test_extract(Kind kind);
+  void test_sext(Kind kind);
 
   static constexpr uint32_t TEST_BW = 4;
   std::vector<std::string> d_values;
@@ -362,26 +362,11 @@ TestBvOp::check_sat_sext(Kind kind,
 
 template <class T>
 void
-TestBvOp::test_binary(Kind kind,
-                      OpKind op_kind,
-                      uint32_t pos_x,
-                      bool const_bits)
+TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
 {
-  std::vector<std::string> x_values;
-
   uint32_t bw_x = TEST_BW;
   uint32_t bw_s = TEST_BW;
   uint32_t bw_t = TEST_BW;
-
-  if (const_bits)
-  {
-    x_values = d_xvalues;
-  }
-  else
-  {
-    /* x is unconstrained (no const bits) */
-    x_values.push_back(std::string(bw_x, 'x'));
-  }
 
   if (op_kind == ULT || op_kind == SLT || op_kind == EQ)
   {
@@ -395,7 +380,7 @@ TestBvOp::test_binary(Kind kind,
 
   uint32_t nval_s = 1 << bw_s;
   uint32_t nval_t = 1 << bw_t;
-  for (const std::string& x_value : x_values)
+  for (const std::string& x_value : d_xvalues)
   {
     BitVectorDomain x(x_value);
     for (uint32_t i = 0; i < nval_s; i++)
@@ -441,7 +426,7 @@ TestBvOp::test_binary(Kind kind,
 }
 
 void
-TestBvOp::test_ite(Kind kind, uint32_t pos_x, bool const_bits)
+TestBvOp::test_ite(Kind kind, uint32_t pos_x)
 {
   std::vector<std::string> x_values;
   uint32_t bw_s0, bw_s1, bw = TEST_BW;
@@ -453,29 +438,15 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x, bool const_bits)
   {
     bw_s0 = 1;
     bw_s1 = bw;
-    if (const_bits)
-    {
-      x_values = d_xvalues;
-    }
-    else
-    {
-      x_values.push_back(std::string(bw, 'x'));
-    }
+    x_values = d_xvalues;
   }
   else
   {
     bw_s0 = bw;
     bw_s1 = bw;
-    if (const_bits)
-    {
-      x_values.push_back("x");
-      x_values.push_back("0");
-      x_values.push_back("1");
-    }
-    else
-    {
-      x_values.push_back("x");
-    }
+    x_values.push_back("x");
+    x_values.push_back("0");
+    x_values.push_back("1");
   }
   n_vals    = 1 << bw;
   n_vals_s0 = 1 << bw_s0;
@@ -547,22 +518,11 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x, bool const_bits)
 }
 
 void
-TestBvOp::test_extract(Kind kind, bool const_bits)
+TestBvOp::test_extract(Kind kind)
 {
-  std::vector<std::string> x_values;
   uint32_t bw_x = TEST_BW;
 
-  if (const_bits)
-  {
-    x_values = d_values;
-  }
-  else
-  {
-    /* x is unconstrained (no const bits) */
-    x_values.push_back(std::string(bw_x, 'x'));
-  }
-
-  for (const std::string& x_value : x_values)
+  for (const std::string& x_value : d_xvalues)
   {
     BitVectorDomain x(x_value);
     for (uint32_t lo = 0; lo < bw_x; ++lo)
@@ -602,22 +562,11 @@ TestBvOp::test_extract(Kind kind, bool const_bits)
 }
 
 void
-TestBvOp::test_sext(Kind kind, bool const_bits)
+TestBvOp::test_sext(Kind kind)
 {
-  std::vector<std::string> x_values;
   uint32_t bw_x = TEST_BW;
 
-  if (const_bits)
-  {
-    x_values = d_values;
-  }
-  else
-  {
-    /* x is unconstrained (no const bits) */
-    x_values.push_back(std::string(bw_x, 'x'));
-  }
-
-  for (const std::string& x_value : x_values)
+  for (const std::string& x_value : d_xvalues)
   {
     BitVectorDomain x(x_value);
     for (uint32_t n = 1; n <= bw_x; ++n)
