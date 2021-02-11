@@ -389,7 +389,7 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
         BitVector inv = s.bvmodinv().ibvmul(t);
         if (x.match_fixed_bits(inv))
         {
-          d_inverse.reset(new BitVectorDomain(inv));
+          d_inverse_domain.reset(new BitVectorDomain(inv));
           return true;
         }
         return false;
@@ -408,7 +408,7 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
       if (x_prime.match_fixed_bits(y_ext))
       {
         /* Result domain is x[bw - 1:ctz(s)] o y[bw - ctz(s) - 1:0] */
-        d_inverse.reset(
+        d_inverse_domain.reset(
             new BitVectorDomain(x.lo().bvextract(bw - 1, ctz).ibvconcat(y),
                                 x.hi().bvextract(bw - 1, ctz).ibvconcat(y)));
         return true;
@@ -1080,7 +1080,7 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
         BitVectorDomainGenerator gen(x, d_rng, min, max);
         if (gen.has_next())
         {
-          d_inverse.reset(new BitVectorDomain(gen.random(), max));
+          d_inverse_domain.reset(new BitVectorDomain(gen.random(), max));
           return true;
         }
         return false;
@@ -1115,7 +1115,7 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
       BitVectorDomainGenerator gen(x, d_rng, min, max);
       if (gen.has_next())
       {
-        d_inverse.reset(new BitVectorDomain(gen.random(), max));
+        d_inverse_domain.reset(new BitVectorDomain(gen.random(), max));
         return true;
       }
       return false;
@@ -1592,7 +1592,7 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
               BitVector rem = bv.bvurem(s);
               if (rem.compare(t) == 0)
               {
-                d_inverse.reset(new BitVectorDomain(bv, hi));
+                d_inverse_domain.reset(new BitVectorDomain(bv, hi));
                 return true;
               }
             }
@@ -1635,7 +1635,7 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
       if (!bv.is_null())
       {
         assert(s.bvurem(bv).compare(t) == 0);
-        d_inverse.reset(new BitVectorDomain(bv));
+        d_inverse_domain.reset(new BitVectorDomain(bv));
         return true;
       }
       return false;
