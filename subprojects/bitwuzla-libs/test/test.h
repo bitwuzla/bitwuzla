@@ -424,8 +424,18 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
         else if (kind == INV)
         {
           if (x.is_fixed()) continue;
-          BitVector bvres = op.inverse_value(t, pos_x);
-          ASSERT_EQ(t.compare(eval_op_binary(op_kind, bvres, s, pos_x)), 0);
+          if (!op.is_invertible(t, pos_x)) continue;
+          BitVector inv = op.inverse_value(t, pos_x);
+          int32_t cmp   = t.compare(eval_op_binary(op_kind, inv, s, pos_x));
+          if (cmp != 0)
+          {
+            std::cout << "pos_x: " << pos_x << std::endl;
+            std::cout << "t: " << t.to_string() << std::endl;
+            std::cout << "x: " << x_value << std::endl;
+            std::cout << "s: " << s.to_string() << std::endl;
+            std::cout << "inverse: " << inv.to_string() << std::endl;
+          }
+          ASSERT_EQ(cmp, 0);
         }
       }
     }

@@ -217,6 +217,26 @@ BitVectorAnd::is_consistent(const BitVector& t, uint32_t pos_x)
   return t.compare(t.bvand(x.hi())) == 0;
 }
 
+const BitVector&
+BitVectorAnd::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_inverse == nullptr);
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t pos_s     = 1 - pos_x;
+  const BitVector& s = d_children[pos_s]->assignment();
+
+  /** inverse value: (t & s) | (~s & rand) */
+
+  uint32_t size = t.size();
+  d_inverse.reset(new BitVector(
+      t.bvand(s).bvor(s.bvnot().ibvand(BitVector(size, *d_rng)))));
+
+  assert(t.compare(d_inverse->bvand(s)) == 0);
+  return *d_inverse;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
