@@ -120,6 +120,7 @@ class TestBvOp : public TestBvDomainCommon
  protected:
   enum Kind
   {
+    INV,
     IS_CONS,
     IS_INV,
   };
@@ -132,10 +133,10 @@ class TestBvOp : public TestBvDomainCommon
     d_rng.reset(new RNG(1234));
   }
 
-  BitVector check_sat_binary_aux(OpKind op_kind,
-                                 const BitVector& x,
-                                 const BitVector& s,
-                                 uint32_t pos_x);
+  BitVector eval_op_binary(OpKind op_kind,
+                           const BitVector& x,
+                           const BitVector& s,
+                           uint32_t pos_x);
   bool check_sat_binary(Kind kind,
                         OpKind op_kind,
                         const BitVectorDomain& x,
@@ -171,10 +172,10 @@ class TestBvOp : public TestBvDomainCommon
 };
 
 BitVector
-TestBvOp::check_sat_binary_aux(OpKind op_kind,
-                               const BitVector& x,
-                               const BitVector& s,
-                               uint32_t pos_x)
+TestBvOp::eval_op_binary(OpKind op_kind,
+                         const BitVector& x,
+                         const BitVector& s,
+                         uint32_t pos_x)
 {
   BitVector res;
   switch (op_kind)
@@ -230,13 +231,13 @@ TestBvOp::check_sat_binary(Kind kind,
       BitVectorDomainGenerator gens(s.size());
       while (gens.has_next())
       {
-        res = check_sat_binary_aux(op_kind, xval, gens.next(), pos_x);
+        res = eval_op_binary(op_kind, xval, gens.next(), pos_x);
         if (t.compare(res) == 0) return true;
       }
     }
     else
     {
-      res = check_sat_binary_aux(op_kind, xval, s, pos_x);
+      res = eval_op_binary(op_kind, xval, s, pos_x);
       if (t.compare(res) == 0) return true;
     }
   } while (gen.has_next());
@@ -393,33 +394,39 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
         BitVector t(bw_t, j);
         /* For this test, we don't care about the current assignment of x, thus
          * we initialize it with 0. */
-        BitVectorOp* op_x =
-            new T(d_rng.get(), BitVector::mk_zero(bw_x), x, nullptr, nullptr);
+        std::unique_ptr<BitVectorOp> op_x(
+            new T(d_rng.get(), BitVector::mk_zero(bw_x), x, nullptr, nullptr));
         /* For this test, we don't care about the domain of s, thus we
          * initialize it with an unconstrained domain. */
-        BitVectorOp* op_s =
-            new T(d_rng.get(), s, BitVectorDomain(bw_s), nullptr, nullptr);
+        std::unique_ptr<BitVectorOp> op_s(
+            new T(d_rng.get(), s, BitVectorDomain(bw_s), nullptr, nullptr));
         /* For this test, we don't care about current assignment and domain of
          * the op, thus we initialize them with 0 and 'x..x', respectively. */
         T op(d_rng.get(),
              bw_t,
-             pos_x == 0 ? op_x : op_s,
-             pos_x == 1 ? op_x : op_s);
+             pos_x == 0 ? op_x.get() : op_s.get(),
+             pos_x == 1 ? op_x.get() : op_s.get());
 
         bool res    = kind == IS_INV ? op.is_invertible(t, pos_x)
                                      : op.is_consistent(t, pos_x);
-        bool status = check_sat_binary(kind, op_kind, x, t, s, pos_x);
-        if (res != status)
+        if (kind == IS_INV || kind == IS_CONS)
         {
-          std::cout << "pos_x: " << pos_x << std::endl;
-          std::cout << "t: " << t.to_string() << std::endl;
-          std::cout << "x: " << x_value << std::endl;
-          std::cout << "s: " << s.to_string() << std::endl;
+          bool status = check_sat_binary(kind, op_kind, x, t, s, pos_x);
+          if (res != status)
+          {
+            std::cout << "pos_x: " << pos_x << std::endl;
+            std::cout << "t: " << t.to_string() << std::endl;
+            std::cout << "x: " << x_value << std::endl;
+            std::cout << "s: " << s.to_string() << std::endl;
+          }
+          ASSERT_EQ(res, status);
         }
-        ASSERT_EQ(res, status);
-
-        delete op[pos_x];
-        delete op[1 - pos_x];
+        else if (kind == INV)
+        {
+          if (x.is_fixed()) continue;
+          BitVector bvres = op.inverse_value(t, pos_x);
+          ASSERT_EQ(t.compare(eval_op_binary(op_kind, bvres, s, pos_x)), 0);
+        }
       }
     }
   }
@@ -542,7 +549,8 @@ TestBvOp::test_extract(Kind kind)
            * respectively. */
           BitVectorExtract op(d_rng.get(), bw_t, op_x, hi, lo);
 
-          bool res = IS_INV ? op.is_invertible(t, 0) : op.is_consistent(t, 0);
+          bool res =
+              kind == IS_INV ? op.is_invertible(t, 0) : op.is_consistent(t, 0);
           bool status = check_sat_extract(kind, x, t, hi, lo);
 
           if (res != status)
@@ -584,7 +592,8 @@ TestBvOp::test_sext(Kind kind)
          * respectively. */
         BitVectorSignExtend op(d_rng.get(), bw_t, op_x, n);
 
-        bool res    = IS_INV ? op.is_invertible(t, 0) : op.is_consistent(t, 0);
+        bool res =
+            kind == IS_INV ? op.is_invertible(t, 0) : op.is_consistent(t, 0);
         bool status = check_sat_sext(kind, x, t, n);
 
         if (res != status)

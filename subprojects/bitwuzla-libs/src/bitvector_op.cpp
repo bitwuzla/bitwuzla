@@ -108,6 +108,8 @@ BitVectorAdd::BitVectorAdd(RNG* rng,
 bool
 BitVectorAdd::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
   if (d_children[pos_x]->domain().has_fixed_bits())
   {
     /** IC: mfb(x, t - s) */
@@ -128,9 +130,26 @@ BitVectorAdd::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorAdd::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
   (void) t;
   (void) pos_x;
   return true;
+}
+
+const BitVector&
+BitVectorAdd::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t pos_s     = 1 - pos_x;
+  const BitVector& s = d_children[pos_s]->assignment();
+  if (d_inverse == nullptr)
+  {
+    d_inverse.reset(new BitVector(t.bvsub(s)));
+  }
+  assert(t.compare(d_inverse->bvadd(s)) == 0);
+  return *d_inverse;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -155,6 +174,9 @@ BitVectorAnd::BitVectorAnd(RNG* rng,
 bool
 BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -185,6 +207,9 @@ BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorAnd::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
@@ -214,6 +239,9 @@ BitVectorConcat::BitVectorConcat(RNG* rng,
 bool
 BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -257,6 +285,9 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorConcat::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
@@ -297,6 +328,9 @@ BitVectorEq::BitVectorEq(RNG* rng,
 bool
 BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -329,6 +363,9 @@ BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorEq::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   (void) t;
   (void) pos_x;
   /* CC: true */
@@ -357,6 +394,9 @@ BitVectorMul::BitVectorMul(RNG* rng,
 bool
 BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -424,6 +464,9 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorMul::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
@@ -498,6 +541,9 @@ BitVectorShl::BitVectorShl(RNG* rng,
 bool
 BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -571,6 +617,9 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
@@ -661,6 +710,9 @@ BitVectorShr::BitVectorShr(RNG* rng,
 bool
 BitVectorShr::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -831,6 +883,9 @@ BitVectorAshr::BitVectorAshr(RNG* rng,
 bool
 BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -882,6 +937,9 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorAshr::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
@@ -1010,6 +1068,9 @@ BitVectorUdiv::BitVectorUdiv(RNG* rng,
 bool
 BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -1129,6 +1190,9 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorUdiv::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
@@ -1306,6 +1370,9 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
 bool
 BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -1347,6 +1414,9 @@ BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorUlt::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
@@ -1384,6 +1454,9 @@ BitVectorSlt::BitVectorSlt(RNG* rng,
 bool
 BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -1462,6 +1535,9 @@ BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorSlt::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
@@ -1501,6 +1577,9 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
 bool
 BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -1649,6 +1728,9 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorUrem::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
   if (!x.has_fixed_bits()) return true;
 
@@ -1761,6 +1843,9 @@ BitVectorXor::BitVectorXor(RNG* rng,
 bool
 BitVectorXor::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   const BitVectorDomain& x = d_children[pos_x]->domain();
 
   /** IC_wo: true */
@@ -1776,6 +1861,9 @@ BitVectorXor::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorXor::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   /** CC: true */
   (void) t;
   (void) pos_x;
@@ -1806,6 +1894,9 @@ BitVectorIte::BitVectorIte(RNG* rng,
 bool
 BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   uint32_t pos_s0          = pos_x == 0 ? 1 : 0;
   uint32_t pos_s1          = pos_x == 2 ? 1 : 2;
   const BitVector& s0      = d_children[pos_s0]->assignment();
@@ -1872,6 +1963,9 @@ BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
 bool
 BitVectorIte::is_consistent(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   /** CC: true */
   (void) t;
   (void) pos_x;
@@ -1899,6 +1993,9 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
 bool
 BitVectorExtract::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   (void) pos_x;
 
   const BitVectorDomain& x = d_children[pos_x]->domain();
@@ -1939,6 +2036,9 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
 bool
 BitVectorSignExtend::is_invertible(const BitVector& t, uint32_t pos_x)
 {
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
   (void) pos_x;
 
   const BitVectorDomain& x = d_children[pos_x]->domain();

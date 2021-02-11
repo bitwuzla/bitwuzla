@@ -6,6 +6,7 @@ set(test_names
   bv
   bvdomain
   bvdomaingen
+  bvopinv
   bvopiscons
   bvopisinv
 )
