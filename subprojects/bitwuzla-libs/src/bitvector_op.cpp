@@ -417,6 +417,53 @@ BitVectorEq::is_consistent(const BitVector& t, uint32_t pos_x)
   return true;
 }
 
+const BitVector&
+BitVectorEq::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_inverse == nullptr);
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t pos_s     = 1 - pos_x;
+  const BitVector& s = d_children[pos_s]->assignment();
+
+  /**
+   * inverse value: t = 0: random bit-vector != s
+   *                t = 1: s
+   */
+
+  if (t.is_zero())
+  {
+    BitVector res;
+    if (x.has_fixed_bits())
+    {
+      BitVectorDomainGenerator gen(x, d_rng);
+      do
+      {
+        assert(gen.has_random());
+        res = gen.random();
+      } while (s.compare(res) == 0);
+      d_inverse.reset(new BitVector(res));
+    }
+    else
+    {
+      do
+      {
+        res = BitVector(x.size(), *d_rng);
+      } while (s.compare(res) == 0);
+    }
+    d_inverse.reset(new BitVector(res));
+  }
+  else
+  {
+    assert(x.match_fixed_bits(s));
+    d_inverse.reset(new BitVector(s));
+  }
+
+  assert(t.compare(d_inverse->bveq(s)) == 0);
+  return *d_inverse;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorMul::BitVectorMul(RNG* rng,
