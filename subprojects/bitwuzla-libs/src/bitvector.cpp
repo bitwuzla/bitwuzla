@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <utility>
 
 #include "gmpmpz.h"
 #include "gmprandstate.h"
@@ -160,6 +161,11 @@ BitVector::BitVector(const BitVector& other)
     d_val.reset(new GMPMpz());
   }
   mpz_set(d_val->d_mpz, other.d_val->d_mpz);
+}
+
+BitVector::BitVector(BitVector&& other)
+    : d_size(std::exchange(other.d_size, 0)), d_val(std::move(other.d_val))
+{
 }
 
 BitVector::~BitVector() {}

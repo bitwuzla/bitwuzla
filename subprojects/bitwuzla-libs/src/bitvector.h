@@ -43,6 +43,7 @@ class BitVector
   BitVector(uint32_t size);
   /** Construct a random bit-vector of given size. */
   BitVector(uint32_t size, const RNG& rng);
+
   /**
    * Construct a random bit-vector of given size with the given range.
    * size     : The size of the bit-vector.
@@ -56,7 +57,6 @@ class BitVector
             const BitVector& from,
             const BitVector& to,
             bool is_signed = false);
-
   /**
    * Construct a new bit-vector of given size and randomly set bits within given
    * index range. Bits outside of given index range are initialized with zero.
@@ -70,6 +70,7 @@ class BitVector
    *        length of this string is > 'size', the value is zero extended.
    */
   BitVector(uint32_t size, const std::string& value);
+
   /**
    * Construct a bit-vector of given size from given uint64 value.
    * size : The bit-vector size.
@@ -77,8 +78,11 @@ class BitVector
    *        represented with 'size' bits, it is truncated.
    */
   BitVector(uint32_t size, uint64_t value);
+
   /** Copy constructor. */
   BitVector(const BitVector& other);
+  /** Move constructor. */
+  BitVector(BitVector&& other);
 
   /** Destructor. */
   ~BitVector();
@@ -629,7 +633,7 @@ class BitVector
   bool shift_is_uint64(uint32_t* res) const;
 
   /** The size of this bit-vector. */
-  uint32_t d_size               = 0;
+  uint32_t d_size = 0;
   /** The bit-vector value. */
   std::unique_ptr<GMPMpz> d_val = nullptr;
 };
