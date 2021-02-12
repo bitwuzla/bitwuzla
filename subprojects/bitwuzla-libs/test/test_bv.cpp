@@ -3559,6 +3559,66 @@ TEST_F(TestBitVector, is_min_signed)
   }
 }
 
+TEST_F(TestBitVector, is_power_of_two)
+{
+  for (uint64_t i = 0; i < (1u << 1); ++i)
+  {
+    std::string v = std::bitset<1>(i).to_string();
+    size_t first  = v.find_first_of('1');
+    size_t last   = v.find_last_of('1');
+    if (first != std::string::npos && first == last)
+    {
+      ASSERT_TRUE(BitVector(1, v).is_power_of_two());
+    }
+    else
+    {
+      ASSERT_FALSE(BitVector(1, v).is_power_of_two());
+    }
+  }
+  for (uint64_t i = 0; i < (1u << 2); ++i)
+  {
+    std::string v = std::bitset<2>(i).to_string();
+    size_t first  = v.find_first_of('1');
+    size_t last   = v.find_last_of('1');
+    if (first != std::string::npos && first == last)
+    {
+      ASSERT_TRUE(BitVector(2, v).is_power_of_two());
+    }
+    else
+    {
+      ASSERT_FALSE(BitVector(2, v).is_power_of_two());
+    }
+  }
+  for (uint64_t i = 0; i < (1u << 3); ++i)
+  {
+    std::string v = std::bitset<3>(i).to_string();
+    size_t first  = v.find_first_of('1');
+    size_t last   = v.find_last_of('1');
+    if (first != std::string::npos && first == last)
+    {
+      ASSERT_TRUE(BitVector(3, v).is_power_of_two());
+    }
+    else
+    {
+      ASSERT_FALSE(BitVector(3, v).is_power_of_two());
+    }
+  }
+  for (uint64_t i = 0; i < (1u << 8); ++i)
+  {
+    std::string v = std::bitset<8>(i).to_string();
+    size_t first  = v.find_first_of('1');
+    size_t last   = v.find_last_of('1');
+    if (first != std::string::npos && first == last)
+    {
+      ASSERT_TRUE(BitVector(8, v).is_power_of_two());
+    }
+    else
+    {
+      ASSERT_FALSE(BitVector(8, v).is_power_of_two());
+    }
+  }
+}
+
 TEST_F(TestBitVector, count_trailing_zeros)
 {
   test_count(8, false, true);

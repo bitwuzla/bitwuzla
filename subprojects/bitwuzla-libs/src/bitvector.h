@@ -157,6 +157,9 @@ class BitVector
   /** Return true if this bit-vector is the maximum signed value. */
   bool is_max_signed() const;
 
+  /** Return true if this bit-vector is a power of two. */
+  bool is_power_of_two() const;
+
   /**
    * Return true if the addition of this and the given bit-vector produces an
    * overflow.

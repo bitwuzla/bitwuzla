@@ -412,6 +412,13 @@ BitVector::is_max_signed() const
 }
 
 bool
+BitVector::is_power_of_two() const
+{
+  assert(!is_null());
+  return !is_zero() && bvdec().ibvand(*this).is_zero();
+}
+
+bool
 BitVector::is_uadd_overflow(const BitVector& bv) const
 {
   assert(!is_null());
