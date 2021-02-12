@@ -89,6 +89,11 @@ class BitVectorDomain
    * this domain by the shift value represented as bit-vector 'bv'.
    */
   BitVectorDomain bvashr(const BitVector &shift) const;
+  /**
+   * Create a bit-vector domain that represents a concatenation of this domain
+   * by bit-vector 'bv'.
+   */
+  BitVectorDomain bvconcat(const BitVector &bv) const;
 
   /**
    * Extract a bit range from this bit-vector domain.

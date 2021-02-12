@@ -429,6 +429,42 @@ TEST_F(TestBitVectorDomain, ashr)
                "size\\(\\) == size\\(\\)");
 }
 
+TEST_F(TestBitVectorDomain, concat)
+{
+  std::vector<std::string> consts;
+  gen_xvalues(3, consts);
+
+  for (const std::string &c : consts)
+  {
+    for (int32_t i = 2; i >= 0; --i)
+    {
+      for (int32_t j = i; j >= 0; --j)
+      {
+        BitVectorDomain d(c);
+        for (int32_t k = 0; k < 3; ++k)
+        {
+          BitVector bvk(3, k);
+          BitVectorDomain dconcat = d.bvconcat(bvk);
+          ASSERT_EQ(dconcat.size(), d.size() + bvk.size());
+          for (int32_t l = 0, n = d.size(); l < n; ++l)
+          {
+            if (l >= 3)
+            {
+              ASSERT_FALSE(dconcat.is_fixed_bit(l));
+            }
+            else
+            {
+              ASSERT_TRUE(dconcat.is_fixed_bit(l));
+              ASSERT_TRUE(bvk.get_bit(l) || dconcat.is_fixed_bit_false(l));
+              ASSERT_TRUE(!bvk.get_bit(l) || dconcat.is_fixed_bit_true(l));
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 TEST_F(TestBitVectorDomain, extract)
 {
   std::vector<std::string> consts;

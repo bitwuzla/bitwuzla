@@ -166,6 +166,12 @@ BitVectorDomain::bvashr(const BitVector &shift) const
 }
 
 BitVectorDomain
+BitVectorDomain::bvconcat(const BitVector &bv) const
+{
+  return BitVectorDomain(d_lo.bvconcat(bv), d_hi.bvconcat(bv));
+}
+
+BitVectorDomain
 BitVectorDomain::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 {
   assert(idx_hi >= idx_lo);
