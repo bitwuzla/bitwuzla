@@ -119,7 +119,7 @@ BitVectorAdd::is_invertible(const BitVector& t, uint32_t pos_x)
     BitVector sub            = t.bvsub(s);
     if (x.match_fixed_bits(sub))
     {
-      d_inverse.reset(new BitVector(sub));
+      d_inverse.reset(new BitVector(std::move(sub)));
       return true;
     }
     return false;
@@ -293,7 +293,7 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
   {
     if (x.match_fixed_bits(tx))
     {
-      d_inverse.reset(new BitVector(tx));
+      d_inverse.reset(new BitVector(std::move(tx)));
       return true;
     }
     return false;
@@ -434,25 +434,26 @@ BitVectorEq::inverse_value(const BitVector& t, uint32_t pos_x)
 
   if (t.is_zero())
   {
-    BitVector res;
     if (x.has_fixed_bits())
     {
+      BitVector res;
       BitVectorDomainGenerator gen(x, d_rng);
       do
       {
         assert(gen.has_random());
         res = gen.random();
       } while (s.compare(res) == 0);
-      d_inverse.reset(new BitVector(res));
+      d_inverse.reset(new BitVector(std::move(res)));
     }
     else
     {
+      BitVector res;
       do
       {
         res = BitVector(x.size(), *d_rng);
       } while (s.compare(res) == 0);
+      d_inverse.reset(new BitVector(std::move(res)));
     }
-    d_inverse.reset(new BitVector(res));
   }
   else
   {
@@ -522,7 +523,7 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
         BitVector inv = s.bvmodinv().ibvmul(t);
         if (x.match_fixed_bits(inv))
         {
-          d_inverse.reset(new BitVector(inv));
+          d_inverse.reset(new BitVector(std::move(inv)));
           return true;
         }
         return false;
@@ -676,7 +677,7 @@ BitVectorMul::inverse_value(const BitVector& t, uint32_t pos_x)
                     .ibvmul(t.bvshr(n))
                     .ibvextract(size - n - 1, 0);
       }
-      d_inverse.reset(new BitVector(BitVector(n, *d_rng).bvconcat(right)));
+      d_inverse.reset(new BitVector(BitVector(n, *d_rng).ibvconcat(right)));
     }
   }
   else if (d_inverse == nullptr)
