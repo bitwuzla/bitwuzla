@@ -149,6 +149,7 @@ BitVectorAdd::inverse_value(const BitVector& t, uint32_t pos_x)
     d_inverse.reset(new BitVector(t.bvsub(s)));
   }
   assert(t.compare(d_inverse->bvadd(s)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
   return *d_inverse;
 }
 
@@ -234,6 +235,7 @@ BitVectorAnd::inverse_value(const BitVector& t, uint32_t pos_x)
       t.bvand(s).bvor(s.bvnot().ibvand(BitVector(size, *d_rng)))));
 
   assert(t.compare(d_inverse->bvand(s)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
   return *d_inverse;
 }
 
@@ -348,6 +350,7 @@ BitVectorConcat::inverse_value(const BitVector& t, uint32_t pos_x)
   }
   assert(pos_x == 1 || t.compare(d_inverse->bvconcat(s)) == 0);
   assert(pos_x == 0 || t.compare(s.bvconcat(*d_inverse)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
   return *d_inverse;
 }
 
@@ -462,6 +465,7 @@ BitVectorEq::inverse_value(const BitVector& t, uint32_t pos_x)
   }
 
   assert(t.compare(d_inverse->bveq(s)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
   return *d_inverse;
 }
 
@@ -688,6 +692,7 @@ BitVectorMul::inverse_value(const BitVector& t, uint32_t pos_x)
   }
   assert(pos_x == 1 || t.compare(d_inverse->bvmul(s)) == 0);
   assert(pos_x == 0 || t.compare(s.bvmul(*d_inverse)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
   return *d_inverse;
 }
 
@@ -761,8 +766,6 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
 
     if (pos_x == 0)
     {
-      // TODO can't we reuse x.bvshl(s)? domain gen -> select random value
-      // for value computation
       return x.bvshl(s).match_fixed_bits(t);
     }
     if (t.is_zero())
@@ -858,6 +861,120 @@ BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
     }
   }
   return true;
+}
+
+const BitVector&
+BitVectorShl::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t pos_s     = 1 - pos_x;
+  const BitVector& s = d_children[pos_s]->assignment();
+  uint32_t size      = t.size();
+
+  if (d_inverse == nullptr)
+  {
+    if (pos_x == 0)
+    {
+      /** inverse value: t >> s (with bits shifted in set randomly) */
+
+      /* actual value is small enough to fit into 32 bit (max bit width handled
+       * is INT32_MAX) */
+      uint32_t shift;
+      if (size > 64)
+      {
+        shift = s.bvextract(32, 0).to_uint64();
+      }
+      else
+      {
+        shift = s.to_uint64();
+      }
+      assert(shift >= size || t.count_trailing_zeros() >= shift);
+      assert(shift < size || t.count_trailing_zeros() == size);
+
+      if (shift >= size)
+      {
+        if (x.has_fixed_bits())
+        {
+          BitVectorDomainGenerator gen(x, d_rng);
+          assert(gen.has_random());
+          d_inverse.reset(new BitVector(gen.random()));
+        }
+        else
+        {
+          d_inverse.reset(new BitVector(size, *d_rng));
+        }
+      }
+      else if (shift > 0)
+      {
+        if (x.has_fixed_bits())
+        {
+          BitVectorDomain x_ext = x.bvextract(size - 1, size - shift);
+          BitVector left;
+          if (x_ext.is_fixed())
+          {
+            left = x_ext.lo();
+          }
+          else
+          {
+            BitVectorDomainGenerator gen(x_ext, d_rng);
+            assert(gen.has_random());
+            left = gen.random();
+          }
+          d_inverse.reset(new BitVector(
+              std::move(left.ibvconcat(t.bvextract(size - 1, shift)))));
+        }
+        else
+        {
+          d_inverse.reset(new BitVector(
+              BitVector(shift, *d_rng).bvconcat(t.bvextract(size - 1, shift))));
+        }
+      }
+      else
+      {
+        d_inverse.reset(new BitVector(t));
+      }
+    }
+    else
+    {
+      /**
+       * inverse value:
+       *   s = 0 && t = 0: random
+       *
+       *   else          : shift = ctz(t) - ctz(s)
+       *                   + t = 0: shift <= res < size
+       *                   + else : shift
+       *
+       */
+
+      if (s.is_zero() && t.is_zero())
+      {
+        d_inverse.reset(new BitVector(size, *d_rng));
+      }
+      else
+      {
+        uint32_t ctz_s = s.count_trailing_zeros();
+        uint32_t ctz_t = t.count_trailing_zeros();
+        assert(ctz_t >= ctz_s);
+        uint32_t shift = ctz_t - ctz_s;
+        if (t.is_zero())
+        {
+          assert(!x.has_fixed_bits());
+          d_inverse.reset(new BitVector(
+              size, *d_rng, BitVector(size, shift), BitVector::mk_ones(size)));
+        }
+        else
+        {
+          d_inverse.reset(new BitVector(size, shift));
+        }
+      }
+    }
+  }
+
+  assert(pos_x == 1 || t.compare(d_inverse->bvshl(s)) == 0);
+  assert(pos_x == 0 || t.compare(s.bvshl(*d_inverse)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
+  return *d_inverse;
 }
 
 /* -------------------------------------------------------------------------- */
