@@ -362,6 +362,17 @@ class BitVectorShr : public BitVectorOp
                             const BitVectorDomain& x,
                             uint32_t pos_x,
                             std::unique_ptr<BitVector>& inverse_value);
+  /**
+   * Additional interface / helper for inverse_value.
+   * Cached result is stored in 'inverse_value'.
+   */
+  static void inverse_value(RNG* rng,
+                            const BitVector& t,
+                            const BitVector& s,
+                            const BitVectorDomain& x,
+                            uint32_t pos_x,
+                            std::unique_ptr<BitVector>& inverse_value,
+                            bool is_arithmetic = false);
 
   /** Constructors. */
   BitVectorShr(RNG* rng,
