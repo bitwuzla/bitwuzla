@@ -1154,12 +1154,14 @@ BitVectorShr::inverse_value(const BitVector& t, uint32_t pos_x)
   assert(!x.is_fixed());
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
-  uint32_t size      = t.size();
 
   if (d_inverse == nullptr)
   {
     if (pos_x == 0)
     {
+      assert(s.compare(BitVector(s.size(), s.size())) >= 0
+             || s.compare(BitVector(s.size(), t.count_leading_zeros())) <= 0);
+      assert(s.compare(BitVector(s.size(), s.size())) < 0 || t.is_zero());
       inverse_value(d_rng, t, s, x, 0, d_inverse);
     }
     else
@@ -1180,8 +1182,7 @@ BitVectorShr::inverse_value(RNG* rng,
                             const BitVector& s,
                             const BitVectorDomain& x,
                             uint32_t pos_x,
-                            std::unique_ptr<BitVector>& inverse_value,
-                            bool is_arithmetic)
+                            std::unique_ptr<BitVector>& inverse_value)
 {
   uint32_t size = t.size();
   if (pos_x == 0)
@@ -1199,18 +1200,6 @@ BitVectorShr::inverse_value(RNG* rng,
     {
       shift = s.to_uint64();
     }
-#ifndef NDEBUG
-    if (is_arithmetic && t.get_msb())
-    {
-      assert(shift >= size || t.count_leading_ones() >= shift);
-      assert(shift < size || t.count_leading_ones() == size);
-    }
-    else
-    {
-      assert(shift >= size || t.count_leading_zeros() >= shift);
-      assert(shift < size || t.count_leading_zeros() == size);
-    }
-#endif
 
     if (shift >= size)
     {
@@ -1355,8 +1344,6 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
 
   if (ic_wo && x.has_fixed_bits())
   {
-    // TODO can't we reuse x.bvashr(s)? domain gen -> select random value
-    // for value computation
     return x.bvashr(s).match_fixed_bits(t);
   }
   return ic_wo;
@@ -1472,6 +1459,95 @@ BitVectorAshr::is_consistent(const BitVector& t, uint32_t pos_x)
     }
   }
   return res;
+}
+
+const BitVector&
+BitVectorAshr::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t pos_s     = 1 - pos_x;
+  const BitVector& s = d_children[pos_s]->assignment();
+  uint32_t size      = t.size();
+
+  if (d_inverse == nullptr)
+  {
+    if (pos_x == 0)
+    {
+      BitVectorShr::inverse_value(d_rng, t, s, x, 0, d_inverse);
+      if (t.get_msb())
+      {
+        if (!d_inverse->get_msb())
+        {
+          assert(!x.is_fixed_bit(x.size() - 1));
+          d_inverse->set_bit(x.size() - 1, true);
+        }
+        assert(s.compare(BitVector(s.size(), s.size())) >= 0
+               || s.compare(BitVector(s.size(), t.count_leading_ones())) <= 0);
+        assert(s.compare(BitVector(s.size(), s.size())) < 0 || t.is_ones());
+      }
+      else
+      {
+        if (d_inverse->get_msb())
+        {
+          assert(!x.is_fixed_bit(x.size() - 1));
+          d_inverse->set_bit(x.size() - 1, false);
+        }
+        assert(s.compare(BitVector(s.size(), s.size())) >= 0
+               || s.compare(BitVector(s.size(), t.count_leading_zeros())) <= 0);
+        assert(s.compare(BitVector(s.size(), s.size())) < 0 || t.is_zero());
+      }
+    }
+    else
+    {
+      /**
+       * inverse value:
+       *   s = 0 && t = 0: random
+       *
+       *   else          : shift = cnt(t) - cnt(s)
+       *                   with cnt = clz if t[msb] = 0 else clo
+       *                   + t = 0: shift <= res < size
+       *                   + else : shift
+       *
+       */
+      if (!s.get_msb())
+      {
+        BitVectorShr::inverse_value(d_rng, t, s, x, 1, d_inverse);
+      }
+      else
+      {
+        assert(t.get_msb());
+        if (s.is_ones() && t.is_ones())
+        {
+          d_inverse.reset(new BitVector(size, *d_rng));
+        }
+        else
+        {
+          uint32_t clo_s = s.count_leading_ones();
+          uint32_t clo_t = t.count_leading_ones();
+          assert(clo_t >= clo_s);
+          uint32_t shift = clo_t - clo_s;
+          if (t.is_ones())
+          {
+            assert(!x.has_fixed_bits());
+            d_inverse.reset(new BitVector(size,
+                                          *d_rng,
+                                          BitVector(size, shift),
+                                          BitVector::mk_ones(size)));
+          }
+          else
+          {
+            d_inverse.reset(new BitVector(size, shift));
+          }
+        }
+      }
+    }
+  }
+
+  assert(pos_x == 1 || t.compare(d_inverse->bvashr(s)) == 0);
+  assert(pos_x == 0 || t.compare(s.bvashr(*d_inverse)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
+  return *d_inverse;
 }
 
 /* -------------------------------------------------------------------------- */

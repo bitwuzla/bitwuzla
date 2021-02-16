@@ -371,8 +371,7 @@ class BitVectorShr : public BitVectorOp
                             const BitVector& s,
                             const BitVectorDomain& x,
                             uint32_t pos_x,
-                            std::unique_ptr<BitVector>& inverse_value,
-                            bool is_arithmetic = false);
+                            std::unique_ptr<BitVector>& inverse_value);
 
   /** Constructors. */
   BitVectorShr(RNG* rng,
@@ -465,10 +464,7 @@ class BitVectorAshr : public BitVectorOp
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override
-  {
-    return *d_inverse;
-  }
+  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t, uint32_t pos_x) override
   {
