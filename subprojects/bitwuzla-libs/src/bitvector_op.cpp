@@ -907,10 +907,10 @@ BitVectorShl::inverse_value(const BitVector& t, uint32_t pos_x)
       }
       else if (shift > 0)
       {
+        BitVector left;
         if (x.has_fixed_bits())
         {
           BitVectorDomain x_ext = x.bvextract(size - 1, size - shift);
-          BitVector left;
           if (x_ext.is_fixed())
           {
             left = x_ext.lo();
@@ -921,14 +921,13 @@ BitVectorShl::inverse_value(const BitVector& t, uint32_t pos_x)
             assert(gen.has_random());
             left = gen.random();
           }
-          d_inverse.reset(new BitVector(
-              std::move(left.ibvconcat(t.bvextract(size - 1, shift)))));
         }
         else
         {
-          d_inverse.reset(new BitVector(
-              BitVector(shift, *d_rng).bvconcat(t.bvextract(size - 1, shift))));
+          left = BitVector(shift, *d_rng);
         }
+        d_inverse.reset(new BitVector(
+            std::move(left.ibvconcat(t.bvextract(size - 1, shift)))));
       }
       else
       {
