@@ -556,8 +556,8 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
       if (x.bvextract(size - ctz - 1, 0).match_fixed_bits(y_ext))
       {
         /* Result domain is x[size - 1:size - ctz] o y[size - ctz(s) - 1:0] */
-        d_inverse_domain.reset(
-            new BitVectorDomain(BitVectorDomain(ctz).bvconcat(y_ext)));
+        d_inverse_domain.reset(new BitVectorDomain(
+            x.bvextract(size - 1, size - ctz).bvconcat(y_ext)));
         return true;
       }
       return false;
@@ -694,11 +694,17 @@ BitVectorMul::inverse_value(const BitVector& t, uint32_t pos_x)
       d_inverse.reset(new BitVector(BitVector(n, *d_rng).ibvconcat(right)));
     }
   }
-  else if (d_inverse == nullptr)
+  else if (d_inverse_domain != nullptr)
   {
-    BitVectorDomainGenerator gen(*d_inverse_domain, d_rng);
-    assert(gen.has_random());
-    d_inverse.reset(new BitVector(gen.random()));
+    if (d_inverse_domain->is_fixed())
+    {
+      d_inverse.reset(new BitVector(d_inverse_domain->lo()));
+    }
+    else
+    {
+      BitVectorDomainGenerator gen(*d_inverse_domain, d_rng);
+      d_inverse.reset(new BitVector(gen.random()));
+    }
   }
   assert(pos_x == 1 || t.compare(d_inverse->bvmul(s)) == 0);
   assert(pos_x == 0 || t.compare(s.bvmul(*d_inverse)) == 0);
