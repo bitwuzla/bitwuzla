@@ -1799,12 +1799,12 @@ BitVectorUdiv::inverse_value(const BitVector& t, uint32_t pos_x)
     {
       /**
        * inverse value:
-       *     t = ones: s = 1: ones
-       *               s = 0: random value
+       *   t = ones: s = 1: ones
+       *             s = 0: random value
        *
-       *     s * t does not overflow: - s * t
-       *                              - v with v / s = t
-       *                              (0.5 prob)
+       *   s * t does not overflow: - s * t
+       *                            - v with v / s = t
+       *                            (0.5 prob)
        */
       if (t.is_ones())
       {
@@ -1870,15 +1870,15 @@ BitVectorUdiv::inverse_value(const BitVector& t, uint32_t pos_x)
     {
       /**
        * inverse value:
-       *     t = ones: s  = t: 1 or 0
-       *               s != t: 0
+       *   t = ones: s  = t: 1 or 0
+       *             s != t: 0
        *
-       *     t = 0   : 0 < s < ones: random value > s
-       *               s = 0       : random value > 0
+       *   t = 0   : 0 < s < ones: random value > s
+       *             s = 0       : random value > 0
        *
-       *     t is a divisior of s: t / s or s with s / x = t (0.5 prob)
+       *   t is a divisior of s: t / s or s with s / x = t (0.5 prob)
        *
-       *     else : s with s / x = t
+       *   else : s with s / x = t
        */
       if (t.is_ones())
       {
@@ -2265,7 +2265,6 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
-  d_inverse_domain.reset(nullptr);
 
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
@@ -2358,7 +2357,7 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
               BitVector rem = bv.bvurem(s);
               if (rem.compare(t) == 0)
               {
-                d_inverse_domain.reset(new BitVectorDomain(bv, hi));
+                d_inverse.reset(new BitVector(std::move(bv)));
                 return true;
               }
             }
@@ -2401,7 +2400,7 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
       if (!bv.is_null())
       {
         assert(s.bvurem(bv).compare(t) == 0);
-        d_inverse_domain.reset(new BitVectorDomain(bv));
+        d_inverse.reset(new BitVector(std::move(bv)));
         return true;
       }
       return false;
@@ -2484,6 +2483,221 @@ BitVectorUrem::is_consistent(const BitVector& t, uint32_t pos_x)
     }
   }
   return true;
+}
+
+const BitVector&
+BitVectorUrem::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  return inverse_value(t, pos_x, 0);
+}
+
+const BitVector&
+BitVectorUrem::inverse_value(const BitVector& t,
+                             uint32_t pos_x,
+                             uint32_t n_tries)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t pos_s     = 1 - pos_x;
+  const BitVector& s = d_children[pos_s]->assignment();
+  uint32_t size      = t.size();
+
+  if (d_inverse == nullptr)
+  {
+    if (pos_x == 0)
+    {
+      /**
+       * inverse value:
+       *   s = 0: t
+       *   else : - t
+       *          - s * n + b
+       *            with n such that (s * n + b) does not overflow
+       */
+
+      assert(t.is_zero() || !s.is_one());
+      if (s.is_zero())
+      {
+        d_inverse.reset(new BitVector(t));
+      }
+      else
+      {
+        assert(s.compare(t) > 0);
+        if (d_rng->flip_coin() && x.match_fixed_bits(t))
+        {
+          d_inverse.reset(new BitVector(t));
+        }
+        else
+        {
+          BitVector ones = BitVector::mk_ones(size);
+          if (ones.bvsub(s).compare(t) < 0)
+          {
+            /* overflow for n = 1 -> only simplest solution (t) possible */
+            assert(x.match_fixed_bits(t));
+            d_inverse.reset(new BitVector(t));
+          }
+          else
+          {
+            BitVector zero = BitVector::mk_zero(size);
+            /**
+             * upper and lower bounds for n such that s * n + t does not
+             * overflow in the multiplication and addition:
+             *   lo = 0
+             *   up = (ones - t) / s
+             */
+            BitVector up = ones.bvudiv(s);
+            BitVector n(size, *d_rng, zero, up);
+            /* choose n such that addition in s * n + t does not overflow */
+            BitVector mul = s.bvmul(n);
+            for (uint32_t i = 0; n_tries == 0 || i < n_tries; ++i)
+            {
+              if (ones.bvsub(mul).compare(t) >= 0
+                  && x.match_fixed_bits(mul.ibvadd(t)))
+              {
+                d_inverse.reset(new BitVector(std::move(mul)));
+                break;
+              }
+              n   = BitVector(size, *d_rng, zero, up);
+              mul = s.bvmul(n);
+            }
+            if (d_inverse == nullptr && x.match_fixed_bits(t))
+            {
+              d_inverse.reset(new BitVector(t));
+            }
+          }
+          assert(d_inverse->compare(t) >= 0);
+        }
+      }
+    }
+    else
+    {
+      /**
+       * inverse value:
+       *   t = ones: 0
+       *   s = t   : 0 or random value > t
+       *   s > t   : ((s - t) / n) > t
+       */
+      if (t.is_ones())
+      {
+        assert(s.is_ones());
+        d_inverse.reset(new BitVector(BitVector::mk_zero(size)));
+      }
+      else if (s.compare(t) == 0)
+      {
+        BitVector zero = BitVector::mk_zero(size);
+        if (d_rng->pick_with_prob(250) && x.match_fixed_bits(zero))
+        {
+          d_inverse.reset(new BitVector(std::move(zero)));
+        }
+        else
+        {
+          if (x.has_fixed_bits())
+          {
+            BitVectorDomainGenerator gen(
+                x, d_rng, t.bvinc(), BitVector::mk_ones(size));
+            if (!gen.has_random())
+            {
+              assert(x.match_fixed_bits(zero));
+              d_inverse.reset(new BitVector(std::move(zero)));
+            }
+            else
+            {
+              d_inverse.reset(new BitVector(gen.random()));
+            }
+          }
+          else
+          {
+            d_inverse.reset(new BitVector(
+                size, *d_rng, t.bvinc(), BitVector::mk_ones(size)));
+          }
+        }
+      }
+      else
+      {
+        assert(s.compare(t) > 0);
+        assert(t.is_zero() || t.compare(s.bvdec()) != 0);
+
+        BitVector sub = s.bvsub(t);
+        assert(sub.compare(t) > 0);
+
+        if (d_rng->flip_coin() && x.match_fixed_bits(sub))
+        {
+          d_inverse.reset(new BitVector(std::move(sub)));
+        }
+        else
+        {
+          /**
+           * 1 <= n < (s - t) / t (non-truncating)
+           * Note: div truncates towards 0!
+           *
+           * Upper and lower bounds for n:
+           * lower = 1
+           * upper = s               if t = 0
+           *         (s - t) / t - 1 if (s - t) % t = 0
+           *         (s - t) / t     if (s - t) % t > 0
+           */
+          BitVector up;
+          if (t.is_zero())
+          {
+            up = s;
+          }
+          else
+          {
+            BitVector rem;
+            sub.bvudivurem(t, &up, &rem);
+            assert(!up.is_null());
+            assert(!rem.is_null());
+            if (rem.is_zero())
+            {
+              /* (s - t) / t is not truncated (remainder is 0) and is therefore
+               * the EXclusive upper bound, the inclusive upper bound is:
+               * upper = (s - t) / t - 1  */
+              up.ibvdec();
+            }
+          }
+
+          if (up.is_zero())
+          {
+            d_inverse.reset(new BitVector(std::move(sub.ibvdec())));
+          }
+          else
+          {
+            /* choose n such that (s - t) % n = 0 */
+            BitVector one = BitVector::mk_one(size);
+            BitVector n(size, *d_rng, one, up);
+            BitVector rem = sub.bvurem(n);
+            for (uint32_t i = 0; n_tries == 0 || i < n_tries; ++i)
+            {
+              n   = BitVector(size, *d_rng, one, up);
+              rem = sub.bvurem(n);
+              if (rem.is_zero())
+              {
+                BitVector div = sub.bvudiv(n);
+                if (x.match_fixed_bits(div))
+                {
+                  /* result: s - t / n */
+                  d_inverse.reset(new BitVector(std::move(div)));
+                  break;
+                }
+              }
+            }
+            if (d_inverse == nullptr && x.match_fixed_bits(sub))
+            {
+              /* fall back to n = 1 */
+              d_inverse.reset(new BitVector(std::move(sub)));
+            }
+          }
+        }
+      }
+    }
+  }
+
+  assert(n_tries != 0 || d_inverse != nullptr);
+  assert(d_inverse == nullptr || pos_x == 1
+         || t.compare(d_inverse->bvurem(s)) == 0);
+  assert(d_inverse == nullptr || pos_x == 0
+         || t.compare(s.bvurem(*d_inverse)) == 0);
+  assert(d_inverse == nullptr || x.match_fixed_bits(*d_inverse));
+  return *d_inverse;
 }
 
 BitVector

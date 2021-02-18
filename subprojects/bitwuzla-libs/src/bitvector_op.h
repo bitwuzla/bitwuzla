@@ -692,10 +692,10 @@ class BitVectorUrem : public BitVectorOp
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override
-  {
-    return *d_inverse;
-  }
+  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+  const BitVector& inverse_value(const BitVector& t,
+                                 uint32_t pos_x,
+                                 uint32_t n_tries);
 
   const BitVector& consistent_value(const BitVector& t, uint32_t pos_x) override
   {

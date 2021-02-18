@@ -1,5 +1,4 @@
 #include "test.h"
-
 namespace bzlals {
 namespace test {
 
@@ -59,6 +58,12 @@ TEST_F(TestBvOpInv, udiv)
 {
   test_binary<BitVectorUdiv>(INV, UDIV, 0);
   test_binary<BitVectorUdiv>(INV, UDIV, 1);
+}
+
+TEST_F(TestBvOpInv, urem)
+{
+  test_binary<BitVectorUrem>(INV, UREM, 0);
+  test_binary<BitVectorUrem>(INV, UREM, 1);
 }
 
 }  // namespace test

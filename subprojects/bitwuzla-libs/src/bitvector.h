@@ -612,7 +612,7 @@ class BitVector
    * The result of the division is stored in 'quot', and the result of the
    * remainder operation is stored in 'rem'.
    */
-  void bvudivurem(const BitVector& bv, BitVector* quot, BitVector* rem);
+  void bvudivurem(const BitVector& bv, BitVector* quot, BitVector* rem) const;
 
  private:
   /**

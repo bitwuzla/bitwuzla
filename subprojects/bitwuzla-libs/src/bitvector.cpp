@@ -2163,7 +2163,9 @@ BitVector::ibvmodinv()
 /* -------------------------------------------------------------------------- */
 
 void
-BitVector::bvudivurem(const BitVector& bv, BitVector* quot, BitVector* rem)
+BitVector::bvudivurem(const BitVector& bv,
+                      BitVector* quot,
+                      BitVector* rem) const
 {
   assert(!is_null());
   assert(!bv.is_null());
