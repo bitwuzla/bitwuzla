@@ -540,8 +540,6 @@ class BitVectorUdiv : public BitVectorOp
    * Returns a null bit-vector if no such value can be found.
    */
   BitVector consistent_value_pos0_aux(const BitVector& t);
-  /** Cached inverse_value result. */
-  std::unique_ptr<BitVectorDomain> d_inverse_domain = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */

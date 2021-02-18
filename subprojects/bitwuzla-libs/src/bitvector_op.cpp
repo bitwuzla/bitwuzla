@@ -1574,7 +1574,6 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
-  d_inverse_domain.reset(nullptr);
 
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
@@ -1646,7 +1645,7 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
         BitVectorDomainGenerator gen(x, d_rng, min, max);
         if (gen.has_next())
         {
-          d_inverse_domain.reset(new BitVectorDomain(gen.random(), max));
+          d_inverse.reset(new BitVector(gen.random()));
           return true;
         }
         return false;
@@ -1681,7 +1680,7 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
       BitVectorDomainGenerator gen(x, d_rng, min, max);
       if (gen.has_next())
       {
-        d_inverse_domain.reset(new BitVectorDomain(gen.random(), max));
+        d_inverse.reset(new BitVector(gen.random()));
         return true;
       }
       return false;
