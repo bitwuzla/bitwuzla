@@ -231,8 +231,18 @@ BitVectorAnd::inverse_value(const BitVector& t, uint32_t pos_x)
   /** inverse value: (t & s) | (~s & rand) */
 
   uint32_t size = t.size();
-  d_inverse.reset(new BitVector(
-      t.bvand(s).bvor(s.bvnot().ibvand(BitVector(size, *d_rng)))));
+  BitVector rand;
+  if (x.has_fixed_bits())
+  {
+    BitVectorDomainGenerator gen(x, d_rng);
+    assert(gen.has_random());
+    rand = gen.random();
+  }
+  else
+  {
+    rand = BitVector(size, *d_rng);
+  }
+  d_inverse.reset(new BitVector(t.bvand(s).bvor(s.bvnot().ibvand(rand))));
 
   assert(t.compare(d_inverse->bvand(s)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
