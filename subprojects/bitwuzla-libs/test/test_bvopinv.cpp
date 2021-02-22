@@ -54,6 +54,12 @@ TEST_F(TestBvOpInv, ashr)
   test_binary<BitVectorAshr>(INV, ASHR, 1);
 }
 
+TEST_F(TestBvOpInv, slt)
+{
+  test_binary<BitVectorSlt>(INV, SLT, 0);
+  test_binary<BitVectorSlt>(INV, SLT, 1);
+}
+
 TEST_F(TestBvOpInv, udiv)
 {
   test_binary<BitVectorUdiv>(INV, UDIV, 0);
