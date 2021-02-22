@@ -392,10 +392,17 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
       {
         /* Target value of the operation (op). */
         BitVector t(bw_t, j);
-        /* For this test, we don't care about the current assignment of x, thus
-         * we initialize it with 0. */
+        /* For this test, we don't care about the current assignment of x,
+         * thus we initialize it with a random value that matches constant
+         * bits in x. */
+        BitVector x_val = x.lo();
+        if (!x.is_fixed())
+        {
+          BitVectorDomainGenerator gen(x, d_rng.get());
+          x_val = gen.random();
+        }
         std::unique_ptr<BitVectorOp> op_x(
-            new T(d_rng.get(), BitVector::mk_zero(bw_x), x, nullptr, nullptr));
+            new T(d_rng.get(), x_val, x, nullptr, nullptr));
         /* For this test, we don't care about the domain of s, thus we
          * initialize it with an unconstrained domain. */
         std::unique_ptr<BitVectorOp> op_s(
@@ -446,26 +453,28 @@ void
 TestBvOp::test_ite(Kind kind, uint32_t pos_x)
 {
   std::vector<std::string> x_values;
-  uint32_t bw_s0, bw_s1, bw = TEST_BW;
+  uint32_t bw_s0, bw_s1, bw_x, bw_t = TEST_BW;
   uint32_t n_vals, n_vals_s0, n_vals_s1;
   uint32_t pos_s0 = pos_x == 0 ? 1 : 0;
   uint32_t pos_s1 = pos_x == 2 ? 1 : 2;
 
   if (pos_x)
   {
+    bw_x     = TEST_BW;
     bw_s0 = 1;
-    bw_s1 = bw;
+    bw_s1    = TEST_BW;
     x_values = d_xvalues;
   }
   else
   {
-    bw_s0 = bw;
-    bw_s1 = bw;
+    bw_x  = 1;
+    bw_s0 = TEST_BW;
+    bw_s1 = TEST_BW;
     x_values.push_back("x");
     x_values.push_back("0");
     x_values.push_back("1");
   }
-  n_vals    = 1 << bw;
+  n_vals    = 1 << bw_x;
   n_vals_s0 = 1 << bw_s0;
   n_vals_s1 = 1 << bw_s1;
 
@@ -480,54 +489,88 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
         BitVector s1(bw_s1, j);
         for (uint32_t k = 0; k < n_vals; k++)
         {
-          BitVector t(bw, k);
+          BitVector t(bw_t, k);
 
           /* For this test, we don't care about the current assignment of x,
-           * thus we initialize it with 0. */
-          BitVectorOp* op_x = new BitVectorIte(d_rng.get(),
-                                               BitVector::mk_zero(bw),
-                                               x,
-                                               nullptr,
-                                               nullptr,
-                                               nullptr);
+           * thus we initialize it with a random value that matches constant
+           * bits in x. */
+          BitVector x_val = x.lo();
+          if (!x.is_fixed())
+          {
+            BitVectorDomainGenerator gen(x, d_rng.get());
+            x_val = gen.random();
+          }
+          std::unique_ptr<BitVectorOp> op_x(new BitVectorIte(
+              d_rng.get(), x_val, x, nullptr, nullptr, nullptr));
           /* For this test, we don't care about the domain of 0, thus we
            * initialize it with an unconstrained domain. */
-          BitVectorOp* op_s0 = new BitVectorIte(d_rng.get(),
-                                                s0,
-                                                BitVectorDomain(bw_s0),
-                                                nullptr,
-                                                nullptr,
-                                                nullptr);
-          BitVectorOp* op_s1 = new BitVectorIte(d_rng.get(),
-                                                s1,
-                                                BitVectorDomain(bw_s0),
-                                                nullptr,
-                                                nullptr,
-                                                nullptr);
+          std::unique_ptr<BitVectorOp> op_s0(
+              new BitVectorIte(d_rng.get(),
+                               s0,
+                               BitVectorDomain(bw_s0),
+                               nullptr,
+                               nullptr,
+                               nullptr));
+          std::unique_ptr<BitVectorOp> op_s1(
+              new BitVectorIte(d_rng.get(),
+                               s1,
+                               BitVectorDomain(bw_s0),
+                               nullptr,
+                               nullptr,
+                               nullptr));
           /* For this test, we don't care about current assignment and domain of
            * the op, thus we initialize them with 0 and 'x..x', respectively. */
           BitVectorIte op(d_rng.get(),
-                          bw,
-                          pos_x == 0 ? op_x : op_s0,
-                          pos_x == 1 ? op_x : (pos_x == 2 ? op_s1 : op_s0),
-                          pos_x == 2 ? op_x : op_s1);
+                          bw_t,
+                          pos_x == 0 ? op_x.get() : op_s0.get(),
+                          pos_x == 1 ? op_x.get()
+                                     : (pos_x == 2 ? op_s1.get() : op_s0.get()),
+                          pos_x == 2 ? op_x.get() : op_s1.get());
 
-          bool res    = kind == IS_INV ? op.is_invertible(t, pos_x)
-                                       : op.is_consistent(t, pos_x);
-          bool status = check_sat_ite(kind, x, t, s0, s1, pos_x);
-          if (res != status)
+          if (kind == IS_INV || kind == IS_CONS)
           {
-            std::cout << "pos_x: " << pos_x << std::endl;
-            std::cout << "t: " << t.to_string() << std::endl;
-            std::cout << "x: " << x_value << std::endl;
-            std::cout << "s0: " << s0.to_string() << std::endl;
-            std::cout << "s1: " << s1.to_string() << std::endl;
+            bool res    = kind == IS_INV ? op.is_invertible(t, pos_x)
+                                         : op.is_consistent(t, pos_x);
+            bool status = check_sat_ite(kind, x, t, s0, s1, pos_x);
+            if (res != status)
+            {
+              std::cout << "pos_x: " << pos_x << std::endl;
+              std::cout << "t: " << t.to_string() << std::endl;
+              std::cout << "x: " << x_value << std::endl;
+              std::cout << "s0: " << s0.to_string() << std::endl;
+              std::cout << "s1: " << s1.to_string() << std::endl;
+            }
+            ASSERT_EQ(res, status);
           }
-          ASSERT_EQ(res, status);
-
-          delete op[pos_x];
-          delete op[pos_s0];
-          delete op[pos_s1];
+          else if (kind == INV)
+          {
+            if (x.is_fixed()) continue;
+            if (!op.is_invertible(t, pos_x)) continue;
+            BitVector inv = op.inverse_value(t, pos_x);
+            int32_t cmp;
+            if (pos_x == 0)
+            {
+              cmp = t.compare(BitVector::bvite(inv, s0, s1));
+            }
+            else if (pos_x == 1)
+            {
+              cmp = t.compare(BitVector::bvite(s0, inv, s1));
+            }
+            else
+            {
+              cmp = t.compare(BitVector::bvite(s0, s1, inv));
+            }
+            if (cmp != 0)
+            {
+              std::cout << "pos_x: " << pos_x << std::endl;
+              std::cout << "t: " << t.to_string() << std::endl;
+              std::cout << "x: " << x_value << std::endl;
+              std::cout << "s0: " << s0.to_string() << std::endl;
+              std::cout << "s1: " << s1.to_string() << std::endl;
+              std::cout << "inverse: " << inv.to_string() << std::endl;
+            }
+            ASSERT_EQ(cmp, 0);
+          }
         }
       }
     }
@@ -551,9 +594,16 @@ TestBvOp::test_extract(Kind kind)
         {
           BitVector t(bw_t, i);
           /* For this test, we don't care about the current assignment of x,
-           * thus we initialize it with 0. */
-          BitVectorOp* op_x = new BitVectorExtract(
-              d_rng.get(), BitVector::mk_zero(bw_x), x, nullptr, hi, lo);
+           * thus we initialize it with a random value that matches constant
+           * bits in x. */
+          BitVector x_val = x.lo();
+          if (!x.is_fixed())
+          {
+            BitVectorDomainGenerator gen(x, d_rng.get());
+            x_val = gen.random();
+          }
+          BitVectorOp* op_x =
+              new BitVectorExtract(d_rng.get(), x_val, x, nullptr, hi, lo);
           /* For this test, we don't care about current assignment and domain
            * of the op, thus we initialize them with 0 and 'x..x',
            * respectively. */
@@ -594,9 +644,16 @@ TestBvOp::test_sext(Kind kind)
       {
         BitVector t(bw_t, i);
         /* For this test, we don't care about the current assignment of x,
-         * thus we initialize it with 0. */
-        BitVectorOp* op_x = new BitVectorSignExtend(
-            d_rng.get(), BitVector::mk_zero(bw_x), x, nullptr, n);
+         * thus we initialize it with a random value that matches constant
+         * bits in x. */
+        BitVector x_val = x.lo();
+        if (!x.is_fixed())
+        {
+          BitVectorDomainGenerator gen(x, d_rng.get());
+          x_val = gen.random();
+        }
+        BitVectorOp* op_x =
+            new BitVectorSignExtend(d_rng.get(), x_val, x, nullptr, n);
         /* For this test, we don't care about current assignment and domain
          * of the op, thus we initialize them with 0 and 'x..x',
          * respectively. */

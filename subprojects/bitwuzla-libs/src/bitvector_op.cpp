@@ -3098,6 +3098,84 @@ BitVectorIte::is_consistent(const BitVector& t, uint32_t pos_x)
   return true;
 }
 
+const BitVector&
+BitVectorIte::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_inverse == nullptr);
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t pos_s0     = pos_x == 0 ? 1 : 0;
+  uint32_t pos_s1     = pos_x == 2 ? 1 : 2;
+  const BitVector& s0 = d_children[pos_s0]->assignment();
+  const BitVector& s1 = d_children[pos_s1]->assignment();
+
+  /**
+   * inverse value:
+   *   pos_x = 0: t = 0: random value >=s s
+   *              t = 1: random value <s s
+   *   pos_x = 1: t = 0: random value <=s s
+   *              t = 1: random value >s s
+   */
+
+  if (pos_x == 0)
+  {
+    int32_t cmp0 = s0.compare(t) == 0;
+    int32_t cmp1 = s1.compare(t) == 0;
+    if (cmp0 && cmp1)
+    {
+      if (x.has_fixed_bits())
+      {
+        if (d_rng->flip_coin())
+        {
+          BitVector bv = BitVector::mk_true();
+          if (x.match_fixed_bits(bv))
+          {
+            d_inverse.reset(new BitVector(std::move(bv)));
+          }
+          else
+          {
+            d_inverse.reset(new BitVector(BitVector::mk_false()));
+          }
+        }
+        else
+        {
+          d_inverse.reset(new BitVector(BitVector::mk_false()));
+        }
+      }
+      else
+      {
+        d_inverse.reset(new BitVector(
+            d_rng->flip_coin() ? BitVector::mk_true() : BitVector::mk_false()));
+      }
+    }
+    else if (cmp0)
+    {
+      d_inverse.reset(new BitVector(BitVector::mk_true()));
+    }
+    else
+    {
+      assert(cmp1);
+      d_inverse.reset(new BitVector(BitVector::mk_false()));
+    }
+  }
+  else if ((pos_x == 1 && s0.is_zero()) || (pos_x == 2 && s0.is_one()))
+  {
+    /* return current assignment for disabled branch */
+    d_inverse.reset(new BitVector(d_children[pos_x]->assignment()));
+  }
+  else
+  {
+    d_inverse.reset(new BitVector(t));
+  }
+
+  assert(pos_x != 0 || t.compare(BitVector::bvite(*d_inverse, s0, s1)) == 0);
+  assert(pos_x != 1 || t.compare(BitVector::bvite(s0, *d_inverse, s1)) == 0);
+  assert(pos_x != 2 || t.compare(BitVector::bvite(s0, s1, *d_inverse)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
+  return *d_inverse;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorExtract::BitVectorExtract(
