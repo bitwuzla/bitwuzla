@@ -2134,6 +2134,99 @@ BitVectorUlt::is_consistent(const BitVector& t, uint32_t pos_x)
   return t.is_false() || !x.hi().is_zero();
 }
 
+const BitVector&
+BitVectorUlt::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_inverse == nullptr);
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t pos_s     = 1 - pos_x;
+  const BitVector& s = d_children[pos_s]->assignment();
+  uint32_t size      = s.size();
+  bool is_true       = t.is_true();
+
+  /**
+   * inverse value:
+   *   pos_x = 0: t = 0: random value >= s
+   *              t = 1: random value < s
+   *   pos_x = 1: t = 0: random value <= s
+   *              t = 1: random value > s
+   */
+
+  if (pos_x == 0)
+  {
+    if (is_true)
+    {
+      assert(!s.is_zero());
+      if (x.has_fixed_bits())
+      {
+        BitVectorDomainGenerator gen(
+            x, d_rng, BitVector::mk_zero(size), s.bvdec());
+        assert(gen.has_random());
+        d_inverse.reset(new BitVector(gen.random()));
+      }
+      else
+      {
+        d_inverse.reset(
+            new BitVector(size, *d_rng, BitVector::mk_zero(size), s.bvdec()));
+      }
+    }
+    else
+    {
+      if (x.has_fixed_bits())
+      {
+        BitVectorDomainGenerator gen(x, d_rng, s, BitVector::mk_ones(size));
+        assert(gen.has_random());
+        d_inverse.reset(new BitVector(gen.random()));
+      }
+      else
+      {
+        d_inverse.reset(
+            new BitVector(size, *d_rng, s, BitVector::mk_ones(size)));
+      }
+    }
+  }
+  else
+  {
+    if (is_true)
+    {
+      assert(!s.is_ones());
+      if (x.has_fixed_bits())
+      {
+        BitVectorDomainGenerator gen(
+            x, d_rng, s.bvinc(), BitVector::mk_ones(size));
+        assert(gen.has_random());
+        d_inverse.reset(new BitVector(gen.random()));
+      }
+      else
+      {
+        d_inverse.reset(
+            new BitVector(size, *d_rng, s.bvinc(), BitVector::mk_ones(size)));
+      }
+    }
+    else
+    {
+      if (x.has_fixed_bits())
+      {
+        BitVectorDomainGenerator gen(x, d_rng, BitVector::mk_zero(size), s);
+        assert(gen.has_random());
+        d_inverse.reset(new BitVector(gen.random()));
+      }
+      else
+      {
+        d_inverse.reset(
+            new BitVector(size, *d_rng, BitVector::mk_zero(size), s));
+      }
+    }
+  }
+
+  assert(pos_x == 1 || t.compare(d_inverse->bvult(s)) == 0);
+  assert(pos_x == 0 || t.compare(s.bvult(*d_inverse)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
+  return *d_inverse;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorSlt::BitVectorSlt(RNG* rng,

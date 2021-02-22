@@ -60,6 +60,12 @@ TEST_F(TestBvOpInv, udiv)
   test_binary<BitVectorUdiv>(INV, UDIV, 1);
 }
 
+TEST_F(TestBvOpInv, ult)
+{
+  test_binary<BitVectorUlt>(INV, ULT, 0);
+  test_binary<BitVectorUlt>(INV, ULT, 1);
+}
+
 TEST_F(TestBvOpInv, urem)
 {
   test_binary<BitVectorUrem>(INV, UREM, 0);
