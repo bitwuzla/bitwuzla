@@ -2975,6 +2975,27 @@ BitVectorXor::is_consistent(const BitVector& t, uint32_t pos_x)
   return true;
 }
 
+const BitVector&
+BitVectorXor::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_inverse == nullptr);
+
+#ifndef NDEBUG
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+#endif
+  uint32_t pos_s     = 1 - pos_x;
+  const BitVector& s = d_children[pos_s]->assignment();
+
+  /** inverse value: s ^ t */
+  d_inverse.reset(new BitVector(s.bvxor(t)));
+
+  assert(pos_x == 1 || t.compare(d_inverse->bvxor(s)) == 0);
+  assert(pos_x == 0 || t.compare(s.bvxor(*d_inverse)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
+  return *d_inverse;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorIte::BitVectorIte(RNG* rng,
