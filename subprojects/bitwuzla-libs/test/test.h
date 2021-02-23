@@ -602,27 +602,44 @@ TestBvOp::test_extract(Kind kind)
             BitVectorDomainGenerator gen(x, d_rng.get());
             x_val = gen.random();
           }
-          BitVectorOp* op_x =
-              new BitVectorExtract(d_rng.get(), x_val, x, nullptr, hi, lo);
+          std::unique_ptr<BitVectorOp> op_x(
+              new BitVectorExtract(d_rng.get(), x_val, x, nullptr, hi, lo));
           /* For this test, we don't care about current assignment and domain
            * of the op, thus we initialize them with 0 and 'x..x',
            * respectively. */
-          BitVectorExtract op(d_rng.get(), bw_t, op_x, hi, lo);
+          BitVectorExtract op(d_rng.get(), bw_t, op_x.get(), hi, lo);
 
-          bool res =
-              kind == IS_INV ? op.is_invertible(t, 0) : op.is_consistent(t, 0);
-          bool status = check_sat_extract(kind, x, t, hi, lo);
-
-          if (res != status)
+          if (kind == IS_INV || kind == IS_CONS)
           {
-            std::cout << "hi: " << hi << std::endl;
-            std::cout << "lo: " << lo << std::endl;
-            std::cout << "t: " << t.to_string() << std::endl;
-            std::cout << "x: " << x_value << std::endl;
-          }
-          ASSERT_EQ(res, status);
+            bool res    = kind == IS_INV ? op.is_invertible(t, 0)
+                                         : op.is_consistent(t, 0);
+            bool status = check_sat_extract(kind, x, t, hi, lo);
 
-          delete op_x;
+            if (res != status)
+            {
+              std::cout << "hi: " << hi << std::endl;
+              std::cout << "lo: " << lo << std::endl;
+              std::cout << "t: " << t.to_string() << std::endl;
+              std::cout << "x: " << x_value << std::endl;
+            }
+            ASSERT_EQ(res, status);
+          }
+          else if (kind == INV)
+          {
+            if (x.is_fixed()) continue;
+            if (!op.is_invertible(t, 0)) continue;
+            BitVector inv = op.inverse_value(t, 0);
+            int32_t cmp   = t.compare(inv.bvextract(hi, lo));
+            if (cmp != 0)
+            {
+              std::cout << "hi: " << hi << std::endl;
+              std::cout << "lo: " << lo << std::endl;
+              std::cout << "t: " << t.to_string() << std::endl;
+              std::cout << "x: " << x_value << std::endl;
+              std::cout << "inverse: " << inv.to_string() << std::endl;
+            }
+            ASSERT_EQ(cmp, 0);
+          }
         }
       }
     }

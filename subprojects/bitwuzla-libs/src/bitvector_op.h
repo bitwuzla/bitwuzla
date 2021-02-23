@@ -828,10 +828,7 @@ class BitVectorExtract : public BitVectorOp
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
-  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override
-  {
-    return *d_inverse;
-  }
+  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
 
   const BitVector& consistent_value(const BitVector& t, uint32_t pos_x) override
   {
@@ -839,10 +836,28 @@ class BitVectorExtract : public BitVectorOp
   }
 
  private:
+  /**
+   * Probability for keeping the current value of don't care bits (rather than
+   * of fully randomizing all of them).
+   */
+  static constexpr uint32_t s_prob_keep = 500;
+
   /** The upper index. */
   uint32_t d_hi;
   /** The lower index. */
   uint32_t d_lo;
+  /**
+   * Left part of don't care bits, that is, all bits > d_hi.
+   * Nullptr if d_hi = msb.
+   * Cache for inverse_value.
+   */
+  std::unique_ptr<BitVectorDomain> d_x_slice_left = nullptr;
+  /**
+   * Right part of don't care bits, that is, all bits < d_lo.
+   * Nullptr if d_lo = 0.
+   * Cache for inverse_value.
+   */
+  std::unique_ptr<BitVectorDomain> d_x_slice_right = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */

@@ -3218,6 +3218,118 @@ BitVectorExtract::is_consistent(const BitVector& t, uint32_t pos_x)
   return is_invertible(t, pos_x);
 }
 
+const BitVector&
+BitVectorExtract::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_inverse == nullptr);
+  (void) pos_x;
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  const BitVector& x_val = d_children[pos_x]->assignment();
+
+  /**
+   * inverse value: x[msb: hi+1] o t o x[lo-1:0]
+   *
+   * We choose with probability s_prob_keep if we keep the current assignment
+   * of the don't care bits, i.e., all bits that are not determined by t, or if
+   * we set them randomly.
+   */
+
+  uint32_t size = x.size();
+  bool keep     = d_rng->pick_with_prob(s_prob_keep);
+  BitVector left, propagated, right;
+
+  if (d_hi < size - 1)
+  {
+    if (keep)
+    {
+      left = x_val.bvextract(size - 1, d_hi + 1);
+    }
+    else
+    {
+      if (x.has_fixed_bits())
+      {
+        if (d_x_slice_left == nullptr)
+        {
+          d_x_slice_left.reset(
+              new BitVectorDomain(x.bvextract(size - 1, d_hi + 1)));
+        }
+        if (d_x_slice_left->is_fixed())
+        {
+          left = d_x_slice_left->lo();
+        }
+        else
+        {
+          BitVectorDomainGenerator gen(*d_x_slice_left, d_rng);
+          assert(gen.has_random());
+          left = gen.random();
+        }
+      }
+      else
+      {
+        left = BitVector(size - 1 - d_hi, *d_rng);
+      }
+    }
+  }
+
+  if (d_lo > 0)
+  {
+    if (keep)
+    {
+      right = x_val.bvextract(d_lo - 1, 0);
+    }
+    else
+    {
+      if (x.has_fixed_bits())
+      {
+        if (d_x_slice_right == nullptr)
+        {
+          d_x_slice_right.reset(new BitVectorDomain(x.bvextract(d_lo - 1, 0)));
+        }
+        if (d_x_slice_right->is_fixed())
+        {
+          right = d_x_slice_right->lo();
+        }
+        else
+        {
+          BitVectorDomainGenerator gen(*d_x_slice_right, d_rng);
+          assert(gen.has_random());
+          right = gen.random();
+        }
+      }
+      else
+      {
+        right = BitVector(d_lo, *d_rng);
+      }
+    }
+  }
+
+  if (left.is_null())
+  {
+    if (right.is_null())
+    {
+      d_inverse.reset(new BitVector(t));
+    }
+    else
+    {
+      d_inverse.reset(new BitVector(t.bvconcat(right)));
+    }
+  }
+  else if (right.is_null())
+  {
+    d_inverse.reset(new BitVector(left.bvconcat(t)));
+  }
+  else
+  {
+    d_inverse.reset(new BitVector(left.bvconcat(t).ibvconcat(right)));
+  }
+
+  assert(t.compare(d_inverse->bvextract(d_hi, d_lo)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
+  return *d_inverse;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
