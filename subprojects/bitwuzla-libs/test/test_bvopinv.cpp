@@ -93,5 +93,7 @@ TEST_F(TestBvOpInv, ite)
 
 TEST_F(TestBvOpInv, extract) { test_extract(INV); }
 
+TEST_F(TestBvOpInv, sext) { test_sext(INV); }
+
 }  // namespace test
 }  // namespace bzlals

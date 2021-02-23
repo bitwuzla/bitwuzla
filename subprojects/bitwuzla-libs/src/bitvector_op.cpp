@@ -3387,5 +3387,20 @@ BitVectorSignExtend::is_consistent(const BitVector& t, uint32_t pos_x)
   return is_invertible(t, pos_x);
 }
 
+const BitVector&
+BitVectorSignExtend::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_inverse != nullptr);
+  (void) t;
+  (void) pos_x;
+#ifndef NDEBUG
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+#endif
+  assert(t.compare(d_inverse->bvsext(d_n)) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
+  return *d_inverse;
+}
+
 /* -------------------------------------------------------------------------- */
 }  // namespace bzlals

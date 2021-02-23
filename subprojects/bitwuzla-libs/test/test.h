@@ -455,8 +455,6 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
   std::vector<std::string> x_values;
   uint32_t bw_s0, bw_s1, bw_x, bw_t = TEST_BW;
   uint32_t n_vals, n_vals_s0, n_vals_s1;
-  uint32_t pos_s0 = pos_x == 0 ? 1 : 0;
-  uint32_t pos_s1 = pos_x == 2 ? 1 : 2;
 
   if (pos_x)
   {
@@ -669,26 +667,42 @@ TestBvOp::test_sext(Kind kind)
           BitVectorDomainGenerator gen(x, d_rng.get());
           x_val = gen.random();
         }
-        BitVectorOp* op_x =
-            new BitVectorSignExtend(d_rng.get(), x_val, x, nullptr, n);
+        std::unique_ptr<BitVectorOp> op_x(
+            new BitVectorSignExtend(d_rng.get(), x_val, x, nullptr, n));
         /* For this test, we don't care about current assignment and domain
          * of the op, thus we initialize them with 0 and 'x..x',
          * respectively. */
-        BitVectorSignExtend op(d_rng.get(), bw_t, op_x, n);
+        BitVectorSignExtend op(d_rng.get(), bw_t, op_x.get(), n);
 
-        bool res =
-            kind == IS_INV ? op.is_invertible(t, 0) : op.is_consistent(t, 0);
-        bool status = check_sat_sext(kind, x, t, n);
-
-        if (res != status)
+        if (kind == IS_INV || kind == IS_CONS)
         {
-          std::cout << "n: " << n << std::endl;
-          std::cout << "t: " << t.to_string() << std::endl;
-          std::cout << "x: " << x_value << std::endl;
-        }
-        ASSERT_EQ(res, status);
+          bool res =
+              kind == IS_INV ? op.is_invertible(t, 0) : op.is_consistent(t, 0);
+          bool status = check_sat_sext(kind, x, t, n);
 
-        delete op_x;
+          if (res != status)
+          {
+            std::cout << "n: " << n << std::endl;
+            std::cout << "t: " << t.to_string() << std::endl;
+            std::cout << "x: " << x_value << std::endl;
+          }
+          ASSERT_EQ(res, status);
+        }
+        else if (kind == INV)
+        {
+          if (x.is_fixed()) continue;
+          if (!op.is_invertible(t, 0)) continue;
+          BitVector inv = op.inverse_value(t, 0);
+          int32_t cmp   = t.compare(inv.bvsext(n));
+          if (cmp != 0)
+          {
+            std::cout << "n: " << n << std::endl;
+            std::cout << "t: " << t.to_string() << std::endl;
+            std::cout << "x: " << x_value << std::endl;
+            std::cout << "inverse: " << inv.to_string() << std::endl;
+          }
+          ASSERT_EQ(cmp, 0);
+        }
       }
     }
   }
