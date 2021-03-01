@@ -120,6 +120,7 @@ class TestBvOp : public TestBvDomainCommon
  protected:
   enum Kind
   {
+    CONS,
     INV,
     IS_CONS,
     IS_INV,
@@ -143,6 +144,10 @@ class TestBvOp : public TestBvDomainCommon
                         const BitVector& t,
                         const BitVector& s,
                         uint32_t pos_x);
+  bool check_sat_binary_cons(OpKind op_kind,
+                             const BitVector& x,
+                             const BitVector& t,
+                             uint32_t pos_x);
   bool check_sat_ite(Kind kind,
                      const BitVectorDomain& x,
                      const BitVector& t,
@@ -237,9 +242,27 @@ TestBvOp::check_sat_binary(Kind kind,
     }
     else
     {
+      assert(kind == IS_INV);
       res = eval_op_binary(op_kind, xval, s, pos_x);
       if (t.compare(res) == 0) return true;
     }
+  } while (gen.has_next());
+  return false;
+}
+
+bool
+TestBvOp::check_sat_binary_cons(OpKind op_kind,
+                                const BitVector& x,
+                                const BitVector& t,
+                                uint32_t pos_x)
+{
+  BitVectorDomainGenerator gen(BitVectorDomain(x.size()));
+  do
+  {
+    BitVector res;
+    BitVector sval = gen.next();
+    res            = eval_op_binary(op_kind, x, sval, pos_x);
+    if (t.compare(res) == 0) return true;
   } while (gen.has_next());
   return false;
 }
@@ -274,6 +297,7 @@ TestBvOp::check_sat_ite(Kind kind,
       }
       else
       {
+        assert(kind == IS_INV);
         BitVector res = BitVector::bvite(xval, s0, s1);
         if (t.compare(res) == 0) return true;
       }
@@ -296,6 +320,7 @@ TestBvOp::check_sat_ite(Kind kind,
       }
       else
       {
+        assert(kind == IS_INV);
         if (s0.is_false() && s1.compare(t) != 0) return false;
         BitVector res = BitVector::bvite(s0, xval, s1);
         if (t.compare(res) == 0) return true;
@@ -319,6 +344,7 @@ TestBvOp::check_sat_ite(Kind kind,
       }
       else
       {
+        assert(kind == IS_INV);
         if (s0.is_true() && s1.compare(t) != 0) return false;
         BitVector res = BitVector::bvite(s0, s1, xval);
         if (t.compare(res) == 0) return true;
@@ -335,6 +361,7 @@ TestBvOp::check_sat_extract(Kind kind,
                             uint32_t hi,
                             uint32_t lo)
 {
+  assert(kind == IS_CONS || kind == IS_INV);
   BitVectorDomainGenerator gen(x);
   do
   {
@@ -351,6 +378,7 @@ TestBvOp::check_sat_sext(Kind kind,
                          const BitVector& t,
                          uint32_t n)
 {
+  assert(kind == IS_CONS || kind == IS_INV);
   BitVectorDomainGenerator gen(x);
   do
   {
@@ -432,6 +460,7 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
         {
           if (x.is_fixed()) continue;
           if (!op.is_invertible(t, pos_x)) continue;
+          assert(op.is_consistent(t, pos_x));
           BitVector inv = op.inverse_value(t, pos_x);
           int32_t cmp   = t.compare(eval_op_binary(op_kind, inv, s, pos_x));
           if (cmp != 0)
@@ -443,6 +472,21 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
             std::cout << "inverse: " << inv.to_string() << std::endl;
           }
           ASSERT_EQ(cmp, 0);
+        }
+        else
+        {
+          if (x.is_fixed()) continue;
+          if (!op.is_consistent(t, pos_x)) continue;
+          BitVector cons = op.consistent_value(t, pos_x);
+          bool status    = check_sat_binary_cons(op_kind, cons, t, pos_x);
+          if (!status)
+          {
+            std::cout << "pos_x: " << pos_x << std::endl;
+            std::cout << "t: " << t.to_string() << std::endl;
+            std::cout << "x: " << x_value << std::endl;
+            std::cout << "consistent: " << cons.to_string() << std::endl;
+          }
+          ASSERT_TRUE(status);
         }
       }
     }
@@ -544,6 +588,7 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
           {
             if (x.is_fixed()) continue;
             if (!op.is_invertible(t, pos_x)) continue;
+            assert(op.is_consistent(t, pos_x));
             BitVector inv = op.inverse_value(t, pos_x);
             int32_t cmp;
             if (pos_x == 0)
@@ -568,6 +613,10 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
               std::cout << "inverse: " << inv.to_string() << std::endl;
             }
             ASSERT_EQ(cmp, 0);
+          }
+          else
+          {
+            assert(false);
           }
         }
       }
@@ -626,6 +675,7 @@ TestBvOp::test_extract(Kind kind)
           {
             if (x.is_fixed()) continue;
             if (!op.is_invertible(t, 0)) continue;
+            assert(op.is_consistent(t, 0));
             BitVector inv = op.inverse_value(t, 0);
             int32_t cmp   = t.compare(inv.bvextract(hi, lo));
             if (cmp != 0)
@@ -637,6 +687,10 @@ TestBvOp::test_extract(Kind kind)
               std::cout << "inverse: " << inv.to_string() << std::endl;
             }
             ASSERT_EQ(cmp, 0);
+          }
+          else
+          {
+            assert(false);
           }
         }
       }
@@ -692,6 +746,7 @@ TestBvOp::test_sext(Kind kind)
         {
           if (x.is_fixed()) continue;
           if (!op.is_invertible(t, 0)) continue;
+          assert(op.is_consistent(t, 0));
           BitVector inv = op.inverse_value(t, 0);
           int32_t cmp   = t.compare(inv.bvsext(n));
           if (cmp != 0)
@@ -702,6 +757,10 @@ TestBvOp::test_sext(Kind kind)
             std::cout << "inverse: " << inv.to_string() << std::endl;
           }
           ASSERT_EQ(cmp, 0);
+        }
+        else
+        {
+          assert(false);
         }
       }
     }

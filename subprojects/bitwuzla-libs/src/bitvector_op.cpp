@@ -249,6 +249,29 @@ BitVectorAnd::inverse_value(const BitVector& t, uint32_t pos_x)
   return *d_inverse;
 }
 
+const BitVector&
+BitVectorAnd::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_consistent == nullptr);
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+
+  /** consistent value: t | rand */
+
+  if (x.has_fixed_bits())
+  {
+    BitVectorDomainGenerator gen(x, d_rng);
+    d_consistent.reset(new BitVector(gen.random().ibvor(t)));
+  }
+  else
+  {
+    d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng).ibvor(t)));
+  }
+  assert(x.match_fixed_bits(*d_consistent));
+  return *d_consistent;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
