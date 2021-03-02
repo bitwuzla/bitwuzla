@@ -808,6 +808,90 @@ BitVectorMul::inverse_value(const BitVector& t, uint32_t pos_x)
   return *d_inverse;
 }
 
+const BitVector&
+BitVectorMul::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+
+  /**
+   * consistent value:
+   *   t = 0: random value
+   *   t > 0: t odd : random odd value
+   *          t even: random even value > 0 with ctz(x) <= ctz(t)
+   */
+
+  if (d_consistent == nullptr)
+  {
+    if (x.has_fixed_bits())
+    {
+      BitVectorDomainGenerator gen(x, d_rng);
+      d_consistent.reset(new BitVector(gen.random()));
+    }
+    else
+    {
+      d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng)));
+    }
+
+    if (!t.is_zero())
+    {
+      while (d_consistent->is_zero())
+      {
+        if (x.has_fixed_bits())
+        {
+          BitVectorDomainGenerator gen(x, d_rng);
+          d_consistent.reset(new BitVector(gen.random()));
+        }
+        else
+        {
+          d_consistent.reset(new BitVector(BitVector(x.size(), *d_rng)));
+        }
+      }
+
+      if (t.get_lsb())
+      {
+        if (!d_consistent->get_lsb())
+        {
+          assert(!x.is_fixed_bit_false(0));
+          d_consistent->set_bit(0, true);
+        }
+      }
+      else
+      {
+        assert(!x.has_fixed_bits());
+        uint32_t ctz_t = t.count_trailing_zeros();
+        /* choose consistent value as 2^n with prob 0.1 */
+        if (d_rng->pick_with_prob(100))
+        {
+          d_consistent->iset(0);
+          d_consistent->set_bit(d_rng->pick<uint32_t>(0, ctz_t - 1), true);
+        }
+        /* choose consistent value as t / 2^n with prob 0.1 */
+        else if (d_rng->pick_with_prob(100))
+        {
+          d_consistent->iset(t);
+          uint32_t r = d_rng->pick<uint32_t>(0, ctz_t);
+          if (r > 0)
+          {
+            d_consistent->ibvshr(r);
+          }
+        }
+        /* choose random value with ctz(t) >= ctz(res) with prob 0.8 */
+        else
+        {
+          if (d_consistent->count_trailing_zeros() > ctz_t)
+          {
+            d_consistent->set_bit(d_rng->pick<uint32_t>(0, ctz_t - 1), true);
+          }
+        }
+      }
+    }
+  }
+
+  assert(x.match_fixed_bits(*d_consistent));
+  return *d_consistent;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorShl::BitVectorShl(RNG* rng,
