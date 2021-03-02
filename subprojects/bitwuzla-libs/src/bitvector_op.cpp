@@ -412,6 +412,30 @@ BitVectorConcat::inverse_value(const BitVector& t, uint32_t pos_x)
   return *d_inverse;
 }
 
+const BitVector&
+BitVectorConcat::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_consistent == nullptr);
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t bw_t = t.size();
+  uint32_t bw_x = x.size();
+
+  if (pos_x == 0)
+  {
+    /** consistent value: t[msb, bw_x] */
+    d_consistent.reset(new BitVector(t.bvextract(bw_t - 1, bw_t - bw_x)));
+  }
+  else
+  {
+    /** consistent value: t[bw_x - 1, 0] */
+    d_consistent.reset(new BitVector(t.bvextract(bw_x - 1, 0)));
+  }
+  assert(x.match_fixed_bits(*d_consistent));
+  return *d_consistent;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorEq::BitVectorEq(RNG* rng,

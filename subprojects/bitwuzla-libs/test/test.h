@@ -147,6 +147,7 @@ class TestBvOp : public TestBvDomainCommon
   bool check_sat_binary_cons(OpKind op_kind,
                              const BitVector& x,
                              const BitVector& t,
+                             uint32_t s_size,
                              uint32_t pos_x);
   bool check_sat_ite(Kind kind,
                      const BitVectorDomain& x,
@@ -254,9 +255,11 @@ bool
 TestBvOp::check_sat_binary_cons(OpKind op_kind,
                                 const BitVector& x,
                                 const BitVector& t,
+                                uint32_t s_size,
                                 uint32_t pos_x)
 {
-  BitVectorDomainGenerator gen(BitVectorDomain(x.size()));
+  BitVectorDomain s(s_size);
+  BitVectorDomainGenerator gen(s);
   do
   {
     BitVector res;
@@ -478,7 +481,8 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
           if (x.is_fixed()) continue;
           if (!op.is_consistent(t, pos_x)) continue;
           BitVector cons = op.consistent_value(t, pos_x);
-          bool status    = check_sat_binary_cons(op_kind, cons, t, pos_x);
+          bool status =
+              check_sat_binary_cons(op_kind, cons, t, s.size(), pos_x);
           if (!status)
           {
             std::cout << "pos_x: " << pos_x << std::endl;
