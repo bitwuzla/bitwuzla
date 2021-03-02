@@ -360,7 +360,6 @@ class BitVectorShr : public BitVectorOp
                             const BitVectorDomain& x,
                             uint32_t pos_x,
                             std::unique_ptr<BitVector>& inverse_value);
-
   /** Constructors. */
   BitVectorShr(RNG* rng,
                uint32_t size,
@@ -371,7 +370,6 @@ class BitVectorShr : public BitVectorOp
                const BitVectorDomain& domain,
                BitVectorOp* child0,
                BitVectorOp* child1);
-
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -452,10 +450,8 @@ class BitVectorAshr : public BitVectorOp
 
   const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
 
-  const BitVector& consistent_value(const BitVector& t, uint32_t pos_x) override
-  {
-    return *d_consistent;
-  }
+  const BitVector& consistent_value(const BitVector& t,
+                                    uint32_t pos_x) override;
 };
 
 /* -------------------------------------------------------------------------- */

@@ -48,5 +48,11 @@ TEST_F(TestBvOpCons, shr)
   test_binary<BitVectorShr>(CONS, SHR, 1);
 }
 
+TEST_F(TestBvOpCons, ashr)
+{
+  test_binary<BitVectorAshr>(CONS, ASHR, 0);
+  test_binary<BitVectorAshr>(CONS, ASHR, 1);
+}
+
 }  // namespace test
 }  // namespace bzlals
