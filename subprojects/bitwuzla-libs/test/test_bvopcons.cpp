@@ -24,5 +24,11 @@ TEST_F(TestBvOpCons, concat)
   test_binary<BitVectorConcat>(CONS, CONCAT, 1);
 }
 
+TEST_F(TestBvOpCons, eq)
+{
+  test_binary<BitVectorEq>(CONS, EQ, 0);
+  test_binary<BitVectorEq>(CONS, EQ, 1);
+}
+
 }  // namespace test
 }  // namespace bzlals
