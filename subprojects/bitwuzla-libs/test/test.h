@@ -460,7 +460,6 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
         {
           if (x.is_fixed()) continue;
           if (!op.is_invertible(t, pos_x)) continue;
-          assert(op.is_consistent(t, pos_x));
           BitVector inv = op.inverse_value(t, pos_x);
           int32_t cmp   = t.compare(eval_op_binary(op_kind, inv, s, pos_x));
           if (cmp != 0)
@@ -472,6 +471,7 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
             std::cout << "inverse: " << inv.to_string() << std::endl;
           }
           ASSERT_EQ(cmp, 0);
+          ASSERT_TRUE(op.is_consistent(t, pos_x));
         }
         else
         {
@@ -588,7 +588,6 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
           {
             if (x.is_fixed()) continue;
             if (!op.is_invertible(t, pos_x)) continue;
-            assert(op.is_consistent(t, pos_x));
             BitVector inv = op.inverse_value(t, pos_x);
             int32_t cmp;
             if (pos_x == 0)
@@ -613,6 +612,7 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
               std::cout << "inverse: " << inv.to_string() << std::endl;
             }
             ASSERT_EQ(cmp, 0);
+            ASSERT_TRUE(op.is_consistent(t, pos_x));
           }
           else
           {
@@ -675,7 +675,6 @@ TestBvOp::test_extract(Kind kind)
           {
             if (x.is_fixed()) continue;
             if (!op.is_invertible(t, 0)) continue;
-            assert(op.is_consistent(t, 0));
             BitVector inv = op.inverse_value(t, 0);
             int32_t cmp   = t.compare(inv.bvextract(hi, lo));
             if (cmp != 0)
@@ -687,6 +686,7 @@ TestBvOp::test_extract(Kind kind)
               std::cout << "inverse: " << inv.to_string() << std::endl;
             }
             ASSERT_EQ(cmp, 0);
+            ASSERT_TRUE(op.is_consistent(t, 0));
           }
           else
           {
@@ -746,7 +746,6 @@ TestBvOp::test_sext(Kind kind)
         {
           if (x.is_fixed()) continue;
           if (!op.is_invertible(t, 0)) continue;
-          assert(op.is_consistent(t, 0));
           BitVector inv = op.inverse_value(t, 0);
           int32_t cmp   = t.compare(inv.bvsext(n));
           if (cmp != 0)
@@ -757,6 +756,7 @@ TestBvOp::test_sext(Kind kind)
             std::cout << "inverse: " << inv.to_string() << std::endl;
           }
           ASSERT_EQ(cmp, 0);
+          ASSERT_TRUE(op.is_consistent(t, 0));
         }
         else
         {
