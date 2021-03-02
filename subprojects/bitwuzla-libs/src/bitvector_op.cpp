@@ -1544,6 +1544,76 @@ BitVectorShr::inverse_value(RNG* rng,
   }
 }
 
+const BitVector&
+BitVectorShr::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+
+  /**
+   * consistent value:
+   *   pos_x = 0: t = 0: random
+   *              t > 0: random value with clz(x) <= clz(t)
+   *   pos_x = 1: t = 0: random
+   *              t > 0: random value <= clz(t)
+   */
+
+  if (d_consistent == nullptr)
+  {
+    uint32_t size  = x.size();
+    uint32_t clz_t = t.count_leading_zeros();
+
+    if (pos_x == 0)
+    {
+      if (clz_t == size)
+      {
+        if (x.has_fixed_bits())
+        {
+          BitVectorDomainGenerator gen(x, d_rng);
+          d_consistent.reset(new BitVector(gen.random()));
+        }
+        else
+        {
+          d_consistent.reset(new BitVector(size, *d_rng));
+        }
+      }
+      else
+      {
+        assert(!x.has_fixed_bits());
+        uint32_t shift = d_rng->pick<uint32_t>(0, clz_t);
+        if (shift == 0)
+        {
+          d_consistent.reset(new BitVector(t));
+        }
+        else
+        {
+          d_consistent.reset(
+              new BitVector(t.bvextract(size - shift - 1, 0)
+                                .ibvconcat(BitVector(shift, *d_rng))));
+        }
+      }
+    }
+    else
+    {
+      uint32_t max = clz_t < size ? clz_t : ((1u << size) - 1);
+      if (x.has_fixed_bits())
+      {
+        BitVectorDomainGenerator gen(
+            x, d_rng, BitVector::mk_zero(size), BitVector(size, max));
+        assert(gen.has_random());
+        d_consistent.reset(new BitVector(gen.random()));
+      }
+      else
+      {
+        d_consistent.reset(new BitVector(size, d_rng->pick<uint32_t>(0, max)));
+      }
+    }
+  }
+
+  assert(x.match_fixed_bits(*d_consistent));
+  return *d_consistent;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
