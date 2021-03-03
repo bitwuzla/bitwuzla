@@ -155,6 +155,11 @@ class TestBvOp : public TestBvDomainCommon
                      const BitVector& s0,
                      const BitVector& s1,
                      uint32_t pos_x);
+  bool check_sat_ite_cons(const BitVector& x,
+                          const BitVector& t,
+                          uint32_t s0_size,
+                          uint32_t s1_size,
+                          uint32_t pos_x);
   bool check_sat_extract(Kind kind,
                          const BitVectorDomain& x,
                          const BitVector& t,
@@ -358,6 +363,39 @@ TestBvOp::check_sat_ite(Kind kind,
 }
 
 bool
+TestBvOp::check_sat_ite_cons(const BitVector& x,
+                             const BitVector& t,
+                             uint32_t s0_size,
+                             uint32_t s1_size,
+                             uint32_t pos_x)
+{
+  BitVectorDomainGenerator gens0(s0_size);
+  while (gens0.has_next())
+  {
+    BitVector s0val = gens0.next();
+    BitVectorDomainGenerator gens1(s1_size);
+    while (gens1.has_next())
+    {
+      BitVector res;
+      if (pos_x == 0)
+      {
+        res = BitVector::bvite(x, s0val, gens1.next());
+      }
+      else if (pos_x == 1)
+      {
+        res = BitVector::bvite(s0val, x, gens1.next());
+      }
+      else
+      {
+        res = BitVector::bvite(s0val, gens1.next(), x);
+      }
+      if (t.compare(res) == 0) return true;
+    }
+  }
+  return false;
+}
+
+bool
 TestBvOp::check_sat_extract(Kind kind,
                             const BitVectorDomain& x,
                             const BitVector& t,
@@ -478,6 +516,7 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
         }
         else
         {
+          assert(kind == CONS);
           if (x.is_fixed()) continue;
           if (!op.is_consistent(t, pos_x)) continue;
           BitVector cons = op.consistent_value(t, pos_x);
@@ -620,7 +659,20 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
           }
           else
           {
-            assert(false);
+            assert(kind == CONS);
+            if (x.is_fixed()) continue;
+            if (!op.is_consistent(t, pos_x)) continue;
+            BitVector cons = op.consistent_value(t, pos_x);
+            bool status =
+                check_sat_ite_cons(cons, t, s0.size(), s1.size(), pos_x);
+            if (!status)
+            {
+              std::cout << "pos_x: " << pos_x << std::endl;
+              std::cout << "t: " << t.to_string() << std::endl;
+              std::cout << "x: " << x_value << std::endl;
+              std::cout << "consistent: " << cons.to_string() << std::endl;
+            }
+            ASSERT_TRUE(status);
           }
         }
       }

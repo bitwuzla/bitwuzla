@@ -3992,6 +3992,44 @@ BitVectorIte::inverse_value(const BitVector& t, uint32_t pos_x)
   return *d_inverse;
 }
 
+const BitVector&
+BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_consistent == nullptr);
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  const BitVector& s0 = d_children[0]->assignment();
+  uint32_t size       = x.size();
+
+  /**
+   * consistent value:
+   *   pos_x = 0: 0 or 1
+   *   pos_x > 0: disabled branch: current assignment
+   *              enabled branch : t if bits in x match, else current assignment
+   */
+
+  if (pos_x == 0)
+  {
+    assert(!x.has_fixed_bits());
+    d_consistent.reset(new BitVector(d_rng->flip_coin()
+                                         ? BitVector::mk_one(size)
+                                         : BitVector::mk_zero(size)));
+  }
+  else if ((pos_x == 1 && s0.is_false()) || (pos_x == 2 && s0.is_true())
+           || !x.match_fixed_bits(t))
+  {
+    d_consistent.reset(new BitVector(d_children[pos_x]->assignment()));
+  }
+  else
+  {
+    d_consistent.reset(new BitVector(t));
+  }
+
+  assert(x.match_fixed_bits(*d_consistent));
+  return *d_consistent;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorExtract::BitVectorExtract(
