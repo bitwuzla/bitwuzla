@@ -3082,6 +3082,83 @@ BitVectorSlt::inverse_value(const BitVector& t, uint32_t pos_x)
   return *d_inverse;
 }
 
+const BitVector&
+BitVectorSlt::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t size = x.size();
+  bool is_ult   = t.is_true();
+
+  /**
+   * consistent value:
+   *   pos_x = 0: t = 1: random value <s max_signed
+   *              t = 0: random value
+   *   pos_x = 1: t = 1: random_value >s min_signed
+   *              t = 0: random value
+   */
+
+  if (pos_x == 0 && is_ult)
+  {
+    if (x.has_fixed_bits())
+    {
+      BitVectorDomainSignedGenerator gen(
+          x,
+          d_rng,
+          BitVector::mk_min_signed(size),
+          BitVector::mk_max_signed(size).ibvdec());
+      assert(gen.has_random());
+      d_consistent.reset(new BitVector(gen.random()));
+    }
+    else
+    {
+      d_consistent.reset(
+          new BitVector(BitVector(size,
+                                  *d_rng,
+                                  BitVector::mk_min_signed(size),
+                                  BitVector::mk_max_signed(size).ibvdec(),
+                                  true)));
+    }
+  }
+  else if (pos_x == 1 && is_ult)
+  {
+    if (x.has_fixed_bits())
+    {
+      BitVectorDomainSignedGenerator gen(
+          x,
+          d_rng,
+          BitVector::mk_min_signed(size).ibvinc(),
+          BitVector::mk_max_signed(size));
+      assert(gen.has_random());
+      d_consistent.reset(new BitVector(gen.random()));
+    }
+    else
+    {
+      d_consistent.reset(
+          new BitVector(BitVector(size,
+                                  *d_rng,
+                                  BitVector::mk_min_signed(size).ibvinc(),
+                                  BitVector::mk_max_signed(size),
+                                  true)));
+    }
+  }
+  else
+  {
+    if (x.has_fixed_bits())
+    {
+      BitVectorDomainGenerator gen(x, d_rng);
+      assert(gen.has_random());
+      d_consistent.reset(new BitVector(gen.random()));
+    }
+    else
+    {
+      d_consistent.reset(new BitVector(BitVector(size, *d_rng)));
+    }
+  }
+  assert(x.match_fixed_bits(*d_consistent));
+  return *d_consistent;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
