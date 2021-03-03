@@ -163,7 +163,7 @@ BitVectorAdd::consistent_value(const BitVector& t, uint32_t pos_x)
 #endif
   (void) t;
 
-  /** consistent value: rand */
+  /** consistent value: random value */
 
   if (x.has_fixed_bits())
   {
@@ -561,7 +561,7 @@ BitVectorEq::consistent_value(const BitVector& t, uint32_t pos_x)
 #endif
   (void) t;
 
-  /** consistent value: rand */
+  /** consistent value: random value */
   if (x.has_fixed_bits())
   {
     BitVectorDomainGenerator gen(x, d_rng);
@@ -2385,6 +2385,170 @@ BitVectorUdiv::inverse_value(const BitVector& t, uint32_t pos_x)
   assert(pos_x == 0 || t.compare(s.bvudiv(*d_inverse)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
   return *d_inverse;
+}
+
+const BitVector&
+BitVectorUdiv::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t size = x.size();
+
+  /**
+   * consistent value:
+   *
+   *   pos_x = 0: t = 0   : random value < ones
+   *              t = ones: random value
+   *              t = one : random value > 0
+   *              else    : x = y * t + offset
+   *                        with y in [1, ones / t]
+   *                        and offset in [0, min(y - 1, ones - y * t)]
+   *
+   *   pos_x = 1: t = ones: 0 or 1
+   *              else    : x * t such that no overflow occurs
+   */
+
+  if (d_consistent == nullptr)
+  {
+    if (pos_x == 0)
+    {
+      if (t.is_zero())
+      {
+        if (x.has_fixed_bits())
+        {
+          BitVectorDomainGenerator gen(x,
+                                       d_rng,
+                                       BitVector::mk_zero(size),
+                                       BitVector::mk_ones(size).ibvdec());
+          assert(gen.has_random());
+          d_consistent.reset(new BitVector(gen.random()));
+        }
+        else
+        {
+          d_consistent.reset(new BitVector(size,
+                                           *d_rng,
+                                           BitVector::mk_zero(size),
+                                           BitVector::mk_ones(size).ibvdec()));
+        }
+      }
+      else if (t.is_ones())
+      {
+        if (x.has_fixed_bits())
+        {
+          BitVectorDomainGenerator gen(x, d_rng);
+          assert(gen.has_random());
+          d_consistent.reset(new BitVector(gen.random()));
+        }
+        else
+        {
+          d_consistent.reset(new BitVector(size, *d_rng));
+        }
+      }
+      else if (t.is_one())
+      {
+        if (x.has_fixed_bits())
+        {
+          BitVectorDomainGenerator gen(
+              x, d_rng, BitVector::mk_one(size), x.hi());
+          assert(gen.has_random());
+          d_consistent.reset(new BitVector(gen.random()));
+        }
+        else
+        {
+          d_consistent.reset(new BitVector(
+              size, *d_rng, BitVector::mk_one(size), BitVector::mk_ones(size)));
+        }
+      }
+      else
+      {
+        if (x.has_fixed_bits())
+        {
+          BitVector bvres = consistent_value_pos0_aux(t);
+          if (bvres.is_null())
+          {
+            assert(x.match_fixed_bits(t));
+            d_consistent.reset(new BitVector(t));
+          }
+          else
+          {
+            d_consistent.reset(new BitVector(std::move(bvres)));
+          }
+        }
+        else
+        {
+          BitVector ones = BitVector::mk_ones(size);
+          /* Compute x = y * t + offset with y in [1, ones / t] and
+           * offset in [0, min(y - 1, ones - y * t)].  */
+          BitVector y(size, *d_rng, BitVector::mk_one(size), ones.bvudiv(t));
+          assert(!y.is_umul_overflow(t));
+          d_consistent.reset(new BitVector(y.bvmul(t)));
+
+          /* Make sure that adding the offset to (y * t) does not overflow.
+           * The maximum value of the offset is the minimum of
+           * (y - 1, ones - (y * t)).  */
+          BitVector sub = ones.bvsub(*d_consistent);
+          /* Compute offset for adding to y * t. */
+          BitVector offset(size,
+                           *d_rng,
+                           BitVector::mk_zero(size),
+                           sub.compare(y.ibvdec()) < 0 ? sub : y);
+          assert(!d_consistent->is_uadd_overflow(offset));
+          d_consistent->ibvadd(offset);
+        }
+      }
+    }
+    else
+    {
+      if (t.is_ones())
+      {
+        BitVector one   = BitVector::mk_one(size);
+        BitVector zero  = BitVector::mk_zero(size);
+        bool match_one  = x.match_fixed_bits(one);
+        bool match_zero = x.match_fixed_bits(zero);
+        if (!match_zero || (match_one && d_rng->flip_coin()))
+        {
+          d_consistent.reset(new BitVector(std::move(one)));
+        }
+        else
+        {
+          assert(match_zero);
+          d_consistent.reset(new BitVector(std::move(zero)));
+        }
+      }
+      else
+      {
+        BitVector one = BitVector::mk_one(size);
+        BitVector max = BitVector::mk_ones(size);
+        if (x.has_fixed_bits())
+        {
+          BitVector rand;
+          for (;;)
+          {
+            BitVectorDomainGenerator gen(x, d_rng, one, max);
+            assert(gen.has_random());
+            rand = gen.random();
+            if (!rand.is_umul_overflow(t)) break;
+            max = rand.ibvdec();
+          }
+          d_consistent.reset(new BitVector(std::move(rand)));
+        }
+        else
+        {
+          BitVector rand;
+          for (;;)
+          {
+            rand = BitVector(size, *d_rng, one, max);
+            if (!rand.is_umul_overflow(t)) break;
+            max = rand.ibvdec();
+          }
+          d_consistent.reset(new BitVector(std::move(rand)));
+        }
+      }
+    }
+  }
+
+  assert(x.match_fixed_bits(*d_consistent));
+  return *d_consistent;
 }
 
 BitVector

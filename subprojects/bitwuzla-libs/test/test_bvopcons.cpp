@@ -54,5 +54,11 @@ TEST_F(TestBvOpCons, ashr)
   test_binary<BitVectorAshr>(CONS, ASHR, 1);
 }
 
+TEST_F(TestBvOpCons, udiv)
+{
+  test_binary<BitVectorUdiv>(CONS, UDIV, 0);
+  test_binary<BitVectorUdiv>(CONS, UDIV, 1);
+}
+
 }  // namespace test
 }  // namespace bzlals
