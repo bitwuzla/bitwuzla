@@ -2796,6 +2796,74 @@ BitVectorUlt::inverse_value(const BitVector& t, uint32_t pos_x)
   return *d_inverse;
 }
 
+const BitVector&
+BitVectorUlt::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+  assert(!x.is_fixed());
+  uint32_t size = x.size();
+  bool is_ult   = t.is_true();
+
+  /**
+   * consistent value:
+   *   pos_x = 0: t = 1: random value < ones
+   *              t = 0: random value
+   *   pos_x = 1: t = 1: random_value > 0
+   *              t = 0: random value
+   */
+
+  if (pos_x == 0 && is_ult)
+  {
+    if (x.has_fixed_bits())
+    {
+      BitVectorDomainGenerator gen(x,
+                                   d_rng,
+                                   BitVector::mk_zero(size),
+                                   BitVector::mk_ones(size).ibvdec());
+      assert(gen.has_random());
+      d_consistent.reset(new BitVector(gen.random()));
+    }
+    else
+    {
+      d_consistent.reset(
+          new BitVector(BitVector(size,
+                                  *d_rng,
+                                  BitVector::mk_zero(size),
+                                  BitVector::mk_ones(size).ibvdec())));
+    }
+  }
+  else if (pos_x == 1 && is_ult)
+  {
+    if (x.has_fixed_bits())
+    {
+      BitVectorDomainGenerator gen(
+          x, d_rng, BitVector::mk_one(size), BitVector::mk_ones(size));
+      assert(gen.has_random());
+      d_consistent.reset(new BitVector(gen.random()));
+    }
+    else
+    {
+      d_consistent.reset(new BitVector(BitVector(
+          size, *d_rng, BitVector::mk_one(size), BitVector::mk_ones(size))));
+    }
+  }
+  else
+  {
+    if (x.has_fixed_bits())
+    {
+      BitVectorDomainGenerator gen(x, d_rng);
+      assert(gen.has_random());
+      d_consistent.reset(new BitVector(gen.random()));
+    }
+    else
+    {
+      d_consistent.reset(new BitVector(BitVector(size, *d_rng)));
+    }
+  }
+  assert(x.match_fixed_bits(*d_consistent));
+  return *d_consistent;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorSlt::BitVectorSlt(RNG* rng,

@@ -60,5 +60,11 @@ TEST_F(TestBvOpCons, udiv)
   test_binary<BitVectorUdiv>(CONS, UDIV, 1);
 }
 
+TEST_F(TestBvOpCons, ult)
+{
+  test_binary<BitVectorUlt>(CONS, ULT, 0);
+  test_binary<BitVectorUlt>(CONS, ULT, 1);
+}
+
 }  // namespace test
 }  // namespace bzlals
