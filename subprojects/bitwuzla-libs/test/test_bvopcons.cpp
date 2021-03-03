@@ -78,5 +78,11 @@ TEST_F(TestBvOpCons, urem)
   test_binary<BitVectorUrem>(CONS, UREM, 1);
 }
 
+TEST_F(TestBvOpCons, xor)
+{
+  test_binary<BitVectorXor>(CONS, XOR, 0);
+  test_binary<BitVectorXor>(CONS, XOR, 1);
+}
+
 }  // namespace test
 }  // namespace bzlals

@@ -711,10 +711,8 @@ class BitVectorXor : public BitVectorOp
 
   const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
 
-  const BitVector& consistent_value(const BitVector& t, uint32_t pos_x) override
-  {
-    return *d_consistent;
-  }
+  const BitVector& consistent_value(const BitVector& t,
+                                    uint32_t pos_x) override;
 };
 
 /* -------------------------------------------------------------------------- */
