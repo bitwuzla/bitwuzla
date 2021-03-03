@@ -91,5 +91,9 @@ TEST_F(TestBvOpCons, ite)
   test_ite(CONS, 2);
 }
 
+TEST_F(TestBvOpCons, extract) { test_extract(CONS); }
+
+TEST_F(TestBvOpCons, sext) { test_sext(CONS); }
+
 }  // namespace test
 }  // namespace bzlals

@@ -4184,6 +4184,12 @@ BitVectorExtract::inverse_value(const BitVector& t, uint32_t pos_x)
   return *d_inverse;
 }
 
+const BitVector&
+BitVectorExtract::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  return inverse_value(t, pos_x);
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
@@ -4254,6 +4260,12 @@ BitVectorSignExtend::inverse_value(const BitVector& t, uint32_t pos_x)
   assert(t.compare(d_inverse->bvsext(d_n)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
   return *d_inverse;
+}
+
+const BitVector&
+BitVectorSignExtend::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  return inverse_value(t, pos_x);
 }
 
 /* -------------------------------------------------------------------------- */

@@ -727,26 +727,42 @@ TestBvOp::test_extract(Kind kind)
             }
             ASSERT_EQ(res, status);
           }
-          else if (kind == INV)
-          {
-            if (x.is_fixed()) continue;
-            if (!op.is_invertible(t, 0)) continue;
-            BitVector inv = op.inverse_value(t, 0);
-            int32_t cmp   = t.compare(inv.bvextract(hi, lo));
-            if (cmp != 0)
-            {
-              std::cout << "hi: " << hi << std::endl;
-              std::cout << "lo: " << lo << std::endl;
-              std::cout << "t: " << t.to_string() << std::endl;
-              std::cout << "x: " << x_value << std::endl;
-              std::cout << "inverse: " << inv.to_string() << std::endl;
-            }
-            ASSERT_EQ(cmp, 0);
-            ASSERT_TRUE(op.is_consistent(t, 0));
-          }
           else
           {
-            assert(false);
+            assert(kind == INV || kind == CONS);
+            if (x.is_fixed()) continue;
+            if (kind == INV && !op.is_invertible(t, 0)) continue;
+            if (kind == CONS && !op.is_consistent(t, 0)) continue;
+
+            if (kind == INV)
+            {
+              BitVector inv = op.inverse_value(t, 0);
+              int32_t cmp   = t.compare(inv.bvextract(hi, lo));
+              if (cmp != 0)
+              {
+                std::cout << "hi: " << hi << std::endl;
+                std::cout << "lo: " << lo << std::endl;
+                std::cout << "t: " << t.to_string() << std::endl;
+                std::cout << "x: " << x_value << std::endl;
+                std::cout << "inverse: " << inv.to_string() << std::endl;
+              }
+              ASSERT_EQ(cmp, 0);
+            }
+            else
+            {
+              BitVector cons = op.consistent_value(t, 0);
+              int32_t cmp    = t.compare(cons.bvextract(hi, lo));
+              if (cmp != 0)
+              {
+                std::cout << "hi: " << hi << std::endl;
+                std::cout << "lo: " << lo << std::endl;
+                std::cout << "t: " << t.to_string() << std::endl;
+                std::cout << "x: " << x_value << std::endl;
+                std::cout << "consistent: " << cons.to_string() << std::endl;
+              }
+              ASSERT_EQ(cmp, 0);
+            }
+            ASSERT_TRUE(op.is_consistent(t, 0));
           }
         }
       }
@@ -798,25 +814,40 @@ TestBvOp::test_sext(Kind kind)
           }
           ASSERT_EQ(res, status);
         }
-        else if (kind == INV)
-        {
-          if (x.is_fixed()) continue;
-          if (!op.is_invertible(t, 0)) continue;
-          BitVector inv = op.inverse_value(t, 0);
-          int32_t cmp   = t.compare(inv.bvsext(n));
-          if (cmp != 0)
-          {
-            std::cout << "n: " << n << std::endl;
-            std::cout << "t: " << t.to_string() << std::endl;
-            std::cout << "x: " << x_value << std::endl;
-            std::cout << "inverse: " << inv.to_string() << std::endl;
-          }
-          ASSERT_EQ(cmp, 0);
-          ASSERT_TRUE(op.is_consistent(t, 0));
-        }
         else
         {
-          assert(false);
+          assert(kind == INV || kind == CONS);
+          if (x.is_fixed()) continue;
+          if (kind == INV && !op.is_invertible(t, 0)) continue;
+          if (kind == CONS && !op.is_consistent(t, 0)) continue;
+
+          if (kind == INV)
+          {
+            BitVector inv = op.inverse_value(t, 0);
+            int32_t cmp   = t.compare(inv.bvsext(n));
+            if (cmp != 0)
+            {
+              std::cout << "n: " << n << std::endl;
+              std::cout << "t: " << t.to_string() << std::endl;
+              std::cout << "x: " << x_value << std::endl;
+              std::cout << "inverse: " << inv.to_string() << std::endl;
+            }
+            ASSERT_EQ(cmp, 0);
+          }
+          else
+          {
+            BitVector cons = op.consistent_value(t, 0);
+            int32_t cmp    = t.compare(cons.bvsext(n));
+            if (cmp != 0)
+            {
+              std::cout << "n: " << n << std::endl;
+              std::cout << "t: " << t.to_string() << std::endl;
+              std::cout << "x: " << x_value << std::endl;
+              std::cout << "consistent: " << cons.to_string() << std::endl;
+            }
+            ASSERT_EQ(cmp, 0);
+          }
+          ASSERT_TRUE(op.is_consistent(t, 0));
         }
       }
     }
