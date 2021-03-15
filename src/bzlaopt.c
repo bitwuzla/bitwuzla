@@ -1098,7 +1098,6 @@ bzla_opt_init_opts(Bzla *bzla)
            "bits of the operand of a slice operation "
            "(rather than fully randomizing all of them, "
            "for both inverse and consistent value selection) "
-           "if their current value is not kept "
            "(interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_PROP_PROB_CONC_FLIP,
@@ -1152,7 +1151,7 @@ bzla_opt_init_opts(Bzla *bzla)
            BZLA_PROB_100,
            "probability for using the current assignment of the don't care "
            "bits of the selected node with max. one of its bits flipped "
-           "(rather fully randomizing all of them) in case of an and operation "
+           "(rather than fully randomizing all of them) in case of an and operation "
            "(for both inverse and consistent value selection) "
            "(interpreted as <n>/1000)");
   init_opt(bzla,
