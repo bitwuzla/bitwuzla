@@ -33,23 +33,6 @@
 #define BZLA_DO_NOT_PROCESS_SKELETON
 #endif
 
-// Currently, 'BoolectorNode' (external) vs. 'BzlaNode' (internal)
-// syntactically hides internal nodes.  Hence, we assume that both structs
-// 'BoolectorNode' and 'BzlaNode' have/ the same structure and provide the
-// following macros for type conversion (via typecasting).  We further assume
-// that external 'boolector_xxx' functions provide the same functionality as
-// their internal counter part 'bzla_xxx' (except for API tracing and contract
-// checks).
-//
-// If the assumption above does not hold, we have to provide
-// real containers for 'BoolectorNode' (cf. 'BoolectorNodeMap').
-
-#define BZLA_IMPORT_BOOLECTOR_NODE(node) (((BzlaNode *) (node)))
-#define BZLA_IMPORT_BOOLECTOR_NODE_ARRAY(array) (((BzlaNode **) (array)))
-#define BZLA_EXPORT_BOOLECTOR_NODE(node) (((BoolectorNode *) (node)))
-#define BZLA_IMPORT_BOOLECTOR_SORT(sort) (((BzlaSortId)(long) (sort)))
-#define BZLA_EXPORT_BOOLECTOR_SORT(sort) (((BoolectorSort)(long) (sort)))
-
 /*------------------------------------------------------------------------*/
 
 struct BzlaNodeUniqueTable
