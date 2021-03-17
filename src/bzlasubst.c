@@ -893,16 +893,9 @@ bzla_substitute_terms(Bzla *bzla,
       bzla_hashint_map_add(cache, cur->id);
       BZLA_PUSH_STACK(visit, cur);
 
-      if (ds)
+      for (i = 0; i < cur->arity; ++i)
       {
-        BZLA_PUSH_STACK(visit, ds->as_ptr);
-      }
-      else
-      {
-        for (i = 0; i < cur->arity; ++i)
-        {
-          BZLA_PUSH_STACK(visit, cur->e[i]);
-        }
+        BZLA_PUSH_STACK(visit, cur->e[i]);
       }
     }
     else if (!d->as_ptr)
@@ -910,13 +903,7 @@ bzla_substitute_terms(Bzla *bzla,
       result = 0;
       if (ds)
       {
-        dd = bzla_hashint_map_get(cache, bzla_node_real_addr(ds->as_ptr)->id);
-        if (dd && !dd->as_ptr)
-        {
-          BZLA_ABORT(true, "cyclic substitution detected");
-        }
-        result =
-            bzla_node_copy(bzla, bzla_node_cond_invert(ds->as_ptr, dd->as_ptr));
+        result = bzla_node_copy(bzla, ds->as_ptr);
       }
       else
       {
