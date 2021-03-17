@@ -19,9 +19,6 @@
 #include "utils/bzlarng.h"
 #include "utils/bzlastack.h"
 
-#define BZLA_BV_TYPE uint32_t
-#define BZLA_BV_TYPE_BW (sizeof(BZLA_BV_TYPE) * 8)
-
 typedef struct BzlaBitVector BzlaBitVector;
 
 BZLA_DECLARE_STACK(BzlaBitVectorPtr, BzlaBitVector *);

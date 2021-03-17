@@ -247,6 +247,15 @@ BzlaFloatingPoint *bzla_fp_convert_from_ubv(Bzla *bzla,
                                             const BzlaRoundingMode rm,
                                             const BzlaBitVector *bv);
 
+/**
+ * Create a floating-point constant of given sort converted from the given
+ * real constant represented as a string w.r.t. to the given rounding mode.
+ */
+BzlaFloatingPoint *bzla_fp_convert_from_real(Bzla *bzla,
+                                             BzlaSortId sort,
+                                             const BzlaRoundingMode rm,
+                                             const char *real);
+
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */
 /* -------------------------------------------------------------------------- */

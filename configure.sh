@@ -158,7 +158,7 @@ do
 
     --gmp) gmp=yes;;
 
-    --symfpu) symfpu=yes;;
+    --symfpu) symfpu=yes; gmp=yes;;
     --no-cadical)   cadical=no;;
     --no-cms)       cms=no;;
     --no-kissat)    kissat=no;;

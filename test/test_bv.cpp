@@ -17,6 +17,10 @@ extern "C" {
 #include "bzlabv.h"
 }
 
+// TODO: remove after non-gmp BV implementation is deleted
+#define BZLA_BV_TYPE uint32_t
+#define BZLA_BV_TYPE_BW (sizeof(BZLA_BV_TYPE) * 8)
+
 #define TEST_BV_IS_UADDO_BITVEC(bw, v0, v1, res)      \
   do                                                  \
   {                                                   \
