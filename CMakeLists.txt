@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.3)
 
 #-----------------------------------------------------------------------------#
 
-project(cbitwuzla)
+project(bitwuzla)
 set(VERSION "0.1-202011")
 string(TIMESTAMP TIME)
 
@@ -146,7 +146,7 @@ option(USE_GMP        "Use GMP for bit-vector implementation" OFF)
 #    REQUIRED)
 #
 #  # Produce a python module that only links against system libraries. SAT
-#  # solvers and libcbitwuzla should be included in the module itself.
+#  # solvers and libbitwuzla should be included in the module itself.
 #  if(NOT BUILD_SHARED_LIBS)
 #    add_check_c_cxx_flag("-fPIC")
 #    # Disable MiniSat since the static library is not compiled with -fPIC by
@@ -243,7 +243,7 @@ if(GCOV)
   setup_target_for_coverage_lcov(
     NAME coverage
     EXECUTABLE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test
-    DEPENDENCIES cbitwuzla-bin)
+    DEPENDENCIES bitwuzla-bin)
 endif()
 
 if(GPROF)
@@ -499,32 +499,32 @@ add_subdirectory(test)
 
 #-----------------------------------------------------------------------------#
 
-set(ARCHIVE_NAME "cbitwuzla-${VERSION}")
+set(ARCHIVE_NAME "bitwuzla-${VERSION}")
 add_custom_target(dist
     COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD
         | xz > ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar.xz
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 #-----------------------------------------------------------------------------#
-# Install config and configversion for CBitwuzla to add support for
-# find_package(CBitwuzla).
+# Install config and configversion for Bitwuzla to add support for
+# find_package(Bitwuzla).
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-  ${CMAKE_CURRENT_BINARY_DIR}/CBitwuzlaConfigVersion.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/BitwuzlaConfigVersion.cmake
   VERSION ${VERSION}
   COMPATIBILITY SameMajorVersion
 )
 
 # Install the config, configversion and custom find modules
 install(FILES
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/CBitwuzlaConfig.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/CBitwuzlaConfigVersion.cmake
-  DESTINATION lib/cmake/CBitwuzla
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/BitwuzlaConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/BitwuzlaConfigVersion.cmake
+  DESTINATION lib/cmake/Bitwuzla
 )
 
 #-----------------------------------------------------------------------------#
-# Print CBitwuzla configuration
+# Print Bitwuzla configuration
 
 if(NOT WIN32)
   string(ASCII 27 Esc)

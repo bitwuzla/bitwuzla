@@ -48,7 +48,7 @@ endif()
 foreach(test ${test_names})
   add_executable (test${test} test_${test}.cpp)
   target_include_directories(test${test} PRIVATE ${PROJECT_SOURCE_DIR}/test/new_test)
-  target_link_libraries(test${test} cbitwuzla m)
+  target_link_libraries(test${test} bitwuzla m)
   target_link_libraries(test${test} gtest_main)
   set_target_properties(test${test} PROPERTIES OUTPUT_NAME test${test})
   add_test(${test} ${CMAKE_BINARY_DIR}/bin/tests/test${test})
@@ -1218,8 +1218,8 @@ endif()
 
 
 
-get_target_property(BITWUZLA_BINARY_PATH cbitwuzla-bin RUNTIME_OUTPUT_DIRECTORY)
-set(BITWUZLA_BINARY "${BITWUZLA_BINARY_PATH}/cbitwuzla")
+get_target_property(BITWUZLA_BINARY_PATH bitwuzla-bin RUNTIME_OUTPUT_DIRECTORY)
+set(BITWUZLA_BINARY "${BITWUZLA_BINARY_PATH}/bitwuzla")
 set(RUN_TEST_CASE_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/run-test-case.py)
 
 macro(add_test_case option testcase)
