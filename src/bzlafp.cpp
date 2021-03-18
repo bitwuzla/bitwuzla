@@ -3782,9 +3782,9 @@ bzla_fp_convert_from_real(Bzla *bzla,
 
     /* compute the exponent */
     mpq_t tmp_exp;
-    mpz_t exp, inc;
+    mpz_t iexp, inc;
     make_mpq_from_ui(&tmp_exp, 1, 1);
-    mpz_init_set_ui(exp, 0);
+    mpz_init_set_ui(iexp, 0);
     mpz_init_set_ui(inc, 1);
 
     int32_t cmp = mpq_cmp(r, tmp_exp);
@@ -3794,7 +3794,7 @@ bzla_fp_convert_from_real(Bzla *bzla,
       {
         while (mpq_cmp(r, tmp_exp) < 0)
         {
-          mpz_sub(exp, exp, inc);
+          mpz_sub(iexp, iexp, inc);
           mpq_div_2exp(tmp_exp, tmp_exp, 1);
         }
       }
@@ -3802,10 +3802,10 @@ bzla_fp_convert_from_real(Bzla *bzla,
       {
         while (mpq_cmp(r, tmp_exp) >= 0)
         {
-          mpz_add(exp, exp, inc);
+          mpz_add(iexp, iexp, inc);
           mpq_mul_2exp(tmp_exp, tmp_exp, 1);
         }
-        mpz_sub(exp, exp, inc);
+        mpz_sub(iexp, iexp, inc);
         mpq_div_2exp(tmp_exp, tmp_exp, 1);
       }
     }
@@ -3821,13 +3821,13 @@ bzla_fp_convert_from_real(Bzla *bzla,
     /* Determine number of bits required to represent the exponent for a
      * normal number */
     uint32_t exp_bits = 2;
-    int32_t esgn      = mpz_sgn(exp);
+    int32_t esgn      = mpz_sgn(iexp);
     if (esgn > 0)
     {
       /* not exactly representable with exp_bits, adjust */
       mpz_t representable;
       mpz_init_set_ui(representable, 4);
-      while (mpz_cmp(representable, exp) <= 0)
+      while (mpz_cmp(representable, iexp) <= 0)
       {
         mpz_mul_2exp(representable, representable, 1);
         exp_bits += 1;
@@ -3842,7 +3842,7 @@ bzla_fp_convert_from_real(Bzla *bzla,
       mpz_init_set_si(representable, -4);
       mpz_init(rep_plus_two);
       mpz_add_ui(rep_plus_two, representable, 2);
-      while (mpz_cmp(rep_plus_two, exp) > 0)
+      while (mpz_cmp(rep_plus_two, iexp) > 0)
       {
         mpz_mul_2exp(representable, representable, 1);
         mpz_add_ui(rep_plus_two, representable, 2);
@@ -3853,18 +3853,17 @@ bzla_fp_convert_from_real(Bzla *bzla,
     }
     exp_bits += 1; /* for sign bit */
 #ifndef NDEBUG
-    char *exp_bin_str = mpz_get_str(nullptr, 2, exp);
+    char *exp_bin_str = mpz_get_str(nullptr, 2, iexp);
     assert(strlen(exp_bin_str) <= exp_bits);
     free(exp_bin_str);
 #endif
-    BzlaBitVector *exact_exp = bzla_bv_new(mm, exp_bits);
-    mpz_fdiv_r_2exp(exact_exp->val, exp, exp_bits);
+    BzlaBitVector *exp = bzla_bv_new(mm, exp_bits);
+    mpz_fdiv_r_2exp(exp->val, iexp, exp_bits);
 
     /* Compute the significand */
     /* sig bits of sort + guard and sticky bits */
     uint32_t sig_bits  = bzla_sort_fp_get_sig_width(bzla, sort) + 2;
     BzlaBitVector *sig = bzla_bv_zero(mm, sig_bits);
-    BzlaBitVector *one = bzla_bv_one(mm, sig_bits);
     mpq_t tmp_sig, mid;
     make_mpq_from_ui(&tmp_sig, 0, 1);
     mpq_init(mid);
@@ -3873,12 +3872,10 @@ bzla_fp_convert_from_real(Bzla *bzla,
       mpq_add(mid, tmp_sig, tmp_exp);
       if (mpq_cmp(mid, r) <= 0)
       {
-        BzlaBitVector *bvor = bzla_bv_or(mm, sig, one);
-        bzla_bv_free(mm, sig);
-        sig = bvor;
+        bzla_bv_set_bit(sig, 0, 1);
         mpq_set(tmp_sig, mid);
       }
-      BzlaBitVector *shl = bzla_bv_sll(mm, sig, one);
+      BzlaBitVector *shl = bzla_bv_sll_uint64(mm, sig, 1);
       bzla_bv_free(mm, sig);
       sig = shl;
       mpq_div_2exp(tmp_exp, tmp_exp, 1);
@@ -3896,9 +3893,7 @@ bzla_fp_convert_from_real(Bzla *bzla,
 #endif
     if (mpq_sgn(remainder) != 0)
     {
-      BzlaBitVector *bvor = bzla_bv_or(mm, sig, one);
-      bzla_bv_free(mm, sig);
-      sig = bvor;
+      bzla_bv_set_bit(sig, 0, 1);
     }
 
     /* Exact float */
@@ -3910,31 +3905,30 @@ bzla_fp_convert_from_real(Bzla *bzla,
     uint32_t extension =
         BzlaUnpackedFloat::exponentWidth(exact_format) - exp_bits;
 
-    BzlaBitVector *exact_bv_sign =
-        sgn < 0 ? bzla_bv_one(mm, 1) : bzla_bv_zero(mm, 1);
+    BzlaBitVector *sign = sgn < 0 ? bzla_bv_one(mm, 1) : bzla_bv_zero(mm, 1);
 
-    BzlaBitVector *exact_bv_exp = extension > 0
-                                      ? bzla_bv_sext(mm, exact_exp, extension)
-                                      : bzla_bv_copy(mm, exact_exp);
+    if (extension > 0)
+    {
+      BzlaBitVector *tmp = bzla_bv_sext(mm, exp, extension);
+      bzla_bv_free(mm, exp);
+      exp = tmp;
+    }
 
-    BzlaFloatingPoint *exact_float =
-        bzla_fp_fp(bzla, exact_bv_sign, exact_bv_exp, sig);
+    BzlaFloatingPoint *exact_float = bzla_fp_fp(bzla, sign, exp, sig);
 
     res->fp = new BzlaUnpackedFloat(symfpu::convertFloatToFloat<BzlaFPTraits>(
         exact_format, *res->size, rm, *exact_float->fp));
 
     bzla_fp_free(bzla, exact_float);
 
-    bzla_bv_free(mm, exact_bv_exp);
-    bzla_bv_free(mm, exact_bv_sign);
+    bzla_bv_free(mm, exp);
+    bzla_bv_free(mm, sign);
     bzla_bv_free(mm, sig);
-    bzla_bv_free(mm, one);
-    bzla_bv_free(mm, exact_exp);
 
     mpq_clear(remainder);
     mpq_clear(tmp_sig);
     mpq_clear(mid);
-    mpz_clear(exp);
+    mpz_clear(iexp);
     mpz_clear(inc);
     mpq_clear(tmp_exp);
   }

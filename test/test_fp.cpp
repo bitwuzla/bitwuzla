@@ -102,6 +102,36 @@ class TestFpInternal : public TestBzla
     bzla_bv_free(d_bzla->mm, res_sign);
   }
 
+  void test_to_fp_from_real(BzlaRoundingMode rm,
+                            std::vector<std::vector<const char *>> &expected)
+  {
+    BzlaMemMgr *mm = d_bzla->mm;
+    BzlaFloatingPoint *fp;
+    BzlaBitVector *sign, *exp, *sig;
+    char *sign_str, *exp_str, *sig_str;
+
+    assert(d_constants.size() == expected.size());
+    for (size_t i = 0, n = d_constants.size(); i < n; ++i)
+    {
+      fp = bzla_fp_convert_from_real(d_bzla, d_f16, rm, d_constants[i]);
+      bzla_fp_as_bv(d_bzla, fp, &sign, &exp, &sig);
+      sign_str = bzla_bv_to_char(mm, sign);
+      exp_str  = bzla_bv_to_char(mm, exp);
+      sig_str  = bzla_bv_to_char(mm, sig);
+      ASSERT_EQ(strcmp(sign_str, expected[i][0]), 0);
+      ASSERT_EQ(strcmp(exp_str, expected[i][1]), 0);
+      ASSERT_EQ(strcmp(sig_str, expected[i][2]), 0);
+
+      bzla_mem_freestr(mm, sign_str);
+      bzla_mem_freestr(mm, exp_str);
+      bzla_mem_freestr(mm, sig_str);
+      bzla_bv_free(mm, sign);
+      bzla_bv_free(mm, exp);
+      bzla_bv_free(mm, sig);
+      bzla_fp_free(d_bzla, fp);
+    }
+  }
+
   std::vector<const char *> d_constants = {
       "00",
       "0.0",
@@ -388,12 +418,7 @@ TEST_F(TestFpInternal, fp_is_const)
 
 TEST_F(TestFpInternal, fp_from_real_dec_str_rna)
 {
-  BzlaMemMgr *mm = d_bzla->mm;
-  BzlaFloatingPoint *fp;
-  BzlaBitVector *sign, *exp, *sig;
-  char *sign_str, *exp_str, *sig_str;
-
-  std::vector<std::vector<const char *>> results = {
+  std::vector<std::vector<const char *>> expected = {
       {"0", "00000", "0000000000"}, {"0", "00000", "0000000000"},
       {"0", "01000", "1000000111"}, {"0", "01001", "0001111000"},
       {"0", "01010", "0001111000"}, {"0", "01010", "1010110011"},
@@ -485,25 +510,5 @@ TEST_F(TestFpInternal, fp_from_real_dec_str_rna)
       {"0", "10101", "0101010000"}, {"0", "10010", "0010000000"},
   };
 
-  assert(d_constants.size() == results.size());
-  for (size_t i = 0, n = d_constants.size(); i < n; ++i)
-  {
-    fp = bzla_fp_convert_from_real(
-        d_bzla, d_f16, BzlaRoundingMode::BZLA_RM_RNA, d_constants[i]);
-    bzla_fp_as_bv(d_bzla, fp, &sign, &exp, &sig);
-    sign_str = bzla_bv_to_char(mm, sign);
-    exp_str  = bzla_bv_to_char(mm, exp);
-    sig_str  = bzla_bv_to_char(mm, sig);
-    ASSERT_EQ(strcmp(sign_str, results[i][0]), 0);
-    ASSERT_EQ(strcmp(exp_str, results[i][1]), 0);
-    ASSERT_EQ(strcmp(sig_str, results[i][2]), 0);
-
-    bzla_mem_freestr(mm, sign_str);
-    bzla_mem_freestr(mm, exp_str);
-    bzla_mem_freestr(mm, sig_str);
-    bzla_bv_free(mm, sign);
-    bzla_bv_free(mm, exp);
-    bzla_bv_free(mm, sig);
-    bzla_fp_free(d_bzla, fp);
-  }
+  test_to_fp_from_real(BzlaRoundingMode::BZLA_RM_RNA, expected);
 }
