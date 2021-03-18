@@ -3327,6 +3327,42 @@ bzla_fp_nan(Bzla *bzla, BzlaSortId sort)
 }
 
 BzlaFloatingPoint *
+bzla_fp_fp(Bzla *bzla,
+           BzlaBitVector *bv_sign,
+           BzlaBitVector *bv_exp,
+           BzlaBitVector *bv_sig)
+{
+  assert(bzla);
+  assert(bv_sign);
+  assert(bv_exp);
+  assert(bv_sig);
+
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  BzlaSortId sort = bzla_sort_fp(
+      bzla, bzla_bv_get_width(bv_exp), bzla_bv_get_width(bv_sig) + 1);
+  BzlaBitVector *tmp      = bzla_bv_concat(bzla->mm, bv_sign, bv_exp);
+  BzlaBitVector *bv_const = bzla_bv_concat(bzla->mm, tmp, bv_sig);
+
+  res = bzla_fp_new(bzla, sort);
+  res->fp =
+      new BzlaUnpackedFloat(symfpu::unpack<BzlaFPTraits>(*res->size, bv_const));
+
+  bzla_bv_free(bzla->mm, tmp);
+  bzla_sort_release(bzla, sort);
+#else
+  (void) bzla;
+  (void) sort;
+  (void) bv_sign;
+  (void) bv_exp;
+  (void) bv_sig;
+  res = nullptr;
+#endif
+  return res;
+}
+
+BzlaFloatingPoint *
 bzla_fp_from_bv(Bzla *bzla, BzlaSortId sort, BzlaBitVector *bv_const)
 {
   assert(bzla);

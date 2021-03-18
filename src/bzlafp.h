@@ -138,6 +138,15 @@ BzlaFloatingPoint *bzla_fp_inf(Bzla *bzla, BzlaSortId sort, bool sign);
 BzlaFloatingPoint *bzla_fp_nan(Bzla *bzla, BzlaSortId sort);
 
 /**
+ * Create a floating-point constant from its bit-vector representation given as
+ * sign bit, exponent bits, and significand bits.
+ */
+BzlaFloatingPoint *bzla_fp_fp(Bzla *bzla,
+                              BzlaBitVector *bv_sign,
+                              BzlaBitVector *bv_exp,
+                              BzlaBitVector *bv_sig);
+
+/**
  * Create a floating-point constant from a given bit-vector constant.
  */
 BzlaFloatingPoint *bzla_fp_from_bv(Bzla *bzla,

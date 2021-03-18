@@ -1899,10 +1899,8 @@ bzla_exp_fp_const(Bzla *bzla,
   assert(bzla_node_is_bv_const(e2_sig));
   assert(bzla_node_bv_get_width(bzla, e0_sign) == 1);
 
-  uint32_t ewidth, swidth;
   BzlaNode *result;
-  BzlaBitVector *bv_e0_sign, *bv_e1_exp, *bv_e2_sig, *tmp, *concat;
-  BzlaSortId sort;
+  BzlaBitVector *bv_e0_sign, *bv_e1_exp, *bv_e2_sig;
   BzlaFloatingPoint *fp;
 
   e0_sign = bzla_simplify_exp(bzla, e0_sign);
@@ -1919,19 +1917,10 @@ bzla_exp_fp_const(Bzla *bzla,
                   ? bzla_node_bv_const_get_bits(e2_sig)
                   : bzla_node_bv_const_get_invbits(e2_sig);
 
-  tmp    = bzla_bv_concat(bzla->mm, bv_e0_sign, bv_e1_exp);
-  concat = bzla_bv_concat(bzla->mm, tmp, bv_e2_sig);
-
-  ewidth = bzla_bv_get_width(bv_e1_exp);
-  swidth = 1 + bzla_bv_get_width(bv_e2_sig);
-  sort   = bzla_sort_fp(bzla, ewidth, swidth);
-  fp     = bzla_fp_from_bv(bzla, sort, concat);
+  fp     = bzla_fp_fp(bzla, bv_e0_sign, bv_e1_exp, bv_e2_sig);
   result = bzla_exp_fp_const_fp(bzla, fp);
 
   bzla_fp_free(bzla, fp);
-  bzla_bv_free(bzla->mm, concat);
-  bzla_bv_free(bzla->mm, tmp);
-  bzla_sort_release(bzla, sort);
   return result;
 }
 
