@@ -3765,7 +3765,7 @@ bzla_fp_convert_from_real(Bzla *bzla,
   make_mpq_from_dec_string(&r, real);
 
   int32_t sgn = mpq_sgn(r);
-  if (sgn == 0) /* zero */
+  if (sgn == 0)
   {
     res = bzla_fp_zero(bzla, sort, false);
   }
@@ -3780,7 +3780,8 @@ bzla_fp_convert_from_real(Bzla *bzla,
       mpq_neg(r, r);
     }
 
-    /* compute the exponent */
+    /* Exponent ---------------------------------------------------------- */
+
     mpq_t tmp_exp;
     mpz_t iexp, inc;
     make_mpq_from_ui(&tmp_exp, 1, 1);
@@ -3819,25 +3820,25 @@ bzla_fp_convert_from_real(Bzla *bzla,
     mpq_clear(tmp_mul);
 #endif
     /* Determine number of bits required to represent the exponent for a
-     * normal number */
-    uint32_t exp_bits = 2;
+     * normal number. */
+    uint32_t n_exp_bits = 2;
     int32_t esgn      = mpz_sgn(iexp);
     if (esgn > 0)
     {
-      /* not exactly representable with exp_bits, adjust */
+      /* Not exactly representable with n_exp_bits, adjust. */
       mpz_t representable;
       mpz_init_set_ui(representable, 4);
       while (mpz_cmp(representable, iexp) <= 0)
       {
         mpz_mul_2exp(representable, representable, 1);
-        exp_bits += 1;
+        n_exp_bits += 1;
       }
       mpz_clear(representable);
     }
     else if (esgn < 0)
     {
-      /* Exactly representable with exp_bits + sign bit but -2^n and -(2^n - 1)
-       * are both subnormal */
+      /* Exactly representable with n_exp_bits + sign bit but -2^n and
+       * -(2^n - 1) are both subnormal */
       mpz_t representable, rep_plus_two;
       mpz_init_set_si(representable, -4);
       mpz_init(rep_plus_two);
@@ -3846,28 +3847,29 @@ bzla_fp_convert_from_real(Bzla *bzla,
       {
         mpz_mul_2exp(representable, representable, 1);
         mpz_add_ui(rep_plus_two, representable, 2);
-        exp_bits += 1;
+        n_exp_bits += 1;
       }
       mpz_clear(rep_plus_two);
       mpz_clear(representable);
     }
-    exp_bits += 1; /* for sign bit */
+    n_exp_bits += 1; /* for sign bit */
 #ifndef NDEBUG
     char *exp_bin_str = mpz_get_str(nullptr, 2, iexp);
-    assert(strlen(exp_bin_str) <= exp_bits);
+    assert(strlen(exp_bin_str) <= n_exp_bits);
     free(exp_bin_str);
 #endif
-    BzlaBitVector *exp = bzla_bv_new(mm, exp_bits);
-    mpz_fdiv_r_2exp(exp->val, iexp, exp_bits);
+    BzlaBitVector *exp = bzla_bv_new(mm, n_exp_bits);
+    mpz_fdiv_r_2exp(exp->val, iexp, n_exp_bits);
 
-    /* Compute the significand */
+    /* Significand ------------------------------------------------------- */
+
     /* sig bits of sort + guard and sticky bits */
-    uint32_t sig_bits  = bzla_sort_fp_get_sig_width(bzla, sort) + 2;
-    BzlaBitVector *sig = bzla_bv_zero(mm, sig_bits);
+    uint32_t n_sig_bits  = bzla_sort_fp_get_sig_width(bzla, sort) + 2;
+    BzlaBitVector *sig = bzla_bv_zero(mm, n_sig_bits);
     mpq_t tmp_sig, mid;
     make_mpq_from_ui(&tmp_sig, 0, 1);
     mpq_init(mid);
-    for (uint32_t i = 0, n = sig_bits - 1; i < n; ++i)
+    for (uint32_t i = 0, n = n_sig_bits - 1; i < n; ++i)
     {
       mpq_add(mid, tmp_sig, tmp_exp);
       if (mpq_cmp(mid, r) <= 0)
@@ -3881,7 +3883,8 @@ bzla_fp_convert_from_real(Bzla *bzla,
       mpq_div_2exp(tmp_exp, tmp_exp, 1);
     }
 
-    /* Compute the sticky bit */
+    /* Sticky bit -------------------------------------------------------- */
+
     mpq_t remainder;
     mpq_init(remainder);
     mpq_sub(remainder, r, tmp_sig);
@@ -3896,14 +3899,14 @@ bzla_fp_convert_from_real(Bzla *bzla,
       bzla_bv_set_bit(sig, 0, 1);
     }
 
-    /* Exact float */
+    /* Exact float ------------------------------------------------------- */
 
-    BzlaFloatingPointSize exact_format(exp_bits, sig_bits);
+    BzlaFloatingPointSize exact_format(n_exp_bits, n_sig_bits);
 
-    /* If the format has exp_bits, the unpacked format may have more to allow
+    /* If the format has n_exp_bits, the unpacked format may have more to allow
      * subnormals to be normalised. */
     uint32_t extension =
-        BzlaUnpackedFloat::exponentWidth(exact_format) - exp_bits;
+        BzlaUnpackedFloat::exponentWidth(exact_format) - n_exp_bits;
 
     BzlaBitVector *sign = sgn < 0 ? bzla_bv_one(mm, 1) : bzla_bv_zero(mm, 1);
 
