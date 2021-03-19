@@ -147,6 +147,21 @@ BzlaFloatingPoint *bzla_fp_fp(Bzla *bzla,
                               BzlaBitVector *bv_sig);
 
 /**
+ * Create a floating-point constant from its unpacked bit-vector representation
+ * given as sign bit, exponent bits, and significand bits.
+ *
+ * This unpacked representation accounts for additional bits required for the
+ * exponent to allow subnormals to be normalized.
+ *
+ * This should NOT be used to create a literal from its IEEE bit-vector
+ * representation -- for this, the above constructor is to be used.
+ */
+BzlaFloatingPoint *bzla_fp_fp_from_unpacked(Bzla *bzla,
+                                            BzlaBitVector *bv_sign,
+                                            BzlaBitVector *bv_exp,
+                                            BzlaBitVector *bv_sig);
+
+/**
  * Create a floating-point constant from a given bit-vector constant.
  */
 BzlaFloatingPoint *bzla_fp_from_bv(Bzla *bzla,

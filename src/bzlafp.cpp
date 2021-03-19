@@ -3343,11 +3343,47 @@ bzla_fp_fp(Bzla *bzla,
   BzlaSortId sort = bzla_sort_fp(
       bzla, bzla_bv_get_width(bv_exp), bzla_bv_get_width(bv_sig) + 1);
 
+  BzlaBitVector *tmp      = bzla_bv_concat(bzla->mm, bv_sign, bv_exp);
+  BzlaBitVector *bv_const = bzla_bv_concat(bzla->mm, tmp, bv_sig);
+
+  res = bzla_fp_new(bzla, sort);
+  res->fp =
+      new BzlaUnpackedFloat(symfpu::unpack<BzlaFPTraits>(*res->size, bv_const));
+
+  bzla_bv_free(bzla->mm, tmp);
+  bzla_sort_release(bzla, sort);
+#else
+  (void) bzla;
+  (void) sort;
+  (void) bv_sign;
+  (void) bv_exp;
+  (void) bv_sig;
+  res = nullptr;
+#endif
+  return res;
+}
+
+BzlaFloatingPoint *
+bzla_fp_fp_from_unpacked(Bzla *bzla,
+                         BzlaBitVector *bv_sign,
+                         BzlaBitVector *bv_exp,
+                         BzlaBitVector *bv_sig)
+{
+  assert(bzla);
+  assert(bv_sign);
+  assert(bv_exp);
+  assert(bv_sig);
+
+  BzlaFloatingPoint *res;
+#ifdef BZLA_USE_SYMFPU
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+  BzlaSortId sort = bzla_sort_fp(
+      bzla, bzla_bv_get_width(bv_exp), bzla_bv_get_width(bv_sig) + 1);
+
   res     = bzla_fp_new(bzla, sort);
   res->fp = new BzlaUnpackedFloat(bzla_bv_is_one(bv_sign),
                                   bzla_bv_copy(bzla->mm, bv_exp),
                                   bzla_bv_copy(bzla->mm, bv_sig));
-
   bzla_sort_release(bzla, sort);
 #else
   (void) bzla;
@@ -3917,7 +3953,8 @@ bzla_fp_convert_from_real(Bzla *bzla,
       exp = tmp;
     }
 
-    BzlaFloatingPoint *exact_float = bzla_fp_fp(bzla, sign, exp, sig);
+    BzlaFloatingPoint *exact_float =
+        bzla_fp_fp_from_unpacked(bzla, sign, exp, sig);
 
     res->fp = new BzlaUnpackedFloat(symfpu::convertFloatToFloat<BzlaFPTraits>(
         exact_format, *res->size, rm, *exact_float->fp));
