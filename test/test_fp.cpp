@@ -49,7 +49,7 @@ class TestFpInternal : public TestBzla
     BzlaSortId sort_fp, sort_sign, sort_exp, sort_sig;
     BzlaNode *node_fp, *node_bv_sign, *node_bv_exp, *node_bv_sig;
     BzlaBitVector *bv_sign, *bv_exp, *bv_sig;
-    BzlaBitVector *res_sign, *res_exp, *res_sig;
+    BzlaBitVector *res_bv, *res_sign, *res_exp, *res_sig, *tmp, *res_tmp;
     BzlaFloatingPoint *fp;
     uint32_t bw_sig, bw_exp;
 
@@ -72,7 +72,13 @@ class TestFpInternal : public TestBzla
     node_fp = bzla_exp_fp_const(d_bzla, node_bv_sign, node_bv_exp, node_bv_sig);
 
     fp = bzla_fp_get_fp(node_fp);
-    bzla_fp_as_bv(d_bzla, fp, &res_sign, &res_exp, &res_sig);
+
+    res_bv = bzla_fp_as_bv(d_bzla, fp);
+    bzla_fp_as_bvs(d_bzla, fp, &res_sign, &res_exp, &res_sig);
+    tmp     = bzla_bv_concat(d_bzla->mm, res_sign, res_exp);
+    res_tmp = bzla_bv_concat(d_bzla->mm, tmp, res_sig);
+    ASSERT_EQ(bzla_bv_compare(res_bv, res_tmp), 0);
+
     if (bzla_fp_is_nan(d_bzla, fp))
     {
       BzlaFloatingPoint *nan = bzla_fp_nan(d_bzla, sort_fp);
@@ -94,12 +100,15 @@ class TestFpInternal : public TestBzla
     bzla_sort_release(d_bzla, sort_sig);
     bzla_sort_release(d_bzla, sort_exp);
     bzla_sort_release(d_bzla, sort_sign);
+    bzla_bv_free(d_bzla->mm, tmp);
+    bzla_bv_free(d_bzla->mm, res_tmp);
     bzla_bv_free(d_bzla->mm, bv_sig);
     bzla_bv_free(d_bzla->mm, bv_exp);
     bzla_bv_free(d_bzla->mm, bv_sign);
     bzla_bv_free(d_bzla->mm, res_sig);
     bzla_bv_free(d_bzla->mm, res_exp);
     bzla_bv_free(d_bzla->mm, res_sign);
+    bzla_bv_free(d_bzla->mm, res_bv);
   }
 
   void test_to_fp_from_real(BzlaRoundingMode rm,
@@ -114,7 +123,7 @@ class TestFpInternal : public TestBzla
     for (size_t i = 0, n = d_constants.size(); i < n; ++i)
     {
       fp = bzla_fp_convert_from_real(d_bzla, d_f16, rm, d_constants[i]);
-      bzla_fp_as_bv(d_bzla, fp, &sign, &exp, &sig);
+      bzla_fp_as_bvs(d_bzla, fp, &sign, &exp, &sig);
       sign_str = bzla_bv_to_char(mm, sign);
       exp_str  = bzla_bv_to_char(mm, exp);
       sig_str  = bzla_bv_to_char(mm, sig);

@@ -2976,12 +2976,25 @@ bzla_fp_get_bv_width(const BzlaFloatingPoint *fp)
   return fp->size->exponentWidth() + fp->size->significandWidth();
 }
 
+BzlaBitVector *
+bzla_fp_as_bv(Bzla *bzla, BzlaFloatingPoint *fp)
+{
+  assert(bzla);
+  assert(fp);
+  BzlaFPWordBlaster::set_s_bzla(bzla);
+#ifdef BZLA_USE_SYMFPU
+  return bzla_bv_copy(bzla->mm, symfpu::pack(*fp->size, *fp->fp).getBv());
+#else
+  return nullptr;
+#endif
+}
+
 void
-bzla_fp_as_bv(Bzla *bzla,
-              BzlaFloatingPoint *fp,
-              BzlaBitVector **sign,
-              BzlaBitVector **exp,
-              BzlaBitVector **sig)
+bzla_fp_as_bvs(Bzla *bzla,
+               BzlaFloatingPoint *fp,
+               BzlaBitVector **sign,
+               BzlaBitVector **exp,
+               BzlaBitVector **sig)
 {
   assert(bzla);
   assert(fp);

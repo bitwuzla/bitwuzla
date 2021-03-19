@@ -55,6 +55,9 @@ uint32_t bzla_fp_get_sig_width(const BzlaFloatingPoint *fp);
  */
 uint32_t bzla_fp_get_bv_width(const BzlaFloatingPoint *fp);
 
+/** Get the bit-vector representing a given floating-point.  */
+BzlaBitVector *bzla_fp_as_bv(Bzla *bzla, BzlaFloatingPoint *fp);
+
 /**
  * Get the triple of bit-vectors representing a given floating-point.
  * sign: The output argument for the bit-vector representation of the sign bit.
@@ -62,11 +65,11 @@ uint32_t bzla_fp_get_bv_width(const BzlaFloatingPoint *fp);
  * sig : The output argument for the bit-vector representation of the
  *       significand.
  */
-void bzla_fp_as_bv(Bzla *bzla,
-                   BzlaFloatingPoint *fp,
-                   BzlaBitVector **sign,
-                   BzlaBitVector **exp,
-                   BzlaBitVector **sig);
+void bzla_fp_as_bvs(Bzla *bzla,
+                    BzlaFloatingPoint *fp,
+                    BzlaBitVector **sign,
+                    BzlaBitVector **exp,
+                    BzlaBitVector **sig);
 
 /** Get the floating-point of a floating-point constant node. */
 BzlaFloatingPoint *bzla_fp_get_fp(BzlaNode *node);
