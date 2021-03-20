@@ -3750,14 +3750,14 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
 }
 
 static void
-make_mpq_from_dec_string(mpq_t *res, std::string str)
+make_mpq_from_dec_string(mpq_t &res, std::string str)
 {
   std::string::size_type decimal_point(str.find("."));
-  mpq_init(*res);
+  mpq_init(res);
 
   if (decimal_point == std::string::npos)
   {
-    mpq_set_str(*res, str.c_str(), 10);
+    mpq_set_str(res, str.c_str(), 10);
   }
   else
   {
@@ -3770,40 +3770,101 @@ make_mpq_from_dec_string(mpq_t *res, std::string str)
     mpz_init_set_ui(den, 10);
     mpz_pow_ui(den, den, str.size() - decimal_point);
 
-    mpz_set(mpq_numref(*res), num);
-    mpz_set(mpq_denref(*res), den);
+    mpz_set(mpq_numref(res), num);
+    mpz_set(mpq_denref(res), den);
 
     mpz_clear(num);
     mpz_clear(den);
   }
 
-  mpq_canonicalize(*res);
+  mpq_canonicalize(res);
 }
 
 static void
-make_mpq_from_ui(mpq_t *res, uint32_t n, uint32_t d)
+make_mpq_from_rat_string(mpq_t &res, const char *str_num, const char *str_den)
 {
-  mpq_init(*res);
-  mpq_set_ui(*res, n, d);
-  mpq_canonicalize(*res);
+  mpq_init(res);
+
+  bool num_is_dec = std::string(str_num).find(".") != std::string::npos;
+  bool den_is_dec = std::string(str_den).find(".") != std::string::npos;
+
+  if (num_is_dec || den_is_dec)
+  {
+    mpq_t num, den;
+
+    if (num_is_dec)
+    {
+      make_mpq_from_dec_string(num, str_num);
+    }
+    else
+    {
+      mpz_t znum;
+      mpz_init_set_str(znum, str_num, 10);
+      mpq_set_z(num, znum);
+      mpz_clear(znum);
+    }
+    if (den_is_dec)
+    {
+      make_mpq_from_dec_string(den, str_den);
+    }
+    else
+    {
+      mpz_t zden;
+      mpz_init_set_str(zden, str_den, 10);
+      mpq_set_z(den, zden);
+      mpz_clear(zden);
+    }
+
+    mpq_div(res, num, den);
+    mpq_clear(num);
+    mpq_clear(den);
+  }
+  else
+  {
+    mpz_t num, den;
+    mpz_init_set_str(num, str_num, 10);
+    mpz_init_set_str(den, str_den, 10);
+    mpz_set(mpq_numref(res), num);
+    mpz_set(mpq_denref(res), den);
+    mpz_clear(num);
+    mpz_clear(den);
+  }
+
+  mpq_canonicalize(res);
 }
 
-BzlaFloatingPoint *
-bzla_fp_convert_from_real(Bzla *bzla,
-                          BzlaSortId sort,
-                          const BzlaRoundingMode rm,
-                          const char *real)
+static void
+make_mpq_from_ui(mpq_t &res, uint32_t n, uint32_t d)
+{
+  mpq_init(res);
+  mpq_set_ui(res, n, d);
+  mpq_canonicalize(res);
+}
+
+static BzlaFloatingPoint *
+fp_convert_from_rational_aux(Bzla *bzla,
+                             BzlaSortId sort,
+                             const BzlaRoundingMode rm,
+                             const char *num,
+                             const char *den)
 {
   assert(bzla);
   assert(sort);
-  assert(real);
+  assert(num);
 
   BzlaFloatingPoint *res;
 #ifdef BZLA_USE_SYMFPU
   BzlaFPWordBlaster::set_s_bzla(bzla);
 
   mpq_t r;
-  make_mpq_from_dec_string(&r, real);
+  if (den == nullptr)
+  {
+    make_mpq_from_dec_string(r, num);
+  }
+  else
+  {
+    make_mpq_from_rat_string(r, num, den);
+  }
 
   int32_t sgn = mpq_sgn(r);
   if (sgn == 0)
@@ -3825,7 +3886,7 @@ bzla_fp_convert_from_real(Bzla *bzla,
 
     mpq_t tmp_exp;
     mpz_t iexp, inc;
-    make_mpq_from_ui(&tmp_exp, 1, 1);
+    make_mpq_from_ui(tmp_exp, 1, 1);
     mpz_init_set_ui(iexp, 0);
     mpz_init_set_ui(inc, 1);
 
@@ -3908,7 +3969,7 @@ bzla_fp_convert_from_real(Bzla *bzla,
     uint32_t n_sig_bits  = bzla_sort_fp_get_sig_width(bzla, sort) + 2;
     BzlaBitVector *sig = bzla_bv_zero(mm, n_sig_bits);
     mpq_t tmp_sig, mid;
-    make_mpq_from_ui(&tmp_sig, 0, 1);
+    make_mpq_from_ui(tmp_sig, 0, 1);
     mpq_init(mid);
     for (uint32_t i = 0, n = n_sig_bits - 1; i < n; ++i)
     {
@@ -3931,7 +3992,7 @@ bzla_fp_convert_from_real(Bzla *bzla,
     mpq_sub(remainder, r, tmp_sig);
 #ifndef NDEBUG
     mpq_t tmp01;
-    make_mpq_from_ui(&tmp01, 0, 1);
+    make_mpq_from_ui(tmp01, 0, 1);
     assert(mpq_cmp(tmp01, remainder) <= 1);
     mpq_clear(tmp01);
 #endif
@@ -3985,6 +4046,25 @@ bzla_fp_convert_from_real(Bzla *bzla,
   res = nullptr;
 #endif
   return res;
+}
+
+BzlaFloatingPoint *
+bzla_fp_convert_from_real(Bzla *bzla,
+                          BzlaSortId sort,
+                          const BzlaRoundingMode rm,
+                          const char *real)
+{
+  return fp_convert_from_rational_aux(bzla, sort, rm, real, nullptr);
+}
+
+BzlaFloatingPoint *
+bzla_fp_convert_from_rational(Bzla *bzla,
+                              BzlaSortId sort,
+                              const BzlaRoundingMode rm,
+                              const char *num,
+                              const char *den)
+{
+  return fp_convert_from_rational_aux(bzla, sort, rm, num, den);
 }
 
 /* ========================================================================== */

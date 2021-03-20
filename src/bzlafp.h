@@ -275,13 +275,23 @@ BzlaFloatingPoint *bzla_fp_convert_from_ubv(Bzla *bzla,
                                             const BzlaBitVector *bv);
 
 /**
- * Create a floating-point constant of given sort converted from the given
- * real constant represented as a string w.r.t. to the given rounding mode.
+ * Create a floating-point constant of given sort converted from the given real
+ * constant represented as a decimal string w.r.t. to the given rounding mode.
  */
 BzlaFloatingPoint *bzla_fp_convert_from_real(Bzla *bzla,
                                              BzlaSortId sort,
                                              const BzlaRoundingMode rm,
                                              const char *real);
+/**
+ * Create a floating-point constant of given sort converted from the given
+ * rational constant represented as a numerator and denominator decimal
+ * string w.r.t. to the given rounding mode.
+ */
+BzlaFloatingPoint *bzla_fp_convert_from_rational(Bzla *bzla,
+                                                 BzlaSortId sort,
+                                                 const BzlaRoundingMode rm,
+                                                 const char *num,
+                                                 const char *den);
 
 /* -------------------------------------------------------------------------- */
 /* Word-Blaster.                                                              */
