@@ -442,17 +442,9 @@ BzlaFPBV<is_signed>::signExtendRightShift(const BzlaFPBV<is_signed> &op) const
   uint32_t bwop = bzla_bv_get_width(op.d_bv);
   assert(bwop <= bw);
   BzlaBitVector *res, *bvop = op.d_bv;
-  if (is_signed)
-  {
-    if (bwop < bw) bvop = bzla_bv_sext(s_bzla->mm, op.d_bv, bw - bwop);
-    res = bzla_bv_sra(s_bzla->mm, d_bv, bvop);
-  }
-  else
-  {
-    if (bwop < bw) bvop = bzla_bv_uext(s_bzla->mm, op.d_bv, bw - bwop);
-    res = bzla_bv_srl(s_bzla->mm, d_bv, bvop);
-  }
-  if (bwop < bw) bzla_bv_free(s_bzla->mm, bvop);
+  bvop = bzla_bv_sext(s_bzla->mm, op.d_bv, bw - bwop);
+  res = bzla_bv_sra(s_bzla->mm, d_bv, bvop);
+  bzla_bv_free(s_bzla->mm, bvop);
   return res;
 }
 
