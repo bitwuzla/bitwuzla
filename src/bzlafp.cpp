@@ -3798,6 +3798,7 @@ make_mpq_from_rat_string(mpq_t &res, const char *str_num, const char *str_den)
     }
     else
     {
+      mpq_init(num);
       mpz_t znum;
       mpz_init_set_str(znum, str_num, 10);
       mpq_set_z(num, znum);
@@ -3809,6 +3810,7 @@ make_mpq_from_rat_string(mpq_t &res, const char *str_num, const char *str_den)
     }
     else
     {
+      mpq_init(den);
       mpz_t zden;
       mpz_init_set_str(zden, str_den, 10);
       mpq_set_z(den, zden);
