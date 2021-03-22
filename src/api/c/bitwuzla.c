@@ -1677,6 +1677,59 @@ bitwuzla_mk_fp_value(Bitwuzla *bitwuzla,
 }
 
 BitwuzlaTerm *
+bitwuzla_mk_fp_value_from_real(Bitwuzla *bitwuzla,
+                               const BitwuzlaSort *sort,
+                               const BitwuzlaTerm *rm,
+                               const char *real)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(sort);
+  BZLA_CHECK_ARG_NOT_NULL(rm);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(real);
+  BZLA_CHECK_SORT_BITWUZLA(bitwuzla, sort);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+
+  BzlaNode *bzla_rm = BZLA_IMPORT_BITWUZLA_TERM(rm);
+  assert(bzla_node_get_ext_refs(bzla_rm));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_rm);
+  BZLA_CHECK_TERM_IS_RM(bzla, bzla_rm);
+
+  BzlaNode *res = bzla_exp_fp_const_from_real(bzla, bzla_sort, bzla_rm, real);
+  BZLA_RETURN_BITWUZLA_TERM(res);
+}
+
+BitwuzlaTerm *
+bitwuzla_mk_fp_value_from_rational(Bitwuzla *bitwuzla,
+                                   const BitwuzlaSort *sort,
+                                   const BitwuzlaTerm *rm,
+                                   const char *num,
+                                   const char *den)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(sort);
+  BZLA_CHECK_ARG_NOT_NULL(rm);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(num);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(den);
+  BZLA_CHECK_SORT_BITWUZLA(bitwuzla, sort);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
+
+  BzlaNode *bzla_rm = BZLA_IMPORT_BITWUZLA_TERM(rm);
+  assert(bzla_node_get_ext_refs(bzla_rm));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_rm);
+  BZLA_CHECK_TERM_IS_RM(bzla, bzla_rm);
+
+  BzlaNode *res =
+      bzla_exp_fp_const_from_rational(bzla, bzla_sort, bzla_rm, num, den);
+  BZLA_RETURN_BITWUZLA_TERM(res);
+}
+
+BitwuzlaTerm *
 bitwuzla_mk_rm_value(Bitwuzla *bitwuzla, BitwuzlaRoundingMode rm)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);

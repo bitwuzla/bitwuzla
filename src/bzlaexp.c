@@ -1925,6 +1925,186 @@ bzla_exp_fp_const(Bzla *bzla,
 }
 
 BzlaNode *
+bzla_exp_fp_const_from_real(Bzla *bzla,
+                            BzlaSortId sort,
+                            BzlaNode *rm,
+                            const char *real)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  assert(sort);
+  assert(bzla_sort_is_fp(bzla, sort));
+  assert(bzla_node_is_regular(rm));
+
+  BzlaNode *result;
+
+  if (bzla_node_is_rm_const(rm))
+  {
+    BzlaFloatingPoint *fp;
+    fp = bzla_fp_convert_from_real(
+        bzla, sort, bzla_node_rm_const_get_rm(rm), real);
+    result = bzla_exp_fp_const_fp(bzla, fp);
+    bzla_fp_free(bzla, fp);
+  }
+  else
+  {
+    BzlaFloatingPoint *fp_rna, *fp_rne, *fp_rtn, *fp_rtp, *fp_rtz;
+    BzlaNode *rna, *rne, *rtn, *rtp;
+    BzlaNode *c, *t_rna, *t_rne, *t_rtn, *t_rtp, *t_rtz, *e;
+
+    rna = bzla_exp_rm_const(bzla, BZLA_RM_RNA);
+    rne = bzla_exp_rm_const(bzla, BZLA_RM_RNE);
+    rtn = bzla_exp_rm_const(bzla, BZLA_RM_RTN);
+    rtp = bzla_exp_rm_const(bzla, BZLA_RM_RTP);
+
+    fp_rna = bzla_fp_convert_from_real(bzla, sort, BZLA_RM_RNA, real);
+    fp_rne = bzla_fp_convert_from_real(bzla, sort, BZLA_RM_RNE, real);
+    fp_rtn = bzla_fp_convert_from_real(bzla, sort, BZLA_RM_RTN, real);
+    fp_rtp = bzla_fp_convert_from_real(bzla, sort, BZLA_RM_RTP, real);
+    fp_rtz = bzla_fp_convert_from_real(bzla, sort, BZLA_RM_RTZ, real);
+
+    t_rna = bzla_exp_fp_const_fp(bzla, fp_rna);
+    t_rne = bzla_exp_fp_const_fp(bzla, fp_rne);
+    t_rtn = bzla_exp_fp_const_fp(bzla, fp_rtn);
+    t_rtp = bzla_exp_fp_const_fp(bzla, fp_rtp);
+    t_rtz = bzla_exp_fp_const_fp(bzla, fp_rtz);
+
+    e = t_rtz;
+
+    c      = bzla_exp_eq(bzla, rm, rtp);
+    result = bzla_exp_cond(bzla, c, t_rtp, e);
+    bzla_node_release(bzla, c);
+    e = result;
+
+    c      = bzla_exp_eq(bzla, rm, rtn);
+    result = bzla_exp_cond(bzla, c, t_rtn, e);
+    bzla_node_release(bzla, c);
+    bzla_node_release(bzla, e);
+    e = result;
+
+    c      = bzla_exp_eq(bzla, rm, rne);
+    result = bzla_exp_cond(bzla, c, t_rne, e);
+    bzla_node_release(bzla, c);
+    bzla_node_release(bzla, e);
+    e = result;
+
+    c      = bzla_exp_eq(bzla, rm, rna);
+    result = bzla_exp_cond(bzla, c, t_rna, e);
+    bzla_node_release(bzla, c);
+    bzla_node_release(bzla, e);
+
+    bzla_node_release(bzla, t_rna);
+    bzla_node_release(bzla, t_rne);
+    bzla_node_release(bzla, t_rtn);
+    bzla_node_release(bzla, t_rtp);
+    bzla_node_release(bzla, t_rtz);
+
+    bzla_fp_free(bzla, fp_rna);
+    bzla_fp_free(bzla, fp_rne);
+    bzla_fp_free(bzla, fp_rtn);
+    bzla_fp_free(bzla, fp_rtp);
+    bzla_fp_free(bzla, fp_rtz);
+
+    bzla_node_release(bzla, rna);
+    bzla_node_release(bzla, rne);
+    bzla_node_release(bzla, rtn);
+    bzla_node_release(bzla, rtp);
+  }
+  return result;
+}
+
+BzlaNode *
+bzla_exp_fp_const_from_rational(
+    Bzla *bzla, BzlaSortId sort, BzlaNode *rm, const char *num, const char *den)
+{
+#if !defined(BZLA_USE_SYMFPU)
+  BZLA_ABORT(true, "SymFPU not configured");
+#endif
+  assert(bzla);
+  assert(sort);
+  assert(bzla_sort_is_fp(bzla, sort));
+  assert(bzla_node_is_regular(rm));
+
+  BzlaNode *result;
+
+  if (bzla_node_is_rm_const(rm))
+  {
+    BzlaFloatingPoint *fp;
+    fp = bzla_fp_convert_from_rational(
+        bzla, sort, bzla_node_rm_const_get_rm(rm), num, den);
+    result = bzla_exp_fp_const_fp(bzla, fp);
+    bzla_fp_free(bzla, fp);
+  }
+  else
+  {
+    BzlaFloatingPoint *fp_rna, *fp_rne, *fp_rtn, *fp_rtp, *fp_rtz;
+    BzlaNode *rna, *rne, *rtn, *rtp;
+    BzlaNode *c, *t_rna, *t_rne, *t_rtn, *t_rtp, *t_rtz, *e;
+
+    rna = bzla_exp_rm_const(bzla, BZLA_RM_RNA);
+    rne = bzla_exp_rm_const(bzla, BZLA_RM_RNE);
+    rtn = bzla_exp_rm_const(bzla, BZLA_RM_RTN);
+    rtp = bzla_exp_rm_const(bzla, BZLA_RM_RTP);
+
+    fp_rna = bzla_fp_convert_from_rational(bzla, sort, BZLA_RM_RNA, num, den);
+    fp_rne = bzla_fp_convert_from_rational(bzla, sort, BZLA_RM_RNE, num, den);
+    fp_rtn = bzla_fp_convert_from_rational(bzla, sort, BZLA_RM_RTN, num, den);
+    fp_rtp = bzla_fp_convert_from_rational(bzla, sort, BZLA_RM_RTP, num, den);
+    fp_rtz = bzla_fp_convert_from_rational(bzla, sort, BZLA_RM_RTZ, num, den);
+
+    t_rna = bzla_exp_fp_const_fp(bzla, fp_rna);
+    t_rne = bzla_exp_fp_const_fp(bzla, fp_rne);
+    t_rtn = bzla_exp_fp_const_fp(bzla, fp_rtn);
+    t_rtp = bzla_exp_fp_const_fp(bzla, fp_rtp);
+    t_rtz = bzla_exp_fp_const_fp(bzla, fp_rtz);
+
+    e = t_rtz;
+
+    c      = bzla_exp_eq(bzla, rm, rtp);
+    result = bzla_exp_cond(bzla, c, t_rtp, e);
+    bzla_node_release(bzla, c);
+    e = result;
+
+    c      = bzla_exp_eq(bzla, rm, rtn);
+    result = bzla_exp_cond(bzla, c, t_rtn, e);
+    bzla_node_release(bzla, c);
+    bzla_node_release(bzla, e);
+    e = result;
+
+    c      = bzla_exp_eq(bzla, rm, rne);
+    result = bzla_exp_cond(bzla, c, t_rne, e);
+    bzla_node_release(bzla, c);
+    bzla_node_release(bzla, e);
+    e = result;
+
+    c      = bzla_exp_eq(bzla, rm, rna);
+    result = bzla_exp_cond(bzla, c, t_rna, e);
+    bzla_node_release(bzla, c);
+    bzla_node_release(bzla, e);
+
+    bzla_node_release(bzla, t_rna);
+    bzla_node_release(bzla, t_rne);
+    bzla_node_release(bzla, t_rtn);
+    bzla_node_release(bzla, t_rtp);
+    bzla_node_release(bzla, t_rtz);
+
+    bzla_fp_free(bzla, fp_rna);
+    bzla_fp_free(bzla, fp_rne);
+    bzla_fp_free(bzla, fp_rtn);
+    bzla_fp_free(bzla, fp_rtp);
+    bzla_fp_free(bzla, fp_rtz);
+
+    bzla_node_release(bzla, rna);
+    bzla_node_release(bzla, rne);
+    bzla_node_release(bzla, rtn);
+    bzla_node_release(bzla, rtp);
+  }
+  return result;
+}
+
+BzlaNode *
 bzla_exp_fp_fp(Bzla *bzla,
                BzlaNode *e0_sign,
                BzlaNode *e1_exp,

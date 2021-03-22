@@ -1213,6 +1213,7 @@ if(SymFPU_FOUND)
 
   list(APPEND cmp_testcases
     "fp_regr5.smt2 -i"
+    "fp_real.smt2"
   )
 endif()
 

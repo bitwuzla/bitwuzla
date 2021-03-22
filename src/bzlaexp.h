@@ -485,7 +485,32 @@ BzlaNode *bzla_exp_fp_const(Bzla *bzla,
                             BzlaNode *e1,
                             BzlaNode *e2);
 
-/* Create floating-point const from BzlaFloatingPoint. */
+/**
+ * Create floating-point const from decimal real string.
+ * sort: floating-point sort
+ * rm  : rounding mode
+ * real: integer or decimal string
+ */
+BzlaNode *bzla_exp_fp_const_from_real(Bzla *bzla,
+                                      BzlaSortId sort,
+                                      BzlaNode *rm,
+                                      const char *real);
+
+/**
+ * Create floating-point const from decimal numerator and denominator strings
+ * representing a rational.
+ * sort: floating-point sort
+ * rm  : rounding mode
+ * num : integer or decimal string representing the numerator of the rational
+ * den : integer or decimal string representing the denominator of the rational
+ */
+BzlaNode *bzla_exp_fp_const_from_rational(Bzla *bzla,
+                                          BzlaSortId sort,
+                                          BzlaNode *rm,
+                                          const char *num,
+                                          const char *den);
+
+/** Create floating-point const from BzlaFloatingPoint. */
 BzlaNode *bzla_exp_fp_const_fp(Bzla *bzla, const BzlaFloatingPoint *fp);
 
 /**
