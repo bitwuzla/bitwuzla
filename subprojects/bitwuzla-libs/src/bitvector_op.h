@@ -66,6 +66,15 @@ class BitVectorOp
   virtual const BitVector& consistent_value(const BitVector& t,
                                             uint32_t pos_x) = 0;
 
+  /**
+   * Select the next step in the propagation path based on target value t and
+   * the current assignment of this operand's children.
+   */
+  uint32_t select_path(const BitVector& t)
+  { /* TODO */
+    return 0;
+  }
+
   /** Get child at given index. */
   BitVectorOp* operator[](uint32_t pos) const;
 
@@ -75,6 +84,10 @@ class BitVectorOp
   const BitVector& assignment() const { return d_assignment; }
   /** Get the domain of this operation. */
   const BitVectorDomain& domain() const { return d_domain; }
+  /** Return true if the underlying domain is fixed. */
+  bool is_const() const { return d_is_const; }
+  /** Return true if all children are const. */
+  bool all_const() const { return d_all_const; }
 
  protected:
   std::unique_ptr<BitVectorOp*[]> d_children = nullptr;
@@ -82,6 +95,8 @@ class BitVectorOp
   uint32_t d_arity                           = 2;
   BitVector d_assignment;
   BitVectorDomain d_domain;
+  bool d_is_const;
+  bool d_all_const;
 
   /** Cached inverse value result. */
   std::unique_ptr<BitVector> d_inverse = nullptr;
