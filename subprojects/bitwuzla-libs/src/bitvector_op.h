@@ -14,6 +14,7 @@ class BitVectorOp
 {
  public:
   /** Constructor. */
+  BitVectorOp(RNG* rng, uint32_t size);
   BitVectorOp(RNG* rng, uint32_t size, BitVectorOp* child0);
   BitVectorOp(RNG* rng,
               uint32_t size,
@@ -24,6 +25,9 @@ class BitVectorOp
               BitVectorOp* child0,
               BitVectorOp* child1,
               BitVectorOp* child2);
+  BitVectorOp(RNG* rng,
+              const BitVector& assignment,
+              const BitVectorDomain& domain);
   BitVectorOp(RNG* rng,
               const BitVector& assignment,
               const BitVectorDomain& domain,
@@ -46,25 +50,44 @@ class BitVectorOp
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
    */
-  virtual bool is_invertible(const BitVector& t, uint32_t pos_x) = 0;
+  virtual bool is_invertible(const BitVector& t, uint32_t pos_x)
+  {
+    (void) t;
+    (void) pos_x;
+    return true;
+  }
+
   /**
    * Check consistency condition for x at index pos_x with respect to constant
    * bits and target value t.
    */
-  virtual bool is_consistent(const BitVector& t, uint32_t pos_x) = 0;
+  virtual bool is_consistent(const BitVector& t, uint32_t pos_x)
+  {
+    (void) t;
+    (void) pos_x;
+    return true;
+  }
 
   /**
    * Get an inverse value for x at index pos_x with respect to constant bits
    * and target value t.
    */
-  virtual const BitVector& inverse_value(const BitVector& t,
-                                         uint32_t pos_x) = 0;
+  virtual const BitVector& inverse_value(const BitVector& t, uint32_t pos_x)
+  {
+    (void) t;
+    (void) pos_x;
+    return *d_inverse;
+  }
   /**
    * Get an consistent value for x at index pos_x with respect to constant bits
    * and target value t.
    */
-  virtual const BitVector& consistent_value(const BitVector& t,
-                                            uint32_t pos_x) = 0;
+  virtual const BitVector& consistent_value(const BitVector& t, uint32_t pos_x)
+  {
+    (void) t;
+    (void) pos_x;
+    return *d_consistent;
+  }
 
   /**
    * Select the next step in the propagation path based on target value t and
@@ -86,13 +109,14 @@ class BitVectorOp
   const BitVectorDomain& domain() const { return d_domain; }
   /** Return true if the underlying domain is fixed. */
   bool is_const() const { return d_is_const; }
+
   /** Return true if all children are const. */
   bool all_const() const { return d_all_const; }
 
  protected:
   std::unique_ptr<BitVectorOp*[]> d_children = nullptr;
-  RNG* d_rng                                 = nullptr;
-  uint32_t d_arity                           = 2;
+  RNG* d_rng;
+  uint32_t d_arity;
   BitVector d_assignment;
   BitVectorDomain d_domain;
   bool d_is_const;

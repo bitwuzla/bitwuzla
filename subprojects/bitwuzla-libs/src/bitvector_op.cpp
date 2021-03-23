@@ -11,6 +11,13 @@ namespace bzlals {
 
 /* -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
+
+BitVectorOp::BitVectorOp(RNG* rng, uint32_t size)
+    : BitVectorOp(rng, BitVector::mk_zero(size), BitVectorDomain(size))
+{
+}
+
 BitVectorOp::BitVectorOp(RNG* rng, uint32_t size, BitVectorOp* child0)
     : BitVectorOp(rng, BitVector::mk_zero(size), BitVectorDomain(size), child0)
 {
@@ -41,20 +48,29 @@ BitVectorOp::BitVectorOp(RNG* rng,
 
 BitVectorOp::BitVectorOp(RNG* rng,
                          const BitVector& assignment,
+                         const BitVectorDomain& domain)
+    : d_rng(rng),
+      d_arity(0),
+      d_assignment(assignment),
+      d_domain(domain),
+      d_is_const(domain.is_fixed())
+{
+}
+
+BitVectorOp::BitVectorOp(RNG* rng,
+                         const BitVector& assignment,
                          const BitVectorDomain& domain,
                          BitVectorOp* child0)
-    : d_rng(rng), d_arity(1), d_assignment(assignment), d_domain(domain)
+    : d_rng(rng),
+      d_arity(1),
+      d_assignment(assignment),
+      d_domain(domain),
+      d_is_const(domain.is_fixed())
 {
   assert(rng);
   d_children.reset(new BitVectorOp*[d_arity]);
   d_children[0] = child0;
-  d_is_const      = domain.is_fixed();
-  uint32_t nconst = 0;
-  for (uint32_t i = 0; i < d_arity; ++i)
-  {
-    if (d_children[i]->is_const()) nconst += 1;
-  }
-  d_all_const = nconst == d_arity;
+  d_all_const   = child0->is_const();
 }
 
 BitVectorOp::BitVectorOp(RNG* rng,
@@ -62,13 +78,17 @@ BitVectorOp::BitVectorOp(RNG* rng,
                          const BitVectorDomain& domain,
                          BitVectorOp* child0,
                          BitVectorOp* child1)
-    : d_rng(rng), d_arity(2), d_assignment(assignment), d_domain(domain)
+    : d_rng(rng),
+      d_arity(2),
+      d_assignment(assignment),
+      d_domain(domain),
+      d_is_const(domain.is_fixed())
 {
   assert(rng);
   d_children.reset(new BitVectorOp*[d_arity]);
   d_children[0] = child0;
   d_children[1] = child1;
-  d_is_const    = domain.is_fixed();
+  d_all_const   = child0->is_const() && child1->is_const();
 }
 
 BitVectorOp::BitVectorOp(RNG* rng,
@@ -77,14 +97,18 @@ BitVectorOp::BitVectorOp(RNG* rng,
                          BitVectorOp* child0,
                          BitVectorOp* child1,
                          BitVectorOp* child2)
-    : d_rng(rng), d_arity(3), d_assignment(assignment), d_domain(domain)
+    : d_rng(rng),
+      d_arity(3),
+      d_assignment(assignment),
+      d_domain(domain),
+      d_is_const(domain.is_fixed())
 {
   assert(rng);
   d_children.reset(new BitVectorOp*[d_arity]);
   d_children[0] = child0;
   d_children[1] = child1;
   d_children[2] = child2;
-  d_is_const    = domain.is_fixed();
+  d_all_const = child0->is_const() && child1->is_const() && child2->is_const();
 }
 
 BitVectorOp*
