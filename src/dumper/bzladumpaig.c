@@ -142,7 +142,7 @@ bzla_dumpaig_dump(Bzla *bzla, bool is_binary, FILE *output, bool merge_roots)
   BzlaPtrHashTableIterator it;
   BzlaNodePtrStack nodes;
 
-  const char *fmt_header      = "%s AIG dump\nc Bitwuzla version %s\n";
+  const char *fmt_header      = "%s AIG dump\nBitwuzla version %s\n";
   int comment_section_started = 0;
 
   BZLA_INIT_STACK(bzla->mm, nodes);
@@ -166,6 +166,18 @@ bzla_dumpaig_dump(Bzla *bzla, bool is_binary, FILE *output, bool merge_roots)
     fprintf(output, fmt_header, "Formula", bzla_version(bzla));
   }
   BZLA_RELEASE_STACK(nodes);
+
+  if (BZLA_EMPTY_STACK(nodes))
+  {
+    if (bzla->inconsistent)
+    {
+      BZLA_PUSH_STACK(nodes, bzla_node_invert(bzla->true_exp));
+    }
+    else
+    {
+      BZLA_PUSH_STACK(nodes, bzla->true_exp);
+    }
+  }
 
   /* print nodes marked as outputs in BTOR2 */
   if (BZLA_COUNT_STACK(bzla->outputs))
