@@ -51,14 +51,16 @@ typedef enum BzlaSMT2TagClass
   BZLA_ARRAY_TAG_CLASS_SMT2    = (BZLA_CLASS_SIZE_SMT2 << 5),
   BZLA_BV_TAG_CLASS_SMT2       = (BZLA_CLASS_SIZE_SMT2 << 6),
   BZLA_FP_TAG_CLASS_SMT2       = (BZLA_CLASS_SIZE_SMT2 << 7),
-  BZLA_LOGIC_TAG_CLASS_SMT2    = (BZLA_CLASS_SIZE_SMT2 << 8),
+  BZLA_REAL_TAG_CLASS_SMT2     = (BZLA_CLASS_SIZE_SMT2 << 8),
+  BZLA_LOGIC_TAG_CLASS_SMT2    = (BZLA_CLASS_SIZE_SMT2 << 9),
 } BzlaSMT2TagClass;
 
 #define BZLA_TAG_CLASS_MASK_SMT2                              \
   (BZLA_RESERVED_TAG_CLASS_SMT2 | BZLA_COMMAND_TAG_CLASS_SMT2 \
    | BZLA_KEYWORD_TAG_CLASS_SMT2 | BZLA_CORE_TAG_CLASS_SMT2   \
    | BZLA_ARRAY_TAG_CLASS_SMT2 | BZLA_BV_TAG_CLASS_SMT2       \
-   | BZLA_FP_TAG_CLASS_SMT2 | BZLA_LOGIC_TAG_CLASS_SMT2)
+   | BZLA_FP_TAG_CLASS_SMT2 | BZLA_REAL_TAG_CLASS_SMT2        \
+   | BZLA_LOGIC_TAG_CLASS_SMT2)
 
 typedef enum BzlaSMT2Tag
 {
@@ -284,6 +286,9 @@ typedef enum BzlaSMT2Tag
   BZLA_FP_TO_UBV_TAG_SMT2                       = 48 + BZLA_FP_TAG_CLASS_SMT2,
   BZLA_FP_TO_SBV_TAG_SMT2                       = 49 + BZLA_FP_TAG_CLASS_SMT2,
 
+  /* Reals (for to_fp conversion) ----------------------------------------- */
+  BZLA_REAL_DIV_TAG_SMT2 = 0 + BZLA_REAL_TAG_CLASS_SMT2,
+
   /* ---------------------------------------------------------------------- */
   /* Logic                                                                  */
 
@@ -365,6 +370,7 @@ typedef struct BzlaSMT2Item
     BitwuzlaTerm *exp;
     BitwuzlaSort *sort;
     char *str;
+    char *strs[2];
   };
 } BzlaSMT2Item;
 
@@ -1147,6 +1153,12 @@ insert_fp_symbols_smt2(BzlaSMT2Parser *parser)
 }
 
 static void
+insert_real_symbols_smt2(BzlaSMT2Parser *parser)
+{
+  INSERT("/", BZLA_REAL_DIV_TAG_SMT2);
+}
+
+static void
 insert_logics_smt2(BzlaSMT2Parser *parser)
 {
   INSERT("AUFLIA", BZLA_LOGIC_AUFLIA_TAG_SMT2);
@@ -1220,6 +1232,7 @@ new_smt2_parser(Bitwuzla *bitwuzla)
   insert_array_symbols_smt2(res);
   insert_bitvec_symbols_smt2(res);
   insert_fp_symbols_smt2(res);
+  insert_real_symbols_smt2(res);
   insert_logics_smt2(res);
 
   return res;
@@ -2031,6 +2044,21 @@ check_rm_fp_args_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p, uint32_t nargs)
   return check_bv_or_fp_args_smt2(parser, p, 2, nargs, true);
 }
 
+static bool
+check_real_arg_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p, uint32_t idx)
+{
+  if (p[idx].tag != BZLA_DECIMAL_CONSTANT_TAG_SMT2
+      && p[idx].tag != BZLA_REAL_CONSTANT_TAG_SMT2)
+  {
+    parser->perrcoo = p[idx].coo;
+    return !perr_smt2(parser,
+                      "argument %u of '%s' is not a Real constant",
+                      idx,
+                      p->node->name);
+  }
+  return true;
+}
+
 static int32_t parse_sort(BzlaSMT2Parser *parser,
                           int32_t tag,
                           bool allow_array_sort,
@@ -2618,7 +2646,8 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   if (!check_rm_arg_smt2(parser, item_cur, 1)) return 0;
   if (item_cur[2].tag != BZLA_EXP_TAG_SMT2
-      && item_cur[2].tag != BZLA_REAL_CONSTANT_TAG_SMT2)
+      && item_cur[2].tag != BZLA_REAL_CONSTANT_TAG_SMT2
+      && item_cur[2].tag != BZLA_REAL_DIV_TAG_SMT2)
   {
     parser->perrcoo = item_cur[2].coo;
     return !perr_smt2(parser, "expected expression or real constant");
@@ -2631,6 +2660,15 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
     exp = bitwuzla_mk_fp_value_from_real(
         bitwuzla, s, item_cur[1].exp, item_cur[2].str);
     bzla_mem_freestr(parser->mem, item_cur[2].str);
+  }
+  else if (item_cur[2].tag == BZLA_REAL_DIV_TAG_SMT2)
+  {
+    BitwuzlaSort *s =
+        bitwuzla_mk_fp_sort(bitwuzla, item_cur->idx0, item_cur->idx1);
+    exp = bitwuzla_mk_fp_value_from_rational(
+        bitwuzla, s, item_cur[1].exp, item_cur[2].strs[0], item_cur[2].strs[1]);
+    bzla_mem_freestr(parser->mem, item_cur[2].strs[0]);
+    bzla_mem_freestr(parser->mem, item_cur[2].strs[1]);
   }
   else
   {
@@ -2801,9 +2839,10 @@ close_term(BzlaSMT2Parser *parser)
 
   /* check if operands are expressions -------------------------------------- */
   if (tag != BZLA_LET_TAG_SMT2 && tag != BZLA_LETBIND_TAG_SMT2
-      && tag != BZLA_PARLETBINDING_TAG_SMT2 && tag != BZLA_SORTED_VAR_TAG_SMT2
-      && tag != BZLA_SORTED_VARS_TAG_SMT2 && tag != BZLA_FORALL_TAG_SMT2
-      && tag != BZLA_EXISTS_TAG_SMT2 && tag != BZLA_BANG_TAG_SMT2)
+      && tag != BZLA_PARLETBINDING_TAG_SMT2 && tag != BZLA_REAL_DIV_TAG_SMT2
+      && tag != BZLA_SORTED_VAR_TAG_SMT2 && tag != BZLA_SORTED_VARS_TAG_SMT2
+      && tag != BZLA_FORALL_TAG_SMT2 && tag != BZLA_EXISTS_TAG_SMT2
+      && tag != BZLA_BANG_TAG_SMT2)
   {
     i = 1;
     for (; i <= nargs; i++)
@@ -2811,12 +2850,14 @@ close_term(BzlaSMT2Parser *parser)
       if (item_cur[i].tag != BZLA_EXP_TAG_SMT2)
       {
         parser->perrcoo = item_cur[i].coo;
-        if (item_cur[i].tag == BZLA_REAL_CONSTANT_TAG_SMT2)
+        if (item_cur[i].tag == BZLA_REAL_CONSTANT_TAG_SMT2
+            || item_cur[i].tag == BZLA_REAL_DIV_TAG_SMT2)
         {
           if (tag == BZLA_FP_TO_FP_TAG_SMT2) continue;
           return !perr_smt2(parser, "Real constants not supported");
         }
-        return !perr_smt2(parser, "expected expression");
+        assert(false);
+        return !perr_smt2(parser, "-expected expression");
       }
     }
   }
@@ -3777,7 +3818,7 @@ close_term(BzlaSMT2Parser *parser)
     }
     release_exp_and_overwrite(parser, item_open, item_cur, exp);
   }
-  /* FP: to_fp ---------------------------------------------------------- */
+  /* FP: to_fp -------------------------------------------------------------- */
   else if (tag == BZLA_FP_TO_FP_TAG_SMT2)
   {
     if (nargs == 1)
@@ -3809,10 +3850,21 @@ close_term(BzlaSMT2Parser *parser)
       close_term_to_fp_two_args(parser, item_open, item_cur, nargs);
     }
   }
-  /* FP: to_fp_unsigned ------------------------------------------------- */
+  /* FP: to_fp_unsigned ----------------------------------------------------- */
   else if (tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
   {
     close_term_to_fp_two_args(parser, item_open, item_cur, nargs);
+  }
+  /* Real: / ---------------------------------------------------------------- */
+  else if (tag == BZLA_REAL_DIV_TAG_SMT2)
+  {
+    if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
+    if (!check_real_arg_smt2(parser, item_cur, 1)) return 0;
+    if (!check_real_arg_smt2(parser, item_cur, 2)) return 0;
+    parser->work.top   = item_cur;
+    item_open->tag     = BZLA_REAL_DIV_TAG_SMT2;
+    item_open->strs[0] = item_cur[1].str;
+    item_open->strs[1] = item_cur[2].str;
   }
   /* let (<var_binding>+) <term> -------------------------------------------- */
   else if (tag == BZLA_LET_TAG_SMT2)
@@ -4549,7 +4601,7 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
       item_cur->exp = bitwuzla_mk_rm_value(bitwuzla, BITWUZLA_RM_RTZ);
     }
   }
-  else
+  else if (tag != BZLA_REAL_DIV_TAG_SMT2)
   {
     return !perr_smt2(parser, "unexpected token '%s'", item2str_smt2(item_cur));
   }
@@ -4720,7 +4772,8 @@ parse_open_term(BzlaSMT2Parser *parser, int32_t tag)
     bzla_mem_freestr(parser->mem, uconstr);
     bzla_mem_freestr(parser->mem, constr);
   }
-  else if (tag == BZLA_REAL_CONSTANT_TAG_SMT2)
+  else if (tag == BZLA_DECIMAL_CONSTANT_TAG_SMT2
+           || tag == BZLA_REAL_CONSTANT_TAG_SMT2)
   {
     item_cur->str = bzla_mem_strdup(parser->mem, parser->token.start);
   }
