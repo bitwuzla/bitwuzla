@@ -14,8 +14,6 @@ shared=no
 prefix=
 path=
 
-gmp=no
-
 symfpu=no
 
 cadical=unknown
@@ -68,8 +66,6 @@ where <option> is one of the following:
   --py2             prefer Python 2.7
   --py3             prefer Python 3
   --time-stats      compile with time statistics
-
-  --gmp             use gmp for bit-vector implementation
 
   --symfpu          use SymFPU for FP support
 
@@ -156,9 +152,7 @@ do
     --py3)        py3=yes;;
     --time-stats) timestats=yes;;
 
-    --gmp) gmp=yes;;
-
-    --symfpu) symfpu=yes; gmp=yes;;
+    --symfpu) symfpu=yes;;
     --no-cadical)   cadical=no;;
     --no-cms)       cms=no;;
     --no-kissat)    kissat=no;;
@@ -193,8 +187,6 @@ cmake_opts="$CMAKE_OPTS"
 
 [ -n "$prefix" ] && cmake_opts="$cmake_opts -DCMAKE_INSTALL_PREFIX=$prefix"
 [ -n "$path" ] && cmake_opts="$cmake_opts -DCMAKE_PREFIX_PATH=$path"
-
-[ $gmp = yes ] && cmake_opts="$cmake_opts -DUSE_GMP=ON"
 
 [ $symfpu = yes ] && cmake_opts="$cmake_opts -DUSE_SYMFPU=ON"
 

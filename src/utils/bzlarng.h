@@ -19,12 +19,10 @@ struct BzlaRNG
   uint32_t z, w;
   BzlaMemMgr* mm;
   uint32_t seed;
-#ifdef BZLA_USE_GMP
   bool is_init;
   /* This is a bit ugly, but a workaround to not include gmp.h in this header
    * (including the GMP header causes compilation problems with gtest). */
   void* gmp_state;
-#endif
 };
 
 typedef struct BzlaRNG BzlaRNG;

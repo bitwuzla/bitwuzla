@@ -37,9 +37,7 @@
 #include "utils/bzlastack.h"
 #include "utils/bzlautil.h"
 
-#ifdef BZLA_USE_GMP
 #include <gmp.h>
-#endif
 
 BZLA_DECLARE_STACK(BzlaNodePtrStackPtr, BzlaNodePtrStack *);
 BZLA_DECLARE_STACK(BzlaPtrHashTablePtrPtr, BzlaPtrHashTable **);
@@ -951,9 +949,7 @@ clone_aux_bzla(Bzla *bzla,
   clone->rng = bzla_rng_clone(bzla->rng, mm);
 #ifndef NDEBUG
   allocated += sizeof(BzlaRNG);
-#ifdef BZLA_USE_GMP
   allocated += sizeof(gmp_randstate_t);
-#endif
 #endif
 
   BZLA_CLR(&clone->cbs);

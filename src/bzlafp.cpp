@@ -3359,7 +3359,6 @@ bzla_fp_fp(Bzla *bzla,
   bzla_sort_release(bzla, sort);
 #else
   (void) bzla;
-  (void) sort;
   (void) bv_sign;
   (void) bv_exp;
   (void) bv_sig;
@@ -3392,7 +3391,6 @@ bzla_fp_fp_from_unpacked(Bzla *bzla,
   bzla_sort_release(bzla, sort);
 #else
   (void) bzla;
-  (void) sort;
   (void) bv_sign;
   (void) bv_exp;
   (void) bv_sig;
@@ -3749,6 +3747,7 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
   return res;
 }
 
+#ifdef BZLA_USE_SYMFPU
 static void
 make_mpq_from_dec_string(mpq_t &res, std::string str)
 {
@@ -3842,6 +3841,7 @@ make_mpq_from_ui(mpq_t &res, uint32_t n, uint32_t d)
   mpq_set_ui(res, n, d);
   mpq_canonicalize(res);
 }
+#endif
 
 static BzlaFloatingPoint *
 fp_convert_from_rational_aux(Bzla *bzla,
@@ -4044,7 +4044,8 @@ fp_convert_from_rational_aux(Bzla *bzla,
 #else
   (void) bzla;
   (void) rm;
-  (void) bv;
+  (void) num;
+  (void) den;
   res = nullptr;
 #endif
   return res;

@@ -19,7 +19,7 @@ extern "C" {
 
 // TODO: remove after non-gmp BV implementation is deleted
 #define BZLA_BV_TYPE uint32_t
-#define BZLA_BV_TYPE_BW (sizeof(BZLA_BV_TYPE) * 8)
+#define TEST_BV_TYPE_BW (sizeof(BZLA_BV_TYPE) * 8)
 
 #define TEST_BV_IS_UADDO_BITVEC(bw, v0, v1, res)      \
   do                                                  \
@@ -58,10 +58,11 @@ extern "C" {
 class TestBv : public TestBzla
 {
  protected:
-  static constexpr uint32_t BZLA_TEST_BITVEC_NUM_BITS      = 65;
-  static constexpr uint32_t BZLA_TEST_BITVEC_MOD_INV_TESTS = 1000;
-  static constexpr uint32_t BZLA_TEST_BITVEC_TESTS         = 100000;
-  static constexpr uint32_t BZLA_TEST_BITVEC_PERF_TESTS    = 1000000;
+  static constexpr uint32_t TEST_BW                   = 32;
+  static constexpr uint32_t TEST_BITVEC_NUM_BITS      = 65;
+  static constexpr uint32_t TEST_BITVEC_MOD_INV_TESTS = 1000;
+  static constexpr uint32_t TEST_BITVEC_TESTS         = 100000;
+  static constexpr uint32_t TEST_BITVEC_PERF_TESTS    = 1000000;
 
   void SetUp() override
   {
@@ -310,7 +311,7 @@ class TestBv : public TestBzla
     BzlaBitVector *bv, *res;
     uint64_t a, ares, bres;
 
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       bv   = bzla_bv_new_random(d_mm, d_rng, bit_width);
       res  = bitvec_func(d_mm, bv);
@@ -334,7 +335,7 @@ class TestBv : public TestBzla
     uint64_t a1, a2, ares, bres;
 
     zero = bzla_bv_new(d_mm, bit_width);
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       bv1 = bzla_bv_new_random(d_mm, d_rng, bit_width);
       bv2 = bzla_bv_new_random(d_mm, d_rng, bit_width);
@@ -376,7 +377,7 @@ class TestBv : public TestBzla
     int64_t a1, a2, ares, bres;
 
     zero = bzla_bv_new(d_mm, bit_width);
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       bv1 = bzla_bv_new_random(d_mm, d_rng, bit_width);
       bv2 = bzla_bv_new_random(d_mm, d_rng, bit_width);
@@ -422,7 +423,7 @@ class TestBv : public TestBzla
     uint64_t a1, a2, ares_div, ares_rem, bres_div, bres_rem;
 
     zero = bzla_bv_new(d_mm, bit_width);
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       bv1 = bzla_bv_new_random(d_mm, d_rng, bit_width);
       bv2 = bzla_bv_new_random(d_mm, d_rng, bit_width);
@@ -493,7 +494,7 @@ class TestBv : public TestBzla
     BzlaBitVector *bv1, *bv2, *res;
     uint64_t a1, a2, ares, bres;
 
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       bw1 = bzla_rng_pick_rand(d_rng, 1, bit_width - 1);
       bw2 = bit_width - bw1;
@@ -518,7 +519,7 @@ class TestBv : public TestBzla
     char *sbv, *sres;
     BzlaBitVector *bv, *res;
 
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       bv    = bzla_bv_new_random(d_mm, d_rng, bit_width);
       lower = rand() % bit_width;
@@ -551,7 +552,7 @@ class TestBv : public TestBzla
     char *sbv, *sres;
     BzlaBitVector *bv, *res;
 
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       len = bzla_rng_pick_rand(d_rng, 0, bit_width - 1);
       bv  = bzla_bv_new_random(d_mm, d_rng, bit_width - len);
@@ -579,7 +580,7 @@ class TestBv : public TestBzla
     BzlaBitVector *bvc, *bvt, *bve, *res;
     uint64_t ac, at, ae, ares, bres;
 
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       bvc  = bzla_bv_new_random(d_mm, d_rng, 1);
       bvt  = bzla_bv_new_random(d_mm, d_rng, bit_width);
@@ -605,7 +606,7 @@ class TestBv : public TestBzla
     uint32_t i;
     BzlaBitVector *bv, *bvinv, *mul;
 
-    for (i = 0; i < BZLA_TEST_BITVEC_MOD_INV_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_MOD_INV_TESTS; i++)
     {
       bv = bzla_bv_new_random(d_mm, d_rng, bit_width);
       bzla_bv_set_bit(bv, 0, 1);  // must be odd
@@ -623,7 +624,7 @@ class TestBv : public TestBzla
     uint32_t i, j, pos;
     BzlaBitVector *bv, *res;
 
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       pos = bzla_rng_pick_rand(d_rng, 0, bit_width - 1);
       bv  = bzla_bv_new_random(d_mm, d_rng, bit_width);
@@ -644,7 +645,7 @@ class TestBv : public TestBzla
     uint32_t i, j, up, lo;
     BzlaBitVector *bv, *res;
 
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       lo = bzla_rng_pick_rand(d_rng, 0, bit_width - 1);
       up = lo == bit_width - 1
@@ -668,7 +669,7 @@ class TestBv : public TestBzla
     uint32_t i, j, up, lo;
     BzlaBitVector *bv1, *bv2, *bv3;
 
-    for (i = 0; i < BZLA_TEST_BITVEC_TESTS; i++)
+    for (i = 0; i < TEST_BITVEC_TESTS; i++)
     {
       lo  = bzla_rng_pick_rand(d_rng, 0, bw - 1);
       up  = lo == bw - 1 ? bw - 1 : bzla_rng_pick_rand(d_rng, lo + 1, bw - 1);
@@ -854,22 +855,13 @@ TEST_F(TestBv, new)
 {
   BzlaBitVector *bv;
 
-  bv = bzla_bv_new(d_mm, BZLA_BV_TYPE_BW);
-#ifndef BZLA_USE_GMP
-  ASSERT_EQ(bzla_bv_get_len(bv), 1u);
-#endif
+  bv = bzla_bv_new(d_mm, TEST_BW);
   bzla_bv_free(d_mm, bv);
 
-  bv = bzla_bv_new(d_mm, BZLA_BV_TYPE_BW - 1);
-#ifndef BZLA_USE_GMP
-  ASSERT_EQ(bzla_bv_get_len(bv), 1u);
-#endif
+  bv = bzla_bv_new(d_mm, TEST_BW - 1);
   bzla_bv_free(d_mm, bv);
 
-  bv = bzla_bv_new(d_mm, BZLA_BV_TYPE_BW + 1);
-#ifndef BZLA_USE_GMP
-  ASSERT_EQ(bzla_bv_get_len(bv), 2u);
-#endif
+  bv = bzla_bv_new(d_mm, TEST_BW + 1);
   bzla_bv_free(d_mm, bv);
 }
 

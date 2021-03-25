@@ -60,9 +60,6 @@ hamming_distance(Bzla *bzla, BzlaBitVector *bv1, BzlaBitVector *bv2)
   assert(bv1);
   assert(bv2);
   assert(bzla_bv_get_width(bv1) == bzla_bv_get_width(bv2));
-#ifndef BZLA_USE_GMP
-  assert(bzla_bv_get_len(bv1) == bzla_bv_get_len(bv2));
-#endif
 
   uint32_t res, bw;
   BzlaBitVector *bv, *bvdec = 0, *zero, *ones, *tmp;
@@ -95,9 +92,6 @@ min_flip(Bzla *bzla, BzlaBitVector *bv1, BzlaBitVector *bv2)
   assert(bv1);
   assert(bv2);
   assert(bzla_bv_get_width(bv1) == bzla_bv_get_width(bv2));
-#ifndef BZLA_USE_GMP
-  assert(bzla_bv_get_len(bv1) == bzla_bv_get_len(bv2));
-#endif
 
   uint32_t i, j, res, bw;
   BzlaBitVector *tmp;
@@ -128,9 +122,6 @@ min_flip_inv(Bzla *bzla, BzlaBitVector *bv1, BzlaBitVector *bv2)
   assert(bv1);
   assert(bv2);
   assert(bzla_bv_get_width(bv1) == bzla_bv_get_width(bv2));
-#ifndef BZLA_USE_GMP
-  assert(bzla_bv_get_len(bv1) == bzla_bv_get_len(bv2));
-#endif
 
   uint32_t i, j, res, bw;
   BzlaBitVector *tmp;

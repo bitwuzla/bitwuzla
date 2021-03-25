@@ -1054,14 +1054,16 @@ bitwuzla_copyright(Bitwuzla *bitwuzla)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   return BZLA_LICENSE
-#if defined(BZLA_USE_LINGELING) || defined(BZLA_USE_PICOSAT)  \
-    || defined(BZLA_USE_MINISAT) || defined(BZLA_USE_CADICAL) \
-    || defined(BZLA_USE_CMS) || defined(BZLA_USE_GMP)
       "\n\n"
       "This version of Bitwuzla is linked against the following\n"
       "third party libraries. For copyright information of each\n"
       "library see the corresponding url.\n"
-#endif
+      "\n"
+      "  Btor2Tools - tools for the BTOR2 format\n"
+      "  https://https://github.com/Boolector/btor2tools\n"
+      "\n"
+      "  GMP - GNU Multiple Precision Arithmetic Library\n"
+      "  https://gmplib.org \n"
 #ifdef BZLA_USE_LINGELING
       "\n"
       "  Lingeling\n"
@@ -1086,11 +1088,6 @@ bitwuzla_copyright(Bitwuzla *bitwuzla)
       "\n"
       "  CryptoMiniSat\n"
       "  https://github.com/msoos/cryptominisat\n"
-#endif
-#ifdef BZLA_USE_GMP
-      "\n"
-      "  GMP - GNU Multiple Precision Arithmetic Library\n"
-      "  https://gmplib.org \n"
 #endif
 #ifdef BZLA_USE_SYMFPU
       "\n"

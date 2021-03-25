@@ -15,9 +15,7 @@
 #ifndef NDEBUG
 #include <float.h>
 #endif
-#ifdef BZLA_USE_GMP
 #include <gmp.h>
-#endif
 #include <stdint.h>
 
 BzlaRNG*
@@ -49,7 +47,6 @@ bzla_rng_init(BzlaRNG* rng, uint32_t seed)
   rng->w *= 2019164533u;
   rng->z *= 1000632769u;
 
-#ifdef BZLA_USE_GMP
   if (rng->is_init)
   {
     assert(rng->gmp_state);
@@ -62,7 +59,6 @@ bzla_rng_init(BzlaRNG* rng, uint32_t seed)
   rng->is_init = true;
   gmp_randinit_mt(*((gmp_randstate_t*) rng->gmp_state));
   gmp_randseed_ui(*((gmp_randstate_t*) rng->gmp_state), bzla_rng_rand(rng));
-#endif
 }
 
 BzlaRNG*
@@ -70,18 +66,7 @@ bzla_rng_clone(BzlaRNG* rng, BzlaMemMgr* mm)
 {
   assert(mm);
   BzlaRNG* res;
-#ifndef BZLA_USE_GMP
   res = bzla_rng_new(mm, rng->seed);
-#else
-  assert(rng->gmp_state);
-  BZLA_CNEW(mm, res);
-  res->mm        = mm;
-  res->seed      = rng->seed;
-  res->gmp_state = bzla_mem_malloc(res->mm, sizeof(gmp_randstate_t));
-  gmp_randinit_set(*((gmp_randstate_t*) res->gmp_state),
-                   *((gmp_randstate_t*) rng->gmp_state));
-  rng->is_init = true;
-#endif
   return res;
 }
 
@@ -89,13 +74,11 @@ void
 bzla_rng_delete(BzlaRNG* rng)
 {
   (void) rng;
-#ifdef BZLA_USE_GMP
   assert(rng->gmp_state);
   gmp_randclear(*((gmp_randstate_t*) rng->gmp_state));
   bzla_mem_free(rng->mm, rng->gmp_state, sizeof(gmp_randstate_t));
   rng->gmp_state = 0;
   rng->is_init   = false;
-#endif
   BZLA_DELETE(rng->mm, rng);
 }
 

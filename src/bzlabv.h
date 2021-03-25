@@ -106,14 +106,6 @@ uint32_t bzla_bv_hash(const BzlaBitVector *bv);
 void bzla_bv_print(const BzlaBitVector *bv);
 /** Print given bit-vector to stdout, without terminating new line. */
 void bzla_bv_print_without_new_line(const BzlaBitVector *bv);
-/**
- * Print 32 bit chunks of underlying bits array of given bit-vector to stdout.
- * Superfluous bits and actual bits belonging to the bit-vector (in case that
- * the underlying array allows to represent more than bv->width bits) are
- * separated with a '|'. For debugging purposes only. Does not print anything
- * if compiled with GMP.
- */
-void bzla_bv_print_all(const BzlaBitVector *bv);
 
 /**
  * Convert given bit-vector to a binary string.

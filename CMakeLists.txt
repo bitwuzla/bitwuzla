@@ -126,7 +126,6 @@ option(ONLY_PICOSAT   "Only use PicoSAT" OFF)
 option(ONLY_KISSAT    "Only use Kissat" OFF)
 #option(USE_PYTHON2    "Prefer Python 2.7" )
 #option(USE_PYTHON3    "Prefer Python 3" )
-option(USE_GMP        "Use GMP for bit-vector implementation" OFF)
 
 #-----------------------------------------------------------------------------#
 
@@ -312,6 +311,7 @@ endif()
 #-----------------------------------------------------------------------------#
 
 find_package(Btor2Tools REQUIRED)
+find_package(GMP REQUIRED)
 
 if(NOT IS_WINDOWS_BUILD)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -319,15 +319,6 @@ if(NOT IS_WINDOWS_BUILD)
   if(Threads_FOUND)
     set(LIBRARIES ${LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
     add_definitions("-DBZLA_HAVE_PTHREADS")
-  endif()
-endif()
-
-if(USE_GMP)
-  find_package(GMP)
-  if(GMP_FOUND)
-    add_definitions("-DBZLA_USE_GMP")
-  else()
-    message(FATAL_ERROR "GMP not found")
   endif()
 endif()
 
@@ -562,5 +553,4 @@ config_info_bool("Lingeling" Lingeling_FOUND)
 config_info_bool("MiniSat" MiniSat_FOUND)
 config_info_bool("PicoSAT" PicoSAT_FOUND)
 config_info_bool("Kissat" Kissat_FOUND)
-config_info_bool("GMP" USE_GMP)
 config_info_bool("SymFPU" SymFPU_FOUND)

@@ -2856,8 +2856,7 @@ close_term(BzlaSMT2Parser *parser)
           if (tag == BZLA_FP_TO_FP_TAG_SMT2) continue;
           return !perr_smt2(parser, "Real constants not supported");
         }
-        assert(false);
-        return !perr_smt2(parser, "-expected expression");
+        return !perr_smt2(parser, "expected expression");
       }
     }
   }
