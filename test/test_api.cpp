@@ -3677,25 +3677,6 @@ TEST_F(TestApi, substitute)
               bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_SDIV, bv_value, y));
   }
 
-  // cyclic substitution check
-  {
-    BitwuzlaTerm *x = bitwuzla_mk_const(d_bzla, bv_sort, 0);
-    BitwuzlaTerm *y = bitwuzla_mk_const(d_bzla, bv_sort, 0);
-
-    std::vector<BitwuzlaTerm *> keys   = {x, y};
-    std::vector<BitwuzlaTerm *> values = {
-        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, y, bv_value),
-        bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_BV_NEG, x)};
-
-    ASSERT_DEATH(bitwuzla_substitute_term(
-                     d_bzla,
-                     bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, x, y),
-                     keys.size(),
-                     keys.data(),
-                     values.data()),
-                 "cyclic substitution detected");
-  }
-
   // partial substitution of variables in quantified formula
   {
     std::vector<BitwuzlaTerm *> args = {
