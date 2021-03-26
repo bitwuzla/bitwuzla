@@ -47,6 +47,15 @@ class BitVectorOp
   virtual ~BitVectorOp() {}
 
   /**
+   * Check if operand at index pos_x is essential with respect to constant
+   * bits and target value t.
+   */
+  virtual bool is_essential(const BitVector& t, uint32_t pos_x)
+  {
+    return !is_invertible(t, 1 - pos_x);
+  }
+
+  /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
    */
@@ -771,6 +780,9 @@ class BitVectorIte : public BitVectorOp
                BitVectorOp* child0,
                BitVectorOp* child1,
                BitVectorOp* child2);
+
+  bool is_essential(const BitVector& t, uint32_t pos_x) override;
+
   /**
    * ite(_c, _t, _e)
    *
@@ -823,6 +835,9 @@ class BitVectorExtract : public BitVectorOp
                    BitVectorOp* child0,
                    uint32_t hi,
                    uint32_t lo);
+
+  bool is_essential(const BitVector& t, uint32_t pos_x) override;
+
   /**
    * IC:
    *   w/o  const bits: true
@@ -879,6 +894,9 @@ class BitVectorSignExtend : public BitVectorOp
                       const BitVectorDomain& domain,
                       BitVectorOp* child0,
                       uint32_t n);
+
+  bool is_essential(const BitVector& t, uint32_t pos_x) override;
+
   /**
    * IC:
    *   w/o  const bits (IC_wo): t_ext == ones || t_ext == zero

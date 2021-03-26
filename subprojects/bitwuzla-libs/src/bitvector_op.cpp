@@ -3867,6 +3867,14 @@ BitVectorIte::BitVectorIte(RNG* rng,
 }
 
 bool
+BitVectorIte::is_essential(const BitVector& t, uint32_t pos_x)
+{
+  uint32_t pos_s0 = pos_x == 0 ? 1 : 0;
+  uint32_t pos_s1 = pos_x == 2 ? 1 : 2;
+  return !is_invertible(t, pos_s0) && !is_invertible(t, pos_s1);
+}
+
+bool
 BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
 {
   d_inverse.reset(nullptr);
@@ -4082,6 +4090,12 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
 }
 
 bool
+BitVectorExtract::is_essential(const BitVector& t, uint32_t pos_x)
+{
+  return !is_invertible(t, pos_x);
+}
+
+bool
 BitVectorExtract::is_invertible(const BitVector& t, uint32_t pos_x)
 {
   d_inverse.reset(nullptr);
@@ -4240,6 +4254,12 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
                                          uint32_t n)
     : BitVectorOp(rng, assignment, domain, child0), d_n(n)
 {
+}
+
+bool
+BitVectorSignExtend::is_essential(const BitVector& t, uint32_t pos_x)
+{
+  return !is_invertible(t, pos_x);
 }
 
 bool

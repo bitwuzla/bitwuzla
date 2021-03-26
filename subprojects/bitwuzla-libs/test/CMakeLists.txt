@@ -9,6 +9,7 @@ set(test_names
   bvopcons
   bvopinv
   bvopiscons
+  bvopisess
   bvopisinv
 )
 
