@@ -222,10 +222,10 @@ struct Bzla
   } time;
 };
 
-/* Creates new boolector instance. */
+/* Creates new bitwuzla instance. */
 Bzla *bzla_new(void);
 
-/* Deletes boolector. */
+/* Deletes bitwuzla. */
 void bzla_delete(Bzla *bzla);
 
 /* Gets version. */
@@ -240,7 +240,7 @@ void bzla_set_term(Bzla *bzla, int32_t (*fun)(void *), void *state);
 /* Get termination callback state. */
 void *bzla_get_term_state(Bzla *bzla);
 
-/* Determine if boolector has been terminated via termination callback. */
+/* Determine if bitwuzla has been terminated via termination callback. */
 int32_t bzla_terminate(Bzla *bzla);
 
 /* Set verbosity message prefix. */
