@@ -456,14 +456,14 @@ substitute(Bzla *bzla,
         result = bzla_exp_fp_to_fp_from_fp(
             bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
       }
-      else if (bzla_node_is_fp_to_fp_from_int(real_cur))
+      else if (bzla_node_is_fp_to_fp_from_sbv(real_cur))
       {
-        result = bzla_exp_fp_to_fp_from_int(
+        result = bzla_exp_fp_to_fp_from_sbv(
             bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
       }
-      else if (bzla_node_is_fp_to_fp_from_uint(real_cur))
+      else if (bzla_node_is_fp_to_fp_from_ubv(real_cur))
       {
-        result = bzla_exp_fp_to_fp_from_uint(
+        result = bzla_exp_fp_to_fp_from_ubv(
             bzla, e[0], e[1], bzla_node_get_sort_id(real_cur));
       }
       else
