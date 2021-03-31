@@ -3052,8 +3052,9 @@ bitwuzla_parse_format(Bitwuzla *bitwuzla,
   }
   else
   {
-    BZLA_ABORT(
-        true, "unknown format '%s', expected one of 'smt2', 'bzla' or 'btor2 ");
+    BZLA_ABORT(true,
+               "unknown format '%s', expected one of 'smt2', 'bzla' or 'btor2'",
+               format);
   }
   if (bzla_res == BZLA_RESULT_SAT) return BITWUZLA_SAT;
   if (bzla_res == BZLA_RESULT_UNSAT) return BITWUZLA_UNSAT;

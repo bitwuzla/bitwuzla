@@ -1,0 +1,82 @@
+on: [push, pull_request]
+name: CI
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        name: [
+          production,
+          production-clang,
+          debug,
+          debug-clang
+        ]
+
+        exclude:
+          - name: production-clang
+            os: macos-latest
+
+          - name: debug-clang
+            os: macos-latest
+
+        include:
+          - name: production
+            config: --symfpu
+
+          - name: production-clang
+            config:
+            env: CC=clang CXX=clang++
+
+          - name: debug
+            config: -g
+
+          - name: debug-clang
+            config: -g --symfpu
+            env: CC=clang CXX=clang++
+
+    name: ${{ matrix.os }}:${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Install Packages (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev
+
+      - name: Install Packages (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install gmp
+
+      - uses: actions/checkout@v2
+
+      - name: Restore Dependencies
+        id: restore-deps
+        uses: actions/cache@v2
+        with:
+          path: deps/install
+          key: ${{ runner.os }}-deps-${{ hashFiles('contrib/setup-*') }}-${{ hashFiles('.github/workflows/ci.yml') }}
+
+      - name: Setup Dependencies
+        if: steps.restore-deps.outputs.cache-hit != 'true'
+        run: |
+          ./contrib/setup-btor2tools.sh
+          ./contrib/setup-cadical.sh
+          ./contrib/setup-cms.sh
+          ./contrib/setup-kissat.sh
+          ./contrib/setup-lingeling.sh
+          ./contrib/setup-symfpu.sh
+
+      - name: Configure
+        run: |
+          ${{ matrix.env }} ./configure.sh ${{ matrix.config }}
+
+      - name: Build
+        run: make -j2
+        working-directory: build
+
+      - name: Run CTest
+        run: ctest -j2 --output-on-failure
+        working-directory: build
