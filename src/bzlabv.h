@@ -1,11 +1,11 @@
-/*  Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
+/**
+ * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2013-2016 Mathias Preiner.
- *  Copyright (C) 2015-2020 Aina Niemetz.
- *  Copyright (C) 2018 Armin Biere.
+ * This file is part of Bitwuzla.
  *
- *  This file is part of Bitwuzla.
- *  See COPYING for more information on using this software.
+ * Copyright (C) 2007-2021 by the authors listed in the AUTHORS file.
+ *
+ * See COPYING for more information on using this software.
  */
 
 #ifndef BZLABV_H_INCLUDED

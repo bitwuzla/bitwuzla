@@ -1,17 +1,21 @@
-/*  Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
+/**
+ * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2018-2020 Mathias Preiner.
- *  Copyright (C) 2018-2020 Aina Niemetz.
+ * This file is part of Bitwuzla.
  *
- *  This file is part of Bitwuzla.
- *  See COPYING for more information on using this software.
+ * Copyright (C) 2007-2021 by the authors listed in the AUTHORS file.
  *
- *  Bit-vector operator propagators based on [1] and [2].
+ * See COPYING for more information on using this software.
+ */
+
+/*
+ * Bit-vector operator propagators based on [1] and [2].
  *
- *  [1] Wenxi Wang, Harald SøndergaardPeter J. Stuckey:
- *      A Bit-Vector Solver with Word-Level Propagation
- *  [2] L. Michel, P. Van Hentenryck:
- *      Constraint Satisfaction over Bit-Vectors
+ * [1] Wenxi Wang, Harald SøndergaardPeter J. Stuckey:
+ *   A Bit-Vector Solver with Word-Level Propagation
+ *
+ * [2] L. Michel, P. Van Hentenryck:
+ *   Constraint Satisfaction over Bit-Vectors
  */
 
 #include "bzlabvprop.h"

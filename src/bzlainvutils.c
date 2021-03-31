@@ -1,17 +1,23 @@
-/*  Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
+/**
+ * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
- *  Copyright (C) 2018 Mathias Preiner.
- *  Copyright (C) 2018-2020 Aina Niemetz.
+ * This file is part of Bitwuzla.
  *
- *  This file is part of Bitwuzla.
- *  See COPYING for more information on using this software.
+ * Copyright (C) 2007-2021 by the authors listed in the AUTHORS file.
  *
- *  Bit-vector operator invertibility checks based on [1].
+ * See COPYING for more information on using this software.
+ */
+
+/*
+ * Bit-vector operator invertibility checks based on [1] and [2].
  *
- *  [1] Aina Niemetz, Mathias Preiner, Andrew Reynolds, Clark Barrett, Cesare
- *      Tinelli: Solving Quantified Bit-Vectors Using Invertibility Conditions.
- *      CAV (2) 2018: 236-255
+ * [1] Aina Niemetz, Mathias Preiner, Andrew Reynolds, Clark Barrett, Cesare
+ *     Tinelli: Solving Quantified Bit-Vectors Using Invertibility Conditions.
+ *     CAV (2) 2018: 236-255
  *
+ * [2] Aina Niemetz, Mathias Preiner: Ternary Propagation-Based Local Search
+ *     for more Bit-Precise Reasoning.
+ *     FMCAD 2020: 214-224
  */
 
 #include "bzlainvutils.h"
