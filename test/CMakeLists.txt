@@ -85,7 +85,8 @@ set(sat_testcases
 "invalidmodel1.smt2"
 "invalidmodel2.smt2 -xl=0 -ml=0 -rwl=2"
 "invalidmodel3.btor"
-"issue96.smt2"
+# Disabled since quantifiers disabled
+#"issue96.smt2"
 "lazyreadwritebug1.btor"
 "lambda1.btor"
 "lin0.btor"
@@ -478,7 +479,8 @@ set(unsat_testcases
 "hd9.btor -rwl 1"
 "inc.btor"
 "inc.btor -rwl 0"
-"issue97.smt2"
+# Disabled since quantifiers disabled
+#"issue97.smt2"
 "lambda2.btor"
 "memcpy02.smt2"
 "mulassoc4.smt2"
@@ -543,7 +545,8 @@ set(unsat_testcases
 "regrexpleak2.btor -rwl 1"
 "regrexpleak2.btor -rwl 2"
 "regrexpleak2.btor -rwl 3"
-"regrnormquant.smt2"
+# Disabled since quantifiers disabled
+#"regrnormquant.smt2"
 "regrmark2.btor -rwl 0"
 "regrmark2.btor -rwl 1"
 "regrmark2.btor -rwl 2"
