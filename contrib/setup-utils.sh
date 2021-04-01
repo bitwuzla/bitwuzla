@@ -11,6 +11,7 @@ die () {
 [ ! -e src/bzlamain.c ] && die "$0 not called from Bitwuzla base directory"
 
 DEPS_DIR="$(pwd)/deps"
+CONTRIB_DIR="$(pwd)/contrib"
 INSTALL_DIR="${DEPS_DIR}/install"
 INSTALL_LIB_DIR="${INSTALL_DIR}/lib"
 INSTALL_INCLUDE_DIR="${INSTALL_DIR}/include"
