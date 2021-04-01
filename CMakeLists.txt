@@ -466,13 +466,6 @@ configure_file(
 #-----------------------------------------------------------------------------#
 # Regression tests
 
-# Get and configure google test
-include(cmake/googletest.cmake)
-fetch_googletest(
-    ${PROJECT_SOURCE_DIR}/cmake
-    ${PROJECT_BINARY_DIR}/googletest
-    )
-
 enable_testing()
 
 #-----------------------------------------------------------------------------#
