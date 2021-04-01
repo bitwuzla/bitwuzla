@@ -8,7 +8,3 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(SymFPU DEFAULT_MSG SymFPU_INCLUDE_DIR)
 
 mark_as_advanced(SymFPU_INCLUDE_DIR)
-
-if(SymFPU_LIBRARIES)
-  message(STATUS "Found SymFPU library: ${SymFPU_LIBRARIES}")
-endif()
