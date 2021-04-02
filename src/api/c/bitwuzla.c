@@ -1259,6 +1259,27 @@ bitwuzla_set_option(Bitwuzla *bitwuzla, BitwuzlaOption option, uint32_t value)
   bzla_opt_set(bzla, opt, value);
 }
 
+void
+bitwuzla_set_option_str(Bitwuzla *bitwuzla,
+                        BitwuzlaOption option,
+                        const char *value)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla     = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaOption opt = BZLA_IMPORT_BITWUZLA_OPTION(option);
+
+  BZLA_CHECK_OPTION(bzla, opt);
+  BZLA_ABORT(
+      !bzla_opt_is_enum_option(bzla, opt),
+      "option expects an integer value, use bitwuzla_set_option instead.");
+  BZLA_ABORT(!bzla_opt_is_enum_option_value(bzla, opt, value),
+             "invalid option value '%s'",
+             value);
+
+  bzla_opt_set(bzla, opt, bzla_opt_get_enum_value(bzla, opt, value));
+}
+
 uint32_t
 bitwuzla_get_option(Bitwuzla *bitwuzla, BitwuzlaOption option)
 {

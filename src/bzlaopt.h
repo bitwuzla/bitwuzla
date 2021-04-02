@@ -149,6 +149,14 @@ const char *bzla_opt_get_valstr(const Bzla *bzla, const BzlaOption opt);
 void bzla_opt_set(Bzla *bzla, const BzlaOption opt, uint32_t val);
 void bzla_opt_set_str(Bzla *bzla, const BzlaOption opt, const char *str);
 
+bool bzla_opt_is_enum_option(const Bzla *bzla, const BzlaOption opt);
+bool bzla_opt_is_enum_option_value(const Bzla *bzla,
+                                   const BzlaOption opt,
+                                   const char *value);
+uint32_t bzla_opt_get_enum_value(Bzla *bzla,
+                                 const BzlaOption opt,
+                                 const char *value);
+
 BzlaOption bzla_opt_first(Bzla *bzla);
 BzlaOption bzla_opt_next(Bzla *bzla, BzlaOption cur);
 

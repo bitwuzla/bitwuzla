@@ -1892,6 +1892,42 @@ bzla_opt_set_str(Bzla *bzla, const BzlaOption opt, const char *str)
   bzla->options[opt].valstr = bzla_mem_strdup(bzla->mm, str);
 }
 
+bool
+bzla_opt_is_enum_option(const Bzla *bzla, const BzlaOption opt)
+{
+  assert(bzla);
+  assert(bzla_opt_is_valid(bzla, opt));
+  return bzla->options[opt].options != NULL;
+}
+
+bool
+bzla_opt_is_enum_option_value(const Bzla *bzla,
+                              const BzlaOption opt,
+                              const char *value)
+{
+  assert(bzla);
+  assert(bzla_opt_is_valid(bzla, opt));
+  assert(bzla_opt_is_enum_option(bzla, opt));
+
+  BzlaPtrHashTable *options = bzla->options[opt].options;
+  return bzla_hashptr_table_get(options, value) != NULL;
+}
+
+uint32_t
+bzla_opt_get_enum_value(Bzla *bzla, const BzlaOption opt, const char *value)
+{
+  assert(bzla);
+  assert(bzla_opt_is_valid(bzla, opt));
+  assert(bzla_opt_is_enum_option(bzla, opt));
+
+  BzlaPtrHashTable *options = bzla->options[opt].options;
+  BzlaPtrHashBucket *b      = bzla_hashptr_table_get(options, value);
+  assert(b);
+  assert(b->data.as_ptr);
+  BzlaOptHelp *hdata = (BzlaOptHelp *) b->data.as_ptr;
+  return hdata->val;
+}
+
 BzlaOption
 bzla_opt_first(Bzla *bzla)
 {

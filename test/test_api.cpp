@@ -280,6 +280,18 @@ TEST_F(TestApi, set_option)
       bitwuzla_set_option(bzla_uc, BITWUZLA_OPT_PRODUCE_UNSAT_CORES, 1));
 }
 
+TEST_F(TestApi, set_option_str)
+{
+  Bitwuzla *bzla = bitwuzla_new();
+
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_set_option_str(bzla, BITWUZLA_OPT_SAT_ENGINE, "cadical"));
+  ASSERT_DEATH(bitwuzla_set_option_str(bzla, BITWUZLA_OPT_SAT_ENGINE, "asdf"),
+               "invalid option value");
+  ASSERT_DEATH(bitwuzla_set_option_str(bzla, BITWUZLA_OPT_INCREMENTAL, "true"),
+               "option expects an integer value");
+}
+
 TEST_F(TestApi, mk_array_sort)
 {
   ASSERT_DEATH(bitwuzla_mk_array_sort(nullptr, d_bv_sort1, d_bv_sort8),

@@ -399,6 +399,19 @@ void bitwuzla_set_option(Bitwuzla *bitwuzla,
                          uint32_t val);
 
 /**
+ * Set option value for string options.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param option The option.
+ * @param val The option string value.
+ *
+ * @see BitwuzlaOption
+ */
+void bitwuzla_set_option_str(Bitwuzla *bitwuzla,
+                             BitwuzlaOption option,
+                             const char *val);
+
+/**
  * Get the current value of an option.
  *
  * @param bitwuzla The Bitwuzla instance.
