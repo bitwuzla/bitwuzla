@@ -4138,6 +4138,7 @@ parse_open_close_term_indexed_fp_special_const(
   assert(tag == BZLA_FP_POS_ZERO_TAG_SMT2 || tag == BZLA_FP_NEG_ZERO_TAG_SMT2
          || tag == BZLA_FP_POS_INF_TAG_SMT2 || tag == BZLA_FP_NEG_INF_TAG_SMT2
          || tag == BZLA_FP_NAN_TAG_SMT2);
+  (void) tag;
 
   BzlaSMT2Item *item_open;
   BitwuzlaTerm *exp;

@@ -455,48 +455,6 @@ is_abs_set_pattern(BzlaNode *index, BzlaNode *prev_index)
          && (!prev_index || bzla_node_is_bv_const(prev_index));
 }
 
-/* Pattern 1)
- *
- *   dst0 := write(dst, dst_addr + c, read(src, src_addr + c))
- *   dst1 := write(dst0, dst_addr + c + 1, read(src, src_addr + c + 1))
- *   dst2 := write(dst1, dst_addr + c + 2, read(src, src_addr + c + 2))
- *
- * Pattern 2) overlapping memory regions
- *
- *   dst0 := write(dst, dst_addr + c, read(dst, src_addr + c))
- *   dst1 := write(dst0, dst_addr + c + 1, read(dst0, src_addr + c + 1))
- *   dst2 := write(dst1, dst_addr + c + 2, read(dst1, src_addr + c + 2))
- */
-static bool
-is_copy_pattern(BzlaNode *index,
-                BzlaNode *value,
-                BzlaNode *prev_index,
-                BzlaNode *prev_value,
-                BzlaNode *array)
-{
-  BzlaNode *src_addr, *dst_addr;
-  BzlaNode *prev_src_addr, *prev_dst_addr;
-
-  if (!is_cpy_pattern(index, value)) return false;
-
-  /* 'index' is the first index collected for the current memcopy pattern */
-  if (!prev_index) return true;
-
-  /* 'index' belongs to a new memcopy pattern (create new pattern) */
-  if (!is_cpy_pattern(prev_index, prev_value)) return false;
-
-  extract_cpy_src_dst_info(index, value, 0, &src_addr, &dst_addr, 0);
-  extract_cpy_src_dst_info(
-      prev_index, prev_value, 0, &prev_src_addr, &prev_dst_addr, 0);
-
-  return src_addr == prev_src_addr
-         && dst_addr == prev_dst_addr
-         /* destination array check: either every copy step uses the same
-          * destination array or they use the intermediate results of the write
-          * operations */
-         && (value->e[0] == prev_value->e[0] || value->e[0] == array);
-}
-
 static void
 add_to_index_map(Bzla *bzla,
                  BzlaPtrHashTable *map_value_index,

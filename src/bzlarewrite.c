@@ -5479,6 +5479,7 @@ static inline BzlaNode *
 apply_fp_min_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   assert(applies_fp_min_max(bzla, e0, e1));
+  (void) e1;
   return bzla_node_copy(bzla, e0);
 }
 
@@ -5497,6 +5498,7 @@ static inline BzlaNode *
 apply_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   assert(applies_fp_lte(bzla, e0, e1));
+  (void) e1;
   BzlaNode *result, *isnan;
   BZLA_INC_REC_RW_CALL(bzla);
   isnan  = rewrite_fp_tester_exp(bzla, BZLA_FP_IS_NAN_NODE, e0);
@@ -5521,6 +5523,8 @@ static inline BzlaNode *
 apply_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   assert(applies_fp_lte(bzla, e0, e1));
+  (void) e0;
+  (void) e1;
   return bzla_exp_false(bzla);
 }
 
@@ -5558,6 +5562,7 @@ static inline bool
 applies_fp_rem_sign_divisor(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) bzla;
+  (void) e0;
   assert(bzla_node_is_regular(e0));
   assert(bzla_node_is_regular(e1));
 
@@ -5584,6 +5589,7 @@ static inline bool
 applies_fp_rem_neg(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) bzla;
+  (void) e1;
   assert(bzla_node_is_regular(e0));
   assert(bzla_node_is_regular(e1));
 
@@ -9312,6 +9318,7 @@ bzla_rewrite_unary_to_fp_exp(Bzla *bzla,
   assert(sort);
   assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
   assert(kind == BZLA_FP_TO_FP_BV_NODE);
+  (void) kind;
 
   BzlaNode *res;
   double start = bzla_util_time_stamp();

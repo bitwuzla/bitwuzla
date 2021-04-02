@@ -229,6 +229,7 @@ bzla_dumpsmt_dump_const_rm_value(Bzla *bzla,
 {
   assert(bzla);
   assert(bits);
+  (void) bzla;
 
   BzlaRoundingMode rm = bzla_bv_to_uint64(bits);
   assert(rm < BZLA_RM_MAX);
@@ -252,6 +253,7 @@ bzla_dumpsmt_dump_const_fp_value(Bzla *bzla,
 {
   assert(bzla);
   assert(bits);
+  (void) esize;
 
   BzlaBitVector *sign, *exp, *sig;
   char *sign_str, *exp_str, *sig_str;

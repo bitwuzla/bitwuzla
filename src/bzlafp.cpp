@@ -716,18 +716,21 @@ void
 BzlaFPTraits::precondition(const bool &p)
 {
   assert(p);
+  (void) p;
 }
 
 void
 BzlaFPTraits::postcondition(const bool &p)
 {
   assert(p);
+  (void) p;
 }
 
 void
 BzlaFPTraits::invariant(const bool &p)
 {
   assert(p);
+  (void) p;
 }
 
 /* ========================================================================== */
@@ -1833,6 +1836,7 @@ BzlaFPSymRM::check_node(const BzlaNode *node) const
           && bzla_node_bv_get_width(s_bzla, node) == BZLA_RM_BW)
          || bzla_node_is_rm(s_bzla, node);
 #else
+  (void) node;
   return false;
 #endif
 }
@@ -2669,6 +2673,8 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
     res = d_packed_float_map.at(node).getNode();
   }
   assert(res);
+#else
+  (void) node;
 #endif
   return res;
 }
@@ -2708,6 +2714,7 @@ BzlaFPWordBlaster::get_word_blasted_node(BzlaNode *node)
 
   return word_blast(node);
 #else
+  (void) node;
   return nullptr;
 #endif
 }
@@ -2978,6 +2985,7 @@ bzla_fp_as_bv(Bzla *bzla, BzlaFloatingPoint *fp)
 #ifdef BZLA_USE_SYMFPU
   return bzla_bv_copy(bzla->mm, symfpu::pack(*fp->size, *fp->fp).getBv());
 #else
+  (void) fp;
   return nullptr;
 #endif
 }
@@ -3006,6 +3014,11 @@ bzla_fp_as_bvs(Bzla *bzla,
   *exp  = bzla_bv_slice(bzla->mm, bv, bw - 2, bw - 1 - bw_exp);
   *sig  = bzla_bv_slice(bzla->mm, bv, bw_sig - 2, 0);
   bzla_bv_free(bzla->mm, bv);
+#else
+  (void) fp;
+  (void) sign;
+  (void) exp;
+  (void) sig;
 #endif
 }
 
@@ -3030,6 +3043,7 @@ bzla_fp_get_bytes(BzlaNode *node)
   return sizeof(BzlaFloatingPoint) + bzla_bv_size(bv_exp)
          + bzla_bv_size(bv_sig);
 #else
+  (void) node;
   return 0;
 #endif
 }
@@ -3054,6 +3068,8 @@ bzla_fp_hash(const BzlaFloatingPoint *fp)
   hash += uf->getSign() * hash_primes[3];
   hash += bzla_bv_hash(uf->getExponent().getBv()) * hash_primes[4];
   hash += bzla_bv_hash(uf->getSignificand().getBv()) * hash_primes[5];
+#else
+  (void) fp;
 #endif
   return hash;
 }
@@ -3091,6 +3107,9 @@ bzla_fp_compare(const BzlaFloatingPoint *a, const BzlaFloatingPoint *b)
   {
     return 0;
   }
+#else
+  (void) a;
+  (void) b;
 #endif
   return -1;
 }
@@ -3662,6 +3681,7 @@ bzla_fp_fma(Bzla *bzla,
   (void) rm;
   (void) fp0;
   (void) fp1;
+  (void) fp2;
   res = nullptr;
 #endif
   return res;
@@ -3685,6 +3705,7 @@ bzla_fp_convert(Bzla *bzla,
       *fp->size, *res->size, rm, *fp->fp));
 #else
   (void) bzla;
+  (void) sort;
   (void) rm;
   (void) fp;
   res = nullptr;
@@ -3713,6 +3734,7 @@ bzla_fp_convert_from_ubv(Bzla *bzla,
       *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
 #else
   (void) bzla;
+  (void) sort;
   (void) rm;
   (void) bv;
   res = nullptr;
@@ -3741,6 +3763,7 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
       *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
 #else
   (void) bzla;
+  (void) sort;
   (void) rm;
   (void) bv;
   res = nullptr;
@@ -4044,6 +4067,7 @@ fp_convert_from_rational_aux(Bzla *bzla,
   mpq_clear(r);
 #else
   (void) bzla;
+  (void) sort;
   (void) rm;
   (void) num;
   (void) den;

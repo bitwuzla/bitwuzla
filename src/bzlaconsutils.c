@@ -41,6 +41,8 @@ bzla_is_cons_add_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
+  (void) bzla;
+  (void) pi;
   return true;
 }
 
@@ -89,6 +91,8 @@ bzla_is_cons_xor_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
+  (void) bzla;
+  (void) pi;
   return true;
 }
 
@@ -105,6 +109,8 @@ bzla_is_cons_eq_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
+  (void) bzla;
+  (void) pi;
   return true;
 }
 
@@ -123,6 +129,7 @@ bzla_is_cons_ult_const(Bzla *bzla, BzlaPropInfo *pi)
 {
   assert(bzla);
   assert(pi);
+  (void) bzla;
 
   uint32_t pos_x;
   const BzlaBitVector *t;

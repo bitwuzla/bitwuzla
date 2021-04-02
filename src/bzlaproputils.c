@@ -2972,7 +2972,6 @@ bzla_proputils_cons_concat_const(Bzla *bzla, BzlaPropInfo *pi)
 #endif
   int32_t pos_x, bw_t, bw_s, upper, lower;
   BzlaBitVector *res;
-  const BzlaBvDomain *x;
   BzlaMemMgr *mm;
   const BzlaBitVector *s, *t;
 
@@ -2988,7 +2987,6 @@ bzla_proputils_cons_concat_const(Bzla *bzla, BzlaPropInfo *pi)
   pos_x = pi->pos_x;
   s     = pi->bv[1 - pos_x];
   t     = pi->target_value;
-  x     = pi->bvd[pos_x];
   bw_t  = bzla_bv_get_width(t);
   bw_s  = bzla_bv_get_width(s);
 
@@ -3005,7 +3003,7 @@ bzla_proputils_cons_concat_const(Bzla *bzla, BzlaPropInfo *pi)
 
   res = bzla_bv_slice(mm, t, upper, lower);
 
-  assert(bzla_bvdomain_check_fixed_bits(mm, x, res));
+  assert(bzla_bvdomain_check_fixed_bits(mm, pi->bvd[pos_x], res));
   return res;
 }
 
