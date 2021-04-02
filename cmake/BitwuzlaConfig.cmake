@@ -1,1 +1,1 @@
-include("${CMAKE_CURRENT_LIST_DIR}/CBitwuzlaTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/BitwuzlaTargets.cmake")
