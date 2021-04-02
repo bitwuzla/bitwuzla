@@ -1254,3 +1254,7 @@ endforeach()
 foreach(testcase ${cmp_testcases})
     add_test_case("--check-output" ${testcase})
 endforeach()
+
+if(PYTHON)
+  add_subdirectory(python)
+endif()
