@@ -23,24 +23,99 @@ extern "C" {
 
 /* -------------------------------------------------------------------------- */
 
+/** The base for strings representing bit-vector values. */
 enum BitwuzlaBVBase
 {
-  BITWUZLA_BV_BASE_BIN,
-  BITWUZLA_BV_BASE_DEC,
-  BITWUZLA_BV_BASE_HEX,
+  BITWUZLA_BV_BASE_BIN, ///< binary
+  BITWUZLA_BV_BASE_DEC, ///< decimal
+  BITWUZLA_BV_BASE_HEX, ///< hexadecimal
 };
 typedef enum BitwuzlaBVBase BitwuzlaBVBase;
 
+/** The options supported by Bitwuzla. */
 enum BitwuzlaOption
 {
+  /*! **Incremental solving.**
+   *
+   * Values:
+   * * **1**: enable
+   * * **0**: disable [**default**]
+   *
+   * @note
+   * Enabling this option turns off some optimization techniques.  
+   * Enabling/disabling incremental solving after bitwuzla_check_sat()
+   * has been called is not supported.  
+   * This option cannot be enabled in combination with ::BITWUZLA_OPT_UCOPT.
+   */
   BITWUZLA_OPT_INCREMENTAL,
+
+  /*! **Model generation.**
+   *
+   * Values:
+   * * **1**: enable, generate model for assertions only
+   * * **2**: enable, generate model for all created expressions
+   * * **0**: disable [**default**]
+   *
+   * @note This option cannot be enabled in combination with
+   *       ::BITWUZLA_OPT_UCOPT.
+   */
   BITWUZLA_OPT_PRODUCE_MODELS,
+
+  /*! **Configure input file format.**
+   *
+   * If unspecified, Bitwuzla will autodetect the input file format.
+   *
+   * Values: TODO
+   */
   BITWUZLA_OPT_INPUT_FORMAT,
+
+  /*! **Configure output number format for bit-vector values.**
+   *
+   * If unspecified, Bitwuzla will use binary representation.
+   *
+   * Values: TODO
+   */
   BITWUZLA_OPT_OUTPUT_NUMBER_FORMAT,
+
+  /*! **Configure output number format for bit-vector values.**
+   *
+   * If unspecified, Bitwuzla will use BTOR format.
+   *
+   * Values: TODO
+   */
   BITWUZLA_OPT_OUTPUT_FORMAT,
+
+  /*! **Configure the solver engine.**
+   *
+   * Values: TODO
+   */
   BITWUZLA_OPT_ENGINE,
+
+  /*! **Configure the SAT solver engine.**
+   *
+   * Values: TODO
+   */
   BITWUZLA_OPT_SAT_ENGINE,
+
+  /*! **Pretty printing.**
+   *
+   * Values:
+   * * **1**: enable [**default**]
+   * * **0**: disable
+   */
   BITWUZLA_OPT_PRETTY_PRINT,
+
+  /*! **Use non-zero exit codes for sat and unsat results.**
+   *
+   * When enabled, use Bitwuzla exit codes (::BITWUZLA_SAT, ::BITWUZLA_UNSAT,
+   * ::BITWUZLA_UNKNOWN).  
+   * When disabled, return 0 on success (sat, unsat, unknown), and a non-zero
+   * exit code for any other case.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
   BITWUZLA_OPT_EXIT_CODES,
   BITWUZLA_OPT_SEED,
   BITWUZLA_OPT_VERBOSITY,
@@ -144,7 +219,9 @@ enum BitwuzlaOption
   BITWUZLA_OPT_PRODUCE_UNSAT_CORES,
   BITWUZLA_OPT_SMT_COMP_MODE,
   /* this MUST be the last entry! */
+#ifndef DOXYGEN_SKIP
   BITWUZLA_OPT_NUM_OPTS,
+#endif
 };
 typedef enum BitwuzlaOption BitwuzlaOption;
 
