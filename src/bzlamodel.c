@@ -1189,7 +1189,8 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
     {
       /* add assignment of bv var to model (creates new assignment, if
        * it doesn't have one) */
-      if (bzla_node_is_bv_var(real_cur) || bzla_node_is_fun_eq(real_cur))
+      if (bzla_node_is_bv_var(real_cur) || bzla_node_is_fun_eq(real_cur)
+          || bzla_node_is_quantifier(real_cur))
       {
         result = bzla_model_get_bv_assignment(
             bzla, bzla_node_get_simplified(bzla, real_cur));
