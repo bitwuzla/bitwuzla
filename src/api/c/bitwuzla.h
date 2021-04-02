@@ -292,7 +292,7 @@ typedef struct BitwuzlaSort BitwuzlaSort;
 Bitwuzla *bitwuzla_new(void);
 
 /**
- * Delete the given Bitwuzla instance.
+ * Delete a Bitwuzla instance.
  *
  * The given instance must have been created via bitwuzla_new().
  *
@@ -303,9 +303,9 @@ Bitwuzla *bitwuzla_new(void);
 void bitwuzla_delete(Bitwuzla *bitwuzla);
 
 /**
- * Reset the given Bitwuzla instance.
- * 
- * This deletes the given instances and creates a new instance in place.
+ * Reset a Bitwuzla instance.
+ *
+ * This deletes the given instance and creates a new instance in place.
  * The given instance must have been created via bitwuzla_new().
  *
  * @param bitwuzla The Bitwuzla instance to reset.
@@ -482,7 +482,7 @@ BitwuzlaSort *bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
  * @param bitwuzla The Bitwuzla instance.
  * @param arity The number of arguments to the function.
  * @param domain The domain sorts (the sorts of the arguments). The number of
- *               sorts in this vector must match given \p arity.
+ *               sorts in this vector must match \p arity.
  * @param codomain The codomain sort (the sort of the return value).
  *
  * @return A function sort of given domain and codomain sorts.
@@ -593,8 +593,8 @@ BitwuzlaTerm *bitwuzla_mk_bv_min_signed(Bitwuzla *bitwuzla,
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the value.
  *
- * @return A term representing the bit-vector value of given where the MSB is
- *         set to 0 and all remaining bits are set to 1.
+ * @return A term representing the bit-vector value of given sort where the MSB
+ *         is set to 0 and all remaining bits are set to 1.
  *
  * @see bitwuzla_mk_bv_sort
  */
@@ -1058,7 +1058,7 @@ void bitwuzla_assert(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 void bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 
 /**
- * Determine if given assumption is an unsat assumption.
+ * Determine if an assumption is an unsat assumption.
  *
  * Unsat assumptions are assumptions that force an input formula to become
  * unsatisfiable. Unsat assumptions handling in Boolector is analogous to
@@ -1212,7 +1212,7 @@ void bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file);
  * Requires that incremental solving is not enabled.
  *
  * @param bitwuzla The Bitwuzla instance.
- * @param format The output format for printing the model. Either "aiger_ascii"
+ * @param format The output format for printing the formula. Either "aiger_ascii"
  *               for the AIGER ascii format, "aiger_binary" for the binary
  *               AIGER format, "btor" for the BTOR format, or "smt2" for the
  *               SMT-LIB v2 format.
@@ -1221,7 +1221,7 @@ void bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file);
 void bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
 
 /**
- * Parse given input file.
+ * Parse input file.
  *
  * The format of the input file is auto detected.  
  * Requires that no terms have been created yet.
@@ -1252,7 +1252,7 @@ BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
                               bool *parsed_smt2);
 
 /**
- * Parse given input file, assumed to be given in the specified format.
+ * Parse input file, assumed to be given in the specified format.
  *
  * Requires that no terms have been created yet.
  *
@@ -1283,8 +1283,7 @@ BitwuzlaResult bitwuzla_parse_format(Bitwuzla *bitwuzla,
                                      BitwuzlaResult *parsed_status);
 
 /**
- * Substitute a set of given keys with their corresponding values in the given
- * term.
+ * Substitute a set of keys with their corresponding values in the given term.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param term The term in which the keys are to be substituted.
@@ -1301,8 +1300,8 @@ BitwuzlaTerm *bitwuzla_substitute_term(Bitwuzla *bitwuzla,
                                        BitwuzlaTerm *map_values[]);
 
 /**
- * Substitute a set of given keys with their corresponding values in the set
- * of given terms.
+ * Substitute a set of keys with their corresponding values in the set of given
+ * terms.
  *
  * The terms in \p terms are replaced with the terms resulting from this
  * substitutions.
@@ -1325,86 +1324,601 @@ void bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
 /* BitwuzlaSort                                                               */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Compute the hash value for a sort.
+ *
+ * @param sort The sort.
+ *
+ * @return The hash value of the sort.
+ */
 size_t bitwuzla_sort_hash(const BitwuzlaSort *sort);
 
+/**
+ * Get the size of a bit-vector sort.
+ *
+ * Requires that given sort is a bit-vector sort.
+ *
+ * @param sort The sort.
+ *
+ * @return The size of the bit-vector sort.
+ */
 uint32_t bitwuzla_sort_bv_get_size(const BitwuzlaSort *sort);
+
+/**
+ * Get the exponent size of a floating-point sort.
+ *
+ * Requires that given sort is a floating-point sort.
+ *
+ * @param sort The sort.
+ *
+ * @return The exponent size of the floating-point sort.
+ */
 uint32_t bitwuzla_sort_fp_get_exp_size(const BitwuzlaSort *sort);
+
+/**
+ * Get the significand size of a floating-point sort.
+ *
+ * Requires that given sort is a floating-point sort.
+ *
+ * @param sort The sort.
+ *
+ * @return The significand size of the floating-point sort.
+ */
 uint32_t bitwuzla_sort_fp_get_sig_size(const BitwuzlaSort *sort);
+
+/**
+ * Get the index sort of an array sort.
+ *
+ * Requires that given sort is an array sort.
+ *
+ * @param sort The sort.
+ *
+ * @return The index sort of the array sort.
+ */
 BitwuzlaSort *bitwuzla_sort_array_get_index(const BitwuzlaSort *sort);
+
+/**
+ * Get the element sort of an array sort.
+ *
+ * Requires that given sort is an array sort.
+ *
+ * @param sort The sort.
+ *
+ * @return The element sort of the array sort.
+ */
 BitwuzlaSort *bitwuzla_sort_array_get_element(const BitwuzlaSort *sort);
+
+/**
+ * Get the domain sorts of a function sort, wrapped into a single sort.
+ *
+ * Requires that given sort is a function sort.
+ *
+ * @note The returned sort is a tuple sort consisting of the domain sorts of
+ *       the given function sort. Tuple sorts are internal only and cannot be
+ *       created via the Api.
+ *
+ * @param sort The sort.
+ *
+ * @return The domain sorts of the function sort.
+ */
 BitwuzlaSort *bitwuzla_sort_fun_get_domain(const BitwuzlaSort *sort);
+
+/**
+ * Get the domain sorts of a function sort.
+ *
+ * The domain sorts are returned as a \c NULL terminated array of sorts.  
+ * Requires that given sort is a function sort.
+ *
+ * @param sort The sort.
+ *
+ * @return The domain sorts of the function sort as a \c NULL terminated array.
+ */
 BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort);
+
+/**
+ * Get the codomain sort of a function sort.
+ *
+ * Requires that given sort is a function sort.
+ *
+ * @param sort The sort.
+ *
+ * @return The codomain sort of the function sort.
+ */
 BitwuzlaSort *bitwuzla_sort_fun_get_codomain(const BitwuzlaSort *sort);
+
+/**
+ * Get the arity of a function sort.
+ *
+ * @param sort The sort.
+ *
+ * @return The number of arguments of the function sort.
+ */
 uint32_t bitwuzla_sort_fun_get_arity(const BitwuzlaSort *sort);
 
+/**
+ * Determine if two sorts are equal.
+ *
+ * @param sort0 The first sort.
+ * @param sort1 The second sort.
+ *
+ * @return True if the given sorts are equal.
+ */
 bool bitwuzla_sort_is_equal(const BitwuzlaSort *sort0,
                             const BitwuzlaSort *sort1);
+
+/**
+ * Determine if a sort is an array sort.
+ *
+ * @param sort The sort.
+ *
+ * @return True if \p sort is an array sort.
+ */
 bool bitwuzla_sort_is_array(const BitwuzlaSort *sort);
+
+/**
+ * Determine if a sort is a bit-vector sort.
+ *
+ * @param sort The sort.
+ *
+ * @return True if \p sort is a bit-vector sort.
+ */
 bool bitwuzla_sort_is_bv(const BitwuzlaSort *sort);
+
+/**
+ * Determine if a sort is a floating-point sort.
+ *
+ * @param sort The sort.
+ *
+ * @return True if \p sort is a floating-point sort.
+ */
 bool bitwuzla_sort_is_fp(const BitwuzlaSort *sort);
+
+/**
+ * Determine if a sort is a function sort.
+ *
+ * @param sort The sort.
+ *
+ * @return True if \p sort is a function sort.
+ */
 bool bitwuzla_sort_is_fun(const BitwuzlaSort *sort);
+
+/**
+ * Determine if a sort is a roundingmode sort.
+ *
+ * @param sort The sort.
+ *
+ * @return True if \p sort is a roundingmode sort.
+ */
 bool bitwuzla_sort_is_rm(const BitwuzlaSort *sort);
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTerm                                                               */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Compute the hash value for a term.
+ *
+ * @param term The term.
+ *
+ * @return The hash value of the term.
+ */
 size_t bitwuzla_term_hash(const BitwuzlaTerm *term);
 
+/**
+ * Get the kind of a term.
+ *
+ * @param term The term.
+ *
+ * @return The kind of the given term.
+ *
+ * @see BitwuzlaKind
+ */
 BitwuzlaKind bitwuzla_term_get_kind(const BitwuzlaTerm *term);
+
+/**
+ * Get the child terms of a term.
+ *
+ * Returns \c NULL if given term does not have children.
+ *
+ * @param term The term.
+ * @param size Output parameter, stores the number of children of \p term.
+ *
+ * @return The children of \p term as an array of terms.
+ */
 BitwuzlaTerm **bitwuzla_term_get_children(const BitwuzlaTerm *term,
                                           size_t *size);
+
+/**
+ * Get the indices of an indexed term.
+ *
+ * Requires that given term is an indexed term.
+ *
+ * @param term The term.
+ * @param size Output parameter, stores the number of indices of \p term.
+ *
+ * @return The children of \p term as an array of terms.
+ */
 uint32_t *bitwuzla_term_get_indices(const BitwuzlaTerm *term, size_t *size);
+
+/**
+ * Determine if a term is an indexed term.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is an indexed term.
+ */
 bool bitwuzla_term_is_indexed(const BitwuzlaTerm *term);
 
+/**
+ * Get the associated Bitwuzla instance of a term.
+ *
+ * @param term The term.
+ *
+ * @return The associated Bitwuzla instance.
+ */
 Bitwuzla *bitwuzla_term_get_bitwuzla(const BitwuzlaTerm *term);
+
+/**
+ * Get the sort of a term.
+ *
+ * @param term The term.
+ *
+ * @return The sort of the term.
+ */
 BitwuzlaSort *bitwuzla_term_get_sort(const BitwuzlaTerm *term);
+
+/**
+ * Get the index sort of an array term.
+ *
+ * Requires that given term is an array or a BITWUZLA_KIND_ARRAY_STORE term.
+ *
+ * @param term The term.
+ *
+ * @return The index sort of the array term.
+ */
 BitwuzlaSort *bitwuzla_term_array_get_index_sort(const BitwuzlaTerm *term);
+
+/**
+ * Get the element sort of an array term.
+ *
+ * Requires that given term is an array or a store term.
+ *
+ * @param term The term.
+ *
+ * @return The element sort of the array term.
+ */
 BitwuzlaSort *bitwuzla_term_array_get_element_sort(const BitwuzlaTerm *term);
+
+/**
+ * Get the domain sorts of a function term, wrapped into a single sort.
+ *
+ * Requires that given term is an uninterpreted function, a lambda term, a
+ * store term, an ite term over function terms.
+ *
+ * @note The returned sort is a tuple sort consisting of the domain sorts of
+ *       the given function sort. Tuple sorts are internal only and cannot be
+ *       created via the Api.
+ *
+ * @param term The term.
+ *
+ * @return The domain sorts of the function term.
+ */
 BitwuzlaSort *bitwuzla_term_fun_get_domain_sort(const BitwuzlaTerm *term);
+
+/**
+ * Get the domain sorts of a function term.
+ *
+ * The domain sorts are returned as a \c NULL terminated array of sorts.  
+ * Requires that given term is an uninterpreted function, a lambda term, a
+ * store term, an ite term over function terms.
+ *
+ * @param term The term.
+ *
+ * @return The domain sorts of the function term as a \c NULL terminated array.
+ */
 BitwuzlaSort **bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term);
+
+/**
+ * Get the codomain sort of a function term.
+ *
+ * Requires that given term is an uninterpreted function, a lambda term, a
+ * store term, an ite term over function terms.
+ *
+ * @param term The term.
+ *
+ * @return The codomain sort of the function term.
+ */
 BitwuzlaSort *bitwuzla_term_fun_get_codomain_sort(const BitwuzlaTerm *term);
 
+/**
+ * Get the bit-width of a bit-vector term.
+ *
+ * Requires that given term is a bit-vector term.
+ *
+ * @param term The term.
+ *
+ * @return The bit-width of the bit-vector term.
+ */
 uint32_t bitwuzla_term_bv_get_size(const BitwuzlaTerm *term);
+
+/**
+ * Get the bit-width of the exponent of a floating-point term.
+ *
+ * Requires that given term is a floating-point term.
+ *
+ * @param term The term.
+ *
+ * @return The bit-width of the exponent of the floating-point term.
+ */
 uint32_t bitwuzla_term_fp_get_exp_size(const BitwuzlaTerm *term);
+
+/**
+ * Get the bit-width of the significand of a floating-point term.
+ *
+ * Requires that given term is a floating-point term.
+ *
+ * @param term The term.
+ *
+ * @return The bit-width of the significand of the floating-point term.
+ */
 uint32_t bitwuzla_term_fp_get_sig_size(const BitwuzlaTerm *term);
+
+/**
+ * Get the aritye of a function term.
+ *
+ * Requires that given term is a function term.
+ *
+ * @param term The term.
+ *
+ * @return The arity of the function term.
+ */
 uint32_t bitwuzla_term_fun_get_arity(const BitwuzlaTerm *term);
 
+/**
+ * Get the symbol of a term.
+ *
+ * @param term The term.
+ *
+ * @return The symbol of \p term. \c NULL if no symbol is defined.
+ */
 const char *bitwuzla_term_get_symbol(const BitwuzlaTerm *term);
+
+/**
+ * Set the symbol of a term.
+ *
+ * @param term The term.
+ * @param symbol The symbol.
+ */
 void bitwuzla_term_set_symbol(BitwuzlaTerm *term, const char *symbol);
 
+/**
+ * Determine if the sorts of two terms are equal.
+ *
+ * @param term0 The first term.
+ * @param term1 The second term.
+ *
+ * @return True if the sorts of \p term0 and \p term1 are equal.
+ */
 bool bitwuzla_term_is_equal_sort(const BitwuzlaTerm *term0,
                                  const BitwuzlaTerm *term1);
 
+/**
+ * Determine if a term is an array term.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is an array term.
+ */
 bool bitwuzla_term_is_array(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a constant.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a constant.
+ */
 bool bitwuzla_term_is_const(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a function.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a function.
+ */
 bool bitwuzla_term_is_fun(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a variable.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a variable.
+ */
 bool bitwuzla_term_is_var(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a bound variable.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a variable and bound.
+ */
 bool bitwuzla_term_is_bound_var(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a value.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a value.
+ */
 bool bitwuzla_term_is_value(const BitwuzlaTerm *term);
 
+/**
+ * Determine if a term is a bit-vector value.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a bit-vector value.
+ */
 bool bitwuzla_term_is_bv_value(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a floating-point value.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a floating-point value.
+ */
 bool bitwuzla_term_is_fp_value(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a roundingmode value.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a roundingmode value.
+ */
 bool bitwuzla_term_is_rm_value(const BitwuzlaTerm *term);
 
+/**
+ * Determine if a term is a bit-vector term.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a bit-vector term.
+ */
 bool bitwuzla_term_is_bv(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a floating-point term.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a floating-point term.
+ */
 bool bitwuzla_term_is_fp(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a roundingmode term.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a roundingmode term.
+ */
 bool bitwuzla_term_is_rm(const BitwuzlaTerm *term);
 
+/**
+ * Determine if a term is a bit-vector value representing zero.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a bit-vector zero value.
+ */
 bool bitwuzla_term_is_bv_value_zero(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a bit-vector value representing one.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a bit-vector one value.
+ */
 bool bitwuzla_term_is_bv_value_one(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a bit-vector value with all bits set to one.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a bit-vector value with all bits set to one.
+ */
 bool bitwuzla_term_is_bv_value_ones(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a bit-vector minimum signed value.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a bit-vector value with the most significant bit
+ *         set to 1 and all other bits set to 0.
+ */
 bool bitwuzla_term_is_bv_value_min_signed(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a bit-vector maximum signed value.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a bit-vector value with the most significant bit
+ *         set to 0 and all other bits set to 1.
+ */
 bool bitwuzla_term_is_bv_value_max_signed(const BitwuzlaTerm *term);
 
+/**
+ * Determine if a term is a floating-point positive zero (+zero) value.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a floating-point +zero value.
+ */
 bool bitwuzla_term_is_fp_value_pos_zero(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a floating-point value negative zero (-zero).
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a floating-point value negative zero.
+ */
 bool bitwuzla_term_is_fp_value_neg_zero(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a floating-point positive infinity (+oo) value.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a floating-point +oo value.
+ */
 bool bitwuzla_term_is_fp_value_pos_inf(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a floating-point negative infinity (-oo) value.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a floating-point -oo value.
+ */
 bool bitwuzla_term_is_fp_value_neg_inf(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a floating-point NaN value.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a floating-point NaN value.
+ */
 bool bitwuzla_term_is_fp_value_nan(const BitwuzlaTerm *term);
 
+/**
+ * Determine if a term is a constant array.
+ *
+ * @param term The term.
+ *
+ * @return True if \p term is a constant array.
+ */
 bool bitwuzla_term_is_const_array(const BitwuzlaTerm *term);
 
+/**
+ * Print term .
+ *
+ * @param term The term.
+ * @param format The output format for printing the term. Either "btor" for the
+ *               BTOR format, or "smt2" for the SMT-LIB v2 format.
+ * @param file The file to print the term to.
+ */
 void bitwuzla_term_dump(const BitwuzlaTerm *term,
                         const char *format,
                         FILE *file);
