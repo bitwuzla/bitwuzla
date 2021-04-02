@@ -41,7 +41,8 @@ class TestPropComplete : public TestBzla
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
     bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_SORT_EXP, 0);
-    bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_CONC_FLIP, 0);
+    // we configure everything needed for const bits tests manually
+    bzla_opt_set(d_bzla, BZLA_OPT_PROP_CONST_BITS, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_SLICE_FLIP, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_EQ_FLIP, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_AND_FLIP, 0);

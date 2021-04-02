@@ -391,7 +391,7 @@ enum BzlaOption
   /*!
     * **BZLA_OPT_FUN_EAGER_LEMMAS**
 
-      | Select mode for eager generation lemmas.
+      | Select mode for eager lemma generation.
 
       * BZLA_FUN_EAGER_LEMMAS_NONE:
         do not generate lemmas eagerly (generate one single lemma per
@@ -659,7 +659,7 @@ enum BzlaOption
   BZLA_OPT_PROP_USE_RESTARTS,
 
   /*!
-    * **BZLA_OPT_PROP_USE_RESTARTS**
+    * **BZLA_OPT_PROP_USE_BANDIT**
 
       | Enable (``value``: 1) or disable (``value``: 0) heuristic (bandit
         scheme) for selecting root constraints.
@@ -719,7 +719,7 @@ enum BzlaOption
     * **BZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL**
 
      Set the limit for how often the path to the condition (in case of an
-     if-then-else operation) may be selected bevor
+     if-then-else operation) may be selected before
      BZLA_OPT_PROP_PROB_FLIP_COND_CONST is decreased or increased by
      BZLA_OPT_PROP_PROB_FLIP_COND_CONST_DELTA.
   */
@@ -733,16 +733,6 @@ enum BzlaOption
       when selecting an inverse or consistent value.
    */
   BZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
-
-  /*!
-    * **BZLA_OPT_PROP_PROB_CONC_FLIP**
-
-     Set probability with which to use the corresponing slice of current
-     assignment with max. one of its bits flipped (rather than using the
-     corresponding slice of the down propagated assignment) as result of
-     consistent value selection for concats.
-  */
-  BZLA_OPT_PROP_PROB_CONC_FLIP,
 
   /*!
     * **BZLA_OPT_PROP_PROB_SLICE_FLIP**
@@ -760,7 +750,7 @@ enum BzlaOption
 
      Set probability with which the current assignment of the selected node
      with one of its bits flipped (rather than a fully randomized bit-vector)
-     is down-propagated in case of an inequality (both for inverse and
+     is down-propagated in case of a disequality (both for inverse and
      consistent value selection).
   */
   BZLA_OPT_PROP_PROB_EQ_FLIP,

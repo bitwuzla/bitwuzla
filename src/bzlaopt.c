@@ -926,7 +926,7 @@ bzla_opt_init_opts(Bzla *bzla)
            true,
            "prop-const-bits",
            0,
-           0,
+           1,
            0,
            1,
            "use constant bits propagation");
@@ -1094,19 +1094,6 @@ bzla_opt_init_opts(Bzla *bzla)
            "(rather than fully randomizing all of them, "
            "for both inverse and consistent value selection) "
            "(interpreted as <n>/1000)");
-  init_opt(bzla,
-           BZLA_OPT_PROP_PROB_CONC_FLIP,
-           false,
-           false,
-           "prop-prob-conc-flip",
-           0,
-           900,
-           0,
-           BZLA_PROB_100,
-           "probability for using slice of current assignment with max. "
-           "one of its bits flipped (rather than using slice of down "
-           "propagated assignment) as result of consistent value selction "
-           "for concats (interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_PROP_PROB_SLICE_FLIP,
            false,

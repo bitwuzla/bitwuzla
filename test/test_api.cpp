@@ -2524,7 +2524,8 @@ TEST_F(TestApi, dump_formula)
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_dump_formula(d_bzla, "asdf", stdout), d_error_format);
 
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+  ASSERT_DEATH(bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, 0),
+               "before creating expressions");
 
   bitwuzla_assert(d_bzla, d_bv_const1);
   bitwuzla_assert(

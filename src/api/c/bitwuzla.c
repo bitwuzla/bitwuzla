@@ -131,7 +131,6 @@ static BzlaOption bzla_options[BITWUZLA_OPT_NUM_OPTS] = {
     BZLA_OPT_PROP_FLIP_COND_CONST_DELTA,
     BZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL,
     BZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
-    BZLA_OPT_PROP_PROB_CONC_FLIP,
     BZLA_OPT_PROP_PROB_SLICE_FLIP,
     BZLA_OPT_PROP_PROB_EQ_FLIP,
     BZLA_OPT_PROP_PROB_AND_FLIP,
@@ -245,7 +244,6 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
     BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA,
     BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL,
     BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
-    BITWUZLA_OPT_PROP_PROB_CONC_FLIP,
     BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
     BITWUZLA_OPT_PROP_PROB_EQ_FLIP,
     BITWUZLA_OPT_PROP_PROB_AND_FLIP,
@@ -256,7 +254,7 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
     BITWUZLA_OPT_PROP_INFER_INEQ_BOUNDS,
     BITWUZLA_OPT_PROP_SEXT,
     BITWUZLA_OPT_PROP_XOR,
-    BITWUZLA_OPT_PROP_SRA,
+    BITWUZLA_OPT_PROP_ASHR,
     BITWUZLA_OPT_AIGPROP_USE_RESTARTS,
     BITWUZLA_OPT_AIGPROP_USE_BANDIT,
     BITWUZLA_OPT_AIGPROP_NPROPS,
@@ -267,6 +265,7 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
     BITWUZLA_OPT_QUANT_DER,
     BITWUZLA_OPT_QUANT_CER,
     BITWUZLA_OPT_QUANT_MINISCOPE,
+    /* internal options --------------------------------------------------- */
     BITWUZLA_OPT_SORT_EXP,
     BITWUZLA_OPT_SORT_AIG,
     BITWUZLA_OPT_SORT_AIGVEC,
@@ -1239,7 +1238,6 @@ bitwuzla_set_option(Bitwuzla *bitwuzla, BitwuzlaOption option, uint32_t value)
       value = val;
     }
   }
-#if 0
 #ifndef BZLA_USE_LINGELING
   if (opt == BZLA_OPT_SAT_ENGINE_LGL_FORK)
   {
@@ -1255,7 +1253,6 @@ bitwuzla_set_option(Bitwuzla *bitwuzla, BitwuzlaOption option, uint32_t value)
         BZLA_COUNT_STACK (bzla->nodes_id_table) > 2,
         "setting rewrite level must be done before creating expressions");
   }
-#endif
   bzla_opt_set(bzla, opt, value);
 }
 
