@@ -8,7 +8,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('dirs', nargs='*')
 args = ap.parse_args()
 
-HEADER_TEMPLATE="""/**
+HEADER_TEMPLATE="""/***
  * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
  *
  * This file is part of Bitwuzla.
