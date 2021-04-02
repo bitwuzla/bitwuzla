@@ -987,7 +987,8 @@ bitwuzla_main(int32_t argc, char **argv)
 {
   size_t i, len;
   int32_t res;
-  int32_t parse_res, parsed_status;
+  int32_t parse_res;
+  BitwuzlaResult parsed_status;
   int32_t sat_res;
   uint32_t format, mgen, pmodel, inc, dump;
   uint32_t val;

@@ -2537,7 +2537,7 @@ TEST_F(TestApi, dump_formula)
 TEST_F(TestApi, parse)
 {
   bool is_smt2;
-  int32_t status;
+  BitwuzlaResult status;
   char *error_msg;
   std::string infile_name = "fp_regr1.smt2";
   std::stringstream ss;
@@ -2610,7 +2610,7 @@ TEST_F(TestApi, parse)
 
 TEST_F(TestApi, parse_format)
 {
-  int32_t status;
+  BitwuzlaResult status;
   char *error_msg;
   std::string infile_name = "fp_regr1.smt2";
   std::stringstream ss;

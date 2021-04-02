@@ -156,7 +156,7 @@ class TestFile : public TestBitwuzla
 
     std::stringstream ss_in;
     FILE *f_in;
-    int32_t parsed_status;
+    BitwuzlaResult parsed_status;
     char *parse_err;
     int32_t sat_res;
     bool parsed_smt2;

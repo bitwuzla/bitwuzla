@@ -55,7 +55,7 @@ int32_t bzla_parse(Bitwuzla *bitwuzla,
                    const char *infile_name,
                    FILE *outfile,
                    char **error_msg,
-                   int32_t *status,
+                   BitwuzlaResult *status,
                    bool *parsed_smt2);
 
 int32_t bzla_parse_btor(Bitwuzla *bitwuzla,
@@ -63,21 +63,21 @@ int32_t bzla_parse_btor(Bitwuzla *bitwuzla,
                         const char *infile_name,
                         FILE *outfile,
                         char **error_msg,
-                        int32_t *status);
+                        BitwuzlaResult *status);
 
 int32_t bzla_parse_btor2(Bitwuzla *bitwuzla,
                          FILE *infile,
                          const char *infile_name,
                          FILE *outfile,
                          char **error_msg,
-                         int32_t *status);
+                         BitwuzlaResult *status);
 
 int32_t bzla_parse_smt2(Bitwuzla *bitwuzla,
                         FILE *infile,
                         const char *infile_name,
                         FILE *outfile,
                         char **error_msg,
-                        int32_t *status);
+                        BitwuzlaResult *status);
 
 BzlaMsg *bitwuzla_get_bzla_msg(Bitwuzla *bitwuzla);
 #endif

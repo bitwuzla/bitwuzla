@@ -41,7 +41,7 @@ parse_aux(Bitwuzla *bitwuzla,
           FILE *outfile,
           const BzlaParserAPI *parser_api,
           char **error_msg,
-          int32_t *status,
+          BitwuzlaResult *status,
           char *msg)
 {
   assert(bitwuzla);
@@ -143,7 +143,7 @@ bzla_parse(Bitwuzla *bitwuzla,
            const char *infile_name,
            FILE *outfile,
            char **error_msg,
-           int32_t *status,
+           BitwuzlaResult *status,
            bool *parsed_smt2)
 {
   assert(bitwuzla);
@@ -273,7 +273,7 @@ bzla_parse_btor(Bitwuzla *bitwuzla,
                 const char *infile_name,
                 FILE *outfile,
                 char **error_msg,
-                int32_t *status)
+                BitwuzlaResult *status)
 {
   assert(bitwuzla);
   assert(infile);
@@ -301,7 +301,7 @@ bzla_parse_btor2(Bitwuzla *bitwuzla,
                  const char *infile_name,
                  FILE *outfile,
                  char **error_msg,
-                 int32_t *status)
+                 BitwuzlaResult *status)
 {
   assert(bitwuzla);
   assert(infile);
@@ -329,7 +329,7 @@ bzla_parse_smt2(Bitwuzla *bitwuzla,
                 const char *infile_name,
                 FILE *outfile,
                 char **error_msg,
-                int32_t *status)
+                BitwuzlaResult *status)
 {
   assert(bitwuzla);
   assert(infile);

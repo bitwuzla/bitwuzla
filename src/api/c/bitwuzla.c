@@ -2987,7 +2987,7 @@ bitwuzla_parse(Bitwuzla *bitwuzla,
                const char *infile_name,
                FILE *outfile,
                char **error_msg,
-               int32_t *parsed_status,
+               BitwuzlaResult *parsed_status,
                bool *parsed_smt2)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
@@ -3021,7 +3021,7 @@ bitwuzla_parse_format(Bitwuzla *bitwuzla,
                       const char *infile_name,
                       FILE *outfile,
                       char **error_msg,
-                      int32_t *parsed_status)
+                      BitwuzlaResult *parsed_status)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(format);
