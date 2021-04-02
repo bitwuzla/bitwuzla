@@ -2796,8 +2796,6 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
     }
   }
 
-  BZLA_ABORT(bzla->quantifiers->count, "Quantifiers support is disabled.");
-
   // FIXME: this is temporary until we support FP handling with LOD for Lambdas
   if (is_fp_logic(bzla))
   {
