@@ -30,6 +30,8 @@ py2=no
 py3=no
 timestats=no
 
+docs=no
+
 ninja=no
 
 flags=""
@@ -68,6 +70,8 @@ where <option> is one of the following:
   --time-stats      compile with time statistics
 
   --symfpu          use SymFPU for FP support
+
+  -- docs           build API documentation
 
 By default all supported SAT solvers available are used and linked.
 If explicitly enabled, configuration will fail if the SAT solver library
@@ -153,6 +157,9 @@ do
     --time-stats) timestats=yes;;
 
     --symfpu) symfpu=yes;;
+
+    --docs) docs=yes;;
+
     --no-cadical)   cadical=no;;
     --no-cms)       cms=no;;
     --no-kissat)    kissat=no;;
@@ -211,6 +218,8 @@ cmake_opts="$CMAKE_OPTS"
 [ $py2 = yes ] && cmake_opts="$cmake_opts -DUSE_PYTHON2=ON"
 [ $py3 = yes ] && cmake_opts="$cmake_opts -DUSE_PYTHON3=ON"
 [ $timestats = yes ] && cmake_opts="$cmake_opts -DTIME_STATS=ON"
+
+[ $docs = yes ] && cmake_opts="$cmake_opts -DDOCS=ON"
 
 [ -n "$flags" ] && cmake_opts="$cmake_opts -DFLAGS=$flags"
 

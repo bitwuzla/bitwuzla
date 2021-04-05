@@ -108,6 +108,7 @@ option3vl(GPROF      "Compile with profiling support")
 option3vl(LOG        "Compile with logging support (default for Debug builds)")
 #option3vl(PYTHON     "Build Python API")
 option3vl(TIME_STATS "Compile with time statistics")
+option3vl(DOCS       "Build API documentation")
 
 option3vl(USE_CADICAL    "Use and link with CaDiCaL")
 option3vl(USE_CMS        "Use and link with CryptoMiniSat")
@@ -501,6 +502,13 @@ install(FILES
 )
 
 #-----------------------------------------------------------------------------#
+# Build API documentation
+
+if(DOCS)
+  add_subdirectory(docs)
+endif()
+
+#-----------------------------------------------------------------------------#
 # Print Bitwuzla configuration
 
 if(NOT WIN32)
@@ -533,6 +541,7 @@ config_info_bool("gprof support" GPROF)
 config_info_bool("Logging support" LOG)
 #config_info_bool("Python bindings" PYTHON)
 config_info_bool("Time statistics" TIME_STATS)
+config_info_bool("Build API documentation" DOCS)
 config_info_bool("CaDiCaL" CaDiCaL_FOUND)
 config_info_bool("CryptoMiniSat" CryptoMiniSat_FOUND)
 config_info_bool("Lingeling" Lingeling_FOUND)
