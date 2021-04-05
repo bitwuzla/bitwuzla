@@ -118,6 +118,12 @@ class TestApi : public TestBitwuzla
                                             d_other_exists_var)));
   }
 
+  void TearDown() override
+  {
+    bitwuzla_delete(d_other_bzla);
+    TestBitwuzla::TearDown();
+  }
+
   /* sorts */
   BitwuzlaSort *d_arr_sort_bv;
   BitwuzlaSort *d_arr_sort_bvfp;
@@ -278,6 +284,14 @@ TEST_F(TestApi, set_option)
 
   ASSERT_NO_FATAL_FAILURE(
       bitwuzla_set_option(bzla_uc, BITWUZLA_OPT_PRODUCE_UNSAT_CORES, 1));
+
+  bitwuzla_delete(bzla_inc);
+  bitwuzla_delete(bzla_dp);
+  bitwuzla_delete(bzla_just);
+  bitwuzla_delete(bzla_mg);
+  bitwuzla_delete(bzla_non);
+  bitwuzla_delete(bzla_uc);
+  bitwuzla_delete(bzla_ucopt);
 }
 
 TEST_F(TestApi, set_option_str)
@@ -290,6 +304,8 @@ TEST_F(TestApi, set_option_str)
                "invalid option value");
   ASSERT_DEATH(bitwuzla_set_option_str(bzla, BITWUZLA_OPT_INCREMENTAL, "true"),
                "option expects an integer value");
+
+  bitwuzla_delete(bzla);
 }
 
 TEST_F(TestApi, mk_array_sort)
@@ -2456,6 +2472,7 @@ TEST_F(TestApi, check_sat)
   Bitwuzla *bzla = bitwuzla_new();
   bitwuzla_set_option(bzla, BITWUZLA_OPT_INCREMENTAL, 1);
   ASSERT_NO_FATAL_FAILURE(bitwuzla_check_sat(bzla));
+  bitwuzla_delete(bzla);
 }
 
 TEST_F(TestApi, get_value)
@@ -2619,6 +2636,7 @@ TEST_F(TestApi, parse)
                                          &status,
                                          &is_smt2));
   ASSERT_TRUE(is_smt2);
+  bitwuzla_delete(bzla);
 }
 
 TEST_F(TestApi, parse_format)
@@ -2694,6 +2712,7 @@ TEST_F(TestApi, parse_format)
                d_error_format);
   ASSERT_NO_FATAL_FAILURE(bitwuzla_parse_format(
       bzla, "smt2", infile, infile_name.c_str(), stdout, &error_msg, &status));
+  bitwuzla_delete(bzla);
 }
 
 /* -------------------------------------------------------------------------- */
