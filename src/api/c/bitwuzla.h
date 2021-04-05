@@ -30,7 +30,9 @@ enum BitwuzlaBVBase
   BITWUZLA_BV_BASE_DEC, ///< decimal
   BITWUZLA_BV_BASE_HEX, ///< hexadecimal
 };
+#ifndef DOXYGEN_SKIP
 typedef enum BitwuzlaBVBase BitwuzlaBVBase;
+#endif
 
 /** The options supported by Bitwuzla. */
 enum BitwuzlaOption
@@ -1001,7 +1003,9 @@ enum BitwuzlaOption
   BITWUZLA_OPT_NUM_OPTS,
 #endif
 };
+#ifndef DOXYGEN_SKIP
 typedef enum BitwuzlaOption BitwuzlaOption;
+#endif
 
 /** The term kind. */
 enum BitwuzlaKind
@@ -1201,7 +1205,9 @@ enum BitwuzlaKind
   BITWUZLA_NUM_KINDS,
 #endif
 };
+#ifndef DOXYGEN_SKIP
 typedef enum BitwuzlaKind BitwuzlaKind;
+#endif
 
 /** A satisfiability result. */
 enum BitwuzlaResult
@@ -1210,7 +1216,9 @@ enum BitwuzlaResult
   BITWUZLA_UNSAT   = 20, ///< unsat
   BITWUZLA_UNKNOWN = 0,  ///< unknown
 };
+#ifndef DOXYGEN_SKIP
 typedef enum BitwuzlaResult BitwuzlaResult;
+#endif
 
 /** A roundingmode value. */
 enum BitwuzlaRoundingMode
@@ -1224,7 +1232,9 @@ enum BitwuzlaRoundingMode
   BITWUZLA_RM_MAX = 5,
 #endif
 };
+#ifndef DOXYGEN_SKIP
 typedef enum BitwuzlaRoundingMode BitwuzlaRoundingMode;
+#endif
 
 /** The Bitwuzla solver. */
 typedef struct Bitwuzla Bitwuzla;
