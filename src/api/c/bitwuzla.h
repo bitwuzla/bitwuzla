@@ -43,11 +43,11 @@ enum BitwuzlaOption
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   * @note
-   * Enabling this option turns off some optimization techniques.  
-   * Enabling/disabling incremental solving after bitwuzla_check_sat()
-   * has been called is not supported.  
-   * This option cannot be enabled in combination with ::BITWUZLA_OPT_UCOPT.
+   * @note Enabling this option turns off some optimization techniques.
+   * @note Enabling/disabling incremental solving after bitwuzla_check_sat()
+   *       has been called is not supported.
+   * @note This option cannot be enabled in combination with
+   *       ::BITWUZLA_OPT_UCOPT.
    */
   BITWUZLA_OPT_INCREMENTAL,
 
@@ -55,7 +55,7 @@ enum BitwuzlaOption
    *
    * Values:
    *  * **1**: enable, generate model for assertions only
-   *  * **2**: enable, generate model for all created terms 
+   *  * **2**: enable, generate model for all created terms
    *  * **0**: disable [**default**]
    *
    * @note This option cannot be enabled in combination with
@@ -109,8 +109,11 @@ enum BitwuzlaOption
 
   /*! **Use non-zero exit codes for sat and unsat results.**
    *
-   * When enabled, use Bitwuzla exit codes (::BITWUZLA_SAT, ::BITWUZLA_UNSAT,
-   * ::BITWUZLA_UNKNOWN).  
+   * When enabled, use Bitwuzla exit codes:
+   * * ::BITWUZLA_SAT
+   * * ::BITWUZLA_UNSAT
+   * * ::BITWUZLA_UNKNOWN
+   *
    * When disabled, return 0 on success (sat, unsat, unknown), and a non-zero
    * exit code for any other case.
    *
@@ -326,6 +329,7 @@ enum BitwuzlaOption
    *    Eager lemmas.**
    *
    * Configure mode for eager lemma generation.
+   *
    * Values: TODO
    */
   BITWUZLA_OPT_FUN_EAGER_LEMMAS,
@@ -343,7 +347,7 @@ enum BitwuzlaOption
 
   /*! **Print DIMACS.**
    *
-   * Print the CNF sent to the SAT solver in DIMCAS format to stdout.
+   * Print the CNF sent to the SAT solver in DIMACS format to stdout.
    *
    * Values:
    *  * **1**: enable
@@ -733,7 +737,7 @@ enum BitwuzlaOption
    * Values:
    *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
    *
-   * @ see ::BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC
+   * @see ::BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC
    */
   BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
 
