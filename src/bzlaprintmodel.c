@@ -524,6 +524,40 @@ print_bv_value_smt2(
   fprintf(file, ")");
 }
 
+static void
+print_fp_value_smt2(Bzla *bzla, BzlaNode *node, char *symbol_str, FILE *file)
+{
+  assert(bzla);
+  assert(node);
+
+  char *symbol;
+  const BzlaBitVector *ass;
+  BzlaSortId sort;
+  int32_t id;
+
+  ass    = bzla_model_get_bv(bzla, node);
+  symbol = symbol_str ? symbol_str : bzla_node_get_symbol(bzla, node);
+  sort   = bzla_node_get_sort_id(node);
+
+  if (symbol)
+  {
+    fprintf(file, "(%s ", symbol);
+  }
+  else
+  {
+    id = bzla_node_get_bzla_id(bzla_node_real_addr(node));
+    fprintf(
+        file, "(v%d ", id ? id : bzla_node_get_id(bzla_node_real_addr(node)));
+  }
+
+  bzla_dumpsmt_dump_const_fp_value(bzla,
+                                   ass,
+                                   bzla_sort_fp_get_exp_width(bzla, sort),
+                                   bzla_sort_fp_get_sig_width(bzla, sort),
+                                   file);
+  fprintf(file, ")");
+}
+
 /*------------------------------------------------------------------------*/
 
 static void
@@ -601,7 +635,15 @@ bzla_print_value_smt2(Bzla *bzla, BzlaNode *exp, char *symbol_str, FILE *file)
 
   base = bzla_opt_get(bzla, BZLA_OPT_OUTPUT_NUMBER_FORMAT);
   if (bzla_node_is_fun(bzla_simplify_exp(bzla, exp)))
+  {
     print_fun_value_smt2(bzla, exp, symbol_str, base, file);
+  }
+  else if (bzla_node_is_fp(bzla, bzla_simplify_exp(bzla, exp)))
+  {
+    print_fp_value_smt2(bzla, exp, symbol_str, file);
+  }
   else
+  {
     print_bv_value_smt2(bzla, exp, symbol_str, base, file);
+  }
 }
