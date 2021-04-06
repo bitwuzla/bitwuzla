@@ -1279,6 +1279,9 @@ void bitwuzla_delete(Bitwuzla *bitwuzla);
  * This deletes the given instance and creates a new instance in place.
  * The given instance must have been created via bitwuzla_new().
  *
+ * @note All sorts and terms associated with the given instance are released
+ *       and thus invalidated.
+ *
  * @param bitwuzla The Bitwuzla instance to reset.
  *
  * @see bitwuzla_new
@@ -1929,7 +1932,9 @@ BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                                        uint32_t idxs[]);
 
 /**
- * Create a constant of given sort with given symbol.
+ * Create a (first-order) constant of given sort with given symbol.
+ *
+ * @note This creates a 0-arity function symbol.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the constant.
@@ -1967,6 +1972,8 @@ BitwuzlaTerm *bitwuzla_mk_const_array(Bitwuzla *bitwuzla,
 /**
  * Create a variable of given sort with given symbol.
  *
+ * @note This creates a variable to be bound by quantifiers or lambdas.
+ *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the variable.
  * @param symbol The symbol of the variable.
@@ -1986,7 +1993,7 @@ BitwuzlaTerm *bitwuzla_mk_var(Bitwuzla *bitwuzla,
 /**
  * Push context levels.
  *
- * Requires that incremental solving has been enabled via bitwuzla_set_opt().
+ * Requires that incremental solving has been enabled via bitwuzla_set_option().
  *
  * @note Assumptions added via this bitwuzla_assume() are not affected by
  *       context level changes and are only valid until the next
@@ -1995,14 +2002,14 @@ BitwuzlaTerm *bitwuzla_mk_var(Bitwuzla *bitwuzla,
  * @param bitwuzla The Bitwuzla instance.
  * @param nlevels The number of context levels to push.
  *
- * @see bitwuzla_set_opt
+ * @see bitwuzla_set_option
  */
 void bitwuzla_push(Bitwuzla *bitwuzla, uint32_t nlevels);
 
 /**
  * Pop context levels.
  *
- * Requires that incremental solving has been enabled via bitwuzla_set_opt().
+ * Requires that incremental solving has been enabled via bitwuzla_set_option().
  *
  * @note Assumptions added via this bitwuzla_assume() are not affected by
  *       context level changes and are only valid until the next
@@ -2011,7 +2018,7 @@ void bitwuzla_push(Bitwuzla *bitwuzla, uint32_t nlevels);
  * @param bitwuzla The Bitwuzla instance.
  * @param nlevels The number of context levels to pop.
  *
- * @see bitwuzla_set_opt
+ * @see bitwuzla_set_option
  */
 void bitwuzla_pop(Bitwuzla *bitwuzla, uint32_t nlevels);
 
@@ -2026,7 +2033,7 @@ void bitwuzla_assert(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 /**
  * Assume formula.
  *
- * Requires that incremental solving has been enabled via bitwuzla_set_opt().
+ * Requires that incremental solving has been enabled via bitwuzla_set_option().
  *
  * @note Assumptions added via this function are not affected by context level
  *       changes and are only valid until the next bitwuzla_check_sat() call,
@@ -2035,7 +2042,7 @@ void bitwuzla_assert(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
  * @param bitwuzla The Bitwuzla instance.
  * @param term The formula to assume.
  *
- * @see bitwuzla_set_opt
+ * @see bitwuzla_set_option
  * @see bitwuzla_is_unsat_assumption
  * @see bitwuzla_get_unsat_assumptions
  */
@@ -2048,16 +2055,16 @@ void bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
  * unsatisfiable. Unsat assumptions handling in Boolector is analogous to
  * failed assumptions in MiniSAT.
  *
- * Requires that incremental solving has been enabled via bitwuzla_set_opt().
+ * Requires that incremental solving has been enabled via bitwuzla_set_option().
  *
- * Requires that a prior bitwuzla_check_sat() query returned BITWUZLA_UNSAT.
+ * Requires that the last bitwuzla_check_sat() query returned BITWUZLA_UNSAT.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param term The assumption to check for.
  *
  * @return True if given assumption is an unsat assumption.
  *
- * @see bitwuzla_set_opt
+ * @see bitwuzla_set_option
  * @see bitwuzla_assume
  * @see bitwuzla_check_sat
  */
@@ -2070,16 +2077,16 @@ bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
  * unsatisfiable. Unsat assumptions handling in Boolector is analogous to
  * failed assumptions in MiniSAT.
  *
- * Requires that incremental solving has been enabled via bitwuzla_set_opt().
+ * Requires that incremental solving has been enabled via bitwuzla_set_option().
  *
- * Requires that a prior bitwuzla_check_sat() query returned BITWUZLA_UNSAT.
+ * Requires that the last bitwuzla_check_sat() query returned BITWUZLA_UNSAT.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param size Output parameter, stores the size of the returned array.
  *
  * @return An array with unsat assumptions of size \p size.
  *
- * @see bitwuzla_set_opt
+ * @see bitwuzla_set_option
  * @see bitwuzla_assume
  * @see bitwuzla_check_sat
  */
@@ -2091,7 +2098,7 @@ BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
  * The unsat core consists of the set of assertions that force an input formula
  * to become unsatisfiable.
  *
- * Requires that a prior bitwuzla_check_sat() query returned BITWUZLA_UNSAT.
+ * Requires that the last bitwuzla_check_sat() query returned BITWUZLA_UNSAT.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param size Output parameter, stores the size of the returned array.
@@ -2146,7 +2153,7 @@ BitwuzlaResult bitwuzla_simplify(Bitwuzla *bitwuzla);
  *
  * @note Assertions and assumptions are combined via Boolean and.  Multiple
  *       calls to this function require enabling incremental solving via
- *       bitwuzla_set_opt().
+ *       bitwuzla_set_option().
  *
  * @param bitwuzla The Bitwuzla instance.
  *
@@ -2157,7 +2164,7 @@ BitwuzlaResult bitwuzla_simplify(Bitwuzla *bitwuzla);
  *
  * @see bitwuzla_assert
  * @see bitwuzla_assume
- * @see bitwuzla_set_opt
+ * @see bitwuzla_set_option
  * @see BitwuzlaResult
  */
 BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
@@ -2165,7 +2172,7 @@ BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
 /**
  * Get a term representing the model value of a given term.
  *
- * Requires that a prior bitwuzla_check_sat() query returned BITWUZLA_SAT.
+ * Requires that the last bitwuzla_check_sat() query returned BITWUZLA_SAT.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param term The term to query a model value for.
@@ -2179,7 +2186,7 @@ BitwuzlaTerm *bitwuzla_get_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 /**
  * Print a model for the current input formula.
  *
- * Requires that a prior bitwuzla_check_sat() query returned BITWUZLA_SAT.
+ * Requires that the last bitwuzla_check_sat() query returned BITWUZLA_SAT.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param format The output format for printing the model. Either "btor" for
@@ -2275,7 +2282,7 @@ BitwuzlaResult bitwuzla_parse_format(Bitwuzla *bitwuzla,
  * @param map_keys The keys.
  * @param map_values The mapped values.
  *
- * @return The resulting from this substitution.
+ * @return The resulting term from this substitution.
  */
 BitwuzlaTerm *bitwuzla_substitute_term(Bitwuzla *bitwuzla,
                                        const BitwuzlaTerm *term,
@@ -2554,7 +2561,7 @@ BitwuzlaSort *bitwuzla_term_get_sort(const BitwuzlaTerm *term);
 /**
  * Get the index sort of an array term.
  *
- * Requires that given term is an array or a BITWUZLA_KIND_ARRAY_STORE term.
+ * Requires that given term is an array or an array store term.
  *
  * @param term The term.
  *
@@ -2565,7 +2572,7 @@ BitwuzlaSort *bitwuzla_term_array_get_index_sort(const BitwuzlaTerm *term);
 /**
  * Get the element sort of an array term.
  *
- * Requires that given term is an array or a store term.
+ * Requires that given term is an array or an array store term.
  *
  * @param term The term.
  *
@@ -2577,7 +2584,7 @@ BitwuzlaSort *bitwuzla_term_array_get_element_sort(const BitwuzlaTerm *term);
  * Get the domain sorts of a function term, wrapped into a single sort.
  *
  * Requires that given term is an uninterpreted function, a lambda term, a
- * store term, an ite term over function terms.
+ * store term, or an ite term over function terms.
  *
  * @note The returned sort is a tuple sort consisting of the domain sorts of
  *       the given function sort. Tuple sorts are internal only and cannot be
@@ -2593,8 +2600,8 @@ BitwuzlaSort *bitwuzla_term_fun_get_domain_sort(const BitwuzlaTerm *term);
  * Get the domain sorts of a function term.
  *
  * The domain sorts are returned as a \c NULL terminated array of sorts.  
- * Requires that given term is an uninterpreted function, a lambda term, a
- * store term, an ite term over function terms.
+ * Requires that given term is an uninterpreted function, a lambda term, an
+ * array store term, or an ite term over function terms.
  *
  * @param term The term.
  *
@@ -2605,8 +2612,8 @@ BitwuzlaSort **bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term);
 /**
  * Get the codomain sort of a function term.
  *
- * Requires that given term is an uninterpreted function, a lambda term, a
- * store term, an ite term over function terms.
+ * Requires that given term is an uninterpreted function, a lambda term, an
+ * array store term, or an ite term over function terms.
  *
  * @param term The term.
  *
@@ -2648,7 +2655,7 @@ uint32_t bitwuzla_term_fp_get_exp_size(const BitwuzlaTerm *term);
 uint32_t bitwuzla_term_fp_get_sig_size(const BitwuzlaTerm *term);
 
 /**
- * Get the aritye of a function term.
+ * Get the arity of a function term.
  *
  * Requires that given term is a function term.
  *
