@@ -1014,196 +1014,386 @@ typedef enum BitwuzlaOption BitwuzlaOption;
 /** The term kind. */
 enum BitwuzlaKind
 {
-  /*! boolean and */
+  /*! Boolean and.
+   *
+   *  SMT-LIB: \c and */
   BITWUZLA_KIND_AND,
-  /*! function application */
+  /*! Function application. */
   BITWUZLA_KIND_APPLY,
-  /*! array select */
+  /*! Array select.
+   *
+   *  SMT-LIB: \c select */
   BITWUZLA_KIND_ARRAY_SELECT,
-  /*! array store */
+  /*! Array store.
+   *
+   * SMT-LIB: \c store */
   BITWUZLA_KIND_ARRAY_STORE,
-  /*! bit-vector addition */
+  /*! Bit-vector addition.
+   *
+   *  SMT-LIB: \c bvadd */
   BITWUZLA_KIND_BV_ADD,
-  /*! bit-vector and */
+  /*! Bit-vector and.
+   *
+   * SMT-LIB: \c bvand */
   BITWUZLA_KIND_BV_AND,
-  /*! bit-vector arithmetic shift right */
+  /*! Bit-vector arithmetic right shift.
+   *
+   * SMT-LIB: \c bvashr */
   BITWUZLA_KIND_BV_ASHR,
-  /*! bit-vector comparison */
+  /*! Bit-vector comparison.
+   *
+   * SMT-LIB: \c bvcomp */
   BITWUZLA_KIND_BV_COMP,
-  /*! bit-vector concat */
+  /*! Bit-vector concat.
+   *
+   * SMT-LIB: \c concat */
   BITWUZLA_KIND_BV_CONCAT,
-  /*! bit-vector decrement */
+  /*! Bit-vector decrement.
+   *
+   * Decrement by one. */
   BITWUZLA_KIND_BV_DEC,
-  /*! bit-vector increment */
+  /*! Bit-vector increment.
+   *
+   * Increment by one. */
   BITWUZLA_KIND_BV_INC,
-  /*! bit-vector multiplication */
+  /*! Bit-vector multiplication.
+   *
+   * SMT-LIB: \c bvmul */
   BITWUZLA_KIND_BV_MUL,
-  /*! bit-vector nand */
+  /*! Bit-vector nand.
+   *
+   * SMT-LIB: \c bvnand */
   BITWUZLA_KIND_BV_NAND,
-  /*! bit-vector negation (two's complement) */
+  /*! Bit-vector negation (two's complement).
+   *
+   * SMT-LIB: \c bvneg */
   BITWUZLA_KIND_BV_NEG,
-  /*! bit-vector nor */
+  /*! Bit-vector nor.
+   *
+   * SMT-LIB: \c bvnor */
   BITWUZLA_KIND_BV_NOR,
-  /*! bit-vector not (one's complement) */
+  /*! Bit-vector not (one's complement).
+   *
+   * SMT-LIB: \c bvnot */
   BITWUZLA_KIND_BV_NOT,
-  /*! bit-vector or */
+  /*! Bit-vector or.
+   *
+   * SMT-LIB: \c bvor */
   BITWUZLA_KIND_BV_OR,
-  /*! bit-vector reduce and */
+  /*! Bit-vector and reduction.
+   *
+   * Bit-wise \c and reduction, all bits are \c and ed together into a single bit.
+   * This corresponds to bit-wise \c and reduction as known from Verilog. */
   BITWUZLA_KIND_BV_REDAND,
-  /*! bit-vector reduce or */
+  /*! Bit-vector reduce or.
+   *
+   * Bit-wise \c or reduction, all bits are \c or ed together into a single bit.
+   * This corresponds to bit-wise \c or reduction as known from Verilog. */
   BITWUZLA_KIND_BV_REDOR,
-  /*! bit-vector reduce xor */
+  /*! Bit-vector reduce xor.
+   *
+   * Bit-wise \c xor reduction, all bits are \c xor ed together into a single bit.
+   * This corresponds to bit-wise \c xor reduction as known from Verilog. */
   BITWUZLA_KIND_BV_REDXOR,
-  /*! bit-vector rotate left */
+  /*! Bit-vector rotate left (not indexed).
+   *
+   * This is a non-indexed variant of SMT-LIB \c rotate_left. */
   BITWUZLA_KIND_BV_ROL,
-  /*! bit-vector rotate right */
+  /*! Bit-vector rotate right.
+   *
+   * This is a non-indexed variant of SMT-LIB \c rotate_right. */
   BITWUZLA_KIND_BV_ROR,
-  /*! bit-vector signed addition overflow test */
+  /*! Bit-vector signed addition overflow test.
+   *
+   * Single bit to indicate if signed addition produces an overflow. */
   BITWUZLA_KIND_BV_SADD_OVERFLOW,
-  /*! bit-vector signed division overflow test */
+  /*! Bit-vector signed division overflow test.
+   *
+   * Single bit to indicate if signed division produces an overflow. */
   BITWUZLA_KIND_BV_SDIV_OVERFLOW,
-  /*! bit-vector signed division */
+  /*! Bit-vector signed division.
+   *
+   * SMT-LIB: \c bvsdiv */
   BITWUZLA_KIND_BV_SDIV,
-  /*! bit-vector signed greater than or equal */
+  /*! Bit-vector signed greater than or equal.
+   *
+   * SMT-LIB: \c bvsle */
   BITWUZLA_KIND_BV_SGE,
-  /*! bit-vector signed greater than */
+  /*! Bit-vector signed greater than.
+   *
+   * SMT-LIB: \c bvslt */
   BITWUZLA_KIND_BV_SGT,
-  /*! bit-vector logical shift left */
+  /*! Bit-vector logical left shift.
+   *
+   * SMT-LIB: \c bvshl */
   BITWUZLA_KIND_BV_SHL,
-  /*! bit-vector logical shift right */
+  /*! Bit-vector logical right shift.
+   *
+   * SMT-LIB: \c bvshr */
   BITWUZLA_KIND_BV_SHR,
-  /*! bit-vector signed less than or equal */
+  /*! Bit-vector signed less than or equal.
+   *
+   * SMT-LIB: \c bvsle */
   BITWUZLA_KIND_BV_SLE,
-  /*! bit-vector signed less than */
+  /*! Bit-vector signed less than.
+   *
+   * SMT-LIB: \c bvslt */
   BITWUZLA_KIND_BV_SLT,
-  /*! bit-vector signed modulo */
+  /*! Bit-vector signed modulo.
+   *
+   * SMT-LIB: \c bvsmod */
   BITWUZLA_KIND_BV_SMOD,
-  /*! bit-vector signed multiplication overflow test */
+  /*! Bit-vector signed multiplication overflow test.
+   *
+   * SMT-LIB: \c bvsmod */
   BITWUZLA_KIND_BV_SMUL_OVERFLOW,
-  /*! bit-vector signed remainder */
+  /*! Bit-vector signed remainder.
+   *
+   * SMT-LIB: \c bvsrem */
   BITWUZLA_KIND_BV_SREM,
-  /*! bit-vector signed subtraction overflow test */
+  /*! Bit-vector signed subtraction overflow test.
+   *
+   * Single bit to indicate if signed subtraction produces an overflow. */
   BITWUZLA_KIND_BV_SSUB_OVERFLOW,
-  /*! bit-vector subtraction */
+  /*! Bit-vector subtraction.
+   *
+   * SMT-LIB: \c bvsub */
   BITWUZLA_KIND_BV_SUB,
-  /*! bit-vector unsigned addition overflow test */
+  /*! Bit-vector unsigned addition overflow test.
+   *
+   * Single bit to indicate if unsigned addition produces an overflow. */
   BITWUZLA_KIND_BV_UADD_OVERFLOW,
-  /*! bit-vector unsigned division */
+  /*! Bit-vector unsigned division.
+   *
+   * SMT-LIB: \c bvudiv */
   BITWUZLA_KIND_BV_UDIV,
-  /*! bit-vector unsigned greater than or equal */
+  /*! Bit-vector unsigned greater than or equal.
+   *
+   * SMT-LIB: \c bvuge */
   BITWUZLA_KIND_BV_UGE,
-  /*! bit-vector unsigned greater than */
+  /*! Bit-vector unsigned greater than.
+   *
+   * SMT-LIB: \c bvugt */
   BITWUZLA_KIND_BV_UGT,
-  /*! bit-vector unsigned less than or equal */
+  /*! Bit-vector unsigned less than or equal.
+   *
+   * SMT-LIB: \c bvule */
   BITWUZLA_KIND_BV_ULE,
-  /*! bit-vector unsigned less than */
+  /*! Bit-vector unsigned less than.
+   *
+   * SMT-LIB: \c bvult */
   BITWUZLA_KIND_BV_ULT,
-  /*! bit-vector unsigned multiplication overflow test */
+  /*! Bit-vector unsigned multiplication overflow test.
+   *
+   * Single bit to indicate if unsigned multiplication produces an overflow. */
   BITWUZLA_KIND_BV_UMUL_OVERFLOW,
-  /*! bit-vector unsigned remainder */
+  /*! Bit-vector unsigned remainder.
+   *
+   * SMT-LIB: \c bvurem */
   BITWUZLA_KIND_BV_UREM,
-  /*! bit-vector unsigned subtraction overflow test */
+  /*! Bit-vector unsigned subtraction overflow test.
+   *
+   * Single bit to indicate if unsigned subtraction produces an overflow. */
   BITWUZLA_KIND_BV_USUB_OVERFLOW,
-  /*! bit-vector xnor */
+  /*! Bit-vector xnor.
+   *
+   * SMT-LIB: \c bvxnor */
   BITWUZLA_KIND_BV_XNOR,
-  /*! bit-vector xor */
+  /*! Bit-vector xor.
+   *
+   * SMT-LIB: \c bvxor */
   BITWUZLA_KIND_BV_XOR,
-  /*! Disequality */
+  /*! Disequality.
+   *
+   * SMT-LIB: \c distinct */
   BITWUZLA_KIND_DISTINCT,
-  /*! Equality */
+  /*! Equality.
+   *
+   * SMT-LIB: \c = */
   BITWUZLA_KIND_EQUAL,
-  /*! Existential quantification */
+  /*! Existential quantification.
+   *
+   * SMT-LIB: \c exists */
   BITWUZLA_KIND_EXISTS,
-  /*! Universal quantification */
+  /*! Universal quantification.
+   *
+   * SMT-LIB: \c forall */
   BITWUZLA_KIND_FORALL,
-  /*! floating-point absolute value */
+  /*! Floating-point absolute value.
+   *
+   * SMT-LIB: \c fp.abs */
   BITWUZLA_KIND_FP_ABS,
-  /*! floating-point addition */
+  /*! Floating-point addition.
+   *
+   * SMT-LIB: \c fp.add */
   BITWUZLA_KIND_FP_ADD,
-  /*! floating-point division */
+  /*! Floating-point division.
+   *
+   * SMT-LIB: \c fp.div */
   BITWUZLA_KIND_FP_DIV,
-  /*! floating-point equality */
+  /*! Floating-point equality.
+   *
+   * SMT-LIB: \c fp.eq */
   BITWUZLA_KIND_FP_EQ,
-  /*! floating-point fused multiplcation and addition */
+  /*! Floating-point fused multiplcation and addition.
+   *
+   * SMT-LIB: \c fp.fma */
   BITWUZLA_KIND_FP_FMA,
-  /*! floating-point IEEE 754 value (fp ...) */
+  /*! Floating-point IEEE 754 value.
+   *
+   * SMT-LIB: \c fp */
   BITWUZLA_KIND_FP_FP,
-  /*! floating-point greater than or equal */
+  /*! Floating-point greater than or equal.
+   *
+   * SMT-LIB: \c fp.geq */
   BITWUZLA_KIND_FP_GEQ,
-  /*! floating-point greater than */
+  /*! Floating-point greater than.
+   *
+   * SMT-LIB: \c fp.gt */
   BITWUZLA_KIND_FP_GT,
-  /*! floating-point is infinity tester */
+  /*! Floating-point is infinity tester.
+   *
+   * SMT-LIB: \c fp.isInfinite */
   BITWUZLA_KIND_FP_IS_INF,
-  /*! floating-point is Nan tester */
+  /*! Floating-point is Nan tester.
+   *
+   * SMT-LIB: \c fp.isNaN */
   BITWUZLA_KIND_FP_IS_NAN,
-  /*! floating-point is negative tester */
+  /*! Floating-point is negative tester.
+   *
+   * SMT-LIB: \c fp.isNegative */
   BITWUZLA_KIND_FP_IS_NEG,
-  /*! floating-point is normal tester */
+  /*! Floating-point is normal tester.
+   *
+   * SMT-LIB: \c fp.isNormal */
   BITWUZLA_KIND_FP_IS_NORMAL,
-  /*! floating-point is positive tester */
+  /*! Floating-point is positive tester.
+   *
+   * SMT-LIB: \c fp.isPositive */
   BITWUZLA_KIND_FP_IS_POS,
-  /*! floating-point is subnormal tester */
+  /*! Floating-point is subnormal tester.
+   *
+   * SMT-LIB: \c fp.isSubnormal */
   BITWUZLA_KIND_FP_IS_SUBNORMAL,
-  /*! floating-point is zero tester */
+  /*! Floating-point is zero tester.
+   *
+   * SMT-LIB: \c fp.isZero */
   BITWUZLA_KIND_FP_IS_ZERO,
-  /*! floating-point less than or equal */
+  /*! Floating-point less than or equal.
+   *
+   * SMT-LIB: \c fp.leq */
   BITWUZLA_KIND_FP_LEQ,
-  /*! floating-point less than */
+  /*! Floating-point less than.
+   *
+   * SMT-LIB: \c fp.lt */
   BITWUZLA_KIND_FP_LT,
-  /*! floating-point max */
+  /*! Floating-point max.
+   *
+   * SMT-LIB: \c fp.max */
   BITWUZLA_KIND_FP_MAX,
-  /*! floating-point min */
+  /*! Floating-point min.
+   *
+   * SMT-LIB: \c fp.min */
   BITWUZLA_KIND_FP_MIN,
-  /*! floating-point multiplcation */
+  /*! Floating-point multiplcation.
+   *
+   * SMT-LIB: \c fp.mul */
   BITWUZLA_KIND_FP_MUL,
-  /*! floating-point negation */
+  /*! Floating-point negation.
+   *
+   * SMT-LIB: \c fp.neg */
   BITWUZLA_KIND_FP_NEG,
-  /*! floating-point remainder */
+  /*! Floating-point remainder.
+   *
+   * SMT-LIB: \c fp.rem */
   BITWUZLA_KIND_FP_REM,
-  /*! floating-point round to integral */
+  /*! Floating-point round to integral.
+   *
+   * SMT-LIB: \c fp.roundToIntegral */
   BITWUZLA_KIND_FP_RTI,
-  /*! floating-point round to square root */
+  /*! Floating-point round to square root.
+   *
+   * SMT-LIB: \c fp.sqrt */
   BITWUZLA_KIND_FP_SQRT,
-  /*! floating-point round to subtraction */
+  /*! Floating-point round to subtraction.
+   *
+   * SMT-LIB: \c fp.sqrt */
   BITWUZLA_KIND_FP_SUB,
-  /*! boolean if and only if */
+  /*! Boolean if and only if.
+   *
+   * SMT-LIB: \c = */
   BITWUZLA_KIND_IFF,
-  /*! boolean implies */
+  /*! Boolean implies.
+   *
+   * SMT-LIB: \c => */
   BITWUZLA_KIND_IMPLIES,
-  /*! if then else */
+  /*! If-then-else.
+   *
+   * SMT-LIB: \c ite */
   BITWUZLA_KIND_ITE,
-  /*! lambda */
+  /*! Lambda. */
   BITWUZLA_KIND_LAMBDA,
-  /*! boolean not */
+  /*! Boolean not.
+   *
+   * SMT-LIB: \c not */
   BITWUZLA_KIND_NOT,
-  /*! boolean or */
+  /*! Boolean or.
+   *
+   * SMT-LIB: \c or */
   BITWUZLA_KIND_OR,
-  /*! boolean xor */
+  /*! Boolean xor.
+   *
+   * SMT-LIB: \c xor */
   BITWUZLA_KIND_XOR,
+
   // indexed
-  /*! bit-vector extract */
+  /*! Bit-vector extract.
+   *
+   * SMT-LIB: \c extract (indexed) */
   BITWUZLA_KIND_BV_EXTRACT,
-  /*! bit-vector repeat */
+  /*! Bit-vector repeat.
+   *
+   * SMT-LIB: \c repeat (indexed) */
   BITWUZLA_KIND_BV_REPEAT,
-  /*! bit-vector rotate left by integer */
+  /*! Bit-vector rotate left by integer.
+   *
+   * SMT-LIB: \c rotate_left (indexed) */
   BITWUZLA_KIND_BV_ROLI,
-  /*! bit-vector rotate right by integer */
+  /*! Bit-vector rotate right by integer.
+   *
+   * SMT-LIB: \c rotate_right (indexed) */
   BITWUZLA_KIND_BV_RORI,
-  /*! bit-vector sign extend */
+  /*! Bit-vector sign extend.
+   *
+   * SMT-LIB: \c sign_extend (indexed) */
   BITWUZLA_KIND_BV_SIGN_EXTEND,
-  /*! bit-vector zero extend */
+  /*! Bit-vector zero extend.
+   *
+   * SMT-LIB: \c zero_extend (indexed) */
   BITWUZLA_KIND_BV_ZERO_EXTEND,
-  /*! floating-point to_fp from IEEE 754 bit-vector */
+  /*! Floating-point to_fp from IEEE 754 bit-vector.
+   *
+   * SMT-LIB: \c to_fp (indexed) */
   BITWUZLA_KIND_FP_TO_FP_FROM_BV,
-  /*! floating-point to_fp from floating-point */
+  /*! Floating-point to_fp from floating-point.
+   *
+   * SMT-LIB: \c to_fp (indexed) */
   BITWUZLA_KIND_FP_TO_FP_FROM_FP,
-  /*! floating-point to_fp from signed bit-vector value  */
+  /*! Floating-point to_fp from signed bit-vector value.
+   *
+   * SMT-LIB: \c to_fp (indexed) */
   BITWUZLA_KIND_FP_TO_FP_FROM_SBV,
-  /*! floating-point to_fp from unsigned bit-vector value  */
+  /*! Floating-point to_fp from unsigned bit-vector value.
+   *
+   * SMT-LIB: \c to_fp_unsigned (indexed) */
   BITWUZLA_KIND_FP_TO_FP_FROM_UBV,
-  /*! floating-point to_sbv */
+  /*! Floating-point to_sbv.
+   *
+   * SMT-LIB: \c fp.to_sbv (indexed) */
   BITWUZLA_KIND_FP_TO_SBV,
-  /*! floating-point to_ubv */
+  /*! Floating-point to_ubv.
+   *
+   * SMT-LIB: \c fp.to_ubv (indexed) */
   BITWUZLA_KIND_FP_TO_UBV,
 #ifndef DOXYGEN_SKIP
   BITWUZLA_NUM_KINDS,
@@ -1227,11 +1417,16 @@ typedef enum BitwuzlaResult BitwuzlaResult;
 /** A roundingmode value. */
 enum BitwuzlaRoundingMode
 {
-  BITWUZLA_RM_RNE = 0, ///< round nearest ties to even
-  BITWUZLA_RM_RNA = 1, ///< round nearest ties to away
-  BITWUZLA_RM_RTN = 2, ///< round toward negative
-  BITWUZLA_RM_RTP = 3, ///< round toward positive
-  BITWUZLA_RM_RTZ = 4, ///< round toward zero
+  /*! SMT-LIB: \c RNE \c roundNearestTiesToEven */
+  BITWUZLA_RM_RNE = 0,
+  /*! SMT-LIB: \c RNA \c roundNearestTiesToAway */
+  BITWUZLA_RM_RNA = 1,
+  /*! SMT-LIB: \c RTN \c roundTowardNegative */
+  BITWUZLA_RM_RTN = 2,
+  /*! SMT-LIB: \c RTP \c roundTowardPositive */
+  BITWUZLA_RM_RTP = 3,
+  /*! SMT-LIB: \c RTZ \c roundTowardZero */
+  BITWUZLA_RM_RTZ = 4,
 #ifndef DOXYGEN_SKIP
   BITWUZLA_RM_MAX = 5,
 #endif
