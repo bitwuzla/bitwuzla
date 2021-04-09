@@ -500,8 +500,7 @@ enum BitwuzlaOption
    * Values:
    *  * An unsigned integer value (**default**: 1)
    *
-   * @see BITWUZLA_OPT_SLS_MOVE_PROP
-   * @see BITWUZLA_OPT_SLS_MOVE_PROP_N_SLS
+   * @see BITWUZLA_OPT_SLS_MOVE_PROP, BITWUZLA_OPT_SLS_MOVE_PROP_N_SLS
    */
   BITWUZLA_OPT_SLS_MOVE_PROP_N_PROP,
 
@@ -515,8 +514,7 @@ enum BitwuzlaOption
    * Values:
    *  * An unsigned integer value (**default**: 1)
    *
-   * @see BITWUZLA_OPT_SLS_MOVE_PROP
-   * @see BITWUZLA_OPT_SLS_MOVE_PROP_N_PROP
+   * @see BITWUZLA_OPT_SLS_MOVE_PROP, BITWUZLA_OPT_SLS_MOVE_PROP_N_PROP
    */
   BITWUZLA_OPT_SLS_MOVE_PROP_N_SLS,
 
@@ -737,7 +735,7 @@ enum BitwuzlaOption
    * Values:
    *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
    *
-   * @see ::BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC
+   * @see BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC
    */
   BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
 
@@ -1518,8 +1516,7 @@ bool bitwuzla_terminate(Bitwuzla *bitwuzla);
  *            been terminated.
  * @param state The argument to the callback function.
  *
- * @see bitwuzla_terminate
- * @see bitwuzla_get_termination_callback_state
+ * @see bitwuzla_terminate, bitwuzla_get_termination_callback_state
  */
 void bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
                                        int32_t (*fun)(void *),
@@ -1536,8 +1533,7 @@ void bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
  *
  * @return The object passed as argument \p state to the callback function.
  *
- * @see bitwuzla_terminate
- * @see bitwuzla_set_termination_callback
+ * @see bitwuzla_terminate, see bitwuzla_set_termination_callback
  */
 void *bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla);
 
@@ -1601,12 +1597,9 @@ uint32_t bitwuzla_get_option(Bitwuzla *bitwuzla, BitwuzlaOption option);
  *
  * @return An array sort which maps sort \p index to sort \p element.
  *
- * @see bitwuzla_sort_is_array
- * @see bitwuzla_sort_array_get_index
- * @see bitwuzla_sort_array_get_element
- * @see bitwuzla_term_is_array
- * @see bitwuzla_term_array_get_index_sort
- * @see bitwuzla_term_array_get_element_sort
+ * @see bitwuzla_sort_is_array, bitwuzla_sort_array_get_index,
+ * bitwuzla_sort_array_get_element, bitwuzla_term_is_array,
+ * bitwuzla_term_array_get_index_sort, bitwuzla_term_array_get_element_sort
  */
 BitwuzlaSort *bitwuzla_mk_array_sort(Bitwuzla *bitwuzla,
                                      const BitwuzlaSort *index,
@@ -1631,10 +1624,8 @@ BitwuzlaSort *bitwuzla_mk_bool_sort(Bitwuzla *bitwuzla);
  *
  * @return A bit-vector sort of given size.
  *
- * @see bitwuzla_sort_is_bv
- * @see bitwuzla_sort_bv_get_size
- * @see bitwuzla_term_is_bv
- * @see bitwuzla_term_bv_get_size
+ * @see bitwuzla_sort_is_bv, bitwuzla_sort_bv_get_size, bitwuzla_term_is_bv,
+ * bitwuzla_term_bv_get_size
  */
 BitwuzlaSort *bitwuzla_mk_bv_sort(Bitwuzla *bitwuzla, uint32_t size);
 
@@ -1647,12 +1638,9 @@ BitwuzlaSort *bitwuzla_mk_bv_sort(Bitwuzla *bitwuzla, uint32_t size);
  *
  * @return A floating-point sort of given format.
  *
- * @see bitwuzla_sort_is_fp
- * @see bitwuzla_sort_fp_get_exp_size
- * @see bitwuzla_sort_fp_get_sig_size
- * @see bitwuzla_term_is_fp
- * @see bitwuzla_term_fp_get_exp_size
- * @see bitwuzla_term_fp_get_sig_size
+ * @see bitwuzla_sort_is_fp, bitwuzla_sort_fp_get_exp_size,
+ * bitwuzla_sort_fp_get_sig_size, bitwuzla_term_is_fp,
+ * bitwuzla_term_fp_get_exp_size, bitwuzla_term_fp_get_sig_size
  */
 BitwuzlaSort *bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
                                   uint32_t exp_size,
@@ -1669,16 +1657,11 @@ BitwuzlaSort *bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
  *
  * @return A function sort of given domain and codomain sorts.
  *
- * @see bitwuzla_sort_is_fun
- * @see bitwuzla_sort_fun_get_arity
- * @see bitwuzla_sort_fun_get_domain
- * @see bitwuzla_sort_fun_get_domain_sorts
- * @see bitwuzla_sort_fun_get_codomain
- * @see bitwuzla_term_is_fun
- * @see bitwuzla_term_fun_get_arity
- * @see bitwuzla_term_fun_get_domain_sort
- * @see bitwuzla_term_fun_get_domain_sorts
- * @see bitwuzla_term_fun_get_codomain_sort
+ * @see bitwuzla_sort_is_fun, bitwuzla_sort_fun_get_arity,
+ * bitwuzla_sort_fun_get_domain, bitwuzla_sort_fun_get_domain_sorts,
+ * bitwuzla_sort_fun_get_codomain, bitwuzla_term_is_fun,
+ * bitwuzla_term_fun_get_arity, bitwuzla_term_fun_get_domain_sort,
+ * bitwuzla_term_fun_get_domain_sorts, bitwuzla_term_fun_get_codomain_sort
  */
 BitwuzlaSort *bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
                                    uint32_t arity,
@@ -1692,8 +1675,7 @@ BitwuzlaSort *bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
  *
  * @return A roundingmode sort.
  *
- * @see bitwuzla_sort_is_rm
- * @see bitwuzla_term_is_rm
+ * @see bitwuzla_sort_is_rm, see bitwuzla_term_is_rm
  */
 BitwuzlaSort *bitwuzla_mk_rm_sort(Bitwuzla *bitwuzla);
 
@@ -1866,8 +1848,7 @@ BitwuzlaTerm *bitwuzla_mk_fp_nan(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
  *
  * @return A term representing the bit-vector value of given sort.
  *
- * @see bitwuzla_mk_bv_sort
- * @see BitwuzlaBase
+ * @see bitwuzla_mk_bv_sort, BitwuzlaBase
  */
 BitwuzlaTerm *bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
                                    const BitwuzlaSort *sort,
@@ -2137,12 +2118,8 @@ BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
  *
  * @return A term representing the constant.
  *
- * @see bitwuzla_mk_array_sort
- * @see bitwuzla_mk_bool_sort
- * @see bitwuzla_mk_bv_sort
- * @see bitwuzla_mk_fp_sort
- * @see bitwuzla_mk_fun_sort
- * @see bitwuzla_mk_rm_sort
+ * @see bitwuzla_mk_array_sort, bitwuzla_mk_bool_sort bitwuzla_mk_bv_sort,
+ * bitwuzla_mk_fp_sort, bitwuzla_mk_fun_sort, bitwuzla_mk_rm_sort
  */
 BitwuzlaTerm *bitwuzla_mk_const(Bitwuzla *bitwuzla,
                                 const BitwuzlaSort *sort,
@@ -2175,11 +2152,8 @@ BitwuzlaTerm *bitwuzla_mk_const_array(Bitwuzla *bitwuzla,
  *
  * @return A term representing the variable.
  *
- * @see bitwuzla_mk_bool_sort
- * @see bitwuzla_mk_bv_sort
- * @see bitwuzla_mk_fp_sort
- * @see bitwuzla_mk_fun_sort
- * @see bitwuzla_mk_rm_sort
+ * @see bitwuzla_mk_bool_sort, bitwuzla_mk_bv_sort, bitwuzla_mk_fp_sort,
+ * bitwuzla_mk_fun_sort, bitwuzla_mk_rm_sort
  */
 BitwuzlaTerm *bitwuzla_mk_var(Bitwuzla *bitwuzla,
                               const BitwuzlaSort *sort,
@@ -2237,9 +2211,8 @@ void bitwuzla_assert(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
  * @param bitwuzla The Bitwuzla instance.
  * @param term The formula to assume.
  *
- * @see bitwuzla_set_option
- * @see bitwuzla_is_unsat_assumption
- * @see bitwuzla_get_unsat_assumptions
+ * @see bitwuzla_set_option, bitwuzla_is_unsat_assumption,
+ * bitwuzla_get_unsat_assumptions
  */
 void bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 
@@ -2259,9 +2232,7 @@ void bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
  *
  * @return True if given assumption is an unsat assumption.
  *
- * @see bitwuzla_set_option
- * @see bitwuzla_assume
- * @see bitwuzla_check_sat
+ * @see bitwuzla_set_option, bitwuzla_assume, bitwuzla_check_sat
  */
 bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 
@@ -2281,9 +2252,7 @@ bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
  *
  * @return An array with unsat assumptions of size \p size.
  *
- * @see bitwuzla_set_option
- * @see bitwuzla_assume
- * @see bitwuzla_check_sat
+ * @see bitwuzla_set_option, bitwuzla_assume, bitwuzla_check_sat
  */
 BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
 
@@ -2300,8 +2269,7 @@ BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
  *
  * @return An array with unsat assertions of size \p size.
  *
- * @see bitwuzla_assert
- * @see bitwuzla_check_sat
+ * @see bitwuzla_assert, bitwuzla_check_sat
  */
 BitwuzlaTerm **bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
 
@@ -2334,8 +2302,7 @@ void bitwuzla_reset_assumptions(Bitwuzla *bitwuzla);
  *         BITWUZLA_UNSAT if it was simplified to false, and BITWUZLA_UNKNOWN
  *         otherwise.
  *
- * @see bitwuzla_assert
- * @see BitwuzlaResult
+ * @see bitwuzla_assert, BitwuzlaResult
  */
 BitwuzlaResult bitwuzla_simplify(Bitwuzla *bitwuzla);
 
@@ -2357,10 +2324,7 @@ BitwuzlaResult bitwuzla_simplify(Bitwuzla *bitwuzla);
  *         satisfiability nor unsatisfiability was determined. This can happen
  *         when \p bitwuzla was terminated via a termination callback.
  *
- * @see bitwuzla_assert
- * @see bitwuzla_assume
- * @see bitwuzla_set_option
- * @see BitwuzlaResult
+ * @see bitwuzla_assert, bitwuzla_assume, bitwuzla_set_option, BitwuzlaResult
  */
 BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
 

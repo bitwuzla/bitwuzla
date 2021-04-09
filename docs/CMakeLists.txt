@@ -9,8 +9,8 @@ set(DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR}/src/api/c)
 set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/doxygen)
 set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/xml/index.xml)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
-               ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+configure_file(Doxyfile.in Doxyfile @ONLY)
+configure_file(conf.py.in conf.py)
 
 file(MAKE_DIRECTORY ${DOXYGEN_OUTPUT_DIR})
 
@@ -29,9 +29,16 @@ set(SPHINX_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/sphinx)
 add_custom_target(docs ALL
                   DEPENDS docs-doxygen
                   COMMAND
-                  ${SPHINX_EXECUTABLE} -b html
-                  # Tell Breathe where to find the Doxygen output
-                  -Dbreathe_projects.Bitwuzla=${DOXYGEN_OUTPUT_DIR}/xml
-                  ${SPHINX_INPUT_DIR} ${SPHINX_OUTPUT_DIR}
+                    ${SPHINX_EXECUTABLE} -b html
+                    # Tell Breathe where to find the Doxygen output
+                    -Dbreathe_projects.Bitwuzla=${DOXYGEN_OUTPUT_DIR}/xml
+                    # Tell Sphinx where to find conf.py
+                    -c ${CMAKE_CURRENT_BINARY_DIR}
+                    ${SPHINX_INPUT_DIR}
+                    ${SPHINX_OUTPUT_DIR}
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                  COMMENT "Generating Sphinx Api docs")
+                  COMMENT "Generating Sphinx API documentation")
+
+if(PYTHON)
+  add_dependencies(docs pybitwuzla)
+endif()

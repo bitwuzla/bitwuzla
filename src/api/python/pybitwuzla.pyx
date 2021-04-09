@@ -715,13 +715,6 @@ cdef class Bitwuzla:
 
             Set an option.
 
-            .. include:: pybitwuzla_options.rst
-
-            .. toctree::
-                :hidden:
-
-                pybitwuzla_options.rst
-
             :param opt:   Option.
             :type opt:    BitwuzlaOption
             :param value: Option value.
