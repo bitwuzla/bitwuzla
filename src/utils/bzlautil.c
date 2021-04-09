@@ -31,6 +31,31 @@ bzla_util_is_power_of_2(uint32_t x)
   return (x & (x - 1)) == 0;
 }
 
+bool
+bzla_util_is_valid_real(const char *value)
+{
+  size_t len               = strlen(value);
+  bool found_decimal_point = false;
+
+  for (size_t i = 0; i < len; ++i)
+  {
+    if (!isdigit(value[i]))
+    {
+      if (i == 0 && value[i] == '-')
+      {
+        continue;
+      }
+      else if (value[i] == '.' && !found_decimal_point)
+      {
+        found_decimal_point = true;
+        continue;
+      }
+      return false;
+    }
+  }
+  return true;
+}
+
 uint32_t
 bzla_util_log_2(uint32_t x)
 {

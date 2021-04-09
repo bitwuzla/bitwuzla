@@ -3775,12 +3775,16 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
 static void
 make_mpq_from_dec_string(mpq_t &res, std::string str)
 {
+#ifndef NDEBUG
+  int32_t ret;
+#endif
   std::string::size_type decimal_point(str.find("."));
   mpq_init(res);
 
   if (decimal_point == std::string::npos)
   {
-    mpq_set_str(res, str.c_str(), 10);
+    ret = mpq_set_str(res, str.c_str(), 10);
+    assert(ret == 0);
   }
   else
   {
@@ -3788,7 +3792,8 @@ make_mpq_from_dec_string(mpq_t &res, std::string str)
     str.erase(decimal_point, 1);
     mpz_t num, den;
     /* nnnmmm */
-    mpz_init_set_str(num, str.c_str(), 10);
+    ret = mpz_init_set_str(num, str.c_str(), 10);
+    assert(ret == 0);
     /* 10^(number of m */
     mpz_init_set_ui(den, 10);
     mpz_pow_ui(den, den, str.size() - decimal_point);

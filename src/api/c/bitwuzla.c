@@ -1704,6 +1704,9 @@ bitwuzla_mk_fp_value_from_real(Bitwuzla *bitwuzla,
   BZLA_CHECK_ARG_NOT_NULL(rm);
   BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(real);
   BZLA_CHECK_SORT_BITWUZLA(bitwuzla, sort);
+  BZLA_ABORT(!bzla_util_is_valid_real(real),
+             "invalid value '%s', expected real number",
+             real);
 
   Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
@@ -1731,6 +1734,10 @@ bitwuzla_mk_fp_value_from_rational(Bitwuzla *bitwuzla,
   BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(num);
   BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(den);
   BZLA_CHECK_SORT_BITWUZLA(bitwuzla, sort);
+  BZLA_ABORT(!bzla_util_is_valid_real(num),
+             "invalid value '%s' for numerator, expected real number");
+  BZLA_ABORT(!bzla_util_is_valid_real(den),
+             "invalid value '%s' for denominator, expected real number");
 
   Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);

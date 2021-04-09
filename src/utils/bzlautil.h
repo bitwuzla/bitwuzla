@@ -38,6 +38,8 @@
 
 bool bzla_util_is_power_of_2(uint32_t x);
 
+bool bzla_util_is_valid_real(const char *value);
+
 uint32_t bzla_util_log_2(uint32_t x);
 
 int32_t bzla_util_pow_2(int32_t x);
