@@ -132,7 +132,8 @@ def generate_output(bzla_enums, output_file):
                 if py_e.startswith(prefix):
                     py_e = py_e.replace(prefix, '', 1)
                     break
-            py_values.append('{} = {}'.format(py_e, e))
+            if e != 'BITWUZLA_RM_MAX':
+                py_values.append('{} = {}'.format(py_e, e))
 
         formatted_py_values = "\n    ".join(py_values)
         s = PY_ENUM_TEMPLATE.format(

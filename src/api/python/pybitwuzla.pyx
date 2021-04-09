@@ -207,6 +207,9 @@ cdef class BitwuzlaTerm:
     def __hash__(self):
         return bitwuzla_api.bitwuzla_term_hash(self.ptr())
 
+    def __eq__(self, BitwuzlaTerm other):
+        return self.ptr() == other.ptr()
+
     def get_children(self):
         cdef bitwuzla_api.BitwuzlaTerm** children
         cdef size_t size
@@ -731,7 +734,7 @@ cdef class Bitwuzla:
         else:
             bitwuzla_api.bitwuzla_set_option(self.ptr(), opt.value, value)
 
-    def get_option(self, BitwuzlaOption opt):
+    def get_option(self, opt):
         """ get_option(opt)
 
             Get value of given Bitwuzla option ``opt``.
@@ -744,7 +747,9 @@ cdef class Bitwuzla:
             :return: Option value.
             :rtype: uint32_t
         """
-        return bitwuzla_api.bitwuzla_get_option(self.ptr(), opt)
+        if not isinstance(opt, Option):
+            raise ValueError("Given 'opt' is not an option object")
+        return bitwuzla_api.bitwuzla_get_option(self.ptr(), opt.value)
 
     # ------------------------------------------------------------------------
     # Sort methods
@@ -934,6 +939,28 @@ cdef class Bitwuzla:
                             val_significand.ptr()))
         return term
 
+    def mk_fp_value_from(self, BitwuzlaSort sort, BitwuzlaTerm rm, value):
+        """
+        """
+        term = BitwuzlaTerm(self)
+        if isinstance(value, str) and '/' in value:
+            num, den = value.split('/')
+            term.set(bitwuzla_api.bitwuzla_mk_fp_value_from_rational(
+                                self.ptr(),
+                                sort.ptr(),
+                                rm.ptr(),
+                                _to_cstr(num),
+                                _to_cstr(den)))
+
+        else:
+            term.set(bitwuzla_api.bitwuzla_mk_fp_value_from_real(
+                                self.ptr(),
+                                sort.ptr(),
+                                rm.ptr(),
+                                _to_cstr(str(value))))
+        return term
+
+
     def mk_fp_pos_zero(self, BitwuzlaSort sort):
         """
         """
@@ -967,6 +994,15 @@ cdef class Bitwuzla:
         """
         term = BitwuzlaTerm(self)
         term.set(bitwuzla_api.bitwuzla_mk_fp_nan(self.ptr(), sort.ptr()))
+        return term
+
+    def mk_rm_value(self, rm):
+        """
+        """
+        if not isinstance(rm, RoundingMode):
+            raise ValueError("Given 'rm' is not a RoundingMode value")
+        term = BitwuzlaTerm(self)
+        term.set(bitwuzla_api.bitwuzla_mk_rm_value(self.ptr(), rm.value))
         return term
 
 

@@ -156,6 +156,19 @@ cdef extern from "bitwuzla.h":
                                        const BitwuzlaTerm *bv_significand) \
         except +raise_py_error
 
+    BitwuzlaTerm *bitwuzla_mk_fp_value_from_real(Bitwuzla *bitwuzla,
+                                                 const BitwuzlaSort *sort,
+                                                 const BitwuzlaTerm *rm,
+                                                 const char *real) \
+        except +raise_py_error
+
+    BitwuzlaTerm *bitwuzla_mk_fp_value_from_rational(Bitwuzla *bitwuzla,
+                                                     const BitwuzlaSort *sort,
+                                                     const BitwuzlaTerm *rm,
+                                                     const char *num,
+                                                     const char *den) \
+        except +raise_py_error
+
     BitwuzlaTerm *bitwuzla_mk_rm_value(Bitwuzla *bitwuzla,
                                        BitwuzlaRoundingMode rm) \
         except +raise_py_error
