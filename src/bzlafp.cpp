@@ -3756,11 +3756,30 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
 #ifdef BZLA_USE_SYMFPU
   BzlaFPWordBlaster::set_s_bzla(bzla);
   res = bzla_fp_new(bzla, sort);
-  /* Note: We must copy the bv here, because 1) the corresponding constructor
-   *       doesn't copy it but sets d_bv = bv and 2) the wrong constructor is
-   *       matched (const bool &val). */
-  res->fp = new BzlaUnpackedFloat(symfpu::convertSBVToFloat<BzlaFPTraits>(
-      *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
+  if (bzla_bv_get_width(bv) == 1)
+  {
+    /* Note: We must copy the bv here, because 1) the corresponding constructor
+     *       doesn't copy it but sets d_bv = bv and 2) the wrong constructor is
+     *       matched (const bool &val). */
+    res->fp = new BzlaUnpackedFloat(symfpu::convertUBVToFloat<BzlaFPTraits>(
+        *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
+    /* We need special handling for bit-vectors of size one since symFPU does
+     * not allow conversions from signed bit-vectors of size one.  */
+    if (bzla_bv_is_one(bv))
+    {
+      BzlaFloatingPoint *tmp = bzla_fp_neg(bzla, res);
+      bzla_fp_free(bzla, res);
+      res = tmp;
+    }
+  }
+  else
+  {
+    /* Note: We must copy the bv here, because 1) the corresponding constructor
+     *       doesn't copy it but sets d_bv = bv and 2) the wrong constructor is
+     *       matched (const bool &val). */
+    res->fp = new BzlaUnpackedFloat(symfpu::convertSBVToFloat<BzlaFPTraits>(
+        *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
+  }
 #else
   (void) bzla;
   (void) sort;

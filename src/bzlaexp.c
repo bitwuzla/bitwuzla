@@ -2639,17 +2639,37 @@ bzla_exp_fp_to_fp_from_sbv(Bzla *bzla,
 #if !defined(BZLA_USE_SYMFPU)
   BZLA_ABORT(true, "SymFPU not configured");
 #endif
+  assert(bzla_node_is_bv(bzla, e1));
+
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+
+  if (bzla_node_bv_get_width(bzla, e1) == 1)
   {
-    result = bzla_rewrite_binary_to_fp_exp(
-        bzla, BZLA_FP_TO_FP_SBV_NODE, e0, e1, sort);
+    /* We need special handling for bit-vectors of size one since symFPU does
+     * not allow conversions from signed bit-vectors of size one.  */
+    BzlaNode *one     = bzla_exp_true(bzla);
+    BzlaNode *cond    = bzla_exp_eq(bzla, e1, one);
+    BzlaNode *fromubv = bzla_exp_fp_to_fp_from_ubv(bzla, e0, e1, sort);
+    BzlaNode *neg     = bzla_exp_fp_neg(bzla, fromubv);
+    result            = bzla_exp_cond(bzla, cond, neg, fromubv);
+    bzla_node_release(bzla, neg);
+    bzla_node_release(bzla, fromubv);
+    bzla_node_release(bzla, cond);
+    bzla_node_release(bzla, one);
   }
   else
   {
-    result = bzla_node_create_fp_to_fp_from_sbv(bzla, e0, e1, sort);
+    if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    {
+      result = bzla_rewrite_binary_to_fp_exp(
+          bzla, BZLA_FP_TO_FP_SBV_NODE, e0, e1, sort);
+    }
+    else
+    {
+      result = bzla_node_create_fp_to_fp_from_sbv(bzla, e0, e1, sort);
+    }
   }
   return result;
 }

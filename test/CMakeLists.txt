@@ -439,6 +439,7 @@ set(unsat_testcases
 "extarraywrite2.btor"
 "extarraywrite3.smt2"
 "fifo32bc04k05.smt2"
+"fp_fromsbv.smt2"
 "gtewithsub.btor"
 "hd1.btor -rwl 0"
 "hd1.btor -rwl 1"
