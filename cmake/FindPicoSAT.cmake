@@ -1,3 +1,12 @@
+###
+# Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
+#
+# This file is part of Bitwuzla.
+#
+# Copyright (C) 2007-2021 by the authors listed in the AUTHORS file.
+#
+# See COPYING for more information on using this software.
+##
 # Find PicoSAT
 # PicoSAT_FOUND - found PicoSAT lib
 # PicoSAT_INCLUDE_DIR - the PicoSAT include directory

@@ -1,3 +1,13 @@
+###
+# Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
+#
+# This file is part of Bitwuzla.
+#
+# Copyright (C) 2007-2021 by the authors listed in the AUTHORS file.
+#
+# See COPYING for more information on using this software.
+##
+
 set(libbitwuzla_src_files
   aigprop.c
   bzlaaig.c
