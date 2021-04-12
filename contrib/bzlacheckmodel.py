@@ -17,13 +17,13 @@ def dec2bin(dec, len):
   return evalstring % int(binary)
 
 if len(sys.argv) != 4:
-  print("Usage: ./bzlacheckmodel <bzla-file> <bzla-output-model-file> <boolector-binary>")
+  print("Usage: ./bzlacheckmodel <bzla-file> <bzla-output-model-file> <bitwuzla-binary>")
   sys.exit(2)
 
 pid = os.getpid();
 foutname = "/tmp/bzlacheckmodel" + str(pid) +".btor"
-# get absolute path to boolector binary
-boolector = sys.argv[3]
+# get absolute path to bitwuzla binary
+bitwuzla = sys.argv[3]
 
 
 def cleanup():
@@ -208,7 +208,7 @@ id = id + 1
 fout.write(str(id) + " root 1 -" + str(lastid) + "\n")
 fout.close()
 
-ret = os.popen (boolector + " -rwl 0 " + foutname)
+ret = os.popen (bitwuzla + " -rwl 0 " + foutname)
 result = ret.readline().strip()
 if result == "sat":
   print("Invalid")

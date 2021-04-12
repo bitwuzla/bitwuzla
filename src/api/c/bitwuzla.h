@@ -2220,7 +2220,7 @@ void bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
  * Determine if an assumption is an unsat assumption.
  *
  * Unsat assumptions are assumptions that force an input formula to become
- * unsatisfiable. Unsat assumptions handling in Boolector is analogous to
+ * unsatisfiable. Unsat assumptions handling in Bitwuzla is analogous to
  * failed assumptions in MiniSAT.
  *
  * Requires that incremental solving has been enabled via bitwuzla_set_option().
@@ -2240,7 +2240,7 @@ bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
  * Get the set of unsat assumptions.
  *
  * Unsat assumptions are assumptions that force an input formula to become
- * unsatisfiable. Unsat assumptions handling in Boolector is analogous to
+ * unsatisfiable. Unsat assumptions handling in Bitwuzla is analogous to
  * failed assumptions in MiniSAT.
  *
  * Requires that incremental solving has been enabled via bitwuzla_set_option().
