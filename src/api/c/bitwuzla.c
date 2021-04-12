@@ -953,18 +953,6 @@ reset_assumptions(Bitwuzla *bitwuzla)
 
 /* -------------------------------------------------------------------------- */
 
-static void
-abort_aux(const char *msg)
-{
-  if (bzla_abort_callback.cb_fun)
-    ((void (*)(const char *)) bzla_abort_callback.cb_fun)(msg);
-}
-
-BzlaAbortCallback bzla_abort_callback = {.abort_fun = abort_aux,
-                                         .cb_fun    = bzla_abort_fun};
-
-/* -------------------------------------------------------------------------- */
-
 #define BZLA_RETURN_BITWUZLA_SORT(bitwuzla, sort)    \
   do                                                 \
   {                                                  \
@@ -1131,8 +1119,7 @@ bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla)
 void
 bitwuzla_set_abort_callback(void (*fun)(const char *msg))
 {
-  bzla_abort_callback.abort_fun = abort_aux;
-  bzla_abort_callback.cb_fun    = fun;
+  bzla_set_abort_callback(fun);
 }
 
 void

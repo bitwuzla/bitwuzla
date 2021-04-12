@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "bzlaslv.h"
 #include "bzlatypes.h"
 #include "utils/bzlamem.h"
 #include "utils/bzlastack.h"

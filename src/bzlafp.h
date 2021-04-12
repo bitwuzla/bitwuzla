@@ -9,8 +9,8 @@
  */
 
 #include "bzlabv.h"
+#include "bzlarm.h"
 #include "bzlasort.h"
-#include "bzlatypes.h"
 #include "utils/bzlanodemap.h"
 
 #ifndef BZLAFP_H_INCLUDED

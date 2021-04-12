@@ -18,6 +18,15 @@
 #include "utils/bzlamem.h"
 #include "utils/bzlanodemap.h"
 
+enum BzlaSolverResult
+{
+  BZLA_RESULT_SAT     = 10,
+  BZLA_RESULT_UNSAT   = 20,
+  BZLA_RESULT_UNKNOWN = 0,
+};
+
+typedef enum BzlaSolverResult BzlaSolverResult;
+
 enum BzlaSolverKind
 {
   BZLA_FUN_SOLVER_KIND,

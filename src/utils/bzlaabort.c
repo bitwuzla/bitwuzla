@@ -19,6 +19,40 @@
 
 #define BUFFER_LEN 255
 
+/* -------------------------------------------------------------------------- */
+
+/* Callback function to be executed on abort, primarily intended to be used for
+ * plugging in exception handling. */
+struct BzlaAbortCallback
+{
+  void (*abort_fun)(const char *msg);
+  void *cb_fun; /* abort callback function */
+};
+typedef struct BzlaAbortCallback BzlaAbortCallback;
+
+static BzlaAbortCallback bzla_abort_callback;
+
+static void
+abort_aux(const char *msg)
+{
+  if (bzla_abort_callback.cb_fun)
+  {
+    ((void (*)(const char *)) bzla_abort_callback.cb_fun)(msg);
+  }
+}
+
+static BzlaAbortCallback bzla_abort_callback = {.abort_fun = abort_aux,
+                                                .cb_fun    = bzla_abort_fun};
+
+void
+bzla_set_abort_callback(void (*fun)(const char *msg))
+{
+  bzla_abort_callback.abort_fun = abort_aux;
+  bzla_abort_callback.cb_fun    = fun;
+}
+
+/* -------------------------------------------------------------------------- */
+
 void
 bzla_abort_fun(const char *msg)
 {
