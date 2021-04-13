@@ -1412,18 +1412,63 @@ enum BitwuzlaResult
 typedef enum BitwuzlaResult BitwuzlaResult;
 #endif
 
-/** A roundingmode value. */
+/**
+ * Rounding mode for floating-point operations.
+ *
+ * For some floating-point operations, infinitely precise results may not be
+ * representable in a given format. Hence, they are rounded modulo one of five
+ * rounding modes to a representable floating-point number.
+ *
+ * \verbatim embed:rst:leading-asterisk
+ * The following rounding modes follow the SMT-LIB theory for floating-point
+ * arithmetic, which in turn is based on IEEE Standard 754 :cite:`IEEE754`.
+ * The rounding modes are specified in Sections 4.3.1 and 4.3.2 of the IEEE
+ * Standard 754.
+ * \endverbatim
+ */
 enum BitwuzlaRoundingMode
 {
-  /*! SMT-LIB: \c RNE \c roundNearestTiesToEven */
+  /*!
+   * Round to the nearest even number.
+   * If the two nearest floating-point numbers bracketing an unrepresentable
+   * infinitely precise result are equally near, the one with an even least
+   * significant digit will be delivered.
+   *
+   * SMT-LIB: \c RNE \c roundNearestTiesToEven
+   */
   BITWUZLA_RM_RNE = 0,
-  /*! SMT-LIB: \c RNA \c roundNearestTiesToAway */
+  /*!
+   * Round to the nearest number away from zero.
+   * If the two nearest floating-point numbers bracketing an unrepresentable
+   * infinitely precise result are equally near, the one with larger magnitude
+   * will be selected.
+   *
+   * SMT-LIB: \c RNA \c roundNearestTiesToAway
+   */
   BITWUZLA_RM_RNA = 1,
-  /*! SMT-LIB: \c RTN \c roundTowardNegative */
+  /*!
+   * Round towards negative infinity (-oo).
+   * The result shall be the format’s floating-point number (possibly -oo)
+   * closest to and no less than the infinitely precise result.
+   *
+   * SMT-LIB: \c RTN \c roundTowardNegative
+   */
   BITWUZLA_RM_RTN = 2,
-  /*! SMT-LIB: \c RTP \c roundTowardPositive */
+  /*!
+   * Round towards positive infinity (+oo).
+   * The result shall be the format’s floating-point number (possibly +oo)
+   * closest to and no less than the infinitely precise result.
+   *
+   * SMT-LIB: \c RTP \c roundTowardPositive
+   */
   BITWUZLA_RM_RTP = 3,
-  /*! SMT-LIB: \c RTZ \c roundTowardZero */
+  /*!
+   * Round towards zero.
+   * The result shall be the format’s floating-point number closest to and no
+   * greater in magnitude than the infinitely precise result.
+   *
+   * SMT-LIB: \c RTZ \c roundTowardZero
+   */
   BITWUZLA_RM_RTZ = 4,
 #ifndef DOXYGEN_SKIP
   BITWUZLA_RM_MAX = 5,

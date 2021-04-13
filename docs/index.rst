@@ -22,3 +22,5 @@ Table of Contents
   :maxdepth: 1
 
   building_on_windows
+
+  references
