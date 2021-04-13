@@ -449,7 +449,6 @@ set(unsat_testcases
 "extarraywrite2.btor"
 "extarraywrite3.smt2"
 "fifo32bc04k05.smt2"
-"fp_fromsbv.smt2"
 "gtewithsub.btor"
 "hd1.btor -rwl 0"
 "hd1.btor -rwl 1"
@@ -1225,6 +1224,7 @@ if(SymFPU_FOUND)
     "fp_misc.smt2"
     "fp_nan.smt2"
     "fp_zero.smt2"
+    "fp_fromsbv.smt2"
   )
 
   list(APPEND cmp_testcases
