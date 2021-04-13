@@ -58,6 +58,8 @@ cdef extern from "bitwuzla.h":
         except +raise_py_error
     const char *bitwuzla_version(Bitwuzla *bitwuzla) \
         except +raise_py_error
+    const char *bitwuzla_git_id(Bitwuzla *bitwuzla) \
+        except +raise_py_error
 
     bool bitwuzla_terminate(Bitwuzla *bitwuzla) \
         except +raise_py_error

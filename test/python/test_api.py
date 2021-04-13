@@ -10,23 +10,47 @@
 
 import pytest
 from pybitwuzla import *
+import time
+
+class BzlaEnv:
+    def __init__(self):
+        self.bzla = Bitwuzla()
+        self.bv8 = self.bzla.mk_bv_sort(8)
+        self.bv32 = self.bzla.mk_bv_sort(32)
+        self.fp16 = self.bzla.mk_fp_sort(5, 11)
+        self.fp32 = self.bzla.mk_fp_sort(8, 24)
+
 
 @pytest.fixture
 def bzla():
     return Bitwuzla()
 
+@pytest.fixture
+def env():
+    return BzlaEnv()
+
+
 def test_new():
     Bitwuzla()
 
 
-def test_set_term():
-    # TODO
-    pass
+def test_set_term(bzla):
+
+    def termfunc(x):
+        return time.time() - x > 1.0
+
+    bzla.set_term(termfunc, [100])
+    assert bzla.terminate()
 
 
-def test_terminate():
-    # TODO
-    pass
+def test_terminate(bzla):
+    assert not bzla.terminate()
+
+    def termfunc(x):
+        return True
+
+    bzla.set_term(termfunc, None)
+    assert bzla.terminate()
 
 
 def test_copyright(bzla):
@@ -38,9 +62,7 @@ def test_version(bzla):
 
 
 def test_git_id(bzla):
-    # TODO
-    #assert bzla.git_id()
-    pass
+    assert bzla.git_id()
 
 
 def test_push(bzla):
@@ -154,21 +176,6 @@ def test_mk_bv_sort(bzla):
         bzla.mk_bv_sort(0)
 
 
-def test_mk_array_sort(bzla):
-    bv8 = bzla.mk_bv_sort(8)
-    bv32 = bzla.mk_bv_sort(32)
-    asort = bzla.mk_array_sort(bv32, bv8)
-    assert asort.is_array()
-
-
-def test_mk_fun_sort(bzla):
-    bv8 = bzla.mk_bv_sort(8)
-    bv32 = bzla.mk_bv_sort(32)
-    bv64 = bzla.mk_bv_sort(64)
-    fsort = bzla.mk_fun_sort([bv8, bv32, bv64], bv8)
-    assert fsort.is_fun()
-
-
 def test_mk_fp_sort(bzla):
     fp16 = bzla.mk_fp_sort(5, 11)
     assert fp16.is_fp()
@@ -179,6 +186,16 @@ def test_mk_fp_sort(bzla):
 def test_mk_rm_sort(bzla):
     rmsort = bzla.mk_rm_sort()
     assert rmsort.is_rm()
+
+
+def test_mk_array_sort(env):
+    asort = env.bzla.mk_array_sort(env.bv32, env.bv8)
+    assert asort.is_array()
+
+
+def test_mk_fun_sort(env):
+    fsort = env.bzla.mk_fun_sort([env.bv8, env.bv32, env.fp32], env.fp16)
+    assert fsort.is_fun()
 
 
 def test_mk_bv_value(bzla):
@@ -246,53 +263,137 @@ def test_mk_fp_value(bzla):
 
 
 def test_mk_fp_pos_zero(bzla):
-    # TODO
-    pass
+    try:
+        fp32 = bzla.mk_fp_sort(8, 24)
+        v = bzla.mk_fp_pos_zero(fp32)
+        assert v.is_fp_value_pos_zero()
+    except BitwuzlaException as e:
+        assert "SymFPU not configured" in e.msg
 
 
 def test_mk_fp_neg_zero(bzla):
-    # TODO
-    pass
+    try:
+        fp32 = bzla.mk_fp_sort(8, 24)
+        v = bzla.mk_fp_neg_zero(fp32)
+        assert v.is_fp_value_neg_zero()
+    except BitwuzlaException as e:
+        assert "SymFPU not configured" in e.msg
 
 
 def test_mk_fp_pos_inf(bzla):
-    # TODO
-    pass
+    try:
+        fp32 = bzla.mk_fp_sort(8, 24)
+        v = bzla.mk_fp_pos_inf(fp32)
+        assert v.is_fp_value_pos_inf()
+    except BitwuzlaException as e:
+        assert "SymFPU not configured" in e.msg
 
 
 def test_mk_fp_neg_inf(bzla):
-    # TODO
-    pass
+    try:
+        fp32 = bzla.mk_fp_sort(8, 24)
+        v = bzla.mk_fp_neg_inf(fp32)
+        assert v.is_fp_value_neg_inf()
+    except BitwuzlaException as e:
+        assert "SymFPU not configured" in e.msg
 
 
 def test_mk_fp_nan(bzla):
-    # TODO
-    pass
+    try:
+        fp32 = bzla.mk_fp_sort(8, 24)
+        v = bzla.mk_fp_nan(fp32)
+        assert v.is_fp_value_nan()
+    except BitwuzlaException as e:
+        assert "SymFPU not configured" in e.msg
+
+def test_mk_rm_value(bzla):
+    try:
+        rne = bzla.mk_rm_value(RoundingMode.RNE)
+        assert rne.is_rm_value()
+        rna = bzla.mk_rm_value(RoundingMode.RNA)
+        assert rna.is_rm_value()
+        rtn = bzla.mk_rm_value(RoundingMode.RTN)
+        assert rtn.is_rm_value()
+        rtp = bzla.mk_rm_value(RoundingMode.RTP)
+        assert rtp.is_rm_value()
+        rtz = bzla.mk_rm_value(RoundingMode.RTZ)
+        assert rtz.is_rm_value()
+    except BitwuzlaException as e:
+        assert "SymFPU not configured" in e.msg
 
 
-def test_mk_const(bzla):
-    # TODO
-    pass
+def test_mk_const(env):
+    c1 = env.bzla.mk_const(env.bv8)
+    c2 = env.bzla.mk_const(env.bv32)
+    assert c1.is_const()
+    assert c2.is_const()
+    try:
+        c3 = env.bzla.mk_const(env.fp32)
+        assert c3.is_const()
+    except BitwuzlaException as e:
+        assert "SymFPU not configured" in e.msg
 
 
-def test_mk_const_array(bzla):
-    # TODO
-    pass
+def test_mk_const_array(env):
+    asort = env.bzla.mk_array_sort(env.bv32, env.bv8)
+    val = env.bzla.mk_bv_value(env.bv8, 0)
+    a = env.bzla.mk_const_array(asort, val)
+    assert a.is_const_array()
+    try:
+        asort = env.bzla.mk_array_sort(env.fp32, env.fp16)
+        val = env.bzla.mk_fp_pos_zero(env.fp16)
+        a = env.bzla.mk_const_array(asort, val)
+        assert a.is_const_array()
+    except BitwuzlaException as e:
+        assert "SymFPU not configured" in e.msg
 
 
-def test_mk_var(bzla):
-    # TODO
-    pass
+def test_mk_var(env):
+    v1 = env.bzla.mk_var(env.bv8)
+    v2 = env.bzla.mk_var(env.bv32)
+    assert v1.is_var()
+    assert v2.is_var()
+    try:
+        v3 = env.bzla.mk_var(env.fp32)
+        assert v3.is_var()
+    except BitwuzlaException as e:
+        assert "SymFPU not configured" in e.msg
 
 
-def test_mk_term(bzla):
-    # TODO
-    pass
+def test_mk_term(env):
+    c1 = env.bzla.mk_const(env.bv32)
+    c2 = env.bzla.mk_const(env.bv32)
+    t1 = env.bzla.mk_term(Kind.DISTINCT, [c1, c2])
+    t2 = env.bzla.mk_term(Kind.BV_NEG, [c1])
+    t3 = env.bzla.mk_term(Kind.BV_ADD, (t2,c1,t2))
+    t4 = env.bzla.mk_term(Kind.BV_EXTRACT, [t3], [15, 0])
+    try:
+        rne = env.bzla.mk_rm_value(RoundingMode.RNE)
+        t5 = env.bzla.mk_term(Kind.FP_TO_FP_FROM_BV, [t3], [8, 24])
+        t6 = env.bzla.mk_term(Kind.FP_TO_SBV, [rne, t5], [32])
+        t7 = env.bzla.mk_term(Kind.FP_TO_UBV, [rne, t5], [32])
+    except BitwuzlaException as e:
+        assert "SymFPU not configured" in e.msg
 
 
-def test_substitute(bzla):
-    # TODO
-    pass
+def test_substitute(env):
+    x = env.bzla.mk_var(env.bv32)
+    y = env.bzla.mk_var(env.bv32)
+    a = env.bzla.mk_const(env.bv32)
+    b = env.bzla.mk_const(env.bv32)
+
+    fsort = env.bzla.mk_fun_sort([env.bv32], env.bzla.mk_bool_sort())
+    P = env.bzla.mk_const(fsort)
+    P_x = env.bzla.mk_term(Kind.APPLY, [P, x])
+    P_y = env.bzla.mk_term(Kind.APPLY, [P, y])
+    P_a = env.bzla.mk_term(Kind.APPLY, [P, a])
+    P_b = env.bzla.mk_term(Kind.APPLY, [P, b])
+    t = env.bzla.substitute(P_x, {x: a})
+    assert t == P_a
+
+    terms = env.bzla.substitute([P_x, P_y], {x: a, y: b})
+    assert terms == [P_a, P_b]
+
 
 
 # BitwuzlaSort tests

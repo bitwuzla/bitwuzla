@@ -469,8 +469,8 @@ cdef class Bitwuzla:
             :rtype: str
         """
         cdef const char * c_str
-        # TODO
-        return ""
+        c_str = bitwuzla_api.bitwuzla_git_id(self.ptr())
+        return _to_str(c_str)
 
     def push(self, uint32_t levels = 1):
         """ push(level)
@@ -1072,7 +1072,9 @@ cdef class Bitwuzla:
         if not isinstance(terms, BitwuzlaTerm) and not isinstance(terms, list):
             raise ValueError('Expected BitwuzlaTerm or list of ' \
                              'BitwuzlaTerm but got {}'.format(type(terms)))
+        got_term = False
         if isinstance(terms, BitwuzlaTerm):
+            got_term = True
             terms = [terms]
 
         num_terms = len(terms)
@@ -1106,4 +1108,8 @@ cdef class Bitwuzla:
                                                 c_keys,
                                                 c_values)
 
+        if got_term:
+            term = BitwuzlaTerm(self)
+            term.set(c_terms[0])
+            return term
         return _to_terms(self, num_terms, c_terms)

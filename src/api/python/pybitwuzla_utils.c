@@ -117,7 +117,7 @@ pybitwuzla_set_term(Bitwuzla *bitwuzla, PyObject *fun, PyObject *state)
     cbstate->state = tmp;
   }
 
-  bitwuzla_set_termination_callback(bitwuzla, terminate_callback, state);
+  bitwuzla_set_termination_callback(bitwuzla, terminate_callback, cbstate);
 }
 
 void

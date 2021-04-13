@@ -1482,18 +1482,25 @@ void bitwuzla_delete(Bitwuzla *bitwuzla);
 void bitwuzla_reset(Bitwuzla *bitwuzla);
 
 /**
- * Print copyright information.
+ * Get copyright information.
  *
  * @param bitwuzla The Bitwuzla instance.
  */
 const char *bitwuzla_copyright(Bitwuzla *bitwuzla);
 
 /**
- * Print version information.
+ * Get version information.
  *
  * @param bitwuzla The Bitwuzla instance.
  */
 const char *bitwuzla_version(Bitwuzla *bitwuzla);
+
+/**
+ * Get git information.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ */
+const char *bitwuzla_git_id(Bitwuzla *bitwuzla);
 
 /**
  * If termination callback function has been configured via

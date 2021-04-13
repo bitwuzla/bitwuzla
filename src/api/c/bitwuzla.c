@@ -1093,6 +1093,13 @@ bitwuzla_version(Bitwuzla *bitwuzla)
   return bzla_version(BZLA_IMPORT_BITWUZLA(bitwuzla));
 }
 
+const char *
+bitwuzla_git_id(Bitwuzla *bitwuzla)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  return bzla_git_id(BZLA_IMPORT_BITWUZLA(bitwuzla));
+}
+
 bool
 bitwuzla_terminate(Bitwuzla *bitwuzla)
 {

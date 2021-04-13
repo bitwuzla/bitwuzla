@@ -141,7 +141,8 @@ def generate_output(bzla_enums, output_file):
                 if py_e.startswith(prefix):
                     py_e = py_e.replace(prefix, '', 1)
                     break
-            if e != 'BITWUZLA_RM_MAX':
+            if e not in ('BITWUZLA_RM_MAX', 'BITWUZLA_NUM_KINDS',
+                         'BITWUZLA_OPT_NUM_OPTS'):
                 py_values.append('{} = {}'.format(py_e, e))
 
         formatted_py_values = "\n    ".join(py_values)
