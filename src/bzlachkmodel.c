@@ -13,6 +13,7 @@
 #include "bzlaclone.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
+#include "bzlafp.h"
 #include "bzlalog.h"
 #include "bzlamodel.h"
 #include "bzlaopt.h"
@@ -73,44 +74,29 @@ map_inputs(Bzla *bzla, Bzla *clone)
   return inputs;
 }
 
-static void
-rebuild_formula(Bzla *bzla, uint32_t rewrite_level)
+static BzlaNode *
+value_to_node(Bzla *bzla, BzlaSortId sort, const BzlaBitVector *value)
 {
-  assert(bzla);
+  BzlaNode *res = 0;
 
-  uint32_t i, cnt;
-  BzlaNode *cur;
-  BzlaPtrHashTable *t;
-
-  BZLALOG(1, "rebuild formula with rewrite level %u", rewrite_level);
-
-  /* set new rewrite level */
-  bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rewrite_level);
-
-  t = bzla_hashptr_table_new(bzla->mm,
-                             (BzlaHashPtr) bzla_node_hash_by_id,
-                             (BzlaCmpPtr) bzla_node_compare_by_id);
-
-  /* collect all leaves and rebuild whole formula */
-  for (i = 1, cnt = BZLA_COUNT_STACK(bzla->nodes_id_table); i <= cnt; i++)
+  if (bzla_sort_is_fp(bzla, sort))
   {
-    if (!(cur = BZLA_PEEK_STACK(bzla->nodes_id_table, cnt - i))) continue;
-
-    if (bzla_node_is_simplified(cur)) continue;
-
-    if (cur->arity == 0)
-    {
-      assert(bzla_node_is_var(cur) || bzla_node_is_bv_const(cur)
-             || bzla_node_is_rm_const(cur) || bzla_node_is_fp_const(cur)
-             || bzla_node_is_param(cur) || bzla_node_is_uf(cur));
-      bzla_hashptr_table_add(t, cur);
-    }
+    BzlaFloatingPoint *fp = bzla_fp_from_bv(bzla, sort, value);
+    res                   = bzla_exp_fp_const_fp(bzla, fp);
+    bzla_fp_free(bzla, fp);
   }
+  else if (bzla_sort_is_rm(bzla, sort))
+  {
+    res = bzla_exp_rm_const(bzla, bzla_rm_from_bv(value));
+  }
+  else
+  {
+    assert(bzla_sort_is_bv(bzla, sort));
+    res = bzla_exp_bv_const(bzla, value);
+  }
+  assert(res);
 
-  bzla_substitute_and_rebuild(bzla, t);
-  bzla_hashptr_table_delete(t);
-
-  BZLALOG(1, "rebuild formula done");
+  return res;
 }
 
 void
@@ -121,12 +107,11 @@ bzla_check_model(BzlaCheckModelContext *ctx)
   uint32_t i;
   int32_t sat_res;
   Bzla *bzla, *clone;
-  BzlaNode *cur, *exp, *simp, *simp_clone, *real_simp_clone, *model, *eq, *tmp;
-  BzlaNode *args, *apply, *wb;
+  BzlaNode *cur, *exp, *simp_clone, *model, *eq;
+  BzlaNode *args, *apply;
   BzlaPtrHashTableIterator it;
   const BzlaPtrHashTable *fmodel;
-  BzlaBitVector *value, *bv;
-  BzlaRoundingMode rm;
+  const BzlaBitVector *value;
   BzlaBitVectorTuple *args_tuple;
   BzlaNodePtrStack consts;
 
@@ -160,26 +145,7 @@ bzla_check_model(BzlaCheckModelContext *ctx)
   if (clone->valid_assignments) bzla_reset_incremental_usage(clone);
 
   /* add assumptions as assertions */
-  bzla_iter_hashptr_init(&it, clone->assumptions);
-  while (bzla_iter_hashptr_has_next(&it))
-    bzla_assert_exp(clone, bzla_iter_hashptr_next(&it));
-  bzla_reset_assumptions(clone);
-
-  /* clone->assertions have been already added at this point. */
-  while (!BZLA_EMPTY_STACK(clone->assertions))
-  {
-    cur = BZLA_POP_STACK(clone->assertions);
-    bzla_node_release(clone, cur);
-  }
-
-  /* apply variable substitution until fixpoint */
-  while (clone->varsubst_constraints->count > 0)
-  {
-    bzla_substitute_var_exps(clone);
-  }
-
-  /* rebuild formula with new rewriting level */
-  rebuild_formula(clone, 3);
+  bzla_fixate_assumptions(clone);
 
   /* add bit vector variable models */
   BZLA_INIT_STACK(clone->mm, consts);
@@ -190,20 +156,23 @@ bzla_check_model(BzlaCheckModelContext *ctx)
     assert(exp);
     assert(bzla_node_is_regular(exp));
     assert(exp->bzla == bzla);
-    /* Note: we do not want simplified constraints here */
-    simp = bzla_node_get_simplified(bzla, exp);
+
     cur  = bzla_iter_hashptr_next(&it);
     assert(bzla_node_is_regular(cur));
     assert(cur->bzla == clone);
     simp_clone      = bzla_simplify_exp(clone, cur);
-    real_simp_clone = bzla_node_real_addr(simp_clone);
 
-    if (bzla_node_is_fun(real_simp_clone))
+    if (bzla_node_is_fun(simp_clone))
     {
-      fmodel = bzla_model_get_fun(bzla, simp);
+      fmodel = bzla_model_get_fun(bzla, exp);
       if (!fmodel) continue;
 
-      BZLALOG(2, "assert model for %s", bzla_util_node2string(real_simp_clone));
+      BzlaSortId domain_sort =
+          bzla_sort_fun_get_domain(clone, bzla_node_get_sort_id(simp_clone));
+      assert(bzla_sort_is_tuple(clone, domain_sort));
+      BzlaTupleSortIterator sit;
+
+      BZLALOG(2, "assert model for %s", bzla_util_node2string(simp_clone));
       bzla_iter_hashptr_init(&it, (BzlaPtrHashTable *) fmodel);
       while (bzla_iter_hashptr_has_next(&it))
       {
@@ -215,32 +184,19 @@ bzla_check_model(BzlaCheckModelContext *ctx)
 
         /* create condition */
         assert(BZLA_EMPTY_STACK(consts));
+        bzla_iter_tuple_sort_init(&sit, clone, domain_sort);
         for (i = 0; i < args_tuple->arity; i++)
         {
-          model = bzla_exp_bv_const(clone, args_tuple->bv[i]);
+          assert(bzla_iter_tuple_sort_has_next(&sit));
+          model = value_to_node(
+              clone, bzla_iter_tuple_sort_next(&sit), args_tuple->bv[i]);
           BZLA_PUSH_STACK(consts, model);
           BZLALOG(2, "  arg%u: %s", i, bzla_util_node2string(model));
         }
 
         args  = bzla_exp_args(clone, consts.start, BZLA_COUNT_STACK(consts));
-        apply = bzla_exp_apply(clone, real_simp_clone, args);
-        model = bzla_exp_bv_const(clone, value);
-        if (bzla_node_is_fp(bzla, apply))
-        {
-          tmp   = model;
-          model = bzla_exp_fp_to_fp_from_bv(
-              clone, tmp, bzla_node_get_sort_id(apply));
-          bzla_node_release(clone, tmp);
-        }
-        else if (bzla_node_is_rm(bzla, apply))
-        {
-          tmp = model;
-          bv  = bzla_node_is_regular(tmp) ? bzla_node_bv_const_get_bits(tmp)
-                                         : bzla_node_bv_const_get_invbits(tmp);
-          rm    = bzla_rm_from_bv(bv);
-          model = bzla_exp_rm_const(clone, rm);
-          bzla_node_release(clone, tmp);
-        }
+        apply = bzla_exp_apply(clone, simp_clone, args);
+        model = value_to_node(clone, bzla_node_get_sort_id(apply), value);
         eq = bzla_exp_eq(clone, apply, model);
 
         BZLALOG(2, "  value: %s", bzla_util_node2string(model));
@@ -257,26 +213,16 @@ bzla_check_model(BzlaCheckModelContext *ctx)
     }
     else
     {
-      /* we need to invert the assignment if simplified is inverted */
-      model =
-          bzla_exp_bv_const(clone,
-                            (BzlaBitVector *) bzla_model_get_bv(
-                                bzla, bzla_node_cond_invert(simp_clone, simp)));
+      value = bzla_model_get_bv(bzla, exp);
+      model = value_to_node(clone, bzla_node_get_sort_id(simp_clone), value);
+
       BZLALOG(2,
               "assert model for %s (%s) [%s]",
-              bzla_util_node2string(real_simp_clone),
+              bzla_util_node2string(simp_clone),
               bzla_node_get_symbol(clone, cur),
               bzla_util_node2string(model));
 
-      if (bzla_node_fp_needs_word_blast(clone, real_simp_clone))
-      {
-        wb = bzla_fp_word_blast(clone, real_simp_clone);
-        eq = bzla_exp_eq(clone, wb, model);
-      }
-      else
-      {
-        eq = bzla_exp_eq(clone, real_simp_clone, model);
-      }
+      eq = bzla_exp_eq(clone, simp_clone, model);
       bzla_assert_exp(clone, eq);
       bzla_node_release(clone, eq);
       bzla_node_release(clone, model);
@@ -284,11 +230,6 @@ bzla_check_model(BzlaCheckModelContext *ctx)
   }
   BZLA_RELEASE_STACK(consts);
 
-  /* apply variable substitution until fixpoint */
-  while (clone->varsubst_constraints->count > 0)
-    bzla_substitute_var_exps(clone);
-
-  // bzla_print_model (bzla, "btor", stdout);
   sat_res = bzla_check_sat(clone, -1, -1);
   BZLA_ABORT(sat_res == BZLA_RESULT_UNSAT, "invalid model");
   BZLALOG(1, "end check model");

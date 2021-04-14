@@ -3420,7 +3420,7 @@ bzla_fp_fp_from_unpacked(Bzla *bzla,
 }
 
 BzlaFloatingPoint *
-bzla_fp_from_bv(Bzla *bzla, BzlaSortId sort, BzlaBitVector *bv_const)
+bzla_fp_from_bv(Bzla *bzla, BzlaSortId sort, const BzlaBitVector *bv_const)
 {
   assert(bzla);
   assert(sort);

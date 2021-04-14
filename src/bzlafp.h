@@ -171,7 +171,7 @@ BzlaFloatingPoint *bzla_fp_fp_from_unpacked(Bzla *bzla,
  */
 BzlaFloatingPoint *bzla_fp_from_bv(Bzla *bzla,
                                    BzlaSortId sort,
-                                   BzlaBitVector *bv_const);
+                                   const BzlaBitVector *bv_const);
 
 /**
  * Create a floating-point constant representing the absolute value
