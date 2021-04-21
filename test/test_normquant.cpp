@@ -342,7 +342,7 @@ TEST_F(TestNormQuant, expand_quant)
   BzlaNode *exists, *X, *redandX;
   BzlaSortId sort;
 
-  bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_LEVEL, 0);
 
   sort    = bzla_sort_bv(d_bzla, 32);
   x       = bzla_exp_param(d_bzla, sort, "x");
@@ -368,7 +368,7 @@ TEST_F(TestNormQuant, expand_quant)
   bzla_node_release(d_bzla, exists);
   bzla_node_release(d_bzla, expected);
   bzla_sort_release(d_bzla, sort);
-  bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 3);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_LEVEL, 3);
 }
 
 /*

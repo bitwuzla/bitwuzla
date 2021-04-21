@@ -153,7 +153,7 @@ bzla_eliminate_slices_on_bv_vars(Bzla *bzla)
       assert(bzla_node_is_regular(cur));
       if (bzla_node_is_simplified(cur))
       {
-        assert(bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+        assert(bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
         continue;
       }
       if (bzla_node_is_bv_slice(cur))

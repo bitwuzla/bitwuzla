@@ -177,7 +177,7 @@ incremental_required(Bzla *bzla)
 
   /* If model generation is enabled for all nodes, we don't have to traverse
    * the formula, but check if functions have been created. */
-  if (bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN) > 1)
+  if (bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS) > 1)
   {
     return bzla->ufs->count > 0 || bzla->lambdas->count > 0;
   }
@@ -367,7 +367,7 @@ new_exp_layer_clone_for_dual_prop(Bzla *bzla,
   assert(clone->embedded_constraints->count == 0);
   assert(clone->unsynthesized_constraints->count);
 
-  bzla_opt_set(clone, BZLA_OPT_MODEL_GEN, 0);
+  bzla_opt_set(clone, BZLA_OPT_PRODUCE_MODELS, 0);
   bzla_opt_set(clone, BZLA_OPT_INCREMENTAL, 1);
   //  bzla_opt_set (clone, BZLA_OPT_LOGLEVEL, 0);
   //  bzla_opt_set (clone, BZLA_OPT_VERBOSITY, 0);
@@ -1292,7 +1292,7 @@ collect_premisses(Bzla *bzla,
     assert(bzla_node_is_regular(to));
     assert(bzla_node_is_fun(to));
     assert(!bzla_node_is_simplified(from->e[0])
-           || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+           || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
 
     cur = bzla_node_get_simplified(bzla, from->e[0]);
 
@@ -1572,7 +1572,7 @@ push_applies_for_propagation(Bzla *bzla,
   {
     cur = BZLA_POP_STACK(visit);
     assert(!bzla_node_is_simplified(cur)
-           || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+           || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
 
     cur = bzla_node_real_addr(bzla_node_get_simplified(bzla, cur));
     assert(!cur->parameterized);
@@ -1701,7 +1701,7 @@ propagate(Bzla *bzla,
     assert(bzla_node_is_regular(args));
     assert(bzla_node_is_args(args));
     assert(!bzla_node_is_simplified(args)
-           || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+           || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
     args = bzla_node_get_simplified(bzla, args);
     assert(bzla_node_is_args(args));
 
@@ -2305,7 +2305,7 @@ check_and_resolve_conflicts(Bzla *bzla,
    * checked). We therefore queue all unreachable applies to make sure that we
    * compute the correct model values.
    */
-  if (bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN) == 2 && bzla->feqs->count > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS) == 2 && bzla->feqs->count > 0)
   {
     push_unreachable_applies(bzla, init_apps);
   }

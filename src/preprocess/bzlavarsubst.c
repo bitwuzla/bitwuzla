@@ -271,10 +271,10 @@ bzla_substitute_var_exps(Bzla *bzla)
       assert(right);
       left = bzla_iter_hashptr_next(&it);
       assert(bzla_node_is_regular(left));
-      assert(bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST)
+      assert(bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST)
              || bzla_node_is_proxy(left));
       assert(bzla_node_is_simplified(left)
-             || (!bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST)
+             || (!bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST)
                  || bzla_node_is_synth(left)));
 
       /* Count number of performed substitutions. */

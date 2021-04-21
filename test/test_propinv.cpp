@@ -61,17 +61,17 @@ class TestPropInv : public TestPropCommon
     slv_prop->bzla = bzla;
 
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
-    bzla_opt_set(bzla, BZLA_OPT_CHK_MODEL, 0);
+    bzla_opt_set(bzla, BZLA_OPT_CHECK_MODEL, 0);
     bzla_opt_set(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
     bzla_opt_set(bzla, BZLA_OPT_PROP_SRA, 1);
     bzla_opt_set(bzla, BZLA_OPT_PROP_XOR, 1);
 
     if (expr_fun == bzla_exp_bv_slt)
     {
-      bzla_opt_set(bzla, BZLA_OPT_SLT_ELIM, 0);
+      bzla_opt_set(bzla, BZLA_OPT_RW_SLT, 0);
     }
     /* Disable rewriting in order to preserve sign extension structure. */
-    bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, 0);
+    bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, 0);
 
     sort_x = bzla_sort_bv(bzla, test_bw);
     if (expr_fun == bzla_exp_bv_concat)
@@ -320,7 +320,7 @@ class TestPropInv : public TestPropCommon
     slv_prop->bzla = bzla;
 
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
-    bzla_opt_set(bzla, BZLA_OPT_CHK_MODEL, 0);
+    bzla_opt_set(bzla, BZLA_OPT_CHECK_MODEL, 0);
 
     sort_x = bzla_sort_bv(bzla, TEST_PROPINV_BW);
 
@@ -509,7 +509,7 @@ class TestPropInv : public TestPropCommon
     slv_prop->bzla = bzla;
 
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
-    bzla_opt_set(bzla, BZLA_OPT_CHK_MODEL, 0);
+    bzla_opt_set(bzla, BZLA_OPT_CHECK_MODEL, 0);
 
     sort_bool = bzla_sort_bool(bzla);
     sort_bv   = bzla_sort_bv(bzla, TEST_PROPINV_BW);

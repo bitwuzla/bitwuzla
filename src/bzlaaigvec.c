@@ -347,7 +347,7 @@ bzla_aigvec_add(BzlaAIGVecMgr *avmgr, BzlaAIGVec *av1, BzlaAIGVec *av2)
   BzlaAIG *cout, *cin;
   uint32_t i, j;
 
-  if (bzla_opt_get(avmgr->bzla, BZLA_OPT_SORT_AIGVEC) > 0
+  if (bzla_opt_get(avmgr->bzla, BZLA_OPT_RW_SORT_AIGVEC) > 0
       && compare_aigvec_lsb_first(av1, av2) > 0)
   {
     BZLA_SWAP(BzlaAIGVec *, av1, av2);
@@ -636,7 +636,7 @@ mul_aigvec(BzlaAIGVecMgr *avmgr, BzlaAIGVec *a, BzlaAIGVec *b)
   assert(width > 0);
   assert(width == b->width);
 
-  if (bzla_opt_get(avmgr->bzla, BZLA_OPT_SORT_AIGVEC) > 0
+  if (bzla_opt_get(avmgr->bzla, BZLA_OPT_RW_SORT_AIGVEC) > 0
       && compare_aigvec_lsb_first(a, b) > 0)
   {
     BZLA_SWAP(BzlaAIGVec *, a, b);

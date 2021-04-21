@@ -32,7 +32,7 @@ class TestModelGenSMT2 : public TestFile
     assert(rwl >= 0);
     assert(rwl <= 3);
 
-    bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
+    bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, rwl);
     bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
     d_get_model    = true;
     d_model_format = "smt2";

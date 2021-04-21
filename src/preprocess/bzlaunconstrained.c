@@ -83,9 +83,9 @@ void
 bzla_optimize_unconstrained(Bzla *bzla)
 {
   assert(bzla);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2);
   assert(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL));
-  assert(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN));
+  assert(!bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS));
 
   double start, delta;
   uint32_t i, num_ucs;
@@ -143,7 +143,7 @@ bzla_optimize_unconstrained(Bzla *bzla)
     cur = BZLA_POP_STACK(stack);
     assert(bzla_node_is_regular(cur));
     assert(!bzla_node_is_simplified(cur)
-           || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+           || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
 
     if (bzla_node_is_simplified(cur)) continue;
 

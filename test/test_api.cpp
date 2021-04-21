@@ -240,7 +240,8 @@ TEST_F(TestApi, set_option)
 
   ASSERT_NO_FATAL_FAILURE(
       bitwuzla_set_option(bzla_inc, BITWUZLA_OPT_INCREMENTAL, 1));
-  ASSERT_DEATH(bitwuzla_set_option(bzla_inc, BITWUZLA_OPT_UCOPT, 1),
+  ASSERT_DEATH(bitwuzla_set_option(
+                   bzla_inc, BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION, 1),
                "unconstrained optimization cannot be enabled in incremental "
                "mode");
   bitwuzla_check_sat(bzla_inc);
@@ -253,7 +254,7 @@ TEST_F(TestApi, set_option)
   ASSERT_DEATH(bitwuzla_set_option(bzla_dp, BITWUZLA_OPT_FUN_JUST, 1),
                "enabling multiple optimization techniques is not allowed");
   ASSERT_DEATH(
-      bitwuzla_set_option(bzla_dp, BITWUZLA_OPT_NONDESTR_SUBST, 1),
+      bitwuzla_set_option(bzla_dp, BITWUZLA_OPT_PP_NONDESTR_SUBST, 1),
       "non-destructive substitution is not supported with dual propagation");
 
   ASSERT_NO_FATAL_FAILURE(
@@ -263,18 +264,19 @@ TEST_F(TestApi, set_option)
 
   ASSERT_NO_FATAL_FAILURE(
       bitwuzla_set_option(bzla_mg, BITWUZLA_OPT_PRODUCE_MODELS, 1));
-  ASSERT_DEATH(bitwuzla_set_option(bzla_mg, BITWUZLA_OPT_UCOPT, 1),
+  ASSERT_DEATH(bitwuzla_set_option(
+                   bzla_mg, BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION, 1),
                "unconstrained optimization cannot be enabled if model "
                "generation is enabled");
 
   ASSERT_NO_FATAL_FAILURE(
-      bitwuzla_set_option(bzla_non, BITWUZLA_OPT_NONDESTR_SUBST, 1));
+      bitwuzla_set_option(bzla_non, BITWUZLA_OPT_PP_NONDESTR_SUBST, 1));
   ASSERT_DEATH(
       bitwuzla_set_option(bzla_non, BITWUZLA_OPT_FUN_DUAL_PROP, 1),
       "non-destructive substitution is not supported with dual propagation");
 
-  ASSERT_NO_FATAL_FAILURE(
-      bitwuzla_set_option(bzla_ucopt, BITWUZLA_OPT_UCOPT, 1));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_set_option(
+      bzla_ucopt, BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION, 1));
   ASSERT_DEATH(bitwuzla_set_option(bzla_ucopt, BITWUZLA_OPT_INCREMENTAL, 1),
                "incremental solving cannot be enabled if unconstrained "
                "optimization is enabled");
@@ -2541,7 +2543,7 @@ TEST_F(TestApi, dump_formula)
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_dump_formula(d_bzla, "asdf", stdout), d_error_format);
 
-  ASSERT_DEATH(bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, 0),
+  ASSERT_DEATH(bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, 0),
                "before creating expressions");
 
   bitwuzla_assert(d_bzla, d_bv_const1);

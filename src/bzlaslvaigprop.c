@@ -214,7 +214,7 @@ sat_aigprop_solver(BzlaAIGPropSolver *slv)
   }
 
   BZLA_ABORT(bzla->ufs->count != 0
-                 || (!bzla_opt_get(bzla, BZLA_OPT_BETA_REDUCE)
+                 || (!bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE)
                      && bzla->lambdas->count != 0),
              "aigprop engine supports QF_BV only");
 

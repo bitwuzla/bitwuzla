@@ -339,8 +339,8 @@ fix_quantifier_polarities(Bzla *bzla, BzlaNode *root)
          * generated 'iff' is not rewritten to an equality, however, if
          * additional rules are introduced later we want to make sure that
          * this does not break normalization. */
-        unsigned rwl = bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL);
-        bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, 0);
+        unsigned rwl = bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL);
+        bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, 0);
         BzlaNode *i1  = bzla_exp_implies(bzla, real_cur->e[0], real_cur->e[1]);
         BzlaNode *i2  = bzla_exp_implies(bzla, real_cur->e[1], real_cur->e[0]);
         BzlaNode *iff = bzla_exp_bv_and(bzla, i1, i2);
@@ -350,7 +350,7 @@ fix_quantifier_polarities(Bzla *bzla, BzlaNode *root)
         BZLA_PUSH_STACK(visit, iff);
         BZLA_PUSH_STACK(polarity, cur_pol);
         BZLA_PUSH_STACK(cleanup, iff);
-        bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+        bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, rwl);
       }
       else
       {

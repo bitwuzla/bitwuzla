@@ -49,7 +49,7 @@ class TestArith : public TestBitwuzla
           {
             if (d_bzla) bitwuzla_delete(d_bzla);
             d_bzla = bitwuzla_new();
-            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
+            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, rwl);
 
             BitwuzlaSort *sort = bitwuzla_mk_bv_sort(d_bzla, num_bits);
 
@@ -100,7 +100,7 @@ class TestArith : public TestBitwuzla
           {
             if (d_bzla) bitwuzla_delete(d_bzla);
             d_bzla = bitwuzla_new();
-            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
+            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, rwl);
 
             BitwuzlaSort *sort = bitwuzla_mk_bv_sort(d_bzla, num_bits);
             BitwuzlaTerm *const1, *const2, *const3, *bfun, *eq;

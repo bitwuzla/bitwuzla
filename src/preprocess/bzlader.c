@@ -293,8 +293,8 @@ elim_vars(Bzla *bzla, BzlaNode *root, bool elim_evars)
   BzlaIntHashTable *mark, *map, *vars, *qcache, *deps;
   BzlaHashTableData *cur_d, *d;
 
-  opt_simp_const = bzla_opt_get(bzla, BZLA_OPT_SIMPLIFY_CONSTRAINTS);
-  bzla_opt_set(bzla, BZLA_OPT_SIMPLIFY_CONSTRAINTS, 0);
+  opt_simp_const = bzla_opt_get(bzla, BZLA_OPT_RW_SIMPLIFY_CONSTRAINTS);
+  bzla_opt_set(bzla, BZLA_OPT_RW_SIMPLIFY_CONSTRAINTS, 0);
 
   mm     = bzla->mm;
   mark   = bzla_hashint_map_new(mm);
@@ -412,7 +412,7 @@ elim_vars(Bzla *bzla, BzlaNode *root, bool elim_evars)
   bzla_hashint_map_delete(deps);
   bzla_hashint_table_delete(qcache);
   BZLA_RELEASE_STACK(visit);
-  bzla_opt_set(bzla, BZLA_OPT_SIMPLIFY_CONSTRAINTS, opt_simp_const);
+  bzla_opt_set(bzla, BZLA_OPT_RW_SIMPLIFY_CONSTRAINTS, opt_simp_const);
   return result;
 }
 

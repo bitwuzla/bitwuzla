@@ -294,7 +294,7 @@ beta_reduce(Bzla *bzla,
     {
       assert(!bzla_node_is_lambda(real_cur)
              || !bzla_node_is_simplified(real_cur->e[0])
-             || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+             || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
 
       if (bzla_node_is_lambda(real_cur)
           && !real_cur->parameterized

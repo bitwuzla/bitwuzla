@@ -659,7 +659,7 @@ TEST_F(TestExp, ult)
 TEST_F(TestExp, slt)
 {
   open_log_file("slt_exp");
-  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
   binary_non_commutative_exp_test(bzla_exp_bv_slt);
 }
 
@@ -672,7 +672,7 @@ TEST_F(TestExp, ulte)
 TEST_F(TestExp, slte)
 {
   open_log_file("slte_exp");
-  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
   binary_non_commutative_exp_test(bzla_exp_bv_slte);
 }
 
@@ -685,7 +685,7 @@ TEST_F(TestExp, ugt)
 TEST_F(TestExp, sgt)
 {
   open_log_file("sgt_exp");
-  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
   binary_non_commutative_exp_test(bzla_exp_bv_sgt);
 }
 
@@ -698,7 +698,7 @@ TEST_F(TestExp, ugte)
 TEST_F(TestExp, sgte)
 {
   open_log_file("sgte_exp");
-  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
   binary_non_commutative_exp_test(bzla_exp_bv_sgte);
 }
 

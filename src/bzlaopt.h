@@ -29,7 +29,7 @@ enum BzlaOption
    */
   /* --------------------------------------------------------------------- */
   /*!
-    * **BZLA_OPT_MODEL_GEN**
+    * **BZLA_OPT_PRODUCE_MODELS**
 
       | Enable (``value``: 1 or 2) or disable (``value``: 0) generation of a
         model for satisfiable instances.
@@ -38,7 +38,7 @@ enum BzlaOption
       * generate model for asserted expressions only (``value``: 1)
       * generate model for all expressions (``value``: 2)
   */
-  BZLA_OPT_MODEL_GEN,
+  BZLA_OPT_PRODUCE_MODELS,
 
   /*!
     * **BZLA_OPT_INCREMENTAL**
@@ -196,7 +196,7 @@ enum BzlaOption
   /* --------------------------------------------------------------------- */
 
   /*!
-    * **BZLA_OPT_REWRITE_LEVEL**
+    * **BZLA_OPT_RW_LEVEL**
 
       | Set the rewrite level (``value``: 0-3) of the rewriting engine.
       | Bitwuzla uses rewrite level 3 by default, rewrite levels are
@@ -210,95 +210,95 @@ enum BzlaOption
       | Do not alter the rewrite level of the rewriting engine after creating
         expressions.
   */
-  BZLA_OPT_REWRITE_LEVEL,
+  BZLA_OPT_RW_LEVEL,
 
   /*!
-    * **BZLA_OPT_SKELETON_PREPROC**
+    * **BZLA_OPT_PP_SKELETON_PREPROC**
 
       Enable (``value``: 1) or disable (``value``: 0) skeleton  preprocessing
       during simplification.
   */
-  BZLA_OPT_SKELETON_PREPROC,
+  BZLA_OPT_PP_SKELETON_PREPROC,
 
   /*!
-    * **BZLA_OPT_ACKERMANN**
+    * **BZLA_OPT_PP_ACKERMANN**
 
       Enable (``value``: 1) or disable (``value``: 0) the eager addition of
       Ackermann constraints for function applications.
   */
-  BZLA_OPT_ACKERMANN,
+  BZLA_OPT_PP_ACKERMANN,
 
   /*!
-    * **BZLA_OPT_BETA_REDUCE**
+    * **BZLA_OPT_PP_BETA_REDUCE**
 
       Enable (``value``: 1) or disable (``value``: 0) the eager elimination of
       lambda expressions via beta reduction.
   */
-  BZLA_OPT_BETA_REDUCE,
+  BZLA_OPT_PP_BETA_REDUCE,
 
   /*!
-    * **BZLA_OPT_ELIMINATE_ITES**
+    * **BZLA_OPT_PP_ELIMINATE_ITES**
 
       Enable (``value``: 1) or disable (``value``: 0) ITE elimination.
   */
-  BZLA_OPT_ELIMINATE_ITES,
+  BZLA_OPT_PP_ELIMINATE_ITES,
 
   /*!
-    * **BZLA_OPT_ELIMINATE_SLICES**
+    * **BZLA_OPT_PP_ELIMINATE_EXTRACTS**
 
       Enable (``value``: 1) or disable (``value``: 0) slice elimination on bit
       vector variables.
   */
-  BZLA_OPT_ELIMINATE_SLICES,
+  BZLA_OPT_PP_ELIMINATE_EXTRACTS,
 
   /*!
-    * **BZLA_OPT_VAR_SUBST**
+    * **BZLA_OPT_PP_VAR_SUBST**
 
       Enable (``value``: 1) or disable (``value``: 0) variable substitution
       during simplification.
   */
-  BZLA_OPT_VAR_SUBST,
+  BZLA_OPT_PP_VAR_SUBST,
 
   /*!
-    * **BZLA_OPT_UCOPT**
+    * **BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION**
 
       Enable (``value``: 1) or disable (``value``: 0) unconstrained
       optimization.
   */
-  BZLA_OPT_UCOPT,
+  BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION,
 
   /*!
-    * **BZLA_OPT_MERGE_LAMBDAS**
+    * **BZLA_OPT_PP_MERGE_LAMBDAS**
 
       Enable (``value``: 1) or disable (``value``: 0) merging of lambda
       expressions.
   */
-  BZLA_OPT_MERGE_LAMBDAS,
+  BZLA_OPT_PP_MERGE_LAMBDAS,
 
   /*!
-    * **BZLA_OPT_EXTRACT_LAMBDAS**
+    * **BZLA_OPT_PP_EXTRACT_LAMBDAS**
 
       Enable (``value``: 1) or disable (``value``: 0) extraction of common
       array patterns as lambda terms.
   */
-  BZLA_OPT_EXTRACT_LAMBDAS,
+  BZLA_OPT_PP_EXTRACT_LAMBDAS,
 
   /*!
-    * **BZLA_OPT_NORMALIZE**
+    * **BZLA_OPT_RW_NORMALIZE**
 
       Enable (``value``: 1) or disable (``value``: 0) normalization of
       addition, multiplication and bit-wise and.
   */
-  BZLA_OPT_NORMALIZE,
+  BZLA_OPT_RW_NORMALIZE,
 
   /*!
-    * **BZLA_OPT_NORMALIZE_ADD**
+    * **BZLA_OPT_RW_NORMALIZE_ADD**
 
       Enable (``value``: 1) or disable (``value``: 0) normalization of
       addition.
   */
-  BZLA_OPT_NORMALIZE_ADD,
-  BZLA_OPT_SIMP_NORMALIZE_ADDERS,
+  BZLA_OPT_RW_NORMALIZE_ADD,
+  BZLA_OPT_PP_NORMALIZE_ADD,
 
   /* --------------------------------------------------------------------- */
   /*!
@@ -918,27 +918,27 @@ enum BzlaOption
 
   /* internal options --------------------------------------------------- */
 
-  BZLA_OPT_SORT_EXP,
-  BZLA_OPT_SORT_AIG,
-  BZLA_OPT_SORT_AIGVEC,
+  BZLA_OPT_RW_SORT_EXP,
+  BZLA_OPT_RW_SORT_AIG,
+  BZLA_OPT_RW_SORT_AIGVEC,
   BZLA_OPT_AUTO_CLEANUP_INTERNAL,
-  BZLA_OPT_SIMPLIFY_CONSTRAINTS,
-  BZLA_OPT_CHK_FAILED_ASSUMPTIONS,
-  BZLA_OPT_CHK_MODEL,
-  BZLA_OPT_CHK_UNCONSTRAINED,
+  BZLA_OPT_RW_SIMPLIFY_CONSTRAINTS,
+  BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS,
+  BZLA_OPT_CHECK_MODEL,
+  BZLA_OPT_CHECK_UNCONSTRAINED,
   BZLA_OPT_LS_SHARE_SAT,
   BZLA_OPT_PARSE_INTERACTIVE,
   BZLA_OPT_SAT_ENGINE_LGL_FORK,
   BZLA_OPT_SAT_ENGINE_CADICAL_FREEZE,
   BZLA_OPT_SAT_ENGINE_N_THREADS,
-  BZLA_OPT_SLT_ELIM,
+  BZLA_OPT_RW_SLT,
   BZLA_OPT_DECLSORT_BV_WIDTH,
   BZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
   BZLA_OPT_QUANT_FIXSYNTH,
-  BZLA_OPT_RW_ZERO_LOWER_SLICE,
-  BZLA_OPT_NONDESTR_SUBST,
+  BZLA_OPT_RW_EXTRACT_ARITH,
+  BZLA_OPT_PP_NONDESTR_SUBST,
   BZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE,
-  BZLA_OPT_UNSAT_CORES,
+  BZLA_OPT_PRODUCE_UNSAT_CORES,
   BZLA_OPT_SMT_COMP_MODE,
 
   /* this MUST be the last entry! */

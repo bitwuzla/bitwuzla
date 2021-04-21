@@ -307,7 +307,7 @@ is_always_unequal(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   assert(e1);
   /* we need this so that a + 0 is rewritten to a,
    * and constants are normalized (all inverted constants are odd) */
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
   real_e0 = bzla_node_real_addr(e0);
   real_e1 = bzla_node_real_addr(e1);
@@ -2017,7 +2017,7 @@ applies_concat_upper_slice(Bzla *bzla,
                            uint32_t lower)
 {
   return bzla_node_is_bv_concat(exp)
-         && bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) < 3
+         && bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) < 3
          && upper == bzla_node_bv_get_width(bzla, exp) - 1
          && bzla_node_bv_get_width(bzla, bzla_node_real_addr(exp)->e[0])
                 == upper - lower + 1;
@@ -2053,7 +2053,7 @@ applies_concat_rec_upper_slice(Bzla *bzla,
                                uint32_t lower)
 {
   (void) upper;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) >= 3
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) >= 3
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
          && bzla_node_is_bv_concat(exp)
          && lower
@@ -2096,7 +2096,7 @@ applies_concat_rec_lower_slice(Bzla *bzla,
                                uint32_t lower)
 {
   (void) lower;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) >= 3
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) >= 3
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
          && bzla_node_is_bv_concat(exp)
          && upper
@@ -2137,7 +2137,7 @@ applies_concat_rec_slice(Bzla *bzla,
                          uint32_t lower)
 {
   return bzla_node_is_bv_concat(exp)
-         && bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) >= 3
+         && bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) >= 3
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && lower == 0
          && upper
                 >= bzla_node_bv_get_width(bzla, bzla_node_real_addr(exp)->e[1]);
@@ -2176,7 +2176,7 @@ applies_and_slice(Bzla *bzla, BzlaNode *exp, uint32_t upper, uint32_t lower)
 {
   (void) upper;
   (void) lower;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) >= 3
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) >= 3
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv_and(exp)
          && (slice_simplifiable(bzla_node_real_addr(exp)->e[0])
              || slice_simplifiable(bzla_node_real_addr(exp)->e[1]));
@@ -2210,7 +2210,7 @@ applies_bcond_slice(Bzla *bzla, BzlaNode *exp, uint32_t upper, uint32_t lower)
 {
   (void) upper;
   (void) lower;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) >= 3
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) >= 3
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv_cond(exp)
          && (slice_simplifiable(bzla_node_real_addr(exp)->e[1])
              || slice_simplifiable(bzla_node_real_addr(exp)->e[2]));
@@ -2242,8 +2242,8 @@ applies_zero_lower_slice(Bzla *bzla,
                          uint32_t lower)
 {
   (void) upper;
-  return bzla_opt_get(bzla, BZLA_OPT_RW_ZERO_LOWER_SLICE)
-         && bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_EXTRACT_ARITH)
+         && bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && lower == 0
          && upper < bzla_node_bv_get_width(bzla, exp) / 2
          && (bzla_node_is_bv_mul(exp) || bzla_node_is_bv_add(exp));
@@ -2322,7 +2322,7 @@ apply_false_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_add_left_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && e0->kind == BZLA_BV_ADD_NODE && e0->e[0] == e1;
 }
@@ -2353,7 +2353,7 @@ apply_add_left_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_add_right_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && e0->kind == BZLA_BV_ADD_NODE && e0->e[1] == e1;
 }
@@ -2381,7 +2381,7 @@ apply_add_right_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_add_add_1_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && !bzla_node_is_inverted(e1) && e0->kind == BZLA_BV_ADD_NODE
          && e1->kind == BZLA_BV_ADD_NODE && e0->e[0] == e1->e[0];
@@ -2406,7 +2406,7 @@ apply_add_add_1_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_add_add_2_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && !bzla_node_is_inverted(e1) && e0->kind == BZLA_BV_ADD_NODE
          && e1->kind == BZLA_BV_ADD_NODE && e0->e[0] == e1->e[1];
@@ -2431,7 +2431,7 @@ apply_add_add_2_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_add_add_3_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && !bzla_node_is_inverted(e1) && e0->kind == BZLA_BV_ADD_NODE
          && e1->kind == BZLA_BV_ADD_NODE && e0->e[1] == e1->e[0];
@@ -2456,7 +2456,7 @@ apply_add_add_3_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_add_add_4_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && !bzla_node_is_inverted(e1) && e0->kind == BZLA_BV_ADD_NODE
          && e1->kind == BZLA_BV_ADD_NODE && e0->e[1] == e1->e[1];
@@ -2482,7 +2482,7 @@ static inline bool
 applies_sub_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) e0;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_regular(e1)
          && bzla_node_is_bv_add(e1)
          && ((bzla_node_is_regular(e1->e[0])
@@ -2527,7 +2527,7 @@ apply_sub_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_and_and_1_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 {
-  return bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2
 	 && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
 	 && !bzla_node_is_inverted (e0)
 	 && !bzla_node_is_inverted (e1)
@@ -2564,7 +2564,7 @@ apply_and_and_1_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 static inline bool
 applies_and_and_2_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 {
-  return bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2
 	 && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
 	 && !bzla_node_is_inverted (e0)
 	 && !bzla_node_is_inverted (e1)
@@ -2602,7 +2602,7 @@ apply_and_and_2_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 static inline bool
 applies_and_and_3_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 {
-  return bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2
 	 && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
 	 && !bzla_node_is_inverted (e0)
 	 && !bzla_node_is_inverted (e1)
@@ -2638,7 +2638,7 @@ apply_and_and_3_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 static inline bool
 applies_and_and_4_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 {
-  return bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2
 	 && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
 	 && !bzla_node_is_inverted (e0)
 	 && !bzla_node_is_inverted (e1)
@@ -2672,7 +2672,7 @@ apply_and_and_4_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 static inline bool
 applies_bcond_uneq_if_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && bzla_node_is_bv_cond(e0) && is_always_unequal(bzla, e0->e[1], e1);
 }
@@ -2699,7 +2699,7 @@ apply_bcond_uneq_if_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_bcond_uneq_else_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && bzla_node_is_bv_cond(e0) && is_always_unequal(bzla, e0->e[2], e1);
 }
@@ -2729,7 +2729,7 @@ apply_bcond_uneq_else_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_bcond_if_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv_cond(e1)
          && bzla_node_real_addr(e1)->e[1] == e0;
 }
@@ -2769,7 +2769,7 @@ apply_bcond_if_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_bcond_else_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv_cond(e1)
          && bzla_node_real_addr(e1)->e[2] == e0;
 }
@@ -2847,7 +2847,7 @@ apply_bcond_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_add_mul_distrib(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && !bzla_node_is_inverted(e1) && bzla_node_is_bv_mul(e0)
          && bzla_node_is_bv_mul(e1)
@@ -2901,7 +2901,7 @@ applies_distrib_add_mul_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   bool result;
   BzlaNode *tmp = 0;
 
-  result = bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  result = bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
            && !bzla_node_is_inverted(e0) && !bzla_node_is_inverted(e1)
            && bzla_node_is_bv_mul(e0) && bzla_node_is_bv_add(e1)
            && applies_add_mul_distrib(bzla, e1->e[0], e1->e[1])
@@ -2932,7 +2932,7 @@ static inline bool
 applies_concat_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) e1;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
          && bzla_node_real_addr(e0)->kind == BZLA_BV_CONCAT_NODE;
 }
@@ -2985,7 +2985,7 @@ applies_zero_eq_and_eq (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 {
   BzlaNode *real_e1;
   real_e1 = bzla_node_real_addr (e1);
-  return bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2
 	 && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
 	 && is_const_zero_exp (bzla, e0)
 	 && bzla_node_is_bv_and (real_e1)
@@ -3080,7 +3080,7 @@ apply_bool_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_concat_upper_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && !bzla_node_is_inverted(e1) && bzla_node_is_bv_concat(e0)
          && e0->kind == e1->kind && e0->e[0] == e1->e[0];
@@ -3106,7 +3106,7 @@ apply_concat_upper_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_concat_lower_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && !bzla_node_is_inverted(e1) && bzla_node_is_bv_concat(e0)
          && e0->kind == e1->kind && e0->e[1] == e1->e[1];
@@ -3201,7 +3201,7 @@ apply_bool_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_concat_lower_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e0)
          && !bzla_node_is_inverted(e1) && bzla_node_is_bv_concat(e0)
          && e0->kind == e1->kind && e0->e[1] == e1->e[1];
@@ -3901,7 +3901,7 @@ static inline bool
 applies_push_ite_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) e1;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_cond(e0)
          && (bzla_node_is_bv_const_zero(bzla, bzla_node_real_addr(e0)->e[1])
              || bzla_node_is_bv_const_zero(bzla,
@@ -3937,7 +3937,7 @@ apply_push_ite_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_and (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 {
-  return bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
 	 && !bzla_node_is_inverted (e0)
 	 && bzla_node_is_bv_cond (e0);
@@ -3953,7 +3953,7 @@ apply_and (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 // TODO (ma): uses shallow substitute, which does not really work
   if (!bzla_node_is_inverted (e0) &&
       e0->kind == BZLA_BV_EQ_NODE &&
-      bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2 &&
+      bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2 &&
       bzla->rec_rw_calls < BZLA_REC_RW_BOUND)
     {
       BzlaNode * e1_simp = condrewrite (bzla, e1, e0);
@@ -3975,7 +3975,7 @@ apply_and (Bzla * bzla, BzlaNode * e0, BzlaNode * e1)
 
   if (!bzla_node_is_inverted (e1) &&
       e1->kind == BZLA_BV_EQ_NODE &&
-      bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2 &&
+      bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2 &&
       bzla->rec_rw_calls < BZLA_REC_RW_BOUND)
     {
       BzlaNode * e0_simp = condrewrite (bzla, e0, e1);
@@ -4139,7 +4139,7 @@ apply_const_rhs_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   //         == (~e00 + 1) + (~e01 + 1) - 1 + e1
   //         == ((~e00 + ~e01) + 1) + e1
   //
-  if (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2 &&
+  if (bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2 &&
       bzla_node_is_inverted (e0) &&
       bzla->rec_rw_calls < BZLA_REC_RW_BOUND &&
       (temp = bzla_node_real_addr (e0))->kind == BZLA_BV_ADD_NODE)
@@ -4168,7 +4168,7 @@ apply_const_rhs_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   //         == e0 + (~e10 + 1) + (~e11 + 1) - 1
   //         == e0 + ((~e10 + ~e11) + 1)
   //
-  if (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2 &&
+  if (bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2 &&
       bzla_node_is_inverted (e1) &&
       bzla->rec_rw_calls < BZLA_REC_RW_BOUND &&
       (temp = bzla_node_real_addr (e1))->kind == BZLA_BV_ADD_NODE)
@@ -4200,7 +4200,7 @@ applies_const_neg_lhs_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   (void) e1;
   BzlaNode *real_e0;
   real_e0 = bzla_node_real_addr(e0);
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_inverted(e0)
          && bzla_node_is_bv_mul(real_e0)
          && bzla_node_is_bv_const(real_e0->e[0]);
@@ -4243,7 +4243,7 @@ applies_const_neg_rhs_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   (void) e1;
   BzlaNode *real_e0;
   real_e0 = bzla_node_real_addr(e0);
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_inverted(e0)
          && bzla_node_is_bv_mul(real_e0)
          && bzla_node_is_bv_const(real_e0->e[1]);
@@ -4283,7 +4283,7 @@ apply_const_neg_rhs_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_sll_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e1)
          && bzla_node_is_bv_sll(e1) && e0 == e1->e[1];
 }
@@ -4308,7 +4308,7 @@ apply_sll_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_mul_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e1)
          && bzla_node_is_bv_mul(e1) && (e1->e[0] == e0 || e1->e[1] == e0);
 }
@@ -4336,7 +4336,7 @@ static inline bool
 applies_push_ite_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) e1;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_cond(e0)
          && !bzla_node_is_inverted(e0)
          && (bzla_node_is_bv_const_zero(bzla, e0->e[1])
@@ -4555,7 +4555,7 @@ apply_const_rhs_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 static inline bool
 applies_const_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv_const(e0)
          && !bzla_node_is_inverted(e1) && bzla_node_is_bv_add(e1)
          && (bzla_node_is_bv_const(e1->e[0])
@@ -4587,7 +4587,7 @@ static inline bool
 applies_push_ite_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) e1;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_cond(e0)
          && !bzla_node_is_inverted(e0)
          && (bzla_node_is_bv_const_zero(bzla, e0->e[1])
@@ -4619,7 +4619,7 @@ static inline bool
 applies_sll_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) e1;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv_sll(e0)
          && !bzla_node_is_inverted(e0);
 }
@@ -4643,7 +4643,7 @@ static inline bool
 applies_neg_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) e1;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
          && (bzla_node_bv_is_neg(bzla, e0, 0)
              || bzla_node_bv_is_neg(bzla, e1, 0));
@@ -4686,7 +4686,7 @@ static inline bool
 applies_ones_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   (void) e1;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
          && (bzla_node_is_bv_const_ones(bzla, e0)
              || bzla_node_is_bv_const_ones(bzla, e1));
@@ -5017,7 +5017,7 @@ applies_slice_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   BzlaNode *real_e0, *real_e1;
   real_e0 = bzla_node_real_addr(e0);
   real_e1 = bzla_node_real_addr(e1);
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
          && bzla_node_is_inverted(e0) == bzla_node_is_inverted(e1)
          && bzla_node_is_bv_slice(real_e0) && bzla_node_is_bv_slice(real_e1)
@@ -5046,7 +5046,7 @@ apply_slice_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
 // NOTE: disabled for now, conflicts with rewriting rule of cond
 #if 0
-  if (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2 &&
+  if (bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2 &&
       !bzla_node_is_inverted (e0) &&
       e0->kind == BZLA_BCOND_NODE &&
       (bzla_is_concat_simplifiable (e0->e[1]) ||
@@ -5065,7 +5065,7 @@ apply_slice_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
 // NOTE: disabled for now, conflicts with rewriting rule of cond
 #if 0
-  if (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2 &&
+  if (bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2 &&
       bzla_node_is_inverted (e0) &&
       (real_e0 = bzla_node_real_addr (e0))->kind == BZLA_BCOND_NODE &&
       (bzla_is_concat_simplifiable (real_e0->e[1]) ||
@@ -5084,7 +5084,7 @@ apply_slice_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
 // NOTE: disabled for now, conflicts with rewriting rule of cond
 #if 0
-  if (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2 &&
+  if (bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2 &&
       !bzla_node_is_inverted (e1) &&
       e1->kind == BZLA_BCOND_NODE &&
       (bzla_is_concat_simplifiable (e1->e[1]) ||
@@ -5103,7 +5103,7 @@ apply_slice_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 
 // NOTE: disabled for now, conflicts with rewriting rule of cond
 #if 0
-  if (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2 &&
+  if (bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2 &&
       bzla_node_is_inverted (e1) &&
       (real_e1 = bzla_node_real_addr (e1))->kind == BZLA_BCOND_NODE &&
       (bzla_is_concat_simplifiable (real_e1->e[1]) ||
@@ -5130,7 +5130,7 @@ applies_and_lhs_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   (void) e1;
   BzlaNode *real_e0;
   real_e0 = bzla_node_real_addr(e0);
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
          && bzla_node_is_bv_and(real_e0)
          && (is_concat_simplifiable(real_e0->e[0])
@@ -5168,7 +5168,7 @@ applies_and_rhs_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   (void) e0;
   BzlaNode *real_e1;
   real_e1 = bzla_node_real_addr(e1);
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
          && bzla_node_is_bv_and(real_e1)
          && (is_concat_simplifiable(real_e1->e[0])
@@ -6569,7 +6569,7 @@ applies_concat_cond(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 
   real_e1 = bzla_node_real_addr(e1);
   real_e2 = bzla_node_real_addr(e2);
-  result  = bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  result  = bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
            && bzla->rec_rw_calls < BZLA_REC_RW_BOUND
            && bzla_node_is_bv_concat(real_e1)
            && bzla_node_is_bv_concat(real_e2);
@@ -6614,7 +6614,7 @@ static inline bool
 applies_op_lhs_cond(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
   (void) e0;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e1)
          && !bzla_node_is_inverted(e2) && e1->kind == e2->kind
          && (bzla_node_is_bv_add(e1) || bzla_node_is_bv_and(e1)
@@ -6646,7 +6646,7 @@ static inline bool
 applies_op_rhs_cond(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
   (void) e0;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e1)
          && !bzla_node_is_inverted(e2) && e1->kind == e2->kind
          && (bzla_node_is_bv_add(e1) || bzla_node_is_bv_and(e1)
@@ -6678,7 +6678,7 @@ static inline bool
 applies_comm_op_1_cond(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
   (void) e0;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e1)
          && !bzla_node_is_inverted(e2) && e1->kind == e2->kind
          && (bzla_node_is_bv_add(e1) || bzla_node_is_bv_and(e1)
@@ -6709,7 +6709,7 @@ static inline bool
 applies_comm_op_2_cond(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
   (void) e0;
-  return bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  return bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
          && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && !bzla_node_is_inverted(e1)
          && !bzla_node_is_inverted(e2) && e1->kind == e2->kind
          && (bzla_node_is_bv_add(e1) || bzla_node_is_bv_and(e1)
@@ -6799,7 +6799,7 @@ normalize_bin_comm_ass_exp(Bzla *bzla,
                            BzlaNode **e1_norm)
 {
   assert(bzla);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2);
   assert(e0);
   assert(e1);
   assert(!bzla_node_real_addr(e0)->simplified);
@@ -6837,7 +6837,7 @@ RESTART_NORMALIZE:
                                 (BzlaCmpPtr) bzla_node_compare_by_id);
   cache = bzla_hashint_map_new(mm);
 
-  if (!bzla_opt_get(bzla, BZLA_OPT_NORMALIZE)) goto RETURN_NO_RESULT;
+  if (!bzla_opt_get(bzla, BZLA_OPT_RW_NORMALIZE)) goto RETURN_NO_RESULT;
 
   /* We first try to normalize all nodes, i.e., we do a tree traversal on e0
    * and e1. If we encounter a node more than 32 times, we restart and do a
@@ -7084,10 +7084,10 @@ normalize_adds_muls_ands(Bzla *bzla, BzlaNode **left, BzlaNode **right)
   real_e0 = bzla_node_real_addr(e0);
   real_e1 = bzla_node_real_addr(e1);
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
       && real_e0->kind == real_e1->kind
       && ((bzla_node_is_bv_add(real_e0)
-           && bzla_opt_get(bzla, BZLA_OPT_NORMALIZE_ADD))
+           && bzla_opt_get(bzla, BZLA_OPT_RW_NORMALIZE_ADD))
           || bzla_node_is_bv_mul(real_e0) || bzla_node_is_bv_and(real_e0)))
   {
     normalize_bin_comm_ass_exp(bzla, real_e0, real_e1, &e0_norm, &e1_norm);
@@ -7115,7 +7115,7 @@ normalize_eq(Bzla *bzla, BzlaNode **left, BzlaNode **right)
     e1 = bzla_node_invert(e1);
   }
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 1)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 1)
   {
     if (bzla_node_is_inverted(e0) && bzla_node_is_bv_var(e0))
     {
@@ -7128,12 +7128,13 @@ normalize_eq(Bzla *bzla, BzlaNode **left, BzlaNode **right)
   /* normalize adds and muls on demand */
   normalize_adds_muls_ands(bzla, &e0, &e1);
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
-      && (op0 = find_top_op(bzla, e0)) && (op1 = find_top_op(bzla, e1))
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2 && (op0 = find_top_op(bzla, e0))
+      && (op1 = find_top_op(bzla, e1))
       && bzla_node_real_addr(op0)->kind == bzla_node_real_addr(op1)->kind
       && bzla_node_get_sort_id(op0) == bzla_node_get_sort_id(op1))
   {
-    if (!bzla_node_is_bv_and(op0) || bzla_opt_get(bzla, BZLA_OPT_NORMALIZE_ADD))
+    if (!bzla_node_is_bv_and(op0)
+        || bzla_opt_get(bzla, BZLA_OPT_RW_NORMALIZE_ADD))
     {
       normalize_bin_comm_ass_exp(bzla, op0, op1, &n0, &n1);
       tmp1 = rebuild_top_op(bzla, e0, op0, n0);
@@ -7156,7 +7157,7 @@ normalize_eq(Bzla *bzla, BzlaNode **left, BzlaNode **right)
    *
    * c0 = ~(c1 + b) -> ~c0 = c1 + b
    */
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
       && ((bzla_node_is_bv_add(e0) && bzla_node_is_bv_const(e1))
           || (bzla_node_is_bv_add(e1) && bzla_node_is_bv_const(e0))))
   {
@@ -7328,7 +7329,7 @@ normalize_concat(Bzla *bzla, BzlaNode **left, BzlaNode **right)
   e1 = *right;
 
   /* normalize concats --> left-associative */
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
       && bzla->rec_rw_calls < BZLA_REC_RW_BOUND && bzla_node_is_bv_concat(e1))
   {
     BZLA_INIT_STACK(mm, po_stack);
@@ -9122,7 +9123,7 @@ bzla_rewrite_slice_exp(Bzla *bzla,
                        uint32_t lower)
 {
   assert(bzla);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
   BzlaNode *res;
   double start = bzla_util_time_stamp();
@@ -9137,7 +9138,7 @@ bzla_rewrite_unary_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
   assert(bzla);
   assert(kind);
   assert(e0);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
   BzlaNode *result;
   double start = bzla_util_time_stamp();
@@ -9173,7 +9174,7 @@ bzla_rewrite_binary_exp(Bzla *bzla,
   assert(kind);
   assert(e0);
   assert(e1);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
   BzlaNode *result;
   double start = bzla_util_time_stamp();
@@ -9238,7 +9239,7 @@ bzla_rewrite_ternary_exp(
   assert(e0);
   assert(e1);
   assert(e2);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
   BzlaNode *res;
   double start = bzla_util_time_stamp();
@@ -9264,7 +9265,7 @@ bzla_rewrite_fp_fma_exp(
   assert(e1);
   assert(e2);
   assert(e3);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
   BzlaNode *result = 0;
   double start     = bzla_util_time_stamp();
@@ -9316,7 +9317,7 @@ bzla_rewrite_unary_to_fp_exp(Bzla *bzla,
   assert(bzla);
   assert(e0);
   assert(sort);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
   assert(kind == BZLA_FP_TO_FP_BV_NODE);
   (void) kind;
 
@@ -9334,7 +9335,7 @@ bzla_rewrite_binary_to_fp_exp(
   assert(bzla);
   assert(e0);
   assert(sort);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
   BzlaNode *res;
   double start = bzla_util_time_stamp();

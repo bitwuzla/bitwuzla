@@ -122,7 +122,7 @@ bzla_check_model(BzlaCheckModelContext *ctx)
   assert(bzla->last_sat_result == BZLA_RESULT_SAT);
   clone = ctx->clone;
 
-  if (!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN))
+  if (!bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS))
   {
     switch (bzla_opt_get(bzla, BZLA_OPT_ENGINE))
     {
@@ -246,11 +246,11 @@ bzla_check_model_init(Bzla *bzla)
   ctx->clone = bzla_clone_exp_layer(bzla, 0, true);
   bzla_set_msg_prefix(ctx->clone, "chkm");
   bzla_opt_set(ctx->clone, BZLA_OPT_FUN_DUAL_PROP, 0);
-  bzla_opt_set(ctx->clone, BZLA_OPT_CHK_UNCONSTRAINED, 0);
-  bzla_opt_set(ctx->clone, BZLA_OPT_CHK_MODEL, 0);
-  bzla_opt_set(ctx->clone, BZLA_OPT_CHK_FAILED_ASSUMPTIONS, 0);
+  bzla_opt_set(ctx->clone, BZLA_OPT_CHECK_UNCONSTRAINED, 0);
+  bzla_opt_set(ctx->clone, BZLA_OPT_CHECK_MODEL, 0);
+  bzla_opt_set(ctx->clone, BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS, 0);
   bzla_opt_set(ctx->clone, BZLA_OPT_PRINT_DIMACS, 0);
-  bzla_opt_set(ctx->clone, BZLA_OPT_EXTRACT_LAMBDAS, 0);
+  bzla_opt_set(ctx->clone, BZLA_OPT_PP_EXTRACT_LAMBDAS, 0);
   bzla_set_term(ctx->clone, 0, 0);
 
   bzla_opt_set(ctx->clone, BZLA_OPT_ENGINE, BZLA_ENGINE_FUN);

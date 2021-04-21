@@ -176,7 +176,7 @@ TEST_F(TestInc, assume_assert1)
 {
   int32_t sat_result;
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, 0);
   BitwuzlaSort *s      = bitwuzla_mk_bool_sort(d_bzla);
   BitwuzlaSort *as     = bitwuzla_mk_array_sort(d_bzla, s, s);
   BitwuzlaTerm *array  = bitwuzla_mk_const(d_bzla, as, "array1");
@@ -206,7 +206,7 @@ TEST_F(TestInc, lemmas_on_demand1)
   int32_t sat_result;
 
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, 0);
   BitwuzlaSort *s      = bitwuzla_mk_bool_sort(d_bzla);
   BitwuzlaSort *as     = bitwuzla_mk_array_sort(d_bzla, s, s);
   BitwuzlaTerm *array  = bitwuzla_mk_const(d_bzla, as, "array1");

@@ -389,7 +389,7 @@ bdcnode(BzlaDumpContext *bdc, BzlaNode *node, FILE *file)
     case BZLA_FORALL_NODE: op = "forall"; break;
     case BZLA_EXISTS_NODE: op = "exists"; break;
     case BZLA_LAMBDA_NODE:
-      if (bzla_opt_get(bdc->bzla, BZLA_OPT_REWRITE_LEVEL) == 0
+      if (bzla_opt_get(bdc->bzla, BZLA_OPT_RW_LEVEL) == 0
           && bzla_node_lambda_get_static_rho(node))
       {
         op = "write";
@@ -403,7 +403,7 @@ bdcnode(BzlaDumpContext *bdc, BzlaNode *node, FILE *file)
       break;
     case BZLA_APPLY_NODE:
       if (bzla_node_is_uf_array(node->e[0])
-          || (bzla_opt_get(bdc->bzla, BZLA_OPT_REWRITE_LEVEL) == 0
+          || (bzla_opt_get(bdc->bzla, BZLA_OPT_RW_LEVEL) == 0
               && bzla_node_is_lambda(node->e[0])
               && bzla_node_lambda_get_static_rho(node->e[0])))
         op = "read";
@@ -498,7 +498,7 @@ bdcnode(BzlaDumpContext *bdc, BzlaNode *node, FILE *file)
   else if (bzla_node_is_proxy(node))
     fprintf(file, " %d", bdcid(bdc, node->simplified));
   /* print write instead of lambda */
-  else if (bzla_opt_get(bdc->bzla, BZLA_OPT_REWRITE_LEVEL) == 0
+  else if (bzla_opt_get(bdc->bzla, BZLA_OPT_RW_LEVEL) == 0
            && bzla_node_is_lambda(node)
            && bzla_node_lambda_get_static_rho(node))
   {

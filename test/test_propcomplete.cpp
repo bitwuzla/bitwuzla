@@ -39,8 +39,8 @@ class TestPropComplete : public TestBzla
     d_domains         = BZLA_PROP_SOLVER(d_bzla)->domains;
 
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
-    bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
-    bzla_opt_set(d_bzla, BZLA_OPT_SORT_EXP, 0);
+    bzla_opt_set(d_bzla, BZLA_OPT_RW_LEVEL, 0);
+    bzla_opt_set(d_bzla, BZLA_OPT_RW_SORT_EXP, 0);
     // we configure everything needed for const bits tests manually
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_CONST_BITS, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_SLICE_FLIP, 0);
@@ -465,7 +465,7 @@ class TestPropComplete : public TestBzla
 
     if (is_signed)
     {
-      bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+      bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
       exp_fun    = bzla_exp_bv_slt;
       bv_fun     = bzla_bv_slt;
       is_inv_fun = bzla_is_inv_slt;
@@ -480,7 +480,7 @@ class TestPropComplete : public TestBzla
     }
 
     /* Disable rewriting in order to preserve sign extension structure. */
-    bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
+    bzla_opt_set(d_bzla, BZLA_OPT_RW_LEVEL, 0);
 
     sort_v = bzla_sort_bv(d_bzla, bw - nsext);
     sort   = bzla_sort_bv(d_bzla, bw);
@@ -542,7 +542,7 @@ class TestPropComplete : public TestBzla
 
     if (is_signed)
     {
-      bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+      bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
       exp_fun    = bzla_exp_bv_slt;
       bv_fun     = bzla_bv_slt;
       is_inv_fun = bzla_is_inv_slt;
@@ -557,7 +557,7 @@ class TestPropComplete : public TestBzla
     }
 
     /* Disable rewriting in order to preserve sign extension structure. */
-    bzla_opt_set(d_bzla, BZLA_OPT_REWRITE_LEVEL, 0);
+    bzla_opt_set(d_bzla, BZLA_OPT_RW_LEVEL, 0);
 
     sort_v0 = bzla_sort_bv(d_bzla, bw_v0);
     sort_v1 = bzla_sort_bv(d_bzla, bw - bw_v0);
@@ -2905,7 +2905,7 @@ TEST_F(TestPropComplete, complete_slt_concat_inv)
 
 TEST_F(TestPropComplete, complete_slt_inv)
 {
-  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
   check_binary(
       bzla_exp_bv_slt, bzla_bv_slt, bzla_is_inv_slt, bzla_proputils_inv_slt);
 }
@@ -2999,7 +2999,7 @@ TEST_F(TestPropComplete, complete_ult_cons)
 
 TEST_F(TestPropComplete, complete_slt_cons)
 {
-  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
   check_binary(bzla_exp_bv_slt, bzla_bv_slt, 0, bzla_proputils_cons_slt);
 }
 
@@ -3095,7 +3095,7 @@ TEST_F(TestPropCompleteConst, complete_ult_inv_const)
 
 TEST_F(TestPropCompleteConst, complete_slt_inv_const)
 {
-  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
   check_binary(bzla_exp_bv_slt,
                bzla_bv_slt,
                bzla_is_inv_slt_const,
@@ -3199,7 +3199,7 @@ TEST_F(TestPropCompleteConst, complete_ult_cons_const)
 
 TEST_F(TestPropCompleteConst, complete_slt_cons_const)
 {
-  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
   check_binary(bzla_exp_bv_slt, bzla_bv_slt, 0, bzla_proputils_cons_slt_const);
 }
 
@@ -3287,7 +3287,7 @@ TEST_F(TestPropComplete, conf_ult)
 
 TEST_F(TestPropComplete, conf_slt)
 {
-  bzla_opt_set(d_bzla, BZLA_OPT_SLT_ELIM, 0);
+  bzla_opt_set(d_bzla, BZLA_OPT_RW_SLT, 0);
   check_conf_slt(1, false);
   check_conf_slt(4, false);
   check_conf_slt(8, false);

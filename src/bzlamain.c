@@ -849,10 +849,10 @@ print_help(BitwuzlaMainApp *app, bool include_expert_opts)
   {
     if (!include_expert_opts && bzla->options[o].expert) continue;
 
-    if (o == BZLA_OPT_AUTO_CLEANUP || o == BZLA_OPT_BETA_REDUCE
+    if (o == BZLA_OPT_AUTO_CLEANUP || o == BZLA_OPT_PP_BETA_REDUCE
         || o == BZLA_OPT_INCREMENTAL || o == BZLA_OPT_INPUT_FORMAT
-        || o == BZLA_OPT_ENGINE || o == BZLA_OPT_REWRITE_LEVEL
-        || o == BZLA_OPT_SORT_EXP
+        || o == BZLA_OPT_ENGINE || o == BZLA_OPT_RW_LEVEL
+        || o == BZLA_OPT_RW_SORT_EXP
         || (!fun && (fun = strstr(bzla->options[o].lng, "fun:")))
         || (!sls && (sls = strstr(bzla->options[o].lng, "sls:")))
         || (!prop && (prop = strstr(bzla->options[o].lng, "prop:")))
@@ -1294,7 +1294,7 @@ bitwuzla_main(int32_t argc, char **argv)
         {
           if (po->isdisable)
           {
-            if (bopt == BZLA_OPT_MODEL_GEN)
+            if (bopt == BZLA_OPT_PRODUCE_MODELS)
             {
               mgen   = 0;
               pmodel = 0;
@@ -1306,7 +1306,7 @@ bitwuzla_main(int32_t argc, char **argv)
           {
             switch (bopt)
             {
-              case BZLA_OPT_MODEL_GEN:
+              case BZLA_OPT_PRODUCE_MODELS:
                 if (BZLA_ARG_READ_IS_INT(po->readval) && po->val == 0)
                 {
                   mgen   = 0;

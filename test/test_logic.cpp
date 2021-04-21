@@ -43,7 +43,7 @@ class TestLogic : public TestBitwuzla
         if (d_bzla) bitwuzla_delete(d_bzla);
         d_bzla = bitwuzla_new();
 
-        bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
+        bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, rwl);
 
         result = ~i & (max - 1);
 
@@ -89,7 +89,7 @@ class TestLogic : public TestBitwuzla
         {
           if (d_bzla) bitwuzla_delete(d_bzla);
           d_bzla = bitwuzla_new();
-          bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
+          bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, rwl);
 
           result = func(i, j);
 
@@ -133,7 +133,7 @@ class TestLogic : public TestBitwuzla
           {
             if (d_bzla) bitwuzla_delete(d_bzla);
             d_bzla = bitwuzla_new();
-            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
+            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, rwl);
 
             result = ~(i ^ j) & (max - 1);
 
@@ -180,7 +180,7 @@ class TestLogic : public TestBitwuzla
       {
         if (d_bzla) bitwuzla_delete(d_bzla);
         d_bzla = bitwuzla_new();
-        bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
+        bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, rwl);
 
         result = func(i, (uint32_t) num_bits);
 

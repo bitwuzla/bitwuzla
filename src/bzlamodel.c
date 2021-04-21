@@ -1545,7 +1545,7 @@ bzla_model_generate(Bzla *bzla,
           || cur->parameterized)
         continue;
       assert(!bzla_node_is_simplified(cur)
-             || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+             || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
       BZLA_PUSH_STACK(
           nodes, bzla_node_copy(bzla, bzla_node_get_simplified(bzla, cur)));
     }

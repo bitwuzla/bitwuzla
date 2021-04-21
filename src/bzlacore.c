@@ -444,7 +444,7 @@ bzla_print_stats(Bzla *bzla)
     BZLA_MSG(bzla->msg, 1, "");
   }
 
-  if (bzla_opt_get(bzla, BZLA_OPT_UCOPT))
+  if (bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION))
   {
     BZLA_MSG(
         bzla->msg, 1, "%5d unconstrained bv props", bzla->stats.bv_uc_props);
@@ -586,7 +586,7 @@ bzla_print_stats(Bzla *bzla)
            1,
            "%.2f seconds substitute and rebuild",
            bzla->time.subst_rebuild);
-  if (bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN))
+  if (bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS))
     BZLA_MSG(
         bzla->msg, 1, "%.2f seconds model generation", bzla->time.model_gen);
 
@@ -609,7 +609,7 @@ bzla_print_stats(Bzla *bzla)
            bzla->time.embedded,
            percent(bzla->time.embedded, bzla->time.simplify));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_ELIMINATE_SLICES))
+  if (bzla_opt_get(bzla, BZLA_OPT_PP_ELIMINATE_EXTRACTS))
     BZLA_MSG(bzla->msg,
              1,
              "    %.2f seconds variable slicing (%.0f%%)",
@@ -624,34 +624,34 @@ bzla_print_stats(Bzla *bzla)
            percent(bzla->time.skel, bzla->time.simplify));
 #endif
 
-  if (bzla_opt_get(bzla, BZLA_OPT_UCOPT))
+  if (bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION))
     BZLA_MSG(bzla->msg,
              1,
              "    %.2f seconds unconstrained optimization",
              bzla->time.ucopt);
 
-  if (bzla_opt_get(bzla, BZLA_OPT_EXTRACT_LAMBDAS))
+  if (bzla_opt_get(bzla, BZLA_OPT_PP_EXTRACT_LAMBDAS))
     BZLA_MSG(bzla->msg,
              1,
              "    %.2f seconds lambda extraction (%.0f%%)",
              bzla->time.extract,
              percent(bzla->time.extract, bzla->time.simplify));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_MERGE_LAMBDAS))
+  if (bzla_opt_get(bzla, BZLA_OPT_PP_MERGE_LAMBDAS))
     BZLA_MSG(bzla->msg,
              1,
              "    %.2f seconds lambda merging (%.0f%%)",
              bzla->time.merge,
              percent(bzla->time.merge, bzla->time.simplify));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_BETA_REDUCE))
+  if (bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE))
     BZLA_MSG(bzla->msg,
              1,
              "    %.2f seconds apply elimination (%.0f%%)",
              bzla->time.elimapplies,
              percent(bzla->time.elimapplies, bzla->time.simplify));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_ACKERMANN))
+  if (bzla_opt_get(bzla, BZLA_OPT_PP_ACKERMANN))
     BZLA_MSG(bzla->msg,
              1,
              "    %.2f seconds ackermann constraints (%.0f%%)",
@@ -1110,7 +1110,7 @@ bzla_process_unsynthesized_constraints(Bzla *bzla)
 
 #if 0
 #ifndef NDEBUG
-      if (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 2)
+      if (bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 2)
 	{
 	  BzlaNode * real_cur = bzla_node_real_addr (cur);
 	  if (bzla_node_is_bv_eq (real_cur))
@@ -1205,7 +1205,7 @@ bzla_insert_unsynthesized_constraint(Bzla *bzla, BzlaNode *exp)
   /* Insert into embedded constraint table if constraint has parents.
    * Expressions containing embedded constraints get rebuilt and the embedded
    * constraint is substituted by true/false. */
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 1
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 1
       && bzla_node_real_addr(exp)->parents > 0
       && !bzla_hashptr_table_get(bzla->embedded_constraints, exp))
   {
@@ -1225,7 +1225,7 @@ constraint_is_inconsistent(Bzla *bzla, BzlaNode *exp)
 {
   assert(bzla);
   assert(exp);
-  //  assert (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 1);
+  //  assert (bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 1);
   assert(bzla_node_bv_get_width(bzla, exp) == 1);
 
   exp = bzla_simplify_exp(bzla, exp);
@@ -1346,7 +1346,7 @@ occurrence_check(Bzla *bzla, BzlaNode *left, BzlaNode *right)
     cur = bzla_node_real_addr(BZLA_DEQUEUE(queue));
   OCCURRENCE_CHECK_ENTER_WITHOUT_POP:
     assert(!bzla_node_is_simplified(cur)
-           || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+           || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
     cur = bzla_node_real_addr(bzla_node_get_simplified(bzla, cur));
 
     if (real_left->id > cur->id) continue;
@@ -1377,7 +1377,7 @@ normalize_substitution(Bzla *bzla,
                        BzlaNode **left_result,
                        BzlaNode **right_result)
 {
-  assert(bzla_opt_get(bzla, BZLA_OPT_VAR_SUBST));
+  assert(bzla_opt_get(bzla, BZLA_OPT_PP_VAR_SUBST));
 
   BzlaNode *left, *right, *real_left, *real_right, *tmp, *inv, *var, *lambda;
   BzlaNode *const_exp, *e0, *e1;
@@ -1391,7 +1391,7 @@ normalize_substitution(Bzla *bzla,
   assert(exp);
   assert(left_result);
   assert(right_result);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 1);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 1);
   assert(bzla_simplify_exp(bzla, exp) == exp);
 
   mm = bzla->mm;
@@ -1630,8 +1630,8 @@ insert_new_constraint(Bzla *bzla, BzlaNode *exp)
 
   if (!bzla_hashptr_table_get(bzla->synthesized_constraints, exp))
   {
-    if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 1
-        && bzla_opt_get(bzla, BZLA_OPT_VAR_SUBST)
+    if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 1
+        && bzla_opt_get(bzla, BZLA_OPT_PP_VAR_SUBST)
         && normalize_substitution(bzla, exp, &left, &right))
     {
       insert_varsubst_constraint(bzla, left, right);
@@ -2151,7 +2151,7 @@ bzla_set_simplified_exp(Bzla *bzla, BzlaNode *exp, BzlaNode *simplified)
 
   if (exp->constraint) replace_constraint(bzla, exp, exp->simplified);
 
-  if (!bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST))
+  if (!bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST))
   {
     bzla_node_set_to_proxy(bzla, exp);
 
@@ -2180,9 +2180,9 @@ recursively_pointer_chase_simplified_exp(Bzla *bzla, BzlaNode *exp)
   simplified = real_exp->simplified;
   do
   {
-    assert(!bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST)
+    assert(!bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST)
            || !bzla_node_is_proxy(simplified));
-    assert(bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST)
+    assert(bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST)
            || bzla_node_is_proxy(simplified));
     if (bzla_node_is_inverted(simplified)) invert = !invert;
     simplified = bzla_node_real_addr(simplified)->simplified;
@@ -2216,7 +2216,7 @@ bzla_node_get_simplified(Bzla *bzla, BzlaNode *exp)
 {
   assert(bzla);
   assert(exp);
-  assert(!bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST)
+  assert(!bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST)
          || !bzla_node_is_proxy(exp));
 
   (void) bzla;
@@ -2248,7 +2248,7 @@ simplify_constraint_exp(Bzla *bzla, BzlaNode *exp)
   assert(bzla_node_real_addr(exp)->constraint);
   assert(!bzla_node_real_addr(exp)->simplified);
   /* embedded constraints rewriting enabled with rwl > 1 */
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 1);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 1);
 
   BzlaNode *real_exp, *result, *not_exp;
 
@@ -2300,8 +2300,8 @@ bzla_simplify_exp(Bzla *bzla, BzlaNode *exp)
   result = bzla_node_get_simplified(bzla, exp);
 
   /* NOTE: embedded constraints rewriting is enabled with rwl > 1 */
-  if (bzla_opt_get(bzla, BZLA_OPT_SIMPLIFY_CONSTRAINTS)
-      && bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 1
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_SIMPLIFY_CONSTRAINTS)
+      && bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 1
       && bzla_node_real_addr(result)->constraint)
     return simplify_constraint_exp(bzla, result);
 
@@ -2791,7 +2791,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
   if (BZLA_COUNT_STACK(bzla->assertions) > 0)
   {
     assert(BZLA_COUNT_STACK(bzla->assertions_trail) > 0
-           || bzla_opt_get(bzla, BZLA_OPT_UNSAT_CORES));
+           || bzla_opt_get(bzla, BZLA_OPT_PRODUCE_UNSAT_CORES));
     uint32_t i;
     for (i = 0; i < BZLA_COUNT_STACK(bzla->assertions); i++)
     {
@@ -2805,7 +2805,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
   if (is_fp_logic(bzla))
   {
     BZLA_MSG(bzla->msg, 1, "found FP expressions, disable lambda extraction");
-    bzla_opt_set(bzla, BZLA_OPT_EXTRACT_LAMBDAS, 0);
+    bzla_opt_set(bzla, BZLA_OPT_PP_EXTRACT_LAMBDAS, 0);
   }
 
 #ifndef NDEBUG
@@ -2813,18 +2813,18 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
   if (bzla->quantifiers->count) check = false;
 
   Bzla *uclone = 0;
-  if (check && bzla_opt_get(bzla, BZLA_OPT_CHK_UNCONSTRAINED)
-      && bzla_opt_get(bzla, BZLA_OPT_UCOPT)
-      && bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+  if (check && bzla_opt_get(bzla, BZLA_OPT_CHECK_UNCONSTRAINED)
+      && bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION)
+      && bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
       && !bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL)
-      && !bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN)
+      && !bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS)
       && !bzla_opt_get(bzla, BZLA_OPT_PRINT_DIMACS))
   {
     uclone = bzla_clone(bzla);
-    bzla_opt_set(uclone, BZLA_OPT_UCOPT, 0);
-    bzla_opt_set(uclone, BZLA_OPT_CHK_UNCONSTRAINED, 0);
-    bzla_opt_set(uclone, BZLA_OPT_CHK_MODEL, 0);
-    bzla_opt_set(uclone, BZLA_OPT_CHK_FAILED_ASSUMPTIONS, 0);
+    bzla_opt_set(uclone, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION, 0);
+    bzla_opt_set(uclone, BZLA_OPT_CHECK_UNCONSTRAINED, 0);
+    bzla_opt_set(uclone, BZLA_OPT_CHECK_MODEL, 0);
+    bzla_opt_set(uclone, BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS, 0);
     bzla_set_term(uclone, 0, 0);
 
     bzla_opt_set(uclone, BZLA_OPT_ENGINE, BZLA_ENGINE_FUN);
@@ -2835,7 +2835,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
     }
   }
   BzlaCheckModelContext *chkmodel = 0;
-  if (check && bzla_opt_get(bzla, BZLA_OPT_CHK_MODEL))
+  if (check && bzla_opt_get(bzla, BZLA_OPT_CHECK_MODEL))
   {
     chkmodel = bzla_check_model_init(bzla);
   }
@@ -2854,14 +2854,14 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
     BZLA_MSG(bzla->msg,
              1,
              "no UFs or function equalities, enable beta-reduction=all");
-    bzla_opt_set(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
+    bzla_opt_set(bzla, BZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
   }
 
   /* Lambdas are not supported with FP right now since we can't handle FP
    * expressions in bzla_eval_exp yet. */
   if (is_fp_logic(bzla))
   {
-    bzla_opt_set(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
+    bzla_opt_set(bzla, BZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
   }
 
   // FIXME (ma): not sound with slice elimination. see red-vsl.proof3106.smt2
@@ -2872,14 +2872,14 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
              1,
              "found %s, disable slice elimination",
              bzla->ufs->count > 0 ? "UFs" : "quantifiers");
-    bzla_opt_set(bzla, BZLA_OPT_ELIMINATE_SLICES, 0);
+    bzla_opt_set(bzla, BZLA_OPT_PP_ELIMINATE_EXTRACTS, 0);
   }
 
   /* set options for quantifiers */
   if (bzla->quantifiers->count > 0)
   {
-    bzla_opt_set(bzla, BZLA_OPT_UCOPT, 0);
-    bzla_opt_set(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
+    bzla_opt_set(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION, 0);
+    bzla_opt_set(bzla, BZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
   }
 
   res = bzla_simplify(bzla);
@@ -2895,7 +2895,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
           && bzla->feqs->count == 0)
       {
         assert(bzla->lambdas->count == 0
-               || bzla_opt_get(bzla, BZLA_OPT_BETA_REDUCE));
+               || bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE));
         BZLA_ABORT(bzla->quantifiers->count,
                    "Quantifiers not supported for -E sls");
         bzla->slv = bzla_new_sls_solver(bzla);
@@ -2904,7 +2904,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
                && bzla->feqs->count == 0)
       {
         assert(bzla->lambdas->count == 0
-               || bzla_opt_get(bzla, BZLA_OPT_BETA_REDUCE));
+               || bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE));
         BZLA_ABORT(bzla->quantifiers->count,
                    "Quantifiers not supported for -E prop");
         bzla->slv = bzla_new_prop_solver(bzla);
@@ -2913,7 +2913,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
                && bzla->feqs->count == 0)
       {
         assert(bzla->lambdas->count == 0
-               || bzla_opt_get(bzla, BZLA_OPT_BETA_REDUCE));
+               || bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE));
         BZLA_ABORT(bzla->quantifiers->count,
                    "Quantifiers not supported for -E aigprop");
         bzla->slv = bzla_new_aigprop_solver(bzla);
@@ -2949,7 +2949,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
   bzla->bzla_sat_bzla_called++;
   bzla->valid_assignments = 1;
 
-  if (bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN) && res == BZLA_RESULT_SAT)
+  if (bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS) && res == BZLA_RESULT_SAT)
   {
     switch (bzla_opt_get(bzla, BZLA_OPT_ENGINE))
     {
@@ -2957,21 +2957,21 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
       case BZLA_ENGINE_PROP:
       case BZLA_ENGINE_AIGPROP:
         bzla->slv->api.generate_model(
-            bzla->slv, bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN) == 2, false);
+            bzla->slv, bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS) == 2, false);
         break;
       default:
         bzla->slv->api.generate_model(
-            bzla->slv, bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN) == 2, true);
+            bzla->slv, bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS) == 2, true);
     }
   }
 
 #ifndef NDEBUG
   if (uclone)
   {
-    assert(bzla_opt_get(bzla, BZLA_OPT_UCOPT));
-    assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2);
+    assert(bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION));
+    assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2);
     assert(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL));
-    assert(!bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN));
+    assert(!bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS));
     BzlaSolverResult ucres = bzla_check_sat(uclone, -1, -1);
     assert(res == ucres);
     bzla_delete(uclone);
@@ -2979,7 +2979,8 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 
   if (chkmodel)
   {
-    if (res == BZLA_RESULT_SAT && !bzla_opt_get(bzla, BZLA_OPT_UCOPT))
+    if (res == BZLA_RESULT_SAT
+        && !bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION))
     {
       bzla_check_model(chkmodel);
     }
@@ -2988,7 +2989,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 #endif
 
 #ifndef NDEBUG
-  if (check && bzla_opt_get(bzla, BZLA_OPT_CHK_FAILED_ASSUMPTIONS)
+  if (check && bzla_opt_get(bzla, BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS)
       && !bzla->inconsistent && bzla->last_sat_result == BZLA_RESULT_UNSAT)
     bzla_check_failed_assumptions(bzla);
 #endif

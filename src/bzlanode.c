@@ -476,7 +476,7 @@ hash_bv_fp_exp(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
   uint32_t hash = 0;
   uint32_t i;
 #ifndef NDEBUG
-  if (bzla_opt_get(bzla, BZLA_OPT_SORT_EXP) > 0
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_SORT_EXP) > 0
       && bzla_node_is_binary_commutative_bv_kind(kind))
     assert(arity == 2),
         assert(bzla_node_real_addr(e[0])->id <= bzla_node_real_addr(e[1])->id);
@@ -1203,7 +1203,7 @@ bzla_node_set_to_proxy(Bzla *bzla, BzlaNode *exp)
   assert(bzla_node_is_regular(exp));
   assert(bzla == exp->bzla);
   assert(bzla_node_is_simplified(exp));
-  assert(!bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+  assert(!bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
 
   uint32_t i;
   BzlaNode *e[BZLA_NODE_MAX_CHILDREN];
@@ -1744,7 +1744,7 @@ bzla_node_mk_param_with_unique_symbol(Bzla *bzla, BzlaNode *node)
 static bool
 is_sorted_binary_bv_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
 {
-  if (!bzla_opt_get(bzla, BZLA_OPT_SORT_EXP)) return 1;
+  if (!bzla_opt_get(bzla, BZLA_OPT_RW_SORT_EXP)) return 1;
   if (!bzla_node_is_binary_commutative_bv_kind(kind)) return 1;
   if (e[0] == e[1]) return 1;
   if (bzla_node_invert(e[0]) == e[1] && bzla_node_is_inverted(e[1])) return 1;
@@ -1754,7 +1754,7 @@ is_sorted_binary_bv_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
 static bool
 is_sorted_binary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
 {
-  if (!bzla_opt_get(bzla, BZLA_OPT_SORT_EXP)) return 1;
+  if (!bzla_opt_get(bzla, BZLA_OPT_RW_SORT_EXP)) return 1;
   if (!bzla_node_is_binary_commutative_fp_kind(kind)) return 1;
   assert(bzla_node_is_regular(e[1]));
   assert(bzla_node_is_regular(e[2]));
@@ -1765,7 +1765,7 @@ is_sorted_binary_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
 static bool
 is_sorted_fp_fma_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[])
 {
-  if (!bzla_opt_get(bzla, BZLA_OPT_SORT_EXP)) return 1;
+  if (!bzla_opt_get(bzla, BZLA_OPT_RW_SORT_EXP)) return 1;
   if (kind != BZLA_FP_FMA_NODE) return 1;
   assert(bzla_node_is_regular(e[1]));
   assert(bzla_node_is_regular(e[2]));
@@ -2000,7 +2000,7 @@ find_bv_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
         if (cur->e[i] != e[i]) equal = false;
       if (equal) break;
 #ifndef NDEBUG
-      if (bzla_opt_get(bzla, BZLA_OPT_SORT_EXP) > 0
+      if (bzla_opt_get(bzla, BZLA_OPT_RW_SORT_EXP) > 0
           && bzla_node_is_binary_commutative_bv_kind(kind))
         assert(arity == 2),
             assert(e[0] == e[1] || bzla_node_invert(e[0]) == e[1]
@@ -2656,7 +2656,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
   assert(e);
 
 #ifndef NDEBUG
-  if (bzla_opt_get(bzla, BZLA_OPT_SORT_EXP) > 0
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_SORT_EXP) > 0
       && bzla_node_is_binary_commutative_bv_kind(kind))
     assert(arity == 2),
         assert(bzla_node_real_addr(e[0])->id <= bzla_node_real_addr(e[1])->id);
@@ -2838,7 +2838,7 @@ create_exp(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
   assert(bzla_node_is_regular(*lookup));
   if (bzla_node_is_simplified(*lookup))
   {
-    assert(bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+    assert(bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
     simp = bzla_node_copy(bzla, bzla_node_get_simplified(bzla, *lookup));
     bzla_node_release(bzla, *lookup);
     return simp;
@@ -3290,8 +3290,7 @@ unary_exp_slice_exp(Bzla *bzla, BzlaNode *exp, uint32_t upper, uint32_t lower)
   assert(upper >= lower);
   assert(upper < bzla_node_bv_get_width(bzla, exp));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0
-      && bzla_node_is_inverted(exp))
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0 && bzla_node_is_inverted(exp))
   {
     inv = true;
     exp = bzla_node_invert(exp);
@@ -3523,7 +3522,7 @@ bzla_bv_cond_exp_node (Bzla * bzla, BzlaNode * e_cond, BzlaNode * e_if,
   assert (bzla == bzla_node_real_addr (e_if)->bzla);
   assert (bzla == bzla_node_real_addr (e_else)->bzla);
 
-  if (bzla_opt_get (bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get (bzla, BZLA_OPT_RW_LEVEL) > 0)
     return bzla_rewrite_ternary_exp (bzla, BZLA_BCOND_NODE, e_cond, e_if, e_else);
 
   return bzla_node_create_cond (bzla, e_cond, e_if, e_else);

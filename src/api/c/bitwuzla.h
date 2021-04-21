@@ -49,7 +49,7 @@ enum BitwuzlaOption
    * @note Enabling/disabling incremental solving after bitwuzla_check_sat()
    *       has been called is not supported.
    * @note This option cannot be enabled in combination with
-   *       ::BITWUZLA_OPT_UCOPT.
+   *       ::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION.
    */
   BITWUZLA_OPT_INCREMENTAL,
 
@@ -61,7 +61,7 @@ enum BitwuzlaOption
    *  * **0**: disable [**default**]
    *
    * @note This option cannot be enabled in combination with
-   *       ::BITWUZLA_OPT_UCOPT.
+   *       ::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION.
    */
   BITWUZLA_OPT_PRODUCE_MODELS,
 
@@ -177,7 +177,7 @@ enum BitwuzlaOption
    * @note Configuring the rewrite level after terms have been created
    *       is not allowed.
    */
-  BITWUZLA_OPT_REWRITE_LEVEL,
+  BITWUZLA_OPT_RW_LEVEL,
 
   /*! **Boolean skeleton preprocessing.**
    *
@@ -185,7 +185,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_SKELETON_PREPROC,
+  BITWUZLA_OPT_PP_SKELETON_PREPROC,
 
   /*! **Ackermannization.**
    *
@@ -195,7 +195,7 @@ enum BitwuzlaOption
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_ACKERMANN,
+  BITWUZLA_OPT_PP_ACKERMANN,
 
   /*! **Beta reduction.**
    *
@@ -203,7 +203,7 @@ enum BitwuzlaOption
    *
    * Values: TODO
    */
-  BITWUZLA_OPT_BETA_REDUCE,
+  BITWUZLA_OPT_PP_BETA_REDUCE,
 
   /*! **Eliminate ITEs.**
    *
@@ -211,7 +211,7 @@ enum BitwuzlaOption
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_ELIMINATE_ITES,
+  BITWUZLA_OPT_PP_ELIMINATE_ITES,
 
   /*! **Eliminate bit-vector extracts.**
    *
@@ -219,7 +219,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_ELIMINATE_SLICES,
+  BITWUZLA_OPT_PP_ELIMINATE_EXTRACTS,
 
   /*! **Variable substitution preprocessing.**
    *
@@ -227,7 +227,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_VAR_SUBST,
+  BITWUZLA_OPT_PP_VAR_SUBST,
 
   /*! **Unconstrained optimization.**
    *
@@ -235,7 +235,7 @@ enum BitwuzlaOption
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_UCOPT,
+  BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION,
 
   /*! **Merge lambda terms.**
    *
@@ -243,7 +243,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_MERGE_LAMBDAS,
+  BITWUZLA_OPT_PP_MERGE_LAMBDAS,
 
   /*! **Extract lambdas.**
    *
@@ -253,7 +253,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_EXTRACT_LAMBDAS,
+  BITWUZLA_OPT_PP_EXTRACT_LAMBDAS,
 
   /*! **Normalize bit-vector operations.**
    *
@@ -263,7 +263,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_NORMALIZE,
+  BITWUZLA_OPT_RW_NORMALIZE,
 
   /*! **Normalize bit-vector addition (local).**
    *
@@ -271,7 +271,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_NORMALIZE_ADD,
+  BITWUZLA_OPT_RW_NORMALIZE_ADD,
 
   /*! **Sort the children of commutative operations by id.**
    *
@@ -279,7 +279,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_SORT_EXP,
+  BITWUZLA_OPT_RW_SORT_EXP,
 
   /*! **Sort the children of AIG nodes by id.**
    *
@@ -287,7 +287,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_SORT_AIG,
+  BITWUZLA_OPT_RW_SORT_AIG,
 
   /*! **Sort the children of adder and multiplier circuits by id.**
    *
@@ -295,7 +295,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_SORT_AIGVEC,
+  BITWUZLA_OPT_RW_SORT_AIGVEC,
 
   /*! **Simplify constraints on construction.**
    *
@@ -303,7 +303,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_SIMPLIFY_CONSTRAINTS,
+  BITWUZLA_OPT_RW_SIMPLIFY_CONSTRAINTS,
 
   /*! **Eliminate bit-vector SLT nodes.**
    *
@@ -311,7 +311,7 @@ enum BitwuzlaOption
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_SLT_ELIM,
+  BITWUZLA_OPT_RW_SLT,
 
   /*! **Propagate bit-vector extracts over arithmetic bit-vector operators.**
    *
@@ -319,7 +319,7 @@ enum BitwuzlaOption
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_RW_ZERO_LOWER_SLICE,
+  BITWUZLA_OPT_RW_EXTRACT_ARITH,
 
   /*! **Non-destructive term substitutions.**
    *
@@ -327,7 +327,7 @@ enum BitwuzlaOption
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_NONDESTR_SUBST,
+  BITWUZLA_OPT_PP_NONDESTR_SUBST,
 
   /*! **Normalize bit-vector addition (global).**
    *
@@ -335,7 +335,7 @@ enum BitwuzlaOption
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_SIMP_NORMALIZE_ADDERS,
+  BITWUZLA_OPT_PP_NORMALIZE_ADD,
 
   /* --------------------- Fun Engine Options (Expert) --------------------- */
 

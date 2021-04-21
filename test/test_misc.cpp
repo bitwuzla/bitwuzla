@@ -82,7 +82,7 @@ class TestMisc : public TestMm
           BzlaNode *const1, *const2, *slice, *eq;
 
           bzla = bzla_new();
-          bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, rwl);
 
           result   = mk_slice(x, i, j, num_bits);
           resultbv = bzla_bv_char_to_bv(d_mm, result);
@@ -162,7 +162,7 @@ class TestMisc : public TestMm
           BzlaNode *const1, *const2, *eq, *bfun;
 
           bzla = bzla_new();
-          bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, rwl);
 
           result =
               ext_mode == UEXT ? uext(i, j, num_bits) : sext(i, j, num_bits);
@@ -235,7 +235,7 @@ class TestMisc : public TestMm
           BzlaNode *const1, *const2, *const3, *eq, *concat;
 
           bzla = bzla_new();
-          bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, rwl);
 
           result   = mk_concat(i, j, num_bits);
           resultbv = bzla_bv_char_to_bv(d_mm, result);
@@ -289,7 +289,7 @@ class TestMisc : public TestMm
             BzlaNode *const1, *const2, *const3, *const4, *eq, *cond;
 
             bzla = bzla_new();
-            bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+            bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, rwl);
 
             result = k ? i : j;
 
@@ -342,7 +342,7 @@ class TestMisc : public TestMm
           BzlaNode *eq1, *eq2, *array, *read1, *read2;
 
           bzla = bzla_new();
-          bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rwl);
+          bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, rwl);
 
           elem_sort  = bzla_sort_bv(bzla, num_bits);
           index_sort = bzla_sort_bv(bzla, 1);

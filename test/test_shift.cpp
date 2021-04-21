@@ -37,7 +37,7 @@ class TestShift : public TestCommon
     BitwuzlaTerm *two;
 
     Bitwuzla *bitwuzla = bitwuzla_new();
-    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_RW_LEVEL, 0);
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
 
     sort   = bitwuzla_mk_bv_sort(bitwuzla, bw);

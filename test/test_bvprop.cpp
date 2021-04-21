@@ -717,7 +717,7 @@ class TestBvProp : public TestBvDomainCommon
     Bitwuzla *bitwuzla = bitwuzla_new();
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_INCREMENTAL, 1);
-    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_RW_LEVEL, 0);
     bwx = bzla_bvdomain_get_width(d_x);
     swx = bitwuzla_mk_bv_sort(bitwuzla, bwx);
     bwz = bzla_bvdomain_get_width(d_z);

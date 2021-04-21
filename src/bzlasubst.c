@@ -337,7 +337,7 @@ substitute(Bzla *bzla,
   BzlaIntHashTable *cnt;
 #endif
   BzlaPtrHashTableIterator it;
-  bool opt_nondestr_subst = bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST) == 1;
+  bool opt_nondestr_subst = bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST) == 1;
 
   if (nroots == 0) return;
 
@@ -595,7 +595,7 @@ bzla_substitute_and_rebuild(Bzla *bzla, BzlaPtrHashTable *substs)
   if (substs->count == 0u) return;
 
   mm                 = bzla->mm;
-  opt_nondestr_subst = bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST) == 1;
+  opt_nondestr_subst = bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST) == 1;
 
   BZLA_INIT_STACK(mm, stack);
   BZLA_INIT_STACK(mm, root_stack);

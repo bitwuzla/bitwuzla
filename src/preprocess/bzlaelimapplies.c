@@ -56,7 +56,7 @@ bzla_eliminate_applies(Bzla *bzla)
   BzlaPtrHashTable *substs;
   BzlaIntHashTable *app_cache;
 
-  if (bzla_opt_get(bzla, BZLA_OPT_BETA_REDUCE) == BZLA_BETA_REDUCE_ALL)
+  if (bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE) == BZLA_BETA_REDUCE_ALL)
   {
     eliminate_update_nodes(bzla);
   }
@@ -155,7 +155,8 @@ bzla_eliminate_applies(Bzla *bzla)
     while (bzla_iter_apply_parent_has_next(&it))
     {
       app = bzla_iter_apply_parent_next(&it);
-      assert(app->parameterized || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+      assert(app->parameterized
+             || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
     }
   }
 #endif

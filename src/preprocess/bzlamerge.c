@@ -85,7 +85,7 @@ void
 bzla_merge_lambdas(Bzla *bzla)
 {
   assert(bzla);
-  assert(bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0);
+  assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
   uint32_t i, num_merged_lambdas = 0;
   double start, delta;
@@ -117,14 +117,14 @@ bzla_merge_lambdas(Bzla *bzla)
   {
     lambda = BZLA_POP_STACK(lambdas);
     assert(!bzla_node_is_simplified(lambda)
-           || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+           || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
     lambda = bzla_node_get_simplified(bzla, lambda);
     assert(bzla_node_is_regular(lambda));
     assert(bzla_node_is_lambda(lambda));
 
     if (!bzla_node_is_lambda(lambda))
     {
-      assert(bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+      assert(bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
       continue;
     }
 
@@ -146,7 +146,7 @@ bzla_merge_lambdas(Bzla *bzla)
     lambda = BZLA_POP_STACK(stack);
     assert(bzla_node_is_regular(lambda));
     assert(!bzla_node_is_simplified(lambda)
-           || bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST));
+           || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
     lambda = bzla_node_get_simplified(bzla, lambda);
 
     if (bzla_hashint_table_contains(mark_lambda, lambda->id)) continue;

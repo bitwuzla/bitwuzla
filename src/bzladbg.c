@@ -188,7 +188,7 @@ bzla_dbg_check_nodes_simp_free(Bzla *bzla, BzlaNode *nodes[], size_t nnodes)
 
   BZLA_INIT_STACK(bzla->mm, visit);
   cache              = bzla_hashint_table_new(bzla->mm);
-  opt_nondestr_subst = bzla_opt_get(bzla, BZLA_OPT_NONDESTR_SUBST) == 1;
+  opt_nondestr_subst = bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST) == 1;
 
   for (i = 0; i < nnodes; i++)
   {

@@ -209,7 +209,7 @@ find_and_aig(BzlaAIGMgr *amgr, BzlaAIG *left, BzlaAIG *right)
   uint32_t hash;
   int32_t *result;
 
-  if (bzla_opt_get(amgr->bzla, BZLA_OPT_SORT_AIG) > 0
+  if (bzla_opt_get(amgr->bzla, BZLA_OPT_RW_SORT_AIG) > 0
       && BZLA_REAL_ADDR_AIG(right)->id < BZLA_REAL_ADDR_AIG(left)->id)
   {
     BZLA_SWAP(BzlaAIG *, left, right);
@@ -228,7 +228,7 @@ find_and_aig(BzlaAIGMgr *amgr, BzlaAIG *left, BzlaAIG *right)
         && bzla_aig_get_right_child(amgr, cur) == right)
       break;
 #ifndef NDEBUG
-    if (bzla_opt_get(amgr->bzla, BZLA_OPT_SORT_AIG) > 0)
+    if (bzla_opt_get(amgr->bzla, BZLA_OPT_RW_SORT_AIG) > 0)
       assert(bzla_aig_get_left_child(amgr, cur) != right
              || bzla_aig_get_right_child(amgr, cur) != left);
 #endif
@@ -714,7 +714,7 @@ BZLA_AIG_TWO_LEVEL_OPT_TRY_AGAIN:
       enlarge_aig_nodes_unique_table(amgr);
       lookup = find_and_aig(amgr, left, right);
     }
-    if (bzla_opt_get(amgr->bzla, BZLA_OPT_SORT_AIG) > 0
+    if (bzla_opt_get(amgr->bzla, BZLA_OPT_RW_SORT_AIG) > 0
         && real_right->id < real_left->id)
     {
       BZLA_SWAP(BzlaAIG *, left, right);
@@ -936,7 +936,7 @@ is_xor_aig(BzlaAIGMgr *amgr, BzlaAIG *aig, BzlaAIGPtrStack *leafs)
     return true;
   }
 
-  assert(!bzla_opt_get(amgr->bzla, BZLA_OPT_SORT_AIG)
+  assert(!bzla_opt_get(amgr->bzla, BZLA_OPT_RW_SORT_AIG)
          || ll != BZLA_INVERT_AIG(rr) || lr != BZLA_INVERT_AIG(rl));
 
   return false;

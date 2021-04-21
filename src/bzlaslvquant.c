@@ -637,7 +637,7 @@ setup_solvers(BzlaQuantSolver *slv,
   bzla_set_msg_prefix(res->forall, prefix_forall);
 
   /* configure options */
-  bzla_opt_set(res->forall, BZLA_OPT_MODEL_GEN, 1);
+  bzla_opt_set(res->forall, BZLA_OPT_PRODUCE_MODELS, 1);
   bzla_opt_set(res->forall, BZLA_OPT_INCREMENTAL, 1);
 
   if (setup_dual)
@@ -652,7 +652,7 @@ setup_solvers(BzlaQuantSolver *slv,
         res->forall,
         root,
         exp_map,
-        bzla_opt_get(res->forall, BZLA_OPT_REWRITE_LEVEL));
+        bzla_opt_get(res->forall, BZLA_OPT_RW_LEVEL));
     /* all bv vars are quantified with exists */
     assert(res->forall->bv_vars->count == 0);
     bzla_nodemap_delete(exp_map);

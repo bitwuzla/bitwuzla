@@ -122,7 +122,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   /* general options (all others are expert options) ----------------------- */
   init_opt(bzla,
-           BZLA_OPT_MODEL_GEN,
+           BZLA_OPT_PRODUCE_MODELS,
            false,
            true,
            "model-gen",
@@ -142,7 +142,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "incremental usage");
   init_opt(bzla,
-           BZLA_OPT_UNSAT_CORES,
+           BZLA_OPT_PRODUCE_UNSAT_CORES,
            true,
            true,
            "unsat-cores",
@@ -402,7 +402,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   /* rewriting / preprocessing (expert options) ----------------------------- */
   init_opt(bzla,
-           BZLA_OPT_REWRITE_LEVEL,
+           BZLA_OPT_RW_LEVEL,
            true,
            false,
            "rewrite-level",
@@ -412,7 +412,7 @@ bzla_opt_init_opts(Bzla *bzla)
            3,
            "rewrite level");
   init_opt(bzla,
-           BZLA_OPT_SKELETON_PREPROC,
+           BZLA_OPT_PP_SKELETON_PREPROC,
            true,
            true,
            "skeleton-preproc",
@@ -422,7 +422,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "propositional skeleton preprocessing");
   init_opt(bzla,
-           BZLA_OPT_ACKERMANN,
+           BZLA_OPT_PP_ACKERMANN,
            true,
            true,
            "ackermannize",
@@ -432,7 +432,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "add ackermann constraints");
   init_opt(bzla,
-           BZLA_OPT_BETA_REDUCE,
+           BZLA_OPT_PP_BETA_REDUCE,
            true,
            false,
            "beta-reduce",
@@ -451,10 +451,10 @@ bzla_opt_init_opts(Bzla *bzla)
                "all",
                BZLA_BETA_REDUCE_ALL,
                "beta-reduce functions and array-writes");
-  bzla->options[BZLA_OPT_BETA_REDUCE].options = opts;
+  bzla->options[BZLA_OPT_PP_BETA_REDUCE].options = opts;
 
   init_opt(bzla,
-           BZLA_OPT_ELIMINATE_ITES,
+           BZLA_OPT_PP_ELIMINATE_ITES,
            true,
            true,
            "eliminate-ites",
@@ -464,7 +464,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "eliminate ITEs");
   init_opt(bzla,
-           BZLA_OPT_ELIMINATE_SLICES,
+           BZLA_OPT_PP_ELIMINATE_EXTRACTS,
            true,
            true,
            "eliminate-slices",
@@ -474,7 +474,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "eliminate slices on variables");
   init_opt(bzla,
-           BZLA_OPT_VAR_SUBST,
+           BZLA_OPT_PP_VAR_SUBST,
            true,
            true,
            "var-subst",
@@ -484,7 +484,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "variable substitution");
   init_opt(bzla,
-           BZLA_OPT_UCOPT,
+           BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION,
            true,
            true,
            "ucopt",
@@ -494,7 +494,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "unconstrained optimization");
   init_opt(bzla,
-           BZLA_OPT_MERGE_LAMBDAS,
+           BZLA_OPT_PP_MERGE_LAMBDAS,
            true,
            true,
            "merge-lambdas",
@@ -504,7 +504,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "merge lambda chains");
   init_opt(bzla,
-           BZLA_OPT_EXTRACT_LAMBDAS,
+           BZLA_OPT_PP_EXTRACT_LAMBDAS,
            true,
            true,
            "extract-lambdas",
@@ -514,7 +514,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "extract lambda terms");
   init_opt(bzla,
-           BZLA_OPT_NORMALIZE_ADD,
+           BZLA_OPT_RW_NORMALIZE_ADD,
            true,
            true,
            "normalize-add",
@@ -524,7 +524,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "normalize bit-vector addition operators (local)");
   init_opt(bzla,
-           BZLA_OPT_NORMALIZE,
+           BZLA_OPT_RW_NORMALIZE,
            true,
            true,
            "normalize",
@@ -534,7 +534,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "normalize bit-vector operators");
   init_opt(bzla,
-           BZLA_OPT_SIMP_NORMALIZE_ADDERS,
+           BZLA_OPT_PP_NORMALIZE_ADD,
            true,
            true,
            "simp-norm-adds",
@@ -544,7 +544,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "normalize bit-vector addition operators (global)");
   init_opt(bzla,
-           BZLA_OPT_SIMPLIFY_CONSTRAINTS,
+           BZLA_OPT_RW_SIMPLIFY_CONSTRAINTS,
            true,
            true,
            "simplify-constraints",
@@ -554,7 +554,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "simplify constraints on construction");
   init_opt(bzla,
-           BZLA_OPT_SORT_EXP,
+           BZLA_OPT_RW_SORT_EXP,
            true,
            true,
            "sort-exp",
@@ -564,7 +564,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "sort commutative expression nodes");
   init_opt(bzla,
-           BZLA_OPT_SORT_AIG,
+           BZLA_OPT_RW_SORT_AIG,
            true,
            true,
            "sort-aig",
@@ -574,7 +574,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "sort AIG nodes");
   init_opt(bzla,
-           BZLA_OPT_SORT_AIGVEC,
+           BZLA_OPT_RW_SORT_AIGVEC,
            true,
            true,
            "sort-aigvec",
@@ -584,7 +584,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "sort AIG vectors");
   init_opt(bzla,
-           BZLA_OPT_NONDESTR_SUBST,
+           BZLA_OPT_PP_NONDESTR_SUBST,
            true,
            true,
            "nondestr-subst",
@@ -594,20 +594,20 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "enable non-destructive term substitutions");
   init_opt(bzla,
-           BZLA_OPT_SLT_ELIM,
+           BZLA_OPT_RW_SLT,
            true,
            true,
-           "slt-elim",
+           "rw-slt",
            0,
            0,
            0,
            1,
            "eliminate bit-vector slt nodes");
   init_opt(bzla,
-           BZLA_OPT_RW_ZERO_LOWER_SLICE,
+           BZLA_OPT_RW_EXTRACT_ARITH,
            true,
            true,
-           "rw-zero-lower-slice",
+           "rw-extract-arith",
            0,
            0,
            0,
@@ -1298,12 +1298,12 @@ bzla_opt_init_opts(Bzla *bzla)
            BZLA_OPT_PROP_SRA,
            true,
            true,
-           "prop-sra",
+           "prop-ashr",
            0,
            0,
            0,
            1,
-           "use sra inverse value computation");
+           "use ashr inverse value computation");
 
   /* AIGPROP engine (expert options) ---------------------------------------- */
   init_opt(bzla,
@@ -1477,30 +1477,30 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "auto clean up all allocated memory on exit");
   init_opt(bzla,
-           BZLA_OPT_CHK_FAILED_ASSUMPTIONS,
+           BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS,
            true,
            true,
-           "chk-failed-assumptions",
+           "check-failed-assumptions",
            0,
            1,
            0,
            1,
            "check if assumptions determined as unsat are indeed unsat");
   init_opt(bzla,
-           BZLA_OPT_CHK_MODEL,
+           BZLA_OPT_CHECK_MODEL,
            true,
            true,
-           "chk-model",
+           "check-model",
            0,
            1,
            0,
            1,
            "check model");
   init_opt(bzla,
-           BZLA_OPT_CHK_UNCONSTRAINED,
+           BZLA_OPT_CHECK_UNCONSTRAINED,
            true,
            true,
-           "chk-unconstrained",
+           "check-unconstrained",
            0,
            1,
            0,
@@ -1776,29 +1776,29 @@ bzla_opt_set(Bzla *bzla, const BzlaOption opt, uint32_t val)
     else if (val == BZLA_ENGINE_PROP)
       bzla_opt_set(bzla, BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT, 0);
   }
-  else if (opt == BZLA_OPT_MODEL_GEN)
+  else if (opt == BZLA_OPT_PRODUCE_MODELS)
   {
     if (!val && bzla_opt_get(bzla, opt)) bzla_model_delete(bzla);
-    if (val && bzla_opt_get(bzla, BZLA_OPT_UCOPT))
+    if (val && bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION))
     {
-      bzla_opt_set(bzla, BZLA_OPT_UCOPT, 0);
+      bzla_opt_set(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION, 0);
       BZLA_MSG(bzla->msg,
                1,
                "Disabling unconstrained optimization since model generation "
                "is enabled");
     }
-    assert(!val || !bzla_opt_get(bzla, BZLA_OPT_UCOPT));
+    assert(!val || !bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION));
   }
-  else if (opt == BZLA_OPT_UNSAT_CORES)
+  else if (opt == BZLA_OPT_PRODUCE_UNSAT_CORES)
   {
     if (val)
     {
       bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
     }
   }
-  else if (opt == BZLA_OPT_UCOPT)
+  else if (opt == BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION)
   {
-    if (val && bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN))
+    if (val && bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS))
     {
       BZLA_MSG(bzla->msg,
                1,
@@ -1862,7 +1862,7 @@ bzla_opt_set(Bzla *bzla, const BzlaOption opt, uint32_t val)
   {
     assert(!val || !bzla_opt_get(bzla, BZLA_OPT_FUN_DUAL_PROP));
   }
-  else if (opt == BZLA_OPT_REWRITE_LEVEL)
+  else if (opt == BZLA_OPT_RW_LEVEL)
   {
     assert(val <= 3);
     assert(oldval <= 3);

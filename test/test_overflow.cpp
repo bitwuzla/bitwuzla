@@ -56,7 +56,7 @@ class TestOverflow : public TestBitwuzla
           if (d_bzla) bitwuzla_delete(d_bzla);
           d_bzla = bitwuzla_new();
 
-          bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
+          bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, rwl);
 
           overflow_test = false;
           overflow_bzla = false;
@@ -130,7 +130,7 @@ class TestOverflow : public TestBitwuzla
             if (d_bzla) bitwuzla_delete(d_bzla);
             d_bzla = bitwuzla_new();
 
-            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_REWRITE_LEVEL, rwl);
+            bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, rwl);
 
             overflow_test = false;
             overflow_bzla = false;

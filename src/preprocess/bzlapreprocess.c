@@ -56,7 +56,7 @@ bzla_simplify(Bzla *bzla)
    * after adding variable substitution constraints (they are still in
    * unsynthesized_constraints).
    */
-  if (bzla_opt_get(bzla, BZLA_OPT_VAR_SUBST) == 0
+  if (bzla_opt_get(bzla, BZLA_OPT_PP_VAR_SUBST) == 0
       && bzla->varsubst_constraints->count > 0)
   {
     bzla_delete_varsubst_constraints(bzla);
@@ -74,9 +74,9 @@ bzla_simplify(Bzla *bzla)
     assert(bzla_dbg_check_all_hash_tables_proxy_free(bzla));
     assert(bzla_dbg_check_all_hash_tables_simp_free(bzla));
     assert(bzla_dbg_check_unique_table_children_proxy_free(bzla));
-    if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 1)
+    if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 1)
     {
-      if (bzla_opt_get(bzla, BZLA_OPT_VAR_SUBST))
+      if (bzla_opt_get(bzla, BZLA_OPT_PP_VAR_SUBST))
       {
         bzla_substitute_var_exps(bzla);
 
@@ -105,8 +105,8 @@ bzla_simplify(Bzla *bzla)
       if (bzla->varsubst_constraints->count) continue;
     }
 
-    if (bzla_opt_get(bzla, BZLA_OPT_ELIMINATE_SLICES)
-        && bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+    if (bzla_opt_get(bzla, BZLA_OPT_PP_ELIMINATE_EXTRACTS)
+        && bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
         && !bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL))
     {
       bzla_eliminate_slices_on_bv_vars(bzla);
@@ -122,8 +122,8 @@ bzla_simplify(Bzla *bzla)
     }
 
 #ifndef BZLA_DO_NOT_PROCESS_SKELETON
-    if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
-        && bzla_opt_get(bzla, BZLA_OPT_SKELETON_PREPROC))
+    if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
+        && bzla_opt_get(bzla, BZLA_OPT_PP_SKELETON_PREPROC))
     {
       skelrounds++;
       if (skelrounds <= 1)  // TODO only one?
@@ -145,10 +145,10 @@ bzla_simplify(Bzla *bzla)
     if (bzla->varsubst_constraints->count || bzla->embedded_constraints->count)
       continue;
 
-    if (bzla_opt_get(bzla, BZLA_OPT_UCOPT)
-        && bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
+    if (bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION)
+        && bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
         && !bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL)
-        && !bzla_opt_get(bzla, BZLA_OPT_MODEL_GEN))
+        && !bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS))
     {
       bzla_optimize_unconstrained(bzla);
       if (bzla->inconsistent)
@@ -161,19 +161,19 @@ bzla_simplify(Bzla *bzla)
     if (bzla->varsubst_constraints->count || bzla->embedded_constraints->count)
       continue;
 
-    if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
-        && bzla_opt_get(bzla, BZLA_OPT_EXTRACT_LAMBDAS))
+    if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
+        && bzla_opt_get(bzla, BZLA_OPT_PP_EXTRACT_LAMBDAS))
       bzla_extract_lambdas(bzla);
 
-    if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
-        && bzla_opt_get(bzla, BZLA_OPT_MERGE_LAMBDAS))
+    if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
+        && bzla_opt_get(bzla, BZLA_OPT_PP_MERGE_LAMBDAS))
       bzla_merge_lambdas(bzla);
 
     if (bzla->varsubst_constraints->count || bzla->embedded_constraints->count)
       continue;
 
     /* rewrite/beta-reduce applies on lambdas */
-    if (bzla_opt_get(bzla, BZLA_OPT_BETA_REDUCE))
+    if (bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE))
     {
       /* If no UFs or function equalities are present, we eagerly eliminate all
        * remaining lambdas. */
@@ -183,22 +183,22 @@ bzla_simplify(Bzla *bzla)
         BZLA_MSG(bzla->msg,
                  1,
                  "no UFs or function equalities, enable beta-reduction=all");
-        bzla_opt_set(bzla, BZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
+        bzla_opt_set(bzla, BZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
       }
       bzla_eliminate_applies(bzla);
     }
 
-    if (bzla_opt_get(bzla, BZLA_OPT_ELIMINATE_ITES))
+    if (bzla_opt_get(bzla, BZLA_OPT_PP_ELIMINATE_ITES))
     {
       bzla_eliminate_ites(bzla);
     }
 
     /* add ackermann constraints for all uninterpreted functions */
-    if (bzla_opt_get(bzla, BZLA_OPT_ACKERMANN))
+    if (bzla_opt_get(bzla, BZLA_OPT_PP_ACKERMANN))
       bzla_add_ackermann_constraints(bzla);
 
-    if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
-        && bzla_opt_get(bzla, BZLA_OPT_SIMP_NORMALIZE_ADDERS))
+    if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
+        && bzla_opt_get(bzla, BZLA_OPT_PP_NORMALIZE_ADD))
       bzla_normalize_adds(bzla);
 
   } while (bzla->varsubst_constraints->count

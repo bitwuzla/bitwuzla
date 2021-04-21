@@ -286,7 +286,7 @@ bzla_exp_eq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_eq_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
   {
     if (bzla_node_is_fun(e0))
       result = bzla_rewrite_binary_exp(bzla, BZLA_FUN_EQ_NODE, e0, e1);
@@ -321,7 +321,7 @@ bzla_exp_cond(Bzla *bzla, BzlaNode *e_cond, BzlaNode *e_if, BzlaNode *e_else)
   assert(bzla == bzla_node_real_addr(e_if)->bzla);
   assert(bzla == bzla_node_real_addr(e_else)->bzla);
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     return bzla_rewrite_ternary_exp(bzla, BZLA_COND_NODE, e_cond, e_if, e_else);
 
   return bzla_node_create_cond(bzla, e_cond, e_if, e_else);
@@ -558,7 +558,7 @@ bzla_exp_bv_slice(Bzla *bzla, BzlaNode *exp, uint32_t upper, uint32_t lower)
   exp = bzla_simplify_exp(bzla, exp);
   assert(bzla_dbg_precond_slice_exp(bzla, exp, upper, lower));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_slice_exp(bzla, exp, upper, lower);
   else
     result = bzla_node_create_bv_slice(bzla, exp, upper, lower);
@@ -685,7 +685,7 @@ bzla_exp_bv_and(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_BV_AND_NODE, e0, e1);
   else
     result = bzla_node_create_bv_and(bzla, e0, e1);
@@ -776,7 +776,7 @@ bzla_exp_bv_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_BV_ADD_NODE, e0, e1);
   else
     result = bzla_node_create_bv_add(bzla, e0, e1);
@@ -863,7 +863,7 @@ bzla_exp_bv_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_BV_MUL_NODE, e0, e1);
   else
     result = bzla_node_create_bv_mul(bzla, e0, e1);
@@ -1031,7 +1031,7 @@ bzla_exp_bv_ult(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_BV_ULT_NODE, e0, e1);
   else
     result = bzla_node_create_bv_ult(bzla, e0, e1);
@@ -1052,7 +1052,7 @@ bzla_exp_bv_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_SLT_ELIM))
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_SLT))
   {
     BzlaNode *determined_by_sign, *eq_sign, *ult, *eq_sign_and_ult;
     BzlaNode *s0, *s1, *r0, *r1, *l, *r;
@@ -1089,7 +1089,7 @@ bzla_exp_bv_slt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   }
   else
   {
-    if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
       result = bzla_rewrite_binary_exp(bzla, BZLA_BV_SLT_NODE, e0, e1);
     else
       result = bzla_node_create_bv_slt(bzla, e0, e1);
@@ -1207,7 +1207,7 @@ bzla_exp_bv_sll(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_shift_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_BV_SLL_NODE, e0, e1);
   else
     result = bzla_node_create_bv_sll(bzla, e0, e1);
@@ -1228,7 +1228,7 @@ bzla_exp_bv_srl(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_shift_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_BV_SRL_NODE, e0, e1);
   else
     result = bzla_node_create_bv_srl(bzla, e0, e1);
@@ -1473,7 +1473,7 @@ bzla_exp_bv_udiv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_BV_UDIV_NODE, e0, e1);
   else
     result = bzla_node_create_bv_udiv(bzla, e0, e1);
@@ -1562,7 +1562,7 @@ bzla_exp_bv_urem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_regular_binary_bv_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_BV_UREM_NODE, e0, e1);
   else
     result = bzla_node_create_bv_urem(bzla, e0, e1);
@@ -1698,7 +1698,7 @@ bzla_exp_bv_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   e1 = bzla_simplify_exp(bzla, e1);
   assert(bzla_dbg_precond_concat_exp(bzla, e0, e1));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_BV_CONCAT_NODE, e0, e1);
   else
     result = bzla_node_create_bv_concat(bzla, e0, e1);
@@ -2154,7 +2154,7 @@ bzla_exp_fp_abs(Bzla *bzla, BzlaNode *node)
 #endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_unary_exp(bzla, BZLA_FP_ABS_NODE, node);
   else
     result = bzla_node_create_fp_abs(bzla, node);
@@ -2169,7 +2169,7 @@ bzla_exp_fp_neg(Bzla *bzla, BzlaNode *node)
 #endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_unary_exp(bzla, BZLA_FP_NEG_NODE, node);
   else
     result = bzla_node_create_fp_neg(bzla, node);
@@ -2184,7 +2184,7 @@ bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *node)
 #endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_NORM_NODE, node);
   else
     result = bzla_node_create_fp_is_normal(bzla, node);
@@ -2199,7 +2199,7 @@ bzla_exp_fp_is_subnormal(Bzla *bzla, BzlaNode *node)
 #endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_SUBNORM_NODE, node);
   else
     result = bzla_node_create_fp_is_subnormal(bzla, node);
@@ -2214,7 +2214,7 @@ bzla_exp_fp_is_zero(Bzla *bzla, BzlaNode *node)
 #endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_ZERO_NODE, node);
   else
     result = bzla_node_create_fp_is_zero(bzla, node);
@@ -2229,7 +2229,7 @@ bzla_exp_fp_is_inf(Bzla *bzla, BzlaNode *node)
 #endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_INF_NODE, node);
   else
     result = bzla_node_create_fp_is_inf(bzla, node);
@@ -2244,7 +2244,7 @@ bzla_exp_fp_is_nan(Bzla *bzla, BzlaNode *node)
 #endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_NAN_NODE, node);
   else
     result = bzla_node_create_fp_is_nan(bzla, node);
@@ -2259,7 +2259,7 @@ bzla_exp_fp_is_neg(Bzla *bzla, BzlaNode *node)
 #endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_NEG_NODE, node);
   else
     result = bzla_node_create_fp_is_neg(bzla, node);
@@ -2274,7 +2274,7 @@ bzla_exp_fp_is_pos(Bzla *bzla, BzlaNode *node)
 #endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_unary_exp(bzla, BZLA_FP_IS_POS_NODE, node);
   else
     result = bzla_node_create_fp_is_pos(bzla, node);
@@ -2290,7 +2290,7 @@ bzla_exp_fp_min(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_FP_MIN_NODE, e0, e1);
   else
     result = bzla_node_create_fp_min(bzla, e0, e1);
@@ -2306,7 +2306,7 @@ bzla_exp_fp_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_FP_MAX_NODE, e0, e1);
   else
     result = bzla_node_create_fp_max(bzla, e0, e1);
@@ -2322,7 +2322,7 @@ bzla_exp_fp_rem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_FP_REM_NODE, e0, e1);
   else
     result = bzla_node_create_fp_rem(bzla, e0, e1);
@@ -2382,7 +2382,7 @@ bzla_exp_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_FP_LTE_NODE, e0, e1);
   else
     result = bzla_node_create_fp_lte(bzla, e0, e1);
@@ -2398,7 +2398,7 @@ bzla_exp_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_FP_LT_NODE, e0, e1);
   else
     result = bzla_node_create_fp_lt(bzla, e0, e1);
@@ -2449,7 +2449,7 @@ bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_FP_SQRT_NODE, e0, e1);
   else
     result = bzla_node_create_fp_sqrt(bzla, e0, e1);
@@ -2465,7 +2465,7 @@ bzla_exp_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_FP_RTI_NODE, e0, e1);
   else
     result = bzla_node_create_fp_rti(bzla, e0, e1);
@@ -2482,7 +2482,7 @@ bzla_exp_fp_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   e2 = bzla_simplify_exp(bzla, e2);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_ternary_exp(bzla, BZLA_FP_ADD_NODE, e0, e1, e2);
   else
     result = bzla_node_create_fp_add(bzla, e0, e1, e2);
@@ -2519,7 +2519,7 @@ bzla_exp_fp_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   e2 = bzla_simplify_exp(bzla, e2);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_ternary_exp(bzla, BZLA_FP_MUL_NODE, e0, e1, e2);
   else
     result = bzla_node_create_fp_mul(bzla, e0, e1, e2);
@@ -2536,7 +2536,7 @@ bzla_exp_fp_div(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   e2 = bzla_simplify_exp(bzla, e2);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_ternary_exp(bzla, BZLA_FP_DIV_NODE, e0, e1, e2);
   else
     result = bzla_node_create_fp_div(bzla, e0, e1, e2);
@@ -2555,7 +2555,7 @@ bzla_exp_fp_fma(
   e1 = bzla_simplify_exp(bzla, e1);
   e2 = bzla_simplify_exp(bzla, e2);
   e3 = bzla_simplify_exp(bzla, e3);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_fp_fma_exp(bzla, e0, e1, e2, e3);
   else
     result = bzla_node_create_fp_fma(bzla, e0, e1, e2, e3);
@@ -2594,7 +2594,7 @@ bzla_exp_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
          == bzla_sort_fp_get_bv_width(bzla, sort));
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
   {
     result =
         bzla_rewrite_unary_to_fp_exp(bzla, BZLA_FP_TO_FP_BV_NODE, node, sort);
@@ -2618,7 +2618,7 @@ bzla_exp_fp_to_fp_from_fp(Bzla *bzla,
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
   {
     result = bzla_rewrite_binary_to_fp_exp(
         bzla, BZLA_FP_TO_FP_FP_NODE, e0, e1, sort);
@@ -2661,7 +2661,7 @@ bzla_exp_fp_to_fp_from_sbv(Bzla *bzla,
   }
   else
   {
-    if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+    if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     {
       result = bzla_rewrite_binary_to_fp_exp(
           bzla, BZLA_FP_TO_FP_SBV_NODE, e0, e1, sort);
@@ -2686,7 +2686,7 @@ bzla_exp_fp_to_fp_from_ubv(Bzla *bzla,
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
   {
     result = bzla_rewrite_binary_to_fp_exp(
         bzla, BZLA_FP_TO_FP_UBV_NODE, e0, e1, sort);
@@ -2789,7 +2789,7 @@ bzla_exp_apply(Bzla *bzla, BzlaNode *fun, BzlaNode *args)
   assert(bzla_node_is_fun(fun));
   assert(bzla_node_is_args(args));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     return bzla_rewrite_binary_exp(bzla, BZLA_APPLY_NODE, fun, args);
 
   return bzla_node_create_apply(bzla, fun, args);
@@ -2841,7 +2841,7 @@ bzla_exp_lambda(Bzla *bzla, BzlaNode *e_param, BzlaNode *e_exp)
   e_exp   = bzla_simplify_exp(bzla, e_exp);
 
   BzlaNode *result;
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     result = bzla_rewrite_binary_exp(bzla, BZLA_LAMBDA_NODE, e_param, e_exp);
   else
     result = bzla_node_create_lambda(bzla, e_param, e_exp);
@@ -2901,7 +2901,7 @@ quantifier_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *param, BzlaNode *body)
   assert(bzla_node_is_param(param));
   assert(body);
   assert(bzla_sort_is_bool(bzla, bzla_node_real_addr(body)->sort_id));
-  if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
     return bzla_rewrite_binary_exp(bzla, kind, param, body);
   return bzla_node_create_quantifier(bzla, kind, param, body);
 }

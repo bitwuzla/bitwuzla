@@ -476,14 +476,15 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
       || !bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_SMT_COMP_MODE))
     return;
 
-  bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
+  bitwuzla_set_option(
+      bitwuzla, BITWUZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
 
   /* incremental track */
   if (parser->print_success || parser->scope_level > 0)
   {
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_INCREMENTAL, 1);
-    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_NONDESTR_SUBST, 1);
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PP_NONDESTR_SUBST, 1);
     track = "incremental";
   }
   /* unsat core track */
@@ -495,7 +496,7 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
   else
   {
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
-    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_SIMP_NORMALIZE_ADDERS, 1);
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PP_NORMALIZE_ADD, 1);
 
     switch (parser->parsed_logic_tag)
     {

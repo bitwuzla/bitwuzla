@@ -1766,8 +1766,8 @@ bzla_clone_recursively_rebuild_exp(Bzla *bzla,
 
   /* in some cases we may want to rebuild the expressions with a certain
    * rewrite level */
-  rwl = bzla_opt_get(clone, BZLA_OPT_REWRITE_LEVEL);
-  if (rwl > 0) bzla_opt_set(clone, BZLA_OPT_REWRITE_LEVEL, rewrite_level);
+  rwl = bzla_opt_get(clone, BZLA_OPT_RW_LEVEL);
+  if (rwl > 0) bzla_opt_set(clone, BZLA_OPT_RW_LEVEL, rewrite_level);
 
   BZLA_INIT_STACK(mm, work_stack);
 
@@ -1922,6 +1922,6 @@ bzla_clone_recursively_rebuild_exp(Bzla *bzla,
   bzla_hashint_table_delete(mark);
 
   /* reset rewrite_level to original value */
-  bzla_opt_set(clone, BZLA_OPT_REWRITE_LEVEL, rwl);
+  bzla_opt_set(clone, BZLA_OPT_RW_LEVEL, rwl);
   return bzla_node_copy(clone, bzla_nodemap_mapped(exp_map, exp));
 }

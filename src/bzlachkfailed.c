@@ -29,7 +29,7 @@ rebuild_formula(Bzla *bzla, uint32_t rewrite_level)
   BZLALOG(1, "rebuild formula with rewrite level %u", rewrite_level);
 
   /* set new rewrite level */
-  bzla_opt_set(bzla, BZLA_OPT_REWRITE_LEVEL, rewrite_level);
+  bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, rewrite_level);
 
   t = bzla_hashptr_table_new(bzla->mm,
                              (BzlaHashPtr) bzla_node_hash_by_id,
@@ -71,9 +71,9 @@ bzla_check_failed_assumptions(Bzla *bzla)
   clone = bzla_clone_exp_layer(bzla, 0, true);
   bzla_set_msg_prefix(clone, "chkf");
   bzla_opt_set(clone, BZLA_OPT_FUN_DUAL_PROP, 0);
-  bzla_opt_set(clone, BZLA_OPT_CHK_UNCONSTRAINED, 0);
-  bzla_opt_set(clone, BZLA_OPT_CHK_MODEL, 0);
-  bzla_opt_set(clone, BZLA_OPT_CHK_FAILED_ASSUMPTIONS, 0);
+  bzla_opt_set(clone, BZLA_OPT_CHECK_UNCONSTRAINED, 0);
+  bzla_opt_set(clone, BZLA_OPT_CHECK_MODEL, 0);
+  bzla_opt_set(clone, BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS, 0);
   bzla_opt_set(clone, BZLA_OPT_PRINT_DIMACS, 0);
   bzla_opt_set(clone, BZLA_OPT_AUTO_CLEANUP, 1);
   bzla_set_term(clone, 0, 0);
