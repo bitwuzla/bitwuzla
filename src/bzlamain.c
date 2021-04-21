@@ -60,6 +60,7 @@ BZLA_DECLARE_STACK(BzlaOption, BzlaOption);
 enum BitwuzlaMainOption
 {
   BZLAMAIN_OPT_HELP,
+  BZLAMAIN_OPT_HELP_EXPERT,
   BZLAMAIN_OPT_COPYRIGHT,
   BZLAMAIN_OPT_VERSION,
   BZLAMAIN_OPT_TIME,
@@ -176,6 +177,18 @@ bzlamain_init_opts(BitwuzlaMainApp *app)
                     false,
                     BZLA_ARG_EXPECT_NONE,
                     "print this message and exit");
+  bzlamain_init_opt(app,
+                    BZLAMAIN_OPT_HELP_EXPERT,
+                    true,
+                    true,
+                    "help-expert",
+                    "he",
+                    0,
+                    0,
+                    1,
+                    false,
+                    BZLA_ARG_EXPECT_NONE,
+                    "print help message (including expert options) and exit");
   bzlamain_init_opt(app,
                     BZLAMAIN_OPT_COPYRIGHT,
                     true,
@@ -757,7 +770,7 @@ print_opt_help(BitwuzlaMainApp *app,
   "\n\n"
 
 static void
-print_help(BitwuzlaMainApp *app)
+print_help(BitwuzlaMainApp *app, bool include_expert_opts)
 {
   assert(app);
 
@@ -834,7 +847,7 @@ print_help(BitwuzlaMainApp *app)
   for (o = bzla_opt_first(bzla); bzla_opt_is_valid(bzla, o);
        o = bzla_opt_next(bzla, o))
   {
-    if (bzla->options[o].internal) continue;
+    if (!include_expert_opts && bzla->options[o].expert) continue;
 
     if (o == BZLA_OPT_AUTO_CLEANUP || o == BZLA_OPT_BETA_REDUCE
         || o == BZLA_OPT_INCREMENTAL || o == BZLA_OPT_INPUT_FORMAT
@@ -1131,7 +1144,9 @@ bitwuzla_main(int32_t argc, char **argv)
       /* set opt */
       switch (bmopt)
       {
-        case BZLAMAIN_OPT_HELP: print_help(g_app); goto DONE;
+        case BZLAMAIN_OPT_HELP: print_help(g_app, false); goto DONE;
+
+        case BZLAMAIN_OPT_HELP_EXPERT: print_help(g_app, true); goto DONE;
 
         case BZLAMAIN_OPT_COPYRIGHT:
           fprintf(g_app->outfile, "%s", bitwuzla_copyright(bitwuzla));

@@ -37,7 +37,7 @@ const char *const g_bzla_se_name[BZLA_SAT_ENGINE_MAX + 1] = {
 static void
 init_opt(Bzla *bzla,
          BzlaOption opt,
-         bool internal,
+         bool expert,
          bool isflag,
          char *lng,
          char *shrt,
@@ -58,7 +58,7 @@ init_opt(Bzla *bzla,
 
   assert(!bzla_hashptr_table_get(bzla->str2opt, lng));
 
-  bzla->options[opt].internal = internal;
+  bzla->options[opt].expert   = expert;
   bzla->options[opt].isflag   = isflag;
   bzla->options[opt].shrt     = shrt;
   bzla->options[opt].lng      = lng;
@@ -120,6 +120,7 @@ bzla_opt_init_opts(Bzla *bzla)
   bzla->str2opt = bzla_hashptr_table_new(
       mm, (BzlaHashPtr) bzla_hash_str, (BzlaCmpPtr) strcmpoptval);
 
+  /* general options (all others are expert options) ----------------------- */
   init_opt(bzla,
            BZLA_OPT_MODEL_GEN,
            false,
@@ -140,6 +141,16 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "incremental usage");
+  init_opt(bzla,
+           BZLA_OPT_UNSAT_CORES,
+           true,
+           true,
+           "unsat-cores",
+           0,
+           0,
+           0,
+           1,
+           "enable unsat cores");
   init_opt(bzla,
            BZLA_OPT_INPUT_FORMAT,
            false,
@@ -326,7 +337,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            0,
            1,
-           "auto cleanup on exit");
+           "auto clean up all memory allocated via API queries on exit");
   init_opt(bzla,
            BZLA_OPT_PRETTY_PRINT,
            false,
@@ -377,11 +388,22 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            UINT32_MAX,
            "increase loglevel");
+  init_opt(
+      bzla,
+      BZLA_OPT_PRINT_DIMACS,
+      true,
+      true,
+      "dump-dimacs",
+      "dd",
+      0,
+      0,
+      1,
+      "Print CNF formula sent to SAT solver in DIMACS format and terminate.");
 
-  /* simplifier --------------------------------------------------------- */
+  /* rewriting / preprocessing (expert options) ----------------------------- */
   init_opt(bzla,
            BZLA_OPT_REWRITE_LEVEL,
-           false,
+           true,
            false,
            "rewrite-level",
            "rwl",
@@ -391,7 +413,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "rewrite level");
   init_opt(bzla,
            BZLA_OPT_SKELETON_PREPROC,
-           false,
+           true,
            true,
            "skeleton-preproc",
            "sp",
@@ -401,7 +423,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "propositional skeleton preprocessing");
   init_opt(bzla,
            BZLA_OPT_ACKERMANN,
-           false,
+           true,
            true,
            "ackermannize",
            "ack",
@@ -411,7 +433,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "add ackermann constraints");
   init_opt(bzla,
            BZLA_OPT_BETA_REDUCE,
-           false,
+           true,
            false,
            "beta-reduce",
            "br",
@@ -433,7 +455,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_ELIMINATE_ITES,
-           false,
+           true,
            true,
            "eliminate-ites",
            "ei",
@@ -443,7 +465,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "eliminate ITEs");
   init_opt(bzla,
            BZLA_OPT_ELIMINATE_SLICES,
-           false,
+           true,
            true,
            "eliminate-slices",
            "es",
@@ -453,7 +475,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "eliminate slices on variables");
   init_opt(bzla,
            BZLA_OPT_VAR_SUBST,
-           false,
+           true,
            true,
            "var-subst",
            "vs",
@@ -463,7 +485,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "variable substitution");
   init_opt(bzla,
            BZLA_OPT_UCOPT,
-           false,
+           true,
            true,
            "ucopt",
            "uc",
@@ -473,7 +495,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "unconstrained optimization");
   init_opt(bzla,
            BZLA_OPT_MERGE_LAMBDAS,
-           false,
+           true,
            true,
            "merge-lambdas",
            "ml",
@@ -483,7 +505,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "merge lambda chains");
   init_opt(bzla,
            BZLA_OPT_EXTRACT_LAMBDAS,
-           false,
+           true,
            true,
            "extract-lambdas",
            "xl",
@@ -493,29 +515,109 @@ bzla_opt_init_opts(Bzla *bzla)
            "extract lambda terms");
   init_opt(bzla,
            BZLA_OPT_NORMALIZE_ADD,
-           false,
+           true,
            true,
            "normalize-add",
            "nadd",
            1,
            0,
            1,
-           "normalize addition operators");
+           "normalize bit-vector addition operators (local)");
   init_opt(bzla,
            BZLA_OPT_NORMALIZE,
-           false,
+           true,
            true,
            "normalize",
            "norm",
            1,
            0,
            1,
-           "normalize add/mul/and operators");
+           "normalize bit-vector operators");
+  init_opt(bzla,
+           BZLA_OPT_SIMP_NORMALIZE_ADDERS,
+           true,
+           true,
+           "simp-norm-adds",
+           0,
+           0,
+           0,
+           1,
+           "normalize bit-vector addition operators (global)");
+  init_opt(bzla,
+           BZLA_OPT_SIMPLIFY_CONSTRAINTS,
+           true,
+           true,
+           "simplify-constraints",
+           0,
+           1,
+           0,
+           1,
+           "simplify constraints on construction");
+  init_opt(bzla,
+           BZLA_OPT_SORT_EXP,
+           true,
+           true,
+           "sort-exp",
+           0,
+           1,
+           0,
+           1,
+           "sort commutative expression nodes");
+  init_opt(bzla,
+           BZLA_OPT_SORT_AIG,
+           true,
+           true,
+           "sort-aig",
+           0,
+           1,
+           0,
+           1,
+           "sort AIG nodes");
+  init_opt(bzla,
+           BZLA_OPT_SORT_AIGVEC,
+           true,
+           true,
+           "sort-aigvec",
+           0,
+           1,
+           0,
+           1,
+           "sort AIG vectors");
+  init_opt(bzla,
+           BZLA_OPT_NONDESTR_SUBST,
+           true,
+           true,
+           "nondestr-subst",
+           0,
+           0,
+           0,
+           1,
+           "enable non-destructive term substitutions");
+  init_opt(bzla,
+           BZLA_OPT_SLT_ELIM,
+           true,
+           true,
+           "slt-elim",
+           0,
+           0,
+           0,
+           1,
+           "eliminate bit-vector slt nodes");
+  init_opt(bzla,
+           BZLA_OPT_RW_ZERO_LOWER_SLICE,
+           true,
+           true,
+           "rw-zero-lower-slice",
+           0,
+           0,
+           0,
+           1,
+           "propagate extracts over arithmetic bit-vector operators");
 
-  /* FUN engine ---------------------------------------------------------- */
+  /* FUN engine (expert options) -------------------------------------------- */
   init_opt(bzla,
            BZLA_OPT_FUN_PREPROP,
-           false,
+           true,
            true,
            "fun-preprop",
            0,
@@ -526,7 +628,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "(QF_BV only)");
   init_opt(bzla,
            BZLA_OPT_FUN_PRESLS,
-           false,
+           true,
            true,
            "fun-presls",
            0,
@@ -537,7 +639,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "(QF_BV only)");
   init_opt(bzla,
            BZLA_OPT_FUN_DUAL_PROP,
-           false,
+           true,
            true,
            "fun-dual-prop",
            "fun-dp",
@@ -548,7 +650,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_FUN_DUAL_PROP_QSORT,
-           false,
+           true,
            false,
            "fun-dual-prop-qsort",
            0,
@@ -571,7 +673,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_FUN_JUST,
-           false,
+           true,
            true,
            "fun-just",
            "fun-ju",
@@ -582,7 +684,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_FUN_JUST_HEURISTIC,
-           false,
+           true,
            false,
            "fun-just-heuristic",
            0,
@@ -613,7 +715,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_FUN_LAZY_SYNTHESIZE,
-           false,
+           true,
            true,
            "fun-lazy-synthesize",
            "fun-ls",
@@ -624,7 +726,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_FUN_EAGER_LEMMAS,
-           false,
+           true,
            false,
            "fun-eager-lemmas",
            "fun-el",
@@ -654,7 +756,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_FUN_STORE_LAMBDAS,
-           false,
+           true,
            true,
            "fun-store-lambdas",
            "fun-sl",
@@ -663,22 +765,10 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "represent array store as lambda");
 
-  init_opt(
-      bzla,
-      BZLA_OPT_PRINT_DIMACS,
-      false,
-      true,
-      "dump-dimacs",
-      "dd",
-      0,
-      0,
-      1,
-      "Print CNF formula sent to SAT solver in DIMACS format and terminate.");
-
-  /* SLS engine ---------------------------------------------------------- */
+  /* SLS engine (expert options) -------------------------------------------- */
   init_opt(bzla,
            BZLA_OPT_SLS_NFLIPS,
-           false,
+           true,
            false,
            "sls-nflips",
            0,
@@ -689,7 +779,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_SLS_STRATEGY,
-           false,
+           true,
            false,
            "sls-strategy",
            0,
@@ -732,7 +822,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_SLS_JUST,
-           false,
+           true,
            true,
            "sls-just",
            0,
@@ -742,7 +832,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "justification optimization");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_GW,
-           false,
+           true,
            true,
            "sls-move-gw",
            0,
@@ -753,7 +843,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "but all candidate variables at once");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_RANGE,
-           false,
+           true,
            true,
            "sls-move-range",
            0,
@@ -763,7 +853,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "try range-wise flips when selecting moves");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_SEGMENT,
-           false,
+           true,
            true,
            "sls-move-segment",
            0,
@@ -773,7 +863,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "try segment-wise flips when selecting moves");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_RAND_WALK,
-           false,
+           true,
            true,
            "sls-move-rand-walk",
            0,
@@ -783,7 +873,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "do a random walk (with given probability)");
   init_opt(bzla,
            BZLA_OPT_SLS_PROB_MOVE_RAND_WALK,
-           false,
+           true,
            false,
            "sls-prob-move-rand-walk",
            0,
@@ -794,7 +884,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "(interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_RAND_ALL,
-           false,
+           true,
            true,
            "sls-move-rand-all",
            0,
@@ -805,7 +895,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "if no neighbor with better score is found");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_RAND_RANGE,
-           false,
+           true,
            true,
            "sls-move-rand-range",
            0,
@@ -816,7 +906,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "variable if neighbor with better score is found");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_PROP,
-           false,
+           true,
            true,
            "sls-move-prop",
            0,
@@ -827,7 +917,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "to regular moves)");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_PROP_N_PROP,
-           false,
+           true,
            false,
            "sls-move-prop-n-prop",
            0,
@@ -838,7 +928,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "to sls moves");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_PROP_N_SLS,
-           false,
+           true,
            false,
            "sls-move-prop-n-sls",
            0,
@@ -849,7 +939,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "to sls moves");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_PROP_FORCE_RW,
-           false,
+           true,
            true,
            "sls-move-prop-force-rw",
            0,
@@ -859,7 +949,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "force random walk if propagation move fails");
   init_opt(bzla,
            BZLA_OPT_SLS_MOVE_INC_MOVE_TEST,
-           false,
+           true,
            true,
            "sls-move-inc-move-test",
            0,
@@ -870,7 +960,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "next move test");
   init_opt(bzla,
            BZLA_OPT_SLS_USE_RESTARTS,
-           false,
+           true,
            true,
            "sls-use-restarts",
            0,
@@ -880,7 +970,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "use restarts");
   init_opt(bzla,
            BZLA_OPT_SLS_USE_BANDIT,
-           false,
+           true,
            true,
            "sls-use-bandit",
            0,
@@ -889,10 +979,10 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "use bandit scheme for constraint selection");
 
-  /* PROP engine ---------------------------------------------------------- */
+  /* PROP engine (expert options) ------------------------------------------- */
   init_opt(bzla,
            BZLA_OPT_PROP_NPROPS,
-           false,
+           true,
            false,
            "prop-nprops",
            0,
@@ -902,7 +992,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "number of propagation steps used as a limit for prop engine");
   init_opt(bzla,
            BZLA_OPT_PROP_NUPDATES,
-           false,
+           true,
            false,
            "prop-nupdates",
            0,
@@ -912,7 +1002,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "number of model value updates used as a limit for prop engine");
   init_opt(bzla,
            BZLA_OPT_PROP_ENTAILED,
-           false,
+           true,
            false,
            "prop-entailed",
            0,
@@ -922,7 +1012,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "maintain and prioritize entailed propagations");
   init_opt(bzla,
            BZLA_OPT_PROP_CONST_BITS,
-           false,
+           true,
            true,
            "prop-const-bits",
            0,
@@ -932,7 +1022,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "use constant bits propagation");
   init_opt(bzla,
            BZLA_OPT_PROP_CONST_DOMAINS,
-           false,
+           true,
            true,
            "prop-const-domains",
            0,
@@ -943,7 +1033,7 @@ bzla_opt_init_opts(Bzla *bzla)
 #if 0
   init_opt (bzla,
             BZLA_OPT_PROP_DOMAINS,
-            false,
+            true,
             true,
             "prop-domains",
             0,
@@ -954,7 +1044,7 @@ bzla_opt_init_opts(Bzla *bzla)
 #endif
   init_opt(bzla,
            BZLA_OPT_PROP_USE_RESTARTS,
-           false,
+           true,
            true,
            "prop-use-restarts",
            0,
@@ -964,7 +1054,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "use restarts");
   init_opt(bzla,
            BZLA_OPT_PROP_USE_BANDIT,
-           false,
+           true,
            true,
            "prop-use-bandit",
            0,
@@ -975,7 +1065,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_PROP_PATH_SEL,
-           false,
+           true,
            false,
            "prop-path-sel",
            0,
@@ -999,7 +1089,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_PROP_PROB_USE_INV_VALUE,
-           false,
+           true,
            false,
            "prop-prob-use-inv-value",
            0,
@@ -1010,7 +1100,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "(interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE,
-           false,
+           true,
            false,
            "prop-prob-fallback-rand-value",
            0,
@@ -1021,7 +1111,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "(interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_PROP_PROB_RANDOM_INPUT,
-           false,
+           true,
            false,
            "prop-prob-rand-input",
            0,
@@ -1032,7 +1122,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "input (interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_PROP_PROB_FLIP_COND,
-           false,
+           true,
            false,
            "prop-prob-flip-cond",
            0,
@@ -1044,7 +1134,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "for prop moves (interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_PROP_PROB_FLIP_COND_CONST,
-           false,
+           true,
            false,
            "prop-prob-flip-cond-const",
            0,
@@ -1057,7 +1147,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "is constant (interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL,
-           false,
+           true,
            false,
            "prop-flip-cond-const-npathsel",
            0,
@@ -1070,7 +1160,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "condition if either the 'then' or 'else' branch is constant");
   init_opt(bzla,
            BZLA_OPT_PROP_FLIP_COND_CONST_DELTA,
-           false,
+           true,
            false,
            "prop-flip-cond-const-delta",
            0,
@@ -1082,7 +1172,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "is decreased or increased");
   init_opt(bzla,
            BZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
-           false,
+           true,
            false,
            "prop-prob-slice-keep-dc",
            0,
@@ -1096,7 +1186,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "(interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_PROP_PROB_SLICE_FLIP,
-           false,
+           true,
            false,
            "prop-prob-slice-flip",
            0,
@@ -1110,7 +1200,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "(interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_PROP_PROB_EQ_FLIP,
-           false,
+           true,
            false,
            "prop-prob-eq-flip",
            0,
@@ -1122,23 +1212,24 @@ bzla_opt_init_opts(Bzla *bzla)
            "randomized node) in case of inequalities "
            "(for both inverse and consistent value selection) "
            "(interpreted as <n>/1000)");
-  init_opt(bzla,
-           BZLA_OPT_PROP_PROB_AND_FLIP,
-           false,
-           false,
-           "prop-prob-and-flip",
-           0,
-           0,
-           0,
-           BZLA_PROB_100,
-           "probability for using the current assignment of the don't care "
-           "bits of the selected node with max. one of its bits flipped "
-           "(rather than fully randomizing all of them) in case of an and operation "
-           "(for both inverse and consistent value selection) "
-           "(interpreted as <n>/1000)");
+  init_opt(
+      bzla,
+      BZLA_OPT_PROP_PROB_AND_FLIP,
+      true,
+      false,
+      "prop-prob-and-flip",
+      0,
+      0,
+      0,
+      BZLA_PROB_100,
+      "probability for using the current assignment of the don't care "
+      "bits of the selected node with max. one of its bits flipped "
+      "(rather than fully randomizing all of them) in case of an and operation "
+      "(for both inverse and consistent value selection) "
+      "(interpreted as <n>/1000)");
   init_opt(bzla,
            BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT,
-           false,
+           true,
            true,
            "prop-no-move-on-conflict",
            0,
@@ -1150,7 +1241,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_PROP_SKIP_NO_PROGRESS,
-           false,
+           true,
            true,
            "prop-skip-no-progress",
            0,
@@ -1161,7 +1252,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_PROP_USE_INV_LT_CONCAT,
-           false,
+           true,
            true,
            "prop-use-inv-lt-concat",
            0,
@@ -1172,7 +1263,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_PROP_INFER_INEQ_BOUNDS,
-           false,
+           true,
            true,
            "prop-infer-ineq-bounds",
            0,
@@ -1183,7 +1274,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_PROP_SEXT,
-           false,
+           true,
            true,
            "prop-sext",
            0,
@@ -1194,7 +1285,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_PROP_XOR,
-           false,
+           true,
            true,
            "prop-xor",
            0,
@@ -1205,7 +1296,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_PROP_SRA,
-           false,
+           true,
            true,
            "prop-sra",
            0,
@@ -1214,10 +1305,10 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "use sra inverse value computation");
 
-  /* AIGPROP engine ------------------------------------------------------- */
+  /* AIGPROP engine (expert options) ---------------------------------------- */
   init_opt(bzla,
            BZLA_OPT_AIGPROP_USE_RESTARTS,
-           false,
+           true,
            true,
            "aigprop-use-restarts",
            0,
@@ -1227,7 +1318,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "use restarts");
   init_opt(bzla,
            BZLA_OPT_AIGPROP_USE_BANDIT,
-           false,
+           true,
            true,
            "aigprop-use-bandit",
            0,
@@ -1237,7 +1328,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "use bandit scheme for constraint selection");
   init_opt(bzla,
            BZLA_OPT_AIGPROP_NPROPS,
-           false,
+           true,
            false,
            "aigprop-nprops",
            0,
@@ -1246,10 +1337,10 @@ bzla_opt_init_opts(Bzla *bzla)
            UINT32_MAX,
            "number of propagation steps used as a limit for aigprop engine");
 
-  /* QUANT engine ----------------------------------------------------------- */
+  /* QUANT engine (expert options) ------------------------------------------ */
   init_opt(bzla,
            BZLA_OPT_QUANT_DER,
-           false,
+           true,
            true,
            "quant-der",
            0,
@@ -1259,7 +1350,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "apply destructive equality resolution");
   init_opt(bzla,
            BZLA_OPT_QUANT_CER,
-           false,
+           true,
            true,
            "quant-cer",
            0,
@@ -1269,7 +1360,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "apply constructive equality resolution");
   init_opt(bzla,
            BZLA_OPT_QUANT_MINISCOPE,
-           false,
+           true,
            true,
            "quant-ms",
            0,
@@ -1280,7 +1371,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_QUANT_SYNTH,
-           false,
+           true,
            true,
            "quant-synth",
            0,
@@ -1324,7 +1415,7 @@ bzla_opt_init_opts(Bzla *bzla)
 
   init_opt(bzla,
            BZLA_OPT_QUANT_DUAL_SOLVER,
-           false,
+           true,
            true,
            "quant-dual",
            0,
@@ -1334,7 +1425,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "dual solver");
   init_opt(bzla,
            BZLA_OPT_QUANT_SYNTH_LIMIT,
-           false,
+           true,
            false,
            "quant-synthlimit",
            0,
@@ -1344,17 +1435,18 @@ bzla_opt_init_opts(Bzla *bzla)
            "number of checks for synthesizing terms");
   init_opt(bzla,
            BZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
-           false,
+           true,
            true,
            "quant-synthcomplete",
            0,
            1,
            0,
            1,
-           "make base case of concrete model constant instead of undef.");
+           "make base case of concrete model for ITE constant instead of "
+           "undefined.");
   init_opt(bzla,
            BZLA_OPT_QUANT_SYNTH_QI,
-           false,
+           true,
            true,
            "quant-synthqi",
            0,
@@ -1362,38 +1454,18 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "synthesize quantifier instantiations from counterexamples");
+  init_opt(bzla,
+           BZLA_OPT_QUANT_FIXSYNTH,
+           true,
+           true,
+           "quant-fixsynth",
+           0,
+           1,
+           0,
+           1,
+           "update current model w.r.t. synthesized skolem function");
 
-  /* internal options ---------------------------------------------------- */
-  init_opt(bzla,
-           BZLA_OPT_SORT_EXP,
-           true,
-           true,
-           "sort-exp",
-           0,
-           1,
-           0,
-           1,
-           "sort commutative expression nodes");
-  init_opt(bzla,
-           BZLA_OPT_SORT_AIG,
-           true,
-           true,
-           "sort-aig",
-           0,
-           1,
-           0,
-           1,
-           "sort AIG nodes");
-  init_opt(bzla,
-           BZLA_OPT_SORT_AIGVEC,
-           true,
-           true,
-           "sort-aigvec",
-           0,
-           1,
-           0,
-           1,
-           "sort AIG vectors");
+  /* other expert options --------------------------------------------------- */
   init_opt(bzla,
            BZLA_OPT_AUTO_CLEANUP_INTERNAL,
            true,
@@ -1403,17 +1475,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            0,
            1,
-           0);
-  init_opt(bzla,
-           BZLA_OPT_SIMPLIFY_CONSTRAINTS,
-           true,
-           true,
-           "simplify-constraints",
-           0,
-           1,
-           0,
-           1,
-           0);
+           "auto clean up all allocated memory on exit");
   init_opt(bzla,
            BZLA_OPT_CHK_FAILED_ASSUMPTIONS,
            true,
@@ -1423,8 +1485,17 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            0,
            1,
-           0);
-  init_opt(bzla, BZLA_OPT_CHK_MODEL, true, true, "chk-model", 0, 1, 0, 1, 0);
+           "check if assumptions determined as unsat are indeed unsat");
+  init_opt(bzla,
+           BZLA_OPT_CHK_MODEL,
+           true,
+           true,
+           "chk-model",
+           0,
+           1,
+           0,
+           1,
+           "check model");
   init_opt(bzla,
            BZLA_OPT_CHK_UNCONSTRAINED,
            true,
@@ -1434,7 +1505,7 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            0,
            1,
-           0);
+           "check result when unconstrained optimization is enabled");
   init_opt(bzla,
            BZLA_OPT_PARSE_INTERACTIVE,
            true,
@@ -1475,7 +1546,7 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            0,
            1,
-           "use CaDiCaL's freeze/melt API");
+           "use CaDiCaL's freeze/melt");
   init_opt(bzla,
            BZLA_OPT_SAT_ENGINE_N_THREADS,
            true,
@@ -1487,26 +1558,6 @@ bzla_opt_init_opts(Bzla *bzla)
            UINT32_MAX,
            "number of threads to use in the SAT solver");
   init_opt(bzla,
-           BZLA_OPT_SLT_ELIM,
-           true,
-           true,
-           "slt-elim",
-           0,
-           0,
-           0,
-           1,
-           "enable elimination of slt nodes");
-  init_opt(bzla,
-           BZLA_OPT_SIMP_NORMAMLIZE_ADDERS,
-           true,
-           true,
-           "simp-norm-adds",
-           0,
-           0,
-           0,
-           1,
-           "enable global adder normalization");
-  init_opt(bzla,
            BZLA_OPT_DECLSORT_BV_WIDTH,
            true,
            false,
@@ -1517,46 +1568,6 @@ bzla_opt_init_opts(Bzla *bzla)
            UINT32_MAX,
            "interpret sorts introduced with declare-sort as bit-vectors of "
            "given width");
-  init_opt(bzla,
-           BZLA_OPT_QUANT_FIXSYNTH,
-           true,
-           true,
-           "quant-fixsynth",
-           0,
-           1,
-           0,
-           1,
-           "update current model w.r.t. synthesized skolem function");
-  init_opt(bzla,
-           BZLA_OPT_RW_ZERO_LOWER_SLICE,
-           true,
-           true,
-           "rw-zero-lower-slice",
-           0,
-           0,
-           0,
-           1,
-           "enable zero_lower_slice rewrite");
-  init_opt(bzla,
-           BZLA_OPT_NONDESTR_SUBST,
-           true,
-           true,
-           "nondestr-subst",
-           0,
-           0,
-           0,
-           1,
-           "enable non-destructive term substitutions");
-  init_opt(bzla,
-           BZLA_OPT_UNSAT_CORES,
-           true,
-           true,
-           "unsat-cores",
-           0,
-           0,
-           0,
-           1,
-           "enable unsat cores");
   init_opt(bzla,
            BZLA_OPT_SMT_COMP_MODE,
            true,

@@ -37,6 +37,8 @@ typedef enum BitwuzlaBVBase BitwuzlaBVBase;
 /** The options supported by Bitwuzla. */
 enum BitwuzlaOption
 {
+  /* --------------------------- General Options --------------------------- */
+
   /*! **Incremental solving.**
    *
    * Values:
@@ -62,6 +64,14 @@ enum BitwuzlaOption
    *       ::BITWUZLA_OPT_UCOPT.
    */
   BITWUZLA_OPT_PRODUCE_MODELS,
+
+  /*! **Unsat core generation.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_PRODUCE_UNSAT_CORES,
 
   /*! **Configure input file format.**
    *
@@ -143,6 +153,18 @@ enum BitwuzlaOption
    *  * An unsigned integer value (**default**: 0).
    */
   BITWUZLA_OPT_LOGLEVEL,
+
+  /*! **Print DIMACS.**
+   *
+   * Print the CNF sent to the SAT solver in DIMACS format to stdout.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_PRINT_DIMACS,
+
+  /* -------------- Rewriting/Preprocessing Options (Expert) --------------- */
 
   /*! **Rewrite level.**
    *
@@ -243,13 +265,79 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_NORMALIZE,
 
-  /*! **Normalize bit-vector addition.**
+  /*! **Normalize bit-vector addition (local).**
    *
    * Values:
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
   BITWUZLA_OPT_NORMALIZE_ADD,
+
+  /*! **Sort the children of commutative operations by id.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_SORT_EXP,
+
+  /*! **Sort the children of AIG nodes by id.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_SORT_AIG,
+
+  /*! **Sort the children of adder and multiplier circuits by id.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_SORT_AIGVEC,
+
+  /*! **Simplify constraints on construction.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_SIMPLIFY_CONSTRAINTS,
+
+  /*! **Eliminate bit-vector SLT nodes.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_SLT_ELIM,
+
+  /*! **Propagate bit-vector extracts over arithmetic bit-vector operators.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_RW_ZERO_LOWER_SLICE,
+
+  /*! **Non-destructive term substitutions.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_NONDESTR_SUBST,
+
+  /*! **Normalize bit-vector addition (global).**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_SIMP_NORMALIZE_ADDERS,
+
+  /* --------------------- Fun Engine Options (Expert) --------------------- */
 
   /*! **Function solver engine:
    *    Propagation-based local search sequential portfolio.**
@@ -345,15 +433,7 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_FUN_STORE_LAMBDAS,
 
-  /*! **Print DIMACS.**
-   *
-   * Print the CNF sent to the SAT solver in DIMACS format to stdout.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_PRINT_DIMACS,
+  /* --------------------- SLS Engine Options (Expert) --------------------- */
 
   /*! **Stochastic local search solver engine:
    *    Number of bit flips.**
@@ -415,7 +495,7 @@ enum BitwuzlaOption
    *    Segment-wise bit-flip moves.**
    *
    * Configure range-wise bit-flip moves for SLS engine. When enabled, try
-   * segment-wise bit-flips when selecting moves, where bits within segments 
+   * segment-wise bit-flips when selecting moves, where bits within segments
    * of multiples of 2 are flipped at once.
    *
    * Values:
@@ -565,6 +645,8 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_SLS_USE_BANDIT,
 
+  /* -------------------- Prop Engine Options (Expert) --------------------- */
+
   /*! **Propagation-based local search solver engine:
    *    Number of propagations.**
    *
@@ -590,7 +672,7 @@ enum BitwuzlaOption
   /*! **Propagation-based local search solver engine:
    *    Entailed propagations.**
    *
-   * Maintain a work queue with entailed propagations.  
+   * Maintain a work queue with entailed propagations.
    * If enabled, propagations from this queue are propagated before randomly
    * choosing a yet unsatisfied path from the root.
    *
@@ -633,9 +715,9 @@ enum BitwuzlaOption
   /*! **Propagation-based local search solver engine:
    *    Bandit scheme.**
    *
-   * Configure bandit scheme heuristic for selecting root constraints.  
+   * Configure bandit scheme heuristic for selecting root constraints.
    * If enabled, root constraint selection via bandit scheme is based on a
-   * scoring scheme similar to the one used in the SLS engine.  
+   * scoring scheme similar to the one used in the SLS engine.
    * If disabled, root constraints are selected randomly.
    *
    * Values:
@@ -657,7 +739,7 @@ enum BitwuzlaOption
    *    Probability for inverse values.**
    *
    * Configure the probability with which to choose an inverse value over a
-   * consistent value when aninverse value exists. 
+   * consistent value when aninverse value exists.
    *
    * Values:
    *  * An unsigned integer value <= 1000 (= 100%) (**default**: 990).
@@ -771,7 +853,6 @@ enum BitwuzlaOption
    * Configure the probability with which to select a random input instead of
    * an essential input when selecting the path.
    *
-   *
    * Values:
    *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
    */
@@ -866,6 +947,16 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_PROP_ASHR,
 
+  /*! **Propagation-based local search solver engine:
+   *    Probability for producing inverse rather than consistent values.**
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
+   */
+  BITWUZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE,
+
+  /* ------------------- AigProp Engine Options (Expert) ------------------- */
+
   /*! **AIG-level propagation-based local search solver engine:
    *    Restarts.**
    *
@@ -878,9 +969,9 @@ enum BitwuzlaOption
   /*! **AIG-level propagation-based local search solver engine:
    *    Bandit scheme.**
    *
-   * Configure bandit scheme heuristic for selecting root constraints.  
+   * Configure bandit scheme heuristic for selecting root constraints.
    * If enabled, root constraint selection via bandit scheme is based on a
-   * scoring scheme similar to the one used in the SLS engine.  
+   * scoring scheme similar to the one used in the SLS engine.
    * If disabled, root constraints are selected randomly.
    *
    * Values:
@@ -899,6 +990,8 @@ enum BitwuzlaOption
    *  * An unsigned integer value (**default**: 0).
    */
   BITWUZLA_OPT_AIGPROP_NPROPS,
+
+  /* ----------------- Quantifier Eninge Options (Expert) ------------------ */
 
   /*! **Quantifier solver engine:
    *    Synthesis mode.**
@@ -977,33 +1070,113 @@ enum BitwuzlaOption
    *  * **0**: disable
    */
   BITWUZLA_OPT_QUANT_MINISCOPE,
-#ifndef DOXYGEN_SKIP
-  /* internal options --------------------------------------------------- */
-  BITWUZLA_OPT_SORT_EXP,
-  BITWUZLA_OPT_SORT_AIG,
-  BITWUZLA_OPT_SORT_AIGVEC,
-  BITWUZLA_OPT_SIMPLIFY_CONSTRAINTS,
-  BITWUZLA_OPT_CHECK_UNSAT_ASSUMPTIONS,
-  BITWUZLA_OPT_CHECK_MODEL,
-  BITWUZLA_OPT_CHECK_UNCONSTRAINED,
-  BITWUZLA_OPT_LS_SHARE_SAT,
-  BITWUZLA_OPT_PARSE_INTERACTIVE,
-  BITWUZLA_OPT_SAT_ENGINE_LGL_FORK,
-  BITWUZLA_OPT_SAT_ENGINE_CADICAL_FREEZE,
-  BITWUZLA_OPT_SAT_ENGINE_N_THREADS,
-  BITWUZLA_OPT_SLT_ELIM,
-  BITWUZLA_OPT_SIMP_NORMAMLIZE_ADDERS,
-  BITWUZLA_OPT_DECLSORT_BV_WIDTH,
+  /*! **Quantifier solver engine:
+   *    Base case for ITE model.**
+   *
+   * Configure the base case of a concrete model for ITEs. Constant if enabled,
+   * else undefined.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
   BITWUZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
+  /*! **Quantifier solver engine:
+   *    Update model with respect to synthesized skolem.**
+   *
+   * Configure to update the current model with respect to the synthesized
+   * skolem function if enabled.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
   BITWUZLA_OPT_QUANT_FIXSYNTH,
-  BITWUZLA_OPT_RW_ZERO_LOWER_SLICE,
-  BITWUZLA_OPT_NONDESTR_SUBST,
-  BITWUZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE,
-  BITWUZLA_OPT_PRODUCE_UNSAT_CORES,
+
+  /* ------------------------ Other Expert Options ------------------------- */
+
+  /*! **Check unsat assumptions (debug only).**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_CHECK_UNSAT_ASSUMPTIONS,
+  /*! **Check model (debug only).**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_CHECK_MODEL,
+  /*! **Check result when unconstrained optimization is enabled (debug only).**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_CHECK_UNCONSTRAINED,
+  /*! **Share partial models determined via local search with bit-blasting
+   *    engine.**
+   *
+   * This option is only effective when local search engines are combined with
+   * the bit-blasting engine in a sequential portfolio.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_LS_SHARE_SAT,
+  /*! **Interactive parsing mode.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_PARSE_INTERACTIVE,
+  /*! **Lingeling fork mode.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_SAT_ENGINE_LGL_FORK,
+  /*! **Use CaDiCaL's freeze/melt.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_SAT_ENGINE_CADICAL_FREEZE,
+  /*! **Number of threads to use in the SAT solver.**
+   *
+   * This option is only effective for SAT solvers with support for
+   * multi-threading.
+   *
+   * Values:
+   *  * An unsigned integer value > 0 (**default**: 1).
+   */
+  BITWUZLA_OPT_SAT_ENGINE_N_THREADS,
+  /*! **Interpret sorts introduced with declare-sort as bit-vectors of given
+   *    width.**
+   *
+   * Disabled if zero.
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 0).
+   */
+  BITWUZLA_OPT_DECLSORT_BV_WIDTH,
+  /*! **Enable SMT-COMP mode.**
+   *
+   * Parser only option. Only effective when an SMT2 input file is parsed.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
   BITWUZLA_OPT_SMT_COMP_MODE,
   /* this MUST be the last entry! */
   BITWUZLA_OPT_NUM_OPTS,
-#endif
 };
 #ifndef DOXYGEN_SKIP
 typedef enum BitwuzlaOption BitwuzlaOption;

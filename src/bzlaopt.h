@@ -298,6 +298,7 @@ enum BzlaOption
       addition.
   */
   BZLA_OPT_NORMALIZE_ADD,
+  BZLA_OPT_SIMP_NORMALIZE_ADDERS,
 
   /* --------------------------------------------------------------------- */
   /*!
@@ -931,7 +932,6 @@ enum BzlaOption
   BZLA_OPT_SAT_ENGINE_CADICAL_FREEZE,
   BZLA_OPT_SAT_ENGINE_N_THREADS,
   BZLA_OPT_SLT_ELIM,
-  BZLA_OPT_SIMP_NORMAMLIZE_ADDERS,
   BZLA_OPT_DECLSORT_BV_WIDTH,
   BZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
   BZLA_OPT_QUANT_FIXSYNTH,
@@ -1086,7 +1086,7 @@ typedef enum BzlaOptBetaReduceMode BzlaOptBetaReduceMode;
 
 struct BzlaOpt
 {
-  bool internal;             /* internal option? */
+  bool expert;               /* expert option? */
   bool isflag;               /* flag? */
   const char *shrt;          /* short option identifier (may be 0) */
   const char *lng;           /* long option identifier */

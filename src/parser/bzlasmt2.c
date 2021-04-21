@@ -495,7 +495,7 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
   else
   {
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
-    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_SIMP_NORMAMLIZE_ADDERS, 1);
+    bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_SIMP_NORMALIZE_ADDERS, 1);
 
     switch (parser->parsed_logic_tag)
     {

@@ -198,7 +198,7 @@ bzla_simplify(Bzla *bzla)
       bzla_add_ackermann_constraints(bzla);
 
     if (bzla_opt_get(bzla, BZLA_OPT_REWRITE_LEVEL) > 2
-        && bzla_opt_get(bzla, BZLA_OPT_SIMP_NORMAMLIZE_ADDERS))
+        && bzla_opt_get(bzla, BZLA_OPT_SIMP_NORMALIZE_ADDERS))
       bzla_normalize_adds(bzla);
 
   } while (bzla->varsubst_constraints->count

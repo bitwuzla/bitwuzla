@@ -314,7 +314,7 @@ chkclone_opts(Bzla *bzla, Bzla *clone)
   {
     opt  = &bzla->options[o];
     copt = &clone->options[o];
-    assert(opt->internal == copt->internal);
+    assert(opt->expert == copt->expert);
     /* Note: auto_cleanup.val = 1 in clone! */
     if (o != BZLA_OPT_AUTO_CLEANUP && o != BZLA_OPT_AUTO_CLEANUP_INTERNAL)
       assert(opt->val == copt->val);
