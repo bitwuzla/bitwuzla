@@ -15,8 +15,8 @@ Table of Contents
 .. toctree::
   :maxdepth: 2
 
-  api_documentation_c
-  api_documentation_python
+  c/api_documentation_c
+  python/api_documentation_python
 
 .. toctree::
   :maxdepth: 1
