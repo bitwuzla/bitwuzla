@@ -1215,7 +1215,10 @@ QuantSolverState::synthesize_terms()
         value = bzla_node_create_fp_const(d_bzla, fp_value);
         bzla_fp_free(d_bzla, fp_value);
       }
-      // TODO: rounding mode values
+      else if (bzla_node_is_rm(d_bzla, sk))
+      {
+        value = bzla_exp_rm_const(d_bzla, bzla_rm_from_bv(bv));
+      }
       else
       {
         assert(bzla_node_is_bv(d_bzla, sk));
