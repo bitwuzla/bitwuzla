@@ -212,6 +212,7 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_VERBOSITY,
 
+#ifndef DOXYGEN_SKIP
   /* -------------- Rewriting/Preprocessing Options (Expert) --------------- */
 
   /*! **Ackermannization preprocessing.**
@@ -1292,6 +1293,7 @@ enum BitwuzlaOption
 
   /* this MUST be the last entry! */
   BITWUZLA_OPT_NUM_OPTS,
+#endif
 };
 #ifndef DOXYGEN_SKIP
 typedef enum BitwuzlaOption BitwuzlaOption;
