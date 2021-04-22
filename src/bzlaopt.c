@@ -916,7 +916,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "enable propagation moves (with given ratio of propagation "
            "to regular moves)");
   init_opt(bzla,
-           BZLA_OPT_SLS_MOVE_PROP_N_PROP,
+           BZLA_OPT_SLS_MOVE_PROP_NPROPS,
            true,
            false,
            "sls-move-prop-n-prop",
@@ -927,7 +927,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "number of prop moves (moves are performed as <n>:m prop "
            "to sls moves");
   init_opt(bzla,
-           BZLA_OPT_SLS_MOVE_PROP_N_SLS,
+           BZLA_OPT_SLS_MOVE_PROP_NSLSS,
            true,
            false,
            "sls-move-prop-n-sls",
@@ -1295,7 +1295,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "use xor inverse value computation");
 
   init_opt(bzla,
-           BZLA_OPT_PROP_SRA,
+           BZLA_OPT_PROP_ASHR,
            true,
            true,
            "prop-ashr",

@@ -1144,8 +1144,8 @@ move(Bzla *bzla, uint32_t nmoves)
 
   res = true;
 
-  nprops = bzla_opt_get(bzla, BZLA_OPT_SLS_MOVE_PROP_N_PROP);
-  nsls   = bzla_opt_get(bzla, BZLA_OPT_SLS_MOVE_PROP_N_SLS);
+  nprops = bzla_opt_get(bzla, BZLA_OPT_SLS_MOVE_PROP_NPROPS);
+  nsls   = bzla_opt_get(bzla, BZLA_OPT_SLS_MOVE_PROP_NSLSS);
 
   /* Always perform propagation moves first, i.e. perform moves
    * with ratio nprops:nsls of propagation to sls moves */

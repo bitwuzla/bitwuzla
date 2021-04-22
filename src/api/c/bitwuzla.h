@@ -39,6 +39,58 @@ enum BitwuzlaOption
 {
   /* --------------------------- General Options --------------------------- */
 
+  /*! **Configure the solver engine.**
+   *
+   * Values: TODO
+   *  * BZLA_ENGINE_FUN [default]:
+   *    the default engine for all combinations of QF_AUFBV, uses lemmas on
+   *    demand for QF_AUFBV and eager bit-blasting for QF_BV
+   *  * BZLA_ENGINE_SLS:
+   *    the score-based local search QF_BV engine
+   *  * BZLA_ENGINE_PROP:
+   *    the propagation-based local search QF_BV engine
+   *  * BZLA_ENGINE_AIGPROP:
+   *    the propagation-based local search QF_BV engine that operates on the
+   *    bit-blasted formula (the AIG layer)
+   *  * BZLA_ENGINE_QUANT:
+   *    the quantifier engine (BV only)
+   */
+  BITWUZLA_OPT_ENGINE,
+
+  /*! **Use non-zero exit codes for sat and unsat results.**
+   *
+   * When enabled, use Bitwuzla exit codes:
+   * * ::BITWUZLA_SAT
+   * * ::BITWUZLA_UNSAT
+   * * ::BITWUZLA_UNKNOWN
+   *
+   * When disabled, return 0 on success (sat, unsat, unknown), and a non-zero
+   * exit code for any other case.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_EXIT_CODES,
+
+  /*! **Configure input file format.**
+   *
+   * If unspecified, Bitwuzla will autodetect the input file format.
+   *
+   * Values: TODO
+   *  * BZLA_INPUT_FORMAT_BTOR:
+   *    `BTOR <http://fmv.jku.at/papers/BrummayerBiereLonsing-BPR08.pdf>`_
+   * format
+   *  * BZLA_INPUT_FORMAT_BTOR2:
+   *    `BTOR2 <http://fmv.jku.at/papers/NiemetzPreinerWolfBiere-CAV18.pdf>`_
+   * format
+   *  * BZLA_INPUT_FORMAT_SMT2:
+   *    `SMT-LIB v2
+   * <http://smtlib.cs.uiowa.edu/papers/smt-lib-reference-v2.0-r12.09.09.pdf>`_
+   * format
+   */
+  BITWUZLA_OPT_INPUT_FORMAT,
+
   /*! **Incremental solving.**
    *
    * Values:
@@ -52,6 +104,59 @@ enum BitwuzlaOption
    *       ::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION.
    */
   BITWUZLA_OPT_INCREMENTAL,
+
+  /*! **Log level.**
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 0).
+   */
+  BITWUZLA_OPT_LOGLEVEL,
+
+  /*! **Configure output number format for bit-vector values.**
+   *
+   * If unspecified, Bitwuzla will use BTOR format.
+   *
+   * Values: TODO
+   *  * BZLA_OUTPUT_FORMAT_BTOR [default]:
+   *    `BTOR`_ format
+   *  * BZLA_OUTPUT_FORMAT_BTOR2:
+   *    `BTOR2`_ format
+   *  * BZLA_OUTPUT_FORMAT_SMT2:
+   *    `SMT-LIB v2`_ format
+   *  * BZLA_OUTPUT_FORMAT_AIGER_ASCII:
+   *    `Aiger ascii format
+   * <http://fmv.jku.at/papers/BiereHeljankoWieringa-FMV-TR-11-2.pdf>`_
+   *  * BZLA_OUTPUT_FORMAT_AIGER_BINARY:
+   *    `Aiger binary format
+   * <http://fmv.jku.at/papers/BiereHeljankoWieringa-FMV-TR-11-2.pdf>`_
+   */
+  BITWUZLA_OPT_OUTPUT_FORMAT,
+
+  /*! **Configure output number format for bit-vector values.**
+   *
+   * If unspecified, Bitwuzla will use binary representation.
+   *
+   * Values: TODO
+   */
+  BITWUZLA_OPT_OUTPUT_NUMBER_FORMAT,
+
+  /*! **Pretty printing.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_PRETTY_PRINT,
+
+  /*! **Print DIMACS.**
+   *
+   * Print the CNF sent to the SAT solver in DIMACS format to stdout.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_PRINT_DIMACS,
 
   /*! **Model generation.**
    *
@@ -73,65 +178,25 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_PRODUCE_UNSAT_CORES,
 
-  /*! **Configure input file format.**
-   *
-   * If unspecified, Bitwuzla will autodetect the input file format.
-   *
-   * Values: TODO
-   */
-  BITWUZLA_OPT_INPUT_FORMAT,
-
-  /*! **Configure output number format for bit-vector values.**
-   *
-   * If unspecified, Bitwuzla will use binary representation.
-   *
-   * Values: TODO
-   */
-  BITWUZLA_OPT_OUTPUT_NUMBER_FORMAT,
-
-  /*! **Configure output number format for bit-vector values.**
-   *
-   * If unspecified, Bitwuzla will use BTOR format.
-   *
-   * Values: TODO
-   */
-  BITWUZLA_OPT_OUTPUT_FORMAT,
-
-  /*! **Configure the solver engine.**
-   *
-   * Values: TODO
-   */
-  BITWUZLA_OPT_ENGINE,
-
   /*! **Configure the SAT solver engine.**
    *
    * Values: TODO
+   *  | Available option values and default values depend on the sat solvers
+   *    configured.
+   *  * BZLA_SAT_ENGINE_CADICAL:
+   *    `CaDiCaL <https://fmv.jku.at/cadical>`_
+   *  * BZLA_SAT_ENGINE_CMS:
+   *    `CryptoMiniSat <https://github.com/msoos/cryptominisat>`_
+   *  * BZLA_SAT_ENGINE_KISSAT:
+   *    `Kissat <https://github.com/arminbiere/kissat>`_
+   *  * BZLA_SAT_ENGINE_LINGELING:
+   *    `Lingeling <https://fmv.jku.at/lingeling>`_
+   *  * BZLA_SAT_ENGINE_MINISAT:
+   *    `MiniSat <https://github.com/niklasso/minisat>`_
+   *  * BZLA_SAT_ENGINE_PICOSAT:
+   *    `PicoSAT <http://fmv.jku.at/picosat/>`_
    */
   BITWUZLA_OPT_SAT_ENGINE,
-
-  /*! **Pretty printing.**
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_PRETTY_PRINT,
-
-  /*! **Use non-zero exit codes for sat and unsat results.**
-   *
-   * When enabled, use Bitwuzla exit codes:
-   * * ::BITWUZLA_SAT
-   * * ::BITWUZLA_UNSAT
-   * * ::BITWUZLA_UNKNOWN
-   *
-   * When disabled, return 0 on success (sat, unsat, unknown), and a non-zero
-   * exit code for any other case.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_EXIT_CODES,
 
   /*! **Seed for random number generator.**
    *
@@ -147,24 +212,107 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_VERBOSITY,
 
-  /*! **Log level.**
-   *
-   * Values:
-   *  * An unsigned integer value (**default**: 0).
-   */
-  BITWUZLA_OPT_LOGLEVEL,
+  /* -------------- Rewriting/Preprocessing Options (Expert) --------------- */
 
-  /*! **Print DIMACS.**
+  /*! **Ackermannization preprocessing.**
    *
-   * Print the CNF sent to the SAT solver in DIMACS format to stdout.
+   * Eager addition of Ackermann constraints for function applications.
    *
    * Values:
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_PRINT_DIMACS,
+  BITWUZLA_OPT_PP_ACKERMANN,
 
-  /* -------------- Rewriting/Preprocessing Options (Expert) --------------- */
+  /*! **Beta reduction preprocessing.**
+   *
+   * Eager elimination of lambda terms via beta reduction.
+   *
+   * Values: TODO
+   */
+  BITWUZLA_OPT_PP_BETA_REDUCE,
+
+  /*! **Eliminate bit-vector extracts (preprocessing).**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_PP_ELIMINATE_EXTRACTS,
+
+  /*! **Eliminate ITEs (preprocessing).**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_PP_ELIMINATE_ITES,
+
+  /*! **Extract lambdas (preprocessing).**
+   *
+   * Extraction of common array patterns as lambda terms.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_PP_EXTRACT_LAMBDAS,
+
+  /*! **Merge lambda terms (preprocessing).**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_PP_MERGE_LAMBDAS,
+
+  /*! **Non-destructive term substitutions.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_PP_NONDESTR_SUBST,
+
+  /*! **Normalize bit-vector addition (global).**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_PP_NORMALIZE_ADD,
+
+  /*! **Boolean skeleton preprocessing.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_PP_SKELETON_PREPROC,
+
+  /*! **Unconstrained optimization (preprocessing).**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION,
+
+  /*! **Variable substitution preprocessing.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_PP_VAR_SUBST,
+
+  /*! **Propagate bit-vector extracts over arithmetic bit-vector operators.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_RW_EXTRACT_ARITH,
 
   /*! **Rewrite level.**
    *
@@ -178,82 +326,6 @@ enum BitwuzlaOption
    *       is not allowed.
    */
   BITWUZLA_OPT_RW_LEVEL,
-
-  /*! **Boolean skeleton preprocessing.**
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_PP_SKELETON_PREPROC,
-
-  /*! **Ackermannization.**
-   *
-   * Eager addition of Ackermann constraints for function applications.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_PP_ACKERMANN,
-
-  /*! **Beta reduction.**
-   *
-   * Eager elimination of lambda terms via beta reduction.
-   *
-   * Values: TODO
-   */
-  BITWUZLA_OPT_PP_BETA_REDUCE,
-
-  /*! **Eliminate ITEs.**
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_PP_ELIMINATE_ITES,
-
-  /*! **Eliminate bit-vector extracts.**
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_PP_ELIMINATE_EXTRACTS,
-
-  /*! **Variable substitution preprocessing.**
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_PP_VAR_SUBST,
-
-  /*! **Unconstrained optimization.**
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION,
-
-  /*! **Merge lambda terms.**
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_PP_MERGE_LAMBDAS,
-
-  /*! **Extract lambdas.**
-   *
-   * Extraction of common array patterns as lambda terms.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_PP_EXTRACT_LAMBDAS,
 
   /*! **Normalize bit-vector operations.**
    *
@@ -273,13 +345,21 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_RW_NORMALIZE_ADD,
 
-  /*! **Sort the children of commutative operations by id.**
+  /*! **Simplify constraints on construction.**
    *
    * Values:
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_RW_SORT_EXP,
+  BITWUZLA_OPT_RW_SIMPLIFY_CONSTRAINTS,
+
+  /*! **Eliminate bit-vector SLT nodes.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_RW_SLT,
 
   /*! **Sort the children of AIG nodes by id.**
    *
@@ -297,47 +377,92 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_RW_SORT_AIGVEC,
 
-  /*! **Simplify constraints on construction.**
+  /*! **Sort the children of commutative operations by id.**
    *
    * Values:
    *  * **1**: enable [**default**]
    *  * **0**: disable
    */
-  BITWUZLA_OPT_RW_SIMPLIFY_CONSTRAINTS,
-
-  /*! **Eliminate bit-vector SLT nodes.**
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_RW_SLT,
-
-  /*! **Propagate bit-vector extracts over arithmetic bit-vector operators.**
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_RW_EXTRACT_ARITH,
-
-  /*! **Non-destructive term substitutions.**
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_PP_NONDESTR_SUBST,
-
-  /*! **Normalize bit-vector addition (global).**
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_PP_NORMALIZE_ADD,
+  BITWUZLA_OPT_RW_SORT_EXP,
 
   /* --------------------- Fun Engine Options (Expert) --------------------- */
+
+  /*! **Function solver engine:
+   *    Dual propagation optimization.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_FUN_DUAL_PROP,
+
+  /*! **Function solver engine:
+   *    Assumption order for dual propagation optimization.**
+   *
+   * Set order in which inputs are assumed in the dual propagation clone.
+   *
+   * Values: TODO
+   *  * BZLA_DP_QSORT_JUST [default]:
+   *    order by score, highest score first
+   *  * BZLA_DP_QSORT_ASC:
+   *    order by input id, ascending
+   *  * BZLA_DP_QSORT_DESC:
+   *    order by input id, descending
+   */
+  BITWUZLA_OPT_FUN_DUAL_PROP_QSORT,
+
+  /*! **Function solver engine:
+   *    Eager lemmas.**
+   *
+   * Configure mode for eager lemma generation.
+   *
+   * Values: TODO
+   *  * BZLA_FUN_EAGER_LEMMAS_NONE:
+   *    do not generate lemmas eagerly (generate one single lemma per
+   *    refinement iteration)
+   *  * BZLA_FUN_EAGER_LEMMAS_CONF:
+   *    only generate lemmas eagerly until the first conflict dependent on
+   *    another conflict is found
+   *  * BZLA_FUN_EAGER_LEMMAS_ALL:
+   *    in each refinement iteration, generate lemmas for all conflicts
+   */
+  BITWUZLA_OPT_FUN_EAGER_LEMMAS,
+
+  /*! **Function solver engine:
+   *    Lazy synthesis.**
+   *
+   * Configure lazy synthesis (to bit-level) of bit-vector expressions.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_FUN_LAZY_SYNTHESIZE,
+
+  /*! **Function solver engine:
+   *    Justification optimization.**
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_FUN_JUST,
+
+  /*! **Function solver engine:
+   *    Justification optimization heuristic.**
+   *
+   * Configure heuristic to determine path selection for justification
+   * optimization.
+   *
+   * Values: TODO
+   *  * BZLA_JUST_HEUR_BRANCH_MIN_APP [default]:
+   *    choose branch with minimum number of applies
+   *  * BZLA_JUST_HEUR_BRANCH_MIN_DEP:
+   *    choose branch with minimum depth
+   *  * BZLA_JUST_HEUR_LEFT:
+   *    always choose left branch
+   */
+  BITWUZLA_OPT_FUN_JUST_HEURISTIC,
 
   /*! **Function solver engine:
    *    Propagation-based local search sequential portfolio.**
@@ -366,63 +491,6 @@ enum BitwuzlaOption
   BITWUZLA_OPT_FUN_PRESLS,
 
   /*! **Function solver engine:
-   *    Dual propagation optimization.**
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_FUN_DUAL_PROP,
-
-  /*! **Function solver engine:
-   *    Assumption order for dual propagation optimization.**
-   *
-   * Set order in which inputs are assumed in the dual propagation clone.
-   *
-   * Values: TODO
-   */
-  BITWUZLA_OPT_FUN_DUAL_PROP_QSORT,
-
-  /*! **Function solver engine:
-   *    Justification optimization.**
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_FUN_JUST,
-
-  /*! **Function solver engine:
-   *    Justification optimization heuristic.**
-   *
-   * Configure heuristic to determine path selection for justification
-   * optimization.
-   *
-   * Values: TODO
-   */
-  BITWUZLA_OPT_FUN_JUST_HEURISTIC,
-
-  /*! **Function solver engine:
-   *    Lazy synthesis.**
-   *
-   * Configure lazy synthesis (to bit-level) of bit-vector expressions.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_FUN_LAZY_SYNTHESIZE,
-
-  /*! **Function solver engine:
-   *    Eager lemmas.**
-   *
-   * Configure mode for eager lemma generation.
-   *
-   * Values: TODO
-   */
-  BITWUZLA_OPT_FUN_EAGER_LEMMAS,
-
-  /*! **Function solver engine:
    *    Represent store as lambda.**
    *
    * Represent array stores as lambdas.
@@ -434,25 +502,6 @@ enum BitwuzlaOption
   BITWUZLA_OPT_FUN_STORE_LAMBDAS,
 
   /* --------------------- SLS Engine Options (Expert) --------------------- */
-
-  /*! **Stochastic local search solver engine:
-   *    Number of bit flips.**
-   *
-   * Configure the number of bit flips used as a limit for the SLS engine.
-   *
-   * Values:
-   *  * An unsigned integer value, no limit if 0 (**default**: 0).
-   */
-  BITWUZLA_OPT_SLS_NFLIPS,
-
-  /*! **Stochastic local search solver engine:
-   *    Move strategy.**
-   *
-   * Configure the move selection strategy for the SLS engine.
-   *
-   * Values: TODO
-   */
-  BITWUZLA_OPT_SLS_STRATEGY,
 
   /*! **Stochastic local search solver engine:
    *    Justification-based path selection.**
@@ -477,6 +526,113 @@ enum BitwuzlaOption
    *  * **0**: disable [**default**]
    */
   BITWUZLA_OPT_SLS_MOVE_GW,
+
+  /*! **Stochastic local search solver engine:
+   *    Incremental move test.**
+   *
+   * Configure that during best move selection, the previous best neighbor
+   * for the current candidate is used for neighborhood exploration rather
+   * than its current assignment.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_SLS_MOVE_INC_MOVE_TEST,
+
+  /*! **Stochastic local search solver engine:
+   *    Propagation moves.**
+   *
+   * Configure propagation moves, chosen with a ratio of number of propagation
+   * moves ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS to regular SLS moves
+   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_SLS_MOVE_PROP,
+
+  /*! **Stochastic local search solver engine:
+   *    Force random walks.**
+   *
+   * Configure that random walks are forcibly chosen as recovery moves in case
+   * of conflicts when a propagation move is performed (rather than performing
+   * a regular SLS move).
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_SLS_MOVE_PROP_FORCE_RW,
+
+  /*! **Stochastic local search solver engine:
+   *    Number of propagation moves.**
+   *
+   * Configure the number of propagation moves to be performed when propagation
+   * moves are enabled. Propagation moves are chosen with a ratio of
+   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS to ::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 1)
+   *
+   * @see BITWUZLA_OPT_SLS_MOVE_PROP, BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS
+   */
+  BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS,
+
+  /*! **Stochastic local search solver engine:
+   *    Number of regular SLS moves.**
+   *
+   * Configure the number of regular SLS moves to be performed when propagation
+   * moves are enabled. Propagation moves are chosen with a ratio of
+   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS to ::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 1)
+   *
+   * @see BITWUZLA_OPT_SLS_MOVE_PROP, BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS
+   */
+  BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS,
+
+  /*! **Stochastic local search solver engine:
+   *    Randomize all candidates.**
+   *
+   * Configure the randomization of all candidate variables (rather than just
+   * a single randomly selected one) in case no best move has been found.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_SLS_MOVE_RAND_ALL,
+
+  /*! **Stochastic local search solver engine:
+   *    Randomize bit ranges.**
+   *
+   * Configure the randomization of bit ranges (rather than all bits) of
+   * candidate variable(s) in case no best move has been found.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_SLS_MOVE_RAND_RANGE,
+
+  /*! **Stochastic local search solver engine:
+   *    Random walk.**
+   *
+   * Configure random walk moves, where one out of all possible neighbors is
+   * randomly selected (with given probability
+   * ::BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK) for a randomly selected candidate
+   * variable.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   *
+   * @see BITWUZLA_OPT_SLS_MOVE_PROB_RAND_WALK
+   */
+  BITWUZLA_OPT_SLS_MOVE_RAND_WALK,
 
   /*! **Stochastic local search solver engine:
    *    Range-wise bit-flip moves.**
@@ -505,22 +661,6 @@ enum BitwuzlaOption
   BITWUZLA_OPT_SLS_MOVE_SEGMENT,
 
   /*! **Stochastic local search solver engine:
-   *    Random walk.**
-   *
-   * Configure random walk moves, where one out of all possible neighbors is
-   * randomly selected (with given probability
-   * ::BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK) for a randomly selected candidate
-   * variable.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   *
-   * @see BITWUZLA_OPT_SLS_MOVE_PROB_RAND_WALK
-   */
-  BITWUZLA_OPT_SLS_MOVE_RAND_WALK,
-
-  /*! **Stochastic local search solver engine:
    *    Probability for random walks.**
    *
    * Configure the probability with which a random walk is chosen if random
@@ -534,95 +674,35 @@ enum BitwuzlaOption
   BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK,
 
   /*! **Stochastic local search solver engine:
-   *    Randomize all candidates.**
+   *    Number of bit flips.**
    *
-   * Configure the randomization of all candidate variables (rather than just
-   * a single randomly selected one) in case no best move has been found.
+   * Configure the number of bit flips used as a limit for the SLS engine.
    *
    * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   *  * An unsigned integer value, no limit if 0 (**default**: 0).
    */
-  BITWUZLA_OPT_SLS_MOVE_RAND_ALL,
+  BITWUZLA_OPT_SLS_NFLIPS,
 
   /*! **Stochastic local search solver engine:
-   *    Randomize bit ranges.**
+   *    Move strategy.**
    *
-   * Configure the randomization of bit ranges (rather than all bits) of
-   * candidate variable(s) in case no best move has been found.
+   * Configure the move selection strategy for the SLS engine.
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   * Values: TODO
+   *  * BZLA_SLS_STRAT_BEST_MOVE:
+   *    always choose best score improving move
+   *  * BZLA_SLS_STRAT_RAND_WALK:
+   *    always choose random walk weighted by score
+   *  * BZLA_SLS_STRAT_FIRST_BEST_MOVE [default]:
+   *    always choose first best move (no matter if any other move is better)
+   *  * BZLA_SLS_STRAT_BEST_SAME_MOVE:
+   *    determine move as best move even if its score is not better but the
+   *    same as the score of the previous best move
+   *  * BZLA_SLS_STRAT_ALWAYS_PROP:
+   *    always choose propagation move (and recover with SLS move in case of
+   *    conflict)
    */
-  BITWUZLA_OPT_SLS_MOVE_RAND_RANGE,
-
-  /*! **Stochastic local search solver engine:
-   *    Propagation moves.**
-   *
-   * Configure propagation moves, chosen with a ratio of number of propagation
-   * moves ::BITWUZLA_OPT_SLS_MOVE_PROP_N_PROP to regular SLS moves
-   * ::BITWUZLA_OPT_SLS_MOVE_PROP_N_SLS.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_SLS_MOVE_PROP,
-
-  /*! **Stochastic local search solver engine:
-   *    Number of propagation moves.**
-   *
-   * Configure the number of propagation moves to be performed when propagation
-   * moves are enabled. Propagation moves are chosen with a ratio of
-   * ::BITWUZLA_OPT_SLS_MOVE_PROP_N_PROP to ::BITWUZLA_OPT_SLS_MOVE_PROP_N_SLS.
-   *
-   * Values:
-   *  * An unsigned integer value (**default**: 1)
-   *
-   * @see BITWUZLA_OPT_SLS_MOVE_PROP, BITWUZLA_OPT_SLS_MOVE_PROP_N_SLS
-   */
-  BITWUZLA_OPT_SLS_MOVE_PROP_N_PROP,
-
-  /*! **Stochastic local search solver engine:
-   *    Number of regular SLS moves.**
-   *
-   * Configure the number of regular SLS moves to be performed when propagation
-   * moves are enabled. Propagation moves are chosen with a ratio of
-   * ::BITWUZLA_OPT_SLS_MOVE_PROP_N_PROP to ::BITWUZLA_OPT_SLS_MOVE_PROP_N_SLS.
-   *
-   * Values:
-   *  * An unsigned integer value (**default**: 1)
-   *
-   * @see BITWUZLA_OPT_SLS_MOVE_PROP, BITWUZLA_OPT_SLS_MOVE_PROP_N_PROP
-   */
-  BITWUZLA_OPT_SLS_MOVE_PROP_N_SLS,
-
-  /*! **Stochastic local search solver engine:
-   *    Force random walks.**
-   *
-   * Configure that random walks are forcibly chosen as recovery moves in case
-   * of conflicts when a propagation move is performed (rather than performing
-   * a regular SLS move).
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_SLS_MOVE_PROP_FORCE_RW,
-
-  /*! **Stochastic local search solver engine:
-   *    Incremental move test.**
-   *
-   * Configure that during best move selection, the previous best neighbor
-   * for the current candidate is used for neighborhood exploration rather
-   * than its current assignment.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_SLS_MOVE_INC_MOVE_TEST,
+  BITWUZLA_OPT_SLS_STRATEGY,
 
   /*! **Stochastic local search solver engine:
    *    Restarts.**
@@ -648,37 +728,16 @@ enum BitwuzlaOption
   /* -------------------- Prop Engine Options (Expert) --------------------- */
 
   /*! **Propagation-based local search solver engine:
-   *    Number of propagations.**
+   *    Value computation for xor.**
    *
-   * Configure the number of propagations used as a limit for the
-   * propagation-based local search solver engine. No limit if 0.
-   *
-   * Values:
-   *  * An unsigned integer value (**default**: 0).
-   */
-  BITWUZLA_OPT_PROP_NPROPS,
-
-  /*! **Propagation-based local search solver engine:
-   *    Number of updates.**
-   *
-   * Configure the number of model value updates used as a limit for the
-   * propagation-based local search solver engine. No limit if 0.
+   * When enabled, detect arithmetic right shift operations (are rewritten on
+   * construction) and use value computation for ashr.
    *
    * Values:
-   *  * An unsigned integer value (**default**: 0).
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_PROP_NUPDATES,
-
-  /*! **Propagation-based local search solver engine:
-   *    Entailed propagations.**
-   *
-   * Maintain a work queue with entailed propagations.
-   * If enabled, propagations from this queue are propagated before randomly
-   * choosing a yet unsatisfied path from the root.
-   *
-   * Values: TODO
-   */
-  BITWUZLA_OPT_PROP_ENTAILED,
+  BITWUZLA_OPT_PROP_ASHR,
 
   /*! **Propagation-based local search solver engine:
    *    Constant bits.**
@@ -704,71 +763,21 @@ enum BitwuzlaOption
   BITWUZLA_OPT_PROP_CONST_DOMAINS,
 
   /*! **Propagation-based local search solver engine:
-   *    Restarts.**
+   *    Entailed propagations.**
    *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_PROP_USE_RESTARTS,
-
-  /*! **Propagation-based local search solver engine:
-   *    Bandit scheme.**
-   *
-   * Configure bandit scheme heuristic for selecting root constraints.
-   * If enabled, root constraint selection via bandit scheme is based on a
-   * scoring scheme similar to the one used in the SLS engine.
-   * If disabled, root constraints are selected randomly.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_PROP_USE_BANDIT,
-
-  /*! **Propagation-based local search solver engine:
-   *    Path selection.**
-   *
-   * Configure mode for path selection.
+   * Maintain a work queue with entailed propagations.
+   * If enabled, propagations from this queue are propagated before randomly
+   * choosing a yet unsatisfied path from the root.
    *
    * Values: TODO
+   *  This feature is disabled (BZLA_PROP_ENTAILED_OFF) by default.
+   *
+   *  * BZLA_PROP_ENTAILED_OFF: do not use strategy (default)
+   *  * BZLA_PROP_ENTAILED_ALL: propagate all entailed propagations
+   *  * BZLA_PROP_ENTAILED_FIRST: process only the first entailed propagation
+   *  * BZLA_PROP_ENTAILED_LAST: process only the last entailed propagation
    */
-  BITWUZLA_OPT_PROP_PATH_SEL,
-
-  /*! **Propagation-based local search solver engine:
-   *    Probability for inverse values.**
-   *
-   * Configure the probability with which to choose an inverse value over a
-   * consistent value when aninverse value exists.
-   *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 990).
-   */
-  BITWUZLA_OPT_PROP_PROB_USE_INV_VALUE,
-
-  /*! **Propagation-based local search solver engine:
-   *    Probability for flipping ite condition.**
-   *
-   * Configure the probability with which to select the path to the condition
-   * (in case of an ite operation) rather than the enabled branch during down
-   * propagation).
-   *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 100).
-   */
-  BITWUZLA_OPT_PROP_PROB_FLIP_COND,
-
-  /*! **Propagation-based local search solver engine:
-   *    Probability for flipping ite condition with constant branches.**
-   *
-   * Configure the probability with which to select the path to the condition
-   * (in case of an ite operation) rather than the enabled branch during down
-   * propagation) if either the 'then' or 'else' branch is constant.
-   *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 100).
-   */
-  BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST,
+  BITWUZLA_OPT_PROP_ENTAILED,
 
   /*! **Propagation-based local search solver engine:
    *    Delta for flipping ite conditions with constant branches.**
@@ -796,67 +805,16 @@ enum BitwuzlaOption
   BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL,
 
   /*! **Propagation-based local search solver engine:
-   *    Probability for keeping the value of don't care bits for extracts.**
+   *    Infer bounds for inequalities for value computation.**
    *
-   * Configure the probability with which to keep the current value of don't
-   * care bits of an extract operation (rather than fully randomizing them)
-   * when selecting an inverse or consistent value.
-   *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 500).
-   */
-  BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
-
-  /*! **Propagation-based local search solver engine:
-   *    Probability for flipping one of the don't care bits for extracts.**
-   *
-   * Configure the probability with which to flip one of the don't care bits of
-   * the current assignment of the operand to a bit-vector extract (when the
-   * asignment is kept) when selecting an inverse or consistent value.
+   * When enabled, infer bounds for value computation for inequalities based on
+   * satisfied top level inequalities.
    *
    * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
-   *
-   * @see BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
-
-  /*! **Propagation-based local search solver engine:
-   *    Probability for using the current assignment with one bit flipped for
-   *    equalities.**
-   *
-   * Configure the probability with which the current assignment of an operand
-   * to a disequality is kept with just a single bit flipped (rather than fully
-   * randomizing the assignment) when selecting an inverse or consistent value.
-   *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
-   */
-  BITWUZLA_OPT_PROP_PROB_EQ_FLIP,
-
-  /*! **Propagation-based local search solver engine:
-   *    Probability for flipping one of the don't care bits for ands.**
-   *
-   * Configure the probability with which to keep the current assignement of
-   * the operand to a bit-vector and with max one bit flipped (rather than
-   * fully randomizing the assignment) when selecting an inverse or consistent
-   * value.
-   *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
-   */
-  BITWUZLA_OPT_PROP_PROB_AND_FLIP,
-
-  /*! **Propagation-based local search solver engine:
-   *    Probability for selecting random input.**
-   *
-   * Configure the probability with which to select a random input instead of
-   * an essential input when selecting the path.
-   *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
-   */
-  BITWUZLA_OPT_PROP_PROB_RANDOM_INPUT,
+  BITWUZLA_OPT_PROP_INFER_INEQ_BOUNDS,
 
   /*! **Propagation-based local search solver engine:
    *    No move on conflict.**
@@ -875,17 +833,159 @@ enum BitwuzlaOption
   BITWUZLA_OPT_PROP_NO_MOVE_ON_CONFLICT,
 
   /*! **Propagation-based local search solver engine:
-   *    Skip if no progress.**
+   *    Number of propagations.**
    *
-   * When enabled, moves that make no progress, that is, that produce a target
-   * value that is the seame as the current assignment of a variable, are
-   * skipped.
+   * Configure the number of propagations used as a limit for the
+   * propagation-based local search solver engine. No limit if 0.
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 0).
+   */
+  BITWUZLA_OPT_PROP_NPROPS,
+
+  /*! **Propagation-based local search solver engine:
+   *    Number of updates.**
+   *
+   * Configure the number of model value updates used as a limit for the
+   * propagation-based local search solver engine. No limit if 0.
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 0).
+   */
+  BITWUZLA_OPT_PROP_NUPDATES,
+
+  /*! **Propagation-based local search solver engine:
+   *    Path selection.**
+   *
+   * Configure mode for path selection.
+   *
+   * Values: TODO
+   *  * BZLA_PROP_PATH_SEL_ESSENTIAL [default]:
+   *    select path based on essential inputs
+   *  * BZLA_PROP_PATH_SEL_RANDOM:
+   *    select path based on random inputs
+   */
+  BITWUZLA_OPT_PROP_PATH_SEL,
+
+  /*! **Propagation-based local search solver engine:
+   *    Probability for producing inverse rather than consistent values.**
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
+   */
+  BITWUZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE,
+
+  /*! **Propagation-based local search solver engine:
+   *    Probability for flipping one of the don't care bits for ands.**
+   *
+   * Configure the probability with which to keep the current assignement of
+   * the operand to a bit-vector and with max one bit flipped (rather than
+   * fully randomizing the assignment) when selecting an inverse or consistent
+   * value.
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
+   */
+  BITWUZLA_OPT_PROP_PROB_AND_FLIP,
+
+  /*! **Propagation-based local search solver engine:
+   *    Probability for using the current assignment with one bit flipped for
+   *    equalities.**
+   *
+   * Configure the probability with which the current assignment of an operand
+   * to a disequality is kept with just a single bit flipped (rather than fully
+   * randomizing the assignment) when selecting an inverse or consistent value.
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
+   */
+  BITWUZLA_OPT_PROP_PROB_EQ_FLIP,
+
+  /*! **Propagation-based local search solver engine:
+   *    Probability for flipping ite condition.**
+   *
+   * Configure the probability with which to select the path to the condition
+   * (in case of an ite operation) rather than the enabled branch during down
+   * propagation).
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 100).
+   */
+  BITWUZLA_OPT_PROP_PROB_FLIP_COND,
+
+  /*! **Propagation-based local search solver engine:
+   *    Probability for flipping ite condition with constant branches.**
+   *
+   * Configure the probability with which to select the path to the condition
+   * (in case of an ite operation) rather than the enabled branch during down
+   * propagation) if either the 'then' or 'else' branch is constant.
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 100).
+   */
+  BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST,
+
+  /*! **Propagation-based local search solver engine:
+   *    Probability for selecting random input.**
+   *
+   * Configure the probability with which to select a random input instead of
+   * an essential input when selecting the path.
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
+   */
+  BITWUZLA_OPT_PROP_PROB_RANDOM_INPUT,
+
+  /*! **Propagation-based local search solver engine:
+   *    Probability for flipping one of the don't care bits for extracts.**
+   *
+   * Configure the probability with which to flip one of the don't care bits of
+   * the current assignment of the operand to a bit-vector extract (when the
+   * asignment is kept) when selecting an inverse or consistent value.
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
+   *
+   * @see BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC
+   */
+  BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
+
+  /*! **Propagation-based local search solver engine:
+   *    Probability for keeping the value of don't care bits for extracts.**
+   *
+   * Configure the probability with which to keep the current value of don't
+   * care bits of an extract operation (rather than fully randomizing them)
+   * when selecting an inverse or consistent value.
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 500).
+   */
+  BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
+
+  /*! **Propagation-based local search solver engine:
+   *    Probability for inverse values.**
+   *
+   * Configure the probability with which to choose an inverse value over a
+   * consistent value when aninverse value exists.
+   *
+   * Values:
+   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 990).
+   */
+  BITWUZLA_OPT_PROP_PROB_USE_INV_VALUE,
+
+  /*! **Propagation-based local search solver engine:
+   *    Bandit scheme.**
+   *
+   * Configure bandit scheme heuristic for selecting root constraints.
+   * If enabled, root constraint selection via bandit scheme is based on a
+   * scoring scheme similar to the one used in the SLS engine.
+   * If disabled, root constraints are selected randomly.
    *
    * Values:
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_PROP_SKIP_NO_PROGRESS,
+  BITWUZLA_OPT_PROP_USE_BANDIT,
 
   /*! **Propagation-based local search solver engine:
    *    Inverse value computation for inequalities over concats.**
@@ -900,16 +1000,13 @@ enum BitwuzlaOption
   BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT,
 
   /*! **Propagation-based local search solver engine:
-   *    Infer bounds for inequalities for value computation.**
-   *
-   * When enabled, infer bounds for value computation for inequalities based on
-   * satisfied top level inequalities.
+   *    Restarts.**
    *
    * Values:
    *  * **1**: enable
    *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_PROP_INFER_INEQ_BOUNDS,
+  BITWUZLA_OPT_PROP_USE_RESTARTS,
 
   /*! **Propagation-based local search solver engine:
    *    Value computation for sign extension.**
@@ -924,6 +1021,19 @@ enum BitwuzlaOption
   BITWUZLA_OPT_PROP_SEXT,
 
   /*! **Propagation-based local search solver engine:
+   *    Skip if no progress.**
+   *
+   * When enabled, moves that make no progress, that is, that produce a target
+   * value that is the seame as the current assignment of a variable, are
+   * skipped.
+   *
+   * Values:
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
+   */
+  BITWUZLA_OPT_PROP_SKIP_NO_PROGRESS,
+
+  /*! **Propagation-based local search solver engine:
    *    Value computation for xor.**
    *
    * When enabled, detect xor operations (are rewritten on construction) and
@@ -935,36 +1045,18 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_PROP_XOR,
 
-  /*! **Propagation-based local search solver engine:
-   *    Value computation for xor.**
-   *
-   * When enabled, detect arithmetic right shift operations (are rewritten on
-   * construction) and use value computation for ashr.
-   *
-   * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
-   */
-  BITWUZLA_OPT_PROP_ASHR,
-
-  /*! **Propagation-based local search solver engine:
-   *    Probability for producing inverse rather than consistent values.**
-   *
-   * Values:
-   *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
-   */
-  BITWUZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE,
-
   /* ------------------- AigProp Engine Options (Expert) ------------------- */
 
   /*! **AIG-level propagation-based local search solver engine:
-   *    Restarts.**
+   *    Number of propagations.**
+   *
+   * Configure the number of propagations used as a limit for the
+   * propagation-based local search solver engine. No limit if 0.
    *
    * Values:
-   *  * **1**: enable
-   *  * **0**: disable [**default**]
+   *  * An unsigned integer value (**default**: 0).
    */
-  BITWUZLA_OPT_AIGPROP_USE_RESTARTS,
+  BITWUZLA_OPT_AIGPROP_NPROPS,
 
   /*! **AIG-level propagation-based local search solver engine:
    *    Bandit scheme.**
@@ -981,26 +1073,39 @@ enum BitwuzlaOption
   BITWUZLA_OPT_AIGPROP_USE_BANDIT,
 
   /*! **AIG-level propagation-based local search solver engine:
-   *    Number of propagations.**
-   *
-   * Configure the number of propagations used as a limit for the
-   * propagation-based local search solver engine. No limit if 0.
+   *    Restarts.**
    *
    * Values:
-   *  * An unsigned integer value (**default**: 0).
+   *  * **1**: enable
+   *  * **0**: disable [**default**]
    */
-  BITWUZLA_OPT_AIGPROP_NPROPS,
+  BITWUZLA_OPT_AIGPROP_USE_RESTARTS,
 
   /* ----------------- Quantifier Eninge Options (Expert) ------------------ */
 
   /*! **Quantifier solver engine:
-   *    Synthesis mode.**
+   *    Constructive Equality Resolution.**
    *
-   * Configure mode for synthesizing Skolem functions.
+   * Configure the use of Constructive Equality Resolution simplification in
+   * the quantifier solver engine.
    *
-   * Values: TODO
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
    */
-  BITWUZLA_OPT_QUANT_SYNTH,
+  BITWUZLA_OPT_QUANT_CER,
+
+  /*! **Quantifier solver engine:
+   *    Destructive Equality Resolution.**
+   *
+   * Configure the use of Destructive Equality Resolution simplification in
+   * the quantifier solver engine.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_QUANT_DER,
 
   /*! **Quantifier solver engine:
    *    Dual solver.**
@@ -1012,6 +1117,63 @@ enum BitwuzlaOption
    *  * **0**: disable
    */
   BITWUZLA_OPT_QUANT_DUAL_SOLVER,
+
+  /*! **Quantifier solver engine:
+   *    Miniscoping.**
+   *
+   * Configure the use of miniscoping in the quantifier solver engine.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_QUANT_MINISCOPE,
+
+  /*! **Quantifier solver engine:
+   *    Synthesis mode.**
+   *
+   * Configure mode for synthesizing Skolem functions.
+   *
+   * Values: TODO
+   * * BZLA_QUANT_SYNTH_NONE:
+   *   do not synthesize skolem functions (use model values for instantiation)
+   * * BZLA_QUANT_SYNTH_EL:
+   *   use enumerative learning to synthesize skolem functions
+   * * BZLA_QUANT_SYNTH_ELMC:
+   *   use enumerative learning modulo the predicates in the cone of influence
+   *   of the existential variables to synthesize skolem functions
+   * * BZLA_QUANT_SYNTH_EL_ELMC:
+   *   chain BZLA_QUANT_SYNTH_EL and BZLA_QUANT_SYNTH_ELMC approaches to
+   *   synthesize skolem functions
+   * * BZLA_QUANT_SYNTH_ELMR:
+   *   use enumerative learning modulo the given root constraints to synthesize
+   *   skolem functions
+   */
+  BITWUZLA_OPT_QUANT_SYNTH,
+
+  /*! **Quantifier solver engine:
+   *    Update model with respect to synthesized skolem.**
+   *
+   * Configure to update the current model with respect to the synthesized
+   * skolem function if enabled.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_QUANT_FIXSYNTH,
+
+  /*! **Quantifier solver engine:
+   *    Base case for ITE model.**
+   *
+   * Configure the base case of a concrete model for ITEs. Constant if enabled,
+   * else undefined.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
 
   /*! **Quantifier solver engine:
    *    Limit for synthesis.**
@@ -1036,64 +1198,23 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_QUANT_SYNTH_QI,
 
-  /*! **Quantifier solver engine:
-   *    Destructive Equality Resolution.**
-   *
-   * Configure the use of Destructive Equality Resolution simplification in
-   * the quantifier solver engine.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_QUANT_DER,
-
-  /*! **Quantifier solver engine:
-   *    Constructive Equality Resolution.**
-   *
-   * Configure the use of Constructive Equality Resolution simplification in
-   * the quantifier solver engine.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_QUANT_CER,
-
-  /*! **Quantifier solver engine:
-   *    Miniscoping.**
-   *
-   * Configure the use of miniscoping in the quantifier solver engine.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_QUANT_MINISCOPE,
-  /*! **Quantifier solver engine:
-   *    Base case for ITE model.**
-   *
-   * Configure the base case of a concrete model for ITEs. Constant if enabled,
-   * else undefined.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
-  /*! **Quantifier solver engine:
-   *    Update model with respect to synthesized skolem.**
-   *
-   * Configure to update the current model with respect to the synthesized
-   * skolem function if enabled.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_QUANT_FIXSYNTH,
-
   /* ------------------------ Other Expert Options ------------------------- */
+
+  /*! **Check model (debug only).**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_CHECK_MODEL,
+
+  /*! **Check result when unconstrained optimization is enabled (debug only).**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_CHECK_UNCONSTRAINED,
 
   /*! **Check unsat assumptions (debug only).**
    *
@@ -1102,20 +1223,17 @@ enum BitwuzlaOption
    *  * **0**: disable
    */
   BITWUZLA_OPT_CHECK_UNSAT_ASSUMPTIONS,
-  /*! **Check model (debug only).**
+
+  /*! **Interpret sorts introduced with declare-sort as bit-vectors of given
+   *    width.**
+   *
+   * Disabled if zero.
    *
    * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
+   *  * An unsigned integer value (**default**: 0).
    */
-  BITWUZLA_OPT_CHECK_MODEL,
-  /*! **Check result when unconstrained optimization is enabled (debug only).**
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_CHECK_UNCONSTRAINED,
+  BITWUZLA_OPT_DECLSORT_BV_WIDTH,
+
   /*! **Share partial models determined via local search with bit-blasting
    *    engine.**
    *
@@ -1127,6 +1245,7 @@ enum BitwuzlaOption
    *  * **0**: disable [**default**]
    */
   BITWUZLA_OPT_LS_SHARE_SAT,
+
   /*! **Interactive parsing mode.**
    *
    * Values:
@@ -1134,13 +1253,7 @@ enum BitwuzlaOption
    *  * **0**: disable
    */
   BITWUZLA_OPT_PARSE_INTERACTIVE,
-  /*! **Lingeling fork mode.**
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   */
-  BITWUZLA_OPT_SAT_ENGINE_LGL_FORK,
+
   /*! **Use CaDiCaL's freeze/melt.**
    *
    * Values:
@@ -1148,6 +1261,15 @@ enum BitwuzlaOption
    *  * **0**: disable [**default**]
    */
   BITWUZLA_OPT_SAT_ENGINE_CADICAL_FREEZE,
+
+  /*! **Lingeling fork mode.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   */
+  BITWUZLA_OPT_SAT_ENGINE_LGL_FORK,
+
   /*! **Number of threads to use in the SAT solver.**
    *
    * This option is only effective for SAT solvers with support for
@@ -1157,15 +1279,7 @@ enum BitwuzlaOption
    *  * An unsigned integer value > 0 (**default**: 1).
    */
   BITWUZLA_OPT_SAT_ENGINE_N_THREADS,
-  /*! **Interpret sorts introduced with declare-sort as bit-vectors of given
-   *    width.**
-   *
-   * Disabled if zero.
-   *
-   * Values:
-   *  * An unsigned integer value (**default**: 0).
-   */
-  BITWUZLA_OPT_DECLSORT_BV_WIDTH,
+
   /*! **Enable SMT-COMP mode.**
    *
    * Parser only option. Only effective when an SMT2 input file is parsed.
@@ -1175,6 +1289,7 @@ enum BitwuzlaOption
    *  * **0**: disable [**default**]
    */
   BITWUZLA_OPT_SMT_COMP_MODE,
+
   /* this MUST be the last entry! */
   BITWUZLA_OPT_NUM_OPTS,
 };

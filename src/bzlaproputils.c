@@ -215,7 +215,7 @@ select_path_log(Bzla *bzla, BzlaPropInfo *pi)
   for (size_t i = 0; i < exp->arity; i++)
   {
     a = bzla_bv_to_char(mm, pi->bv[i]);
-    if (bzla_opt_get(bzla, BZLA_OPT_PROP_SRA)
+    if (bzla_opt_get(bzla, BZLA_OPT_PROP_ASHR)
         && bzla_is_bv_sra(bzla,
                           bzla_node_real_addr((BzlaNode *) exp->e[i]),
                           &children[0],
@@ -1353,7 +1353,7 @@ check_cons_dbg(Bzla *bzla, BzlaPropInfo *pi, bool same_bw)
   assert(pi->pos_x >= 0);
   assert(pi->pos_x <= 1);
   BzlaNode *sra_e[2], *xor_e[2];
-  bool is_bv_sra = bzla_opt_get(bzla, BZLA_OPT_PROP_SRA)
+  bool is_bv_sra = bzla_opt_get(bzla, BZLA_OPT_PROP_ASHR)
                    && bzla_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
   bool is_bv_xor = bzla_opt_get(bzla, BZLA_OPT_PROP_XOR)
                    && bzla_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
@@ -3128,7 +3128,7 @@ check_inv_dbg(Bzla *bzla,
   uint32_t arity;
   BzlaNode *sra_e[2], *xor_e[2];
 
-  is_bv_sra = bzla_opt_get(bzla, BZLA_OPT_PROP_SRA)
+  is_bv_sra = bzla_opt_get(bzla, BZLA_OPT_PROP_ASHR)
               && bzla_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
   is_bv_xor = bzla_opt_get(bzla, BZLA_OPT_PROP_XOR)
               && bzla_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
@@ -7536,7 +7536,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       bzla_opt_get(bzla, BZLA_OPT_PROP_SKIP_NO_PROGRESS) != 0;
   opt_prop_xor  = bzla_opt_get(bzla, BZLA_OPT_PROP_XOR);
   opt_prop_sext = bzla_opt_get(bzla, BZLA_OPT_PROP_SEXT);
-  opt_prop_sra  = bzla_opt_get(bzla, BZLA_OPT_PROP_SRA);
+  opt_prop_sra  = bzla_opt_get(bzla, BZLA_OPT_PROP_ASHR);
 
 #ifndef NBZLALOG
   if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)

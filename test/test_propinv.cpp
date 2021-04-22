@@ -63,7 +63,7 @@ class TestPropInv : public TestPropCommon
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
     bzla_opt_set(bzla, BZLA_OPT_CHECK_MODEL, 0);
     bzla_opt_set(bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
-    bzla_opt_set(bzla, BZLA_OPT_PROP_SRA, 1);
+    bzla_opt_set(bzla, BZLA_OPT_PROP_ASHR, 1);
     bzla_opt_set(bzla, BZLA_OPT_PROP_XOR, 1);
 
     if (expr_fun == bzla_exp_bv_slt)
