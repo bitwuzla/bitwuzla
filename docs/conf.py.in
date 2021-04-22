@@ -34,8 +34,12 @@ author = 'The Authors of Bitwuzla'
 extensions = [
         'sphinxcontrib.bibtex',
         'sphinx.ext.autodoc',
+        'sphinx.ext.autosectionlabel',
         "breathe",
 ]
+
+# Make sure the target is unique
+autosectionlabel_prefix_document = True
 
 bibtex_bibfiles = ['references.bib']
 

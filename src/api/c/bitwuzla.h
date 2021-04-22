@@ -1775,6 +1775,11 @@ typedef struct BitwuzlaTerm BitwuzlaTerm;
 /** A Bitwuzla sort. */
 typedef struct BitwuzlaSort BitwuzlaSort;
 
+/**
+ * \addtogroup functions
+ * @{
+ */
+
 /* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -3414,6 +3419,10 @@ bool bitwuzla_term_is_const_array(const BitwuzlaTerm *term);
 void bitwuzla_term_dump(const BitwuzlaTerm *term,
                         const char *format,
                         FILE *file);
+
+/**
+ * }@
+ */
 
 /* -------------------------------------------------------------------------- */
 

@@ -1,18 +1,15 @@
-C API Documentation
-============================
+C Interface
+===========
 
+* :ref:`c/interface:types`
+* :ref:`c/interface:enums`
+* :ref:`c/interface:functions`
 
-Quickstart
-----------
-
-Interface
-----------
-
-.. doxygenfile:: bitwuzla.h
-  :sections: func
-
-Typedefs
 ---------
+
+
+Types
+-----
 
 Bitwuzla
 ^^^^^^^^^^^^^^^
@@ -45,3 +42,10 @@ BitwuzlaResult
 BitwuzlaRoundingMode
 ^^^^^^^^^^^^^^^^^^^^^
 .. doxygenenum:: BitwuzlaRoundingMode
+
+
+Functions
+---------
+
+.. doxygengroup:: functions
+  :content-only:
