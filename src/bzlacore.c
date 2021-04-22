@@ -569,6 +569,7 @@ bzla_print_stats(Bzla *bzla)
            bzla->avmgr ? bzla->avmgr->amgr->num_cnf_literals : 0);
 
   if (bzla->slv) bzla->slv->api.print_stats(bzla->slv);
+  if (bzla->qslv) bzla->qslv->api.print_stats(bzla->qslv);
 
 #ifdef BZLA_TIME_STATISTICS
   BZLA_MSG(bzla->msg, 1, "");
@@ -659,6 +660,7 @@ bzla_print_stats(Bzla *bzla)
              percent(bzla->time.ack, bzla->time.simplify));
 
   if (bzla->slv) bzla->slv->api.print_time_stats(bzla->slv);
+  if (bzla->qslv) bzla->qslv->api.print_time_stats(bzla->qslv);
 #endif
 
   BZLA_MSG(bzla->msg, 1, "");

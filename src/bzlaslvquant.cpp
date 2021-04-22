@@ -128,15 +128,15 @@ class QuantSolverState
 
   struct
   {
-    uint64_t num_ground_checks;
-    uint64_t num_ground_checks_iterations;
-    uint64_t num_counterexample_checks;
+    uint64_t num_ground_checks            = 0;
+    uint64_t num_ground_checks_iterations = 0;
+    uint64_t num_counterexample_checks    = 0;
 
-    double time_check_sat;
-    double time_check_ground;
-    double time_synthesize_terms;
-    double time_check_counterexamples;
-    double time_get_active;
+    double time_check_sat             = 0;
+    double time_check_ground          = 0;
+    double time_synthesize_terms      = 0;
+    double time_check_counterexamples = 0;
+    double time_get_active            = 0;
   } d_statistics;
 
  private:
@@ -1205,6 +1205,7 @@ QuantSolverState::synthesize_terms()
         value = bzla_node_create_fp_const(d_bzla, fp_value);
         bzla_fp_free(d_bzla, fp_value);
       }
+      // TODO: rounding mode values
       else
       {
         assert(bzla_node_is_bv(d_bzla, sk));
