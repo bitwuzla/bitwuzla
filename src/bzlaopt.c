@@ -1010,6 +1010,25 @@ bzla_opt_init_opts(Bzla *bzla)
            BZLA_PROP_ENTAILED_MIN,
            BZLA_PROP_ENTAILED_MAX,
            "maintain and prioritize entailed propagations");
+  opts = bzla_hashptr_table_new(
+      bzla->mm, (BzlaHashPtr) bzla_hash_str, (BzlaCmpPtr) strcmpoptval);
+  add_opt_help(mm, opts, "off", BZLA_PROP_ENTAILED_OFF, "do not use strategy");
+  add_opt_help(mm,
+               opts,
+               "all",
+               BZLA_PROP_ENTAILED_ALL,
+               "propagate all entailed propagations");
+  add_opt_help(mm,
+               opts,
+               "first",
+               BZLA_PROP_ENTAILED_FIRST,
+               "process only the first entailed propagation");
+  add_opt_help(mm,
+               opts,
+               "last",
+               BZLA_PROP_ENTAILED_FIRST,
+               "process only the last entailed propagation");
+  bzla->options[BZLA_OPT_PROP_ENTAILED].options = opts;
   init_opt(bzla,
            BZLA_OPT_PROP_CONST_BITS,
            true,

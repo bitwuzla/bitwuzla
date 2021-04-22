@@ -41,19 +41,20 @@ enum BitwuzlaOption
 
   /*! **Configure the solver engine.**
    *
-   * Values: TODO
-   *  * BZLA_ENGINE_FUN [default]:
-   *    the default engine for all combinations of QF_AUFBV, uses lemmas on
-   *    demand for QF_AUFBV and eager bit-blasting for QF_BV
-   *  * BZLA_ENGINE_SLS:
-   *    the score-based local search QF_BV engine
-   *  * BZLA_ENGINE_PROP:
-   *    the propagation-based local search QF_BV engine
-   *  * BZLA_ENGINE_AIGPROP:
-   *    the propagation-based local search QF_BV engine that operates on the
-   *    bit-blasted formula (the AIG layer)
-   *  * BZLA_ENGINE_QUANT:
-   *    the quantifier engine (BV only)
+   * Values:
+   *  * **aigprop**:  
+   *    The propagation-based local search QF_BV engine that operates on the
+   *    bit-blasted formula (the AIG circuit layer).
+   *  * **fun** [**default**]:  
+   *    The default engine for all combinations of QF_AUFBVFP, uses lemmas on
+   *    demand for QF_AUFBVFP, and eager bit-blasting (optionally with local
+   *    searchin a sequential portfolio) for QF_BV.
+   *  * **prop**:  
+   *    The propagation-based local search QF_BV engine.
+   *  * **sls**:  
+   *     The stochastic local search QF_BV engine.
+   *  * **quant**:  
+   *    The quantifier engine.
    */
   BITWUZLA_OPT_ENGINE,
 
@@ -65,7 +66,7 @@ enum BitwuzlaOption
    * * ::BITWUZLA_UNKNOWN
    *
    * When disabled, return 0 on success (sat, unsat, unknown), and a non-zero
-   * exit code for any other case.
+   * exit code otherwise.
    *
    * Values:
    *  * **1**: enable [**default**]
@@ -77,17 +78,21 @@ enum BitwuzlaOption
    *
    * If unspecified, Bitwuzla will autodetect the input file format.
    *
-   * Values: TODO
-   *  * BZLA_INPUT_FORMAT_BTOR:
-   *    `BTOR <http://fmv.jku.at/papers/BrummayerBiereLonsing-BPR08.pdf>`_
-   * format
-   *  * BZLA_INPUT_FORMAT_BTOR2:
-   *    `BTOR2 <http://fmv.jku.at/papers/NiemetzPreinerWolfBiere-CAV18.pdf>`_
-   * format
-   *  * BZLA_INPUT_FORMAT_SMT2:
-   *    `SMT-LIB v2
-   * <http://smtlib.cs.uiowa.edu/papers/smt-lib-reference-v2.0-r12.09.09.pdf>`_
-   * format
+   * Values:
+   *  * **none** [**default**]:  
+   *    Auto-detect input file format.
+   *  * **btor**:
+   *    \verbatim embed:rst:leading-asterisk
+   *    BTOR format :cite:`btor`
+   *    \endverbatim
+   *  * **btor2**:
+   *    \verbatim embed:rst:leading-asterisk
+   *    BTOR2 format :cite:`btor2`
+   *    \endverbatim
+   *  * **smt2**:
+   *    \verbatim embed:rst:leading-asterisk
+   *    SMT-LIB v2 format :cite:`smtlib2`
+   *    \endverbatim
    */
   BITWUZLA_OPT_INPUT_FORMAT,
 
@@ -97,11 +102,12 @@ enum BitwuzlaOption
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   * @note Enabling this option turns off some optimization techniques.
-   * @note Enabling/disabling incremental solving after bitwuzla_check_sat()
-   *       has been called is not supported.
-   * @note This option cannot be enabled in combination with
-   *       ::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION.
+   * @note
+   * * Enabling this option turns off some optimization techniques.
+   * * Enabling/disabling incremental solving after bitwuzla_check_sat()
+   *   has been called is not supported.
+   * * This option cannot be enabled in combination with option
+   *   `BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION`.
    */
   BITWUZLA_OPT_INCREMENTAL,
 
@@ -116,19 +122,23 @@ enum BitwuzlaOption
    *
    * If unspecified, Bitwuzla will use BTOR format.
    *
-   * Values: TODO
-   *  * BZLA_OUTPUT_FORMAT_BTOR [default]:
-   *    `BTOR`_ format
-   *  * BZLA_OUTPUT_FORMAT_BTOR2:
-   *    `BTOR2`_ format
-   *  * BZLA_OUTPUT_FORMAT_SMT2:
-   *    `SMT-LIB v2`_ format
-   *  * BZLA_OUTPUT_FORMAT_AIGER_ASCII:
-   *    `Aiger ascii format
-   * <http://fmv.jku.at/papers/BiereHeljankoWieringa-FMV-TR-11-2.pdf>`_
-   *  * BZLA_OUTPUT_FORMAT_AIGER_BINARY:
-   *    `Aiger binary format
-   * <http://fmv.jku.at/papers/BiereHeljankoWieringa-FMV-TR-11-2.pdf>`_
+   * Values:
+   *  * **aiger**:
+   *    \verbatim embed:rst:leading-asterisk
+   *    AIGER ascii format :cite:`aiger`
+   *    \endverbatim
+   *  * **aigerbin**:
+   *    \verbatim embed:rst:leading-asterisk
+   *    AIGER binary format :cite:`aiger`
+   *    \endverbatim
+   *  * **btor** [**default**]:
+   *    \verbatim embed:rst:leading-asterisk
+   *    BTOR format :cite:`btor`
+   *    \endverbatim
+   *  * **smt2**:
+   *    \verbatim embed:rst:leading-asterisk
+   *    SMT-LIB v2 format :cite:`smtlib2`
+   *    \endverbatim
    */
   BITWUZLA_OPT_OUTPUT_FORMAT,
 
@@ -136,7 +146,13 @@ enum BitwuzlaOption
    *
    * If unspecified, Bitwuzla will use binary representation.
    *
-   * Values: TODO
+   * Values:
+   *  * **bin** [**default**]:  
+   *  Binary number format.
+   *  * **hex**:  
+   *  Hexadecimal number format.
+   *  * **dec**:  
+   *  Decimal number format.
    */
   BITWUZLA_OPT_OUTPUT_NUMBER_FORMAT,
 
@@ -165,8 +181,8 @@ enum BitwuzlaOption
    *  * **2**: enable, generate model for all created terms
    *  * **0**: disable [**default**]
    *
-   * @note This option cannot be enabled in combination with
-   *       ::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION.
+   * @note This option cannot be enabled in combination with option
+   *       `BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION`.
    */
   BITWUZLA_OPT_PRODUCE_MODELS,
 
@@ -180,21 +196,19 @@ enum BitwuzlaOption
 
   /*! **Configure the SAT solver engine.**
    *
-   * Values: TODO
-   *  | Available option values and default values depend on the sat solvers
-   *    configured.
-   *  * BZLA_SAT_ENGINE_CADICAL:
-   *    `CaDiCaL <https://fmv.jku.at/cadical>`_
-   *  * BZLA_SAT_ENGINE_CMS:
-   *    `CryptoMiniSat <https://github.com/msoos/cryptominisat>`_
-   *  * BZLA_SAT_ENGINE_KISSAT:
-   *    `Kissat <https://github.com/arminbiere/kissat>`_
-   *  * BZLA_SAT_ENGINE_LINGELING:
-   *    `Lingeling <https://fmv.jku.at/lingeling>`_
-   *  * BZLA_SAT_ENGINE_MINISAT:
-   *    `MiniSat <https://github.com/niklasso/minisat>`_
-   *  * BZLA_SAT_ENGINE_PICOSAT:
-   *    `PicoSAT <http://fmv.jku.at/picosat/>`_
+   * Values:
+   *  * **cadical** [**default**]:
+   *    [CaDiCaL](https://github.com/arminbiere/cadical)
+   *  * **cms**:
+   *    [CryptoMiniSat](https://github.com/msoos/cryptominisat)
+   *  * **kissat**:
+   *    [Kissat](https://github.com/arminbiere/kissat)
+   *  * **lingeling**:
+   *    [Lingeling](https://github.com/arminbiere/lingeling)
+   *  * **minisat**:
+   *    [MiniSat](https://github.com/niklasso/minisat)
+   *  * **picosat**:
+   *    [PicoSAT](http://fmv.jku.at/picosat/)
    */
   BITWUZLA_OPT_SAT_ENGINE,
 
@@ -229,7 +243,13 @@ enum BitwuzlaOption
    *
    * Eager elimination of lambda terms via beta reduction.
    *
-   * Values: TODO
+   * Values:
+   *  * **none** [**default**]:  
+   *    Disable beta reduction preprocessing.
+   *  * **fun**:  
+   *    Only beta reduce functions that do not represent array stores.
+   *  * **all**:  
+   *    Only beta reduce all functions, including array stores.
    */
   BITWUZLA_OPT_PP_BETA_REDUCE,
 
@@ -402,13 +422,13 @@ enum BitwuzlaOption
    *
    * Set order in which inputs are assumed in the dual propagation clone.
    *
-   * Values: TODO
-   *  * BZLA_DP_QSORT_JUST [default]:
-   *    order by score, highest score first
-   *  * BZLA_DP_QSORT_ASC:
-   *    order by input id, ascending
-   *  * BZLA_DP_QSORT_DESC:
-   *    order by input id, descending
+   * Values:
+   *  * **just** [**default**]:  
+   *    Order by score, highest score first.
+   *  * **asc**:  
+   *    Order by input id, ascending.
+   *  * **desc**:  
+   *    Order by input id, descending.
    */
   BITWUZLA_OPT_FUN_DUAL_PROP_QSORT,
 
@@ -417,15 +437,15 @@ enum BitwuzlaOption
    *
    * Configure mode for eager lemma generation.
    *
-   * Values: TODO
-   *  * BZLA_FUN_EAGER_LEMMAS_NONE:
-   *    do not generate lemmas eagerly (generate one single lemma per
-   *    refinement iteration)
-   *  * BZLA_FUN_EAGER_LEMMAS_CONF:
-   *    only generate lemmas eagerly until the first conflict dependent on
-   *    another conflict is found
-   *  * BZLA_FUN_EAGER_LEMMAS_ALL:
-   *    in each refinement iteration, generate lemmas for all conflicts
+   * Values:
+   *  * **none**:  
+   *    Do not generate lemmas eagerly (generate one single lemma per
+   *    refinement iteration).
+   *  * **conf** [**default**]:  
+   *    Only generate lemmas eagerly until the first conflict dependent on
+   *    another conflict is found.
+   *  * **all**:  
+   *    In each refinement iteration, generate lemmas for all conflicts.
    */
   BITWUZLA_OPT_FUN_EAGER_LEMMAS,
 
@@ -455,13 +475,13 @@ enum BitwuzlaOption
    * Configure heuristic to determine path selection for justification
    * optimization.
    *
-   * Values: TODO
-   *  * BZLA_JUST_HEUR_BRANCH_MIN_APP [default]:
-   *    choose branch with minimum number of applies
-   *  * BZLA_JUST_HEUR_BRANCH_MIN_DEP:
-   *    choose branch with minimum depth
-   *  * BZLA_JUST_HEUR_LEFT:
-   *    always choose left branch
+   * Values:
+   *  * **applies** [**default**]:  
+   *    Choose branch with minimum number of applies.
+   *  * **depth**:  
+   *    Choose branch with minimum depth.
+   *  * **left**:  
+   *    Always choose left branch.
    */
   BITWUZLA_OPT_FUN_JUST_HEURISTIC,
 
@@ -545,8 +565,8 @@ enum BitwuzlaOption
    *    Propagation moves.**
    *
    * Configure propagation moves, chosen with a ratio of number of propagation
-   * moves ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS to regular SLS moves
-   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
+   * moves `BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to regular SLS moves
+   * `BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
    *
    * Values:
    *  * **1**: enable
@@ -572,7 +592,7 @@ enum BitwuzlaOption
    *
    * Configure the number of propagation moves to be performed when propagation
    * moves are enabled. Propagation moves are chosen with a ratio of
-   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS to ::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
+   * `BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to `BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
    *
    * Values:
    *  * An unsigned integer value (**default**: 1)
@@ -586,7 +606,7 @@ enum BitwuzlaOption
    *
    * Configure the number of regular SLS moves to be performed when propagation
    * moves are enabled. Propagation moves are chosen with a ratio of
-   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS to ::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
+   * `BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to `BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
    *
    * Values:
    *  * An unsigned integer value (**default**: 1)
@@ -624,7 +644,7 @@ enum BitwuzlaOption
    *
    * Configure random walk moves, where one out of all possible neighbors is
    * randomly selected (with given probability
-   * ::BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK) for a randomly selected candidate
+   * `BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK`) for a randomly selected candidate
    * variable.
    *
    * Values:
@@ -689,19 +709,18 @@ enum BitwuzlaOption
    *
    * Configure the move selection strategy for the SLS engine.
    *
-   * Values: TODO
-   *  * BZLA_SLS_STRAT_BEST_MOVE:
-   *    always choose best score improving move
-   *  * BZLA_SLS_STRAT_RAND_WALK:
-   *    always choose random walk weighted by score
-   *  * BZLA_SLS_STRAT_FIRST_BEST_MOVE [default]:
-   *    always choose first best move (no matter if any other move is better)
-   *  * BZLA_SLS_STRAT_BEST_SAME_MOVE:
-   *    determine move as best move even if its score is not better but the
-   *    same as the score of the previous best move
-   *  * BZLA_SLS_STRAT_ALWAYS_PROP:
-   *    always choose propagation move (and recover with SLS move in case of
-   *    conflict)
+   * Values:
+   *  * **best** [**default**]:  
+   *    Choose best score improving move.
+   *  * **walk**:  
+   *    Choose random walk weighted by score.
+   *  * **first**:  
+   *    Choose first best move (no matter if any other move is better).
+   *  * **same**:  
+   *    Determine move as best move even if its score is not better but the
+   *    same as the score of the previous best move.
+   *  * **prop**:  
+   *    Choose propagation move (and recover with SLS move in case of conflict).
    */
   BITWUZLA_OPT_SLS_STRATEGY,
 
@@ -770,22 +789,25 @@ enum BitwuzlaOption
    * If enabled, propagations from this queue are propagated before randomly
    * choosing a yet unsatisfied path from the root.
    *
-   * Values: TODO
-   *  This feature is disabled (BZLA_PROP_ENTAILED_OFF) by default.
+   * Values:
    *
-   *  * BZLA_PROP_ENTAILED_OFF: do not use strategy (default)
-   *  * BZLA_PROP_ENTAILED_ALL: propagate all entailed propagations
-   *  * BZLA_PROP_ENTAILED_FIRST: process only the first entailed propagation
-   *  * BZLA_PROP_ENTAILED_LAST: process only the last entailed propagation
+   *  * **off** [**default**]:  
+   *    Disable strategy.
+   *  * **all**:  
+   *    Propagate all entailed propagations.
+   *  * **first**:  
+   *    Process only the first entailed propagation.
+   *  * **last**:  
+   *    Process only the last entailed propagation.
    */
   BITWUZLA_OPT_PROP_ENTAILED,
 
   /*! **Propagation-based local search solver engine:
    *    Delta for flipping ite conditions with constant branches.**
    *
-   * Configure the delta by which ::BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST is
+   * Configure the delta by which `BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST` is
    * decreased or increased after a limit
-   * ::BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL is reached.
+   * `BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL` is reached.
    *
    * Values:
    *  * A signed integer value (**default**: 100).
@@ -797,8 +819,8 @@ enum BitwuzlaOption
    *
    * Configure the limit for how often the path to the condition for ite
    * operations with constant branches may be selected before
-   * ::BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST is decreased or increased by
-   * ::BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA.
+   * `BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST` is decreased or increased by
+   * `BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA`.
    *
    * Values:
    *  * A signed integer value (**default**: 500).
@@ -860,11 +882,11 @@ enum BitwuzlaOption
    *
    * Configure mode for path selection.
    *
-   * Values: TODO
-   *  * BZLA_PROP_PATH_SEL_ESSENTIAL [default]:
-   *    select path based on essential inputs
-   *  * BZLA_PROP_PATH_SEL_RANDOM:
-   *    select path based on random inputs
+   * Values:
+   *  * **essential** [default]:  
+   *    Select path based on essential inputs.
+   *  * **random**:  
+   *    Select path randomly.
    */
   BITWUZLA_OPT_PROP_PATH_SEL,
 
@@ -1135,20 +1157,19 @@ enum BitwuzlaOption
    *
    * Configure mode for synthesizing Skolem functions.
    *
-   * Values: TODO
-   * * BZLA_QUANT_SYNTH_NONE:
-   *   do not synthesize skolem functions (use model values for instantiation)
-   * * BZLA_QUANT_SYNTH_EL:
-   *   use enumerative learning to synthesize skolem functions
-   * * BZLA_QUANT_SYNTH_ELMC:
-   *   use enumerative learning modulo the predicates in the cone of influence
-   *   of the existential variables to synthesize skolem functions
-   * * BZLA_QUANT_SYNTH_EL_ELMC:
-   *   chain BZLA_QUANT_SYNTH_EL and BZLA_QUANT_SYNTH_ELMC approaches to
-   *   synthesize skolem functions
-   * * BZLA_QUANT_SYNTH_ELMR:
-   *   use enumerative learning modulo the given root constraints to synthesize
-   *   skolem functions
+   * Values:
+   * * **none**:  
+   *   Do not synthesize skolem functions (use model values for instantiation).
+   * * **el**:  
+   *   Use enumerative learning to synthesize skolem functions.
+   * * **elmc**:  
+   *   Use enumerative learning modulo the predicates in the cone of influence
+   *   of the existential variables to synthesize skolem functions.
+   * * **elelmc**:  
+   *   Chain `el` and `elmc` approaches to synthesize skolem functions.
+   * * **elmr** [**default**]:  
+   *   Use enumerative learning modulo the given root constraints to synthesize
+   *   skolem functions.
    */
   BITWUZLA_OPT_QUANT_SYNTH,
 
