@@ -284,12 +284,11 @@ QuantSolverState::pop_assumption()
   BzlaNode *n = d_assumptions.back();
   d_assumptions.pop_back();
 
-  BzlaNode *simp = bzla_simplify_exp(d_bzla, n);
 
   assert(bzla_hashptr_table_get(d_bzla->orig_assumptions, n));
   bzla_hashptr_table_remove(d_bzla->orig_assumptions, n, 0, 0);
 
-  simp = bzla_simplify_exp(d_bzla, n);
+  BzlaNode *simp = bzla_simplify_exp(d_bzla, n);
   assert(bzla_hashptr_table_get(d_bzla->assumptions, simp));
   bzla_hashptr_table_remove(d_bzla->assumptions, simp, 0, 0);
   bzla_node_release(d_bzla, n);
@@ -1106,7 +1105,13 @@ QuantSolverState::synthesize_terms()
       prev_f = it_prev->second;
     }
 
-    /* Synthesize Skolem functions. */
+    /**
+     * Synthesize Skolem function.
+     *
+     * Uses enumerative syntax-guided synthesis to synthesize a Skolem function
+     * based on concrete input/output pairs. The input/output pairs are
+     * constructed from the current model of the Skolem UF `sk`.
+     */
     if (bzla_node_is_fun(sk))
     {
       qlog("Synthesize term for %s\n", bzla_util_node2string(sk));
@@ -1127,7 +1132,8 @@ QuantSolverState::synthesize_terms()
 
       if (prev_f)
       {
-        // TODO: add params of prev_f to value_in_map
+        // TODO: add params of prev_f to value_in_map so that we can pass
+        // prev_f to bzla_synthesize_term.
       }
 
       BzlaSortId domain =
@@ -1151,13 +1157,13 @@ QuantSolverState::synthesize_terms()
                                          values_out.data(),
                                          values_in.size(),
                                          value_in_map,
+                                         nullptr,
                                          0,
-                                         0,
-                                         0,  // BzlaNode **consts,
+                                         nullptr,  // BzlaNode **consts,
                                          0,  // uint32_t nconsts,
-                                         10000,
-                                         5,
-                                         0);  // BzlaNode *prev_synth)
+                                         10000, // max checks
+                                         5,     // max levels
+                                         nullptr);  // BzlaNode *prev_synth)
 
       for (BzlaBitVectorTuple *bvtup : values_in)
       {
@@ -1168,6 +1174,7 @@ QuantSolverState::synthesize_terms()
         bzla_bv_free(d_bzla->mm, bv);
       }
 
+      // Create new candidate function with synthesized term `t`.
       if (t)
       {
         BzlaNode *f = bzla_exp_fun(d_bzla, params.data(), params.size(), t);
@@ -1180,6 +1187,9 @@ QuantSolverState::synthesize_terms()
         store_synthesized_term(sk, f);
         bzla_node_release(d_bzla, f);
       }
+      // Was not able to synthesize a candidate term for current input/output
+      // pairs. Delete previously synthesized function since it does not have
+      // the expected input/output behavior for Skolem UF `sk`.
       else if (prev_f)
       {
         store_synthesized_term(sk, nullptr);
