@@ -107,7 +107,7 @@ enum BitwuzlaOption
    * * Enabling/disabling incremental solving after bitwuzla_check_sat()
    *   has been called is not supported.
    * * This option cannot be enabled in combination with option
-   *   `BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION`.
+   *   ::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION.
    */
   BITWUZLA_OPT_INCREMENTAL,
 
@@ -182,7 +182,7 @@ enum BitwuzlaOption
    *  * **0**: disable [**default**]
    *
    * @note This option cannot be enabled in combination with option
-   *       `BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION`.
+   *       ::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION.
    */
   BITWUZLA_OPT_PRODUCE_MODELS,
 
@@ -565,8 +565,8 @@ enum BitwuzlaOption
    *    Propagation moves.**
    *
    * Configure propagation moves, chosen with a ratio of number of propagation
-   * moves `BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to regular SLS moves
-   * `BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
+   * moves ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS to regular SLS moves
+   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
    *
    * Values:
    *  * **1**: enable
@@ -592,7 +592,7 @@ enum BitwuzlaOption
    *
    * Configure the number of propagation moves to be performed when propagation
    * moves are enabled. Propagation moves are chosen with a ratio of
-   * `BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to `BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
+   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to `BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
    *
    * Values:
    *  * An unsigned integer value (**default**: 1)
@@ -606,7 +606,7 @@ enum BitwuzlaOption
    *
    * Configure the number of regular SLS moves to be performed when propagation
    * moves are enabled. Propagation moves are chosen with a ratio of
-   * `BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to `BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
+   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to `BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
    *
    * Values:
    *  * An unsigned integer value (**default**: 1)
@@ -644,7 +644,7 @@ enum BitwuzlaOption
    *
    * Configure random walk moves, where one out of all possible neighbors is
    * randomly selected (with given probability
-   * `BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK`) for a randomly selected candidate
+   * ::BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK) for a randomly selected candidate
    * variable.
    *
    * Values:
@@ -805,9 +805,9 @@ enum BitwuzlaOption
   /*! **Propagation-based local search solver engine:
    *    Delta for flipping ite conditions with constant branches.**
    *
-   * Configure the delta by which `BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST` is
+   * Configure the delta by which ::BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST is
    * decreased or increased after a limit
-   * `BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL` is reached.
+   * ::BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL is reached.
    *
    * Values:
    *  * A signed integer value (**default**: 100).
@@ -819,8 +819,8 @@ enum BitwuzlaOption
    *
    * Configure the limit for how often the path to the condition for ite
    * operations with constant branches may be selected before
-   * `BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST` is decreased or increased by
-   * `BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA`.
+   * ::BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST is decreased or increased by
+   * ::BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA.
    *
    * Values:
    *  * A signed integer value (**default**: 500).
@@ -1796,11 +1796,6 @@ typedef struct BitwuzlaTerm BitwuzlaTerm;
 /** A Bitwuzla sort. */
 typedef struct BitwuzlaSort BitwuzlaSort;
 
-/**
- * \addtogroup functions
- * @{
- */
-
 /* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -2666,9 +2661,9 @@ void bitwuzla_reset_assumptions(Bitwuzla *bitwuzla);
  *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return BITWUZLA_SAT if the input formula was simplified to true,
- *         BITWUZLA_UNSAT if it was simplified to false, and BITWUZLA_UNKNOWN
- *         otherwise.
+ * @return ::BITWUZLA_SAT if the input formula was simplified to true,
+ *         ::BITWUZLA_UNSAT if it was simplified to false, and
+ *         ::BITWUZLA_UNKNOWN otherwise.
  *
  * @see bitwuzla_assert, BitwuzlaResult
  */
@@ -2687,10 +2682,10 @@ BitwuzlaResult bitwuzla_simplify(Bitwuzla *bitwuzla);
  *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return BITWUZLA_SAT if the input formula is satisfiable and BITWUZLA_UNSAT
- *         if it is unsatisfiable, and BITWUZLA_UNKNOWN when neither
- *         satisfiability nor unsatisfiability was determined. This can happen
- *         when \p bitwuzla was terminated via a termination callback.
+ * @return ::BITWUZLA_SAT if the input formula is satisfiable and
+ *         ::BITWUZLA_UNSAT if it is unsatisfiable, and ::BITWUZLA_UNKNOWN when
+ *         neither satisfiability nor unsatisfiability was determined. This can
+ *         happen when \p bitwuzla was terminated via a termination callback.
  *
  * @see bitwuzla_assert, bitwuzla_assume, bitwuzla_set_option, BitwuzlaResult
  */
@@ -2699,7 +2694,7 @@ BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
 /**
  * Get a term representing the model value of a given term.
  *
- * Requires that the last bitwuzla_check_sat() query returned BITWUZLA_SAT.
+ * Requires that the last bitwuzla_check_sat() query returned ::BITWUZLA_SAT.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param term The term to query a model value for.
@@ -2713,7 +2708,7 @@ BitwuzlaTerm *bitwuzla_get_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 /**
  * Print a model for the current input formula.
  *
- * Requires that the last bitwuzla_check_sat() query returned BITWUZLA_SAT.
+ * Requires that the last bitwuzla_check_sat() query returned ::BITWUZLA_SAT.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param format The output format for printing the model. Either "btor" for
@@ -2755,9 +2750,9 @@ void bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
  * @param parsed_smt2 Output parameter, true if parsed input file has been
  *                    detected as SMT-LIB v2 input.
  *
- * @return BITWUZLA_SAT if the input formula was simplified to true,
- *         BITWUZLA_UNSAT if it was simplified to false, and BITWUZLA_UNKNOWN
- *         otherwise.
+ * @return ::BITWUZLA_SAT if the input formula was simplified to true,
+ *         ::BITWUZLA_UNSAT if it was simplified to false,
+ *         and ::BITWUZLA_UNKNOWN otherwise.
  *
  * @see bitwuzla_parse_format
  */
@@ -2786,9 +2781,9 @@ BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
  * @param parsed_status Output parameter, stores the status of the input in case
  *                      of SMT-LIB v2 input, if given.
  *
- * @return BITWUZLA_SAT if the input formula was simplified to true,
- *         BITWUZLA_UNSAT if it was simplified to false, and BITWUZLA_UNKNOWN
- *         otherwise.
+ * @return ::BITWUZLA_SAT if the input formula was simplified to true,
+ *         ::BITWUZLA_UNSAT if it was simplified to false,
+ *         and ::BITWUZLA_UNKNOWN otherwise.
  *
  * @see bitwuzla_parse
  */
@@ -3440,10 +3435,6 @@ bool bitwuzla_term_is_const_array(const BitwuzlaTerm *term);
 void bitwuzla_term_dump(const BitwuzlaTerm *term,
                         const char *format,
                         FILE *file);
-
-/**
- * }@
- */
 
 /* -------------------------------------------------------------------------- */
 

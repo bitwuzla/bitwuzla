@@ -47,5 +47,5 @@ BitwuzlaRoundingMode
 Functions
 ---------
 
-.. doxygengroup:: functions
-  :content-only:
+.. doxygenfile:: bitwuzla.h
+  :sections: func
