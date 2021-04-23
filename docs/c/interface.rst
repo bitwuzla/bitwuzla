@@ -27,13 +27,19 @@ BitwuzlaTerm
 Enums
 ------
 
-BitwuzlaOption
-^^^^^^^^^^^^^^^
-.. doxygenenum:: BitwuzlaOption
-
 BitwuzlaBVBase
 ^^^^^^^^^^^^^^^
 .. doxygenenum:: BitwuzlaBVBase
+
+BitwuzlaKind
+^^^^^^^^^^^^
+See :ref:`c/kinds:kinds` for more details and examples on how to create terms
+of a given kind.
+
+BitwuzlaOption
+^^^^^^^^^^^^^^
+See :ref:`c/options:options` for more details and examples on how to set and
+get options.
 
 BitwuzlaResult
 ^^^^^^^^^^^^^^^

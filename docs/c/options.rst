@@ -1,0 +1,4 @@
+Options
+=======
+
+.. doxygenenum:: BitwuzlaOption

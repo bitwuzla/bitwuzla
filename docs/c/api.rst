@@ -7,6 +7,8 @@ C API Documentation
 .. toctree::
   :maxdepth: 2
 
+  options
+  kinds
   interface
 
 Quickstart

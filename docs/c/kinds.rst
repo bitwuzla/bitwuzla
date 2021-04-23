@@ -1,0 +1,4 @@
+Kinds
+=====
+
+.. doxygenenum:: BitwuzlaKind
