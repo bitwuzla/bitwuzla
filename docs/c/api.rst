@@ -1,8 +1,8 @@
 C API Documentation
 ============================
 
-* :ref:`c/api_c:quickstart`
-* :ref:`c/api_c:examples`
+* :ref:`c/api:quickstart`
+* :ref:`c/api:examples`
 
 .. toctree::
   :maxdepth: 2

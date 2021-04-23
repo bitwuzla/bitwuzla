@@ -1,8 +1,8 @@
 Python API Documentation
 =================================
 
-* :ref:`python/api_python:quickstart`
-* :ref:`python/api_python:examples`
+* :ref:`python/api:quickstart`
+* :ref:`python/api:examples`
 
 .. toctree::
   :maxdepth: 2
