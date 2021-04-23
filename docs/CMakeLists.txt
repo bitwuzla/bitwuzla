@@ -27,6 +27,9 @@ add_custom_target(docs ALL
                     -c ${CMAKE_CURRENT_BINARY_DIR}
                     ${SPHINX_INPUT_DIR}
                     ${SPHINX_OUTPUT_DIR}
+                  # Remove unwanted header
+                  COMMAND sed -i'orig' 's/<p class="breathe-sectiondef-title rubric" id="breathe-section-title-functions">Functions<\\/p>//' ${SPHINX_OUTPUT_DIR}/c/interface.html
+                  COMMAND find ${SPHINX_OUTPUT_DIR} -name '*orig' -delete
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   COMMENT "Generating Sphinx API documentation")
 
