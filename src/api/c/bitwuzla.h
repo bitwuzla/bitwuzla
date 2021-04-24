@@ -61,9 +61,9 @@ enum BitwuzlaOption
   /*! **Use non-zero exit codes for sat and unsat results.**
    *
    * When enabled, use Bitwuzla exit codes:
-   * * ::BITWUZLA_SAT
-   * * ::BITWUZLA_UNSAT
-   * * ::BITWUZLA_UNKNOWN
+   * * `::BITWUZLA_SAT`
+   * * `::BITWUZLA_UNSAT`
+   * * `::BITWUZLA_UNKNOWN`
    *
    * When disabled, return 0 on success (sat, unsat, unknown), and a non-zero
    * exit code otherwise.
@@ -107,7 +107,7 @@ enum BitwuzlaOption
    * * Enabling/disabling incremental solving after bitwuzla_check_sat()
    *   has been called is not supported.
    * * This option cannot be enabled in combination with option
-   *   ::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION.
+   *   `::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION`.
    */
   BITWUZLA_OPT_INCREMENTAL,
 
@@ -182,7 +182,7 @@ enum BitwuzlaOption
    *  * **0**: disable [**default**]
    *
    * @note This option cannot be enabled in combination with option
-   *       ::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION.
+   *       `::BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION`.
    */
   BITWUZLA_OPT_PRODUCE_MODELS,
 
@@ -565,8 +565,8 @@ enum BitwuzlaOption
    *    Propagation moves.**
    *
    * Configure propagation moves, chosen with a ratio of number of propagation
-   * moves ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS to regular SLS moves
-   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
+   * moves `::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to regular SLS moves
+   * `::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
    *
    * Values:
    *  * **1**: enable
@@ -592,12 +592,15 @@ enum BitwuzlaOption
    *
    * Configure the number of propagation moves to be performed when propagation
    * moves are enabled. Propagation moves are chosen with a ratio of
-   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to `BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
+   * `::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to
+   * `::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
    *
    * Values:
    *  * An unsigned integer value (**default**: 1)
    *
-   * @see BITWUZLA_OPT_SLS_MOVE_PROP, BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS
+   * @see
+   *   * BITWUZLA_OPT_SLS_MOVE_PROP
+   *   * BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS
    */
   BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS,
 
@@ -606,12 +609,15 @@ enum BitwuzlaOption
    *
    * Configure the number of regular SLS moves to be performed when propagation
    * moves are enabled. Propagation moves are chosen with a ratio of
-   * ::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to `BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS.
+   * `::BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS` to
+   * `::BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS`.
    *
    * Values:
    *  * An unsigned integer value (**default**: 1)
    *
-   * @see BITWUZLA_OPT_SLS_MOVE_PROP, BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS
+   * @see
+   *   * BITWUZLA_OPT_SLS_MOVE_PROP
+   *   * BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS
    */
   BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS,
 
@@ -644,14 +650,15 @@ enum BitwuzlaOption
    *
    * Configure random walk moves, where one out of all possible neighbors is
    * randomly selected (with given probability
-   * ::BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK) for a randomly selected candidate
-   * variable.
+   * `::BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK`) for a randomly selected
+   * candidate variable.
    *
    * Values:
    *  * **1**: enable
    *  * **0**: disable [**default**]
    *
-   * @see BITWUZLA_OPT_SLS_MOVE_PROB_RAND_WALK
+   * @see
+   *   * BITWUZLA_OPT_SLS_MOVE_PROB_RAND_WALK
    */
   BITWUZLA_OPT_SLS_MOVE_RAND_WALK,
 
@@ -690,7 +697,8 @@ enum BitwuzlaOption
    * Values:
    *  * An unsigned integer value <= 1000 (= 100%) (**default**: 100)
    *
-   * @see BITWUZLA_OPT_SLS_MOVE_RAND_WALK
+   * @see
+   *   * BITWUZLA_OPT_SLS_MOVE_RAND_WALK
    */
   BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK,
 
@@ -805,9 +813,9 @@ enum BitwuzlaOption
   /*! **Propagation-based local search solver engine:
    *    Delta for flipping ite conditions with constant branches.**
    *
-   * Configure the delta by which ::BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST is
+   * Configure the delta by which `::BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST` is
    * decreased or increased after a limit
-   * ::BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL is reached.
+   * `::BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL` is reached.
    *
    * Values:
    *  * A signed integer value (**default**: 100).
@@ -819,8 +827,8 @@ enum BitwuzlaOption
    *
    * Configure the limit for how often the path to the condition for ite
    * operations with constant branches may be selected before
-   * ::BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST is decreased or increased by
-   * ::BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA.
+   * `::BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST` is decreased or increased by
+   * `::BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA`.
    *
    * Values:
    *  * A signed integer value (**default**: 500).
@@ -969,7 +977,8 @@ enum BitwuzlaOption
    * Values:
    *  * An unsigned integer value <= 1000 (= 100%) (**default**: 0).
    *
-   * @see BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC
+   * @see
+   *   * BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC
    */
   BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
 
@@ -1391,18 +1400,18 @@ enum BitwuzlaKind
   BITWUZLA_KIND_BV_OR,
   /*! Bit-vector and reduction.
    *
-   * Bit-wise \c and reduction, all bits are \c and ed together into a single bit.
-   * This corresponds to bit-wise \c and reduction as known from Verilog. */
+   * Bit-wise *and* reduction, all bits are *and*'ed together into a single bit.
+   * This corresponds to bit-wise *and* reduction as known from Verilog. */
   BITWUZLA_KIND_BV_REDAND,
   /*! Bit-vector reduce or.
    *
-   * Bit-wise \c or reduction, all bits are \c or ed together into a single bit.
-   * This corresponds to bit-wise \c or reduction as known from Verilog. */
+   * Bit-wise *or* reduction, all bits are *or*'ed together into a single bit.
+   * This corresponds to bit-wise *or* reduction as known from Verilog. */
   BITWUZLA_KIND_BV_REDOR,
   /*! Bit-vector reduce xor.
    *
-   * Bit-wise \c xor reduction, all bits are \c xor ed together into a single bit.
-   * This corresponds to bit-wise \c xor reduction as known from Verilog. */
+   * Bit-wise *xor* reduction, all bits are *xor*'ed together into a single bit.
+   * This corresponds to bit-wise *xor* reduction as known from Verilog. */
   BITWUZLA_KIND_BV_REDXOR,
   /*! Bit-vector rotate left (not indexed).
    *
@@ -1803,22 +1812,24 @@ typedef struct BitwuzlaSort BitwuzlaSort;
 /**
  * Create a new Bitwuzla instance.
  *
- * The returned instance must be deleted via bitwuzla_delete().
+ * The returned instance must be deleted via `bitwuzla_delete()`.
  *
  * @return A pointer to the created Bitwuzla instance.
  *
- * @see bitwuzla_delete
+ * @see
+ *   * `bitwuzla_delete`
  */
 Bitwuzla *bitwuzla_new(void);
 
 /**
  * Delete a Bitwuzla instance.
  *
- * The given instance must have been created via bitwuzla_new().
+ * The given instance must have been created via `bitwuzla_new()`.
  *
  * @param bitwuzla The Bitwuzla instance to delete.
  *
- * @see bitwuzla_new
+ * @see
+ *   * `bitwuzla_new`
  */
 void bitwuzla_delete(Bitwuzla *bitwuzla);
 
@@ -1826,14 +1837,15 @@ void bitwuzla_delete(Bitwuzla *bitwuzla);
  * Reset a Bitwuzla instance.
  *
  * This deletes the given instance and creates a new instance in place.
- * The given instance must have been created via bitwuzla_new().
+ * The given instance must have been created via `bitwuzla_new()`.
  *
  * @note All sorts and terms associated with the given instance are released
  *       and thus invalidated.
  *
  * @param bitwuzla The Bitwuzla instance to reset.
  *
- * @see bitwuzla_new
+ * @see
+ *   * `bitwuzla_new`
  */
 void bitwuzla_reset(Bitwuzla *bitwuzla);
 
@@ -1860,26 +1872,32 @@ const char *bitwuzla_git_id(Bitwuzla *bitwuzla);
 
 /**
  * If termination callback function has been configured via
- * bitwuzla_set_termination_callback(), call this termination function.
+ * `bitwuzla_set_termination_callback()`, call this termination function.
  *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return True if \p bitwuzla has been terminated.
+ * @return True if `bitwuzla` has been terminated.
+ *
+ * @see
+ *   * `bitwuzla_set_termination_callback`
+ *   * `bitwuzla_get_termination_callback_state`
  */
 bool bitwuzla_terminate(Bitwuzla *bitwuzla);
 
 /**
  * Configure a termination callback function.
  *
- * The \p state of the callback can be retrieved via
- * bitwuzla_get_termination_callback_state().
+ * The `state` of the callback can be retrieved via
+ * `bitwuzla_get_termination_callback_state()`.
  *
  * @param bitwuzla The Bitwuzla instance.
- * @param fun The callback function, returns a value > 0 if \p bitwuzla has
+ * @param fun The callback function, returns a value > 0 if `bitwuzla` has
  *            been terminated.
  * @param state The argument to the callback function.
  *
- * @see bitwuzla_terminate, bitwuzla_get_termination_callback_state
+ * @see
+ *   * `bitwuzla_terminate`
+ *   * `bitwuzla_get_termination_callback_state`
  */
 void bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
                                        int32_t (*fun)(void *),
@@ -1889,14 +1907,16 @@ void bitwuzla_set_termination_callback(Bitwuzla *bitwuzla,
  * Get the state of the termination callback function.
  *
  * The returned object representing the state of the callback corresponds to
- * the \p state configured as argument to the callback function via
- * bitwuzla_get_termination_callback_state().
+ * the `state` configured as argument to the callback function via
+ * `bitwuzla_set_termination_callback()`.
  *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return The object passed as argument \p state to the callback function.
+ * @return The object passed as argument `state` to the callback function.
  *
- * @see bitwuzla_terminate, see bitwuzla_set_termination_callback
+ * @see
+ *   * `bitwuzla_terminate`
+ *   * `bitwuzla_set_termination_callback`
  */
 void *bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla);
 
@@ -1908,7 +1928,7 @@ void *bitwuzla_get_termination_callback_state(Bitwuzla *bitwuzla);
  *       as a global variable). It you use threading, make sure to set the
  *       abort callback prior to creating threads.
  *
- * @param fun The callback function, the argument \p msg explains the reason
+ * @param fun The callback function, the argument `msg` explains the reason
  *            for the abort.
  */
 void bitwuzla_set_abort_callback(void (*fun)(const char *msg));
@@ -1920,7 +1940,8 @@ void bitwuzla_set_abort_callback(void (*fun)(const char *msg));
  * @param option The option.
  * @param val The option value.
  *
- * @see BitwuzlaOption
+ * @see
+ *   * `BitwuzlaOption`
  */
 void bitwuzla_set_option(Bitwuzla *bitwuzla,
                          BitwuzlaOption option,
@@ -1933,7 +1954,8 @@ void bitwuzla_set_option(Bitwuzla *bitwuzla,
  * @param option The option.
  * @param val The option string value.
  *
- * @see BitwuzlaOption
+ * @see
+ *   * `BitwuzlaOption`
  */
 void bitwuzla_set_option_str(Bitwuzla *bitwuzla,
                              BitwuzlaOption option,
@@ -1947,7 +1969,8 @@ void bitwuzla_set_option_str(Bitwuzla *bitwuzla,
  *
  * @return The option value.
  *
- * @see BitwuzlaOption
+ * @see
+ *   * `BitwuzlaOption`
  */
 uint32_t bitwuzla_get_option(Bitwuzla *bitwuzla, BitwuzlaOption option);
 
@@ -1958,11 +1981,15 @@ uint32_t bitwuzla_get_option(Bitwuzla *bitwuzla, BitwuzlaOption option);
  * @param index The index sort of the array sort.
  * @param element The element sort of the array sort.
  *
- * @return An array sort which maps sort \p index to sort \p element.
+ * @return An array sort which maps sort `index` to sort `element`.
  *
- * @see bitwuzla_sort_is_array, bitwuzla_sort_array_get_index,
- * bitwuzla_sort_array_get_element, bitwuzla_term_is_array,
- * bitwuzla_term_array_get_index_sort, bitwuzla_term_array_get_element_sort
+ * @see
+ *   * `bitwuzla_sort_is_array`
+ *   * `bitwuzla_sort_array_get_index`
+ *   * `bitwuzla_sort_array_get_element`
+ *   * `bitwuzla_term_is_array`
+ *   * `bitwuzla_term_array_get_index_sort`
+ *   * `bitwuzla_term_array_get_element_sort`
  */
 BitwuzlaSort *bitwuzla_mk_array_sort(Bitwuzla *bitwuzla,
                                      const BitwuzlaSort *index,
@@ -1987,8 +2014,11 @@ BitwuzlaSort *bitwuzla_mk_bool_sort(Bitwuzla *bitwuzla);
  *
  * @return A bit-vector sort of given size.
  *
- * @see bitwuzla_sort_is_bv, bitwuzla_sort_bv_get_size, bitwuzla_term_is_bv,
- * bitwuzla_term_bv_get_size
+ * @see
+ *   * `bitwuzla_sort_is_bv`
+ *   * `bitwuzla_sort_bv_get_size`
+ *   * `bitwuzla_term_is_bv`
+ *   * `bitwuzla_term_bv_get_size`
  */
 BitwuzlaSort *bitwuzla_mk_bv_sort(Bitwuzla *bitwuzla, uint32_t size);
 
@@ -2001,9 +2031,13 @@ BitwuzlaSort *bitwuzla_mk_bv_sort(Bitwuzla *bitwuzla, uint32_t size);
  *
  * @return A floating-point sort of given format.
  *
- * @see bitwuzla_sort_is_fp, bitwuzla_sort_fp_get_exp_size,
- * bitwuzla_sort_fp_get_sig_size, bitwuzla_term_is_fp,
- * bitwuzla_term_fp_get_exp_size, bitwuzla_term_fp_get_sig_size
+ * @see
+ *   * `bitwuzla_sort_is_fp`
+ *   * `bitwuzla_sort_fp_get_exp_size`
+ *   * `bitwuzla_sort_fp_get_sig_size`
+ *   * `bitwuzla_term_is_fp`
+ *   * `bitwuzla_term_fp_get_exp_size`
+ *   * `bitwuzla_term_fp_get_sig_size`
  */
 BitwuzlaSort *bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
                                   uint32_t exp_size,
@@ -2015,16 +2049,22 @@ BitwuzlaSort *bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
  * @param bitwuzla The Bitwuzla instance.
  * @param arity The number of arguments to the function.
  * @param domain The domain sorts (the sorts of the arguments). The number of
- *               sorts in this vector must match \p arity.
+ *               sorts in this vector must match `arity`.
  * @param codomain The codomain sort (the sort of the return value).
  *
  * @return A function sort of given domain and codomain sorts.
  *
- * @see bitwuzla_sort_is_fun, bitwuzla_sort_fun_get_arity,
- * bitwuzla_sort_fun_get_domain, bitwuzla_sort_fun_get_domain_sorts,
- * bitwuzla_sort_fun_get_codomain, bitwuzla_term_is_fun,
- * bitwuzla_term_fun_get_arity, bitwuzla_term_fun_get_domain_sort,
- * bitwuzla_term_fun_get_domain_sorts, bitwuzla_term_fun_get_codomain_sort
+ * @see
+ *   * `bitwuzla_sort_is_fun`
+ *   * `bitwuzla_sort_fun_get_arity`
+ *   * `bitwuzla_sort_fun_get_domain`
+ *   * `bitwuzla_sort_fun_get_domain_sorts`
+ *   * `bitwuzla_sort_fun_get_codomain`
+ *   * `bitwuzla_term_is_fun`
+ *   * `bitwuzla_term_fun_get_arity`
+ *   * `bitwuzla_term_fun_get_domain_sort`
+ *   * `bitwuzla_term_fun_get_domain_sorts`
+ *   * `bitwuzla_term_fun_get_codomain_sort`
  */
 BitwuzlaSort *bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
                                    uint32_t arity,
@@ -2032,13 +2072,15 @@ BitwuzlaSort *bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
                                    const BitwuzlaSort *codomain);
 
 /**
- * Create a roundingmode sort.
+ * Create a Roundingmode sort.
  *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return A roundingmode sort.
+ * @return A Roundingmode sort.
  *
- * @see bitwuzla_sort_is_rm, see bitwuzla_term_is_rm
+ * @see
+ *   * `bitwuzla_sort_is_rm`
+ *   * `bitwuzla_term_is_rm`
  */
 BitwuzlaSort *bitwuzla_mk_rm_sort(Bitwuzla *bitwuzla);
 
@@ -2072,7 +2114,8 @@ BitwuzlaTerm *bitwuzla_mk_false(Bitwuzla *bitwuzla);
  *
  * @return A term representing the bit-vector value 0 of given sort.
  *
- * @see bitwuzla_mk_bv_sort
+ * @see
+ *   * `bitwuzla_mk_bv_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_bv_zero(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
 
@@ -2084,7 +2127,8 @@ BitwuzlaTerm *bitwuzla_mk_bv_zero(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
  *
  * @return A term representing the bit-vector value 1 of given sort.
  *
- * @see bitwuzla_mk_bv_sort
+ * @see
+ *   * `bitwuzla_mk_bv_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_bv_one(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
 
@@ -2097,7 +2141,8 @@ BitwuzlaTerm *bitwuzla_mk_bv_one(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
  * @return A term representing the bit-vector value of given sort
  *         where all bits are set to 1.
  *
- * @see bitwuzla_mk_bv_sort
+ * @see
+ *   * `bitwuzla_mk_bv_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_bv_ones(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
 
@@ -2110,7 +2155,8 @@ BitwuzlaTerm *bitwuzla_mk_bv_ones(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
  * @return A term representing the bit-vector value of given sort where the MSB
  *         is set to 1 and all remaining bits are set to 0.
  *
- * @see bitwuzla_mk_bv_sort
+ * @see
+ *   * `bitwuzla_mk_bv_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_bv_min_signed(Bitwuzla *bitwuzla,
                                         const BitwuzlaSort *sort);
@@ -2123,13 +2169,14 @@ BitwuzlaTerm *bitwuzla_mk_bv_min_signed(Bitwuzla *bitwuzla,
  * @return A term representing the bit-vector value of given sort where the MSB
  *         is set to 0 and all remaining bits are set to 1.
  *
- * @see bitwuzla_mk_bv_sort
+ * @see
+ *   * `bitwuzla_mk_bv_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_bv_max_signed(Bitwuzla *bitwuzla,
                                         const BitwuzlaSort *sort);
 
 /**
- * Create a floating-point positive zero value (+zero).
+ * Create a floating-point positive zero value (SMT-LIB: `+zero`).
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the value.
@@ -2137,13 +2184,14 @@ BitwuzlaTerm *bitwuzla_mk_bv_max_signed(Bitwuzla *bitwuzla,
  * @return A term representing the floating-point positive zero value of given
  *         floating-point sort.
  *
- * @see bitwuzla_mk_fp_sort
+ * @see
+ *  * `bitwuzla_mk_fp_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_fp_pos_zero(Bitwuzla *bitwuzla,
                                       const BitwuzlaSort *sort);
 
 /**
- * Create a floating-point negative zero value (-zero).
+ * Create a floating-point negative zero value (SMT-LIB: `-zero`).
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the value.
@@ -2151,13 +2199,14 @@ BitwuzlaTerm *bitwuzla_mk_fp_pos_zero(Bitwuzla *bitwuzla,
  * @return A term representing the floating-point negative zero value of given
  *         floating-point sort.
  *
- * @see bitwuzla_mk_fp_sort
+ * @see
+ *   * `bitwuzla_mk_fp_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_fp_neg_zero(Bitwuzla *bitwuzla,
                                       const BitwuzlaSort *sort);
 
 /**
- * Create a floating-point positive infinity value (+oo).
+ * Create a floating-point positive infinity value (SMT-LIB: `+oo`).
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the value.
@@ -2165,13 +2214,14 @@ BitwuzlaTerm *bitwuzla_mk_fp_neg_zero(Bitwuzla *bitwuzla,
  * @return A term representing the floating-point positive infinity value of
  *         given floating-point sort.
  *
- * @see bitwuzla_mk_fp_sort
+ * @see
+ *   * `bitwuzla_mk_fp_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_fp_pos_inf(Bitwuzla *bitwuzla,
                                      const BitwuzlaSort *sort);
 
 /**
- * Create a floating-point negative infinity value (-oo).
+ * Create a floating-point negative infinity value (SMT-LIB: `-oo`).
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the value.
@@ -2179,7 +2229,8 @@ BitwuzlaTerm *bitwuzla_mk_fp_pos_inf(Bitwuzla *bitwuzla,
  * @return A term representing the floating-point negative infinity value of
  *         given floating-point sort.
  *
- * @see bitwuzla_mk_fp_sort
+ * @see
+ *   * `bitwuzla_mk_fp_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_fp_neg_inf(Bitwuzla *bitwuzla,
                                      const BitwuzlaSort *sort);
@@ -2193,14 +2244,15 @@ BitwuzlaTerm *bitwuzla_mk_fp_neg_inf(Bitwuzla *bitwuzla,
  * @return A term representing the floating-point NaN value of given
  *         floating-point sort.
  *
- * @see bitwuzla_mk_fp_sort
+ * @see
+ *   * `bitwuzla_mk_fp_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_fp_nan(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
 
 /**
  * Create a bit-vector value from its string representation.
  *
- * Parameter \p base determines the base of the string representation.
+ * Parameter `base` determines the base of the string representation.
  *
  * @note Given value must fit into a bit-vector of given size (sort).
  *
@@ -2211,7 +2263,9 @@ BitwuzlaTerm *bitwuzla_mk_fp_nan(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
  *
  * @return A term representing the bit-vector value of given sort.
  *
- * @see bitwuzla_mk_bv_sort, BitwuzlaBase
+ * @see
+ *   * `bitwuzla_mk_bv_sort`
+ *   * `BitwuzlaBVBase`
  */
 BitwuzlaTerm *bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
                                    const BitwuzlaSort *sort,
@@ -2230,7 +2284,8 @@ BitwuzlaTerm *bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
  *
  * @return A term representing the bit-vector value of given sort.
  *
- * @see bitwuzla_mk_bv_sort
+ * @see
+ *   * `bitwuzla_mk_bv_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
                                           const BitwuzlaSort *sort,
@@ -2255,16 +2310,17 @@ BitwuzlaTerm *bitwuzla_mk_fp_value(Bitwuzla *bitwuzla,
 
 /**
  * Create a floating-point value from its real representation, given as a
- * decimal string, with respect to given roundingmode.
+ * decimal string, with respect to given rounding mode.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the value.
- * @param rm The roundingmode.
+ * @param rm The rounding mode.
  * @param real The decimal string representing a real value.
  *
  * @return A term representing the floating-point value of given sort.
  *
- * @see bitwuzla_mk_fp_sort
+ * @see
+ *   * `bitwuzla_mk_fp_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_fp_value_from_real(Bitwuzla *bitwuzla,
                                              const BitwuzlaSort *sort,
@@ -2274,17 +2330,18 @@ BitwuzlaTerm *bitwuzla_mk_fp_value_from_real(Bitwuzla *bitwuzla,
 /**
  * Create a floating-point value from its rational representation, given as a
  * two decimal strings representing the numerator and denominator, with respect
- * to given roundingmode.
+ * to given rounding mode.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the value.
- * @param rm The roundingmode.
+ * @param rm The rounding mode.
  * @param num The decimal string representing the numerator.
  * @param den The decimal string representing the denominator.
  *
  * @return A term representing the floating-point value of given sort.
  *
- * @see bitwuzla_mk_fp_sort
+ * @see
+ *   * `bitwuzla_mk_fp_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_fp_value_from_rational(Bitwuzla *bitwuzla,
                                                  const BitwuzlaSort *sort,
@@ -2293,14 +2350,15 @@ BitwuzlaTerm *bitwuzla_mk_fp_value_from_rational(Bitwuzla *bitwuzla,
                                                  const char *den);
 
 /**
- * Create a roundingmode value.
+ * Create a rounding mode value.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param rm The rounding mode value.
  *
- * @return A term representing the roundingmode value.
+ * @return A term representing the rounding mode value.
  *
- * @see BitwuzlaRoundingMode
+ * @see
+ *   * `BitwuzlaRoundingMode`
  */
 BitwuzlaTerm *bitwuzla_mk_rm_value(Bitwuzla *bitwuzla, BitwuzlaRoundingMode rm);
 
@@ -2313,7 +2371,8 @@ BitwuzlaTerm *bitwuzla_mk_rm_value(Bitwuzla *bitwuzla, BitwuzlaRoundingMode rm);
  *
  * @return A term representing an operation of given kind.
  *
- * @see BitwuzlaKind
+ * @see
+ *   * `BitwuzlaKind`
  */
 BitwuzlaTerm *bitwuzla_mk_term1(Bitwuzla *bitwuzla,
                                 BitwuzlaKind kind,
@@ -2329,7 +2388,8 @@ BitwuzlaTerm *bitwuzla_mk_term1(Bitwuzla *bitwuzla,
  *
  * @return A term representing an operation of given kind.
  *
- * @see BitwuzlaKind
+ * @see
+ *   * `BitwuzlaKind`
  */
 BitwuzlaTerm *bitwuzla_mk_term2(Bitwuzla *bitwuzla,
                                 BitwuzlaKind kind,
@@ -2347,7 +2407,8 @@ BitwuzlaTerm *bitwuzla_mk_term2(Bitwuzla *bitwuzla,
  *
  * @return A term representing an operation of given kind.
  *
- * @see BitwuzlaKind
+ * @see
+ *   * `BitwuzlaKind`
  */
 BitwuzlaTerm *bitwuzla_mk_term3(Bitwuzla *bitwuzla,
                                 BitwuzlaKind kind,
@@ -2365,7 +2426,8 @@ BitwuzlaTerm *bitwuzla_mk_term3(Bitwuzla *bitwuzla,
  *
  * @return A term representing an operation of given kind.
  *
- * @see BitwuzlaKind
+ * @see
+ *   * `BitwuzlaKind`
  */
 BitwuzlaTerm *bitwuzla_mk_term(Bitwuzla *bitwuzla,
                                BitwuzlaKind kind,
@@ -2382,7 +2444,8 @@ BitwuzlaTerm *bitwuzla_mk_term(Bitwuzla *bitwuzla,
  *
  * @return A term representing an indexed operation of given kind.
  *
- * @see BitwuzlaKind
+ * @see
+ *   * `BitwuzlaKind`
  */
 BitwuzlaTerm *bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
                                          BitwuzlaKind kind,
@@ -2400,7 +2463,8 @@ BitwuzlaTerm *bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
  *
  * @return A term representing an indexed operation of given kind.
  *
- * @see BitwuzlaKind
+ * @see
+ *   * `BitwuzlaKind`
  */
 BitwuzlaTerm *bitwuzla_mk_term1_indexed2(Bitwuzla *bitwuzla,
                                          BitwuzlaKind kind,
@@ -2419,7 +2483,8 @@ BitwuzlaTerm *bitwuzla_mk_term1_indexed2(Bitwuzla *bitwuzla,
  *
  * @return A term representing an indexed operation of given kind.
  *
- * @see BitwuzlaKind
+ * @see
+ *   * `BitwuzlaKind`
  */
 BitwuzlaTerm *bitwuzla_mk_term2_indexed1(Bitwuzla *bitwuzla,
                                          BitwuzlaKind kind,
@@ -2439,7 +2504,8 @@ BitwuzlaTerm *bitwuzla_mk_term2_indexed1(Bitwuzla *bitwuzla,
  *
  * @return A term representing an indexed operation of given kind.
  *
- * @see BitwuzlaKind
+ * @see
+ *   * `BitwuzlaKind`
  */
 BitwuzlaTerm *bitwuzla_mk_term2_indexed2(Bitwuzla *bitwuzla,
                                          BitwuzlaKind kind,
@@ -2461,7 +2527,8 @@ BitwuzlaTerm *bitwuzla_mk_term2_indexed2(Bitwuzla *bitwuzla,
  *
  * @return A term representing an indexed operation of given kind.
  *
- * @see BitwuzlaKind
+ * @see
+ *   * `BitwuzlaKind`
  */
 BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                                        BitwuzlaKind kind,
@@ -2481,8 +2548,13 @@ BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
  *
  * @return A term representing the constant.
  *
- * @see bitwuzla_mk_array_sort, bitwuzla_mk_bool_sort bitwuzla_mk_bv_sort,
- * bitwuzla_mk_fp_sort, bitwuzla_mk_fun_sort, bitwuzla_mk_rm_sort
+ * @see
+ *   * `bitwuzla_mk_array_sort`
+ *   * `bitwuzla_mk_bool_sort`
+ *   * `bitwuzla_mk_bv_sort`
+ *   * `bitwuzla_mk_fp_sort`
+ *   * `bitwuzla_mk_fun_sort`
+ *   * `bitwuzla_mk_rm_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_const(Bitwuzla *bitwuzla,
                                 const BitwuzlaSort *sort,
@@ -2498,7 +2570,8 @@ BitwuzlaTerm *bitwuzla_mk_const(Bitwuzla *bitwuzla,
  *
  * @return A term representing a constant array of given sort.
  *
- * @see bitwuzla_mk_array_sort
+ * @see
+ *   * `bitwuzla_mk_array_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_const_array(Bitwuzla *bitwuzla,
                                       const BitwuzlaSort *sort,
@@ -2515,8 +2588,12 @@ BitwuzlaTerm *bitwuzla_mk_const_array(Bitwuzla *bitwuzla,
  *
  * @return A term representing the variable.
  *
- * @see bitwuzla_mk_bool_sort, bitwuzla_mk_bv_sort, bitwuzla_mk_fp_sort,
- * bitwuzla_mk_fun_sort, bitwuzla_mk_rm_sort
+ * @see
+ *   * `bitwuzla_mk_bool_sort`
+ *   * `bitwuzla_mk_bv_sort`
+ *   * `bitwuzla_mk_fp_sort`
+ *   * `bitwuzla_mk_fun_sort`
+ *   * `bitwuzla_mk_rm_sort`
  */
 BitwuzlaTerm *bitwuzla_mk_var(Bitwuzla *bitwuzla,
                               const BitwuzlaSort *sort,
@@ -2525,32 +2602,40 @@ BitwuzlaTerm *bitwuzla_mk_var(Bitwuzla *bitwuzla,
 /**
  * Push context levels.
  *
- * Requires that incremental solving has been enabled via bitwuzla_set_option().
+ * Requires that incremental solving has been enabled via
+ * `bitwuzla_set_option()`.
  *
- * @note Assumptions added via this bitwuzla_assume() are not affected by
+ * @note Assumptions added via this `bitwuzla_assume()` are not affected by
  *       context level changes and are only valid until the next
- *       bitwuzla_check_sat() call, no matter at which level they were assumed.
+ *       `bitwuzla_check_sat()` call, no matter at which level they were
+ *       assumed.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param nlevels The number of context levels to push.
  *
- * @see bitwuzla_set_option
+ * @see
+ *   * `bitwuzla_set_option`
+ *   * `::BITWUZLA_OPT_INCREMENTAL`
  */
 void bitwuzla_push(Bitwuzla *bitwuzla, uint32_t nlevels);
 
 /**
  * Pop context levels.
  *
- * Requires that incremental solving has been enabled via bitwuzla_set_option().
+ * Requires that incremental solving has been enabled via
+ * `bitwuzla_set_option()`.
  *
- * @note Assumptions added via this bitwuzla_assume() are not affected by
+ * @note Assumptions added via this `bitwuzla_assume()` are not affected by
  *       context level changes and are only valid until the next
- *       bitwuzla_check_sat() call, no matter at which level they were assumed.
+ *       `bitwuzla_check_sat()` call, no matter at which level they were
+ *       assumed.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param nlevels The number of context levels to pop.
  *
- * @see bitwuzla_set_option
+ * @see
+ *   * `bitwuzla_set_option`
+ *   * `::BITWUZLA_OPT_INCREMENTAL`
  */
 void bitwuzla_pop(Bitwuzla *bitwuzla, uint32_t nlevels);
 
@@ -2565,17 +2650,21 @@ void bitwuzla_assert(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 /**
  * Assume formula.
  *
- * Requires that incremental solving has been enabled via bitwuzla_set_option().
+ * Requires that incremental solving has been enabled via
+ * `bitwuzla_set_option()`.
  *
  * @note Assumptions added via this function are not affected by context level
- *       changes and are only valid until the next bitwuzla_check_sat() call,
+ *       changes and are only valid until the next `bitwuzla_check_sat()` call,
  *       no matter at which level they were assumed.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param term The formula to assume.
  *
- * @see bitwuzla_set_option, bitwuzla_is_unsat_assumption,
- * bitwuzla_get_unsat_assumptions
+ * @see
+ *   * `bitwuzla_set_option`
+ *   * `bitwuzla_is_unsat_assumption`
+ *   * `bitwuzla_get_unsat_assumptions`
+ *   * `::BITWUZLA_OPT_INCREMENTAL`
  */
 void bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 
@@ -2586,16 +2675,22 @@ void bitwuzla_assume(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
  * unsatisfiable. Unsat assumptions handling in Bitwuzla is analogous to
  * failed assumptions in MiniSAT.
  *
- * Requires that incremental solving has been enabled via bitwuzla_set_option().
+ * Requires that incremental solving has been enabled via
+ * `bitwuzla_set_option()`.
  *
- * Requires that the last bitwuzla_check_sat() query returned BITWUZLA_UNSAT.
+ * Requires that the last `bitwuzla_check_sat()` query returned
+ * `::BITWUZLA_UNSAT`.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param term The assumption to check for.
  *
  * @return True if given assumption is an unsat assumption.
  *
- * @see bitwuzla_set_option, bitwuzla_assume, bitwuzla_check_sat
+ * @see
+ *   * `bitwuzla_set_option`
+ *   * `bitwuzla_assume`
+ *   * `bitwuzla_check_sat`
+ *   * `::BITWUZLA_OPT_INCREMENTAL`
  */
 bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 
@@ -2606,16 +2701,22 @@ bool bitwuzla_is_unsat_assumption(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
  * unsatisfiable. Unsat assumptions handling in Bitwuzla is analogous to
  * failed assumptions in MiniSAT.
  *
- * Requires that incremental solving has been enabled via bitwuzla_set_option().
+ * Requires that incremental solving has been enabled via
+ * `bitwuzla_set_option()`.
  *
- * Requires that the last bitwuzla_check_sat() query returned BITWUZLA_UNSAT.
+ * Requires that the last `bitwuzla_check_sat()` query returned
+ * `::BITWUZLA_UNSAT`.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param size Output parameter, stores the size of the returned array.
  *
- * @return An array with unsat assumptions of size \p size.
+ * @return An array with unsat assumptions of size `size`.
  *
- * @see bitwuzla_set_option, bitwuzla_assume, bitwuzla_check_sat
+ * @see
+ *   * `bitwuzla_set_option`
+ *   * `bitwuzla_assume`
+ *   * `bitwuzla_check_sat`
+ *   * `::BITWUZLA_OPT_INCREMENTAL`
  */
 BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
 
@@ -2625,14 +2726,17 @@ BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size);
  * The unsat core consists of the set of assertions that force an input formula
  * to become unsatisfiable.
  *
- * Requires that the last bitwuzla_check_sat() query returned BITWUZLA_UNSAT.
+ * Requires that the last `bitwuzla_check_sat()` query returned
+ * `::BITWUZLA_UNSAT`.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param size Output parameter, stores the size of the returned array.
  *
- * @return An array with unsat assertions of size \p size.
+ * @return An array with unsat assertions of size `size`.
  *
- * @see bitwuzla_assert, bitwuzla_check_sat
+ * @see
+ *   * `bitwuzla_assert`
+ *   * `bitwuzla_check_sat`
  */
 BitwuzlaTerm **bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
 
@@ -2641,7 +2745,8 @@ BitwuzlaTerm **bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size);
  *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @see bitwuzla_assume
+ * @see
+ *   * `bitwuzla_assume`
  */
 void bitwuzla_fixate_assumptions(Bitwuzla *bitwuzla);
 
@@ -2650,7 +2755,8 @@ void bitwuzla_fixate_assumptions(Bitwuzla *bitwuzla);
  *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @see bitwuzla_assume
+ * @see
+ *   * `bitwuzla_assume`
  */
 void bitwuzla_reset_assumptions(Bitwuzla *bitwuzla);
 
@@ -2661,61 +2767,72 @@ void bitwuzla_reset_assumptions(Bitwuzla *bitwuzla);
  *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return ::BITWUZLA_SAT if the input formula was simplified to true,
- *         ::BITWUZLA_UNSAT if it was simplified to false, and
- *         ::BITWUZLA_UNKNOWN otherwise.
+ * @return `::BITWUZLA_SAT` if the input formula was simplified to true,
+ *         `::BITWUZLA_UNSAT` if it was simplified to false, and
+ *         `::BITWUZLA_UNKNOWN` otherwise.
  *
- * @see bitwuzla_assert, BitwuzlaResult
+ * @see
+ *   * `bitwuzla_assert`
+ *   * `BitwuzlaResult`
  */
 BitwuzlaResult bitwuzla_simplify(Bitwuzla *bitwuzla);
 
 /**
  * Check satisfiability of current input formula.
  *
- * An input formula consists of assertions added via bitwuzla_assert().  You
- * can guide the search for a solution by making assumptions via
- * bitwuzla_assume().
+ * An input formula consists of assertions added via `bitwuzla_assert()`.
+ * The search for a solution can by guided by making assumptions via
+ * `bitwuzla_assume()`.
  *
  * @note Assertions and assumptions are combined via Boolean and.  Multiple
  *       calls to this function require enabling incremental solving via
- *       bitwuzla_set_option().
+ *       `bitwuzla_set_option()`.
  *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return ::BITWUZLA_SAT if the input formula is satisfiable and
- *         ::BITWUZLA_UNSAT if it is unsatisfiable, and ::BITWUZLA_UNKNOWN when
- *         neither satisfiability nor unsatisfiability was determined. This can
- *         happen when \p bitwuzla was terminated via a termination callback.
+ * @return `::BITWUZLA_SAT` if the input formula is satisfiable and
+ *         `::BITWUZLA_UNSAT` if it is unsatisfiable, and `::BITWUZLA_UNKNOWN`
+ *         when neither satisfiability nor unsatisfiability was determined.
+ *         This can happen when `bitwuzla` was terminated via a termination
+ *         callback.
  *
- * @see bitwuzla_assert, bitwuzla_assume, bitwuzla_set_option, BitwuzlaResult
+ * @see
+ *   * `bitwuzla_assert`
+ *   * `bitwuzla_assume`
+ *   * `bitwuzla_set_option`
+ *   * `::BITWUZLA_OPT_INCREMENTAL`
+ *   * `BitwuzlaResult`
  */
 BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
 
 /**
  * Get a term representing the model value of a given term.
  *
- * Requires that the last bitwuzla_check_sat() query returned ::BITWUZLA_SAT.
+ * Requires that the last `bitwuzla_check_sat()` query returned
+ * `::BITWUZLA_SAT`.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param term The term to query a model value for.
  *
- * @return A term representing the model value of term \p term.
+ * @return A term representing the model value of term `term`.
  *
- * @see bitwuzla_check_sat
+ * @see `bitwuzla_check_sat`
  */
 BitwuzlaTerm *bitwuzla_get_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 
 /**
  * Print a model for the current input formula.
  *
- * Requires that the last bitwuzla_check_sat() query returned ::BITWUZLA_SAT.
+ * Requires that the last `bitwuzla_check_sat()` query returned
+ * `::BITWUZLA_SAT`.
  *
  * @param bitwuzla The Bitwuzla instance.
- * @param format The output format for printing the model. Either "btor" for
- *               the BTOR format, or "smt2" for the SMT-LIB v2 format.
+ * @param format The output format for printing the model. Either `"btor"` for
+ *               the BTOR format, or `"smt2"` for the SMT-LIB v2 format.
  * @param file The file to print the model to.
  *
- * @see bitwuzla_check_sat
+ * @see
+ *   * `bitwuzla_check_sat`
  */
 void bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file);
 
@@ -2725,10 +2842,10 @@ void bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file);
  * Requires that incremental solving is not enabled.
  *
  * @param bitwuzla The Bitwuzla instance.
- * @param format The output format for printing the formula. Either "aiger_ascii"
- *               for the AIGER ascii format, "aiger_binary" for the binary
- *               AIGER format, "btor" for the BTOR format, or "smt2" for the
- *               SMT-LIB v2 format.
+ * @param format The output format for printing the formula. Either
+ *               `"aiger_ascii"` for the AIGER ascii format, `"aiger_binary"`
+ *               for the binary AIGER format, `"btor"` for the BTOR format, or
+ *               `"smt2"` for the SMT-LIB v2 format.
  * @param file The file to print the formula to.
  */
 void bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
@@ -2750,11 +2867,12 @@ void bitwuzla_dump_formula(Bitwuzla *bitwuzla, const char *format, FILE *file);
  * @param parsed_smt2 Output parameter, true if parsed input file has been
  *                    detected as SMT-LIB v2 input.
  *
- * @return ::BITWUZLA_SAT if the input formula was simplified to true,
- *         ::BITWUZLA_UNSAT if it was simplified to false,
- *         and ::BITWUZLA_UNKNOWN otherwise.
+ * @return `::BITWUZLA_SAT` if the input formula was simplified to true,
+ *         `::BITWUZLA_UNSAT` if it was simplified to false,
+ *         and `::BITWUZLA_UNKNOWN` otherwise.
  *
- * @see bitwuzla_parse_format
+ * @see
+ *   * `bitwuzla_parse_format`
  */
 BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
                               FILE *infile,
@@ -2770,9 +2888,9 @@ BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
  * Requires that no terms have been created yet.
  *
  * @param bitwuzla The Bitwuzla instance.
- * @param format The input format for printing the model. Either "btor" for
- *               the BTOR format, "btor2" for the BTOR2 format, or "smt2" for
- *               the SMT-LIB v2 format.
+ * @param format The input format for printing the model. Either `"btor"` for
+ *               the BTOR format, `"btor2"` for the BTOR2 format, or `"smt2"`
+ *               for the SMT-LIB v2 format.
  * @param infile The input file.
  * @param infile_name The name of the input file.
  * @param outfile The output file.
@@ -2781,11 +2899,12 @@ BitwuzlaResult bitwuzla_parse(Bitwuzla *bitwuzla,
  * @param parsed_status Output parameter, stores the status of the input in case
  *                      of SMT-LIB v2 input, if given.
  *
- * @return ::BITWUZLA_SAT if the input formula was simplified to true,
- *         ::BITWUZLA_UNSAT if it was simplified to false,
- *         and ::BITWUZLA_UNKNOWN otherwise.
+ * @return `::BITWUZLA_SAT` if the input formula was simplified to true,
+ *         `::BITWUZLA_UNSAT` if it was simplified to false,
+ *         and ::BITWUZLA_UNKNOWN` otherwise.
  *
- * @see bitwuzla_parse
+ * @see
+ *   * `bitwuzla_parse`
  */
 BitwuzlaResult bitwuzla_parse_format(Bitwuzla *bitwuzla,
                                      const char *format,
@@ -2816,7 +2935,7 @@ BitwuzlaTerm *bitwuzla_substitute_term(Bitwuzla *bitwuzla,
  * Substitute a set of keys with their corresponding values in the set of given
  * terms.
  *
- * The terms in \p terms are replaced with the terms resulting from this
+ * The terms in `terms` are replaced with the terms resulting from this
  * substitutions.
  *
  * @param bitwuzla The Bitwuzla instance.
@@ -2964,7 +3083,7 @@ bool bitwuzla_sort_is_equal(const BitwuzlaSort *sort0,
  *
  * @param sort The sort.
  *
- * @return True if \p sort is an array sort.
+ * @return True if `sort` is an array sort.
  */
 bool bitwuzla_sort_is_array(const BitwuzlaSort *sort);
 
@@ -2973,7 +3092,7 @@ bool bitwuzla_sort_is_array(const BitwuzlaSort *sort);
  *
  * @param sort The sort.
  *
- * @return True if \p sort is a bit-vector sort.
+ * @return True if `sort` is a bit-vector sort.
  */
 bool bitwuzla_sort_is_bv(const BitwuzlaSort *sort);
 
@@ -2982,7 +3101,7 @@ bool bitwuzla_sort_is_bv(const BitwuzlaSort *sort);
  *
  * @param sort The sort.
  *
- * @return True if \p sort is a floating-point sort.
+ * @return True if `sort` is a floating-point sort.
  */
 bool bitwuzla_sort_is_fp(const BitwuzlaSort *sort);
 
@@ -2991,16 +3110,16 @@ bool bitwuzla_sort_is_fp(const BitwuzlaSort *sort);
  *
  * @param sort The sort.
  *
- * @return True if \p sort is a function sort.
+ * @return True if `sort` is a function sort.
  */
 bool bitwuzla_sort_is_fun(const BitwuzlaSort *sort);
 
 /**
- * Determine if a sort is a roundingmode sort.
+ * Determine if a sort is a Roundingmode sort.
  *
  * @param sort The sort.
  *
- * @return True if \p sort is a roundingmode sort.
+ * @return True if `sort` is a Roundingmode sort.
  */
 bool bitwuzla_sort_is_rm(const BitwuzlaSort *sort);
 
@@ -3034,9 +3153,9 @@ BitwuzlaKind bitwuzla_term_get_kind(const BitwuzlaTerm *term);
  * Returns \c NULL if given term does not have children.
  *
  * @param term The term.
- * @param size Output parameter, stores the number of children of \p term.
+ * @param size Output parameter, stores the number of children of `term`.
  *
- * @return The children of \p term as an array of terms.
+ * @return The children of `term` as an array of terms.
  */
 BitwuzlaTerm **bitwuzla_term_get_children(const BitwuzlaTerm *term,
                                           size_t *size);
@@ -3047,9 +3166,9 @@ BitwuzlaTerm **bitwuzla_term_get_children(const BitwuzlaTerm *term,
  * Requires that given term is an indexed term.
  *
  * @param term The term.
- * @param size Output parameter, stores the number of indices of \p term.
+ * @param size Output parameter, stores the number of indices of `term`.
  *
- * @return The children of \p term as an array of terms.
+ * @return The children of `term` as an array of terms.
  */
 uint32_t *bitwuzla_term_get_indices(const BitwuzlaTerm *term, size_t *size);
 
@@ -3058,7 +3177,7 @@ uint32_t *bitwuzla_term_get_indices(const BitwuzlaTerm *term, size_t *size);
  *
  * @param term The term.
  *
- * @return True if \p term is an indexed term.
+ * @return True if `term` is an indexed term.
  */
 bool bitwuzla_term_is_indexed(const BitwuzlaTerm *term);
 
@@ -3192,7 +3311,7 @@ uint32_t bitwuzla_term_fun_get_arity(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return The symbol of \p term. \c NULL if no symbol is defined.
+ * @return The symbol of `term`. \c NULL if no symbol is defined.
  */
 const char *bitwuzla_term_get_symbol(const BitwuzlaTerm *term);
 
@@ -3210,7 +3329,7 @@ void bitwuzla_term_set_symbol(BitwuzlaTerm *term, const char *symbol);
  * @param term0 The first term.
  * @param term1 The second term.
  *
- * @return True if the sorts of \p term0 and \p term1 are equal.
+ * @return True if the sorts of `term0` and `term1` are equal.
  */
 bool bitwuzla_term_is_equal_sort(const BitwuzlaTerm *term0,
                                  const BitwuzlaTerm *term1);
@@ -3220,7 +3339,7 @@ bool bitwuzla_term_is_equal_sort(const BitwuzlaTerm *term0,
  *
  * @param term The term.
  *
- * @return True if \p term is an array term.
+ * @return True if `term` is an array term.
  */
 bool bitwuzla_term_is_array(const BitwuzlaTerm *term);
 
@@ -3229,7 +3348,7 @@ bool bitwuzla_term_is_array(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a constant.
+ * @return True if `term` is a constant.
  */
 bool bitwuzla_term_is_const(const BitwuzlaTerm *term);
 
@@ -3238,7 +3357,7 @@ bool bitwuzla_term_is_const(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a function.
+ * @return True if `term` is a function.
  */
 bool bitwuzla_term_is_fun(const BitwuzlaTerm *term);
 
@@ -3247,7 +3366,7 @@ bool bitwuzla_term_is_fun(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a variable.
+ * @return True if `term` is a variable.
  */
 bool bitwuzla_term_is_var(const BitwuzlaTerm *term);
 
@@ -3256,7 +3375,7 @@ bool bitwuzla_term_is_var(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a variable and bound.
+ * @return True if `term` is a variable and bound.
  */
 bool bitwuzla_term_is_bound_var(const BitwuzlaTerm *term);
 
@@ -3265,7 +3384,7 @@ bool bitwuzla_term_is_bound_var(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a value.
+ * @return True if `term` is a value.
  */
 bool bitwuzla_term_is_value(const BitwuzlaTerm *term);
 
@@ -3274,7 +3393,7 @@ bool bitwuzla_term_is_value(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a bit-vector value.
+ * @return True if `term` is a bit-vector value.
  */
 bool bitwuzla_term_is_bv_value(const BitwuzlaTerm *term);
 
@@ -3283,16 +3402,16 @@ bool bitwuzla_term_is_bv_value(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a floating-point value.
+ * @return True if `term` is a floating-point value.
  */
 bool bitwuzla_term_is_fp_value(const BitwuzlaTerm *term);
 
 /**
- * Determine if a term is a roundingmode value.
+ * Determine if a term is a rounding mode value.
  *
  * @param term The term.
  *
- * @return True if \p term is a roundingmode value.
+ * @return True if `term` is a rounding mode value.
  */
 bool bitwuzla_term_is_rm_value(const BitwuzlaTerm *term);
 
@@ -3301,7 +3420,7 @@ bool bitwuzla_term_is_rm_value(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a bit-vector term.
+ * @return True if `term` is a bit-vector term.
  */
 bool bitwuzla_term_is_bv(const BitwuzlaTerm *term);
 
@@ -3310,16 +3429,16 @@ bool bitwuzla_term_is_bv(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a floating-point term.
+ * @return True if `term` is a floating-point term.
  */
 bool bitwuzla_term_is_fp(const BitwuzlaTerm *term);
 
 /**
- * Determine if a term is a roundingmode term.
+ * Determine if a term is a rounding mode term.
  *
  * @param term The term.
  *
- * @return True if \p term is a roundingmode term.
+ * @return True if `term` is a rounding mode term.
  */
 bool bitwuzla_term_is_rm(const BitwuzlaTerm *term);
 
@@ -3328,7 +3447,7 @@ bool bitwuzla_term_is_rm(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a bit-vector zero value.
+ * @return True if `term` is a bit-vector zero value.
  */
 bool bitwuzla_term_is_bv_value_zero(const BitwuzlaTerm *term);
 
@@ -3337,7 +3456,7 @@ bool bitwuzla_term_is_bv_value_zero(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a bit-vector one value.
+ * @return True if `term` is a bit-vector one value.
  */
 bool bitwuzla_term_is_bv_value_one(const BitwuzlaTerm *term);
 
@@ -3346,7 +3465,7 @@ bool bitwuzla_term_is_bv_value_one(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a bit-vector value with all bits set to one.
+ * @return True if `term` is a bit-vector value with all bits set to one.
  */
 bool bitwuzla_term_is_bv_value_ones(const BitwuzlaTerm *term);
 
@@ -3355,7 +3474,7 @@ bool bitwuzla_term_is_bv_value_ones(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a bit-vector value with the most significant bit
+ * @return True if `term` is a bit-vector value with the most significant bit
  *         set to 1 and all other bits set to 0.
  */
 bool bitwuzla_term_is_bv_value_min_signed(const BitwuzlaTerm *term);
@@ -3365,7 +3484,7 @@ bool bitwuzla_term_is_bv_value_min_signed(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a bit-vector value with the most significant bit
+ * @return True if `term` is a bit-vector value with the most significant bit
  *         set to 0 and all other bits set to 1.
  */
 bool bitwuzla_term_is_bv_value_max_signed(const BitwuzlaTerm *term);
@@ -3375,7 +3494,7 @@ bool bitwuzla_term_is_bv_value_max_signed(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a floating-point +zero value.
+ * @return True if `term` is a floating-point +zero value.
  */
 bool bitwuzla_term_is_fp_value_pos_zero(const BitwuzlaTerm *term);
 
@@ -3384,7 +3503,7 @@ bool bitwuzla_term_is_fp_value_pos_zero(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a floating-point value negative zero.
+ * @return True if `term` is a floating-point value negative zero.
  */
 bool bitwuzla_term_is_fp_value_neg_zero(const BitwuzlaTerm *term);
 
@@ -3393,7 +3512,7 @@ bool bitwuzla_term_is_fp_value_neg_zero(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a floating-point +oo value.
+ * @return True if `term` is a floating-point +oo value.
  */
 bool bitwuzla_term_is_fp_value_pos_inf(const BitwuzlaTerm *term);
 
@@ -3402,7 +3521,7 @@ bool bitwuzla_term_is_fp_value_pos_inf(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a floating-point -oo value.
+ * @return True if `term` is a floating-point -oo value.
  */
 bool bitwuzla_term_is_fp_value_neg_inf(const BitwuzlaTerm *term);
 
@@ -3411,7 +3530,7 @@ bool bitwuzla_term_is_fp_value_neg_inf(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a floating-point NaN value.
+ * @return True if `term` is a floating-point NaN value.
  */
 bool bitwuzla_term_is_fp_value_nan(const BitwuzlaTerm *term);
 
@@ -3420,7 +3539,7 @@ bool bitwuzla_term_is_fp_value_nan(const BitwuzlaTerm *term);
  *
  * @param term The term.
  *
- * @return True if \p term is a constant array.
+ * @return True if `term` is a constant array.
  */
 bool bitwuzla_term_is_const_array(const BitwuzlaTerm *term);
 
@@ -3428,8 +3547,8 @@ bool bitwuzla_term_is_const_array(const BitwuzlaTerm *term);
  * Print term .
  *
  * @param term The term.
- * @param format The output format for printing the term. Either "btor" for the
- *               BTOR format, or "smt2" for the SMT-LIB v2 format.
+ * @param format The output format for printing the term. Either `"btor"` for the
+ *               BTOR format, or `"smt2"` for the SMT-LIB v2 format.
  * @param file The file to print the term to.
  */
 void bitwuzla_term_dump(const BitwuzlaTerm *term,
