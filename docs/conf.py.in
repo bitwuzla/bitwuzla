@@ -35,8 +35,11 @@ extensions = [
         'sphinxcontrib.bibtex',
         'sphinx.ext.autodoc',
         'sphinx.ext.autosectionlabel',
-        "breathe",
+        'sphinx.ext.todo',
+        'breathe',
 ]
+
+todo_include_todos = True
 
 # Make sure the target is unique
 autosectionlabel_prefix_document = True
@@ -67,3 +70,36 @@ html_css_files = ['custom.css']
 
 # -- Breathe configuration ---------------------------------------------------
 breathe_default_project = "Bitwuzla"
+
+# -- SMT-LIB syntax highlighting
+from pygments.lexer import RegexLexer
+from pygments import token
+from sphinx.highlighting import lexers
+
+class SmtLibLexer(RegexLexer):
+    name = 'smtlib'
+
+    tokens = {
+        'root': [
+            (r'declare-const', token.Keyword),
+            (r'define-fun', token.Keyword),
+            (r'assert', token.Keyword),
+            (r'and', token.Keyword),
+            (r'BitVec', token.Keyword),
+            (r'bvult', token.Keyword),
+            (r'bvule', token.Keyword),
+            (r'bvugt', token.Keyword),
+            (r'bvmul', token.Keyword),
+            (r'#b', token.Text),
+            (r'[a-zA-Z]', token.Name),
+            (r'[0-9]', token.Number),
+            (r'\s', token.Text),
+            (r'\(_', token.Text),
+            (r'\(', token.Text),
+            (r'\)', token.Text),
+            (r';.*$', token.Comment)
+        ]
+    }
+
+lexers['smtlib'] = SmtLibLexer()
+
