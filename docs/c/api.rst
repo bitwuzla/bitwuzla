@@ -20,7 +20,7 @@ First, create a Bitwuzla instance:
 
   Bitwuzla *bzla = bitwuzla_new();
 
-This instance can be configured via :code:`bitwuzzla_set_option()`.  
+This instance can be configured via :c:func:`bitwuzla_set_option()`.  
 For example, to enable model generation
 (SMT-LIB: :code:`(set-option :produce-models true)`):
 
@@ -90,8 +90,8 @@ This input is created and asserted as follows:
 
 Alternatively, you can parse an input file in BTOR format :cite:`btor`,
 BTOR2 format :cite:`btor2` or SMT-LIB v2 format :cite:`smtlib2` via
-:code:`bitwuzla_parse()` (if the format can be auto-detected) or
-:code:`bitwuzla_parse_format()` (which requires to specify the input format).
+:c:func:`bitwuzla_parse()` (if the format can be auto-detected) or
+:c:func:`bitwuzla_parse_format()` (which requires to specify the input format).
 For example, to parse an input file `example.smt2` in SMT-LIB format:
 
 .. code-block:: c
@@ -108,10 +108,10 @@ For example, to parse an input file `example.smt2` in SMT-LIB format:
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
   or :code:`get-value` will be executed while parsing.
 
-If incremental usage is enabled (option :code:`BITWUZLA_OPT_INCREMENTAL`),
-formulas can also be assumed via :code:`bitwuzla_assume()`.
+If incremental usage is enabled (option :c:func:`bitwuzla_OPT_INCREMENTAL`),
+formulas can also be assumed via :c:func:`bitwuzla_assume()`.
 After parsing an input file and/or asserting and assuming formulas,
-satisfiability can be determined via :code:`bitwuzla_check_sat()`.
+satisfiability can be determined via :c:func:`bitwuzla_check_sat()`.
 
 .. code-block:: c
 
@@ -119,18 +119,18 @@ satisfiability can be determined via :code:`bitwuzla_check_sat()`.
 
 .. note::
   To simulate SMT-LIB's :code:`check-sat-assuming`, first add assumptions
-  via :code:`bitwuzla_assume()`, and then call :code:`bitwuzla_check_sat()`.
-  Assumptions are cleared after a call to :code:`bitwuzla_check_sat()`.
+  via :c:func:`bitwuzla_assume()`, and then call :c:func:`bitwuzla_check_sat()`.
+  Assumptions are cleared after a call to :c:func:`bitwuzla_check_sat()`.
 
 If the formula is satisfiable and model generation has been enabled, the
-resulting model can be printed via :code:`bitwuzla_print_model()`.
+resulting model can be printed via :c:func:`bitwuzla_print_model()`.
 
 .. code-block:: c
 
   bitwuzla_print_model(bzla, stdout);
 
 This will output a possible model (default: in SMT-LIB format, configurable
-via option :code:`BITWUZLA_OPT_OUTPUT_FORMAT`) as follows:
+via option :c:func:`bitwuzla_OPT_OUTPUT_FORMAT`) as follows:
 
 .. code-block:: smtlib
 
@@ -141,7 +141,7 @@ via option :code:`BITWUZLA_OPT_OUTPUT_FORMAT`) as follows:
 
 
 Alternatively, it is possible to query the value of expressions via
-:code:`bitwuzla_get_value()`.
+:c:func:`bitwuzla_get_value()`.
 
 .. code-block:: c
 
@@ -154,8 +154,6 @@ Alternatively, it is possible to query the value of expressions via
   * unsat cores
   * unsat assumptions
   * push/pop
-  * function references as links
-
 
 
 Examples

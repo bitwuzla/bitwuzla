@@ -71,6 +71,8 @@ html_css_files = ['custom.css']
 # -- Breathe configuration ---------------------------------------------------
 breathe_default_project = "Bitwuzla"
 
+breathe_domain_by_extension = {"h" : "c"}
+
 # -- SMT-LIB syntax highlighting
 from pygments.lexer import RegexLexer
 from pygments import token
@@ -102,4 +104,3 @@ class SmtLibLexer(RegexLexer):
     }
 
 lexers['smtlib'] = SmtLibLexer()
-
