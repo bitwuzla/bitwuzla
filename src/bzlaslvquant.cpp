@@ -27,7 +27,9 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
+#include <algorithm>
 #include <cstdarg>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <unordered_map>
@@ -42,7 +44,16 @@ using NodeSet = std::unordered_set<BzlaNode *>;
 
 /*------------------------------------------------------------------------*/
 
-//#define QLOG
+std::ostream &
+operator<<(std::ostream &out, BzlaNode *n)
+{
+  out << bzla_util_node2string(n);
+  return out;
+}
+
+/*------------------------------------------------------------------------*/
+
+#define QLOG
 
 #ifdef QLOG
 
@@ -93,6 +104,10 @@ class QuantSolverState
                                          std::vector<BzlaNode *> &free_vars);
   void compute_variable_dependencies();
 
+  /* Collect values and constants in the formula and populate d_value_map and
+   * d_const_map. */
+  void collect_info();
+
   BzlaNode *find_backref(BzlaNode *q);
   void add_backref(BzlaNode *qfrom, BzlaNode *qto);
 
@@ -107,7 +122,7 @@ class QuantSolverState
 
   BzlaNode *instantiate(BzlaNode *q, const NodeMap<BzlaNode *> &substs);
 
-  void add_lemma(BzlaNode *lem);
+  bool add_lemma(BzlaNode *lem);
   void add_value_instantiation_lemma(BzlaNode *q);
 
   bool added_new_lemmas() const;
@@ -131,6 +146,9 @@ class QuantSolverState
     uint64_t num_ground_checks            = 0;
     uint64_t num_ground_checks_iterations = 0;
     uint64_t num_counterexample_checks    = 0;
+    uint64_t num_value_inst_lemmas        = 0;
+    uint64_t num_skolemization_lemmas     = 0;
+    uint64_t num_ce_lemmas                = 0;
 
     double time_check_sat             = 0;
     double time_check_ground          = 0;
@@ -179,6 +197,18 @@ class QuantSolverState
 
   /* Assumption stack */
   std::vector<BzlaNode *> d_assumptions;
+
+  /**
+   * Maps sort ids to values of given sort found by traversing root
+   * constraints. Populated by collect_info().
+   */
+  std::unordered_map<BzlaSortId, std::vector<BzlaNode *>> d_value_map;
+
+  /**
+   * Maps sort ids to constants of given sort found by traversing root
+   * constraints. Populated by collect_info().
+   */
+  std::unordered_map<BzlaSortId, std::vector<BzlaNode *>> d_const_map;
 };
 
 QuantSolverState::~QuantSolverState()
@@ -937,19 +967,20 @@ get_value(Bzla *bzla, BzlaNode *n)
   return value;
 }
 
-void
+bool
 QuantSolverState::add_lemma(BzlaNode *lem)
 {
   auto it = d_lemma_cache.find(lem);
   if (it != d_lemma_cache.end())
   {
     // log ("Duplicate lemma: %s\n", bzla_util_node2string (lem));
-    return;
+    return false;
   }
   // log ("Add lemma: %s\n", bzla_util_node2string(lem));
   bzla_assert_exp(d_bzla, lem);
   d_lemma_cache.insert(bzla_node_copy(d_bzla, lem));
   d_added_lemma = true;
+  return true;
 }
 
 void
@@ -996,6 +1027,7 @@ QuantSolverState::add_value_instantiation_lemma(BzlaNode *q)
   bzla_node_release(d_bzla, inst);
   add_lemma(lem);
   bzla_node_release(d_bzla, lem);
+  ++d_statistics.num_value_inst_lemmas;
 }
 
 bool
@@ -1084,6 +1116,7 @@ QuantSolverState::synthesize_terms()
   BzlaNode *prev_f;
 
   d_bzla->slv->api.generate_model(d_bzla->slv, false, false);
+  // TODO: check if we only need to do this for active quantifiers
   for (auto [q, sk] : d_skolems)
   {
     BzlaNode *br = find_backref(q);
@@ -1117,7 +1150,7 @@ QuantSolverState::synthesize_terms()
       qlog("Synthesize term for %s\n", bzla_util_node2string(sk));
       std::vector<BzlaBitVectorTuple *> values_in;
       std::vector<BzlaBitVector *> values_out;
-      std::vector<BzlaNode *> params;
+      std::vector<BzlaNode *> params, inputs;
 
       get_fun_model(sk, values_in, values_out);
 
@@ -1148,21 +1181,48 @@ QuantSolverState::synthesize_terms()
         param = bzla_node_create_param(d_bzla, sort, 0);
         bzla_hashint_map_add(value_in_map, param->id)->as_int = params.size();
         params.push_back(param);
+        inputs.push_back(param);
+      }
+
+      // inputs ... vector of params/consts
+      // input/output pairs
+      //   - input ... vector of values
+      //   - output ... value
+      // input_map ... maps input ids to index in input vector
+
+      // TODO:
+      // - collect values from formula
+      //   -> add more special values?
+      //
+      // - collect additional constants
+      //   -> always add (Skolem) constants (global scope)
+      //
+      //
+      BzlaSortId codomain =
+          bzla_sort_fun_get_codomain(d_bzla, bzla_node_get_sort_id(sk));
+
+      BzlaNode **values = nullptr;
+      size_t n_values   = 0;
+      auto it           = d_value_map.find(codomain);
+      if (it != d_value_map.end())
+      {
+        values   = it->second.data();
+        n_values = it->second.size();
       }
 
       BzlaNode *t = bzla_synthesize_term(d_bzla,
-                                         params.data(),
-                                         params.size(),
+                                         inputs.data(),
+                                         inputs.size(),
                                          values_in.data(),
                                          values_out.data(),
                                          values_in.size(),
                                          value_in_map,
-                                         nullptr,
-                                         0,
-                                         nullptr,  // BzlaNode **consts,
-                                         0,  // uint32_t nconsts,
-                                         10000, // max checks
-                                         5,     // max levels
+                                         nullptr,   // constraints
+                                         0,         // number of constraints
+                                         values,    // special constants
+                                         n_values,  // number of constants
+                                         10000,     // max checks
+                                         5,         // max levels
                                          nullptr);  // BzlaNode *prev_synth)
 
       for (BzlaBitVectorTuple *bvtup : values_in)
@@ -1279,7 +1339,10 @@ QuantSolverState::check_active_quantifiers()
       if (!is_inactive(q))
       {
         // lemmas.push_back(get_ce_lemma(q));
-        add_lemma(get_ce_lemma(q));
+        if (add_lemma(get_ce_lemma(q)))
+        {
+          ++d_statistics.num_ce_lemmas;
+        }
         to_check.push_back(q);
       }
     }
@@ -1287,7 +1350,11 @@ QuantSolverState::check_active_quantifiers()
     {
       assert(is_exists(q));
       // lemmas.push_back(get_skolemization_lemma(q));
-      add_lemma(get_skolemization_lemma(q));
+      if (add_lemma(get_skolemization_lemma(q)))
+      {
+        ++d_statistics.num_skolemization_lemmas;
+      }
+      // to_synth.push_back(q);
     }
   }
   d_statistics.time_get_active += bzla_util_time_stamp() - start;
@@ -1307,7 +1374,7 @@ QuantSolverState::check_active_quantifiers()
 
 #ifdef QLOG
   printf("\n");
-  bzla_dumpsmt_dump(d_bzla, stdout);
+  // bzla_dumpsmt_dump(d_bzla, stdout);
 #endif
 
   assert(d_bzla->slv->api.sat(d_bzla->slv) == BZLA_RESULT_SAT);
@@ -1358,10 +1425,10 @@ QuantSolverState::check_active_quantifiers()
   }
   reset_assumptions();
 
-  for (BzlaNode *lem : lemmas)
-  {
-    add_lemma(lem);
-  }
+  //  for (BzlaNode *lem : lemmas)
+  //  {
+  //    add_lemma(lem);
+  //  }
 
   d_statistics.time_check_counterexamples += bzla_util_time_stamp() - start;
 
@@ -1430,6 +1497,69 @@ QuantSolverState::compute_variable_dependencies()
     compute_variable_dependencies_aux(q, free_vars);
     assert(free_vars.size() > 0);
     d_deps.emplace(bzla_node_copy(d_bzla, q), free_vars);
+  }
+}
+
+// TODO: add special values
+void
+QuantSolverState::collect_info()
+{
+  std::vector<BzlaNode *> visit;
+
+  // TODO: cache visited constraints to avoid traversal of already seen
+  // constraints
+  BzlaPtrHashTableIterator it;
+  bzla_iter_hashptr_init(&it, d_bzla->unsynthesized_constraints);
+  bzla_iter_hashptr_queue(&it, d_bzla->assumptions);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    visit.push_back(static_cast<BzlaNode *>(bzla_iter_hashptr_next(&it)));
+  }
+
+  NodeSet cache;
+  BzlaNode *cur;
+  while (!visit.empty())
+  {
+    cur = visit.back();
+    visit.pop_back();
+
+    if (cache.find(cur) == cache.end())
+    {
+      cache.emplace(cur);
+
+      if (bzla_node_is_bv_const(cur))
+      {
+        BzlaSortId sort_id = bzla_node_get_sort_id(cur);
+
+        // Add value if not already stored.
+        auto &values = d_value_map[sort_id];
+        auto res     = std::find(values.begin(), values.end(), cur);
+        if (res == std::end(values))
+        {
+          values.push_back(bzla_node_copy(d_bzla, cur));
+          qlog("found value: %s\n", bzla_util_node2string(cur));
+        }
+      }
+      else if (bzla_node_is_bv_var(cur))
+      {
+        BzlaSortId sort_id = bzla_node_get_sort_id(cur);
+
+        // Add value if not already stored.
+        auto &consts = d_const_map[sort_id];
+        auto res     = std::find(consts.begin(), consts.end(), cur);
+        if (res == std::end(consts))
+        {
+          consts.push_back(bzla_node_copy(d_bzla, cur));
+          qlog("found const: %s\n", bzla_util_node2string(cur));
+        }
+      }
+
+      BzlaNode *real_cur = bzla_node_real_addr(cur);
+      for (size_t i = 0; i < real_cur->arity; ++i)
+      {
+        visit.push_back(real_cur->e[i]);
+      }
+    }
   }
 }
 
@@ -1511,12 +1641,11 @@ QuantSolverState::check_ground_formulas()
       for (auto it = assumptions.begin(); it != assumptions.end();)
       {
         lit = it->first;
-        q   = it->second;
         if (bzla_failed_exp(d_bzla, lit))
         {
           qlog("  failed: %s (instance: %s)\n",
-               bzla_util_node2string(q),
-               bzla_util_node2string(find_backref(q)));
+               bzla_util_node2string(it->second),
+               bzla_util_node2string(find_backref(it->second)));
           failed = true;
           it     = assumptions.erase(it);
         }
@@ -1553,6 +1682,15 @@ QuantSolverState::print_statistics() const
            1,
            "  %zu CE checks",
            d_statistics.num_counterexample_checks);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "  %zu value instantiation lemmas",
+           d_statistics.num_value_inst_lemmas);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "  %zu skolemization lemmas",
+           d_statistics.num_skolemization_lemmas);
+  BZLA_MSG(d_bzla->msg, 1, "  %zu CE lemmas", d_statistics.num_ce_lemmas);
 }
 
 void
@@ -1598,6 +1736,7 @@ check_sat_quant_solver(BzlaQuantSolver *slv)
   QuantSolverState &state = *slv->d_state.get();
 
   state.compute_variable_dependencies();
+  state.collect_info();
 
   while (true)
   {

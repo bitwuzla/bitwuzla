@@ -229,7 +229,7 @@ print_param_smt2(uint32_t param_index, BzlaSort *sort, FILE *file)
   assert(sort);
   assert(file);
 
-  fprintf(file, "(@x%u ", param_index);
+  fprintf(file, "(_x%u ", param_index);
   bzla_dumpsmt_dump_sort(sort, file);
   fprintf(file, ")");
 }
