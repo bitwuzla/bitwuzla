@@ -13,6 +13,13 @@ class RNG;
 class BitVectorNode
 {
  public:
+  /**
+   * Path selection mode.
+   * True if path is to be selected based on essential inputs, false if it is
+   * to be selected randomly.
+   */
+  static constexpr bool s_sel_path_essential = true;
+
   /** Constructor. */
   BitVectorNode(RNG* rng, uint32_t size);
   BitVectorNode(RNG* rng, uint32_t size, BitVectorNode* child0);
@@ -100,12 +107,9 @@ class BitVectorNode
 
   /**
    * Select the next step in the propagation path based on target value t and
-   * the current assignment of this operand's children.
+   * the current assignment of this operation's children.
    */
-  uint32_t select_path(const BitVector& t)
-  { /* TODO */
-    return 0;
-  }
+  uint32_t select_path(const BitVector& t);
 
   /** Get child at given index. */
   BitVectorNode* operator[](uint32_t pos) const;

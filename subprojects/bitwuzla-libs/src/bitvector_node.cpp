@@ -11,8 +11,6 @@ namespace bzlals {
 
 /* -------------------------------------------------------------------------- */
 
-/* -------------------------------------------------------------------------- */
-
 BitVectorNode::BitVectorNode(RNG* rng, uint32_t size)
     : BitVectorNode(rng, BitVector::mk_zero(size), BitVectorDomain(size))
 {
@@ -110,6 +108,56 @@ BitVectorNode::BitVectorNode(RNG* rng,
   d_children[1] = child1;
   d_children[2] = child2;
   d_all_const = child0->is_const() && child1->is_const() && child2->is_const();
+}
+
+uint32_t
+BitVectorNode::select_path(const BitVector& t)
+{
+  assert(!all_const());
+
+  int32_t pos_x = -1;
+
+  /* select non-const operand if only one is non-const */
+  for (uint32_t i = 0; i < d_arity; ++i)
+  {
+    if (d_children[i]->is_const()) continue;
+    if (pos_x >= 0)
+    {
+      /* more than one non-const child */
+      pos_x = -1;
+      break;
+    }
+    pos_x = i;
+  }
+
+  /* select essential input if any and path selection based on essential
+   * inputs is enabled. */
+  if (pos_x == -1 && s_sel_path_essential)
+  {
+    /* determine essential inputs */
+    std::vector<uint32_t> ess_inputs;
+    for (uint32_t i = 0; i < d_arity; ++i)
+    {
+      if (is_essential(t, i))
+      {
+        ess_inputs.push_back(i);
+      }
+    }
+    if (!ess_inputs.empty())
+    {
+      pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>(ess_inputs);
+    }
+  }
+
+  /* select random input if operation has no essential inputs or if random path
+   * selection enabled */
+  if (pos_x == -1)
+  {
+    pos_x = d_rng->pick<uint32_t>(0, d_arity - 1);
+  }
+
+  assert(pos_x >= 0);
+  return pos_x;
 }
 
 BitVectorNode*

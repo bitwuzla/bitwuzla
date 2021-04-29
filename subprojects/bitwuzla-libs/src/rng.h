@@ -63,6 +63,10 @@ class RNG
   /** Pick one out of five choices. */
   Choice pick_one_of_five();
 
+  /* Pick random element from given set/vector. */
+  template <typename TSet, typename TPicked>
+  TPicked pick_from_set(const TSet& data);
+
  private:
   /** The seed of the random number generator. */
   uint32_t d_seed;
@@ -71,6 +75,16 @@ class RNG
   /** The GMP randstate. */
   std::unique_ptr<GMPRandState> d_gmp_state = nullptr;
 };
+
+template <typename TSet, typename TPicked>
+TPicked
+RNG::pick_from_set(const TSet& set)
+{
+  assert(!set.empty());
+  auto it = set.begin();
+  std::advance(it, pick<uint32_t>() % set.size());
+  return *it;
+}
 
 }  // namespace bzlals
 

@@ -11,6 +11,7 @@ set(test_names
   bvnodeiscons
   bvnodeisess
   bvnodeisinv
+  bvnodeselpath
 )
 
 foreach(test ${test_names})
