@@ -7,8 +7,8 @@
  *
  * See COPYING for more information on using this software.
  */
-#ifndef AIGPROP_H_INCLUDED
-#define AIGPROP_H_INCLUDED
+#ifndef BZLA_AIGPROP_H_INCLUDED
+#define BZLA_AIGPROP_H_INCLUDED
 
 #include "bzlaaig.h"
 #include "utils/bzlahashint.h"
@@ -16,11 +16,11 @@
 #include "utils/bzlamem.h"
 #include "utils/bzlarng.h"
 
-#define AIGPROP_UNKNOWN 0
-#define AIGPROP_SAT 10
-#define AIGPROP_UNSAT 20
+#define BZLA_AIGPROP_UNKNOWN 0
+#define BZLA_AIGPROP_SAT 10
+#define BZLA_AIGPROP_UNSAT 20
 
-struct AIGProp
+struct BzlaAIGProp
 {
   BzlaAIGMgr *amgr;
   BzlaIntHashTable *roots;
@@ -55,26 +55,26 @@ struct AIGProp
   } time;
 };
 
-typedef struct AIGProp AIGProp;
+typedef struct BzlaAIGProp BzlaAIGProp;
 
-AIGProp *aigprop_new_aigprop(BzlaAIGMgr *amgr,
-                             uint32_t loglevel,
-                             uint32_t seed,
-                             uint32_t use_restarts,
-                             uint32_t use_bandit,
-                             uint64_t nprops);
+BzlaAIGProp *bzla_aigprop_new_aigprop(BzlaAIGMgr *amgr,
+                                      uint32_t loglevel,
+                                      uint32_t seed,
+                                      uint32_t use_restarts,
+                                      uint32_t use_bandit,
+                                      uint64_t nprops);
 
-AIGProp *aigprop_clone_aigprop(BzlaAIGMgr *clone, AIGProp *aprop);
-void aigprop_delete_aigprop(AIGProp *aprop);
+BzlaAIGProp *bzla_aigprop_clone_aigprop(BzlaAIGMgr *clone, BzlaAIGProp *aprop);
+void bzla_aigprop_delete_aigprop(BzlaAIGProp *aprop);
 
-int32_t aigprop_get_assignment_aig(AIGProp *aprop, BzlaAIG *aig);
-void aigprop_generate_model(AIGProp *aprop, bool reset);
+int32_t bzla_aigprop_get_assignment_aig(BzlaAIGProp *aprop, BzlaAIG *aig);
+void bzla_aigprop_generate_model(BzlaAIGProp *aprop, bool reset);
 
-int32_t aigprop_sat(AIGProp *aprop, BzlaIntHashTable *roots);
+int32_t bzla_aigprop_sat(BzlaAIGProp *aprop, BzlaIntHashTable *roots);
 
 #if 0
-void aigprop_print_stats (AIGProp * aprop);
-void aigprop_print_time_stats (AIGProp * aprop);
+void bzla_aigprop_print_stats (BzlaAIGProp * aprop);
+void bzla_aigprop_print_time_stats (BzlaAIGProp * aprop);
 #endif
 
 #endif

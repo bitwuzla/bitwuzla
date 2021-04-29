@@ -45,7 +45,7 @@ clone_aigprop_solver(Bzla *clone, BzlaAIGPropSolver *slv, BzlaNodeMap *exp_map)
   BZLA_NEW(clone->mm, res);
   memcpy(res, slv, sizeof(BzlaAIGPropSolver));
   res->bzla  = clone;
-  res->aprop = aigprop_clone_aigprop(bzla_get_aig_mgr(clone), slv->aprop);
+  res->aprop = bzla_aigprop_clone_aigprop(bzla_get_aig_mgr(clone), slv->aprop);
   return res;
 }
 
@@ -59,12 +59,12 @@ delete_aigprop_solver(BzlaAIGPropSolver *slv)
 
   Bzla *bzla = slv->bzla;
 
-  if (slv->aprop) aigprop_delete_aigprop(slv->aprop);
+  if (slv->aprop) bzla_aigprop_delete_aigprop(slv->aprop);
   BZLA_DELETE(bzla->mm, slv);
 }
 
 static int32_t
-get_assignment_aig(AIGProp *aprop, BzlaAIG *aig)
+get_assignment_aig(BzlaAIGProp *aprop, BzlaAIG *aig)
 {
   assert(aprop);
   assert(aprop->model);
@@ -74,11 +74,11 @@ get_assignment_aig(AIGProp *aprop, BzlaAIG *aig)
   /* initialize don't care bits with false */
   if (!bzla_hashint_map_contains(aprop->model, BZLA_REAL_ADDR_AIG(aig)->id))
     return BZLA_IS_INVERTED_AIG(aig) ? 1 : -1;
-  return aigprop_get_assignment_aig(aprop, aig);
+  return bzla_aigprop_get_assignment_aig(aprop, aig);
 }
 
 static BzlaBitVector *
-get_assignment_bv(BzlaMemMgr *mm, BzlaNode *exp, AIGProp *aprop)
+get_assignment_bv(BzlaMemMgr *mm, BzlaNode *exp, BzlaAIGProp *aprop)
 {
   assert(mm);
   assert(exp);
@@ -117,7 +117,7 @@ generate_model_from_aig_model(Bzla *bzla)
   BzlaPtrHashTableIterator it;
   BzlaNodePtrStack stack;
   BzlaIntHashTable *cache;
-  AIGProp *aprop;
+  BzlaAIGProp *aprop;
 
   if (!(slv = BZLA_AIGPROP_SOLVER(bzla))) return;
 
@@ -265,12 +265,12 @@ sat_aigprop_solver(BzlaAIGPropSolver *slv)
       (void) bzla_hashint_table_add(roots, bzla_aig_get_id(aig));
   }
 
-  sat_result = aigprop_sat(slv->aprop, roots);
-  if (sat_result == AIGPROP_UNKNOWN)
+  sat_result = bzla_aigprop_sat(slv->aprop, roots);
+  if (sat_result == BZLA_AIGPROP_UNKNOWN)
     goto UNKNOWN;
-  else if (sat_result == AIGPROP_UNSAT)
+  else if (sat_result == BZLA_AIGPROP_UNSAT)
     goto UNSAT;
-  assert(sat_result == AIGPROP_SAT);
+  assert(sat_result == BZLA_AIGPROP_SAT);
   sat_result = BZLA_RESULT_SAT;
   generate_model_from_aig_model(bzla);
 DONE:
@@ -381,13 +381,13 @@ bzla_new_aigprop_solver(Bzla *bzla)
       (BzlaSolverPrintTimeStats) print_time_stats_aigprop_solver;
   slv->api.print_model = (BzlaSolverPrintModel) print_model;
 
-  slv->aprop =
-      aigprop_new_aigprop(bzla_get_aig_mgr(bzla),
-                          bzla_opt_get(bzla, BZLA_OPT_LOGLEVEL),
-                          bzla_opt_get(bzla, BZLA_OPT_SEED),
-                          bzla_opt_get(bzla, BZLA_OPT_AIGPROP_USE_RESTARTS),
-                          bzla_opt_get(bzla, BZLA_OPT_AIGPROP_USE_BANDIT),
-                          bzla_opt_get(bzla, BZLA_OPT_AIGPROP_NPROPS));
+  slv->aprop = bzla_aigprop_new_aigprop(
+      bzla_get_aig_mgr(bzla),
+      bzla_opt_get(bzla, BZLA_OPT_LOGLEVEL),
+      bzla_opt_get(bzla, BZLA_OPT_SEED),
+      bzla_opt_get(bzla, BZLA_OPT_AIGPROP_USE_RESTARTS),
+      bzla_opt_get(bzla, BZLA_OPT_AIGPROP_USE_BANDIT),
+      bzla_opt_get(bzla, BZLA_OPT_AIGPROP_NPROPS));
 
   BZLA_MSG(bzla->msg, 1, "enabled aigprop engine");
 

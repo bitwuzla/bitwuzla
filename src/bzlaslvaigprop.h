@@ -20,7 +20,7 @@ struct BzlaAIGPropSolver
 {
   BZLA_SOLVER_STRUCT;
 
-  AIGProp *aprop;
+  BzlaAIGProp *aprop;
 
   /* statistics */
   struct

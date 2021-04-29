@@ -21,11 +21,11 @@
 
 /*------------------------------------------------------------------------*/
 
-#define AIGPROPLOG(level, fmt, args...) \
-  do                                    \
-  {                                     \
-    if (aprop->loglevel < level) break; \
-    msg(fmt, ##args);                   \
+#define BZLA_AIGPROPLOG(level, fmt, args...) \
+  do                                         \
+  {                                          \
+    if (aprop->loglevel < level) break;      \
+    msg(fmt, ##args);                        \
   } while (0)
 
 static void
@@ -43,16 +43,16 @@ msg(char *fmt, ...)
 
 /*------------------------------------------------------------------------*/
 
-#define AIGPROP_MAXSTEPS_CFACT 100
-#define AIGPROP_MAXSTEPS(i) \
-  (AIGPROP_MAXSTEPS_CFACT * ((i) &1u ? 1 : 1 << ((i) >> 1)))
+#define BZLA_AIGPROP_MAXSTEPS_CFACT 100
+#define BZLA_AIGPROP_MAXSTEPS(i) \
+  (BZLA_AIGPROP_MAXSTEPS_CFACT * ((i) &1u ? 1 : 1 << ((i) >> 1)))
 
-#define AIGPROP_SELECT_CFACT 20
+#define BZLA_AIGPROP_SELECT_CFACT 20
 
 /*------------------------------------------------------------------------*/
 
 int32_t
-aigprop_get_assignment_aig(AIGProp *aprop, BzlaAIG *aig)
+bzla_aigprop_get_assignment_aig(BzlaAIGProp *aprop, BzlaAIG *aig)
 {
   assert(aprop);
 
@@ -80,45 +80,45 @@ aigprop_get_assignment_aig(AIGProp *aprop, BzlaAIG *aig)
  * score (-(-aig0 /\ -aig1), A) = max (score (-aig0), score (-aig1), A)
  */
 
-#define AIGPROP_LOG_COMPUTE_SCORE_AIG(cur, left, right, s0, s1, res) \
-  do                                                                 \
-  {                                                                  \
-    a = aigprop_get_assignment_aig(aprop, left);                     \
-    assert(a);                                                       \
-    AIGPROPLOG(3,                                                    \
-               "        assignment aig0 (%s%d): %d",                 \
-               BZLA_IS_INVERTED_AIG(left) ? "-" : "",                \
-               BZLA_REAL_ADDR_AIG(left)->id,                         \
-               a < 0 ? 0 : 1);                                       \
-    a = aigprop_get_assignment_aig(aprop, right);                    \
-    assert(a);                                                       \
-    AIGPROPLOG(3,                                                    \
-               "        assignment aig1 (%s%d): %d",                 \
-               BZLA_IS_INVERTED_AIG(right) ? "-" : "",               \
-               BZLA_REAL_ADDR_AIG(right)->id,                        \
-               a < 0 ? 0 : 1);                                       \
-    AIGPROPLOG(3,                                                    \
-               "        score      aig0 (%s%d): %f%s",               \
-               BZLA_IS_INVERTED_AIG(left) ? "-" : "",                \
-               BZLA_REAL_ADDR_AIG(left)->id,                         \
-               s0,                                                   \
-               s0 < 1.0 ? " (< 1.0)" : "");                          \
-    AIGPROPLOG(3,                                                    \
-               "        score      aig1 (%s%d): %f%s",               \
-               BZLA_IS_INVERTED_AIG(right) ? "-" : "",               \
-               BZLA_REAL_ADDR_AIG(right)->id,                        \
-               s1,                                                   \
-               s1 < 1.0 ? " (< 1.0)" : "");                          \
-    AIGPROPLOG(3,                                                    \
-               "      * score cur (%s%d): %f%s",                     \
-               BZLA_IS_INVERTED_AIG(cur) ? "-" : "",                 \
-               real_cur->id,                                         \
-               res,                                                  \
-               res < 1.0 ? " (< 1.0)" : "");                         \
+#define BZLA_AIGPROP_LOG_COMPUTE_SCORE_AIG(cur, left, right, s0, s1, res) \
+  do                                                                      \
+  {                                                                       \
+    a = bzla_aigprop_get_assignment_aig(aprop, left);                     \
+    assert(a);                                                            \
+    BZLA_AIGPROPLOG(3,                                                    \
+                    "        assignment aig0 (%s%d): %d",                 \
+                    BZLA_IS_INVERTED_AIG(left) ? "-" : "",                \
+                    BZLA_REAL_ADDR_AIG(left)->id,                         \
+                    a < 0 ? 0 : 1);                                       \
+    a = bzla_aigprop_get_assignment_aig(aprop, right);                    \
+    assert(a);                                                            \
+    BZLA_AIGPROPLOG(3,                                                    \
+                    "        assignment aig1 (%s%d): %d",                 \
+                    BZLA_IS_INVERTED_AIG(right) ? "-" : "",               \
+                    BZLA_REAL_ADDR_AIG(right)->id,                        \
+                    a < 0 ? 0 : 1);                                       \
+    BZLA_AIGPROPLOG(3,                                                    \
+                    "        score      aig0 (%s%d): %f%s",               \
+                    BZLA_IS_INVERTED_AIG(left) ? "-" : "",                \
+                    BZLA_REAL_ADDR_AIG(left)->id,                         \
+                    s0,                                                   \
+                    s0 < 1.0 ? " (< 1.0)" : "");                          \
+    BZLA_AIGPROPLOG(3,                                                    \
+                    "        score      aig1 (%s%d): %f%s",               \
+                    BZLA_IS_INVERTED_AIG(right) ? "-" : "",               \
+                    BZLA_REAL_ADDR_AIG(right)->id,                        \
+                    s1,                                                   \
+                    s1 < 1.0 ? " (< 1.0)" : "");                          \
+    BZLA_AIGPROPLOG(3,                                                    \
+                    "      * score cur (%s%d): %f%s",                     \
+                    BZLA_IS_INVERTED_AIG(cur) ? "-" : "",                 \
+                    real_cur->id,                                         \
+                    res,                                                  \
+                    res < 1.0 ? " (< 1.0)" : "");                         \
   } while (0)
 
 static double
-compute_score_aig(AIGProp *aprop, BzlaAIG *aig)
+compute_score_aig(BzlaAIGProp *aprop, BzlaAIG *aig)
 {
   assert(aprop);
   assert(!bzla_aig_is_const(aig));
@@ -175,33 +175,33 @@ compute_score_aig(AIGProp *aprop, BzlaAIG *aig)
     {
       assert(d->as_int == 0);
       d->as_int = 1;
-      assert(aigprop_get_assignment_aig(aprop, cur) != 0);
+      assert(bzla_aigprop_get_assignment_aig(aprop, cur) != 0);
 #ifndef NDEBUG
-      a = aigprop_get_assignment_aig(aprop, cur);
+      a = bzla_aigprop_get_assignment_aig(aprop, cur);
       assert(a);
-      AIGPROPLOG(3, "");
-      AIGPROPLOG(3,
-                 "  ** assignment cur (%s%d): %d",
-                 BZLA_IS_INVERTED_AIG(cur) ? "-" : "",
-                 real_cur->id,
-                 a < 0 ? 0 : 1);
+      BZLA_AIGPROPLOG(3, "");
+      BZLA_AIGPROPLOG(3,
+                      "  ** assignment cur (%s%d): %d",
+                      BZLA_IS_INVERTED_AIG(cur) ? "-" : "",
+                      real_cur->id,
+                      a < 0 ? 0 : 1);
 #endif
       assert(!bzla_hashint_map_contains(aprop->score, curid));
       assert(!bzla_hashint_map_contains(aprop->score, -curid));
 
       if (bzla_aig_is_var(real_cur))
       {
-        res = aigprop_get_assignment_aig(aprop, cur) < 0 ? 0.0 : 1.0;
-        AIGPROPLOG(3,
-                   "        * score cur (%s%d): %f",
-                   BZLA_IS_INVERTED_AIG(cur) ? "-" : "",
-                   real_cur->id,
-                   res);
-        AIGPROPLOG(3,
-                   "        * score cur (%s%d): %f",
-                   BZLA_IS_INVERTED_AIG(cur) ? "" : "-",
-                   real_cur->id,
-                   res == 0.0 ? 1.0 : 0.0);
+        res = bzla_aigprop_get_assignment_aig(aprop, cur) < 0 ? 0.0 : 1.0;
+        BZLA_AIGPROPLOG(3,
+                        "        * score cur (%s%d): %f",
+                        BZLA_IS_INVERTED_AIG(cur) ? "-" : "",
+                        real_cur->id,
+                        res);
+        BZLA_AIGPROPLOG(3,
+                        "        * score cur (%s%d): %f",
+                        BZLA_IS_INVERTED_AIG(cur) ? "" : "-",
+                        real_cur->id,
+                        res == 0.0 ? 1.0 : 0.0);
         bzla_hashint_map_add(aprop->score, curid)->as_dbl = res;
         bzla_hashint_map_add(aprop->score, -curid)->as_dbl =
             res == 0.0 ? 1.0 : 0.0;
@@ -238,7 +238,7 @@ compute_score_aig(AIGProp *aprop, BzlaAIG *aig)
         assert(res >= 0.0 && res <= 1.0);
         bzla_hashint_map_add(aprop->score, real_cur->id)->as_dbl = res;
 #ifndef NDEBUG
-        AIGPROP_LOG_COMPUTE_SCORE_AIG(
+        BZLA_AIGPROP_LOG_COMPUTE_SCORE_AIG(
             real_cur, left, right, sleft, sright, res);
 #endif
         sleft = bzla_aig_is_const(left)
@@ -251,12 +251,12 @@ compute_score_aig(AIGProp *aprop, BzlaAIG *aig)
         assert(res >= 0.0 && res <= 1.0);
         bzla_hashint_map_add(aprop->score, -real_cur->id)->as_dbl = res;
 #ifndef NDEBUG
-        AIGPROP_LOG_COMPUTE_SCORE_AIG(BZLA_INVERT_AIG(real_cur),
-                                      BZLA_INVERT_AIG(left),
-                                      BZLA_INVERT_AIG(right),
-                                      sleft,
-                                      sright,
-                                      res);
+        BZLA_AIGPROP_LOG_COMPUTE_SCORE_AIG(BZLA_INVERT_AIG(real_cur),
+                                           BZLA_INVERT_AIG(left),
+                                           BZLA_INVERT_AIG(right),
+                                           sleft,
+                                           sright,
+                                           res);
 #endif
       }
       assert(bzla_hashint_map_contains(aprop->score, curid));
@@ -273,7 +273,7 @@ compute_score_aig(AIGProp *aprop, BzlaAIG *aig)
 }
 
 static void
-compute_scores(AIGProp *aprop)
+compute_scores(BzlaAIGProp *aprop)
 {
   assert(aprop);
   assert(aprop->roots);
@@ -285,7 +285,7 @@ compute_scores(AIGProp *aprop)
   BzlaIntHashTableIterator it;
   BzlaMemMgr *mm;
 
-  AIGPROPLOG(3, "*** compute scores");
+  BZLA_AIGPROPLOG(3, "*** compute scores");
 
   mm = aprop->mm;
 
@@ -342,7 +342,7 @@ compute_scores(AIGProp *aprop)
 /*------------------------------------------------------------------------*/
 
 static void
-recursively_compute_assignment(AIGProp *aprop, BzlaAIG *aig)
+recursively_compute_assignment(BzlaAIGProp *aprop, BzlaAIG *aig)
 {
   assert(aprop);
   assert(aprop->model);
@@ -395,9 +395,9 @@ recursively_compute_assignment(AIGProp *aprop, BzlaAIG *aig)
       }
       else
       {
-        aleft = aigprop_get_assignment_aig(aprop, left);
+        aleft = bzla_aigprop_get_assignment_aig(aprop, left);
         assert(aleft);
-        aright = aigprop_get_assignment_aig(aprop, right);
+        aright = bzla_aigprop_get_assignment_aig(aprop, right);
         assert(aright);
         if (aleft < 0 || aright < 0)
           bzla_hashint_map_add(aprop->model, real_cur->id)->as_int = -1;
@@ -412,7 +412,7 @@ recursively_compute_assignment(AIGProp *aprop, BzlaAIG *aig)
 }
 
 void
-aigprop_delete_model(AIGProp *aprop)
+bzla_aigprop_delete_model(BzlaAIGProp *aprop)
 {
   assert(aprop);
 
@@ -422,23 +422,23 @@ aigprop_delete_model(AIGProp *aprop)
 }
 
 void
-aigprop_init_model(AIGProp *aprop)
+bzla_aigprop_init_model(BzlaAIGProp *aprop)
 {
   assert(aprop);
 
-  if (aprop->model) aigprop_delete_model(aprop);
+  if (aprop->model) bzla_aigprop_delete_model(aprop);
   aprop->model = bzla_hashint_map_new(aprop->mm);
 }
 
 void
-aigprop_generate_model(AIGProp *aprop, bool reset)
+bzla_aigprop_generate_model(BzlaAIGProp *aprop, bool reset)
 {
   assert(aprop);
   assert(aprop->roots);
 
   BzlaIntHashTableIterator it;
 
-  if (reset) aigprop_init_model(aprop);
+  if (reset) bzla_aigprop_init_model(aprop);
 
   bzla_iter_hashint_init(&it, aprop->roots);
   while (bzla_iter_hashint_has_next(&it))
@@ -449,14 +449,14 @@ aigprop_generate_model(AIGProp *aprop, bool reset)
 /*------------------------------------------------------------------------*/
 
 static inline void
-update_unsatroots_table(AIGProp *aprop, BzlaAIG *aig, int32_t assignment)
+update_unsatroots_table(BzlaAIGProp *aprop, BzlaAIG *aig, int32_t assignment)
 {
   assert(aprop);
   assert(aig);
   assert(!bzla_aig_is_const(aig));
   assert(bzla_hashint_table_contains(aprop->roots, bzla_aig_get_id(aig))
          || bzla_hashint_table_contains(aprop->roots, -bzla_aig_get_id(aig)));
-  assert(aigprop_get_assignment_aig(aprop, aig) != assignment);
+  assert(bzla_aigprop_get_assignment_aig(aprop, aig) != assignment);
   assert(assignment == 1 || assignment == -1);
 
   uint32_t id;
@@ -466,29 +466,29 @@ update_unsatroots_table(AIGProp *aprop, BzlaAIG *aig, int32_t assignment)
   if (bzla_hashint_map_contains(aprop->unsatroots, id))
   {
     bzla_hashint_map_remove(aprop->unsatroots, id, 0);
-    assert(aigprop_get_assignment_aig(aprop, aig) == -1);
+    assert(bzla_aigprop_get_assignment_aig(aprop, aig) == -1);
     assert(assignment == 1);
   }
   else if (bzla_hashint_map_contains(aprop->unsatroots, -id))
   {
     bzla_hashint_map_remove(aprop->unsatroots, -id, 0);
-    assert(aigprop_get_assignment_aig(aprop, BZLA_INVERT_AIG(aig)) == -1);
+    assert(bzla_aigprop_get_assignment_aig(aprop, BZLA_INVERT_AIG(aig)) == -1);
     assert(assignment == -1);
   }
   else if (assignment == -1)
   {
     bzla_hashint_map_add(aprop->unsatroots, id);
-    assert(aigprop_get_assignment_aig(aprop, aig) == 1);
+    assert(bzla_aigprop_get_assignment_aig(aprop, aig) == 1);
   }
   else
   {
     bzla_hashint_map_add(aprop->unsatroots, -id);
-    assert(aigprop_get_assignment_aig(aprop, BZLA_INVERT_AIG(aig)) == 1);
+    assert(bzla_aigprop_get_assignment_aig(aprop, BZLA_INVERT_AIG(aig)) == 1);
   }
 }
 
 static void
-update_cone(AIGProp *aprop, BzlaAIG *aig, int32_t assignment)
+update_cone(BzlaAIGProp *aprop, BzlaAIG *aig, int32_t assignment)
 {
   assert(aprop);
   assert(aig);
@@ -519,19 +519,22 @@ update_cone(AIGProp *aprop, BzlaAIG *aig, int32_t assignment)
     root = bzla_aig_get_by_id(aprop->amgr, bzla_iter_hashint_next(&it));
     assert(!bzla_aig_is_false(root));
     if ((!BZLA_IS_INVERTED_AIG(root)
-         && aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root)) == -1)
+         && bzla_aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root))
+                == -1)
         || (BZLA_IS_INVERTED_AIG(root)
-            && aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root))
+            && bzla_aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root))
                    == 1))
     {
       assert(
           bzla_hashint_map_contains(aprop->unsatroots, bzla_aig_get_id(root)));
     }
     else if ((!BZLA_IS_INVERTED_AIG(root)
-              && aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root))
+              && bzla_aigprop_get_assignment_aig(aprop,
+                                                 BZLA_REAL_ADDR_AIG(root))
                      == 1)
              || (BZLA_IS_INVERTED_AIG(root)
-                 && aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root))
+                 && bzla_aigprop_get_assignment_aig(aprop,
+                                                    BZLA_REAL_ADDR_AIG(root))
                         == -1))
     {
       assert(
@@ -602,9 +605,9 @@ update_cone(AIGProp *aprop, BzlaAIG *aig, int32_t assignment)
 
     left  = bzla_aig_get_left_child(aprop->amgr, cur);
     right = bzla_aig_get_right_child(aprop->amgr, cur);
-    aleft = aigprop_get_assignment_aig(aprop, left);
+    aleft = bzla_aigprop_get_assignment_aig(aprop, left);
     assert(aleft);
-    aright = aigprop_get_assignment_aig(aprop, right);
+    aright = bzla_aigprop_get_assignment_aig(aprop, right);
     assert(aright);
     ass = aleft < 0 || aright < 0 ? -1 : 1;
     d   = bzla_hashint_map_get(aprop->model, cur->id);
@@ -673,19 +676,22 @@ update_cone(AIGProp *aprop, BzlaAIG *aig, int32_t assignment)
   {
     root = bzla_aig_get_by_id(aprop->amgr, bzla_iter_hashint_next(&it));
     if ((!BZLA_IS_INVERTED_AIG(root)
-         && aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root)) == -1)
+         && bzla_aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root))
+                == -1)
         || (BZLA_IS_INVERTED_AIG(root)
-            && aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root))
+            && bzla_aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root))
                    == 1))
     {
       assert(
           bzla_hashint_map_contains(aprop->unsatroots, bzla_aig_get_id(root)));
     }
     else if ((!BZLA_IS_INVERTED_AIG(root)
-              && aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root))
+              && bzla_aigprop_get_assignment_aig(aprop,
+                                                 BZLA_REAL_ADDR_AIG(root))
                      == 1)
              || (BZLA_IS_INVERTED_AIG(root)
-                 && aigprop_get_assignment_aig(aprop, BZLA_REAL_ADDR_AIG(root))
+                 && bzla_aigprop_get_assignment_aig(aprop,
+                                                    BZLA_REAL_ADDR_AIG(root))
                         == -1))
     {
       assert(
@@ -700,7 +706,7 @@ update_cone(AIGProp *aprop, BzlaAIG *aig, int32_t assignment)
 /*------------------------------------------------------------------------*/
 
 static BzlaAIG *
-select_root(AIGProp *aprop, uint32_t nmoves)
+select_root(BzlaAIGProp *aprop, uint32_t nmoves)
 {
   assert(aprop);
   assert(aprop->unsatroots);
@@ -725,7 +731,7 @@ select_root(AIGProp *aprop, uint32_t nmoves)
     {
       selected = &aprop->unsatroots->data[it.cur_pos].as_int;
       cur      = bzla_aig_get_by_id(aprop->amgr, bzla_iter_hashint_next(&it));
-      assert(aigprop_get_assignment_aig(aprop, cur) != 1);
+      assert(bzla_aigprop_get_assignment_aig(aprop, cur) != 1);
       assert(!bzla_aig_is_const(cur));
       d = bzla_hashint_map_get(aprop->score, bzla_aig_get_id(cur));
       assert(d);
@@ -737,7 +743,7 @@ select_root(AIGProp *aprop, uint32_t nmoves)
         *selected += 1;
         continue;
       }
-      value = score + AIGPROP_SELECT_CFACT * sqrt(log(*selected) / nmoves);
+      value = score + BZLA_AIGPROP_SELECT_CFACT * sqrt(log(*selected) / nmoves);
       if (value > max_value)
       {
         res       = cur;
@@ -755,7 +761,7 @@ select_root(AIGProp *aprop, uint32_t nmoves)
     while (bzla_iter_hashint_has_next(&it))
     {
       cur = bzla_aig_get_by_id(aprop->amgr, bzla_iter_hashint_next(&it));
-      assert(aigprop_get_assignment_aig(aprop, cur) != 1);
+      assert(bzla_aigprop_get_assignment_aig(aprop, cur) != 1);
       assert(!bzla_aig_is_const(cur));
       BZLA_PUSH_STACK(stack, cur);
     }
@@ -767,16 +773,19 @@ select_root(AIGProp *aprop, uint32_t nmoves)
 
   assert(res);
 
-  AIGPROPLOG(1, "");
-  AIGPROPLOG(1,
-             "*** select root: %s%d",
-             BZLA_IS_INVERTED_AIG(res) ? "-" : "",
-             BZLA_REAL_ADDR_AIG(res)->id);
+  BZLA_AIGPROPLOG(1, "");
+  BZLA_AIGPROPLOG(1,
+                  "*** select root: %s%d",
+                  BZLA_IS_INVERTED_AIG(res) ? "-" : "",
+                  BZLA_REAL_ADDR_AIG(res)->id);
   return res;
 }
 
 static bool
-select_move(AIGProp *aprop, BzlaAIG *root, BzlaAIG **input, int32_t *assignment)
+select_move(BzlaAIGProp *aprop,
+            BzlaAIG *root,
+            BzlaAIG **input,
+            int32_t *assignment)
 {
   assert(aprop);
   assert(root);
@@ -877,7 +886,7 @@ select_move(AIGProp *aprop, BzlaAIG *root, BzlaAIG **input, int32_t *assignment)
 }
 
 static int32_t
-move(AIGProp *aprop, uint32_t nmoves)
+move(BzlaAIGProp *aprop, uint32_t nmoves)
 {
   assert(aprop);
   assert(aprop->roots);
@@ -892,16 +901,16 @@ move(AIGProp *aprop, uint32_t nmoves)
 
   if (select_move(aprop, root, &input, &assignment))
   {
-    AIGPROPLOG(1, "");
-    AIGPROPLOG(1, "*** move");
+    BZLA_AIGPROPLOG(1, "");
+    BZLA_AIGPROPLOG(1, "*** move");
 #ifndef NDEBUG
-    int32_t a = aigprop_get_assignment_aig(aprop, input);
-    AIGPROPLOG(1,
-               "    * input: %s%d",
-               BZLA_IS_INVERTED_AIG(input) ? "-" : "",
-               BZLA_REAL_ADDR_AIG(input)->id);
-    AIGPROPLOG(1, "      prev. assignment: %d", a);
-    AIGPROPLOG(1, "      new   assignment: %d", assignment);
+    int32_t a = bzla_aigprop_get_assignment_aig(aprop, input);
+    BZLA_AIGPROPLOG(1,
+                    "    * input: %s%d",
+                    BZLA_IS_INVERTED_AIG(input) ? "-" : "",
+                    BZLA_REAL_ADDR_AIG(input)->id);
+    BZLA_AIGPROPLOG(1, "      prev. assignment: %d", a);
+    BZLA_AIGPROPLOG(1, "      new   assignment: %d", assignment);
 #endif
     update_cone(aprop, input, assignment);
     aprop->stats.moves += 1;
@@ -914,7 +923,7 @@ move(AIGProp *aprop, uint32_t nmoves)
 
 // TODO termination callback?
 int32_t
-aigprop_sat(AIGProp *aprop, BzlaIntHashTable *roots)
+bzla_aigprop_sat(BzlaAIGProp *aprop, BzlaIntHashTable *roots)
 {
   assert(aprop);
   assert(roots);
@@ -931,7 +940,7 @@ aigprop_sat(AIGProp *aprop, BzlaIntHashTable *roots)
   BzlaAIG *root, *cur, *child;
 
   start      = bzla_util_time_stamp();
-  sat_result = AIGPROP_UNKNOWN;
+  sat_result = BZLA_AIGPROP_UNKNOWN;
   nmoves     = 0;
 
   mm           = aprop->mm;
@@ -996,7 +1005,7 @@ aigprop_sat(AIGProp *aprop, BzlaIntHashTable *roots)
   BZLA_RELEASE_STACK(stack);
 
   /* generate initial model, all inputs are initialized with false */
-  aigprop_generate_model(aprop, true);
+  bzla_aigprop_generate_model(aprop, true);
 
   for (;;)
   {
@@ -1011,9 +1020,9 @@ aigprop_sat(AIGProp *aprop, BzlaIntHashTable *roots)
       if (bzla_aig_is_true(root)) continue;
       if (bzla_aig_is_false(root)) goto UNSAT;
       if (bzla_hashint_table_contains(aprop->roots, -rootid)) goto UNSAT;
-      assert(aigprop_get_assignment_aig(aprop, root));
+      assert(bzla_aigprop_get_assignment_aig(aprop, root));
       if (!bzla_hashint_map_contains(aprop->unsatroots, rootid)
-          && aigprop_get_assignment_aig(aprop, root) == -1)
+          && bzla_aigprop_get_assignment_aig(aprop, root) == -1)
         bzla_hashint_map_add(aprop->unsatroots, rootid);
     }
 
@@ -1022,7 +1031,7 @@ aigprop_sat(AIGProp *aprop, BzlaIntHashTable *roots)
 
     if (!aprop->unsatroots->count) goto SAT;
 
-    for (j = 0, max_steps = AIGPROP_MAXSTEPS(aprop->stats.restarts + 1);
+    for (j = 0, max_steps = BZLA_AIGPROP_MAXSTEPS(aprop->stats.restarts + 1);
          !aprop->use_restarts || j < max_steps;
          j++)
     {
@@ -1037,7 +1046,7 @@ aigprop_sat(AIGProp *aprop, BzlaIntHashTable *roots)
     }
 
     /* restart */
-    aigprop_generate_model(aprop, true);
+    bzla_aigprop_generate_model(aprop, true);
     bzla_hashint_map_delete(aprop->score);
     aprop->score = 0;
     bzla_hashint_map_delete(aprop->unsatroots);
@@ -1045,13 +1054,13 @@ aigprop_sat(AIGProp *aprop, BzlaIntHashTable *roots)
     aprop->stats.restarts += 1;
   }
 SAT:
-  sat_result = AIGPROP_SAT;
+  sat_result = BZLA_AIGPROP_SAT;
   goto DONE;
 UNSAT:
-  sat_result = AIGPROP_UNSAT;
+  sat_result = BZLA_AIGPROP_UNSAT;
   goto DONE;
 UNKNOWN:
-  sat_result = AIGPROP_UNKNOWN;
+  sat_result = BZLA_AIGPROP_UNKNOWN;
 DONE:
   bzla_iter_hashint_init(&it, aprop->parents);
   while (bzla_iter_hashint_has_next(&it))
@@ -1073,19 +1082,19 @@ DONE:
   return sat_result;
 }
 
-AIGProp *
-aigprop_clone_aigprop(BzlaAIGMgr *clone, AIGProp *aprop)
+BzlaAIGProp *
+bzla_aigprop_clone_aigprop(BzlaAIGMgr *clone, BzlaAIGProp *aprop)
 {
   assert(clone);
 
-  AIGProp *res;
+  BzlaAIGProp *res;
   BzlaMemMgr *mm;
 
   if (!aprop) return 0;
 
   mm = bzla_mem_mgr_new();
   BZLA_CNEW(mm, res);
-  memcpy(res, aprop, sizeof(AIGProp));
+  memcpy(res, aprop, sizeof(BzlaAIGProp));
   res->mm   = mm;
   res->rng  = bzla_rng_clone(aprop->rng, mm);
   res->amgr = clone;
@@ -1098,17 +1107,17 @@ aigprop_clone_aigprop(BzlaAIGMgr *clone, AIGProp *aprop)
   return res;
 }
 
-AIGProp *
-aigprop_new_aigprop(BzlaAIGMgr *amgr,
-                    uint32_t loglevel,
-                    uint32_t seed,
-                    uint32_t use_restarts,
-                    uint32_t use_bandit,
-                    uint64_t nprops)
+BzlaAIGProp *
+bzla_aigprop_new_aigprop(BzlaAIGMgr *amgr,
+                         uint32_t loglevel,
+                         uint32_t seed,
+                         uint32_t use_restarts,
+                         uint32_t use_bandit,
+                         uint64_t nprops)
 {
   assert(amgr);
 
-  AIGProp *res;
+  BzlaAIGProp *res;
   BzlaMemMgr *mm;
 
   mm = bzla_mem_mgr_new();
@@ -1126,7 +1135,7 @@ aigprop_new_aigprop(BzlaAIGMgr *amgr,
 }
 
 void
-aigprop_delete_aigprop(AIGProp *aprop)
+bzla_aigprop_delete_aigprop(BzlaAIGProp *aprop)
 {
   assert(aprop);
   BzlaMemMgr *mm;
@@ -1142,7 +1151,7 @@ aigprop_delete_aigprop(AIGProp *aprop)
 
 #if 0
 void
-aigprop_print_stats (AIGProp * aprop)
+bzla_aigprop_print_stats (BzlaAIGProp * aprop)
 {
   assert (aprop);
   msg ("");
@@ -1151,7 +1160,7 @@ aigprop_print_stats (AIGProp * aprop)
 }
 
 void
-aigprop_print_time_stats (AIGProp * aprop)
+bzla_aigprop_print_time_stats (BzlaAIGProp * aprop)
 {
   assert (aprop);
   msg ("");
