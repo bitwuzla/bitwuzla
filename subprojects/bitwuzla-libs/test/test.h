@@ -6,7 +6,7 @@
 
 #include "bitvector.h"
 #include "bitvector_domain.h"
-#include "bitvector_op.h"
+#include "bitvector_node.h"
 #include "gmpmpz.h"
 #include "gmprandstate.h"
 #include "gtest/gtest.h"
@@ -115,7 +115,7 @@ TestBvDomainCommon::gen_values(uint32_t bw, std::vector<std::string>& values)
 
 /* -------------------------------------------------------------------------- */
 
-class TestBvOp : public TestBvDomainCommon
+class TestBvNode : public TestBvDomainCommon
 {
  protected:
   enum Kind
@@ -196,10 +196,10 @@ class TestBvOp : public TestBvDomainCommon
 };
 
 BitVector
-TestBvOp::eval_op_binary(OpKind op_kind,
-                         const BitVector& x_val,
-                         const BitVector& s_val,
-                         uint32_t pos_x)
+TestBvNode::eval_op_binary(OpKind op_kind,
+                           const BitVector& x_val,
+                           const BitVector& s_val,
+                           uint32_t pos_x)
 {
   BitVector res;
   switch (op_kind)
@@ -242,12 +242,12 @@ TestBvOp::eval_op_binary(OpKind op_kind,
 }
 
 bool
-TestBvOp::check_sat_binary(Kind kind,
-                           OpKind op_kind,
-                           const BitVectorDomain& x,
-                           const BitVector& t,
-                           const BitVector& s_val,
-                           uint32_t pos_x)
+TestBvNode::check_sat_binary(Kind kind,
+                             OpKind op_kind,
+                             const BitVectorDomain& x,
+                             const BitVector& t,
+                             const BitVector& s_val,
+                             uint32_t pos_x)
 {
   BitVectorDomainGenerator gen(x);
   do
@@ -274,11 +274,11 @@ TestBvOp::check_sat_binary(Kind kind,
 }
 
 bool
-TestBvOp::check_sat_binary_cons(OpKind op_kind,
-                                const BitVector& x_val,
-                                const BitVector& t,
-                                uint32_t s_size,
-                                uint32_t pos_x)
+TestBvNode::check_sat_binary_cons(OpKind op_kind,
+                                  const BitVector& x_val,
+                                  const BitVector& t,
+                                  uint32_t s_size,
+                                  uint32_t pos_x)
 {
   BitVectorDomain s(s_size);
   BitVectorDomainGenerator gen(s);
@@ -293,11 +293,11 @@ TestBvOp::check_sat_binary_cons(OpKind op_kind,
 }
 
 bool
-TestBvOp::check_sat_binary_is_ess(OpKind op_kind,
-                                  const BitVector& x_val,
-                                  const BitVector& t,
-                                  const BitVectorDomain& s,
-                                  uint32_t pos_x)
+TestBvNode::check_sat_binary_is_ess(OpKind op_kind,
+                                    const BitVector& x_val,
+                                    const BitVector& t,
+                                    const BitVectorDomain& s,
+                                    uint32_t pos_x)
 {
   BitVectorDomainGenerator gen(s);
   do
@@ -310,12 +310,12 @@ TestBvOp::check_sat_binary_is_ess(OpKind op_kind,
 }
 
 bool
-TestBvOp::check_sat_ite(Kind kind,
-                        const BitVectorDomain& x,
-                        const BitVector& t,
-                        const BitVector& s0_val,
-                        const BitVector& s1_val,
-                        uint32_t pos_x)
+TestBvNode::check_sat_ite(Kind kind,
+                          const BitVectorDomain& x,
+                          const BitVector& t,
+                          const BitVector& s0_val,
+                          const BitVector& s1_val,
+                          uint32_t pos_x)
 {
   BitVectorDomainGenerator gen(x);
   do
@@ -397,13 +397,13 @@ TestBvOp::check_sat_ite(Kind kind,
 }
 
 bool
-TestBvOp::check_sat_ite_is_ess(const BitVector& x_val,
-                               const BitVector& t,
-                               const BitVectorDomain& s0,
-                               const BitVector& s0_val_cur,
-                               const BitVectorDomain& s1,
-                               const BitVector& s1_val_cur,
-                               uint32_t pos_x)
+TestBvNode::check_sat_ite_is_ess(const BitVector& x_val,
+                                 const BitVector& t,
+                                 const BitVectorDomain& s0,
+                                 const BitVector& s0_val_cur,
+                                 const BitVectorDomain& s1,
+                                 const BitVector& s1_val_cur,
+                                 uint32_t pos_x)
 {
   BitVectorDomainGenerator gens0(s0);
   BitVectorDomainGenerator gens1(s1);
@@ -449,11 +449,11 @@ TestBvOp::check_sat_ite_is_ess(const BitVector& x_val,
 }
 
 bool
-TestBvOp::check_sat_ite_cons(const BitVector& x_val,
-                             const BitVector& t,
-                             uint32_t s0_size,
-                             uint32_t s1_size,
-                             uint32_t pos_x)
+TestBvNode::check_sat_ite_cons(const BitVector& x_val,
+                               const BitVector& t,
+                               uint32_t s0_size,
+                               uint32_t s1_size,
+                               uint32_t pos_x)
 {
   BitVectorDomainGenerator gens0(s0_size);
   while (gens0.has_next())
@@ -482,11 +482,11 @@ TestBvOp::check_sat_ite_cons(const BitVector& x_val,
 }
 
 bool
-TestBvOp::check_sat_extract(Kind kind,
-                            const BitVectorDomain& x,
-                            const BitVector& t,
-                            uint32_t hi,
-                            uint32_t lo)
+TestBvNode::check_sat_extract(Kind kind,
+                              const BitVectorDomain& x,
+                              const BitVector& t,
+                              uint32_t hi,
+                              uint32_t lo)
 {
   assert(kind == IS_CONS || kind == IS_ESS || kind == IS_INV);
   BitVectorDomainGenerator gen(x);
@@ -500,10 +500,10 @@ TestBvOp::check_sat_extract(Kind kind,
 }
 
 bool
-TestBvOp::check_sat_sext(Kind kind,
-                         const BitVectorDomain& x,
-                         const BitVector& t,
-                         uint32_t n)
+TestBvNode::check_sat_sext(Kind kind,
+                           const BitVectorDomain& x,
+                           const BitVector& t,
+                           uint32_t n)
 {
   assert(kind == IS_CONS || kind == IS_ESS || kind == IS_INV);
   BitVectorDomainGenerator gen(x);
@@ -518,7 +518,7 @@ TestBvOp::check_sat_sext(Kind kind,
 
 template <class T>
 void
-TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
+TestBvNode::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
 {
   uint32_t bw_x = TEST_BW;
   uint32_t bw_s = TEST_BW;
@@ -569,16 +569,16 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
             BitVectorDomainGenerator gen(s, d_rng.get());
             s_val = gen.random();
           }
-          std::unique_ptr<BitVectorOp> child(
-              new BitVectorOp(d_rng.get(), bw_t));
+          std::unique_ptr<BitVectorNode> child(
+              new BitVectorNode(d_rng.get(), bw_t));
           /* For this test, the domain of x is irrelevant, hence we
            * initialize it with an unconstrained domain. */
-          std::unique_ptr<BitVectorOp> op_x(new T(d_rng.get(),
-                                                  x_val,
-                                                  BitVectorDomain(bw_x),
-                                                  child.get(),
-                                                  child.get()));
-          std::unique_ptr<BitVectorOp> op_s(
+          std::unique_ptr<BitVectorNode> op_x(new T(d_rng.get(),
+                                                    x_val,
+                                                    BitVectorDomain(bw_x),
+                                                    child.get(),
+                                                    child.get()));
+          std::unique_ptr<BitVectorNode> op_s(
               new T(d_rng.get(), s_val, s, child.get(), child.get()));
           /* For this test, we don't care about current assignment and domain of
            * the op, thus we initialize them with 0 and x..x, respectively. */
@@ -622,14 +622,14 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
             BitVectorDomainGenerator gen(x, d_rng.get());
             x_val = gen.random();
           }
-          std::unique_ptr<BitVectorOp> child(
-              new BitVectorOp(d_rng.get(), bw_t));
-          std::unique_ptr<BitVectorOp> op_x(
+          std::unique_ptr<BitVectorNode> child(
+              new BitVectorNode(d_rng.get(), bw_t));
+          std::unique_ptr<BitVectorNode> op_x(
               new T(d_rng.get(), x_val, x, child.get(), child.get()));
           /* For this test, we don't care about the domain of s, thus we
            * initialize it with an unconstrained domain. */
           BitVectorDomain s(bw_s);
-          std::unique_ptr<BitVectorOp> op_s(
+          std::unique_ptr<BitVectorNode> op_s(
               new T(d_rng.get(), s_val, s, child.get(), child.get()));
           /* For this test, we don't care about current assignment and domain of
            * the op, thus we initialize them with 0 and x..x, respectively. */
@@ -693,7 +693,7 @@ TestBvOp::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
 }
 
 void
-TestBvOp::test_ite(Kind kind, uint32_t pos_x)
+TestBvNode::test_ite(Kind kind, uint32_t pos_x)
 {
   uint32_t bw_s0, bw_s1, bw_x, bw_t = TEST_BW;
   uint32_t n_vals, n_vals_s0, n_vals_s1;
@@ -741,13 +741,13 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
           for (uint32_t j = 0; j < n_vals; j++)
           {
             BitVector t(bw_t, j);
-            std::unique_ptr<BitVectorOp> child0(
-                new BitVectorOp(d_rng.get(), 1));
-            std::unique_ptr<BitVectorOp> child1(
-                new BitVectorOp(d_rng.get(), bw_t));
+            std::unique_ptr<BitVectorNode> child0(
+                new BitVectorNode(d_rng.get(), 1));
+            std::unique_ptr<BitVectorNode> child1(
+                new BitVectorNode(d_rng.get(), bw_t));
             /* For this test, the domain of x is irrelevant, hence we
              * initialize it with an unconstrained domain. */
-            std::unique_ptr<BitVectorOp> op_x(
+            std::unique_ptr<BitVectorNode> op_x(
                 new BitVectorIte(d_rng.get(),
                                  x_val,
                                  BitVectorDomain(bw_x),
@@ -767,18 +767,20 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
               BitVectorDomainGenerator gen(s1, d_rng.get());
               s1_val = gen.random();
             }
-            std::unique_ptr<BitVectorOp> op_s0(new BitVectorIte(d_rng.get(),
-                                                                s0_val,
-                                                                s0,
-                                                                child0.get(),
-                                                                child1.get(),
-                                                                child1.get()));
-            std::unique_ptr<BitVectorOp> op_s1(new BitVectorIte(d_rng.get(),
-                                                                s1_val,
-                                                                s1,
-                                                                child0.get(),
-                                                                child1.get(),
-                                                                child1.get()));
+            std::unique_ptr<BitVectorNode> op_s0(
+                new BitVectorIte(d_rng.get(),
+                                 s0_val,
+                                 s0,
+                                 child0.get(),
+                                 child1.get(),
+                                 child1.get()));
+            std::unique_ptr<BitVectorNode> op_s1(
+                new BitVectorIte(d_rng.get(),
+                                 s1_val,
+                                 s1,
+                                 child0.get(),
+                                 child1.get(),
+                                 child1.get()));
             /* For this test, we don't care about current assignment and domain
              * of the op, thus we initialize them with 0 and x..x,
              * respectively. */
@@ -842,26 +844,26 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
               BitVectorDomainGenerator gen(x, d_rng.get());
               x_val = gen.random();
             }
-            std::unique_ptr<BitVectorOp> child0(
-                new BitVectorOp(d_rng.get(), 1));
-            std::unique_ptr<BitVectorOp> child1(
-                new BitVectorOp(d_rng.get(), bw_t));
-            std::unique_ptr<BitVectorOp> op_x(new BitVectorIte(d_rng.get(),
-                                                               x_val,
-                                                               x,
-                                                               child0.get(),
-                                                               child1.get(),
-                                                               child1.get()));
+            std::unique_ptr<BitVectorNode> child0(
+                new BitVectorNode(d_rng.get(), 1));
+            std::unique_ptr<BitVectorNode> child1(
+                new BitVectorNode(d_rng.get(), bw_t));
+            std::unique_ptr<BitVectorNode> op_x(new BitVectorIte(d_rng.get(),
+                                                                 x_val,
+                                                                 x,
+                                                                 child0.get(),
+                                                                 child1.get(),
+                                                                 child1.get()));
             /* For this test, we don't care about the domains of s0 and s1,
              * hence we initialize them with unconstrained domains. */
-            std::unique_ptr<BitVectorOp> op_s0(
+            std::unique_ptr<BitVectorNode> op_s0(
                 new BitVectorIte(d_rng.get(),
                                  s0_val,
                                  BitVectorDomain(bw_s0),
                                  child0.get(),
                                  child1.get(),
                                  child1.get()));
-            std::unique_ptr<BitVectorOp> op_s1(
+            std::unique_ptr<BitVectorNode> op_s1(
                 new BitVectorIte(d_rng.get(),
                                  s1_val,
                                  BitVectorDomain(bw_s0),
@@ -949,7 +951,7 @@ TestBvOp::test_ite(Kind kind, uint32_t pos_x)
 }
 
 void
-TestBvOp::test_extract(Kind kind)
+TestBvNode::test_extract(Kind kind)
 {
   uint32_t bw_x = TEST_BW;
 
@@ -973,9 +975,9 @@ TestBvOp::test_extract(Kind kind)
             BitVectorDomainGenerator gen(x, d_rng.get());
             x_val = gen.random();
           }
-          std::unique_ptr<BitVectorOp> child(
-              new BitVectorOp(d_rng.get(), bw_t));
-          std::unique_ptr<BitVectorOp> op_x(
+          std::unique_ptr<BitVectorNode> child(
+              new BitVectorNode(d_rng.get(), bw_t));
+          std::unique_ptr<BitVectorNode> op_x(
               new BitVectorExtract(d_rng.get(), x_val, x, child.get(), hi, lo));
           /* For this test, we don't care about current assignment and domain
            * of the op, thus we initialize them with 0 and 'x..x',
@@ -1043,7 +1045,7 @@ TestBvOp::test_extract(Kind kind)
 }
 
 void
-TestBvOp::test_sext(Kind kind)
+TestBvNode::test_sext(Kind kind)
 {
   uint32_t bw_x = TEST_BW;
 
@@ -1065,8 +1067,9 @@ TestBvOp::test_sext(Kind kind)
           BitVectorDomainGenerator gen(x, d_rng.get());
           x_val = gen.random();
         }
-        std::unique_ptr<BitVectorOp> child(new BitVectorOp(d_rng.get(), bw_t));
-        std::unique_ptr<BitVectorOp> op_x(
+        std::unique_ptr<BitVectorNode> child(
+            new BitVectorNode(d_rng.get(), bw_t));
+        std::unique_ptr<BitVectorNode> op_x(
             new BitVectorSignExtend(d_rng.get(), x_val, x, child.get(), n));
         /* For this test, we don't care about current assignment and domain
          * of the op, thus we initialize them with 0 and 'x..x',

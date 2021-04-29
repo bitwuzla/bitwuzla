@@ -1,4 +1,4 @@
-#include "bitvector_op.h"
+#include "bitvector_node.h"
 
 #include <cassert>
 #include <iostream>
@@ -13,42 +13,43 @@ namespace bzlals {
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorOp::BitVectorOp(RNG* rng, uint32_t size)
-    : BitVectorOp(rng, BitVector::mk_zero(size), BitVectorDomain(size))
+BitVectorNode::BitVectorNode(RNG* rng, uint32_t size)
+    : BitVectorNode(rng, BitVector::mk_zero(size), BitVectorDomain(size))
 {
 }
 
-BitVectorOp::BitVectorOp(RNG* rng, uint32_t size, BitVectorOp* child0)
-    : BitVectorOp(rng, BitVector::mk_zero(size), BitVectorDomain(size), child0)
+BitVectorNode::BitVectorNode(RNG* rng, uint32_t size, BitVectorNode* child0)
+    : BitVectorNode(
+        rng, BitVector::mk_zero(size), BitVectorDomain(size), child0)
 {
 }
 
-BitVectorOp::BitVectorOp(RNG* rng,
-                         uint32_t size,
-                         BitVectorOp* child0,
-                         BitVectorOp* child1)
-    : BitVectorOp(
+BitVectorNode::BitVectorNode(RNG* rng,
+                             uint32_t size,
+                             BitVectorNode* child0,
+                             BitVectorNode* child1)
+    : BitVectorNode(
         rng, BitVector::mk_zero(size), BitVectorDomain(size), child0, child1)
 {
 }
 
-BitVectorOp::BitVectorOp(RNG* rng,
-                         uint32_t size,
-                         BitVectorOp* child0,
-                         BitVectorOp* child1,
-                         BitVectorOp* child2)
-    : BitVectorOp(rng,
-                  BitVector::mk_zero(size),
-                  BitVectorDomain(size),
-                  child0,
-                  child1,
-                  child2)
+BitVectorNode::BitVectorNode(RNG* rng,
+                             uint32_t size,
+                             BitVectorNode* child0,
+                             BitVectorNode* child1,
+                             BitVectorNode* child2)
+    : BitVectorNode(rng,
+                    BitVector::mk_zero(size),
+                    BitVectorDomain(size),
+                    child0,
+                    child1,
+                    child2)
 {
 }
 
-BitVectorOp::BitVectorOp(RNG* rng,
-                         const BitVector& assignment,
-                         const BitVectorDomain& domain)
+BitVectorNode::BitVectorNode(RNG* rng,
+                             const BitVector& assignment,
+                             const BitVectorDomain& domain)
     : d_rng(rng),
       d_arity(0),
       d_assignment(assignment),
@@ -57,10 +58,10 @@ BitVectorOp::BitVectorOp(RNG* rng,
 {
 }
 
-BitVectorOp::BitVectorOp(RNG* rng,
-                         const BitVector& assignment,
-                         const BitVectorDomain& domain,
-                         BitVectorOp* child0)
+BitVectorNode::BitVectorNode(RNG* rng,
+                             const BitVector& assignment,
+                             const BitVectorDomain& domain,
+                             BitVectorNode* child0)
     : d_rng(rng),
       d_arity(1),
       d_assignment(assignment),
@@ -68,16 +69,16 @@ BitVectorOp::BitVectorOp(RNG* rng,
       d_is_const(domain.is_fixed())
 {
   assert(rng);
-  d_children.reset(new BitVectorOp*[d_arity]);
+  d_children.reset(new BitVectorNode*[d_arity]);
   d_children[0] = child0;
   d_all_const   = child0->is_const();
 }
 
-BitVectorOp::BitVectorOp(RNG* rng,
-                         const BitVector& assignment,
-                         const BitVectorDomain& domain,
-                         BitVectorOp* child0,
-                         BitVectorOp* child1)
+BitVectorNode::BitVectorNode(RNG* rng,
+                             const BitVector& assignment,
+                             const BitVectorDomain& domain,
+                             BitVectorNode* child0,
+                             BitVectorNode* child1)
     : d_rng(rng),
       d_arity(2),
       d_assignment(assignment),
@@ -85,18 +86,18 @@ BitVectorOp::BitVectorOp(RNG* rng,
       d_is_const(domain.is_fixed())
 {
   assert(rng);
-  d_children.reset(new BitVectorOp*[d_arity]);
+  d_children.reset(new BitVectorNode*[d_arity]);
   d_children[0] = child0;
   d_children[1] = child1;
   d_all_const   = child0->is_const() && child1->is_const();
 }
 
-BitVectorOp::BitVectorOp(RNG* rng,
-                         const BitVector& assignment,
-                         const BitVectorDomain& domain,
-                         BitVectorOp* child0,
-                         BitVectorOp* child1,
-                         BitVectorOp* child2)
+BitVectorNode::BitVectorNode(RNG* rng,
+                             const BitVector& assignment,
+                             const BitVectorDomain& domain,
+                             BitVectorNode* child0,
+                             BitVectorNode* child1,
+                             BitVectorNode* child2)
     : d_rng(rng),
       d_arity(3),
       d_assignment(assignment),
@@ -104,15 +105,15 @@ BitVectorOp::BitVectorOp(RNG* rng,
       d_is_const(domain.is_fixed())
 {
   assert(rng);
-  d_children.reset(new BitVectorOp*[d_arity]);
+  d_children.reset(new BitVectorNode*[d_arity]);
   d_children[0] = child0;
   d_children[1] = child1;
   d_children[2] = child2;
   d_all_const = child0->is_const() && child1->is_const() && child2->is_const();
 }
 
-BitVectorOp*
-BitVectorOp::operator[](uint32_t pos) const
+BitVectorNode*
+BitVectorNode::operator[](uint32_t pos) const
 {
   assert(pos <= arity());
   assert(d_children);
@@ -123,18 +124,18 @@ BitVectorOp::operator[](uint32_t pos) const
 
 BitVectorAdd::BitVectorAdd(RNG* rng,
                            uint32_t size,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorAdd::BitVectorAdd(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -215,18 +216,18 @@ BitVectorAdd::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorAnd::BitVectorAnd(RNG* rng,
                            uint32_t size,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorAnd::BitVectorAnd(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -334,18 +335,18 @@ BitVectorAnd::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
                                  uint32_t size,
-                                 BitVectorOp* child0,
-                                 BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                                 BitVectorNode* child0,
+                                 BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
                                  const BitVector& assignment,
                                  const BitVectorDomain& domain,
-                                 BitVectorOp* child0,
-                                 BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                                 BitVectorNode* child0,
+                                 BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -410,8 +411,8 @@ BitVectorConcat::is_consistent(const BitVector& t, uint32_t pos_x)
    *      pos_x = 1: tx = t[size(x) - 1 : 0]
    */
 
-  uint32_t bw_t            = t.size();
-  uint32_t bw_x            = x.size();
+  uint32_t bw_t = t.size();
+  uint32_t bw_x = x.size();
   if (pos_x == 0)
   {
     return x.match_fixed_bits(t.bvextract(bw_t - 1, bw_t - bw_x));
@@ -473,18 +474,18 @@ BitVectorConcat::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorEq::BitVectorEq(RNG* rng,
                          uint32_t size,
-                         BitVectorOp* child0,
-                         BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                         BitVectorNode* child0,
+                         BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorEq::BitVectorEq(RNG* rng,
                          const BitVector& assignment,
                          const BitVectorDomain& domain,
-                         BitVectorOp* child0,
-                         BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                         BitVectorNode* child0,
+                         BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -612,18 +613,18 @@ BitVectorEq::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorMul::BitVectorMul(RNG* rng,
                            uint32_t size,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorMul::BitVectorMul(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -929,18 +930,18 @@ BitVectorMul::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorShl::BitVectorShl(RNG* rng,
                            uint32_t size,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorShl::BitVectorShl(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -999,7 +1000,7 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
     }
     if (t.is_zero())
     {
-      uint32_t size    = x.size();
+      uint32_t size  = x.size();
       bool s_is_zero = s.is_zero();
       BitVector min  = BitVector(size, ctz_t - ctz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
@@ -1032,8 +1033,8 @@ BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
    *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y))
    */
 
-  uint32_t ctz_t           = t.count_trailing_zeros();
-  uint32_t size            = t.size();
+  uint32_t ctz_t = t.count_trailing_zeros();
+  uint32_t size  = t.size();
 
   if (ctz_t != size)
   {
@@ -1279,18 +1280,18 @@ BitVectorShl::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorShr::BitVectorShr(RNG* rng,
                            uint32_t size,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorShr::BitVectorShr(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -1359,7 +1360,7 @@ BitVectorShr::is_invertible(RNG* rng,
     }
     if (t.is_zero())
     {
-      uint32_t size    = x.size();
+      uint32_t size  = x.size();
       bool s_is_zero = s.is_zero();
       BitVector min  = BitVector(size, clz_t - clz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
@@ -1386,8 +1387,8 @@ BitVectorShr::is_consistent(const BitVector& t, uint32_t pos_x)
   /* CC: pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x >> y, t))
    *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y)) */
 
-  uint32_t clz_t           = t.count_leading_zeros();
-  uint32_t size            = t.size();
+  uint32_t clz_t = t.count_leading_zeros();
+  uint32_t size  = t.size();
 
   if (clz_t != size)
   {
@@ -1651,18 +1652,18 @@ BitVectorShr::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
                              uint32_t size,
-                             BitVectorOp* child0,
-                             BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                             BitVectorNode* child0,
+                             BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
                              const BitVector& assignment,
                              const BitVectorDomain& domain,
-                             BitVectorOp* child0,
-                             BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                             BitVectorNode* child0,
+                             BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -2008,18 +2009,18 @@ BitVectorAshr::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorUdiv::BitVectorUdiv(RNG* rng,
                              uint32_t size,
-                             BitVectorOp* child0,
-                             BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                             BitVectorNode* child0,
+                             BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorUdiv::BitVectorUdiv(RNG* rng,
                              const BitVector& assignment,
                              const BitVectorDomain& domain,
-                             BitVectorOp* child0,
-                             BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                             BitVectorNode* child0,
+                             BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -2656,18 +2657,18 @@ BitVectorUdiv::consistent_value_pos0_aux(const BitVector& t)
 
 BitVectorUlt::BitVectorUlt(RNG* rng,
                            uint32_t size,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorUlt::BitVectorUlt(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -2903,18 +2904,18 @@ BitVectorUlt::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorSlt::BitVectorSlt(RNG* rng,
                            uint32_t size,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorSlt::BitVectorSlt(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -3200,18 +3201,18 @@ BitVectorSlt::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
                              uint32_t size,
-                             BitVectorOp* child0,
-                             BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                             BitVectorNode* child0,
+                             BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
                              const BitVector& assignment,
                              const BitVectorDomain& domain,
-                             BitVectorOp* child0,
-                             BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                             BitVectorNode* child0,
+                             BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -3275,7 +3276,7 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
         {
           /* simplest solution (0 <= res < s: res = t) does not apply, thus
            * x = s * n + t with n s.t. (s * n + t) does not overflow */
-          uint32_t size    = x.size();
+          uint32_t size  = x.size();
           BitVector ones = BitVector::mk_ones(size);
           if (ones.bvsub(s).compare(t) < 0)
           {
@@ -3753,18 +3754,18 @@ BitVectorUrem::consistent_value_pos0_aux(const BitVector& t)
 
 BitVectorXor::BitVectorXor(RNG* rng,
                            uint32_t size,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, size, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, size, child0, child1)
 {
 }
 
 BitVectorXor::BitVectorXor(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1)
-    : BitVectorOp(rng, assignment, domain, child0, child1)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1)
+    : BitVectorNode(rng, assignment, domain, child0, child1)
 {
 }
 
@@ -3849,20 +3850,20 @@ BitVectorXor::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorIte::BitVectorIte(RNG* rng,
                            uint32_t size,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1,
-                           BitVectorOp* child2)
-    : BitVectorOp(rng, size, child0, child1, child2)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1,
+                           BitVectorNode* child2)
+    : BitVectorNode(rng, size, child0, child1, child2)
 {
 }
 
 BitVectorIte::BitVectorIte(RNG* rng,
                            const BitVector& assignment,
                            const BitVectorDomain& domain,
-                           BitVectorOp* child0,
-                           BitVectorOp* child1,
-                           BitVectorOp* child2)
-    : BitVectorOp(rng, assignment, domain, child0, child1, child2)
+                           BitVectorNode* child0,
+                           BitVectorNode* child1,
+                           BitVectorNode* child2)
+    : BitVectorNode(rng, assignment, domain, child0, child1, child2)
 {
 }
 
@@ -4074,18 +4075,18 @@ BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
 /* -------------------------------------------------------------------------- */
 
 BitVectorExtract::BitVectorExtract(
-    RNG* rng, uint32_t size, BitVectorOp* child0, uint32_t hi, uint32_t lo)
-    : BitVectorOp(rng, size, child0), d_hi(hi), d_lo(lo)
+    RNG* rng, uint32_t size, BitVectorNode* child0, uint32_t hi, uint32_t lo)
+    : BitVectorNode(rng, size, child0), d_hi(hi), d_lo(lo)
 {
 }
 
 BitVectorExtract::BitVectorExtract(RNG* rng,
                                    const BitVector& assignment,
                                    const BitVectorDomain& domain,
-                                   BitVectorOp* child0,
+                                   BitVectorNode* child0,
                                    uint32_t hi,
                                    uint32_t lo)
-    : BitVectorOp(rng, assignment, domain, child0), d_hi(hi), d_lo(lo)
+    : BitVectorNode(rng, assignment, domain, child0), d_hi(hi), d_lo(lo)
 {
 }
 
@@ -4241,18 +4242,18 @@ BitVectorExtract::consistent_value(const BitVector& t, uint32_t pos_x)
 
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
                                          uint32_t size,
-                                         BitVectorOp* child0,
+                                         BitVectorNode* child0,
                                          uint32_t n)
-    : BitVectorOp(rng, size, child0), d_n(n)
+    : BitVectorNode(rng, size, child0), d_n(n)
 {
 }
 
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
                                          const BitVector& assignment,
                                          const BitVectorDomain& domain,
-                                         BitVectorOp* child0,
+                                         BitVectorNode* child0,
                                          uint32_t n)
-    : BitVectorOp(rng, assignment, domain, child0), d_n(n)
+    : BitVectorNode(rng, assignment, domain, child0), d_n(n)
 {
 }
 

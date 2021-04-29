@@ -10,41 +10,41 @@ class RNG;
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorOp
+class BitVectorNode
 {
  public:
   /** Constructor. */
-  BitVectorOp(RNG* rng, uint32_t size);
-  BitVectorOp(RNG* rng, uint32_t size, BitVectorOp* child0);
-  BitVectorOp(RNG* rng,
-              uint32_t size,
-              BitVectorOp* child0,
-              BitVectorOp* child1);
-  BitVectorOp(RNG* rng,
-              uint32_t size,
-              BitVectorOp* child0,
-              BitVectorOp* child1,
-              BitVectorOp* child2);
-  BitVectorOp(RNG* rng,
-              const BitVector& assignment,
-              const BitVectorDomain& domain);
-  BitVectorOp(RNG* rng,
-              const BitVector& assignment,
-              const BitVectorDomain& domain,
-              BitVectorOp* child0);
-  BitVectorOp(RNG* rng,
-              const BitVector& assignment,
-              const BitVectorDomain& domain,
-              BitVectorOp* child0,
-              BitVectorOp* child1);
-  BitVectorOp(RNG* rng,
-              const BitVector& assignment,
-              const BitVectorDomain& domain,
-              BitVectorOp* child0,
-              BitVectorOp* child1,
-              BitVectorOp* child2);
+  BitVectorNode(RNG* rng, uint32_t size);
+  BitVectorNode(RNG* rng, uint32_t size, BitVectorNode* child0);
+  BitVectorNode(RNG* rng,
+                uint32_t size,
+                BitVectorNode* child0,
+                BitVectorNode* child1);
+  BitVectorNode(RNG* rng,
+                uint32_t size,
+                BitVectorNode* child0,
+                BitVectorNode* child1,
+                BitVectorNode* child2);
+  BitVectorNode(RNG* rng,
+                const BitVector& assignment,
+                const BitVectorDomain& domain);
+  BitVectorNode(RNG* rng,
+                const BitVector& assignment,
+                const BitVectorDomain& domain,
+                BitVectorNode* child0);
+  BitVectorNode(RNG* rng,
+                const BitVector& assignment,
+                const BitVectorDomain& domain,
+                BitVectorNode* child0,
+                BitVectorNode* child1);
+  BitVectorNode(RNG* rng,
+                const BitVector& assignment,
+                const BitVectorDomain& domain,
+                BitVectorNode* child0,
+                BitVectorNode* child1,
+                BitVectorNode* child2);
   /** Destructor. */
-  virtual ~BitVectorOp() {}
+  virtual ~BitVectorNode() {}
 
   /**
    * Check if operand at index pos_x is essential with respect to constant
@@ -108,7 +108,7 @@ class BitVectorOp
   }
 
   /** Get child at given index. */
-  BitVectorOp* operator[](uint32_t pos) const;
+  BitVectorNode* operator[](uint32_t pos) const;
 
   /** Return the arity of this operation. */
   uint32_t arity() const { return d_arity; }
@@ -123,7 +123,7 @@ class BitVectorOp
   bool all_const() const { return d_all_const; }
 
  protected:
-  std::unique_ptr<BitVectorOp*[]> d_children = nullptr;
+  std::unique_ptr<BitVectorNode*[]> d_children = nullptr;
   RNG* d_rng;
   uint32_t d_arity;
   BitVector d_assignment;
@@ -139,19 +139,19 @@ class BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorAdd : public BitVectorOp
+class BitVectorAdd : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorAdd(RNG* rng,
                uint32_t size,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   BitVectorAdd(RNG* rng,
                const BitVector& assignment,
                const BitVectorDomain& domain,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   /**
    * IC:
    *   w/o  const bits: true
@@ -174,19 +174,19 @@ class BitVectorAdd : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorAnd : public BitVectorOp
+class BitVectorAnd : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorAnd(RNG* rng,
                uint32_t size,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   BitVectorAnd(RNG* rng,
                const BitVector& assignment,
                const BitVectorDomain& domain,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   /**
    * IC:
    *   w/o const bits (IC_wo): (t & s) = t
@@ -214,19 +214,19 @@ class BitVectorAnd : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorConcat : public BitVectorOp
+class BitVectorConcat : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorConcat(RNG* rng,
                   uint32_t size,
-                  BitVectorOp* child0,
-                  BitVectorOp* child1);
+                  BitVectorNode* child0,
+                  BitVectorNode* child1);
   BitVectorConcat(RNG* rng,
                   const BitVector& assignment,
                   const BitVectorDomain& domain,
-                  BitVectorOp* child0,
-                  BitVectorOp* child1);
+                  BitVectorNode* child0,
+                  BitVectorNode* child1);
   /**
    * x o s = tx o ts
    * s o x = ts o tx
@@ -258,19 +258,19 @@ class BitVectorConcat : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorEq : public BitVectorOp
+class BitVectorEq : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorEq(RNG* rng,
               uint32_t size,
-              BitVectorOp* child0,
-              BitVectorOp* child1);
+              BitVectorNode* child0,
+              BitVectorNode* child1);
   BitVectorEq(RNG* rng,
               const BitVector& assignment,
               const BitVectorDomain& domain,
-              BitVectorOp* child0,
-              BitVectorOp* child1);
+              BitVectorNode* child0,
+              BitVectorNode* child1);
   /**
    * IC:
    *   w/o  const bits: true
@@ -295,19 +295,19 @@ class BitVectorEq : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorMul : public BitVectorOp
+class BitVectorMul : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorMul(RNG* rng,
                uint32_t size,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   BitVectorMul(RNG* rng,
                const BitVector& assignment,
                const BitVectorDomain& domain,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   /**
    * IC:
    *   w/o const bits (IC_wo): ((-s | s) & t) = t
@@ -340,19 +340,19 @@ class BitVectorMul : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorShl : public BitVectorOp
+class BitVectorShl : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorShl(RNG* rng,
                uint32_t size,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   BitVectorShl(RNG* rng,
                const BitVector& assignment,
                const BitVectorDomain& domain,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -385,7 +385,7 @@ class BitVectorShl : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorShr : public BitVectorOp
+class BitVectorShr : public BitVectorNode
 {
  public:
   /**
@@ -411,13 +411,13 @@ class BitVectorShr : public BitVectorOp
   /** Constructors. */
   BitVectorShr(RNG* rng,
                uint32_t size,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   BitVectorShr(RNG* rng,
                const BitVector& assignment,
                const BitVectorDomain& domain,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -450,19 +450,19 @@ class BitVectorShr : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorAshr : public BitVectorOp
+class BitVectorAshr : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorAshr(RNG* rng,
                 uint32_t size,
-                BitVectorOp* child0,
-                BitVectorOp* child1);
+                BitVectorNode* child0,
+                BitVectorNode* child1);
   BitVectorAshr(RNG* rng,
                 const BitVector& assignment,
                 const BitVectorDomain& domain,
-                BitVectorOp* child0,
-                BitVectorOp* child1);
+                BitVectorNode* child0,
+                BitVectorNode* child1);
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -504,19 +504,19 @@ class BitVectorAshr : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorUdiv : public BitVectorOp
+class BitVectorUdiv : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorUdiv(RNG* rng,
                 uint32_t size,
-                BitVectorOp* child0,
-                BitVectorOp* child1);
+                BitVectorNode* child0,
+                BitVectorNode* child1);
   BitVectorUdiv(RNG* rng,
                 const BitVector& assignment,
                 const BitVectorDomain& domain,
-                BitVectorOp* child0,
-                BitVectorOp* child1);
+                BitVectorNode* child0,
+                BitVectorNode* child1);
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -572,19 +572,19 @@ class BitVectorUdiv : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorUlt : public BitVectorOp
+class BitVectorUlt : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorUlt(RNG* rng,
                uint32_t size,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   BitVectorUlt(RNG* rng,
                const BitVector& assignment,
                const BitVectorDomain& domain,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -613,19 +613,19 @@ class BitVectorUlt : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorSlt : public BitVectorOp
+class BitVectorSlt : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorSlt(RNG* rng,
                uint32_t size,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   BitVectorSlt(RNG* rng,
                const BitVector& assignment,
                const BitVectorDomain& domain,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -662,19 +662,19 @@ class BitVectorSlt : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorUrem : public BitVectorOp
+class BitVectorUrem : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorUrem(RNG* rng,
                 uint32_t size,
-                BitVectorOp* child0,
-                BitVectorOp* child1);
+                BitVectorNode* child0,
+                BitVectorNode* child1);
   BitVectorUrem(RNG* rng,
                 const BitVector& assignment,
                 const BitVectorDomain& domain,
-                BitVectorOp* child0,
-                BitVectorOp* child1);
+                BitVectorNode* child0,
+                BitVectorNode* child1);
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -730,19 +730,19 @@ class BitVectorUrem : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorXor : public BitVectorOp
+class BitVectorXor : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorXor(RNG* rng,
                uint32_t size,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   BitVectorXor(RNG* rng,
                const BitVector& assignment,
                const BitVectorDomain& domain,
-               BitVectorOp* child0,
-               BitVectorOp* child1);
+               BitVectorNode* child0,
+               BitVectorNode* child1);
   /**
    * IC:
    *   w/o  const bits: true
@@ -765,21 +765,21 @@ class BitVectorXor : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorIte : public BitVectorOp
+class BitVectorIte : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorIte(RNG* rng,
                uint32_t size,
-               BitVectorOp* child0,
-               BitVectorOp* child1,
-               BitVectorOp* child2);
+               BitVectorNode* child0,
+               BitVectorNode* child1,
+               BitVectorNode* child2);
   BitVectorIte(RNG* rng,
                const BitVector& assignment,
                const BitVectorDomain& domain,
-               BitVectorOp* child0,
-               BitVectorOp* child1,
-               BitVectorOp* child2);
+               BitVectorNode* child0,
+               BitVectorNode* child1,
+               BitVectorNode* child2);
 
   bool is_essential(const BitVector& t, uint32_t pos_x) override;
 
@@ -823,16 +823,16 @@ class BitVectorIte : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorExtract : public BitVectorOp
+class BitVectorExtract : public BitVectorNode
 {
  public:
   /** Constructors. */
   BitVectorExtract(
-      RNG* rng, uint32_t size, BitVectorOp* child0, uint32_t hi, uint32_t lo);
+      RNG* rng, uint32_t size, BitVectorNode* child0, uint32_t hi, uint32_t lo);
   BitVectorExtract(RNG* rng,
                    const BitVector& assignment,
                    const BitVectorDomain& domain,
-                   BitVectorOp* child0,
+                   BitVectorNode* child0,
                    uint32_t hi,
                    uint32_t lo);
 
@@ -884,15 +884,18 @@ class BitVectorExtract : public BitVectorOp
 
 /* -------------------------------------------------------------------------- */
 
-class BitVectorSignExtend : public BitVectorOp
+class BitVectorSignExtend : public BitVectorNode
 {
  public:
   /** Constructors. */
-  BitVectorSignExtend(RNG* rng, uint32_t size, BitVectorOp* child0, uint32_t n);
+  BitVectorSignExtend(RNG* rng,
+                      uint32_t size,
+                      BitVectorNode* child0,
+                      uint32_t n);
   BitVectorSignExtend(RNG* rng,
                       const BitVector& assignment,
                       const BitVectorDomain& domain,
-                      BitVectorOp* child0,
+                      BitVectorNode* child0,
                       uint32_t n);
 
   bool is_essential(const BitVector& t, uint32_t pos_x) override;

@@ -2,7 +2,7 @@ set(libbzlals_src_files
   bzlals.cpp
   bitvector.cpp
   bitvector_domain.cpp
-  bitvector_op.cpp
+  bitvector_node.cpp
   rng.cpp
   wheel_factorizer.cpp
 )

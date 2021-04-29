@@ -6,11 +6,11 @@ set(test_names
   bv
   bvdomain
   bvdomaingen
-  bvopcons
-  bvopinv
-  bvopiscons
-  bvopisess
-  bvopisinv
+  bvnodecons
+  bvnodeinv
+  bvnodeiscons
+  bvnodeisess
+  bvnodeisinv
 )
 
 foreach(test ${test_names})

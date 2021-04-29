@@ -13,10 +13,10 @@
 namespace bzlals {
 
 BzlaLsMove
-bzlals_select_move(RNG* rng, BitVectorOp* root, const BitVector& t_root)
+bzlals_select_move(RNG* rng, BitVectorNode* root, const BitVector& t_root)
 {
   uint64_t nprops  = 0;
-  BitVectorOp* cur = root;
+  BitVectorNode* cur = root;
   BitVector t      = t_root;
   BitVector t_new;
 
