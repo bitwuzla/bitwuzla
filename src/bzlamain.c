@@ -498,7 +498,7 @@ bzlamain_msg(char *msg, ...)
 
 #define IS_OPT(optlng, lng) (!strcmp(optlng, lng))
 
-const char *
+static const char *
 get_opt_val_string(BzlaPtrHashTable *options, int32_t val)
 {
   BzlaPtrHashTableIterator it;
@@ -518,7 +518,7 @@ get_opt_val_string(BzlaPtrHashTable *options, int32_t val)
   return s;
 }
 
-char *
+static char *
 get_opt_vals_string(BzlaMemMgr *mm, BzlaOpt *bo)
 {
   size_t i;

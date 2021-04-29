@@ -1759,7 +1759,7 @@ bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp)
 
 /*------------------------------------------------------------------------*/
 
-BzlaNode *
+static BzlaNode *
 exp_rm_const_aux(Bzla *bzla, const BzlaRoundingMode rm)
 {
   return bzla_node_create_rm_const(bzla, rm);

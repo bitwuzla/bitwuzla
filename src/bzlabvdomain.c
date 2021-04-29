@@ -890,7 +890,7 @@ wfact_next(WheelFactorizer *wf)
   return res;
 }
 
-void
+static void
 wfact_delete(WheelFactorizer *wf)
 {
   bzla_bv_free(wf->mm, wf->one);

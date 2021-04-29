@@ -1063,151 +1063,7 @@ refine_exists_solver(BzlaGroundSolvers *gslv, BzlaNodeMap *evar_map)
   bzla_node_release(e_solver, res);
 }
 
-BzlaNode *
-mk_concrete_lambda_model(Bzla *bzla, const BzlaPtrHashTable *model)
-
-{
-  assert(bzla);
-  assert(model);
-
-  uint32_t i;
-  bool opt_synth_complete;
-  BzlaNode *uf;
-  BzlaNode *res, *c, *p, *cond, *e_if, *e_else, *tmp, *eq, *ite, *args;
-  BzlaPtrHashTableIterator it;
-  BzlaNodePtrStack params, consts;
-  BzlaBitVector *value;
-  BzlaBitVectorTuple *args_tuple;
-  BzlaSortId dsortid, cdsortid, funsortid;
-  BzlaSortIdStack tup_sorts;
-  BzlaPtrHashTable *static_rho;
-  BzlaMemMgr *mm;
-
-  mm         = bzla->mm;
-  static_rho = bzla_hashptr_table_new(mm, 0, 0);
-  BZLA_INIT_STACK(mm, params);
-  BZLA_INIT_STACK(mm, consts);
-  BZLA_INIT_STACK(mm, tup_sorts);
-  opt_synth_complete =
-      bzla_opt_get(bzla, BZLA_OPT_QUANT_SYNTH_ITE_COMPLETE) == 1;
-
-  args_tuple = model->first->key;
-  value      = model->first->data.as_ptr;
-
-  /* create params from domain sort */
-  for (i = 0; i < args_tuple->arity; i++)
-  {
-    p = bzla_exp_param(bzla, bzla_bv_get_width(args_tuple->bv[i]), 0);
-    BZLA_PUSH_STACK(params, p);
-    BZLA_PUSH_STACK(tup_sorts, p->sort_id);
-  }
-
-  dsortid = bzla_sort_tuple(bzla, tup_sorts.start, BZLA_COUNT_STACK(tup_sorts));
-  cdsortid  = bzla_sort_bv(bzla, bzla_bv_get_width(value));
-  funsortid = bzla_sort_fun(bzla, dsortid, cdsortid);
-  bzla_sort_release(bzla, dsortid);
-  bzla_sort_release(bzla, cdsortid);
-  BZLA_RELEASE_STACK(tup_sorts);
-
-  if (opt_synth_complete)
-    e_else = bzla_exp_bv_zero(bzla, bzla_bv_get_width(value));
-  else
-  {
-    uf   = bzla_exp_uf(bzla, funsortid, 0);
-    args = bzla_exp_args(bzla, params.start, BZLA_COUNT_STACK(params));
-    assert(args->sort_id == bzla_sort_fun_get_domain(bzla, uf->sort_id));
-    e_else = bzla_exp_apply(bzla, uf, args);
-    assert(bzla_node_real_addr(e_else)->sort_id
-           == bzla_sort_fun_get_codomain(bzla, uf->sort_id));
-    bzla_node_release(bzla, args);
-    bzla_node_release(bzla, uf);
-  }
-
-  /* generate ITEs */
-  ite = 0;
-  res = 0;
-  bzla_iter_hashptr_init(&it, (BzlaPtrHashTable *) model);
-  while (bzla_iter_hashptr_has_next(&it))
-  {
-    value      = (BzlaBitVector *) it.bucket->data.as_ptr;
-    args_tuple = bzla_iter_hashptr_next(&it);
-
-    /* create condition */
-    assert(BZLA_EMPTY_STACK(consts));
-    assert(BZLA_COUNT_STACK(params) == args_tuple->arity);
-    for (i = 0; i < args_tuple->arity; i++)
-    {
-      c = bzla_exp_bv_const(bzla, args_tuple->bv[i]);
-      assert(bzla_node_real_addr(c)->sort_id
-             == BZLA_PEEK_STACK(params, i)->sort_id);
-      BZLA_PUSH_STACK(consts, c);
-    }
-
-    assert(!BZLA_EMPTY_STACK(params));
-    assert(BZLA_COUNT_STACK(params) == BZLA_COUNT_STACK(consts));
-    cond = bzla_exp_eq(
-        bzla, BZLA_PEEK_STACK(params, 0), BZLA_PEEK_STACK(consts, 0));
-    for (i = 1; i < BZLA_COUNT_STACK(params); i++)
-    {
-      eq = bzla_exp_eq(
-          bzla, BZLA_PEEK_STACK(params, i), BZLA_PEEK_STACK(consts, i));
-      tmp = bzla_exp_bv_and(bzla, cond, eq);
-      bzla_node_release(bzla, cond);
-      bzla_node_release(bzla, eq);
-      cond = tmp;
-    }
-
-    /* args for static_rho */
-    args = bzla_exp_args(bzla, consts.start, BZLA_COUNT_STACK(consts));
-
-    while (!BZLA_EMPTY_STACK(consts))
-      bzla_node_release(bzla, BZLA_POP_STACK(consts));
-
-    /* create ITE */
-    e_if = bzla_exp_bv_const(bzla, value);
-    ite  = bzla_exp_cond(bzla, cond, e_if, e_else);
-
-    /* add to static rho */
-    bzla_hashptr_table_add(static_rho, args)->data.as_ptr =
-        bzla_node_copy(bzla, e_if);
-
-    bzla_node_release(bzla, cond);
-    bzla_node_release(bzla, e_if);
-    bzla_node_release(bzla, e_else);
-    e_else = ite;
-  }
-
-  assert(ite);
-  if (ite) /* get rid of compiler warning */
-  {
-    res = bzla_exp_fun(bzla, params.start, BZLA_COUNT_STACK(params), ite);
-    bzla_node_release(bzla, ite);
-  }
-  assert(res->sort_id == funsortid);
-  bzla_sort_release(bzla, funsortid);
-
-  while (!BZLA_EMPTY_STACK(params))
-    bzla_node_release(bzla, BZLA_POP_STACK(params));
-  BZLA_RELEASE_STACK(params);
-  BZLA_RELEASE_STACK(consts);
-
-  /* res already exists */
-  if (((BzlaLambdaNode *) res)->static_rho)
-  {
-    bzla_iter_hashptr_init(&it, static_rho);
-    while (bzla_iter_hashptr_has_next(&it))
-    {
-      bzla_node_release(bzla, it.bucket->data.as_ptr);
-      bzla_node_release(bzla, bzla_iter_hashptr_next(&it));
-    }
-    bzla_hashptr_table_delete(static_rho);
-  }
-  else
-    ((BzlaLambdaNode *) res)->static_rho = static_rho;
-  return res;
-}
-
-BzlaNode *
+static BzlaNode *
 mk_concrete_ite_model(BzlaGroundSolvers *gslv, BzlaNode *evar, FlatModel *model)
 
 {
@@ -2484,7 +2340,7 @@ DONE:
 }
 
 #ifdef BZLA_HAVE_PTHREADS
-void *
+static void *
 thread_work(void *state)
 {
   BzlaSolverResult res = BZLA_RESULT_UNKNOWN;
@@ -2513,7 +2369,7 @@ thread_work(void *state)
   return NULL;
 }
 
-int32_t
+static int32_t
 thread_terminate(void *state)
 {
   bool found_result = *((bool *) state);

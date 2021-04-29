@@ -28,7 +28,7 @@
     msg(fmt, ##args);                   \
   } while (0)
 
-void
+static void
 msg(char *fmt, ...)
 {
   va_list msg;

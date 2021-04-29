@@ -1341,24 +1341,6 @@ DONE:
 
 /*------------------------------------------------------------------------*/
 
-void
-clone_data_as_sls_constr_data_ptr(BzlaMemMgr *mm,
-                                  const void *map,
-                                  BzlaHashTableData *data,
-                                  BzlaHashTableData *cloned_data)
-{
-  assert(data);
-  assert(cloned_data);
-
-  BzlaSLSConstrData *d, *cd;
-
-  (void) map;
-  d = (BzlaSLSConstrData *) data->as_ptr;
-  BZLA_CNEW(mm, cd);
-  memcpy(cd, d, sizeof(BzlaSLSConstrData));
-  cloned_data->as_ptr = cd;
-}
-
 static BzlaSLSSolver *
 clone_sls_solver(Bzla *clone, BzlaSLSSolver *slv, BzlaNodeMap *exp_map)
 {

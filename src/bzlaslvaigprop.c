@@ -77,7 +77,7 @@ get_assignment_aig(AIGProp *aprop, BzlaAIG *aig)
   return aigprop_get_assignment_aig(aprop, aig);
 }
 
-BzlaBitVector *
+static BzlaBitVector *
 get_assignment_bv(BzlaMemMgr *mm, BzlaNode *exp, AIGProp *aprop)
 {
   assert(mm);

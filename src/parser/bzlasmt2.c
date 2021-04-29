@@ -466,7 +466,7 @@ typedef struct BzlaSMT2Parser
 
 /*------------------------------------------------------------------------*/
 
-void
+static void
 configure_smt_comp_mode(BzlaSMT2Parser *parser)
 {
   const char *track  = 0;
