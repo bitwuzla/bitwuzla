@@ -374,7 +374,7 @@ delete_model(BzlaGroundSolvers *gslv)
  * 'deps' maps existential variables to a list of universal variables by means
  * of an argument node.
  */
-void
+static void
 compute_var_deps(Bzla *bzla,
                  BzlaNode *root,
                  BzlaNodeMap *edeps,

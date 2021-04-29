@@ -1599,7 +1599,7 @@ bzla_opt_init_opts(Bzla *bzla)
            "enable SMT-COMP mode");
 }
 
-void
+static void
 clone_data_as_opt_help_ptr(BzlaMemMgr *mm,
                            const void *map,
                            BzlaHashTableData *data,

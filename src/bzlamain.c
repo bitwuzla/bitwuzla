@@ -705,7 +705,7 @@ print_opt(BitwuzlaMainApp *app,
   BZLA_RELEASE_STACK(optstr);
 }
 
-void
+static void
 print_opt_help(BitwuzlaMainApp *app,
                const char *shrt,
                const char *lng,

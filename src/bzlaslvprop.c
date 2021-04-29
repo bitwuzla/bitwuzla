@@ -445,7 +445,7 @@ bzla_prop_solver_init_domains(Bzla *bzla,
   BZLA_RELEASE_STACK(visit);
 }
 
-bool
+static bool
 update_domain(Bzla *bzla,
               BzlaIntHashTable *domains,
               const BzlaNode *n,
@@ -477,7 +477,7 @@ update_domain(Bzla *bzla,
   return true;
 }
 
-void
+static void
 propagate_domains(Bzla *bzla,
                   BzlaNode *root,
                   BzlaIntHashTable *domains,
