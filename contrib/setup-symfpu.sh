@@ -20,6 +20,6 @@ rm -rf "${SYMFPU_DIR}"
 git clone https://github.com/martin-cs/symfpu.git "${SYMFPU_DIR}"
 cd "${SYMFPU_DIR}"
 git checkout $commit
-git apply "${CONTRIB_DIR}/symfpu_202012001.patch"
+git apply "${CONTRIB_DIR}/symfpu_20201114.patch"
 install_include core symfpu
 install_include utils symfpu
