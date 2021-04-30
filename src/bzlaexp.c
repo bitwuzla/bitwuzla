@@ -2649,7 +2649,7 @@ bzla_exp_fp_to_fp_from_sbv(Bzla *bzla,
   {
     /* We need special handling for bit-vectors of size one since symFPU does
      * not allow conversions from signed bit-vectors of size one.  */
-    BzlaNode *one     = bzla_exp_true(bzla);
+    BzlaNode *one     = bzla_exp_bv_one(bzla, 1);
     BzlaNode *cond    = bzla_exp_eq(bzla, e1, one);
     BzlaNode *fromubv = bzla_exp_fp_to_fp_from_ubv(bzla, e0, e1, sort);
     BzlaNode *neg     = bzla_exp_fp_neg(bzla, fromubv);
