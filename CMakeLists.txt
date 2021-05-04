@@ -45,6 +45,8 @@ option3vl(PYTHON     "Build Python API")
 option3vl(TIME_STATS "Compile with time statistics")
 option3vl(DOCS       "Build API documentation")
 
+option3vl(TESTING    "Configure unit testing")
+
 option3vl(USE_CADICAL    "Use and link with CaDiCaL")
 option3vl(USE_CMS        "Use and link with CryptoMiniSat")
 option3vl(USE_LINGELING  "Use and link with Lingeling (default)")
@@ -154,6 +156,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_check_c_cxx_flag("-ggdb")
   set_option(LOG ON)
   set_option(TIME_STATS ON)
+  set_option(TESTING ON)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_check_c_cxx_flag("-O3")
   if(NOT CHECK)
@@ -168,10 +171,12 @@ endif()
 if(GCOV)
   include(CodeCoverage)
   APPEND_COVERAGE_COMPILER_FLAGS()
-  setup_target_for_coverage_lcov(
-    NAME coverage
-    EXECUTABLE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test
-    DEPENDENCIES bitwuzla-bin)
+  if(TESTING)
+    setup_target_for_coverage_lcov(
+      NAME coverage
+      EXECUTABLE ctest -j${CTEST_NTHREADS} --output-on-failure || exit 0
+      DEPENDENCIES bitwuzla-bin)
+  endif()
 endif()
 
 if(GPROF)
@@ -389,14 +394,18 @@ configure_file(
 #-----------------------------------------------------------------------------#
 # Regression tests
 
-enable_testing()
+if(TESTING)
+  enable_testing()
+endif()
 
 #-----------------------------------------------------------------------------#
 # Source directories
 
 include_directories(src ${CMAKE_CURRENT_BINARY_DIR}/src)
 add_subdirectory(src)
-add_subdirectory(test)
+if(TESTING)
+  add_subdirectory(test)
+endif()
 # Disabled until migrated to new API
 if(PYTHON)
   add_subdirectory(src/api/python)
@@ -465,6 +474,7 @@ config_info_bool("Shared build" "${BUILD_SHARED_LIBS}")
 config_info_bool("ASAN support" ASAN)
 config_info_bool("UBSAN support" UBSAN)
 config_info_bool("Assertions enabled" CHECK)
+config_info_bool("Testing" TESTING)
 config_info_bool("gcov support" GCOV)
 config_info_bool("gprof support" GPROF)
 config_info_bool("Logging support" LOG)

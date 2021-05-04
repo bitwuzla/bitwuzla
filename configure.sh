@@ -26,6 +26,8 @@ path=
 
 symfpu=yes
 
+units=unknown
+
 cadical=unknown
 cms=unknown
 kissat=unknown
@@ -76,6 +78,9 @@ where <option> is one of the following:
   --time-stats      compile with time statistics
 
   --no-symfpu       disable FP support
+
+  --unit-testing    enable unit testing
+  --no-unit-testing disable unit testing
 
   --docs            build API documentation
 
@@ -162,6 +167,9 @@ do
 
     --no-symfpu) symfpu=no;;
 
+    --unit-testing) units=yes;;
+    --no-unit-testing) units=no;;
+
     --docs) docs=yes;;
 
     --no-cadical)   cadical=no;;
@@ -200,6 +208,9 @@ cmake_opts="$CMAKE_OPTS"
 [ -n "$path" ] && cmake_opts="$cmake_opts -DCMAKE_PREFIX_PATH=$path"
 
 [ $symfpu = yes ] && cmake_opts="$cmake_opts -DUSE_SYMFPU=ON"
+
+[ $units = yes ] && cmake_opts="$cmake_opts -DTESTING=ON"
+[ $units = no ] && cmake_opts="$cmake_opts -DTESTING=OFF"
 
 [ $cadical = yes ] && cmake_opts="$cmake_opts -DUSE_CADICAL=ON"
 [ $cms = yes ] && cmake_opts="$cmake_opts -DUSE_CMS=ON"
