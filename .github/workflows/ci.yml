@@ -22,17 +22,17 @@ jobs:
 
         include:
           - name: production
-            config: --symfpu
+            config:
 
           - name: production-clang
-            config:
+            config: --no-symfpu
             env: CC=clang CXX=clang++
 
           - name: debug
-            config: -g
+            config: -g --no-symfpu
 
           - name: debug-clang
-            config: -g --symfpu
+            config: -g
             env: CC=clang CXX=clang++
 
     name: ${{ matrix.os }}:${{ matrix.name }}
