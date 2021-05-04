@@ -141,10 +141,11 @@ endif()
 
 #-----------------------------------------------------------------------------#
 
-set(build_types Debug Release)
+set(build_types Debug Production)
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "No build type set, options are: ${build_types}")
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Options are: ${build_types}" FORCE)
+    set(CMAKE_BUILD_TYPE Production
+      CACHE STRING "Options are: ${build_types}" FORCE)
     # Provide drop down menu options in cmake-gui
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${build_types})
 endif()
@@ -157,7 +158,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set_option(LOG ON)
   set_option(TIME_STATS ON)
   set_option(TESTING ON)
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Production")
   add_check_c_cxx_flag("-O3")
   if(NOT CHECK)
     add_definitions("-DNDEBUG")

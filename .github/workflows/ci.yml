@@ -29,10 +29,10 @@ jobs:
             env: CC=clang CXX=clang++
 
           - name: debug
-            config: -g --no-symfpu
+            config: debug --no-symfpu
 
           - name: debug-clang
-            config: -g
+            config: debug
             env: CC=clang CXX=clang++
 
     name: ${{ matrix.os }}:${{ matrix.name }}
