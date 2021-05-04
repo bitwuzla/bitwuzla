@@ -9,6 +9,7 @@
 ##
 
 find_package(Sphinx REQUIRED)
+check_python_module(sphinxcontrib.bibtex sphinxcontrib-bibtex)
 
 add_subdirectory(c)
 
