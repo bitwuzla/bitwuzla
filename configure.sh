@@ -24,7 +24,7 @@ shared=no
 prefix=
 path=
 
-symfpu=no
+symfpu=yes
 
 cadical=unknown
 cms=unknown
@@ -75,9 +75,9 @@ where <option> is one of the following:
   --python          compile python API
   --time-stats      compile with time statistics
 
-  --symfpu          use SymFPU for FP support
+  --no-symfpu       disable FP support
 
-  -- docs           build API documentation
+  --docs            build API documentation
 
 By default all supported SAT solvers available are used and linked.
 If explicitly enabled, configuration will fail if the SAT solver library
@@ -160,7 +160,7 @@ do
     --python)     python=yes;;
     --time-stats) timestats=yes;;
 
-    --symfpu) symfpu=yes;;
+    --no-symfpu) symfpu=no;;
 
     --docs) docs=yes;;
 
