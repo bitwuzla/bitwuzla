@@ -9,13 +9,13 @@ namespace test {
 
 /* -------------------------------------------------------------------------- */
 
-class TestBitVectorDomainGen : public TestBvDomainCommon
+class TestBvDomainGen : public TestCommon
 {
  protected:
   static constexpr uint32_t TEST_BW = 4;
   void SetUp() override
   {
-    TestBvDomainCommon::SetUp();
+    TestCommon::SetUp();
     d_rng.reset(new RNG(1234));
   }
   bool check_const_bits(const std::string& x, const std::string& s);
@@ -40,8 +40,7 @@ class TestBitVectorDomainGen : public TestBvDomainCommon
 };
 
 bool
-TestBitVectorDomainGen::check_const_bits(const std::string& x,
-                                         const std::string& s)
+TestBvDomainGen::check_const_bits(const std::string& x, const std::string& s)
 {
   assert(x.size() == s.size());
   for (uint32_t i = 0, n = x.size(); i < n; ++i)
@@ -52,9 +51,9 @@ TestBitVectorDomainGen::check_const_bits(const std::string& x,
 }
 
 std::vector<std::string>
-TestBitVectorDomainGen::generate_expected(const std::string& x,
-                                          const std::string min,
-                                          const std::string max)
+TestBvDomainGen::generate_expected(const std::string& x,
+                                   const std::string min,
+                                   const std::string max)
 {
   std::vector<std::string> res;
   uint64_t umin = strtoul(min.c_str(), 0, 2);
@@ -75,9 +74,9 @@ TestBitVectorDomainGen::generate_expected(const std::string& x,
 }
 
 std::vector<std::string>
-TestBitVectorDomainGen::generate_expected_signed(std::string x,
-                                                 const std::string min,
-                                                 const std::string max)
+TestBvDomainGen::generate_expected_signed(std::string x,
+                                          const std::string min,
+                                          const std::string max)
 {
   std::vector<std::string> res;
   int64_t imin = strtol(min.c_str(), 0, 2);
@@ -120,11 +119,11 @@ TestBitVectorDomainGen::generate_expected_signed(std::string x,
 }
 
 void
-TestBitVectorDomainGen::test_next_aux(const std::string& str_d,
-                                      const std::string& str_min,
-                                      const std::string& str_max,
-                                      std::vector<std::string> expected,
-                                      bool random)
+TestBvDomainGen::test_next_aux(const std::string& str_d,
+                               const std::string& str_min,
+                               const std::string& str_max,
+                               std::vector<std::string> expected,
+                               bool random)
 {
   BitVectorDomain d(str_d);
   std::unique_ptr<BitVectorDomainGenerator> gen;
@@ -184,11 +183,11 @@ TestBitVectorDomainGen::test_next_aux(const std::string& str_d,
 }
 
 void
-TestBitVectorDomainGen::test_next_signed_aux(const std::string& str_d,
-                                             const std::string& str_min,
-                                             const std::string& str_max,
-                                             std::vector<std::string> expected,
-                                             bool random)
+TestBvDomainGen::test_next_signed_aux(const std::string& str_d,
+                                      const std::string& str_min,
+                                      const std::string& str_max,
+                                      std::vector<std::string> expected,
+                                      bool random)
 {
   BitVectorDomain d(str_d);
   std::unique_ptr<BitVectorDomainSignedGenerator> gen;
@@ -251,7 +250,7 @@ TestBitVectorDomainGen::test_next_signed_aux(const std::string& str_d,
 }
 
 void
-TestBitVectorDomainGen::test_next(bool random, bool is_signed)
+TestBvDomainGen::test_next(bool random, bool is_signed)
 {
   std::string ones(TEST_BW, '1');
   std::string zero(TEST_BW, '0');
@@ -299,7 +298,7 @@ TestBitVectorDomainGen::test_next(bool random, bool is_signed)
 
 /* -------------------------------------------------------------------------- */
 
-TEST_F(TestBitVectorDomainGen, ctor_dtor)
+TEST_F(TestBvDomainGen, ctor_dtor)
 {
   for (uint32_t size = 1; size <= 16; ++size)
   {
@@ -315,7 +314,7 @@ TEST_F(TestBitVectorDomainGen, ctor_dtor)
   }
 }
 
-TEST_F(TestBitVectorDomainGen, has_next)
+TEST_F(TestBvDomainGen, has_next)
 {
   for (uint32_t size = 1; size <= 8; ++size)
   {
@@ -335,7 +334,7 @@ TEST_F(TestBitVectorDomainGen, has_next)
   }
 }
 
-TEST_F(TestBitVectorDomainGen, has_random)
+TEST_F(TestBvDomainGen, has_random)
 {
   for (uint32_t size = 1; size <= 8; ++size)
   {
@@ -359,21 +358,21 @@ TEST_F(TestBitVectorDomainGen, has_random)
   }
 }
 
-TEST_F(TestBitVectorDomainGen, next)
+TEST_F(TestBvDomainGen, next)
 {
   test_next(false, false);
   ASSERT_DEATH(BitVectorDomainGenerator(BitVector::mk_ones(4)).next(),
                "has_next");
 }
 
-TEST_F(TestBitVectorDomainGen, random)
+TEST_F(TestBvDomainGen, random)
 {
   test_next(true, false);
   ASSERT_DEATH(BitVectorDomainGenerator(BitVector::mk_ones(4)).random(),
                "has_random");
 }
 
-TEST_F(TestBitVectorDomainGen, ctor_dtor_signed)
+TEST_F(TestBvDomainGen, ctor_dtor_signed)
 {
   for (uint32_t size = 1; size <= 16; ++size)
   {
@@ -390,7 +389,7 @@ TEST_F(TestBitVectorDomainGen, ctor_dtor_signed)
   }
 }
 
-TEST_F(TestBitVectorDomainGen, has_next_signed)
+TEST_F(TestBvDomainGen, has_next_signed)
 {
   for (uint32_t size = 1; size <= 8; ++size)
   {
@@ -409,7 +408,7 @@ TEST_F(TestBitVectorDomainGen, has_next_signed)
   }
 }
 
-TEST_F(TestBitVectorDomainGen, has_random_signed)
+TEST_F(TestBvDomainGen, has_random_signed)
 {
   for (uint32_t size = 1; size <= 8; ++size)
   {
@@ -432,14 +431,14 @@ TEST_F(TestBitVectorDomainGen, has_random_signed)
   }
 }
 
-TEST_F(TestBitVectorDomainGen, next_signed)
+TEST_F(TestBvDomainGen, next_signed)
 {
   test_next(true, true);
   ASSERT_DEATH(BitVectorDomainSignedGenerator(BitVector::mk_ones(4)).next(),
                "has_next");
 }
 
-TEST_F(TestBitVectorDomainGen, random_signed)
+TEST_F(TestBvDomainGen, random_signed)
 {
   test_next(true, true);
   ASSERT_DEATH(BitVectorDomainSignedGenerator(BitVector::mk_ones(4)).random(),

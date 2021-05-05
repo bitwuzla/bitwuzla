@@ -7,7 +7,7 @@ namespace test {
 
 /* -------------------------------------------------------------------------- */
 
-class TestBitVectorDomain : public TestBvDomainCommon
+class TestBitVectorDomain : public TestCommon
 {
  protected:
   void test_match_fixed_bits(const std::string &value);

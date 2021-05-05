@@ -60,13 +60,7 @@ class TestCommon : public ::testing::Test
     XOR,
     ZEXT,
   };
-};
 
-/* -------------------------------------------------------------------------- */
-
-class TestBvDomainCommon : public TestCommon
-{
- protected:
   static void gen_all_combinations(size_t size,
                                    const std::vector<char>& bits,
                                    std::vector<std::string>& values);
@@ -74,10 +68,12 @@ class TestBvDomainCommon : public TestCommon
   static void gen_values(uint32_t bw, std::vector<std::string>& values);
 };
 
+/* -------------------------------------------------------------------------- */
+
 void
-TestBvDomainCommon::gen_all_combinations(size_t size,
-                                         const std::vector<char>& bits,
-                                         std::vector<std::string>& values)
+TestCommon::gen_all_combinations(size_t size,
+                                 const std::vector<char>& bits,
+                                 std::vector<std::string>& values)
 {
   size_t num_values;
   size_t num_bits = bits.size();
@@ -102,20 +98,20 @@ TestBvDomainCommon::gen_all_combinations(size_t size,
 }
 
 void
-TestBvDomainCommon::gen_xvalues(uint32_t bw, std::vector<std::string>& values)
+TestCommon::gen_xvalues(uint32_t bw, std::vector<std::string>& values)
 {
   gen_all_combinations(bw, {'x', '0', '1'}, values);
 }
 
 void
-TestBvDomainCommon::gen_values(uint32_t bw, std::vector<std::string>& values)
+TestCommon::gen_values(uint32_t bw, std::vector<std::string>& values)
 {
   gen_all_combinations(bw, {'0', '1'}, values);
 }
 
 /* -------------------------------------------------------------------------- */
 
-class TestBvNode : public TestBvDomainCommon
+class TestBvNode : public TestCommon
 {
  protected:
   enum Kind
@@ -129,7 +125,7 @@ class TestBvNode : public TestBvDomainCommon
 
   void SetUp() override
   {
-    TestBvDomainCommon::SetUp();
+    TestCommon::SetUp();
     gen_values(TEST_BW, d_values);
     gen_xvalues(TEST_BW, d_xvalues);
     d_rng.reset(new RNG(1234));
