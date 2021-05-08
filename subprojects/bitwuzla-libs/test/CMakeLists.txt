@@ -12,6 +12,7 @@ set(test_names
   bvnodeisess
   bvnodeisinv
   bvnodeselpath
+  bzlals
 )
 
 foreach(test ${test_names})

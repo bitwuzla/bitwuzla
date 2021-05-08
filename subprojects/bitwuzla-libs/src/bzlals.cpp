@@ -12,8 +12,62 @@
 
 namespace bzlals {
 
+struct BzlaLsMove
+{
+  BzlaLsMove() : d_nprops(0), d_input(nullptr) {}
+
+  BzlaLsMove(uint64_t nprops, BitVectorNode* input, BitVector assignment)
+      : d_nprops(nprops), d_input(input), d_assignment(assignment)
+  {
+  }
+
+  uint64_t d_nprops;
+  BitVectorNode* d_input;
+  BitVector d_assignment;
+};
+
+BzlaLs::BzlaLs(uint64_t max_nprops) : d_max_nprops(max_nprops)
+{
+  d_one = BitVector::mk_one(1);
+}
+
+void
+BzlaLs::register_root(BitVectorNode* root)
+{
+  d_roots.push_back(root);
+}
+
+void
+BzlaLs::init_parents()
+{
+  /* map nodes to their parents */
+  std::vector<BitVectorNode*> to_visit = d_roots;
+  while (!to_visit.empty())
+  {
+    BitVectorNode* cur = to_visit.back();
+    to_visit.pop_back();
+    if (d_parents.find(cur) == d_parents.end())
+    {
+      d_parents[cur] = {};
+    }
+    for (uint32_t i = 0; i < cur->arity(); ++i)
+    {
+      BitVectorNode* child = (*cur)[i];
+      if (d_parents.find(child) == d_parents.end())
+      {
+        d_parents[child] = {};
+      }
+      if (d_parents.at(child).find(cur) == d_parents.at(child).end())
+      {
+        d_parents.at(child).insert(cur);
+      }
+      to_visit.push_back(child);
+    }
+  }
+}
+
 BzlaLsMove
-bzlals_select_move(RNG* rng, BitVectorNode* root, const BitVector& t_root)
+BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
 {
   uint64_t nprops  = 0;
   BitVectorNode* cur = root;
@@ -52,7 +106,7 @@ bzlals_select_move(RNG* rng, BitVectorNode* root, const BitVector& t_root)
        *    conflict
        */
 
-      if (rng->pick_with_prob(BZLALS_PROB_USE_INV_VALUE)
+      if (d_rng->pick_with_prob(BZLALS_PROB_USE_INV_VALUE)
           && cur->is_invertible(t, pos_x))
       {
         t = cur->inverse_value(t, pos_x);
