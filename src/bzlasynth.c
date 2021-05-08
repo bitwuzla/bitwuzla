@@ -343,9 +343,12 @@ eval_candidate(Bzla *bzla,
     else if (!d->as_ptr)
     {
       assert(!bzla_node_is_fun(real_cur));
-      assert(!bzla_node_is_apply(real_cur));
+      //assert(!bzla_node_is_apply(real_cur));
 
-      arg_stack.top -= real_cur->arity;
+      if (!bzla_node_is_apply(real_cur))
+      {
+        arg_stack.top -= real_cur->arity;
+      }
       bv = arg_stack.top;
 
       switch (real_cur->kind)
@@ -354,6 +357,7 @@ eval_candidate(Bzla *bzla,
           result = bzla_bv_copy(mm, bzla_node_bv_const_get_bits(real_cur));
           break;
 
+        case BZLA_APPLY_NODE:
         case BZLA_PARAM_NODE:
         case BZLA_VAR_NODE:
           assert(bzla_hashint_map_get(value_in_map, real_cur->id));
@@ -413,7 +417,10 @@ eval_candidate(Bzla *bzla,
             result = bzla_bv_copy(mm, bv[2]);
       }
 
-      for (i = 0; i < real_cur->arity; i++) bzla_bv_free(mm, bv[i]);
+      if (!bzla_node_is_apply(real_cur))
+      {
+        for (i = 0; i < real_cur->arity; i++) bzla_bv_free(mm, bv[i]);
+      }
 
       d->as_ptr = bzla_bv_copy(mm, result);
 
