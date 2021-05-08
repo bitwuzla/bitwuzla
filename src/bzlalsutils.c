@@ -369,7 +369,7 @@ bzla_lsutils_is_leaf_node(BzlaNode *n)
 {
   assert(n);
   return bzla_node_is_bv_var(n) || bzla_node_is_apply(n)
-         || bzla_node_is_fun_eq(n);
+         || bzla_node_is_fun_eq(n) || bzla_node_is_quantifier(n);
 }
 
 /**
