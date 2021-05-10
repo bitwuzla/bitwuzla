@@ -8,6 +8,9 @@ class TestBvNodeSelPath : public TestBvNode
   template <class T>
   void test_binary(OpKind op_kind);
   void test_ite();
+  void test_not();
+  void test_extract();
+  void test_sext();
 };
 
 template <class T>
@@ -50,7 +53,7 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
     for (const std::string& s1_value : s1values)
     {
       BitVectorDomain s1(s1_value);
-      for (uint32_t j = 0; j < nval_t; j++)
+      for (uint32_t j = 0; j < nval_t; ++j)
       {
         /* Target value of the operation (op). */
         BitVector t(bw_t, j);
@@ -159,7 +162,7 @@ TestBvNodeSelPath::test_ite()
       {
         BitVectorDomain s2(s2_value);
 
-        for (uint32_t j = 0; j < nval_t; j++)
+        for (uint32_t j = 0; j < nval_t; ++j)
         {
           /* Target value of the operation (op). */
           BitVector t(bw_t, j);
@@ -269,6 +272,237 @@ TestBvNodeSelPath::test_ite()
   }
 }
 
+void
+TestBvNodeSelPath::test_not()
+{
+  uint32_t bw_t = TEST_BW;
+
+  bool test_const_leaf = true;
+  bool test_const_op   = true;
+
+  for (const std::string& s0_value : d_xvalues)
+  {
+    BitVectorDomain s0(s0_value);
+    for (uint32_t i = 0, n = 1 << bw_t; i < n; ++i)
+    {
+      /* Target value of the operation (op). */
+      BitVector t(bw_t, i);
+
+      /* The current assignment of the operands, we choose a random value. */
+      BitVector s0_val = s0.lo();
+      if (!s0.is_fixed())
+      {
+        BitVectorDomainGenerator gen(s0, d_rng.get());
+        s0_val = gen.random();
+      }
+
+      uint32_t pos_x;
+      bool is_const;
+      bool is_essential;
+
+      /* Operand is leaf node. */
+      std::unique_ptr<BitVectorNode> leaf0(
+          new BitVectorNode(d_rng.get(), s0_val, s0));
+      BitVectorNot lop(d_rng.get(), bw_t, leaf0.get());
+      is_const     = lop[0]->is_const();
+      is_essential = lop.is_essential(t, 0);
+      /* we only perform this death test once (for performance reasons) */
+      if (is_const)
+      {
+        if (test_const_leaf)
+        {
+          ASSERT_DEATH(lop.select_path(t), "!all_const");
+          test_const_leaf = false;
+        }
+        continue;
+      }
+      pos_x = lop.select_path(t);
+      ASSERT_TRUE(is_const || pos_x == 0);
+      ASSERT_TRUE(is_essential || pos_x == 0);
+
+      /* Operands is op. */
+      std::unique_ptr<BitVectorNode> child(
+          new BitVectorNode(d_rng.get(), bw_t));
+      std::unique_ptr<BitVectorNode> op_s0(
+          new BitVectorNot(d_rng.get(), s0_val, s0, child.get()));
+      BitVectorNot oop(d_rng.get(), bw_t, op_s0.get());
+      is_const     = lop[0]->is_const();
+      is_essential = oop.is_essential(t, 0);
+      /* we only perform this death test once (for performance reasons) */
+      if (is_const)
+      {
+        if (test_const_op)
+        {
+          ASSERT_DEATH(oop.select_path(t), "!all_const");
+          test_const_op = false;
+        }
+        continue;
+      }
+      pos_x = oop.select_path(t);
+      ASSERT_TRUE(!is_const || pos_x == 0);
+      ASSERT_TRUE(is_essential || pos_x == 0);
+    }
+  }
+}
+
+void
+TestBvNodeSelPath::test_extract()
+{
+  uint32_t bw_x = TEST_BW;
+
+  bool test_const_leaf = true;
+  bool test_const_op   = true;
+
+  for (const std::string& s0_value : d_xvalues)
+  {
+    BitVectorDomain s0(s0_value);
+    for (uint32_t lo = 0; lo < bw_x; ++lo)
+    {
+      for (uint32_t hi = lo; hi < bw_x; ++hi)
+      {
+        uint32_t bw_t = hi - lo + 1;
+        for (uint32_t i = 0, n = 1 << bw_t; i < n; ++i)
+        {
+          /* Target value of the operation (op). */
+          BitVector t(bw_t, i);
+
+          /* The current assignment of the operands, we choose a random value.
+           */
+          BitVector s0_val = s0.lo();
+          if (!s0.is_fixed())
+          {
+            BitVectorDomainGenerator gen(s0, d_rng.get());
+            s0_val = gen.random();
+          }
+
+          uint32_t pos_x;
+          bool is_const;
+          bool is_essential;
+
+          /* Operand is leaf node. */
+          std::unique_ptr<BitVectorNode> leaf0(
+              new BitVectorNode(d_rng.get(), s0_val, s0));
+          BitVectorExtract lop(d_rng.get(), bw_t, leaf0.get(), hi, lo);
+          is_const     = lop[0]->is_const();
+          is_essential = lop.is_essential(t, 0);
+          /* we only perform this death test once (for performance reasons) */
+          if (is_const)
+          {
+            if (test_const_leaf)
+            {
+              ASSERT_DEATH(lop.select_path(t), "!all_const");
+              test_const_leaf = false;
+            }
+            continue;
+          }
+          pos_x = lop.select_path(t);
+          ASSERT_TRUE(is_const || pos_x == 0);
+          ASSERT_TRUE(is_essential || pos_x == 0);
+
+          /* Operands is op. */
+          std::unique_ptr<BitVectorNode> child(
+              new BitVectorNode(d_rng.get(), bw_t));
+          std::unique_ptr<BitVectorNode> op_s0(new BitVectorExtract(
+              d_rng.get(), s0_val, s0, child.get(), hi, lo));
+          BitVectorExtract oop(d_rng.get(), bw_t, op_s0.get(), hi, lo);
+          is_const     = lop[0]->is_const();
+          is_essential = oop.is_essential(t, 0);
+          /* we only perform this death test once (for performance reasons) */
+          if (is_const)
+          {
+            if (test_const_op)
+            {
+              ASSERT_DEATH(oop.select_path(t), "!all_const");
+              test_const_op = false;
+            }
+            continue;
+          }
+          pos_x = oop.select_path(t);
+          ASSERT_TRUE(!is_const || pos_x == 0);
+          ASSERT_TRUE(is_essential || pos_x == 0);
+        }
+      }
+    }
+  }
+}
+
+void
+TestBvNodeSelPath::test_sext()
+{
+  uint32_t bw_x = TEST_BW;
+
+  bool test_const_leaf = true;
+  bool test_const_op   = true;
+
+  for (const std::string& s0_value : d_xvalues)
+  {
+    BitVectorDomain s0(s0_value);
+    for (uint32_t n = 1; n <= bw_x; ++n)
+    {
+      uint32_t bw_t = bw_x + n;
+      for (uint32_t i = 0, m = 1 << bw_t; i < m; ++i)
+      {
+        /* Target value of the operation (op). */
+        BitVector t(bw_t, i);
+
+        /* The current assignment of the operands, we choose a random value. */
+        BitVector s0_val = s0.lo();
+        if (!s0.is_fixed())
+        {
+          BitVectorDomainGenerator gen(s0, d_rng.get());
+          s0_val = gen.random();
+        }
+
+        uint32_t pos_x;
+        bool is_const;
+        bool is_essential;
+
+        /* Operand is leaf node. */
+        std::unique_ptr<BitVectorNode> leaf0(
+            new BitVectorNode(d_rng.get(), s0_val, s0));
+        BitVectorSignExtend lop(d_rng.get(), bw_t, leaf0.get(), n);
+        is_const     = lop[0]->is_const();
+        is_essential = lop.is_essential(t, 0);
+        /* we only perform this death test once (for performance reasons) */
+        if (is_const)
+        {
+          if (test_const_leaf)
+          {
+            ASSERT_DEATH(lop.select_path(t), "!all_const");
+            test_const_leaf = false;
+          }
+          continue;
+        }
+        pos_x = lop.select_path(t);
+        ASSERT_TRUE(is_const || pos_x == 0);
+        ASSERT_TRUE(is_essential || pos_x == 0);
+
+        /* Operands is op. */
+        std::unique_ptr<BitVectorNode> child(
+            new BitVectorNode(d_rng.get(), bw_t));
+        std::unique_ptr<BitVectorNode> op_s0(
+            new BitVectorSignExtend(d_rng.get(), s0_val, s0, child.get(), n));
+        BitVectorSignExtend oop(d_rng.get(), bw_t, op_s0.get(), n);
+        is_const     = lop[0]->is_const();
+        is_essential = oop.is_essential(t, 0);
+        /* we only perform this death test once (for performance reasons) */
+        if (is_const)
+        {
+          if (test_const_op)
+          {
+            ASSERT_DEATH(oop.select_path(t), "!all_const");
+            test_const_op = false;
+          }
+          continue;
+        }
+        pos_x = oop.select_path(t);
+        ASSERT_TRUE(!is_const || pos_x == 0);
+        ASSERT_TRUE(is_essential || pos_x == 0);
+      }
+    }
+  }
+}
+
 TEST_F(TestBvNodeSelPath, add)
 {
   test_binary<BitVectorAdd>(ADD);
@@ -300,10 +534,10 @@ TEST_F(TestBvNodeSelPath, xor) { test_binary<BitVectorXor>(XOR); }
 
 TEST_F(TestBvNodeSelPath, ite) { test_ite(); }
 
-// TEST_F(TestBvNodeSelPath, not ) { test_not(CONS); }
-//
-// TEST_F(TestBvNodeSelPath, extract) { test_extract(CONS); }
-//
-// TEST_F(TestBvNodeSelPath, sext) { test_sext(CONS); }
+TEST_F(TestBvNodeSelPath, not ) { test_not(); }
+
+TEST_F(TestBvNodeSelPath, extract) { test_extract(); }
+
+TEST_F(TestBvNodeSelPath, sext) { test_sext(); }
 }  // namespace test
 }  // namespace bzlals
