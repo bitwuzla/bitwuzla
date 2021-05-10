@@ -7,6 +7,7 @@ class TestBvNodeSelPath : public TestBvNode
  protected:
   template <class T>
   void test_binary(OpKind op_kind);
+  void test_ite();
 };
 
 template <class T>
@@ -134,6 +135,140 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
   }
 }
 
+void
+TestBvNodeSelPath::test_ite()
+{
+  uint32_t bw_t = TEST_BW;
+
+  uint32_t nval_t = 1 << bw_t;
+
+  std::vector<std::string> s0values  = {"x", "0", "1"};
+  std::vector<std::string>& s1values = d_xvalues;
+  std::vector<std::string>& s2values = d_xvalues;
+
+  bool test_all_const_leafs = true;
+  bool test_all_const_ops   = true;
+
+  for (const std::string& s0_value : s0values)
+  {
+    BitVectorDomain s0(s0_value);
+    for (const std::string& s1_value : s1values)
+    {
+      BitVectorDomain s1(s1_value);
+      for (const std::string& s2_value : s2values)
+      {
+        BitVectorDomain s2(s2_value);
+
+        for (uint32_t j = 0; j < nval_t; j++)
+        {
+          /* Target value of the operation (op). */
+          BitVector t(bw_t, j);
+
+          /* Current assignment of the operands, we choose a random value. */
+          BitVector s0_val = s0.lo();
+          if (!s0.is_fixed())
+          {
+            BitVectorDomainGenerator gen(s0, d_rng.get());
+            s0_val = gen.random();
+          }
+          BitVector s1_val = s1.lo();
+          if (!s1.is_fixed())
+          {
+            BitVectorDomainGenerator gen(s1, d_rng.get());
+            s1_val = gen.random();
+          }
+          BitVector s2_val = s2.lo();
+          if (!s2.is_fixed())
+          {
+            BitVectorDomainGenerator gen(s2, d_rng.get());
+            s2_val = gen.random();
+          }
+
+          uint32_t pos_x;
+          bool is_const0, is_const1, is_const2;
+          bool is_essential0, is_essential1, is_essential2;
+
+          /* Both operands leaf nodes. */
+          std::unique_ptr<BitVectorNode> leaf0(
+              new BitVectorNode(d_rng.get(), s0_val, s0));
+          std::unique_ptr<BitVectorNode> leaf1(
+              new BitVectorNode(d_rng.get(), s1_val, s1));
+          std::unique_ptr<BitVectorNode> leaf2(
+              new BitVectorNode(d_rng.get(), s2_val, s2));
+          BitVectorIte lop(
+              d_rng.get(), bw_t, leaf0.get(), leaf1.get(), leaf2.get());
+          is_const0     = lop[0]->is_const();
+          is_const1     = lop[1]->is_const();
+          is_const2     = lop[2]->is_const();
+          is_essential0 = lop.is_essential(t, 0);
+          is_essential1 = lop.is_essential(t, 1);
+          is_essential2 = lop.is_essential(t, 2);
+          /* we only perform this death test once (for performance reasons) */
+          if (is_const0 && is_const1 && is_const2)
+          {
+            if (test_all_const_leafs)
+            {
+              ASSERT_DEATH(lop.select_path(t), "!all_const");
+              test_all_const_leafs = false;
+            }
+            continue;
+          }
+          pos_x = lop.select_path(t);
+          ASSERT_TRUE(!is_const1 || !is_const2 || pos_x == 0);
+          ASSERT_TRUE(!is_const0 || !is_const2 || pos_x == 1);
+          ASSERT_TRUE(!is_const0 || !is_const1 || pos_x == 2);
+          ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
+                      || !is_essential0 || pos_x == 0);
+          ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
+                      || !is_essential1 || pos_x == 1);
+          ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
+                      || !is_essential2 || pos_x == 2);
+
+          /* All operands ops. */
+          std::unique_ptr<BitVectorNode> cond(
+              new BitVectorNode(d_rng.get(), 1));
+          std::unique_ptr<BitVectorNode> branch(
+              new BitVectorNode(d_rng.get(), bw_t));
+          std::unique_ptr<BitVectorNode> op_s0(new BitVectorIte(
+              d_rng.get(), s0_val, s0, cond.get(), branch.get(), branch.get()));
+          std::unique_ptr<BitVectorNode> op_s1(new BitVectorIte(
+              d_rng.get(), s1_val, s1, cond.get(), branch.get(), branch.get()));
+          std::unique_ptr<BitVectorNode> op_s2(new BitVectorIte(
+              d_rng.get(), s2_val, s2, cond.get(), branch.get(), branch.get()));
+          BitVectorIte oop(
+              d_rng.get(), bw_t, op_s0.get(), op_s1.get(), op_s2.get());
+          is_const0     = lop[0]->is_const();
+          is_const1     = lop[1]->is_const();
+          is_const2     = lop[2]->is_const();
+          is_essential0 = oop.is_essential(t, 0);
+          is_essential1 = oop.is_essential(t, 1);
+          is_essential2 = oop.is_essential(t, 2);
+          /* we only perform this death test once (for performance reasons) */
+          if (is_const0 && is_const1 && is_const2)
+          {
+            if (test_all_const_ops)
+            {
+              ASSERT_DEATH(oop.select_path(t), "!all_const");
+              test_all_const_ops = false;
+            }
+            continue;
+          }
+          pos_x = oop.select_path(t);
+          ASSERT_TRUE(!is_const1 || !is_const2 || pos_x == 0);
+          ASSERT_TRUE(!is_const0 || !is_const2 || pos_x == 1);
+          ASSERT_TRUE(!is_const0 || !is_const1 || pos_x == 2);
+          ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
+                      || !is_essential0 || pos_x == 0);
+          ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
+                      || !is_essential1 || pos_x == 1);
+          ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
+                      || !is_essential2 || pos_x == 2);
+        }
+      }
+    }
+  }
+}
+
 TEST_F(TestBvNodeSelPath, add)
 {
   test_binary<BitVectorAdd>(ADD);
@@ -163,13 +298,8 @@ TEST_F(TestBvNodeSelPath, urem) { test_binary<BitVectorUrem>(UREM); }
 
 TEST_F(TestBvNodeSelPath, xor) { test_binary<BitVectorXor>(XOR); }
 
-// TEST_F(TestBvNodeSelPath, ite)
-//{
-//  test_ite(CONS, 0);
-//  test_ite(CONS, 1);
-//  test_ite(CONS, 2);
-//}
-//
+TEST_F(TestBvNodeSelPath, ite) { test_ite(); }
+
 // TEST_F(TestBvNodeSelPath, not ) { test_not(CONS); }
 //
 // TEST_F(TestBvNodeSelPath, extract) { test_extract(CONS); }
