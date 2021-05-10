@@ -91,6 +91,8 @@ TEST_F(TestBvNodeInv, ite)
   test_ite(INV, 2);
 }
 
+TEST_F(TestBvNodeInv, not ) { test_not(INV); }
+
 TEST_F(TestBvNodeInv, extract) { test_extract(INV); }
 
 TEST_F(TestBvNodeInv, sext) { test_sext(INV); }

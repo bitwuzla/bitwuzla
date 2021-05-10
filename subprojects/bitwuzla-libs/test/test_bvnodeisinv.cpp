@@ -92,6 +92,8 @@ TEST_F(TestBvNodeIsInv, ite)
   test_ite(IS_INV, 2);
 }
 
+TEST_F(TestBvNodeIsInv, not ) { test_not(IS_INV); }
+
 TEST_F(TestBvNodeIsInv, extract) { test_extract(IS_INV); }
 
 TEST_F(TestBvNodeIsInv, sext) { test_sext(IS_INV); }

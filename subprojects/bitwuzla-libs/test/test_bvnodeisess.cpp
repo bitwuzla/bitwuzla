@@ -92,6 +92,8 @@ TEST_F(TestBvNodeIsEss, ite)
   test_ite(IS_ESS, 2);
 }
 
+TEST_F(TestBvNodeIsEss, not ) { test_not(IS_ESS); }
+
 TEST_F(TestBvNodeIsEss, extract) { test_extract(IS_ESS); }
 
 TEST_F(TestBvNodeIsEss, sext) { test_sext(IS_ESS); }

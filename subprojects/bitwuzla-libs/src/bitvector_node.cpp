@@ -4122,6 +4122,74 @@ BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
 
 /* -------------------------------------------------------------------------- */
 
+BitVectorNot::BitVectorNot(RNG* rng, uint32_t size, BitVectorNode* child0)
+    : BitVectorNode(rng, size, child0)
+{
+}
+
+BitVectorNot::BitVectorNot(RNG* rng,
+                           const BitVector& assignment,
+                           const BitVectorDomain& domain,
+                           BitVectorNode* child0)
+    : BitVectorNode(rng, assignment, domain, child0)
+{
+}
+
+bool
+BitVectorNot::is_essential(const BitVector& t, uint32_t pos_x)
+{
+  return !is_invertible(t, pos_x);
+}
+
+bool
+BitVectorNot::is_invertible(const BitVector& t, uint32_t pos_x)
+{
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
+
+  (void) pos_x;
+
+  const BitVectorDomain& x = d_children[pos_x]->domain();
+
+  /** IC_wo: true */
+  if (!x.has_fixed_bits()) return true;
+  /** IC: mfb(x, ~t) */
+  return x.match_fixed_bits(t.bvnot());
+}
+
+bool
+BitVectorNot::is_consistent(const BitVector& t, uint32_t pos_x)
+{
+  /** CC: IC */
+  return is_invertible(t, pos_x);
+}
+
+const BitVector&
+BitVectorNot::inverse_value(const BitVector& t, uint32_t pos_x)
+{
+  assert(d_inverse == nullptr);
+  (void) pos_x;
+
+  /** inverse value: ~t */
+  d_inverse.reset(new BitVector(t.bvnot()));
+
+#ifndef NDEBUG
+  const BitVectorDomain& x = d_children[0]->domain();
+  assert(!x.is_fixed());
+  assert(t.compare(d_inverse->bvnot()) == 0);
+  assert(x.match_fixed_bits(*d_inverse));
+#endif
+  return *d_inverse;
+}
+
+const BitVector&
+BitVectorNot::consistent_value(const BitVector& t, uint32_t pos_x)
+{
+  return inverse_value(t, pos_x);
+}
+
+/* -------------------------------------------------------------------------- */
+
 BitVectorExtract::BitVectorExtract(
     RNG* rng, uint32_t size, BitVectorNode* child0, uint32_t hi, uint32_t lo)
     : BitVectorNode(rng, size, child0), d_hi(hi), d_lo(lo)

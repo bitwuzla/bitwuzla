@@ -92,6 +92,8 @@ TEST_F(TestBvNodeIsCons, ite)
   test_ite(IS_CONS, 2);
 }
 
+TEST_F(TestBvNodeIsCons, not ) { test_not(IS_CONS); }
+
 TEST_F(TestBvNodeIsCons, extract) { test_extract(IS_CONS); }
 
 TEST_F(TestBvNodeIsCons, sext) { test_sext(IS_CONS); }

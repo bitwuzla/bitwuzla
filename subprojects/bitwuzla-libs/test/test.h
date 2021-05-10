@@ -227,6 +227,7 @@ class TestBvNode : public TestBvNodeCommon
                             const BitVectorDomain& s1,
                             const BitVector& s1_val_cur,
                             uint32_t pos_x);
+  bool check_sat_not(Kind kind, const BitVectorDomain& x, const BitVector& t);
   bool check_sat_extract(Kind kind,
                          const BitVectorDomain& x,
                          const BitVector& t,
@@ -240,6 +241,7 @@ class TestBvNode : public TestBvNodeCommon
   template <class T>
   void test_binary(Kind kind, OpKind op_kind, uint32_t pos_x);
   void test_ite(Kind kind, uint32_t pos_x);
+  void test_not(Kind kind);
   void test_extract(Kind kind);
   void test_sext(Kind kind);
 };
@@ -482,6 +484,22 @@ TestBvNode::check_sat_ite_cons(const BitVector& x_val,
     }
   }
   return false;
+}
+
+bool
+TestBvNode::check_sat_not(Kind kind,
+                          const BitVectorDomain& x,
+                          const BitVector& t)
+{
+  assert(kind == IS_CONS || kind == IS_ESS || kind == IS_INV);
+  BitVectorDomainGenerator gen(x);
+  do
+  {
+    BitVector val = gen.has_next() ? gen.next() : x.lo();
+    BitVector res = val.bvnot();
+    if (t.compare(res) == 0) return kind == IS_ESS ? false : true;
+  } while (gen.has_next());
+  return kind == IS_ESS ? true : false;
 }
 
 bool
@@ -948,6 +966,85 @@ TestBvNode::test_ite(Kind kind, uint32_t pos_x)
             }
           }
         }
+      }
+    }
+  }
+}
+
+void
+TestBvNode::test_not(Kind kind)
+{
+  for (const std::string& x_value : d_xvalues)
+  {
+    BitVectorDomain x(x_value);
+    uint32_t bw_t = x.size();
+    for (uint32_t i = 0, n = 1 << bw_t; i < n; ++i)
+    {
+      BitVector t(bw_t, i);
+      /* For this test, we don't care about the current assignment of x,
+       * thus we initialize it with a random value that matches constant
+       * bits in x. */
+      BitVector x_val = x.lo();
+      if (!x.is_fixed())
+      {
+        BitVectorDomainGenerator gen(x, d_rng.get());
+        x_val = gen.random();
+      }
+      std::unique_ptr<BitVectorNode> child(
+          new BitVectorNode(d_rng.get(), bw_t));
+      std::unique_ptr<BitVectorNode> op_x(
+          new BitVectorNot(d_rng.get(), x_val, x, child.get()));
+      /* For this test, we don't care about current assignment and domain
+       * of the op, thus we initialize them with 0 and 'x..x',
+       * respectively. */
+      BitVectorNot op(d_rng.get(), bw_t, op_x.get());
+
+      if (kind == IS_CONS || kind == IS_ESS || kind == IS_INV)
+      {
+        bool res    = kind == IS_ESS ? op.is_essential(t, 0)
+                                     : (kind == IS_INV ? op.is_invertible(t, 0)
+                                                       : op.is_consistent(t, 0));
+        bool status = check_sat_not(kind, x, t);
+
+        if (res != status)
+        {
+          std::cout << "t: " << t << std::endl;
+          std::cout << "x: " << x_value << ": " << x_val << std::endl;
+        }
+        ASSERT_EQ(res, status);
+      }
+      else
+      {
+        assert(kind == INV || kind == CONS);
+        if (x.is_fixed()) continue;
+        if (kind == INV && !op.is_invertible(t, 0)) continue;
+        if (kind == CONS && !op.is_consistent(t, 0)) continue;
+
+        if (kind == INV)
+        {
+          BitVector inv = op.inverse_value(t, 0);
+          int32_t cmp   = t.compare(inv.bvnot());
+          if (cmp != 0)
+          {
+            std::cout << "t: " << t << std::endl;
+            std::cout << "x: " << x_value << ": " << x_val << std::endl;
+            std::cout << "inverse: " << inv << std::endl;
+          }
+          ASSERT_EQ(cmp, 0);
+        }
+        else
+        {
+          BitVector cons = op.consistent_value(t, 0);
+          int32_t cmp    = t.compare(cons.bvnot());
+          if (cmp != 0)
+          {
+            std::cout << "t: " << t << std::endl;
+            std::cout << "x: " << x_value << ": " << x_val << std::endl;
+            std::cout << "consistent: " << cons << std::endl;
+          }
+          ASSERT_EQ(cmp, 0);
+        }
+        ASSERT_TRUE(op.is_consistent(t, 0));
       }
     }
   }

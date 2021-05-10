@@ -164,7 +164,7 @@ class BitVectorAdd : public BitVectorNode
   bool is_invertible(const BitVector& t, uint32_t pos_x) override;
 
   /**
-   * IC:
+   * CC:
    *   w/o  const bits: true
    *   with const bits: true
    */
@@ -816,6 +816,40 @@ class BitVectorIte : public BitVectorNode
    * CC:
    *   w/o  const bits: true
    *   with const bits: true
+   */
+  bool is_consistent(const BitVector& t, uint32_t pos_x) override;
+
+  const BitVector& inverse_value(const BitVector& t, uint32_t pos_x) override;
+
+  const BitVector& consistent_value(const BitVector& t,
+                                    uint32_t pos_x) override;
+};
+
+/* -------------------------------------------------------------------------- */
+
+class BitVectorNot : public BitVectorNode
+{
+ public:
+  /** Constructors. */
+  BitVectorNot(RNG* rng, uint32_t size, BitVectorNode* child0);
+  BitVectorNot(RNG* rng,
+               const BitVector& assignment,
+               const BitVectorDomain& domain,
+               BitVectorNode* child0);
+
+  bool is_essential(const BitVector& t, uint32_t pos_x) override;
+
+  /**
+   * IC:
+   *   w/o  const bits: true
+   *   with const bits: mfb(x, ~t)
+   */
+  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+
+  /**
+   * CC:
+   *   w/o  const bits: true
+   *   with const bits: IC
    */
   bool is_consistent(const BitVector& t, uint32_t pos_x) override;
 
