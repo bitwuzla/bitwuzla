@@ -188,7 +188,9 @@ BitVectorAdd::BitVectorAdd(RNG* rng,
 }
 
 bool
-BitVectorAdd::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorAdd::is_invertible(const BitVector& t,
+                            uint32_t pos_x,
+                            bool find_inverse)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -201,7 +203,10 @@ BitVectorAdd::is_invertible(const BitVector& t, uint32_t pos_x)
     BitVector sub            = t.bvsub(s);
     if (x.match_fixed_bits(sub))
     {
-      d_inverse.reset(new BitVector(std::move(sub)));
+      if (find_inverse)
+      {
+        d_inverse.reset(new BitVector(std::move(sub)));
+      }
       return true;
     }
     return false;
@@ -280,8 +285,12 @@ BitVectorAnd::BitVectorAnd(RNG* rng,
 }
 
 bool
-BitVectorAnd::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorAnd::is_invertible(const BitVector& t,
+                            uint32_t pos_x,
+                            bool find_inverse)
 {
+  (void) find_inverse;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -399,7 +408,9 @@ BitVectorConcat::BitVectorConcat(RNG* rng,
 }
 
 bool
-BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorConcat::is_invertible(const BitVector& t,
+                               uint32_t pos_x,
+                               bool find_inverse)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -435,7 +446,10 @@ BitVectorConcat::is_invertible(const BitVector& t, uint32_t pos_x)
   {
     if (x.match_fixed_bits(tx))
     {
-      d_inverse.reset(new BitVector(std::move(tx)));
+      if (find_inverse)
+      {
+        d_inverse.reset(new BitVector(std::move(tx)));
+      }
       return true;
     }
     return false;
@@ -538,8 +552,12 @@ BitVectorEq::BitVectorEq(RNG* rng,
 }
 
 bool
-BitVectorEq::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorEq::is_invertible(const BitVector& t,
+                           uint32_t pos_x,
+                           bool find_inverse)
 {
+  (void) find_inverse;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -677,7 +695,9 @@ BitVectorMul::BitVectorMul(RNG* rng,
 }
 
 bool
-BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorMul::is_invertible(const BitVector& t,
+                            uint32_t pos_x,
+                            bool find_inverse)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -715,7 +735,10 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
         BitVector inv = s.bvmodinv().ibvmul(t);
         if (x.match_fixed_bits(inv))
         {
-          d_inverse.reset(new BitVector(std::move(inv)));
+          if (find_inverse)
+          {
+            d_inverse.reset(new BitVector(std::move(inv)));
+          }
           return true;
         }
         return false;
@@ -734,8 +757,11 @@ BitVectorMul::is_invertible(const BitVector& t, uint32_t pos_x)
       if (x.bvextract(size - ctz - 1, 0).match_fixed_bits(y_ext))
       {
         /* Result domain is x[size - 1:size - ctz] o y[size - ctz(s) - 1:0] */
-        d_inverse_domain.reset(new BitVectorDomain(
-            x.bvextract(size - 1, size - ctz).bvconcat(y_ext)));
+        if (find_inverse)
+        {
+          d_inverse_domain.reset(new BitVectorDomain(
+              x.bvextract(size - 1, size - ctz).bvconcat(y_ext)));
+        }
         return true;
       }
       return false;
@@ -994,7 +1020,9 @@ BitVectorShl::BitVectorShl(RNG* rng,
 }
 
 bool
-BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorShl::is_invertible(const BitVector& t,
+                            uint32_t pos_x,
+                            bool find_inverse)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -1053,10 +1081,13 @@ BitVectorShl::is_invertible(const BitVector& t, uint32_t pos_x)
       BitVector min  = BitVector(size, ctz_t - ctz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
       {
-        BitVectorDomainGenerator gen(
-            x, d_rng, s_is_zero ? x.lo() : min, x.hi());
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
+        if (find_inverse)
+        {
+          BitVectorDomainGenerator gen(
+              x, d_rng, s_is_zero ? x.lo() : min, x.hi());
+          assert(gen.has_random());
+          d_inverse.reset(new BitVector(gen.random()));
+        }
         return true;
       }
       return false;
@@ -1344,7 +1375,9 @@ BitVectorShr::BitVectorShr(RNG* rng,
 }
 
 bool
-BitVectorShr::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorShr::is_invertible(const BitVector& t,
+                            uint32_t pos_x,
+                            bool find_inverse)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -1352,7 +1385,8 @@ BitVectorShr::is_invertible(const BitVector& t, uint32_t pos_x)
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
-  return is_invertible(d_rng, t, s, x, pos_x, d_inverse);
+  return is_invertible(
+      d_rng, t, s, x, pos_x, find_inverse ? &d_inverse : nullptr);
 }
 
 bool
@@ -1361,7 +1395,7 @@ BitVectorShr::is_invertible(RNG* rng,
                             const BitVector& s,
                             const BitVectorDomain& x,
                             uint32_t pos_x,
-                            std::unique_ptr<BitVector>& inverse)
+                            std::unique_ptr<BitVector>* inverse)
 {
   uint32_t clz_t = 0;
   uint32_t clz_s = 0;
@@ -1413,9 +1447,13 @@ BitVectorShr::is_invertible(RNG* rng,
       BitVector min  = BitVector(size, clz_t - clz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
       {
-        BitVectorDomainGenerator gen(x, rng, s_is_zero ? x.lo() : min, x.hi());
-        assert(gen.has_random());
-        inverse.reset(new BitVector(gen.random()));
+        if (inverse != nullptr)
+        {
+          BitVectorDomainGenerator gen(
+              x, rng, s_is_zero ? x.lo() : min, x.hi());
+          assert(gen.has_random());
+          inverse->reset(new BitVector(gen.random()));
+        }
         return true;
       }
       return false;
@@ -1716,7 +1754,9 @@ BitVectorAshr::BitVectorAshr(RNG* rng,
 }
 
 bool
-BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorAshr::is_invertible(const BitVector& t,
+                             uint32_t pos_x,
+                             bool find_inverse)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -1744,10 +1784,15 @@ BitVectorAshr::is_invertible(const BitVector& t, uint32_t pos_x)
   {
     if (s.get_msb())
     {
-      return BitVectorShr::is_invertible(
-          d_rng, t.bvnot(), s.bvnot(), x, pos_x, d_inverse);
+      return BitVectorShr::is_invertible(d_rng,
+                                         t.bvnot(),
+                                         s.bvnot(),
+                                         x,
+                                         pos_x,
+                                         find_inverse ? &d_inverse : nullptr);
     }
-    return BitVectorShr::is_invertible(d_rng, t, s, x, pos_x, d_inverse);
+    return BitVectorShr::is_invertible(
+        d_rng, t, s, x, pos_x, find_inverse ? &d_inverse : nullptr);
   }
 
   uint32_t size = s.size();
@@ -2073,7 +2118,9 @@ BitVectorUdiv::BitVectorUdiv(RNG* rng,
 }
 
 bool
-BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorUdiv::is_invertible(const BitVector& t,
+                             uint32_t pos_x,
+                             bool find_inverse)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -2148,7 +2195,10 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
         BitVectorDomainGenerator gen(x, d_rng, min, max);
         if (gen.has_next())
         {
-          d_inverse.reset(new BitVector(gen.random()));
+          if (find_inverse)
+          {
+            d_inverse.reset(new BitVector(gen.random()));
+          }
           return true;
         }
         return false;
@@ -2183,7 +2233,10 @@ BitVectorUdiv::is_invertible(const BitVector& t, uint32_t pos_x)
       BitVectorDomainGenerator gen(x, d_rng, min, max);
       if (gen.has_next())
       {
-        d_inverse.reset(new BitVector(gen.random()));
+        if (find_inverse)
+        {
+          d_inverse.reset(new BitVector(gen.random()));
+        }
         return true;
       }
       return false;
@@ -2721,8 +2774,12 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
 }
 
 bool
-BitVectorUlt::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorUlt::is_invertible(const BitVector& t,
+                            uint32_t pos_x,
+                            bool find_inverse)
 {
+  (void) find_inverse;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -2968,8 +3025,12 @@ BitVectorSlt::BitVectorSlt(RNG* rng,
 }
 
 bool
-BitVectorSlt::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorSlt::is_invertible(const BitVector& t,
+                            uint32_t pos_x,
+                            bool find_inverse)
 {
+  (void) find_inverse;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -3265,7 +3326,9 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
 }
 
 bool
-BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorUrem::is_invertible(const BitVector& t,
+                             uint32_t pos_x,
+                             bool find_inverse)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -3361,7 +3424,10 @@ BitVectorUrem::is_invertible(const BitVector& t, uint32_t pos_x)
               BitVector rem = bv.bvurem(s);
               if (rem.compare(t) == 0)
               {
-                d_inverse.reset(new BitVector(std::move(bv)));
+                if (find_inverse)
+                {
+                  d_inverse.reset(new BitVector(std::move(bv)));
+                }
                 return true;
               }
             }
@@ -3818,8 +3884,12 @@ BitVectorXor::BitVectorXor(RNG* rng,
 }
 
 bool
-BitVectorXor::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorXor::is_invertible(const BitVector& t,
+                            uint32_t pos_x,
+                            bool find_inverse)
 {
+  (void) find_inverse;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -3920,12 +3990,16 @@ BitVectorIte::is_essential(const BitVector& t, uint32_t pos_x)
 {
   uint32_t pos_s0 = pos_x == 0 ? 1 : 0;
   uint32_t pos_s1 = pos_x == 2 ? 1 : 2;
-  return !is_invertible(t, pos_s0) && !is_invertible(t, pos_s1);
+  return !is_invertible(t, pos_s0) && !is_invertible(t, pos_s1, false);
 }
 
 bool
-BitVectorIte::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorIte::is_invertible(const BitVector& t,
+                            uint32_t pos_x,
+                            bool find_inverse)
 {
+  (void) find_inverse;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -4138,12 +4212,16 @@ BitVectorNot::BitVectorNot(RNG* rng,
 bool
 BitVectorNot::is_essential(const BitVector& t, uint32_t pos_x)
 {
-  return !is_invertible(t, pos_x);
+  return !is_invertible(t, pos_x, false);
 }
 
 bool
-BitVectorNot::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorNot::is_invertible(const BitVector& t,
+                            uint32_t pos_x,
+                            bool find_inverse)
 {
+  (void) find_inverse;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -4209,12 +4287,16 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
 bool
 BitVectorExtract::is_essential(const BitVector& t, uint32_t pos_x)
 {
-  return !is_invertible(t, pos_x);
+  return !is_invertible(t, pos_x, false);
 }
 
 bool
-BitVectorExtract::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorExtract::is_invertible(const BitVector& t,
+                                uint32_t pos_x,
+                                bool find_inverse)
 {
+  (void) find_inverse;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -4376,11 +4458,13 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
 bool
 BitVectorSignExtend::is_essential(const BitVector& t, uint32_t pos_x)
 {
-  return !is_invertible(t, pos_x);
+  return !is_invertible(t, pos_x, false);
 }
 
 bool
-BitVectorSignExtend::is_invertible(const BitVector& t, uint32_t pos_x)
+BitVectorSignExtend::is_invertible(const BitVector& t,
+                                   uint32_t pos_x,
+                                   bool find_inverse)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -4405,7 +4489,10 @@ BitVectorSignExtend::is_invertible(const BitVector& t, uint32_t pos_x)
   {
     ic_wo = x.match_fixed_bits(t_x);
   }
-  if (ic_wo) d_inverse.reset(new BitVector(t_x));
+  if (ic_wo && find_inverse)
+  {
+    d_inverse.reset(new BitVector(t_x));
+  }
 
   return ic_wo;
 }

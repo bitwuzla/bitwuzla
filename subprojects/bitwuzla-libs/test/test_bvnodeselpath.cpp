@@ -137,8 +137,43 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
 TEST_F(TestBvNodeSelPath, add)
 {
   test_binary<BitVectorAdd>(ADD);
-  test_binary<BitVectorAdd>(ADD);
 }
 
+TEST_F(TestBvNodeSelPath, and) { test_binary<BitVectorAnd>(AND); }
+
+TEST_F(TestBvNodeSelPath, concat) { test_binary<BitVectorConcat>(CONCAT); }
+
+TEST_F(TestBvNodeSelPath, eq) { test_binary<BitVectorEq>(EQ); }
+
+TEST_F(TestBvNodeSelPath, mul) { test_binary<BitVectorMul>(MUL); }
+
+TEST_F(TestBvNodeSelPath, shl) { test_binary<BitVectorShl>(SHL); }
+
+TEST_F(TestBvNodeSelPath, shr) { test_binary<BitVectorShr>(SHR); }
+
+TEST_F(TestBvNodeSelPath, ashr) { test_binary<BitVectorAshr>(ASHR); }
+
+TEST_F(TestBvNodeSelPath, udiv) { test_binary<BitVectorUdiv>(UDIV); }
+
+TEST_F(TestBvNodeSelPath, ult) { test_binary<BitVectorUlt>(ULT); }
+
+TEST_F(TestBvNodeSelPath, slt) { test_binary<BitVectorSlt>(SLT); }
+
+TEST_F(TestBvNodeSelPath, urem) { test_binary<BitVectorUrem>(UREM); }
+
+TEST_F(TestBvNodeSelPath, xor) { test_binary<BitVectorXor>(XOR); }
+
+// TEST_F(TestBvNodeSelPath, ite)
+//{
+//  test_ite(CONS, 0);
+//  test_ite(CONS, 1);
+//  test_ite(CONS, 2);
+//}
+//
+// TEST_F(TestBvNodeSelPath, not ) { test_not(CONS); }
+//
+// TEST_F(TestBvNodeSelPath, extract) { test_extract(CONS); }
+//
+// TEST_F(TestBvNodeSelPath, sext) { test_sext(CONS); }
 }  // namespace test
 }  // namespace bzlals

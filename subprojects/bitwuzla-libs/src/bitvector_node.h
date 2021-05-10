@@ -59,17 +59,20 @@ class BitVectorNode
    */
   virtual bool is_essential(const BitVector& t, uint32_t pos_x)
   {
-    return !is_invertible(t, 1 - pos_x);
+    return !is_invertible(t, 1 - pos_x, false);
   }
 
   /**
    * Check invertibility condition for x at index pos_x with respect to constant
    * bits and target value t.
    */
-  virtual bool is_invertible(const BitVector& t, uint32_t pos_x)
+  virtual bool is_invertible(const BitVector& t,
+                             uint32_t pos_x,
+                             bool find_inverse = true)
   {
     (void) t;
     (void) pos_x;
+    (void) find_inverse;
     return true;
   }
 
@@ -161,7 +164,9 @@ class BitVectorAdd : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: mfb(x, t - s)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -201,7 +206,9 @@ class BitVectorAnd : public BitVectorNode
    * 1) x & s = t on all const bits of x
    * 2) s & t = t on all non-const bits of x
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -242,7 +249,9 @@ class BitVectorConcat : public BitVectorNode
    *
    * with const bits: mfb(x, tx) && s = ts
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -282,7 +291,9 @@ class BitVectorEq : public BitVectorNode
    *    t = 0: (x_hi != x_lo) || (x_hi != s)
    *    t = 1: mfb(x, s)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -321,7 +332,9 @@ class BitVectorMul : public BitVectorNode
    *                             (!odd(s) => mfb (x << c, y << c))))
    *                    with c = ctz(s) and y = (t >> c) * (s >> c)^-1
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -370,7 +383,9 @@ class BitVectorShl : public BitVectorNode
    *                  ((t = 0) => (x_hi >= ctz(t) - ctz(s) || (s = 0))) &&
    *                  ((t != 0) => mfb(x, ctz(t) - ctz(s)))
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -401,7 +416,7 @@ class BitVectorShr : public BitVectorNode
                             const BitVector& s,
                             const BitVectorDomain& x,
                             uint32_t pos_x,
-                            std::unique_ptr<BitVector>& inverse_value);
+                            std::unique_ptr<BitVector>* inverse_value);
   /**
    * Additional interface / helper for inverse_value.
    * Cached result is stored in 'inverse_value'.
@@ -435,7 +450,9 @@ class BitVectorShr : public BitVectorNode
    *                  ((t = 0) => (x_hi >= clz(t) - clz(s) || (s = 0))) &&
    *                  ((t != 0) => mfb(x, clz(t) - clz(s)))
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -481,7 +498,9 @@ class BitVectorAshr : public BitVectorNode
    *                  (s[msb ] = 0 => IC_shr) &&
    *                  (s[msb] = 1 => IC_shr(~s >> x = ~t))
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -540,7 +559,9 @@ class BitVectorUdiv : public BitVectorNode
    *                      (t = ones => y <= s / t) &&
    *                      (t != ones => y > t + 1 && y <= s / t)))
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -599,7 +620,9 @@ class BitVectorUlt : public BitVectorNode
    *       pos_x = 0: t = 1 => (s != 0 && x_lo < s) && t = 0 => (x_hi >= s)
    *       pos_x = 1: t = 1 => (s != ones && x_hi > s) && t = 0 => (x_lo <= s)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -648,7 +671,9 @@ class BitVectorSlt : public BitVectorNode
    *                  t = 0 => ((MSB(x) = 0 && s >= x_lo) ||
    *                            (MSB(x) != 0 && s >= 1 o x_lo[bw-2:0])))
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -695,7 +720,9 @@ class BitVectorUrem : public BitVectorNode
    *                  (s != t => \exists y. (
    *                      mfb(x, y) && y > t && (s - t) mod y = 0)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -752,7 +779,9 @@ class BitVectorXor : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: mfb(x, s^t)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -810,7 +839,9 @@ class BitVectorIte : public BitVectorNode
    *       pos_x = 2: s0 == false && mfb(x, t)
    *                  with s0 the value for '_c'
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -844,7 +875,9 @@ class BitVectorNot : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: mfb(x, ~t)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -881,7 +914,9 @@ class BitVectorExtract : public BitVectorNode
    *   w/o  const bits: true
    *   with const bits: mfb(x[hi:lo], t)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
@@ -947,7 +982,9 @@ class BitVectorSignExtend : public BitVectorNode
    *
    *   with const bits: IC_wo && mfb(x, t_x)
    */
-  bool is_invertible(const BitVector& t, uint32_t pos_x) override;
+  bool is_invertible(const BitVector& t,
+                     uint32_t pos_x,
+                     bool find_inverse = true) override;
 
   /**
    * CC:
