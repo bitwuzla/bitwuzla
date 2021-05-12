@@ -26,13 +26,217 @@ struct BzlaLsMove
   BitVector d_assignment;
 };
 
-BzlaLs::BzlaLs(uint64_t max_nprops) : d_max_nprops(max_nprops)
+BzlaLs::BzlaLs(uint64_t max_nprops, uint32_t seed)
+    : d_max_nprops(max_nprops), d_seed(seed)
 {
+  d_rng.reset(new RNG(d_seed));
   d_one = BitVector::mk_one(1);
 }
 
+uint32_t
+BzlaLs::mk_node(NodeKind kind,
+                uint32_t size,
+                const std::vector<uint32_t>& children)
+{
+  return mk_node(
+      kind, BitVector::mk_zero(size), BitVectorDomain(size), children);
+}
+
+uint32_t
+BzlaLs::mk_indexed_node(NodeKind kind,
+                        uint32_t size,
+                        uint32_t child0,
+                        const std::vector<uint32_t>& indices)
+{
+  return mk_indexed_node(
+      kind, BitVector::mk_zero(size), BitVectorDomain(size), child0, indices);
+}
+
+uint32_t
+BzlaLs::mk_node(NodeKind kind,
+                const BitVector& assignment,
+                const BitVectorDomain& domain,
+                const std::vector<uint32_t>& children)
+{
+  assert(assignment.size() == domain.size());
+  uint32_t id = d_nodes.size();
+#ifndef NDEBUG
+  for (uint32_t c : children) assert(c < id);
+#endif
+
+  std::unique_ptr<BitVectorNode> res;
+  switch (kind)
+  {
+    case ADD:
+      assert(children.size() == 2);
+      res.reset(new BitVectorAdd(d_rng.get(),
+                                 assignment,
+                                 domain,
+                                 d_nodes[children[0]].get(),
+                                 d_nodes[children[1]].get()));
+      break;
+
+    case AND:
+      assert(children.size() == 2);
+      res.reset(new BitVectorAnd(d_rng.get(),
+                                 assignment,
+                                 domain,
+                                 d_nodes[children[0]].get(),
+                                 d_nodes[children[1]].get()));
+      break;
+    case ASHR:
+      assert(children.size() == 2);
+      res.reset(new BitVectorAshr(d_rng.get(),
+                                  assignment,
+                                  domain,
+                                  d_nodes[children[0]].get(),
+                                  d_nodes[children[1]].get()));
+      break;
+    case CONCAT:
+      assert(children.size() == 2);
+      res.reset(new BitVectorConcat(d_rng.get(),
+                                    assignment,
+                                    domain,
+                                    d_nodes[children[0]].get(),
+                                    d_nodes[children[1]].get()));
+      break;
+    case EQ:
+      assert(children.size() == 2);
+      res.reset(new BitVectorEq(d_rng.get(),
+                                assignment,
+                                domain,
+                                d_nodes[children[0]].get(),
+                                d_nodes[children[1]].get()));
+      break;
+    case ITE:
+      assert(children.size() == 3);
+      res.reset(new BitVectorIte(d_rng.get(),
+                                 assignment,
+                                 domain,
+                                 d_nodes[children[0]].get(),
+                                 d_nodes[children[1]].get(),
+                                 d_nodes[children[2]].get()));
+      break;
+    case MUL:
+      assert(children.size() == 2);
+      res.reset(new BitVectorMul(d_rng.get(),
+                                 assignment,
+                                 domain,
+                                 d_nodes[children[0]].get(),
+                                 d_nodes[children[1]].get()));
+      break;
+    case NOT:
+      assert(children.size() == 1);
+      d_nodes.push_back(std::make_unique<BitVectorNot>(
+          d_rng.get(), assignment, domain, d_nodes[children[0]].get()));
+      break;
+    case SHL:
+      assert(children.size() == 2);
+      res.reset(new BitVectorShl(d_rng.get(),
+                                 assignment,
+                                 domain,
+                                 d_nodes[children[0]].get(),
+                                 d_nodes[children[1]].get()));
+      break;
+    case SHR:
+      assert(children.size() == 2);
+      res.reset(new BitVectorShr(d_rng.get(),
+                                 assignment,
+                                 domain,
+                                 d_nodes[children[0]].get(),
+                                 d_nodes[children[1]].get()));
+      break;
+    case SLT:
+      assert(children.size() == 2);
+      res.reset(new BitVectorSlt(d_rng.get(),
+                                 assignment,
+                                 domain,
+                                 d_nodes[children[0]].get(),
+                                 d_nodes[children[1]].get()));
+      break;
+    case UDIV:
+      assert(children.size() == 2);
+      res.reset(new BitVectorUdiv(d_rng.get(),
+                                  assignment,
+                                  domain,
+                                  d_nodes[children[0]].get(),
+                                  d_nodes[children[1]].get()));
+      break;
+    case ULT:
+      assert(children.size() == 2);
+      res.reset(new BitVectorSlt(d_rng.get(),
+                                 assignment,
+                                 domain,
+                                 d_nodes[children[0]].get(),
+                                 d_nodes[children[1]].get()));
+      break;
+    case UREM:
+      assert(children.size() == 2);
+      res.reset(new BitVectorUrem(d_rng.get(),
+                                  assignment,
+                                  domain,
+                                  d_nodes[children[0]].get(),
+                                  d_nodes[children[1]].get()));
+      break;
+    case XOR:
+      assert(children.size() == 2);
+      res.reset(new BitVectorXor(d_rng.get(),
+                                 assignment,
+                                 domain,
+                                 d_nodes[children[0]].get(),
+                                 d_nodes[children[1]].get()));
+      break;
+
+    default:
+      assert(kind == CONST);
+      assert(children.empty());
+      res.reset(new BitVectorNode(d_rng.get(), assignment, domain));
+  }
+  res->set_id(id);
+  d_nodes.push_back(std::move(res));
+  assert(d_nodes[id] == d_nodes.back());
+  return id;
+}
+
+uint32_t
+BzlaLs::mk_indexed_node(NodeKind kind,
+                        const BitVector& assignment,
+                        const BitVectorDomain& domain,
+                        uint32_t child0,
+                        const std::vector<uint32_t>& indices)
+{
+  assert(kind == EXTRACT || kind == SEXT);
+  assert(assignment.size() == domain.size());
+  assert(kind != EXTRACT || indices.size() == 2);
+  assert(kind != EXTRACT || indices[0] >= indices[1]);
+  assert(kind != EXTRACT || indices[0] < assignment.size());
+  assert(kind != SEXT || indices.size() == 1);
+
+  uint32_t id = d_nodes.size();
+  assert(child0 < id);
+
+  std::unique_ptr<BitVectorNode> res;
+  if (kind == EXTRACT)
+  {
+    res.reset(new BitVectorExtract(d_rng.get(),
+                                   assignment,
+                                   domain,
+                                   d_nodes[child0].get(),
+                                   indices[0],
+                                   indices[1]));
+  }
+  else
+  {
+    res.reset(new BitVectorSignExtend(
+        d_rng.get(), assignment, domain, d_nodes[child0].get(), indices[0]));
+  }
+  res->set_id(id);
+  d_nodes.push_back(std::move(res));
+  return id;
+}
+
 void
-BzlaLs::register_root(BitVectorNode* root)
+BzlaLs::register_root(uint32_t root)
 {
   d_roots.push_back(root);
 }
@@ -41,27 +245,30 @@ void
 BzlaLs::init_parents()
 {
   /* map nodes to their parents */
-  std::vector<BitVectorNode*> to_visit = d_roots;
+  std::vector<uint32_t> to_visit = d_roots;
   while (!to_visit.empty())
   {
-    BitVectorNode* cur = to_visit.back();
+    uint32_t cur_id = to_visit.back();
+    assert(cur_id < d_nodes.size());
     to_visit.pop_back();
-    if (d_parents.find(cur) == d_parents.end())
+    const BitVectorNode* cur = d_nodes[cur_id].get();
+    if (d_parents.find(cur_id) == d_parents.end())
     {
-      d_parents[cur] = {};
+      d_parents[cur_id] = {};
     }
     for (uint32_t i = 0; i < cur->arity(); ++i)
     {
       BitVectorNode* child = (*cur)[i];
-      if (d_parents.find(child) == d_parents.end())
+      uint32_t child_id    = child->id();
+      if (d_parents.find(child_id) == d_parents.end())
       {
-        d_parents[child] = {};
+        d_parents[child_id] = {};
       }
-      if (d_parents.at(child).find(cur) == d_parents.at(child).end())
+      if (d_parents.at(child_id).find(cur_id) == d_parents.at(child_id).end())
       {
-        d_parents.at(child).insert(cur);
+        d_parents.at(child_id).insert(cur_id);
       }
-      to_visit.push_back(child);
+      to_visit.push_back(child_id);
     }
   }
 }

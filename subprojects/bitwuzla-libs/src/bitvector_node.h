@@ -53,6 +53,9 @@ class BitVectorNode
   /** Destructor. */
   virtual ~BitVectorNode() {}
 
+  /** Get the bit-vector size of the node. */
+  uint32_t size() { return d_assignment.size(); }
+
   /**
    * Check if operand at index pos_x is essential with respect to constant
    * bits and target value t.
@@ -129,7 +132,13 @@ class BitVectorNode
   /** Return true if all children are const. */
   bool all_const() const { return d_all_const; }
 
+  /** Set id of this node. */
+  void set_id(uint32_t id) { d_id = id; }
+  /** Get id of this node. */
+  uint32_t id() { return d_id; }
+
  protected:
+  uint32_t d_id                                = 0;
   std::unique_ptr<BitVectorNode*[]> d_children = nullptr;
   RNG* d_rng;
   uint32_t d_arity;

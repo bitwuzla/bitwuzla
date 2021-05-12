@@ -12,163 +12,162 @@ class TestBzlaLs : public TestBvNodeCommon
   {
     TestBvNodeCommon::SetUp();
 
-    d_c1.reset(new BitVectorNode(d_rng.get(), TEST_BW));
-    d_v1.reset(new BitVectorNode(d_rng.get(), TEST_BW));
-    d_v2.reset(new BitVectorNode(d_rng.get(), TEST_BW));
-    d_v3.reset(new BitVectorNode(d_rng.get(), TEST_BW));
+    d_bzlals.reset(new BzlaLs(100));
+
+    d_c1 = d_bzlals->mk_node(BzlaLs::NodeKind::CONST, TEST_BW, {});
+    d_v1 = d_bzlals->mk_node(BzlaLs::NodeKind::CONST, TEST_BW, {});
+    d_v2 = d_bzlals->mk_node(BzlaLs::NodeKind::CONST, TEST_BW, {});
+    d_v3 = d_bzlals->mk_node(BzlaLs::NodeKind::CONST, TEST_BW, {});
 
     // v1 + c1
-    d_v1pc1.reset(
-        new BitVectorAdd(d_rng.get(), TEST_BW, d_v1.get(), d_c1.get()));
+    d_v1pc1 = d_bzlals->mk_node(BzlaLs::NodeKind::ADD, TEST_BW, {d_v1, d_c1});
     // (v1 + c1) + v2
-    d_v1pc1pv2.reset(
-        new BitVectorAdd(d_rng.get(), TEST_BW, d_v1pc1.get(), d_v2.get()));
+    d_v1pc1pv2 =
+        d_bzlals->mk_node(BzlaLs::NodeKind::ADD, TEST_BW, {d_v1pc1, d_v2});
     // v1 + v2
-    d_v1pv2.reset(
-        new BitVectorAdd(d_rng.get(), TEST_BW, d_v1.get(), d_v2.get()));
+    d_v1pv2 = d_bzlals->mk_node(BzlaLs::NodeKind::ADD, TEST_BW, {d_v1, d_v2});
     // (v1 + v2) & v2
-    d_v1pv2av2.reset(
-        new BitVectorAnd(d_rng.get(), TEST_BW, d_v1pv2.get(), d_v2.get()));
+    d_v1pv2av2 =
+        d_bzlals->mk_node(BzlaLs::NodeKind::AND, TEST_BW, {d_v1pv2, d_v2});
 
     // v1[0:0]
-    d_v1e.reset(new BitVectorExtract(d_rng.get(), TEST_BW, d_v1.get(), 0, 0));
+    d_v1e =
+        d_bzlals->mk_indexed_node(BzlaLs::NodeKind::EXTRACT, 1, d_v1, {0, 0});
     // v3[0:0]
-    d_v3e.reset(new BitVectorExtract(d_rng.get(), TEST_BW, d_v3.get(), 0, 0));
+    d_v3e =
+        d_bzlals->mk_indexed_node(BzlaLs::NodeKind::EXTRACT, 1, d_v3, {0, 0});
     // v1[0:0] + v3[0:0]
-    d_v1epv3e.reset(
-        new BitVectorAdd(d_rng.get(), TEST_BW, d_v1e.get(), d_v3e.get()));
+    d_v1epv3e = d_bzlals->mk_node(BzlaLs::NodeKind::ADD, 1, {d_v1e, d_v3e});
     // sext(v1[0:0] + v3[0:0], 3)
-    d_v1epv3e_ext.reset(
-        new BitVectorSignExtend(d_rng.get(), TEST_BW, d_v1epv3e.get(), 3));
+    d_v1epv3e_ext = d_bzlals->mk_indexed_node(
+        BzlaLs::NodeKind::SEXT, TEST_BW, d_v1epv3e, {3});
 
     // v3 + c1
-    d_v3pc1.reset(
-        new BitVectorAdd(d_rng.get(), TEST_BW, d_v3.get(), d_c1.get()));
+    d_v3pc1 = d_bzlals->mk_node(BzlaLs::NodeKind::ADD, TEST_BW, {d_v3, d_c1});
     // (v3 + c1) + v3
-    d_v3pc1pv3.reset(
-        new BitVectorAdd(d_rng.get(), TEST_BW, d_v3pc1.get(), d_v3.get()));
+    d_v3pc1pv3 =
+        d_bzlals->mk_node(BzlaLs::NodeKind::ADD, TEST_BW, {d_v3pc1, d_v3});
     // ((v3 + c1) + v3) + v1
-    d_v3pc1pv3pv1.reset(
-        new BitVectorAdd(d_rng.get(), TEST_BW, d_v3pc1pv3.get(), d_v1.get()));
+    d_v3pc1pv3pv1 =
+        d_bzlals->mk_node(BzlaLs::NodeKind::ADD, TEST_BW, {d_v3pc1pv3, d_v1});
 
     // root1: (v1 + c1) + v2 < (v1 + v2) & v2
-    d_root1.reset(new BitVectorUlt(
-        d_rng.get(), TEST_BW, d_v1pc1pv2.get(), d_v1pv2av2.get()));
+    d_root1 =
+        d_bzlals->mk_node(BzlaLs::NodeKind::ULT, 1, {d_v1pc1pv2, d_v1pv2av2});
     // root2: sext(v1[0:0] + v3[0:0], 3) = ((v3 + c1) + v3) + v1
-    d_root2.reset(new BitVectorEq(
-        d_rng.get(), TEST_BW, d_v1epv3e_ext.get(), d_v3pc1pv3pv1.get()));
+    d_root2 = d_bzlals->mk_node(
+        BzlaLs::NodeKind::EQ, 1, {d_v1epv3e_ext, d_v3pc1pv3pv1});
   }
 
-  std::unique_ptr<BitVectorNode> d_c1, d_v1, d_v2, d_v3;
-  std::unique_ptr<BitVectorNode> d_v1pc1, d_v1pc1pv2;
-  std::unique_ptr<BitVectorNode> d_v1pv2, d_v1pv2av2;
-  std::unique_ptr<BitVectorNode> d_v1e, d_v3e;
-  std::unique_ptr<BitVectorNode> d_v1epv3e, d_v1epv3e_ext;
-  std::unique_ptr<BitVectorNode> d_v3pc1, d_v3pc1pv3;
-  std::unique_ptr<BitVectorNode> d_v3pc1pv3pv1;
-  std::unique_ptr<BitVectorNode> d_root1, d_root2;
+  std::unique_ptr<BzlaLs> d_bzlals;
+
+  uint32_t d_c1, d_v1, d_v2, d_v3;
+  uint32_t d_v1pc1, d_v1pc1pv2;
+  uint32_t d_v1pv2, d_v1pv2av2;
+  uint32_t d_v1e, d_v3e;
+  uint32_t d_v1epv3e, d_v1epv3e_ext;
+  uint32_t d_v3pc1, d_v3pc1pv3;
+  uint32_t d_v3pc1pv3pv1;
+  uint32_t d_root1, d_root2;
 };
 
 TEST_F(TestBzlaLs, parents)
 {
-  BzlaLs bzlals(100);
-  bzlals.register_root(d_root1.get());
-  bzlals.register_root(d_root2.get());
-  bzlals.init_parents();
+  d_bzlals->register_root(d_root1);
+  d_bzlals->register_root(d_root2);
+  d_bzlals->init_parents();
 
-  const BzlaLs::ParentsMap& parents = bzlals.get_parents();
+  const BzlaLs::ParentsMap& parents = d_bzlals->get_parents();
 
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_c1.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_c1);
     ASSERT_TRUE(p.size() == 2);
-    ASSERT_TRUE(p.find(d_v1pc1.get()) != p.end());
-    ASSERT_TRUE(p.find(d_v3pc1.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v1pc1) != p.end());
+    ASSERT_TRUE(p.find(d_v3pc1) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v1.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v1);
     ASSERT_TRUE(p.size() == 4);
-    ASSERT_TRUE(p.find(d_v1pc1.get()) != p.end());
-    ASSERT_TRUE(p.find(d_v1pv2.get()) != p.end());
-    ASSERT_TRUE(p.find(d_v3pc1pv3pv1.get()) != p.end());
-    ASSERT_TRUE(p.find(d_v1e.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v1pc1) != p.end());
+    ASSERT_TRUE(p.find(d_v1pv2) != p.end());
+    ASSERT_TRUE(p.find(d_v3pc1pv3pv1) != p.end());
+    ASSERT_TRUE(p.find(d_v1e) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v2.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v2);
     ASSERT_TRUE(p.size() == 3);
-    ASSERT_TRUE(p.find(d_v1pc1pv2.get()) != p.end());
-    ASSERT_TRUE(p.find(d_v1pv2.get()) != p.end());
-    ASSERT_TRUE(p.find(d_v1pv2av2.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v1pc1pv2) != p.end());
+    ASSERT_TRUE(p.find(d_v1pv2) != p.end());
+    ASSERT_TRUE(p.find(d_v1pv2av2) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v3.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v3);
     ASSERT_TRUE(p.size() == 3);
-    ASSERT_TRUE(p.find(d_v3pc1.get()) != p.end());
-    ASSERT_TRUE(p.find(d_v3pc1pv3.get()) != p.end());
-    ASSERT_TRUE(p.find(d_v3e.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v3pc1) != p.end());
+    ASSERT_TRUE(p.find(d_v3pc1pv3) != p.end());
+    ASSERT_TRUE(p.find(d_v3e) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v1pc1.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v1pc1);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_v1pc1pv2.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v1pc1pv2) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v1pc1pv2.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v1pc1pv2);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_root1.get()) != p.end());
+    ASSERT_TRUE(p.find(d_root1) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v1pv2.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v1pv2);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_v1pv2av2.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v1pv2av2) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v1pv2av2.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v1pv2av2);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_root1.get()) != p.end());
+    ASSERT_TRUE(p.find(d_root1) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v1e.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v1e);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_v1epv3e.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v1epv3e) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v3e.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v3e);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_v1epv3e.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v1epv3e) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v1epv3e.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v1epv3e);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_v1epv3e_ext.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v1epv3e_ext) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p =
-        parents.at(d_v1epv3e_ext.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v1epv3e_ext);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_root2.get()) != p.end());
+    ASSERT_TRUE(p.find(d_root2) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v3pc1.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v3pc1);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_v3pc1pv3.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v3pc1pv3) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_v3pc1pv3.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v3pc1pv3);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_v3pc1pv3pv1.get()) != p.end());
+    ASSERT_TRUE(p.find(d_v3pc1pv3pv1) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p =
-        parents.at(d_v3pc1pv3pv1.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_v3pc1pv3pv1);
     ASSERT_TRUE(p.size() == 1);
-    ASSERT_TRUE(p.find(d_root2.get()) != p.end());
+    ASSERT_TRUE(p.find(d_root2) != p.end());
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_root1.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_root1);
     ASSERT_TRUE(p.size() == 0);
   }
   {
-    const std::unordered_set<BitVectorNode*>& p = parents.at(d_root2.get());
+    const std::unordered_set<uint32_t>& p = parents.at(d_root2);
     ASSERT_TRUE(p.size() == 0);
   }
 }

@@ -590,17 +590,12 @@ TestBvNode::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
             BitVectorDomainGenerator gen(s, d_rng.get());
             s_val = gen.random();
           }
-          std::unique_ptr<BitVectorNode> child(
-              new BitVectorNode(d_rng.get(), bw_t));
           /* For this test, the domain of x is irrelevant, hence we
            * initialize it with an unconstrained domain. */
-          std::unique_ptr<BitVectorNode> op_x(new T(d_rng.get(),
-                                                    x_val,
-                                                    BitVectorDomain(bw_x),
-                                                    child.get(),
-                                                    child.get()));
+          std::unique_ptr<BitVectorNode> op_x(
+              new BitVectorNode(d_rng.get(), x_val, BitVectorDomain(bw_x)));
           std::unique_ptr<BitVectorNode> op_s(
-              new T(d_rng.get(), s_val, s, child.get(), child.get()));
+              new BitVectorNode(d_rng.get(), s_val, s));
           /* For this test, we don't care about current assignment and domain of
            * the op, thus we initialize them with 0 and x..x, respectively. */
           T op(d_rng.get(),
@@ -643,15 +638,13 @@ TestBvNode::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
             BitVectorDomainGenerator gen(x, d_rng.get());
             x_val = gen.random();
           }
-          std::unique_ptr<BitVectorNode> child(
-              new BitVectorNode(d_rng.get(), bw_t));
           std::unique_ptr<BitVectorNode> op_x(
-              new T(d_rng.get(), x_val, x, child.get(), child.get()));
+              new BitVectorNode(d_rng.get(), x_val, x));
           /* For this test, we don't care about the domain of s, thus we
            * initialize it with an unconstrained domain. */
           BitVectorDomain s(bw_s);
           std::unique_ptr<BitVectorNode> op_s(
-              new T(d_rng.get(), s_val, s, child.get(), child.get()));
+              new BitVectorNode(d_rng.get(), s_val, s));
           /* For this test, we don't care about current assignment and domain of
            * the op, thus we initialize them with 0 and x..x, respectively. */
           T op(d_rng.get(),
@@ -762,19 +755,10 @@ TestBvNode::test_ite(Kind kind, uint32_t pos_x)
           for (uint32_t j = 0; j < n_vals; j++)
           {
             BitVector t(bw_t, j);
-            std::unique_ptr<BitVectorNode> child0(
-                new BitVectorNode(d_rng.get(), 1));
-            std::unique_ptr<BitVectorNode> child1(
-                new BitVectorNode(d_rng.get(), bw_t));
             /* For this test, the domain of x is irrelevant, hence we
              * initialize it with an unconstrained domain. */
             std::unique_ptr<BitVectorNode> op_x(
-                new BitVectorIte(d_rng.get(),
-                                 x_val,
-                                 BitVectorDomain(bw_x),
-                                 child0.get(),
-                                 child1.get(),
-                                 child1.get()));
+                new BitVectorNode(d_rng.get(), x_val, BitVectorDomain(bw_x)));
             /* For this test, we don't care about the current assignment of s0
              * and s1, hence we use a random value. */
             BitVector s0_val = s0.lo(), s1_val = s1.lo();
@@ -789,19 +773,9 @@ TestBvNode::test_ite(Kind kind, uint32_t pos_x)
               s1_val = gen.random();
             }
             std::unique_ptr<BitVectorNode> op_s0(
-                new BitVectorIte(d_rng.get(),
-                                 s0_val,
-                                 s0,
-                                 child0.get(),
-                                 child1.get(),
-                                 child1.get()));
+                new BitVectorNode(d_rng.get(), s0_val, s0));
             std::unique_ptr<BitVectorNode> op_s1(
-                new BitVectorIte(d_rng.get(),
-                                 s1_val,
-                                 s1,
-                                 child0.get(),
-                                 child1.get(),
-                                 child1.get()));
+                new BitVectorNode(d_rng.get(), s1_val, s1));
             /* For this test, we don't care about current assignment and domain
              * of the op, thus we initialize them with 0 and x..x,
              * respectively. */
@@ -865,32 +839,14 @@ TestBvNode::test_ite(Kind kind, uint32_t pos_x)
               BitVectorDomainGenerator gen(x, d_rng.get());
               x_val = gen.random();
             }
-            std::unique_ptr<BitVectorNode> child0(
-                new BitVectorNode(d_rng.get(), 1));
-            std::unique_ptr<BitVectorNode> child1(
-                new BitVectorNode(d_rng.get(), bw_t));
-            std::unique_ptr<BitVectorNode> op_x(new BitVectorIte(d_rng.get(),
-                                                                 x_val,
-                                                                 x,
-                                                                 child0.get(),
-                                                                 child1.get(),
-                                                                 child1.get()));
+            std::unique_ptr<BitVectorNode> op_x(
+                new BitVectorNode(d_rng.get(), x_val, x));
             /* For this test, we don't care about the domains of s0 and s1,
              * hence we initialize them with unconstrained domains. */
             std::unique_ptr<BitVectorNode> op_s0(
-                new BitVectorIte(d_rng.get(),
-                                 s0_val,
-                                 BitVectorDomain(bw_s0),
-                                 child0.get(),
-                                 child1.get(),
-                                 child1.get()));
+                new BitVectorNode(d_rng.get(), s0_val, BitVectorDomain(bw_s0)));
             std::unique_ptr<BitVectorNode> op_s1(
-                new BitVectorIte(d_rng.get(),
-                                 s1_val,
-                                 BitVectorDomain(bw_s0),
-                                 child0.get(),
-                                 child1.get(),
-                                 child1.get()));
+                new BitVectorNode(d_rng.get(), s1_val, BitVectorDomain(bw_s0)));
             /* For this test, we don't care about current assignment and domain
              * of the op, thus we initialize them with 0 and x..x,
              * respectively. */
@@ -990,10 +946,8 @@ TestBvNode::test_not(Kind kind)
         BitVectorDomainGenerator gen(x, d_rng.get());
         x_val = gen.random();
       }
-      std::unique_ptr<BitVectorNode> child(
-          new BitVectorNode(d_rng.get(), bw_t));
       std::unique_ptr<BitVectorNode> op_x(
-          new BitVectorNot(d_rng.get(), x_val, x, child.get()));
+          new BitVectorNode(d_rng.get(), x_val, x));
       /* For this test, we don't care about current assignment and domain
        * of the op, thus we initialize them with 0 and 'x..x',
        * respectively. */
@@ -1075,10 +1029,8 @@ TestBvNode::test_extract(Kind kind)
             BitVectorDomainGenerator gen(x, d_rng.get());
             x_val = gen.random();
           }
-          std::unique_ptr<BitVectorNode> child(
-              new BitVectorNode(d_rng.get(), bw_t));
           std::unique_ptr<BitVectorNode> op_x(
-              new BitVectorExtract(d_rng.get(), x_val, x, child.get(), hi, lo));
+              new BitVectorNode(d_rng.get(), x_val, x));
           /* For this test, we don't care about current assignment and domain
            * of the op, thus we initialize them with 0 and 'x..x',
            * respectively. */
@@ -1167,10 +1119,8 @@ TestBvNode::test_sext(Kind kind)
           BitVectorDomainGenerator gen(x, d_rng.get());
           x_val = gen.random();
         }
-        std::unique_ptr<BitVectorNode> child(
-            new BitVectorNode(d_rng.get(), bw_t));
         std::unique_ptr<BitVectorNode> op_x(
-            new BitVectorSignExtend(d_rng.get(), x_val, x, child.get(), n));
+            new BitVectorNode(d_rng.get(), x_val, x));
         /* For this test, we don't care about current assignment and domain
          * of the op, thus we initialize them with 0 and 'x..x',
          * respectively. */

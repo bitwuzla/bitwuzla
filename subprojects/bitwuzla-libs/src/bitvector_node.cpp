@@ -176,6 +176,8 @@ BitVectorAdd::BitVectorAdd(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == child0->size());
+  assert(child0->size() == child1->size());
 }
 
 BitVectorAdd::BitVectorAdd(RNG* rng,
@@ -185,6 +187,9 @@ BitVectorAdd::BitVectorAdd(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size());
 }
 
 bool
@@ -273,6 +278,8 @@ BitVectorAnd::BitVectorAnd(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == child0->size());
+  assert(child0->size() == child1->size());
 }
 
 BitVectorAnd::BitVectorAnd(RNG* rng,
@@ -282,6 +289,9 @@ BitVectorAnd::BitVectorAnd(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size());
 }
 
 bool
@@ -396,6 +406,7 @@ BitVectorConcat::BitVectorConcat(RNG* rng,
                                  BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == child0->size() + child1->size());
 }
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
@@ -405,6 +416,8 @@ BitVectorConcat::BitVectorConcat(RNG* rng,
                                  BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size() + child1->size());
 }
 
 bool
@@ -540,6 +553,8 @@ BitVectorEq::BitVectorEq(RNG* rng,
                          BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == 1);
+  assert(child0->size() == child1->size());
 }
 
 BitVectorEq::BitVectorEq(RNG* rng,
@@ -549,6 +564,9 @@ BitVectorEq::BitVectorEq(RNG* rng,
                          BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == 1);
 }
 
 bool
@@ -683,6 +701,8 @@ BitVectorMul::BitVectorMul(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == child0->size());
+  assert(child0->size() == child1->size());
 }
 
 BitVectorMul::BitVectorMul(RNG* rng,
@@ -692,6 +712,9 @@ BitVectorMul::BitVectorMul(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size());
 }
 
 bool
@@ -1008,6 +1031,8 @@ BitVectorShl::BitVectorShl(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == child0->size());
+  assert(child0->size() == child1->size());
 }
 
 BitVectorShl::BitVectorShl(RNG* rng,
@@ -1017,6 +1042,9 @@ BitVectorShl::BitVectorShl(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size());
 }
 
 bool
@@ -1363,6 +1391,8 @@ BitVectorShr::BitVectorShr(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == child0->size());
+  assert(child0->size() == child1->size());
 }
 
 BitVectorShr::BitVectorShr(RNG* rng,
@@ -1372,6 +1402,9 @@ BitVectorShr::BitVectorShr(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size());
 }
 
 bool
@@ -1742,6 +1775,8 @@ BitVectorAshr::BitVectorAshr(RNG* rng,
                              BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == child0->size());
+  assert(child0->size() == child1->size());
 }
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
@@ -1751,6 +1786,9 @@ BitVectorAshr::BitVectorAshr(RNG* rng,
                              BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size());
 }
 
 bool
@@ -2106,6 +2144,8 @@ BitVectorUdiv::BitVectorUdiv(RNG* rng,
                              BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == child0->size());
+  assert(child0->size() == child1->size());
 }
 
 BitVectorUdiv::BitVectorUdiv(RNG* rng,
@@ -2115,6 +2155,9 @@ BitVectorUdiv::BitVectorUdiv(RNG* rng,
                              BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size());
 }
 
 bool
@@ -2762,6 +2805,8 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == 1);
+  assert(child0->size() == child1->size());
 }
 
 BitVectorUlt::BitVectorUlt(RNG* rng,
@@ -2771,6 +2816,9 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == 1);
 }
 
 bool
@@ -3013,6 +3061,8 @@ BitVectorSlt::BitVectorSlt(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == 1);
+  assert(child0->size() == child1->size());
 }
 
 BitVectorSlt::BitVectorSlt(RNG* rng,
@@ -3022,6 +3072,9 @@ BitVectorSlt::BitVectorSlt(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == 1);
 }
 
 bool
@@ -3314,6 +3367,8 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
                              BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == child0->size());
+  assert(child0->size() == child1->size());
 }
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
@@ -3323,6 +3378,9 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
                              BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size());
 }
 
 bool
@@ -3872,6 +3930,8 @@ BitVectorXor::BitVectorXor(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
 {
+  assert(size == child0->size());
+  assert(child0->size() == child1->size());
 }
 
 BitVectorXor::BitVectorXor(RNG* rng,
@@ -3881,6 +3941,9 @@ BitVectorXor::BitVectorXor(RNG* rng,
                            BitVectorNode* child1)
     : BitVectorNode(rng, assignment, domain, child0, child1)
 {
+  assert(child0->size() == child1->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size());
 }
 
 bool
@@ -3973,6 +4036,9 @@ BitVectorIte::BitVectorIte(RNG* rng,
                            BitVectorNode* child2)
     : BitVectorNode(rng, size, child0, child1, child2)
 {
+  assert(size == child1->size());
+  assert(child0->size() == 1);
+  assert(child1->size() == child2->size());
 }
 
 BitVectorIte::BitVectorIte(RNG* rng,
@@ -3983,6 +4049,10 @@ BitVectorIte::BitVectorIte(RNG* rng,
                            BitVectorNode* child2)
     : BitVectorNode(rng, assignment, domain, child0, child1, child2)
 {
+  assert(child0->size() == 1);
+  assert(child1->size() == child2->size());
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child1->size());
 }
 
 bool
@@ -4199,6 +4269,7 @@ BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
 BitVectorNot::BitVectorNot(RNG* rng, uint32_t size, BitVectorNode* child0)
     : BitVectorNode(rng, size, child0)
 {
+  assert(size == child0->size());
 }
 
 BitVectorNot::BitVectorNot(RNG* rng,
@@ -4207,6 +4278,8 @@ BitVectorNot::BitVectorNot(RNG* rng,
                            BitVectorNode* child0)
     : BitVectorNode(rng, assignment, domain, child0)
 {
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size());
 }
 
 bool
@@ -4272,6 +4345,7 @@ BitVectorExtract::BitVectorExtract(
     RNG* rng, uint32_t size, BitVectorNode* child0, uint32_t hi, uint32_t lo)
     : BitVectorNode(rng, size, child0), d_hi(hi), d_lo(lo)
 {
+  assert(size == hi - lo + 1);
 }
 
 BitVectorExtract::BitVectorExtract(RNG* rng,
@@ -4282,6 +4356,8 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
                                    uint32_t lo)
     : BitVectorNode(rng, assignment, domain, child0), d_hi(hi), d_lo(lo)
 {
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == hi - lo + 1);
 }
 
 bool
@@ -4444,6 +4520,7 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
                                          uint32_t n)
     : BitVectorNode(rng, size, child0), d_n(n)
 {
+  assert(size == child0->size() + n);
 }
 
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
@@ -4453,6 +4530,8 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
                                          uint32_t n)
     : BitVectorNode(rng, assignment, domain, child0), d_n(n)
 {
+  assert(assignment.size() == domain.size());
+  assert(assignment.size() == child0->size() + n);
 }
 
 bool
