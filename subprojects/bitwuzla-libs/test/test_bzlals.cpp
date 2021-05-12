@@ -63,7 +63,13 @@ class TestBzlaLs : public TestBvNodeCommon
    * Create a mapping from nodes to their parents to compare against the
    * mapping created internally on node creation.
    */
-  BzlaLs::ParentsMap get_parents();
+  BzlaLs::ParentsMap get_expected_parents();
+  /**
+   * Get a reference of the parents map of the BzlaLs object.
+   * Note: The map is private in BzlaLs and only the main test class has
+   *       access to it.
+   */
+  const BzlaLs::ParentsMap& get_parents() { return d_bzlals->d_parents; }
 
   std::unique_ptr<BzlaLs> d_bzlals;
 
@@ -78,7 +84,7 @@ class TestBzlaLs : public TestBvNodeCommon
 };
 
 BzlaLs::ParentsMap
-TestBzlaLs::get_parents()
+TestBzlaLs::get_expected_parents()
 {
   BzlaLs::ParentsMap parents;
   std::vector<uint32_t> to_visit = {d_root1, d_root2};
@@ -112,8 +118,8 @@ TEST_F(TestBzlaLs, parents)
   d_bzlals->register_root(d_root1);
   d_bzlals->register_root(d_root2);
 
-  BzlaLs::ParentsMap parents          = d_bzlals->get_parents();
-  BzlaLs::ParentsMap parents_expected = get_parents();
+  const BzlaLs::ParentsMap& parents   = get_parents();
+  BzlaLs::ParentsMap parents_expected = get_expected_parents();
 
   {
     const std::unordered_set<uint32_t>& p = parents.at(d_c1);

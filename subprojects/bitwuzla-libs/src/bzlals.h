@@ -12,11 +12,16 @@
 namespace bzlals {
 
 class RNG;
-
 struct BzlaLsMove;
+
+namespace test {
+class TestBzlaLs;
+}
 
 class BzlaLs
 {
+  friend class test::TestBzlaLs;
+
  public:
   using NodesIdTable = std::vector<std::unique_ptr<BitVectorNode>>;
   using ParentsSet   = std::unordered_set<uint32_t>;
@@ -94,8 +99,6 @@ class BzlaLs
 
   uint32_t get_arity(uint32_t id) const;
   uint32_t get_child(uint32_t id, uint32_t idx) const;
-
-  const ParentsMap& get_parents() const { return d_parents; }
 
  private:
   BitVectorNode* get_node(uint32_t id) const;
