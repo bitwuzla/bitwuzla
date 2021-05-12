@@ -19,7 +19,8 @@ class BzlaLs
 {
  public:
   using NodesIdTable = std::vector<std::unique_ptr<BitVectorNode>>;
-  using ParentsMap = std::unordered_map<uint32_t, std::unordered_set<uint32_t>>;
+  using ParentsSet   = std::unordered_set<uint32_t>;
+  using ParentsMap   = std::unordered_map<uint32_t, ParentsSet>;
 
   enum NodeKind
   {
@@ -91,11 +92,14 @@ class BzlaLs
 
   void register_root(uint32_t root);
 
-  const NodesIdTable& get_nodes() { return d_nodes; }
+  uint32_t get_arity(uint32_t id) const;
+  uint32_t get_child(uint32_t id, uint32_t idx) const;
 
-  const ParentsMap& get_parents() { return d_parents; }
+  const ParentsMap& get_parents() const { return d_parents; }
 
  private:
+  BitVectorNode* get_node(uint32_t id) const;
+  bool is_leaf_node(const BitVectorNode* node) const;
   BzlaLsMove select_move(BitVectorNode* root, const BitVector& t_root);
 
   std::unique_ptr<RNG> d_rng;

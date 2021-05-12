@@ -81,22 +81,18 @@ BzlaLs::ParentsMap
 TestBzlaLs::get_parents()
 {
   BzlaLs::ParentsMap parents;
-  const BzlaLs::NodesIdTable& nodes = d_bzlals->get_nodes();
-  std::vector<uint32_t> to_visit    = {d_root1, d_root2};
+  std::vector<uint32_t> to_visit = {d_root1, d_root2};
   while (!to_visit.empty())
   {
     uint32_t cur_id = to_visit.back();
-    assert(cur_id < nodes.size());
     to_visit.pop_back();
-    const BitVectorNode* cur = nodes[cur_id].get();
     if (parents.find(cur_id) == parents.end())
     {
       parents[cur_id] = {};
     }
-    for (uint32_t i = 0; i < cur->arity(); ++i)
+    for (uint32_t i = 0; i < d_bzlals->get_arity(cur_id); ++i)
     {
-      BitVectorNode* child = (*cur)[i];
-      uint32_t child_id    = child->id();
+      uint32_t child_id = d_bzlals->get_child(cur_id, i);
       if (parents.find(child_id) == parents.end())
       {
         parents[child_id] = {};
