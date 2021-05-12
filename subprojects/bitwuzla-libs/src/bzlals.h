@@ -18,6 +18,7 @@ struct BzlaLsMove;
 class BzlaLs
 {
  public:
+  using NodesIdTable = std::vector<std::unique_ptr<BitVectorNode>>;
   using ParentsMap = std::unordered_map<uint32_t, std::unordered_set<uint32_t>>;
 
   enum NodeKind
@@ -89,7 +90,8 @@ class BzlaLs
   // void set_domain(uint32_t node, const BitVectorDomain& domain);
 
   void register_root(uint32_t root);
-  void init_parents();
+
+  const NodesIdTable& get_nodes() { return d_nodes; }
 
   const ParentsMap& get_parents() { return d_parents; }
 
@@ -98,7 +100,7 @@ class BzlaLs
 
   std::unique_ptr<RNG> d_rng;
 
-  std::vector<std::unique_ptr<BitVectorNode>> d_nodes;
+  NodesIdTable d_nodes;
   std::vector<uint32_t> d_roots;
   ParentsMap d_parents;
 

@@ -60,9 +60,14 @@ BzlaLs::mk_node(NodeKind kind,
 {
   assert(assignment.size() == domain.size());
   uint32_t id = d_nodes.size();
-#ifndef NDEBUG
-  for (uint32_t c : children) assert(c < id);
-#endif
+
+  for (uint32_t c : children)
+  {
+    assert(c < id);
+    assert(d_parents.find(c) != d_parents.end());
+    assert(d_parents.at(c).find(id) == d_parents.at(c).end());
+    d_parents.at(c).insert(id);
+  }
 
   std::unique_ptr<BitVectorNode> res;
   switch (kind)
@@ -195,6 +200,8 @@ BzlaLs::mk_node(NodeKind kind,
   res->set_id(id);
   d_nodes.push_back(std::move(res));
   assert(d_nodes[id] == d_nodes.back());
+  assert(d_parents.find(id) == d_parents.end());
+  d_parents[id] = {};
   return id;
 }
 
@@ -215,6 +222,10 @@ BzlaLs::mk_indexed_node(NodeKind kind,
   uint32_t id = d_nodes.size();
   assert(child0 < id);
 
+  assert(d_parents.find(child0) != d_parents.end());
+  assert(d_parents.at(child0).find(id) == d_parents.at(child0).end());
+  d_parents.at(child0).insert(id);
+
   std::unique_ptr<BitVectorNode> res;
   if (kind == EXTRACT)
   {
@@ -232,6 +243,8 @@ BzlaLs::mk_indexed_node(NodeKind kind,
   }
   res->set_id(id);
   d_nodes.push_back(std::move(res));
+  assert(d_parents.find(id) == d_parents.end());
+  d_parents[id] = {};
   return id;
 }
 
@@ -239,38 +252,6 @@ void
 BzlaLs::register_root(uint32_t root)
 {
   d_roots.push_back(root);
-}
-
-void
-BzlaLs::init_parents()
-{
-  /* map nodes to their parents */
-  std::vector<uint32_t> to_visit = d_roots;
-  while (!to_visit.empty())
-  {
-    uint32_t cur_id = to_visit.back();
-    assert(cur_id < d_nodes.size());
-    to_visit.pop_back();
-    const BitVectorNode* cur = d_nodes[cur_id].get();
-    if (d_parents.find(cur_id) == d_parents.end())
-    {
-      d_parents[cur_id] = {};
-    }
-    for (uint32_t i = 0; i < cur->arity(); ++i)
-    {
-      BitVectorNode* child = (*cur)[i];
-      uint32_t child_id    = child->id();
-      if (d_parents.find(child_id) == d_parents.end())
-      {
-        d_parents[child_id] = {};
-      }
-      if (d_parents.at(child_id).find(cur_id) == d_parents.at(child_id).end())
-      {
-        d_parents.at(child_id).insert(cur_id);
-      }
-      to_visit.push_back(child_id);
-    }
-  }
 }
 
 BzlaLsMove
