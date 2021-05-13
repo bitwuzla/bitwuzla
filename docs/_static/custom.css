@@ -9,3 +9,27 @@ code.xref {
 .rst-content code {
     padding: 1px !important;
 }
+
+.rst-content code.literal {
+    color: #2980b9;
+}
+
+a {
+  color: #ff9434;
+}
+
+a:visited {
+  color: #ff9434;
+}
+
+a:hover {
+  color: #afd700;
+}
+
+.wy-side-nav-search {
+  background-color: #afd700;
+}
+
+.wy-side-nav-search > a {
+    color: #343131;
+}
