@@ -22,7 +22,7 @@ a:visited {
   color: #ff9434;
 }
 
-a:hover {
+a:hover, a:focus {
   color: #afd700;
 }
 
@@ -32,4 +32,8 @@ a:hover {
 
 .wy-side-nav-search > a {
     color: #343131;
+}
+
+.wy-side-nav-search input[type="text"] {
+  border-color: #92b300;
 }
