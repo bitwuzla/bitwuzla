@@ -146,6 +146,10 @@ if(MiniSat_FOUND)
   target_link_libraries(bitwuzla ${MiniSat_LIBRARIES})
 endif()
 
+if(SymFPU_FOUND)
+  target_include_directories(bitwuzla PRIVATE ${SymFPU_INCLUDE_DIR})
+endif()
+
 install(TARGETS bitwuzla
   EXPORT bitwuzla-export
   LIBRARY DESTINATION lib
