@@ -56,6 +56,9 @@ class BitVectorNode
   /** Get the bit-vector size of the node. */
   uint32_t size() { return d_assignment.size(); }
 
+  /** Update assignment based on the assignment of its children. */
+  virtual void evaluate() {}
+
   /**
    * Check if operand at index pos_x is essential with respect to constant
    * bits and target value t.
@@ -122,6 +125,8 @@ class BitVectorNode
 
   /** Return the arity of this operation. */
   uint32_t arity() const { return d_arity; }
+  /** Set the assignment of this operation. */
+  void set_assignment(const BitVector& assignment);
   /** Get the assignment of this operation. */
   const BitVector& assignment() const { return d_assignment; }
   /** Get the domain of this operation. */
@@ -135,7 +140,7 @@ class BitVectorNode
   /** Set id of this node. */
   void set_id(uint32_t id) { d_id = id; }
   /** Get id of this node. */
-  uint32_t id() { return d_id; }
+  uint32_t id() const { return d_id; }
 
  protected:
   uint32_t d_id                                = 0;
@@ -168,6 +173,9 @@ class BitVectorAdd : public BitVectorNode
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o  const bits: true
@@ -205,6 +213,9 @@ class BitVectorAnd : public BitVectorNode
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o const bits (IC_wo): (t & s) = t
@@ -247,6 +258,9 @@ class BitVectorConcat : public BitVectorNode
                   const BitVectorDomain& domain,
                   BitVectorNode* child0,
                   BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * x o s = tx o ts
    * s o x = ts o tx
@@ -293,6 +307,9 @@ class BitVectorEq : public BitVectorNode
               const BitVectorDomain& domain,
               BitVectorNode* child0,
               BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o  const bits: true
@@ -332,6 +349,9 @@ class BitVectorMul : public BitVectorNode
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o const bits (IC_wo): ((-s | s) & t) = t
@@ -379,6 +399,9 @@ class BitVectorShl : public BitVectorNode
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -446,6 +469,9 @@ class BitVectorShr : public BitVectorNode
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -493,6 +519,9 @@ class BitVectorAshr : public BitVectorNode
                 const BitVectorDomain& domain,
                 BitVectorNode* child0,
                 BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -549,6 +578,9 @@ class BitVectorUdiv : public BitVectorNode
                 const BitVectorDomain& domain,
                 BitVectorNode* child0,
                 BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -619,6 +651,9 @@ class BitVectorUlt : public BitVectorNode
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -662,6 +697,9 @@ class BitVectorSlt : public BitVectorNode
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -713,6 +751,9 @@ class BitVectorUrem : public BitVectorNode
                 const BitVectorDomain& domain,
                 BitVectorNode* child0,
                 BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o const bits (IC_wo):
@@ -783,6 +824,9 @@ class BitVectorXor : public BitVectorNode
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
+
+  void evaluate() override;
+
   /**
    * IC:
    *   w/o  const bits: true
@@ -822,6 +866,8 @@ class BitVectorIte : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1,
                BitVectorNode* child2);
+
+  void evaluate() override;
 
   bool is_essential(const BitVector& t, uint32_t pos_x) override;
 
@@ -877,6 +923,8 @@ class BitVectorNot : public BitVectorNode
                const BitVectorDomain& domain,
                BitVectorNode* child0);
 
+  void evaluate() override;
+
   bool is_essential(const BitVector& t, uint32_t pos_x) override;
 
   /**
@@ -915,6 +963,8 @@ class BitVectorExtract : public BitVectorNode
                    BitVectorNode* child0,
                    uint32_t hi,
                    uint32_t lo);
+
+  void evaluate() override;
 
   bool is_essential(const BitVector& t, uint32_t pos_x) override;
 
@@ -979,6 +1029,8 @@ class BitVectorSignExtend : public BitVectorNode
                       const BitVectorDomain& domain,
                       BitVectorNode* child0,
                       uint32_t n);
+
+  void evaluate() override;
 
   bool is_essential(const BitVector& t, uint32_t pos_x) override;
 

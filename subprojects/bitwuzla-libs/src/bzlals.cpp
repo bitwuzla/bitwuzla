@@ -1,5 +1,6 @@
 #include "bzlals.h"
 
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 
@@ -254,11 +255,25 @@ BzlaLs::mk_indexed_node(NodeKind kind,
   return id;
 }
 
+const BitVector&
+BzlaLs::get_assignment(uint32_t id) const
+{
+  assert(id < d_nodes.size());  // API check
+  return get_node(id)->assignment();
+}
+
+void
+BzlaLs::set_assignment(uint32_t id, const BitVector& assignment)
+{
+  assert(id < d_nodes.size());  // API check
+  get_node(id)->set_assignment(assignment);
+}
+
 void
 BzlaLs::register_root(uint32_t root)
 {
   assert(root < d_nodes.size());  // API check
-  d_roots.push_back(root);
+  d_roots.insert(root);
 }
 
 uint32_t
@@ -293,9 +308,19 @@ BzlaLs::is_leaf_node(const BitVectorNode* node) const
   return node->arity() == 0;
 }
 
+bool
+BzlaLs::is_root_node(const BitVectorNode* node) const
+{
+  assert(node);
+  assert(d_parents.find(node->id()) != d_parents.end());
+  return d_parents.at(node->id()).empty();
+}
+
 BzlaLsMove
 BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
 {
+  assert(root);
+
   uint64_t nprops  = 0;
   BitVectorNode* cur = root;
   BitVector t      = t_root;
@@ -358,6 +383,94 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
   }
   /* Conflict case */
   return BzlaLsMove(nprops, root, BitVector());
+}
+
+void
+BzlaLs::update_roots(uint32_t id)
+{
+  assert(id < d_nodes.size());
+
+  auto it = d_roots.find(id);
+  if (it != d_roots.end())
+  {
+    if (get_node(id)->assignment().is_true())
+    {
+      d_roots.erase(it);
+    }
+  }
+  else if (get_node(id)->assignment().is_false())
+  {
+    d_roots.insert(id);
+  }
+}
+
+void
+BzlaLs::update_cone(BitVectorNode* node)
+{
+  assert(node);
+  assert(is_leaf_node(node));
+
+#ifndef NDEBUG
+  for (uint32_t r : d_roots)
+  {
+    assert(get_node(r)->assignment().is_false());
+  }
+#endif
+
+  std::vector<uint32_t> cone;
+  std::vector<BitVectorNode*> to_visit;
+  std::unordered_set<uint32_t> visited;
+
+  /* reset cone */
+  const std::unordered_set<uint32_t>& parents = d_parents.at(node->id());
+  for (uint32_t p : parents)
+  {
+    to_visit.push_back(get_node(p));
+  }
+
+  while (!to_visit.empty())
+  {
+    BitVectorNode* cur = to_visit.back();
+    to_visit.pop_back();
+
+    if (visited.find(cur->id()) != visited.end()) continue;
+    visited.insert(cur->id());
+    cone.push_back(cur->id());
+
+    const std::unordered_set<uint32_t>& parents = d_parents.at(cur->id());
+    for (uint32_t p : parents)
+    {
+      to_visit.push_back(get_node(p));
+    }
+  }
+
+  /* update assignments of cone */
+  if (is_root_node(node))
+  {
+    update_roots(node->id());
+  }
+
+  std::sort(cone.begin(), cone.end());
+
+  for (uint32_t id : cone)
+  {
+    BitVectorNode* cur = get_node(id);
+    for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+    {
+      (*cur)[i]->evaluate();
+    }
+    if (is_root_node(cur))
+    {
+      update_roots(cur->id());
+    }
+  }
+
+#ifndef NDEBUG
+  for (uint32_t r : d_roots)
+  {
+    assert(get_node(r)->assignment().is_false());
+  }
+#endif
 }
 
 /* -------------------------------------------------------------------------- */

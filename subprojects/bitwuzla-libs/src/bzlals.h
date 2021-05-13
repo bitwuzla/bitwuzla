@@ -92,7 +92,8 @@ class BzlaLs
                            uint32_t child0,
                            const std::vector<uint32_t>& indices);
 
-  // void set_assignment(uint32_t node, const BitVector& assignment);
+  const BitVector& get_assignment(uint32_t id) const;
+  void set_assignment(uint32_t id, const BitVector& assignment);
   // void set_domain(uint32_t node, const BitVectorDomain& domain);
 
   void register_root(uint32_t root);
@@ -103,12 +104,15 @@ class BzlaLs
  private:
   BitVectorNode* get_node(uint32_t id) const;
   bool is_leaf_node(const BitVectorNode* node) const;
+  bool is_root_node(const BitVectorNode* node) const;
+  void update_roots(uint32_t id);
+  void update_cone(BitVectorNode* node);
   BzlaLsMove select_move(BitVectorNode* root, const BitVector& t_root);
 
   std::unique_ptr<RNG> d_rng;
 
   NodesIdTable d_nodes;
-  std::vector<uint32_t> d_roots;
+  std::unordered_set<uint32_t> d_roots;
   ParentsMap d_parents;
 
   BitVector d_one;

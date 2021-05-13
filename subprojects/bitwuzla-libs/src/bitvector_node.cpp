@@ -168,6 +168,12 @@ BitVectorNode::operator[](uint32_t pos) const
   return d_children[pos];
 }
 
+void
+BitVectorNode::set_assignment(const BitVector& assignment)
+{
+  d_assignment.iset(assignment);
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorAdd::BitVectorAdd(RNG* rng,
@@ -190,6 +196,12 @@ BitVectorAdd::BitVectorAdd(RNG* rng,
   assert(child0->size() == child1->size());
   assert(assignment.size() == domain.size());
   assert(assignment.size() == child0->size());
+}
+
+void
+BitVectorAdd::evaluate()
+{
+  d_assignment.ibvadd(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 bool
@@ -292,6 +304,12 @@ BitVectorAnd::BitVectorAnd(RNG* rng,
   assert(child0->size() == child1->size());
   assert(assignment.size() == domain.size());
   assert(assignment.size() == child0->size());
+}
+
+void
+BitVectorAnd::evaluate()
+{
+  d_assignment.ibvand(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 bool
@@ -418,6 +436,13 @@ BitVectorConcat::BitVectorConcat(RNG* rng,
 {
   assert(assignment.size() == domain.size());
   assert(assignment.size() == child0->size() + child1->size());
+}
+
+void
+BitVectorConcat::evaluate()
+{
+  d_assignment.ibvconcat(d_children[0]->assignment(),
+                         d_children[1]->assignment());
 }
 
 bool
@@ -569,6 +594,12 @@ BitVectorEq::BitVectorEq(RNG* rng,
   assert(assignment.size() == 1);
 }
 
+void
+BitVectorEq::evaluate()
+{
+  d_assignment.ibveq(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
 bool
 BitVectorEq::is_invertible(const BitVector& t,
                            uint32_t pos_x,
@@ -715,6 +746,12 @@ BitVectorMul::BitVectorMul(RNG* rng,
   assert(child0->size() == child1->size());
   assert(assignment.size() == domain.size());
   assert(assignment.size() == child0->size());
+}
+
+void
+BitVectorMul::evaluate()
+{
+  d_assignment.ibvmul(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 bool
@@ -1045,6 +1082,12 @@ BitVectorShl::BitVectorShl(RNG* rng,
   assert(child0->size() == child1->size());
   assert(assignment.size() == domain.size());
   assert(assignment.size() == child0->size());
+}
+
+void
+BitVectorShl::evaluate()
+{
+  d_assignment.ibvshl(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 bool
@@ -1405,6 +1448,12 @@ BitVectorShr::BitVectorShr(RNG* rng,
   assert(child0->size() == child1->size());
   assert(assignment.size() == domain.size());
   assert(assignment.size() == child0->size());
+}
+
+void
+BitVectorShr::evaluate()
+{
+  d_assignment.ibvshr(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 bool
@@ -1791,6 +1840,13 @@ BitVectorAshr::BitVectorAshr(RNG* rng,
   assert(assignment.size() == child0->size());
 }
 
+void
+BitVectorAshr::evaluate()
+{
+  d_assignment.ibvashr(d_children[0]->assignment(),
+                       d_children[1]->assignment());
+}
+
 bool
 BitVectorAshr::is_invertible(const BitVector& t,
                              uint32_t pos_x,
@@ -2158,6 +2214,13 @@ BitVectorUdiv::BitVectorUdiv(RNG* rng,
   assert(child0->size() == child1->size());
   assert(assignment.size() == domain.size());
   assert(assignment.size() == child0->size());
+}
+
+void
+BitVectorUdiv::evaluate()
+{
+  d_assignment.ibvudiv(d_children[0]->assignment(),
+                       d_children[1]->assignment());
 }
 
 bool
@@ -2821,6 +2884,12 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
   assert(assignment.size() == 1);
 }
 
+void
+BitVectorUlt::evaluate()
+{
+  d_assignment.ibvult(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
 bool
 BitVectorUlt::is_invertible(const BitVector& t,
                             uint32_t pos_x,
@@ -3075,6 +3144,12 @@ BitVectorSlt::BitVectorSlt(RNG* rng,
   assert(child0->size() == child1->size());
   assert(assignment.size() == domain.size());
   assert(assignment.size() == 1);
+}
+
+void
+BitVectorSlt::evaluate()
+{
+  d_assignment.ibvslt(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 bool
@@ -3381,6 +3456,13 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
   assert(child0->size() == child1->size());
   assert(assignment.size() == domain.size());
   assert(assignment.size() == child0->size());
+}
+
+void
+BitVectorUrem::evaluate()
+{
+  d_assignment.ibvurem(d_children[0]->assignment(),
+                       d_children[1]->assignment());
 }
 
 bool
@@ -3946,6 +4028,12 @@ BitVectorXor::BitVectorXor(RNG* rng,
   assert(assignment.size() == child0->size());
 }
 
+void
+BitVectorXor::evaluate()
+{
+  d_assignment.ibvxor(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
 bool
 BitVectorXor::is_invertible(const BitVector& t,
                             uint32_t pos_x,
@@ -4053,6 +4141,14 @@ BitVectorIte::BitVectorIte(RNG* rng,
   assert(child1->size() == child2->size());
   assert(assignment.size() == domain.size());
   assert(assignment.size() == child1->size());
+}
+
+void
+BitVectorIte::evaluate()
+{
+  d_assignment.ibvite(d_children[0]->assignment(),
+                      d_children[1]->assignment(),
+                      d_children[2]->assignment());
 }
 
 bool
@@ -4282,6 +4378,12 @@ BitVectorNot::BitVectorNot(RNG* rng,
   assert(assignment.size() == child0->size());
 }
 
+void
+BitVectorNot::evaluate()
+{
+  d_assignment.ibvnot(d_children[0]->assignment());
+}
+
 bool
 BitVectorNot::is_essential(const BitVector& t, uint32_t pos_x)
 {
@@ -4358,6 +4460,12 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
 {
   assert(assignment.size() == domain.size());
   assert(assignment.size() == hi - lo + 1);
+}
+
+void
+BitVectorExtract::evaluate()
+{
+  d_assignment.ibvextract(d_children[0]->assignment(), d_hi, d_lo);
 }
 
 bool
@@ -4532,6 +4640,12 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
 {
   assert(assignment.size() == domain.size());
   assert(assignment.size() == child0->size() + n);
+}
+
+void
+BitVectorSignExtend::evaluate()
+{
+  d_assignment.ibvsext(d_children[0]->assignment(), d_n);
 }
 
 bool
