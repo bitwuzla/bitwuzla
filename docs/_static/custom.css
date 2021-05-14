@@ -26,6 +26,18 @@ a:hover, a:focus {
   color: #afd700;
 }
 
+.highlight .o {
+  color: #ac7339;
+}
+
+.highlight .k {
+  color: #2980b9;
+}
+
+.highlight .m {
+  color: #ba2121;
+}
+
 .wy-side-nav-search {
   background-color: #afd700;
 }

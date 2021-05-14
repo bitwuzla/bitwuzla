@@ -29,8 +29,8 @@ main()
 
   // (bvsdiv x (_ bv2 8))
   BitwuzlaTerm *sdiv = bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_SDIV, x, two);
-  // (bvashr x (_ bv1 8))
-  BitwuzlaTerm *ashr = bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_ASHR, x, one);
+  // (bvashr y (_ bv1 8))
+  BitwuzlaTerm *ashr = bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_ASHR, y, one);
   // ((_ extract 3 0) (bvsdiv x (_ bv2 8)))
   BitwuzlaTerm *sdive =
       bitwuzla_mk_term1_indexed2(bzla, BITWUZLA_KIND_BV_EXTRACT, sdiv, 3, 0);
@@ -41,7 +41,7 @@ main()
   // (assert
   //     (distinct
   //         ((_ extract 3 0) (bvsdiv x (_ bv2 8)))
-  //         ((_ extract 3 0) (bvashr x (_ bv1 8)))
+  //         ((_ extract 3 0) (bvashr y (_ bv1 8)))
   bitwuzla_assert(
       bzla, bitwuzla_mk_term2(bzla, BITWUZLA_KIND_DISTINCT, sdive, ashre));
 
