@@ -45,43 +45,16 @@ For example, consider the following SMT-LIB input:
 
   (declare-const x (_ BitVec 8))
   (declare-const y (_ BitVec 8))
-  ; 0 < x <= 100
-  (assert (and (bvugt x (_ bv0 8)) (bvule x (_ bv100 8))))
-  ; 0 < y <= 100
-  (assert (and (bvugt y (_ bv0 8)) (bvule y (_ bv100 8))))
-  ; x * y < 100
-  (assert (bvult (bvmul x y) (_ bv100 8)))
+  (assert
+      (distinct
+          ((_ extract 3 0) (bvsdiv x (_ bv2 8)))
+          ((_ extract 3 0) (bvashr x (_ bv1 8)))
 
 This input is created and asserted as follows:
 
-.. code-block:: c
-
-  BitwuzlaSort *bv8 = bitwuzla_mk_bv_sort(bzla, 8);
-
-  BitwuzlaTerm *x = bitwuzla_mk_const(bzla, bv8, "x");
-  BitwuzlaTerm *y = bitwuzla_mk_const(bzla, bv8, "y");
-
-  BitwuzlaTerm *zero    = bitwuzla_mk_bv_zero(bzla, bv8);
-  BitwuzlaTerm *hundred = bitwuzla_mk_bv_value_uint64(bzla, bv8, 100);
-
-  // 0 < x <= 100
-  bitwuzla_assert(bzla,
-    bitwuzla_mk_term2(bzla, BITWUZLA_KIND_AND,
-      bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_UGT, x, zero),
-      bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_ULE, x, hundred),
-    ));
-  // 0 < y <= 100
-  bitwuzla_assert(bzla,
-    bitwuzla_mk_term2(bzla, BITWUZLA_KIND_AND,
-      bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_UGT, y, zero),
-      bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_ULE, y, hundred),
-    ));
-  // x * y < 100
-  bitwuzla_assert(bzla,
-    bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_ULT,
-      bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_MUL, x, y),
-      hundred
-    ));
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 7-44
 
 .. note::
   Bitwuzla does not distinguish between sort Boolean and a bit-vector sort of
@@ -113,9 +86,10 @@ formulas can also be assumed via :c:func:`bitwuzla_assume()`.
 After parsing an input file and/or asserting and assuming formulas,
 satisfiability can be determined via :c:func:`bitwuzla_check_sat()`.
 
-.. code-block:: c
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 46-47
 
-  BitwuzlaResult result = bitwuzla_check_sat(bzla);
 
 .. note::
   To simulate SMT-LIB's :code:`check-sat-assuming`, first add assumptions
@@ -125,9 +99,9 @@ satisfiability can be determined via :c:func:`bitwuzla_check_sat()`.
 If the formula is satisfiable and model generation has been enabled, the
 resulting model can be printed via :c:func:`bitwuzla_print_model()`.
 
-.. code-block:: c
-
-  bitwuzla_print_model(bzla, stdout);
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 54-55
 
 This will output a possible model (default: in SMT-LIB format, configurable
 via option :c:func:`bitwuzla_OPT_OUTPUT_FORMAT`) as follows:
@@ -135,8 +109,8 @@ via option :c:func:`bitwuzla_OPT_OUTPUT_FORMAT`) as follows:
 .. code-block:: smtlib
 
   (
-    (define-fun x () (_ BitVec 8) #b01100100)
-    (define-fun y () (_ BitVec 8) #b01100100)
+    (define-fun x () (_ BitVec 8) #b11111111)
+    (define-fun y () (_ BitVec 8) #b00000000)
   )
 
 
@@ -158,3 +132,14 @@ Alternatively, it is possible to query the value of expressions via
 
 Examples
 --------
+
+All examples can be found in directory
+`examples <https://github.com/bitwuzla/bitwuzla/tree/main/examples>`_.
+For instructions on how to build these examples, see
+`examples/README.md <https://github.com/bitwuzla/bitwuzla/tree/main/examples/README.md>`_.
+
+Quickstart example:
+^^^^^^^^^^^^^^^^^^^
+
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
