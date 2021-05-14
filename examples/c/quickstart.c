@@ -12,8 +12,10 @@ main()
   // Note: This will silently fall back to one of the compiled in SAT solvers
   //       if the selected solver is not compiled in.
   bitwuzla_set_option_str(bzla, BITWUZLA_OPT_SAT_ENGINE, "cms");
+
   // Create a bit-vector sort of size 8.
   BitwuzlaSort *bv8 = bitwuzla_mk_bv_sort(bzla, 8);
+
   // Create two bit-vector variables of that sort.
   BitwuzlaTerm *x = bitwuzla_mk_const(bzla, bv8, "x");
   BitwuzlaTerm *y = bitwuzla_mk_const(bzla, bv8, "y");
@@ -53,4 +55,7 @@ main()
               : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
   // Print model in SMT-LIBv2 format.
   bitwuzla_print_model(bzla, "smt2", stdout);
+
+  // Finally, delete the Bitwuzla instance.
+  bitwuzla_delete(bzla);
 }

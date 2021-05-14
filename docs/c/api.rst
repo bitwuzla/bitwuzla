@@ -16,25 +16,25 @@ Quickstart
 
 First, create a Bitwuzla instance:
 
-.. code-block:: c
-
-  Bitwuzla *bzla = bitwuzla_new();
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 8
 
 This instance can be configured via :c:func:`bitwuzla_set_option()`.  
 For example, to enable model generation
 (SMT-LIB: :code:`(set-option :produce-models true)`):
 
-.. code-block:: c
-
-  bitwuzla_set_option(bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 10
 
 Some options expect string values rather than integer values, for example,
 to enable CryptoMiniSat as back end SAT solver instead of the default
 SAT solver CaDiCaL:
 
-.. code-block:: c
-
-  bitwuzla_set_option_str(bzla, BITWUZLA_OPT_SAT_ENGINE, "cms");
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 12-14
 
 For more details on available options, see :ref:`c/options:options`.
 
@@ -54,7 +54,7 @@ This input is created and asserted as follows:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 7-44
+     :lines: 7-46
 
 .. note::
   Bitwuzla does not distinguish between sort Boolean and a bit-vector sort of
@@ -88,7 +88,7 @@ satisfiability can be determined via :c:func:`bitwuzla_check_sat()`.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 46-47
+     :lines: 48-49
 
 
 .. note::
@@ -101,7 +101,7 @@ resulting model can be printed via :c:func:`bitwuzla_print_model()`.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 54-55
+     :lines: 56-57
 
 This will output a possible model (default: in SMT-LIB format, configurable
 via option :c:func:`bitwuzla_OPT_OUTPUT_FORMAT`) as follows:
@@ -122,12 +122,17 @@ Alternatively, it is possible to query the value of expressions via
   BitwuzlaTerm *v = bitwuzla_get_value(bzla,
       bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_MUL, x, y));
 
+Finally, we delete the Bitwuzla instance.
+
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 60
+
 .. todo::
 
   * What to do with terms retrieved by get_value?
   * unsat cores
   * unsat assumptions
-  * push/pop
 
 
 Examples
@@ -138,8 +143,14 @@ All examples can be found in directory
 For instructions on how to build these examples, see
 `examples/README.md <https://github.com/bitwuzla/bitwuzla/tree/main/examples/README.md>`_.
 
-Quickstart example:
+Quickstart Example
 ^^^^^^^^^^^^^^^^^^^
 
 .. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+
+Incremental Example with push and pop
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. literalinclude:: ../../examples/c/pushpop.c
      :language: c

@@ -9,6 +9,7 @@
 ##
 
 set (BZLA_EXAMPLES_API
+  pushpop
   quickstart
   )
 
