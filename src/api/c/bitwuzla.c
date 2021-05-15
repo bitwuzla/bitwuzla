@@ -2859,7 +2859,6 @@ bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size)
   BZLA_CHECK_ARG_NOT_NULL(size);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BZLA_CHECK_OPT_INCREMENTAL(bzla);
   BZLA_CHECK_OPT_PRODUCE_UNSAT_CORES(bzla);
   BZLA_CHECK_UNSAT(bzla, "get unsat core");
 

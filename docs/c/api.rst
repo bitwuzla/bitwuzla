@@ -179,3 +179,20 @@ All active assumptions are inactivated after the check sat call.
 
 .. literalinclude:: ../../examples/c/checksatassuming.c
      :language: c
+
+Unsat Core Example
+^^^^^^^^^^^^^^^^^^
+
+This example shows how to extract an unsat core.
+It creates bit-vector and floating-point terms and further illustrates how to
+create lambda terms (:code:`define-fun`).
+
+| The SMT-LIB input for this example can be found at `examples/c/unsatcore.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/unsatcore.smt2>`_.
+| The source code for this example can be found at `examples/c/unsatcore.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/unsatcore.c>`_.
+
+
+.. literalinclude:: ../../examples/c/unsatcore.smt2
+     :language: smtlib
+
+.. literalinclude:: ../../examples/c/unsatcore.c
+     :language: c

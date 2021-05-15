@@ -12,6 +12,7 @@ set (BZLA_EXAMPLES_API
   checksatassuming
   pushpop
   quickstart
+  unsatcore
   )
 
 foreach(example ${BZLA_EXAMPLES_API})

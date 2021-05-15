@@ -13,29 +13,29 @@ main()
   bitwuzla_set_option(bzla, BITWUZLA_OPT_INCREMENTAL, 1);
 
   // Create a bit-vector sort of size 1.
-  BitwuzlaSort *bv1 = bitwuzla_mk_bv_sort(bzla, 2);
+  BitwuzlaSort *sortbv1 = bitwuzla_mk_bv_sort(bzla, 1);
   // Create a bit-vector sort of size 2.
-  BitwuzlaSort *bv2 = bitwuzla_mk_bv_sort(bzla, 2);
+  BitwuzlaSort *sortbv2 = bitwuzla_mk_bv_sort(bzla, 2);
 
   // Create bit-vector variables.
   // (declare-const o0 (_ BitVec 2))
-  BitwuzlaTerm *o0 = bitwuzla_mk_const(bzla, bv1, "o0");
+  BitwuzlaTerm *o0 = bitwuzla_mk_const(bzla, sortbv1, "o0");
   // (declare-const o1 (_ BitVec 2))
-  BitwuzlaTerm *o1 = bitwuzla_mk_const(bzla, bv1, "o1");
+  BitwuzlaTerm *o1 = bitwuzla_mk_const(bzla, sortbv1, "o1");
   // (declare-const s0 (_ BitVec 2))
-  BitwuzlaTerm *s0 = bitwuzla_mk_const(bzla, bv2, "s0");
+  BitwuzlaTerm *s0 = bitwuzla_mk_const(bzla, sortbv2, "s0");
   // (declare-const s1 (_ BitVec 2))
-  BitwuzlaTerm *s1 = bitwuzla_mk_const(bzla, bv2, "s1");
+  BitwuzlaTerm *s1 = bitwuzla_mk_const(bzla, sortbv2, "s1");
   // (declare-const s2 (_ BitVec 2))
-  BitwuzlaTerm *s2 = bitwuzla_mk_const(bzla, bv2, "s2");
+  BitwuzlaTerm *s2 = bitwuzla_mk_const(bzla, sortbv2, "s2");
   // (declare-const goal (_ BitVec 2))
-  BitwuzlaTerm *goal = bitwuzla_mk_const(bzla, bv2, "goal");
+  BitwuzlaTerm *goal = bitwuzla_mk_const(bzla, sortbv2, "goal");
 
   // Create bit-vector values zero, one, three.
-  BitwuzlaTerm *zero  = bitwuzla_mk_bv_zero(bzla, bv2);
-  BitwuzlaTerm *one1  = bitwuzla_mk_bv_one(bzla, bv1);
-  BitwuzlaTerm *one2  = bitwuzla_mk_bv_one(bzla, bv2);
-  BitwuzlaTerm *three = bitwuzla_mk_bv_value_uint64(bzla, bv2, 3);
+  BitwuzlaTerm *zero  = bitwuzla_mk_bv_zero(bzla, sortbv2);
+  BitwuzlaTerm *one1  = bitwuzla_mk_bv_one(bzla, sortbv1);
+  BitwuzlaTerm *one2  = bitwuzla_mk_bv_one(bzla, sortbv2);
+  BitwuzlaTerm *three = bitwuzla_mk_bv_value_uint64(bzla, sortbv2, 3);
 
   // Add some assertions.
   bitwuzla_assert(bzla, bitwuzla_mk_term2(bzla, BITWUZLA_KIND_EQUAL, s0, zero));
@@ -51,7 +51,7 @@ main()
              ? "sat"
              : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
 
-  // (assert (= s1 (ite (= o0 (_ bv1 1)) (bvadd s0 one) s0)))
+  // (assert (= s1 (ite (= o0 (_ sortbv1 1)) (bvadd s0 one) s0)))
   bitwuzla_assert(
       bzla,
       bitwuzla_mk_term2(
@@ -74,7 +74,7 @@ main()
              ? "sat"
              : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
 
-  // (assert (= s2 (ite (= o1 (_ bv1 1)) (bvadd s1 one) s1)))
+  // (assert (= s2 (ite (= o1 (_ sortbv1 1)) (bvadd s1 one) s1)))
   bitwuzla_assert(
       bzla,
       bitwuzla_mk_term2(
