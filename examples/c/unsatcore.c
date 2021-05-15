@@ -115,4 +115,7 @@ main()
     printf(" %s", bitwuzla_term_get_symbol(unsat_core[i]));
   }
   printf(" }\n");
+
+  // Finally, delete the Bitwuzla instance.
+  bitwuzla_delete(bzla);
 }

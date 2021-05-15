@@ -125,7 +125,6 @@ Finally, we delete the Bitwuzla instance.
 .. todo::
 
   * What to do with terms retrieved by get_value?
-  * unsat cores
   * unsat assumptions
 
 
