@@ -143,6 +143,9 @@ The example used in the :ref:`c/api:quickstart` guide.
 | The SMT-LIB input for this example can be found at `examples/c/quickstart.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/quickstart.smt2>`_.
 | The source code for this example can be found at `examples/c/quickstart.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/quickstart.c>`_.
 
+.. literalinclude:: ../../examples/c/quickstart.smt2
+     :language: smtlib
+
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
 
@@ -153,6 +156,9 @@ An incremental example with :code:`push` and :code:`pop`.
 
 | The SMT-LIB input for this example can be found at `examples/c/pushpop.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/pushpop.smt2>`_.
 | The source code for this example can be found at `examples/c/pushpop.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/pushpop.c>`_.
+
+.. literalinclude:: ../../examples/c/pushpop.smt2
+     :language: smtlib
 
 .. literalinclude:: ../../examples/c/pushpop.c
      :language: c
@@ -167,6 +173,9 @@ All active assumptions are inactivated after the check sat call.
 
 | The SMT-LIB input for this example can be found at `examples/c/checksatassuming.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/checksatassuming.smt2>`_.
 | The source code for this example can be found at `examples/c/checksatassuming.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/checksatassuming.c>`_.
+
+.. literalinclude:: ../../examples/c/checksatassuming.smt2
+     :language: smtlib
 
 .. literalinclude:: ../../examples/c/checksatassuming.c
      :language: c
