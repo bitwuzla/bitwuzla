@@ -5406,7 +5406,10 @@ define_fun_smt2(BzlaSMT2Parser *parser)
       bitwuzla_assert(bitwuzla, eq);
     }
     else
+    {
       fun->exp = exp;
+      bitwuzla_term_set_symbol(fun->exp, fun->name);
+    }
   }
   return read_rpar_smt2(parser, " to close definition");
 }

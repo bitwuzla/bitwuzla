@@ -125,7 +125,6 @@ Finally, we delete the Bitwuzla instance.
 .. todo::
 
   * What to do with terms retrieved by get_value?
-  * unsat assumptions
 
 
 Examples
@@ -194,4 +193,20 @@ create lambda terms (:code:`define-fun`).
      :language: smtlib
 
 .. literalinclude:: ../../examples/c/unsatcore.c
+     :language: c
+
+Unsat Assumptions Example
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This example shows how to implement the example above with
+:code:`get-unsat-assumptions`.
+
+| The SMT-LIB input for this example can be found at `examples/c/unsatassumptions.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/unsatassumptions.smt2>`_.
+| The source code for this example can be found at `examples/c/unsatassumptions.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/unsatassumptions.c>`_.
+
+
+.. literalinclude:: ../../examples/c/unsatassumptions.smt2
+     :language: smtlib
+
+.. literalinclude:: ../../examples/c/unsatassumptions.c
      :language: c
