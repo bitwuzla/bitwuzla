@@ -218,6 +218,7 @@ class TestApi : public TestBitwuzla
   const char *d_error_incremental      = "incremental usage not enabled";
   const char *d_error_produce_models   = "model production not enabled";
   const char *d_error_unsat            = "if input formula is not unsat";
+  const char *d_error_unsat_cores      = "unsat core production not enabled";
   const char *d_error_sat              = "if input formula is not sat";
   const char *d_error_format           = "unknown format";
   const char *d_error_inc_quant =
@@ -2376,10 +2377,9 @@ TEST_F(TestApi, get_unsat_assumptions)
 TEST_F(TestApi, get_unsat_core)
 {
   size_t size;
-  ASSERT_DEATH(bitwuzla_get_unsat_core(d_bzla, &size), d_error_incremental);
+  ASSERT_DEATH(bitwuzla_get_unsat_core(d_bzla, &size), d_error_unsat_cores);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-  ASSERT_DEATH(bitwuzla_get_unsat_core(d_bzla, &size),
-               "unsat core production not enabled");
+  ASSERT_DEATH(bitwuzla_get_unsat_core(d_bzla, &size), d_error_unsat_cores);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_UNSAT_CORES, 1);
 
   ASSERT_DEATH(bitwuzla_get_unsat_core(nullptr, &size), d_error_not_null);
