@@ -215,10 +215,16 @@ DONE:
     result = BZLA_RESULT_UNSAT;
   }
   else if (bzla->unsynthesized_constraints->count == 0u
-           && bzla->synthesized_constraints->count == 0u)
+           && bzla->synthesized_constraints->count == 0u
+           && bzla->assumptions->count == 0
+           && BZLA_EMPTY_STACK(bzla->assertions))
+  {
     result = BZLA_RESULT_SAT;
+  }
   else
+  {
     result = BZLA_RESULT_UNKNOWN;
+  }
 
   BZLA_MSG(bzla->msg, 1, "simplification returned %d", result);
   return result;
