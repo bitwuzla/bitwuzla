@@ -18,9 +18,6 @@
 #include "utils/bzlanodeiter.h"
 #include "utils/bzlautil.h"
 
-#define BZLA_CONST_GET_BITS(c)                                 \
-  bzla_node_is_inverted(c) ? bzla_node_bv_const_get_invbits(c) \
-                           : bzla_node_bv_const_get_bits(c)
 
 static void
 extract_base_addr_offset(BzlaNode *bvadd, BzlaNode **base, BzlaNode **offset)
@@ -55,8 +52,8 @@ cmp_abs_rel_indices(const void *a, const void *b)
 
   if (is_abs) /* absolute address */
   {
-    bx = BZLA_CONST_GET_BITS(x);
-    by = BZLA_CONST_GET_BITS(y);
+    bx = bzla_node_bv_const_get_bits(x);
+    by = bzla_node_bv_const_get_bits(y);
   }
   else /* relative address */
   {
@@ -69,8 +66,8 @@ cmp_abs_rel_indices(const void *a, const void *b)
     assert(x_base_addr == y_base_addr);
     assert(bzla_node_is_bv_const(x_offset));
     assert(bzla_node_is_bv_const(y_offset));
-    bx = BZLA_CONST_GET_BITS(x_offset);
-    by = BZLA_CONST_GET_BITS(y_offset);
+    bx = bzla_node_bv_const_get_bits(x_offset);
+    by = bzla_node_bv_const_get_bits(y_offset);
   }
   assert(bx);
   assert(by);
@@ -865,8 +862,8 @@ find_ranges(Bzla *bzla,
         if (bzla_node_is_bv_const(n0))
         {
           assert(bzla_node_is_bv_const(n1));
-          b0 = BZLA_CONST_GET_BITS(n0);
-          b1 = BZLA_CONST_GET_BITS(n1);
+          b0 = bzla_node_bv_const_get_bits(n0);
+          b1 = bzla_node_bv_const_get_bits(n1);
         }
         else
         {
@@ -877,8 +874,8 @@ find_ranges(Bzla *bzla,
           extract_base_addr_offset(n0, &n0_base_addr, &n0_offset);
           extract_base_addr_offset(n1, &n1_base_addr, &n1_offset);
           assert(n0_base_addr == n1_base_addr);
-          b0 = BZLA_CONST_GET_BITS(n0_offset);
-          b1 = BZLA_CONST_GET_BITS(n1_offset);
+          b0 = bzla_node_bv_const_get_bits(n0_offset);
+          b1 = bzla_node_bv_const_get_bits(n1_offset);
         }
         assert(b0);
         assert(b1);

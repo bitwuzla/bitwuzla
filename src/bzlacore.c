@@ -1181,8 +1181,7 @@ bzla_insert_unsynthesized_constraint(Bzla *bzla, BzlaNode *exp)
   {
     bits = bzla_node_bv_const_get_bits(exp);
     assert(bzla_bv_get_width(bits) == 1);
-    if ((bzla_node_is_inverted(exp) && bzla_bv_get_bit(bits, 0))
-        || (!bzla_node_is_inverted(exp) && !bzla_bv_get_bit(bits, 0)))
+    if (!bzla_bv_get_bit(bits, 0))
     {
       bzla->inconsistent = true;
       return;
@@ -1457,10 +1456,7 @@ normalize_substitution(Bzla *bzla,
 
       if (!bzla_node_is_bv_const(right)) return false;
 
-      if (bzla_node_is_inverted(right))
-        bits = bzla_bv_not(mm, bzla_node_bv_const_get_bits(right));
-      else
-        bits = bzla_bv_copy(mm, bzla_node_bv_const_get_bits(right));
+      bits = bzla_bv_copy(mm, bzla_node_bv_const_get_bits(right));
 
       if (comp == BZLA_SUBST_COMP_ULT_KIND || comp == BZLA_SUBST_COMP_ULTE_KIND)
       {

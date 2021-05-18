@@ -154,19 +154,9 @@ is_const_zero_exp(Bzla *bzla, BzlaNode *exp)
 {
   assert(bzla);
   assert(exp);
-
-  bool result;
-
   exp = bzla_simplify_exp(bzla, exp);
-
   if (!bzla_node_is_bv_const(exp)) return false;
-
-  if (bzla_node_is_inverted(exp))
-    result = bzla_bv_is_ones(bzla_node_bv_const_get_bits(exp));
-  else
-    result = bzla_bv_is_zero(bzla_node_bv_const_get_bits(exp));
-
-  return result;
+  return bzla_bv_is_zero(bzla_node_bv_const_get_bits(exp));
 }
 
 #if 0
@@ -176,19 +166,10 @@ is_const_ones_exp (Bzla * bzla, BzlaNode * exp)
   assert (bzla);
   assert (exp);
 
-  bool result;
-
   exp = bzla_simplify_exp (bzla, exp);
+  if (!bzla_node_is_bv_const (exp)) return false;
 
-  if (!bzla_node_is_bv_const (exp))
-    return false;
-
-  if (bzla_node_is_inverted (exp))
-    result = bzla_is_zero_const (bzla_node_bv_const_get_bits (exp));
-  else
-    result = bzla_is_ones_const (bzla_node_bv_const_get_bits (exp));
-
-  return result;
+  return bzla_is_ones_const (bzla_node_bv_const_get_bits (exp));
 }
 #endif
 
@@ -458,17 +439,8 @@ static bool
 is_true_cond(BzlaNode *cond)
 {
   assert(cond);
-  assert(bzla_node_is_bv(bzla_node_real_addr(cond)->bzla, cond));
-  assert(bzla_node_bv_get_width(bzla_node_real_addr(cond)->bzla, cond) == 1);
-
-  if (bzla_node_is_inverted(cond)
-      && !bzla_bv_get_bit(bzla_node_bv_const_get_bits(cond), 0))
-    return true;
-  else if (!bzla_node_is_inverted(cond)
-           && bzla_bv_get_bit(bzla_node_bv_const_get_bits(cond), 0))
-    return true;
-
-  return false;
+  assert(bzla_node_is_bv_const(cond));
+  return bzla_bv_is_true(bzla_node_bv_const_get_bits(cond));
 }
 
 #if 0
@@ -771,8 +743,7 @@ apply_const_fp_to_fp_from_bv_exp(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
   BzlaBitVector *bits;
   BzlaNode *result;
 
-  bits = bzla_node_is_regular(e0) ? bzla_node_bv_const_get_bits(e0)
-                                  : bzla_node_bv_const_get_invbits(e0);
+  bits   = bzla_node_bv_const_get_bits(e0);
   fpres  = bzla_fp_from_bv(bzla, sort, bits);
   result = bzla_exp_fp_const_fp(bzla, fpres);
   bzla_fp_free(bzla, fpres);
@@ -837,8 +808,7 @@ apply_const_fp_to_fp_from_sbv_exp(
   BzlaBitVector *bits;
   BzlaNode *result;
 
-  bits = bzla_node_is_regular(e1) ? bzla_node_bv_const_get_bits(e1)
-                                  : bzla_node_bv_const_get_invbits(e1);
+  bits = bzla_node_bv_const_get_bits(e1);
   if (kind == BZLA_FP_TO_FP_SBV_NODE)
   {
     fpres = bzla_fp_convert_from_sbv(
@@ -1940,7 +1910,6 @@ apply_const_slice(Bzla *bzla, BzlaNode *exp, uint32_t upper, uint32_t lower)
   bits =
       bzla_bv_slice(bzla->mm, bzla_node_bv_const_get_bits(exp), upper, lower);
   result = bzla_exp_bv_const(bzla, bits);
-  result = bzla_node_cond_invert(exp, result);
   bzla_bv_free(bzla->mm, bits);
   return result;
 }
@@ -4827,6 +4796,7 @@ static inline BzlaNode *
 apply_power2_udiv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
   assert(applies_power2_udiv(bzla, e0, e1));
+  assert(bzla_node_is_regular(e1));
 
   uint32_t l, n;
   BzlaNode *slice, *pad, *result;

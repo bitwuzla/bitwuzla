@@ -1906,15 +1906,9 @@ bzla_exp_fp_const(Bzla *bzla,
   e1_exp  = bzla_simplify_exp(bzla, e1_exp);
   e2_sig  = bzla_simplify_exp(bzla, e2_sig);
 
-  bv_e0_sign = bzla_node_is_regular(e0_sign)
-                   ? bzla_node_bv_const_get_bits(e0_sign)
-                   : bzla_node_bv_const_get_invbits(e0_sign);
-  bv_e1_exp = bzla_node_is_regular(e1_exp)
-                  ? bzla_node_bv_const_get_bits(e1_exp)
-                  : bzla_node_bv_const_get_invbits(e1_exp);
-  bv_e2_sig = bzla_node_is_regular(e2_sig)
-                  ? bzla_node_bv_const_get_bits(e2_sig)
-                  : bzla_node_bv_const_get_invbits(e2_sig);
+  bv_e0_sign = bzla_node_bv_const_get_bits(e0_sign);
+  bv_e1_exp  = bzla_node_bv_const_get_bits(e1_exp);
+  bv_e2_sig  = bzla_node_bv_const_get_bits(e2_sig);
 
   fp     = bzla_fp_fp(bzla, bv_e0_sign, bv_e1_exp, bv_e2_sig);
   result = bzla_exp_fp_const_fp(bzla, fp);

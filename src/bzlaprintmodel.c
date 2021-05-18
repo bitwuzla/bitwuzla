@@ -114,9 +114,7 @@ bzla_print_node_model(Bzla *bzla,
   else
   {
     assert(bzla_node_is_bv_const(value));
-    BzlaBitVector *bv_value = bzla_node_is_inverted(value)
-                                  ? bzla_node_bv_const_get_invbits(value)
-                                  : bzla_node_bv_const_get_bits(value);
+    BzlaBitVector *bv_value = bzla_node_bv_const_get_bits(value);
     if (!strcmp(format, "btor"))
     {
       id = bzla_node_get_bzla_id(input);

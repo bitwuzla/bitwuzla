@@ -289,7 +289,7 @@ bzla_node_invert(const BzlaNode *node)
   return (BzlaNode *) ((uintptr_t) 1 ^ (uintptr_t) node);
 }
 
-/** Invert node if given condition is true. */
+/** Invert node if the LSB of 'cond' is 1. */
 static inline BzlaNode *
 bzla_node_cond_invert(const BzlaNode *cond, const BzlaNode *node)
 {
@@ -1220,14 +1220,30 @@ uint32_t bzla_node_fp_get_sig_width(Bzla *bzla, const BzlaNode *exp);
 
 /**
  * Get the bit-vector representation of a bit-vector constant node.
+ *
+ * Bit-vector constants are normalized to LSB = 0. As a consequence, bit-vector
+ * constant nodes can be inverted. This function returns the *real* bit-vector
+ * representation of a bit-vector constant node, i.e., if it is inverted, it
+ * returns the correctly inverted bit-vector representation. For example,
+ * bit-vector constant '001' is represented as an inverted node 'n' that
+ * represents '110', i.e., bzla_node_is_inverted(n) = true and n->bits = '110'.
+ * This function will return '001' for 'n'.
+ *
  * Note: The returned BzlaBitVector does not have to be freed.
  */
 BzlaBitVector *bzla_node_bv_const_get_bits(BzlaNode *exp);
+
 /**
- * Get the inverted bit-vector representation of a bit-vector constant node.
- * Note: The returned BzlaBitVector does not have to be freed.
+ * Get a pointer to 'bits' of a bit-vector constant node.
+ * This function is meant to only be used for manipulating this pointer.
  */
-BzlaBitVector *bzla_node_bv_const_get_invbits(BzlaNode *exp);
+BzlaBitVector *bzla_node_bv_const_get_bits_ptr(BzlaNode *exp);
+
+/**
+ * Get a pointer to 'invbits' of a bit-vector constant node.
+ * This function is meant to only be used for manipulating this pointer.
+ */
+BzlaBitVector *bzla_node_bv_const_get_invbits_ptr(BzlaNode *exp);
 
 /** Set the bit-vector representation of a bit-vector constant node. */
 void bzla_node_bv_const_set_bits(BzlaNode *exp, BzlaBitVector *bits);

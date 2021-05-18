@@ -236,9 +236,7 @@ bzla_lsutils_update_cone(Bzla *bzla,
     {
       if (bzla_node_is_bv_const(cur->e[j]))
       {
-        e[j] = bzla_node_is_inverted(cur->e[j])
-                   ? bzla_bv_copy(mm, bzla_node_bv_const_get_invbits(cur->e[j]))
-                   : bzla_bv_copy(mm, bzla_node_bv_const_get_bits(cur->e[j]));
+        e[j] = bzla_bv_copy(mm, bzla_node_bv_const_get_bits(cur->e[j]));
       }
       else
       {

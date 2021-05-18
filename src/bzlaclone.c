@@ -516,9 +516,9 @@ clone_exp(Bzla *clone,
   /* ------------------- BZLA_VAR_NODE_STRUCT (all nodes) -----------------> */
   if (bzla_node_is_bv_const(exp))
   {
-    bits = bzla_bv_copy(mm, bzla_node_bv_const_get_bits(exp));
+    bits = bzla_bv_copy(mm, bzla_node_bv_const_get_bits_ptr(exp));
     bzla_node_bv_const_set_bits(res, bits);
-    bits = bzla_bv_copy(mm, bzla_node_bv_const_get_invbits(exp));
+    bits = bzla_bv_copy(mm, bzla_node_bv_const_get_invbits_ptr(exp));
     bzla_node_bv_const_set_invbits(res, bits);
   }
   else if (bzla_node_is_fp_const(exp))
@@ -1143,8 +1143,8 @@ clone_aux_bzla(Bzla *bzla,
     allocated += cur->bytes;
     if (bzla_node_is_bv_const(cur))
     {
-      allocated += MEM_BITVEC(bzla_node_bv_const_get_bits(cur));
-      allocated += MEM_BITVEC(bzla_node_bv_const_get_invbits(cur));
+      allocated += MEM_BITVEC(bzla_node_bv_const_get_bits_ptr(cur));
+      allocated += MEM_BITVEC(bzla_node_bv_const_get_invbits_ptr(cur));
     }
     else if (bzla_node_is_fp_const(cur))
     {

@@ -1033,12 +1033,15 @@ erase_local_data_exp(Bzla *bzla, BzlaNode *exp)
 
   switch (exp->kind)
   {
-    case BZLA_BV_CONST_NODE:
-      bzla_bv_free(mm, bzla_node_bv_const_get_bits(exp));
-      if (bzla_node_bv_const_get_invbits(exp))
-        bzla_bv_free(mm, bzla_node_bv_const_get_invbits(exp));
+    case BZLA_BV_CONST_NODE: {
+      bzla_bv_free(mm, bzla_node_bv_const_get_bits_ptr(exp));
+      if (bzla_node_bv_const_get_invbits_ptr(exp))
+      {
+        bzla_bv_free(mm, bzla_node_bv_const_get_invbits_ptr(exp));
+      }
       bzla_node_bv_const_set_bits(exp, 0);
       bzla_node_bv_const_set_invbits(exp, 0);
+    }
       break;
     case BZLA_FP_CONST_NODE:
       bzla_fp_free(bzla, bzla_node_fp_const_get_fp(exp));
@@ -1450,11 +1453,23 @@ bzla_node_bv_const_get_bits(BzlaNode *exp)
 {
   assert(exp);
   assert(bzla_node_is_bv_const(exp));
+  if (bzla_node_is_regular(exp))
+  {
+    return bzla_node_bv_const_get_bits_ptr(exp);
+  }
+  return bzla_node_bv_const_get_invbits_ptr(exp);
+}
+
+BzlaBitVector *
+bzla_node_bv_const_get_bits_ptr(BzlaNode *exp)
+{
+  assert(exp);
+  assert(bzla_node_is_bv_const(exp));
   return ((BzlaBVConstNode *) bzla_node_real_addr(exp))->bits;
 }
 
 BzlaBitVector *
-bzla_node_bv_const_get_invbits(BzlaNode *exp)
+bzla_node_bv_const_get_invbits_ptr(BzlaNode *exp)
 {
   assert(exp);
   assert(bzla_node_is_bv_const(exp));

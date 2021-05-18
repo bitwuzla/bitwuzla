@@ -3247,6 +3247,79 @@ TEST_F(TestApi, term_dump)
   std::cout << std::endl;
 }
 
+TEST_F(TestApi, term_dump_regr0)
+{
+  BitwuzlaTerm *rne = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNE);
+  BitwuzlaTerm *rna = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNA);
+  BitwuzlaTerm *rtn = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTN);
+  BitwuzlaTerm *rtp = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTP);
+  BitwuzlaTerm *rtz = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTZ);
+
+  testing::internal::CaptureStdout();
+
+  bitwuzla_term_dump(rne, "smt2", stdout);
+  printf("\n");
+  bitwuzla_term_dump(rna, "smt2", stdout);
+  printf("\n");
+  bitwuzla_term_dump(rtn, "smt2", stdout);
+  printf("\n");
+  bitwuzla_term_dump(rtp, "smt2", stdout);
+  printf("\n");
+  bitwuzla_term_dump(rtz, "smt2", stdout);
+
+  std::string output = testing::internal::GetCapturedStdout();
+  ASSERT_EQ(output, "RNE\nRNA\nRTN\nRTP\nRTZ");
+}
+
+TEST_F(TestApi, term_dump_regr1)
+{
+  BitwuzlaSort *bv_sort5  = bitwuzla_mk_bv_sort(d_bzla, 5);
+  BitwuzlaSort *bv_sort10 = bitwuzla_mk_bv_sort(d_bzla, 10);
+
+  BitwuzlaTerm *fp_const;
+  std::string output;
+
+  fp_const = bitwuzla_mk_fp_value(d_bzla,
+                                  bitwuzla_mk_bv_zero(d_bzla, d_bv_sort1),
+                                  bitwuzla_mk_bv_zero(d_bzla, bv_sort5),
+                                  bitwuzla_mk_bv_zero(d_bzla, bv_sort10));
+
+  testing::internal::CaptureStdout();
+  bitwuzla_term_dump(fp_const, "smt2", stdout);
+  output = testing::internal::GetCapturedStdout();
+  ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000000)");
+
+  fp_const = bitwuzla_mk_fp_value(d_bzla,
+                                  bitwuzla_mk_bv_one(d_bzla, d_bv_sort1),
+                                  bitwuzla_mk_bv_zero(d_bzla, bv_sort5),
+                                  bitwuzla_mk_bv_zero(d_bzla, bv_sort10));
+
+  testing::internal::CaptureStdout();
+  bitwuzla_term_dump(fp_const, "smt2", stdout);
+  output = testing::internal::GetCapturedStdout();
+  ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000000)");
+
+  fp_const = bitwuzla_mk_fp_value(d_bzla,
+                                  bitwuzla_mk_bv_zero(d_bzla, d_bv_sort1),
+                                  bitwuzla_mk_bv_zero(d_bzla, bv_sort5),
+                                  bitwuzla_mk_bv_one(d_bzla, bv_sort10));
+
+  testing::internal::CaptureStdout();
+  bitwuzla_term_dump(fp_const, "smt2", stdout);
+  output = testing::internal::GetCapturedStdout();
+  ASSERT_EQ(output, "(fp #b0 #b00000 #b0000000001)");
+
+  fp_const = bitwuzla_mk_fp_value(d_bzla,
+                                  bitwuzla_mk_bv_one(d_bzla, d_bv_sort1),
+                                  bitwuzla_mk_bv_zero(d_bzla, bv_sort5),
+                                  bitwuzla_mk_bv_one(d_bzla, bv_sort10));
+
+  testing::internal::CaptureStdout();
+  bitwuzla_term_dump(fp_const, "smt2", stdout);
+  output = testing::internal::GetCapturedStdout();
+  ASSERT_EQ(output, "(fp #b1 #b00000 #b0000000001)");
+}
+
 TEST_F(TestApi, reset)
 {
   Bitwuzla *bzla                         = bitwuzla_new();

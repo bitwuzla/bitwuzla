@@ -509,17 +509,18 @@ bzla_chkclone_exp(Bzla *bzla,
 
   if (bzla_node_is_bv_const(real_exp))
   {
-    assert(bzla_bv_get_width(bzla_node_bv_const_get_bits(real_exp))
-           == bzla_bv_get_width(bzla_node_bv_const_get_bits(real_cexp)));
-    assert(bzla_bv_compare(bzla_node_bv_const_get_bits(real_exp),
-                           bzla_node_bv_const_get_bits(real_cexp))
+    assert(bzla_bv_get_width(bzla_node_bv_const_get_bits_ptr(real_exp))
+           == bzla_bv_get_width(bzla_node_bv_const_get_bits_ptr(real_cexp)));
+    assert(bzla_bv_compare(bzla_node_bv_const_get_bits_ptr(real_exp),
+                           bzla_node_bv_const_get_bits_ptr(real_cexp))
            == 0);
-    if (bzla_node_bv_const_get_invbits(real_exp))
+    if (bzla_node_bv_const_get_invbits_ptr(real_exp))
     {
-      assert(bzla_bv_get_width(bzla_node_bv_const_get_invbits(real_exp))
-             == bzla_bv_get_width(bzla_node_bv_const_get_invbits(real_cexp)));
-      assert(bzla_bv_compare(bzla_node_bv_const_get_invbits(real_exp),
-                             bzla_node_bv_const_get_invbits(real_cexp))
+      assert(
+          bzla_bv_get_width(bzla_node_bv_const_get_invbits_ptr(real_exp))
+          == bzla_bv_get_width(bzla_node_bv_const_get_invbits_ptr(real_cexp)));
+      assert(bzla_bv_compare(bzla_node_bv_const_get_invbits_ptr(real_exp),
+                             bzla_node_bv_const_get_invbits_ptr(real_cexp))
              == 0);
     }
   }
