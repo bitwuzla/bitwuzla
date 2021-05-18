@@ -2057,12 +2057,10 @@ BitwuzlaSort *bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
  * @see
  *   * `bitwuzla_sort_is_fun`
  *   * `bitwuzla_sort_fun_get_arity`
- *   * `bitwuzla_sort_fun_get_domain`
  *   * `bitwuzla_sort_fun_get_domain_sorts`
  *   * `bitwuzla_sort_fun_get_codomain`
  *   * `bitwuzla_term_is_fun`
  *   * `bitwuzla_term_fun_get_arity`
- *   * `bitwuzla_term_fun_get_domain_sort`
  *   * `bitwuzla_term_fun_get_domain_sorts`
  *   * `bitwuzla_term_fun_get_codomain_sort`
  */
@@ -3021,21 +3019,6 @@ BitwuzlaSort *bitwuzla_sort_array_get_index(const BitwuzlaSort *sort);
 BitwuzlaSort *bitwuzla_sort_array_get_element(const BitwuzlaSort *sort);
 
 /**
- * Get the domain sorts of a function sort, wrapped into a single sort.
- *
- * Requires that given sort is a function sort.
- *
- * @note The returned sort is a tuple sort consisting of the domain sorts of
- *       the given function sort. Tuple sorts are internal only and cannot be
- *       created via the Api.
- *
- * @param sort The sort.
- *
- * @return The domain sorts of the function sort.
- */
-BitwuzlaSort *bitwuzla_sort_fun_get_domain(const BitwuzlaSort *sort);
-
-/**
  * Get the domain sorts of a function sort.
  *
  * The domain sorts are returned as a \c NULL terminated array of sorts.  
@@ -3220,22 +3203,6 @@ BitwuzlaSort *bitwuzla_term_array_get_index_sort(const BitwuzlaTerm *term);
  * @return The element sort of the array term.
  */
 BitwuzlaSort *bitwuzla_term_array_get_element_sort(const BitwuzlaTerm *term);
-
-/**
- * Get the domain sorts of a function term, wrapped into a single sort.
- *
- * Requires that given term is an uninterpreted function, a lambda term, a
- * store term, or an ite term over function terms.
- *
- * @note The returned sort is a tuple sort consisting of the domain sorts of
- *       the given function sort. Tuple sorts are internal only and cannot be
- *       created via the Api.
- *
- * @param term The term.
- *
- * @return The domain sorts of the function term.
- */
-BitwuzlaSort *bitwuzla_term_fun_get_domain_sort(const BitwuzlaTerm *term);
 
 /**
  * Get the domain sorts of a function term.

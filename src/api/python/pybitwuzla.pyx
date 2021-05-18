@@ -133,10 +133,6 @@ cdef class BitwuzlaSort:
         return self.new_sort(
                     bitwuzla_api.bitwuzla_sort_array_get_element(self.ptr()))
 
-    def fun_get_domain(self):
-        return self.new_sort(
-                    bitwuzla_api.bitwuzla_sort_fun_get_domain(self.ptr()))
-
     def fun_get_domain_sorts(self):
         """
         """
@@ -243,11 +239,6 @@ cdef class BitwuzlaTerm:
     def array_get_element_sort(self):
         return self.new_sort(
                     bitwuzla_api.bitwuzla_term_array_get_element_sort(
-                        self.ptr()))
-
-    def fun_get_domain_sort(self):
-        return self.new_sort(
-                    bitwuzla_api.bitwuzla_term_fun_get_domain_sort(
                         self.ptr()))
 
     def fun_get_domain_sorts(self):

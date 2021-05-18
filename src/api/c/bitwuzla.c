@@ -3239,21 +3239,6 @@ bitwuzla_sort_array_get_element(const BitwuzlaSort *sort)
       sort->d_bzla, bzla_sort_array_get_element(bzla, bzla_sort));
 }
 
-BitwuzlaSort *
-bitwuzla_sort_fun_get_domain(const BitwuzlaSort *sort)
-{
-  BZLA_CHECK_ARG_NOT_NULL(sort);
-
-  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(sort->d_bzla);
-  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
-  assert(bzla_sort_is_valid(bzla, bzla_sort));
-  BZLA_CHECK_SORT_IS_FUN(bzla, bzla_sort);
-
-  /* Note: We don't need to increase the ref counter here. */
-  return BZLA_EXPORT_BITWUZLA_SORT(sort->d_bzla,
-                                   bzla_sort_fun_get_domain(bzla, bzla_sort));
-}
-
 BitwuzlaSort **
 bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort)
 {
@@ -3704,21 +3689,6 @@ bitwuzla_term_array_get_element_sort(const BitwuzlaTerm *term)
       BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)),
       bzla_sort_array_get_element(bzla_node_get_bzla(bzla_term),
                                   bzla_node_get_sort_id(bzla_term)));
-}
-
-BitwuzlaSort *
-bitwuzla_term_fun_get_domain_sort(const BitwuzlaTerm *term)
-{
-  BZLA_CHECK_ARG_NOT_NULL(term);
-
-  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
-  assert(bzla_node_get_ext_refs(bzla_term));
-  BZLA_CHECK_TERM_IS_FUN(bzla_term);
-  /* Note: We don't need to increase the ref counter here. */
-  return BZLA_EXPORT_BITWUZLA_SORT(
-      BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)),
-      bzla_sort_fun_get_domain(bzla_node_get_bzla(bzla_term),
-                               bzla_node_get_sort_id(bzla_term)));
 }
 
 BitwuzlaSort **

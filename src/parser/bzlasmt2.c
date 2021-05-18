@@ -1821,92 +1821,37 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
   assert(nargs >= 1);
 
   uint32_t i, j;
-  BitwuzlaSort *sort, *domain;
+  BitwuzlaSort *sort;
 
   parser->perrcoo = p->coo;
 
   j    = offset + 1;
   sort = bitwuzla_term_get_sort(p[j].exp);
 
-  if (bitwuzla_term_is_array(p[j].exp))
+  for (i = j + 1; i <= nargs; ++i)
   {
-    domain = bitwuzla_term_fun_get_domain_sort(p[j].exp);
-    for (i = j + 1; i <= nargs; i++)
+    if (bitwuzla_term_get_sort(p[i].exp) == sort) continue;
+
+    if (bitwuzla_term_is_array(p[j].exp) && !bitwuzla_term_is_array(p[i].exp))
     {
-      if (!bitwuzla_term_is_array(p[i].exp))
-      {
-        return !perr_smt2(
-            parser,
-            "first argument of '%s' is an array but argument %d is not",
-            p->node->name,
-            i);
-      }
-      if (bitwuzla_term_get_sort(p[i].exp) != sort)
-      {
-        return !perr_smt2(parser,
-                          "sorts of arguments 1 and %d of '%s' do not match",
-                          i,
-                          p->node->name);
-      }
-      if (bitwuzla_term_fun_get_domain_sort(p[i].exp) != domain)
-      {
-        return !perr_smt2(
-            parser,
-            "domain sorts of arguments 1 and %d of '%s' do not match",
-            i,
-            p->node->name);
-      }
+      return !perr_smt2(
+          parser,
+          "first argument of '%s' is an array but argument %d is not",
+          p->node->name,
+          i);
     }
-  }
-  else if (bitwuzla_term_is_fun(p[j].exp))
-  {
-    for (i = j + 1; i <= nargs; i++)
+    if (bitwuzla_term_is_fun(p[j].exp) && !bitwuzla_term_is_fun(p[i].exp))
     {
-      if (!bitwuzla_term_is_fun(p[i].exp))
-      {
-        return !perr_smt2(
-            parser,
-            "first argument of '%s' is a function but argument %d not",
-            p->node->name,
-            i);
-      }
-      if (!bitwuzla_term_is_equal_sort(p[1].exp, p[i].exp))
-      {
-        return !perr_smt2(parser,
-                          "sorts of arguments 1 and %d of '%s' do not match",
-                          i,
-                          p->node->name);
-      }
+      return !perr_smt2(
+          parser,
+          "first argument of '%s' is a function but argument %d not",
+          p->node->name,
+          i);
     }
-  }
-  else
-  {
-    for (i = j; i <= nargs; i++)
-    {
-      if (bitwuzla_term_is_array(p[i].exp))
-      {
-        return !perr_smt2(
-            parser,
-            "argument %d of '%s' is an array but first argument not",
-            i,
-            p->node->name);
-      }
-      if (bitwuzla_term_is_fun(p[i].exp))
-      {
-        return !perr_smt2(
-            parser,
-            "argument %d of '%s' is a function but first argument not",
-            i,
-            p->node->name);
-      }
-      if (bitwuzla_term_get_sort(p[i].exp) != sort)
-      {
-        return !perr_smt2(parser,
-                          "sorts of arguments 1 and %d of '%s' do not match",
-                          i,
-                          p->node->name);
-      }
-    }
+    return !perr_smt2(parser,
+                      "sorts of arguments 1 and %d of '%s' do not match",
+                      i,
+                      p->node->name);
   }
   parser->perrcoo.x = 0;
   return true;
