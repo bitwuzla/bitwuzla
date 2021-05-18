@@ -17,6 +17,7 @@ extern "C" {
 
 #include <stdlib.h>
 
+#include <algorithm>
 #include <bitset>
 #include <unordered_set>
 
