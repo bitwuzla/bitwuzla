@@ -38,6 +38,14 @@ a:hover, a:focus {
   color: #ba2121;
 }
 
+.wy-nav-top {
+  background-color: #afd700;
+}
+
+.wy-nav-top a {
+    color: #343131;
+}
+
 .wy-side-nav-search {
   background-color: #afd700;
 }
