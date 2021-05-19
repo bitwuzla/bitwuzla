@@ -1178,6 +1178,7 @@ set(cmp_testcases
 "smt2perr175.smt2"
 "smt2perr176.smt2"
 "smt2perr177.smt2"
+"smt2perr178.smt2"
 )
 
 if(CaDiCaL_FOUND)
