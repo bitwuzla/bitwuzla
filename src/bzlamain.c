@@ -1546,9 +1546,6 @@ bitwuzla_main(int32_t argc, char **argv)
   else
     sat_res = parse_res;
 
-  assert(bzla_terminate(bzla) || sat_res != BITWUZLA_UNKNOWN
-         || bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_PRINT_DIMACS));
-
   /* check if status is equal to benchmark status (if provided) */
   if (sat_res == BITWUZLA_SAT && parsed_status == BITWUZLA_UNSAT)
     bzlamain_error(g_app,

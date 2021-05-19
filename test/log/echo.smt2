@@ -1,0 +1,5 @@
+(echo "str""")
+(echo "str""ing")
+(echo "hi")
+(echo "str""""ing")
+(echo "str""i""ng")

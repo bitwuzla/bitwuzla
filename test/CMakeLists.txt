@@ -969,6 +969,7 @@ set(cmp_testcases
 "dumpbtor3.btor -db"
 "dumpsmt1.btor -rwl 0 -ds"
 "dumpsmt2.btor -rwl 0 -ds"
+"echo.smt2"
 "getvalue1.smt2"
 "getvalue2.smt2"
 "getvalue3.smt2"
@@ -1175,6 +1176,8 @@ set(cmp_testcases
 "smt2perr173.smt2"
 "smt2perr174.smt2"
 "smt2perr175.smt2"
+"smt2perr176.smt2"
+"smt2perr177.smt2"
 )
 
 if(CaDiCaL_FOUND)
