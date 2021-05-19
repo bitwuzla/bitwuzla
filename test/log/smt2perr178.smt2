@@ -1,0 +1,2 @@
+(echo "str\"\ing")
+
