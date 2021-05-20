@@ -143,9 +143,17 @@ equal_sort(const BzlaSort *a, const BzlaSort *b)
 
   switch (a->kind)
   {
-    default:
     case BZLA_BV_SORT:
       if (a->bitvec.width != b->bitvec.width) return 0;
+      break;
+
+    case BZLA_FP_SORT:
+      if (a->fp.width_exp != b->fp.width_exp) return 0;
+      if (a->fp.width_sig != b->fp.width_sig) return 0;
+      break;
+
+    case BZLA_RM_SORT:
+      // Always equal;
       break;
 
     case BZLA_FUN_SORT:
@@ -159,6 +167,9 @@ equal_sort(const BzlaSort *a, const BzlaSort *b)
       for (i = 0; i < a->tuple.num_elements; i++)
         if (a->tuple.elements[i]->id != b->tuple.elements[i]->id) return 0;
       break;
+
+    default:
+      assert(0);
   }
 
   return 1;
