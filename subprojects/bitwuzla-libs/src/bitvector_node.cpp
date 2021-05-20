@@ -177,8 +177,8 @@ BitVectorNode::set_assignment(const BitVector& assignment)
 std::string
 BitVectorNode::to_string() const
 {
-  return "const: " + d_domain.to_string() + " (" + d_assignment.to_string()
-         + ")";
+  return "[" + std::to_string(d_id) + "] const: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -299,7 +299,8 @@ BitVectorAdd::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorAdd::to_string() const
 {
-  return "add: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] add: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -446,7 +447,8 @@ BitVectorAnd::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorAnd::to_string() const
 {
-  return "and: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] and: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -613,8 +615,8 @@ BitVectorConcat::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorConcat::to_string() const
 {
-  return "concat: " + d_domain.to_string() + " (" + d_assignment.to_string()
-         + ")";
+  return "[" + std::to_string(d_id) + "] concat: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -781,7 +783,8 @@ BitVectorEq::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorEq::to_string() const
 {
-  return "eq: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] eq: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -1130,7 +1133,8 @@ BitVectorMul::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorMul::to_string() const
 {
-  return "mul: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] mul: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -1509,7 +1513,8 @@ BitVectorShl::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorShl::to_string() const
 {
-  return "shl: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] shl: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -1912,7 +1917,8 @@ BitVectorShr::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorShr::to_string() const
 {
-  return "shr: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] shr: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -2301,8 +2307,8 @@ BitVectorAshr::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorAshr::to_string() const
 {
-  return "ashr: " + d_domain.to_string() + " (" + d_assignment.to_string()
-         + ")";
+  return "[" + std::to_string(d_id) + "] ashr: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -2983,8 +2989,8 @@ BitVectorUdiv::consistent_value_pos0_aux(const BitVector& t)
 std::string
 BitVectorUdiv::to_string() const
 {
-  return "udiv: " + d_domain.to_string() + " (" + d_assignment.to_string()
-         + ")";
+  return "[" + std::to_string(d_id) + "] udiv: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -3259,7 +3265,8 @@ BitVectorUlt::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorUlt::to_string() const
 {
-  return "ult: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] ult: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -3584,7 +3591,8 @@ BitVectorSlt::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorSlt::to_string() const
 {
-  return "slt: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] slt: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -4167,8 +4175,8 @@ BitVectorUrem::consistent_value_pos0_aux(const BitVector& t)
 std::string
 BitVectorUrem::to_string() const
 {
-  return "urem: " + d_domain.to_string() + " (" + d_assignment.to_string()
-         + ")";
+  return "[" + std::to_string(d_id) + "] urem: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -4292,7 +4300,8 @@ BitVectorXor::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorXor::to_string() const
 {
-  return "xor: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] xor: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -4550,7 +4559,8 @@ BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorIte::to_string() const
 {
-  return "ite: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] ite: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -4644,7 +4654,8 @@ BitVectorNot::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorNot::to_string() const
 {
-  return "not: " + d_domain.to_string() + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] not: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -4836,8 +4847,8 @@ BitVectorExtract::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorExtract::to_string() const
 {
-  return "extract: " + d_domain.to_string() + " (" + d_assignment.to_string()
-         + ")";
+  return "[" + std::to_string(d_id) + "] extract: " + d_domain.to_string()
+         + " (" + d_assignment.to_string() + ")";
 }
 
 std::ostream&
@@ -4948,8 +4959,8 @@ BitVectorSignExtend::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorSignExtend::to_string() const
 {
-  return "sext: " + d_domain.to_string() + " (" + d_assignment.to_string()
-         + ")";
+  return "[" + std::to_string(d_id) + "] sext: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&
