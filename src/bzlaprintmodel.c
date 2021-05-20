@@ -224,13 +224,12 @@ bzla_print_bvfp_model(
 /*------------------------------------------------------------------------*/
 
 static void
-print_param_smt2(char *symbol, uint32_t param_index, BzlaSort *sort, FILE *file)
+print_param_smt2(uint32_t param_index, BzlaSort *sort, FILE *file)
 {
-  assert(symbol);
   assert(sort);
   assert(file);
 
-  fprintf(file, "(%s_x%u ", symbol, param_index);
+  fprintf(file, "(@x%u ", param_index);
   bzla_dumpsmt_dump_sort(sort, file);
   fprintf(file, ")");
 }
@@ -288,7 +287,7 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
     {
       fputc(' ', file);
     }
-    print_param_smt2(s, x, bzla_sort_get_by_id(bzla, codomain), file);
+    print_param_smt2(x, bzla_sort_get_by_id(bzla, codomain), file);
     x++;
   }
   fprintf(file, ") ");
@@ -321,7 +320,7 @@ print_fun_model_smt2(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
         for (i = 0; i < args->arity; i++, x++)
         {
           if (args->arity > 1) fprintf(file, "\n%8c", ' ');
-          fprintf(file, "(= _x%d ", x);
+          fprintf(file, "(= @x%d ", x);
           dump_const_value(bzla,
                            domain_sort->tuple.elements[i]->id,
                            args->bv[i],
