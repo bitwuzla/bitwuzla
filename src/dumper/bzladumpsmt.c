@@ -382,13 +382,11 @@ bzla_dumpsmt_dump_sort(BzlaSort *sort, FILE *file)
       break;
 
     case BZLA_ARRAY_SORT:
-      fmt = "(Array (_ BitVec %d) (_ BitVec %d))";
-      assert(sort->array.index->kind == BZLA_BV_SORT);
-      assert(sort->array.element->kind == BZLA_BV_SORT);
-      fprintf(file,
-              fmt,
-              sort->array.index->bitvec.width,
-              sort->array.element->bitvec.width);
+      fprintf(file, "(Array ");
+      bzla_dumpsmt_dump_sort(sort->array.index, file);
+      fprintf(file, " ");
+      bzla_dumpsmt_dump_sort(sort->array.element, file);
+      fprintf(file, ")");
       break;
 
     case BZLA_FP_SORT:
@@ -428,29 +426,10 @@ bzla_dumpsmt_dump_sort_node(BzlaNode *exp, FILE *file)
   assert(exp);
   assert(file);
 
-  Bzla *bzla;
-  BzlaSortId s_fid, s_tid, s_cid, s_did;
   BzlaSort *sort;
-
   exp  = bzla_node_real_addr(exp);
-  bzla = exp->bzla;
-  if (bzla_node_is_array(exp))
-  {
-    s_fid = bzla_node_get_sort_id(exp);
-    s_tid = bzla_sort_fun_get_domain(bzla, s_fid);
-    assert(bzla_sort_is_tuple(bzla, s_tid));
-    s_did = bzla_sort_get_by_id(bzla, s_tid)->tuple.elements[0]->id;
-    s_cid = bzla_sort_fun_get_codomain(bzla, s_fid);
-    fprintf(file,
-            "(Array (_ BitVec %d) (_ BitVec %d))",
-            bzla_sort_bv_get_width(bzla, s_did),
-            bzla_sort_bv_get_width(bzla, s_cid));
-  }
-  else
-  {
-    sort = bzla_sort_get_by_id(exp->bzla, bzla_node_get_sort_id(exp));
-    bzla_dumpsmt_dump_sort(sort, file);
-  }
+  sort = bzla_sort_get_by_id(exp->bzla, bzla_node_get_sort_id(exp));
+  bzla_dumpsmt_dump_sort(sort, file);
 }
 
 #if 0
@@ -1537,10 +1516,12 @@ static void
 dump_declare_fun_smt(BzlaSMTDumpContext *sdc, BzlaNode *exp)
 {
   assert(!bzla_hashptr_table_get(sdc->dumped, exp));
-  fputs("(declare-fun ", sdc->file);
+  bool is_const = bzla_node_is_var(exp) || bzla_node_is_uf_array(exp);
+
+  fputs(is_const ? "(declare-const " : "(declare-fun ", sdc->file);
   dump_smt_id(sdc, exp);
   fputc(' ', sdc->file);
-  if (bzla_node_is_var(exp) || bzla_node_is_uf_array(exp))
+  if (!is_const)
     fputs("() ", sdc->file);
   bzla_dumpsmt_dump_sort_node(exp, sdc->file);
   fputs(")\n", sdc->file);
