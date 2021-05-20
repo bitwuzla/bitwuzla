@@ -22,8 +22,8 @@ sys.path.insert(0, "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 # -- Project information -----------------------------------------------------
 
 project = 'Bitwuzla'
-copyright = '2021, The Authors of Bitwuzla'
-author = 'The Authors of Bitwuzla'
+copyright = '2021, the authors of Bitwuzla'
+author = 'The authors of Bitwuzla'
 
 
 # -- General configuration ---------------------------------------------------
