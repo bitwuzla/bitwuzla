@@ -142,6 +142,9 @@ class BitVectorNode
   /** Get id of this node. */
   uint32_t id() const { return d_id; }
 
+  /** Get the string representation of this node. */
+  virtual std::string to_string() const;
+
  protected:
   uint32_t d_id                                = 0;
   std::unique_ptr<BitVectorNode*[]> d_children = nullptr;
@@ -157,6 +160,8 @@ class BitVectorNode
   /** Cached consistent value result. */
   std::unique_ptr<BitVector> d_consistent = nullptr;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorNode& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -196,7 +201,11 @@ class BitVectorAdd : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorAdd& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -241,7 +250,11 @@ class BitVectorAnd : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorAnd& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -290,7 +303,11 @@ class BitVectorConcat : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorConcat& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -332,7 +349,11 @@ class BitVectorEq : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorEq& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -379,10 +400,14 @@ class BitVectorMul : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
 
+  std::string to_string() const override;
+
  private:
   /** Cached inverse values result. */
   std::unique_ptr<BitVectorDomain> d_inverse_domain = nullptr;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorMul& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -432,7 +457,11 @@ class BitVectorShl : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorShl& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -502,7 +531,11 @@ class BitVectorShr : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorShr& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -561,7 +594,11 @@ class BitVectorAshr : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorAshr& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -628,6 +665,8 @@ class BitVectorUdiv : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
 
+  std::string to_string() const override;
+
  private:
   /**
    * Try to find a consistent value for pos_x = 0 other than x = t.
@@ -635,6 +674,8 @@ class BitVectorUdiv : public BitVectorNode
    */
   BitVector consistent_value_pos0_aux(const BitVector& t);
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorUdiv& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -680,7 +721,11 @@ class BitVectorUlt : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorUlt& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -734,7 +779,11 @@ class BitVectorSlt : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorSlt& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -799,6 +848,8 @@ class BitVectorUrem : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
 
+  std::string to_string() const override;
+
  private:
   /**
    * Pick a consistent value for pos_x = 0 with x > t.
@@ -808,6 +859,8 @@ class BitVectorUrem : public BitVectorNode
   /** Cached inverse_value result. */
   std::unique_ptr<BitVectorDomain> d_inverse_domain = nullptr;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorUrem& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -847,7 +900,11 @@ class BitVectorXor : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorXor& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -909,7 +966,11 @@ class BitVectorIte : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorIte& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -947,7 +1008,11 @@ class BitVectorNot : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  std::string to_string() const override;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorNot& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -989,6 +1054,8 @@ class BitVectorExtract : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
 
+  std::string to_string() const override;
+
  private:
   /**
    * Probability for keeping the current value of don't care bits (rather than
@@ -1013,6 +1080,8 @@ class BitVectorExtract : public BitVectorNode
    */
   std::unique_ptr<BitVectorDomain> d_x_slice_right = nullptr;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorExtract& node);
 
 /* -------------------------------------------------------------------------- */
 
@@ -1059,10 +1128,14 @@ class BitVectorSignExtend : public BitVectorNode
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
 
+  std::string to_string() const override;
+
  private:
   /** The number of bits to extend with. */
   uint32_t d_n;
 };
+
+std::ostream& operator<<(std::ostream& out, const BitVectorSignExtend& node);
 
 /* -------------------------------------------------------------------------- */
 
