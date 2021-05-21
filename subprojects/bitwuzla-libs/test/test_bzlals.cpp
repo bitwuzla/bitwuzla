@@ -318,8 +318,8 @@ TEST_F(TestBzlaLs, update_cone)
       {d_v3sc1, zero4},        // not in COI
       {d_v3sc1pv3, zero4},     // not in COI
       {d_v3sc1pv3pv1, zero4},  // not in COI
-      {d_root1, zero1},        // 0000 < 0000 = 0
-      {d_root2, zero1},        // 0
+      {d_root1, zero1},        // 0000 <s 0000 = 0
+      {d_root2, one1},         // 0000 == 0000 = 1
   };
   update_cone(d_c1);
   for (auto& p : ass_init_up_c1)
@@ -343,7 +343,7 @@ TEST_F(TestBzlaLs, update_cone)
       {d_v3sc1, zero4},        // not in COI
       {d_v3sc1pv3, zero4},     // not in COI
       {d_v3sc1pv3pv1, zero4},  // 0000 + 0000 = 0000
-      {d_root1, zero1},        // 0000 < 0000 = 0
+      {d_root1, zero1},        // 0000 <s 0000 = 0
       {d_root2, zero1},        // 0000 == 1111 = 0
   };
   update_cone(d_v1);
@@ -368,7 +368,7 @@ TEST_F(TestBzlaLs, update_cone)
       {d_v3sc1, zero4},        // not in COI
       {d_v3sc1pv3, zero4},     // not in COI
       {d_v3sc1pv3pv1, zero4},  // not in COI
-      {d_root1, zero1},        // 0000 < 0000 = 0
+      {d_root1, zero1},        // 0000 <s 0000 = 0
       {d_root2, zero1},        // not in COI
   };
   update_cone(d_v2);
@@ -420,7 +420,7 @@ TEST_F(TestBzlaLs, update_cone)
       {d_v3sc1, zero4},        // not in COI
       {d_v3sc1pv3, zero4},     // not in COI
       {d_v3sc1pv3pv1, two4},   // 0000 + 0010 = 0010
-      {d_root1, zero1},        // 0000 < 0000 = 0
+      {d_root1, zero1},        // 0000 <s 0000 = 0
       {d_root2, zero1},        // 0000 == 1111 = 0
   };
   update_cone(d_v1);
@@ -447,7 +447,7 @@ TEST_F(TestBzlaLs, update_cone)
       {d_v3sc1, zero4},        // not in COI
       {d_v3sc1pv3, zero4},     // not in COI
       {d_v3sc1pv3pv1, two4},   // 0000 + 0010 = 0010
-      {d_root1, zero1},        // 1000 < 0000 = 0
+      {d_root1, one1},         // 1000 <s 0000 = 1
       {d_root2, zero1},        // not in COI
   };
   update_cone(d_v2);
@@ -474,8 +474,8 @@ TEST_F(TestBzlaLs, update_cone)
       {d_v3sc1, zero4},        // 1111 << 1010 = 0000
       {d_v3sc1pv3, ones4},     // 0000 + 1111 = 1111
       {d_v3sc1pv3pv1, one4},   // 1111 + 0010 = 0001
-      {d_root1, zero1},        // not in COI
-      {d_root2, zero1},        // 0001 < 0000 = 0
+      {d_root1, one1},         // not in COI
+      {d_root2, zero1},        // 0001 == 0000 = 0
   };
   update_cone(d_v3);
   for (auto& p : ass_up_v3)

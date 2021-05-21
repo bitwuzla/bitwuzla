@@ -407,6 +407,8 @@ BzlaLs::update_roots(uint32_t id)
 void
 BzlaLs::update_cone(BitVectorNode* node)
 {
+  BZLALSLOG << "*** update cone: " << *node << std::endl;
+
   assert(node);
   assert(is_leaf_node(node));
 
@@ -455,10 +457,17 @@ BzlaLs::update_cone(BitVectorNode* node)
   for (uint32_t id : cone)
   {
     BitVectorNode* cur = get_node(id);
-    for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+    BZLALSLOG << "  node: " << *cur << " -> ";
+    cur->evaluate();
+    BZLALSLOG << cur->assignment() << std::endl;
+    if (BZLALSLOG_ENABLED)
     {
-      (*cur)[i]->evaluate();
+      for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+      {
+        BZLALSLOG << "    |- node[" << i << "]: " << *(*cur)[i] << std::endl;
+      }
     }
+
     if (is_root_node(cur))
     {
       update_roots(cur->id());

@@ -11,6 +11,7 @@ class OstreamVoider
   void operator&(std::ostream& ostream) { (void) ostream; }
 };
 
-#define BZLALSLOG BZLALSLOGLEVEL == 0 ? (void) 0 : OstreamVoider() & std::cout
+#define BZLALSLOG_ENABLED (BZLALSLOGLEVEL != 0)
+#define BZLALSLOG !(BZLALSLOG_ENABLED) ? (void) 0 : OstreamVoider() & std::cout
 
 #endif
