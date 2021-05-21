@@ -3106,6 +3106,21 @@ bool bitwuzla_sort_is_fun(const BitwuzlaSort *sort);
  */
 bool bitwuzla_sort_is_rm(const BitwuzlaSort *sort);
 
+/**
+ * Print sort.
+ *
+ * @param sort The sort.
+ * @param format The output format for printing the term. Either `"btor"` for
+ *               the BTOR format, or `"smt2"` for the SMT-LIB v2 format. Note
+ *               for the `"btor"` this function won't do anything since BTOR
+ *               sorts are printed when printing the term via
+ *               bitwuzla_term_dump.
+ * @param file The file to print the term to.
+ */
+void bitwuzla_sort_dump(const BitwuzlaSort *sort,
+                        const char *format,
+                        FILE *file);
+
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTerm                                                               */
 /* -------------------------------------------------------------------------- */

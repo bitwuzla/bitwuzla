@@ -2865,6 +2865,21 @@ TEST_F(TestApi, sort_is_rm)
   ASSERT_FALSE(bitwuzla_sort_is_rm(d_arr_sort_bv));
 }
 
+TEST_F(TestApi, sort_dump)
+{
+  ASSERT_DEATH(bitwuzla_sort_dump(nullptr, "btor", stdout), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_dump(d_bv_sort1, nullptr, stdout),
+               d_error_exp_str);
+  ASSERT_DEATH(bitwuzla_sort_dump(d_bv_sort1, "smt2", nullptr),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_sort_dump(d_bv_sort1, "asdf", stdout), d_error_format);
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_bv_sort1, "btor", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_bv_sort8, "smt2", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_rm_sort, "smt2", stdout));
+  ASSERT_NO_FATAL_FAILURE(bitwuzla_sort_dump(d_fp_sort32, "smt2", stdout));
+  std::cout << std::endl;
+}
+
 TEST_F(TestApi, regr1)
 {
   std::vector<BitwuzlaSort *> domain({d_bv_sort8});

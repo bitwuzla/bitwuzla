@@ -3375,6 +3375,32 @@ bitwuzla_sort_is_rm(const BitwuzlaSort *sort)
   return bzla_sort_is_rm(bzla, bzla_sort);
 }
 
+void
+bitwuzla_sort_dump(const BitwuzlaSort *sort, const char *format, FILE *file)
+{
+  BZLA_CHECK_ARG_NOT_NULL(sort);
+  BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(format);
+  BZLA_CHECK_ARG_NOT_NULL(file);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(sort->d_bzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  assert(bzla_sort_is_valid(bzla, bzla_sort));
+
+  if (strcmp(format, "smt2") == 0)
+  {
+    bzla_dumpsmt_dump_sort(bzla_sort_get_by_id(bzla, bzla_sort), file);
+  }
+  else if (strcmp(format, "btor") == 0)
+  {
+    // Sorts are dumped when dumping terms.
+  }
+  else
+  {
+    BZLA_ABORT(
+        true, "unknown format '%s', expected one of 'smt2' or 'bzla'", format);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaTerm                                                               */
 /* -------------------------------------------------------------------------- */
