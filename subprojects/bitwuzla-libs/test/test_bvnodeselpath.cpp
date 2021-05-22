@@ -109,10 +109,10 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
             new BitVectorNode(d_rng.get(), bw_s0));
         std::unique_ptr<BitVectorNode> child1(
             new BitVectorNode(d_rng.get(), bw_s1));
-        std::unique_ptr<BitVectorNode> op_s0(new BitVectorAnd(
-            d_rng.get(), s0_val, s0, child0.get(), child0.get()));
-        std::unique_ptr<BitVectorNode> op_s1(new BitVectorAdd(
-            d_rng.get(), s1_val, s1, child1.get(), child1.get()));
+        std::unique_ptr<BitVectorNode> op_s0(
+            new BitVectorAnd(d_rng.get(), s0, child0.get(), child0.get()));
+        std::unique_ptr<BitVectorNode> op_s1(
+            new BitVectorAdd(d_rng.get(), s1, child1.get(), child1.get()));
         T oop(d_rng.get(), bw_t, op_s0.get(), op_s1.get());
         is_const0     = lop[0]->is_const();
         is_const1     = lop[1]->is_const();
@@ -132,9 +132,9 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
         ASSERT_TRUE(!is_const0 || pos_x == 1);
         ASSERT_TRUE(!is_const1 || pos_x == 0);
         ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential0
-                    || pos_x == 0);
+                    || is_const0 || pos_x == 0);
         ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential1
-                    || pos_x == 1);
+                    || is_const1 || pos_x == 1);
       }
     }
   }
@@ -234,12 +234,12 @@ TestBvNodeSelPath::test_ite()
               new BitVectorNode(d_rng.get(), 1));
           std::unique_ptr<BitVectorNode> childbwt(
               new BitVectorNode(d_rng.get(), bw_t));
-          std::unique_ptr<BitVectorNode> op_s0(new BitVectorAnd(
-              d_rng.get(), s0_val, s0, child1.get(), child1.get()));
+          std::unique_ptr<BitVectorNode> op_s0(
+              new BitVectorAnd(d_rng.get(), s0, child1.get(), child1.get()));
           std::unique_ptr<BitVectorNode> op_s1(new BitVectorAdd(
-              d_rng.get(), s1_val, s1, childbwt.get(), childbwt.get()));
+              d_rng.get(), s1, childbwt.get(), childbwt.get()));
           std::unique_ptr<BitVectorNode> op_s2(new BitVectorMul(
-              d_rng.get(), s2_val, s2, childbwt.get(), childbwt.get()));
+              d_rng.get(), s2, childbwt.get(), childbwt.get()));
           BitVectorIte oop(
               d_rng.get(), bw_t, op_s0.get(), op_s1.get(), op_s2.get());
           is_const0     = lop[0]->is_const();
@@ -263,11 +263,11 @@ TestBvNodeSelPath::test_ite()
           ASSERT_TRUE(!is_const0 || !is_const2 || pos_x == 1);
           ASSERT_TRUE(!is_const0 || !is_const1 || pos_x == 2);
           ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
-                      || !is_essential0 || pos_x == 0);
+                      || !is_essential0 || is_const0 || pos_x == 0);
           ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
-                      || !is_essential1 || pos_x == 1);
+                      || !is_essential1 || is_const1 || pos_x == 1);
           ASSERT_TRUE((is_essential0 && is_essential1 && is_essential2)
-                      || !is_essential2 || pos_x == 2);
+                      || !is_essential2 || is_const2 || pos_x == 2);
         }
       }
     }
@@ -326,7 +326,7 @@ TestBvNodeSelPath::test_not()
       std::unique_ptr<BitVectorNode> child(
           new BitVectorNode(d_rng.get(), bw_t));
       std::unique_ptr<BitVectorNode> op_s0(
-          new BitVectorNot(d_rng.get(), s0_val, s0, child.get()));
+          new BitVectorNot(d_rng.get(), s0, child.get()));
       BitVectorNot oop(d_rng.get(), bw_t, op_s0.get());
       is_const     = lop[0]->is_const();
       is_essential = oop.is_essential(t, 0);
@@ -342,7 +342,7 @@ TestBvNodeSelPath::test_not()
       }
       pos_x = oop.select_path(t);
       ASSERT_TRUE(!is_const || pos_x == 0);
-      ASSERT_TRUE(is_essential || pos_x == 0);
+      ASSERT_TRUE(is_essential || is_const || pos_x == 0);
     }
   }
 }
@@ -404,8 +404,8 @@ TestBvNodeSelPath::test_extract()
           /* Operands is op. */
           std::unique_ptr<BitVectorNode> child(
               new BitVectorNode(d_rng.get(), bw_x));
-          std::unique_ptr<BitVectorNode> op_s0(new BitVectorMul(
-              d_rng.get(), s0_val, s0, child.get(), child.get()));
+          std::unique_ptr<BitVectorNode> op_s0(
+              new BitVectorMul(d_rng.get(), s0, child.get(), child.get()));
           BitVectorExtract oop(d_rng.get(), bw_t, op_s0.get(), hi, lo);
           is_const     = lop[0]->is_const();
           is_essential = oop.is_essential(t, 0);
@@ -421,7 +421,7 @@ TestBvNodeSelPath::test_extract()
           }
           pos_x = oop.select_path(t);
           ASSERT_TRUE(!is_const || pos_x == 0);
-          ASSERT_TRUE(is_essential || pos_x == 0);
+          ASSERT_TRUE(is_essential || is_const || pos_x == 0);
         }
       }
     }
@@ -482,8 +482,8 @@ TestBvNodeSelPath::test_sext()
         /* Operands is op. */
         std::unique_ptr<BitVectorNode> child(
             new BitVectorNode(d_rng.get(), bw_x));
-        std::unique_ptr<BitVectorNode> op_s0(new BitVectorUdiv(
-            d_rng.get(), s0_val, s0, child.get(), child.get()));
+        std::unique_ptr<BitVectorNode> op_s0(
+            new BitVectorUdiv(d_rng.get(), s0, child.get(), child.get()));
         BitVectorSignExtend oop(d_rng.get(), bw_t, op_s0.get(), n);
         is_const     = lop[0]->is_const();
         is_essential = oop.is_essential(t, 0);
@@ -499,7 +499,7 @@ TestBvNodeSelPath::test_sext()
         }
         pos_x = oop.select_path(t);
         ASSERT_TRUE(!is_const || pos_x == 0);
-        ASSERT_TRUE(is_essential || pos_x == 0);
+        ASSERT_TRUE(is_essential || is_const || pos_x == 0);
       }
     }
   }

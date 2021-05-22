@@ -846,7 +846,7 @@ TestBvNode::test_ite(Kind kind, uint32_t pos_x)
             std::unique_ptr<BitVectorNode> op_s0(
                 new BitVectorNode(d_rng.get(), s0_val, BitVectorDomain(bw_s0)));
             std::unique_ptr<BitVectorNode> op_s1(
-                new BitVectorNode(d_rng.get(), s1_val, BitVectorDomain(bw_s0)));
+                new BitVectorNode(d_rng.get(), s1_val, BitVectorDomain(bw_s1)));
             /* For this test, we don't care about current assignment and domain
              * of the op, thus we initialize them with 0 and x..x,
              * respectively. */

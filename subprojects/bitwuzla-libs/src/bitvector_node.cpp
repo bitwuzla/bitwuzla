@@ -17,8 +17,7 @@ BitVectorNode::BitVectorNode(RNG* rng, uint32_t size)
 }
 
 BitVectorNode::BitVectorNode(RNG* rng, uint32_t size, BitVectorNode* child0)
-    : BitVectorNode(
-        rng, BitVector::mk_zero(size), BitVectorDomain(size), child0)
+    : BitVectorNode(rng, BitVectorDomain(size), child0)
 {
 }
 
@@ -26,8 +25,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
                              uint32_t size,
                              BitVectorNode* child0,
                              BitVectorNode* child1)
-    : BitVectorNode(
-        rng, BitVector::mk_zero(size), BitVectorDomain(size), child0, child1)
+    : BitVectorNode(rng, BitVectorDomain(size), child0, child1)
 {
 }
 
@@ -37,7 +35,6 @@ BitVectorNode::BitVectorNode(RNG* rng,
                              BitVectorNode* child1,
                              BitVectorNode* child2)
     : BitVectorNode(rng,
-                    BitVector::mk_zero(size),
                     BitVectorDomain(size),
                     child0,
                     child1,
@@ -54,15 +51,15 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_domain(domain),
       d_is_const(domain.is_fixed())
 {
+  assert(assignment.size() == domain.size());
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
-                             const BitVector& assignment,
                              const BitVectorDomain& domain,
                              BitVectorNode* child0)
     : d_rng(rng),
       d_arity(1),
-      d_assignment(assignment),
+      d_assignment(BitVector::mk_zero(domain.size())),
       d_domain(domain),
       d_is_const(domain.is_fixed())
 {
@@ -73,13 +70,12 @@ BitVectorNode::BitVectorNode(RNG* rng,
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
-                             const BitVector& assignment,
                              const BitVectorDomain& domain,
                              BitVectorNode* child0,
                              BitVectorNode* child1)
     : d_rng(rng),
       d_arity(2),
-      d_assignment(assignment),
+      d_assignment(BitVector::mk_zero(domain.size())),
       d_domain(domain),
       d_is_const(domain.is_fixed())
 {
@@ -91,14 +87,13 @@ BitVectorNode::BitVectorNode(RNG* rng,
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
-                             const BitVector& assignment,
                              const BitVectorDomain& domain,
                              BitVectorNode* child0,
                              BitVectorNode* child1,
                              BitVectorNode* child2)
     : d_rng(rng),
       d_arity(3),
-      d_assignment(assignment),
+      d_assignment(BitVector::mk_zero(domain.size())),
       d_domain(domain),
       d_is_const(domain.is_fixed())
 {
@@ -198,24 +193,30 @@ BitVectorAdd::BitVectorAdd(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorAdd::BitVectorAdd(RNG* rng,
-                           const BitVector& assignment,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size());
+  assert(domain.size() == child0->size());
+  _evaluate();
+}
+
+void
+BitVectorAdd::_evaluate()
+{
+  d_assignment.ibvadd(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 void
 BitVectorAdd::evaluate()
 {
-  d_assignment.ibvadd(d_children[0]->assignment(), d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -320,24 +321,30 @@ BitVectorAnd::BitVectorAnd(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorAnd::BitVectorAnd(RNG* rng,
-                           const BitVector& assignment,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size());
+  assert(domain.size() == child0->size());
+  _evaluate();
+}
+
+void
+BitVectorAnd::_evaluate()
+{
+  d_assignment.ibvand(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 void
 BitVectorAnd::evaluate()
 {
-  d_assignment.ibvand(d_children[0]->assignment(), d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -467,24 +474,30 @@ BitVectorConcat::BitVectorConcat(RNG* rng,
     : BitVectorNode(rng, size, child0, child1)
 {
   assert(size == child0->size() + child1->size());
+  _evaluate();
 }
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
-                                 const BitVector& assignment,
                                  const BitVectorDomain& domain,
                                  BitVectorNode* child0,
                                  BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size() + child1->size());
+  assert(domain.size() == child0->size() + child1->size());
+  _evaluate();
+}
+
+void
+BitVectorConcat::_evaluate()
+{
+  d_assignment.ibvconcat(d_children[0]->assignment(),
+                         d_children[1]->assignment());
 }
 
 void
 BitVectorConcat::evaluate()
 {
-  d_assignment.ibvconcat(d_children[0]->assignment(),
-                         d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -636,24 +649,30 @@ BitVectorEq::BitVectorEq(RNG* rng,
 {
   assert(size == 1);
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorEq::BitVectorEq(RNG* rng,
-                         const BitVector& assignment,
                          const BitVectorDomain& domain,
                          BitVectorNode* child0,
                          BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == 1);
+  assert(domain.size() == 1);
+  _evaluate();
+}
+
+void
+BitVectorEq::_evaluate()
+{
+  d_assignment.ibveq(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 void
 BitVectorEq::evaluate()
 {
-  d_assignment.ibveq(d_children[0]->assignment(), d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -804,24 +823,30 @@ BitVectorMul::BitVectorMul(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorMul::BitVectorMul(RNG* rng,
-                           const BitVector& assignment,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size());
+  assert(domain.size() == child0->size());
+  _evaluate();
+}
+
+void
+BitVectorMul::_evaluate()
+{
+  d_assignment.ibvmul(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 void
 BitVectorMul::evaluate()
 {
-  d_assignment.ibvmul(d_children[0]->assignment(), d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -1154,24 +1179,30 @@ BitVectorShl::BitVectorShl(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorShl::BitVectorShl(RNG* rng,
-                           const BitVector& assignment,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size());
+  assert(domain.size() == child0->size());
+  _evaluate();
+}
+
+void
+BitVectorShl::_evaluate()
+{
+  d_assignment.ibvshl(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 void
 BitVectorShl::evaluate()
 {
-  d_assignment.ibvshl(d_children[0]->assignment(), d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -1534,24 +1565,30 @@ BitVectorShr::BitVectorShr(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorShr::BitVectorShr(RNG* rng,
-                           const BitVector& assignment,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size());
+  assert(domain.size() == child0->size());
+  _evaluate();
+}
+
+void
+BitVectorShr::_evaluate()
+{
+  d_assignment.ibvshr(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 void
 BitVectorShr::evaluate()
 {
-  d_assignment.ibvshr(d_children[0]->assignment(), d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -1938,25 +1975,31 @@ BitVectorAshr::BitVectorAshr(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
-                             const BitVector& assignment,
                              const BitVectorDomain& domain,
                              BitVectorNode* child0,
                              BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size());
+  assert(domain.size() == child0->size());
+  _evaluate();
+}
+
+void
+BitVectorAshr::_evaluate()
+{
+  d_assignment.ibvashr(d_children[0]->assignment(),
+                       d_children[1]->assignment());
 }
 
 void
 BitVectorAshr::evaluate()
 {
-  d_assignment.ibvashr(d_children[0]->assignment(),
-                       d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -2328,25 +2371,31 @@ BitVectorUdiv::BitVectorUdiv(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorUdiv::BitVectorUdiv(RNG* rng,
-                             const BitVector& assignment,
                              const BitVectorDomain& domain,
                              BitVectorNode* child0,
                              BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size());
+  assert(domain.size() == child0->size());
+  _evaluate();
+}
+
+void
+BitVectorUdiv::_evaluate()
+{
+  d_assignment.ibvudiv(d_children[0]->assignment(),
+                       d_children[1]->assignment());
 }
 
 void
 BitVectorUdiv::evaluate()
 {
-  d_assignment.ibvudiv(d_children[0]->assignment(),
-                       d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -3010,24 +3059,30 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
 {
   assert(size == 1);
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorUlt::BitVectorUlt(RNG* rng,
-                           const BitVector& assignment,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == 1);
+  assert(domain.size() == 1);
+  _evaluate();
+}
+
+void
+BitVectorUlt::_evaluate()
+{
+  d_assignment.ibvult(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 void
 BitVectorUlt::evaluate()
 {
-  d_assignment.ibvult(d_children[0]->assignment(), d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -3286,24 +3341,30 @@ BitVectorSlt::BitVectorSlt(RNG* rng,
 {
   assert(size == 1);
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorSlt::BitVectorSlt(RNG* rng,
-                           const BitVector& assignment,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == 1);
+  assert(domain.size() == 1);
+  _evaluate();
+}
+
+void
+BitVectorSlt::_evaluate()
+{
+  d_assignment.ibvslt(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 void
 BitVectorSlt::evaluate()
 {
-  d_assignment.ibvslt(d_children[0]->assignment(), d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -3612,25 +3673,31 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
-                             const BitVector& assignment,
                              const BitVectorDomain& domain,
                              BitVectorNode* child0,
                              BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size());
+  assert(domain.size() == child0->size());
+  _evaluate();
+}
+
+void
+BitVectorUrem::_evaluate()
+{
+  d_assignment.ibvurem(d_children[0]->assignment(),
+                       d_children[1]->assignment());
 }
 
 void
 BitVectorUrem::evaluate()
 {
-  d_assignment.ibvurem(d_children[0]->assignment(),
-                       d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -4196,24 +4263,30 @@ BitVectorXor::BitVectorXor(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  _evaluate();
 }
 
 BitVectorXor::BitVectorXor(RNG* rng,
-                           const BitVector& assignment,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
-    : BitVectorNode(rng, assignment, domain, child0, child1)
+    : BitVectorNode(rng, domain, child0, child1)
 {
   assert(child0->size() == child1->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size());
+  assert(domain.size() == child0->size());
+  _evaluate();
+}
+
+void
+BitVectorXor::_evaluate()
+{
+  d_assignment.ibvxor(d_children[0]->assignment(), d_children[1]->assignment());
 }
 
 void
 BitVectorXor::evaluate()
 {
-  d_assignment.ibvxor(d_children[0]->assignment(), d_children[1]->assignment());
+  _evaluate();
 }
 
 bool
@@ -4323,28 +4396,34 @@ BitVectorIte::BitVectorIte(RNG* rng,
   assert(size == child1->size());
   assert(child0->size() == 1);
   assert(child1->size() == child2->size());
+  _evaluate();
 }
 
 BitVectorIte::BitVectorIte(RNG* rng,
-                           const BitVector& assignment,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0,
                            BitVectorNode* child1,
                            BitVectorNode* child2)
-    : BitVectorNode(rng, assignment, domain, child0, child1, child2)
+    : BitVectorNode(rng, domain, child0, child1, child2)
 {
   assert(child0->size() == 1);
   assert(child1->size() == child2->size());
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child1->size());
+  assert(domain.size() == child1->size());
+  _evaluate();
+}
+
+void
+BitVectorIte::_evaluate()
+{
+  d_assignment.ibvite(d_children[0]->assignment(),
+                      d_children[1]->assignment(),
+                      d_children[2]->assignment());
 }
 
 void
 BitVectorIte::evaluate()
 {
-  d_assignment.ibvite(d_children[0]->assignment(),
-                      d_children[1]->assignment(),
-                      d_children[2]->assignment());
+  _evaluate();
 }
 
 bool
@@ -4576,22 +4655,28 @@ BitVectorNot::BitVectorNot(RNG* rng, uint32_t size, BitVectorNode* child0)
     : BitVectorNode(rng, size, child0)
 {
   assert(size == child0->size());
+  _evaluate();
 }
 
 BitVectorNot::BitVectorNot(RNG* rng,
-                           const BitVector& assignment,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0)
-    : BitVectorNode(rng, assignment, domain, child0)
+    : BitVectorNode(rng, domain, child0)
 {
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size());
+  assert(domain.size() == child0->size());
+  _evaluate();
+}
+
+void
+BitVectorNot::_evaluate()
+{
+  d_assignment.ibvnot(d_children[0]->assignment());
 }
 
 void
 BitVectorNot::evaluate()
 {
-  d_assignment.ibvnot(d_children[0]->assignment());
+  _evaluate();
 }
 
 bool
@@ -4672,24 +4757,30 @@ BitVectorExtract::BitVectorExtract(
     : BitVectorNode(rng, size, child0), d_hi(hi), d_lo(lo)
 {
   assert(size == hi - lo + 1);
+  _evaluate();
 }
 
 BitVectorExtract::BitVectorExtract(RNG* rng,
-                                   const BitVector& assignment,
                                    const BitVectorDomain& domain,
                                    BitVectorNode* child0,
                                    uint32_t hi,
                                    uint32_t lo)
-    : BitVectorNode(rng, assignment, domain, child0), d_hi(hi), d_lo(lo)
+    : BitVectorNode(rng, domain, child0), d_hi(hi), d_lo(lo)
 {
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == hi - lo + 1);
+  assert(domain.size() == hi - lo + 1);
+  _evaluate();
+}
+
+void
+BitVectorExtract::_evaluate()
+{
+  d_assignment.ibvextract(d_children[0]->assignment(), d_hi, d_lo);
 }
 
 void
 BitVectorExtract::evaluate()
 {
-  d_assignment.ibvextract(d_children[0]->assignment(), d_hi, d_lo);
+  _evaluate();
 }
 
 bool
@@ -4867,23 +4958,29 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
     : BitVectorNode(rng, size, child0), d_n(n)
 {
   assert(size == child0->size() + n);
+  _evaluate();
 }
 
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
-                                         const BitVector& assignment,
                                          const BitVectorDomain& domain,
                                          BitVectorNode* child0,
                                          uint32_t n)
-    : BitVectorNode(rng, assignment, domain, child0), d_n(n)
+    : BitVectorNode(rng, domain, child0), d_n(n)
 {
-  assert(assignment.size() == domain.size());
-  assert(assignment.size() == child0->size() + n);
+  assert(domain.size() == child0->size() + n);
+  _evaluate();
+}
+
+void
+BitVectorSignExtend::_evaluate()
+{
+  d_assignment.ibvsext(d_children[0]->assignment(), d_n);
 }
 
 void
 BitVectorSignExtend::evaluate()
 {
-  d_assignment.ibvsext(d_children[0]->assignment(), d_n);
+  _evaluate();
 }
 
 bool

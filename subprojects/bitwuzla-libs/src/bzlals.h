@@ -27,11 +27,8 @@ class BzlaLs
   using ParentsSet   = std::unordered_set<uint32_t>;
   using ParentsMap   = std::unordered_map<uint32_t, ParentsSet>;
 
-  enum NodeKind
+  enum OperatorKind
   {
-    /* bit-vector variables and constants */
-    CONST,
-    /* operators */
     ADD,
     AND,
     ASHR,
@@ -74,20 +71,20 @@ class BzlaLs
 
   BzlaLs(uint64_t max_nprops, uint32_t seed = 1234);
 
-  uint32_t mk_node(NodeKind kind,
+  uint32_t mk_node(uint32_t size);
+  uint32_t mk_node(OperatorKind kind,
                    uint32_t size,
                    const std::vector<uint32_t>& children);
-  uint32_t mk_indexed_node(NodeKind kind,
+  uint32_t mk_indexed_node(OperatorKind kind,
                            uint32_t size,
                            uint32_t child0,
                            const std::vector<uint32_t>& indices);
 
-  uint32_t mk_node(NodeKind kind,
-                   const BitVector& assignment,
+  uint32_t mk_node(const BitVector& assignment, const BitVectorDomain& domain);
+  uint32_t mk_node(OperatorKind kind,
                    const BitVectorDomain& domain,
                    const std::vector<uint32_t>& children);
-  uint32_t mk_indexed_node(NodeKind kind,
-                           const BitVector& assignment,
+  uint32_t mk_indexed_node(OperatorKind kind,
                            const BitVectorDomain& domain,
                            uint32_t child0,
                            const std::vector<uint32_t>& indices);

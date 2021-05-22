@@ -22,34 +22,9 @@ class BitVectorNode
 
   /** Constructor. */
   BitVectorNode(RNG* rng, uint32_t size);
-  BitVectorNode(RNG* rng, uint32_t size, BitVectorNode* child0);
-  BitVectorNode(RNG* rng,
-                uint32_t size,
-                BitVectorNode* child0,
-                BitVectorNode* child1);
-  BitVectorNode(RNG* rng,
-                uint32_t size,
-                BitVectorNode* child0,
-                BitVectorNode* child1,
-                BitVectorNode* child2);
   BitVectorNode(RNG* rng,
                 const BitVector& assignment,
                 const BitVectorDomain& domain);
-  BitVectorNode(RNG* rng,
-                const BitVector& assignment,
-                const BitVectorDomain& domain,
-                BitVectorNode* child0);
-  BitVectorNode(RNG* rng,
-                const BitVector& assignment,
-                const BitVectorDomain& domain,
-                BitVectorNode* child0,
-                BitVectorNode* child1);
-  BitVectorNode(RNG* rng,
-                const BitVector& assignment,
-                const BitVectorDomain& domain,
-                BitVectorNode* child0,
-                BitVectorNode* child1,
-                BitVectorNode* child2);
   /** Destructor. */
   virtual ~BitVectorNode() {}
 
@@ -146,6 +121,27 @@ class BitVectorNode
   virtual std::string to_string() const;
 
  protected:
+  BitVectorNode(RNG* rng, uint32_t size, BitVectorNode* child0);
+  BitVectorNode(RNG* rng,
+                uint32_t size,
+                BitVectorNode* child0,
+                BitVectorNode* child1);
+  BitVectorNode(RNG* rng,
+                uint32_t size,
+                BitVectorNode* child0,
+                BitVectorNode* child1,
+                BitVectorNode* child2);
+  BitVectorNode(RNG* rng, const BitVectorDomain& domain, BitVectorNode* child0);
+  BitVectorNode(RNG* rng,
+                const BitVectorDomain& domain,
+                BitVectorNode* child0,
+                BitVectorNode* child1);
+  BitVectorNode(RNG* rng,
+                const BitVectorDomain& domain,
+                BitVectorNode* child0,
+                BitVectorNode* child1,
+                BitVectorNode* child2);
+
   uint32_t d_id                                = 0;
   std::unique_ptr<BitVectorNode*[]> d_children = nullptr;
   RNG* d_rng;
@@ -174,7 +170,6 @@ class BitVectorAdd : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorAdd(RNG* rng,
-               const BitVector& assignment,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
@@ -203,6 +198,9 @@ class BitVectorAdd : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorAdd& node);
@@ -218,7 +216,6 @@ class BitVectorAnd : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorAnd(RNG* rng,
-               const BitVector& assignment,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
@@ -252,6 +249,9 @@ class BitVectorAnd : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorAnd& node);
@@ -267,7 +267,6 @@ class BitVectorConcat : public BitVectorNode
                   BitVectorNode* child0,
                   BitVectorNode* child1);
   BitVectorConcat(RNG* rng,
-                  const BitVector& assignment,
                   const BitVectorDomain& domain,
                   BitVectorNode* child0,
                   BitVectorNode* child1);
@@ -305,6 +304,9 @@ class BitVectorConcat : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorConcat& node);
@@ -320,7 +322,6 @@ class BitVectorEq : public BitVectorNode
               BitVectorNode* child0,
               BitVectorNode* child1);
   BitVectorEq(RNG* rng,
-              const BitVector& assignment,
               const BitVectorDomain& domain,
               BitVectorNode* child0,
               BitVectorNode* child1);
@@ -351,6 +352,9 @@ class BitVectorEq : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorEq& node);
@@ -366,7 +370,6 @@ class BitVectorMul : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorMul(RNG* rng,
-               const BitVector& assignment,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
@@ -403,6 +406,8 @@ class BitVectorMul : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  void _evaluate();
+
   /** Cached inverse values result. */
   std::unique_ptr<BitVectorDomain> d_inverse_domain = nullptr;
 };
@@ -420,7 +425,6 @@ class BitVectorShl : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorShl(RNG* rng,
-               const BitVector& assignment,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
@@ -459,6 +463,9 @@ class BitVectorShl : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorShl& node);
@@ -494,7 +501,6 @@ class BitVectorShr : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorShr(RNG* rng,
-               const BitVector& assignment,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
@@ -533,6 +539,9 @@ class BitVectorShr : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorShr& node);
@@ -548,7 +557,6 @@ class BitVectorAshr : public BitVectorNode
                 BitVectorNode* child0,
                 BitVectorNode* child1);
   BitVectorAshr(RNG* rng,
-                const BitVector& assignment,
                 const BitVectorDomain& domain,
                 BitVectorNode* child0,
                 BitVectorNode* child1);
@@ -596,6 +604,9 @@ class BitVectorAshr : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorAshr& node);
@@ -611,7 +622,6 @@ class BitVectorUdiv : public BitVectorNode
                 BitVectorNode* child0,
                 BitVectorNode* child1);
   BitVectorUdiv(RNG* rng,
-                const BitVector& assignment,
                 const BitVectorDomain& domain,
                 BitVectorNode* child0,
                 BitVectorNode* child1);
@@ -668,6 +678,8 @@ class BitVectorUdiv : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  void _evaluate();
+
   /**
    * Try to find a consistent value for pos_x = 0 other than x = t.
    * Returns a null bit-vector if no such value can be found.
@@ -688,7 +700,6 @@ class BitVectorUlt : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorUlt(RNG* rng,
-               const BitVector& assignment,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
@@ -723,6 +734,9 @@ class BitVectorUlt : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorUlt& node);
@@ -738,7 +752,6 @@ class BitVectorSlt : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorSlt(RNG* rng,
-               const BitVector& assignment,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
@@ -781,6 +794,9 @@ class BitVectorSlt : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorSlt& node);
@@ -796,7 +812,6 @@ class BitVectorUrem : public BitVectorNode
                 BitVectorNode* child0,
                 BitVectorNode* child1);
   BitVectorUrem(RNG* rng,
-                const BitVector& assignment,
                 const BitVectorDomain& domain,
                 BitVectorNode* child0,
                 BitVectorNode* child1);
@@ -851,6 +866,8 @@ class BitVectorUrem : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  void _evaluate();
+
   /**
    * Pick a consistent value for pos_x = 0 with x > t.
    * Returns a null bit-vector if no such value can be found.
@@ -873,7 +890,6 @@ class BitVectorXor : public BitVectorNode
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorXor(RNG* rng,
-               const BitVector& assignment,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1);
@@ -902,6 +918,9 @@ class BitVectorXor : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorXor& node);
@@ -918,7 +937,6 @@ class BitVectorIte : public BitVectorNode
                BitVectorNode* child1,
                BitVectorNode* child2);
   BitVectorIte(RNG* rng,
-               const BitVector& assignment,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1,
@@ -968,6 +986,9 @@ class BitVectorIte : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorIte& node);
@@ -980,7 +1001,6 @@ class BitVectorNot : public BitVectorNode
   /** Constructors. */
   BitVectorNot(RNG* rng, uint32_t size, BitVectorNode* child0);
   BitVectorNot(RNG* rng,
-               const BitVector& assignment,
                const BitVectorDomain& domain,
                BitVectorNode* child0);
 
@@ -1010,6 +1030,9 @@ class BitVectorNot : public BitVectorNode
                                     uint32_t pos_x) override;
 
   std::string to_string() const override;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorNot& node);
@@ -1023,7 +1046,6 @@ class BitVectorExtract : public BitVectorNode
   BitVectorExtract(
       RNG* rng, uint32_t size, BitVectorNode* child0, uint32_t hi, uint32_t lo);
   BitVectorExtract(RNG* rng,
-                   const BitVector& assignment,
                    const BitVectorDomain& domain,
                    BitVectorNode* child0,
                    uint32_t hi,
@@ -1079,6 +1101,9 @@ class BitVectorExtract : public BitVectorNode
    * Cache for inverse_value.
    */
   std::unique_ptr<BitVectorDomain> d_x_slice_right = nullptr;
+
+ private:
+  void _evaluate();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorExtract& node);
@@ -1094,7 +1119,6 @@ class BitVectorSignExtend : public BitVectorNode
                       BitVectorNode* child0,
                       uint32_t n);
   BitVectorSignExtend(RNG* rng,
-                      const BitVector& assignment,
                       const BitVectorDomain& domain,
                       BitVectorNode* child0,
                       uint32_t n);
@@ -1131,6 +1155,8 @@ class BitVectorSignExtend : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  void _evaluate();
+
   /** The number of bits to extend with. */
   uint32_t d_n;
 };

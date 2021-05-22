@@ -39,31 +39,48 @@ BzlaLs::BzlaLs(uint64_t max_nprops, uint32_t seed)
 }
 
 uint32_t
-BzlaLs::mk_node(NodeKind kind,
-                uint32_t size,
-                const std::vector<uint32_t>& children)
+BzlaLs::mk_node(uint32_t size)
 {
-  return mk_node(
-      kind, BitVector::mk_zero(size), BitVectorDomain(size), children);
+  return mk_node(BitVector::mk_zero(size), BitVectorDomain(size));
 }
 
 uint32_t
-BzlaLs::mk_indexed_node(NodeKind kind,
+BzlaLs::mk_node(OperatorKind kind,
+                uint32_t size,
+                const std::vector<uint32_t>& children)
+{
+  return mk_node(kind, BitVectorDomain(size), children);
+}
+
+uint32_t
+BzlaLs::mk_indexed_node(OperatorKind kind,
                         uint32_t size,
                         uint32_t child0,
                         const std::vector<uint32_t>& indices)
 {
-  return mk_indexed_node(
-      kind, BitVector::mk_zero(size), BitVectorDomain(size), child0, indices);
+  return mk_indexed_node(kind, BitVectorDomain(size), child0, indices);
 }
 
 uint32_t
-BzlaLs::mk_node(NodeKind kind,
-                const BitVector& assignment,
+BzlaLs::mk_node(const BitVector& assignment, const BitVectorDomain& domain)
+{
+  uint32_t id = d_nodes.size();
+  assert(assignment.size() == domain.size());  // API check
+  std::unique_ptr<BitVectorNode> res(
+      new BitVectorNode(d_rng.get(), assignment, domain));
+  res->set_id(id);
+  d_nodes.push_back(std::move(res));
+  assert(get_node(id) == d_nodes.back().get());
+  assert(d_parents.find(id) == d_parents.end());
+  d_parents[id] = {};
+  return id;
+}
+
+uint32_t
+BzlaLs::mk_node(OperatorKind kind,
                 const BitVectorDomain& domain,
                 const std::vector<uint32_t>& children)
 {
-  assert(assignment.size() == domain.size());  // API check
   uint32_t id = d_nodes.size();
   for (uint32_t c : children)
   {
@@ -80,7 +97,6 @@ BzlaLs::mk_node(NodeKind kind,
     case ADD:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorAdd(d_rng.get(),
-                                 assignment,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1])));
@@ -89,7 +105,6 @@ BzlaLs::mk_node(NodeKind kind,
     case AND:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorAnd(d_rng.get(),
-                                 assignment,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1])));
@@ -97,7 +112,6 @@ BzlaLs::mk_node(NodeKind kind,
     case ASHR:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorAshr(d_rng.get(),
-                                  assignment,
                                   domain,
                                   get_node(children[0]),
                                   get_node(children[1])));
@@ -105,7 +119,6 @@ BzlaLs::mk_node(NodeKind kind,
     case CONCAT:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorConcat(d_rng.get(),
-                                    assignment,
                                     domain,
                                     get_node(children[0]),
                                     get_node(children[1])));
@@ -113,7 +126,6 @@ BzlaLs::mk_node(NodeKind kind,
     case EQ:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorEq(d_rng.get(),
-                                assignment,
                                 domain,
                                 get_node(children[0]),
                                 get_node(children[1])));
@@ -121,7 +133,6 @@ BzlaLs::mk_node(NodeKind kind,
     case ITE:
       assert(children.size() == 3);  // API check
       res.reset(new BitVectorIte(d_rng.get(),
-                                 assignment,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1]),
@@ -130,7 +141,6 @@ BzlaLs::mk_node(NodeKind kind,
     case MUL:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorMul(d_rng.get(),
-                                 assignment,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1])));
@@ -138,12 +148,11 @@ BzlaLs::mk_node(NodeKind kind,
     case NOT:
       assert(children.size() == 1);  // API check
       d_nodes.push_back(std::make_unique<BitVectorNot>(
-          d_rng.get(), assignment, domain, get_node(children[0])));
+          d_rng.get(), domain, get_node(children[0])));
       break;
     case SHL:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorShl(d_rng.get(),
-                                 assignment,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1])));
@@ -151,7 +160,6 @@ BzlaLs::mk_node(NodeKind kind,
     case SHR:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorShr(d_rng.get(),
-                                 assignment,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1])));
@@ -159,7 +167,6 @@ BzlaLs::mk_node(NodeKind kind,
     case SLT:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorSlt(d_rng.get(),
-                                 assignment,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1])));
@@ -167,7 +174,6 @@ BzlaLs::mk_node(NodeKind kind,
     case UDIV:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorUdiv(d_rng.get(),
-                                  assignment,
                                   domain,
                                   get_node(children[0]),
                                   get_node(children[1])));
@@ -175,7 +181,6 @@ BzlaLs::mk_node(NodeKind kind,
     case ULT:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorSlt(d_rng.get(),
-                                 assignment,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1])));
@@ -183,7 +188,6 @@ BzlaLs::mk_node(NodeKind kind,
     case UREM:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorUrem(d_rng.get(),
-                                  assignment,
                                   domain,
                                   get_node(children[0]),
                                   get_node(children[1])));
@@ -191,16 +195,12 @@ BzlaLs::mk_node(NodeKind kind,
     case XOR:
       assert(children.size() == 2);  // API check
       res.reset(new BitVectorXor(d_rng.get(),
-                                 assignment,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1])));
       break;
 
-    default:
-      assert(kind == CONST);  // API check
-      assert(children.empty());
-      res.reset(new BitVectorNode(d_rng.get(), assignment, domain));
+    default: assert(0);  // API check
   }
   res->set_id(id);
   d_nodes.push_back(std::move(res));
@@ -212,17 +212,15 @@ BzlaLs::mk_node(NodeKind kind,
 }
 
 uint32_t
-BzlaLs::mk_indexed_node(NodeKind kind,
-                        const BitVector& assignment,
+BzlaLs::mk_indexed_node(OperatorKind kind,
                         const BitVectorDomain& domain,
                         uint32_t child0,
                         const std::vector<uint32_t>& indices)
 {
   assert(kind == EXTRACT || kind == SEXT);                    // API check
-  assert(assignment.size() == domain.size());                 // API check
   assert(kind != EXTRACT || indices.size() == 2);             // API check
   assert(kind != EXTRACT || indices[0] >= indices[1]);        // API check
-  assert(kind != EXTRACT || indices[0] < assignment.size());  // API check
+  assert(kind != EXTRACT || indices[0] < domain.size());      // API check
   assert(kind != SEXT || indices.size() == 1);                // API check
 
   uint32_t id = d_nodes.size();
@@ -236,7 +234,6 @@ BzlaLs::mk_indexed_node(NodeKind kind,
   if (kind == EXTRACT)
   {
     res.reset(new BitVectorExtract(d_rng.get(),
-                                   assignment,
                                    domain,
                                    get_node(child0),
                                    indices[0],
@@ -245,7 +242,7 @@ BzlaLs::mk_indexed_node(NodeKind kind,
   else
   {
     res.reset(new BitVectorSignExtend(
-        d_rng.get(), assignment, domain, get_node(child0), indices[0]));
+        d_rng.get(), domain, get_node(child0), indices[0]));
   }
   res->set_id(id);
   d_nodes.push_back(std::move(res));
