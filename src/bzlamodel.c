@@ -467,6 +467,99 @@ bzla_model_get_fun(Bzla *bzla, BzlaNode *exp)
   return bzla_model_get_fun_aux(bzla, bzla->bv_model, bzla->fun_model, exp);
 }
 
+void
+bzla_model_get_array_model(Bzla *bzla,
+                           BzlaNode *exp,
+                           BzlaNodePtrStack *indices,
+                           BzlaNodePtrStack *values,
+                           BzlaNode **default_value)
+{
+  assert(bzla_node_is_array(exp));
+  assert(indices);
+  assert(values);
+  assert(default_value);
+
+  const BzlaPtrHashTable *model = bzla_model_get_fun(bzla, exp);
+
+  if (!model)
+  {
+    return;
+  }
+
+  BzlaBitVectorTuple *tup;
+  BzlaBitVector *bv;
+  BzlaPtrHashTableIterator it;
+
+  BzlaSortId array_sort = bzla_node_get_sort_id(exp);
+  BzlaSortId index_sort = bzla_sort_array_get_index(bzla, array_sort);
+  BzlaSortId value_sort = bzla_sort_array_get_element(bzla, array_sort);
+
+  *default_value = 0;
+
+  bzla_iter_hashptr_init(&it, model);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    bv  = it.bucket->data.as_ptr;
+    tup = bzla_iter_hashptr_next(&it);
+    if (tup->arity == 0)
+    {
+      assert(!*default_value);
+      *default_value = bzla_node_mk_value(bzla, value_sort, bv);
+    }
+    else
+    {
+      assert(tup->arity == 1);
+      BZLA_PUSH_STACK(*indices,
+                      bzla_node_mk_value(bzla, index_sort, tup->bv[0]));
+      BZLA_PUSH_STACK(*values, bzla_node_mk_value(bzla, value_sort, bv));
+    }
+  }
+}
+
+void
+bzla_model_get_fun_model(Bzla *bzla,
+                         BzlaNode *exp,
+                         BzlaNodePtrStack *args,
+                         BzlaNodePtrStack *values)
+{
+  assert(bzla_sort_is_fun(bzla, bzla_node_get_sort_id(exp)));
+  assert(args);
+  assert(values);
+
+  const BzlaPtrHashTable *model = bzla_model_get_fun(bzla, exp);
+
+  if (!model)
+  {
+    return;
+  }
+
+  BzlaBitVectorTuple *tup;
+  BzlaBitVector *bv;
+  BzlaPtrHashTableIterator it;
+
+  BzlaSortId fun_sort      = bzla_node_get_sort_id(exp);
+  BzlaSortId domain_sort   = bzla_sort_fun_get_domain(bzla, fun_sort);
+  BzlaSortId codomain_sort = bzla_sort_fun_get_codomain(bzla, fun_sort);
+
+  BzlaSort *domain = bzla_sort_get_by_id(bzla, domain_sort);
+  bzla_iter_hashptr_init(&it, model);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    bv  = it.bucket->data.as_ptr;
+    tup = bzla_iter_hashptr_next(&it);
+    assert(tup->arity > 0);
+
+    for (size_t i = 0; i < tup->arity; ++i)
+    {
+      BZLA_PUSH_STACK(
+          *args,
+          bzla_node_mk_value(bzla, domain->tuple.elements[i]->id, tup->bv[i]));
+    }
+
+    BZLA_PUSH_STACK(*values, bzla_node_mk_value(bzla, codomain_sort, bv));
+  }
+}
+
 /*------------------------------------------------------------------------*/
 
 static void
@@ -1365,9 +1458,10 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
   exp  = bzla_simplify_exp(bzla, exp);
   sort = bzla_node_get_sort_id(exp);
 
-  if (bzla_node_is_bv(bzla, exp))
+  if (bzla_node_is_bv(bzla, exp) || bzla_node_is_fp(bzla, exp)
+      || bzla_node_is_rm(bzla, exp))
   {
-    res = bzla_exp_bv_const(bzla, bzla_model_get_bv(bzla, exp));
+    res = bzla_node_mk_value(bzla, sort, bzla_model_get_bv(bzla, exp));
   }
   else if ((bzla_node_is_lambda(exp) && bzla_node_fun_get_arity(bzla, exp) > 1)
            || bzla_node_is_const_array(exp))
@@ -1388,7 +1482,7 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
       {
         /* Check for const array. */
         res = 0;
-        bzla_iter_hashptr_init(&it, (BzlaPtrHashTable *) model);
+        bzla_iter_hashptr_init(&it, model);
         while (bzla_iter_hashptr_has_next(&it))
         {
           bv_val = it.bucket->data.as_ptr;
@@ -1409,7 +1503,7 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
         }
 
         /* Build write chains on top of base array. */
-        bzla_iter_hashptr_init(&it, (BzlaPtrHashTable *) model);
+        bzla_iter_hashptr_init(&it, model);
         while (bzla_iter_hashptr_has_next(&it))
         {
           bv_val = it.bucket->data.as_ptr;

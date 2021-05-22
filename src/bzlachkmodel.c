@@ -74,31 +74,6 @@ map_inputs(Bzla *bzla, Bzla *clone)
   return inputs;
 }
 
-static BzlaNode *
-value_to_node(Bzla *bzla, BzlaSortId sort, const BzlaBitVector *value)
-{
-  BzlaNode *res = 0;
-
-  if (bzla_sort_is_fp(bzla, sort))
-  {
-    BzlaFloatingPoint *fp = bzla_fp_from_bv(bzla, sort, value);
-    res                   = bzla_exp_fp_const_fp(bzla, fp);
-    bzla_fp_free(bzla, fp);
-  }
-  else if (bzla_sort_is_rm(bzla, sort))
-  {
-    res = bzla_exp_rm_const(bzla, bzla_rm_from_bv(value));
-  }
-  else
-  {
-    assert(bzla_sort_is_bv(bzla, sort));
-    res = bzla_exp_bv_const(bzla, value);
-  }
-  assert(res);
-
-  return res;
-}
-
 void
 bzla_check_model(BzlaCheckModelContext *ctx)
 {
@@ -188,7 +163,7 @@ bzla_check_model(BzlaCheckModelContext *ctx)
         for (i = 0; i < args_tuple->arity; i++)
         {
           assert(bzla_iter_tuple_sort_has_next(&sit));
-          model = value_to_node(
+          model = bzla_node_mk_value(
               clone, bzla_iter_tuple_sort_next(&sit), args_tuple->bv[i]);
           BZLA_PUSH_STACK(consts, model);
           BZLALOG(2, "  arg%u: %s", i, bzla_util_node2string(model));
@@ -196,7 +171,7 @@ bzla_check_model(BzlaCheckModelContext *ctx)
 
         args  = bzla_exp_args(clone, consts.start, BZLA_COUNT_STACK(consts));
         apply = bzla_exp_apply(clone, simp_clone, args);
-        model = value_to_node(clone, bzla_node_get_sort_id(apply), value);
+        model = bzla_node_mk_value(clone, bzla_node_get_sort_id(apply), value);
         eq = bzla_exp_eq(clone, apply, model);
 
         BZLALOG(2, "  value: %s", bzla_util_node2string(model));
@@ -214,7 +189,8 @@ bzla_check_model(BzlaCheckModelContext *ctx)
     else
     {
       value = bzla_model_get_bv(bzla, exp);
-      model = value_to_node(clone, bzla_node_get_sort_id(simp_clone), value);
+      model =
+          bzla_node_mk_value(clone, bzla_node_get_sort_id(simp_clone), value);
 
       BZLALOG(2,
               "assert model for %s (%s) [%s]",

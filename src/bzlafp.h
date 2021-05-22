@@ -60,6 +60,13 @@ uint32_t bzla_fp_get_bv_width(const BzlaFloatingPoint *fp);
 /** Get the bit-vector representing a given floating-point.  */
 BzlaBitVector *bzla_fp_as_bv(Bzla *bzla, BzlaFloatingPoint *fp);
 
+void bzla_fp_ieee_bv_as_bvs(Bzla *bzla,
+                            const BzlaBitVector *bv,
+                            BzlaSortId fp_sort,
+                            BzlaBitVector **sign,
+                            BzlaBitVector **exp,
+                            BzlaBitVector **sig);
+
 /**
  * Get the triple of bit-vectors representing a given floating-point.
  * sign: The output argument for the bit-vector representation of the sign bit.

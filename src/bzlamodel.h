@@ -68,6 +68,17 @@ const BzlaPtrHashTable* bzla_model_get_fun_aux(Bzla* bzla,
                                                BzlaIntHashTable* fun_model,
                                                BzlaNode* exp);
 
+void bzla_model_get_array_model(Bzla* bzla,
+                                BzlaNode* exp,
+                                BzlaNodePtrStack* indices,
+                                BzlaNodePtrStack* values,
+                                BzlaNode** default_value);
+
+void bzla_model_get_fun_model(Bzla* bzla,
+                              BzlaNode* exp,
+                              BzlaNodePtrStack* args,
+                              BzlaNodePtrStack* values);
+
 /**
  * Get node representation of the model value of the given node.
  *

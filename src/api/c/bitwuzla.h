@@ -2819,6 +2819,111 @@ BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla);
 BitwuzlaTerm *bitwuzla_get_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 
 /**
+ * Get string representation of the current model value of given bit-vector
+ * term.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param term The term to query a model value for.
+ *
+ * @return Binary string representation of current model value of term \p term.
+ *         Return value is valid until next `bitwuzla_get_bv_value` call.
+ */
+const char *bitwuzla_get_bv_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
+
+/**
+ * Get string of IEEE 754 standard representation of the current model value of
+ * given floating-point term.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param term The term to query a model value for.
+ * @param sign Binary string representation of the sign bit.
+ * @param exponent Binary string representation of the exponent bit-vector
+ *        value.
+ * @param significand Binary string representation of the significand
+ *        bit-vector value.
+ */
+void bitwuzla_get_fp_value(Bitwuzla *bitwuzla,
+                           const BitwuzlaTerm *term,
+                           const char **sign,
+                           const char **exponent,
+                           const char **significand);
+
+/**
+ * Get string representation of the current model value of given rounding mode
+ * term.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param term The rounding mode term to query a model value for.
+ *
+ * @return String representation of rounding mode (RNA, RNE, RTN, RTP, RTZ).
+ */
+const char *bitwuzla_get_rm_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
+
+/**
+ * Get the current model value of given array term.
+ *
+ * The string representation of `indices` and `values` can be queried via
+ * `bitwuzla_get_bv_value()`, `bitwuzla_get_fp_value()`, and
+ * `bitwuzla_get_rm_value()`.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param term The term to query a model value for.
+ * @param indices List of indices of size `size`. 1:1 mapping to `values`,
+ *                i.e., `index[i] -> value[i]`.
+ * @param values List of values of size `size`.
+ * @param size Size of `indices` and `values` list.
+ * @param default_value The value of all other indices not in `indices` and
+ *                      is set when base array is a constant array.
+ */
+void bitwuzla_get_array_value(Bitwuzla *bitwuzla,
+                              const BitwuzlaTerm *term,
+                              BitwuzlaTerm ***indices,
+                              BitwuzlaTerm ***values,
+                              size_t *size,
+                              BitwuzlaTerm **default_value);
+
+/**
+ * Get the current model value of given function term.
+ *
+ * The string representation of `args` and `values` can be queried via
+ * `bitwuzla_get_bv_value()`, `bitwuzla_get_fp_value()`, and
+ * `bitwuzla_get_rm_value()`.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param term The term to query a model value for.
+ * @param args List of argument lists (nested lists) of size `size`. Each
+ *             argument list is of size `arity`.
+ * @param arity Size of each argument list in `args`.
+ * @param values List of values of size `size`.
+ * @param size Size of `indices` and `values` list.
+ *
+ * **Usage**
+ * ```
+ * size_t arity, size;
+ * BitwuzlaTerm ***args, **values;
+ * bitwuzla_get_fun_value(bzla, f, &args, &arity, &values, &size);
+ *
+ * for (size_t i = 0; i < size; ++i)
+ * {
+ *   // args[i] are argument lists of size arity
+ *   for (size_t j = 0; j < arity; ++j)
+ *   {
+ *     // args[i][j] corresponds to value of jth argument of function f
+ *   }
+ *   // values[i] corresponds to the value of
+ *   // (f args[i][0] ... args[i][arity - 1])
+ * }
+ * ```
+ *
+ */
+void bitwuzla_get_fun_value(Bitwuzla *bitwuzla,
+                            const BitwuzlaTerm *term,
+                            BitwuzlaTerm ****args,
+                            size_t *arity,
+                            BitwuzlaTerm ***values,
+                            size_t *size);
+
+/**
  * Print a model for the current input formula.
  *
  * Requires that the last `bitwuzla_check_sat()` query returned

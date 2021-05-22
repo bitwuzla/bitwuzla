@@ -2991,6 +2991,22 @@ bzla_fp_as_bv(Bzla *bzla, BzlaFloatingPoint *fp)
 }
 
 void
+bzla_fp_ieee_bv_as_bvs(Bzla *bzla,
+                       const BzlaBitVector *bv,
+                       BzlaSortId fp_sort,
+                       BzlaBitVector **sign,
+                       BzlaBitVector **exp,
+                       BzlaBitVector **sig)
+{
+  uint32_t bw     = bzla_bv_get_width(bv);
+  uint32_t bw_exp = bzla_sort_fp_get_exp_width(bzla, fp_sort);
+  uint32_t bw_sig = bzla_sort_fp_get_sig_width(bzla, fp_sort);
+  *sign           = bzla_bv_slice(bzla->mm, bv, bw - 1, bw - 1);
+  *exp            = bzla_bv_slice(bzla->mm, bv, bw - 2, bw - 1 - bw_exp);
+  *sig            = bzla_bv_slice(bzla->mm, bv, bw_sig - 2, 0);
+}
+
+void
 bzla_fp_as_bvs(Bzla *bzla,
                BzlaFloatingPoint *fp,
                BzlaBitVector **sign,

@@ -3912,6 +3912,33 @@ bzla_node_create_fp_to_fp_from_ubv(Bzla *bzla,
       bzla, BZLA_FP_TO_FP_UBV_NODE, e[0], e[1], sort);
 }
 
+/*------------------------------------------------------------------------*/
+
+BzlaNode *
+bzla_node_mk_value(Bzla *bzla, BzlaSortId sort, const BzlaBitVector *bv)
+{
+  BzlaNode *res = 0;
+
+  if (bzla_sort_is_fp(bzla, sort))
+  {
+    BzlaFloatingPoint *fp = bzla_fp_from_bv(bzla, sort, bv);
+    res                   = bzla_exp_fp_const_fp(bzla, fp);
+    bzla_fp_free(bzla, fp);
+  }
+  else if (bzla_sort_is_rm(bzla, sort))
+  {
+    res = bzla_exp_rm_const(bzla, bzla_rm_from_bv(bv));
+  }
+  else
+  {
+    assert(bzla_sort_is_bv(bzla, sort));
+    res = bzla_exp_bv_const(bzla, bv);
+  }
+  assert(res);
+
+  return res;
+}
+
 /*========================================================================*/
 
 BzlaNodePair *

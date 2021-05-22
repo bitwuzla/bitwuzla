@@ -28,6 +28,7 @@
 /* -------------------------------------------------------------------------- */
 
 BZLA_DECLARE_STACK(BitwuzlaTermPtr, BitwuzlaTerm *);
+BZLA_DECLARE_STACK(BitwuzlaTermPtrPtr, BitwuzlaTerm **);
 BZLA_DECLARE_STACK(BitwuzlaTermConstPtr, const BitwuzlaTerm *);
 BZLA_DECLARE_STACK(BitwuzlaSortPtr, BitwuzlaSort *);
 
@@ -49,6 +50,18 @@ struct Bitwuzla
   BitwuzlaSortPtrStack d_fun_domain_sorts;
   /* Domain sorts of current bitwuzla_sort_fun_get_domain_sorts query. */
   BitwuzlaSortPtrStack d_sort_fun_domain_sorts;
+  /* String populated by bitwuzla_get_bv_value. */
+  char *d_bv_value;
+  /* Strings populated by bitwuzla_get_fp_value. */
+  char *d_fp_significand;
+  char *d_fp_exponent;
+  /* Strings populated by bitwuzla_get_array_value. */
+  BitwuzlaTermPtrStack d_array_indices;
+  BitwuzlaTermPtrStack d_array_values;
+  /* Strings populated by bitwuzla_get_fun_value. */
+  BitwuzlaTermPtrStack d_fun_args;
+  BitwuzlaTermPtrPtrStack d_fun_args_ptr;
+  BitwuzlaTermPtrStack d_fun_values;
   /* Map internal sort id to external sort wrapper. */
   BzlaIntHashTable *d_sort_map;
   /* Internal solver. */
@@ -994,6 +1007,11 @@ init(Bitwuzla *bitwuzla, BzlaMemMgr *mm)
   BZLA_INIT_STACK(mm, bitwuzla->d_term_children);
   BZLA_INIT_STACK(mm, bitwuzla->d_fun_domain_sorts);
   BZLA_INIT_STACK(mm, bitwuzla->d_sort_fun_domain_sorts);
+  BZLA_INIT_STACK(mm, bitwuzla->d_array_indices);
+  BZLA_INIT_STACK(mm, bitwuzla->d_array_values);
+  BZLA_INIT_STACK(mm, bitwuzla->d_fun_args);
+  BZLA_INIT_STACK(mm, bitwuzla->d_fun_args_ptr);
+  BZLA_INIT_STACK(mm, bitwuzla->d_fun_values);
   bzla_opt_set(bitwuzla->d_bzla, BZLA_OPT_AUTO_CLEANUP, 1);
 }
 
@@ -1002,7 +1020,7 @@ bitwuzla_new(void)
 {
   Bitwuzla *res;
   BzlaMemMgr *mm = bzla_mem_mgr_new();
-  BZLA_NEW(mm, res);
+  BZLA_CNEW(mm, res);
   init(res, mm);
   return res;
 }
@@ -1025,6 +1043,26 @@ reset(Bitwuzla *bitwuzla)
   BZLA_RELEASE_STACK(bitwuzla->d_term_children);
   BZLA_RELEASE_STACK(bitwuzla->d_fun_domain_sorts);
   BZLA_RELEASE_STACK(bitwuzla->d_sort_fun_domain_sorts);
+  BZLA_RELEASE_STACK(bitwuzla->d_array_indices);
+  BZLA_RELEASE_STACK(bitwuzla->d_array_values);
+  BZLA_RELEASE_STACK(bitwuzla->d_fun_args);
+  BZLA_RELEASE_STACK(bitwuzla->d_fun_args_ptr);
+  BZLA_RELEASE_STACK(bitwuzla->d_fun_values);
+  if (bitwuzla->d_bv_value)
+  {
+    bzla_mem_freestr(bitwuzla->d_mm, bitwuzla->d_bv_value);
+    bitwuzla->d_bv_value = 0;
+  }
+  if (bitwuzla->d_fp_significand)
+  {
+    bzla_mem_freestr(bitwuzla->d_mm, bitwuzla->d_fp_significand);
+    bitwuzla->d_fp_significand = 0;
+  }
+  if (bitwuzla->d_fp_exponent)
+  {
+    bzla_mem_freestr(bitwuzla->d_mm, bitwuzla->d_fp_exponent);
+    bitwuzla->d_fp_exponent = 0;
+  }
   bzla_delete(bitwuzla->d_bzla);
 }
 
@@ -2956,6 +2994,266 @@ bitwuzla_get_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
 
   BzlaNode *res = bzla_model_get_value(bzla, bzla_term);
   BZLA_RETURN_BITWUZLA_TERM(res);
+}
+
+const char *
+bitwuzla_get_bv_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_PRODUCE_MODELS(bzla);
+  BZLA_CHECK_SAT(bzla, "retrieve model");
+  BZLA_ABORT(bzla->quantifiers->count,
+             "'get-value' is currently not supported with quantifiers");
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  BZLA_ABORT(!bzla_node_is_bv(bzla, bzla_term),
+             "given term is not a bit-vector term");
+
+  if (bitwuzla->d_bv_value)
+  {
+    bzla_mem_freestr(bitwuzla->d_mm, bitwuzla->d_bv_value);
+  }
+  const BzlaBitVector *bv = bzla_model_get_bv(bzla, bzla_term);
+  bitwuzla->d_bv_value    = bzla_bv_to_char(bitwuzla->d_mm, bv);
+  return bitwuzla->d_bv_value;
+}
+
+void
+bitwuzla_get_fp_value(Bitwuzla *bitwuzla,
+                      const BitwuzlaTerm *term,
+                      const char **sign,
+                      const char **exponent,
+                      const char **significand)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(term);
+  BZLA_CHECK_ARG_NOT_NULL(sign);
+  BZLA_CHECK_ARG_NOT_NULL(exponent);
+  BZLA_CHECK_ARG_NOT_NULL(significand);
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_PRODUCE_MODELS(bzla);
+  BZLA_CHECK_SAT(bzla, "retrieve model");
+  BZLA_ABORT(bzla->quantifiers->count,
+             "'get-value' is currently not supported with quantifiers");
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  BZLA_ABORT(!bzla_node_is_fp(bzla, bzla_term),
+             "given term is not a floating-point term");
+
+  const BzlaBitVector *bv = bzla_model_get_bv(bzla, bzla_term);
+  BzlaBitVector *bv_sign, *bv_exp, *bv_sig;
+  bzla_fp_ieee_bv_as_bvs(
+      bzla, bv, bzla_node_get_sort_id(bzla_term), &bv_sign, &bv_exp, &bv_sig);
+
+  if (bitwuzla->d_fp_exponent)
+  {
+    assert(bitwuzla->d_fp_significand);
+    bzla_mem_freestr(bitwuzla->d_mm, bitwuzla->d_fp_exponent);
+    bzla_mem_freestr(bitwuzla->d_mm, bitwuzla->d_fp_significand);
+  }
+  bitwuzla->d_fp_exponent    = bzla_bv_to_char(bitwuzla->d_mm, bv_exp);
+  bitwuzla->d_fp_significand = bzla_bv_to_char(bitwuzla->d_mm, bv_sig);
+
+  *sign        = bzla_bv_is_one(bv_sign) ? "1" : "0";
+  *exponent    = bitwuzla->d_fp_exponent;
+  *significand = bitwuzla->d_fp_significand;
+
+  bzla_bv_free(bzla->mm, bv_sign);
+  bzla_bv_free(bzla->mm, bv_exp);
+  bzla_bv_free(bzla->mm, bv_sig);
+}
+
+const char *
+bitwuzla_get_rm_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(term);
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_PRODUCE_MODELS(bzla);
+  BZLA_CHECK_SAT(bzla, "retrieve model");
+  BZLA_ABORT(bzla->quantifiers->count,
+             "'get-value' is currently not supported with quantifiers");
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  BZLA_ABORT(!bzla_node_is_rm(bzla, bzla_term),
+             "given term is not a rounding mode term");
+
+  switch (bzla_rm_from_bv(bzla_model_get_bv(bzla, bzla_term)))
+  {
+    case BZLA_RM_RNA: return "RNA";
+    case BZLA_RM_RNE: return "RNE";
+    case BZLA_RM_RTN: return "RTN";
+    case BZLA_RM_RTP: return "RTP";
+    case BZLA_RM_RTZ: return "RTZ";
+    default: assert(0); return "";
+  }
+}
+
+void
+bitwuzla_get_array_value(Bitwuzla *bitwuzla,
+                         const BitwuzlaTerm *term,
+                         BitwuzlaTerm ***indices,
+                         BitwuzlaTerm ***values,
+                         size_t *size,
+                         BitwuzlaTerm **default_value)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(term);
+  BZLA_CHECK_ARG_NOT_NULL(indices);
+  BZLA_CHECK_ARG_NOT_NULL(values);
+  BZLA_CHECK_ARG_NOT_NULL(size);
+  BZLA_CHECK_ARG_NOT_NULL(default_value);
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_PRODUCE_MODELS(bzla);
+  BZLA_CHECK_SAT(bzla, "retrieve model");
+  BZLA_ABORT(bzla->quantifiers->count,
+             "'get-value' is currently not supported with quantifiers");
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  BZLA_ABORT(!bzla_node_is_array(bzla_term), "given term is not an array term");
+
+  BzlaNodePtrStack _indices, _values;
+  BzlaNode *_default_value = 0, *index, *value;
+
+  BZLA_INIT_STACK(bitwuzla->d_mm, _indices);
+  BZLA_INIT_STACK(bitwuzla->d_mm, _values);
+  bzla_model_get_array_model(
+      bzla, bzla_term, &_indices, &_values, &_default_value);
+  assert(BZLA_COUNT_STACK(_indices) == BZLA_COUNT_STACK(_values));
+
+  *indices       = 0;
+  *values        = 0;
+  *size          = 0;
+  *default_value = 0;
+
+  if (BZLA_EMPTY_STACK(_indices) && !_default_value)
+  {
+    BZLA_RELEASE_STACK(_indices);
+    BZLA_RELEASE_STACK(_values);
+    return;
+  }
+
+  BZLA_RESET_STACK(bitwuzla->d_array_indices);
+  BZLA_RESET_STACK(bitwuzla->d_array_values);
+
+  for (size_t i = 0; i < BZLA_COUNT_STACK(_indices); ++i)
+  {
+    index = BZLA_PEEK_STACK(_indices, i);
+    value = BZLA_PEEK_STACK(_values, i);
+    BZLA_PUSH_STACK(bitwuzla->d_array_indices,
+                    BZLA_EXPORT_BITWUZLA_TERM(index));
+    bzla_node_inc_ext_ref_counter(bzla, index);
+    BZLA_PUSH_STACK(bitwuzla->d_array_values, BZLA_EXPORT_BITWUZLA_TERM(value));
+    bzla_node_inc_ext_ref_counter(bzla, value);
+  }
+
+  *size = BZLA_COUNT_STACK(_values);
+
+  if (*size)
+  {
+    *indices = (BitwuzlaTerm **) bitwuzla->d_array_indices.start;
+    *values  = (BitwuzlaTerm **) bitwuzla->d_array_values.start;
+  }
+
+  if (_default_value)
+  {
+    *default_value = BZLA_EXPORT_BITWUZLA_TERM(_default_value);
+    bzla_node_inc_ext_ref_counter(bzla, _default_value);
+  }
+  BZLA_RELEASE_STACK(_indices);
+  BZLA_RELEASE_STACK(_values);
+}
+
+void
+bitwuzla_get_fun_value(Bitwuzla *bitwuzla,
+                       const BitwuzlaTerm *term,
+                       BitwuzlaTerm ****args,
+                       size_t *arity,
+                       BitwuzlaTerm ***values,
+                       size_t *size)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(term);
+  BZLA_CHECK_ARG_NOT_NULL(args);
+  BZLA_CHECK_ARG_NOT_NULL(arity);
+  BZLA_CHECK_ARG_NOT_NULL(values);
+  BZLA_CHECK_ARG_NOT_NULL(size);
+
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_CHECK_OPT_PRODUCE_MODELS(bzla);
+  BZLA_CHECK_SAT(bzla, "retrieve model");
+  BZLA_ABORT(bzla->quantifiers->count,
+             "'get-value' is currently not supported with quantifiers");
+
+  BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
+  assert(bzla_node_get_ext_refs(bzla_term));
+  BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
+  BZLA_ABORT(!bzla_sort_is_fun(bzla, bzla_node_get_sort_id(bzla_term)),
+             "given term is not a function term");
+
+  uint32_t _arity = bzla_node_fun_get_arity(bzla, bzla_term);
+  BzlaNodePtrStack _args, _values;
+
+  BZLA_INIT_STACK(bitwuzla->d_mm, _args);
+  BZLA_INIT_STACK(bitwuzla->d_mm, _values);
+  bzla_model_get_fun_model(bzla, bzla_term, &_args, &_values);
+  assert(BZLA_COUNT_STACK(_values) * _arity == BZLA_COUNT_STACK(_args));
+
+  *args   = 0;
+  *arity  = 0;
+  *values = 0;
+  *size   = 0;
+
+  if (BZLA_EMPTY_STACK(_args))
+  {
+    BZLA_RELEASE_STACK(_args);
+    BZLA_RELEASE_STACK(_values);
+    return;
+  }
+
+  BZLA_RESET_STACK(bitwuzla->d_fun_args_ptr);
+  BZLA_RESET_STACK(bitwuzla->d_fun_args);
+  BZLA_RESET_STACK(bitwuzla->d_fun_values);
+
+  BzlaNode *arg, *value;
+  for (size_t i = 0; i < BZLA_COUNT_STACK(_args); ++i)
+  {
+    arg = BZLA_PEEK_STACK(_args, i);
+    BZLA_PUSH_STACK(bitwuzla->d_fun_args, BZLA_EXPORT_BITWUZLA_TERM(arg));
+    bzla_node_inc_ext_ref_counter(bzla, arg);
+  }
+
+  for (size_t i = 0; i < BZLA_COUNT_STACK(_values); i += _arity)
+  {
+    BZLA_PUSH_STACK(bitwuzla->d_fun_args_ptr, bitwuzla->d_fun_args.start + i);
+    value = BZLA_PEEK_STACK(_values, i);
+    BZLA_PUSH_STACK(bitwuzla->d_fun_values, BZLA_EXPORT_BITWUZLA_TERM(value));
+    bzla_node_inc_ext_ref_counter(bzla, value);
+  }
+
+  assert(BZLA_COUNT_STACK(bitwuzla->d_fun_args_ptr)
+         == BZLA_COUNT_STACK(bitwuzla->d_fun_values));
+
+  *arity  = _arity;
+  *args   = (BitwuzlaTerm ***) bitwuzla->d_fun_args_ptr.start;
+  *values = (BitwuzlaTerm **) bitwuzla->d_fun_values.start;
+  *size   = BZLA_COUNT_STACK(_values);
+  BZLA_RELEASE_STACK(_args);
+  BZLA_RELEASE_STACK(_values);
 }
 
 void

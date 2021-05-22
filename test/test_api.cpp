@@ -2504,6 +2504,141 @@ TEST_F(TestApi, get_value)
 //               "'get-value' is currently not supported with quantifiers");
 }
 
+TEST_F(TestApi, get_bv_value)
+{
+  ASSERT_DEATH(bitwuzla_get_bv_value(d_bzla, d_bv_one1),
+               d_error_produce_models);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+  ASSERT_DEATH(bitwuzla_get_bv_value(nullptr, d_bv_one1), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_get_bv_value(d_bzla, nullptr), d_error_not_null);
+  bitwuzla_check_sat(d_bzla);
+  ASSERT_DEATH(bitwuzla_get_bv_value(d_bzla, d_fp_nan32), "not a bit-vector");
+  ASSERT_TRUE(!strcmp("1", bitwuzla_get_bv_value(d_bzla, d_bv_one1)));
+}
+
+TEST_F(TestApi, get_rm_value)
+{
+  ASSERT_DEATH(bitwuzla_get_rm_value(d_bzla, d_bv_one1),
+               d_error_produce_models);
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+  ASSERT_DEATH(bitwuzla_get_rm_value(nullptr, d_bv_one1), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_get_rm_value(d_bzla, nullptr), d_error_not_null);
+
+  BitwuzlaTerm *rna = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNA);
+  BitwuzlaTerm *rne = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNE);
+  BitwuzlaTerm *rtn = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTN);
+  BitwuzlaTerm *rtp = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTP);
+  BitwuzlaTerm *rtz = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTZ);
+  bitwuzla_check_sat(d_bzla);
+  ASSERT_DEATH(bitwuzla_get_rm_value(d_bzla, d_fp_nan32),
+               "not a rounding mode");
+  ASSERT_TRUE(!strcmp("RNA", bitwuzla_get_rm_value(d_bzla, rna)));
+  ASSERT_TRUE(!strcmp("RNE", bitwuzla_get_rm_value(d_bzla, rne)));
+  ASSERT_TRUE(!strcmp("RTN", bitwuzla_get_rm_value(d_bzla, rtn)));
+  ASSERT_TRUE(!strcmp("RTP", bitwuzla_get_rm_value(d_bzla, rtp)));
+  ASSERT_TRUE(!strcmp("RTZ", bitwuzla_get_rm_value(d_bzla, rtz)));
+}
+
+TEST_F(TestApi, get_array_value)
+{
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+  BitwuzlaTerm *a = bitwuzla_mk_const(d_bzla, d_arr_sort_bvfp, nullptr);
+
+  BitwuzlaTerm *i =
+      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "1", BITWUZLA_BV_BASE_DEC);
+  BitwuzlaTerm *j =
+      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "10", BITWUZLA_BV_BASE_DEC);
+  BitwuzlaTerm *k =
+      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "100", BITWUZLA_BV_BASE_DEC);
+
+  BitwuzlaTerm *rm = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNE);
+  BitwuzlaTerm *u =
+      bitwuzla_mk_fp_value_from_real(d_bzla, d_fp_sort16, rm, "1.3");
+  BitwuzlaTerm *v =
+      bitwuzla_mk_fp_value_from_real(d_bzla, d_fp_sort16, rm, "15.123");
+  BitwuzlaTerm *w =
+      bitwuzla_mk_fp_value_from_real(d_bzla, d_fp_sort16, rm, "1333.18");
+
+  BitwuzlaTerm *stores = bitwuzla_mk_term3(
+      d_bzla,
+      BITWUZLA_KIND_ARRAY_STORE,
+      bitwuzla_mk_term3(
+          d_bzla,
+          BITWUZLA_KIND_ARRAY_STORE,
+          bitwuzla_mk_term3(d_bzla, BITWUZLA_KIND_ARRAY_STORE, a, i, u),
+          j,
+          v),
+      k,
+      w);
+  bitwuzla_check_sat(d_bzla);
+
+  size_t size;
+  BitwuzlaTerm **indices, **values, *default_value;
+  bitwuzla_get_array_value(
+      d_bzla, stores, &indices, &values, &size, &default_value);
+
+  ASSERT_EQ(size, 3);
+  for (size_t ii = 0; ii < size; ++ii)
+  {
+    ASSERT_TRUE(indices[ii] == i || indices[ii] == j || indices[ii] == k);
+    ASSERT_TRUE(values[ii] == u || values[ii] == v || values[ii] == w);
+    bitwuzla_term_dump(indices[ii], "smt2", stdout);
+    std::cout << " -> ";
+    bitwuzla_term_dump(values[ii], "smt2", stdout);
+    std::cout << std::endl;
+  }
+
+  BitwuzlaTerm *b = bitwuzla_mk_const_array(d_bzla, d_arr_sort_bvfp, w);
+  bitwuzla_get_array_value(d_bzla, b, &indices, &values, &size, &default_value);
+  ASSERT_EQ(size, 0);
+  ASSERT_EQ(indices, nullptr);
+  ASSERT_EQ(values, nullptr);
+  ASSERT_EQ(default_value, w);
+}
+
+TEST_F(TestApi, get_fun_value)
+{
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+  BitwuzlaTerm *f = bitwuzla_mk_const(d_bzla, d_fun_sort, nullptr);
+
+  BitwuzlaTerm *arg0 =
+      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "42", BITWUZLA_BV_BASE_DEC);
+  BitwuzlaTerm *arg1 = bitwuzla_mk_fp_value_from_real(
+      d_bzla,
+      d_fp_sort16,
+      bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTP),
+      "0.4324");
+  BitwuzlaTerm *arg2 =
+      bitwuzla_mk_bv_value(d_bzla, d_bv_sort32, "381012", BITWUZLA_BV_BASE_DEC);
+
+  std::vector<BitwuzlaTerm *> _args = {f, arg0, arg1, arg2};
+  BitwuzlaTerm *app0 =
+      bitwuzla_mk_term(d_bzla, BITWUZLA_KIND_APPLY, _args.size(), _args.data());
+
+  bitwuzla_assert(d_bzla,
+                  bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, app0, arg0));
+  bitwuzla_check_sat(d_bzla);
+
+  size_t size, arity;
+  BitwuzlaTerm ***args, **values;
+  bitwuzla_get_fun_value(d_bzla, f, &args, &arity, &values, &size);
+
+  ASSERT_EQ(size, 1);
+  ASSERT_EQ(arity, 3);
+
+  for (size_t i = 0; i < size; ++i)
+  {
+    for (size_t j = 0; j < arity; ++j)
+    {
+      bitwuzla_term_dump(args[i][j], "smt2", stdout);
+      std::cout << " ";
+    }
+    std::cout << "-> ";
+    bitwuzla_term_dump(values[i], "smt2", stdout);
+    std::cout << std::endl;
+  }
+}
+
 TEST_F(TestApi, print_model)
 {
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);

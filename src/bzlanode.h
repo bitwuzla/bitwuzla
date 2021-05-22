@@ -1523,6 +1523,13 @@ BzlaNode *bzla_node_create_fp_to_fp_from_ubv(Bzla *bzla,
                                              BzlaNode *e1,
                                              BzlaSortId sort);
 
+/*------------------------------------------------------------------------*/
+
+/** Create a new value of with sort 'sort' from bit-vector 'bv'. */
+BzlaNode *bzla_node_mk_value(Bzla *bzla,
+                             BzlaSortId sort,
+                             const BzlaBitVector *bv);
+
 /*========================================================================*/
 
 struct BzlaNodePair
