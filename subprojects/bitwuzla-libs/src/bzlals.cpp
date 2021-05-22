@@ -402,9 +402,10 @@ BzlaLs::update_roots(uint32_t id)
 }
 
 void
-BzlaLs::update_cone(BitVectorNode* node)
+BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
 {
-  BZLALSLOG << "*** update cone: " << *node << std::endl;
+  BZLALSLOG << "*** update cone: " << *node << " with: " << assignment
+            << std::endl;
 
   assert(node);
   assert(is_leaf_node(node));
@@ -415,6 +416,11 @@ BzlaLs::update_cone(BitVectorNode* node)
     assert(get_node(r)->assignment().is_false());
   }
 #endif
+
+  /* nothing to do if node already has given assignment */
+  if (node->assignment().compare(assignment) == 0) return;
+  /* update assignment of given node */
+  node->set_assignment(assignment);
 
   std::vector<uint32_t> cone;
   std::vector<BitVectorNode*> to_visit;

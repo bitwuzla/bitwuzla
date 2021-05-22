@@ -14,12 +14,29 @@ class TestBzlaLs : public TestBvNodeCommon
 
     d_bzlals.reset(new BzlaLs(100));
 
-    d_c1 = d_bzlals->mk_node(TEST_BW);
+    d_two4  = BitVector(4, "0010");
+    d_for4  = BitVector(4, "0100");
+    d_fiv4  = BitVector(4, "0101");
+    d_six4  = BitVector(4, "0110");
+    d_sev4  = BitVector(4, "0111");
+    d_ten4  = BitVector(4, "1010");
+    d_ele4  = BitVector(4, "1011");
+    d_egt4  = BitVector(4, "1000");
+    d_twe4  = BitVector(4, "1100");
+    d_thi4  = BitVector(4, "1101");
+    d_zero4 = BitVector::mk_zero(4);
+    d_zero1 = BitVector::mk_zero(1);
+    d_ones4 = BitVector::mk_ones(4);
+    d_one4  = BitVector::mk_one(4);
+    d_one1  = BitVector::mk_one(1);
+
+    d_c1 = d_bzlals->mk_node(d_ten4, BitVectorDomain(d_ten4));
     d_v1 = d_bzlals->mk_node(TEST_BW);
     d_v2 = d_bzlals->mk_node(TEST_BW);
     d_v3 = d_bzlals->mk_node(TEST_BW);
 
-    d_bzlals->set_assignment(d_c1, BitVector(4, "1010"));
+    d_bzlals->set_assignment(d_v2, d_ones4);
+    d_bzlals->set_assignment(d_v3, d_six4);
 
     // v1 + c1
     d_v1pc1 =
@@ -82,9 +99,13 @@ class TestBzlaLs : public TestBvNodeCommon
    * Note: BzlaLs::update_cone() is private and only the main test class has
    *       access to it.
    */
-  void update_cone(uint32_t id);
+  void update_cone(uint32_t id, const BitVector& assignment);
 
   std::unique_ptr<BzlaLs> d_bzlals;
+
+  BitVector d_two4, d_for4, d_fiv4, d_six4, d_sev4;
+  BitVector d_egt4, d_ten4, d_ele4, d_twe4, d_thi4;
+  BitVector d_zero4, d_zero1, d_ones4, d_one4, d_one1;
 
   uint32_t d_c1, d_v1, d_v2, d_v3;
   uint32_t d_v1pc1, d_v1pc1mv2;
@@ -127,9 +148,9 @@ TestBzlaLs::get_expected_parents()
 }
 
 void
-TestBzlaLs::update_cone(uint32_t id)
+TestBzlaLs::update_cone(uint32_t id, const BitVector& assignment)
 {
-  d_bzlals->update_cone(d_bzlals->get_node(id));
+  d_bzlals->update_cone(d_bzlals->get_node(id), assignment);
 }
 
 TEST_F(TestBzlaLs, parents)
@@ -267,38 +288,26 @@ TEST_F(TestBzlaLs, parents)
   }
 }
 
-#if 0
 TEST_F(TestBzlaLs, update_cone)
 {
-  BitVector two4(4, "0010");
-  BitVector for4(4, "0100");
-  BitVector six4(4, "1010");
-  BitVector egt4(4, "1000");
-  BitVector twe4(4, "1100");
-  BitVector zero4 = BitVector::mk_zero(4);
-  BitVector zero1 = BitVector::mk_zero(1);
-  BitVector ones4 = BitVector::mk_ones(4);
-  BitVector one4  = BitVector::mk_one(4);
-  BitVector one1  = BitVector::mk_one(1);
-
-  std::unordered_map<uint32_t, BitVector> ass_init = {
-      {d_c1, six4},
-      {d_v1, zero4},
-      {d_v2, zero4},
-      {d_v3, zero4},
-      {d_v1pc1, zero4},
-      {d_v1pc1mv2, zero4},
-      {d_v1pv2, zero4},
-      {d_v1pv2av2, zero4},
-      {d_v1e, zero1},
-      {d_v3e, zero1},
-      {d_v1edv3e, zero1},
-      {d_v1edv3e_ext, zero4},
-      {d_v3sc1, zero4},
-      {d_v3sc1pv3, zero4},
-      {d_v3sc1pv3pv1, zero4},
-      {d_root1, zero1},
-      {d_root2, zero1},
+  std::map<uint32_t, BitVector> ass_init = {
+      {d_c1, d_ten4},            // 1010
+      {d_v1, d_zero4},           // 0000
+      {d_v2, d_ones4},           // 1111
+      {d_v3, d_six4},            // 0110
+      {d_v1pc1, d_ten4},         // 0000 + 1010 = 1010
+      {d_v1pc1mv2, d_six4},      // 1010 * 1111 = 0110
+      {d_v1pv2, d_ones4},        // 0000 + 1111 = 1111
+      {d_v1pv2av2, d_ones4},     // 1111 & 1111 = 1111
+      {d_v1e, d_zero1},          // 0000[0:0] = 0
+      {d_v3e, d_zero1},          // 0110[0:0] = 0
+      {d_v1edv3e, d_one1},       // 0 / 0 = 1
+      {d_v1edv3e_ext, d_ones4},  // sext(1, 3) = 1111
+      {d_v3sc1, d_zero4},        // 0110 << 1010 = 0000
+      {d_v3sc1pv3, d_six4},      // 0000 + 0110 = 0110
+      {d_v3sc1pv3pv1, d_six4},   // 0110 + 0000 = 0110
+      {d_root1, d_zero1},        // 0110 <s 1111 = 0
+      {d_root2, d_zero1},        // 0110 == 0000 = 0
   };
 
   for (auto& p : ass_init)
@@ -306,189 +315,84 @@ TEST_F(TestBzlaLs, update_cone)
     ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
   }
 
-  /* initial update */
-  std::unordered_map<uint32_t, BitVector> ass_init_up_c1 = {
-      {d_c1, six4},
-      {d_v1, zero4},
-      {d_v2, zero4},
-      {d_v3, zero4},
-      {d_v1pc1, six4},         // 0000 + 1010 = 1010
-      {d_v1pc1mv2, zero4},     // 1010 * 0000 = 0000
-      {d_v1pv2, zero4},        // not in COI
-      {d_v1pv2av2, zero4},     // not in COI
-      {d_v1e, zero1},          // not in COI
-      {d_v3e, zero1},          // not in COI
-      {d_v1edv3e, zero1},      // not in COI
-      {d_v1edv3e_ext, zero4},  // not in COI
-      {d_v3sc1, zero4},        // not in COI
-      {d_v3sc1pv3, zero4},     // not in COI
-      {d_v3sc1pv3pv1, zero4},  // not in COI
-      {d_root1, zero1},        // 0000 <s 0000 = 0
-      {d_root2, one1},         // 0000 == 0000 = 1
+  /* v1 -> 0001 */
+  update_cone(d_v1, d_one4);
+  std::map<uint32_t, BitVector> ass_up_v1 = {
+      {d_c1, d_ten4},            // 1010
+      {d_v1, d_one4},            // 0001
+      {d_v2, d_ones4},           // 1111
+      {d_v3, d_six4},            // 0110
+      {d_v1pc1, d_ele4},         // 0001 + 1010 = 1011
+      {d_v1pc1mv2, d_fiv4},      // 1011 * 1111 = 0101
+      {d_v1pv2, d_zero4},        // 0001 + 1111 = 0000
+      {d_v1pv2av2, d_zero4},     // 0000 & 1111 = 0000
+      {d_v1e, d_one1},           // 0001[0:0] = 1
+      {d_v3e, d_zero1},          // 0110[0:0] = 0 (not in COI)
+      {d_v1edv3e, d_one1},       // 1 / 0 = 1
+      {d_v1edv3e_ext, d_ones4},  // sext(1, 3) = 1111
+      {d_v3sc1, d_zero4},        // 0110 << 1010 = 0000 (not in COI)
+      {d_v3sc1pv3, d_six4},      // 0000 + 0110 = 0110  (not in COI)
+      {d_v3sc1pv3pv1, d_sev4},   // 0110 + 0001 = 0111
+      {d_root1, d_zero1},        // 0101 <s 0000 = 0
+      {d_root2, d_zero1},        // 0111 == 1111 = 0
   };
-  update_cone(d_c1);
-  for (auto& p : ass_init_up_c1)
-  {
-    ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
-  }
-
-  std::unordered_map<uint32_t, BitVector> ass_init_up_v1 = {
-      {d_c1, six4},
-      {d_v1, zero4},
-      {d_v2, zero4},
-      {d_v3, zero4},
-      {d_v1pc1, six4},         // 0000 + 1010 = 1010
-      {d_v1pc1mv2, zero4},     // 1010 * 0000 = 0000
-      {d_v1pv2, zero4},        // 0000 + 0000 = 0000
-      {d_v1pv2av2, zero4},     // 0000 & 0000 = 0000
-      {d_v1e, zero1},          // 0000[0:0] = 0
-      {d_v3e, zero1},          // not in COI
-      {d_v1edv3e, one1},       // 0 / 0 = 1
-      {d_v1edv3e_ext, ones4},  // sext(1, 3) = 1111
-      {d_v3sc1, zero4},        // not in COI
-      {d_v3sc1pv3, zero4},     // not in COI
-      {d_v3sc1pv3pv1, zero4},  // 0000 + 0000 = 0000
-      {d_root1, zero1},        // 0000 <s 0000 = 0
-      {d_root2, zero1},        // 0000 == 1111 = 0
-  };
-  update_cone(d_v1);
-  for (auto& p : ass_init_up_v1)
-  {
-    ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
-  }
-
-  std::unordered_map<uint32_t, BitVector> ass_init_up_v2 = {
-      {d_c1, six4},
-      {d_v1, zero4},
-      {d_v2, zero4},
-      {d_v3, zero4},
-      {d_v1pc1, six4},         // not in COI
-      {d_v1pc1mv2, zero4},     // 1010 * 0000 = 0000
-      {d_v1pv2, zero4},        // 0000 + 0000 = 0000
-      {d_v1pv2av2, zero4},     // 0000 & 0000 = 0000
-      {d_v1e, zero1},          // not in COI
-      {d_v3e, zero1},          // not in COI
-      {d_v1edv3e, one1},       // not in COI
-      {d_v1edv3e_ext, ones4},  // not in COI
-      {d_v3sc1, zero4},        // not in COI
-      {d_v3sc1pv3, zero4},     // not in COI
-      {d_v3sc1pv3pv1, zero4},  // not in COI
-      {d_root1, zero1},        // 0000 <s 0000 = 0
-      {d_root2, zero1},        // not in COI
-  };
-  update_cone(d_v2);
-  for (auto& p : ass_init_up_v2)
-  {
-    ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
-  }
-
-  std::unordered_map<uint32_t, BitVector> ass_init_up_v3 = {
-      {d_c1, six4},
-      {d_v1, zero4},
-      {d_v2, zero4},
-      {d_v3, zero4},
-      {d_v1pc1, six4},         // not in COI
-      {d_v1pc1mv2, zero4},     // not in COI
-      {d_v1pv2, zero4},        // not in COI
-      {d_v1pv2av2, zero4},     // not in COI
-      {d_v1e, zero1},          // not in COI
-      {d_v3e, zero1},          // 0000[0:0] = 0
-      {d_v1edv3e, one1},       // 0 / 0 = 1
-      {d_v1edv3e_ext, ones4},  // sext(1, 3) = 1111
-      {d_v3sc1, zero4},        // 0000 << 1010 = 0000
-      {d_v3sc1pv3, zero4},     // 0000 + 0000 = 0000
-      {d_v3sc1pv3pv1, zero4},  // 0000 + 0000 = 0000
-      {d_root1, zero1},        // not in COI
-      {d_root2, zero1},        // 0000 == 1111 = 0
-  };
-  update_cone(d_v3);
-  for (auto& p : ass_init_up_v3)
-  {
-    ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
-  }
-
-  /* update v1 */
-  d_bzlals->set_assignment(d_v1, two4);
-  std::unordered_map<uint32_t, BitVector> ass_up_v1 = {
-      {d_c1, six4},
-      {d_v1, two4},
-      {d_v2, zero4},
-      {d_v3, zero4},
-      {d_v1pc1, twe4},         // 0010 + 1010 = 1100
-      {d_v1pc1mv2, zero4},     // 1100 * 0000 = 0000
-      {d_v1pv2, two4},         // 0010 + 0000 = 0010
-      {d_v1pv2av2, zero4},     // 0010 & 0000 = 0000
-      {d_v1e, zero1},          // 0010[0:0] = 0
-      {d_v3e, zero1},          // not in COI
-      {d_v1edv3e, one1},       // 0 / 0 = 1
-      {d_v1edv3e_ext, ones4},  // sext(1, 3) = 1111
-      {d_v3sc1, zero4},        // not in COI
-      {d_v3sc1pv3, zero4},     // not in COI
-      {d_v3sc1pv3pv1, two4},   // 0000 + 0010 = 0010
-      {d_root1, zero1},        // 0000 <s 0000 = 0
-      {d_root2, zero1},        // 0000 == 1111 = 0
-  };
-  update_cone(d_v1);
   for (auto& p : ass_up_v1)
   {
     ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
   }
 
-  /* update v2 */
-  d_bzlals->set_assignment(d_v2, two4);
-  std::unordered_map<uint32_t, BitVector> ass_up_v2 = {
-      {d_c1, six4},
-      {d_v1, two4},
-      {d_v2, two4},
-      {d_v3, zero4},
-      {d_v1pc1, twe4},         // not in COI
-      {d_v1pc1mv2, egt4},      // 1100 * 0010 = 1000
-      {d_v1pv2, for4},         // 0010 + 0010 = 0100
-      {d_v1pv2av2, zero4},     // 0100 & 0010 = 0000
-      {d_v1e, zero1},          // not in COI
-      {d_v3e, zero1},          // not in COI
-      {d_v1edv3e, one1},       // not in COI
-      {d_v1edv3e_ext, ones4},  // not in COI
-      {d_v3sc1, zero4},        // not in COI
-      {d_v3sc1pv3, zero4},     // not in COI
-      {d_v3sc1pv3pv1, two4},   // 0000 + 0010 = 0010
-      {d_root1, one1},         // 1000 <s 0000 = 1
-      {d_root2, zero1},        // not in COI
+  /* v2 -> 0111 */
+  update_cone(d_v2, d_sev4);
+  std::map<uint32_t, BitVector> ass_up_v2 = {
+      {d_c1, d_ten4},            // 1010
+      {d_v1, d_one4},            // 0001
+      {d_v2, d_sev4},            // 0111
+      {d_v3, d_six4},            // 0110
+      {d_v1pc1, d_ele4},         // 0001 + 1010 = 1011 (not in COI)
+      {d_v1pc1mv2, d_thi4},      // 1011 * 0111 = 1101
+      {d_v1pv2, d_egt4},         // 0001 + 0111 = 1000
+      {d_v1pv2av2, d_zero4},     // 1000 & 0111 = 0000
+      {d_v1e, d_one1},           // 0001[0:0] = 1 (not in COI)
+      {d_v3e, d_zero1},          // 0110[0:0] = 0 (not in COI)
+      {d_v1edv3e, d_one1},       // 1 / 0 = 1 (not in COI)
+      {d_v1edv3e_ext, d_ones4},  // sext(1, 3) = 1111 (not in COI)
+      {d_v3sc1, d_zero4},        // 0110 << 1010 = 0000 (not in COI)
+      {d_v3sc1pv3, d_six4},      // 0000 + 0110 = 0110  (not in COI)
+      {d_v3sc1pv3pv1, d_sev4},   // 0110 + 0001 = 0111 (not in COI)
+      {d_root1, d_one1},         // 1101 <s 0000 = 1
+      {d_root2, d_zero1},        // 0111 == 1111 = 0 (not in COI)
   };
-  update_cone(d_v2);
   for (auto& p : ass_up_v2)
   {
     ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
   }
 
-  /* update v3 */
-  d_bzlals->set_assignment(d_v3, ones4);
-  std::unordered_map<uint32_t, BitVector> ass_up_v3 = {
-      {d_c1, six4},
-      {d_v1, two4},
-      {d_v2, two4},
-      {d_v3, ones4},
-      {d_v1pc1, twe4},         // not in COI
-      {d_v1pc1mv2, egt4},      // not in COI
-      {d_v1pv2, for4},         // not in COI
-      {d_v1pv2av2, zero4},     // not in COi
-      {d_v1e, zero1},          // not in COI
-      {d_v3e, one1},           // 1111[0:0] = 1
-      {d_v1edv3e, zero1},      // 0 / 1 = 0
-      {d_v1edv3e_ext, zero4},  // sext(0, 3) = 0000
-      {d_v3sc1, zero4},        // 1111 << 1010 = 0000
-      {d_v3sc1pv3, ones4},     // 0000 + 1111 = 1111
-      {d_v3sc1pv3pv1, one4},   // 1111 + 0010 = 0001
-      {d_root1, one1},         // not in COI
-      {d_root2, zero1},        // 0001 == 0000 = 0
+  /* v3 -> 0001 */
+  update_cone(d_v3, d_one4);
+  std::map<uint32_t, BitVector> ass_up_v3 = {
+      {d_c1, d_ten4},            // 1010
+      {d_v1, d_one4},            // 0001
+      {d_v2, d_sev4},            // 0111
+      {d_v3, d_one4},            // 0001
+      {d_v1pc1, d_ele4},         // 0001 + 1010 = 1011 (not in COI)
+      {d_v1pc1mv2, d_thi4},      // 1011 * 0111 = 1101 (not in COI)
+      {d_v1pv2, d_egt4},         // 0001 + 0111 = 1000 (not in COI)
+      {d_v1pv2av2, d_zero4},     // 1000 & 0111 = 0000 (not in COI)
+      {d_v1e, d_one1},           // 0001[0:0] = 1 (not in COI)
+      {d_v3e, d_one1},           // 0001[0:0] = 1
+      {d_v1edv3e, d_one1},       // 1 / 1 = 1
+      {d_v1edv3e_ext, d_ones4},  // sext(1, 3) = 1111
+      {d_v3sc1, d_zero4},        // 0001 << 1010 = 0000
+      {d_v3sc1pv3, d_one4},      // 0000 + 0001 = 0001
+      {d_v3sc1pv3pv1, d_two4},   // 0001 + 0001 = 0010
+      {d_root1, d_one1},         // 1101 <s 0000 = 1 (not in COI)
+      {d_root2, d_zero1},        // 0010 == 1111 = 0
   };
-  update_cone(d_v3);
   for (auto& p : ass_up_v3)
   {
     ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
   }
 }
-#endif
 
 }  // namespace test
 }  // namespace bzlals

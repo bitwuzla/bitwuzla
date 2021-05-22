@@ -103,7 +103,7 @@ class BzlaLs
   bool is_leaf_node(const BitVectorNode* node) const;
   bool is_root_node(const BitVectorNode* node) const;
   void update_roots(uint32_t id);
-  void update_cone(BitVectorNode* node);
+  void update_cone(BitVectorNode* node, const BitVector& assignment);
   BzlaLsMove select_move(BitVectorNode* root, const BitVector& t_root);
 
   std::unique_ptr<RNG> d_rng;
