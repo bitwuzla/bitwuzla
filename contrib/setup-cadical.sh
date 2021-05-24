@@ -39,6 +39,11 @@ else
   export CXXFLAGS="-fPIC"
 fi
 
+# Quickfix for compile errors
+sed -i.orig \
+  "s,#include <vector>,#include <vector>\n#include <cstddef>," \
+  src/reap.hpp
+
 ./configure ${EXTRA_FLAGS}
 make -j${NPROC}
 install_lib build/libcadical.a
