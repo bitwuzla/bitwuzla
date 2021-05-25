@@ -3126,14 +3126,16 @@ BitwuzlaSort *bitwuzla_sort_array_get_element(const BitwuzlaSort *sort);
 /**
  * Get the domain sorts of a function sort.
  *
- * The domain sorts are returned as a \c NULL terminated array of sorts.  
+ * The domain sorts are returned as an array of sorts of size `size`.
  * Requires that given sort is a function sort.
  *
  * @param sort The sort.
+ * @param size The size of the returned array.
  *
- * @return The domain sorts of the function sort as a \c NULL terminated array.
+ * @return The domain sorts of the function sort.
  */
-BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort);
+BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort,
+                                                  size_t *size);
 
 /**
  * Get the codomain sort of a function sort.
@@ -3327,15 +3329,17 @@ BitwuzlaSort *bitwuzla_term_array_get_element_sort(const BitwuzlaTerm *term);
 /**
  * Get the domain sorts of a function term.
  *
- * The domain sorts are returned as a \c NULL terminated array of sorts.  
+ * The domain sorts are returned as an array of sorts of size `size.
  * Requires that given term is an uninterpreted function, a lambda term, an
  * array store term, or an ite term over function terms.
  *
  * @param term The term.
+ * @param size The size of the returned array. Optional, NULL is allowed.
  *
- * @return The domain sorts of the function term as a \c NULL terminated array.
+ * @return The domain sorts of the function term.
  */
-BitwuzlaSort **bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term);
+BitwuzlaSort **bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term,
+                                                  size_t *size);
 
 /**
  * Get the codomain sort of a function term.

@@ -2826,7 +2826,9 @@ close_term(BzlaSMT2Parser *parser)
         return !perr_smt2(parser, "invalid number of arguments");
       }
 
-      BitwuzlaSort **domain_sorts = bitwuzla_term_fun_get_domain_sorts(fun);
+      size_t size;
+      BitwuzlaSort **domain_sorts =
+          bitwuzla_term_fun_get_domain_sorts(fun, &size);
 
       BZLA_PUSH_STACK(fargs, fun);
       for (i = 1; i <= nargs; i++)
@@ -2838,6 +2840,7 @@ close_term(BzlaSMT2Parser *parser)
           return !perr_smt2(parser, "expected expression");
         }
         BZLA_PUSH_STACK(fargs, item_cur[i].exp);
+        assert(i - 1 < size);
         assert(domain_sorts[i - 1]);
         if (!bitwuzla_sort_is_equal(
                 domain_sorts[i - 1],
