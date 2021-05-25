@@ -259,6 +259,13 @@ BzlaLs::get_assignment(uint32_t id) const
   return get_node(id)->assignment();
 }
 
+const BitVectorDomain&
+BzlaLs::get_domain(uint32_t id) const
+{
+  assert(id < d_nodes.size());  // API check
+  return get_node(id)->domain();
+}
+
 void
 BzlaLs::set_assignment(uint32_t id, const BitVector& assignment)
 {
@@ -271,6 +278,7 @@ BzlaLs::register_root(uint32_t root)
 {
   assert(root < d_nodes.size());  // API check
   d_roots.insert(root);
+  update_roots(root);
 }
 
 uint32_t
@@ -321,11 +329,21 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
   uint64_t nprops  = 0;
   BitVectorNode* cur = root;
   BitVector t      = t_root;
-  BitVector t_new;
 
   for (;;)
   {
     uint32_t arity = cur->arity();
+
+    BZLALSLOG << std::endl << "  propagate: " << std::endl;
+    BZLALSLOG << "    node: " << *cur << std::endl;
+    if (BZLALSLOG_ENABLED)
+    {
+      for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+      {
+        BZLALSLOG << "      |- node[" << i << "]: " << *(*cur)[i] << std::endl;
+      }
+    }
+    BZLALSLOG << "    target value: " << t << std::endl;
 
     if (arity == 0)
     {
@@ -339,11 +357,11 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
     {
       assert(!cur->domain().is_fixed());
 
-      BZLALSLOG << "propagate: " << t << std::endl;
-
       /* Select path */
       uint32_t pos_x = cur->select_path(t);
       assert(pos_x < arity);
+
+      BZLALSLOG << "      select path: node[" << pos_x << "]" << std::endl;
 
       /** Select value
        *
@@ -359,12 +377,12 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
           && cur->is_invertible(t, pos_x))
       {
         t = cur->inverse_value(t, pos_x);
-        BZLALSLOG << "inverse value: " << t_new << std::endl;
+        BZLALSLOG << "      inverse value: " << t << std::endl;
       }
       else if (cur->is_consistent(t, pos_x))
       {
         t = cur->consistent_value(t, pos_x);
-        BZLALSLOG << "consistent value: " << t_new << std::endl;
+        BZLALSLOG << "      consistent value: " << t << std::endl;
       }
       else
       {
@@ -379,7 +397,7 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
     }
   }
   /* Conflict case */
-  return BzlaLsMove(nprops, root, BitVector());
+  return BzlaLsMove(nprops, nullptr, BitVector());
 }
 
 void
@@ -404,12 +422,11 @@ BzlaLs::update_roots(uint32_t id)
 void
 BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
 {
-  BZLALSLOG << "*** update cone: " << *node << " with: " << assignment
-            << std::endl;
-
   assert(node);
   assert(is_leaf_node(node));
 
+  BZLALSLOG << "*** update cone: " << *node << " with: " << assignment
+            << std::endl;
 #ifndef NDEBUG
   for (uint32_t r : d_roots)
   {
@@ -469,6 +486,7 @@ BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
       {
         BZLALSLOG << "    |- node[" << i << "]: " << *(*cur)[i] << std::endl;
       }
+      BZLALSLOG << std::endl;
     }
 
     if (is_root_node(cur))
@@ -483,6 +501,51 @@ BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
     assert(get_node(r)->assignment().is_false());
   }
 #endif
+}
+
+BzlaLs::Result
+BzlaLs::move()
+{
+  BZLALSLOG << "*** move: " << d_nmoves + 1 << std::endl;
+  BZLALSLOG << "  unsatisfied roots: " << std::endl;
+  if (BZLALSLOG_ENABLED)
+  {
+    for (const auto& r : d_roots) BZLALSLOG << "    - " << *get_node(r);
+    BZLALSLOG << std::endl;
+  }
+
+  if (d_roots.empty()) return SAT;
+
+  BzlaLsMove m;
+  do
+  {
+    if (d_max_nprops > 0 && d_nprops >= d_max_nprops) return UNKNOWN;
+
+    BitVectorNode* root = get_node(
+        d_rng->pick_from_set<std::unordered_set<uint32_t>, uint32_t>(d_roots));
+
+    if (root->is_const() && root->assignment().is_false()) return UNSAT;
+
+    BZLALSLOG << std::endl << "  select constraint: " << *root << std::endl;
+
+    m = select_move(root, d_one);
+    d_nprops += m.d_nprops;
+  } while (m.d_input == nullptr);
+
+  assert(!m.d_assignment.is_null());
+
+  BZLALSLOG << std::endl << "  move" << std::endl;
+  BZLALSLOG << "  input: " << *m.d_input << std::endl;
+  BZLALSLOG << "  prev. assignment: " << m.d_input->assignment() << std::endl;
+  BZLALSLOG << "  new   assignment: " << m.d_assignment << std::endl;
+  BZLALSLOG << std::endl;
+
+  d_nmoves += 1;
+
+  update_cone(m.d_input, m.d_assignment);
+
+  if (d_roots.empty()) return SAT;
+  return BzlaLs::UNKNOWN;
 }
 
 /* -------------------------------------------------------------------------- */

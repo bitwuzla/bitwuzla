@@ -1,7 +1,7 @@
 #ifndef BZLALS__LOG_H
 #define BZLALS__LOG_H
 
-#define BZLALSLOGLEVEL 1
+#define BZLALSLOGLEVEL 0
 
 #include <iosfwd>
 class OstreamVoider

@@ -27,6 +27,13 @@ class BzlaLs
   using ParentsSet   = std::unordered_set<uint32_t>;
   using ParentsMap   = std::unordered_map<uint32_t, ParentsSet>;
 
+  enum Result
+  {
+    SAT,
+    UNSAT,
+    UNKNOWN,
+  };
+
   enum OperatorKind
   {
     ADD,
@@ -91,6 +98,7 @@ class BzlaLs
 
   const BitVector& get_assignment(uint32_t id) const;
   void set_assignment(uint32_t id, const BitVector& assignment);
+  const BitVectorDomain& get_domain(uint32_t node) const;
   // void set_domain(uint32_t node, const BitVectorDomain& domain);
 
   void register_root(uint32_t root);
@@ -105,6 +113,7 @@ class BzlaLs
   void update_roots(uint32_t id);
   void update_cone(BitVectorNode* node, const BitVector& assignment);
   BzlaLsMove select_move(BitVectorNode* root, const BitVector& t_root);
+  Result move();
 
   std::unique_ptr<RNG> d_rng;
 
