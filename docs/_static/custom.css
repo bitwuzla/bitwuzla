@@ -46,7 +46,7 @@ a:hover, a:focus {
     color: #343131;
 }
 
-.wy-side-nav-search > a:visited, a:hover, a:focus {
+.wy-side-nav-search > a:visited, > a:hover, > a:focus {
     color: #343131;
 }
 
