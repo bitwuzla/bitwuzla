@@ -193,7 +193,7 @@ BitVectorAdd::BitVectorAdd(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorAdd::BitVectorAdd(RNG* rng,
@@ -204,13 +204,28 @@ BitVectorAdd::BitVectorAdd(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorAdd::_evaluate()
 {
   d_assignment.ibvadd(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
+void
+BitVectorAdd::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -321,7 +336,7 @@ BitVectorAnd::BitVectorAnd(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorAnd::BitVectorAnd(RNG* rng,
@@ -332,13 +347,28 @@ BitVectorAnd::BitVectorAnd(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorAnd::_evaluate()
 {
   d_assignment.ibvand(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
+void
+BitVectorAnd::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -474,7 +504,7 @@ BitVectorConcat::BitVectorConcat(RNG* rng,
     : BitVectorNode(rng, size, child0, child1)
 {
   assert(size == child0->size() + child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
@@ -484,7 +514,7 @@ BitVectorConcat::BitVectorConcat(RNG* rng,
     : BitVectorNode(rng, domain, child0, child1)
 {
   assert(domain.size() == child0->size() + child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
@@ -492,6 +522,21 @@ BitVectorConcat::_evaluate()
 {
   d_assignment.ibvconcat(d_children[0]->assignment(),
                          d_children[1]->assignment());
+}
+
+void
+BitVectorConcat::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -649,7 +694,7 @@ BitVectorEq::BitVectorEq(RNG* rng,
 {
   assert(size == 1);
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorEq::BitVectorEq(RNG* rng,
@@ -660,13 +705,28 @@ BitVectorEq::BitVectorEq(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == 1);
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorEq::_evaluate()
 {
   d_assignment.ibveq(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
+void
+BitVectorEq::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -823,7 +883,7 @@ BitVectorMul::BitVectorMul(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorMul::BitVectorMul(RNG* rng,
@@ -834,13 +894,28 @@ BitVectorMul::BitVectorMul(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorMul::_evaluate()
 {
   d_assignment.ibvmul(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
+void
+BitVectorMul::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -1179,7 +1254,7 @@ BitVectorShl::BitVectorShl(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorShl::BitVectorShl(RNG* rng,
@@ -1190,13 +1265,28 @@ BitVectorShl::BitVectorShl(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorShl::_evaluate()
 {
   d_assignment.ibvshl(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
+void
+BitVectorShl::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -1565,7 +1655,7 @@ BitVectorShr::BitVectorShr(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorShr::BitVectorShr(RNG* rng,
@@ -1576,13 +1666,28 @@ BitVectorShr::BitVectorShr(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorShr::_evaluate()
 {
   d_assignment.ibvshr(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
+void
+BitVectorShr::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -1975,7 +2080,7 @@ BitVectorAshr::BitVectorAshr(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
@@ -1986,7 +2091,7 @@ BitVectorAshr::BitVectorAshr(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
@@ -1994,6 +2099,21 @@ BitVectorAshr::_evaluate()
 {
   d_assignment.ibvashr(d_children[0]->assignment(),
                        d_children[1]->assignment());
+}
+
+void
+BitVectorAshr::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -2371,7 +2491,7 @@ BitVectorUdiv::BitVectorUdiv(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorUdiv::BitVectorUdiv(RNG* rng,
@@ -2382,7 +2502,7 @@ BitVectorUdiv::BitVectorUdiv(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
@@ -2390,6 +2510,21 @@ BitVectorUdiv::_evaluate()
 {
   d_assignment.ibvudiv(d_children[0]->assignment(),
                        d_children[1]->assignment());
+}
+
+void
+BitVectorUdiv::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -3059,7 +3194,7 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
 {
   assert(size == 1);
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorUlt::BitVectorUlt(RNG* rng,
@@ -3070,13 +3205,28 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == 1);
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorUlt::_evaluate()
 {
   d_assignment.ibvult(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
+void
+BitVectorUlt::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -3341,7 +3491,7 @@ BitVectorSlt::BitVectorSlt(RNG* rng,
 {
   assert(size == 1);
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorSlt::BitVectorSlt(RNG* rng,
@@ -3352,13 +3502,28 @@ BitVectorSlt::BitVectorSlt(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == 1);
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorSlt::_evaluate()
 {
   d_assignment.ibvslt(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
+void
+BitVectorSlt::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -3673,7 +3838,7 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
@@ -3684,7 +3849,7 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
@@ -3692,6 +3857,21 @@ BitVectorUrem::_evaluate()
 {
   d_assignment.ibvurem(d_children[0]->assignment(),
                        d_children[1]->assignment());
+}
+
+void
+BitVectorUrem::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -4263,7 +4443,7 @@ BitVectorXor::BitVectorXor(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorXor::BitVectorXor(RNG* rng,
@@ -4274,13 +4454,28 @@ BitVectorXor::BitVectorXor(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorXor::_evaluate()
 {
   d_assignment.ibvxor(d_children[0]->assignment(), d_children[1]->assignment());
+}
+
+void
+BitVectorXor::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -4396,7 +4591,7 @@ BitVectorIte::BitVectorIte(RNG* rng,
   assert(size == child1->size());
   assert(child0->size() == 1);
   assert(child1->size() == child2->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorIte::BitVectorIte(RNG* rng,
@@ -4409,7 +4604,7 @@ BitVectorIte::BitVectorIte(RNG* rng,
   assert(child0->size() == 1);
   assert(child1->size() == child2->size());
   assert(domain.size() == child1->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
@@ -4418,6 +4613,21 @@ BitVectorIte::_evaluate()
   d_assignment.ibvite(d_children[0]->assignment(),
                       d_children[1]->assignment(),
                       d_children[2]->assignment());
+}
+
+void
+BitVectorIte::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -4655,7 +4865,7 @@ BitVectorNot::BitVectorNot(RNG* rng, uint32_t size, BitVectorNode* child0)
     : BitVectorNode(rng, size, child0)
 {
   assert(size == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorNot::BitVectorNot(RNG* rng,
@@ -4664,13 +4874,28 @@ BitVectorNot::BitVectorNot(RNG* rng,
     : BitVectorNode(rng, domain, child0)
 {
   assert(domain.size() == child0->size());
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorNot::_evaluate()
 {
   d_assignment.ibvnot(d_children[0]->assignment());
+}
+
+void
+BitVectorNot::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -4757,7 +4982,7 @@ BitVectorExtract::BitVectorExtract(
     : BitVectorNode(rng, size, child0), d_hi(hi), d_lo(lo)
 {
   assert(size == hi - lo + 1);
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorExtract::BitVectorExtract(RNG* rng,
@@ -4768,13 +4993,28 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
     : BitVectorNode(rng, domain, child0), d_hi(hi), d_lo(lo)
 {
   assert(domain.size() == hi - lo + 1);
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorExtract::_evaluate()
 {
   d_assignment.ibvextract(d_children[0]->assignment(), d_hi, d_lo);
+}
+
+void
+BitVectorExtract::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void
@@ -4958,7 +5198,7 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
     : BitVectorNode(rng, size, child0), d_n(n)
 {
   assert(size == child0->size() + n);
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
@@ -4968,13 +5208,28 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
     : BitVectorNode(rng, domain, child0), d_n(n)
 {
   assert(domain.size() == child0->size() + n);
-  _evaluate();
+  _evaluate_and_set_domain();
 }
 
 void
 BitVectorSignExtend::_evaluate()
 {
   d_assignment.ibvsext(d_children[0]->assignment(), d_n);
+}
+
+void
+BitVectorSignExtend::_evaluate_and_set_domain()
+{
+  _evaluate();
+  if (d_all_const)
+  {
+    assert(d_domain.match_fixed_bits(d_assignment));
+    if (!d_is_const)
+    {
+      d_domain.fix(d_assignment);
+      d_is_const = true;
+    }
+  }
 }
 
 void

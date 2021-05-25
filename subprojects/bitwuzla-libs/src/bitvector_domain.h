@@ -57,6 +57,8 @@ class BitVectorDomain
 
   /** Fix bit at given index to given value. */
   void fix_bit(uint32_t idx, bool value);
+  /** Fix domain to given value. */
+  void fix(const BitVector &val);
 
   /**
    * Return true if fixed bits of this bit-vector domain are consistent with

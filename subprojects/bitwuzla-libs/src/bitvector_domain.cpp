@@ -117,6 +117,14 @@ BitVectorDomain::fix_bit(uint32_t idx, bool value)
   d_hi.set_bit(idx, value);
 }
 
+void
+BitVectorDomain::fix(const BitVector &val)
+{
+  assert(val.size() == size());
+  d_lo.iset(val);
+  d_hi.iset(val);
+}
+
 bool
 BitVectorDomain::match_fixed_bits(const BitVector &bv) const
 {

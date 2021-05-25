@@ -200,7 +200,17 @@ class BitVectorAdd : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorAdd& node);
@@ -251,7 +261,17 @@ class BitVectorAnd : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorAnd& node);
@@ -306,7 +326,17 @@ class BitVectorConcat : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorConcat& node);
@@ -354,7 +384,17 @@ class BitVectorEq : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorEq& node);
@@ -406,7 +446,17 @@ class BitVectorMul : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 
   /** Cached inverse values result. */
   std::unique_ptr<BitVectorDomain> d_inverse_domain = nullptr;
@@ -465,7 +515,17 @@ class BitVectorShl : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorShl& node);
@@ -541,7 +601,17 @@ class BitVectorShr : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorShr& node);
@@ -606,7 +676,17 @@ class BitVectorAshr : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorAshr& node);
@@ -678,7 +758,17 @@ class BitVectorUdiv : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 
   /**
    * Try to find a consistent value for pos_x = 0 other than x = t.
@@ -736,7 +826,17 @@ class BitVectorUlt : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorUlt& node);
@@ -796,7 +896,17 @@ class BitVectorSlt : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorSlt& node);
@@ -866,7 +976,17 @@ class BitVectorUrem : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 
   /**
    * Pick a consistent value for pos_x = 0 with x > t.
@@ -920,7 +1040,17 @@ class BitVectorXor : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorXor& node);
@@ -988,7 +1118,17 @@ class BitVectorIte : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorIte& node);
@@ -1032,7 +1172,17 @@ class BitVectorNot : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorNot& node);
@@ -1103,7 +1253,17 @@ class BitVectorExtract : public BitVectorNode
   std::unique_ptr<BitVectorDomain> d_x_slice_right = nullptr;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorExtract& node);
@@ -1155,7 +1315,17 @@ class BitVectorSignExtend : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  /**
+   * Evaluate the assignment of this node.
+   * Helper to allow evaluating the assignment on construction (evaluate() is
+   * virtual and cannot be called from the constructor).
+   */
   void _evaluate();
+  /**
+   * Wrapper for evaluating the assignment and fixing the domain on construction
+   * when all operands are constant.
+   */
+  void _evaluate_and_set_domain();
 
   /** The number of bits to extend with. */
   uint32_t d_n;
