@@ -180,10 +180,8 @@ BzlaLs::mk_node(OperatorKind kind,
       break;
     case ULT:
       assert(children.size() == 2);  // API check
-      res.reset(new BitVectorSlt(d_rng.get(),
-                                 domain,
-                                 get_node(children[0]),
-                                 get_node(children[1])));
+      res.reset(new BitVectorUlt(
+          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
       break;
     case UREM:
       assert(children.size() == 2);  // API check
@@ -362,6 +360,15 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
       assert(pos_x < arity);
 
       BZLALSLOG << "      select path: node[" << pos_x << "]" << std::endl;
+      if (BZLALSLOG_ENABLED)
+      {
+        for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+        {
+          BZLALSLOG << "        |- is_essential[" << i
+                    << "]: " << (cur->is_essential(t, i) ? "true" : "false")
+                    << std::endl;
+        }
+      }
 
       /** Select value
        *
