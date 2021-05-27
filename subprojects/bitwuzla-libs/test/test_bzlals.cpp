@@ -8,7 +8,9 @@ namespace test {
 class TestBzlaLs : public TestBvNodeCommon
 {
  protected:
-  static constexpr bool TEST_SLOW = true;
+  static constexpr bool TEST_SLOW = false;
+  static constexpr uint32_t nmoves_slow = 35;
+  static constexpr uint32_t nmoves_fast = 20;
 
   void SetUp() override
   {
@@ -164,9 +166,6 @@ TestBzlaLs::test_move_binary(OpKind opkind,
                              BzlaLs::OperatorKind kind,
                              uint32_t pos_x)
 {
-  BitVector zero = BitVector::mk_zero(1);
-  BitVector one  = BitVector::mk_one(1);
-
   std::vector<std::string> xvalues;
   if (TEST_SLOW)
   {
@@ -181,12 +180,12 @@ TestBzlaLs::test_move_binary(OpKind opkind,
   {
     BitVectorDomain s(s_domain_value);
     BitVectorDomainGenerator gens(s);
-    for (const std::string& x_domain_value : xvalues)
+    do
     {
-      BitVectorDomain x(x_domain_value);
-      do
+      BitVector s_val = gens.has_next() ? gens.next() : s.lo();
+      for (const std::string& x_domain_value : xvalues)
       {
-        BitVector s_val = gens.has_next() ? gens.next() : s.lo();
+        BitVectorDomain x(x_domain_value);
         BitVectorDomainGenerator genx(x);
         do
         {
@@ -219,7 +218,7 @@ TestBzlaLs::test_move_binary(OpKind opkind,
                    || res == BzlaLs::Result::UNSAT);
             assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
             assert(res == BzlaLs::Result::UNSAT
-                   || bzlals.get_assignment(root).compare(one) == 0);
+                   || bzlals.get_assignment(root).is_true());
           }
 
           // s random, x random, n moves
@@ -227,8 +226,7 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
             BitVector rs_val = genrs.has_random() ? genrs.random() : s.lo();
 
-            uint32_t max_nmoves = 25;
-            BzlaLs bzlals(100, max_nmoves);
+            BzlaLs bzlals(100, TEST_SLOW ? nmoves_slow : nmoves_fast);
             uint32_t op_s = bzlals.mk_node(rs_val, s);
             uint32_t op_x = bzlals.mk_node(rx_val, x);
             uint32_t op =
@@ -244,18 +242,18 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             {
               res = bzlals.move();
             } while (res == BzlaLs::Result::UNKNOWN
-                     && bzlals.d_nmoves <= max_nmoves);
-            assert(bzlals.d_nmoves <= 25);
+                     && bzlals.d_nmoves
+                            < (TEST_SLOW ? nmoves_slow : nmoves_fast));
             assert(!bzlals.get_domain(root).is_fixed()
                    || !bzlals.get_assignment(root).is_false()
                    || res == BzlaLs::Result::UNSAT);
             assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
             assert(res == BzlaLs::Result::UNSAT
-                   || bzlals.get_assignment(root).compare(one) == 0);
+                   || bzlals.get_assignment(root).is_true());
           }
         } while (genx.has_next());
-      } while (gens.has_next());
-    }
+      }
+    } while (gens.has_next());
   }
 }
 
