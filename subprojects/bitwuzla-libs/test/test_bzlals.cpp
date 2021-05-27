@@ -80,7 +80,7 @@ class TestBzlaLs : public TestBvNodeCommon
 
     // root1: (v1 + c1) + v2 < (v1 + v2) & v2
     d_root1 = d_bzlals->mk_node(
-        BzlaLs::OperatorKind::ULT, 1, {d_v1pc1mv2, d_v1pv2av2});
+        BzlaLs::OperatorKind::SLT, 1, {d_v1pc1mv2, d_v1pv2av2});
     // root2: sext(v1[0:0] + v3[0:0], 3) = ((v3 + c1) + v3) + v1
     d_root2 = d_bzlals->mk_node(
         BzlaLs::OperatorKind::EQ, 1, {d_v1edv3e_ext, d_v3sc1pv3pv1});
