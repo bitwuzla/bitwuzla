@@ -106,21 +106,16 @@ BitVectorNode::BitVectorNode(RNG* rng,
 }
 
 int32_t
-BitVectorNode::select_path_non_const() const
+BitVectorNode::select_path_non_const(std::vector<uint32_t>& inputs) const
 {
-  int32_t pos_x = -1;
+  assert(inputs.empty());
   for (uint32_t i = 0; i < d_arity; ++i)
   {
     if (d_children[i]->is_const()) continue;
-    if (pos_x >= 0)
-    {
-      /* more than one non-const child */
-      pos_x = -1;
-      break;
-    }
-    pos_x = i;
+    inputs.push_back(i);
   }
-  return pos_x;
+  if (inputs.size() > 1) return -1;
+  return inputs[0];
 }
 
 uint32_t
@@ -128,8 +123,10 @@ BitVectorNode::select_path(const BitVector& t)
 {
   assert(!all_const());
 
+  std::vector<uint32_t> inputs;
+
   /* select non-const operand if only one is non-const */
-  int32_t pos_x = select_path_non_const();
+  int32_t pos_x = select_path_non_const(inputs);
 
   /* select essential input if any and path selection based on essential
    * inputs is enabled. */
@@ -137,8 +134,9 @@ BitVectorNode::select_path(const BitVector& t)
   {
     /* determine essential inputs */
     std::vector<uint32_t> ess_inputs;
-    for (uint32_t i = 0; i < d_arity; ++i)
+    for (uint32_t i : inputs)
     {
+      assert(!d_children[i]->is_const());
       if (is_essential(t, i))
       {
         ess_inputs.push_back(i);
@@ -154,7 +152,7 @@ BitVectorNode::select_path(const BitVector& t)
    * selection enabled */
   if (pos_x == -1)
   {
-    pos_x = d_rng->pick<uint32_t>(0, d_arity - 1);
+    pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>(inputs);
   }
 
   assert(pos_x >= 0);
@@ -4856,8 +4854,10 @@ BitVectorIte::select_path(const BitVector& t)
 {
   assert(!all_const());
 
+  std::vector<uint32_t> inputs;
+
   /* select non-const operand if only one is non-const */
-  int32_t pos_x = select_path_non_const();
+  int32_t pos_x = select_path_non_const(inputs);
 
   /* select essential input if any and path selection based on essential
    * inputs is enabled. */
@@ -4865,16 +4865,13 @@ BitVectorIte::select_path(const BitVector& t)
   {
     /* determine essential inputs, disabled branches are excluded */
     std::vector<uint32_t> ess_inputs;
-    if (is_essential(t, 0)) ess_inputs.push_back(0);
-    if (d_children[0]->assignment().is_true())
+    for (uint32_t i : inputs)
     {
-      if (is_essential(t, 1)) ess_inputs.push_back(1);
+      bool cond = d_children[0]->assignment().is_true();
+      if (i == 1 && !cond) continue;
+      if (i == 2 && cond) continue;
+      if (is_essential(t, i)) ess_inputs.push_back(i);
     }
-    else
-    {
-      if (is_essential(t, 2)) ess_inputs.push_back(2);
-    }
-
     if (!ess_inputs.empty())
     {
       pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>(ess_inputs);
@@ -4885,14 +4882,7 @@ BitVectorIte::select_path(const BitVector& t)
    * selection enabled */
   if (pos_x == -1)
   {
-    if (d_children[0]->assignment().is_true())
-    {
-      pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>({0, 1});
-    }
-    else
-    {
-      pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>({0, 2});
-    }
+    pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>(inputs);
   }
 
   assert(pos_x >= 0);

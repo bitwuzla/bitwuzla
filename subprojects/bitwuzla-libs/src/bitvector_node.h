@@ -1,6 +1,8 @@
 #ifndef BZLALS__BITVECTOR_OP_H
 #define BZLALS__BITVECTOR_OP_H
 
+#include <vector>
+
 #include "bitvector.h"
 #include "bitvector_domain.h"
 
@@ -142,7 +144,7 @@ class BitVectorNode
                 BitVectorNode* child1,
                 BitVectorNode* child2);
 
-  int32_t select_path_non_const() const;
+  int32_t select_path_non_const(std::vector<uint32_t>& inputs) const;
 
   uint32_t d_id                                = 0;
   std::unique_ptr<BitVectorNode*[]> d_children = nullptr;

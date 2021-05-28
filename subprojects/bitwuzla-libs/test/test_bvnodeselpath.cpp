@@ -129,6 +129,7 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
           continue;
         }
         pos_x = oop.select_path(t);
+        ASSERT_FALSE(pos_x == 0 ? is_const0 : is_const1);
         ASSERT_TRUE(!is_const0 || pos_x == 1);
         ASSERT_TRUE(!is_const1 || pos_x == 0);
         ASSERT_TRUE((is_essential0 && is_essential1) || !is_essential0
@@ -219,6 +220,8 @@ TestBvNodeSelPath::test_ite()
             continue;
           }
           pos_x = lop.select_path(t);
+          ASSERT_FALSE(pos_x == 0 ? is_const0
+                                  : (pos_x == 1 ? is_const1 : is_const2));
           ASSERT_TRUE(!is_const1 || !is_const2 || pos_x == 0);
           ASSERT_TRUE(!is_const0 || !is_const2 || pos_x == 1);
           ASSERT_TRUE(!is_const0 || !is_const1 || pos_x == 2);
