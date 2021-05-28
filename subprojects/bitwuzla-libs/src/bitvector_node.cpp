@@ -105,14 +105,10 @@ BitVectorNode::BitVectorNode(RNG* rng,
   d_all_const = child0->is_const() && child1->is_const() && child2->is_const();
 }
 
-uint32_t
-BitVectorNode::select_path(const BitVector& t)
+int32_t
+BitVectorNode::select_path_non_const() const
 {
-  assert(!all_const());
-
   int32_t pos_x = -1;
-
-  /* select non-const operand if only one is non-const */
   for (uint32_t i = 0; i < d_arity; ++i)
   {
     if (d_children[i]->is_const()) continue;
@@ -124,6 +120,16 @@ BitVectorNode::select_path(const BitVector& t)
     }
     pos_x = i;
   }
+  return pos_x;
+}
+
+uint32_t
+BitVectorNode::select_path(const BitVector& t)
+{
+  assert(!all_const());
+
+  /* select non-const operand if only one is non-const */
+  int32_t pos_x = select_path_non_const();
 
   /* select essential input if any and path selection based on essential
    * inputs is enabled. */
@@ -4843,6 +4849,54 @@ BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
 
   assert(x.match_fixed_bits(*d_consistent));
   return *d_consistent;
+}
+
+uint32_t
+BitVectorIte::select_path(const BitVector& t)
+{
+  assert(!all_const());
+
+  /* select non-const operand if only one is non-const */
+  int32_t pos_x = select_path_non_const();
+
+  /* select essential input if any and path selection based on essential
+   * inputs is enabled. */
+  if (pos_x == -1 && s_sel_path_essential)
+  {
+    /* determine essential inputs, disabled branches are excluded */
+    std::vector<uint32_t> ess_inputs;
+    if (is_essential(t, 0)) ess_inputs.push_back(0);
+    if (d_children[0]->assignment().is_true())
+    {
+      if (is_essential(t, 1)) ess_inputs.push_back(1);
+    }
+    else
+    {
+      if (is_essential(t, 2)) ess_inputs.push_back(2);
+    }
+
+    if (!ess_inputs.empty())
+    {
+      pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>(ess_inputs);
+    }
+  }
+
+  /* select random input if operation has no essential inputs or if random path
+   * selection enabled */
+  if (pos_x == -1)
+  {
+    if (d_children[0]->assignment().is_true())
+    {
+      pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>({0, 1});
+    }
+    else
+    {
+      pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>({0, 2});
+    }
+  }
+
+  assert(pos_x >= 0);
+  return pos_x;
 }
 
 std::string

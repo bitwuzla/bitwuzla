@@ -93,7 +93,7 @@ class BitVectorNode
    * Select the next step in the propagation path based on target value t and
    * the current assignment of this operation's children.
    */
-  uint32_t select_path(const BitVector& t);
+  virtual uint32_t select_path(const BitVector& t);
 
   /** Get child at given index. */
   BitVectorNode* operator[](uint32_t pos) const;
@@ -141,6 +141,8 @@ class BitVectorNode
                 BitVectorNode* child0,
                 BitVectorNode* child1,
                 BitVectorNode* child2);
+
+  int32_t select_path_non_const() const;
 
   uint32_t d_id                                = 0;
   std::unique_ptr<BitVectorNode*[]> d_children = nullptr;
@@ -1114,6 +1116,8 @@ class BitVectorIte : public BitVectorNode
 
   const BitVector& consistent_value(const BitVector& t,
                                     uint32_t pos_x) override;
+
+  uint32_t select_path(const BitVector& t) override;
 
   std::string to_string() const override;
 
