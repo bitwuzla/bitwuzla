@@ -5222,8 +5222,9 @@ BitVectorExtract::consistent_value(const BitVector& t, uint32_t pos_x)
 std::string
 BitVectorExtract::to_string() const
 {
-  return "[" + std::to_string(d_id) + "] extract: " + d_domain.to_string()
-         + " (" + d_assignment.to_string() + ")";
+  return "[" + std::to_string(d_id) + "] extract [" + std::to_string(d_hi) + ":"
+         + std::to_string(d_lo) + "]: " + d_domain.to_string() + " ("
+         + d_assignment.to_string() + ")";
 }
 
 std::ostream&

@@ -214,11 +214,12 @@ BzlaLs::mk_indexed_node(OperatorKind kind,
                         uint32_t child0,
                         const std::vector<uint32_t>& indices)
 {
-  assert(kind == EXTRACT || kind == SEXT);                    // API check
-  assert(kind != EXTRACT || indices.size() == 2);             // API check
-  assert(kind != EXTRACT || indices[0] >= indices[1]);        // API check
-  assert(kind != EXTRACT || indices[0] < domain.size());      // API check
-  assert(kind != SEXT || indices.size() == 1);                // API check
+  assert(kind == EXTRACT || kind == SEXT);              // API check
+  assert(kind != EXTRACT || indices.size() == 2);       // API check
+  assert(kind != EXTRACT || indices[0] >= indices[1]);  // API check
+  assert(kind != EXTRACT
+         || indices[0] < get_node(child0)->size());  // API check
+  assert(kind != SEXT || indices.size() == 1);       // API check
 
   uint32_t id = d_nodes.size();
   assert(child0 < id);
