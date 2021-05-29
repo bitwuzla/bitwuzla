@@ -147,8 +147,7 @@ BzlaLs::mk_node(OperatorKind kind,
       break;
     case NOT:
       assert(children.size() == 1);  // API check
-      d_nodes.push_back(std::make_unique<BitVectorNot>(
-          d_rng.get(), domain, get_node(children[0])));
+      res.reset(new BitVectorNot(d_rng.get(), domain, get_node(children[0])));
       break;
     case SHL:
       assert(children.size() == 2);  // API check

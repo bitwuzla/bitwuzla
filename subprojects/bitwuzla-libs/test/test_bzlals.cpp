@@ -109,6 +109,9 @@ class TestBzlaLs : public TestBvNodeCommon
                         BzlaLs::OperatorKind kind,
                         uint32_t pos_x);
   void test_move_ite(uint32_t pos_x);
+  void test_move_not();
+  void test_move_extract();
+  void test_move_sext();
 
   std::unique_ptr<BzlaLs> d_bzlals;
 
@@ -407,6 +410,51 @@ TestBzlaLs::test_move_ite(uint32_t pos_x)
         } while (gens1.has_next());
       }
     } while (gens0.has_next());
+  }
+}
+
+void
+TestBzlaLs::test_move_not()
+{
+  std::vector<std::string> xvalues;
+  if (TEST_SLOW)
+  {
+    xvalues = d_xvalues;
+  }
+  else
+  {
+    gen_xvalues(3, xvalues);
+  }
+
+  for (const std::string& x_domain_value : xvalues)
+  {
+    BitVectorDomain x(x_domain_value);
+    BitVectorDomainGenerator genx(x);
+    do
+    {
+      BitVector x_val = genx.has_next() ? genx.next() : x.lo();
+      BitVector t_val = x_val.bvnot();
+
+      uint32_t bw_t = t_val.size();
+
+      BitVectorDomainGenerator genrx(x, d_rng.get());
+      BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
+
+      BzlaLs bzlals(100);
+      uint32_t op_x = bzlals.mk_node(rx_val, x);
+      uint32_t op   = bzlals.mk_node(
+          BzlaLs::OperatorKind::NOT, BitVectorDomain(bw_t), {op_x});
+      uint32_t t    = bzlals.mk_node(t_val, BitVectorDomain(t_val));
+      uint32_t root = bzlals.mk_node(BzlaLs::EQ, BitVectorDomain(1), {op, t});
+      bzlals.register_root(root);
+      BzlaLs::Result res = bzlals.move();
+      assert(!bzlals.get_domain(root).is_fixed()
+             || !bzlals.get_assignment(root).is_false()
+             || res == BzlaLs::Result::UNSAT);
+      assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
+      assert(res == BzlaLs::Result::UNSAT
+             || bzlals.get_assignment(root).is_true());
+    } while (genx.has_next());
   }
 }
 
@@ -735,6 +783,8 @@ TEST_F(TestBzlaLs, ite)
   test_move_ite(1);
   test_move_ite(2);
 }
+
+TEST_F(TestBzlaLs, not ) { test_move_not(); }
 
 }  // namespace test
 }  // namespace bzlals
