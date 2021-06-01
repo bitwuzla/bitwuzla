@@ -19,7 +19,7 @@ build=default
 
 asan=no
 ubsan=no
-check=no
+assertions=no
 log=no
 shared=no
 prefix=
@@ -73,7 +73,8 @@ Options:
   --shared          shared library
 
   -l                compile with logging support (default for '-g')
-  -c                check assertions even in optimized compilation
+  --assertions      enable assertions (default: enabled in debug,
+                                                disabled in production)
   --asan            compile with -fsanitize=address -fsanitize-recover=address
   --ubsan           compile with -fsanitize=undefined
   --gcov            compile with -fprofile-arcs -ftest-coverage
@@ -160,7 +161,7 @@ do
     --shared) shared=yes;;
 
     -l)      log=yes;;
-    -c)      check=yes;;
+    --assertions) assertions=yes;;
     --asan)  asan=yes;;
     --ubsan) ubsan=yes;;
     --gcov)  gcov=yes;;
@@ -213,7 +214,7 @@ cmake_opts="$CMAKE_OPTS"
 
 [ $asan = yes ] && cmake_opts="$cmake_opts -DASAN=ON"
 [ $ubsan = yes ] && cmake_opts="$cmake_opts -DUBSAN=ON"
-[ $check = yes ] && cmake_opts="$cmake_opts -DCHECK=ON"
+[ $assertions = yes ] && cmake_opts="$cmake_opts -DASSERTIONS=ON"
 [ $log = yes ] && cmake_opts="$cmake_opts -DLOG=ON"
 [ $shared = yes ] && cmake_opts="$cmake_opts -DBUILD_SHARED_LIBS=ON"
 
