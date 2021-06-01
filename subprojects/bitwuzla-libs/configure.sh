@@ -8,8 +8,11 @@ BUILDDIR=build
 build=default
 
 assertions=no
+units=unknown
+
 asan=no
 ubsan=no
+
 shared=no
 prefix=
 path=
@@ -43,6 +46,8 @@ where <option> is one of the following:
 
   --assertions      enable assertions (default: enabled for debug,
                                                 disabled for production)
+  --unit-testing    enable unit testing
+  --no-unit-testing disable unit testing
 
   --asan            compile with -fsanitize=address -fsanitize-recover=address
   --ubsan           compile with -fsanitize=undefined
@@ -99,6 +104,9 @@ do
     --gcov)  gcov=yes;;
     --gprof) gprof=yes;;
 
+    --unit-testing) units=ON;;
+    --no-unit-testing) units=OFF;;
+
     -*) die "invalid option '$opt' (try '-h')";;
 
     *) case $1 in
@@ -117,6 +125,8 @@ cmake_opts="$CMAKE_OPTS"
 
 [ $build != default ] \
   && cmake_opts="$cmake_opts -DCMAKE_BUILD_TYPE=$build"
+
+[ $units != unknown ] && cmake_opts="$cmake_opts -DTESTING=$units"
 
 [ $ninja = yes ] && cmake_opts="$cmake_opts -G Ninja"
 

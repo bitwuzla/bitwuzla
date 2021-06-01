@@ -105,6 +105,7 @@ message(STATUS "BIN directory is '${CMAKE_BINARY_DIR}/bin'")
 option3vl(ASAN       "Compile with ASAN support")
 option3vl(UBSAN      "Compile with UBSan support")
 option3vl(ASSERTIONS "Enable assertions")
+option3vl(TESTING    "Enable unit tests")
 option3vl(GCOV       "Compile with coverage support")
 option3vl(GPROF      "Compile with profiling support")
 
@@ -160,6 +161,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_check_c_cxx_flag("-g3")
   add_check_c_cxx_flag("-ggdb")
   set_option(ASSERTIONS ON)
+  set_option(TESTING ON)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Production")
   add_check_c_cxx_flag("-O3")
   if(NOT ASSERTIONS)
@@ -170,9 +172,8 @@ endif()
 #-----------------------------------------------------------------------------#
 # Regression tests
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(TESTING)
   enable_testing()
-  set(BUILD_SHARED_LIBS ON)
 endif()
 
 #-----------------------------------------------------------------------------#
@@ -262,7 +263,9 @@ endif()
 
 include_directories(src ${CMAKE_CURRENT_BINARY_DIR}/src)
 add_subdirectory(src)
-add_subdirectory(test)
+if (TESTING)
+  add_subdirectory(test)
+endif()
 
 #-----------------------------------------------------------------------------#
 
@@ -319,5 +322,6 @@ config_info_bool("Shared build" "${BUILD_SHARED_LIBS}")
 config_info_bool("ASAN support" ASAN)
 config_info_bool("UBSAN support" UBSAN)
 config_info_bool("Assertions enabled" ASSERTIONS)
+config_info_bool("Testing enabled" TESTING)
 config_info_bool("gcov support" GCOV)
 config_info_bool("gprof support" GPROF)
