@@ -268,14 +268,6 @@ if (TESTING)
 endif()
 
 #-----------------------------------------------------------------------------#
-
-set(ARCHIVE_NAME "bzlals-${VERSION}")
-add_custom_target(dist
-    COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD
-        | xz > ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar.xz
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-
-#-----------------------------------------------------------------------------#
 # Install config and configversion for bzla-ls to add support for
 # find_package(bzlals).
 
