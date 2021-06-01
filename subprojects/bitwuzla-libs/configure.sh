@@ -5,9 +5,10 @@ BUILDDIR=build
 
 #--------------------------------------------------------------------------#
 
+build=default
+
 asan=no
 ubsan=no
-debug=no
 check=no
 shared=no
 prefix=
@@ -24,13 +25,12 @@ flags=""
 
 usage () {
 cat <<EOF
-usage: $0 [<option> ...]
+usage: $0 [<build type>] [<option> ...]
 
 where <option> is one of the following:
 
   -h, --help        print this message and exit
 
-  -g                compile with debugging support
   -f...|-m...       add compiler options
 
   --ninja           use Ninja build system
@@ -72,7 +72,6 @@ do
   case $opt in
     -h|--help) usage;;
 
-    -g) debug=yes;;
     -f*|-m*) if [ -z "$flags" ]; then flags=$1; else flags="$flags;$1"; fi;;
 
     --ninja) ninja=yes;;
@@ -99,6 +98,13 @@ do
     --gprof) gprof=yes;;
 
     -*) die "invalid option '$opt' (try '-h')";;
+
+    *) case $1 in
+         production)      build=Production;;
+         debug)           build=Debug;;
+         *)               die "invalid build type (try -h)";;
+       esac
+       ;;
   esac
   shift
 done
@@ -107,11 +113,13 @@ done
 
 cmake_opts="$CMAKE_OPTS"
 
+[ $build != default ] \
+  && cmake_opts="$cmake_opts -DCMAKE_BUILD_TYPE=$build"
+
 [ $ninja = yes ] && cmake_opts="$cmake_opts -G Ninja"
 
 [ $asan = yes ] && cmake_opts="$cmake_opts -DASAN=ON"
 [ $ubsan = yes ] && cmake_opts="$cmake_opts -DUBSAN=ON"
-[ $debug = yes ] && cmake_opts="$cmake_opts -DCMAKE_BUILD_TYPE=Debug"
 [ $check = yes ] && cmake_opts="$cmake_opts -DCHECK=ON"
 [ $shared = yes ] && cmake_opts="$cmake_opts -DBUILD_SHARED_LIBS=ON"
 
