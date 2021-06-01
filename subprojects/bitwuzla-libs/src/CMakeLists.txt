@@ -20,4 +20,16 @@ target_include_directories(bzlals
 target_include_directories(bzlals PRIVATE ${GMP_INCLUDE_DIR})
 target_link_libraries(bzlals ${GMP_LIBRARIES})
 
-# TODO install
+install(TARGETS bzlals
+  EXPORT bzlals-export
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+
+install(EXPORT bzlals-export
+  FILE BzlaLSTargets.cmake
+  NAMESPACE BzlaLS::
+  DESTINATION lib/cmake/BzlaLS)
+
+# Install header files
+install(FILES bzlals.h DESTINATION include)
