@@ -278,8 +278,10 @@ BitVectorAdd::is_consistent(const BitVector& t, uint32_t pos_x)
 const BitVector&
 BitVectorAdd::inverse_value(const BitVector& t, uint32_t pos_x)
 {
+#ifndef NDEBUG
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
+#endif
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
   if (d_inverse == nullptr)
@@ -295,10 +297,8 @@ const BitVector&
 BitVectorAdd::consistent_value(const BitVector& t, uint32_t pos_x)
 {
   assert(d_consistent == nullptr);
-#ifndef NDEBUG
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
-#endif
   (void) t;
 
   /** consistent value: random value */
@@ -843,10 +843,8 @@ const BitVector&
 BitVectorEq::consistent_value(const BitVector& t, uint32_t pos_x)
 {
   assert(d_consistent == nullptr);
-#ifndef NDEBUG
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
-#endif
   (void) t;
 
   /** consistent value: random value */

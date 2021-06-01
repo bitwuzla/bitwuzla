@@ -170,7 +170,6 @@ endif()
 # Regression tests
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  find_package(GTest REQUIRED)
   enable_testing()
   set(BUILD_SHARED_LIBS ON)
 endif()

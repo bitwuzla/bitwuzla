@@ -1056,7 +1056,7 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
     uint64_t i2         = int_args[i].second;
     BitVector res(b1);
     BitVector tres;
-    uint64_t ares, atres;
+    uint64_t ares = 0, atres = 0;
     switch (kind)
     {
       case ADD:
@@ -1957,7 +1957,7 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
     uint64_t i2         = int_args[i].second;
     BitVector res(b1);
     BitVector tres;
-    uint64_t ares, atres;
+    uint64_t ares = 0, atres = 0;
     switch (kind)
     {
       case SDIV:
@@ -2381,6 +2381,7 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
   uint32_t size = to_shift.size();
   assert(size == shift.size());
   assert(size == expected.size());
+  (void) size;
 
   BitVector bv(to_shift.size(), to_shift);
   BitVector bv_shift(shift.size(), shift);

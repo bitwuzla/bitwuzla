@@ -12,6 +12,7 @@
 namespace bzlals {
 
 namespace {
+#ifndef NDEBUG
 bool
 is_bin_str(std::string str)
 {
@@ -21,6 +22,7 @@ is_bin_str(std::string str)
   }
   return true;
 }
+#endif
 
 #if !defined(__GNUC__) && !defined(__clang__)
 static uint32_t

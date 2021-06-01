@@ -1,4 +1,4 @@
-include(GoogleTest)
+find_package(GoogleTest REQUIRED)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/tests)
 

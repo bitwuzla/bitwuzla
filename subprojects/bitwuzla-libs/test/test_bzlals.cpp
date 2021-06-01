@@ -223,6 +223,7 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
             assert(res == BzlaLs::Result::UNSAT
                    || bzlals.get_assignment(root).is_true());
+            (void) res;
           }
 
           // s random, x random, n moves
@@ -360,6 +361,7 @@ TestBzlaLs::test_move_ite(uint32_t pos_x)
                        || res == BzlaLs::Result::SAT);
                 assert(res == BzlaLs::Result::UNSAT
                        || bzlals.get_assignment(root).is_true());
+                (void) res;
               }
 
               // s random, x random, n moves
@@ -454,6 +456,7 @@ TestBzlaLs::test_move_not()
       assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
       assert(res == BzlaLs::Result::UNSAT
              || bzlals.get_assignment(root).is_true());
+      (void) res;
     } while (genx.has_next());
   }
 }
@@ -510,6 +513,7 @@ TestBzlaLs::test_move_extract()
             assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
             assert(res == BzlaLs::Result::UNSAT
                    || bzlals.get_assignment(root).is_true());
+            (void) res;
           }
         }
       }
@@ -561,6 +565,7 @@ TestBzlaLs::test_move_sext()
         assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
         assert(res == BzlaLs::Result::UNSAT
                || bzlals.get_assignment(root).is_true());
+        (void) res;
       }
     } while (genx.has_next());
   }
