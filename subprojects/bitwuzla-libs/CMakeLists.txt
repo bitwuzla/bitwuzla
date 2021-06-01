@@ -300,7 +300,7 @@ add_custom_target(dist
 if(NOT WIN32)
   string(ASCII 27 Esc)
   set(Green "${Esc}[32m")
-  set(Blue "${Esc}[34m")
+  set(Blue "${Esc}[1;34m")
   set(ResetColor "${Esc}[m")
 endif()
 
