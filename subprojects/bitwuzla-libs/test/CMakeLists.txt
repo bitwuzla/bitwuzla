@@ -16,7 +16,7 @@ set(test_names
 )
 
 foreach(test ${test_names})
-  set(testbin test${test})
+  set(testbin testbzlals${test})
   add_executable (${testbin} test_${test}.cpp)
   gtest_add_tests(TARGET ${testbin})
   target_link_libraries(${testbin} bzlals)
