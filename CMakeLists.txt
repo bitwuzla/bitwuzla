@@ -424,14 +424,6 @@ endif()
 # add_subdirectory(examples/api/c)
 
 #-----------------------------------------------------------------------------#
-
-set(ARCHIVE_NAME "bitwuzla-${VERSION}")
-add_custom_target(dist
-    COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD
-        | xz > ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar.xz
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-
-#-----------------------------------------------------------------------------#
 # Install config and configversion for Bitwuzla to add support for
 # find_package(Bitwuzla).
 
