@@ -21,6 +21,7 @@ asan=no
 ubsan=no
 assertions=no
 log=no
+
 shared=no
 prefix=
 path=
