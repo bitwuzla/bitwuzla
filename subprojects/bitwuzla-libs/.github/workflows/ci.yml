@@ -26,7 +26,7 @@ jobs:
 
       - name: Configure
         run: |
-          ./configure.sh -g
+          ./configure.sh debug
 
       - name: Build
         run: make -j2
