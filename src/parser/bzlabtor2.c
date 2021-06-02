@@ -12,7 +12,7 @@
 #include <inttypes.h>
 #include <limits.h>
 
-#include "btor2parser/btor2parser.h"
+#include "btor2parser.h"
 #include "bzlamsg.h"
 #include "bzlaparse.h"
 #include "bzlatypes.h"

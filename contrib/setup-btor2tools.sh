@@ -14,7 +14,7 @@ set -e -o pipefail
 source "$(dirname "$0")/setup-utils.sh"
 
 BTOR2TOOLS_DIR="${DEPS_DIR}/btor2tools"
-COMMIT_ID="1df768d75adfb13a8f922f5ffdd1d58e80cb1cc2"
+COMMIT_ID="6ba194b3d58774b5d13e92b198367dedd5b80236"
 
 download_github "boolector/btor2tools" "$COMMIT_ID" "$BTOR2TOOLS_DIR"
 cd "${BTOR2TOOLS_DIR}"
@@ -25,7 +25,7 @@ if is_windows; then
   test_apply_patch "${component}" "${last_patch_date}"
 fi
 
-./configure.sh -fPIC
-make -j${NPROC}
-install_lib build/libbtor2parser.a
-install_include src/btor2parser/btor2parser.h btor2parser
+mkdir build
+cd build
+cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
+make install -j${NPROC}
