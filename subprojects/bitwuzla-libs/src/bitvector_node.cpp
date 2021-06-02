@@ -4859,8 +4859,8 @@ BitVectorIte::select_path_non_const(std::vector<uint32_t>& inputs) const
     if (i == 2 && cond) continue;
     inputs.push_back(i);
   }
-  if (inputs.size() > 1) return -1;
-  return inputs[0];
+  if (inputs.size() == 1) return inputs[0];
+  return -1;
 }
 
 uint32_t
@@ -4893,7 +4893,22 @@ BitVectorIte::select_path(const BitVector& t)
    * selection enabled */
   if (pos_x == -1)
   {
-    pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>(inputs);
+    /* It can happen that inputs is empty (for example, if cond and enabled
+     * branch are const). This shouldn't happen in practice, but can happen
+     * in the test setting (when covering all cases), and we guard for this. */
+    if (inputs.empty())
+    {
+      assert(d_children[0]->is_const());
+      assert(d_children[0]->assignment().is_true()
+             || (!d_children[1]->is_const() && d_children[2]->is_const()));
+      assert(d_children[0]->assignment().is_false()
+             || (!d_children[2]->is_const() && d_children[1]->is_const()));
+      pos_x = d_children[0]->assignment().is_true() ? 2 : 1;
+    }
+    else
+    {
+      pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>(inputs);
+    }
   }
 
   assert(pos_x >= 0);
