@@ -4847,6 +4847,22 @@ BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
   return *d_consistent;
 }
 
+int32_t
+BitVectorIte::select_path_non_const(std::vector<uint32_t>& inputs) const
+{
+  assert(inputs.empty());
+  bool cond = d_children[0]->assignment().is_true();
+  for (uint32_t i = 0; i < d_arity; ++i)
+  {
+    if (d_children[i]->is_const()) continue;
+    if (i == 1 && !cond) continue;
+    if (i == 2 && cond) continue;
+    inputs.push_back(i);
+  }
+  if (inputs.size() > 1) return -1;
+  return inputs[0];
+}
+
 uint32_t
 BitVectorIte::select_path(const BitVector& t)
 {
@@ -4865,9 +4881,6 @@ BitVectorIte::select_path(const BitVector& t)
     std::vector<uint32_t> ess_inputs;
     for (uint32_t i : inputs)
     {
-      bool cond = d_children[0]->assignment().is_true();
-      if (i == 1 && !cond) continue;
-      if (i == 2 && cond) continue;
       if (is_essential(t, i)) ess_inputs.push_back(i);
     }
     if (!ess_inputs.empty())

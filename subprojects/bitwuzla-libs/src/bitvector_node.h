@@ -144,7 +144,7 @@ class BitVectorNode
                 BitVectorNode* child1,
                 BitVectorNode* child2);
 
-  int32_t select_path_non_const(std::vector<uint32_t>& inputs) const;
+  virtual int32_t select_path_non_const(std::vector<uint32_t>& inputs) const;
 
   uint32_t d_id                                = 0;
   std::unique_ptr<BitVectorNode*[]> d_children = nullptr;
@@ -1124,6 +1124,7 @@ class BitVectorIte : public BitVectorNode
   std::string to_string() const override;
 
  private:
+  int32_t select_path_non_const(std::vector<uint32_t>& inputs) const override;
   /**
    * Evaluate the assignment of this node.
    * Helper to allow evaluating the assignment on construction (evaluate() is
