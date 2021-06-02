@@ -12,7 +12,7 @@
 # Btor2Tools_INCLUDE_DIR - the Btor2Tools include directory
 # Btor2Tools_LIBRARIES - Libraries needed to use Btor2Tools
 
-find_path(Btor2Tools_INCLUDE_DIR NAMES btor2parser/btor2parser.h)
+find_path(Btor2Tools_INCLUDE_DIR NAMES btor2parser.h)
 find_library(Btor2Tools_LIBRARIES NAMES btor2parser)
 
 include(FindPackageHandleStandardArgs)
