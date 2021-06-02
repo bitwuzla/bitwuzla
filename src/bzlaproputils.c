@@ -18,7 +18,7 @@
 #include "bzlanode.h"
 #include "bzlaprintmodel.h"
 #include "bzlaslsutils.h"
-#include "bzlaslvprop.h"
+#include "bzlaslvpropold.h"
 #include "bzlaslvsls.h"
 #include "utils/bzlahash.h"
 #include "utils/bzlanodeiter.h"
@@ -1268,11 +1268,11 @@ select_path_cond(Bzla *bzla, BzlaPropInfo *pi)
        *
        * -> else select other non-const branch
        */
-      if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+      if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
       {
-        prob        = &BZLA_PROP_SOLVER(bzla)->flip_cond_const_prob;
-        delta       = &BZLA_PROP_SOLVER(bzla)->flip_cond_const_prob_delta;
-        nflips_cond = &BZLA_PROP_SOLVER(bzla)->nflip_cond_const;
+        prob        = &BZLA_PROP_OLD_SOLVER(bzla)->flip_cond_const_prob;
+        delta       = &BZLA_PROP_OLD_SOLVER(bzla)->flip_cond_const_prob_delta;
+        nflips_cond = &BZLA_PROP_OLD_SOLVER(bzla)->nflip_cond_const;
       }
       else
       {
@@ -1329,14 +1329,14 @@ select_path_cond(Bzla *bzla, BzlaPropInfo *pi)
 static void
 record_cons_stats(Bzla *bzla, uint32_t *stats)
 {
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
   {
 #ifndef NDEBUG
     *stats += 1;
 #else
     (void) stats;
 #endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_cons += 1;
+    BZLA_PROP_OLD_SOLVER(bzla)->stats.props_cons += 1;
   }
 }
 
@@ -1379,7 +1379,7 @@ bzla_proputils_cons_add(Bzla *bzla, BzlaPropInfo *pi)
   check_cons_dbg(bzla, pi, true);
 #endif
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_add);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_add);
   return bzla_bv_new_random(
       bzla->mm, bzla->rng, bzla_bv_get_width(pi->target_value));
 }
@@ -1400,7 +1400,7 @@ bzla_proputils_cons_and(Bzla *bzla, BzlaPropInfo *pi)
   mm = bzla->mm;
   t  = pi->target_value;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_and);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_and);
 
   b = bzla_rng_pick_with_prob(bzla->rng,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_AND_FLIP));
@@ -1449,7 +1449,7 @@ bzla_proputils_cons_xor(Bzla *bzla, BzlaPropInfo *pi)
   check_cons_dbg(bzla, pi, true);
 #endif
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_xor);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_xor);
   return bzla_bv_new_random(
       bzla->mm, bzla->rng, bzla_bv_get_width(pi->target_value));
 }
@@ -1463,7 +1463,7 @@ bzla_proputils_cons_eq(Bzla *bzla, BzlaPropInfo *pi)
 
   BzlaBitVector *res;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_eq);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_eq);
 
   if (bzla_rng_pick_with_prob(bzla->rng,
                               bzla_opt_get(bzla, BZLA_OPT_PROP_PROB_EQ_FLIP)))
@@ -1495,7 +1495,7 @@ cons_ult_aux(Bzla *bzla, BzlaPropInfo *pi, bool with_const_bits)
   BzlaBvDomainGenerator gen;
   int32_t pos_x;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_ult);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_ult);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -1608,7 +1608,7 @@ cons_slt_aux(Bzla *bzla, BzlaPropInfo *pi, bool with_const_bits)
   BzlaBvDomainSignedGenerator gen;
   int32_t pos_x;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_slt);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_slt);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -1711,7 +1711,7 @@ bzla_proputils_cons_sll(Bzla *bzla, BzlaPropInfo *pi)
   BzlaMemMgr *mm;
   const BzlaBitVector *t;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sll);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_sll);
 
   mm    = bzla->mm;
   t     = pi->target_value;
@@ -1772,7 +1772,7 @@ bzla_proputils_cons_srl(Bzla *bzla, BzlaPropInfo *pi)
   BzlaMemMgr *mm;
   const BzlaBitVector *t;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_srl);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_srl);
 
   mm    = bzla->mm;
   t     = pi->target_value;
@@ -1834,7 +1834,7 @@ bzla_proputils_cons_sra(Bzla *bzla, BzlaPropInfo *pi)
   BzlaMemMgr *mm;
   const BzlaBitVector *t;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sra);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_sra);
 
   mm = bzla->mm;
   t  = pi->target_value;
@@ -1908,7 +1908,7 @@ bzla_proputils_cons_mul(Bzla *bzla, BzlaPropInfo *pi)
   BzlaMemMgr *mm;
   const BzlaBitVector *t;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_mul);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_mul);
 
   mm  = bzla->mm;
   t   = pi->target_value;
@@ -1986,7 +1986,7 @@ bzla_proputils_cons_udiv(Bzla *bzla, BzlaPropInfo *pi)
   one  = bzla_bv_one(mm, bw);
   ones = bzla_bv_ones(mm, bw);
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_udiv);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_udiv);
 
   if (pi->pos_x)
   {
@@ -2079,7 +2079,7 @@ bzla_proputils_cons_urem(Bzla *bzla, BzlaPropInfo *pi)
   BzlaMemMgr *mm;
   const BzlaBitVector *t;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_urem);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_urem);
 
   mm = bzla->mm;
   t  = pi->target_value;
@@ -2154,7 +2154,7 @@ bzla_proputils_cons_concat(Bzla *bzla, BzlaPropInfo *pi)
   BzlaBitVector *res;
   const BzlaBitVector *s, *t;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_concat);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_concat);
 
   s = pi->bv[1 - pi->pos_x];
   t = pi->target_value;
@@ -2201,7 +2201,7 @@ bzla_proputils_cons_cond(Bzla *bzla, BzlaPropInfo *pi)
   BzlaBitVector *res;
   BzlaMemMgr *mm;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_cond);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_cond);
 
   mm = bzla->mm;
 
@@ -2238,7 +2238,7 @@ bzla_proputils_cons_add_const(Bzla *bzla, BzlaPropInfo *pi)
   const BzlaBvDomain *x;
   BzlaMemMgr *mm;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_add);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_add);
 
   mm = bzla->mm;
   x  = pi->bvd[pi->pos_x];
@@ -2264,7 +2264,7 @@ bzla_proputils_cons_and_const(Bzla *bzla, BzlaPropInfo *pi)
     return NULL;
   }
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_and);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_and);
 
   mm = bzla->mm;
   x  = pi->bvd[pi->pos_x];
@@ -2286,7 +2286,7 @@ bzla_proputils_cons_xor_const(Bzla *bzla, BzlaPropInfo *pi)
   const BzlaBvDomain *x;
   BzlaMemMgr *mm;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_xor);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_xor);
 
   mm = bzla->mm;
   x  = pi->bvd[pi->pos_x];
@@ -2316,7 +2316,7 @@ bzla_proputils_cons_eq_const(Bzla *bzla, BzlaPropInfo *pi)
   x = pi->bvd[pi->pos_x];
   if (bzla_bvdomain_is_fixed(bzla->mm, x))
   {
-    record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_eq);
+    record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_eq);
     return bzla_bv_copy(bzla->mm, x->lo);
   }
   res = bzla_proputils_cons_eq(bzla, pi);
@@ -2365,7 +2365,7 @@ bzla_proputils_cons_sll_const(Bzla *bzla, BzlaPropInfo *pi)
     return NULL;
   }
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sll);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_sll);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -2406,7 +2406,7 @@ bzla_proputils_cons_srl_const(Bzla *bzla, BzlaPropInfo *pi)
     return NULL;
   }
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_srl);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_srl);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -2448,7 +2448,7 @@ bzla_proputils_cons_sra_const(Bzla *bzla, BzlaPropInfo *pi)
     return NULL;
   }
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_sra);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_sra);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -2505,13 +2505,13 @@ bzla_proputils_cons_mul_const(Bzla *bzla, BzlaPropInfo *pi)
 
   if (pi->res_x)
   {
-    record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_mul);
+    record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_mul);
     assert(bzla_bv_get_bit(t, 0) == 0);
     res = bzla_bv_copy(mm, pi->res_x->lo);
   }
   else if (bzla_bvdomain_is_fixed(mm, x))
   {
-    record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_mul);
+    record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_mul);
     res = bzla_bv_copy(mm, x->lo);
   }
   else
@@ -2677,7 +2677,7 @@ bzla_proputils_cons_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
     return NULL;
   }
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_udiv);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_udiv);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -2810,7 +2810,7 @@ bzla_proputils_cons_urem_const_pos0_aux(Bzla *bzla, BzlaPropInfo *pi)
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_urem);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_urem);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -2857,7 +2857,7 @@ bzla_proputils_cons_urem_const(Bzla *bzla, BzlaPropInfo *pi)
     return NULL;
   }
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_urem);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_urem);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -2981,7 +2981,7 @@ bzla_proputils_cons_concat_const(Bzla *bzla, BzlaPropInfo *pi)
     return NULL;
   }
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_concat);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_concat);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -3055,7 +3055,7 @@ bzla_proputils_cons_cond_const(Bzla *bzla, BzlaPropInfo *pi)
   BzlaBvDomainGenerator gen;
   BzlaMemMgr *mm;
 
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.cons_cond);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.cons_cond);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -3100,14 +3100,14 @@ bzla_proputils_cons_cond_const(Bzla *bzla, BzlaPropInfo *pi)
 static void
 record_inv_stats(Bzla *bzla, uint32_t *stats)
 {
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
   {
 #ifndef NDEBUG
     *stats += 1;
 #else
     (void) stats;
 #endif
-    BZLA_PROP_SOLVER(bzla)->stats.props_inv += 1;
+    BZLA_PROP_OLD_SOLVER(bzla)->stats.props_inv += 1;
   }
 }
 
@@ -3218,7 +3218,7 @@ bzla_proputils_inv_add(Bzla *bzla, BzlaPropInfo *pi)
   BzlaBitVector *res;
   const BzlaBitVector *s, *t;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_add);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_add);
 
   s = pi->bv[1 - pi->pos_x];
   t = pi->target_value;
@@ -3251,7 +3251,7 @@ bzla_proputils_inv_and(Bzla *bzla, BzlaPropInfo *pi)
 
   mm = bzla->mm;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_and);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_and);
 
   s = pi->bv[1 - pi->pos_x];
   t = pi->target_value;
@@ -3331,7 +3331,7 @@ bzla_proputils_inv_xor(Bzla *bzla, BzlaPropInfo *pi)
 #ifndef NDEBUG
   check_inv_dbg(bzla, pi, bzla_is_inv_xor, bzla_is_inv_xor_const, false);
 #endif
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_xor);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_xor);
   return bzla_bv_xor(bzla->mm, pi->bv[1 - pi->pos_x], pi->target_value);
 }
 
@@ -3353,7 +3353,7 @@ bzla_proputils_inv_eq(Bzla *bzla, BzlaPropInfo *pi)
   s  = pi->bv[1 - pi->pos_x];
   t  = pi->target_value;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_eq);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_eq);
 
   /**
    * invertibility condition: true
@@ -4090,7 +4090,7 @@ bzla_proputils_inv_ult(Bzla *bzla, BzlaPropInfo *pi)
 
   mm = bzla->mm;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_ult);
 
   res = 0;
   compute_ineq_bounds(bzla, pi, &min, &max);
@@ -4621,7 +4621,7 @@ bzla_proputils_inv_slt(Bzla *bzla, BzlaPropInfo *pi)
   BzlaMemMgr *mm;
 
   mm = bzla->mm;
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_slt);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_slt);
 
   res = 0;
   compute_ineq_bounds(bzla, pi, &min, &max);
@@ -4686,7 +4686,7 @@ bzla_proputils_inv_sll(Bzla *bzla, BzlaPropInfo *pi)
 
   mm = bzla->mm;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sll);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_sll);
 
   res   = 0;
   pos_x = pi->pos_x;
@@ -4900,7 +4900,7 @@ bzla_proputils_inv_srl(Bzla *bzla, BzlaPropInfo *pi)
   check_inv_dbg(bzla, pi, bzla_is_inv_srl, bzla_is_inv_srl_const, true);
 #endif
   BzlaBitVector *res;
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_srl);
   res = inv_srl_aux(bzla, pi);
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_srl, pi, res, ">>");
@@ -4927,7 +4927,7 @@ bzla_proputils_inv_sra(Bzla *bzla, BzlaPropInfo *pi)
 
   mm = bzla->mm;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sra);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_sra);
 
   res   = 0;
   pos_x = pi->pos_x;
@@ -5060,7 +5060,7 @@ bzla_proputils_inv_mul(Bzla *bzla, BzlaPropInfo *pi)
 
   mm = bzla->mm;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_mul);
 
   s   = pi->bv[1 - pi->pos_x];
   t   = pi->target_value;
@@ -5218,7 +5218,7 @@ bzla_proputils_inv_udiv(Bzla *bzla, BzlaPropInfo *pi)
 
   mm = bzla->mm;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_udiv);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_udiv);
 
   rng   = bzla->rng;
   pos_x = pi->pos_x;
@@ -5425,7 +5425,7 @@ bzla_proputils_inv_urem(Bzla *bzla, BzlaPropInfo *pi)
 
   mm = bzla->mm;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_urem);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_urem);
 
   pos_x = pi->pos_x;
   s     = pi->bv[1 - pos_x];
@@ -5713,7 +5713,7 @@ bzla_proputils_inv_concat(Bzla *bzla, BzlaPropInfo *pi)
 
   mm = bzla->mm;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_concat);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_concat);
 
   pos_x = pi->pos_x;
   s     = pi->bv[1 - pos_x];
@@ -5772,7 +5772,7 @@ bzla_proputils_inv_slice(Bzla *bzla, BzlaPropInfo *pi)
   BzlaMemMgr *mm;
   bool bkeep, bflip;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_slice);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_slice);
 
   /* invertibility condition: true */
 
@@ -5906,7 +5906,7 @@ bzla_proputils_inv_cond(Bzla *bzla, BzlaPropInfo *pi)
   BzlaMemMgr *mm;
   const BzlaBitVector *t;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_cond);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_cond);
 
   mm = bzla->mm;
   t  = pi->target_value;
@@ -5956,7 +5956,7 @@ bzla_proputils_inv_cond(Bzla *bzla, BzlaPropInfo *pi)
   char *str_s2 = bzla_bv_to_char (mm, s2);
 #endif
 
-  record_inv_stats (bzla, &BZLA_PROP_SOLVER (bzla)->stats.inv_cond);
+  record_inv_stats (bzla, &BZLA_PROP_OLD_SOLVER (bzla)->stats.inv_cond);
 
   /* either assume that cond is fixed and propagate s
    * to enabled path, or flip condition */
@@ -5996,12 +5996,12 @@ bzla_proputils_inv_cond(Bzla *bzla, BzlaPropInfo *pi)
       }
       BZLALOG (2, "");
 #endif
-      if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+      if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
       {
         if (is_recoverable)
-          BZLA_PROP_SOLVER (bzla)->stats.rec_conf += 1;
+          BZLA_PROP_OLD_SOLVER (bzla)->stats.rec_conf += 1;
         else
-          BZLA_PROP_SOLVER (bzla)->stats.non_rec_conf += 1;
+          BZLA_PROP_OLD_SOLVER (bzla)->stats.non_rec_conf += 1;
       }
       else
       {
@@ -6067,7 +6067,7 @@ bzla_proputils_inv_add_const(Bzla *bzla, BzlaPropInfo *pi)
     assert(bzla_bv_compare(tmp, pi->target_value) == 0);
     bzla_bv_free(mm, tmp);
 #endif
-    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_add);
+    record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_add);
     res = bzla_bv_copy(mm, x->lo);
   }
   else
@@ -6106,7 +6106,7 @@ bzla_proputils_inv_and_const(Bzla *bzla, BzlaPropInfo *pi)
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
-    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_and);
+    record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_and);
     res = bzla_bv_copy(mm, x->lo);
   }
   else
@@ -6130,7 +6130,7 @@ bzla_proputils_inv_xor_const(Bzla *bzla, BzlaPropInfo *pi)
 #ifndef NDEBUG
   check_inv_dbg(bzla, pi, bzla_is_inv_xor, bzla_is_inv_xor_const, true);
 #endif
-  record_cons_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_xor);
+  record_cons_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_xor);
   return bzla_proputils_inv_xor(bzla, pi);
 }
 
@@ -6162,7 +6162,7 @@ bzla_proputils_inv_eq_const(Bzla *bzla, BzlaPropInfo *pi)
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
-    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_eq);
+    record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_eq);
     res = bzla_bv_copy(mm, x->lo);
   }
   else if (bzla_bv_is_zero(t))
@@ -6207,7 +6207,7 @@ bzla_proputils_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi)
   pos_x = pi->pos_x;
   x     = pi->bvd[pos_x];
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_ult);
 
   res = 0;
 
@@ -6222,7 +6222,7 @@ bzla_proputils_inv_ult_const(Bzla *bzla, BzlaPropInfo *pi)
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
-    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_ult);
+    record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_ult);
     res = bzla_bv_copy(mm, x->lo);
   }
   else
@@ -6292,7 +6292,7 @@ bzla_proputils_inv_slt_const(Bzla *bzla, BzlaPropInfo *pi)
   pos_x = pi->pos_x;
   x     = pi->bvd[pos_x];
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_slt);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_slt);
 
   res = 0;
   if (bzla_bvdomain_is_fixed(mm, x))
@@ -6306,7 +6306,7 @@ bzla_proputils_inv_slt_const(Bzla *bzla, BzlaPropInfo *pi)
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
-    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_slt);
+    record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_slt);
     res = bzla_bv_copy(mm, x->lo);
   }
   else
@@ -6394,12 +6394,12 @@ bzla_proputils_inv_sll_const(Bzla *bzla, BzlaPropInfo *pi)
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
-    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sll);
+    record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_sll);
     res = bzla_bv_copy(mm, x->lo);
   }
   else if (pos_x)
   {
-    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_sll);
+    record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_sll);
 
     assert(pi->res_x);
     assert(bzla_bvdomain_is_fixed(mm, pi->res_x));
@@ -6470,7 +6470,7 @@ bzla_proputils_inv_srl_const(Bzla *bzla, BzlaPropInfo *pi)
 #ifndef NDEBUG
   check_inv_dbg(bzla, pi, bzla_is_inv_srl, bzla_is_inv_srl_const, true);
 #endif
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_srl);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_srl);
   BzlaBitVector *res = inv_srl_const_aux(bzla, pi);
 #ifndef NDEBUG
   check_result_binary_dbg(bzla, bzla_bv_srl, pi, res, ">>");
@@ -6557,12 +6557,12 @@ bzla_proputils_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
     assert(bzla_bv_compare(tmp, t) == 0);
     bzla_bv_free(mm, tmp);
 #endif
-    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
+    record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_mul);
     res = bzla_bv_copy(mm, x->lo);
   }
   else if (pi->res_x)
   {
-    record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
+    record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_mul);
 
     if (bzla_bvdomain_is_fixed(mm, pi->res_x))
     {
@@ -6583,7 +6583,7 @@ bzla_proputils_inv_mul_const(Bzla *bzla, BzlaPropInfo *pi)
   {
     if (bzla_bv_is_zero(s))
     {
-      record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_mul);
+      record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_mul);
 
       res = bzla_bv_new_random(mm, bzla->rng, bzla_bv_get_width(t));
       set_const_bits(mm, x, &res);
@@ -6617,7 +6617,7 @@ bzla_proputils_inv_udiv_const(Bzla *bzla, BzlaPropInfo *pi)
   const BzlaBitVector *s, *t;
   BzlaMemMgr *mm;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_udiv);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_udiv);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -6720,7 +6720,7 @@ bzla_proputils_inv_urem_const(Bzla *bzla, BzlaPropInfo *pi)
   const BzlaBitVector *s, *t;
   BzlaMemMgr *mm;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_urem);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_urem);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -6991,7 +6991,7 @@ bzla_proputils_inv_cond_const(Bzla *bzla, BzlaPropInfo *pi)
   BzlaBitVector *res;
   const BzlaBvDomain *x;
 
-  record_inv_stats(bzla, &BZLA_PROP_SOLVER(bzla)->stats.inv_cond);
+  record_inv_stats(bzla, &BZLA_PROP_OLD_SOLVER(bzla)->stats.inv_cond);
 
   mm    = bzla->mm;
   pos_x = pi->pos_x;
@@ -7204,7 +7204,7 @@ record_conflict(Bzla *bzla,
                 bool is_recoverable)
 {
   assert(bzla);
-  assert(bzla->slv->kind == BZLA_PROP_SOLVER_KIND
+  assert(bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND
          || bzla->slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(exp);
   assert(bzla_node_is_regular(exp));
@@ -7403,9 +7403,9 @@ record_conflict(Bzla *bzla,
   }
   bzla_mem_freestr(mm, str_t);
 #endif
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
   {
-    BzlaPropSolver *slv    = BZLA_PROP_SOLVER(bzla);
+    BzlaPropOldSolver *slv = BZLA_PROP_OLD_SOLVER(bzla);
     uint32_t prop_entailed = bzla_opt_get(bzla, BZLA_OPT_PROP_ENTAILED);
     if (is_recoverable)
     {
@@ -7539,10 +7539,10 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   opt_prop_sra  = bzla_opt_get(bzla, BZLA_OPT_PROP_ASHR);
 
 #ifndef NBZLALOG
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
   {
-    nrecconf_prev    = BZLA_PROP_SOLVER(bzla)->stats.rec_conf;
-    nnonrecconf_prev = BZLA_PROP_SOLVER(bzla)->stats.non_rec_conf;
+    nrecconf_prev    = BZLA_PROP_OLD_SOLVER(bzla)->stats.rec_conf;
+    nnonrecconf_prev = BZLA_PROP_OLD_SOLVER(bzla)->stats.non_rec_conf;
   }
   else
   {
@@ -7552,14 +7552,14 @@ bzla_proputils_select_move_prop(Bzla *bzla,
   }
 #endif
 
-  domains = BZLA_PROP_SOLVER(bzla)->domains;
+  domains = BZLA_PROP_OLD_SOLVER(bzla)->domains;
   assert(domains);
 
   tmp = (BzlaBitVector *) bzla_model_get_bv(bzla, root);
   if (!bzla_bv_compare(bvroot, tmp))
   {
-    if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
-      BZLA_PROP_SOLVER(bzla)->stats.fixed_conf++;
+    if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
+      BZLA_PROP_OLD_SOLVER(bzla)->stats.fixed_conf++;
     goto DONE;
   }
 
@@ -7571,9 +7571,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
     real_cur = bzla_node_real_addr(cur);
 
 #ifndef NDEBUG
-    if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND && opt_prop_const_bits)
+    if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND && opt_prop_const_bits)
     {
-      BzlaPropSolver *slv = BZLA_PROP_SOLVER(bzla);
+      BzlaPropOldSolver *slv = BZLA_PROP_OLD_SOLVER(bzla);
       assert(slv->domains);
       assert(bzla_hashint_map_contains(slv->domains, real_cur->id));
       BzlaBvDomain *d =
@@ -7750,11 +7750,11 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       assert(pos_x < arity);
 
 #ifndef NDEBUG
-      if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+      if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
       {
         BzlaPropEntailInfo prop = {
             real_cur, bzla_bv_copy(bzla->mm, bv_t), pos_x};
-        BZLA_PUSH_STACK(BZLA_PROP_SOLVER(bzla)->prop_path, prop);
+        BZLA_PUSH_STACK(BZLA_PROP_OLD_SOLVER(bzla)->prop_path, prop);
       }
 #endif
 
@@ -7905,9 +7905,9 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
       if (opt_skip_no_progress && !bzla_bv_compare(bv_s_new, bv_s[pos_x]))
       {
-        if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+        if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
         {
-          BZLA_PROP_SOLVER(bzla)->stats.moves_skipped++;
+          BZLA_PROP_OLD_SOLVER(bzla)->stats.moves_skipped++;
         }
         bzla_bv_free(bzla->mm, bv_s_new);
         break;
@@ -7936,10 +7936,10 @@ bzla_proputils_select_move_prop(Bzla *bzla,
 
 DONE:
 #ifndef NBZLALOG
-  if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
   {
-    nrecconf    = BZLA_PROP_SOLVER(bzla)->stats.rec_conf;
-    nnonrecconf = BZLA_PROP_SOLVER(bzla)->stats.non_rec_conf;
+    nrecconf    = BZLA_PROP_OLD_SOLVER(bzla)->stats.rec_conf;
+    nnonrecconf = BZLA_PROP_OLD_SOLVER(bzla)->stats.non_rec_conf;
   }
   else
   {

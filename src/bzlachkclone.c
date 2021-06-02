@@ -20,7 +20,7 @@
 #include "bzlaslv.h"
 #include "bzlaslvaigprop.h"
 #include "bzlaslvfun.h"
-#include "bzlaslvprop.h"
+#include "bzlaslvpropold.h"
 #include "bzlaslvsls.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
@@ -1127,10 +1127,10 @@ chkclone_slv(Bzla *bzla, Bzla *clone)
     BZLA_CHKCLONE_SLV_STATS(slv, cslv, move_gw_rand_walk);
     BZLA_CHKCLONE_SLV_STATS(slv, cslv, updates);
   }
-  else if (bzla->slv->kind == BZLA_PROP_SOLVER_KIND)
+  else if (bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
   {
-    BzlaPropSolver *slv  = BZLA_PROP_SOLVER(bzla);
-    BzlaPropSolver *cslv = BZLA_PROP_SOLVER(clone);
+    BzlaPropOldSolver *slv  = BZLA_PROP_OLD_SOLVER(bzla);
+    BzlaPropOldSolver *cslv = BZLA_PROP_OLD_SOLVER(clone);
 
     chkclone_int_hash_map(slv->roots, cslv->roots, cmp_data_as_int);
     chkclone_int_hash_map(slv->score, cslv->score, cmp_data_as_dbl);

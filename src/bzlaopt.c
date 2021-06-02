@@ -275,8 +275,8 @@ bzla_opt_init_opts(Bzla *bzla)
                "+ lambdas, uses eager bit-blasting for QF_BV)");
   add_opt_help(mm,
                opts,
-               "prop",
-               BZLA_ENGINE_PROP,
+               "propold",
+               BZLA_ENGINE_PROP_OLD,
                "use the propagation-based local search engine (QF_BV only)");
   add_opt_help(mm,
                opts,
@@ -1745,7 +1745,7 @@ bzla_opt_set(Bzla *bzla, const BzlaOption opt, uint32_t val)
   {
     if (val == BZLA_ENGINE_SLS)
       bzla_opt_set(bzla, BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT, 1);
-    else if (val == BZLA_ENGINE_PROP)
+    else if (val == BZLA_ENGINE_PROP_OLD)
       bzla_opt_set(bzla, BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT, 0);
   }
   else if (opt == BZLA_OPT_PRODUCE_MODELS)

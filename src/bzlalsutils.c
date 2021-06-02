@@ -94,13 +94,13 @@ bzla_lsutils_update_cone(Bzla *bzla,
                          double *time_update_cone_compute_score)
 {
   assert(bzla);
-  assert(bzla->slv->kind == BZLA_PROP_SOLVER_KIND
+  assert(bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND
          || bzla->slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(bv_model);
   assert(roots);
   assert(exps);
   assert(exps->count);
-  assert(bzla->slv->kind != BZLA_PROP_SOLVER_KIND || update_roots);
+  assert(bzla->slv->kind != BZLA_PROP_OLD_SOLVER_KIND || update_roots);
   assert(time_update_cone);
   assert(time_update_cone_reset);
   assert(time_update_cone_model_gen);

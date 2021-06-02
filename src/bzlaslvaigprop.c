@@ -17,7 +17,7 @@
 #include "bzlamodel.h"
 #include "bzlaopt.h"
 #include "bzlaprintmodel.h"
-#include "bzlaslvprop.h"
+#include "bzlaslvpropold.h"
 #include "utils/bzlaabort.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"

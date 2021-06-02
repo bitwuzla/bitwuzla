@@ -8,7 +8,7 @@
  * See COPYING for more information on using this software.
  */
 
-#include "bzlaslvprop.h"
+#include "bzlaslvpropold.h"
 
 #include <math.h>
 
@@ -49,10 +49,10 @@ select_constraint(Bzla *bzla, uint32_t nmoves)
   assert(bzla);
 
   BzlaNode *res, *cur;
-  BzlaPropSolver *slv;
+  BzlaPropOldSolver *slv;
   BzlaIntHashTableIterator it;
 
-  slv = BZLA_PROP_SOLVER(bzla);
+  slv = BZLA_PROP_OLD_SOLVER(bzla);
   assert(slv);
   assert(slv->roots);
   assert(slv->roots->count);
@@ -128,7 +128,7 @@ select_constraint(Bzla *bzla, uint32_t nmoves)
 }
 
 static void
-print_progress(BzlaPropSolver *slv)
+print_progress(BzlaPropOldSolver *slv)
 {
   uint64_t num_total_roots, num_unsat_roots;
   Bzla *bzla;
@@ -163,13 +163,13 @@ move(Bzla *bzla, uint64_t nprops)
 
   BzlaNode *root, *input;
   BzlaBitVector *bvroot, *assignment;
-  BzlaPropSolver *slv;
+  BzlaPropOldSolver *slv;
   BzlaIntHashTable *exps;
   BzlaPropEntailInfo prop;
   int32_t idx_x;
   uint64_t props;
 
-  slv = BZLA_PROP_SOLVER(bzla);
+  slv = BZLA_PROP_OLD_SOLVER(bzla);
   assert(slv);
   assert(BZLA_EMPTY_STACK(slv->prop_path));
 
@@ -297,19 +297,19 @@ DONE:
 
 /*------------------------------------------------------------------------*/
 
-static BzlaPropSolver *
-clone_prop_solver(Bzla *clone, BzlaPropSolver *slv, BzlaNodeMap *exp_map)
+static BzlaPropOldSolver *
+clone_propold_solver(Bzla *clone, BzlaPropOldSolver *slv, BzlaNodeMap *exp_map)
 {
   assert(clone);
   assert(slv);
-  assert(slv->kind == BZLA_PROP_SOLVER_KIND);
+  assert(slv->kind == BZLA_PROP_OLD_SOLVER_KIND);
 
-  BzlaPropSolver *res;
+  BzlaPropOldSolver *res;
 
   (void) exp_map;
 
   BZLA_NEW(clone->mm, res);
-  memcpy(res, slv, sizeof(BzlaPropSolver));
+  memcpy(res, slv, sizeof(BzlaPropOldSolver));
 
   res->bzla  = clone;
   res->roots = bzla_hashint_map_clone(clone->mm, slv->roots, 0, 0);
@@ -327,10 +327,10 @@ clone_prop_solver(Bzla *clone, BzlaPropSolver *slv, BzlaNodeMap *exp_map)
 }
 
 static void
-delete_prop_solver(BzlaPropSolver *slv)
+delete_propold_solver(BzlaPropOldSolver *slv)
 {
   assert(slv);
-  assert(slv->kind == BZLA_PROP_SOLVER_KIND);
+  assert(slv->kind == BZLA_PROP_OLD_SOLVER_KIND);
   assert(slv->domains);
   assert(slv->bzla);
   assert(slv->bzla->slv == (BzlaSolver *) slv);
@@ -357,9 +357,9 @@ delete_prop_solver(BzlaPropSolver *slv)
 }
 
 void
-bzla_prop_solver_init_domains(Bzla *bzla,
-                              BzlaIntHashTable *domains,
-                              BzlaNode *root)
+bzla_propold_solver_init_domains(Bzla *bzla,
+                                 BzlaIntHashTable *domains,
+                                 BzlaNode *root)
 {
   assert(bzla);
   assert(domains);
@@ -432,10 +432,10 @@ bzla_prop_solver_init_domains(Bzla *bzla,
             assert(invdomain);
             bzla_bvdomain_fix_bit(
                 invdomain, idx, bzla_aig_is_false(av->aigs[i]));
-            BZLA_PROP_SOLVER(bzla)->stats.fixed_bits++;
+            BZLA_PROP_OLD_SOLVER(bzla)->stats.fixed_bits++;
           }
         }
-        BZLA_PROP_SOLVER(bzla)->stats.total_bits += bw;
+        BZLA_PROP_OLD_SOLVER(bzla)->stats.total_bits += bw;
       }
     }
   }
@@ -487,9 +487,9 @@ propagate_domains(Bzla *bzla,
   BzlaNodePtrStack visit;
   BzlaBvDomain *d_cur, *d_res_cur, *d_e[3], *d_res_e[3];
   BzlaMemMgr *mm;
-  BzlaPropSolver *slv;
+  BzlaPropOldSolver *slv;
 
-  slv = BZLA_PROP_SOLVER(bzla);
+  slv = BZLA_PROP_OLD_SOLVER(bzla);
   mm  = bzla->mm;
   BZLA_INIT_STACK(mm, visit);
   BZLA_PUSH_STACK(visit, root);
@@ -674,7 +674,7 @@ synthesize_constraints(Bzla *bzla)
 /* This is an extra function in order to be able to test completeness
  * via test suite. */
 int32_t
-bzla_prop_solver_sat(Bzla *bzla)
+bzla_propold_solver_sat(Bzla *bzla)
 {
   assert(bzla);
 
@@ -686,10 +686,10 @@ bzla_prop_solver_sat(Bzla *bzla)
   BzlaNode *root, *not_root;
   BzlaPtrHashTableIterator it;
   BzlaIntHashTableIterator iit;
-  BzlaPropSolver *slv;
+  BzlaPropOldSolver *slv;
   BzlaIntHashTable *cache;
 
-  slv = BZLA_PROP_SOLVER(bzla);
+  slv = BZLA_PROP_OLD_SOLVER(bzla);
   assert(slv);
   assert(slv->domains);
   assert(slv->domains->count == 0);
@@ -727,7 +727,7 @@ bzla_prop_solver_sat(Bzla *bzla)
     root = bzla_iter_hashptr_next(&it);
     if (opt_prop_const_bits)
     {
-      bzla_prop_solver_init_domains(bzla, slv->domains, root);
+      bzla_propold_solver_init_domains(bzla, slv->domains, root);
     }
   }
 
@@ -747,7 +747,7 @@ bzla_prop_solver_sat(Bzla *bzla)
     /* initialize propagator domains for inverse values / const bits handling */
     if (opt_prop_const_bits)
     {
-      bzla_prop_solver_init_domains(bzla, slv->domains, root);
+      bzla_propold_solver_init_domains(bzla, slv->domains, root);
     }
   }
 
@@ -895,10 +895,10 @@ DONE:
 
 /* Note: failed assumptions handling not necessary, prop only works for SAT */
 static int32_t
-sat_prop_solver(BzlaPropSolver *slv)
+sat_propold_solver(BzlaPropOldSolver *slv)
 {
   assert(slv);
-  assert(slv->kind == BZLA_PROP_SOLVER_KIND);
+  assert(slv->kind == BZLA_PROP_OLD_SOLVER_KIND);
   assert(slv->bzla);
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
@@ -918,19 +918,19 @@ sat_prop_solver(BzlaPropSolver *slv)
    * not have to consider model_for_all_nodes, but let this be handled by
    * the model generation (if enabled) after SAT has been determined. */
   slv->api.generate_model((BzlaSolver *) slv, false, true);
-  sat_result = bzla_prop_solver_sat(bzla);
+  sat_result = bzla_propold_solver_sat(bzla);
 DONE:
   assert(BZLA_EMPTY_STACK(slv->toprop));
   return sat_result;
 }
 
 static void
-generate_model_prop_solver(BzlaPropSolver *slv,
-                           bool model_for_all_nodes,
-                           bool reset)
+generate_model_propold_solver(BzlaPropOldSolver *slv,
+                              bool model_for_all_nodes,
+                              bool reset)
 {
   assert(slv);
-  assert(slv->kind == BZLA_PROP_SOLVER_KIND);
+  assert(slv->kind == BZLA_PROP_OLD_SOLVER_KIND);
   assert(slv->bzla);
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
@@ -944,10 +944,10 @@ generate_model_prop_solver(BzlaPropSolver *slv,
 }
 
 static void
-print_stats_prop_solver(BzlaPropSolver *slv)
+print_stats_propold_solver(BzlaPropOldSolver *slv)
 {
   assert(slv);
-  assert(slv->kind == BZLA_PROP_SOLVER_KIND);
+  assert(slv->kind == BZLA_PROP_OLD_SOLVER_KIND);
   assert(slv->bzla);
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
@@ -1071,10 +1071,10 @@ print_stats_prop_solver(BzlaPropSolver *slv)
 }
 
 static void
-print_time_stats_prop_solver(BzlaPropSolver *slv)
+print_time_stats_propold_solver(BzlaPropOldSolver *slv)
 {
   assert(slv);
-  assert(slv->kind == BZLA_PROP_SOLVER_KIND);
+  assert(slv->kind == BZLA_PROP_OLD_SOLVER_KIND);
   assert(slv->bzla);
   assert(slv->bzla->slv == (BzlaSolver *) slv);
 
@@ -1102,33 +1102,35 @@ print_time_stats_prop_solver(BzlaPropSolver *slv)
 }
 
 static void
-print_model_prop_solver(BzlaPropSolver *slv, const char *format, FILE *file)
+print_model_propold_solver(BzlaPropOldSolver *slv,
+                           const char *format,
+                           FILE *file)
 {
   bzla_print_model_aufbvfp(slv->bzla, format, file);
 }
 
 BzlaSolver *
-bzla_new_prop_solver(Bzla *bzla)
+bzla_new_propold_solver(Bzla *bzla)
 {
   assert(bzla);
 
-  BzlaPropSolver *slv;
+  BzlaPropOldSolver *slv;
 
   BZLA_CNEW(bzla->mm, slv);
 
   slv->bzla    = bzla;
-  slv->kind    = BZLA_PROP_SOLVER_KIND;
+  slv->kind    = BZLA_PROP_OLD_SOLVER_KIND;
   slv->domains = bzla_hashint_map_new(bzla->mm);
 
-  slv->api.clone = (BzlaSolverClone) clone_prop_solver;
-  slv->api.delet = (BzlaSolverDelete) delete_prop_solver;
-  slv->api.sat   = (BzlaSolverSat) sat_prop_solver;
+  slv->api.clone = (BzlaSolverClone) clone_propold_solver;
+  slv->api.delet = (BzlaSolverDelete) delete_propold_solver;
+  slv->api.sat   = (BzlaSolverSat) sat_propold_solver;
   slv->api.generate_model =
-      (BzlaSolverGenerateModel) generate_model_prop_solver;
-  slv->api.print_stats = (BzlaSolverPrintStats) print_stats_prop_solver;
+      (BzlaSolverGenerateModel) generate_model_propold_solver;
+  slv->api.print_stats = (BzlaSolverPrintStats) print_stats_propold_solver;
   slv->api.print_time_stats =
-      (BzlaSolverPrintTimeStats) print_time_stats_prop_solver;
-  slv->api.print_model = (BzlaSolverPrintModel) print_model_prop_solver;
+      (BzlaSolverPrintTimeStats) print_time_stats_propold_solver;
+  slv->api.print_model = (BzlaSolverPrintModel) print_model_propold_solver;
 
   BZLA_INIT_STACK(bzla->mm, slv->toprop);
 #ifndef NDEBUG

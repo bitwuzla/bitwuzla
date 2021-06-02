@@ -8,8 +8,8 @@
  * See COPYING for more information on using this software.
  */
 
-#ifndef BZLASLVPROP_H_INCLUDED
-#define BZLASLVPROP_H_INCLUDED
+#ifndef BZLASLVPROPOLD_H_INCLUDED
+#define BZLASLVPROPOLD_H_INCLUDED
 
 #include "bzlabv.h"
 #include "bzlaproputils.h"
@@ -17,7 +17,7 @@
 #include "bzlatypes.h"
 #include "utils/bzlahashint.h"
 
-struct BzlaPropSolver
+struct BzlaPropOldSolver
 {
   BZLA_SOLVER_STRUCT;
 
@@ -142,17 +142,17 @@ struct BzlaPropSolver
   } time;
 };
 
-typedef struct BzlaPropSolver BzlaPropSolver;
+typedef struct BzlaPropOldSolver BzlaPropOldSolver;
 
-#define BZLA_PROP_SOLVER(bzla) ((BzlaPropSolver *) (bzla)->slv)
+#define BZLA_PROP_OLD_SOLVER(bzla) ((BzlaPropOldSolver *) (bzla)->slv)
 
-BzlaSolver *bzla_new_prop_solver(Bzla *bzla);
+BzlaSolver *bzla_new_propold_solver(Bzla *bzla);
 
-void bzla_prop_solver_init_domains(Bzla *bzla,
-                                   BzlaIntHashTable *domains,
-                                   BzlaNode *root);
+void bzla_propold_solver_init_domains(Bzla *bzla,
+                                      BzlaIntHashTable *domains,
+                                      BzlaNode *root);
 
-int32_t bzla_prop_solver_sat(Bzla *bzla);
+int32_t bzla_propold_solver_sat(Bzla *bzla);
 /*------------------------------------------------------------------------*/
 
 #endif

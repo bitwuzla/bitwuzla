@@ -17,7 +17,7 @@ extern "C" {
 #include "bzlainvutils.h"
 #include "bzlanode.h"
 #include "bzlaproputils.h"
-#include "bzlaslvprop.h"
+#include "bzlaslvpropold.h"
 #include "bzlaslvsls.h"
 #include "utils/bzlautil.h"
 }
@@ -32,13 +32,13 @@ class TestPropComplete : public TestBzla
   {
     TestBzla::SetUp();
 
-    d_bzla->slv       = bzla_new_prop_solver(d_bzla);
+    d_bzla->slv       = bzla_new_propold_solver(d_bzla);
     d_bzla->slv->bzla = d_bzla;
     d_mm              = d_bzla->mm;
     d_rng             = d_bzla->rng;
-    d_domains         = BZLA_PROP_SOLVER(d_bzla)->domains;
+    d_domains         = BZLA_PROP_OLD_SOLVER(d_bzla)->domains;
 
-    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
     bzla_opt_set(d_bzla, BZLA_OPT_RW_LEVEL, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_RW_SORT_EXP, 0);
     // we configure everything needed for const bits tests manually
@@ -633,7 +633,7 @@ class TestPropComplete : public TestBzla
       is_inv_fun = bzla_is_inv_and_const;
       cons_fun   = bzla_proputils_cons_and_const;
       bzla_synthesize_exp(d_bzla, exp, 0);
-      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+      bzla_propold_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
@@ -719,7 +719,7 @@ class TestPropComplete : public TestBzla
           goto PROP_COMPLETE_CONF_AND_TESTS;
         DONE:
           assert(slv);
-          bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+          bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
           d_bzla->slv->api.delet(d_bzla->slv);
           d_bzla->slv = slv;
         }
@@ -772,7 +772,7 @@ class TestPropComplete : public TestBzla
       is_inv_fun = bzla_is_inv_ult_const;
       cons_fun   = bzla_proputils_cons_ult_const;
       bzla_synthesize_exp(d_bzla, exp, 0);
-      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+      bzla_propold_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
@@ -851,7 +851,7 @@ class TestPropComplete : public TestBzla
 
   DONE:
     assert(slv);
-    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
 
@@ -897,7 +897,7 @@ class TestPropComplete : public TestBzla
       is_inv_fun = bzla_is_inv_slt_const;
       cons_fun   = bzla_proputils_cons_slt_const;
       bzla_synthesize_exp(d_bzla, exp, 0);
-      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+      bzla_propold_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
@@ -978,7 +978,7 @@ class TestPropComplete : public TestBzla
 
   DONE:
     assert(slv);
-    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
 
@@ -1018,7 +1018,7 @@ class TestPropComplete : public TestBzla
     {
       assert(d_domains);
       bzla_synthesize_exp(d_bzla, sll, 0);
-      bzla_prop_solver_init_domains(d_bzla, d_domains, sll);
+      bzla_propold_solver_init_domains(d_bzla, d_domains, sll);
     }
 
     /* prop engine: all conflicts are treated as fixable */
@@ -1135,7 +1135,7 @@ class TestPropComplete : public TestBzla
     goto PROP_INV_CONF_SLL_TESTS;
 
   DONE:
-    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
 
@@ -1171,7 +1171,7 @@ class TestPropComplete : public TestBzla
     {
       assert(d_domains);
       bzla_synthesize_exp(d_bzla, srl, 0);
-      bzla_prop_solver_init_domains(d_bzla, d_domains, srl);
+      bzla_propold_solver_init_domains(d_bzla, d_domains, srl);
     }
 
     /* prop engine: all conflicts are treated as fixable */
@@ -1294,7 +1294,7 @@ class TestPropComplete : public TestBzla
 
     clear_domains();
 
-    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
   }
@@ -1408,7 +1408,7 @@ class TestPropComplete : public TestBzla
     goto PROP_COMPLETE_CONF_MUL_TESTS;
 
   DONE:
-    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
 
@@ -1500,7 +1500,7 @@ class TestPropComplete : public TestBzla
 
     goto PROP_COMPLETE_CONF_UDIV_TESTS;
   DONE:
-    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
 
@@ -1544,7 +1544,7 @@ class TestPropComplete : public TestBzla
       is_inv_fun = bzla_is_inv_urem_const;
       cons_fun   = bzla_proputils_cons_urem_const;
       bzla_synthesize_exp(d_bzla, exp, 0);
-      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+      bzla_propold_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
@@ -1729,7 +1729,7 @@ class TestPropComplete : public TestBzla
 
   DONE:
     assert(slv);
-    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
 
@@ -1785,7 +1785,7 @@ class TestPropComplete : public TestBzla
         is_inv_fun = bzla_is_inv_concat_const;
         cons_fun   = bzla_proputils_cons_concat_const;
         bzla_synthesize_exp(d_bzla, exp, 0);
-        bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+        bzla_propold_solver_init_domains(d_bzla, d_domains, exp);
         x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                  d_domains, bzla_node_real_addr(exp->e[0])->id)
                  ->as_ptr;
@@ -1876,7 +1876,7 @@ class TestPropComplete : public TestBzla
 
   DONE:
     assert(slv);
-    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+    bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
     d_bzla->slv->api.delet(d_bzla->slv);
     d_bzla->slv = slv;
   }
@@ -1913,7 +1913,7 @@ class TestPropComplete : public TestBzla
       is_inv_fun = bzla_is_inv_mul_const;
       cons_fun   = bzla_proputils_cons_mul_const;
       bzla_synthesize_exp(d_bzla, exp, 0);
-      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+      bzla_propold_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
@@ -2007,7 +2007,7 @@ class TestPropComplete : public TestBzla
       is_inv_fun = bzla_is_inv_udiv_const;
       cons_fun   = bzla_proputils_cons_udiv_const;
       bzla_synthesize_exp(d_bzla, exp, 0);
-      bzla_prop_solver_init_domains(d_bzla, d_domains, exp);
+      bzla_propold_solver_init_domains(d_bzla, d_domains, exp);
       x0 = (BzlaBvDomain *) bzla_hashint_map_get(
                d_domains, bzla_node_real_addr(exp->e[0])->id)
                ->as_ptr;
@@ -2348,7 +2348,7 @@ class TestPropCompleteConst : public TestPropComplete
     BzlaNode *children[2];
 
     bzla_synthesize_exp(d_bzla, (BzlaNode *) pi->exp, 0);
-    bzla_prop_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
+    bzla_propold_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
     if (bzla_is_bv_sra(d_bzla, pi->exp, &children[0], &children[1]))
     {
       assert(bzla_hashint_map_contains(d_domains,
@@ -2397,7 +2397,7 @@ class TestPropCompleteConst : public TestPropComplete
                              std::vector<uint32_t> &fixed_idx)
   {
     bzla_synthesize_exp(d_bzla, (BzlaNode *) pi->exp, 0);
-    bzla_prop_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
+    bzla_propold_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
     assert(bzla_hashint_map_contains(d_domains,
                                      bzla_node_real_addr(pi->exp->e[0])->id));
     assert(bzla_hashint_map_contains(d_domains,
@@ -2433,7 +2433,7 @@ class TestPropCompleteConst : public TestPropComplete
                               std::vector<uint32_t> &fixed_idx)
   {
     bzla_synthesize_exp(d_bzla, (BzlaNode *) pi->exp, 0);
-    bzla_prop_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
+    bzla_propold_solver_init_domains(d_bzla, d_domains, (BzlaNode *) pi->exp);
     assert(bzla_hashint_map_contains(d_domains,
                                      bzla_node_real_addr(pi->exp->e[0])->id));
     pi->bvd[0] = (BzlaBvDomain *) bzla_hashint_map_get(

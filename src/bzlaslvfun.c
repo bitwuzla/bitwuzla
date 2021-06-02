@@ -21,7 +21,7 @@
 #include "bzlamodel.h"
 #include "bzlaopt.h"
 #include "bzlaprintmodel.h"
-#include "bzlaslvprop.h"
+#include "bzlaslvpropold.h"
 #include "bzlaslvsls.h"
 #include "preprocess/bzlapreprocess.h"
 #include "utils/bzlaabort.h"
@@ -2526,7 +2526,7 @@ check_sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
   {
     if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP))
     {
-      *ls_slv = bzla_new_prop_solver(bzla);
+      *ls_slv = bzla_new_propold_solver(bzla);
     }
     else
     {
@@ -2550,7 +2550,7 @@ check_sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
   BZLA_MSG(bzla->msg,
            1,
            "%s engine determined '%s'",
-           preslv->kind == BZLA_PROP_SOLVER_KIND ? "PROP" : "SLS",
+           preslv->kind == BZLA_PROP_OLD_SOLVER_KIND ? "PROP" : "SLS",
            result == BZLA_RESULT_SAT
                ? "sat"
                : (result == BZLA_RESULT_UNSAT ? "unsat" : "unknown"));

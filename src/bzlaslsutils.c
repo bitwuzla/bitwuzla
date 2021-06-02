@@ -434,7 +434,7 @@ bzla_slsutils_compute_sls_scores(Bzla *bzla,
                                  BzlaIntHashTable *score)
 {
   assert(bzla);
-  assert(bzla->slv->kind == BZLA_PROP_SOLVER_KIND
+  assert(bzla->slv->kind == BZLA_PROP_OLD_SOLVER_KIND
          || bzla->slv->kind == BZLA_SLS_SOLVER_KIND);
   assert(bv_model);
   assert(fun_model);

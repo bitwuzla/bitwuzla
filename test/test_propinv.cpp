@@ -18,7 +18,7 @@ extern "C" {
 #include "bzlaexp.h"
 #include "bzlainvutils.h"
 #include "bzlaproputils.h"
-#include "bzlaslvprop.h"
+#include "bzlaslvpropold.h"
 }
 
 #define TEST_PROPINV_BW 3
@@ -57,7 +57,7 @@ class TestPropInv : public TestPropCommon
     mm   = bzla->mm;
     rng  = bzla_rng_new(mm, 0);
 
-    slv_prop       = bzla_new_prop_solver(bzla);
+    slv_prop       = bzla_new_propold_solver(bzla);
     slv_prop->bzla = bzla;
 
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
@@ -316,7 +316,7 @@ class TestPropInv : public TestPropCommon
     mm   = bzla->mm;
     rng  = bzla_rng_new(mm, 0);
 
-    slv_prop       = bzla_new_prop_solver(bzla);
+    slv_prop       = bzla_new_propold_solver(bzla);
     slv_prop->bzla = bzla;
 
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
@@ -505,7 +505,7 @@ class TestPropInv : public TestPropCommon
     mm   = bzla->mm;
     rng  = bzla_rng_new(mm, 0);
 
-    slv_prop       = bzla_new_prop_solver(bzla);
+    slv_prop       = bzla_new_propold_solver(bzla);
     slv_prop->bzla = bzla;
 
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);

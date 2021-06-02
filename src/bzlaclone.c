@@ -27,7 +27,7 @@
 #include "bzlasat.h"
 #include "bzlaslvaigprop.h"
 #include "bzlaslvfun.h"
-#include "bzlaslvprop.h"
+#include "bzlaslvpropold.h"
 #include "bzlaslvsls.h"
 #include "bzlasort.h"
 #include "sat/bzlalgl.h"
@@ -1540,16 +1540,16 @@ clone_aux_bzla(Bzla *bzla,
           allocated += bzla_bv_size(bzla_iter_hashint_next_data(&iit)->as_ptr);
       }
     }
-    else if (clone->slv->kind == BZLA_PROP_SOLVER_KIND)
+    else if (clone->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
     {
-      BzlaPropSolver *slv  = BZLA_PROP_SOLVER(bzla);
-      BzlaPropSolver *cslv = BZLA_PROP_SOLVER(clone);
+      BzlaPropOldSolver *slv  = BZLA_PROP_OLD_SOLVER(bzla);
+      BzlaPropOldSolver *cslv = BZLA_PROP_OLD_SOLVER(clone);
 
       CHKCLONE_MEM_INT_HASH_MAP(slv->roots, cslv->roots);
       CHKCLONE_MEM_INT_HASH_MAP(slv->score, cslv->score);
 
       allocated +=
-          sizeof(BzlaPropSolver) + MEM_PTR_HASH_TABLE(cslv->roots)
+          sizeof(BzlaPropOldSolver) + MEM_PTR_HASH_TABLE(cslv->roots)
           + MEM_PTR_HASH_TABLE(cslv->score)
 #ifndef NDEBUG
           + BZLA_SIZE_STACK(cslv->prop_path) * sizeof(BzlaPropEntailInfo);
