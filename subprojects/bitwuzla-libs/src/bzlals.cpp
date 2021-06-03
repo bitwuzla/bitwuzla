@@ -4,6 +4,8 @@
 #include <cassert>
 #include <iostream>
 
+#include "bitvector.h"
+#include "bitvector_node.h"
 #include "gmpmpz.h"
 #include "gmprandstate.h"
 #include "log.h"
@@ -35,7 +37,7 @@ BzlaLs::BzlaLs(uint64_t max_nprops, uint32_t seed)
     : d_max_nprops(max_nprops), d_seed(seed)
 {
   d_rng.reset(new RNG(d_seed));
-  d_one = BitVector::mk_one(1);
+  d_one.reset(new BitVector(BitVector::mk_one(1)));
 }
 
 uint32_t
@@ -535,7 +537,7 @@ BzlaLs::move()
 
     BZLALSLOG << std::endl << "  select constraint: " << *root << std::endl;
 
-    m = select_move(root, d_one);
+    m = select_move(root, *d_one);
     d_nprops += m.d_nprops;
   } while (m.d_input == nullptr);
 

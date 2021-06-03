@@ -2,17 +2,18 @@
 #define BZLALS__BZLALS_H
 
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-#include "bitvector.h"
-#include "bitvector_node.h"
 
 namespace bzlals {
 
 class RNG;
 struct BzlaLsMove;
+class BitVector;
+class BitVectorDomain;
+class BitVectorNode;
 
 namespace test {
 class TestBzlaLs;
@@ -121,7 +122,7 @@ class BzlaLs
   std::unordered_set<uint32_t> d_roots;
   ParentsMap d_parents;
 
-  BitVector d_one;
+  std::unique_ptr<BitVector> d_one;
 
   uint64_t d_max_nprops;
   uint64_t d_nprops = 0;
