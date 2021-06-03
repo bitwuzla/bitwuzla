@@ -1976,7 +1976,8 @@ bzla_dumpsmt_dump_node(Bzla *bzla, FILE *file, BzlaNode *exp, uint32_t depth)
     fprintf(file, "%s_%d\n", g_kind2smt[real_exp->kind], real_exp->id);
     goto CLEANUP;
   }
-  else if (bzla_node_is_var(exp) || bzla_node_is_uf(exp))
+  else if (bzla_node_is_regular(exp)
+           && (bzla_node_is_var(exp) || bzla_node_is_uf(exp)))
   {
     dump_declare_fun_smt(sdc, exp);
     goto CLEANUP;

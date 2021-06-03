@@ -3995,3 +3995,21 @@ TEST_F(TestApi, substitute)
     ASSERT_TRUE(bitwuzla_term_is_const_array(result));
   }
 }
+
+TEST_F(TestApi, term_dump1)
+{
+  std::string filename = "term_dump1.out";
+  FILE *tmpfile        = fopen(filename.c_str(), "w");
+  BitwuzlaSort *bv1    = bitwuzla_mk_bool_sort(d_bzla);
+  BitwuzlaTerm *a      = bitwuzla_mk_const(d_bzla, bv1, "a");
+  BitwuzlaTerm *nota   = bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_NOT, a);
+  bitwuzla_term_dump(nota, "smt2", tmpfile);
+  fclose(tmpfile);
+
+  std::ifstream ifs(filename);
+  std::string content((std::istreambuf_iterator<char>(ifs)),
+                      (std::istreambuf_iterator<char>()));
+  unlink(filename.c_str());
+
+  ASSERT_EQ("(bvnot a)", content);
+}
