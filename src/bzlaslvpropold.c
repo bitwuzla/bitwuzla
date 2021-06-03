@@ -1137,7 +1137,7 @@ bzla_new_propold_solver(Bzla *bzla)
   BZLA_INIT_STACK(bzla->mm, slv->prop_path);
 #endif
 
-  BZLA_MSG(bzla->msg, 1, "enabled prop engine");
+  BZLA_MSG(bzla->msg, 1, "enabled prop (old) engine");
 
   return (BzlaSolver *) slv;
 }

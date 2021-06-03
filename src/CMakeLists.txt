@@ -43,6 +43,7 @@ set(libbitwuzla_src_files
   bzlaslsutils.c
   bzlaslvaigprop.c
   bzlaslvfun.c
+  bzlaslvprop.cpp
   bzlaslvpropold.c
   bzlaslvquant.cpp
   bzlaslvsls.c
@@ -112,9 +113,8 @@ target_include_directories(bitwuzla
 target_include_directories(bitwuzla PRIVATE ${Btor2Tools_INCLUDE_DIR})
 target_link_libraries(bitwuzla ${Btor2Tools_LIBRARIES})
 
-if(USE_BZLALS)
-  target_link_libraries(bitwuzla bzlals)
-endif()
+target_include_directories(bitwuzla PRIVATE lib/bzla-ls/src)
+target_link_libraries(bitwuzla bzlals)
 
 if(GMP_FOUND)
   target_include_directories(bitwuzla PRIVATE ${GMP_INCLUDE_DIR})

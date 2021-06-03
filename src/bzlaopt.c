@@ -275,6 +275,11 @@ bzla_opt_init_opts(Bzla *bzla)
                "+ lambdas, uses eager bit-blasting for QF_BV)");
   add_opt_help(mm,
                opts,
+               "prop",
+               BZLA_ENGINE_PROP,
+               "use the propagation-based local search engine (QF_BV only)");
+  add_opt_help(mm,
+               opts,
                "propold",
                BZLA_ENGINE_PROP_OLD,
                "use the propagation-based local search engine (QF_BV only)");
