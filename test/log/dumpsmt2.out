@@ -1,4 +1,4 @@
-(set-logic QF_UFBV)
+(set-logic QF_ABV)
 (declare-const v1 (_ BitVec 1))
 (declare-const v2 (_ BitVec 2))
 (declare-const v3 (_ BitVec 1))
@@ -1484,7 +1484,7 @@
    (bvand 
     (bvnot $e252) 
     (bvnot $e253)))))
-(assert (distinct 
+(assert (= 
  (bvnot 
   (bvand 
    (bvand 
@@ -1509,6 +1509,6 @@
       (bvnot $e255))) 
     (bvnot 
      (bvand 
-      (bvnot $e254) $e255))))) #b0))
+      (bvnot $e254) $e255))))) #b1))
 (check-sat)
 (exit)

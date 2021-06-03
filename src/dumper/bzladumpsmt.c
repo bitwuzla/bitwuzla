@@ -1561,9 +1561,9 @@ dump_assert_smt2(BzlaSMTDumpContext *sdc, BzlaNode *exp)
 
   open_sexp(sdc);
   fputs("assert ", sdc->file);
-  if (!is_boolean(sdc, exp)) fputs("(distinct ", sdc->file);
+  if (!is_boolean(sdc, exp)) fputs("(= ", sdc->file);
   recursively_dump_exp_smt(sdc, exp, 0, 0);
-  if (!is_boolean(sdc, exp)) fputs(" #b0)", sdc->file);
+  if (!is_boolean(sdc, exp)) fputs(" #b1)", sdc->file);
   close_sexp(sdc);
   fputc('\n', sdc->file);
 }
@@ -1661,13 +1661,10 @@ mark_boolean(BzlaSMTDumpContext *sdc, BzlaNodePtrStack *exps)
       /* boolean function */
       if ((bzla_node_is_lambda(cur->e[0])
            && is_boolean(sdc, bzla_node_binder_get_body(cur->e[0])))
-          || (bzla_node_is_fun_cond(cur->e[0]) && is_boolean(sdc, cur->e[1]))
-          || (bzla_node_is_uf(cur->e[0])
-              && bzla_sort_is_bool(
-                  sdc->bzla,
-                  bzla_sort_fun_get_codomain(
-                      sdc->bzla, bzla_node_get_sort_id(cur->e[0])))))
+          || (bzla_node_is_fun_cond(cur->e[0]) && is_boolean(sdc, cur->e[1])))
+      {
         bzla_hashptr_table_add(sdc->boolean, cur);
+      }
       continue;
     }
     else if ((bzla_node_is_bv_and(cur) || bzla_node_is_bv_cond(cur))
@@ -1685,11 +1682,59 @@ mark_boolean(BzlaSMTDumpContext *sdc, BzlaNodePtrStack *exps)
 }
 
 static void
+print_logic(BzlaSMTDumpContext *sdc,
+            bool logic_quant,
+            bool logic_bv,
+            bool logic_fp,
+            bool logic_arrays,
+            bool logic_uf)
+{
+  char logic_str[32];
+  size_t size = 32;
+
+  const char *str_quant = "", *str_arrays = "", *str_uf = "", *str_bv = "";
+  const char *str_fp = "";
+
+  if (!logic_quant)
+  {
+    str_quant = "QF_";
+  }
+  if (logic_arrays)
+  {
+    str_arrays = "A";
+  }
+  if (logic_uf)
+  {
+    str_uf = "UF";
+  }
+  if (logic_bv)
+  {
+    str_bv = "BV";
+  }
+  if (logic_fp)
+  {
+    str_fp = "FP";
+  }
+
+  snprintf(logic_str,
+           size,
+           "%s%s%s%s%s",
+           str_quant,
+           str_arrays,
+           str_uf,
+           str_bv,
+           str_fp);
+
+  set_logic_smt(sdc, logic_str);
+}
+
+static void
 dump_smt(BzlaSMTDumpContext *sdc)
 {
   assert(sdc);
 
-  bool quantifiers = false;
+  bool logic_quant = false, logic_arrays = false, logic_fp = false;
+  bool logic_bv = true, logic_uf = false;
   uint32_t i, j;
   BzlaNode *e, *cur, *value, *index;
   BzlaMemMgr *mm;
@@ -1727,17 +1772,40 @@ dump_smt(BzlaSMTDumpContext *sdc)
     BZLA_PUSH_STACK(all, cur);
 
     if (bzla_node_is_var(cur))
+    {
       BZLA_PUSH_STACK(vars, cur);
+    }
     else if (bzla_node_is_uf(cur))
+    {
       BZLA_PUSH_STACK(ufs, cur);
+    }
     else if (bzla_node_is_lambda(cur) && !bzla_node_is_array(cur)
              && !cur->parameterized && !has_lambda_parents_only(cur))
+    {
       BZLA_PUSH_STACK(shared, cur);
+    }
     else if (bzla_node_is_lambda(cur) && bzla_node_is_array(cur)
              && !bzla_node_is_const_array(cur))
+    {
       BZLA_PUSH_STACK(larr, cur);
+    }
     else if (bzla_node_is_quantifier(cur))
-      quantifiers = true;
+    {
+      logic_quant = true;
+    }
+
+    if (bzla_sort_is_fp(sdc->bzla, bzla_node_get_sort_id(cur)))
+    {
+      logic_fp = true;
+    }
+    else if (bzla_node_is_array(cur))
+    {
+      logic_arrays = true;
+    }
+    else if (bzla_node_is_uf(cur))
+    {
+      logic_uf = true;
+    }
 
     for (j = 0; j < cur->arity; j++)
       BZLA_PUSH_STACK(visit, bzla_node_real_addr(cur->e[j]));
@@ -1828,20 +1896,7 @@ dump_smt(BzlaSMTDumpContext *sdc)
   mark_boolean(sdc, &all);
 
   /* begin dump */
-  if (quantifiers)
-  {
-    if (BZLA_EMPTY_STACK(ufs))
-      set_logic_smt(sdc, "BV");
-    else
-      set_logic_smt(sdc, "UFBV");
-  }
-  else
-  {
-    if (BZLA_EMPTY_STACK(ufs))
-      set_logic_smt(sdc, "QF_BV");
-    else
-      set_logic_smt(sdc, "QF_UFBV");
-  }
+  print_logic(sdc, logic_quant, logic_bv, logic_fp, logic_arrays, logic_uf);
 
   /* dump inputs */
   if (vars.start)
