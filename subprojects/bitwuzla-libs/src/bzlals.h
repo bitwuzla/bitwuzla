@@ -103,6 +103,10 @@ class BzlaLs
   // void set_domain(uint32_t node, const BitVectorDomain& domain);
 
   void register_root(uint32_t root);
+  // TODO: incremental case:
+  //       - we need to be able to unregister roots (assumptions)
+  //       - we might want to exclude nodes that are not in the formula from
+  //         cone updates
 
   uint32_t get_arity(uint32_t id) const;
   uint32_t get_child(uint32_t id, uint32_t idx) const;
