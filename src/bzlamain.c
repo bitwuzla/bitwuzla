@@ -778,7 +778,7 @@ print_help(BitwuzlaMainApp *app, bool include_expert_opts)
   BzlaOptionStack ostack;
   BitwuzlaMainOption mo;
   FILE *out;
-  char *s, *fun, *sls, *prop, *aigprop, *quant;
+  char *s;
   size_t i;
 
   Bzla *bzla = app->bzla;
@@ -786,12 +786,6 @@ print_help(BitwuzlaMainApp *app, bool include_expert_opts)
   BZLA_INIT_STACK(app->mm, ostack);
 
   out = app->outfile;
-
-  fun     = 0;
-  sls     = 0;
-  prop    = 0;
-  aigprop = 0;
-  quant   = 0;
 
   fprintf(out, "usage: bitwuzla [<option>...][<input>]\n");
   fprintf(out, "\n");
@@ -849,19 +843,6 @@ print_help(BitwuzlaMainApp *app, bool include_expert_opts)
   {
     if (!include_expert_opts && bzla->options[o].expert) continue;
 
-    if (o == BZLA_OPT_AUTO_CLEANUP || o == BZLA_OPT_PP_BETA_REDUCE
-        || o == BZLA_OPT_INCREMENTAL || o == BZLA_OPT_INPUT_FORMAT
-        || o == BZLA_OPT_ENGINE || o == BZLA_OPT_RW_LEVEL
-        || o == BZLA_OPT_RW_SORT_EXP
-        || (!fun && (fun = strstr(bzla->options[o].lng, "fun:")))
-        || (!sls && (sls = strstr(bzla->options[o].lng, "sls:")))
-        || (!prop && (prop = strstr(bzla->options[o].lng, "prop:")))
-        || (!aigprop && (aigprop = strstr(bzla->options[o].lng, "aigprop:")))
-        || (!quant && (quant = strstr(bzla->options[o].lng, "quant:"))))
-    {
-      fprintf(out, "\n");
-    }
-
     s = get_opt_vals_string(app->mm, &bzla->options[o]);
     print_opt(
         app,
@@ -874,6 +855,13 @@ print_help(BitwuzlaMainApp *app, bool include_expert_opts)
         bzla->options[o].desc,
         true);
     if (s) bzla_mem_freestr(app->mm, s);
+    if (o == BZLA_OPT_AUTO_CLEANUP || o == BZLA_OPT_PP_BETA_REDUCE
+        || o == BZLA_OPT_INCREMENTAL || o == BZLA_OPT_INPUT_FORMAT
+        || o == BZLA_OPT_ENGINE || o == BZLA_OPT_RW_LEVEL
+        || o == BZLA_OPT_RW_SORT_EXP)
+    {
+      fprintf(out, "\n");
+    }
   }
 
   app->done = true;
