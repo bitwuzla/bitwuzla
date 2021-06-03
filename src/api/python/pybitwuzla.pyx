@@ -136,8 +136,10 @@ cdef class BitwuzlaSort:
     def fun_get_domain_sorts(self):
         """
         """
+        cdef size_t size
         cdef bitwuzla_api.BitwuzlaSort** sorts = \
-                bitwuzla_api.bitwuzla_sort_fun_get_domain_sorts(self.ptr())
+                bitwuzla_api.bitwuzla_sort_fun_get_domain_sorts(self.ptr(),
+                                                                &size)
 
         res = []
         for i in range(self.fun_get_arity()):

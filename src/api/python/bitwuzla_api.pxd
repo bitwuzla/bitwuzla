@@ -336,7 +336,8 @@ cdef extern from "bitwuzla.h":
     BitwuzlaSort *bitwuzla_sort_array_get_element(const BitwuzlaSort *sort) \
         except +raise_py_error
     BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(
-        const BitwuzlaSort *sort) \
+        const BitwuzlaSort *sort,
+        size_t *size) \
         except +raise_py_error
     BitwuzlaSort *bitwuzla_sort_fun_get_codomain(const BitwuzlaSort *sort) \
         except +raise_py_error
@@ -388,7 +389,8 @@ cdef extern from "bitwuzla.h":
             const BitwuzlaTerm *term) \
         except +raise_py_error
     const BitwuzlaSort **bitwuzla_term_fun_get_domain_sorts(
-        const BitwuzlaTerm *term) \
+        const BitwuzlaTerm *term,
+        size_t *size) \
         except +raise_py_error
     BitwuzlaSort *bitwuzla_term_fun_get_codomain_sort(
             const BitwuzlaTerm *term) \
