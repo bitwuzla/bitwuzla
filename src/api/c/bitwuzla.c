@@ -744,10 +744,12 @@ static const char *bitwuzla_kind_to_str[BITWUZLA_NUM_KINDS] = {
           ->parameterized,                                                   \
       "term must not be parameterized");
 
-#define BZLA_CHECK_TERM_NOT_IS_UF_AT_IDX(term, idx)                       \
-  BZLA_ABORT(                                                             \
-      bzla_node_is_uf(bzla_simplify_exp(bzla_node_get_bzla(term), term)), \
-      "unexpected function term at index %u",                             \
+#define BZLA_CHECK_TERM_NOT_IS_UF_AT_IDX(term, idx)                           \
+  BZLA_ABORT(                                                                 \
+      !bzla_node_is_lambda(bzla_simplify_exp(bzla_node_get_bzla(term), term)) \
+          && bzla_node_is_fun(                                                \
+              bzla_simplify_exp(bzla_node_get_bzla(term), term)),             \
+      "unexpected function term at index %u",                                 \
       (idx))
 
 #define BZLA_CHECK_TERM_NOT_IS_VAR_BOUND_AT_IDX(term, idx) \
