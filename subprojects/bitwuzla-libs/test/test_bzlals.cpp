@@ -231,7 +231,7 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
             BitVector rs_val = genrs.has_random() ? genrs.random() : s.lo();
 
-            BzlaLs bzlals(100, TEST_SLOW ? nmoves_slow : nmoves_fast);
+            BzlaLs bzlals(100);
             uint32_t op_s = bzlals.mk_node(rs_val, s);
             uint32_t op_x = bzlals.mk_node(rx_val, x);
             uint32_t op =
@@ -372,7 +372,7 @@ TestBzlaLs::test_move_ite(uint32_t pos_x)
                 BitVector rs1_val =
                     genrs1.has_random() ? genrs1.random() : s1.lo();
 
-                BzlaLs bzlals(100, TEST_SLOW ? nmoves_slow : nmoves_fast);
+                BzlaLs bzlals(100);
                 uint32_t op_s0 = bzlals.mk_node(rs0_val, s0);
                 uint32_t op_s1 = bzlals.mk_node(rs1_val, s1);
                 uint32_t op_x  = bzlals.mk_node(rx_val, x);
