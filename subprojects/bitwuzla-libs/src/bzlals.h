@@ -77,7 +77,12 @@ class BzlaLs
     // ZEXT,
   };
 
-  BzlaLs(uint64_t max_nprops, uint32_t seed = 1234);
+  BzlaLs(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed = 1234);
+
+  void set_max_nprops(uint64_t max) { d_max_nprops = max; }
+  void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }
+  uint64_t get_nprops() { return d_nprops; }
+  uint64_t get_nupdates() { return d_nupdates; }
 
   uint32_t mk_node(uint32_t size);
   uint32_t mk_node(OperatorKind kind,
@@ -116,7 +121,7 @@ class BzlaLs
   bool is_leaf_node(const BitVectorNode* node) const;
   bool is_root_node(const BitVectorNode* node) const;
   void update_roots(uint32_t id);
-  void update_cone(BitVectorNode* node, const BitVector& assignment);
+  uint64_t update_cone(BitVectorNode* node, const BitVector& assignment);
   BzlaLsMove select_move(BitVectorNode* root, const BitVector& t_root);
   Result move();
 
@@ -129,7 +134,9 @@ class BzlaLs
   std::unique_ptr<BitVector> d_one;
 
   uint64_t d_max_nprops;
+  uint64_t d_max_nupdates;
   uint64_t d_nprops = 0;
+  uint64_t d_nupdates = 0;
   uint64_t d_nmoves = 0;
   uint32_t d_seed;
 };

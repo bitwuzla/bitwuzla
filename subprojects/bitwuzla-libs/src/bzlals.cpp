@@ -19,22 +19,29 @@ namespace bzlals {
 
 struct BzlaLsMove
 {
-  BzlaLsMove() : d_nprops(0), d_input(nullptr) {}
+  BzlaLsMove() : d_nprops(0), d_nupdates(0), d_input(nullptr) {}
 
-  BzlaLsMove(uint64_t nprops, BitVectorNode* input, BitVector assignment)
-      : d_nprops(nprops), d_input(input), d_assignment(assignment)
+  BzlaLsMove(uint64_t nprops,
+             uint64_t nupdates,
+             BitVectorNode* input,
+             BitVector assignment)
+      : d_nprops(nprops),
+        d_nupdates(nupdates),
+        d_input(input),
+        d_assignment(assignment)
   {
   }
 
   uint64_t d_nprops;
+  uint64_t d_nupdates;
   BitVectorNode* d_input;
   BitVector d_assignment;
 };
 
 /* -------------------------------------------------------------------------- */
 
-BzlaLs::BzlaLs(uint64_t max_nprops, uint32_t seed)
-    : d_max_nprops(max_nprops), d_seed(seed)
+BzlaLs::BzlaLs(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed)
+    : d_max_nprops(max_nprops), d_max_nupdates(max_nupdates), d_seed(seed)
 {
   d_rng.reset(new RNG(d_seed));
   d_one.reset(new BitVector(BitVector::mk_one(1)));
@@ -326,9 +333,9 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
 {
   assert(root);
 
-  uint64_t nprops  = 0;
+  uint64_t nprops = 0, nupdates = 0;
   BitVectorNode* cur = root;
-  BitVector t      = t_root;
+  BitVector t        = t_root;
 
   for (;;)
   {
@@ -347,7 +354,7 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
 
     if (arity == 0)
     {
-      return BzlaLsMove(nprops, cur, t);
+      return BzlaLsMove(nprops, nupdates, cur, t);
     }
     else if (cur->is_const() || cur->all_const())
     {
@@ -406,7 +413,7 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
     }
   }
   /* Conflict case */
-  return BzlaLsMove(nprops, nullptr, BitVector());
+  return BzlaLsMove(nprops, nupdates, nullptr, BitVector());
 }
 
 void
@@ -428,7 +435,7 @@ BzlaLs::update_roots(uint32_t id)
   }
 }
 
-void
+uint64_t
 BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
 {
   assert(node);
@@ -444,9 +451,11 @@ BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
 #endif
 
   /* nothing to do if node already has given assignment */
-  if (node->assignment().compare(assignment) == 0) return;
+  if (node->assignment().compare(assignment) == 0) return 0;
+
   /* update assignment of given node */
   node->set_assignment(assignment);
+  uint64_t nupdates = 1;
 
   std::vector<uint32_t> cone;
   std::vector<BitVectorNode*> to_visit;
@@ -488,6 +497,7 @@ BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
     BitVectorNode* cur = get_node(id);
     BZLALSLOG << "  node: " << *cur << " -> ";
     cur->evaluate();
+    nupdates += 1;
     BZLALSLOG << cur->assignment() << std::endl;
     if (BZLALSLOG_ENABLED)
     {
@@ -503,13 +513,13 @@ BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
       update_roots(cur->id());
     }
   }
-
 #ifndef NDEBUG
   for (uint32_t r : d_roots)
   {
     assert(get_node(r)->assignment().is_false());
   }
 #endif
+  return nupdates;
 }
 
 BzlaLs::Result
@@ -529,6 +539,7 @@ BzlaLs::move()
   do
   {
     if (d_max_nprops > 0 && d_nprops >= d_max_nprops) return UNKNOWN;
+    if (d_max_nupdates > 0 && d_nupdates >= d_max_nupdates) return UNKNOWN;
 
     BitVectorNode* root = get_node(
         d_rng->pick_from_set<std::unordered_set<uint32_t>, uint32_t>(d_roots));
@@ -539,6 +550,7 @@ BzlaLs::move()
 
     m = select_move(root, *d_one);
     d_nprops += m.d_nprops;
+    d_nupdates += m.d_nupdates;
   } while (m.d_input == nullptr);
 
   assert(!m.d_assignment.is_null());
@@ -550,8 +562,7 @@ BzlaLs::move()
   BZLALSLOG << std::endl;
 
   d_nmoves += 1;
-
-  update_cone(m.d_input, m.d_assignment);
+  d_nupdates += update_cone(m.d_input, m.d_assignment);
 
   if (d_roots.empty()) return SAT;
   return BzlaLs::UNKNOWN;

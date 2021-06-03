@@ -16,7 +16,7 @@ class TestBzlaLs : public TestBvNodeCommon
   {
     TestBvNodeCommon::SetUp();
 
-    d_bzlals.reset(new BzlaLs(100));
+    d_bzlals.reset(new BzlaLs(100, 100));
 
     d_two4  = BitVector(4, "0010");
     d_for4  = BitVector(4, "0100");
@@ -205,7 +205,7 @@ TestBzlaLs::test_move_binary(OpKind opkind,
           {
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
-            BzlaLs bzlals(100);
+            BzlaLs bzlals(1, 1);
             uint32_t op_s = bzlals.mk_node(s_val, s);
             uint32_t op_x = bzlals.mk_node(rx_val, x);
             uint32_t op =
@@ -223,6 +223,12 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
             assert(res == BzlaLs::Result::UNSAT
                    || bzlals.get_assignment(root).is_true());
+            assert(bzlals.d_nmoves == 0
+                   || (bzlals.d_nprops > 0
+                       && bzlals.d_nprops == 2 * bzlals.d_nmoves));
+            assert(bzlals.d_nmoves == 0
+                   || (bzlals.d_nupdates > 0
+                       && bzlals.d_nupdates <= 3 * bzlals.d_nmoves));
             (void) res;
           }
 
@@ -231,7 +237,7 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
             BitVector rs_val = genrs.has_random() ? genrs.random() : s.lo();
 
-            BzlaLs bzlals(100);
+            BzlaLs bzlals(100, 100);
             uint32_t op_s = bzlals.mk_node(rs_val, s);
             uint32_t op_x = bzlals.mk_node(rx_val, x);
             uint32_t op =
@@ -255,6 +261,12 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
             assert(res == BzlaLs::Result::UNSAT
                    || bzlals.get_assignment(root).is_true());
+            assert(bzlals.d_nmoves == 0
+                   || (bzlals.d_nprops > 0
+                       && bzlals.d_nprops == 2 * bzlals.d_nmoves));
+            assert(bzlals.d_nmoves == 0
+                   || (bzlals.d_nupdates > 0
+                       && bzlals.d_nupdates <= 3 * bzlals.d_nmoves));
           }
         } while (genx.has_next());
       }
@@ -333,7 +345,7 @@ TestBzlaLs::test_move_ite(uint32_t pos_x)
               {
                 BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
-                BzlaLs bzlals(100);
+                BzlaLs bzlals(100, 100);
                 uint32_t op_s0 = bzlals.mk_node(s0_val, s0);
                 uint32_t op_s1 = bzlals.mk_node(s1_val, s1);
                 uint32_t op_x  = bzlals.mk_node(rx_val, x);
@@ -372,7 +384,7 @@ TestBzlaLs::test_move_ite(uint32_t pos_x)
                 BitVector rs1_val =
                     genrs1.has_random() ? genrs1.random() : s1.lo();
 
-                BzlaLs bzlals(100);
+                BzlaLs bzlals(100, 100);
                 uint32_t op_s0 = bzlals.mk_node(rs0_val, s0);
                 uint32_t op_s1 = bzlals.mk_node(rs1_val, s1);
                 uint32_t op_x  = bzlals.mk_node(rx_val, x);
@@ -442,7 +454,7 @@ TestBzlaLs::test_move_not()
       BitVectorDomainGenerator genrx(x, d_rng.get());
       BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
-      BzlaLs bzlals(100);
+      BzlaLs bzlals(100, 100);
       uint32_t op_x = bzlals.mk_node(rx_val, x);
       uint32_t op   = bzlals.mk_node(
           BzlaLs::OperatorKind::NOT, BitVectorDomain(bw_t), {op_x});
@@ -496,7 +508,7 @@ TestBzlaLs::test_move_extract()
             BitVectorDomainGenerator genrx(x, d_rng.get());
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
-            BzlaLs bzlals(100);
+            BzlaLs bzlals(100, 100);
             uint32_t op_x = bzlals.mk_node(rx_val, x);
             uint32_t op = bzlals.mk_indexed_node(BzlaLs::OperatorKind::EXTRACT,
                                                  BitVectorDomain(bw_t),
@@ -551,7 +563,7 @@ TestBzlaLs::test_move_sext()
         BitVectorDomainGenerator genrx(x, d_rng.get());
         BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
-        BzlaLs bzlals(100);
+        BzlaLs bzlals(100, 100);
         uint32_t op_x = bzlals.mk_node(rx_val, x);
         uint32_t op   = bzlals.mk_indexed_node(
             BzlaLs::OperatorKind::SEXT, BitVectorDomain(bw_t), op_x, {n});
