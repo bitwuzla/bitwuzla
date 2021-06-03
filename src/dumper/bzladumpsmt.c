@@ -395,23 +395,36 @@ bzla_dumpsmt_dump_sort(BzlaSort *sort, FILE *file)
       break;
 
     case BZLA_FUN_SORT:
-      /* print domain */
-      fputc('(', file);
-      if (sort->fun.domain->kind == BZLA_TUPLE_SORT)
+      if (sort->fun.is_array)
       {
-        for (i = 0; i < sort->fun.domain->tuple.num_elements; i++)
-        {
-          bzla_dumpsmt_dump_sort(sort->fun.domain->tuple.elements[i], file);
-          if (i < sort->fun.domain->tuple.num_elements - 1) fputc(' ', file);
-        }
+        BzlaSortId isort = bzla_sort_array_get_index(sort->bzla, sort->id);
+        BzlaSortId esort = bzla_sort_array_get_element(sort->bzla, sort->id);
+        fprintf(file, "(Array ");
+        bzla_dumpsmt_dump_sort(bzla_sort_get_by_id(sort->bzla, isort), file);
+        fprintf(file, " ");
+        bzla_dumpsmt_dump_sort(bzla_sort_get_by_id(sort->bzla, esort), file);
+        fprintf(file, ")");
       }
       else
-        bzla_dumpsmt_dump_sort(sort->fun.domain, file);
-      fputc(')', file);
-      fputc(' ', file);
+      {
+        /* print domain */
+        fputc('(', file);
+        if (sort->fun.domain->kind == BZLA_TUPLE_SORT)
+        {
+          for (i = 0; i < sort->fun.domain->tuple.num_elements; i++)
+          {
+            bzla_dumpsmt_dump_sort(sort->fun.domain->tuple.elements[i], file);
+            if (i < sort->fun.domain->tuple.num_elements - 1) fputc(' ', file);
+          }
+        }
+        else
+          bzla_dumpsmt_dump_sort(sort->fun.domain, file);
+        fputc(')', file);
+        fputc(' ', file);
 
-      /* print co-domain */
-      bzla_dumpsmt_dump_sort(sort->fun.codomain, file);
+        /* print co-domain */
+        bzla_dumpsmt_dump_sort(sort->fun.codomain, file);
+      }
       break;
 
     case BZLA_RM_SORT: fprintf(file, "RoundingMode"); break;
@@ -428,8 +441,22 @@ bzla_dumpsmt_dump_sort_node(BzlaNode *exp, FILE *file)
 
   BzlaSort *sort;
   exp  = bzla_node_real_addr(exp);
-  sort = bzla_sort_get_by_id(exp->bzla, bzla_node_get_sort_id(exp));
-  bzla_dumpsmt_dump_sort(sort, file);
+  if (bzla_node_is_uf_array(exp))
+  {
+    BzlaSortId sort_id = bzla_node_get_sort_id(exp);
+    BzlaSortId asort =
+        bzla_sort_array(exp->bzla,
+                        bzla_sort_array_get_index(exp->bzla, sort_id),
+                        bzla_sort_array_get_element(exp->bzla, sort_id));
+    sort = bzla_sort_get_by_id(exp->bzla, asort);
+    bzla_dumpsmt_dump_sort(sort, file);
+    bzla_sort_release(exp->bzla, asort);
+  }
+  else
+  {
+    sort = bzla_sort_get_by_id(exp->bzla, bzla_node_get_sort_id(exp));
+    bzla_dumpsmt_dump_sort(sort, file);
+  }
 }
 
 #if 0
@@ -906,11 +933,10 @@ recursively_dump_exp_smt(BzlaSMTDumpContext *sdc,
           break;
 
         case BZLA_APPLY_NODE:
-
-          if (bzla_node_is_update(real_exp->e[0])
-              || bzla_node_is_uf_array(real_exp->e[0])
-              || bzla_node_is_const_array(real_exp->e[0]))
+          if (bzla_node_is_array(real_exp->e[0]))
+          {
             op = "select ";
+          }
 
           /* we need the arguments in reversed order */
           bzla_iter_args_init(&it, real_exp->e[1]);

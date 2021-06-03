@@ -4032,3 +4032,22 @@ TEST_F(TestApi, term_dump2)
 
   ASSERT_EQ("(declare-fun f ((_ BitVec 1)) (_ BitVec 1))\n", content);
 }
+
+TEST_F(TestApi, term_dump3)
+{
+  std::string filename = "term_dump3.out";
+  FILE *tmpfile        = fopen(filename.c_str(), "w");
+
+  BitwuzlaSort *bv1   = bitwuzla_mk_bv_sort(d_bzla, 1);
+  BitwuzlaSort *ar1_1 = bitwuzla_mk_array_sort(d_bzla, bv1, bv1);
+  BitwuzlaTerm *a     = bitwuzla_mk_const(d_bzla, ar1_1, "a");
+  bitwuzla_term_dump(a, "smt2", tmpfile);
+  fclose(tmpfile);
+
+  std::ifstream ifs(filename);
+  std::string content((std::istreambuf_iterator<char>(ifs)),
+                      (std::istreambuf_iterator<char>()));
+  unlink(filename.c_str());
+
+  ASSERT_EQ("(declare-const a (Array (_ BitVec 1) (_ BitVec 1)))\n", content);
+}
