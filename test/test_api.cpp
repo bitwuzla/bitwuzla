@@ -4013,3 +4013,22 @@ TEST_F(TestApi, term_dump1)
 
   ASSERT_EQ("(bvnot a)", content);
 }
+
+TEST_F(TestApi, term_dump2)
+{
+  std::string filename = "term_dump2.out";
+  FILE *tmpfile        = fopen(filename.c_str(), "w");
+
+  BitwuzlaSort *bv1 = bitwuzla_mk_bv_sort(d_bzla, 1);
+  BitwuzlaSort *fn1_1 = bitwuzla_mk_fun_sort(d_bzla, 1, &bv1, bv1);
+  BitwuzlaTerm *f = bitwuzla_mk_const(d_bzla, fn1_1, "f");
+  bitwuzla_term_dump(f, "smt2", tmpfile);
+  fclose(tmpfile);
+
+  std::ifstream ifs(filename);
+  std::string content((std::istreambuf_iterator<char>(ifs)),
+                      (std::istreambuf_iterator<char>()));
+  unlink(filename.c_str());
+
+  ASSERT_EQ("(declare-fun f ((_ BitVec 1)) (_ BitVec 1))\n", content);
+}

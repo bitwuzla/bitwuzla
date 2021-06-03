@@ -1521,8 +1521,6 @@ dump_declare_fun_smt(BzlaSMTDumpContext *sdc, BzlaNode *exp)
   fputs(is_const ? "(declare-const " : "(declare-fun ", sdc->file);
   dump_smt_id(sdc, exp);
   fputc(' ', sdc->file);
-  if (!is_const)
-    fputs("() ", sdc->file);
   bzla_dumpsmt_dump_sort_node(exp, sdc->file);
   fputs(")\n", sdc->file);
   bzla_hashptr_table_add(sdc->dumped, exp);
