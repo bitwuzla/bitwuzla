@@ -5357,7 +5357,11 @@ define_fun_smt2(BzlaSMT2Parser *parser)
     else
     {
       fun->exp = exp;
-      bitwuzla_term_set_symbol(fun->exp, fun->name);
+      /* Only assign a symbol if the given term does not have a symbol yet. */
+      if (!bitwuzla_term_get_symbol(fun->exp))
+      {
+        bitwuzla_term_set_symbol(fun->exp, fun->name);
+      }
     }
   }
   return read_rpar_smt2(parser, " to close definition");
