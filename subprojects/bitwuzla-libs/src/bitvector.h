@@ -635,7 +635,7 @@ class BitVector
   /** The size of this bit-vector. */
   uint32_t d_size = 0;
   /** The bit-vector value. */
-  std::unique_ptr<GMPMpz> d_val = nullptr;
+  std::unique_ptr<GMPMpz> d_val;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVector& bv);

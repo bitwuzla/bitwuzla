@@ -1,7 +1,5 @@
 #include "wheel_factorizer.h"
 
-#include "gmpmpz.h"
-
 namespace bzlals {
 
 WheelFactorizer::WheelFactorizer(const BitVector& n, uint64_t limit)

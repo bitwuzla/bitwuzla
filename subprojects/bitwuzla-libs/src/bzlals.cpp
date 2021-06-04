@@ -6,8 +6,6 @@
 
 #include "bitvector.h"
 #include "bitvector_node.h"
-#include "gmpmpz.h"
-#include "gmprandstate.h"
 #include "log.h"
 #include "rng.h"
 

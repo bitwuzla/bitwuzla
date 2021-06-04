@@ -3,8 +3,6 @@
 #include <cassert>
 #include <iostream>
 
-#include "gmpmpz.h"
-#include "gmprandstate.h"
 #include "rng.h"
 
 namespace bzlals {

@@ -73,7 +73,7 @@ class RNG
   /** The underlying RNG Mersenne Twister engine. */
   std::mt19937 d_rng;
   /** The GMP randstate. */
-  std::unique_ptr<GMPRandState> d_gmp_state = nullptr;
+  std::unique_ptr<GMPRandState> d_gmp_state;
 };
 
 template <typename TSet, typename TPicked>
