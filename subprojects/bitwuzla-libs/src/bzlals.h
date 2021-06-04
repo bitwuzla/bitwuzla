@@ -114,6 +114,7 @@ class BzlaLs
 
   void register_root(uint32_t root);
   bool all_roots_sat() const { return d_roots.empty(); }
+  uint32_t get_num_roots_unsat() const { return d_roots.size(); }
 
   // TODO: incremental case:
   //       - we need to be able to unregister roots (assumptions)
