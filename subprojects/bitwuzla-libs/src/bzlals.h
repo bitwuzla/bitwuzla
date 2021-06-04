@@ -125,6 +125,8 @@ class BzlaLs
   uint32_t get_arity(uint32_t id) const;
   uint32_t get_child(uint32_t id, uint32_t idx) const;
 
+  Result move();
+
  private:
   BitVectorNode* get_node(uint32_t id) const;
   bool is_leaf_node(const BitVectorNode* node) const;
@@ -132,7 +134,6 @@ class BzlaLs
   void update_roots(uint32_t id);
   uint64_t update_cone(BitVectorNode* node, const BitVector& assignment);
   BzlaLsMove select_move(BitVectorNode* root, const BitVector& t_root);
-  Result move();
 
   std::unique_ptr<RNG> d_rng;
 
