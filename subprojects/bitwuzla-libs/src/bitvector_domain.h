@@ -203,11 +203,11 @@ class BitVectorDomainGenerator
   BitVector d_max;          /* the max value (in case of ranged init) */
 #endif
   /* Unconstrained bits, most LSB is farthest right. */
-  std::unique_ptr<BitVector> d_bits = nullptr;
+  std::unique_ptr<BitVector> d_bits;
   /* Min value of unconstrained bits. */
-  std::unique_ptr<BitVector> d_bits_min = nullptr;
+  std::unique_ptr<BitVector> d_bits_min;
   /* Max value of unconstrained bits. */
-  std::unique_ptr<BitVector> d_bits_max = nullptr;
+  std::unique_ptr<BitVector> d_bits_max;
 };
 
 class BitVectorDomainSignedGenerator
@@ -264,9 +264,9 @@ class BitVectorDomainSignedGenerator
   /* The associated RNG (may be 0). */
   RNG *d_rng = nullptr;
   /** The generator covering the lower range < 0. */
-  std::unique_ptr<BitVectorDomainGenerator> d_gen_lo = nullptr;
+  std::unique_ptr<BitVectorDomainGenerator> d_gen_lo;
   /** The generator covering the upper range >= 0. */
-  std::unique_ptr<BitVectorDomainGenerator> d_gen_hi = nullptr;
+  std::unique_ptr<BitVectorDomainGenerator> d_gen_hi;
   /** The currently active generator. */
   BitVectorDomainGenerator *d_gen_cur = nullptr;
 };

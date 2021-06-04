@@ -45,6 +45,8 @@ BzlaLs::BzlaLs(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed)
   d_one.reset(new BitVector(BitVector::mk_one(1)));
 }
 
+BzlaLs::~BzlaLs() {}
+
 uint32_t
 BzlaLs::mk_node(uint32_t size)
 {

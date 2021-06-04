@@ -78,6 +78,7 @@ class BzlaLs
   };
 
   BzlaLs(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed = 1234);
+  ~BzlaLs();
 
   void set_max_nprops(uint64_t max) { d_max_nprops = max; }
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }

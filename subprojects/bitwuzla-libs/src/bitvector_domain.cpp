@@ -313,6 +313,10 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
   const BitVector &mmin = lo.compare(min) <= 0 ? min : lo;
   const BitVector &mmax = hi.compare(max) >= 0 ? max : hi;
 
+  d_bits.reset(nullptr);
+  d_bits_min.reset(nullptr);
+  d_bits_max.reset(nullptr);
+
   for (uint32_t i = 0; i < size; ++i)
   {
     if (!d_domain.is_fixed_bit(i)) cnt += 1;
@@ -522,6 +526,10 @@ BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
   BitVector ones         = BitVector::mk_ones(size);
   int32_t min_scomp_zero = min.signed_compare(zero);
   int32_t max_scomp_zero = max.signed_compare(zero);
+
+  d_gen_lo.reset(nullptr);
+  d_gen_hi.reset(nullptr);
+
   if (min_scomp_zero < 0)
   {
     d_gen_lo.reset(new BitVectorDomainGenerator(

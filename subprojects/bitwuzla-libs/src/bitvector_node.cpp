@@ -62,6 +62,8 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_is_const(domain.is_fixed())
 {
   assert(rng);
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
   d_children.reset(new BitVectorNode*[d_arity]);
   d_children[0] = child0;
   d_all_const   = child0->is_const();
@@ -78,6 +80,8 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_is_const(domain.is_fixed())
 {
   assert(rng);
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
   d_children.reset(new BitVectorNode*[d_arity]);
   d_children[0] = child0;
   d_children[1] = child1;
@@ -96,6 +100,8 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_is_const(domain.is_fixed())
 {
   assert(rng);
+  d_inverse.reset(nullptr);
+  d_consistent.reset(nullptr);
   d_children.reset(new BitVectorNode*[d_arity]);
   d_children[0] = child0;
   d_children[1] = child1;
@@ -890,6 +896,7 @@ BitVectorMul::BitVectorMul(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  d_inverse_domain.reset(nullptr);
   _evaluate_and_set_domain();
 }
 
@@ -901,6 +908,7 @@ BitVectorMul::BitVectorMul(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
+  d_inverse_domain.reset(nullptr);
   _evaluate_and_set_domain();
 }
 
@@ -3845,6 +3853,7 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
+  d_inverse_domain.reset(nullptr);
   _evaluate_and_set_domain();
 }
 
@@ -3856,6 +3865,7 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
+  d_inverse_domain.reset(nullptr);
   _evaluate_and_set_domain();
 }
 
@@ -5057,6 +5067,8 @@ BitVectorExtract::BitVectorExtract(
     : BitVectorNode(rng, size, child0), d_hi(hi), d_lo(lo)
 {
   assert(size == hi - lo + 1);
+  d_x_slice_left.reset(nullptr);
+  d_x_slice_right.reset(nullptr);
   _evaluate_and_set_domain();
 }
 
@@ -5068,6 +5080,8 @@ BitVectorExtract::BitVectorExtract(RNG* rng,
     : BitVectorNode(rng, domain, child0), d_hi(hi), d_lo(lo)
 {
   assert(domain.size() == hi - lo + 1);
+  d_x_slice_left.reset(nullptr);
+  d_x_slice_right.reset(nullptr);
   _evaluate_and_set_domain();
 }
 

@@ -149,8 +149,8 @@ class BitVectorNode
 
   virtual int32_t select_path_non_const(std::vector<uint32_t>& inputs) const;
 
-  uint32_t d_id                                = 0;
-  std::unique_ptr<BitVectorNode*[]> d_children = nullptr;
+  uint32_t d_id = 0;
+  std::unique_ptr<BitVectorNode*[]> d_children;
   RNG* d_rng;
   uint32_t d_arity;
   BitVector d_assignment;
@@ -159,9 +159,9 @@ class BitVectorNode
   bool d_all_const;
 
   /** Cached inverse value result. */
-  std::unique_ptr<BitVector> d_inverse = nullptr;
+  std::unique_ptr<BitVector> d_inverse;
   /** Cached consistent value result. */
-  std::unique_ptr<BitVector> d_consistent = nullptr;
+  std::unique_ptr<BitVector> d_consistent;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorNode& node);
@@ -466,7 +466,7 @@ class BitVectorMul : public BitVectorNode
   void _evaluate_and_set_domain();
 
   /** Cached inverse values result. */
-  std::unique_ptr<BitVectorDomain> d_inverse_domain = nullptr;
+  std::unique_ptr<BitVectorDomain> d_inverse_domain;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorMul& node);
@@ -1001,7 +1001,7 @@ class BitVectorUrem : public BitVectorNode
    */
   BitVector consistent_value_pos0_aux(const BitVector& t);
   /** Cached inverse_value result. */
-  std::unique_ptr<BitVectorDomain> d_inverse_domain = nullptr;
+  std::unique_ptr<BitVectorDomain> d_inverse_domain;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorUrem& node);
@@ -1254,13 +1254,13 @@ class BitVectorExtract : public BitVectorNode
    * Nullptr if d_hi = msb.
    * Cache for inverse_value.
    */
-  std::unique_ptr<BitVectorDomain> d_x_slice_left = nullptr;
+  std::unique_ptr<BitVectorDomain> d_x_slice_left;
   /**
    * Right part of don't care bits, that is, all bits < d_lo.
    * Nullptr if d_lo = 0.
    * Cache for inverse_value.
    */
-  std::unique_ptr<BitVectorDomain> d_x_slice_right = nullptr;
+  std::unique_ptr<BitVectorDomain> d_x_slice_right;
 
  private:
   /**
