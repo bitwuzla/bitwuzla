@@ -37,10 +37,10 @@ set(test_names
   modelgensmt2
   nodemap
   overflow
-  prop
-  propcomplete
-  propcons
-  propinv
+  propold
+  propoldcomplete
+  propoldcons
+  propoldinv
   rotate
   queue
   satmgr
