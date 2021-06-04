@@ -83,6 +83,7 @@ class BzlaLs
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }
   uint64_t get_nprops() { return d_nprops; }
   uint64_t get_nupdates() { return d_nupdates; }
+  uint64_t get_nmoves() { return d_nmoves; }
 
   uint32_t mk_node(uint32_t size);
   uint32_t mk_node(OperatorKind kind,
