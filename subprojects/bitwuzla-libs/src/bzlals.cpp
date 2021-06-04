@@ -286,6 +286,15 @@ BzlaLs::set_assignment(uint32_t id, const BitVector& assignment)
 }
 
 void
+BzlaLs::fix_bit(uint32_t id, uint32_t idx, bool value)
+{
+  assert(id < d_nodes.size());  // API check
+  BitVectorNode* node = get_node(id);
+  assert(idx < node->domain().size());  // API check
+  node->fix_bit(idx, value);
+}
+
+void
 BzlaLs::register_root(uint32_t root)
 {
   assert(root < d_nodes.size());  // API check

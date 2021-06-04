@@ -119,6 +119,9 @@ class BitVectorNode
   /** Get id of this node. */
   uint32_t id() const { return d_id; }
 
+  /** Fix domain bit at index 'idx' to 'value'. */
+  void fix_bit(uint32_t idx, bool value);
+
   /** Get the string representation of this node. */
   virtual std::string to_string() const;
 

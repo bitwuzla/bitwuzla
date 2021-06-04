@@ -109,6 +109,9 @@ class BzlaLs
   const BitVectorDomain& get_domain(uint32_t node) const;
   // void set_domain(uint32_t node, const BitVectorDomain& domain);
 
+  /** Fix domain bit of given node at index 'idx' to 'value'. */
+  void fix_bit(uint32_t id, uint32_t idx, bool value);
+
   void register_root(uint32_t root);
   // TODO: incremental case:
   //       - we need to be able to unregister roots (assumptions)

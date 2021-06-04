@@ -171,6 +171,13 @@ BitVectorNode::set_assignment(const BitVector& assignment)
   d_assignment.iset(assignment);
 }
 
+void
+BitVectorNode::fix_bit(uint32_t idx, bool value)
+{
+  assert(idx < d_domain.size());
+  d_domain.fix_bit(idx, value);
+}
+
 std::string
 BitVectorNode::to_string() const
 {
