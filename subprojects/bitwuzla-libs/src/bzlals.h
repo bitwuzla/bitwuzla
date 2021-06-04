@@ -113,6 +113,8 @@ class BzlaLs
   void fix_bit(uint32_t id, uint32_t idx, bool value);
 
   void register_root(uint32_t root);
+  bool all_roots_sat() const { return d_roots.empty(); }
+
   // TODO: incremental case:
   //       - we need to be able to unregister roots (assumptions)
   //       - we might want to exclude nodes that are not in the formula from
