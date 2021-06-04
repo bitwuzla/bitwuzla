@@ -259,6 +259,13 @@ BzlaLs::mk_indexed_node(OperatorKind kind,
   return id;
 }
 
+uint32_t
+BzlaLs::invert_node(uint32_t id)
+{
+  assert(id < d_nodes.size());  // API check
+  return mk_node(NOT, get_node(id)->domain().bvnot(), {id});
+}
+
 const BitVector&
 BzlaLs::get_assignment(uint32_t id) const
 {

@@ -102,6 +102,8 @@ class BzlaLs
                            uint32_t child0,
                            const std::vector<uint32_t>& indices);
 
+  uint32_t invert_node(uint32_t id);
+
   const BitVector& get_assignment(uint32_t id) const;
   void set_assignment(uint32_t id, const BitVector& assignment);
   const BitVectorDomain& get_domain(uint32_t node) const;
