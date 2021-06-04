@@ -397,12 +397,11 @@ bzla_dumpsmt_dump_sort(BzlaSort *sort, FILE *file)
     case BZLA_FUN_SORT:
       if (sort->fun.is_array)
       {
-        BzlaSortId isort = bzla_sort_array_get_index(sort->bzla, sort->id);
-        BzlaSortId esort = bzla_sort_array_get_element(sort->bzla, sort->id);
+        assert(sort->fun.domain->tuple.num_elements == 1);
         fprintf(file, "(Array ");
-        bzla_dumpsmt_dump_sort(bzla_sort_get_by_id(sort->bzla, isort), file);
+        bzla_dumpsmt_dump_sort(sort->fun.domain->tuple.elements[0], file);
         fprintf(file, " ");
-        bzla_dumpsmt_dump_sort(bzla_sort_get_by_id(sort->bzla, esort), file);
+        bzla_dumpsmt_dump_sort(sort->fun.codomain, file);
         fprintf(file, ")");
       }
       else
