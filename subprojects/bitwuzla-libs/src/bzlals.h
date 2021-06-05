@@ -30,9 +30,9 @@ class BzlaLs
 
   enum Result
   {
-    SAT,
-    UNSAT,
-    UNKNOWN,
+    SAT = 10,
+    UNSAT = 20,
+    UNKNOWN = 0,
   };
 
   enum OperatorKind

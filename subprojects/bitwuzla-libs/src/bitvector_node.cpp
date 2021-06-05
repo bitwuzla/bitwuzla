@@ -50,6 +50,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
       d_is_const(domain.is_fixed())
 {
   assert(assignment.size() == domain.size());
+  assert(domain.match_fixed_bits(assignment));
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
@@ -57,7 +58,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
                              BitVectorNode* child0)
     : d_rng(rng),
       d_arity(1),
-      d_assignment(BitVector::mk_zero(domain.size())),
+      d_assignment(domain.lo()),
       d_domain(domain),
       d_is_const(domain.is_fixed())
 {
@@ -75,7 +76,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
                              BitVectorNode* child1)
     : d_rng(rng),
       d_arity(2),
-      d_assignment(BitVector::mk_zero(domain.size())),
+      d_assignment(domain.lo()),
       d_domain(domain),
       d_is_const(domain.is_fixed())
 {
@@ -95,7 +96,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
                              BitVectorNode* child2)
     : d_rng(rng),
       d_arity(3),
-      d_assignment(BitVector::mk_zero(domain.size())),
+      d_assignment(domain.lo()),
       d_domain(domain),
       d_is_const(domain.is_fixed())
 {
