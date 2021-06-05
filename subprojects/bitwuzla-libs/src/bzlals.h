@@ -128,6 +128,8 @@ class BzlaLs
 
   Result move();
 
+  void set_log_level(uint32_t level) { d_log_level = level; }
+
  private:
   BitVectorNode* get_node(uint32_t id) const;
   bool is_leaf_node(const BitVectorNode* node) const;
@@ -144,8 +146,11 @@ class BzlaLs
 
   std::unique_ptr<BitVector> d_one;
 
-  uint64_t d_max_nprops;
-  uint64_t d_max_nupdates;
+  uint32_t d_log_level = 0;
+
+  uint64_t d_max_nprops   = 0;
+  uint64_t d_max_nupdates = 0;
+
   uint64_t d_nprops = 0;
   uint64_t d_nupdates = 0;
   uint64_t d_nmoves = 0;

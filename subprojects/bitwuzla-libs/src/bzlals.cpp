@@ -6,12 +6,23 @@
 
 #include "bitvector.h"
 #include "bitvector_node.h"
-#include "log.h"
 #include "rng.h"
 
 #define BZLALS_PROB_USE_INV_VALUE 990
 
 namespace bzlals {
+
+/* -------------------------------------------------------------------------- */
+
+class OstreamVoider
+{
+ public:
+  OstreamVoider() = default;
+  void operator&(std::ostream& ostream) { (void) ostream; }
+};
+
+#define BZLALSLOG_ENABLED (d_log_level != 0)
+#define BZLALSLOG !(BZLALSLOG_ENABLED) ? (void) 0 : OstreamVoider() & std::cout
 
 /* -------------------------------------------------------------------------- */
 
