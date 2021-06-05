@@ -37,6 +37,7 @@ set(test_names
   modelgensmt2
   nodemap
   overflow
+  prop
   propold
   propoldcomplete
   propoldcons
