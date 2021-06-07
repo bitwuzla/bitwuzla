@@ -469,7 +469,7 @@ BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
   assert(is_leaf_node(node));
 
   BZLALSLOG << "*** update cone: " << *node << " with: " << assignment
-            << std::endl;
+            << std::endl << std::endl;
 #ifndef NDEBUG
   for (uint32_t r : d_roots)
   {
@@ -590,6 +590,11 @@ BzlaLs::move()
 
   d_nmoves += 1;
   d_nupdates += update_cone(m.d_input, m.d_assignment);
+
+  BZLALSLOG << "*** number of propagations: " << d_nprops << std::endl;
+  BZLALSLOG << std::endl;
+  BZLALSLOG << "*** number of updates: " << d_nupdates << std::endl;
+  BZLALSLOG << std::endl;
 
   if (d_roots.empty()) return SAT;
   return BzlaLs::UNKNOWN;
