@@ -5898,6 +5898,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
       break;
 
     case BZLA_DECLARE_SORT_TAG_SMT2:
+      configure_smt_comp_mode(parser);
       if (!declare_sort_smt2(parser)) return 0;
       print_success(parser);
       break;
