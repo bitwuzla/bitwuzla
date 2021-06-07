@@ -3010,9 +3010,12 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 #endif
 
 #ifndef NDEBUG
-  if (check && bzla_opt_get(bzla, BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS)
+  if (check && bzla_opt_get(bzla, BZLA_OPT_ENGINE) != BZLA_ENGINE_PROP
+      && bzla_opt_get(bzla, BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS)
       && !bzla->inconsistent && bzla->last_sat_result == BZLA_RESULT_UNSAT)
+  {
     bzla_check_failed_assumptions(bzla);
+  }
 #endif
 
   delta = bzla_util_time_stamp() - start;

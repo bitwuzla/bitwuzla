@@ -224,7 +224,7 @@ PropSolverState::synthesize_constraints()
   while (bzla_iter_hashptr_has_next(&it))
   {
     cur = static_cast<BzlaNode *>(bzla_iter_hashptr_next(&it));
-    bzla_synthesize_exp(d_bzla, cur, 0);
+    bzla_synthesize_exp(d_bzla, cur, nullptr);
     av = bzla_node_real_addr(cur)->av;
     assert(av->width == 1);
 

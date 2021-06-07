@@ -10,6 +10,7 @@
 #include "test.h"
 
 extern "C" {
+#include "bzlacore.h"
 #include "bzlaexp.h"
 #include "bzlaslvprop.h"
 }
@@ -22,8 +23,8 @@ class TestProp : public TestPropCommon
 {
  protected:
   static constexpr bool TEST_SLOW       = false;
-  static constexpr uint32_t nmoves_slow = 35;
-  static constexpr uint32_t nmoves_fast = 20;
+  static constexpr uint32_t TEST_NPROPS   = TEST_SLOW ? 35 * 2 : 20 * 2;
+  static constexpr uint32_t TEST_NUPDATES = TEST_SLOW ? 35 * 3 : 20 * 3;
 
   void SetUp() override
   {
@@ -129,6 +130,9 @@ TestProp::test_binary(BzlaNodeKind kind)
           bzla_opt_set(bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
           bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, 0);
           bzla_opt_set(bzla, BZLA_OPT_RW_SORT_EXP, 0);
+          bzla_opt_set(bzla, BZLA_OPT_PROP_NPROPS, TEST_NPROPS);
+          bzla_opt_set(bzla, BZLA_OPT_PROP_NUPDATES, TEST_NUPDATES);
+          // bzla_opt_set(bzla, BZLA_OPT_VERBOSITY, 1);
           // bzla_opt_set(bzla, BZLA_OPT_LOGLEVEL, 2);
           BzlaSortId sort = bzla_sort_bv(bzla, d_test_bw);
           BzlaNode* var0  = bzla_exp_var(bzla, sort, 0);
@@ -140,15 +144,37 @@ TestProp::test_binary(BzlaNodeKind kind)
           BzlaNode* t  = bzla_exp_bv_const(bzla, t_bv);
           BzlaNode* eq = bzla_exp_eq(bzla, op, t);
           bzla_assert_exp(bzla, eq);
-          // synthesize expression
-          // for (uint32_t i = 0, n = s0_val.size(); i < n; ++i)
-          //{
-          //}
-          // for (uint32_t i = 0, n = s1_val.size(); i < n; ++i)
-          //{
-          //}
+          bzla_synthesize_exp(bzla, var0, nullptr);
+          bzla_synthesize_exp(bzla, var1, nullptr);
+          assert(!bzla_node_is_inverted(var0));
+          assert(!bzla_node_is_inverted(var1));
+          for (uint32_t i = 0, n = s0.size(); i < n; ++i)
+          {
+            if (s0.is_fixed_bit(i))
+            {
+              uint32_t ai    = d_test_bw - 1 - i;
+              BzlaAIGVec* av = var0->av;
+              assert(!bzla_aig_is_const(av->aigs[ai]));
+              bzla_aig_release(bzla->avmgr->amgr, av->aigs[ai]);
+              av->aigs[ai] =
+                  s0.is_fixed_bit_true(i) ? BZLA_AIG_TRUE : BZLA_AIG_FALSE;
+            }
+          }
+          for (uint32_t i = 0, n = s1.size(); i < n; ++i)
+          {
+            if (s1.is_fixed_bit(i))
+            {
+              uint32_t ai    = d_test_bw - 1 - i;
+              BzlaAIGVec* av = var1->av;
+              assert(!bzla_aig_is_const(av->aigs[ai]));
+              bzla_aig_release(bzla->avmgr->amgr, av->aigs[ai]);
+              av->aigs[ai] =
+                  s1.is_fixed_bit_true(i) ? BZLA_AIG_TRUE : BZLA_AIG_FALSE;
+            }
+          }
 
-          bzla_check_sat(bzla, -1, -1);
+          int32_t res = bzla_check_sat(bzla, -1, -1);
+          assert(res == BZLA_RESULT_SAT || res == BZLA_RESULT_UNSAT);
 
           bzla_bv_free(bzla->mm, t_bv);
           bzla_node_release(bzla, eq);
