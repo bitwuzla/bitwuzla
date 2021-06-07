@@ -9,8 +9,8 @@ class TestBzlaLs : public TestBvNodeCommon
 {
  protected:
   static constexpr bool TEST_SLOW = false;
-  static constexpr uint32_t nmoves_slow = 35;
-  static constexpr uint32_t nmoves_fast = 20;
+  static constexpr uint32_t NMOVES_SLOW = 35;
+  static constexpr uint32_t NMOVES_FAST = 20;
 
   void SetUp() override
   {
@@ -254,7 +254,7 @@ TestBzlaLs::test_move_binary(OpKind opkind,
               res = bzlals.move();
             } while (res == BzlaLs::Result::UNKNOWN
                      && bzlals.d_nmoves
-                            < (TEST_SLOW ? nmoves_slow : nmoves_fast));
+                            < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
             assert(!bzlals.get_domain(root).is_fixed()
                    || !bzlals.get_assignment(root).is_false()
                    || res == BzlaLs::Result::UNSAT);
@@ -410,7 +410,7 @@ TestBzlaLs::test_move_ite(uint32_t pos_x)
                   res = bzlals.move();
                 } while (res == BzlaLs::Result::UNKNOWN
                          && bzlals.d_nmoves
-                                < (TEST_SLOW ? nmoves_slow : nmoves_fast));
+                                < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
                 assert(!bzlals.get_domain(root).is_fixed()
                        || !bzlals.get_assignment(root).is_false()
                        || res == BzlaLs::Result::UNSAT);
