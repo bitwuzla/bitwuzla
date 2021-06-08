@@ -2913,6 +2913,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
                || bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE));
         BZLA_ABORT(bzla->quantifiers->count,
                    "Quantifiers not supported for -E sls");
+        BZLA_ABORT(is_fp_logic(bzla), "FP not supported for -E propold");
         bzla->slv = bzla_new_sls_solver(bzla);
       }
       else if (engine == BZLA_ENGINE_PROP && bzla->ufs->count == 0
@@ -2920,6 +2921,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
       {
         assert(bzla->lambdas->count == 0
                || bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE));
+        BZLA_ABORT(is_fp_logic(bzla), "FP not supported for -E prop");
         BZLA_ABORT(bzla->quantifiers->count,
                    "Quantifiers not supported for -E prop");
         bzla->slv = bzla_new_prop_solver(bzla);
@@ -2931,6 +2933,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
                || bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE));
         BZLA_ABORT(bzla->quantifiers->count,
                    "Quantifiers not supported for -E propold");
+        BZLA_ABORT(is_fp_logic(bzla), "FP not supported for -E propold");
         bzla->slv = bzla_new_propold_solver(bzla);
       }
       else if (engine == BZLA_ENGINE_AIGPROP && bzla->ufs->count == 0
@@ -2940,6 +2943,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
                || bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE));
         BZLA_ABORT(bzla->quantifiers->count,
                    "Quantifiers not supported for -E aigprop");
+        BZLA_ABORT(is_fp_logic(bzla), "FP not supported for -E propold");
         bzla->slv = bzla_new_aigprop_solver(bzla);
       }
       else
