@@ -5821,6 +5821,10 @@ read_command_smt2(BzlaSMT2Parser *parser)
           parser->res->logic = BZLA_LOGIC_QF_AUFBVFP;
           break;
 
+        case BZLA_LOGIC_QF_UFFP_TAG_SMT2:
+          parser->res->logic = BZLA_LOGIC_QF_UFFP;
+          break;
+
         case BZLA_LOGIC_ALL_TAG_SMT2:
           parser->res->logic = BZLA_LOGIC_ALL;
           break;
