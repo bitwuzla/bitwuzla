@@ -22,7 +22,7 @@ extern "C" {
 class TestProp : public TestPropCommon
 {
  protected:
-  static constexpr bool TEST_SLOW       = false;
+  static constexpr bool TEST_SLOW         = false;
   static constexpr uint32_t TEST_NPROPS   = TEST_SLOW ? 35 * 2 : 20 * 2;
   static constexpr uint32_t TEST_NUPDATES = TEST_SLOW ? 35 * 3 : 20 * 3;
 
@@ -190,55 +190,25 @@ TestProp::test_binary(BzlaNodeKind kind)
 
 TEST_F(TestProp, add) { test_binary(BZLA_BV_ADD_NODE); }
 
-// TEST_F(TestProp, and)
-//{
-//  test_binary(BZLA_BV_AND_NODE);
-//}
-//
-// TEST_F(TestProp, concat)
-//{
-//  test_binary(BZLA_BV_CONCAT_NODE);
-//}
-//
-// TEST_F(TestProp, eq)
-//{
-//  test_binary(BZLA_BV_EQ_NODE);
-//}
-//
-// TEST_F(TestProp, mul)
-//{
-//  test_binary(BZLA_BV_MUL_NODE);
-//}
-//
-// TEST_F(TestProp, shl)
-//{
-//  test_binary(BZLA_BV_SLL_NODE);
-//}
-//
-// TEST_F(TestProp, shr)
-//{
-//  test_binary(BZLA_BV_SRL_NODE);
-//}
-//
-// TEST_F(TestProp, udiv)
-//{
-//  test_binary(BZLA_BV_UDIV_NODE);
-//}
-//
-// TEST_F(TestProp, ult)
-//{
-//  test_binary(BZLA_BV_ULT_NODE);
-//}
-//
-// TEST_F(TestProp, slt)
-//{
-//  test_binary(BZLA_BV_SLT_NODE);
-//}
-//
-// TEST_F(TestProp, urem)
-//{
-//  test_binary(BZLA_BV_UREM_NODE);
-//}
+TEST_F(TestProp, and) { test_binary(BZLA_BV_AND_NODE); }
+
+TEST_F(TestProp, concat) { test_binary(BZLA_BV_CONCAT_NODE); }
+
+TEST_F(TestProp, eq) { test_binary(BZLA_BV_EQ_NODE); }
+
+TEST_F(TestProp, mul) { test_binary(BZLA_BV_MUL_NODE); }
+
+TEST_F(TestProp, shl) { test_binary(BZLA_BV_SLL_NODE); }
+
+TEST_F(TestProp, shr) { test_binary(BZLA_BV_SRL_NODE); }
+
+TEST_F(TestProp, udiv) { test_binary(BZLA_BV_UDIV_NODE); }
+
+TEST_F(TestProp, ult) { test_binary(BZLA_BV_ULT_NODE); }
+
+TEST_F(TestProp, slt) { test_binary(BZLA_BV_SLT_NODE); }
+
+TEST_F(TestProp, urem) { test_binary(BZLA_BV_UREM_NODE); }
 
 // TEST_F(TestProp, ite)
 //{
