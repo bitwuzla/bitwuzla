@@ -247,6 +247,7 @@ PropSolverState::synthesize_constraints()
 void
 PropSolverState::init_nodes()
 {
+  NodeStack roots;
   NodeStack visit;
   NodeSet cache;
   BzlaPtrHashTableIterator it;
@@ -256,32 +257,43 @@ PropSolverState::init_nodes()
   bzla_iter_hashptr_queue(&it, d_bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&it))
   {
-    visit.push_back(static_cast<BzlaNode *>(bzla_iter_hashptr_next(&it)));
+    BzlaNode *cur = static_cast<BzlaNode *>(bzla_iter_hashptr_next(&it));
+    roots.push_back(cur);
+    visit.push_back(bzla_node_real_addr(cur));
   }
 
   while (!visit.empty())
   {
-    BzlaNode *cur = visit.back();
+    BzlaNode *cur = bzla_node_real_addr(visit.back());
     visit.pop_back();
-    BzlaNode *real_cur = bzla_node_real_addr(cur);
 
-    if (d_node_map.find(real_cur) != d_node_map.end()) continue;
+    if (d_node_map.find(cur) != d_node_map.end()) continue;
 
-    if (cache.find(real_cur) != cache.end())
+    if (cache.find(cur) != cache.end())
     {
       assert(bzla_node_is_regular(cur));
-      uint32_t real_node   = mk_node(real_cur);
-      d_node_map[real_cur] = real_node;
-      if (bzla_node_is_bv_var(real_cur)) d_leafs.push_back(real_cur);
+      d_node_map[cur] = mk_node(cur);
+      if (bzla_node_is_bv_var(cur)) d_leafs.push_back(cur);
     }
     else
     {
-      cache.emplace(real_cur);
-      visit.push_back(real_cur);
-      for (uint32_t i = 0; i < real_cur->arity; ++i)
+      cache.emplace(cur);
+      visit.push_back(cur);
+      for (uint32_t i = 0; i < cur->arity; ++i)
       {
-        visit.push_back(real_cur->e[i]);
+        visit.push_back(cur->e[i]);
       }
+    }
+  }
+
+  for (BzlaNode *root : roots)
+  {
+    if (d_node_map.find(root) == d_node_map.end())
+    {
+      assert(bzla_node_is_inverted(root));
+      auto it = d_node_map.find(bzla_node_real_addr(root));
+      assert(it != d_node_map.end());
+      d_node_map[root] = d_bzlals->invert_node(it->second);
     }
   }
 }
