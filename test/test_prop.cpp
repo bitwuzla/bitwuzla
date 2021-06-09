@@ -185,11 +185,13 @@ TestProp::test_binary(BzlaNodeKind kind)
           assert(res == BZLA_RESULT_SAT || res == BZLA_RESULT_UNSAT);
 
           bzla_bv_free(bzla->mm, t_bv);
+          bzla_node_release(bzla, t);
           bzla_node_release(bzla, eq);
           bzla_node_release(bzla, op);
           bzla_node_release(bzla, var0);
           bzla_node_release(bzla, var1);
           bzla_sort_release(bzla, sort);
+          bzla_delete(bzla);
         } while (gens1.has_next());
       }
     } while (gens0.has_next());
@@ -284,6 +286,7 @@ TestProp::test_ite()
               assert(res == BZLA_RESULT_SAT || res == BZLA_RESULT_UNSAT);
 
               bzla_bv_free(bzla->mm, t_bv);
+              bzla_node_release(bzla, t);
               bzla_node_release(bzla, eq);
               bzla_node_release(bzla, op);
               bzla_node_release(bzla, var0);
@@ -291,6 +294,7 @@ TestProp::test_ite()
               bzla_node_release(bzla, var2);
               bzla_sort_release(bzla, sort);
               bzla_sort_release(bzla, sort1);
+              bzla_delete(bzla);
             } while (gens2.has_next());
           }
         } while (gens1.has_next());
