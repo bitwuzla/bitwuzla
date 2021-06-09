@@ -33,6 +33,7 @@ class TestProp : public TestPropCommon
     d_rng.reset(new bzlals::RNG(54321));
   }
 
+  Bzla* create_bzla();
   BzlaNode* mk_op_binary(Bzla* bzla,
                          BzlaNodeKind kind,
                          BzlaNode* e0,
@@ -42,7 +43,7 @@ class TestProp : public TestPropCommon
                                    const bzlals::BitVector& s1_val);
 
   void test_binary(BzlaNodeKind kind);
-  // void test_ite();
+  void test_ite();
   // void test_not();
   // void test_extract();
   // void test_sext();
@@ -50,6 +51,20 @@ class TestProp : public TestPropCommon
   uint32_t d_test_bw;
   std::unique_ptr<bzlals::RNG> d_rng;
 };
+
+Bzla*
+TestProp::create_bzla()
+{
+  Bzla* bzla = bzla_new();
+  bzla_opt_set(bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
+  bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, 0);
+  bzla_opt_set(bzla, BZLA_OPT_RW_SORT_EXP, 0);
+  bzla_opt_set(bzla, BZLA_OPT_PROP_NPROPS, TEST_NPROPS);
+  bzla_opt_set(bzla, BZLA_OPT_PROP_NUPDATES, TEST_NUPDATES);
+  // bzla_opt_set(bzla, BZLA_OPT_VERBOSITY, 1);
+  // bzla_opt_set(bzla, BZLA_OPT_LOGLEVEL, 2);
+  return bzla;
+}
 
 BzlaNode*
 TestProp::mk_op_binary(Bzla* bzla,
@@ -126,14 +141,7 @@ TestProp::test_binary(BzlaNodeKind kind)
           bzlals::BitVector s1_val = gens1.has_next() ? gens1.next() : s1.lo();
           bzlals::BitVector t_val  = eval_op_binary(kind, s0_val, s1_val);
 
-          Bzla* bzla = bzla_new();
-          bzla_opt_set(bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP);
-          bzla_opt_set(bzla, BZLA_OPT_RW_LEVEL, 0);
-          bzla_opt_set(bzla, BZLA_OPT_RW_SORT_EXP, 0);
-          bzla_opt_set(bzla, BZLA_OPT_PROP_NPROPS, TEST_NPROPS);
-          bzla_opt_set(bzla, BZLA_OPT_PROP_NUPDATES, TEST_NUPDATES);
-          // bzla_opt_set(bzla, BZLA_OPT_VERBOSITY, 1);
-          // bzla_opt_set(bzla, BZLA_OPT_LOGLEVEL, 2);
+          Bzla* bzla      = create_bzla();
           BzlaSortId sort = bzla_sort_bv(bzla, d_test_bw);
           BzlaNode* var0  = bzla_exp_var(bzla, sort, 0);
           BzlaNode* var1  = bzla_exp_var(bzla, sort, 0);
@@ -188,6 +196,109 @@ TestProp::test_binary(BzlaNodeKind kind)
   }
 }
 
+void
+TestProp::test_ite()
+{
+  std::vector<std::string> s0values = {"x", "0", "1"};
+  std::vector<std::string> xvalues;
+  gen_xvalues(d_test_bw, xvalues);
+
+  for (const std::string& s0_domain_value : s0values)
+  {
+    bzlals::BitVectorDomain s0(s0_domain_value);
+    bzlals::BitVectorDomainGenerator gens0(s0);
+    do
+    {
+      bzlals::BitVector s0_val = gens0.has_next() ? gens0.next() : s0.lo();
+      for (const std::string& s1_domain_value : xvalues)
+      {
+        bzlals::BitVectorDomain s1(s1_domain_value);
+        bzlals::BitVectorDomainGenerator gens1(s1);
+        do
+        {
+          bzlals::BitVector s1_val = gens1.has_next() ? gens1.next() : s1.lo();
+
+          for (const std::string& s2_domain_value : xvalues)
+          {
+            bzlals::BitVectorDomain s2(s2_domain_value);
+            bzlals::BitVectorDomainGenerator gens2(s2);
+            do
+            {
+              bzlals::BitVector s2_val =
+                  gens2.has_next() ? gens2.next() : s2.lo();
+              bzlals::BitVector t_val =
+                  bzlals::BitVector::bvite(s0_val, s1_val, s2_val);
+
+              Bzla* bzla       = create_bzla();
+              BzlaSortId sort1 = bzla_sort_bv(bzla, 1);
+              BzlaSortId sort  = bzla_sort_bv(bzla, d_test_bw);
+              BzlaNode* var0   = bzla_exp_var(bzla, sort1, 0);
+              BzlaNode* var1   = bzla_exp_var(bzla, sort, 0);
+              BzlaNode* var2   = bzla_exp_var(bzla, sort, 0);
+              BzlaNode* op     = bzla_exp_cond(bzla, var0, var1, var2);
+
+              BzlaBitVector* t_bv = bzla_bv_const(
+                  bzla->mm, t_val.to_string().c_str(), t_val.size());
+              BzlaNode* t  = bzla_exp_bv_const(bzla, t_bv);
+              BzlaNode* eq = bzla_exp_eq(bzla, op, t);
+              bzla_assert_exp(bzla, eq);
+              bzla_synthesize_exp(bzla, var0, nullptr);
+              bzla_synthesize_exp(bzla, var1, nullptr);
+              bzla_synthesize_exp(bzla, var2, nullptr);
+              assert(!bzla_node_is_inverted(var0));
+              assert(!bzla_node_is_inverted(var1));
+              assert(!bzla_node_is_inverted(var2));
+              {
+                BzlaAIGVec* av = var0->av;
+                assert(!bzla_aig_is_const(av->aigs[0]));
+                bzla_aig_release(bzla->avmgr->amgr, av->aigs[0]);
+                av->aigs[0] =
+                    s0.is_fixed_bit_true(0) ? BZLA_AIG_TRUE : BZLA_AIG_FALSE;
+              }
+              for (uint32_t i = 0, n = s1.size(); i < n; ++i)
+              {
+                if (s1.is_fixed_bit(i))
+                {
+                  uint32_t ai    = d_test_bw - 1 - i;
+                  BzlaAIGVec* av = var1->av;
+                  assert(!bzla_aig_is_const(av->aigs[ai]));
+                  bzla_aig_release(bzla->avmgr->amgr, av->aigs[ai]);
+                  av->aigs[ai] =
+                      s1.is_fixed_bit_true(i) ? BZLA_AIG_TRUE : BZLA_AIG_FALSE;
+                }
+              }
+              for (uint32_t i = 0, n = s2.size(); i < n; ++i)
+              {
+                if (s2.is_fixed_bit(i))
+                {
+                  uint32_t ai    = d_test_bw - 1 - i;
+                  BzlaAIGVec* av = var2->av;
+                  assert(!bzla_aig_is_const(av->aigs[ai]));
+                  bzla_aig_release(bzla->avmgr->amgr, av->aigs[ai]);
+                  av->aigs[ai] =
+                      s2.is_fixed_bit_true(i) ? BZLA_AIG_TRUE : BZLA_AIG_FALSE;
+                }
+              }
+
+              int32_t res = bzla_check_sat(bzla, -1, -1);
+              assert(res == BZLA_RESULT_SAT || res == BZLA_RESULT_UNSAT);
+
+              bzla_bv_free(bzla->mm, t_bv);
+              bzla_node_release(bzla, eq);
+              bzla_node_release(bzla, op);
+              bzla_node_release(bzla, var0);
+              bzla_node_release(bzla, var1);
+              bzla_node_release(bzla, var2);
+              bzla_sort_release(bzla, sort);
+              bzla_sort_release(bzla, sort1);
+            } while (gens2.has_next());
+          }
+        } while (gens1.has_next());
+      }
+    } while (gens0.has_next());
+  }
+}
+
 TEST_F(TestProp, add) { test_binary(BZLA_BV_ADD_NODE); }
 
 TEST_F(TestProp, and) { test_binary(BZLA_BV_AND_NODE); }
@@ -210,12 +321,7 @@ TEST_F(TestProp, slt) { test_binary(BZLA_BV_SLT_NODE); }
 
 TEST_F(TestProp, urem) { test_binary(BZLA_BV_UREM_NODE); }
 
-// TEST_F(TestProp, ite)
-//{
-//  test_ite(0);
-//  test_ite(1);
-//  test_ite(2);
-//}
+TEST_F(TestProp, ite) { test_ite(); }
 
 // TEST_F(TestProp, not ) { test_not(); }
 
