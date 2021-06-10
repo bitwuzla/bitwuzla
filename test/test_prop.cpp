@@ -48,12 +48,11 @@ class TestProp : public TestPropCommon
                      const bzlals::BitVectorDomain* s2,
                      const bzlals::BitVector* s0_val,
                      const bzlals::BitVector* s1_val,
-                     const bzlals::BitVector* s2_val);
+                     const bzlals::BitVector* s2_val,
+                     uint32_t idx0 = 0,
+                     uint32_t idx1 = 0);
 
   void test_prop(BzlaNodeKind kind);
-  // void test_not();
-  // void test_extract();
-  // void test_sext();
 
   uint32_t d_test_bw;
   std::unique_ptr<bzlals::RNG> d_rng;
@@ -133,7 +132,9 @@ TestProp::test_prop_aux(BzlaNodeKind kind,
                         const bzlals::BitVectorDomain* s2,
                         const bzlals::BitVector* s0_val,
                         const bzlals::BitVector* s1_val,
-                        const bzlals::BitVector* s2_val)
+                        const bzlals::BitVector* s2_val,
+                        uint32_t idx0,
+                        uint32_t idx1)
 {
   assert(s0_val);
 
@@ -142,14 +143,15 @@ TestProp::test_prop_aux(BzlaNodeKind kind,
   BzlaSortId sort0 =
       s2_val ? bzla_sort_bv(bzla, 1) : bzla_sort_copy(bzla, sort);
   BzlaNode* var0 = bzla_exp_var(bzla, sort0, 0);
-  BzlaNode* var1 = bzla_exp_var(bzla, sort, 0);
-  BzlaNode *var2, *op;
+  BzlaNode *var1, *var2, *op;
   bzlals::BitVector t_val;
 
   if (s2_val)
   {
     /* ternary */
-    assert(s1_val && s0_val);
+    assert(kind == BZLA_COND_NODE);
+    assert(s1_val);
+    var1  = bzla_exp_var(bzla, sort, 0);
     var2  = bzla_exp_var(bzla, sort, 0);
     op    = bzla_exp_cond(bzla, var0, var1, var2);
     t_val = bzlals::BitVector::bvite(*s0_val, *s1_val, *s2_val);
@@ -157,13 +159,16 @@ TestProp::test_prop_aux(BzlaNodeKind kind,
   else if (s1_val)
   {
     /* binary */
-    assert(s0_val);
+    var1  = bzla_exp_var(bzla, sort, 0);
     op    = mk_op_binary(bzla, kind, var0, var1);
     t_val = eval_op_binary(kind, *s0_val, *s1_val);
   }
   else
   {
     /* unary */
+    assert(kind == BZLA_BV_SLICE_NODE);
+    op    = bzla_exp_bv_slice(bzla, var0, idx0, idx1);
+    t_val = s0_val->bvextract(idx0, idx1);
   }
 
   BzlaBitVector* t_bv =
@@ -172,10 +177,6 @@ TestProp::test_prop_aux(BzlaNodeKind kind,
   BzlaNode* eq = bzla_exp_eq(bzla, op, t);
 
   bzla_assert_exp(bzla, eq);
-
-  bzla_synthesize_exp(bzla, var1, nullptr);
-  assert(!bzla_node_is_inverted(var0));
-  assert(!bzla_node_is_inverted(var1));
 
   if (s0_val)
   {
@@ -262,33 +263,58 @@ TestProp::test_prop(BzlaNodeKind kind)
     do
     {
       bzlals::BitVector s0_val = gens0.has_next() ? gens0.next() : s0.lo();
-      for (const std::string& s1_domain_value : xvalues)
+      if (kind == BZLA_BV_SLICE_NODE)
       {
-        bzlals::BitVectorDomain s1(s1_domain_value);
-        bzlals::BitVectorDomainGenerator gens1(s1);
-        do
+        for (uint32_t lo = 0, bw_s0 = s0_val.size(); lo < bw_s0; ++lo)
         {
-          bzlals::BitVector s1_val = gens1.has_next() ? gens1.next() : s1.lo();
-          if (kind == BZLA_COND_NODE)
+          for (uint32_t hi = lo; hi < bw_s0; ++hi)
           {
-            for (const std::string& s2_domain_value : xvalues)
+            uint32_t bw_t = hi - lo + 1;
+            for (uint32_t i = 0, n = 1 << bw_t; i < n; ++i)
             {
-              bzlals::BitVectorDomain s2(s2_domain_value);
-              bzlals::BitVectorDomainGenerator gens2(s2);
-              do
-              {
-                bzlals::BitVector s2_val =
-                    gens2.has_next() ? gens2.next() : s2.lo();
-                test_prop_aux(
-                    BZLA_COND_NODE, &s0, &s1, &s2, &s0_val, &s1_val, &s2_val);
-              } while (gens2.has_next());
+              test_prop_aux(kind,
+                            &s0,
+                            nullptr,
+                            nullptr,
+                            &s0_val,
+                            nullptr,
+                            nullptr,
+                            hi,
+                            lo);
             }
           }
-          else
+        }
+      }
+      else
+      {
+        for (const std::string& s1_domain_value : xvalues)
+        {
+          bzlals::BitVectorDomain s1(s1_domain_value);
+          bzlals::BitVectorDomainGenerator gens1(s1);
+          do
           {
-            test_prop_aux(kind, &s0, &s1, nullptr, &s0_val, &s1_val, nullptr);
-          }
-        } while (gens1.has_next());
+            bzlals::BitVector s1_val =
+                gens1.has_next() ? gens1.next() : s1.lo();
+            if (kind == BZLA_COND_NODE)
+            {
+              for (const std::string& s2_domain_value : xvalues)
+              {
+                bzlals::BitVectorDomain s2(s2_domain_value);
+                bzlals::BitVectorDomainGenerator gens2(s2);
+                do
+                {
+                  bzlals::BitVector s2_val =
+                      gens2.has_next() ? gens2.next() : s2.lo();
+                  test_prop_aux(kind, &s0, &s1, &s2, &s0_val, &s1_val, &s2_val);
+                } while (gens2.has_next());
+              }
+            }
+            else
+            {
+              test_prop_aux(kind, &s0, &s1, nullptr, &s0_val, &s1_val, nullptr);
+            }
+          } while (gens1.has_next());
+        }
       }
     } while (gens0.has_next());
   }
@@ -318,8 +344,4 @@ TEST_F(TestProp, urem) { test_prop(BZLA_BV_UREM_NODE); }
 
 TEST_F(TestProp, ite) { test_prop(BZLA_COND_NODE); }
 
-// TEST_F(TestProp, not ) { test_not(); }
-
-// TEST_F(TestProp, extract) { test_extract(); }
-
-// TEST_F(TestProp, sext) { test_sext(); }
+TEST_F(TestProp, extract) { test_prop(BZLA_BV_SLICE_NODE); }
