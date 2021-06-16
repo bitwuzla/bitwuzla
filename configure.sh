@@ -27,7 +27,7 @@ path=
 
 symfpu=yes
 
-units=unknown
+testing=unknown
 
 cadical=unknown
 cms=unknown
@@ -85,8 +85,8 @@ Options:
 
   --no-symfpu       disable FP support
 
-  --unit-testing    enable unit testing
-  --no-unit-testing disable unit testing
+  --testing         enable unit and regression testing
+  --no-testing      disable unit and regression testing
 
   --docs            build API documentation
 
@@ -172,8 +172,8 @@ do
 
     --no-symfpu) symfpu=no;;
 
-    --unit-testing) units=yes;;
-    --no-unit-testing) units=no;;
+    --testing) testing=yes;;
+    --no-testing) testing=no;;
 
     --docs) docs=yes;;
 
@@ -223,8 +223,8 @@ cmake_opts="$CMAKE_OPTS"
 
 [ $symfpu = yes ] && cmake_opts="$cmake_opts -DUSE_SYMFPU=ON"
 
-[ $units = yes ] && cmake_opts="$cmake_opts -DTESTING=ON"
-[ $units = no ] && cmake_opts="$cmake_opts -DTESTING=OFF"
+[ $testing = yes ] && cmake_opts="$cmake_opts -DTESTING=ON"
+[ $testing = no ] && cmake_opts="$cmake_opts -DTESTING=OFF"
 
 [ $cadical = yes ] && cmake_opts="$cmake_opts -DUSE_CADICAL=ON"
 [ $cms = yes ] && cmake_opts="$cmake_opts -DUSE_CMS=ON"

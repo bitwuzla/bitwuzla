@@ -45,7 +45,7 @@ option3vl(PYTHON     "Build Python API")
 option3vl(TIME_STATS "Compile with time statistics")
 option3vl(DOCS       "Build API documentation")
 
-option3vl(TESTING    "Configure unit testing")
+option3vl(TESTING    "Configure unit and regression testing")
 
 option3vl(USE_CADICAL    "Use and link with CaDiCaL")
 option3vl(USE_CMS        "Use and link with CryptoMiniSat")
