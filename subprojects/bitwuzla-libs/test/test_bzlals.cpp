@@ -503,8 +503,6 @@ TestBzlaLs::test_move_extract()
           {
             BitVector t_val = x_val.bvextract(hi, lo);
 
-            uint32_t bw_t = t_val.size();
-
             BitVectorDomainGenerator genrx(x, d_rng.get());
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
