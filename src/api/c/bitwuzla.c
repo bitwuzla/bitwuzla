@@ -3239,9 +3239,10 @@ bitwuzla_get_fun_value(Bitwuzla *bitwuzla,
     bzla_node_inc_ext_ref_counter(bzla, arg);
   }
 
-  for (size_t i = 0; i < BZLA_COUNT_STACK(_values); i += _arity)
+  for (size_t i = 0; i < BZLA_COUNT_STACK(_values); ++i)
   {
-    BZLA_PUSH_STACK(bitwuzla->d_fun_args_ptr, bitwuzla->d_fun_args.start + i);
+    BZLA_PUSH_STACK(bitwuzla->d_fun_args_ptr,
+                    bitwuzla->d_fun_args.start + i * _arity);
     value = BZLA_PEEK_STACK(_values, i);
     BZLA_PUSH_STACK(bitwuzla->d_fun_values, BZLA_EXPORT_BITWUZLA_TERM(value));
     bzla_node_inc_ext_ref_counter(bzla, value);

@@ -2639,6 +2639,37 @@ TEST_F(TestApi, get_fun_value)
   }
 }
 
+TEST_F(TestApi, get_fun_value2)
+{
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+  BitwuzlaSort *bv1       = bitwuzla_mk_bv_sort(d_bzla, 1);
+  BitwuzlaSort *args1_1[] = {bv1, bv1};
+  BitwuzlaSort *fn1_1_1   = bitwuzla_mk_fun_sort(d_bzla, 2, args1_1, bv1);
+  BitwuzlaTerm *a         = bitwuzla_mk_const(d_bzla, fn1_1_1, "a");
+  BitwuzlaTerm *t         = bitwuzla_mk_true(d_bzla);
+  BitwuzlaTerm *f         = bitwuzla_mk_false(d_bzla);
+  BitwuzlaTerm *a0_0 = bitwuzla_mk_term3(d_bzla, BITWUZLA_KIND_APPLY, a, f, f);
+  BitwuzlaTerm *a0_1 = bitwuzla_mk_term3(d_bzla, BITWUZLA_KIND_APPLY, a, f, t);
+  BitwuzlaTerm *c0   = bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, a0_0, t);
+  BitwuzlaTerm *c1   = bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, a0_1, f);
+  bitwuzla_assert(d_bzla, c0);
+  bitwuzla_assert(d_bzla, c1);
+  bitwuzla_check_sat(d_bzla);
+
+  BitwuzlaTerm ***args, **values;
+  size_t arity, size;
+  bitwuzla_get_fun_value(d_bzla, a, &args, &arity, &values, &size);
+  for (size_t i = 0; i < size; i += 1)
+  {
+    std::cout << "(" << bitwuzla_get_bv_value(d_bzla, args[i][0]);
+    for (size_t j = 1; j < arity; j += 1)
+    {
+      std::cout << ", " << bitwuzla_get_bv_value(d_bzla, args[i][j]);
+    }
+    std::cout << "): " << bitwuzla_get_bv_value(d_bzla, values[i]) << std::endl;
+  }
+}
+
 TEST_F(TestApi, print_model)
 {
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
