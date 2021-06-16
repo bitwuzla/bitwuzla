@@ -1187,8 +1187,6 @@ bzla_insert_unsynthesized_constraint(Bzla *bzla, BzlaNode *exp)
       return;
     }
     /* we do not add true */
-    assert((bzla_node_is_inverted(exp) && !bzla_bv_get_bit(bits, 0))
-           || (!bzla_node_is_inverted(exp) && bzla_bv_get_bit(bits, 0)));
     return;
   }
 
