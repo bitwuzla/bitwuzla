@@ -49,12 +49,40 @@ main()
   BitwuzlaResult result = bitwuzla_check_sat(bzla);
 
   printf("Expect: sat\n");
-  printf("Bitwuzla: %s\n",
+  printf("Bitwuzla: %s\n\n",
          result == BITWUZLA_SAT
              ? "sat"
              : (result == BITWUZLA_UNSAT ? "unsat" : "unknown"));
+
+  printf("Model:\n");
   // Print model in SMT-LIBv2 format.
   bitwuzla_print_model(bzla, "smt2", stdout);
+  printf("\n");
+
+  // Get assignment strings for x and y
+  // Note: The returned string is only valid until the next call to
+  //       bitwuzla_get_bv_value
+  const char *xstr = bitwuzla_get_bv_value(bzla, x);  // returns "11111111"
+  printf("assignment of x: %s\n", xstr);
+  const char *ystr = bitwuzla_get_bv_value(bzla, y);  // returns "00011110"
+  printf("assignment of y: %s\n", ystr);
+  printf("\n");
+
+  // Alternatively, get values for x and y as terms
+  BitwuzlaTerm *x_value = bitwuzla_get_value(bzla, x);
+  BitwuzlaTerm *y_value = bitwuzla_get_value(bzla, y);
+  const char *xvaluestr =
+      bitwuzla_get_bv_value(bzla, x_value);  // returns "11111111"
+  printf("assignment of x (via bitwuzla_get_value): %s\n", xvaluestr);
+  const char *yvaluestr =
+      bitwuzla_get_bv_value(bzla, y_value);  // returns "00011110"
+  printf("assignment of y (via bitwuzla_get_value): %s\n", yvaluestr);
+  printf("\n");
+
+  // Query value of expression that does not occur in the input formula
+  BitwuzlaTerm *v = bitwuzla_get_value(
+      bzla, bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_MUL, x, x));
+  printf("assignment of v = x * x: %s\n", bitwuzla_get_bv_value(bzla, v));
 
   // Finally, delete the Bitwuzla instance.
   bitwuzla_delete(bzla);

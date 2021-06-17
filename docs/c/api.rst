@@ -75,7 +75,7 @@ For example, to parse an input file `example.smt2` in SMT-LIB format:
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
   or :code:`get-value` will be executed while parsing.
 
-If incremental usage is enabled (option :c:func:`bitwuzla_OPT_INCREMENTAL`),
+If incremental usage is enabled (option :c:enum:`BITWUZLA_OPT_INCREMENTAL`),
 formulas can also be assumed via :c:func:`bitwuzla_assume()`.
 After parsing an input file and/or asserting and assuming formulas,
 satisfiability can be determined via :c:func:`bitwuzla_check_sat()`.
@@ -95,10 +95,10 @@ resulting model can be printed via :c:func:`bitwuzla_print_model()`.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 56-57
+     :lines: 58-59
 
 This will output a possible model (default: in SMT-LIB format, configurable
-via option :c:func:`bitwuzla_OPT_OUTPUT_FORMAT`) as follows:
+via option :c:enum:`BITWUZLA_OPT_OUTPUT_FORMAT`) as follows:
 
 .. code-block:: smtlib
 
@@ -108,23 +108,43 @@ via option :c:func:`bitwuzla_OPT_OUTPUT_FORMAT`) as follows:
   )
 
 
-Alternatively, it is possible to query the value of expressions via
+Alternatively, it is possible to query the value of expressions as assignment
+string via :c:func:`bitwuzla_get_bv_value()`, or as a term via
 :c:func:`bitwuzla_get_value()`.
 
-.. code-block:: c
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 62-80
 
-  BitwuzlaTerm *v = bitwuzla_get_value(bzla,
-      bitwuzla_mk_term2(bzla, BITWUZLA_KIND_BV_MUL, x, x));
+This will print:
+
+.. code-block::
+
+  assignment of x: 11111111
+  assignment of y: 00011110
+
+  assignment of x (via bitwuzla_get_value): 11111111
+  assignment of y (via bitwuzla_get_value): 00011110
+
+
+It is also possible to query the model value of expressions that do not
+occur in the input formula.
+
+.. literalinclude:: ../../examples/c/quickstart.c
+     :language: c
+     :lines: 84-86
+
+This will print:
+
+.. code-block::
+
+  assignment of v = x * x: 00000001
 
 Finally, we delete the Bitwuzla instance.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 60
-
-.. todo::
-
-  * What to do with terms retrieved by get_value?
+     :lines: 89
 
 
 Examples
