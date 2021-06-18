@@ -1333,6 +1333,22 @@ bitwuzla_get_option(Bitwuzla *bitwuzla, BitwuzlaOption option)
   return bzla_opt_get(bzla, opt);
 }
 
+const char*
+bitwuzla_get_option_str(Bitwuzla *bitwuzla,
+                        BitwuzlaOption option)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+
+  Bzla *bzla     = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaOption opt = BZLA_IMPORT_BITWUZLA_OPTION(option);
+
+  BZLA_CHECK_OPTION(bzla, opt);
+  BZLA_ABORT(!bzla_opt_is_enum_option(bzla, opt),
+             "option is configured with an integer value, use "
+             "bitwuzla_get_option instead.");
+  return bzla_opt_get_str_value(bzla, opt);
+}
+
 BitwuzlaSort *
 bitwuzla_mk_array_sort(Bitwuzla *bitwuzla,
                        const BitwuzlaSort *index,

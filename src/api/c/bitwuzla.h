@@ -1975,6 +1975,21 @@ void bitwuzla_set_option_str(Bitwuzla *bitwuzla,
 uint32_t bitwuzla_get_option(Bitwuzla *bitwuzla, BitwuzlaOption option);
 
 /**
+ * Get the current value of an option as a string if option can be configured
+ * via a string value.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param option The option.
+ *
+ * @return The option value.
+ *
+ * @see
+ *   * `BitwuzlaOption`
+ *   * `bitwuzla_set_option_str`
+ */
+const char* bitwuzla_get_option_str(Bitwuzla *bitwuzla, BitwuzlaOption option);
+
+/**
  * Create an array sort.
  *
  * @param bitwuzla The Bitwuzla instance.

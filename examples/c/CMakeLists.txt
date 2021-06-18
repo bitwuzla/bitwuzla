@@ -10,6 +10,7 @@
 
 set (BZLA_EXAMPLES_API
   checksatassuming
+  options
   pushpop
   quickstart
   unsatassumptions

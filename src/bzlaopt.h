@@ -435,6 +435,11 @@ bool bzla_opt_is_enum_option_value(const Bzla *bzla,
 uint32_t bzla_opt_get_enum_value(Bzla *bzla,
                                  const BzlaOption opt,
                                  const char *value);
+/**
+ * Get the string representation of the current value of an option that
+ * expects an enum value as configuration value.
+ */
+const char* bzla_opt_get_str_value(Bzla *bzla, const BzlaOption opt);
 
 BzlaOption bzla_opt_first(Bzla *bzla);
 BzlaOption bzla_opt_next(Bzla *bzla, BzlaOption cur);
