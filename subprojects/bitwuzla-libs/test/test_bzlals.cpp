@@ -223,12 +223,14 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
             assert(res == BzlaLs::Result::UNSAT
                    || bzlals.get_assignment(root).is_true());
-            assert(bzlals.d_nmoves == 0
-                   || (bzlals.d_nprops > 0
-                       && bzlals.d_nprops == 2 * bzlals.d_nmoves));
-            assert(bzlals.d_nmoves == 0
-                   || (bzlals.d_nupdates > 0
-                       && bzlals.d_nupdates <= 3 * bzlals.d_nmoves));
+            assert(bzlals.d_statistics.d_nmoves == 0
+                   || (bzlals.d_statistics.d_nprops > 0
+                       && bzlals.d_statistics.d_nprops
+                              == 2 * bzlals.d_statistics.d_nmoves));
+            assert(bzlals.d_statistics.d_nmoves == 0
+                   || (bzlals.d_statistics.d_nupdates > 0
+                       && bzlals.d_statistics.d_nupdates
+                              <= 3 * bzlals.d_statistics.d_nmoves));
             (void) res;
           }
 
@@ -253,7 +255,7 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             {
               res = bzlals.move();
             } while (res == BzlaLs::Result::UNKNOWN
-                     && bzlals.d_nmoves
+                     && bzlals.d_statistics.d_nmoves
                             < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
             assert(!bzlals.get_domain(root).is_fixed()
                    || !bzlals.get_assignment(root).is_false()
@@ -261,12 +263,14 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
             assert(res == BzlaLs::Result::UNSAT
                    || bzlals.get_assignment(root).is_true());
-            assert(bzlals.d_nmoves == 0
-                   || (bzlals.d_nprops > 0
-                       && bzlals.d_nprops == 2 * bzlals.d_nmoves));
-            assert(bzlals.d_nmoves == 0
-                   || (bzlals.d_nupdates > 0
-                       && bzlals.d_nupdates <= 3 * bzlals.d_nmoves));
+            assert(bzlals.d_statistics.d_nmoves == 0
+                   || (bzlals.d_statistics.d_nprops > 0
+                       && bzlals.d_statistics.d_nprops
+                              == 2 * bzlals.d_statistics.d_nmoves));
+            assert(bzlals.d_statistics.d_nmoves == 0
+                   || (bzlals.d_statistics.d_nupdates > 0
+                       && bzlals.d_statistics.d_nupdates
+                              <= 3 * bzlals.d_statistics.d_nmoves));
           }
         } while (genx.has_next());
       }
@@ -409,7 +413,7 @@ TestBzlaLs::test_move_ite(uint32_t pos_x)
                 {
                   res = bzlals.move();
                 } while (res == BzlaLs::Result::UNKNOWN
-                         && bzlals.d_nmoves
+                         && bzlals.d_statistics.d_nmoves
                                 < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
                 assert(!bzlals.get_domain(root).is_fixed()
                        || !bzlals.get_assignment(root).is_false()

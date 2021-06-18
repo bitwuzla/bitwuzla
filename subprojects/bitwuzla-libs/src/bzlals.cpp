@@ -425,14 +425,131 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
       {
         t = cur->inverse_value(t, pos_x);
         BZLALSLOG << "      inverse value: " << t << std::endl;
+        d_statistics.d_nprops_inv += 1;
+#ifndef NDEBUG
+        switch (cur->get_kind())
+        {
+          case BitVectorNode::NodeKind::ADD:
+            d_statistics.d_ninv.d_add += 1;
+            break;
+          case BitVectorNode::NodeKind::AND:
+            d_statistics.d_ninv.d_and += 1;
+            break;
+          case BitVectorNode::NodeKind::ASHR:
+            d_statistics.d_ninv.d_ashr += 1;
+            break;
+          case BitVectorNode::NodeKind::CONCAT:
+            d_statistics.d_ninv.d_concat += 1;
+            break;
+          case BitVectorNode::NodeKind::EXTRACT:
+            d_statistics.d_ninv.d_extract += 1;
+            break;
+          case BitVectorNode::NodeKind::EQ:
+            d_statistics.d_ninv.d_eq += 1;
+            break;
+          case BitVectorNode::NodeKind::ITE:
+            d_statistics.d_ninv.d_ite += 1;
+            break;
+          case BitVectorNode::NodeKind::MUL:
+            d_statistics.d_ninv.d_mul += 1;
+            break;
+          case BitVectorNode::NodeKind::NOT:
+            d_statistics.d_ninv.d_not += 1;
+            break;
+          case BitVectorNode::NodeKind::SEXT:
+            d_statistics.d_ninv.d_sext += 1;
+            break;
+          case BitVectorNode::NodeKind::SHL:
+            d_statistics.d_ninv.d_shl += 1;
+            break;
+          case BitVectorNode::NodeKind::SHR:
+            d_statistics.d_ninv.d_shr += 1;
+            break;
+          case BitVectorNode::NodeKind::SLT:
+            d_statistics.d_ninv.d_slt += 1;
+            break;
+          case BitVectorNode::NodeKind::UDIV:
+            d_statistics.d_ninv.d_udiv += 1;
+            break;
+          case BitVectorNode::NodeKind::ULT:
+            d_statistics.d_ninv.d_ult += 1;
+            break;
+          case BitVectorNode::NodeKind::UREM:
+            d_statistics.d_ninv.d_urem += 1;
+            break;
+          case BitVectorNode::NodeKind::XOR:
+            d_statistics.d_ninv.d_xor += 1;
+            break;
+          default: assert(false);
+        };
+#endif
       }
       else if (cur->is_consistent(t, pos_x))
       {
         t = cur->consistent_value(t, pos_x);
         BZLALSLOG << "      consistent value: " << t << std::endl;
+        d_statistics.d_nprops_cons += 1;
+#ifndef NDEBUG
+        switch (cur->get_kind())
+        {
+          case BitVectorNode::NodeKind::ADD:
+            d_statistics.d_ncons.d_add += 1;
+            break;
+          case BitVectorNode::NodeKind::AND:
+            d_statistics.d_ncons.d_and += 1;
+            break;
+          case BitVectorNode::NodeKind::ASHR:
+            d_statistics.d_ncons.d_ashr += 1;
+            break;
+          case BitVectorNode::NodeKind::CONCAT:
+            d_statistics.d_ncons.d_concat += 1;
+            break;
+          case BitVectorNode::NodeKind::EXTRACT:
+            d_statistics.d_ncons.d_extract += 1;
+            break;
+          case BitVectorNode::NodeKind::EQ:
+            d_statistics.d_ncons.d_eq += 1;
+            break;
+          case BitVectorNode::NodeKind::ITE:
+            d_statistics.d_ncons.d_ite += 1;
+            break;
+          case BitVectorNode::NodeKind::MUL:
+            d_statistics.d_ncons.d_mul += 1;
+            break;
+          case BitVectorNode::NodeKind::NOT:
+            d_statistics.d_ncons.d_not += 1;
+            break;
+          case BitVectorNode::NodeKind::SEXT:
+            d_statistics.d_ncons.d_sext += 1;
+            break;
+          case BitVectorNode::NodeKind::SHL:
+            d_statistics.d_ncons.d_shl += 1;
+            break;
+          case BitVectorNode::NodeKind::SHR:
+            d_statistics.d_ncons.d_shr += 1;
+            break;
+          case BitVectorNode::NodeKind::SLT:
+            d_statistics.d_ncons.d_slt += 1;
+            break;
+          case BitVectorNode::NodeKind::UDIV:
+            d_statistics.d_ncons.d_udiv += 1;
+            break;
+          case BitVectorNode::NodeKind::ULT:
+            d_statistics.d_ncons.d_ult += 1;
+            break;
+          case BitVectorNode::NodeKind::UREM:
+            d_statistics.d_ncons.d_urem += 1;
+            break;
+          case BitVectorNode::NodeKind::XOR:
+            d_statistics.d_ncons.d_xor += 1;
+            break;
+          default: assert(false);
+        };
+#endif
       }
       else
       {
+        d_statistics.d_nconf += 1;
         break;
       }
 
@@ -556,7 +673,7 @@ BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
 BzlaLs::Result
 BzlaLs::move()
 {
-  BZLALSLOG << "*** move: " << d_nmoves + 1 << std::endl;
+  BZLALSLOG << "*** move: " << d_statistics.d_nmoves + 1 << std::endl;
   BZLALSLOG << "  unsatisfied roots: " << std::endl;
   if (BZLALSLOG_ENABLED)
   {
@@ -569,8 +686,10 @@ BzlaLs::move()
   BzlaLsMove m;
   do
   {
-    if (d_max_nprops > 0 && d_nprops >= d_max_nprops) return UNKNOWN;
-    if (d_max_nupdates > 0 && d_nupdates >= d_max_nupdates) return UNKNOWN;
+    if (d_max_nprops > 0 && d_statistics.d_nprops >= d_max_nprops)
+      return UNKNOWN;
+    if (d_max_nupdates > 0 && d_statistics.d_nupdates >= d_max_nupdates)
+      return UNKNOWN;
 
     BitVectorNode* root = get_node(
         d_rng->pick_from_set<std::unordered_set<uint32_t>, uint32_t>(d_roots));
@@ -580,8 +699,8 @@ BzlaLs::move()
     BZLALSLOG << std::endl << "  select constraint: " << *root << std::endl;
 
     m = select_move(root, *d_one);
-    d_nprops += m.d_nprops;
-    d_nupdates += m.d_nupdates;
+    d_statistics.d_nprops += m.d_nprops;
+    d_statistics.d_nupdates += m.d_nupdates;
   } while (m.d_input == nullptr);
 
   assert(!m.d_assignment.is_null());
@@ -592,12 +711,14 @@ BzlaLs::move()
   BZLALSLOG << "  new   assignment: " << m.d_assignment << std::endl;
   BZLALSLOG << std::endl;
 
-  d_nmoves += 1;
-  d_nupdates += update_cone(m.d_input, m.d_assignment);
+  d_statistics.d_nmoves += 1;
+  d_statistics.d_nupdates += update_cone(m.d_input, m.d_assignment);
 
-  BZLALSLOG << "*** number of propagations: " << d_nprops << std::endl;
+  BZLALSLOG << "*** number of propagations: " << d_statistics.d_nprops
+            << std::endl;
   BZLALSLOG << std::endl;
-  BZLALSLOG << "*** number of updates: " << d_nupdates << std::endl;
+  BZLALSLOG << "*** number of updates: " << d_statistics.d_nupdates
+            << std::endl;
   BZLALSLOG << std::endl;
 
   if (d_roots.empty()) return SAT;
