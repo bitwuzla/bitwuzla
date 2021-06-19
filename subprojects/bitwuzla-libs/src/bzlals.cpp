@@ -22,7 +22,9 @@ class OstreamVoider
 };
 
 #define BZLALSLOG_ENABLED (d_log_level != 0)
-#define BZLALSLOG !(BZLALSLOG_ENABLED) ? (void) 0 : OstreamVoider() & std::cout
+#define BZLALSLOGSTREAM \
+  !(BZLALSLOG_ENABLED) ? (void) 0 : OstreamVoider() & std::cout
+#define BZLALSLOG BZLALSLOGSTREAM << "[bzla-ls]"
 
 /* -------------------------------------------------------------------------- */
 
@@ -372,7 +374,8 @@ BzlaLs::select_move(BitVectorNode* root, const BitVector& t_root)
   {
     uint32_t arity = cur->arity();
 
-    BZLALSLOG << std::endl << "  propagate: " << std::endl;
+    BZLALSLOG << std::endl;
+    BZLALSLOG << "  propagate: " << std::endl;
     BZLALSLOG << "    node: " << *cur << std::endl;
     if (BZLALSLOG_ENABLED)
     {
@@ -590,7 +593,8 @@ BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
   assert(is_leaf_node(node));
 
   BZLALSLOG << "*** update cone: " << *node << " with: " << assignment
-            << std::endl << std::endl;
+            << std::endl;
+  BZLALSLOG << std::endl;
 #ifndef NDEBUG
   for (uint32_t r : d_roots)
   {
@@ -646,7 +650,7 @@ BzlaLs::update_cone(BitVectorNode* node, const BitVector& assignment)
     BZLALSLOG << "  node: " << *cur << " -> ";
     cur->evaluate();
     nupdates += 1;
-    BZLALSLOG << cur->assignment() << std::endl;
+    BZLALSLOGSTREAM << cur->assignment() << std::endl;
     if (BZLALSLOG_ENABLED)
     {
       for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
@@ -677,8 +681,10 @@ BzlaLs::move()
   BZLALSLOG << "  unsatisfied roots: " << std::endl;
   if (BZLALSLOG_ENABLED)
   {
-    for (const auto& r : d_roots) BZLALSLOG << "    - " << *get_node(r);
-    BZLALSLOG << std::endl;
+    for (const auto& r : d_roots)
+    {
+      BZLALSLOG << "    - " << *get_node(r) << std::endl;
+    }
   }
 
   if (d_roots.empty()) return SAT;
@@ -696,7 +702,8 @@ BzlaLs::move()
 
     if (root->is_const() && root->assignment().is_false()) return UNSAT;
 
-    BZLALSLOG << std::endl << "  select constraint: " << *root << std::endl;
+    BZLALSLOG << std::endl;
+    BZLALSLOG << "  select constraint: " << *root << std::endl;
 
     m = select_move(root, *d_one);
     d_statistics.d_nprops += m.d_nprops;
@@ -705,7 +712,8 @@ BzlaLs::move()
 
   assert(!m.d_assignment.is_null());
 
-  BZLALSLOG << std::endl << "  move" << std::endl;
+  BZLALSLOG << std::endl;
+  BZLALSLOG << "  move" << std::endl;
   BZLALSLOG << "  input: " << *m.d_input << std::endl;
   BZLALSLOG << "  prev. assignment: " << m.d_input->assignment() << std::endl;
   BZLALSLOG << "  new   assignment: " << m.d_assignment << std::endl;
