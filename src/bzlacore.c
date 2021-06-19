@@ -3027,7 +3027,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
   BZLA_MSG(bzla->msg,
            1,
            "SAT call %d returned %d in %.3f seconds",
-           bzla->bzla_sat_bzla_called + 1,
+           bzla->bzla_sat_bzla_called,
            res,
            delta);
 

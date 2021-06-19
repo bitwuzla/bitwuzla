@@ -38,12 +38,12 @@ class PropSolverState
  public:
   struct
   {
-    uint64_t nfixed_bits = 0;
-    uint64_t ntotal_bits = 0;
+    uint64_t d_nfixed_bits = 0;
+    uint64_t d_ntotal_bits = 0;
   } d_statistics;
   struct
   {
-    double check_sat = 0;
+    double d_check_sat = 0;
   } d_time_statistics;
 
   PropSolverState(Bzla *bzla, uint32_t max_nprops, uint32_t seed) : d_bzla(bzla)
@@ -56,6 +56,7 @@ class PropSolverState
   void init_nodes();
   BzlaSolverResult check_sat();
   void generate_model();
+  void print_statistics();
 
  private:
   uint32_t mk_node(BzlaNode *node);
@@ -104,10 +105,10 @@ PropSolverState::mk_node(BzlaNode *node)
       if (bzla_aig_is_const(av->aigs[i]))
       {
         domain.fix_bit(idx, bzla_aig_is_true(av->aigs[i]));
-        d_statistics.nfixed_bits += 1;
+        d_statistics.d_nfixed_bits += 1;
       }
     }
-    d_statistics.ntotal_bits += bw;
+    d_statistics.d_ntotal_bits += bw;
   }
 
   switch (node->kind)
@@ -310,14 +311,14 @@ PropSolverState::print_progress() const
            1,
            "%u/%u roots satisfied (%.1f%%), "
            "moves: %u, "
-           "propagations: %zu, "
-           "model updates: %zu",
+           "propagation steps: %zu, "
+           "cone updates: %zu",
            nroots_total - nroots_unsat,
            nroots_total,
            (double) (nroots_total - nroots_unsat) / nroots_total * 100,
-           d_bzlals->get_nmoves(),
-           d_bzlals->get_nprops(),
-           d_bzlals->get_nupdates());
+           d_bzlals->d_statistics.d_nmoves,
+           d_bzlals->d_statistics.d_nprops,
+           d_bzlals->d_statistics.d_nupdates);
 }
 
 BzlaSolverResult
@@ -340,13 +341,13 @@ PropSolverState::check_sat()
 
   if (nprops)
   {
-    nprops += d_bzlals->get_nprops();
+    nprops += d_bzlals->d_statistics.d_nprops;
     d_bzlals->set_max_nprops(nprops);
     BZLA_MSG(d_bzla->msg, 1, "Set propagation limit to %zu", nprops);
   }
   if (nupdates)
   {
-    nupdates += d_bzlals->get_nupdates();
+    nupdates += d_bzlals->d_statistics.d_nupdates;
     d_bzlals->set_max_nupdates(nupdates);
     BZLA_MSG(d_bzla->msg, 1, "Set model update limit to %zu", nupdates);
   }
@@ -371,8 +372,9 @@ PropSolverState::check_sat()
 
   for (uint32_t j = 0;; ++j)
   {
-    if (bzla_terminate(d_bzla) || (nprops && d_bzlals->get_nprops() >= nprops)
-        || (nupdates && d_bzlals->get_nupdates() >= nupdates))
+    if (bzla_terminate(d_bzla)
+        || (nprops && d_bzlals->d_statistics.d_nprops >= nprops)
+        || (nupdates && d_bzlals->d_statistics.d_nupdates >= nupdates))
     {
       assert(sat_result == BZLA_RESULT_UNKNOWN);
       goto DONE;
@@ -409,7 +411,7 @@ UNSAT:
 DONE:
   print_progress();
 
-  d_time_statistics.check_sat += bzla_util_time_stamp() - start;
+  d_time_statistics.d_check_sat += bzla_util_time_stamp() - start;
 
   return sat_result;
 }
@@ -434,6 +436,127 @@ PropSolverState::generate_model()
   }
 }
 
+void
+PropSolverState::print_statistics()
+{
+  uint64_t nmoves   = d_bzlals->d_statistics.d_nmoves;
+  uint64_t nprops   = d_bzlals->d_statistics.d_nprops;
+  uint64_t nupdates = d_bzlals->d_statistics.d_nupdates;
+
+  BZLA_MSG(d_bzla->msg, 1, "");
+  BZLA_MSG(d_bzla->msg, 1, "moves: %u", nmoves);
+  // BZLA_MSG(d_bzla->msg, 1, "    skipped moves: %u", TODO);
+
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "moves per second: %.1f",
+           (double) nmoves / d_time_statistics.d_check_sat);
+  BZLA_MSG(d_bzla->msg, 1, "propagation steps: %u", nprops);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "    inverse value propagations: %u",
+           d_bzlals->d_statistics.d_nprops_inv);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "    consistent value propagations: %u",
+           d_bzlals->d_statistics.d_nprops_cons);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "propagation steps per second: %.1f",
+           (double) nprops / d_time_statistics.d_check_sat);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "propagation conflicts (non-recoverable): %u",
+           d_bzlals->d_statistics.d_nconf);
+  BZLA_MSG(d_bzla->msg, 1, "cone updates: %u", nupdates);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "updates per second: %.1f",
+           (double) nupdates / d_time_statistics.d_check_sat);
+#ifndef NDEBUG
+  BZLA_MSG(d_bzla->msg, 1, "");
+  BZLA_MSG(d_bzla->msg, 1, "value computations:");
+  BZLA_MSG(d_bzla->msg, 1, "  inverse:");
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld add ", d_bzlals->d_statistics.d_ninv.d_add);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld and ", d_bzlals->d_statistics.d_ninv.d_and);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld ashr ", d_bzlals->d_statistics.d_ninv.d_ashr);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "  %5lld concat ",
+           d_bzlals->d_statistics.d_ninv.d_concat);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld eq ", d_bzlals->d_statistics.d_ninv.d_eq);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "  %5lld extract ",
+           d_bzlals->d_statistics.d_ninv.d_extract);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld ite ", d_bzlals->d_statistics.d_ninv.d_ite);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld mul ", d_bzlals->d_statistics.d_ninv.d_mul);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld not ", d_bzlals->d_statistics.d_ninv.d_not);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld sext ", d_bzlals->d_statistics.d_ninv.d_sext);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld shl ", d_bzlals->d_statistics.d_ninv.d_shl);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld shr ", d_bzlals->d_statistics.d_ninv.d_shr);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld slt ", d_bzlals->d_statistics.d_ninv.d_slt);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld udiv ", d_bzlals->d_statistics.d_ninv.d_udiv);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld ult ", d_bzlals->d_statistics.d_ninv.d_ult);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld urem ", d_bzlals->d_statistics.d_ninv.d_urem);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld xor ", d_bzlals->d_statistics.d_ninv.d_xor);
+
+  BZLA_MSG(d_bzla->msg, 1, "  consistent:");
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld add ", d_bzlals->d_statistics.d_ncons.d_add);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld and ", d_bzlals->d_statistics.d_ncons.d_and);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld ashr ", d_bzlals->d_statistics.d_ncons.d_ashr);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "  %5lld concat ",
+           d_bzlals->d_statistics.d_ncons.d_concat);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld eq ", d_bzlals->d_statistics.d_ncons.d_eq);
+  BZLA_MSG(d_bzla->msg,
+           1,
+           "  %5lld extract ",
+           d_bzlals->d_statistics.d_ncons.d_extract);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld ite ", d_bzlals->d_statistics.d_ncons.d_ite);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld mul ", d_bzlals->d_statistics.d_ncons.d_mul);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld not ", d_bzlals->d_statistics.d_ncons.d_not);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld sext ", d_bzlals->d_statistics.d_ncons.d_sext);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld shl ", d_bzlals->d_statistics.d_ncons.d_shl);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld shr ", d_bzlals->d_statistics.d_ncons.d_shr);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld slt ", d_bzlals->d_statistics.d_ncons.d_slt);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld udiv ", d_bzlals->d_statistics.d_ncons.d_udiv);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld ult ", d_bzlals->d_statistics.d_ncons.d_ult);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld urem ", d_bzlals->d_statistics.d_ncons.d_urem);
+  BZLA_MSG(
+      d_bzla->msg, 1, "  %5lld xor ", d_bzlals->d_statistics.d_ncons.d_xor);
+#endif
+
+  if (bzla_opt_get(d_bzla, BZLA_OPT_PROP_CONST_BITS))
+  {
+    BZLA_MSG(d_bzla->msg, 1, "");
+    BZLA_MSG(
+        d_bzla->msg,
+        1,
+        "fixed bits: %zu/%zu (%.1f%%)",
+        d_statistics.d_nfixed_bits,
+        d_statistics.d_ntotal_bits,
+        (double) d_statistics.d_nfixed_bits / d_statistics.d_ntotal_bits * 100);
+  }
+}
 }  // namespace prop
 }  // namespace bzla
 
@@ -513,13 +636,13 @@ generate_model_prop_solver(BzlaPropSolver *slv,
 void
 print_stats_prop_solver(BzlaPropSolver *slv)
 {
-  // TODO
+  slv->d_state->print_statistics();
 }
 
 void
 print_time_stats_prop_solver(BzlaPropSolver *slv)
 {
-  // TODO
+  // nothing to print yet
 }
 
 void
