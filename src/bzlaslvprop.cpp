@@ -14,6 +14,7 @@ extern "C" {
 #include "bzlacore.h"
 #include "bzlamodel.h"
 #include "bzlamsg.h"
+#include "bzlaprintmodel.h"
 #include "bzlaslvprop.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlautil.h"
@@ -642,13 +643,14 @@ print_stats_prop_solver(BzlaPropSolver *slv)
 void
 print_time_stats_prop_solver(BzlaPropSolver *slv)
 {
+  (void) slv;
   // nothing to print yet
 }
 
 void
 print_model_prop_solver(BzlaPropSolver *slv, const char *format, FILE *file)
 {
-  // TODO
+  bzla_print_model_aufbvfp(slv->bzla, format, file);
 }
 }  // namespace
 
