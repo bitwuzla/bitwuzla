@@ -502,7 +502,7 @@ cdef class Bitwuzla:
         bitwuzla_api.bitwuzla_pop(self.ptr(), levels)
 
     def assert_formula(self, *formulas):
-        """ assert(formula,...)
+        """ assert_formula(formula,...)
 
             Assert one or more formulas.
 
