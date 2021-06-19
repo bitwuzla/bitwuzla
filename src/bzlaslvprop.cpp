@@ -111,6 +111,14 @@ PropSolverState::mk_node(BzlaNode *node)
     }
     d_statistics.d_ntotal_bits += bw;
   }
+  else if (bzla_node_is_bv_const(node))
+  {
+    BzlaBitVector* bits = bzla_node_bv_const_get_bits(node);
+    for (uint32_t i = 0; i < bw; ++i)
+    {
+      domain.fix_bit(i, bzla_bv_get_bit(bits, i));
+    }
+  }
 
   switch (node->kind)
   {
