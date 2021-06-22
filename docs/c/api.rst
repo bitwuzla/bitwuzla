@@ -14,7 +14,7 @@ C API Documentation
 Quickstart
 ----------
 
-First, create a Bitwuzla instance:
+First, create a :c:struct:`Bitwuzla` instance:
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
@@ -75,7 +75,8 @@ For example, to parse an input file `example.smt2` in SMT-LIB format:
   If the input is given in SMT-LIB format, commands like :code:`check-sat`
   or :code:`get-value` will be executed while parsing.
 
-If incremental usage is enabled (option :c:enum:`BITWUZLA_OPT_INCREMENTAL`),
+If incremental usage is enabled (option
+:c:enum:`BitwuzlaOption.BITWUZLA_OPT_INCREMENTAL`),
 formulas can also be assumed via :c:func:`bitwuzla_assume()`.
 After parsing an input file and/or asserting and assuming formulas,
 satisfiability can be determined via :c:func:`bitwuzla_check_sat()`.
@@ -98,7 +99,7 @@ resulting model can be printed via :c:func:`bitwuzla_print_model()`.
      :lines: 58-59
 
 This will output a possible model (default: in SMT-LIB format, configurable
-via option :c:enum:`BITWUZLA_OPT_OUTPUT_FORMAT`) as follows:
+via option :c:enum:`BitwuzlaOption.BITWUZLA_OPT_OUTPUT_FORMAT`) as follows:
 
 .. code-block:: smtlib
 
@@ -132,7 +133,7 @@ occur in the input formula.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 84-86
+     :lines: 83-85
 
 This will print:
 
@@ -144,7 +145,7 @@ Finally, we delete the Bitwuzla instance.
 
 .. literalinclude:: ../../examples/c/quickstart.c
      :language: c
-     :lines: 89
+     :lines: 88
 
 
 Examples
