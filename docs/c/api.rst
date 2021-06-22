@@ -162,11 +162,9 @@ The example used in the :ref:`c/api:quickstart` guide.
 | The SMT-LIB input for this example can be found at `examples/smt2/quickstart.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/quickstart.smt2>`_.
 | The source code for this example can be found at `examples/c/quickstart.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/quickstart.c>`_.
 
-.. literalinclude:: ../../examples/smt2/quickstart.smt2
-     :language: smtlib
-
-.. literalinclude:: ../../examples/c/quickstart.c
-     :language: c
+.. tabbed-examples::
+  ../../examples/smt2/quickstart.smt2
+  ../../examples/c/quickstart.c
 
 Incremental Example with push and pop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -176,11 +174,9 @@ An incremental example with :code:`push` and :code:`pop`.
 | The SMT-LIB input for this example can be found at `examples/smt2/pushpop.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/pushpop.smt2>`_.
 | The source code for this example can be found at `examples/c/pushpop.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/pushpop.c>`_.
 
-.. literalinclude:: ../../examples/smt2/pushpop.smt2
-     :language: smtlib
-
-.. literalinclude:: ../../examples/c/pushpop.c
-     :language: c
+.. tabbed-examples::
+  ../../examples/smt2/pushpop.smt2
+  ../../examples/c/pushpop.c
 
 Incremental Example with check-sat-assuming
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -193,11 +189,9 @@ All active assumptions are inactivated after the check sat call.
 | The SMT-LIB input for this example can be found at `examples/smt2/checksatassuming.smt2 <https://github.com/bitwuzla/bitwuzla/tree/main/examples/smt2/checksatassuming.smt2>`_.
 | The source code for this example can be found at `examples/c/checksatassuming.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/checksatassuming.c>`_.
 
-.. literalinclude:: ../../examples/smt2/checksatassuming.smt2
-     :language: smtlib
-
-.. literalinclude:: ../../examples/c/checksatassuming.c
-     :language: c
+.. tabbed-examples::
+  ../../examples/smt2/checksatassuming.smt2
+  ../../examples/c/checksatassuming.c
 
 Unsat Core Example
 ^^^^^^^^^^^^^^^^^^
@@ -210,11 +204,9 @@ create lambda terms (:code:`define-fun`).
 | The source code for this example can be found at `examples/c/unsatcore.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/unsatcore.c>`_.
 
 
-.. literalinclude:: ../../examples/smt2/unsatcore.smt2
-     :language: smtlib
-
-.. literalinclude:: ../../examples/c/unsatcore.c
-     :language: c
+.. tabbed-examples::
+  ../../examples/smt2/unsatcore.smt2
+  ../../examples/c/unsatcore.c
 
 Unsat Assumptions Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -226,8 +218,6 @@ This example shows how to implement the example above with
 | The source code for this example can be found at `examples/c/unsatassumptions.c <https://github.com/bitwuzla/bitwuzla/tree/main/examples/c/unsatassumptions.c>`_.
 
 
-.. literalinclude:: ../../examples/smt2/unsatassumptions.smt2
-     :language: smtlib
-
-.. literalinclude:: ../../examples/c/unsatassumptions.c
-     :language: c
+.. tabbed-examples::
+   ../../examples/smt2/unsatassumptions.smt2
+   ../../examples/c/unsatassumptions.c

@@ -19,6 +19,9 @@
 import sys
 sys.path.insert(0, "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
+# Add path to enable custom extensions
+sys.path.insert(0, '${CMAKE_CURRENT_SOURCE_DIR}/extensions/')
+
 # -- Project information -----------------------------------------------------
 
 project = 'Bitwuzla'
@@ -35,8 +38,10 @@ extensions = [
         'sphinxcontrib.bibtex',
         'sphinx.ext.autodoc',
         'sphinx.ext.autosectionlabel',
+        'sphinx_tabs.tabs',
         'sphinx.ext.todo',
         'breathe',
+        'examples',
 ]
 
 todo_include_todos = True
@@ -74,7 +79,7 @@ breathe_default_project = "Bitwuzla"
 
 breathe_domain_by_extension = {"h" : "c"}
 
-# -- SMT-LIB syntax highlighting
+# -- SMT-LIB syntax highlighting ---------------------------------------------
 from pygments.lexer import RegexLexer
 from pygments import token
 from sphinx.highlighting import lexers
