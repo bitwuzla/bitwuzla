@@ -8,4 +8,5 @@
         ((_ extract 3 0) (bvashr y (_ bv1 8)))))
 (check-sat)
 (get-model)
+(get-value (x y (bvmul x x)))
 (exit)
