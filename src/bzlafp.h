@@ -25,6 +25,7 @@
  * UnpackedFloat object (the underlying floating-point representation).
  */
 typedef struct BzlaFloatingPoint BzlaFloatingPoint;
+typedef struct BzlaNodePtrStack BzlaNodePtrStack;
 
 /**
  * Create a new floating-point wrapper object.
@@ -326,4 +327,6 @@ void bzla_fp_word_blaster_delete(Bzla *bzla);
 /** Word-blast given floating-point/rounding mode expression. */
 BzlaNode *bzla_fp_word_blast(Bzla *bzla, BzlaNode *node);
 
+/** Return all uninterpreted functions introduced while word-blasting. */
+void bzla_fp_word_blaster_get_introduced_ufs(Bzla *bzla, BzlaNodePtrStack *ufs);
 #endif

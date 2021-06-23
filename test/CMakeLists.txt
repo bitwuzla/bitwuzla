@@ -1230,6 +1230,10 @@ if(SymFPU_FOUND)
     "fp_nan.smt2"
     "fp_zero.smt2"
     "fp_fromsbv.smt2"
+    "uf_fpmin.smt2"
+    "uf_fpmax.smt2"
+    "uf_toubv.smt2"
+    "uf_tosbv.smt2"
   )
 
   list(APPEND cmp_testcases

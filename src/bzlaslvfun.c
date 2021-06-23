@@ -207,7 +207,11 @@ incremental_required(Bzla *bzla)
     if (bzla_hashint_table_contains(cache, cur->id)) continue;
 
     bzla_hashint_table_add(cache, cur->id);
-    if (bzla_node_is_fun(cur) || cur->apply_below || cur->lambda_below)
+    if (bzla_node_is_fun(cur) || cur->apply_below
+        || cur->lambda_below
+        // These FP operators introduce uninterpreted functions.
+        || bzla_node_is_fp_to_sbv(cur) || bzla_node_is_fp_to_ubv(cur)
+        || bzla_node_is_fp_min(cur) || bzla_node_is_fp_max(cur))
     {
       res = true;
       break;
@@ -990,8 +994,32 @@ search_initial_applies_bv_skeleton(BzlaFunSolver *slv,
     bzla_node_release(bzla, BZLA_PEEK_STACK(slv->constraints, j));
   }
   BZLA_RESET_STACK(slv->constraints);
-
   BZLA_RELEASE_STACK(stack);
+
+  /* The UFs introduced while word-blasting min/max/to_sbv/to_ubv FP terms do
+   * not occur in any formula reachable from the root constraints since they
+   * only encode undefined values. However, for these UFs we still have to
+   * check the consistency of the corresponding function applications.
+   */
+  BzlaNode *uf;
+  BzlaNodePtrStack ufs;
+  BZLA_INIT_STACK(bzla->mm, ufs);
+  bzla_fp_word_blaster_get_introduced_ufs(bzla, &ufs);
+  BzlaNodeIterator it;
+  for (size_t i = 0; i < BZLA_COUNT_STACK(ufs); ++i)
+  {
+    uf = BZLA_PEEK_STACK(ufs, i);
+
+    bzla_iter_parent_init(&it, uf);
+    while (bzla_iter_parent_has_next(&it))
+    {
+      cur = bzla_iter_parent_next(&it);
+      BZLALOG(1, "initial apply: %s", bzla_util_node2string(cur));
+      BZLA_PUSH_STACK(*applies, cur);
+    }
+  }
+  BZLA_RELEASE_STACK(ufs);
+
   BZLA_FUN_SOLVER(bzla)->time.search_init_apps +=
       bzla_util_time_stamp() - start;
 }

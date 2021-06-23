@@ -2029,6 +2029,7 @@ class BzlaFPWordBlaster
 
   BzlaNode *word_blast(BzlaNode *node);
   BzlaNode *get_word_blasted_node(BzlaNode *node);
+  void get_introduced_ufs(std::vector<BzlaNode *> &ufs);
 
   BzlaFPWordBlaster *clone(Bzla *cbzla, BzlaNodeMap *exp_map);
 
@@ -2717,6 +2718,19 @@ BzlaFPWordBlaster::get_word_blasted_node(BzlaNode *node)
   (void) node;
   return nullptr;
 #endif
+}
+
+void
+BzlaFPWordBlaster::get_introduced_ufs(std::vector<BzlaNode *> &ufs)
+{
+  for (const auto &p : d_min_max_uf_map)
+  {
+    ufs.push_back(p.second);
+  }
+  for (const auto &p : d_sbv_ubv_uf_map)
+  {
+    ufs.push_back(p.second);
+  }
 }
 
 BzlaFPWordBlaster *
@@ -4136,6 +4150,21 @@ bzla_fp_convert_from_rational(Bzla *bzla,
                               const char *den)
 {
   return fp_convert_from_rational_aux(bzla, sort, rm, num, den);
+}
+
+void
+bzla_fp_word_blaster_get_introduced_ufs(Bzla *bzla, BzlaNodePtrStack *ufs)
+{
+  if (!bzla->word_blaster) return;
+  BzlaFPWordBlaster *word_blaster =
+      static_cast<BzlaFPWordBlaster *>(bzla->word_blaster);
+
+  std::vector<BzlaNode *> introduced_ufs;
+  word_blaster->get_introduced_ufs(introduced_ufs);
+  for (BzlaNode *uf : introduced_ufs)
+  {
+    BZLA_PUSH_STACK(*ufs, uf);
+  }
 }
 
 /* ========================================================================== */
