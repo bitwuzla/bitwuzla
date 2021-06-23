@@ -175,10 +175,14 @@ if(GCOV)
   APPEND_COVERAGE_COMPILER_FLAGS()
   if(TESTING)
     setup_target_for_coverage_lcov(
-      NAME coverage
+      NAME coverage-test
       EXECUTABLE ctest -j${CTEST_NTHREADS} --output-on-failure || exit 0
       DEPENDENCIES bitwuzla-bin)
   endif()
+
+    setup_target_for_coverage_lcov_no_executable(
+      NAME coverage
+      DEPENDENCIES bitwuzla-bin)
 endif()
 
 if(GPROF)
