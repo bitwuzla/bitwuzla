@@ -168,9 +168,6 @@ move(Bzla *bzla, uint64_t nprops)
   BzlaPropEntailInfo prop;
   int32_t idx_x;
   uint64_t props;
-#ifndef NBZLALOG
-  size_t i;
-#endif
 
   slv = BZLA_PROP_SOLVER(bzla);
   assert(slv);
@@ -197,7 +194,7 @@ move(Bzla *bzla, uint64_t nprops)
 
 #ifndef NBZLALOG
     BZLALOG(1, "entailed propagations: %u", BZLA_COUNT_STACK(slv->toprop));
-    for (i = 0; i < BZLA_COUNT_STACK(slv->toprop); i++)
+    for (size_t i = 0; i < BZLA_COUNT_STACK(slv->toprop); i++)
     {
       BzlaPropEntailInfo *p = &slv->toprop.start[i];
       char *bvprop          = bzla_bv_to_char(bzla->mm, p->bvexp);
@@ -271,6 +268,7 @@ move(Bzla *bzla, uint64_t nprops)
   BzlaBitVector *bvass, *bvtarget;
   BzlaNode *n;
   cnt = BZLA_COUNT_STACK(slv->prop_path);
+  size_t i;
   for (i = 0; i < cnt; i++)
   {
     n = BZLA_PEEK_STACK(slv->prop_path, cnt - 1 - i).exp;
