@@ -119,6 +119,15 @@
 #endif
 //{fprintf (stderr, "apply: %s (%s)\n", #rw_rule, __FUNCTION__);
 
+#define BZLA_START_REWRITE_TIMER \
+  double timer_start = (bzla->rec_rw_calls == 0 ? bzla_util_time_stamp() : 0)
+
+#define BZLA_STOP_REWRITE_TIMER                                 \
+  if (bzla->rec_rw_calls == 0)                                  \
+  {                                                             \
+    bzla->time.rewrite += bzla_util_time_stamp() - timer_start; \
+  }
+
 /* -------------------------------------------------------------------------- */
 /* rewrite cache */
 
@@ -6748,6 +6757,7 @@ mk_norm_node_from_hash_table(Bzla *bzla,
 
   qsort(stack.start, BZLA_COUNT_STACK(stack), sizeof(BzlaNode *), cmp_node_id);
 
+  BZLA_INC_REC_RW_CALL(bzla);
   assert(!BZLA_EMPTY_STACK(stack));
   result = bzla_node_copy(bzla, BZLA_PEEK_STACK(stack, 0));
   for (i = 1; i < BZLA_COUNT_STACK(stack); i++)
@@ -6757,6 +6767,7 @@ mk_norm_node_from_hash_table(Bzla *bzla,
     bzla_node_release(bzla, result);
     result = tmp;
   }
+  BZLA_DEC_REC_RW_CALL(bzla);
   BZLA_RELEASE_STACK(stack);
   return result;
 }
@@ -8216,7 +8227,6 @@ rewrite_fp_to_fp_from_bv_exp(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
   assert(sort);
 
   BzlaNode *result  = 0;
-  double start      = bzla_util_time_stamp();
   BzlaNodeKind kind = BZLA_FP_TO_FP_BV_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
@@ -8245,7 +8255,6 @@ rewrite_fp_to_fp_from_bv_exp(Bzla *bzla, BzlaNode *e0, BzlaSortId sort)
     }
   }
   assert(result);
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
   return result;
 }
 
@@ -8261,7 +8270,6 @@ rewrite_fp_to_fp_from_fp_exp(Bzla *bzla,
   assert(sort);
 
   BzlaNode *result  = 0;
-  double start      = bzla_util_time_stamp();
   BzlaNodeKind kind = BZLA_FP_TO_FP_FP_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
@@ -8292,7 +8300,6 @@ rewrite_fp_to_fp_from_fp_exp(Bzla *bzla,
     }
   }
   assert(result);
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
   return result;
 }
 
@@ -8308,7 +8315,6 @@ rewrite_fp_to_fp_from_sbv_exp(Bzla *bzla,
   assert(sort);
 
   BzlaNode *result  = 0;
-  double start      = bzla_util_time_stamp();
   BzlaNodeKind kind = BZLA_FP_TO_FP_SBV_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
@@ -8339,7 +8345,6 @@ rewrite_fp_to_fp_from_sbv_exp(Bzla *bzla,
     }
   }
   assert(result);
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
   return result;
 }
 
@@ -8355,7 +8360,6 @@ rewrite_fp_to_fp_from_ubv_exp(Bzla *bzla,
   assert(sort);
 
   BzlaNode *result  = 0;
-  double start      = bzla_util_time_stamp();
   BzlaNodeKind kind = BZLA_FP_TO_FP_UBV_NODE;
 
   e0 = bzla_simplify_exp(bzla, e0);
@@ -8386,7 +8390,6 @@ rewrite_fp_to_fp_from_ubv_exp(Bzla *bzla,
     }
   }
   assert(result);
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
   return result;
 }
 
@@ -9095,10 +9098,9 @@ bzla_rewrite_slice_exp(Bzla *bzla,
   assert(bzla);
   assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
-  BzlaNode *res;
-  double start = bzla_util_time_stamp();
-  res          = rewrite_bv_slice_exp(bzla, exp, upper, lower);
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
+  BZLA_START_REWRITE_TIMER;
+  BzlaNode *res = rewrite_bv_slice_exp(bzla, exp, upper, lower);
+  BZLA_STOP_REWRITE_TIMER;
   return res;
 }
 
@@ -9110,8 +9112,9 @@ bzla_rewrite_unary_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
   assert(e0);
   assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
+  BZLA_START_REWRITE_TIMER;
+
   BzlaNode *result;
-  double start = bzla_util_time_stamp();
 
   switch (kind)
   {
@@ -9130,7 +9133,7 @@ bzla_rewrite_unary_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e0)
       assert(kind == BZLA_FP_NEG_NODE);
       result = rewrite_fp_neg_exp(bzla, e0);
   }
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
+  BZLA_STOP_REWRITE_TIMER;
   return result;
 }
 
@@ -9146,8 +9149,9 @@ bzla_rewrite_binary_exp(Bzla *bzla,
   assert(e1);
   assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
+  BZLA_START_REWRITE_TIMER;
+
   BzlaNode *result;
-  double start = bzla_util_time_stamp();
 
   switch (kind)
   {
@@ -9197,7 +9201,7 @@ bzla_rewrite_binary_exp(Bzla *bzla,
       result = rewrite_lambda_exp(bzla, e0, e1);
   }
 
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
+  BZLA_STOP_REWRITE_TIMER;
   return result;
 }
 
@@ -9211,8 +9215,9 @@ bzla_rewrite_ternary_exp(
   assert(e2);
   assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
+  BZLA_START_REWRITE_TIMER;
+
   BzlaNode *res;
-  double start = bzla_util_time_stamp();
   switch (kind)
   {
     case BZLA_FP_ADD_NODE: res = rewrite_fp_add_exp(bzla, e0, e1, e2); break;
@@ -9222,7 +9227,7 @@ bzla_rewrite_ternary_exp(
       assert(kind == BZLA_COND_NODE);
       res = rewrite_cond_exp(bzla, e0, e1, e2);
   }
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
+  BZLA_STOP_REWRITE_TIMER;
   return res;
 }
 
@@ -9237,8 +9242,9 @@ bzla_rewrite_fp_fma_exp(
   assert(e3);
   assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
+  BZLA_START_REWRITE_TIMER;
+
   BzlaNode *result = 0;
-  double start     = bzla_util_time_stamp();
 
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -9274,7 +9280,7 @@ bzla_rewrite_fp_fma_exp(
     }
   }
   assert(result);
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
+  BZLA_STOP_REWRITE_TIMER;
   return result;
 }
 
@@ -9291,10 +9297,9 @@ bzla_rewrite_unary_to_fp_exp(Bzla *bzla,
   assert(kind == BZLA_FP_TO_FP_BV_NODE);
   (void) kind;
 
-  BzlaNode *res;
-  double start = bzla_util_time_stamp();
-  res          = rewrite_fp_to_fp_from_bv_exp(bzla, e0, sort);
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
+  BZLA_START_REWRITE_TIMER;
+  BzlaNode *res = rewrite_fp_to_fp_from_bv_exp(bzla, e0, sort);
+  BZLA_STOP_REWRITE_TIMER;
   return res;
 }
 
@@ -9307,8 +9312,9 @@ bzla_rewrite_binary_to_fp_exp(
   assert(sort);
   assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0);
 
+  BZLA_START_REWRITE_TIMER;
+
   BzlaNode *res;
-  double start = bzla_util_time_stamp();
   switch (kind)
   {
     case BZLA_FP_TO_FP_SBV_NODE:
@@ -9321,6 +9327,6 @@ bzla_rewrite_binary_to_fp_exp(
       assert(kind == BZLA_FP_TO_FP_FP_NODE);
       res = rewrite_fp_to_fp_from_fp_exp(bzla, e0, e1, sort);
   }
-  bzla->time.rewrite += bzla_util_time_stamp() - start;
+  BZLA_STOP_REWRITE_TIMER;
   return res;
 }
