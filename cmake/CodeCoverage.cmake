@@ -211,6 +211,7 @@ function(SETUP_TARGET_FOR_COVERAGE_LCOV_NO_EXECUTABLE)
         COMMAND ${LCOV_PATH} ${DIRECTORIES} --zerocounters
         # Create baseline to make sure untouched files show up in the report
         COMMAND ${LCOV_PATH} -c -i ${DIRECTORIES} -o ${Coverage_NAME}.base
+        COMMENT "Resetting code coverage counters to zero."
     )
 
     # Setup target
@@ -224,7 +225,7 @@ function(SETUP_TARGET_FOR_COVERAGE_LCOV_NO_EXECUTABLE)
 
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         DEPENDS ${Coverage_DEPENDENCIES}
-        COMMENT "Resetting code coverage counters to zero.\nProcessing code coverage counters and generating report."
+        COMMENT "Processing code coverage counters and generating report."
     )
 
     # Show where to find the lcov info report
