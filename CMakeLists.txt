@@ -180,9 +180,9 @@ if(GCOV)
       DEPENDENCIES bitwuzla-bin)
   endif()
 
-    setup_target_for_coverage_lcov_no_executable(
-      NAME coverage
-      DEPENDENCIES bitwuzla-bin)
+  setup_target_for_coverage_lcov_no_executable(
+    NAME coverage
+    DEPENDENCIES bitwuzla-bin)
 endif()
 
 if(GPROF)

@@ -875,12 +875,12 @@ print_static_stats(int32_t sat_res)
   double real    = bzla_util_current_time() - g_start_time_real;
   double process = bzla_util_time_stamp();
   if (g_dual_threads)
-    bzlamain_msg("%.1f seconds process, %.0f%% utilization",
+    bzlamain_msg("%.3f seconds process, %.0f%% utilization",
                  process,
                  real > 0 ? (100 * process) / real / 2 : 0.0);
   else
-    bzlamain_msg("%.1f seconds process", process);
-  bzlamain_msg("%.1f seconds real", real);
+    bzlamain_msg("%.3f seconds process", process);
+  bzlamain_msg("%.3f seconds real", real);
 #endif
   bzlamain_msg("%s",
                sat_res == BITWUZLA_SAT

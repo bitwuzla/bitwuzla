@@ -572,54 +572,54 @@ bzla_print_stats(Bzla *bzla)
 
 #ifdef BZLA_TIME_STATISTICS
   BZLA_MSG(bzla->msg, 1, "");
-  BZLA_MSG(bzla->msg, 1, "%.2f seconds beta-reduction", bzla->time.beta);
+  BZLA_MSG(bzla->msg, 1, "%.3f seconds beta-reduction", bzla->time.beta);
   BZLA_MSG(bzla->msg,
            1,
-           "%.2f seconds synthesize expressions",
+           "%.3f seconds synthesize expressions",
            bzla->time.synth_exp);
   BZLA_MSG(bzla->msg,
            1,
-           "%.2f seconds determining failed assumptions",
+           "%.3f seconds determining failed assumptions",
            bzla->time.failed);
-  BZLA_MSG(bzla->msg, 1, "%.2f seconds cloning", bzla->time.cloning);
+  BZLA_MSG(bzla->msg, 1, "%.3f seconds cloning", bzla->time.cloning);
   BZLA_MSG(bzla->msg,
            1,
-           "%.2f seconds substitute and rebuild",
+           "%.3f seconds substitute and rebuild",
            bzla->time.subst_rebuild);
   if (bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS))
     BZLA_MSG(
-        bzla->msg, 1, "%.2f seconds model generation", bzla->time.model_gen);
+        bzla->msg, 1, "%.3f seconds model generation", bzla->time.model_gen);
 
   BZLA_MSG(bzla->msg, 1, "");
-  BZLA_MSG(bzla->msg, 1, "%.2f seconds solving", bzla->time.sat);
+  BZLA_MSG(bzla->msg, 1, "%.3f seconds solving", bzla->time.sat);
   BZLA_MSG(
-      bzla->msg, 1, "  %.2f seconds rewriting engine", bzla->time.simplify);
+      bzla->msg, 1, "  %.3f seconds rewriting engine", bzla->time.simplify);
   BZLA_MSG(bzla->msg,
            1,
-           "    %.2f seconds variable substitution (%.0f%%)",
+           "    %.3f seconds variable substitution (%.0f%%)",
            bzla->time.subst,
            percent(bzla->time.subst, bzla->time.simplify));
-  BZLA_MSG(bzla->msg, 1, "    %.2f seconds rewriting", bzla->time.rewrite);
+  BZLA_MSG(bzla->msg, 1, "    %.3f seconds rewriting", bzla->time.rewrite);
   BZLA_MSG(
-      bzla->msg, 1, "    %.2f seconds occurrence check", bzla->time.occurrence);
+      bzla->msg, 1, "    %.3f seconds occurrence check", bzla->time.occurrence);
 
   BZLA_MSG(bzla->msg,
            1,
-           "    %.2f seconds embedded substitution (%.0f%%)",
+           "    %.3f seconds embedded substitution (%.0f%%)",
            bzla->time.embedded,
            percent(bzla->time.embedded, bzla->time.simplify));
 
   if (bzla_opt_get(bzla, BZLA_OPT_PP_ELIMINATE_EXTRACTS))
     BZLA_MSG(bzla->msg,
              1,
-             "    %.2f seconds variable slicing (%.0f%%)",
+             "    %.3f seconds variable slicing (%.0f%%)",
              bzla->time.slicing,
              percent(bzla->time.slicing, bzla->time.simplify));
 
 #ifndef BZLA_DO_NOT_PROCESS_SKELETON
   BZLA_MSG(bzla->msg,
            1,
-           "    %.2f seconds skeleton preprocessing (%.0f%%)",
+           "    %.3f seconds skeleton preprocessing (%.0f%%)",
            bzla->time.skel,
            percent(bzla->time.skel, bzla->time.simplify));
 #endif
@@ -627,34 +627,34 @@ bzla_print_stats(Bzla *bzla)
   if (bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION))
     BZLA_MSG(bzla->msg,
              1,
-             "    %.2f seconds unconstrained optimization",
+             "    %.3f seconds unconstrained optimization",
              bzla->time.ucopt);
 
   if (bzla_opt_get(bzla, BZLA_OPT_PP_EXTRACT_LAMBDAS))
     BZLA_MSG(bzla->msg,
              1,
-             "    %.2f seconds lambda extraction (%.0f%%)",
+             "    %.3f seconds lambda extraction (%.0f%%)",
              bzla->time.extract,
              percent(bzla->time.extract, bzla->time.simplify));
 
   if (bzla_opt_get(bzla, BZLA_OPT_PP_MERGE_LAMBDAS))
     BZLA_MSG(bzla->msg,
              1,
-             "    %.2f seconds lambda merging (%.0f%%)",
+             "    %.3f seconds lambda merging (%.0f%%)",
              bzla->time.merge,
              percent(bzla->time.merge, bzla->time.simplify));
 
   if (bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE))
     BZLA_MSG(bzla->msg,
              1,
-             "    %.2f seconds apply elimination (%.0f%%)",
+             "    %.3f seconds apply elimination (%.0f%%)",
              bzla->time.elimapplies,
              percent(bzla->time.elimapplies, bzla->time.simplify));
 
   if (bzla_opt_get(bzla, BZLA_OPT_PP_ACKERMANN))
     BZLA_MSG(bzla->msg,
              1,
-             "    %.2f seconds ackermann constraints (%.0f%%)",
+             "    %.3f seconds ackermann constraints (%.0f%%)",
              bzla->time.ack,
              percent(bzla->time.ack, bzla->time.simplify));
 
