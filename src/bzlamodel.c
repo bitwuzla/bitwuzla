@@ -262,6 +262,32 @@ add_rho_to_model(Bzla *bzla,
   }
 }
 
+/**
+ * Copy model of `fun_with_model` to the model of `fun.
+ */
+static void
+merge_fun_models(Bzla *bzla,
+                 BzlaNode *fun,
+                 BzlaNode *fun_with_model,
+                 BzlaIntHashTable *fun_model)
+{
+  BzlaBitVectorTuple *t;
+  BzlaBitVector *bv_value;
+  BzlaPtrHashTableIterator it;
+  BzlaHashTableData *d;
+
+  d = bzla_hashint_map_get(fun_model, fun_with_model->id);
+  assert(d);
+  const BzlaPtrHashTable *model = d->as_ptr;
+  bzla_iter_hashptr_init(&it, model);
+  while (bzla_iter_hashptr_has_next(&it))
+  {
+    bv_value = it.bucket->data.as_ptr;
+    t        = bzla_iter_hashptr_next(&it);
+    add_to_fun_model(bzla, fun_model, fun, t, bv_value);
+  }
+}
+
 static void
 recursively_compute_function_model(Bzla *bzla,
                                    BzlaIntHashTable *bv_model,
@@ -289,12 +315,22 @@ recursively_compute_function_model(Bzla *bzla,
   {
     assert(bzla_node_is_fun(cur_fun));
 
+    if (bzla_hashint_map_contains(fun_model, cur_fun->id))
+    {
+      merge_fun_models(bzla, fun, cur_fun, fun_model);
+      break;
+    }
+
     if (cur_fun->rho)
+    {
       add_rho_to_model(bzla, fun, cur_fun->rho, bv_model, fun_model);
+    }
 
     if (bzla_node_is_lambda(cur_fun)
         && (static_rho = bzla_node_lambda_get_static_rho(cur_fun)))
+    {
       add_rho_to_model(bzla, fun, static_rho, bv_model, fun_model);
+    }
 
     if (bzla_node_is_lambda(cur_fun))
     {
@@ -970,6 +1006,17 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
   BzlaHashTableData *md;
 
   mm = bzla->mm;
+
+  /* Return model value if already computed. */
+  d = bzla_hashint_map_get(bv_model, bzla_node_real_addr(exp)->id);
+  if (d)
+  {
+    if (bzla_node_is_inverted(exp))
+    {
+      return bzla_bv_not(mm, d->as_ptr);
+    }
+    return bzla_bv_copy(mm, d->as_ptr);
+  }
 
   assigned = bzla_hashint_map_new(mm);
   expanded = bzla_hashint_table_new(mm);
