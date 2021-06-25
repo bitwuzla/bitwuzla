@@ -1217,6 +1217,7 @@ if(SymFPU_FOUND)
     "fp_regr6.smt2"
     "fp_regr7.smt2"
     "fp_regr8.smt2"
+    "fp_regr10.smt2"
     "checkmodelfp1.smt2"
   )
 
@@ -1238,6 +1239,7 @@ if(SymFPU_FOUND)
 
   list(APPEND cmp_testcases
     "fp_regr5.smt2 -i"
+    "fp_regr9.smt2"
     "fp_real.smt2"
     "fp_rational.smt2"
   )

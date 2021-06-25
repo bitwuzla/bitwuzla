@@ -1,0 +1,2 @@
+sat
+(((fp.mul (ite s7 s5 s) (_ -zero 5 11) (_ -zero 5 11)) (fp #b0 #b00000 #b0000000000)))

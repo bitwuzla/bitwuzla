@@ -1,0 +1,5 @@
+(declare-const x Float64)
+(declare-fun c () RoundingMode)
+(declare-fun ~ () Float64)
+(assert (= x (fp.add c ~ (fp (_ bv0 1) (_ bv0 11) (_ bv0 52)))))
+(check-sat)

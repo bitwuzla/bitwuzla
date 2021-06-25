@@ -318,11 +318,15 @@ void *bzla_fp_word_blaster_new(Bzla *bzla);
  * Note: Memory is not managed by the memory manager of the given Bzla instance.
  */
 void *bzla_fp_word_blaster_clone(Bzla *bzla, Bzla *clone, BzlaNodeMap *exp_map);
+
 /**
  * Delete word-blaster of given Bzla instance.
  * Note: Memory is not managed by the memory manager of the given Bzla instance.
  */
 void bzla_fp_word_blaster_delete(Bzla *bzla);
+
+/** Assert additional constraints added during word-blasting. */
+void bzla_fp_word_blaster_add_additional_assertions(Bzla *bzla);
 
 /** Word-blast given floating-point/rounding mode expression. */
 BzlaNode *bzla_fp_word_blast(Bzla *bzla, BzlaNode *node);

@@ -2030,6 +2030,7 @@ class BzlaFPWordBlaster
   BzlaNode *word_blast(BzlaNode *node);
   BzlaNode *get_word_blasted_node(BzlaNode *node);
   void get_introduced_ufs(std::vector<BzlaNode *> &ufs);
+  void add_additional_assertions();
 
   BzlaFPWordBlaster *clone(Bzla *cbzla, BzlaNodeMap *exp_map);
 
@@ -2084,6 +2085,7 @@ class BzlaFPWordBlaster
       d_sbv_ubv_uf_map;
 
   std::unordered_map<BzlaNode *, BzlaNode *, BzlaNodeHashFunction> d_ite_map;
+  std::vector<BzlaNode *> d_additional_assertions;
   Bzla *d_bzla;
 };
 
@@ -2151,6 +2153,10 @@ BzlaFPWordBlaster::~BzlaFPWordBlaster()
   for (const auto &p : d_sbv_map)
   {
     bzla_node_release(d_bzla, p.first);
+  }
+  for (BzlaNode *node : d_additional_assertions)
+  {
+    bzla_node_release(d_bzla, node);
   }
 }
 
@@ -2240,10 +2246,8 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         BzlaNode *then_imp = bzla_exp_implies(d_bzla, cur->e[0], then_eq);
         BzlaNode *else_imp =
             bzla_exp_implies(d_bzla, bzla_node_invert(cur->e[0]), else_eq);
-        bzla_assert_exp(d_bzla, then_imp);
-        bzla_assert_exp(d_bzla, else_imp);
-        bzla_node_release(d_bzla, else_imp);
-        bzla_node_release(d_bzla, then_imp);
+        d_additional_assertions.push_back(then_imp);
+        d_additional_assertions.push_back(else_imp);
         bzla_node_release(d_bzla, else_eq);
         bzla_node_release(d_bzla, then_eq);
       }
@@ -2256,8 +2260,8 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       {
         BzlaFPSymRM var(cur);
         d_rm_map.emplace(bzla_node_copy(d_bzla, cur), var);
-        BzlaFPSymProp assertion = var.valid();
-        bzla_assert_exp(d_bzla, assertion.getNode());
+        d_additional_assertions.push_back(
+            bzla_node_copy(d_bzla, var.valid().getNode()));
       }
       else if (bzla_node_is_fp_const(cur))
       {
@@ -2290,8 +2294,8 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
 
         BzlaSymUnpackedFloat uf(nan, inf, zero, sign, exp, sig);
         d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur), uf);
-        BzlaFPSymProp assertion = uf.valid(sort);
-        bzla_assert_exp(d_bzla, assertion.getNode());
+        d_additional_assertions.push_back(
+            bzla_node_copy(d_bzla, uf.valid(sort).getNode()));
 
         bzla_node_release(d_bzla, sig);
         bzla_node_release(d_bzla, exp);
@@ -2733,6 +2737,17 @@ BzlaFPWordBlaster::get_introduced_ufs(std::vector<BzlaNode *> &ufs)
   }
 }
 
+void
+BzlaFPWordBlaster::add_additional_assertions()
+{
+  for (BzlaNode *node : d_additional_assertions)
+  {
+    bzla_assert_exp(d_bzla, node);
+    bzla_node_release(d_bzla, node);
+  }
+  d_additional_assertions.clear();
+}
+
 BzlaFPWordBlaster *
 BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
 {
@@ -2860,6 +2875,13 @@ BzlaFPWordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
                              BzlaFPSymBV<false>(csig)));
   }
 #endif
+  for (BzlaNode *node : d_additional_assertions)
+  {
+    BzlaNode *real_node = bzla_node_real_addr(node);
+    cexp                = bzla_nodemap_mapped(exp_map, real_node);
+    assert(cexp);
+    res->d_additional_assertions.push_back(bzla_node_cond_invert(node, cexp));
+  }
   return res;
 }
 
@@ -4155,6 +4177,7 @@ bzla_fp_convert_from_rational(Bzla *bzla,
 void
 bzla_fp_word_blaster_get_introduced_ufs(Bzla *bzla, BzlaNodePtrStack *ufs)
 {
+  assert(bzla);
   if (!bzla->word_blaster) return;
   BzlaFPWordBlaster *word_blaster =
       static_cast<BzlaFPWordBlaster *>(bzla->word_blaster);
@@ -4196,6 +4219,16 @@ bzla_fp_word_blaster_delete(Bzla *bzla)
   BzlaFPWordBlaster::set_s_bzla(wb->get_bzla());
   delete wb;
   bzla->word_blaster = nullptr;
+}
+
+void
+bzla_fp_word_blaster_add_additional_assertions(Bzla *bzla)
+{
+  assert(bzla);
+  if (!bzla->word_blaster) return;
+  BzlaFPWordBlaster *word_blaster =
+      static_cast<BzlaFPWordBlaster *>(bzla->word_blaster);
+  word_blaster->add_additional_assertions();
 }
 
 BzlaNode *

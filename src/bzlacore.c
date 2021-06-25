@@ -1091,6 +1091,13 @@ bzla_process_unsynthesized_constraints(Bzla *bzla)
   sc   = bzla->synthesized_constraints;
   amgr = bzla_get_aig_mgr(bzla);
 
+  /* We have to always synthesize FP inputs in order to guarantee that they
+   * have a valid assignment when unconstrained. If not, when the model is
+   * generated, they will be word-blasted into components and are assigned a
+   * default value (all zero) that does not represent a valid FP.
+   * Note that we don't necessarily have to synthesize RM inputs (they would
+   * be assigned zero as default value when unconstrained, which is a valid
+   * RM value), but we still do. */
   bzla_iter_hashptr_init(&it, bzla->inputs);
   while (bzla_iter_hashptr_has_next(&it))
   {
@@ -1101,6 +1108,8 @@ bzla_process_unsynthesized_constraints(Bzla *bzla)
       bzla_synthesize_exp(bzla, cur, 0);
     }
   }
+  /* assert constraints added during word-blasting */
+  bzla_fp_word_blaster_add_additional_assertions(bzla);
 
   while (uc->count > 0)
   {
@@ -1154,6 +1163,8 @@ bzla_process_unsynthesized_constraints(Bzla *bzla)
       bzla_aig_release(amgr, aig);
       (void) bzla_hashptr_table_add(sc, cur);
       bzla_hashptr_table_remove(uc, cur, 0, 0);
+      /* assert constraints added during word-blasting */
+      bzla_fp_word_blaster_add_additional_assertions(bzla);
 
       bzla->stats.constraints.synthesized++;
       report_constraint_stats(bzla, false);
@@ -2707,6 +2718,8 @@ bzla_add_again_assumptions(Bzla *bzla)
     }
     bzla_aig_release(amgr, aig);
   }
+  /* assert constraints added during word-blasting */
+  bzla_fp_word_blaster_add_additional_assertions(bzla);
 
   BZLA_RELEASE_STACK(stack);
   bzla_hashptr_table_delete(assumptions);
