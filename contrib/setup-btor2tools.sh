@@ -14,7 +14,7 @@ set -e -o pipefail
 source "$(dirname "$0")/setup-utils.sh"
 
 BTOR2TOOLS_DIR="${DEPS_DIR}/btor2tools"
-COMMIT_ID="6ba194b3d58774b5d13e92b198367dedd5b80236"
+COMMIT_ID="db46e96d1bc26271cf32849592e7db1c702a7bc1"
 
 download_github "boolector/btor2tools" "$COMMIT_ID" "$BTOR2TOOLS_DIR"
 cd "${BTOR2TOOLS_DIR}"
