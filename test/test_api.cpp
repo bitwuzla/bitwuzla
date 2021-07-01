@@ -4116,3 +4116,19 @@ TEST_F(TestApi, dump_formula2)
       "(exit)\n",
       content);
 }
+
+TEST_F(TestApi, arrayfun)
+{
+  BitwuzlaSort *bvsort = bitwuzla_mk_bv_sort(d_bzla, 4);
+  std::vector<BitwuzlaSort *> domain({bvsort});
+  BitwuzlaSort *funsort =
+      bitwuzla_mk_fun_sort(d_bzla, domain.size(), domain.data(), bvsort);
+  BitwuzlaSort *arrsort = bitwuzla_mk_array_sort(d_bzla, bvsort, bvsort);
+  BitwuzlaTerm *f       = bitwuzla_mk_const(d_bzla, funsort, "f");
+  BitwuzlaTerm *a       = bitwuzla_mk_const(d_bzla, arrsort, "a");
+  ASSERT_TRUE(bitwuzla_term_get_sort(f) != bitwuzla_term_get_sort(a));
+  ASSERT_TRUE(bitwuzla_term_is_fun(f));
+  ASSERT_TRUE(!bitwuzla_term_is_fun(a));
+  ASSERT_TRUE(!bitwuzla_term_is_array(f));
+  ASSERT_TRUE(bitwuzla_term_is_array(a));
+}
