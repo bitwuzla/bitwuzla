@@ -2195,8 +2195,6 @@ TEST_F(TestApi, mk_const)
   ASSERT_DEATH(bitwuzla_mk_const(nullptr, d_bv_sort8, "asdf"),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_const(d_bzla, nullptr, "asdf"), d_error_not_null);
-  ASSERT_DEATH(bitwuzla_mk_const(d_bzla, d_bv_sort8, "bv_const8"),
-               "already in use in the current context");
   ASSERT_DEATH(bitwuzla_mk_const(d_bzla, d_other_bv_sort8, "asdf"),
                d_error_solver);
 
@@ -2237,8 +2235,6 @@ TEST_F(TestApi, mk_var)
   ASSERT_DEATH(bitwuzla_mk_var(d_bzla, nullptr, "asdf"), d_error_not_null);
   ASSERT_DEATH(bitwuzla_mk_var(d_bzla, d_other_bv_sort8, "asdf"),
                d_error_solver);
-  ASSERT_DEATH(bitwuzla_mk_var(d_bzla, d_bv_sort8, "bv_const8"),
-               "already in use in the current context");
 
   ASSERT_NO_FATAL_FAILURE(bitwuzla_mk_var(d_bzla, d_bv_sort8, nullptr));
   ASSERT_NO_FATAL_FAILURE(bitwuzla_mk_var(d_bzla, d_bv_sort8, ""));

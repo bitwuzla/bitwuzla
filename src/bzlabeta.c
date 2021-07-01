@@ -420,7 +420,8 @@ beta_reduce(Bzla *bzla,
          * variable is one of the arguments of 'exp'. */
         if (bzla_hashint_map_contains(mark, q->id))
         {
-          result = bzla_node_mk_param_with_unique_symbol(bzla, real_cur);
+          result = bzla_node_create_param(
+              bzla, real_cur->sort_id, bzla_node_get_symbol(bzla, real_cur));
         }
         else
         {

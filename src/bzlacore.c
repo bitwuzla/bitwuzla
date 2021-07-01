@@ -697,8 +697,6 @@ bzla_new(void)
   bzla->bv_assignments  = bzla_ass_new_bv_list(mm);
   bzla->fun_assignments = bzla_ass_new_fun_list(mm);
 
-  bzla->symbols = bzla_hashptr_table_new(
-      mm, (BzlaHashPtr) bzla_hash_str, (BzlaCmpPtr) strcmp);
   bzla->node2symbol =
       bzla_hashptr_table_new(mm,
                              (BzlaHashPtr) bzla_node_hash_by_id,
@@ -1031,11 +1029,10 @@ bzla_delete(Bzla *bzla)
          || bzla->sorts_unique_table.num_elements == 0);
   BZLA_RELEASE_SORT_UNIQUE_TABLE(mm, bzla->sorts_unique_table);
 
-  bzla_hashptr_table_delete(bzla->node2symbol);
-  bzla_iter_hashptr_init(&it, bzla->symbols);
+  bzla_iter_hashptr_init(&it, bzla->node2symbol);
   while (bzla_iter_hashptr_has_next(&it))
-    bzla_mem_freestr(bzla->mm, (char *) bzla_iter_hashptr_next(&it));
-  bzla_hashptr_table_delete(bzla->symbols);
+    bzla_mem_freestr(bzla->mm, (char *) bzla_iter_hashptr_next_data(&it));
+  bzla_hashptr_table_delete(bzla->node2symbol);
 
   bzla_hashptr_table_delete(bzla->bv_vars);
   bzla_hashptr_table_delete(bzla->ufs);

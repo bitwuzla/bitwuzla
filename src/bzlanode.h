@@ -1172,18 +1172,6 @@ char *bzla_node_get_symbol(Bzla *bzla, const BzlaNode *exp);
 /** Sets the symbol of an expression. */
 void bzla_node_set_symbol(Bzla *bzla, BzlaNode *exp, const char *symbol);
 
-/**
- * Get the exp (belonging to instance 'bzla') that matches given symbol.
- * Note: does NOT increase the ref counter
- */
-BzlaNode *bzla_node_get_by_symbol(Bzla *bzla, const char *sym);
-
-/**
- * Retrieve the exp (belonging to instance 'bzla') that matches given symbol.
- * Note: increases ref counter of returned match!
- */
-BzlaNode *bzla_node_match_by_symbol(Bzla *bzla, const char *sym);
-
 /*------------------------------------------------------------------------*/
 
 /**
@@ -1324,8 +1312,6 @@ BzlaNode *bzla_node_param_get_assigned_exp(BzlaNode *param);
 
 /** Instantiate given parameter. */
 BzlaNode *bzla_node_param_set_assigned_exp(BzlaNode *param, BzlaNode *exp);
-
-BzlaNode *bzla_node_mk_param_with_unique_symbol(Bzla *bzla, BzlaNode *node);
 
 /*------------------------------------------------------------------------*/
 

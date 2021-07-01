@@ -805,27 +805,6 @@ chkclone_tables(Bzla *bzla, Bzla *clone)
   BzlaIntHashTableIterator iit, ciit;
   char *sym, *csym;
 
-  if (!bzla->symbols)
-    assert(!clone->symbols);
-  else
-  {
-    assert(clone->symbols);
-    assert(bzla->symbols->size == clone->symbols->size);
-    assert(bzla->symbols->count == clone->symbols->count);
-    assert(bzla->symbols->hash == clone->symbols->hash);
-    assert(bzla->symbols->cmp == clone->symbols->cmp);
-    assert(!bzla->symbols->first || clone->symbols->first);
-    bzla_iter_hashptr_init(&pit, bzla->symbols);
-    bzla_iter_hashptr_init(&cpit, clone->symbols);
-    while (bzla_iter_hashptr_has_next(&pit))
-    {
-      assert(bzla_iter_hashptr_has_next(&cpit));
-      assert(!strcmp((char *) bzla_iter_hashptr_next(&pit),
-                     (char *) bzla_iter_hashptr_next(&cpit)));
-    }
-    assert(!bzla_iter_hashptr_has_next(&cpit));
-  }
-
   if (!bzla->node2symbol)
     assert(!clone->node2symbol);
   else
@@ -845,8 +824,6 @@ chkclone_tables(Bzla *bzla, Bzla *clone)
       csym = cpit.bucket->data.as_str;
       assert(sym != csym);
       assert(!strcmp(sym, csym));
-      assert(bzla_hashptr_table_get(bzla->symbols, sym));
-      assert(bzla_hashptr_table_get(clone->symbols, sym));
       BZLA_CHKCLONE_EXPID(bzla_iter_hashptr_next(&pit),
                           bzla_iter_hashptr_next(&cpit));
     }

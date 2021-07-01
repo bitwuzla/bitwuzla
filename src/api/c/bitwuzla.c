@@ -771,47 +771,6 @@ inc_ext_refs_sort(Bzla *bzla, BzlaSortId id)
   bzla->external_refs += 1;
 }
 
-/** Return start address of (original) symbol without prefix.  */
-static const char *
-remove_unique_symbol_prefix(Bzla *bzla, const char *symbol)
-{
-  if (symbol)
-  {
-    size_t len    = strlen(symbol);
-    size_t offset = 5 + bzla_util_num_digits(bzla->num_push_pop);
-    if (len > offset && !strncmp(symbol, "BZLA_", 5) && symbol[offset] == '@')
-    {
-      return symbol + offset + 1;
-    }
-  }
-  return symbol;
-}
-
-/**
- * Create symbol that is unique in the current context.
- * For this, symbols are prefixed with BZLA_<num_push_pop>@<symbol>.
- */
-static char *
-mk_unique_symbol(Bzla *bzla, const char *symbol)
-{
-  char *res;
-  size_t len;
-  if (bzla->num_push_pop)
-  {
-    len = strlen(symbol) + 1;
-    len += strlen("BZLA_@");
-    len += bzla_util_num_digits(bzla->num_push_pop);
-    BZLA_CNEWN(bzla->mm, res, len);
-    sprintf(res, "BZLA_%u@%s", bzla->num_push_pop, symbol);
-  }
-  else
-  {
-    res = bzla_mem_strdup(bzla->mm, symbol);
-  }
-  assert(!symbol || !strcmp(symbol, remove_unique_symbol_prefix(bzla, res)));
-  return res;
-}
-
 /** Dummy helper for sort argument check for mk_term. */
 static bool
 sort_any(Bzla *bzla, BzlaSortId node)
@@ -2692,24 +2651,19 @@ bitwuzla_mk_const(Bitwuzla *bitwuzla,
   Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
 
-  char *s = mk_unique_symbol(bzla, symbol);
-  BZLA_ABORT(s != NULL && bzla_hashptr_table_get(bzla->symbols, (char *) s),
-             "symbol '%s' already in use in the current context",
-             s);
   BzlaNode *res;
   if (bzla_sort_is_array(bzla, bzla_sort))
   {
-    res = bzla_exp_array(bzla, bzla_sort, s);
+    res = bzla_exp_array(bzla, bzla_sort, symbol);
   }
   else if (bzla_sort_is_fun(bzla, bzla_sort))
   {
-    res = bzla_exp_uf(bzla, bzla_sort, s);
+    res = bzla_exp_uf(bzla, bzla_sort, symbol);
   }
   else
   {
-    res = bzla_exp_var(bzla, bzla_sort, s);
+    res = bzla_exp_var(bzla, bzla_sort, symbol);
   }
-  bzla_mem_freestr(bzla->mm, s);
   (void) bzla_hashptr_table_add(bzla->inputs, bzla_node_copy(bzla, res));
   BZLA_RETURN_BITWUZLA_TERM(res);
 }
@@ -2752,12 +2706,7 @@ bitwuzla_mk_var(Bitwuzla *bitwuzla,
   BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
   BZLA_CHECK_SORT_NOT_IS_FUN(bzla, bzla_sort);
 
-  char *s = mk_unique_symbol(bzla, symbol);
-  BZLA_ABORT(s != NULL && bzla_hashptr_table_get(bzla->symbols, (char *) s),
-             "symbol '%s' already in use in the current context",
-             s);
-  BzlaNode *res = bzla_exp_param(bzla, bzla_sort, s);
-  bzla_mem_freestr(bzla->mm, s);
+  BzlaNode *res = bzla_exp_param(bzla, bzla_sort, symbol);
   BZLA_RETURN_BITWUZLA_TERM(res);
 }
 
@@ -4137,8 +4086,7 @@ bitwuzla_term_get_symbol(const BitwuzlaTerm *term)
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   assert(bzla_node_get_ext_refs(bzla_term));
   Bzla *bzla = bzla_node_get_bzla(bzla_term);
-  return remove_unique_symbol_prefix(bzla,
-                                     bzla_node_get_symbol(bzla, bzla_term));
+  return bzla_node_get_symbol(bzla, bzla_term);
 }
 
 void
@@ -4151,16 +4099,7 @@ bitwuzla_term_set_symbol(BitwuzlaTerm *term, const char *symbol)
   assert(bzla_node_get_ext_refs(bzla_term));
   Bzla *bzla = bzla_node_get_bzla(bzla_term);
 
-  char *s = mk_unique_symbol(bzla, symbol);
-  if (bzla_hashptr_table_get(bzla->symbols, s))
-  {
-    BZLA_WARN(true, "symbol %s already defined, will not set symbol", symbol);
-  }
-  else
-  {
-    bzla_node_set_symbol(bzla, bzla_term, s);
-  }
-  bzla_mem_freestr(bzla->mm, s);
+  bzla_node_set_symbol(bzla, bzla_term, symbol);
 }
 
 bool

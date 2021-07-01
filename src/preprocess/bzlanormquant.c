@@ -88,39 +88,6 @@ create_skolem_ite(Bzla *bzla, BzlaNode *ite, BzlaIntHashTable *map)
 }
 
 static BzlaNode *
-mk_param_with_symbol(Bzla *bzla, BzlaNode *node)
-{
-  BzlaMemMgr *mm;
-  BzlaNode *result;
-  size_t len  = 0;
-  int32_t idx = 0;
-  char *sym, *buf = 0;
-
-  mm  = bzla->mm;
-  sym = bzla_node_get_symbol(bzla, node);
-  if (sym)
-  {
-    len = strlen(sym);
-    while (true)
-    {
-      len += 2 + bzla_util_num_digits(idx);
-      BZLA_NEWN(mm, buf, len);
-      sprintf(buf, "%s!%d", sym, idx);
-      if (bzla_hashptr_table_get(bzla->symbols, buf))
-      {
-        BZLA_DELETEN(mm, buf, len);
-        idx += 1;
-      }
-      else
-        break;
-    }
-  }
-  result = bzla_exp_param(bzla, node->sort_id, buf);
-  if (buf) BZLA_DELETEN(mm, buf, len);
-  return result;
-}
-
-static BzlaNode *
 elim_quantified_ite(Bzla *bzla, BzlaNode *roots[], uint32_t num_roots)
 {
   int32_t i;
@@ -166,9 +133,14 @@ elim_quantified_ite(Bzla *bzla, BzlaNode *roots[], uint32_t num_roots)
       if (real_cur->arity == 0)
       {
         if (bzla_node_is_param(real_cur))
-          result = mk_param_with_symbol(bzla, real_cur);
+        {
+          result = bzla_node_create_param(
+              bzla, real_cur->sort_id, bzla_node_get_symbol(bzla, real_cur));
+        }
         else
+        {
           result = bzla_node_copy(bzla, real_cur);
+        }
       }
       else if (bzla_node_is_bv_slice(real_cur))
       {
@@ -376,9 +348,14 @@ fix_quantifier_polarities(Bzla *bzla, BzlaNode *root)
       if (real_cur->arity == 0)
       {
         if (bzla_node_is_param(real_cur))
-          result = mk_param_with_symbol(bzla, real_cur);
+        {
+          result = bzla_node_create_param(
+              bzla, real_cur->sort_id, bzla_node_get_symbol(bzla, real_cur));
+        }
         else
+        {
           result = bzla_node_copy(bzla, real_cur);
+        }
       }
       else if (bzla_node_is_bv_slice(real_cur))
       {
@@ -504,10 +481,14 @@ collect_existential_vars(Bzla *bzla, BzlaNode *root)
       if (real_cur->arity == 0)
       {
         if (bzla_node_is_param(real_cur))
-          result = mk_param_with_symbol(bzla, real_cur);
+        {
+          result = bzla_node_create_param(
+              bzla, real_cur->sort_id, bzla_node_get_symbol(bzla, real_cur));
+        }
         else if (bzla_node_is_bv_var(real_cur))
         {
-          result = mk_param_with_symbol(bzla, real_cur);
+          result = bzla_node_create_param(
+              bzla, real_cur->sort_id, bzla_node_get_symbol(bzla, real_cur));
           BZLA_PUSH_STACK(vars, result);
         }
         else
@@ -688,119 +669,3 @@ bzla_normalize_quantifiers(Bzla *bzla)
   BZLA_RELEASE_STACK(roots);
   return result;
 }
-
-#if 0
-BzlaNode *
-bzla_invert_quantifiers (Bzla * bzla, BzlaNode * root,
-			 BzlaIntHashTable * node_map)
-{
-  size_t j;
-  int32_t i;
-  BzlaMemMgr *mm;
-  BzlaNode *cur, *real_cur, *result, **e;
-  BzlaNodePtrStack stack, args;
-  BzlaIntHashTable *map;
-  BzlaHashTableData *d;
-
-  mm = bzla->mm;
-  map = bzla_hashint_map_new (mm);
-  BZLA_INIT_STACK (mm, stack);
-  BZLA_INIT_STACK (mm, args);
-  BZLA_PUSH_STACK (stack, root);
-  while (!BZLA_EMPTY_STACK (stack))
-    {
-      cur = BZLA_POP_STACK (stack);
-      real_cur = bzla_node_real_addr (cur);
-      d = bzla_hashint_map_get (map, real_cur->id);
-
-      if (!d)
-	{
-	  bzla_hashint_table_add (map, real_cur->id);
-
-	  BZLA_PUSH_STACK (stack, cur);
-	  for (i = real_cur->arity - 1; i >= 0; i--)
-	    BZLA_PUSH_STACK (stack, real_cur->e[i]);
-	}
-      else if (!d->as_ptr)
-	{
-	  /* bit vector variables should be existentially quantified */
-	  assert (!bzla_node_is_bv_var (real_cur));
-	  assert (BZLA_COUNT_STACK (args) >= real_cur->arity);
-	  args.top -= real_cur->arity;
-	  e = args.top;
-
-	  if (real_cur->arity == 0)
-	    {
-	      if (bzla_node_is_param (real_cur))
-		result = mk_param_with_symbol (bzla, real_cur);
-	      else
-		result = bzla_node_copy (bzla, real_cur);
-
-	    }
-	  else if (bzla_node_is_bv_slice (real_cur))
-	    {
-	      result = bzla_exp_bv_slice (bzla, e[0],
-				       bzla_node_bv_slice_get_upper (real_cur),
-				       bzla_node_bv_slice_get_lower (real_cur));
-	    }
-	  /* invert quantifier nodes */
-	  else if (bzla_node_is_quantifier (real_cur))
-	    {
-	      /* quantifiers are never negated (but flipped) */
-	      if (!bzla_node_is_quantifier (e[1]))
-		e[1] = bzla_node_invert (e[1]);
-	      result =
-		bzla_exp_create (bzla,
-				 real_cur->kind == BZLA_EXISTS_NODE
-				 ? BZLA_FORALL_NODE
-				 : BZLA_EXISTS_NODE,
-				 e, real_cur->arity);
-	    }
-	  else
-	    result = bzla_exp_create (bzla, real_cur->kind, e, real_cur->arity);
-
-	  d->as_ptr = bzla_node_copy (bzla, result);
-
-	  for (i = 0; i < real_cur->arity; i++)
-	    bzla_node_release (bzla, e[i]);
-
-	  if (node_map)
-	    {
-	      if (!bzla_contains_int_hash_map (node_map, real_cur->id))
-		bzla_hashint_map_add (node_map, real_cur->id)->as_int =
-		  bzla_node_real_addr (result)->id;
-	    }
-PUSH_RESULT:
-	  /* quantifiers are never negated (but flipped) */
-	  if (!bzla_node_is_quantifier (real_cur))
-	    result = bzla_node_cond_invert (cur, result);
-	  BZLA_PUSH_STACK (args, result);
-	}
-      else
-	{
-	  assert (d->as_ptr);
-	  result = bzla_node_copy (bzla, d->as_ptr);
-	  goto PUSH_RESULT;
-	}
-
-    }
-  assert (BZLA_COUNT_STACK (args) == 1);
-  result = BZLA_POP_STACK (args);
-
-  BZLA_RELEASE_STACK (stack);
-  BZLA_RELEASE_STACK (args);
-
-  for (j = 0; j < map->size; j++)
-    {
-      if (!map->data[j].as_ptr) continue;
-      bzla_node_release (bzla, map->data[j].as_ptr);
-    }
-  bzla_hashint_map_delete (map);
-
-  /* quantifiers are never negated (but flipped) */
-  if (!bzla_node_is_quantifier (result))
-    result = bzla_node_invert (result);
-
-  return result;
-}
-#endif

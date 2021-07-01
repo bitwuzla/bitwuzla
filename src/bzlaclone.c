@@ -144,6 +144,17 @@ bzla_clone_data_as_str_ptr(BzlaMemMgr *mm,
 }
 
 void
+bzla_clone_data_as_str(BzlaMemMgr *mm,
+                       const void *str_table,
+                       BzlaHashTableData *data,
+                       BzlaHashTableData *cloned_data)
+{
+  assert(mm);
+  (void) str_table;
+  cloned_data->as_str = bzla_mem_strdup(mm, (char *) data->as_str);
+}
+
+void
 bzla_clone_data_as_int(BzlaMemMgr *mm,
                        const void *map,
                        BzlaHashTableData *data,
@@ -1180,28 +1191,18 @@ clone_aux_bzla(Bzla *bzla,
   assert((allocated += bzla->nodes_unique_table.size * sizeof(BzlaNode *))
          == clone->mm->allocated);
 
-  clone->symbols = bzla_hashptr_table_clone(mm,
-                                            bzla->symbols,
-                                            bzla_clone_key_as_str,
-                                            bzla_clone_data_as_node_ptr,
-                                            0,
-                                            emap);
-#ifndef NDEBUG
-  uint32_t str_bytes = 0;
-  bzla_iter_hashptr_init(&pit, bzla->symbols);
-  while (bzla_iter_hashptr_has_next(&pit))
-    str_bytes +=
-        (strlen((char *) bzla_iter_hashptr_next(&pit)) + 1) * sizeof(char);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->symbols) + str_bytes)
-         == clone->mm->allocated);
-#endif
   clone->node2symbol = bzla_hashptr_table_clone(mm,
                                                 bzla->node2symbol,
                                                 bzla_clone_key_as_node,
-                                                bzla_clone_data_as_str_ptr,
+                                                bzla_clone_data_as_str,
                                                 emap,
-                                                clone->symbols);
+                                                NULL);
 #ifndef NDEBUG
+  bzla_iter_hashptr_init(&pit, bzla->node2symbol);
+  while (bzla_iter_hashptr_has_next(&pit))
+  {
+    allocated += strlen(bzla_iter_hashptr_next_data(&pit)->as_str) + 1;
+  }
   assert((allocated += MEM_PTR_HASH_TABLE(bzla->node2symbol))
          == clone->mm->allocated);
 #endif
@@ -1803,51 +1804,23 @@ bzla_clone_recursively_rebuild_exp(Bzla *bzla,
         case BZLA_VAR_NODE:
           b      = bzla_hashptr_table_get(bzla->node2symbol, cur);
           symbol = b ? b->data.as_str : 0;
-          if (symbol && (b = bzla_hashptr_table_get(clone->symbols, symbol)))
-          {
-            cur_clone = bzla_node_copy(clone, b->data.as_ptr);
-            assert(cur_clone->sort_id == cur->sort_id);
-            assert(cur_clone->kind == cur->kind);
-          }
-          else
-          {
-            sort      = bzla_sort_bv(clone, bzla_node_bv_get_width(bzla, cur));
-            cur_clone = bzla_exp_var(clone, sort, symbol);
-            bzla_sort_release(clone, sort);
-          }
+          sort      = bzla_sort_bv(clone, bzla_node_bv_get_width(bzla, cur));
+          cur_clone = bzla_exp_var(clone, sort, symbol);
+          bzla_sort_release(clone, sort);
           break;
         case BZLA_PARAM_NODE:
           b      = bzla_hashptr_table_get(bzla->node2symbol, cur);
           symbol = b ? b->data.as_str : 0;
-          if (symbol && (b = bzla_hashptr_table_get(clone->symbols, symbol)))
-          {
-            cur_clone = bzla_node_copy(clone, b->data.as_ptr);
-            assert(cur_clone->sort_id == cur->sort_id);
-            assert(cur_clone->kind == cur->kind);
-          }
-          else
-          {
-            sort      = bzla_sort_bv(clone, bzla_node_bv_get_width(bzla, cur));
-            cur_clone = bzla_exp_param(clone, sort, symbol);
-            bzla_sort_release(clone, sort);
-          }
+          sort      = bzla_sort_bv(clone, bzla_node_bv_get_width(bzla, cur));
+          cur_clone = bzla_exp_param(clone, sort, symbol);
+          bzla_sort_release(clone, sort);
           break;
         case BZLA_UF_NODE:
           b      = bzla_hashptr_table_get(bzla->node2symbol, cur);
           symbol = b ? b->data.as_str : 0;
-          if (symbol && (b = bzla_hashptr_table_get(clone->symbols, symbol)))
-          {
-            cur_clone = bzla_node_copy(clone, b->data.as_ptr);
-            assert(cur_clone->sort_id == cur->sort_id);
-            assert(cur_clone->kind == cur->kind);
-          }
-          else
-          {
-            sort =
-                bzla_clone_recursively_rebuild_sort(bzla, clone, cur->sort_id);
-            cur_clone = bzla_exp_uf(clone, sort, symbol);
-            bzla_sort_release(clone, sort);
-          }
+          sort = bzla_clone_recursively_rebuild_sort(bzla, clone, cur->sort_id);
+          cur_clone = bzla_exp_uf(clone, sort, symbol);
+          bzla_sort_release(clone, sort);
           break;
         case BZLA_BV_SLICE_NODE:
           cur_clone = bzla_exp_bv_slice(clone,

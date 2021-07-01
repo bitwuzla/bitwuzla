@@ -364,9 +364,14 @@ elim_vars(Bzla *bzla, BzlaNode *root, bool elim_evars)
           continue;
         }
         if (bzla_node_is_param(real_cur))
-          result = bzla_node_mk_param_with_unique_symbol(bzla, real_cur);
+        {
+          result = bzla_node_create_param(
+              bzla, real_cur->sort_id, bzla_node_get_symbol(bzla, real_cur));
+        }
         else
+        {
           result = bzla_node_copy(bzla, real_cur);
+        }
       }
       else if (bzla_node_is_bv_slice(real_cur))
         result = bzla_exp_bv_slice(bzla,

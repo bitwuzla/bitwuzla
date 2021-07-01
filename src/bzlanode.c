@@ -786,9 +786,8 @@ remove_from_hash_tables(Bzla *bzla, BzlaNode *exp, bool keep_symbol)
   if (!keep_symbol && bzla_hashptr_table_get(bzla->node2symbol, exp))
   {
     bzla_hashptr_table_remove(bzla->node2symbol, exp, 0, &data);
-    if (data.as_str[0] != 0)
+    if (data.as_str)
     {
-      bzla_hashptr_table_remove(bzla->symbols, data.as_str, 0, 0);
       bzla_mem_freestr(bzla->mm, data.as_str);
     }
   }
@@ -798,9 +797,8 @@ remove_from_hash_tables(Bzla *bzla, BzlaNode *exp, bool keep_symbol)
   {
     bzla_hashptr_table_remove(
         bzla->node2symbol, bzla_node_invert(exp), 0, &data);
-    if (data.as_str[0] != 0)
+    if (data.as_str)
     {
-      bzla_hashptr_table_remove(bzla->symbols, data.as_str, 0, 0);
       bzla_mem_freestr(bzla->mm, data.as_str);
     }
   }
@@ -1316,45 +1314,23 @@ bzla_node_set_symbol(Bzla *bzla, BzlaNode *exp, const char *symbol)
   assert(exp);
   assert(bzla == bzla_node_real_addr(exp)->bzla);
   assert(symbol);
-  assert(!bzla_hashptr_table_get(bzla->symbols, (char *) symbol));
 
   BzlaPtrHashBucket *b;
   char *sym;
 
   sym = bzla_mem_strdup(bzla->mm, symbol);
-  bzla_hashptr_table_add(bzla->symbols, sym)->data.as_ptr = exp;
   b = bzla_hashptr_table_get(bzla->node2symbol, exp);
 
   if (b)
   {
-    bzla_hashptr_table_remove(bzla->symbols, b->data.as_str, 0, 0);
     bzla_mem_freestr(bzla->mm, b->data.as_str);
   }
   else
+  {
     b = bzla_hashptr_table_add(bzla->node2symbol, exp);
+  }
 
   b->data.as_str = sym;
-}
-
-BzlaNode *
-bzla_node_get_by_symbol(Bzla *bzla, const char *sym)
-{
-  assert(bzla);
-  assert(sym);
-  BzlaPtrHashBucket *b;
-  b = bzla_hashptr_table_get(bzla->symbols, (char *) sym);
-  if (!b) return 0;
-  return b->data.as_ptr;
-}
-
-BzlaNode *
-bzla_node_match_by_symbol(Bzla *bzla, const char *sym)
-{
-  assert(bzla);
-  assert(sym);
-  BzlaNode *res = bzla_node_get_by_symbol(bzla, sym);
-  if (res) bzla_node_copy(bzla, res);
-  return res;
 }
 
 /*------------------------------------------------------------------------*/
@@ -1719,39 +1695,6 @@ bzla_node_param_set_assigned_exp(BzlaNode *param, BzlaNode *exp)
   assert(bzla_node_is_param(param));
   assert(!exp || bzla_node_get_sort_id(param) == bzla_node_get_sort_id(exp));
   return ((BzlaParamNode *) bzla_node_real_addr(param))->assigned_exp = exp;
-}
-
-BzlaNode *
-bzla_node_mk_param_with_unique_symbol(Bzla *bzla, BzlaNode *node)
-{
-  BzlaMemMgr *mm;
-  BzlaNode *result;
-  size_t len  = 0;
-  int32_t idx = 0;
-  char *sym, *buf = 0;
-
-  mm  = bzla->mm;
-  sym = bzla_node_get_symbol(bzla, node);
-  if (sym)
-  {
-    len = strlen(sym);
-    while (true)
-    {
-      len += 2 + bzla_util_num_digits(idx);
-      BZLA_NEWN(mm, buf, len);
-      sprintf(buf, "%s!%d", sym, idx);
-      if (bzla_hashptr_table_get(bzla->symbols, buf))
-      {
-        BZLA_DELETEN(mm, buf, len);
-        idx += 1;
-      }
-      else
-        break;
-    }
-  }
-  result = bzla_exp_param(bzla, node->sort_id, buf);
-  if (buf) BZLA_DELETEN(mm, buf, len);
-  return result;
 }
 
 /*------------------------------------------------------------------------*/
@@ -2980,7 +2923,6 @@ bzla_node_create_var(Bzla *bzla, BzlaSortId sort, const char *symbol)
   assert(sort);
   assert(bzla_sort_is_bv(bzla, sort) || bzla_sort_is_rm(bzla, sort)
          || bzla_sort_is_fp(bzla, sort));
-  assert(!symbol || !bzla_hashptr_table_get(bzla->symbols, (char *) symbol));
 
   BzlaBVVarNode *exp;
 
@@ -2999,7 +2941,6 @@ bzla_node_create_uf(Bzla *bzla, BzlaSortId sort, const char *symbol)
 {
   assert(bzla);
   assert(sort);
-  assert(!symbol || !bzla_hashptr_table_get(bzla->symbols, (char *) symbol));
 
   BzlaUFNode *exp;
 
@@ -3024,7 +2965,6 @@ bzla_node_create_param(Bzla *bzla, BzlaSortId sort, const char *symbol)
   assert(sort);
   assert(bzla_sort_is_bv(bzla, sort) || bzla_sort_is_rm(bzla, sort)
          || bzla_sort_is_fp(bzla, sort));
-  assert(!symbol || !bzla_hashptr_table_get(bzla->symbols, (char *) symbol));
 
   BzlaParamNode *exp;
 
