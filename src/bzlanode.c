@@ -1983,7 +1983,9 @@ find_bv_fp_exp(Bzla *bzla, BzlaNodeKind kind, BzlaNode *e[], uint32_t arity)
   assert(kind != BZLA_FP_TO_FP_SBV_NODE);
   assert(kind != BZLA_FP_TO_FP_UBV_NODE);
 
-  if (!is_sorted_binary_bv_exp(bzla, kind, e))
+  if (!is_sorted_binary_bv_exp(bzla, kind, e)
+      || (kind == BZLA_FP_EQ_NODE && e[0]->id > e[1]->id)
+      || (kind == BZLA_RM_EQ_NODE && e[0]->id > e[1]->id))
   {
     BZLA_SWAP(BzlaNode *, e[0], e[1]);
   }
