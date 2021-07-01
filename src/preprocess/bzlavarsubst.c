@@ -245,8 +245,14 @@ bzla_substitute_var_exps(Bzla *bzla)
         assert(bzla_node_is_var(simp) || bzla_node_is_uf(simp));
         simp_right = bzla_node_get_simplified(bzla, right);
         assert(!bzla_node_is_simplified(simp_right));
-        bzla_hashptr_table_add(substs, bzla_node_copy(bzla, simp))
-            ->data.as_ptr = bzla_node_copy(bzla, simp_right);
+        /* In rare cases it may happen that 'cur' simplifies to a variable
+         * that was already added to subst. In this case we ignore this
+         * substitution. */
+        if (!bzla_hashptr_table_get(substs, simp))
+        {
+          bzla_hashptr_table_add(substs, bzla_node_copy(bzla, simp))
+              ->data.as_ptr = bzla_node_copy(bzla, simp_right);
+        }
       }
       bzla_node_release(bzla, cur);
       bzla_node_release(bzla, right);
