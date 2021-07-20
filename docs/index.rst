@@ -29,10 +29,11 @@ Table of Contents
   c/api
   python/api
 
+  OCaml API Documentation <https://bitwuzla.github.io/docs/ocaml/index.html>
+
 .. toctree::
   :maxdepth: 1
 
   building_on_windows
 
   references
-  
