@@ -47,10 +47,14 @@ class PropSolverState
     double d_check_sat = 0;
   } d_time_statistics;
 
-  PropSolverState(Bzla *bzla, uint32_t max_nprops, uint32_t seed) : d_bzla(bzla)
+  PropSolverState(Bzla *bzla,
+                  uint64_t max_nprops,
+                  uint64_t max_nupdates,
+                  uint32_t seed)
+      : d_bzla(bzla)
   {
     assert(bzla);
-    d_bzlals.reset(new bzlals::BzlaLs(max_nprops, seed));
+    d_bzlals.reset(new bzlals::BzlaLs(max_nprops, max_nupdates, seed));
     d_bzlals->set_log_level(bzla_opt_get(d_bzla, BZLA_OPT_LOGLEVEL));
   }
 
@@ -668,8 +672,11 @@ bzla_new_prop_solver(Bzla *bzla)
   assert(bzla);
 
   BzlaPropSolver *slv = new BzlaPropSolver();
-  // TODO: max_nprops, seed
-  slv->d_state.reset(new bzla::prop::PropSolverState(bzla, 0, 0));
+  slv->d_state.reset(new bzla::prop::PropSolverState(
+      bzla,
+      bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS),
+      bzla_opt_get(bzla, BZLA_OPT_PROP_NUPDATES),
+      bzla_opt_get(bzla, BZLA_OPT_SEED)));
   slv->kind      = BZLA_PROP_SOLVER_KIND;
   slv->bzla      = bzla;
   slv->api.clone = (BzlaSolverClone) clone_prop_solver;
