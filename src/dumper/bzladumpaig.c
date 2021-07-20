@@ -90,7 +90,8 @@ dumpaig_dump_aux(Bzla *bzla,
     merged = BZLA_AIG_TRUE;
     for (size_t i = 0; i < nnodes; i++)
     {
-      av = bzla_exp_to_aigvec(bzla, nodes[i], backannotation);
+      av = bzla_exp_to_aigvec(
+          bzla, bzla_simplify_exp(bzla, nodes[i]), backannotation);
       if (merge_roots)
       {
         assert(av->width == 1);
@@ -191,6 +192,7 @@ bzla_dumpaig_dump(Bzla *bzla, bool is_binary, FILE *output, bool merge_roots)
     if (!comment_section_started) fputs("c\n", output);
     fprintf(output, fmt_header, "BTOR2 outputs", bzla_version(bzla));
   }
+  BZLA_RELEASE_STACK(nodes);
 }
 
 void
