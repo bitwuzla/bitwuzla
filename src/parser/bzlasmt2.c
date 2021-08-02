@@ -5121,20 +5121,20 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
     for (i = 0; i < BZLA_COUNT_STACK(args); i++)
     {
       const BitwuzlaSort *sort_arg = BZLA_PEEK_STACK(args, i);
-      if (!bitwuzla_sort_is_bv(sort_arg) && !bitwuzla_sort_is_fp(sort_arg))
+      if (bitwuzla_sort_is_fun(sort_arg) || bitwuzla_sort_is_array(sort_arg))
       {
         BZLA_RELEASE_STACK(args);
         return !perr_smt2(parser,
-                          "only bit-vector or floating-point sorts "
-                          "supported for arity > 0");
+                          "array and function sorts not supported "
+                          "for arguments of uninterpreted functions");
       }
     }
-    if (!bitwuzla_sort_is_bv(sort) && !bitwuzla_sort_is_fp(sort))
+    if (bitwuzla_sort_is_fun(sort) || bitwuzla_sort_is_array(sort))
     {
       BZLA_RELEASE_STACK(args);
       return !perr_smt2(parser,
-                        "only bit-vector or floating-point sort supported as "
-                        "return sort for arity > 0");
+                        "array and function sorts not supported as "
+                        "return sort for uninterpreted functions");
     }
 
     s = bitwuzla_mk_fun_sort(
