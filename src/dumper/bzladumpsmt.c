@@ -440,7 +440,7 @@ bzla_dumpsmt_dump_sort_node(BzlaNode *exp, FILE *file)
 
   BzlaSort *sort;
   exp  = bzla_node_real_addr(exp);
-  if (bzla_node_is_uf_array(exp))
+  if (bzla_node_is_array(exp))
   {
     BzlaSortId sort_id = bzla_node_get_sort_id(exp);
     BzlaSortId asort =
