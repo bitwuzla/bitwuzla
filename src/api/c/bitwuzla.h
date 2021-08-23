@@ -2654,7 +2654,7 @@ BitwuzlaTerm *bitwuzla_mk_term3(Bitwuzla *bitwuzla,
 BitwuzlaTerm *bitwuzla_mk_term(Bitwuzla *bitwuzla,
                                BitwuzlaKind kind,
                                uint32_t argc,
-                               BitwuzlaTerm *args[]);
+                               const BitwuzlaTerm *args[]);
 
 /**
  * Create an indexed term of given kind with one argument term and one index.
@@ -2755,7 +2755,7 @@ BitwuzlaTerm *bitwuzla_mk_term2_indexed2(Bitwuzla *bitwuzla,
 BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                                        BitwuzlaKind kind,
                                        uint32_t argc,
-                                       BitwuzlaTerm *args[],
+                                       const BitwuzlaTerm *args[],
                                        uint32_t idxc,
                                        uint32_t idxs[]);
 
@@ -3253,10 +3253,10 @@ BitwuzlaResult bitwuzla_parse_format(Bitwuzla *bitwuzla,
  * @return The resulting term from this substitution.
  */
 BitwuzlaTerm *bitwuzla_substitute_term(Bitwuzla *bitwuzla,
-                                       const BitwuzlaTerm *term,
+                                       BitwuzlaTerm *term,
                                        size_t map_size,
-                                       BitwuzlaTerm *map_keys[],
-                                       BitwuzlaTerm *map_values[]);
+                                       const BitwuzlaTerm *map_keys[],
+                                       const BitwuzlaTerm *map_values[]);
 
 /**
  * Substitute a set of keys with their corresponding values in the set of given
@@ -3276,8 +3276,8 @@ void bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
                                size_t terms_size,
                                BitwuzlaTerm *terms[],
                                size_t map_size,
-                               BitwuzlaTerm *map_keys[],
-                               BitwuzlaTerm *map_values[]);
+                               const BitwuzlaTerm *map_keys[],
+                               const BitwuzlaTerm *map_values[]);
 
 /* -------------------------------------------------------------------------- */
 /* BitwuzlaSort                                                               */
@@ -3486,8 +3486,8 @@ BitwuzlaKind bitwuzla_term_get_kind(const BitwuzlaTerm *term);
  *
  * @return The children of `term` as an array of terms.
  */
-BitwuzlaTerm **bitwuzla_term_get_children(const BitwuzlaTerm *term,
-                                          size_t *size);
+const BitwuzlaTerm **bitwuzla_term_get_children(const BitwuzlaTerm *term,
+                                                size_t *size);
 
 /**
  * Get the indices of an indexed term.

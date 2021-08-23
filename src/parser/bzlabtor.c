@@ -1473,7 +1473,7 @@ static BitwuzlaTerm *
 parse_lambda(BzlaBZLAParser *parser, uint32_t width)
 {
   uint32_t paramwidth;
-  BitwuzlaTerm **args;
+  const BitwuzlaTerm **args;
   BitwuzlaTerm *exp, *res;
 
   paramwidth = 0;
@@ -1516,7 +1516,7 @@ parse_apply(BzlaBZLAParser *parser, uint32_t width)
 {
   uint32_t i, arity;
   BitwuzlaTerm *res, *fun, *arg;
-  BitwuzlaTermPtrStack args;
+  BitwuzlaTermConstPtrStack args;
 
   if (parse_space(parser)) return 0;
 

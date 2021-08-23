@@ -1789,7 +1789,7 @@ bitwuzla_mk_term1(Bitwuzla *bitwuzla,
                   const BitwuzlaTerm *arg)
 {
   const BitwuzlaTerm *args[] = {arg};
-  return bitwuzla_mk_term(bitwuzla, kind, 1, (BitwuzlaTerm **) args);
+  return bitwuzla_mk_term(bitwuzla, kind, 1, args);
 }
 
 BitwuzlaTerm *
@@ -1799,7 +1799,7 @@ bitwuzla_mk_term2(Bitwuzla *bitwuzla,
                   const BitwuzlaTerm *arg1)
 {
   const BitwuzlaTerm *args[] = {arg0, arg1};
-  return bitwuzla_mk_term(bitwuzla, kind, 2, (BitwuzlaTerm **) args);
+  return bitwuzla_mk_term(bitwuzla, kind, 2, args);
 }
 
 BitwuzlaTerm *
@@ -1810,14 +1810,14 @@ bitwuzla_mk_term3(Bitwuzla *bitwuzla,
                   const BitwuzlaTerm *arg2)
 {
   const BitwuzlaTerm *args[] = {arg0, arg1, arg2};
-  return bitwuzla_mk_term(bitwuzla, kind, 3, (BitwuzlaTerm **) args);
+  return bitwuzla_mk_term(bitwuzla, kind, 3, args);
 }
 
 BitwuzlaTerm *
 bitwuzla_mk_term(Bitwuzla *bitwuzla,
                  BitwuzlaKind kind,
                  uint32_t argc,
-                 BitwuzlaTerm *args[])
+                 const BitwuzlaTerm *args[])
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
 
@@ -2448,8 +2448,7 @@ bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
 {
   const BitwuzlaTerm *args[] = {arg};
   uint32_t idxs[]            = {idx};
-  return bitwuzla_mk_term_indexed(
-      bitwuzla, kind, 1, (BitwuzlaTerm **) args, 1, idxs);
+  return bitwuzla_mk_term_indexed(bitwuzla, kind, 1, args, 1, idxs);
 }
 
 BitwuzlaTerm *
@@ -2461,8 +2460,7 @@ bitwuzla_mk_term1_indexed2(Bitwuzla *bitwuzla,
 {
   const BitwuzlaTerm *args[] = {arg};
   uint32_t idxs[]            = {idx0, idx1};
-  return bitwuzla_mk_term_indexed(
-      bitwuzla, kind, 1, (BitwuzlaTerm **) args, 2, idxs);
+  return bitwuzla_mk_term_indexed(bitwuzla, kind, 1, args, 2, idxs);
 }
 
 BitwuzlaTerm *
@@ -2474,8 +2472,7 @@ bitwuzla_mk_term2_indexed1(Bitwuzla *bitwuzla,
 {
   const BitwuzlaTerm *args[] = {arg0, arg1};
   uint32_t idxs[]            = {idx};
-  return bitwuzla_mk_term_indexed(
-      bitwuzla, kind, 2, (BitwuzlaTerm **) args, 1, idxs);
+  return bitwuzla_mk_term_indexed(bitwuzla, kind, 2, args, 1, idxs);
 }
 
 BitwuzlaTerm *
@@ -2488,15 +2485,14 @@ bitwuzla_mk_term2_indexed2(Bitwuzla *bitwuzla,
 {
   const BitwuzlaTerm *args[] = {arg0, arg1};
   uint32_t idxs[]            = {idx0, idx1};
-  return bitwuzla_mk_term_indexed(
-      bitwuzla, kind, 2, (BitwuzlaTerm **) args, 2, idxs);
+  return bitwuzla_mk_term_indexed(bitwuzla, kind, 2, args, 2, idxs);
 }
 
 BitwuzlaTerm *
 bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                          BitwuzlaKind kind,
                          uint32_t argc,
-                         BitwuzlaTerm *args[],
+                         const BitwuzlaTerm *args[],
                          uint32_t idxc,
                          uint32_t idxs[])
 {
@@ -3358,12 +3354,12 @@ bitwuzla_parse_format(Bitwuzla *bitwuzla,
 
 BitwuzlaTerm *
 bitwuzla_substitute_term(Bitwuzla *bitwuzla,
-                         const BitwuzlaTerm *term,
+                         BitwuzlaTerm *term,
                          size_t map_size,
-                         BitwuzlaTerm *map_keys[],
-                         BitwuzlaTerm *map_values[])
+                         const BitwuzlaTerm *map_keys[],
+                         const BitwuzlaTerm *map_values[])
 {
-  BitwuzlaTerm *terms[1] = {(BitwuzlaTerm *) term};
+  BitwuzlaTerm *terms[1] = {term};
   bitwuzla_substitute_terms(bitwuzla, 1, terms, map_size, map_keys, map_values);
   return terms[0];
 }
@@ -3373,8 +3369,8 @@ bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
                           size_t terms_size,
                           BitwuzlaTerm *terms[],
                           size_t map_size,
-                          BitwuzlaTerm *map_keys[],
-                          BitwuzlaTerm *map_values[])
+                          const BitwuzlaTerm *map_keys[],
+                          const BitwuzlaTerm *map_values[])
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_ABORT(terms_size == 0, "no terms to substitute");
@@ -3777,7 +3773,7 @@ bitwuzla_term_get_kind(const BitwuzlaTerm *term)
   return kind;
 }
 
-BitwuzlaTerm **
+const BitwuzlaTerm **
 bitwuzla_term_get_children(const BitwuzlaTerm *term, size_t *size)
 {
   BZLA_CHECK_ARG_NOT_NULL(term);
@@ -3860,7 +3856,7 @@ bitwuzla_term_get_children(const BitwuzlaTerm *term, size_t *size)
   {
     return NULL;
   }
-  return bitwuzla->d_term_children.start;
+  return (const BitwuzlaTerm **) bitwuzla->d_term_children.start;
 }
 
 uint32_t *
