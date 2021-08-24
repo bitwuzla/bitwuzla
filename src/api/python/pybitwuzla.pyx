@@ -75,9 +75,9 @@ cdef const bitwuzla_api.BitwuzlaTerm** _alloc_terms_const(size):
         raise MemoryError()
     return terms
 
-cdef bitwuzla_api.BitwuzlaSort** _alloc_sorts(size):
-    cdef bitwuzla_api.BitwuzlaSort **sorts = \
-        <bitwuzla_api.BitwuzlaSort **> \
+cdef const bitwuzla_api.BitwuzlaSort** _alloc_sorts_const(size):
+    cdef const bitwuzla_api.BitwuzlaSort **sorts = \
+        <const bitwuzla_api.BitwuzlaSort **> \
             malloc(size * sizeof(bitwuzla_api.BitwuzlaSort*))
     if not sorts:
         raise MemoryError()
@@ -113,8 +113,8 @@ cdef class BitwuzlaSort:
     cdef Bitwuzla bitwuzla
     cdef bitwuzla_api.BitwuzlaSort *_c_sort
 
-    cdef set(self, bitwuzla_api.BitwuzlaSort* sort):
-        self._c_sort = sort
+    cdef set(self, const bitwuzla_api.BitwuzlaSort* sort):
+        self._c_sort = <bitwuzla_api.BitwuzlaSort*> sort
 
     cdef bitwuzla_api.BitwuzlaSort* ptr(self):
         return self._c_sort
@@ -818,7 +818,8 @@ cdef class Bitwuzla:
             :rtype: :class:`~pybitwuzla.BitwuzlaSort`
           """
         cdef uint32_t arity = len(domain)
-        cdef bitwuzla_api.BitwuzlaSort **c_domain = _alloc_sorts(arity)
+        cdef const bitwuzla_api.BitwuzlaSort **c_domain = \
+                _alloc_sorts_const(arity)
         for i in range(arity):
             if not isinstance(domain[i], BitwuzlaSort):
                 raise ValueError('Argument at position {} ' \

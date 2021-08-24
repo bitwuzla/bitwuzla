@@ -27,6 +27,7 @@
 BZLA_DECLARE_STACK(BitwuzlaTermPtr, BitwuzlaTerm *);
 BZLA_DECLARE_STACK(BitwuzlaTermConstPtr, const BitwuzlaTerm *);
 BZLA_DECLARE_STACK(BitwuzlaSortPtr, BitwuzlaSort *);
+BZLA_DECLARE_STACK(BitwuzlaSortConstPtr, const BitwuzlaSort *);
 
 /*------------------------------------------------------------------------*/
 
@@ -5031,7 +5032,7 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
   uint32_t i;
   int32_t tag;
   bool is_bool_var = false;
-  BitwuzlaSortPtrStack args;
+  BitwuzlaSortConstPtrStack args;
   BzlaSMT2Node *fun;
   fun = 0;
   BitwuzlaSort *sort, *s;

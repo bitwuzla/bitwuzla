@@ -2290,7 +2290,7 @@ BitwuzlaSort *bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
  */
 BitwuzlaSort *bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
                                    uint32_t arity,
-                                   BitwuzlaSort *domain[],
+                                   const BitwuzlaSort *domain[],
                                    const BitwuzlaSort *codomain);
 
 /**

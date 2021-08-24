@@ -1366,7 +1366,7 @@ bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla, uint32_t exp_size, uint32_t sig_size)
 BitwuzlaSort *
 bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
                      uint32_t arity,
-                     BitwuzlaSort *domain[],
+                     const BitwuzlaSort *domain[],
                      const BitwuzlaSort *codomain)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
