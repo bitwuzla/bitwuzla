@@ -2623,7 +2623,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   else
   {
     BitwuzlaSort *s      = bitwuzla_term_get_sort(item_cur[2].exp);
-    BitwuzlaTerm *args[] = {item_cur[1].exp, item_cur[2].exp};
+    const BitwuzlaTerm *args[] = {item_cur[1].exp, item_cur[2].exp};
     uint32_t idxs[]      = {item_cur->idx0, item_cur->idx1};
     if (item_cur->tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
     {

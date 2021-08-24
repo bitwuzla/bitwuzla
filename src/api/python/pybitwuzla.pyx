@@ -67,6 +67,14 @@ cdef bitwuzla_api.BitwuzlaTerm** _alloc_terms(size):
         raise MemoryError()
     return terms
 
+cdef const bitwuzla_api.BitwuzlaTerm** _alloc_terms_const(size):
+    cdef const bitwuzla_api.BitwuzlaTerm **terms = \
+        <const bitwuzla_api.BitwuzlaTerm **> \
+            malloc(size * sizeof(bitwuzla_api.BitwuzlaTerm*))
+    if not terms:
+        raise MemoryError()
+    return terms
+
 cdef bitwuzla_api.BitwuzlaSort** _alloc_sorts(size):
     cdef bitwuzla_api.BitwuzlaSort **sorts = \
         <bitwuzla_api.BitwuzlaSort **> \
@@ -76,6 +84,15 @@ cdef bitwuzla_api.BitwuzlaSort** _alloc_sorts(size):
     return sorts
 
 cdef _to_terms(Bitwuzla bitwuzla, size, bitwuzla_api.BitwuzlaTerm **c_terms):
+    terms = []
+    for i in range(size):
+        term = BitwuzlaTerm(bitwuzla)
+        term.set(c_terms[i])
+        terms.append(term)
+    return terms
+
+cdef _to_terms_const(Bitwuzla bitwuzla, size,
+                     const bitwuzla_api.BitwuzlaTerm **c_terms):
     terms = []
     for i in range(size):
         term = BitwuzlaTerm(bitwuzla)
@@ -184,8 +201,8 @@ cdef class BitwuzlaTerm:
     cdef Bitwuzla bitwuzla
     cdef bitwuzla_api.BitwuzlaTerm *_c_term
 
-    cdef set(self, bitwuzla_api.BitwuzlaTerm* term):
-        self._c_term = term
+    cdef set(self, const bitwuzla_api.BitwuzlaTerm* term):
+        self._c_term = <bitwuzla_api.BitwuzlaTerm*> term
 
     cdef bitwuzla_api.BitwuzlaTerm* ptr(self):
         return self._c_term
@@ -210,10 +227,10 @@ cdef class BitwuzlaTerm:
         return self.ptr() == other.ptr()
 
     def get_children(self):
-        cdef bitwuzla_api.BitwuzlaTerm** children
+        cdef const bitwuzla_api.BitwuzlaTerm** children
         cdef size_t size
         children = bitwuzla_api.bitwuzla_term_get_children(self.ptr(), &size)
-        return _to_terms(self.bitwuzla, size, children)
+        return _to_terms_const(self.bitwuzla, size, children)
 
     def get_indices(self):
         cdef uint32_t* indices
@@ -1033,7 +1050,8 @@ cdef class Bitwuzla:
             raise ValueError('Expected list or tuple for indices')
 
         num_terms = len(terms)
-        cdef bitwuzla_api.BitwuzlaTerm **c_terms = _alloc_terms(num_terms)
+        cdef const bitwuzla_api.BitwuzlaTerm **c_terms =\
+                _alloc_terms_const(num_terms)
 
         for i in range(num_terms):
             if not isinstance(terms[i], BitwuzlaTerm):
@@ -1073,8 +1091,10 @@ cdef class Bitwuzla:
         num_terms = len(terms)
         size_map = len(map)
         cdef bitwuzla_api.BitwuzlaTerm **c_terms = _alloc_terms(num_terms)
-        cdef bitwuzla_api.BitwuzlaTerm **c_keys = _alloc_terms(size_map)
-        cdef bitwuzla_api.BitwuzlaTerm **c_values = _alloc_terms(size_map)
+        cdef const bitwuzla_api.BitwuzlaTerm **c_keys = \
+                _alloc_terms_const(size_map)
+        cdef const bitwuzla_api.BitwuzlaTerm **c_values = \
+                _alloc_terms_const(size_map)
 
         for i in range(num_terms):
             if not isinstance(terms[i], BitwuzlaTerm):

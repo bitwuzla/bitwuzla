@@ -196,7 +196,7 @@ cdef extern from "bitwuzla.h":
     BitwuzlaTerm *bitwuzla_mk_term(Bitwuzla *bitwuzla,
                                    BitwuzlaKind kind,
                                    uint32_t argc,
-                                   BitwuzlaTerm *args[]) \
+                                   const BitwuzlaTerm *args[]) \
         except +raise_py_error
 
 #    BitwuzlaTerm *bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
@@ -230,7 +230,7 @@ cdef extern from "bitwuzla.h":
     BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                                            BitwuzlaKind kind,
                                            uint32_t argc,
-                                           BitwuzlaTerm *args[],
+                                           const BitwuzlaTerm *args[],
                                            uint32_t idxc,
                                            uint32_t idxs[]) \
         except +raise_py_error
@@ -314,8 +314,8 @@ cdef extern from "bitwuzla.h":
                                    size_t terms_size,
                                    BitwuzlaTerm *terms[],
                                    size_t map_size,
-                                   BitwuzlaTerm *map_keys[],
-                                   BitwuzlaTerm *map_values[]) \
+                                   const BitwuzlaTerm *map_keys[],
+                                   const BitwuzlaTerm *map_values[]) \
         except +raise_py_error
 
 # -------------------------------------------------------------------------- #
@@ -368,8 +368,8 @@ cdef extern from "bitwuzla.h":
     BitwuzlaKind bitwuzla_term_get_kind(const BitwuzlaTerm *term) \
         except +raise_py_error
 
-    BitwuzlaTerm **bitwuzla_term_get_children(const BitwuzlaTerm *term,
-                                              size_t *size) \
+    const BitwuzlaTerm **bitwuzla_term_get_children(const BitwuzlaTerm *term,
+                                                    size_t *size) \
         except +raise_py_error
 
     uint32_t *bitwuzla_term_get_indices(const BitwuzlaTerm *term,
