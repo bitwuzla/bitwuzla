@@ -2515,13 +2515,13 @@ BitwuzlaTerm *bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
 
 /**
  * Create a floating-point value from its IEEE 754 standard representation
- * given as three bitvectors representing the sign bit, the exponent and the
- * significand.
+ * given as three bit-vector values representing the sign bit, the exponent and
+ * the significand.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param bv_sign The sign bit.
- * @param bv_exponent The exponent bit-vector.
- * @param bv_significand The significand bit-vector.
+ * @param bv_exponent The exponent bit-vector value.
+ * @param bv_significand The significand bit-vector value.
  *
  * @return A term representing the floating-point value.
  */
