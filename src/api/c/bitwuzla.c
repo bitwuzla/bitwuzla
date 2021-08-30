@@ -1212,6 +1212,18 @@ bitwuzla_set_option(Bitwuzla *bitwuzla, BitwuzlaOption option, uint32_t value)
                  "if unconstrained optimization is enabled");
     }
   }
+  else
+  {
+    if (option == BITWUZLA_OPT_INCREMENTAL)
+    {
+      BZLA_ABORT(bzla_opt_get(bzla,
+                              BZLA_IMPORT_BITWUZLA_OPTION(
+                                  BITWUZLA_OPT_PRODUCE_UNSAT_CORES)),
+                 "incremental solving cannot be disabled "
+                 "when unsat cores are enabled");
+    }
+  }
+
   uint32_t val = bzla_opt_get(bzla, opt);
 
   if (opt == BZLA_OPT_SAT_ENGINE)
