@@ -2757,7 +2757,7 @@ BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                                        uint32_t argc,
                                        const BitwuzlaTerm *args[],
                                        uint32_t idxc,
-                                       uint32_t idxs[]);
+                                       const uint32_t idxs[]);
 
 /**
  * Create a (first-order) constant of given sort with given symbol.

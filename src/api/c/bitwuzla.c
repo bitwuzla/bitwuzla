@@ -2459,7 +2459,7 @@ bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
                            uint32_t idx)
 {
   const BitwuzlaTerm *args[] = {arg};
-  uint32_t idxs[]            = {idx};
+  const uint32_t idxs[]      = {idx};
   return bitwuzla_mk_term_indexed(bitwuzla, kind, 1, args, 1, idxs);
 }
 
@@ -2471,7 +2471,7 @@ bitwuzla_mk_term1_indexed2(Bitwuzla *bitwuzla,
                            uint32_t idx1)
 {
   const BitwuzlaTerm *args[] = {arg};
-  uint32_t idxs[]            = {idx0, idx1};
+  const uint32_t idxs[]      = {idx0, idx1};
   return bitwuzla_mk_term_indexed(bitwuzla, kind, 1, args, 2, idxs);
 }
 
@@ -2483,7 +2483,7 @@ bitwuzla_mk_term2_indexed1(Bitwuzla *bitwuzla,
                            uint32_t idx)
 {
   const BitwuzlaTerm *args[] = {arg0, arg1};
-  uint32_t idxs[]            = {idx};
+  const uint32_t idxs[]      = {idx};
   return bitwuzla_mk_term_indexed(bitwuzla, kind, 2, args, 1, idxs);
 }
 
@@ -2496,7 +2496,7 @@ bitwuzla_mk_term2_indexed2(Bitwuzla *bitwuzla,
                            uint32_t idx1)
 {
   const BitwuzlaTerm *args[] = {arg0, arg1};
-  uint32_t idxs[]            = {idx0, idx1};
+  const uint32_t idxs[]      = {idx0, idx1};
   return bitwuzla_mk_term_indexed(bitwuzla, kind, 2, args, 2, idxs);
 }
 
@@ -2506,7 +2506,7 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
                          uint32_t argc,
                          const BitwuzlaTerm *args[],
                          uint32_t idxc,
-                         uint32_t idxs[])
+                         const uint32_t idxs[])
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
 
