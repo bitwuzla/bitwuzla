@@ -3142,9 +3142,9 @@ void bitwuzla_get_array_value(Bitwuzla *bitwuzla,
  */
 void bitwuzla_get_fun_value(Bitwuzla *bitwuzla,
                             const BitwuzlaTerm *term,
-                            BitwuzlaTerm ****args,
+                            const BitwuzlaTerm ****args,
                             size_t *arity,
-                            BitwuzlaTerm ***values,
+                            const BitwuzlaTerm ***values,
                             size_t *size);
 
 /**
