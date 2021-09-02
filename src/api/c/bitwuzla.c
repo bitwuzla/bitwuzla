@@ -3078,10 +3078,10 @@ bitwuzla_get_rm_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
 void
 bitwuzla_get_array_value(Bitwuzla *bitwuzla,
                          const BitwuzlaTerm *term,
-                         BitwuzlaTerm ***indices,
-                         BitwuzlaTerm ***values,
+                         const BitwuzlaTerm ***indices,
+                         const BitwuzlaTerm ***values,
                          size_t *size,
-                         BitwuzlaTerm **default_value)
+                         const BitwuzlaTerm **default_value)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   BZLA_CHECK_ARG_NOT_NULL(term);
@@ -3140,8 +3140,8 @@ bitwuzla_get_array_value(Bitwuzla *bitwuzla,
 
   if (*size)
   {
-    *indices = (BitwuzlaTerm **) bitwuzla->d_array_indices.start;
-    *values  = (BitwuzlaTerm **) bitwuzla->d_array_values.start;
+    *indices = (const BitwuzlaTerm **) bitwuzla->d_array_indices.start;
+    *values  = (const BitwuzlaTerm **) bitwuzla->d_array_values.start;
   }
 
   if (_default_value)

@@ -2579,7 +2579,8 @@ TEST_F(TestApi, get_array_value)
   bitwuzla_check_sat(d_bzla);
 
   size_t size;
-  BitwuzlaTerm **indices, **values, *default_value;
+  const BitwuzlaTerm **indices, **values;
+  const BitwuzlaTerm *default_value;
   bitwuzla_get_array_value(
       d_bzla, stores, &indices, &values, &size, &default_value);
 
