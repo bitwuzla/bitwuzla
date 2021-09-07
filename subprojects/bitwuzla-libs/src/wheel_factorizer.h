@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include "bitvector.h"
+#include "bzlabitvector.h"
 
 namespace bzlals {
 

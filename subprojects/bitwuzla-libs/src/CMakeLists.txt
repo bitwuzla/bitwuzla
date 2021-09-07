@@ -1,5 +1,5 @@
 set(libbzlabv_src_files
-  bitvector.cpp
+  bzlabitvector.cpp
   rng.cpp
 )
 
@@ -54,4 +54,4 @@ install(EXPORT bzlabv-export
   NAMESPACE BzlaBV::
   DESTINATION lib/cmake/BzlaBV)
 
-install(FILES bzlals.h bitvector.h DESTINATION include)
+install(FILES bzlals.h bzlabitvector.h DESTINATION include)

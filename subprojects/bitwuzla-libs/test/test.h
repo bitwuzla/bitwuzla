@@ -4,9 +4,9 @@
 #include <cmath>
 #include <string>
 
-#include "bitvector.h"
 #include "bitvector_domain.h"
 #include "bitvector_node.h"
+#include "bzlabitvector.h"
 #include "gtest/gtest.h"
 #include "rng.h"
 

@@ -4,8 +4,8 @@
 #include <cassert>
 #include <iostream>
 
-#include "bitvector.h"
 #include "bitvector_node.h"
+#include "bzlabitvector.h"
 #include "rng.h"
 
 #define BZLALS_PROB_USE_INV_VALUE 990
