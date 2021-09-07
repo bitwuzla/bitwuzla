@@ -1637,7 +1637,8 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
           tup    = bzla_iter_hashptr_next(&it);
           if (tup->arity == 0)
           {
-            val = bzla_exp_bv_const(bzla, bv_val);
+            val = bzla_node_mk_value(
+                bzla, bzla_sort_array_get_element(bzla, sort), bv_val);
             res = bzla_exp_const_array(bzla, sort, val);
             bzla_node_release(bzla, val);
             break;
@@ -1661,8 +1662,10 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
           {
             continue;
           }
-          val = bzla_exp_bv_const(bzla, bv_val);
-          arg = bzla_exp_bv_const(bzla, tup->bv[0]);
+          val = bzla_node_mk_value(
+              bzla, bzla_sort_array_get_element(bzla, sort), bv_val);
+          arg = bzla_node_mk_value(
+              bzla, bzla_sort_array_get_index(bzla, sort), tup->bv[0]);
           tmp = bzla_exp_write(bzla, res, arg, val);
           bzla_node_release(bzla, arg);
           bzla_node_release(bzla, val);
@@ -1687,17 +1690,22 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
         uf  = bzla_exp_uf(bzla, sort, 0);
         res = bzla_exp_apply_n(bzla, uf, params, nparams);
         bzla_node_release(bzla, uf);
+        BzlaSortId codomain_sort = bzla_sort_fun_get_codomain(bzla, sort);
+        BzlaSort *domain_sort =
+            bzla_sort_get_by_id(bzla, bzla_sort_fun_get_domain(bzla, sort));
         /* create ite chain */
         bzla_iter_hashptr_init(&it, (BzlaPtrHashTable *) model);
         while (bzla_iter_hashptr_has_next(&it))
         {
-          val = bzla_exp_bv_const(bzla, it.bucket->data.as_ptr);
+          val = bzla_node_mk_value(bzla, codomain_sort, it.bucket->data.as_ptr);
           tup = (BzlaBitVectorTuple *) bzla_iter_hashptr_next(&it);
           assert(tup->arity == nparams);
           cond = bzla_exp_true(bzla);
+          assert(tup->arity == domain_sort->tuple.num_elements);
           for (i = 0; i < nparams; i++)
           {
-            arg = bzla_exp_bv_const(bzla, tup->bv[i]);
+            arg = bzla_node_mk_value(
+                bzla, domain_sort->tuple.elements[i]->id, tup->bv[i]);
             eq  = bzla_exp_eq(bzla, arg, params[i]);
             tmp = bzla_exp_bv_and(bzla, cond, eq);
             bzla_node_release(bzla, eq);
