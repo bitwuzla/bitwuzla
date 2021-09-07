@@ -20,7 +20,7 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
-#include "bitvector.h"
+#include "bzlabitvector.h"
 #include "bitvector_domain.h"
 #include "bzlals.h"
 

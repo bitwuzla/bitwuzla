@@ -15,7 +15,7 @@ extern "C" {
 #include "bzlaslvprop.h"
 }
 
-#include "bitvector.h"
+#include "bzlabitvector.h"
 #include "bitvector_domain.h"
 #include "rng.h"
 
