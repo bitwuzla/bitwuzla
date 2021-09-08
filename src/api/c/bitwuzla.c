@@ -4098,7 +4098,7 @@ bitwuzla_term_get_symbol(const BitwuzlaTerm *term)
 }
 
 void
-bitwuzla_term_set_symbol(BitwuzlaTerm *term, const char *symbol)
+bitwuzla_term_set_symbol(const BitwuzlaTerm *term, const char *symbol)
 {
   BZLA_CHECK_ARG_NOT_NULL(term);
   BZLA_CHECK_ARG_STR_NOT_NULL_OR_EMPTY(symbol);

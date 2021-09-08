@@ -3636,7 +3636,7 @@ const char *bitwuzla_term_get_symbol(const BitwuzlaTerm *term);
  * @param term The term.
  * @param symbol The symbol.
  */
-void bitwuzla_term_set_symbol(BitwuzlaTerm *term, const char *symbol);
+void bitwuzla_term_set_symbol(const BitwuzlaTerm *term, const char *symbol);
 
 /**
  * Determine if the sorts of two terms are equal.
