@@ -3358,8 +3358,8 @@ BitwuzlaSort *bitwuzla_sort_array_get_element(const BitwuzlaSort *sort);
  *
  * @return The domain sorts of the function sort.
  */
-BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort,
-                                                  size_t *size);
+const BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(
+    const BitwuzlaSort *sort, size_t *size);
 
 /**
  * Get the codomain sort of a function sort.
@@ -3562,8 +3562,8 @@ BitwuzlaSort *bitwuzla_term_array_get_element_sort(const BitwuzlaTerm *term);
  *
  * @return The domain sorts of the function term.
  */
-BitwuzlaSort **bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term,
-                                                  size_t *size);
+const BitwuzlaSort **bitwuzla_term_fun_get_domain_sorts(
+    const BitwuzlaTerm *term, size_t *size);
 
 /**
  * Get the codomain sort of a function term.

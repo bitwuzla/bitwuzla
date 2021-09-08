@@ -2948,12 +2948,12 @@ TEST_F(TestApi, sort_fun_get_domain_sorts)
   ASSERT_DEATH(bitwuzla_sort_fun_get_domain_sorts(d_bv_sort32, &size),
                d_error_exp_fun_sort);
 
-  BitwuzlaSort **index_sorts =
+  const BitwuzlaSort **index_sorts =
       bitwuzla_sort_fun_get_domain_sorts(d_arr_sort_bv, &size);
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort32, index_sorts[0]));
   ASSERT_EQ(size, 1);
 
-  BitwuzlaSort **domain_sorts =
+  const BitwuzlaSort **domain_sorts =
       bitwuzla_sort_fun_get_domain_sorts(d_fun_sort, &size);
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort8, domain_sorts[0]));
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_fp_sort16, domain_sorts[1]));
@@ -3138,12 +3138,12 @@ TEST_F(TestApi, term_fun_get_domain_sorts)
   ASSERT_DEATH(bitwuzla_term_fun_get_domain_sorts(bv_term, &size),
                "expected function term");
 
-  BitwuzlaSort **index_sorts =
+  const BitwuzlaSort **index_sorts =
       bitwuzla_term_fun_get_domain_sorts(d_array, &size);
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort32, index_sorts[0]));
   ASSERT_EQ(size, 1);
 
-  BitwuzlaSort **domain_sorts =
+  const BitwuzlaSort **domain_sorts =
       bitwuzla_term_fun_get_domain_sorts(d_fun, &size);
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_bv_sort8, domain_sorts[0]));
   ASSERT_TRUE(bitwuzla_sort_is_equal(d_fp_sort16, domain_sorts[1]));

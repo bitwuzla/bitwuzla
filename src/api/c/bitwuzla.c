@@ -3513,7 +3513,7 @@ bitwuzla_sort_array_get_element(const BitwuzlaSort *sort)
       sort->d_bzla, bzla_sort_array_get_element(bzla, bzla_sort));
 }
 
-BitwuzlaSort **
+const BitwuzlaSort **
 bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort, size_t *size)
 {
   BZLA_CHECK_ARG_NOT_NULL(sort);
@@ -3540,7 +3540,7 @@ bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort, size_t *size)
     inc_ext_refs_sort(bzla, id);
   }
   *size = BZLA_COUNT_STACK(bitwuzla->d_sort_fun_domain_sorts);
-  return bitwuzla->d_sort_fun_domain_sorts.start;
+  return (const BitwuzlaSort **) bitwuzla->d_sort_fun_domain_sorts.start;
 }
 
 BitwuzlaSort *
@@ -3992,7 +3992,7 @@ bitwuzla_term_array_get_element_sort(const BitwuzlaTerm *term)
                                   bzla_node_get_sort_id(bzla_term)));
 }
 
-BitwuzlaSort **
+const BitwuzlaSort **
 bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term, size_t *size)
 {
   BZLA_CHECK_ARG_NOT_NULL(term);
@@ -4020,7 +4020,7 @@ bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term, size_t *size)
     inc_ext_refs_sort(bzla, id);
   }
   *size = BZLA_COUNT_STACK(bitwuzla->d_fun_domain_sorts);
-  return bitwuzla->d_fun_domain_sorts.start;
+  return (const BitwuzlaSort **) bitwuzla->d_fun_domain_sorts.start;
 }
 
 BitwuzlaSort *
