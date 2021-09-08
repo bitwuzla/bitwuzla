@@ -2829,7 +2829,7 @@ close_term(BzlaSMT2Parser *parser)
       }
 
       size_t size;
-      BitwuzlaSort **domain_sorts =
+      const BitwuzlaSort **domain_sorts =
           bitwuzla_term_fun_get_domain_sorts(fun, &size);
 
       BZLA_PUSH_STACK(fargs, fun);
