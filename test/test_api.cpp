@@ -492,6 +492,35 @@ TEST_F(TestApi, mk_fp_nan)
 
 TEST_F(TestApi, mk_bv_value)
 {
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "127", BITWUZLA_BV_BASE_DEC));
+  ASSERT_NO_FATAL_FAILURE(
+      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "-128", BITWUZLA_BV_BASE_DEC));
+  ASSERT_DEATH(
+      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "256", BITWUZLA_BV_BASE_DEC),
+      "does not fit into");
+  ASSERT_DEATH(
+      bitwuzla_mk_bv_value(d_bzla, d_bv_sort8, "-129", BITWUZLA_BV_BASE_DEC),
+      "does not fit into");
+
+  bitwuzla_set_option(d_bzla, BITWUZLA_OPT_PRODUCE_MODELS, 1);
+  bitwuzla_check_sat(d_bzla);
+  ASSERT_EQ(std::string(bitwuzla_get_bv_value(
+                d_bzla,
+                bitwuzla_mk_bv_value(
+                    d_bzla, d_bv_sort8, "-1", BITWUZLA_BV_BASE_DEC))),
+            "11111111");
+  ASSERT_EQ(std::string(bitwuzla_get_bv_value(
+                d_bzla,
+                bitwuzla_mk_bv_value(
+                    d_bzla, d_bv_sort8, "-123", BITWUZLA_BV_BASE_DEC))),
+            "10000101");
+  ASSERT_EQ(std::string(bitwuzla_get_bv_value(
+                d_bzla,
+                bitwuzla_mk_bv_value(
+                    d_bzla, d_bv_sort8, "-128", BITWUZLA_BV_BASE_DEC))),
+            "10000000");
+
   ASSERT_DEATH(
       bitwuzla_mk_bv_value(nullptr, d_bv_sort8, "010", BITWUZLA_BV_BASE_BIN),
       d_error_not_null);

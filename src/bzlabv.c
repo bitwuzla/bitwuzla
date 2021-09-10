@@ -228,6 +228,11 @@ bzla_bv_constd(BzlaMemMgr *mm, const char *str, uint32_t bw)
   BZLA_NEW(mm, res);
   res->width = bw;
   mpz_init_set_str(res->val, str, 10);
+  /* We assert that given string must fit into bw after conversion. However,
+   * we still need to normalize negative values. Values of size bw where the
+   * MSB is set are indicated as negative in GMP when created from
+   * mpz_init_set_str, which is problematic when converting to string. */
+  mpz_fdiv_r_2exp(res->val, res->val, bw);
 
   return res;
 }
@@ -402,6 +407,7 @@ bzla_bv_to_char(BzlaMemMgr *mm, const BzlaBitVector *bv)
 
   BZLA_CNEWN(mm, res, bw + 1);
   char *tmp     = mpz_get_str(0, 2, bv->val);
+  assert(tmp[0] == '1' || tmp[0] == '0');  // may not be negative
   uint64_t n    = strlen(tmp);
   uint64_t diff = bw - n;
   assert(n <= bw);

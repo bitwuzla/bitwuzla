@@ -468,6 +468,7 @@ bzla_util_check_bin_to_bv(BzlaMemMgr *mm, const char *str, uint32_t bw)
 {
   assert(mm);
   assert(str);
+  assert(str[0] != '-');
   assert(bw);
 
   (void) mm;
@@ -505,6 +506,7 @@ bzla_util_check_hex_to_bv(BzlaMemMgr *mm, const char *str, uint32_t bw)
 {
   assert(mm);
   assert(str);
+  assert(str[0] != '-');
   assert(bw);
 
   char *bits;
