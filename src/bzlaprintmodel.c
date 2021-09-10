@@ -659,15 +659,16 @@ bzla_print_value_smt2(Bzla *bzla, BzlaNode *exp, char *symbol_str, FILE *file)
   uint32_t base;
 
   base = bzla_opt_get(bzla, BZLA_OPT_OUTPUT_NUMBER_FORMAT);
-  if (bzla_node_is_fun(bzla_simplify_exp(bzla, exp)))
+  exp  = bzla_simplify_exp(bzla, exp);
+  if (bzla_node_is_fun(exp))
   {
     print_fun_value_smt2(bzla, exp, symbol_str, base, file);
   }
-  else if (bzla_node_is_fp(bzla, bzla_simplify_exp(bzla, exp)))
+  else if (bzla_node_is_fp(bzla, exp))
   {
     print_fp_value_smt2(bzla, exp, symbol_str, file);
   }
-  else if (bzla_node_is_rm(bzla, bzla_simplify_exp(bzla, exp)))
+  else if (bzla_node_is_rm(bzla, exp))
   {
     print_rm_value_smt2(bzla, exp, symbol_str, file);
   }
