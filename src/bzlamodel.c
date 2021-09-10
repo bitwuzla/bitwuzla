@@ -1257,7 +1257,8 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
         bzla_hashint_table_add(expanded, real_cur->id);
       }
       /* For FP terms we need to ensure that we have word blasted them. */
-      else if (bzla_node_fp_needs_word_blast(bzla, real_cur))
+      else if (!bzla_node_is_apply(real_cur)
+               && bzla_node_fp_needs_word_blast(bzla, real_cur))
       {
         next = bzla_fp_word_blast(bzla, real_cur);
         assert(next);
@@ -1457,7 +1458,22 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
                                    param_model_cache);
           if (!result)
           {
-            result = bzla_bv_zero(mm, bzla_node_bv_get_width(bzla, cur_parent));
+            BzlaSortId sort = bzla_node_get_sort_id(cur_parent);
+            uint32_t bw;
+            if (bzla_sort_is_fp(bzla, sort))
+            {
+              bw = bzla_sort_fp_get_bv_width(bzla, sort);
+            }
+            else if (bzla_sort_is_rm(bzla, sort))
+            {
+              bw = BZLA_RM_BW;
+            }
+            else
+            {
+              assert(bzla_sort_is_bv(bzla, sort));
+              bw = bzla_node_bv_get_width(bzla, cur_parent);
+            }
+            result = bzla_bv_zero(mm, bw);
           }
           break;
 
