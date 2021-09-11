@@ -3707,10 +3707,6 @@ bitwuzla_term_get_kind(const BitwuzlaTerm *term)
     return BITWUZLA_KIND_BV_NOT;
   }
 
-  BZLA_ABORT(bzla_node_real_addr(bzla_term)->arity == 0
-                 || bzla_node_is_const_array(bzla_term),
-             "cannot get kind of var/const/value terms.");
-
   switch (k)
   {
     case BZLA_BV_SLICE_NODE: kind = BITWUZLA_KIND_BV_EXTRACT; break;
@@ -3767,7 +3763,16 @@ bitwuzla_term_get_kind(const BitwuzlaTerm *term)
 
     case BZLA_FORALL_NODE: kind = BITWUZLA_KIND_FORALL; break;
     case BZLA_EXISTS_NODE: kind = BITWUZLA_KIND_EXISTS; break;
-    case BZLA_LAMBDA_NODE: kind = BITWUZLA_KIND_LAMBDA; break;
+    case BZLA_LAMBDA_NODE:
+      if (bzla_node_is_const_array(bzla_term))
+      {
+        kind = BITWUZLA_KIND_CONST_ARRAY;
+      }
+      else
+      {
+        kind = BITWUZLA_KIND_LAMBDA;
+      }
+      break;
 
     case BZLA_COND_NODE: kind = BITWUZLA_KIND_ITE; break;
     case BZLA_FP_ADD_NODE: kind = BITWUZLA_KIND_FP_ADD; break;
@@ -3776,6 +3781,22 @@ bitwuzla_term_get_kind(const BitwuzlaTerm *term)
     case BZLA_UPDATE_NODE: kind = BITWUZLA_KIND_ARRAY_STORE; break;
 
     default:
+      if (bzla_node_is_var(bzla_term))
+      {
+        kind = BITWUZLA_KIND_CONST;
+        break;
+      }
+      if (bzla_node_is_bv_const(bzla_term) || bzla_node_is_fp_const(bzla_term)
+          || bzla_node_is_rm_const(bzla_term))
+      {
+        kind = BITWUZLA_KIND_VAL;
+        break;
+      }
+      if (bzla_node_is_param(bzla_term))
+      {
+        kind = BITWUZLA_KIND_VAR;
+        break;
+      }
       BZLA_ABORT(k != BZLA_FP_FMA_NODE,
                  "unhandled internal kind: %s",
                  g_bzla_op2str[k]);

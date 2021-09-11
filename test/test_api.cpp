@@ -3661,6 +3661,11 @@ TEST_F(TestApi, terms)
     term = nullptr;
     switch (kind)
     {
+      case BITWUZLA_KIND_CONST:
+      case BITWUZLA_KIND_CONST_ARRAY:
+      case BITWUZLA_KIND_VAL:
+      case BITWUZLA_KIND_VAR: continue;
+
       // Boolean
       case BITWUZLA_KIND_NOT:
         term = bitwuzla_mk_term1(d_bzla, kind, bool_args[0]);
@@ -3941,22 +3946,42 @@ TEST_F(TestApi, terms)
   BitwuzlaTerm *t;
 
   t = bitwuzla_mk_const(d_bzla, bv_sort, nullptr);
-  ASSERT_DEATH(bitwuzla_term_get_kind(t), "cannot get kind");
+  ASSERT_EQ(bitwuzla_term_get_kind(t), BITWUZLA_KIND_CONST);
   ASSERT_EQ(bitwuzla_term_get_children(t, &size), nullptr);
   ASSERT_EQ(size, 0);
 
   t = bitwuzla_mk_var(d_bzla, bv_sort, nullptr);
-  ASSERT_DEATH(bitwuzla_term_get_kind(t), "cannot get kind");
+  ASSERT_EQ(bitwuzla_term_get_kind(t), BITWUZLA_KIND_VAR);
+  ASSERT_EQ(bitwuzla_term_get_children(t, &size), nullptr);
+  ASSERT_EQ(size, 0);
+
+  t = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNA);
+  ASSERT_EQ(bitwuzla_term_get_kind(t), BITWUZLA_KIND_VAL);
+  ASSERT_EQ(bitwuzla_term_get_children(t, &size), nullptr);
+  ASSERT_EQ(size, 0);
+
+  t = bitwuzla_mk_fp_value_from_real(d_bzla, d_fp_sort16, t, "1.1");
+  ASSERT_EQ(bitwuzla_term_get_kind(t), BITWUZLA_KIND_VAL);
+  ASSERT_EQ(bitwuzla_term_get_children(t, &size), nullptr);
+  ASSERT_EQ(size, 0);
+
+  t = bitwuzla_mk_fp_nan(d_bzla, d_fp_sort16);
+  ASSERT_EQ(bitwuzla_term_get_kind(t), BITWUZLA_KIND_VAL);
+  ASSERT_EQ(bitwuzla_term_get_children(t, &size), nullptr);
+  ASSERT_EQ(size, 0);
+
+  t = bitwuzla_mk_bv_one(d_bzla, bv_sort);
+  ASSERT_EQ(bitwuzla_term_get_kind(t), BITWUZLA_KIND_VAL);
   ASSERT_EQ(bitwuzla_term_get_children(t, &size), nullptr);
   ASSERT_EQ(size, 0);
 
   t = bitwuzla_mk_bv_value(d_bzla, bv_sort, "43", BITWUZLA_BV_BASE_DEC);
-  ASSERT_DEATH(bitwuzla_term_get_kind(t), "cannot get kind");
+  ASSERT_EQ(bitwuzla_term_get_kind(t), BITWUZLA_KIND_VAL);
   ASSERT_EQ(bitwuzla_term_get_children(t, &size), nullptr);
   ASSERT_EQ(size, 0);
 
   t = bitwuzla_mk_const_array(d_bzla, array_sort, t);
-  ASSERT_DEATH(bitwuzla_term_get_kind(t), "cannot get kind");
+  ASSERT_EQ(bitwuzla_term_get_kind(t), BITWUZLA_KIND_CONST_ARRAY);
   ASSERT_NE(bitwuzla_term_get_children(t, &size), nullptr);
   ASSERT_EQ(size, 1);
 }

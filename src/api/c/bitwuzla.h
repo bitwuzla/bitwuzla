@@ -1541,6 +1541,16 @@ typedef enum BitwuzlaOption BitwuzlaOption;
 /** The term kind. */
 enum BitwuzlaKind
 {
+  /*! First order constant. */
+  BITWUZLA_KIND_CONST,
+  /*! Constant array. */
+  BITWUZLA_KIND_CONST_ARRAY,
+  /*! Bound variable. */
+  BITWUZLA_KIND_VAR,
+  /*! Value. */
+  BITWUZLA_KIND_VAL,
+
+  // operators
   /*! Boolean and.
    *
    *  SMT-LIB: \c and */
@@ -2483,7 +2493,8 @@ BitwuzlaTerm *bitwuzla_mk_fp_nan(Bitwuzla *bitwuzla, const BitwuzlaSort *sort);
  * @param value A string representing the value.
  * @param base The base in which the string is given.
  *
- * @return A term representing the bit-vector value of given sort.
+ * @return A term of kind BITWUZLA_KIND_VAL, representing the bit-vector value
+ *         of given sort.
  *
  * @see
  *   * `bitwuzla_mk_bv_sort`
@@ -2504,7 +2515,8 @@ BitwuzlaTerm *bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
  * @param sort The sort of the value.
  * @param value The unsigned integer representation of the bit-vector value.
  *
- * @return A term representing the bit-vector value of given sort.
+ * @return A term of kind BITWUZLA_KIND_VAL, representing the bit-vector value
+ *         of given sort.
  *
  * @see
  *   * `bitwuzla_mk_bv_sort`
@@ -2523,7 +2535,8 @@ BitwuzlaTerm *bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
  * @param bv_exponent The exponent bit-vector value.
  * @param bv_significand The significand bit-vector value.
  *
- * @return A term representing the floating-point value.
+ * @return A term of kind BITWUZLA_KIND_VAL, representing the floating-point
+ *         value.
  */
 BitwuzlaTerm *bitwuzla_mk_fp_value(Bitwuzla *bitwuzla,
                                    const BitwuzlaTerm *bv_sign,
@@ -2539,7 +2552,8 @@ BitwuzlaTerm *bitwuzla_mk_fp_value(Bitwuzla *bitwuzla,
  * @param rm The rounding mode.
  * @param real The decimal string representing a real value.
  *
- * @return A term representing the floating-point value of given sort.
+ * @return A term of kind BITWUZLA_KIND_VAL, representing the floating-point
+ *         value of given sort.
  *
  * @see
  *   * `bitwuzla_mk_fp_sort`
@@ -2560,7 +2574,8 @@ BitwuzlaTerm *bitwuzla_mk_fp_value_from_real(Bitwuzla *bitwuzla,
  * @param num The decimal string representing the numerator.
  * @param den The decimal string representing the denominator.
  *
- * @return A term representing the floating-point value of given sort.
+ * @return A term of kind BITWUZLA_KIND_VAL, representing the floating-point
+ *         value of given sort.
  *
  * @see
  *   * `bitwuzla_mk_fp_sort`
@@ -2577,7 +2592,8 @@ BitwuzlaTerm *bitwuzla_mk_fp_value_from_rational(Bitwuzla *bitwuzla,
  * @param bitwuzla The Bitwuzla instance.
  * @param rm The rounding mode value.
  *
- * @return A term representing the rounding mode value.
+ * @return A term of kind BITWUZLA_KIND_VAL, representing the rounding mode
+ *         value.
  *
  * @see
  *   * `BitwuzlaRoundingMode`
@@ -2768,7 +2784,7 @@ BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
  * @param sort The sort of the constant.
  * @param symbol The symbol of the constant.
  *
- * @return A term representing the constant.
+ * @return A term of kind BITWUZLA_KIND_CONST, representing the constant.
  *
  * @see
  *   * `bitwuzla_mk_array_sort`
@@ -2790,7 +2806,8 @@ BitwuzlaTerm *bitwuzla_mk_const(Bitwuzla *bitwuzla,
  * @param sort The sort of the array.
  * @param value The value to initialize the elements of the array with.
  *
- * @return A term representing a constant array of given sort.
+ * @return A term of kind BITWUZLA_KIND_CONST_ARRAY, representing a constant
+ *         array of given sort.
  *
  * @see
  *   * `bitwuzla_mk_array_sort`
@@ -2808,7 +2825,7 @@ BitwuzlaTerm *bitwuzla_mk_const_array(Bitwuzla *bitwuzla,
  * @param sort The sort of the variable.
  * @param symbol The symbol of the variable.
  *
- * @return A term representing the variable.
+ * @return A term of kind BITWUZLA_KIND_VAR, representing the variable.
  *
  * @see
  *   * `bitwuzla_mk_bool_sort`
