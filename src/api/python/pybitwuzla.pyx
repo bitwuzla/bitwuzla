@@ -119,7 +119,7 @@ cdef class BitwuzlaSort:
     cdef bitwuzla_api.BitwuzlaSort* ptr(self):
         return self._c_sort
 
-    cdef BitwuzlaSort new_sort(self, bitwuzla_api.BitwuzlaSort* sort):
+    cdef BitwuzlaSort new_sort(self, const bitwuzla_api.BitwuzlaSort* sort):
         res = BitwuzlaSort(self.bitwuzla)
         res.set(sort)
         return res
@@ -154,7 +154,7 @@ cdef class BitwuzlaSort:
         """
         """
         cdef size_t size
-        cdef bitwuzla_api.BitwuzlaSort** sorts = \
+        cdef const bitwuzla_api.BitwuzlaSort** sorts = \
                 bitwuzla_api.bitwuzla_sort_fun_get_domain_sorts(self.ptr(),
                                                                 &size)
 

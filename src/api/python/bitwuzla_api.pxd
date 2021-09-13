@@ -335,7 +335,7 @@ cdef extern from "bitwuzla.h":
         except +raise_py_error
     BitwuzlaSort *bitwuzla_sort_array_get_element(const BitwuzlaSort *sort) \
         except +raise_py_error
-    BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(
+    const BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(
         const BitwuzlaSort *sort,
         size_t *size) \
         except +raise_py_error
