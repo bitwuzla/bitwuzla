@@ -2,8 +2,7 @@
 
 #include "test.h"
 
-namespace bzlals {
-namespace test {
+namespace bzlatest {
 
 /* -------------------------------------------------------------------------- */
 
@@ -532,5 +531,4 @@ TEST_F(TestBitVectorDomain, to_string)
 
 /* -------------------------------------------------------------------------- */
 
-}  // namespace test
-}  // namespace bzlals
+}  // namespace bzlatest

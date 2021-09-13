@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace bzlals {
+namespace bzlabv {
 
 /**
  * A GMP mpz_t wrapper.
@@ -34,5 +34,5 @@ struct GMPMpz
   mpz_t d_mpz;
 };
 
-}
+}  // namespace bzlabv
 #endif

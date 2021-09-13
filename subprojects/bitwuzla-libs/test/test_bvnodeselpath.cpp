@@ -1,6 +1,6 @@
 #include "test.h"
-namespace bzlals {
-namespace test {
+
+namespace bzlatest {
 
 class TestBvNodeSelPath : public TestBvNode
 {
@@ -544,5 +544,5 @@ TEST_F(TestBvNodeSelPath, not ) { test_not(); }
 TEST_F(TestBvNodeSelPath, extract) { test_extract(); }
 
 TEST_F(TestBvNodeSelPath, sext) { test_sext(); }
-}  // namespace test
-}  // namespace bzlals
+
+}  // namespace bzlatest

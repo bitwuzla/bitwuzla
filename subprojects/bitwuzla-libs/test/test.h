@@ -10,8 +10,11 @@
 #include "gtest/gtest.h"
 #include "rng.h"
 
-namespace bzlals {
-namespace test {
+using namespace bzlabv;
+using namespace bzlals;
+using namespace bzlarng;
+
+namespace bzlatest {
 
 /* -------------------------------------------------------------------------- */
 
@@ -1181,6 +1184,5 @@ TestBvNode::test_sext(Kind kind)
 
 /* -------------------------------------------------------------------------- */
 
-}  // namespace test
-}  // namespace bzlals
+}  // namespace bzlatest
 #endif

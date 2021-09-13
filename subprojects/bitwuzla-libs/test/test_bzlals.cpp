@@ -2,8 +2,7 @@
 #include "bzlals.h"
 #include "test.h"
 
-namespace bzlals {
-namespace test {
+namespace bzlatest {
 
 class TestBzlaLs : public TestBvNodeCommon
 {
@@ -917,5 +916,4 @@ TEST_F(TestBzlaLs, extract) { test_move_extract(); }
 
 TEST_F(TestBzlaLs, sext) { test_move_sext(); }
 
-}  // namespace test
-}  // namespace bzlals
+}  // namespace bzlatest

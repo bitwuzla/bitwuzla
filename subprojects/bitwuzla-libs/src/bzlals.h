@@ -7,21 +7,27 @@
 #include <unordered_set>
 #include <vector>
 
-namespace bzlals {
-
-class RNG;
-struct BzlaLsMove;
+namespace bzlabv {
 class BitVector;
-class BitVectorDomain;
-class BitVectorNode;
+}
 
-namespace test {
+namespace bzlarng {
+class RNG;
+}
+
+namespace bzlatest {
 class TestBzlaLs;
 }
 
+namespace bzlals {
+
+struct BzlaLsMove;
+class BitVectorDomain;
+class BitVectorNode;
+
 class BzlaLs
 {
-  friend class test::TestBzlaLs;
+  friend class ::bzlatest::TestBzlaLs;
 
  public:
   using NodesIdTable = std::vector<std::unique_ptr<BitVectorNode>>;
@@ -147,7 +153,8 @@ class BzlaLs
                            uint32_t child0,
                            const std::vector<uint32_t>& indices);
 
-  uint32_t mk_node(const BitVector& assignment, const BitVectorDomain& domain);
+  uint32_t mk_node(const ::bzlabv::BitVector& assignment,
+                   const BitVectorDomain& domain);
   uint32_t mk_node(OperatorKind kind,
                    const BitVectorDomain& domain,
                    const std::vector<uint32_t>& children);
@@ -158,8 +165,8 @@ class BzlaLs
 
   uint32_t invert_node(uint32_t id);
 
-  const BitVector& get_assignment(uint32_t id) const;
-  void set_assignment(uint32_t id, const BitVector& assignment);
+  const ::bzlabv::BitVector& get_assignment(uint32_t id) const;
+  void set_assignment(uint32_t id, const ::bzlabv::BitVector& assignment);
   const BitVectorDomain& get_domain(uint32_t node) const;
   // void set_domain(uint32_t node, const BitVectorDomain& domain);
 
@@ -187,16 +194,18 @@ class BzlaLs
   bool is_leaf_node(const BitVectorNode* node) const;
   bool is_root_node(const BitVectorNode* node) const;
   void update_roots(uint32_t id);
-  uint64_t update_cone(BitVectorNode* node, const BitVector& assignment);
-  BzlaLsMove select_move(BitVectorNode* root, const BitVector& t_root);
+  uint64_t update_cone(BitVectorNode* node,
+                       const ::bzlabv::BitVector& assignment);
+  BzlaLsMove select_move(BitVectorNode* root,
+                         const ::bzlabv::BitVector& t_root);
 
-  std::unique_ptr<RNG> d_rng;
+  std::unique_ptr<::bzlarng::RNG> d_rng;
 
   NodesIdTable d_nodes;
   std::unordered_set<uint32_t> d_roots;
   ParentsMap d_parents;
 
-  std::unique_ptr<BitVector> d_one;
+  std::unique_ptr<::bzlabv::BitVector> d_one;
 
   uint32_t d_log_level = 0;
 

@@ -1,5 +1,7 @@
 #include "wheel_factorizer.h"
 
+using namespace bzlabv;
+
 namespace bzlals {
 
 WheelFactorizer::WheelFactorizer(const BitVector& n, uint64_t limit)

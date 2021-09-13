@@ -1,7 +1,6 @@
 #include "test.h"
 
-namespace bzlals {
-namespace test {
+namespace bzlatest {
 
 class TestBvNodeIsEss : public TestBvNode
 {
@@ -98,5 +97,4 @@ TEST_F(TestBvNodeIsEss, extract) { test_extract(IS_ESS); }
 
 TEST_F(TestBvNodeIsEss, sext) { test_sext(IS_ESS); }
 
-}  // namespace test
-}  // namespace bzlals
+}  // namespace bzlatest

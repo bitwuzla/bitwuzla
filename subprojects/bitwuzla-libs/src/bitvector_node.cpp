@@ -5,6 +5,9 @@
 
 #include "rng.h"
 
+using namespace bzlabv;
+using namespace bzlarng;
+
 namespace bzlals {
 
 /* -------------------------------------------------------------------------- */

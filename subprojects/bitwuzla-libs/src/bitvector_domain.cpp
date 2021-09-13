@@ -7,6 +7,9 @@
 #include "rng.h"
 #include "wheel_factorizer.h"
 
+using namespace bzlabv;
+using namespace bzlarng;
+
 namespace bzlals {
 
 /*----------------------------------------------------------------------------*/

@@ -4,8 +4,9 @@
 
 #include "test.h"
 
-namespace bzlals {
-namespace test {
+using namespace bzlarng;
+
+namespace bzlatest {
 
 /* -------------------------------------------------------------------------- */
 
@@ -445,5 +446,4 @@ TEST_F(TestBvDomainGen, random_signed)
                "has_random");
 }
 
-}  // namespace test
-}  // namespace bzlals
+}  // namespace bzlatest

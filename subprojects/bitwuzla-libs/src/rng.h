@@ -5,14 +5,12 @@
 #include <memory>
 #include <random>
 
-namespace bzlals {
+namespace bzlarng {
 
 struct GMPRandState;
 
 class RNG
 {
-  friend class BitVector;
-
  public:
   /**
    * The values for the selected choice when picking from multiple choices,
@@ -67,6 +65,8 @@ class RNG
   template <typename TSet, typename TPicked>
   TPicked pick_from_set(const TSet& data);
 
+  GMPRandState* get_gmp_state() const { return d_gmp_state.get(); }
+
  private:
   /** The seed of the random number generator. */
   uint32_t d_seed;
@@ -86,6 +86,6 @@ RNG::pick_from_set(const TSet& set)
   return *it;
 }
 
-}  // namespace bzlals
+}  // namespace bzlarng
 
 #endif

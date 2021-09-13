@@ -10,6 +10,9 @@
 
 #define BZLALS_PROB_USE_INV_VALUE 990
 
+using namespace bzlabv;
+using namespace bzlarng;
+
 namespace bzlals {
 
 /* -------------------------------------------------------------------------- */
