@@ -1,28 +1,47 @@
 set(libbzlabv_src_files
-  bzlabitvector.cpp
-  rng.cpp
+  bitvector.cpp
 )
 
 set(libbzlals_src_files
-  bzlals.cpp
+  ls.cpp
   bitvector_domain.cpp
   bitvector_node.cpp
-  rng.cpp
   wheel_factorizer.cpp
 )
+
+set(libbzlarng_src_files
+  rng.cpp
+)
+
+#-----------------------------------------------------------------------------#
+# bzlarng library
+
+add_library(bzlarng ${libbzlarng_src_files})
+target_include_directories(bzlarng PRIVATE ${GMP_INCLUDE_DIR})
+target_link_libraries(bzlarng ${GMP_LIBRARIES})
+
+target_include_directories(bzlarng
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>)
 
 #-----------------------------------------------------------------------------#
 # bzlabv library
 
 add_library(bzlabv ${libbzlabv_src_files})
 target_include_directories(bzlabv PRIVATE ${GMP_INCLUDE_DIR})
-target_link_libraries(bzlabv ${GMP_LIBRARIES})
+target_link_libraries(bzlabv ${GMP_LIBRARIES} bzlarng)
+
+target_include_directories(bzlabv
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>)
 
 #-----------------------------------------------------------------------------#
 # bzlals library
 
 add_library(bzlals ${libbzlals_src_files})
-target_link_libraries(bzlals bzlabv)
+target_link_libraries(bzlals bzlabv bzlarng)
 
 target_include_directories(bzlals
   PUBLIC
@@ -32,26 +51,37 @@ target_include_directories(bzlals
 #-----------------------------------------------------------------------------#
 # Install
 
-install(TARGETS bzlals
-  EXPORT bzlals-export
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-)
-
 install(TARGETS bzlabv
   EXPORT bzlabv-export
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
 
-install(EXPORT bzlals-export
-  FILE BzlaLSTargets.cmake
-  NAMESPACE BzlaLS::
-  DESTINATION lib/cmake/BzlaLS)
+install(TARGETS bzlals
+  EXPORT bzlals-export
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+
+install(TARGETS bzlarng
+  EXPORT bzlarng-export
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
 
 install(EXPORT bzlabv-export
   FILE BzlaBVTargets.cmake
   NAMESPACE BzlaBV::
   DESTINATION lib/cmake/BzlaBV)
 
-install(FILES bzlals.h bzlabitvector.h DESTINATION include)
+install(EXPORT bzlals-export
+  FILE BzlaLSTargets.cmake
+  NAMESPACE BzlaLS::
+  DESTINATION lib/cmake/BzlaLS)
+
+install(EXPORT bzlarng-export
+  FILE BzlaBVTargets.cmake
+  NAMESPACE BzlaRNG::
+  DESTINATION lib/cmake/BzlaRNG)
+
+install(FILES ls.h bitvector.h DESTINATION include/bzlalibs)

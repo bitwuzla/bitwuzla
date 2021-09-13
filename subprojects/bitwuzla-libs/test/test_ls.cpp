@@ -1,13 +1,13 @@
 #include "bitvector_node.h"
-#include "bzlals.h"
+#include "ls.h"
 #include "test.h"
 
 namespace bzlatest {
 
-class TestBzlaLs : public TestBvNodeCommon
+class TestLs : public TestBvNodeCommon
 {
  protected:
-  static constexpr bool TEST_SLOW = false;
+  static constexpr bool TEST_SLOW       = false;
   static constexpr uint32_t NMOVES_SLOW = 35;
   static constexpr uint32_t NMOVES_FAST = 20;
 
@@ -15,7 +15,7 @@ class TestBzlaLs : public TestBvNodeCommon
   {
     TestBvNodeCommon::SetUp();
 
-    d_bzlals.reset(new BzlaLs(100, 100));
+    d_ls.reset(new LocalSearch(100, 100));
 
     d_two4  = BitVector(4, "0010");
     d_for4  = BitVector(4, "0100");
@@ -33,86 +33,86 @@ class TestBzlaLs : public TestBvNodeCommon
     d_one4  = BitVector::mk_one(4);
     d_one1  = BitVector::mk_one(1);
 
-    d_c1 = d_bzlals->mk_node(d_ten4, BitVectorDomain(d_ten4));
-    d_v1 = d_bzlals->mk_node(TEST_BW);
-    d_v2 = d_bzlals->mk_node(TEST_BW);
-    d_v3 = d_bzlals->mk_node(TEST_BW);
+    d_c1 = d_ls->mk_node(d_ten4, BitVectorDomain(d_ten4));
+    d_v1 = d_ls->mk_node(TEST_BW);
+    d_v2 = d_ls->mk_node(TEST_BW);
+    d_v3 = d_ls->mk_node(TEST_BW);
 
-    d_bzlals->set_assignment(d_v2, d_ones4);
-    d_bzlals->set_assignment(d_v3, d_six4);
+    d_ls->set_assignment(d_v2, d_ones4);
+    d_ls->set_assignment(d_v3, d_six4);
 
     // v1 + c1
     d_v1pc1 =
-        d_bzlals->mk_node(BzlaLs::OperatorKind::ADD, TEST_BW, {d_v1, d_c1});
+        d_ls->mk_node(LocalSearch::OperatorKind::ADD, TEST_BW, {d_v1, d_c1});
     // (v1 + c1) * v2
     d_v1pc1mv2 =
-        d_bzlals->mk_node(BzlaLs::OperatorKind::MUL, TEST_BW, {d_v1pc1, d_v2});
+        d_ls->mk_node(LocalSearch::OperatorKind::MUL, TEST_BW, {d_v1pc1, d_v2});
     // v1 + v2
     d_v1pv2 =
-        d_bzlals->mk_node(BzlaLs::OperatorKind::ADD, TEST_BW, {d_v1, d_v2});
+        d_ls->mk_node(LocalSearch::OperatorKind::ADD, TEST_BW, {d_v1, d_v2});
     // (v1 + v2) & v2
     d_v1pv2av2 =
-        d_bzlals->mk_node(BzlaLs::OperatorKind::AND, TEST_BW, {d_v1pv2, d_v2});
+        d_ls->mk_node(LocalSearch::OperatorKind::AND, TEST_BW, {d_v1pv2, d_v2});
 
     // v1[0:0]
-    d_v1e = d_bzlals->mk_indexed_node(
-        BzlaLs::OperatorKind::EXTRACT, 1, d_v1, {0, 0});
+    d_v1e = d_ls->mk_indexed_node(
+        LocalSearch::OperatorKind::EXTRACT, 1, d_v1, {0, 0});
     // v3[0:0]
-    d_v3e = d_bzlals->mk_indexed_node(
-        BzlaLs::OperatorKind::EXTRACT, 1, d_v3, {0, 0});
+    d_v3e = d_ls->mk_indexed_node(
+        LocalSearch::OperatorKind::EXTRACT, 1, d_v3, {0, 0});
     // v1[0:0] / v3[0:0]
     d_v1edv3e =
-        d_bzlals->mk_node(BzlaLs::OperatorKind::UDIV, 1, {d_v1e, d_v3e});
+        d_ls->mk_node(LocalSearch::OperatorKind::UDIV, 1, {d_v1e, d_v3e});
     // sext(v1[0:0] / v3[0:0], 3)
-    d_v1edv3e_ext = d_bzlals->mk_indexed_node(
-        BzlaLs::OperatorKind::SEXT, TEST_BW, d_v1edv3e, {3});
+    d_v1edv3e_ext = d_ls->mk_indexed_node(
+        LocalSearch::OperatorKind::SEXT, TEST_BW, d_v1edv3e, {3});
 
     // v3 << c1
     d_v3sc1 =
-        d_bzlals->mk_node(BzlaLs::OperatorKind::SHL, TEST_BW, {d_v3, d_c1});
+        d_ls->mk_node(LocalSearch::OperatorKind::SHL, TEST_BW, {d_v3, d_c1});
     // (v3 << c1) + v3
     d_v3sc1pv3 =
-        d_bzlals->mk_node(BzlaLs::OperatorKind::ADD, TEST_BW, {d_v3sc1, d_v3});
+        d_ls->mk_node(LocalSearch::OperatorKind::ADD, TEST_BW, {d_v3sc1, d_v3});
     // ((v3 << c1) + v3) + v1
-    d_v3sc1pv3pv1 = d_bzlals->mk_node(
-        BzlaLs::OperatorKind::ADD, TEST_BW, {d_v3sc1pv3, d_v1});
+    d_v3sc1pv3pv1 = d_ls->mk_node(
+        LocalSearch::OperatorKind::ADD, TEST_BW, {d_v3sc1pv3, d_v1});
 
     // root1: (v1 + c1) + v2 < (v1 + v2) & v2
-    d_root1 = d_bzlals->mk_node(
-        BzlaLs::OperatorKind::SLT, 1, {d_v1pc1mv2, d_v1pv2av2});
+    d_root1 = d_ls->mk_node(
+        LocalSearch::OperatorKind::SLT, 1, {d_v1pc1mv2, d_v1pv2av2});
     // root2: sext(v1[0:0] + v3[0:0], 3) = ((v3 + c1) + v3) + v1
-    d_root2 = d_bzlals->mk_node(
-        BzlaLs::OperatorKind::EQ, 1, {d_v1edv3e_ext, d_v3sc1pv3pv1});
+    d_root2 = d_ls->mk_node(
+        LocalSearch::OperatorKind::EQ, 1, {d_v1edv3e_ext, d_v3sc1pv3pv1});
   }
 
   /**
    * Create a mapping from nodes to their parents to compare against the
    * mapping created internally on node creation.
    */
-  BzlaLs::ParentsMap get_expected_parents();
+  LocalSearch::ParentsMap get_expected_parents();
   /**
-   * Get a reference of the parents map of the BzlaLs object.
-   * Note: BzlaLs::d_parents is private and only the main test class has
+   * Get a reference of the parents map of the LocalSearch object.
+   * Note: LocalSearch::d_parents is private and only the main test class has
    *       access to it.
    */
-  const BzlaLs::ParentsMap& get_parents() { return d_bzlals->d_parents; }
+  const LocalSearch::ParentsMap& get_parents() { return d_ls->d_parents; }
 
   /**
-   * Wrapper for BzlaLs::update_cone().
-   * Note: BzlaLs::update_cone() is private and only the main test class has
-   *       access to it.
+   * Wrapper for LocalSearch::update_cone().
+   * Note: LocalSearch::update_cone() is private and only the main test class
+   * has access to it.
    */
   void update_cone(uint32_t id, const BitVector& assignment);
 
   void test_move_binary(OpKind opkind,
-                        BzlaLs::OperatorKind kind,
+                        LocalSearch::OperatorKind kind,
                         uint32_t pos_x);
   void test_move_ite(uint32_t pos_x);
   void test_move_not();
   void test_move_extract();
   void test_move_sext();
 
-  std::unique_ptr<BzlaLs> d_bzlals;
+  std::unique_ptr<LocalSearch> d_ls;
 
   BitVector d_two4, d_for4, d_fiv4, d_six4, d_sev4;
   BitVector d_egt4, d_ten4, d_ele4, d_twe4, d_thi4;
@@ -128,10 +128,10 @@ class TestBzlaLs : public TestBvNodeCommon
   uint32_t d_root1, d_root2;
 };
 
-BzlaLs::ParentsMap
-TestBzlaLs::get_expected_parents()
+LocalSearch::ParentsMap
+TestLs::get_expected_parents()
 {
-  BzlaLs::ParentsMap parents;
+  LocalSearch::ParentsMap parents;
   std::vector<uint32_t> to_visit = {d_root1, d_root2};
   while (!to_visit.empty())
   {
@@ -141,9 +141,9 @@ TestBzlaLs::get_expected_parents()
     {
       parents[cur_id] = {};
     }
-    for (uint32_t i = 0; i < d_bzlals->get_arity(cur_id); ++i)
+    for (uint32_t i = 0; i < d_ls->get_arity(cur_id); ++i)
     {
-      uint32_t child_id = d_bzlals->get_child(cur_id, i);
+      uint32_t child_id = d_ls->get_child(cur_id, i);
       if (parents.find(child_id) == parents.end())
       {
         parents[child_id] = {};
@@ -159,15 +159,15 @@ TestBzlaLs::get_expected_parents()
 }
 
 void
-TestBzlaLs::update_cone(uint32_t id, const BitVector& assignment)
+TestLs::update_cone(uint32_t id, const BitVector& assignment)
 {
-  d_bzlals->update_cone(d_bzlals->get_node(id), assignment);
+  d_ls->update_cone(d_ls->get_node(id), assignment);
 }
 
 void
-TestBzlaLs::test_move_binary(OpKind opkind,
-                             BzlaLs::OperatorKind kind,
-                             uint32_t pos_x)
+TestLs::test_move_binary(OpKind opkind,
+                         LocalSearch::OperatorKind kind,
+                         uint32_t pos_x)
 {
   std::vector<std::string> xvalues;
   if (TEST_SLOW)
@@ -204,32 +204,33 @@ TestBzlaLs::test_move_binary(OpKind opkind,
           {
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
-            BzlaLs bzlals(1, 1);
-            uint32_t op_s = bzlals.mk_node(s_val, s);
-            uint32_t op_x = bzlals.mk_node(rx_val, x);
+            LocalSearch ls(1, 1);
+            uint32_t op_s = ls.mk_node(s_val, s);
+            uint32_t op_x = ls.mk_node(rx_val, x);
             uint32_t op =
                 pos_x == 0
-                    ? bzlals.mk_node(kind, BitVectorDomain(bw_t), {op_x, op_s})
-                    : bzlals.mk_node(kind, BitVectorDomain(bw_t), {op_s, op_x});
-            uint32_t t = bzlals.mk_node(t_val, BitVectorDomain(t_val));
+                    ? ls.mk_node(kind, BitVectorDomain(bw_t), {op_x, op_s})
+                    : ls.mk_node(kind, BitVectorDomain(bw_t), {op_s, op_x});
+            uint32_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
             uint32_t root =
-                bzlals.mk_node(BzlaLs::EQ, BitVectorDomain(1), {op, t});
-            bzlals.register_root(root);
-            BzlaLs::Result res = bzlals.move();
-            assert(!bzlals.get_domain(root).is_fixed()
-                   || !bzlals.get_assignment(root).is_false()
-                   || res == BzlaLs::Result::UNSAT);
-            assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
-            assert(res == BzlaLs::Result::UNSAT
-                   || bzlals.get_assignment(root).is_true());
-            assert(bzlals.d_statistics.d_nmoves == 0
-                   || (bzlals.d_statistics.d_nprops > 0
-                       && bzlals.d_statistics.d_nprops
-                              == 2 * bzlals.d_statistics.d_nmoves));
-            assert(bzlals.d_statistics.d_nmoves == 0
-                   || (bzlals.d_statistics.d_nupdates > 0
-                       && bzlals.d_statistics.d_nupdates
-                              <= 3 * bzlals.d_statistics.d_nmoves));
+                ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
+            ls.register_root(root);
+            LocalSearch::Result res = ls.move();
+            assert(!ls.get_domain(root).is_fixed()
+                   || !ls.get_assignment(root).is_false()
+                   || res == LocalSearch::Result::UNSAT);
+            assert(res == LocalSearch::Result::UNSAT
+                   || res == LocalSearch::Result::SAT);
+            assert(res == LocalSearch::Result::UNSAT
+                   || ls.get_assignment(root).is_true());
+            assert(ls.d_statistics.d_nmoves == 0
+                   || (ls.d_statistics.d_nprops > 0
+                       && ls.d_statistics.d_nprops
+                              == 2 * ls.d_statistics.d_nmoves));
+            assert(ls.d_statistics.d_nmoves == 0
+                   || (ls.d_statistics.d_nupdates > 0
+                       && ls.d_statistics.d_nupdates
+                              <= 3 * ls.d_statistics.d_nmoves));
             (void) res;
           }
 
@@ -238,38 +239,39 @@ TestBzlaLs::test_move_binary(OpKind opkind,
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
             BitVector rs_val = genrs.has_random() ? genrs.random() : s.lo();
 
-            BzlaLs bzlals(100, 100);
-            uint32_t op_s = bzlals.mk_node(rs_val, s);
-            uint32_t op_x = bzlals.mk_node(rx_val, x);
+            LocalSearch ls(100, 100);
+            uint32_t op_s = ls.mk_node(rs_val, s);
+            uint32_t op_x = ls.mk_node(rx_val, x);
             uint32_t op =
                 pos_x == 0
-                    ? bzlals.mk_node(kind, BitVectorDomain(bw_t), {op_x, op_s})
-                    : bzlals.mk_node(kind, BitVectorDomain(bw_t), {op_s, op_x});
-            uint32_t t = bzlals.mk_node(t_val, BitVectorDomain(t_val));
+                    ? ls.mk_node(kind, BitVectorDomain(bw_t), {op_x, op_s})
+                    : ls.mk_node(kind, BitVectorDomain(bw_t), {op_s, op_x});
+            uint32_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
             uint32_t root =
-                bzlals.mk_node(BzlaLs::EQ, BitVectorDomain(1), {op, t});
-            bzlals.register_root(root);
-            BzlaLs::Result res;
+                ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
+            ls.register_root(root);
+            LocalSearch::Result res;
             do
             {
-              res = bzlals.move();
-            } while (res == BzlaLs::Result::UNKNOWN
-                     && bzlals.d_statistics.d_nmoves
+              res = ls.move();
+            } while (res == LocalSearch::Result::UNKNOWN
+                     && ls.d_statistics.d_nmoves
                             < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
-            assert(!bzlals.get_domain(root).is_fixed()
-                   || !bzlals.get_assignment(root).is_false()
-                   || res == BzlaLs::Result::UNSAT);
-            assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
-            assert(res == BzlaLs::Result::UNSAT
-                   || bzlals.get_assignment(root).is_true());
-            assert(bzlals.d_statistics.d_nmoves == 0
-                   || (bzlals.d_statistics.d_nprops > 0
-                       && bzlals.d_statistics.d_nprops
-                              == 2 * bzlals.d_statistics.d_nmoves));
-            assert(bzlals.d_statistics.d_nmoves == 0
-                   || (bzlals.d_statistics.d_nupdates > 0
-                       && bzlals.d_statistics.d_nupdates
-                              <= 3 * bzlals.d_statistics.d_nmoves));
+            assert(!ls.get_domain(root).is_fixed()
+                   || !ls.get_assignment(root).is_false()
+                   || res == LocalSearch::Result::UNSAT);
+            assert(res == LocalSearch::Result::UNSAT
+                   || res == LocalSearch::Result::SAT);
+            assert(res == LocalSearch::Result::UNSAT
+                   || ls.get_assignment(root).is_true());
+            assert(ls.d_statistics.d_nmoves == 0
+                   || (ls.d_statistics.d_nprops > 0
+                       && ls.d_statistics.d_nprops
+                              == 2 * ls.d_statistics.d_nmoves));
+            assert(ls.d_statistics.d_nmoves == 0
+                   || (ls.d_statistics.d_nupdates > 0
+                       && ls.d_statistics.d_nupdates
+                              <= 3 * ls.d_statistics.d_nmoves));
           }
         } while (genx.has_next());
       }
@@ -278,7 +280,7 @@ TestBzlaLs::test_move_binary(OpKind opkind,
 }
 
 void
-TestBzlaLs::test_move_ite(uint32_t pos_x)
+TestLs::test_move_ite(uint32_t pos_x)
 {
   std::vector<std::string> cond_values = {"x", "0", "1"};
   std::vector<std::string> xvalues, s0values, s1values;
@@ -348,34 +350,34 @@ TestBzlaLs::test_move_ite(uint32_t pos_x)
               {
                 BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
-                BzlaLs bzlals(100, 100);
-                uint32_t op_s0 = bzlals.mk_node(s0_val, s0);
-                uint32_t op_s1 = bzlals.mk_node(s1_val, s1);
-                uint32_t op_x  = bzlals.mk_node(rx_val, x);
+                LocalSearch ls(100, 100);
+                uint32_t op_s0 = ls.mk_node(s0_val, s0);
+                uint32_t op_s1 = ls.mk_node(s1_val, s1);
+                uint32_t op_x  = ls.mk_node(rx_val, x);
                 uint32_t op =
                     pos_x == 0
-                        ? bzlals.mk_node(BzlaLs::OperatorKind::ITE,
-                                         BitVectorDomain(bw_t),
-                                         {op_x, op_s0, op_s1})
+                        ? ls.mk_node(LocalSearch::OperatorKind::ITE,
+                                     BitVectorDomain(bw_t),
+                                     {op_x, op_s0, op_s1})
                         : (pos_x == 1
-                               ? bzlals.mk_node(BzlaLs::OperatorKind::ITE,
-                                                BitVectorDomain(bw_t),
-                                                {op_s0, op_x, op_s1})
-                               : bzlals.mk_node(BzlaLs::OperatorKind::ITE,
-                                                BitVectorDomain(bw_t),
-                                                {op_s0, op_s1, op_x}));
-                uint32_t t = bzlals.mk_node(t_val, BitVectorDomain(t_val));
+                               ? ls.mk_node(LocalSearch::OperatorKind::ITE,
+                                            BitVectorDomain(bw_t),
+                                            {op_s0, op_x, op_s1})
+                               : ls.mk_node(LocalSearch::OperatorKind::ITE,
+                                            BitVectorDomain(bw_t),
+                                            {op_s0, op_s1, op_x}));
+                uint32_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
                 uint32_t root =
-                    bzlals.mk_node(BzlaLs::EQ, BitVectorDomain(1), {op, t});
-                bzlals.register_root(root);
-                BzlaLs::Result res = bzlals.move();
-                assert(!bzlals.get_domain(root).is_fixed()
-                       || !bzlals.get_assignment(root).is_false()
-                       || res == BzlaLs::Result::UNSAT);
-                assert(res == BzlaLs::Result::UNSAT
-                       || res == BzlaLs::Result::SAT);
-                assert(res == BzlaLs::Result::UNSAT
-                       || bzlals.get_assignment(root).is_true());
+                    ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
+                ls.register_root(root);
+                LocalSearch::Result res = ls.move();
+                assert(!ls.get_domain(root).is_fixed()
+                       || !ls.get_assignment(root).is_false()
+                       || res == LocalSearch::Result::UNSAT);
+                assert(res == LocalSearch::Result::UNSAT
+                       || res == LocalSearch::Result::SAT);
+                assert(res == LocalSearch::Result::UNSAT
+                       || ls.get_assignment(root).is_true());
                 (void) res;
               }
 
@@ -387,40 +389,40 @@ TestBzlaLs::test_move_ite(uint32_t pos_x)
                 BitVector rs1_val =
                     genrs1.has_random() ? genrs1.random() : s1.lo();
 
-                BzlaLs bzlals(100, 100);
-                uint32_t op_s0 = bzlals.mk_node(rs0_val, s0);
-                uint32_t op_s1 = bzlals.mk_node(rs1_val, s1);
-                uint32_t op_x  = bzlals.mk_node(rx_val, x);
+                LocalSearch ls(100, 100);
+                uint32_t op_s0 = ls.mk_node(rs0_val, s0);
+                uint32_t op_s1 = ls.mk_node(rs1_val, s1);
+                uint32_t op_x  = ls.mk_node(rx_val, x);
                 uint32_t op =
                     pos_x == 0
-                        ? bzlals.mk_node(BzlaLs::OperatorKind::ITE,
-                                         BitVectorDomain(bw_t),
-                                         {op_x, op_s0, op_s1})
+                        ? ls.mk_node(LocalSearch::OperatorKind::ITE,
+                                     BitVectorDomain(bw_t),
+                                     {op_x, op_s0, op_s1})
                         : (pos_x == 1
-                               ? bzlals.mk_node(BzlaLs::OperatorKind::ITE,
-                                                BitVectorDomain(bw_t),
-                                                {op_s0, op_x, op_s1})
-                               : bzlals.mk_node(BzlaLs::OperatorKind::ITE,
-                                                BitVectorDomain(bw_t),
-                                                {op_s0, op_s1, op_x}));
-                uint32_t t = bzlals.mk_node(t_val, BitVectorDomain(t_val));
+                               ? ls.mk_node(LocalSearch::OperatorKind::ITE,
+                                            BitVectorDomain(bw_t),
+                                            {op_s0, op_x, op_s1})
+                               : ls.mk_node(LocalSearch::OperatorKind::ITE,
+                                            BitVectorDomain(bw_t),
+                                            {op_s0, op_s1, op_x}));
+                uint32_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
                 uint32_t root =
-                    bzlals.mk_node(BzlaLs::EQ, BitVectorDomain(1), {op, t});
-                bzlals.register_root(root);
-                BzlaLs::Result res;
+                    ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
+                ls.register_root(root);
+                LocalSearch::Result res;
                 do
                 {
-                  res = bzlals.move();
-                } while (res == BzlaLs::Result::UNKNOWN
-                         && bzlals.d_statistics.d_nmoves
+                  res = ls.move();
+                } while (res == LocalSearch::Result::UNKNOWN
+                         && ls.d_statistics.d_nmoves
                                 < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
-                assert(!bzlals.get_domain(root).is_fixed()
-                       || !bzlals.get_assignment(root).is_false()
-                       || res == BzlaLs::Result::UNSAT);
-                assert(res == BzlaLs::Result::UNSAT
-                       || res == BzlaLs::Result::SAT);
-                assert(res == BzlaLs::Result::UNSAT
-                       || bzlals.get_assignment(root).is_true());
+                assert(!ls.get_domain(root).is_fixed()
+                       || !ls.get_assignment(root).is_false()
+                       || res == LocalSearch::Result::UNSAT);
+                assert(res == LocalSearch::Result::UNSAT
+                       || res == LocalSearch::Result::SAT);
+                assert(res == LocalSearch::Result::UNSAT
+                       || ls.get_assignment(root).is_true());
               }
             } while (genx.has_next());
           }
@@ -431,7 +433,7 @@ TestBzlaLs::test_move_ite(uint32_t pos_x)
 }
 
 void
-TestBzlaLs::test_move_not()
+TestLs::test_move_not()
 {
   std::vector<std::string> xvalues;
   if (TEST_SLOW)
@@ -457,27 +459,28 @@ TestBzlaLs::test_move_not()
       BitVectorDomainGenerator genrx(x, d_rng.get());
       BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
-      BzlaLs bzlals(100, 100);
-      uint32_t op_x = bzlals.mk_node(rx_val, x);
-      uint32_t op   = bzlals.mk_node(
-          BzlaLs::OperatorKind::NOT, BitVectorDomain(bw_t), {op_x});
-      uint32_t t    = bzlals.mk_node(t_val, BitVectorDomain(t_val));
-      uint32_t root = bzlals.mk_node(BzlaLs::EQ, BitVectorDomain(1), {op, t});
-      bzlals.register_root(root);
-      BzlaLs::Result res = bzlals.move();
-      assert(!bzlals.get_domain(root).is_fixed()
-             || !bzlals.get_assignment(root).is_false()
-             || res == BzlaLs::Result::UNSAT);
-      assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
-      assert(res == BzlaLs::Result::UNSAT
-             || bzlals.get_assignment(root).is_true());
+      LocalSearch ls(100, 100);
+      uint32_t op_x = ls.mk_node(rx_val, x);
+      uint32_t op   = ls.mk_node(
+          LocalSearch::OperatorKind::NOT, BitVectorDomain(bw_t), {op_x});
+      uint32_t t    = ls.mk_node(t_val, BitVectorDomain(t_val));
+      uint32_t root = ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
+      ls.register_root(root);
+      LocalSearch::Result res = ls.move();
+      assert(!ls.get_domain(root).is_fixed()
+             || !ls.get_assignment(root).is_false()
+             || res == LocalSearch::Result::UNSAT);
+      assert(res == LocalSearch::Result::UNSAT
+             || res == LocalSearch::Result::SAT);
+      assert(res == LocalSearch::Result::UNSAT
+             || ls.get_assignment(root).is_true());
       (void) res;
     } while (genx.has_next());
   }
 }
 
 void
-TestBzlaLs::test_move_extract()
+TestLs::test_move_extract()
 {
   std::vector<std::string> xvalues;
   if (TEST_SLOW)
@@ -509,23 +512,24 @@ TestBzlaLs::test_move_extract()
             BitVectorDomainGenerator genrx(x, d_rng.get());
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
-            BzlaLs bzlals(100, 100);
-            uint32_t op_x = bzlals.mk_node(rx_val, x);
-            uint32_t op = bzlals.mk_indexed_node(BzlaLs::OperatorKind::EXTRACT,
-                                                 BitVectorDomain(bw_t),
-                                                 op_x,
-                                                 {hi, lo});
-            uint32_t t  = bzlals.mk_node(t_val, BitVectorDomain(t_val));
+            LocalSearch ls(100, 100);
+            uint32_t op_x = ls.mk_node(rx_val, x);
+            uint32_t op = ls.mk_indexed_node(LocalSearch::OperatorKind::EXTRACT,
+                                             BitVectorDomain(bw_t),
+                                             op_x,
+                                             {hi, lo});
+            uint32_t t  = ls.mk_node(t_val, BitVectorDomain(t_val));
             uint32_t root =
-                bzlals.mk_node(BzlaLs::EQ, BitVectorDomain(1), {op, t});
-            bzlals.register_root(root);
-            BzlaLs::Result res = bzlals.move();
-            assert(!bzlals.get_domain(root).is_fixed()
-                   || !bzlals.get_assignment(root).is_false()
-                   || res == BzlaLs::Result::UNSAT);
-            assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
-            assert(res == BzlaLs::Result::UNSAT
-                   || bzlals.get_assignment(root).is_true());
+                ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
+            ls.register_root(root);
+            LocalSearch::Result res = ls.move();
+            assert(!ls.get_domain(root).is_fixed()
+                   || !ls.get_assignment(root).is_false()
+                   || res == LocalSearch::Result::UNSAT);
+            assert(res == LocalSearch::Result::UNSAT
+                   || res == LocalSearch::Result::SAT);
+            assert(res == LocalSearch::Result::UNSAT
+                   || ls.get_assignment(root).is_true());
             (void) res;
           }
         }
@@ -535,7 +539,7 @@ TestBzlaLs::test_move_extract()
 }
 
 void
-TestBzlaLs::test_move_sext()
+TestLs::test_move_sext()
 {
   std::vector<std::string> xvalues;
   if (TEST_SLOW)
@@ -564,36 +568,38 @@ TestBzlaLs::test_move_sext()
         BitVectorDomainGenerator genrx(x, d_rng.get());
         BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
-        BzlaLs bzlals(100, 100);
-        uint32_t op_x = bzlals.mk_node(rx_val, x);
-        uint32_t op   = bzlals.mk_indexed_node(
-            BzlaLs::OperatorKind::SEXT, BitVectorDomain(bw_t), op_x, {n});
-        uint32_t t    = bzlals.mk_node(t_val, BitVectorDomain(t_val));
-        uint32_t root = bzlals.mk_node(BzlaLs::EQ, BitVectorDomain(1), {op, t});
-        bzlals.register_root(root);
-        BzlaLs::Result res = bzlals.move();
-        assert(!bzlals.get_domain(root).is_fixed()
-               || !bzlals.get_assignment(root).is_false()
-               || res == BzlaLs::Result::UNSAT);
-        assert(res == BzlaLs::Result::UNSAT || res == BzlaLs::Result::SAT);
-        assert(res == BzlaLs::Result::UNSAT
-               || bzlals.get_assignment(root).is_true());
+        LocalSearch ls(100, 100);
+        uint32_t op_x = ls.mk_node(rx_val, x);
+        uint32_t op   = ls.mk_indexed_node(
+            LocalSearch::OperatorKind::SEXT, BitVectorDomain(bw_t), op_x, {n});
+        uint32_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
+        uint32_t root =
+            ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
+        ls.register_root(root);
+        LocalSearch::Result res = ls.move();
+        assert(!ls.get_domain(root).is_fixed()
+               || !ls.get_assignment(root).is_false()
+               || res == LocalSearch::Result::UNSAT);
+        assert(res == LocalSearch::Result::UNSAT
+               || res == LocalSearch::Result::SAT);
+        assert(res == LocalSearch::Result::UNSAT
+               || ls.get_assignment(root).is_true());
         (void) res;
       }
     } while (genx.has_next());
   }
 }
 
-TEST_F(TestBzlaLs, parents)
+TEST_F(TestLs, parents)
 {
-  d_bzlals->register_root(d_root1);
-  d_bzlals->register_root(d_root2);
+  d_ls->register_root(d_root1);
+  d_ls->register_root(d_root2);
 
-  const BzlaLs::ParentsMap& parents   = get_parents();
-  BzlaLs::ParentsMap parents_expected = get_expected_parents();
+  const LocalSearch::ParentsMap& parents   = get_parents();
+  LocalSearch::ParentsMap parents_expected = get_expected_parents();
 
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_c1);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_c1);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_c1);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 2);
@@ -601,7 +607,7 @@ TEST_F(TestBzlaLs, parents)
     ASSERT_TRUE(p.find(d_v3sc1) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_v1);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_v1);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 4);
@@ -611,7 +617,7 @@ TEST_F(TestBzlaLs, parents)
     ASSERT_TRUE(p.find(d_v1e) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_v2);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_v2);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v2);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 3);
@@ -620,7 +626,7 @@ TEST_F(TestBzlaLs, parents)
     ASSERT_TRUE(p.find(d_v1pv2av2) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_v3);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_v3);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v3);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 3);
@@ -629,7 +635,7 @@ TEST_F(TestBzlaLs, parents)
     ASSERT_TRUE(p.find(d_v3e) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_v1pc1);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_v1pc1);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1pc1);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
@@ -643,28 +649,28 @@ TEST_F(TestBzlaLs, parents)
     ASSERT_TRUE(p.find(d_root1) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_v1pv2);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_v1pv2);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1pv2);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_v1pv2av2) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_v1pv2av2);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_v1pv2av2);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1pv2av2);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_root1) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_v1e);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_v1e);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1e);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_v1edv3e) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_v3e);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_v3e);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v3e);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
@@ -706,20 +712,20 @@ TEST_F(TestBzlaLs, parents)
     ASSERT_TRUE(p.find(d_root2) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_root1);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_root1);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_root1);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 0);
   }
   {
-    const std::unordered_set<uint32_t>& p = parents.at(d_root2);
+    const std::unordered_set<uint32_t>& p  = parents.at(d_root2);
     const std::unordered_set<uint32_t>& pe = parents_expected.at(d_root2);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 0);
   }
 }
 
-TEST_F(TestBzlaLs, update_cone)
+TEST_F(TestLs, update_cone)
 {
   std::map<uint32_t, BitVector> ass_init = {
       {d_c1, d_ten4},            // 1010
@@ -743,7 +749,7 @@ TEST_F(TestBzlaLs, update_cone)
 
   for (auto& p : ass_init)
   {
-    ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
+    ASSERT_EQ(d_ls->get_assignment(p.first).compare(p.second), 0);
   }
 
   /* v1 -> 0001 */
@@ -769,7 +775,7 @@ TEST_F(TestBzlaLs, update_cone)
   };
   for (auto& p : ass_up_v1)
   {
-    ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
+    ASSERT_EQ(d_ls->get_assignment(p.first).compare(p.second), 0);
   }
 
   /* v2 -> 0111 */
@@ -795,7 +801,7 @@ TEST_F(TestBzlaLs, update_cone)
   };
   for (auto& p : ass_up_v2)
   {
-    ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
+    ASSERT_EQ(d_ls->get_assignment(p.first).compare(p.second), 0);
   }
 
   /* v3 -> 0001 */
@@ -821,99 +827,99 @@ TEST_F(TestBzlaLs, update_cone)
   };
   for (auto& p : ass_up_v3)
   {
-    ASSERT_EQ(d_bzlals->get_assignment(p.first).compare(p.second), 0);
+    ASSERT_EQ(d_ls->get_assignment(p.first).compare(p.second), 0);
   }
 }
 
-TEST_F(TestBzlaLs, move_add)
+TEST_F(TestLs, move_add)
 {
-  test_move_binary(ADD, BzlaLs::ADD, 0);
-  test_move_binary(ADD, BzlaLs::ADD, 1);
+  test_move_binary(ADD, LocalSearch::OperatorKind::ADD, 0);
+  test_move_binary(ADD, LocalSearch::OperatorKind::ADD, 1);
 }
 
-TEST_F(TestBzlaLs, move_and)
+TEST_F(TestLs, move_and)
 {
-  test_move_binary(AND, BzlaLs::AND, 0);
-  test_move_binary(AND, BzlaLs::AND, 1);
+  test_move_binary(AND, LocalSearch::OperatorKind::AND, 0);
+  test_move_binary(AND, LocalSearch::OperatorKind::AND, 1);
 }
 
-TEST_F(TestBzlaLs, move_concat)
+TEST_F(TestLs, move_concat)
 {
-  test_move_binary(CONCAT, BzlaLs::CONCAT, 0);
-  test_move_binary(CONCAT, BzlaLs::CONCAT, 1);
+  test_move_binary(CONCAT, LocalSearch::OperatorKind::CONCAT, 0);
+  test_move_binary(CONCAT, LocalSearch::OperatorKind::CONCAT, 1);
 }
 
-TEST_F(TestBzlaLs, move_eq)
+TEST_F(TestLs, move_eq)
 {
-  test_move_binary(EQ, BzlaLs::EQ, 0);
-  test_move_binary(EQ, BzlaLs::EQ, 1);
+  test_move_binary(EQ, LocalSearch::OperatorKind::EQ, 0);
+  test_move_binary(EQ, LocalSearch::OperatorKind::EQ, 1);
 }
 
-TEST_F(TestBzlaLs, move_mul)
+TEST_F(TestLs, move_mul)
 {
-  test_move_binary(MUL, BzlaLs::MUL, 0);
-  test_move_binary(MUL, BzlaLs::MUL, 1);
+  test_move_binary(MUL, LocalSearch::OperatorKind::MUL, 0);
+  test_move_binary(MUL, LocalSearch::OperatorKind::MUL, 1);
 }
 
-TEST_F(TestBzlaLs, move_shl)
+TEST_F(TestLs, move_shl)
 {
-  test_move_binary(SHL, BzlaLs::SHL, 0);
-  test_move_binary(SHL, BzlaLs::SHL, 1);
+  test_move_binary(SHL, LocalSearch::OperatorKind::SHL, 0);
+  test_move_binary(SHL, LocalSearch::OperatorKind::SHL, 1);
 }
 
-TEST_F(TestBzlaLs, move_shr)
+TEST_F(TestLs, move_shr)
 {
-  test_move_binary(SHR, BzlaLs::SHR, 0);
-  test_move_binary(SHR, BzlaLs::SHR, 1);
+  test_move_binary(SHR, LocalSearch::OperatorKind::SHR, 0);
+  test_move_binary(SHR, LocalSearch::OperatorKind::SHR, 1);
 }
 
-TEST_F(TestBzlaLs, move_ashr)
+TEST_F(TestLs, move_ashr)
 {
-  test_move_binary(ASHR, BzlaLs::ASHR, 0);
-  test_move_binary(ASHR, BzlaLs::ASHR, 1);
+  test_move_binary(ASHR, LocalSearch::OperatorKind::ASHR, 0);
+  test_move_binary(ASHR, LocalSearch::OperatorKind::ASHR, 1);
 }
 
-TEST_F(TestBzlaLs, move_udiv)
+TEST_F(TestLs, move_udiv)
 {
-  test_move_binary(UDIV, BzlaLs::UDIV, 0);
-  test_move_binary(UDIV, BzlaLs::UDIV, 1);
+  test_move_binary(UDIV, LocalSearch::OperatorKind::UDIV, 0);
+  test_move_binary(UDIV, LocalSearch::OperatorKind::UDIV, 1);
 }
 
-TEST_F(TestBzlaLs, move_ult)
+TEST_F(TestLs, move_ult)
 {
-  test_move_binary(ULT, BzlaLs::ULT, 0);
-  test_move_binary(ULT, BzlaLs::ULT, 1);
+  test_move_binary(ULT, LocalSearch::OperatorKind::ULT, 0);
+  test_move_binary(ULT, LocalSearch::OperatorKind::ULT, 1);
 }
 
-TEST_F(TestBzlaLs, move_slt)
+TEST_F(TestLs, move_slt)
 {
-  test_move_binary(SLT, BzlaLs::SLT, 0);
-  test_move_binary(SLT, BzlaLs::SLT, 1);
+  test_move_binary(SLT, LocalSearch::OperatorKind::SLT, 0);
+  test_move_binary(SLT, LocalSearch::OperatorKind::SLT, 1);
 }
 
-TEST_F(TestBzlaLs, move_urem)
+TEST_F(TestLs, move_urem)
 {
-  test_move_binary(UREM, BzlaLs::UREM, 0);
-  test_move_binary(UREM, BzlaLs::UREM, 1);
+  test_move_binary(UREM, LocalSearch::OperatorKind::UREM, 0);
+  test_move_binary(UREM, LocalSearch::OperatorKind::UREM, 1);
 }
 
-TEST_F(TestBzlaLs, move_xor)
+TEST_F(TestLs, move_xor)
 {
-  test_move_binary(XOR, BzlaLs::XOR, 0);
-  test_move_binary(XOR, BzlaLs::XOR, 1);
+  test_move_binary(XOR, LocalSearch::OperatorKind::XOR, 0);
+  test_move_binary(XOR, LocalSearch::OperatorKind::XOR, 1);
 }
 
-TEST_F(TestBzlaLs, ite)
+TEST_F(TestLs, ite)
 {
   test_move_ite(0);
   test_move_ite(1);
   test_move_ite(2);
 }
 
-TEST_F(TestBzlaLs, not ) { test_move_not(); }
+TEST_F(TestLs, not ) { test_move_not(); }
 
-TEST_F(TestBzlaLs, extract) { test_move_extract(); }
+TEST_F(TestLs, extract) { test_move_extract(); }
 
-TEST_F(TestBzlaLs, sext) { test_move_sext(); }
+TEST_F(TestLs, sext) { test_move_sext(); }
 
 }  // namespace bzlatest

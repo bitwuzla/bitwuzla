@@ -1,7 +1,7 @@
 #ifndef BZLALS__BITVECTOR_DOMAIN_H
 #define BZLALS__BITVECTOR_DOMAIN_H
 
-#include "bzlabitvector.h"
+#include "bitvector.h"
 
 namespace bzlals {
 

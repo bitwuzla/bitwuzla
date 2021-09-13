@@ -3,8 +3,8 @@
 
 #include <vector>
 
+#include "bitvector.h"
 #include "bitvector_domain.h"
-#include "bzlabitvector.h"
 
 namespace bzlarng {
 class RNG;

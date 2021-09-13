@@ -16,18 +16,18 @@ class RNG;
 }
 
 namespace bzlatest {
-class TestBzlaLs;
+class TestLs;
 }
 
 namespace bzlals {
 
-struct BzlaLsMove;
+struct LocalSearchMove;
 class BitVectorDomain;
 class BitVectorNode;
 
-class BzlaLs
+class LocalSearch
 {
-  friend class ::bzlatest::TestBzlaLs;
+  friend class ::bzlatest::TestLs;
 
  public:
   using NodesIdTable = std::vector<std::unique_ptr<BitVectorNode>>;
@@ -36,8 +36,8 @@ class BzlaLs
 
   enum Result
   {
-    SAT = 10,
-    UNSAT = 20,
+    SAT     = 10,
+    UNSAT   = 20,
     UNKNOWN = 0,
   };
 
@@ -138,8 +138,8 @@ class BzlaLs
 #endif
   } d_statistics;
 
-  BzlaLs(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed = 1234);
-  ~BzlaLs();
+  LocalSearch(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed = 1234);
+  ~LocalSearch();
 
   void set_max_nprops(uint64_t max) { d_max_nprops = max; }
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }
@@ -196,8 +196,8 @@ class BzlaLs
   void update_roots(uint32_t id);
   uint64_t update_cone(BitVectorNode* node,
                        const ::bzlabv::BitVector& assignment);
-  BzlaLsMove select_move(BitVectorNode* root,
-                         const ::bzlabv::BitVector& t_root);
+  LocalSearchMove select_move(BitVectorNode* root,
+                              const ::bzlabv::BitVector& t_root);
 
   std::unique_ptr<::bzlarng::RNG> d_rng;
 

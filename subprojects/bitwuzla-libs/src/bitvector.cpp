@@ -1,4 +1,4 @@
-#include "bzlabitvector.h"
+#include "bitvector.h"
 
 #include <cassert>
 #include <iostream>
@@ -2301,4 +2301,3 @@ operator<<(std::ostream& out, const ::bzlabv::BitVector& bv)
   out << bv.to_string();
   return out;
 }
-
