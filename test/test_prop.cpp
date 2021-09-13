@@ -15,9 +15,12 @@ extern "C" {
 #include "bzlaslvprop.h"
 }
 
-#include "bzlabitvector.h"
+#include "bitvector.h"
 #include "bitvector_domain.h"
 #include "rng.h"
+
+namespace bzla {
+namespace test {
 
 class TestProp : public TestPropCommon
 {
@@ -30,7 +33,7 @@ class TestProp : public TestPropCommon
   {
     TestPropCommon::SetUp();
     d_test_bw = TEST_SLOW ? 4 : 3;
-    d_rng.reset(new bzlals::RNG(54321));
+    d_rng.reset(new RNG(54321));
   }
 
   Bzla* create_bzla();
@@ -38,24 +41,24 @@ class TestProp : public TestPropCommon
                          BzlaNodeKind kind,
                          BzlaNode* e0,
                          BzlaNode* e1);
-  bzlals::BitVector eval_op_binary(BzlaNodeKind kind,
-                                   const bzlals::BitVector& s0_val,
-                                   const bzlals::BitVector& s1_val);
+  BitVector eval_op_binary(BzlaNodeKind kind,
+                           const BitVector& s0_val,
+                           const BitVector& s1_val);
 
   void test_prop_aux(BzlaNodeKind kind,
-                     const bzlals::BitVectorDomain* s0,
-                     const bzlals::BitVectorDomain* s1,
-                     const bzlals::BitVectorDomain* s2,
-                     const bzlals::BitVector* s0_val,
-                     const bzlals::BitVector* s1_val,
-                     const bzlals::BitVector* s2_val,
+                     const bzla::ls::BitVectorDomain* s0,
+                     const bzla::ls::BitVectorDomain* s1,
+                     const bzla::ls::BitVectorDomain* s2,
+                     const BitVector* s0_val,
+                     const BitVector* s1_val,
+                     const BitVector* s2_val,
                      uint32_t idx0 = 0,
                      uint32_t idx1 = 0);
 
   void test_prop(BzlaNodeKind kind);
 
   uint32_t d_test_bw;
-  std::unique_ptr<bzlals::RNG> d_rng;
+  std::unique_ptr<RNG> d_rng;
 };
 
 Bzla*
@@ -101,12 +104,12 @@ TestProp::mk_op_binary(Bzla* bzla,
   return res;
 }
 
-bzlals::BitVector
+BitVector
 TestProp::eval_op_binary(BzlaNodeKind kind,
-                         const bzlals::BitVector& s0_val,
-                         const bzlals::BitVector& s1_val)
+                         const BitVector& s0_val,
+                         const BitVector& s1_val)
 {
-  bzlals::BitVector res;
+  BitVector res;
   switch (kind)
   {
     case BZLA_BV_ADD_NODE: res = s0_val.bvadd(s1_val); break;
@@ -127,12 +130,12 @@ TestProp::eval_op_binary(BzlaNodeKind kind,
 
 void
 TestProp::test_prop_aux(BzlaNodeKind kind,
-                        const bzlals::BitVectorDomain* s0,
-                        const bzlals::BitVectorDomain* s1,
-                        const bzlals::BitVectorDomain* s2,
-                        const bzlals::BitVector* s0_val,
-                        const bzlals::BitVector* s1_val,
-                        const bzlals::BitVector* s2_val,
+                        const bzla::ls::BitVectorDomain* s0,
+                        const bzla::ls::BitVectorDomain* s1,
+                        const bzla::ls::BitVectorDomain* s2,
+                        const BitVector* s0_val,
+                        const BitVector* s1_val,
+                        const BitVector* s2_val,
                         uint32_t idx0,
                         uint32_t idx1)
 {
@@ -144,7 +147,7 @@ TestProp::test_prop_aux(BzlaNodeKind kind,
       s2_val ? bzla_sort_bv(bzla, 1) : bzla_sort_copy(bzla, sort);
   BzlaNode* var0 = bzla_exp_var(bzla, sort0, 0);
   BzlaNode *var1, *var2, *op;
-  bzlals::BitVector t_val;
+  BitVector t_val;
 
   if (s2_val)
   {
@@ -154,7 +157,7 @@ TestProp::test_prop_aux(BzlaNodeKind kind,
     var1  = bzla_exp_var(bzla, sort, 0);
     var2  = bzla_exp_var(bzla, sort, 0);
     op    = bzla_exp_cond(bzla, var0, var1, var2);
-    t_val = bzlals::BitVector::bvite(*s0_val, *s1_val, *s2_val);
+    t_val = BitVector::bvite(*s0_val, *s1_val, *s2_val);
   }
   else if (s1_val)
   {
@@ -258,11 +261,11 @@ TestProp::test_prop(BzlaNodeKind kind)
 
   for (const std::string& s0_domain_value : s0values)
   {
-    bzlals::BitVectorDomain s0(s0_domain_value);
-    bzlals::BitVectorDomainGenerator gens0(s0);
+    bzla::ls::BitVectorDomain s0(s0_domain_value);
+    bzla::ls::BitVectorDomainGenerator gens0(s0);
     do
     {
-      bzlals::BitVector s0_val = gens0.has_next() ? gens0.next() : s0.lo();
+      BitVector s0_val = gens0.has_next() ? gens0.next() : s0.lo();
       if (kind == BZLA_BV_SLICE_NODE)
       {
         for (uint32_t lo = 0, bw_s0 = s0_val.size(); lo < bw_s0; ++lo)
@@ -289,22 +292,20 @@ TestProp::test_prop(BzlaNodeKind kind)
       {
         for (const std::string& s1_domain_value : xvalues)
         {
-          bzlals::BitVectorDomain s1(s1_domain_value);
-          bzlals::BitVectorDomainGenerator gens1(s1);
+          bzla::ls::BitVectorDomain s1(s1_domain_value);
+          bzla::ls::BitVectorDomainGenerator gens1(s1);
           do
           {
-            bzlals::BitVector s1_val =
-                gens1.has_next() ? gens1.next() : s1.lo();
+            BitVector s1_val = gens1.has_next() ? gens1.next() : s1.lo();
             if (kind == BZLA_COND_NODE)
             {
               for (const std::string& s2_domain_value : xvalues)
               {
-                bzlals::BitVectorDomain s2(s2_domain_value);
-                bzlals::BitVectorDomainGenerator gens2(s2);
+                bzla::ls::BitVectorDomain s2(s2_domain_value);
+                bzla::ls::BitVectorDomainGenerator gens2(s2);
                 do
                 {
-                  bzlals::BitVector s2_val =
-                      gens2.has_next() ? gens2.next() : s2.lo();
+                  BitVector s2_val = gens2.has_next() ? gens2.next() : s2.lo();
                   test_prop_aux(kind, &s0, &s1, &s2, &s0_val, &s1_val, &s2_val);
                 } while (gens2.has_next());
               }
@@ -345,3 +346,6 @@ TEST_F(TestProp, urem) { test_prop(BZLA_BV_UREM_NODE); }
 TEST_F(TestProp, ite) { test_prop(BZLA_COND_NODE); }
 
 TEST_F(TestProp, extract) { test_prop(BZLA_BV_SLICE_NODE); }
+
+}  // namespace test
+}  // namespace bzla

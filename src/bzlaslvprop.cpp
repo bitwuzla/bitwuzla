@@ -20,9 +20,9 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
-#include "bzlabitvector.h"
+#include "bitvector.h"
 #include "bitvector_domain.h"
-#include "bzlals.h"
+#include "ls.h"
 
 struct BzlaPropSolver;
 
@@ -54,8 +54,8 @@ class PropSolverState
       : d_bzla(bzla)
   {
     assert(bzla);
-    d_bzlals.reset(new bzlals::BzlaLs(max_nprops, max_nupdates, seed));
-    d_bzlals->set_log_level(bzla_opt_get(d_bzla, BZLA_OPT_LOGLEVEL));
+    d_ls.reset(new bzla::ls::LocalSearch(max_nprops, max_nupdates, seed));
+    d_ls->set_log_level(bzla_opt_get(d_bzla, BZLA_OPT_LOGLEVEL));
   }
 
   void init_nodes();
@@ -68,7 +68,7 @@ class PropSolverState
   void synthesize_constraints();
   void print_progress() const;
   Bzla *d_bzla;
-  std::unique_ptr<bzlals::BzlaLs> d_bzlals;
+  std::unique_ptr<bzla::ls::LocalSearch> d_ls;
   NodeMap<uint32_t> d_node_map;
   NodeStack d_leafs;
 };
@@ -93,12 +93,12 @@ PropSolverState::mk_node(BzlaNode *node)
       auto iit = d_node_map.find(e);
       if (iit == d_node_map.end())
       {
-        d_node_map[e] = d_bzlals->invert_node(it->second);
+        d_node_map[e] = d_ls->invert_node(it->second);
       }
     }
   }
 
-  bzlals::BitVectorDomain domain(bw);
+  bzla::ls::BitVectorDomain domain(bw);
 
   if (node->av)
   {
@@ -128,99 +128,99 @@ PropSolverState::mk_node(BzlaNode *node)
   {
     case BZLA_BV_ADD_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::ADD,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::ADD,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_AND_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::AND,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::AND,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_CONCAT_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::CONCAT,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::CONCAT,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_EQ_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::EQ,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::EQ,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_MUL_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::MUL,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::MUL,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_ULT_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::ULT,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::ULT,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_SLICE_NODE:
       assert(node->arity == 1);
-      res = d_bzlals->mk_indexed_node(bzlals::BzlaLs::OperatorKind::EXTRACT,
-                                      domain,
-                                      d_node_map.at(node->e[0]),
-                                      {bzla_node_bv_slice_get_upper(node),
-                                       bzla_node_bv_slice_get_lower(node)});
+      res = d_ls->mk_indexed_node(bzla::ls::LocalSearch::OperatorKind::EXTRACT,
+                                  domain,
+                                  d_node_map.at(node->e[0]),
+                                  {bzla_node_bv_slice_get_upper(node),
+                                   bzla_node_bv_slice_get_lower(node)});
       break;
     case BZLA_BV_SLL_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::SHL,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::SHL,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_SLT_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::SLT,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::SLT,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_SRL_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::SHR,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::SHR,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_UDIV_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::UDIV,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::UDIV,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_UREM_NODE:
       assert(node->arity == 2);
-      res = d_bzlals->mk_node(
-          bzlals::BzlaLs::OperatorKind::UREM,
-          domain,
-          {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      res =
+          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::UREM,
+                        domain,
+                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_COND_NODE:
       assert(node->arity == 3);
-      res = d_bzlals->mk_node(bzlals::BzlaLs::OperatorKind::ITE,
-                              domain,
-                              {d_node_map.at(node->e[0]),
-                               d_node_map.at(node->e[1]),
-                               d_node_map.at(node->e[2])});
+      res = d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::ITE,
+                          domain,
+                          {d_node_map.at(node->e[0]),
+                           d_node_map.at(node->e[1]),
+                           d_node_map.at(node->e[2])});
       break;
     case BZLA_BV_CONST_NODE:
-    case BZLA_VAR_NODE: res = d_bzlals->mk_node(domain.lo(), domain); break;
+    case BZLA_VAR_NODE: res = d_ls->mk_node(domain.lo(), domain); break;
     default: assert(false);
   }
 
@@ -307,7 +307,7 @@ PropSolverState::init_nodes()
       assert(bzla_node_is_inverted(root));
       auto it = d_node_map.find(bzla_node_real_addr(root));
       assert(it != d_node_map.end());
-      d_node_map[root] = d_bzlals->invert_node(it->second);
+      d_node_map[root] = d_ls->invert_node(it->second);
     }
   }
 }
@@ -318,7 +318,7 @@ PropSolverState::print_progress() const
   uint32_t nroots_total = d_bzla->assumptions->count
                           + d_bzla->unsynthesized_constraints->count
                           + d_bzla->synthesized_constraints->count;
-  uint32_t nroots_unsat = d_bzlals->get_num_roots_unsat();
+  uint32_t nroots_unsat = d_ls->get_num_roots_unsat();
 
   BZLA_MSG(d_bzla->msg,
            1,
@@ -329,9 +329,9 @@ PropSolverState::print_progress() const
            nroots_total - nroots_unsat,
            nroots_total,
            (double) (nroots_total - nroots_unsat) / nroots_total * 100,
-           d_bzlals->d_statistics.d_nmoves,
-           d_bzlals->d_statistics.d_nprops,
-           d_bzlals->d_statistics.d_nupdates);
+           d_ls->d_statistics.d_nmoves,
+           d_ls->d_statistics.d_nprops,
+           d_ls->d_statistics.d_nupdates);
 }
 
 BzlaSolverResult
@@ -354,14 +354,14 @@ PropSolverState::check_sat()
 
   if (nprops)
   {
-    nprops += d_bzlals->d_statistics.d_nprops;
-    d_bzlals->set_max_nprops(nprops);
+    nprops += d_ls->d_statistics.d_nprops;
+    d_ls->set_max_nprops(nprops);
     BZLA_MSG(d_bzla->msg, 1, "Set propagation limit to %zu", nprops);
   }
   if (nupdates)
   {
-    nupdates += d_bzlals->d_statistics.d_nupdates;
-    d_bzlals->set_max_nupdates(nupdates);
+    nupdates += d_ls->d_statistics.d_nupdates;
+    d_ls->set_max_nupdates(nupdates);
     BZLA_MSG(d_bzla->msg, 1, "Set model update limit to %zu", nupdates);
   }
 
@@ -380,14 +380,14 @@ PropSolverState::check_sat()
   {
     BzlaNode *root = static_cast<BzlaNode *>(bzla_iter_hashptr_next(&it));
     assert(d_node_map.find(root) != d_node_map.end());
-    d_bzlals->register_root(d_node_map.at(root));
+    d_ls->register_root(d_node_map.at(root));
   }
 
   for (uint32_t j = 0;; ++j)
   {
     if (bzla_terminate(d_bzla)
-        || (nprops && d_bzlals->d_statistics.d_nprops >= nprops)
-        || (nupdates && d_bzlals->d_statistics.d_nupdates >= nupdates))
+        || (nprops && d_ls->d_statistics.d_nprops >= nprops)
+        || (nupdates && d_ls->d_statistics.d_nupdates >= nupdates))
     {
       assert(sat_result == BZLA_RESULT_UNKNOWN);
       goto DONE;
@@ -403,14 +403,14 @@ PropSolverState::check_sat()
       }
     }
 
-    bzlals::BzlaLs::Result res = d_bzlals->move();
+    bzla::ls::LocalSearch::Result res = d_ls->move();
 
-    if (res == bzlals::BzlaLs::Result::UNSAT)
+    if (res == bzla::ls::LocalSearch::Result::UNSAT)
     {
       goto UNSAT;
     }
 
-    if (res == bzlals::BzlaLs::Result::SAT)
+    if (res == bzla::ls::LocalSearch::Result::SAT)
     {
       goto SAT;
     }
@@ -441,7 +441,7 @@ PropSolverState::generate_model()
 
     auto iit = d_node_map.find(leaf);
     assert(iit != d_node_map.end());
-    const bzlals::BitVector &assignment = d_bzlals->get_assignment(iit->second);
+    const BitVector &assignment         = d_ls->get_assignment(iit->second);
     BzlaBitVector *bv_assignment        = bzla_bv_const(
         d_bzla->mm, assignment.to_string().c_str(), assignment.size());
     bzla_model_add_to_bv(d_bzla, d_bzla->bv_model, leaf, bv_assignment);
@@ -452,9 +452,9 @@ PropSolverState::generate_model()
 void
 PropSolverState::print_statistics()
 {
-  uint64_t nmoves   = d_bzlals->d_statistics.d_nmoves;
-  uint64_t nprops   = d_bzlals->d_statistics.d_nprops;
-  uint64_t nupdates = d_bzlals->d_statistics.d_nupdates;
+  uint64_t nmoves   = d_ls->d_statistics.d_nmoves;
+  uint64_t nprops   = d_ls->d_statistics.d_nprops;
+  uint64_t nupdates = d_ls->d_statistics.d_nupdates;
 
   BZLA_MSG(d_bzla->msg, 1, "");
   BZLA_MSG(d_bzla->msg, 1, "moves: %u", nmoves);
@@ -468,11 +468,11 @@ PropSolverState::print_statistics()
   BZLA_MSG(d_bzla->msg,
            1,
            "    inverse value propagations: %u",
-           d_bzlals->d_statistics.d_nprops_inv);
+           d_ls->d_statistics.d_nprops_inv);
   BZLA_MSG(d_bzla->msg,
            1,
            "    consistent value propagations: %u",
-           d_bzlals->d_statistics.d_nprops_cons);
+           d_ls->d_statistics.d_nprops_cons);
   BZLA_MSG(d_bzla->msg,
            1,
            "propagation steps per second: %.1f",
@@ -480,7 +480,7 @@ PropSolverState::print_statistics()
   BZLA_MSG(d_bzla->msg,
            1,
            "propagation conflicts (non-recoverable): %u",
-           d_bzlals->d_statistics.d_nconf);
+           d_ls->d_statistics.d_nconf);
   BZLA_MSG(d_bzla->msg, 1, "cone updates: %u", nupdates);
   BZLA_MSG(d_bzla->msg,
            1,
@@ -490,72 +490,46 @@ PropSolverState::print_statistics()
   BZLA_MSG(d_bzla->msg, 1, "");
   BZLA_MSG(d_bzla->msg, 1, "value computations:");
   BZLA_MSG(d_bzla->msg, 1, "  inverse:");
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld add ", d_bzlals->d_statistics.d_ninv.d_add);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld and ", d_bzlals->d_statistics.d_ninv.d_and);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld add ", d_ls->d_statistics.d_ninv.d_add);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld and ", d_ls->d_statistics.d_ninv.d_and);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld ashr ", d_ls->d_statistics.d_ninv.d_ashr);
   BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld ashr ", d_bzlals->d_statistics.d_ninv.d_ashr);
-  BZLA_MSG(d_bzla->msg,
-           1,
-           "  %5lld concat ",
-           d_bzlals->d_statistics.d_ninv.d_concat);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld eq ", d_bzlals->d_statistics.d_ninv.d_eq);
-  BZLA_MSG(d_bzla->msg,
-           1,
-           "  %5lld extract ",
-           d_bzlals->d_statistics.d_ninv.d_extract);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld ite ", d_bzlals->d_statistics.d_ninv.d_ite);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld mul ", d_bzlals->d_statistics.d_ninv.d_mul);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld not ", d_bzlals->d_statistics.d_ninv.d_not);
+      d_bzla->msg, 1, "  %5lld concat ", d_ls->d_statistics.d_ninv.d_concat);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld eq ", d_ls->d_statistics.d_ninv.d_eq);
   BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld sext ", d_bzlals->d_statistics.d_ninv.d_sext);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld shl ", d_bzlals->d_statistics.d_ninv.d_shl);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld shr ", d_bzlals->d_statistics.d_ninv.d_shr);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld slt ", d_bzlals->d_statistics.d_ninv.d_slt);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld udiv ", d_bzlals->d_statistics.d_ninv.d_udiv);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld ult ", d_bzlals->d_statistics.d_ninv.d_ult);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld urem ", d_bzlals->d_statistics.d_ninv.d_urem);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld xor ", d_bzlals->d_statistics.d_ninv.d_xor);
+      d_bzla->msg, 1, "  %5lld extract ", d_ls->d_statistics.d_ninv.d_extract);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld ite ", d_ls->d_statistics.d_ninv.d_ite);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld mul ", d_ls->d_statistics.d_ninv.d_mul);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld not ", d_ls->d_statistics.d_ninv.d_not);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld sext ", d_ls->d_statistics.d_ninv.d_sext);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld shl ", d_ls->d_statistics.d_ninv.d_shl);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld shr ", d_ls->d_statistics.d_ninv.d_shr);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld slt ", d_ls->d_statistics.d_ninv.d_slt);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld udiv ", d_ls->d_statistics.d_ninv.d_udiv);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld ult ", d_ls->d_statistics.d_ninv.d_ult);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld urem ", d_ls->d_statistics.d_ninv.d_urem);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld xor ", d_ls->d_statistics.d_ninv.d_xor);
 
   BZLA_MSG(d_bzla->msg, 1, "  consistent:");
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld add ", d_ls->d_statistics.d_ncons.d_add);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld and ", d_ls->d_statistics.d_ncons.d_and);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld ashr ", d_ls->d_statistics.d_ncons.d_ashr);
   BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld add ", d_bzlals->d_statistics.d_ncons.d_add);
+      d_bzla->msg, 1, "  %5lld concat ", d_ls->d_statistics.d_ncons.d_concat);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld eq ", d_ls->d_statistics.d_ncons.d_eq);
   BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld and ", d_bzlals->d_statistics.d_ncons.d_and);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld ashr ", d_bzlals->d_statistics.d_ncons.d_ashr);
-  BZLA_MSG(d_bzla->msg,
-           1,
-           "  %5lld concat ",
-           d_bzlals->d_statistics.d_ncons.d_concat);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld eq ", d_bzlals->d_statistics.d_ncons.d_eq);
-  BZLA_MSG(d_bzla->msg,
-           1,
-           "  %5lld extract ",
-           d_bzlals->d_statistics.d_ncons.d_extract);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld ite ", d_bzlals->d_statistics.d_ncons.d_ite);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld mul ", d_bzlals->d_statistics.d_ncons.d_mul);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld not ", d_bzlals->d_statistics.d_ncons.d_not);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld sext ", d_bzlals->d_statistics.d_ncons.d_sext);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld shl ", d_bzlals->d_statistics.d_ncons.d_shl);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld shr ", d_bzlals->d_statistics.d_ncons.d_shr);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld slt ", d_bzlals->d_statistics.d_ncons.d_slt);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld udiv ", d_bzlals->d_statistics.d_ncons.d_udiv);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld ult ", d_bzlals->d_statistics.d_ncons.d_ult);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld urem ", d_bzlals->d_statistics.d_ncons.d_urem);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld xor ", d_bzlals->d_statistics.d_ncons.d_xor);
+      d_bzla->msg, 1, "  %5lld extract ", d_ls->d_statistics.d_ncons.d_extract);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld ite ", d_ls->d_statistics.d_ncons.d_ite);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld mul ", d_ls->d_statistics.d_ncons.d_mul);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld not ", d_ls->d_statistics.d_ncons.d_not);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld sext ", d_ls->d_statistics.d_ncons.d_sext);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld shl ", d_ls->d_statistics.d_ncons.d_shl);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld shr ", d_ls->d_statistics.d_ncons.d_shr);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld slt ", d_ls->d_statistics.d_ncons.d_slt);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld udiv ", d_ls->d_statistics.d_ncons.d_udiv);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld ult ", d_ls->d_statistics.d_ncons.d_ult);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld urem ", d_ls->d_statistics.d_ncons.d_urem);
+  BZLA_MSG(d_bzla->msg, 1, "  %5lld xor ", d_ls->d_statistics.d_ncons.d_xor);
 #endif
 
   if (bzla_opt_get(d_bzla, BZLA_OPT_PROP_CONST_BITS))
