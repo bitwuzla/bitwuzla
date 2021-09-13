@@ -8,7 +8,7 @@
 
 #define BZLALS_PROB_MAX 1000 /* Maximum probability 100% = 1000. */
 
-namespace bzlarng {
+namespace bzla {
 
 RNG::RNG(uint32_t seed) : d_seed(seed)
 {
@@ -65,4 +65,4 @@ RNG::pick_one_of_five()
   return Choice::FIFTH;
 }
 
-}  // namespace bzlarng
+}  // namespace bzla

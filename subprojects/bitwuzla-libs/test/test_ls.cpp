@@ -1,8 +1,9 @@
-#include "bitvector_node.h"
 #include "ls.h"
-#include "test.h"
+#include "test_ls_common.h"
 
-namespace bzlatest {
+namespace bzla {
+namespace ls {
+namespace test {
 
 class TestLs : public TestBvNodeCommon
 {
@@ -922,4 +923,6 @@ TEST_F(TestLs, extract) { test_move_extract(); }
 
 TEST_F(TestLs, sext) { test_move_sext(); }
 
-}  // namespace bzlatest
+}  // namespace test
+}  // namespace ls
+}  // namespace bzla

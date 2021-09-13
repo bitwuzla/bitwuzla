@@ -1,6 +1,8 @@
-#include "test.h"
+#include "test_ls_common.h"
 
-namespace bzlatest {
+namespace bzla {
+namespace ls {
+namespace test {
 
 class TestBvNodeInv : public TestBvNode
 {
@@ -97,4 +99,6 @@ TEST_F(TestBvNodeInv, extract) { test_extract(INV); }
 
 TEST_F(TestBvNodeInv, sext) { test_sext(INV); }
 
-}  // namespace bzlatest
+}  // namespace test
+}  // namespace ls
+}  // namespace bzla

@@ -5,10 +5,8 @@
 
 #include "rng.h"
 
-using namespace bzlabv;
-using namespace bzlarng;
-
-namespace bzlals {
+namespace bzla {
+namespace ls {
 
 /* -------------------------------------------------------------------------- */
 
@@ -5417,4 +5415,6 @@ operator<<(std::ostream& out, const BitVectorSignExtend& node)
 }
 
 /* -------------------------------------------------------------------------- */
-}  // namespace bzlals
+
+}  // namespace ls
+}  // namespace bzla

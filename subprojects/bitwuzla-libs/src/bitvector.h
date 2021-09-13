@@ -5,13 +5,10 @@
 #include <memory>
 #include <string>
 
-namespace bzlarng {
-class RNG;
-}
-
-namespace bzlabv {
+namespace bzla {
 
 struct GMPMpz;
+class RNG;
 
 class BitVector
 {
@@ -45,7 +42,7 @@ class BitVector
   /** Construct a zero bit-vector of given size. */
   BitVector(uint32_t size);
   /** Construct a random bit-vector of given size. */
-  BitVector(uint32_t size, const ::bzlarng::RNG& rng);
+  BitVector(uint32_t size, const RNG& rng);
 
   /**
    * Construct a random bit-vector of given size with the given range.
@@ -56,7 +53,7 @@ class BitVector
    * is_signed: True to interpret the given range as signed, else unsigned.
    */
   BitVector(uint32_t size,
-            const ::bzlarng::RNG& rng,
+            const RNG& rng,
             const BitVector& from,
             const BitVector& to,
             bool is_signed = false);
@@ -64,10 +61,7 @@ class BitVector
    * Construct a new bit-vector of given size and randomly set bits within given
    * index range. Bits outside of given index range are initialized with zero.
    */
-  BitVector(uint32_t size,
-            const ::bzlarng::RNG& rng,
-            uint32_t idx_hi,
-            uint32_t idx_lo);
+  BitVector(uint32_t size, const RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
 
   /**
    * Construct a bit-vector of given size from given binary string.
@@ -107,7 +101,7 @@ class BitVector
    * Set the value of this bit-vector to a random value between 'from' and 'to'
    * (in-place).
    */
-  void iset(const ::bzlarng::RNG& rng,
+  void iset(const RNG& rng,
             const BitVector& from,
             const BitVector& to,
             bool is_signed);
@@ -644,8 +638,8 @@ class BitVector
   std::unique_ptr<GMPMpz> d_val;
 };
 
-}  // namespace bzlabv
+std::ostream& operator<<(std::ostream& out, const BitVector& bv);
 
-std::ostream& operator<<(std::ostream& out, const ::bzlabv::BitVector& bv);
+}  // namespace bzla
 
 #endif

@@ -9,7 +9,7 @@
 #include "gmprandstate.h"
 #include "rng.h"
 
-namespace bzlabv {
+namespace bzla {
 
 namespace {
 #ifndef NDEBUG
@@ -109,14 +109,14 @@ BitVector::BitVector(uint32_t size) : d_size(size)
   d_val.reset(new GMPMpz());
 }
 
-BitVector::BitVector(uint32_t size, const ::bzlarng::RNG& rng) : BitVector(size)
+BitVector::BitVector(uint32_t size, const RNG& rng) : BitVector(size)
 {
   mpz_urandomb(d_val->d_mpz, rng.get_gmp_state()->d_gmp_randstate, size);
   mpz_fdiv_r_2exp(d_val->d_mpz, d_val->d_mpz, size);
 }
 
 BitVector::BitVector(uint32_t size,
-                     const ::bzlarng::RNG& rng,
+                     const RNG& rng,
                      const BitVector& from,
                      const BitVector& to,
                      bool is_signed)
@@ -126,7 +126,7 @@ BitVector::BitVector(uint32_t size,
 }
 
 BitVector::BitVector(uint32_t size,
-                     const ::bzlarng::RNG& rng,
+                     const RNG& rng,
                      uint32_t idx_hi,
                      uint32_t idx_lo)
     : BitVector(size, rng)
@@ -219,7 +219,7 @@ BitVector::iset(const BitVector& bv)
 }
 
 void
-BitVector::iset(const ::bzlarng::RNG& rng,
+BitVector::iset(const RNG& rng,
                 const BitVector& from,
                 const BitVector& to,
                 bool is_signed)
@@ -2293,11 +2293,11 @@ BitVector::shift_is_uint64(uint32_t* res) const
   return true;
 }
 
-}  // namespace bzlabv
-
 std::ostream&
-operator<<(std::ostream& out, const ::bzlabv::BitVector& bv)
+operator<<(std::ostream& out, const BitVector& bv)
 {
   out << bv.to_string();
   return out;
 }
+
+}  // namespace bzla

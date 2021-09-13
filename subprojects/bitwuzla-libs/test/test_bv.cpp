@@ -3,7 +3,8 @@
 
 #include "test.h"
 
-namespace bzlatest {
+namespace bzla {
+namespace test {
 
 /* -------------------------------------------------------------------------- */
 
@@ -4034,4 +4035,5 @@ TEST_F(TestBitVector, udivurem)
 
 /* -------------------------------------------------------------------------- */
 
-}  // namespace bzlatest
+}  // namespace test
+}  // namespace bzla

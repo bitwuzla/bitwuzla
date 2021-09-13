@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace bzlarng {
+namespace bzla {
 
 /**
  * A GMP gmp_randstate_t wrapper.
@@ -26,6 +26,6 @@ struct GMPRandState
   gmp_randstate_t d_gmp_randstate;
 };
 
-}  // namespace bzlarng
+}  // namespace bzla
 
 #endif

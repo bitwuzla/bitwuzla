@@ -10,10 +10,8 @@
 
 #define BZLALS_PROB_USE_INV_VALUE 990
 
-using namespace bzlabv;
-using namespace bzlarng;
-
-namespace bzlals {
+namespace bzla {
+namespace ls {
 
 /* -------------------------------------------------------------------------- */
 
@@ -712,4 +710,6 @@ LocalSearch::move()
 }
 
 /* -------------------------------------------------------------------------- */
-}  // namespace bzlals
+
+}  // namespace ls
+}  // namespace bzla

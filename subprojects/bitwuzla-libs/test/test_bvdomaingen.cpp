@@ -2,15 +2,15 @@
 #include <string>
 #include <unordered_set>
 
-#include "test.h"
+#include "test_ls_common.h"
 
-using namespace bzlarng;
-
-namespace bzlatest {
+namespace bzla {
+namespace ls {
+namespace test {
 
 /* -------------------------------------------------------------------------- */
 
-class TestBvDomainGen : public TestCommon
+class TestBvDomainGen : public ::bzla::test::TestCommon
 {
  protected:
   static constexpr uint32_t TEST_BW = 4;
@@ -446,4 +446,6 @@ TEST_F(TestBvDomainGen, random_signed)
                "has_random");
 }
 
-}  // namespace bzlatest
+}  // namespace test
+}  // namespace ls
+}  // namespace bzla

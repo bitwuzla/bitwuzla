@@ -5,7 +5,7 @@
 #include <memory>
 #include <random>
 
-namespace bzlarng {
+namespace bzla {
 
 struct GMPRandState;
 
@@ -86,6 +86,6 @@ RNG::pick_from_set(const TSet& set)
   return *it;
 }
 
-}  // namespace bzlarng
+}  // namespace bzla
 
 #endif

@@ -7,10 +7,8 @@
 #include "rng.h"
 #include "wheel_factorizer.h"
 
-using namespace bzlabv;
-using namespace bzlarng;
-
-namespace bzlals {
+namespace bzla {
+namespace ls {
 
 /*----------------------------------------------------------------------------*/
 
@@ -611,4 +609,6 @@ operator<<(std::ostream &out, const BitVectorDomain &d)
   out << d.to_string();
   return out;
 }
-}  // namespace bzlals
+
+}  // namespace ls
+}  // namespace bzla

@@ -1,12 +1,14 @@
 #include <bitset>
 
-#include "test.h"
+#include "test_ls_common.h"
 
-namespace bzlatest {
+namespace bzla {
+namespace ls {
+namespace test {
 
 /* -------------------------------------------------------------------------- */
 
-class TestBitVectorDomain : public TestCommon
+class TestBitVectorDomain : public ::bzla::test::TestCommon
 {
  protected:
   void test_match_fixed_bits(const std::string &value);
@@ -531,4 +533,6 @@ TEST_F(TestBitVectorDomain, to_string)
 
 /* -------------------------------------------------------------------------- */
 
-}  // namespace bzlatest
+}  // namespace test
+}  // namespace ls
+}  // namespace bzla
