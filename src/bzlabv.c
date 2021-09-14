@@ -229,9 +229,9 @@ bzla_bv_constd(BzlaMemMgr *mm, const char *str, uint32_t bw)
   res->width = bw;
   mpz_init_set_str(res->val, str, 10);
   /* We assert that given string must fit into bw after conversion. However,
-   * we still need to normalize negative values. Values of size bw where the
-   * MSB is set are indicated as negative in GMP when created from
-   * mpz_init_set_str, which is problematic when converting to string. */
+   * However, we still need to normalize negative values. Negative values are
+   * represented as "-xxx" (where xxx is the binary representation of the
+   * absolute value of 'value') in GMP when created from mpz_init_set_str. */
   mpz_fdiv_r_2exp(res->val, res->val, bw);
 
   return res;
