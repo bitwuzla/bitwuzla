@@ -27,6 +27,7 @@ class RNG
 
   /** Constructor. */
   explicit RNG(uint32_t seed = 0);
+  RNG(const RNG& other);
   /** Destructor. */
   ~RNG();
 
@@ -61,10 +62,11 @@ class RNG
   /** Pick one out of five choices. */
   Choice pick_one_of_five();
 
-  /* Pick random element from given set/vector. */
+  /** Pick random element from given set/vector. */
   template <typename TSet, typename TPicked>
   TPicked pick_from_set(const TSet& data);
 
+  /** Get a pointer to the gmp_randstate_t wrapper. */
   GMPRandState* get_gmp_state() const { return d_gmp_state.get(); }
 
  private:

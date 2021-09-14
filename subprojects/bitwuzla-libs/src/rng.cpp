@@ -16,6 +16,8 @@ RNG::RNG(uint32_t seed) : d_seed(seed)
   d_gmp_state.reset(new GMPRandState(pick<uint32_t>()));
 }
 
+RNG::RNG(const RNG& other) : d_rng(other.d_rng) {}
+
 RNG::~RNG() {}
 
 bool
