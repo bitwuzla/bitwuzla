@@ -23,10 +23,9 @@ struct GMPMpz
   {
     mpz_init_set_str(d_mpz, value.c_str(), base);
     /* BitVector asserts that given string must fit into bv after conversion.
-     * However, we still need to normalize negative values. Values that can
-     * only presented with 'size' bits where the MSB is set are indicated as
-     * negative in GMP when created from mpz_init_set_str, which is problematic
-     * when converting to string. */
+     * However, we still need to normalize negative values. Negative values are
+     * represented as "-xxx" (where xxx is the binary representation of the
+     * absolute value of 'value') in GMP when created from mpz_init_set_str. */
     mpz_fdiv_r_2exp(d_mpz, d_mpz, size);
   }
   /** Construct a GMP value from given uint64 value. */
