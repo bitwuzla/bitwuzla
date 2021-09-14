@@ -51,6 +51,27 @@ class RNG
     return dist(d_rng);
   }
 
+  /** Pick a floating point number with type T. */
+  template <
+      typename T,
+      typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
+  T pick()
+  {
+    std::uniform_real_distribution<T> dist;
+    return dist(d_rng);
+  }
+
+  /** Pick a floating point number with type T between 'from' and 'to'
+   * (inclusive). */
+  template <
+      typename T,
+      typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
+  T pick(T from, T to)
+  {
+    std::uniform_real_distribution<T> dist(from, to);
+    return dist(d_rng);
+  }
+
   /** Pick with given probability, 100% = 1000. */
   bool pick_with_prob(uint32_t prob);
   /** Pick with probability of 50%. */
