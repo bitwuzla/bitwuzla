@@ -952,16 +952,12 @@ clone_aux_bzla(Bzla *bzla,
 
   mm = bzla_mem_mgr_new();
   BZLA_CNEW(mm, clone);
-#ifndef NDEBUG
-  allocated = sizeof(Bzla);
-#endif
   memcpy(clone, bzla, sizeof(Bzla));
   clone->qslv = NULL;
   clone->mm  = mm;
   clone->rng = bzla_rng_clone(bzla->rng, mm);
 #ifndef NDEBUG
-  allocated += sizeof(BzlaRNG);
-  allocated += sizeof(gmp_randstate_t);
+  allocated = clone->mm->allocated;  // we cannot retrieve size of RNG
 #endif
 
   BZLA_CLR(&clone->cbs);

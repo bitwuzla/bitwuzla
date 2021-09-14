@@ -69,7 +69,8 @@ bzla_bv_new_random(BzlaMemMgr *mm, BzlaRNG *rng, uint32_t bw)
   BzlaBitVector *res;
 
   res = bzla_bv_new(mm, bw);
-  mpz_urandomb(res->val, *((gmp_randstate_t *) rng->gmp_state), bw);
+  mpz_urandomb(
+      res->val, *((gmp_randstate_t *) bzla_rng_get_gmp_state(rng)), bw);
   mpz_fdiv_r_2exp(res->val, res->val, bw);
 
   return res;
@@ -98,7 +99,8 @@ bzla_bv_new_random_range(BzlaMemMgr *mm,
   mpz_sub(n_to, n_to, from->val);
   mpz_add_ui(n_to, n_to, 1);
 
-  mpz_urandomm(res->val, *((gmp_randstate_t *) rng->gmp_state), n_to);
+  mpz_urandomm(
+      res->val, *((gmp_randstate_t *) bzla_rng_get_gmp_state(rng)), n_to);
   mpz_add(res->val, res->val, from->val);
   mpz_clear(n_to);
 

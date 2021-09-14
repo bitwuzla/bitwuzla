@@ -16,17 +16,6 @@
 
 #include "utils/bzlamem.h"
 
-struct BzlaRNG
-{
-  uint32_t z, w;
-  BzlaMemMgr* mm;
-  uint32_t seed;
-  bool is_init;
-  /* This is a bit ugly, but a workaround to not include gmp.h in this header
-   * (including the GMP header causes compilation problems with gtest). */
-  void* gmp_state;
-};
-
 typedef struct BzlaRNG BzlaRNG;
 
 /**
@@ -53,6 +42,9 @@ void bzla_rng_init(BzlaRNG* rng, uint32_t seed);
  * to the cloned object when cloning) when compiled with GMP.
  */
 BzlaRNG* bzla_rng_clone(BzlaRNG* rng, BzlaMemMgr* mm);
+
+/** Get a pointer to the gmp_randstate_t of the RNG. */
+void* bzla_rng_get_gmp_state(BzlaRNG* rng);
 
 /**
  * Delete allocated data members of the given RNG.
