@@ -57,7 +57,7 @@ TEST_F(TestBitVectorDomain, ctor_dtor)
   ASSERT_DEATH(BitVectorDomain(BitVector(10, 4), BitVector(11, 5)),
                "lo.size\\(\\) == hi.size\\(\\)");
   ASSERT_DEATH(BitVectorDomain(""), "size > 0");
-  ASSERT_DEATH(BitVectorDomain("12345"), "is_bin_str");
+  ASSERT_DEATH(BitVectorDomain("12345"), "is_valid_bin_str");
 }
 
 TEST_F(TestBitVectorDomain, size)

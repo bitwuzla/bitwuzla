@@ -2764,12 +2764,22 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_NO_FATAL_FAILURE(BitVector(10));
   ASSERT_NO_FATAL_FAILURE(BitVector(6, "101010"));
   ASSERT_NO_FATAL_FAILURE(BitVector(8, "101010"));
+  ASSERT_NO_FATAL_FAILURE(BitVector(8, "128", 10));
+  ASSERT_NO_FATAL_FAILURE(BitVector(8, "-128", 10));
+  ASSERT_NO_FATAL_FAILURE(BitVector(8, "a1", 16));
   ASSERT_NO_FATAL_FAILURE(BitVector(16, 1234));
   ASSERT_NO_FATAL_FAILURE(BitVector(16, 123412341234));
   ASSERT_DEATH(BitVector(0), "> 0");
-  ASSERT_DEATH(BitVector(2, "101010"), "<= size");
+  ASSERT_DEATH(BitVector(2, "101010"), "is_valid_bin_str");
+  ASSERT_DEATH(BitVector(6, "a01010"), "is_valid_bin_str");
+  ASSERT_DEATH(BitVector(6, "123412"), "is_valid_bin_str");
+  ASSERT_DEATH(BitVector(6, "1234", 10), "is_valid_dec_str");
+  ASSERT_DEATH(BitVector(6, "1f", 10), "is_valid_dec_str");
+  ASSERT_DEATH(BitVector(8, "-129", 10), "is_valid_dec_str");
+  ASSERT_DEATH(BitVector(6, "1234", 16), "is_valid_hex_str");
+  ASSERT_DEATH(BitVector(6, "1z", 16), "is_valid_hex_str");
+  ASSERT_DEATH(BitVector(8, "-12", 16), "is_valid_hex_str");
   ASSERT_DEATH(BitVector(2, ""), "empty");
-  ASSERT_DEATH(BitVector(6, "123412"), "is_bin_str");
   ASSERT_DEATH(BitVector(0, 1234), "> 0");
 }
 

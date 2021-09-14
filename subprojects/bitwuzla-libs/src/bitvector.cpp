@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <unordered_set>
 #include <utility>
 
 #include "gmpmpz.h"
@@ -13,13 +14,245 @@ namespace bzla {
 
 namespace {
 #ifndef NDEBUG
-bool
-is_bin_str(std::string str)
+/** Strip leading zeros of given string. */
+std::string
+strip_zeros(std::string s)
 {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+            return ch != '0';
+          }));
+  return s;
+}
+/** Add two binary numbers given as strings. */
+std::string
+add_unbounded_bin_str(std::string a, std::string b)
+{
+  a = strip_zeros(a);
+  b = strip_zeros(b);
+
+  if (a.empty()) return b;
+  if (b.empty()) return a;
+
+  size_t asize = a.size();
+  size_t bsize = b.size();
+  size_t rsize = (asize < bsize) ? bsize + 1 : asize + 1;
+  std::string res(rsize, '0');
+
+  char c = '0';
+  for (uint32_t i = 0; i < rsize; ++i)
+  {
+    char x             = i < asize ? a[asize - i - 1] : '0';
+    char y             = i < bsize ? b[bsize - i - 1] : '0';
+    char s             = x ^ y ^ c;
+    c                  = (x & y) | (x & c) | (y & c);
+    res[rsize - i - 1] = s;
+  }
+  return strip_zeros(res);
+}
+/** Multiply two binary numbers given as strings. */
+std::string
+mult_unbounded_bin_str(std::string a, std::string b)
+{
+  a = strip_zeros(a);
+
+  if (a.empty()) return a;
+
+  if (a[0] == '1' && !a[1]) return b;
+
+  b = strip_zeros(b);
+
+  if (b.empty()) return b;
+
+  if (b[0] == '1' && !b[1]) return a;
+
+  size_t asize = a.size();
+  size_t bsize = b.size();
+  size_t rsize = asize + bsize;
+
+  std::string res(rsize, '0');
+  for (uint32_t i = 0, n = a.size(); i < n; ++i) res[bsize + i] = a[i];
+
+  for (size_t i = 0; i < asize; ++i)
+  {
+    char m = res[rsize - 1];
+    char c = '0';
+
+    if (m == '1')
+    {
+      for (size_t j = bsize; j > 0; --j)
+      {
+        char x     = b[j - 1];
+        char y     = res[j - 1];
+        char s     = x ^ y ^ c;
+        c          = (x & y) | (x & c) | (y & c);
+        res[j - 1] = s;
+      }
+    }
+    std::string subres = res.substr(0, rsize - 1);
+    res.replace(res.begin() + 1, res.end(), subres.begin(), subres.end());
+    res[0] = c;
+  }
+
+  return res;
+}
+/** Convert a digit to its binary representation; */
+const char*
+digit2bin(char ch)
+{
+  assert('0' <= ch);
+  assert(ch <= '9');
+  const char* table[10] = {
+      "",
+      "1",
+      "10",
+      "11",
+      "100",
+      "101",
+      "110",
+      "111",
+      "1000",
+      "1001",
+  };
+  return table[ch - '0'];
+}
+/** Convert a binary string to a decimal string. */
+std::string
+str_bin_to_dec(const std::string& str_bin)
+{
+  std::string digits(str_bin.size(), 0);
+
+  // from MSB to LSB
+  for (const auto& c : str_bin)
+  {
+    // shift digits, with carry
+    uint32_t carry = 0;
+    for (auto& digit : digits)
+    {
+      uint32_t d = digit * 2 + carry;
+      carry      = d > 9;
+      digit      = d % 10;
+    }
+    // add new bit
+    if (c == '1') digits[0] |= 1;
+  }
+
+  // Note: digits are in reverse order, with leading zeros on the right
+  size_t pos = 0;
+  size_t n   = digits.size();
+  for (pos = 0; pos <= n; ++pos)
+  {
+    if (digits[n - pos] != 0) break;
+  }
+  std::stringstream ss;
+  if (pos > n) return "0";
+  for (size_t i = pos; i <= n; ++i)
+  {
+    ss << ((char) (digits[n - i] + '0'));
+  }
+  return ss.str();
+}
+/** Convert a decimal string to a binary string. */
+std::string
+str_dec_to_bin(const std::string& str_dec)
+{
+  assert(str_dec[0] != '-');
+
+  std::string res;
+  for (size_t i = 0, n = str_dec.size(); i < n; ++i)
+  {
+    res = mult_unbounded_bin_str(res, "1010");                // * 10
+    res = add_unbounded_bin_str(res, digit2bin(str_dec[i]));  // + digit
+  }
+  assert(strip_zeros(res) == res);
+  assert(str_bin_to_dec(res) == str_dec);
+  if (res.size()) return res;
+  return "0";
+}
+/** Convert a hexadecimal string to a binary string. */
+std::string
+str_hex_to_bin(const std::string& str_hex)
+{
+  std::stringstream res;
+
+  for (char c : str_hex)
+  {
+    switch (c)
+    {
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9': res << digit2bin(c); break;
+      case 'a':
+      case 'A': res << "1010"; break;
+      case 'b':
+      case 'B': res << "1011"; break;
+      case 'c':
+      case 'C': res << "1100"; break;
+      case 'd':
+      case 'D': res << "1101"; break;
+      case 'e':
+      case 'E': res << "1110"; break;
+      case 'f':
+      case 'F': res << "1111"; break;
+      default: return "";
+    }
+  }
+  return res.str();
+}
+/**
+ * Return true if given string is a valid binary string.
+ * A string is a valid binary string if it only contains '0' and '1', and
+ * its length does not exceed the given size.
+ */
+bool
+is_valid_bin_str(uint32_t size, const std::string& str)
+{
+  if (size < str.size()) return false;
   for (const char& c : str)
   {
     if (c != '0' && c != '1') return false;
   }
+  return true;
+}
+/**
+ * Return true if given string is a valid decimal string.
+ * A string is a valid decimal string if it only contains characters 0-9 and
+ * its binary representation fits into the given size.
+ */
+bool
+is_valid_dec_str(uint32_t size, const std::string& str)
+{
+  bool is_neg = str[0] == '-';
+  std::unordered_set<char> digits{
+      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+  for (size_t i = is_neg ? 1 : 0, n = str.size(); i < n; ++i)
+  {
+    if (digits.find(str[i]) == digits.end()) return false;
+  }
+  std::string str_bin   = str_dec_to_bin(str.c_str() + (is_neg ? 1 : 0));
+  uint32_t str_bin_size = str_bin.size();
+  std::string min_val   = "1" + (size > 1 ? std::string(size - 1, '0') : "");
+  bool is_min_val       = str_bin == min_val;
+  return ((is_neg && !is_min_val) || str_bin_size <= size)
+         && (!is_neg || is_min_val || str_bin_size + 1 <= size);
+}
+/**
+ * Return true if given string is a valid hex string.
+ * A string is a valid hex string if it only contains characters 0-9 and a-f
+ * and its binary representation fits into the given size.
+ */
+bool
+is_valid_hex_str(uint32_t size, const std::string& str)
+{
+  std::string s = str_hex_to_bin(str);
+  if (s.empty()) return false;
+  if (size < strip_zeros(s).size()) return false;
   return true;
 }
 #endif
@@ -141,12 +374,14 @@ BitVector::BitVector(uint32_t size,
   }
 }
 
-BitVector::BitVector(uint32_t size, const std::string& value) : d_size(size)
+BitVector::BitVector(uint32_t size, const std::string& value, uint32_t base)
+    : d_size(size)
 {
-  assert(value.size() <= size);
   assert(!value.empty());
-  assert(is_bin_str(value));
-  d_val.reset(new GMPMpz(value));
+  assert(base != 2 || is_valid_bin_str(size, value));
+  assert(base != 10 || is_valid_dec_str(size, value));
+  assert(base != 16 || is_valid_hex_str(size, value));
+  d_val.reset(new GMPMpz(size, value, base));
 }
 
 BitVector::BitVector(uint32_t size, uint64_t value) : d_size(size)
@@ -277,6 +512,7 @@ BitVector::to_string() const
   assert(!is_null());
   std::stringstream res;
   char* tmp     = mpz_get_str(0, 2, d_val->d_mpz);
+  assert(tmp[0] == '1' || tmp[0] == '0');  // may not be negative
   uint32_t n    = strlen(tmp);
   uint32_t diff = d_size - n;
   assert(n <= d_size);

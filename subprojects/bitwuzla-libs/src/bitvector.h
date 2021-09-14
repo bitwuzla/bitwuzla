@@ -66,10 +66,12 @@ class BitVector
   /**
    * Construct a bit-vector of given size from given binary string.
    * size : The bit-vector size, must be >= the length of 'value'.
-   * value: A binary string representing the value of the bit-vector. If the
+   * value: A string representing the value of the bit-vector. If the
    *        length of this string is > 'size', the value is zero extended.
+   * base : The base the string is given in, 2 for binary, 10 for decimal,
+   *        16 for hexadecimal.
    */
-  BitVector(uint32_t size, const std::string& value);
+  BitVector(uint32_t size, const std::string& value, uint32_t base = 2);
 
   /**
    * Construct a bit-vector of given size from given uint64 value.
