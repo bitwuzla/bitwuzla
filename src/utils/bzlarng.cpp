@@ -9,21 +9,13 @@
  */
 
 #include <cassert>
-#include <memory>
 
-#include "gmprandstate.h"
-#include "rng.h"
+#include "bzlarngstruct.h"
 
 extern "C" {
 #include "bzlaopt.h"
 #include "utils/bzlarng.h"
 }
-
-struct BzlaRNG
-{
-  BzlaMemMgr* mm;
-  std::unique_ptr<bzla::RNG> d_rng;
-};
 
 BzlaRNG*
 bzla_rng_new(BzlaMemMgr* mm, uint32_t seed)
