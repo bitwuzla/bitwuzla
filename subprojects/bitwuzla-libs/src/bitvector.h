@@ -92,6 +92,8 @@ class BitVector
   /** Copy assignment operator. */
   BitVector& operator=(const BitVector& other);
 
+  size_t hash() const;
+
   /** Return true if this is an uninitialized bit-vector. */
   bool is_null() const { return d_val == nullptr; }
 
@@ -617,6 +619,12 @@ class BitVector
   void bvudivurem(const BitVector& bv, BitVector* quot, BitVector* rem) const;
 
  private:
+  /** Prime numbers used for hashing. */
+  static inline uint32_t s_hash_primes[] = {333444569u, 76891121u, 456790003u};
+  /** Number of prime numbers used for hashing. */
+  static constexpr uint32_t s_n_primes =
+      ((uint32_t) (sizeof s_hash_primes / sizeof *s_hash_primes));
+
   /**
    * Count leading zeros or ones.
    * zeros: True to determine number of leading zeros, false to count number
@@ -643,5 +651,16 @@ class BitVector
 std::ostream& operator<<(std::ostream& out, const BitVector& bv);
 
 }  // namespace bzla
+
+namespace std {
+
+/** Hash function. */
+template <>
+struct hash<bzla::BitVector>
+{
+  size_t operator()(const bzla::BitVector& bv) const;
+};
+
+}  // namespace std
 
 #endif
