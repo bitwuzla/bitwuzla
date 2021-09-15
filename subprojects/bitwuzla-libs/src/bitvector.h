@@ -24,7 +24,7 @@ class BitVector
                            const std::string& str,
                            uint32_t base);
   /** Return true if given value fits into a BitVector of given size. */
-  static bool fits_in_size(uint32_t size, uint64_t value);
+  static bool fits_in_size(uint32_t size, uint64_t value, bool sign = false);
   /** Create a true bit-vector (value 1 of size 1). */
   static BitVector mk_true();
   /** Create a false bit-vector (value 0 of size 1). */

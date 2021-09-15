@@ -103,8 +103,13 @@ BitVector::fits_in_size(uint32_t size, const std::string& str, uint32_t base)
 }
 
 bool
-BitVector::fits_in_size(uint32_t size, uint64_t value)
+BitVector::fits_in_size(uint32_t size, uint64_t value, bool sign)
 {
+  if (sign)
+  {
+    return fits_in_size(size, std::to_string((int64_t) value), 10);
+  }
+
   GMPMpz tmp;
   mpz_set_ui(tmp.d_mpz, value);
   return size >= mpz_sizeinbase(tmp.d_mpz, 2);
@@ -225,7 +230,7 @@ BitVector::BitVector(uint32_t size, uint64_t value, bool sign) : d_size(size)
 {
   assert(size > 0);
   assert(sign || fits_in_size(size, value));
-  assert(!sign || fits_in_size(size, std::to_string((int64_t) value), 10));
+  assert(!sign || fits_in_size(size, value, true));
 
   d_val.reset(new GMPMpz(size, value, sign));
 }
