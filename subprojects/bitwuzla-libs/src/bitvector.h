@@ -13,13 +13,12 @@ class RNG;
 class BitVector
 {
  public:
-  /**
-   * Return true if given string in given base fits into a BitVector of given
-   * size.
-   */
+  /** Return true if string in base fits into a BitVector of given size. */
   static bool fits_in_size(uint32_t size,
                            const std::string& str,
                            uint32_t base);
+  /** Return true if given value fits into a BitVector of given size. */
+  static bool fits_in_size(uint32_t size, uint64_t value);
   /** Create a true bit-vector (value 1 of size 1). */
   static BitVector mk_true();
   /** Create a false bit-vector (value 0 of size 1). */
@@ -34,6 +33,7 @@ class BitVector
   static BitVector mk_min_signed(uint32_t size);
   /** Create a maximum signed value bit-vector of given size. */
   static BitVector mk_max_signed(uint32_t size);
+
   /**
    * Create a if-then-else over the given bit-vectors.
    * c: The condition.

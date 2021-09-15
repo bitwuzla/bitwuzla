@@ -2770,8 +2770,9 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_NO_FATAL_FAILURE(BitVector(8, "-127", 10));
   ASSERT_NO_FATAL_FAILURE(BitVector(8, "-128", 10));
   ASSERT_NO_FATAL_FAILURE(BitVector(8, "a1", 16));
+  ASSERT_NO_FATAL_FAILURE(BitVector(11, 1234));
   ASSERT_NO_FATAL_FAILURE(BitVector(16, 1234));
-  ASSERT_NO_FATAL_FAILURE(BitVector(16, 123412341234));
+  ASSERT_NO_FATAL_FAILURE(BitVector(16, 65535));
   ASSERT_DEATH(BitVector(0), "> 0");
   ASSERT_DEATH(BitVector(2, "101010"), "fits_in_size");
   ASSERT_DEATH(BitVector(6, "a01010"), "is_valid_bin_str");
@@ -2784,6 +2785,9 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_DEATH(BitVector(8, "-12", 16), "is_valid_hex_str");
   ASSERT_DEATH(BitVector(2, ""), "empty");
   ASSERT_DEATH(BitVector(0, 1234), "> 0");
+  ASSERT_DEATH(BitVector(10, 1234), "fits_in_size");
+  ASSERT_DEATH(BitVector(16, 123412341234), "fits_in_size");
+  ASSERT_DEATH(BitVector(16, 65536), "fits_in_size");
 }
 
 TEST_F(TestBitVector, ctor_rand)

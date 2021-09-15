@@ -87,7 +87,7 @@ BitVector::fits_in_size(uint32_t size, const std::string& str, uint32_t base)
   bool is_neg = str[0] == '-';
 
   GMPMpz tmp;
-  mpz_init_set_str(tmp.d_mpz, str.c_str(), base);
+  mpz_set_str(tmp.d_mpz, str.c_str(), base);
 
   if (is_neg)
   {
@@ -100,6 +100,14 @@ BitVector::fits_in_size(uint32_t size, const std::string& str, uint32_t base)
     BitVector max = BitVector::mk_ones(size);
     return mpz_cmp(tmp.d_mpz, max.d_val->d_mpz) <= 0;
   }
+}
+
+bool
+BitVector::fits_in_size(uint32_t size, uint64_t value)
+{
+  GMPMpz tmp;
+  mpz_set_ui(tmp.d_mpz, value);
+  return size >= mpz_sizeinbase(tmp.d_mpz, 2);
 }
 
 BitVector
@@ -216,6 +224,7 @@ BitVector::BitVector(uint32_t size, const std::string& value, uint32_t base)
 BitVector::BitVector(uint32_t size, uint64_t value) : d_size(size)
 {
   assert(size > 0);
+  assert(fits_in_size(size, value));
   d_val.reset(new GMPMpz(size, value));
 }
 
