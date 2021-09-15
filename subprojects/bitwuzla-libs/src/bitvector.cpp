@@ -389,17 +389,22 @@ BitVector::operator!=(const BitVector& bv)
 }
 
 std::string
-BitVector::to_string() const
+BitVector::to_string(uint32_t base) const
 {
   assert(!is_null());
   std::stringstream res;
-  char* tmp     = mpz_get_str(0, 2, d_val->d_mpz);
-  assert(tmp[0] == '1' || tmp[0] == '0');  // may not be negative
-  uint32_t n    = strlen(tmp);
-  uint32_t diff = d_size - n;
-  assert(n <= d_size);
-  res << std::string(diff, '0') << tmp;
-  assert(res.str().size() == d_size);
+  char* tmp = mpz_get_str(0, base, d_val->d_mpz);
+  assert(tmp[0] != '-');  // may not be negative
+  if (base == 2)
+  {
+    /* Pad with leading zeros for binary representation. */
+    uint32_t n    = strlen(tmp);
+    uint32_t diff = d_size - n;
+    assert(n <= d_size);
+    res << std::string(diff, '0');
+  }
+  res << tmp;
+  assert(base != 2 || res.str().size() == d_size);
   free(tmp);
   return res.str();
 }

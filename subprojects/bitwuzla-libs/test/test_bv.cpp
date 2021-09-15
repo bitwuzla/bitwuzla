@@ -2870,8 +2870,30 @@ TEST_F(TestBitVector, to_string)
   ASSERT_EQ(BitVector(6, "101010").to_string(), "101010");
   ASSERT_EQ(BitVector(8, "101010").to_string(), "00101010");
   ASSERT_EQ(BitVector(16, 1234).to_string(), "0000010011010010");
-  ASSERT_EQ(BitVector(16, 123412341234).to_string(), "1110000111110010");
-  ASSERT_EQ(BitVector(16, UINT64_MAX).to_string(), "1111111111111111");
+  ASSERT_EQ(BitVector(16, 65530).to_string(), "1111111111111010");
+  ASSERT_EQ(BitVector(16, 65535).to_string(), "1111111111111111");
+  ASSERT_EQ(BitVector(32, 4294967295).to_string(),
+            "11111111111111111111111111111111");
+  ASSERT_EQ(BitVector(64, UINT64_MAX).to_string(),
+            "1111111111111111111111111111111111111111111111111111111111111111");
+
+  ASSERT_EQ(BitVector(10).to_string(10), "0");
+  ASSERT_EQ(BitVector(6, "101010").to_string(10), "42");
+  ASSERT_EQ(BitVector(8, "101010").to_string(10), "42");
+  ASSERT_EQ(BitVector(16, 1234).to_string(10), "1234");
+  ASSERT_EQ(BitVector(16, 65530).to_string(10), "65530");
+  ASSERT_EQ(BitVector(16, 65535).to_string(10), "65535");
+  ASSERT_EQ(BitVector(32, 4294967295).to_string(10), "4294967295");
+  ASSERT_EQ(BitVector(64, UINT64_MAX).to_string(10), "18446744073709551615");
+
+  ASSERT_EQ(BitVector(10).to_string(16), "0");
+  ASSERT_EQ(BitVector(6, "101010").to_string(16), "2a");
+  ASSERT_EQ(BitVector(8, "101010").to_string(16), "2a");
+  ASSERT_EQ(BitVector(16, 1234).to_string(16), "4d2");
+  ASSERT_EQ(BitVector(16, 65530).to_string(16), "fffa");
+  ASSERT_EQ(BitVector(16, 65535).to_string(16), "ffff");
+  ASSERT_EQ(BitVector(32, 4294967295).to_string(16), "ffffffff");
+  ASSERT_EQ(BitVector(64, UINT64_MAX).to_string(16), "ffffffffffffffff");
 }
 
 TEST_F(TestBitVector, to_uint64)

@@ -122,8 +122,12 @@ class BitVector
   /** Disequality comparison operator. */
   bool operator!=(const BitVector& bv);
 
-  /** Return a string representation of this bit-vector. */
-  std::string to_string() const;
+  /**
+   * Return a string representation of this bit-vector.
+   * base: 2 for binary representation, 10 for decimal representation, 16 for
+   *       hexadecimal representation.
+   */
+  std::string to_string(uint32_t base = 2) const;
   /**
    * Return a uint64_t representation of this bit-vector.
    * Size of this bit-vector must be <= 64.
