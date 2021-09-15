@@ -89,10 +89,11 @@ class BitVector
   /**
    * Construct a bit-vector of given size from given uint64 value.
    * size : The bit-vector size.
-   * value: A uint64 representing the bit-vector value, if the value can not be
-   *        represented with 'size' bits, it is truncated.
+   * value: A uint64 (when unsigned) or int64 (when signed) representing the
+   *        bit-vector value. The value must be representable with 'size' bits.
+   * sign : True if given value should be interpreted as signed integer.
    */
-  BitVector(uint32_t size, uint64_t value);
+  BitVector(uint32_t size, uint64_t value, bool sign = false);
 
   /** Copy constructor. */
   BitVector(const BitVector& other);

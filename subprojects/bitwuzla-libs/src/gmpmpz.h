@@ -29,9 +29,16 @@ struct GMPMpz
     mpz_fdiv_r_2exp(d_mpz, d_mpz, size);
   }
   /** Construct a GMP value from given uint64 value. */
-  GMPMpz(uint64_t size, uint64_t value)
+  GMPMpz(uint64_t size, uint64_t value, bool sign = false)
   {
-    mpz_init_set_ui(d_mpz, value);
+    if (sign)
+    {
+      mpz_init_set_ui(d_mpz, value);
+    }
+    else
+    {
+      mpz_init_set_si(d_mpz, value);
+    }
     mpz_fdiv_r_2exp(d_mpz, d_mpz, size);
   }
 

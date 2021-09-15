@@ -221,11 +221,13 @@ BitVector::BitVector(uint32_t size, const std::string& value, uint32_t base)
   d_val.reset(new GMPMpz(size, value, base));
 }
 
-BitVector::BitVector(uint32_t size, uint64_t value) : d_size(size)
+BitVector::BitVector(uint32_t size, uint64_t value, bool sign) : d_size(size)
 {
   assert(size > 0);
-  assert(fits_in_size(size, value));
-  d_val.reset(new GMPMpz(size, value));
+  assert(sign || fits_in_size(size, value));
+  assert(!sign || fits_in_size(size, std::to_string((int64_t) value), 10));
+
+  d_val.reset(new GMPMpz(size, value, sign));
 }
 
 BitVector::BitVector(const BitVector& other)

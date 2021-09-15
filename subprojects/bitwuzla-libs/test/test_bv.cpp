@@ -2771,6 +2771,9 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_NO_FATAL_FAILURE(BitVector(8, "-127", 10));
   ASSERT_NO_FATAL_FAILURE(BitVector(8, "-128", 10));
   ASSERT_NO_FATAL_FAILURE(BitVector(8, "a1", 16));
+  ASSERT_NO_FATAL_FAILURE(BitVector(8, -3, true));
+  ASSERT_NO_FATAL_FAILURE(BitVector(8, -127, true));
+  ASSERT_NO_FATAL_FAILURE(BitVector(8, -128, true));
   ASSERT_NO_FATAL_FAILURE(BitVector(11, 1234));
   ASSERT_NO_FATAL_FAILURE(BitVector(16, 1234));
   ASSERT_NO_FATAL_FAILURE(BitVector(16, 65535));
@@ -2786,6 +2789,7 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_DEATH(BitVector(8, "-12", 16), "is_valid_hex_str");
   ASSERT_DEATH(BitVector(2, ""), "empty");
   ASSERT_DEATH(BitVector(0, 1234), "> 0");
+  ASSERT_DEATH(BitVector(8, -129, true), "fits_in_size");
   ASSERT_DEATH(BitVector(10, 1234), "fits_in_size");
   ASSERT_DEATH(BitVector(16, 123412341234), "fits_in_size");
   ASSERT_DEATH(BitVector(16, 65536), "fits_in_size");
@@ -2962,16 +2966,16 @@ TEST_F(TestBitVector, signed_compare)
 {
   for (int32_t i = -8; i < 7; ++i)
   {
-    BitVector bv1(4, std::to_string(i), 10);
-    BitVector bv2(4, std::to_string(i), 10);
+    BitVector bv1(4, i, true);
+    BitVector bv2(4, i, true);
     ASSERT_EQ(bv1.signed_compare(bv2), 0);
     ASSERT_TRUE(bv1 == bv2);
   }
 
   for (int32_t i = -8; i < 7 - 1; i++)
   {
-    BitVector bv1(4, std::to_string(i), 10);
-    BitVector bv2(4, std::to_string(i + 1), 10);
+    BitVector bv1(4, i, true);
+    BitVector bv2(4, i + 1, true);
     ASSERT_LT(bv1.signed_compare(bv2), 0);
     ASSERT_GT(bv2.signed_compare(bv1), 0);
     ASSERT_FALSE(bv1 == bv2);
@@ -2988,8 +2992,8 @@ TEST_F(TestBitVector, signed_compare)
     } while (j == k);
     j = -j;
     k = -k;
-    BitVector bv1(4, std::to_string(j), 10);
-    BitVector bv2(4, std::to_string(k), 10);
+    BitVector bv1(4, j, true);
+    BitVector bv2(4, k, true);
     if (j > k)
     {
       ASSERT_GT(bv1.signed_compare(bv2), 0);
@@ -3013,7 +3017,7 @@ TEST_F(TestBitVector, signed_compare)
         j = rand() % 9;
       } while (j == k);
       j = -j;
-      BitVector bv1(4, std::to_string(j), 10);
+      BitVector bv1(4, j, true);
       BitVector bv2(4, k);
       if (j > k)
       {
@@ -3040,7 +3044,7 @@ TEST_F(TestBitVector, signed_compare)
       } while (j == k);
       k = -k;
       BitVector bv1(4, j);
-      BitVector bv2(4, std::to_string(k), 10);
+      BitVector bv2(4, k, true);
       if (j > k)
       {
         ASSERT_GT(bv1.signed_compare(bv2), 0);
@@ -3064,8 +3068,8 @@ TEST_F(TestBitVector, signed_compare)
       {
         j = rand() % 8;
       } while (j == k);
-      BitVector bv1(4, std::to_string(-j), 10);
-      BitVector bv2(4, std::to_string(-k), 10);
+      BitVector bv1(4, -j, true);
+      BitVector bv2(4, -k, true);
       if (-j > -k)
       {
         ASSERT_GT(bv1.signed_compare(bv2), 0);
