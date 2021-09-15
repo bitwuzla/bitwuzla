@@ -13,6 +13,12 @@ class RNG;
 class BitVector
 {
  public:
+  /** Prime numbers used for hashing. */
+  static inline uint32_t s_hash_primes[] = {333444569u, 76891121u, 456790003u};
+  /** Number of prime numbers used for hashing. */
+  static constexpr uint32_t s_n_primes =
+      ((uint32_t) (sizeof s_hash_primes / sizeof *s_hash_primes));
+
   /** Return true if string in base fits into a BitVector of given size. */
   static bool fits_in_size(uint32_t size,
                            const std::string& str,
@@ -630,12 +636,6 @@ class BitVector
   void bvudivurem(const BitVector& bv, BitVector* quot, BitVector* rem) const;
 
  private:
-  /** Prime numbers used for hashing. */
-  static inline uint32_t s_hash_primes[] = {333444569u, 76891121u, 456790003u};
-  /** Number of prime numbers used for hashing. */
-  static constexpr uint32_t s_n_primes =
-      ((uint32_t) (sizeof s_hash_primes / sizeof *s_hash_primes));
-
   /**
    * Count leading zeros or ones.
    * zeros: True to determine number of leading zeros, false to count number
