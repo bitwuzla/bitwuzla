@@ -2528,8 +2528,7 @@ const BitwuzlaTerm *bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
 /**
  * Create a bit-vector value from its unsigned integer representation.
  *
- * @note If given value does not fit into a bit-vector of given size (sort),
- *       the value is truncated to fit.
+ * @note Given value must fit into a bit-vector of given size (sort).
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the value.
@@ -2544,6 +2543,25 @@ const BitwuzlaTerm *bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
 const BitwuzlaTerm *bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
                                                 const BitwuzlaSort *sort,
                                                 uint64_t value);
+
+/**
+ * Create a bit-vector value from its signed integer representation.
+ *
+ * @note Given value must fit into a bit-vector of given size (sort).
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param sort The sort of the value.
+ * @param value The unsigned integer representation of the bit-vector value.
+ *
+ * @return A term of kind BITWUZLA_KIND_VAL, representing the bit-vector value
+ *         of given sort.
+ *
+ * @see
+ *   * `bitwuzla_mk_bv_sort`
+ */
+const BitwuzlaTerm *bitwuzla_mk_bv_value_int64(Bitwuzla *bitwuzla,
+                                               const BitwuzlaSort *sort,
+                                               int64_t value);
 
 /**
  * Create a floating-point value from its IEEE 754 standard representation

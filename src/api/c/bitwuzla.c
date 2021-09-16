@@ -10,6 +10,7 @@
 
 #include "bitwuzla.h"
 
+#include "bzlabv.h"
 #include "bzlaconfig.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
@@ -1698,6 +1699,15 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
   BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
 
   uint32_t size = bzla_sort_bv_get_width(bzla, bzla_sort);
+  BZLA_ABORT(
+      !bzla_bv_str_fits_in_size(size,
+                                value,
+                                base == BITWUZLA_BV_BASE_BIN
+                                    ? 2
+                                    : (base == BITWUZLA_BV_BASE_DEC ? 10 : 16)),
+      "given string does not fit into a bit-vector of size %u",
+      size);
+
   BzlaBitVector *bv;
   switch (base)
   {
@@ -1779,7 +1789,38 @@ bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
   Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
   BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
+  BZLA_ABORT(!bzla_bv_uint64_fits_in_size(
+                 bzla_sort_bv_get_width(bzla, bzla_sort), value),
+             "given value '%lu' does not fit into a bit-vector of size %u",
+             value,
+             bzla_sort_bv_get_width(bzla, bzla_sort));
+
   BzlaBitVector *bv = bzla_bv_uint64_to_bv(
+      bzla->mm, value, bzla_sort_bv_get_width(bzla, bzla_sort));
+  BzlaNode *res = bzla_exp_bv_const(bzla, bv);
+  bzla_bv_free(bzla->mm, bv);
+  BZLA_RETURN_BITWUZLA_TERM(res);
+}
+
+const BitwuzlaTerm *
+bitwuzla_mk_bv_value_int64(Bitwuzla *bitwuzla,
+                           const BitwuzlaSort *sort,
+                           int64_t value)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(sort);
+  BZLA_CHECK_SORT_BITWUZLA(bitwuzla, sort);
+
+  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaSortId bzla_sort = BZLA_IMPORT_BITWUZLA_SORT(sort);
+  BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
+  BZLA_ABORT(!bzla_bv_int64_fits_in_size(
+                 bzla_sort_bv_get_width(bzla, bzla_sort), value),
+             "given value '%lu' does not fit into a bit-vector of size %u",
+             value,
+             bzla_sort_bv_get_width(bzla, bzla_sort));
+
+  BzlaBitVector *bv = bzla_bv_int64_to_bv(
       bzla->mm, value, bzla_sort_bv_get_width(bzla, bzla_sort));
   BzlaNode *res = bzla_exp_bv_const(bzla, bv);
   bzla_bv_free(bzla->mm, bv);

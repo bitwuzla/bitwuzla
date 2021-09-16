@@ -719,7 +719,7 @@ class TestBv : public TestBzla
         break;
       case 31:
         TEST_BV_IS_UADDO_BITVEC(bw, 15, 78, false);
-        TEST_BV_IS_UADDO_BITVEC(bw, 2147483647, 2147483650, true);
+        TEST_BV_IS_UADDO_BITVEC(bw, 2147483647, 2147483647, true);
         break;
       case 33:
         TEST_BV_IS_UADDO_BITVEC(bw, 15, 78, false);
@@ -1056,68 +1056,85 @@ TEST_F(TestBv, uint64_to_bv_to_uint64)
 
 TEST_F(TestBv, int64_to_bv)
 {
-  uint32_t bw;
-  uint64_t i;
-  BzlaBitVector *a, *ua, *tmp, *b;
-  char *str_a;
-  int64_t x[] = {
+  std::vector<int64_t> x{
       -1,
       -2,
       -3,
       -123,
       3,
   };
-  const char *str_x[] = {
-      "11111111111111111111111111111111"
+  std::vector<std::string> str_x{
+      "00000000000000000000000000000000"
       "11111111111111111111111111111111"
       "11111111111111111111111111111111",
 
-      "11111111111111111111111111111111"
+      "00000000000000000000000000000000"
       "11111111111111111111111111111111"
       "11111111111111111111111111111110",
 
-      "11111111111111111111111111111111"
+      "00000000000000000000000000000001"
       "11111111111111111111111111111111"
       "1111111111111111111111111111101",
 
-      "11111111111111111111111111111111"
-      "11111111111111111111111111111111"
+      "00000000000000000000000000000000"
+      "00000000000000000000000000000000"
       "11111111111111111111111111111111"
       "11111111111111111111111110000101",
 
       "00000000000000000000000000000000"
       "00000000000000000000000000000000"
-      "00000000000000000000000000000011",
+      "00000000000000000000000000000011"};
 
-      0};
+  std::vector<std::string> str_x_64{
+      "11111111111111111111111111111111"
+      "11111111111111111111111111111111",
 
-  for (i = 0; str_x[i]; i++)
+      "11111111111111111111111111111111"
+      "11111111111111111111111111111110",
+
+      "11111111111111111111111111111111"
+      "1111111111111111111111111111101",
+
+      "11111111111111111111111111111111"
+      "11111111111111111111111110000101",
+
+      "00000000000000000000000000000000"
+      "00000000000000000000000000000011"};
+
+  for (size_t i = 0, n = str_x.size(); i < n; i++)
   {
-    assert(str_x[i]);
-    bw    = strlen(str_x[i]);
-    a     = bzla_bv_int64_to_bv(d_mm, x[i], bw);
-    str_a = bzla_bv_to_char(d_mm, a);
-    ASSERT_EQ(strcmp(str_a, str_x[i]), 0);
+    uint32_t bw_a    = str_x[i].size();
+    uint32_t bw_b    = str_x_64[i].size();
+    BzlaBitVector *a = bzla_bv_int64_to_bv(d_mm, x[i], bw_a);
+    BzlaBitVector *b = bzla_bv_int64_to_bv(d_mm, x[i], bw_b);
+    char *str_a      = bzla_bv_to_char(d_mm, a);
+    char *str_b      = bzla_bv_to_char(d_mm, b);
+    ASSERT_EQ(str_a, str_x[i]);
+    ASSERT_EQ(str_b, str_x_64[i]);
     bzla_mem_freestr(d_mm, str_a);
+    bzla_mem_freestr(d_mm, str_b);
+
+    BzlaBitVector *ub, *c;
     if (x[i] < 0)
     {
-      tmp = bzla_bv_uint64_to_bv(d_mm, -x[i], bw);
-      ua  = bzla_bv_neg(d_mm, tmp);
+      BzlaBitVector *tmp = bzla_bv_uint64_to_bv(d_mm, -x[i], bw_b);
+      ub                 = bzla_bv_neg(d_mm, tmp);
       bzla_bv_free(d_mm, tmp);
-      tmp = bzla_bv_uint64_to_bv(d_mm, x[i], bw);
-      b   = bzla_bv_neg(d_mm, tmp);
+      tmp = bzla_bv_constd(d_mm, std::to_string(x[i]).c_str(), bw_b);
+      c   = bzla_bv_neg(d_mm, tmp);
       bzla_bv_free(d_mm, tmp);
     }
     else
     {
-      ua = bzla_bv_uint64_to_bv(d_mm, x[i], bw);
-      b  = bzla_bv_uint64_to_bv(d_mm, -x[i], bw);
+      ub = bzla_bv_uint64_to_bv(d_mm, x[i], bw_b);
+      c  = bzla_bv_uint64_to_bv(d_mm, -x[i], bw_b);
     }
-    ASSERT_EQ(bzla_bv_compare(a, ua), 0);
-    ASSERT_NE(bzla_bv_compare(a, b), 0);
+    ASSERT_EQ(bzla_bv_compare(b, ub), 0);
+    ASSERT_NE(bzla_bv_compare(b, c), 0);
+    bzla_bv_free(d_mm, ub);
     bzla_bv_free(d_mm, a);
     bzla_bv_free(d_mm, b);
-    bzla_bv_free(d_mm, ua);
+    bzla_bv_free(d_mm, c);
   }
 }
 
@@ -3111,12 +3128,12 @@ TEST_F(TestBv, is_one)
     bv2 = bzla_bv_char_to_bv(d_mm, s.c_str());
     if (i <= 64)
     {
-      bv3 = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, i);
+      bv3 = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, i);
     }
     else
     {
-      BzlaBitVector *r = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, 64);
-      BzlaBitVector *l = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, i - 64);
+      BzlaBitVector *r = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, 64);
+      BzlaBitVector *l = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, i - 64);
 
       bv3 = bzla_bv_concat(d_mm, l, r);
       bzla_bv_free(d_mm, l);
@@ -3204,12 +3221,12 @@ TEST_F(TestBv, is_ones)
     bv2 = bzla_bv_char_to_bv(d_mm, s.c_str());
     if (i <= 64)
     {
-      bv3 = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, i);
+      bv3 = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, i);
     }
     else
     {
-      BzlaBitVector *r = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, 64);
-      BzlaBitVector *l = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, i - 64);
+      BzlaBitVector *r = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, 64);
+      BzlaBitVector *l = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, i - 64);
 
       bv3 = bzla_bv_concat(d_mm, l, r);
       bzla_bv_free(d_mm, l);
@@ -3411,12 +3428,12 @@ TEST_F(TestBv, is_zero)
     bv2 = bzla_bv_char_to_bv(d_mm, s.c_str());
     if (i <= 64)
     {
-      bv3 = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, i);
+      bv3 = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, i);
     }
     else
     {
-      BzlaBitVector *r = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, 64);
-      BzlaBitVector *l = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, i - 64);
+      BzlaBitVector *r = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, 64);
+      BzlaBitVector *l = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, i - 64);
 
       bv3 = bzla_bv_concat(d_mm, l, r);
       bzla_bv_free(d_mm, l);
@@ -3591,12 +3608,12 @@ TEST_F(TestBv, is_max_signed)
     bv2 = bzla_bv_char_to_bv(d_mm, s.c_str());
     if (i <= 64)
     {
-      bv3 = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, i);
+      bv3 = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, i);
     }
     else
     {
-      BzlaBitVector *r = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, 64);
-      BzlaBitVector *l = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, i - 64);
+      BzlaBitVector *r = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, 64);
+      BzlaBitVector *l = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, i - 64);
 
       bv3 = bzla_bv_concat(d_mm, l, r);
       bzla_bv_free(d_mm, l);
@@ -3741,12 +3758,12 @@ TEST_F(TestBv, is_min_signed)
     bv2 = bzla_bv_char_to_bv(d_mm, s.c_str());
     if (i <= 64)
     {
-      bv3 = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, i);
+      bv3 = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, i);
     }
     else
     {
-      BzlaBitVector *r = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, 64);
-      BzlaBitVector *l = bzla_bv_uint64_to_bv(d_mm, UINT64_MAX, i - 64);
+      BzlaBitVector *r = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, 64);
+      BzlaBitVector *l = bzla_bv_int64_to_bv(d_mm, UINT64_MAX, i - 64);
 
       bv3 = bzla_bv_concat(d_mm, l, r);
       bzla_bv_free(d_mm, l);
@@ -4065,200 +4082,6 @@ TEST_F(TestBv, power_of_two)
   bzla_bv_free(d_mm, bv);
 }
 
-TEST_F(TestBv, small_positive_int)
-{
-  BzlaBitVector *bv;
-
-  bv = bzla_bv_char_to_bv(
-      d_mm, "0000000000000000000000000000000000000000000000000000000000000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 0);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 0);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "001");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 1);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0010");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 2);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "00100");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 4);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "001000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 8);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0010000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 16);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "000100000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 32);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0001000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 64);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "00010000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 128);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "000100000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 256);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0001000000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 512);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0000010000000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 1024);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "10000000000000000000000000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), (1 << 28));
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "100000000000000000000000000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), (1 << 29));
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "1000000000000000000000000000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), (1 << 30));
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "01000000000000000000000000000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), (1 << 30));
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 6);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "1110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 14);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "11110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 30);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "111110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 62);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "1111110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 126);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "111111110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 510);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "1111111110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 1022);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "11111111110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 2046);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "111111111110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 4094);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "1111111111110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 8190);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "1111111111111110");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 65534);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "011");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 3);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "111");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 7);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0011");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 3);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "00101");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 5);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "101101");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 45);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "00100001");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 33);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "000100111");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 39);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "1001000001");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 577);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "11010000001");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 1665);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "000100000011");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 259);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0001000000111");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 519);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0000010000001111");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 1039);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "10000000000000000000000000010");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 268435458);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "100000000000000000000001000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 536870976);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "1000000000000100000000000000000");
-  ASSERT_EQ(bzla_bv_small_positive_int(bv), 1073872896);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "10000000000000000000000000000000");
-  ASSERT_LT(bzla_bv_small_positive_int(bv), 0);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "10000100000000000000000011100000");
-  ASSERT_LT(bzla_bv_small_positive_int(bv), 0);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0010000000000000000000000000000000");
-  ASSERT_LT(bzla_bv_small_positive_int(bv), 0);
-  bzla_bv_free(d_mm, bv);
-
-  bv = bzla_bv_char_to_bv(d_mm, "0010000000000100000000000011110000");
-  ASSERT_LT(bzla_bv_small_positive_int(bv), 0);
-  bzla_bv_free(d_mm, bv);
-}
-
 TEST_F(TestBv, get_num_trailing_zeros)
 {
   test_get_num(8, bzla_bv_get_num_trailing_zeros, false);
@@ -4285,5 +4108,3 @@ TEST_F(TestBv, test_get_num_leading_ones)
   test_get_num(128, bzla_bv_get_num_leading_ones, true, false);
   test_get_num(176, bzla_bv_get_num_leading_ones, true, false);
 }
-
-// TODO bzla_bv_get_assignment

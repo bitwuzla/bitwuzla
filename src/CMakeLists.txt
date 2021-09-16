@@ -14,7 +14,7 @@ set(libbitwuzla_src_files
   bzlaaigvec.c
   bzlaass.c
   bzlabeta.c
-  bzlabv.c
+  bzlabv.cpp
   bzlabvdomain.c
   bzlabvprop.c
   bzlachkclone.c

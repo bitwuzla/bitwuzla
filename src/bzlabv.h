@@ -81,6 +81,19 @@ BzlaBitVector *bzla_bv_copy(BzlaMemMgr *mm, const BzlaBitVector *bv);
 
 /*------------------------------------------------------------------------*/
 
+/** Return true if given string in base fits into a bit-vector of given size. */
+bool bzla_bv_str_fits_in_size(uint32_t bw, const char *str, uint32_t base);
+/**
+ * Return true if given unsigned integer value fits into a bit-vector of given
+ * size.
+ */
+bool bzla_bv_uint64_fits_in_size(uint32_t bw, uint64_t value);
+/**
+ * Return true if given signed integer value fits into a bit-vector of given
+ * size.
+ */
+bool bzla_bv_int64_fits_in_size(uint32_t bw, int64_t value);
+
 /** Return the size in bytes of the given bit-vector. */
 size_t bzla_bv_size(const BzlaBitVector *bv);
 
@@ -131,12 +144,6 @@ uint64_t bzla_bv_to_uint64(const BzlaBitVector *bv);
 /** Get the bit-width of given bit-vector. */
 uint32_t bzla_bv_get_width(const BzlaBitVector *bv);
 
-/**
- * Get the length of the bits array of the given bit-vector.
- * This function returns 0 if compiled with GMP.
- */
-uint32_t bzla_bv_get_len(const BzlaBitVector *bv);
-
 /** Get value of bit at given index (index 0 is LSB, width - 1 is MSB). */
 uint32_t bzla_bv_get_bit(const BzlaBitVector *bv, uint32_t pos);
 /** Get value of bit at given index (index 0 is LSB, width - 1 is MSB). */
@@ -165,11 +172,6 @@ bool bzla_bv_is_max_signed(const BzlaBitVector *bv);
 
 /** Return p for bv = 2^p, and -1 if bv is not a power of 2 */
 int64_t bzla_bv_power_of_two(const BzlaBitVector *bv);
-/**
- * Return 'bv' as integer if its value can be converted into a positive
- * integer of bw 32, and -1 otherwise
- */
-int32_t bzla_bv_small_positive_int(const BzlaBitVector *bv);
 
 /** Return the of count trailing zeros (starting from LSB). */
 uint32_t bzla_bv_get_num_trailing_zeros(const BzlaBitVector *bv);

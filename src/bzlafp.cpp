@@ -14,9 +14,10 @@
 #include <unordered_map>
 #include <vector>
 
+#include "bzlabvstruct.h"
+
 extern "C" {
 #include "bzlabv.h"
-#include "bzlabvstruct.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
 #include "bzlafp.h"
@@ -3772,7 +3773,7 @@ fp_convert_from_rational_aux(Bzla *bzla,
     /* Determine number of bits required to represent the exponent for a
      * normal number. */
     uint32_t n_exp_bits = 2;
-    int32_t esgn      = mpz_sgn(iexp);
+    int32_t esgn        = mpz_sgn(iexp);
     if (esgn > 0)
     {
       /* Not exactly representable with n_exp_bits, adjust. */
@@ -3808,8 +3809,8 @@ fp_convert_from_rational_aux(Bzla *bzla,
     assert(strlen(exp_bin_str) <= n_exp_bits);
     free(exp_bin_str);
 #endif
-    BzlaBitVector *exp = bzla_bv_new(mm, n_exp_bits);
-    mpz_fdiv_r_2exp(exp->val, iexp, n_exp_bits);
+    BzlaBitVector *exp =
+        bzla_bv_constd(mm, mpz_get_str(nullptr, 10, iexp), n_exp_bits);
 
     /* Significand ------------------------------------------------------- */
 

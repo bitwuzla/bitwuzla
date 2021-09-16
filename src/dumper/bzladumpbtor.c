@@ -373,8 +373,7 @@ bdcnode(BzlaDumpContext *bdc, BzlaNode *node, FILE *file)
         op    = "consth";
         cbits = bzla_bv_to_hex_char(bdc->bzla->mm, bits);
       }
-      else if (opt == BZLA_OUTPUT_BASE_DEC
-               || bzla_bv_small_positive_int(bits) > 0)
+      else if (opt == BZLA_OUTPUT_BASE_DEC)
       {
         op    = "constd";
         cbits = bzla_bv_to_dec_char(bdc->bzla->mm, bits);

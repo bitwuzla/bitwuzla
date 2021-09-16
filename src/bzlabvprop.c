@@ -764,8 +764,10 @@ bvprop_shift_const_aux(BzlaMemMgr *mm,
   assert(w == bzla_bvdomain_get_width(d_x));
 #ifndef NDEBUG
   BzlaBitVector *uint32maxbv = bzla_bv_ones(mm, 32);
-  assert(bzla_bv_compare(n, uint32maxbv) <= 0);
+  BzlaBitVector *nn          = bzla_bv_uext(mm, n, 32 - bzla_bv_get_width(n));
+  assert(bzla_bv_compare(nn, uint32maxbv) <= 0);
   bzla_bv_free(mm, uint32maxbv);
+  bzla_bv_free(mm, nn);
 #endif
   wn = (uint32_t) bzla_bv_to_uint64(n);
 
