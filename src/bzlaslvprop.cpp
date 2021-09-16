@@ -340,9 +340,6 @@ PropSolverState::check_sat()
   double start                = bzla_util_time_stamp();
   BzlaSolverResult sat_result = BZLA_RESULT_UNKNOWN;
 
-  BzlaPropSolver *slv = (BzlaPropSolver *) d_bzla->slv;
-  assert(slv);
-
   bool const_bits    = bzla_opt_get(d_bzla, BZLA_OPT_PROP_CONST_BITS) == 1;
   uint32_t verbosity = bzla_opt_get(d_bzla, BZLA_OPT_VERBOSITY);
 
