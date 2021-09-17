@@ -3863,6 +3863,7 @@ bitwuzla_term_get_children(const BitwuzlaTerm *term, size_t *size)
   BzlaNode *n;
   BzlaNode *bzla_term = BZLA_IMPORT_BITWUZLA_TERM(term);
   Bzla *bzla          = bzla_node_get_bzla(bzla_term);
+  bzla_term           = bzla_simplify_exp(bzla, bzla_term);
   Bitwuzla *bitwuzla  = BZLA_EXPORT_BITWUZLA(bzla);
 
   BZLA_RESET_STACK(bitwuzla->d_term_children);
