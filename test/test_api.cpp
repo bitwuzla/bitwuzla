@@ -235,6 +235,8 @@ TEST_F(TestApi, kind_to_string)
             std::string("BITWUZLA_KIND_CONST"));
   ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_CONST_ARRAY),
             std::string("BITWUZLA_KIND_CONST_ARRAY"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_UF),
+            std::string("BITWUZLA_KIND_UF"));
   ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_VAR),
             std::string("BITWUZLA_KIND_VAR"));
   ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_VAL),
