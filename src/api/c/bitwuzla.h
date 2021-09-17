@@ -1545,10 +1545,10 @@ enum BitwuzlaKind
   BITWUZLA_KIND_CONST,
   /*! Constant array. */
   BITWUZLA_KIND_CONST_ARRAY,
-  /*! Bound variable. */
-  BITWUZLA_KIND_VAR,
   /*! Value. */
   BITWUZLA_KIND_VAL,
+  /*! Bound variable. */
+  BITWUZLA_KIND_VAR,
 
   // operators
   /*! Boolean and.

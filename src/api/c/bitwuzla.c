@@ -315,8 +315,8 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
 static const char *bzla_kind_to_str[BITWUZLA_NUM_KINDS] = {
     "BITWUZLA_KIND_CONST",
     "BITWUZLA_KIND_CONST_ARRAY",
-    "BITWUZLA_KIND_VAR",
     "BITWUZLA_KIND_VAL",
+    "BITWUZLA_KIND_VAR",
     "BITWUZLA_KIND_AND",
     "BITWUZLA_KIND_APPLY",
     "BITWUZLA_KIND_ARRAY_SELECT",
