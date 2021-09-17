@@ -1545,8 +1545,6 @@ enum BitwuzlaKind
   BITWUZLA_KIND_CONST,
   /*! Constant array. */
   BITWUZLA_KIND_CONST_ARRAY,
-  /*! Uninterpreted Function. */
-  BITWUZLA_KIND_UF,
   /*! Value. */
   BITWUZLA_KIND_VAL,
   /*! Bound variable. */
