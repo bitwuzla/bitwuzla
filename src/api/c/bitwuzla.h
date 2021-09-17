@@ -1940,6 +1940,12 @@ enum BitwuzlaKind
 typedef enum BitwuzlaKind BitwuzlaKind;
 #endif
 
+/**
+ * Get the string representation of a term kind.
+ * @return A string representation of the given term kind.
+ */
+const char *bitwuzla_kind_to_string(BitwuzlaKind kind);
+
 /** A satisfiability result. */
 enum BitwuzlaResult
 {
@@ -1950,6 +1956,12 @@ enum BitwuzlaResult
 #ifndef DOXYGEN_SKIP
 typedef enum BitwuzlaResult BitwuzlaResult;
 #endif
+
+/**
+ * Get the string representation of a result.
+ * @return A string representation of the given result.
+ */
+const char *bitwuzla_result_to_string(BitwuzlaResult result);
 
 /**
  * Rounding mode for floating-point operations.
@@ -2016,6 +2028,12 @@ enum BitwuzlaRoundingMode
 #ifndef DOXYGEN_SKIP
 typedef enum BitwuzlaRoundingMode BitwuzlaRoundingMode;
 #endif
+
+/**
+ * Get the string representation of a rounding mode.
+ * @return A string representation of the rounding mode.
+ */
+const char *bitwuzla_rm_to_string(BitwuzlaRoundingMode rm);
 
 /** The Bitwuzla solver. */
 typedef struct Bitwuzla Bitwuzla;

@@ -226,6 +226,243 @@ class TestApi : public TestBitwuzla
 };
 
 /* -------------------------------------------------------------------------- */
+/* BitwuzlaKind                                                               */
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestApi, kind_to_string)
+{
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_CONST),
+            std::string("BITWUZLA_KIND_CONST"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_CONST_ARRAY),
+            std::string("BITWUZLA_KIND_CONST_ARRAY"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_VAR),
+            std::string("BITWUZLA_KIND_VAR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_VAL),
+            std::string("BITWUZLA_KIND_VAL"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_AND),
+            std::string("BITWUZLA_KIND_AND"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_APPLY),
+            std::string("BITWUZLA_KIND_APPLY"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_ARRAY_SELECT),
+            std::string("BITWUZLA_KIND_ARRAY_SELECT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_ARRAY_STORE),
+            std::string("BITWUZLA_KIND_ARRAY_STORE"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_ADD),
+            std::string("BITWUZLA_KIND_BV_ADD"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_AND),
+            std::string("BITWUZLA_KIND_BV_AND"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_ASHR),
+            std::string("BITWUZLA_KIND_BV_ASHR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_COMP),
+            std::string("BITWUZLA_KIND_BV_COMP"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_CONCAT),
+            std::string("BITWUZLA_KIND_BV_CONCAT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_DEC),
+            std::string("BITWUZLA_KIND_BV_DEC"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_INC),
+            std::string("BITWUZLA_KIND_BV_INC"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_MUL),
+            std::string("BITWUZLA_KIND_BV_MUL"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_NAND),
+            std::string("BITWUZLA_KIND_BV_NAND"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_NEG),
+            std::string("BITWUZLA_KIND_BV_NEG"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_NOR),
+            std::string("BITWUZLA_KIND_BV_NOR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_NOT),
+            std::string("BITWUZLA_KIND_BV_NOT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_OR),
+            std::string("BITWUZLA_KIND_BV_OR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_REDAND),
+            std::string("BITWUZLA_KIND_BV_REDAND"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_REDOR),
+            std::string("BITWUZLA_KIND_BV_REDOR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_REDXOR),
+            std::string("BITWUZLA_KIND_BV_REDXOR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_ROL),
+            std::string("BITWUZLA_KIND_BV_ROL"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_ROR),
+            std::string("BITWUZLA_KIND_BV_ROR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SADD_OVERFLOW),
+            std::string("BITWUZLA_KIND_BV_SADD_OVERFLOW"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SDIV_OVERFLOW),
+            std::string("BITWUZLA_KIND_BV_SDIV_OVERFLOW"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SDIV),
+            std::string("BITWUZLA_KIND_BV_SDIV"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SGE),
+            std::string("BITWUZLA_KIND_BV_SGE"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SGT),
+            std::string("BITWUZLA_KIND_BV_SGT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SHL),
+            std::string("BITWUZLA_KIND_BV_SHL"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SHR),
+            std::string("BITWUZLA_KIND_BV_SHR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SLE),
+            std::string("BITWUZLA_KIND_BV_SLE"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SLT),
+            std::string("BITWUZLA_KIND_BV_SLT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SMOD),
+            std::string("BITWUZLA_KIND_BV_SMOD"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SMUL_OVERFLOW),
+            std::string("BITWUZLA_KIND_BV_SMUL_OVERFLOW"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SREM),
+            std::string("BITWUZLA_KIND_BV_SREM"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SSUB_OVERFLOW),
+            std::string("BITWUZLA_KIND_BV_SSUB_OVERFLOW"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SUB),
+            std::string("BITWUZLA_KIND_BV_SUB"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_UADD_OVERFLOW),
+            std::string("BITWUZLA_KIND_BV_UADD_OVERFLOW"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_UDIV),
+            std::string("BITWUZLA_KIND_BV_UDIV"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_UGE),
+            std::string("BITWUZLA_KIND_BV_UGE"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_UGT),
+            std::string("BITWUZLA_KIND_BV_UGT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_ULE),
+            std::string("BITWUZLA_KIND_BV_ULE"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_ULT),
+            std::string("BITWUZLA_KIND_BV_ULT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_UMUL_OVERFLOW),
+            std::string("BITWUZLA_KIND_BV_UMUL_OVERFLOW"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_UREM),
+            std::string("BITWUZLA_KIND_BV_UREM"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_USUB_OVERFLOW),
+            std::string("BITWUZLA_KIND_BV_USUB_OVERFLOW"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_XNOR),
+            std::string("BITWUZLA_KIND_BV_XNOR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_XOR),
+            std::string("BITWUZLA_KIND_BV_XOR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_DISTINCT),
+            std::string("BITWUZLA_KIND_DISTINCT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_EQUAL),
+            std::string("BITWUZLA_KIND_EQUAL"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_EXISTS),
+            std::string("BITWUZLA_KIND_EXISTS"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FORALL),
+            std::string("BITWUZLA_KIND_FORALL"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_ABS),
+            std::string("BITWUZLA_KIND_FP_ABS"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_ADD),
+            std::string("BITWUZLA_KIND_FP_ADD"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_DIV),
+            std::string("BITWUZLA_KIND_FP_DIV"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_EQ),
+            std::string("BITWUZLA_KIND_FP_EQ"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_FMA),
+            std::string("BITWUZLA_KIND_FP_FMA"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_FP),
+            std::string("BITWUZLA_KIND_FP_FP"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_GEQ),
+            std::string("BITWUZLA_KIND_FP_GEQ"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_GT),
+            std::string("BITWUZLA_KIND_FP_GT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_IS_INF),
+            std::string("BITWUZLA_KIND_FP_IS_INF"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_IS_NAN),
+            std::string("BITWUZLA_KIND_FP_IS_NAN"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_IS_NEG),
+            std::string("BITWUZLA_KIND_FP_IS_NEG"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_IS_NORMAL),
+            std::string("BITWUZLA_KIND_FP_IS_NORMAL"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_IS_POS),
+            std::string("BITWUZLA_KIND_FP_IS_POS"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_IS_SUBNORMAL),
+            std::string("BITWUZLA_KIND_FP_IS_SUBNORMAL"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_IS_ZERO),
+            std::string("BITWUZLA_KIND_FP_IS_ZERO"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_LEQ),
+            std::string("BITWUZLA_KIND_FP_LEQ"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_LT),
+            std::string("BITWUZLA_KIND_FP_LT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_MAX),
+            std::string("BITWUZLA_KIND_FP_MAX"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_MIN),
+            std::string("BITWUZLA_KIND_FP_MIN"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_MUL),
+            std::string("BITWUZLA_KIND_FP_MUL"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_NEG),
+            std::string("BITWUZLA_KIND_FP_NEG"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_REM),
+            std::string("BITWUZLA_KIND_FP_REM"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_RTI),
+            std::string("BITWUZLA_KIND_FP_RTI"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_SQRT),
+            std::string("BITWUZLA_KIND_FP_SQRT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_SUB),
+            std::string("BITWUZLA_KIND_FP_SUB"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_IFF),
+            std::string("BITWUZLA_KIND_IFF"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_IMPLIES),
+            std::string("BITWUZLA_KIND_IMPLIES"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_ITE),
+            std::string("BITWUZLA_KIND_ITE"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_LAMBDA),
+            std::string("BITWUZLA_KIND_LAMBDA"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_NOT),
+            std::string("BITWUZLA_KIND_NOT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_OR),
+            std::string("BITWUZLA_KIND_OR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_XOR),
+            std::string("BITWUZLA_KIND_XOR"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_EXTRACT),
+            std::string("BITWUZLA_KIND_BV_EXTRACT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_REPEAT),
+            std::string("BITWUZLA_KIND_BV_REPEAT"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_ROLI),
+            std::string("BITWUZLA_KIND_BV_ROLI"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_RORI),
+            std::string("BITWUZLA_KIND_BV_RORI"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_SIGN_EXTEND),
+            std::string("BITWUZLA_KIND_BV_SIGN_EXTEND"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_BV_ZERO_EXTEND),
+            std::string("BITWUZLA_KIND_BV_ZERO_EXTEND"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_TO_FP_FROM_BV),
+            std::string("BITWUZLA_KIND_FP_TO_FP_FROM_BV"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_TO_FP_FROM_FP),
+            std::string("BITWUZLA_KIND_FP_TO_FP_FROM_FP"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_TO_FP_FROM_SBV),
+            std::string("BITWUZLA_KIND_FP_TO_FP_FROM_SBV"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_TO_FP_FROM_UBV),
+            std::string("BITWUZLA_KIND_FP_TO_FP_FROM_UBV"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_TO_SBV),
+            std::string("BITWUZLA_KIND_FP_TO_SBV"));
+  ASSERT_EQ(bitwuzla_kind_to_string(BITWUZLA_KIND_FP_TO_UBV),
+            std::string("BITWUZLA_KIND_FP_TO_UBV"));
+  ASSERT_DEATH(bitwuzla_kind_to_string(BITWUZLA_NUM_KINDS),
+               std::string("invalid term kind"));
+}
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaRoundingMode                                                       */
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestApi, rm_to_string)
+{
+  ASSERT_EQ(bitwuzla_rm_to_string(BITWUZLA_RM_RNA), std::string("RNA"));
+  ASSERT_EQ(bitwuzla_rm_to_string(BITWUZLA_RM_RNE), std::string("RNE"));
+  ASSERT_EQ(bitwuzla_rm_to_string(BITWUZLA_RM_RTN), std::string("RTN"));
+  ASSERT_EQ(bitwuzla_rm_to_string(BITWUZLA_RM_RTP), std::string("RTP"));
+  ASSERT_EQ(bitwuzla_rm_to_string(BITWUZLA_RM_RTZ), std::string("RTZ"));
+  ASSERT_DEATH(bitwuzla_rm_to_string(BITWUZLA_RM_MAX),
+               std::string("invalid rounding mode"));
+}
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaResult                                                             */
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestApi, result_to_string)
+{
+  ASSERT_EQ(bitwuzla_result_to_string(BITWUZLA_SAT), std::string("sat"));
+  ASSERT_EQ(bitwuzla_result_to_string(BITWUZLA_UNSAT), std::string("unsat"));
+  ASSERT_EQ(bitwuzla_result_to_string(BITWUZLA_UNKNOWN),
+            std::string("unknown"));
+  ASSERT_DEATH(bitwuzla_result_to_string((BitwuzlaResult) 1),
+               std::string("invalid result kind"));
+}
+
+/* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
 /* -------------------------------------------------------------------------- */
 

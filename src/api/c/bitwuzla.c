@@ -312,7 +312,11 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
     [BZLA_OPT_VERBOSITY]               = BITWUZLA_OPT_VERBOSITY,
 };
 
-static const char *bitwuzla_kind_to_str[BITWUZLA_NUM_KINDS] = {
+static const char *bzla_kind_to_str[BITWUZLA_NUM_KINDS] = {
+    "BITWUZLA_KIND_CONST",
+    "BITWUZLA_KIND_CONST_ARRAY",
+    "BITWUZLA_KIND_VAR",
+    "BITWUZLA_KIND_VAL",
     "BITWUZLA_KIND_AND",
     "BITWUZLA_KIND_APPLY",
     "BITWUZLA_KIND_ARRAY_SELECT",
@@ -496,7 +500,7 @@ static const char *bitwuzla_kind_to_str[BITWUZLA_NUM_KINDS] = {
   BZLA_ABORT(                                                                  \
       (nary && (argc) < expected) || (!nary && (argc) != (expected)),          \
       "invalid number of arguments for kind '%s', expected '%u' and got '%u'", \
-      bitwuzla_kind_to_str[kind],                                              \
+      bzla_kind_to_str[kind],                                                  \
       expected,                                                                \
       argc)
 
@@ -504,7 +508,7 @@ static const char *bitwuzla_kind_to_str[BITWUZLA_NUM_KINDS] = {
   BZLA_ABORT(                                                                \
       (argc) != (expected),                                                  \
       "invalid number of indices for kind '%s', expected '%u' and got '%u'", \
-      bitwuzla_kind_to_str[kind],                                            \
+      bzla_kind_to_str[kind],                                                \
       expected,                                                              \
       argc)
 
@@ -950,6 +954,53 @@ reset_assumptions(Bitwuzla *bitwuzla)
     bzla_node_inc_ext_ref_counter(bzla, res); \
     return BZLA_EXPORT_BITWUZLA_TERM(res);    \
   } while (0)
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaKind                                                               */
+/* -------------------------------------------------------------------------- */
+
+const char *
+bitwuzla_kind_to_string(BitwuzlaKind kind)
+{
+  BZLA_ABORT(kind >= BITWUZLA_NUM_KINDS, "invalid term kind");
+  return bzla_kind_to_str[kind];
+}
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaRoundingMode                                                       */
+/* -------------------------------------------------------------------------- */
+
+const char *
+bitwuzla_rm_to_string(BitwuzlaRoundingMode rm)
+{
+  switch (rm)
+  {
+    case BITWUZLA_RM_RNA: return "RNA"; break;
+    case BITWUZLA_RM_RNE: return "RNE"; break;
+    case BITWUZLA_RM_RTN: return "RTN"; break;
+    case BITWUZLA_RM_RTP: return "RTP"; break;
+    default:
+      BZLA_ABORT(rm != BITWUZLA_RM_RTZ, "invalid rounding mode");
+      return "RTZ";
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* BitwuzlaResult                                                             */
+/* -------------------------------------------------------------------------- */
+
+const char *
+bitwuzla_result_to_string(BitwuzlaResult result)
+{
+  switch (result)
+  {
+    case BITWUZLA_SAT: return "sat"; break;
+    case BITWUZLA_UNSAT: return "unsat"; break;
+    default:
+      BZLA_ABORT(result != BITWUZLA_UNKNOWN, "invalid result kind");
+      return "unknown";
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /* Bitwuzla                                                                   */
@@ -2346,7 +2397,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       BZLA_ABORT(argc < 2,
                  "invalid number of arguments for kind '%s', expected at least "
                  "2, got %u",
-                 bitwuzla_kind_to_str[kind],
+                 bzla_kind_to_str[kind],
                  argc);
       BzlaNodePtrStack apply_args;
       BZLA_INIT_STACK(bzla->mm, apply_args);
@@ -2446,8 +2497,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
     break;
 
     default:
-      BZLA_ABORT(
-          true, "unexpected operator kind '%s'", bitwuzla_kind_to_str[kind]);
+      BZLA_ABORT(true, "unexpected operator kind '%s'", bzla_kind_to_str[kind]);
   }
   BZLA_RETURN_BITWUZLA_TERM(res);
 }
@@ -2641,8 +2691,7 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
     }
     break;
     default:
-      BZLA_ABORT(
-          true, "unexpected operator kind '%s'", bitwuzla_kind_to_str[kind]);
+      BZLA_ABORT(true, "unexpected operator kind '%s'", bzla_kind_to_str[kind]);
   }
   BZLA_RETURN_BITWUZLA_TERM(res);
 }
