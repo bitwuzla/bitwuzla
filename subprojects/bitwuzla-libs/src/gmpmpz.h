@@ -33,11 +33,11 @@ struct GMPMpz
   {
     if (sign)
     {
-      mpz_init_set_ui(d_mpz, value);
+      mpz_init_set_si(d_mpz, value);
     }
     else
     {
-      mpz_init_set_si(d_mpz, value);
+      mpz_init_set_ui(d_mpz, value);
     }
     mpz_fdiv_r_2exp(d_mpz, d_mpz, size);
   }
