@@ -96,6 +96,7 @@ class TestBitVector : public TestCommon
   static uint64_t _urem(uint64_t x, uint64_t y, uint32_t size);
   static uint64_t _xnor(uint64_t x, uint64_t y, uint32_t size);
   static uint64_t _xor(uint64_t x, uint64_t y, uint32_t size);
+  static uint64_t normalize_uint64(uint32_t size, uint64_t value);
 
   BitVector mk_ones(uint32_t size);
   BitVector mk_min_signed(uint32_t size);
@@ -129,13 +130,13 @@ class TestBitVector : public TestCommon
   void test_extract_aux(BvFunKind fun_kind, const BitVector& bv);
   void test_extract(BvFunKind fun_kind);
   void test_is_uadd_overflow_aux(uint32_t size,
-                                 uint64_t a1,
-                                 uint64_t a2,
+                                 const std::string& s1,
+                                 const std::string& s2,
                                  bool expected);
   void test_is_uadd_overflow(uint32_t size);
   void test_is_umul_overflow_aux(uint32_t size,
-                                 uint64_t a1,
-                                 uint64_t a2,
+                                 const std::string& s1,
+                                 const std::string& s2,
                                  bool expected);
   void test_is_umul_overflow(uint32_t size);
   void test_ite_aux(BvFunKind fun_kind,
@@ -157,15 +158,21 @@ class TestBitVector : public TestCommon
 };
 
 uint64_t
+TestBitVector::normalize_uint64(uint32_t size, uint64_t value)
+{
+  return size > 63 ? value : (value % (uint64_t) pow(2, size));
+}
+
+uint64_t
 TestBitVector::_not(uint64_t x, uint32_t size)
 {
-  return ~x % (uint64_t) pow(2, size);
+  return normalize_uint64(size, ~x);
 }
 
 uint64_t
 TestBitVector::_neg(uint64_t x, uint32_t size)
 {
-  return -x % (uint64_t) pow(2, size);
+  return normalize_uint64(size, -x);
 }
 
 uint64_t
@@ -185,25 +192,25 @@ TestBitVector::_redor(uint64_t x, uint32_t size)
 uint64_t
 TestBitVector::_inc(uint64_t x, uint32_t size)
 {
-  return (x + 1) % (uint64_t) pow(2, size);
+  return normalize_uint64(size, x + 1);
 }
 
 uint64_t
 TestBitVector::_dec(uint64_t x, uint32_t size)
 {
-  return (x - 1) % (uint64_t) pow(2, size);
+  return normalize_uint64(size, x - 1);
 }
 
 uint64_t
 TestBitVector::_add(uint64_t x, uint64_t y, uint32_t size)
 {
-  return (x + y) % (uint64_t) pow(2, size);
+  return normalize_uint64(size, x + y);
 }
 
 uint64_t
 TestBitVector::_sub(uint64_t x, uint64_t y, uint32_t size)
 {
-  return (x - y) % (uint64_t) pow(2, size);
+  return normalize_uint64(size, x - y);
 }
 
 uint64_t
@@ -216,8 +223,7 @@ TestBitVector::_and(uint64_t x, uint64_t y, uint32_t size)
 uint64_t
 TestBitVector::_nand(uint64_t x, uint64_t y, uint32_t size)
 {
-  assert(size <= 64);
-  uint32_t shift = 64 - size;
+  uint32_t shift = 64 - (size > 64 ? 0 : size);
   return (((~(x & y)) << shift) >> shift);
 }
 
@@ -231,16 +237,14 @@ TestBitVector::_or(uint64_t x, uint64_t y, uint32_t size)
 uint64_t
 TestBitVector::_nor(uint64_t x, uint64_t y, uint32_t size)
 {
-  assert(size <= 64);
-  uint32_t shift = 64 - size;
+  uint32_t shift = 64 - (size > 64 ? 0 : size);
   return ((~(x | y)) << shift) >> shift;
 }
 
 uint64_t
 TestBitVector::_xnor(uint64_t x, uint64_t y, uint32_t size)
 {
-  assert(size <= 64);
-  uint32_t shift = 64 - size;
+  uint32_t shift = 64 - (size > 64 ? 0 : size);
   return ((~(x ^ y)) << shift) >> shift;
 }
 
@@ -332,51 +336,48 @@ TestBitVector::_sge(int64_t x, int64_t y, uint32_t size)
 uint64_t
 TestBitVector::_shl(uint64_t x, uint64_t y, uint32_t size)
 {
-  assert(size <= 64);
   if (y >= size) return 0;
-  return (x << y) % (uint64_t) pow(2, size);
+  return normalize_uint64(size, x << y);
 }
 
 uint64_t
 TestBitVector::_shr(uint64_t x, uint64_t y, uint32_t size)
 {
-  assert(size <= 64);
   if (y >= size) return 0;
-  return (x >> y) % (uint64_t) pow(2, size);
+  return normalize_uint64(size, x >> y);
 }
 
 uint64_t
 TestBitVector::_ashr(uint64_t x, uint64_t y, uint32_t size)
 {
-  assert(size <= 64);
-  uint64_t max = pow(2, size);
+  size = size > 64 ? 64 : size;
   if ((x >> (size - 1)) & 1)
   {
-    if (y > size) return ~0 % max;
-    return ~((~x % max) >> y) % max;
+    if (y > size) return normalize_uint64(size, ~0);
+    return normalize_uint64(size, ~(normalize_uint64(size, ~x) >> y));
   }
   if (y > size) return 0;
-  return (x >> y) % max;
+  return normalize_uint64(size, x >> y);
 }
 
 uint64_t
 TestBitVector::_mul(uint64_t x, uint64_t y, uint32_t size)
 {
-  return (x * y) % (uint64_t) pow(2, size);
+  return normalize_uint64(size, x * y);
 }
 
 uint64_t
 TestBitVector::_udiv(uint64_t x, uint64_t y, uint32_t size)
 {
-  if (y == 0) return UINT64_MAX % (uint64_t) pow(2, size);
-  return (x / y) % (uint64_t) pow(2, size);
+  if (y == 0) return normalize_uint64(size, UINT64_MAX);
+  return normalize_uint64(size, x / y);
 }
 
 uint64_t
 TestBitVector::_urem(uint64_t x, uint64_t y, uint32_t size)
 {
   if (y == 0) return x;
-  return (x % y) % (uint64_t) pow(2, size);
+  return normalize_uint64(size, x % y);
 }
 
 int64_t
@@ -384,16 +385,16 @@ TestBitVector::_sdiv(int64_t x, int64_t y, uint32_t size)
 {
   if (y == 0)
   {
-    return x < 0 ? 1 : UINT64_MAX % (uint64_t) pow(2, size);
+    return x < 0 ? 1 : normalize_uint64(size, UINT64_MAX);
   }
-  return (x / y) % (uint64_t) pow(2, size);
+  return normalize_uint64(size, x / y);
 }
 
 int64_t
 TestBitVector::_srem(int64_t x, int64_t y, uint32_t size)
 {
-  if (y == 0) return x % (uint64_t) pow(2, size);
-  return (x % y) % (uint64_t) pow(2, size);
+  if (y == 0) return normalize_uint64(size, x);
+  return normalize_uint64(size, x % y);
 }
 
 uint64_t
@@ -635,28 +636,30 @@ TestBitVector::test_extend(BvFunKind fun_kind, Kind kind)
       test_extend_aux(fun_kind, kind, BitVector(s, i), n);
     }
   }
-  /* test random values for bit-widths 16, 32, 35 */
+  /* test random values for bit-widths 16, 64, 65, 127 */
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     uint32_t n;
 
     n = d_rng->pick<uint32_t>(0, 16 - 1);
     test_extend_aux(fun_kind, kind, BitVector(16 - n, *d_rng), n);
-    n = d_rng->pick<uint32_t>(0, 32 - 1);
-    test_extend_aux(fun_kind, kind, BitVector(32 - n, *d_rng), n);
-    n = d_rng->pick<uint32_t>(0, 35 - 1);
-    test_extend_aux(fun_kind, kind, BitVector(35 - n, *d_rng), n);
+    n = d_rng->pick<uint32_t>(0, 64 - 1);
+    test_extend_aux(fun_kind, kind, BitVector(64 - n, *d_rng), n);
+    n = d_rng->pick<uint32_t>(0, 65 - 1);
+    test_extend_aux(fun_kind, kind, BitVector(65 - n, *d_rng, 63, 0), n);
+    n = d_rng->pick<uint32_t>(0, 127 - 1);
+    test_extend_aux(fun_kind, kind, BitVector(127 - n, *d_rng, 63, 0), n);
   }
 }
 
 void
 TestBitVector::test_is_uadd_overflow_aux(uint32_t size,
-                                         uint64_t a1,
-                                         uint64_t a2,
+                                         const std::string& s1,
+                                         const std::string& s2,
                                          bool expected)
 {
-  BitVector bv1(size, a1);
-  BitVector bv2(size, a2);
+  BitVector bv1(size, s1, 10);
+  BitVector bv2(size, s2, 10);
   ASSERT_EQ(bv1.is_uadd_overflow(bv2), expected);
   ASSERT_DEATH(bv1.is_uadd_overflow(BitVector(size + 1, *d_rng)),
                "d_size == bv.d_size");
@@ -668,21 +671,31 @@ TestBitVector::test_is_uadd_overflow(uint32_t size)
   switch (size)
   {
     case 1:
-      test_is_uadd_overflow_aux(size, 0, 0, false);
-      test_is_uadd_overflow_aux(size, 0, 1, false);
-      test_is_uadd_overflow_aux(size, 1, 1, true);
+      test_is_uadd_overflow_aux(size, "0", "0", false);
+      test_is_uadd_overflow_aux(size, "0", "1", false);
+      test_is_uadd_overflow_aux(size, "1", "1", true);
       break;
     case 7:
-      test_is_uadd_overflow_aux(size, 3, 6, false);
-      test_is_uadd_overflow_aux(size, 126, 2, true);
+      test_is_uadd_overflow_aux(size, "3", "6", false);
+      test_is_uadd_overflow_aux(size, "126", "2", true);
       break;
     case 31:
-      test_is_uadd_overflow_aux(size, 15, 78, false);
-      test_is_uadd_overflow_aux(size, 2147483647, 2147483647, true);
+      test_is_uadd_overflow_aux(size, "15", "78", false);
+      test_is_uadd_overflow_aux(size, "2147483647", "2147483647", true);
       break;
-    case 33:
-      test_is_uadd_overflow_aux(size, 15, 78, false);
-      test_is_uadd_overflow_aux(size, 4294967295, 4294967530, true);
+    case 64:
+      test_is_uadd_overflow_aux(size, "18446744073709551614", "1", false);
+      test_is_uadd_overflow_aux(size, "18446744073709551614", "2", true);
+      break;
+    case 65:
+      test_is_uadd_overflow_aux(size, "36893488147419103230", "1", false);
+      test_is_uadd_overflow_aux(size, "36893488147419103230", "2", true);
+      break;
+    case 127:
+      test_is_uadd_overflow_aux(
+          size, "170141183460469231731687303715884105726", "1", false);
+      test_is_uadd_overflow_aux(
+          size, "170141183460469231731687303715884105726", "2", true);
       break;
     default: assert(false);
   }
@@ -690,12 +703,12 @@ TestBitVector::test_is_uadd_overflow(uint32_t size)
 
 void
 TestBitVector::test_is_umul_overflow_aux(uint32_t size,
-                                         uint64_t a1,
-                                         uint64_t a2,
+                                         const std::string& s1,
+                                         const std::string& s2,
                                          bool expected)
 {
-  BitVector bv1(size, a1);
-  BitVector bv2(size, a2);
+  BitVector bv1(size, s1, 10);
+  BitVector bv2(size, s2, 10);
   ASSERT_EQ(bv1.is_umul_overflow(bv2), expected);
   ASSERT_DEATH(bv1.is_umul_overflow(BitVector(size + 1, *d_rng)),
                "d_size == bv.d_size");
@@ -707,21 +720,31 @@ TestBitVector::test_is_umul_overflow(uint32_t size)
   switch (size)
   {
     case 1:
-      test_is_umul_overflow_aux(size, 0, 0, false);
-      test_is_umul_overflow_aux(size, 0, 1, false);
-      test_is_umul_overflow_aux(size, 1, 1, false);
+      test_is_umul_overflow_aux(size, "0", "0", false);
+      test_is_umul_overflow_aux(size, "0", "1", false);
+      test_is_umul_overflow_aux(size, "1", "1", false);
       break;
     case 7:
-      test_is_umul_overflow_aux(size, 3, 6, false);
-      test_is_umul_overflow_aux(size, 124, 2, true);
+      test_is_umul_overflow_aux(size, "3", "6", false);
+      test_is_umul_overflow_aux(size, "124", "2", true);
       break;
     case 31:
-      test_is_umul_overflow_aux(size, 15, 78, false);
-      test_is_umul_overflow_aux(size, 1073742058, 2, true);
+      test_is_umul_overflow_aux(size, "15", "78", false);
+      test_is_umul_overflow_aux(size, "1073742058", "2", true);
       break;
-    case 33:
-      test_is_umul_overflow_aux(size, 15, 78, false);
-      test_is_umul_overflow_aux(size, 4294967530, 4294967530, true);
+    case 64:
+      test_is_umul_overflow_aux(size, "9223372036854775805", "2", false);
+      test_is_umul_overflow_aux(size, "18446744073709551615", "2", true);
+      break;
+    case 65:
+      test_is_umul_overflow_aux(size, "18446744073709551615", "2", false);
+      test_is_umul_overflow_aux(size, "36893488147419103231", "2", true);
+      break;
+    case 127:
+      test_is_umul_overflow_aux(
+          size, "85070591730234615865843651857942052863", "2", false);
+      test_is_umul_overflow_aux(
+          size, "170141183460469231731687303715884105727", "2", true);
       break;
     default: assert(false);
   }
@@ -758,13 +781,16 @@ TestBitVector::test_ite_aux(BvFunKind fun_kind,
   }
 
   uint64_t a0    = b0.to_uint64();
-  uint64_t a1    = b1.to_uint64();
-  uint64_t a2    = b2.to_uint64();
+  /* we only test values representable in 64 bits */
+  uint64_t a1    = b1.bvextract(63, 0).to_uint64();
+  uint64_t a2    = b2.bvextract(63, 0).to_uint64();
   uint64_t ares  = _ite(a0, a1, a2, size);
   uint64_t atres = _ite(a0, a1, a1, size);
-  ASSERT_EQ(ares, res.to_uint64());
-  ASSERT_TRUE(tres0.is_null() || ares == tres0.to_uint64());
-  ASSERT_TRUE(tres1.is_null() || atres == tres1.to_uint64());
+  ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+  ASSERT_TRUE(tres0.is_null()
+              || BitVector(tres0.size(), ares).compare(tres0) == 0);
+  ASSERT_TRUE(tres1.is_null()
+              || BitVector(tres0.size(), atres).compare(tres1) == 0);
 }
 
 void
@@ -796,12 +822,20 @@ TestBitVector::test_ite(BvFunKind fun_kind)
                  BitVector(16, *d_rng));
     test_ite_aux(fun_kind,
                  BitVector(1, *d_rng),
-                 BitVector(32, *d_rng),
-                 BitVector(32, *d_rng));
+                 BitVector(31, *d_rng),
+                 BitVector(31, *d_rng));
     test_ite_aux(fun_kind,
                  BitVector(1, *d_rng),
-                 BitVector(35, *d_rng),
-                 BitVector(35, *d_rng));
+                 BitVector(64, *d_rng),
+                 BitVector(64, *d_rng));
+    test_ite_aux(fun_kind,
+                 BitVector(1, *d_rng),
+                 BitVector(65, *d_rng, 63, 0),
+                 BitVector(65, *d_rng, 63, 0));
+    test_ite_aux(fun_kind,
+                 BitVector(1, *d_rng),
+                 BitVector(127, *d_rng, 63, 0),
+                 BitVector(127, *d_rng, 63, 0));
   }
   /* death tests */
   BitVector b1(1, *d_rng);
@@ -867,10 +901,16 @@ TestBitVector::test_modinv(BvFunKind fun_kind)
     bv = BitVector(16, *d_rng);
     bv.set_bit(0, 1);  // must be odd
     test_modinv_aux(fun_kind, bv);
-    bv = BitVector(32, *d_rng);
+    bv = BitVector(31, *d_rng);
     bv.set_bit(0, 1);  // must be odd
     test_modinv_aux(fun_kind, bv);
-    bv = BitVector(35, *d_rng);
+    bv = BitVector(64, *d_rng);
+    bv.set_bit(0, 1);  // must be odd
+    test_modinv_aux(fun_kind, bv);
+    bv = BitVector(65, *d_rng, 63, 0);
+    bv.set_bit(0, 1);  // must be odd
+    test_modinv_aux(fun_kind, bv);
+    bv = BitVector(127, *d_rng, 63, 0);
     bv.set_bit(0, 1);  // must be odd
     test_modinv_aux(fun_kind, bv);
   }
@@ -886,7 +926,8 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
   BitVector res(bv);
   BitVector tres;
   uint32_t size = bv.size();
-  uint64_t a = bv.to_uint64();
+  /* we only test values representable in 64 bits */
+  uint64_t a = bv.bvextract(63, 0).to_uint64();
   switch (kind)
   {
     case DEC:
@@ -1005,8 +1046,18 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
 
     default: assert(false);
   }
-  ASSERT_EQ(ares, res.to_uint64());
-  ASSERT_TRUE(tres.is_null() || ares == tres.to_uint64());
+  if (size > 64)
+  {
+    ASSERT_EQ(BitVector(64, ares).compare(res.ibvextract(63, 0)), 0);
+    ASSERT_TRUE(tres.is_null()
+                || BitVector(64, ares).compare(tres.ibvextract(63, 0)) == 0);
+  }
+  else
+  {
+    ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+    ASSERT_TRUE(tres.is_null()
+                || BitVector(tres.size(), ares).compare(tres) == 0);
+  }
 }
 
 void
@@ -1024,8 +1075,10 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind)
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
     test_unary_aux(fun_kind, kind, BitVector(16, *d_rng));
-    test_unary_aux(fun_kind, kind, BitVector(32, *d_rng));
-    test_unary_aux(fun_kind, kind, BitVector(35, *d_rng));
+    test_unary_aux(fun_kind, kind, BitVector(31, *d_rng));
+    test_unary_aux(fun_kind, kind, BitVector(64, *d_rng));
+    test_unary_aux(fun_kind, kind, BitVector(65, *d_rng, 63, 0));
+    test_unary_aux(fun_kind, kind, BitVector(127, *d_rng, 63, 0));
   }
 }
 
@@ -1039,8 +1092,8 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
 
   uint32_t size  = bv0.size();
   BitVector zero = BitVector::mk_zero(size);
-  uint64_t a0    = bv0.to_uint64();
-  uint64_t a1    = bv1.to_uint64();
+  uint64_t a0    = bv0.bvextract(63, 0).to_uint64();
+  uint64_t a1    = bv1.bvextract(63, 0).to_uint64();
 
   std::vector<std::pair<BitVector, BitVector>> bv_args = {
       std::make_pair(zero, bv1),
@@ -1546,8 +1599,18 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
 
       default: assert(false);
     }
-    ASSERT_EQ(ares, res.to_uint64());
-    ASSERT_TRUE(tres.is_null() || atres == tres.to_uint64());
+    if (size > 64)
+    {
+      ASSERT_EQ(BitVector(64, ares).compare(res.ibvextract(63, 0)), 0);
+      ASSERT_TRUE(tres.is_null()
+                  || BitVector(64, atres).compare(tres.ibvextract(63, 0)) == 0);
+    }
+    else
+    {
+      ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+      ASSERT_TRUE(tres.is_null()
+                  || BitVector(tres.size(), atres).compare(tres) == 0);
+    }
   }
 }
 
@@ -1572,9 +1635,19 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
     test_binary_aux(
         fun_kind, kind, BitVector(16, *d_rng), BitVector(16, *d_rng));
     test_binary_aux(
-        fun_kind, kind, BitVector(32, *d_rng), BitVector(32, *d_rng));
+        fun_kind, kind, BitVector(31, *d_rng), BitVector(31, *d_rng));
     test_binary_aux(
-        fun_kind, kind, BitVector(35, *d_rng), BitVector(35, *d_rng));
+        fun_kind, kind, BitVector(64, *d_rng), BitVector(64, *d_rng));
+    /* We only randomize bits 63 to 0 in order to be able to compare against
+     * the corresponding implementation with uint64. */
+    test_binary_aux(fun_kind,
+                    kind,
+                    BitVector(65, *d_rng, 63, 0),
+                    BitVector(65, *d_rng, 63, 0));
+    test_binary_aux(fun_kind,
+                    kind,
+                    BitVector(127, *d_rng, 63, 0),
+                    BitVector(127, *d_rng, 63, 0));
   }
   /* death tests */
   BitVector b1(33, *d_rng);
@@ -1933,8 +2006,9 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
   BitVector zero = BitVector::mk_zero(size);
   BitVector b1(bv0);
   BitVector b2(bv1);
-  int64_t a1 = b1.to_uint64();
-  int64_t a2 = b2.to_uint64();
+  /* we only test values representable in 64 bits */
+  int64_t a1 = b1.bvextract(63, 0).to_uint64();
+  int64_t a2 = b2.bvextract(63, 0).to_uint64();
   if (b1.get_bit(size - 1))
   {
     a1 = (UINT64_MAX << size) | a1;
@@ -2101,8 +2175,9 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
 
       default: assert(false);
     }
-    ASSERT_EQ(ares, res.to_uint64());
-    ASSERT_TRUE(tres.is_null() || atres == tres.to_uint64());
+    ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+    ASSERT_TRUE(tres.is_null()
+                || BitVector(tres.size(), atres).compare(tres) == 0);
   }
 }
 
@@ -2266,11 +2341,14 @@ TestBitVector::test_concat_aux(BvFunKind fun_kind,
       res = bv0.bvconcat(bv1);
     }
     ASSERT_EQ(res.size(), size0 + size1);
-    uint64_t u0 = bv0.to_uint64();
-    uint64_t u1 = bv1.to_uint64();
-    uint64_t u  = bv.to_uint64();
-    ASSERT_EQ((u0 << size1) | u1, res.to_uint64());
-    ASSERT_TRUE(tres.is_null() || ((u << (size / 2)) | u) == tres.to_uint64());
+    /* we only test values representable in 64 bits */
+    uint64_t u0 = bv0.bvextract(63, 0).to_uint64();
+    uint64_t u1 = bv1.bvextract(63, 0).to_uint64();
+    uint64_t u  = bv.bvextract(63, 0).to_uint64();
+    ASSERT_EQ(BitVector(res.size(), (u0 << size1) | u1).compare(res), 0);
+    ASSERT_TRUE(tres.is_null()
+                || BitVector(tres.size(), ((u << (size / 2)) | u)).compare(tres)
+                       == 0);
 }
 
 void
@@ -2499,7 +2577,6 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
     default: assert(false);
   }
 
-  assert(res.compare(bv_expected) == 0);
   ASSERT_EQ(res.compare(bv_expected), 0);
 }
 
@@ -2727,31 +2804,32 @@ TestBitVector::test_udivurem(uint32_t size)
     BitVector q, r;
     BitVector bv1(size, *d_rng);
     BitVector bv2(size, *d_rng);
-    uint64_t a1 = bv1.to_uint64();
-    uint64_t a2 = bv2.to_uint64();
+    /* we only test values representable in 64 bits */
+    uint64_t a1 = bv1.bvextract(63, 0).to_uint64();
+    uint64_t a2 = bv2.bvextract(63, 0).to_uint64();
     uint64_t ares_div, ares_rem, bres_div, bres_rem;
     /* test for x = 0 explicitly */
     zero.bvudivurem(bv2, &q, &r);
     ares_div = _udiv(0, a2, size);
     ares_rem = _urem(0, a2, size);
-    bres_div = q.to_uint64();
-    bres_rem = r.to_uint64();
+    bres_div = q.bvextract(63, 0).to_uint64();
+    bres_rem = r.bvextract(63, 0).to_uint64();
     ASSERT_EQ(ares_div, bres_div);
     ASSERT_EQ(ares_rem, bres_rem);
     /* test for y = 0 explicitly */
     bv1.bvudivurem(zero, &q, &r);
     ares_div = _udiv(a1, 0, size);
     ares_rem = _urem(a1, 0, size);
-    bres_div = q.to_uint64();
-    bres_rem = r.to_uint64();
+    bres_div = q.bvextract(63, 0).to_uint64();
+    bres_rem = r.bvextract(63, 0).to_uint64();
     ASSERT_EQ(ares_div, bres_div);
     ASSERT_EQ(ares_rem, bres_rem);
     /* test x, y random */
     bv1.bvudivurem(bv2, &q, &r);
     ares_div = _udiv(a1, a2, size);
     ares_rem = _urem(a1, a2, size);
-    bres_div = q.to_uint64();
-    bres_rem = r.to_uint64();
+    bres_div = q.bvextract(63, 0).to_uint64();
+    bres_rem = r.bvextract(63, 0).to_uint64();
     ASSERT_EQ(ares_div, bres_div);
     ASSERT_EQ(ares_rem, bres_rem);
   }
@@ -2802,25 +2880,25 @@ TEST_F(TestBitVector, ctor_rand)
     BitVector bv1(size, *d_rng);
     BitVector bv2(size, *d_rng);
     BitVector bv3(size, *d_rng);
-    assert(bv1.compare(bv2) || bv1.compare(bv3) || bv2.compare(bv3));
+    ASSERT_TRUE(bv1.compare(bv2) || bv1.compare(bv3) || bv2.compare(bv3));
   }
 }
 
 TEST_F(TestBitVector, ctor_random_range)
 {
-  for (uint32_t size = 1; size <= 64; ++size)
+  for (uint32_t size = 1; size <= 65; ++size)
   {
     BitVector from(size, *d_rng);
     // from == to
     BitVector bv1(size, *d_rng, from, from);
-    ASSERT_EQ(bv1.to_uint64(), from.to_uint64());
+    ASSERT_EQ(bv1.compare(from), 0);
     // from < to
     BitVector to(size, *d_rng);
     while (from.compare(to) == 0)
     {
       to = BitVector(size, *d_rng);
     }
-    if (to.to_uint64() < from.to_uint64())
+    if (to.compare(from) < 0)
     {
       BitVector tmp = to;
       to            = from;
@@ -2828,8 +2906,8 @@ TEST_F(TestBitVector, ctor_random_range)
     }
 
     BitVector bv2(size, *d_rng, from, to);
-    ASSERT_GE(bv2.to_uint64(), from.to_uint64());
-    ASSERT_LE(bv2.to_uint64(), to.to_uint64());
+    ASSERT_GE(bv2.compare(from), 0);
+    ASSERT_LE(bv2.compare(to), 0);
   }
 }
 
@@ -2840,8 +2918,7 @@ TEST_F(TestBitVector, ctor_random_signed_range)
     BitVector from(size, *d_rng);
     // from == to
     BitVector bv1(size, *d_rng, from, from, true);
-    assert(bv1.to_uint64() == from.to_uint64());
-    ASSERT_EQ(bv1.to_uint64(), from.to_uint64());
+    ASSERT_EQ(bv1.compare(from), 0);
     // from < to
     BitVector to(size, *d_rng);
     while (from.signed_compare(to) == 0)
@@ -3722,7 +3799,9 @@ TEST_F(TestBitVector, is_uadd_overflow)
   test_is_uadd_overflow(1);
   test_is_uadd_overflow(7);
   test_is_uadd_overflow(31);
-  test_is_uadd_overflow(33);
+  test_is_uadd_overflow(64);
+  test_is_uadd_overflow(65);
+  test_is_uadd_overflow(127);
 }
 
 TEST_F(TestBitVector, is_umul_overflow)
@@ -3730,7 +3809,9 @@ TEST_F(TestBitVector, is_umul_overflow)
   test_is_umul_overflow(1);
   test_is_umul_overflow(7);
   test_is_umul_overflow(31);
-  test_is_umul_overflow(33);
+  test_is_umul_overflow(64);
+  test_is_umul_overflow(65);
+  test_is_umul_overflow(127);
 }
 
 TEST_F(TestBitVector, ite) { test_ite(DEFAULT); }

@@ -193,10 +193,10 @@ BitVector::BitVector(uint32_t size,
                      const RNG& rng,
                      const BitVector& from,
                      const BitVector& to,
-                     bool is_signed)
+                     bool sign)
     : BitVector(size)
 {
-  iset(rng, from, to, is_signed);
+  iset(rng, from, to, sign);
 }
 
 BitVector::BitVector(uint32_t size,
