@@ -359,9 +359,7 @@ BitVector::iset(const RNG& rng,
   if (is_signed)
   {
     BitVector sto   = to.bvsub(from);
-    BitVector sfrom = mk_zero(d_size);
     mpz_init_set(_to, sto.d_val->d_mpz);
-    mpz_sub(_to, _to, sfrom.d_val->d_mpz);
   }
   else
   {
