@@ -355,19 +355,14 @@ BitVector::iset(const RNG& rng,
   assert(d_size == to.d_size);
   assert(is_signed || from.compare(to) <= 0);
   assert(!is_signed || from.signed_compare(to) <= 0);
-  mpz_t _to;
-  if (is_signed)
-  {
-    BitVector sto   = to.bvsub(from);
-    mpz_init_set(_to, sto.d_val->d_mpz);
-  }
-  else
-  {
-    mpz_init_set(_to, to.d_val->d_mpz);
-    mpz_sub(_to, _to, from.d_val->d_mpz);
-  }
-  mpz_add_ui(_to, _to, 1);
-  mpz_urandomm(d_val->d_mpz, rng.get_gmp_state()->d_gmp_randstate, _to);
+  BitVector _to = to.bvsub(from);
+  // We cannot use bvinc here, we actually have to increase the GMP value by 1
+  // with mpz_add_ui without normalizing it to the bit-width. This is due the
+  // fact that the upper bound for mpz_urandomm is exclusive (and normalizing
+  // it to the bit-width can overflow).
+  mpz_add_ui(_to.d_val->d_mpz, _to.d_val->d_mpz, 1);
+  mpz_urandomm(
+      d_val->d_mpz, rng.get_gmp_state()->d_gmp_randstate, _to.d_val->d_mpz);
   if (is_signed)
   {
     // add from to picked value
@@ -378,7 +373,6 @@ BitVector::iset(const RNG& rng,
   {
     mpz_add(d_val->d_mpz, d_val->d_mpz, from.d_val->d_mpz);
   }
-  mpz_clear(_to);
 }
 
 bool
