@@ -742,9 +742,17 @@ bool
 BitVector::is_min_signed() const
 {
   assert(!is_null());
-  if (is_gmp() && mpz_scan1(d_val_gmp->d_mpz, 0) != d_size - 1) return false;
-  if (!is_gmp() && d_val_uint64 != ((uint64_t) 1 << ((d_size % 64) - 1)))
-    return false;
+  if (is_gmp())
+  {
+    if (mpz_scan1(d_val_gmp->d_mpz, 0) != d_size - 1) return false;
+  }
+  else
+  {
+    if (d_val_uint64 != ((uint64_t) 1 << ((d_size % 64) - 1)))
+    {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -759,8 +767,10 @@ BitVector::is_max_signed() const
   else
   {
     if (d_size == 1 && d_val_uint64 == 0) return true;
-    if (d_val_uint64 != (~((uint64_t) 0) >> (64 - (d_size % 64) + 1)))
+    if (d_val_uint64 != (~((uint64_t) 0) >> (64 - d_size + 1)))
+    {
       return false;
+    }
   }
   return true;
 }
@@ -862,389 +872,247 @@ BitVector::count_leading_ones() const
 BitVector
 BitVector::bvneg() const
 {
-  assert(!is_null());
-  BitVector res(d_size);
-  return res.ibvneg(*this);
+  return BitVector(d_size).ibvneg(*this);
 }
 
 BitVector
 BitVector::bvnot() const
 {
-  assert(!is_null());
-  BitVector res(d_size);
-  return res.ibvnot(*this);
+  return BitVector(d_size).ibvnot(*this);
 }
 
 BitVector
 BitVector::bvinc() const
 {
-  assert(!is_null());
-  BitVector res(d_size);
-  return res.ibvinc(*this);
+  return BitVector(d_size).ibvinc(*this);
 }
 
 BitVector
 BitVector::bvdec() const
 {
-  assert(!is_null());
-  BitVector res(d_size);
-  return res.ibvdec(*this);
+  return BitVector(d_size).ibvdec(*this);
 }
 
 BitVector
 BitVector::bvredand() const
 {
-  assert(!is_null());
-  BitVector res(1);
-  return res.ibvredand(*this);
+  return BitVector(1).ibvredand(*this);
 }
 
 BitVector
 BitVector::bvredor() const
 {
-  assert(!is_null());
-  BitVector res(1);
-  return res.ibvredor(*this);
+  return BitVector(1).ibvredor(*this);
 }
 
 BitVector
 BitVector::bvadd(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvadd(*this, bv);
+  return BitVector(d_size).ibvadd(*this, bv);
 }
 
 BitVector
 BitVector::bvsub(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvsub(*this, bv);
+  return BitVector(d_size).ibvsub(*this, bv);
 }
 
 BitVector
 BitVector::bvand(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvand(*this, bv);
+  return BitVector(d_size).ibvand(*this, bv);
 }
 
 BitVector
 BitVector::bvimplies(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == 1);
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibvimplies(*this, bv);
+  return BitVector(1).ibvimplies(*this, bv);
 }
 
 BitVector
 BitVector::bvnand(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvnand(*this, bv);
+  return BitVector(d_size).ibvnand(*this, bv);
 }
 
 BitVector
 BitVector::bvnor(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvnor(*this, bv);
+  return BitVector(d_size).ibvnor(*this, bv);
 }
 
 BitVector
 BitVector::bvor(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvor(*this, bv);
+  return BitVector(d_size).ibvor(*this, bv);
 }
 
 BitVector
 BitVector::bvxnor(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvxnor(*this, bv);
+  return BitVector(d_size).ibvxnor(*this, bv);
 }
 
 BitVector
 BitVector::bvxor(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvxor(*this, bv);
+  return BitVector(d_size).ibvxor(*this, bv);
 }
 
 BitVector
 BitVector::bveq(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibveq(*this, bv);
+  return BitVector(1).ibveq(*this, bv);
 }
 
 BitVector
 BitVector::bvne(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibvne(*this, bv);
+  return BitVector(1).ibvne(*this, bv);
 }
 
 BitVector
 BitVector::bvult(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibvult(*this, bv);
+  return BitVector(1).ibvult(*this, bv);
 }
 
 BitVector
 BitVector::bvule(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibvule(*this, bv);
+  return BitVector(1).ibvule(*this, bv);
 }
 
 BitVector
 BitVector::bvugt(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibvugt(*this, bv);
+  return BitVector(1).ibvugt(*this, bv);
 }
 
 BitVector
 BitVector::bvuge(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibvuge(*this, bv);
+  return BitVector(1).ibvuge(*this, bv);
 }
 
 BitVector
 BitVector::bvslt(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibvslt(*this, bv);
+  return BitVector(1).ibvslt(*this, bv);
 }
 
 BitVector
 BitVector::bvsle(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibvsle(*this, bv);
+  return BitVector(1).ibvsle(*this, bv);
 }
 
 BitVector
 BitVector::bvsgt(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibvsgt(*this, bv);
+  return BitVector(1).ibvsgt(*this, bv);
 }
 
 BitVector
 BitVector::bvsge(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(1);
-  return res.ibvsge(*this, bv);
+  return BitVector(1).ibvsge(*this, bv);
 }
 
 BitVector
 BitVector::bvshl(uint32_t shift) const
 {
-  assert(!is_null());
-  BitVector res(d_size);
-  return res.ibvshl(*this, shift);
+  return BitVector(d_size).ibvshl(*this, shift);
 }
 
 BitVector
 BitVector::bvshl(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvshl(*this, bv);
+  return BitVector(d_size).ibvshl(*this, bv);
 }
 
 BitVector
 BitVector::bvshr(uint32_t shift) const
 {
-  assert(!is_null());
-  BitVector res(d_size);
-  return res.ibvshr(*this, shift);
+  return BitVector(d_size).ibvshr(*this, shift);
 }
 
 BitVector
 BitVector::bvshr(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvshr(*this, bv);
+  return BitVector(d_size).ibvshr(*this, bv);
 }
 
 BitVector
 BitVector::bvashr(uint32_t shift) const
 {
-  assert(!is_null());
-  BitVector res(d_size);
-  return res.ibvashr(*this, shift);
+  return BitVector(d_size).ibvashr(*this, shift);
 }
 
 BitVector
 BitVector::bvashr(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvashr(*this, bv);
+  return BitVector(d_size).ibvashr(*this, bv);
 }
 
 BitVector
 BitVector::bvmul(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvmul(*this, bv);
+  return BitVector(d_size).ibvmul(*this, bv);
 }
 
 BitVector
 BitVector::bvudiv(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvudiv(*this, bv);
+  return BitVector(d_size).ibvudiv(*this, bv);
 }
 
 BitVector
 BitVector::bvurem(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvurem(*this, bv);
+  return BitVector(d_size).ibvurem(*this, bv);
 }
 
 BitVector
 BitVector::bvsdiv(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvsdiv(*this, bv);
+  return BitVector(d_size).ibvsdiv(*this, bv);
 }
 
 BitVector
 BitVector::bvsrem(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  assert(d_size == bv.d_size);
-  BitVector res(d_size);
-  return res.ibvsrem(*this, bv);
+  return BitVector(d_size).ibvsrem(*this, bv);
 }
 
 BitVector
 BitVector::bvconcat(const BitVector& bv) const
 {
-  assert(!is_null());
-  assert(!bv.is_null());
-  uint32_t size = d_size + bv.d_size;
-  BitVector res(size);
-  return res.ibvconcat(*this, bv);
+  return BitVector(d_size).ibvconcat(*this, bv);
 }
 
 BitVector
 BitVector::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 {
-  assert(!is_null());
-  assert(idx_hi >= idx_lo);
-  uint32_t size = idx_hi - idx_lo + 1;
-  BitVector res(size);
-  return res.ibvextract(*this, idx_hi, idx_lo);
+  return BitVector(d_size).ibvextract(*this, idx_hi, idx_lo);
 }
 
 BitVector
 BitVector::bvzext(uint32_t n) const
 {
-  assert(!is_null());
-  BitVector res(d_size);
-  return res.ibvzext(*this, n);
+  return BitVector(d_size).ibvzext(*this, n);
 }
 
 BitVector
 BitVector::bvsext(uint32_t n) const
 {
-  assert(!is_null());
-  BitVector res(d_size);
-  return res.ibvsext(*this, n);
+  return BitVector(d_size).ibvsext(*this, n);
 }
 
 BitVector
 BitVector::bvmodinv() const
 {
-  assert(!is_null());
-  assert(get_lsb()); /* must be odd */
-  BitVector res(d_size);
-  return res.ibvmodinv(*this);
+  return BitVector(d_size).ibvmodinv(*this);
 }
 
 /* -------------------------------------------------------------------------- */
