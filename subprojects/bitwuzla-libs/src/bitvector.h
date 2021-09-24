@@ -55,7 +55,7 @@ class BitVector
   /** Construct a zero bit-vector of given size. */
   BitVector(uint32_t size);
   /** Construct a random bit-vector of given size. */
-  BitVector(uint32_t size, const RNG& rng);
+  BitVector(uint32_t size, RNG& rng);
 
   /**
    * Construct a random bit-vector of given size with the given range.
@@ -66,7 +66,7 @@ class BitVector
    * sign: True to interpret the given range as signed, else unsigned.
    */
   BitVector(uint32_t size,
-            const RNG& rng,
+            RNG& rng,
             const BitVector& from,
             const BitVector& to,
             bool sign = false);
@@ -74,7 +74,7 @@ class BitVector
    * Construct a new bit-vector of given size and randomly set bits within given
    * index range. Bits outside of given index range are initialized with zero.
    */
-  BitVector(uint32_t size, const RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
+  BitVector(uint32_t size, RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
 
   /**
    * Construct a bit-vector of given size from given binary string.
@@ -109,7 +109,7 @@ class BitVector
   size_t hash() const;
 
   /** Return true if this is an uninitialized bit-vector. */
-  bool is_null() const { return d_val == nullptr; }
+  bool is_null() const { return d_size == 0; }
 
   /** Set the value of this bit-vector to the given unsigned (in-place). */
   void iset(uint64_t value);
@@ -119,7 +119,7 @@ class BitVector
    * Set the value of this bit-vector to a random value between 'from' and 'to'
    * (in-place).
    */
-  void iset(const RNG& rng,
+  void iset(RNG& rng,
             const BitVector& from,
             const BitVector& to,
             bool is_signed);
@@ -318,6 +318,8 @@ class BitVector
 
   /* ----------------------------------------------------------------------- */
   /* In-place versions of bit-vector operations.                             */
+  /*                                                                         */
+  /* Note: This bit-vector may not be null.                                  */
   /*                                                                         */
   /* Result is stored in this bit-vector.                                    */
   /* Return a reference to this bit-vector.                                  */
@@ -638,26 +640,48 @@ class BitVector
 
  private:
   /**
+   * Normalize uint64_t value for a given bit-width.
+   * The equivalent of mpz_fdiv_r_2exp for uint64_t values.
+   * Compute the remainder of the division of val by 2^size, implemented
+   * with shifts and a bit mask.
+   */
+  static uint64_t uint64_fdiv_r_2exp(uint32_t size, uint64_t val);
+  /**
    * Count leading zeros or ones.
    * zeros: True to determine number of leading zeros, false to count number
    *        of leading ones.
    */
   uint32_t count_leading(bool zeros) const;
   /**
-   * Get the first limb and return the number of limbs needed to represented
-   * given bit-vector if all zero limbs are disregarded.
-   */
-  uint32_t get_limb(void* limb, uint32_t nbits_rem, bool zeros) const;
-  /**
    * Return true if this bit-vector can be represented with a uint64_t.
    * If true, uint64_t representation is stored in 'res'.
    */
   bool shift_is_uint64(uint32_t* res) const;
+  /**
+   * Get the first limb and return the number of limbs needed to represented
+   * given bit-vector if all zero limbs are disregarded.
+   */
+  uint32_t get_limb(void* limb, uint32_t nbits_rem, bool zeros) const;
+
+  /** True if bit-vector is of size > 64 and thus wraps a GMPMpz. */
+  bool is_gmp() const { return d_size > 64; }
 
   /** The size of this bit-vector. */
   uint32_t d_size = 0;
-  /** The bit-vector value. */
-  std::unique_ptr<GMPMpz> d_val;
+  /**
+   * The bit-vector value.
+   *
+   * Note: We use a union instead of std::variant here in order to avoid the
+   *       overhead of the latter, since we already have a "tracking variable"
+   *       (the size of the bit-vector, d_size). Further, we do not use a
+   *       unique_ptr for d_val_gmp because we don't gain anything if it is in
+   *       a union -- we have to manually destruct it anyways.
+   */
+  union
+  {
+    uint64_t d_val_uint64;
+    GMPMpz* d_val_gmp;
+  };
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVector& bv);
