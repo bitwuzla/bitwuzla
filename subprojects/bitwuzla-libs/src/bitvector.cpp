@@ -515,7 +515,7 @@ BitVector::operator!=(const BitVector& bv)
 std::string
 BitVector::to_string(uint32_t base) const
 {
-  assert(!is_null());
+  if (is_null()) return "(nil)";
 
   if (is_gmp())
   {
@@ -2895,30 +2895,55 @@ BitVector::bvudivurem(const BitVector& bv,
 {
   assert(!is_null());
   assert(!bv.is_null());
+  assert(quot != rem);
   assert(d_size == bv.d_size);
 
   if (bv.is_zero())
   {
-    *quot = mk_ones(d_size);
     *rem  = *this;
+    *quot = mk_ones(d_size);
   }
   else
   {
     if (is_gmp())
     {
+      const BitVector *a, *b;
+      BitVector aa, bb;
+      if (this == quot || this == rem)
+      {
+        aa = *this;
+        a  = &aa;
+      }
+      else
+      {
+        a = this;
+      }
+      if (&bv == quot || &bv == rem)
+      {
+        bb = bv;
+        b  = &bb;
+      }
+      else
+      {
+        b = &bv;
+      }
       *quot = mk_zero(d_size);
       *rem  = mk_zero(d_size);
       mpz_fdiv_qr(quot->d_val_gmp->d_mpz,
                   rem->d_val_gmp->d_mpz,
-                  d_val_gmp->d_mpz,
-                  bv.d_val_gmp->d_mpz);
+                  a->d_val_gmp->d_mpz,
+                  b->d_val_gmp->d_mpz);
       mpz_fdiv_r_2exp(quot->d_val_gmp->d_mpz, quot->d_val_gmp->d_mpz, d_size);
       mpz_fdiv_r_2exp(rem->d_val_gmp->d_mpz, rem->d_val_gmp->d_mpz, d_size);
     }
     else
     {
-      *quot = BitVector(d_size, d_val_uint64 / bv.d_val_uint64);
-      *rem  = BitVector(d_size, d_val_uint64 % bv.d_val_uint64);
+      /* copy to guard for quot == *this and rem == *this */
+      uint64_t a = d_val_uint64;
+      /* copy to guard for bv == *quot or bv == *rem */
+      uint64_t b = bv.d_val_uint64;
+      *quot      = BitVector(d_size, a / b);
+      *rem       = BitVector(d_size, a % b);
     }
   }
 }

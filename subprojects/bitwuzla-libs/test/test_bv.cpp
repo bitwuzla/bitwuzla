@@ -53,8 +53,17 @@ class TestBitVector : public TestCommon
 
   enum BvFunKind
   {
+    /** Not in-place, this is not passed as argument. */
     DEFAULT,
+    /**
+     * In-place, version that uses this as first argument.
+     * For additional arguments, test with non-this and this arguments.
+     */
     INPLACE_THIS,
+    /**
+     * In-place, version that does not use this as first argument.
+     * Test with all non-this and all this arguments.
+     */
     INPLACE_ALL,
   };
 
@@ -2808,7 +2817,7 @@ TestBitVector::test_udivurem(uint32_t size)
   BitVector zero = BitVector::mk_zero(size);
   for (uint32_t i = 0; i < N_TESTS; ++i)
   {
-    BitVector q, r;
+    BitVector q, r, tq, tr;
     BitVector bv1(size, *d_rng, 63, 0);
     BitVector bv2(size, *d_rng, 63, 0);
     /* we only test values representable in 64 bits */
@@ -2817,29 +2826,105 @@ TestBitVector::test_udivurem(uint32_t size)
     uint64_t a2 =
         size > 64 ? bv2.bvextract(63, 0).to_uint64() : bv2.to_uint64();
     uint64_t ares_div, ares_rem, bres_div, bres_rem;
+
     /* test for x = 0 explicitly */
-    zero.bvudivurem(bv2, &q, &r);
     ares_div = _udiv(0, a2, size);
     ares_rem = _urem(0, a2, size);
+    // no *this arguments
+    zero.bvudivurem(bv2, &q, &r);
     bres_div = size > 64 ? q.bvextract(63, 0).to_uint64() : q.to_uint64();
     bres_rem = size > 64 ? r.bvextract(63, 0).to_uint64() : r.to_uint64();
     ASSERT_EQ(ares_div, bres_div);
     ASSERT_EQ(ares_rem, bres_rem);
+    // test with *this as argument
+    tq = zero;
+    tr = BitVector();
+    tq.bvudivurem(bv2, &tq, &tr);
+    bres_div = size > 64 ? tq.bvextract(63, 0).to_uint64() : tq.to_uint64();
+    bres_rem = size > 64 ? tr.bvextract(63, 0).to_uint64() : tr.to_uint64();
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+    tq = BitVector();
+    tr = zero;
+    tr.bvudivurem(bv2, &tq, &tr);
+    bres_div = size > 64 ? tq.bvextract(63, 0).to_uint64() : tq.to_uint64();
+    bres_rem = size > 64 ? tr.bvextract(63, 0).to_uint64() : tr.to_uint64();
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+    // test second argument == remainder argument
+    tq = BitVector();
+    tr = bv2;
+    zero.bvudivurem(tr, &tq, &tr);
+    bres_div = size > 64 ? tq.bvextract(63, 0).to_uint64() : tq.to_uint64();
+    bres_rem = size > 64 ? tr.bvextract(63, 0).to_uint64() : tr.to_uint64();
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+
     /* test for y = 0 explicitly */
-    bv1.bvudivurem(zero, &q, &r);
     ares_div = _udiv(a1, 0, size);
     ares_rem = _urem(a1, 0, size);
+    // no *this arguments
+    bv1.bvudivurem(zero, &q, &r);
     bres_div = size > 64 ? q.bvextract(63, 0).to_uint64() : q.to_uint64();
     bres_rem = size > 64 ? r.bvextract(63, 0).to_uint64() : r.to_uint64();
     ASSERT_EQ(ares_div, bres_div);
     ASSERT_EQ(ares_rem, bres_rem);
+    // test with *this as argument
+    tq = bv1;
+    tr = BitVector();
+    tq.bvudivurem(zero, &tq, &tr);
+    bres_div = size > 64 ? tq.bvextract(63, 0).to_uint64() : tq.to_uint64();
+    bres_rem = size > 64 ? tr.bvextract(63, 0).to_uint64() : tr.to_uint64();
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+    tq = BitVector();
+    tr = bv1;
+    tr.bvudivurem(zero, &tq, &tr);
+    bres_div = size > 64 ? tq.bvextract(63, 0).to_uint64() : tq.to_uint64();
+    bres_rem = size > 64 ? tr.bvextract(63, 0).to_uint64() : tr.to_uint64();
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+    // test second argument == remainder argument
+    tq = BitVector();
+    tr = zero;
+    bv1.bvudivurem(tr, &tq, &tr);
+    bres_div = size > 64 ? tq.bvextract(63, 0).to_uint64() : tq.to_uint64();
+    bres_rem = size > 64 ? tr.bvextract(63, 0).to_uint64() : tr.to_uint64();
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+
     /* test x, y random */
-    bv1.bvudivurem(bv2, &q, &r);
     ares_div = _udiv(a1, a2, size);
     ares_rem = _urem(a1, a2, size);
+    // no *this arguments
+    bv1.bvudivurem(bv2, &q, &r);
     bres_div = size >= 64 ? q.bvextract(63, 0).to_uint64() : q.to_uint64();
     bres_rem = size >= 64 ? r.bvextract(63, 0).to_uint64() : r.to_uint64();
     assert(ares_div == bres_div);
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+    // test with *this as argument
+    tq = bv1;
+    tr = BitVector();
+    tq.bvudivurem(bv2, &tq, &tr);
+    bres_div = size > 64 ? tq.bvextract(63, 0).to_uint64() : tq.to_uint64();
+    bres_rem = size > 64 ? tr.bvextract(63, 0).to_uint64() : tr.to_uint64();
+    assert(ares_div == bres_div);
+    assert(ares_div == bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+    tq = BitVector();
+    tr = bv1;
+    tr.bvudivurem(bv2, &tq, &tr);
+    bres_div = size > 64 ? tq.bvextract(63, 0).to_uint64() : tq.to_uint64();
+    bres_rem = size > 64 ? tr.bvextract(63, 0).to_uint64() : tr.to_uint64();
+    ASSERT_EQ(ares_div, bres_div);
+    ASSERT_EQ(ares_rem, bres_rem);
+    // test second argument == remainder argument
+    tq = BitVector();
+    tr = bv2;
+    bv1.bvudivurem(tr, &tq, &tr);
+    bres_div = size > 64 ? tq.bvextract(63, 0).to_uint64() : tq.to_uint64();
+    bres_rem = size > 64 ? tr.bvextract(63, 0).to_uint64() : tr.to_uint64();
     ASSERT_EQ(ares_div, bres_div);
     ASSERT_EQ(ares_rem, bres_rem);
   }
