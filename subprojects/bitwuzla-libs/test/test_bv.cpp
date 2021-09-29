@@ -586,50 +586,54 @@ TestBitVector::test_extend_aux(BvFunKind fun_kind,
                                uint32_t n)
 {
   uint32_t size = bv.size();
-  BitVector res(bv);
+  std::vector<BitVector> reses{BitVector(bv)};
+  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
   char c = 0;
 
-  switch (kind)
+  for (auto& res : reses)
   {
-    case ZEXT:
-      if (fun_kind == INPLACE_THIS)
-      {
-        (void) res.ibvzext(n);
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        (void) res.ibvzext(bv, n);
-      }
-      else
-      {
-        res = bv.bvzext(n);
-      }
-      c = '0';
-      break;
-    case SEXT:
-      if (fun_kind == INPLACE_THIS)
-      {
-        (void) res.ibvsext(n);
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        (void) res.ibvsext(bv, n);
-      }
-      else
-      {
-        res = bv.bvsext(n);
-      }
-      c = bv.get_msb() ? '1' : '0';
-      break;
+    switch (kind)
+    {
+      case ZEXT:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvzext(n);
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvzext(bv, n);
+        }
+        else
+        {
+          res = bv.bvzext(n);
+        }
+        c = '0';
+        break;
+      case SEXT:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvsext(n);
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvsext(bv, n);
+        }
+        else
+        {
+          res = bv.bvsext(n);
+        }
+        c = bv.get_msb() ? '1' : '0';
+        break;
 
-    default: assert(false);
+      default: assert(false);
+    }
+    ASSERT_EQ(size + n, res.size());
+    std::string res_str = res.to_string();
+    std::string bv_str  = bv.to_string();
+    uint32_t len        = size - n;
+    ASSERT_EQ(bv_str.compare(0, len, res_str, n, len), 0);
+    ASSERT_EQ(std::string(n, c).compare(0, n, res_str, 0, n), 0);
   }
-  ASSERT_EQ(size + n, res.size());
-  std::string res_str = res.to_string();
-  std::string bv_str  = bv.to_string();
-  uint32_t len        = size - n;
-  ASSERT_EQ(bv_str.compare(0, len, res_str, n, len), 0);
-  ASSERT_EQ(std::string(n, c).compare(0, n, res_str, 0, n), 0);
 }
 
 void
@@ -771,35 +775,37 @@ TestBitVector::test_ite_aux(BvFunKind fun_kind,
   BitVector b0(bv0);
   BitVector b1(bv1);
   BitVector b2(bv2);
-  BitVector res(size);
-  BitVector tres0, tres1;
+  std::vector<BitVector> reses{BitVector(size)};
+  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
 
-  if (fun_kind == INPLACE_ALL)
-  {
-    (void) res.ibvite(b0, b1, b2);
-    // test with *this as arguments
-    tres0 = b0;
-    tres1 = b1;
-    (void) tres0.ibvite(tres0, b1, b2);
-    (void) tres1.ibvite(b0, tres1, tres1);
-  }
-  else
-  {
-    assert(fun_kind == DEFAULT);
-    res = BitVector::bvite(b0, b1, b2);
-  }
-
-  uint64_t a0    = b0.to_uint64();
+  uint64_t a0 = b0.to_uint64();
   /* we only test values representable in 64 bits */
   uint64_t a1    = size > 64 ? b1.bvextract(63, 0).to_uint64() : b1.to_uint64();
   uint64_t a2    = size > 64 ? b2.bvextract(63, 0).to_uint64() : b2.to_uint64();
   uint64_t ares  = _ite(a0, a1, a2, size);
   uint64_t atres = _ite(a0, a1, a1, size);
-  ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
-  ASSERT_TRUE(tres0.is_null()
-              || BitVector(tres0.size(), ares).compare(tres0) == 0);
-  ASSERT_TRUE(tres1.is_null()
-              || BitVector(tres0.size(), atres).compare(tres1) == 0);
+
+  for (auto& res : reses)
+  {
+    if (fun_kind == INPLACE_ALL)
+    {
+      (void) res.ibvite(b0, b1, b2);
+      // test with *this as arguments
+      BitVector tres0(b0);
+      BitVector tres1(b1);
+      (void) tres0.ibvite(tres0, b1, b2);
+      (void) tres1.ibvite(b0, tres1, tres1);
+      ASSERT_TRUE(BitVector(tres0.size(), ares).compare(tres0) == 0);
+      ASSERT_TRUE(BitVector(tres0.size(), atres).compare(tres1) == 0);
+    }
+    else
+    {
+      assert(fun_kind == DEFAULT);
+      res = BitVector::bvite(b0, b1, b2);
+    }
+
+    ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+  }
 }
 
 void
@@ -868,26 +874,30 @@ TestBitVector::test_ite(BvFunKind fun_kind)
 void
 TestBitVector::test_modinv_aux(BvFunKind fun_kind, const BitVector& bv)
 {
-  BitVector res(bv);
-  BitVector tres;
-  if (fun_kind == INPLACE_THIS)
-  {
-    (void) res.ibvmodinv();
-  }
-  else if (fun_kind == INPLACE_ALL)
-  {
-    (void) res.ibvmodinv(bv);
-    // test with *this as argument
-    tres = bv;
-    (void) tres.ibvmodinv(tres);
-  }
-  else
-  {
-    res = bv.bvmodinv();
-  }
+  std::vector<BitVector> reses{BitVector(bv)};
+  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
 
-  ASSERT_TRUE(bv.bvmul(res).is_one());
-  ASSERT_TRUE(tres.is_null() || bv.bvmul(tres).is_one());
+  for (auto& res : reses)
+  {
+    if (fun_kind == INPLACE_THIS)
+    {
+      (void) res.ibvmodinv();
+    }
+    else if (fun_kind == INPLACE_ALL)
+    {
+      (void) res.ibvmodinv(bv);
+      // test with *this as argument
+      BitVector tres(bv);
+      (void) tres.ibvmodinv(tres);
+      ASSERT_TRUE(bv.bvmul(tres).is_one());
+    }
+    else
+    {
+      res = bv.bvmodinv();
+    }
+
+    ASSERT_TRUE(bv.bvmul(res).is_one());
+  }
 }
 
 void
@@ -932,140 +942,145 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
 {
   uint64_t ares;
   BitVector b(bv);
-  BitVector res(bv);
+  std::vector<BitVector> reses{BitVector(bv)};
+  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
   BitVector tres;
   uint32_t size = bv.size();
   /* we only test values representable in 64 bits */
   uint64_t a = size > 64 ? bv.bvextract(63, 0).to_uint64() : bv.to_uint64();
-  switch (kind)
+
+  for (auto& res : reses)
   {
-    case DEC:
-      if (fun_kind == INPLACE_THIS)
-      {
-        (void) res.ibvdec();
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        (void) res.ibvdec(b);
-        // test with *this as argument
-        tres = bv;
-        (void) tres.ibvdec(tres);
-      }
-      else
-      {
-        res = b.bvdec();
-      }
-      ares = _dec(a, size);
-      break;
+    switch (kind)
+    {
+      case DEC:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvdec();
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvdec(b);
+          // test with *this as argument
+          tres = bv;
+          (void) tres.ibvdec(tres);
+        }
+        else
+        {
+          res = b.bvdec();
+        }
+        ares = _dec(a, size);
+        break;
 
-    case INC:
-      if (fun_kind == INPLACE_THIS)
-      {
-        (void) res.ibvinc();
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        (void) res.ibvinc(b);
-        // test with *this as argument
-        tres = bv;
-        (void) tres.ibvinc(tres);
-      }
-      else
-      {
-        res = b.bvinc();
-      }
-      ares = _inc(a, size);
-      break;
+      case INC:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvinc();
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvinc(b);
+          // test with *this as argument
+          tres = bv;
+          (void) tres.ibvinc(tres);
+        }
+        else
+        {
+          res = b.bvinc();
+        }
+        ares = _inc(a, size);
+        break;
 
-    case NEG:
-      if (fun_kind == INPLACE_THIS)
-      {
-        (void) res.ibvneg();
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        (void) res.ibvneg(b);
-        // test with *this as argument
-        tres = bv;
-        (void) tres.ibvneg(tres);
-      }
-      else
-      {
-        res = b.bvneg();
-      }
-      ares = _neg(a, size);
-      break;
+      case NEG:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvneg();
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvneg(b);
+          // test with *this as argument
+          tres = bv;
+          (void) tres.ibvneg(tres);
+        }
+        else
+        {
+          res = b.bvneg();
+        }
+        ares = _neg(a, size);
+        break;
 
-    case NOT:
-      if (fun_kind == INPLACE_THIS)
-      {
-        (void) res.ibvnot();
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        (void) res.ibvnot(b);
-        // test with *this as argument
-        tres = bv;
-        (void) tres.ibvnot(tres);
-      }
-      else
-      {
-        res = b.bvnot();
-      }
-      ares = _not(a, size);
-      break;
+      case NOT:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvnot();
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvnot(b);
+          // test with *this as argument
+          tres = bv;
+          (void) tres.ibvnot(tres);
+        }
+        else
+        {
+          res = b.bvnot();
+        }
+        ares = _not(a, size);
+        break;
 
-    case REDAND:
-      if (fun_kind == INPLACE_THIS)
-      {
-        (void) res.ibvredand();
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        (void) res.ibvredand(b);
-        // test with *this as argument
-        tres = bv;
-        (void) tres.ibvredand(tres);
-      }
-      else
-      {
-        res = b.bvredand();
-      }
-      ares = _redand(a, size);
-      break;
+      case REDAND:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvredand();
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvredand(b);
+          // test with *this as argument
+          tres = bv;
+          (void) tres.ibvredand(tres);
+        }
+        else
+        {
+          res = b.bvredand();
+        }
+        ares = _redand(a, size);
+        break;
 
-    case REDOR:
-      if (fun_kind == INPLACE_THIS)
-      {
-        (void) res.ibvredor();
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        (void) res.ibvredor(b);
-        // test with *this as argument
-        tres = bv;
-        (void) tres.ibvredor(tres);
-      }
-      else
-      {
-        res = b.bvredor();
-      }
-      ares = _redor(a, size);
-      break;
+      case REDOR:
+        if (fun_kind == INPLACE_THIS)
+        {
+          (void) res.ibvredor();
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          (void) res.ibvredor(b);
+          // test with *this as argument
+          tres = bv;
+          (void) tres.ibvredor(tres);
+        }
+        else
+        {
+          res = b.bvredor();
+        }
+        ares = _redor(a, size);
+        break;
 
-    default: assert(false);
-  }
-  if (res.size() > 64)
-  {
-    ASSERT_EQ(BitVector(64, ares).compare(res.ibvextract(63, 0)), 0);
-    ASSERT_TRUE(tres.is_null()
-                || BitVector(64, ares).compare(tres.ibvextract(63, 0)) == 0);
-  }
-  else
-  {
-    ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
-    ASSERT_TRUE(tres.is_null()
-                || BitVector(tres.size(), ares).compare(tres) == 0);
+      default: assert(false);
+    }
+    if (res.size() > 64)
+    {
+      ASSERT_EQ(BitVector(64, ares).compare(res.ibvextract(63, 0)), 0);
+      ASSERT_TRUE(tres.is_null()
+                  || BitVector(64, ares).compare(tres.ibvextract(63, 0)) == 0);
+    }
+    else
+    {
+      ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+      ASSERT_TRUE(tres.is_null()
+                  || BitVector(tres.size(), ares).compare(tres) == 0);
+    }
   }
 }
 
@@ -1117,508 +1132,513 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
     const BitVector& b2 = bv_args[i].second;
     uint64_t i1         = int_args[i].first;
     uint64_t i2         = int_args[i].second;
-    BitVector res(b1);
+    std::vector<BitVector> reses{BitVector(b1)};
+    if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
     BitVector tres;
     uint64_t ares = 0, atres = 0;
-    switch (kind)
+
+    for (auto& res : reses)
     {
-      case ADD:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvadd(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvadd(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvadd(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvadd(tres, tres);
-        }
-        else
-        {
-          res = b1.bvadd(b2);
-        }
-        ares  = _add(i1, i2, size);
-        atres = _add(i1, i1, size);
-        break;
+      switch (kind)
+      {
+        case ADD:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvadd(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvadd(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvadd(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvadd(tres, tres);
+          }
+          else
+          {
+            res = b1.bvadd(b2);
+          }
+          ares  = _add(i1, i2, size);
+          atres = _add(i1, i1, size);
+          break;
 
-      case AND:
-        if (fun_kind == INPLACE_THIS)
-        {
-          res.ibvand(b1, b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvand(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvand(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvand(tres, tres);
-        }
-        else
-        {
-          res = b1.bvand(b2);
-        }
-        ares  = _and(i1, i2, size);
-        atres = _and(i1, i1, size);
-        break;
+        case AND:
+          if (fun_kind == INPLACE_THIS)
+          {
+            res.ibvand(b1, b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvand(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvand(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvand(tres, tres);
+          }
+          else
+          {
+            res = b1.bvand(b2);
+          }
+          ares  = _and(i1, i2, size);
+          atres = _and(i1, i1, size);
+          break;
 
-      case ASHR:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvashr(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvashr(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvashr(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvashr(tres, tres);
-        }
-        else
-        {
-          res = b1.bvashr(b2);
-        }
-        ares  = _ashr(i1, i2, size);
-        atres = _ashr(i1, i1, size);
-        break;
+        case ASHR:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvashr(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvashr(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvashr(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvashr(tres, tres);
+          }
+          else
+          {
+            res = b1.bvashr(b2);
+          }
+          ares  = _ashr(i1, i2, size);
+          atres = _ashr(i1, i1, size);
+          break;
 
-      case EQ:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibveq(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibveq(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibveq(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibveq(tres, tres);
-        }
-        else
-        {
-          res = b1.bveq(b2);
-        }
-        ares  = _eq(i1, i2, size);
-        atres = _eq(i1, i1, size);
-        break;
+        case EQ:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibveq(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibveq(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibveq(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibveq(tres, tres);
+          }
+          else
+          {
+            res = b1.bveq(b2);
+          }
+          ares  = _eq(i1, i2, size);
+          atres = _eq(i1, i1, size);
+          break;
 
-      case IMPLIES:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvimplies(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvimplies(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvimplies(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvimplies(tres, tres);
-        }
-        else
-        {
-          res = b1.bvimplies(b2);
-        }
-        ares  = _implies(i1, i2, size);
-        atres = _implies(i1, i1, size);
-        break;
+        case IMPLIES:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvimplies(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvimplies(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvimplies(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvimplies(tres, tres);
+          }
+          else
+          {
+            res = b1.bvimplies(b2);
+          }
+          ares  = _implies(i1, i2, size);
+          atres = _implies(i1, i1, size);
+          break;
 
-      case MUL:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvmul(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvmul(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvmul(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvmul(tres, tres);
-        }
-        else
-        {
-          res = b1.bvmul(b2);
-        }
-        ares  = _mul(i1, i2, size);
-        atres = _mul(i1, i1, size);
-        break;
+        case MUL:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvmul(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvmul(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvmul(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvmul(tres, tres);
+          }
+          else
+          {
+            res = b1.bvmul(b2);
+          }
+          ares  = _mul(i1, i2, size);
+          atres = _mul(i1, i1, size);
+          break;
 
-      case NAND:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvnand(b1, b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvnand(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvnand(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvnand(tres, tres);
-        }
-        else
-        {
-          res = b1.bvnand(b2);
-        }
-        ares  = _nand(i1, i2, size);
-        atres = _nand(i1, i1, size);
-        break;
+        case NAND:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvnand(b1, b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvnand(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvnand(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvnand(tres, tres);
+          }
+          else
+          {
+            res = b1.bvnand(b2);
+          }
+          ares  = _nand(i1, i2, size);
+          atres = _nand(i1, i1, size);
+          break;
 
-      case NE:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvne(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvne(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvne(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvne(tres, tres);
-        }
-        else
-        {
-          res = b1.bvne(b2);
-        }
-        ares  = _ne(i1, i2, size);
-        atres = _ne(i1, i1, size);
-        break;
+        case NE:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvne(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvne(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvne(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvne(tres, tres);
+          }
+          else
+          {
+            res = b1.bvne(b2);
+          }
+          ares  = _ne(i1, i2, size);
+          atres = _ne(i1, i1, size);
+          break;
 
-      case NOR:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvnor(b1, b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvnor(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvnor(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvnor(tres, tres);
-        }
-        else
-        {
-          res = b1.bvnor(b2);
-        }
-        ares  = _nor(i1, i2, size);
-        atres = _nor(i1, i1, size);
-        break;
+        case NOR:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvnor(b1, b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvnor(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvnor(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvnor(tres, tres);
+          }
+          else
+          {
+            res = b1.bvnor(b2);
+          }
+          ares  = _nor(i1, i2, size);
+          atres = _nor(i1, i1, size);
+          break;
 
-      case OR:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvor(b1, b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvor(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvor(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvor(tres, tres);
-        }
-        else
-        {
-          res = b1.bvor(b2);
-        }
-        ares  = _or(i1, i2, size);
-        atres = _or(i1, i1, size);
-        break;
+        case OR:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvor(b1, b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvor(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvor(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvor(tres, tres);
+          }
+          else
+          {
+            res = b1.bvor(b2);
+          }
+          ares  = _or(i1, i2, size);
+          atres = _or(i1, i1, size);
+          break;
 
-      case SHL:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvshl(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvshl(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvshl(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvshl(tres, tres);
-        }
-        else
-        {
-          res = b1.bvshl(b2);
-        }
-        ares  = _shl(i1, i2, size);
-        atres = _shl(i1, i1, size);
-        break;
+        case SHL:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvshl(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvshl(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvshl(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvshl(tres, tres);
+          }
+          else
+          {
+            res = b1.bvshl(b2);
+          }
+          ares  = _shl(i1, i2, size);
+          atres = _shl(i1, i1, size);
+          break;
 
-      case SHR:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvshr(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvshr(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvshr(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvshr(tres, tres);
-        }
-        else
-        {
-          res = b1.bvshr(b2);
-        }
-        ares  = _shr(i1, i2, size);
-        atres = _shr(i1, i1, size);
-        break;
+        case SHR:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvshr(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvshr(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvshr(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvshr(tres, tres);
+          }
+          else
+          {
+            res = b1.bvshr(b2);
+          }
+          ares  = _shr(i1, i2, size);
+          atres = _shr(i1, i1, size);
+          break;
 
-      case SUB:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvsub(b1, b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvsub(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvsub(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvsub(tres, tres);
+        case SUB:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvsub(b1, b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvsub(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvsub(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsub(tres, tres);
+          }
+          else
+          {
+            res = b1.bvsub(b2);
+          }
+          ares  = _sub(i1, i2, size);
           atres = _sub(i1, i1, size);
-        }
-        else
-        {
-          res = b1.bvsub(b2);
-        }
-        ares  = _sub(i1, i2, size);
-        atres = _sub(i1, i1, size);
-        break;
+          break;
 
-      case UDIV:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvudiv(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvudiv(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvudiv(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvudiv(tres, tres);
-        }
-        else
-        {
-          res = b1.bvudiv(b2);
-        }
-        ares  = _udiv(i1, i2, size);
-        atres = _udiv(i1, i1, size);
-        break;
+        case UDIV:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvudiv(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvudiv(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvudiv(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvudiv(tres, tres);
+          }
+          else
+          {
+            res = b1.bvudiv(b2);
+          }
+          ares  = _udiv(i1, i2, size);
+          atres = _udiv(i1, i1, size);
+          break;
 
-      case ULT:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvult(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvult(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvult(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvult(tres, tres);
-        }
-        else
-        {
-          res = b1.bvult(b2);
-        }
-        ares  = _ult(i1, i2, size);
-        atres = _ult(i1, i1, size);
-        break;
+        case ULT:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvult(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvult(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvult(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvult(tres, tres);
+          }
+          else
+          {
+            res = b1.bvult(b2);
+          }
+          ares  = _ult(i1, i2, size);
+          atres = _ult(i1, i1, size);
+          break;
 
-      case ULE:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvule(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvule(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvule(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvule(tres, tres);
-        }
-        else
-        {
-          res = b1.bvule(b2);
-        }
-        ares  = _ule(i1, i2, size);
-        atres = _ule(i1, i1, size);
-        break;
+        case ULE:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvule(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvule(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvule(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvule(tres, tres);
+          }
+          else
+          {
+            res = b1.bvule(b2);
+          }
+          ares  = _ule(i1, i2, size);
+          atres = _ule(i1, i1, size);
+          break;
 
-      case UGT:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvugt(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvugt(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvugt(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvugt(tres, tres);
-        }
-        else
-        {
-          res = b1.bvugt(b2);
-        }
-        ares  = _ugt(i1, i2, size);
-        atres = _ugt(i1, i1, size);
-        break;
+        case UGT:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvugt(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvugt(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvugt(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvugt(tres, tres);
+          }
+          else
+          {
+            res = b1.bvugt(b2);
+          }
+          ares  = _ugt(i1, i2, size);
+          atres = _ugt(i1, i1, size);
+          break;
 
-      case UGE:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvuge(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvuge(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvuge(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvuge(tres, tres);
-        }
-        else
-        {
-          res = b1.bvuge(b2);
-        }
-        ares  = _uge(i1, i2, size);
-        atres = _uge(i1, i1, size);
-        break;
+        case UGE:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvuge(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvuge(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvuge(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvuge(tres, tres);
+          }
+          else
+          {
+            res = b1.bvuge(b2);
+          }
+          ares  = _uge(i1, i2, size);
+          atres = _uge(i1, i1, size);
+          break;
 
-      case UREM:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvurem(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvurem(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvurem(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvurem(tres, tres);
-        }
-        else
-        {
-          res = b1.bvurem(b2);
-        }
-        ares  = _urem(i1, i2, size);
-        atres = _urem(i1, i1, size);
-        break;
+        case UREM:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvurem(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvurem(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvurem(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvurem(tres, tres);
+          }
+          else
+          {
+            res = b1.bvurem(b2);
+          }
+          ares  = _urem(i1, i2, size);
+          atres = _urem(i1, i1, size);
+          break;
 
-      case XOR:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvxor(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvxor(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvxor(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvxor(tres, tres);
-        }
-        else
-        {
-          res = b1.bvxor(b2);
-        }
-        ares  = _xor(i1, i2, size);
-        atres = _xor(i1, i1, size);
-        break;
+        case XOR:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvxor(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvxor(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvxor(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvxor(tres, tres);
+          }
+          else
+          {
+            res = b1.bvxor(b2);
+          }
+          ares  = _xor(i1, i2, size);
+          atres = _xor(i1, i1, size);
+          break;
 
-      case XNOR:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvxnor(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvxnor(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvxnor(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvxnor(tres, tres);
-        }
-        else
-        {
-          res = b1.bvxnor(b2);
-        }
-        ares  = _xnor(i1, i2, size);
-        atres = _xnor(i1, i1, size);
-        break;
+        case XNOR:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvxnor(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvxnor(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvxnor(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvxnor(tres, tres);
+          }
+          else
+          {
+            res = b1.bvxnor(b2);
+          }
+          ares  = _xnor(i1, i2, size);
+          atres = _xnor(i1, i1, size);
+          break;
 
-      default: assert(false);
-    }
-    if (res.size() > 64)
-    {
-      ASSERT_EQ(BitVector(64, ares).compare(res.ibvextract(63, 0)), 0);
-      ASSERT_TRUE(tres.is_null()
-                  || BitVector(64, atres).compare(tres.ibvextract(63, 0)) == 0);
-    }
-    else
-    {
-      ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
-      ASSERT_TRUE(tres.is_null()
-                  || BitVector(tres.size(), atres).compare(tres) == 0);
+        default: assert(false);
+      }
+      if (res.size() > 64)
+      {
+        ASSERT_EQ(BitVector(64, ares).compare(res.ibvextract(63, 0)), 0);
+        ASSERT_TRUE(tres.is_null()
+                    || BitVector(64, atres).compare(tres.ibvextract(63, 0))
+                           == 0);
+      }
+      else
+      {
+        ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+        ASSERT_TRUE(tres.is_null()
+                    || BitVector(tres.size(), atres).compare(tres) == 0);
+      }
     }
   }
 }
@@ -2039,154 +2059,159 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
     const BitVector& b2 = bv_args[i].second;
     uint64_t i1         = int_args[i].first;
     uint64_t i2         = int_args[i].second;
-    BitVector res(b1);
+    std::vector<BitVector> reses{BitVector(b1)};
+    if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
     BitVector tres;
     uint64_t ares = 0, atres = 0;
-    switch (kind)
+
+    for (auto& res : reses)
     {
-      case SDIV:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvsdiv(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvsdiv(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvsdiv(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvsdiv(tres, tres);
-        }
-        else
-        {
-          res = b1.bvsdiv(b2);
-        }
-        ares  = _sdiv(i1, i2, size);
-        atres = _sdiv(i1, i1, size);
-        break;
+      switch (kind)
+      {
+        case SDIV:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvsdiv(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvsdiv(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvsdiv(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsdiv(tres, tres);
+          }
+          else
+          {
+            res = b1.bvsdiv(b2);
+          }
+          ares  = _sdiv(i1, i2, size);
+          atres = _sdiv(i1, i1, size);
+          break;
 
-      case SLT:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvslt(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvslt(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvslt(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvslt(tres, tres);
-        }
-        else
-        {
-          res = b1.bvslt(b2);
-        }
-        ares  = _slt(i1, i2, size);
-        atres = _slt(i1, i1, size);
-        break;
+        case SLT:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvslt(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvslt(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvslt(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvslt(tres, tres);
+          }
+          else
+          {
+            res = b1.bvslt(b2);
+          }
+          ares  = _slt(i1, i2, size);
+          atres = _slt(i1, i1, size);
+          break;
 
-      case SLE:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvsle(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvsle(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvsle(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvsle(tres, tres);
-        }
-        else
-        {
-          res = b1.bvsle(b2);
-        }
-        ares  = _sle(i1, i2, size);
-        atres = _sle(i1, i1, size);
-        break;
+        case SLE:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvsle(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvsle(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvsle(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsle(tres, tres);
+          }
+          else
+          {
+            res = b1.bvsle(b2);
+          }
+          ares  = _sle(i1, i2, size);
+          atres = _sle(i1, i1, size);
+          break;
 
-      case SGT:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvsgt(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvsgt(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvsgt(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvsgt(tres, tres);
-        }
-        else
-        {
-          res = b1.bvsgt(b2);
-        }
-        ares  = _sgt(i1, i2, size);
-        atres = _sgt(i1, i1, size);
-        break;
+        case SGT:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvsgt(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvsgt(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvsgt(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsgt(tres, tres);
+          }
+          else
+          {
+            res = b1.bvsgt(b2);
+          }
+          ares  = _sgt(i1, i2, size);
+          atres = _sgt(i1, i1, size);
+          break;
 
-      case SGE:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvsge(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvsge(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvsge(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvsge(tres, tres);
-        }
-        else
-        {
-          res = b1.bvsge(b2);
-        }
-        ares  = _sge(i1, i2, size);
-        atres = _sge(i1, i1, size);
-        break;
+        case SGE:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvsge(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvsge(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvsge(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsge(tres, tres);
+          }
+          else
+          {
+            res = b1.bvsge(b2);
+          }
+          ares  = _sge(i1, i2, size);
+          atres = _sge(i1, i1, size);
+          break;
 
-      case SREM:
-        if (fun_kind == INPLACE_THIS)
-        {
-          (void) res.ibvsrem(b2);
-          // test with *this as argument
-          tres = b1;
-          (void) tres.ibvsrem(tres);
-        }
-        else if (fun_kind == INPLACE_ALL)
-        {
-          (void) res.ibvsrem(b1, b2);
-          // test with *this as arguments
-          tres = b1;
-          (void) tres.ibvsrem(tres, tres);
-        }
-        else
-        {
-          res = b1.bvsrem(b2);
-        }
-        ares  = _srem(i1, i2, size);
-        atres = _srem(i1, i1, size);
-        break;
+        case SREM:
+          if (fun_kind == INPLACE_THIS)
+          {
+            (void) res.ibvsrem(b2);
+            // test with *this as argument
+            tres = b1;
+            (void) tres.ibvsrem(tres);
+          }
+          else if (fun_kind == INPLACE_ALL)
+          {
+            (void) res.ibvsrem(b1, b2);
+            // test with *this as arguments
+            tres = b1;
+            (void) tres.ibvsrem(tres, tres);
+          }
+          else
+          {
+            res = b1.bvsrem(b2);
+          }
+          ares  = _srem(i1, i2, size);
+          atres = _srem(i1, i1, size);
+          break;
 
-      default: assert(false);
+        default: assert(false);
+      }
+      ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+      ASSERT_TRUE(tres.is_null()
+                  || BitVector(tres.size(), atres).compare(tres) == 0);
     }
-    ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
-    ASSERT_TRUE(tres.is_null()
-                || BitVector(tres.size(), atres).compare(tres) == 0);
   }
 }
 
@@ -2329,14 +2354,18 @@ TestBitVector::test_concat_aux(BvFunKind fun_kind,
   uint32_t size1 = bv1.size();
   uint32_t size  = size0 + size1;
   BitVector bv(size / 2, *d_rng), cbv0(bv0), cbv1(bv1);
-  BitVector res(bv0);
+  std::vector<BitVector> reses{BitVector(bv0)};
+  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
   BitVector tres, tbv0(bv), tbv1(bv);
-  if (fun_kind == INPLACE_THIS)
+
+  for (auto& res : reses)
   {
-    (void) res.ibvconcat(bv1);
-    // test with *this as argument
-    tres = bv;
-    (void) tres.ibvconcat(tres);
+    if (fun_kind == INPLACE_THIS)
+    {
+      (void) res.ibvconcat(bv1);
+      // test with *this as argument
+      tres = bv;
+      (void) tres.ibvconcat(tres);
     }
     else if (fun_kind == INPLACE_ALL)
     {
@@ -2358,6 +2387,7 @@ TestBitVector::test_concat_aux(BvFunKind fun_kind,
                        == 0);
     ASSERT_TRUE(tres.is_null()
                 || tres.bvextract(tbv1.size() - 1, 0).compare(tbv1) == 0);
+  }
 }
 
 void
@@ -2408,6 +2438,8 @@ TestBitVector::test_extract_aux(BvFunKind fun_kind, const BitVector& bv)
 {
   uint32_t size = bv.size();
 
+  std::vector<BitVector> reses{BitVector(bv)};
+  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
   BitVector tres;
   uint32_t lo = d_rng->pick<uint32_t>(0, size - 1);
   uint32_t hi = d_rng->pick<uint32_t>(lo, size - 1);
@@ -2415,10 +2447,11 @@ TestBitVector::test_extract_aux(BvFunKind fun_kind, const BitVector& bv)
   ASSERT_LT(hi, size);
   ASSERT_LT(lo, size);
 
-  BitVector res(bv);
-  if (fun_kind == INPLACE_THIS)
+  for (auto& res : reses)
   {
-    (void) res.ibvextract(hi, lo);
+    if (fun_kind == INPLACE_THIS)
+    {
+      (void) res.ibvextract(hi, lo);
     }
     else if (fun_kind == INPLACE_ALL)
     {
@@ -2442,6 +2475,7 @@ TestBitVector::test_extract_aux(BvFunKind fun_kind, const BitVector& bv)
       std::string tres_str = tres.to_string();
       ASSERT_EQ(bv_str.compare(size - hi - 1, len, tres_str, 0, len), 0);
     }
+  }
 }
 
 void
@@ -2481,119 +2515,124 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
   BitVector bv(to_shift.size(), to_shift);
   BitVector bv_shift(shift.size(), shift);
   BitVector bv_expected(expected.size(), expected);
-  BitVector res(bv);
+  std::vector<BitVector> reses{BitVector(bv)};
+  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
   uint32_t int_shift = strtoul(shift.c_str(), nullptr, 2);
-  switch (kind)
-  {
-    case ASHR:
-      if (fun_kind == INPLACE_THIS)
-      {
-        if (shift_by_int)
-        {
-          (void) res.ibvashr(int_shift);
-        }
-        else
-        {
-          (void) res.ibvashr(bv_shift);
-        }
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        if (shift_by_int)
-        {
-          (void) res.ibvashr(bv, int_shift);
-        }
-        else
-        {
-          (void) res.ibvashr(bv, bv_shift);
-        }
-      }
-      else
-      {
-        if (shift_by_int)
-        {
-          res = bv.bvashr(int_shift);
-        }
-        else
-        {
-          res = bv.bvashr(bv_shift);
-        }
-      }
-      break;
-    case SHL:
-      if (fun_kind == INPLACE_THIS)
-      {
-        if (shift_by_int)
-        {
-          (void) res.ibvshl(int_shift);
-        }
-        else
-        {
-          (void) res.ibvshl(bv_shift);
-        }
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        if (shift_by_int)
-        {
-          (void) res.ibvshl(bv, int_shift);
-        }
-        else
-        {
-          (void) res.ibvshl(bv, bv_shift);
-        }
-      }
-      else
-      {
-        if (shift_by_int)
-        {
-          res = bv.bvshl(int_shift);
-        }
-        else
-        {
-          res = bv.bvshl(bv_shift);
-        }
-      }
-      break;
-    case SHR:
-      if (fun_kind == INPLACE_THIS)
-      {
-        if (shift_by_int)
-        {
-          (void) res.ibvshr(int_shift);
-        }
-        else
-        {
-          (void) res.ibvshr(bv_shift);
-        }
-      }
-      else if (fun_kind == INPLACE_ALL)
-      {
-        if (shift_by_int)
-        {
-          (void) res.ibvshr(bv, int_shift);
-        }
-        else
-        {
-          (void) res.ibvshr(bv, bv_shift);
-        }
-      }
-      else
-      {
-        if (shift_by_int)
-        {
-          res = bv.bvshr(int_shift);
-        }
-        else
-        {
-          res = bv.bvshr(bv_shift);
-        }
-      }
-      break;
-    default: assert(false);
-  }
 
-  ASSERT_EQ(res.compare(bv_expected), 0);
+  for (auto& res : reses)
+  {
+    switch (kind)
+    {
+      case ASHR:
+        if (fun_kind == INPLACE_THIS)
+        {
+          if (shift_by_int)
+          {
+            (void) res.ibvashr(int_shift);
+          }
+          else
+          {
+            (void) res.ibvashr(bv_shift);
+          }
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          if (shift_by_int)
+          {
+            (void) res.ibvashr(bv, int_shift);
+          }
+          else
+          {
+            (void) res.ibvashr(bv, bv_shift);
+          }
+        }
+        else
+        {
+          if (shift_by_int)
+          {
+            res = bv.bvashr(int_shift);
+          }
+          else
+          {
+            res = bv.bvashr(bv_shift);
+          }
+        }
+        break;
+      case SHL:
+        if (fun_kind == INPLACE_THIS)
+        {
+          if (shift_by_int)
+          {
+            (void) res.ibvshl(int_shift);
+          }
+          else
+          {
+            (void) res.ibvshl(bv_shift);
+          }
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          if (shift_by_int)
+          {
+            (void) res.ibvshl(bv, int_shift);
+          }
+          else
+          {
+            (void) res.ibvshl(bv, bv_shift);
+          }
+        }
+        else
+        {
+          if (shift_by_int)
+          {
+            res = bv.bvshl(int_shift);
+          }
+          else
+          {
+            res = bv.bvshl(bv_shift);
+          }
+        }
+        break;
+      case SHR:
+        if (fun_kind == INPLACE_THIS)
+        {
+          if (shift_by_int)
+          {
+            (void) res.ibvshr(int_shift);
+          }
+          else
+          {
+            (void) res.ibvshr(bv_shift);
+          }
+        }
+        else if (fun_kind == INPLACE_ALL)
+        {
+          if (shift_by_int)
+          {
+            (void) res.ibvshr(bv, int_shift);
+          }
+          else
+          {
+            (void) res.ibvshr(bv, bv_shift);
+          }
+        }
+        else
+        {
+          if (shift_by_int)
+          {
+            res = bv.bvshr(int_shift);
+          }
+          else
+          {
+            res = bv.bvshr(bv_shift);
+          }
+        }
+        break;
+      default: assert(false);
+    }
+
+    ASSERT_EQ(res.compare(bv_expected), 0);
+  }
 }
 
 void
