@@ -2071,57 +2071,40 @@ BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
   assert(!bv0.is_null());
   assert(!bv1.is_null());
   uint32_t size = bv0.d_size + bv1.d_size;
+  const BitVector* b1;
+  BitVector bb1;
 
   if (is_null()) init(size);
+
+  /* copy to guard for bv1 == *this */
+  if (&bv1 == this)
+  {
+    bb1 = bv1;
+    b1  = &bb1;
+  }
+  else
+  {
+    b1 = &bv1;
+  }
 
   if (is_gmp())
   {
     if (bv0.is_gmp())
     {
-      if (bv1.is_gmp())
-      {
-        if (&bv1 == this)
-        {
-          BitVector b1(bv1); /* copy to guard for bv1 == *this */
-          mpz_mul_2exp(d_val_gmp->d_mpz, bv0.d_val_gmp->d_mpz, b1.d_size);
-          mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1.d_val_gmp->d_mpz);
-        }
-        else
-        {
-          mpz_mul_2exp(d_val_gmp->d_mpz, bv0.d_val_gmp->d_mpz, bv1.d_size);
-          mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_val_gmp->d_mpz);
-        }
-      }
-      else
-      {
-        GMPMpz b1(bv1.d_size, bv1.d_val_uint64);
-        mpz_mul_2exp(d_val_gmp->d_mpz, bv0.d_val_gmp->d_mpz, bv1.d_size);
-        mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_val_uint64);
-      }
+      mpz_set(d_val_gmp->d_mpz, bv0.d_val_gmp->d_mpz);
     }
     else
     {
       mpz_set_ui(d_val_gmp->d_mpz, bv0.d_val_uint64);
-      if (bv1.is_gmp())
-      {
-        if (&bv1 == this)
-        {
-          BitVector b1(bv1); /* copy to guard for bv1 == *this */
-          mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1.d_size);
-          mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1.d_val_gmp->d_mpz);
-        }
-        else
-        {
-          mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_size);
-          mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_val_gmp->d_mpz);
-        }
-      }
-      else
-      {
-        uint64_t b1 = bv1.d_val_uint64; /* copy to guard for bv1 == *this */
-        mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_size);
-        mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1);
-      }
+    }
+    mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1->d_size);
+    if (b1->is_gmp())
+    {
+      mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1->d_val_gmp->d_mpz);
+    }
+    else
+    {
+      mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1->d_val_uint64);
     }
     mpz_fdiv_r_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, size);
 
@@ -2138,62 +2121,26 @@ BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
     {
       if (bv0.is_gmp())
       {
-        if (bv1.is_gmp())
-        {
-          if (&bv1 == this)
-          {
-            BitVector b1(bv1); /* copy to guard for bv1 == *this */
-            d_val_gmp = new GMPMpz(*bv0.d_val_gmp);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1.d_size);
-            mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1.d_val_gmp->d_mpz);
-          }
-          else
-          {
-            d_val_gmp = new GMPMpz(*bv0.d_val_gmp);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_size);
-            mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_val_gmp->d_mpz);
-          }
-        }
-        else
-        {
-          uint64_t b1 = bv1.d_val_uint64; /* copy to guard for bv1 == *this */
-          d_val_gmp   = new GMPMpz(*bv0.d_val_gmp);
-          mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_size);
-          mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1);
-        }
+        d_val_gmp = new GMPMpz(*bv0.d_val_gmp);
       }
       else
       {
-        if (bv1.is_gmp())
-        {
-          if (&bv1 == this)
-          {
-            BitVector b1(bv1); /* copy to guard for bv1 == *this */
-            d_val_gmp = new GMPMpz(size, bv0.d_val_uint64);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1.d_size);
-            mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1.d_val_gmp->d_mpz);
-          }
-          else
-          {
-            d_val_gmp = new GMPMpz(size, bv0.d_val_uint64);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_size);
-            mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_val_gmp->d_mpz);
-          }
-        }
-        else
-        {
-          uint64_t b1 = bv1.d_val_uint64; /* copy to guard for bv1 == *this */
-          d_val_gmp   = new GMPMpz(size, bv0.d_val_uint64);
-          mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv1.d_size);
-          mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1);
-        }
+        d_val_gmp = new GMPMpz(size, bv0.d_val_uint64);
+      }
+      mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1->d_size);
+      if (b1->is_gmp())
+      {
+        mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1->d_val_gmp->d_mpz);
+      }
+      else
+      {
+        mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b1->d_val_uint64);
       }
     }
     else
     {
-      uint64_t b1  = bv1.d_val_uint64; /* copy to guard for bv1 == *this */
-      d_val_uint64 = bv0.d_val_uint64 << bv1.d_size;
-      d_val_uint64 = uint64_fdiv_r_2exp(size, d_val_uint64 + b1);
+      d_val_uint64 = bv0.d_val_uint64 << b1->d_size;
+      d_val_uint64 = uint64_fdiv_r_2exp(size, d_val_uint64 + b1->d_val_uint64);
     }
   }
   d_size = size;
@@ -2298,30 +2245,26 @@ BitVector::ibvzext(const BitVector& bv, uint32_t n)
   {
     if (size > 64)
     {
+      /* copy to guard for bv == *this */
+      const BitVector* b;
+      BitVector bb;
       if (&bv == this)
       {
-        BitVector b(bv); /* copy to guard for bv == *this */
-        d_val_gmp = new GMPMpz();
-        if (b.is_gmp())
-        {
-          mpz_set(d_val_gmp->d_mpz, b.d_val_gmp->d_mpz);
-        }
-        else
-        {
-          mpz_set_ui(d_val_gmp->d_mpz, b.d_val_uint64);
-        }
+        bb = bv;
+        b  = &bb;
       }
       else
       {
-        d_val_gmp = new GMPMpz();
-        if (bv.is_gmp())
-        {
-          mpz_set(d_val_gmp->d_mpz, bv.d_val_gmp->d_mpz);
-        }
-        else
-        {
-          mpz_set_ui(d_val_gmp->d_mpz, bv.d_val_uint64);
-        }
+        b = &bv;
+      }
+      d_val_gmp = new GMPMpz();
+      if (b->is_gmp())
+      {
+        mpz_set(d_val_gmp->d_mpz, b->d_val_gmp->d_mpz);
+      }
+      else
+      {
+        mpz_set_ui(d_val_gmp->d_mpz, b->d_val_uint64);
       }
     }
     else
@@ -2342,40 +2285,35 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n)
 
   if (n > 0)
   {
-    if (bv.get_msb())
+    /* copy to guard for bv == *this */
+    const BitVector* b;
+    BitVector bb;
+    if (&bv == this)
     {
-      uint32_t bv_size = bv.d_size;
-      uint32_t size    = bv_size + n;
+      bb = bv;
+      b  = &bb;
+    }
+    else
+    {
+      b = &bv;
+    }
+    if (b->get_msb())
+    {
+      uint32_t b_size = b->d_size;
+      uint32_t size   = b_size + n;
       if (is_gmp())
       {
-        if (bv.is_gmp())
+        mpz_set_ui(d_val_gmp->d_mpz, 1);
+        mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, n);
+        mpz_sub_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, 1);
+        mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b_size);
+        if (b->is_gmp())
         {
-          if (&bv == this)
-          {
-            /* copy to guard for bv == *this */
-            BitVector b(bv);
-            mpz_set_ui(d_val_gmp->d_mpz, 1);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, n);
-            mpz_sub_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, 1);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv_size);
-            mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b.d_val_gmp->d_mpz);
-          }
-          else
-          {
-            mpz_set_ui(d_val_gmp->d_mpz, 1);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, n);
-            mpz_sub_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, 1);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv_size);
-            mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv.d_val_gmp->d_mpz);
-          }
+          mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b->d_val_gmp->d_mpz);
         }
         else
         {
-          mpz_set_ui(d_val_gmp->d_mpz, 1);
-          mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, n);
-          mpz_sub_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, 1);
-          mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv_size);
-          mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv.d_val_uint64);
+          mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b->d_val_uint64);
         }
         mpz_fdiv_r_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, size);
         if (size <= 64)
@@ -2389,47 +2327,28 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n)
       {
         if (size > 64)
         {
-          if (&bv == this)
+          d_val_gmp = new GMPMpz(size, 1);
+          mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, n);
+          mpz_sub_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, 1);
+          mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b_size);
+          if (b->is_gmp())
           {
-            BitVector b(bv);
-            d_val_gmp = new GMPMpz(size, 1);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, n);
-            mpz_sub_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, 1);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv_size);
-            if (b.is_gmp())
-            {
-              mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b.d_val_gmp->d_mpz);
-            }
-            else
-            {
-              mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b.d_val_uint64);
-            }
+            mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b->d_val_gmp->d_mpz);
           }
           else
           {
-            d_val_gmp = new GMPMpz(size, 1);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, n);
-            mpz_sub_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, 1);
-            mpz_mul_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv_size);
-            if (bv.is_gmp())
-            {
-              mpz_add(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv.d_val_gmp->d_mpz);
-            }
-            else
-            {
-              mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, bv.d_val_uint64);
-            }
+            mpz_add_ui(d_val_gmp->d_mpz, d_val_gmp->d_mpz, b->d_val_uint64);
           }
           mpz_fdiv_r_2exp(d_val_gmp->d_mpz, d_val_gmp->d_mpz, size);
         }
         else
         {
-          uint64_t b   = bv.d_val_uint64;
-          d_val_uint64 = UINT64_MAX << bv_size;
-          d_val_uint64 = uint64_fdiv_r_2exp(size, d_val_uint64 + b);
+          d_val_uint64 = UINT64_MAX << b_size;
+          d_val_uint64 =
+              uint64_fdiv_r_2exp(size, d_val_uint64 + b->d_val_uint64);
         }
+        d_size = size;
       }
-      d_size = size;
     }
     else
     {
@@ -2944,6 +2863,7 @@ BitVector::bvudivurem(const BitVector& bv,
     {
       const BitVector *a, *b;
       BitVector aa, bb;
+      /* copy to guard for quot == *this and rem == *this */
       if (this == quot || this == rem)
       {
         aa = *this;
@@ -2953,6 +2873,7 @@ BitVector::bvudivurem(const BitVector& bv,
       {
         a = this;
       }
+      /* copy to guard for bv == *quot or bv == *rem */
       if (&bv == quot || &bv == rem)
       {
         bb = bv;
