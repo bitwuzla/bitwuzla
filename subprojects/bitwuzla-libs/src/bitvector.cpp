@@ -87,6 +87,8 @@ BitVector::fits_in_size(uint32_t size, const std::string& str, uint32_t base)
 {
   bool is_neg = str[0] == '-';
 
+  /* Don't use constructor with string argument here, we do not want to
+   * normalize to 'size'. */
   GMPMpz tmp;
   mpz_set_str(tmp.d_mpz, str.c_str(), base);
 
@@ -118,7 +120,8 @@ BitVector::fits_in_size(uint32_t size, uint64_t value, bool sign)
   {
     return fits_in_size(size, std::to_string((int64_t) value), 10);
   }
-
+  /* Don't use constructor with string argument here, we do not want to
+   * normalize to 'size'. */
   GMPMpz tmp;
   mpz_set_ui(tmp.d_mpz, value);
   return size >= mpz_sizeinbase(tmp.d_mpz, 2);
@@ -291,8 +294,7 @@ BitVector::BitVector(const BitVector& other)
     }
     if (is_gmp())
     {
-      d_val_gmp = new GMPMpz();
-      mpz_set(d_val_gmp->d_mpz, other.d_val_gmp->d_mpz);
+      d_val_gmp = new GMPMpz(*other.d_val_gmp);
     }
     else
     {
@@ -2318,8 +2320,7 @@ BitVector::ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo)
     {
       if (bv.is_gmp())
       {
-        GMPMpz tmp;
-        mpz_set(tmp.d_mpz, bv.d_val_gmp->d_mpz);
+        GMPMpz tmp(*bv.d_val_gmp);
         mpz_fdiv_r_2exp(tmp.d_mpz, tmp.d_mpz, idx_hi + 1);
         mpz_fdiv_q_2exp(tmp.d_mpz, tmp.d_mpz, idx_lo);
         d_val_uint64 = mpz_get_ui(tmp.d_mpz);

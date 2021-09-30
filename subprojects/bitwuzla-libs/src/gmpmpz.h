@@ -15,6 +15,8 @@ struct GMPMpz
 {
   /** Construct a zero-initialized GMP value. */
   GMPMpz() { mpz_init(d_mpz); }
+  /** Copy constructor. */
+  GMPMpz(const GMPMpz& other) { mpz_init_set(d_mpz, other.d_mpz); }
   /**
    * Construct a GMP value from string, given in the specified base.
    * base: 2 for binary, 10 for decimal, 16 for hexadecimal
@@ -45,6 +47,12 @@ struct GMPMpz
   /** Destructor. */
   ~GMPMpz() { mpz_clear(d_mpz); }
 
+  /** Copy assignment operator. */
+  GMPMpz& operator=(const GMPMpz& other)
+  {
+    mpz_set(d_mpz, other.d_mpz);
+    return *this;
+  }
   /** The GMP integer value. */
   mpz_t d_mpz;
 };
