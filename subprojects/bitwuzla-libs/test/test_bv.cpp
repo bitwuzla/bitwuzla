@@ -587,7 +587,12 @@ TestBitVector::test_extend_aux(BvFunKind fun_kind,
 {
   uint32_t size = bv.size();
   std::vector<BitVector> reses{BitVector(bv)};
-  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
+  if (fun_kind != INPLACE_THIS)
+  {
+    reses.push_back(BitVector());
+    reses.emplace_back(64);
+    reses.emplace_back(65);
+  }
   char c = 0;
 
   for (auto& res : reses)
@@ -627,6 +632,7 @@ TestBitVector::test_extend_aux(BvFunKind fun_kind,
 
       default: assert(false);
     }
+    assert(size + n == res.size());
     ASSERT_EQ(size + n, res.size());
     std::string res_str = res.to_string();
     std::string bv_str  = bv.to_string();
@@ -776,7 +782,12 @@ TestBitVector::test_ite_aux(BvFunKind fun_kind,
   BitVector b1(bv1);
   BitVector b2(bv2);
   std::vector<BitVector> reses{BitVector(size)};
-  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
+  if (fun_kind != INPLACE_THIS)
+  {
+    reses.push_back(BitVector());
+    reses.emplace_back(64);
+    reses.emplace_back(65);
+  }
 
   uint64_t a0 = b0.to_uint64();
   /* we only test values representable in 64 bits */
@@ -875,7 +886,11 @@ void
 TestBitVector::test_modinv_aux(BvFunKind fun_kind, const BitVector& bv)
 {
   std::vector<BitVector> reses{BitVector(bv)};
-  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
+  if (fun_kind != INPLACE_THIS)
+  {
+    reses.push_back(BitVector());
+    reses.emplace_back(bv.size() + 1);
+  }
 
   for (auto& res : reses)
   {
@@ -941,11 +956,16 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
                               const BitVector& bv)
 {
   uint64_t ares;
-  BitVector b(bv);
-  std::vector<BitVector> reses{BitVector(bv)};
-  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
-  BitVector tres;
   uint32_t size = bv.size();
+  BitVector b(bv);
+  BitVector tres;
+  std::vector<BitVector> reses{BitVector(bv)};
+  if (fun_kind != INPLACE_THIS)
+  {
+    reses.push_back(BitVector());
+    reses.emplace_back(64);
+    reses.emplace_back(65);
+  }
   /* we only test values representable in 64 bits */
   uint64_t a = size > 64 ? bv.bvextract(63, 0).to_uint64() : bv.to_uint64();
 
@@ -1133,7 +1153,12 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
     uint64_t i1         = int_args[i].first;
     uint64_t i2         = int_args[i].second;
     std::vector<BitVector> reses{BitVector(b1)};
-    if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
+    if (fun_kind != INPLACE_THIS)
+    {
+      reses.push_back(BitVector());
+      reses.emplace_back(64);
+      reses.emplace_back(65);
+    }
     BitVector tres;
     uint64_t ares = 0, atres = 0;
 
@@ -2060,7 +2085,12 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
     uint64_t i1         = int_args[i].first;
     uint64_t i2         = int_args[i].second;
     std::vector<BitVector> reses{BitVector(b1)};
-    if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
+    if (fun_kind != INPLACE_THIS)
+    {
+      reses.push_back(BitVector());
+      reses.emplace_back(64);
+      reses.emplace_back(65);
+    }
     BitVector tres;
     uint64_t ares = 0, atres = 0;
 
@@ -2355,7 +2385,12 @@ TestBitVector::test_concat_aux(BvFunKind fun_kind,
   uint32_t size  = size0 + size1;
   BitVector bv(size / 2, *d_rng), cbv0(bv0), cbv1(bv1);
   std::vector<BitVector> reses{BitVector(bv0)};
-  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
+  if (fun_kind != INPLACE_THIS)
+  {
+    reses.push_back(BitVector());
+    reses.emplace_back(64);
+    reses.emplace_back(65);
+  }
   BitVector tres, tbv0(bv), tbv1(bv);
 
   for (auto& res : reses)
@@ -2439,7 +2474,12 @@ TestBitVector::test_extract_aux(BvFunKind fun_kind, const BitVector& bv)
   uint32_t size = bv.size();
 
   std::vector<BitVector> reses{BitVector(bv)};
-  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
+  if (fun_kind != INPLACE_THIS)
+  {
+    reses.push_back(BitVector());
+    reses.emplace_back(64);
+    reses.emplace_back(65);
+  }
   BitVector tres;
   uint32_t lo = d_rng->pick<uint32_t>(0, size - 1);
   uint32_t hi = d_rng->pick<uint32_t>(lo, size - 1);
@@ -2516,7 +2556,12 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
   BitVector bv_shift(shift.size(), shift);
   BitVector bv_expected(expected.size(), expected);
   std::vector<BitVector> reses{BitVector(bv)};
-  if (fun_kind != INPLACE_THIS) reses.push_back(BitVector());
+  if (fun_kind != INPLACE_THIS)
+  {
+    reses.push_back(BitVector());
+    reses.emplace_back(64);
+    reses.emplace_back(65);
+  }
   uint32_t int_shift = strtoul(shift.c_str(), nullptr, 2);
 
   for (auto& res : reses)

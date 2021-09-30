@@ -647,11 +647,6 @@ class BitVector
    */
   static uint64_t uint64_fdiv_r_2exp(uint32_t size, uint64_t val);
   /**
-   * Initialize bit-vector for given size.
-   * This bit-vector must be null.
-   */
-  void init(uint32_t size);
-  /**
    * Count leading zeros or ones.
    * zeros: True to determine number of leading zeros, false to count number
    *        of leading ones.
