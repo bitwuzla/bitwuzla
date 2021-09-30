@@ -3028,6 +3028,7 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_NO_FATAL_FAILURE(BitVector(8, "-127", 10));
   ASSERT_NO_FATAL_FAILURE(BitVector(8, "-128", 10));
   ASSERT_NO_FATAL_FAILURE(BitVector(8, "a1", 16));
+  ASSERT_NO_FATAL_FAILURE(BitVector(8, "F1", 16));
   ASSERT_NO_FATAL_FAILURE(BitVector(8, -3, true));
   ASSERT_NO_FATAL_FAILURE(BitVector(8, -127, true));
   ASSERT_NO_FATAL_FAILURE(BitVector(8, -128, true));

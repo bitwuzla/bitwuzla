@@ -29,11 +29,9 @@ is_valid_bin_str(const std::string& str)
 bool
 is_valid_dec_str(const std::string& str)
 {
-  std::unordered_set<char> digits{
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
   for (size_t i = str[0] == '-' ? 1 : 0, n = str.size(); i < n; ++i)
   {
-    if (digits.find(str[i]) == digits.end()) return false;
+    if (str[i] < '0' || str[i] > '9') return false;
   }
   return true;
 }
@@ -41,25 +39,13 @@ is_valid_dec_str(const std::string& str)
 bool
 is_valid_hex_str(const std::string& str)
 {
-  std::unordered_set<char> digits{'0',
-                                  '1',
-                                  '2',
-                                  '3',
-                                  '4',
-                                  '5',
-                                  '6',
-                                  '7',
-                                  '8',
-                                  '9',
-                                  'a',
-                                  'b',
-                                  'c',
-                                  'd',
-                                  'e',
-                                  'f'};
   for (size_t i = 0, n = str.size(); i < n; ++i)
   {
-    if (digits.find(str[i]) == digits.end()) return false;
+    if ((str[i] < '0' || str[i] > '9') && (str[i] < 'a' || str[i] > 'f')
+        && (str[i] < 'A' || str[i] > 'F'))
+    {
+      return false;
+    }
   }
   return true;
 }
