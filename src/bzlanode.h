@@ -1063,6 +1063,19 @@ bool bzla_node_is_fp_const_nan(Bzla *bzla, BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 
+/** Return true if given node is a rounding mode constant representing RNA. */
+bool bzla_node_is_rm_const_rna(Bzla *bzla, BzlaNode *exp);
+/** Return true if given node is a rounding mode constant representing RNE. */
+bool bzla_node_is_rm_const_rne(Bzla *bzla, BzlaNode *exp);
+/** Return true if given node is a rounding mode constant representing RTN. */
+bool bzla_node_is_rm_const_rtn(Bzla *bzla, BzlaNode *exp);
+/** Return true if given node is a rounding mode constant representing RTP. */
+bool bzla_node_is_rm_const_rtp(Bzla *bzla, BzlaNode *exp);
+/** Return true if given node is a rounding mode constant representing RTZ. */
+bool bzla_node_is_rm_const_rtz(Bzla *bzla, BzlaNode *exp);
+
+/*------------------------------------------------------------------------*/
+
 /** Get the id of a given node (negative if inverted). */
 static inline int32_t
 bzla_node_get_id(const BzlaNode *exp)

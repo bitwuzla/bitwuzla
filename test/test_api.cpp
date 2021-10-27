@@ -54,6 +54,12 @@ class TestApi : public TestBitwuzla
     d_fp_const16 = bitwuzla_mk_const(d_bzla, d_fp_sort16, "fp_const16");
     d_rm_const   = bitwuzla_mk_const(d_bzla, d_rm_sort, "rm_const");
 
+    d_rm_rna = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNA);
+    d_rm_rne = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNE);
+    d_rm_rtn = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTN);
+    d_rm_rtp = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTP);
+    d_rm_rtz = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTZ);
+
     d_fun        = bitwuzla_mk_const(d_bzla, d_fun_sort, "fun");
     d_fun_fp     = bitwuzla_mk_const(d_bzla, d_fun_sort_fp, "fun_fp");
     d_array_fpbv = bitwuzla_mk_const(d_bzla, d_arr_sort_fpbv, "array_fpbv");
@@ -156,6 +162,12 @@ class TestApi : public TestBitwuzla
   BitwuzlaTerm *d_bv_const8;
   BitwuzlaTerm *d_fp_const16;
   BitwuzlaTerm *d_rm_const;
+
+  BitwuzlaTerm *d_rm_rna;
+  BitwuzlaTerm *d_rm_rne;
+  BitwuzlaTerm *d_rm_rtn;
+  BitwuzlaTerm *d_rm_rtp;
+  BitwuzlaTerm *d_rm_rtz;
 
   BitwuzlaTerm *d_fun;
   BitwuzlaTerm *d_fun_fp;
@@ -2796,19 +2808,14 @@ TEST_F(TestApi, get_rm_value)
   ASSERT_DEATH(bitwuzla_get_rm_value(nullptr, d_bv_one1), d_error_not_null);
   ASSERT_DEATH(bitwuzla_get_rm_value(d_bzla, nullptr), d_error_not_null);
 
-  BitwuzlaTerm *rna = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNA);
-  BitwuzlaTerm *rne = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNE);
-  BitwuzlaTerm *rtn = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTN);
-  BitwuzlaTerm *rtp = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTP);
-  BitwuzlaTerm *rtz = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTZ);
   bitwuzla_check_sat(d_bzla);
   ASSERT_DEATH(bitwuzla_get_rm_value(d_bzla, d_fp_nan32),
                "not a rounding mode");
-  ASSERT_TRUE(!strcmp("RNA", bitwuzla_get_rm_value(d_bzla, rna)));
-  ASSERT_TRUE(!strcmp("RNE", bitwuzla_get_rm_value(d_bzla, rne)));
-  ASSERT_TRUE(!strcmp("RTN", bitwuzla_get_rm_value(d_bzla, rtn)));
-  ASSERT_TRUE(!strcmp("RTP", bitwuzla_get_rm_value(d_bzla, rtp)));
-  ASSERT_TRUE(!strcmp("RTZ", bitwuzla_get_rm_value(d_bzla, rtz)));
+  ASSERT_TRUE(!strcmp("RNA", bitwuzla_get_rm_value(d_bzla, d_rm_rna)));
+  ASSERT_TRUE(!strcmp("RNE", bitwuzla_get_rm_value(d_bzla, d_rm_rne)));
+  ASSERT_TRUE(!strcmp("RTN", bitwuzla_get_rm_value(d_bzla, d_rm_rtn)));
+  ASSERT_TRUE(!strcmp("RTP", bitwuzla_get_rm_value(d_bzla, d_rm_rtp)));
+  ASSERT_TRUE(!strcmp("RTZ", bitwuzla_get_rm_value(d_bzla, d_rm_rtz)));
 }
 
 TEST_F(TestApi, get_array_value)
@@ -3674,6 +3681,61 @@ TEST_F(TestApi, term_is_fp_value_nan)
   ASSERT_FALSE(bitwuzla_term_is_fp_value_nan(d_fp_ninf32));
 }
 
+TEST_F(TestApi, term_is_rm_value_rna)
+{
+  ASSERT_DEATH(bitwuzla_term_is_rm_value_rna(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_rm_value_rna(d_rm_rna));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rna(d_fp_pzero32));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rna(d_rm_rne));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rna(d_rm_rtn));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rna(d_rm_rtp));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rna(d_rm_rtz));
+}
+
+TEST_F(TestApi, term_is_rm_value_rne)
+{
+  ASSERT_DEATH(bitwuzla_term_is_rm_value_rne(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_rm_value_rne(d_rm_rne));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rne(d_fun));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rne(d_rm_rna));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rne(d_rm_rtn));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rne(d_rm_rtp));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rne(d_rm_rtz));
+}
+
+TEST_F(TestApi, term_is_rm_value_rtn)
+{
+  ASSERT_DEATH(bitwuzla_term_is_rm_value_rtn(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_rm_value_rtn(d_rm_rtn));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtn(d_true));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtn(d_rm_rna));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtn(d_rm_rne));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtn(d_rm_rtp));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtn(d_rm_rtz));
+}
+
+TEST_F(TestApi, term_is_rm_value_rtp)
+{
+  ASSERT_DEATH(bitwuzla_term_is_rm_value_rtp(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_rm_value_rtp(d_rm_rtp));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtp(d_var2));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtp(d_rm_rna));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtp(d_rm_rne));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtp(d_rm_rtn));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtp(d_rm_rtz));
+}
+
+TEST_F(TestApi, term_is_rm_value_rtz)
+{
+  ASSERT_DEATH(bitwuzla_term_is_rm_value_rtz(nullptr), d_error_not_null);
+  ASSERT_TRUE(bitwuzla_term_is_rm_value_rtz(d_rm_rtz));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtz(d_lambda));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtz(d_rm_rna));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtz(d_rm_rne));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtz(d_rm_rtn));
+  ASSERT_FALSE(bitwuzla_term_is_rm_value_rtz(d_rm_rtp));
+}
+
 TEST_F(TestApi, term_is_const_array)
 {
   ASSERT_DEATH(bitwuzla_term_is_const_array(nullptr), d_error_not_null);
@@ -3701,23 +3763,17 @@ TEST_F(TestApi, term_dump)
 
 TEST_F(TestApi, term_dump_regr0)
 {
-  BitwuzlaTerm *rne = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNE);
-  BitwuzlaTerm *rna = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNA);
-  BitwuzlaTerm *rtn = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTN);
-  BitwuzlaTerm *rtp = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTP);
-  BitwuzlaTerm *rtz = bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RTZ);
-
   testing::internal::CaptureStdout();
 
-  bitwuzla_term_dump(rne, "smt2", stdout);
+  bitwuzla_term_dump(d_rm_rne, "smt2", stdout);
   printf("\n");
-  bitwuzla_term_dump(rna, "smt2", stdout);
+  bitwuzla_term_dump(d_rm_rna, "smt2", stdout);
   printf("\n");
-  bitwuzla_term_dump(rtn, "smt2", stdout);
+  bitwuzla_term_dump(d_rm_rtn, "smt2", stdout);
   printf("\n");
-  bitwuzla_term_dump(rtp, "smt2", stdout);
+  bitwuzla_term_dump(d_rm_rtp, "smt2", stdout);
   printf("\n");
-  bitwuzla_term_dump(rtz, "smt2", stdout);
+  bitwuzla_term_dump(d_rm_rtz, "smt2", stdout);
 
   std::string output = testing::internal::GetCapturedStdout();
   ASSERT_EQ(output, "RNE\nRNA\nRTN\nRTP\nRTZ");
@@ -3871,7 +3927,7 @@ TEST_F(TestApi, terms)
       bitwuzla_mk_fun_sort(d_bzla, domain.size(), domain.data(), bv_sort);
 
   std::vector<const BitwuzlaTerm *> fp_args = {
-      bitwuzla_mk_rm_value(d_bzla, BITWUZLA_RM_RNA),
+      d_rm_rna,
       bitwuzla_mk_const(d_bzla, fp_sort, nullptr),
       bitwuzla_mk_const(d_bzla, fp_sort, nullptr),
       bitwuzla_mk_const(d_bzla, fp_sort, nullptr),

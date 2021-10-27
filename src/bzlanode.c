@@ -377,6 +377,73 @@ bzla_node_is_fp_const_nan(Bzla *bzla, BzlaNode *exp)
 /*------------------------------------------------------------------------*/
 
 bool
+bzla_node_is_rm_const_rna(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  if (!bzla_node_is_rm_const(exp)) return false;
+
+  return bzla_node_rm_const_get_rm(exp) == BZLA_RM_RNA;
+}
+
+bool
+bzla_node_is_rm_const_rne(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  if (!bzla_node_is_rm_const(exp)) return false;
+
+  return bzla_node_rm_const_get_rm(exp) == BZLA_RM_RNE;
+}
+
+bool
+bzla_node_is_rm_const_rtn(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  if (!bzla_node_is_rm_const(exp)) return false;
+
+  return bzla_node_rm_const_get_rm(exp) == BZLA_RM_RTN;
+}
+
+bool
+bzla_node_is_rm_const_rtp(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  if (!bzla_node_is_rm_const(exp)) return false;
+
+  return bzla_node_rm_const_get_rm(exp) == BZLA_RM_RTP;
+}
+
+bool
+bzla_node_is_rm_const_rtz(Bzla *bzla, BzlaNode *exp)
+{
+  assert(bzla);
+  assert(exp);
+
+  exp = bzla_simplify_exp(bzla, exp);
+
+  if (!bzla_node_is_rm_const(exp)) return false;
+
+  return bzla_node_rm_const_get_rm(exp) == BZLA_RM_RTZ;
+}
+
+/*------------------------------------------------------------------------*/
+
+bool
 bzla_node_is_bv(Bzla *bzla, const BzlaNode *exp)
 {
   assert(bzla);

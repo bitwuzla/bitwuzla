@@ -3885,6 +3885,51 @@ bool bitwuzla_term_is_fp_value_neg_inf(const BitwuzlaTerm *term);
 bool bitwuzla_term_is_fp_value_nan(const BitwuzlaTerm *term);
 
 /**
+ * Determine if a term is a rounding mode RNA value.
+ *
+ * @param term The term.
+ *
+ * @return True if `term` is a roundindg mode RNA value.
+ */
+bool bitwuzla_term_is_rm_value_rna(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a rounding mode RNE value.
+ *
+ * @param term The term.
+ *
+ * @return True if `term` is a rounding mode RNE value.
+ */
+bool bitwuzla_term_is_rm_value_rne(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a rounding mode RTN value.
+ *
+ * @param term The term.
+ *
+ * @return True if `term` is a rounding mode RTN value.
+ */
+bool bitwuzla_term_is_rm_value_rtn(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a rounding mode RTP value.
+ *
+ * @param term The term.
+ *
+ * @return True if `term` is a rounding mode RTP value.
+ */
+bool bitwuzla_term_is_rm_value_rtp(const BitwuzlaTerm *term);
+
+/**
+ * Determine if a term is a rounding mode RTZ value.
+ *
+ * @param term The term.
+ *
+ * @return True if `term` is a rounding mode RTZ value.
+ */
+bool bitwuzla_term_is_rm_value_rtz(const BitwuzlaTerm *term);
+
+/**
  * Determine if a term is a constant array.
  *
  * @param term The term.
