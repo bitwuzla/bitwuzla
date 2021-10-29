@@ -3113,15 +3113,13 @@ bitwuzla_get_rm_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
   BZLA_ABORT(!bzla_node_is_rm(bzla, bzla_term),
              "given term is not a rounding mode term");
 
-  switch (bzla_rm_from_bv(bzla_model_get_bv(bzla, bzla_term)))
-  {
-    case BZLA_RM_RNA: return "RNA";
-    case BZLA_RM_RNE: return "RNE";
-    case BZLA_RM_RTN: return "RTN";
-    case BZLA_RM_RTP: return "RTP";
-    case BZLA_RM_RTZ: return "RTZ";
-    default: assert(0); return "";
-  }
+  BzlaRoundingMode rm = bzla_rm_from_bv(bzla_model_get_bv(bzla, bzla_term));
+  if (rm == BZLA_RM_RNA) return "RNA";
+  if (rm == BZLA_RM_RNE) return "RNE";
+  if (rm == BZLA_RM_RTN) return "RTN";
+  if (rm == BZLA_RM_RTP) return "RTP";
+  assert(rm == BZLA_RM_RTZ);
+  return "RTZ";
 }
 
 void
