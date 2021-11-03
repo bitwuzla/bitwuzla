@@ -57,6 +57,125 @@ BZLA_DECLARE_STACK(BzlaOption, BzlaOption);
 
 /*------------------------------------------------------------------------*/
 
+static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
+    [BZLA_OPT_AIGPROP_NPROPS]          = BITWUZLA_OPT_AIGPROP_NPROPS,
+    [BZLA_OPT_AIGPROP_USE_BANDIT]      = BITWUZLA_OPT_AIGPROP_USE_BANDIT,
+    [BZLA_OPT_AIGPROP_USE_RESTARTS]    = BITWUZLA_OPT_AIGPROP_USE_RESTARTS,
+    [BZLA_OPT_CHECK_MODEL]             = BITWUZLA_OPT_CHECK_MODEL,
+    [BZLA_OPT_CHECK_UNCONSTRAINED]     = BITWUZLA_OPT_CHECK_UNCONSTRAINED,
+    [BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS] = BITWUZLA_OPT_CHECK_UNSAT_ASSUMPTIONS,
+    [BZLA_OPT_DECLSORT_BV_WIDTH]       = BITWUZLA_OPT_DECLSORT_BV_WIDTH,
+    [BZLA_OPT_ENGINE]                  = BITWUZLA_OPT_ENGINE,
+    [BZLA_OPT_EXIT_CODES]              = BITWUZLA_OPT_EXIT_CODES,
+    [BZLA_OPT_FUN_DUAL_PROP]           = BITWUZLA_OPT_FUN_DUAL_PROP,
+    [BZLA_OPT_FUN_DUAL_PROP_QSORT]     = BITWUZLA_OPT_FUN_DUAL_PROP_QSORT,
+    [BZLA_OPT_FUN_EAGER_LEMMAS]        = BITWUZLA_OPT_FUN_EAGER_LEMMAS,
+    [BZLA_OPT_FUN_JUST]                = BITWUZLA_OPT_FUN_JUST,
+    [BZLA_OPT_FUN_JUST_HEURISTIC]      = BITWUZLA_OPT_FUN_JUST_HEURISTIC,
+    [BZLA_OPT_FUN_LAZY_SYNTHESIZE]     = BITWUZLA_OPT_FUN_LAZY_SYNTHESIZE,
+    [BZLA_OPT_FUN_PREPROP]             = BITWUZLA_OPT_FUN_PREPROP,
+    [BZLA_OPT_FUN_PRESLS]              = BITWUZLA_OPT_FUN_PRESLS,
+    [BZLA_OPT_FUN_STORE_LAMBDAS]       = BITWUZLA_OPT_FUN_STORE_LAMBDAS,
+    [BZLA_OPT_INCREMENTAL]             = BITWUZLA_OPT_INCREMENTAL,
+    [BZLA_OPT_INPUT_FORMAT]            = BITWUZLA_OPT_INPUT_FORMAT,
+    [BZLA_OPT_LOGLEVEL]                = BITWUZLA_OPT_LOGLEVEL,
+    [BZLA_OPT_LS_SHARE_SAT]            = BITWUZLA_OPT_LS_SHARE_SAT,
+    [BZLA_OPT_OUTPUT_FORMAT]           = BITWUZLA_OPT_OUTPUT_FORMAT,
+    [BZLA_OPT_OUTPUT_NUMBER_FORMAT]    = BITWUZLA_OPT_OUTPUT_NUMBER_FORMAT,
+    [BZLA_OPT_PARSE_INTERACTIVE]       = BITWUZLA_OPT_PARSE_INTERACTIVE,
+    [BZLA_OPT_PP_ACKERMANN]            = BITWUZLA_OPT_PP_ACKERMANN,
+    [BZLA_OPT_PP_BETA_REDUCE]          = BITWUZLA_OPT_PP_BETA_REDUCE,
+    [BZLA_OPT_PP_ELIMINATE_EXTRACTS]   = BITWUZLA_OPT_PP_ELIMINATE_EXTRACTS,
+    [BZLA_OPT_PP_ELIMINATE_ITES]       = BITWUZLA_OPT_PP_ELIMINATE_ITES,
+    [BZLA_OPT_PP_EXTRACT_LAMBDAS]      = BITWUZLA_OPT_PP_EXTRACT_LAMBDAS,
+    [BZLA_OPT_PP_MERGE_LAMBDAS]        = BITWUZLA_OPT_PP_MERGE_LAMBDAS,
+    [BZLA_OPT_PP_NONDESTR_SUBST]       = BITWUZLA_OPT_PP_NONDESTR_SUBST,
+    [BZLA_OPT_PP_NORMALIZE_ADD]        = BITWUZLA_OPT_PP_NORMALIZE_ADD,
+    [BZLA_OPT_PP_SKELETON_PREPROC]     = BITWUZLA_OPT_PP_SKELETON_PREPROC,
+    [BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION] =
+        BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION,
+    [BZLA_OPT_PP_VAR_SUBST]        = BITWUZLA_OPT_PP_VAR_SUBST,
+    [BZLA_OPT_PRETTY_PRINT]        = BITWUZLA_OPT_PRETTY_PRINT,
+    [BZLA_OPT_PRINT_DIMACS]        = BITWUZLA_OPT_PRINT_DIMACS,
+    [BZLA_OPT_PRODUCE_MODELS]      = BITWUZLA_OPT_PRODUCE_MODELS,
+    [BZLA_OPT_PRODUCE_UNSAT_CORES] = BITWUZLA_OPT_PRODUCE_UNSAT_CORES,
+    [BZLA_OPT_PROP_CONST_BITS]     = BITWUZLA_OPT_PROP_CONST_BITS,
+    [BZLA_OPT_PROP_CONST_DOMAINS]  = BITWUZLA_OPT_PROP_CONST_DOMAINS,
+    [BZLA_OPT_PROP_ENTAILED]       = BITWUZLA_OPT_PROP_ENTAILED,
+    [BZLA_OPT_PROP_FLIP_COND_CONST_DELTA] =
+        BITWUZLA_OPT_PROP_FLIP_COND_CONST_DELTA,
+    [BZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL] =
+        BITWUZLA_OPT_PROP_FLIP_COND_CONST_NPATHSEL,
+    [BZLA_OPT_PROP_INFER_INEQ_BOUNDS]   = BITWUZLA_OPT_PROP_INFER_INEQ_BOUNDS,
+    [BZLA_OPT_PROP_NO_MOVE_ON_CONFLICT] = BITWUZLA_OPT_PROP_NO_MOVE_ON_CONFLICT,
+    [BZLA_OPT_PROP_NPROPS]              = BITWUZLA_OPT_PROP_NPROPS,
+    [BZLA_OPT_PROP_NUPDATES]            = BITWUZLA_OPT_PROP_NUPDATES,
+    [BZLA_OPT_PROP_PATH_SEL]            = BITWUZLA_OPT_PROP_PATH_SEL,
+    [BZLA_OPT_PROP_PROB_AND_FLIP]       = BITWUZLA_OPT_PROP_PROB_AND_FLIP,
+    [BZLA_OPT_PROP_PROB_EQ_FLIP]        = BITWUZLA_OPT_PROP_PROB_EQ_FLIP,
+    [BZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE] =
+        BITWUZLA_OPT_PROP_PROB_FALLBACK_RANDOM_VALUE,
+    [BZLA_OPT_PROP_PROB_FLIP_COND] = BITWUZLA_OPT_PROP_PROB_FLIP_COND,
+    [BZLA_OPT_PROP_PROB_FLIP_COND_CONST] =
+        BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST,
+    [BZLA_OPT_PROP_PROB_RANDOM_INPUT]   = BITWUZLA_OPT_PROP_PROB_RANDOM_INPUT,
+    [BZLA_OPT_PROP_PROB_SLICE_FLIP]     = BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
+    [BZLA_OPT_PROP_PROB_SLICE_KEEP_DC]  = BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
+    [BZLA_OPT_PROP_PROB_USE_INV_VALUE]  = BITWUZLA_OPT_PROP_PROB_USE_INV_VALUE,
+    [BZLA_OPT_PROP_SEXT]                = BITWUZLA_OPT_PROP_SEXT,
+    [BZLA_OPT_PROP_SKIP_NO_PROGRESS]    = BITWUZLA_OPT_PROP_SKIP_NO_PROGRESS,
+    [BZLA_OPT_PROP_ASHR]                = BITWUZLA_OPT_PROP_ASHR,
+    [BZLA_OPT_PROP_USE_BANDIT]          = BITWUZLA_OPT_PROP_USE_BANDIT,
+    [BZLA_OPT_PROP_USE_INV_LT_CONCAT]   = BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT,
+    [BZLA_OPT_PROP_USE_RESTARTS]        = BITWUZLA_OPT_PROP_USE_RESTARTS,
+    [BZLA_OPT_PROP_XOR]                 = BITWUZLA_OPT_PROP_XOR,
+    [BZLA_OPT_QUANT_CER]                = BITWUZLA_OPT_QUANT_CER,
+    [BZLA_OPT_QUANT_DER]                = BITWUZLA_OPT_QUANT_DER,
+    [BZLA_OPT_QUANT_DUAL_SOLVER]        = BITWUZLA_OPT_QUANT_DUAL_SOLVER,
+    [BZLA_OPT_QUANT_FIXSYNTH]           = BITWUZLA_OPT_QUANT_FIXSYNTH,
+    [BZLA_OPT_QUANT_MINISCOPE]          = BITWUZLA_OPT_QUANT_MINISCOPE,
+    [BZLA_OPT_QUANT_SYNTH]              = BITWUZLA_OPT_QUANT_SYNTH,
+    [BZLA_OPT_QUANT_SYNTH_ITE_COMPLETE] = BITWUZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
+    [BZLA_OPT_QUANT_SYNTH_LIMIT]        = BITWUZLA_OPT_QUANT_SYNTH_LIMIT,
+    [BZLA_OPT_QUANT_SYNTH_QI]           = BITWUZLA_OPT_QUANT_SYNTH_QI,
+    [BZLA_OPT_RW_EXTRACT_ARITH]         = BITWUZLA_OPT_RW_EXTRACT_ARITH,
+    [BZLA_OPT_RW_LEVEL]                 = BITWUZLA_OPT_RW_LEVEL,
+    [BZLA_OPT_RW_NORMALIZE]             = BITWUZLA_OPT_RW_NORMALIZE,
+    [BZLA_OPT_RW_NORMALIZE_ADD]         = BITWUZLA_OPT_RW_NORMALIZE_ADD,
+    [BZLA_OPT_RW_SIMPLIFY_CONSTRAINTS]  = BITWUZLA_OPT_RW_SIMPLIFY_CONSTRAINTS,
+    [BZLA_OPT_RW_SLT]                   = BITWUZLA_OPT_RW_SLT,
+    [BZLA_OPT_RW_SORT_AIGVEC]           = BITWUZLA_OPT_RW_SORT_AIGVEC,
+    [BZLA_OPT_RW_SORT_AIG]              = BITWUZLA_OPT_RW_SORT_AIG,
+    [BZLA_OPT_RW_SORT_EXP]              = BITWUZLA_OPT_RW_SORT_EXP,
+    [BZLA_OPT_SAT_ENGINE]               = BITWUZLA_OPT_SAT_ENGINE,
+    [BZLA_OPT_SAT_ENGINE_CADICAL_FREEZE] =
+        BITWUZLA_OPT_SAT_ENGINE_CADICAL_FREEZE,
+    [BZLA_OPT_SAT_ENGINE_LGL_FORK]     = BITWUZLA_OPT_SAT_ENGINE_LGL_FORK,
+    [BZLA_OPT_SAT_ENGINE_N_THREADS]    = BITWUZLA_OPT_SAT_ENGINE_N_THREADS,
+    [BZLA_OPT_SEED]                    = BITWUZLA_OPT_SEED,
+    [BZLA_OPT_SLS_JUST]                = BITWUZLA_OPT_SLS_JUST,
+    [BZLA_OPT_SLS_MOVE_GW]             = BITWUZLA_OPT_SLS_MOVE_GW,
+    [BZLA_OPT_SLS_MOVE_INC_MOVE_TEST]  = BITWUZLA_OPT_SLS_MOVE_INC_MOVE_TEST,
+    [BZLA_OPT_SLS_MOVE_PROP]           = BITWUZLA_OPT_SLS_MOVE_PROP,
+    [BZLA_OPT_SLS_MOVE_PROP_FORCE_RW]  = BITWUZLA_OPT_SLS_MOVE_PROP_FORCE_RW,
+    [BZLA_OPT_SLS_MOVE_PROP_NPROPS]    = BITWUZLA_OPT_SLS_MOVE_PROP_NPROPS,
+    [BZLA_OPT_SLS_MOVE_PROP_NSLSS]     = BITWUZLA_OPT_SLS_MOVE_PROP_NSLSS,
+    [BZLA_OPT_SLS_MOVE_RAND_ALL]       = BITWUZLA_OPT_SLS_MOVE_RAND_ALL,
+    [BZLA_OPT_SLS_MOVE_RAND_RANGE]     = BITWUZLA_OPT_SLS_MOVE_RAND_RANGE,
+    [BZLA_OPT_SLS_MOVE_RAND_WALK]      = BITWUZLA_OPT_SLS_MOVE_RAND_WALK,
+    [BZLA_OPT_SLS_MOVE_RANGE]          = BITWUZLA_OPT_SLS_MOVE_RANGE,
+    [BZLA_OPT_SLS_MOVE_SEGMENT]        = BITWUZLA_OPT_SLS_MOVE_SEGMENT,
+    [BZLA_OPT_SLS_NFLIPS]              = BITWUZLA_OPT_SLS_NFLIPS,
+    [BZLA_OPT_SLS_PROB_MOVE_RAND_WALK] = BITWUZLA_OPT_SLS_PROB_MOVE_RAND_WALK,
+    [BZLA_OPT_SLS_STRATEGY]            = BITWUZLA_OPT_SLS_STRATEGY,
+    [BZLA_OPT_SLS_USE_BANDIT]          = BITWUZLA_OPT_SLS_USE_BANDIT,
+    [BZLA_OPT_SLS_USE_RESTARTS]        = BITWUZLA_OPT_SLS_USE_RESTARTS,
+    [BZLA_OPT_SMT_COMP_MODE]           = BITWUZLA_OPT_SMT_COMP_MODE,
+    [BZLA_OPT_VERBOSITY]               = BITWUZLA_OPT_VERBOSITY,
+};
+
+/*------------------------------------------------------------------------*/
+
 enum BitwuzlaMainOption
 {
   BZLAMAIN_OPT_HELP,
@@ -1267,7 +1386,9 @@ bitwuzla_main(int32_t argc, char **argv)
           goto DONE;
         }
 
-        bzla_opt_set(bzla, bopt, ((BzlaOptHelp *) b->data.as_ptr)->val);
+        bitwuzla_set_option(bitwuzla,
+                            bitwuzla_options[bopt],
+                            ((BzlaOptHelp *) b->data.as_ptr)->val);
       }
       else
       {
@@ -1288,7 +1409,9 @@ bitwuzla_main(int32_t argc, char **argv)
               pmodel = 0;
             }
             else
-              bzla_opt_set(bzla, bopt, 0);
+            {
+              bitwuzla_set_option(bitwuzla, bitwuzla_options[bopt], 0);
+            }
           }
           else
           {
@@ -1310,22 +1433,26 @@ bitwuzla_main(int32_t argc, char **argv)
               case BITWUZLA_OPT_LOGLEVEL:
                 if (BZLA_ARG_READ_IS_INT(po->readval))
                 {
-                  bzla_opt_set(bzla, bopt, po->val);
+                  bitwuzla_set_option(
+                      bitwuzla, bitwuzla_options[bopt], po->val);
                 }
                 else
                 {
-                  bzla_opt_set(bzla, bopt, bzla_opt_get(bzla, bopt) + 1);
+                  bitwuzla_set_option(bitwuzla,
+                                      bitwuzla_options[bopt],
+                                      bzla_opt_get(bzla, bopt) + 1);
                 }
                 break;
               default:
                 assert(bopt != BZLA_OPT_NUM_OPTS);
                 if (BZLA_ARG_READ_IS_INT(po->readval))
                 {
-                  bzla_opt_set(bzla, bopt, po->val);
+                  bitwuzla_set_option(
+                      bitwuzla, bitwuzla_options[bopt], po->val);
                 }
                 else
                 {
-                  bzla_opt_set(bzla, bopt, 1);
+                  bitwuzla_set_option(bitwuzla, bitwuzla_options[bopt], 1);
                 }
             }
           }
@@ -1333,7 +1460,7 @@ bitwuzla_main(int32_t argc, char **argv)
         else
         {
           assert(BZLA_ARG_READ_IS_INT(po->readval));
-          bzla_opt_set(bzla, bopt, po->val);
+          bitwuzla_set_option(bitwuzla, bitwuzla_options[bopt], po->val);
         }
       }
     }
