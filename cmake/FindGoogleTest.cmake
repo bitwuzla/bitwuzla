@@ -14,7 +14,7 @@
 
 find_package(GTest 1.10.0)
 
-if(NOT GTest_FOUND)
+if(NOT GTest_FOUND OR NOT TARGET GTest::gtest_main)
   include(ExternalProject)
 
   set(GTest_VERSION "1.10.0")
