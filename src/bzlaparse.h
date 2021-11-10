@@ -29,7 +29,7 @@ typedef BzlaParser *(*BzlaInitParser)(Bitwuzla *);
 typedef void (*BzlaResetParser)(void *);
 
 typedef char *(*BzlaParse)(BzlaParser *,
-                           BzlaCharStack *prefix,
+                           BzlaIntStack *prefix,
                            FILE *,
                            const char *,
                            FILE *,

@@ -36,7 +36,7 @@ has_compressed_suffix(const char *str, const char *suffix)
 static int32_t
 parse_aux(Bitwuzla *bitwuzla,
           FILE *infile,
-          BzlaCharStack *prefix,
+          BzlaIntStack *prefix,
           const char *infile_name,
           FILE *outfile,
           const BzlaParserAPI *parser_api,
@@ -163,10 +163,10 @@ bzla_parse(Bitwuzla *bitwuzla,
   assert(parsed_smt2);
 
   const BzlaParserAPI *parser_api;
-  int32_t idx, first, second, res;
+  int32_t idx, first, second, res, ch;
   uint32_t len;
-  char ch, *msg;
-  BzlaCharStack prefix;
+  char *msg;
+  BzlaIntStack prefix;
 
   BzlaMemMgr *mem = bzla_mem_mgr_new();
 
@@ -246,13 +246,23 @@ bzla_parse(Bitwuzla *bitwuzla,
           if (ch == EOF) break;
           BZLA_PUSH_STACK(prefix, ch);
         } while (ch != '\n');
-        BZLA_PUSH_STACK(prefix, 0);
-        if (strstr(prefix.start + idx, " sort ") != NULL)
+        for (size_t i = idx; i < BZLA_COUNT_STACK(prefix); ++i)
         {
-          parser_api = bzla_parsebtor2_parser_api();
-          sprintf(msg, "assuming BTOR2 input,  parsing '%s'", infile_name);
+          /* check if input is BTOR2 */
+          if (i < BZLA_COUNT_STACK(prefix) - 6)
+          {
+            if (BZLA_PEEK_STACK(prefix, i) == ' '
+                && BZLA_PEEK_STACK(prefix, i + 1) == 's'
+                && BZLA_PEEK_STACK(prefix, i + 2) == 'o'
+                && BZLA_PEEK_STACK(prefix, i + 3) == 'r'
+                && BZLA_PEEK_STACK(prefix, i + 4) == 't'
+                && BZLA_PEEK_STACK(prefix, i + 5) == ' ')
+            {
+              parser_api = bzla_parsebtor2_parser_api();
+              sprintf(msg, "assuming BTOR2 input,  parsing '%s'", infile_name);
+            }
+          }
         }
-        (void) BZLA_POP_STACK(prefix);
       }
     }
   }

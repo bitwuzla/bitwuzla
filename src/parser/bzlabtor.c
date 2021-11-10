@@ -54,7 +54,7 @@ struct BzlaBZLAParser
   Bitwuzla *bitwuzla;
 
   uint32_t nprefix;
-  BzlaCharStack *prefix;
+  BzlaIntStack *prefix;
   FILE *infile;
   const char *infile_name;
   uint32_t lineno;
@@ -1768,7 +1768,7 @@ delete_bzla_parser(BzlaBZLAParser *parser)
  * input files). */
 static const char *
 parse_bzla_parser(BzlaBZLAParser *parser,
-                  BzlaCharStack *prefix,
+                  BzlaIntStack *prefix,
                   FILE *infile,
                   const char *infile_name,
                   FILE *outfile,

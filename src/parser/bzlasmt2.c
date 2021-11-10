@@ -439,7 +439,8 @@ typedef struct BzlaSMT2Parser
   FILE *outfile;
   double parse_start;
   bool store_tokens; /* needed for parsing terms in get-value */
-  BzlaCharStack *prefix, token, tokens;
+  BzlaIntStack *prefix;
+  BzlaCharStack token, tokens;
   BitwuzlaSortPtrStack sorts;
   BzlaSMT2ItemStack work;
   BzlaSMT2Coo coo, lastcoo, nextcoo, perrcoo;
@@ -569,7 +570,7 @@ perr_smt2(BzlaSMT2Parser *parser, const char *fmt, ...)
 }
 
 static void
-savech_smt2(BzlaSMT2Parser *parser, char ch)
+savech_smt2(BzlaSMT2Parser *parser, int32_t ch)
 {
   assert(!parser->saved);
   parser->saved   = true;
@@ -6111,7 +6112,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
 
 static const char *
 parse_smt2_parser(BzlaSMT2Parser *parser,
-                  BzlaCharStack *prefix,
+                  BzlaIntStack *prefix,
                   FILE *infile,
                   const char *infile_name,
                   FILE *outfile,
