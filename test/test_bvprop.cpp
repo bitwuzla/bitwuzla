@@ -566,7 +566,7 @@ class TestBvProp : public TestBvDomainCommon
    * This is a helper for the check_sat test below.
    */
   void fix_result_bits_for_check_sat(Bitwuzla *bitwuzla,
-                                     BitwuzlaTerm *var,
+                                     const BitwuzlaTerm *var,
                                      BzlaBvDomain *d)
   {
     assert(bitwuzla);
@@ -574,8 +574,8 @@ class TestBvProp : public TestBvDomainCommon
     assert(d);
     assert(bzla_bvdomain_is_valid(d_mm, d));
 
-    BitwuzlaTerm *d_hi, *d_lo, *a, *o, *_or, *ne1, *ne2;
-    BitwuzlaSort *sort;
+    const BitwuzlaTerm *d_hi, *d_lo, *a, *o, *_or, *ne1, *ne2;
+    const BitwuzlaSort *sort;
     char *s_hi, *s_lo;
 
     sort = bitwuzla_mk_bv_sort(bitwuzla, bzla_bvdomain_get_width(d));
@@ -604,7 +604,7 @@ class TestBvProp : public TestBvDomainCommon
    * This is a helper for the check_sat test below.
    */
   void fix_domain_bits_for_check_sat(Bitwuzla *bitwuzla,
-                                     BitwuzlaTerm *var,
+                                     const BitwuzlaTerm *var,
                                      BzlaBvDomain *d)
   {
     assert(bitwuzla);
@@ -612,8 +612,8 @@ class TestBvProp : public TestBvDomainCommon
     assert(d);
     assert(bzla_bvdomain_is_valid(d_mm, d));
 
-    BitwuzlaTerm *d_hi, *d_lo, *a, *o, *_and, *eq1, *eq2;
-    BitwuzlaSort *sort;
+    const BitwuzlaTerm *d_hi, *d_lo, *a, *o, *_and, *eq1, *eq2;
+    const BitwuzlaSort *sort;
     char *s_hi, *s_lo;
 
     sort = bitwuzla_mk_bv_sort(bitwuzla, bzla_bvdomain_get_width(d));
@@ -709,8 +709,8 @@ class TestBvProp : public TestBvDomainCommon
 
     BitwuzlaResult sat_res;
     uint32_t bwx, bwy, bwz;
-    BitwuzlaTerm *x, *y, *z, *c, *fun, *ofun, *_not, *eq;
-    BitwuzlaSort *swx, *swy, *swz, *s1;
+    const BitwuzlaTerm *x, *y, *z, *c, *fun, *ofun, *_not, *eq;
+    const BitwuzlaSort *swx, *swy, *swz, *s1;
 
     swy = 0;
 

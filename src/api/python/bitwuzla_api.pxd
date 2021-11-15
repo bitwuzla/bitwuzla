@@ -84,170 +84,173 @@ cdef extern from "bitwuzla.h":
     uint32_t bitwuzla_get_option(Bitwuzla *bitwuzla, BitwuzlaOption option) \
         except +raise_py_error
 
-    BitwuzlaSort *bitwuzla_mk_array_sort(Bitwuzla *bitwuzla,
-                                         const BitwuzlaSort *index,
-                                         const BitwuzlaSort *element) \
+    const BitwuzlaSort *bitwuzla_mk_array_sort(Bitwuzla *bitwuzla,
+                                               const BitwuzlaSort *index,
+                                               const BitwuzlaSort *element) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_mk_bool_sort(Bitwuzla *bitwuzla) \
+    const BitwuzlaSort *bitwuzla_mk_bool_sort(Bitwuzla *bitwuzla) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_mk_bv_sort(Bitwuzla *bitwuzla, uint32_t size) \
+    const BitwuzlaSort *bitwuzla_mk_bv_sort(Bitwuzla *bitwuzla, uint32_t size) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
-                                      uint32_t exp_size,
-                                      uint32_t sig_size) \
+    const BitwuzlaSort *bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla,
+                                            uint32_t exp_size,
+                                            uint32_t sig_size) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
-                                       uint32_t arity,
-                                       const BitwuzlaSort *domain[],
-                                       const BitwuzlaSort *codomain) \
+    const BitwuzlaSort *bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
+                                             uint32_t arity,
+                                             const BitwuzlaSort *domain[],
+                                             const BitwuzlaSort *codomain) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_mk_rm_sort(Bitwuzla *bitwuzla) \
+    const BitwuzlaSort *bitwuzla_mk_rm_sort(Bitwuzla *bitwuzla) \
         except +raise_py_error
 
-#    BitwuzlaTerm *bitwuzla_mk_true(Bitwuzla *bitwuzla) \
+#    const BitwuzlaTerm *bitwuzla_mk_true(Bitwuzla *bitwuzla) \
 #        except +raise_py_error
-#    BitwuzlaTerm *bitwuzla_mk_false(Bitwuzla *bitwuzla) \
+#    const BitwuzlaTerm *bitwuzla_mk_false(Bitwuzla *bitwuzla) \
 #        except +raise_py_error
 
-#    BitwuzlaTerm *bitwuzla_mk_bv_zero(Bitwuzla *bitwuzla,
+#    const BitwuzlaTerm *bitwuzla_mk_bv_zero(Bitwuzla *bitwuzla,
 #                                      const BitwuzlaSort *sort) \
 #        except +raise_py_error
-#    BitwuzlaTerm *bitwuzla_mk_bv_one(Bitwuzla *bitwuzla,
+#    const BitwuzlaTerm *bitwuzla_mk_bv_one(Bitwuzla *bitwuzla,
 #                                     const BitwuzlaSort *sort) \
 #        except +raise_py_error
-    BitwuzlaTerm *bitwuzla_mk_bv_ones(Bitwuzla *bitwuzla,
-                                      const BitwuzlaSort *sort) \
-        except +raise_py_error
-    BitwuzlaTerm *bitwuzla_mk_bv_min_signed(Bitwuzla *bitwuzla,
+    const BitwuzlaTerm *bitwuzla_mk_bv_ones(Bitwuzla *bitwuzla,
                                             const BitwuzlaSort *sort) \
         except +raise_py_error
-    BitwuzlaTerm *bitwuzla_mk_bv_max_signed(Bitwuzla *bitwuzla,
-                                            const BitwuzlaSort *sort) \
+    const BitwuzlaTerm *bitwuzla_mk_bv_min_signed(Bitwuzla *bitwuzla,
+                                                  const BitwuzlaSort *sort) \
+        except +raise_py_error
+    const BitwuzlaTerm *bitwuzla_mk_bv_max_signed(Bitwuzla *bitwuzla,
+                                                  const BitwuzlaSort *sort) \
         except +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_mk_fp_pos_zero(Bitwuzla *bitwuzla,
-                                          const BitwuzlaSort *sort) \
+    const BitwuzlaTerm *bitwuzla_mk_fp_pos_zero(Bitwuzla *bitwuzla,
+                                                const BitwuzlaSort *sort) \
         except +raise_py_error
-    BitwuzlaTerm *bitwuzla_mk_fp_neg_zero(Bitwuzla *bitwuzla,
-                                          const BitwuzlaSort *sort) \
+    const BitwuzlaTerm *bitwuzla_mk_fp_neg_zero(Bitwuzla *bitwuzla,
+                                                const BitwuzlaSort *sort) \
         except +raise_py_error
-    BitwuzlaTerm *bitwuzla_mk_fp_pos_inf(Bitwuzla *bitwuzla,
-                                         const BitwuzlaSort *sort) \
+    const BitwuzlaTerm *bitwuzla_mk_fp_pos_inf(Bitwuzla *bitwuzla,
+                                               const BitwuzlaSort *sort) \
         except +raise_py_error
-    BitwuzlaTerm *bitwuzla_mk_fp_neg_inf(Bitwuzla *bitwuzla,
-                                         const BitwuzlaSort *sort) \
+    const BitwuzlaTerm *bitwuzla_mk_fp_neg_inf(Bitwuzla *bitwuzla,
+                                               const BitwuzlaSort *sort) \
         except +raise_py_error
-    BitwuzlaTerm *bitwuzla_mk_fp_nan(Bitwuzla *bitwuzla,
-                                     const BitwuzlaSort *sort) \
-        except +raise_py_error
-
-    BitwuzlaTerm *bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
-                                       const BitwuzlaSort *sort,
-                                       const char *value,
-                                       BitwuzlaBVBase base) \
+    const BitwuzlaTerm *bitwuzla_mk_fp_nan(Bitwuzla *bitwuzla,
+                                           const BitwuzlaSort *sort) \
         except +raise_py_error
 
-#    BitwuzlaTerm *bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
+    const BitwuzlaTerm *bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
+                                             const BitwuzlaSort *sort,
+                                             const char *value,
+                                             BitwuzlaBVBase base) \
+        except +raise_py_error
+
+#    const BitwuzlaTerm *bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
 #                                              const BitwuzlaSort *sort,
 #                                              uint64_t value) \
 #        except +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_mk_fp_value(Bitwuzla *bitwuzla,
-                                       const BitwuzlaTerm *bv_sign,
-                                       const BitwuzlaTerm *bv_exponent,
-                                       const BitwuzlaTerm *bv_significand) \
+    const BitwuzlaTerm *bitwuzla_mk_fp_value(
+            Bitwuzla *bitwuzla,
+            const BitwuzlaTerm *bv_sign,
+            const BitwuzlaTerm *bv_exponent,
+            const BitwuzlaTerm *bv_significand) \
         except +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_mk_fp_value_from_real(Bitwuzla *bitwuzla,
-                                                 const BitwuzlaSort *sort,
-                                                 const BitwuzlaTerm *rm,
-                                                 const char *real) \
+    const BitwuzlaTerm *bitwuzla_mk_fp_value_from_real(
+            Bitwuzla *bitwuzla,
+            const BitwuzlaSort *sort,
+            const BitwuzlaTerm *rm,
+            const char *real) \
         except +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_mk_fp_value_from_rational(Bitwuzla *bitwuzla,
-                                                     const BitwuzlaSort *sort,
-                                                     const BitwuzlaTerm *rm,
-                                                     const char *num,
-                                                     const char *den) \
+    const BitwuzlaTerm *bitwuzla_mk_fp_value_from_rational(
+            Bitwuzla *bitwuzla,
+            const BitwuzlaSort *sort,
+            const BitwuzlaTerm *rm,
+            const char *num,
+            const char *den) \
         except +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_mk_rm_value(Bitwuzla *bitwuzla,
-                                       BitwuzlaRoundingMode rm) \
+    const BitwuzlaTerm *bitwuzla_mk_rm_value(Bitwuzla *bitwuzla,
+                                             BitwuzlaRoundingMode rm) \
         except +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_mk_term1(Bitwuzla *bitwuzla,
-                                    BitwuzlaKind kind,
-                                    const BitwuzlaTerm *arg) \
+    const BitwuzlaTerm *bitwuzla_mk_term1(Bitwuzla *bitwuzla,
+                                          BitwuzlaKind kind,
+                                          const BitwuzlaTerm *arg) \
         except +raise_py_error
 
-#    BitwuzlaTerm *bitwuzla_mk_term2(Bitwuzla *bitwuzla,
-#                                    BitwuzlaKind kind,
-#                                    const BitwuzlaTerm *arg0,
-#                                    const BitwuzlaTerm *arg1) \
+#    const BitwuzlaTerm *bitwuzla_mk_term2(Bitwuzla *bitwuzla,
+#                                          BitwuzlaKind kind,
+#                                          const BitwuzlaTerm *arg0,
+#                                          const BitwuzlaTerm *arg1) \
 #        except +raise_py_error
 #
-#    BitwuzlaTerm *bitwuzla_mk_term3(Bitwuzla *bitwuzla,
-#                                    BitwuzlaKind kind,
-#                                    const BitwuzlaTerm *arg0,
-#                                    const BitwuzlaTerm *arg1,
-#                                    const BitwuzlaTerm *arg2) \
+#    const BitwuzlaTerm *bitwuzla_mk_term3(Bitwuzla *bitwuzla,
+#                                          BitwuzlaKind kind,
+#                                          const BitwuzlaTerm *arg0,
+#                                          const BitwuzlaTerm *arg1,
+#                                          const BitwuzlaTerm *arg2) \
 #        except +raise_py_error
 #
-    BitwuzlaTerm *bitwuzla_mk_term(Bitwuzla *bitwuzla,
+    const BitwuzlaTerm *bitwuzla_mk_term(Bitwuzla *bitwuzla,
                                    BitwuzlaKind kind,
                                    uint32_t argc,
                                    const BitwuzlaTerm *args[]) \
         except +raise_py_error
 
-#    BitwuzlaTerm *bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
-#                                             BitwuzlaKind kind,
-#                                             const BitwuzlaTerm *arg,
-#                                             uint32_t idx) \
+#    const BitwuzlaTerm *bitwuzla_mk_term1_indexed1(Bitwuzla *bitwuzla,
+#                                                   BitwuzlaKind kind,
+#                                                   const BitwuzlaTerm *arg,
+#                                                   uint32_t idx) \
 #        except +raise_py_error
 #
-#    BitwuzlaTerm *bitwuzla_mk_term1_indexed2(Bitwuzla *bitwuzla,
-#                                             BitwuzlaKind kind,
-#                                             const BitwuzlaTerm *arg,
-#                                             uint32_t idx0,
-#                                             uint32_t idx1) \
+#    const BitwuzlaTerm *bitwuzla_mk_term1_indexed2(Bitwuzla *bitwuzla,
+#                                                   BitwuzlaKind kind,
+#                                                   const BitwuzlaTerm *arg,
+#                                                   uint32_t idx0,
+#                                                   uint32_t idx1) \
 #        except +raise_py_error
 #
-#    BitwuzlaTerm *bitwuzla_mk_term2_indexed1(Bitwuzla *bitwuzla,
-#                                             BitwuzlaKind kind,
-#                                             const BitwuzlaTerm *arg0,
-#                                             const BitwuzlaTerm *arg1,
-#                                             uint32_t idx) \
+#    const BitwuzlaTerm *bitwuzla_mk_term2_indexed1(Bitwuzla *bitwuzla,
+#                                                   BitwuzlaKind kind,
+#                                                   const BitwuzlaTerm *arg0,
+#                                                   const BitwuzlaTerm *arg1,
+#                                                   uint32_t idx) \
 #        except +raise_py_error
 #
-#    BitwuzlaTerm *bitwuzla_mk_term2_indexed2(Bitwuzla *bitwuzla,
-#                                             BitwuzlaKind kind,
-#                                             const BitwuzlaTerm *arg0,
-#                                             const BitwuzlaTerm *arg1,
-#                                             uint32_t idx0,
-#                                             uint32_t idx1) \
-#        except +raise_py_error
+#    const BitwuzlaTerm *bitwuzla_mk_term2_indexed2(Bitwuzla *bitwuzla,
+#                                                   BitwuzlaKind kind,
+#                                                   const BitwuzlaTerm *arg0,
+#                                                   const BitwuzlaTerm *arg1,
+#                                                   uint32_t idx0,
+#                                                   uint32_t idx1) \
+#        except       +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
-                                           BitwuzlaKind kind,
-                                           uint32_t argc,
-                                           const BitwuzlaTerm *args[],
-                                           uint32_t idxc,
-                                           uint32_t idxs[]) \
+    const BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
+                                                 BitwuzlaKind kind,
+                                                 uint32_t argc,
+                                                 const BitwuzlaTerm *args[],
+                                                 uint32_t idxc,
+                                                 uint32_t idxs[]) \
         except +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_mk_const(Bitwuzla *bitwuzla,
-                                    const BitwuzlaSort *sort,
-                                    const char *symbol) \
+    const BitwuzlaTerm *bitwuzla_mk_const(Bitwuzla *bitwuzla,
+                                         const BitwuzlaSort *sort,
+                                         const char *symbol) \
         except +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_mk_const_array(Bitwuzla *bitwuzla,
-                                          const BitwuzlaSort *sort,
-                                          const BitwuzlaTerm *value) \
+    const BitwuzlaTerm *bitwuzla_mk_const_array(Bitwuzla *bitwuzla,
+                                                const BitwuzlaSort *sort,
+                                                const BitwuzlaTerm *value) \
         except +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_mk_var(Bitwuzla *bitwuzla,
-                                  const BitwuzlaSort *sort,
-                                  const char *symbol) \
+    const BitwuzlaTerm *bitwuzla_mk_var(Bitwuzla *bitwuzla,
+                                        const BitwuzlaSort *sort,
+                                        const char *symbol) \
         except +raise_py_error
 
     void bitwuzla_push(Bitwuzla *bitwuzla, uint32_t nlevels) \
@@ -263,10 +266,11 @@ cdef extern from "bitwuzla.h":
                                       const BitwuzlaTerm *term) \
         except +raise_py_error
 
-    BitwuzlaTerm **bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla,
-                                                  size_t *size) \
+    const BitwuzlaTerm **bitwuzla_get_unsat_assumptions(
+            Bitwuzla *bitwuzla, size_t *size) \
         except +raise_py_error
-    BitwuzlaTerm **bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size) \
+    const BitwuzlaTerm **bitwuzla_get_unsat_core(
+            Bitwuzla *bitwuzla, size_t *size) \
         except +raise_py_error
 
     void bitwuzla_fixate_assumptions(Bitwuzla *bitwuzla) \
@@ -280,8 +284,8 @@ cdef extern from "bitwuzla.h":
     BitwuzlaResult bitwuzla_check_sat(Bitwuzla *bitwuzla) \
         except +raise_py_error
 
-    BitwuzlaTerm *bitwuzla_get_value(Bitwuzla *bitwuzla,
-                                     const BitwuzlaTerm *term) \
+    const BitwuzlaTerm *bitwuzla_get_value(Bitwuzla *bitwuzla,
+                                           const BitwuzlaTerm *term) \
         except +raise_py_error
 
     void bitwuzla_print_model(Bitwuzla *bitwuzla,
@@ -312,7 +316,7 @@ cdef extern from "bitwuzla.h":
 
     void bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
                                    size_t terms_size,
-                                   BitwuzlaTerm *terms[],
+                                   const BitwuzlaTerm *terms[],
                                    size_t map_size,
                                    const BitwuzlaTerm *map_keys[],
                                    const BitwuzlaTerm *map_values[]) \
@@ -331,15 +335,18 @@ cdef extern from "bitwuzla.h":
         except +raise_py_error
     uint32_t bitwuzla_sort_fp_get_sig_size(const BitwuzlaSort *sort) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_sort_array_get_index(const BitwuzlaSort *sort) \
+    const BitwuzlaSort *bitwuzla_sort_array_get_index(
+            const BitwuzlaSort *sort) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_sort_array_get_element(const BitwuzlaSort *sort) \
+    const BitwuzlaSort *bitwuzla_sort_array_get_element(
+            const BitwuzlaSort *sort) \
         except +raise_py_error
     const BitwuzlaSort **bitwuzla_sort_fun_get_domain_sorts(
         const BitwuzlaSort *sort,
         size_t *size) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_sort_fun_get_codomain(const BitwuzlaSort *sort) \
+    const BitwuzlaSort *bitwuzla_sort_fun_get_codomain(
+            const BitwuzlaSort *sort) \
         except +raise_py_error
     uint32_t bitwuzla_sort_fun_get_arity(const BitwuzlaSort *sort) \
         except +raise_py_error
@@ -381,18 +388,19 @@ cdef extern from "bitwuzla.h":
 
 #    Bitwuzla *bitwuzla_term_get_bitwuzla(const BitwuzlaTerm *term) \
 #        except +raise_py_error
-    BitwuzlaSort *bitwuzla_term_get_sort(const BitwuzlaTerm *term) \
+    const BitwuzlaSort *bitwuzla_term_get_sort(const BitwuzlaTerm *term) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_term_array_get_index_sort(const BitwuzlaTerm *term) \
+    const BitwuzlaSort *bitwuzla_term_array_get_index_sort(
+            const BitwuzlaTerm *term) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_term_array_get_element_sort(
+    const BitwuzlaSort *bitwuzla_term_array_get_element_sort(
             const BitwuzlaTerm *term) \
         except +raise_py_error
     const BitwuzlaSort **bitwuzla_term_fun_get_domain_sorts(
         const BitwuzlaTerm *term,
         size_t *size) \
         except +raise_py_error
-    BitwuzlaSort *bitwuzla_term_fun_get_codomain_sort(
+    const BitwuzlaSort *bitwuzla_term_fun_get_codomain_sort(
             const BitwuzlaTerm *term) \
         except +raise_py_error
 
@@ -407,7 +415,8 @@ cdef extern from "bitwuzla.h":
 
     const char *bitwuzla_term_get_symbol(const BitwuzlaTerm *term) \
         except +raise_py_error
-    void bitwuzla_term_set_symbol(BitwuzlaTerm *term, const char *symbol) \
+    void bitwuzla_term_set_symbol(
+            const BitwuzlaTerm *term, const char *symbol) \
         except +raise_py_error
 
 #    bool bitwuzla_term_is_equal_sort(const BitwuzlaTerm *term0,

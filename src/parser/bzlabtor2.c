@@ -22,8 +22,10 @@
 
 /*------------------------------------------------------------------------*/
 
-void bitwuzla_set_bzla_id(Bitwuzla *bitwuzla, BitwuzlaTerm *term, int32_t id);
-void bitwuzla_add_output(Bitwuzla *bitwuzla, BitwuzlaTerm *term);
+void bitwuzla_set_bzla_id(Bitwuzla *bitwuzla,
+                          const BitwuzlaTerm *term,
+                          int32_t id);
+void bitwuzla_add_output(Bitwuzla *bitwuzla, const BitwuzlaTerm *term);
 
 /*------------------------------------------------------------------------*/
 
@@ -110,8 +112,8 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
   BzlaIntHashTable *sortmap;
   BzlaIntHashTable *nodemap;
   BzlaIntHashTableIterator it;
-  BitwuzlaTerm *e[3], *term, *tmp;
-  BitwuzlaSort *sort, *sort_index, *sort_elem;
+  const BitwuzlaTerm *e[3], *term, *tmp;
+  const BitwuzlaSort *sort, *sort_index, *sort_elem;
   BzlaMemMgr *mm;
   BzlaMsg *msg;
   bool found_arrays, found_lambdas;
@@ -491,7 +493,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
           sort = bitwuzla_mk_array_sort(bitwuzla, sort_index, sort_elem);
         }
         assert(!bzla_hashint_map_contains(sortmap, line->id));
-        bzla_hashint_map_add(sortmap, line->id)->as_ptr = sort;
+        bzla_hashint_map_add(sortmap, line->id)->as_ptr = (BitwuzlaSort *) sort;
         break;
 
       case BTOR2_TAG_smod:
@@ -621,7 +623,7 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
     if (term)
     {
       assert(!bzla_hashint_map_contains(nodemap, line->id));
-      bzla_hashint_map_add(nodemap, line->id)->as_ptr = term;
+      bzla_hashint_map_add(nodemap, line->id)->as_ptr = (BitwuzlaTerm *) term;
     }
   }
 DONE:

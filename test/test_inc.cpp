@@ -29,16 +29,16 @@ class TestInc : public TestBitwuzla
 
     bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
 
-    BitwuzlaSort *s       = bitwuzla_mk_bv_sort(d_bzla, w);
-    BitwuzlaTerm *one     = bitwuzla_mk_bv_one(d_bzla, s);
-    BitwuzlaTerm *current = bitwuzla_mk_bv_zero(d_bzla, s);
+    const BitwuzlaSort *s       = bitwuzla_mk_bv_sort(d_bzla, w);
+    const BitwuzlaTerm *one     = bitwuzla_mk_bv_one(d_bzla, s);
+    const BitwuzlaTerm *current = bitwuzla_mk_bv_zero(d_bzla, s);
 
     i = 0;
     for (;;)
     {
-      BitwuzlaTerm *inc =
+      const BitwuzlaTerm *inc =
           bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_ADD, current, one);
-      BitwuzlaTerm *next, *oracle;
+      const BitwuzlaTerm *next, *oracle;
 
       if (nondet)
       {
@@ -63,9 +63,9 @@ class TestInc : public TestBitwuzla
 
       current = next;
 
-      BitwuzlaTerm *nonzero =
+      const BitwuzlaTerm *nonzero =
           bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_BV_REDOR, current);
-      BitwuzlaTerm *allzero =
+      const BitwuzlaTerm *allzero =
           bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_BV_NOT, nonzero);
 
       i++;
@@ -89,8 +89,8 @@ class TestInc : public TestBitwuzla
   {
     assert(w > 0);
 
-    BitwuzlaTerm *prev, *next, *lt;
-    BitwuzlaSort *s;
+    const BitwuzlaTerm *prev, *next, *lt;
+    const BitwuzlaSort *s;
     std::stringstream name;
     uint32_t i;
     int32_t res;
@@ -127,8 +127,8 @@ class TestInc : public TestBitwuzla
 
 TEST_F(TestInc, true_false)
 {
-  BitwuzlaTerm *ff = bitwuzla_mk_false(d_bzla);
-  BitwuzlaTerm *tt = bitwuzla_mk_true(d_bzla);
+  const BitwuzlaTerm *ff = bitwuzla_mk_false(d_bzla);
+  const BitwuzlaTerm *tt = bitwuzla_mk_true(d_bzla);
   int32_t res;
 
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
@@ -177,18 +177,18 @@ TEST_F(TestInc, assume_assert1)
   int32_t sat_result;
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, 0);
-  BitwuzlaSort *s      = bitwuzla_mk_bool_sort(d_bzla);
-  BitwuzlaSort *as     = bitwuzla_mk_array_sort(d_bzla, s, s);
-  BitwuzlaTerm *array  = bitwuzla_mk_const(d_bzla, as, "array1");
-  BitwuzlaTerm *index1 = bitwuzla_mk_const(d_bzla, s, "index1");
-  BitwuzlaTerm *index2 = bitwuzla_mk_const(d_bzla, s, "index2");
-  BitwuzlaTerm *read1 =
+  const BitwuzlaSort *s      = bitwuzla_mk_bool_sort(d_bzla);
+  const BitwuzlaSort *as     = bitwuzla_mk_array_sort(d_bzla, s, s);
+  const BitwuzlaTerm *array  = bitwuzla_mk_const(d_bzla, as, "array1");
+  const BitwuzlaTerm *index1 = bitwuzla_mk_const(d_bzla, s, "index1");
+  const BitwuzlaTerm *index2 = bitwuzla_mk_const(d_bzla, s, "index2");
+  const BitwuzlaTerm *read1 =
       bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_ARRAY_SELECT, array, index1);
-  BitwuzlaTerm *read2 =
+  const BitwuzlaTerm *read2 =
       bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_ARRAY_SELECT, array, index2);
-  BitwuzlaTerm *eq_index =
+  const BitwuzlaTerm *eq_index =
       bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, index1, index2);
-  BitwuzlaTerm *ne_read =
+  const BitwuzlaTerm *ne_read =
       bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_DISTINCT, read1, read2);
   bitwuzla_assert(d_bzla, ne_read);
   sat_result = bitwuzla_check_sat(d_bzla);
@@ -207,18 +207,18 @@ TEST_F(TestInc, lemmas_on_demand1)
 
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
   bitwuzla_set_option(d_bzla, BITWUZLA_OPT_RW_LEVEL, 0);
-  BitwuzlaSort *s      = bitwuzla_mk_bool_sort(d_bzla);
-  BitwuzlaSort *as     = bitwuzla_mk_array_sort(d_bzla, s, s);
-  BitwuzlaTerm *array  = bitwuzla_mk_const(d_bzla, as, "array1");
-  BitwuzlaTerm *index1 = bitwuzla_mk_const(d_bzla, s, "index1");
-  BitwuzlaTerm *index2 = bitwuzla_mk_const(d_bzla, s, "index2");
-  BitwuzlaTerm *read1 =
+  const BitwuzlaSort *s      = bitwuzla_mk_bool_sort(d_bzla);
+  const BitwuzlaSort *as     = bitwuzla_mk_array_sort(d_bzla, s, s);
+  const BitwuzlaTerm *array  = bitwuzla_mk_const(d_bzla, as, "array1");
+  const BitwuzlaTerm *index1 = bitwuzla_mk_const(d_bzla, s, "index1");
+  const BitwuzlaTerm *index2 = bitwuzla_mk_const(d_bzla, s, "index2");
+  const BitwuzlaTerm *read1 =
       bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_ARRAY_SELECT, array, index1);
-  BitwuzlaTerm *read2 =
+  const BitwuzlaTerm *read2 =
       bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_ARRAY_SELECT, array, index2);
-  BitwuzlaTerm *eq =
+  const BitwuzlaTerm *eq =
       bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, index1, index2);
-  BitwuzlaTerm *ne =
+  const BitwuzlaTerm *ne =
       bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_DISTINCT, read1, read2);
   bitwuzla_assert(d_bzla, eq);
   bitwuzla_assume(d_bzla, ne);

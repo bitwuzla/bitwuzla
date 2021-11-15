@@ -30,11 +30,11 @@ class TestShift : public TestCommon
 
     int32_t res;
     uint32_t ushift;
-    BitwuzlaSort *sort;
-    BitwuzlaTerm *res_shift0, *shift0;
-    BitwuzlaTerm *res_shift1;
-    BitwuzlaTerm *e0, *ne0;
-    BitwuzlaTerm *two;
+    const BitwuzlaSort *sort;
+    const BitwuzlaTerm *res_shift0, *shift0;
+    const BitwuzlaTerm *res_shift1;
+    const BitwuzlaTerm *e0, *ne0;
+    const BitwuzlaTerm *two;
 
     Bitwuzla *bitwuzla = bitwuzla_new();
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_RW_LEVEL, 0);
@@ -58,19 +58,21 @@ class TestShift : public TestCommon
       /* if msb = 1, shift in 1 bits instead of 0 bits */
       if (ushift > 0)
       {
-        BitwuzlaTerm *msb = bitwuzla_mk_term1_indexed2(
+        const BitwuzlaTerm *msb = bitwuzla_mk_term1_indexed2(
             bitwuzla, BITWUZLA_KIND_BV_EXTRACT, e0, bw - 1, bw - 1);
         if (ushift < bw)
         {
-          BitwuzlaTerm *slice =
+          const BitwuzlaTerm *slice =
               bitwuzla_mk_term1_indexed2(bitwuzla,
                                          BITWUZLA_KIND_BV_EXTRACT,
                                          res_shift1,
                                          bw - ushift - 1,
                                          0);
-          BitwuzlaSort *sort_sra_ones = bitwuzla_mk_bv_sort(bitwuzla, ushift);
-          BitwuzlaTerm *ones = bitwuzla_mk_bv_ones(bitwuzla, sort_sra_ones);
-          BitwuzlaTerm *concat =
+          const BitwuzlaSort *sort_sra_ones =
+              bitwuzla_mk_bv_sort(bitwuzla, ushift);
+          const BitwuzlaTerm *ones =
+              bitwuzla_mk_bv_ones(bitwuzla, sort_sra_ones);
+          const BitwuzlaTerm *concat =
               bitwuzla_mk_term2(bitwuzla, BITWUZLA_KIND_BV_CONCAT, ones, slice);
           res_shift1 = bitwuzla_mk_term3(
               bitwuzla, BITWUZLA_KIND_ITE, msb, concat, res_shift1);
@@ -93,10 +95,12 @@ class TestShift : public TestCommon
     res = bitwuzla_check_sat(bitwuzla);
     if (res == BITWUZLA_SAT)
     {
-      BitwuzlaTerm *val_e0         = bitwuzla_get_value(bitwuzla, e0);
-      BitwuzlaTerm *val_res_shift0 = bitwuzla_get_value(bitwuzla, res_shift0);
-      BitwuzlaTerm *val_shift0     = bitwuzla_get_value(bitwuzla, shift0);
-      BitwuzlaTerm *val_res_shift1 = bitwuzla_get_value(bitwuzla, res_shift1);
+      const BitwuzlaTerm *val_e0 = bitwuzla_get_value(bitwuzla, e0);
+      const BitwuzlaTerm *val_res_shift0 =
+          bitwuzla_get_value(bitwuzla, res_shift0);
+      const BitwuzlaTerm *val_shift0 = bitwuzla_get_value(bitwuzla, shift0);
+      const BitwuzlaTerm *val_res_shift1 =
+          bitwuzla_get_value(bitwuzla, res_shift1);
 
       bitwuzla_term_dump(val_e0, "btor", stdout);
       bitwuzla_term_dump(val_res_shift0, "btor", stdout);

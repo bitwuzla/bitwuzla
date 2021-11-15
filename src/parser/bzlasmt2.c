@@ -24,9 +24,7 @@
 
 /*------------------------------------------------------------------------*/
 
-BZLA_DECLARE_STACK(BitwuzlaTermPtr, BitwuzlaTerm *);
 BZLA_DECLARE_STACK(BitwuzlaTermConstPtr, const BitwuzlaTerm *);
-BZLA_DECLARE_STACK(BitwuzlaSortPtr, BitwuzlaSort *);
 BZLA_DECLARE_STACK(BitwuzlaSortConstPtr, const BitwuzlaSort *);
 
 /*------------------------------------------------------------------------*/
@@ -34,8 +32,8 @@ BZLA_DECLARE_STACK(BitwuzlaSortConstPtr, const BitwuzlaSort *);
 BitwuzlaOption bitwuzla_get_option_from_string(Bitwuzla *bitwuzla,
                                                const char *str);
 
-void bitwuzla_term_print_value_smt2(BitwuzlaTerm *, char *, FILE *);
-void bitwuzla_term_var_mark_bool(BitwuzlaTerm *);
+void bitwuzla_term_print_value_smt2(const BitwuzlaTerm *, char *, FILE *);
+void bitwuzla_term_var_mark_bool(const BitwuzlaTerm *);
 
 /*------------------------------------------------------------------------*/
 
@@ -351,8 +349,8 @@ typedef struct BzlaSMT2Node
   uint32_t scope_level;
   BzlaSMT2Coo coo;
   char *name;
-  BitwuzlaTerm *exp;
-  BitwuzlaSort *sort_alias;
+  const BitwuzlaTerm *exp;
+  const BitwuzlaSort *sort_alias;
   struct BzlaSMT2Node *next;
 } BzlaSMT2Node;
 
@@ -371,8 +369,8 @@ typedef struct BzlaSMT2Item
   union
   {
     BzlaSMT2Node *node;
-    BitwuzlaTerm *exp;
-    BitwuzlaSort *sort;
+    const BitwuzlaTerm *exp;
+    const BitwuzlaSort *sort;
     char *str;
     char *strs[2];
   };
@@ -441,12 +439,12 @@ typedef struct BzlaSMT2Parser
   bool store_tokens; /* needed for parsing terms in get-value */
   BzlaIntStack *prefix;
   BzlaCharStack token, tokens;
-  BitwuzlaSortPtrStack sorts;
+  BitwuzlaSortConstPtrStack sorts;
   BzlaSMT2ItemStack work;
   BzlaSMT2Coo coo, lastcoo, nextcoo, perrcoo;
   BzlaSMT2Node *last_node;
   BzlaParseResult *res;
-  BitwuzlaTermPtrStack sat_assuming_assumptions;
+  BitwuzlaTermConstPtrStack sat_assuming_assumptions;
   uint32_t scope_level;
   struct
   {
@@ -1825,7 +1823,7 @@ check_arg_sorts_match_smt2(BzlaSMT2Parser *parser,
   assert(nargs >= 1);
 
   uint32_t i, j;
-  BitwuzlaSort *sort;
+  const BitwuzlaSort *sort;
 
   parser->perrcoo = p->coo;
 
@@ -2014,7 +2012,7 @@ check_real_arg_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *p, uint32_t idx)
 static int32_t parse_sort(BzlaSMT2Parser *parser,
                           int32_t tag,
                           bool allow_array_sort,
-                          BitwuzlaSort **sort);
+                          const BitwuzlaSort **sort);
 
 /* -------------------------------------------------------------------------- */
 
@@ -2022,7 +2020,7 @@ static void
 release_exp_and_overwrite(BzlaSMT2Parser *parser,
                           BzlaSMT2Item *item_open,
                           BzlaSMT2Item *item_cur,
-                          BitwuzlaTerm *exp)
+                          const BitwuzlaTerm *exp)
 {
   parser->work.top = item_cur;
   item_open->tag   = BZLA_EXP_TAG_SMT2;
@@ -2091,7 +2089,7 @@ close_term_bin_bool(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_OR_TAG_SMT2
          || item_cur->tag == BZLA_XOR_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
+  const BitwuzlaTerm *exp;
 
   if (nargs < 2)
   {
@@ -2135,7 +2133,7 @@ close_term_unary_bv_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_BV_REDOR_TAG_SMT2
          || item_cur->tag == BZLA_BV_REDAND_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
+  const BitwuzlaTerm *exp;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
@@ -2172,8 +2170,6 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_BV_SUB_TAG_SMT2
          || item_cur->tag == BZLA_BV_MUL_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
-
   if (nargs < 2)
   {
     parser->perrcoo = item_cur->coo;
@@ -2194,7 +2190,8 @@ close_term_bin_bv_left_associative(BzlaSMT2Parser *parser,
   BitwuzlaTermConstPtrStack args;
   BZLA_INIT_STACK(parser->mem, args);
   for (uint32_t i = 1; i <= nargs; i++) BZLA_PUSH_STACK(args, item_cur[i].exp);
-  exp = bitwuzla_mk_term(parser->bitwuzla, kind, nargs, args.start);
+  const BitwuzlaTerm *exp =
+      bitwuzla_mk_term(parser->bitwuzla, kind, nargs, args.start);
   BZLA_RELEASE_STACK(args);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
 
@@ -2242,12 +2239,10 @@ close_term_bin_bv_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_BV_SGT_TAG_SMT2
          || item_cur->tag == BZLA_BV_SGE_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
-
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, 2)) return 0;
   if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
-  exp = bitwuzla_mk_term2(
+  const BitwuzlaTerm *exp = bitwuzla_mk_term2(
       parser->bitwuzla, kind, item_cur[1].exp, item_cur[2].exp);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
   return 1;
@@ -2276,19 +2271,16 @@ close_term_extend_bv_fun(BzlaSMT2Parser *parser,
   assert(item_cur->tag == BZLA_BV_ZERO_EXTEND_TAG_SMT2
          || item_cur->tag == BZLA_BV_SIGN_EXTEND_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
-  uint32_t width;
-
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
-  width = bitwuzla_term_bv_get_size(item_cur[1].exp);
+  uint32_t width = bitwuzla_term_bv_get_size(item_cur[1].exp);
   if ((uint32_t)(INT32_MAX - item_cur->num) < width)
   {
     parser->perrcoo = item_cur->coo;
     return !perr_smt2(
         parser, "resulting bit-width of '%s' too large", item_cur->node->name);
   }
-  exp = bitwuzla_mk_term1_indexed1(
+  const BitwuzlaTerm *exp = bitwuzla_mk_term1_indexed1(
       parser->bitwuzla, kind, item_cur[1].exp, item_cur->num);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
   return 1;
@@ -2317,13 +2309,10 @@ close_term_rotate_bv_fun(BzlaSMT2Parser *parser,
   assert(item_cur->tag == BZLA_BV_ROTATE_LEFT_TAG_SMT2
          || item_cur->tag == BZLA_BV_ROTATE_RIGHT_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
-  uint32_t width;
-
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_bv_args_smt2(parser, item_cur, nargs)) return 0;
-  width = bitwuzla_term_bv_get_size(item_cur[1].exp);
-  exp   = bitwuzla_mk_term1_indexed1(
+  uint32_t width          = bitwuzla_term_bv_get_size(item_cur[1].exp);
+  const BitwuzlaTerm *exp = bitwuzla_mk_term1_indexed1(
       parser->bitwuzla, kind, item_cur[1].exp, item_cur->num % width);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
   return 1;
@@ -2354,11 +2343,10 @@ close_term_unary_fp_fun(BzlaSMT2Parser *parser,
   assert(item_cur->tag == BZLA_FP_ABS_TAG_SMT2
          || item_cur->tag == BZLA_FP_NEG_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
-
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_fp_args_smt2(parser, item_cur, nargs)) return 0;
-  exp = bitwuzla_mk_term1(parser->bitwuzla, kind, item_cur[1].exp);
+  const BitwuzlaTerm *exp =
+      bitwuzla_mk_term1(parser->bitwuzla, kind, item_cur[1].exp);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
   return 1;
 }
@@ -2389,11 +2377,9 @@ close_term_unary_rm_fp_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_SQRT_TAG_SMT2
          || item_cur->tag == BZLA_FP_TO_SBV_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
-
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   if (!check_rm_fp_args_smt2(parser, item_cur, nargs)) return 0;
-  exp = bitwuzla_mk_term2(
+  const BitwuzlaTerm *exp = bitwuzla_mk_term2(
       parser->bitwuzla, kind, item_cur[1].exp, item_cur[2].exp);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
   return 1;
@@ -2429,11 +2415,10 @@ close_term_unary_bool_fp_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_IS_NEG_TAG_SMT2
          || item_cur->tag == BZLA_FP_IS_POS_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
-
   if (!check_nargs_smt2(parser, item_cur, nargs, 1)) return 0;
   if (!check_fp_args_smt2(parser, item_cur, nargs)) return 0;
-  exp = bitwuzla_mk_term1(parser->bitwuzla, kind, item_cur[1].exp);
+  const BitwuzlaTerm *exp =
+      bitwuzla_mk_term1(parser->bitwuzla, kind, item_cur[1].exp);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
   return 1;
 }
@@ -2464,12 +2449,10 @@ close_term_bin_fp_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_MIN_TAG_SMT2
          || item_cur->tag == BZLA_FP_MAX_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
-
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   if (!check_fp_args_smt2(parser, item_cur, nargs)) return 0;
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, 2)) return 0;
-  exp = bitwuzla_mk_term2(
+  const BitwuzlaTerm *exp = bitwuzla_mk_term2(
       parser->bitwuzla, kind, item_cur[1].exp, item_cur[2].exp);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
   return 1;
@@ -2504,14 +2487,13 @@ close_term_bin_fp_fun_chainable(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_GT_TAG_SMT2);
 
   BitwuzlaTermConstPtrStack args;
-  BitwuzlaTerm *exp;
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
   BZLA_INIT_STACK(parser->mem, args);
   if (!check_fp_args_smt2(parser, item_cur, nargs)) return 0;
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, nargs)) return 0;
   for (uint32_t i = 1; i <= nargs; i++) BZLA_PUSH_STACK(args, item_cur[i].exp);
-  exp = bitwuzla_mk_term(bitwuzla, kind, nargs, args.start);
+  const BitwuzlaTerm *exp = bitwuzla_mk_term(bitwuzla, kind, nargs, args.start);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
   BZLA_RELEASE_STACK(args);
   return 1;
@@ -2544,16 +2526,14 @@ close_term_bin_rm_fp_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_FP_MUL_TAG_SMT2
          || item_cur->tag == BZLA_FP_DIV_TAG_SMT2);
 
-  BitwuzlaTerm *exp;
-
   if (!check_nargs_smt2(parser, item_cur, nargs, 3)) return 0;
   if (!check_rm_fp_args_smt2(parser, item_cur, nargs)) return 0;
   if (!check_arg_sorts_match_smt2(parser, item_cur, 1, 2)) return 0;
-  exp = bitwuzla_mk_term3(parser->bitwuzla,
-                          kind,
-                          item_cur[1].exp,
-                          item_cur[2].exp,
-                          item_cur[3].exp);
+  const BitwuzlaTerm *exp = bitwuzla_mk_term3(parser->bitwuzla,
+                                              kind,
+                                              item_cur[1].exp,
+                                              item_cur[2].exp,
+                                              item_cur[3].exp);
   release_exp_and_overwrite(parser, item_open, item_cur, exp);
   return 1;
 }
@@ -2592,7 +2572,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   assert(item_cur->idx1);
   assert(item_cur);
 
-  BitwuzlaTerm *exp;
+  const BitwuzlaTerm *exp;
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
@@ -2607,7 +2587,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
 
   if (item_cur[2].tag == BZLA_REAL_CONSTANT_TAG_SMT2)
   {
-    BitwuzlaSort *s =
+    const BitwuzlaSort *s =
         bitwuzla_mk_fp_sort(bitwuzla, item_cur->idx0, item_cur->idx1);
     exp = bitwuzla_mk_fp_value_from_real(
         bitwuzla, s, item_cur[1].exp, item_cur[2].str);
@@ -2615,7 +2595,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   }
   else if (item_cur[2].tag == BZLA_REAL_DIV_TAG_SMT2)
   {
-    BitwuzlaSort *s =
+    const BitwuzlaSort *s =
         bitwuzla_mk_fp_sort(bitwuzla, item_cur->idx0, item_cur->idx1);
     exp = bitwuzla_mk_fp_value_from_rational(
         bitwuzla, s, item_cur[1].exp, item_cur[2].strs[0], item_cur[2].strs[1]);
@@ -2624,7 +2604,7 @@ close_term_to_fp_two_args(BzlaSMT2Parser *parser,
   }
   else
   {
-    BitwuzlaSort *s      = bitwuzla_term_get_sort(item_cur[2].exp);
+    const BitwuzlaSort *s      = bitwuzla_term_get_sort(item_cur[2].exp);
     const BitwuzlaTerm *args[] = {item_cur[1].exp, item_cur[2].exp};
     uint32_t idxs[]      = {item_cur->idx0, item_cur->idx1};
     if (item_cur->tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
@@ -2747,7 +2727,7 @@ close_term(BzlaSMT2Parser *parser)
 {
   assert(parser);
 
-  BitwuzlaTerm *exp, *tmp;
+  const BitwuzlaTerm *exp, *tmp;
   int32_t open, tag;
   uint32_t i, width, nargs;
   BzlaSMT2Item *item_open;
@@ -2822,7 +2802,7 @@ close_term(BzlaSMT2Parser *parser)
       BitwuzlaTermConstPtrStack fargs;
       BZLA_INIT_STACK(parser->mem, fargs);
 
-      BitwuzlaTerm *fun = item_cur[0].exp;
+      const BitwuzlaTerm *fun = item_cur[0].exp;
       if (nargs != bitwuzla_term_fun_get_arity(fun))
       {
         BZLA_RELEASE_STACK(fargs);
@@ -4081,7 +4061,7 @@ parse_open_close_term_indexed_fp_special_const(
     int32_t tag,
     BzlaSMT2Node *node,
     const char *msg,
-    BitwuzlaTerm *(*fun)(Bitwuzla *, const BitwuzlaSort *) )
+    const BitwuzlaTerm *(*fun)(Bitwuzla *, const BitwuzlaSort *) )
 {
   assert(parser);
   assert(item_cur);
@@ -4093,19 +4073,15 @@ parse_open_close_term_indexed_fp_special_const(
          || tag == BZLA_FP_NAN_TAG_SMT2);
   (void) tag;
 
-  BzlaSMT2Item *item_open;
-  BitwuzlaTerm *exp;
-  BitwuzlaSort *sort;
-
   Bitwuzla *bitwuzla = parser->bitwuzla;
-
-  item_open = item_cur - 1;
+  BzlaSMT2Item *item_open = item_cur - 1;
   assert(node && tag == (int32_t) node->tag);
   if (!parse_bit_width_smt2(parser, &item_open->idx0)) return 0;
   if (!parse_bit_width_smt2(parser, &item_open->idx1)) return 0;
 
-  sort = bitwuzla_mk_fp_sort(bitwuzla, item_open->idx0, item_open->idx1);
-  exp  = fun(bitwuzla, sort);
+  const BitwuzlaSort *sort =
+      bitwuzla_mk_fp_sort(bitwuzla, item_open->idx0, item_open->idx1);
+  const BitwuzlaTerm *exp = fun(bitwuzla, sort);
 
   item_open->tag   = BZLA_EXP_TAG_SMT2;
   item_open->node  = node;
@@ -4126,8 +4102,8 @@ parse_open_term_indexed(BzlaSMT2Parser *parser, BzlaSMT2Item *item_cur)
   uint32_t width, width2;
   int32_t tag;
   BzlaSMT2Node *node;
-  BitwuzlaTerm *exp;
-  BitwuzlaSort *s;
+  const BitwuzlaTerm *exp;
+  const BitwuzlaSort *s;
 
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
@@ -4571,7 +4547,7 @@ parse_open_term(BzlaSMT2Parser *parser, int32_t tag)
   uint32_t width, width2;
   BzlaSMT2Item *item_cur;
   BzlaSMT2Node *sym, *new_sym;
-  BitwuzlaSort *s;
+  const BitwuzlaSort *s;
 
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
@@ -4747,12 +4723,12 @@ static int32_t
 parse_term_aux_smt2(BzlaSMT2Parser *parser,
                     bool have_look_ahead,
                     int32_t look_ahead,
-                    BitwuzlaTerm **resptr,
+                    const BitwuzlaTerm **resptr,
                     BzlaSMT2Coo *cooptr)
 {
   size_t work_cnt;
   int32_t tag;
-  BitwuzlaTerm *res;
+  const BitwuzlaTerm *res;
   BzlaSMT2Item *l, *p;
 
   parser->open = 0;
@@ -4833,7 +4809,7 @@ parse_term_aux_smt2(BzlaSMT2Parser *parser,
 
 static int32_t
 parse_term_smt2(BzlaSMT2Parser *parser,
-                BitwuzlaTerm **resptr,
+                const BitwuzlaTerm **resptr,
                 BzlaSMT2Coo *cooptr)
 {
   return parse_term_aux_smt2(parser, false, 0, resptr, cooptr);
@@ -4846,7 +4822,7 @@ parse_term_smt2(BzlaSMT2Parser *parser,
 static int32_t
 parse_bv_or_fp_sort(BzlaSMT2Parser *parser,
                     uint32_t skiptokens,
-                    BitwuzlaSort **resptr)
+                    const BitwuzlaSort **resptr)
 {
   assert(skiptokens <= 2);
 
@@ -4921,9 +4897,9 @@ parse_bv_or_fp_sort(BzlaSMT2Parser *parser,
 }
 
 static int32_t
-parse_array_sort(BzlaSMT2Parser *parser, int32_t tag, BitwuzlaSort **sort)
+parse_array_sort(BzlaSMT2Parser *parser, int32_t tag, const BitwuzlaSort **sort)
 {
-  BitwuzlaSort *index, *value;
+  const BitwuzlaSort *index, *value;
   if (tag == BZLA_ARRAY_TAG_SMT2)
   {
     // TODO (ma): check all logics with no arrays?
@@ -4947,7 +4923,7 @@ static int32_t
 parse_sort(BzlaSMT2Parser *parser,
            int32_t tag,
            bool allow_array_sort,
-           BitwuzlaSort **sort)
+           const BitwuzlaSort **sort)
 {
   BzlaSMT2Node *alias;
 
@@ -5036,7 +5012,7 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
   BitwuzlaSortConstPtrStack args;
   BzlaSMT2Node *fun;
   fun = 0;
-  BitwuzlaSort *sort, *s;
+  const BitwuzlaSort *sort, *s;
 
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
@@ -5164,13 +5140,13 @@ static int32_t
 define_fun_smt2(BzlaSMT2Parser *parser)
 {
   int32_t tag, nargs = 0, len;
-  BitwuzlaTerm *eq, *tmp, *exp = 0;
+  const BitwuzlaTerm *eq, *tmp, *exp = 0;
   BzlaSMT2Coo coo;
   BzlaSMT2Item *item;
   BzlaSMT2Node *fun, *arg, *new_arg;
   BitwuzlaTermConstPtrStack args;
   char *psym;
-  BitwuzlaSort *sort, *s;
+  const BitwuzlaSort *sort, *s;
 
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
@@ -5375,7 +5351,7 @@ define_sort_smt2(BzlaSMT2Parser *parser)
 {
   int32_t tag;
   BzlaSMT2Node *sort_alias;
-  BitwuzlaSort *sort;
+  const BitwuzlaSort *sort;
 
   sort_alias = 0;
   if (!read_symbol(parser, " after 'define-sort'", &sort_alias)) return 0;
@@ -5410,7 +5386,7 @@ declare_sort_smt2(BzlaSMT2Parser *parser)
 {
   uint32_t arity, opt_bit_width = 0;
   BzlaSMT2Node *sort_alias;
-  BitwuzlaSort *sort;
+  const BitwuzlaSort *sort;
 
   opt_bit_width =
       bitwuzla_get_option(parser->bitwuzla, BITWUZLA_OPT_DECLSORT_BV_WIDTH);
@@ -5681,11 +5657,11 @@ check_sat(BzlaSMT2Parser *parser)
 
 static int32_t
 read_exp_list(BzlaSMT2Parser *parser,
-              BitwuzlaTermPtrStack *exps,
+              BitwuzlaTermConstPtrStack *exps,
               BzlaSMT2Coo *coo)
 {
-  int32_t tag       = 0;
-  BitwuzlaTerm *exp = 0;
+  int32_t tag             = 0;
+  const BitwuzlaTerm *exp = 0;
 
   /* parse list of symbols/terms */
   BZLA_INIT_STACK(parser->mem, *exps);
@@ -5722,10 +5698,10 @@ read_command_smt2(BzlaSMT2Parser *parser)
 {
   uint32_t i, width, level;
   int32_t tag;
-  BitwuzlaTerm *exp = 0;
+  const BitwuzlaTerm *exp = 0;
   BzlaSMT2Coo coo;
-  BitwuzlaTermPtrStack exps;
-  BitwuzlaTerm **failed_assumptions, **unsat_core;
+  BitwuzlaTermConstPtrStack exps;
+  const BitwuzlaTerm **failed_assumptions, **unsat_core;
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
   coo.x = coo.y = 0;

@@ -22,8 +22,8 @@ class TestRotate : public TestBitwuzla
     int32_t res;
     BitwuzlaKind kind, kindi;
 
-    BitwuzlaSort *sort = bitwuzla_mk_bv_sort(d_bzla, bw);
-    BitwuzlaTerm *e0   = bitwuzla_mk_const(d_bzla, sort, "e0");
+    const BitwuzlaSort *sort = bitwuzla_mk_bv_sort(d_bzla, bw);
+    const BitwuzlaTerm *e0   = bitwuzla_mk_const(d_bzla, sort, "e0");
 
     if (is_left)
     {
@@ -36,11 +36,12 @@ class TestRotate : public TestBitwuzla
       kindi = BITWUZLA_KIND_BV_RORI;
     }
 
-    BitwuzlaTerm *roti = bitwuzla_mk_term1_indexed1(d_bzla, kindi, e0, nbits);
-    BitwuzlaTerm *rot0 = bitwuzla_mk_term2(
+    const BitwuzlaTerm *roti =
+        bitwuzla_mk_term1_indexed1(d_bzla, kindi, e0, nbits);
+    const BitwuzlaTerm *rot0 = bitwuzla_mk_term2(
         d_bzla, kind, e0, bitwuzla_mk_bv_value_uint64(d_bzla, sort, nbits));
 
-    BitwuzlaTerm *ne0 =
+    const BitwuzlaTerm *ne0 =
         bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_DISTINCT, rot0, roti);
 
     bitwuzla_assert(d_bzla, ne0);
