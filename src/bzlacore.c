@@ -788,9 +788,7 @@ terminate_aux_bzla(void *bzla)
 
   bt = (Bzla *) bzla;
   if (!bt->cbs.term.fun) return 0;
-  if (bt->cbs.term.done) return 1;
   res = ((int32_t(*)(void *)) bt->cbs.term.fun)(bt->cbs.term.state);
-  if (res) bt->cbs.term.done = res;
   return res;
 }
 

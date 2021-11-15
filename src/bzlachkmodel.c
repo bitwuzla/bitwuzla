@@ -113,7 +113,6 @@ bzla_check_model(BzlaCheckModelContext *ctx)
   /* Reset terminate callbacks. */
   clone->cbs.term.fun   = 0;
   clone->cbs.term.state = 0;
-  clone->cbs.term.done  = 0;
 
   /* formula did not change since last sat call, we have to reset assumptions
    * from the previous run */

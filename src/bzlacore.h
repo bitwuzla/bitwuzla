@@ -53,7 +53,6 @@ struct BzlaCallbacks
 
     void *fun;   /* termination callback function */
     void *state; /* termination callback function arguments */
-    int32_t done;
   } term;
 };
 

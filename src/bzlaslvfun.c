@@ -2763,7 +2763,7 @@ sat_fun_solver(BzlaFunSolver *slv)
     }
     else if (result == BZLA_RESULT_UNKNOWN)
     {
-      assert(slv->sat_limit > -1 || bzla->cbs.term.done
+      assert(slv->sat_limit > -1 || bzla_terminate(bzla)
              || bzla_opt_get(bzla, BZLA_OPT_PRINT_DIMACS));
       break;
     }

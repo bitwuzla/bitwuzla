@@ -2261,7 +2261,7 @@ find_model(BzlaGroundSolvers *gslv, bool skip_exists)
     /* solver terminated due to termination callback */
     else if (r == BZLA_RESULT_UNKNOWN)
     {
-      assert(gslv->exists->cbs.term.done);
+      assert(bzla_terminate(gslv->exists));
       goto DONE;
     }
 
@@ -2316,7 +2316,7 @@ find_model(BzlaGroundSolvers *gslv, bool skip_exists)
   /* solver terminated due to termination callback */
   else if (r == BZLA_RESULT_UNKNOWN)
   {
-    assert(gslv->forall->cbs.term.done);
+    assert(bzla_terminate(gslv->forall));
     goto DONE;
   }
 
