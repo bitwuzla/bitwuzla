@@ -1031,7 +1031,7 @@ bzla_opt_init_opts(Bzla *bzla)
   add_opt_help(mm,
                opts,
                "last",
-               BZLA_PROP_ENTAILED_FIRST,
+               BZLA_PROP_ENTAILED_LAST,
                "process only the last entailed propagation");
   bzla->options[BZLA_OPT_PROP_ENTAILED].options = opts;
   init_opt(bzla,
