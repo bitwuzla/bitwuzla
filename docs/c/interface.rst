@@ -41,6 +41,11 @@ BitwuzlaOption
 See :ref:`c/options:options` for more details and examples on how to set and
 get options.
 
+BitwuzlaOptionInfo
+^^^^^^^^^^^^^^^^^^
+.. doxygenstruct:: BitwuzlaOptionInfo
+  :members:
+
 BitwuzlaResult
 ^^^^^^^^^^^^^^^
 .. doxygenenum:: BitwuzlaResult

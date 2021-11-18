@@ -560,6 +560,28 @@ TEST_F(TestApi, set_option_str)
   bitwuzla_delete(bzla);
 }
 
+TEST_F(TestApi, get_option_info)
+{
+  Bitwuzla *bzla = bitwuzla_new();
+
+  BitwuzlaOptionInfo info;
+
+  for (int32_t i = 0; i < BITWUZLA_OPT_NUM_OPTS; ++i)
+  {
+    BitwuzlaOption opt = static_cast<BitwuzlaOption>(i);
+    bitwuzla_get_option_info(bzla, opt, &info);
+    if (info.is_numeric)
+    {
+      ASSERT_EQ(bitwuzla_get_option(bzla, opt), info.numeric.cur_val);
+    }
+    else
+    {
+      ASSERT_TRUE(
+          !strcmp(bitwuzla_get_option_str(bzla, opt), info.string.cur_val));
+    }
+  }
+}
+
 TEST_F(TestApi, mk_array_sort)
 {
   ASSERT_DEATH(bitwuzla_mk_array_sort(nullptr, d_bv_sort1, d_bv_sort8),

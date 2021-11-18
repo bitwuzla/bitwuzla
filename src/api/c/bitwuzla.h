@@ -1538,6 +1538,58 @@ enum BitwuzlaOption
 typedef enum BitwuzlaOption BitwuzlaOption;
 #endif
 
+/**
+ * The option info struct holds all information about an option, which can
+ * be queried via `bitwuzla_get_option_info`.
+ *
+ * @see
+ *   * `bitwuzla_get_option_info`
+ */
+struct BitwuzlaOptionInfo
+{
+  /** The Bitwuzla option. */
+  BitwuzlaOption opt;
+  /** Short option name. */
+  const char *shrt;
+  /** Long option name. */
+  const char *lng;
+  /** Option description. */
+  const char *desc;
+  /** Indicates whether values are numeric or strings. */
+  bool is_numeric;
+
+  union
+  {
+    struct
+    {
+      /** Current option value. */
+      uint32_t cur_val;
+      /** Default option value. */
+      uint32_t def_val;
+      /** Minimum option value. */
+      uint32_t min_val;
+      /** Maximum option value. */
+      uint32_t max_val;
+    } numeric;
+
+    struct
+    {
+      /** Current string option value. */
+      const char *cur_val;
+      /** Default string option value. */
+      const char *def_val;
+      /** Number of available string values. */
+      size_t num_values;
+      /** List of available string values. */
+      const char **values;
+    } string;
+  };
+};
+
+#ifndef DOXYGEN_SKIP
+typedef struct BitwuzlaOptionInfo BitwuzlaOptionInfo;
+#endif
+
 /** The term kind. */
 enum BitwuzlaKind
 {
@@ -2225,6 +2277,20 @@ uint32_t bitwuzla_get_option(Bitwuzla *bitwuzla, BitwuzlaOption option);
  *   * `bitwuzla_set_option_str`
  */
 const char* bitwuzla_get_option_str(Bitwuzla *bitwuzla, BitwuzlaOption option);
+
+/**
+ * Get the details of an option.
+ *
+ * @param bitwuzla The Bitwuzla instance.
+ * @param option The option.
+ * @param info The option info to populate.
+ *
+ * @see
+ *   * `BitwuzlaOptionInfo`
+ */
+void bitwuzla_get_option_info(Bitwuzla *bitwuzla,
+                              BitwuzlaOption option,
+                              BitwuzlaOptionInfo *info);
 
 /**
  * Create an array sort.

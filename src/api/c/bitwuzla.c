@@ -30,6 +30,7 @@
 BZLA_DECLARE_STACK(BitwuzlaTermConstPtr, const BitwuzlaTerm *);
 BZLA_DECLARE_STACK(BitwuzlaTermConstPtrPtr, const BitwuzlaTerm **);
 BZLA_DECLARE_STACK(BitwuzlaConstSortPtr, const BitwuzlaSort *);
+BZLA_DECLARE_STACK(BzlaConstCharPtr, const char *);
 
 /* -------------------------------------------------------------------------- */
 
@@ -61,6 +62,7 @@ struct Bitwuzla
   BitwuzlaTermConstPtrStack d_fun_args;
   BitwuzlaTermConstPtrPtrStack d_fun_args_ptr;
   BitwuzlaTermConstPtrStack d_fun_values;
+  BzlaConstCharPtrStack d_option_info_values;
   /* Map internal sort id to external sort wrapper. */
   BzlaIntHashTable *d_sort_map;
   /* Internal solver. */
@@ -1023,6 +1025,7 @@ init(Bitwuzla *bitwuzla, BzlaMemMgr *mm)
   BZLA_INIT_STACK(mm, bitwuzla->d_fun_args);
   BZLA_INIT_STACK(mm, bitwuzla->d_fun_args_ptr);
   BZLA_INIT_STACK(mm, bitwuzla->d_fun_values);
+  BZLA_INIT_STACK(mm, bitwuzla->d_option_info_values);
   bzla_opt_set(bitwuzla->d_bzla, BZLA_OPT_AUTO_CLEANUP, 1);
 }
 
@@ -1368,6 +1371,57 @@ bitwuzla_get_option_str(Bitwuzla *bitwuzla,
              "option is configured with an integer value, use "
              "bitwuzla_get_option instead.");
   return bzla_opt_get_str_value(bzla, opt);
+}
+
+void
+bitwuzla_get_option_info(Bitwuzla *bitwuzla,
+                         BitwuzlaOption option,
+                         BitwuzlaOptionInfo *info)
+{
+  BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
+  BZLA_CHECK_ARG_NOT_NULL(info);
+
+  Bzla *bzla     = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BzlaOption opt = BZLA_IMPORT_BITWUZLA_OPTION(option);
+
+  BZLA_CHECK_OPTION(bzla, opt);
+
+  BZLA_CLR(info);
+  info->opt        = option;
+  info->shrt       = bzla_opt_get_shrt(bzla, opt);
+  info->lng        = bzla_opt_get_lng(bzla, opt);
+  info->desc       = bzla_opt_get_desc(bzla, opt);
+  info->is_numeric = !bzla_opt_is_enum_option(bzla, opt);
+
+  if (info->is_numeric)
+  {
+    info->numeric.cur_val = bzla_opt_get(bzla, opt);
+    info->numeric.def_val = bzla_opt_get_dflt(bzla, opt);
+    info->numeric.min_val = bzla_opt_get_min(bzla, opt);
+    info->numeric.max_val = bzla_opt_get_max(bzla, opt);
+  }
+  else
+  {
+    BZLA_RESET_STACK(bitwuzla->d_option_info_values);
+    info->string.cur_val = bzla_opt_get_str_value(bzla, opt);
+
+    int32_t def_val = bzla_opt_get_dflt(bzla, opt);
+    BzlaPtrHashTableIterator it;
+    BzlaOptHelp *oh;
+    bzla_iter_hashptr_init(&it, bzla->options[opt].options);
+    while (bzla_iter_hashptr_has_next(&it))
+    {
+      oh = it.bucket->data.as_ptr;
+      BZLA_PUSH_STACK(bitwuzla->d_option_info_values,
+                      bzla_iter_hashptr_next(&it));
+      if (oh->val == def_val)
+      {
+        info->string.def_val = BZLA_TOP_STACK(bitwuzla->d_option_info_values);
+      }
+    }
+    info->string.num_values = BZLA_COUNT_STACK(bitwuzla->d_option_info_values);
+    info->string.values     = bitwuzla->d_option_info_values.start;
+  }
 }
 
 const BitwuzlaSort *

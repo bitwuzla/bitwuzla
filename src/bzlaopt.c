@@ -219,6 +219,11 @@ bzla_opt_init_opts(Bzla *bzla)
       bzla->mm, (BzlaHashPtr) bzla_hash_str, (BzlaCmpPtr) strcmpoptval);
   add_opt_help(mm,
                opts,
+               "none",
+               BZLA_OUTPUT_FORMAT_NONE,
+               "auto-detect based on input format");
+  add_opt_help(mm,
+               opts,
                "btor",
                BZLA_OUTPUT_FORMAT_BTOR,
                "use BTOR as output file format");
