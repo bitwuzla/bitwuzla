@@ -1062,6 +1062,7 @@ reset(Bitwuzla *bitwuzla)
   BZLA_RELEASE_STACK(bitwuzla->d_fun_args);
   BZLA_RELEASE_STACK(bitwuzla->d_fun_args_ptr);
   BZLA_RELEASE_STACK(bitwuzla->d_fun_values);
+  BZLA_RELEASE_STACK(bitwuzla->d_option_info_values);
   if (bitwuzla->d_bv_value)
   {
     bzla_mem_freestr(bitwuzla->d_mm, bitwuzla->d_bv_value);

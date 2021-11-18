@@ -2283,7 +2283,8 @@ const char* bitwuzla_get_option_str(Bitwuzla *bitwuzla, BitwuzlaOption option);
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param option The option.
- * @param info The option info to populate.
+ * @param info The option info to populate, will be valid until the next
+ *             `bitwuzla_get_option_info` call.
  *
  * @see
  *   * `BitwuzlaOptionInfo`
