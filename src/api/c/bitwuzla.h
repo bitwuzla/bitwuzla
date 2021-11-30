@@ -2180,7 +2180,7 @@ bool bitwuzla_terminate(Bitwuzla *bitwuzla);
  * `bitwuzla_get_termination_callback_state()`.
  *
  * @param bitwuzla The Bitwuzla instance.
- * @param fun The callback function, returns a value > 0 if `bitwuzla` has
+ * @param fun The callback function, returns a value != 0 if `bitwuzla` has
  *            been terminated.
  * @param state The argument to the callback function.
  *
