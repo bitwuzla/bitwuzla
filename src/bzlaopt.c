@@ -375,7 +375,7 @@ bzla_opt_init_opts(Bzla *bzla)
            false,
            "seed",
            "s",
-           0,
+           42,
            0,
            UINT32_MAX,
            "random number generator seed");
