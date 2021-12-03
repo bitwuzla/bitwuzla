@@ -113,7 +113,7 @@ target_include_directories(bitwuzla
 target_include_directories(bitwuzla PRIVATE ${Btor2Tools_INCLUDE_DIR})
 target_link_libraries(bitwuzla ${Btor2Tools_LIBRARIES})
 
-target_include_directories(bitwuzla PRIVATE lib/bzla-ls/src)
+target_include_directories(bitwuzla PRIVATE subprojects/bitwuzla-libs/src)
 target_link_libraries(bitwuzla bzlabv bzlals bzlarng)
 
 if(GMP_FOUND)
