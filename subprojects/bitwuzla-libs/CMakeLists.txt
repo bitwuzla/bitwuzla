@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.9)
 
 #-----------------------------------------------------------------------------#
 
-project(bzla-ls)
+project(bzla-libs)
 set(VERSION "0.0")
 string(TIMESTAMP TIME)
 
@@ -268,7 +268,7 @@ if (TESTING)
 endif()
 
 #-----------------------------------------------------------------------------#
-# Install config and configversion for bzla-ls to add support for
+# Install config and configversion for bzla-libs to add support for
 # find_package(bzlals).
 
 # TODO
@@ -287,7 +287,7 @@ endif()
 #)
 
 #-----------------------------------------------------------------------------#
-# Print bzla-ls configuration
+# Print bzla-libs configuration
 
 if(NOT WIN32)
   string(ASCII 27 Esc)
