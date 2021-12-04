@@ -50,7 +50,11 @@ jobs:
         run: |
           brew install gmp
 
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.BZLA_LIBS_TOKEN }}
+          submodules: 'recursive'
 
       - name: Restore Dependencies
         id: restore-deps
