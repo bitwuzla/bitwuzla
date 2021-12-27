@@ -299,6 +299,7 @@ elseif(NOT Lingeling_FOUND
        AND NOT CaDiCaL_FOUND
        AND NOT CryptoMiniSat_FOUND
        AND NOT PicoSAT_FOUND
+       AND NOT Kissat_FOUND
        AND NOT MiniSat_FOUND)
   message(FATAL_ERROR "No SAT solver found")
 endif()
