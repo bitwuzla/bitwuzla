@@ -845,7 +845,10 @@ remove_from_hash_tables(Bzla *bzla, BzlaNode *exp, bool keep_symbol)
       break;
     case BZLA_UF_NODE: bzla_hashptr_table_remove(bzla->ufs, exp, 0, 0); break;
     case BZLA_FUN_EQ_NODE:
-      bzla_hashptr_table_remove(bzla->feqs, exp, 0, 0);
+      if (!exp->parameterized)
+      {
+        bzla_hashptr_table_remove(bzla->feqs, exp, 0, 0);
+      }
       break;
     default: break;
   }
@@ -2769,7 +2772,7 @@ new_node(Bzla *bzla, BzlaNodeKind kind, uint32_t arity, BzlaNode *e[])
   for (i = 0; i < arity; i++)
     connect_child_exp(bzla, (BzlaNode *) exp, e[i], i);
 
-  if (kind == BZLA_FUN_EQ_NODE)
+  if (kind == BZLA_FUN_EQ_NODE && !exp->parameterized)
   {
     assert(!bzla_hashptr_table_get(bzla->feqs, exp));
     bzla_hashptr_table_add(bzla->feqs, exp)->data.as_int = 0;
