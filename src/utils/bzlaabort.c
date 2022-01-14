@@ -48,7 +48,7 @@ void
 bzla_set_abort_callback(void (*fun)(const char *msg))
 {
   bzla_abort_callback.abort_fun = abort_aux;
-  bzla_abort_callback.cb_fun    = fun;
+  bzla_abort_callback.cb_fun    = fun ? fun : bzla_abort_fun;
 }
 
 /* -------------------------------------------------------------------------- */
