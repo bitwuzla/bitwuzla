@@ -716,9 +716,9 @@ bzla_util_getenv_value(BzlaMemMgr *mm, const char *lname)
 
   BZLA_INIT_STACK(mm, uname);
   BZLA_PUSH_STACK(uname, 'B');
-  BZLA_PUSH_STACK(uname, 'T');
-  BZLA_PUSH_STACK(uname, 'O');
-  BZLA_PUSH_STACK(uname, 'R');
+  BZLA_PUSH_STACK(uname, 'Z');
+  BZLA_PUSH_STACK(uname, 'L');
+  BZLA_PUSH_STACK(uname, 'A');
 
   for (i = 0; lname[i] != 0; i++)
   {
