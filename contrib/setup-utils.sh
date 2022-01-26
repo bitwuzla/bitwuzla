@@ -67,7 +67,7 @@ function is_windows
   # otherwise.
   #
   case "$(uname -s)" in
-    CYGWIN*|MINGW32*|MSYS*)
+    CYGWIN*|MINGW32*|MINGW64*|MSYS*)
       return
       ;;
   esac
