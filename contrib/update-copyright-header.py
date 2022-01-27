@@ -4,7 +4,7 @@
 #
 # This file is part of Bitwuzla.
 #
-# Copyright (C) 2007-2021 by the authors listed in the AUTHORS file.
+# Copyright (C) 2007-2022 by the authors listed in the AUTHORS file.
 #
 # See COPYING for more information on using this software.
 ##
@@ -33,7 +33,7 @@ C_HEADER_TEMPLATE="""/***
  *
  * This file is part of Bitwuzla.
  *
- * Copyright (C) 2007-2021 by the authors listed in the AUTHORS file.
+ * Copyright (C) 2007-2022 by the authors listed in the AUTHORS file.
  *
  * See COPYING for more information on using this software.
  */
@@ -44,7 +44,7 @@ PY_HEADER_TEMPLATE="""###
 #
 # This file is part of Bitwuzla.
 #
-# Copyright (C) 2007-2021 by the authors listed in the AUTHORS file.
+# Copyright (C) 2007-2022 by the authors listed in the AUTHORS file.
 #
 # See COPYING for more information on using this software.
 ##

@@ -25,7 +25,7 @@ sys.path.insert(0, '${CMAKE_CURRENT_SOURCE_DIR}/extensions/')
 # -- Project information -----------------------------------------------------
 
 project = 'Bitwuzla'
-copyright = '2021, the authors of Bitwuzla'
+copyright = '2022, the authors of Bitwuzla'
 author = 'The authors of Bitwuzla'
 
 
