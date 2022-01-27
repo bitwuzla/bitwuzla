@@ -885,7 +885,7 @@ print_opt_help(BitwuzlaMainApp *app,
   "Note that all of the following options can also be set via env. variables " \
   "of"                                                                         \
   "\n"                                                                         \
-  "the form 'BTOR<capitalized long name without '-' and ':'>=<int>'."          \
+  "the form 'BZLA<capitalized long name without '-' and ':'>=<int>'."          \
   "\n\n"
 
 static void
