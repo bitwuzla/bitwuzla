@@ -4,7 +4,8 @@ The main authors and developers of Bitwuzla are:
   Mathias Preiner, Stanford University.
 
 Bitwuzlas's copyright is held by these individuals and the affiliated
-institutions at the time of their contributions.
+institutions at the time of their contributions.  See the file COPYING for
+details on the copyright and licensing of Bitwuzla.
 
 This version of Bitwuzla is forked from Boolector commit 95859db.
 
