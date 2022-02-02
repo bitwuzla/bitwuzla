@@ -218,6 +218,8 @@ struct Bzla
     double rewrite;
     double occurrence;
   } time;
+
+  uint64_t clock_deadline;
 };
 
 /* Creates new bitwuzla instance. */
@@ -327,4 +329,9 @@ void bzla_process_unsynthesized_constraints(Bzla *bzla);
 void bzla_insert_unsynthesized_constraint(Bzla *bzla, BzlaNode *constraint);
 void bzla_set_simplified_exp(Bzla *bzla, BzlaNode *exp, BzlaNode *simplified);
 void bzla_delete_varsubst_constraints(Bzla *bzla);
+
+/*
+ * not static, as we need to know the address of this function in bzla_opt_set
+ */
+int32_t bzla_timeout_deadline_compare(void *param);
 #endif

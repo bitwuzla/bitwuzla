@@ -512,6 +512,75 @@ def test_substitute(env):
     assert terms == [P_a, P_b]
 
 
+def test_timeout(env):
+    """
+    Test to validate that it possible to set a timeout via the API
+    """
+
+    # Constant for the internal Bitwuzla value for when CaDiCaL is enabled
+    CADICAL_SOLVER_ID = 4
+
+    # Try enabling CaDiCaL
+    env.bzla.set_option(Option.SAT_ENGINE, "cadical")
+
+    # Check if CaDiCaL has been enabled
+    if env.bzla.get_option(Option.SAT_ENGINE) != CADICAL_SOLVER_ID:
+        # If not, we assume that this build of Boolector does not support
+        # CaDiCaL, so we don't run the timeout tests
+        return
+
+    # Enable incremental
+    env.bzla.set_option(Option.INCREMENTAL, True)
+
+    # Enable the timeout
+    env.bzla.set_option(Option.TIMEOUT, 500)
+
+    # What are the size of starting terms + the result of our extensions
+    term_width = 16
+    base_bv_sort = env.bzla.mk_bv_sort(term_width)
+    extended_bv_sort = env.bzla.mk_bv_sort(term_width * 2)
+
+    # Two base values
+    v1 = env.bzla.mk_const(base_bv_sort, "v1")
+    v2 = env.bzla.mk_const(base_bv_sort, "v2")
+
+    # Create the signed extension of them both
+    ext1 = env.bzla.mk_term(Kind.BV_SIGN_EXTEND, [v1], [term_width])
+    ext2 = env.bzla.mk_term(Kind.BV_SIGN_EXTEND, [v2], [term_width])
+
+    # Zero as a constant
+    zero = env.bzla.mk_bv_value(extended_bv_sort, 0)
+
+    # Construct:
+    #
+    #    (not (= ((_ sign_extend 16) v2) (_ bv0 32)))
+    #
+    ext2_zero = env.bzla.mk_term(Kind.EQUAL, [ext2, zero])
+    not_ext2_zero = env.bzla.mk_term(Kind.NOT, [ext2_zero])
+
+    # Construct:
+    #
+    #    (not (= (bvsdiv (bvmul ((_ sign_extend 16) v1) ((_ sign_extend 16) v2)) ((_ sign_extend 16) v2)) ((_ sign_extend 16) v1)))
+    #
+    ext1_mul_ext2 = env.bzla.mk_term(Kind.BV_MUL, [ext1, ext2])
+    div_mul_ext2 = env.bzla.mk_term(Kind.BV_SDIV, [ext1_mul_ext2, ext2])
+    div_eq_ext1 = env.bzla.mk_term(Kind.EQUAL, [div_mul_ext2, ext1])
+    not_div_eq_ext1 = env.bzla.mk_term(Kind.NOT, [div_eq_ext1])
+
+    # We're now going assert both formulae in different scopes, such that we
+    # can pop on timeout
+    env.bzla.push()
+    env.bzla.assert_formula(not_ext2_zero)
+    env.bzla.push()
+    env.bzla.assert_formula(not_div_eq_ext1)
+
+    # Asserting both formulae should hit timeout
+    assert env.bzla.check_sat() == Result.UNKNOWN
+
+    # Popping the second means that the first scope is SAT
+    env.bzla.pop()
+    assert env.bzla.check_sat() == Result.SAT
+
 
 # BitwuzlaSort tests
 # TODO

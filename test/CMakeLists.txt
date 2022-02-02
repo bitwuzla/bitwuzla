@@ -1247,6 +1247,41 @@ if(SymFPU_FOUND)
   )
 endif()
 
+# Solvers that support timeout
+if(CaDiCaL_FOUND)
+  list(APPEND cmp_testcases
+    "timeout.smt2 -m -to 500 --sat-engine=cadical"         # 500ms by argument
+    "timeout_in_file.smt2 -m --sat-engine=cadical"         # 500ms in file
+    "timeout_inc.smt2 -i -to 500 --sat-engine=cadical"  # 500ms by argument, incremental
+    "timeout_in_file_inc.smt2 -i --sat-engine=cadical"  # 500ms in file, incremental
+  )
+endif()
+if(Lingeling_FOUND)
+  list(APPEND cmp_testcases
+    "timeout.smt2 -m -to 500 --sat-engine=lingeling"         # 500ms by argument
+    "timeout_in_file.smt2 -m --sat-engine=lingeling"         # 500ms in file
+    "timeout_inc.smt2 -i -to 500 --sat-engine=lingeling"  # 500ms by argument, incremental
+    "timeout_in_file_inc.smt2 -i --sat-engine=lingeling"  # 500ms in file, incremental
+  )
+endif()
+if(PicoSAT_FOUND)
+  list(APPEND cmp_testcases
+    "timeout_unsupported_picosat.smt2 -to 500 --sat-engine=picosat" # 500ms by argument
+    "timeout_in_file_unsupported_picosat.smt2 --sat-engine=picosat" # 500ms by file
+  )
+endif()
+if(MiniSat_FOUND)
+  list(APPEND cmp_testcases
+    "timeout_unsupported_minisat.smt2 -to 500 --sat-engine=minisat" # 500ms by argument
+    "timeout_in_file_unsupported_minisat.smt2 --sat-engine=minisat" # 500ms by file
+  )
+endif()
+if(CryptoMiniSat_FOUND)
+  list(APPEND cmp_testcases
+    "timeout_unsupported_cms.smt2 -to 500 --sat-engine=cms" # 500ms by argument
+    "timeout_in_file_unsupported_cms.smt2 --sat-engine=cms" # 500ms by file
+  )
+endif()
 
 
 get_target_property(BITWUZLA_BINARY_PATH bitwuzla-bin RUNTIME_OUTPUT_DIRECTORY)

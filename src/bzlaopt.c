@@ -17,6 +17,7 @@
 #include "bzlalog.h"
 #include "bzlamodel.h"
 #include "bzlaparse.h"
+#include "utils/bzlaabort.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlarng.h"
 #include "utils/bzlautil.h"
@@ -410,6 +411,16 @@ bzla_opt_init_opts(Bzla *bzla)
       0,
       1,
       "Print CNF formula sent to SAT solver in DIMACS format and terminate.");
+  init_opt(bzla,
+           BZLA_OPT_TIMEOUT /* opt */,
+           false /* internal */,
+           false /* isflag */,
+           "timeout" /* lng */,
+           "to" /* shrt */,
+           0 /* val */,
+           0 /* min */,
+           UINT32_MAX /* max */,
+           "enable SAT solver timeout" /* desc */);
 
   /* rewriting / preprocessing (expert options) ----------------------------- */
   init_opt(bzla,
@@ -1907,6 +1918,25 @@ bzla_opt_set(Bzla *bzla, const BzlaOption opt, uint32_t val)
     }
   }
 #endif
+  else if (opt == BZLA_OPT_TIMEOUT)
+  {
+    /* when setting a timeout value, this disables any current termination
+     * functions */
+    if (bzla->cbs.term.fun != &bzla_timeout_deadline_compare)
+    {
+      BZLA_MSG(bzla->msg,
+               1,
+               "Setting a timeout overrides any current termination functions");
+
+      /*
+       * We explictly set the current termination functions to NULL -- these
+       * will get set correctly when 'bzla_set_timeout' is called as part of
+       * 'bzla_check_sat'
+       */
+      bzla->cbs.term.fun     = NULL;
+      bzla->cbs.term.termfun = NULL;
+    }
+  }
 
   if (val > o->max) val = o->max;
   if (val < o->min) val = o->min;

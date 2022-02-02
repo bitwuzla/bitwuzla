@@ -228,6 +228,16 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_SAT_ENGINE,
 
+  /*! **Time-out in milliseconds**
+   *
+   * Time-out solving for given value in milliseconds; a value of 0 represents
+   * no timeout.
+   *
+   * Values:
+   *  * An unsigned integer value (**default**: 0).
+   */
+  BITWUZLA_OPT_TIMEOUT,
+
   /*! **Seed for random number generator.**
    *
    * Values:

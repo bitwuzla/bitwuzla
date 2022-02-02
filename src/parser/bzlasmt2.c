@@ -173,6 +173,7 @@ typedef enum BzlaSMT2Tag
   BZLA_VERBOSITY_TAG_SMT2                 = 33 + BZLA_KEYWORD_TAG_CLASS_SMT2,
   BZLA_VERSION_TAG_SMT2                   = 34 + BZLA_KEYWORD_TAG_CLASS_SMT2,
   BZLA_GLOBAL_DECLARATIONS_TAG_SMT2       = 35 + BZLA_KEYWORD_TAG_CLASS_SMT2,
+  BZLA_TIMEOUT_TAG_SMT2                   = 36 + BZLA_KEYWORD_TAG_CLASS_SMT2,
 
   /* ---------------------------------------------------------------------- */
   /* Theories                                                               */
@@ -983,6 +984,7 @@ insert_keywords_smt2(BzlaSMT2Parser *parser)
   INSERT(":sorts-description", BZLA_SORTS_DESCRIPTION_TAG_SMT2);
   INSERT(":status", BZLA_STATUS_TAG_SMT2);
   INSERT(":theories", BZLA_THEORIES_TAG_SMT2);
+  INSERT(":timeout", BZLA_TIMEOUT_TAG_SMT2);
   INSERT(":values", BZLA_VALUES_TAG_SMT2);
   INSERT(":verbosity", BZLA_VERBOSITY_TAG_SMT2);
   INSERT(":version", BZLA_VERSION_TAG_SMT2);
@@ -5572,6 +5574,10 @@ set_option_smt2(BzlaSMT2Parser *parser)
     else if (tag == BZLA_PRODUCE_UNSAT_CORES_TAG_SMT2)
     {
       o = BITWUZLA_OPT_PRODUCE_UNSAT_CORES;
+    }
+    else if (tag == BZLA_TIMEOUT_TAG_SMT2)
+    {
+      o = BITWUZLA_OPT_TIMEOUT;
     }
     else
     {

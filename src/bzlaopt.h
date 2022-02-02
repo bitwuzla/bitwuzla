@@ -38,6 +38,7 @@ enum BzlaOption
   BZLA_OPT_PRODUCE_UNSAT_CORES,
   BZLA_OPT_SAT_ENGINE,
   BZLA_OPT_SEED,
+  BZLA_OPT_TIMEOUT,
   BZLA_OPT_VERBOSITY,
 
   /* Rewriting/preprocessing (expert) */

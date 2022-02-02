@@ -814,6 +814,49 @@ bzla_set_term(Bzla *bzla, int32_t (*fun)(void *), void *state)
 
   smgr = bzla_get_sat_mgr(bzla);
   bzla_sat_mgr_set_term(smgr, terminate_aux_bzla, bzla);
+
+  /* when setting a term function, this disables the timeout option */
+  if (bzla_opt_get(bzla, BZLA_OPT_TIMEOUT))
+  {
+    BZLA_MSG(
+        bzla->msg,
+        1,
+        "Setting a termination function overrides any current timeout values");
+    bzla_opt_set(bzla, BZLA_OPT_TIMEOUT, 0);
+  }
+}
+
+void
+bzla_set_timeout(Bzla *bzla)
+{
+  assert(bzla);
+
+  BzlaSATMgr *smgr;
+
+  bzla->cbs.term.termfun = terminate_aux_bzla;
+  bzla->cbs.term.fun     = &bzla_timeout_deadline_compare;
+  bzla->clock_deadline =
+      bzla_util_get_time_now_ms() + bzla_opt_get(bzla, BZLA_OPT_TIMEOUT);
+  bzla->cbs.term.state = (void *) &bzla->clock_deadline;
+
+  smgr = bzla_get_sat_mgr(bzla);
+  bzla_sat_mgr_set_term(smgr, terminate_aux_bzla, bzla);
+}
+
+void
+bzla_clear_timeout(Bzla *bzla)
+{
+  assert(bzla);
+
+  BzlaSATMgr *smgr;
+
+  bzla->cbs.term.termfun = NULL;
+  bzla->cbs.term.fun     = NULL;
+  bzla->clock_deadline   = 0;
+  bzla->cbs.term.state   = NULL;
+
+  smgr = bzla_get_sat_mgr(bzla);
+  bzla_sat_mgr_set_term(smgr, NULL, bzla);
 }
 
 void *
@@ -2784,6 +2827,8 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 
   BZLA_MSG(bzla->msg, 1, "calling SAT");
 
+  if (bzla_opt_get(bzla, BZLA_OPT_TIMEOUT)) bzla_set_timeout(bzla);
+
   if (bzla->valid_assignments == 1) bzla_reset_incremental_usage(bzla);
 
   /* 'bzla->assertions' contains all assertions that were asserted in context
@@ -3007,6 +3052,8 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 
   bzla->time.sat += delta;
 
+  if (bzla_opt_get(bzla, BZLA_OPT_TIMEOUT)) bzla_clear_timeout(bzla);
+
   return res;
 }
 
@@ -3107,4 +3154,13 @@ bzla_exp_to_aigvec(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
     result = bzla_aigvec_copy(avmgr, result);
 
   return result;
+}
+
+int32_t
+bzla_timeout_deadline_compare(void *param)
+{
+  uint64_t now      = bzla_util_get_time_now_ms();
+  uint64_t deadline = *(uint64_t *) param;
+
+  return now > deadline;
 }

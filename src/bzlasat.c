@@ -359,6 +359,14 @@ bzla_sat_init(BzlaSATMgr *smgr)
   smgr->solver = init(smgr);
   enable_verbosity(smgr, bzla_opt_get(smgr->bzla, BZLA_OPT_VERBOSITY));
 
+  if (bzla_opt_get(smgr->bzla, BZLA_OPT_TIMEOUT) && !smgr->api.setterm)
+  {
+    BZLA_WARN(true,
+              "SAT solver %s does not support termination functions; Timeout "
+              "option may not have any effect",
+              smgr->name);
+  }
+
   /* Set terminate callbacks if SAT solver supports it */
   if (smgr->term.fun && smgr->api.setterm)
   {

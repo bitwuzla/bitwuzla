@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <time.h>
 
 #include "bzlacore.h"
 #include "dumper/bzladumpbtor.h"
@@ -519,12 +520,12 @@ bzla_util_check_hex_to_bv(BzlaMemMgr *mm, const char *str, uint32_t bw)
 }
 
 /*------------------------------------------------------------------------*/
-#ifdef BZLA_TIME_STATISTICS
-
+#if defined(BZLA_HAVE_TIME_UTILS) || defined(BZLA_TIME_STATISTICS)
 #include <sys/resource.h>
 #include <sys/time.h>
-#include <time.h>
+#endif
 
+#ifdef BZLA_TIME_STATISTICS
 double
 bzla_util_time_stamp(void)
 {
@@ -731,3 +732,34 @@ bzla_util_getenv_value(BzlaMemMgr *mm, const char *lname)
   BZLA_RELEASE_STACK(uname);
   return res;
 }
+
+/*------------------------------------------------------------------------*/
+
+uint64_t
+bzla_util_get_time_now_ms(void)
+{
+  uint64_t res = 0;
+#ifdef BZLA_HAVE_TIME_UTILS
+  /*
+   * If we have BZLA_HAVE_TIME_UTILS, then we use 'getrusage' and calculate the
+   * current time in millis
+   */
+  struct rusage u;
+  if (!getrusage(RUSAGE_SELF, &u))
+  {
+    res = (1000 * u.ru_utime.tv_sec + u.ru_utime.tv_usec / 1000);
+  }
+  /* if getrusage returns non-zero, we fall-back to behaviour without getrusage */
+  else
+#endif
+  {
+    /*
+     * clock returns clock_t, which is likely to be long, but cast to a double
+     * (for the division and multiplication) and then truncate to a uint
+     */
+     res = (uint64_t) (((double) clock() / CLOCKS_PER_SEC) * 1000);
+  }
+  return res;
+}
+
+/*------------------------------------------------------------------------*/
