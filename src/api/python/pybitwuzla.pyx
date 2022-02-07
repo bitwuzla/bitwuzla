@@ -349,6 +349,28 @@ cdef class BitwuzlaTerm:
     def is_indexed(self):
         return bitwuzla_api.bitwuzla_term_is_indexed(self.ptr())
 
+    property assignment:
+        """ The assignment of a Bitwuzla node.
+
+            May be queried only after a preceding call to
+            :func:`~pyboolector.Bitwuzla.Sat` returned
+            :data:`~pyboolector.Bitwuzla.SAT`.
+
+            If the queried node is a bit vector, its assignment is
+            represented as string.
+            Arrays, functions and floating point numbers are not currently
+            supported.
+        """
+        def __get__(self):
+            if self.is_bv():
+                c_str = \
+                    bitwuzla_api.bitwuzla_get_bv_value(self.bitwuzla._c_bitwuzla,
+                                                    self.ptr())
+                value = _to_str(c_str)
+                return value
+            else:
+              raise BitwuzlaException("Unable to get the assignment for a non-bit-vector")
+
 #
 #    void bitwuzla_term_dump(const BitwuzlaTerm *term,
 #                            const char *format,
