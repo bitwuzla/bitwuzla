@@ -534,7 +534,7 @@ cdef class Bitwuzla:
             Check satisfiability of asserted and assumed input formulas.
 
             Input formulas can either be asserted via
-            :func:`~pybitwuzla.Boolector.Assert` or
+            :func:`~pybitwuzla.Bitwuzla.assert_formula` or
             assumed via :func:`~pybitwuzla.Bitwuzla.assume_formula`.
 
             If this function is called multiple times it is required to
@@ -647,7 +647,7 @@ cdef class Bitwuzla:
 
             Unsat assumptions are those assumptions that force an
             input formula to become unsatisfiable.
-            Unsat assumptions handling in Boolector is analogous to
+            Unsat assumptions handling in Bitwuzla is analogous to
             unsatisfiable assumptions in MiniSAT.
 
             See :func:`~pybitwuzla.Bitwuzla.assume_formula`.

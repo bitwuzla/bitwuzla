@@ -22,7 +22,7 @@ extern "C" {
 /*!
    Set a Python termination callback.
 
-   :param btor:  Bitwuzla instance.
+   :param bzla:  Bitwuzla instance.
    :param fun:   The termination callback Python function.
    :param state: The Python argument(s) to the termination callback function.
 
@@ -35,7 +35,7 @@ void pybitwuzla_set_term(Bitwuzla* bitwuzla, PyObject* fun, PyObject* state);
   Delete a Bitwuzla instance (with possibly defined Python function
   callbacks) and free its resources.
 
-  :param btor: Bitwuzla instance.
+  :param bzla: Bitwuzla instance.
 
   .. seealso::
     bitwuzla_delete
