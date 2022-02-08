@@ -11,6 +11,7 @@
 import pytest
 from pybitwuzla import *
 import time
+import struct
 
 class BzlaEnv:
     def __init__(self):
@@ -19,7 +20,18 @@ class BzlaEnv:
         self.bv32 = self.bzla.mk_bv_sort(32)
         self.fp16 = self.bzla.mk_fp_sort(5, 11)
         self.fp32 = self.bzla.mk_fp_sort(8, 24)
+        self.fp64 = self.bzla.mk_fp_sort(11, 53)
+        self.rne = self.bzla.mk_rm_value(RoundingMode.RNE)
 
+
+def bitstring_to_float(s, size):
+    """
+    Helper function to convert a Bitwuzla bit-string to a native Python float/double
+    """
+    conversions = {32: "f",
+                   64: "d"}
+    b = int(s, 2).to_bytes((len(s) + 7) // 8, byteorder="big")
+    return struct.unpack(f">{conversions[size]}", b)[0]
 
 @pytest.fixture
 def bzla():
@@ -28,6 +40,7 @@ def bzla():
 @pytest.fixture
 def env():
     return BzlaEnv()
+
 
 
 def test_new():
@@ -394,6 +407,51 @@ def test_substitute(env):
     terms = env.bzla.substitute([P_x, P_y], {x: a, y: b})
     assert terms == [P_a, P_b]
 
+
+def test_bv_assignment(env):
+
+    env.bzla.set_option(Option.PRODUCE_MODELS, 1)
+    env.bzla.set_option(Option.INCREMENTAL, 1)
+
+    TARGET_VALUE = 12345
+
+    bv_x = env.bzla.mk_const(env.bv32, "bv_x")
+    bv_target = env.bzla.mk_bv_value(env.bv32, TARGET_VALUE)
+
+    eq = env.bzla.mk_term(Kind.EQUAL, [bv_x, bv_target])
+    env.bzla.assert_formula(eq)
+
+    assert env.bzla.check_sat() == Result.SAT
+
+    value_for_x = env.bzla.get_value(bv_x)
+    assignment_for_x = value_for_x.assignment
+
+    assert assignment_for_x.lstrip("0") == "{0:b}".format(TARGET_VALUE)
+
+
+def test_fp_assignment(env):
+
+    env.bzla.set_option(Option.PRODUCE_MODELS, 1)
+    env.bzla.set_option(Option.INCREMENTAL, 1)
+
+    TARGET_VALUE = 123.50
+
+    fp_sorts = {32: env.fp32, 64: env.fp64}
+    for size, fp_sort in fp_sorts.items():
+        env.bzla.push()
+        fp_x = env.bzla.mk_const(fp_sort, "fp_x")
+        fp_target = env.bzla.mk_fp_value_from(fp_sort, env.rne, TARGET_VALUE)
+        eq = env.bzla.mk_term(Kind.EQUAL, [fp_x, fp_target])
+        env.bzla.assert_formula(eq)
+
+        assert env.bzla.check_sat() == Result.SAT
+
+        value_for_x = env.bzla.get_value(fp_x)
+        assignment_for_x = value_for_x.assignment
+        float_for_x = bitstring_to_float("".join(assignment_for_x), size=size)
+        env.bzla.pop()
+
+        assert float_for_x == TARGET_VALUE
 
 
 # BitwuzlaSort tests
