@@ -147,7 +147,7 @@ if(MiniSat_FOUND)
 endif()
 
 if(SymFPU_FOUND)
-  target_include_directories(bitwuzla PRIVATE ${SymFPU_INCLUDE_DIR})
+  target_include_directories(bitwuzla SYSTEM PRIVATE ${SymFPU_INCLUDE_DIR})
 endif()
 
 install(TARGETS bitwuzla
