@@ -36,6 +36,17 @@ cdef extern from "bitwuzla.h":
         pass
     ctypedef enum BitwuzlaOption:
         pass
+    cdef struct BitwuzlaOptionInfo_union_numeric:
+        uint32_t cur_val
+    cdef struct BitwuzlaOptionInfo_union_string:
+        const char *cur_val;
+    cdef union BitwuzlaOptionInfo_union:
+        BitwuzlaOptionInfo_union_numeric numeric
+        BitwuzlaOptionInfo_union_string string
+    ctypedef struct BitwuzlaOptionInfo:
+        bool is_numeric
+        BitwuzlaOptionInfo_union_numeric numeric
+        BitwuzlaOptionInfo_union_string string
     ctypedef enum BitwuzlaKind:
         pass
     ctypedef enum BitwuzlaBVBase:
@@ -82,6 +93,11 @@ cdef extern from "bitwuzla.h":
                                  const char *val) \
         except +raise_py_error
     uint32_t bitwuzla_get_option(Bitwuzla *bitwuzla, BitwuzlaOption option) \
+        except +raise_py_error
+
+    void bitwuzla_get_option_info(Bitwuzla *bitwuzla,
+                                  BitwuzlaOption option,
+                                  BitwuzlaOptionInfo *info) \
         except +raise_py_error
 
     const BitwuzlaSort *bitwuzla_mk_array_sort(Bitwuzla *bitwuzla,

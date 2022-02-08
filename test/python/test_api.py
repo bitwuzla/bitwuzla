@@ -160,6 +160,8 @@ def test_get_option(bzla):
     assert bzla.get_option(Option.INCREMENTAL)
     bzla.set_option(Option.INCREMENTAL, False)
     assert not bzla.get_option(Option.INCREMENTAL)
+    bzla.set_option(Option.SAT_ENGINE, "cadical")
+    assert bzla.get_option(Option.SAT_ENGINE) == "cadical"
 
 
 def test_mk_bool_sort(bzla):

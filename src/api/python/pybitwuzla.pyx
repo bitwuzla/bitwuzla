@@ -741,11 +741,15 @@ cdef class Bitwuzla:
             :param opt: Option.
             :type opt: BitwuzlaOption
             :return: Option value.
-            :rtype: uint32_t
+            :rtype: uint32_t or str
         """
         if not isinstance(opt, Option):
             raise ValueError("Given 'opt' is not an option object")
-        return bitwuzla_api.bitwuzla_get_option(self.ptr(), opt.value)
+        cdef bitwuzla_api.BitwuzlaOptionInfo info
+        bitwuzla_api.bitwuzla_get_option_info(self.ptr(), opt.value, &info)
+        if info.is_numeric:
+            return info.numeric.cur_val
+        return _to_str(info.string.cur_val)
 
     # ------------------------------------------------------------------------
     # Sort methods
