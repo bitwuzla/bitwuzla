@@ -356,20 +356,37 @@ cdef class BitwuzlaTerm:
             :func:`~pyboolector.Bitwuzla.Sat` returned
             :data:`~pyboolector.Bitwuzla.SAT`.
 
-            If the queried node is a bit vector, its assignment is
-            represented as string.
-            Arrays, functions and floating point numbers are not currently
-            supported.
+            If the queried node is a bit vector and floating point, its
+            assignment is represented as string.
+
+            Arrays and functions are not currently supported.
         """
         def __get__(self):
+            cdef const char *sign = NULL
+            cdef const char *exponent = NULL
+            cdef const char *significand = NULL
+            cdef const char *c_str = NULL
+
             if self.is_bv():
                 c_str = \
                     bitwuzla_api.bitwuzla_get_bv_value(self.bitwuzla._c_bitwuzla,
                                                     self.ptr())
                 value = _to_str(c_str)
                 return value
+            if self.is_fp():
+                bitwuzla_api.bitwuzla_get_fp_value(self.bitwuzla._c_bitwuzla,
+                                                self.ptr(),
+                                                &sign,
+                                                &exponent,
+                                                &significand)
+                s_sign = _to_str(sign)
+                s_exponent = _to_str(exponent)
+                s_significand = _to_str(significand)
+                return (s_sign, s_exponent, s_significand)
             else:
-              raise BitwuzlaException("Unable to get the assignment for a non-bit-vector")
+              raise BitwuzlaException("Assignments are currently only supported "
+                                      "for bit-vectors and floats")
+
 
 #
 #    void bitwuzla_term_dump(const BitwuzlaTerm *term,

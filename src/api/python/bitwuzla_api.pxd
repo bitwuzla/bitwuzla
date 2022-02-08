@@ -422,6 +422,16 @@ cdef extern from "bitwuzla.h":
     const char *bitwuzla_get_bv_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term) \
       except +raise_py_error
 
+    const char *bitwuzla_get_bv_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term) \
+      except +raise_py_error
+
+    void bitwuzla_get_fp_value(Bitwuzla *bitwuzla, \
+                          const BitwuzlaTerm *term, \
+                          const char **sign, \
+                          const char **exponent, \
+                          const char **significand) \
+      except +raise_py_error
+
 #    bool bitwuzla_term_is_equal_sort(const BitwuzlaTerm *term0,
 #                                     const BitwuzlaTerm *term1) \
 #        except +raise_py_error
