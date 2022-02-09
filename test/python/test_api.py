@@ -194,10 +194,26 @@ def test_get_value_str_fun(env):
         assert len(args) == 2
         assert len(value) == 3 # FP value
 
-def test_print_model(bzla):
-    # TODO
-    pass
-
+def test_get_model(env):
+    bzla = env.bzla
+    bzla.set_option(Option.PRODUCE_MODELS, 1)
+    x = bzla.mk_const(env.bv8, "x")
+    y = bzla.mk_const(env.fp16, "y")
+    rm = bzla.mk_const(bzla.mk_rm_sort(), "rm")
+    ones = bzla.mk_bv_ones(env.bv8)
+    bzla.assert_formula(bzla.mk_term(Kind.EQUAL, [x, ones]))
+    bzla.assert_formula(bzla.mk_term(Kind.FP_IS_NAN, [y]))
+    bzla.assert_formula(bzla.mk_term(Kind.EQUAL,
+                                     [rm, bzla.mk_rm_value(RoundingMode.RNA)]))
+    bzla.check_sat()
+    assert bzla.get_model() == """(
+  (define-fun x () (_ BitVec 8) #b11111111)
+  (define-fun y () (_ FloatingPoint 5 11) (fp #b0 #b11111 #b1000000000))
+  (define-fun rm () RoundingMode RNA)
+)"""
+    assert bzla.get_model("btor") == """2 11111111 x
+3 0111111000000000 y
+4 000 rm"""
 
 def test_dump_formula(bzla):
     # TODO

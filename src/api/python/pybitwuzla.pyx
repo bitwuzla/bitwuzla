@@ -22,6 +22,7 @@ from cpython cimport array
 from collections import defaultdict
 import array
 import math, os, sys
+import tempfile
 
 include "pybitwuzla_enums.pxd"
 
@@ -664,10 +665,16 @@ cdef class Bitwuzla:
             return _to_str(bitwuzla_api.bitwuzla_get_rm_value(self.ptr(),
                                                               term.ptr()))
 
-    def print_model(self):
+    def get_model(self, fmt='smt2'):
         """
         """
-        pass
+        cdef FILE * out
+        with tempfile.NamedTemporaryFile('r') as f:
+            out = fopen(_to_cstr(f.name), 'w')
+            bitwuzla_api.bitwuzla_print_model(self.ptr(), _to_cstr(fmt), out)
+            fclose(out)
+            return f.read().strip()
+
 
     def dump_formula(self):
         """
