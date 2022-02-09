@@ -1647,6 +1647,7 @@ mark_boolean(BzlaSMTDumpContext *sdc, BzlaNodePtrStack *exps)
         || bzla_node_is_fp_is_zero(cur) || bzla_node_is_fp_lte(cur)
         || bzla_node_is_fp_lt(cur)
         || bzla_node_is_fp_eq(cur)
+        || bzla_node_is_rm_eq(cur)
 
         /* Other Boolean nodes */
         || cur == bzla_node_real_addr(sdc->bzla->true_exp)

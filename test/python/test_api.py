@@ -215,10 +215,27 @@ def test_get_model(env):
 3 0111111000000000 y
 4 000 rm"""
 
-def test_dump_formula(bzla):
-    # TODO
-    pass
-
+def test_dump_formula(env):
+    bzla = env.bzla
+    bzla.set_option(Option.PRODUCE_MODELS, 1)
+    bzla.set_option(Option.PRETTY_PRINT, 0)
+    x = bzla.mk_const(env.bv8, "x")
+    y = bzla.mk_const(env.fp16, "y")
+    rm = bzla.mk_const(bzla.mk_rm_sort(), "rm")
+    ones = bzla.mk_bv_ones(env.bv8)
+    bzla.assert_formula(bzla.mk_term(Kind.EQUAL, [x, ones]))
+    bzla.assert_formula(bzla.mk_term(Kind.FP_IS_NAN, [y]))
+    bzla.assert_formula(bzla.mk_term(Kind.EQUAL,
+                                     [rm, bzla.mk_rm_value(RoundingMode.RNA)]))
+    assert bzla.dump_formula() == """(set-logic QF_BVFP)
+(declare-const x (_ BitVec 8))
+(declare-const y (_ FloatingPoint 5 11))
+(declare-const rm RoundingMode)
+(assert (= x #b11111111))
+(assert (fp.isNaN y))
+(assert (= rm RNA))
+(check-sat)
+(exit)"""
 
 def test_assume_formula(bzla):
     # TODO

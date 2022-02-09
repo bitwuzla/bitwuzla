@@ -676,10 +676,15 @@ cdef class Bitwuzla:
             return f.read().strip()
 
 
-    def dump_formula(self):
+    def dump_formula(self, fmt='smt2'):
         """
         """
-        pass
+        cdef FILE * out
+        with tempfile.NamedTemporaryFile('r') as f:
+            out = fopen(_to_cstr(f.name), 'w')
+            bitwuzla_api.bitwuzla_dump_formula(self.ptr(), _to_cstr(fmt), out)
+            fclose(out)
+            return f.read().strip()
 
     # ------------------------------------------------------------------------
     # Assumption handling
