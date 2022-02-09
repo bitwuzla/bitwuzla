@@ -111,6 +111,88 @@ def test_get_value(bzla):
     # TODO
     pass
 
+def test_get_value_str_bv(env):
+    bzla = env.bzla
+    bzla.set_option(Option.PRODUCE_MODELS, 1)
+    x = bzla.mk_const(env.bv8)
+    y = bzla.mk_const(env.bv8)
+    ones = bzla.mk_bv_ones(env.bv8)
+    mins = bzla.mk_bv_min_signed(env.bv8)
+    bzla.assert_formula(bzla.mk_term(Kind.EQUAL, [x, ones]))
+    bzla.assert_formula(bzla.mk_term(Kind.EQUAL, [y, mins]))
+    bzla.check_sat()
+    assert bzla.get_value_str(x) == "1" * 8
+    assert bzla.get_value_str(y) == "1" + "0" * 7
+
+def test_get_value_str_fp(env):
+    bzla = env.bzla
+    bzla.set_option(Option.PRODUCE_MODELS, 1)
+    x = bzla.mk_const(env.fp16)
+    pinf = bzla.mk_fp_pos_inf(env.fp16)
+    bzla.assert_formula(bzla.mk_term(Kind.EQUAL, [x, pinf]))
+    bzla.check_sat()
+    assert bzla.get_value_str(x) == ("0", "1" * 5, "0" * 10)
+
+def test_get_value_str_rm(env):
+    bzla = env.bzla
+    bzla.set_option(Option.PRODUCE_MODELS, 1)
+    x = bzla.mk_const(bzla.mk_rm_sort())
+    rna = bzla.mk_rm_value(RoundingMode.RNA)
+    bzla.assert_formula(bzla.mk_term(Kind.EQUAL, [x, rna]))
+    bzla.check_sat()
+    assert bzla.get_value_str(x) == "RNA"
+
+def test_get_value_str_array(env):
+    bzla = env.bzla
+    bzla.set_option(Option.PRODUCE_MODELS, 1)
+    a = bzla.mk_const(bzla.mk_array_sort(env.bv8, env.bv32))
+    s1 = bzla.mk_term(Kind.ARRAY_SELECT, [a, bzla.mk_bv_ones(env.bv8)])
+    s2 = bzla.mk_term(Kind.ARRAY_SELECT, [a, bzla.mk_bv_min_signed(env.bv8)])
+    bzla.assert_formula(bzla.mk_term(Kind.DISTINCT, [s1, s2]))
+    bzla.check_sat()
+    val = bzla.get_value_str(a)
+    assert len(val) == 2
+    assert "11111111" in val
+    assert "10000000" in val
+    assert val["11111111"] != val["10000000"]
+
+def test_get_value_str_array_const(env):
+    bzla = env.bzla
+    bzla.set_option(Option.PRODUCE_MODELS, 1)
+    bzla.set_option(Option.RW_LEVEL, 0)
+    zero = bzla.mk_bv_value(env.bv32, 0)
+    a = bzla.mk_const_array(bzla.mk_array_sort(env.bv8, env.bv32), zero)
+    b = bzla.mk_term(Kind.ARRAY_STORE,
+                     [a,
+                      bzla.mk_bv_value(env.bv8, 0),
+                      bzla.mk_bv_min_signed(env.bv32)])
+    bzla.check_sat()
+    val = bzla.get_value_str(b)
+    assert len(val) == 1
+    assert "00000000" in val
+    assert val["00000000"] == "10000000000000000000000000000000"
+    # Default value is zero due to const array
+    assert val["11111111"] == "0" * 32
+
+def test_get_value_str_fun(env):
+    bzla = env.bzla
+    bzla.set_option(Option.PRODUCE_MODELS, 1)
+    s = bzla.mk_fun_sort([env.bv8, env.bv32], env.fp16)
+    f = bzla.mk_const(s)
+    args1 = [f, bzla.mk_const(env.bv8), bzla.mk_const(env.bv32)]
+    args2 = [f, bzla.mk_const(env.bv8), bzla.mk_const(env.bv32)]
+    app1 = bzla.mk_term(Kind.APPLY, args1)
+    app2 = bzla.mk_term(Kind.APPLY, args2)
+    bzla.assert_formula(bzla.mk_term(Kind.DISTINCT, [app1, app2]))
+    bzla.assert_formula(bzla.mk_term(Kind.DISTINCT, [args1[1], args2[1]]))
+    bzla.assert_formula(bzla.mk_term(Kind.DISTINCT, [args1[2], args2[2]]))
+    bzla.check_sat()
+    val = bzla.get_value_str(f)
+    assert len(val) == 2
+    for args, value in val.items():
+        assert isinstance(args, tuple)
+        assert len(args) == 2
+        assert len(value) == 3 # FP value
 
 def test_print_model(bzla):
     # TODO

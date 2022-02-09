@@ -304,6 +304,38 @@ cdef extern from "bitwuzla.h":
                                            const BitwuzlaTerm *term) \
         except +raise_py_error
 
+    const char *bitwuzla_get_bv_value(Bitwuzla *bitwuzla,
+                                      const BitwuzlaTerm *term) \
+        except +raise_py_error
+
+    void bitwuzla_get_fp_value(Bitwuzla *bitwuzla,
+                               const BitwuzlaTerm *term,
+                               const char **sign,
+                               const char **exponent,
+                               const char **significand) \
+        except +raise_py_error
+
+    const char *bitwuzla_get_rm_value(Bitwuzla *bitwuzla,
+                                      const BitwuzlaTerm *term) \
+        except +raise_py_error
+
+    void bitwuzla_get_array_value(Bitwuzla *bitwuzla,
+                                  const BitwuzlaTerm *term,
+                                  const BitwuzlaTerm ***indices,
+                                  const BitwuzlaTerm ***values,
+                                  size_t *size,
+                                  const BitwuzlaTerm **default_value) \
+        except +raise_py_error
+
+    void bitwuzla_get_fun_value(Bitwuzla *bitwuzla,
+                                const BitwuzlaTerm *term,
+                                const BitwuzlaTerm ****args,
+                                size_t *arity,
+                                const BitwuzlaTerm ***values,
+                                size_t *size) \
+        except +raise_py_error
+
+
     void bitwuzla_print_model(Bitwuzla *bitwuzla,
                               const char *format, FILE *file) \
         except +raise_py_error

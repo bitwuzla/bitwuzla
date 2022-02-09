@@ -19,6 +19,7 @@ from libc.stdint cimport int32_t, uint32_t, uint64_t
 from libcpp cimport bool as cbool
 from cpython.ref cimport PyObject
 from cpython cimport array
+from collections import defaultdict
 import array
 import math, os, sys
 
@@ -92,6 +93,10 @@ cdef _to_terms(Bitwuzla bitwuzla, size,
         terms.append(term)
     return terms
 
+cdef _to_term(Bitwuzla bitwuzla, const bitwuzla_api.BitwuzlaTerm* term):
+    t = BitwuzlaTerm(bitwuzla)
+    t.set(term)
+    return t
 
 # --------------------------------------------------------------------------- #
 # Sort wrapper classes
@@ -598,6 +603,83 @@ cdef class Bitwuzla:
         res = BitwuzlaTerm(self)
         res.set(bitwuzla_api.bitwuzla_get_value(self.ptr(), term.ptr()))
         return res
+
+    def get_value_str(self, BitwuzlaTerm term):
+        """ get_value_str(term)
+
+            Get string representation of model value of a `term`.
+
+            Requires that the last :func:`~pybitwuzla.Bitwuzla.check_sat` call
+            returned `~pybitwuzla.Result.SAT`.
+
+            :return:
+                - arrays: dictionary mapping indices to values
+                - bit-vectors: bit string
+                - floating-points: 3-tuple of bit strings
+                  (sign, exponent, significand)
+                - functions: dictionary mapping tuples of arguments to values
+                - rounding mode: string representation of rounding mode value
+        """
+        cdef const char* sign
+        cdef const char* exponent
+        cdef const char* significand
+        cdef const bitwuzla_api.BitwuzlaTerm** array_indices
+        cdef const bitwuzla_api.BitwuzlaTerm** array_values
+        cdef const bitwuzla_api.BitwuzlaTerm* array_default_value
+        cdef size_t array_size
+        cdef const bitwuzla_api.BitwuzlaTerm*** fun_args
+        cdef const bitwuzla_api.BitwuzlaTerm** fun_values
+        cdef size_t fun_arity, fun_size
+
+        if term.is_array():
+            bitwuzla_api.bitwuzla_get_array_value(self.ptr(),
+                                                  term.ptr(),
+                                                  &array_indices,
+                                                  &array_values,
+                                                  &array_size,
+                                                  &array_default_value)
+
+            if array_default_value is not NULL:
+                val = defaultdict(lambda: self.get_value_str(
+                                    _to_term(self, array_default_value)))
+            else:
+                val = dict()
+
+            for i in range(array_size):
+                vi = self.get_value_str(_to_term(self, array_indices[i]))
+                ve = self.get_value_str(_to_term(self, array_values[i]))
+                val[vi] = ve
+
+            return val
+        elif term.is_bv():
+            return _to_str(bitwuzla_api.bitwuzla_get_bv_value(self.ptr(),
+                                                              term.ptr()))
+        elif term.is_fp():
+            bitwuzla_api.bitwuzla_get_fp_value(self.ptr(),
+                                               term.ptr(),
+                                               &sign,
+                                               &exponent,
+                                               &significand)
+            return (_to_str(sign), _to_str(exponent), _to_str(significand))
+        elif term.is_fun():
+            bitwuzla_api.bitwuzla_get_fun_value(self.ptr(),
+                                                term.ptr(),
+                                                &fun_args,
+                                                &fun_arity,
+                                                &fun_values,
+                                                &fun_size)
+
+            val = dict()
+            for i in range(fun_size):
+                args = [self.get_value_str(_to_term(self, fun_args[i][j])) \
+                            for j in range(fun_arity)]
+                val[tuple(args)] = self.get_value_str(_to_term(self,
+                                                               fun_values[i]))
+            return val
+        else:
+            assert term.is_rm()
+            return _to_str(bitwuzla_api.bitwuzla_get_rm_value(self.ptr(),
+                                                              term.ptr()))
 
     def print_model(self):
         """
