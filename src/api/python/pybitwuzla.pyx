@@ -84,19 +84,14 @@ cdef const bitwuzla_api.BitwuzlaSort** _alloc_sorts_const(size):
         raise MemoryError()
     return sorts
 
-cdef _to_terms(Bitwuzla bitwuzla, size,
-               const bitwuzla_api.BitwuzlaTerm **c_terms):
-    terms = []
-    for i in range(size):
-        term = BitwuzlaTerm(bitwuzla)
-        term.set(c_terms[i])
-        terms.append(term)
-    return terms
-
 cdef _to_term(Bitwuzla bitwuzla, const bitwuzla_api.BitwuzlaTerm* term):
     t = BitwuzlaTerm(bitwuzla)
     t.set(term)
     return t
+
+cdef _to_terms(Bitwuzla bitwuzla, size,
+               const bitwuzla_api.BitwuzlaTerm **c_terms):
+    return [_to_term(bitwuzla, c_terms[i]) for i in range(size)]
 
 # --------------------------------------------------------------------------- #
 # Sort wrapper classes
@@ -204,11 +199,6 @@ cdef class BitwuzlaTerm:
     cdef const bitwuzla_api.BitwuzlaTerm* ptr(self):
         return self._c_term
 
-    cdef BitwuzlaTerm new_term(self, const bitwuzla_api.BitwuzlaTerm* term):
-        res = BitwuzlaTerm(self.bitwuzla)
-        res.set(term)
-        return res
-
     cdef BitwuzlaSort new_sort(self, const bitwuzla_api.BitwuzlaSort* sort):
         res = BitwuzlaSort(self.bitwuzla)
         res.set(sort)
@@ -233,11 +223,7 @@ cdef class BitwuzlaTerm:
         cdef uint32_t* indices
         cdef size_t size
         indices = bitwuzla_api.bitwuzla_term_get_indices(self.ptr(), &size)
-
-        res = []
-        for i in range(size):
-            res.append(indices[i])
-        return res
+        return [indices[i] for i in range(size)]
 
     def get_kind(self):
         cdef bitwuzla_api.BitwuzlaKind kind
@@ -282,8 +268,6 @@ cdef class BitwuzlaTerm:
 
     def set_symbol(self, str symbol):
         bitwuzla_api.bitwuzla_term_set_symbol(self.ptr(), _to_cstr(symbol))
-
-#    bool bitwuzla_term_is_equal_sort(const BitwuzlaTerm *term0, const BitwuzlaTerm *term1) \
 
     def is_array(self):
         return bitwuzla_api.bitwuzla_term_is_array(self.ptr())
@@ -600,9 +584,8 @@ cdef class Bitwuzla:
             :rtype: BitwuzlaTerm
 
         """
-        res = BitwuzlaTerm(self)
-        res.set(bitwuzla_api.bitwuzla_get_value(self.ptr(), term.ptr()))
-        return res
+        return _to_term(self, bitwuzla_api.bitwuzla_get_value(self.ptr(),
+                                                              term.ptr()))
 
     def get_value_str(self, BitwuzlaTerm term):
         """ get_value_str(term)
@@ -977,25 +960,22 @@ cdef class Bitwuzla:
     def mk_bv_ones(self, BitwuzlaSort sort):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_bv_ones(self.ptr(), sort.ptr()))
-        return term
+        return _to_term(self, bitwuzla_api.bitwuzla_mk_bv_ones(self.ptr(),
+                                                               sort.ptr()))
 
     def mk_bv_min_signed(self, BitwuzlaSort sort):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_bv_min_signed(
-                    self.ptr(), sort.ptr()))
-        return term
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_bv_min_signed(self.ptr(),
+                                                               sort.ptr()))
 
     def mk_bv_max_signed(self, BitwuzlaSort sort):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_bv_max_signed(
-                    self.ptr(), sort.ptr()))
-        return term
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_bv_max_signed(self.ptr(),
+                                                               sort.ptr()))
 
     # Floating-point values
 
@@ -1014,13 +994,12 @@ cdef class Bitwuzla:
         cdef BitwuzlaTerm val_significand = \
                 self.mk_bv_value(sort_significand, significand)
 
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_fp_value(
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_fp_value(
                             self.ptr(),
                             val_sign.ptr(),
                             val_exp.ptr(),
                             val_significand.ptr()))
-        return term
 
     def mk_fp_value_from(self, BitwuzlaSort sort, BitwuzlaTerm rm, value):
         """
@@ -1028,65 +1007,63 @@ cdef class Bitwuzla:
         term = BitwuzlaTerm(self)
         if isinstance(value, str) and '/' in value:
             num, den = value.split('/')
-            term.set(bitwuzla_api.bitwuzla_mk_fp_value_from_rational(
+            return _to_term(self,
+                            bitwuzla_api.bitwuzla_mk_fp_value_from_rational(
                                 self.ptr(),
                                 sort.ptr(),
                                 rm.ptr(),
                                 _to_cstr(num),
                                 _to_cstr(den)))
 
-        else:
-            term.set(bitwuzla_api.bitwuzla_mk_fp_value_from_real(
-                                self.ptr(),
-                                sort.ptr(),
-                                rm.ptr(),
-                                _to_cstr(str(value))))
-        return term
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_fp_value_from_real(
+                            self.ptr(),
+                            sort.ptr(),
+                            rm.ptr(),
+                            _to_cstr(str(value))))
 
 
     def mk_fp_pos_zero(self, BitwuzlaSort sort):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_fp_pos_zero(self.ptr(), sort.ptr()))
-        return term
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_fp_pos_zero(self.ptr(),
+                                                             sort.ptr()))
 
     def mk_fp_neg_zero(self, BitwuzlaSort sort):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_fp_neg_zero(self.ptr(), sort.ptr()))
-        return term
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_fp_neg_zero(self.ptr(),
+                                                             sort.ptr()))
 
     def mk_fp_pos_inf(self, BitwuzlaSort sort):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_fp_pos_inf(self.ptr(), sort.ptr()))
-        return term
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_fp_pos_inf(self.ptr(),
+                                                            sort.ptr()))
 
     def mk_fp_neg_inf(self, BitwuzlaSort sort):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_fp_neg_inf(self.ptr(), sort.ptr()))
-        return term
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_fp_neg_inf(self.ptr(),
+                                                            sort.ptr()))
 
     def mk_fp_nan(self, BitwuzlaSort sort):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_fp_nan(self.ptr(), sort.ptr()))
-        return term
+        return _to_term(self, bitwuzla_api.bitwuzla_mk_fp_nan(self.ptr(),
+                                                              sort.ptr()))
 
     def mk_rm_value(self, rm):
         """
         """
         if not isinstance(rm, RoundingMode):
             raise ValueError("Given 'rm' is not a RoundingMode value")
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_rm_value(self.ptr(), rm.value))
-        return term
+        return _to_term(self, bitwuzla_api.bitwuzla_mk_rm_value(self.ptr(),
+                                                                rm.value))
 
 
     # ------------------------------------------------------------------------
@@ -1095,26 +1072,26 @@ cdef class Bitwuzla:
     def mk_const(self, BitwuzlaSort sort, str symbol = None):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_const(
-                    self.ptr(), sort.ptr(), _to_cstr(symbol)))
-        return term
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_const(self.ptr(),
+                                                       sort.ptr(),
+                                                       _to_cstr(symbol)))
 
     def mk_const_array(self, BitwuzlaSort sort, BitwuzlaTerm value):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_const_array(
-                    self.ptr(), sort.ptr(), value.ptr()))
-        return term
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_const_array(self.ptr(),
+                                                             sort.ptr(),
+                                                             value.ptr()))
 
     def mk_var(self, BitwuzlaSort sort, str symbol = None):
         """
         """
-        term = BitwuzlaTerm(self)
-        term.set(bitwuzla_api.bitwuzla_mk_var(
-                    self.ptr(), sort.ptr(), _to_cstr(symbol)))
-        return term
+        return _to_term(self,
+                        bitwuzla_api.bitwuzla_mk_var(self.ptr(),
+                                                     sort.ptr(),
+                                                     _to_cstr(symbol)))
 
     def mk_term(self, kind, terms, indices = None):
         """
@@ -1201,7 +1178,5 @@ cdef class Bitwuzla:
                                                 c_values)
 
         if got_term:
-            term = BitwuzlaTerm(self)
-            term.set(c_terms[0])
-            return term
+            return _to_term(self, c_terms[0])
         return _to_terms(self, num_terms, c_terms)
