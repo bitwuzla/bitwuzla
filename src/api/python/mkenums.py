@@ -59,7 +59,7 @@ def extract_enums(header):
             # Get the next line
             line = next(line_iter)
 
-            # We expect this to be an opening curly, given Boolector's style
+            # We expect this to be an opening curly, given Bitwuzla's style
             if line != "{":
                 raise BitwuzlaEnumParseError(enum_name)
 

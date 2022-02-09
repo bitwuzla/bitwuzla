@@ -12,7 +12,7 @@ find_package(PythonExtensions REQUIRED)
 find_package(Cython REQUIRED)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_LIST_DIR})               # btorapi.pxd
+include_directories(${CMAKE_CURRENT_LIST_DIR})               # bitwuzla_api.pxd
 include_directories(${CMAKE_CURRENT_LIST_DIR}/../c/)         # bitwuzla.h
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
