@@ -427,7 +427,6 @@ typedef struct BzlaSMT2Parser
   int32_t open;
   uint32_t nprefix;
   int32_t sorted_var;
-  uint32_t bound_vars; /* used for exists/forall vars to enumerate symbols */
   bool isvarbinding;
   const char *expecting_body;
   char *error;
@@ -4626,10 +4625,7 @@ parse_open_term(BzlaSMT2Parser *parser, int32_t tag)
 
       q       = push_item_smt2(parser, BZLA_SYMBOL_TAG_SMT2);
       q->node = sym;
-      char
-          buf[strlen(sym->name) + bzla_util_num_digits(parser->bound_vars) + 2];
-      sprintf(buf, "%s!%d", sym->name, parser->bound_vars++);
-      sym->exp = bitwuzla_mk_var(bitwuzla, s, buf);
+      sym->exp = bitwuzla_mk_var(bitwuzla, s, sym->name);
     }
     parser->open++;
   }
