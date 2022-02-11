@@ -1347,8 +1347,6 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
   while (bzla_iter_binder_has_next(&nit))
   {
     cur = bzla_iter_binder_next(&nit);
-    //std::cout << "q: " << cur << std::endl;
-    //std::cout << "q[0]: " << cur->e[0] << std::endl;
     ic  = get_inst_constant(cur);
 
     std::vector<BzlaNode *> inputs;
@@ -1420,7 +1418,6 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
                                10000,     // max checks
                                5,         // max levels
                                nullptr);  // BzlaNode *prev_synth)
-      std::cout << "candidate: " << t << " for " << cur->e[0] << std::endl;
     }
 
     bzla_hashint_map_delete(value_in_map);
@@ -1433,8 +1430,6 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
     {
       map[cur->e[0]] = get_value(d_bzla, ic);
     }
-
-    // std::cout << "synth qi: " << t << std::endl;
 
     for (BzlaBitVectorTuple *bvtup : values_in)
     {
@@ -1524,14 +1519,14 @@ QuantSolverState::check_active_quantifiers()
     model_assumptions.push_back(eq);
   }
 
-  //for (auto c : d_constants)
-  //{
-  //  BzlaNode *val = get_value(d_bzla, c);
-  //  BzlaNode *eq = bzla_exp_eq(d_bzla, c, val);
-  //  bzla_node_release(d_bzla, val);
-  //  assume(eq);
-  //  model_assumptions.push_back(eq);
-  //}
+  for (auto c : d_constants)
+  {
+    BzlaNode *val = get_value(d_bzla, c);
+    BzlaNode *eq  = bzla_exp_eq(d_bzla, c, val);
+    bzla_node_release(d_bzla, val);
+    assume(eq);
+    model_assumptions.push_back(eq);
+  }
 
 #ifdef QLOG
   printf("\n");
