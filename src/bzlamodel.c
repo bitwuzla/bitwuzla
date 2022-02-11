@@ -722,8 +722,8 @@ compute_model_values(Bzla *bzla,
     {
       recursively_compute_function_model(bzla, bv_model, fun_model, cur);
     }
-    else if (bzla_node_is_apply(cur)
-             || bzla_node_fp_needs_word_blast(bzla, cur))
+    else if (bzla_node_is_apply(cur) || bzla_node_fp_needs_word_blast(bzla, cur)
+             || bzla_node_is_quantifier(cur))
     {
       // Generate model for top-level update nodes only
       if (bzla_node_is_apply(cur) && bzla_node_is_update(cur->e[0]))
