@@ -244,6 +244,24 @@ cdef class BitwuzlaTerm:
     def __eq__(self, BitwuzlaTerm other):
         return self.ptr() == other.ptr()
 
+    def dump(self, fmt='smt2'):
+        """dump(fmt = "smt2")
+
+           Get string representation of term in format ``fmt``.
+
+           :param fmt: Output format. Available formats: "btor", "smt2"
+           :type: str
+
+           :return: String representation of the term in format ``fmt``.
+           :rtype: str
+        """
+        cdef FILE * out
+        with tempfile.NamedTemporaryFile('r') as f:
+            out = fopen(_to_cstr(f.name), 'w')
+            bitwuzla_api.bitwuzla_term_dump(self.ptr(), _to_cstr(fmt), out)
+            fclose(out)
+            return f.read().strip()
+
     def get_children(self):
         """:return: The children of the term.
            :rtype: list(BitwuzlaTerm)

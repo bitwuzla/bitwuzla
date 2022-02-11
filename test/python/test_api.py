@@ -517,4 +517,10 @@ def test_substitute(env):
 # TODO
 
 # BitwuzlaTerm tests
-# TODO
+
+def test_term_dump(env):
+    x = env.bzla.mk_var(env.bv32, "x")
+    assert x.dump() == "x"
+    y = env.bzla.mk_var(env.bv32, "y")
+    add = env.bzla.mk_term(Kind.BV_ADD, [x, y])
+    assert add.dump() == "(bvadd x y)"
