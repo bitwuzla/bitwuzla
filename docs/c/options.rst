@@ -1,3 +1,5 @@
+.. _c_options:
+
 Options
 =======
 

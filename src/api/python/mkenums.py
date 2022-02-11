@@ -93,6 +93,8 @@ C_ENUM_TEMPLATE = """
 
 PY_ENUM_TEMPLATE = """
 class {bzla_enum:s}(Enum):
+    \"\"\"{docstring:s}
+    \"\"\"
     {values:s}
 """
 
@@ -103,6 +105,25 @@ cdef extern from \"bitwuzla.h\":
 {cenums:s}
 
 {pyenums:s}"""
+
+ENUM_DOCSTRINGS = {
+    "Option":
+"""Configuration options supported by Bitwuzla. For more information on
+   options see :ref:`c_options`.
+""",
+
+    "Kind":
+"""BitwuzlaTerm kinds. For more information on term kinds see :ref:`c_kinds`.
+""",
+
+    "Result":
+"""Satisfiability result.
+""",
+
+    "RoundingMode":
+"""Floating-point rounding mode.
+"""
+}
 
 
 def generate_output(bzla_enums, output_file):
@@ -146,8 +167,13 @@ def generate_output(bzla_enums, output_file):
                 py_values.append('{} = {}'.format(py_e, e))
 
         formatted_py_values = "\n    ".join(py_values)
+        if py_enum_name not in ENUM_DOCSTRINGS:
+            raise BitwuzlaEnumParseError(
+                    f'Missing docstring for enum {py_enum_name}')
+        docstring = ENUM_DOCSTRINGS[py_enum_name]
         s = PY_ENUM_TEMPLATE.format(
             bzla_enum=py_enum_name,
+            docstring=docstring,
             values=formatted_py_values
         )
         all_py_enums.append(s)

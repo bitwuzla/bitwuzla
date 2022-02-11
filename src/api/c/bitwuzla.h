@@ -2868,8 +2868,6 @@ const BitwuzlaTerm *bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
 /**
  * Create a (first-order) constant of given sort with given symbol.
  *
- * @note This creates a 0-arity function symbol.
- *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the constant.
  * @param symbol The symbol of the constant.
@@ -2894,7 +2892,7 @@ const BitwuzlaTerm *bitwuzla_mk_const(Bitwuzla *bitwuzla,
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param sort The sort of the array.
- * @param value The value to initialize the elements of the array with.
+ * @param value The term to initialize the elements of the array with.
  *
  * @return A term of kind BITWUZLA_KIND_CONST_ARRAY, representing a constant
  *         array of given sort.

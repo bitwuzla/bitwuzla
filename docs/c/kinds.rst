@@ -1,3 +1,5 @@
+.. _c_kinds:
+
 Kinds
 =====
 
