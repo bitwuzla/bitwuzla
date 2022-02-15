@@ -55,7 +55,7 @@ operator<<(std::ostream &out, BzlaNode *n)
 
 /*------------------------------------------------------------------------*/
 
-//#define QLOG
+#define QLOG
 
 #ifdef QLOG
 
@@ -129,6 +129,7 @@ class QuantSolverState
 
   bool added_new_lemmas() const;
 
+  BzlaSolverResult check_sat_ground();
   void reset_assumptions();
   void pop_assumption();
   void assume(BzlaNode *n);
@@ -306,6 +307,12 @@ struct BzlaQuantSolver
 };
 
 /*------------------------------------------------------------------------*/
+
+BzlaSolverResult
+QuantSolverState::check_sat_ground()
+{
+  return d_bzla->slv->api.sat(d_bzla->slv);
+}
 
 void
 QuantSolverState::reset_assumptions()
@@ -1004,10 +1011,10 @@ QuantSolverState::add_lemma(BzlaNode *lem)
   auto it = d_lemma_cache.find(lem);
   if (it != d_lemma_cache.end())
   {
-    // log ("Duplicate lemma: %s\n", bzla_util_node2string (lem));
+    qlog("Duplicate lemma: %s\n", bzla_util_node2string(lem));
     return false;
   }
-  // log ("Add lemma: %s\n", bzla_util_node2string(lem));
+  qlog("Add lemma: %s\n", bzla_util_node2string(lem));
   bzla_assert_exp(d_bzla, lem);
   d_lemma_cache.insert(bzla_node_copy(d_bzla, lem));
   d_added_lemma = true;
@@ -1530,11 +1537,11 @@ QuantSolverState::check_active_quantifiers()
   }
 
 #ifdef QLOG
-  printf("\n");
-  bzla_dumpsmt_dump(d_bzla, stdout);
+  // printf("\n");
+  // bzla_dumpsmt_dump(d_bzla, stdout);
 #endif
 
-  assert(d_bzla->slv->api.sat(d_bzla->slv) == BZLA_RESULT_SAT);
+  assert(check_sat_ground() == BZLA_RESULT_SAT);
 
   /* Check for counterexamples under current candidate model. */
   start               = bzla_util_time_stamp();
@@ -1551,7 +1558,7 @@ QuantSolverState::check_active_quantifiers()
     // bzla_dumpsmt_dump(d_bzla, stdout);
     qlog("Check for counterexamples (%s): ", bzla_util_node2string(q));
 
-    res = d_bzla->slv->api.sat(d_bzla->slv);
+    res = check_sat_ground();
 
     if (res == BZLA_RESULT_SAT)
     {
@@ -1762,7 +1769,7 @@ QuantSolverState::check_ground_formulas()
     //bzla_dumpsmt_dump(d_bzla, stdout);
 #endif
 
-    res = d_bzla->slv->api.sat(d_bzla->slv);
+    res = check_sat_ground();
 
     if (res == BZLA_RESULT_SAT)
     {
