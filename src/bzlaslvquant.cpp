@@ -55,7 +55,7 @@ operator<<(std::ostream &out, BzlaNode *n)
 
 /*------------------------------------------------------------------------*/
 
-#define QLOG
+//#define QLOG
 
 #ifdef QLOG
 
