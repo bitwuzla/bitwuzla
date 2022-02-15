@@ -1530,7 +1530,7 @@ QuantSolverState::check_active_quantifiers()
 
 #ifdef QLOG
   printf("\n");
-  // bzla_dumpsmt_dump(d_bzla, stdout);
+  bzla_dumpsmt_dump(d_bzla, stdout);
 #endif
 
   assert(d_bzla->slv->api.sat(d_bzla->slv) == BZLA_RESULT_SAT);
@@ -1635,6 +1635,7 @@ QuantSolverState::compute_variable_dependencies()
   BzlaNode *q;
   BzlaPtrHashTableIterator it;
 
+  // TODO: process only quantifiers in current assertions
   bzla_iter_hashptr_init(&it, d_bzla->quantifiers);
   while (bzla_iter_hashptr_has_next(&it))
   {
@@ -1677,7 +1678,7 @@ QuantSolverState::collect_info()
   BzlaNode *cur;
   while (!visit.empty())
   {
-    cur = visit.back();
+    cur = bzla_node_real_addr(visit.back());
     visit.pop_back();
 
     if (cache.find(cur) == cache.end())
@@ -1712,10 +1713,9 @@ QuantSolverState::collect_info()
         d_constants.emplace(cur);
       }
 
-      BzlaNode *real_cur = bzla_node_real_addr(cur);
-      for (size_t i = 0; i < real_cur->arity; ++i)
+      for (size_t i = 0; i < cur->arity; ++i)
       {
-        visit.push_back(real_cur->e[i]);
+        visit.push_back(cur->e[i]);
       }
     }
   }
