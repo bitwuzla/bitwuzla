@@ -55,7 +55,7 @@ operator<<(std::ostream &out, BzlaNode *n)
 
 /*------------------------------------------------------------------------*/
 
-//#define QLOG
+#define QLOG
 
 #ifdef QLOG
 
@@ -104,11 +104,11 @@ class QuantSolverState
 
   void compute_variable_dependencies_aux(BzlaNode *q,
                                          std::vector<BzlaNode *> &free_vars);
-  void compute_variable_dependencies();
+  void compute_variable_dependencies(const std::vector<BzlaNode *> quantifiers);
 
   /* Collect values and constants in the formula and populate d_value_map and
    * d_const_map. */
-  void collect_info();
+  void collect_info(std::vector<BzlaNode *> &quantifiers);
 
   BzlaNode *find_backref(BzlaNode *q);
   void add_backref(BzlaNode *qfrom, BzlaNode *qto);
@@ -400,7 +400,8 @@ QuantSolverState::get_active_quantifiers()
 
   mm = d_bzla->mm;
 
-  /* collect all reachable function equalities */
+  /* collect top-most quantifiers reachable from assertions */
+  // TODO: Cache traversed assertions
   bzla_iter_hashptr_init(&it, d_bzla->synthesized_constraints);
   bzla_iter_hashptr_queue(&it, d_bzla->assumptions);
   while (bzla_iter_hashptr_has_next(&it))
@@ -1630,16 +1631,11 @@ QuantSolverState::compute_variable_dependencies_aux(
 }
 
 void
-QuantSolverState::compute_variable_dependencies()
+QuantSolverState::compute_variable_dependencies(
+    const std::vector<BzlaNode *> quantifiers)
 {
-  BzlaNode *q;
-  BzlaPtrHashTableIterator it;
-
-  // TODO: process only quantifiers in current assertions
-  bzla_iter_hashptr_init(&it, d_bzla->quantifiers);
-  while (bzla_iter_hashptr_has_next(&it))
+  for (const auto q : quantifiers)
   {
-    q = static_cast<BzlaNode *>(bzla_iter_hashptr_next(&it));
     if (!q->parameterized)
     {
       qlog("skip: %s\n", bzla_util_node2string(q));
@@ -1660,7 +1656,7 @@ QuantSolverState::compute_variable_dependencies()
 
 // TODO: add special values
 void
-QuantSolverState::collect_info()
+QuantSolverState::collect_info(std::vector<BzlaNode *> &quantifiers)
 {
   std::vector<BzlaNode *> visit;
 
@@ -1711,6 +1707,10 @@ QuantSolverState::collect_info()
           qlog("found const: %s\n", bzla_util_node2string(cur));
         }
         d_constants.emplace(cur);
+      }
+      else if (bzla_node_is_quantifier(cur))
+      {
+        quantifiers.push_back(cur);
       }
 
       for (size_t i = 0; i < cur->arity; ++i)
@@ -1897,8 +1897,9 @@ check_sat_quant_solver(BzlaQuantSolver *slv)
   start                   = bzla_util_time_stamp();
   QuantSolverState &state = *slv->d_state.get();
 
-  state.compute_variable_dependencies();
-  state.collect_info();
+  std::vector<BzlaNode *> quantifiers;
+  state.collect_info(quantifiers);
+  state.compute_variable_dependencies(quantifiers);
 
   while (true)
   {
