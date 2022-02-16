@@ -50,6 +50,7 @@ set(libbitwuzla_src_files
   bzlasubst.c
   bzlafp.cpp
   bzlasynth.c
+  bzlasynthterm.cpp
   api/c/bitwuzla.c
   dumper/bzladumpaig.c
   dumper/bzladumpbtor.c

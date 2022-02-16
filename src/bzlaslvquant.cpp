@@ -18,7 +18,6 @@ extern "C" {
 #include "bzlamodel.h"
 #include "bzlaprintmodel.h"
 #include "bzlaslvfun.h"
-#include "bzlasynth.h"
 #include "dumper/bzladumpsmt.h"
 #include "utils/bzlaabort.h"
 #include "utils/bzlahashint.h"
@@ -36,6 +35,8 @@ extern "C" {
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include "bzlasynthterm.h"
 
 namespace bzla {
 
@@ -56,7 +57,7 @@ operator<<(std::ostream &out, BzlaNode *n)
 
 /*------------------------------------------------------------------------*/
 
-//#define QLOG
+#define QLOG
 
 #ifdef QLOG
 
@@ -131,6 +132,28 @@ qlog_print_synth_table(Bzla *bzla,
 /*------------------------------------------------------------------------*/
 /* Solver State                                                           */
 /*------------------------------------------------------------------------*/
+
+struct SynthData
+{
+  SynthData(BzlaMemMgr *mm) : d_mm(mm) {}
+  ~SynthData();
+
+  BzlaMemMgr *d_mm;
+  std::vector<BzlaBitVectorTuple *> d_values_in;
+  std::vector<BzlaBitVector *> d_values_out;
+};
+
+SynthData::~SynthData()
+{
+  for (BzlaBitVectorTuple *bvtup : d_values_in)
+  {
+    bzla_bv_free_tuple(d_mm, bvtup);
+  }
+  for (BzlaBitVector *bv : d_values_out)
+  {
+    bzla_bv_free(d_mm, bv);
+  }
+}
 
 class QuantSolverState
 {
@@ -270,6 +293,8 @@ class QuantSolverState
   std::unordered_map<BzlaSortId, std::vector<BzlaNode *>> d_const_map;
 
   NodeSet d_constants;
+
+  std::unordered_map<BzlaNode *, SynthData> d_synth_qi_data;
 };
 
 QuantSolverState::~QuantSolverState()
@@ -1305,31 +1330,22 @@ QuantSolverState::synthesize_terms()
       BzlaSortId codomain =
           bzla_sort_fun_get_codomain(d_bzla, bzla_node_get_sort_id(sk));
 
-      BzlaNode **values = nullptr;
-      size_t n_values   = 0;
       auto it           = d_value_map.find(codomain);
-      if (it != d_value_map.end())
-      {
-        values   = it->second.data();
-        n_values = it->second.size();
-      }
+      // FIXME: it->second dangerous
 
       qlog(">>> Synthesize term for %s\n", bzla_util_node2string(sk));
       qlog_print_synth_table(d_bzla, inputs, values_in, values_out, it->second);
+      std::vector<BzlaNode *> constraints;
       BzlaNode *t = bzla_synthesize_term(d_bzla,
-                                         inputs.data(),
-                                         inputs.size(),
-                                         values_in.data(),
-                                         values_out.data(),
-                                         values_in.size(),
+                                         inputs,
+                                         values_in,
+                                         values_out,
                                          value_in_map,
-                                         nullptr,   // constraints
-                                         0,         // number of constraints
-                                         values,    // special constants
-                                         n_values,  // number of constants
-                                         10000,     // max checks
-                                         5,         // max levels
-                                         nullptr);  // BzlaNode *prev_synth)
+                                         constraints,
+                                         it->second,  // special constants
+                                         10000,       // max checks
+                                         5,           // max levels
+                                         nullptr);    // BzlaNode *prev_synth)
       qlog(">>> Result: %s\n", bzla_util_node2string(t));
 
       for (BzlaBitVectorTuple *bvtup : values_in)
@@ -1426,13 +1442,14 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
     cur = bzla_iter_binder_next(&nit);
     ic  = get_inst_constant(cur);
 
+    auto [it_sd, inserted] = d_synth_qi_data.emplace(cur, d_bzla->mm);
+    auto &synth_data       = it_sd->second;
+
     std::vector<BzlaNode *> inputs;
-    std::vector<BzlaBitVectorTuple *> values_in;
-    std::vector<BzlaBitVector *> values_out;
     std::vector<const BzlaBitVector *> input_values;
     BzlaIntHashTable *value_in_map = bzla_hashint_map_new(d_bzla->mm);
 
-    values_out.push_back(
+    synth_data.d_values_out.push_back(
         bzla_bv_copy(d_bzla->mm, bzla_model_get_bv(d_bzla, ic)));
 
     BzlaSortId sort_id = bzla_node_get_sort_id(ic);
@@ -1467,34 +1484,28 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
     {
       bzla_bv_add_to_tuple(d_bzla->mm, bvt, input_values[i], i);
     }
-    values_in.push_back(bvt);
+    synth_data.d_values_in.push_back(bvt);
 
     auto itv          = d_value_map.find(sort_id);
-    BzlaNode **values = nullptr;
-    size_t n_values   = 0;
-    if (itv != d_value_map.end())
-    {
-      values   = itv->second.data();
-      n_values = itv->second.size();
-    }
+    // FIXME: it->second dangerous
 
     BzlaNode *t = nullptr;
     if (!inputs.empty())
     {
+      std::vector<BzlaNode *> constraints;
       qlog(">>> Synthesize QI for %s\n", bzla_util_node2string(cur));
-      qlog_print_synth_table(
-          d_bzla, inputs, values_in, values_out, itv->second);
+      qlog_print_synth_table(d_bzla,
+                             inputs,
+                             synth_data.d_values_in,
+                             synth_data.d_values_out,
+                             itv->second);
       t = bzla_synthesize_term(d_bzla,
-                               inputs.data(),
-                               inputs.size(),
-                               values_in.data(),
-                               values_out.data(),
-                               values_in.size(),
+                               inputs,
+                               synth_data.d_values_in,
+                               synth_data.d_values_out,
                                value_in_map,
-                               nullptr,   // constraints
-                               0,         // number of constraints
-                               values,    // special constants
-                               n_values,  // number of constants
+                               constraints,
+                               itv->second,
                                10000,     // max checks
                                5,         // max levels
                                nullptr);  // BzlaNode *prev_synth)
@@ -1510,15 +1521,6 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
     else
     {
       map[cur->e[0]] = get_value(d_bzla, ic);
-    }
-
-    for (BzlaBitVectorTuple *bvtup : values_in)
-    {
-      bzla_bv_free_tuple(d_bzla->mm, bvtup);
-    }
-    for (BzlaBitVector *bv : values_out)
-    {
-      bzla_bv_free(d_bzla->mm, bv);
     }
   }
 
