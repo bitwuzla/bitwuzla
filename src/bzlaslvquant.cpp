@@ -29,6 +29,7 @@ extern "C" {
 
 #include <algorithm>
 #include <cstdarg>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -59,7 +60,9 @@ operator<<(std::ostream &out, BzlaNode *n)
 
 #ifdef QLOG
 
-static void
+namespace {
+
+void
 qlog(const char *fmt, ...)
 {
   va_list ap;
@@ -69,6 +72,50 @@ qlog(const char *fmt, ...)
   va_end(ap);
 }
 
+void
+qlog_print_synth_table(Bzla *bzla,
+                       const std::vector<BzlaNode *> &inputs,
+                       const std::vector<BzlaBitVectorTuple *> &values_in,
+                       const std::vector<BzlaBitVector *> &values_out,
+                       const std::vector<BzlaNode *> &consts)
+{
+  assert(values_in.size() == values_out.size());
+  for (size_t i = 0; i < values_in.size(); ++i)
+  {
+    auto bvt = values_in[i];
+    std::stringstream ss, ssin;
+
+    for (size_t j = 0; j < bvt->arity; ++j)
+    {
+      char *bv = bzla_bv_to_char(bzla->mm, bvt->bv[j]);
+      ss << bv << " ";
+      ssin << std::setw(strlen(bv)) << inputs[j] << " ";
+      bzla_mem_freestr(bzla->mm, bv);
+    }
+
+    if (i == 0)
+    {
+      std::cout << ssin.str() << std::endl;
+    }
+
+    char *bv = bzla_bv_to_char(bzla->mm, values_out[i]);
+    ss << "-> " << bv << "\n";
+    bzla_mem_freestr(bzla->mm, bv);
+    std::cout << ss.str();
+  }
+
+  if (!consts.empty())
+  {
+    std::cout << "Consts:" << std::endl;
+    for (auto c : consts)
+    {
+      std::cout << "  " << c << std::endl;
+    }
+  }
+}
+
+}  // namespace
+
 #else
 
 #define qlog(...)        \
@@ -76,6 +123,8 @@ qlog(const char *fmt, ...)
   {                      \
     printf(__VA_ARGS__); \
   }
+
+#define qlog_print_synth_table(bzla, inputs, in, out, consts)
 
 #endif
 
@@ -1027,8 +1076,10 @@ QuantSolverState::add_lemma(BzlaNode *lem)
 void
 QuantSolverState::assert_lemmas()
 {
+  qlog("Assert lemmas\n");
   for (BzlaNode *lem : d_lemmas)
   {
+    qlog("  Lemma: %s\n", bzla_util_node2string(lem));
     bzla_assert_exp(d_bzla, lem);
   }
   d_lemmas.clear();
@@ -1044,7 +1095,7 @@ QuantSolverState::add_value_instantiation_lemma(BzlaNode *q)
   BzlaNodeIterator it;
   NodeMap<BzlaNode *> map;
 
-  qlog("Add value instantiation: %s\n", bzla_util_node2string(q));
+  qlog("<<< Add value instantiation: %s\n", bzla_util_node2string(q));
   /* Collect model values for instantiation constants of q. */
   bzla_iter_binder_init(&it, q);
   while (bzla_iter_binder_has_next(&it))
@@ -1079,6 +1130,7 @@ QuantSolverState::add_value_instantiation_lemma(BzlaNode *q)
   add_lemma(lem);
   bzla_node_release(d_bzla, lem);
   ++d_statistics.num_value_inst_lemmas;
+  qlog("<<<\n");
 }
 
 bool
@@ -1262,6 +1314,8 @@ QuantSolverState::synthesize_terms()
         n_values = it->second.size();
       }
 
+      qlog(">>> Synthesize term for %s\n", bzla_util_node2string(sk));
+      qlog_print_synth_table(d_bzla, inputs, values_in, values_out, it->second);
       BzlaNode *t = bzla_synthesize_term(d_bzla,
                                          inputs.data(),
                                          inputs.size(),
@@ -1276,6 +1330,7 @@ QuantSolverState::synthesize_terms()
                                          10000,     // max checks
                                          5,         // max levels
                                          nullptr);  // BzlaNode *prev_synth)
+      qlog(">>> Result: %s\n", bzla_util_node2string(t));
 
       for (BzlaBitVectorTuple *bvtup : values_in)
       {
@@ -1426,6 +1481,9 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
     BzlaNode *t = nullptr;
     if (!inputs.empty())
     {
+      qlog(">>> Synthesize QI for %s\n", bzla_util_node2string(cur));
+      qlog_print_synth_table(
+          d_bzla, inputs, values_in, values_out, itv->second);
       t = bzla_synthesize_term(d_bzla,
                                inputs.data(),
                                inputs.size(),
@@ -1440,6 +1498,7 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
                                10000,     // max checks
                                5,         // max levels
                                nullptr);  // BzlaNode *prev_synth)
+      qlog(">>> Result: %s\n", bzla_util_node2string(t));
     }
 
     bzla_hashint_map_delete(value_in_map);
