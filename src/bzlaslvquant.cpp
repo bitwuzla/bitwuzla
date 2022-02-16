@@ -119,7 +119,9 @@ class QuantSolverState
   BzlaNode *get_inst_constant(BzlaNode *q);
   BzlaNode *skolemize(BzlaNode *q);
   BzlaNode *get_skolemization_lemma(BzlaNode *q);
+  bool added_skolemization_lemma(BzlaNode *q);
   BzlaNode *get_ce_lemma(BzlaNode *q);
+  bool added_ce_lemma(BzlaNode *q);
   BzlaNode *get_ce_literal(BzlaNode *q);
 
   BzlaNode *instantiate(BzlaNode *q, const NodeMap<BzlaNode *> &substs);
@@ -939,6 +941,12 @@ QuantSolverState::get_skolemization_lemma(BzlaNode *q)
   return lemma;
 }
 
+bool
+QuantSolverState::added_skolemization_lemma(BzlaNode *q)
+{
+  return d_skolemization_lemmas.find(q) != d_skolemization_lemmas.end();
+}
+
 BzlaNode *
 QuantSolverState::get_ce_lemma(BzlaNode *q)
 {
@@ -986,6 +994,12 @@ QuantSolverState::get_ce_lemma(BzlaNode *q)
   qlog("---\n");
 
   return lem;
+}
+
+bool
+QuantSolverState::added_ce_lemma(BzlaNode *q)
+{
+  return d_ce_lemmas.find(q) != d_ce_lemmas.end();
 }
 
 BzlaNode *
@@ -1494,7 +1508,7 @@ QuantSolverState::check_active_quantifiers()
     {
       if (!is_inactive(q))
       {
-        if (add_lemma(get_ce_lemma(q)))
+        if (!added_ce_lemma(q) && add_lemma(get_ce_lemma(q)))
         {
           ++d_statistics.num_ce_lemmas;
         }
@@ -1504,7 +1518,7 @@ QuantSolverState::check_active_quantifiers()
     else
     {
       assert(is_exists(q));
-      if (add_lemma(get_skolemization_lemma(q)))
+      if (!added_skolemization_lemma(q) && add_lemma(get_skolemization_lemma(q)))
       {
         ++d_statistics.num_skolemization_lemmas;
       }
@@ -1537,6 +1551,8 @@ QuantSolverState::check_active_quantifiers()
   // printf("\n");
   // bzla_dumpsmt_dump(d_bzla, stdout);
 #endif
+
+  assert_lemmas();
 
   qlog("Assume model values.\n---\n");
   for (auto a : model_assumptions)
