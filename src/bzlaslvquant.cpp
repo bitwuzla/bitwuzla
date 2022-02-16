@@ -55,7 +55,7 @@ operator<<(std::ostream &out, BzlaNode *n)
 
 /*------------------------------------------------------------------------*/
 
-#define QLOG
+//#define QLOG
 
 #ifdef QLOG
 
@@ -125,14 +125,16 @@ class QuantSolverState
   BzlaNode *instantiate(BzlaNode *q, const NodeMap<BzlaNode *> &substs);
 
   bool add_lemma(BzlaNode *lem);
+  void assert_lemmas();
   void add_value_instantiation_lemma(BzlaNode *q);
 
   bool added_new_lemmas() const;
 
   BzlaSolverResult check_sat_ground();
+  void generate_model_ground();
   void reset_assumptions();
   void pop_assumption();
-  void assume(BzlaNode *n);
+  bool assume(BzlaNode *n);
   void save_assumptions();
 
   void get_fun_model(BzlaNode *sk_fun,
@@ -195,6 +197,7 @@ class QuantSolverState
   NodeMap<BzlaNode *> d_ce_literals;
   /* Cache of added lemmas. */
   NodeSet d_lemma_cache;
+  std::vector<BzlaNode *> d_lemmas;
   /* Maps Skolem constant/function to synthesized term. */
   NodeMap<BzlaNode *> d_synthesized_terms;
 
@@ -275,6 +278,11 @@ QuantSolverState::~QuantSolverState()
     bzla_node_release(d_bzla, l);
   }
 
+  for (BzlaNode *a : d_assumptions)
+  {
+    bzla_node_release(d_bzla, a);
+  }
+
   for (auto [sk, t] : d_synthesized_terms)
   {
     bzla_node_release(d_bzla, t);
@@ -315,26 +323,19 @@ QuantSolverState::check_sat_ground()
 }
 
 void
+QuantSolverState::generate_model_ground()
+{
+  d_bzla->slv->api.generate_model(d_bzla->slv, false, false);
+}
+
+void
 QuantSolverState::reset_assumptions()
 {
-  BzlaNode *simp;
-  for (BzlaNode *n : d_assumptions)
+  qlog("Reset assumptions:\n");
+  while (!d_assumptions.empty())
   {
-    // qlog("reset assume: %s\n", bzla_util_node2string(n));
-    assert(bzla_hashptr_table_get(d_bzla->orig_assumptions, n));
-    bzla_hashptr_table_remove(d_bzla->orig_assumptions, n, 0, 0);
-
-    simp = bzla_simplify_exp(d_bzla, n);
-    /* If simp is not in assumptions it already got removed in a previous
-     * iteration. */
-    if (bzla_hashptr_table_get(d_bzla->assumptions, simp))
-    {
-      bzla_hashptr_table_remove(d_bzla->assumptions, simp, 0, 0);
-      bzla_node_release(d_bzla, simp);
-    }
-    bzla_node_release(d_bzla, n);
+    pop_assumption();
   }
-  d_assumptions.clear();
 }
 
 void
@@ -342,23 +343,34 @@ QuantSolverState::pop_assumption()
 {
   BzlaNode *n = d_assumptions.back();
   d_assumptions.pop_back();
+  qlog("Pop assumption: %s\n", bzla_util_node2string(n));
 
-  assert(bzla_hashptr_table_get(d_bzla->orig_assumptions, n));
-  bzla_hashptr_table_remove(d_bzla->orig_assumptions, n, 0, 0);
+  if (bzla_is_assumption_exp(d_bzla, n))
+  {
+    assert(bzla_hashptr_table_get(d_bzla->orig_assumptions, n));
+    bzla_hashptr_table_remove(d_bzla->orig_assumptions, n, 0, 0);
 
-  BzlaNode *simp = bzla_simplify_exp(d_bzla, n);
-  assert(bzla_hashptr_table_get(d_bzla->assumptions, simp));
-  bzla_hashptr_table_remove(d_bzla->assumptions, simp, 0, 0);
-  bzla_node_release(d_bzla, n);
-  bzla_node_release(d_bzla, simp);
+    BzlaNode *simp = bzla_simplify_exp(d_bzla, n);
+    assert(bzla_hashptr_table_get(d_bzla->assumptions, simp));
+    bzla_hashptr_table_remove(d_bzla->assumptions, simp, 0, 0);
+    bzla_node_release(d_bzla, n);  // copy from bzla_assume_exp()
+    bzla_node_release(d_bzla, simp);
+  }
+
+  bzla_node_release(d_bzla, n);  // copy from d_assumptions
 }
 
-void
+bool
 QuantSolverState::assume(BzlaNode *n)
 {
-  // qlog("assume: %s\n", bzla_util_node2string(n));
-  bzla_assume_exp(d_bzla, n);
-  d_assumptions.push_back(n);
+  if (!bzla_is_assumption_exp(d_bzla, n))
+  {
+    qlog("Assume: %s\n", bzla_util_node2string(n));
+    bzla_assume_exp(d_bzla, n);
+    d_assumptions.push_back(bzla_node_copy(d_bzla, n));
+    return true;
+  }
+  return false;
 }
 
 // TODO: Shorten paths for better performance
@@ -979,30 +991,7 @@ QuantSolverState::get_ce_lemma(BzlaNode *q)
 BzlaNode *
 get_value(Bzla *bzla, BzlaNode *n)
 {
-  BzlaBitVector *bv_value;
-  BzlaNode *value = 0;
-
-  bv_value = bzla_model_get_bv_assignment(bzla, n);
-  if (bzla_node_is_fp(bzla, n))
-  {
-    BzlaFloatingPoint *fp_value =
-        bzla_fp_from_bv(bzla, bzla_node_get_sort_id(n), bv_value);
-    value = bzla_node_create_fp_const(bzla, fp_value);
-    bzla_fp_free(bzla, fp_value);
-  }
-  else if (bzla_node_is_rm(bzla, n))
-  {
-    value = bzla_exp_rm_const(bzla, bzla_rm_from_bv(bv_value));
-  }
-  else
-  {
-    assert(bzla_node_is_bv(bzla, n));
-    value = bzla_exp_bv_const(bzla, bv_value);
-  }
-
-  assert(value);
-  bzla_bv_free(bzla->mm, bv_value);
-  return value;
+  return bzla_model_get_value(bzla, n);
 }
 
 bool
@@ -1015,10 +1004,20 @@ QuantSolverState::add_lemma(BzlaNode *lem)
     return false;
   }
   qlog("Add lemma: %s\n", bzla_util_node2string(lem));
-  bzla_assert_exp(d_bzla, lem);
   d_lemma_cache.insert(bzla_node_copy(d_bzla, lem));
+  d_lemmas.push_back(lem);
   d_added_lemma = true;
   return true;
+}
+
+void
+QuantSolverState::assert_lemmas()
+{
+  for (BzlaNode *lem : d_lemmas)
+  {
+    bzla_assert_exp(d_bzla, lem);
+  }
+  d_lemmas.clear();
 }
 
 void
@@ -1153,7 +1152,8 @@ QuantSolverState::synthesize_terms()
   std::vector<BzlaNode *> quantifiers;
   BzlaNode *prev_f;
 
-  d_bzla->slv->api.generate_model(d_bzla->slv, false, false);
+  generate_model_ground();
+
   // TODO: check if we only need to do this for active quantifiers
   for (auto [q, sk] : d_skolems)
   {
@@ -1484,6 +1484,7 @@ QuantSolverState::check_active_quantifiers()
   BzlaSolverResult res;
   std::vector<BzlaNode *> to_check, to_synth, model_assumptions, lemmas;
 
+  assert(d_lemmas.empty());
   d_added_lemma = false;
   start         = bzla_util_time_stamp();
   get_active_quantifiers();
@@ -1493,7 +1494,6 @@ QuantSolverState::check_active_quantifiers()
     {
       if (!is_inactive(q))
       {
-        // lemmas.push_back(get_ce_lemma(q));
         if (add_lemma(get_ce_lemma(q)))
         {
           ++d_statistics.num_ce_lemmas;
@@ -1504,7 +1504,6 @@ QuantSolverState::check_active_quantifiers()
     else
     {
       assert(is_exists(q));
-      // lemmas.push_back(get_skolemization_lemma(q));
       if (add_lemma(get_skolemization_lemma(q)))
       {
         ++d_statistics.num_skolemization_lemmas;
@@ -1523,7 +1522,6 @@ QuantSolverState::check_active_quantifiers()
   for (auto [sk, model_candidate] : d_synthesized_terms)
   {
     BzlaNode *eq = bzla_exp_eq(d_bzla, sk, model_candidate);
-    assume(eq);
     model_assumptions.push_back(eq);
   }
 
@@ -1532,7 +1530,6 @@ QuantSolverState::check_active_quantifiers()
     BzlaNode *val = get_value(d_bzla, c);
     BzlaNode *eq  = bzla_exp_eq(d_bzla, c, val);
     bzla_node_release(d_bzla, val);
-    assume(eq);
     model_assumptions.push_back(eq);
   }
 
@@ -1541,7 +1538,15 @@ QuantSolverState::check_active_quantifiers()
   // bzla_dumpsmt_dump(d_bzla, stdout);
 #endif
 
-  assert(check_sat_ground() == BZLA_RESULT_SAT);
+  qlog("Assume model values.\n---\n");
+  for (auto a : model_assumptions)
+  {
+    assume(a);
+    bzla_node_release(d_bzla, a);
+  }
+  qlog("---\n");
+
+  // assert(check_sat_ground() == BZLA_RESULT_SAT);
 
   /* Check for counterexamples under current candidate model. */
   start               = bzla_util_time_stamp();
@@ -1549,10 +1554,11 @@ QuantSolverState::check_active_quantifiers()
   for (BzlaNode *q : to_check)
   {
     ++d_statistics.num_counterexample_checks;
+    qlog("***\n");
 
     lit = get_ce_literal(q);
 
-    assume(lit);
+    bool assumed = assume(lit);
 
     // printf("\n");
     // bzla_dumpsmt_dump(d_bzla, stdout);
@@ -1563,9 +1569,7 @@ QuantSolverState::check_active_quantifiers()
     if (res == BZLA_RESULT_SAT)
     {
       qlog("sat\n");
-
-      // d_bzla->slv->api.generate_model(d_bzla->slv, false, false);
-      // d_bzla->slv->api.print_model(d_bzla->slv, "smt2", stdout);
+      generate_model_ground();
       add_value_instantiation_lemma(q);
       synthesize_qi(q);
     }
@@ -1579,21 +1583,16 @@ QuantSolverState::check_active_quantifiers()
       }
     }
 
-    pop_assumption();
+    if (assumed)
+    {
+      pop_assumption();
+    }
+    qlog("***\n");
   }
   done = num_inactive == to_check.size();
 
-  // TODO: can be removed if assumptions released via reset_assumptions
-  for (BzlaNode *n : model_assumptions)
-  {
-    bzla_node_release(d_bzla, n);
-  }
   reset_assumptions();
-
-  //  for (BzlaNode *lem : lemmas)
-  //  {
-  //    add_lemma(lem);
-  //  }
+  assert_lemmas();
 
   d_statistics.time_check_counterexamples += bzla_util_time_stamp() - start;
 
@@ -1701,7 +1700,7 @@ QuantSolverState::collect_info(std::vector<BzlaNode *> &quantifiers)
           qlog("found value: %s\n", bzla_util_node2string(cur));
         }
       }
-      else if (bzla_node_is_bv_var(cur))
+      else if (bzla_node_is_var(cur) || bzla_node_is_uf(cur))
       {
         BzlaSortId sort_id = bzla_node_get_sort_id(cur);
 
@@ -1790,7 +1789,7 @@ QuantSolverState::check_ground_formulas()
           bzla_hashptr_table_add(d_bzla->inputs, bzla_node_copy(d_bzla, ic));
         }
       }
-      d_bzla->slv->api.generate_model(d_bzla->slv, false, false);
+      generate_model_ground();
       d_bzla->slv->api.print_model(d_bzla->slv, "smt2", stdout);
 #endif
 

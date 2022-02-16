@@ -2847,6 +2847,7 @@ DONE:
     bzla->slv = (BzlaSolver *) slv;
   }
   bzla->last_sat_result = result;
+  bzla->valid_assignments = 1;
   return result;
 }
 
