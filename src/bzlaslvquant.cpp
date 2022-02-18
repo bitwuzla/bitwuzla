@@ -170,10 +170,6 @@ class QuantSolverState
   void set_inactive(BzlaNode *q);
   bool is_inactive(BzlaNode *q);
 
-  void add_instance(BzlaNode *q,
-                    BzlaNode *qi,
-                    const NodeMap<BzlaNode *> &substs);
-
   void compute_variable_dependencies_aux(BzlaNode *q,
                                          std::vector<BzlaNode *> &free_vars);
   void compute_variable_dependencies(const std::vector<BzlaNode *> quantifiers);
@@ -182,8 +178,16 @@ class QuantSolverState
    * d_const_map. */
   void collect_info(std::vector<BzlaNode *> &quantifiers);
 
-  BzlaNode *find_backref(BzlaNode *q);
-  void add_backref(BzlaNode *qfrom, BzlaNode *qto);
+  /** Add new instance of `q_orig` and track dependencies. */
+  void add_instance(BzlaNode *q_orig,
+                    BzlaNode *q_inst,
+                    const NodeMap<BzlaNode *> &substs);
+
+  /** Find original instance of quantifier `q`. */
+  BzlaNode *find_original_instance(BzlaNode *q);
+
+  /** Record instance `q_inst` of quantified formula `q_orig`. */
+  void record_instance(BzlaNode *q_inst, BzlaNode *q_orig);
 
   BzlaNode *get_skolem(BzlaNode *q);
   BzlaNode *mk_skolem(BzlaNode *q, const char *sym);
@@ -266,7 +270,11 @@ class QuantSolverState
   NodeSet d_inactive_quantifiers;
 
   NodeMap<std::vector<BzlaNode *>> d_deps;
-  NodeMap<BzlaNode *> d_backrefs;
+  /**
+   * Stores all instantiations and maps an instantiated quantifier back to the
+   * original quantifier.
+   */
+  NodeMap<BzlaNode *> d_instantiations;
 
   /* Maps quantifier to introduced skolem. */
   NodeMap<BzlaNode *> d_skolems;
@@ -328,7 +336,7 @@ QuantSolverState::~QuantSolverState()
     }
   }
 
-  for (auto [qi, q] : d_backrefs)
+  for (auto [qi, q] : d_instantiations)
   {
     bzla_node_release(d_bzla, qi);
     bzla_node_release(d_bzla, q);
@@ -471,29 +479,32 @@ QuantSolverState::assume(BzlaNode *n)
 
 // TODO: Shorten paths for better performance
 BzlaNode *
-QuantSolverState::find_backref(BzlaNode *q)
+QuantSolverState::find_original_instance(BzlaNode *q)
 {
-  auto it = d_backrefs.find(q);
-  while (it != d_backrefs.end())
+  auto it = d_instantiations.find(q);
+  while (it != d_instantiations.end())
   {
+    assert(bzla_node_real_addr(q) != bzla_node_real_addr(it->second));
     q  = it->second;
-    it = d_backrefs.find(q);
+    it = d_instantiations.find(q);
   }
   return q;
 }
 
 void
-QuantSolverState::add_backref(BzlaNode *qfrom, BzlaNode *qto)
+QuantSolverState::record_instance(BzlaNode *q_inst, BzlaNode *q_orig)
 {
-  BzlaNode *backref = find_backref(qto);
-
-  auto it = d_backrefs.find(qfrom);
-  if (it == d_backrefs.end())
+  if (q_inst == q_orig)
   {
-    d_backrefs.emplace(bzla_node_copy(d_bzla, qfrom),
-                       bzla_node_copy(d_bzla, backref));
-    //    log ("::: %s -> %s\n", bzla_util_node2string(qfrom),
-    //    bzla_util_node2string(qto));
+    return;
+  }
+
+  q_orig  = find_original_instance(q_orig);
+  auto it = d_instantiations.find(q_inst);
+  if (it == d_instantiations.end())
+  {
+    d_instantiations.emplace(bzla_node_copy(d_bzla, q_inst),
+                             bzla_node_copy(d_bzla, q_orig));
   }
 }
 
@@ -544,7 +555,7 @@ QuantSolverState::get_active_quantifiers()
       qlog("  %s (%s) (instance: %s)\n",
            bzla_util_node2string(cur),
            phase ? "true" : "false",
-           bzla_util_node2string(find_backref(cur)));
+           bzla_util_node2string(find_original_instance(cur)));
 
       /* Determine polarity of each active quantifier. */
       do
@@ -602,7 +613,7 @@ static BzlaNode *
 substitute(Bzla *bzla,
            BzlaNode *n,
            const NodeMap<BzlaNode *> &substs,
-           NodeMap<BzlaNode *> &backref)
+           NodeMap<BzlaNode *> &substituted)
 {
   assert(bzla);
   assert(n);
@@ -632,9 +643,7 @@ substitute(Bzla *bzla,
         if (bzla_node_is_param(real_cur)
             && bzla_node_param_is_forall_var(real_cur))
         {
-          backref.emplace(real_cur, bzla_node_copy(bzla, subst));
-          // printf ("backref: %s -> %s\n", bzla_util_node2string(real_cur),
-          // bzla_util_node2string(subst));
+          substituted.emplace(real_cur, bzla_node_copy(bzla, subst));
         }
         continue;
       }
@@ -720,7 +729,7 @@ substitute(Bzla *bzla,
           if (bzla_node_is_quantifier(real_cur)
               && bzla_node_is_quantifier(result))
           {
-            backref.emplace(real_cur, bzla_node_copy(bzla, result));
+            substituted.emplace(real_cur, bzla_node_copy(bzla, result));
           }
         }
       }
@@ -729,7 +738,7 @@ substitute(Bzla *bzla,
       if (bzla_node_is_param(real_cur)
           && bzla_node_param_is_forall_var(real_cur))
       {
-        backref.emplace(real_cur, bzla_node_copy(bzla, result));
+        substituted.emplace(real_cur, bzla_node_copy(bzla, result));
       }
 
       it->second = result;
@@ -748,44 +757,54 @@ substitute(Bzla *bzla,
 }
 
 void
-QuantSolverState::add_instance(BzlaNode *q,
-                               BzlaNode *qi,
+QuantSolverState::add_instance(BzlaNode *q_orig,
+                               BzlaNode *q_inst,
                                const NodeMap<BzlaNode *> &substs)
 {
-  if (q == qi)
+  if (q_orig == q_inst)
   {
     return;
   }
 
-  if (d_deps.find(qi) != d_deps.end())
+  record_instance(q_inst, q_orig);
+
+  // Instance already added.
+  if (d_deps.find(q_inst) != d_deps.end())
   {
-    // TODO: check if we need to do anything here
-    // log("******* already added\n");
     return;
   }
-  assert(d_deps.find(q) != d_deps.end());
 
-  qlog("Add new instance: %s\n", bzla_util_node2string(qi));
+  qlog("Add new instance: %s (from %s)\n",
+       bzla_util_node2string(q_inst),
+       bzla_util_node2string(q_orig));
 
-  auto &qdeps = d_deps.at(q);
-  std::vector<BzlaNode *> qideps;
-  for (auto cur : qdeps)
+  auto it = d_deps.find(q_orig);
+  if (it != d_deps.end())
   {
-    auto it = substs.find(cur);
-    if (it != substs.end())
+    auto &qdeps = it->second;
+    std::vector<BzlaNode *> qideps;
+    for (auto cur : qdeps)
     {
-      qideps.push_back(bzla_node_copy(d_bzla, it->second));
-      qlog("  dep: %s -> %s\n",
-           bzla_util_node2string(cur),
-           bzla_util_node2string(it->second));
+      auto it = substs.find(cur);
+      if (it != substs.end())
+      {
+        qideps.push_back(bzla_node_copy(d_bzla, it->second));
+        qlog("  dep: %s -> %s\n",
+             bzla_util_node2string(cur),
+             bzla_util_node2string(it->second));
+      }
+      else
+      {
+        qideps.push_back(bzla_node_copy(d_bzla, cur));
+        qlog("  dep: %s\n", bzla_util_node2string(cur));
+      }
     }
-    else
-    {
-      qideps.push_back(bzla_node_copy(d_bzla, cur));
-      qlog("  dep: %s\n", bzla_util_node2string(cur));
-    }
+    d_deps.emplace(bzla_node_copy(d_bzla, q_inst), qideps);
   }
-  d_deps.emplace(bzla_node_copy(d_bzla, qi), qideps);
+  else
+  {
+    assert(!bzla_node_real_addr(q_orig)->parameterized);
+  }
 }
 
 BzlaNode *
@@ -793,19 +812,18 @@ QuantSolverState::instantiate(BzlaNode *q, const NodeMap<BzlaNode *> &substs)
 {
   assert(bzla_node_is_quantifier(q));
 
-  NodeMap<BzlaNode *> backref;
+  NodeMap<BzlaNode *> substituted;
   BzlaNode *result;
 
-  result = substitute(d_bzla, q, substs, backref);
+  result = substitute(d_bzla, q, substs, substituted);
 
-  for (auto [q, qi] : backref)
+  for (auto [q_orig, q_inst] : substituted)
   {
-    if (bzla_node_is_quantifier(q))
+    if (bzla_node_is_quantifier(q_orig))
     {
-      add_backref(qi, q);
-      add_instance(q, qi, backref);
+      add_instance(q_orig, q_inst, substituted);
     }
-    bzla_node_release(d_bzla, qi);
+    bzla_node_release(d_bzla, q_inst);
   }
 
   return result;
@@ -843,7 +861,7 @@ QuantSolverState::get_inst_constant(BzlaNode *q)
 BzlaNode *
 QuantSolverState::mk_skolem(BzlaNode *q, const char *sym)
 {
-  BzlaNode *result = 0, *backref, *sk;
+  BzlaNode *result = 0, *sk;
   BzlaSortId domain, codomain, sort;
 
   auto it = d_deps.find(q);
@@ -866,8 +884,8 @@ QuantSolverState::mk_skolem(BzlaNode *q, const char *sym)
 
     if (!sorts.empty())
     {
-      backref = find_backref(q);
-      auto it = d_skolems.find(backref);
+      auto q_orig = find_original_instance(q);
+      auto it     = d_skolems.find(q_orig);
       if (it != d_skolems.end())
       {
         sk = it->second;
@@ -875,7 +893,7 @@ QuantSolverState::mk_skolem(BzlaNode *q, const char *sym)
         qlog("Use skolem UF (%s): %s (%s)\n",
              bzla_util_node2string(sk),
              bzla_util_node2string(q),
-             bzla_util_node2string(backref));
+             bzla_util_node2string(q_orig));
       }
       else
       {
@@ -885,12 +903,12 @@ QuantSolverState::mk_skolem(BzlaNode *q, const char *sym)
         sk       = bzla_exp_uf(d_bzla, sort, sym);
         bzla_sort_release(d_bzla, domain);
         bzla_sort_release(d_bzla, sort);
-        d_skolems.emplace(bzla_node_copy(d_bzla, backref), sk);
+        d_skolems.emplace(bzla_node_copy(d_bzla, q_orig), sk);
 
         qlog("New skolem UF (%s): %s (%s)\n",
              bzla_util_node2string(sk),
              bzla_util_node2string(q),
-             bzla_util_node2string(backref));
+             bzla_util_node2string(q_orig));
 
         /* We currently only support synthesis for bit-vectors sorts, but not
          * FP sorts. Therefore, we have to check if the sorts for this function
@@ -1051,7 +1069,7 @@ QuantSolverState::get_ce_lemma(BzlaNode *q)
 
   qlog("Add CE lemma: %s (%s)\n---\n",
        bzla_util_node2string(q),
-       bzla_util_node2string(find_backref(q)));
+       bzla_util_node2string(find_original_instance(q)));
 
   /* Get instantiations constants for variables in q. */
   bzla_iter_binder_init(&it, q);
@@ -1260,7 +1278,7 @@ QuantSolverState::synthesize_terms()
   // TODO: check if we only need to do this for active quantifiers
   for (auto [q, sk] : d_skolems)
   {
-    BzlaNode *br = find_backref(q);
+    BzlaNode *br = find_original_instance(q);
 
     /* We only need to synthesize for Skolem UFs / constants, but not for
      * applications on UFs. */
@@ -1881,7 +1899,7 @@ QuantSolverState::check_ground_formulas()
         {
           qlog("  failed: %s (instance: %s)\n",
                bzla_util_node2string(it->second),
-               bzla_util_node2string(find_backref(it->second)));
+               bzla_util_node2string(find_original_instance(it->second)));
           failed = true;
           it     = assumptions.erase(it);
         }
