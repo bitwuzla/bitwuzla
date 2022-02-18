@@ -293,6 +293,7 @@ class QuantSolverState
 
   /* Assumption stack */
   std::vector<BzlaNode *> d_assumptions;
+  std::vector<BzlaNode *> d_assumptions_simp;
 
   /**
    * Maps sort ids to values of given sort found by traversing root
@@ -435,19 +436,22 @@ QuantSolverState::pop_assumption()
   d_assumptions.pop_back();
   qlog("Pop assumption: %s\n", bzla_util_node2string(n));
 
-  if (bzla_is_assumption_exp(d_bzla, n))
+  if (bzla_hashptr_table_get(d_bzla->orig_assumptions, n))
   {
-    assert(bzla_hashptr_table_get(d_bzla->orig_assumptions, n));
     bzla_hashptr_table_remove(d_bzla->orig_assumptions, n, 0, 0);
-
-    BzlaNode *simp = bzla_simplify_exp(d_bzla, n);
-    assert(bzla_hashptr_table_get(d_bzla->assumptions, simp));
-    bzla_hashptr_table_remove(d_bzla->assumptions, simp, 0, 0);
     bzla_node_release(d_bzla, n);  // copy from bzla_assume_exp()
-    bzla_node_release(d_bzla, simp);
   }
-
   bzla_node_release(d_bzla, n);  // copy from d_assumptions
+
+  BzlaNode *simp = d_assumptions_simp.back();
+  d_assumptions_simp.pop_back();
+
+  if (bzla_hashptr_table_get(d_bzla->assumptions, simp))
+  {
+    bzla_hashptr_table_remove(d_bzla->assumptions, simp, 0, 0);
+    bzla_node_release(d_bzla, simp);  // copy from bzla_assume_exp()
+  }
+  bzla_node_release(d_bzla, simp);  // copy from d_assumptions_simp
 }
 
 bool
@@ -458,6 +462,8 @@ QuantSolverState::assume(BzlaNode *n)
     qlog("Assume: %s\n", bzla_util_node2string(n));
     bzla_assume_exp(d_bzla, n);
     d_assumptions.push_back(bzla_node_copy(d_bzla, n));
+    d_assumptions_simp.push_back(
+        bzla_node_copy(d_bzla, bzla_simplify_exp(d_bzla, n)));
     return true;
   }
   return false;
