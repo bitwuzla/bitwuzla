@@ -398,7 +398,6 @@ TermSynthesizer::check_term(uint32_t cur_level,
 
   if (bzla_node_is_bv_const(exp) || d_term_cache.find(id) != d_term_cache.end())
   {
-    bzla_node_release(d_bzla, exp);
     return false;
   }
 
@@ -415,7 +414,6 @@ TermSynthesizer::check_term(uint32_t cur_level,
   {
     assert(!found_term);
     bzla_bv_free_tuple(mm, sig);
-    bzla_node_release(d_bzla, exp);
     return false;
   }
 
@@ -503,13 +501,15 @@ TermSynthesizer::synthesize_terms(Op ops[],
   // Note: currently unused
   if (prev_synth)
   {
-    exp             = bzla_node_copy(d_bzla, prev_synth);
-    found_candidate = check_term(cur_level, exp, sigs, 0);
+    found_candidate = check_term(cur_level, prev_synth, sigs, 0);
     num_checks++;
     if (num_checks % 10000 == 0)
+    {
       report_stats(d_bzla, start, cur_level, num_checks, d_terms);
+    }
     if (found_candidate)
     {
+      exp = bzla_node_copy(d_bzla, prev_synth);
       BZLA_MSG(d_bzla->msg, 1, "previously synthesized term matches");
       goto DONE;
     }
@@ -518,14 +518,17 @@ TermSynthesizer::synthesize_terms(Op ops[],
   // Check if any of the inputs matches the output values.
   for (BzlaNode *t : d_inputs)
   {
-    exp             = bzla_node_copy(d_bzla, t);
-    found_candidate = check_term(cur_level, exp, sigs, 0);
+    found_candidate = check_term(cur_level, t, sigs, 0);
     num_checks++;
     if (num_checks % 10000 == 0)
     {
       report_stats(d_bzla, start, cur_level, num_checks, d_terms);
     }
-    if (found_candidate) goto DONE;
+    if (found_candidate)
+    {
+      exp = bzla_node_copy(d_bzla, t);
+      goto DONE;
+    }
   }
 
   // Check if output values are all equal (only if size of output values > 1).
@@ -571,6 +574,7 @@ TermSynthesizer::synthesize_terms(Op ops[],
           {
             exp = ops[i].un(d_bzla, t);
             CHECK_CANDIDATE(exp);
+            bzla_node_release(d_bzla, exp);
           }
         }
       }
@@ -601,6 +605,7 @@ TermSynthesizer::synthesize_terms(Op ops[],
               {
                 exp = ops[i].bin(d_bzla, t1, t2);
                 CHECK_CANDIDATE(exp);
+                bzla_node_release(d_bzla, exp);
               }
             }
           }
@@ -643,6 +648,7 @@ TermSynthesizer::synthesize_terms(Op ops[],
                 {
                   exp = ops[i].ter(d_bzla, t1, t2, t3);
                   CHECK_CANDIDATE(exp);
+                  bzla_node_release(d_bzla, exp);
                 }
               }
             }
@@ -659,7 +665,9 @@ DONE:
   report_op_stats(d_bzla, ops, nops);
 
   if (found_candidate)
-    result = bzla_node_copy(d_bzla, exp);
+  {
+    result = exp;
+  }
   else
   {
     equal = true;
@@ -679,12 +687,16 @@ DONE:
   }
 
   if (found_candidate)
+  {
     BZLA_MSG(d_bzla->msg,
              1,
              "found candidate after enumerating %u expressions",
              num_checks);
+  }
   else
+  {
     BZLA_MSG(d_bzla->msg, 1, "no candidate found");
+  }
 
   bzla_iter_hashptr_init(&it, sigs);
   while (bzla_iter_hashptr_has_next(&it))
