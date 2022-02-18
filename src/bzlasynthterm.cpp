@@ -172,6 +172,11 @@ class TermSynthesizer
   std::unordered_set<int32_t> d_term_cache;
 
   TermDb d_terms;
+
+  struct
+  {
+    uint64_t num_checks = 0;
+  } d_stats;
 };
 
 TermSynthesizer::TermSynthesizer(Bzla *bzla,
@@ -384,6 +389,8 @@ TermSynthesizer::check_term(uint32_t cur_level,
   id = bzla_node_get_id(exp);
   mm = d_bzla->mm;
 
+  ++d_stats.num_checks;
+
   if (bzla_node_is_bv_const(exp) || d_term_cache.find(id) != d_term_cache.end())
   {
     return false;
@@ -445,18 +452,28 @@ report_op_stats(Bzla *bzla, Op ops[], uint32_t nops)
     BZLA_MSG(bzla->msg, 1, "%s: %u", ops[i].name, ops[i].num_added);
 }
 
-#define CHECK_CANDIDATE(exp)                                       \
-  {                                                                \
-    found_candidate = check_term(cur_level, exp, sigs, &ops[i]);   \
-    num_checks++;                                                  \
-    if (num_checks % 10000 == 0)                                   \
-      report_stats(d_bzla, start, cur_level, num_checks, d_terms); \
-    if (num_checks % 1000 == 0 && bzla_terminate(d_bzla))          \
-    {                                                              \
-      BZLA_MSG(d_bzla->msg, 1, "terminate");                       \
-      goto DONE;                                                   \
-    }                                                              \
-    if (found_candidate || num_checks >= max_checks) goto DONE;    \
+#define CHECK_DONE(exp)                                                    \
+  {                                                                        \
+    found_candidate = check_term(cur_level, exp, sigs, &ops[i]);           \
+    if (found_candidate)                                                   \
+    {                                                                      \
+      goto DONE;                                                           \
+    }                                                                      \
+    bzla_node_release(d_bzla, exp);                                        \
+    if (d_stats.num_checks % 10000 == 0)                                   \
+    {                                                                      \
+      report_stats(d_bzla, start, cur_level, d_stats.num_checks, d_terms); \
+    }                                                                      \
+    if (d_stats.num_checks % 1000 == 0 && bzla_terminate(d_bzla))          \
+    {                                                                      \
+      BZLA_MSG(d_bzla->msg, 1, "terminate");                               \
+      goto DONE;                                                           \
+    }                                                                      \
+    if (d_stats.num_checks >= max_checks)                                  \
+    {                                                                      \
+      BZLA_MSG(d_bzla->msg, 1, "Check limit of %u reached", max_checks);   \
+      goto DONE;                                                           \
+    }                                                                      \
   }
 
 BzlaNode *
@@ -471,7 +488,7 @@ TermSynthesizer::synthesize_terms(Op ops[],
 
   double start;
   bool found_candidate = false, equal;
-  uint32_t i, *tuple, cur_level = 1, num_checks = 0;
+  uint32_t i, *tuple, cur_level = 1;
   BzlaNode *exp, *result = 0;
   BzlaPtrHashTable *sigs;
   BzlaMemMgr *mm;
@@ -490,10 +507,9 @@ TermSynthesizer::synthesize_terms(Op ops[],
   if (prev_synth)
   {
     found_candidate = check_term(cur_level, prev_synth, sigs, 0);
-    num_checks++;
-    if (num_checks % 10000 == 0)
+    if (d_stats.num_checks % 10000 == 0)
     {
-      report_stats(d_bzla, start, cur_level, num_checks, d_terms);
+      report_stats(d_bzla, start, cur_level, d_stats.num_checks, d_terms);
     }
     if (found_candidate)
     {
@@ -507,10 +523,9 @@ TermSynthesizer::synthesize_terms(Op ops[],
   for (BzlaNode *t : d_inputs)
   {
     found_candidate = check_term(cur_level, t, sigs, 0);
-    num_checks++;
-    if (num_checks % 10000 == 0)
+    if (d_stats.num_checks % 10000 == 0)
     {
-      report_stats(d_bzla, start, cur_level, num_checks, d_terms);
+      report_stats(d_bzla, start, cur_level, d_stats.num_checks, d_terms);
     }
     if (found_candidate)
     {
@@ -547,7 +562,7 @@ TermSynthesizer::synthesize_terms(Op ops[],
   for (cur_level = 2; !max_level || cur_level < max_level; cur_level++)
   {
     /* initialize current level */
-    report_stats(d_bzla, start, cur_level, num_checks, d_terms);
+    report_stats(d_bzla, start, cur_level, d_stats.num_checks, d_terms);
 
     size_t num_added = d_terms.size();
     for (i = 0; i < nops; i++)
@@ -561,8 +576,7 @@ TermSynthesizer::synthesize_terms(Op ops[],
           for (BzlaNode *t : terms)
           {
             exp = ops[i].un(d_bzla, t);
-            CHECK_CANDIDATE(exp);
-            bzla_node_release(d_bzla, exp);
+            CHECK_DONE(exp);
           }
         }
       }
@@ -590,8 +604,7 @@ TermSynthesizer::synthesize_terms(Op ops[],
               for (auto t2 : it2->second)
               {
                 exp = ops[i].bin(d_bzla, t1, t2);
-                CHECK_CANDIDATE(exp);
-                bzla_node_release(d_bzla, exp);
+                CHECK_DONE(exp);
               }
             }
           }
@@ -633,8 +646,7 @@ TermSynthesizer::synthesize_terms(Op ops[],
                 for (auto t1 : it1->second)
                 {
                   exp = ops[i].ter(d_bzla, t1, t2, t3);
-                  CHECK_CANDIDATE(exp);
-                  bzla_node_release(d_bzla, exp);
+                  CHECK_DONE(exp);
                 }
               }
             }
@@ -647,7 +659,7 @@ TermSynthesizer::synthesize_terms(Op ops[],
     if (num_added == d_terms.size()) break;
   }
 DONE:
-  report_stats(d_bzla, start, cur_level, num_checks, d_terms);
+  report_stats(d_bzla, start, cur_level, d_stats.num_checks, d_terms);
   report_op_stats(d_bzla, ops, nops);
 
   if (found_candidate)
@@ -677,7 +689,7 @@ DONE:
     BZLA_MSG(d_bzla->msg,
              1,
              "found candidate after enumerating %u expressions",
-             num_checks);
+             d_stats.num_checks);
   }
   else
   {
