@@ -12,27 +12,31 @@
 #define BZLASYNTHTERM_H_INCLUDED
 
 #include <cstdint>
+#include <unordered_map>
 #include <vector>
 
 extern "C" {
+
+#include "bzlasort.h"
+
 struct Bzla;
 struct BzlaNode;
 struct BzlaBitVector;
 struct BzlaBitVectorTuple;
-struct BzlaIntHashTable;
 }
 
 namespace bzla {
+namespace synth {
 
 BzlaNode* bzla_synthesize_term(Bzla* bzla,
                                std::vector<BzlaNode*>& params,
                                std::vector<BzlaBitVectorTuple*>& value_in,
                                std::vector<BzlaBitVector*>& value_out,
-                               BzlaIntHashTable* value_in_map,
-                               std::vector<BzlaNode*>& constraints,
                                std::vector<BzlaNode*>& consts,
                                uint32_t max_checks,
                                uint32_t max_level,
                                BzlaNode* prev_synth);
+
+}
 }
 #endif

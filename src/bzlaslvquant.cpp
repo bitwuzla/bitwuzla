@@ -57,7 +57,7 @@ operator<<(std::ostream &out, BzlaNode *n)
 
 /*------------------------------------------------------------------------*/
 
-#define QLOG
+//#define QLOG
 
 #ifdef QLOG
 
@@ -192,8 +192,22 @@ class QuantSolverState
   BzlaNode *skolemize(BzlaNode *q);
   BzlaNode *get_skolemization_lemma(BzlaNode *q);
   bool added_skolemization_lemma(BzlaNode *q);
+
+  /**
+   * Generate counterexample lemma.
+   *
+   * Creates the following lemma for a quantifier q := \forall x . P(x):
+   *
+   * k => \not P(k), where k is a fresh constant introduced for q.
+   */
   BzlaNode *get_ce_lemma(BzlaNode *q);
+
+  /**
+   * Check whether a counterexample lemmas was already added for quantifier q.
+   */
   bool added_ce_lemma(BzlaNode *q);
+
+  /** Returns the counterexample literal for given quantifier. */
   BzlaNode *get_ce_literal(BzlaNode *q);
 
   BzlaNode *instantiate(BzlaNode *q, const NodeMap<BzlaNode *> &substs);
@@ -1286,8 +1300,6 @@ QuantSolverState::synthesize_terms()
         continue;
       }
 
-      BzlaIntHashTable *value_in_map = bzla_hashint_map_new(d_bzla->mm);
-
       if (prev_f)
       {
         // TODO: add params of prev_f to value_in_map so that we can pass
@@ -1304,7 +1316,6 @@ QuantSolverState::synthesize_terms()
       {
         sort  = bzla_iter_tuple_sort_next(&sit);
         param = bzla_node_create_param(d_bzla, sort, 0);
-        bzla_hashint_map_add(value_in_map, param->id)->as_int = params.size();
         params.push_back(param);
         inputs.push_back(param);
       }
@@ -1327,21 +1338,20 @@ QuantSolverState::synthesize_terms()
           bzla_sort_fun_get_codomain(d_bzla, bzla_node_get_sort_id(sk));
 
       auto it           = d_value_map.find(codomain);
-      // FIXME: it->second dangerous
+      std::vector<BzlaNode *> values =
+          it == d_value_map.end() ? std::vector<BzlaNode *>() : it->second;
 
       qlog(">>> Synthesize term for %s\n", bzla_util_node2string(sk));
-      qlog_print_synth_table(d_bzla, inputs, values_in, values_out, it->second);
-      std::vector<BzlaNode *> constraints;
-      BzlaNode *t = bzla_synthesize_term(d_bzla,
-                                         inputs,
-                                         values_in,
-                                         values_out,
-                                         value_in_map,
-                                         constraints,
-                                         it->second,  // special constants
-                                         10000,       // max checks
-                                         5,           // max levels
-                                         nullptr);    // BzlaNode *prev_synth)
+      qlog_print_synth_table(d_bzla, inputs, values_in, values_out, values);
+      BzlaNode *t =
+          synth::bzla_synthesize_term(d_bzla,
+                                      inputs,
+                                      values_in,
+                                      values_out,
+                                      values,    // special constants
+                                      10000,     // max checks
+                                      5,         // max levels
+                                      nullptr);  // BzlaNode *prev_synth)
       qlog(">>> Result: %s\n", bzla_util_node2string(t));
 
       for (BzlaBitVectorTuple *bvtup : values_in)
@@ -1378,8 +1388,6 @@ QuantSolverState::synthesize_terms()
       {
         bzla_node_release(d_bzla, p);
       }
-
-      bzla_hashint_map_delete(value_in_map);
     }
     /* Use current model value for Skolem constants. */
     else
@@ -1443,7 +1451,6 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
 
     std::vector<BzlaNode *> inputs;
     std::vector<const BzlaBitVector *> input_values;
-    BzlaIntHashTable *value_in_map = bzla_hashint_map_new(d_bzla->mm);
 
     synth_data.d_values_out.push_back(
         bzla_bv_copy(d_bzla->mm, bzla_model_get_bv(d_bzla, ic)));
@@ -1456,7 +1463,6 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
       for (BzlaNode *c : consts)
       {
         assert(bzla_node_is_regular(c));
-        bzla_hashint_map_add(value_in_map, c->id)->as_int = inputs.size();
         inputs.push_back(c);
         input_values.push_back(bzla_model_get_bv(d_bzla, c));
       }
@@ -1468,7 +1474,6 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
     {
       for (BzlaNode *dep : itt->second)
       {
-        bzla_hashint_map_add(value_in_map, dep->id)->as_int = inputs.size();
         inputs.push_back(dep);
         input_values.push_back(bzla_model_get_bv(d_bzla, dep));
       }
@@ -1483,32 +1488,28 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
     synth_data.d_values_in.push_back(bvt);
 
     auto itv          = d_value_map.find(sort_id);
-    // FIXME: it->second dangerous
+    std::vector<BzlaNode *> values =
+        itv == d_value_map.end() ? std::vector<BzlaNode *>() : itv->second;
 
     BzlaNode *t = nullptr;
     if (!inputs.empty())
     {
-      std::vector<BzlaNode *> constraints;
       qlog(">>> Synthesize QI for %s\n", bzla_util_node2string(cur));
       qlog_print_synth_table(d_bzla,
                              inputs,
                              synth_data.d_values_in,
                              synth_data.d_values_out,
-                             itv->second);
-      t = bzla_synthesize_term(d_bzla,
-                               inputs,
-                               synth_data.d_values_in,
-                               synth_data.d_values_out,
-                               value_in_map,
-                               constraints,
-                               itv->second,
-                               10000,     // max checks
-                               5,         // max levels
-                               nullptr);  // BzlaNode *prev_synth)
+                             values);
+      t = synth::bzla_synthesize_term(d_bzla,
+                                      inputs,
+                                      synth_data.d_values_in,
+                                      synth_data.d_values_out,
+                                      values,
+                                      10000,     // max checks
+                                      5,         // max levels
+                                      nullptr);  // BzlaNode *prev_synth)
       qlog(">>> Result: %s\n", bzla_util_node2string(t));
     }
-
-    bzla_hashint_map_delete(value_in_map);
 
     if (t)
     {
@@ -1569,13 +1570,15 @@ QuantSolverState::check_active_quantifiers()
         {
           ++d_statistics.num_ce_lemmas;
         }
+        // TODO: check if pushing only if added is better
         to_check.push_back(q);
       }
     }
     else
     {
       assert(is_exists(q));
-      if (!added_skolemization_lemma(q) && add_lemma(get_skolemization_lemma(q)))
+      if (!added_skolemization_lemma(q)
+          && add_lemma(get_skolemization_lemma(q)))
       {
         ++d_statistics.num_skolemization_lemmas;
       }
@@ -1609,8 +1612,7 @@ QuantSolverState::check_active_quantifiers()
   // bzla_dumpsmt_dump(d_bzla, stdout);
 #endif
 
-  assert_lemmas();
-
+  // Assume current model.
   qlog("Assume model values.\n---\n");
   for (auto a : model_assumptions)
   {
@@ -1619,9 +1621,7 @@ QuantSolverState::check_active_quantifiers()
   }
   qlog("---\n");
 
-  // assert(check_sat_ground() == BZLA_RESULT_SAT);
-
-  /* Check for counterexamples under current candidate model. */
+  // Check for counterexamples under current candidate model.
   start               = bzla_util_time_stamp();
   size_t num_inactive = 0;
   for (BzlaNode *q : to_check)
@@ -1630,15 +1630,11 @@ QuantSolverState::check_active_quantifiers()
     qlog("***\n");
 
     lit = get_ce_literal(q);
-
     bool assumed = assume(lit);
 
-    // printf("\n");
-    // bzla_dumpsmt_dump(d_bzla, stdout);
     qlog("Check for counterexamples (%s): ", bzla_util_node2string(q));
-
     res = check_sat_ground();
-
+    // Counterexample found, add new instantiation.
     if (res == BZLA_RESULT_SAT)
     {
       qlog("sat\n");
@@ -1646,6 +1642,7 @@ QuantSolverState::check_active_quantifiers()
       add_value_instantiation_lemma(q);
       synthesize_qi(q);
     }
+    // No counterexamples found anymore, set quantifier to inactive.
     else
     {
       qlog("unsat\n");
