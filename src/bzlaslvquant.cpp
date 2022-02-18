@@ -482,11 +482,7 @@ QuantSolverState::add_backref(BzlaNode *qfrom, BzlaNode *qto)
   BzlaNode *backref = find_backref(qto);
 
   auto it = d_backrefs.find(qfrom);
-  if (it != d_backrefs.end())
-  {
-    assert(it->second == backref);
-  }
-  else
+  if (it == d_backrefs.end())
   {
     d_backrefs.emplace(bzla_node_copy(d_bzla, qfrom),
                        bzla_node_copy(d_bzla, backref));
