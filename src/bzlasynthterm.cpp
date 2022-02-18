@@ -192,18 +192,6 @@ TermSynthesizer::TermSynthesizer(Bzla *bzla,
   }
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
-class TermEnumerator
-{
-  //  TermEnumerator(std::vector<BzlaNode *> terms);
-  //  TermEnumerator(std::vector<BzlaNode *> terms1,
-  //                 std::vector<BzlaNode *> terms2);
-  //  TermEnumerator(std::vector<BzlaNode *> terms1,
-  //                 std::vector<BzlaNode *> terms2,
-  //                 std::vector<BzlaNode *> terms3);
-};
-
 /* ------------------------------------------------------------------------- */
 
 BzlaBitVector *
@@ -580,8 +568,6 @@ TermSynthesizer::synthesize_terms(Op ops[],
       }
       else if (ops[i].arity == 2)
       {
-        // TermEnumerator te(d_terms, 2, cur_level, !ops[i].assoc);
-
         // partition generator: generates level partitions
         bzla_init_part_gen(&pg, cur_level, 2, !ops[i].assoc);
         while (bzla_has_next_part_gen(&pg))
