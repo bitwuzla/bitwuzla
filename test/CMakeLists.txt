@@ -36,7 +36,6 @@ set(test_names
   modelgen
   modelgensmt2
   nodemap
-  normquant
   overflow
   prop
   propcomplete
