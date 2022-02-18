@@ -840,11 +840,7 @@ QuantSolverState::mk_skolem(BzlaNode *q, const char *sym)
     /* Collect sorts of universal variable dependencies. */
     for (auto cur : deps)
     {
-      if (bzla_node_is_param(cur))
-      {
-        assert(is_exists(find_backref(bzla_node_param_get_binder(cur))));
-      }
-      else
+      if (!bzla_node_is_param(cur))
       {
         qlog("  %s\n", bzla_util_node2string(cur));
         sorts.push_back(bzla_node_get_sort_id(cur));
