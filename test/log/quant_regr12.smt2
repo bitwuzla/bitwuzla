@@ -1,0 +1,6 @@
+(declare-fun c_ () (_ BitVec 32))
+(declare-fun m () (_ BitVec 32))
+(declare-fun c () (_ BitVec 32))
+(assert (and (bvsle c_ (_ bv4 32)) (bvsle m (_ bv0 32))))
+(assert (or false (forall ((m (_ BitVec 32))) (and (bvsle c_ (bvmul m (_ bv2 32))) (bvsle m (_ bv1 32)) (bvsle m c)))))
+(check-sat)
