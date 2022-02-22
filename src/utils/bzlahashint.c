@@ -200,8 +200,14 @@ resize(BzlaIntHashTable *t)
   assert(old_size > 0);
   new_size = initsize((pow2size(old_size)) * 2);
   BZLA_CNEWN(t->mm, t->keys, new_size);
+  BZLA_CLRN(t->keys, new_size);
   BZLA_CNEWN(t->mm, t->hop_info, new_size);
-  if (old_data) BZLA_CNEWN(t->mm, t->data, new_size);
+  BZLA_CLRN(t->hop_info, new_size);
+  if (old_data)
+  {
+    BZLA_CNEWN(t->mm, t->data, new_size);
+    BZLA_CLRN(t->data, new_size);
+  }
   t->count = 0;
   t->size  = new_size;
 
@@ -234,7 +240,9 @@ bzla_hashint_table_new(BzlaMemMgr *mm)
   res->mm   = mm;
   res->size = initsize(HOP_RANGE);
   BZLA_CNEWN(mm, res->keys, res->size);
+  BZLA_CLRN(res->keys, res->size);
   BZLA_CNEWN(mm, res->hop_info, res->size);
+  BZLA_CLRN(res->hop_info, res->size);
   return res;
 }
 
@@ -356,6 +364,7 @@ bzla_hashint_map_new(BzlaMemMgr *mm)
 
   res = bzla_hashint_table_new(mm);
   BZLA_CNEWN(mm, res->data, res->size);
+  BZLA_CLRN(res->data, res->size);
   return res;
 }
 
