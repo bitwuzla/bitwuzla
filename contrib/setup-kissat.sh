@@ -26,7 +26,7 @@ rm -rf "${KISSAT_DIR}"
 download_github arminbiere/kissat 02cd69626a53e93e09286b1978ccb5d6bec58b8e "${KISSAT_DIR}"
 cd "${KISSAT_DIR}"
 
-./configure -fPIC --quiet ${EXTRA_FLAGS}
+./configure -fPIC ${EXTRA_FLAGS}
 make -j${NPROC}
 install_lib build/libkissat.a
 install_include src/kissat.h
