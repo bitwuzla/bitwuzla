@@ -18,10 +18,12 @@ KISSAT_DIR="${DEPS_DIR}/kissat"
 rm -rf "${KISSAT_DIR}"
 
 # Download and build Kissat
-curl -o kissat.tar.xz -L http://fmv.jku.at/kissat/kissat-sc2020-039805f2.tar.xz
-tar xf kissat.tar.xz
-rm kissat.tar.xz
-mv kissat-sc2020-039805f2 "${KISSAT_DIR}"
+
+# This commit is version 2.0.1 which behaves identically to version
+# sc2021-sweep but removes an unconditional runtime assertion ("coverage goal")
+# and avoids the "undefined reference to `kissat_signal_name'" error that
+# previously occured for some setups.
+download_github arminbiere/kissat 02cd69626a53e93e09286b1978ccb5d6bec58b8e "${KISSAT_DIR}"
 cd "${KISSAT_DIR}"
 
 ./configure -fPIC --quiet ${EXTRA_FLAGS}
