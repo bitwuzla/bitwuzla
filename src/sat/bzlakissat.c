@@ -24,7 +24,11 @@ init(BzlaSATMgr *smgr)
 {
   kissat *slv;
 
+#ifdef KISSAT_EXTRAS
+  BZLA_MSG(smgr->bzla->msg, 1, "Kissat Extras Version %s", kissat_version());
+#else
   BZLA_MSG(smgr->bzla->msg, 1, "Kissat Version %s", kissat_version());
+#endif
 
   slv = kissat_init();
 
@@ -70,6 +74,22 @@ reset(BzlaSATMgr *smgr)
   smgr->solver = 0;
 }
 
+#ifdef KISSAT_EXTRAS
+
+static void
+assume(BzlaSATMgr *smgr, int32_t lit)
+{
+  kissat_assume(smgr->solver, lit);
+}
+
+static int32_t
+failed(BzlaSATMgr *smgr, int32_t lit)
+{
+  return kissat_failed(smgr->solver, lit);
+}
+
+#endif
+
 /*------------------------------------------------------------------------*/
 
 bool
@@ -98,6 +118,13 @@ bzla_sat_enable_kissat(BzlaSATMgr *smgr)
   smgr->api.set_output       = 0;
   smgr->api.set_prefix       = 0;
   smgr->api.stats            = 0;
+
+#ifdef KISSAT_EXTRAS
+  smgr->api.assume           = assume;
+  smgr->api.failed           = failed;
+
+  smgr->have_restore = true;
+#endif
   return true;
 }
 /*------------------------------------------------------------------------*/
