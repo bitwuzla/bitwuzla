@@ -1,6 +1,8 @@
 #ifndef BZLALS__BITVECTOR_H
 #define BZLALS__BITVECTOR_H
 
+#include <gmpxx.h>
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -680,7 +682,8 @@ class BitVector
   union
   {
     uint64_t d_val_uint64;
-    GMPMpz* d_val_gmp;
+    // GMPMpz* d_val_gmp;
+    mpz_t d_val_gmp;
   };
 };
 

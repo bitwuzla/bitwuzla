@@ -1,13 +1,13 @@
 #ifndef BZLALS__RNG_H
 #define BZLALS__RNG_H
 
+#include <gmpxx.h>
+
 #include <cstdint>
 #include <memory>
 #include <random>
 
 namespace bzla {
-
-struct GMPRandState;
 
 class RNG
 {
@@ -87,8 +87,8 @@ class RNG
   template <typename TSet, typename TPicked>
   TPicked pick_from_set(const TSet& data);
 
-  /** Get a pointer to the gmp_randstate_t wrapper. */
-  GMPRandState* get_gmp_state() const { return d_gmp_state.get(); }
+  /** Get a pointer to the gmp_randstate_t. */
+  gmp_randstate_t* get_gmp_state() { return &d_gmp_randstate; }
 
  private:
   /** The seed of the random number generator. */
@@ -96,7 +96,7 @@ class RNG
   /** The underlying RNG Mersenne Twister engine. */
   std::mt19937 d_rng;
   /** The GMP randstate. */
-  std::unique_ptr<GMPRandState> d_gmp_state;
+  gmp_randstate_t d_gmp_randstate;
 };
 
 template <typename TSet, typename TPicked>

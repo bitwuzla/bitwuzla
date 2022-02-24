@@ -1,10 +1,6 @@
 #include "rng.h"
 
-#include <gmpxx.h>
-
 #include <cassert>
-
-#include "gmprandstate.h"
 
 #define BZLALS_PROB_MAX 1000 /* Maximum probability 100% = 1000. */
 
@@ -13,12 +9,13 @@ namespace bzla {
 RNG::RNG(uint32_t seed) : d_seed(seed)
 {
   d_rng.seed(seed);
-  d_gmp_state.reset(new GMPRandState(pick<uint32_t>()));
+  gmp_randinit_mt(d_gmp_randstate);
+  gmp_randseed_ui(d_gmp_randstate, pick<uint32_t>());
 }
 
 RNG::RNG(const RNG& other) : d_rng(other.d_rng) {}
 
-RNG::~RNG() {}
+RNG::~RNG() { gmp_randclear(d_gmp_randstate); }
 
 bool
 RNG::pick_with_prob(uint32_t prob)

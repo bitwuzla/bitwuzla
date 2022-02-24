@@ -955,7 +955,7 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
                               Kind kind,
                               const BitVector& bv)
 {
-  uint64_t ares;
+  uint64_t ares = 0;
   uint32_t size = bv.size();
   BitVector b(bv);
   BitVector tres;
@@ -4359,6 +4359,17 @@ TEST_F(TestBitVector, iadd32)
   }
 }
 
+TEST_F(TestBitVector, add64)
+{
+  BitVector res;
+  BitVector a0(64, *d_rng);
+  BitVector a1(64, *d_rng);
+  for (uint32_t i = 0; i < 10000000; ++i)
+  {
+    res = a0.bvadd(a1);
+  }
+}
+
 TEST_F(TestBitVector, add65)
 {
   BitVector res;
@@ -4367,6 +4378,50 @@ TEST_F(TestBitVector, add65)
   for (uint32_t i = 0; i < 10000000; ++i)
   {
     res = a0.bvadd(a1);
+  }
+}
+
+TEST_F(TestBitVector, add129)
+{
+  BitVector res;
+  BitVector a0(129, *d_rng);
+  BitVector a1(129, *d_rng);
+  for (uint32_t i = 0; i < 10000000; ++i)
+  {
+    res = a0.bvadd(a1);
+  }
+}
+
+TEST_F(TestBitVector, mul64)
+{
+  BitVector res;
+  BitVector a0(64, *d_rng);
+  BitVector a1(64, *d_rng);
+  for (uint32_t i = 0; i < 10000000; ++i)
+  {
+    res = a0.bvmul(a1);
+  }
+}
+
+TEST_F(TestBitVector, mul65)
+{
+  BitVector res;
+  BitVector a0(65, *d_rng);
+  BitVector a1(65, *d_rng);
+  for (uint32_t i = 0; i < 10000000; ++i)
+  {
+    res = a0.bvmul(a1);
+  }
+}
+
+TEST_F(TestBitVector, mul129)
+{
+  BitVector res;
+  BitVector a0(129, *d_rng);
+  BitVector a1(129, *d_rng);
+  for (uint32_t i = 0; i < 10000000; ++i)
+  {
+    res = a0.bvmul(a1);
   }
 }
 
