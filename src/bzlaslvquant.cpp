@@ -856,10 +856,6 @@ QuantSolverState::add_instance(BzlaNode *q_orig,
     }
     d_deps.emplace(bzla_node_copy(d_bzla, q_inst), q_inst_deps);
   }
-  else
-  {
-    assert(!bzla_node_real_addr(q_orig)->parameterized);
-  }
 }
 
 BzlaNode *
