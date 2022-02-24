@@ -1364,131 +1364,25 @@ bzla_opt_init_opts(Bzla *bzla)
 
   /* QUANT engine (expert options) ------------------------------------------ */
   init_opt(bzla,
-           BZLA_OPT_QUANT_DER,
+           BZLA_OPT_QUANT_SYNTH_SK,
            true,
            true,
-           "quant-der",
+           "quant-synth-sk",
            0,
            1,
            0,
            1,
-           "apply destructive equality resolution");
-  init_opt(bzla,
-           BZLA_OPT_QUANT_CER,
-           true,
-           true,
-           "quant-cer",
-           0,
-           1,
-           0,
-           1,
-           "apply constructive equality resolution");
-  init_opt(bzla,
-           BZLA_OPT_QUANT_MINISCOPE,
-           true,
-           true,
-           "quant-ms",
-           0,
-           1,
-           0,
-           1,
-           "apply miniscoping");
-
-  init_opt(bzla,
-           BZLA_OPT_QUANT_SYNTH,
-           true,
-           true,
-           "quant-synth",
-           0,
-           BZLA_QUANT_SYNTH_DFLT,
-           BZLA_QUANT_SYNTH_MIN,
-           BZLA_QUANT_SYNTH_MAX,
-           "synthesis mode for Skolem functions");
-  opts = bzla_hashptr_table_new(
-      bzla->mm, (BzlaHashPtr) bzla_hash_str, (BzlaCmpPtr) strcmpoptval);
-  add_opt_help(mm,
-               opts,
-               "none",
-               BZLA_QUANT_SYNTH_NONE,
-               "do not synthesize skolem functions (use model values for "
-               "instantiation)");
-  add_opt_help(mm,
-               opts,
-               "el",
-               BZLA_QUANT_SYNTH_EL,
-               "use enumerative learning to synthesize skolem functions");
-  add_opt_help(mm,
-               opts,
-               "elmc",
-               BZLA_QUANT_SYNTH_ELMC,
-               "use enumerative learning modulo the predicates in the cone of"
-               "influence of the existential variables to synthesize skolem "
-               "functions");
-  add_opt_help(mm,
-               opts,
-               "elelmc",
-               BZLA_QUANT_SYNTH_EL_ELMC,
-               "chain 'el' and 'elmc' approaches to synthesize skolem "
-               "functions");
-  add_opt_help(mm,
-               opts,
-               "elmr",
-               BZLA_QUANT_SYNTH_ELMR,
-               "use enumerative learning modulo the given root constraints "
-               "to synthesize skolem functions");
-  bzla->options[BZLA_OPT_QUANT_SYNTH].options = opts;
-
-  init_opt(bzla,
-           BZLA_OPT_QUANT_DUAL_SOLVER,
-           true,
-           true,
-           "quant-dual",
-           0,
-           1,
-           0,
-           1,
-           "dual solver");
-  init_opt(bzla,
-           BZLA_OPT_QUANT_SYNTH_LIMIT,
-           true,
-           false,
-           "quant-synthlimit",
-           0,
-           10000,
-           0,
-           UINT32_MAX,
-           "number of checks for synthesizing terms");
-  init_opt(bzla,
-           BZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
-           true,
-           true,
-           "quant-synthcomplete",
-           0,
-           1,
-           0,
-           1,
-           "make base case of concrete model for ITE constant instead of "
-           "undefined.");
+           "synthesize Skolem functions");
   init_opt(bzla,
            BZLA_OPT_QUANT_SYNTH_QI,
            true,
            true,
-           "quant-synthqi",
+           "quant-synth-qi",
            0,
            1,
            0,
            1,
-           "synthesize quantifier instantiations from counterexamples");
-  init_opt(bzla,
-           BZLA_OPT_QUANT_FIXSYNTH,
-           true,
-           true,
-           "quant-fixsynth",
-           0,
-           1,
-           0,
-           1,
-           "update current model w.r.t. synthesized skolem function");
+           "synthesize quantifier instantiations");
 
   /* other expert options --------------------------------------------------- */
   init_opt(bzla,

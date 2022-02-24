@@ -34,7 +34,6 @@
 typedef struct BitwuzlaMainApp BitwuzlaMainApp;
 static BitwuzlaMainApp *g_app;
 
-bool g_dual_threads;
 static double g_start_time_real;
 static uint32_t g_verbosity;
 static uint32_t g_set_alarm;
@@ -118,36 +117,29 @@ static BitwuzlaOption bitwuzla_options[BZLA_OPT_NUM_OPTS] = {
     [BZLA_OPT_PROP_PROB_FLIP_COND] = BITWUZLA_OPT_PROP_PROB_FLIP_COND,
     [BZLA_OPT_PROP_PROB_FLIP_COND_CONST] =
         BITWUZLA_OPT_PROP_PROB_FLIP_COND_CONST,
-    [BZLA_OPT_PROP_PROB_RANDOM_INPUT]   = BITWUZLA_OPT_PROP_PROB_RANDOM_INPUT,
-    [BZLA_OPT_PROP_PROB_SLICE_FLIP]     = BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
-    [BZLA_OPT_PROP_PROB_SLICE_KEEP_DC]  = BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
-    [BZLA_OPT_PROP_PROB_USE_INV_VALUE]  = BITWUZLA_OPT_PROP_PROB_USE_INV_VALUE,
-    [BZLA_OPT_PROP_SEXT]                = BITWUZLA_OPT_PROP_SEXT,
-    [BZLA_OPT_PROP_SKIP_NO_PROGRESS]    = BITWUZLA_OPT_PROP_SKIP_NO_PROGRESS,
-    [BZLA_OPT_PROP_ASHR]                = BITWUZLA_OPT_PROP_ASHR,
-    [BZLA_OPT_PROP_USE_BANDIT]          = BITWUZLA_OPT_PROP_USE_BANDIT,
-    [BZLA_OPT_PROP_USE_INV_LT_CONCAT]   = BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT,
-    [BZLA_OPT_PROP_USE_RESTARTS]        = BITWUZLA_OPT_PROP_USE_RESTARTS,
-    [BZLA_OPT_PROP_XOR]                 = BITWUZLA_OPT_PROP_XOR,
-    [BZLA_OPT_QUANT_CER]                = BITWUZLA_OPT_QUANT_CER,
-    [BZLA_OPT_QUANT_DER]                = BITWUZLA_OPT_QUANT_DER,
-    [BZLA_OPT_QUANT_DUAL_SOLVER]        = BITWUZLA_OPT_QUANT_DUAL_SOLVER,
-    [BZLA_OPT_QUANT_FIXSYNTH]           = BITWUZLA_OPT_QUANT_FIXSYNTH,
-    [BZLA_OPT_QUANT_MINISCOPE]          = BITWUZLA_OPT_QUANT_MINISCOPE,
-    [BZLA_OPT_QUANT_SYNTH]              = BITWUZLA_OPT_QUANT_SYNTH,
-    [BZLA_OPT_QUANT_SYNTH_ITE_COMPLETE] = BITWUZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
-    [BZLA_OPT_QUANT_SYNTH_LIMIT]        = BITWUZLA_OPT_QUANT_SYNTH_LIMIT,
-    [BZLA_OPT_QUANT_SYNTH_QI]           = BITWUZLA_OPT_QUANT_SYNTH_QI,
-    [BZLA_OPT_RW_EXTRACT_ARITH]         = BITWUZLA_OPT_RW_EXTRACT_ARITH,
-    [BZLA_OPT_RW_LEVEL]                 = BITWUZLA_OPT_RW_LEVEL,
-    [BZLA_OPT_RW_NORMALIZE]             = BITWUZLA_OPT_RW_NORMALIZE,
-    [BZLA_OPT_RW_NORMALIZE_ADD]         = BITWUZLA_OPT_RW_NORMALIZE_ADD,
-    [BZLA_OPT_RW_SIMPLIFY_CONSTRAINTS]  = BITWUZLA_OPT_RW_SIMPLIFY_CONSTRAINTS,
-    [BZLA_OPT_RW_SLT]                   = BITWUZLA_OPT_RW_SLT,
-    [BZLA_OPT_RW_SORT_AIGVEC]           = BITWUZLA_OPT_RW_SORT_AIGVEC,
-    [BZLA_OPT_RW_SORT_AIG]              = BITWUZLA_OPT_RW_SORT_AIG,
-    [BZLA_OPT_RW_SORT_EXP]              = BITWUZLA_OPT_RW_SORT_EXP,
-    [BZLA_OPT_SAT_ENGINE]               = BITWUZLA_OPT_SAT_ENGINE,
+    [BZLA_OPT_PROP_PROB_RANDOM_INPUT]  = BITWUZLA_OPT_PROP_PROB_RANDOM_INPUT,
+    [BZLA_OPT_PROP_PROB_SLICE_FLIP]    = BITWUZLA_OPT_PROP_PROB_SLICE_FLIP,
+    [BZLA_OPT_PROP_PROB_SLICE_KEEP_DC] = BITWUZLA_OPT_PROP_PROB_SLICE_KEEP_DC,
+    [BZLA_OPT_PROP_PROB_USE_INV_VALUE] = BITWUZLA_OPT_PROP_PROB_USE_INV_VALUE,
+    [BZLA_OPT_PROP_SEXT]               = BITWUZLA_OPT_PROP_SEXT,
+    [BZLA_OPT_PROP_SKIP_NO_PROGRESS]   = BITWUZLA_OPT_PROP_SKIP_NO_PROGRESS,
+    [BZLA_OPT_PROP_ASHR]               = BITWUZLA_OPT_PROP_ASHR,
+    [BZLA_OPT_PROP_USE_BANDIT]         = BITWUZLA_OPT_PROP_USE_BANDIT,
+    [BZLA_OPT_PROP_USE_INV_LT_CONCAT]  = BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT,
+    [BZLA_OPT_PROP_USE_RESTARTS]       = BITWUZLA_OPT_PROP_USE_RESTARTS,
+    [BZLA_OPT_PROP_XOR]                = BITWUZLA_OPT_PROP_XOR,
+    [BZLA_OPT_QUANT_SYNTH_SK]          = BITWUZLA_OPT_QUANT_SYNTH_SK,
+    [BZLA_OPT_QUANT_SYNTH_QI]          = BITWUZLA_OPT_QUANT_SYNTH_QI,
+    [BZLA_OPT_RW_EXTRACT_ARITH]        = BITWUZLA_OPT_RW_EXTRACT_ARITH,
+    [BZLA_OPT_RW_LEVEL]                = BITWUZLA_OPT_RW_LEVEL,
+    [BZLA_OPT_RW_NORMALIZE]            = BITWUZLA_OPT_RW_NORMALIZE,
+    [BZLA_OPT_RW_NORMALIZE_ADD]        = BITWUZLA_OPT_RW_NORMALIZE_ADD,
+    [BZLA_OPT_RW_SIMPLIFY_CONSTRAINTS] = BITWUZLA_OPT_RW_SIMPLIFY_CONSTRAINTS,
+    [BZLA_OPT_RW_SLT]                  = BITWUZLA_OPT_RW_SLT,
+    [BZLA_OPT_RW_SORT_AIGVEC]          = BITWUZLA_OPT_RW_SORT_AIGVEC,
+    [BZLA_OPT_RW_SORT_AIG]             = BITWUZLA_OPT_RW_SORT_AIG,
+    [BZLA_OPT_RW_SORT_EXP]             = BITWUZLA_OPT_RW_SORT_EXP,
+    [BZLA_OPT_SAT_ENGINE]              = BITWUZLA_OPT_SAT_ENGINE,
     [BZLA_OPT_SAT_ENGINE_CADICAL_FREEZE] =
         BITWUZLA_OPT_SAT_ENGINE_CADICAL_FREEZE,
     [BZLA_OPT_SAT_ENGINE_LGL_FORK]     = BITWUZLA_OPT_SAT_ENGINE_LGL_FORK,
@@ -993,12 +985,7 @@ print_static_stats(int32_t sat_res)
 #ifdef BZLA_TIME_STATISTICS
   double real    = bzla_util_current_time() - g_start_time_real;
   double process = bzla_util_time_stamp();
-  if (g_dual_threads)
-    bzlamain_msg("%.3f seconds process, %.0f%% utilization",
-                 process,
-                 real > 0 ? (100 * process) / real / 2 : 0.0);
-  else
-    bzlamain_msg("%.3f seconds process", process);
+  bzlamain_msg("%.3f seconds process", process);
   bzlamain_msg("%.3f seconds real", real);
 #endif
   bzlamain_msg("%s",
@@ -1571,10 +1558,6 @@ bitwuzla_main(int32_t argc, char **argv)
 
   /* verbosity may have been increased via input (set-option) */
   g_verbosity = bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_VERBOSITY);
-
-  g_dual_threads =
-      bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_QUANT_DUAL_SOLVER) == 1
-      && bzla->quantifiers->count > 0;
 
   if (parse_err_msg)
   {

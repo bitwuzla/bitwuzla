@@ -1279,94 +1279,10 @@ enum BitwuzlaOption
   BITWUZLA_OPT_AIGPROP_USE_RESTARTS,
 
   /* ----------------- Quantifier Eninge Options (Expert) ------------------ */
-
-  /*! **Quantifier solver engine:
-   *    Constructive Equality Resolution.**
-   *
-   * Configure the use of Constructive Equality Resolution simplification in
-   * the quantifier solver engine.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   *
-   *  @warning This is an expert option to configure the quantifier solver
-   *  engine.
-   */
-  BITWUZLA_OPT_QUANT_CER,
-
-  /*! **Quantifier solver engine:
-   *    Destructive Equality Resolution.**
-   *
-   * Configure the use of Destructive Equality Resolution simplification in
-   * the quantifier solver engine.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   *
-   *  @warning This is an expert option to configure the quantifier solver
-   *  engine.
-   */
-  BITWUZLA_OPT_QUANT_DER,
-
-  /*! **Quantifier solver engine:
-   *    Dual solver.**
-   *
-   * Configure the use of the dual (negated) version of the quantified formula.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   *
-   *  @warning This is an expert option to configure the quantifier solver
-   *  engine.
-   */
-  BITWUZLA_OPT_QUANT_DUAL_SOLVER,
-
-  /*! **Quantifier solver engine:
-   *    Miniscoping.**
-   *
-   * Configure the use of miniscoping in the quantifier solver engine.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   *
-   *  @warning This is an expert option to configure the quantifier solver
-   *  engine.
-   */
-  BITWUZLA_OPT_QUANT_MINISCOPE,
-
   /*! **Quantifier solver engine:
    *    Synthesis mode.**
    *
-   * Configure mode for synthesizing Skolem functions.
-   *
-   * Values:
-   * * **none**:
-   *   Do not synthesize skolem functions (use model values for instantiation).
-   * * **el**:
-   *   Use enumerative learning to synthesize skolem functions.
-   * * **elmc**:
-   *   Use enumerative learning modulo the predicates in the cone of influence
-   *   of the existential variables to synthesize skolem functions.
-   * * **elelmc**:
-   *   Chain `el` and `elmc` approaches to synthesize skolem functions.
-   * * **elmr** [**default**]:
-   *   Use enumerative learning modulo the given root constraints to synthesize
-   *   skolem functions.
-   *
-   *  @warning This is an expert option to configure the quantifier solver
-   *  engine.
-   */
-  BITWUZLA_OPT_QUANT_SYNTH,
-
-  /*! **Quantifier solver engine:
-   *    Update model with respect to synthesized skolem.**
-   *
-   * Configure to update the current model with respect to the synthesized
-   * skolem function if enabled.
+   * Configure the generalization of Skolem functions via enumerative learning.
    *
    * Values:
    *  * **1**: enable [**default**]
@@ -1375,36 +1291,7 @@ enum BitwuzlaOption
    *  @warning This is an expert option to configure the quantifier solver
    *  engine.
    */
-  BITWUZLA_OPT_QUANT_FIXSYNTH,
-
-  /*! **Quantifier solver engine:
-   *    Base case for ITE model.**
-   *
-   * Configure the base case of a concrete model for ITEs. Constant if enabled,
-   * else undefined.
-   *
-   * Values:
-   *  * **1**: enable [**default**]
-   *  * **0**: disable
-   *
-   *  @warning This is an expert option to configure the quantifier solver
-   *  engine.
-   */
-  BITWUZLA_OPT_QUANT_SYNTH_ITE_COMPLETE,
-
-  /*! **Quantifier solver engine:
-   *    Limit for synthesis.**
-   *
-   * Configure the limit of enumerated expressions for the enumerative learning
-   * synthesis algorithm implemented in the quantified solver engine.
-   *
-   * Values:
-   *  * An unsigned integer value (**default**: 10000).
-   *
-   *  @warning This is an expert option to configure the quantifier solver
-   *  engine.
-   */
-  BITWUZLA_OPT_QUANT_SYNTH_LIMIT,
+  BITWUZLA_OPT_QUANT_SYNTH_SK,
 
   /*! **Quantifier solver engine:
    *    Quantifier instantiation.**
