@@ -431,7 +431,7 @@ report_stats(Bzla *bzla,
   double delta;
   delta = bzla_util_time_stamp() - start;
   BZLA_MSG(bzla->msg,
-           1,
+           2,
            "level: %u|%u(%u,%u,%u)|%u, %.2f/s, %.2fs, %.2f MiB",
            cur_level,
            term_db.size(),
@@ -449,7 +449,9 @@ report_op_stats(Bzla *bzla, Op ops[], uint32_t nops)
 {
   uint32_t i;
   for (i = 0; i < nops; i++)
-    BZLA_MSG(bzla->msg, 1, "%s: %u", ops[i].name, ops[i].num_added);
+  {
+    BZLA_MSG(bzla->msg, 2, "%s: %u", ops[i].name, ops[i].num_added);
+  }
 }
 
 #define CHECK_DONE(exp)                                                    \
@@ -471,7 +473,7 @@ report_op_stats(Bzla *bzla, Op ops[], uint32_t nops)
     }                                                                      \
     if (d_stats.num_checks >= max_checks)                                  \
     {                                                                      \
-      BZLA_MSG(d_bzla->msg, 1, "Check limit of %u reached", max_checks);   \
+      BZLA_MSG(d_bzla->msg, 2, "Check limit of %u reached", max_checks);   \
       goto DONE;                                                           \
     }                                                                      \
   }
@@ -514,7 +516,7 @@ TermSynthesizer::synthesize_terms(Op ops[],
     if (found_candidate)
     {
       exp = bzla_node_copy(d_bzla, prev_synth);
-      BZLA_MSG(d_bzla->msg, 1, "previously synthesized term matches");
+      BZLA_MSG(d_bzla->msg, 2, "previously synthesized term matches");
       goto DONE;
     }
   }
@@ -687,13 +689,13 @@ DONE:
   if (found_candidate)
   {
     BZLA_MSG(d_bzla->msg,
-             1,
+             2,
              "found candidate after enumerating %u expressions",
              d_stats.num_checks);
   }
   else
   {
-    BZLA_MSG(d_bzla->msg, 1, "no candidate found");
+    BZLA_MSG(d_bzla->msg, 2, "no candidate found");
   }
 
   bzla_iter_hashptr_init(&it, sigs);
