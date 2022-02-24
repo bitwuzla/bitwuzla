@@ -353,12 +353,14 @@ class QuantSolverState
 
   bool d_opt_synth_sk;
   bool d_opt_synth_qi;
+  bool d_opt_skolem_uf;
 };
 
 QuantSolverState::QuantSolverState(Bzla *bzla)
     : d_bzla(bzla),
       d_opt_synth_sk(bzla_opt_get(bzla, BZLA_OPT_QUANT_SYNTH_SK) == 1),
-      d_opt_synth_qi(bzla_opt_get(bzla, BZLA_OPT_QUANT_SYNTH_QI) == 1){};
+      d_opt_synth_qi(bzla_opt_get(bzla, BZLA_OPT_QUANT_SYNTH_QI) == 1),
+      d_opt_skolem_uf(bzla_opt_get(bzla, BZLA_OPT_QUANT_SKOLEM_UF) == 1){};
 
 QuantSolverState::~QuantSolverState()
 {
@@ -521,7 +523,6 @@ QuantSolverState::assume(BzlaNode *n)
   return false;
 }
 
-// TODO: Shorten paths for better performance?
 BzlaNode *
 QuantSolverState::find_original_instance(BzlaNode *q)
 {
@@ -926,8 +927,7 @@ QuantSolverState::get_skolem(BzlaNode *q)
 
   auto q_parent = find_parent(q);
   auto it       = d_deps.find(q);
-  // TODO: add option to disable/enable UF skolemization
-  if (it != d_deps.end())
+  if (d_opt_skolem_uf && it != d_deps.end())
   {
     std::vector<BzlaSortId> sorts;
     std::vector<BzlaNode *> args, vars;

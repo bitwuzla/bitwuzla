@@ -1280,7 +1280,7 @@ enum BitwuzlaOption
 
   /* ----------------- Quantifier Eninge Options (Expert) ------------------ */
   /*! **Quantifier solver engine:
-   *    Synthesis mode.**
+   *    Skolem function synthesis.**
    *
    * Configure the generalization of Skolem functions via enumerative learning.
    *
@@ -1294,7 +1294,7 @@ enum BitwuzlaOption
   BITWUZLA_OPT_QUANT_SYNTH_SK,
 
   /*! **Quantifier solver engine:
-   *    Quantifier instantiation.**
+   *    Quantifier instantiation synthesis.**
    *
    * Configure the generalization of quantifier instantiations via enumerative
    * learning.
@@ -1307,6 +1307,20 @@ enum BitwuzlaOption
    *  engine.
    */
   BITWUZLA_OPT_QUANT_SYNTH_QI,
+
+  /*! **Quantifier solver engine:
+   *    Skolemization.**
+   *
+   * Use uninterpreted functions for Skolemization instead of fresh constants.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   *
+   *  @warning This is an expert option to configure the quantifier solver
+   *  engine.
+   */
+  BITWUZLA_OPT_QUANT_SKOLEM_UF,
 
   /* ------------------------ Other Expert Options ------------------------- */
 

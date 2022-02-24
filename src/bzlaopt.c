@@ -1383,6 +1383,16 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "synthesize quantifier instantiations");
+  init_opt(bzla,
+           BZLA_OPT_QUANT_SKOLEM_UF,
+           true,
+           true,
+           "quant-skolem-uf",
+           0,
+           1,
+           0,
+           1,
+           "use UFs for Skolemization");
 
   /* other expert options --------------------------------------------------- */
   init_opt(bzla,

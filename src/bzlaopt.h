@@ -135,6 +135,7 @@ enum BzlaOption
   /* Quantifier engine (expert) */
   BZLA_OPT_QUANT_SYNTH_SK,
   BZLA_OPT_QUANT_SYNTH_QI,
+  BZLA_OPT_QUANT_SKOLEM_UF,
 
   /* Other expert options */
   BZLA_OPT_AUTO_CLEANUP_INTERNAL,
