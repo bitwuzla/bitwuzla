@@ -1322,6 +1322,20 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_QUANT_SKOLEM_UF,
 
+  /*! **Quantifier solver engine:
+   *    Eager Skolemization.**
+   *
+   * Eagerly apply Skolemization.
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   *
+   *  @warning This is an expert option to configure the quantifier solver
+   *  engine.
+   */
+  BITWUZLA_OPT_QUANT_EAGER_SKOLEM,
+
   /* ------------------------ Other Expert Options ------------------------- */
 
   /*! **Check model (debug only).**

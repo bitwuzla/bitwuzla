@@ -1393,6 +1393,16 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "use UFs for Skolemization");
+  init_opt(bzla,
+           BZLA_OPT_QUANT_EAGER_SKOLEM,
+           true,
+           true,
+           "quant-eager-skolem",
+           0,
+           0,
+           0,
+           1,
+           "eagerly apply Skolemization");
 
   /* other expert options --------------------------------------------------- */
   init_opt(bzla,

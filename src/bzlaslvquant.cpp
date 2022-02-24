@@ -354,13 +354,16 @@ class QuantSolverState
   bool d_opt_synth_sk;
   bool d_opt_synth_qi;
   bool d_opt_skolem_uf;
+  bool d_opt_eager_skolem;
 };
 
 QuantSolverState::QuantSolverState(Bzla *bzla)
     : d_bzla(bzla),
       d_opt_synth_sk(bzla_opt_get(bzla, BZLA_OPT_QUANT_SYNTH_SK) == 1),
       d_opt_synth_qi(bzla_opt_get(bzla, BZLA_OPT_QUANT_SYNTH_QI) == 1),
-      d_opt_skolem_uf(bzla_opt_get(bzla, BZLA_OPT_QUANT_SKOLEM_UF) == 1){};
+      d_opt_skolem_uf(bzla_opt_get(bzla, BZLA_OPT_QUANT_SKOLEM_UF) == 1),
+      d_opt_eager_skolem(bzla_opt_get(bzla, BZLA_OPT_QUANT_EAGER_SKOLEM)
+                         == 1){};
 
 QuantSolverState::~QuantSolverState()
 {
@@ -1170,9 +1173,8 @@ QuantSolverState::get_ce_lemma(BzlaNode *q)
   inst = instantiate(q, map);
   assert(!bzla_node_real_addr(inst)->parameterized);
 
-  // TODO: add option to enable/disable skolemization in CE
-  // TODO: optimization, disabled for now
-  if (false && bzla_node_is_inverted(inst) && bzla_node_is_forall(inst))
+  if (d_opt_eager_skolem && bzla_node_is_inverted(inst)
+      && bzla_node_is_forall(inst))
   {
     BzlaNode *inst_skolemized = skolemize(bzla_node_real_addr(inst));
     bzla_node_release(d_bzla, inst);
@@ -1255,9 +1257,8 @@ QuantSolverState::add_value_instantiation_lemma(BzlaNode *q)
   inst = instantiate(q, map);
   assert(!bzla_node_real_addr(inst)->parameterized);
 
-  // TODO: add option to enable/disable skolemization in CE
-  // TODO: optimization, disabled for now
-  if (false && bzla_node_is_inverted(inst) && bzla_node_is_forall(inst))
+  if (d_opt_eager_skolem && bzla_node_is_inverted(inst)
+      && bzla_node_is_forall(inst))
   {
     BzlaNode *inst_skolemized = skolemize(bzla_node_real_addr(inst));
     bzla_node_release(d_bzla, inst);
@@ -1663,8 +1664,8 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
 
   assert(!bzla_node_real_addr(inst)->parameterized);
 
-  // TODO: add option to enable/disable skolemization in CE
-  if (bzla_node_is_inverted(inst) && bzla_node_is_forall(inst))
+  if (d_opt_eager_skolem && bzla_node_is_inverted(inst)
+      && bzla_node_is_forall(inst))
   {
     BzlaNode *inst_skolemized = skolemize(bzla_node_real_addr(inst));
     bzla_node_release(d_bzla, inst);
