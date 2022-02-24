@@ -1,0 +1,5 @@
+(set-info :status sat)
+(declare-const x Bool)
+(declare-const x7 Bool)
+(assert (or x (forall ((? (_ BitVec 16))) x7) (exists ((y (_ BitVec 16))) (forall ((? (_ BitVec 16))) (forall ((?y (_ BitVec 16))) (or x7 false (and true (forall ((?y (_ BitVec 16))) (bvsgt (_ bv0 16) (bvadd ? y (bvmul ?y #b0000000000000001)))))))))))
+(check-sat)

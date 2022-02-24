@@ -38,6 +38,37 @@ extern "C" {
 
 #include "bzlasynthterm.h"
 
+// TODO: hash BzlaNode * by id not ptr
+
+namespace std {
+template <>
+struct hash<std::pair<BzlaNode *, BzlaNode *>>
+{
+  size_t operator()(const std::pair<BzlaNode *, BzlaNode *> &p) const
+  {
+    // return reinterpret_cast<std::uintptr_t>(p.first) +
+    // reinterpret_cast<std::uintptr_t>(p.second);
+    size_t hash = bzla_node_get_id(p.first);
+    if (p.second)
+    {
+      hash += bzla_node_get_id(p.second);
+    }
+    return hash;
+  }
+};
+
+#if 0
+  template<>
+  struct hash<BzlaNode *>
+  {
+    size_t operator()(const BzlaNode * n) const
+    {
+      return bzla_node_get_id(n);
+    }
+  };
+#endif
+}  // namespace std
+
 namespace bzla {
 
 /*------------------------------------------------------------------------*/
@@ -185,12 +216,12 @@ class QuantSolverState
 
   /** Find original instance of quantifier `q`. */
   BzlaNode *find_original_instance(BzlaNode *q);
+  BzlaNode *find_parent(BzlaNode *q);
 
   /** Record instance `q_inst` of quantified formula `q_orig`. */
   void record_instance(BzlaNode *q_inst, BzlaNode *q_orig);
 
   BzlaNode *get_skolem(BzlaNode *q);
-  BzlaNode *mk_skolem(BzlaNode *q, const char *sym);
 
   BzlaNode *get_inst_constant(BzlaNode *q);
   BzlaNode *skolemize(BzlaNode *q);
@@ -260,10 +291,10 @@ class QuantSolverState
  private:
   Bzla *d_bzla;
 
-  /* Contains currently active quantifiers (populatd by
-   * get_active_quantifiers). The mapped bool indicates the current polarity of
-   * the quantifier. */
-  NodeSet d_active_quantifiers;
+  /**
+   * Contains currently active quantifiers (populatd by get_active_quantifiers).
+   */
+  std::vector<BzlaNode *> d_active_quantifiers;
 
   NodeMap<bool> d_quantifiers;
 
@@ -278,7 +309,7 @@ class QuantSolverState
   NodeMap<BzlaNode *> d_instantiations;
 
   /* Maps quantifier to introduced skolem. */
-  NodeMap<BzlaNode *> d_skolems;
+  std::unordered_map<std::pair<BzlaNode *, BzlaNode *>, BzlaNode *> d_skolems;
 
   /* Stores all Skolem UFs for which we can use synthesis.
    * Currently supported are bit-vector UFs, but not FP. */
@@ -343,9 +374,13 @@ QuantSolverState::~QuantSolverState()
     bzla_node_release(d_bzla, q);
   }
 
-  for (auto [q, s] : d_skolems)
+  for (auto [p, s] : d_skolems)
   {
-    bzla_node_release(d_bzla, q);
+    bzla_node_release(d_bzla, p.first);
+    if (p.second != nullptr)
+    {
+      bzla_node_release(d_bzla, p.second);
+    }
     bzla_node_release(d_bzla, s);
   }
 
@@ -478,7 +513,7 @@ QuantSolverState::assume(BzlaNode *n)
   return false;
 }
 
-// TODO: Shorten paths for better performance
+// TODO: Shorten paths for better performance?
 BzlaNode *
 QuantSolverState::find_original_instance(BzlaNode *q)
 {
@@ -488,6 +523,17 @@ QuantSolverState::find_original_instance(BzlaNode *q)
     assert(bzla_node_real_addr(q) != bzla_node_real_addr(it->second));
     q  = it->second;
     it = d_instantiations.find(q);
+  }
+  return q;
+}
+
+BzlaNode *
+QuantSolverState::find_parent(BzlaNode *q)
+{
+  auto it = d_instantiations.find(q);
+  if (it != d_instantiations.end())
+  {
+    return it->second;
   }
   return q;
 }
@@ -543,12 +589,11 @@ QuantSolverState::get_active_quantifiers()
 
     if (bzla_node_is_quantifier(cur))
     {
-      assert(d_active_quantifiers.find(cur) == d_active_quantifiers.end());
       value = bzla_model_get_bv_assignment(d_bzla, cur);
       assert(value);
       bool phase = bzla_bv_is_true(value);
       bzla_bv_free(mm, value);
-      d_active_quantifiers.emplace(cur);
+      d_active_quantifiers.push_back(cur);
       qlog("  %s (%s) (instance: %s)\n",
            bzla_util_node2string(cur),
            phase ? "true" : "false",
@@ -857,66 +902,84 @@ QuantSolverState::get_inst_constant(BzlaNode *q)
 }
 
 BzlaNode *
-QuantSolverState::mk_skolem(BzlaNode *q, const char *sym)
+QuantSolverState::get_skolem(BzlaNode *q)
 {
-  BzlaNode *result = 0, *sk;
-  BzlaSortId domain, codomain, sort;
+  BzlaNode *result = nullptr;
 
-  // Always create skolem UF w.r.t. original instance.
-  auto q_orig = find_original_instance(q);
-  auto it     = d_deps.find(q_orig);
+  auto key   = std::make_pair(q, nullptr);
+  auto it_sk = d_skolems.find(key);
+  if (it_sk != d_skolems.end())
+  {
+    qlog("Use skolem (%s): %s\n",
+         bzla_util_node2string(it_sk->second),
+         bzla_util_node2string(q));
+    return it_sk->second;
+  }
+
+  auto q_parent = find_parent(q);
+  auto it       = d_deps.find(q);
+  // TODO: add option to disable/enable UF skolemization
   if (it != d_deps.end())
   {
     std::vector<BzlaSortId> sorts;
-    std::vector<BzlaNode *> args;
-    auto &q_orig_deps = it->second;
+    std::vector<BzlaNode *> args, vars;
+    auto &q_deps        = it->second;
+    auto &q_deps_parent = d_deps.at(q_parent);
+    assert(q_deps.size() == q_deps_parent.size());
 
     // Collect sorts of universal variable dependencies.
-    for (auto cur : q_orig_deps)
+    for (size_t i = 0; i < q_deps_parent.size(); ++i)
     {
-      if (!bzla_node_is_param(cur))
+      auto cur = q_deps_parent[i];
+      if (bzla_node_is_param(cur) && is_forall(bzla_node_param_get_binder(cur)))
       {
-        qlog("  %s\n", bzla_util_node2string(cur));
-        sorts.push_back(bzla_node_get_sort_id(cur));
-        args.push_back(cur);
+        qlog("  %s: %s\n",
+             bzla_util_node2string(cur),
+             bzla_util_node2string(q_deps[i]));
+        sorts.push_back(bzla_node_get_sort_id(q_deps[i]));
+        args.push_back(q_deps[i]);
+        vars.push_back(cur);
       }
     }
+    // TODO: hashing by vars may not be necessary anymore since we now use
+    // q_parent
 
+    // Need Skolem function.
     if (!sorts.empty())
     {
-      auto it = d_skolems.find(q_orig);
+      BzlaNode *sk = nullptr;
+      BzlaNode *arg_vars =
+          bzla_node_create_args(d_bzla, vars.data(), vars.size());
+      auto key = std::make_pair(q_parent, arg_vars);
+
+      auto it = d_skolems.find(key);
       // Use Skolem of original instance.
       if (it != d_skolems.end())
       {
         sk = it->second;
-
-        qlog("Use skolem UF (%s): %s (%s)\n",
-             bzla_util_node2string(sk),
-             bzla_util_node2string(q),
-             bzla_util_node2string(q_orig));
-
-#ifndef NDEBUG
-        auto itt = d_deps.find(q_orig);
-        assert(itt != d_deps.end());
-        assert(itt->second.size() == q_orig_deps.size());
-        assert(q_orig_deps.size() == bzla_node_fun_get_arity(d_bzla, sk));
-#endif
       }
-      // No Skolem created yet.
+      // No Skolem created yet for `q_parent`.
       else
       {
-        domain   = bzla_sort_tuple(d_bzla, sorts.data(), sorts.size());
-        codomain = bzla_node_get_sort_id(q->e[0]);
-        sort     = bzla_sort_fun(d_bzla, domain, codomain);
-        sk       = bzla_exp_uf(d_bzla, sort, sym);
+        BzlaSortId domain = bzla_sort_tuple(d_bzla, sorts.data(), sorts.size());
+        BzlaSortId codomain = bzla_node_get_sort_id(q->e[0]);
+        BzlaSortId sort     = bzla_sort_fun(d_bzla, domain, codomain);
         bzla_sort_release(d_bzla, domain);
-        bzla_sort_release(d_bzla, sort);
-        d_skolems.emplace(bzla_node_copy(d_bzla, q_orig), sk);
 
-        qlog("New skolem UF (%s): %s (%s)\n",
-             bzla_util_node2string(sk),
-             bzla_util_node2string(q),
-             bzla_util_node2string(q_orig));
+        std::stringstream ss;
+        const char *sym = bzla_node_get_symbol(d_bzla, q->e[0]);
+        if (sym)
+        {
+          ss << "sk(" << sym << ")";
+        }
+        sk = bzla_exp_uf(d_bzla, sort, ss.str().c_str());
+        bzla_sort_release(d_bzla, sort);
+
+        // Cache Skolem for `q_parent`.
+        assert(d_skolems.find(key) == d_skolems.end());
+        d_skolems.emplace(key, sk);
+        bzla_node_copy(d_bzla, key.first);
+        bzla_node_copy(d_bzla, key.second);
 
         /* We currently only support synthesis for bit-vectors sorts, but not
          * FP sorts. Therefore, we have to check if the sorts for this function
@@ -939,46 +1002,49 @@ QuantSolverState::mk_skolem(BzlaNode *q, const char *sym)
           d_use_synth.insert(sk);
         }
       }
+
+      qlog("%s skolem UF (%s, arity: %zu): %s (%s)\n",
+           it == d_skolems.end() ? "New" : "Use",
+           bzla_util_node2string(sk),
+           sorts.size(),
+           bzla_util_node2string(q),
+           bzla_util_node2string(q_parent));
+
+      assert(sk);
+      bzla_node_release(d_bzla, arg_vars);
       assert(args.size() == bzla_node_fun_get_arity(d_bzla, sk));
       result = bzla_exp_apply_n(d_bzla, sk, args.data(), args.size());
+
+      // Cache Skolem for `q`.
+      key = std::make_pair(bzla_node_copy(d_bzla, q), nullptr);
+      assert(d_skolems.find(key) == d_skolems.end());
+      d_skolems.emplace(key, result);
     }
   }
 
   // No dependencies, just create a skolem constant.
   if (!result)
   {
-    result = bzla_node_create_var(d_bzla, bzla_node_get_sort_id(q->e[0]), sym);
+    std::stringstream ss;
+    const char *sym = bzla_node_get_symbol(d_bzla, q->e[0]);
+    if (sym)
+    {
+      ss << "sk(" << sym << ")";
+    }
+    result = bzla_node_create_var(
+        d_bzla, bzla_node_get_sort_id(q->e[0]), ss.str().c_str());
+
+    key = std::make_pair(bzla_node_copy(d_bzla, q), nullptr);
+    assert(d_skolems.find(key) == d_skolems.end());
+    d_skolems.emplace(key, result);
+
+    qlog("New skolem (%s): %s (%s)\n",
+         bzla_util_node2string(result),
+         bzla_util_node2string(q),
+         bzla_util_node2string(q_parent));
   }
 
   return result;
-}
-
-BzlaNode *
-QuantSolverState::get_skolem(BzlaNode *q)
-{
-  BzlaNode *sk;
-
-  auto it = d_skolems.find(q);
-  if (it != d_skolems.end())
-  {
-    return it->second;
-  }
-
-  std::stringstream ss;
-
-  char *sym = bzla_node_get_symbol(d_bzla, q->e[0]);
-  if (sym)
-  {
-    ss << "sk(" << sym << ")";
-  }
-  sk = mk_skolem(q, ss.str().c_str());
-
-  qlog("New skolem %s for %s\n",
-       bzla_util_node2string(sk),
-       bzla_util_node2string(q));
-  d_skolems.emplace(bzla_node_copy(d_bzla, q), sk);
-
-  return sk;
 }
 
 BzlaNode *
@@ -1009,12 +1075,16 @@ QuantSolverState::skolemize(BzlaNode *q)
 {
   assert(bzla_node_is_regular(q));
   assert(bzla_node_is_forall(q));
+  assert(!q->parameterized);
 
   BzlaNode *cur, *sk, *inst;
   BzlaNodeIterator it;
   NodeMap<BzlaNode *> map;
 
-  qlog("Skolemize %s\n", bzla_util_node2string(q));
+  qlog("Skolemize %s (%s, %s)\n",
+       bzla_util_node2string(q),
+       bzla_util_node2string(find_original_instance(q)),
+       bzla_util_node2string(find_parent(q)));
   bzla_iter_binder_init(&it, q);
   while (bzla_iter_binder_has_next(&it))
   {
@@ -1093,7 +1163,8 @@ QuantSolverState::get_ce_lemma(BzlaNode *q)
   assert(!bzla_node_real_addr(inst)->parameterized);
 
   // TODO: add option to enable/disable skolemization in CE
-  if (bzla_node_is_inverted(inst) && bzla_node_is_forall(inst))
+  // TODO: optimization, disabled for now
+  if (false && bzla_node_is_inverted(inst) && bzla_node_is_forall(inst))
   {
     BzlaNode *inst_skolemized = skolemize(bzla_node_real_addr(inst));
     bzla_node_release(d_bzla, inst);
@@ -1177,7 +1248,8 @@ QuantSolverState::add_value_instantiation_lemma(BzlaNode *q)
   assert(!bzla_node_real_addr(inst)->parameterized);
 
   // TODO: add option to enable/disable skolemization in CE
-  if (bzla_node_is_inverted(inst) && bzla_node_is_forall(inst))
+  // TODO: optimization, disabled for now
+  if (false && bzla_node_is_inverted(inst) && bzla_node_is_forall(inst))
   {
     BzlaNode *inst_skolemized = skolemize(bzla_node_real_addr(inst));
     bzla_node_release(d_bzla, inst);
@@ -1285,13 +1357,13 @@ QuantSolverState::synthesize_terms()
   generate_model_ground();
 
   // TODO: check if we only need to do this for active quantifiers
-  for (auto [q, sk] : d_skolems)
+  for (auto [p, sk] : d_skolems)
   {
-    BzlaNode *br = find_original_instance(q);
+    BzlaNode *q_orig = find_original_instance(p.first);
 
     /* We only need to synthesize for Skolem UFs / constants, but not for
      * applications on UFs. */
-    if (q != br) continue;
+    if (p.first != q_orig) continue;
 
     /* Synthesis not supported for this Skolem UF. */
     if (d_use_synth.find(sk) == d_use_synth.end())
@@ -1399,7 +1471,7 @@ QuantSolverState::synthesize_terms()
         bzla_node_release(d_bzla, t);
 
 #ifdef QLOG
-        bzla_dumpsmt_dump_node(d_bzla, stdout, f, 0);
+        // bzla_dumpsmt_dump_node(d_bzla, stdout, f, 0);
 #endif
 
         store_synthesized_term(sk, f);
@@ -1577,6 +1649,8 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
     }
   }
 
+  // TODO: This is not necessary if no t synthesized since we already added a
+  // value instantiation.
   BzlaNode *inst = instantiate(q, map);
 
   assert(!bzla_node_real_addr(inst)->parameterized);
@@ -1732,6 +1806,14 @@ QuantSolverState::compute_variable_dependencies_aux(
   BzlaNode *cur;
   std::vector<BzlaNode *> visit;
   NodeSet cache;
+  BzlaNodeIterator nit;
+
+  bzla_iter_binder_init(&nit, q);
+  while (bzla_iter_binder_has_next(&nit))
+  {
+    auto cur = bzla_iter_binder_next(&nit);
+    cache.emplace(cur->e[0]);
+  }
 
   visit.push_back(q);
   while (!visit.empty())
@@ -1766,13 +1848,25 @@ void
 QuantSolverState::compute_variable_dependencies(
     const std::vector<BzlaNode *> quantifiers)
 {
+  BzlaNodeIterator nit;
+  std::unordered_set<BzlaNode *> cache;
   for (const auto q : quantifiers)
   {
     if (!q->parameterized)
     {
-      qlog("skip: %s\n", bzla_util_node2string(q));
+      // Skip all quantifiers in same block.
+      bzla_iter_binder_init(&nit, q);
+      while (bzla_iter_binder_has_next(&nit))
+      {
+        auto cur = bzla_iter_binder_next(&nit);
+        qlog("skip: %s (%s)\n",
+             bzla_util_node2string(cur),
+             bzla_util_node2string(cur->e[0]));
+        cache.emplace(cur);
+      }
       continue;
     }
+    if (cache.find(q) != cache.end()) continue;
     if (d_deps.find(q) != d_deps.end()) continue;
 
     qlog("Dependencies for %s (%s):\n",
@@ -1782,7 +1876,23 @@ QuantSolverState::compute_variable_dependencies(
     std::vector<BzlaNode *> free_vars;
     compute_variable_dependencies_aux(q, free_vars);
     assert(free_vars.size() > 0);
+
     d_deps.emplace(bzla_node_copy(d_bzla, q), free_vars);
+
+    // Set dependencies for all quantifiers in same block.
+    bzla_iter_binder_init(&nit, q);
+    bzla_iter_binder_next(&nit);  // Skip `q`.
+    while (bzla_iter_binder_has_next(&nit))
+    {
+      auto cur = bzla_iter_binder_next(&nit);
+      assert(d_deps.find(cur) == d_deps.end());
+      d_deps.emplace(bzla_node_copy(d_bzla, cur), free_vars);
+      // Increment reference counts for all vars in `free_vars`.
+      for (const auto fv : free_vars)
+      {
+        bzla_node_copy(d_bzla, fv);
+      }
+    }
   }
 }
 
@@ -1843,6 +1953,8 @@ QuantSolverState::collect_info(std::vector<BzlaNode *> &quantifiers)
       else if (bzla_node_is_quantifier(cur))
       {
         quantifiers.push_back(cur);
+        visit.push_back(bzla_node_binder_get_body(cur));
+        continue;
       }
 
       for (size_t i = 0; i < cur->arity; ++i)
@@ -1873,7 +1985,11 @@ QuantSolverState::check_ground_formulas()
 
   for (auto [q, lit] : d_ce_literals)
   {
-    if (is_inactive(q)) continue;
+    if (is_inactive(q))
+    {
+      qlog("  inactive: %s\n", bzla_util_node2string(q));
+      continue;
+    }
     assumptions.emplace(lit, q);
   }
 
@@ -1882,10 +1998,12 @@ QuantSolverState::check_ground_formulas()
   {
     ++d_statistics.num_ground_checks_iterations;
     ++i;
-    qlog("\nGround check: %zu (%zu assumptions): ", i, assumptions.size());
+    qlog("\n=================================================================");
+    qlog("\nGround check: %zu (%zu assumptions):\n", i, assumptions.size());
 
     for (auto &p : assumptions)
     {
+      qlog("  active: %s\n", bzla_util_node2string(p.second));
       assume(p.first);
     }
 
@@ -1896,28 +2014,32 @@ QuantSolverState::check_ground_formulas()
 
     res = check_sat_ground();
 
+    qlog("Ground check: ");
     if (res == BZLA_RESULT_SAT)
     {
       qlog("sat\n");
 
-#ifdef QLOG
-      for (auto [q, sk] : d_skolems)
-      {
-        if (sk->arity == 0 && !bzla_hashptr_table_get(d_bzla->inputs, sk))
-        {
-          bzla_hashptr_table_add(d_bzla->inputs, bzla_node_copy(d_bzla, sk));
-        }
-      }
-      for (auto [q, ic] : d_instantiation_constants)
-      {
-        if (!bzla_hashptr_table_get(d_bzla->inputs, ic))
-        {
-          bzla_hashptr_table_add(d_bzla->inputs, bzla_node_copy(d_bzla, ic));
-        }
-      }
-      generate_model_ground();
-      d_bzla->slv->api.print_model(d_bzla->slv, "smt2", stdout);
-#endif
+      //#ifdef QLOG
+      //      for (auto [q, sk] : d_skolems)
+      //      {
+      //        if (sk->arity == 0 && !bzla_hashptr_table_get(d_bzla->inputs,
+      //        sk))
+      //        {
+      //          bzla_hashptr_table_add(d_bzla->inputs, bzla_node_copy(d_bzla,
+      //          sk));
+      //        }
+      //      }
+      //      for (auto [q, ic] : d_instantiation_constants)
+      //      {
+      //        if (!bzla_hashptr_table_get(d_bzla->inputs, ic))
+      //        {
+      //          bzla_hashptr_table_add(d_bzla->inputs, bzla_node_copy(d_bzla,
+      //          ic));
+      //        }
+      //      }
+      //      generate_model_ground();
+      //      d_bzla->slv->api.print_model(d_bzla->slv, "smt2", stdout);
+      //#endif
 
       reset_assumptions();
       break;
@@ -2039,6 +2161,7 @@ check_sat_quant_solver(BzlaQuantSolver *slv)
     if (res == BZLA_RESULT_SAT)
     {
       qlog("\n");
+      state.generate_model_ground();
       done = state.check_active_quantifiers();
       if (!state.added_new_lemmas())
       {
