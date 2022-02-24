@@ -12,7 +12,6 @@
 
 #include <memory>
 
-#include "gmprandstate.h"
 #include "rng.h"
 
 extern "C" {
