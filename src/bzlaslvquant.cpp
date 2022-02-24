@@ -189,7 +189,7 @@ SynthData::~SynthData()
 class QuantSolverState
 {
  public:
-  QuantSolverState(Bzla *bzla) : d_bzla(bzla){};
+  QuantSolverState(Bzla *bzla);
   ~QuantSolverState();
 
   void get_active_quantifiers();
@@ -350,7 +350,15 @@ class QuantSolverState
   NodeSet d_constants;
 
   std::unordered_map<BzlaNode *, SynthData> d_synth_qi_data;
+
+  bool d_opt_synth_sk;
+  bool d_opt_synth_qi;
 };
+
+QuantSolverState::QuantSolverState(Bzla *bzla)
+    : d_bzla(bzla),
+      d_opt_synth_sk(bzla_opt_get(bzla, BZLA_OPT_QUANT_SYNTH_SK) == 1),
+      d_opt_synth_qi(bzla_opt_get(bzla, BZLA_OPT_QUANT_SYNTH_QI) == 1){};
 
 QuantSolverState::~QuantSolverState()
 {
@@ -1719,9 +1727,12 @@ QuantSolverState::check_active_quantifiers()
 
   /* Synthesize functions for Skolem UFs and assume candidate model.  For
    * skolem constants the current model value is used. */
-  start = bzla_util_time_stamp();
-  synthesize_terms();
-  d_statistics.time_synthesize_terms += bzla_util_time_stamp() - start;
+  if (d_opt_synth_sk)
+  {
+    start = bzla_util_time_stamp();
+    synthesize_terms();
+    d_statistics.time_synthesize_terms += bzla_util_time_stamp() - start;
+  }
 
   for (auto [sk, model_candidate] : d_synthesized_terms)
   {
@@ -1770,7 +1781,10 @@ QuantSolverState::check_active_quantifiers()
       qlog("sat\n");
       generate_model_ground();
       add_value_instantiation_lemma(q);
-      synthesize_qi(q);
+      if (d_opt_synth_qi)
+      {
+        synthesize_qi(q);
+      }
     }
     // No counterexamples found anymore, set quantifier to inactive.
     else
