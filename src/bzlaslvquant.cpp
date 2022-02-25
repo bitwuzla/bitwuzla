@@ -1370,19 +1370,6 @@ QuantSolverState::synthesize_terms()
      * applications on UFs. */
     if (p.first != q_orig) continue;
 
-    /* Synthesis not supported for this Skolem UF. */
-    if (d_use_synth.find(sk) == d_use_synth.end())
-    {
-      continue;
-    }
-
-    prev_f       = nullptr;
-    auto it_prev = d_synthesized_terms.find(sk);
-    if (it_prev != d_synthesized_terms.end())
-    {
-      prev_f = it_prev->second;
-    }
-
     /**
      * Synthesize Skolem function.
      *
@@ -1390,8 +1377,16 @@ QuantSolverState::synthesize_terms()
      * based on concrete input/output pairs. The input/output pairs are
      * constructed from the current model of the Skolem UF `sk`.
      */
-    if (bzla_node_is_fun(sk))
+    if (d_opt_synth_sk && bzla_node_is_fun(sk)
+        && d_use_synth.find(sk) != d_use_synth.end())
     {
+      prev_f       = nullptr;
+      auto it_prev = d_synthesized_terms.find(sk);
+      if (it_prev != d_synthesized_terms.end())
+      {
+        prev_f = it_prev->second;
+      }
+
       qlog("Synthesize term for %s\n", bzla_util_node2string(sk));
       std::vector<BzlaBitVectorTuple *> values_in;
       std::vector<BzlaBitVector *> values_out;
@@ -1730,6 +1725,12 @@ QuantSolverState::check_active_quantifiers()
     synthesize_terms();
     d_statistics.time_synthesize_terms += bzla_util_time_stamp() - start;
   }
+
+  /* Synthesize functions for Skolem UFs and assume candidate model.  For
+   * skolem constants the current model value is used. */
+  start = bzla_util_time_stamp();
+  synthesize_terms();
+  d_statistics.time_synthesize_terms += bzla_util_time_stamp() - start;
 
   for (auto [sk, model_candidate] : d_synthesized_terms)
   {
