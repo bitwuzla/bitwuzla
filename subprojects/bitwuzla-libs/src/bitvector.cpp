@@ -309,18 +309,33 @@ BitVector::BitVector(const BitVector& other)
   }
 }
 
-BitVector::BitVector(BitVector&& other) : d_size(std::exchange(other.d_size, 0))
+BitVector::BitVector(BitVector&& other)
 {
   if (is_gmp())
   {
-    mpz_set(d_val_gmp, other.d_val_gmp);
-    mpz_clear(other.d_val_gmp);
+    if (other.is_gmp())
+    {
+      mpz_set(d_val_gmp, other.d_val_gmp);
+      mpz_clear(other.d_val_gmp);
+    }
+    else
+    {
+      mpz_clear(d_val_gmp);
+      d_val_uint64 = std::exchange(other.d_val_uint64, 0);
+    }
   }
   else
   {
-    d_val_uint64       = other.d_val_uint64;
-    other.d_val_uint64 = 0;
+    if (other.is_gmp())
+    {
+      mpz_init_set(d_val_gmp, other.d_val_gmp);
+    }
+    else
+    {
+      d_val_uint64 = std::exchange(other.d_val_uint64, 0);
+    }
   }
+  d_size = std::exchange(other.d_size, 0);
 }
 
 BitVector::~BitVector()
