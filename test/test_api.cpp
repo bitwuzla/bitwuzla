@@ -580,6 +580,7 @@ TEST_F(TestApi, get_option_info)
           !strcmp(bitwuzla_get_option_str(bzla, opt), info.string.cur_val));
     }
   }
+  bitwuzla_delete(bzla);
 }
 
 TEST_F(TestApi, mk_array_sort)
