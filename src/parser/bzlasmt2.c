@@ -372,8 +372,8 @@ typedef struct BzlaSMT2Item
     const BitwuzlaTerm *exp;
     const BitwuzlaSort *sort;
     char *str;
-    char *strs[2];
   };
+  char *strs[2];
 } BzlaSMT2Item;
 
 BZLA_DECLARE_STACK(BzlaSMT2Item, BzlaSMT2Item);
@@ -850,6 +850,8 @@ release_symbols_smt2(BzlaSMT2Parser *parser)
 static void
 release_item_smt2(BzlaSMT2Parser *parser, BzlaSMT2Item *item)
 {
+  if (item->strs[0]) bzla_mem_freestr(parser->mem, item->strs[0]);
+  if (item->strs[1]) bzla_mem_freestr(parser->mem, item->strs[1]);
   if (item->tag != BZLA_EXP_TAG_SMT2
       && (item->tag & BZLA_CONSTANT_TAG_CLASS_SMT2))
   {
@@ -3797,6 +3799,7 @@ close_term(BzlaSMT2Parser *parser)
     if (!check_real_arg_smt2(parser, item_cur, 2)) return 0;
     parser->work.top   = item_cur;
     item_open->tag     = BZLA_REAL_DIV_TAG_SMT2;
+    item_open->node    = item_cur[0].node;
     item_open->strs[0] = item_cur[1].str;
     item_open->strs[1] = item_cur[2].str;
   }
@@ -4786,17 +4789,16 @@ parse_term_aux_smt2(BzlaSMT2Parser *parser,
                       "internal parse error: worker stack of size %d",
                       BZLA_COUNT_STACK(parser->work));
   }
-  parser->work.top -= 1;
-  p = parser->work.top;
+  p = parser->work.top - 1;
   if (p->tag != BZLA_EXP_TAG_SMT2)
   {
     parser->perrcoo = p->coo;
-    // Ditto, same comment wrt defensive programming an future use.
     return !perr_smt2(
         parser,
         "internal parse error: failed to translate parsed term at '%s'",
         item2str_smt2(p));
   }
+  parser->work.top -= 1;
   res     = p->exp;
   *cooptr = p->coo;
   release_item_smt2(parser, p);
