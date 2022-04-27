@@ -22,7 +22,7 @@ compare_rw_cache_tuple(const BzlaRwCacheTuple *t0, const BzlaRwCacheTuple *t1)
   assert(t1);
 
   if (t0->kind == t1->kind && t0->n[0] == t1->n[0] && t0->n[1] == t1->n[1]
-      && t0->n[2] == t1->n[2])
+      && t0->n[2] == t1->n[2] && t0->n[3] == t1->n[3])
   {
     return 0;
   }
@@ -37,6 +37,7 @@ hash_rw_cache_tuple(const BzlaRwCacheTuple *t)
   hash += hash_primes[1] * (uint32_t) t->n[0];
   hash += hash_primes[2] * (uint32_t) t->n[1];
   hash += hash_primes[3] * (uint32_t) t->n[2];
+  hash += hash_primes[0] * (uint32_t) t->n[3];
   return hash;
 }
 

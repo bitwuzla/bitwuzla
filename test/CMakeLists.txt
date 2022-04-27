@@ -1220,6 +1220,7 @@ if(SymFPU_FOUND)
     "fp_regr8.smt2"
     "fp_regr10.smt2"
     "checkmodelfp1.smt2"
+    "fp_regr11.smt2"
   )
 
   list(APPEND unsat_testcases
