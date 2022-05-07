@@ -186,6 +186,40 @@ BitVectorNode::fix_bit(uint32_t idx, bool value)
   d_domain.fix_bit(idx, value);
 }
 
+void
+BitVectorNode::update_max_bound(const BitVector& value, bool is_exclusive)
+{
+  assert(!d_max.is_null());
+  const BitVector& val = value;
+  BitVector val_dec;
+  if (is_exclusive)
+  {
+    assert(!value.is_zero());
+    val_dec = value.bvdec();
+  }
+  if (d_max.compare(val) > 0)
+  {
+    d_max = val;
+  }
+}
+
+void
+BitVectorNode::update_min_bound(const BitVector& value, bool is_exclusive)
+{
+  assert(!d_min.is_null());
+  const BitVector& val = value;
+  BitVector val_inc;
+  if (is_exclusive)
+  {
+    assert(!value.is_ones());
+    val_inc = value.bvinc();
+  }
+  if (d_min.compare(val) < 0)
+  {
+    d_min = val;
+  }
+}
+
 std::string
 BitVectorNode::to_string() const
 {

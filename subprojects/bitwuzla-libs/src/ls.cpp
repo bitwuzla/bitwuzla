@@ -54,8 +54,12 @@ struct LocalSearchMove
 
 LocalSearch::LocalSearch(uint64_t max_nprops,
                          uint64_t max_nupdates,
-                         uint32_t seed)
-    : d_max_nprops(max_nprops), d_max_nupdates(max_nupdates), d_seed(seed)
+                         uint32_t seed,
+                         bool ineq_bounds)
+    : d_max_nprops(max_nprops),
+      d_max_nupdates(max_nupdates),
+      d_seed(seed),
+      d_ineq_bounds(ineq_bounds)
 {
   d_rng.reset(new RNG(d_seed));
   d_one.reset(new BitVector(BitVector::mk_one(1)));
@@ -337,6 +341,14 @@ LocalSearch::is_root_node(const BitVectorNode* node) const
   return d_parents.at(node->id()).empty();
 }
 
+bool
+LocalSearch::is_ineq_node(const BitVectorNode* node)
+{
+  BitVectorNode::NodeKind kind = node->get_kind();
+  return kind == BitVectorNode::NodeKind::SLT
+         || kind == BitVectorNode::NodeKind::ULT;
+}
+
 LocalSearchMove
 LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
 {
@@ -543,6 +555,61 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
   return LocalSearchMove(nprops, nupdates, nullptr, BitVector());
 }
 
+namespace {
+void
+update_bounds(BitVectorNode* root, int32_t pos)
+
+{
+  BitVectorNode* child0 = (*root)[0];
+  BitVectorNode* child1 = (*root)[1];
+  uint32_t size         = root[0].size();
+  BitVector min_value, max_value;
+  if (root->get_kind() == BitVectorNode::NodeKind::SLT)
+  {
+    min_value = BitVector::mk_min_signed(size);
+    max_value = BitVector::mk_max_signed(size);
+  }
+  else
+  {
+    min_value = BitVector::mk_zero(size);
+    max_value = BitVector::mk_ones(size);
+  }
+
+  if (root->assignment().is_true())
+  {
+    // x < s
+    if (pos < 0 || pos == 0)
+    {
+      child0->update_min_bound(min_value, false);
+      child0->update_max_bound(child1->assignment(), true);
+    }
+
+    // s < x
+    if (pos < 0 || pos == 1)
+    {
+      child1->update_min_bound(child0->assignment(), true);
+      child1->update_max_bound(max_value, false);
+    }
+  }
+  else
+  {
+    // x >= s
+    if (pos < 0 || pos == 0)
+    {
+      child0->update_min_bound(child1->assignment(), false);
+      child0->update_max_bound(max_value, false);
+    }
+
+    // s >= x
+    if (pos < 0 || pos == 1)
+    {
+      child1->update_min_bound(max_value, false);
+      child1->update_max_bound(child0->assignment(), false);
+    }
+  }
+}
+}  // namespace
+
 void
 LocalSearch::update_roots(uint32_t id)
 {
@@ -551,14 +618,56 @@ LocalSearch::update_roots(uint32_t id)
   auto it = d_roots.find(id);
   if (it != d_roots.end())
   {
-    if (get_node(id)->assignment().is_true())
+    BitVectorNode* root = get_node(id);
+    if (root->assignment().is_true())
     {
+      /* remove from unsatisfied roots list */
       d_roots.erase(it);
+
+      /* update min/max bounds for children of (now) true top-level
+       * inequalities */
+      if (d_ineq_bounds && is_ineq_node(root))
+      {
+        assert(root->arity() == 2);
+        update_bounds(root, -1);
+      }
     }
   }
   else if (get_node(id)->assignment().is_false())
   {
+    /* add to unsatisfied roots list */
     d_roots.insert(id);
+
+    /* recompute min/max bounds for children of (now) false top-level
+     * inequalities */
+    BitVectorNode* root = get_node(id);
+    if (d_ineq_bounds && is_ineq_node(root))
+    {
+      assert(root->arity() == 2);
+
+      BitVectorNode* child0                        = (*root)[0];
+      BitVectorNode* child1                        = (*root)[1];
+      const std::unordered_set<uint32_t>& parents0 = d_parents.at(child0->id());
+      for (const auto& p : parents0)
+      {
+        BitVectorNode* node = get_node(p);
+        if (is_root_node(node) && is_ineq_node(node))
+        {
+          update_bounds(
+              node, child0 == (*node)[0] ? 0 : (child0 == (*node)[1] ? -1 : 1));
+        }
+      }
+      const std::unordered_set<uint32_t>& parents1 = d_parents.at(child1->id());
+      for (const auto& p : parents1)
+      {
+        BitVectorNode* node = get_node(p);
+        if (is_root_node(node) && is_ineq_node(node))
+        {
+          update_bounds(
+              node, child1 == (*node)[0] ? 0 : (child1 == (*node)[1] ? -1 : 1));
+        }
+      }
+    }
   }
 }
 

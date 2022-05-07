@@ -136,11 +136,15 @@ class LocalSearch
 #endif
   } d_statistics;
 
-  LocalSearch(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed = 1234);
+  LocalSearch(uint64_t max_nprops,
+              uint64_t max_nupdates,
+              uint32_t seed    = 1234,
+              bool ineq_bounds = false);
   ~LocalSearch();
 
   void set_max_nprops(uint64_t max) { d_max_nprops = max; }
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }
+  void set_ineq_bounds(bool value) { d_ineq_bounds = value; }
 
   uint32_t mk_node(uint32_t size);
   uint32_t mk_node(OperatorKind kind,
@@ -187,6 +191,7 @@ class LocalSearch
   void set_log_level(uint32_t level) { d_log_level = level; }
 
  private:
+  static bool is_ineq_node(const BitVectorNode* node);
   BitVectorNode* get_node(uint32_t id) const;
   bool is_leaf_node(const BitVectorNode* node) const;
   bool is_root_node(const BitVectorNode* node) const;
@@ -208,6 +213,8 @@ class LocalSearch
   uint64_t d_max_nupdates = 0;
 
   uint32_t d_seed;
+
+  bool d_ineq_bounds = false;
 };
 
 }  // namespace ls

@@ -149,6 +149,11 @@ class BitVectorNode
   /** Fix domain bit at index 'idx' to 'value'. */
   void fix_bit(uint32_t idx, bool value);
 
+  /** Update max bound. */
+  void update_max_bound(const BitVector& value, bool is_exclusive);
+  /** Update min bound. */
+  void update_min_bound(const BitVector& value, bool is_exclusive);
+
   /** Get the string representation of this node. */
   virtual std::string to_string() const;
 
@@ -184,6 +189,8 @@ class BitVectorNode
   BitVectorDomain d_domain;
   bool d_is_const;
   bool d_all_const;
+  BitVector d_max;
+  BitVector d_min;
 
   /** Cached inverse value result. */
   std::unique_ptr<BitVector> d_inverse;
