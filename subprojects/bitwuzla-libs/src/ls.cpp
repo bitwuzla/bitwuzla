@@ -556,6 +556,11 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
 }
 
 namespace {
+/**
+ * Helper for updating bounds of children of root inequalities.
+ * @param root The root node.
+ * @param pos The position of the child to update, -1 for updating all children.
+ */
 void
 update_bounds(BitVectorNode* root, int32_t pos)
 
