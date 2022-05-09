@@ -13,7 +13,10 @@ RNG::RNG(uint32_t seed) : d_seed(seed)
   gmp_randseed_ui(d_gmp_randstate, pick<uint32_t>());
 }
 
-RNG::RNG(const RNG& other) : d_rng(other.d_rng) {}
+RNG::RNG(const RNG& other) : d_rng(other.d_rng)
+{
+  gmp_randinit_set(d_gmp_randstate, other.d_gmp_randstate);
+}
 
 RNG::~RNG() { gmp_randclear(d_gmp_randstate); }
 
