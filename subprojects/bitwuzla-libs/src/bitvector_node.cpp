@@ -189,34 +189,32 @@ BitVectorNode::fix_bit(uint32_t idx, bool value)
 void
 BitVectorNode::update_max_bound(const BitVector& value, bool is_exclusive)
 {
-  assert(!d_max.is_null());
-  const BitVector& val = value;
-  BitVector val_dec;
+  assert(!d_max->is_null());
+  if (d_max->compare(value) <= 0) return;
   if (is_exclusive)
   {
     assert(!value.is_zero());
-    val_dec = value.bvdec();
+    d_max.reset(new BitVector(value.bvdec()));
   }
-  if (d_max.compare(val) > 0)
+  else
   {
-    d_max = val;
+    d_max.reset(new BitVector(value));
   }
 }
 
 void
 BitVectorNode::update_min_bound(const BitVector& value, bool is_exclusive)
 {
-  assert(!d_min.is_null());
-  const BitVector& val = value;
-  BitVector val_inc;
+  assert(!d_min->is_null());
+  if (d_min->compare(value) <= 0) return;
   if (is_exclusive)
   {
-    assert(!value.is_ones());
-    val_inc = value.bvinc();
+    assert(!value.is_zero());
+    d_min.reset(new BitVector(value.bvinc()));
   }
-  if (d_min.compare(val) < 0)
+  else
   {
-    d_min = val;
+    d_min.reset(new BitVector(value));
   }
 }
 
