@@ -567,7 +567,7 @@ update_bounds(BitVectorNode* root, int32_t pos)
 {
   BitVectorNode* child0 = (*root)[0];
   BitVectorNode* child1 = (*root)[1];
-  uint32_t size         = root[0].size();
+  uint32_t size         = child0->size();
   BitVector min_value, max_value;
   if (root->get_kind() == BitVectorNode::NodeKind::SLT)
   {

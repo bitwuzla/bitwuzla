@@ -189,6 +189,7 @@ BitVectorNode::fix_bit(uint32_t idx, bool value)
 void
 BitVectorNode::update_max_bound(const BitVector& value, bool is_exclusive)
 {
+  assert(size() == value.size());
   if (d_max && d_max->compare(value) <= 0) return;
   if (is_exclusive)
   {
@@ -204,6 +205,7 @@ BitVectorNode::update_max_bound(const BitVector& value, bool is_exclusive)
 void
 BitVectorNode::update_min_bound(const BitVector& value, bool is_exclusive)
 {
+  assert(size() == value.size());
   if (d_min && d_min->compare(value) <= 0) return;
   if (is_exclusive)
   {
