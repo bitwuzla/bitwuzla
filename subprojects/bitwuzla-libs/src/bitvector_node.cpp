@@ -193,7 +193,6 @@ BitVectorNode::update_max_bound(const BitVector& value, bool is_exclusive)
   if (d_max && d_max->compare(value) <= 0) return;
   if (is_exclusive)
   {
-    assert(!value.is_zero());
     d_max.reset(new BitVector(value.bvdec()));
   }
   else
@@ -209,7 +208,6 @@ BitVectorNode::update_min_bound(const BitVector& value, bool is_exclusive)
   if (d_min && d_min->compare(value) <= 0) return;
   if (is_exclusive)
   {
-    assert(!value.is_ones());
     d_min.reset(new BitVector(value.bvinc()));
   }
   else

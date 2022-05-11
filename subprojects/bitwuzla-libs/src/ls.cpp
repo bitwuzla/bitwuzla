@@ -563,13 +563,13 @@ namespace {
  */
 void
 update_bounds(BitVectorNode* root, int32_t pos)
-
 {
   BitVectorNode* child0 = (*root)[0];
   BitVectorNode* child1 = (*root)[1];
   uint32_t size         = child0->size();
+  bool is_signed        = root->get_kind() == BitVectorNode::NodeKind::SLT;
   BitVector min_value, max_value;
-  if (root->get_kind() == BitVectorNode::NodeKind::SLT)
+  if (is_signed)
   {
     min_value = BitVector::mk_min_signed(size);
     max_value = BitVector::mk_max_signed(size);
@@ -586,12 +586,16 @@ update_bounds(BitVectorNode* root, int32_t pos)
     if (pos < 0 || pos == 0)
     {
       child0->update_min_bound(min_value, false);
+      assert((is_signed && child1->assignment().signed_compare(min_value) > 0)
+             || (!is_signed && child1->assignment().compare(min_value) > 0));
       child0->update_max_bound(child1->assignment(), true);
     }
 
     // s < x
     if (pos < 0 || pos == 1)
     {
+      assert((is_signed && child1->assignment().signed_compare(max_value) < 0)
+             || (!is_signed && child1->assignment().compare(max_value) < 0));
       child1->update_min_bound(child0->assignment(), true);
       child1->update_max_bound(max_value, false);
     }
