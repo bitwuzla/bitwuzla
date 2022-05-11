@@ -216,7 +216,7 @@ class TestPropInv : public TestPropCommon
 
             if (res != expected_result)
             {
-              std::cout << "is_sign_extend: " << bzla_is_bv_sext(bzla, x)
+              std::cout << "is_sign_extend: " << bzla_exp_is_bv_sext(bzla, x)
                         << std::endl;
               std::cout << "d_x:    ";
               bzla_bvdomain_print(mm, d_x, true);

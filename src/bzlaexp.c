@@ -2826,3 +2826,126 @@ bzla_exp_exists_n(Bzla *bzla, BzlaNode *params[], uint32_t n, BzlaNode *body)
   return bzla_node_invert(quantifier_n_exp(
       bzla, BZLA_FORALL_NODE, params, n, bzla_node_invert(body)));
 }
+
+/*------------------------------------------------------------------------*/
+
+bool
+bzla_exp_is_bv_sext(Bzla *bzla, BzlaNode *n)
+{
+  assert(bzla);
+  assert(n);
+
+  uint32_t msb;
+  BzlaNode *ite, *t;
+
+  if (bzla_node_is_inverted(n) || !bzla_node_is_bv_concat(n))
+  {
+    return false;
+  }
+
+  ite = n->e[0];
+  t   = n->e[1];
+  msb = bzla_node_bv_get_width(bzla, t) - 1;
+
+  if (bzla_node_is_inverted(ite) || !bzla_node_is_cond(ite)
+      || !bzla_node_is_bv_slice(ite->e[0]) || bzla_node_is_inverted(ite->e[0])
+      || ite->e[0]->e[0] != t || bzla_node_bv_slice_get_upper(ite->e[0]) != msb
+      || bzla_node_bv_slice_get_lower(ite->e[0]) != msb
+      || !bzla_node_is_bv_const_ones(bzla, ite->e[1])
+      || !bzla_node_is_bv_const_zero(bzla, ite->e[2]))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+bool
+bzla_exp_is_bv_xor(Bzla *bzla,
+                   const BzlaNode *n,
+                   BzlaNode **res_a,
+                   BzlaNode **res_b)
+{
+  assert(bzla);
+  assert(n);
+  assert(res_a);
+  assert(res_b);
+  (void) bzla;
+
+  const BzlaNode *e0, *e1, *a, *b;
+
+  *res_a = 0;
+  *res_b = 0;
+
+  if (bzla_node_is_inverted(n) || !bzla_node_is_bv_and(n))
+  {
+    return false;
+  }
+
+  e0 = n->e[0];
+  e1 = n->e[1];
+  if (bzla_node_is_inverted(e0) && bzla_node_is_inverted(e1)
+      && bzla_node_is_bv_and(e0) && bzla_node_is_bv_and(e1))
+  {
+    a = bzla_node_real_addr(e0)->e[0];
+    b = bzla_node_real_addr(e0)->e[1];
+
+    if (bzla_node_invert(a) == bzla_node_real_addr(e1)->e[0]
+        && bzla_node_invert(b) == bzla_node_real_addr(e1)->e[1])
+    {
+      *res_a = bzla_node_real_addr(a);
+      *res_b = bzla_node_real_addr(b);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool
+bzla_exp_is_bv_sra(Bzla *bzla,
+                   const BzlaNode *n,
+                   BzlaNode **res_a,
+                   BzlaNode **res_b)
+{
+  assert(bzla);
+  assert(n);
+  assert(res_a);
+  assert(res_b);
+  assert(bzla_node_is_regular(n));
+
+  uint32_t bw;
+  BzlaNode *e0, *e1;
+
+  *res_a = 0;
+  *res_b = 0;
+
+  if (!bzla_node_is_cond(n)) return false;
+
+  if (bzla_node_is_inverted(n->e[0])) return false;
+  if (!bzla_node_is_inverted(n->e[1])) return false;
+  if (bzla_node_is_inverted(n->e[2])) return false;
+
+  if (!bzla_node_is_bv_slice(n->e[0])) return false;
+  if (!bzla_node_is_bv_srl(n->e[1])) return false;
+  if (!bzla_node_is_bv_srl(n->e[2])) return false;
+
+  bw = bzla_node_bv_get_width(bzla, n);
+
+  if (bzla_node_bv_slice_get_lower(n->e[0]) != bw - 1) return false;
+  if (bzla_node_bv_slice_get_upper(n->e[0]) != bw - 1) return false;
+
+  e0 = n->e[2]->e[0];
+  e1 = n->e[2]->e[1];
+
+  if (n->e[0]->e[0] != e0) return false;
+
+  if (bzla_node_real_addr(n->e[1])->e[0] != bzla_node_invert(e0)) return false;
+  if (bzla_node_real_addr(n->e[1])->e[1] != e1) return false;
+
+  *res_a = e0;
+  *res_b = e1;
+  return true;
+}
+
+/* ========================================================================== */

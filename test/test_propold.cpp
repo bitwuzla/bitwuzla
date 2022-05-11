@@ -130,7 +130,7 @@ class TestProp : public TestBzla
 
     bzla_synthesize_exp(d_bzla, eq, 0);
     bzla_propold_solver_init_domains(d_bzla, d_domains, exp);
-    if (bzla_is_bv_sra(d_bzla, exp, &children[0], &children[1]))
+    if (bzla_exp_is_bv_sra(d_bzla, exp, &children[0], &children[1]))
     {
       assert(bzla_hashint_map_contains(d_domains,
                                        bzla_node_real_addr(children[0])->id));

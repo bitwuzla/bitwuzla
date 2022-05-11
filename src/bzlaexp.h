@@ -17,7 +17,7 @@
 
 /*------------------------------------------------------------------------*/
 
-/* Convenience wrapper function. */
+/** Convenience wrapper function. */
 BzlaNode *bzla_exp_create(Bzla *bzla,
                           BzlaNodeKind kind,
                           BzlaNode *e[],
@@ -25,26 +25,26 @@ BzlaNode *bzla_exp_create(Bzla *bzla,
 
 /*------------------------------------------------------------------------*/
 
-/* Create a variable of given sort. */
+/** Create a variable of given sort. */
 BzlaNode *bzla_exp_var(Bzla *bzla, BzlaSortId sort, const char *symbol);
 
-/* Create a parameter (to a function) of given sort. */
+/** Create a parameter (to a function) of given sort. */
 BzlaNode *bzla_exp_param(Bzla *bzla, BzlaSortId sort, const char *symbol);
 
-/* Create an array variable of given sort. */
+/** Create an array variable of given sort. */
 BzlaNode *bzla_exp_array(Bzla *bzla, BzlaSortId sort, const char *symbol);
 
 BzlaNode *bzla_exp_const_array(Bzla *bzla, BzlaSortId sort, BzlaNode *value);
 
-/* Create an uninterpreted function of given sort. */
+/** Create an uninterpreted function of given sort. */
 BzlaNode *bzla_exp_uf(Bzla *bzla, BzlaSortId sort, const char *symbol);
 
 /*------------------------------------------------------------------------*/
 
-/* Create a bit-vector constant of size 1 respresenting TRUE. */
+/** Create a bit-vector constant of size 1 respresenting TRUE. */
 BzlaNode *bzla_exp_true(Bzla *bzla);
 
-/* Create a bit-vector constant of size 1 respresenting FALSE. */
+/** Create a bit-vector constant of size 1 respresenting FALSE. */
 BzlaNode *bzla_exp_false(Bzla *bzla);
 
 /**
@@ -92,22 +92,22 @@ BzlaNode *bzla_exp_cond(Bzla *bzla,
 
 /*------------------------------------------------------------------------*/
 
-/* Create a bit-vector constant representing the given string of bits. */
+/** Create a bit-vector constant representing the given string of bits. */
 BzlaNode *bzla_exp_bv_const(Bzla *bzla, const BzlaBitVector *bits);
 
-/* Create a bit-vector constant representing zero. */
+/** Create a bit-vector constant representing zero. */
 BzlaNode *bzla_exp_bv_zero(Bzla *bzla, BzlaSortId sort);
 
-/* Create a bit-vector constant representing all ones. */
+/** Create a bit-vector constant representing all ones. */
 BzlaNode *bzla_exp_bv_ones(Bzla *bzla, BzlaSortId sort);
 
-/* Create a bit-vector constant representing 1. */
+/** Create a bit-vector constant representing 1. */
 BzlaNode *bzla_exp_bv_one(Bzla *bzla, BzlaSortId sort);
 
-/* Create a bit-vector constant representing the minimum signed value. */
+/** Create a bit-vector constant representing the minimum signed value. */
 BzlaNode *bzla_exp_bv_min_signed(Bzla *bzla, BzlaSortId sort);
 
-/* Create a bit-vector constant representing the maximum signed value. */
+/** Create a bit-vector constant representing the maximum signed value. */
 BzlaNode *bzla_exp_bv_max_signed(Bzla *bzla, BzlaSortId sort);
 
 /**
@@ -124,31 +124,31 @@ BzlaNode *bzla_exp_bv_unsigned(Bzla *bzla, uint32_t u, BzlaSortId sort);
 
 /*------------------------------------------------------------------------*/
 
-/* Create a bit-vector one's complement. */
+/** Create a bit-vector one's complement. */
 BzlaNode *bzla_exp_bv_not(Bzla *bzla, BzlaNode *exp);
 
-/* Create a bit-Vector two's complement. */
+/** Create a bit-Vector two's complement. */
 BzlaNode *bzla_exp_bv_neg(Bzla *bzla, BzlaNode *exp);
 
-/* Create a bit-vector OR reduction. */
+/** Create a bit-vector OR reduction. */
 BzlaNode *bzla_exp_bv_redor(Bzla *bzla, BzlaNode *exp);
 
-/* Create a bit-vector XOR reduction. */
+/** Create a bit-vector XOR reduction. */
 BzlaNode *bzla_exp_bv_redxor(Bzla *bzla, BzlaNode *exp);
 
-/* Create a bit-vector AND reduction. */
+/** Create a bit-vector AND reduction. */
 BzlaNode *bzla_exp_bv_redand(Bzla *bzla, BzlaNode *exp);
 
-/* Create a slice of the given bit-vector from index 'upper' to 'lower'. */
+/** Create a slice of the given bit-vector from index 'upper' to 'lower'. */
 BzlaNode *bzla_exp_bv_slice(Bzla *bzla,
                             BzlaNode *exp,
                             uint32_t upper,
                             uint32_t lower);
 
-/* Create an unsigned extension of the given bit-vector by 'width' bits. */
+/** Create an unsigned extension of the given bit-vector by 'width' bits. */
 BzlaNode *bzla_exp_bv_uext(Bzla *bzla, BzlaNode *exp, uint32_t width);
 
-/* Create a signed extension of the given bit-vector by 'width' bits. */
+/** Create a signed extension of the given bit-vector by 'width' bits. */
 BzlaNode *bzla_exp_bv_sext(Bzla *bzla, BzlaNode *exp, uint32_t width);
 
 /**
@@ -419,26 +419,29 @@ BzlaNode *bzla_exp_bv_urem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
  */
 BzlaNode *bzla_exp_bv_srem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create bit-vector signed modulo.
+/**
+ * Create bit-vector signed modulo.
  * width(e0) = width(e1)
  * width(result) = width(e0) = width(e1)
  */
 BzlaNode *bzla_exp_bv_smod(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create bit-vector concatenation.
+/**
+ * Create bit-vector concatenation.
  * width(result) = width(e0) + width(e1)
  */
 BzlaNode *bzla_exp_bv_concat(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create bit-vector repetition.
+/**
+ * Create bit-vector repetition.
  * width(result) = n * width(exp)
  */
 BzlaNode *bzla_exp_bv_repeat(Bzla *bzla, BzlaNode *exp, uint32_t n);
 
-/* Create bit-vector increment by one */
+/** Create bit-vector increment by one */
 BzlaNode *bzla_exp_bv_inc(Bzla *bzla, BzlaNode *exp);
 
-/* Create bit-vector decrement by one */
+/** Create bit-vector decrement by one */
 BzlaNode *bzla_exp_bv_dec(Bzla *bzla, BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
@@ -529,52 +532,52 @@ BzlaNode *bzla_exp_fp_fp(Bzla *bzla,
 /** Create floating-point fp.isNormal. */
 BzlaNode *bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point fp.isSubnormal. */
+/** Create floating-point fp.isSubnormal. */
 BzlaNode *bzla_exp_fp_is_subnormal(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point fp.isZero. */
+/** Create floating-point fp.isZero. */
 BzlaNode *bzla_exp_fp_is_zero(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point fp.isInfinite. */
+/** Create floating-point fp.isInfinite. */
 BzlaNode *bzla_exp_fp_is_inf(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point fp.isNaN. */
+/** Create floating-point fp.isNaN. */
 BzlaNode *bzla_exp_fp_is_nan(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point fp.isNegative. */
+/** Create floating-point fp.isNegative. */
 BzlaNode *bzla_exp_fp_is_neg(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point fp.isPositive. */
+/** Create floating-point fp.isPositive. */
 BzlaNode *bzla_exp_fp_is_pos(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point fp.abs. */
+/** Create floating-point fp.abs. */
 BzlaNode *bzla_exp_fp_abs(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point fp.neg. */
+/** Create floating-point fp.neg. */
 BzlaNode *bzla_exp_fp_neg(Bzla *bzla, BzlaNode *exp);
 
-/* Create floating-point fp.max. */
+/** Create floating-point fp.max. */
 BzlaNode *bzla_exp_fp_min(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point fp.min. */
+/** Create floating-point fp.min. */
 BzlaNode *bzla_exp_fp_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point fp.rem. */
+/** Create floating-point fp.rem. */
 BzlaNode *bzla_exp_fp_rem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point fp.eq. */
+/** Create floating-point fp.eq. */
 BzlaNode *bzla_exp_fp_fpeq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point fp.leq. */
+/** Create floating-point fp.leq. */
 BzlaNode *bzla_exp_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point fp.lt. */
+/** Create floating-point fp.lt. */
 BzlaNode *bzla_exp_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point fp.geq. */
+/** Create floating-point fp.geq. */
 BzlaNode *bzla_exp_fp_gte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
-/* Create floating-point fp.gt. */
+/** Create floating-point fp.gt. */
 BzlaNode *bzla_exp_fp_gt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1);
 
 /**
@@ -703,13 +706,15 @@ BzlaNode *bzla_exp_fp_to_fp_from_ubv(Bzla *bzla,
 
 /*------------------------------------------------------------------------*/
 
-/* Array read on array 'e_array' at position 'e_index'.
+/**
+ * Array read on array 'e_array' at position 'e_index'.
  * index_width(e_array) = width(e_index)
  * width(result) = elem_width(e_array)
  */
 BzlaNode *bzla_exp_read(Bzla *bzla, BzlaNode *e_array, BzlaNode *e_index);
 
-/* Create array write on array 'e_array' at position 'e_index' with value
+/**
+ * Create array write on array 'e_array' at position 'e_index' with value
  * 'e_value'.
  * index_width(e_array) = width(e_index)
  * elem_width(e_array) = width(e_value)
@@ -730,16 +735,16 @@ BzlaNode *bzla_exp_fun(Bzla *bzla,
                        uint32_t paramc,
                        BzlaNode *exp);
 
-/* Create apply expression that applies argument expression 'args' to 'fun'. */
+/** Create apply expression that applies argument expression 'args' to 'fun'. */
 BzlaNode *bzla_exp_apply(Bzla *bzla, BzlaNode *fun, BzlaNode *args);
 
-/* Create apply expression that applies 'argc' number of arguments to 'fun'. */
+/** Create apply expression that applies 'argc' number of arguments to 'fun'. */
 BzlaNode *bzla_exp_apply_n(Bzla *bzla,
                            BzlaNode *fun,
                            BzlaNode *args[],
                            uint32_t argc);
 
-/* Create argument expression with 'argc' arguments. */
+/** Create argument expression with 'argc' arguments. */
 BzlaNode *bzla_exp_args(Bzla *bzla, BzlaNode *args[], uint32_t argc);
 
 /**
@@ -751,32 +756,66 @@ BzlaNode *bzla_exp_update(Bzla *bzla,
                           BzlaNode *args,
                           BzlaNode *value);
 
-/* Create lambda expression that represents an array write. */
+/** Create lambda expression that represents an array write. */
 BzlaNode *bzla_exp_lambda_write(Bzla *bzla,
                                 BzlaNode *e_array,
                                 BzlaNode *e_index,
                                 BzlaNode *e_value);
 
-/* Create lambda expression with variable 'e_param' bound in 'e_exp'. */
+/** Create lambda expression with variable 'e_param' bound in 'e_exp'. */
 BzlaNode *bzla_exp_lambda(Bzla *bzla, BzlaNode *e_param, BzlaNode *e_exp);
 
 /*------------------------------------------------------------------------*/
 
-/* Create forall expression with variable 'param' and 'body'. */
+/** Create forall expression with variable 'param' and 'body'. */
 BzlaNode *bzla_exp_forall(Bzla *bzla, BzlaNode *param, BzlaNode *body);
-/* Create forall expression with variables 'params' and 'body'. */
+/** Create forall expression with variables 'params' and 'body'. */
 BzlaNode *bzla_exp_forall_n(Bzla *bzla,
                             BzlaNode *params[],
                             uint32_t paramc,
                             BzlaNode *body);
 
-/* Create exists expression with variable 'param' and 'body' */
+/** Create exists expression with variable 'param' and 'body' */
 BzlaNode *bzla_exp_exists(Bzla *bzla, BzlaNode *param, BzlaNode *body);
-/* Create exists expression with variables 'params' and 'body' */
+/** Create exists expression with variables 'params' and 'body' */
 BzlaNode *bzla_exp_exists_n(Bzla *bzla,
                             BzlaNode *params[],
                             uint32_t paramc,
                             BzlaNode *body);
+
+/*------------------------------------------------------------------------*/
+
+/**
+ * Return true if the given node represents a bit-vector arithmetic right
+ * shift.
+ * @param bzla The associated Bzla instance.
+ * @param n The node to check.
+ * @param res_a The child of the sra that would be at index 0.
+ * @param res_b The child of the sra that would be at index 1.
+ */
+bool bzla_exp_is_bv_sra(Bzla *bzla,
+                        const BzlaNode *n,
+                        BzlaNode **res_a,
+                        BzlaNode **res_b);
+/**
+ * Return true if the given node represents a bit-vector sign extend.
+ * @param bzla The associated Bzla instance.
+ * @param n The node to check.
+ */
+bool bzla_exp_is_bv_sext(Bzla *bzla, BzlaNode *n);
+/**
+ * Return true if the given node represents a bit-vector xor.
+ * @param bzla The associated Bzla instance.
+ * @param n The node to check.
+ * @param res_a The child of the xor that would be at index 0.
+ * @param res_b The child of the xor that would be at index 1.
+ */
+bool bzla_exp_is_bv_xor(Bzla *bzla,
+                        const BzlaNode *n,
+                        BzlaNode **res_a,
+                        BzlaNode **res_b);
+
+/*------------------------------------------------------------------------*/
 
 #if 0
 BzlaNode *bzla_invert_quantifier (Bzla * bzla, BzlaNode * quantifier);

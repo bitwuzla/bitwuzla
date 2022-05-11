@@ -13,6 +13,7 @@
 #include "bzlabv.h"
 #include "bzlaconsutils.h"
 #include "bzlaessutils.h"
+#include "bzlaexp.h"
 #include "bzlainvutils.h"
 #include "bzlalsutils.h"
 #include "bzlanode.h"
@@ -51,127 +52,6 @@ bvdomain_random(Bzla *bzla, const BzlaBvDomain *x)
     bzla_bvdomain_gen_delete(&gen);
   }
   return res;
-}
-
-/* ========================================================================== */
-
-bool
-bzla_is_bv_sext(Bzla *bzla, BzlaNode *n)
-{
-  assert(bzla);
-  assert(n);
-
-  uint32_t msb;
-  BzlaNode *ite, *t;
-
-  if (bzla_node_is_inverted(n) || !bzla_node_is_bv_concat(n))
-  {
-    return false;
-  }
-
-  ite = n->e[0];
-  t   = n->e[1];
-  msb = bzla_node_bv_get_width(bzla, t) - 1;
-
-  if (bzla_node_is_inverted(ite) || !bzla_node_is_cond(ite)
-      || !bzla_node_is_bv_slice(ite->e[0]) || bzla_node_is_inverted(ite->e[0])
-      || ite->e[0]->e[0] != t || bzla_node_bv_slice_get_upper(ite->e[0]) != msb
-      || bzla_node_bv_slice_get_lower(ite->e[0]) != msb
-      || !bzla_node_is_bv_const_ones(bzla, ite->e[1])
-      || !bzla_node_is_bv_const_zero(bzla, ite->e[2]))
-  {
-    return false;
-  }
-
-  return true;
-}
-
-bool
-bzla_is_bv_xor(Bzla *bzla,
-               const BzlaNode *n,
-               BzlaNode **res_a,
-               BzlaNode **res_b)
-{
-  assert(bzla);
-  assert(n);
-  assert(res_a);
-  assert(res_b);
-  (void) bzla;
-
-  const BzlaNode *e0, *e1, *a, *b;
-
-  *res_a = 0;
-  *res_b = 0;
-
-  if (bzla_node_is_inverted(n) || !bzla_node_is_bv_and(n))
-  {
-    return false;
-  }
-
-  e0 = n->e[0];
-  e1 = n->e[1];
-  if (bzla_node_is_inverted(e0) && bzla_node_is_inverted(e1)
-      && bzla_node_is_bv_and(e0) && bzla_node_is_bv_and(e1))
-  {
-    a = bzla_node_real_addr(e0)->e[0];
-    b = bzla_node_real_addr(e0)->e[1];
-
-    if (bzla_node_invert(a) == bzla_node_real_addr(e1)->e[0]
-        && bzla_node_invert(b) == bzla_node_real_addr(e1)->e[1])
-    {
-      *res_a = bzla_node_real_addr(a);
-      *res_b = bzla_node_real_addr(b);
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool
-bzla_is_bv_sra(Bzla *bzla,
-               const BzlaNode *n,
-               BzlaNode **res_a,
-               BzlaNode **res_b)
-{
-  assert(bzla);
-  assert(n);
-  assert(res_a);
-  assert(res_b);
-  assert(bzla_node_is_regular(n));
-
-  uint32_t bw;
-  BzlaNode *e0, *e1;
-
-  *res_a = 0;
-  *res_b = 0;
-
-  if (!bzla_node_is_cond(n)) return false;
-
-  if (bzla_node_is_inverted(n->e[0])) return false;
-  if (!bzla_node_is_inverted(n->e[1])) return false;
-  if (bzla_node_is_inverted(n->e[2])) return false;
-
-  if (!bzla_node_is_bv_slice(n->e[0])) return false;
-  if (!bzla_node_is_bv_srl(n->e[1])) return false;
-  if (!bzla_node_is_bv_srl(n->e[2])) return false;
-
-  bw = bzla_node_bv_get_width(bzla, n);
-
-  if (bzla_node_bv_slice_get_lower(n->e[0]) != bw - 1) return false;
-  if (bzla_node_bv_slice_get_upper(n->e[0]) != bw - 1) return false;
-
-  e0 = n->e[2]->e[0];
-  e1 = n->e[2]->e[1];
-
-  if (n->e[0]->e[0] != e0) return false;
-
-  if (bzla_node_real_addr(n->e[1])->e[0] != bzla_node_invert(e0)) return false;
-  if (bzla_node_real_addr(n->e[1])->e[1] != e1) return false;
-
-  *res_a = e0;
-  *res_b = e1;
-  return true;
 }
 
 /* ========================================================================== */
@@ -216,10 +96,10 @@ select_path_log(Bzla *bzla, BzlaPropInfo *pi)
   {
     a = bzla_bv_to_char(mm, pi->bv[i]);
     if (bzla_opt_get(bzla, BZLA_OPT_PROP_ASHR)
-        && bzla_is_bv_sra(bzla,
-                          bzla_node_real_addr((BzlaNode *) exp->e[i]),
-                          &children[0],
-                          &children[1]))
+        && bzla_exp_is_bv_sra(bzla,
+                              bzla_node_real_addr((BzlaNode *) exp->e[i]),
+                              &children[0],
+                              &children[1]))
     {
       BZLALOG(2,
               "       e[%zu]: %d sra %d %d (%s)",
@@ -230,10 +110,10 @@ select_path_log(Bzla *bzla, BzlaPropInfo *pi)
               a);
     }
     if (bzla_opt_get(bzla, BZLA_OPT_PROP_XOR)
-        && bzla_is_bv_xor(bzla,
-                          bzla_node_real_addr((BzlaNode *) exp->e[i]),
-                          &children[0],
-                          &children[1]))
+        && bzla_exp_is_bv_xor(bzla,
+                              bzla_node_real_addr((BzlaNode *) exp->e[i]),
+                              &children[0],
+                              &children[1]))
     {
       BZLALOG(2,
               "       e[%zu]: %d xor %d %d (%s)",
@@ -1354,9 +1234,9 @@ check_cons_dbg(Bzla *bzla, BzlaPropInfo *pi, bool same_bw)
   assert(pi->pos_x <= 1);
   BzlaNode *sra_e[2], *xor_e[2];
   bool is_bv_sra = bzla_opt_get(bzla, BZLA_OPT_PROP_ASHR)
-                   && bzla_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
+                   && bzla_exp_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
   bool is_bv_xor = bzla_opt_get(bzla, BZLA_OPT_PROP_XOR)
-                   && bzla_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
+                   && bzla_exp_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
   if (is_bv_sra)
   {
     assert(!bzla_node_is_bv_const(sra_e[pi->pos_x]));
@@ -3129,9 +3009,9 @@ check_inv_dbg(Bzla *bzla,
   BzlaNode *sra_e[2], *xor_e[2];
 
   is_bv_sra = bzla_opt_get(bzla, BZLA_OPT_PROP_ASHR)
-              && bzla_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
+              && bzla_exp_is_bv_sra(bzla, pi->exp, &sra_e[0], &sra_e[1]);
   is_bv_xor = bzla_opt_get(bzla, BZLA_OPT_PROP_XOR)
-              && bzla_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
+              && bzla_exp_is_bv_xor(bzla, pi->exp, &xor_e[0], &xor_e[1]);
   arity = is_bv_sra ? 2 : pi->exp->arity;
 
   for (uint32_t i = 0; i < arity; ++i)
@@ -3689,7 +3569,7 @@ inv_ult_concat(Bzla *bzla, BzlaPropInfo *pi, bool with_const_bits)
     dx1 = bzla_bvdomain_slice(mm, pi->bvd[pos_x], bw_x1 - 1, 0);
   }
 
-  if (bzla_is_bv_sext(bzla, exp_x))
+  if (bzla_exp_is_bv_sext(bzla, exp_x))
   {
     min_signed = bzla_bv_min_signed(mm, bw_x1);
 
@@ -4210,7 +4090,7 @@ inv_slt_concat(Bzla *bzla,
     dx1 = bzla_bvdomain_slice(mm, pi->bvd[pos_x], bw_x1 - 1, 0);
   }
 
-  if (bzla_is_bv_sext(bzla, exp_x))
+  if (bzla_exp_is_bv_sext(bzla, exp_x))
   {
     min_signed = bzla_bv_min_signed(mm, bw_x1);
     max_signed = bzla_bv_max_signed(mm, bw_x1);
@@ -7218,7 +7098,7 @@ record_conflict(Bzla *bzla,
 
   mm = bzla->mm;
 
-  if ((is_sra = bzla_is_bv_sra(bzla, exp, &children[0], &children[1])))
+  if ((is_sra = bzla_exp_is_bv_sra(bzla, exp, &children[0], &children[1])))
   {
     assert(children[0]);
     assert(children[1]);
@@ -7228,7 +7108,7 @@ record_conflict(Bzla *bzla,
     }
     is_recoverable = !bzla_node_is_bv_const(children[idx_s]);
   }
-  else if ((is_xor = bzla_is_bv_xor(bzla, exp, &children[0], &children[1])))
+  else if ((is_xor = bzla_exp_is_bv_xor(bzla, exp, &children[0], &children[1])))
   {
     assert(children[0]);
     assert(children[1]);
@@ -7630,7 +7510,7 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       is_sext = false;
       if (opt_prop_sext)
       {
-        is_sext = bzla_is_bv_sext(bzla, real_cur);
+        is_sext = bzla_exp_is_bv_sext(bzla, real_cur);
       }
 
       /* check if expression is an xor (if enabled) */
@@ -7639,8 +7519,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       {
         tmp_children[0] = 0;
         tmp_children[1] = 0;
-        is_xor =
-            bzla_is_bv_xor(bzla, real_cur, &tmp_children[0], &tmp_children[1]);
+        is_xor          = bzla_exp_is_bv_xor(
+            bzla, real_cur, &tmp_children[0], &tmp_children[1]);
       }
 
       /* check if expression is an arithmetic right shift (if enabled) */
@@ -7649,8 +7529,8 @@ bzla_proputils_select_move_prop(Bzla *bzla,
       {
         tmp_children[0] = 0;
         tmp_children[1] = 0;
-        is_sra =
-            bzla_is_bv_sra(bzla, real_cur, &tmp_children[0], &tmp_children[1]);
+        is_sra          = bzla_exp_is_bv_sra(
+            bzla, real_cur, &tmp_children[0], &tmp_children[1]);
       }
 
       if (is_xor || is_sra)
