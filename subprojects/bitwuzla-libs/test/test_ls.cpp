@@ -8,7 +8,7 @@ namespace test {
 class TestLs : public TestBvNodeCommon
 {
  protected:
-  static constexpr bool TEST_SLOW       = false;
+  static constexpr bool TEST_SLOW       = true;
   static constexpr uint32_t NMOVES_SLOW = 35;
   static constexpr uint32_t NMOVES_FAST = 20;
 
