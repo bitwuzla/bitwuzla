@@ -13,6 +13,7 @@ set(test_names
   bvnodeisinv
   bvnodeselpath
   ls
+  aigmgr
 )
 
 foreach(test ${test_names})

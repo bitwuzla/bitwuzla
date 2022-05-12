@@ -7,6 +7,7 @@ set(libbzlals_src_files
   bitvector_domain.cpp
   bitvector_node.cpp
   wheel_factorizer.cpp
+  bb/aigmgr.cpp
 )
 
 set(libbzlarng_src_files
