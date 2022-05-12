@@ -3,15 +3,43 @@ name: CI
 
 jobs:
   build:
-    name: debug
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        name: [
+          production,
+          production-clang,
+          debug,
+          debug-clang
+        ]
+
+        exclude:
+          - name: production-clang
+            os: macos-latest
+
+          - name: debug-clang
+            os: macos-latest
+
+        include:
+          - name: production
+            config:
+
+          - name: production-clang
+            config:
+            env: CC=clang CXX=clang++
+
+          - name: debug
+            config: debug
+
+          - name: debug-clang
+            config: debug
+            env: CC=clang CXX=clang++
+
+    name: ${{ matrix.os }}:${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
 
     steps:
-
-      - name: Check out code
-        uses: actions/checkout@v2
-
-      - name: Install Packages
+      - name: Install Packages (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
@@ -24,9 +52,18 @@ jobs:
           sudo cmake --build . --target install
           cd -
 
+      - name: Install Packages (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install gmp
+          brew install googletest
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Configure
         run: |
-          ./configure.sh debug
+          ${{ matrix.env }} ./configure.sh ${{ matrix.config }}
 
       - name: Build
         run: make -j2
