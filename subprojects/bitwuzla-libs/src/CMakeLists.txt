@@ -17,7 +17,7 @@ set(libbzlarng_src_files
 # bzlarng library
 
 add_library(bzlarng ${libbzlarng_src_files})
-target_include_directories(bzlarng PRIVATE ${GMP_INCLUDE_DIR})
+target_include_directories(bzlarng PUBLIC ${GMP_INCLUDE_DIR})
 target_link_libraries(bzlarng ${GMP_LIBRARIES})
 
 target_include_directories(bzlarng
@@ -29,7 +29,7 @@ target_include_directories(bzlarng
 # bzlabv library
 
 add_library(bzlabv ${libbzlabv_src_files})
-target_include_directories(bzlabv PRIVATE ${GMP_INCLUDE_DIR})
+target_include_directories(bzlabv PUBLIC ${GMP_INCLUDE_DIR})
 target_link_libraries(bzlabv ${GMP_LIBRARIES} bzlarng)
 
 target_include_directories(bzlabv
