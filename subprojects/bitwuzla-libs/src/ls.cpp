@@ -299,6 +299,10 @@ LocalSearch::register_root(uint32_t root)
   assert(root < d_nodes.size());  // API check
   d_roots.insert(root);
   update_roots(root);
+  if (d_ineq_bounds)
+  {
+    update_roots_ineq_bounds();
+  }
 }
 
 uint32_t
@@ -594,8 +598,8 @@ update_bounds(BitVectorNode* root, int32_t pos)
     // s < x
     if (pos < 0 || pos == 1)
     {
-      assert((is_signed && child1->assignment().signed_compare(max_value) < 0)
-             || (!is_signed && child1->assignment().compare(max_value) < 0));
+      assert((is_signed && child0->assignment().signed_compare(max_value) < 0)
+             || (!is_signed && child0->assignment().compare(max_value) < 0));
       child1->update_min_bound(child0->assignment(), true);
       child1->update_max_bound(max_value, false);
     }
@@ -624,52 +628,73 @@ LocalSearch::update_roots(uint32_t id)
 {
   assert(id < d_nodes.size());
 
+  BitVectorNode* root = get_node(id);
   auto it = d_roots.find(id);
   if (it != d_roots.end())
   {
-    BitVectorNode* root = get_node(id);
     if (root->assignment().is_true())
     {
       /* remove from unsatisfied roots list */
       d_roots.erase(it);
 
-      /* update min/max bounds for children of (now) true top-level
-       * inequalities */
       if (d_ineq_bounds && is_ineq_node(root))
       {
-        assert(root->arity() == 2);
-        update_bounds(root, -1);
+        /* cache for updating min/max bounds */
+        d_true_roots_to_update.insert(root);
       }
     }
   }
-  else if (get_node(id)->assignment().is_false())
+  else if (root->assignment().is_false())
   {
     /* add to unsatisfied roots list */
     d_roots.insert(id);
 
-    /* recompute min/max bounds for children of (now) false top-level
-     * inequalities */
-    BitVectorNode* root = get_node(id);
     if (d_ineq_bounds && is_ineq_node(root))
     {
-      assert(root->arity() == 2);
+      /* cache for updating min/max bounds */
+      d_false_roots_to_update.insert(root);
+    }
+  }
+}
 
-      for (uint32_t i = 0, n = root->arity(); i < n; ++i)
+void
+LocalSearch::update_roots_ineq_bounds()
+{
+  assert(d_ineq_bounds);
+  /* update min/max bounds for children of (now) true top-level inequalities */
+  for (BitVectorNode* root : d_true_roots_to_update)
+  {
+    assert(is_ineq_node(root));
+    assert(root->arity() == 2);
+    {
+      assert(root->arity() == 2);
+      update_bounds(root, -1);
+    }
+  }
+  /* update min/max bounds for children of (now) false top-level
+   * inequalities */
+  for (BitVectorNode* root : d_false_roots_to_update)
+  {
+    assert(is_ineq_node(root));
+    assert(root->arity() == 2);
+
+    for (uint32_t i = 0, n = root->arity(); i < n; ++i)
+    {
+      BitVectorNode* child                        = (*root)[i];
+      const std::unordered_set<uint32_t>& parents = d_parents.at(child->id());
+      for (const auto& p : parents)
       {
-        BitVectorNode* child                        = (*root)[i];
-        const std::unordered_set<uint32_t>& parents = d_parents.at(child->id());
-        for (const auto& p : parents)
+        BitVectorNode* node = get_node(p);
+        if (is_root_node(node) && is_ineq_node(node))
         {
-          BitVectorNode* node = get_node(p);
-          if (is_root_node(node) && is_ineq_node(node))
-          {
-            update_bounds(
-                node, child == (*node)[0] ? 0 : (child == (*node)[1] ? -1 : 1));
-          }
+          update_bounds(
+              node, child == (*node)[0] ? (child == (*node)[1] ? -1 : 0) : 1);
         }
       }
     }
   }
+  d_true_roots_to_update.clear();
+  d_false_roots_to_update.clear();
 }
 
 uint64_t
@@ -750,6 +775,10 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
     {
       update_roots(cur->id());
     }
+  }
+  if (d_ineq_bounds)
+  {
+    update_roots_ineq_bounds();
   }
 #ifndef NDEBUG
   for (uint32_t r : d_roots)

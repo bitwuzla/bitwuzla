@@ -191,30 +191,109 @@ class LocalSearch
   void set_log_level(uint32_t level) { d_log_level = level; }
 
  private:
+  /**
+   * Determine if given node is an inequality (ULT or SLT).
+   * @param node The node to query.
+   * @return True if `node` is an inequality.
+   */
   static bool is_ineq_node(const BitVectorNode* node);
+  /**
+   * Get node by id.
+   * @param id The node id.
+   * @return The node with the given id.
+   */
   BitVectorNode* get_node(uint32_t id) const;
+  /**
+   * Determine if given node is a leaf node (its arity = 0).
+   * @param node The node to query.
+   * @return True if `node` is a leaf.
+   */
   bool is_leaf_node(const BitVectorNode* node) const;
+  /**
+   * Determine if given node is a root node.
+   * @param node The node to query.
+   * @return True if `node` is a root.
+   */
   bool is_root_node(const BitVectorNode* node) const;
+  /**
+   * Update information related to the root given by id.
+   *
+   * This removes given root from the list of unsatisfied roots , adds the root
+   * to the list of unsatisfied roots if it is unsatisfied, and in either case,
+   * caches the root for later updating of inequality bounds (if enabled).
+   *
+   * @note Roots are updated initially on registration, and during updating the
+   *       assignments of the cone of influence of the input that has been
+   *       updated. If given root is unsatisfied and infering inequality bounds
+   *       is enabled, we have to update bounds for its children wrt. to all of
+   *       its parents after the assignment of all nodes has been (re)computed.
+   *       Thus, we defer updating inequality bounds for all roots to after
+   *       update_roots() has been called and the assignment of all nodes is
+   *       consistent (see update_roots_ineq_bounds()).
+   *
+   * @param id The id of the root to update.
+   */
   void update_roots(uint32_t id);
+  /**
+   * Update min/max bounds for children of (now) false top-level
+   * inequalities (cached in d_false_roots_to_update).
+   *
+   * This must be called after update_roots() has been called and the
+   * assignment of all nodes has been computed/updated, i.e., the assignment is
+   * consistent.
+   */
+  void update_roots_ineq_bounds();
+  /**
+   * Update the assignment of the given node to the given assignment, and
+   * recompute the assignment of all nodes in its cone of influence
+   *
+   * @param node The node to update.
+   * @param assignment The new assignment of the given node.
+   * @return The number of updated assignments.
+   */
   uint64_t update_cone(BitVectorNode* node, const BitVector& assignment);
+  /**
+   * Select an input and a new assignment for that input by propagating the
+   * given target value `t_root` for the given root along one path towards an
+   * input.
+   *
+   * @param root The root to propagate from.
+   * @param t_root The target value of the given root.
+   * @return An object encapsulating all information necessary for that move.
+   */
   LocalSearchMove select_move(BitVectorNode* root, const BitVector& t_root);
 
+  /** The random number generator. */
   std::unique_ptr<RNG> d_rng;
 
+  /** Map from node id to nodes. */
   NodesIdTable d_nodes;
+  /** The set of unsatisfied roots. */
   std::unordered_set<uint32_t> d_roots;
+  /** Map nodes to their parent nodes. */
   ParentsMap d_parents;
 
+  /** Bit-vector one of size one, the target value for each root. */
   std::unique_ptr<BitVector> d_one;
 
+  /** The log level. */
   uint32_t d_log_level = 0;
-
+  /** The maximum number of propagations, 0 for unlimited. */
   uint64_t d_max_nprops   = 0;
+  /** The maximum number of cone updates, 0 for unlimited. */
   uint64_t d_max_nupdates = 0;
-
+  /** The seed for the RNG. */
   uint32_t d_seed;
-
+  /**
+   * True to enable to infer bounds for top-level inequalities for value
+   * computation.
+   */
   bool d_ineq_bounds = false;
+
+  /** The set of now true roots to update in update_roots_ineq_bounds(). */
+  std::unordered_set<BitVectorNode*> d_true_roots_to_update;
+  /** The set of now false roots to update in update_roots_ineq_bounds(). */
+  std::unordered_set<BitVectorNode*> d_false_roots_to_update;
 };
 
 }  // namespace ls
