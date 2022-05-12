@@ -3,7 +3,7 @@
 # GMP_INCLUDE_DIR - the GMP include directory
 # GMP_LIBRARIES - Libraries needed to use GMP
 
-find_path(GMP_INCLUDE_DIR NAMES gmp.h)
+find_path(GMP_INCLUDE_DIR NAMES gmpxx.h)
 find_library(GMP_LIBRARIES NAMES gmp)
 
 include(FindPackageHandleStandardArgs)
