@@ -10,9 +10,27 @@ namespace test {
 class TestLs : public TestBvNodeCommon
 {
  protected:
-  static constexpr bool TEST_SLOW       = true;
-  static constexpr uint32_t NMOVES_SLOW = 100;
-  static constexpr uint32_t NMOVES_FAST = 20;
+  /**
+   * True to enable slow tests (of larger bit-width TEST_BW = 4), else use
+   * TEST_BW_FAST = 3. This distinction is only used for tests that are slow
+   * with TEST_BW, else TEST_BW is the default.
+   */
+  static constexpr bool TEST_SLOW = false;
+  /**
+   * The bit-width used for tests that are slow with TEST_BW when TEST_SLOW is
+   * enabled.
+   */
+  static constexpr uint32_t TEST_BW_FAST = 3;
+  /**
+   * The maximum number of moves for test_move_binary() and test_ite()
+   * when TEST_SLOW is enabled.
+   */
+  static constexpr uint32_t NMOVES_SLOW = 55;
+  /**
+   * The maximum number of moves for test_move_binary() and test_ite()
+   * when TEST_SLOW is disabled.
+   */
+  static constexpr uint32_t NMOVES_FAST = 35;
 
   void SetUp() override
   {
