@@ -12,6 +12,7 @@
 
 extern "C" {
 #include "bzlacore.h"
+#include "bzlaexp.h"
 #include "bzlamodel.h"
 #include "bzlamsg.h"
 #include "bzlaprintmodel.h"
@@ -48,14 +49,14 @@ class PropSolverState
   } d_time_statistics;
 
   PropSolverState(Bzla *bzla)
-      : d_bzla(bzla)
+      : d_bzla(bzla), d_use_sext(bzla_opt_get(d_bzla, BZLA_OPT_PROP_SEXT))
   {
     assert(bzla);
     d_ls.reset(new bzla::ls::LocalSearch(
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_NPROPS),
-        bzla_opt_get(bzla, BZLA_OPT_PROP_NUPDATES),
-        bzla_opt_get(bzla, BZLA_OPT_SEED),
-        bzla_opt_get(bzla, BZLA_OPT_PROP_INFER_INEQ_BOUNDS)));
+        bzla_opt_get(d_bzla, BZLA_OPT_PROP_NUPDATES),
+        bzla_opt_get(d_bzla, BZLA_OPT_SEED),
+        bzla_opt_get(d_bzla, BZLA_OPT_PROP_INFER_INEQ_BOUNDS)));
     d_ls->set_log_level(bzla_opt_get(d_bzla, BZLA_OPT_LOGLEVEL));
   }
 
@@ -72,6 +73,10 @@ class PropSolverState
   std::unique_ptr<bzla::ls::LocalSearch> d_ls;
   NodeMap<uint32_t> d_node_map;
   NodeStack d_leafs;
+  /**
+   * True to create sign extend nodes for concats that represent a sign extend.
+   */
+  bool d_use_sext = false;
 };
 
 uint32_t
@@ -143,10 +148,21 @@ PropSolverState::mk_node(BzlaNode *node)
       break;
     case BZLA_BV_CONCAT_NODE:
       assert(node->arity == 2);
-      res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::CONCAT,
-                        domain,
-                        {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      if (d_use_sext && bzla_exp_is_bv_sext(d_bzla, node))
+      {
+        res =
+            d_ls->mk_indexed_node(bzla::ls::LocalSearch::OperatorKind::SEXT,
+                                  domain,
+                                  d_node_map.at(node->e[1]),
+                                  {bzla_node_bv_get_width(d_bzla, node->e[0])});
+      }
+      else
+      {
+        res = d_ls->mk_node(
+            bzla::ls::LocalSearch::OperatorKind::CONCAT,
+            domain,
+            {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
+      }
       break;
     case BZLA_BV_EQ_NODE:
       assert(node->arity == 2);
