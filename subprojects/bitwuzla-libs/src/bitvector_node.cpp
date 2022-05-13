@@ -3405,71 +3405,73 @@ BitVectorUlt::inverse_value(const BitVector& t, uint32_t pos_x)
    *              t = 1: random value > s
    */
 
+  const BitVector *min, *max, *min_u, *max_u;
+  BitVector mmin, mmax;
+
   if (pos_x == 0)
   {
     if (is_true)
     {
       assert(!s.is_zero());
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainGenerator gen(
-            x, d_rng, BitVector::mk_zero(size), s.bvdec());
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
-      }
-      else
-      {
-        d_inverse.reset(
-            new BitVector(size, *d_rng, BitVector::mk_zero(size), s.bvdec()));
-      }
+      mmin = BitVector::mk_zero(size);
+      mmax = s.bvdec();
+      min  = &mmin;
     }
     else
     {
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainGenerator gen(x, d_rng, s, BitVector::mk_ones(size));
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
-      }
-      else
-      {
-        d_inverse.reset(
-            new BitVector(size, *d_rng, s, BitVector::mk_ones(size)));
-      }
+      mmax = BitVector::mk_ones(size);
+      min  = &s;
     }
+    max = &mmax;
+
+    min_u = d_children[0]->min_u();
+    max_u = d_children[0]->max_u();
   }
   else
   {
     if (is_true)
     {
       assert(!s.is_ones());
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainGenerator gen(
-            x, d_rng, s.bvinc(), BitVector::mk_ones(size));
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
-      }
-      else
-      {
-        d_inverse.reset(
-            new BitVector(size, *d_rng, s.bvinc(), BitVector::mk_ones(size)));
-      }
+      mmin = s.bvinc();
+      mmax = BitVector::mk_ones(size);
+      max  = &mmax;
     }
     else
     {
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainGenerator gen(x, d_rng, BitVector::mk_zero(size), s);
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
-      }
-      else
-      {
-        d_inverse.reset(
-            new BitVector(size, *d_rng, BitVector::mk_zero(size), s));
-      }
+      mmin = BitVector::mk_zero(size);
+      max  = &s;
     }
+    min = &mmin;
+
+    min_u = d_children[1]->min_u();
+    max_u = d_children[1]->max_u();
+  }
+
+  if (min_u && min_u->compare(mmin) > 0)
+  {
+    min = min_u;
+  }
+  if (max_u && max_u->compare(mmax) < 0)
+  {
+    max = max_u;
+  }
+
+  /* conflict, reset to default bounds */
+  if ((min_u || max_u) && (min->compare(*max) > 0))
+  {
+    min = mmin.is_null() ? &s : &mmin;
+    max = &mmax;
+  }
+
+  if (x.has_fixed_bits())
+  {
+    BitVectorDomainGenerator gen(x, d_rng, *min, *max);
+    assert(gen.has_random());
+    d_inverse.reset(new BitVector(gen.random()));
+  }
+  else
+  {
+    d_inverse.reset(new BitVector(size, *d_rng, *min, *max));
   }
 
   assert(pos_x == 1 || t.compare(d_inverse->bvult(s)) == 0);

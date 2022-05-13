@@ -54,18 +54,27 @@ class BitVectorNode
   /** Destructor. */
   virtual ~BitVectorNode() {}
 
-  /** Get the kind of the node. */
+  /**
+   * Get the kind of the node.
+   * @return The kind of this node.
+   */
   virtual NodeKind get_kind() const { return CONST; }
 
-  /** Get the bit-vector size of the node. */
+  /**
+   * Get the bit-vector size of the node.
+   * @return The size of this node.
+   */
   uint32_t size() { return d_assignment.size(); }
 
   /** Update assignment based on the assignment of its children. */
   virtual void evaluate() {}
 
   /**
-   * Check if operand at index pos_x is essential with respect to constant
-   * bits and target value t.
+   * Check if operand at index `pos_x` is essential with respect to constant
+   * bits and target value `t`.
+   * @param t The target value.
+   * @param pos_x The index of `x`.
+   * @return True if operand at index `pos_x` is essential.
    */
   virtual bool is_essential(const BitVector& t, uint32_t pos_x)
   {
@@ -73,8 +82,11 @@ class BitVectorNode
   }
 
   /**
-   * Check invertibility condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * Check invertibility condition for `x` at index `pos_x with` respect to
+   * constant bits and target value `t`.
+   * @param t The target value.
+   * @param pos_x The index of `x`.
+   * @return True if there exists an inverse value for `x`.
    */
   virtual bool is_invertible(const BitVector& t,
                              uint32_t pos_x,
@@ -87,8 +99,11 @@ class BitVectorNode
   }
 
   /**
-   * Check consistency condition for x at index pos_x with respect to constant
-   * bits and target value t.
+   * Check consistency condition for `x` at index `pos_x` with respect to
+   * constant bits and target value `t`.
+   * @param t The target value.
+   * @param pos_x The index of `x`.
+   * @return True if there exists a consistent value for `x`.
    */
   virtual bool is_consistent(const BitVector& t, uint32_t pos_x)
   {
@@ -98,8 +113,11 @@ class BitVectorNode
   }
 
   /**
-   * Get an inverse value for x at index pos_x with respect to constant bits
-   * and target value t.
+   * Get an inverse value for `x` at index `pos_x` with respect to constant bits
+   * and target value `t`.
+   * @param t The target value.
+   * @param pos_x The index of `x`.
+   * @return The inverse value for `x`.
    */
   virtual const BitVector& inverse_value(const BitVector& t, uint32_t pos_x)
   {
@@ -108,8 +126,11 @@ class BitVectorNode
     return *d_inverse;
   }
   /**
-   * Get an consistent value for x at index pos_x with respect to constant bits
-   * and target value t.
+   * Get an consistent value for `x` at index `pos_x` with respect to constant
+   * bits and target value `t`.
+   * @param t The target value.
+   * @param pos_x The index of `x`.
+   * @return The consistent value for `x`.
    */
   virtual const BitVector& consistent_value(const BitVector& t, uint32_t pos_x)
   {
@@ -119,34 +140,89 @@ class BitVectorNode
   }
 
   /**
-   * Select the next step in the propagation path based on target value t and
-   * the current assignment of this operation's children.
+   * Select the next step in the propagation path based on target value `t` and
+   * the current assignment of this node's children.
+   * @param t The target value of this node.
+   * @return The index of child to propagate the target value down to.
    */
   virtual uint32_t select_path(const BitVector& t);
 
-  /** Get child at given index. */
+  /**
+   * Get child at given index.
+   * @param pos The index of the child to get.
+   * @return The child at the given index.
+   */
   BitVectorNode* operator[](uint32_t pos) const;
 
-  /** Return the arity of this operation. */
+  /**
+   * Get the arity of this node.
+   * @return The arity of this node.
+   */
   uint32_t arity() const { return d_arity; }
-  /** Set the assignment of this operation. */
+  /**
+   * Set the assignment of this node.
+   * @param assignment The assignment to set.
+   */
   void set_assignment(const BitVector& assignment);
-  /** Get the assignment of this operation. */
+  /**
+   * Get the assignment of this node.
+   * @return The assignment of this node.
+   */
   const BitVector& assignment() const { return d_assignment; }
-  /** Get the domain of this operation. */
+  /**
+   * Get the domain of this node.
+   * @return The domain of this node.
+   */
   const BitVectorDomain& domain() const { return d_domain; }
-  /** Return true if the underlying domain is fixed. */
+  /**
+   * Determine if the underlying domain is fixed.
+   * @return True if the underlying domain is fixed.
+   */
   bool is_const() const { return d_is_const; }
 
-  /** Return true if all children are const. */
+  /**
+   * Determine if all children are const.
+   * @return True if all children are const.
+   */
   bool all_const() const { return d_all_const; }
 
-  /** Set id of this node. */
+  /**
+   * Set id of this node.
+   * @param id The id to set.
+   */
   void set_id(uint32_t id) { d_id = id; }
-  /** Get id of this node. */
+  /**
+   * Get id of this node.
+   * @return The id of this node.
+   */
   uint32_t id() const { return d_id; }
 
-  /** Fix domain bit at index 'idx' to 'value'. */
+  /**
+   * Get the unsigned upper bound (incl) for inverse value computation.
+   * @return The upper unsigned bound.
+   */
+  BitVector* max_u() { return d_max_u.get(); }
+  /**
+   * Get the unsigned lower bound (incl) for inverse value computation.
+   * @return The lower unsigned bound.
+   */
+  BitVector* min_u() { return d_min_u.get(); }
+  /**
+   * Get the signed upper bound (incl) for inverse value computation.
+   * @return The upper signed bound.
+   */
+  BitVector* max_s() { return d_max_s.get(); }
+  /**
+   * Get the signed lower bound (incl) for inverse value computation.
+   * @return The lower signed bound.
+   */
+  BitVector* min_s() { return d_min_s.get(); }
+
+  /**
+   * Fix domain bit at index `idx` to `value`.
+   * @param idx The index of the bit to fix to the given value.
+   * @param value  The value to fix the bit to.
+   */
   void fix_bit(uint32_t idx, bool value);
 
   /**
@@ -205,9 +281,14 @@ class BitVectorNode
   BitVectorDomain d_domain;
   bool d_is_const;
   bool d_all_const;
+
+  /** Unsigned upper bound (incl) for inverse value computation. */
   std::unique_ptr<BitVector> d_max_u;
+  /** Unsigned lower bound (incl) for inverse value computation. */
   std::unique_ptr<BitVector> d_min_u;
+  /** Signed upper bound (incl) for inverse value computation. */
   std::unique_ptr<BitVector> d_max_s;
+  /** Signed lower bound (incl) for inverse value computation. */
   std::unique_ptr<BitVector> d_min_s;
 
   /** Cached inverse value result. */
