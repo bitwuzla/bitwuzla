@@ -1,6 +1,8 @@
 #include "ls.h"
 #include "test_ls_common.h"
 
+#include <map>
+
 namespace bzla {
 namespace ls {
 namespace test {
@@ -268,7 +270,7 @@ TestLs::test_move_binary(OpKind opkind,
             assert(ls.d_statistics.d_nmoves == 0
                    || (ls.d_statistics.d_nprops > 0
                        && ls.d_statistics.d_nprops
-                              == 2 * ls.d_statistics.d_nmoves));
+                              >= 2 * ls.d_statistics.d_nmoves));
             assert(ls.d_statistics.d_nmoves == 0
                    || (ls.d_statistics.d_nupdates > 0
                        && ls.d_statistics.d_nupdates
