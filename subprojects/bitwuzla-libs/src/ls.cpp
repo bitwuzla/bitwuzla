@@ -589,10 +589,10 @@ update_bounds(BitVectorNode* root, int32_t pos)
     // x < s
     if (pos < 0 || pos == 0)
     {
-      child0->update_min_bound(min_value, false);
+      child0->update_min_bound(min_value, is_signed, false);
       assert((is_signed && child1->assignment().signed_compare(min_value) > 0)
              || (!is_signed && child1->assignment().compare(min_value) > 0));
-      child0->update_max_bound(child1->assignment(), true);
+      child0->update_max_bound(child1->assignment(), is_signed, true);
     }
 
     // s < x
@@ -600,8 +600,8 @@ update_bounds(BitVectorNode* root, int32_t pos)
     {
       assert((is_signed && child0->assignment().signed_compare(max_value) < 0)
              || (!is_signed && child0->assignment().compare(max_value) < 0));
-      child1->update_min_bound(child0->assignment(), true);
-      child1->update_max_bound(max_value, false);
+      child1->update_min_bound(child0->assignment(), is_signed, true);
+      child1->update_max_bound(max_value, is_signed, false);
     }
   }
   else
@@ -609,15 +609,15 @@ update_bounds(BitVectorNode* root, int32_t pos)
     // x >= s
     if (pos < 0 || pos == 0)
     {
-      child0->update_min_bound(child1->assignment(), false);
-      child0->update_max_bound(max_value, false);
+      child0->update_min_bound(child1->assignment(), is_signed, false);
+      child0->update_max_bound(max_value, is_signed, false);
     }
 
     // s >= x
     if (pos < 0 || pos == 1)
     {
-      child1->update_min_bound(max_value, false);
-      child1->update_max_bound(child0->assignment(), false);
+      child1->update_min_bound(max_value, is_signed, false);
+      child1->update_max_bound(child0->assignment(), is_signed, false);
     }
   }
 }

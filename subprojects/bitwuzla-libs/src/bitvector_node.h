@@ -152,17 +152,23 @@ class BitVectorNode
   /**
    * Update max bound.
    * @param value The value to update the max bound with.
+   * @param is_signed True if the given bound is a signed bound.
    * @param is_exclusive True if the given bound is exclusive, in which case
    *                     `value - 1` will be used as the max bound.
    */
-  void update_max_bound(const BitVector& value, bool is_exclusive);
+  void update_max_bound(const BitVector& value,
+                        bool is_signed,
+                        bool is_exclusive);
   /**
    * Update min bound.
    * @param value The value to update the min bound with.
+   * @param is_signed True if the given bound is a signed bound.
    * @param is_exclusive True if the given bound is exclusive, in which case
    *                     `value + 1` will be used as the min bound.
    */
-  void update_min_bound(const BitVector& value, bool is_exclusive);
+  void update_min_bound(const BitVector& value,
+                        bool is_signed,
+                        bool is_exclusive);
 
   /** Get the string representation of this node. */
   virtual std::string to_string() const;
@@ -199,8 +205,10 @@ class BitVectorNode
   BitVectorDomain d_domain;
   bool d_is_const;
   bool d_all_const;
-  std::unique_ptr<BitVector> d_max;
-  std::unique_ptr<BitVector> d_min;
+  std::unique_ptr<BitVector> d_max_u;
+  std::unique_ptr<BitVector> d_min_u;
+  std::unique_ptr<BitVector> d_max_s;
+  std::unique_ptr<BitVector> d_min_s;
 
   /** Cached inverse value result. */
   std::unique_ptr<BitVector> d_inverse;
