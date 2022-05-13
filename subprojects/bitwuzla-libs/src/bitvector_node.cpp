@@ -4454,16 +4454,18 @@ BitVectorUrem::consistent_value_pos0_aux(const BitVector& t)
    * -> 2*t + 1 <= x <= ones */
   const BitVectorDomain& x = d_children[0]->domain();
   BitVector min            = t.bvinc();
-  assert(!min.is_uadd_overflow(t));
-  min.ibvadd(t);
-  if (x.is_fixed() && x.lo().compare(min) >= 0)
+  if (!min.is_uadd_overflow(t))
   {
-    return x.lo();
-  }
-  BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
-  if (gen.has_random())
-  {
-    return gen.random();
+    min.ibvadd(t);
+    if (x.is_fixed() && x.lo().compare(min) >= 0)
+    {
+      return x.lo();
+    }
+    BitVectorDomainGenerator gen(x, d_rng, min, x.hi());
+    if (gen.has_random())
+    {
+      return gen.random();
+    }
   }
   return BitVector();
 }
