@@ -3447,11 +3447,11 @@ BitVectorUlt::inverse_value(const BitVector& t, uint32_t pos_x)
     max_u = d_children[1]->max_u();
   }
 
-  if (min_u && min_u->compare(mmin) > 0)
+  if (min_u && min_u->compare(*min) > 0)
   {
     min = min_u;
   }
-  if (max_u && max_u->compare(mmax) < 0)
+  if (max_u && max_u->compare(*max) < 0)
   {
     max = max_u;
   }
@@ -3460,7 +3460,7 @@ BitVectorUlt::inverse_value(const BitVector& t, uint32_t pos_x)
   if ((min_u || max_u) && (min->compare(*max) > 0))
   {
     min = mmin.is_null() ? &s : &mmin;
-    max = &mmax;
+    max = mmax.is_null() ? &s : &mmax;
   }
 
   if (x.has_fixed_bits())
@@ -3743,75 +3743,74 @@ BitVectorSlt::inverse_value(const BitVector& t, uint32_t pos_x)
    *              t = 1: random value >s s
    */
 
+  const BitVector *min, *max, *min_s, *max_s;
+  BitVector mmin, mmax;
+
   if (pos_x == 0)
   {
     if (is_true)
     {
       assert(!s.is_min_signed());
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainSignedGenerator gen(
-            x, d_rng, BitVector::mk_min_signed(size), s.bvdec());
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
-      }
-      else
-      {
-        d_inverse.reset(new BitVector(
-            size, *d_rng, BitVector::mk_min_signed(size), s.bvdec(), true));
-      }
+      mmin = BitVector::mk_min_signed(size);
+      mmax = s.bvdec();
+      min  = &mmin;
     }
     else
     {
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainSignedGenerator gen(
-            x, d_rng, s, BitVector::mk_max_signed(size));
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
-      }
-      else
-      {
-        d_inverse.reset(new BitVector(
-            size, *d_rng, s, BitVector::mk_max_signed(size), true));
-      }
+      mmax = BitVector::mk_max_signed(size);
+      min  = &s;
     }
+    max = &mmax;
+
+    min_s = d_children[0]->min_s();
+    max_s = d_children[0]->max_s();
   }
   else
   {
     if (is_true)
     {
       assert(!s.is_max_signed());
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainSignedGenerator gen(
-            x, d_rng, s.bvinc(), BitVector::mk_max_signed(size));
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
-      }
-      else
-      {
-        d_inverse.reset(new BitVector(
-            size, *d_rng, s.bvinc(), BitVector::mk_max_signed(size), true));
-      }
+      mmin = s.bvinc();
+      mmax = BitVector::mk_max_signed(size);
+      max  = &mmax;
     }
     else
     {
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainSignedGenerator gen(
-            x, d_rng, BitVector::mk_min_signed(size), s);
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
-      }
-      else
-      {
-        d_inverse.reset(new BitVector(
-            size, *d_rng, BitVector::mk_min_signed(size), s, true));
-      }
+      mmin = BitVector::mk_min_signed(size);
+      max  = &s;
     }
+    min = &mmin;
+
+    min_s = d_children[1]->min_s();
+    max_s = d_children[1]->max_s();
   }
 
+  if (min_s && min_s->compare(*min) > 0)
+  {
+    min = min_s;
+  }
+  if (max_s && max_s->compare(*max) < 0)
+  {
+    max = max_s;
+  }
+
+  /* conflict, reset to default bounds */
+  if ((min_s || max_s) && (min->signed_compare(*max) > 0))
+  {
+    min = mmin.is_null() ? &s : &mmin;
+    max = mmax.is_null() ? &s : &mmax;
+  }
+
+  if (x.has_fixed_bits())
+  {
+    BitVectorDomainSignedGenerator gen(x, d_rng, *min, *max);
+    assert(gen.has_random());
+    d_inverse.reset(new BitVector(gen.random()));
+  }
+  else
+  {
+    d_inverse.reset(new BitVector(size, *d_rng, *min, *max, true));
+  }
   assert(pos_x == 1 || t.compare(d_inverse->bvslt(s)) == 0);
   assert(pos_x == 0 || t.compare(s.bvslt(*d_inverse)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
