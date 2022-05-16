@@ -3329,6 +3329,8 @@ BitVectorUlt::is_invertible(const BitVector& t,
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
+  BitVector* min_u         = d_children[pos_x]->min_u();
+  BitVector* max_u         = d_children[pos_x]->max_u();
 
   /**
    * IC: pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
@@ -3336,20 +3338,32 @@ BitVectorUlt::is_invertible(const BitVector& t,
    */
   if (x.has_fixed_bits())
   {
+    bool res;
     if (pos_x == 0)
     {
       if (t.is_true())
       {
-        return !s.is_zero() && x.lo().compare(s) < 0;
+        res = !s.is_zero() && x.lo().compare(s) < 0;
       }
-      return x.hi().compare(s) >= 0;
+      else
+      {
+        res = x.hi().compare(s) >= 0;
+      }
     }
-    assert(pos_x == 1);
-    if (t.is_true())
+    else
     {
-      return !s.is_ones() && x.hi().compare(s) > 0;
+      assert(pos_x == 1);
+      if (t.is_true())
+      {
+        res = !s.is_ones() && x.hi().compare(s) > 0;
+      }
+      else
+      {
+        res = x.lo().compare(s) <= 0;
+      }
     }
-    return x.lo().compare(s) <= 0;
+    return res && (!min_u || x.lo().compare(*min_u) >= 0)
+           && (!max_u || x.hi().compare(*max_u) <= 0);
   }
 
   /**
@@ -3358,10 +3372,18 @@ BitVectorUlt::is_invertible(const BitVector& t,
    */
   if (pos_x == 0)
   {
-    return t.is_false() || !s.is_zero();
+    if (t.is_false())
+    {
+      return !max_u || max_u->compare(s) < 0;
+    }
+    return (min_u && min_u->compare(s)) || !s.is_zero();
   }
   assert(pos_x == 1);
-  return t.is_false() || !s.is_ones();
+  if (t.is_false())
+  {
+    return !min_u || min_u->compare(s) <= 0;
+  }
+  return (max_u && max_u->compare(s) > 0) || !s.is_ones();
 }
 
 bool
