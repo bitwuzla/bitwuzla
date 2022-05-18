@@ -96,6 +96,10 @@ AigNode::operator=(const AigNode& other)
 
 AigNode::AigNode(AigNode&& other)
 {
+  if (d_data)
+  {
+    d_data->dec_refs();
+  }
   d_data       = other.d_data;
   d_negated    = other.d_negated;
   other.d_data = nullptr;
@@ -104,6 +108,10 @@ AigNode::AigNode(AigNode&& other)
 AigNode&
 AigNode::operator=(AigNode&& other)
 {
+  if (d_data)
+  {
+    d_data->dec_refs();
+  }
   d_data       = other.d_data;
   d_negated    = other.d_negated;
   other.d_data = nullptr;
@@ -144,6 +152,17 @@ bool
 AigNode::operator==(const AigNode& other) const
 {
   return get_id() == other.get_id() && is_negated() == other.is_negated();
+}
+
+const AigNode& AigNode::operator[](int index) const
+{
+  assert(is_and());
+  if (index == 0)
+  {
+    return d_data->d_left;
+  }
+  assert(index == 1);
+  return d_data->d_right;
 }
 
 int64_t
@@ -217,6 +236,8 @@ AigManager::mk_and(const AigNode& a, const AigNode& b)
     d_unique_ands.emplace(d);
     ++d_statistics.num_ands;
   }
+  assert(!d->d_left.is_null());
+  assert(!d->d_right.is_null());
   return AigNode(d);
 }
 
