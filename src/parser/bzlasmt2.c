@@ -54,15 +54,13 @@ typedef enum BzlaSMT2TagClass
   BZLA_BV_TAG_CLASS_SMT2       = (BZLA_CLASS_SIZE_SMT2 << 6),
   BZLA_FP_TAG_CLASS_SMT2       = (BZLA_CLASS_SIZE_SMT2 << 7),
   BZLA_REAL_TAG_CLASS_SMT2     = (BZLA_CLASS_SIZE_SMT2 << 8),
-  BZLA_LOGIC_TAG_CLASS_SMT2    = (BZLA_CLASS_SIZE_SMT2 << 9),
 } BzlaSMT2TagClass;
 
 #define BZLA_TAG_CLASS_MASK_SMT2                              \
   (BZLA_RESERVED_TAG_CLASS_SMT2 | BZLA_COMMAND_TAG_CLASS_SMT2 \
    | BZLA_KEYWORD_TAG_CLASS_SMT2 | BZLA_CORE_TAG_CLASS_SMT2   \
    | BZLA_ARRAY_TAG_CLASS_SMT2 | BZLA_BV_TAG_CLASS_SMT2       \
-   | BZLA_FP_TAG_CLASS_SMT2 | BZLA_REAL_TAG_CLASS_SMT2        \
-   | BZLA_LOGIC_TAG_CLASS_SMT2)
+   | BZLA_FP_TAG_CLASS_SMT2 | BZLA_REAL_TAG_CLASS_SMT2)
 
 typedef enum BzlaSMT2Tag
 {
@@ -291,49 +289,6 @@ typedef enum BzlaSMT2Tag
   /* Reals (for to_fp conversion) ----------------------------------------- */
   BZLA_REAL_DIV_TAG_SMT2 = 0 + BZLA_REAL_TAG_CLASS_SMT2,
 
-  /* ---------------------------------------------------------------------- */
-  /* Logic                                                                  */
-
-  BZLA_LOGIC_AUFLIA_TAG_SMT2        = 0 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_AUFLIRA_TAG_SMT2       = 1 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_AUFNIRA_TAG_SMT2       = 2 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_LRA_TAG_SMT2           = 3 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_ABV_TAG_SMT2        = 4 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_ABVFP_TAG_SMT2      = 5 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_ABVFPLRA_TAG_SMT2   = 6 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_AUFBV_TAG_SMT2      = 7 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_AUFBVFP_TAG_SMT2    = 8 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_AUFBVFPLRA_TAG_SMT2 = 9 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_AUFLIA_TAG_SMT2     = 10 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_AX_TAG_SMT2         = 11 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_BV_TAG_SMT2         = 12 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_BVFP_TAG_SMT2       = 13 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_BVFPLRA_TAG_SMT2    = 14 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_FP_TAG_SMT2         = 15 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_FPLRA_TAG_SMT2      = 16 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_IDL_TAG_SMT2        = 17 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_LIA_TAG_SMT2        = 18 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_LRA_TAG_SMT2        = 19 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_NIA_TAG_SMT2        = 20 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_NRA_TAG_SMT2        = 21 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_RDL_TAG_SMT2        = 22 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_UF_TAG_SMT2         = 23 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_UFBV_TAG_SMT2       = 24 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_UFFP_TAG_SMT2       = 25 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_UFFPLRA_TAG_SMT2    = 26 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_UFBVFP_TAG_SMT2     = 27 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_UFBVFPLRA_TAG_SMT2  = 28 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_UFIDL_TAG_SMT2      = 29 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_UFLIA_TAG_SMT2      = 30 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_UFLRA_TAG_SMT2      = 31 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_QF_UFNRA_TAG_SMT2      = 32 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_UFLRA_TAG_SMT2         = 33 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_UFNIA_TAG_SMT2         = 34 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_BV_TAG_SMT2            = 35 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_UFBV_TAG_SMT2          = 36 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_ABV_TAG_SMT2           = 37 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_FP_TAG_SMT2            = 38 + BZLA_LOGIC_TAG_CLASS_SMT2,
-  BZLA_LOGIC_ALL_TAG_SMT2           = 39 + BZLA_LOGIC_TAG_CLASS_SMT2,
 } BzlaSMT2Tag;
 
 typedef struct BzlaSMT2Coo
@@ -498,19 +453,17 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PP_NORMALIZE_ADD, 1);
 
-    switch (parser->parsed_logic_tag)
+    if (parser->res->logic == BZLA_LOGIC_QF_BV
+        || parser->res->logic == BZLA_LOGIC_BV)
     {
-      case BZLA_LOGIC_QF_BV_TAG_SMT2:
-      case BZLA_LOGIC_BV_TAG_SMT2:
-        bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_FUN_PREPROP, 1);
-        bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_CONST_BITS, 1);
-        bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_INFER_INEQ_BOUNDS, 1);
-        bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_NPROPS, 10000);
-        bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_NUPDATES, 2000000);
-        bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_PROB_RANDOM_INPUT, 10);
-        bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_SEXT, 1);
-        bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
-        break;
+      bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_FUN_PREPROP, 1);
+      bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_CONST_BITS, 1);
+      bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_INFER_INEQ_BOUNDS, 1);
+      bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_NPROPS, 10000);
+      bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_NUPDATES, 2000000);
+      bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_PROB_RANDOM_INPUT, 10);
+      bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_SEXT, 1);
+      bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_USE_INV_LT_CONCAT, 1);
     }
 
     if (bitwuzla_get_option(bitwuzla, BITWUZLA_OPT_PRODUCE_MODELS))
@@ -1163,52 +1116,6 @@ insert_real_symbols_smt2(BzlaSMT2Parser *parser)
   INSERT("/", BZLA_REAL_DIV_TAG_SMT2);
 }
 
-static void
-insert_logics_smt2(BzlaSMT2Parser *parser)
-{
-  INSERT("AUFLIA", BZLA_LOGIC_AUFLIA_TAG_SMT2);
-  INSERT("AUFLIRA", BZLA_LOGIC_AUFLIRA_TAG_SMT2);
-  INSERT("AUFNIRA", BZLA_LOGIC_AUFNIRA_TAG_SMT2);
-  INSERT("LRA", BZLA_LOGIC_LRA_TAG_SMT2);
-  INSERT("QF_ABV", BZLA_LOGIC_QF_ABV_TAG_SMT2);
-  INSERT("QF_ABVFP", BZLA_LOGIC_QF_ABVFP_TAG_SMT2);
-  INSERT("QF_ABVFPLRA", BZLA_LOGIC_QF_ABVFPLRA_TAG_SMT2);
-  INSERT("QF_AUFBV", BZLA_LOGIC_QF_AUFBV_TAG_SMT2);
-  INSERT("QF_AUFBVFP", BZLA_LOGIC_QF_AUFBVFP_TAG_SMT2);
-  INSERT("QF_AUFBVFPLRA", BZLA_LOGIC_QF_AUFBVFPLRA_TAG_SMT2);
-  INSERT("QF_AUFLIA", BZLA_LOGIC_QF_AUFLIA_TAG_SMT2);
-  INSERT("QF_AX", BZLA_LOGIC_QF_AX_TAG_SMT2);
-  INSERT("QF_BV", BZLA_LOGIC_QF_BV_TAG_SMT2);
-  INSERT("QF_BVFP", BZLA_LOGIC_QF_BVFP_TAG_SMT2);
-  INSERT("QF_BVFPLRA", BZLA_LOGIC_QF_BVFPLRA_TAG_SMT2);
-  INSERT("QF_FP", BZLA_LOGIC_QF_FP_TAG_SMT2);
-  INSERT("QF_FPLRA", BZLA_LOGIC_QF_FPLRA_TAG_SMT2);
-  INSERT("QF_IDL", BZLA_LOGIC_QF_IDL_TAG_SMT2);
-  INSERT("QF_LIA", BZLA_LOGIC_QF_LIA_TAG_SMT2);
-  INSERT("QF_LRA", BZLA_LOGIC_QF_LRA_TAG_SMT2);
-  INSERT("QF_NIA", BZLA_LOGIC_QF_NIA_TAG_SMT2);
-  INSERT("QF_NRA", BZLA_LOGIC_QF_NRA_TAG_SMT2);
-  INSERT("QF_RDL", BZLA_LOGIC_QF_RDL_TAG_SMT2);
-  INSERT("QF_UF", BZLA_LOGIC_QF_UF_TAG_SMT2);
-  INSERT("QF_UFBV", BZLA_LOGIC_QF_UFBV_TAG_SMT2);
-  INSERT("QF_UFBVFP", BZLA_LOGIC_QF_UFBVFP_TAG_SMT2);
-  INSERT("QF_UFBVFPLRA", BZLA_LOGIC_QF_UFBVFPLRA_TAG_SMT2);
-  INSERT("QF_UFFP", BZLA_LOGIC_QF_UFFP_TAG_SMT2);
-  INSERT("QF_UFFPLRA", BZLA_LOGIC_QF_UFFPLRA_TAG_SMT2);
-  INSERT("QF_UFIDL", BZLA_LOGIC_QF_UFIDL_TAG_SMT2);
-  INSERT("QF_UFLIA", BZLA_LOGIC_QF_UFLIA_TAG_SMT2);
-  INSERT("QF_UFLRA", BZLA_LOGIC_QF_UFLRA_TAG_SMT2);
-  INSERT("QF_UFNRA", BZLA_LOGIC_QF_UFNRA_TAG_SMT2);
-  INSERT("UFLRA", BZLA_LOGIC_UFLRA_TAG_SMT2);
-  INSERT("UFNIA", BZLA_LOGIC_UFNIA_TAG_SMT2);
-  INSERT("BV", BZLA_LOGIC_BV_TAG_SMT2);
-  INSERT("UFBV", BZLA_LOGIC_UFBV_TAG_SMT2);
-  INSERT("ABV", BZLA_LOGIC_ABV_TAG_SMT2);
-  INSERT("FP", BZLA_LOGIC_FP_TAG_SMT2);
-  INSERT("ALL", BZLA_LOGIC_ALL_TAG_SMT2);
-  INSERT("ALL_SUPPORTED", BZLA_LOGIC_ALL_TAG_SMT2);
-}
-
 static BzlaSMT2Parser *
 new_smt2_parser(Bitwuzla *bitwuzla)
 {
@@ -1239,7 +1146,6 @@ new_smt2_parser(Bitwuzla *bitwuzla)
   insert_bitvec_symbols_smt2(res);
   insert_fp_symbols_smt2(res);
   insert_real_symbols_smt2(res);
-  insert_logics_smt2(res);
 
   return res;
 }
@@ -4417,10 +4323,6 @@ parse_open_term_item_with_node(BzlaSMT2Parser *parser,
   {
     return !perr_smt2(parser, "unexpected keyword '%s'", item_cur->node->name);
   }
-  if (tag & BZLA_LOGIC_TAG_CLASS_SMT2)
-  {
-    return !perr_smt2(parser, "unexpected logic '%s'", item_cur->node->name);
-  }
   if (tag & BZLA_RESERVED_TAG_CLASS_SMT2)
   {
     if (tag == BZLA_LET_TAG_SMT2)
@@ -5694,6 +5596,7 @@ read_command_smt2(BzlaSMT2Parser *parser)
   int32_t tag;
   const BitwuzlaTerm *exp = 0;
   BzlaSMT2Coo coo;
+  BzlaSMT2Node *logic = 0;
   BitwuzlaTermConstPtrStack exps;
   const BitwuzlaTerm **failed_assumptions, **unsat_core;
   Bitwuzla *bitwuzla = parser->bitwuzla;
@@ -5738,7 +5641,10 @@ read_command_smt2(BzlaSMT2Parser *parser)
   switch (tag)
   {
     case BZLA_SET_LOGIC_TAG_SMT2:
-      tag = read_token_smt2(parser);
+      if (!read_symbol(parser, " after set-logic", &logic))
+      {
+        return 0;
+      }
       if (tag == EOF)
       {
         parser->perrcoo = parser->lastcoo;
@@ -5749,73 +5655,66 @@ read_command_smt2(BzlaSMT2Parser *parser)
         assert(parser->error);
         return 0;
       }
-      if (!(tag & BZLA_LOGIC_TAG_CLASS_SMT2))
+      if (!strcmp(logic->name, "QF_BV"))
       {
-        return !perr_smt2(
-            parser, "expected logic at '%s'", parser->token.start);
+        parser->res->logic = BZLA_LOGIC_QF_BV;
       }
-      parser->parsed_logic_tag = tag;
-      switch (tag)
+      else if (!strcmp(logic->name, "QF_AUFBV")
+               || !strcmp(logic->name, "QF_UFBV")
+               || !strcmp(logic->name, "QF_ABV"))
       {
-        case BZLA_LOGIC_QF_BV_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_QF_BV;
-          break;
-
-        case BZLA_LOGIC_QF_AUFBV_TAG_SMT2:
-        case BZLA_LOGIC_QF_UFBV_TAG_SMT2:
-        case BZLA_LOGIC_QF_ABV_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_QF_AUFBV;
-          break;
-
-        case BZLA_LOGIC_QF_ABVFP_TAG_SMT2:
-        case BZLA_LOGIC_QF_ABVFPLRA_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_QF_ABVFP;
-          break;
-
-        case BZLA_LOGIC_QF_AUFBVFP_TAG_SMT2:
-        case BZLA_LOGIC_QF_AUFBVFPLRA_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_QF_AUFBVFP;
-          break;
-
-        case BZLA_LOGIC_BV_TAG_SMT2: parser->res->logic = BZLA_LOGIC_BV; break;
-
-        case BZLA_LOGIC_UFBV_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_UFBV;
-          break;
-
-        case BZLA_LOGIC_QF_FP_TAG_SMT2:
-        case BZLA_LOGIC_QF_FPLRA_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_QF_FP;
-          break;
-
-        case BZLA_LOGIC_QF_BVFP_TAG_SMT2:
-        case BZLA_LOGIC_QF_BVFPLRA_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_QF_BVFP;
-          break;
-
-        case BZLA_LOGIC_QF_UFBVFP_TAG_SMT2:
-        case BZLA_LOGIC_QF_UFBVFPLRA_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_QF_AUFBVFP;
-          break;
-
-        case BZLA_LOGIC_QF_UFFP_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_QF_UFFP;
-          break;
-
-        case BZLA_LOGIC_FP_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_FP;
-          break;
-
-        case BZLA_LOGIC_ALL_TAG_SMT2:
-          parser->res->logic = BZLA_LOGIC_ALL;
-          break;
-
-        default:
-          return !perr_smt2(
-              parser, "unsupported logic '%s'", parser->token.start);
+        parser->res->logic = BZLA_LOGIC_QF_AUFBV;
       }
-      BZLA_MSG(
-          bitwuzla_get_bzla_msg(bitwuzla), 2, "logic %s", parser->token.start);
+      else if (!strcmp(logic->name, "QF_ABVFP")
+               || !strcmp(logic->name, "QF_ABVFPLRA"))
+      {
+        parser->res->logic = BZLA_LOGIC_QF_ABVFP;
+      }
+      else if (!strcmp(logic->name, "QF_AUFBVFP")
+               || !strcmp(logic->name, "QF_AUFBVFPLRA"))
+      {
+        parser->res->logic = BZLA_LOGIC_QF_AUFBVFP;
+      }
+      else if (!strcmp(logic->name, "BV"))
+      {
+        parser->res->logic = BZLA_LOGIC_BV;
+      }
+      else if (!strcmp(logic->name, "UFBV"))
+      {
+        parser->res->logic = BZLA_LOGIC_UFBV;
+      }
+      else if (!strcmp(logic->name, "QF_FP")
+               || !strcmp(logic->name, "QF_FPLRA"))
+      {
+        parser->res->logic = BZLA_LOGIC_QF_FP;
+      }
+      else if (!strcmp(logic->name, "QF_BVFP")
+               || !strcmp(logic->name, "QF_BVFPLRA"))
+      {
+        parser->res->logic = BZLA_LOGIC_QF_BVFP;
+      }
+      else if (!strcmp(logic->name, "QF_UFBVFP")
+               || !strcmp(logic->name, "QF_UFBVFPLRA"))
+      {
+        parser->res->logic = BZLA_LOGIC_QF_AUFBVFP;
+      }
+      else if (!strcmp(logic->name, "QF_UFFP"))
+      {
+        parser->res->logic = BZLA_LOGIC_QF_UFFP;
+      }
+      else if (!strcmp(logic->name, "FP"))
+      {
+        parser->res->logic = BZLA_LOGIC_FP;
+      }
+      else if (!strcmp(logic->name, "ALL"))
+      {
+        parser->res->logic = BZLA_LOGIC_ALL;
+      }
+      else
+      {
+        return !perr_smt2(parser, "unsupported logic '%s'", logic->name);
+      }
+      BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla), 2, "logic %s", logic->name);
       if (!read_rpar_smt2(parser, " after logic")) return 0;
       if (parser->commands.set_logic++)
         BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
