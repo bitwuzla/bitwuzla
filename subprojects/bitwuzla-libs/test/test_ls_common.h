@@ -96,7 +96,10 @@ class TestBvNode : public TestBvNodeCommon
                         const BitVectorDomain& x,
                         const BitVector& t,
                         const BitVector& s_val,
-                        uint32_t pos_x);
+                        uint32_t pos_x,
+                        const BitVector* min = nullptr,
+                        const BitVector* max = nullptr,
+                        bool is_signed       = false);
   bool check_sat_binary_cons(OpKind op_kind,
                              const BitVector& x_val,
                              const BitVector& t,
@@ -137,7 +140,10 @@ class TestBvNode : public TestBvNodeCommon
                       uint32_t n);
 
   template <class T>
-  void test_binary(Kind kind, OpKind op_kind, uint32_t pos_x);
+  void test_binary(Kind kind,
+                   OpKind op_kind,
+                   uint32_t pos_x,
+                   bool use_bounds = false);
   void test_ite(Kind kind, uint32_t pos_x);
   void test_not(Kind kind);
   void test_extract(Kind kind);
@@ -150,7 +156,10 @@ TestBvNode::check_sat_binary(Kind kind,
                              const BitVectorDomain& x,
                              const BitVector& t,
                              const BitVector& s_val,
-                             uint32_t pos_x)
+                             uint32_t pos_x,
+                             const BitVector* min,
+                             const BitVector* max,
+                             bool is_signed)
 {
   BitVectorDomainGenerator gen(x);
   do
@@ -159,6 +168,7 @@ TestBvNode::check_sat_binary(Kind kind,
     BitVector x_val = gen.has_next() ? gen.next() : x.lo();
     if (kind == IS_CONS)
     {
+      assert(!min && !max);
       BitVectorDomainGenerator gens(s_val.size());
       while (gens.has_next())
       {
@@ -170,7 +180,14 @@ TestBvNode::check_sat_binary(Kind kind,
     {
       assert(kind == IS_INV);
       res = eval_op_binary(op_kind, x_val, s_val, pos_x);
-      if (t.compare(res) == 0) return true;
+      if (t.compare(res) == 0
+          && (!min || (is_signed && x_val.signed_compare(*min) >= 0)
+              || (!is_signed && x_val.compare(*min) >= 0))
+          && (!max || (is_signed && x_val.signed_compare(*max) <= 0)
+              || (!is_signed && x_val.compare(*max) <= 0)))
+      {
+        return true;
+      }
     }
   } while (gen.has_next());
   return false;
@@ -437,7 +454,10 @@ TestBvNode::check_sat_sext(Kind kind,
 
 template <class T>
 void
-TestBvNode::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
+TestBvNode::test_binary(Kind kind,
+                        OpKind op_kind,
+                        uint32_t pos_x,
+                        bool use_bounds)
 {
   uint32_t bw_x = TEST_BW;
   uint32_t bw_s = TEST_BW;
@@ -536,68 +556,102 @@ TestBvNode::test_binary(Kind kind, OpKind op_kind, uint32_t pos_x)
             BitVectorDomainGenerator gen(x, d_rng.get());
             x_val = gen.random();
           }
-          std::unique_ptr<BitVectorNode> op_x(
-              new BitVectorNode(d_rng.get(), x_val, x));
-          /* For this test, we don't care about the domain of s, thus we
-           * initialize it with an unconstrained domain. */
-          BitVectorDomain s(bw_s);
-          std::unique_ptr<BitVectorNode> op_s(
-              new BitVectorNode(d_rng.get(), s_val, s));
-          /* For this test, we don't care about current assignment and domain of
-           * the op, thus we initialize them with 0 and x..x, respectively. */
-          T op(d_rng.get(),
-               bw_t,
-               pos_x == 0 ? op_x.get() : op_s.get(),
-               pos_x == 1 ? op_x.get() : op_s.get());
 
-          if (kind == IS_CONS || kind == IS_INV)
+          bool is_signed = op_kind == SDIV || op_kind == SGT || op_kind == SGE
+                           || op_kind == SLT || op_kind == SLE
+                           || op_kind == SREM;
+          uint32_t n_tests = 0;
+          std::unique_ptr<BitVector> min, max;
+          do
           {
-            bool res    = kind == IS_INV ? op.is_invertible(t, pos_x)
-                                         : op.is_consistent(t, pos_x);
-            bool status = check_sat_binary(kind, op_kind, x, t, s_val, pos_x);
-            if (res != status)
+            std::unique_ptr<BitVectorNode> op_x(
+                new BitVectorNode(d_rng.get(), x_val, x));
+            /* For this test, we don't care about the domain of s, thus we
+             * initialize it with an unconstrained domain. */
+            BitVectorDomain s(bw_s);
+            std::unique_ptr<BitVectorNode> op_s(
+                new BitVectorNode(d_rng.get(), s_val, s));
+            /* For this test, we don't care about current assignment and domain
+             * of
+             * the op, thus we initialize them with 0 and x..x, respectively. */
+            T op(d_rng.get(),
+                 bw_t,
+                 pos_x == 0 ? op_x.get() : op_s.get(),
+                 pos_x == 1 ? op_x.get() : op_s.get());
+
+            if (use_bounds)
             {
-              std::cout << "pos_x: " << pos_x << std::endl;
-              std::cout << "t: " << t << std::endl;
-              std::cout << "x: " << x_value << ": " << x_val << std::endl;
-              std::cout << "s: " << s_val << std::endl;
+              min.reset(new BitVector(bw_x, *d_rng.get()));
+              max.reset(new BitVector(bw_x,
+                                      *d_rng.get(),
+                                      *min,
+                                      is_signed ? BitVector::mk_max_signed(bw_x)
+                                                : BitVector::mk_ones(bw_x),
+                                      is_signed));
+              op_x->update_min_bound(*min, is_signed, false);
+              op_x->update_max_bound(*max, is_signed, false);
             }
-            ASSERT_EQ(res, status);
-          }
-          else if (kind == INV)
-          {
-            if (x.is_fixed()) continue;
-            if (!op.is_invertible(t, pos_x)) continue;
-            BitVector inv = op.inverse_value(t, pos_x);
-            int32_t cmp = t.compare(eval_op_binary(op_kind, inv, s_val, pos_x));
-            if (cmp != 0)
+
+            if (kind == IS_CONS || kind == IS_INV)
             {
-              std::cout << "pos_x: " << pos_x << std::endl;
-              std::cout << "t: " << t << std::endl;
-              std::cout << "x: " << x_value << ": " << x_val << std::endl;
-              std::cout << "s: " << s_val << std::endl;
-              std::cout << "inverse: " << inv << std::endl;
+              bool res    = kind == IS_INV ? op.is_invertible(t, pos_x)
+                                           : op.is_consistent(t, pos_x);
+              bool status = check_sat_binary(kind,
+                                             op_kind,
+                                             x,
+                                             t,
+                                             s_val,
+                                             pos_x,
+                                             min.get(),
+                                             max.get(),
+                                             is_signed);
+              if (res != status)
+              {
+                std::cout << "pos_x: " << pos_x << std::endl;
+                std::cout << "t: " << t << std::endl;
+                std::cout << "x: " << x_value << ": " << x_val << std::endl;
+                std::cout << "s: " << s_val << std::endl;
+                if (min) std::cout << "min: " << *min << std::endl;
+                if (max) std::cout << "max: " << *max << std::endl;
+              }
+              ASSERT_EQ(res, status);
             }
-            ASSERT_EQ(cmp, 0);
-            ASSERT_TRUE(op.is_consistent(t, pos_x));
-          }
-          else
-          {
-            assert(kind == CONS);
-            if (x.is_fixed()) continue;
-            if (!op.is_consistent(t, pos_x)) continue;
-            BitVector cons = op.consistent_value(t, pos_x);
-            bool status =
-                check_sat_binary_cons(op_kind, cons, t, s_val.size(), pos_x);
-            if (!status)
+            else if (kind == INV)
             {
-              std::cout << "pos_x: " << pos_x << std::endl;
-              std::cout << "t: " << t << std::endl;
-              std::cout << "x: " << x_value << ": " << x_val << std::endl;
-              std::cout << "consistent: " << cons << std::endl;
+              if (x.is_fixed()) continue;
+              if (!op.is_invertible(t, pos_x)) continue;
+              BitVector inv = op.inverse_value(t, pos_x);
+              int32_t cmp =
+                  t.compare(eval_op_binary(op_kind, inv, s_val, pos_x));
+              if (cmp != 0)
+              {
+                std::cout << "pos_x: " << pos_x << std::endl;
+                std::cout << "t: " << t << std::endl;
+                std::cout << "x: " << x_value << ": " << x_val << std::endl;
+                std::cout << "s: " << s_val << std::endl;
+                std::cout << "inverse: " << inv << std::endl;
+              }
+              ASSERT_EQ(cmp, 0);
+              ASSERT_TRUE(op.is_consistent(t, pos_x));
             }
-            ASSERT_TRUE(status);
-          }
+            else
+            {
+              assert(kind == CONS);
+              if (x.is_fixed()) continue;
+              if (!op.is_consistent(t, pos_x)) continue;
+              BitVector cons = op.consistent_value(t, pos_x);
+              bool status =
+                  check_sat_binary_cons(op_kind, cons, t, s_val.size(), pos_x);
+              if (!status)
+              {
+                std::cout << "pos_x: " << pos_x << std::endl;
+                std::cout << "t: " << t << std::endl;
+                std::cout << "x: " << x_value << ": " << x_val << std::endl;
+                std::cout << "consistent: " << cons << std::endl;
+              }
+              ASSERT_TRUE(status);
+            }
+          } while (use_bounds && ++n_tests < 10);
         }
       }
     }

@@ -359,7 +359,7 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
       }
     }
 
-    /* Set unconstrained bits to the maxium value that corresponds to a
+    /* Set unconstrained bits to the maximum value that corresponds to a
      * generated value <= mmax. */
     d_bits_max.reset(new BitVector(BitVector::mk_ones(cnt)));
     for (uint32_t i = 0, j = 0, j0 = 0; i < size; ++i)

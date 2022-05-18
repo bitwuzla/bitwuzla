@@ -72,6 +72,8 @@ TEST_F(TestBvNodeInv, ult)
 {
   test_binary<BitVectorUlt>(INV, ULT, 0);
   test_binary<BitVectorUlt>(INV, ULT, 1);
+  test_binary<BitVectorUlt>(INV, ULT, 0, true);
+  test_binary<BitVectorUlt>(INV, ULT, 1, true);
 }
 
 TEST_F(TestBvNodeInv, urem)

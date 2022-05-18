@@ -66,6 +66,8 @@ TEST_F(TestBvNodeIsInv, ult)
 {
   test_binary<BitVectorUlt>(IS_INV, ULT, 0);
   test_binary<BitVectorUlt>(IS_INV, ULT, 1);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, true);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, true);
 }
 
 TEST_F(TestBvNodeIsInv, slt)

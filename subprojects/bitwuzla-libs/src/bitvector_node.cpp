@@ -226,7 +226,7 @@ BitVectorNode::update_min_bound(const BitVector& value,
   assert(size() == value.size());
   if (is_signed)
   {
-    if (d_min_s && d_min_s->signed_compare(value) <= 0) return;
+    if (d_min_s && d_min_s->signed_compare(value) >= 0) return;
     if (is_exclusive)
     {
       d_min_s.reset(new BitVector(value.bvinc()));
@@ -238,7 +238,7 @@ BitVectorNode::update_min_bound(const BitVector& value,
   }
   else
   {
-    if (d_min_u && d_min_u->compare(value) <= 0) return;
+    if (d_min_u && d_min_u->compare(value) >= 0) return;
     if (is_exclusive)
     {
       d_min_u.reset(new BitVector(value.bvinc()));
@@ -3316,6 +3316,63 @@ BitVectorUlt::evaluate()
   _evaluate();
 }
 
+void
+BitVectorUlt::compute_min_max_bounds(
+    const BitVector& s, bool t, uint32_t pos_x, BitVector& min, BitVector& max)
+{
+  uint32_t size = s.size();
+  BitVector *min_u, *max_u;
+  if (pos_x == 0)
+  {
+    if (t)
+    {
+      min = BitVector::mk_zero(size);
+      max = s.bvdec();
+    }
+    else
+    {
+      min = s;
+      max = BitVector::mk_ones(size);
+    }
+
+    min_u = d_children[0]->min_u();
+    max_u = d_children[0]->max_u();
+  }
+  else
+  {
+    if (t)
+    {
+      min = s.bvinc();
+      max = BitVector::mk_ones(size);
+    }
+    else
+    {
+      min = BitVector::mk_zero(size);
+      max = s;
+    }
+
+    min_u = d_children[1]->min_u();
+    max_u = d_children[1]->max_u();
+  }
+
+  BitVector* mmin = &min;
+  BitVector* mmax = &max;
+  if (min_u && min_u->compare(min) > 0)
+  {
+    mmin = min_u;
+  }
+  if (max_u && max_u->compare(max) < 0)
+  {
+    mmax = max_u;
+  }
+  if ((min_u || max_u) && (mmin->compare(*mmax) <= 0))
+  {
+    if (mmin != &min) min = *mmin;
+    if (mmax != &max) max = *mmax;
+  }
+  /* else conflict, use the default bounds */
+}
+
 bool
 BitVectorUlt::is_invertible(const BitVector& t,
                             uint32_t pos_x,
@@ -3326,64 +3383,94 @@ BitVectorUlt::is_invertible(const BitVector& t,
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
+  bool res;
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
+  bool has_fixed_bits      = x.has_fixed_bits();
+  bool is_true             = t.is_true();
   BitVector* min_u         = d_children[pos_x]->min_u();
   BitVector* max_u         = d_children[pos_x]->max_u();
 
   /**
    * IC: pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
    *     pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
+   *
+   * IC_wo: pos_x = 0: t = 0 || s != 0
+   *        pos_x = 1: t = 0 || s != ones
    */
-  if (x.has_fixed_bits())
+
+  if (pos_x == 0)
   {
-    bool res;
-    if (pos_x == 0)
+    if (is_true)
     {
-      if (t.is_true())
+      res = (min_u && min_u->compare(s) < 0) || (!min_u && !s.is_zero());
+      if (res && has_fixed_bits)
       {
-        res = !s.is_zero() && x.lo().compare(s) < 0;
-      }
-      else
-      {
-        res = x.hi().compare(s) >= 0;
+        res = x.lo().compare(s) < 0;
       }
     }
     else
     {
-      assert(pos_x == 1);
-      if (t.is_true())
+      res = !max_u || max_u->compare(s) >= 0;
+      if (res && has_fixed_bits)
       {
-        res = !s.is_ones() && x.hi().compare(s) > 0;
+        res = x.hi().compare(s) >= 0;
       }
-      else
+    }
+  }
+  else
+  {
+    assert(pos_x == 1);
+    if (is_true)
+    {
+      res = (max_u && max_u->compare(s) > 0) || (!max_u && !s.is_ones());
+      if (res && has_fixed_bits)
+      {
+        res = x.hi().compare(s) > 0;
+      }
+    }
+    else
+    {
+      res = !min_u || min_u->compare(s) <= 0;
+      if (res && has_fixed_bits)
       {
         res = x.lo().compare(s) <= 0;
       }
     }
-    return res && (!min_u || x.lo().compare(*min_u) >= 0)
-           && (!max_u || x.hi().compare(*max_u) <= 0);
   }
 
-  /**
-   * IC_wo: pos_x = 0: t = 0 || s != 0
-   *        pos_x = 1: t = 0 || s != ones
-   */
-  if (pos_x == 0)
+  if (res && has_fixed_bits && (min_u || max_u))
   {
-    if (t.is_false())
+    BitVector min, max;
+    compute_min_max_bounds(s, is_true, pos_x, min, max);
+    if (x.is_fixed())
     {
-      return !max_u || max_u->compare(s) < 0;
+      if (x.lo().compare(min) >= 0 && x.lo().compare(max) <= 0)
+      {
+        if (find_inverse)
+        {
+          d_inverse.reset(new BitVector(x.lo()));
+        }
+        return true;
+      }
+      return false;
     }
-    return (min_u && min_u->compare(s)) || !s.is_zero();
+    else
+    {
+      BitVectorDomainGenerator gen(x, d_rng, min, max);
+      if (gen.has_random())
+      {
+        if (find_inverse)
+        {
+          d_inverse.reset(new BitVector(gen.random()));
+        }
+        return true;
+      }
+      return false;
+    }
   }
-  assert(pos_x == 1);
-  if (t.is_false())
-  {
-    return !min_u || min_u->compare(s) <= 0;
-  }
-  return (max_u && max_u->compare(s) > 0) || !s.is_ones();
+  return res;
 }
 
 bool
@@ -3410,90 +3497,40 @@ BitVectorUlt::is_consistent(const BitVector& t, uint32_t pos_x)
 const BitVector&
 BitVectorUlt::inverse_value(const BitVector& t, uint32_t pos_x)
 {
-  assert(d_inverse == nullptr);
-
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
-  uint32_t size      = s.size();
-  bool is_true       = t.is_true();
 
-  /**
-   * inverse value:
-   *   pos_x = 0: t = 0: random value >= s
-   *              t = 1: random value < s
-   *   pos_x = 1: t = 0: random value <= s
-   *              t = 1: random value > s
-   */
-
-  const BitVector *min, *max, *min_u, *max_u;
-  BitVector mmin, mmax;
-
-  if (pos_x == 0)
+  if (d_inverse == nullptr)
   {
-    if (is_true)
+    assert(!x.has_fixed_bits() || !d_children[pos_x]->min_u());
+    assert(!x.has_fixed_bits() || !d_children[pos_x]->max_u());
+
+    uint32_t size = s.size();
+    bool is_true  = t.is_true();
+
+    /**
+     * inverse value:
+     *   pos_x = 0: t = 0: random value >= s
+     *              t = 1: random value < s
+     *   pos_x = 1: t = 0: random value <= s
+     *              t = 1: random value > s
+     */
+
+    BitVector min, max;
+    compute_min_max_bounds(s, is_true, pos_x, min, max);
+
+    if (x.has_fixed_bits())
     {
-      assert(!s.is_zero());
-      mmin = BitVector::mk_zero(size);
-      mmax = s.bvdec();
-      min  = &mmin;
+      BitVectorDomainGenerator gen(x, d_rng, min, max);
+      assert(gen.has_random());
+      d_inverse.reset(new BitVector(gen.random()));
     }
     else
     {
-      mmax = BitVector::mk_ones(size);
-      min  = &s;
+      d_inverse.reset(new BitVector(size, *d_rng, min, max));
     }
-    max = &mmax;
-
-    min_u = d_children[0]->min_u();
-    max_u = d_children[0]->max_u();
-  }
-  else
-  {
-    if (is_true)
-    {
-      assert(!s.is_ones());
-      mmin = s.bvinc();
-      mmax = BitVector::mk_ones(size);
-      max  = &mmax;
-    }
-    else
-    {
-      mmin = BitVector::mk_zero(size);
-      max  = &s;
-    }
-    min = &mmin;
-
-    min_u = d_children[1]->min_u();
-    max_u = d_children[1]->max_u();
-  }
-
-  if (min_u && min_u->compare(*min) > 0)
-  {
-    min = min_u;
-  }
-  if (max_u && max_u->compare(*max) < 0)
-  {
-    max = max_u;
-  }
-
-  /* conflict, reset to default bounds */
-  if ((min_u || max_u) && (min->compare(*max) > 0))
-  {
-    min = mmin.is_null() ? &s : &mmin;
-    max = mmax.is_null() ? &s : &mmax;
-  }
-
-  if (x.has_fixed_bits())
-  {
-    BitVectorDomainGenerator gen(x, d_rng, *min, *max);
-    assert(gen.has_random());
-    d_inverse.reset(new BitVector(gen.random()));
-  }
-  else
-  {
-    d_inverse.reset(new BitVector(size, *d_rng, *min, *max));
   }
 
   assert(pos_x == 1 || t.compare(d_inverse->bvult(s)) == 0);
