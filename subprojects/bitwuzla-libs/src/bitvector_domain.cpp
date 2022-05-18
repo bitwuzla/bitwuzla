@@ -60,6 +60,7 @@ BitVectorDomain::~BitVectorDomain()
 uint32_t
 BitVectorDomain::size() const
 {
+  assert(!is_null());
   assert(d_lo.size() == d_hi.size());
   return d_lo.size();
 }
@@ -67,18 +68,21 @@ BitVectorDomain::size() const
 bool
 BitVectorDomain::is_valid() const
 {
+  assert(!is_null());
   return d_lo.bvnot().ibvor(d_hi).is_ones();
 }
 
 bool
 BitVectorDomain::is_fixed() const
 {
+  assert(!is_null());
   return d_lo.compare(d_hi) == 0;
 }
 
 bool
 BitVectorDomain::has_fixed_bits() const
 {
+  assert(!is_null());
   assert(is_valid());
   return d_has_fixed_bits;
 }
@@ -86,6 +90,7 @@ BitVectorDomain::has_fixed_bits() const
 bool
 BitVectorDomain::is_fixed_bit(uint32_t idx) const
 {
+  assert(!is_null());
   assert(idx < size());
   return d_lo.get_bit(idx) == d_hi.get_bit(idx);
 }
@@ -93,6 +98,7 @@ BitVectorDomain::is_fixed_bit(uint32_t idx) const
 bool
 BitVectorDomain::is_fixed_bit_true(uint32_t idx) const
 {
+  assert(!is_null());
   assert(idx < size());
   bool b = d_lo.get_bit(idx);
   if (!b) return false;
@@ -102,6 +108,7 @@ BitVectorDomain::is_fixed_bit_true(uint32_t idx) const
 bool
 BitVectorDomain::is_fixed_bit_false(uint32_t idx) const
 {
+  assert(!is_null());
   assert(idx < size());
   bool b = d_lo.get_bit(idx);
   if (b) return false;
@@ -111,6 +118,7 @@ BitVectorDomain::is_fixed_bit_false(uint32_t idx) const
 void
 BitVectorDomain::fix_bit(uint32_t idx, bool value)
 {
+  assert(!is_null());
   assert(idx < size());
   d_lo.set_bit(idx, value);
   d_hi.set_bit(idx, value);
@@ -119,6 +127,7 @@ BitVectorDomain::fix_bit(uint32_t idx, bool value)
 void
 BitVectorDomain::fix(const BitVector &val)
 {
+  assert(!is_null());
   assert(val.size() == size());
   d_lo.iset(val);
   d_hi.iset(val);
@@ -127,6 +136,7 @@ BitVectorDomain::fix(const BitVector &val)
 bool
 BitVectorDomain::match_fixed_bits(const BitVector &bv) const
 {
+  assert(!is_null());
   return bv.bvand(d_hi).ibvor(d_lo).compare(bv) == 0;
 }
 
@@ -134,6 +144,7 @@ BitVectorDomain &
 BitVectorDomain::operator=(const BitVectorDomain &other)
 {
   if (&other == this) return *this;
+  assert(!other.is_null());
   d_lo = other.d_lo;
   d_hi = other.d_hi;
   return *this;
@@ -142,18 +153,22 @@ BitVectorDomain::operator=(const BitVectorDomain &other)
 bool
 BitVectorDomain::operator==(const BitVectorDomain &other) const
 {
+  assert(!is_null());
+  assert(!other.is_null());
   return d_lo.compare(other.d_lo) == 0 && d_hi.compare(other.d_hi) == 0;
 }
 
 BitVectorDomain
 BitVectorDomain::bvnot() const
 {
+  assert(!is_null());
   return BitVectorDomain(d_hi.bvnot(), d_lo.bvnot());
 }
 
 BitVectorDomain
 BitVectorDomain::bvshl(const BitVector &shift) const
 {
+  assert(!is_null());
   assert(shift.size() == size());
   return BitVectorDomain(d_lo.bvshl(shift), d_hi.bvshl(shift));
 }
@@ -161,6 +176,7 @@ BitVectorDomain::bvshl(const BitVector &shift) const
 BitVectorDomain
 BitVectorDomain::bvshr(const BitVector &shift) const
 {
+  assert(!is_null());
   assert(shift.size() == size());
   return BitVectorDomain(d_lo.bvshr(shift), d_hi.bvshr(shift));
 }
@@ -168,6 +184,7 @@ BitVectorDomain::bvshr(const BitVector &shift) const
 BitVectorDomain
 BitVectorDomain::bvashr(const BitVector &shift) const
 {
+  assert(!is_null());
   assert(shift.size() == size());
   return BitVectorDomain(d_lo.bvashr(shift), d_hi.bvashr(shift));
 }
@@ -175,12 +192,14 @@ BitVectorDomain::bvashr(const BitVector &shift) const
 BitVectorDomain
 BitVectorDomain::bvconcat(const BitVector &bv) const
 {
+  assert(!is_null());
   return BitVectorDomain(d_lo.bvconcat(bv), d_hi.bvconcat(bv));
 }
 
 BitVectorDomain
 BitVectorDomain::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
 {
+  assert(!is_null());
   assert(idx_hi >= idx_lo);
   return BitVectorDomain(d_lo.bvextract(idx_hi, idx_lo),
                          d_hi.bvextract(idx_hi, idx_lo));
@@ -260,6 +279,7 @@ BitVectorDomain::get_factor(RNG *rng,
 std::string
 BitVectorDomain::to_string() const
 {
+  assert(!is_null());
   std::string res(d_lo.to_string());
   std::string hi(d_hi.to_string());
   for (uint32_t i = 0, n = size(); i < n; ++i)

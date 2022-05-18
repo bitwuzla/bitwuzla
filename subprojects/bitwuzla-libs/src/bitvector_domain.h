@@ -15,6 +15,12 @@ class BitVectorDomain
   friend BitVectorDomainGenerator;
 
  public:
+  /**
+   * Default constructor.
+   * @note Creates null (uninitialized) domain. Only to be used for
+   * pre-declaration.
+   */
+  BitVectorDomain() {}
   /** Construct a bit-vector domain of given size. */
   BitVectorDomain(uint32_t size);
   /** Construct a bit-vector domain ranging from 'lo' to 'hi'. */
@@ -30,41 +36,81 @@ class BitVectorDomain
   /** Destructor. */
   ~BitVectorDomain();
 
-  /** Return the size of this bit-vector. */
+  /**
+   * Determine if this domain is an uninitialized domain.
+   * @return True if this domain is uninitialized.
+   */
+  bool is_null() const { return d_lo.is_null(); }
+
+  /**
+   * Get the size of this bit-vector domain.
+   * @return The size of this domain.
+   */
   uint32_t size() const;
 
-  /** Get the lower bound of this domain. */
+  /**
+   * Get the lower bound of this domain.
+   * @return The lower bound of this domain.
+   */
   const BitVector &lo() const { return d_lo; }
-  /** Get the upper bound of this domain. */
+  /**
+   * Get the upper bound of this domain.
+   * @return The upper bound of this domain.
+   */
   const BitVector &hi() const { return d_hi; }
 
-  /** Return true if this bit-vector domain is valid, i.e., ~lo | hi == ones. */
+  /**
+   * Determine if this bit-vector domain is valid, i.e., `~lo | hi == ones`.
+   * @return True if this bit-vector domain is valid, i.e., `~lo | hi == ones`.
+   */
   bool is_valid() const;
 
-  /** Return true if this bit-vector domain is fixed, i.e., lo == hi. */
+  /**
+   * Determine if this bit-vector domain is fixed, i.e., `lo == hi`.
+   * @return True if this bit-vector domain is fixed, i.e., lo == hi.
+   */
   bool is_fixed() const;
   /**
-   * Return true if this bit-vector domain has fixed bits, i.e., bits that are
+   * Determine if this bit-vector domain has fixed bits, i.e., bits that are
    * assigned to the same value in both 'hi' and 'lo'.
-   * Note: This check may only be called on VALID domains.
+   * @note This check may only be called on VALID domains.
+   * @return True if this domain has fixed bits.
    */
   bool has_fixed_bits() const;
-  /** Return true if bit at given index is fixed. */
+  /**
+   * Determine if bit at given index is fixed.
+   * @return True if bit at given index is fixed.
+   */
   bool is_fixed_bit(uint32_t idx) const;
-  /** Return true if bit at given index is fixed and true. */
+  /**
+   * Determine if bit at given index is fixed and true.
+   * @return True if bit at given index is fixed and true.
+   */
   bool is_fixed_bit_true(uint32_t idx) const;
-  /** Return true if bit at given index is fixed and false. */
+  /**
+   * Determine if bit at given index is fixed and false.
+   * @return True if bit at given index is fixed and false.
+   */
   bool is_fixed_bit_false(uint32_t idx) const;
 
-  /** Fix bit at given index to given value. */
+  /**
+   * Fix bit at given index to given value.
+   * @param idx   The index of the bit to fix.
+   * @param value The fixed value of the bit.
+   */
   void fix_bit(uint32_t idx, bool value);
-  /** Fix domain to given value. */
+  /**
+   * Fix domain to given value.
+   * @param val The value this domain is to be fixed to.
+   */
   void fix(const BitVector &val);
 
   /**
-   * Return true if fixed bits of this bit-vector domain are consistent with
+   * Determine if the fixed bits of this bit-vector domain are consistent with
    * the corresponding bits of the given bit-vector. That is, if a bit is fixed
    * to a value, it must have the same value in the bit-vector.
+   * @param bv The bit-vector to check for consistency against.
+   * @return True if the fixed bits of this domain are consistent with `bv`.
    */
   bool match_fixed_bits(const BitVector &bv) const;
 
@@ -75,40 +121,57 @@ class BitVectorDomain
 
   /**
    * Create a bit-vector domain that represents a bit-wise not of this domain.
+   * @return A domain representing the bit-wise not of this domain.
    */
   BitVectorDomain bvnot() const;
   /**
    * Create a bit-vector domain that represents a logial left shift of this
-   * domain by the shift value represented as bit-vector 'bv'.
+   * domain by the shift value represented as bit-vector `bv`.
+   * @param bv A bit-vector representing the shift value.
+   * @return A domain representing the logical left shift by `bv` of this
+   *         domain.
    */
   BitVectorDomain bvshl(const BitVector &shift) const;
   /**
    * Create a bit-vector domain that represents a logial right shift of this
-   * domain by the shift value represented as bit-vector 'bv'.
+   * domain by the shift value represented as bit-vector `bv`.
+   * @param bv A bit-vector representing the shift value.
+   * @return A domain representing the logical right shift by `bv` of this
+   *         domain.
    */
   BitVectorDomain bvshr(const BitVector &shift) const;
   /**
    * Create a bit-vector domain that represents an arithmetic right shift of
-   * this domain by the shift value represented as bit-vector 'bv'.
+   * this domain by the shift value represented as bit-vector `bv`.
+   * @param bv A bit-vector representing the shift value.
+   * @return A domain representing the arithmetic right shift by `bv` of this
+   *         domain.
    */
   BitVectorDomain bvashr(const BitVector &shift) const;
   /**
    * Create a bit-vector domain that represents a concatenation of this domain
-   * by bit-vector 'bv'.
+   * with bit-vector `bv`.
+   * @param bv The bit-vector to concatenate this domain with.
+   * @return A domain representing a concatenation of this domain with `bv`.
    */
   BitVectorDomain bvconcat(const BitVector &bv) const;
 
   /**
    * Extract a bit range from this bit-vector domain.
-   * idx_hi: The upper bit-index of the range (inclusive).
-   * idx_lo: The lower bit-index of the range (inclusive).
+   * @param idx_hi The upper bit-index of the range (inclusive).
+   * @param idx_lo The lower bit-index of the range (inclusive).
+   * @return A domain representing the given bit range of this domain.
    */
   BitVectorDomain bvextract(uint32_t idx_hi, uint32_t idx_lo) const;
 
   /**
-   * Determine a random factor of 'num' > 't'.
-   * Returns a null bit-vector if no such factor exists, or if computation
-   * exceeds 'limit' iterations in the wheel factorizer.
+   * Determine a random factor of `num > t`.
+   * @param rng      The associated random number generator.
+   * @param num      The value to factorize.
+   * @param excl_min The exclusive minimum value of the factor.
+   * @param limit    The maximum numbers of iterations in the wheel factorizer.
+   * @return A null bit-vector if no such factor exists, or if computation
+   *         exceeds `limit` iterations in the wheel factorizer.
    */
   BitVector get_factor(RNG *rng,
                        const BitVector &num,
@@ -116,22 +179,23 @@ class BitVectorDomain
                        uint64_t limit) const;
 
   /**
-   * Return a string representation of this bit-vector domain.
-   * Unset bits are represented as 'x', invalid bits are represented as 'i'.
+   * Get a string representation of this bit-vector domain.
+   * Unset bits are represented as `x`, invalid bits are represented as `i`.
+   * @return A string representation of this bit-vector domain.
    */
   std::string to_string() const;
 
  private:
   /**
    * The lower bound of this bit-vector domain.
-   * Bits that are not fixed are set to 0. If a bit is '1' in 'lo' and '0' in
-   * 'hi', the domain is invalid.
+   * Bits that are not fixed are set to 0. If a bit is `1` in `lo` and `0` in
+   * `hi`, the domain is invalid.
    */
   BitVector d_lo;
   /**
    * The upper bound of this bit-vector domain.
-   * Bits that are not fixed are set to 1. If a bit is '1' in 'lo' and '0' in
-   * 'hi', the domain is invalid.
+   * Bits that are not fixed are set to 1. If a bit is `1` in `lo` and `0` in
+   * `hi`, the domain is invalid.
    */
   BitVector d_hi;
   /** True if this domain has fixed bits. */
@@ -148,15 +212,15 @@ class BitVectorDomainGenerator
   /**
    * Construct generator for values within the range defined by the given
    * bit-vector domain, interpreted as unsigned.
-   * domain: The domain to enumerate values for.
+   * @param domain The domain to enumerate values for.
    */
   BitVectorDomainGenerator(const BitVectorDomain &domain);
   /**
    * Construct generator for values within given range (inclusive),
    * interpreted as unsigned.
-   * domain: The domain to enumerate values for.
-   * min   : The minimum value to start enumeration with.
-   * max   : The maximum value to enumerate until.
+   * @param domain The domain to enumerate values for.
+   * @param min    The minimum value to start enumeration with.
+   * @param max    The maximum value to enumerate until.
    */
   BitVectorDomainGenerator(const BitVectorDomain &domain,
                            const BitVector &min,
@@ -164,17 +228,17 @@ class BitVectorDomainGenerator
   /**
    * Construct generator for values within the range defined by the given
    * bit-vector domain, interpreted as unsigned.
-   * domain: The domain to enumerate values for.
-   * rng   : The associated random number generator.
+   * @param domain The domain to enumerate values for.
+   * @param rng    The associated random number generator.
    */
   BitVectorDomainGenerator(const BitVectorDomain &domain, RNG *rng);
   /**
    * Construct generator for values within given range (inclusive),
    * interpreted as unsigned.
-   * domain: The domain to enumerate values for.
-   * rng   : The associated random number generator.
-   * min   : The minimum value to start enumeration with.
-   * max   : The maximum value to enumerate until.
+   * @param domain The domain to enumerate values for.
+   * @param rng    The associated random number generator.
+   * @param min    The minimum value to start enumeration with.
+   * @param max    The maximum value to enumerate until.
    */
   BitVectorDomainGenerator(const BitVectorDomain &domain,
                            RNG *rng,
@@ -183,16 +247,32 @@ class BitVectorDomainGenerator
   /** Destructor. */
   ~BitVectorDomainGenerator();
 
-  /** Return true if not all possible values have been generated yet. */
+  /**
+   * Determine if there is a next element in the sequence.
+   * @return True if not all possible values have been generated yet.
+   */
   bool has_next() const;
-  /** Return true if generating random values is possible. */
+  /**
+   * Determine if generating random values is possible.
+   * @return True if generating random values is possible.
+   */
   bool has_random() const;
-  /** Generate next element in the sequence. */
+  /**
+   * Generate next element in the sequence.
+   * @return The next element in the sequence.
+   */
   BitVector next();
-  /** Generate random element in the sequence. */
+  /**
+   * Generate random element in the sequence.
+   * @return A random element in the sequence.
+   */
   BitVector random();
 
  private:
+  /**
+   * Helper for next() and random().
+   * @param random True to generate a random value, else get the next value.
+   */
   BitVector generate_next(bool random);
   /* The domain to enumerate values for. */
   BitVectorDomain d_domain;
@@ -217,15 +297,15 @@ class BitVectorDomainSignedGenerator
   /**
    * Construct generator for values within the range defined by the given
    * bit-vector domain, interpreted as signed.
-   * domain: The domain to enumerate values for.
+   * @param domain The domain to enumerate values for.
    */
   BitVectorDomainSignedGenerator(const BitVectorDomain &domain);
   /**
    * Construct generator for values within given range (inclusive),
    * interpreted as signed.
-   * domain: The domain to enumerate values for.
-   * min   : The minimum value to start enumeration with.
-   * max   : The maximum value to enumerate until.
+   * @param domain The domain to enumerate values for.
+   * @param min    The minimum value to start enumeration with.
+   * @param max    The maximum value to enumerate until.
    */
   BitVectorDomainSignedGenerator(const BitVectorDomain &domain,
                                  const BitVector &min,
@@ -233,17 +313,17 @@ class BitVectorDomainSignedGenerator
   /**
    * Construct generator for values within the range defined by the given
    * bit-vector domain, interpreted as signed.
-   * domain: The domain to enumerate values for.
-   * rng   : The associated random number generator.
+   * @param domain The domain to enumerate values for.
+   * @param rng    The associated random number generator.
    */
   BitVectorDomainSignedGenerator(const BitVectorDomain &domain, RNG *rng);
   /**
    * Construct generator for values within given range (inclusive),
    * interpreted as signed.
-   * domain: The domain to enumerate values for.
-   * rng   : The associated random number generator.
-   * min   : The minimum value to start enumeration with.
-   * max   : The maximum value to enumerate until.
+   * @param domain The domain to enumerate values for.
+   * @param rng    The associated random number generator.
+   * @param min    The minimum value to start enumeration with.
+   * @param max    The maximum value to enumerate until.
    */
   BitVectorDomainSignedGenerator(const BitVectorDomain &domain,
                                  RNG *rng,
@@ -252,13 +332,25 @@ class BitVectorDomainSignedGenerator
   /** Destructor. */
   ~BitVectorDomainSignedGenerator();
 
-  /** Return true if not all possible values have been generated yet. */
+  /**
+   * Determine if there is a next element in the sequence.
+   * @return True if not all possible values have been generated yet.
+   */
   bool has_next();
-  /** Return true if generating random values is possible. */
+  /**
+   * Determine if generating random values is possible.
+   * @return True if generating random values is possible.
+   */
   bool has_random();
-  /** Generate next element in the sequence. */
+  /**
+   * Generate next element in the sequence.
+   * @return The next element in the sequence.
+   */
   BitVector next();
-  /** Generate random element in the sequence. */
+  /**
+   * Generate random element in the sequence.
+   * @return A random element in the sequence.
+   */
   BitVector random();
 
  private:
