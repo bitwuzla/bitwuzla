@@ -60,6 +60,8 @@ TEST_F(TestBvNodeInv, slt)
 {
   test_binary<BitVectorSlt>(INV, SLT, 0);
   test_binary<BitVectorSlt>(INV, SLT, 1);
+  test_binary<BitVectorSlt>(INV, SLT, 0, true);
+  test_binary<BitVectorSlt>(INV, SLT, 1, true);
 }
 
 TEST_F(TestBvNodeInv, udiv)

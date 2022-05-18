@@ -1083,6 +1083,20 @@ class BitVectorSlt : public BitVectorNode
    * when all operands are constant.
    */
   void _evaluate_and_set_domain();
+  /**
+   * Helper to compute the min and max bounds for `x` with respect to the
+   * current min/max bounds of this node, if any.
+   * @param s The value of the other operand.
+   * @param t The target value of this node.
+   * @param pos_x The index of operand `x`.
+   * @param min The resulting lower bound.
+   * @param max The resulting upper bound.
+   */
+  void compute_min_max_bounds(const BitVector& s,
+                              bool t,
+                              uint32_t pos_x,
+                              BitVector& min,
+                              BitVector& max);
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorSlt& node);

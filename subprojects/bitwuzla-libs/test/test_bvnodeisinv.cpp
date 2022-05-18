@@ -74,6 +74,8 @@ TEST_F(TestBvNodeIsInv, slt)
 {
   test_binary<BitVectorSlt>(IS_INV, SLT, 0);
   test_binary<BitVectorSlt>(IS_INV, SLT, 1);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 0, true);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 1, true);
 }
 
 TEST_F(TestBvNodeIsInv, urem)
