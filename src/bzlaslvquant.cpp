@@ -186,6 +186,27 @@ SynthData::~SynthData()
   }
 }
 
+enum class LemmaKind
+{
+  COUNTEREXAMPLE,
+  SKOLEMIZATION,
+  VALUE_INST,
+  SYNTH_INST
+};
+
+static const char *
+to_string(LemmaKind k)
+{
+  switch (k)
+  {
+    case LemmaKind::COUNTEREXAMPLE: return "COUNTEREXAMPLE";
+    case LemmaKind::SKOLEMIZATION: return "SKOLEMIZATION";
+    case LemmaKind::VALUE_INST: return "VALUE_INST";
+    case LemmaKind::SYNTH_INST: return "SYNTH_INST";
+    default: assert(false); return "UNKNOWN";
+  }
+}
+
 class QuantSolverState
 {
  public:
@@ -248,7 +269,7 @@ class QuantSolverState
 
   BzlaNode *instantiate(BzlaNode *q, const NodeMap<BzlaNode *> &substs);
 
-  bool add_lemma(BzlaNode *lem);
+  bool add_lemma(BzlaNode *lem, LemmaKind k);
   void assert_lemmas();
   void add_value_instantiation_lemma(BzlaNode *q);
 
@@ -324,7 +345,7 @@ class QuantSolverState
   /* Cache for CE literals. */
   NodeMap<BzlaNode *> d_ce_literals;
   /* Cache of added lemmas. */
-  NodeSet d_lemma_cache;
+  NodeMap<LemmaKind> d_lemma_cache;
   std::vector<BzlaNode *> d_lemmas;
   /* Maps Skolem constant/function to synthesized term. */
   NodeMap<BzlaNode *> d_synthesized_terms;
@@ -421,9 +442,9 @@ QuantSolverState::~QuantSolverState()
     bzla_node_release(d_bzla, l);
   }
 
-  for (BzlaNode *l : d_lemma_cache)
+  for (auto [q, k] : d_lemma_cache)
   {
-    bzla_node_release(d_bzla, l);
+    bzla_node_release(d_bzla, q);
   }
 
   for (BzlaNode *a : d_assumptions)
@@ -1199,16 +1220,17 @@ get_value(Bzla *bzla, BzlaNode *n)
 }
 
 bool
-QuantSolverState::add_lemma(BzlaNode *lem)
+QuantSolverState::add_lemma(BzlaNode *lem, LemmaKind k)
 {
   auto it = d_lemma_cache.find(lem);
   if (it != d_lemma_cache.end())
   {
-    qlog("Duplicate lemma: %s\n", bzla_util_node2string(lem));
+    qlog(
+        "Duplicate lemma (%s): %s\n", to_string(k), bzla_util_node2string(lem));
     return false;
   }
-  qlog("Add lemma: %s\n", bzla_util_node2string(lem));
-  d_lemma_cache.insert(bzla_node_copy(d_bzla, lem));
+  qlog("Add lemma (%s): %s\n", to_string(k), bzla_util_node2string(lem));
+  d_lemma_cache.emplace(bzla_node_copy(d_bzla, lem), k);
   d_lemmas.push_back(lem);
   d_added_lemma = true;
   return true;
@@ -1268,7 +1290,7 @@ QuantSolverState::add_value_instantiation_lemma(BzlaNode *q)
 
   lem = bzla_exp_implies(d_bzla, q, inst);
   bzla_node_release(d_bzla, inst);
-  add_lemma(lem);
+  add_lemma(lem, LemmaKind::VALUE_INST);
   bzla_node_release(d_bzla, lem);
   ++d_statistics.num_value_inst_lemmas;
   qlog("<<<\n");
@@ -1329,26 +1351,16 @@ QuantSolverState::get_fun_model(BzlaNode *sk_fun,
       bvtup = bzla_bv_new_tuple(d_bzla->mm,
                                 bzla_node_fun_get_arity(d_bzla, sk_fun));
       bzla_iter_args_init(&it, sk->e[1]);
-      qlog("  in:");
       while (bzla_iter_args_has_next(&it))
       {
         arg = bzla_iter_args_next(&it);
         bv  = bzla_model_get_bv(d_bzla, arg);
         bzla_bv_add_to_tuple(d_bzla->mm, bvtup, bv, i++);
-#ifdef QLOG
-        qlog(" ");
-        bzla_bv_print_without_new_line(bv);
-#endif
       }
       values_in.push_back(bvtup);
 
       bv = bzla_model_get_bv(d_bzla, sk);
       values_out.push_back(bzla_bv_copy(d_bzla->mm, bv));
-#ifdef QLOG
-      qlog("\n");
-      qlog("  out: ");
-      bzla_bv_print(bv);
-#endif
     }
   }
 }
@@ -1398,7 +1410,7 @@ QuantSolverState::synthesize_terms()
       if (values_in.empty())
       {
         qlog("  no model, skip\n");
-        continue;
+        goto MODEL_VALUE;
       }
 
       if (prev_f)
@@ -1493,6 +1505,7 @@ QuantSolverState::synthesize_terms()
     /* Use current model value for Skolem constants. */
     else
     {
+    MODEL_VALUE:
       qlog("Use model value for %s\n", bzla_util_node2string(sk));
       BzlaNode *value = get_value(d_bzla, sk);
       store_synthesized_term(sk, value);
@@ -1670,7 +1683,7 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
 
   BzlaNode *lem = bzla_exp_implies(d_bzla, q, inst);
   bzla_node_release(d_bzla, inst);
-  if (add_lemma(lem))
+  if (add_lemma(lem, LemmaKind::SYNTH_INST))
   {
     ++d_statistics.num_synth_qi_lemmas;
   }
@@ -1696,11 +1709,11 @@ QuantSolverState::check_active_quantifiers()
     {
       if (!is_inactive(q))
       {
-        if (!added_ce_lemma(q) && add_lemma(get_ce_lemma(q)))
+        if (!added_ce_lemma(q)
+            && add_lemma(get_ce_lemma(q), LemmaKind::COUNTEREXAMPLE))
         {
           ++d_statistics.num_ce_lemmas;
         }
-        // TODO: check if pushing only if added is better
         to_check.push_back(q);
       }
     }
@@ -1708,7 +1721,7 @@ QuantSolverState::check_active_quantifiers()
     {
       assert(is_exists(q));
       if (!added_skolemization_lemma(q)
-          && add_lemma(get_skolemization_lemma(q)))
+          && add_lemma(get_skolemization_lemma(q), LemmaKind::SKOLEMIZATION))
       {
         ++d_statistics.num_skolemization_lemmas;
       }
@@ -1717,13 +1730,10 @@ QuantSolverState::check_active_quantifiers()
   }
   d_statistics.time_get_active += bzla_util_time_stamp() - start;
 
-  /* Synthesize functions for Skolem UFs and assume candidate model.  For
-   * skolem constants the current model value is used. */
-  if (d_opt_synth_sk)
+  if (added_new_lemmas())
   {
-    start = bzla_util_time_stamp();
-    synthesize_terms();
-    d_statistics.time_synthesize_terms += bzla_util_time_stamp() - start;
+    assert_lemmas();
+    return false;
   }
 
   /* Synthesize functions for Skolem UFs and assume candidate model.  For
@@ -1765,10 +1775,18 @@ QuantSolverState::check_active_quantifiers()
   size_t num_inactive = 0;
   for (BzlaNode *q : to_check)
   {
+    if (d_bzla->inconsistent)
+    {
+      break;
+    }
+
     ++d_statistics.num_counterexample_checks;
     qlog("***\n");
 
     lit = get_ce_literal(q);
+    // Reset flag in order to avoid resetting current assumptions when
+    // calling `bzla_assume_exp()` in `assume()`.
+    d_bzla->valid_assignments = 0;
     bool assumed = assume(lit);
 
     qlog("Check for counterexamples (%s): ", bzla_util_node2string(q));
@@ -1783,6 +1801,10 @@ QuantSolverState::check_active_quantifiers()
       {
         synthesize_qi(q);
       }
+      // Reset flag in order to avoid resetting current assumptions when
+      // calling `bzla_assert_exp()` in `assert_lemmas()`.
+      d_bzla->valid_assignments = 0;
+      assert_lemmas();
     }
     // No counterexamples found anymore, set quantifier to inactive.
     else
@@ -1804,6 +1826,7 @@ QuantSolverState::check_active_quantifiers()
   done = num_inactive == to_check.size();
 
   reset_assumptions();
+  // TODO: check whether this is still needed
   assert_lemmas();
 
   d_statistics.time_check_counterexamples += bzla_util_time_stamp() - start;
@@ -2031,27 +2054,24 @@ QuantSolverState::check_ground_formulas()
     {
       qlog("sat\n");
 
-      //#ifdef QLOG
-      //      for (auto [q, sk] : d_skolems)
-      //      {
-      //        if (sk->arity == 0 && !bzla_hashptr_table_get(d_bzla->inputs,
-      //        sk))
-      //        {
-      //          bzla_hashptr_table_add(d_bzla->inputs, bzla_node_copy(d_bzla,
-      //          sk));
-      //        }
-      //      }
-      //      for (auto [q, ic] : d_instantiation_constants)
-      //      {
-      //        if (!bzla_hashptr_table_get(d_bzla->inputs, ic))
-      //        {
-      //          bzla_hashptr_table_add(d_bzla->inputs, bzla_node_copy(d_bzla,
-      //          ic));
-      //        }
-      //      }
-      //      generate_model_ground();
-      //      d_bzla->slv->api.print_model(d_bzla->slv, "smt2", stdout);
-      //#endif
+#ifdef QLOG
+      for (auto [q, sk] : d_skolems)
+      {
+        if (sk->arity == 0 && !bzla_hashptr_table_get(d_bzla->inputs, sk))
+        {
+          bzla_hashptr_table_add(d_bzla->inputs, bzla_node_copy(d_bzla, sk));
+        }
+      }
+      for (auto [q, ic] : d_instantiation_constants)
+      {
+        if (!bzla_hashptr_table_get(d_bzla->inputs, ic))
+        {
+          bzla_hashptr_table_add(d_bzla->inputs, bzla_node_copy(d_bzla, ic));
+        }
+      }
+      generate_model_ground();
+      d_bzla->slv->api.print_model(d_bzla->slv, "smt2", stdout);
+#endif
 
       reset_assumptions();
       break;
