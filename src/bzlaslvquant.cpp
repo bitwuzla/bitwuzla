@@ -1971,7 +1971,8 @@ QuantSolverState::collect_info(std::vector<BzlaNode *> &quantifiers)
           qlog("found value: %s\n", bzla_util_node2string(cur));
         }
       }
-      else if (bzla_node_is_var(cur) || bzla_node_is_uf(cur))
+      else if ((bzla_node_is_var(cur) || bzla_node_is_uf(cur))
+               && bzla_node_is_bv(d_bzla, cur))
       {
         BzlaSortId sort_id = bzla_node_get_sort_id(cur);
 
