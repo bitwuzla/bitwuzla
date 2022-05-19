@@ -1011,6 +1011,26 @@ class BitVectorUlt : public BitVectorNode
                               uint32_t pos_x,
                               BitVector& min,
                               BitVector& max);
+  /**
+   * Helper for concat-specific inverse value computation.
+   * @param s The value of the other operand.
+   * @param t The target value of this node.
+   * @param pos_x The index of operand `x`, which is a concat node.
+   * @return The inverse value.
+   */
+  BitVector inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s);
+  /**
+   * Helper for inverse_value_concat() to generate a new random value with
+   * respect to the given domain and within given min/max range.
+   * @param d The domain.
+   * @param min The lower bound of the range.
+   * @param max The upper bound of the range.
+   * @return A random value within the given range, if there is one, else
+   *         a null BitVector.
+   */
+  BitVector inverse_value_concat_new_random(const BitVectorDomain& d,
+                                            const BitVector& min,
+                                            const BitVector& max);
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorUlt& node);
