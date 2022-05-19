@@ -116,7 +116,6 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
   const BitwuzlaSort *sort, *sort_index, *sort_elem;
   BzlaMemMgr *mm;
   BzlaMsg *msg;
-  bool found_arrays, found_lambdas;
 
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
@@ -127,9 +126,6 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
   BZLA_CLR(res);
 
   mm = parser->mm;
-
-  found_arrays  = false;
-  found_lambdas = false;
 
   nodemap = 0;
   sortmap = 0;
@@ -307,10 +303,6 @@ parse_btor2_parser(BzlaBTOR2Parser *parser,
       case BTOR2_TAG_input:
         assert(line->nargs == 0);
         term = bitwuzla_mk_const(bitwuzla, sort, line->symbol);
-        if (bitwuzla_sort_is_array(sort))
-        {
-          found_arrays = true;
-        }
         bitwuzla_set_bzla_id(bitwuzla, term, line->id);
         break;
 
@@ -644,10 +636,6 @@ DONE:
   }
   if (res)
   {
-    if (found_arrays || found_lambdas)
-      res->logic = BZLA_LOGIC_QF_AUFBV;
-    else
-      res->logic = BZLA_LOGIC_QF_BV;
     res->status = BITWUZLA_UNKNOWN;
   }
   if (parser->error) return parser->error;

@@ -24,6 +24,37 @@
 
 /*------------------------------------------------------------------------*/
 
+static const char *
+remove_prefix(const char *logic, const char *prefix)
+{
+  size_t len_logic  = strlen(logic);
+  size_t len_prefix = strlen(prefix);
+  if (len_prefix <= len_logic && strncmp(logic, prefix, len_prefix) == 0)
+  {
+    return logic + len_prefix;
+  }
+  return logic;
+}
+
+static bool
+is_supported_logic(const char *logic)
+{
+  const char *p = logic;
+  if (!strcmp(p, "ALL"))
+  {
+    return true;
+  }
+  p = remove_prefix(p, "QF_");
+  p = remove_prefix(p, "A");
+  p = remove_prefix(p, "UF");
+  p = remove_prefix(p, "BV");
+  p = remove_prefix(p, "FPLRA");
+  p = remove_prefix(p, "FP");
+  return strlen(p) == 0;
+}
+
+/*------------------------------------------------------------------------*/
+
 BZLA_DECLARE_STACK(BitwuzlaTermConstPtr, const BitwuzlaTerm *);
 BZLA_DECLARE_STACK(BitwuzlaSortConstPtr, const BitwuzlaSort *);
 
@@ -385,6 +416,7 @@ typedef struct BzlaSMT2Parser
   bool isvarbinding;
   const char *expecting_body;
   char *error;
+  char *logic;
   unsigned char cc[256];
   FILE *infile;
   char *infile_name;
@@ -415,8 +447,6 @@ typedef struct BzlaSMT2Parser
   bool global_declarations;
 
   bool track_mode_set;
-
-  int32_t parsed_logic_tag;
 } BzlaSMT2Parser;
 
 /*------------------------------------------------------------------------*/
@@ -453,8 +483,7 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PP_NORMALIZE_ADD, 1);
 
-    if (parser->res->logic == BZLA_LOGIC_QF_BV
-        || parser->res->logic == BZLA_LOGIC_BV)
+    if (!strcmp(parser->logic, "QF_BV") || !strcmp(parser->logic, "BV"))
     {
       bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_FUN_PREPROP, 1);
       bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_CONST_BITS, 1);
@@ -1174,6 +1203,7 @@ delete_smt2_parser(BzlaSMT2Parser *parser)
 
   if (parser->infile_name) bzla_mem_freestr(mem, parser->infile_name);
   if (parser->error) bzla_mem_freestr(mem, parser->error);
+  if (parser->logic) bzla_mem_freestr(mem, parser->logic);
 
   BZLA_RELEASE_STACK(parser->sorts);
 
@@ -4803,9 +4833,6 @@ parse_array_sort(BzlaSMT2Parser *parser, int32_t tag, const BitwuzlaSort **sort)
   const BitwuzlaSort *index, *value;
   if (tag == BZLA_ARRAY_TAG_SMT2)
   {
-    // TODO (ma): check all logics with no arrays?
-    if (parser->commands.set_logic && parser->res->logic == BZLA_LOGIC_QF_BV)
-      return !perr_smt2(parser, "'Array' invalid for logic 'QF_BV'");
     tag = read_token_smt2(parser);
     if (!parse_sort(parser, tag, false, &index)) return 0;
     tag = read_token_smt2(parser);
@@ -5655,60 +5682,10 @@ read_command_smt2(BzlaSMT2Parser *parser)
         assert(parser->error);
         return 0;
       }
-      if (!strcmp(logic->name, "QF_BV"))
+      assert(logic);
+      if (is_supported_logic(logic->name))
       {
-        parser->res->logic = BZLA_LOGIC_QF_BV;
-      }
-      else if (!strcmp(logic->name, "QF_AUFBV")
-               || !strcmp(logic->name, "QF_UFBV")
-               || !strcmp(logic->name, "QF_ABV"))
-      {
-        parser->res->logic = BZLA_LOGIC_QF_AUFBV;
-      }
-      else if (!strcmp(logic->name, "QF_ABVFP")
-               || !strcmp(logic->name, "QF_ABVFPLRA"))
-      {
-        parser->res->logic = BZLA_LOGIC_QF_ABVFP;
-      }
-      else if (!strcmp(logic->name, "QF_AUFBVFP")
-               || !strcmp(logic->name, "QF_AUFBVFPLRA"))
-      {
-        parser->res->logic = BZLA_LOGIC_QF_AUFBVFP;
-      }
-      else if (!strcmp(logic->name, "BV"))
-      {
-        parser->res->logic = BZLA_LOGIC_BV;
-      }
-      else if (!strcmp(logic->name, "UFBV"))
-      {
-        parser->res->logic = BZLA_LOGIC_UFBV;
-      }
-      else if (!strcmp(logic->name, "QF_FP")
-               || !strcmp(logic->name, "QF_FPLRA"))
-      {
-        parser->res->logic = BZLA_LOGIC_QF_FP;
-      }
-      else if (!strcmp(logic->name, "QF_BVFP")
-               || !strcmp(logic->name, "QF_BVFPLRA"))
-      {
-        parser->res->logic = BZLA_LOGIC_QF_BVFP;
-      }
-      else if (!strcmp(logic->name, "QF_UFBVFP")
-               || !strcmp(logic->name, "QF_UFBVFPLRA"))
-      {
-        parser->res->logic = BZLA_LOGIC_QF_AUFBVFP;
-      }
-      else if (!strcmp(logic->name, "QF_UFFP"))
-      {
-        parser->res->logic = BZLA_LOGIC_QF_UFFP;
-      }
-      else if (!strcmp(logic->name, "FP"))
-      {
-        parser->res->logic = BZLA_LOGIC_FP;
-      }
-      else if (!strcmp(logic->name, "ALL"))
-      {
-        parser->res->logic = BZLA_LOGIC_ALL;
+        parser->logic = bzla_mem_strdup(parser->mem, logic->name);
       }
       else
       {
@@ -6007,7 +5984,8 @@ parse_smt2_parser(BzlaSMT2Parser *parser,
   parser->saved       = false;
   parser->parse_start = start;
   BZLA_CLR(res);
-  parser->res = res;
+  parser->res   = res;
+  parser->logic = 0;
 
   Bitwuzla *bitwuzla = parser->bitwuzla;
 
@@ -6020,10 +5998,12 @@ parse_smt2_parser(BzlaSMT2Parser *parser,
   if (!bitwuzla_terminate(bitwuzla))
   {
     if (!parser->commands.all)
+    {
       BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
                1,
                "WARNING no commands in '%s'",
                parser->infile_name);
+    }
     else
     {
       if (!parser->commands.set_logic)
@@ -6055,50 +6035,6 @@ parse_smt2_parser(BzlaSMT2Parser *parser,
            "parsed %d commands in %.2f seconds",
            parser->commands.all,
            delta);
-
-  if (parser->need_functions && parser->need_arrays
-      && parser->res->logic == BZLA_LOGIC_QF_BV)
-  {
-    BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
-             1,
-             "found functions thus using 'QF_AUFBV' logic");
-    parser->res->logic = BZLA_LOGIC_QF_AUFBV;
-  }
-  else if (parser->need_functions && parser->res->logic == BZLA_LOGIC_QF_BV)
-  {
-    BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
-             1,
-             "found functions thus using 'QF_UFBV' logic");
-    parser->res->logic = BZLA_LOGIC_QF_UFBV;
-  }
-  /* determine logic to use */
-  else if (parser->res->logic == BZLA_LOGIC_ALL)
-  {
-    if (!parser->need_quantifiers)
-    {
-      if (parser->need_functions || parser->need_arrays)
-        parser->res->logic = BZLA_LOGIC_QF_AUFBV;
-      else
-        parser->res->logic = BZLA_LOGIC_QF_BV;
-    }
-    else
-    {
-      /* we only support quantifiers with pure bit-vectors for now */
-      parser->res->logic = BZLA_LOGIC_BV;
-    }
-  }
-  else if (parser->commands.set_logic)
-  {
-    if (!parser->need_functions && !parser->need_arrays
-        && !parser->need_quantifiers
-        && parser->res->logic == BZLA_LOGIC_QF_AUFBV)
-    {
-      BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
-               1,
-               "no functions found thus restricting logic to 'QF_BV'");
-      parser->res->logic = BZLA_LOGIC_QF_BV;
-    }
-  }
   return 0;
 }
 

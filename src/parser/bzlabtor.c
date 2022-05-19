@@ -79,9 +79,6 @@ struct BzlaBZLAParser
   const char **ops;
 
   uint32_t idx;
-
-  bool found_arrays;
-  bool found_lambdas;
 };
 
 /*------------------------------------------------------------------------*/
@@ -448,7 +445,6 @@ parse_array(BzlaBZLAParser *parser, uint32_t width)
       parser->bitwuzla, s, parser->symbol.start[0] ? parser->symbol.start : 0);
   bitwuzla_set_bzla_id(parser->bitwuzla, res, parser->idx);
   parser->info.start[parser->idx].array = 1;
-  parser->found_arrays                  = true;
   return res;
 }
 
@@ -1472,7 +1468,6 @@ parse_lambda(BzlaBZLAParser *parser, uint32_t width)
   res = bitwuzla_mk_term(parser->bitwuzla, BITWUZLA_KIND_LAMBDA, 2, args);
 
   BZLA_DELETEN(parser->mem, args, 2);
-  parser->found_lambdas = true;
   BZLA_PUSH_STACK(parser->lambdas, res);
   return res;
 }
@@ -1776,10 +1771,6 @@ NEXT:
 
     if (res)
     {
-      if (parser->found_arrays || parser->found_lambdas)
-        res->logic = BZLA_LOGIC_QF_AUFBV;
-      else
-        res->logic = BZLA_LOGIC_QF_BV;
       res->status = BITWUZLA_UNKNOWN;
     }
 

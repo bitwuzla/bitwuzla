@@ -14,7 +14,6 @@
 #include <stdio.h>
 
 #include "api/c/bitwuzla.h"
-#include "bzlalogic.h"
 #include "bzlamsg.h"
 #include "utils/bzlastack.h"
 
@@ -37,7 +36,6 @@ typedef char *(*BzlaParse)(BzlaParser *,
 
 struct BzlaParseResult
 {
-  BzlaLogic logic;
   int32_t status;
   int32_t result;
   uint32_t nsatcalls;

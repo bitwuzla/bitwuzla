@@ -76,60 +76,6 @@ parse_aux(Bitwuzla *bitwuzla,
   {
     res = parse_res.result;
 
-    if (parse_res.logic == BZLA_LOGIC_QF_BV)
-    {
-      BZLA_MSG(bmsg, 1, "logic QF_BV");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_BV)
-    {
-      BZLA_MSG(bmsg, 1, "logic BV");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_UFBV)
-    {
-      BZLA_MSG(bmsg, 1, "logic UFBV");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_FP)
-    {
-      BZLA_MSG(bmsg, 1, "logic FP");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_QF_UFBV)
-    {
-      BZLA_MSG(bmsg, 1, "logic QF_UFBV");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_QF_ABV)
-    {
-      BZLA_MSG(bmsg, 1, "logic QF_ABV");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_QF_ABVFP)
-    {
-      BZLA_MSG(bmsg, 1, "logic QF_ABVFP");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_QF_ABVFPLRA)
-    {
-      BZLA_MSG(bmsg, 1, "logic QF_ABVFPLRA");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_QF_AUFBVFP)
-    {
-      BZLA_MSG(bmsg, 1, "logic QF_AUFBVFP");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_QF_FP)
-    {
-      BZLA_MSG(bmsg, 1, "logic QF_FP");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_QF_BVFP)
-    {
-      BZLA_MSG(bmsg, 1, "logic QF_BVFP");
-    }
-    else if (parse_res.logic == BZLA_LOGIC_QF_UFFP)
-    {
-      BZLA_MSG(bmsg, 1, "logic QF_UFFP");
-    }
-    else
-    {
-      assert(parse_res.logic == BZLA_LOGIC_QF_AUFBV);
-      BZLA_MSG(bmsg, 1, "logic QF_AUFBV");
-    }
-
     if (parse_res.status == BITWUZLA_SAT)
     {
       BZLA_MSG(bmsg, 1, "status sat");
