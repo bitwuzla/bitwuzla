@@ -122,6 +122,19 @@ class BitblasterInterface
     return res;
   }
 
+  /* Predicates */
+
+  virtual Bits bv_eq(const Bits& a, const Bits& b)
+  {
+    assert(a.size() == b.size());
+    T res = d_bit_mgr.mk_iff(a[0], b[0]);
+    for (size_t i = 1; i < a.size(); ++i)
+    {
+      res = d_bit_mgr.mk_and(res, d_bit_mgr.mk_iff(a[i], b[i]));
+    }
+    return Bits{res};
+  }
+
  private:
 
   BitInterface<T> d_bit_mgr;

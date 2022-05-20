@@ -213,4 +213,20 @@ TEST_F(TestAigBitblaster, bv_concat)
   ASSERT_EQ(bb.bv_extract(bb_concat, 23, 0), b);
 }
 
+TEST_F(TestAigBitblaster, bv_eq)
+{
+  bb::AigBitblaster bb;
+  auto a     = bb.bv_constant(32);
+  auto b     = bb.bv_constant(32);
+  auto bb_eq = bb.bv_eq(a, b);
+
+  ASSERT_EQ(bb_eq, bb.bv_eq(b, a));
+}
+
+TEST_F(TestAigBitblaster, bv_eq1) { TEST_BIN_OP(1, "=", bv_eq); }
+
+TEST_F(TestAigBitblaster, bv_eq16) { TEST_BIN_OP(16, "=", bv_eq); }
+
+TEST_F(TestAigBitblaster, bv_eq32) { TEST_BIN_OP(32, "=", bv_eq); }
+
 }  // namespace bzla::test
