@@ -8,6 +8,7 @@ set(libbzlals_src_files
   bitvector_node.cpp
   wheel_factorizer.cpp
   bb/aigmgr.cpp
+  bb/aig_printer.cpp
 )
 
 set(libbzlarng_src_files
