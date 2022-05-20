@@ -63,6 +63,19 @@ class BitblasterInterface
     return res;
   }
 
+  /* Bitwise */
+
+  virtual Bits bv_not(const Bits& bits)
+  {
+    Bits res;
+    res.reserve((bits.size()));
+    for (const T& bit : bits)
+    {
+      res.emplace_back(d_bit_mgr.mk_not(bit));
+    }
+    return res;
+  }
+
  private:
 
   BitInterface<T> d_bit_mgr;

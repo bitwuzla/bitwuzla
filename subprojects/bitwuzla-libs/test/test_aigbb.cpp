@@ -63,4 +63,19 @@ TEST_F(TestAigBitblaster, bv_constant)
   ASSERT_EQ(bits.size(), 12);
 }
 
+TEST_F(TestAigBitblaster, bv_not)
+{
+  BitVector zero(32, 0);
+  BitVector ones = zero.bvnot();
+
+  bb::AigBitblaster bb;
+  auto bb_zero  = bb.bv_value(zero);
+  auto bb_ones  = bb.bv_value(ones);
+  auto bb_const = bb.bv_constant(8);
+
+  ASSERT_EQ(bb_zero, bb.bv_not(bb_ones));
+  ASSERT_EQ(bb_ones, bb.bv_not(bb_zero));
+  ASSERT_EQ(bb_const, bb.bv_not(bb.bv_not(bb_const)));
+}
+
 }  // namespace bzla::test
