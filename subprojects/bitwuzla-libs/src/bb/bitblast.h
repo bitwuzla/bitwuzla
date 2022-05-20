@@ -141,6 +141,35 @@ class BitblasterInterface
     return Bits{ult_helper(a, b)};
   }
 
+  virtual Bits bv_slt(const Bits& a, const Bits& b)
+  {
+    size_t msb_pos  = a.size() - 1;
+    const T& a_sign = a[0];
+    const T& b_sign = b[0];
+
+    // a[msb] = 1, b[msb] = 0: true
+    T strict_neg = d_bit_mgr.mk_and(a_sign, d_bit_mgr.mk_not(b_sign));
+
+    if (a.size() == 1)
+    {
+      return Bits{strict_neg};
+    }
+
+    // a[0:msb-1] < b[0:msb-1]
+    Bits a_rem = bv_extract(a, msb_pos - 1, 0);
+    Bits b_rem = bv_extract(b, msb_pos - 1, 0);
+    T ult      = ult_helper(a_rem, b_rem);
+
+    // a[msb] = 0, b[msb] = 1: false
+    T strict_pos = d_bit_mgr.mk_and(d_bit_mgr.mk_not(a_sign), b_sign);
+    // a[msb] = b[msb]: a[0:msb-1] < b[0:msb-1]
+    T eq_sign = d_bit_mgr.mk_and(d_bit_mgr.mk_not(strict_neg),
+                                 d_bit_mgr.mk_not(strict_pos));
+
+    T res = d_bit_mgr.mk_or(strict_neg, d_bit_mgr.mk_and(eq_sign, ult));
+    return Bits{res};
+  }
+
  private:
   T ult_helper(const Bits& a, const Bits& b)
   {
