@@ -229,4 +229,10 @@ TEST_F(TestAigBitblaster, bv_eq16) { TEST_BIN_OP(16, "=", bv_eq); }
 
 TEST_F(TestAigBitblaster, bv_eq32) { TEST_BIN_OP(32, "=", bv_eq); }
 
+TEST_F(TestAigBitblaster, bv_ult1) { TEST_BIN_OP(1, "bvult", bv_ult); }
+
+TEST_F(TestAigBitblaster, bv_ult16) { TEST_BIN_OP(16, "bvult", bv_ult); }
+
+TEST_F(TestAigBitblaster, bv_ult32) { TEST_BIN_OP(32, "bvult", bv_ult); }
+
 }  // namespace bzla::test

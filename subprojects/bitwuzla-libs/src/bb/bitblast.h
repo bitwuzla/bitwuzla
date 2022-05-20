@@ -135,7 +135,30 @@ class BitblasterInterface
     return Bits{res};
   }
 
+  virtual Bits bv_ult(const Bits& a, const Bits& b)
+  {
+    assert(a.size() == b.size());
+    return Bits{ult_helper(a, b)};
+  }
+
  private:
+  T ult_helper(const Bits& a, const Bits& b)
+  {
+    size_t lsb = a.size() - 1;
+    // a[lsb] < b[lsb]
+    T res = d_bit_mgr.mk_and(d_bit_mgr.mk_not(a[lsb]), b[lsb]);
+    for (size_t i = 1, j = a.size() - 2; i < a.size(); ++i, --j)
+    {
+      res = d_bit_mgr.mk_or(
+          // a[i] < b[i]
+          d_bit_mgr.mk_and(d_bit_mgr.mk_not(a[j]), b[j]),
+          // ~(a[i] = 1 /\ b[i] = 0) /\ res
+          d_bit_mgr.mk_and(
+              d_bit_mgr.mk_not(d_bit_mgr.mk_and(a[j], d_bit_mgr.mk_not(b[j]))),
+              res));
+    }
+    return res;
+  }
 
   BitInterface<T> d_bit_mgr;
 };
