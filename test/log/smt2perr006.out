@@ -1,1 +1,1 @@
-log/smt2perr006.smt2:1:2: unexpected end-of-file after 'set-logic'
+log/smt2perr006.smt2:3:1: expected symbol after set-logic but reached end-of-file

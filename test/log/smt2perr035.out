@@ -1,1 +1,1 @@
-log/smt2perr035.smt2:2:20: 'Array' invalid for logic 'QF_BV'
+log/smt2perr035.smt2:3:1: reached end-of-file but expected '(' or sort keyword

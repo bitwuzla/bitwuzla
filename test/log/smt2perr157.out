@@ -1,1 +1,1 @@
-log/smt2perr157.smt2:1:12: expected logic at 'oops'
+log/smt2perr157.smt2:1:12: unsupported logic 'oops'
