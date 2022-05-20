@@ -942,15 +942,34 @@ std::ostream& operator<<(std::ostream& out, const BitVectorUdiv& node);
 class BitVectorUlt : public BitVectorNode
 {
  public:
-  /** Constructors. */
+  /**
+   * Constructor.
+   * @param rng The associated random number generator.
+   * @param size The bit-width of this node.
+   * @param child0 The operand at index 0.
+   * @param child1 The operand at index 1.
+   * @param opt_concat True to enable optimization for inverse_value
+   *                   computation of concat operands.
+   */
   BitVectorUlt(RNG* rng,
                uint32_t size,
                BitVectorNode* child0,
-               BitVectorNode* child1);
+               BitVectorNode* child1,
+               bool opt_concat = false);
+  /**
+   * Constructor.
+   * @param rng The associated random number generator.
+   * @param domain The underlying bit-vector domain.
+   * @param child0 The operand at index 0.
+   * @param child1 The operand at index 1.
+   * @param opt_concat True to enable optimization for inverse_value
+   *                   computation of concat operands.
+   */
   BitVectorUlt(RNG* rng,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
-               BitVectorNode* child1);
+               BitVectorNode* child1,
+               bool opt_concat = false);
 
   NodeKind get_kind() const override { return ULT; }
 
@@ -1013,6 +1032,8 @@ class BitVectorUlt : public BitVectorNode
                               BitVector& max);
   /**
    * Helper for concat-specific inverse value computation.
+   * Attempts to find an inverse value by only changing the value of one of
+   * the children of the concat.
    * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`, which is a concat node.
@@ -1031,6 +1052,11 @@ class BitVectorUlt : public BitVectorNode
   BitVector inverse_value_concat_new_random(const BitVectorDomain& d,
                                             const BitVector& min,
                                             const BitVector& max);
+  /**
+   * True to enable optimization for inverse_value computation of concat
+   * operands.
+   */
+  bool d_opt_concat = false;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorUlt& node);

@@ -3270,8 +3270,9 @@ operator<<(std::ostream& out, const BitVectorUdiv& node)
 BitVectorUlt::BitVectorUlt(RNG* rng,
                            uint32_t size,
                            BitVectorNode* child0,
-                           BitVectorNode* child1)
-    : BitVectorNode(rng, size, child0, child1)
+                           BitVectorNode* child1,
+                           bool opt_concat)
+    : BitVectorNode(rng, size, child0, child1), d_opt_concat(opt_concat)
 {
   assert(size == 1);
   assert(child0->size() == child1->size());
@@ -3281,8 +3282,9 @@ BitVectorUlt::BitVectorUlt(RNG* rng,
 BitVectorUlt::BitVectorUlt(RNG* rng,
                            const BitVectorDomain& domain,
                            BitVectorNode* child0,
-                           BitVectorNode* child1)
-    : BitVectorNode(rng, domain, child0, child1)
+                           BitVectorNode* child1,
+                           bool opt_concat)
+    : BitVectorNode(rng, domain, child0, child1), d_opt_concat(opt_concat)
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == 1);
