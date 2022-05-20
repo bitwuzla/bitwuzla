@@ -35,5 +35,27 @@ class BitInterface
   T mk_ite(const T& c, const T& a, const T& b);
 };
 
+template <class T>
+class BitblasterInterface
+{
+ public:
+  using Bits = std::vector<T>;
+
+  virtual Bits bv_value(const BitVector& bv_value)
+  {
+    Bits res;
+    for (size_t i = 0, j = bv_value.size() - 1; i < bv_value.size(); ++i)
+    {
+      res.emplace_back(bv_value.get_bit(j - i) ? d_bit_mgr.mk_true()
+                                               : d_bit_mgr.mk_false());
+    }
+    return res;
+  }
+
+ private:
+
+  BitInterface<T> d_bit_mgr;
+};
+
 }  // namespace bzla::bb
 #endif

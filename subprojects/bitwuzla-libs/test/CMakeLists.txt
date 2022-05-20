@@ -14,6 +14,7 @@ set(test_names
   bvnodeselpath
   ls
   aigmgr
+  aigbb
 )
 
 foreach(test ${test_names})

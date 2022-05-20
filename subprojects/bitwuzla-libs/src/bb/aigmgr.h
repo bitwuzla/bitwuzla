@@ -148,6 +148,8 @@ class BitInterface<AigNode>
   } d_statistics;
 };
 
+using AigBitblaster = BitblasterInterface<AigNode>;
+
 }  // namespace bzla::bb
 
 namespace std {
