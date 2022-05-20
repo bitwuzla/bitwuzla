@@ -184,4 +184,21 @@ TEST_F(TestAigBitblaster, bv_or16) { TEST_BIN_OP(16, "bvor", bv_or); }
 
 TEST_F(TestAigBitblaster, bv_or32) { TEST_BIN_OP(32, "bvor", bv_or); }
 
+
+TEST_F(TestAigBitblaster, bv_extract)
+{
+  bb::AigBitblaster bb;
+
+  auto a = bb.bv_constant(12);
+  auto b = bb.bv_extract(a, 11, 0);
+  ASSERT_EQ(a, b);
+  for (size_t i = 0; i < a.size(); ++i)
+  {
+    auto bit = bb.bv_extract(a, i, i);
+    ASSERT_EQ(bit[0], a[a.size() - 1 - i]);
+  }
+  b = bb.bv_extract(a, 6, 0);
+  ASSERT_EQ(b.size(), 7);
+}
+
 }  // namespace bzla::test

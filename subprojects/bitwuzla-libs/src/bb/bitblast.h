@@ -2,6 +2,7 @@
 #define BZLA__BB_BITBLAST_H
 
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <vector>
 
@@ -97,6 +98,15 @@ class BitblasterInterface
     {
       res.emplace_back(d_bit_mgr.mk_or(a[i], b[i]));
     }
+    return res;
+  }
+
+  virtual Bits bv_extract(const Bits& bits, size_t upper, size_t lower)
+  {
+    assert(lower <= upper);
+    assert(upper < bits.size());
+    Bits res(bits.begin() + (bits.size() - 1 - upper), bits.end() - lower);
+    assert(res.size() == upper - lower + 1);
     return res;
   }
 
