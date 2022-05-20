@@ -1813,7 +1813,7 @@ QuantSolverState::check_active_quantifiers()
       if (bzla_failed_exp(d_bzla, lit))
       {
         ++num_inactive;
-        set_inactive(q);
+        //set_inactive(q);
       }
     }
 
