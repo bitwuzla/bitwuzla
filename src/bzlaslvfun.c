@@ -978,8 +978,6 @@ search_initial_applies_bv_skeleton(BzlaFunSolver *slv,
     while (!BZLA_EMPTY_STACK(stack))
     {
       cur = BZLA_POP_STACK(stack);
-      assert(!bzla_node_is_simplified(cur)
-             || bzla_opt_get(bzla, BZLA_OPT_PP_NONDESTR_SUBST));
       cur = bzla_node_real_addr(bzla_node_get_simplified(bzla, cur));
 
       if (bzla_hashint_table_contains(cache, cur->id)) continue;
