@@ -88,6 +88,18 @@ class BitblasterInterface
     return res;
   }
 
+  virtual Bits bv_or(const Bits& a, const Bits& b)
+  {
+    assert(a.size() == b.size());
+    Bits res;
+    res.reserve(a.size());
+    for (size_t i = 0; i < a.size(); ++i)
+    {
+      res.emplace_back(d_bit_mgr.mk_or(a[i], b[i]));
+    }
+    return res;
+  }
+
  private:
 
   BitInterface<T> d_bit_mgr;

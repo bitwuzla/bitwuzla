@@ -166,4 +166,22 @@ TEST_F(TestAigBitblaster, bv_and16) { TEST_BIN_OP(16, "bvand", bv_and); }
 
 TEST_F(TestAigBitblaster, bv_and32) { TEST_BIN_OP(32, "bvand", bv_and); }
 
+TEST_F(TestAigBitblaster, bv_or)
+{
+  bb::AigBitblaster bb;
+  auto a     = bb.bv_constant(32);
+  auto b     = bb.bv_constant(32);
+  auto bb_or = bb.bv_or(a, b);
+
+  ASSERT_EQ(bb_or.size(), a.size());
+  ASSERT_EQ(bb_or, bb.bv_or(b, a));
+  ASSERT_EQ(bb_or, bb.bv_not(bb.bv_not(bb_or)));
+}
+
+TEST_F(TestAigBitblaster, bv_or1) { TEST_BIN_OP(1, "bvor", bv_or); }
+
+TEST_F(TestAigBitblaster, bv_or16) { TEST_BIN_OP(16, "bvor", bv_or); }
+
+TEST_F(TestAigBitblaster, bv_or32) { TEST_BIN_OP(32, "bvor", bv_or); }
+
 }  // namespace bzla::test
