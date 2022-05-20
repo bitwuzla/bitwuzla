@@ -52,6 +52,17 @@ class BitblasterInterface
     return res;
   }
 
+  virtual Bits bv_constant(size_t size)
+  {
+    Bits res;
+    res.reserve(size);
+    for (size_t i = 0; i < size; ++i)
+    {
+      res.emplace_back(d_bit_mgr.mk_bit());
+    }
+    return res;
+  }
+
  private:
 
   BitInterface<T> d_bit_mgr;

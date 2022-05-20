@@ -54,4 +54,13 @@ TEST_F(TestAigBitblaster, bv_value)
     }
   }
 }
+
+TEST_F(TestAigBitblaster, bv_constant)
+{
+  bb::AigBitblaster bb;
+
+  auto bits = bb.bv_constant(12);
+  ASSERT_EQ(bits.size(), 12);
+}
+
 }  // namespace bzla::test
