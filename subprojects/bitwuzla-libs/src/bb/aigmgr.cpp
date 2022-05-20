@@ -21,7 +21,7 @@ class AigNodeData
     --d_refs;
     if (d_refs == 0)
     {
-      d_mgr->delete_data(this);
+      d_mgr->garbage_collect(this);
     }
   }
 
@@ -151,10 +151,11 @@ AigNode::is_negated() const
 bool
 AigNode::operator==(const AigNode& other) const
 {
-  return get_id() == other.get_id() && is_negated() == other.is_negated();
+  return get_id() == other.get_id();
 }
 
-const AigNode& AigNode::operator[](int index) const
+const AigNode&
+AigNode::operator[](int index) const
 {
   assert(is_and());
   if (index == 0)
@@ -180,6 +181,13 @@ bool
 AigNode::is_null() const
 {
   return d_data == nullptr;
+}
+
+uint64_t
+AigNode::get_refs() const
+{
+  assert(!is_null());
+  return d_data->d_refs;
 }
 
 // BitNodeInterface<AigNode>
@@ -297,10 +305,56 @@ AigManager::new_data(const AigNode& left, const AigNode& right)
 }
 
 void
-AigManager::delete_data(AigNodeData* d)
+AigManager::garbage_collect(AigNodeData* d)
 {
-  d_unique_ands.erase(d);
-  d_node_data.erase(d->d_id);
+  assert(d->d_refs == 0);
+
+  if (d_gc_mode)
+  {
+    assert(false);
+    return;
+  }
+
+  d_gc_mode = true;
+
+  AigNodeData *cur, *data;
+  std::vector<AigNodeData*> visit{d};
+
+  do
+  {
+    cur = visit.back();
+    visit.pop_back();
+
+    if (cur->d_refs == 0)
+    {
+      // Decrement reference counts for children of AND nodes
+      if (!cur->d_left.is_null())
+      {
+        assert(!cur->d_right.is_null());
+
+        data = cur->d_left.d_data;
+        --data->d_refs;
+        cur->d_left.d_data = nullptr;
+        if (data->d_refs == 0)
+        {
+          visit.push_back(data);
+        }
+
+        data = cur->d_right.d_data;
+        --data->d_refs;
+        cur->d_right.d_data = nullptr;
+        if (data->d_refs == 0)
+        {
+          visit.push_back(data);
+        }
+      }
+      // Delete node data
+      d_unique_ands.erase(cur);
+      d_node_data.erase(cur->d_id);
+    }
+  } while (!visit.empty());
+
+  d_gc_mode = false;
 }
 
 }  // namespace bzla::bb

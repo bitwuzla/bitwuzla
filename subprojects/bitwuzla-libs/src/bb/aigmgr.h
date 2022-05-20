@@ -55,6 +55,7 @@ class AigNode
   AigNode(AigNodeData* data, bool negated = false);
 
   bool is_null() const;
+  uint64_t get_refs() const;
 
   AigNodeData* d_data = nullptr;
   // TODO: optimization hide flag in d_data pointer
@@ -112,7 +113,7 @@ class BitInterface<AigNode>
   /**
    * Delete given node data.
    */
-  void delete_data(AigNodeData* d);
+  void garbage_collect(AigNodeData* d);
 
   /** Hash node data based on the AND gate children used for hash consing. */
   struct AigNodeDataHash
@@ -136,6 +137,9 @@ class BitInterface<AigNode>
   AigNode d_true;
   /** AIG node representing false. */
   AigNode d_false;
+
+  /** Indicates whether AIG manager is in garbage collection mode. */
+  bool d_gc_mode = false;
 
   struct
   {
