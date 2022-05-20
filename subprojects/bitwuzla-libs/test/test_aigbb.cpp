@@ -201,4 +201,16 @@ TEST_F(TestAigBitblaster, bv_extract)
   ASSERT_EQ(b.size(), 7);
 }
 
+TEST_F(TestAigBitblaster, bv_concat)
+{
+  bb::AigBitblaster bb;
+  auto a         = bb.bv_constant(8);
+  auto b         = bb.bv_constant(24);
+  auto bb_concat = bb.bv_concat(a, b);
+
+  ASSERT_EQ(a.size() + b.size(), bb_concat.size());
+  ASSERT_EQ(bb.bv_extract(bb_concat, 31, 24), a);
+  ASSERT_EQ(bb.bv_extract(bb_concat, 23, 0), b);
+}
+
 }  // namespace bzla::test

@@ -110,6 +110,18 @@ class BitblasterInterface
     return res;
   }
 
+  /**
+   * Bit-blast concatenation of bit-vectors `a` and `b`.
+   */
+  virtual Bits bv_concat(const Bits& a, const Bits& b)
+  {
+    Bits res;
+    res.reserve(a.size() + b.size());
+    res.insert(res.end(), a.begin(), a.end());
+    res.insert(res.end(), b.begin(), b.end());
+    return res;
+  }
+
  private:
 
   BitInterface<T> d_bit_mgr;
