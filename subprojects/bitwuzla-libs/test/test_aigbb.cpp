@@ -184,6 +184,12 @@ TEST_F(TestAigBitblaster, bv_or16) { TEST_BIN_OP(16, "bvor", bv_or); }
 
 TEST_F(TestAigBitblaster, bv_or32) { TEST_BIN_OP(32, "bvor", bv_or); }
 
+TEST_F(TestAigBitblaster, bv_shl1) { TEST_BIN_OP(1, "bvshl", bv_shl); }
+
+TEST_F(TestAigBitblaster, bv_shl16) { TEST_BIN_OP(16, "bvshl", bv_shl); }
+
+TEST_F(TestAigBitblaster, bv_shl32) { TEST_BIN_OP(32, "bvshl", bv_shl); }
+
 
 TEST_F(TestAigBitblaster, bv_extract)
 {
