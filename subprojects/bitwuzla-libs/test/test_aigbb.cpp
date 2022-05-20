@@ -1,12 +1,82 @@
+#include <cstdlib>
 #include <filesystem>
 
+#include "bb/aig_printer.h"
 #include "bb/aigmgr.h"
 #include "test.h"
+
+static const char* s_solver_binary = std::getenv("SOLVER_BINARY");
 
 namespace bzla::test {
 
 class TestAigBitblaster : public TestCommon
 {
+ public:
+  static std::string check_sat(std::stringstream& ss)
+  {
+    std::stringstream bench;
+    bench << "(set-logic QF_BV)\n";
+    bench << "(set-option :produce-models true)\n";
+    bench << ss.str();
+    bench << "(check-sat)\n";
+    bench << "(get-model)\n";
+
+    std::string filename = std::tmpnam(nullptr);
+    FILE* file           = std::fopen(filename.c_str(), "w");
+    fputs(bench.str().c_str(), file);
+    fflush(file);
+
+    std::stringstream cmd;
+    cmd << s_solver_binary << " " << filename;
+
+    // Execute solver and read output.
+    FILE* fp = popen(cmd.str().c_str(), "r");
+    char buf[1024];
+    std::stringstream output;
+    while (fgets(buf, 1024, fp))
+    {
+      output << buf;
+    }
+    fclose(file);
+    remove(filename.c_str());
+
+    std::string result = output.str();
+    size_t newline_pos = result.find_last_of('\n');
+    return result.substr(0, newline_pos);
+  }
+
+  static void test_binary(const std::string& op,
+                          const std::vector<bb::AigNode>& res,
+                          const std::vector<bb::AigNode>& a,
+                          const std::vector<bb::AigNode>& b)
+  {
+    if (s_solver_binary == nullptr)
+    {
+      GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
+    }
+    std::stringstream ss;
+    bb::aig::Smt2Printer::print(ss, res);
+    define_const(ss, "a", a);
+    define_const(ss, "b", b);
+    define_const(ss, "res", res);
+    ss << "(assert (distinct res (" << op << " a b)))\n";
+    ASSERT_EQ("unsat", check_sat(ss));
+  }
+
+  static void define_const(std::stringstream& ss,
+                           const std::string& name,
+                           const std::vector<bb::AigNode>& bits)
+  {
+    ss << "(declare-const " << name << " (_ BitVec " << bits.size() << "))\n";
+    for (size_t i = 0; i < bits.size(); ++i)
+    {
+      size_t pos = bits.size() - 1 - i;
+      ss << "(assert (= ((_ extract " << pos << " " << pos << ") " << name
+         << ") ";
+      bb::aig::Smt2Printer::print(ss, bits[i]);
+      ss << "))\n";
+    }
+  }
 };
 
 #define TEST_BIN_OP(size, op, func)  \
@@ -77,5 +147,23 @@ TEST_F(TestAigBitblaster, bv_not)
   ASSERT_EQ(bb_ones, bb.bv_not(bb_zero));
   ASSERT_EQ(bb_const, bb.bv_not(bb.bv_not(bb_const)));
 }
+
+TEST_F(TestAigBitblaster, bv_and)
+{
+  bb::AigBitblaster bb;
+  auto a      = bb.bv_constant(32);
+  auto b      = bb.bv_constant(32);
+  auto bb_and = bb.bv_and(a, b);
+
+  ASSERT_EQ(bb_and.size(), a.size());
+  ASSERT_EQ(bb_and, bb.bv_and(b, a));
+  ASSERT_EQ(bb_and, bb.bv_not(bb.bv_not(bb_and)));
+}
+
+TEST_F(TestAigBitblaster, bv_and1) { TEST_BIN_OP(1, "bvand", bv_and); }
+
+TEST_F(TestAigBitblaster, bv_and16) { TEST_BIN_OP(16, "bvand", bv_and); }
+
+TEST_F(TestAigBitblaster, bv_and32) { TEST_BIN_OP(32, "bvand", bv_and); }
 
 }  // namespace bzla::test
