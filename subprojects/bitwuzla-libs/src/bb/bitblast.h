@@ -170,6 +170,21 @@ class BitblasterInterface
     return Bits{res};
   }
 
+  /**
+   * Bit-blast if-then-else over bit-vectors `a` and `b` of size k, and a
+   * condition `cond` of size 1.
+   */
+  virtual Bits bv_ite(const T cond, const Bits& a, const Bits& b)
+  {
+    Bits res;
+    res.reserve(a.size());
+    for (size_t i = 0; i < a.size(); ++i)
+    {
+      res.emplace_back(d_bit_mgr.mk_ite(cond, a[i], b[i]));
+    }
+    return res;
+  }
+
  private:
   T ult_helper(const Bits& a, const Bits& b)
   {

@@ -241,4 +241,26 @@ TEST_F(TestAigBitblaster, bv_slt16) { TEST_BIN_OP(16, "bvslt", bv_slt); }
 
 TEST_F(TestAigBitblaster, bv_slt32) { TEST_BIN_OP(32, "bvslt", bv_slt); }
 
+TEST_F(TestAigBitblaster, bv_ite) {
+
+  bb::AigBitblaster bb;
+  auto a      = bb.bv_constant(32);
+  auto b      = bb.bv_constant(32);
+  auto c      = bb.bv_constant(1);
+  auto bb_ite = bb.bv_ite(c[0], a, b);
+
+    if (s_solver_binary == nullptr)
+    {
+      GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
+    }
+    std::stringstream ss;
+    bb::aig::Smt2Printer::print(ss, bb_ite);
+    define_const(ss, "a", a);
+    define_const(ss, "b", b);
+    define_const(ss, "c", c);
+    define_const(ss, "res", bb_ite);
+    ss << "(assert (distinct res (ite c a b)))\n";
+    ASSERT_EQ("unsat", check_sat(ss));
+}
+
 }  // namespace bzla::test
