@@ -2864,7 +2864,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 
   // FIXME (ma): not sound with slice elimination. see red-vsl.proof3106.smt2
   /* disabling slice elimination is better on QF_ABV and BV */
-  if (bzla->ufs->count > 0 || bzla->quantifiers->count > 0)
+  if (bzla->ufs->count > 0)
   {
     BZLA_MSG(bzla->msg,
              1,
@@ -2879,9 +2879,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
   {
     bzla_opt_set(bzla, BZLA_OPT_INCREMENTAL, 1);
     bzla_opt_set(bzla, BZLA_OPT_PRODUCE_MODELS, 1);
-
     bzla_opt_set(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION, 0);
-    bzla_opt_set(bzla, BZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
   }
 
   res = bzla_simplify(bzla);
