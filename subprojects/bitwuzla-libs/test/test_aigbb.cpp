@@ -55,12 +55,25 @@ class TestAigBitblaster : public TestCommon
       GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
     }
     std::stringstream ss;
+    declare_const(ss, a);
+    declare_const(ss, b);
     bb::aig::Smt2Printer::print(ss, res);
     define_const(ss, "a", a);
     define_const(ss, "b", b);
     define_const(ss, "res", res);
     ss << "(assert (distinct res (" << op << " a b)))\n";
     ASSERT_EQ("unsat", check_sat(ss));
+  }
+
+  static void declare_const(std::stringstream& ss,
+                           const std::vector<bb::AigNode>& bits)
+  {
+    for (size_t i = 0; i < bits.size(); ++i)
+    {
+      ss << "(declare-const ";
+      bb::aig::Smt2Printer::print(ss, bits[i]);
+      ss << " (_ BitVec 1))\n";
+    }
   }
 
   static void define_const(std::stringstream& ss,
@@ -196,6 +209,11 @@ TEST_F(TestAigBitblaster, bv_shr16) { TEST_BIN_OP(16, "bvlshr", bv_shr); }
 
 TEST_F(TestAigBitblaster, bv_shr32) { TEST_BIN_OP(32, "bvlshr", bv_shr); }
 
+TEST_F(TestAigBitblaster, bv_ashr1) { TEST_BIN_OP(1, "bvashr", bv_ashr); }
+
+TEST_F(TestAigBitblaster, bv_ashr16) { TEST_BIN_OP(16, "bvashr", bv_ashr); }
+
+TEST_F(TestAigBitblaster, bv_ashr32) { TEST_BIN_OP(32, "bvashr", bv_ashr); }
 
 TEST_F(TestAigBitblaster, bv_extract)
 {
@@ -266,6 +284,8 @@ TEST_F(TestAigBitblaster, bv_ite) {
       GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
     }
     std::stringstream ss;
+    declare_const(ss, a);
+    declare_const(ss, a);
     bb::aig::Smt2Printer::print(ss, bb_ite);
     define_const(ss, "a", a);
     define_const(ss, "b", b);

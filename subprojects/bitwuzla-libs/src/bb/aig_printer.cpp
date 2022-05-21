@@ -55,11 +55,7 @@ Smt2Printer::print(std::stringstream& ss, const std::vector<AigNode>& bits)
     {
       cache.emplace(id, false);
 
-      if (n.is_const())
-      {
-        ss << "(declare-const x" << id << " (_ BitVec 1))\n";
-      }
-      else if (n.is_and())
+      if (n.is_and())
       {
         visit.push_back(n);
         visit.push_back(n[0]);
