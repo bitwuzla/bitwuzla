@@ -143,6 +143,48 @@ class BitblasterInterface
     return res;
   }
 
+  virtual Bits bv_shr(const Bits& a, const Bits& b)
+  {
+    assert(a.size() == b.size());
+
+    size_t size = a.size();
+    if (size == 1)
+    {
+      return Bits{d_bit_mgr.mk_and(a[0], d_bit_mgr.mk_not(b[0]))};
+    }
+
+    size_t shift_size = std::ceil(std::log2(b.size()));
+    assert(shift_size <= b.size());
+
+    Bits shift_result = a;
+    for (size_t i = 0; i < shift_size; ++i)
+    {
+      size_t shift_step = std::pow(2, i);
+      size_t shift_bit  = b.size() - 1 - i;
+      assert(shift_step < size);
+
+      // Perform left right by `shift_step` bits.
+      for (size_t j = 0, k = size - 1; j < size - shift_step; ++j, --k)
+      {
+        shift_result[k] = d_bit_mgr.mk_ite(
+            b[shift_bit], shift_result[k - shift_step], shift_result[k]);
+      }
+
+      // The first `shift_step` bits either stay the same or become zero.
+      T not_shift = d_bit_mgr.mk_not(b[shift_bit]);
+      for (size_t j = 0; j < shift_step; ++j)
+      {
+        shift_result[j] = d_bit_mgr.mk_and(not_shift, shift_result[j]);
+      }
+    }
+
+    Bits res = bv_ite(ult_helper(b, bv_value(BitVector(b.size(), size))),
+                      shift_result,
+                      bv_value(BitVector(size, 0)));
+
+    return res;
+  }
+
   virtual Bits bv_extract(const Bits& bits, size_t upper, size_t lower)
   {
     assert(lower <= upper);
