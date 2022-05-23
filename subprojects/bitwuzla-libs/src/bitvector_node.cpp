@@ -3509,32 +3509,40 @@ BitVectorUlt::inverse_value(const BitVector& t, uint32_t pos_x)
     assert(!x.has_fixed_bits() || !d_children[pos_x]->min_u());
     assert(!x.has_fixed_bits() || !d_children[pos_x]->max_u());
 
-    uint32_t size = s.size();
-    bool is_true  = t.is_true();
-
-    /**
-     * inverse value:
-     *   pos_x = 0: t = 0: random value >= s
-     *              t = 1: random value < s
-     *   pos_x = 1: t = 0: random value <= s
-     *              t = 1: random value > s
-     */
-
-    BitVector min, max;
-    compute_min_max_bounds(s, is_true, pos_x, min, max);
-
-    if (x.has_fixed_bits())
+    if (d_opt_concat && d_children[pos_x]->get_kind() == CONCAT)
     {
-      BitVectorDomainGenerator gen(x, d_rng, min, max);
-      assert(gen.has_random());
-      d_inverse.reset(new BitVector(gen.random()));
+      d_inverse.reset(inverse_value_concat(t.is_true(), pos_x, pos_s));
     }
-    else
+    if (d_inverse == nullptr)
     {
-      d_inverse.reset(new BitVector(size, *d_rng, min, max));
+      uint32_t size = s.size();
+      bool is_true  = t.is_true();
+
+      /**
+       * inverse value:
+       *   pos_x = 0: t = 0: random value >= s
+       *              t = 1: random value < s
+       *   pos_x = 1: t = 0: random value <= s
+       *              t = 1: random value > s
+       */
+
+      BitVector min, max;
+      compute_min_max_bounds(s, is_true, pos_x, min, max);
+
+      if (x.has_fixed_bits())
+      {
+        BitVectorDomainGenerator gen(x, d_rng, min, max);
+        assert(gen.has_random());
+        d_inverse.reset(new BitVector(gen.random()));
+      }
+      else
+      {
+        d_inverse.reset(new BitVector(size, *d_rng, min, max));
+      }
     }
   }
 
+  assert(d_inverse);
   assert(pos_x == 1 || t.compare(d_inverse->bvult(s)) == 0);
   assert(pos_x == 0 || t.compare(s.bvult(*d_inverse)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
@@ -3565,20 +3573,18 @@ BitVectorUlt::inverse_value_concat_new_random(const BitVectorDomain& d,
   return BitVector();
 }
 
-BitVector
+BitVector*
 BitVectorUlt::inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s)
 {
   BitVectorNode& op_x = *d_children[pos_x];
-  assert(op_x.get_kind() == BitVectorNode::NodeKind::CONCAT);
+  assert(op_x.get_kind() == CONCAT);
   BitVectorNode& op_s = *d_children[pos_s];
 
   const BitVectorDomain& dx = op_x.domain();
-  bool has_fixed_bits       = dx.has_fixed_bits();
 
-  BitVectorDomain dx0, dx1;
   uint32_t bw_x  = op_x.size();
   uint32_t bw_x0 = op_x[0]->size();
-  uint32_t bw_x1 = op_x[0]->size();
+  uint32_t bw_x1 = op_x[1]->size();
   assert(bw_x - bw_x1 == bw_x0);
 
   const BitVector x = op_x.assignment();
@@ -3587,65 +3593,44 @@ BitVectorUlt::inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s)
   const BitVector s = op_s.assignment();
   BitVector s0      = s.bvextract(bw_x - 1, bw_x1);
   BitVector s1      = s.bvextract(bw_x1 - 1, 0);
+  BitVectorDomain dx0 = dx.bvextract(bw_x - 1, bw_x1);
+  BitVectorDomain dx1 = dx.bvextract(bw_x1 - 1, 0);
 
   BitVector res_x0, res_x1;
-  BitVector res;
-
-  if (has_fixed_bits)
-  {
-    dx0 = dx.bvextract(bw_x - 1, bw_x1);
-    dx1 = dx.bvextract(bw_x1 - 1, 0);
-  }
+  BitVector* res = nullptr;
 
   if (pos_x == 0)
   {
-    /* x0 o x1 < s0 o s1 */
+    /* x0 o x1 < s0 o s1 ---------------------------------------------- */
     if (t)
     {
       assert(!s.is_zero());
 
-      /* x0 > s0 -> pick x0 <= s0 */
-      if (x0.compare(s0) > 0)
+      /* s0 != 0 && x0 >= s0 -> pick x0 < s0 */
+      if (!s0.is_zero() && x0.compare(s0) >= 0)
       {
-        res_x0 = inverse_value_concat_new_random(
-            dx0, BitVector::mk_zero(bw_x0), s1.is_zero() ? s0.bvdec() : s0);
-      }
-      /* x0 == s0 && s1 == zero -> pick x0 < s0 */
-      else if (x0.compare(s0) == 0 && s1.is_zero())
-      {
-        assert(!s0.is_zero());
         res_x0 = inverse_value_concat_new_random(
             dx0, BitVector::mk_zero(bw_x0), s0.bvdec());
-      }
-      else
-      {
-        res_x0 = x0;
-      }
-
-      if (!res_x0.is_null())
-      {
-        assert(res_x0.compare(s0) <= 0);
-
-        /* If x0 == s0 && x1 >= s1 -> pick x1 < s1 */
-        if (res_x0.compare(s0) == 0 && x1.compare(s1) >= 0)
+        if (!res_x0.is_null())
         {
-          assert(!s1.is_zero());
-          res_x1 = inverse_value_concat_new_random(
-              dx1, BitVector::mk_zero(bw_x1), s1.bvdec());
+          res_x0.ibvconcat(x1);
+          if (res_x0.compare(s) < 0) res = new BitVector(res_x0);
         }
-        else
-        {
-          res_x1 = x1;
-        }
+      }
 
+      /* s1 != 0 && x0 == s0 && x1 >= s1 -> pick x1 < s1 */
+      if (!s1.is_zero() && x0.compare(s0) == 0 && x1.compare(s1) >= 0)
+      {
+        res_x1 = inverse_value_concat_new_random(
+            dx1, BitVector::mk_zero(bw_x1), s1.bvdec());
         if (!res_x1.is_null())
         {
-          res = res_x0.bvconcat(res_x1);
-          assert(res.compare(s) < 0);
+          res_x1.ibvconcat(x0, res_x1);
+          if (res_x1.compare(s) < 0) res = new BitVector(res_x1);
         }
       }
     }
-    /* x0 o x1 >= s0 o s1 */
+    /* x0 o x1 >= s0 o s1 --------------------------------------------- */
     else
     {
       /* x0 < s0 -> pick x0 >= s0 */
@@ -3653,31 +3638,22 @@ BitVectorUlt::inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s)
       {
         res_x0 =
             inverse_value_concat_new_random(dx0, s0, BitVector::mk_ones(bw_x0));
-      }
-      else
-      {
-        res_x0 = x0;
-      }
-
-      if (!res_x0.is_null())
-      {
-        assert(res_x0.compare(s0) >= 0);
-
-        /* x0 == s0 && x1 < s1 -> pick x1 >= s1 */
-        if (res_x0.compare(s0) == 0 && x1.compare(s1) < 0)
+        if (!res_x0.is_null())
         {
-          res_x1 = inverse_value_concat_new_random(
-              dx1, s1, BitVector::mk_ones(bw_x1));
+          res_x0.ibvconcat(x1);
+          if (res_x0.compare(s) >= 0) res = new BitVector(res_x0);
         }
-        else
-        {
-          res_x1 = x1;
-        }
+      }
 
+      /* x0 == s0 && x1 < s1 -> pick x1 >= s1 */
+      if (x0.compare(s0) == 0 && x1.compare(s1) < 0)
+      {
+        res_x1 =
+            inverse_value_concat_new_random(dx1, s1, BitVector::mk_ones(bw_x1));
         if (!res_x1.is_null())
         {
-          res = res_x0.bvconcat(res_x1);
-          assert(res.compare(s) >= 0);
+          res_x1.ibvconcat(x0, res_x1);
+          if (res_x1.compare(s) >= 0) res = new BitVector(res_x1);
         }
       }
     }
@@ -3689,44 +3665,28 @@ BitVectorUlt::inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s)
     {
       assert(!s.is_ones());
 
-      /* x0 < s0 -> pick x0 >= s0 */
-      if (x0.compare(s0) < 0)
+      /* x0 <= s0 -> pick x0 > s0 */
+      if (!s0.is_ones() && x0.compare(s0) < 0)
       {
-        res_x0 = inverse_value_concat_new_random(
-            dx0, s1.is_ones() ? s0.bvinc() : s0, BitVector::mk_ones(bw_x0));
-      }
-      /* x0 == s0 && s1 == ones -> pick x0 > s0 */
-      else if (x0.compare(s0) == 0 && s1.is_ones())
-      {
-        assert(!s0.is_ones());
         res_x0 = inverse_value_concat_new_random(
             dx0, s0.bvinc(), BitVector::mk_ones(bw_x0));
-      }
-      else
-      {
-        res_x0 = x0;
-      }
-
-      if (!res_x0.is_null())
-      {
-        assert(res_x0.compare(s0) >= 0);
-
-        /* x0 == s0 && x1 < s1 -> pick x1 > s1 */
-        if (res_x0.compare(s0) == 0 && x1.compare(s1) <= 0)
+        if (!res_x0.is_null())
         {
-          assert(!s1.is_ones());
-          res_x1 = inverse_value_concat_new_random(
-              dx1, s1.bvinc(), BitVector::mk_ones(bw_x1));
+          res_x0.ibvconcat(x1);
+          if (s.compare(res_x0) < 0) res = new BitVector(res_x0);
         }
-        else
-        {
-          res_x1 = x1;
-        }
+      }
 
+      /* !s1.is_ones() && x0 == s0 && x1 <= s1 -> pick x1 > s1 */
+      if (x0.compare(s0) == 0 && !s1.is_ones() && x1.compare(s1) <= 0)
+      {
+        assert(!s1.is_ones());
+        res_x1 = inverse_value_concat_new_random(
+            dx1, s1.bvinc(), BitVector::mk_ones(bw_x1));
         if (!res_x1.is_null())
         {
-          res = res_x0.bvconcat(res_x1);
-          assert(s.compare(res) < 0);
+          res_x1.ibvconcat(x0, res_x1);
+          if (s.compare(res_x1) < 0) res = new BitVector(res_x1);
         }
       }
     }
@@ -3738,31 +3698,22 @@ BitVectorUlt::inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s)
       {
         res_x0 =
             inverse_value_concat_new_random(dx0, BitVector::mk_zero(bw_x0), s0);
-      }
-      else
-      {
-        res_x0 = x0;
-      }
-
-      if (!res_x0.is_null())
-      {
-        assert(s0.compare(res_x0) >= 0);
-
-        /* s0 == x0 && s1 < x1 -> pick x1 <= s1 */
-        if (s0.compare(res_x0) == 0 && s1.compare(x1) < 0)
+        if (!res_x0.is_null())
         {
-          res_x1 = inverse_value_concat_new_random(
-              dx1, BitVector::mk_zero(bw_x1), s1);
+          res_x0.ibvconcat(x1);
+          if (s.compare(res_x0) >= 0) res = new BitVector(res_x0);
         }
-        else
-        {
-          res_x1 = x1;
-        }
+      }
 
+      /* s0 == x0 && s1 < x1 -> pick x1 <= s1 */
+      if (x0.compare(s0) == 0 && s1.compare(x1) < 0)
+      {
+        res_x1 =
+            inverse_value_concat_new_random(dx1, BitVector::mk_zero(bw_x1), s1);
         if (!res_x1.is_null())
         {
-          res = res_x0.bvconcat(res_x1);
-          assert(s.compare(res) >= 0);
+          res_x1.ibvconcat(x0, res_x1);
+          if (s.compare(res_x1) >= 0) res = new BitVector(res_x1);
         }
       }
     }
