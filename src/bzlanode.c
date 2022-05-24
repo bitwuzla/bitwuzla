@@ -3080,42 +3080,11 @@ bzla_node_create_cond(Bzla *bzla,
                       BzlaNode *e_if,
                       BzlaNode *e_else)
 {
-  uint32_t i, arity;
-  BzlaNode *e[3], *cond, *lambda;
-  BzlaNodePtrStack params;
-  BzlaSort *sort;
+  BzlaNode *e[3];
   e[0] = bzla_simplify_exp(bzla, e_cond);
   e[1] = bzla_simplify_exp(bzla, e_if);
   e[2] = bzla_simplify_exp(bzla, e_else);
   assert(bzla_dbg_precond_cond_exp(bzla, e[0], e[1], e[2]));
-
-  /* represent parameterized function conditionals (with parameterized
-   * functions) as parameterized function
-   * -> gets beta reduced in bzla_node_create_apply */
-  if (bzla_node_is_fun(e[1]) && (e[1]->parameterized || e[2]->parameterized))
-  {
-    BZLA_INIT_STACK(bzla->mm, params);
-    assert(bzla_sort_is_fun(bzla, bzla_node_get_sort_id(e[1])));
-    arity = bzla_node_fun_get_arity(bzla, e[1]);
-    sort  = bzla_sort_get_by_id(bzla, bzla_node_get_sort_id(e[1]));
-    assert(sort->fun.domain->kind == BZLA_TUPLE_SORT);
-    assert(sort->fun.domain->tuple.num_elements == arity);
-    for (i = 0; i < arity; i++)
-      BZLA_PUSH_STACK(
-          params,
-          bzla_exp_param(bzla, sort->fun.domain->tuple.elements[i]->id, 0));
-    e[1]   = bzla_exp_apply_n(bzla, e[1], params.start, arity);
-    e[2]   = bzla_exp_apply_n(bzla, e[2], params.start, arity);
-    cond   = create_exp(bzla, BZLA_COND_NODE, 3, e);
-    lambda = bzla_exp_fun(bzla, params.start, arity, cond);
-    while (!BZLA_EMPTY_STACK(params))
-      bzla_node_release(bzla, BZLA_POP_STACK(params));
-    bzla_node_release(bzla, e[1]);
-    bzla_node_release(bzla, e[2]);
-    bzla_node_release(bzla, cond);
-    BZLA_RELEASE_STACK(params);
-    return lambda;
-  }
   return create_exp(bzla, BZLA_COND_NODE, 3, e);
 }
 
@@ -3204,7 +3173,7 @@ bzla_node_create_apply(Bzla *bzla, BzlaNode *fun, BzlaNode *args)
 
   assert(bzla_node_is_regular(e[0]));
   assert(bzla_node_is_regular(e[1]));
-  assert(bzla_node_is_fun(e[0]));
+  assert(bzla_node_is_fun(e[0]) || bzla_node_is_array(e[0]));
   assert(bzla_node_is_args(e[1]));
 
   /* eliminate nested functions */
@@ -3215,8 +3184,6 @@ bzla_node_create_apply(Bzla *bzla, BzlaNode *fun, BzlaNode *args)
     bzla_beta_unassign_params(bzla, e[0]);
     return result;
   }
-  assert(!bzla_node_is_fun_cond(e[0])
-         || (!e[0]->e[1]->parameterized && !e[0]->e[2]->parameterized));
   return create_exp(bzla, BZLA_APPLY_NODE, 2, e);
 }
 
@@ -3276,14 +3243,6 @@ bzla_node_create_update(Bzla *bzla,
   assert(bzla_node_is_fun(e[0]));
   assert(bzla_node_is_args(e[1]));
   assert(!bzla_node_is_fun(e[2]));
-
-  if (bzla_node_real_addr(e[0])->parameterized
-      || bzla_node_real_addr(e[1])->parameterized
-      || bzla_node_real_addr(e[2])->parameterized)
-  {
-    assert(bzla_node_args_get_arity(bzla, args) == 1);
-    return bzla_exp_lambda_write(bzla, fun, args->e[0], value);
-  }
 
   res = create_exp(bzla, BZLA_UPDATE_NODE, 3, e);
   if (fun->is_array) res->is_array = 1;

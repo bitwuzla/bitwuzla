@@ -1878,6 +1878,12 @@ propagate(Bzla *bzla,
       assert(bzla_node_is_apply(fun_value));
       BZLA_PUSH_STACK(*prop_stack, app);
       BZLA_PUSH_STACK(*prop_stack, bzla_node_real_addr(fun_value)->e[0]);
+      if (!bzla_hashptr_table_get(cleanup_table, BZLA_TOP_STACK(*prop_stack)))
+      {
+        bzla_hashptr_table_add(
+            cleanup_table, bzla_node_copy(bzla, BZLA_TOP_STACK(*prop_stack)))
+            ->data.flag = true;
+      }
       slv->stats.propagations_down++;
       app->propagated = 0;
       BZLALOG(1, "  propagate down: %s", bzla_util_node2string(app));
@@ -2392,6 +2398,7 @@ check_and_resolve_conflicts(Bzla *bzla,
   bzla_iter_hashptr_init(&pit, cleanup_table);
   while (bzla_iter_hashptr_has_next(&pit))
   {
+    BzlaPtrHashBucket *b = pit.bucket;
     cur = bzla_iter_hashptr_next(&pit);
     assert(bzla_node_is_regular(cur));
     if (bzla_node_is_apply(cur))
@@ -2417,6 +2424,14 @@ check_and_resolve_conflicts(Bzla *bzla,
          * premature release in case that function is released via API
          * call) */
         BZLA_PUSH_STACK(bzla->functions_with_model, bzla_node_copy(bzla, cur));
+      }
+
+      /* If flag is set we have to decrease the reference count (function
+       * created while beta reducing). */
+      if (b->data.flag)
+      {
+        bzla_node_release(bzla, cur);
+        continue;
       }
     }
   }

@@ -2723,20 +2723,11 @@ bzla_exp_write(Bzla *bzla,
   e_value = bzla_simplify_exp(bzla, e_value);
   assert(bzla_dbg_precond_write_exp(bzla, e_array, e_index, e_value));
 
-  if (bzla_opt_get(bzla, BZLA_OPT_FUN_STORE_LAMBDAS)
-      || bzla_node_real_addr(e_index)->parameterized
-      || bzla_node_real_addr(e_value)->parameterized)
-  {
-    return bzla_exp_lambda_write(bzla, e_array, e_index, e_value);
-  }
-  else
-  {
-    BzlaNode *args = bzla_exp_args(bzla, &e_index, 1);
-    BzlaNode *res  = bzla_exp_update(bzla, e_array, args, e_value);
-    bzla_node_release(bzla, args);
-    res->is_array = 1;
-    return res;
-  }
+  BzlaNode *args = bzla_exp_args(bzla, &e_index, 1);
+  BzlaNode *res  = bzla_exp_update(bzla, e_array, args, e_value);
+  bzla_node_release(bzla, args);
+  res->is_array = 1;
+  return res;
 }
 
 /*------------------------------------------------------------------------*/
