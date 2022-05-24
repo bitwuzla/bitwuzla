@@ -2945,8 +2945,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
   bzla->bzla_sat_bzla_called++;
   bzla->valid_assignments = 1;
 
-  if (bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS) && res == BZLA_RESULT_SAT
-      && bzla->quantifiers->count == 0)
+  if (bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS) && res == BZLA_RESULT_SAT)
   {
     switch (bzla_opt_get(bzla, BZLA_OPT_ENGINE))
     {

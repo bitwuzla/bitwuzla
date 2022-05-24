@@ -3331,6 +3331,8 @@ bitwuzla_print_model(Bitwuzla *bitwuzla, const char *format, FILE *file)
              format);
 
   Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  BZLA_ABORT(bzla->quantifiers->count,
+             "model printing is currently not supported with quantifiers");
   BZLA_CHECK_OPT_PRODUCE_MODELS(bzla);
   BZLA_CHECK_SAT(bzla, "print model");
   bzla_print_model(bzla, format, file);
