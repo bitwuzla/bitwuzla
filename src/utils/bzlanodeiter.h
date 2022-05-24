@@ -47,6 +47,7 @@ BzlaNode *bzla_iter_lambda_next(BzlaNodeIterator *it);
 
 void bzla_iter_binder_init(BzlaNodeIterator *it, BzlaNode *exp);
 bool bzla_iter_binder_has_next(const BzlaNodeIterator *it);
+bool bzla_iter_binder_has_next_inverted(const BzlaNodeIterator *it);
 BzlaNode *bzla_iter_binder_next(BzlaNodeIterator *it);
 
 #if 0

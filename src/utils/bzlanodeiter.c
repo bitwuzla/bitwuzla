@@ -161,6 +161,14 @@ bzla_iter_binder_has_next(const BzlaNodeIterator *it)
   return !bzla_node_is_inverted(it->cur) && bzla_node_is_binder(it->cur);
 }
 
+bool
+bzla_iter_binder_has_next_inverted(const BzlaNodeIterator *it)
+{
+  assert(it);
+  assert(it->cur);
+  return !bzla_node_is_inverted(it->cur) && bzla_node_is_binder(it->cur);
+}
+
 void
 bzla_iter_lambda_init(BzlaNodeIterator *it, BzlaNode *exp)
 {

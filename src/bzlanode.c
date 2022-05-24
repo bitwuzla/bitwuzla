@@ -2097,7 +2097,7 @@ compare_binder_exp(Bzla *bzla,
 
   int32_t i, equal = 0;
   BzlaMemMgr *mm;
-  BzlaNode *cur, *real_cur, *result, *subst_param, **e, *b0, *b1;
+  BzlaNode *cur, *real_cur, *result, *subst_param, **e, *b0, *b1, *binder_body;
   BzlaPtrHashTable *cache, *param_map;
   BzlaPtrHashBucket *b, *bb;
   BzlaNodePtrStack stack, args;
@@ -2109,9 +2109,12 @@ compare_binder_exp(Bzla *bzla,
 
   if (bzla_node_get_sort_id(subst_param) != bzla_node_get_sort_id(param)
       || bzla_node_get_sort_id(body) != bzla_node_get_sort_id(binder->e[1]))
+  {
     return 0;
+  }
 
   cache = bzla_hashptr_table_new(mm, 0, 0);
+  binder_body = bzla_node_binder_get_body(binder);
 
   /* create param map */
   param_map = bzla_hashptr_table_new(mm, 0, 0);
@@ -2133,16 +2136,18 @@ compare_binder_exp(Bzla *bzla,
   {
     bzla_iter_binder_init(&it, bzla_node_real_addr(body));
     bzla_iter_binder_init(&iit, bzla_node_real_addr(binder->e[1]));
-    while (bzla_iter_binder_has_next(&it))
+    while (bzla_iter_binder_has_next_inverted(&it))
     {
-      if (!bzla_iter_binder_has_next(&iit)) goto NOT_EQUAL;
+      if (!bzla_iter_binder_has_next_inverted(&iit)) goto NOT_EQUAL;
 
-      b0 = bzla_iter_binder_next(&it);
-      b1 = bzla_iter_binder_next(&iit);
+      b0 = bzla_node_real_addr(bzla_iter_binder_next(&it));
+      b1 = bzla_node_real_addr(bzla_iter_binder_next(&iit));
 
       if (bzla_node_get_sort_id(b0) != bzla_node_get_sort_id(b1)
           || b0->kind != b1->kind)
+      {
         goto NOT_EQUAL;
+      }
 
       param       = b0->e[0];
       subst_param = b1->e[0];
@@ -2152,14 +2157,20 @@ compare_binder_exp(Bzla *bzla,
       assert(bzla_node_is_param(subst_param));
 
       if (bzla_node_get_sort_id(param) != bzla_node_get_sort_id(subst_param))
+      {
         goto NOT_EQUAL;
+      }
 
       bzla_hashptr_table_add(param_map, param)->data.as_ptr = subst_param;
+
+      body = bzla_node_binder_get_body(b0);
+      binder_body = bzla_node_binder_get_body(b1);
     }
-    body = bzla_node_binder_get_body(bzla_node_real_addr(body));
   }
   else if (bzla_node_is_binder(body) || bzla_node_is_binder(binder->e[1]))
+  {
     goto NOT_EQUAL;
+  }
 
   BZLA_INIT_STACK(mm, args);
   BZLA_INIT_STACK(mm, stack);
@@ -2300,7 +2311,9 @@ compare_binder_exp(Bzla *bzla,
   assert(BZLA_COUNT_STACK(args) <= 1);
 
   if (!BZLA_EMPTY_STACK(args))
-    equal = BZLA_TOP_STACK(args) == bzla_node_binder_get_body(binder);
+  {
+    equal = BZLA_TOP_STACK(args) == binder_body;
+  }
 
   BZLA_RELEASE_STACK(stack);
   BZLA_RELEASE_STACK(args);
