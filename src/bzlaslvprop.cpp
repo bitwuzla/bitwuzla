@@ -56,7 +56,8 @@ class PropSolverState
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_NPROPS),
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_NUPDATES),
         bzla_opt_get(d_bzla, BZLA_OPT_SEED),
-        bzla_opt_get(d_bzla, BZLA_OPT_PROP_INFER_INEQ_BOUNDS)));
+        bzla_opt_get(d_bzla, BZLA_OPT_PROP_INFER_INEQ_BOUNDS),
+        bzla_opt_get(d_bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT)));
     d_ls->set_log_level(bzla_opt_get(d_bzla, BZLA_OPT_LOGLEVEL));
   }
 
