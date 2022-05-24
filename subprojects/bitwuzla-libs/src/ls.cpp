@@ -55,11 +55,14 @@ struct LocalSearchMove
 LocalSearch::LocalSearch(uint64_t max_nprops,
                          uint64_t max_nupdates,
                          uint32_t seed,
-                         bool ineq_bounds)
+                         bool ineq_bounds,
+                         bool opt_ult_concat)
     : d_max_nprops(max_nprops),
       d_max_nupdates(max_nupdates),
       d_seed(seed),
-      d_ineq_bounds(ineq_bounds)
+      d_ineq_bounds(ineq_bounds),
+      d_opt_ult_concat(opt_ult_concat)
+
 {
   d_rng.reset(new RNG(d_seed));
   d_one.reset(new BitVector(BitVector::mk_one(1)));
@@ -190,8 +193,11 @@ LocalSearch::mk_node(OperatorKind kind,
       break;
     case ULT:
       assert(children.size() == 2);  // API check
-      res.reset(new BitVectorUlt(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
+      res.reset(new BitVectorUlt(d_rng.get(),
+                                 domain,
+                                 get_node(children[0]),
+                                 get_node(children[1]),
+                                 d_opt_ult_concat));
       break;
     case UREM:
       assert(children.size() == 2);  // API check

@@ -138,8 +138,9 @@ class LocalSearch
 
   LocalSearch(uint64_t max_nprops,
               uint64_t max_nupdates,
-              uint32_t seed    = 1234,
-              bool ineq_bounds = false);
+              uint32_t seed       = 1234,
+              bool ineq_bounds    = false,
+              bool opt_ult_concat = false);
   ~LocalSearch();
 
   void set_max_nprops(uint64_t max) { d_max_nprops = max; }
@@ -289,6 +290,11 @@ class LocalSearch
    * computation.
    */
   bool d_ineq_bounds = false;
+  /**
+   * True to enable optimization for inverse_value computation of ult over
+   * concat operands.
+   */
+  bool d_opt_ult_concat = false;
 
   /** The set of now true roots to update in update_roots_ineq_bounds(). */
   std::unordered_set<BitVectorNode*> d_true_roots_to_update;
