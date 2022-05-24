@@ -3033,9 +3033,6 @@ bitwuzla_check_sat(Bitwuzla *bitwuzla)
   {
     BZLA_CHECK_OPT_INCREMENTAL(bzla);
   }
-  BZLA_ABORT(
-      bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL) && bzla->quantifiers->count,
-      "incremental solving is currently not supported with quantifiers");
 
   BzlaSolverResult bzla_res = bzla_check_sat(bzla, -1, -1);
   if (bzla_res == BZLA_RESULT_SAT) return BITWUZLA_SAT;
