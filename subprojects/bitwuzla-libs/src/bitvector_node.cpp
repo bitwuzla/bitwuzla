@@ -471,28 +471,102 @@ BitVectorAnd::is_invertible(const BitVector& t,
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
+  BitVector* min_u         = d_children[pos_x]->min_u();
+  BitVector* max_u         = d_children[pos_x]->max_u();
+  BitVector* min_s         = d_children[pos_x]->min_s();
+  BitVector* max_s         = d_children[pos_x]->max_s();
 
   /** IC_wo: (t & s) = t */
-  bool ic_wo = t.bvand(s).compare(t) == 0;
+  bool res = t.bvand(s).compare(t) == 0;
 
   /**
    * IC: IC_wo && ((s & hi_x) & m) = (t & m)
    *     with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits
    */
-  if (ic_wo && x.has_fixed_bits())
+  if (res && x.has_fixed_bits())
   {
-    if (x.is_fixed())
+    if (x.is_fixed() && x.lo().bvand(s).compare(t) != 0)
     {
-      if (x.lo().bvand(s).compare(t) == 0)
-      {
-        return true;
-      }
       return false;
     }
     BitVector mask = x.lo().bvxnor(x.hi());
-    return s.bvand(x.hi()).ibvand(mask).compare(t.bvand(mask)) == 0;
+    res            = s.bvand(x.hi()).ibvand(mask).compare(t.bvand(mask)) == 0;
   }
-  return ic_wo;
+
+  /**
+   * Check bounds. We determine the lo and hi values wrt to the target values
+   * and the domain of x, and check:
+   *   min_u <= hi
+   *   max_u >= lo
+   *   min_s <=s hi
+   *   max_s >=s lo
+   * Note: Right now, we only consider either the unsigned (preferred) or
+   *       signed bounds. If both are set, only unsigned is considered.
+   */
+  if (res && (min_u || max_u))
+  {
+    BitVector lo = x.lo().bvor(t);
+    BitVector hi = x.hi().bvand(s.bvxnor(t));
+    if (lo.compare(hi) == 0)
+    {
+      if (min_u && lo.compare(*min_u) < 0) return false;
+      if (max_u && lo.compare(*max_u) > 0) return false;
+      if (find_inverse)
+      {
+        d_inverse.reset(new BitVector(lo));
+      }
+      return true;
+    }
+
+    BitVectorDomain tmp(lo, hi);
+    BitVectorDomainGenerator gen(tmp,
+                                 d_rng,
+                                 min_u ? *min_u : BitVector::mk_zero(t.size()),
+                                 max_u ? *max_u : BitVector::mk_ones(t.size()));
+    if (!gen.has_random())
+    {
+      return false;
+    }
+    if (find_inverse)
+    {
+      d_inverse.reset(new BitVector(gen.random()));
+    }
+    return true;
+  }
+
+  if (res && (min_s || max_s))
+  {
+    BitVector lo = x.lo().bvor(t);
+    BitVector hi = x.hi().bvand(s.bvxnor(t));
+    if (lo.compare(hi) == 0)
+    {
+      if (min_s && lo.signed_compare(*min_s) < 0) return false;
+      if (max_s && lo.signed_compare(*max_s) > 0) return false;
+      if (find_inverse)
+      {
+        d_inverse.reset(new BitVector(lo));
+      }
+      return true;
+    }
+
+    BitVectorDomain tmp(lo, hi);
+    BitVectorDomainSignedGenerator gen(
+        tmp,
+        d_rng,
+        min_s ? *min_s : BitVector::mk_min_signed(t.size()),
+        max_s ? *max_s : BitVector::mk_max_signed(t.size()));
+    if (!gen.has_random())
+    {
+      return false;
+    }
+    if (find_inverse)
+    {
+      d_inverse.reset(new BitVector(gen.random()));
+    }
+    return true;
+  }
+
+  return res;
 }
 
 bool
@@ -511,28 +585,29 @@ BitVectorAnd::is_consistent(const BitVector& t, uint32_t pos_x)
 const BitVector&
 BitVectorAnd::inverse_value(const BitVector& t, uint32_t pos_x)
 {
-  assert(d_inverse == nullptr);
-
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
 
-  /** inverse value: (t & s) | (~s & rand) */
+  if (d_inverse == nullptr)
+  {
+    /** inverse value: (t & s) | (~s & rand) */
 
-  uint32_t size = t.size();
-  BitVector rand;
-  if (x.has_fixed_bits())
-  {
-    BitVectorDomainGenerator gen(x, d_rng);
-    assert(gen.has_random());
-    rand = gen.random();
+    uint32_t size = t.size();
+    BitVector rand;
+    if (x.has_fixed_bits())
+    {
+      BitVectorDomainGenerator gen(x, d_rng);
+      assert(gen.has_random());
+      rand = gen.random();
+    }
+    else
+    {
+      rand = BitVector(size, *d_rng);
+    }
+    d_inverse.reset(new BitVector(t.bvand(s).bvor(s.bvnot().ibvand(rand))));
   }
-  else
-  {
-    rand = BitVector(size, *d_rng);
-  }
-  d_inverse.reset(new BitVector(t.bvand(s).bvor(s.bvnot().ibvand(rand))));
 
   assert(t.compare(d_inverse->bvand(s)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
