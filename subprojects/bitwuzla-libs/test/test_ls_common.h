@@ -90,6 +90,12 @@ class TestBvNode : public TestBvNodeCommon
     IS_ESS,
     IS_INV,
   };
+  enum BoundsKind
+  {
+    NONE,
+    SIGNED,
+    UNSIGNED,
+  };
 
   bool check_sat_binary(Kind kind,
                         OpKind op_kind,
@@ -143,7 +149,7 @@ class TestBvNode : public TestBvNodeCommon
   void test_binary(Kind kind,
                    OpKind op_kind,
                    uint32_t pos_x,
-                   bool use_bounds = false);
+                   BoundsKind bounds_kind = NONE);
   void test_ite(Kind kind, uint32_t pos_x);
   void test_not(Kind kind);
   void test_extract(Kind kind);
@@ -457,7 +463,7 @@ void
 TestBvNode::test_binary(Kind kind,
                         OpKind op_kind,
                         uint32_t pos_x,
-                        bool use_bounds)
+                        TestBvNode::BoundsKind bounds_kind)
 {
   uint32_t bw_x = TEST_BW;
   uint32_t bw_s = TEST_BW;
@@ -557,9 +563,7 @@ TestBvNode::test_binary(Kind kind,
             x_val = gen.random();
           }
 
-          bool is_signed = op_kind == SDIV || op_kind == SGT || op_kind == SGE
-                           || op_kind == SLT || op_kind == SLE
-                           || op_kind == SREM;
+          bool use_bounds  = bounds_kind != NONE;
           uint32_t n_tests = 0;
           std::unique_ptr<BitVector> min, max;
           do
@@ -579,8 +583,9 @@ TestBvNode::test_binary(Kind kind,
                  pos_x == 0 ? op_x.get() : op_s.get(),
                  pos_x == 1 ? op_x.get() : op_s.get());
 
-            if (use_bounds)
+            if (bounds_kind != NONE)
             {
+              bool is_signed = bounds_kind == SIGNED;
               min.reset(new BitVector(bw_x, *d_rng.get()));
               max.reset(new BitVector(bw_x,
                                       *d_rng.get(),
@@ -604,7 +609,7 @@ TestBvNode::test_binary(Kind kind,
                                              pos_x,
                                              min.get(),
                                              max.get(),
-                                             is_signed);
+                                             bounds_kind == SIGNED);
               if (res != status)
               {
                 std::cout << "pos_x: " << pos_x << std::endl;
