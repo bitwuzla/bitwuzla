@@ -300,6 +300,22 @@ class BitblasterInterface
     return Bits{res};
   }
 
+  /* Arithmetic */
+
+  virtual Bits bv_add(const Bits& a, const Bits& b)
+  {
+    Bits res;
+    size_t size = a.size();
+    res.resize(size);
+
+    T cout = d_bit_mgr.mk_false();
+    for (size_t i = 0, j = size - 1; i < size; ++i, --j)
+    {
+      std::tie(res[j], cout) = full_adder(a[j], b[j], cout);
+    }
+    return res;
+  }
+
   /**
    * Bit-blast if-then-else over bit-vectors `a` and `b` of size k, and a
    * condition `cond` of size 1.
@@ -332,6 +348,37 @@ class BitblasterInterface
               res));
     }
     return res;
+  }
+
+  /**
+   * Create half adder of `a` and `b`.
+   *
+   * Returns a pair consisting of the sum of the two bits and the carry out bit.
+   */
+  std::pair<T, T> half_adder(const T& a, const T& b)
+  {
+    // Carry out bit
+    T a_and_b = d_bit_mgr.mk_and(a, b);
+
+    // Sum of a and b: a xor b
+    T a_or_b = d_bit_mgr.mk_or(a, b);
+    T a_xor_b = d_bit_mgr.mk_and(d_bit_mgr.mk_not(a_and_b), a_or_b);
+
+    // Return <sum, carry bit>
+    return std::make_pair(a_xor_b, a_and_b);
+  }
+
+  /**
+   * Create full adder of `a`, `b` and carry bit `carry_in`.
+   *
+   * Returns a pair consisting of the sum of a, b, and carry_in, and the carry
+   * out bit.
+   */
+  std::pair<T, T> full_adder(const T& a, const T& b, const T& carry_in)
+  {
+    auto [sum, cout1] = half_adder(a, b);
+    auto [res, cout2] = half_adder(sum, carry_in);
+    return std::make_pair(res, d_bit_mgr.mk_or(cout1, cout2));
   }
 
   BitInterface<T> d_bit_mgr;

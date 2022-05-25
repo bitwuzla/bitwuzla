@@ -271,6 +271,22 @@ TEST_F(TestAigBitblaster, bv_slt16) { TEST_BIN_OP(16, "bvslt", bv_slt); }
 
 TEST_F(TestAigBitblaster, bv_slt32) { TEST_BIN_OP(32, "bvslt", bv_slt); }
 
+TEST_F(TestAigBitblaster, bv_add)
+{
+  bb::AigBitblaster bb;
+  auto a      = bb.bv_constant(32);
+  auto b      = bb.bv_constant(32);
+  auto bb_add = bb.bv_add(a, b);
+
+  ASSERT_EQ(bb_add, bb.bv_add(b, a));
+}
+
+TEST_F(TestAigBitblaster, bv_add1) { TEST_BIN_OP(1, "bvadd", bv_add); }
+
+TEST_F(TestAigBitblaster, bv_add16) { TEST_BIN_OP(16, "bvadd", bv_add); }
+
+TEST_F(TestAigBitblaster, bv_add32) { TEST_BIN_OP(32, "bvadd", bv_add); }
+
 TEST_F(TestAigBitblaster, bv_ite) {
 
   bb::AigBitblaster bb;
