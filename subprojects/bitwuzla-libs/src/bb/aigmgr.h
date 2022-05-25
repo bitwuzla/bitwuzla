@@ -25,6 +25,7 @@ class AigNode
   friend class AigNodeData;
 
  public:
+  AigNode() = default;
   ~AigNode();
   AigNode(const AigNode& other);
   AigNode& operator=(const AigNode& other);
@@ -51,7 +52,6 @@ class AigNode
   static const int64_t s_true_id = 1;
 
   // Should only be constructed via AigManager
-  AigNode() = default;
   AigNode(AigNodeData* data, bool negated = false);
 
   bool is_null() const;

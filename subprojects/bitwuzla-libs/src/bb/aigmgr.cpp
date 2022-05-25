@@ -324,34 +324,32 @@ AigManager::garbage_collect(AigNodeData* d)
   {
     cur = visit.back();
     visit.pop_back();
+    assert(cur->d_refs == 0);
 
-    if (cur->d_refs == 0)
+    // Decrement reference counts for children of AND nodes
+    if (!cur->d_left.is_null())
     {
-      // Decrement reference counts for children of AND nodes
-      if (!cur->d_left.is_null())
+      assert(!cur->d_right.is_null());
+
+      data = cur->d_left.d_data;
+      --data->d_refs;
+      cur->d_left.d_data = nullptr;
+      if (data->d_refs == 0)
       {
-        assert(!cur->d_right.is_null());
-
-        data = cur->d_left.d_data;
-        --data->d_refs;
-        cur->d_left.d_data = nullptr;
-        if (data->d_refs == 0)
-        {
-          visit.push_back(data);
-        }
-
-        data = cur->d_right.d_data;
-        --data->d_refs;
-        cur->d_right.d_data = nullptr;
-        if (data->d_refs == 0)
-        {
-          visit.push_back(data);
-        }
+        visit.push_back(data);
       }
-      // Delete node data
-      d_unique_ands.erase(cur);
-      d_node_data.erase(cur->d_id);
+
+      data = cur->d_right.d_data;
+      --data->d_refs;
+      cur->d_right.d_data = nullptr;
+      if (data->d_refs == 0)
+      {
+        visit.push_back(data);
+      }
     }
+    // Delete node data
+    d_unique_ands.erase(cur);
+    d_node_data.erase(cur->d_id);
   } while (!visit.empty());
 
   d_gc_mode = false;
