@@ -1,5 +1,5 @@
-#ifndef BZLA__BB_AIGMGR_H
-#define BZLA__BB_AIGMGR_H
+#ifndef BZLA__BITBLAST_AIG_MANAGER_H
+#define BZLA__BITBLAST_AIG_MANAGER_H
 
 #include <cassert>
 #include <cstddef>
@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "bb/bitblast.h"
+#include "bitblast/bitblaster.h"
 
 namespace bzla::bb {
 
@@ -147,8 +147,6 @@ class BitInterface<AigNode>
     uint64_t num_consts = 0;
   } d_statistics;
 };
-
-using AigBitblaster = BitblasterInterface<AigNode>;
 
 }  // namespace bzla::bb
 

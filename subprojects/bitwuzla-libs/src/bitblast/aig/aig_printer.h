@@ -1,7 +1,7 @@
-#ifndef BZLA__BB_AIG_PRINTER_H
-#define BZLA__BB_AIG_PRINTER_H
+#ifndef BZLA__BITBLAST_AIG_AIG_PRINTER_H
+#define BZLA__BITBLAST_AIG_AIG_PRINTER_H
 
-#include <bb/aigmgr.h>
+#include "bitblast/aig/aig_manager.h"
 
 #include <vector>
 

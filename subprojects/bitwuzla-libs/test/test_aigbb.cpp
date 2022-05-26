@@ -1,8 +1,8 @@
 #include <cstdlib>
 #include <filesystem>
 
-#include "bb/aig_printer.h"
-#include "bb/aigmgr.h"
+#include "bitblast/aig_bitblaster.h"
+#include "bitblast/aig/aig_printer.h"
 #include "test.h"
 
 static const char* s_solver_binary = std::getenv("SOLVER_BINARY");

@@ -1,9 +1,9 @@
-#include "bb/aig_printer.h"
+#include "bitblast/aig/aig_printer.h"
 
 #include <sstream>
 #include <vector>
 
-#include "bb/aigmgr.h"
+#include "bitblast/aig/aig_manager.h"
 
 namespace bzla::bb::aig {
 

@@ -1,5 +1,5 @@
-#ifndef BZLA__BB_BITBLAST_H
-#define BZLA__BB_BITBLAST_H
+#ifndef BZLA__BITBLAST_BITBLASTER_H
+#define BZLA__BITBLAST_BITBLASTER_H
 
 #include <cassert>
 #include <cmath>

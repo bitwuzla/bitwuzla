@@ -1,4 +1,4 @@
-#include "bb/aigmgr.h"
+#include "bitblast/aig/aig_manager.h"
 
 namespace bzla::bb {
 
