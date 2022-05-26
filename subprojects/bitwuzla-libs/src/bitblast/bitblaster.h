@@ -47,8 +47,8 @@ class BitblasterInterface
     Bits res;
     for (size_t i = 0, j = bv_value.size() - 1; i < bv_value.size(); ++i)
     {
-      res.emplace_back(bv_value.get_bit(j - i) ? d_bit_mgr.mk_true()
-                                               : d_bit_mgr.mk_false());
+      res.push_back(bv_value.get_bit(j - i) ? d_bit_mgr.mk_true()
+                                            : d_bit_mgr.mk_false());
     }
     return res;
   }
@@ -59,7 +59,7 @@ class BitblasterInterface
     res.reserve(size);
     for (size_t i = 0; i < size; ++i)
     {
-      res.emplace_back(d_bit_mgr.mk_bit());
+      res.push_back(d_bit_mgr.mk_bit());
     }
     return res;
   }
@@ -72,7 +72,7 @@ class BitblasterInterface
     res.reserve((bits.size()));
     for (const T& bit : bits)
     {
-      res.emplace_back(d_bit_mgr.mk_not(bit));
+      res.push_back(d_bit_mgr.mk_not(bit));
     }
     return res;
   }
@@ -84,7 +84,7 @@ class BitblasterInterface
     res.reserve(a.size());
     for (size_t i = 0; i < a.size(); ++i)
     {
-      res.emplace_back(d_bit_mgr.mk_and(a[i], b[i]));
+      res.push_back(d_bit_mgr.mk_and(a[i], b[i]));
     }
     return res;
   }
@@ -96,7 +96,7 @@ class BitblasterInterface
     res.reserve(a.size());
     for (size_t i = 0; i < a.size(); ++i)
     {
-      res.emplace_back(d_bit_mgr.mk_or(a[i], b[i]));
+      res.push_back(d_bit_mgr.mk_or(a[i], b[i]));
     }
     return res;
   }
@@ -325,7 +325,7 @@ class BitblasterInterface
 
     for (size_t i = 0; i < size; ++i)
     {
-      res.emplace_back(d_bit_mgr.mk_and(a[i], b[size - 1]));
+      res.push_back(d_bit_mgr.mk_and(a[i], b[size - 1]));
     }
 
     for (size_t i = 1, ib = size - 2; i < size; ++i, --ib)
@@ -344,6 +344,18 @@ class BitblasterInterface
     return res;
   }
 
+  virtual Bits bv_udiv(const Bits& a, const Bits& b)
+  {
+    auto [res, rem] = udiv_urem_helper(a, b);
+    return res;
+  }
+
+  virtual Bits bv_urem(const Bits& a, const Bits& b)
+  {
+    auto [res, rem] = udiv_urem_helper(a, b);
+    return rem;
+  }
+
   /**
    * Bit-blast if-then-else over bit-vectors `a` and `b` of size k, and a
    * condition `cond` of size 1.
@@ -354,7 +366,7 @@ class BitblasterInterface
     res.reserve(a.size());
     for (size_t i = 0; i < a.size(); ++i)
     {
-      res.emplace_back(d_bit_mgr.mk_ite(cond, a[i], b[i]));
+      res.push_back(d_bit_mgr.mk_ite(cond, a[i], b[i]));
     }
     return res;
   }
@@ -407,6 +419,141 @@ class BitblasterInterface
     auto [sum, cout1] = half_adder(a, b);
     auto [res, cout2] = half_adder(sum, carry_in);
     return std::make_pair(res, d_bit_mgr.mk_or(cout1, cout2));
+  }
+
+  T mk_xor(const T& a, const T& b)
+  {
+    return d_bit_mgr.mk_and(d_bit_mgr.mk_or(a, b),
+                            d_bit_mgr.mk_not(d_bit_mgr.mk_and(a, b)));
+  }
+
+  /**
+   * Full adder that only computes the carry bit.
+   *
+   * This gate is used in the first stage of the divider circuit for computing
+   * the quotient bit.
+   *
+   * Returns the carry bit of r + d + c.
+   */
+  T fa_div_carry(const T& r, const T& d, const T& c)
+  {
+    return d_bit_mgr.mk_or(d_bit_mgr.mk_and(d_bit_mgr.mk_or(d, c), r),
+                           d_bit_mgr.mk_and(d, c));
+  }
+
+  /**
+   * Full adder that computes only the sum bit.
+   *
+   * Determines to perform addition based on quotient bit `q`:
+   * q = 1: perform addition of d + c + r
+   * q = 0: no addition performed, return r.
+   *
+   * This gate is used in the second stage of the divider circuit to compute
+   * the remainder for the next iteration.
+   *
+   * Returns the sum bit of (d + c) * q + r
+   */
+  T fa_div_sum(const T& r, const T& d, const T& c, const T& q)
+  {
+    return mk_xor(d_bit_mgr.mk_and(mk_xor(d, c), q), r);
+  }
+
+  /**
+   * Encode shift/subtract divider circuit.
+   *
+   * Returns a pair of bits consisting of the quotient and remainder of the
+   * division operation.
+   */
+  std::pair<Bits, Bits> udiv_urem_helper(const Bits& a, const Bits& b)
+  {
+    // Prepare divisor for subtraction operation: -d == ~d + 1
+    // Note: The divisor is reversed here to have lsb at position 0.
+    Bits d;
+    for (auto it = b.rbegin(); it != b.rend(); ++it)
+    {
+      d.push_back(d_bit_mgr.mk_not(*it));
+    }
+
+    size_t size = a.size();
+    Bits rem, carry, quot;
+    rem.reserve(size + 1);
+    carry.resize(size + 1);
+
+    // Remainder is initially zero.
+    for (size_t i = 0; i <= size; ++i)
+    {
+      rem.push_back(d_bit_mgr.mk_false());
+    }
+
+    // Two-stage subtraction:
+    // For each bit of the dividend starting from the MSB:
+    //
+    // 1) Add ith bit of dividend as MSB of remainder `rem`.
+    //
+    // 1) Compute carry bits when subtracting divisor `d` from current
+    //    remainder `rem`, which determines the current quotient bit.
+    // 2) Perform subtraction operation based on current quotient bit and shift
+    //    remainder by one.
+    //
+    // For example, a = 0111, b = 0010
+    //
+    //   i   rem       d   q
+    //   0   0000             // insert a[0]
+    //             -0010   0  // subtract d, not successful
+    //       0000             // shift
+    //
+    //   1   0001             // insert a[1]
+    //             -0010   0  // subtract d, not successful
+    //       0010             // shift
+    //
+    //   2   0011             // insert a[2]
+    //             -0010   1  // subtract d, successful
+    //       0001             // result
+    //       0010             // shift
+    //
+    //   3   0011             // insert a[3]
+    //             -0010   1  // subtract d, successful
+    //       0001             // remainder
+    //
+    //   remainder: 0001
+    //   quotient:  0011
+    //
+    // Note: In the following, bits of remainder and divisor are reversed to
+    //       keep loop indices simpler.
+    for (size_t i = 0; i < size; i++)
+    {
+      rem[0]   = a[i];
+      carry[0] = d_bit_mgr.mk_true();  // carry is initially 1 due to
+                                       // subtraction (d already inverted)
+
+      // Compute ith quotient bit.
+      //
+      // First stage: Compute carry bits for subtracting divisor `d` from
+      // current remainder `rem`. If `carry[size]` is 1, subtraction was
+      // successful and quotient is 1, else 0.
+      for (size_t j = 0; j < size; ++j)
+      {
+        carry[j + 1] = fa_div_carry(rem[j], d[j], carry[j]);
+      }
+      quot.push_back(carry[size]);
+
+      // Compute remainder for next iteration based on current quotient bit:
+      // ((d + c) * q + r) >> 1.
+      //
+      // Note: Instead of using a full adder that computes the sum and the
+      // carry bit, we can use the carry bits computed in the previous stage to
+      // perform the subtraction operation.
+      T prev_r = rem[0];
+      for (size_t j = 0; j < size; ++j)
+      {
+        T tmp      = fa_div_sum(prev_r, d[j], carry[j], quot[i]);
+        prev_r     = rem[j + 1];
+        rem[j + 1] = tmp;
+      }
+    }
+
+    Bits r(rem.rbegin(), rem.rend() - 1);
+    return std::make_pair(quot, r);
   }
 
   BitInterface<T> d_bit_mgr;

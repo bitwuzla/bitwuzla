@@ -64,7 +64,9 @@ class TestAigBitblaster : public TestCommon
     define_const(ss, "a", a);
     define_const(ss, "b", b);
     define_const(ss, "res", res);
-    ss << "(assert (distinct res (" << op << " a b)))\n";
+    ss << "(declare-const expected (_ BitVec " << res.size() << "))\n";
+    ss << "(assert (= expected (" << op << " a b)))\n";
+    ss << "(assert (distinct res expected))\n";
     ASSERT_EQ("unsat", check_sat(ss));
   }
 
@@ -309,6 +311,50 @@ TEST_F(TestAigBitblaster, bv_mul3) { TEST_BIN_OP(3, "bvmul", bv_mul); }
 TEST_F(TestAigBitblaster, bv_mul4) { TEST_BIN_OP(4, "bvmul", bv_mul); }
 
 TEST_F(TestAigBitblaster, bv_mul8) { TEST_BIN_OP(8, "bvmul", bv_mul); }
+
+TEST_F(TestAigBitblaster, bv_udiv)
+{
+  bb::AigBitblaster bb;
+  auto a       = bb.bv_constant(32);
+  auto b       = bb.bv_constant(32);
+  auto bb_udiv = bb.bv_udiv(a, b);
+}
+
+TEST_F(TestAigBitblaster, bv_udiv1) { TEST_BIN_OP(1, "bvudiv", bv_udiv); }
+
+TEST_F(TestAigBitblaster, bv_udiv2) { TEST_BIN_OP(2, "bvudiv", bv_udiv); }
+
+TEST_F(TestAigBitblaster, bv_udiv3) { TEST_BIN_OP(3, "bvudiv", bv_udiv); }
+
+TEST_F(TestAigBitblaster, bv_udiv4) { TEST_BIN_OP(4, "bvudiv", bv_udiv); }
+
+TEST_F(TestAigBitblaster, bv_udiv8) { TEST_BIN_OP(8, "bvudiv", bv_udiv); }
+
+TEST_F(TestAigBitblaster, bv_udiv9) { TEST_BIN_OP(9, "bvudiv", bv_udiv); }
+
+TEST_F(TestAigBitblaster, bv_udiv10) { TEST_BIN_OP(10, "bvudiv", bv_udiv); }
+
+TEST_F(TestAigBitblaster, bv_urem)
+{
+  bb::AigBitblaster bb;
+  auto a       = bb.bv_constant(32);
+  auto b       = bb.bv_constant(32);
+  auto bb_urem = bb.bv_urem(a, b);
+}
+
+TEST_F(TestAigBitblaster, bv_urem1) { TEST_BIN_OP(1, "bvurem", bv_urem); }
+
+TEST_F(TestAigBitblaster, bv_urem2) { TEST_BIN_OP(2, "bvurem", bv_urem); }
+
+TEST_F(TestAigBitblaster, bv_urem3) { TEST_BIN_OP(3, "bvurem", bv_urem); }
+
+TEST_F(TestAigBitblaster, bv_urem4) { TEST_BIN_OP(4, "bvurem", bv_urem); }
+
+TEST_F(TestAigBitblaster, bv_urem8) { TEST_BIN_OP(8, "bvurem", bv_urem); }
+
+TEST_F(TestAigBitblaster, bv_urem9) { TEST_BIN_OP(9, "bvurem", bv_urem); }
+
+TEST_F(TestAigBitblaster, bv_urem10) { TEST_BIN_OP(10, "bvurem", bv_urem); }
 
 TEST_F(TestAigBitblaster, bv_ite) {
 
