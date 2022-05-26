@@ -1,0 +1,2 @@
+add_unit_test(test_aig_bitblaster)
+add_unit_test(test_aig_manager)
