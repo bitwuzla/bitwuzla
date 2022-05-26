@@ -316,6 +316,33 @@ class BitblasterInterface
     return res;
   }
 
+  virtual Bits bv_mul(const Bits& a, const Bits& b)
+  {
+    Bits res;
+    size_t size = a.size();
+    res.reserve(size);
+
+    for (size_t i = 0; i < size; ++i)
+    {
+      res.emplace_back(d_bit_mgr.mk_and(a[i], b[size - 1]));
+    }
+
+    for (size_t i = 1, ib = size - 2; i < size; ++i, --ib)
+    {
+      T cout;
+      const T& b_bit = b[ib];
+
+      std::tie(res[ib], cout) =
+          half_adder(res[ib], d_bit_mgr.mk_and(a[size - 1], b_bit));
+      for (size_t j = 1, ir = ib - 1, ia = size - 2; j <= ib; ++j, --ir, --ia)
+      {
+        std::tie(res[ir], cout) =
+            full_adder(res[ir], d_bit_mgr.mk_and(a[ia], b_bit), cout);
+      }
+    }
+    return res;
+  }
+
   /**
    * Bit-blast if-then-else over bit-vectors `a` and `b` of size k, and a
    * condition `cond` of size 1.
@@ -361,7 +388,7 @@ class BitblasterInterface
     T a_and_b = d_bit_mgr.mk_and(a, b);
 
     // Sum of a and b: a xor b
-    T a_or_b = d_bit_mgr.mk_or(a, b);
+    T a_or_b  = d_bit_mgr.mk_or(a, b);
     T a_xor_b = d_bit_mgr.mk_and(d_bit_mgr.mk_not(a_and_b), a_or_b);
 
     // Return <sum, carry bit>
