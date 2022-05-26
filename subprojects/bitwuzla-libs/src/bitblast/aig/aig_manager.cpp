@@ -88,6 +88,10 @@ AigNode::AigNode(const AigNode& other)
 AigNode&
 AigNode::operator=(const AigNode& other)
 {
+  if (d_data)
+  {
+    d_data->dec_refs();
+  }
   d_data    = other.d_data;
   d_negated = other.d_negated;
   d_data->inc_refs();
