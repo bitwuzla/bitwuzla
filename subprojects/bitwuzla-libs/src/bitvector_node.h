@@ -246,6 +246,25 @@ class BitVectorNode
                         bool is_signed,
                         bool is_exclusive);
 
+  /**
+   * Normalize signed and unsigned bounds into a lower (from min_signed and
+   * ones) and upper (from zero to max_signed) ranges. If signed and unsigned
+   * ranges of this node don't have any intersection, all return parameters
+   * will be null nodes.
+   * @param min_lo The minimum value of the resulting lower range, null if
+   *               no values in the lower range are covered.
+   * @param max_lo The maximum value of the resulting lower range, null if
+   *               no values in the lower range are covered.
+   * @param min_hi The minimum value of the resulting upper range, null if
+   *               no values in the upper range are covered.
+   * @param max_hi The maximum value of the resulting upper range, null if
+   *               no values in the upper range are covered.
+   */
+  void normalize_bounds(BitVector& res_min_lo,
+                        BitVector& res_max_lo,
+                        BitVector& res_min_hi,
+                        BitVector& res_max_hi);
+
   /** Get the string representation of this node. */
   virtual std::string to_string() const;
 
