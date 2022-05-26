@@ -132,6 +132,8 @@ TEST_F(TestBvNodeInv, and)
   test_binary<BitVectorAnd>(INV, AND, 1, TestBvNode::BoundsKind::UNSIGNED);
   test_binary<BitVectorAnd>(INV, AND, 0, TestBvNode::BoundsKind::SIGNED);
   test_binary<BitVectorAnd>(INV, AND, 1, TestBvNode::BoundsKind::SIGNED);
+  test_binary<BitVectorAnd>(INV, AND, 0, TestBvNode::BoundsKind::BOTH);
+  test_binary<BitVectorAnd>(INV, AND, 1, TestBvNode::BoundsKind::BOTH);
 }
 
 TEST_F(TestBvNodeInv, concat)

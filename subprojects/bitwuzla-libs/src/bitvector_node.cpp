@@ -503,14 +503,174 @@ BitVectorAnd::is_invertible(const BitVector& t,
    * Note: Right now, we only consider either the unsigned (preferred) or
    *       signed bounds. If both are set, only unsigned is considered.
    */
-  if (res && (min_u || max_u))
+  if (res && (min_u || max_u || min_s || max_s))
   {
-    BitVector lo = x.lo().bvor(t);
-    BitVector hi = x.hi().bvand(s.bvxnor(t));
+    BitVector lo         = x.lo().bvor(t);
+    BitVector hi         = x.hi().bvand(s.bvxnor(t));
+    BitVector zero       = BitVector::mk_zero(t.size());
+    BitVector ones       = BitVector::mk_ones(t.size());
+    BitVector min_signed = BitVector::mk_min_signed(t.size());
+    BitVector max_signed = BitVector::mk_max_signed(t.size());
+
+    BitVector *min_hi = nullptr, *max_hi = nullptr;
+    BitVector *min_lo = nullptr, *max_lo = nullptr;
+
+    if (min_u || max_u)
+    {
+      int32_t min_comp_max_signed = min_u ? min_u->compare(max_signed) : -1;
+      int32_t max_comp_max_signed = max_u ? max_u->compare(max_signed) : 1;
+
+      if (min_comp_max_signed <= 0)
+      {
+        min_hi = min_u ? min_u : &zero;
+        max_hi = max_comp_max_signed <= 0 ? max_u : &max_signed;
+      }
+      if (max_comp_max_signed > 0)
+      {
+        min_lo = min_comp_max_signed > 0 ? min_u : &min_signed;
+        max_lo = max_u ? max_u : &ones;
+      }
+    }
+    if (min_s || max_s)
+    {
+      int32_t min_scomp_zero = min_s ? min_s->signed_compare(zero) : -1;
+      int32_t max_scomp_zero = max_s ? max_s->signed_compare(zero) : 1;
+      BitVector *minu = nullptr, *maxu = nullptr;
+      BitVector *mins = nullptr, *maxs = nullptr;
+
+      if (min_scomp_zero < 0)
+      {
+        mins = min_s ? min_s : &min_signed;
+        maxs = max_scomp_zero < 0 ? max_s : &ones;
+      }
+      if (max_scomp_zero >= 0)
+      {
+        minu = min_scomp_zero >= 0 ? min_s : &zero;
+        maxu = max_s ? max_s : &max_signed;
+      }
+      assert(!mins || maxs);
+      assert(!minu || maxu);
+
+      if (min_u || max_u)
+      {
+        if (!min_hi && !max_hi && !mins && !maxs && (minu || maxu))
+        {
+          return false;
+        }
+        if (!min_lo && !max_lo && !minu && !maxu && (mins || maxs))
+        {
+          return false;
+        }
+      }
+
+      if (!min_u && !max_u)
+      {
+        min_lo = mins;
+        max_lo = maxs;
+        min_hi = minu;
+        max_hi = maxu;
+      }
+      else
+      {
+        if (min_lo)
+        {
+          if (!mins)
+          {
+            min_lo = nullptr;
+            max_lo = nullptr;
+          }
+          else
+          {
+            if (max_lo && mins->compare(*max_lo) > 0)
+            {
+              min_lo = nullptr;
+              max_lo = nullptr;
+            }
+            else if (!min_lo || mins->compare(*min_lo) > 0)
+            {
+              min_lo = mins;
+            }
+          }
+        }
+        if (max_lo)
+        {
+          if (!maxs)
+          {
+            min_lo = nullptr;
+            max_lo = nullptr;
+          }
+          else
+          {
+            if (min_lo && maxs->compare(*min_lo) < 0)
+            {
+              min_lo = nullptr;
+              max_lo = nullptr;
+            }
+            else if (!max_lo || maxs->compare(*max_lo) < 0)
+            {
+              max_lo = maxs;
+            }
+          }
+        }
+        if (min_hi)
+        {
+          if (!minu)
+          {
+            min_hi = nullptr;
+            max_hi = nullptr;
+          }
+          else
+          {
+            if (max_hi && minu->compare(*max_hi) > 0)
+            {
+              min_hi = nullptr;
+              max_hi = nullptr;
+            }
+            else if (!min_hi || minu->compare(*min_hi) > 0)
+            {
+              min_hi = minu;
+            }
+          }
+        }
+        if (max_hi)
+        {
+          if (!maxu)
+          {
+            min_hi = nullptr;
+            max_hi = nullptr;
+          }
+          else
+          {
+            if (min_hi && maxu->compare(*min_hi) < 0)
+            {
+              min_hi = nullptr;
+              max_hi = nullptr;
+            }
+            else if (!max_hi || maxu->compare(*max_hi) < 0)
+            {
+              max_hi = maxu;
+            }
+          }
+        }
+      }
+    }
+    assert(!min_lo || max_lo);
+    assert(!min_hi || max_hi);
+
     if (lo.compare(hi) == 0)
     {
-      if (min_u && lo.compare(*min_u) < 0) return false;
-      if (max_u && lo.compare(*max_u) > 0) return false;
+      bool in_lo = false, in_hi = false;
+      if (min_hi)
+      {
+        assert(max_hi);
+        in_hi = lo.compare(*min_hi) >= 0 && lo.compare(*max_hi) <= 0;
+      }
+      if (min_lo)
+      {
+        assert(max_lo);
+        in_lo = lo.compare(*min_lo) >= 0 && lo.compare(*max_lo) <= 0;
+      }
+      if (!in_lo && !in_hi) return false;
       if (find_inverse)
       {
         d_inverse.reset(new BitVector(lo));
@@ -518,11 +678,11 @@ BitVectorAnd::is_invertible(const BitVector& t,
       return true;
     }
 
+    if (!min_hi && !max_hi && !min_lo && !max_lo) return false;
+
     BitVectorDomain tmp(lo, hi);
-    BitVectorDomainGenerator gen(tmp,
-                                 d_rng,
-                                 min_u ? *min_u : BitVector::mk_zero(t.size()),
-                                 max_u ? *max_u : BitVector::mk_ones(t.size()));
+    BitVectorDomainDualGenerator gen(
+        tmp, d_rng, min_lo, max_lo, min_hi, max_hi);
     if (!gen.has_random())
     {
       return false;
@@ -533,39 +693,6 @@ BitVectorAnd::is_invertible(const BitVector& t,
     }
     return true;
   }
-
-  if (res && (min_s || max_s))
-  {
-    BitVector lo = x.lo().bvor(t);
-    BitVector hi = x.hi().bvand(s.bvxnor(t));
-    if (lo.compare(hi) == 0)
-    {
-      if (min_s && lo.signed_compare(*min_s) < 0) return false;
-      if (max_s && lo.signed_compare(*max_s) > 0) return false;
-      if (find_inverse)
-      {
-        d_inverse.reset(new BitVector(lo));
-      }
-      return true;
-    }
-
-    BitVectorDomain tmp(lo, hi);
-    BitVectorDomainSignedGenerator gen(
-        tmp,
-        d_rng,
-        min_s ? *min_s : BitVector::mk_min_signed(t.size()),
-        max_s ? *max_s : BitVector::mk_max_signed(t.size()));
-    if (!gen.has_random())
-    {
-      return false;
-    }
-    if (find_inverse)
-    {
-      d_inverse.reset(new BitVector(gen.random()));
-    }
-    return true;
-  }
-
   return res;
 }
 

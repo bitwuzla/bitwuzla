@@ -22,6 +22,8 @@ TEST_F(TestBvNodeIsInv, and)
   test_binary<BitVectorAnd>(IS_INV, AND, 1, TestBvNode::BoundsKind::UNSIGNED);
   test_binary<BitVectorAnd>(IS_INV, AND, 0, TestBvNode::BoundsKind::SIGNED);
   test_binary<BitVectorAnd>(IS_INV, AND, 1, TestBvNode::BoundsKind::SIGNED);
+  test_binary<BitVectorAnd>(IS_INV, AND, 0, TestBvNode::BoundsKind::BOTH);
+  test_binary<BitVectorAnd>(IS_INV, AND, 1, TestBvNode::BoundsKind::BOTH);
 }
 
 TEST_F(TestBvNodeIsInv, concat)

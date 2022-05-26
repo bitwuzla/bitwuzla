@@ -511,6 +511,113 @@ BitVectorDomainGenerator::generate_next(bool random)
   return res;
 }
 
+BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
+    const BitVectorDomain &domain,
+    const BitVector *min_hi,
+    const BitVector *max_hi,
+    const BitVector *min_lo,
+    const BitVector *max_lo)
+    : BitVectorDomainDualGenerator(
+        domain, nullptr, min_hi, max_hi, min_lo, max_lo)
+{
+}
+
+BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
+    const BitVectorDomain &domain,
+    RNG *rng,
+    const BitVector *min_lo,
+    const BitVector *max_lo,
+    const BitVector *min_hi,
+    const BitVector *max_hi)
+    : d_rng(rng)
+{
+  assert(!max_lo || !min_lo || max_lo->compare(*min_lo) >= 0);
+  assert(!max_hi || !min_hi || max_hi->compare(*min_hi) >= 0);
+  uint32_t size = domain.size();
+  assert(!max_hi || max_hi->compare(BitVector::mk_max_signed(size)) <= 0);
+  assert(!min_lo || min_lo->compare(BitVector::mk_min_signed(size)) >= 0);
+
+  d_gen_lo.reset(nullptr);
+  d_gen_hi.reset(nullptr);
+
+  if (min_lo || max_lo)
+  {
+    d_gen_lo.reset(new BitVectorDomainGenerator(
+        domain,
+        rng,
+        min_lo ? *min_lo : BitVector::mk_min_signed(size),
+        max_lo ? *max_lo : BitVector::mk_ones(size)));
+    d_gen_cur = d_gen_lo.get();
+  }
+  if (min_hi || max_hi)
+  {
+    d_gen_hi.reset(new BitVectorDomainGenerator(
+        domain,
+        rng,
+        min_hi ? *min_hi : BitVector::mk_zero(size),
+        max_hi ? *max_hi : BitVector::mk_max_signed(size)));
+    if (d_gen_cur == nullptr) d_gen_cur = d_gen_hi.get();
+  }
+}
+
+BitVectorDomainDualGenerator::~BitVectorDomainDualGenerator() {}
+
+bool
+BitVectorDomainDualGenerator::has_next()
+{
+  if (d_gen_cur == nullptr) return false;
+  if (!d_gen_cur->has_next())
+  {
+    if (d_gen_cur == d_gen_lo.get() && d_gen_hi)
+    {
+      d_gen_cur = d_gen_hi.get();
+      return d_gen_cur->has_next();
+    }
+    return false;
+  }
+  return true;
+}
+
+bool
+BitVectorDomainDualGenerator::has_random()
+{
+  if (d_gen_cur == nullptr) return false;
+  if (!d_gen_cur->has_random())
+  {
+    if (d_gen_cur == d_gen_lo.get() && d_gen_hi)
+    {
+      d_gen_cur = d_gen_hi.get();
+      return d_gen_cur->has_random();
+    }
+    return false;
+  }
+  return true;
+}
+
+BitVector
+BitVectorDomainDualGenerator::next()
+{
+  assert(has_next());
+  return d_gen_cur->next();
+}
+
+BitVector
+BitVectorDomainDualGenerator::random()
+{
+  bool has_random_lo = d_gen_lo ? d_gen_lo->has_random() : false;
+  bool has_random_hi = d_gen_hi ? d_gen_hi->has_random() : false;
+  if (has_random_lo && has_random_hi)
+  {
+    return d_rng->flip_coin() ? d_gen_lo->random() : d_gen_hi->random();
+  }
+  if (has_random_lo)
+  {
+    return d_gen_lo->random();
+  }
+  assert(has_random_hi);
+  return d_gen_hi->random();
+}
+
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
     const BitVectorDomain &domain)
     : BitVectorDomainSignedGenerator(domain,

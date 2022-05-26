@@ -95,6 +95,7 @@ class TestBvNode : public TestBvNodeCommon
     NONE,
     SIGNED,
     UNSIGNED,
+    BOTH,
   };
 
   bool check_sat_binary(Kind kind,
@@ -103,9 +104,10 @@ class TestBvNode : public TestBvNodeCommon
                         const BitVector& t,
                         const BitVector& s_val,
                         uint32_t pos_x,
-                        const BitVector* min = nullptr,
-                        const BitVector* max = nullptr,
-                        bool is_signed       = false);
+                        const BitVector* min_u = nullptr,
+                        const BitVector* max_u = nullptr,
+                        const BitVector* min_s = nullptr,
+                        const BitVector* max_s = nullptr);
   bool check_sat_binary_cons(OpKind op_kind,
                              const BitVector& x_val,
                              const BitVector& t,
@@ -163,10 +165,14 @@ TestBvNode::check_sat_binary(Kind kind,
                              const BitVector& t,
                              const BitVector& s_val,
                              uint32_t pos_x,
-                             const BitVector* min,
-                             const BitVector* max,
-                             bool is_signed)
+                             const BitVector* min_u,
+                             const BitVector* max_u,
+                             const BitVector* min_s,
+                             const BitVector* max_s)
 {
+  assert(!min_u || max_u);
+  assert(!min_s || max_s);
+
   BitVectorDomainGenerator gen(x);
   do
   {
@@ -174,7 +180,7 @@ TestBvNode::check_sat_binary(Kind kind,
     BitVector x_val = gen.has_next() ? gen.next() : x.lo();
     if (kind == IS_CONS)
     {
-      assert(!min && !max);
+      assert(!min_u && !max_u && !min_s && !max_s);
       BitVectorDomainGenerator gens(s_val.size());
       while (gens.has_next())
       {
@@ -186,13 +192,36 @@ TestBvNode::check_sat_binary(Kind kind,
     {
       assert(kind == IS_INV);
       res = eval_op_binary(op_kind, x_val, s_val, pos_x);
-      if (t.compare(res) == 0
-          && (!min || (is_signed && x_val.signed_compare(*min) >= 0)
-              || (!is_signed && x_val.compare(*min) >= 0))
-          && (!max || (is_signed && x_val.signed_compare(*max) <= 0)
-              || (!is_signed && x_val.compare(*max) <= 0)))
+      if (t.compare(res) == 0)
       {
-        return true;
+        if (min_u && max_u && min_s && max_s)
+        {
+          if (x_val.compare(*min_u) >= 0 && x_val.signed_compare(*min_s) >= 0
+              && x_val.compare(*max_u) <= 0
+              && x_val.signed_compare(*max_s) <= 0)
+          {
+            return true;
+          }
+        }
+        else if (min_u && max_u)
+        {
+          if (x_val.compare(*min_u) >= 0 && x_val.compare(*max_u) <= 0)
+          {
+            return true;
+          }
+        }
+        else if (min_s && max_s)
+        {
+          if (x_val.signed_compare(*min_s) >= 0
+              && x_val.signed_compare(*max_s) <= 0)
+          {
+            return true;
+          }
+        }
+        else
+        {
+          return true;
+        }
       }
     }
   } while (gen.has_next());
@@ -565,7 +594,7 @@ TestBvNode::test_binary(Kind kind,
 
           bool use_bounds  = bounds_kind != NONE;
           uint32_t n_tests = 0;
-          std::unique_ptr<BitVector> min, max;
+          BitVector min, max;
           do
           {
             std::unique_ptr<BitVectorNode> op_x(
@@ -586,15 +615,35 @@ TestBvNode::test_binary(Kind kind,
             if (bounds_kind != NONE)
             {
               bool is_signed = bounds_kind == SIGNED;
-              min.reset(new BitVector(bw_x, *d_rng.get()));
-              max.reset(new BitVector(bw_x,
-                                      *d_rng.get(),
-                                      *min,
-                                      is_signed ? BitVector::mk_max_signed(bw_x)
-                                                : BitVector::mk_ones(bw_x),
-                                      is_signed));
-              op_x->update_min_bound(*min, is_signed, false);
-              op_x->update_max_bound(*max, is_signed, false);
+              min            = BitVector(bw_x, *d_rng.get());
+              if (is_signed)
+              {
+                max = BitVector(bw_x,
+                                *d_rng.get(),
+                                min,
+                                is_signed ? BitVector::mk_max_signed(bw_x)
+                                          : BitVector::mk_ones(bw_x),
+                                is_signed);
+              }
+              else
+              {
+                max = BitVector(
+                    bw_x, *d_rng.get(), min, BitVector::mk_ones(bw_x), false);
+                if (bounds_kind == BOTH)
+                {
+                  op_x->update_min_bound(min, false, false);
+                  op_x->update_max_bound(max, false, false);
+                  is_signed = true;
+                  min       = BitVector(bw_x, *d_rng.get());
+                  max       = BitVector(bw_x,
+                                  *d_rng.get(),
+                                  min,
+                                  BitVector::mk_max_signed(bw_x),
+                                  is_signed);
+                }
+              }
+              op_x->update_min_bound(min, is_signed, false);
+              op_x->update_max_bound(max, is_signed, false);
             }
 
             if (kind == IS_CONS || kind == IS_INV)
@@ -607,17 +656,32 @@ TestBvNode::test_binary(Kind kind,
                                              t,
                                              s_val,
                                              pos_x,
-                                             min.get(),
-                                             max.get(),
-                                             bounds_kind == SIGNED);
+                                             op_x->min_u(),
+                                             op_x->max_u(),
+                                             op_x->min_s(),
+                                             op_x->max_s());
               if (res != status)
               {
                 std::cout << "pos_x: " << pos_x << std::endl;
                 std::cout << "t: " << t << std::endl;
                 std::cout << "x: " << x_value << ": " << x_val << std::endl;
                 std::cout << "s: " << s_val << std::endl;
-                if (min) std::cout << "min: " << *min << std::endl;
-                if (max) std::cout << "max: " << *max << std::endl;
+                std::cout << "min_u: "
+                          << (op_x->min_u() ? op_x->min_u()->to_string()
+                                            : "(nil)")
+                          << std::endl;
+                std::cout << "max_u: "
+                          << (op_x->max_u() ? op_x->max_u()->to_string()
+                                            : "(nil)")
+                          << std::endl;
+                std::cout << "min_s: "
+                          << (op_x->min_s() ? op_x->min_s()->to_string()
+                                            : "(nil)")
+                          << std::endl;
+                std::cout << "max_s: "
+                          << (op_x->max_s() ? op_x->max_s()->to_string()
+                                            : "(nil)")
+                          << std::endl;
               }
               ASSERT_EQ(res, status);
             }

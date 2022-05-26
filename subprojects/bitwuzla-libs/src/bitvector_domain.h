@@ -291,6 +291,82 @@ class BitVectorDomainGenerator
   std::unique_ptr<BitVector> d_bits_max;
 };
 
+class BitVectorDomainDualGenerator
+{
+ public:
+  /**
+   * Construct generator for values within given ranges (non-overlapping,
+   * bounds are inclusive), interpreted as unsigned.
+   * @param domain The domain to enumerate values for.
+   * @param min_lo The minimum value to of the lower range (between
+   *               min_signed and ones).
+   * @param max_lo The maximum value of the lower range (between min_signed
+   *               and ones).
+   * @param min_hi The minimum value to of the upper range (between zero and
+   *               the max_signed value).
+   * @param max_hi The maximum value of the upper range (between zero and
+   *               the max_signed value).
+   */
+  BitVectorDomainDualGenerator(const BitVectorDomain &domain,
+                               const BitVector *min_lo,
+                               const BitVector *max_lo,
+                               const BitVector *min_hi,
+                               const BitVector *max_hi);
+  /**
+   * Construct generator for values within given ranges (inclusive),
+   * interpreted as unsigned.
+   * @param domain The domain to enumerate values for.
+   * @param rng    The associated random number generator.
+   * @param min_lo The minimum value to of the lower range (between
+   *               min_signed and the ones).
+   * @param max_lo The maximum value of the lower range (between min_signed
+   *               and the ones).
+   * @param min_hi The minimum value to of the upper range (between zero and
+   *               the max_signed value).
+   * @param max_hi The maximum value of the upper range (between zero and
+   *               the max_signed value).
+   */
+  BitVectorDomainDualGenerator(const BitVectorDomain &domain,
+                               RNG *rng,
+                               const BitVector *min_lo,
+                               const BitVector *max_lo,
+                               const BitVector *min_hi,
+                               const BitVector *max_hi);
+  /** Destructor. */
+  ~BitVectorDomainDualGenerator();
+
+  /**
+   * Determine if there is a next element in the sequence.
+   * @return True if not all possible values have been generated yet.
+   */
+  bool has_next();
+  /**
+   * Determine if generating random values is possible.
+   * @return True if generating random values is possible.
+   */
+  bool has_random();
+  /**
+   * Generate next element in the sequence.
+   * @return The next element in the sequence.
+   */
+  BitVector next();
+  /**
+   * Generate random element in the sequence.
+   * @return A random element in the sequence.
+   */
+  BitVector random();
+
+ protected:
+  /* The associated RNG (may be 0). */
+  RNG *d_rng = nullptr;
+  /** The generator covering the lower range < 0. */
+  std::unique_ptr<BitVectorDomainGenerator> d_gen_lo;
+  /** The generator covering the upper range >= 0. */
+  std::unique_ptr<BitVectorDomainGenerator> d_gen_hi;
+  /** The currently active generator. */
+  BitVectorDomainGenerator *d_gen_cur = nullptr;
+};
+
 class BitVectorDomainSignedGenerator
 {
  public:
