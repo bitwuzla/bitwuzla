@@ -21,8 +21,11 @@ class TestAigBitblaster : public TestCommon
     bench << "(check-sat)\n";
     bench << "(get-model)\n";
 
-    std::string filename = std::tmpnam(nullptr);
-    FILE* file           = std::fopen(filename.c_str(), "w");
+    char filename[] = "bzlabbtest-XXXXXX";
+    int fd          = mkstemp(filename);
+    assert(fd != -1);
+
+    FILE* file = fdopen(fd, "w");
     fputs(bench.str().c_str(), file);
     fflush(file);
 
@@ -37,8 +40,8 @@ class TestAigBitblaster : public TestCommon
     {
       output << buf;
     }
+    remove(filename);
     fclose(file);
-    remove(filename.c_str());
 
     std::string result = output.str();
     size_t newline_pos = result.find_last_of('\n');
