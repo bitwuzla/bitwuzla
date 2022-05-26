@@ -308,8 +308,9 @@ class BitblasterInterface
     size_t size = a.size();
     res.resize(size);
 
-    T cout = d_bit_mgr.mk_false();
-    for (size_t i = 0, j = size - 1; i < size; ++i, --j)
+    T cout;
+    std::tie(res[size - 1], cout) = half_adder(a[size - 1], b[size - 1]);
+    for (size_t i = 1, j = size - 2; i < size; ++i, --j)
     {
       std::tie(res[j], cout) = full_adder(a[j], b[j], cout);
     }
