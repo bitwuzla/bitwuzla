@@ -321,7 +321,8 @@ TEST_F(TestAigBitblaster, bv_ite) {
     }
     std::stringstream ss;
     declare_const(ss, a);
-    declare_const(ss, a);
+    declare_const(ss, b);
+    declare_const(ss, c);
     bb::aig::Smt2Printer::print(ss, bb_ite);
     define_const(ss, "a", a);
     define_const(ss, "b", b);
