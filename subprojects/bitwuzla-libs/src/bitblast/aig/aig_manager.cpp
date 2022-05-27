@@ -51,8 +51,9 @@ class AigNodeData
 size_t
 AigManager::AigNodeDataHash::operator()(const AigNodeData* d) const
 {
-  return static_cast<size_t>(d->d_left.get_id())
-         + static_cast<size_t>(d->d_right.get_id());
+  size_t lhs = static_cast<size_t>(std::abs(d->d_left.get_id()));
+  size_t rhs = static_cast<size_t>(std::abs(d->d_right.get_id()));
+  return 547789289u * lhs + 786695309u * rhs;
 }
 
 bool
