@@ -85,7 +85,7 @@ class BitInterface<AigNode>
   int64_t d_aig_id_counter = AigNode::s_true_id;
 
   /** Returns the next free AIG id. */
-  int64_t next_id();
+  void init_id(AigNodeData* d);
 
   /**
    * Find already constructed and gate with given children.
@@ -95,20 +95,12 @@ class BitInterface<AigNode>
    * @return Pointer to existing node data or nullptr if AND gate was not yet
    * constructed.
    */
-  AigNodeData* find_and(const AigNode& left, const AigNode& right);
+  AigNodeData* find_or_create_and(const AigNode& left, const AigNode& right);
 
   /**
    * Construct a new node data.
    */
   AigNodeData* new_data();
-
-  /**
-   * Construct new AND node data.
-   *
-   * @param left Left child of AND gate.
-   * @param right Right child of AND gate.
-   */
-  AigNodeData* new_data(const AigNode& left, const AigNode& right);
 
   /**
    * Delete given node data.
@@ -128,7 +120,7 @@ class BitInterface<AigNode>
   };
 
   /** Maps node id to node data and stores all created node data. */
-  std::unordered_map<int64_t, std::unique_ptr<AigNodeData>> d_node_data;
+  std::vector<std::unique_ptr<AigNodeData>> d_node_data;
   /** AND gate cache used for hash consing. */
   std::unordered_set<AigNodeData*, AigNodeDataHash, AigNodeDataKeyEqual>
       d_unique_ands;

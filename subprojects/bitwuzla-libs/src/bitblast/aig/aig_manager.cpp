@@ -26,12 +26,9 @@ class AigNodeData
   }
 
  private:
-  AigNodeData(AigManager* mgr, int64_t id) : d_mgr(mgr), d_id(id) {}
-  AigNodeData(AigManager* mgr,
-              int64_t id,
-              const AigNode& left,
-              const AigNode& right)
-      : d_mgr(mgr), d_id(id), d_left(left), d_right(right)
+  AigNodeData(AigManager* mgr) : d_mgr(mgr) {}
+  AigNodeData(AigManager* mgr, const AigNode& left, const AigNode& right)
+      : d_mgr(mgr), d_left(left), d_right(right)
   {
   }
 
@@ -242,13 +239,7 @@ AigManager::mk_and(const AigNode& a, const AigNode& b)
 
   // TODO: two-level AIG rewriting
 
-  AigNodeData* d = find_and(left, right);
-  if (!d)
-  {
-    d = new_data(left, right);
-    d_unique_ands.emplace(d);
-    ++d_statistics.num_ands;
-  }
+  AigNodeData* d = find_or_create_and(left, right);
   assert(!d->d_left.is_null());
   assert(!d->d_right.is_null());
   return AigNode(d);
@@ -272,40 +263,38 @@ AigManager::mk_ite(const AigNode& c, const AigNode& a, const AigNode& b)
   return mk_or(mk_and(c, a), mk_and(mk_not(c), b));
 }
 
-int64_t
-AigManager::next_id()
+void
+AigManager::init_id(AigNodeData* d)
 {
   assert(d_aig_id_counter < INT64_MAX);
-  return d_aig_id_counter++;
+  assert(d != nullptr);
+  assert(d->d_id == 0);
+  d_node_data.emplace_back(d);
+  assert(d_node_data.size() == static_cast<size_t>(d_aig_id_counter));
+  d->d_id = d_aig_id_counter++;
 }
 
 AigNodeData*
-AigManager::find_and(const AigNode& left, const AigNode& right)
+AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
 {
-  AigNodeData aig(this, 0, left, right);
-  auto it = d_unique_ands.find(&aig);
-  if (it != d_unique_ands.end())
+  AigNodeData* d = new AigNodeData(this, left, right);
+
+  auto [it, inserted] = d_unique_ands.insert(d);
+  if (inserted)
   {
-    return *it;
+    init_id(d);
+    ++d_statistics.num_ands;
+    return d;
   }
-  return nullptr;
+  delete d;
+  return *it;
 }
 
 AigNodeData*
 AigManager::new_data()
 {
-  auto id        = next_id();
-  AigNodeData* d = new AigNodeData(this, id);
-  d_node_data.emplace(id, d);
-  return d;
-}
-
-AigNodeData*
-AigManager::new_data(const AigNode& left, const AigNode& right)
-{
-  auto id        = next_id();
-  AigNodeData* d = new AigNodeData(this, id, left, right);
-  d_node_data.emplace(id, d);
+  AigNodeData* d = new AigNodeData(this);
+  init_id(d);
   return d;
 }
 
@@ -331,6 +320,9 @@ AigManager::garbage_collect(AigNodeData* d)
     visit.pop_back();
     assert(cur->d_refs == 0);
 
+    // Erase node data before we modify children.
+    d_unique_ands.erase(cur);
+
     // Decrement reference counts for children of AND nodes
     if (!cur->d_left.is_null())
     {
@@ -352,9 +344,10 @@ AigManager::garbage_collect(AigNodeData* d)
         visit.push_back(data);
       }
     }
+
     // Delete node data
-    d_unique_ands.erase(cur);
-    d_node_data.erase(cur->d_id);
+    assert(d_node_data[cur->d_id - 1]->d_id == cur->d_id);
+    d_node_data[cur->d_id - 1].reset(nullptr);
   } while (!visit.empty());
 
   d_gc_mode = false;
