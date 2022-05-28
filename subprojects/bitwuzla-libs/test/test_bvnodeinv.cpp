@@ -92,8 +92,7 @@ TestBvNodeInv::test_inv_ineq_concat(OpKind op_kind,
                                     is_signed ? BitVector::mk_max_signed(bw_x)
                                               : BitVector::mk_ones(bw_x),
                                     is_signed));
-            op_x->update_min_bound(*min, is_signed, false);
-            op_x->update_max_bound(*max, is_signed, false);
+            op_x->update_bounds(*min, *max, false, false, is_signed);
           }
 
           if (!op.is_invertible(t, pos_x)) continue;

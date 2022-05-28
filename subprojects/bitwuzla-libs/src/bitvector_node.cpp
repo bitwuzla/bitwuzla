@@ -187,71 +187,80 @@ BitVectorNode::fix_bit(uint32_t idx, bool value)
 }
 
 void
-BitVectorNode::update_max_bound(const BitVector& value,
-                                bool is_signed,
-                                bool is_exclusive)
+BitVectorNode::update_bounds(const BitVector& min,
+                             const BitVector& max,
+                             bool min_is_exclusive,
+                             bool max_is_exclusive,
+                             bool is_signed)
 {
-  assert(size() == value.size());
+  assert(size() == min.size());
+  assert(size() == max.size());
+  assert(is_signed || min.compare(max) <= 0);
+  assert(!is_signed || min.signed_compare(max) <= 0);
+
   if (is_signed)
   {
-    if (d_max_s && d_max_s->signed_compare(value) <= 0) return;
-    if (is_exclusive)
+    if (!d_min_s || d_min_s->signed_compare(min) < 0)
     {
-      assert(!value.is_zero());
-      d_max_s.reset(new BitVector(value.bvdec()));
+      if (min_is_exclusive)
+      {
+        assert(!min.is_max_signed());
+        d_min_s.reset(new BitVector(min.bvinc()));
+      }
+      else
+      {
+        d_min_s.reset(new BitVector(min));
+      }
     }
-    else
+    if (!d_max_s || d_max_s->signed_compare(max) > 0)
     {
-      d_max_s.reset(new BitVector(value));
+      if (max_is_exclusive)
+      {
+        assert(!max.is_min_signed());
+        d_max_s.reset(new BitVector(max.bvdec()));
+      }
+      else
+      {
+        d_max_s.reset(new BitVector(max));
+      }
     }
   }
   else
   {
-    if (d_max_u && d_max_u->compare(value) <= 0) return;
-    if (is_exclusive)
+    if (!d_min_u || d_min_u->compare(min) < 0)
     {
-      assert(!value.is_zero());
-      d_max_u.reset(new BitVector(value.bvdec()));
+      if (min_is_exclusive)
+      {
+        assert(!min.is_ones());
+        d_min_u.reset(new BitVector(min.bvinc()));
+      }
+      else
+      {
+        d_min_u.reset(new BitVector(min));
+      }
     }
-    else
+    if (!d_max_u || d_max_u->compare(max) > 0)
     {
-      d_max_u.reset(new BitVector(value));
+      if (max_is_exclusive)
+      {
+        assert(!max.is_zero());
+        d_max_u.reset(new BitVector(max.bvdec()));
+      }
+      else
+      {
+        d_max_u.reset(new BitVector(max));
+      }
     }
   }
 }
 
 void
-BitVectorNode::update_min_bound(const BitVector& value,
-                                bool is_signed,
-                                bool is_exclusive)
+BitVectorNode::reset_bounds()
 {
-  assert(size() == value.size());
-  if (is_signed)
-  {
-    if (d_min_s && d_min_s->signed_compare(value) >= 0) return;
-    if (is_exclusive)
-    {
-      assert(!value.is_ones());
-      d_min_s.reset(new BitVector(value.bvinc()));
-    }
-    else
-    {
-      d_min_s.reset(new BitVector(value));
-    }
-  }
-  else
-  {
-    if (d_min_u && d_min_u->compare(value) >= 0) return;
-    if (is_exclusive)
-    {
-      assert(!value.is_ones());
-      d_min_u.reset(new BitVector(value.bvinc()));
-    }
-    else
-    {
-      d_min_u.reset(new BitVector(value));
-    }
-  }
+  d_min_u = nullptr;
+  d_max_u = nullptr;
+  d_min_s = nullptr;
+  d_max_s = nullptr;
 }
 
 void

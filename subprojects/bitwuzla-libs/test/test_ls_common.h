@@ -631,8 +631,7 @@ TestBvNode::test_binary(Kind kind,
                     bw_x, *d_rng.get(), min, BitVector::mk_ones(bw_x), false);
                 if (bounds_kind == BOTH)
                 {
-                  op_x->update_min_bound(min, false, false);
-                  op_x->update_max_bound(max, false, false);
+                  op_x->update_bounds(min, max, false, false, false);
                   is_signed = true;
                   min       = BitVector(bw_x, *d_rng.get());
                   max       = BitVector(bw_x,
@@ -642,8 +641,7 @@ TestBvNode::test_binary(Kind kind,
                                   is_signed);
                 }
               }
-              op_x->update_min_bound(min, is_signed, false);
-              op_x->update_max_bound(max, is_signed, false);
+              op_x->update_bounds(min, max, false, false, is_signed);
             }
 
             if (kind == IS_CONS || kind == IS_INV)

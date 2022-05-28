@@ -226,26 +226,24 @@ class BitVectorNode
   void fix_bit(uint32_t idx, bool value);
 
   /**
-   * Update max bound.
-   * @param value The value to update the max bound with.
-   * @param is_signed True if the given bound is a signed bound.
-   * @param is_exclusive True if the given bound is exclusive, in which case
-   *                     `value - 1` will be used as the max bound.
+   * Update bounds.
+   * @param min The minimum value.
+   * @param max The maximum value.
+   * @param min_is_exclusive True if the given min bound is exclusive, in which
+   * case `min + 1` will be used.
+   * @param max_is_exclusive True if the given max bound is exclusive, in which
+   * case `min - 1` will be used.
+   * @param is_signed True if the given bounds are signed bounds.
    */
-  void update_max_bound(const BitVector& value,
-                        bool is_signed,
-                        bool is_exclusive);
+  void update_bounds(const BitVector& min,
+                     const BitVector& max,
+                     bool min_is_exclusive,
+                     bool max_is_exclusive,
+                     bool is_signed);
   /**
-   * Update min bound.
-   * @param value The value to update the min bound with.
-   * @param is_signed True if the given bound is a signed bound.
-   * @param is_exclusive True if the given bound is exclusive, in which case
-   *                     `value + 1` will be used as the min bound.
+   * Reset signed and unsigned bounds.
    */
-  void update_min_bound(const BitVector& value,
-                        bool is_signed,
-                        bool is_exclusive);
-
+  void reset_bounds();
   /**
    * Normalize signed and unsigned bounds into a lower (from min_signed and
    * ones) and upper (from zero to max_signed) ranges. If signed and unsigned
