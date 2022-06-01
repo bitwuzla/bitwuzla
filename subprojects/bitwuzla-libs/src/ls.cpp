@@ -118,10 +118,7 @@ LocalSearch::mk_node(OperatorKind kind,
   {
     assert(c < id);  // API check
     assert(d_parents.find(c) != d_parents.end());
-    if (d_parents.at(c).find(id) == d_parents.at(c).end())
-    {
-      d_parents.at(c).insert(id);
-    }
+    d_parents.at(c).insert(id);
   }
 
   std::unique_ptr<BitVectorNode> res;
@@ -238,10 +235,7 @@ LocalSearch::mk_indexed_node(OperatorKind kind,
   assert(child0 < id);
 
   assert(d_parents.find(child0) != d_parents.end());
-  if (d_parents.at(child0).find(id) == d_parents.at(child0).end())
-  {
-    d_parents.at(child0).insert(id);
-  }
+  d_parents.at(child0).insert(id);
 
   std::unique_ptr<BitVectorNode> res;
   if (kind == EXTRACT)
