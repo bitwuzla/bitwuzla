@@ -298,7 +298,7 @@ LocalSearch::register_root(uint32_t root)
 {
   assert(root < d_nodes.size());  // API check
   d_roots_unsat.insert(root);
-  update_roots(root);
+  update_unsat_roots(root);
   if (d_ineq_bounds)
   {
     update_roots_ineq_bounds();
@@ -641,7 +641,7 @@ update_bounds(BitVectorNode* root, int32_t pos)
 }  // namespace
 
 void
-LocalSearch::update_roots(uint32_t id)
+LocalSearch::update_unsat_roots(uint32_t id)
 {
   assert(id < d_nodes.size());
 
@@ -769,7 +769,7 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
   /* update assignments of cone */
   if (is_root_node(node))
   {
-    update_roots(node->id());
+    update_unsat_roots(node->id());
   }
 
   std::sort(cone.begin(), cone.end());
@@ -792,7 +792,7 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
 
     if (is_root_node(cur))
     {
-      update_roots(cur->id());
+      update_unsat_roots(cur->id());
     }
   }
   if (d_ineq_bounds)

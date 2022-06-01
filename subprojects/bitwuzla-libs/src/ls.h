@@ -229,17 +229,17 @@ class LocalSearch
    *       is enabled, we have to update bounds for its children wrt. to all of
    *       its parents after the assignment of all nodes has been (re)computed.
    *       Thus, we defer updating inequality bounds for all roots to after
-   *       update_roots() has been called and the assignment of all nodes is
-   *       consistent (see update_roots_ineq_bounds()).
+   *       update_unsat_roots() has been called and the assignment of all nodes
+   *       is consistent (see update_roots_ineq_bounds()).
    *
    * @param id The id of the root to update.
    */
-  void update_roots(uint32_t id);
+  void update_unsat_roots(uint32_t id);
   /**
    * Update min/max bounds for children of (now) false top-level
    * inequalities (cached in d_false_roots_to_update).
    *
-   * This must be called after update_roots() has been called and the
+   * This must be called after update_unsat_roots() has been called and the
    * assignment of all nodes has been computed/updated, i.e., the assignment is
    * consistent.
    */
