@@ -176,8 +176,8 @@ class LocalSearch
   void fix_bit(uint32_t id, uint32_t idx, bool value);
 
   void register_root(uint32_t root);
-  bool all_roots_sat() const { return d_roots.empty(); }
-  uint32_t get_num_roots_unsat() const { return d_roots.size(); }
+  bool all_roots_sat() const { return d_roots_unsat.empty(); }
+  uint32_t get_num_roots_unsat() const { return d_roots_unsat.size(); }
 
   // TODO: incremental case:
   //       - we need to be able to unregister roots (assumptions)
@@ -270,7 +270,7 @@ class LocalSearch
   /** Map from node id to nodes. */
   NodesIdTable d_nodes;
   /** The set of unsatisfied roots. */
-  std::unordered_set<uint32_t> d_roots;
+  std::unordered_set<uint32_t> d_roots_unsat;
   /** Map nodes to their parent nodes. */
   ParentsMap d_parents;
 
