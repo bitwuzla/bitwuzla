@@ -8,7 +8,7 @@ macro(add_unit_test test_name)
   target_link_libraries(${test_name} bzlals)
   target_link_libraries(${test_name} GTest::GTest)
   target_link_libraries(${test_name} GTest::Main)
-  add_test(${test_name} $<TARGET_FILE:${test_name}>)
+  add_test(NAME ${test_name} COMMAND ${test_name})
 endmacro()
 
 set(test_names
