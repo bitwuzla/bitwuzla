@@ -297,7 +297,7 @@ void
 LocalSearch::register_root(uint32_t root)
 {
   assert(root < d_nodes.size());  // API check
-  d_roots.push_back(root);
+  d_roots.push_back(get_node(root));
   update_unsat_roots(root);
 }
 
@@ -822,7 +822,15 @@ LocalSearch::move()
     BZLALSLOG << std::endl;
     BZLALSLOG << "  select constraint: " << *root << std::endl;
 
-    if (d_ineq_bounds) update_bounds(root);
+    if (d_ineq_bounds)
+    {
+      /* Update min/max bounds for children of inequalities. */
+      for (BitVectorNode* r : d_roots)
+      {
+        update_bounds(r);
+      }
+    }
+
     m = select_move(root, *d_one);
     d_statistics.d_nprops += m.d_nprops;
     d_statistics.d_nupdates += m.d_nupdates;
