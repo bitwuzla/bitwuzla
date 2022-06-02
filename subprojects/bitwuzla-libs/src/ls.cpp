@@ -679,25 +679,39 @@ LocalSearch::update_unsat_roots(uint32_t id)
 }
 
 void
-LocalSearch::update_bounds(BitVectorNode* root)
+LocalSearch::update_bounds()
 {
-  assert(is_root_node(root));
-  if (!is_ineq_node(root)) return;
-
-  assert(root->arity() == 2);
-  for (uint32_t i = 0, n = root->arity(); i < n; ++i)
+  for (BitVectorNode* root : d_roots)
   {
-    BitVectorNode* child = (*root)[i];
-    child->reset_bounds();
-    const std::unordered_set<uint32_t>& parents = d_parents.at(child->id());
-    for (const auto& p : parents)
+    if (!is_ineq_node(root)) continue;
+
+    for (uint32_t i = 0, n = root->arity(); i < n; ++i)
     {
-      BitVectorNode* node = get_node(p);
-      if (is_root_node(node) && is_ineq_node(node))
+      BitVectorNode* child                        = (*root)[i];
+      const std::unordered_set<uint32_t>& parents = d_parents.at(child->id());
+      for (const auto& p : parents)
       {
-        _update_bounds(
-            node, child == (*node)[0] ? (child == (*node)[1] ? -1 : 0) : 1);
+        BitVectorNode* node = get_node(p);
+        if (is_root_node(node) && is_ineq_node(node))
+        {
+          _update_bounds(
+              node, child == (*node)[0] ? (child == (*node)[1] ? -1 : 0) : 1);
+        }
       }
+    }
+  }
+}
+
+void
+LocalSearch::reset_bounds()
+{
+  for (BitVectorNode* root : d_roots)
+  {
+    if (!is_ineq_node(root)) continue;
+
+    for (uint32_t i = 0, n = root->arity(); i < n; ++i)
+    {
+      (*root)[i]->reset_bounds();
     }
   }
 }
@@ -824,11 +838,10 @@ LocalSearch::move()
 
     if (d_ineq_bounds)
     {
+      /* Reset bounds from the previous move. */
+      reset_bounds();
       /* Update min/max bounds for children of inequalities. */
-      for (BitVectorNode* r : d_roots)
-      {
-        update_bounds(r);
-      }
+      update_bounds();
     }
 
     m = select_move(root, *d_one);

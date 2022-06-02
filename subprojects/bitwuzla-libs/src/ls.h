@@ -230,15 +230,15 @@ class LocalSearch
    */
   void update_unsat_roots(uint32_t id);
   /**
-   * Update min/max bounds for children of given root.
+   * Update min/max bounds for children of all (satisfied) root nodes.
    *
    * This must be called after update_unsat_roots() has been called and the
    * assignment of all nodes has been computed/updated, i.e., the assignment is
    * consistent.
-   *
-   * @param root The root node.
    */
-  void update_bounds(BitVectorNode* root);
+  void update_bounds();
+  /** Reset min/max bounds for children of all roots. */
+  void reset_bounds();
   /**
    * Update the assignment of the given node to the given assignment, and
    * recompute the assignment of all nodes in its cone of influence
