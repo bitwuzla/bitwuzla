@@ -236,14 +236,15 @@ class LocalSearch
    */
   void update_unsat_roots(uint32_t id);
   /**
-   * Update min/max bounds for children of (now) false top-level
-   * inequalities (cached in d_false_roots_to_update).
+   * Update min/max bounds for children of given root.
    *
    * This must be called after update_unsat_roots() has been called and the
    * assignment of all nodes has been computed/updated, i.e., the assignment is
    * consistent.
+   *
+   * @param root The root node.
    */
-  void update_roots_ineq_bounds();
+  void update_bounds(BitVectorNode* root);
   /**
    * Update the assignment of the given node to the given assignment, and
    * recompute the assignment of all nodes in its cone of influence
@@ -269,6 +270,8 @@ class LocalSearch
 
   /** Map from node id to nodes. */
   NodesIdTable d_nodes;
+  /** The set of roots. */
+  std::vector<uint32_t> d_roots;
   /** The set of unsatisfied roots. */
   std::unordered_set<uint32_t> d_roots_unsat;
   /** Map nodes to their parent nodes. */
@@ -295,11 +298,6 @@ class LocalSearch
    * concat operands.
    */
   bool d_opt_ult_concat = false;
-
-  /** The set of now true roots to update in update_roots_ineq_bounds(). */
-  std::unordered_set<BitVectorNode*> d_true_roots_to_update;
-  /** The set of now false roots to update in update_roots_ineq_bounds(). */
-  std::unordered_set<BitVectorNode*> d_false_roots_to_update;
 };
 
 }  // namespace ls
