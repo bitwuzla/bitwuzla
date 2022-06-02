@@ -344,9 +344,16 @@ LocalSearch::is_root_node(const BitVectorNode* node) const
 bool
 LocalSearch::is_ineq_node(const BitVectorNode* node)
 {
-  BitVectorNode::NodeKind kind = node->get_kind();
+  BitVectorNode::NodeKind kind =
+      is_not_node(node) ? (*node)[0]->get_kind() : node->get_kind();
   return kind == BitVectorNode::NodeKind::SLT
          || kind == BitVectorNode::NodeKind::ULT;
+}
+
+bool
+LocalSearch::is_not_node(const BitVectorNode* node)
+{
+  return node->get_kind() == BitVectorNode::NodeKind::NOT;
 }
 
 LocalSearchMove
@@ -575,87 +582,6 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
   return LocalSearchMove(nprops, nupdates, nullptr, BitVector());
 }
 
-namespace {
-/**
- * Helper for updating bounds of children of root inequalities.
- * @param root The root node.
- * @param pos The position of the child to update, -1 for updating all children.
- */
-void
-_update_bounds(BitVectorNode* root, int32_t pos)
-{
-  BitVectorNode* child0 = (*root)[0];
-  BitVectorNode* child1 = (*root)[1];
-  uint32_t size         = child0->size();
-  bool is_signed        = root->get_kind() == BitVectorNode::NodeKind::SLT;
-  BitVector min_value, max_value;
-  if (is_signed)
-  {
-    min_value = BitVector::mk_min_signed(size);
-    max_value = BitVector::mk_max_signed(size);
-  }
-  else
-  {
-    min_value = BitVector::mk_zero(size);
-    max_value = BitVector::mk_ones(size);
-  }
-
-  if (root->assignment().is_true())
-  {
-    // x < s
-    if (pos < 0 || pos == 0)
-    {
-      assert((is_signed && child1->assignment().signed_compare(min_value) > 0)
-             || (!is_signed && child1->assignment().compare(min_value) > 0));
-      child0->update_bounds(
-          min_value, child1->assignment(), false, true, is_signed);
-      assert(is_signed || child0->min_u()->compare(*child0->max_u()) <= 0);
-      assert(!is_signed
-             || child0->min_s()->signed_compare(*child0->max_s()) <= 0);
-    }
-
-    // s < x
-    if (pos < 0 || pos == 1)
-    {
-      assert((is_signed && child0->assignment().signed_compare(max_value) < 0)
-             || (!is_signed && child0->assignment().compare(max_value) < 0));
-      child1->update_bounds(
-          child0->assignment(), max_value, true, false, is_signed);
-      assert(is_signed || child1->min_u()->compare(*child1->max_u()) <= 0);
-      assert(!is_signed
-             || child1->min_s()->signed_compare(*child1->max_s()) <= 0);
-    }
-  }
-  // else
-  //{
-  //   // x >= s
-  //   if (pos < 0 || pos == 0)
-  //   {
-  //     assert((is_signed && child1->assignment().signed_compare(max_value) <=
-  //     0)
-  //            || (!is_signed && child1->assignment().compare(max_value) <=
-  //            0));
-  //     child0->update_bounds(child1->assignment(), max_value, false, false,
-  //     is_signed); assert(is_signed ||
-  //     child0->min_u()->compare(*child0->max_u()) <= 0); assert(!is_signed ||
-  //     child0->min_s()->signed_compare(*child0->max_s()) <= 0);
-  //   }
-
-  //  // s >= x
-  //  if (pos < 0 || pos == 1)
-  //  {
-  //    assert((is_signed && min_value.signed_compare(child0->assignment()) <=
-  //    0)
-  //           || (!is_signed && min_value.compare(child0->assignment()) <= 0));
-  //    child1->update_bounds(min_value, child0->assignment(), false, false,
-  //    is_signed); assert(is_signed ||
-  //    child1->min_u()->compare(*child1->max_u()) <= 0); assert(!is_signed ||
-  //    child1->min_s()->signed_compare(*child1->max_s()) <= 0);
-  //  }
-  //}
-}
-}  // namespace
-
 void
 LocalSearch::update_unsat_roots(uint32_t id)
 {
@@ -692,12 +618,97 @@ LocalSearch::update_bounds()
       for (const auto& p : parents)
       {
         BitVectorNode* node = get_node(p);
-        if (is_root_node(node) && is_ineq_node(node))
+        if (is_root_node(node) && is_ineq_node(node)
+            && node->assignment().is_true())
         {
-          _update_bounds(
+          update_bounds_aux(
               node, child == (*node)[0] ? (child == (*node)[1] ? -1 : 0) : 1);
         }
       }
+    }
+  }
+}
+
+void
+LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
+{
+  assert(is_ineq_node(root));
+
+  bool is_ult      = true;
+  BitVectorNode* r = root;
+  if (root->get_kind() == BitVectorNode::NodeKind::NOT)
+  {
+    r      = (*root)[0];
+    is_ult = false;
+  }
+
+  BitVectorNode* child0 = (*r)[0];
+  BitVectorNode* child1 = (*r)[1];
+  bool is_signed        = r->get_kind() == BitVectorNode::NodeKind::SLT;
+  uint32_t size         = child0->size();
+  BitVector min_value, max_value;
+
+  if (is_signed)
+  {
+    min_value = BitVector::mk_min_signed(size);
+    max_value = BitVector::mk_max_signed(size);
+  }
+  else
+  {
+    min_value = BitVector::mk_zero(size);
+    max_value = BitVector::mk_ones(size);
+  }
+
+  if (is_ult)
+  {
+    // x < s
+    if (pos < 0 || pos == 0)
+    {
+      assert((is_signed && child1->assignment().signed_compare(min_value) > 0)
+             || (!is_signed && child1->assignment().compare(min_value) > 0));
+      child0->update_bounds(
+          min_value, child1->assignment(), false, true, is_signed);
+      assert(is_signed || child0->min_u()->compare(*child0->max_u()) <= 0);
+      assert(!is_signed
+             || child0->min_s()->signed_compare(*child0->max_s()) <= 0);
+    }
+
+    // s < x
+    if (pos < 0 || pos == 1)
+    {
+      assert((is_signed && child0->assignment().signed_compare(max_value) < 0)
+             || (!is_signed && child0->assignment().compare(max_value) < 0));
+      child1->update_bounds(
+          child0->assignment(), max_value, true, false, is_signed);
+      assert(is_signed || child1->min_u()->compare(*child1->max_u()) <= 0);
+      assert(!is_signed
+             || child1->min_s()->signed_compare(*child1->max_s()) <= 0);
+    }
+  }
+  else
+  {
+    // x >= s
+    if (pos < 0 || pos == 0)
+    {
+      assert((is_signed && child1->assignment().signed_compare(max_value) <= 0)
+             || (!is_signed && child1->assignment().compare(max_value) <= 0));
+      child0->update_bounds(
+          child1->assignment(), max_value, false, false, is_signed);
+      assert(is_signed || child0->min_u()->compare(*child0->max_u()) <= 0);
+      assert(!is_signed
+             || child0->min_s()->signed_compare(*child0->max_s()) <= 0);
+    }
+
+    // s >= x
+    if (pos < 0 || pos == 1)
+    {
+      assert((is_signed && min_value.signed_compare(child0->assignment()) <= 0)
+             || (!is_signed && min_value.compare(child0->assignment()) <= 0));
+      child1->update_bounds(
+          min_value, child0->assignment(), false, false, is_signed);
+      assert(is_signed || child1->min_u()->compare(*child1->max_u()) <= 0);
+      assert(!is_signed
+             || child1->min_s()->signed_compare(*child1->max_s()) <= 0);
     }
   }
 }

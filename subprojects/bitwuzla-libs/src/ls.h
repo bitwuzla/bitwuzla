@@ -199,6 +199,12 @@ class LocalSearch
    */
   static bool is_ineq_node(const BitVectorNode* node);
   /**
+   * Determine if given node is a NOT node.
+   * @param node The node to query.
+   * @return True if `node` is a NOT node.
+   */
+  static bool is_not_node(const BitVectorNode* node);
+  /**
    * Get node by id.
    * @param id The node id.
    * @return The node with the given id.
@@ -239,6 +245,13 @@ class LocalSearch
   void update_bounds();
   /** Reset min/max bounds for children of all roots. */
   void reset_bounds();
+  /**
+   * Helper for updating bounds of children of root inequalities.
+   * @param root The root node.
+   * @param pos The position of the child to update, -1 for updating all
+   *            children.
+   */
+  void update_bounds_aux(BitVectorNode* root, int32_t pos);
   /**
    * Update the assignment of the given node to the given assignment, and
    * recompute the assignment of all nodes in its cone of influence
