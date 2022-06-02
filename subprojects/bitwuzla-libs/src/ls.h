@@ -220,17 +220,11 @@ class LocalSearch
    * Update information related to the root given by id.
    *
    * This removes given root from the list of unsatisfied roots , adds the root
-   * to the list of unsatisfied roots if it is unsatisfied, and in either case,
-   * caches the root for later updating of inequality bounds (if enabled).
+   * to the list of unsatisfied roots if it is unsatisfied.
    *
    * @note Roots are updated initially on registration, and during updating the
    *       assignments of the cone of influence of the input that has been
-   *       updated. If given root is unsatisfied and infering inequality bounds
-   *       is enabled, we have to update bounds for its children wrt. to all of
-   *       its parents after the assignment of all nodes has been (re)computed.
-   *       Thus, we defer updating inequality bounds for all roots to after
-   *       update_unsat_roots() has been called and the assignment of all nodes
-   *       is consistent (see update_roots_ineq_bounds()).
+   *       updated.
    *
    * @param id The id of the root to update.
    */
