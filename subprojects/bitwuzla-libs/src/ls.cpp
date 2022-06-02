@@ -370,6 +370,26 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
       for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
       {
         BZLALSLOG << "      |- node[" << i << "]: " << *(*cur)[i] << std::endl;
+        if ((*cur)[i]->min_u())
+        {
+          BZLALSLOG << "           + min_u: " << *(*cur)[i]->min_u()
+                    << std::endl;
+        }
+        if ((*cur)[i]->max_u())
+        {
+          BZLALSLOG << "           + min_u: " << *(*cur)[i]->max_u()
+                    << std::endl;
+        }
+        if ((*cur)[i]->min_s())
+        {
+          BZLALSLOG << "           + min_s: " << *(*cur)[i]->min_s()
+                    << std::endl;
+        }
+        if ((*cur)[i]->max_s())
+        {
+          BZLALSLOG << "           + min_s: " << *(*cur)[i]->max_s()
+                    << std::endl;
+        }
       }
     }
     BZLALSLOG << "    target value: " << t << std::endl;
