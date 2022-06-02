@@ -80,6 +80,7 @@ set(libbitwuzla_src_files
   sat/bzlaminisat.cpp
   sat/bzlapicosat.c
   sat/bzlakissat.c
+  sat/bzlagimsatul.c
   utils/bzlahashint.c
   utils/bzlahashptr.c
   utils/bzlamem.c
@@ -139,6 +140,11 @@ endif()
 if(Kissat_FOUND)
   target_include_directories(bitwuzla PRIVATE ${Kissat_INCLUDE_DIR})
   target_link_libraries(bitwuzla ${Kissat_LIBRARIES})
+endif()
+
+if(Gimsatul_FOUND)
+  target_include_directories(bitwuzla PRIVATE ${Gimsatul_INCLUDE_DIR})
+  target_link_libraries(bitwuzla ${Gimsatul_LIBRARIES})
 endif()
 
 if(MiniSat_FOUND)

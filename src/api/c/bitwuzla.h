@@ -215,6 +215,8 @@ enum BitwuzlaOption
    *    [CaDiCaL](https://github.com/arminbiere/cadical)
    *  * **cms**:
    *    [CryptoMiniSat](https://github.com/msoos/cryptominisat)
+   *  * **gimsatul**:
+   *    [Gimsatul](https://github.com/arminbiere/gimsatul)
    *  * **kissat**:
    *    [Kissat](https://github.com/arminbiere/kissat)
    *  * **lingeling**:

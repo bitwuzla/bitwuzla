@@ -27,6 +27,7 @@ const char *const g_bzla_se_name[BZLA_SAT_ENGINE_MAX + 1] = {
     [BZLA_SAT_ENGINE_LINGELING] = "Lingeling",
     [BZLA_SAT_ENGINE_PICOSAT]   = "PicoSAT",
     [BZLA_SAT_ENGINE_KISSAT]    = "Kissat",
+    [BZLA_SAT_ENGINE_GIMSATUL]  = "Gimsatul",
     [BZLA_SAT_ENGINE_MINISAT]   = "MiniSat",
     [BZLA_SAT_ENGINE_CADICAL]   = "CaDiCaL",
     [BZLA_SAT_ENGINE_CMS]       = "CryptoMiniSat",
@@ -331,6 +332,11 @@ bzla_opt_init_opts(Bzla *bzla)
                "kissat",
                BZLA_SAT_ENGINE_KISSAT,
                "use kissat as back end SAT solver");
+  add_opt_help(mm,
+               opts,
+               "gimsatul",
+               BZLA_SAT_ENGINE_GIMSATUL,
+               "use gimsatul as back end SAT solver");
   bzla->options[BZLA_OPT_SAT_ENGINE].options = opts;
 
   init_opt(bzla,
@@ -1849,6 +1855,9 @@ bzla_opt_set(Bzla *bzla, const BzlaOption opt, uint32_t val)
 #endif
 #ifndef BZLA_USE_KISSAT
         || val == BZLA_SAT_ENGINE_KISSAT
+#endif
+#ifndef BZLA_USE_GIMSATUL
+        || val == BZLA_SAT_ENGINE_GIMSATUL
 #endif
 #ifndef BZLA_USE_CMS
         || val == BZLA_SAT_ENGINE_CMS

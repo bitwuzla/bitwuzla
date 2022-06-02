@@ -53,6 +53,7 @@ option3vl(USE_LINGELING  "Use and link with Lingeling (default)")
 option3vl(USE_MINISAT    "Use and link with MiniSat")
 option3vl(USE_PICOSAT    "Use and link with PicoSAT")
 option3vl(USE_KISSAT     "Use and link with Kissat")
+option3vl(USE_GIMSATUL   "Use and link with Gimsatul")
 option3vl(USE_SYMFPU     "Use and link with SymFPU")
 
 option(ONLY_CADICAL   "Only use CaDiCaL" OFF)
@@ -116,6 +117,7 @@ set_option(USE_LINGELING ON)
 set_option(USE_MINISAT ON)
 set_option(USE_PICOSAT ON)
 set_option(USE_KISSAT ON)
+set_option(USE_GIMSATUL ON)
 set_option(USE_SYMFPU OFF)
 
 #-----------------------------------------------------------------------------#
@@ -287,20 +289,25 @@ endif()
 if(USE_MINISAT)
   find_package(MiniSat)
 endif()
+if(USE_GIMSATUL)
+  find_package(Gimsatul)
+endif()
 
 if(NOT USE_LINGELING
    AND NOT USE_CADICAL
    AND NOT USE_CMS
    AND NOT USE_PICOSAT
    AND NOT USE_KISSAT
-   AND NOT USE_MINISAT)
+   AND NOT USE_MINISAT
+   AND NOT USE_GIMSATUL)
   message(FATAL_ERROR "No SAT solver configured")
 elseif(NOT Lingeling_FOUND
        AND NOT CaDiCaL_FOUND
        AND NOT CryptoMiniSat_FOUND
        AND NOT PicoSAT_FOUND
        AND NOT Kissat_FOUND
-       AND NOT MiniSat_FOUND)
+       AND NOT MiniSat_FOUND
+       AND NOT Gimsatul_FOUND)
   message(FATAL_ERROR "No SAT solver found")
 endif()
 
@@ -342,6 +349,10 @@ if(Kissat_FOUND)
   else()
     add_definitions("-DBZLA_USE_KISSAT")
   endif()
+endif()
+
+if(Gimsatul_FOUND)
+  add_definitions("-DBZLA_USE_GIMSATUL")
 endif()
 
 if(MiniSat_FOUND)
@@ -494,4 +505,5 @@ config_info_bool("Lingeling" Lingeling_FOUND)
 config_info_bool("MiniSat" MiniSat_FOUND)
 config_info_bool("PicoSAT" PicoSAT_FOUND)
 config_info_bool("Kissat" Kissat_FOUND)
+config_info_bool("Gimsatul" Gimsatul_FOUND)
 config_info_bool("SymFPU" SymFPU_FOUND)
