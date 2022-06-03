@@ -344,16 +344,15 @@ LocalSearch::is_root_node(const BitVectorNode* node) const
 bool
 LocalSearch::is_ineq_node(const BitVectorNode* node)
 {
-  BitVectorNode::NodeKind kind =
+  BitVectorNode::Kind kind =
       is_not_node(node) ? (*node)[0]->get_kind() : node->get_kind();
-  return kind == BitVectorNode::NodeKind::SLT
-         || kind == BitVectorNode::NodeKind::ULT;
+  return kind == BitVectorNode::Kind::SLT || kind == BitVectorNode::Kind::ULT;
 }
 
 bool
 LocalSearch::is_not_node(const BitVectorNode* node)
 {
-  return node->get_kind() == BitVectorNode::NodeKind::NOT;
+  return node->get_kind() == BitVectorNode::Kind::NOT;
 }
 
 LocalSearchMove
@@ -447,57 +446,35 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
 #ifndef NDEBUG
         switch (cur->get_kind())
         {
-          case BitVectorNode::NodeKind::ADD:
-            d_statistics.d_ninv.d_add += 1;
-            break;
-          case BitVectorNode::NodeKind::AND:
-            d_statistics.d_ninv.d_and += 1;
-            break;
-          case BitVectorNode::NodeKind::ASHR:
+          case BitVectorNode::Kind::ADD: d_statistics.d_ninv.d_add += 1; break;
+          case BitVectorNode::Kind::AND: d_statistics.d_ninv.d_and += 1; break;
+          case BitVectorNode::Kind::ASHR:
             d_statistics.d_ninv.d_ashr += 1;
             break;
-          case BitVectorNode::NodeKind::CONCAT:
+          case BitVectorNode::Kind::CONCAT:
             d_statistics.d_ninv.d_concat += 1;
             break;
-          case BitVectorNode::NodeKind::EXTRACT:
+          case BitVectorNode::Kind::EXTRACT:
             d_statistics.d_ninv.d_extract += 1;
             break;
-          case BitVectorNode::NodeKind::EQ:
-            d_statistics.d_ninv.d_eq += 1;
-            break;
-          case BitVectorNode::NodeKind::ITE:
-            d_statistics.d_ninv.d_ite += 1;
-            break;
-          case BitVectorNode::NodeKind::MUL:
-            d_statistics.d_ninv.d_mul += 1;
-            break;
-          case BitVectorNode::NodeKind::NOT:
-            d_statistics.d_ninv.d_not += 1;
-            break;
-          case BitVectorNode::NodeKind::SEXT:
+          case BitVectorNode::Kind::EQ: d_statistics.d_ninv.d_eq += 1; break;
+          case BitVectorNode::Kind::ITE: d_statistics.d_ninv.d_ite += 1; break;
+          case BitVectorNode::Kind::MUL: d_statistics.d_ninv.d_mul += 1; break;
+          case BitVectorNode::Kind::NOT: d_statistics.d_ninv.d_not += 1; break;
+          case BitVectorNode::Kind::SEXT:
             d_statistics.d_ninv.d_sext += 1;
             break;
-          case BitVectorNode::NodeKind::SHL:
-            d_statistics.d_ninv.d_shl += 1;
-            break;
-          case BitVectorNode::NodeKind::SHR:
-            d_statistics.d_ninv.d_shr += 1;
-            break;
-          case BitVectorNode::NodeKind::SLT:
-            d_statistics.d_ninv.d_slt += 1;
-            break;
-          case BitVectorNode::NodeKind::UDIV:
+          case BitVectorNode::Kind::SHL: d_statistics.d_ninv.d_shl += 1; break;
+          case BitVectorNode::Kind::SHR: d_statistics.d_ninv.d_shr += 1; break;
+          case BitVectorNode::Kind::SLT: d_statistics.d_ninv.d_slt += 1; break;
+          case BitVectorNode::Kind::UDIV:
             d_statistics.d_ninv.d_udiv += 1;
             break;
-          case BitVectorNode::NodeKind::ULT:
-            d_statistics.d_ninv.d_ult += 1;
-            break;
-          case BitVectorNode::NodeKind::UREM:
+          case BitVectorNode::Kind::ULT: d_statistics.d_ninv.d_ult += 1; break;
+          case BitVectorNode::Kind::UREM:
             d_statistics.d_ninv.d_urem += 1;
             break;
-          case BitVectorNode::NodeKind::XOR:
-            d_statistics.d_ninv.d_xor += 1;
-            break;
+          case BitVectorNode::Kind::XOR: d_statistics.d_ninv.d_xor += 1; break;
           default: assert(false);
         };
 #endif
@@ -510,57 +487,35 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
 #ifndef NDEBUG
         switch (cur->get_kind())
         {
-          case BitVectorNode::NodeKind::ADD:
-            d_statistics.d_ncons.d_add += 1;
-            break;
-          case BitVectorNode::NodeKind::AND:
-            d_statistics.d_ncons.d_and += 1;
-            break;
-          case BitVectorNode::NodeKind::ASHR:
+          case BitVectorNode::Kind::ADD: d_statistics.d_ncons.d_add += 1; break;
+          case BitVectorNode::Kind::AND: d_statistics.d_ncons.d_and += 1; break;
+          case BitVectorNode::Kind::ASHR:
             d_statistics.d_ncons.d_ashr += 1;
             break;
-          case BitVectorNode::NodeKind::CONCAT:
+          case BitVectorNode::Kind::CONCAT:
             d_statistics.d_ncons.d_concat += 1;
             break;
-          case BitVectorNode::NodeKind::EXTRACT:
+          case BitVectorNode::Kind::EXTRACT:
             d_statistics.d_ncons.d_extract += 1;
             break;
-          case BitVectorNode::NodeKind::EQ:
-            d_statistics.d_ncons.d_eq += 1;
-            break;
-          case BitVectorNode::NodeKind::ITE:
-            d_statistics.d_ncons.d_ite += 1;
-            break;
-          case BitVectorNode::NodeKind::MUL:
-            d_statistics.d_ncons.d_mul += 1;
-            break;
-          case BitVectorNode::NodeKind::NOT:
-            d_statistics.d_ncons.d_not += 1;
-            break;
-          case BitVectorNode::NodeKind::SEXT:
+          case BitVectorNode::Kind::EQ: d_statistics.d_ncons.d_eq += 1; break;
+          case BitVectorNode::Kind::ITE: d_statistics.d_ncons.d_ite += 1; break;
+          case BitVectorNode::Kind::MUL: d_statistics.d_ncons.d_mul += 1; break;
+          case BitVectorNode::Kind::NOT: d_statistics.d_ncons.d_not += 1; break;
+          case BitVectorNode::Kind::SEXT:
             d_statistics.d_ncons.d_sext += 1;
             break;
-          case BitVectorNode::NodeKind::SHL:
-            d_statistics.d_ncons.d_shl += 1;
-            break;
-          case BitVectorNode::NodeKind::SHR:
-            d_statistics.d_ncons.d_shr += 1;
-            break;
-          case BitVectorNode::NodeKind::SLT:
-            d_statistics.d_ncons.d_slt += 1;
-            break;
-          case BitVectorNode::NodeKind::UDIV:
+          case BitVectorNode::Kind::SHL: d_statistics.d_ncons.d_shl += 1; break;
+          case BitVectorNode::Kind::SHR: d_statistics.d_ncons.d_shr += 1; break;
+          case BitVectorNode::Kind::SLT: d_statistics.d_ncons.d_slt += 1; break;
+          case BitVectorNode::Kind::UDIV:
             d_statistics.d_ncons.d_udiv += 1;
             break;
-          case BitVectorNode::NodeKind::ULT:
-            d_statistics.d_ncons.d_ult += 1;
-            break;
-          case BitVectorNode::NodeKind::UREM:
+          case BitVectorNode::Kind::ULT: d_statistics.d_ncons.d_ult += 1; break;
+          case BitVectorNode::Kind::UREM:
             d_statistics.d_ncons.d_urem += 1;
             break;
-          case BitVectorNode::NodeKind::XOR:
-            d_statistics.d_ncons.d_xor += 1;
-            break;
+          case BitVectorNode::Kind::XOR: d_statistics.d_ncons.d_xor += 1; break;
           default: assert(false);
         };
 #endif
@@ -636,7 +591,7 @@ LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
 
   bool is_ult      = true;
   BitVectorNode* r = root;
-  if (root->get_kind() == BitVectorNode::NodeKind::NOT)
+  if (root->get_kind() == BitVectorNode::Kind::NOT)
   {
     r      = (*root)[0];
     is_ult = false;
@@ -644,7 +599,7 @@ LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
 
   BitVectorNode* child0 = (*r)[0];
   BitVectorNode* child1 = (*r)[1];
-  bool is_signed        = r->get_kind() == BitVectorNode::NodeKind::SLT;
+  bool is_signed        = r->get_kind() == BitVectorNode::Kind::SLT;
   uint32_t size         = child0->size();
   BitVector min_value, max_value;
 
