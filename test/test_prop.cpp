@@ -17,7 +17,7 @@ extern "C" {
 
 #include "bitvector.h"
 #include "bitvector_domain.h"
-#include "rng.h"
+#include "rng/rng.h"
 
 namespace bzla {
 namespace test {

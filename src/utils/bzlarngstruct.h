@@ -12,7 +12,7 @@
 
 #include <memory>
 
-#include "rng.h"
+#include "rng/rng.h"
 
 extern "C" {
 #include "utils/bzlamem.h"

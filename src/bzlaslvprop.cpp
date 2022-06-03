@@ -23,7 +23,7 @@ extern "C" {
 
 #include "bitvector.h"
 #include "bitvector_domain.h"
-#include "ls.h"
+#include "ls/ls.h"
 
 struct BzlaPropSolver;
 
