@@ -15,13 +15,6 @@ set(test_names
   test_bv
   test_bvdomain
   test_bvdomaingen
-  test_bvnodecons
-  test_bvnodeinv
-  test_bvnodeiscons
-  test_bvnodeisess
-  test_bvnodeisinv
-  test_bvnodeselpath
-  test_ls
 )
 
 foreach(test ${test_names})
@@ -30,3 +23,4 @@ endforeach()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(bitblast)
+add_subdirectory(ls)

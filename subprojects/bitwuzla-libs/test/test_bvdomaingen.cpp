@@ -2,7 +2,8 @@
 #include <string>
 #include <unordered_set>
 
-#include "test_ls_common.h"
+#include "bitvector_domain.h"
+#include "test.h"
 
 namespace bzla {
 namespace ls {
