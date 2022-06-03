@@ -1,7 +1,7 @@
-#include "ls.h"
-#include "test_ls_common.h"
-
 #include <map>
+
+#include "ls/ls.h"
+#include "test_ls_common.h"
 
 namespace bzla {
 namespace ls {

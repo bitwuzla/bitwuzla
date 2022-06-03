@@ -6,7 +6,7 @@
 
 #include "bitvector.h"
 #include "gtest/gtest.h"
-#include "rng.h"
+#include "rng/rng.h"
 
 namespace bzla {
 

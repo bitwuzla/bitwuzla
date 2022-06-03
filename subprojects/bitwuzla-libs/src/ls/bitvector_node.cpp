@@ -3,7 +3,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "rng.h"
+#include "rng/rng.h"
 
 namespace bzla {
 namespace ls {
@@ -33,11 +33,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
                              BitVectorNode* child0,
                              BitVectorNode* child1,
                              BitVectorNode* child2)
-    : BitVectorNode(rng,
-                    BitVectorDomain(size),
-                    child0,
-                    child1,
-                    child2)
+    : BitVectorNode(rng, BitVectorDomain(size), child0, child1, child2)
 {
 }
 
@@ -3816,12 +3812,12 @@ BitVectorUlt::inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s)
   uint32_t bw_x1 = op_x[1]->size();
   assert(bw_x - bw_x1 == bw_x0);
 
-  const BitVector x = op_x.assignment();
-  BitVector x0      = x.bvextract(bw_x - 1, bw_x1);
-  BitVector x1      = x.bvextract(bw_x1 - 1, 0);
-  const BitVector s = op_s.assignment();
-  BitVector s0      = s.bvextract(bw_x - 1, bw_x1);
-  BitVector s1      = s.bvextract(bw_x1 - 1, 0);
+  const BitVector x   = op_x.assignment();
+  BitVector x0        = x.bvextract(bw_x - 1, bw_x1);
+  BitVector x1        = x.bvextract(bw_x1 - 1, 0);
+  const BitVector s   = op_s.assignment();
+  BitVector s0        = s.bvextract(bw_x - 1, bw_x1);
+  BitVector s1        = s.bvextract(bw_x1 - 1, 0);
   BitVectorDomain dx0 = dx.bvextract(bw_x - 1, bw_x1);
   BitVectorDomain dx1 = dx.bvextract(bw_x1 - 1, 0);
 

@@ -4,8 +4,8 @@
 #include <cassert>
 #include <iostream>
 
-#include "rng.h"
-#include "wheel_factorizer.h"
+#include "rng/rng.h"
+#include "utils/wheel_factorizer.h"
 
 namespace bzla {
 namespace ls {

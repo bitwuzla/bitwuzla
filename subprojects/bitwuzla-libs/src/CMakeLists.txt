@@ -3,16 +3,16 @@ set(libbzlabv_src_files
 )
 
 set(libbzlals_src_files
-  ls.cpp
   bitvector_domain.cpp
-  bitvector_node.cpp
-  wheel_factorizer.cpp
   bitblast/aig/aig_manager.cpp
   bitblast/aig/aig_printer.cpp
+  ls/ls.cpp
+  ls/bitvector_node.cpp
+  utils/wheel_factorizer.cpp
 )
 
 set(libbzlarng_src_files
-  rng.cpp
+  rng/rng.cpp
 )
 
 #-----------------------------------------------------------------------------#

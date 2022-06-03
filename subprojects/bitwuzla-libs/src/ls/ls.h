@@ -296,7 +296,7 @@ class LocalSearch
   /** The log level. */
   uint32_t d_log_level = 0;
   /** The maximum number of propagations, 0 for unlimited. */
-  uint64_t d_max_nprops   = 0;
+  uint64_t d_max_nprops = 0;
   /** The maximum number of cone updates, 0 for unlimited. */
   uint64_t d_max_nupdates = 0;
   /** The seed for the RNG. */

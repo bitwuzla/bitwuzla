@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <utility>
 
-#include "rng.h"
+#include "rng/rng.h"
 
 namespace bzla {
 

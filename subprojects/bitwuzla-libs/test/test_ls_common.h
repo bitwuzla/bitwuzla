@@ -2,7 +2,7 @@
 #define BZLALS__TEST__TEST_LS_COMMON_H
 
 #include "bitvector_domain.h"
-#include "bitvector_node.h"
+#include "ls/bitvector_node.h"
 #include "test.h"
 
 namespace bzla {

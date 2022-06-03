@@ -5,8 +5,8 @@
 #include <iostream>
 
 #include "bitvector.h"
-#include "bitvector_node.h"
-#include "rng.h"
+#include "ls/bitvector_node.h"
+#include "rng/rng.h"
 
 #define BZLALS_PROB_USE_INV_VALUE 990
 
