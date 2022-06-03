@@ -205,6 +205,12 @@ class LocalSearch
    */
   static bool is_not_node(const BitVectorNode* node);
   /**
+   * Determine if given node is a constant.
+   * @param node The node to query.
+   * @return True if `node` is a constant.
+   */
+  static bool is_const_node(const BitVectorNode* node);
+  /**
    * Get node by id.
    * @param id The node id.
    * @return The node with the given id.
