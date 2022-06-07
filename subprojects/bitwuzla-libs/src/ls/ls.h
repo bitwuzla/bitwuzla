@@ -229,6 +229,13 @@ class LocalSearch
    */
   bool is_root_node(const BitVectorNode* node) const;
   /**
+   * Determine if given node is an inequality (ULT or SLT) root (this includes
+   * negated inequalities).
+   * @param node The node to query.
+   * @return True if `node` is a (possibly negated) inequality root.
+   */
+  bool is_ineq_root(const BitVectorNode* node) const;
+  /**
    * Update information related to the root given by id.
    *
    * This removes given root from the list of unsatisfied roots , adds the root
@@ -287,6 +294,13 @@ class LocalSearch
   std::vector<BitVectorNode*> d_roots;
   /** The set of unsatisfied roots. */
   std::unordered_set<uint32_t> d_roots_unsat;
+  /**
+   * A temporary cache for currently satisfied top-level inequalities
+   * (includes negated top-level inequalities).
+   */
+  /// TODO: This is a workaround for now, we might want to get rid of not
+  ///       nodes alltogether, which would simplify updating bounds.
+  std::unordered_set<BitVectorNode*> d_roots_sat_ineq;
   /** Map nodes to their parent nodes. */
   ParentsMap d_parents;
 

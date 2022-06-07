@@ -342,10 +342,18 @@ LocalSearch::is_root_node(const BitVectorNode* node) const
 }
 
 bool
-LocalSearch::is_ineq_node(const BitVectorNode* node)
+LocalSearch::is_ineq_root(const BitVectorNode* node) const
 {
+  if (!is_root_node(node)) return false;
   BitVectorNode::Kind kind =
       is_not_node(node) ? (*node)[0]->get_kind() : node->get_kind();
+  return kind == BitVectorNode::Kind::SLT || kind == BitVectorNode::Kind::ULT;
+}
+
+bool
+LocalSearch::is_ineq_node(const BitVectorNode* node)
+{
+  BitVectorNode::Kind kind = node->get_kind();
   return kind == BitVectorNode::Kind::SLT || kind == BitVectorNode::Kind::ULT;
 }
 
@@ -375,7 +383,7 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
     uint32_t arity = cur->arity();
 
     BZLALSLOG << std::endl;
-    BZLALSLOG << "  propagate: " << std::endl;
+    BZLALSLOG << "  propagate:" << std::endl;
     BZLALSLOG << "    node: " << *cur << std::endl;
     if (BZLALSLOG_ENABLED)
     {
@@ -389,7 +397,7 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
         }
         if ((*cur)[i]->max_u())
         {
-          BZLALSLOG << "           + min_u: " << *(*cur)[i]->max_u()
+          BZLALSLOG << "           + max_u: " << *(*cur)[i]->max_u()
                     << std::endl;
         }
         if ((*cur)[i]->min_s())
@@ -399,7 +407,7 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
         }
         if ((*cur)[i]->max_s())
         {
-          BZLALSLOG << "           + min_s: " << *(*cur)[i]->max_s()
+          BZLALSLOG << "           + max_s: " << *(*cur)[i]->max_s()
                     << std::endl;
         }
       }
@@ -568,10 +576,23 @@ LocalSearch::update_unsat_roots(uint32_t id)
 void
 LocalSearch::update_bounds()
 {
+  assert(d_roots_sat_ineq.empty());
   for (BitVectorNode* root : d_roots)
   {
-    if (!is_ineq_node(root)) continue;
+    if (!is_ineq_root(root)) continue;
+    if (root->assignment().is_false()) continue;
+    if (root->get_kind() == BitVectorNode::Kind::NOT)
+    {
+      d_roots_sat_ineq.insert((*root)[0]);
+    }
+    else
+    {
+      d_roots_sat_ineq.insert(root);
+    }
+  }
 
+  for (BitVectorNode* root : d_roots_sat_ineq)
+  {
     for (uint32_t i = 0, n = root->arity(); i < n; ++i)
     {
       BitVectorNode* child                        = (*root)[i];
@@ -579,8 +600,7 @@ LocalSearch::update_bounds()
       for (const auto& p : parents)
       {
         BitVectorNode* node = get_node(p);
-        if (is_root_node(node) && is_ineq_node(node)
-            && node->assignment().is_true())
+        if (d_roots_sat_ineq.find(node) != d_roots_sat_ineq.end())
         {
           update_bounds_aux(
               node, child == (*node)[0] ? (child == (*node)[1] ? -1 : 0) : 1);
@@ -594,18 +614,12 @@ void
 LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
 {
   assert(is_ineq_node(root));
+  assert(d_roots_sat_ineq.find(root) != d_roots_sat_ineq.end());
+  assert(root->arity() == 2);
 
-  bool is_ult      = true;
-  BitVectorNode* r = root;
-  if (root->get_kind() == BitVectorNode::Kind::NOT)
-  {
-    r      = (*root)[0];
-    is_ult = false;
-  }
-
-  BitVectorNode* child0 = (*r)[0];
-  BitVectorNode* child1 = (*r)[1];
-  bool is_signed        = r->get_kind() == BitVectorNode::Kind::SLT;
+  BitVectorNode* child0 = (*root)[0];
+  BitVectorNode* child1 = (*root)[1];
+  bool is_signed        = root->get_kind() == BitVectorNode::Kind::SLT;
   uint32_t size         = child0->size();
   BitVector min_value, max_value;
 
@@ -620,7 +634,7 @@ LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
     max_value = BitVector::mk_ones(size);
   }
 
-  if (is_ult)
+  if (root->assignment().is_true())
   {
     // x < s
     if (!is_const_node(child0) && (pos < 0 || pos == 0))
@@ -677,15 +691,14 @@ LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
 void
 LocalSearch::reset_bounds()
 {
-  for (BitVectorNode* root : d_roots)
+  for (BitVectorNode* root : d_roots_sat_ineq)
   {
-    if (!is_ineq_node(root)) continue;
-
     for (uint32_t i = 0, n = root->arity(); i < n; ++i)
     {
       (*root)[i]->reset_bounds();
     }
   }
+  d_roots_sat_ineq.clear();
 }
 
 uint64_t
