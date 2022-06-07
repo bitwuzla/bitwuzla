@@ -1336,6 +1336,18 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_QUANT_EAGER_SKOLEM,
 
+  /*! **Quantifier solver engine:
+   *    Model-based Quantifier Instantiation.**
+   *
+   * Values:
+   *  * **1**: enable [**default**]
+   *  * **0**: disable
+   *
+   *  @warning This is an expert option to configure the quantifier solver
+   *  engine.
+   */
+  BITWUZLA_OPT_QUANT_MBQI,
+
   /* ------------------------ Other Expert Options ------------------------- */
 
   /*! **Check model (debug only).**

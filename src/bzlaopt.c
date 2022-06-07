@@ -1403,6 +1403,16 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "eagerly apply Skolemization");
+  init_opt(bzla,
+           BZLA_OPT_QUANT_MBQI,
+           true,
+           true,
+           "quant-mbqi",
+           0,
+           1,
+           0,
+           1,
+           "enable model-based quantifier instantiation");
 
   /* other expert options --------------------------------------------------- */
   init_opt(bzla,
