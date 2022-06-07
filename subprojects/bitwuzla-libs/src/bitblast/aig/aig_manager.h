@@ -98,6 +98,14 @@ class BitInterface<AigNode>
   AigNodeData* find_or_create_and(const AigNode& left, const AigNode& right);
 
   /**
+   * Implements two-level AIG rewriting from [1].
+   *
+   * [1] Local Two-Level And-Inverter Graph Minimization without Blowup.
+   *     Robert Brummayer, Armin Biere.
+   */
+  AigNode rewrite_and(const AigNode& left, const AigNode& right);
+
+  /**
    * Construct a new node data.
    */
   AigNodeData* new_data();

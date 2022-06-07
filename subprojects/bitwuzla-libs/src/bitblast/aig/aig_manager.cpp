@@ -237,7 +237,12 @@ AigManager::mk_and(const AigNode& a, const AigNode& b)
   const AigNode& left  = swap ? b : a;
   const AigNode& right = swap ? a : b;
 
-  // TODO: two-level AIG rewriting
+  AigNode rw = rewrite_and(left, right);
+
+  if (!rw.is_null())
+  {
+    return rw;
+  }
 
   AigNodeData* d = find_or_create_and(left, right);
   assert(!d->d_left.is_null());
@@ -288,6 +293,247 @@ AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
   }
   delete d;
   return *it;
+}
+
+AigNode
+AigManager::rewrite_and(const AigNode& l, const AigNode& r)
+{
+  AigNode left  = l;
+  AigNode right = r;
+  do
+  {
+    /** Optimization level 1 */
+
+    // Neutrality rule
+    //   shape:  a /\ 1
+    //   result: a
+    //
+    // Idempotence rule
+    //   shape:     a /\ b
+    //   condition: a = b
+    //   result:    a
+    if (left.is_true() || left == right)
+    {
+      return right;
+    }
+    // Boundedness rule
+    //   shape:  a /\ 0
+    //   result: 0
+    //
+    // Contradiction rule
+    //   shape:     a /\ ~b
+    //   condition: a = b
+    //   result:    0
+    if (left.is_false() || right.is_false() || left.get_id() == -right.get_id())
+    {
+      return d_false;
+    }
+    assert(!right.is_true());
+
+    /** Optimization level 2 */
+
+    // Contradiction rule (assymetric)
+    //   shape:     (a /\ b) /\ c
+    //   condition: (a = ~c) \/ (b = ~c)
+    //   result:    0
+    if (left.is_and() && !left.is_negated()
+        && (left[0].get_id() == -right.get_id()
+            || left[1].get_id() == -right.get_id()))
+    {
+      return d_false;
+    }
+    if (right.is_and() && !right.is_negated()
+        && (right[0].get_id() == -left.get_id()
+            || right[1].get_id() == -left.get_id()))
+    {
+      return d_false;
+    }
+
+    // Contradiction rule (symmetric)
+    //   shape:     (a /\ b) /\ (c /\ d)
+    //   condition: (a = ~c) \/ (a = ~d) \/ (b = ~c) \/ (b = ~d)
+    //   result:    0
+    if (left.is_and() && !left.is_negated() && right.is_and()
+        && !right.is_negated()
+        && (left[0].get_id() == -right[0].get_id()
+            || left[0].get_id() == -right[1].get_id()
+            || left[1].get_id() == -right[0].get_id()
+            || left[1].get_id() == -right[1].get_id()))
+    {
+      return d_false;
+    }
+
+    // Subsumption rule (assymetric)
+    //   shape:     ~(a /\ b) /\ c
+    //   condition: (a = ~c) \/ (b = ~c)
+    //   result:    c
+    if (left.is_and() && left.is_negated()
+        && (left[0].get_id() == -right.get_id()
+            || left[1].get_id() == -right.get_id()))
+    {
+      return right;
+    }
+    if (right.is_and() && right.is_negated()
+        && (right[0].get_id() == -left.get_id()
+            || right[1].get_id() == -left.get_id()))
+    {
+      return left;
+    }
+
+    // Subsumption rule (symmetric)
+    //   shape:     ~(a /\ b) /\ (c /\ d)
+    //   condition: (a = ~c) \/ (a = ~d) \/ (b = ~c) \/ (b = ~d)
+    //   result:    c /\ d
+    if (left.is_and() && left.is_negated() && right.is_and()
+        && !right.is_negated()
+        && (left[0].get_id() == -right[0].get_id()
+            || left[0].get_id() == -right[1].get_id()
+            || left[1].get_id() == -right[0].get_id()
+            || left[1].get_id() == -right[1].get_id()))
+    {
+      return right;
+    }
+    if (right.is_and() && right.is_negated() && left.is_and()
+        && !left.is_negated()
+        && (right[0].get_id() == -left[0].get_id()
+            || right[0].get_id() == -left[1].get_id()
+            || right[1].get_id() == -left[0].get_id()
+            || right[1].get_id() == -left[1].get_id()))
+    {
+      return left;
+    }
+
+    // Idempotence rule
+    //   shape:     (a /\ b) /\ c
+    //   condition: (a = c) \/ (b = c)
+    //   result:    (a /\ b)
+    if (left.is_and() && !left.is_negated()
+        && (left[0] == right || left[1] == right))
+    {
+      return left;
+    }
+    if (right.is_and() && !right.is_negated()
+        && (right[0] == left || right[1] == left))
+    {
+      return right;
+    }
+
+    // Resolution rule
+    //   shape:     ~(a /\ b) /\ ~(c /\ d)
+    //   condition: (a = d) \/ (b = ~c)
+    //   result:    ~a
+    if (left.is_negated() && left.is_and() && right.is_negated()
+        && right.is_and()
+        && (left[0] == right[1] || left[1].get_id() == -right[0].get_id()))
+    {
+      return mk_not(left[0]);
+    }
+    if (right.is_negated() && right.is_and() && left.is_negated()
+        && left.is_and()
+        && (right[0] == left[1] || right[1].get_id() == -left[0].get_id()))
+    {
+      return mk_not(right[0]);
+    }
+
+    /** Optimization level 3 **/
+
+    // Substitution rule (asymmetric)
+    //   shape:     ~(a /\ b) /\ c
+    //   condition: b = c
+    //   result:    ~a /\ c
+    if (left.is_and() && left.is_negated())
+    {
+      // (a = c) -> ~b /\ c
+      if (left[0] == right)
+      {
+        left = mk_not(left[1]);
+        continue;
+      }
+      // (b = c) -> ~a /\ c
+      if (left[1] == right)
+      {
+        left = mk_not(left[0]);
+        continue;
+      }
+    }
+    if (right.is_and() && right.is_negated())
+    {
+      if (right[0] == left)
+      {
+        right = mk_not(right[1]);
+        continue;
+      }
+      else if (right[1] == left)
+      {
+        right = mk_not(right[0]);
+        continue;
+      }
+    }
+
+    // Substitution rule (symmetric)
+    //   shape:     ~(a /\ b) /\ (c /\ d)
+    //   condition: b = c
+    //   result:    ~a /\ (c /\ d)
+    if (left.is_and() && left.is_negated() && right.is_and()
+        && !right.is_negated())
+    {
+      // (a = c) \/ (a = d) -> ~b /\ (c /\ d)
+      if (left[0] == right[0] || left[0] == right[1])
+      {
+        left = mk_not(left[1]);
+        continue;
+      }
+      // (b = c) \/ (b = d) -> ~a /\ (c /\ d)
+      if (left[1] == right[0] || left[1] == right[1])
+      {
+        left = mk_not(left[0]);
+        continue;
+      }
+    }
+    if (right.is_and() && right.is_negated() && left.is_and()
+        && !left.is_negated())
+    {
+      // (a = c) \/ (a = d) -> ~b /\ (c /\ d)
+      if (right[0] == left[0] || right[0] == left[1])
+      {
+        right = mk_not(right[1]);
+        continue;
+      }
+      // (b = c) \/ (b = d) -> ~a /\ (c /\ d)
+      if (right[1] == left[0] || right[1] == left[1])
+      {
+        right = mk_not(right[0]);
+        continue;
+      }
+    }
+
+    /** Optimization level 4 */
+
+    // Idempotence rule
+    //   shape: (a /\ b) /\ (c /\ d)
+    if (left.is_and() && !left.is_negated() && right.is_and()
+        && !right.is_negated())
+    {
+      // (a = c) \/ (b = c)
+      if (left[0] == right[0] || left[1] == right[0])
+      {
+        right = right[1];
+        continue;
+      }
+      // (a = d) \/ (b = d)
+      if (left[0] == right[1] || left[1] == right[1])
+      {
+        right = right[0];
+        continue;
+      }
+    }
+
+    break;
+  } while (true);
+
+  // create AND with left, right
+
+  return AigNode();
 }
 
 AigNodeData*
