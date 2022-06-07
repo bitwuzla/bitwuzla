@@ -29,6 +29,7 @@ init(BzlaSATMgr *smgr)
   {
     ccadical_set_option(slv, "checkfrozen", 1);
   }
+  ccadical_set_option(slv, "shrink", 0);
   return slv;
 }
 
