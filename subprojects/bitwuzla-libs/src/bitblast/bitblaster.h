@@ -530,7 +530,7 @@ class BitblasterInterface
       //
       // First stage: Compute carry bits for subtracting divisor `d` from
       // current remainder `rem`. If `carry[size]` is 1, subtraction was
-      // successful and quotient is 1, else 0.
+      // successful (i.e., rem >= d),  and quotient is 1, else 0.
       for (size_t j = 0; j < size; ++j)
       {
         carry[j + 1] = fa_div_carry(rem[j], d[j], carry[j]);
