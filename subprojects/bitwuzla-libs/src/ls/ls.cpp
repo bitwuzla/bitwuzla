@@ -595,16 +595,11 @@ LocalSearch::update_bounds()
   {
     for (uint32_t i = 0, n = root->arity(); i < n; ++i)
     {
-      BitVectorNode* child                        = (*root)[i];
-      const std::unordered_set<uint32_t>& parents = d_parents.at(child->id());
-      for (const auto& p : parents)
+      BitVectorNode* child = (*root)[i];
+      if (d_roots_sat_ineq.find(root) != d_roots_sat_ineq.end())
       {
-        BitVectorNode* node = get_node(p);
-        if (d_roots_sat_ineq.find(node) != d_roots_sat_ineq.end())
-        {
-          update_bounds_aux(
-              node, child == (*node)[0] ? (child == (*node)[1] ? -1 : 0) : 1);
-        }
+        update_bounds_aux(
+            root, child == (*root)[0] ? (child == (*root)[1] ? -1 : 0) : 1);
       }
     }
   }
