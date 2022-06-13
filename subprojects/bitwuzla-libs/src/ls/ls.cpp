@@ -384,7 +384,8 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
 
     BZLALSLOG << std::endl;
     BZLALSLOG << "  propagate:" << std::endl;
-    BZLALSLOG << "    node: " << *cur << std::endl;
+    BZLALSLOG << "    node: " << *cur << (is_root_node(cur) ? " (root)" : "")
+              << std::endl;
     if (BZLALSLOG_ENABLED)
     {
       for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
