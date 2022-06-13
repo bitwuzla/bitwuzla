@@ -386,46 +386,56 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
     BZLALSLOG << "  propagate:" << std::endl;
     BZLALSLOG << "    node: " << *cur << (is_root_node(cur) ? " (root)" : "")
               << std::endl;
-    if (BZLALSLOG_ENABLED)
-    {
-      for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
-      {
-        BZLALSLOG << "      |- node[" << i << "]: " << *(*cur)[i] << std::endl;
-        if ((*cur)[i]->min_u())
-        {
-          BZLALSLOG << "           + min_u: " << *(*cur)[i]->min_u()
-                    << std::endl;
-        }
-        if ((*cur)[i]->max_u())
-        {
-          BZLALSLOG << "           + max_u: " << *(*cur)[i]->max_u()
-                    << std::endl;
-        }
-        if ((*cur)[i]->min_s())
-        {
-          BZLALSLOG << "           + min_s: " << *(*cur)[i]->min_s()
-                    << std::endl;
-        }
-        if ((*cur)[i]->max_s())
-        {
-          BZLALSLOG << "           + max_s: " << *(*cur)[i]->max_s()
-                    << std::endl;
-        }
-      }
-    }
-    BZLALSLOG << "    target value: " << t << std::endl;
 
     if (arity == 0)
     {
+      BZLALSLOG << "    target value: " << t << std::endl;
       return LocalSearchMove(nprops, nupdates, cur, t);
     }
-    else if (cur->is_const() || cur->all_const())
+    if (cur->is_const() || cur->all_const())
     {
+      BZLALSLOG << "    target value: " << t << std::endl;
       break;
     }
     else
     {
       assert(!cur->domain().is_fixed());
+
+      /* Compute min/max bounds of current node wrt. current assignment. */
+      if (d_ineq_bounds)
+      {
+        compute_bounds(cur);
+      }
+
+      if (BZLALSLOG_ENABLED)
+      {
+        for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
+        {
+          BZLALSLOG << "      |- node[" << i << "]: " << *(*cur)[i]
+                    << std::endl;
+          if ((*cur)[i]->min_u())
+          {
+            BZLALSLOG << "           + min_u: " << *(*cur)[i]->min_u()
+                      << std::endl;
+          }
+          if ((*cur)[i]->max_u())
+          {
+            BZLALSLOG << "           + max_u: " << *(*cur)[i]->max_u()
+                      << std::endl;
+          }
+          if ((*cur)[i]->min_s())
+          {
+            BZLALSLOG << "           + min_s: " << *(*cur)[i]->min_s()
+                      << std::endl;
+          }
+          if ((*cur)[i]->max_s())
+          {
+            BZLALSLOG << "           + max_s: " << *(*cur)[i]->max_s()
+                      << std::endl;
+          }
+        }
+      }
+      BZLALSLOG << "    target value: " << t << std::endl;
 
       /* Select path */
       uint32_t pos_x = cur->select_path(t);
@@ -575,33 +585,26 @@ LocalSearch::update_unsat_roots(uint32_t id)
 }
 
 void
-LocalSearch::update_bounds()
+LocalSearch::compute_bounds(BitVectorNode* node)
 {
-  assert(d_roots_sat_ineq.empty());
-  for (BitVectorNode* root : d_roots)
+  for (uint32_t i = 0, arity = node->arity(); i < arity; ++i)
   {
-    if (!is_ineq_root(root)) continue;
-    if (root->assignment().is_false()) continue;
-    if (root->get_kind() == BitVectorNode::Kind::NOT)
-    {
-      d_roots_sat_ineq.insert((*root)[0]);
-    }
-    else
-    {
-      d_roots_sat_ineq.insert(root);
-    }
+    (*node)[i]->reset_bounds();
   }
-
-  for (BitVectorNode* root : d_roots_sat_ineq)
+  for (uint32_t i = 0, arity = node->arity(); i < arity; ++i)
   {
-    for (uint32_t i = 0, n = root->arity(); i < n; ++i)
+    const BitVectorNode* child                  = (*node)[i];
+    const std::unordered_set<uint32_t>& parents = d_parents.at(child->id());
+    for (uint32_t pid : parents)
     {
-      BitVectorNode* child = (*root)[i];
-      if (d_roots_sat_ineq.find(root) != d_roots_sat_ineq.end())
+      BitVectorNode* p = get_node(pid);
+      if (!is_ineq_root(p)) continue;
+      if (p->assignment().is_false()) continue;
+      if (p->get_kind() == BitVectorNode::Kind::NOT)
       {
-        update_bounds_aux(
-            root, child == (*root)[0] ? (child == (*root)[1] ? -1 : 0) : 1);
+        p = (*p)[0];
       }
+      update_bounds_aux(p, child == (*p)[0] ? (child == (*p)[1] ? -1 : 0) : 1);
     }
   }
 }
@@ -610,7 +613,6 @@ void
 LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
 {
   assert(is_ineq_node(root));
-  assert(d_roots_sat_ineq.find(root) != d_roots_sat_ineq.end());
   assert(root->arity() == 2);
 
   BitVectorNode* child0 = (*root)[0];
@@ -682,19 +684,6 @@ LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
              || child1->min_s()->signed_compare(*child1->max_s()) <= 0);
     }
   }
-}
-
-void
-LocalSearch::reset_bounds()
-{
-  for (BitVectorNode* root : d_roots_sat_ineq)
-  {
-    for (uint32_t i = 0, n = root->arity(); i < n; ++i)
-    {
-      (*root)[i]->reset_bounds();
-    }
-  }
-  d_roots_sat_ineq.clear();
 }
 
 uint64_t
@@ -816,14 +805,6 @@ LocalSearch::move()
 
     BZLALSLOG << std::endl;
     BZLALSLOG << "  select constraint: " << *root << std::endl;
-
-    if (d_ineq_bounds)
-    {
-      /* Reset bounds from the previous move. */
-      reset_bounds();
-      /* Update min/max bounds for children of inequalities. */
-      update_bounds();
-    }
 
     m = select_move(root, *d_one);
     d_statistics.d_nprops += m.d_nprops;

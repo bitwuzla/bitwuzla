@@ -249,17 +249,17 @@ class LocalSearch
    */
   void update_unsat_roots(uint32_t id);
   /**
-   * Update min/max bounds for children of all (satisfied) root nodes.
+   * Compute min/max bounds for children of given node.
    *
    * This must be called after update_unsat_roots() has been called and the
    * assignment of all nodes has been computed/updated, i.e., the assignment is
    * consistent.
+   *
+   * @param node The node.
    */
-  void update_bounds();
-  /** Reset min/max bounds for children of all roots. */
-  void reset_bounds();
+  void compute_bounds(BitVectorNode* node);
   /**
-   * Helper for updating bounds of children of root inequalities.
+   * Helper for computing bounds of children of root inequalities.
    * @param root The root node.
    * @param pos The position of the child to update, -1 for updating all
    *            children.
@@ -294,13 +294,6 @@ class LocalSearch
   std::vector<BitVectorNode*> d_roots;
   /** The set of unsatisfied roots. */
   std::unordered_set<uint32_t> d_roots_unsat;
-  /**
-   * A temporary cache for currently satisfied top-level inequalities
-   * (includes negated top-level inequalities).
-   */
-  /// TODO: This is a workaround for now, we might want to get rid of not
-  ///       nodes alltogether, which would simplify updating bounds.
-  std::unordered_set<BitVectorNode*> d_roots_sat_ineq;
   /** Map nodes to their parent nodes. */
   ParentsMap d_parents;
 
