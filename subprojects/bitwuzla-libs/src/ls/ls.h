@@ -167,16 +167,47 @@ class LocalSearch
 
   uint32_t invert_node(uint32_t id);
 
+  /**
+   * Get the assignment of the node given by id.
+   * @param id The id of the node to query.
+   */
   const BitVector& get_assignment(uint32_t id) const;
+  /**
+   * Set the assignment of the node given by id.
+   * @param id The id of the node.
+   * @param assignment The assignment to set.
+   */
   void set_assignment(uint32_t id, const BitVector& assignment);
-  const BitVectorDomain& get_domain(uint32_t node) const;
+  /**
+   * Get the domain of the node given by id.
+   * @param id The id of the node to query.
+   * @return The domain of the node given by id.
+   */
+  const BitVectorDomain& get_domain(uint32_t id) const;
   // void set_domain(uint32_t node, const BitVectorDomain& domain);
 
   /** Fix domain bit of given node at index 'idx' to 'value'. */
   void fix_bit(uint32_t id, uint32_t idx, bool value);
 
+  /**
+   * Register node as root.
+   *
+   * @note This not only adds `root` to `d_roots` but also registers unsat
+   *       roots (cached in `d_roots_unsat`) and must therefore be called after
+   *       initial assignment has been computed.
+   *
+   * @param root The id of the node to register as root.
+   */
   void register_root(uint32_t root);
+  /**
+   * Determine if all roots are sat.
+   * @return True if all roots are sat.
+   */
   bool all_roots_sat() const { return d_roots_unsat.empty(); }
+  /**
+   * Get the number of unsat roots.
+   * @return The number of unsat roots.
+   */
   uint32_t get_num_roots_unsat() const { return d_roots_unsat.size(); }
 
   // TODO: incremental case:
@@ -184,11 +215,23 @@ class LocalSearch
   //       - we might want to exclude nodes that are not in the formula from
   //         cone updates
 
+  /**
+   * Get the arity of the node given by id.
+   * @param id The id of the node to query.
+   */
   uint32_t get_arity(uint32_t id) const;
+  /**
+   * Get the child at given index of the node given by id.
+   * @param id The id of the node to query.
+   */
   uint32_t get_child(uint32_t id, uint32_t idx) const;
 
   Result move();
 
+  /**
+   * Set the log level.
+   * @param level The level to set.
+   */
   void set_log_level(uint32_t level) { d_log_level = level; }
 
  private:
@@ -245,9 +288,9 @@ class LocalSearch
    *       assignments of the cone of influence of the input that has been
    *       updated.
    *
-   * @param id The id of the root to update.
+   * @param root The root to update.
    */
-  void update_unsat_roots(uint32_t id);
+  void update_unsat_roots(BitVectorNode* root);
   /**
    * Compute min/max bounds for children of given node.
    *
@@ -293,7 +336,16 @@ class LocalSearch
   /** The set of roots. */
   std::vector<BitVectorNode*> d_roots;
   /** The set of unsatisfied roots. */
-  std::unordered_set<uint32_t> d_roots_unsat;
+  std::unordered_set<BitVectorNode*> d_roots_unsat;
+  /**
+   * The set of (to be considered) top-level inequalities. Maps inequality
+   * roots to their sat assignment (true for top-level inequalities, false for
+   * negated inequality roots).
+   *
+   * @note This includes top-level inequalities and negated inequalities that
+   *       are not roots but whose parents are a top-level NOT.
+   */
+  std::unordered_map<const BitVectorNode*, bool> d_roots_ineq;
   /** Map nodes to their parent nodes. */
   ParentsMap d_parents;
 
