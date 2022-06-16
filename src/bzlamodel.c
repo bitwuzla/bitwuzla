@@ -713,6 +713,11 @@ compute_model_values(Bzla *bzla,
     cur = bzla_node_real_addr(nodes[i]);
     assert(!cur->parameterized);
     BZLALOG(3, "generate model for %s", bzla_util_node2string(cur));
+    // Skip intermediate update nodes
+    if (bzla_node_is_update(cur))
+    {
+      continue;
+    }
     if (bzla_node_is_fun(cur))
     {
       recursively_compute_function_model(bzla, bv_model, fun_model, cur);
@@ -720,6 +725,12 @@ compute_model_values(Bzla *bzla,
     else if (bzla_node_is_apply(cur)
              || bzla_node_fp_needs_word_blast(bzla, cur))
     {
+      // Generate model for top-level update nodes only
+      if (bzla_node_is_apply(cur) && bzla_node_is_update(cur->e[0]))
+      {
+        recursively_compute_function_model(
+            bzla, bv_model, fun_model, cur->e[0]);
+      }
       bv = bzla_model_recursively_compute_assignment(
           bzla, bv_model, fun_model, cur);
       bzla_bv_free(bzla->mm, bv);
