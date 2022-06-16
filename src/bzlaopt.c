@@ -1369,7 +1369,7 @@ bzla_opt_init_opts(Bzla *bzla)
            true,
            "quant-synth-sk",
            0,
-           1,
+           0,
            0,
            1,
            "synthesize Skolem functions");
@@ -1389,7 +1389,7 @@ bzla_opt_init_opts(Bzla *bzla)
            true,
            "quant-skolem-uf",
            0,
-           1,
+           0,
            0,
            1,
            "use UFs for Skolemization");
