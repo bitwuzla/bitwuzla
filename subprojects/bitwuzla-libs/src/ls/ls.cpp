@@ -369,12 +369,6 @@ LocalSearch::is_not_node(const BitVectorNode* node)
   return node->get_kind() == BitVectorNode::Kind::NOT;
 }
 
-bool
-LocalSearch::is_const_node(const BitVectorNode* node)
-{
-  return node->get_kind() == BitVectorNode::Kind::CONST;
-}
-
 LocalSearchMove
 LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
 {
@@ -644,7 +638,7 @@ LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
   if (is_ult)
   {
     // x < s
-    if (!is_const_node(child0) && (pos < 0 || pos == 0))
+    if (!child0->all_const() && (pos < 0 || pos == 0))
     {
       assert((is_signed && child1->assignment().signed_compare(min_value) > 0)
              || (!is_signed && child1->assignment().compare(min_value) > 0));
@@ -656,7 +650,7 @@ LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
     }
 
     // s < x
-    if (!is_const_node(child1) && (pos < 0 || pos == 1))
+    if (!child1->all_const() && (pos < 0 || pos == 1))
     {
       assert((is_signed && child0->assignment().signed_compare(max_value) < 0)
              || (!is_signed && child0->assignment().compare(max_value) < 0));
@@ -670,7 +664,7 @@ LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
   else
   {
     // x >= s
-    if (!is_const_node(child0) && (pos < 0 || pos == 0))
+    if (!child0->all_const() && (pos < 0 || pos == 0))
     {
       assert((is_signed && child1->assignment().signed_compare(max_value) <= 0)
              || (!is_signed && child1->assignment().compare(max_value) <= 0));
@@ -682,7 +676,7 @@ LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
     }
 
     // s >= x
-    if (!is_const_node(child1) && (pos < 0 || pos == 1))
+    if (!child1->all_const() && (pos < 0 || pos == 1))
     {
       assert((is_signed && min_value.signed_compare(child0->assignment()) <= 0)
              || (!is_signed && min_value.compare(child0->assignment()) <= 0));
