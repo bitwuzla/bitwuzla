@@ -1087,11 +1087,13 @@ class BitVectorSlt : public BitVectorNode
   BitVectorSlt(RNG* rng,
                uint32_t size,
                BitVectorNode* child0,
-               BitVectorNode* child1);
+               BitVectorNode* child1,
+               bool opt_concat = false);
   BitVectorSlt(RNG* rng,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
-               BitVectorNode* child1);
+               BitVectorNode* child1,
+               bool opt_concat = false);
 
   Kind get_kind() const override { return SLT; }
 
@@ -1160,6 +1162,33 @@ class BitVectorSlt : public BitVectorNode
                               uint32_t pos_x,
                               BitVector& min,
                               BitVector& max);
+  /**
+   * Helper for concat-specific inverse value computation.
+   * Attempts to find an inverse value by only changing the value of one of
+   * the children of the concat.
+   * @param s The value of the other operand.
+   * @param t The target value of this node.
+   * @param pos_x The index of operand `x`, which is a concat node.
+   * @return The inverse value.
+   */
+  BitVector* inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s);
+  /**
+   * Helper for inverse_value_concat() to generate a new random value with
+   * respect to the given domain and within given min/max range.
+   * @param d The domain.
+   * @param min The lower bound of the range.
+   * @param max The upper bound of the range.
+   * @return A random value within the given range, if there is one, else
+   *         a null BitVector.
+   */
+  BitVector inverse_value_concat_new_random(const BitVectorDomain& d,
+                                            const BitVector& min,
+                                            const BitVector& max);
+  /**
+   * True to enable optimization for inverse_value computation of concat
+   * operands.
+   */
+  bool d_opt_concat = false;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorSlt& node);

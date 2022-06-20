@@ -360,10 +360,10 @@ class LocalSearch
    */
   bool d_ineq_bounds = false;
   /**
-   * True to enable optimization for inverse_value computation of ult over
-   * concat operands.
+   * True to enable optimization for inverse_value computation of inequalities
+   * over concat operands.
    */
-  bool d_opt_ult_concat = false;
+  bool d_opt_lt_concat = false;
 };
 
 }  // namespace ls
