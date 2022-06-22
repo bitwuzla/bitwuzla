@@ -56,12 +56,12 @@ LocalSearch::LocalSearch(uint64_t max_nprops,
                          uint64_t max_nupdates,
                          uint32_t seed,
                          bool ineq_bounds,
-                         bool opt_ult_concat)
+                         bool opt_lt_concat_sext)
     : d_max_nprops(max_nprops),
       d_max_nupdates(max_nupdates),
       d_seed(seed),
       d_ineq_bounds(ineq_bounds),
-      d_opt_lt_concat(opt_ult_concat)
+      d_opt_lt_concat_sext(opt_lt_concat_sext)
 
 {
   d_rng.reset(new RNG(d_seed));
@@ -184,7 +184,7 @@ LocalSearch::mk_node(OperatorKind kind,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1]),
-                                 d_opt_lt_concat));
+                                 d_opt_lt_concat_sext));
       break;
     case UDIV:
       assert(children.size() == 2);  // API check
@@ -197,7 +197,7 @@ LocalSearch::mk_node(OperatorKind kind,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1]),
-                                 d_opt_lt_concat));
+                                 d_opt_lt_concat_sext));
       break;
     case UREM:
       assert(children.size() == 2);  // API check

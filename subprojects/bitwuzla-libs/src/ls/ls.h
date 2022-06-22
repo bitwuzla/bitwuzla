@@ -138,9 +138,9 @@ class LocalSearch
 
   LocalSearch(uint64_t max_nprops,
               uint64_t max_nupdates,
-              uint32_t seed       = 1234,
-              bool ineq_bounds    = false,
-              bool opt_ult_concat = false);
+              uint32_t seed           = 1234,
+              bool ineq_bounds        = false,
+              bool opt_lt_concat_sext = false);
   ~LocalSearch();
 
   void set_max_nprops(uint64_t max) { d_max_nprops = max; }
@@ -361,9 +361,9 @@ class LocalSearch
   bool d_ineq_bounds = false;
   /**
    * True to enable optimization for inverse_value computation of inequalities
-   * over concat operands.
+   * over concat and sign extension operands.
    */
-  bool d_opt_lt_concat = false;
+  bool d_opt_lt_concat_sext = false;
 };
 
 }  // namespace ls

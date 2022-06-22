@@ -965,28 +965,28 @@ class BitVectorUlt : public BitVectorNode
    * @param size The bit-width of this node.
    * @param child0 The operand at index 0.
    * @param child1 The operand at index 1.
-   * @param opt_concat True to enable optimization for inverse_value
-   *                   computation of concat operands.
+   * @param opt_concat_sext True to enable optimization for inverse_value
+   *                        computation of concat and sign extension operands.
    */
   BitVectorUlt(RNG* rng,
                uint32_t size,
                BitVectorNode* child0,
                BitVectorNode* child1,
-               bool opt_concat = false);
+               bool opt_concat_sext = false);
   /**
    * Constructor.
    * @param rng The associated random number generator.
    * @param domain The underlying bit-vector domain.
    * @param child0 The operand at index 0.
    * @param child1 The operand at index 1.
-   * @param opt_concat True to enable optimization for inverse_value
-   *                   computation of concat operands.
+   * @param opt_concat_sext True to enable optimization for inverse_value
+   *                        computation of concat and sign extension operands.
    */
   BitVectorUlt(RNG* rng,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1,
-               bool opt_concat = false);
+               bool opt_concat_sext = false);
 
   Kind get_kind() const override { return ULT; }
 
@@ -1048,7 +1048,7 @@ class BitVectorUlt : public BitVectorNode
                               BitVector& min,
                               BitVector& max);
   /**
-   * Helper for concat-specific inverse value computation.
+   * Helper for concat-specific (when x is a concat) inverse value computation.
    * Attempts to find an inverse value by only changing the value of one of
    * the children of the concat.
    * @param s The value of the other operand.
@@ -1058,22 +1058,31 @@ class BitVectorUlt : public BitVectorNode
    */
   BitVector* inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s);
   /**
-   * Helper for inverse_value_concat() to generate a new random value with
-   * respect to the given domain and within given min/max range.
+   * Helper for sext-specific (when x is a sign extension) inverse value
+   * computation. @param s The value of the other operand.
+   * @param t The target value of this node.
+   * @param pos_x The index of operand `x`, which is a sign extension node.
+   * @return The inverse value.
+   */
+  BitVector* inverse_value_sext(bool t, uint32_t pos_x, uint32_t pos_s);
+  /**
+   * Helper for inverse_value_concat() and inverse_value_sext() to generate a
+   * new random value with respect to the given domain and within given min/max
+   * range.
    * @param d The domain.
    * @param min The lower bound of the range.
    * @param max The upper bound of the range.
    * @return A random value within the given range, if there is one, else
    *         a null BitVector.
    */
-  BitVector inverse_value_concat_new_random(const BitVectorDomain& d,
-                                            const BitVector& min,
-                                            const BitVector& max);
+  BitVector inverse_value_concat_sext_new_random(const BitVectorDomain& d,
+                                                 const BitVector& min,
+                                                 const BitVector& max);
   /**
    * True to enable optimization for inverse_value computation of concat
-   * operands.
+   * and sign extension operands.
    */
-  bool d_opt_concat = false;
+  bool d_opt_concat_sext = false;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorUlt& node);
@@ -1088,12 +1097,12 @@ class BitVectorSlt : public BitVectorNode
                uint32_t size,
                BitVectorNode* child0,
                BitVectorNode* child1,
-               bool opt_concat = false);
+               bool opt_concat_sext = false);
   BitVectorSlt(RNG* rng,
                const BitVectorDomain& domain,
                BitVectorNode* child0,
                BitVectorNode* child1,
-               bool opt_concat = false);
+               bool opt_concat_sext = false);
 
   Kind get_kind() const override { return SLT; }
 
@@ -1163,7 +1172,7 @@ class BitVectorSlt : public BitVectorNode
                               BitVector& min,
                               BitVector& max);
   /**
-   * Helper for concat-specific inverse value computation.
+   * Helper for concat-specific (when x is a concat) inverse value computation.
    * Attempts to find an inverse value by only changing the value of one of
    * the children of the concat.
    * @param s The value of the other operand.
@@ -1173,22 +1182,31 @@ class BitVectorSlt : public BitVectorNode
    */
   BitVector* inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s);
   /**
-   * Helper for inverse_value_concat() to generate a new random value with
-   * respect to the given domain and within given min/max range.
+   * Helper for sext-specific (when x is a sign extension) inverse value
+   * computation. @param s The value of the other operand.
+   * @param t The target value of this node.
+   * @param pos_x The index of operand `x`, which is a sign extension node.
+   * @return The inverse value.
+   */
+  BitVector* inverse_value_sext(bool t, uint32_t pos_x, uint32_t pos_s);
+  /**
+   * Helper for inverse_value_concat() and inverse_value_sext() to generate a
+   * new random value with respect to the given domain and within given min/max
+   * range.
    * @param d The domain.
    * @param min The lower bound of the range.
    * @param max The upper bound of the range.
    * @return A random value within the given range, if there is one, else
    *         a null BitVector.
    */
-  BitVector inverse_value_concat_new_random(const BitVectorDomain& d,
-                                            const BitVector& min,
-                                            const BitVector& max);
+  BitVector inverse_value_concat_sext_new_random(const BitVectorDomain& d,
+                                                 const BitVector& min,
+                                                 const BitVector& max);
   /**
    * True to enable optimization for inverse_value computation of concat
-   * operands.
+   * and sign extension operands.
    */
-  bool d_opt_concat = false;
+  bool d_opt_concat_sext = false;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorSlt& node);
