@@ -22,10 +22,10 @@ class OstreamVoider
   void operator&(std::ostream& ostream) { (void) ostream; }
 };
 
-#define BZLALSLOG_ENABLED (d_log_level != 0)
-#define BZLALSLOGSTREAM \
-  !(BZLALSLOG_ENABLED) ? (void) 0 : OstreamVoider() & std::cout
-#define BZLALSLOG BZLALSLOGSTREAM << "[bzla-ls]"
+#define BZLALSLOG_ENABLED(level) (d_log_level >= (level))
+#define BZLALSLOGSTREAM(level) \
+  !(BZLALSLOG_ENABLED(level)) ? (void) 0 : OstreamVoider() & std::cout
+#define BZLALSLOG(level) BZLALSLOGSTREAM(level) << "[bzla-ls]"
 
 /* -------------------------------------------------------------------------- */
 
@@ -385,19 +385,19 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
   {
     uint32_t arity = cur->arity();
 
-    BZLALSLOG << std::endl;
-    BZLALSLOG << "  propagate:" << std::endl;
-    BZLALSLOG << "    node: " << *cur << (is_root_node(cur) ? " (root)" : "")
-              << std::endl;
+    BZLALSLOG(1) << std::endl;
+    BZLALSLOG(1) << "  propagate:" << std::endl;
+    BZLALSLOG(1) << "    node: " << *cur << (is_root_node(cur) ? " (root)" : "")
+                 << std::endl;
 
     if (arity == 0)
     {
-      BZLALSLOG << "    target value: " << t << std::endl;
+      BZLALSLOG(1) << "    target value: " << t << std::endl;
       return LocalSearchMove(nprops, nupdates, cur, t);
     }
     if (cur->is_const() || cur->all_const())
     {
-      BZLALSLOG << "    target value: " << t << std::endl;
+      BZLALSLOG(1) << "    target value: " << t << std::endl;
       break;
     }
     else
@@ -410,48 +410,48 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
         compute_bounds(cur);
       }
 
-      if (BZLALSLOG_ENABLED)
+      if (BZLALSLOG_ENABLED(1))
       {
         for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
         {
-          BZLALSLOG << "      |- node[" << i << "]: " << *(*cur)[i]
-                    << std::endl;
+          BZLALSLOG(1) << "      |- node[" << i << "]: " << *(*cur)[i]
+                       << std::endl;
           if ((*cur)[i]->min_u())
           {
-            BZLALSLOG << "           + min_u: " << *(*cur)[i]->min_u()
-                      << std::endl;
+            BZLALSLOG(1) << "           + min_u: " << *(*cur)[i]->min_u()
+                         << std::endl;
           }
           if ((*cur)[i]->max_u())
           {
-            BZLALSLOG << "           + max_u: " << *(*cur)[i]->max_u()
-                      << std::endl;
+            BZLALSLOG(1) << "           + max_u: " << *(*cur)[i]->max_u()
+                         << std::endl;
           }
           if ((*cur)[i]->min_s())
           {
-            BZLALSLOG << "           + min_s: " << *(*cur)[i]->min_s()
-                      << std::endl;
+            BZLALSLOG(1) << "           + min_s: " << *(*cur)[i]->min_s()
+                         << std::endl;
           }
           if ((*cur)[i]->max_s())
           {
-            BZLALSLOG << "           + max_s: " << *(*cur)[i]->max_s()
-                      << std::endl;
+            BZLALSLOG(1) << "           + max_s: " << *(*cur)[i]->max_s()
+                         << std::endl;
           }
         }
       }
-      BZLALSLOG << "    target value: " << t << std::endl;
+      BZLALSLOG(1) << "    target value: " << t << std::endl;
 
       /* Select path */
       uint32_t pos_x = cur->select_path(t);
       assert(pos_x < arity);
 
-      BZLALSLOG << "      select path: node[" << pos_x << "]" << std::endl;
-      if (BZLALSLOG_ENABLED)
+      BZLALSLOG(1) << "      select path: node[" << pos_x << "]" << std::endl;
+      if (BZLALSLOG_ENABLED(1))
       {
         for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
         {
-          BZLALSLOG << "        |- is_essential[" << i
-                    << "]: " << (cur->is_essential(t, i) ? "true" : "false")
-                    << std::endl;
+          BZLALSLOG(1) << "        |- is_essential[" << i
+                       << "]: " << (cur->is_essential(t, i) ? "true" : "false")
+                       << std::endl;
         }
       }
 
@@ -469,7 +469,7 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
           && cur->is_invertible(t, pos_x))
       {
         t = cur->inverse_value(t, pos_x);
-        BZLALSLOG << "      inverse value: " << t << std::endl;
+        BZLALSLOG(1) << "      inverse value: " << t << std::endl;
         d_statistics.d_nprops_inv += 1;
 #ifndef NDEBUG
         switch (cur->get_kind())
@@ -510,7 +510,7 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
       else if (cur->is_consistent(t, pos_x))
       {
         t = cur->consistent_value(t, pos_x);
-        BZLALSLOG << "      consistent value: " << t << std::endl;
+        BZLALSLOG(1) << "      consistent value: " << t << std::endl;
         d_statistics.d_nprops_cons += 1;
 #ifndef NDEBUG
         switch (cur->get_kind())
@@ -562,7 +562,7 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
     }
   }
 
-  BZLALSLOG << "*** conflict" << std::endl;
+  BZLALSLOG(1) << "*** conflict" << std::endl;
 
   /* Conflict case */
   return LocalSearchMove(nprops, nupdates, nullptr, BitVector());
@@ -701,9 +701,9 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
   assert(node);
   assert(is_leaf_node(node));
 
-  BZLALSLOG << "*** update cone: " << *node << " with: " << assignment
-            << std::endl;
-  BZLALSLOG << std::endl;
+  BZLALSLOG(1) << "*** update cone: " << *node << " with: " << assignment
+               << std::endl;
+  BZLALSLOG(1) << std::endl;
 #ifndef NDEBUG
   for (BitVectorNode* r : d_roots_unsat)
   {
@@ -756,17 +756,17 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
   for (uint32_t id : cone)
   {
     BitVectorNode* cur = get_node(id);
-    BZLALSLOG << "  node: " << *cur << " -> ";
+    BZLALSLOG(2) << "  node: " << *cur << " -> ";
     cur->evaluate();
     nupdates += 1;
-    BZLALSLOGSTREAM << cur->assignment() << std::endl;
-    if (BZLALSLOG_ENABLED)
+    BZLALSLOGSTREAM(2) << cur->assignment() << std::endl;
+    if (BZLALSLOG_ENABLED(2))
     {
       for (uint32_t i = 0, n = cur->arity(); i < n; ++i)
       {
-        BZLALSLOG << "    |- node[" << i << "]: " << *(*cur)[i] << std::endl;
+        BZLALSLOG(2) << "    |- node[" << i << "]: " << *(*cur)[i] << std::endl;
       }
-      BZLALSLOG << std::endl;
+      BZLALSLOG(2) << std::endl;
     }
 
     if (is_root_node(cur))
@@ -786,13 +786,13 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
 LocalSearch::Result
 LocalSearch::move()
 {
-  BZLALSLOG << "*** move: " << d_statistics.d_nmoves + 1 << std::endl;
-  BZLALSLOG << "  unsatisfied roots: " << std::endl;
-  if (BZLALSLOG_ENABLED)
+  BZLALSLOG(1) << "*** move: " << d_statistics.d_nmoves + 1 << std::endl;
+  BZLALSLOG(1) << "  unsatisfied roots: " << std::endl;
+  if (BZLALSLOG_ENABLED(1))
   {
     for (const auto r : d_roots_unsat)
     {
-      BZLALSLOG << "    - " << *r << std::endl;
+      BZLALSLOG(1) << "    - " << *r << std::endl;
     }
   }
 
@@ -813,8 +813,8 @@ LocalSearch::move()
 
     if (root->is_const() && root->assignment().is_false()) return UNSAT;
 
-    BZLALSLOG << std::endl;
-    BZLALSLOG << "  select constraint: " << *root << std::endl;
+    BZLALSLOG(1) << std::endl;
+    BZLALSLOG(1) << "  select constraint: " << *root << std::endl;
 
     m = select_move(root, *d_one);
     d_statistics.d_nprops += m.d_nprops;
@@ -823,22 +823,23 @@ LocalSearch::move()
 
   assert(!m.d_assignment.is_null());
 
-  BZLALSLOG << std::endl;
-  BZLALSLOG << "  move" << std::endl;
-  BZLALSLOG << "  input: " << *m.d_input << std::endl;
-  BZLALSLOG << "  prev. assignment: " << m.d_input->assignment() << std::endl;
-  BZLALSLOG << "  new   assignment: " << m.d_assignment << std::endl;
-  BZLALSLOG << std::endl;
+  BZLALSLOG(1) << std::endl;
+  BZLALSLOG(1) << "  move" << std::endl;
+  BZLALSLOG(1) << "  input: " << *m.d_input << std::endl;
+  BZLALSLOG(1) << "  prev. assignment: " << m.d_input->assignment()
+               << std::endl;
+  BZLALSLOG(1) << "  new   assignment: " << m.d_assignment << std::endl;
+  BZLALSLOG(1) << std::endl;
 
   d_statistics.d_nmoves += 1;
   d_statistics.d_nupdates += update_cone(m.d_input, m.d_assignment);
 
-  BZLALSLOG << "*** number of propagations: " << d_statistics.d_nprops
-            << std::endl;
-  BZLALSLOG << std::endl;
-  BZLALSLOG << "*** number of updates: " << d_statistics.d_nupdates
-            << std::endl;
-  BZLALSLOG << std::endl;
+  BZLALSLOG(1) << "*** number of propagations: " << d_statistics.d_nprops
+               << std::endl;
+  BZLALSLOG(1) << std::endl;
+  BZLALSLOG(1) << "*** number of updates: " << d_statistics.d_nupdates
+               << std::endl;
+  BZLALSLOG(1) << std::endl;
 
   if (d_roots_unsat.empty()) return SAT;
   return LocalSearch::UNKNOWN;
