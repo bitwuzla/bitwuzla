@@ -483,7 +483,7 @@ configure_smt_comp_mode(BzlaSMT2Parser *parser)
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_DECLSORT_BV_WIDTH, 16);
     bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PP_NORMALIZE_ADD, 1);
 
-    if (!strcmp(parser->logic, "QF_BV") || !strcmp(parser->logic, "BV"))
+    if (!strcmp(parser->logic, "QF_BV"))
     {
       bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_FUN_PREPROP, 1);
       bitwuzla_set_option(bitwuzla, BITWUZLA_OPT_PROP_CONST_BITS, 1);
