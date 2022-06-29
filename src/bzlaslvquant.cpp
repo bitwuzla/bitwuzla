@@ -556,6 +556,10 @@ QuantSolverState::assume(BzlaNode *n)
 {
   if (!bzla_is_assumption_exp(d_bzla, n))
   {
+    // Reset flag in order to avoid resetting current assumptions when
+    // calling `bzla_assume_exp()` in `assume()`.
+    d_bzla->valid_assignments = 0;
+
     qlog("Assume: %s\n", bzla_util_node2string(n));
     bzla_assume_exp(d_bzla, n);
     d_assumptions.push_back(bzla_node_copy(d_bzla, n));
@@ -1259,6 +1263,9 @@ void
 QuantSolverState::assert_lemmas()
 {
   qlog("Assert lemmas\n");
+  // Reset flag in order to avoid resetting current assumptions when
+  // calling `bzla_assert_exp()` in `assert_lemmas()`.
+  d_bzla->valid_assignments = 0;
   for (BzlaNode *lem : d_lemmas)
   {
     qlog("  Lemma: %s\n", bzla_util_node2string(lem));
@@ -1884,9 +1891,6 @@ QuantSolverState::check_active_quantifiers()
     qlog("***\n");
 
     lit = get_ce_literal(q);
-    // Reset flag in order to avoid resetting current assumptions when
-    // calling `bzla_assume_exp()` in `assume()`.
-    d_bzla->valid_assignments = 0;
     bool assumed = assume(lit);
 
     qlog("Check for counterexamples (%s): ", bzla_util_node2string(q));
@@ -1905,9 +1909,6 @@ QuantSolverState::check_active_quantifiers()
       {
         mbqi(q);
       }
-      // Reset flag in order to avoid resetting current assumptions when
-      // calling `bzla_assert_exp()` in `assert_lemmas()`.
-      d_bzla->valid_assignments = 0;
       assert_lemmas();
     }
     // No counterexamples found anymore, set quantifier to inactive.
