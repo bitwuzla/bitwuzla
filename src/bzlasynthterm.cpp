@@ -262,6 +262,7 @@ TermSynthesizer::eval_candidate(BzlaNode *candidate,
         case BZLA_VAR_NODE:
           assert(d_values_in_map.find(real_cur) != d_values_in_map.end());
           pos    = d_values_in_map.at(real_cur);
+          assert(pos < static_cast<size_t>(value_in->arity));
           result = bzla_bv_copy(mm, value_in->bv[pos]);
           break;
 

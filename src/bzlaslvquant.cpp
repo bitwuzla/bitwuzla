@@ -215,6 +215,9 @@ class QuantSolverState
   QuantSolverState(Bzla *bzla);
   ~QuantSolverState();
 
+  /** Reset state for next check-sat call. */
+  void reset();
+
   void get_active_quantifiers();
   bool is_forall(BzlaNode *q);
   bool is_exists(BzlaNode *q);
@@ -491,6 +494,12 @@ QuantSolverState::~QuantSolverState()
       bzla_node_release(d_bzla, n);
     }
   }
+}
+
+void
+QuantSolverState::reset()
+{
+  d_synth_qi_data.clear();
 }
 
 /*------------------------------------------------------------------------*/
@@ -2314,6 +2323,7 @@ check_sat_quant_solver(BzlaQuantSolver *slv)
   QuantSolverState &state = *slv->d_state.get();
 
   std::vector<BzlaNode *> quantifiers;
+  state.reset();
   state.collect_info(quantifiers);
   state.compute_variable_dependencies(quantifiers);
 
