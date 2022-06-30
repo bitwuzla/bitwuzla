@@ -237,17 +237,7 @@ AigManager::mk_and(const AigNode& a, const AigNode& b)
   const AigNode& left  = swap ? b : a;
   const AigNode& right = swap ? a : b;
 
-  AigNode rw = rewrite_and(left, right);
-
-  if (!rw.is_null())
-  {
-    return rw;
-  }
-
-  AigNodeData* d = find_or_create_and(left, right);
-  assert(!d->d_left.is_null());
-  assert(!d->d_right.is_null());
-  return AigNode(d);
+  return rewrite_and(left, right);
 }
 
 AigNode
@@ -532,8 +522,8 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
   } while (true);
 
   // create AND with left, right
-
-  return AigNode();
+  AigNodeData* d = find_or_create_and(left, right);
+  return AigNode(d);
 }
 
 AigNodeData*
