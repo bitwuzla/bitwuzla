@@ -50,7 +50,8 @@ BitVectorDomain::BitVectorDomain(uint32_t size, uint64_t value)
 BitVectorDomain::BitVectorDomain(const BitVectorDomain &other)
     : d_lo(other.d_lo), d_hi(other.d_hi)
 {
-  d_has_fixed_bits = !d_lo.is_zero() || !d_hi.is_ones();
+  d_has_fixed_bits = other.d_has_fixed_bits;
+  assert(d_has_fixed_bits == (!d_lo.is_zero() || !d_hi.is_ones()));
 }
 
 BitVectorDomain::~BitVectorDomain()
@@ -88,6 +89,42 @@ BitVectorDomain::has_fixed_bits() const
 }
 
 bool
+BitVectorDomain::has_fixed_bits_true() const
+{
+  assert(!is_null());
+  assert(is_valid());
+  return d_has_fixed_bits && !d_lo.is_zero();
+}
+
+bool
+BitVectorDomain::has_fixed_bits_false() const
+{
+  assert(!is_null());
+  assert(is_valid());
+  return d_has_fixed_bits && !d_hi.is_ones();
+}
+
+bool
+BitVectorDomain::has_fixed_bits_true_only() const
+{
+  assert(!is_null());
+  assert(is_valid());
+  if (!has_fixed_bits_true()) return false;
+  BitVector lo_not = d_lo.bvnot();
+  return lo_not.bvand(d_hi).compare(lo_not) == 0;
+}
+
+bool
+BitVectorDomain::has_fixed_bits_false_only() const
+{
+  assert(!is_null());
+  assert(is_valid());
+  if (!has_fixed_bits_false()) return false;
+  BitVector hi_not = d_hi.bvnot();
+  return hi_not.bvor(d_lo).compare(hi_not) == 0;
+}
+
+bool
 BitVectorDomain::is_fixed_bit(uint32_t idx) const
 {
   assert(!is_null());
@@ -122,6 +159,7 @@ BitVectorDomain::fix_bit(uint32_t idx, bool value)
   assert(idx < size());
   d_lo.set_bit(idx, value);
   d_hi.set_bit(idx, value);
+  d_has_fixed_bits = true;
 }
 
 void
@@ -131,6 +169,7 @@ BitVectorDomain::fix(const BitVector &val)
   assert(val.size() == size());
   d_lo.iset(val);
   d_hi.iset(val);
+  d_has_fixed_bits = true;
 }
 
 bool
@@ -147,6 +186,7 @@ BitVectorDomain::operator=(const BitVectorDomain &other)
   assert(!other.is_null());
   d_lo = other.d_lo;
   d_hi = other.d_hi;
+  d_has_fixed_bits = other.d_has_fixed_bits;
   return *this;
 }
 
@@ -194,6 +234,13 @@ BitVectorDomain::bvconcat(const BitVector &bv) const
 {
   assert(!is_null());
   return BitVectorDomain(d_lo.bvconcat(bv), d_hi.bvconcat(bv));
+}
+
+BitVectorDomain
+BitVectorDomain::bvconcat(const BitVectorDomain &d) const
+{
+  assert(!is_null());
+  return BitVectorDomain(d_lo.bvconcat(d.lo()), d_hi.bvconcat(d.hi()));
 }
 
 BitVectorDomain

@@ -22,8 +22,8 @@ TEST_F(TestBvNodeIsCons, and)
 
 TEST_F(TestBvNodeIsCons, concat)
 {
-  test_binary<BitVectorConcat>(IS_CONS, CONCAT, 0);
-  test_binary<BitVectorConcat>(IS_CONS, CONCAT, 1);
+  test_binary<BitVectorConcat>(IS_CONS, OpKind::CONCAT, 0);
+  test_binary<BitVectorConcat>(IS_CONS, OpKind::CONCAT, 1);
 }
 
 TEST_F(TestBvNodeIsCons, eq)

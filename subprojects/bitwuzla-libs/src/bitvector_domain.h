@@ -78,6 +78,34 @@ class BitVectorDomain
    */
   bool has_fixed_bits() const;
   /**
+   * Determine if this bit-vector domain has fixed true bits, i.e., bits that
+   * are assigned true in both 'hi' and 'lo'.
+   * @note This check may only be called on VALID domains.
+   * @return True if this domain has fixed true bits.
+   */
+  bool has_fixed_bits_true() const;
+  /**
+   * Determine if this bit-vector domain has fixed false bits, i.e., bits that
+   * are assigned false in both 'hi' and 'lo'.
+   * @note This check may only be called on VALID domains.
+   * @return false if this domain has fixed false bits.
+   */
+  bool has_fixed_bits_false() const;
+  /**
+   * Determine if this bit-vector domain has only fixed true bits, i.e., all
+   * bits that are fixed are true bits.
+   * @note This check may only be called on VALID domains.
+   * @return True if this domain has only fixed true bits.
+   */
+  bool has_fixed_bits_true_only() const;
+  /**
+   * Determine if this bit-vector domain has only fixed false bits, i.e., all
+   * bits that are fixed are false bits.
+   * @note This check may only be called on VALID domains.
+   * @return false if this domain has only fixed false bits.
+   */
+  bool has_fixed_bits_false_only() const;
+  /**
    * Determine if bit at given index is fixed.
    * @return True if bit at given index is fixed.
    */
@@ -155,6 +183,13 @@ class BitVectorDomain
    * @return A domain representing a concatenation of this domain with `bv`.
    */
   BitVectorDomain bvconcat(const BitVector &bv) const;
+  /**
+   * Create a bit-vector domain that represents a concatenation of this domain
+   * with domain `d`.
+   * @param d The bit-vector domain to concatenate this domain with.
+   * @return A domain representing a concatenation of this domain with `d`.
+   */
+  BitVectorDomain bvconcat(const BitVectorDomain &d) const;
 
   /**
    * Extract a bit range from this bit-vector domain.

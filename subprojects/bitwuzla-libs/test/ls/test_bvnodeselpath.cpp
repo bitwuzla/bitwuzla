@@ -27,7 +27,7 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
   {
     bw_t = 1;
   }
-  else if (op_kind == CONCAT)
+  else if (op_kind == OpKind::CONCAT)
   {
     bw_s1 = 2; /* decrease number of tests for concat */
     bw_t  = bw_s0 + bw_s1;
@@ -37,7 +37,7 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
 
   std::vector<std::string>& s0values = d_xvalues;
   std::vector<std::string> s1values;
-  if (op_kind == CONCAT)
+  if (op_kind == OpKind::CONCAT)
   {
     gen_xvalues(bw_s1, s1values);
   }
@@ -517,7 +517,10 @@ TEST_F(TestBvNodeSelPath, add)
 
 TEST_F(TestBvNodeSelPath, and) { test_binary<BitVectorAnd>(AND); }
 
-TEST_F(TestBvNodeSelPath, concat) { test_binary<BitVectorConcat>(CONCAT); }
+TEST_F(TestBvNodeSelPath, concat)
+{
+  test_binary<BitVectorConcat>(OpKind::CONCAT);
+}
 
 TEST_F(TestBvNodeSelPath, eq) { test_binary<BitVectorEq>(EQ); }
 

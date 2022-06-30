@@ -137,8 +137,8 @@ TEST_F(TestBvNodeInv, and)
 
 TEST_F(TestBvNodeInv, concat)
 {
-  test_binary<BitVectorConcat>(INV, CONCAT, 0);
-  test_binary<BitVectorConcat>(INV, CONCAT, 1);
+  test_binary<BitVectorConcat>(INV, OpKind::CONCAT, 0);
+  test_binary<BitVectorConcat>(INV, OpKind::CONCAT, 1);
 }
 
 TEST_F(TestBvNodeInv, eq)

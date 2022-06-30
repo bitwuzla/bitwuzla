@@ -18,18 +18,18 @@ TEST_F(TestBvNodeIsInv, and)
 {
   test_binary<BitVectorAnd>(IS_INV, AND, 0);
   test_binary<BitVectorAnd>(IS_INV, AND, 1);
-  test_binary<BitVectorAnd>(IS_INV, AND, 0, TestBvNode::BoundsKind::UNSIGNED);
-  test_binary<BitVectorAnd>(IS_INV, AND, 1, TestBvNode::BoundsKind::UNSIGNED);
-  test_binary<BitVectorAnd>(IS_INV, AND, 0, TestBvNode::BoundsKind::SIGNED);
-  test_binary<BitVectorAnd>(IS_INV, AND, 1, TestBvNode::BoundsKind::SIGNED);
-  test_binary<BitVectorAnd>(IS_INV, AND, 0, TestBvNode::BoundsKind::BOTH);
-  test_binary<BitVectorAnd>(IS_INV, AND, 1, TestBvNode::BoundsKind::BOTH);
+  test_binary<BitVectorAnd>(IS_INV, AND, 0, UNSIGNED);
+  test_binary<BitVectorAnd>(IS_INV, AND, 1, UNSIGNED);
+  test_binary<BitVectorAnd>(IS_INV, AND, 0, SIGNED);
+  test_binary<BitVectorAnd>(IS_INV, AND, 1, SIGNED);
+  test_binary<BitVectorAnd>(IS_INV, AND, 0, BOTH);
+  test_binary<BitVectorAnd>(IS_INV, AND, 1, BOTH);
 }
 
 TEST_F(TestBvNodeIsInv, concat)
 {
-  test_binary<BitVectorConcat>(IS_INV, CONCAT, 0);
-  test_binary<BitVectorConcat>(IS_INV, CONCAT, 1);
+  test_binary<BitVectorConcat>(IS_INV, OpKind::CONCAT, 0);
+  test_binary<BitVectorConcat>(IS_INV, OpKind::CONCAT, 1);
 }
 
 TEST_F(TestBvNodeIsInv, eq)
@@ -72,8 +72,12 @@ TEST_F(TestBvNodeIsInv, ult)
 {
   test_binary<BitVectorUlt>(IS_INV, ULT, 0);
   test_binary<BitVectorUlt>(IS_INV, ULT, 1);
-  test_binary<BitVectorUlt>(IS_INV, ULT, 0, TestBvNode::BoundsKind::UNSIGNED);
-  test_binary<BitVectorUlt>(IS_INV, ULT, 1, TestBvNode::BoundsKind::UNSIGNED);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, NONE, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, NONE, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, NONE, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, NONE, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, UNSIGNED);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, UNSIGNED);
   // test_binary<BitVectorUlt>(IS_INV, ULT, 0, TestBvNode::BoundsKind::SIGNED);
   // test_binary<BitVectorUlt>(IS_INV, ULT, 1, TestBvNode::BoundsKind::SIGNED);
 }
@@ -82,11 +86,15 @@ TEST_F(TestBvNodeIsInv, slt)
 {
   test_binary<BitVectorSlt>(IS_INV, SLT, 0);
   test_binary<BitVectorSlt>(IS_INV, SLT, 1);
+  test_binary<BitVectorUlt>(IS_INV, SLT, 0, NONE, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(IS_INV, SLT, 1, NONE, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(IS_INV, SLT, 0, NONE, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(IS_INV, SLT, 1, NONE, OptimizationKind::SEXT);
   // test_binary<BitVectorSlt>(IS_INV, SLT, 0,
   // TestBvNode::BoundsKind::UNSIGNED); test_binary<BitVectorSlt>(IS_INV, SLT,
   // 1, TestBvNodeIsInv::UNSIGNED);
-  test_binary<BitVectorSlt>(IS_INV, SLT, 0, TestBvNode::BoundsKind::SIGNED);
-  test_binary<BitVectorSlt>(IS_INV, SLT, 1, TestBvNodeIsInv::SIGNED);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 0, SIGNED);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 1, SIGNED);
 }
 
 TEST_F(TestBvNodeIsInv, urem)

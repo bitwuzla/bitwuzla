@@ -55,6 +55,12 @@ class BitVectorNode
   virtual ~BitVectorNode() {}
 
   /**
+   * Get the domain of this node.
+   * @return A reference to the domain of this node.
+   */
+  const BitVectorDomain& get_domain() { return d_domain; }
+
+  /**
    * Get the kind of the node.
    * @return The kind of this node.
    */
@@ -1034,6 +1040,20 @@ class BitVectorUlt : public BitVectorNode
    */
   void _evaluate_and_set_domain();
   /**
+   * Helper for is_invertible().
+   * @param d The domain representing operand 'x'.
+   * @param s The value of the other operand.
+   * @param t The target value of this node.
+   * @param pos_x The index of operand `x`.
+   * @param find_inverse True to cache one (out of possibly many) inverse if
+   *                     there is one.
+   */
+  bool _is_invertible(const BitVectorDomain* d,
+                      const BitVector& s,
+                      bool t,
+                      uint32_t pos_x,
+                      bool find_inverse);
+  /**
    * Helper to compute the min and max bounds for `x` with respect to the
    * current min/max bounds of this node, if any.
    * @param s The value of the other operand.
@@ -1157,6 +1177,20 @@ class BitVectorSlt : public BitVectorNode
    * when all operands are constant.
    */
   void _evaluate_and_set_domain();
+  /**
+   * Helper for is_invertible().
+   * @param d The domain representing operand 'x'.
+   * @param s The value of the other operand.
+   * @param t The target value of this node.
+   * @param pos_x The index of operand `x`.
+   * @param find_inverse True to cache one (out of possibly many) inverse if
+   *                     there is one.
+   */
+  bool _is_invertible(const BitVectorDomain* d,
+                      const BitVector& s,
+                      bool t,
+                      uint32_t pos_x,
+                      bool find_inverse);
   /**
    * Helper to compute the min and max bounds for `x` with respect to the
    * current min/max bounds of this node, if any.
@@ -1593,6 +1627,12 @@ class BitVectorSignExtend : public BitVectorNode
                       const BitVectorDomain& domain,
                       BitVectorNode* child0,
                       uint32_t n);
+
+  /**
+   * Get the number of extension bits.
+   * @return The number of extension bits.
+   */
+  uint32_t get_n() const { return d_n; }
 
   Kind get_kind() const override { return SEXT; }
 
