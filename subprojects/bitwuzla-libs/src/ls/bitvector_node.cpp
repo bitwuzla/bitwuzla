@@ -480,8 +480,11 @@ BitVectorAdd::evaluate()
 bool
 BitVectorAdd::is_invertible(const BitVector& t,
                             uint32_t pos_x,
-                            bool find_inverse)
+                            bool find_inverse,
+                            bool is_essential_check)
 {
+  (void) is_essential_check;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
   if (d_children[pos_x]->domain().has_fixed_bits())
@@ -623,7 +626,8 @@ BitVectorAnd::evaluate()
 bool
 BitVectorAnd::is_invertible(const BitVector& t,
                             uint32_t pos_x,
-                            bool find_inverse)
+                            bool find_inverse,
+                            bool is_essential_check)
 {
   (void) find_inverse;
 
@@ -634,10 +638,10 @@ BitVectorAnd::is_invertible(const BitVector& t,
   const BitVector& s       = d_children[pos_s]->assignment();
   BitVectorNode* op_x      = d_children[pos_x];
   const BitVectorDomain& x = op_x->domain();
-  BitVector* min_u         = op_x->min_u();
-  BitVector* max_u         = op_x->max_u();
-  BitVector* min_s         = op_x->min_s();
-  BitVector* max_s         = op_x->max_s();
+  BitVector* min_u         = is_essential_check ? nullptr : op_x->min_u();
+  BitVector* max_u         = is_essential_check ? nullptr : op_x->max_u();
+  BitVector* min_s         = is_essential_check ? nullptr : op_x->min_s();
+  BitVector* max_s         = is_essential_check ? nullptr : op_x->max_s();
 
   /** IC_wo: (t & s) = t */
   bool res = t.bvand(s).compare(t) == 0;
@@ -854,8 +858,11 @@ BitVectorConcat::evaluate()
 bool
 BitVectorConcat::is_invertible(const BitVector& t,
                                uint32_t pos_x,
-                               bool find_inverse)
+                               bool find_inverse,
+                               bool is_essential_check)
 {
+  (void) is_essential_check;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -1044,9 +1051,11 @@ BitVectorEq::evaluate()
 bool
 BitVectorEq::is_invertible(const BitVector& t,
                            uint32_t pos_x,
-                           bool find_inverse)
+                           bool find_inverse,
+                           bool is_essential_check)
 {
   (void) find_inverse;
+  (void) is_essential_check;
 
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -1233,8 +1242,11 @@ BitVectorMul::evaluate()
 bool
 BitVectorMul::is_invertible(const BitVector& t,
                             uint32_t pos_x,
-                            bool find_inverse)
+                            bool find_inverse,
+                            bool is_essential_check)
 {
+  (void) is_essential_check;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
   d_inverse_domain.reset(nullptr);
@@ -1604,8 +1616,11 @@ BitVectorShl::evaluate()
 bool
 BitVectorShl::is_invertible(const BitVector& t,
                             uint32_t pos_x,
-                            bool find_inverse)
+                            bool find_inverse,
+                            bool is_essential_check)
 {
+  (void) is_essential_check;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -2005,16 +2020,24 @@ BitVectorShr::evaluate()
 bool
 BitVectorShr::is_invertible(const BitVector& t,
                             uint32_t pos_x,
-                            bool find_inverse)
+                            bool find_inverse,
+                            bool is_essential_check)
 {
+  (void) is_essential_check;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
-  return is_invertible(
-      d_rng, t, s, x, pos_x, find_inverse ? &d_inverse : nullptr);
+  return is_invertible(d_rng,
+                       t,
+                       s,
+                       x,
+                       pos_x,
+                       is_essential_check,
+                       find_inverse ? &d_inverse : nullptr);
 }
 
 bool
@@ -2023,8 +2046,11 @@ BitVectorShr::is_invertible(RNG* rng,
                             const BitVector& s,
                             const BitVectorDomain& x,
                             uint32_t pos_x,
+                            bool is_essential_check,
                             std::unique_ptr<BitVector>* inverse)
 {
+  (void) is_essential_check;
+
   uint32_t clz_t = 0;
   uint32_t clz_s = 0;
   bool ic_wo;
@@ -2431,7 +2457,8 @@ BitVectorAshr::evaluate()
 bool
 BitVectorAshr::is_invertible(const BitVector& t,
                              uint32_t pos_x,
-                             bool find_inverse)
+                             bool find_inverse,
+                             bool is_essential_check)
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -2464,10 +2491,16 @@ BitVectorAshr::is_invertible(const BitVector& t,
                                          s.bvnot(),
                                          x,
                                          pos_x,
+                                         is_essential_check,
                                          find_inverse ? &d_inverse : nullptr);
     }
-    return BitVectorShr::is_invertible(
-        d_rng, t, s, x, pos_x, find_inverse ? &d_inverse : nullptr);
+    return BitVectorShr::is_invertible(d_rng,
+                                       t,
+                                       s,
+                                       x,
+                                       pos_x,
+                                       is_essential_check,
+                                       find_inverse ? &d_inverse : nullptr);
   }
 
   uint32_t size = s.size();
@@ -2842,8 +2875,11 @@ BitVectorUdiv::evaluate()
 bool
 BitVectorUdiv::is_invertible(const BitVector& t,
                              uint32_t pos_x,
-                             bool find_inverse)
+                             bool find_inverse,
+                             bool is_essential_check)
 {
+  (void) is_essential_check;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -3546,8 +3582,12 @@ BitVectorUlt::evaluate()
 }
 
 void
-BitVectorUlt::compute_min_max_bounds(
-    const BitVector& s, bool t, uint32_t pos_x, BitVector& min, BitVector& max)
+BitVectorUlt::compute_min_max_bounds(const BitVector& s,
+                                     bool t,
+                                     uint32_t pos_x,
+                                     BitVector& min,
+                                     BitVector& max,
+                                     bool is_essential_check)
 {
   uint32_t size = s.size();
   BitVector *min_u, *max_u;
@@ -3584,30 +3624,35 @@ BitVectorUlt::compute_min_max_bounds(
     max_u = d_children[1]->max_u();
   }
 
-  BitVector* mmin = &min;
-  BitVector* mmax = &max;
-  if (min_u && min_u->compare(min) > 0)
+  if (!is_essential_check)
   {
-    mmin = min_u;
+    BitVector* mmin = &min;
+    BitVector* mmax = &max;
+    if (min_u && min_u->compare(min) > 0)
+    {
+      mmin = min_u;
+    }
+    if (max_u && max_u->compare(max) < 0)
+    {
+      mmax = max_u;
+    }
+    if ((min_u || max_u) && (mmin->compare(*mmax) <= 0))
+    {
+      if (mmin != &min) min = *mmin;
+      if (mmax != &max) max = *mmax;
+    }
+    /* else conflict, use the default bounds */
   }
-  if (max_u && max_u->compare(max) < 0)
-  {
-    mmax = max_u;
-  }
-  if ((min_u || max_u) && (mmin->compare(*mmax) <= 0))
-  {
-    if (mmin != &min) min = *mmin;
-    if (mmax != &max) max = *mmax;
-  }
-  /* else conflict, use the default bounds */
 }
 
 bool
 BitVectorUlt::is_invertible(const BitVector& t,
                             uint32_t pos_x,
-                            bool find_inverse)
+                            bool find_inverse,
+                            bool is_essential_check)
 {
   (void) find_inverse;
+  (void) is_essential_check;
 
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -3618,8 +3663,8 @@ BitVectorUlt::is_invertible(const BitVector& t,
   const BitVectorDomain& x = d_children[pos_x]->domain();
   bool has_fixed_bits      = x.has_fixed_bits();
   bool is_true             = t.is_true();
-  BitVector* min_u         = d_children[pos_x]->min_u();
-  BitVector* max_u         = d_children[pos_x]->max_u();
+  BitVector* min_u = is_essential_check ? nullptr : d_children[pos_x]->min_u();
+  BitVector* max_u = is_essential_check ? nullptr : d_children[pos_x]->max_u();
 
   bool opt_sext = d_opt_concat_sext && d_children[pos_x]->get_kind() == SEXT;
   BitVectorDomain dxn, dxx;
@@ -3701,14 +3746,16 @@ BitVectorUlt::is_invertible(const BitVector& t,
         ddx = dxn.bvconcat(dxx);
         ddx.fix_bit(bw_xx - 1, true);
         dx  = &ddx;
-        res = _is_invertible(dx, s, is_true, pos_x, find_inverse);
+        res = _is_invertible(
+            dx, s, is_true, pos_x, find_inverse, is_essential_check);
         if (!res || d_rng->flip_coin())
         {
           dxn.fix(BitVector::mk_zero(dxn.size()));
           ddx = dxn.bvconcat(dxx);
           ddx.fix_bit(bw_xx - 1, false);
           dx        = &ddx;
-          bool _res = _is_invertible(dx, s, is_true, pos_x, find_inverse);
+          bool _res = _is_invertible(
+              dx, s, is_true, pos_x, find_inverse, is_essential_check);
           return !res ? _res : res;
         }
       }
@@ -3759,7 +3806,8 @@ BitVectorUlt::is_invertible(const BitVector& t,
 
   if (res)
   {
-    res = _is_invertible(dx, s, is_true, pos_x, find_inverse);
+    res =
+        _is_invertible(dx, s, is_true, pos_x, find_inverse, is_essential_check);
   }
   return res;
 }
@@ -3769,10 +3817,13 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
                              const BitVector& s,
                              bool t,
                              uint32_t pos_x,
-                             bool find_inverse)
+                             bool find_inverse,
+                             bool is_essential_check)
 {
+  (void) is_essential_check;
+
   BitVector min, max;
-  compute_min_max_bounds(s, t, pos_x, min, max);
+  compute_min_max_bounds(s, t, pos_x, min, max, is_essential_check);
   if (d->is_fixed())
   {
     if (d->lo().compare(min) >= 0 && d->lo().compare(max) <= 0)
@@ -4363,8 +4414,12 @@ BitVectorSlt::evaluate()
 }
 
 void
-BitVectorSlt::compute_min_max_bounds(
-    const BitVector& s, bool t, uint32_t pos_x, BitVector& min, BitVector& max)
+BitVectorSlt::compute_min_max_bounds(const BitVector& s,
+                                     bool t,
+                                     uint32_t pos_x,
+                                     BitVector& min,
+                                     BitVector& max,
+                                     bool is_essential_check)
 {
   uint32_t size = s.size();
   BitVector *min_s, *max_s;
@@ -4403,28 +4458,32 @@ BitVectorSlt::compute_min_max_bounds(
     max_s = d_children[1]->max_s();
   }
 
-  BitVector* mmin = &min;
-  BitVector* mmax = &max;
-  if (min_s && min_s->signed_compare(min) > 0)
+  if (!is_essential_check)
   {
-    mmin = min_s;
+    BitVector* mmin = &min;
+    BitVector* mmax = &max;
+    if (min_s && min_s->signed_compare(min) > 0)
+    {
+      mmin = min_s;
+    }
+    if (max_s && max_s->signed_compare(max) < 0)
+    {
+      mmax = max_s;
+    }
+    if ((min_s || max_s) && (mmin->signed_compare(*mmax) <= 0))
+    {
+      if (mmin != &min) min = *mmin;
+      if (mmax != &max) max = *mmax;
+    }
+    /* else conflict, use the default bounds */
   }
-  if (max_s && max_s->signed_compare(max) < 0)
-  {
-    mmax = max_s;
-  }
-  if ((min_s || max_s) && (mmin->signed_compare(*mmax) <= 0))
-  {
-    if (mmin != &min) min = *mmin;
-    if (mmax != &max) max = *mmax;
-  }
-  /* else conflict, use the default bounds */
 }
 
 bool
 BitVectorSlt::is_invertible(const BitVector& t,
                             uint32_t pos_x,
-                            bool find_inverse)
+                            bool find_inverse,
+                            bool is_essential_check)
 {
   (void) find_inverse;
 
@@ -4437,8 +4496,8 @@ BitVectorSlt::is_invertible(const BitVector& t,
   const BitVectorDomain& x = d_children[pos_x]->domain();
   bool is_true             = t.is_true();
   uint32_t msb             = x.size() - 1;
-  BitVector* min_s         = d_children[pos_x]->min_s();
-  BitVector* max_s         = d_children[pos_x]->max_s();
+  BitVector* min_s = is_essential_check ? nullptr : d_children[pos_x]->min_s();
+  BitVector* max_s = is_essential_check ? nullptr : d_children[pos_x]->max_s();
 
   bool opt_sext = d_opt_concat_sext && d_children[pos_x]->get_kind() == SEXT;
   BitVectorDomain dxn, dxx;
@@ -4527,14 +4586,16 @@ BitVectorSlt::is_invertible(const BitVector& t,
         ddx = dxn.bvconcat(dxx);
         ddx.fix_bit(bw_xx - 1, true);
         dx  = &ddx;
-        res = _is_invertible(dx, s, is_true, pos_x, find_inverse);
+        res = _is_invertible(
+            dx, s, is_true, pos_x, find_inverse, is_essential_check);
         if (!res || d_rng->flip_coin())
         {
           dxn.fix(BitVector::mk_zero(dxn.size()));
           ddx = dxn.bvconcat(dxx);
           ddx.fix_bit(bw_xx - 1, false);
           dx        = &ddx;
-          bool _res = _is_invertible(dx, s, is_true, pos_x, find_inverse);
+          bool _res = _is_invertible(
+              dx, s, is_true, pos_x, find_inverse, is_essential_check);
           return !res ? _res : res;
         }
       }
@@ -4623,7 +4684,8 @@ BitVectorSlt::is_invertible(const BitVector& t,
 
   if (res)
   {
-    res = _is_invertible(dx, s, is_true, pos_x, find_inverse);
+    res =
+        _is_invertible(dx, s, is_true, pos_x, find_inverse, is_essential_check);
   }
   return res;
 }
@@ -4633,10 +4695,11 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
                              const BitVector& s,
                              bool t,
                              uint32_t pos_x,
-                             bool find_inverse)
+                             bool find_inverse,
+                             bool is_essential_check)
 {
   BitVector min, max;
-  compute_min_max_bounds(s, t, pos_x, min, max);
+  compute_min_max_bounds(s, t, pos_x, min, max, is_essential_check);
   if (d->is_fixed())
   {
     if (d->lo().signed_compare(min) >= 0 && d->lo().signed_compare(max) <= 0)
@@ -5246,8 +5309,11 @@ BitVectorUrem::evaluate()
 bool
 BitVectorUrem::is_invertible(const BitVector& t,
                              uint32_t pos_x,
-                             bool find_inverse)
+                             bool find_inverse,
+                             bool is_essential_check)
 {
+  (void) is_essential_check;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -5852,9 +5918,11 @@ BitVectorXor::evaluate()
 bool
 BitVectorXor::is_invertible(const BitVector& t,
                             uint32_t pos_x,
-                            bool find_inverse)
+                            bool find_inverse,
+                            bool is_essential_check)
 {
   (void) find_inverse;
+  (void) is_essential_check;
 
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -6006,15 +6074,18 @@ BitVectorIte::is_essential(const BitVector& t, uint32_t pos_x)
 {
   uint32_t pos_s0 = pos_x == 0 ? 1 : 0;
   uint32_t pos_s1 = pos_x == 2 ? 1 : 2;
-  return !is_invertible(t, pos_s0) && !is_invertible(t, pos_s1, false);
+  return !is_invertible(t, pos_s0, false, true)
+         && !is_invertible(t, pos_s1, false, true);
 }
 
 bool
 BitVectorIte::is_invertible(const BitVector& t,
                             uint32_t pos_x,
-                            bool find_inverse)
+                            bool find_inverse,
+                            bool is_essential_check)
 {
   (void) find_inverse;
+  (void) is_essential_check;
 
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -6340,15 +6411,17 @@ BitVectorNot::evaluate()
 bool
 BitVectorNot::is_essential(const BitVector& t, uint32_t pos_x)
 {
-  return !is_invertible(t, pos_x, false);
+  return !is_invertible(t, pos_x, false, true);
 }
 
 bool
 BitVectorNot::is_invertible(const BitVector& t,
                             uint32_t pos_x,
-                            bool find_inverse)
+                            bool find_inverse,
+                            bool is_essential_check)
 {
   (void) find_inverse;
+  (void) is_essential_check;
 
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -6463,15 +6536,17 @@ BitVectorExtract::evaluate()
 bool
 BitVectorExtract::is_essential(const BitVector& t, uint32_t pos_x)
 {
-  return !is_invertible(t, pos_x, false);
+  return !is_invertible(t, pos_x, false, true);
 }
 
 bool
 BitVectorExtract::is_invertible(const BitVector& t,
                                 uint32_t pos_x,
-                                bool find_inverse)
+                                bool find_inverse,
+                                bool is_essential_check)
 {
   (void) find_inverse;
+  (void) is_essential_check;
 
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
@@ -6679,14 +6754,17 @@ BitVectorSignExtend::evaluate()
 bool
 BitVectorSignExtend::is_essential(const BitVector& t, uint32_t pos_x)
 {
-  return !is_invertible(t, pos_x, false);
+  return !is_invertible(t, pos_x, false, true);
 }
 
 bool
 BitVectorSignExtend::is_invertible(const BitVector& t,
                                    uint32_t pos_x,
-                                   bool find_inverse)
+                                   bool find_inverse,
+                                   bool is_essential_check)
 {
+  (void) is_essential_check;
+
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 

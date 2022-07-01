@@ -787,11 +787,17 @@ LocalSearch::Result
 LocalSearch::move()
 {
   BZLALSLOG(1) << "*** move: " << d_statistics.d_nmoves + 1 << std::endl;
-  BZLALSLOG(1) << "  unsatisfied roots: " << std::endl;
   if (BZLALSLOG_ENABLED(1))
   {
+    BZLALSLOG(1) << "  unsatisfied roots:" << std::endl;
     for (const auto r : d_roots_unsat)
     {
+      BZLALSLOG(1) << "    - " << *r << std::endl;
+    }
+    BZLALSLOG(1) << "  satisfied roots:" << std::endl;
+    for (const auto r : d_roots)
+    {
+      if (d_roots_unsat.find(r) != d_roots_unsat.end()) continue;
       BZLALSLOG(1) << "    - " << *r << std::endl;
     }
   }
