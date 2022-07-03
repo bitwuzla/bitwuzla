@@ -1414,6 +1414,29 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "enable model-based quantifier instantiation");
 
+  init_opt(bzla,
+           BZLA_OPT_QUANT_MODE,
+           true,
+           true,
+           "quant-mode",
+           0,
+           BZLA_QUANT_MODE_DFLT,
+           BZLA_QUANT_MODE_MIN,
+           BZLA_QUANT_MODE_MAX,
+           "quantifiers mode");
+
+  opts = bzla_hashptr_table_new(
+      bzla->mm, (BzlaHashPtr) bzla_hash_str, (BzlaCmpPtr) strcmpoptval);
+  add_opt_help(mm, opts, "eager", BZLA_QUANT_MODE_EAGER, "eager mode");
+  add_opt_help(
+      mm, opts, "eager-check", BZLA_QUANT_MODE_EAGER_CHECK, "eager check mode");
+  add_opt_help(
+      mm, opts, "eager-reuse", BZLA_QUANT_MODE_EAGER_REUSE, "eager reuse mode");
+  add_opt_help(mm, opts, "lazy", BZLA_QUANT_MODE_LAZY, "lazy mode");
+  add_opt_help(
+      mm, opts, "portfolio", BZLA_QUANT_MODE_PORTFOLIO, "portfolio mode");
+  bzla->options[BZLA_OPT_QUANT_MODE].options = opts;
+
   /* other expert options --------------------------------------------------- */
   init_opt(bzla,
            BZLA_OPT_AUTO_CLEANUP_INTERNAL,

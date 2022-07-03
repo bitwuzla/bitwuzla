@@ -138,6 +138,7 @@ enum BzlaOption
   BZLA_OPT_QUANT_SKOLEM_UF,
   BZLA_OPT_QUANT_EAGER_SKOLEM,
   BZLA_OPT_QUANT_MBQI,
+  BZLA_OPT_QUANT_MODE,
 
   /* Other expert options */
   BZLA_OPT_AUTO_CLEANUP_INTERNAL,
@@ -270,6 +271,34 @@ enum BzlaOptQuantSynth
   BZLA_QUANT_SYNTH_ELMR,
 };
 typedef enum BzlaOptQuantSynth BzlaOptQuantSynt;
+
+/** Different modes for handling counterexample literals. */
+enum BzlaOptQuantMode
+{
+  /* Eagerly assume counterexample literals when checking ground formulas. */
+  BZLA_QUANT_MODE_EAGER,
+  /* Do not assume counterexample literals when checking ground formulas. */
+  BZLA_QUANT_MODE_LAZY,
+  /**
+   * Like BZLA_QUANT_MODE_EAGER, but use model of initial ground check if check
+   * was satisfiable with all counterexample literals assumed. */
+  BZLA_QUANT_MODE_EAGER_REUSE,
+  /**
+   * Like BZLA_QUANT_MODE_EAGER, but do additional satisfiability check after
+   * counterexample literals were assumed and satisfiable. */
+  BZLA_QUANT_MODE_EAGER_CHECK,
+  /**
+   * Combines BZLA_QUANT_MODE_EAGER_CHECK + BZLA_QUANT_MODE_EAGER +
+   * BZLA_QUANT_MODE_LAZY in a sequential portfolio (in case one of the modes
+   * returns unknown).
+   */
+  BZLA_QUANT_MODE_PORTFOLIO,
+};
+typedef enum BzlaOptQuantMode BzlaOptQuantMode;
+
+#define BZLA_QUANT_MODE_DFLT BZLA_QUANT_MODE_PORTFOLIO
+#define BZLA_QUANT_MODE_MIN BZLA_QUANT_MODE_EAGER
+#define BZLA_QUANT_MODE_MAX BZLA_QUANT_MODE_PORTFOLIO
 
 enum BzlaOptFunEagerLemmas
 {

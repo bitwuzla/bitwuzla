@@ -358,6 +358,9 @@ class QuantSolverState
   NodeMap<BzlaNode *> d_synthesized_terms;
 
   bool d_added_lemma;
+  /* Flag indicating whether the last ground check was satisfiable with all
+   * counterexample literals assumed. Used for BZLA_QUANT_MODE_EAGER_REUSE. */
+  bool d_last_ground_check_ok = false;
 
   /* Assumption stack */
   std::vector<BzlaNode *> d_assumptions;
@@ -390,6 +393,7 @@ class QuantSolverState
   bool d_opt_skolem_uf;
   bool d_opt_eager_skolem;
   bool d_opt_mbqi;
+  BzlaOptQuantMode d_opt_mode;
 };
 
 QuantSolverState::QuantSolverState(Bzla *bzla)
@@ -398,7 +402,9 @@ QuantSolverState::QuantSolverState(Bzla *bzla)
       d_opt_synth_qi(bzla_opt_get(bzla, BZLA_OPT_QUANT_SYNTH_QI) == 1),
       d_opt_skolem_uf(bzla_opt_get(bzla, BZLA_OPT_QUANT_SKOLEM_UF) == 1),
       d_opt_eager_skolem(bzla_opt_get(bzla, BZLA_OPT_QUANT_EAGER_SKOLEM) == 1),
-      d_opt_mbqi(bzla_opt_get(bzla, BZLA_OPT_QUANT_MBQI) == 1){};
+      d_opt_mbqi(bzla_opt_get(bzla, BZLA_OPT_QUANT_MBQI) == 1),
+      d_opt_mode(static_cast<BzlaOptQuantMode>(
+          bzla_opt_get(bzla, BZLA_OPT_QUANT_MODE))){};
 
 QuantSolverState::~QuantSolverState()
 {
@@ -499,6 +505,8 @@ QuantSolverState::~QuantSolverState()
 void
 QuantSolverState::reset()
 {
+  d_opt_mode =
+      static_cast<BzlaOptQuantMode>(bzla_opt_get(d_bzla, BZLA_OPT_QUANT_MODE));
   d_synth_qi_data.clear();
 }
 
@@ -1852,6 +1860,29 @@ QuantSolverState::check_active_quantifiers()
     return false;
   }
 
+  /* If the previous ground check was satisfiable with all counterexample
+   * literals assumed, we can just use the current model to instantiate all
+   * active quantifiers. */
+  if (d_opt_mode == BZLA_QUANT_MODE_EAGER_REUSE && d_last_ground_check_ok)
+  {
+    generate_model_ground();
+    for (BzlaNode *q : to_check)
+    {
+      ++d_statistics.num_counterexample_checks;
+      add_value_instantiation_lemma(q);
+      if (d_opt_synth_qi)
+      {
+        synthesize_qi(q);
+      }
+      if (d_opt_mbqi)
+      {
+        mbqi(q);
+      }
+    }
+    assert_lemmas();
+    return false;
+  }
+
   /* Synthesize functions for Skolem UFs and assume candidate model.  For
    * skolem constants the current model value is used. */
   start = bzla_util_time_stamp();
@@ -1940,8 +1971,6 @@ QuantSolverState::check_active_quantifiers()
   done = num_inactive == to_check.size();
 
   reset_assumptions();
-  // TODO: check whether this is still needed
-  assert_lemmas();
 
   d_statistics.time_check_counterexamples += bzla_util_time_stamp() - start;
 
@@ -2156,16 +2185,20 @@ QuantSolverState::check_ground_formulas()
   start = bzla_util_time_stamp();
   ++d_statistics.num_ground_checks;
 
-  for (auto [q, lit] : d_ce_literals)
+  if (d_opt_mode != BZLA_QUANT_MODE_LAZY)
   {
-    if (is_inactive(q))
+    for (auto [q, lit] : d_ce_literals)
     {
-      qlog("  inactive: %s\n", bzla_util_node2string(q));
-      continue;
+      if (is_inactive(q))
+      {
+        qlog("  inactive: %s\n", bzla_util_node2string(q));
+        continue;
+      }
+      assumptions.emplace(lit, q);
     }
-    assumptions.emplace(lit, q);
   }
 
+  d_last_ground_check_ok = true;
   i = 0;
   while (true)
   {
@@ -2212,10 +2245,15 @@ QuantSolverState::check_ground_formulas()
 #endif
 
       reset_assumptions();
+      if (d_opt_mode == BZLA_QUANT_MODE_EAGER_CHECK)
+      {
+        res = check_sat_ground();
+      }
       break;
     }
     else
     {
+      d_last_ground_check_ok = false;
       qlog("unsat\n");
 
       bool failed = false;
@@ -2362,6 +2400,34 @@ check_sat_quant_solver(BzlaQuantSolver *slv)
   return res;
 }
 
+static BzlaSolverResult
+check_sat_portfolio(BzlaQuantSolver *slv)
+{
+  BzlaSolverResult res = BZLA_RESULT_UNKNOWN;
+
+  std::vector<BzlaOptQuantMode> modes = {BZLA_QUANT_MODE_LAZY,
+                                         BZLA_QUANT_MODE_EAGER_CHECK,
+                                         BZLA_QUANT_MODE_EAGER_REUSE,
+                                         BZLA_QUANT_MODE_EAGER};
+
+  // Try modes in sequential portfolio configuration as long as the check-sat
+  // call returns unknown.
+  for (auto mode : modes)
+  {
+    bzla_opt_set(slv->bzla, BZLA_OPT_QUANT_MODE, mode);
+    res = check_sat_quant_solver(slv);
+    if (res != BZLA_RESULT_UNKNOWN)
+    {
+      break;
+    }
+  }
+
+  // Reset mode to portfolio.
+  bzla_opt_set(slv->bzla, BZLA_OPT_QUANT_MODE, BZLA_QUANT_MODE_PORTFOLIO);
+
+  return res;
+}
+
 static BzlaQuantSolver *
 clone_quant_solver(Bzla *clone, Bzla *bzla, BzlaNodeMap *exp_map)
 {
@@ -2431,7 +2497,14 @@ bzla_new_quantifier_solver(Bzla *bzla)
   slv->bzla      = bzla;
   slv->api.clone = (BzlaSolverClone) clone_quant_solver;
   slv->api.delet = (BzlaSolverDelete) delete_quant_solver;
-  slv->api.sat   = (BzlaSolverSat) check_sat_quant_solver;
+  if (bzla_opt_get(bzla, BZLA_OPT_QUANT_MODE) == BZLA_QUANT_MODE_PORTFOLIO)
+  {
+    slv->api.sat = (BzlaSolverSat) check_sat_portfolio;
+  }
+  else
+  {
+    slv->api.sat = (BzlaSolverSat) check_sat_quant_solver;
+  }
   slv->api.generate_model =
       (BzlaSolverGenerateModel) generate_model_quant_solver;
   slv->api.print_stats = (BzlaSolverPrintStats) print_stats_quant_solver;

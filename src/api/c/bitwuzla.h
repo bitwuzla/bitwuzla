@@ -1348,6 +1348,8 @@ enum BitwuzlaOption
    */
   BITWUZLA_OPT_QUANT_MBQI,
 
+  BITWUZLA_OPT_QUANT_MODE,
+
   /* ------------------------ Other Expert Options ------------------------- */
 
   /*! **Check model (debug only).**
