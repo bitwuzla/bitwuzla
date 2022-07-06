@@ -5,6 +5,7 @@ set(libbzlabv_src_files
 set(libbzlals_src_files
   bitvector_domain.cpp
   bitblast/aig/aig_manager.cpp
+  bitblast/aig/aig_cnf.cpp
   bitblast/aig/aig_printer.cpp
   ls/ls.cpp
   ls/bitvector_node.cpp
