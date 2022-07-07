@@ -103,28 +103,32 @@ class BitVectorNode
    */
   virtual bool is_essential(const BitVector& t, uint32_t pos_x)
   {
-    return !is_invertible(t, 1 - pos_x, false, true);
+    return !is_invertible(t, 1 - pos_x, true);
   }
 
   /**
    * Check invertibility condition for `x` at index `pos_x with` respect to
    * constant bits and target value `t`.
+   *
+   * Caches an inverse (if already determined while checking invertibility)
+   * if `is_essential_check` is false.
+   *
    * @param t The target value.
    * @param pos_x The index of `x`.
    * @param is_essential_check True if called to determine is_essential(). For
    *                           is_essential() checks, we don't consider bounds
    *                           derived from top-level inequalities since this
-   * may trap us in a cycle (see is_essential()).
+   *                           may trap us in a cycle (see is_essential()).
+   *                           We further do not cache inverse values computed
+   *                           while checking for essential checks.
    * @return True if there exists an inverse value for `x`.
    */
   virtual bool is_invertible(const BitVector& t,
                              uint32_t pos_x,
-                             bool find_inverse       = true,
                              bool is_essential_check = false)
   {
     (void) t;
     (void) pos_x;
-    (void) find_inverse;
     (void) is_essential_check;
     return true;
   }
@@ -373,7 +377,6 @@ class BitVectorAdd : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -437,7 +440,6 @@ class BitVectorAnd : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -502,7 +504,6 @@ class BitVectorConcat : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -566,7 +567,6 @@ class BitVectorEq : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -629,7 +629,6 @@ class BitVectorMul : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -701,7 +700,6 @@ class BitVectorShl : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -750,7 +748,6 @@ class BitVectorShr : public BitVectorNode
                             const BitVector& s,
                             const BitVectorDomain& x,
                             uint32_t pos_x,
-                            bool is_essential_check,
                             std::unique_ptr<BitVector>* inverse_value);
   /**
    * Additional interface / helper for inverse_value.
@@ -791,7 +788,6 @@ class BitVectorShr : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -861,7 +857,6 @@ class BitVectorAshr : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -944,7 +939,6 @@ class BitVectorUdiv : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -1045,7 +1039,6 @@ class BitVectorUlt : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -1081,8 +1074,6 @@ class BitVectorUlt : public BitVectorNode
    * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`.
-   * @param find_inverse True to cache one (out of possibly many) inverse if
-   *                     there is one.
    * @param is_essential_check True if called to determine is_essential(). For
    *                           is_essential() checks, we don't consider bounds
    *                           derived from top-level inequalities since this
@@ -1092,7 +1083,6 @@ class BitVectorUlt : public BitVectorNode
                       const BitVector& s,
                       bool t,
                       uint32_t pos_x,
-                      bool find_inverse,
                       bool is_essential_check);
   /**
    * Helper to compute the min and max bounds for `x` with respect to the
@@ -1194,7 +1184,6 @@ class BitVectorSlt : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -1230,8 +1219,6 @@ class BitVectorSlt : public BitVectorNode
    * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`.
-   * @param find_inverse True to cache one (out of possibly many) inverse if
-   *                     there is one.
    * @param is_essential_check True if called to determine is_essential(). For
    *                           is_essential() checks, we don't consider bounds
    *                           derived from top-level inequalities since this
@@ -1241,7 +1228,6 @@ class BitVectorSlt : public BitVectorNode
                       const BitVector& s,
                       bool t,
                       uint32_t pos_x,
-                      bool find_inverse,
                       bool is_essential_check);
   /**
    * Helper to compute the min and max bounds for `x` with respect to the
@@ -1339,7 +1325,6 @@ class BitVectorUrem : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -1419,7 +1404,6 @@ class BitVectorXor : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -1500,7 +1484,6 @@ class BitVectorIte : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -1558,7 +1541,6 @@ class BitVectorNot : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -1618,7 +1600,6 @@ class BitVectorExtract : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
@@ -1713,7 +1694,6 @@ class BitVectorSignExtend : public BitVectorNode
    */
   bool is_invertible(const BitVector& t,
                      uint32_t pos_x,
-                     bool find_inverse       = true,
                      bool is_essential_check = false) override;
 
   /**
