@@ -779,7 +779,8 @@ BitVector::is_min_signed() const
   }
   else
   {
-    if (d_val_uint64 != ((uint64_t) 1 << ((d_size % 64) - 1)))
+    if (d_val_uint64
+        != ((uint64_t) 1 << (d_size == 64 ? 63 : ((d_size % 64) - 1))))
     {
       return false;
     }
