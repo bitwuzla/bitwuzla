@@ -4893,7 +4893,7 @@ BitVectorSlt::inverse_value_sext(bool t, uint32_t pos_x, uint32_t pos_s)
       /* The minimum value that x can represent is xn = ones and
        * xx = min_signed. If s is smaller or equal to the minimum value
        * we have a conflict. */
-      assert(s.compare(min_signed.bvsext(n)) > 0);
+      assert(s.signed_compare(min_signed.bvsext(n)) > 0);
       BitVector max;
       /* sn == zero
        *  1) max_signed < sx -> pick xx <= max_signed
