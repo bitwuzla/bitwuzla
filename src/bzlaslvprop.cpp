@@ -55,9 +55,13 @@ class PropSolverState
     d_ls.reset(new bzla::ls::LocalSearch(
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_NPROPS),
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_NUPDATES),
-        bzla_opt_get(d_bzla, BZLA_OPT_SEED),
-        bzla_opt_get(d_bzla, BZLA_OPT_PROP_INFER_INEQ_BOUNDS),
-        bzla_opt_get(d_bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT)));
+        bzla_opt_get(d_bzla, BZLA_OPT_SEED)));
+    d_ls->d_options.use_ineq_bounds =
+        bzla_opt_get(d_bzla, BZLA_OPT_PROP_INFER_INEQ_BOUNDS);
+    d_ls->d_options.use_opt_lt_concat_sext =
+        bzla_opt_get(d_bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT);
+    d_ls->d_options.prob_pick_inv_value =
+      bzla_opt_get(d_bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE);
     d_ls->set_log_level(bzla_opt_get(d_bzla, BZLA_OPT_LOGLEVEL));
   }
 
