@@ -52,17 +52,33 @@ class PropSolverState
       : d_bzla(bzla), d_use_sext(bzla_opt_get(d_bzla, BZLA_OPT_PROP_SEXT))
   {
     assert(bzla);
+
     d_ls.reset(new bzla::ls::LocalSearch(
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_NPROPS),
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_NUPDATES),
         bzla_opt_get(d_bzla, BZLA_OPT_SEED)));
+
     d_ls->d_options.use_ineq_bounds =
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_INFER_INEQ_BOUNDS);
     d_ls->d_options.use_opt_lt_concat_sext =
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_USE_INV_LT_CONCAT);
     d_ls->d_options.prob_pick_inv_value =
       bzla_opt_get(d_bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE);
+
+    assert(bzla_opt_get(d_bzla, BZLA_OPT_PROP_PATH_SEL)
+               == BZLA_PROP_PATH_SEL_ESSENTIAL
+           || bzla_opt_get(d_bzla, BZLA_OPT_PROP_PATH_SEL)
+                  == BZLA_PROP_PATH_SEL_RANDOM);
+    d_ls->d_options.use_path_sel_essential =
+        bzla_opt_get(d_bzla, BZLA_OPT_PROP_PATH_SEL)
+                == BZLA_PROP_PATH_SEL_ESSENTIAL
+            ? true
+            : false;
+    d_ls->d_options.prob_pick_ess_input =
+        1000 - bzla_opt_get(d_bzla, BZLA_OPT_PROP_PROB_RANDOM_INPUT);
+
     d_ls->set_log_level(bzla_opt_get(d_bzla, BZLA_OPT_LOGLEVEL));
+    d_ls->init();
   }
 
   void init_nodes();
