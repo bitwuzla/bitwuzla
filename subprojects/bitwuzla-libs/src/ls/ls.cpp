@@ -8,8 +8,6 @@
 #include "ls/bitvector_node.h"
 #include "rng/rng.h"
 
-#define BZLALS_PROB_USE_INV_VALUE 990
-
 namespace bzla {
 namespace ls {
 
@@ -54,14 +52,8 @@ struct LocalSearchMove
 
 LocalSearch::LocalSearch(uint64_t max_nprops,
                          uint64_t max_nupdates,
-                         uint32_t seed,
-                         bool ineq_bounds,
-                         bool opt_lt_concat_sext)
-    : d_max_nprops(max_nprops),
-      d_max_nupdates(max_nupdates),
-      d_seed(seed),
-      d_ineq_bounds(ineq_bounds),
-      d_opt_lt_concat_sext(opt_lt_concat_sext)
+                         uint32_t seed)
+    : d_max_nprops(max_nprops), d_max_nupdates(max_nupdates), d_seed(seed)
 
 {
   d_rng.reset(new RNG(d_seed));
@@ -184,7 +176,7 @@ LocalSearch::mk_node(OperatorKind kind,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1]),
-                                 d_opt_lt_concat_sext));
+                                 d_options.use_opt_lt_concat_sext));
       break;
     case UDIV:
       assert(children.size() == 2);  // API check
@@ -197,7 +189,7 @@ LocalSearch::mk_node(OperatorKind kind,
                                  domain,
                                  get_node(children[0]),
                                  get_node(children[1]),
-                                 d_opt_lt_concat_sext));
+                                 d_options.use_opt_lt_concat_sext));
       break;
     case UREM:
       assert(children.size() == 2);  // API check
@@ -405,7 +397,7 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
       assert(!cur->domain().is_fixed());
 
       /* Compute min/max bounds of current node wrt. current assignment. */
-      if (d_ineq_bounds)
+      if (d_options.use_ineq_bounds)
       {
         compute_bounds(cur);
       }
@@ -465,7 +457,7 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
        *    conflict
        */
 
-      if (d_rng->pick_with_prob(BZLALS_PROB_USE_INV_VALUE)
+      if (d_rng->pick_with_prob(d_options.prob_pick_inv_value)
           && cur->is_invertible(t, pos_x))
       {
         t = cur->inverse_value(t, pos_x);

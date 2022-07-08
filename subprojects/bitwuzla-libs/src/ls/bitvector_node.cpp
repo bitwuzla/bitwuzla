@@ -3705,7 +3705,7 @@ BitVectorUlt::is_invertible(const BitVector& t,
       else
       {
         // we have to check for both cases and make sure to randomly choose
-        // frome either (if possible) if is_essential_check is false
+        // from either (if possible) if is_essential_check is false
         dxn.fix(BitVector::mk_ones(dxn.size()));
         ddx = dxn.bvconcat(dxx);
         ddx.fix_bit(bw_xx - 1, true);

@@ -136,16 +136,27 @@ class LocalSearch
 #endif
   } d_statistics;
 
-  LocalSearch(uint64_t max_nprops,
-              uint64_t max_nupdates,
-              uint32_t seed           = 1234,
-              bool ineq_bounds        = false,
-              bool opt_lt_concat_sext = false);
+  struct
+  {
+    // True to infer bounds for top-level inequalities for inverse value
+    // computation.
+    bool use_ineq_bounds = false;
+    // True to enable optimization for inverse_value computation of
+    // inequalities over concat and sign extension operands.
+    bool use_opt_lt_concat_sext = false;
+    // Probability for producing an inverse rather than a consistent value
+    // when invertibility condition for operand `x` wrt. to target value `t`
+    // and constant bits is true. We do not always choose an inverse value
+    // for invertible operations for completeness (to avoid cycles).
+    // Interpreted as prob_inv_value * 1/10 %.
+    uint32_t prob_pick_inv_value = 990;
+  } d_options;
+
+  LocalSearch(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed = 1234);
   ~LocalSearch();
 
   void set_max_nprops(uint64_t max) { d_max_nprops = max; }
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }
-  void set_ineq_bounds(bool value) { d_ineq_bounds = value; }
 
   uint32_t mk_node(uint32_t size);
   uint32_t mk_node(OperatorKind kind,
@@ -354,16 +365,6 @@ class LocalSearch
   uint64_t d_max_nupdates = 0;
   /** The seed for the RNG. */
   uint32_t d_seed;
-  /**
-   * True to enable to infer bounds for top-level inequalities for value
-   * computation.
-   */
-  bool d_ineq_bounds = false;
-  /**
-   * True to enable optimization for inverse_value computation of inequalities
-   * over concat and sign extension operands.
-   */
-  bool d_opt_lt_concat_sext = false;
 };
 
 }  // namespace ls
