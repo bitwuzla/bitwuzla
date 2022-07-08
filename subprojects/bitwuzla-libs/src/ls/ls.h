@@ -136,24 +136,76 @@ class LocalSearch
 #endif
   } d_statistics;
 
+  /** The configuration options of the local search module. */
   struct
   {
-    // True to infer bounds for top-level inequalities for inverse value
-    // computation.
+    /**
+     * True if path is to be selected based on essential inputs, false if it is
+     * to be selected randomly.
+     *
+     * @note If path selection based on essential inputs is enabled, we do not
+     *       always pick an essential input (if there is one) but only with
+     *       probability `prob_pick_ess_input` for completeness (to avoid
+     *       cycles), and else a random input. Consider the following example:
+     *       Assume we have 3 roots:
+     *         y_[64] <= z_[64]
+     *         z_[64] <= sign_extend((1844674407_[32] + x_[32]), 32)
+     *         (844674407_[32] + x_[32]) <= 0_[32]
+     *       Now, assume that the first root and one of the other two are
+     *       satisfied with the initial assignment where all inputs are
+     *       assigned to zero. Now, due to the inequality bounds derived from
+     *       root 1 and 2/3 (depending on which one is satisfied), either the
+     *       sign extension or the addition are essential, but z never is.
+     *       Thus, we never propagate down to z and the first root (and thus
+     *       the bounds of these two terms) remain unchanged. This traps us
+     *       cycling between root 2 and 3 but never reaching a satisfiable
+     *       assignment, which would require us to change the assignments of y
+     *       or z.
+     */
+    bool use_path_sel_essential = true;
+    /**
+     * True to infer bounds for top-level inequalities for inverse value
+     * computation.
+     */
     bool use_ineq_bounds = false;
-    // True to enable optimization for inverse_value computation of
-    // inequalities over concat and sign extension operands.
+    /**
+     * True to enable optimization for inverse_value computation of
+     * inequalities over concat and sign extension operands.
+     */
     bool use_opt_lt_concat_sext = false;
-    // Probability for producing an inverse rather than a consistent value
-    // when invertibility condition for operand `x` wrt. to target value `t`
-    // and constant bits is true. We do not always choose an inverse value
-    // for invertible operations for completeness (to avoid cycles).
-    // Interpreted as prob_inv_value * 1/10 %.
+    /**
+     * Probability for producing an inverse rather than a consistent value when
+     * invertibility condition for operand `x` wrt. to target value `t` and
+     * constant bits is true. We do not always choose an inverse value for
+     * invertible operations for completeness (to avoid cycles), and else a
+     * consistent value. Interpreted as prob_inv_value * 1/10 %.
+     */
     uint32_t prob_pick_inv_value = 990;
+    /**
+     * Probability for picking an essential input if there is one, and else
+     * a random input (see use_path_sel_essential).
+     */
+    uint32_t prob_pick_ess_input = 990;
   } d_options;
 
+  /**
+   * Constructor.
+   * @param max_nprops The maximum number of propagations to perform. Zero
+   *                   if unlimited.
+   * @param max_nupdates The maximum number of cone updates to perform. Zero
+   *                     if unlimited.
+   * @param seed The initial seed for the random number generator.
+   */
   LocalSearch(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed = 1234);
+  /** Destructor. */
   ~LocalSearch();
+
+  /**
+   * Initialize local search module.
+   * Must be called after all options are configured and before nodes are
+   * created.
+   */
+  void init();
 
   void set_max_nprops(uint64_t max) { d_max_nprops = max; }
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }

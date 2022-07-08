@@ -132,7 +132,8 @@ BitVectorNode::select_path(const BitVector& t)
 
   /* select essential input if any and path selection based on essential
    * inputs is enabled. */
-  if (pos_x == -1 && s_sel_path_essential)
+  if (pos_x == -1 && s_path_sel_essential
+      && d_rng->pick_with_prob(s_prob_pick_ess_input))
   {
     /* determine essential inputs */
     std::vector<uint32_t> ess_inputs;
@@ -632,10 +633,10 @@ BitVectorAnd::is_invertible(const BitVector& t,
   const BitVector& s       = d_children[pos_s]->assignment();
   BitVectorNode* op_x      = d_children[pos_x];
   const BitVectorDomain& x = op_x->domain();
-  BitVector* min_u         = is_essential_check ? nullptr : op_x->min_u();
-  BitVector* max_u         = is_essential_check ? nullptr : op_x->max_u();
-  BitVector* min_s         = is_essential_check ? nullptr : op_x->min_s();
-  BitVector* max_s         = is_essential_check ? nullptr : op_x->max_s();
+  BitVector* min_u         = op_x->min_u();
+  BitVector* max_u         = op_x->max_u();
+  BitVector* min_s         = op_x->min_s();
+  BitVector* max_s         = op_x->max_s();
 
   /** IC_wo: (t & s) = t */
   bool res = t.bvand(s).compare(t) == 0;
@@ -1607,8 +1608,6 @@ BitVectorShl::is_invertible(const BitVector& t,
                             uint32_t pos_x,
                             bool is_essential_check)
 {
-  (void) is_essential_check;
-
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
@@ -3550,12 +3549,8 @@ BitVectorUlt::evaluate()
 }
 
 void
-BitVectorUlt::compute_min_max_bounds(const BitVector& s,
-                                     bool t,
-                                     uint32_t pos_x,
-                                     BitVector& min,
-                                     BitVector& max,
-                                     bool is_essential_check)
+BitVectorUlt::compute_min_max_bounds(
+    const BitVector& s, bool t, uint32_t pos_x, BitVector& min, BitVector& max)
 {
   uint32_t size = s.size();
   BitVector *min_u, *max_u;
@@ -3592,25 +3587,22 @@ BitVectorUlt::compute_min_max_bounds(const BitVector& s,
     max_u = d_children[1]->max_u();
   }
 
-  if (!is_essential_check)
+  BitVector* mmin = &min;
+  BitVector* mmax = &max;
+  if (min_u && min_u->compare(min) > 0)
   {
-    BitVector* mmin = &min;
-    BitVector* mmax = &max;
-    if (min_u && min_u->compare(min) > 0)
-    {
-      mmin = min_u;
-    }
-    if (max_u && max_u->compare(max) < 0)
-    {
-      mmax = max_u;
-    }
-    if ((min_u || max_u) && (mmin->compare(*mmax) <= 0))
-    {
-      if (mmin != &min) min = *mmin;
-      if (mmax != &max) max = *mmax;
-    }
-    /* else conflict, use the default bounds */
+    mmin = min_u;
   }
+  if (max_u && max_u->compare(max) < 0)
+  {
+    mmax = max_u;
+  }
+  if ((min_u || max_u) && (mmin->compare(*mmax) <= 0))
+  {
+    if (mmin != &min) min = *mmin;
+    if (mmax != &max) max = *mmax;
+  }
+  /* else conflict, use the default bounds */
 }
 
 bool
@@ -3627,8 +3619,8 @@ BitVectorUlt::is_invertible(const BitVector& t,
   const BitVectorDomain& x = d_children[pos_x]->domain();
   bool has_fixed_bits      = x.has_fixed_bits();
   bool is_true             = t.is_true();
-  BitVector* min_u = is_essential_check ? nullptr : d_children[pos_x]->min_u();
-  BitVector* max_u = is_essential_check ? nullptr : d_children[pos_x]->max_u();
+  BitVector* min_u         = d_children[pos_x]->min_u();
+  BitVector* max_u         = d_children[pos_x]->max_u();
 
   bool opt_sext = d_opt_concat_sext && d_children[pos_x]->get_kind() == SEXT;
   BitVectorDomain dxn, dxx;
@@ -3781,7 +3773,7 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
                              bool is_essential_check)
 {
   BitVector min, max;
-  compute_min_max_bounds(s, t, pos_x, min, max, is_essential_check);
+  compute_min_max_bounds(s, t, pos_x, min, max);
   if (d->is_fixed())
   {
     if (d->lo().compare(min) >= 0 && d->lo().compare(max) <= 0)
@@ -4372,12 +4364,8 @@ BitVectorSlt::evaluate()
 }
 
 void
-BitVectorSlt::compute_min_max_bounds(const BitVector& s,
-                                     bool t,
-                                     uint32_t pos_x,
-                                     BitVector& min,
-                                     BitVector& max,
-                                     bool is_essential_check)
+BitVectorSlt::compute_min_max_bounds(
+    const BitVector& s, bool t, uint32_t pos_x, BitVector& min, BitVector& max)
 {
   uint32_t size = s.size();
   BitVector *min_s, *max_s;
@@ -4416,25 +4404,22 @@ BitVectorSlt::compute_min_max_bounds(const BitVector& s,
     max_s = d_children[1]->max_s();
   }
 
-  if (!is_essential_check)
+  BitVector* mmin = &min;
+  BitVector* mmax = &max;
+  if (min_s && min_s->signed_compare(min) > 0)
   {
-    BitVector* mmin = &min;
-    BitVector* mmax = &max;
-    if (min_s && min_s->signed_compare(min) > 0)
-    {
-      mmin = min_s;
-    }
-    if (max_s && max_s->signed_compare(max) < 0)
-    {
-      mmax = max_s;
-    }
-    if ((min_s || max_s) && (mmin->signed_compare(*mmax) <= 0))
-    {
-      if (mmin != &min) min = *mmin;
-      if (mmax != &max) max = *mmax;
-    }
-    /* else conflict, use the default bounds */
+    mmin = min_s;
   }
+  if (max_s && max_s->signed_compare(max) < 0)
+  {
+    mmax = max_s;
+  }
+  if ((min_s || max_s) && (mmin->signed_compare(*mmax) <= 0))
+  {
+    if (mmin != &min) min = *mmin;
+    if (mmax != &max) max = *mmax;
+  }
+  /* else conflict, use the default bounds */
 }
 
 bool
@@ -4451,8 +4436,8 @@ BitVectorSlt::is_invertible(const BitVector& t,
   const BitVectorDomain& x = d_children[pos_x]->domain();
   bool is_true             = t.is_true();
   uint32_t msb             = x.size() - 1;
-  BitVector* min_s = is_essential_check ? nullptr : d_children[pos_x]->min_s();
-  BitVector* max_s = is_essential_check ? nullptr : d_children[pos_x]->max_s();
+  BitVector* min_s         = d_children[pos_x]->min_s();
+  BitVector* max_s         = d_children[pos_x]->max_s();
 
   bool opt_sext = d_opt_concat_sext && d_children[pos_x]->get_kind() == SEXT;
   BitVectorDomain dxn, dxx;
@@ -4650,7 +4635,7 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
                              bool is_essential_check)
 {
   BitVector min, max;
-  compute_min_max_bounds(s, t, pos_x, min, max, is_essential_check);
+  compute_min_max_bounds(s, t, pos_x, min, max);
   if (d->is_fixed())
   {
     if (d->lo().signed_compare(min) >= 0 && d->lo().signed_compare(max) <= 0)
@@ -6252,7 +6237,8 @@ BitVectorIte::select_path(const BitVector& t)
 
   /* select essential input if any and path selection based on essential
    * inputs is enabled. */
-  if (pos_x == -1 && s_sel_path_essential)
+  if (pos_x == -1 && s_path_sel_essential
+      && d_rng->pick_with_prob(s_prob_pick_ess_input))
   {
     /* determine essential inputs, disabled branches are excluded */
     std::vector<uint32_t> ess_inputs;

@@ -62,6 +62,13 @@ LocalSearch::LocalSearch(uint64_t max_nprops,
 
 LocalSearch::~LocalSearch() {}
 
+void
+LocalSearch::init()
+{
+  BitVectorNode::s_path_sel_essential  = d_options.use_path_sel_essential;
+  BitVectorNode::s_prob_pick_ess_input = d_options.prob_pick_ess_input;
+}
+
 uint32_t
 LocalSearch::mk_node(uint32_t size)
 {

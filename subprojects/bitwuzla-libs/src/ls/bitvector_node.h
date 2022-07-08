@@ -22,7 +22,12 @@ class BitVectorNode
    * True if path is to be selected based on essential inputs, false if it is
    * to be selected randomly.
    */
-  static constexpr bool s_sel_path_essential = true;
+  static inline bool s_path_sel_essential = true;
+  /**
+   * Probability for picking an essential input if there is one, and else
+   * a random input (see use_path_sel_essential).
+   */
+  static inline uint32_t s_prob_pick_ess_input = 990;
 
   enum Kind
   {
@@ -78,24 +83,6 @@ class BitVectorNode
   /**
    * Check if operand at index `pos_x` is essential with respect to constant
    * bits and target value `t`.
-   *
-   * @note
-   * For is_essential() checks, we have to disable the consideration of
-   * bounds derived from top-level, currently satisfied inequalities
-   * since else this may lead us into a cycle.
-   * For example, assume we have 3 roots:
-   *   y_[64] <= z_[64]
-   *   z_[64] <= sign_extend((1844674407_[32] + x_[32]), 32)
-   *   (844674407_[32] + x_[32]) <= 0_[32]
-   * Now, assume that the first root and one of the other two are satisfied
-   * with the initial assignment where all inputs are assigned to zero.
-   * Now, due to the inequality bounds derived from root 1 and 2/3 (depending
-   * on which one is satisfied), either the sign extension or the addition
-   * are essential, but z never is. Thus, we never propagate down to z and
-   * the first root (and thus the bounds of these two terms) remain unchanged.
-   * This traps us cycling between root 2 and 3 but never reaching a
-   * satisfiable assignment, which would require us to change the assignments
-   * of y or z.
    *
    * @param t The target value.
    * @param pos_x The index of `x`.
@@ -1092,17 +1079,12 @@ class BitVectorUlt : public BitVectorNode
    * @param pos_x The index of operand `x`.
    * @param min The resulting lower bound.
    * @param max The resulting upper bound.
-   * @param is_essential_check True if called to determine is_essential(). For
-   *                           is_essential() checks, we don't consider bounds
-   *                           derived from top-level inequalities since this
-   *                           may trap us in a cycle (see is_essential()).
    */
   void compute_min_max_bounds(const BitVector& s,
                               bool t,
                               uint32_t pos_x,
                               BitVector& min,
-                              BitVector& max,
-                              bool is_essential_check = false);
+                              BitVector& max);
   /**
    * Helper for concat-specific (when x is a concat) inverse value computation.
    * Attempts to find an inverse value by only changing the value of one of
@@ -1237,17 +1219,12 @@ class BitVectorSlt : public BitVectorNode
    * @param pos_x The index of operand `x`.
    * @param min The resulting lower bound.
    * @param max The resulting upper bound.
-   * @param is_essential_check True if called to determine is_essential(). For
-   *                           is_essential() checks, we don't consider bounds
-   *                           derived from top-level inequalities since this
-   * may trap us in a cycle (see is_essential()).
    */
   void compute_min_max_bounds(const BitVector& s,
                               bool t,
                               uint32_t pos_x,
                               BitVector& min,
-                              BitVector& max,
-                              bool is_essential_check = false);
+                              BitVector& max);
   /**
    * Helper for concat-specific (when x is a concat) inverse value computation.
    * Attempts to find an inverse value by only changing the value of one of
