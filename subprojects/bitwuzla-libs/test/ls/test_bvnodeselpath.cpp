@@ -7,6 +7,18 @@ namespace test {
 class TestBvNodeSelPath : public TestBvNode
 {
  protected:
+  void SetUp() override
+  {
+    TestBvNode::SetUp();
+    /* We want to test deterministically, with selecting essential inputs when
+     * there are any. For this we additionally have to set the probability of
+     * selecting essential inputs to 100% to disables random input selection in
+     * essential path selection mode, which is performed with (the complement of
+     * this) configured probability for completeness.
+     */
+    BitVectorNode::s_path_sel_essential  = true;
+    BitVectorNode::s_prob_pick_ess_input = 1000;
+  }
   template <class T>
   void test_binary(OpKind op_kind);
   void test_ite();
