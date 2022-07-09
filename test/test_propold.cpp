@@ -49,6 +49,8 @@ class TestProp : public TestBzla
 
     bzla_opt_set(d_bzla, BZLA_OPT_ENGINE, BZLA_ENGINE_PROP_OLD);
     bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_USE_INV_VALUE, 1000);
+    bzla_opt_set(d_bzla, BZLA_OPT_PROP_PATH_SEL, BZLA_PROP_PATH_SEL_ESSENTIAL);
+    bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_RANDOM_INPUT, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_RW_LEVEL, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_RW_SORT_EXP, 0);
     bzla_opt_set(d_bzla, BZLA_OPT_INCREMENTAL, 1);
