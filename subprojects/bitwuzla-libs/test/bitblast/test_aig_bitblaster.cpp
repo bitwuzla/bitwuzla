@@ -1,8 +1,9 @@
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 
-#include "bitblast/aig_bitblaster.h"
 #include "bitblast/aig/aig_printer.h"
+#include "bitblast/aig_bitblaster.h"
 #include "test.h"
 
 static const char* s_solver_binary = std::getenv("SOLVER_BINARY");
@@ -380,5 +381,115 @@ TEST_F(TestAigBitblaster, bv_ite) {
     ss << "(assert (distinct res (ite c a b)))\n";
     ASSERT_EQ("unsat", check_sat(ss));
 }
+
+TEST_F(TestAigBitblaster, bv_udiv1024)
+{
+  std::chrono::system_clock::time_point stop_before_cleanup;
+  auto start = std::chrono::high_resolution_clock::now();
+  {
+    bb::AigBitblaster bb;
+    auto a              = bb.bv_constant(1024);
+    auto b              = bb.bv_constant(1024);
+    auto bb_udiv        = bb.bv_udiv(a, b);
+    stop_before_cleanup = std::chrono::high_resolution_clock::now();
+  }
+  auto stop        = std::chrono::high_resolution_clock::now();
+  auto constr_time = std::chrono::duration_cast<std::chrono::microseconds>(
+                         stop_before_cleanup - start)
+                         .count();
+  auto total_time =
+      std::chrono::duration_cast<std::chrono::microseconds>(stop - start)
+          .count();
+  std::cout << "construction time: " << constr_time << std::endl;
+  std::cout << "cleanup time:      " << total_time - constr_time << std::endl;
+}
+
+TEST_F(TestAigBitblaster, bv_add1024)
+{
+  std::chrono::system_clock::time_point stop_before_cleanup;
+  auto start = std::chrono::high_resolution_clock::now();
+  {
+    bb::AigBitblaster bb;
+    auto a              = bb.bv_constant(1024);
+    auto b              = bb.bv_constant(1024);
+    auto bb_udiv        = bb.bv_add(a, b);
+    stop_before_cleanup = std::chrono::high_resolution_clock::now();
+  }
+  auto stop        = std::chrono::high_resolution_clock::now();
+  auto constr_time = std::chrono::duration_cast<std::chrono::microseconds>(
+                         stop_before_cleanup - start)
+                         .count();
+  auto total_time =
+      std::chrono::duration_cast<std::chrono::microseconds>(stop - start)
+          .count();
+  std::cout << "construction time: " << constr_time << std::endl;
+  std::cout << "cleanup time:      " << total_time - constr_time << std::endl;
+}
+
+TEST_F(TestAigBitblaster, bv_mul1024)
+{
+  std::chrono::system_clock::time_point stop_before_cleanup;
+  auto start = std::chrono::high_resolution_clock::now();
+  {
+    bb::AigBitblaster bb;
+    auto a              = bb.bv_constant(1024);
+    auto b              = bb.bv_constant(1024);
+    auto bb_udiv        = bb.bv_mul(a, b);
+    stop_before_cleanup = std::chrono::high_resolution_clock::now();
+  }
+  auto stop        = std::chrono::high_resolution_clock::now();
+  auto constr_time = std::chrono::duration_cast<std::chrono::microseconds>(
+                         stop_before_cleanup - start)
+                         .count();
+  auto total_time =
+      std::chrono::duration_cast<std::chrono::microseconds>(stop - start)
+          .count();
+  std::cout << "construction time: " << constr_time << std::endl;
+  std::cout << "cleanup time:      " << total_time - constr_time << std::endl;
+}
+
+// TEST_F(TestAigBitblaster, bv_muludiv1024)
+//{
+//   std::chrono::system_clock::time_point stop_before_cleanup;
+//   auto start = std::chrono::high_resolution_clock::now();
+//   {
+//   bb::AigBitblaster bb;
+//   auto a       = bb.bv_constant(1024);
+//   auto b       = bb.bv_constant(1024);
+//   auto bb_udiv = bb.bv_udiv(a, b);
+//   auto bb_mul = bb.bv_mul(a, b);
+//   stop_before_cleanup = std::chrono::high_resolution_clock::now();
+//   }
+//   auto stop = std::chrono::high_resolution_clock::now();
+//   auto constr_time =
+//   std::chrono::duration_cast<std::chrono::microseconds>(stop_before_cleanup -
+//   start).count(); auto total_time =
+//   std::chrono::duration_cast<std::chrono::microseconds>(stop -
+//   start).count(); std::cout << "construction time: " << constr_time <<
+//   std::endl; std::cout << "cleanup time:      " << total_time - constr_time
+//   << std::endl;
+// }
+//
+// TEST_F(TestAigBitblaster, bv_udivudiv1024)
+//{
+//   std::chrono::system_clock::time_point stop_before_cleanup;
+//   auto start = std::chrono::high_resolution_clock::now();
+//   {
+//   bb::AigBitblaster bb;
+//   auto a       = bb.bv_constant(1024);
+//   auto b       = bb.bv_constant(1024);
+//   auto bb_udiv = bb.bv_udiv(a, b);
+//   auto bb_mul = bb.bv_udiv(a, b);
+//   stop_before_cleanup = std::chrono::high_resolution_clock::now();
+//   }
+//   auto stop = std::chrono::high_resolution_clock::now();
+//   auto constr_time =
+//   std::chrono::duration_cast<std::chrono::microseconds>(stop_before_cleanup -
+//   start).count(); auto total_time =
+//   std::chrono::duration_cast<std::chrono::microseconds>(stop -
+//   start).count(); std::cout << "construction time: " << constr_time <<
+//   std::endl; std::cout << "cleanup time:      " << total_time - constr_time
+//   << std::endl;
+// }
 
 }  // namespace bzla::test

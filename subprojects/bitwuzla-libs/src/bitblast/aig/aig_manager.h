@@ -14,6 +14,7 @@ namespace bzla::bb {
 class AigNode;
 using AigManager = BitInterface<AigNode>;
 class AigNodeData;
+class AigNodeUniqueTable;
 
 /**
  * Wrapper around AigNodeData with automatic reference counting on
@@ -60,6 +61,24 @@ class AigNode
   AigNodeData* d_data = nullptr;
   // TODO: optimization hide flag in d_data pointer
   bool d_negated = false;
+};
+
+// AigNodeUniqueTable
+class AigNodeUniqueTable
+{
+ public:
+  AigNodeUniqueTable();
+
+  // AigNodeData* lookup(const AigNode& left, const AigNode& right);
+  std::pair<bool, AigNodeData*> insert(AigNodeData* d);
+  void erase(const AigNodeData* d);
+
+ private:
+  size_t hash(const AigNode& left, const AigNode& right);
+  void resize();
+
+  size_t d_num_elements = 0;
+  std::vector<AigNodeData*> d_buckets;
 };
 
 template <>
@@ -115,23 +134,10 @@ class BitInterface<AigNode>
    */
   void garbage_collect(AigNodeData* d);
 
-  /** Hash node data based on the AND gate children used for hash consing. */
-  struct AigNodeDataHash
-  {
-    size_t operator()(const AigNodeData* d) const;
-  };
-
-  /** Compare node data based on AND gate children. Used for hash consing. */
-  struct AigNodeDataKeyEqual
-  {
-    bool operator()(const AigNodeData* d0, const AigNodeData* d1) const;
-  };
-
   /** Maps node id to node data and stores all created node data. */
   std::vector<std::unique_ptr<AigNodeData>> d_node_data;
   /** AND gate cache used for hash consing. */
-  std::unordered_set<AigNodeData*, AigNodeDataHash, AigNodeDataKeyEqual>
-      d_unique_ands;
+  AigNodeUniqueTable d_unique_table;
 
   /** AIG node representing true. */
   AigNode d_true;
@@ -145,6 +151,7 @@ class BitInterface<AigNode>
   {
     uint64_t num_ands   = 0;
     uint64_t num_consts = 0;
+    uint64_t num_duplicates = 0;
   } d_statistics;
 };
 

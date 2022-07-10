@@ -9,6 +9,7 @@ class AigNodeData
 {
   friend AigManager;
   friend class AigNode;
+  friend class AigNodeUniqueTable;
 
  public:
   AigNodeData() = delete;
@@ -43,21 +44,114 @@ class AigNodeData
   AigNode d_left;
   /** Right child of AND gate. */
   AigNode d_right;
+
+  /** Next pointer for collision chain. */
+  AigNodeData* next = nullptr;
 };
 
-size_t
-AigManager::AigNodeDataHash::operator()(const AigNodeData* d) const
+// AigNodeUniqueTable
+
+AigNodeUniqueTable::AigNodeUniqueTable() { d_buckets.resize(16, nullptr); }
+
+std::pair<bool, AigNodeData*>
+AigNodeUniqueTable::insert(AigNodeData* d)
 {
-  size_t lhs = static_cast<size_t>(std::abs(d->d_left.get_id()));
-  size_t rhs = static_cast<size_t>(std::abs(d->d_right.get_id()));
-  return 547789289u * lhs + 786695309u * rhs;
+  size_t h         = hash(d->d_left, d->d_right);
+  AigNodeData* cur = d_buckets[h];
+  int64_t left_id  = d->d_left.get_id();
+  int64_t right_id = d->d_right.get_id();
+
+  // Check collision chain.
+  while (cur)
+  {
+    if (cur->d_left.get_id() == left_id && cur->d_right.get_id() == right_id)
+    {
+      return std::make_pair(false, cur);
+    }
+    cur = cur->next;
+  }
+
+  if (d_num_elements == d_buckets.capacity())
+  {
+    resize();
+    h = hash(d->d_left, d->d_right);
+  }
+  assert(d->next == nullptr);
+  d->next      = d_buckets[h];
+  d_buckets[h] = d;
+
+  ++d_num_elements;
+  return std::make_pair(true, d);
 }
 
-bool
-AigManager::AigNodeDataKeyEqual::operator()(const AigNodeData* d0,
-                                            const AigNodeData* d1) const
+void
+AigNodeUniqueTable::erase(const AigNodeData* d)
 {
-  return d0->d_left == d1->d_left && d0->d_right == d1->d_right;
+  size_t h          = hash(d->d_left, d->d_right);
+  AigNodeData* cur  = d_buckets[h];
+  AigNodeData* prev = nullptr;
+
+  // Should not happen
+  if (cur == nullptr)
+  {
+    return;
+  }
+
+  // Find data in collision chain.
+  int64_t left_id  = d->d_left.get_id();
+  int64_t right_id = d->d_right.get_id();
+  while (cur)
+  {
+    if (cur->d_left.get_id() == left_id && cur->d_right.get_id() == right_id)
+    {
+      break;
+    }
+    prev = cur;
+    cur  = cur->next;
+  }
+  assert(cur);
+
+  // Update collision chain.
+  if (prev == nullptr)
+  {
+    d_buckets[h] = cur->next;
+  }
+  else
+  {
+    prev->next = cur->next;
+  }
+  --d_num_elements;
+}
+
+size_t
+AigNodeUniqueTable::hash(const AigNode& left, const AigNode& right)
+{
+  size_t lhs = static_cast<size_t>(std::abs(left.get_id()));
+  size_t rhs = static_cast<size_t>(std::abs(right.get_id()));
+  size_t h   = 547789289u * lhs + 786695309u * rhs;
+  return h & (d_buckets.capacity() - 1);
+}
+
+void
+AigNodeUniqueTable::resize()
+{
+  auto buckets = d_buckets;
+
+  d_buckets.clear();
+  d_buckets.resize(d_buckets.capacity() * 2, nullptr);
+
+  // Rehash elements.
+  for (auto cur : buckets)
+  {
+    while (cur)
+    {
+      size_t h     = hash(cur->d_left, cur->d_right);
+      auto next    = cur->next;
+      cur->next    = d_buckets[h];
+      d_buckets[h] = cur;
+      cur          = next;
+    }
+  }
 }
 
 // AigNode
@@ -273,16 +367,17 @@ AigNodeData*
 AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
 {
   AigNodeData* d = new AigNodeData(this, left, right);
-
-  auto [it, inserted] = d_unique_ands.insert(d);
-  if (inserted)
+  auto [inserted, lookup] = d_unique_table.insert(d);
+  if (!inserted)
   {
-    init_id(d);
-    ++d_statistics.num_ands;
-    return d;
+    ++d_statistics.num_duplicates;
+    delete d;
+    return lookup;
   }
-  delete d;
-  return *it;
+
+  init_id(d);
+  ++d_statistics.num_ands;
+  return d;
 }
 
 AigNode
@@ -557,7 +652,7 @@ AigManager::garbage_collect(AigNodeData* d)
     assert(cur->d_refs == 0);
 
     // Erase node data before we modify children.
-    d_unique_ands.erase(cur);
+    d_unique_table.erase(cur);
 
     // Decrement reference counts for children of AND nodes
     if (!cur->d_left.is_null())
