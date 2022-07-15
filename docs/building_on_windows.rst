@@ -30,12 +30,12 @@ Arithmetic Library ("GMP"; https://gmplib.org/); GMP is dual-licensed under
 both the GPL v2 and the LGPL v3.
 
 The following guide builds GMP **as a shared library** and links Bitwuzla
-against this shared library, to ensure that the resulting ``pybitwuzla.pyd``\
+against this shared library, to ensure that the resulting ``pybitwuzla.pyd``
 can be distributed as liberally as possible (that is, the resulting
-``pybitwuzla.pyd``\ file will have LGPL components; linking GMP statically would
-result in ``pybitwuzla.pyd``\ having GPL components).
+``pybitwuzla.pyd`` file will have LGPL components; linking GMP statically would
+result in ``pybitwuzla.pyd`` having GPL components).
 
-If you chose to distribute ``pybitwuzla.pyd``\ that has been built in this way,
+If you chose to distribute ``pybitwuzla.pyd`` that has been built in this way,
 you are bound by the LGPL, and should include the LGPL licence text in any
 distribution you make that includes these files.
 
