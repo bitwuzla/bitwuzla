@@ -1,0 +1,148 @@
+diff --git a/src/mobical.cpp b/src/mobical.cpp
+index 52f3b83..217f359 100644
+--- a/src/mobical.cpp
++++ b/src/mobical.cpp
+@@ -693,8 +693,12 @@ public:
+   SIGNAL(SIGSEGV) \
+   SIGNAL(SIGABRT) \
+   SIGNAL(SIGTERM) \
++
++#ifdef NWINDOWS
+   SIGNAL(SIGBUS) \
+ 
++#endif
++
+ #define SIGNAL(SIG) \
+   static void (*old_ ## SIG ## _handler) (int);
+   SIGNALS
+@@ -1414,8 +1418,10 @@ extern "C" {
+ #include <fcntl.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
++#ifdef NWINDOWS
+ #include <sys/wait.h>
+ #include <sys/resource.h>
++#endif
+ #include <sys/time.h>
+ }
+ 
+@@ -1437,6 +1443,7 @@ void Trace::reset_child_signal_handlers () {
+ }
+ 
+ void Trace::child_signal_handler (int sig) {
++#ifdef NWINDOWS
+   struct rusage u;
+   if (!getrusage (RUSAGE_SELF, &u)) {
+     if ((int64_t) u.ru_maxrss >> 10 >= mobical.space_limit) {
+@@ -1455,6 +1462,7 @@ void Trace::child_signal_handler (int sig) {
+   }
+   reset_child_signal_handlers ();
+   raise (sig);
++#endif
+ }
+ 
+ void Trace::init_child_signal_handlers () {
+@@ -1467,11 +1475,16 @@ void Trace::init_child_signal_handlers () {
+ int Trace::fork_and_execute () {
+ 
+   cerr << flush;
+-  pid_t child = mobical.donot.fork ? 0 : fork ();
++  pid_t child = 
++#ifdef NWINDOWS
++      mobical.donot.fork ? 0 : fork ();
++#else
++      0;
++#endif
+   int res = 0;
+ 
+   if (child) {
+-
++#ifdef NWINDOWS
+     executed++;
+ 
+     int status, other = wait (&status);
+@@ -1480,23 +1493,28 @@ int Trace::fork_and_execute () {
+     else if (!WIFSIGNALED (status)) res = 0;
+     else if (mobical.donot.ignore_resource_limits) res = 1;
+     else res = (WTERMSIG (status) != SIGXCPU);
++#endif
+ 
+   } else {
+ 
+     if (!mobical.donot.fork && mobical.time_limit) {
++#ifdef NWINDOWS
+       struct rlimit rlim;
+       if (!getrlimit (RLIMIT_CPU, &rlim)) {
+         rlim.rlim_cur = mobical.time_limit;
+         setrlimit (RLIMIT_CPU, &rlim);
+       }
++#endif
+     }
+ 
+     if (!mobical.donot.fork && mobical.space_limit) {
++#ifdef NWINDOWS
+       struct rlimit rlim;
+       if (!getrlimit (RLIMIT_AS, &rlim)) {
+         rlim.rlim_cur = mobical.space_limit * (1l << 20);
+         setrlimit (RLIMIT_AS, &rlim);
+       }
++#endif
+     }
+ 
+     init_child_signal_handlers ();
+@@ -2480,7 +2498,9 @@ void Mobical::header () {
+ /*------------------------------------------------------------------------*/
+ 
+ extern "C" {
++#ifdef NWINDOWS
+ #include <sys/mman.h>
++#endif
+ }
+ 
+ Mobical::Mobical ()
+@@ -2504,13 +2524,17 @@ Mobical::Mobical ()
+   traces (0),
+   spurious (0)
+ {
++#ifdef NWINDOWS
+   const int prot = PROT_READ | PROT_WRITE;
+   const int flags = MAP_ANONYMOUS | MAP_SHARED;
+   shared = (Shared*) mmap (0, sizeof *shared, prot, flags, 0, 0);
++#endif
+ }
+ 
+ Mobical::~Mobical () {
++#ifdef NWINDOWS
+   if (shared) munmap (shared, sizeof *shared);
++#endif
+ }
+ 
+ void Mobical::catch_signal (int) {
+@@ -2534,6 +2558,10 @@ int Mobical::main (int argc, char ** argv) {
+ 
+   int64_t limit = -1;
+ 
++#ifndef NWINDOWS
++  donot.fork = true;
++#endif
++
+   // Error message in 'die' also uses colors.
+   //
+   for (int i = 1; i < argc; i++)
+diff --git a/makefile.in b/makefile.in
+index 8fd957f..e11df75 100644
+--- a/makefile.in
++++ b/makefile.in
+@@ -41,10 +41,10 @@ all: libcadical.a cadical mobical
+ # tester 'mobical') and the library are the main build targets.
+ 
+ cadical: cadical.o libcadical.a makefile
+-	$(COMPILE) -o $@ $< -L. -lcadical $(LIBS)
++	$(COMPILE) -o $@ $< -L. -lcadical -lpsapi $(LIBS)
+ 
+ mobical: mobical.o libcadical.a makefile $(LIBS)
+-	$(COMPILE) -o $@ $< -L. -lcadical
++	$(COMPILE) -o $@ $< -L. -lcadical -lpsapi
+ 
+ libcadical.a: $(OBJ) makefile
+ 	ar rc $@ $(OBJ)

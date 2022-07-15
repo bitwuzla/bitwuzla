@@ -21,7 +21,7 @@ cd "${BTOR2TOOLS_DIR}"
 
 if is_windows; then
   component="Btor2Tools"
-  last_patch_date="20190110"
+  last_patch_date="20220715"
   test_apply_patch "${component}" "${last_patch_date}"
 fi
 
@@ -30,5 +30,6 @@ cd build
 cmake .. \
   -DBUILD_SHARED_LIBS=OFF \
   -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
-  -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+  -G "MSYS Makefiles"
 make install -j${NPROC}

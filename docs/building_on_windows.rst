@@ -11,32 +11,57 @@ of other parts of Bitwuzla (e.g., the main ``bitwuzla.exe``\ ).
 To ensure the portability of ``pybitwuzla.pyd``\ , every effort is made in this
 guide to avoid building Bitwuzla with Cygwin (e.g., we wish to avoid a
 dependency on ``cygwin1.dll``\ , which could affect the portability of
-``pybitwuzla.pyd``\ ). Given this, the guide is written to use the MinGW-W64
-"cross-compiler".
+``pybitwuzla.pyd``\ ). Given this, the guide is written to use the MinGW-w64
+"cross-compiler". Steps are also taken to ensure that the resulting binaries
+have no dependency on the MinGW DLLs either.
 
 These notes are purposefully very detailed to allow for someone to go from a
-completely fresh Windows 10 installation to a working version of Bitwuzla.
+completely fresh Windows 11 installation to a working version of Bitwuzla.
 
 Finally, some of Bitwuzla's dependencies have been *heavily* modified to allow
 them to build on Windows. This means that functionality such as timeouts might
 be completely inoperable on Windows.
 
+A note on licensing
+^^^^^^^^^^^^^^^^^^^
+
+Bitwuzla depends (amongst other libraries) on the GNU Multiple Precision
+Arithmetic Library ("GMP"; https://gmplib.org/); GMP is dual-licensed under
+both the GPL v2 and the LGPL v3.
+
+The following guide builds GMP **as a shared library** and links Bitwuzla
+against this shared library, to ensure that the resulting ``pybitwuzla.pyd``\
+can be distributed as liberally as possible (that is, the resulting
+``pybitwuzla.pyd``\ file will have LGPL components; linking GMP statically would
+result in ``pybitwuzla.pyd``\ having GPL components).
+
+If you chose to distribute ``pybitwuzla.pyd``\ that has been built in this way,
+you are bound by the LGPL, and should include the LGPL licence text in any
+distribution you make that includes these files.
+
+
 Dependencies
 ------------
 
-MinGW
-^^^^^
+MinGW-w64
+^^^^^^^^^
 
-Install MinGW-W64 from here:
+To build Bitwuzla, you require a build of GCC that supports building
+applications on Windows. Typically, this compiler would be provided by the
+MinGW-w64 project: https://www.mingw-w64.org/.
 
+For the purposes of this guide, MinGW-w64 can be installed in two ways: by
+downloading an official release from the MinGW-w64 SourceForce
+(https://sourceforge.net/projects/mingw-w64/) or via the MSYS2 package
+repositories.
 
-* https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release/
+If you chose to install MinGW-w64 outside of MSYS2, you should ensure that you
+install a version that supports the `win32` threading model; the POSIX
+threading model has not been tested at all for building Bitwuzla on Windows.
+Furthermore, Bitwuzla's make system has been modified to statically link,
+expecting the ``win32`` model.
 
-You should select the "MinGW-W64 Online Installer" (\ ``MinGW-W64-install.exe``\ ).
-
-The following options are recommended and have been tested when writing this
-guide:
-
+The following release of MinGW-w64 was tested at the time of writing:
 
 * Version: 8.1.0
 * Architecture: x86_64
@@ -44,15 +69,10 @@ guide:
 * Exception: seh (default)
 * Build revision: 0 (default)
 
-When selecting the threading model, only the ``win32`` threading model has been
-validated -- the POSIX model has not been tested at all. On Windows, Bitwuzla's
-make system has been modified to statically link, expecting the ``win32`` model.
-
-MSYS
+MSYS2
 ^^^^
 
-Install MSYS from here:
-
+Install MSYS2 from here:
 
 * https://www.msys2.org
 
@@ -68,14 +88,18 @@ first update itself, and then update its packages.
 
 Now install the following:
 
+* ``pacman -S --needed make git vim wget patch tar m4``
 
-* ``pacman -S --needed make git vim wget patch tar``
+If you wish to use MinGW-w64 installed through MSYS, then you should run the following:
 
-Python 3.8
-^^^^^^^^^^
+* ``pacman -S --needed mingw-w64-x86_64-winpthreads``
 
-Install the most recent 64-bit Python 3.8 from here:
+At the time of writing, this installed GCC 12.1.0.
 
+Python 3.10
+^^^^^^^^^^^
+
+Install the most recent 64-bit Python 3.10 from here:
 
 * https://www.python.org/downloads/windows/
 
@@ -88,16 +112,14 @@ Update your ``%PATH%`` variable to include both the path to ``python.exe`` and t
 the ``Scripts`` sub-directory of the Python installation. These paths will look
 something like:
 
-
-* ``C:\Program Files\Python38``
-* ``C:\Program Files\Python38\Scripts``
+* ``C:\Program Files\Python310``
+* ``C:\Program Files\Python310\Scripts``
 
 If you installed Python for only the current user, the paths will look
 something like:
 
-
-* ``C:\Users\%USERNAME%\AppData\Local\Programs\Python\Python38``
-* ``C:\Users\%USERNAME%\AppData\Local\Programs\Python\Python38\scripts``
+* ``C:\Users\%USERNAME%\AppData\Local\Programs\Python\Python310``
+* ``C:\Users\%USERNAME%\AppData\Local\Programs\Python\Python310\scripts``
 
 You need to ensure that these paths appear *before*
 ``%USERPROFILE%\AppData\Local\Microsoft\WindowsApps``\ , otherwise Window's
@@ -105,15 +127,13 @@ You need to ensure that these paths appear *before*
 
 Once your ``%PATH%`` is set correctly, start ``cmd`` and run the following:
 
-
 .. code-block:: bash
 
   python -m pip install --upgrade pip
   python -m pip install --upgrade cython
 
-
 If you installed Python system-wide (e.g., in to the default path of
-``C:\Program Files\Python38``\ ), you should ensure that the above commands are run
+``C:\Program Files\Python310``\ ), you should ensure that the above commands are run
 inside of an administrative ``cmd``\ , such that the packages get installed into
 the global Python installation.
 
@@ -123,7 +143,6 @@ CMake
 The version of CMake that comes with MSYS does not correctly support MSYS
 Makefiles (strangely). You should download the most recent version of CMake
 from here:
-
 
 * https://cmake.org/download/
 
@@ -148,47 +167,53 @@ The file should have the following content:
 .. code-block:: bash
 
    #!/bin/bash
-
+   
    set -eu
-
+   
    # **Important**
    #
    # If you installed Python for only the current user, pay particular attention
    # to the value of `PYTHON_DIR`. Before calling `cygpath -u`, call `cygpath -d`
    # to remove the space.
    #
-   export PYTHON_DIR=$(cygpath -u $(cygpath -d "C:\Program Files\Python38"))
+   export PYTHON_DIR=$(cygpath -u $(cygpath -d "C:\Program Files\Python310"))
+   export CMAKE_DIR=$(cygpath -u "C:\cmake-3.23.2-windows-x86_64")
 
-   export CMAKE_DIR=$(cygpath -u "C:\cmake-3.17.3-win64-x64")
-   export MINGW_DIR=$(cygpath -u "C:\Program Files\mingw-w64\x86_64-8.1.0-win32-seh-rt_v6-rev0\mingw64")
+   # If you've installed GCC via MinGW-w64 directly, your path might be:
+   # export MINGW_DIR=$(cygpath -u "C:\mingw64\x86_64-8.1.0-release-win32-seh-rt_v6-rev0")
 
+   # For an MSYS2 install of GCC from MinGW-w64, your path might be:
+   export MINGW_DIR=$(cygpath -u "C:\msys64\mingw64")
+   
+   # MinGW-w64 must be *before* Python, to ensure `which` finds Python.org Python!
+   export PATH=${MINGW_DIR}/bin:${PATH}
    export PATH=${PYTHON_DIR}:${PATH}
    export PATH=${PYTHON_DIR}/Scripts:${PATH}
    export PATH=${CMAKE_DIR}/bin:${PATH}
-   export PATH=${MINGW_DIR}/bin:${PATH}
-
+   
    export DEBUG_FLAG=""
    export COMPARCH=64
 
-   export EXTRA_FLAGS="-static-libstdc++ -static-libgcc"
-
+   # Additional flags to ensure that we always link statically (and suppress errors from multiple definitions, which happens due to statically link)
+   export EXTRA_FLAGS="-static-libstdc++ -static-libgcc -Wl,-Bstatic,--whole-archive -lstdc++ -lwinpthread -Wl,-Bdynamic,--no-whole-archive -Wl,--allow-multiple-definition"
+   
    # -DMS_WIN64 is required so the Python headers properly detect a 64-bit build
    export COMPFLAGS="${EXTRA_FLAGS} -I${PYTHON_DIR}/include -m${COMPARCH} -DMS_WIN64"
-
+   
    if [ -z "$DEBUG_FLAG" ]; then
        COMPFLAGS="-O3 -DNDEBUG ${COMPFLAGS}"
    fi
-
+   
    export CFLAGS="${COMPFLAGS} -std=gnu11"
    export CXXFLAGS="${COMPFLAGS} -std=gnu++11"
    export PYTHON_INCLUDE="${COMPFLAGS}"
    export LDFLAGS="${EXTRA_FLAGS} -L${PYTHON_DIR}/lib"
-
+   
    export CC="gcc"
    export CXX="g++"
-
+   
    set +eu
-
+   
    # EOF
 
 Once you have created this file, you should run ``source vars.sh``. You should
@@ -204,19 +229,18 @@ If any of these do not appear to look right, or return incorrect values, you
 need to check your contents of ``vars.sh`` -- pay special attention to
 ``CMAKE_DIR`` and ``MINGW_DIR``\ !
 
-Obtaining Bitwuzla
-^^^^^^^^^^^^^^^^^^
+Building GMP
+^^^^^^^^^^^^
 
-Now that you have configured your environment, you should obtain a copy of
-Bitwuzla:
+Once you have ``vars.sh`` configured to correctly configure your build
+environment, you can build GMP as shared library.
 
+To obtain a version of GMP:
 
 .. code-block:: bash
 
-  git clone https://github.com/Bitwuzla/bitwuzla
-
-Building
-^^^^^^^^^^^^^^^^^
+   wget "https://gmplib.org/download/gmp/gmp-6.2.1.tar.xz"
+   tar -xJvf gmp-6.2.1.tar.xz
 
 The following steps will allow you to build Bitwuzla from the above clone:
 
@@ -224,60 +248,129 @@ The following steps will allow you to build Bitwuzla from the above clone:
 
    #!/bin/bash
 
+   source vars.sh
+   
+   cd gmp-6.2.1
+   
+   ./configure --build=x86_64-w64-mingw64 --host=x86_64-w64-mingw64 --disable-static --enable-shared --enable-cxx  --prefix=$(readlink -f root)
+   
+   make -j$(nproc)
+   
+   make install -j$(nproc)
+
+   # EOF
+
+This will install GMP into the folder ``root`` inside of ``gmp-6.2.1``. The
+rest of the guide expects that your ``gmp-6.2.1`` folder is next to your source
+tree for Bitwuzla.
+
+Obtaining Bitwuzla
+^^^^^^^^^^^^^^^^^^
+
+Now that you have configured your environment, you should obtain a copy of
+Bitwuzla:
+
+.. code-block:: bash
+
+  git clone https://github.com/Bitwuzla/bitwuzla
+
+Building
+^^^^^^^^
+
+The following steps will allow you to build Bitwuzla from the above clone:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   
    set -eu
-
+   
+   source vars.sh
+   
    cd bitwuzla
-
+   
+   rm -rf deps
+   
    #
    # Download, patch and build Bitwuzla's dependencies
    #
-
-   ./contrib/setup-picosat.sh
-   ./contrib/setup-lingeling.sh
-   ./contrib/setup-cadical.sh
    ./contrib/setup-btor2tools.sh
-
+   ./contrib/setup-cadical.sh
+   ./contrib/setup-symfpu.sh
+   
    #
    # Modify pybitwuzla.pyx to be "more Windows compatible"
    #
    ./contrib/fix_cython_windows.sh
-
+   
    #
    # Build Bitwuzla
    #
+   # Please pay careful attention to `CMAKE_PREFIX_PATH` (for the path to where
+   # you installed GMP) and `PYTHON_EXECUTABLE` (to ensure we use Python.org
+   # Python and not MinGW-w64 Python)
+   #
+   rm -rf build
    mkdir build
    cd build
-   cmake .. -DPYTHON=ON -DIS_WINDOWS_BUILD=1 -G "MSYS Makefiles"
+   cmake .. -DPYTHON=ON -DUSE_SYMFPU=ON -DIS_WINDOWS_BUILD=1 -G "MSYS Makefiles" -DCMAKE_PREFIX_PATH=$(readlink -f ../../gmp-6.2.1/root) -DPYTHON_EXECUTABLE:FILEPATH=$(readlink -f ${PYTHON_DIR}/python.exe)
    make -j12
    cd ..
-
+   
    # EOF
 
 *Notes:*
 
-
 * On Windows, the above ``setup`` scripts automatically patch the version of
   Bitwuzla's dependencies to enable them to compile with Windows -- as per the
   start of this guide, these changes may dramatically change Bitwuzla's
-  behaviour.
+  behaviour
 * The use of ``-G "MSYS Makefiles"`` is *highly* essential to allow you to build
-  Bitwuzla on Windows.
+  Bitwuzla on Windows
+* If you do not use a Python.org Python build, then your resulting
+  ``pybitwuzla.pyd`` will likely depend on MinGW-w64 DLLs, making it harder to
+  distribute
 
-Testing Bitwuzla
-^^^^^^^^^^^^^^^^
+Packaging
+^^^^^^^^^
 
-Now that you have built ``pybitwuzla.pyd``\ , you can test it:
+On Windows, it is necessary to "collect-up" Bitwuzla's dependencies into one
+directory before trying to work with our build artefacts. This can be achieved
+as follows (run in the folder that contains GMP and your clone of Bitwuzla):
 
 .. code-block:: bash
 
    #!/bin/bash
 
-   # this script presumes it is run from the root of the Bitwuzla clone
+   dst=bitwuzla_build
+   mkdir ${dst}
 
-   export PYTHONPATH=$(cygpath -d $(readlink -f build/lib))
-   python examples/api/python/api_usage_examples.py
+   cp gmp-6.2.1/root/bin/libgmp-10.dll ${dst}
+   cp bitwuzla/build/bin/libbitwuzla.dll ${dst}
+   cp bitwuzla/build/lib/pybitwuzla.pyd ${dst}
 
    # EOF
 
-If you get uncaught exceptions on ``splice``\ , then you probably did not run
-``./contrib/fix_cython_windows.sh`` before building.
+These steps are necessary as Windows resolves DLLs by looking either next to
+the current DLL or by inspecting ``%PATH%``.
+
+Testing Bitwuzla
+^^^^^^^^^^^^^^^^
+
+Now that you have built ``pybitwuzla.pyd`` and collected the necessary
+artefacts, you can test your build:
+
+.. code-block:: bash
+
+   #!/bin/bash
+
+   # this script presumes it is run from the common directory containing your `bitwuzla_build` folder
+   python -m pip install --upgrade pytest
+   export PYTHONPATH=$(cygpath -d $(readlink -f bitwuzla_build))
+   echo -e "import pybitwuzla\nprint(dir(pybitwuzla))" | python
+   python -m pytest bitwuzla/test/python/test_api.py
+
+   # EOF
+
+Please note, at the time of writing, tests that use `dump` are not expected to pass.
+

@@ -1,0 +1,15 @@
+diff --git a/src/btorsim/btorsim.cpp b/src/btorsim/btorsim.cpp
+index 200bc46..c34294d 100644
+--- a/src/btorsim/btorsim.cpp
++++ b/src/btorsim/btorsim.cpp
+@@ -12,6 +12,10 @@
+  *  See LICENSE.txt for more information on using this software.
+  */
+ 
++#define __STDC_FORMAT_MACROS
++#include <stdint.h>
++#include <inttypes.h>
++
+ #include <assert.h>
+ #include <ctype.h>
+ #include <inttypes.h>

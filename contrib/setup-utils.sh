@@ -86,8 +86,9 @@ function test_apply_patch
   local component="$1"
   local last_patch_date="$2"
   local patch_set="${WINDOWS_PATCHES_DIR}/${component}_${last_patch_date}.patch"
-  patch -p1 -N --dry-run --silent < "${patch_set}" 2>/dev/null
-  if [ $? -eq 0 ]; then
+  ret=0
+  patch -p1 -N --dry-run --silent < "${patch_set}" 2>/dev/null || ret=$?
+  if [ $ret -eq 0 ]; then
     #
     # Apply patch if the dry-run was successful.
     #

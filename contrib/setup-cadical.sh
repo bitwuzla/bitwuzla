@@ -27,14 +27,14 @@ cd "${CADICAL_DIR}"
 
 if is_windows; then
   component="CaDiCaL"
-  last_patch_date="20190730"
+  last_patch_date="20220715"
   test_apply_patch "${component}" "${last_patch_date}"
   EXTRA_FLAGS="-q"
   #
   # CaDiCaL performs configure checks with -Werror, which fails on Windows as
   # fPIC is not valid, so we set CXXFLAGS per-platform
   #
-  export CXXFLAGS=""
+  export CXXFLAGS="-lpsapi"
 else
   export CXXFLAGS="-fPIC"
 fi

@@ -124,7 +124,10 @@ endif()
 
 if(CaDiCaL_FOUND)
   target_include_directories(bitwuzla PRIVATE ${CaDiCaL_INCLUDE_DIR})
-  target_link_libraries(bitwuzla ${CaDiCaL_LIBRARIES})
+  target_link_libraries(bitwuzla "${CaDiCaL_LIBRARIES}")
+  if(IS_WINDOWS_BUILD)
+    target_link_libraries(bitwuzla "-lpsapi")
+  endif()
 endif()
 
 if(CryptoMiniSat_FOUND)
