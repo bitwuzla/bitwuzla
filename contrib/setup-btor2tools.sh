@@ -19,12 +19,10 @@ COMMIT_ID="db46e96d1bc26271cf32849592e7db1c702a7bc1"
 download_github "boolector/btor2tools" "$COMMIT_ID" "$BTOR2TOOLS_DIR"
 cd "${BTOR2TOOLS_DIR}"
 
-generator=""
 if is_windows; then
   component="Btor2Tools"
   last_patch_date="20220715"
   test_apply_patch "${component}" "${last_patch_date}"
-  generator="-G MSYS Makefiles"
 fi
 
 mkdir build
@@ -32,6 +30,5 @@ cd build
 cmake .. \
   -DBUILD_SHARED_LIBS=OFF \
   -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
-  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-  ${generator}
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 make install -j${NPROC}

@@ -153,6 +153,10 @@ When this is downloaded, extract the zip, but *remember the path you extracted
 it to*\ ! You will need it later to the set the variable ``CMAKE_DIR``. The rest of
 this guide assumes you have extracted CMake to the root of your ``C:`` drive.
 
+*Note*: these instructions rely on the CMake environment variable
+`CMAKE_GENERATOR` -- this places a minimum CMake version of 3.15 to build
+Bitwuzla on Windows.
+
 Building Bitwuzla
 -----------------
 
@@ -212,6 +216,9 @@ The file should have the following content:
    export CC="gcc"
    export CXX="g++"
    
+   # Ensure that CMake always uses MSYS Makefiles
+   export CMAKE_GENERATOR="MSYS Makefiles"
+
    set +eu
    
    # EOF
@@ -313,7 +320,7 @@ The following steps will allow you to build Bitwuzla from the above clone:
    rm -rf build
    mkdir build
    cd build
-   cmake .. -DPYTHON=ON -DUSE_SYMFPU=ON -DIS_WINDOWS_BUILD=1 -G "MSYS Makefiles" -DCMAKE_PREFIX_PATH=$(readlink -f ../../gmp-6.2.1/root) -DPYTHON_EXECUTABLE:FILEPATH=$(readlink -f ${PYTHON_DIR}/python.exe)
+   cmake .. -DPYTHON=ON -DUSE_SYMFPU=ON -DIS_WINDOWS_BUILD=1 -DCMAKE_PREFIX_PATH=$(readlink -f ../../gmp-6.2.1/root) -DPYTHON_EXECUTABLE:FILEPATH=$(readlink -f ${PYTHON_DIR}/python.exe)
    make -j12
    cd ..
    
