@@ -5394,7 +5394,7 @@ declare_sort_smt2(BzlaSMT2Parser *parser)
       bitwuzla_get_option(parser->bitwuzla, BITWUZLA_OPT_DECLSORT_BV_WIDTH);
   if (!opt_bit_width)
     return !perr_smt2(parser,
-                      "'declare-sort' not supported if it is not interpreted "
+                      "'declare-sort' not supported if it is not interpreted"
                       " as a bit-vector, try --declsort-bv-width=<n>");
 
   sort_alias = 0;
