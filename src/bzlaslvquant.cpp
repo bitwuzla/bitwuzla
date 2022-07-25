@@ -38,16 +38,12 @@ extern "C" {
 
 #include "bzlasynthterm.h"
 
-// TODO: hash BzlaNode * by id not ptr
-
 namespace std {
 template <>
 struct hash<std::pair<BzlaNode *, BzlaNode *>>
 {
   size_t operator()(const std::pair<BzlaNode *, BzlaNode *> &p) const
   {
-    // return reinterpret_cast<std::uintptr_t>(p.first) +
-    // reinterpret_cast<std::uintptr_t>(p.second);
     size_t hash = bzla_node_get_id(p.first);
     if (p.second)
     {
@@ -326,7 +322,6 @@ class QuantSolverState
 
   NodeMap<bool> d_quantifiers;
 
-  // TODO: check if reset is needed in case of incremental
   NodeSet d_inactive_quantifiers;
 
   NodeMap<std::vector<BzlaNode *>> d_deps;
@@ -1640,19 +1635,6 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
     {
       for (BzlaNode *dep : itt->second)
       {
-#if 0
-        /* This should only happen for nested quantifiers. We already
-         * synthesized a term/value for the outer quantifiers, and therefore
-         * can use the result as input.
-         * Note: The synthesized term may not have the exact in/out behavior,
-         * but we'll use it anyways. */
-        if (bzla_node_is_param(dep))
-        {
-          auto itd = map.find(dep);
-          assert(itd != map.end());
-          dep = itd->second;
-        }
-#endif
         inputs.push_back(dep);
         input_values.push_back(bzla_model_get_bv(d_bzla, dep));
         assert(input_values.back());
