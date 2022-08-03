@@ -278,11 +278,12 @@ bzla_opt_init_opts(Bzla *bzla)
                "prop",
                BZLA_ENGINE_PROP,
                "use the propagation-based local search engine (QF_BV only)");
-  add_opt_help(mm,
-               opts,
-               "propold",
-               BZLA_ENGINE_PROP_OLD,
-               "use the propagation-based local search engine (QF_BV only)");
+  add_opt_help(
+      mm,
+      opts,
+      "propold",
+      BZLA_ENGINE_PROP_OLD,
+      "use the propagation-based local search (old) engine (QF_BV only)");
   add_opt_help(mm,
                opts,
                "sls",
@@ -637,6 +638,18 @@ bzla_opt_init_opts(Bzla *bzla)
            1,
            "run prop engine as preprocessing within a sequential portfolio "
            "(QF_BV only)");
+  init_opt(
+      bzla,
+      BZLA_OPT_FUN_PREPROPOLD,
+      true,
+      true,
+      "fun-prepropold",
+      0,
+      0,
+      0,
+      1,
+      "run prop engine (old) as preprocessing within a sequential portfolio "
+      "(QF_BV only)");
   init_opt(bzla,
            BZLA_OPT_FUN_PRESLS,
            true,

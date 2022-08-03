@@ -21,6 +21,7 @@
 #include "bzlamodel.h"
 #include "bzlaopt.h"
 #include "bzlaprintmodel.h"
+#include "bzlaslvprop.h"
 #include "bzlaslvpropold.h"
 #include "bzlaslvsls.h"
 #include "preprocess/bzlapreprocess.h"
@@ -2525,6 +2526,10 @@ check_sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
   if (!*ls_slv)
   {
     if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP))
+    {
+      *ls_slv = bzla_new_prop_solver(bzla);
+    }
+    else if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROPOLD))
     {
       *ls_slv = bzla_new_propold_solver(bzla);
     }
