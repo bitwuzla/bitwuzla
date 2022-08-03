@@ -2778,10 +2778,6 @@ TEST_F(TestApi, check_sat)
   ASSERT_NO_FATAL_FAILURE(bitwuzla_check_sat(d_bzla));
   ASSERT_DEATH(bitwuzla_check_sat(d_bzla), d_error_incremental);
 
-  bitwuzla_set_option(d_other_bzla, BITWUZLA_OPT_INCREMENTAL, 1);
-  bitwuzla_assert(d_other_bzla, d_other_exists);
-  ASSERT_DEATH(bitwuzla_check_sat(d_other_bzla), d_error_inc_quant);
-
   Bitwuzla *bzla = bitwuzla_new();
   bitwuzla_set_option(bzla, BITWUZLA_OPT_INCREMENTAL, 1);
   ASSERT_NO_FATAL_FAILURE(bitwuzla_check_sat(bzla));
