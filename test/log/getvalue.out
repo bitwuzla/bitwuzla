@@ -1,0 +1,19 @@
+sat
+((A ((as const (Array (_ BitVec 4) (_ BitVec 8))) #b00000000)))
+(((store A (_ bv4 4) (_ bv1 8)) (store ((as const (Array (_ BitVec 4) (_ BitVec 8))) #b00000000) #b0100 #b00000001)))
+(((store B (fp #b0 #b01011 #b1001100110) (_ bv1 8)) (store ((as const (Array (_ FloatingPoint 5 11) (_ BitVec 8))) #b00000000) (fp #b0 #b01011 #b1001100110) #b00000001)))
+(((store (store B (fp #b0 #b01011 #b1001100110) (_ bv1 8)) flp (_ bv2 8)) (store (store ((as const (Array (_ FloatingPoint 5 11) (_ BitVec 8))) #b00000000) (fp #b1 #b11111 #b0000000000) #b00000010) (fp #b0 #b01011 #b1001100110) #b00000001)))
+((C ((as const (Array RoundingMode (_ BitVec 1))) #b0)))
+(((fp #b0 #b01011 #b1001100110) (fp #b0 #b01011 #b1001100110)))
+(
+ ((_ bv10 8) #b00001010)
+ ((fp #b0 #b01011 #b1001100110) (fp #b0 #b01011 #b1001100110))
+)
+((rm RTZ))
+(
+ (bv #b00000000000000000000000000000000)
+ ((bvnot bv) #b11111111111111111111111111111111)
+)
+((f (define-fun f ((_f_x (_ BitVec 8))) (_ BitVec 8)
+(bvadd _f_x #b00000001))
+))

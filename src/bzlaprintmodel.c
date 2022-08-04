@@ -169,8 +169,8 @@ dump_const_value(Bzla *bzla,
   }
 }
 
-void
-bzla_print_bvfp_model(
+static void
+print_bvfp_model(
     Bzla *bzla, BzlaNode *node, const char *format, uint32_t base, FILE *file)
 {
   assert(bzla);
@@ -423,8 +423,8 @@ print_fun_model_btor(Bzla *bzla, BzlaNode *node, uint32_t base, FILE *file)
   }
 }
 
-void
-bzla_print_fun_model(
+static void
+print_fun_model(
     Bzla *bzla, BzlaNode *node, const char *format, uint32_t base, FILE *file)
 {
   assert(bzla);
@@ -464,11 +464,11 @@ bzla_print_model_aufbvfp(Bzla *bzla, const char *format, FILE *file)
     cur = bzla_iter_hashptr_next(&it);
     if (bzla_node_is_fun(bzla_simplify_exp(bzla, cur)))
     {
-      bzla_print_fun_model(bzla, cur, format, base, file);
+      print_fun_model(bzla, cur, format, base, file);
     }
     else
     {
-      bzla_print_bvfp_model(bzla, cur, format, base, file);
+      print_bvfp_model(bzla, cur, format, base, file);
     }
   }
 
@@ -482,171 +482,6 @@ bzla_print_model(Bzla *bzla, const char *format, FILE *file)
 }
 
 /*------------------------------------------------------------------------*/
-/* print value                                                            */
-/*------------------------------------------------------------------------*/
-
-static void
-print_bv_value_smt2(
-    Bzla *bzla, BzlaNode *node, char *symbol_str, uint32_t base, FILE *file)
-{
-  assert(bzla);
-  assert(node);
-
-  char *symbol;
-  const BzlaBitVector *ass;
-  BzlaPtrHashBucket *b;
-  int32_t id;
-
-  ass    = bzla_model_get_bv(bzla, node);
-  symbol = symbol_str ? symbol_str : bzla_node_get_symbol(bzla, node);
-
-  if (symbol)
-    fprintf(file, "(%s ", symbol);
-  else
-  {
-    id = bzla_node_get_bzla_id(bzla_node_real_addr(node));
-    fprintf(
-        file, "(v%d ", id ? id : bzla_node_get_id(bzla_node_real_addr(node)));
-  }
-
-  b = bzla_hashptr_table_get(bzla->inputs, node);
-  if (b && b->data.flag)
-  {
-    fprintf(file, "%s", bzla_bv_is_true(ass) ? "true" : "false");
-  }
-  else
-  {
-    bzla_dumpsmt_dump_const_bv_value(bzla, ass, base, file);
-  }
-  fprintf(file, ")");
-}
-
-static void
-print_fp_value_smt2(Bzla *bzla, BzlaNode *node, char *symbol_str, FILE *file)
-{
-  assert(bzla);
-  assert(node);
-
-  char *symbol;
-  const BzlaBitVector *ass;
-  BzlaSortId sort;
-  int32_t id;
-
-  ass    = bzla_model_get_bv(bzla, node);
-  symbol = symbol_str ? symbol_str : bzla_node_get_symbol(bzla, node);
-  sort   = bzla_node_get_sort_id(node);
-
-  if (symbol)
-  {
-    fprintf(file, "(%s ", symbol);
-  }
-  else
-  {
-    id = bzla_node_get_bzla_id(bzla_node_real_addr(node));
-    fprintf(
-        file, "(v%d ", id ? id : bzla_node_get_id(bzla_node_real_addr(node)));
-  }
-
-  bzla_dumpsmt_dump_const_fp_value(bzla,
-                                   ass,
-                                   bzla_sort_fp_get_exp_width(bzla, sort),
-                                   bzla_sort_fp_get_sig_width(bzla, sort),
-                                   file);
-  fprintf(file, ")");
-}
-
-static void
-print_rm_value_smt2(Bzla *bzla, BzlaNode *node, char *symbol_str, FILE *file)
-{
-  assert(bzla);
-  assert(node);
-
-  char *symbol;
-  const BzlaBitVector *ass;
-  int32_t id;
-
-  ass    = bzla_model_get_bv(bzla, node);
-  symbol = symbol_str ? symbol_str : bzla_node_get_symbol(bzla, node);
-
-  if (symbol)
-  {
-    fprintf(file, "(%s ", symbol);
-  }
-  else
-  {
-    id = bzla_node_get_bzla_id(bzla_node_real_addr(node));
-    fprintf(
-        file, "(v%d ", id ? id : bzla_node_get_id(bzla_node_real_addr(node)));
-  }
-
-  bzla_dumpsmt_dump_const_rm_value(bzla, ass, file);
-  fprintf(file, ")");
-}
-
-/*------------------------------------------------------------------------*/
-
-static void
-print_fun_value_smt2(
-    Bzla *bzla, BzlaNode *node, char *symbol_str, uint32_t base, FILE *file)
-{
-  assert(bzla);
-  assert(node);
-  assert(bzla_node_is_regular(node));
-  assert(file);
-
-  uint32_t i, n;
-  int32_t id;
-  char *symbol;
-  BzlaPtrHashTable *fun_model;
-  BzlaPtrHashTableIterator it;
-  BzlaBitVectorTuple *args;
-  BzlaBitVector *assignment;
-
-  fun_model = (BzlaPtrHashTable *) bzla_model_get_fun(bzla, node);
-  if (!fun_model) return;
-
-  symbol = symbol_str ? symbol_str : bzla_node_get_symbol(bzla, node);
-
-  fprintf(file, "(");
-
-  n = 0;
-  bzla_iter_hashptr_init(&it, fun_model);
-  while (bzla_iter_hashptr_has_next(&it))
-  {
-    if (symbol)
-      fprintf(file, "%s((%s ", n++ ? "\n  " : "", symbol);
-    else
-    {
-      id = bzla_node_get_bzla_id(bzla_node_real_addr(node));
-      fprintf(file,
-              "(%s%d ",
-              bzla_node_is_array(node) ? "a" : "uf",
-              id ? id : bzla_node_get_id(bzla_node_real_addr(node)));
-    }
-    assignment = it.bucket->data.as_ptr;
-    args       = bzla_iter_hashptr_next(&it);
-    if (args->arity > 1)
-    {
-      for (i = 0; i < args->arity; i++)
-      {
-        bzla_dumpsmt_dump_const_bv_value(bzla, args->bv[i], base, file);
-        fprintf(file, ")%s", i + 1 == args->arity ? "" : " ");
-      }
-      fprintf(file, ") ");
-    }
-    else
-    {
-      bzla_dumpsmt_dump_const_bv_value(bzla, args->bv[0], base, file);
-      fprintf(file, ") ");
-    }
-    bzla_dumpsmt_dump_const_bv_value(bzla, assignment, base, file);
-    fprintf(file, ")");
-  }
-
-  fprintf(file, ")");
-}
-
-/*------------------------------------------------------------------------*/
 
 void
 bzla_print_value_smt2(Bzla *bzla, BzlaNode *exp, char *symbol_str, FILE *file)
@@ -656,24 +491,13 @@ bzla_print_value_smt2(Bzla *bzla, BzlaNode *exp, char *symbol_str, FILE *file)
   assert(exp);
   assert(file);
 
-  uint32_t base;
-
-  base = bzla_opt_get(bzla, BZLA_OPT_OUTPUT_NUMBER_FORMAT);
   exp  = bzla_simplify_exp(bzla, exp);
-  if (bzla_node_is_fun(exp))
+  BzlaNode *value = bzla_model_get_value(bzla, exp);
+  if (value)
   {
-    print_fun_value_smt2(bzla, exp, symbol_str, base, file);
-  }
-  else if (bzla_node_is_fp(bzla, exp))
-  {
-    print_fp_value_smt2(bzla, exp, symbol_str, file);
-  }
-  else if (bzla_node_is_rm(bzla, exp))
-  {
-    print_rm_value_smt2(bzla, exp, symbol_str, file);
-  }
-  else
-  {
-    print_bv_value_smt2(bzla, exp, symbol_str, base, file);
+    fprintf(file, "(%s ", symbol_str);
+    bzla_dumpsmt_dump_node(bzla, file, value, 0);
+    bzla_node_release(bzla, value);
+    fprintf(file, ")");
   }
 }
