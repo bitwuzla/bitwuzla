@@ -597,7 +597,11 @@ BitVector::compare(const BitVector& bv) const
 {
   assert(!is_null());
   assert(!bv.is_null());
-  assert(d_size == bv.d_size);
+
+  if (d_size != bv.d_size)
+  {
+    return -1;
+  }
 
   if (is_gmp())
   {
@@ -620,7 +624,11 @@ BitVector::signed_compare(const BitVector& bv) const
 {
   assert(!is_null());
   assert(!bv.is_null());
-  assert(d_size == bv.d_size);
+
+  if (d_size != bv.d_size)
+  {
+    return -1;
+  }
 
   uint32_t msb_a = get_msb();
   uint32_t msb_b = bv.get_msb();

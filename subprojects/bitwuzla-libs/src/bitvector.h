@@ -147,15 +147,21 @@ class BitVector
   uint32_t size() const { return d_size; }
 
   /**
-   * Compare this bit-vector with given bit-vector.
-   * Return 0 if 'this' and 'bv' are equal, -1 if 'this' is unsigned less
-   * than 'bv', and 1 if 'this' is unsigned greater than 'bv'.
+   * Compare this bit-vector with given bit-vector (unsigned).
+   *
+   * @param bv The bit-vector to compare this bit-vector with.
+   * @return 0 if the bit-vectors are equal, -1 if their sizes don't match or
+   *         if `this` is unsigned less than `bv`, and 1 if `this` is unsigned
+   *         greater than `bv`.
    */
   int32_t compare(const BitVector& bv) const;
   /**
-   * Compare this bit-vector with given bit-vector.
-   * Return 0 if 'this' and 'bv' are equal, -1 if 'this' is signed less
-   * than 'bv', and 1 if 'this' is signed greater than 'bv'.
+   * Compare this bit-vector with given bit-vector (signed).
+   *
+   * @param bv The bit-vector to compare this bit-vector with.
+   * @return 0 if the bit-vectors are equal, -1 if their sizes don't match or
+   *         if `this` is signed less than `bv`, and 1 if `this` is signed
+   *         greater than `bv`.
    */
   int32_t signed_compare(const BitVector& bv) const;
 

@@ -3228,7 +3228,7 @@ TEST_F(TestBitVector, compare)
       ASSERT_TRUE(bv1 != bv2);
     }
   }
-  ASSERT_DEATH(BitVector(1).compare(BitVector(2)), "");
+  ASSERT_EQ(BitVector(1).compare(BitVector(2)), -1);
 }
 
 TEST_F(TestBitVector, signed_compare)
@@ -3355,8 +3355,7 @@ TEST_F(TestBitVector, signed_compare)
       }
     }
   }
-  ASSERT_DEATH(BitVector(1).signed_compare(BitVector(2)),
-               "d_size == bv.d_size");
+  ASSERT_EQ(BitVector(1).signed_compare(BitVector(2)), -1);
 }
 
 TEST_F(TestBitVector, is_true)
