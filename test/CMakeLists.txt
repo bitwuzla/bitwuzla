@@ -970,7 +970,6 @@ set(cmp_testcases
 "dumpsmt1.btor -rwl 0 -ds"
 "dumpsmt2.btor -rwl 0 -ds"
 "echo.smt2"
-"getvalue.smt2"
 "getvalue1.smt2"
 "getvalue2.smt2"
 "getvalue3.smt2"
@@ -1246,6 +1245,7 @@ if(SymFPU_FOUND)
     "fp_regr9.smt2"
     "fp_real.smt2"
     "fp_rational.smt2"
+    "getvalue.smt2"
   )
 endif()
 
