@@ -1614,6 +1614,24 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
 
 /*------------------------------------------------------------------------*/
 
+static BzlaNode *
+mk_default_value(Bzla *bzla, BzlaSortId sort)
+{
+  if (bzla_sort_is_bv(bzla, sort))
+  {
+    return bzla_exp_bv_zero(bzla, sort);
+  }
+  else if (bzla_sort_is_fp(bzla, sort))
+  {
+    return bzla_exp_fp_pos_zero(bzla, sort);
+  }
+  else
+  {
+    assert(bzla_sort_is_rm(bzla, sort));
+    return bzla_exp_rm_const(bzla, BZLA_RM_RNE);
+  }
+}
+
 BzlaNode *
 bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
 {
@@ -1675,7 +1693,10 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
         /* Create fresh base array if no const array was found. */
         if (!res)
         {
-          res = bzla_exp_array(bzla, sort, 0);
+          BzlaNode *val =
+              mk_default_value(bzla, bzla_sort_array_get_element(bzla, sort));
+          res = bzla_exp_const_array(bzla, sort, val);
+          bzla_node_release(bzla, val);
         }
 
         /* Build write chains on top of base array. */
