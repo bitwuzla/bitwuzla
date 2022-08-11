@@ -2979,6 +2979,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
     switch (bzla_opt_get(bzla, BZLA_OPT_ENGINE))
     {
       case BZLA_ENGINE_SLS:
+      case BZLA_ENGINE_PROP:
       case BZLA_ENGINE_PROP_OLD:
       case BZLA_ENGINE_AIGPROP:
         bzla->slv->api.generate_model(
@@ -3015,6 +3016,7 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 
 #ifndef NDEBUG
   if (check && bzla_opt_get(bzla, BZLA_OPT_ENGINE) != BZLA_ENGINE_PROP
+      && bzla_opt_get(bzla, BZLA_OPT_ENGINE) != BZLA_ENGINE_PROP_OLD
       && bzla_opt_get(bzla, BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS)
       && !bzla->inconsistent && bzla->last_sat_result == BZLA_RESULT_UNSAT)
   {

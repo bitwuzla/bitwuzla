@@ -90,6 +90,7 @@ bzla_check_model(BzlaCheckModelContext *ctx)
     switch (bzla_opt_get(bzla, BZLA_OPT_ENGINE))
     {
       case BZLA_ENGINE_SLS:
+      case BZLA_ENGINE_PROP:
       case BZLA_ENGINE_PROP_OLD:
       case BZLA_ENGINE_AIGPROP:
         bzla->slv->api.generate_model(bzla->slv, false, false);

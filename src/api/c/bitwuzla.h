@@ -566,6 +566,7 @@ enum BitwuzlaOption
    *  @warning This is an expert option to configure the func solver engine.
    */
   BITWUZLA_OPT_FUN_PREPROP,
+  BITWUZLA_OPT_FUN_PREPROPOLD,
 
   /*! **Function solver engine:
    *    Stochastic local search sequential portfolio.**

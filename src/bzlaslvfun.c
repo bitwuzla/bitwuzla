@@ -2543,6 +2543,12 @@ check_sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
   preslv    = *ls_slv;
   bzla->slv = preslv;
   result    = preslv->api.sat(preslv);
+  if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
+      && (bzla_opt_get(bzla, BZLA_OPT_CHECK_MODEL)
+          || bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS)))
+  {
+    bzla->slv->api.generate_model(bzla->slv, false, false);
+  }
 
   /* print prop/sls solver statistics */
   preslv->api.print_stats(preslv);
@@ -2555,7 +2561,10 @@ check_sat_prels(BzlaFunSolver *slv, BzlaSolver **ls_slv)
   BZLA_MSG(bzla->msg,
            1,
            "%s engine determined '%s'",
-           preslv->kind == BZLA_PROP_OLD_SOLVER_KIND ? "PROP" : "SLS",
+           preslv->kind == BZLA_PROP_OLD_SOLVER_KIND
+                   || preslv->kind == BZLA_PROP_SOLVER_KIND
+               ? "PROP"
+               : "SLS",
            result == BZLA_RESULT_SAT
                ? "sat"
                : (result == BZLA_RESULT_UNSAT ? "unsat" : "unknown"));
@@ -2693,6 +2702,7 @@ sat_fun_solver(BzlaFunSolver *slv)
   bzla      = slv->bzla;
   mm        = bzla->mm;
   opt_prels = bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
+              || bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROPOLD)
               || bzla_opt_get(bzla, BZLA_OPT_FUN_PRESLS);
   opt_prop_const_bits = bzla_opt_get(bzla, BZLA_OPT_PROP_CONST_BITS) != 0;
 
@@ -2910,6 +2920,7 @@ print_stats_fun_solver(BzlaFunSolver *slv)
   if (!(slv = BZLA_FUN_SOLVER(bzla))) return;
 
   if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP)
+      || bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROPOLD)
       || bzla_opt_get(bzla, BZLA_OPT_FUN_PRESLS))
   {
     BZLA_MSG(bzla->msg, 1, "");
