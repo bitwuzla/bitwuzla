@@ -185,7 +185,7 @@ dump_smt_id(BzlaSMTDumpContext *sdc, BzlaNode *exp)
     case BZLA_VAR_NODE: type = "v"; goto DUMP_SYMBOL;
 
     case BZLA_PARAM_NODE:
-      type = "p";
+      type = "x";
     DUMP_SYMBOL:
       sym = bzla_node_get_symbol(sdc->bzla, exp);
       if (sym && !isdigit((int32_t) sym[0]))
@@ -1371,7 +1371,7 @@ dump_fun_let_smt2(BzlaSMTDumpContext *sdc, BzlaNode *exp)
 }
 
 static void
-dump_fun_smt2(BzlaSMTDumpContext *sdc, BzlaNode *fun)
+dump_fun_smt2(BzlaSMTDumpContext *sdc, BzlaNode *fun, bool dump_as_node)
 {
   assert(fun);
   assert(sdc);
@@ -1437,8 +1437,15 @@ dump_fun_smt2(BzlaSMTDumpContext *sdc, BzlaNode *fun)
   }
 
   /* dump function signature */
-  fputs("(define-fun ", sdc->file);
-  dump_smt_id(sdc, fun);
+  if (dump_as_node)
+  {
+    fputs("(lambda", sdc->file);
+  }
+  else
+  {
+    fputs("(define-fun ", sdc->file);
+    dump_smt_id(sdc, fun);
+  }
   fputs(" (", sdc->file);
 
   bzla_iter_lambda_init(&it, fun);
@@ -1460,11 +1467,14 @@ dump_fun_smt2(BzlaSMTDumpContext *sdc, BzlaNode *fun)
   }
   fputs(") ", sdc->file);
 
-  if (is_boolean(sdc, fun_body))
-    fputs("Bool", sdc->file);
-  else
-    bzla_dumpsmt_dump_sort_node(fun_body, sdc->file);
-  fputc(sdc->pretty_print ? '\n' : ' ', sdc->file);
+  if (!dump_as_node)
+  {
+    if (is_boolean(sdc, fun_body))
+      fputs("Bool", sdc->file);
+    else
+      bzla_dumpsmt_dump_sort_node(fun_body, sdc->file);
+    fputc(' ', sdc->file);
+  }
 
   assert(sdc->open_lets == 0);
 
@@ -1491,7 +1501,7 @@ dump_fun_smt2(BzlaSMTDumpContext *sdc, BzlaNode *fun)
   sdc->open_lets = 0;
 
   /* close define-fun */
-  fputs(")\n", sdc->file);
+  fputs(")", sdc->file);
 
   /* due to lambda hashing it is possible that a lambda in 'fun' is shared in
    * different functions. hence, we have to check if all lambda parents of
@@ -1930,7 +1940,7 @@ dump_smt(BzlaSMTDumpContext *sdc)
     assert(!cur->parameterized);
 
     if (bzla_node_is_lambda(cur) && !bzla_node_is_array(cur))
-      dump_fun_smt2(sdc, cur);
+      dump_fun_smt2(sdc, cur, false);
     else
       dump_fun_let_smt2(sdc, cur);
   }
@@ -2110,7 +2120,7 @@ bzla_dumpsmt_dump_node(Bzla *bzla, FILE *file, BzlaNode *exp, uint32_t depth)
 
   mark_boolean(sdc, &all);
   if (bzla_node_is_lambda(exp) && !bzla_node_is_array(exp))
-    dump_fun_smt2(sdc, exp);
+    dump_fun_smt2(sdc, exp, true);
   else
   {
     recursively_dump_exp_let_smt(sdc, exp, false, depth);

@@ -5141,13 +5141,12 @@ declare_fun_smt2(BzlaSMT2Parser *parser, bool isconst)
 static int32_t
 define_fun_smt2(BzlaSMT2Parser *parser)
 {
-  int32_t tag, nargs = 0, len;
+  int32_t tag, nargs = 0;
   const BitwuzlaTerm *eq, *tmp, *exp = 0;
   BzlaSMT2Coo coo;
   BzlaSMT2Item *item;
   BzlaSMT2Node *fun, *arg, *new_arg;
   BitwuzlaTermConstPtrStack args;
-  char *psym;
   const BitwuzlaSort *sort, *s;
 
   Bitwuzla *bitwuzla = parser->bitwuzla;
@@ -5202,11 +5201,7 @@ define_fun_smt2(BzlaSMT2Parser *parser)
       tag = read_token_smt2(parser);
       if (!parse_sort(parser, tag, false, &s)) return 0;
       nargs++;
-      len = strlen(fun->name) + strlen(arg->name) + 3;
-      BZLA_CNEWN(parser->mem, psym, len);
-      sprintf(psym, "_%s_%s", fun->name, arg->name);
-      arg->exp = bitwuzla_mk_var(bitwuzla, s, psym);
-      BZLA_DELETEN(parser->mem, psym, len);
+      arg->exp   = bitwuzla_mk_var(bitwuzla, s, arg->name);
       item       = push_item_smt2(parser, arg->tag);
       item->node = arg;
 

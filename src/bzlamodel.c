@@ -1656,8 +1656,7 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
   {
     res = bzla_node_mk_value(bzla, sort, bzla_model_get_bv(bzla, exp));
   }
-  else if ((bzla_node_is_lambda(exp) && bzla_node_fun_get_arity(bzla, exp) > 1)
-           || bzla_node_is_const_array(exp))
+  else if (bzla_node_is_lambda(exp) || bzla_node_is_const_array(exp))
   {
     res = bzla_node_copy(bzla, exp);
   }
@@ -1665,16 +1664,12 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
   {
     assert(bzla_node_is_array(exp) || bzla_node_is_fun(exp));
     model = bzla_model_get_fun(bzla, exp);
-    if (!model)
+    if (bzla_node_is_array(exp))
     {
-      res = bzla_node_copy(bzla, exp);
-    }
-    else
-    {
-      if (bzla_node_is_array(exp))
+      /* Check for const array. */
+      res = 0;
+      if (model)
       {
-        /* Check for const array. */
-        res = 0;
         bzla_iter_hashptr_init(&it, model);
         while (bzla_iter_hashptr_has_next(&it))
         {
@@ -1689,17 +1684,20 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
             break;
           }
         }
+      }
 
-        /* Create fresh base array if no const array was found. */
-        if (!res)
-        {
-          BzlaNode *val =
-              mk_default_value(bzla, bzla_sort_array_get_element(bzla, sort));
-          res = bzla_exp_const_array(bzla, sort, val);
-          bzla_node_release(bzla, val);
-        }
+      /* Create fresh base array if no const array was found. */
+      if (!res)
+      {
+        BzlaNode *val =
+            mk_default_value(bzla, bzla_sort_array_get_element(bzla, sort));
+        res = bzla_exp_const_array(bzla, sort, val);
+        bzla_node_release(bzla, val);
+      }
 
-        /* Build write chains on top of base array. */
+      /* Build write chains on top of base array. */
+      if (model)
+      {
         bzla_iter_hashptr_init(&it, model);
         while (bzla_iter_hashptr_has_next(&it))
         {
@@ -1721,27 +1719,27 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
           res = tmp;
         }
       }
-      else
+    }
+    else
+    {
+      domain  = bzla_sort_fun_get_domain(bzla, sort);
+      nparams = bzla_node_fun_get_arity(bzla, exp);
+      BZLA_NEWN(bzla->mm, params, nparams);
+      /* create parameters x1, ..., xn for lambda */
+      i = 0;
+      bzla_iter_tuple_sort_init(&tit, bzla, domain);
+      while (bzla_iter_tuple_sort_has_next(&tit))
       {
-        domain  = bzla_sort_fun_get_domain(bzla, sort);
-        nparams = bzla_node_fun_get_arity(bzla, exp);
-        BZLA_NEWN(bzla->mm, params, nparams);
-        /* create parameters x1, ..., xn for lambda */
-        i = 0;
-        bzla_iter_tuple_sort_init(&tit, bzla, domain);
-        while (bzla_iter_tuple_sort_has_next(&tit))
-        {
-          params[i++] =
-              bzla_exp_param(bzla, bzla_iter_tuple_sort_next(&tit), 0);
-        }
-        /* create base case: uf(x1, ..., xn) */
-        uf  = bzla_exp_uf(bzla, sort, 0);
-        res = bzla_exp_apply_n(bzla, uf, params, nparams);
-        bzla_node_release(bzla, uf);
-        BzlaSortId codomain_sort = bzla_sort_fun_get_codomain(bzla, sort);
-        BzlaSort *domain_sort =
-            bzla_sort_get_by_id(bzla, bzla_sort_fun_get_domain(bzla, sort));
-        /* create ite chain */
+        params[i++] = bzla_exp_param(bzla, bzla_iter_tuple_sort_next(&tit), 0);
+      }
+      /* create base case: uf(x1, ..., xn) */
+      res = mk_default_value(bzla, bzla_sort_fun_get_codomain(bzla, sort));
+      BzlaSortId codomain_sort = bzla_sort_fun_get_codomain(bzla, sort);
+      BzlaSort *domain_sort =
+          bzla_sort_get_by_id(bzla, bzla_sort_fun_get_domain(bzla, sort));
+      /* create ite chain */
+      if (model)
+      {
         bzla_iter_hashptr_init(&it, (BzlaPtrHashTable *) model);
         while (bzla_iter_hashptr_has_next(&it))
         {
@@ -1767,15 +1765,15 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
           bzla_node_release(bzla, res);
           res = tmp;
         }
-        tmp = bzla_exp_fun(bzla, params, nparams, res);
-        bzla_node_release(bzla, res);
-        res = tmp;
-        for (i = 0; i < nparams; i++)
-        {
-          bzla_node_release(bzla, params[i]);
-        }
-        BZLA_DELETEN(bzla->mm, params, nparams);
       }
+      tmp = bzla_exp_fun(bzla, params, nparams, res);
+      bzla_node_release(bzla, res);
+      res = tmp;
+      for (i = 0; i < nparams; i++)
+      {
+        bzla_node_release(bzla, params[i]);
+      }
+      BZLA_DELETEN(bzla->mm, params, nparams);
     }
   }
   return res;
