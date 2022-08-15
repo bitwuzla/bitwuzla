@@ -397,13 +397,30 @@ class BitVectorAdd : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -460,13 +477,30 @@ class BitVectorAnd : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -527,13 +561,30 @@ class BitVectorConcat : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -587,13 +638,30 @@ class BitVectorEq : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -651,13 +719,30 @@ class BitVectorMul : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 
@@ -722,13 +807,30 @@ class BitVectorShl : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -810,13 +912,30 @@ class BitVectorShr : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -887,13 +1006,30 @@ class BitVectorAshr : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -971,13 +1107,30 @@ class BitVectorUdiv : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 
@@ -1060,13 +1213,30 @@ class BitVectorUlt : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
   /**
@@ -1200,13 +1370,30 @@ class BitVectorSlt : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
   /**
@@ -1348,13 +1535,30 @@ class BitVectorUrem : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 
@@ -1414,13 +1618,30 @@ class BitVectorXor : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -1497,13 +1718,30 @@ class BitVectorIte : public BitVectorNode
   int32_t select_path_non_const(std::vector<uint32_t>& inputs) const override;
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -1551,13 +1789,30 @@ class BitVectorNot : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -1634,13 +1889,30 @@ class BitVectorExtract : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 };
@@ -1704,13 +1976,30 @@ class BitVectorSignExtend : public BitVectorNode
  private:
   /**
    * Evaluate the assignment of this node.
+   *
    * Helper to allow evaluating the assignment on construction (evaluate() is
    * virtual and cannot be called from the constructor).
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate();
   /**
    * Wrapper for evaluating the assignment and fixing the domain on construction
    * when all operands are constant.
+   *
+   * @note We cannot assert that the assignment propagated from the inputs
+   *       to the roots on evaluation matches constant bits information if it
+   *       includes constant bit information propagated down from top-level
+   *       constraints (and not only up from the inputs). This can happen if
+   *       constant bit information is derived via the 'fixed' interface of
+   *       a SAT solver (e.g., CaDiCaL, Lingeling), where the assignment of
+   *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
 

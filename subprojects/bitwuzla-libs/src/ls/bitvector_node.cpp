@@ -491,13 +491,13 @@ BitVectorAdd::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -634,13 +634,13 @@ BitVectorAnd::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -866,13 +866,13 @@ BitVectorConcat::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -1056,13 +1056,13 @@ BitVectorEq::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -1245,13 +1245,13 @@ BitVectorMul::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -1616,13 +1616,13 @@ BitVectorShl::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -2017,13 +2017,13 @@ BitVectorShr::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -2443,13 +2443,13 @@ BitVectorAshr::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -2855,13 +2855,13 @@ BitVectorUdiv::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -3561,13 +3561,13 @@ BitVectorUlt::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -4376,13 +4376,13 @@ BitVectorSlt::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -5255,13 +5255,13 @@ BitVectorUrem::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -5861,13 +5861,13 @@ BitVectorXor::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -6013,13 +6013,13 @@ BitVectorIte::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -6350,13 +6350,13 @@ BitVectorNot::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -6473,13 +6473,13 @@ BitVectorExtract::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
@@ -6689,13 +6689,13 @@ BitVectorSignExtend::_evaluate_and_set_domain()
   _evaluate();
   if (d_all_const)
   {
-    assert(d_domain.match_fixed_bits(d_assignment));
     if (!d_is_const)
     {
       d_domain.fix(d_assignment);
       d_is_const = true;
     }
   }
+  // we cannot assert that the assignment matches const bits, see header
 }
 
 void
