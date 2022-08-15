@@ -427,6 +427,34 @@ operator<<(std::ostream& out, const BitVectorNode& node)
   return out;
 }
 
+std::ostream&
+operator<<(std::ostream& out, const BitVectorNode::Kind kind)
+{
+  switch (kind)
+  {
+    case BitVectorNode::ADD: out << "ADD"; break;
+    case BitVectorNode::AND: out << "AND"; break;
+    case BitVectorNode::ASHR: out << "ASHR"; break;
+    case BitVectorNode::CONCAT: out << "CONCAT"; break;
+    case BitVectorNode::CONST: out << "CONST"; break;
+    case BitVectorNode::EXTRACT: out << "EXTRACT"; break;
+    case BitVectorNode::EQ: out << "EQ"; break;
+    case BitVectorNode::ITE: out << "ITE"; break;
+    case BitVectorNode::MUL: out << "MUL"; break;
+    case BitVectorNode::NOT: out << "NOT"; break;
+    case BitVectorNode::SEXT: out << "SEXT"; break;
+    case BitVectorNode::SHL: out << "SHL"; break;
+    case BitVectorNode::SHR: out << "SHR"; break;
+    case BitVectorNode::SLT: out << "SLT"; break;
+    case BitVectorNode::UDIV: out << "UDIV"; break;
+    case BitVectorNode::ULT: out << "ULT"; break;
+    case BitVectorNode::UREM: out << "UREM"; break;
+    case BitVectorNode::XOR: out << "XOR"; break;
+    default: assert(false);
+  };
+  return out;
+}
+
 /* -------------------------------------------------------------------------- */
 
 BitVectorAdd::BitVectorAdd(RNG* rng,

@@ -336,7 +336,21 @@ class BitVectorNode
   std::unique_ptr<BitVector> d_consistent;
 };
 
+/**
+ * Serialize a bit-vector node to a given stream.
+ * @param out The output stream.
+ * @param kind The bit-vector node to serialize.
+ * @return The output stream.
+ */
 std::ostream& operator<<(std::ostream& out, const BitVectorNode& node);
+
+/**
+ * Serialize the kind of a bit-vector node to a given stream.
+ * @param out The output stream.
+ * @param kind The kind to serialize.
+ * @return The output stream.
+ */
+std::ostream& operator<<(std::ostream& out, const BitVectorNode::Kind kind);
 
 /* -------------------------------------------------------------------------- */
 
