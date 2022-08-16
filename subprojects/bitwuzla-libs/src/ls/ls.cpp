@@ -816,7 +816,10 @@ LocalSearch::move()
             ->pick_from_set<std::unordered_set<BitVectorNode*>, BitVectorNode*>(
                 d_roots_unsat);
 
-    if (root->is_const() && root->assignment().is_false()) return UNSAT;
+    if (root->is_const() && root->domain().lo().is_false())
+    {
+      return UNSAT;
+    }
 
     BZLALSLOG(1) << std::endl;
     BZLALSLOG(1) << "  select constraint: " << *root << std::endl;
