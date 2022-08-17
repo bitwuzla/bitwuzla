@@ -6537,7 +6537,9 @@ BitVectorExtract::inverse_value(const BitVector& t, uint32_t pos_x)
    *
    * We choose with probability s_prob_keep if we keep the current assignment
    * of the don't care bits, i.e., all bits that are not determined by t, or if
-   * we set them randomly.
+   * we set them randomly. If the current assignment does not match fixed bits
+   * in x, though, which can happen with const bits propagated from top-level
+   * constraints, we fix the assignment of those bits to match these const bits.
    */
 
   uint32_t size = x.size();
@@ -6548,7 +6550,7 @@ BitVectorExtract::inverse_value(const BitVector& t, uint32_t pos_x)
   {
     if (keep)
     {
-      left = x_val.bvextract(size - 1, d_hi + 1);
+      left = x_val.bvor(x.lo()).ibvand(x.hi()).ibvextract(size - 1, d_hi + 1);
     }
     else
     {
@@ -6581,7 +6583,7 @@ BitVectorExtract::inverse_value(const BitVector& t, uint32_t pos_x)
   {
     if (keep)
     {
-      right = x_val.bvextract(d_lo - 1, 0);
+      right = x_val.bvor(x.lo()).ibvand(x.hi()).bvextract(d_lo - 1, 0);
     }
     else
     {
