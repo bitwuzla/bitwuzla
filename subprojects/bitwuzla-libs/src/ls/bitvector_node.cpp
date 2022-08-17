@@ -6226,7 +6226,11 @@ BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
   else if ((pos_x == 1 && s0.is_false()) || (pos_x == 2 && s0.is_true())
            || !x.match_fixed_bits(t))
   {
-    d_consistent.reset(new BitVector(d_children[pos_x]->assignment()));
+    /* If the current assignment does not match fixed bits in x, which can
+     * happen with const bits propagated from top-level constraints, we fix the
+     * assignment of those bits to match these const bits. */
+    d_consistent.reset(new BitVector(
+        d_children[pos_x]->assignment().bvor(x.lo()).ibvand(x.hi())));
   }
   else
   {
