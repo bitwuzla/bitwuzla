@@ -210,6 +210,7 @@ bzla_check_model_init(Bzla *bzla)
   ctx->clone = bzla_clone_exp_layer(bzla, 0, true);
   bzla_set_msg_prefix(ctx->clone, "chkm");
   bzla_opt_set(ctx->clone, BZLA_OPT_FUN_DUAL_PROP, 0);
+  bzla_opt_set(ctx->clone, BZLA_OPT_FUN_PREPROP, 0);
   bzla_opt_set(ctx->clone, BZLA_OPT_CHECK_UNCONSTRAINED, 0);
   bzla_opt_set(ctx->clone, BZLA_OPT_CHECK_MODEL, 0);
   bzla_opt_set(ctx->clone, BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS, 0);
