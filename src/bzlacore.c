@@ -2851,12 +2851,13 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 
   /* eliminate lambdas (define-fun) in the QF_BV case */
   if (bzla->ufs->count == 0 && bzla->feqs->count == 0
-      && bzla->lambdas->count > 0)
+      && bzla->lambdas->count > 0
+      && !bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE))
   {
     BZLA_MSG(bzla->msg,
              1,
              "no UFs or function equalities, enable beta-reduction=all");
-    bzla_opt_set(bzla, BZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
+    bzla_opt_set(bzla, BZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_FUN);
   }
 
   /* Lambdas are not supported with FP right now since we can't handle FP

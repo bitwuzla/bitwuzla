@@ -175,16 +175,6 @@ bzla_simplify(Bzla *bzla)
     /* rewrite/beta-reduce applies on lambdas */
     if (bzla_opt_get(bzla, BZLA_OPT_PP_BETA_REDUCE))
     {
-      /* If no UFs or function equalities are present, we eagerly eliminate all
-       * remaining lambdas. */
-      if (bzla->ufs->count == 0 && bzla->feqs->count == 0
-          && !bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL))
-      {
-        BZLA_MSG(bzla->msg,
-                 1,
-                 "no UFs or function equalities, enable beta-reduction=all");
-        bzla_opt_set(bzla, BZLA_OPT_PP_BETA_REDUCE, BZLA_BETA_REDUCE_ALL);
-      }
       bzla_eliminate_applies(bzla);
     }
 

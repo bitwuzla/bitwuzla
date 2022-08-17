@@ -996,6 +996,7 @@ set(cmp_testcases
 "smtor.smt2 -m"
 "smtvar.smt2 -m"
 "smtxor.smt2 -m"
+"issue35.smt2"
 
 # parse error tests
 
