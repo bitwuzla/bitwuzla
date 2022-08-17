@@ -55,6 +55,9 @@ set(libbitwuzla_src_files
   dumper/bzladumpaig.c
   dumper/bzladumpbtor.c
   dumper/bzladumpsmt.c
+  node/node.cpp
+  node/node_data.cpp
+  node/node_manager.cpp
   parser/bzlabtor.c
   parser/bzlabtor2.c
   parser/bzlasmt2.c

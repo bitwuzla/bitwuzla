@@ -1,0 +1,181 @@
+#include "node/node.h"
+
+#include <array>
+#include <cassert>
+#include <iterator>
+
+#include "node/node_data.h"
+#include "node/node_manager.h"
+
+namespace bzla::node {
+
+/* ------------------------------------------------------------------------- */
+
+#ifndef NDEBUG
+// For unit tests only
+Node::Node(Kind kind,
+           const std::initializer_list<Node>& children,
+           const std::initializer_list<uint64_t>& indices)
+{
+  if (indices.size() > 0)
+  {
+    assert(children.size() > 0);
+    d_data = new NodeDataIndexed(nullptr, kind, children, indices);
+  }
+  else if (children.size() > 0)
+  {
+    d_data = new NodeDataChildren(nullptr, kind, children);
+  }
+  else
+  {
+    d_data = new NodeData(nullptr, kind);
+  }
+  d_data->inc_ref();
+}
+#endif
+
+Node::~Node()
+{
+#ifndef NDEBUG
+  // For unit tests only
+  if (!is_null())
+  {
+    if (d_data->d_mgr == nullptr)
+    {
+      delete d_data;
+      return;
+    }
+  }
+#endif
+  if (!is_null())
+  {
+    assert(d_data);
+    d_data->dec_ref();
+  }
+}
+
+Node::Node(const Node& other) : d_data(other.d_data)
+{
+  if (d_data)
+  {
+    d_data->inc_ref();
+  }
+}
+
+Node&
+Node::operator=(const Node& other)
+{
+  if (d_data)
+  {
+    d_data->dec_ref();
+  }
+  if (other.d_data)
+  {
+    d_data = other.d_data;
+    d_data->inc_ref();
+  }
+  return *this;
+}
+
+Node::Node(Node&& other)
+{
+  if (d_data)
+  {
+    d_data->dec_ref();
+  }
+  d_data       = other.d_data;
+  other.d_data = nullptr;
+}
+
+Node&
+Node::operator=(Node&& other)
+{
+  if (d_data)
+  {
+    d_data->dec_ref();
+  }
+  d_data       = other.d_data;
+  other.d_data = nullptr;
+  return *this;
+}
+
+uint64_t
+Node::get_id() const
+{
+  if (d_data)
+  {
+    return d_data->d_id;
+  }
+  return 0;
+}
+
+Kind
+Node::get_kind() const
+{
+  if (is_null())
+  {
+    return Kind::NULL_NODE;
+  }
+  return d_data->d_kind;
+}
+
+bool
+Node::is_null() const
+{
+  return d_data == nullptr;
+}
+
+bool
+Node::operator==(const Node& other) const
+{
+  return d_data == other.d_data;
+}
+
+bool
+Node::operator!=(const Node& other) const
+{
+  return d_data != other.d_data;
+}
+
+size_t
+Node::get_num_children() const
+{
+  if (is_null())
+  {
+    return 0;
+  }
+  return d_data->get_num_children();
+}
+
+const Node&
+Node::operator[](size_t index) const
+{
+  assert(d_data != nullptr);
+  return d_data->get_child(index);
+}
+
+Node::iterator
+Node::begin() const
+{
+  if (!is_null() && d_data->has_children())
+  {
+    const NodeDataChildren& data =
+        reinterpret_cast<const NodeDataChildren&>(*d_data);
+    return data.d_children.begin();
+  }
+  return nullptr;
+}
+
+Node::iterator
+Node::end() const
+{
+  if (!is_null() && d_data->has_children())
+  {
+    const NodeDataChildren& data =
+        reinterpret_cast<const NodeDataChildren&>(*d_data);
+    return data.d_children.begin() + data.d_num_children;
+  }
+  return nullptr;
+}
+
+}  // namespace bzla::node

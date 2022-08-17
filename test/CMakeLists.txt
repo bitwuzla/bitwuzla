@@ -57,13 +57,16 @@ if(SymFPU_FOUND)
   list(APPEND test_names api fp)
 endif()
 
+macro(add_unit_test test_name)
+  add_executable(${test_name} ${test_name}.cpp)
+  gtest_add_tests(TARGET ${test_name})
+  target_link_libraries(${test_name} bitwuzla m)
+  target_link_libraries(${test_name} GTest::gtest_main)
+  add_test(NAME ${test_name} COMMAND ${test_name})
+endmacro()
+
 foreach(test ${test_names})
-  add_executable (test${test} test_${test}.cpp)
-  target_include_directories(test${test} PRIVATE ${PROJECT_SOURCE_DIR}/test/new_test)
-  target_link_libraries(test${test} bitwuzla m)
-  target_link_libraries(test${test} GTest::gtest_main)
-  set_target_properties(test${test} PROPERTIES OUTPUT_NAME test${test})
-  add_test(${test} ${CMAKE_BINARY_DIR}/bin/tests/test${test})
+  add_unit_test(test_${test})
 endforeach()
 
 # Note: We have to distinguish between testcases that require incremental
@@ -1401,6 +1404,9 @@ if(Lingeling_FOUND)
     add_test_case("--check-unsat" "${testcase} -SE lingeling")
   endforeach()
 endif()
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+add_subdirectory(node)
 
 if(PYTHON)
   add_subdirectory(python)
