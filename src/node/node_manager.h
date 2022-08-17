@@ -11,7 +11,7 @@
 
 #include "node/node.h"
 #include "node/node_data.h"
-#include "node/type.h"
+#include "type/type.h"
 
 namespace bzla::node {
 

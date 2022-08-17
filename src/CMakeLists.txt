@@ -58,6 +58,9 @@ set(libbitwuzla_src_files
   node/node.cpp
   node/node_data.cpp
   node/node_manager.cpp
+  type/type.cpp
+  type/type_data.cpp
+  type/type_manager.cpp
   parser/bzlabtor.c
   parser/bzlabtor2.c
   parser/bzlasmt2.c
