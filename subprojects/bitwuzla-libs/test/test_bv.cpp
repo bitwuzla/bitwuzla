@@ -1192,7 +1192,7 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
         case AND:
           if (fun_kind == INPLACE_THIS)
           {
-            res.ibvand(b1, b2);
+            (void) res.ibvand(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvand(tres);
@@ -1307,7 +1307,7 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
         case NAND:
           if (fun_kind == INPLACE_THIS)
           {
-            (void) res.ibvnand(b1, b2);
+            (void) res.ibvnand(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvnand(tres);
@@ -1353,7 +1353,7 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
         case NOR:
           if (fun_kind == INPLACE_THIS)
           {
-            (void) res.ibvnor(b1, b2);
+            (void) res.ibvnor(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvnor(tres);
@@ -1376,7 +1376,7 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
         case OR:
           if (fun_kind == INPLACE_THIS)
           {
-            (void) res.ibvor(b1, b2);
+            (void) res.ibvor(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvor(tres);
@@ -1445,7 +1445,7 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
         case SUB:
           if (fun_kind == INPLACE_THIS)
           {
-            (void) res.ibvsub(b1, b2);
+            (void) res.ibvsub(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvsub(tres);

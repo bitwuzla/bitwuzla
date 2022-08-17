@@ -1352,7 +1352,6 @@ BitVector::ibvsub(const BitVector& bv0, const BitVector& bv1)
     {
       mpz_init(d_val_gmp);
     }
-    mpz_add(d_val_gmp, bv0.d_val_gmp, bv1.d_val_gmp);
     mpz_sub(d_val_gmp, bv0.d_val_gmp, bv1.d_val_gmp);
     mpz_fdiv_r_2exp(d_val_gmp, d_val_gmp, size);
   }
