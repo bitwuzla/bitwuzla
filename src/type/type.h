@@ -75,4 +75,20 @@ class Type
 
 }  // namespace bzla::type
 
+namespace std {
+
+template <>
+struct hash<bzla::type::Type>
+{
+  size_t operator()(const bzla::type::Type& type) const;
+};
+
+template <>
+struct hash<bzla::type::Type*>
+{
+  size_t operator()(const bzla::type::Type* type) const;
+};
+
+}  // namespace std
+
 #endif

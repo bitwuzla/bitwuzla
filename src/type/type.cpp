@@ -170,3 +170,19 @@ Type::Type(TypeData* data) : d_data(data)
 }
 
 }  // namespace bzla::type
+
+namespace std {
+
+size_t
+hash<bzla::type::Type>::operator()(const bzla::type::Type& type) const
+{
+  return type.get_id();
+}
+
+size_t
+hash<bzla::type::Type*>::operator()(const bzla::type::Type* type) const
+{
+  return type->get_id();
+}
+
+}  // namespace std

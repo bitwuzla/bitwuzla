@@ -1,3 +1,5 @@
+#include <unordered_set>
+
 #include "test.h"
 #include "type/type.h"
 #include "type/type_manager.h"
@@ -143,6 +145,29 @@ TEST_F(TestTypeManager, fun_type)
   ASSERT_NE(fun_type, tm.mk_fun_type({bool_type, array_type}));
   ASSERT_NE(fun_type, fp16);
   ASSERT_NE(fun_type, bv32);
+}
+
+TEST_F(TestTypeManager, hash_type)
+{
+  TypeManager tm;
+
+  Type fp16       = tm.mk_fp_type(5, 11);
+  Type bv32       = tm.mk_bv_type(32);
+  Type bool_type  = tm.mk_bool_type();
+  Type rm_type    = tm.mk_rm_type();
+  Type array_type = tm.mk_array_type(fp16, bool_type);
+
+  Type fp16_2 = tm.mk_fp_type(5, 11);
+
+  std::unordered_set<Type> set;
+  set.insert(fp16);
+  set.insert(bv32);
+  set.insert(array_type);
+  ASSERT_TRUE(set.count(fp16) > 0);
+  ASSERT_TRUE(set.count(fp16_2) > 0);
+  ASSERT_TRUE(set.count(bv32) > 0);
+  ASSERT_TRUE(set.count(array_type) > 0);
+  ASSERT_FALSE(set.count(bool_type) > 0);
 }
 
 }  // namespace bzla::test
