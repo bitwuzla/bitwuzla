@@ -179,6 +179,13 @@ BitVectorDomain::match_fixed_bits(const BitVector &bv) const
   return bv.bvand(d_hi).ibvor(d_lo).compare(bv) == 0;
 }
 
+BitVector
+BitVectorDomain::get_copy_with_fixed_bits(const BitVector &bv) const
+{
+  assert(!is_null());
+  return bv.bvand(d_hi).ibvor(d_lo);
+}
+
 BitVectorDomain &
 BitVectorDomain::operator=(const BitVectorDomain &other)
 {

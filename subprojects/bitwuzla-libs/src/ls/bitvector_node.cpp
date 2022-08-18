@@ -6185,7 +6185,8 @@ BitVectorIte::inverse_value(const BitVector& t, uint32_t pos_x)
   else if ((pos_x == 1 && s0.is_zero()) || (pos_x == 2 && s0.is_one()))
   {
     /* return current assignment for disabled branch */
-    d_inverse.reset(new BitVector(d_children[pos_x]->assignment()));
+    d_inverse.reset(new BitVector(
+        x.get_copy_with_fixed_bits(d_children[pos_x]->assignment())));
   }
   else
   {
@@ -6230,7 +6231,7 @@ BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
      * happen with const bits propagated from top-level constraints, we fix the
      * assignment of those bits to match these const bits. */
     d_consistent.reset(new BitVector(
-        d_children[pos_x]->assignment().bvor(x.lo()).ibvand(x.hi())));
+        x.get_copy_with_fixed_bits(d_children[pos_x]->assignment())));
   }
   else
   {
@@ -6554,7 +6555,7 @@ BitVectorExtract::inverse_value(const BitVector& t, uint32_t pos_x)
   {
     if (keep)
     {
-      left = x_val.bvor(x.lo()).ibvand(x.hi()).ibvextract(size - 1, d_hi + 1);
+      left = x.get_copy_with_fixed_bits(x_val).ibvextract(size - 1, d_hi + 1);
     }
     else
     {
@@ -6587,7 +6588,7 @@ BitVectorExtract::inverse_value(const BitVector& t, uint32_t pos_x)
   {
     if (keep)
     {
-      right = x_val.bvor(x.lo()).ibvand(x.hi()).bvextract(d_lo - 1, 0);
+      right = x.get_copy_with_fixed_bits(x_val).bvextract(d_lo - 1, 0);
     }
     else
     {

@@ -142,6 +142,16 @@ class BitVectorDomain
    */
   bool match_fixed_bits(const BitVector &bv) const;
 
+  /**
+   * Return a copy of the given bit-vector with all bits that are fixed in
+   * this domain set to their fixed value, i.e., the returned bit-vector
+   * matches all fixed bits in this domain.
+   * @param bv The bit-vector.
+   * @return A copy of the given bit-vector, except that all fixed bits of this
+   *         domain are set to their fixed value.
+   */
+  BitVector get_copy_with_fixed_bits(const BitVector &bv) const;
+
   /** Copy assignment operator. */
   BitVectorDomain &operator=(const BitVectorDomain &other);
   /** Equality comparison operator. */
