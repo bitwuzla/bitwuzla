@@ -55,6 +55,8 @@ class TestBitVector : public TestCommon
   {
     /** Not in-place, this is not passed as argument. */
     DEFAULT,
+    /** In-place, this is not passed as argument. */
+    INPLACE,
     /**
      * In-place, version that uses this as first argument.
      * For additional arguments, test with non-this and this arguments.
@@ -64,7 +66,7 @@ class TestBitVector : public TestCommon
      * In-place, version that does not use this as first argument.
      * Test with all non-this and all this arguments.
      */
-    INPLACE_ALL,
+    INPLACE_THIS_ALL,
   };
 
   static constexpr uint32_t N_TESTS        = 10000;
@@ -587,7 +589,7 @@ TestBitVector::test_extend_aux(BvFunKind fun_kind,
 {
   uint32_t size = bv.size();
   std::vector<BitVector> reses{BitVector(bv)};
-  if (fun_kind != INPLACE_THIS)
+  if (fun_kind == DEFAULT || fun_kind == INPLACE)
   {
     reses.push_back(BitVector());
     reses.emplace_back(64);
@@ -600,13 +602,18 @@ TestBitVector::test_extend_aux(BvFunKind fun_kind,
     switch (kind)
     {
       case ZEXT:
-        if (fun_kind == INPLACE_THIS)
+        if (fun_kind == INPLACE)
+        {
+          (void) res.ibvzext(bv, n);
+        }
+        else if (fun_kind == INPLACE_THIS)
         {
           (void) res.ibvzext(n);
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
-          (void) res.ibvzext(bv, n);
+          // test with *this as argument
+          (void) res.ibvzext(res, n);
         }
         else
         {
@@ -615,13 +622,18 @@ TestBitVector::test_extend_aux(BvFunKind fun_kind,
         c = '0';
         break;
       case SEXT:
-        if (fun_kind == INPLACE_THIS)
+        if (fun_kind == INPLACE)
+        {
+          (void) res.ibvsext(bv, n);
+        }
+        else if (fun_kind == INPLACE_THIS)
         {
           (void) res.ibvsext(n);
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
-          (void) res.ibvsext(bv, n);
+          // test with *this as argument
+          (void) res.ibvsext(res, n);
         }
         else
         {
@@ -798,7 +810,7 @@ TestBitVector::test_ite_aux(BvFunKind fun_kind,
 
   for (auto& res : reses)
   {
-    if (fun_kind == INPLACE_ALL)
+    if (fun_kind == INPLACE_THIS_ALL)
     {
       (void) res.ibvite(b0, b1, b2);
       // test with *this as arguments
@@ -867,7 +879,7 @@ TestBitVector::test_ite(BvFunKind fun_kind)
   BitVector b1(1, *d_rng);
   BitVector b8(8, *d_rng);
   BitVector b16(16, *d_rng);
-  if (fun_kind == INPLACE_ALL)
+  if (fun_kind == INPLACE_THIS_ALL)
   {
     ASSERT_DEATH(b8.ibvite(b8, b8, b8), "c.d_size == 1");
     ASSERT_DEATH(b8.ibvite(b1, b8, b16), "e.d_size == t.d_size");
@@ -898,7 +910,7 @@ TestBitVector::test_modinv_aux(BvFunKind fun_kind, const BitVector& bv)
     {
       (void) res.ibvmodinv();
     }
-    else if (fun_kind == INPLACE_ALL)
+    else if (fun_kind == INPLACE_THIS_ALL)
     {
       (void) res.ibvmodinv(bv);
       // test with *this as argument
@@ -978,7 +990,7 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
         {
           (void) res.ibvdec();
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
           (void) res.ibvdec(b);
           // test with *this as argument
@@ -997,7 +1009,7 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
         {
           (void) res.ibvinc();
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
           (void) res.ibvinc(b);
           // test with *this as argument
@@ -1016,7 +1028,7 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
         {
           (void) res.ibvneg();
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
           (void) res.ibvneg(b);
           // test with *this as argument
@@ -1035,7 +1047,7 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
         {
           (void) res.ibvnot();
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
           (void) res.ibvnot(b);
           // test with *this as argument
@@ -1054,7 +1066,7 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
         {
           (void) res.ibvredand();
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
           (void) res.ibvredand(b);
           // test with *this as argument
@@ -1073,7 +1085,7 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
         {
           (void) res.ibvredor();
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
           (void) res.ibvredor(b);
           // test with *this as argument
@@ -1153,7 +1165,7 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
     uint64_t i1         = int_args[i].first;
     uint64_t i2         = int_args[i].second;
     std::vector<BitVector> reses{BitVector(b1)};
-    if (fun_kind != INPLACE_THIS)
+    if (fun_kind == DEFAULT || fun_kind == INPLACE)
     {
       reses.push_back(BitVector());
       reses.emplace_back(64);
@@ -1167,15 +1179,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
       switch (kind)
       {
         case ADD:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvadd(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvadd(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvadd(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvadd(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1190,15 +1208,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case AND:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvand(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvand(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvand(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvand(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1213,15 +1237,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case ASHR:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvashr(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvashr(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvashr(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvashr(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1236,15 +1266,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case EQ:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibveq(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibveq(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibveq(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibveq(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1259,15 +1295,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case IMPLIES:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvimplies(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvimplies(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvimplies(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvimplies(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1282,15 +1324,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case MUL:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvmul(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvmul(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvmul(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvmul(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1305,15 +1353,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case NAND:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvnand(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvnand(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvnand(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvnand(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1328,15 +1382,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case NE:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvne(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvne(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvne(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvne(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1351,15 +1411,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case NOR:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvnor(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvnor(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvnor(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvnor(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1374,15 +1440,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case OR:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvor(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvor(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvor(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvor(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1397,15 +1469,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case SHL:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvshl(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvshl(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvshl(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvshl(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1420,15 +1498,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case SHR:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvshr(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvshr(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvshr(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvshr(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1443,15 +1527,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case SUB:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvsub(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvsub(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvsub(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvsub(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1466,15 +1556,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case UDIV:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvudiv(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvudiv(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvudiv(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvudiv(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1489,15 +1585,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case ULT:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvult(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvult(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvult(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvult(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1512,15 +1614,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case ULE:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvule(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvule(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvule(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvule(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1535,15 +1643,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case UGT:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvugt(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvugt(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvugt(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvugt(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1558,15 +1672,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case UGE:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvuge(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvuge(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvuge(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvuge(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1581,15 +1701,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case UREM:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvurem(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvurem(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvurem(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvurem(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1604,15 +1730,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case XOR:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvxor(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvxor(b2);
-            // test with *this as argument
+            // test with *this as arguments
             tres = b1;
             (void) tres.ibvxor(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvxor(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1627,15 +1759,21 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
           break;
 
         case XNOR:
-          if (fun_kind == INPLACE_THIS)
+          if (fun_kind == INPLACE)
           {
+            (void) res.ibvxnor(b1, b2);
+          }
+          else if (fun_kind == INPLACE_THIS)
+          {
+            // test with *this as first argument
             (void) res.ibvxnor(b2);
             // test with *this as argument
             tres = b1;
             (void) tres.ibvxnor(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
+            // test with *this as first argument
             (void) res.ibvxnor(b1, b2);
             // test with *this as arguments
             tres = b1;
@@ -1713,7 +1851,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvadd(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvadd(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvadd(b2, b1), "d_size == .*d_size");
@@ -1729,7 +1867,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvand(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvand(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvand(b2, b1), "d_size == .*d_size");
@@ -1745,7 +1883,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvashr(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvashr(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvashr(b2, b1), "d_size == .*d_size");
@@ -1761,7 +1899,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibveq(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibveq(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibveq(b2, b1), "d_size == .*d_size");
@@ -1777,7 +1915,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(BitVector(1).ibvimplies(b2), "b1.d_size == 1");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvimplies(b1, b2), "b1.d_size == 1");
         ASSERT_DEATH(b1.ibvimplies(b2, b1), "bv0.d_size == 1");
@@ -1793,7 +1931,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvmul(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvmul(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvmul(b2, b1), "d_size == .*d_size");
@@ -1809,7 +1947,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvnand(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvnand(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvnand(b2, b1), "d_size == .*d_size");
@@ -1825,7 +1963,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvne(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvne(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvne(b2, b1), "d_size == .*d_size");
@@ -1841,7 +1979,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvnor(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvnor(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvnor(b2, b1), "d_size == .*d_size");
@@ -1857,7 +1995,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvor(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvor(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvor(b2, b1), "d_size == .*d_size");
@@ -1873,7 +2011,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvshl(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvshl(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvshl(b2, b1), "d_size == .*d_size");
@@ -1889,7 +2027,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvshr(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvshr(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvshr(b2, b1), "d_size == .*d_size");
@@ -1905,7 +2043,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvsub(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvsub(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvsub(b2, b1), "d_size == .*d_size");
@@ -1921,7 +2059,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvudiv(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvudiv(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvudiv(b2, b1), "d_size == .*d_size");
@@ -1937,7 +2075,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvult(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvult(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvult(b2, b1), "d_size == .*d_size");
@@ -1953,7 +2091,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvule(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvule(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvule(b2, b1), "d_size == .*d_size");
@@ -1969,7 +2107,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvugt(b1, b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvugt(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvugt(b2, b1), "d_size == .*d_size");
@@ -1985,7 +2123,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvuge(b1, b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvuge(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvuge(b2, b1), "d_size == .*d_size");
@@ -2001,7 +2139,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvurem(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvurem(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvurem(b2, b1), "d_size == .*d_size");
@@ -2017,7 +2155,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvxor(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvxor(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvxor(b2, b1), "d_size == .*d_size");
@@ -2033,7 +2171,7 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
       {
         ASSERT_DEATH(b1.ibvxnor(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvxnor(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvxnor(b2, b1), "d_size == .*d_size");
@@ -2106,7 +2244,7 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
             tres = b1;
             (void) tres.ibvsdiv(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
             (void) res.ibvsdiv(b1, b2);
             // test with *this as arguments
@@ -2129,7 +2267,7 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
             tres = b1;
             (void) tres.ibvslt(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
             (void) res.ibvslt(b1, b2);
             // test with *this as arguments
@@ -2152,7 +2290,7 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
             tres = b1;
             (void) tres.ibvsle(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
             (void) res.ibvsle(b1, b2);
             // test with *this as arguments
@@ -2175,7 +2313,7 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
             tres = b1;
             (void) tres.ibvsgt(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
             (void) res.ibvsgt(b1, b2);
             // test with *this as arguments
@@ -2198,7 +2336,7 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
             tres = b1;
             (void) tres.ibvsge(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
             (void) res.ibvsge(b1, b2);
             // test with *this as arguments
@@ -2221,7 +2359,7 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
             tres = b1;
             (void) tres.ibvsrem(tres);
           }
-          else if (fun_kind == INPLACE_ALL)
+          else if (fun_kind == INPLACE_THIS_ALL)
           {
             (void) res.ibvsrem(b1, b2);
             // test with *this as arguments
@@ -2280,7 +2418,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
       {
         ASSERT_DEATH(b1.ibvsdiv(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvsdiv(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvsdiv(b2, b1), "d_size == .*d_size");
@@ -2296,7 +2434,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
       {
         ASSERT_DEATH(b1.ibvslt(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvslt(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvslt(b2, b1), "d_size == .*d_size");
@@ -2312,7 +2450,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
       {
         ASSERT_DEATH(b1.ibvsle(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvsle(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvsle(b2, b1), "d_size == .*d_size");
@@ -2328,7 +2466,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
       {
         ASSERT_DEATH(b1.ibvsgt(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvsgt(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvsgt(b2, b1), "d_size == .*d_size");
@@ -2344,7 +2482,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
       {
         ASSERT_DEATH(b1.ibvsge(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvsge(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvsge(b2, b1), "d_size == .*d_size");
@@ -2360,7 +2498,7 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
       {
         ASSERT_DEATH(b1.ibvsrem(b2), "d_size == .*d_size");
       }
-      else if (fun_kind == INPLACE_ALL)
+      else if (fun_kind == INPLACE_THIS_ALL)
       {
         ASSERT_DEATH(b1.ibvsrem(b1, b2), "d_size == .*d_size");
         ASSERT_DEATH(b1.ibvsrem(b2, b1), "d_size == .*d_size");
@@ -2402,7 +2540,7 @@ TestBitVector::test_concat_aux(BvFunKind fun_kind,
       tres = bv;
       (void) tres.ibvconcat(tres);
     }
-    else if (fun_kind == INPLACE_ALL)
+    else if (fun_kind == INPLACE_THIS_ALL)
     {
       (void) res.ibvconcat(bv0, bv1);
       // test with *this as arguments
@@ -2474,13 +2612,12 @@ TestBitVector::test_extract_aux(BvFunKind fun_kind, const BitVector& bv)
   uint32_t size = bv.size();
 
   std::vector<BitVector> reses{BitVector(bv)};
-  if (fun_kind != INPLACE_THIS)
+  if (fun_kind == DEFAULT || fun_kind == INPLACE)
   {
     reses.push_back(BitVector());
     reses.emplace_back(64);
     reses.emplace_back(65);
   }
-  BitVector tres;
   uint32_t lo = d_rng->pick<uint32_t>(0, size - 1);
   uint32_t hi = d_rng->pick<uint32_t>(lo, size - 1);
   ASSERT_GE(hi, lo);
@@ -2489,16 +2626,18 @@ TestBitVector::test_extract_aux(BvFunKind fun_kind, const BitVector& bv)
 
   for (auto& res : reses)
   {
-    if (fun_kind == INPLACE_THIS)
+    if (fun_kind == INPLACE)
+    {
+      (void) res.ibvextract(bv, hi, lo);
+    }
+    else if (fun_kind == INPLACE_THIS)
     {
       (void) res.ibvextract(hi, lo);
     }
-    else if (fun_kind == INPLACE_ALL)
+    else if (fun_kind == INPLACE_THIS_ALL)
     {
-      (void) res.ibvextract(bv, hi, lo);
       // test with *this as argument
-      tres = bv;
-      (void) tres.ibvextract(tres, hi, lo);
+      (void) res.ibvextract(res, hi, lo);
     }
     else
     {
@@ -2509,12 +2648,6 @@ TestBitVector::test_extract_aux(BvFunKind fun_kind, const BitVector& bv)
     std::string bv_str  = bv.to_string();
     uint32_t len        = hi - lo + 1;
     ASSERT_EQ(bv_str.compare(size - hi - 1, len, res_str, 0, len), 0);
-    if (!tres.is_null())
-    {
-      ASSERT_EQ(tres.size(), (hi - lo + 1));
-      std::string tres_str = tres.to_string();
-      ASSERT_EQ(bv_str.compare(size - hi - 1, len, tres_str, 0, len), 0);
-    }
   }
 }
 
@@ -2580,7 +2713,7 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
             (void) res.ibvashr(bv_shift);
           }
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
           if (shift_by_int)
           {
@@ -2615,7 +2748,7 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
             (void) res.ibvshl(bv_shift);
           }
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
           if (shift_by_int)
           {
@@ -2650,7 +2783,7 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
             (void) res.ibvshr(bv_shift);
           }
         }
-        else if (fun_kind == INPLACE_ALL)
+        else if (fun_kind == INPLACE_THIS_ALL)
         {
           if (shift_by_int)
           {
@@ -4097,241 +4230,272 @@ TEST_F(TestBitVector, zext) { test_extend(DEFAULT, ZEXT); }
 
 TEST_F(TestBitVector, idec)
 {
-  test_unary(INPLACE_ALL, DEC);
+  test_unary(INPLACE_THIS_ALL, DEC);
   test_unary(INPLACE_THIS, DEC);
 }
 
 TEST_F(TestBitVector, iinc)
 {
-  test_unary(INPLACE_ALL, INC);
+  test_unary(INPLACE_THIS_ALL, INC);
   test_unary(INPLACE_THIS, INC);
 }
 
 TEST_F(TestBitVector, ineg)
 {
-  test_unary(INPLACE_ALL, NEG);
+  test_unary(INPLACE_THIS_ALL, NEG);
   test_unary(INPLACE_THIS, NEG);
 }
 
 TEST_F(TestBitVector, inot)
 {
-  test_unary(INPLACE_ALL, NOT);
+  test_unary(INPLACE_THIS_ALL, NOT);
   test_unary(INPLACE_THIS, NOT);
 }
 
 TEST_F(TestBitVector, iredand)
 {
-  test_unary(INPLACE_ALL, REDAND);
+  test_unary(INPLACE_THIS_ALL, REDAND);
   test_unary(INPLACE_THIS, REDAND);
 }
 
 TEST_F(TestBitVector, iredor)
 {
-  test_unary(INPLACE_ALL, REDOR);
+  test_unary(INPLACE_THIS_ALL, REDOR);
   test_unary(INPLACE_THIS, REDOR);
 }
 
 TEST_F(TestBitVector, iadd)
 {
-  test_binary(INPLACE_ALL, ADD);
+  test_binary(INPLACE, ADD);
+  test_binary(INPLACE_THIS_ALL, ADD);
   test_binary(INPLACE_THIS, ADD);
 }
 
 TEST_F(TestBitVector, iand)
 {
-  test_binary(INPLACE_ALL, AND);
+  test_binary(INPLACE, AND);
+  test_binary(INPLACE_THIS_ALL, AND);
   test_binary(INPLACE_THIS, AND);
 }
 
 TEST_F(TestBitVector, iconcat)
 {
-  test_concat(INPLACE_ALL);
+  test_concat(INPLACE);
+  test_concat(INPLACE_THIS_ALL);
   test_concat(INPLACE_THIS);
 }
 
 TEST_F(TestBitVector, ieq)
 {
-  test_binary(INPLACE_ALL, EQ);
+  test_binary(INPLACE, EQ);
+  test_binary(INPLACE_THIS_ALL, EQ);
   test_binary(INPLACE_THIS, EQ);
 }
 
 TEST_F(TestBitVector, iextract)
 {
-  test_extract(INPLACE_ALL);
+  test_extract(INPLACE);
+  test_extract(INPLACE_THIS_ALL);
   test_extract(INPLACE_THIS);
 }
 
 TEST_F(TestBitVector, iimplies)
 {
-  test_binary(INPLACE_ALL, IMPLIES);
+  test_binary(INPLACE, IMPLIES);
+  test_binary(INPLACE_THIS_ALL, IMPLIES);
   test_binary(INPLACE_THIS, IMPLIES);
 }
 
-TEST_F(TestBitVector, iite) { test_ite(INPLACE_ALL); }
+TEST_F(TestBitVector, iite) { test_ite(INPLACE_THIS_ALL); }
 
 TEST_F(TestBitVector, imodinv)
 {
-  test_modinv(INPLACE_ALL);
+  test_modinv(INPLACE_THIS_ALL);
   test_modinv(INPLACE_THIS);
 }
 
 TEST_F(TestBitVector, imul)
 {
-  test_binary(INPLACE_ALL, MUL);
+  test_binary(INPLACE, MUL);
+  test_binary(INPLACE_THIS_ALL, MUL);
   test_binary(INPLACE_THIS, MUL);
 }
 
 TEST_F(TestBitVector, inand)
 {
-  test_binary(INPLACE_ALL, NAND);
+  test_binary(INPLACE, NAND);
+  test_binary(INPLACE_THIS_ALL, NAND);
   test_binary(INPLACE_THIS, NAND);
 }
 
 TEST_F(TestBitVector, ine)
 {
-  test_binary(INPLACE_ALL, NE);
+  test_binary(INPLACE, NE);
+  test_binary(INPLACE_THIS_ALL, NE);
   test_binary(INPLACE_THIS, NE);
 }
 
 TEST_F(TestBitVector, ior)
 {
-  test_binary(INPLACE_ALL, OR);
+  test_binary(INPLACE, OR);
+  test_binary(INPLACE_THIS_ALL, OR);
   test_binary(INPLACE_THIS, OR);
 }
 
 TEST_F(TestBitVector, inor)
 {
-  test_binary(INPLACE_ALL, NOR);
+  test_binary(INPLACE, NOR);
+  test_binary(INPLACE_THIS_ALL, NOR);
   test_binary(INPLACE_THIS, NOR);
 }
 
 TEST_F(TestBitVector, isdiv)
 {
-  test_binary_signed(INPLACE_ALL, SDIV);
+  test_binary_signed(INPLACE, SDIV);
+  test_binary_signed(INPLACE_THIS_ALL, SDIV);
   test_binary_signed(INPLACE_THIS, SDIV);
 }
 
 TEST_F(TestBitVector, isext)
 {
-  test_extend(INPLACE_ALL, SEXT);
+  test_extend(INPLACE, SEXT);
   test_extend(INPLACE_THIS, SEXT);
+  test_extend(INPLACE_THIS_ALL, SEXT);
 }
 
 TEST_F(TestBitVector, ishl)
 {
-  test_binary(INPLACE_ALL, SHL);
-  test_shift(INPLACE_ALL, SHL, true);
-  test_shift(INPLACE_ALL, SHL, false);
+  test_binary(INPLACE, SHL);
+  test_binary(INPLACE_THIS_ALL, SHL);
   test_binary(INPLACE_THIS, SHL);
+  test_shift(INPLACE_THIS_ALL, SHL, true);
+  test_shift(INPLACE_THIS_ALL, SHL, false);
   test_shift(INPLACE_THIS, SHL, true);
   test_shift(INPLACE_THIS, SHL, false);
 }
 
 TEST_F(TestBitVector, ishr)
 {
-  test_binary(INPLACE_ALL, SHR);
-  test_shift(INPLACE_ALL, SHR, true);
-  test_shift(INPLACE_ALL, SHR, false);
+  test_binary(INPLACE, SHR);
+  test_binary(INPLACE_THIS_ALL, SHR);
   test_binary(INPLACE_THIS, SHR);
+  test_shift(INPLACE_THIS_ALL, SHR, true);
+  test_shift(INPLACE_THIS_ALL, SHR, false);
   test_shift(INPLACE_THIS, SHR, true);
   test_shift(INPLACE_THIS, SHR, false);
 }
 
 TEST_F(TestBitVector, iashr)
 {
-  test_binary(INPLACE_ALL, ASHR);
-  test_shift(INPLACE_ALL, ASHR, false);
+  test_binary(INPLACE, ASHR);
+  test_binary(INPLACE_THIS_ALL, ASHR);
   test_binary(INPLACE_THIS, ASHR);
+  test_shift(INPLACE_THIS_ALL, ASHR, false);
   test_shift(INPLACE_THIS, ASHR, false);
 }
 
 TEST_F(TestBitVector, islt)
 {
-  test_binary_signed(INPLACE_ALL, SLT);
+  test_binary_signed(INPLACE, SLT);
+  test_binary_signed(INPLACE_THIS_ALL, SLT);
   test_binary_signed(INPLACE_THIS, SLT);
 }
 
 TEST_F(TestBitVector, isle)
 {
-  test_binary_signed(INPLACE_ALL, SLE);
+  test_binary_signed(INPLACE, SLE);
+  test_binary_signed(INPLACE_THIS_ALL, SLE);
   test_binary_signed(INPLACE_THIS, SLE);
 }
 
 TEST_F(TestBitVector, isgt)
 {
-  test_binary_signed(INPLACE_ALL, SGT);
+  test_binary_signed(INPLACE, SGT);
+  test_binary_signed(INPLACE_THIS_ALL, SGT);
   test_binary_signed(INPLACE_THIS, SGT);
 }
 
 TEST_F(TestBitVector, isge)
 {
-  test_binary_signed(INPLACE_ALL, SGE);
+  test_binary_signed(INPLACE, SGE);
+  test_binary_signed(INPLACE_THIS_ALL, SGE);
   test_binary_signed(INPLACE_THIS, SGE);
 }
 
 TEST_F(TestBitVector, isub)
 {
-  test_binary(INPLACE_ALL, SUB);
+  test_binary(INPLACE, SUB);
+  test_binary(INPLACE_THIS_ALL, SUB);
   test_binary(INPLACE_THIS, SUB);
 }
 
 TEST_F(TestBitVector, isrem)
 {
-  test_binary_signed(INPLACE_ALL, SREM);
+  test_binary_signed(INPLACE, SREM);
+  test_binary_signed(INPLACE_THIS_ALL, SREM);
   test_binary_signed(INPLACE_THIS, SREM);
 }
 
 TEST_F(TestBitVector, iudiv)
 {
-  test_binary(INPLACE_ALL, UDIV);
+  test_binary(INPLACE, UDIV);
+  test_binary(INPLACE_THIS_ALL, UDIV);
   test_binary(INPLACE_THIS, UDIV);
 }
 
 TEST_F(TestBitVector, iult)
 {
-  test_binary(INPLACE_ALL, ULT);
+  test_binary(INPLACE, ULT);
+  test_binary(INPLACE_THIS_ALL, ULT);
   test_binary(INPLACE_THIS, ULT);
 }
 
 TEST_F(TestBitVector, iule)
 {
-  test_binary(INPLACE_ALL, ULE);
+  test_binary(INPLACE, ULE);
+  test_binary(INPLACE_THIS_ALL, ULE);
   test_binary(INPLACE_THIS, ULE);
 }
 
 TEST_F(TestBitVector, iugt)
 {
-  test_binary(INPLACE_ALL, UGT);
+  test_binary(INPLACE, UGT);
+  test_binary(INPLACE_THIS_ALL, UGT);
   test_binary(INPLACE_THIS, UGT);
 }
 
 TEST_F(TestBitVector, iuge)
 {
-  test_binary(INPLACE_ALL, UGE);
+  test_binary(INPLACE, UGE);
+  test_binary(INPLACE_THIS_ALL, UGE);
   test_binary(INPLACE_THIS, UGE);
 }
 
 TEST_F(TestBitVector, iurem)
 {
-  test_binary(INPLACE_ALL, UREM);
+  test_binary(INPLACE, UREM);
+  test_binary(INPLACE_THIS_ALL, UREM);
   test_binary(INPLACE_THIS, UREM);
 }
 TEST_F(TestBitVector, ixor)
 {
-  test_binary(INPLACE_ALL, XOR);
+  test_binary(INPLACE, XOR);
+  test_binary(INPLACE_THIS_ALL, XOR);
   test_binary(INPLACE_THIS, XOR);
 }
 
 TEST_F(TestBitVector, ixnor)
 {
-  test_binary(INPLACE_ALL, XNOR);
+  test_binary(INPLACE, XNOR);
+  test_binary(INPLACE_THIS_ALL, XNOR);
   test_binary(INPLACE_THIS, XNOR);
 }
 
 TEST_F(TestBitVector, izext)
 {
-  test_extend(INPLACE_ALL, ZEXT);
+  test_extend(INPLACE, ZEXT);
   test_extend(INPLACE_THIS, ZEXT);
+  test_extend(INPLACE_THIS_ALL, ZEXT);
 }
 
 /* -------------------------------------------------------------------------- */
