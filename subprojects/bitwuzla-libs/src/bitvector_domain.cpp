@@ -12,7 +12,7 @@ namespace ls {
 
 /*----------------------------------------------------------------------------*/
 
-BitVectorDomain::BitVectorDomain(uint32_t size)
+BitVectorDomain::BitVectorDomain(uint64_t size)
     : d_lo(BitVector::mk_zero(size)), d_hi(BitVector::mk_ones(size))
 {
 }
@@ -26,7 +26,7 @@ BitVectorDomain::BitVectorDomain(const BitVector &lo, const BitVector &hi)
 
 BitVectorDomain::BitVectorDomain(const std::string &value)
 {
-  uint32_t size = value.size();
+  uint64_t size = value.size();
   assert(size > 0);
   std::string lo(value);
   std::string hi(value);
@@ -42,7 +42,7 @@ BitVectorDomain::BitVectorDomain(const BitVector &bv) : d_lo(bv), d_hi(bv)
   d_has_fixed_bits = true;
 }
 
-BitVectorDomain::BitVectorDomain(uint32_t size, uint64_t value)
+BitVectorDomain::BitVectorDomain(uint64_t size, uint64_t value)
     : BitVectorDomain(BitVector(size, value))
 {
 }
@@ -58,7 +58,7 @@ BitVectorDomain::~BitVectorDomain()
 {
 }
 
-uint32_t
+uint64_t
 BitVectorDomain::size() const
 {
   assert(!is_null());
@@ -125,7 +125,7 @@ BitVectorDomain::has_fixed_bits_false_only() const
 }
 
 bool
-BitVectorDomain::is_fixed_bit(uint32_t idx) const
+BitVectorDomain::is_fixed_bit(uint64_t idx) const
 {
   assert(!is_null());
   assert(idx < size());
@@ -133,7 +133,7 @@ BitVectorDomain::is_fixed_bit(uint32_t idx) const
 }
 
 bool
-BitVectorDomain::is_fixed_bit_true(uint32_t idx) const
+BitVectorDomain::is_fixed_bit_true(uint64_t idx) const
 {
   assert(!is_null());
   assert(idx < size());
@@ -143,7 +143,7 @@ BitVectorDomain::is_fixed_bit_true(uint32_t idx) const
 }
 
 bool
-BitVectorDomain::is_fixed_bit_false(uint32_t idx) const
+BitVectorDomain::is_fixed_bit_false(uint64_t idx) const
 {
   assert(!is_null());
   assert(idx < size());
@@ -153,7 +153,7 @@ BitVectorDomain::is_fixed_bit_false(uint32_t idx) const
 }
 
 void
-BitVectorDomain::fix_bit(uint32_t idx, bool value)
+BitVectorDomain::fix_bit(uint64_t idx, bool value)
 {
   assert(!is_null());
   assert(idx < size());
@@ -251,7 +251,7 @@ BitVectorDomain::bvconcat(const BitVectorDomain &d) const
 }
 
 BitVectorDomain
-BitVectorDomain::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
+BitVectorDomain::bvextract(uint64_t idx_hi, uint64_t idx_lo) const
 {
   assert(!is_null());
   assert(idx_hi >= idx_lo);
@@ -279,22 +279,22 @@ BitVectorDomain::get_factor(RNG *rng,
   /* Pick factor from stack. Random (combination) if 'rng' is given. */
   if (!factors.empty())
   {
-    uint32_t n_factors = factors.size();
+    size_t n_factors = factors.size();
     if (rng)
     {
       /* To determine all possible combinations can be very expensive. We'll
        * try for a limited number of times, and if none matches, we return 0. */
-      for (uint32_t cnt = 0; cnt < 1000; ++cnt)
+      for (size_t cnt = 0; cnt < 1000; ++cnt)
       {
         /* number of factors to combine */
-        uint32_t n = rng->pick<uint32_t>(1, n_factors);
+        size_t n = rng->pick<size_t>(1, n_factors);
         /* Move selected factors to front of the stack and combine.
          * This ensures that we don't pick a factor twice, e.g., 2 2 3 can be
          * combined into { 2, 3, 2*2, 2*3, 2*2*3 }. */
         BitVector mul(num.size());
-        for (uint32_t i = 0; i < n; ++i)
+        for (size_t i = 0; i < n; ++i)
         {
-          uint32_t j = rng->pick<uint32_t>(i, n_factors - 1);
+          size_t j = rng->pick<size_t>(i, n_factors - 1);
           if (i != j)
           {
             std::swap(factors[i], factors[j]);
@@ -336,7 +336,7 @@ BitVectorDomain::to_string() const
   assert(!is_null());
   std::string res(d_lo.to_string());
   std::string hi(d_hi.to_string());
-  for (uint32_t i = 0, n = size(); i < n; ++i)
+  for (size_t i = 0, n = size(); i < n; ++i)
   {
     if (res[i] != hi[i])
     {
@@ -381,8 +381,8 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
     const BitVector &max)
     : d_domain(domain), d_rng(rng)
 {
-  uint32_t cnt          = 0;
-  uint32_t size         = domain.size();
+  uint64_t cnt          = 0;
+  uint64_t size         = domain.size();
   const BitVector &hi   = d_domain.d_hi;
   const BitVector &lo   = d_domain.d_lo;
   const BitVector &mmin = lo.compare(min) <= 0 ? min : lo;
@@ -392,7 +392,7 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
   d_bits_min.reset(nullptr);
   d_bits_max.reset(nullptr);
 
-  for (uint32_t i = 0; i < size; ++i)
+  for (size_t i = 0; i < size; ++i)
   {
     if (!d_domain.is_fixed_bit(i)) cnt += 1;
   }
@@ -405,9 +405,9 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
     /* Set unconstrained bits to the minimum value that corresponds to a
      * generated value >= mmin. */
     d_bits_min.reset(new BitVector(BitVector::mk_zero(cnt)));
-    for (uint32_t i = 0, j = 0, j0 = 0; i < size; ++i)
+    for (uint64_t i = 0, j = 0, j0 = 0; i < size; ++i)
     {
-      uint32_t idx_i = size - 1 - i;
+      uint64_t idx_i = size - 1 - i;
       bool bit       = mmin.get_bit(idx_i);
       if (!d_domain.is_fixed_bit(idx_i))
       {
@@ -425,7 +425,7 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
         assert(j > 0);
         assert(!d_bits_min->get_bit(cnt - j0 - 1));
         d_bits_min->set_bit(cnt - j0 - 1, true);
-        for (uint32_t k = j0 + 1; k < cnt; ++k)
+        for (uint64_t k = j0 + 1; k < cnt; ++k)
         {
           d_bits_min->set_bit(cnt - 1 - k, false);
         }
@@ -436,9 +436,9 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
     /* Set unconstrained bits to the maximum value that corresponds to a
      * generated value <= mmax. */
     d_bits_max.reset(new BitVector(BitVector::mk_ones(cnt)));
-    for (uint32_t i = 0, j = 0, j0 = 0; i < size; ++i)
+    for (uint64_t i = 0, j = 0, j0 = 0; i < size; ++i)
     {
-      uint32_t idx_i = size - 1 - i;
+      uint64_t idx_i = size - 1 - i;
       bool bit       = mmax.get_bit(idx_i);
       if (!d_domain.is_fixed_bit(idx_i))
       {
@@ -452,7 +452,7 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
         assert(j > 0);
         assert(d_bits_max->get_bit(cnt - j0 - 1));
         d_bits_max->set_bit(cnt - j0 - 1, false);
-        for (uint32_t k = j0 + 1; k < cnt; ++k)
+        for (uint64_t k = j0 + 1; k < cnt; ++k)
         {
           d_bits_max->set_bit(cnt - 1 - k, true);
         }
@@ -514,7 +514,7 @@ BitVectorDomainGenerator::generate_next(bool random)
 {
   assert(random || d_bits);
 
-  uint32_t size = d_domain.size();
+  uint64_t size = d_domain.size();
   BitVector res(d_domain.d_lo);
 
   /* Random always resets d_bits to a random value between d_bits_min and
@@ -529,7 +529,7 @@ BitVectorDomainGenerator::generate_next(bool random)
     d_bits->iset(*d_rng, *d_bits_min, *d_bits_max, false);
   }
 
-  for (uint32_t i = 0, j = 0; i < size; ++i)
+  for (uint64_t i = 0, j = 0; i < size; ++i)
   {
     if (!d_domain.is_fixed_bit(i))
     {
@@ -587,7 +587,7 @@ BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
 {
   assert(!max_lo || !min_lo || max_lo->compare(*min_lo) >= 0);
   assert(!max_hi || !min_hi || max_hi->compare(*min_hi) >= 0);
-  uint32_t size = domain.size();
+  uint64_t size = domain.size();
   assert(!max_hi || max_hi->compare(BitVector::mk_max_signed(size)) <= 0);
   assert(!min_lo || min_lo->compare(BitVector::mk_min_signed(size)) >= 0);
 
@@ -703,7 +703,7 @@ BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
     const BitVector &max)
     : d_rng(rng)
 {
-  uint32_t size          = domain.size();
+  uint64_t size          = domain.size();
   BitVector zero         = BitVector::mk_zero(size);
   BitVector ones         = BitVector::mk_ones(size);
   int32_t min_scomp_zero = min.signed_compare(zero);

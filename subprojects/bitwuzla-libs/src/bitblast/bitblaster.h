@@ -111,13 +111,13 @@ class BitblasterInterface
       return Bits{d_bit_mgr.mk_and(a[0], d_bit_mgr.mk_not(b[0]))};
     }
 
-    size_t shift_size = std::ceil(std::log2(b.size()));
+    size_t shift_size = static_cast<size_t>(std::ceil(std::log2(b.size())));
     assert(shift_size <= b.size());
 
     Bits shift_result = a;
     for (size_t i = 0; i < shift_size; ++i)
     {
-      size_t shift_step = std::pow(2, i);
+      size_t shift_step = static_cast<size_t>(std::pow(2, i));
       size_t shift_bit  = b.size() - 1 - i;
       assert(shift_step < size);
 
@@ -153,13 +153,13 @@ class BitblasterInterface
       return Bits{d_bit_mgr.mk_and(a[0], d_bit_mgr.mk_not(b[0]))};
     }
 
-    size_t shift_size = std::ceil(std::log2(b.size()));
+    size_t shift_size = static_cast<size_t>(std::ceil(std::log2(b.size())));
     assert(shift_size <= b.size());
 
     Bits shift_result = a;
     for (size_t i = 0; i < shift_size; ++i)
     {
-      size_t shift_step = std::pow(2, i);
+      size_t shift_step = static_cast<size_t>(std::pow(2, i));
       size_t shift_bit  = b.size() - 1 - i;
       assert(shift_step < size);
 
@@ -195,13 +195,13 @@ class BitblasterInterface
       return a;
     }
 
-    size_t shift_size = std::ceil(std::log2(b.size()));
+    size_t shift_size = static_cast<size_t>(std::ceil(std::log2(b.size())));
     assert(shift_size <= b.size());
 
     Bits shift_result = a;
     for (size_t i = 0; i < shift_size; ++i)
     {
-      size_t shift_step = std::pow(2, i);
+      size_t shift_step = static_cast<size_t>(std::pow(2, i));
       size_t shift_bit  = b.size() - 1 - i;
       assert(shift_step < size);
 

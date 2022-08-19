@@ -255,7 +255,7 @@ TEST_F(TestBitVectorDomain, not )
         BitVectorDomain d(c);
         BitVectorDomain dnot = d.bvnot();
         ASSERT_EQ(d.size(), dnot.size());
-        for (uint32_t k = 0, n = d.size(); k < n; ++k)
+        for (uint64_t k = 0, n = d.size(); k < n; ++k)
         {
           if (c[n - k - 1] == 'x')
           {
@@ -295,7 +295,7 @@ TEST_F(TestBitVectorDomain, shl)
         {
           BitVectorDomain dshl = d.bvshl(BitVector(3, k));
           ASSERT_EQ(d.size(), dshl.size());
-          for (int32_t l = 0, n = d.size(); l < n; ++l)
+          for (int64_t l = 0, n = d.size(); l < n; ++l)
           {
             if (l < k)
             {
@@ -342,7 +342,7 @@ TEST_F(TestBitVectorDomain, shr)
         {
           BitVectorDomain dshr = d.bvshr(BitVector(3, k));
           ASSERT_EQ(d.size(), dshr.size());
-          for (int32_t l = 0, n = d.size(); l < n; ++l)
+          for (int64_t l = 0, n = d.size(); l < n; ++l)
           {
             if (l >= n - k)
             {
@@ -389,7 +389,7 @@ TEST_F(TestBitVectorDomain, ashr)
         {
           BitVectorDomain dashr = d.bvashr(BitVector(3, k));
           ASSERT_EQ(d.size(), dashr.size());
-          for (int32_t l = 0, n = d.size(); l < n; ++l)
+          for (int64_t l = 0, n = d.size(); l < n; ++l)
           {
             if (l >= n - k)
             {
@@ -448,7 +448,7 @@ TEST_F(TestBitVectorDomain, concat)
           BitVector bvk(3, k);
           BitVectorDomain dconcat = d.bvconcat(bvk);
           ASSERT_EQ(dconcat.size(), d.size() + bvk.size());
-          for (int32_t l = 0, n = d.size(); l < n; ++l)
+          for (int64_t l = 0, n = d.size(); l < n; ++l)
           {
             if (l >= 3)
             {
@@ -481,7 +481,7 @@ TEST_F(TestBitVectorDomain, extract)
         BitVectorDomain d(c);
         BitVectorDomain dext = d.bvextract(i, j);
         ASSERT_EQ(dext.size(), i - j + 1);
-        for (int32_t k = 0, n = d.size(), m = dext.size(); k < m; ++k)
+        for (int64_t k = 0, n = d.size(), m = dext.size(); k < m; ++k)
         {
           if (c[n - k - j - 1] == 'x')
           {

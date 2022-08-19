@@ -6,7 +6,7 @@ namespace ls {
 WheelFactorizer::WheelFactorizer(const BitVector& n, uint64_t limit)
     : d_num(n), d_limit(limit)
 {
-  uint32_t bw = n.size();
+  uint64_t bw = n.size();
   d_one       = BitVector(bw, 1);
   d_two       = BitVector(bw, 2);
   d_four      = BitVector(bw, 4);

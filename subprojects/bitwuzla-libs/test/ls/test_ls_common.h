@@ -25,7 +25,7 @@ class TestBvNodeCommon : public ::bzla::test::TestCommon
                            const BitVector& s_val,
                            uint32_t pos_x) const;
 
-  static constexpr uint32_t TEST_BW = 4;
+  static constexpr uint64_t TEST_BW = 4;
   std::vector<std::string> d_values;
   std::vector<std::string> d_xvalues;
   std::unique_ptr<RNG> d_rng;
@@ -114,7 +114,7 @@ class TestBvNode : public TestBvNodeCommon
   bool check_sat_binary_cons(OpKind op_kind,
                              const BitVector& x_val,
                              const BitVector& t,
-                             uint32_t s_size,
+                             uint64_t s_size,
                              uint32_t pos_x) const;
   bool check_sat_binary_is_ess(OpKind op_kind,
                                const BitVector& x_val,
@@ -129,8 +129,8 @@ class TestBvNode : public TestBvNodeCommon
                      uint32_t pos_x) const;
   bool check_sat_ite_cons(const BitVector& x_val,
                           const BitVector& t,
-                          uint32_t s0_size,
-                          uint32_t s1_size,
+                          uint64_t s0_size,
+                          uint64_t s1_size,
                           uint32_t pos_x) const;
   bool check_sat_ite_is_ess(const BitVector& x_val,
                             const BitVector& t,
@@ -145,12 +145,12 @@ class TestBvNode : public TestBvNodeCommon
   bool check_sat_extract(Kind kind,
                          const BitVectorDomain& x,
                          const BitVector& t,
-                         uint32_t hi,
-                         uint32_t lo) const;
+                         uint64_t hi,
+                         uint64_t lo) const;
   bool check_sat_sext(Kind kind,
                       const BitVectorDomain& x,
                       const BitVector& t,
-                      uint32_t n) const;
+                      uint64_t n) const;
 
   template <class T>
   void test_binary(Kind kind,
@@ -203,11 +203,11 @@ TestBvNode::check_sat_binary(Kind kind,
       assert(kind == IS_INV);
       if (opt_kind == OptimizationKind::SEXT)
       {
-        uint32_t n = static_cast<BitVectorSignExtend*>(op_x)->get_n();
+        uint64_t n = static_cast<BitVectorSignExtend*>(op_x)->get_n();
         if (n > 0)
         {
-          uint32_t bw_x  = op_x->size();
-          uint32_t bw_xx = bw_x - n;
+          uint64_t bw_x  = op_x->size();
+          uint64_t bw_xx = bw_x - n;
           BitVector xn   = x_val.bvextract(bw_x - 1, bw_xx);
           BitVector xx   = x_val.bvextract(bw_xx - 1, 0);
           if (!xn.is_zero() && !xn.is_ones()) continue;
@@ -258,7 +258,7 @@ bool
 TestBvNode::check_sat_binary_cons(OpKind op_kind,
                                   const BitVector& x_val,
                                   const BitVector& t,
-                                  uint32_t s_size,
+                                  uint64_t s_size,
                                   uint32_t pos_x) const
 {
   BitVectorDomain s(s_size);
@@ -432,8 +432,8 @@ TestBvNode::check_sat_ite_is_ess(const BitVector& x_val,
 bool
 TestBvNode::check_sat_ite_cons(const BitVector& x_val,
                                const BitVector& t,
-                               uint32_t s0_size,
-                               uint32_t s1_size,
+                               uint64_t s0_size,
+                               uint64_t s1_size,
                                uint32_t pos_x) const
 {
   BitVectorDomainGenerator gens0(s0_size);
@@ -482,8 +482,8 @@ bool
 TestBvNode::check_sat_extract(Kind kind,
                               const BitVectorDomain& x,
                               const BitVector& t,
-                              uint32_t hi,
-                              uint32_t lo) const
+                              uint64_t hi,
+                              uint64_t lo) const
 {
   assert(kind == IS_CONS || kind == IS_ESS || kind == IS_INV);
   BitVectorDomainGenerator gen(x);
@@ -500,7 +500,7 @@ bool
 TestBvNode::check_sat_sext(Kind kind,
                            const BitVectorDomain& x,
                            const BitVector& t,
-                           uint32_t n) const
+                           uint64_t n) const
 {
   assert(kind == IS_CONS || kind == IS_ESS || kind == IS_INV);
   BitVectorDomainGenerator gen(x);
@@ -521,9 +521,9 @@ TestBvNode::test_binary(Kind kind,
                         TestBvNode::BoundsKind bounds_kind,
                         OptimizationKind opt_kind)
 {
-  uint32_t bw_x = TEST_BW;
-  uint32_t bw_s = TEST_BW;
-  uint32_t bw_t = TEST_BW;
+  uint64_t bw_x = TEST_BW;
+  uint64_t bw_s = TEST_BW;
+  uint64_t bw_t = TEST_BW;
 
   if (op_kind == ULT || op_kind == SLT || op_kind == EQ)
   {
@@ -535,9 +535,9 @@ TestBvNode::test_binary(Kind kind,
     bw_t = bw_s + bw_x;
   }
 
-  uint32_t nval_x = 1 << bw_x;
-  uint32_t nval_s = 1 << bw_s;
-  uint32_t nval_t = 1 << bw_t;
+  uint64_t nval_x = 1 << bw_x;
+  uint64_t nval_s = 1 << bw_s;
+  uint64_t nval_t = 1 << bw_t;
 
   if (kind == IS_ESS)
   {
@@ -554,10 +554,10 @@ TestBvNode::test_binary(Kind kind,
     for (const std::string& s_value : svalues)
     {
       BitVectorDomain s(s_value);
-      for (uint32_t i = 0; i < nval_x; i++)
+      for (uint64_t i = 0; i < nval_x; i++)
       {
         BitVector x_val(bw_x, i);
-        for (uint32_t j = 0; j < nval_t; j++)
+        for (uint64_t j = 0; j < nval_t; j++)
         {
           /* Target value of the operation (op). */
           BitVector t(bw_t, j);
@@ -601,11 +601,11 @@ TestBvNode::test_binary(Kind kind,
     for (const std::string& x_value : d_xvalues)
     {
       BitVectorDomain x(x_value);
-      for (uint32_t i = 0; i < nval_s; i++)
+      for (uint64_t i = 0; i < nval_s; i++)
       {
         /* Assignment of the other operand. */
         BitVector s_val(bw_s, i);
-        for (uint32_t j = 0; j < nval_t; j++)
+        for (uint64_t j = 0; j < nval_t; j++)
         {
           /* Target value of the operation (op). */
           BitVector t(bw_t, j);
@@ -627,8 +627,8 @@ TestBvNode::test_binary(Kind kind,
             std::unique_ptr<BitVectorNode> op_x;
             if (opt_kind == CONCAT)
             {
-              uint32_t bw_x0 = d_rng->pick<uint32_t>(1, bw_x - 1);
-              uint32_t bw_x1 = bw_x - bw_x0;
+              uint64_t bw_x0 = d_rng->pick<uint64_t>(1, bw_x - 1);
+              uint64_t bw_x1 = bw_x - bw_x0;
               BitVectorNode child0(d_rng.get(), bw_x0);
               BitVectorNode child1(d_rng.get(), bw_x1);
               op_x.reset(new BitVectorConcat(d_rng.get(), x, &child0, &child1));
@@ -636,8 +636,8 @@ TestBvNode::test_binary(Kind kind,
             }
             else if (opt_kind == SEXT)
             {
-              uint32_t n     = d_rng->pick<uint32_t>(0, bw_x - 1);
-              uint32_t bw_xx = bw_x - n;
+              uint64_t n     = d_rng->pick<uint64_t>(0, bw_x - 1);
+              uint64_t bw_xx = bw_x - n;
               BitVectorNode child(d_rng.get(), bw_xx);
               op_x.reset(new BitVectorSignExtend(d_rng.get(), x, &child, n));
               op_x->set_assignment(x_val);
@@ -800,8 +800,8 @@ TestBvNode::test_binary(Kind kind,
 void
 TestBvNode::test_ite(Kind kind, uint32_t pos_x)
 {
-  uint32_t bw_s0, bw_s1, bw_x, bw_t = TEST_BW;
-  uint32_t n_vals, n_vals_s0, n_vals_s1;
+  uint64_t bw_s0, bw_s1, bw_x, bw_t = TEST_BW;
+  uint64_t n_vals, n_vals_s0, n_vals_s1;
 
   if (pos_x)
   {
@@ -840,10 +840,10 @@ TestBvNode::test_ite(Kind kind, uint32_t pos_x)
       for (const std::string& s1_value : s1_values)
       {
         BitVectorDomain s1(s1_value);
-        for (uint32_t i = 0; i < n_vals; i++)
+        for (uint64_t i = 0; i < n_vals; i++)
         {
           BitVector x_val(bw_x, i);
-          for (uint32_t j = 0; j < n_vals; j++)
+          for (uint64_t j = 0; j < n_vals; j++)
           {
             BitVector t(bw_t, j);
             /* For this test, the domain of x is irrelevant, hence we
@@ -911,13 +911,13 @@ TestBvNode::test_ite(Kind kind, uint32_t pos_x)
     for (const std::string& x_value : x_values)
     {
       BitVectorDomain x(x_value);
-      for (uint32_t i = 0; i < n_vals_s0; i++)
+      for (uint64_t i = 0; i < n_vals_s0; i++)
       {
         BitVector s0_val(bw_s0, i);
-        for (uint32_t j = 0; j < n_vals_s1; j++)
+        for (uint64_t j = 0; j < n_vals_s1; j++)
         {
           BitVector s1_val(bw_s1, j);
-          for (uint32_t k = 0; k < n_vals; k++)
+          for (uint64_t k = 0; k < n_vals; k++)
           {
             BitVector t(bw_t, k);
 
@@ -1024,8 +1024,8 @@ TestBvNode::test_not(Kind kind)
   for (const std::string& x_value : d_xvalues)
   {
     BitVectorDomain x(x_value);
-    uint32_t bw_t = x.size();
-    for (uint32_t i = 0, n = 1 << bw_t; i < n; ++i)
+    uint64_t bw_t = x.size();
+    for (uint64_t i = 0, n = 1 << bw_t; i < n; ++i)
     {
       BitVector t(bw_t, i);
       /* For this test, we don't care about the current assignment of x,
@@ -1098,17 +1098,17 @@ TestBvNode::test_not(Kind kind)
 void
 TestBvNode::test_extract(Kind kind)
 {
-  uint32_t bw_x = TEST_BW;
+  uint64_t bw_x = TEST_BW;
 
   for (const std::string& x_value : d_xvalues)
   {
     BitVectorDomain x(x_value);
-    for (uint32_t lo = 0; lo < bw_x; ++lo)
+    for (uint64_t lo = 0; lo < bw_x; ++lo)
     {
-      for (uint32_t hi = lo; hi < bw_x; ++hi)
+      for (uint64_t hi = lo; hi < bw_x; ++hi)
       {
-        uint32_t bw_t = hi - lo + 1;
-        for (uint32_t i = 0, n = 1 << bw_t; i < n; ++i)
+        uint64_t bw_t = hi - lo + 1;
+        for (uint64_t i = 0, n = 1 << bw_t; i < n; ++i)
         {
           BitVector t(bw_t, i);
           /* For this test, we don't care about the current assignment of x,
@@ -1190,15 +1190,15 @@ TestBvNode::test_extract(Kind kind)
 void
 TestBvNode::test_sext(Kind kind)
 {
-  uint32_t bw_x = TEST_BW;
+  uint64_t bw_x = TEST_BW;
 
   for (const std::string& x_value : d_xvalues)
   {
     BitVectorDomain x(x_value);
-    for (uint32_t n = 1; n <= bw_x; ++n)
+    for (uint64_t n = 1; n <= bw_x; ++n)
     {
-      uint32_t bw_t = bw_x + n;
-      for (uint32_t i = 0, m = 1 << bw_t; i < m; ++i)
+      uint64_t bw_t = bw_x + n;
+      for (uint64_t i = 0, m = 1 << bw_t; i < m; ++i)
       {
         BitVector t(bw_t, i);
         /* For this test, we don't care about the current assignment of x,

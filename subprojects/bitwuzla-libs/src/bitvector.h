@@ -22,25 +22,25 @@ class BitVector
       ((uint32_t) (sizeof s_hash_primes / sizeof *s_hash_primes));
 
   /** Return true if string in base fits into a BitVector of given size. */
-  static bool fits_in_size(uint32_t size,
+  static bool fits_in_size(uint64_t size,
                            const std::string& str,
                            uint32_t base);
   /** Return true if given value fits into a BitVector of given size. */
-  static bool fits_in_size(uint32_t size, uint64_t value, bool sign = false);
+  static bool fits_in_size(uint64_t size, uint64_t value, bool sign = false);
   /** Create a true bit-vector (value 1 of size 1). */
   static BitVector mk_true();
   /** Create a false bit-vector (value 0 of size 1). */
   static BitVector mk_false();
   /** Create a zero bit-vector of given size. */
-  static BitVector mk_zero(uint32_t size);
+  static BitVector mk_zero(uint64_t size);
   /** Create a one bit-vector of given size. */
-  static BitVector mk_one(uint32_t size);
+  static BitVector mk_one(uint64_t size);
   /** Create a ones bit-vector of given size. */
-  static BitVector mk_ones(uint32_t size);
+  static BitVector mk_ones(uint64_t size);
   /** Create a minimum signed value bit-vector of given size. */
-  static BitVector mk_min_signed(uint32_t size);
+  static BitVector mk_min_signed(uint64_t size);
   /** Create a maximum signed value bit-vector of given size. */
-  static BitVector mk_max_signed(uint32_t size);
+  static BitVector mk_max_signed(uint64_t size);
 
   /**
    * Create a if-then-else over the given bit-vectors.
@@ -55,9 +55,9 @@ class BitVector
   /** Default constructor. */
   BitVector();
   /** Construct a zero bit-vector of given size. */
-  BitVector(uint32_t size);
+  BitVector(uint64_t size);
   /** Construct a random bit-vector of given size. */
-  BitVector(uint32_t size, RNG& rng);
+  BitVector(uint64_t size, RNG& rng);
 
   /**
    * Construct a random bit-vector of given size with the given range.
@@ -67,7 +67,7 @@ class BitVector
    * to  : Upper bound of given range (inclusive).
    * sign: True to interpret the given range as signed, else unsigned.
    */
-  BitVector(uint32_t size,
+  BitVector(uint64_t size,
             RNG& rng,
             const BitVector& from,
             const BitVector& to,
@@ -76,7 +76,7 @@ class BitVector
    * Construct a new bit-vector of given size and randomly set bits within given
    * index range. Bits outside of given index range are initialized with zero.
    */
-  BitVector(uint32_t size, RNG& rng, uint32_t idx_hi, uint32_t idx_lo);
+  BitVector(uint64_t size, RNG& rng, uint64_t idx_hi, uint64_t idx_lo);
 
   /**
    * Construct a bit-vector of given size from given binary string.
@@ -86,7 +86,7 @@ class BitVector
    * base : The base the string is given in, 2 for binary, 10 for decimal,
    *        16 for hexadecimal.
    */
-  BitVector(uint32_t size, const std::string& value, uint32_t base = 2);
+  BitVector(uint64_t size, const std::string& value, uint32_t base = 2);
 
   /**
    * Construct a bit-vector of given size from given uint64 value.
@@ -95,7 +95,7 @@ class BitVector
    *        bit-vector value. The value must be representable with 'size' bits.
    * sign : True if given value should be interpreted as signed integer.
    */
-  BitVector(uint32_t size, uint64_t value, bool sign = false);
+  BitVector(uint64_t size, uint64_t value, bool sign = false);
 
   /** Copy constructor. */
   BitVector(const BitVector& other);
@@ -144,7 +144,7 @@ class BitVector
   uint64_t to_uint64() const;
 
   /** Return the size of this bit-vector. */
-  uint32_t size() const { return d_size; }
+  uint64_t size() const { return d_size; }
 
   /**
    * Compare this bit-vector with given bit-vector (unsigned).
@@ -166,11 +166,11 @@ class BitVector
   int32_t signed_compare(const BitVector& bv) const;
 
   /** Return true if the bit at given index is 1, and false otherwise. */
-  bool get_bit(uint32_t idx) const;
+  bool get_bit(uint64_t idx) const;
   /** Set the bit at given index to the given value. */
-  void set_bit(uint32_t idx, bool value);
+  void set_bit(uint64_t idx, bool value);
   /** Flip the bit at given index (in-place). */
-  void flip_bit(uint32_t idx);
+  void flip_bit(uint64_t idx);
   /** Return true if the lsb (index 0) is 1, and false otherwise. */
   bool get_lsb() const;
   /** Return true if the msb (index size - 1) is 1, and false otherwise. */
@@ -206,11 +206,11 @@ class BitVector
   bool is_umul_overflow(const BitVector& bv) const;
 
   /** Get number of trailing zeros (counted from lsb). */
-  uint32_t count_trailing_zeros() const;
+  uint64_t count_trailing_zeros() const;
   /** Get number of leading zeros (counted from msb). */
-  uint32_t count_leading_zeros() const;
+  uint64_t count_leading_zeros() const;
   /** Get number of leading ones (counted from msb). */
-  uint32_t count_leading_ones() const;
+  uint64_t count_leading_ones() const;
 
   /* ----------------------------------------------------------------------- */
   /* Bit-vector operations.                                                  */
@@ -268,15 +268,15 @@ class BitVector
   /** Signed greater than or equal. */
   BitVector bvsge(const BitVector& bv) const;
   /** Logical left shift. Shift value is given as an unsigned integer. */
-  BitVector bvshl(uint32_t shift) const;
+  BitVector bvshl(uint64_t shift) const;
   /** Logical left shift. Shift value is given as a bit-vector. */
   BitVector bvshl(const BitVector& bv) const;
   /** Logical right shift. Shift value is given as an unsigned integer. */
-  BitVector bvshr(uint32_t shift) const;
+  BitVector bvshr(uint64_t shift) const;
   /** Logical right shift. Shift value is given as a bit-vector. */
   BitVector bvshr(const BitVector& bv) const;
   /** Arightmetic right shift. Shift value is given as an unsigned integer. */
-  BitVector bvashr(uint32_t shift) const;
+  BitVector bvashr(uint64_t shift) const;
   /** Arithmetic right shift. Shift value is given as a bit-vector. */
   BitVector bvashr(const BitVector& bv) const;
   /** Multiplication. */
@@ -302,18 +302,18 @@ class BitVector
    * idx_hi: The upper bit-index of the range (inclusive).
    * idx_lo: The lower bit-index of the range (inclusive).
    */
-  BitVector bvextract(uint32_t idx_hi, uint32_t idx_lo) const;
+  BitVector bvextract(uint64_t idx_hi, uint64_t idx_lo) const;
 
   /**
    * Zero extension.
    * n: The number of bits to extend this bit-vector with.
    */
-  BitVector bvzext(uint32_t n) const;
+  BitVector bvzext(uint64_t n) const;
   /**
    * Sign extension.
    * n: The number of bits to extend this bit-vector with.
    */
-  BitVector bvsext(uint32_t n) const;
+  BitVector bvsext(uint64_t n) const;
 
   /**
    * Calculate modular inverse for this bit-vector by means of the Extended
@@ -478,12 +478,12 @@ class BitVector
    * Logical left shift (in-place) of 'bv' by 'shift'.
    * Shift value is given as an unsigned integer.
    */
-  BitVector& ibvshl(const BitVector& bv, uint32_t shift);
+  BitVector& ibvshl(const BitVector& bv, uint64_t shift);
   /**
    * Logical left shift (in-place) of this bit-vector by 'shift'.
    * Shift value is given as an unsigned integer.
    */
-  BitVector& ibvshl(uint32_t shift);
+  BitVector& ibvshl(uint64_t shift);
 
   /**
    * Logical left shift (in-place) of 'bv0' by 'bv1'.
@@ -500,12 +500,12 @@ class BitVector
    * Logical right shift (in-place) of 'bv' by 'shift'.
    * Shift value is given as an unsigned integer.
    */
-  BitVector& ibvshr(const BitVector& bv, uint32_t shift);
+  BitVector& ibvshr(const BitVector& bv, uint64_t shift);
   /**
    * Logical right shift (in-place) of this bit-vector by 'shift'.
    * Shift value is given as an unsigned integer.
    */
-  BitVector& ibvshr(uint32_t shift);
+  BitVector& ibvshr(uint64_t shift);
 
   /**
    * Logical right shift (in-place) of 'bv0' by 'bv1'.
@@ -522,12 +522,12 @@ class BitVector
    * Arithmetic right shift (in-place) of 'bv' by 'shift'.
    * Shift value is given as an unsigned integer.
    */
-  BitVector& ibvashr(const BitVector& bv0, uint32_t shift);
+  BitVector& ibvashr(const BitVector& bv0, uint64_t shift);
   /**
    * Arithmetic right shift (in-place) of this bit-vector by 'shift'.
    * Shift value is given as an unsigned integer.
    */
-  BitVector& ibvashr(uint32_t shift);
+  BitVector& ibvashr(uint64_t shift);
 
   /**
    * Arithmetic right shift (in-place) of 'bv0' by 'bv1'.
@@ -582,35 +582,35 @@ class BitVector
    * idx_hi: The upper bit-index of the range (inclusive).
    * idx_lo: The lower bit-index of the range (inclusive).
    */
-  BitVector& ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo);
+  BitVector& ibvextract(const BitVector& bv, uint64_t idx_hi, uint64_t idx_lo);
   /**
    * Extract a bit range from this bit-vector (in-place).
    * idx_hi: The upper bit-index of the range (inclusive).
    * idx_lo: The lower bit-index of the range (inclusive).
    */
-  BitVector& ibvextract(uint32_t idx_hi, uint32_t idx_lo);
+  BitVector& ibvextract(uint64_t idx_hi, uint64_t idx_lo);
 
   /**
    * Zero extension (in-place) of 'bv'.
    * n: The number of bits to extend bit-vector 'bv' with.
    */
-  BitVector& ibvzext(const BitVector& bv, uint32_t n);
+  BitVector& ibvzext(const BitVector& bv, uint64_t n);
   /**
    * Zero extension (in-place) of this bit-vector.
    * n: The number of bits to extend bit-vector 'bv' with.
    */
-  BitVector& ibvzext(uint32_t n);
+  BitVector& ibvzext(uint64_t n);
 
   /**
    * Sign extension (in-place).
    * n: The number of bits to extend bit-vector 'bv' with.
    */
-  BitVector& ibvsext(const BitVector& bv, uint32_t n);
+  BitVector& ibvsext(const BitVector& bv, uint64_t n);
   /**
    * Sign extension (in-place) of this bit-vector.
    * n: The number of bits to extend bit-vector 'bv' with.
    */
-  BitVector& ibvsext(uint32_t n);
+  BitVector& ibvsext(uint64_t n);
 
   /**
    * Create an if-then-else over the given bit-vectors (in-place).
@@ -653,29 +653,29 @@ class BitVector
    * Compute the remainder of the division of val by 2^size, implemented
    * with shifts and a bit mask.
    */
-  static uint64_t uint64_fdiv_r_2exp(uint32_t size, uint64_t val);
+  static uint64_t uint64_fdiv_r_2exp(uint64_t size, uint64_t val);
   /**
    * Count leading zeros or ones.
    * zeros: True to determine number of leading zeros, false to count number
    *        of leading ones.
    */
-  uint32_t count_leading(bool zeros) const;
+  uint64_t count_leading(bool zeros) const;
   /**
    * Return true if this bit-vector can be represented with a uint64_t.
    * If true, uint64_t representation is stored in 'res'.
    */
-  bool shift_is_uint64(uint32_t* res) const;
+  bool shift_is_uint64(uint64_t* res) const;
   /**
    * Get the first limb and return the number of limbs needed to represented
    * given bit-vector if all zero limbs are disregarded.
    */
-  uint32_t get_limb(void* limb, uint32_t nbits_rem, bool zeros) const;
+  uint64_t get_limb(void* limb, uint64_t nbits_rem, bool zeros) const;
 
   /** True if bit-vector is of size > 64 and thus wraps a GMPMpz. */
   bool is_gmp() const { return d_size > 64; }
 
   /** The size of this bit-vector. */
-  uint32_t d_size = 0;
+  uint64_t d_size = 0;
   /**
    * The bit-vector value.
    *

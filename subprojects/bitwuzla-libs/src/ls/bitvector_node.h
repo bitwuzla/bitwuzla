@@ -52,7 +52,7 @@ class BitVectorNode
   };
 
   /** Constructor. */
-  BitVectorNode(RNG* rng, uint32_t size);
+  BitVectorNode(RNG* rng, uint64_t size);
   BitVectorNode(RNG* rng,
                 const BitVector& assignment,
                 const BitVectorDomain& domain);
@@ -75,7 +75,7 @@ class BitVectorNode
    * Get the bit-vector size of the node.
    * @return The size of this node.
    */
-  uint32_t size() { return d_assignment.size(); }
+  uint64_t size() { return d_assignment.size(); }
 
   /** Update assignment based on the assignment of its children. */
   virtual void evaluate() {}
@@ -212,12 +212,12 @@ class BitVectorNode
    * Set id of this node.
    * @param id The id to set.
    */
-  void set_id(uint32_t id) { d_id = id; }
+  void set_id(uint64_t id) { d_id = id; }
   /**
    * Get id of this node.
    * @return The id of this node.
    */
-  uint32_t id() const { return d_id; }
+  uint64_t id() const { return d_id; }
 
   /**
    * Get the unsigned upper bound (incl) for inverse value computation.
@@ -245,7 +245,7 @@ class BitVectorNode
    * @param idx The index of the bit to fix to the given value.
    * @param value  The value to fix the bit to.
    */
-  void fix_bit(uint32_t idx, bool value);
+  void fix_bit(uint64_t idx, bool value);
 
   /**
    * Update bounds.
@@ -289,13 +289,13 @@ class BitVectorNode
   virtual std::string to_string() const;
 
  protected:
-  BitVectorNode(RNG* rng, uint32_t size, BitVectorNode* child0);
+  BitVectorNode(RNG* rng, uint64_t size, BitVectorNode* child0);
   BitVectorNode(RNG* rng,
-                uint32_t size,
+                uint64_t size,
                 BitVectorNode* child0,
                 BitVectorNode* child1);
   BitVectorNode(RNG* rng,
-                uint32_t size,
+                uint64_t size,
                 BitVectorNode* child0,
                 BitVectorNode* child1,
                 BitVectorNode* child2);
@@ -312,7 +312,7 @@ class BitVectorNode
 
   virtual int32_t select_path_non_const(std::vector<uint32_t>& inputs) const;
 
-  uint32_t d_id = 0;
+  uint64_t d_id = 0;
   std::unique_ptr<BitVectorNode*[]> d_children;
   RNG* d_rng;
   uint32_t d_arity;
@@ -359,7 +359,7 @@ class BitVectorAdd : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorAdd(RNG* rng,
-               uint32_t size,
+               uint64_t size,
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorAdd(RNG* rng,
@@ -434,7 +434,7 @@ class BitVectorAnd : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorAnd(RNG* rng,
-               uint32_t size,
+               uint64_t size,
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorAnd(RNG* rng,
@@ -514,7 +514,7 @@ class BitVectorConcat : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorConcat(RNG* rng,
-                  uint32_t size,
+                  uint64_t size,
                   BitVectorNode* child0,
                   BitVectorNode* child1);
   BitVectorConcat(RNG* rng,
@@ -598,7 +598,7 @@ class BitVectorEq : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorEq(RNG* rng,
-              uint32_t size,
+              uint64_t size,
               BitVectorNode* child0,
               BitVectorNode* child1);
   BitVectorEq(RNG* rng,
@@ -675,7 +675,7 @@ class BitVectorMul : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorMul(RNG* rng,
-               uint32_t size,
+               uint64_t size,
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorMul(RNG* rng,
@@ -759,7 +759,7 @@ class BitVectorShl : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorShl(RNG* rng,
-               uint32_t size,
+               uint64_t size,
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorShl(RNG* rng,
@@ -864,7 +864,7 @@ class BitVectorShr : public BitVectorNode
                             std::unique_ptr<BitVector>& inverse_value);
   /** Constructors. */
   BitVectorShr(RNG* rng,
-               uint32_t size,
+               uint64_t size,
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorShr(RNG* rng,
@@ -949,7 +949,7 @@ class BitVectorAshr : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorAshr(RNG* rng,
-                uint32_t size,
+                uint64_t size,
                 BitVectorNode* child0,
                 BitVectorNode* child1);
   BitVectorAshr(RNG* rng,
@@ -1043,7 +1043,7 @@ class BitVectorUdiv : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorUdiv(RNG* rng,
-                uint32_t size,
+                uint64_t size,
                 BitVectorNode* child0,
                 BitVectorNode* child1);
   BitVectorUdiv(RNG* rng,
@@ -1158,7 +1158,7 @@ class BitVectorUlt : public BitVectorNode
    *                        computation of concat and sign extension operands.
    */
   BitVectorUlt(RNG* rng,
-               uint32_t size,
+               uint64_t size,
                BitVectorNode* child0,
                BitVectorNode* child1,
                bool opt_concat_sext = false);
@@ -1316,7 +1316,7 @@ class BitVectorSlt : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorSlt(RNG* rng,
-               uint32_t size,
+               uint64_t size,
                BitVectorNode* child0,
                BitVectorNode* child1,
                bool opt_concat_sext = false);
@@ -1473,7 +1473,7 @@ class BitVectorUrem : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorUrem(RNG* rng,
-                uint32_t size,
+                uint64_t size,
                 BitVectorNode* child0,
                 BitVectorNode* child1);
   BitVectorUrem(RNG* rng,
@@ -1580,7 +1580,7 @@ class BitVectorXor : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorXor(RNG* rng,
-               uint32_t size,
+               uint64_t size,
                BitVectorNode* child0,
                BitVectorNode* child1);
   BitVectorXor(RNG* rng,
@@ -1655,7 +1655,7 @@ class BitVectorIte : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorIte(RNG* rng,
-               uint32_t size,
+               uint64_t size,
                BitVectorNode* child0,
                BitVectorNode* child1,
                BitVectorNode* child2);
@@ -1754,7 +1754,7 @@ class BitVectorNot : public BitVectorNode
 {
  public:
   /** Constructors. */
-  BitVectorNot(RNG* rng, uint32_t size, BitVectorNode* child0);
+  BitVectorNot(RNG* rng, uint64_t size, BitVectorNode* child0);
   BitVectorNot(RNG* rng, const BitVectorDomain& domain, BitVectorNode* child0);
 
   Kind get_kind() const override { return NOT; }
@@ -1826,12 +1826,12 @@ class BitVectorExtract : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorExtract(
-      RNG* rng, uint32_t size, BitVectorNode* child0, uint32_t hi, uint32_t lo);
+      RNG* rng, uint64_t size, BitVectorNode* child0, uint64_t hi, uint64_t lo);
   BitVectorExtract(RNG* rng,
                    const BitVectorDomain& domain,
                    BitVectorNode* child0,
-                   uint32_t hi,
-                   uint32_t lo);
+                   uint64_t hi,
+                   uint64_t lo);
 
   Kind get_kind() const override { return EXTRACT; }
 
@@ -1870,9 +1870,9 @@ class BitVectorExtract : public BitVectorNode
   static constexpr uint32_t s_prob_keep = 500;
 
   /** The upper index. */
-  uint32_t d_hi;
+  uint64_t d_hi;
   /** The lower index. */
-  uint32_t d_lo;
+  uint64_t d_lo;
   /**
    * Left part of don't care bits, that is, all bits > d_hi.
    * Nullptr if d_hi = msb.
@@ -1926,19 +1926,19 @@ class BitVectorSignExtend : public BitVectorNode
  public:
   /** Constructors. */
   BitVectorSignExtend(RNG* rng,
-                      uint32_t size,
+                      uint64_t size,
                       BitVectorNode* child0,
-                      uint32_t n);
+                      uint64_t n);
   BitVectorSignExtend(RNG* rng,
                       const BitVectorDomain& domain,
                       BitVectorNode* child0,
-                      uint32_t n);
+                      uint64_t n);
 
   /**
    * Get the number of extension bits.
    * @return The number of extension bits.
    */
-  uint32_t get_n() const { return d_n; }
+  uint64_t get_n() const { return d_n; }
 
   Kind get_kind() const override { return SEXT; }
 
@@ -2004,7 +2004,7 @@ class BitVectorSignExtend : public BitVectorNode
   void _evaluate_and_set_domain();
 
   /** The number of bits to extend with. */
-  uint32_t d_n;
+  uint64_t d_n;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorSignExtend& node);

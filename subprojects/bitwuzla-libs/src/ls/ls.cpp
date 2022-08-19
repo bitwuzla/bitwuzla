@@ -69,33 +69,33 @@ LocalSearch::init()
   BitVectorNode::s_prob_pick_ess_input = d_options.prob_pick_ess_input;
 }
 
-uint32_t
-LocalSearch::mk_node(uint32_t size)
+uint64_t
+LocalSearch::mk_node(uint64_t size)
 {
   return mk_node(BitVector::mk_zero(size), BitVectorDomain(size));
 }
 
-uint32_t
+uint64_t
 LocalSearch::mk_node(OperatorKind kind,
-                     uint32_t size,
-                     const std::vector<uint32_t>& children)
+                     uint64_t size,
+                     const std::vector<uint64_t>& children)
 {
   return mk_node(kind, BitVectorDomain(size), children);
 }
 
-uint32_t
+uint64_t
 LocalSearch::mk_indexed_node(OperatorKind kind,
-                             uint32_t size,
-                             uint32_t child0,
-                             const std::vector<uint32_t>& indices)
+                             uint64_t size,
+                             uint64_t child0,
+                             const std::vector<uint64_t>& indices)
 {
   return mk_indexed_node(kind, BitVectorDomain(size), child0, indices);
 }
 
-uint32_t
+uint64_t
 LocalSearch::mk_node(const BitVector& assignment, const BitVectorDomain& domain)
 {
-  uint32_t id = d_nodes.size();
+  uint64_t id = d_nodes.size();
   assert(assignment.size() == domain.size());  // API check
   std::unique_ptr<BitVectorNode> res(
       new BitVectorNode(d_rng.get(), assignment, domain));
@@ -107,13 +107,13 @@ LocalSearch::mk_node(const BitVector& assignment, const BitVectorDomain& domain)
   return id;
 }
 
-uint32_t
+uint64_t
 LocalSearch::mk_node(OperatorKind kind,
                      const BitVectorDomain& domain,
-                     const std::vector<uint32_t>& children)
+                     const std::vector<uint64_t>& children)
 {
-  uint32_t id = d_nodes.size();
-  for (uint32_t c : children)
+  uint64_t id = d_nodes.size();
+  for (uint64_t c : children)
   {
     assert(c < id);  // API check
     assert(d_parents.find(c) != d_parents.end());
@@ -220,11 +220,11 @@ LocalSearch::mk_node(OperatorKind kind,
   return id;
 }
 
-uint32_t
+uint64_t
 LocalSearch::mk_indexed_node(OperatorKind kind,
                              const BitVectorDomain& domain,
-                             uint32_t child0,
-                             const std::vector<uint32_t>& indices)
+                             uint64_t child0,
+                             const std::vector<uint64_t>& indices)
 {
   assert(kind == EXTRACT || kind == SEXT);              // API check
   assert(kind != EXTRACT || indices.size() == 2);       // API check
@@ -233,7 +233,7 @@ LocalSearch::mk_indexed_node(OperatorKind kind,
          || indices[0] < get_node(child0)->size());  // API check
   assert(kind != SEXT || indices.size() == 1);       // API check
 
-  uint32_t id = d_nodes.size();
+  uint64_t id = d_nodes.size();
   assert(child0 < id);
 
   assert(d_parents.find(child0) != d_parents.end());
@@ -258,36 +258,36 @@ LocalSearch::mk_indexed_node(OperatorKind kind,
   return id;
 }
 
-uint32_t
-LocalSearch::invert_node(uint32_t id)
+uint64_t
+LocalSearch::invert_node(uint64_t id)
 {
   assert(id < d_nodes.size());  // API check
   return mk_node(NOT, get_node(id)->domain().bvnot(), {id});
 }
 
 const BitVector&
-LocalSearch::get_assignment(uint32_t id) const
+LocalSearch::get_assignment(uint64_t id) const
 {
   assert(id < d_nodes.size());  // API check
   return get_node(id)->assignment();
 }
 
 const BitVectorDomain&
-LocalSearch::get_domain(uint32_t id) const
+LocalSearch::get_domain(uint64_t id) const
 {
   assert(id < d_nodes.size());  // API check
   return get_node(id)->domain();
 }
 
 void
-LocalSearch::set_assignment(uint32_t id, const BitVector& assignment)
+LocalSearch::set_assignment(uint64_t id, const BitVector& assignment)
 {
   assert(id < d_nodes.size());  // API check
   get_node(id)->set_assignment(assignment);
 }
 
 void
-LocalSearch::fix_bit(uint32_t id, uint32_t idx, bool value)
+LocalSearch::fix_bit(uint64_t id, uint32_t idx, bool value)
 {
   assert(id < d_nodes.size());  // API check
   BitVectorNode* node = get_node(id);
@@ -296,7 +296,7 @@ LocalSearch::fix_bit(uint32_t id, uint32_t idx, bool value)
 }
 
 void
-LocalSearch::register_root(uint32_t id)
+LocalSearch::register_root(uint64_t id)
 {
   assert(id < d_nodes.size());  // API check
   BitVectorNode* root = get_node(id);
@@ -313,14 +313,14 @@ LocalSearch::register_root(uint32_t id)
 }
 
 uint32_t
-LocalSearch::get_arity(uint32_t id) const
+LocalSearch::get_arity(uint64_t id) const
 {
   assert(id < d_nodes.size());  // API check
   return get_node(id)->arity();
 }
 
-uint32_t
-LocalSearch::get_child(uint32_t id, uint32_t idx) const
+uint64_t
+LocalSearch::get_child(uint64_t id, uint32_t idx) const
 {
   assert(id < d_nodes.size());  // API check
   assert(idx < get_arity(id));  // API check
@@ -330,7 +330,7 @@ LocalSearch::get_child(uint32_t id, uint32_t idx) const
 /* -------------------------------------------------------------------------- */
 
 BitVectorNode*
-LocalSearch::get_node(uint32_t id) const
+LocalSearch::get_node(uint64_t id) const
 {
   assert(id < d_nodes.size());
   assert(d_nodes[id]->id() == id);
@@ -598,8 +598,8 @@ LocalSearch::compute_bounds(BitVectorNode* node)
   for (uint32_t i = 0, arity = node->arity(); i < arity; ++i)
   {
     const BitVectorNode* child                  = (*node)[i];
-    const std::unordered_set<uint32_t>& parents = d_parents.at(child->id());
-    for (uint32_t pid : parents)
+    const std::unordered_set<uint64_t>& parents = d_parents.at(child->id());
+    for (uint64_t pid : parents)
     {
       BitVectorNode* p = get_node(pid);
       if (!is_ineq_root(p)) continue;
@@ -623,7 +623,7 @@ LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
   BitVectorNode* child0 = (*root)[0];
   BitVectorNode* child1 = (*root)[1];
   bool is_signed        = root->get_kind() == BitVectorNode::Kind::SLT;
-  uint32_t size         = child0->size();
+  uint64_t size         = child0->size();
   BitVector min_value, max_value;
 
   if (is_signed)
@@ -717,13 +717,13 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
   node->set_assignment(assignment);
   uint64_t nupdates = 1;
 
-  std::vector<uint32_t> cone;
+  std::vector<uint64_t> cone;
   std::vector<BitVectorNode*> to_visit;
-  std::unordered_set<uint32_t> visited;
+  std::unordered_set<uint64_t> visited;
 
   /* reset cone */
-  const std::unordered_set<uint32_t>& parents = d_parents.at(node->id());
-  for (uint32_t p : parents)
+  const std::unordered_set<uint64_t>& parents = d_parents.at(node->id());
+  for (uint64_t p : parents)
   {
     to_visit.push_back(get_node(p));
   }
@@ -737,8 +737,8 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
     visited.insert(cur->id());
     cone.push_back(cur->id());
 
-    const std::unordered_set<uint32_t>& parents = d_parents.at(cur->id());
-    for (uint32_t p : parents)
+    const std::unordered_set<uint64_t>& parents = d_parents.at(cur->id());
+    for (uint64_t p : parents)
     {
       to_visit.push_back(get_node(p));
     }
@@ -752,7 +752,7 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
 
   std::sort(cone.begin(), cone.end());
 
-  for (uint32_t id : cone)
+  for (uint64_t id : cone)
   {
     BitVectorNode* cur = get_node(id);
     BZLALSLOG(2) << "  node: " << *cur << " -> ";

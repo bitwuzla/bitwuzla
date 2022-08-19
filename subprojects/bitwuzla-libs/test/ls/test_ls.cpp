@@ -123,7 +123,7 @@ class TestLs : public TestBvNodeCommon
    * Note: LocalSearch::update_cone() is private and only the main test class
    * has access to it.
    */
-  void update_cone(uint32_t id, const BitVector& assignment);
+  void update_cone(uint64_t id, const BitVector& assignment);
 
   void test_move_binary(OpKind opkind,
                         LocalSearch::OperatorKind kind,
@@ -139,24 +139,24 @@ class TestLs : public TestBvNodeCommon
   BitVector d_egt4, d_ten4, d_ele4, d_twe4, d_thi4;
   BitVector d_zero4, d_zero1, d_ones4, d_one4, d_one1;
 
-  uint32_t d_c1, d_v1, d_v2, d_v3;
-  uint32_t d_v1pc1, d_v1pc1mv2;
-  uint32_t d_v1pv2, d_v1pv2av2;
-  uint32_t d_v1e, d_v3e;
-  uint32_t d_v1edv3e, d_v1edv3e_ext;
-  uint32_t d_v3sc1, d_v3sc1pv3;
-  uint32_t d_v3sc1pv3pv1;
-  uint32_t d_root1, d_root2;
+  uint64_t d_c1, d_v1, d_v2, d_v3;
+  uint64_t d_v1pc1, d_v1pc1mv2;
+  uint64_t d_v1pv2, d_v1pv2av2;
+  uint64_t d_v1e, d_v3e;
+  uint64_t d_v1edv3e, d_v1edv3e_ext;
+  uint64_t d_v3sc1, d_v3sc1pv3;
+  uint64_t d_v3sc1pv3pv1;
+  uint64_t d_root1, d_root2;
 };
 
 LocalSearch::ParentsMap
 TestLs::get_expected_parents()
 {
   LocalSearch::ParentsMap parents;
-  std::vector<uint32_t> to_visit = {d_root1, d_root2};
+  std::vector<uint64_t> to_visit = {d_root1, d_root2};
   while (!to_visit.empty())
   {
-    uint32_t cur_id = to_visit.back();
+    uint64_t cur_id = to_visit.back();
     to_visit.pop_back();
     if (parents.find(cur_id) == parents.end())
     {
@@ -164,7 +164,7 @@ TestLs::get_expected_parents()
     }
     for (uint32_t i = 0; i < d_ls->get_arity(cur_id); ++i)
     {
-      uint32_t child_id = d_ls->get_child(cur_id, i);
+      uint64_t child_id = d_ls->get_child(cur_id, i);
       if (parents.find(child_id) == parents.end())
       {
         parents[child_id] = {};
@@ -180,7 +180,7 @@ TestLs::get_expected_parents()
 }
 
 void
-TestLs::update_cone(uint32_t id, const BitVector& assignment)
+TestLs::update_cone(uint64_t id, const BitVector& assignment)
 {
   d_ls->update_cone(d_ls->get_node(id), assignment);
 }
@@ -216,7 +216,7 @@ TestLs::test_move_binary(OpKind opkind,
           BitVector x_val = genx.has_next() ? genx.next() : x.lo();
           BitVector t_val = eval_op_binary(opkind, x_val, s_val, pos_x);
 
-          uint32_t bw_t = t_val.size();
+          uint64_t bw_t = t_val.size();
 
           BitVectorDomainGenerator genrx(x, d_rng.get());
           BitVectorDomainGenerator genrs(s, d_rng.get());
@@ -226,14 +226,14 @@ TestLs::test_move_binary(OpKind opkind,
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
             LocalSearch ls(1, 1);
-            uint32_t op_s = ls.mk_node(s_val, s);
-            uint32_t op_x = ls.mk_node(rx_val, x);
-            uint32_t op =
+            uint64_t op_s = ls.mk_node(s_val, s);
+            uint64_t op_x = ls.mk_node(rx_val, x);
+            uint64_t op =
                 pos_x == 0
                     ? ls.mk_node(kind, BitVectorDomain(bw_t), {op_x, op_s})
                     : ls.mk_node(kind, BitVectorDomain(bw_t), {op_s, op_x});
-            uint32_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
-            uint32_t root =
+            uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
+            uint64_t root =
                 ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
             LocalSearch::Result res = ls.move();
@@ -261,14 +261,14 @@ TestLs::test_move_binary(OpKind opkind,
             BitVector rs_val = genrs.has_random() ? genrs.random() : s.lo();
 
             LocalSearch ls(100, 100);
-            uint32_t op_s = ls.mk_node(rs_val, s);
-            uint32_t op_x = ls.mk_node(rx_val, x);
-            uint32_t op =
+            uint64_t op_s = ls.mk_node(rs_val, s);
+            uint64_t op_x = ls.mk_node(rx_val, x);
+            uint64_t op =
                 pos_x == 0
                     ? ls.mk_node(kind, BitVectorDomain(bw_t), {op_x, op_s})
                     : ls.mk_node(kind, BitVectorDomain(bw_t), {op_s, op_x});
-            uint32_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
-            uint32_t root =
+            uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
+            uint64_t root =
                 ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
             LocalSearch::Result res;
@@ -361,7 +361,7 @@ TestLs::test_move_ite(uint32_t pos_x)
                       ? BitVector::bvite(x_val, s0_val, s1_val)
                       : (pos_x == 1 ? BitVector::bvite(s0_val, x_val, s1_val)
                                     : BitVector::bvite(s0_val, s1_val, x_val));
-              uint32_t bw_t = t_val.size();
+              uint64_t bw_t = t_val.size();
 
               BitVectorDomainGenerator genrx(x, d_rng.get());
               BitVectorDomainGenerator genrs0(s0, d_rng.get());
@@ -372,10 +372,10 @@ TestLs::test_move_ite(uint32_t pos_x)
                 BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
                 LocalSearch ls(100, 100);
-                uint32_t op_s0 = ls.mk_node(s0_val, s0);
-                uint32_t op_s1 = ls.mk_node(s1_val, s1);
-                uint32_t op_x  = ls.mk_node(rx_val, x);
-                uint32_t op =
+                uint64_t op_s0 = ls.mk_node(s0_val, s0);
+                uint64_t op_s1 = ls.mk_node(s1_val, s1);
+                uint64_t op_x  = ls.mk_node(rx_val, x);
+                uint64_t op =
                     pos_x == 0
                         ? ls.mk_node(LocalSearch::OperatorKind::ITE,
                                      BitVectorDomain(bw_t),
@@ -387,8 +387,8 @@ TestLs::test_move_ite(uint32_t pos_x)
                                : ls.mk_node(LocalSearch::OperatorKind::ITE,
                                             BitVectorDomain(bw_t),
                                             {op_s0, op_s1, op_x}));
-                uint32_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
-                uint32_t root =
+                uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
+                uint64_t root =
                     ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
                 ls.register_root(root);
                 LocalSearch::Result res = ls.move();
@@ -411,10 +411,10 @@ TestLs::test_move_ite(uint32_t pos_x)
                     genrs1.has_random() ? genrs1.random() : s1.lo();
 
                 LocalSearch ls(100, 100);
-                uint32_t op_s0 = ls.mk_node(rs0_val, s0);
-                uint32_t op_s1 = ls.mk_node(rs1_val, s1);
-                uint32_t op_x  = ls.mk_node(rx_val, x);
-                uint32_t op =
+                uint64_t op_s0 = ls.mk_node(rs0_val, s0);
+                uint64_t op_s1 = ls.mk_node(rs1_val, s1);
+                uint64_t op_x  = ls.mk_node(rx_val, x);
+                uint64_t op =
                     pos_x == 0
                         ? ls.mk_node(LocalSearch::OperatorKind::ITE,
                                      BitVectorDomain(bw_t),
@@ -426,8 +426,8 @@ TestLs::test_move_ite(uint32_t pos_x)
                                : ls.mk_node(LocalSearch::OperatorKind::ITE,
                                             BitVectorDomain(bw_t),
                                             {op_s0, op_s1, op_x}));
-                uint32_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
-                uint32_t root =
+                uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
+                uint64_t root =
                     ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
                 ls.register_root(root);
                 LocalSearch::Result res;
@@ -475,17 +475,17 @@ TestLs::test_move_not()
       BitVector x_val = genx.has_next() ? genx.next() : x.lo();
       BitVector t_val = x_val.bvnot();
 
-      uint32_t bw_t = t_val.size();
+      uint64_t bw_t = t_val.size();
 
       BitVectorDomainGenerator genrx(x, d_rng.get());
       BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
       LocalSearch ls(100, 100);
-      uint32_t op_x = ls.mk_node(rx_val, x);
-      uint32_t op   = ls.mk_node(
+      uint64_t op_x = ls.mk_node(rx_val, x);
+      uint64_t op   = ls.mk_node(
           LocalSearch::OperatorKind::NOT, BitVectorDomain(bw_t), {op_x});
-      uint32_t t    = ls.mk_node(t_val, BitVectorDomain(t_val));
-      uint32_t root = ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
+      uint64_t t    = ls.mk_node(t_val, BitVectorDomain(t_val));
+      uint64_t root = ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
       ls.register_root(root);
       LocalSearch::Result res = ls.move();
       assert(!ls.get_domain(root).is_fixed()
@@ -516,17 +516,17 @@ TestLs::test_move_extract()
   for (const std::string& x_domain_value : xvalues)
   {
     BitVectorDomain x(x_domain_value);
-    uint32_t bw_x = x.size();
+    uint64_t bw_x = x.size();
     BitVectorDomainGenerator genx(x);
     do
     {
       BitVector x_val = genx.has_next() ? genx.next() : x.lo();
-      for (uint32_t lo = 0; lo < bw_x; ++lo)
+      for (uint64_t lo = 0; lo < bw_x; ++lo)
       {
-        for (uint32_t hi = lo; hi < bw_x; ++hi)
+        for (uint64_t hi = lo; hi < bw_x; ++hi)
         {
-          uint32_t bw_t = hi - lo + 1;
-          for (uint32_t i = 0, n = 1 << bw_t; i < n; ++i)
+          uint64_t bw_t = hi - lo + 1;
+          for (uint64_t i = 0, n = 1 << bw_t; i < n; ++i)
           {
             BitVector t_val = x_val.bvextract(hi, lo);
 
@@ -534,13 +534,13 @@ TestLs::test_move_extract()
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
             LocalSearch ls(100, 100);
-            uint32_t op_x = ls.mk_node(rx_val, x);
-            uint32_t op = ls.mk_indexed_node(LocalSearch::OperatorKind::EXTRACT,
+            uint64_t op_x = ls.mk_node(rx_val, x);
+            uint64_t op = ls.mk_indexed_node(LocalSearch::OperatorKind::EXTRACT,
                                              BitVectorDomain(bw_t),
                                              op_x,
                                              {hi, lo});
-            uint32_t t  = ls.mk_node(t_val, BitVectorDomain(t_val));
-            uint32_t root =
+            uint64_t t  = ls.mk_node(t_val, BitVectorDomain(t_val));
+            uint64_t root =
                 ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
             LocalSearch::Result res = ls.move();
@@ -575,26 +575,26 @@ TestLs::test_move_sext()
   for (const std::string& x_domain_value : xvalues)
   {
     BitVectorDomain x(x_domain_value);
-    uint32_t bw_x = x.size();
+    uint64_t bw_x = x.size();
     BitVectorDomainGenerator genx(x);
     do
     {
       BitVector x_val = genx.has_next() ? genx.next() : x.lo();
-      for (uint32_t n = 1; n <= bw_x; ++n)
+      for (uint64_t n = 1; n <= bw_x; ++n)
       {
         BitVector t_val = x_val.bvsext(n);
 
-        uint32_t bw_t = t_val.size();
+        uint64_t bw_t = t_val.size();
 
         BitVectorDomainGenerator genrx(x, d_rng.get());
         BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
         LocalSearch ls(100, 100);
-        uint32_t op_x = ls.mk_node(rx_val, x);
-        uint32_t op   = ls.mk_indexed_node(
+        uint64_t op_x = ls.mk_node(rx_val, x);
+        uint64_t op   = ls.mk_indexed_node(
             LocalSearch::OperatorKind::SEXT, BitVectorDomain(bw_t), op_x, {n});
-        uint32_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
-        uint32_t root =
+        uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
+        uint64_t root =
             ls.mk_node(LocalSearch::EQ, BitVectorDomain(1), {op, t});
         ls.register_root(root);
         LocalSearch::Result res = ls.move();
@@ -620,16 +620,16 @@ TEST_F(TestLs, parents)
   LocalSearch::ParentsMap parents_expected = get_expected_parents();
 
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_c1);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_c1);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_c1);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_c1);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 2);
     ASSERT_TRUE(p.find(d_v1pc1) != p.end());
     ASSERT_TRUE(p.find(d_v3sc1) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v1);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v1);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v1);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 4);
     ASSERT_TRUE(p.find(d_v1pc1) != p.end());
@@ -638,8 +638,8 @@ TEST_F(TestLs, parents)
     ASSERT_TRUE(p.find(d_v1e) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v2);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v2);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v2);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v2);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 3);
     ASSERT_TRUE(p.find(d_v1pc1mv2) != p.end());
@@ -647,8 +647,8 @@ TEST_F(TestLs, parents)
     ASSERT_TRUE(p.find(d_v1pv2av2) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v3);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v3);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v3);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v3);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 3);
     ASSERT_TRUE(p.find(d_v3sc1) != p.end());
@@ -656,91 +656,91 @@ TEST_F(TestLs, parents)
     ASSERT_TRUE(p.find(d_v3e) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v1pc1);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1pc1);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v1pc1);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v1pc1);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_v1pc1mv2) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v1pc1mv2);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1pc1mv2);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v1pc1mv2);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v1pc1mv2);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_root1) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v1pv2);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1pv2);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v1pv2);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v1pv2);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_v1pv2av2) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v1pv2av2);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1pv2av2);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v1pv2av2);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v1pv2av2);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_root1) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v1e);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1e);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v1e);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v1e);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_v1edv3e) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v3e);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v3e);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v3e);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v3e);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_v1edv3e) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v1edv3e);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1edv3e);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v1edv3e);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v1edv3e);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_v1edv3e_ext) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v1edv3e_ext);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v1edv3e_ext);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v1edv3e_ext);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v1edv3e_ext);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_root2) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v3sc1);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v3sc1);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v3sc1);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v3sc1);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_v3sc1pv3) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v3sc1pv3);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v3sc1pv3);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v3sc1pv3);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v3sc1pv3);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_v3sc1pv3pv1) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_v3sc1pv3pv1);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_v3sc1pv3pv1);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_v3sc1pv3pv1);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_v3sc1pv3pv1);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 1);
     ASSERT_TRUE(p.find(d_root2) != p.end());
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_root1);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_root1);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_root1);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_root1);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 0);
   }
   {
-    const std::unordered_set<uint32_t>& p  = parents.at(d_root2);
-    const std::unordered_set<uint32_t>& pe = parents_expected.at(d_root2);
+    const std::unordered_set<uint64_t>& p  = parents.at(d_root2);
+    const std::unordered_set<uint64_t>& pe = parents_expected.at(d_root2);
     ASSERT_EQ(p, pe);
     ASSERT_TRUE(p.size() == 0);
   }

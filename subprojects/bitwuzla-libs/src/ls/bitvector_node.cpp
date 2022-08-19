@@ -10,18 +10,18 @@ namespace ls {
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorNode::BitVectorNode(RNG* rng, uint32_t size)
+BitVectorNode::BitVectorNode(RNG* rng, uint64_t size)
     : BitVectorNode(rng, BitVector::mk_zero(size), BitVectorDomain(size))
 {
 }
 
-BitVectorNode::BitVectorNode(RNG* rng, uint32_t size, BitVectorNode* child0)
+BitVectorNode::BitVectorNode(RNG* rng, uint64_t size, BitVectorNode* child0)
     : BitVectorNode(rng, BitVectorDomain(size), child0)
 {
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
-                             uint32_t size,
+                             uint64_t size,
                              BitVectorNode* child0,
                              BitVectorNode* child1)
     : BitVectorNode(rng, BitVectorDomain(size), child0, child1)
@@ -29,7 +29,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
 }
 
 BitVectorNode::BitVectorNode(RNG* rng,
-                             uint32_t size,
+                             uint64_t size,
                              BitVectorNode* child0,
                              BitVectorNode* child1,
                              BitVectorNode* child2)
@@ -177,7 +177,7 @@ BitVectorNode::set_assignment(const BitVector& assignment)
 }
 
 void
-BitVectorNode::fix_bit(uint32_t idx, bool value)
+BitVectorNode::fix_bit(uint64_t idx, bool value)
 {
   assert(idx < d_domain.size());
   d_domain.fix_bit(idx, value);
@@ -266,7 +266,7 @@ BitVectorNode::normalize_bounds(BitVector& res_min_lo,
                                 BitVector& res_min_hi,
                                 BitVector& res_max_hi)
 {
-  uint32_t bw          = size();
+  uint64_t bw          = size();
   BitVector zero       = BitVector::mk_zero(bw);
   BitVector ones       = BitVector::mk_ones(bw);
   BitVector min_signed = BitVector::mk_min_signed(bw);
@@ -458,7 +458,7 @@ operator<<(std::ostream& out, const BitVectorNode::Kind kind)
 /* -------------------------------------------------------------------------- */
 
 BitVectorAdd::BitVectorAdd(RNG* rng,
-                           uint32_t size,
+                           uint64_t size,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -601,7 +601,7 @@ operator<<(std::ostream& out, const BitVectorAdd& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorAnd::BitVectorAnd(RNG* rng,
-                           uint32_t size,
+                           uint64_t size,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -774,7 +774,7 @@ BitVectorAnd::inverse_value(const BitVector& t, uint32_t pos_x)
   {
     /** inverse value: (t & s) | (~s & rand) */
 
-    uint32_t size = t.size();
+    uint64_t size = t.size();
     BitVector rand;
     if (x.has_fixed_bits())
     {
@@ -834,7 +834,7 @@ operator<<(std::ostream& out, const BitVectorAnd& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorConcat::BitVectorConcat(RNG* rng,
-                                 uint32_t size,
+                                 uint64_t size,
                                  BitVectorNode* child0,
                                  BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -895,8 +895,8 @@ BitVectorConcat::is_invertible(const BitVector& t,
   BitVector tx;
   bool ic_wo;
 
-  uint32_t bw_t = t.size();
-  uint32_t bw_s = s.size();
+  uint64_t bw_t = t.size();
+  uint64_t bw_s = s.size();
 
   /**
    * IC_wo: s = ts
@@ -947,8 +947,8 @@ BitVectorConcat::is_consistent(const BitVector& t, uint32_t pos_x)
    *      pos_x = 1: tx = t[size(x) - 1 : 0]
    */
 
-  uint32_t bw_t = t.size();
-  uint32_t bw_x = x.size();
+  uint64_t bw_t = t.size();
+  uint64_t bw_x = x.size();
   if (pos_x == 0)
   {
     return x.match_fixed_bits(t.bvextract(bw_t - 1, bw_t - bw_x));
@@ -989,8 +989,8 @@ BitVectorConcat::consistent_value(const BitVector& t, uint32_t pos_x)
 
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
-  uint32_t bw_t = t.size();
-  uint32_t bw_x = x.size();
+  uint64_t bw_t = t.size();
+  uint64_t bw_x = x.size();
 
   if (pos_x == 0)
   {
@@ -1023,7 +1023,7 @@ operator<<(std::ostream& out, const BitVectorConcat& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorEq::BitVectorEq(RNG* rng,
-                         uint32_t size,
+                         uint64_t size,
                          BitVectorNode* child0,
                          BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -1210,7 +1210,7 @@ operator<<(std::ostream& out, const BitVectorEq& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorMul::BitVectorMul(RNG* rng,
-                           uint32_t size,
+                           uint64_t size,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -1315,8 +1315,8 @@ BitVectorMul::is_invertible(const BitVector& t,
        *   y = (t >> ctz(s)) * (s >> ctz(s))^-1
        * match corresponding constant bits of x, i.e.,
        * mfb(x[size - ctz(s) - 1:0], y[size - ctz(s) - 1:0]). */
-      uint32_t size   = x.size();
-      uint32_t ctz    = s.count_trailing_zeros();
+      uint64_t size   = x.size();
+      uint64_t ctz    = s.count_trailing_zeros();
       BitVector y_ext = t.bvshr(ctz)
                             .ibvmul(s.bvshr(ctz).ibvmodinv())
                             .ibvextract(size - ctz - 1, 0);
@@ -1360,8 +1360,8 @@ BitVectorMul::is_consistent(const BitVector& t, uint32_t pos_x)
 
   if (!is_odd && x.has_fixed_bits())
   {
-    uint32_t size  = t.size();
-    uint32_t ctz_t = t.count_trailing_zeros();
+    uint64_t size  = t.size();
+    uint64_t ctz_t = t.count_trailing_zeros();
     BitVectorDomainGenerator gen(
         x,
         d_rng,
@@ -1370,7 +1370,7 @@ BitVectorMul::is_consistent(const BitVector& t, uint32_t pos_x)
     assert(gen.has_random() || x.is_fixed());
     BitVector tmp = gen.has_random() ? gen.random() : x.lo();
     bool res      = false;
-    for (uint32_t i = 0; i < size && i <= ctz_t; ++i)
+    for (uint64_t i = 0; i < size && i <= ctz_t; ++i)
     {
       if (!x.is_fixed_bit_false(i))
       {
@@ -1382,10 +1382,10 @@ BitVectorMul::is_consistent(const BitVector& t, uint32_t pos_x)
     {
       if (ctz_t < size)
       {
-        uint32_t i;
+        uint64_t i;
         do
         {
-          i = d_rng->pick<uint32_t>(0, ctz_t);
+          i = d_rng->pick<uint64_t>(0, ctz_t);
         } while (x.is_fixed_bit_false(i));
         tmp.set_bit(i, true);
       }
@@ -1421,7 +1421,7 @@ BitVectorMul::inverse_value(const BitVector& t, uint32_t pos_x)
    *
    */
 
-  uint32_t size = t.size();
+  uint64_t size = t.size();
 
   if (d_inverse == nullptr && d_inverse_domain == nullptr)
   {
@@ -1448,7 +1448,7 @@ BitVectorMul::inverse_value(const BitVector& t, uint32_t pos_x)
     {
       assert(!x.has_fixed_bits());
       assert(t.count_trailing_zeros() >= s.count_trailing_zeros());
-      uint32_t n = s.count_trailing_zeros();
+      uint64_t n = s.count_trailing_zeros();
       BitVector right;
       if (s.is_power_of_two())
       {
@@ -1533,18 +1533,18 @@ BitVectorMul::consistent_value(const BitVector& t, uint32_t pos_x)
       else
       {
         assert(!x.has_fixed_bits());
-        uint32_t ctz_t = t.count_trailing_zeros();
+        uint64_t ctz_t = t.count_trailing_zeros();
         /* choose consistent value as 2^n with prob 0.1 */
         if (d_rng->pick_with_prob(100))
         {
           d_consistent->iset(0);
-          d_consistent->set_bit(d_rng->pick<uint32_t>(0, ctz_t - 1), true);
+          d_consistent->set_bit(d_rng->pick<uint64_t>(0, ctz_t - 1), true);
         }
         /* choose consistent value as t / 2^n with prob 0.1 */
         else if (d_rng->pick_with_prob(100))
         {
           d_consistent->iset(t);
-          uint32_t r = d_rng->pick<uint32_t>(0, ctz_t);
+          uint64_t r = d_rng->pick<uint64_t>(0, ctz_t);
           if (r > 0)
           {
             d_consistent->ibvshr(r);
@@ -1555,7 +1555,7 @@ BitVectorMul::consistent_value(const BitVector& t, uint32_t pos_x)
         {
           if (d_consistent->count_trailing_zeros() > ctz_t)
           {
-            d_consistent->set_bit(d_rng->pick<uint32_t>(0, ctz_t - 1), true);
+            d_consistent->set_bit(d_rng->pick<uint64_t>(0, ctz_t - 1), true);
           }
         }
       }
@@ -1583,7 +1583,7 @@ operator<<(std::ostream& out, const BitVectorMul& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorShl::BitVectorShl(RNG* rng,
-                           uint32_t size,
+                           uint64_t size,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -1639,11 +1639,11 @@ BitVectorShl::is_invertible(const BitVector& t,
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
-  uint32_t pos_s           = 1 - pos_x;
+  uint64_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
-  uint32_t ctz_t           = 0;
-  uint32_t ctz_s           = 0;
+  uint64_t ctz_t           = 0;
+  uint64_t ctz_s           = 0;
   bool ic_wo;
 
   /**
@@ -1688,7 +1688,7 @@ BitVectorShl::is_invertible(const BitVector& t,
     }
     if (t.is_zero())
     {
-      uint32_t size  = x.size();
+      uint64_t size  = x.size();
       bool s_is_zero = s.is_zero();
       BitVector min  = BitVector(size, ctz_t - ctz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
@@ -1724,8 +1724,8 @@ BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
    *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y))
    */
 
-  uint32_t ctz_t = t.count_trailing_zeros();
-  uint32_t size  = t.size();
+  uint64_t ctz_t = t.count_trailing_zeros();
+  uint64_t size  = t.size();
 
   if (ctz_t != size)
   {
@@ -1733,13 +1733,13 @@ BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
     {
       if (x.is_fixed())
       {
-        uint32_t ctz_x = x.lo().count_trailing_zeros();
+        uint64_t ctz_x = x.lo().count_trailing_zeros();
         return x.lo().bvshl(ctz_t - ctz_x).compare(t) == 0;
       }
 
       std::vector<BitVector> stack;
 
-      for (uint32_t i = 0; i <= ctz_t; ++i)
+      for (uint64_t i = 0; i <= ctz_t; ++i)
       {
         BitVectorDomain x_slice = x.bvextract(size - 1 - i, 0);
         BitVector t_slice       = t.bvextract(size - 1, i);
@@ -1748,9 +1748,9 @@ BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
       bool res = !stack.empty();
       if (res)
       {
-        uint32_t i          = d_rng->pick<uint32_t>(0, stack.size() - 1);
+        uint64_t i          = d_rng->pick<uint64_t>(0, stack.size() - 1);
         BitVector& right    = stack[i];
-        uint32_t size_right = right.size();
+        uint64_t size_right = right.size();
         if (size == size_right)
         {
           d_consistent.reset(new BitVector(right));
@@ -1791,7 +1791,7 @@ BitVectorShl::inverse_value(const BitVector& t, uint32_t pos_x)
   assert(!x.is_fixed());
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
-  uint32_t size      = t.size();
+  uint64_t size      = t.size();
 
   if (d_inverse == nullptr)
   {
@@ -1801,7 +1801,7 @@ BitVectorShl::inverse_value(const BitVector& t, uint32_t pos_x)
 
       /* actual value is small enough to fit into 32 bit (max bit width handled
        * is INT32_MAX) */
-      uint32_t shift;
+      uint64_t shift;
       if (size > 64)
       {
         shift = s.bvextract(32, 0).to_uint64();
@@ -1873,10 +1873,10 @@ BitVectorShl::inverse_value(const BitVector& t, uint32_t pos_x)
       }
       else
       {
-        uint32_t ctz_s = s.count_trailing_zeros();
-        uint32_t ctz_t = t.count_trailing_zeros();
+        uint64_t ctz_s = s.count_trailing_zeros();
+        uint64_t ctz_t = t.count_trailing_zeros();
         assert(ctz_t >= ctz_s);
-        uint32_t shift = ctz_t - ctz_s;
+        uint64_t shift = ctz_t - ctz_s;
         if (t.is_zero())
         {
           assert(!x.has_fixed_bits());
@@ -1913,8 +1913,8 @@ BitVectorShl::consistent_value(const BitVector& t, uint32_t pos_x)
 
   if (d_consistent == nullptr)
   {
-    uint32_t size  = x.size();
-    uint32_t ctz_t = t.count_trailing_zeros();
+    uint64_t size  = x.size();
+    uint64_t ctz_t = t.count_trailing_zeros();
 
     if (pos_x == 0)
     {
@@ -1933,7 +1933,7 @@ BitVectorShl::consistent_value(const BitVector& t, uint32_t pos_x)
       else
       {
         assert(!x.has_fixed_bits());
-        uint32_t shift = d_rng->pick<uint32_t>(0, ctz_t);
+        uint64_t shift = d_rng->pick<uint64_t>(0, ctz_t);
         if (shift == 0)
         {
           d_consistent.reset(new BitVector(t));
@@ -1948,7 +1948,7 @@ BitVectorShl::consistent_value(const BitVector& t, uint32_t pos_x)
     }
     else
     {
-      uint32_t max = ctz_t < size ? ctz_t : ((1u << size) - 1);
+      uint64_t max = ctz_t < size ? ctz_t : ((1u << size) - 1);
       if (x.has_fixed_bits())
       {
         BitVectorDomainGenerator gen(
@@ -1958,7 +1958,7 @@ BitVectorShl::consistent_value(const BitVector& t, uint32_t pos_x)
       }
       else
       {
-        d_consistent.reset(new BitVector(size, d_rng->pick<uint32_t>(0, max)));
+        d_consistent.reset(new BitVector(size, d_rng->pick<uint64_t>(0, max)));
       }
     }
   }
@@ -1984,7 +1984,7 @@ operator<<(std::ostream& out, const BitVectorShl& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorShr::BitVectorShr(RNG* rng,
-                           uint32_t size,
+                           uint64_t size,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -2055,8 +2055,8 @@ BitVectorShr::is_invertible(RNG* rng,
                             uint32_t pos_x,
                             std::unique_ptr<BitVector>* inverse)
 {
-  uint32_t clz_t = 0;
-  uint32_t clz_s = 0;
+  uint64_t clz_t = 0;
+  uint64_t clz_s = 0;
   bool ic_wo;
 
   /**
@@ -2100,7 +2100,7 @@ BitVectorShr::is_invertible(RNG* rng,
     }
     if (t.is_zero())
     {
-      uint32_t size  = x.size();
+      uint64_t size  = x.size();
       bool s_is_zero = s.is_zero();
       BitVector min  = BitVector(size, clz_t - clz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
@@ -2131,8 +2131,8 @@ BitVectorShr::is_consistent(const BitVector& t, uint32_t pos_x)
   /* CC: pos_x = 0: \exists y. (y <= ctz(t) /\ mcb(x >> y, t))
    *     pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y)) */
 
-  uint32_t clz_t = t.count_leading_zeros();
-  uint32_t size  = t.size();
+  uint64_t clz_t = t.count_leading_zeros();
+  uint64_t size  = t.size();
 
   if (clz_t != size)
   {
@@ -2140,13 +2140,13 @@ BitVectorShr::is_consistent(const BitVector& t, uint32_t pos_x)
     {
       if (x.is_fixed())
       {
-        uint32_t clz_x = x.lo().count_leading_zeros();
+        uint64_t clz_x = x.lo().count_leading_zeros();
         return x.lo().bvshr(clz_t - clz_x).compare(t) == 0;
       }
 
       std::vector<BitVector> stack;
 
-      for (uint32_t i = 0; i <= clz_t; ++i)
+      for (uint64_t i = 0; i <= clz_t; ++i)
       {
         BitVectorDomain x_slice = x.bvextract(size - 1, i);
         BitVector t_slice       = t.bvextract(size - 1 - i, 0);
@@ -2155,9 +2155,9 @@ BitVectorShr::is_consistent(const BitVector& t, uint32_t pos_x)
       bool res = !stack.empty();
       if (res)
       {
-        uint32_t i         = d_rng->pick<uint32_t>(0, stack.size() - 1);
+        uint64_t i         = d_rng->pick<uint64_t>(0, stack.size() - 1);
         BitVector& left    = stack[i];
-        uint32_t size_left = left.size();
+        uint64_t size_left = left.size();
         if (size == size_left)
         {
           d_consistent.reset(new BitVector(left));
@@ -2228,14 +2228,14 @@ BitVectorShr::inverse_value(RNG* rng,
                             uint32_t pos_x,
                             std::unique_ptr<BitVector>& inverse_value)
 {
-  uint32_t size = t.size();
+  uint64_t size = t.size();
   if (pos_x == 0)
   {
     /** inverse value: t << s (with bits shifted in set randomly) */
 
     /* actual value is small enough to fit into 32 bit (max bit width handled
      * is INT32_MAX) */
-    uint32_t shift;
+    uint64_t shift;
     if (size > 64)
     {
       shift = s.bvextract(32, 0).to_uint64();
@@ -2304,10 +2304,10 @@ BitVectorShr::inverse_value(RNG* rng,
     }
     else
     {
-      uint32_t clz_s = s.count_leading_zeros();
-      uint32_t clz_t = t.count_leading_zeros();
+      uint64_t clz_s = s.count_leading_zeros();
+      uint64_t clz_t = t.count_leading_zeros();
       assert(clz_t >= clz_s);
-      uint32_t shift = clz_t - clz_s;
+      uint64_t shift = clz_t - clz_s;
       if (t.is_zero())
       {
         assert(!x.has_fixed_bits());
@@ -2338,8 +2338,8 @@ BitVectorShr::consistent_value(const BitVector& t, uint32_t pos_x)
 
   if (d_consistent == nullptr)
   {
-    uint32_t size  = x.size();
-    uint32_t clz_t = t.count_leading_zeros();
+    uint64_t size  = x.size();
+    uint64_t clz_t = t.count_leading_zeros();
 
     if (pos_x == 0)
     {
@@ -2358,7 +2358,7 @@ BitVectorShr::consistent_value(const BitVector& t, uint32_t pos_x)
       else
       {
         assert(!x.has_fixed_bits());
-        uint32_t shift = d_rng->pick<uint32_t>(0, clz_t);
+        uint64_t shift = d_rng->pick<uint64_t>(0, clz_t);
         if (shift == 0)
         {
           d_consistent.reset(new BitVector(t));
@@ -2373,7 +2373,7 @@ BitVectorShr::consistent_value(const BitVector& t, uint32_t pos_x)
     }
     else
     {
-      uint32_t max = clz_t < size ? clz_t : ((1u << size) - 1);
+      uint64_t max = clz_t < size ? clz_t : ((1u << size) - 1);
       if (x.has_fixed_bits())
       {
         BitVectorDomainGenerator gen(
@@ -2383,7 +2383,7 @@ BitVectorShr::consistent_value(const BitVector& t, uint32_t pos_x)
       }
       else
       {
-        d_consistent.reset(new BitVector(size, d_rng->pick<uint32_t>(0, max)));
+        d_consistent.reset(new BitVector(size, d_rng->pick<uint64_t>(0, max)));
       }
     }
   }
@@ -2409,7 +2409,7 @@ operator<<(std::ostream& out, const BitVectorShr& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorAshr::BitVectorAshr(RNG* rng,
-                             uint32_t size,
+                             uint64_t size,
                              BitVectorNode* child0,
                              BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -2501,7 +2501,7 @@ BitVectorAshr::is_invertible(const BitVector& t,
         d_rng, t, s, x, pos_x, is_essential_check ? nullptr : &d_inverse);
   }
 
-  uint32_t size = s.size();
+  uint64_t size = s.size();
   if (s.compare(BitVector(size, size)) < 0)
   {
     ic_wo = t.bvshl(s).ibvashr(s).compare(t) == 0;
@@ -2544,14 +2544,14 @@ BitVectorAshr::is_consistent(const BitVector& t, uint32_t pos_x)
    */
 
   bool is_signed = t.get_msb();
-  uint32_t cnt_t = is_signed ? t.count_leading_ones() : t.count_leading_zeros();
-  uint32_t size  = t.size();
+  uint64_t cnt_t = is_signed ? t.count_leading_ones() : t.count_leading_zeros();
+  uint64_t size  = t.size();
 
   if (x.is_fixed())
   {
     if (pos_x == 0)
     {
-      uint32_t cnt_x = is_signed ? x.lo().count_leading_ones()
+      uint64_t cnt_x = is_signed ? x.lo().count_leading_ones()
                                  : x.lo().count_leading_zeros();
       return x.lo().bvashr(cnt_t - cnt_x).compare(t) == 0;
     }
@@ -2603,7 +2603,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint32_t pos_x)
   }
   std::vector<BitVector> stack;
 
-  for (uint32_t i = 0; i < cnt_t; ++i)
+  for (uint64_t i = 0; i < cnt_t; ++i)
   {
     BitVectorDomain x_slice = x.bvextract(size - 1, i);
     BitVector t_slice       = t.bvextract(size - 1 - i, 0);
@@ -2612,9 +2612,9 @@ BitVectorAshr::is_consistent(const BitVector& t, uint32_t pos_x)
   bool res = !stack.empty();
   if (res)
   {
-    uint32_t i         = d_rng->pick<uint32_t>(0, stack.size() - 1);
+    uint64_t i         = d_rng->pick<uint64_t>(0, stack.size() - 1);
     BitVector& left    = stack[i];
-    uint32_t size_left = left.size();
+    uint64_t size_left = left.size();
     if (size == size_left)
     {
       d_consistent.reset(new BitVector(left));
@@ -2637,7 +2637,7 @@ BitVectorAshr::inverse_value(const BitVector& t, uint32_t pos_x)
   assert(!x.is_fixed());
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
-  uint32_t size      = t.size();
+  uint64_t size      = t.size();
 
   if (d_inverse == nullptr)
   {
@@ -2692,10 +2692,10 @@ BitVectorAshr::inverse_value(const BitVector& t, uint32_t pos_x)
         }
         else
         {
-          uint32_t clo_s = s.count_leading_ones();
-          uint32_t clo_t = t.count_leading_ones();
+          uint64_t clo_s = s.count_leading_ones();
+          uint64_t clo_t = t.count_leading_ones();
           assert(clo_t >= clo_s);
-          uint32_t shift = clo_t - clo_s;
+          uint64_t shift = clo_t - clo_s;
           if (t.is_ones())
           {
             assert(!x.has_fixed_bits());
@@ -2737,8 +2737,8 @@ BitVectorAshr::consistent_value(const BitVector& t, uint32_t pos_x)
   if (d_consistent == nullptr)
   {
     bool is_signed = t.get_msb();
-    uint32_t size  = x.size();
-    uint32_t cnt_t =
+    uint64_t size  = x.size();
+    uint64_t cnt_t =
         is_signed ? t.count_leading_ones() : t.count_leading_zeros();
 
     if (pos_x == 0)
@@ -2770,7 +2770,7 @@ BitVectorAshr::consistent_value(const BitVector& t, uint32_t pos_x)
       else
       {
         assert(!x.has_fixed_bits());
-        uint32_t shift = d_rng->pick<uint32_t>(0, cnt_t - 1);
+        uint64_t shift = d_rng->pick<uint64_t>(0, cnt_t - 1);
         if (shift == 0)
         {
           d_consistent.reset(new BitVector(t));
@@ -2785,7 +2785,7 @@ BitVectorAshr::consistent_value(const BitVector& t, uint32_t pos_x)
     }
     else
     {
-      uint32_t max = cnt_t < size ? cnt_t - 1 : ((1u << size) - 1);
+      uint64_t max = cnt_t < size ? cnt_t - 1 : ((1u << size) - 1);
       if (x.has_fixed_bits())
       {
         BitVectorDomainGenerator gen(
@@ -2795,7 +2795,7 @@ BitVectorAshr::consistent_value(const BitVector& t, uint32_t pos_x)
       }
       else
       {
-        d_consistent.reset(new BitVector(size, d_rng->pick<uint32_t>(0, max)));
+        d_consistent.reset(new BitVector(size, d_rng->pick<uint64_t>(0, max)));
       }
     }
   }
@@ -2821,7 +2821,7 @@ operator<<(std::ostream& out, const BitVectorAshr& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorUdiv::BitVectorUdiv(RNG* rng,
-                             uint32_t size,
+                             uint64_t size,
                              BitVectorNode* child0,
                              BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -2960,7 +2960,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
     }
     else if (!s.is_zero() || !t.is_zero())
     {
-      uint32_t size = s.size();
+      uint64_t size = s.size();
       BitVector min, max;
       if (s.bvudiv(x.hi()).compare(t) > 0)
       {
@@ -3049,7 +3049,7 @@ BitVectorUdiv::is_consistent(const BitVector& t, uint32_t pos_x)
       return t.is_ones();
     }
 
-    uint32_t size  = t.size();
+    uint64_t size  = t.size();
     BitVector zero = BitVector::mk_zero(size);
     BitVector one  = BitVector::mk_one(size);
 
@@ -3100,7 +3100,7 @@ BitVectorUdiv::inverse_value(const BitVector& t, uint32_t pos_x)
   assert(!x.is_fixed());
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
-  uint32_t size      = t.size();
+  uint64_t size      = t.size();
 
   if (d_inverse == nullptr)
   {
@@ -3280,7 +3280,7 @@ BitVectorUdiv::consistent_value(const BitVector& t, uint32_t pos_x)
 {
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
-  uint32_t size = x.size();
+  uint64_t size = x.size();
 
   /**
    * consistent value:
@@ -3447,7 +3447,7 @@ BitVectorUdiv::consistent_value_pos0_aux(const BitVector& t)
    *                       min = 2 * t otherwise */
 
   const BitVectorDomain& x = d_children[0]->domain();
-  uint32_t size            = t.size();
+  uint64_t size            = t.size();
   BitVector one            = BitVector::mk_one(size);
   BitVector max, res;
 
@@ -3524,7 +3524,7 @@ operator<<(std::ostream& out, const BitVectorUdiv& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorUlt::BitVectorUlt(RNG* rng,
-                           uint32_t size,
+                           uint64_t size,
                            BitVectorNode* child0,
                            BitVectorNode* child1,
                            bool opt_concat_sext)
@@ -3580,7 +3580,7 @@ void
 BitVectorUlt::compute_min_max_bounds(
     const BitVector& s, bool t, uint32_t pos_x, BitVector& min, BitVector& max)
 {
-  uint32_t size = s.size();
+  uint64_t size = s.size();
   BitVector *min_u, *max_u;
   if (pos_x == 0)
   {
@@ -3652,7 +3652,7 @@ BitVectorUlt::is_invertible(const BitVector& t,
 
   bool opt_sext = d_opt_concat_sext && d_children[pos_x]->get_kind() == SEXT;
   BitVectorDomain dxn, dxx;
-  uint32_t n = 0, bw_x = 0, bw_xx = 0;
+  uint64_t n = 0, bw_x = 0, bw_xx = 0;
 
   if (opt_sext)
   {
@@ -3881,7 +3881,7 @@ BitVectorUlt::inverse_value(const BitVector& t, uint32_t pos_x)
 
     if (d_inverse == nullptr)
     {
-      uint32_t size = s.size();
+      uint64_t size = s.size();
       bool is_true  = t.is_true();
 
       /**
@@ -3920,7 +3920,7 @@ BitVectorUlt::inverse_value_concat_sext_new_random(const BitVectorDomain& d,
                                                    const BitVector& min,
                                                    const BitVector& max)
 {
-  uint32_t size = d.size();
+  uint64_t size = d.size();
   assert(min.size() == size);
   assert(max.size() == size);
 
@@ -3948,9 +3948,9 @@ BitVectorUlt::inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s)
 
   const BitVectorDomain& dx = op_x.domain();
 
-  uint32_t bw_x  = op_x.size();
-  uint32_t bw_x0 = op_x[0]->size();
-  uint32_t bw_x1 = op_x[1]->size();
+  uint64_t bw_x  = op_x.size();
+  uint64_t bw_x0 = op_x[0]->size();
+  uint64_t bw_x1 = op_x[1]->size();
   assert(bw_x - bw_x1 == bw_x0);
 
   const BitVector x   = op_x.assignment();
@@ -4096,9 +4096,9 @@ BitVectorUlt::inverse_value_sext(bool t, uint32_t pos_x, uint32_t pos_s)
 
   const BitVectorDomain& dx = op_x.domain();
 
-  uint32_t bw_x  = op_x.size();
-  uint32_t bw_xx = op_x[0]->size();  // bw of the op to extend
-  uint32_t n     = bw_x - bw_xx;     // the number of extension bits
+  uint64_t bw_x  = op_x.size();
+  uint64_t bw_xx = op_x[0]->size();  // bw of the op to extend
+  uint64_t n     = bw_x - bw_xx;     // the number of extension bits
 
   const BitVector x   = op_x.assignment();
   BitVector xn        = x.bvextract(bw_x - 1, bw_xx);
@@ -4259,7 +4259,7 @@ BitVectorUlt::consistent_value(const BitVector& t, uint32_t pos_x)
 
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
-  uint32_t size = x.size();
+  uint64_t size = x.size();
   bool is_ult   = t.is_true();
 
   /**
@@ -4339,7 +4339,7 @@ operator<<(std::ostream& out, const BitVectorUlt& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorSlt::BitVectorSlt(RNG* rng,
-                           uint32_t size,
+                           uint64_t size,
                            BitVectorNode* child0,
                            BitVectorNode* child1,
                            bool opt_concat_sext)
@@ -4395,7 +4395,7 @@ void
 BitVectorSlt::compute_min_max_bounds(
     const BitVector& s, bool t, uint32_t pos_x, BitVector& min, BitVector& max)
 {
-  uint32_t size = s.size();
+  uint64_t size = s.size();
   BitVector *min_s, *max_s;
   if (pos_x == 0)
   {
@@ -4463,13 +4463,13 @@ BitVectorSlt::is_invertible(const BitVector& t,
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
   bool is_true             = t.is_true();
-  uint32_t msb             = x.size() - 1;
+  uint64_t msb             = x.size() - 1;
   BitVector* min_s         = d_children[pos_x]->min_s();
   BitVector* max_s         = d_children[pos_x]->max_s();
 
   bool opt_sext = d_opt_concat_sext && d_children[pos_x]->get_kind() == SEXT;
   BitVectorDomain dxn, dxx;
-  uint32_t n = 0, bw_x = 0, bw_xx = 0;
+  uint64_t n = 0, bw_x = 0, bw_xx = 0;
 
   if (opt_sext)
   {
@@ -4702,7 +4702,7 @@ BitVectorSlt::inverse_value_concat_sext_new_random(const BitVectorDomain& d,
                                                    const BitVector& min,
                                                    const BitVector& max)
 {
-  uint32_t size = d.size();
+  uint64_t size = d.size();
   assert(min.size() == size);
   assert(max.size() == size);
 
@@ -4730,9 +4730,9 @@ BitVectorSlt::inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s)
 
   const BitVectorDomain& dx = op_x.domain();
 
-  uint32_t bw_x  = op_x.size();
-  uint32_t bw_x0 = op_x[0]->size();
-  uint32_t bw_x1 = op_x[1]->size();
+  uint64_t bw_x  = op_x.size();
+  uint64_t bw_x0 = op_x[0]->size();
+  uint64_t bw_x1 = op_x[1]->size();
   assert(bw_x - bw_x1 == bw_x0);
 
   const BitVector x   = op_x.assignment();
@@ -4880,9 +4880,9 @@ BitVectorSlt::inverse_value_sext(bool t, uint32_t pos_x, uint32_t pos_s)
 
   const BitVectorDomain& dx = op_x.domain();
 
-  uint32_t bw_x  = op_x.size();
-  uint32_t bw_xx = op_x[0]->size();  // bw of the op to extend
-  uint32_t n     = bw_x - bw_xx;     // the number of extension bits
+  uint64_t bw_x  = op_x.size();
+  uint64_t bw_xx = op_x[0]->size();  // bw of the op to extend
+  uint64_t n     = bw_x - bw_xx;     // the number of extension bits
 
   const BitVector x   = op_x.assignment();
   BitVector xn        = x.bvextract(bw_x - 1, bw_xx);
@@ -5100,7 +5100,7 @@ BitVectorSlt::inverse_value(const BitVector& t, uint32_t pos_x)
        *              t = 1: random value >s s
        */
 
-      uint32_t size = s.size();
+      uint64_t size = s.size();
       bool is_true  = t.is_true();
       BitVector min, max;
       compute_min_max_bounds(s, is_true, pos_x, min, max);
@@ -5130,7 +5130,7 @@ BitVectorSlt::consistent_value(const BitVector& t, uint32_t pos_x)
 
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
-  uint32_t size = x.size();
+  uint64_t size = x.size();
   bool is_ult   = t.is_true();
 
   /**
@@ -5219,7 +5219,7 @@ operator<<(std::ostream& out, const BitVectorSlt& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
-                             uint32_t size,
+                             uint64_t size,
                              BitVectorNode* child0,
                              BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -5332,7 +5332,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
         {
           /* simplest solution (0 <= res < s: res = t) does not apply, thus
            * x = s * n + t with n s.t. (s * n + t) does not overflow */
-          uint32_t size  = x.size();
+          uint64_t size  = x.size();
           BitVector ones = BitVector::mk_ones(size);
           if (ones.bvsub(s).compare(t) < 0)
           {
@@ -5446,7 +5446,7 @@ BitVectorUrem::is_consistent(const BitVector& t, uint32_t pos_x)
    *                 (t != ones => \exists y. (mfb(x, y) && y > t))) */
 
   bool t_is_ones = t.is_ones();
-  uint32_t size  = t.size();
+  uint64_t size  = t.size();
 
   if (pos_x == 0)
   {
@@ -5515,7 +5515,7 @@ BitVectorUrem::inverse_value(const BitVector& t,
   assert(!x.is_fixed());
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
-  uint32_t size      = t.size();
+  uint64_t size      = t.size();
 
   if (d_inverse == nullptr)
   {
@@ -5720,7 +5720,7 @@ BitVectorUrem::consistent_value(const BitVector& t, uint32_t pos_x)
 {
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
-  uint32_t size = x.size();
+  uint64_t size = x.size();
 
   /**
    * consistent value:
@@ -5828,7 +5828,7 @@ operator<<(std::ostream& out, const BitVectorUrem& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorXor::BitVectorXor(RNG* rng,
-                           uint32_t size,
+                           uint64_t size,
                            BitVectorNode* child0,
                            BitVectorNode* child1)
     : BitVectorNode(rng, size, child0, child1)
@@ -5974,7 +5974,7 @@ operator<<(std::ostream& out, const BitVectorXor& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorIte::BitVectorIte(RNG* rng,
-                           uint32_t size,
+                           uint64_t size,
                            BitVectorNode* child0,
                            BitVectorNode* child1,
                            BitVectorNode* child2)
@@ -6208,7 +6208,7 @@ BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
   const BitVector& s0 = d_children[0]->assignment();
-  uint32_t size       = x.size();
+  uint64_t size       = x.size();
 
   /**
    * consistent value:
@@ -6327,7 +6327,7 @@ operator<<(std::ostream& out, const BitVectorIte& node)
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorNot::BitVectorNot(RNG* rng, uint32_t size, BitVectorNode* child0)
+BitVectorNot::BitVectorNot(RNG* rng, uint64_t size, BitVectorNode* child0)
     : BitVectorNode(rng, size, child0)
 {
   assert(size == child0->size());
@@ -6444,7 +6444,7 @@ operator<<(std::ostream& out, const BitVectorNot& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorExtract::BitVectorExtract(
-    RNG* rng, uint32_t size, BitVectorNode* child0, uint32_t hi, uint32_t lo)
+    RNG* rng, uint64_t size, BitVectorNode* child0, uint64_t hi, uint64_t lo)
     : BitVectorNode(rng, size, child0), d_hi(hi), d_lo(lo)
 {
   assert(size == hi - lo + 1);
@@ -6456,8 +6456,8 @@ BitVectorExtract::BitVectorExtract(
 BitVectorExtract::BitVectorExtract(RNG* rng,
                                    const BitVectorDomain& domain,
                                    BitVectorNode* child0,
-                                   uint32_t hi,
-                                   uint32_t lo)
+                                   uint64_t hi,
+                                   uint64_t lo)
     : BitVectorNode(rng, domain, child0), d_hi(hi), d_lo(lo)
 {
   assert(domain.size() == hi - lo + 1);
@@ -6547,7 +6547,7 @@ BitVectorExtract::inverse_value(const BitVector& t, uint32_t pos_x)
    * constraints, we fix the assignment of those bits to match these const bits.
    */
 
-  uint32_t size = x.size();
+  uint64_t size = x.size();
   bool keep     = d_rng->pick_with_prob(s_prob_keep);
   BitVector left, propagated, right;
 
@@ -6665,9 +6665,9 @@ operator<<(std::ostream& out, const BitVectorExtract& node)
 /* -------------------------------------------------------------------------- */
 
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
-                                         uint32_t size,
+                                         uint64_t size,
                                          BitVectorNode* child0,
-                                         uint32_t n)
+                                         uint64_t n)
     : BitVectorNode(rng, size, child0), d_n(n)
 {
   assert(size == child0->size() + n);
@@ -6677,7 +6677,7 @@ BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
 BitVectorSignExtend::BitVectorSignExtend(RNG* rng,
                                          const BitVectorDomain& domain,
                                          BitVectorNode* child0,
-                                         uint32_t n)
+                                         uint64_t n)
     : BitVectorNode(rng, domain, child0), d_n(n)
 {
   assert(domain.size() == child0->size() + n);
@@ -6728,7 +6728,7 @@ BitVectorSignExtend::is_invertible(const BitVector& t,
   (void) pos_x;
 
   const BitVectorDomain& x = d_children[pos_x]->domain();
-  uint32_t size            = t.size();
+  uint64_t size            = t.size();
   BitVector t_x            = t.bvextract(size - 1 - d_n, 0);
   BitVector t_ext          = t.bvextract(size - 1, size - 1 - d_n);
 

@@ -22,7 +22,7 @@ class BitVectorDomain
    */
   BitVectorDomain() {}
   /** Construct a bit-vector domain of given size. */
-  BitVectorDomain(uint32_t size);
+  BitVectorDomain(uint64_t size);
   /** Construct a bit-vector domain ranging from 'lo' to 'hi'. */
   BitVectorDomain(const BitVector &lo, const BitVector &hi);
   /** Construct a bit-vector domain from a 3-valued string representation. */
@@ -30,7 +30,7 @@ class BitVectorDomain
   /** Construct a fixed bit-vector domain with lo = 'bv' and hi = 'bv'. */
   BitVectorDomain(const BitVector &bv);
   /** Construct a fixed bit-vector domain of given size from a uint value. */
-  BitVectorDomain(uint32_t size, uint64_t value);
+  BitVectorDomain(uint64_t size, uint64_t value);
   /** Copy constructor. */
   BitVectorDomain(const BitVectorDomain &other);
   /** Destructor. */
@@ -46,7 +46,7 @@ class BitVectorDomain
    * Get the size of this bit-vector domain.
    * @return The size of this domain.
    */
-  uint32_t size() const;
+  uint64_t size() const;
 
   /**
    * Get the lower bound of this domain.
@@ -109,24 +109,24 @@ class BitVectorDomain
    * Determine if bit at given index is fixed.
    * @return True if bit at given index is fixed.
    */
-  bool is_fixed_bit(uint32_t idx) const;
+  bool is_fixed_bit(uint64_t idx) const;
   /**
    * Determine if bit at given index is fixed and true.
    * @return True if bit at given index is fixed and true.
    */
-  bool is_fixed_bit_true(uint32_t idx) const;
+  bool is_fixed_bit_true(uint64_t idx) const;
   /**
    * Determine if bit at given index is fixed and false.
    * @return True if bit at given index is fixed and false.
    */
-  bool is_fixed_bit_false(uint32_t idx) const;
+  bool is_fixed_bit_false(uint64_t idx) const;
 
   /**
    * Fix bit at given index to given value.
    * @param idx   The index of the bit to fix.
    * @param value The fixed value of the bit.
    */
-  void fix_bit(uint32_t idx, bool value);
+  void fix_bit(uint64_t idx, bool value);
   /**
    * Fix domain to given value.
    * @param val The value this domain is to be fixed to.
@@ -207,7 +207,7 @@ class BitVectorDomain
    * @param idx_lo The lower bit-index of the range (inclusive).
    * @return A domain representing the given bit range of this domain.
    */
-  BitVectorDomain bvextract(uint32_t idx_hi, uint32_t idx_lo) const;
+  BitVectorDomain bvextract(uint64_t idx_hi, uint64_t idx_lo) const;
 
   /**
    * Determine a random factor of `num > t`.

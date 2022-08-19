@@ -50,10 +50,10 @@ is_valid_hex_str(const std::string& str)
 #endif
 
 #if !defined(__GNUC__) && !defined(__clang__)
-static uint32_t
-clz_limb(uint32_t nbits_per_limb, mp_limb_t limb)
+static uint64_t
+clz_limb(uint64_t nbits_per_limb, mp_limb_t limb)
 {
-  uint32_t w;
+  uint64_t w;
   mp_limb_t mask;
   mp_limb_t one = 1u;
   for (w = 0, mask = 0; w < nbits_per_limb; ++w)
@@ -67,7 +67,7 @@ clz_limb(uint32_t nbits_per_limb, mp_limb_t limb)
 }  // namespace
 
 bool
-BitVector::fits_in_size(uint32_t size, const std::string& str, uint32_t base)
+BitVector::fits_in_size(uint64_t size, const std::string& str, uint32_t base)
 {
   bool is_neg = str[0] == '-';
   bool res;
@@ -106,7 +106,7 @@ BitVector::fits_in_size(uint32_t size, const std::string& str, uint32_t base)
 }
 
 bool
-BitVector::fits_in_size(uint32_t size, uint64_t value, bool sign)
+BitVector::fits_in_size(uint64_t size, uint64_t value, bool sign)
 {
   if (sign)
   {
@@ -133,19 +133,19 @@ BitVector::mk_false()
 }
 
 BitVector
-BitVector::mk_zero(uint32_t size)
+BitVector::mk_zero(uint64_t size)
 {
   return BitVector(size);
 }
 
 BitVector
-BitVector::mk_one(uint32_t size)
+BitVector::mk_one(uint64_t size)
 {
   return BitVector(size, 1);
 }
 
 BitVector
-BitVector::mk_ones(uint32_t size)
+BitVector::mk_ones(uint64_t size)
 {
   BitVector res(size);
   if (size > 64)
@@ -162,7 +162,7 @@ BitVector::mk_ones(uint32_t size)
 }
 
 BitVector
-BitVector::mk_min_signed(uint32_t size)
+BitVector::mk_min_signed(uint64_t size)
 {
   BitVector res = BitVector::mk_zero(size);
   res.set_bit(size - 1, true);
@@ -170,7 +170,7 @@ BitVector::mk_min_signed(uint32_t size)
 }
 
 BitVector
-BitVector::mk_max_signed(uint32_t size)
+BitVector::mk_max_signed(uint64_t size)
 {
   BitVector res = BitVector::mk_ones(size);
   res.set_bit(size - 1, false);
@@ -190,7 +190,7 @@ BitVector::bvite(const BitVector& c, const BitVector& t, const BitVector& e)
 
 BitVector::BitVector() : d_size(0), d_val_uint64(0) {}
 
-BitVector::BitVector(uint32_t size) : d_size(size), d_val_uint64(0)
+BitVector::BitVector(uint64_t size) : d_size(size), d_val_uint64(0)
 {
   assert(size > 0);
   if (is_gmp())
@@ -199,7 +199,7 @@ BitVector::BitVector(uint32_t size) : d_size(size), d_val_uint64(0)
   }
 }
 
-BitVector::BitVector(uint32_t size, RNG& rng) : BitVector(size)
+BitVector::BitVector(uint64_t size, RNG& rng) : BitVector(size)
 {
   if (is_gmp())
   {
@@ -215,7 +215,7 @@ BitVector::BitVector(uint32_t size, RNG& rng) : BitVector(size)
   }
 }
 
-BitVector::BitVector(uint32_t size,
+BitVector::BitVector(uint64_t size,
                      RNG& rng,
                      const BitVector& from,
                      const BitVector& to,
@@ -225,20 +225,20 @@ BitVector::BitVector(uint32_t size,
   iset(rng, from, to, sign);
 }
 
-BitVector::BitVector(uint32_t size, RNG& rng, uint32_t idx_hi, uint32_t idx_lo)
+BitVector::BitVector(uint64_t size, RNG& rng, uint64_t idx_hi, uint64_t idx_lo)
     : BitVector(size, rng)
 {
-  for (uint32_t i = 0; i < idx_lo; ++i)
+  for (uint64_t i = 0; i < idx_lo; ++i)
   {
     set_bit(i, false);
   }
-  for (uint32_t i = idx_hi; i < d_size; ++i)
+  for (uint64_t i = idx_hi; i < d_size; ++i)
   {
     set_bit(i, false);
   }
 }
 
-BitVector::BitVector(uint32_t size, const std::string& value, uint32_t base)
+BitVector::BitVector(uint64_t size, const std::string& value, uint32_t base)
     : d_size(size)
 {
   assert(!value.empty());
@@ -261,7 +261,7 @@ BitVector::BitVector(uint32_t size, const std::string& value, uint32_t base)
   }
 }
 
-BitVector::BitVector(uint32_t size, uint64_t value, bool sign) : d_size(size)
+BitVector::BitVector(uint64_t size, uint64_t value, bool sign) : d_size(size)
 {
   assert(size > 0);
   assert(sign || fits_in_size(size, value));
@@ -392,8 +392,8 @@ BitVector::operator=(const BitVector& other)
 size_t
 BitVector::hash() const
 {
-  uint32_t i, j = 0, n, res = 0;
-  uint32_t x, p0, p1;
+  uint64_t i, j = 0, n, res = 0;
+  uint64_t x, p0, p1;
 
   res = d_size * s_hash_primes[j++];
 
@@ -410,8 +410,8 @@ BitVector::hash() const
       limb = mpz_getlimbn(d_val_gmp, i);
       if (mp_bits_per_limb == 64)
       {
-        uint32_t lo = (uint32_t) limb;
-        uint32_t hi = (uint32_t) (limb >> 32);
+        uint64_t lo = limb;
+        uint64_t hi = (limb >> 32);
         x           = lo ^ res;
         x           = ((x >> 16) ^ x) * p0;
         x           = ((x >> 16) ^ x) * p1;
@@ -555,8 +555,8 @@ BitVector::to_string(uint32_t base) const
     if (base == 2)
     {
       /* Pad with leading zeros for binary representation. */
-      uint32_t n    = strlen(tmp);
-      uint32_t diff = d_size - n;
+      uint64_t n    = strlen(tmp);
+      uint64_t diff = d_size - n;
       assert(n <= d_size);
       res << std::string(diff, '0');
     }
@@ -630,8 +630,8 @@ BitVector::signed_compare(const BitVector& bv) const
     return -1;
   }
 
-  uint32_t msb_a = get_msb();
-  uint32_t msb_b = bv.get_msb();
+  uint64_t msb_a = get_msb();
+  uint64_t msb_b = bv.get_msb();
 
   if (msb_a && !msb_b)
   {
@@ -645,7 +645,7 @@ BitVector::signed_compare(const BitVector& bv) const
 }
 
 bool
-BitVector::get_bit(uint32_t idx) const
+BitVector::get_bit(uint64_t idx) const
 {
   assert(!is_null());
   assert(idx < size());
@@ -657,7 +657,7 @@ BitVector::get_bit(uint32_t idx) const
 }
 
 void
-BitVector::set_bit(uint32_t idx, bool value)
+BitVector::set_bit(uint64_t idx, bool value)
 {
   assert(!is_null());
   assert(idx < d_size);
@@ -686,7 +686,7 @@ BitVector::set_bit(uint32_t idx, bool value)
 }
 
 void
-BitVector::flip_bit(uint32_t idx)
+BitVector::flip_bit(uint64_t idx)
 {
   assert(!is_null());
   if (is_gmp())
@@ -747,20 +747,20 @@ BitVector::is_ones() const
 
   if (is_gmp())
   {
-    uint32_t n = mpz_size(d_val_gmp);
+    uint64_t n = mpz_size(d_val_gmp);
     if (n == 0) return false;  // zero
     uint64_t m = d_size / mp_bits_per_limb;
     if (d_size % mp_bits_per_limb) m += 1;
     if (m != n) return false;  // less limbs used than expected, not ones
     uint64_t max = mp_bits_per_limb == 64 ? UINT64_MAX : UINT32_MAX;
-    for (uint32_t i = 0; i < n - 1; ++i)
+    for (uint64_t i = 0; i < n - 1; ++i)
     {
       mp_limb_t limb = mpz_getlimbn(d_val_gmp, i);
       if (((uint64_t) limb) != max) return false;
     }
     mp_limb_t limb = mpz_getlimbn(d_val_gmp, n - 1);
-    if (d_size == (uint32_t) mp_bits_per_limb) return ((uint64_t) limb) == max;
-    m = mp_bits_per_limb - d_size % mp_bits_per_limb;
+    if (d_size == (uint64_t) mp_bits_per_limb) return ((uint64_t) limb) == max;
+    m = static_cast<uint64_t>(mp_bits_per_limb - d_size % mp_bits_per_limb);
     return ((uint64_t) limb) == (max >> m);
   }
   return d_val_uint64 == uint64_fdiv_r_2exp(d_size, UINT64_MAX);
@@ -870,11 +870,11 @@ BitVector::is_umul_overflow(const BitVector& bv) const
   return false;
 }
 
-uint32_t
+uint64_t
 BitVector::count_trailing_zeros() const
 {
   assert(!is_null());
-  uint32_t res = 0;
+  uint64_t res = 0;
   if (is_gmp())
   {
     res = mpz_scan1(d_val_gmp, 0);
@@ -882,7 +882,7 @@ BitVector::count_trailing_zeros() const
   }
   else
   {
-    for (uint32_t i = 0; i < d_size; ++i)
+    for (uint64_t i = 0; i < d_size; ++i)
     {
       if (get_bit(i)) break;
       res += 1;
@@ -891,14 +891,14 @@ BitVector::count_trailing_zeros() const
   return res;
 }
 
-uint32_t
+uint64_t
 BitVector::count_leading_zeros() const
 {
   assert(!is_null());
   return count_leading(true);
 }
 
-uint32_t
+uint64_t
 BitVector::count_leading_ones() const
 {
   assert(!is_null());
@@ -1060,7 +1060,7 @@ BitVector::bvsge(const BitVector& bv) const
 }
 
 BitVector
-BitVector::bvshl(uint32_t shift) const
+BitVector::bvshl(uint64_t shift) const
 {
   return BitVector(d_size).ibvshl(*this, shift);
 }
@@ -1072,7 +1072,7 @@ BitVector::bvshl(const BitVector& bv) const
 }
 
 BitVector
-BitVector::bvshr(uint32_t shift) const
+BitVector::bvshr(uint64_t shift) const
 {
   return BitVector(d_size).ibvshr(*this, shift);
 }
@@ -1084,7 +1084,7 @@ BitVector::bvshr(const BitVector& bv) const
 }
 
 BitVector
-BitVector::bvashr(uint32_t shift) const
+BitVector::bvashr(uint64_t shift) const
 {
   return BitVector(d_size).ibvashr(*this, shift);
 }
@@ -1132,19 +1132,19 @@ BitVector::bvconcat(const BitVector& bv) const
 }
 
 BitVector
-BitVector::bvextract(uint32_t idx_hi, uint32_t idx_lo) const
+BitVector::bvextract(uint64_t idx_hi, uint64_t idx_lo) const
 {
   return BitVector(d_size).ibvextract(*this, idx_hi, idx_lo);
 }
 
 BitVector
-BitVector::bvzext(uint32_t n) const
+BitVector::bvzext(uint64_t n) const
 {
   return BitVector(d_size).ibvzext(*this, n);
 }
 
 BitVector
-BitVector::bvsext(uint32_t n) const
+BitVector::bvsext(uint64_t n) const
 {
   return BitVector(d_size).ibvsext(*this, n);
 }
@@ -1184,7 +1184,7 @@ BitVector::ibvnot(const BitVector& bv)
 {
   assert(!bv.is_null());
 
-  uint32_t size = bv.d_size;
+  uint64_t size = bv.d_size;
 
   if (bv.is_gmp())
   {
@@ -1212,7 +1212,7 @@ BitVector::ibvinc(const BitVector& bv)
 {
   assert(!bv.is_null());
 
-  uint32_t size = bv.d_size;
+  uint64_t size = bv.d_size;
 
   if (bv.is_gmp())
   {
@@ -1240,7 +1240,7 @@ BitVector::ibvdec(const BitVector& bv)
 {
   assert(!bv.is_null());
 
-  uint32_t size = bv.d_size;
+  uint64_t size = bv.d_size;
 
   if (bv.is_gmp())
   {
@@ -1282,7 +1282,7 @@ BitVector&
 BitVector::ibvredor(const BitVector& bv)
 {
   assert(!bv.is_null());
-  uint32_t val = 0;
+  uint64_t val = 0;
   if (bv.is_gmp())
   {
     mp_limb_t limb;
@@ -1313,7 +1313,7 @@ BitVector::ibvadd(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -1344,7 +1344,7 @@ BitVector::ibvsub(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -1375,7 +1375,7 @@ BitVector::ibvand(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -1424,7 +1424,7 @@ BitVector::ibvnand(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -1456,7 +1456,7 @@ BitVector::ibvnor(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -1488,7 +1488,7 @@ BitVector::ibvor(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -1519,7 +1519,7 @@ BitVector::ibvxnor(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -1551,7 +1551,7 @@ BitVector::ibvxor(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -1828,11 +1828,11 @@ BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1)
 }
 
 BitVector&
-BitVector::ibvshl(const BitVector& bv, uint32_t shift)
+BitVector::ibvshl(const BitVector& bv, uint64_t shift)
 {
   assert(!bv.is_null());
 
-  uint32_t size = bv.d_size;
+  uint64_t size = bv.d_size;
 
   if (bv.is_gmp())
   {
@@ -1876,8 +1876,8 @@ BitVector::ibvshl(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t shift;
-  uint32_t size = bv0.d_size;
+  uint64_t shift;
+  uint64_t size = bv0.d_size;
 
   if (bv1.shift_is_uint64(&shift))
   {
@@ -1907,11 +1907,11 @@ BitVector::ibvshl(const BitVector& bv0, const BitVector& bv1)
 }
 
 BitVector&
-BitVector::ibvshr(const BitVector& bv, uint32_t shift)
+BitVector::ibvshr(const BitVector& bv, uint64_t shift)
 {
   assert(!bv.is_null());
 
-  uint32_t size = bv.d_size;
+  uint64_t size = bv.d_size;
 
   if (bv.is_gmp())
   {
@@ -1954,8 +1954,8 @@ BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t shift;
-  uint32_t size = bv0.d_size;
+  uint64_t shift;
+  uint64_t size = bv0.d_size;
 
   if (bv1.shift_is_uint64(&shift))
   {
@@ -1985,7 +1985,7 @@ BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1)
 }
 
 BitVector&
-BitVector::ibvashr(const BitVector& bv, uint32_t shift)
+BitVector::ibvashr(const BitVector& bv, uint64_t shift)
 {
   assert(!bv.is_null());
 
@@ -2034,7 +2034,7 @@ BitVector::ibvmul(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -2065,7 +2065,7 @@ BitVector::ibvudiv(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -2111,7 +2111,7 @@ BitVector::ibvurem(const BitVector& bv0, const BitVector& bv1)
   assert(!bv1.is_null());
   assert(bv0.d_size == bv1.d_size);
 
-  uint32_t size = bv0.d_size;
+  uint64_t size = bv0.d_size;
 
   if (bv0.is_gmp())
   {
@@ -2247,7 +2247,7 @@ BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
 {
   assert(!bv0.is_null());
   assert(!bv1.is_null());
-  uint32_t size = bv0.d_size + bv1.d_size;
+  uint64_t size = bv0.d_size + bv1.d_size;
   const BitVector *b0, *b1;
   BitVector bb0, bb1;
 
@@ -2311,12 +2311,12 @@ BitVector::ibvconcat(const BitVector& bv0, const BitVector& bv1)
 }
 
 BitVector&
-BitVector::ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo)
+BitVector::ibvextract(const BitVector& bv, uint64_t idx_hi, uint64_t idx_lo)
 {
   assert(!bv.is_null());
   assert(idx_hi >= idx_lo);
   assert(idx_hi < bv.size());
-  uint32_t size = idx_hi - idx_lo + 1;
+  uint64_t size = idx_hi - idx_lo + 1;
 
   if (is_gmp())
   {
@@ -2376,13 +2376,13 @@ BitVector::ibvextract(const BitVector& bv, uint32_t idx_hi, uint32_t idx_lo)
 }
 
 BitVector&
-BitVector::ibvzext(const BitVector& bv, uint32_t n)
+BitVector::ibvzext(const BitVector& bv, uint64_t n)
 {
   assert(!bv.is_null());
 
   if (n == 0 && &bv == this) return *this;
 
-  uint32_t size = bv.d_size + n;
+  uint64_t size = bv.d_size + n;
 
   if (is_gmp())
   {
@@ -2437,7 +2437,7 @@ BitVector::ibvzext(const BitVector& bv, uint32_t n)
 }
 
 BitVector&
-BitVector::ibvsext(const BitVector& bv, uint32_t n)
+BitVector::ibvsext(const BitVector& bv, uint64_t n)
 {
   assert(!bv.is_null());
 
@@ -2457,8 +2457,8 @@ BitVector::ibvsext(const BitVector& bv, uint32_t n)
     }
     if (b->get_msb())
     {
-      uint32_t b_size = b->d_size;
-      uint32_t size   = b_size + n;
+      uint64_t b_size = b->d_size;
+      uint64_t size   = b_size + n;
       if (is_gmp())
       {
         mpz_set_ui(d_val_gmp, 1);
@@ -2553,7 +2553,7 @@ BitVector::ibvite(const BitVector& c, const BitVector& t, const BitVector& e)
   assert(c.d_size == 1);
   assert(e.d_size == t.d_size);
 
-  uint32_t size = t.d_size;
+  uint64_t size = t.d_size;
 
   if (c.is_true())
   {
@@ -2616,7 +2616,7 @@ BitVector::ibvmodinv(const BitVector& bv)
     pb = &bv;
   }
 
-  uint32_t size = pb->d_size;
+  uint64_t size = pb->d_size;
 
   if (d_size == 1)
   {
@@ -2667,7 +2667,7 @@ BitVector::ibvmodinv(const BitVector& bv)
        * -> lx * a = lx * 2^bw = 0 (2^bw_[bw] = 0)
        * -> ly * b = bv^-1 * bv = 1
        * -> ly is modular inverse of bv */
-      uint32_t esize = size + 1;
+      uint64_t esize = size + 1;
       BitVector a(esize), b(esize);
 
       a.set_bit(size, 1); /* 2^d_size */
@@ -2904,7 +2904,7 @@ BitVector::ibvsge(const BitVector& bv)
 }
 
 BitVector&
-BitVector::ibvshl(uint32_t shift)
+BitVector::ibvshl(uint64_t shift)
 {
   ibvshl(*this, shift);
   return *this;
@@ -2918,7 +2918,7 @@ BitVector::ibvshl(const BitVector& bv)
 }
 
 BitVector&
-BitVector::ibvshr(uint32_t shift)
+BitVector::ibvshr(uint64_t shift)
 {
   ibvshr(*this, shift);
   return *this;
@@ -2932,7 +2932,7 @@ BitVector::ibvshr(const BitVector& bv)
 }
 
 BitVector&
-BitVector::ibvashr(uint32_t shift)
+BitVector::ibvashr(uint64_t shift)
 {
   ibvashr(*this, shift);
   return *this;
@@ -2988,21 +2988,21 @@ BitVector::ibvconcat(const BitVector& bv)
 }
 
 BitVector&
-BitVector::ibvextract(uint32_t idx_hi, uint32_t idx_lo)
+BitVector::ibvextract(uint64_t idx_hi, uint64_t idx_lo)
 {
   ibvextract(*this, idx_hi, idx_lo);
   return *this;
 }
 
 BitVector&
-BitVector::ibvzext(uint32_t n)
+BitVector::ibvzext(uint64_t n)
 {
   ibvzext(*this, n);
   return *this;
 }
 
 BitVector&
-BitVector::ibvsext(uint32_t n)
+BitVector::ibvsext(uint64_t n)
 {
   ibvsext(*this, n);
   return *this;
@@ -3081,48 +3081,51 @@ BitVector::bvudivurem(const BitVector& bv,
 #define BZLA_BV_MASK_BITS_UINT64(size)
 
 uint64_t
-BitVector::uint64_fdiv_r_2exp(uint32_t size, uint64_t val)
+BitVector::uint64_fdiv_r_2exp(uint64_t size, uint64_t val)
 {
   assert(size <= 64);
   if (size == 64) return val;
   return val & (UINT64_MAX >> (64 - size));
 }
 
-uint32_t
+uint64_t
 BitVector::count_leading(bool zeros) const
 {
   assert(!is_null());
-  uint32_t res = 0;
+  uint64_t res = 0;
   mp_limb_t limb;
 
-  uint32_t n_bits_per_limb = mp_bits_per_limb;
+  uint64_t n_bits_per_limb = static_cast<uint64_t>(mp_bits_per_limb);
   /* The number of bits that spill over into the most significant limb,
    * assuming that all bits are represented). Zero if the bit-width is a
    * multiple of n_bits_per_limb. */
-  uint32_t n_bits_rem = d_size % n_bits_per_limb;
+  uint64_t n_bits_rem = d_size % n_bits_per_limb;
   /* The number of limbs required to represent the actual value.
    * Zero limbs are disregarded. */
-  uint32_t n_limbs = get_limb(&limb, n_bits_rem, zeros);
+  uint64_t n_limbs = get_limb(&limb, n_bits_rem, zeros);
 
   if (n_limbs == 0) return d_size;
 #if defined(__GNUC__) || defined(__clang__)
-  res = n_bits_per_limb == 64 ? __builtin_clzll(limb) : __builtin_clz(limb);
+  res =
+      n_bits_per_limb == 64
+          ? static_cast<uint64_t>(__builtin_clzll(static_cast<uint64_t>(limb)))
+          : static_cast<uint64_t>(__builtin_clz(static_cast<uint32_t>(limb)));
 #else
   res = clz_limb(n_bits_per_limb, limb);
 #endif
   /* Number of limbs required when representing all bits. */
-  uint32_t n_limbs_total = d_size / n_bits_per_limb + 1;
-  uint32_t n_bits_pad    = n_bits_per_limb - n_bits_rem;
+  uint64_t n_limbs_total = d_size / n_bits_per_limb + 1;
+  uint64_t n_bits_pad    = n_bits_per_limb - n_bits_rem;
   res += (n_limbs_total - n_limbs) * n_bits_per_limb - n_bits_pad;
   return res;
 }
 
-uint32_t
-BitVector::get_limb(void* limb, uint32_t nbits_rem, bool zeros) const
+uint64_t
+BitVector::get_limb(void* limb, uint64_t nbits_rem, bool zeros) const
 {
   assert(!is_null());
   mp_limb_t* gmp_limb = static_cast<mp_limb_t*>(limb);
-  uint32_t i, n_limbs, n_limbs_total;
+  uint64_t i, n_limbs, n_limbs_total;
   mp_limb_t res = 0u, mask;
 
   if (is_gmp())
@@ -3197,7 +3200,7 @@ BitVector::get_limb(void* limb, uint32_t nbits_rem, bool zeros) const
 }
 
 bool
-BitVector::shift_is_uint64(uint32_t* res) const
+BitVector::shift_is_uint64(uint64_t* res) const
 {
   if (d_size <= 64)
   {
@@ -3205,7 +3208,7 @@ BitVector::shift_is_uint64(uint32_t* res) const
     return true;
   }
 
-  uint32_t clz = count_leading_zeros();
+  uint64_t clz = count_leading_zeros();
   if (clz < d_size - 64) return false;
 
   BitVector shift = bvextract(clz < d_size ? d_size - 1 - clz : 0, 0);

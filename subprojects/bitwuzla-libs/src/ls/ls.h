@@ -29,8 +29,8 @@ class LocalSearch
 
  public:
   using NodesIdTable = std::vector<std::unique_ptr<BitVectorNode>>;
-  using ParentsSet   = std::unordered_set<uint32_t>;
-  using ParentsMap   = std::unordered_map<uint32_t, ParentsSet>;
+  using ParentsSet   = std::unordered_set<uint64_t>;
+  using ParentsMap   = std::unordered_map<uint64_t, ParentsSet>;
 
   enum Result
   {
@@ -210,47 +210,47 @@ class LocalSearch
   void set_max_nprops(uint64_t max) { d_max_nprops = max; }
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }
 
-  uint32_t mk_node(uint32_t size);
-  uint32_t mk_node(OperatorKind kind,
-                   uint32_t size,
-                   const std::vector<uint32_t>& children);
-  uint32_t mk_indexed_node(OperatorKind kind,
-                           uint32_t size,
-                           uint32_t child0,
-                           const std::vector<uint32_t>& indices);
+  uint64_t mk_node(uint64_t size);
+  uint64_t mk_node(OperatorKind kind,
+                   uint64_t size,
+                   const std::vector<uint64_t>& children);
+  uint64_t mk_indexed_node(OperatorKind kind,
+                           uint64_t size,
+                           uint64_t child0,
+                           const std::vector<uint64_t>& indices);
 
-  uint32_t mk_node(const BitVector& assignment, const BitVectorDomain& domain);
-  uint32_t mk_node(OperatorKind kind,
+  uint64_t mk_node(const BitVector& assignment, const BitVectorDomain& domain);
+  uint64_t mk_node(OperatorKind kind,
                    const BitVectorDomain& domain,
-                   const std::vector<uint32_t>& children);
-  uint32_t mk_indexed_node(OperatorKind kind,
+                   const std::vector<uint64_t>& children);
+  uint64_t mk_indexed_node(OperatorKind kind,
                            const BitVectorDomain& domain,
-                           uint32_t child0,
-                           const std::vector<uint32_t>& indices);
+                           uint64_t child0,
+                           const std::vector<uint64_t>& indices);
 
-  uint32_t invert_node(uint32_t id);
+  uint64_t invert_node(uint64_t id);
 
   /**
    * Get the assignment of the node given by id.
    * @param id The id of the node to query.
    */
-  const BitVector& get_assignment(uint32_t id) const;
+  const BitVector& get_assignment(uint64_t id) const;
   /**
    * Set the assignment of the node given by id.
    * @param id The id of the node.
    * @param assignment The assignment to set.
    */
-  void set_assignment(uint32_t id, const BitVector& assignment);
+  void set_assignment(uint64_t id, const BitVector& assignment);
   /**
    * Get the domain of the node given by id.
    * @param id The id of the node to query.
    * @return The domain of the node given by id.
    */
-  const BitVectorDomain& get_domain(uint32_t id) const;
-  // void set_domain(uint32_t node, const BitVectorDomain& domain);
+  const BitVectorDomain& get_domain(uint64_t id) const;
+  // void set_domain(uint64_t node, const BitVectorDomain& domain);
 
   /** Fix domain bit of given node at index 'idx' to 'value'. */
-  void fix_bit(uint32_t id, uint32_t idx, bool value);
+  void fix_bit(uint64_t id, uint32_t idx, bool value);
 
   /**
    * Register node as root.
@@ -261,7 +261,7 @@ class LocalSearch
    *
    * @param root The id of the node to register as root.
    */
-  void register_root(uint32_t root);
+  void register_root(uint64_t root);
   /**
    * Determine if all roots are sat.
    * @return True if all roots are sat.
@@ -271,7 +271,7 @@ class LocalSearch
    * Get the number of unsat roots.
    * @return The number of unsat roots.
    */
-  uint32_t get_num_roots_unsat() const { return d_roots_unsat.size(); }
+  uint64_t get_num_roots_unsat() const { return d_roots_unsat.size(); }
 
   // TODO: incremental case:
   //       - we need to be able to unregister roots (assumptions)
@@ -282,12 +282,12 @@ class LocalSearch
    * Get the arity of the node given by id.
    * @param id The id of the node to query.
    */
-  uint32_t get_arity(uint32_t id) const;
+  uint32_t get_arity(uint64_t id) const;
   /**
    * Get the child at given index of the node given by id.
    * @param id The id of the node to query.
    */
-  uint32_t get_child(uint32_t id, uint32_t idx) const;
+  uint64_t get_child(uint64_t id, uint32_t idx) const;
 
   Result move();
 
@@ -315,7 +315,7 @@ class LocalSearch
    * @param id The node id.
    * @return The node with the given id.
    */
-  BitVectorNode* get_node(uint32_t id) const;
+  BitVectorNode* get_node(uint64_t id) const;
   /**
    * Determine if given node is a leaf node (its arity = 0).
    * @param node The node to query.

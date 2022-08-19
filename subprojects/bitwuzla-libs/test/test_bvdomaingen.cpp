@@ -14,7 +14,7 @@ namespace test {
 class TestBvDomainGen : public ::bzla::test::TestCommon
 {
  protected:
-  static constexpr uint32_t TEST_BW = 4;
+  static constexpr uint64_t TEST_BW = 4;
   void SetUp() override
   {
     TestCommon::SetUp();
@@ -45,7 +45,7 @@ bool
 TestBvDomainGen::check_const_bits(const std::string& x, const std::string& s)
 {
   assert(x.size() == s.size());
-  for (uint32_t i = 0, n = x.size(); i < n; ++i)
+  for (uint64_t i = 0, n = x.size(); i < n; ++i)
   {
     if (x[i] != 'x' && x[i] != s[i]) return false;
   }
@@ -63,7 +63,7 @@ TestBvDomainGen::generate_expected(const std::string& x,
 
   if (x.find('x') != std::string::npos)
   {
-    for (uint32_t i = umin; i <= umax; ++i)
+    for (uint64_t i = umin; i <= umax; ++i)
     {
       std::string v = std::bitset<TEST_BW>(i).to_string();
       if (check_const_bits(x, v))
@@ -87,7 +87,7 @@ TestBvDomainGen::generate_expected_signed(std::string x,
   if (min[0] == '1')
   {
     BitVector bv_mask = BitVector::mk_ones(64);
-    for (uint32_t i = 0, n = min.size(); i < n; ++i)
+    for (uint64_t i = 0, n = min.size(); i < n; ++i)
     {
       bv_mask.set_bit(i, false);
     }
@@ -98,7 +98,7 @@ TestBvDomainGen::generate_expected_signed(std::string x,
   if (max[0] == '1')
   {
     BitVector bv_mask = BitVector::mk_ones(64);
-    for (uint32_t i = 0, n = min.size(); i < n; ++i)
+    for (uint64_t i = 0, n = min.size(); i < n; ++i)
     {
       bv_mask.set_bit(i, false);
     }
@@ -108,7 +108,7 @@ TestBvDomainGen::generate_expected_signed(std::string x,
 
   if (x.find('x') != std::string::npos)
   {
-    for (int32_t i = imin; i <= imax; ++i)
+    for (int64_t i = imin; i <= imax; ++i)
     {
       std::string v = std::bitset<TEST_BW>(i).to_string();
       if (check_const_bits(x, v))
@@ -235,7 +235,7 @@ TestBvDomainGen::test_next_signed_aux(const std::string& str_d,
   }
   else
   {
-    uint32_t i = 0;
+    uint64_t i = 0;
     while (gen->has_next())
     {
       BitVector res = gen->next();
@@ -261,7 +261,7 @@ TestBvDomainGen::test_next(bool random, bool is_signed)
   gen_xvalues(TEST_BW, xvalues);
   gen_values(TEST_BW, values);
 
-  for (uint32_t i = 0, n = values.size(); i < n; ++i)
+  for (uint64_t i = 0, n = values.size(); i < n; ++i)
   {
     for (const std::string& min : values)
     {
@@ -302,7 +302,7 @@ TestBvDomainGen::test_next(bool random, bool is_signed)
 
 TEST_F(TestBvDomainGen, ctor_dtor)
 {
-  for (uint32_t size = 1; size <= 16; ++size)
+  for (uint64_t size = 1; size <= 16; ++size)
   {
     ASSERT_NO_FATAL_FAILURE(BitVectorDomainGenerator(BitVectorDomain(size)));
     ASSERT_NO_FATAL_FAILURE(
@@ -318,12 +318,12 @@ TEST_F(TestBvDomainGen, ctor_dtor)
 
 TEST_F(TestBvDomainGen, has_next)
 {
-  for (uint32_t size = 1; size <= 8; ++size)
+  for (uint64_t size = 1; size <= 8; ++size)
   {
     std::vector<std::string> xvalues;
     gen_xvalues(size, xvalues);
 
-    for (uint32_t i = 0, n = xvalues.size(); i < n; ++i)
+    for (uint64_t i = 0, n = xvalues.size(); i < n; ++i)
     {
       BitVectorDomain d(xvalues[i]);
       BitVectorDomainGenerator gen(d);
@@ -338,19 +338,19 @@ TEST_F(TestBvDomainGen, has_next)
 
 TEST_F(TestBvDomainGen, has_random)
 {
-  for (uint32_t size = 1; size <= 8; ++size)
+  for (uint64_t size = 1; size <= 8; ++size)
   {
     std::vector<std::string> xvalues;
     gen_xvalues(size, xvalues);
 
-    for (uint32_t i = 0, n = xvalues.size(); i < n; ++i)
+    for (uint64_t i = 0, n = xvalues.size(); i < n; ++i)
     {
       BitVectorDomain d(xvalues[i]);
       BitVectorDomainGenerator gen(d, d_rng.get());
       ASSERT_TRUE(d.is_fixed() || gen.has_random());
       if (gen.has_next())
       {
-        for (uint32_t j = 0; j < size; ++j)
+        for (uint64_t j = 0; j < size; ++j)
         {
           ASSERT_TRUE(gen.has_random());
           gen.random();
@@ -376,7 +376,7 @@ TEST_F(TestBvDomainGen, random)
 
 TEST_F(TestBvDomainGen, ctor_dtor_signed)
 {
-  for (uint32_t size = 1; size <= 16; ++size)
+  for (uint64_t size = 1; size <= 16; ++size)
   {
     ASSERT_NO_FATAL_FAILURE(
         BitVectorDomainSignedGenerator(BitVectorDomain(size)));
@@ -393,12 +393,12 @@ TEST_F(TestBvDomainGen, ctor_dtor_signed)
 
 TEST_F(TestBvDomainGen, has_next_signed)
 {
-  for (uint32_t size = 1; size <= 8; ++size)
+  for (uint64_t size = 1; size <= 8; ++size)
   {
     std::vector<std::string> xvalues;
     gen_xvalues(size, xvalues);
 
-    for (uint32_t i = 0, n = xvalues.size(); i < n; ++i)
+    for (uint64_t i = 0, n = xvalues.size(); i < n; ++i)
     {
       BitVectorDomain d(xvalues[i]);
       BitVectorDomainSignedGenerator gen(d);
@@ -412,18 +412,18 @@ TEST_F(TestBvDomainGen, has_next_signed)
 
 TEST_F(TestBvDomainGen, has_random_signed)
 {
-  for (uint32_t size = 1; size <= 8; ++size)
+  for (uint64_t size = 1; size <= 8; ++size)
   {
     std::vector<std::string> xvalues;
     gen_xvalues(size, xvalues);
 
-    for (uint32_t i = 0, n = xvalues.size(); i < n; ++i)
+    for (uint64_t i = 0, n = xvalues.size(); i < n; ++i)
     {
       BitVectorDomain d(xvalues[i]);
       BitVectorDomainSignedGenerator gen(d, d_rng.get());
       if (gen.has_next())
       {
-        for (uint32_t j = 0; j < size; ++j)
+        for (uint64_t j = 0; j < size; ++j)
         {
           ASSERT_TRUE(gen.has_random());
           gen.random();

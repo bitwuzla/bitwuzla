@@ -140,6 +140,7 @@ add_check_c_cxx_flag("-W")
 add_check_c_cxx_flag("-Wall")
 add_check_c_cxx_flag("-Wextra")
 add_check_c_cxx_flag("-Wredundant-decls")
+add_check_c_cxx_flag("-Wconversion")
 
 foreach(flag ${FLAGS})
   add_required_c_cxx_flag("${flag}")

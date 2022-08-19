@@ -61,8 +61,8 @@ class TestCommon : public ::testing::Test
   static void gen_all_combinations(size_t size,
                                    const std::vector<char>& bits,
                                    std::vector<std::string>& values);
-  static void gen_xvalues(uint32_t bw, std::vector<std::string>& values);
-  static void gen_values(uint32_t bw, std::vector<std::string>& values);
+  static void gen_xvalues(uint64_t bw, std::vector<std::string>& values);
+  static void gen_values(uint64_t bw, std::vector<std::string>& values);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -76,10 +76,14 @@ TestCommon::gen_all_combinations(size_t size,
   size_t num_bits = bits.size();
   std::vector<size_t> psizes;
 
-  num_values = pow(num_bits, size);
+  num_values = static_cast<size_t>(
+      pow(static_cast<double>(num_bits), static_cast<double>(size)));
+
   for (size_t i = 0; i < size; ++i)
   {
-    psizes.push_back(num_values / pow(num_bits, i + 1));
+    psizes.push_back(num_values
+                     / static_cast<size_t>(pow(static_cast<double>(num_bits),
+                                               static_cast<double>(i + 1))));
   }
 
   /* Generate all combinations of 'bits'. */
@@ -95,13 +99,13 @@ TestCommon::gen_all_combinations(size_t size,
 }
 
 void
-TestCommon::gen_xvalues(uint32_t bw, std::vector<std::string>& values)
+TestCommon::gen_xvalues(uint64_t bw, std::vector<std::string>& values)
 {
   gen_all_combinations(bw, {'x', '0', '1'}, values);
 }
 
 void
-TestCommon::gen_values(uint32_t bw, std::vector<std::string>& values)
+TestCommon::gen_values(uint64_t bw, std::vector<std::string>& values)
 {
   gen_all_combinations(bw, {'0', '1'}, values);
 }
