@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include "node/node.h"
+#include "type/type.h"
 
 namespace bzla::node {
 
@@ -17,27 +18,51 @@ static constexpr size_t s_max_children = 4;
 
 class NodeData
 {
-  friend class Node;
   friend class NodeManager;
   friend struct NodeDataHash;
   friend struct NodeDataKeyEqual;
-  friend class NodeDataChildren;
 
  public:
   NodeData() = delete;
-  NodeData(NodeManager* mgr, Kind kind) : d_mgr(mgr), d_kind(kind){};
+  NodeData(NodeManager* mgr, Kind kind);
   virtual ~NodeData() = default;
 
+  /** Return node id. */
   uint64_t get_id() const { return d_id; }
+
+  /** Return node kind. */
   Kind get_kind() const { return d_kind; }
 
+  /** Return node type. */
+  const type::Type& get_type() const { return d_type; }
+
+  /** Check whether node has children. */
+  bool has_children() const;
+
+  /**
+   * Return child at position `index`.
+   *
+   * Only valid to call if get_num_children() > 0.
+   */
   const Node& get_child(size_t index) const;
   Node& get_child(size_t index);
+
+  /** Return number of children. */
   size_t get_num_children() const;
+
+  /** Check whether node is indexed. */
+  bool is_indexed() const;
 
   // TODO: get_indices()
   // TODO: specific instantiantions for ExtractLower/ExtractUpper?
+  /**
+   * Get index at position `index`.
+   *
+   * Only valid to call for indexed operators.
+   */
   uint64_t get_index(size_t index) const;
+
+  /** Return number of indices. */
   size_t get_num_indices() const;
 
   // TODO: instantiate with
@@ -47,22 +72,16 @@ class NodeData
   template <class T>
   T& get_value() const;
 
-  // iterators
-
   // Reference counting
   void inc_ref();
   void dec_ref();
 
  private:
-  bool has_children() const;
-  bool is_indexed() const;
-
   NodeManager* d_mgr = nullptr;
-  NodeData* d_next   = nullptr;
 
   uint64_t d_id = 0;
   Kind d_kind;
-  // Type d_type;
+  type::Type d_type;
   uint32_t d_refs = 0;
 };
 
@@ -77,21 +96,7 @@ class NodeDataChildren : public NodeData
 
   NodeDataChildren(NodeManager* mgr,
                    Kind kind,
-                   const std::initializer_list<Node>& children)
-      : NodeData(mgr, kind), d_num_children(children.size())
-  {
-    assert(d_num_children > 0);
-    assert(d_num_children <= s_max_children);
-    assert(Kind::UNARY_START < kind);
-    assert(kind < Kind::NUM_KINDS);
-    uint8_t i = 0;
-    for (auto n : children)
-    {
-      assert(!n.is_null());
-      d_children[i++] = n;
-    }
-    assert(i == d_num_children);
-  };
+                   const std::vector<Node>& children);
 
  private:
   uint8_t d_num_children;
@@ -114,19 +119,8 @@ class NodeDataIndexed : public NodeDataChildren
   NodeDataIndexed() = delete;
   NodeDataIndexed(NodeManager* mgr,
                   Kind kind,
-                  const std::initializer_list<Node>& children,
-                  const std::initializer_list<uint64_t>& indices)
-      : NodeDataChildren(mgr, kind, children), d_num_indices(indices.size())
-  {
-    assert(d_num_indices > 0);
-    assert(d_num_indices <= 2);
-    uint8_t i = 0;
-    for (auto idx : indices)
-    {
-      d_indices[i] = idx;
-    }
-    assert(i == d_num_indices);
-  };
+                  const std::vector<Node>& children,
+                  const std::vector<uint64_t>& indices);
   ~NodeDataIndexed() = default;
 
  private:

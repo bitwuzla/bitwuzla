@@ -2,14 +2,63 @@
 
 namespace bzla::node {
 
+/* --- NodeManager public -------------------------------------------------- */
+
+Node
+NodeManager::mk_const(const type::Type& type, const std::string& symbol)
+{
+  // TODO: handle symbol
+  NodeData* data = new NodeData(this, Kind::CONSTANT);
+  data->d_type   = type;
+  init_id(data);
+  return Node(data);
+}
+
 Node
 NodeManager::mk_node(Kind kind,
-                     const std::initializer_list<Node>& children,
-                     const std::initializer_list<uint64_t>& indices)
+                     const std::vector<Node>& children,
+                     const std::vector<uint64_t>& indices)
 {
-  // TODO
-  return Node();
+  return Node(find_or_create_node(kind, children, indices));
 }
+
+type::Type
+NodeManager::mk_bool_type()
+{
+  return d_tm.mk_bool_type();
+}
+
+type::Type
+NodeManager::mk_bv_type(uint64_t size)
+{
+  return d_tm.mk_bv_type(size);
+}
+
+type::Type
+NodeManager::mk_fp_type(uint64_t exp_size, uint64_t sig_size)
+{
+  return d_tm.mk_fp_type(exp_size, sig_size);
+}
+
+type::Type
+NodeManager::mk_rm_type()
+{
+  return d_tm.mk_rm_type();
+}
+
+type::Type
+NodeManager::mk_array_type(const type::Type& index, const type::Type& elem)
+{
+  return d_tm.mk_array_type(index, elem);
+}
+
+type::Type
+NodeManager::mk_fun_type(const std::vector<type::Type>& types)
+{
+  return d_tm.mk_fun_type(types);
+}
+
+/* --- NodeManager private ------------------------------------------------- */
 
 void
 NodeManager::init_id(NodeData* data)
@@ -24,8 +73,8 @@ NodeManager::init_id(NodeData* data)
 
 NodeData*
 NodeManager::new_data(Kind kind,
-                      const std::initializer_list<Node>& children,
-                      const std::initializer_list<uint64_t>& indices)
+                      const std::vector<Node>& children,
+                      const std::vector<uint64_t>& indices)
 {
   assert(children.size() > 0);
 
@@ -43,8 +92,8 @@ NodeManager::new_data(Kind kind,
 
 NodeData*
 NodeManager::find_or_create_node(Kind kind,
-                                 const std::initializer_list<Node>& children,
-                                 const std::initializer_list<uint64_t>& indices)
+                                 const std::vector<Node>& children,
+                                 const std::vector<uint64_t>& indices)
 {
   NodeData* data      = new_data(kind, children, indices);
   auto [it, inserted] = d_unique_nodes.insert(data);
@@ -57,6 +106,7 @@ NodeManager::find_or_create_node(Kind kind,
 
   // Node is new, initialize
   init_id(data);
+  // TODO: compute type of node
   return data;
 }
 

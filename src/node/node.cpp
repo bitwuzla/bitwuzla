@@ -9,44 +9,10 @@
 
 namespace bzla::node {
 
-/* ------------------------------------------------------------------------- */
-
-#ifndef NDEBUG
-// For unit tests only
-Node::Node(Kind kind,
-           const std::initializer_list<Node>& children,
-           const std::initializer_list<uint64_t>& indices)
-{
-  if (indices.size() > 0)
-  {
-    assert(children.size() > 0);
-    d_data = new NodeDataIndexed(nullptr, kind, children, indices);
-  }
-  else if (children.size() > 0)
-  {
-    d_data = new NodeDataChildren(nullptr, kind, children);
-  }
-  else
-  {
-    d_data = new NodeData(nullptr, kind);
-  }
-  d_data->inc_ref();
-}
-#endif
+/* --- Node public --------------------------------------------------------- */
 
 Node::~Node()
 {
-#ifndef NDEBUG
-  // For unit tests only
-  if (!is_null())
-  {
-    if (d_data->d_mgr == nullptr)
-    {
-      delete d_data;
-      return;
-    }
-  }
-#endif
   if (!is_null())
   {
     assert(d_data);
@@ -104,7 +70,7 @@ Node::get_id() const
 {
   if (d_data)
   {
-    return d_data->d_id;
+    return d_data->get_id();
   }
   return 0;
 }
@@ -116,7 +82,14 @@ Node::get_kind() const
   {
     return Kind::NULL_NODE;
   }
-  return d_data->d_kind;
+  return d_data->get_kind();
+}
+
+const type::Type&
+Node::get_type() const
+{
+  assert(!is_null());
+  return d_data->get_type();
 }
 
 bool
@@ -177,5 +150,13 @@ Node::end() const
   }
   return nullptr;
 }
+
+/* --- Node private -------------------------------------------------------- */
+
+Node::Node(NodeData* data) : d_data(data)
+{
+  assert(data != nullptr);
+  d_data->inc_ref();
+};
 
 }  // namespace bzla::node

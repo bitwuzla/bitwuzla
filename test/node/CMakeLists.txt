@@ -1,1 +1,1 @@
-add_unit_test(test_node)
+add_unit_test(test_node_manager)
