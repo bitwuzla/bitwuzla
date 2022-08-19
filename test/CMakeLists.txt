@@ -1020,6 +1020,7 @@ set(cmp_testcases
 "normalize_and_incomplete.btor -db"
 "normalize_mul_incomplete.btor -db"
 "painc.smt2 -i"
+"prop_not_sat.smt2 -E prop --prop-nprops=10000 --prop-nupdates=2000000"
 "regaddnorm1.btor -db"
 "regaddnorm2.btor -db"
 "regmismatch.smt2"

@@ -388,7 +388,7 @@ bzla_bv_power_of_two(const BzlaBitVector *bv)
 {
   assert(bv);
 
-  int64_t i, j;
+  uint64_t i, j;
   uint32_t bit;
   bool iszero;
 
