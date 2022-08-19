@@ -3083,8 +3083,9 @@ BitVector::bvudivurem(const BitVector& bv,
 uint64_t
 BitVector::uint64_fdiv_r_2exp(uint32_t size, uint64_t val)
 {
+  assert(size <= 64);
   if (size == 64) return val;
-  return val & (UINT64_MAX >> (64 - (size % 64)));
+  return val & (UINT64_MAX >> (64 - size));
 }
 
 uint32_t
