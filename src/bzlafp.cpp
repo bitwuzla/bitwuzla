@@ -2184,6 +2184,7 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
   while (!to_visit.empty())
   {
     cur = bzla_node_real_addr(to_visit.back());
+    assert(!bzla_node_real_addr(cur)->parameterized);
     to_visit.pop_back();
 
     if (d_prop_map.find(cur) != d_prop_map.end()
@@ -2212,8 +2213,8 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
         d_ite_map.emplace(bzla_node_copy(d_bzla, cur), var);
       }
 
-      /* We treat applies as variables. */
-      if (!bzla_node_is_apply(cur))
+      /* We treat applies and quantifiers as variables. */
+      if (!bzla_node_is_apply(cur) && !bzla_node_is_forall(cur))
       {
         for (uint32_t i = 0; i < cur->arity; ++i)
         {
