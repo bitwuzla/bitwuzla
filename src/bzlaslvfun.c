@@ -545,10 +545,11 @@ add_function_disequality_witnesses(Bzla *bzla)
   {
     cur = bzla_node_real_addr(BZLA_POP_STACK(visit));
 
-    if (bzla_hashint_table_contains(cache, cur->id)) continue;
+    if (bzla_hashint_table_contains(cache, cur->id))
+      continue;
 
     bzla_hashint_table_add(cache, cur->id);
-    if (bzla_node_is_fun_eq(cur))
+    if (bzla_node_is_fun_eq(cur) && !cur->parameterized)
     {
       b = bzla_hashptr_table_get(bzla->feqs, cur);
       /* already visited and created inequality constraint in a previous
