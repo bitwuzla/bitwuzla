@@ -2365,7 +2365,7 @@ bzla_synthesize_exp(Bzla *bzla, BzlaNode *exp, BzlaPtrHashTable *backannotation)
       else if (bzla_node_is_bv_var(cur)
                || (bzla_node_is_apply(cur) && !cur->parameterized
                    && bzla_node_is_bv(bzla, cur))
-               || bzla_node_is_fun_eq(cur))
+               || (bzla_node_is_fun_eq(cur) && !cur->parameterized))
       {
         assert(!cur->parameterized);
         cur->av = bzla_aigvec_var(avmgr, bzla_node_bv_get_width(bzla, cur));
