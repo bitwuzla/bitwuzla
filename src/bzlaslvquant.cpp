@@ -1623,6 +1623,7 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
         for (BzlaNode *c : consts)
         {
           assert(bzla_node_is_regular(c));
+          assert(!bzla_node_is_proxy(c));
           inputs.push_back(c);
           input_values.push_back(bzla_model_get_bv(d_bzla, c));
           assert(input_values.back());
@@ -2150,6 +2151,29 @@ QuantSolverState::collect_info(std::vector<BzlaNode *> &quantifiers)
   for (auto [sort, consts] : d_term_map)
   {
     std::sort(consts.begin(), consts.end(), sort_by_id);
+    for (size_t i = 0; i < consts.size(); ++i)
+    {
+      consts[i] = bzla_node_get_simplified(d_bzla, consts[i]);
+    }
+  }
+
+  // Map may contain proxy nodes after first check-sat call, update term
+  // vectors and filter remove simplified terms that are not constants anymore.
+  for (auto &it : d_const_map)
+  {
+    auto consts = it.second;
+    it.second.clear();
+    for (size_t i = 0; i < consts.size(); ++i)
+    {
+      auto cur =
+          bzla_node_real_addr(bzla_node_get_simplified(d_bzla, consts[i]));
+      if ((bzla_node_is_var(cur) || bzla_node_is_uf(cur))
+          && bzla_node_is_bv(d_bzla, cur))
+      {
+        it.second.push_back(bzla_node_copy(d_bzla, cur));
+      }
+      bzla_node_release(d_bzla, consts[i]);
+    }
   }
 }
 
