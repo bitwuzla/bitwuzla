@@ -956,6 +956,7 @@ clone_aux_bzla(Bzla *bzla,
   allocated = sizeof(Bzla);
 #endif
   memcpy(clone, bzla, sizeof(Bzla));
+  clone->qslv = NULL;
   clone->mm  = mm;
   clone->rng = bzla_rng_clone(bzla->rng, mm);
 #ifndef NDEBUG

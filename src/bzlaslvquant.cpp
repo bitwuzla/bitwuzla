@@ -2429,12 +2429,7 @@ delete_quant_solver(BzlaQuantSolver *slv)
   assert(slv);
   assert(slv->kind == BZLA_QUANT_SOLVER_KIND);
   assert(slv->bzla);
-
-  Bzla *bzla;
-
-  bzla = slv->bzla;
   delete slv;
-  bzla->slv = 0;
 }
 
 static void
