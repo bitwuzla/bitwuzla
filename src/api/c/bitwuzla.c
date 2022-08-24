@@ -2952,6 +2952,7 @@ bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size)
   {
     BzlaNode *bzla_assumption =
         BZLA_IMPORT_BITWUZLA_TERM(BZLA_PEEK_STACK(bitwuzla->d_assumptions, i));
+    assert(bzla_is_assumption_exp(bzla, bzla_assumption));
     if (bzla_failed_exp(bzla, bzla_assumption))
     {
       BZLA_PUSH_STACK(bitwuzla->d_unsat_assumptions,

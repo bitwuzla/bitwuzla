@@ -1007,8 +1007,7 @@ get_apply_value(Bzla *bzla,
                 BzlaNode *app,
                 BzlaNode *fun,
                 BzlaIntHashTable *bv_model,
-                BzlaIntHashTable *fun_model,
-                BzlaIntHashTable *bv_param_model)
+                BzlaIntHashTable *fun_model)
 {
   assert(bzla_node_is_apply(app));
 
@@ -1038,15 +1037,12 @@ get_apply_value(Bzla *bzla,
       assert(real_arg);
     }
     assert(bzla_node_is_regular(real_arg));
-    if (real_arg->parameterized)
-      d = bzla_hashint_map_get(bv_param_model, real_arg->id);
-    else
-      d = bzla_hashint_map_get(bv_model, real_arg->id);
+    assert(!real_arg->parameterized);
+    d = bzla_hashint_map_get(bv_model, real_arg->id);
 
     if (bzla_node_is_apply(real_arg) && !d)
     {
-      bv = get_apply_value(
-          bzla, real_arg, real_arg->e[0], bv_model, fun_model, bv_param_model);
+      bv = get_apply_value(bzla, real_arg, real_arg->e[0], bv_model, fun_model);
     }
     else
     {
@@ -1071,27 +1067,6 @@ get_apply_value(Bzla *bzla,
   return result;
 }
 
-static bool
-argument_needs_word_blast(Bzla *bzla, const BzlaNode *args)
-{
-  assert(bzla_node_is_args(args));
-
-  BzlaNode *arg;
-  BzlaArgsIterator it;
-
-  bzla_iter_args_init(&it, args);
-  while (bzla_iter_args_has_next(&it))
-  {
-    arg = bzla_iter_args_next(&it);
-    if (bzla_node_fp_needs_word_blast(bzla, arg))
-    {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 /* Note: don't forget to free resulting bit vector! */
 BzlaBitVector *
 bzla_model_recursively_compute_assignment(Bzla *bzla,
@@ -1104,13 +1079,13 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
   assert(fun_model);
   assert(exp);
 
-  uint32_t i, num_args, pos;
+  uint32_t i, num_args;
   BzlaMemMgr *mm;
   BzlaNodePtrStack work_stack, reset, cleanup_expanded;
   BzlaVoidPtrStack arg_stack;
   BzlaNode *cur, *real_cur, *next, *cur_parent;
-  BzlaHashTableData *d, dd;
-  BzlaIntHashTable *assigned, *reset_st, *param_model_cache, *expanded;
+  BzlaHashTableData *d;
+  BzlaIntHashTable *assigned, *expanded;
   BzlaIntHashTable *wblasted;
   BzlaBitVector *result = 0, *inv_result, **e;
   BzlaBitVectorTuple *t;
@@ -1134,15 +1109,6 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
   expanded = bzla_hashint_table_new(mm);
   wblasted = bzla_hashint_table_new(mm);
 
-  /* model cache for parameterized nodes */
-  param_model_cache = bzla_hashint_map_new(mm);
-
-  /* 'reset_st' remembers the stack position of 'reset' in case a lambda is
-   * assigned. when the resp. lambda is unassigned, the 'eval_mark' flag of all
-   * parameterized nodes up to the saved position of stack 'reset' will be
-   * reset to 0. */
-  reset_st = bzla_hashint_map_new(mm);
-
   mark = bzla_hashint_map_new(mm);
   BZLA_INIT_STACK(mm, work_stack);
   BZLA_INIT_STACK(mm, arg_stack);
@@ -1157,10 +1123,9 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
     cur_parent = BZLA_POP_STACK(work_stack);
     cur        = BZLA_POP_STACK(work_stack);
     real_cur   = bzla_node_real_addr(cur);
+    assert(!real_cur->parameterized);
 
-    if (bzla_hashint_map_contains(bv_model, real_cur->id)
-        || bzla_hashint_map_contains(param_model_cache, real_cur->id))
-      goto PUSH_CACHED;
+    if (bzla_hashint_map_contains(bv_model, real_cur->id)) goto PUSH_CACHED;
 
     /* check if we already have an assignment for this function application */
     if (bzla_node_is_lambda(real_cur) && cur_parent
@@ -1213,23 +1178,13 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
       /* substitute param with its assignment */
       else if (bzla_node_is_param(real_cur))
       {
+        assert(0);
         next = bzla_node_param_get_assigned_exp(real_cur);
         assert(next);
         next = bzla_node_cond_invert(cur, next);
         BZLA_PUSH_STACK(work_stack, next);
         BZLA_PUSH_STACK(work_stack, cur_parent);
         continue;
-      }
-      else if (bzla_node_is_lambda(real_cur) && cur_parent
-               && bzla_node_is_apply(cur_parent))
-      {
-        bzla_beta_assign_args(bzla, real_cur, cur_parent->e[1]);
-        assert(!bzla_hashint_map_contains(assigned, real_cur->id));
-        bzla_hashint_map_add(assigned, real_cur->id)->as_ptr = cur_parent;
-
-        /* save 'reset' stack position */
-        bzla_hashint_map_add(reset_st, real_cur->id)->as_int =
-            BZLA_COUNT_STACK(reset);
       }
 
       BZLA_PUSH_STACK(work_stack, cur);
@@ -1256,12 +1211,10 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
         BZLA_PUSH_STACK(work_stack, real_cur);
       }
       else if (bzla_node_is_apply(real_cur)
-               && bzla_node_is_lambda(real_cur->e[0])
-               && (bzla_node_is_fp(bzla, real_cur)
-                   || bzla_node_is_rm(bzla, real_cur)
-                   || argument_needs_word_blast(bzla, real_cur->e[1])))
+               && bzla_node_is_lambda(real_cur->e[0]))
       {
         next = bzla_beta_reduce_full(bzla, real_cur, 0);
+        assert(!bzla_node_real_addr(next)->parameterized);
         next = bzla_node_cond_invert(cur, next);
         BZLA_PUSH_STACK(work_stack, next);
         BZLA_PUSH_STACK(work_stack, cur_parent);
@@ -1291,6 +1244,7 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
     {
       assert(!bzla_node_is_param(real_cur));
       assert(real_cur->arity <= BZLA_NODE_MAX_CHILDREN);
+      assert(!bzla_node_is_lambda(real_cur));
 
       /* Check if real_cur is an expanded FP fucntion application. */
       if (bzla_hashint_table_contains(expanded, real_cur->id))
@@ -1435,40 +1389,10 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
           bzla_bv_free_tuple(mm, t);
           break;
 
-        case BZLA_LAMBDA_NODE:
-          result = e[0];
-          bzla_bv_free(mm, e[1]);
-          if (bzla_node_is_lambda(real_cur) && cur_parent
-              && bzla_node_is_apply(cur_parent))
-          {
-            assert(bzla_hashint_map_contains(assigned, real_cur->id));
-            bzla_beta_unassign_params(bzla, real_cur);
-            bzla_hashint_map_remove(assigned, real_cur->id, 0);
-
-            /* reset 'eval_mark' of all parameterized nodes
-             * instantiated by 'real_cur' */
-            bzla_hashint_map_remove(reset_st, real_cur->id, &dd);
-            pos = dd.as_int;
-            while (BZLA_COUNT_STACK(reset) > pos)
-            {
-              next = BZLA_POP_STACK(reset);
-              assert(bzla_node_is_regular(next));
-              assert(next->parameterized);
-              bzla_hashint_map_remove(mark, next->id, 0);
-              bzla_hashint_map_remove(param_model_cache, next->id, &dd);
-              bzla_bv_free(mm, dd.as_ptr);
-            }
-          }
-          break;
-
         case BZLA_UF_NODE:
           assert(bzla_node_is_apply(cur_parent));
-          result = get_apply_value(bzla,
-                                   cur_parent,
-                                   real_cur,
-                                   bv_model,
-                                   fun_model,
-                                   param_model_cache);
+          result =
+              get_apply_value(bzla, cur_parent, real_cur, bv_model, fun_model);
           if (!result)
           {
             BzlaSortId sort = bzla_node_get_sort_id(cur_parent);
@@ -1491,12 +1415,8 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
           break;
 
         case BZLA_UPDATE_NODE:
-          result = get_apply_value(bzla,
-                                   cur_parent,
-                                   real_cur,
-                                   bv_model,
-                                   fun_model,
-                                   param_model_cache);
+          result =
+              get_apply_value(bzla, cur_parent, real_cur, bv_model, fun_model);
           if (!result)
             result = e[2];
           else
@@ -1552,22 +1472,9 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
 
     CACHE_AND_PUSH_RESULT:
       assert(!bzla_node_is_fun(real_cur));
-      /* remember parameterized nodes for resetting 'eval_mark' later */
-      if (real_cur->parameterized)
-      {
-        BZLA_PUSH_STACK(reset, real_cur);
-        /* temporarily cache model for paramterized nodes, is only
-         * valid under current parameter assignment and will be reset
-         * when parameters are unassigned */
-        assert(!bzla_hashint_map_contains(param_model_cache, real_cur->id));
-        bzla_hashint_map_add(param_model_cache, real_cur->id)->as_ptr =
-            bzla_bv_copy(mm, result);
-      }
-      else
-      {
-        assert(!bzla_hashint_map_contains(bv_model, real_cur->id));
-        bzla_model_add_to_bv(bzla, bv_model, real_cur, result);
-      }
+      assert(!real_cur->parameterized);
+      assert(!bzla_hashint_map_contains(bv_model, real_cur->id));
+      bzla_model_add_to_bv(bzla, bv_model, real_cur, result);
 
     PUSH_RESULT:
       if (bzla_node_is_inverted(cur))
@@ -1582,15 +1489,12 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
     {
       assert(md->as_int == 1);
     PUSH_CACHED:
-      if (real_cur->parameterized)
-        d = bzla_hashint_map_get(param_model_cache, real_cur->id);
-      else
-        d = bzla_hashint_map_get(bv_model, real_cur->id);
+      assert(!real_cur->parameterized);
+      d      = bzla_hashint_map_get(bv_model, real_cur->id);
       result = bzla_bv_copy(mm, (BzlaBitVector *) d->as_ptr);
       goto PUSH_RESULT;
     }
   }
-  assert(param_model_cache->count == 0);
   assert(BZLA_COUNT_STACK(arg_stack) == 1);
   result = BZLA_POP_STACK(arg_stack);
   assert(result);
@@ -1599,8 +1503,6 @@ bzla_model_recursively_compute_assignment(Bzla *bzla,
   BZLA_RELEASE_STACK(arg_stack);
   BZLA_RELEASE_STACK(reset);
   bzla_hashint_map_delete(assigned);
-  bzla_hashint_map_delete(reset_st);
-  bzla_hashint_map_delete(param_model_cache);
   bzla_hashint_map_delete(mark);
   bzla_hashint_table_delete(expanded);
   bzla_hashint_table_delete(wblasted);
@@ -1642,7 +1544,7 @@ bzla_model_get_value(Bzla *bzla, BzlaNode *exp)
   assert(bzla->last_sat_result == BZLA_RESULT_SAT && bzla->valid_assignments);
 
   uint32_t i, nparams;
-  BzlaNode *res, *tmp, *arg, *val, **params, *uf, *cond, *eq;
+  BzlaNode *res, *tmp, *arg, *val, **params, *cond, *eq;
   BzlaSortId sort, domain;
   const BzlaPtrHashTable *model;
   BzlaBitVectorTuple *tup;

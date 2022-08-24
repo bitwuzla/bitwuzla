@@ -327,8 +327,7 @@ beta_reduce(Bzla *bzla,
         continue;
       }
       /* stop at nodes that do not need to be rebuilt */
-      else if ((!real_cur->lambda_below && !real_cur->parameterized)
-               || bzla_node_is_update(real_cur))
+      else if (!real_cur->lambda_below && !real_cur->parameterized)
       {
         BZLA_PUSH_STACK(arg_stack, bzla_node_copy(bzla, cur));
         continue;
@@ -389,7 +388,7 @@ beta_reduce(Bzla *bzla,
       }
       /* do not try to reduce conditionals on functions below equalities
        * as they cannot be eliminated. */
-      else if (bzla_node_is_fun_cond(real_cur)
+      else if (!real_cur->parameterized && bzla_node_is_fun_cond(real_cur)
                && bzla_node_is_fun_eq(cur_parent))
       {
         BZLA_PUSH_STACK(arg_stack, bzla_node_copy(bzla, cur));
