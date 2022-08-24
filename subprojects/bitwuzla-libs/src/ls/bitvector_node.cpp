@@ -5633,72 +5633,51 @@ BitVectorUrem::inverse_value(const BitVector& t,
 
         BitVector sub = s.bvsub(t);
         assert(sub.compare(t) > 0);
+        bool x_match_sub = x.match_fixed_bits(sub);
 
-        if (d_rng->flip_coin() && x.match_fixed_bits(sub))
+        if (d_rng->flip_coin() && x_match_sub)
         {
           d_inverse.reset(new BitVector(std::move(sub)));
         }
         else
         {
-          /**
-           * 1 <= n < (s - t) / t (non-truncating)
-           * Note: div truncates towards 0!
-           *
-           * Upper and lower bounds for n:
-           * lower = 1
-           * upper = s               if t = 0
-           *         (s - t) / t - 1 if (s - t) % t = 0
-           *         (s - t) / t     if (s - t) % t > 0
-           */
-          BitVector up;
-          if (t.is_zero())
-          {
-            up = s;
-          }
-          else
-          {
-            BitVector rem;
-            sub.bvudivurem(t, &up, &rem);
-            assert(!up.is_null());
-            assert(!rem.is_null());
-            if (rem.is_zero())
-            {
-              /* (s - t) / t is not truncated (remainder is 0) and is therefore
-               * the EXclusive upper bound, the inclusive upper bound is:
-               * upper = (s - t) / t - 1  */
-              up.ibvdec();
-            }
-          }
+          BitVector one    = BitVector::mk_one(size);
+          bool x_match_one = t.is_zero() && x.match_fixed_bits(one);
 
-          if (up.is_zero())
+          if (d_rng->pick_with_prob(100) && x_match_one)
           {
-            d_inverse.reset(new BitVector(std::move(sub.ibvdec())));
+            d_inverse.reset(new BitVector(std::move(one)));
           }
           else
           {
-            /* choose n such that (s - t) % n = 0 */
-            BitVector one = BitVector::mk_one(size);
-            BitVector n(size, *d_rng, one, up);
-            BitVector rem = sub.bvurem(n);
-            for (uint32_t i = 0; n_tries == 0 || i < n_tries; ++i)
+            BitVector bv = x.get_factor(d_rng, sub, t, 10000);
+            assert(bv.is_null() || x.match_fixed_bits(bv));
+            if (!bv.is_null())
             {
-              n   = BitVector(size, *d_rng, one, up);
-              rem = sub.bvurem(n);
-              if (rem.is_zero())
+              d_inverse.reset(new BitVector(std::move(bv)));
+            }
+            else
+            {
+              assert(x_match_one || x_match_sub);
+              if (x_match_one && x_match_sub)
               {
-                BitVector div = sub.bvudiv(n);
-                if (x.match_fixed_bits(div))
+                if (d_rng->flip_coin())
                 {
-                  /* result: s - t / n */
-                  d_inverse.reset(new BitVector(std::move(div)));
-                  break;
+                  d_inverse.reset(new BitVector(std::move(sub)));
+                }
+                else
+                {
+                  d_inverse.reset(new BitVector(std::move(one)));
                 }
               }
-            }
-            if (d_inverse == nullptr && x.match_fixed_bits(sub))
-            {
-              /* fall back to n = 1 */
-              d_inverse.reset(new BitVector(std::move(sub)));
+              else if (x_match_one)
+              {
+                d_inverse.reset(new BitVector(std::move(one)));
+              }
+              else
+              {
+                d_inverse.reset(new BitVector(std::move(sub)));
+              }
             }
           }
         }
