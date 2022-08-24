@@ -47,23 +47,11 @@ map_inputs(Bzla *bzla, Bzla *clone)
                                   (BzlaHashPtr) bzla_node_hash_by_id,
                                   (BzlaCmpPtr) bzla_node_compare_by_id);
 
-  bzla_iter_hashptr_init(&it, clone->bv_vars);
+  bzla_iter_hashptr_init(&it, clone->inputs);
   while (bzla_iter_hashptr_has_next(&it))
   {
     cur = bzla_iter_hashptr_next(&it);
-    b   = bzla_hashptr_table_get(bzla->bv_vars, cur);
-    assert(b);
-
-    assert(!bzla_hashptr_table_get(inputs, cur));
-    bzla_hashptr_table_add(inputs, bzla_node_copy(clone, cur))->data.as_ptr =
-        bzla_node_copy(bzla, (BzlaNode *) b->key);
-  }
-
-  bzla_iter_hashptr_init(&it, clone->ufs);
-  while (bzla_iter_hashptr_has_next(&it))
-  {
-    cur = bzla_iter_hashptr_next(&it);
-    b   = bzla_hashptr_table_get(bzla->ufs, cur);
+    b   = bzla_hashptr_table_get(bzla->inputs, cur);
     assert(b);
 
     assert(!bzla_hashptr_table_get(inputs, cur));
