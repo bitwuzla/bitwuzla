@@ -2084,7 +2084,6 @@ class BzlaFPWordBlaster
                      BzlaSortPairHashFunction>
       d_sbv_ubv_uf_map;
 
-  std::unordered_map<BzlaNode *, BzlaNode *, BzlaNodeHashFunction> d_ite_map;
   std::vector<BzlaNode *> d_additional_assertions;
   Bzla *d_bzla;
 };
@@ -2125,11 +2124,6 @@ BzlaFPWordBlaster::~BzlaFPWordBlaster()
   {
     bzla_sort_release(d_bzla, p.first.first);
     bzla_sort_release(d_bzla, p.first.second);
-    bzla_node_release(d_bzla, p.second);
-  }
-  for (const auto &p : d_ite_map)
-  {
-    bzla_node_release(d_bzla, p.first);
     bzla_node_release(d_bzla, p.second);
   }
 #ifdef BZLA_USE_SYMFPU
@@ -2201,18 +2195,6 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
       visited.emplace(cur, 0);
       to_visit.push_back(cur);
 
-      if (bzla_node_is_cond(cur)
-          && (bzla_node_is_rm(d_bzla, cur->e[1])
-              || bzla_node_is_fp(d_bzla, cur->e[1])))
-      {
-        std::stringstream ss;
-        ss << "_fp_ite_" << bzla_node_get_id(cur) << "_";
-        BzlaNode *var =
-            bzla_exp_var(d_bzla, bzla_node_get_sort_id(cur), ss.str().c_str());
-        to_visit.push_back(var);
-        d_ite_map.emplace(bzla_node_copy(d_bzla, cur), var);
-      }
-
       /* We treat applies and quantifiers as variables. */
       if (!bzla_node_is_apply(cur) && !bzla_node_is_forall(cur))
       {
@@ -2224,33 +2206,56 @@ BzlaFPWordBlaster::word_blast(BzlaNode *node)
     }
     else if (visited.at(cur) == 0)
     {
-      if (bzla_node_is_cond(cur)
-          && (bzla_node_is_rm(d_bzla, cur->e[1])
-              || bzla_node_is_fp(d_bzla, cur->e[1])))
+      if (bzla_node_is_cond(cur) && bzla_node_is_rm(d_bzla, cur->e[1]))
       {
-        assert(d_ite_map.find(cur) != d_ite_map.end());
-        BzlaNode *var = d_ite_map.at(cur);
+        assert(d_rm_map.find(cur->e[1]) != d_rm_map.end());
+        assert(d_rm_map.find(cur->e[2]) != d_rm_map.end());
+        d_rm_map.emplace(bzla_node_copy(d_bzla, cur),
+                         symfpu::ite<BzlaFPSymProp, BzlaFPSymRM>::iteOp(
+                             BzlaFPSymProp(cur->e[0]),
+                             d_rm_map.at(cur->e[1]),
+                             d_rm_map.at(cur->e[2])));
+      }
+      else if (bzla_node_is_cond(cur) && bzla_node_is_fp(d_bzla, cur->e[1]))
+      {
+        assert(d_unpacked_float_map.find(cur->e[1])
+               != d_unpacked_float_map.end());
+        assert(d_unpacked_float_map.find(cur->e[2])
+               != d_unpacked_float_map.end());
 
-        if (bzla_node_is_rm(d_bzla, cur->e[1]))
-        {
-          assert(d_rm_map.find(var) != d_rm_map.end());
-          d_rm_map.emplace(bzla_node_copy(d_bzla, cur), d_rm_map.at(var));
-        }
-        else
-        {
-          assert(d_unpacked_float_map.find(var) != d_unpacked_float_map.end());
-          d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
-                                       d_unpacked_float_map.at(var));
-        }
-        BzlaNode *then_eq  = bzla_exp_eq(d_bzla, var, cur->e[1]);
-        BzlaNode *else_eq  = bzla_exp_eq(d_bzla, var, cur->e[2]);
-        BzlaNode *then_imp = bzla_exp_implies(d_bzla, cur->e[0], then_eq);
-        BzlaNode *else_imp =
-            bzla_exp_implies(d_bzla, bzla_node_invert(cur->e[0]), else_eq);
-        d_additional_assertions.push_back(then_imp);
-        d_additional_assertions.push_back(else_imp);
-        bzla_node_release(d_bzla, else_eq);
-        bzla_node_release(d_bzla, then_eq);
+        // Consruct ITEs over unpacked float components
+        auto uf1 = d_unpacked_float_map.at(cur->e[1]);
+        auto uf2 = d_unpacked_float_map.at(cur->e[2]);
+
+        BzlaNode *nan = bzla_exp_cond(
+            d_bzla, cur->e[0], uf1.getNaN().getNode(), uf2.getNaN().getNode());
+        BzlaNode *inf = bzla_exp_cond(
+            d_bzla, cur->e[0], uf1.getInf().getNode(), uf2.getInf().getNode());
+        BzlaNode *zero = bzla_exp_cond(d_bzla,
+                                       cur->e[0],
+                                       uf1.getZero().getNode(),
+                                       uf2.getZero().getNode());
+        BzlaNode *sign = bzla_exp_cond(d_bzla,
+                                       cur->e[0],
+                                       uf1.getSign().getNode(),
+                                       uf2.getSign().getNode());
+        BzlaNode *exp  = bzla_exp_cond(d_bzla,
+                                      cur->e[0],
+                                      uf1.getExponent().getNode(),
+                                      uf2.getExponent().getNode());
+        BzlaNode *sig  = bzla_exp_cond(d_bzla,
+                                      cur->e[0],
+                                      uf1.getSignificand().getNode(),
+                                      uf2.getSignificand().getNode());
+
+        BzlaSymUnpackedFloat ite(nan, inf, zero, sign, exp, sig);
+        d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur), ite);
+        bzla_node_release(d_bzla, nan);
+        bzla_node_release(d_bzla, inf);
+        bzla_node_release(d_bzla, zero);
+        bzla_node_release(d_bzla, sign);
+        bzla_node_release(d_bzla, exp);
+        bzla_node_release(d_bzla, sig);
       }
       else if (bzla_node_is_rm_const(cur))
       {
