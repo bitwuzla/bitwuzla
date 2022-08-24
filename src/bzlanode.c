@@ -1541,7 +1541,7 @@ bzla_node_bv_const_set_invbits(BzlaNode *exp, BzlaBitVector *bits)
 /*------------------------------------------------------------------------*/
 
 BzlaRoundingMode
-bzla_node_rm_const_get_rm(BzlaNode *exp)
+bzla_node_rm_const_get_rm(const BzlaNode *exp)
 {
   assert(exp);
   assert(bzla_node_is_rm_const(exp));

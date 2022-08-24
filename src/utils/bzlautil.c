@@ -694,6 +694,11 @@ bzla_util_node2string(const BzlaNode *exp)
     BUFCONCAT(strbuf, cur_len, new_len, " %s", bits);
     bzla_mem_freestr(bzla->mm, bits);
   }
+  else if (bzla_node_is_rm_const(exp))
+  {
+    new_len += 1 + 1;
+    BUFCONCAT(strbuf, cur_len, new_len, " %d", bzla_node_rm_const_get_rm(exp));
+  }
 
   assert(cur_len == strlen(strbuf));
   if (g_bzla_strbufpos + cur_len + 1 > BUFFER_SIZE - 1) g_bzla_strbufpos = 0;

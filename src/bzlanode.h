@@ -1254,7 +1254,7 @@ void bzla_node_bv_const_set_invbits(BzlaNode *exp, BzlaBitVector *bits);
 /*------------------------------------------------------------------------*/
 
 /** Get the rounding mode representation of a rounding mode constant node.  */
-BzlaRoundingMode bzla_node_rm_const_get_rm(BzlaNode *exp);
+BzlaRoundingMode bzla_node_rm_const_get_rm(const BzlaNode *exp);
 
 /*------------------------------------------------------------------------*/
 
