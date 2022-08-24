@@ -1599,82 +1599,86 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
     ic    = get_inst_constant(cur_q);
     qlog("Synthesize QI: %s\n", bzla_util_node2string(cur_q));
 
-    auto [it_sd, inserted] = d_synth_qi_data.emplace(cur_q, d_bzla->mm);
-    auto &synth_data       = it_sd->second;
-
-    std::vector<BzlaNode *> inputs;
-    std::vector<const BzlaBitVector *> input_values;
-
-    synth_data.d_values_out.push_back(
-        bzla_bv_copy(d_bzla->mm, bzla_model_get_bv(d_bzla, ic)));
-
-    // TODO: remove duplicate inputs
-
-    // Add constants with same sort as inputs.
-    BzlaSortId sort_id = bzla_node_get_sort_id(ic);
-    auto it            = d_const_map.find(sort_id);
-    if (it != d_const_map.end())
-    {
-      auto &consts = it->second;
-      for (BzlaNode *c : consts)
-      {
-        assert(bzla_node_is_regular(c));
-        inputs.push_back(c);
-        input_values.push_back(bzla_model_get_bv(d_bzla, c));
-        assert(input_values.back());
-      }
-    }
-
-    // Add dependencies as inputs
-    // Note: For now we use the dependencies of the top-most quantifier for
-    // nested quantifiers.
-    // TODO: Reuse already synthesized terms from outer quantifiers for nested
-    // quantifiers.
-    auto itt = d_deps.find(q);
-    if (itt != d_deps.end())
-    {
-      for (BzlaNode *dep : itt->second)
-      {
-        inputs.push_back(dep);
-        input_values.push_back(bzla_model_get_bv(d_bzla, dep));
-        assert(input_values.back());
-      }
-    }
-
-    BzlaBitVectorTuple *bvt =
-        bzla_bv_new_tuple(d_bzla->mm, input_values.size());
-    for (size_t i = 0; i < input_values.size(); ++i)
-    {
-      bzla_bv_add_to_tuple(d_bzla->mm, bvt, input_values[i], i);
-    }
-    synth_data.d_values_in.push_back(bvt);
-
-    auto itv          = d_value_map.find(sort_id);
-    std::vector<BzlaNode *> values =
-        itv == d_value_map.end() ? std::vector<BzlaNode *>() : itv->second;
-
     BzlaNode *t = nullptr;
-    if (!inputs.empty())
+    // For now, we can only synthesize terms for bit-vector sorts
+    if (bzla_sort_is_bv(d_bzla, bzla_node_get_sort_id(ic)))
     {
-      qlog(">>> Synthesize QI for %s\n", bzla_util_node2string(cur_q));
-      qlog_print_synth_table(d_bzla,
-                             inputs,
-                             synth_data.d_values_in,
-                             synth_data.d_values_out,
-                             values);
-      t = synth::bzla_synthesize_term(d_bzla,
-                                      inputs,
-                                      synth_data.d_values_in,
-                                      synth_data.d_values_out,
-                                      values,
-                                      10000,     // max checks
-                                      5,         // max levels
-                                      nullptr);  // BzlaNode *prev_synth)
-      qlog(">>> Result: %s\n", bzla_util_node2string(t));
-    }
-    else
-    {
-      qlog("No inputs\n");
+      auto [it_sd, inserted] = d_synth_qi_data.emplace(cur_q, d_bzla->mm);
+      auto &synth_data       = it_sd->second;
+
+      std::vector<BzlaNode *> inputs;
+      std::vector<const BzlaBitVector *> input_values;
+
+      synth_data.d_values_out.push_back(
+          bzla_bv_copy(d_bzla->mm, bzla_model_get_bv(d_bzla, ic)));
+
+      // TODO: remove duplicate inputs
+
+      // Add constants with same sort as inputs.
+      BzlaSortId sort_id = bzla_node_get_sort_id(ic);
+      auto it            = d_const_map.find(sort_id);
+      if (it != d_const_map.end())
+      {
+        auto &consts = it->second;
+        for (BzlaNode *c : consts)
+        {
+          assert(bzla_node_is_regular(c));
+          inputs.push_back(c);
+          input_values.push_back(bzla_model_get_bv(d_bzla, c));
+          assert(input_values.back());
+        }
+      }
+
+      // Add dependencies as inputs
+      // Note: For now we use the dependencies of the top-most quantifier for
+      // nested quantifiers.
+      // TODO: Reuse already synthesized terms from outer quantifiers for nested
+      // quantifiers.
+      auto itt = d_deps.find(q);
+      if (itt != d_deps.end())
+      {
+        for (BzlaNode *dep : itt->second)
+        {
+          inputs.push_back(dep);
+          input_values.push_back(bzla_model_get_bv(d_bzla, dep));
+          assert(input_values.back());
+        }
+      }
+
+      BzlaBitVectorTuple *bvt =
+          bzla_bv_new_tuple(d_bzla->mm, input_values.size());
+      for (size_t i = 0; i < input_values.size(); ++i)
+      {
+        bzla_bv_add_to_tuple(d_bzla->mm, bvt, input_values[i], i);
+      }
+      synth_data.d_values_in.push_back(bvt);
+
+      auto itv = d_value_map.find(sort_id);
+      std::vector<BzlaNode *> values =
+          itv == d_value_map.end() ? std::vector<BzlaNode *>() : itv->second;
+
+      if (!inputs.empty())
+      {
+        qlog(">>> Synthesize QI for %s\n", bzla_util_node2string(cur_q));
+        qlog_print_synth_table(d_bzla,
+                               inputs,
+                               synth_data.d_values_in,
+                               synth_data.d_values_out,
+                               values);
+        t = synth::bzla_synthesize_term(d_bzla,
+                                        inputs,
+                                        synth_data.d_values_in,
+                                        synth_data.d_values_out,
+                                        values,
+                                        10000,     // max checks
+                                        5,         // max levels
+                                        nullptr);  // BzlaNode *prev_synth)
+        qlog(">>> Result: %s\n", bzla_util_node2string(t));
+      }
+      else
+      {
+        qlog("No inputs\n");
+      }
     }
 
     if (t)

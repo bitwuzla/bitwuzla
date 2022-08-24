@@ -1261,6 +1261,7 @@ if(SymFPU_FOUND)
     "uf_fpmax.smt2"
     "uf_toubv.smt2"
     "uf_tosbv.smt2"
+    "quant_regr27.smt2"
   )
 
   list(APPEND cmp_testcases
