@@ -155,8 +155,7 @@ class TermSynthesizer
   std::tuple<bool, size_t, BzlaBitVectorTuple *> check_signature(BzlaNode *exp);
 
   BzlaBitVector *eval_candidate(BzlaNode *candidate,
-                                BzlaBitVectorTuple *value_in,
-                                BzlaBitVector *value_out);
+                                BzlaBitVectorTuple *value_in);
 
  private:
   /** Check candidate terms. */
@@ -201,12 +200,10 @@ TermSynthesizer::TermSynthesizer(Bzla *bzla,
 
 BzlaBitVector *
 TermSynthesizer::eval_candidate(BzlaNode *candidate,
-                                BzlaBitVectorTuple *value_in,
-                                BzlaBitVector *value_out)
+                                BzlaBitVectorTuple *value_in)
 {
   assert(candidate);
   assert(value_in);
-  assert(value_out);
 
   size_t j;
   int32_t i, pos;
@@ -364,7 +361,7 @@ TermSynthesizer::check_signature(BzlaNode *exp)
     inputs = d_values_in[i];
     output = d_values_out[i];
 
-    res = eval_candidate(exp, inputs, output);
+    res = eval_candidate(exp, inputs);
 
     if (bzla_bv_compare(res, output) == 0)
     {
