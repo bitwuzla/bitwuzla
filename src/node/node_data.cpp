@@ -55,7 +55,7 @@ NodeData::NodeData(NodeManager* mgr, Kind kind) : d_mgr(mgr), d_kind(kind){};
 bool
 NodeData::has_children() const
 {
-  return d_kind > Kind::UNARY_START;
+  return s_node_kind_info[d_kind].num_children > 0;
 }
 
 size_t
@@ -92,9 +92,7 @@ NodeData::get_child(size_t index)
 bool
 NodeData::is_indexed() const
 {
-  return d_kind == Kind::BV_EXTRACT || d_kind == Kind::FP_TO_UBV
-         || d_kind == Kind::FP_TO_SBV || d_kind == Kind::FP_TO_FP_FP
-         || d_kind == Kind::FP_TO_FP_SBV || d_kind == Kind::FP_TO_FP_UBV;
+  return s_node_kind_info[d_kind].num_indices > 0;
 }
 
 size_t
@@ -144,8 +142,7 @@ NodeDataChildren::NodeDataChildren(NodeManager* mgr,
 {
   assert(d_num_children > 0);
   assert(d_num_children <= s_max_children);
-  assert(Kind::UNARY_START < kind);
-  assert(kind < Kind::NUM_KINDS);
+  assert(s_node_kind_info[kind].num_children > 0);
   uint8_t i = 0;
   for (auto n : children)
   {
@@ -163,8 +160,7 @@ NodeDataIndexed::NodeDataIndexed(NodeManager* mgr,
                                  const std::vector<uint64_t>& indices)
     : NodeDataChildren(mgr, kind, children), d_num_indices(indices.size())
 {
-  assert(d_num_indices > 0);
-  assert(d_num_indices <= 2);
+  assert(s_node_kind_info[kind].num_indices == indices.size());
   uint8_t i = 0;
   for (auto idx : indices)
   {
