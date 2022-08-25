@@ -50,6 +50,16 @@ class Node
    */
   const Node& operator[](size_t index) const;
 
+  /** Return number of indices. */
+  size_t get_num_indices() const;
+
+  /**
+   * Return index at position `index`.
+   *
+   * Only valid to call if get_num_indices() > 0.
+   */
+  uint64_t get_index(size_t index) const;
+
   /** Comparison operators. */
   bool operator==(const Node& other) const;
   bool operator!=(const Node& other) const;

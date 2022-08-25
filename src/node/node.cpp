@@ -127,6 +127,21 @@ Node::operator[](size_t index) const
   return d_data->get_child(index);
 }
 
+size_t
+Node::get_num_indices() const
+{
+  assert(!is_null());
+  return d_data->get_num_indices();
+}
+
+uint64_t
+Node::get_index(size_t index) const
+{
+  assert(!is_null());
+  assert(get_num_indices() > 0);
+  return d_data->get_index(index);
+}
+
 Node::iterator
 Node::begin() const
 {
