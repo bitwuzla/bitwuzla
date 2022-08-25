@@ -150,6 +150,12 @@ Type::get_id() const
 }
 
 bool
+Type::is_null() const
+{
+  return d_data == nullptr;
+}
+
+bool
 Type::operator==(const Type& other) const
 {
   return d_data == other.d_data;

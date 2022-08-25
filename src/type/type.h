@@ -64,6 +64,9 @@ class Type
   /** Return id of type. */
   uint64_t get_id() const;
 
+  /** Check whether Type is a null type. */
+  bool is_null() const;
+
   bool operator==(const Type& other) const;
   bool operator!=(const Type& other) const;
 
