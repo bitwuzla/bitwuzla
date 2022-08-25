@@ -1624,6 +1624,7 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
         {
           assert(bzla_node_is_regular(c));
           assert(!bzla_node_is_proxy(c));
+          assert(bzla_node_is_bv(d_bzla, c));
           inputs.push_back(c);
           input_values.push_back(bzla_model_get_bv(d_bzla, c));
           assert(input_values.back());
@@ -1640,9 +1641,13 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
       {
         for (BzlaNode *dep : itt->second)
         {
-          inputs.push_back(dep);
-          input_values.push_back(bzla_model_get_bv(d_bzla, dep));
-          assert(input_values.back());
+          // Note: We currently only support bit-vector types for synthesis.
+          if (bzla_node_is_bv(d_bzla, dep))
+          {
+            inputs.push_back(dep);
+            input_values.push_back(bzla_model_get_bv(d_bzla, dep));
+            assert(input_values.back());
+          }
         }
       }
 
