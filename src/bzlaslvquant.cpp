@@ -118,6 +118,10 @@ qlog_print_synth_table(Bzla *bzla,
       char *bv = bzla_bv_to_char(bzla->mm, bvt->bv[j]);
       ss << bv << " ";
       ssin << std::setw(strlen(bv)) << inputs[j] << " ";
+      if (j < bvt->arity - 1)
+      {
+        ssin << "| ";
+      }
       bzla_mem_freestr(bzla->mm, bv);
     }
 
@@ -1624,7 +1628,7 @@ QuantSolverState::synthesize_qi(BzlaNode *q)
         {
           assert(bzla_node_is_regular(c));
           assert(!bzla_node_is_proxy(c));
-          assert(bzla_node_is_bv(d_bzla, c));
+          assert(bzla_node_is_bv_var(c));
           inputs.push_back(c);
           input_values.push_back(bzla_model_get_bv(d_bzla, c));
           assert(input_values.back());
@@ -2119,8 +2123,7 @@ QuantSolverState::collect_info(std::vector<BzlaNode *> &quantifiers)
           qlog("found value: %s\n", bzla_util_node2string(cur));
         }
       }
-      else if ((bzla_node_is_var(cur) || bzla_node_is_uf(cur))
-               && bzla_node_is_bv(d_bzla, cur))
+      else if (bzla_node_is_var(cur) && bzla_node_is_bv(d_bzla, cur))
       {
         BzlaSortId sort_id = bzla_node_get_sort_id(cur);
 
@@ -2172,8 +2175,7 @@ QuantSolverState::collect_info(std::vector<BzlaNode *> &quantifiers)
     {
       auto cur =
           bzla_node_real_addr(bzla_node_get_simplified(d_bzla, consts[i]));
-      if ((bzla_node_is_var(cur) || bzla_node_is_uf(cur))
-          && bzla_node_is_bv(d_bzla, cur))
+      if (bzla_node_is_var(cur) && bzla_node_is_bv(d_bzla, cur))
       {
         it.second.push_back(bzla_node_copy(d_bzla, cur));
       }

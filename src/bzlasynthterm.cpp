@@ -232,18 +232,26 @@ TermSynthesizer::eval_candidate(BzlaNode *candidate,
     d = bzla_hashint_map_get(cache, real_cur->id);
     if (!d)
     {
-      bzla_hashint_map_add(cache, real_cur->id);
+      d = bzla_hashint_map_add(cache, real_cur->id);
+
+      // Check whether `real_cur` is an input.
+      auto it = d_values_in_map.find(real_cur);
+      if (it != d_values_in_map.end())
+      {
+        pos = d_values_in_map.at(real_cur);
+        assert(pos < static_cast<int32_t>(value_in->arity));
+        result    = bzla_bv_copy(mm, value_in->bv[pos]);
+        d->as_ptr = bzla_bv_copy(mm, result);
+        goto EVAL_EXP_PUSH_RESULT;
+      }
+
       BZLA_PUSH_STACK(visit, cur);
-
-      if (bzla_node_is_apply(real_cur)) continue;
-
       for (i = real_cur->arity - 1; i >= 0; i--)
         BZLA_PUSH_STACK(visit, real_cur->e[i]);
     }
     else if (!d->as_ptr)
     {
       assert(!bzla_node_is_fun(real_cur));
-      // assert(!bzla_node_is_apply(real_cur));
 
       if (!bzla_node_is_apply(real_cur))
       {
@@ -255,15 +263,6 @@ TermSynthesizer::eval_candidate(BzlaNode *candidate,
       {
         case BZLA_BV_CONST_NODE:
           result = bzla_bv_copy(mm, bzla_node_bv_const_get_bits(real_cur));
-          break;
-
-        case BZLA_APPLY_NODE:
-        case BZLA_PARAM_NODE:
-        case BZLA_VAR_NODE:
-          assert(d_values_in_map.find(real_cur) != d_values_in_map.end());
-          pos    = d_values_in_map.at(real_cur);
-          assert(pos < static_cast<size_t>(value_in->arity));
-          result = bzla_bv_copy(mm, value_in->bv[pos]);
           break;
 
         case BZLA_BV_SLICE_NODE:
