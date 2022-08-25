@@ -1,5 +1,5 @@
-#ifndef BZLA__NODE_DATA_H
-#define BZLA__NODE_DATA_H
+#ifndef BZLA_NODE_DATA_H_INCLUDED
+#define BZLA_NODE_DATA_H_INCLUDED
 
 #include <array>
 #include <cassert>

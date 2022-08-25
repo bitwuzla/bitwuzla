@@ -1,5 +1,5 @@
-#ifndef BZLA__NODE_MANAGER_H
-#define BZLA__NODE_MANAGER_H
+#ifndef BZLA_NODE_MANAGER_H_INCLUDED
+#define BZLA_NODE_MANAGER_H_INCLUDED
 
 #include <cstddef>
 #include <cstdint>

@@ -1,5 +1,5 @@
-#ifndef BZLA__TYPE_H
-#define BZLA__TYPE_H
+#ifndef BZLA_TYPE_H_INCLUDED
+#define BZLA_TYPE_H_INCLUDED
 
 #include <cstdint>
 #include <vector>

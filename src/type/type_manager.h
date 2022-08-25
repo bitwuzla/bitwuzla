@@ -1,5 +1,5 @@
-#ifndef BZLA__TYPE_MANAGER_H
-#define BZLA__TYPE_MANAGER_H
+#ifndef BZLA_TYPE_MANAGER_H_INCLUDED
+#define BZLA_TYPE_MANAGER_H_INCLUDED
 
 #include <memory>
 #include <unordered_set>
