@@ -84,6 +84,8 @@ struct KindInformation
   uint8_t num_indices             = 0;
   const char* enum_name           = nullptr;
   const char* smt2_name           = nullptr;
+
+  bool is_nary() const { return num_children == s_nary; }
 };
 
 struct KindInfo

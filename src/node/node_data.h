@@ -65,6 +65,9 @@ class NodeData
   /** Return number of indices. */
   size_t get_num_indices() const;
 
+  /** Check whether node is nary. */
+  bool is_nary() const;
+
   // TODO: instantiate with
   // - BitVector
   // - FloatingPoint
@@ -103,13 +106,6 @@ class NodeDataChildren : public NodeData
   std::array<Node, s_max_children> d_children;
 };
 
-// class NodeDataArguments : public NodeData
-//{
-//   friend class NodeData;
-//
-//   std::vector<Node> d_children;
-// };
-
 class NodeDataIndexed : public NodeDataChildren
 {
   friend class NodeData;
@@ -128,21 +124,21 @@ class NodeDataIndexed : public NodeDataChildren
   std::array<uint64_t, 2> d_indices;
 };
 
-// template <class T>
-// class NodeDataValue : public NodeData
-//{
-//   friend class NodeData;
-//
-//  public:
-//   NodeDataValue() = delete;
-//   NodeDataValue(NodeManager* mgr, const T& value);
-//       : NodeData(mgr, Kind::VALUE), d_value(value){};
-//
-//   ~NodeDataValue() = default;
-//
-//  private:
-//   T d_value;
-// };
+class NodeDataNary : public NodeData
+{
+  friend class Node;
+  friend class NodeData;
+
+ public:
+  NodeDataNary()  = delete;
+  ~NodeDataNary() = default;
+
+  NodeDataNary(NodeManager* mgr, Kind kind, const std::vector<Node>& children);
+
+ private:
+  std::vector<Node> d_children;
+};
+
 
 /* ------------------------------------------------------------------------- */
 

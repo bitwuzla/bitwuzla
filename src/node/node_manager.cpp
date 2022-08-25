@@ -83,6 +83,10 @@ NodeManager::new_data(Kind kind,
   {
     data = new NodeDataIndexed(this, kind, children, indices);
   }
+  else if (s_node_kind_info[kind].is_nary())
+  {
+    data = new NodeDataNary(this, kind, children);
+  }
   else
   {
     data = new NodeDataChildren(this, kind, children);

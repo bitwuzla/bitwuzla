@@ -147,6 +147,11 @@ Node::begin() const
 {
   if (!is_null() && d_data->has_children())
   {
+    if (d_data->is_nary())
+    {
+      const NodeDataNary& data = reinterpret_cast<const NodeDataNary&>(*d_data);
+      return data.d_children.data();
+    }
     const NodeDataChildren& data =
         reinterpret_cast<const NodeDataChildren&>(*d_data);
     return data.d_children.begin();
@@ -159,6 +164,11 @@ Node::end() const
 {
   if (!is_null() && d_data->has_children())
   {
+    if (d_data->is_nary())
+    {
+      const NodeDataNary& data = reinterpret_cast<const NodeDataNary&>(*d_data);
+      return data.d_children.data() + data.d_children.size();
+    }
     const NodeDataChildren& data =
         reinterpret_cast<const NodeDataChildren&>(*d_data);
     return data.d_children.begin() + data.d_num_children;

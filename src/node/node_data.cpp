@@ -63,9 +63,17 @@ NodeData::get_num_children() const
 {
   if (has_children())
   {
-    const NodeDataChildren& data =
-        reinterpret_cast<const NodeDataChildren&>(*this);
-    return data.d_num_children;
+    if (is_nary())
+    {
+      const NodeDataNary& data = reinterpret_cast<const NodeDataNary&>(*this);
+      return data.d_children.size();
+    }
+    else
+    {
+      const NodeDataChildren& data =
+          reinterpret_cast<const NodeDataChildren&>(*this);
+      return data.d_num_children;
+    }
   }
   return 0;
 }
@@ -75,6 +83,11 @@ NodeData::get_child(size_t index) const
 {
   assert(has_children());
   assert(index < get_num_children());
+  if (is_nary())
+  {
+    const NodeDataNary& data = reinterpret_cast<const NodeDataNary&>(*this);
+    return data.d_children[index];
+  }
   const NodeDataChildren& data =
       reinterpret_cast<const NodeDataChildren&>(*this);
   return data.d_children[index];
@@ -85,6 +98,11 @@ NodeData::get_child(size_t index)
 {
   assert(has_children());
   assert(index < get_num_children());
+  if (is_nary())
+  {
+    NodeDataNary& data = reinterpret_cast<NodeDataNary&>(*this);
+    return data.d_children[index];
+  }
   NodeDataChildren& data = reinterpret_cast<NodeDataChildren&>(*this);
   return data.d_children[index];
 }
@@ -114,6 +132,12 @@ NodeData::get_index(size_t index) const
   assert(index < get_num_indices());
   const NodeDataIndexed& data = reinterpret_cast<const NodeDataIndexed&>(*this);
   return data.d_indices[index];
+}
+
+bool
+NodeData::is_nary() const
+{
+  return s_node_kind_info[d_kind].num_children == KindInformation::s_nary;
 }
 
 void
@@ -167,6 +191,16 @@ NodeDataIndexed::NodeDataIndexed(NodeManager* mgr,
     d_indices[i] = idx;
   }
   assert(i == d_num_indices);
+};
+
+/* --- NodeDataNary public ------------------------------------------------- */
+
+NodeDataNary::NodeDataNary(NodeManager* mgr,
+                           Kind kind,
+                           const std::vector<Node>& children)
+    : NodeData(mgr, kind), d_children(children)
+{
+  assert(is_nary());
 };
 
 }  // namespace bzla::node
