@@ -16,28 +16,48 @@ class TypeManager
   friend class TypeData;
 
  public:
-  /** Create boolean type. */
+  /**
+   * @return Boolean type.
+   */
   Type mk_bool_type();
 
-  /** Create bit-vector type of size `size`. */
+  /**
+   * Create bit-vector type.
+   *
+   * @param size Size of the bit-vector type.
+   * @return Bit-vector type of given size.
+   */
   Type mk_bv_type(uint64_t size);
 
   /**
-   * Create floating-point type with exponent size `exp_size` and significand
-   * size `sig_size`.
+   * Create floating-point type.
+   *
+   * @param exp_size Exponent size.
+   * @param sig_size Significand size.
+   * @return Floating-point type of given format.
    */
   Type mk_fp_type(uint64_t exp_size, uint64_t sig_size);
 
-  /** Create rounding mode type. */
+  /**
+   * @return Rounding mode type.
+   */
   Type mk_rm_type();
 
-  /** Create array type with index type `index` and element type `elem`. */
+  /**
+   * Create array type.
+   *
+   * @param index Index type.
+   * @param element Element type.
+   * @return Array type of given index and element type.
+   */
   Type mk_array_type(const Type& index, const Type& elem);
 
   /**
-   * Create function type with codomain `types[:-1]` and domain `types[-1]`.
+   * Create function type.
    *
-   * Note: Last type in `types` corresponds to function domain type.
+   * @param types Codomain types and domain type of function with the domain
+   *              type being the last element of the vector.
+   * @return Function type of given codmain and domain types.
    */
   Type mk_fun_type(const std::vector<Type>& types);
 
@@ -59,9 +79,12 @@ class TypeManager
   TypeData* find_or_create_fp_type(uint64_t exp_size, uint64_t sig_size);
 
   /**
-   * Garbage collect given type data.
+   * Garbage collect type data.
    *
-   * Travers type data structure and deletes all unused type data nodes.
+   * @note This will recursively delete all type data objects for which the
+   *       reference count becomes zero.
+   *
+   * @param d Type data to delete.
    */
   void garbage_collect(TypeData* d);
 

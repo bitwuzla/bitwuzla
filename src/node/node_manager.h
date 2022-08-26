@@ -170,14 +170,16 @@ class NodeManager
 
   /** Type manager. */
   type::TypeManager d_tm;
+
   /** Node id counter. */
   uint64_t d_node_id_counter = 1;
-  /**
-   * Indicates whether node manager is currently in garbage collection mode.
-   */
-  bool d_in_gc_mode          = false;
+
+  /** Indicates whether node manager is in garbage collection mode. */
+  bool d_in_gc_mode = false;
+
   /** Stores all node data objects, accessiable via the node id. */
   std::vector<std::unique_ptr<NodeData>> d_node_data;
+
   /** Lookup data structure for hash consing of node data. */
   std::unordered_set<NodeData*, NodeDataHash, NodeDataKeyEqual> d_unique_nodes;
 };

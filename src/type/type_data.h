@@ -28,36 +28,59 @@ class TypeData
   TypeData() = delete;
   ~TypeData();
 
-  /** Return type id. */
+  /**
+   * @return The type id.
+   */
   uint64_t get_id() const;
 
-  /** Return type kind. */
+  /**
+   * @return The type kind.
+   */
   Kind get_kind() const;
 
-  /** Return type vector (for array and function types). */
+  /**
+   * Return the types for function and array types.
+   *
+   * @return The vector of stored types.
+   */
   const std::vector<Type>& get_types() const;
 
-  /** Return size of bit-vector type. */
+  /**
+   * @return The size of a bit-vector type.
+   */
   uint64_t get_bv_size() const;
 
-  /** Return exponent size of floating-point type. */
+  /**
+   * @return The exponent size of a floating-point type.
+   */
   uint64_t get_fp_exp_size() const;
 
-  /** Return significand size of floating-point type. */
+  /**
+   * @return The significand size of a floating-point type.
+   */
   uint64_t get_fp_sig_size() const;
 
-  // Reference counting
+  /** Increase the reference count by one. */
   void inc_ref();
+
+  /**
+   * Decrease the reference count by one.
+   *
+   * If reference count becomes zero, this type data object will be
+   * automatically garbage collected.
+   */
   void dec_ref();
 
  private:
+  /** Constructor. */
   TypeData(TypeManager* mgr, Kind kind, const std::vector<Type>& types = {});
+  /** Constructor for creating bit-vector type data. */
   TypeData(TypeManager* mgr, uint64_t size);
+  /** Constructor for creating floating-point type data. */
   TypeData(TypeManager* mgr, uint64_t exp_size, uint64_t sig_size);
 
   /** Pointer to type manager that owns this object. */
   TypeManager* d_mgr = nullptr;
-
   /** Type id. */
   uint64_t d_id = 0;
   /** Type kind. */
@@ -81,6 +104,9 @@ class TypeData
   };
 };
 
+/**
+ * Hash struct used for hash consing type data.
+ */
 struct TypeDataHash
 {
   static constexpr size_t s_primes[4] = {
@@ -88,11 +114,13 @@ struct TypeDataHash
   size_t operator()(const TypeData* d) const;
 };
 
+/**
+ * Comparison struct used for hash consing type data.
+ */
 struct TypeDataKeyEqual
 {
   bool operator()(const TypeData* d0, const TypeData* d1) const;
 };
 
 }  // namespace bzla::type
-
 #endif

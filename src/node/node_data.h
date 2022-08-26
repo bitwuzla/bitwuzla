@@ -114,8 +114,8 @@ class NodeData
   /**
    * Decrease the reference count by one.
    *
-   * If reference count becomes zero, this node data will be automatically
-   * garbage collected.
+   * If reference count becomes zero, this node data object will be
+   * automatically garbage collected.
    */
   void dec_ref();
 
@@ -215,6 +215,9 @@ class NodeDataNary : public NodeData
 
 /* ------------------------------------------------------------------------- */
 
+/**
+ * Hash struct used for hash consing node data.
+ */
 struct NodeDataHash
 {
   static constexpr size_t s_primes[4] = {
@@ -222,6 +225,9 @@ struct NodeDataHash
   size_t operator()(const NodeData* d) const;
 };
 
+/**
+ * Comparison struct used for hash consing node data.
+ */
 struct NodeDataKeyEqual
 {
   bool operator()(const NodeData* d0, const NodeData* d1) const;
