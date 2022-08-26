@@ -20,7 +20,12 @@ class NodeManager
 
  public:
   /* --- Node interface ---------------------------------------------------- */
+
+  /** Create constant of type `t`. */
   Node mk_const(const type::Type& t, const std::string& symbol = "");
+
+  /** Create variable of type `t`. */
+  Node mk_var(const type::Type& t, const std::string& symbol = "");
 
   template <class T>
   Node mk_value(Kind kind, const type::Type& t, const T value);

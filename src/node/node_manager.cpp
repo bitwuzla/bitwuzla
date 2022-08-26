@@ -15,6 +15,16 @@ NodeManager::mk_const(const type::Type& type, const std::string& symbol)
 }
 
 Node
+NodeManager::mk_var(const type::Type& type, const std::string& symbol)
+{
+  // TODO: handle symbol
+  NodeData* data = new NodeData(this, Kind::VARIABLE);
+  data->d_type   = type;
+  init_id(data);
+  return Node(data);
+}
+
+Node
 NodeManager::mk_node(Kind kind,
                      const std::vector<Node>& children,
                      const std::vector<uint64_t>& indices)
