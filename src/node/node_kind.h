@@ -10,6 +10,9 @@ namespace bzla::node {
 
 /* --- Kind ---------------------------------------------------------------- */
 
+/**
+ * Node kinds.
+ */
 enum class Kind
 {
   NULL_NODE = 0,
@@ -77,6 +80,9 @@ enum class Kind
   NUM_KINDS,
 };
 
+/**
+ * Struct to store information for a kind.
+ */
 struct KindInformation
 {
   static constexpr uint8_t s_nary = 5;
@@ -88,6 +94,9 @@ struct KindInformation
   bool is_nary() const { return num_children == s_nary; }
 };
 
+/**
+ * Struct to storing and accessing information for all kinds.
+ */
 struct KindInfo
 {
   /** Return kind information for given `kind`. */
@@ -115,6 +124,9 @@ struct KindInfo
 
 namespace {
 
+/**
+ * Initialization of the KindInfo struct.
+ */
 constexpr KindInfo
 mk_kind_info()
 {
@@ -183,6 +195,9 @@ mk_kind_info()
 static constexpr KindInfo s_node_kind_info = mk_kind_info();
 static_assert(s_node_kind_info.complete(), "KindInfo not fully initialized.");
 
+/**
+ * Print kind to stream.
+ */
 std::ostream& operator<<(std::ostream& out, Kind kind);
 
 }  // namespace bzla::node

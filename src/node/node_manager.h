@@ -21,53 +21,93 @@ class NodeManager
  public:
   /* --- Node interface ---------------------------------------------------- */
 
-  /** Create constant of type `t`. */
+  /**
+   * Create constant.
+   *
+   * @param t The type of the constant.
+   * @param symbol The symbol of the constant.
+   * @return Constant of type `t`.
+   */
   Node mk_const(const type::Type& t, const std::string& symbol = "");
 
-  /** Create variable of type `t`. */
+  /**
+   * Create variable.
+   *
+   * @param t The type of the variable.
+   * @param symbol The symbol of the variable.
+   * @return Variable of type `t`.
+   */
   Node mk_var(const type::Type& t, const std::string& symbol = "");
 
-  /** Create value `value` of type `t`. */
+  /**
+   * Create value.
+   *
+   * @param t Type of the value.
+   * @param value The value itself.
+   * @return Node representing given value.
+   */
   // TODO: Instantiations for bv, fp, rm
   template <class T>
   Node mk_value(const type::Type& t, const T value);
 
-  /** Create node of kind `kind` with given children and indices. */
+  /**
+   * Create node of kind `kind` with given children and indices.
+   *
+   * @param kind Node kind.
+   * @param children The children of the node.
+   * @param indices The indices if kind is indexed.
+   * @return Node of kind `kind`.
+   */
   Node mk_node(Kind kind,
                const std::vector<Node>& children,
                const std::vector<uint64_t>& indices = {});
 
   /* --- Type interface ---------------------------------------------------- */
 
-  /** Create boolean type. */
+  /**
+   * @return Boolean type.
+   */
   type::Type mk_bool_type();
 
-  /** Create bit-vector type of size `size`. */
+  /**
+   * Create bit-vector type.
+   *
+   * @param size Size of the bit-vector type.
+   * @return Bit-vector type of given size.
+   */
   type::Type mk_bv_type(uint64_t size);
 
   /**
-   * Create floating-point type with exponent size `exp_size` and significand
-   * size `sig_size`.
+   * Create floating-point type.
+   *
+   * @param exp_size Exponent size.
+   * @param sig_size Significand size.
+   * @return Floating-point type of given format.
    */
   type::Type mk_fp_type(uint64_t exp_size, uint64_t sig_size);
 
-  /** Create rounding mode type. */
+  /**
+   * @return Rounding mode type.
+   */
   type::Type mk_rm_type();
 
-  /** Create array type with index type `index` and element type `elem`. */
+  /**
+   * Create array type.
+   *
+   * @param index Index type.
+   * @param element Element type.
+   * @return Array type of given index and element type.
+   */
   type::Type mk_array_type(const type::Type& index, const type::Type& elem);
 
   /**
-   * Create function type with codomain `types[:-1]` and domain `types[-1]`.
+   * Create function type.
    *
-   * Note: Last type in `types` corresponds to function domain type.
+   * @param types Codomain types and domain type of function with the domain
+   *              type being the last element of the vector.
+   * @return Function type of given codmain and domain types.
    */
   type::Type mk_fun_type(const std::vector<type::Type>& types);
-
-  /** Compute type for given node. */
-  type::Type compute_type(Kind kind,
-                          const std::vector<Node>& children,
-                          const std::vector<uint64_t>& indices = {});
 
   /** Type checking of children and indices based on kind. */
   std::pair<bool, std::string> check_type(
@@ -76,22 +116,69 @@ class NodeManager
       const std::vector<uint64_t>& indices = {});
 
  private:
+  /**
+   * Initialize node data.
+   *
+   * Initializes the given node data with the node id and stores it in the node
+   * manager.
+   *
+   * @param d Node data to initialize.
+   */
   void init_id(NodeData* d);
 
+  /**
+   * Create node data object.
+   *
+   * Creates node data object based on the given kind (either NodeDataIndexed,
+   * NodeDataChildren or NodeDataNary).
+   *
+   * @param kind The node kind.
+   * @param children The children of the node.
+   * @param indices The indices of the node.
+   * @return Node data.
+   */
   NodeData* new_data(Kind kind,
                      const std::vector<Node>& children,
                      const std::vector<uint64_t>& indices);
 
+  /**
+   * Creates a new node data in case node does not yet exist.
+   *
+   * @param kind The node kind.
+   * @param children The children of the node.
+   * @param indices The indieces of the node.
+   * @return New or existing node data.
+   */
   NodeData* find_or_create_node(Kind kind,
                                 const std::vector<Node>& children,
                                 const std::vector<uint64_t>& indices);
 
+  /** Compute type for a node. */
+  type::Type compute_type(Kind kind,
+                          const std::vector<Node>& children,
+                          const std::vector<uint64_t>& indices = {});
+
+  /**
+   * Garbage collect node data.
+   *
+   * @note This will recursively delete all node data objects for which the
+   *       reference count becomes zero.
+   *
+   * @param d Node data to delete.
+   */
   void garbage_collect(NodeData* d);
 
+  /** Type manager. */
   type::TypeManager d_tm;
+  /** Node id counter. */
   uint64_t d_node_id_counter = 1;
+  /**
+   * Indicates whether node manager is currently in garbage collection mode.
+   */
   bool d_in_gc_mode          = false;
+  /** Stores all node data objects, accessiable via the node id. */
   std::vector<std::unique_ptr<NodeData>> d_node_data;
+  /** Lookup data structure for hash consing of node data. */
   std::unordered_set<NodeData*, NodeDataHash, NodeDataKeyEqual> d_unique_nodes;
 };
 

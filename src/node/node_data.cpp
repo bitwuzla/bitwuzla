@@ -157,6 +157,40 @@ NodeData::dec_ref()
   }
 }
 
+NodeData::iterator
+NodeData::begin() const
+{
+  if (has_children())
+  {
+    if (is_nary())
+    {
+      const NodeDataNary& data = reinterpret_cast<const NodeDataNary&>(*this);
+      return data.d_children.data();
+    }
+    const NodeDataChildren& data =
+        reinterpret_cast<const NodeDataChildren&>(*this);
+    return data.d_children.begin();
+  }
+  return nullptr;
+}
+
+NodeData::iterator
+NodeData::end() const
+{
+  if (has_children())
+  {
+    if (is_nary())
+    {
+      const NodeDataNary& data = reinterpret_cast<const NodeDataNary&>(*this);
+      return data.d_children.data() + data.d_children.size();
+    }
+    const NodeDataChildren& data =
+        reinterpret_cast<const NodeDataChildren&>(*this);
+    return data.d_children.begin() + data.d_num_children;
+  }
+  return nullptr;
+}
+
 /* --- NodeDataChildren public --------------------------------------------- */
 
 NodeDataChildren::NodeDataChildren(NodeManager* mgr,

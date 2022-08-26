@@ -145,16 +145,9 @@ Node::get_index(size_t index) const
 Node::iterator
 Node::begin() const
 {
-  if (!is_null() && d_data->has_children())
+  if (!is_null())
   {
-    if (d_data->is_nary())
-    {
-      const NodeDataNary& data = reinterpret_cast<const NodeDataNary&>(*d_data);
-      return data.d_children.data();
-    }
-    const NodeDataChildren& data =
-        reinterpret_cast<const NodeDataChildren&>(*d_data);
-    return data.d_children.begin();
+    return d_data->begin();
   }
   return nullptr;
 }
@@ -162,16 +155,9 @@ Node::begin() const
 Node::iterator
 Node::end() const
 {
-  if (!is_null() && d_data->has_children())
+  if (!is_null())
   {
-    if (d_data->is_nary())
-    {
-      const NodeDataNary& data = reinterpret_cast<const NodeDataNary&>(*d_data);
-      return data.d_children.data() + data.d_children.size();
-    }
-    const NodeDataChildren& data =
-        reinterpret_cast<const NodeDataChildren&>(*d_data);
-    return data.d_children.begin() + data.d_num_children;
+    return d_data->end();
   }
   return nullptr;
 }

@@ -14,8 +14,11 @@ namespace bzla::node {
 class NodeManager;
 enum class Kind;
 
-static constexpr size_t s_max_children = 4;
-
+/**
+ * Node data base class.
+ *
+ * Used for nodes that do not need additional payload, e.g. Kind::CONSTANT.
+ */
 class NodeData
 {
   friend class NodeManager;
@@ -23,49 +26,79 @@ class NodeData
   friend struct NodeDataKeyEqual;
 
  public:
-  NodeData() = delete;
-  NodeData(NodeManager* mgr, Kind kind);
+  using iterator = const Node*;
+
+  NodeData()          = delete;
   virtual ~NodeData() = default;
 
-  /** Return node id. */
+  /**
+   * @return The node id.
+   */
   uint64_t get_id() const { return d_id; }
 
-  /** Return node kind. */
+  /**
+   * @return The node kind.
+   */
   Kind get_kind() const { return d_kind; }
 
-  /** Return node type. */
+  /**
+   * @return The node type.
+   */
   const type::Type& get_type() const { return d_type; }
 
-  /** Check whether node has children. */
+  /**
+   * @return True if node data stores children.
+   */
   bool has_children() const;
 
   /**
    * Return child at position `index`.
    *
-   * Only valid to call if get_num_children() > 0.
+   * @note: Only valid to call if get_num_children() > 0.
+   *
+   * @param index The position of the child.
+   * @return The child node at position `index`.
    */
   const Node& get_child(size_t index) const;
+
+  /**
+   * Return child at position `index`.
+   *
+   * @note: Only valid to call if get_num_children() > 0.
+   *
+   * @param index The position of the child.
+   * @return The child node at position `index`.
+   */
   Node& get_child(size_t index);
 
-  /** Return number of children. */
+  /**
+   * @return The number of stored children.
+   */
   size_t get_num_children() const;
 
-  /** Check whether node is indexed. */
+  /**
+   * @return True if node data stores indices.
+   */
   bool is_indexed() const;
 
-  // TODO: get_indices()
-  // TODO: specific instantiantions for ExtractLower/ExtractUpper?
   /**
    * Get index at position `index`.
    *
-   * Only valid to call for indexed operators.
+   * @note: Only valid to call for indexed operators.
+   *
+   * @param index The position of the index.
+   * @return The index.
    */
   uint64_t get_index(size_t index) const;
 
-  /** Return number of indices. */
+  /**
+   * @return The number of stored indices.
+   */
   size_t get_num_indices() const;
 
-  /** Check whether node is nary. */
+  /**
+   * @return True if node data stores arbitrary number of children.
+   */
   bool is_nary() const;
 
   // TODO: instantiate with
@@ -75,25 +108,55 @@ class NodeData
   template <class T>
   T& get_value() const;
 
-  // Reference counting
+  /** Increase the reference count by one. */
   void inc_ref();
+
+  /**
+   * Decrease the reference count by one.
+   *
+   * If reference count becomes zero, this node data will be automatically
+   * garbage collected.
+   */
   void dec_ref();
 
- private:
-  NodeManager* d_mgr = nullptr;
+  /**
+   * @return An iterator to the first child of this node.
+   */
+  iterator begin() const;
 
+  /**
+   * @return An iterator to the end of the children list of this node.
+   */
+  iterator end() const;
+
+ protected:
+  NodeData(NodeManager* mgr, Kind kind);
+
+ private:
+  /** The owning node manager. */
+  NodeManager* d_mgr = nullptr;
+  /** Node id. */
   uint64_t d_id = 0;
+  /** Node kind. */
   Kind d_kind;
+  /** Node type. */
   type::Type d_type;
+  /** Number of references. */
   uint32_t d_refs = 0;
 };
 
+/**
+ * Node data with a payload of at most `s_max_children` children.
+ *
+ * Always allocates an std::array of size `s_max_children` to store children.
+ */
 class NodeDataChildren : public NodeData
 {
-  friend class Node;
   friend class NodeData;
 
  public:
+  static constexpr size_t s_max_children = 4;
+
   NodeDataChildren()  = delete;
   ~NodeDataChildren() = default;
 
@@ -102,14 +165,20 @@ class NodeDataChildren : public NodeData
                    const std::vector<Node>& children);
 
  private:
+  /** The number of stored children. */
   uint8_t d_num_children;
+  /** Storage for at most `s_max_children` children. */
   std::array<Node, s_max_children> d_children;
 };
 
+/**
+ * Node data with a payload of at most `s_max_children` children and 2 indices.
+ *
+ * Always allocates an std::array of size 2 to store indices.
+ */
 class NodeDataIndexed : public NodeDataChildren
 {
   friend class NodeData;
-  friend class NodeDataChildren;
 
  public:
   NodeDataIndexed() = delete;
@@ -120,13 +189,17 @@ class NodeDataIndexed : public NodeDataChildren
   ~NodeDataIndexed() = default;
 
  private:
+  /** The number of stored indices. */
   uint8_t d_num_indices = 0;
+  /** Storage for at most 2 indices. */
   std::array<uint64_t, 2> d_indices;
 };
 
+/**
+ * Node data to store an arbitrary number of children.
+ */
 class NodeDataNary : public NodeData
 {
-  friend class Node;
   friend class NodeData;
 
  public:
@@ -136,9 +209,9 @@ class NodeDataNary : public NodeData
   NodeDataNary(NodeManager* mgr, Kind kind, const std::vector<Node>& children);
 
  private:
+  /** Storage for arbitrary number of children. */
   std::vector<Node> d_children;
 };
-
 
 /* ------------------------------------------------------------------------- */
 
