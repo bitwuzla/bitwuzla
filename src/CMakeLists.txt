@@ -90,6 +90,7 @@ set(libbitwuzla_src_files
   sat/bzlakissat.cpp
   sat/bzlagimsatul.c
   sat/cadical.cpp
+  sat/cryptominisat.cpp
   sat/kissat.cpp
   utils/bzlahashint.c
   utils/bzlahashptr.c
