@@ -117,13 +117,14 @@ TEST_F(TestNodeManager, mk_apply)
   NodeManager nm;
 
   Type bool_type  = nm.mk_bool_type();
+  Type bv_type    = nm.mk_bv_type(32);
   Type fun_type   = nm.mk_fun_type({bool_type,
                                     bool_type,
                                     bool_type,
                                     bool_type,
                                     bool_type,
                                     bool_type,
-                                    bool_type});
+                                    bv_type});
   Node fun        = nm.mk_const(fun_type);
   Node bool_const = nm.mk_const(bool_type);
   Node apply      = nm.mk_node(Kind::APPLY,
@@ -136,20 +137,207 @@ TEST_F(TestNodeManager, mk_apply)
                                 bool_const});
 
   ASSERT_EQ(apply.get_num_children(), 7);
-  ASSERT_EQ(apply,
-            nm.mk_node(Kind::APPLY,
-                       {fun,
-                        bool_const,
-                        bool_const,
-                        bool_const,
-                        bool_const,
-                        bool_const,
-                        bool_const}));
   ASSERT_EQ(apply[0], fun);
   for (size_t i = 1; i < apply.get_num_children(); ++i)
   {
     ASSERT_EQ(apply[i], bool_const);
   }
+  ASSERT_EQ(apply.get_type(), bv_type);
+  ASSERT_DEATH(nm.mk_node(Kind::APPLY, {fun}), "");
+  ASSERT_DEATH(nm.mk_node(Kind::APPLY, {fun, bool_const}), "");
+}
+
+TEST_F(TestNodeManager, check_type)
+{
+  NodeManager nm;
+
+  // Test boolean operators
+  Type bool_type   = nm.mk_bool_type();
+  Node bool_const1 = nm.mk_const(bool_type);
+  Node bool_const2 = nm.mk_const(bool_type);
+
+  ASSERT_EQ(nm.mk_node(Kind::EQUAL, {bool_const1, bool_const2}).get_type(),
+            bool_type);
+
+  ASSERT_EQ(nm.mk_node(Kind::NOT, {bool_const1}).get_type(), bool_type);
+
+  for (auto kind : {Kind::AND, Kind::OR})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {bool_const1, bool_const2}).get_type(),
+              bool_type);
+  }
+
+  // Test bit-vector operators
+  Type bv_type   = nm.mk_bv_type(32);
+  Node bv_const1 = nm.mk_const(bv_type);
+  Node bv_const2 = nm.mk_const(bv_type);
+
+  ASSERT_EQ(nm.mk_node(Kind::EQUAL, {bv_const1, bv_const2}).get_type(),
+            bool_type);
+
+  ASSERT_EQ(nm.mk_node(Kind::BV_NOT, {bv_const1}).get_type(), bv_type);
+
+  for (auto kind : {Kind::BV_SLT, Kind::BV_ULT})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {bv_const1, bv_const2}).get_type(), bool_type);
+  }
+
+  for (auto kind : {Kind::BV_AND,
+                    Kind::BV_ADD,
+                    Kind::BV_MUL,
+                    Kind::BV_SHL,
+                    Kind::BV_SHR,
+                    Kind::BV_ASHR,
+                    Kind::BV_UDIV,
+                    Kind::BV_UREM})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {bv_const1, bv_const2}).get_type(), bv_type);
+  }
+
+  ASSERT_EQ(nm.mk_node(Kind::BV_CONCAT, {bv_const1, bv_const2}).get_type(),
+            nm.mk_bv_type(64));
+  ASSERT_EQ(nm.mk_node(Kind::BV_EXTRACT, {bv_const1}, {5, 0}).get_type(),
+            nm.mk_bv_type(6));
+
+  // Test floating-point operators
+  Type fp_type   = nm.mk_fp_type(5, 11);
+  Type rm_type   = nm.mk_rm_type();
+  Node fp_const1 = nm.mk_const(fp_type);
+  Node fp_const2 = nm.mk_const(fp_type);
+  Node fp_const3 = nm.mk_const(fp_type);
+  Node rm_const  = nm.mk_const(rm_type);
+
+  ASSERT_EQ(nm.mk_node(Kind::EQUAL, {fp_const1, fp_const2}).get_type(),
+            bool_type);
+
+  ASSERT_EQ(
+      nm.mk_node(Kind::EQUAL, {rm_const, nm.mk_const(rm_type)}).get_type(),
+      bool_type);
+
+  for (auto kind : {Kind::FP_ABS, Kind::FP_NEG})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {fp_const1}).get_type(), fp_type);
+  }
+
+  for (auto kind : {
+           Kind::FP_IS_INF,
+           Kind::FP_IS_NAN,
+           Kind::FP_IS_NEG,
+           Kind::FP_IS_NORM,
+           Kind::FP_IS_POS,
+           Kind::FP_IS_SUBNORM,
+           Kind::FP_IS_ZERO,
+       })
+  {
+    ASSERT_EQ(nm.mk_node(kind, {fp_const1}).get_type(), bool_type);
+  }
+
+  ASSERT_EQ(nm.mk_node(Kind::FP_TO_FP_FROM_BV, {bv_const1}, {8, 24}).get_type(),
+            nm.mk_fp_type(8, 24));
+
+  for (auto kind : {Kind::FP_EQUAL, Kind::FP_LE, Kind::FP_LT})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {fp_const1, fp_const2}).get_type(), bool_type);
+  }
+
+  for (auto kind : {Kind::FP_MIN, Kind::FP_MAX, Kind::FP_REM})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {fp_const1, fp_const2}).get_type(), fp_type);
+  }
+
+  for (auto kind : {Kind::FP_SQRT, Kind::FP_RTI})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {rm_const, fp_const1}).get_type(), fp_type);
+  }
+
+  for (auto kind : {Kind::FP_TO_SBV, Kind::FP_TO_UBV})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {rm_const, fp_const1}, {32}).get_type(),
+              nm.mk_bv_type(32));
+  }
+
+  ASSERT_EQ(nm.mk_node(Kind::FP_TO_FP_FROM_FP, {rm_const, fp_const1}, {8, 24})
+                .get_type(),
+            nm.mk_fp_type(8, 24));
+
+  for (auto kind : {Kind::FP_TO_FP_FROM_SBV, Kind::FP_TO_FP_FROM_UBV})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {rm_const, bv_const1}, {5, 11}).get_type(),
+              nm.mk_fp_type(5, 11));
+  }
+
+  for (auto kind : {Kind::FP_ADD, Kind::FP_MUL, Kind::FP_DIV})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {rm_const, fp_const1, fp_const2}).get_type(),
+              fp_type);
+  }
+
+  ASSERT_EQ(
+      nm.mk_node(Kind::FP_FMA, {rm_const, fp_const1, fp_const2, fp_const3})
+          .get_type(),
+      fp_type);
+
+  // Test array operators
+  Type array_type  = nm.mk_array_type(bv_type, fp_type);
+  Node array_const = nm.mk_const(array_type);
+
+  ASSERT_EQ(nm.mk_node(Kind::EQUAL, {array_const, nm.mk_const(array_type)})
+                .get_type(),
+            bool_type);
+
+  ASSERT_EQ(nm.mk_node(Kind::SELECT, {array_const, bv_const1}).get_type(),
+            fp_type);
+  ASSERT_EQ(
+      nm.mk_node(Kind::STORE, {array_const, bv_const1, fp_const1}).get_type(),
+      array_type);
+
+  // Test functions
+  Type fun_type  = nm.mk_fun_type({bool_type, rm_type, array_type});
+  Node fun_const = nm.mk_const(fun_type);
+
+  ASSERT_EQ(
+      nm.mk_node(Kind::APPLY, {fun_const, bool_const1, rm_const}).get_type(),
+      array_type);
+
+  Node x  = nm.mk_var(bv_type);
+  Node y  = nm.mk_var(fp_type);
+  Node l1 = nm.mk_node(Kind::LAMBDA,
+                       {y, nm.mk_node(Kind::STORE, {array_const, x, y})});
+  Node l2 = nm.mk_node(Kind::LAMBDA, {x, l1});
+
+  ASSERT_EQ(nm.mk_node(Kind::EQUAL, {l2, l2}).get_type(), bool_type);
+
+  ASSERT_EQ(l2.get_type(), nm.mk_fun_type({bv_type, fp_type, array_type}));
+
+  ASSERT_EQ(nm.mk_node(Kind::APPLY, {l2, bv_const1, fp_const1}).get_type(),
+            array_type);
+
+  // Test quantifiers
+  Node var = nm.mk_var(bv_type);
+  for (auto kind : {Kind::FORALL, Kind::EXISTS})
+  {
+    ASSERT_EQ(nm.mk_node(kind, {var, nm.mk_node(Kind::EQUAL, {var, bv_const1})})
+                  .get_type(),
+              bool_type);
+  }
+
+  // Test ITE
+  ASSERT_EQ(
+      nm.mk_node(Kind::ITE, {bool_const1, bool_const1, bool_const2}).get_type(),
+      bool_type);
+  ASSERT_EQ(
+      nm.mk_node(Kind::ITE, {bool_const1, bv_const1, bv_const2}).get_type(),
+      bv_type);
+  ASSERT_EQ(
+      nm.mk_node(Kind::ITE, {bool_const1, fp_const1, fp_const2}).get_type(),
+      fp_type);
+  ASSERT_EQ(nm.mk_node(Kind::ITE, {bool_const1, rm_const, rm_const}).get_type(),
+            rm_type);
+  ASSERT_EQ(
+      nm.mk_node(Kind::ITE, {bool_const1, array_const, array_const}).get_type(),
+      array_type);
+  ASSERT_EQ(nm.mk_node(Kind::ITE, {bool_const1, l2, l2}).get_type(),
+            nm.mk_fun_type({bv_type, fp_type, array_type}));
 }
 
 }  // namespace bzla::test

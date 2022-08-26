@@ -63,6 +63,17 @@ class NodeManager
    */
   type::Type mk_fun_type(const std::vector<type::Type>& types);
 
+  /** Compute type for given node. */
+  type::Type compute_type(Kind kind,
+                          const std::vector<Node>& children,
+                          const std::vector<uint64_t>& indices = {});
+
+  /** Type checking of children and indices based on kind. */
+  std::pair<bool, std::string> check_type(
+      Kind kind,
+      const std::vector<Node>& children,
+      const std::vector<uint64_t>& indices = {});
+
  private:
   void init_id(NodeData* d);
 
