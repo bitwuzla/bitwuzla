@@ -1,5 +1,5 @@
-#ifndef BZLA_NODE_H_INCLUDED
-#define BZLA_NODE_H_INCLUDED
+#ifndef BZLA_NODE_NODE_H_INCLUDED
+#define BZLA_NODE_NODE_H_INCLUDED
 
 #include <cassert>
 #include <cstddef>

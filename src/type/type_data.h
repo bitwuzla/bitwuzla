@@ -1,5 +1,5 @@
-#ifndef BZLA_TYPE_DATA_H_INCLUDED
-#define BZLA_TYPE_DATA_H_INCLUDED
+#ifndef BZLA_TYPE_TYPE_DATA_H_INCLUDED
+#define BZLA_TYPE_TYPE_DATA_H_INCLUDED
 
 #include <cstddef>
 #include <cstdint>
