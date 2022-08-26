@@ -8,57 +8,60 @@
  * See COPYING for more information on using this software.
  */
 
+extern "C" {
 #include "sat/bzlakissat.h"
 
 #include "utils/bzlaabort.h"
+}
 
 /*------------------------------------------------------------------------*/
 #ifdef BZLA_USE_KISSAT
 /*------------------------------------------------------------------------*/
 
-#include "bzlacore.h"
-#include "kissat.h"
+#include "sat/kissat.h"
 
 static void *
 init(BzlaSATMgr *smgr)
 {
-  kissat *slv;
-
-  BZLA_MSG(smgr->bzla->msg, 1, "Kissat Version %s", kissat_version());
-
-  slv = kissat_init();
-
-  return slv;
+  (void) smgr;
+  return new bzla::sat::Kissat();
 }
 
 static void
 add(BzlaSATMgr *smgr, int32_t lit)
 {
-  kissat_add(smgr->solver, lit);
+  static_cast<bzla::sat::Kissat *>(smgr->solver)->add(lit);
 }
 
 static int32_t
 sat(BzlaSATMgr *smgr, int32_t limit)
 {
   (void) limit;
-  return kissat_solve(smgr->solver);
+  bzla::sat::SatSolver::Result res =
+      static_cast<bzla::sat::Kissat *>(smgr->solver)->solve();
+  if (res == bzla::sat::SatSolver::Result::SAT) return 10;
+  if (res == bzla::sat::SatSolver::Result::UNSAT) return 20;
+  return 0;
 }
 
 static int32_t
 deref(BzlaSATMgr *smgr, int32_t lit)
 {
-  int32_t val;
-  val = kissat_value(smgr->solver, lit);
-  if (val > 0) return 1;
-  if (val < 0) return -1;
-  return 0;
+  return static_cast<bzla::sat::Kissat *>(smgr->solver)->value(lit);
 }
 
 static void
 reset(BzlaSATMgr *smgr)
 {
-  kissat_release(smgr->solver);
+  delete static_cast<bzla::sat::Kissat *>(smgr->solver);
   smgr->solver = 0;
+}
+
+static void
+setterm(BzlaSATMgr *smgr)
+{
+  static_cast<bzla::sat::Kissat *>(smgr->solver)
+      ->set_terminate(smgr->term.fun, smgr->term.state);
 }
 
 /*------------------------------------------------------------------------*/
@@ -89,6 +92,7 @@ bzla_sat_enable_kissat(BzlaSATMgr *smgr)
   smgr->api.set_output       = 0;
   smgr->api.set_prefix       = 0;
   smgr->api.stats            = 0;
+  smgr->api.setterm          = setterm;
   return true;
 }
 /*------------------------------------------------------------------------*/
