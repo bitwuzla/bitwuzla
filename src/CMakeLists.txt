@@ -75,13 +75,14 @@ set(libbitwuzla_src_files
   preprocess/bzlaskolemize.c
   preprocess/bzlaunconstrained.c
   preprocess/bzlavarsubst.c
-  sat/bzlacadical.c
+  sat/bzlacadical.cpp
   sat/bzlacms.cpp
   sat/bzlalgl.c
   sat/bzlaminisat.cpp
   sat/bzlapicosat.c
   sat/bzlakissat.c
   sat/bzlagimsatul.c
+  sat/cadical.cpp
   utils/bzlahashint.c
   utils/bzlahashptr.c
   utils/bzlamem.c

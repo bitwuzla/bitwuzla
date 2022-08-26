@@ -43,3 +43,4 @@ fi
 make -j${NPROC}
 install_lib build/libcadical.a
 install_include src/ccadical.h
+install_include src/cadical.hpp
