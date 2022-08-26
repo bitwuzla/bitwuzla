@@ -59,7 +59,7 @@ class SatSolver
   virtual Result solve() = 0;
   /**
    * Configure a termination callback function.
-   * @param fun The callback function, returns a value != 0 if sat solver has
+   * @param fun The callback function, returns a value != 0 if SAT solver has
    *            been terminated.
    * @param state The argument to the callback function.
    */
@@ -68,10 +68,16 @@ class SatSolver
   // virtual int32_t repr(int32_t) = 0;
 
   /**
-   * Get the name of this sat solver.
-   * @return The name of this sat solver.
+   * Get the name of this SAT solver.
+   * @return The name of this SAT solver.
    */
   virtual const char *get_name() const = 0;
+
+  /**
+   * Get the version of this SAT solver.
+   * @return The version of the underly ing SAT solver.
+   */
+  virtual const char *get_version() const = 0;
 };
 
 }  // namespace bzla::sat

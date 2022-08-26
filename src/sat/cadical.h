@@ -31,6 +31,7 @@ class Cadical : public SatSolver
   Result solve() override;
   void set_terminate(int32_t (*fun)(void *), void *state) override;
   const char *get_name() const override { return "CaDiCaL"; }
+  const char *get_version() const override;
 
  private:
   std::unique_ptr<CaDiCaL::Solver> d_solver   = nullptr;

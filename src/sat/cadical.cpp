@@ -68,6 +68,12 @@ Cadical::set_terminate(int32_t (*fun)(void *), void *state)
   }
 }
 
+const char *
+Cadical::get_version() const
+{
+  return d_solver->version();
+}
+
 bool
 CadicalTerminator::terminate()
 {
