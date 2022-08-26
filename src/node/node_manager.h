@@ -27,14 +27,15 @@ class NodeManager
   /** Create variable of type `t`. */
   Node mk_var(const type::Type& t, const std::string& symbol = "");
 
+  /** Create value `value` of type `t`. */
+  // TODO: Instantiations for bv, fp, rm
   template <class T>
-  Node mk_value(Kind kind, const type::Type& t, const T value);
+  Node mk_value(const type::Type& t, const T value);
 
+  /** Create node of kind `kind` with given children and indices. */
   Node mk_node(Kind kind,
                const std::vector<Node>& children,
                const std::vector<uint64_t>& indices = {});
-
-  // TODO: set symbol?
 
   /* --- Type interface ---------------------------------------------------- */
 
@@ -81,7 +82,6 @@ class NodeManager
                      const std::vector<Node>& children,
                      const std::vector<uint64_t>& indices);
 
-  // NodeData* find_or_create_value(NodeData *lookup);
   NodeData* find_or_create_node(Kind kind,
                                 const std::vector<Node>& children,
                                 const std::vector<uint64_t>& indices);
