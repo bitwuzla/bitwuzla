@@ -188,7 +188,7 @@ NodeDataIndexed::NodeDataIndexed(NodeManager* mgr,
   uint8_t i = 0;
   for (auto idx : indices)
   {
-    d_indices[i] = idx;
+    d_indices[i++] = idx;
   }
   assert(i == d_num_indices);
 };
