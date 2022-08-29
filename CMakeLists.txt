@@ -50,16 +50,12 @@ option3vl(TESTING    "Configure unit and regression testing")
 option3vl(USE_CADICAL    "Use and link with CaDiCaL")
 option3vl(USE_CMS        "Use and link with CryptoMiniSat")
 option3vl(USE_LINGELING  "Use and link with Lingeling (default)")
-option3vl(USE_MINISAT    "Use and link with MiniSat")
-option3vl(USE_PICOSAT    "Use and link with PicoSAT")
 option3vl(USE_KISSAT     "Use and link with Kissat")
 option3vl(USE_GIMSATUL   "Use and link with Gimsatul")
 
 option(ONLY_CADICAL   "Only use CaDiCaL" OFF)
 option(ONLY_CMS       "Only use CryptoMiniSat" OFF)
 option(ONLY_LINGELING "Only use Lingeling" OFF)
-option(ONLY_MINISAT   "Only use MiniSat" OFF)
-option(ONLY_PICOSAT   "Only use PicoSAT" OFF)
 option(ONLY_KISSAT    "Only use Kissat" OFF)
 
 #-----------------------------------------------------------------------------#
@@ -71,19 +67,6 @@ if(PYTHON)
   find_package(PythonLibs
     ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}
     REQUIRED)
-
-  # TODO: static GMP library is not compiled with -fPIC, falling back to shared
-  # libraries for now.
-  ## Produce a python module that only links against system libraries. SAT
-  ## solvers and libcbitwuzla should be included in the module itself.
-  #if(NOT BUILD_SHARED_LIBS)
-  #  add_check_c_cxx_flag("-fPIC")
-  #  # Disable MiniSat since the static library is not compiled with -fPIC by
-  #  # default.
-  #  message(STATUS "Disabling MiniSat for static Python builds. "
-  #                 "Use --shared if you need MiniSat.")
-  #  set_option(USE_MINISAT OFF)
-  #endif()
   set(BUILD_SHARED_LIBS ON)
 endif()
 
@@ -113,8 +96,6 @@ endif()
 set_option(USE_CADICAL ON)
 set_option(USE_CMS ON)
 set_option(USE_LINGELING ON)
-set_option(USE_MINISAT ON)
-set_option(USE_PICOSAT ON)
 set_option(USE_KISSAT ON)
 set_option(USE_GIMSATUL ON)
 
@@ -214,38 +195,18 @@ include(CheckNoExportDynamic)
 if(ONLY_CADICAL)
   set(USE_CMS OFF)
   set(USE_LINGELING OFF)
-  set(USE_MINISAT OFF)
-  set(USE_PICOSAT OFF)
   set(USE_KISSAT OFF)
   set(USE_CADICAL ON)
 elseif(ONLY_CMS)
   set(USE_CADICAL OFF)
   set(USE_LINGELING OFF)
-  set(USE_MINISAT OFF)
-  set(USE_PICOSAT OFF)
   set(USE_KISSAT OFF)
   set(USE_CMS ON)
 elseif(ONLY_LINGELING)
   set(USE_CADICAL OFF)
   set(USE_CMS OFF)
-  set(USE_MINISAT OFF)
-  set(USE_PICOSAT OFF)
   set(USE_KISSAT OFF)
   set(USE_LINGELING ON)
-elseif(ONLY_MINISAT)
-  set(USE_CADICAL OFF)
-  set(USE_CMS OFF)
-  set(USE_LINGELING OFF)
-  set(USE_PICOSAT OFF)
-  set(USE_KISSAT OFF)
-  set(USE_MINISAT ON)
-elseif(ONLY_PICOSAT)
-  set(USE_CADICAL OFF)
-  set(USE_CMS OFF)
-  set(USE_LINGELING OFF)
-  set(USE_MINISAT OFF)
-  set(USE_KISSAT OFF)
-  set(USE_PICOSAT ON)
 endif()
 
 #-----------------------------------------------------------------------------#
@@ -272,14 +233,8 @@ endif()
 if(USE_CMS)
   find_package(CryptoMiniSat)
 endif()
-if(USE_PICOSAT)
-  find_package(PicoSAT)
-endif()
 if(USE_KISSAT)
   find_package(Kissat)
-endif()
-if(USE_MINISAT)
-  find_package(MiniSat)
 endif()
 if(USE_GIMSATUL)
   find_package(Gimsatul)
@@ -288,17 +243,12 @@ endif()
 if(NOT USE_LINGELING
    AND NOT USE_CADICAL
    AND NOT USE_CMS
-   AND NOT USE_PICOSAT
    AND NOT USE_KISSAT
-   AND NOT USE_MINISAT
    AND NOT USE_GIMSATUL)
   message(FATAL_ERROR "No SAT solver configured")
 elseif(NOT Lingeling_FOUND
        AND NOT CaDiCaL_FOUND
        AND NOT CryptoMiniSat_FOUND
-       AND NOT PicoSAT_FOUND
-       AND NOT Kissat_FOUND
-       AND NOT MiniSat_FOUND
        AND NOT Gimsatul_FOUND)
   message(FATAL_ERROR "No SAT solver found")
 endif()
@@ -327,14 +277,6 @@ if(CryptoMiniSat_FOUND)
   endif()
 endif()
 
-if(PicoSAT_FOUND)
-  if(NOT PicoSAT_INCLUDE_DIR)
-    message(FATAL_ERROR "PicoSAT headers not found")
-  else()
-    add_definitions("-DBZLA_USE_PICOSAT")
-  endif()
-endif()
-
 if(Kissat_FOUND)
   if(NOT Kissat_INCLUDE_DIR)
     message(FATAL_ERROR "Kissat headers not found")
@@ -345,14 +287,6 @@ endif()
 
 if(Gimsatul_FOUND)
   add_definitions("-DBZLA_USE_GIMSATUL")
-endif()
-
-if(MiniSat_FOUND)
-  if(NOT MiniSat_INCLUDE_DIR)
-    message(FATAL_ERROR "MiniSAT headers not found")
-  else()
-    add_definitions("-DBZLA_USE_MINISAT")
-  endif()
 endif()
 
 #-----------------------------------------------------------------------------#
@@ -517,8 +451,6 @@ config_info_bool("Build API documentation" DOCS)
 config_info_bool("CaDiCaL" CaDiCaL_FOUND)
 config_info_bool("CryptoMiniSat" CryptoMiniSat_FOUND)
 config_info_bool("Lingeling" Lingeling_FOUND)
-config_info_bool("MiniSat" MiniSat_FOUND)
-config_info_bool("PicoSAT" PicoSAT_FOUND)
 config_info_bool("Kissat" Kissat_FOUND)
 config_info_bool("Gimsatul" Gimsatul_FOUND)
 config_info_bool("SymFPU" SymFPU_FOUND)

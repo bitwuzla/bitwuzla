@@ -221,10 +221,6 @@ enum BitwuzlaOption
    *    [Kissat](https://github.com/arminbiere/kissat)
    *  * **lingeling**:
    *    [Lingeling](https://github.com/arminbiere/lingeling)
-   *  * **minisat**:
-   *    [MiniSat](https://github.com/niklasso/minisat)
-   *  * **picosat**:
-   *    [PicoSAT](http://fmv.jku.at/picosat/)
    */
   BITWUZLA_OPT_SAT_ENGINE,
 

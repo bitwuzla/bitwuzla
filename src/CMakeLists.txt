@@ -85,8 +85,6 @@ set(libbitwuzla_src_files
   sat/bzlacadical.cpp
   sat/bzlacms.cpp
   sat/bzlalgl.c
-  sat/bzlaminisat.cpp
-  sat/bzlapicosat.c
   sat/bzlakissat.cpp
   sat/bzlagimsatul.c
   sat/cadical.cpp
@@ -146,11 +144,6 @@ if(CryptoMiniSat_FOUND)
   target_link_libraries(bitwuzla ${CryptoMiniSat_LIBRARIES})
 endif()
 
-if(PicoSAT_FOUND)
-  target_include_directories(bitwuzla PRIVATE ${PicoSAT_INCLUDE_DIR})
-  target_link_libraries(bitwuzla ${PicoSAT_LIBRARIES})
-endif()
-
 if(Kissat_FOUND)
   target_include_directories(bitwuzla PRIVATE ${Kissat_INCLUDE_DIR})
   target_link_libraries(bitwuzla ${Kissat_LIBRARIES})
@@ -159,11 +152,6 @@ endif()
 if(Gimsatul_FOUND)
   target_include_directories(bitwuzla PRIVATE ${Gimsatul_INCLUDE_DIR})
   target_link_libraries(bitwuzla ${Gimsatul_LIBRARIES})
-endif()
-
-if(MiniSat_FOUND)
-  target_include_directories(bitwuzla PRIVATE ${MiniSat_INCLUDE_DIR})
-  target_link_libraries(bitwuzla ${MiniSat_LIBRARIES})
 endif()
 
 if(SymFPU_FOUND)

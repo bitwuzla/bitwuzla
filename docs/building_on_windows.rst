@@ -232,7 +232,6 @@ The following steps will allow you to build Bitwuzla from the above clone:
    # Download, patch and build Bitwuzla's dependencies
    #
 
-   ./contrib/setup-picosat.sh
    ./contrib/setup-lingeling.sh
    ./contrib/setup-cadical.sh
    ./contrib/setup-btor2tools.sh

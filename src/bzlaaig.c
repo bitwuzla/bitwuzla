@@ -405,8 +405,6 @@ simp_aig_by_sat(BzlaAIGMgr *amgr, BzlaAIG *aig)
   int32_t lit, val, repr, sign;
   BzlaAIG *res;
 
-  /* fixed handling for const aigs not supported by minisat
-   * (returns 0) FIXME why? */
   if (bzla_aig_is_const(aig)) return aig;
 
   lit = bzla_aig_get_cnf_id(aig);

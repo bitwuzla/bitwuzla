@@ -25,8 +25,6 @@ typedef struct BzlaSATMgr BzlaSATMgr;
 
 struct BzlaSATMgr
 {
-  /* Note: direct solver reference for PicoSAT, wrapper object for for
-   *	   Lingeling (BzlaLGL) and MiniSAT (BzlaMiniSAT). */
   void *solver;
   Bzla *bzla;
 

@@ -1116,16 +1116,6 @@ bitwuzla_copyright(Bitwuzla *bitwuzla)
       "  Lingeling\n"
       "  https://github.com/arminbiere/lingeling\n"
 #endif
-#ifdef BZLA_USE_PICOSAT
-      "\n"
-      "  PicoSAT\n"
-      "  http://fmv.jku.at/picosat\n"
-#endif
-#ifdef BZLA_USE_MINISAT
-      "\n"
-      "  MiniSAT\n"
-      "  https://github.com/niklasso/minisat\n"
-#endif
 #ifdef BZLA_USE_CADICAL
       "\n"
       "  CaDiCaL\n"
@@ -1283,12 +1273,6 @@ bitwuzla_set_option(Bitwuzla *bitwuzla, BitwuzlaOption option, uint32_t value)
 #endif
 #ifndef BZLA_USE_CADICAL
         || value == BZLA_SAT_ENGINE_CADICAL
-#endif
-#ifndef BZLA_USE_MINISAT
-        || value == BZLA_SAT_ENGINE_MINISAT
-#endif
-#ifndef BZLA_USE_PICOSAT
-        || value == BZLA_SAT_ENGINE_PICOSAT
 #endif
 #ifndef BZLA_USE_CMS
         || value == BZLA_SAT_ENGINE_CMS
