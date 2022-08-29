@@ -1,4 +1,5 @@
 set(test_ls_names
+  test_bvnode
   test_bvnodecons
   test_bvnodeinv
   test_bvnodeiscons
