@@ -5,9 +5,7 @@
 #include "bitvector_domain.h"
 #include "test.h"
 
-namespace bzla {
-namespace ls {
-namespace test {
+namespace bzla::ls::test {
 
 /* -------------------------------------------------------------------------- */
 
@@ -447,6 +445,4 @@ TEST_F(TestBvDomainGen, random_signed)
                "has_random");
 }
 
-}  // namespace test
-}  // namespace ls
-}  // namespace bzla
+}  // namespace bzla::ls::test

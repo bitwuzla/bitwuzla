@@ -1,8 +1,6 @@
-#include "test_ls_common.h"
+#include "test_bvnode.h"
 
-namespace bzla {
-namespace ls {
-namespace test {
+namespace bzla::ls::test {
 
 class TestBvNodeSelPath : public TestBvNode
 {
@@ -562,6 +560,4 @@ TEST_F(TestBvNodeSelPath, extract) { test_extract(); }
 
 TEST_F(TestBvNodeSelPath, sext) { test_sext(); }
 
-}  // namespace test
-}  // namespace ls
-}  // namespace bzla
+}  // namespace bzla::ls::test

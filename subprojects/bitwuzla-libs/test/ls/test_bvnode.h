@@ -1,13 +1,12 @@
-#ifndef BZLALS__TEST__TEST_LS_COMMON_H
-#define BZLALS__TEST__TEST_LS_COMMON_H
+#ifndef BZLALS__TEST__TEST_BVNODE_H
+#define BZLALS__TEST__TEST_BVNODE_H
 
+#include "bitvector.h"
 #include "bitvector_domain.h"
 #include "ls/bitvector_node.h"
 #include "test.h"
 
-namespace bzla {
-namespace ls {
-namespace test {
+namespace bzla::ls::test {
 
 class TestBvNodeCommon : public ::bzla::test::TestCommon
 {
@@ -1271,7 +1270,5 @@ TestBvNode::test_sext(Kind kind)
     }
   }
 }
-}  // namespace test
-}  // namespace ls
-}  // namespace bzla
+}  // namespace bzla::ls::test
 #endif

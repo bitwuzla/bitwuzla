@@ -3,9 +3,7 @@
 #include "bitvector_domain.h"
 #include "test.h"
 
-namespace bzla {
-namespace ls {
-namespace test {
+namespace bzla::ls::test {
 
 /* -------------------------------------------------------------------------- */
 
@@ -534,6 +532,4 @@ TEST_F(TestBitVectorDomain, to_string)
 
 /* -------------------------------------------------------------------------- */
 
-}  // namespace test
-}  // namespace ls
-}  // namespace bzla
+}  // namespace bzla::ls::test

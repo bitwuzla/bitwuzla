@@ -1,11 +1,9 @@
 #include <map>
 
 #include "ls/ls.h"
-#include "test_ls_common.h"
+#include "test_bvnode.h"
 
-namespace bzla {
-namespace ls {
-namespace test {
+namespace bzla::ls::test {
 
 class TestLs : public TestBvNodeCommon
 {
@@ -943,6 +941,4 @@ TEST_F(TestLs, extract) { test_move_extract(); }
 
 TEST_F(TestLs, sext) { test_move_sext(); }
 
-}  // namespace test
-}  // namespace ls
-}  // namespace bzla
+}  // namespace bzla::ls::test

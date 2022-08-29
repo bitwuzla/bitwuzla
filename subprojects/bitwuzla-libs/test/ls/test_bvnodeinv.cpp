@@ -1,8 +1,6 @@
-#include "test_ls_common.h"
+#include "test_bvnode.h"
 
-namespace bzla {
-namespace ls {
-namespace test {
+namespace bzla::ls::test {
 
 /* -------------------------------------------------------------------------- */
 
@@ -230,6 +228,4 @@ TEST_F(TestBvNodeInv, extract) { test_extract(INV); }
 
 TEST_F(TestBvNodeInv, sext) { test_sext(INV); }
 
-}  // namespace test
-}  // namespace ls
-}  // namespace bzla
+}  // namespace bzla::ls::test

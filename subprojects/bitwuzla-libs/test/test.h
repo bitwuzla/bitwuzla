@@ -8,9 +8,7 @@
 #include "gtest/gtest.h"
 #include "rng/rng.h"
 
-namespace bzla {
-
-namespace test {
+namespace bzla::test {
 
 /* -------------------------------------------------------------------------- */
 
@@ -112,6 +110,5 @@ TestCommon::gen_values(uint64_t bw, std::vector<std::string>& values)
 
 /* -------------------------------------------------------------------------- */
 
-}  // namespace test
-}  // namespace bzla
+}  // namespace bzla::test
 #endif
