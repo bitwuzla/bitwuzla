@@ -8,49 +8,31 @@ namespace bzla::node {
 size_t
 NodeDataHash::operator()(const NodeData* d) const
 {
-  size_t hash = static_cast<size_t>(d->d_kind);
-  for (size_t i = 0, size = d->get_num_children(); i < size; ++i)
-  {
-    hash += s_primes[i] * d->get_child(i).get_id();
-  }
-  for (size_t i = 0, size = d->get_num_indices(); i < size; ++i)
-  {
-    hash += s_primes[i] * d->get_index(i);
-  }
-  // TODO: values
-  return hash;
+  return d->hash();
 }
 
 bool
 NodeDataKeyEqual::operator()(const NodeData* d0, const NodeData* d1) const
 {
-  if (d0->get_kind() != d1->get_kind()
-      || d0->get_num_children() != d1->get_num_children()
-      || d0->get_num_indices() != d1->get_num_indices())
-  {
-    return false;
-  }
-  for (size_t i = 0, size = d0->get_num_children(); i < size; ++i)
-  {
-    if (d0->get_child(i) != d1->get_child(i))
-    {
-      return false;
-    }
-  }
-  for (size_t i = 0, size = d0->get_num_indices(); i < size; ++i)
-  {
-    if (d0->get_index(i) != d1->get_index(i))
-    {
-      return false;
-    }
-  }
-  // TODO: values
-  return true;
+  return d0->equals(*d1);
 }
 
 /* --- NodeData public ----------------------------------------------------- */
 
 NodeData::NodeData(NodeManager* mgr, Kind kind) : d_mgr(mgr), d_kind(kind){};
+
+size_t
+NodeData::hash() const
+{
+  return static_cast<size_t>(d_kind);
+}
+
+bool
+NodeData::equals(const NodeData& other) const
+{
+  (void) other;
+  return d_kind == other.d_kind;
+}
 
 bool
 NodeData::has_children() const
@@ -210,6 +192,40 @@ NodeDataChildren::NodeDataChildren(NodeManager* mgr,
   assert(i == d_num_children);
 };
 
+size_t
+NodeDataChildren::hash() const
+{
+  size_t hash = NodeData::hash();
+  for (size_t i = 0; i < d_num_children; ++i)
+  {
+    hash += NodeDataHash::s_primes[i] * d_children[i].get_id();
+  }
+  return hash;
+}
+
+bool
+NodeDataChildren::equals(const NodeData& other) const
+{
+  if (!NodeData::equals(other))
+  {
+    return false;
+  }
+  assert(other.has_children());
+  const NodeDataChildren& o = reinterpret_cast<const NodeDataChildren&>(other);
+  if (d_num_children != o.d_num_children)
+  {
+    return false;
+  }
+  for (size_t i = 0; i < d_num_children; ++i)
+  {
+    if (d_children[i] != o.d_children[i])
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
 /* --- NodeDataIndexed public ---------------------------------------------- */
 
 NodeDataIndexed::NodeDataIndexed(NodeManager* mgr,
@@ -227,6 +243,37 @@ NodeDataIndexed::NodeDataIndexed(NodeManager* mgr,
   assert(i == d_num_indices);
 };
 
+size_t
+NodeDataIndexed::hash() const
+{
+  size_t hash = NodeDataChildren::hash();
+  for (size_t i = 0; i < d_num_indices; ++i)
+  {
+    hash += NodeDataHash::s_primes[i] * d_indices[i];
+  }
+  return hash;
+}
+
+bool
+NodeDataIndexed::equals(const NodeData& other) const
+{
+  if (!NodeDataChildren::equals(other))
+  {
+    return false;
+  }
+  assert(other.is_indexed());
+  const NodeDataIndexed& o = reinterpret_cast<const NodeDataIndexed&>(other);
+  assert(d_num_indices == o.d_num_indices);
+  for (size_t i = 0; i < d_num_indices; ++i)
+  {
+    if (d_indices[i] != o.d_indices[i])
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
 /* --- NodeDataNary public ------------------------------------------------- */
 
 NodeDataNary::NodeDataNary(NodeManager* mgr,
@@ -236,5 +283,65 @@ NodeDataNary::NodeDataNary(NodeManager* mgr,
 {
   assert(is_nary());
 };
+
+size_t
+NodeDataNary::hash() const
+{
+  size_t hash = NodeData::hash();
+  for (size_t i = 0, size = d_children.size(); i < size; ++i)
+  {
+    hash += NodeDataHash::s_primes[i % sizeof(NodeDataHash::s_primes)]
+            * d_children[i].get_id();
+  }
+  return hash;
+}
+
+bool
+NodeDataNary::equals(const NodeData& other) const
+{
+  if (!NodeData::equals(other))
+  {
+    return false;
+  }
+  assert(other.is_nary());
+  const NodeDataNary& o = reinterpret_cast<const NodeDataNary&>(other);
+  if (d_children.size() != o.d_children.size())
+  {
+    return false;
+  }
+  for (size_t i = 0, size = d_children.size(); i < size; ++i)
+  {
+    if (d_children[i] != o.d_children[i])
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+/* --- NodeDataValue<BitVector> public ------------------------------------- */
+
+template <>
+size_t
+NodeDataValue<BitVector>::hash() const
+{
+  return NodeData::hash() + d_value.hash();
+}
+
+template <>
+bool
+NodeDataValue<BitVector>::equals(const NodeData& other) const
+{
+  if (!NodeData::equals(other))
+  {
+    return false;
+  }
+  if (get_type() != other.get_type())
+  {
+    return false;
+  }
+  const auto& o = reinterpret_cast<const NodeDataValue<BitVector>&>(other);
+  return d_value.compare(o.d_value) == 0;
+}
 
 }  // namespace bzla::node

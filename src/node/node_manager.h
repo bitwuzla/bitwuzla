@@ -12,7 +12,11 @@
 #include "node/node_data.h"
 #include "type/type_manager.h"
 
-namespace bzla::node {
+namespace bzla {
+
+class BitVector;
+
+namespace node {
 
 class NodeManager
 {
@@ -48,7 +52,7 @@ class NodeManager
    */
   // TODO: Instantiations for bv, fp, rm
   template <class T>
-  Node mk_value(const type::Type& t, const T value);
+  Node mk_value(const type::Type& t, const T& value);
 
   /**
    * Create node of kind `kind` with given children and indices.
@@ -142,16 +146,12 @@ class NodeManager
                      const std::vector<uint64_t>& indices);
 
   /**
-   * Creates a new node data in case node does not yet exist.
+   * Find or insert new node data.
    *
-   * @param kind The node kind.
-   * @param children The children of the node.
-   * @param indices The indieces of the node.
-   * @return New or existing node data.
+   * @param lookup The node data to look up in d_unique_nodes
+   * @return Node data pointer if node already exists and nullptr otherwise.
    */
-  NodeData* find_or_create_node(Kind kind,
-                                const std::vector<Node>& children,
-                                const std::vector<uint64_t>& indices);
+  NodeData* find_or_insert_node(NodeData* lookup);
 
   /** Compute type for a node. */
   type::Type compute_type(Kind kind,
@@ -184,5 +184,9 @@ class NodeManager
   std::unordered_set<NodeData*, NodeDataHash, NodeDataKeyEqual> d_unique_nodes;
 };
 
-}  // namespace bzla::node
+template <>
+Node NodeManager::mk_value(const type::Type& t, const BitVector& value);
+
+}  // namespace node
+}  // namespace bzla
 #endif

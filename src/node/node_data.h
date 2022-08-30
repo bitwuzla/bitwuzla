@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "bitvector.h"
 #include "node/node.h"
 #include "type/type.h"
 
@@ -30,6 +31,19 @@ class NodeData
 
   NodeData()          = delete;
   virtual ~NodeData() = default;
+
+  /** Compute hash value. */
+  virtual size_t hash() const;
+
+  /**
+   * Comparison of two node data objects.
+   *
+   * @note This method is only used in NodeDataKeyEqual used for hash consing.
+   *
+   * @param other Other node data to compare to
+   * @return True if both objects store the same data.
+   */
+  virtual bool equals(const NodeData& other) const;
 
   /**
    * @return The node id.
@@ -164,6 +178,9 @@ class NodeDataChildren : public NodeData
                    Kind kind,
                    const std::vector<Node>& children);
 
+  size_t hash() const override;
+  bool equals(const NodeData& other) const override;
+
  private:
   /** The number of stored children. */
   uint8_t d_num_children;
@@ -188,6 +205,9 @@ class NodeDataIndexed : public NodeDataChildren
                   const std::vector<uint64_t>& indices);
   ~NodeDataIndexed() = default;
 
+  size_t hash() const override;
+  bool equals(const NodeData& other) const override;
+
  private:
   /** The number of stored indices. */
   uint8_t d_num_indices = 0;
@@ -208,10 +228,42 @@ class NodeDataNary : public NodeData
 
   NodeDataNary(NodeManager* mgr, Kind kind, const std::vector<Node>& children);
 
+  size_t hash() const override;
+  bool equals(const NodeData& other) const override;
+
  private:
   /** Storage for arbitrary number of children. */
   std::vector<Node> d_children;
 };
+
+/**
+ * Node data template to store arbitrary values.
+ */
+template <class T>
+class NodeDataValue : public NodeData
+{
+  friend class NodeData;
+
+ public:
+  NodeDataValue() = delete;
+  NodeDataValue(NodeManager* mgr, const T& value)
+      : NodeData(mgr, Kind::VALUE), d_value(value){};
+
+  ~NodeDataValue() = default;
+
+  size_t hash() const override;
+  bool equals(const NodeData& other) const override;
+
+ private:
+  T d_value;
+};
+
+/* --- NodeDataValue<BitVector> --------------------------------------------- */
+
+template <>
+size_t NodeDataValue<BitVector>::hash() const;
+template <>
+bool NodeDataValue<BitVector>::equals(const NodeData& other) const;
 
 /* ------------------------------------------------------------------------- */
 

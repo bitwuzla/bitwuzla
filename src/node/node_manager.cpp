@@ -1,26 +1,46 @@
 #include "node/node_manager.h"
 
+#include "bitvector.h"
+
 namespace bzla::node {
 
 /* --- NodeManager public -------------------------------------------------- */
 
 Node
-NodeManager::mk_const(const type::Type& type, const std::string& symbol)
+NodeManager::mk_const(const type::Type& t, const std::string& symbol)
 {
+  assert(!t.is_null());
   // TODO: handle symbol
   NodeData* data = new NodeData(this, Kind::CONSTANT);
-  data->d_type   = type;
+  data->d_type   = t;
   init_id(data);
   return Node(data);
 }
 
 Node
-NodeManager::mk_var(const type::Type& type, const std::string& symbol)
+NodeManager::mk_var(const type::Type& t, const std::string& symbol)
 {
+  assert(!t.is_null());
   // TODO: handle symbol
   NodeData* data = new NodeData(this, Kind::VARIABLE);
-  data->d_type   = type;
+  data->d_type   = t;
   init_id(data);
+  return Node(data);
+}
+
+template <>
+Node
+NodeManager::mk_value(const type::Type& t, const BitVector& value)
+{
+  assert(!t.is_null());
+  NodeData* data  = new NodeDataValue(this, value);
+  data->d_type    = t;
+  auto found_data = find_or_insert_node(data);
+  if (found_data)
+  {
+    delete data;
+    data = found_data;
+  }
   return Node(data);
 }
 
@@ -29,7 +49,19 @@ NodeManager::mk_node(Kind kind,
                      const std::vector<Node>& children,
                      const std::vector<uint64_t>& indices)
 {
-  return Node(find_or_create_node(kind, children, indices));
+  NodeData* data  = new_data(kind, children, indices);
+  auto found_data = find_or_insert_node(data);
+  if (found_data)
+  {
+    delete data;
+    data = found_data;
+  }
+  else
+  {
+    // Compute type for new node
+    data->d_type = compute_type(kind, children, indices);
+  }
+  return Node(data);
 }
 
 type::Type
@@ -564,23 +596,16 @@ NodeManager::new_data(Kind kind,
 }
 
 NodeData*
-NodeManager::find_or_create_node(Kind kind,
-                                 const std::vector<Node>& children,
-                                 const std::vector<uint64_t>& indices)
+NodeManager::find_or_insert_node(NodeData* lookup)
 {
-  NodeData* data      = new_data(kind, children, indices);
-  auto [it, inserted] = d_unique_nodes.insert(data);
-
-  if (!inserted)  // Node already exists
+  auto [it, inserted] = d_unique_nodes.insert(lookup);
+  if (inserted)
   {
-    delete data;
-    return *it;
+    // Initialize new node
+    init_id(lookup);
+    return nullptr;
   }
-
-  // Node is new, initialize and compute type
-  init_id(data);
-  data->d_type = compute_type(kind, children, indices);
-  return data;
+  return *it;
 }
 
 void
