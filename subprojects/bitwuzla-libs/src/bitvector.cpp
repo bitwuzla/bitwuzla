@@ -531,13 +531,13 @@ BitVector::iset(RNG& rng,
 }
 
 bool
-BitVector::operator==(const BitVector& bv)
+BitVector::operator==(const BitVector& bv) const
 {
   return compare(bv) == 0;
 }
 
 bool
-BitVector::operator!=(const BitVector& bv)
+BitVector::operator!=(const BitVector& bv) const
 {
   return compare(bv) != 0;
 }

@@ -127,9 +127,9 @@ class BitVector
             bool is_signed);
 
   /** Equality comparison operator. */
-  bool operator==(const BitVector& bv);
+  bool operator==(const BitVector& bv) const;
   /** Disequality comparison operator. */
-  bool operator!=(const BitVector& bv);
+  bool operator!=(const BitVector& bv) const;
 
   /**
    * Return a string representation of this bit-vector.
