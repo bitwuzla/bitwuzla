@@ -28,6 +28,7 @@ class TestBvNodeCommon : public ::bzla::test::TestCommon
   std::vector<std::string> d_values;
   std::vector<std::string> d_xvalues;
   std::unique_ptr<RNG> d_rng;
+  BitVector d_nullbv;
 };
 
 BitVector
@@ -161,6 +162,22 @@ class TestBvNode : public TestBvNodeCommon
   void test_not(Kind kind);
   void test_extract(Kind kind);
   void test_sext(Kind kind);
+
+  void test_normalize_bounds_only_hi();
+
+ protected:
+  void test_normalize_bounds(const BitVector& min_u,
+                             bool min_u_is_excl,
+                             const BitVector& max_u,
+                             bool max_u_is_excl,
+                             const BitVector& min_s,
+                             bool min_s_is_excl,
+                             const BitVector& max_s,
+                             bool max_s_is_excl,
+                             const BitVector& min_lo_exp,
+                             const BitVector& min_hi_exp,
+                             const BitVector& max_lo_exp,
+                             const BitVector& max_hi_exp);
 };
 
 bool

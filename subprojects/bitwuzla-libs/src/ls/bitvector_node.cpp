@@ -407,6 +407,16 @@ BitVectorNode::normalize_bounds(BitVector& res_min_lo,
   }
   assert(!min_lo || max_lo);
   assert(!min_hi || max_hi);
+  if (min_lo && max_lo && min_lo->compare(*max_lo) > 0)
+  {
+    min_lo = nullptr;
+    max_lo = nullptr;
+  }
+  if (min_hi && max_hi && min_hi->compare(*max_hi) > 0)
+  {
+    min_hi = nullptr;
+    max_hi = nullptr;
+  }
   res_min_lo = min_lo ? *min_lo : BitVector();
   res_max_lo = max_lo ? *max_lo : BitVector();
   res_min_hi = min_hi ? *min_hi : BitVector();
