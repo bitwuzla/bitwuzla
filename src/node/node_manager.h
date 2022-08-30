@@ -50,9 +50,15 @@ class NodeManager
    * @param value The value itself.
    * @return Node representing given value.
    */
-  // TODO: Instantiations for bv, fp, rm
-  template <class T>
-  Node mk_value(const type::Type& t, const T& value);
+  // TODO: Instantiations for fp, rm
+
+  /**
+   * Create bit-vector value.
+   *
+   * @param value Bit-vector value to create.
+   * @return Node representing given bit-vector value of given size.
+   */
+  Node mk_value(const BitVector& value);
 
   /**
    * Create node of kind `kind` with given children and indices.
@@ -183,9 +189,6 @@ class NodeManager
   /** Lookup data structure for hash consing of node data. */
   std::unordered_set<NodeData*, NodeDataHash, NodeDataKeyEqual> d_unique_nodes;
 };
-
-template <>
-Node NodeManager::mk_value(const type::Type& t, const BitVector& value);
 
 }  // namespace node
 }  // namespace bzla

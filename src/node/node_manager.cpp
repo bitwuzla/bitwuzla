@@ -28,13 +28,11 @@ NodeManager::mk_var(const type::Type& t, const std::string& symbol)
   return Node(data);
 }
 
-template <>
 Node
-NodeManager::mk_value(const type::Type& t, const BitVector& value)
+NodeManager::mk_value(const BitVector& value)
 {
-  assert(!t.is_null());
   NodeData* data  = new NodeDataValue(this, value);
-  data->d_type    = t;
+  data->d_type    = mk_bv_type(value.size());
   auto found_data = find_or_insert_node(data);
   if (found_data)
   {

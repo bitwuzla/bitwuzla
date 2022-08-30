@@ -83,12 +83,13 @@ TEST_F(TestNodeManager, mk_value_bv)
   NodeManager nm;
   BitVector bv(32, 1);
 
-  Type bv32 = nm.mk_bv_type(32);
-  Node val1 = nm.mk_value(bv32, bv);
+  Node val1 = nm.mk_value(bv);
   ASSERT_EQ(val1.get_kind(), Kind::VALUE);
-  ASSERT_EQ(val1.get_type(), bv32);
-  ASSERT_EQ(val1, nm.mk_value(bv32, BitVector(32, 1)));
-  ASSERT_NE(val1, nm.mk_value(bv32, BitVector(32, 2)));
+  ASSERT_EQ(val1.get_type(), nm.mk_bv_type(32));
+  ASSERT_EQ(val1, nm.mk_value(BitVector(32, 1)));
+  ASSERT_EQ(val1.get_value<BitVector>(), bv);
+  ASSERT_EQ(val1.get_value<BitVector>(), BitVector(32, 1));
+  ASSERT_NE(val1, nm.mk_value(BitVector(32, 2)));
 };
 
 // TODO: mk_value

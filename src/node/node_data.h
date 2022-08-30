@@ -15,6 +15,9 @@ namespace bzla::node {
 class NodeManager;
 enum class Kind;
 
+template <class T>
+class NodeDataValue;
+
 /**
  * Node data base class.
  *
@@ -116,11 +119,15 @@ class NodeData
   bool is_nary() const;
 
   // TODO: instantiate with
-  // - BitVector
   // - FloatingPoint
   // - RoundingMode
   template <class T>
-  T& get_value() const;
+  const T& get_value() const
+  {
+    assert(get_kind() == Kind::VALUE);
+    const auto& data = reinterpret_cast<const NodeDataValue<T>&>(*this);
+    return data.d_value;
+  }
 
   /** Increase the reference count by one. */
   void inc_ref();

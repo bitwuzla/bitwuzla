@@ -8,7 +8,11 @@
 #include "node/node_kind.h"
 #include "type/type.h"
 
-namespace bzla::node {
+namespace bzla {
+
+class BitVector;
+
+namespace node {
 
 /* --- Node ---------------------------------------------------------------- */
 
@@ -78,7 +82,8 @@ class Node
    */
   uint64_t get_index(size_t index) const;
 
-  /** Comparison operators. */
+  template <class T>
+  const T& get_value() const;
 
   /**
    * Syntactical equality operator.
@@ -113,5 +118,9 @@ class Node
   NodeData* d_data = nullptr;
 };
 
-}  // namespace bzla::node
+template <>
+const BitVector& Node::get_value() const;
+
+}  // namespace node
+}  // namespace bzla
 #endif

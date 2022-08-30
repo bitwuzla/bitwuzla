@@ -142,6 +142,15 @@ Node::get_index(size_t index) const
   return d_data->get_index(index);
 }
 
+template <>
+const BitVector&
+Node::get_value() const
+{
+  assert(!is_null());
+  assert(get_type().is_bv());
+  return d_data->get_value<BitVector>();
+}
+
 Node::iterator
 Node::begin() const
 {
