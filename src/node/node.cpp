@@ -143,6 +143,15 @@ Node::get_index(size_t index) const
 }
 
 template <>
+const bool&
+Node::get_value() const
+{
+  assert(!is_null());
+  assert(get_type().is_bool());
+  return d_data->get_value<bool>();
+}
+
+template <>
 const BitVector&
 Node::get_value() const
 {

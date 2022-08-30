@@ -53,6 +53,14 @@ class NodeManager
   // TODO: Instantiations for fp, rm
 
   /**
+   * Create Boolean value.
+   *
+   * @param value Boolean value to create.
+   * @return Node representing given Boolean value.
+   */
+  Node mk_value(bool value);
+
+  /**
    * Create bit-vector value.
    *
    * @param value Bit-vector value to create.

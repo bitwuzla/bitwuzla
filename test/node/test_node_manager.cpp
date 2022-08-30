@@ -78,18 +78,35 @@ TEST_F(TestNodeManager, mk_const)
   ASSERT_TRUE(fun_const.get_type().is_fun());
 };
 
+TEST_F(TestNodeManager, mk_value_bool)
+{
+  NodeManager nm;
+
+  Node val_true  = nm.mk_value(true);
+  Node val_false = nm.mk_value(false);
+  ASSERT_EQ(val_true.get_kind(), Kind::VALUE);
+  ASSERT_EQ(val_false.get_kind(), Kind::VALUE);
+  ASSERT_EQ(val_true.get_type(), nm.mk_bool_type());
+  ASSERT_EQ(val_true.get_type(), val_false.get_type());
+  ASSERT_EQ(val_true, nm.mk_value(true));
+  ASSERT_EQ(val_false, nm.mk_value(false));
+  ASSERT_EQ(val_true.get_value<bool>(), true);
+  ASSERT_EQ(val_false.get_value<bool>(), false);
+  ASSERT_NE(val_true, val_false);
+};
+
 TEST_F(TestNodeManager, mk_value_bv)
 {
   NodeManager nm;
   BitVector bv(32, 1);
 
-  Node val1 = nm.mk_value(bv);
-  ASSERT_EQ(val1.get_kind(), Kind::VALUE);
-  ASSERT_EQ(val1.get_type(), nm.mk_bv_type(32));
-  ASSERT_EQ(val1, nm.mk_value(BitVector(32, 1)));
-  ASSERT_EQ(val1.get_value<BitVector>(), bv);
-  ASSERT_EQ(val1.get_value<BitVector>(), BitVector(32, 1));
-  ASSERT_NE(val1, nm.mk_value(BitVector(32, 2)));
+  Node val = nm.mk_value(bv);
+  ASSERT_EQ(val.get_kind(), Kind::VALUE);
+  ASSERT_EQ(val.get_type(), nm.mk_bv_type(32));
+  ASSERT_EQ(val, nm.mk_value(BitVector(32, 1)));
+  ASSERT_EQ(val.get_value<BitVector>(), bv);
+  ASSERT_EQ(val.get_value<BitVector>(), BitVector(32, 1));
+  ASSERT_NE(val, nm.mk_value(BitVector(32, 2)));
 };
 
 // TODO: mk_value

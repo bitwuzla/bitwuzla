@@ -119,6 +119,8 @@ class Node
 };
 
 template <>
+const bool& Node::get_value() const;
+template <>
 const BitVector& Node::get_value() const;
 
 }  // namespace node

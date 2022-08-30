@@ -258,19 +258,28 @@ class NodeDataValue : public NodeData
 
   ~NodeDataValue() = default;
 
-  size_t hash() const override;
-  bool equals(const NodeData& other) const override;
+  size_t hash() const override
+  {
+    return NodeData::hash() + std::hash<T>{}(d_value);
+  }
+
+  bool equals(const NodeData& other) const override
+  {
+    if (!NodeData::equals(other))
+    {
+      return false;
+    }
+    if (get_type() != other.get_type())
+    {
+      return false;
+    }
+    const auto& o = reinterpret_cast<const NodeDataValue<T>&>(other);
+    return d_value == o.d_value;
+  }
 
  private:
   T d_value;
 };
-
-/* --- NodeDataValue<BitVector> --------------------------------------------- */
-
-template <>
-size_t NodeDataValue<BitVector>::hash() const;
-template <>
-bool NodeDataValue<BitVector>::equals(const NodeData& other) const;
 
 /* ------------------------------------------------------------------------- */
 

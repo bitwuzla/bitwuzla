@@ -29,6 +29,20 @@ NodeManager::mk_var(const type::Type& t, const std::string& symbol)
 }
 
 Node
+NodeManager::mk_value(bool value)
+{
+  NodeData* data  = new NodeDataValue(this, value);
+  data->d_type    = mk_bool_type();
+  auto found_data = find_or_insert_node(data);
+  if (found_data)
+  {
+    delete data;
+    data = found_data;
+  }
+  return Node(data);
+}
+
+Node
 NodeManager::mk_value(const BitVector& value)
 {
   NodeData* data  = new NodeDataValue(this, value);

@@ -319,29 +319,4 @@ NodeDataNary::equals(const NodeData& other) const
   return true;
 }
 
-/* --- NodeDataValue<BitVector> public ------------------------------------- */
-
-template <>
-size_t
-NodeDataValue<BitVector>::hash() const
-{
-  return NodeData::hash() + d_value.hash();
-}
-
-template <>
-bool
-NodeDataValue<BitVector>::equals(const NodeData& other) const
-{
-  if (!NodeData::equals(other))
-  {
-    return false;
-  }
-  if (get_type() != other.get_type())
-  {
-    return false;
-  }
-  const auto& o = reinterpret_cast<const NodeDataValue<BitVector>&>(other);
-  return d_value.compare(o.d_value) == 0;
-}
-
 }  // namespace bzla::node
