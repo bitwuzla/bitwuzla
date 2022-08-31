@@ -51,10 +51,14 @@ TestBvNode::test_normalize_bounds(const BitVector& min_u,
   ASSERT_EQ(min_hi.is_null(), min_hi_exp.is_null());
   ASSERT_EQ(max_lo.is_null(), max_lo_exp.is_null());
   ASSERT_EQ(max_hi.is_null(), max_hi_exp.is_null());
+  assert(min_lo.is_null() || min_lo.compare(min_lo_exp) == 0);
+  assert(min_hi.is_null() || min_hi.compare(min_hi_exp) == 0);
+  assert(max_lo.is_null() || max_lo.compare(max_lo_exp) == 0);
+  assert(max_hi.is_null() || max_hi.compare(max_hi_exp) == 0);
   ASSERT_TRUE(min_lo.is_null() || min_lo.compare(min_lo_exp) == 0);
-  ASSERT_TRUE(min_hi.is_null() || min_lo.compare(min_lo_exp) == 0);
+  ASSERT_TRUE(min_hi.is_null() || min_hi.compare(min_hi_exp) == 0);
   ASSERT_TRUE(max_lo.is_null() || max_lo.compare(max_lo_exp) == 0);
-  ASSERT_TRUE(max_hi.is_null() || max_lo.compare(max_lo_exp) == 0);
+  ASSERT_TRUE(max_hi.is_null() || max_hi.compare(max_hi_exp) == 0);
 }
 
 void
@@ -108,7 +112,7 @@ TestBvNode::test_normalize_bounds_no_u()
                         BitVector(4, "1101"),
                         BitVector(4, "1111"),
                         BitVector(4, "0000"),
-                        BitVector(4, "0111"));
+                        BitVector(4, "0011"));
   // some bounds exclusive ---------------------------
   test_normalize_bounds(d_nullbv,
                         false,
@@ -157,7 +161,7 @@ TestBvNode::test_normalize_bounds_no_u()
                         BitVector(4, "1101"),
                         BitVector(4, "1111"),
                         BitVector(4, "0000"),
-                        BitVector(4, "0110"));
+                        BitVector(4, "0010"));
   // all bounds exclusive ----------------------------
   test_normalize_bounds(d_nullbv,
                         false,
@@ -206,7 +210,7 @@ TestBvNode::test_normalize_bounds_no_u()
                         BitVector(4, "1110"),
                         BitVector(4, "1111"),
                         BitVector(4, "0000"),
-                        BitVector(4, "0110"));
+                        BitVector(4, "0010"));
 
   // DEATH tests -------------------------------------
   test_normalize_bounds(d_nullbv,
@@ -641,7 +645,7 @@ TestBvNode::test_normalize_bounds_only_hi()
                         d_nullbv,
                         d_nullbv,
                         BitVector(4, "0100"),
-                        BitVector(4, "0011"));
+                        BitVector(4, "0110"));
   // unsigned: ]0011, 0100[
   // signed:   ]0001, 0110[
   test_normalize_bounds(BitVector(4, "0011"),
@@ -846,7 +850,7 @@ TestBvNode::test_normalize_bounds_only_lo()
                         BitVector(4, "1101"),
                         true,
                         BitVector(4, "1011"),
-                        BitVector(4, "1011"),
+                        BitVector(4, "1100"),
                         d_nullbv,
                         d_nullbv);
   // unsigned: ]1010, 1110[
