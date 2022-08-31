@@ -163,6 +163,8 @@ class TestBvNode : public TestBvNodeCommon
   void test_extract(Kind kind);
   void test_sext(Kind kind);
 
+  void test_normalize_bounds_no_u();
+  void test_normalize_bounds_no_s();
   void test_normalize_bounds_only_hi();
 
  protected:

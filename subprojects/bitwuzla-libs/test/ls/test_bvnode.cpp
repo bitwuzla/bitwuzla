@@ -18,8 +18,34 @@ TestBvNode::test_normalize_bounds(const BitVector& min_u,
 {
   BitVector min_lo, min_hi, max_lo, max_hi;
   BitVectorNode node(d_rng.get(), 4);
-  node.update_bounds(min_u, max_u, min_u_is_excl, max_u_is_excl, false);
-  node.update_bounds(min_s, max_s, min_s_is_excl, max_s_is_excl, true);
+  if (!min_u.is_null())
+  {
+    assert(!max_u.is_null());
+    if (min_u.compare(max_u) > 0)
+    {
+      ASSERT_DEATH(
+          node.update_bounds(min_u, max_u, min_u_is_excl, max_u_is_excl, false),
+          "compare");
+    }
+    else
+    {
+      node.update_bounds(min_u, max_u, min_u_is_excl, max_u_is_excl, false);
+    }
+  }
+  if (!min_s.is_null())
+  {
+    assert(!max_s.is_null());
+    if (min_s.signed_compare(max_s) > 0)
+    {
+      ASSERT_DEATH(
+          node.update_bounds(min_s, max_s, min_s_is_excl, max_s_is_excl, true),
+          "signed_compare");
+    }
+    else
+    {
+      node.update_bounds(min_s, max_s, min_s_is_excl, max_s_is_excl, true);
+    }
+  }
   node.normalize_bounds(min_lo, min_hi, max_lo, max_hi);
   ASSERT_EQ(min_lo.is_null(), min_lo_exp.is_null());
   ASSERT_EQ(min_hi.is_null(), min_hi_exp.is_null());
@@ -29,6 +55,336 @@ TestBvNode::test_normalize_bounds(const BitVector& min_u,
   ASSERT_TRUE(min_hi.is_null() || min_lo.compare(min_lo_exp) == 0);
   ASSERT_TRUE(max_lo.is_null() || max_lo.compare(max_lo_exp) == 0);
   ASSERT_TRUE(max_hi.is_null() || max_lo.compare(max_lo_exp) == 0);
+}
+
+void
+TestBvNode::test_normalize_bounds_no_u()
+{
+  // no bounds exclusive -----------------------------
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "0000"),
+                        false,
+                        BitVector(4, "0111"),
+                        false,
+                        d_nullbv,
+                        d_nullbv,
+                        BitVector(4, "0000"),
+                        BitVector(4, "0111"));
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1000"),
+                        false,
+                        BitVector(4, "1111"),
+                        false,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1111"),
+                        d_nullbv,
+                        d_nullbv);
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1111"),
+                        false,
+                        BitVector(4, "0000"),
+                        false,
+                        BitVector(4, "1111"),
+                        BitVector(4, "1111"),
+                        BitVector(4, "0000"),
+                        BitVector(4, "0000"));
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1101"),
+                        false,
+                        BitVector(4, "0011"),
+                        false,
+                        BitVector(4, "1101"),
+                        BitVector(4, "1111"),
+                        BitVector(4, "0000"),
+                        BitVector(4, "0111"));
+  // some bounds exclusive ---------------------------
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "0000"),
+                        true,
+                        BitVector(4, "0111"),
+                        false,
+                        d_nullbv,
+                        d_nullbv,
+                        BitVector(4, "0001"),
+                        BitVector(4, "0111"));
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1000"),
+                        false,
+                        BitVector(4, "1111"),
+                        true,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1110"),
+                        d_nullbv,
+                        d_nullbv);
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1111"),
+                        false,
+                        BitVector(4, "0000"),
+                        true,
+                        BitVector(4, "1111"),
+                        BitVector(4, "1111"),
+                        d_nullbv,
+                        d_nullbv);
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1101"),
+                        false,
+                        BitVector(4, "0011"),
+                        true,
+                        BitVector(4, "1101"),
+                        BitVector(4, "1111"),
+                        BitVector(4, "0000"),
+                        BitVector(4, "0110"));
+  // all bounds exclusive ----------------------------
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "0000"),
+                        true,
+                        BitVector(4, "0111"),
+                        true,
+                        d_nullbv,
+                        d_nullbv,
+                        BitVector(4, "0001"),
+                        BitVector(4, "0110"));
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1000"),
+                        true,
+                        BitVector(4, "1111"),
+                        true,
+                        BitVector(4, "1001"),
+                        BitVector(4, "1110"),
+                        d_nullbv,
+                        d_nullbv);
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1111"),
+                        true,
+                        BitVector(4, "0000"),
+                        true,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv);
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1101"),
+                        true,
+                        BitVector(4, "0011"),
+                        true,
+                        BitVector(4, "1110"),
+                        BitVector(4, "1111"),
+                        BitVector(4, "0000"),
+                        BitVector(4, "0110"));
+
+  // DEATH tests -------------------------------------
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "0000"),
+                        false,
+                        BitVector(4, "1111"),
+                        false,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv);
+  test_normalize_bounds(d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "0011"),
+                        false,
+                        BitVector(4, "1101"),
+                        false,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv);
+}
+
+void
+TestBvNode::test_normalize_bounds_no_s()
+{
+  // no bounds exclusive -----------------------------
+  test_normalize_bounds(BitVector(4, "0000"),
+                        false,
+                        BitVector(4, "0111"),
+                        false,
+                        d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        d_nullbv,
+                        d_nullbv,
+                        BitVector(4, "0000"),
+                        BitVector(4, "0111"));
+  test_normalize_bounds(BitVector(4, "1000"),
+                        false,
+                        BitVector(4, "1111"),
+                        false,
+                        d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1111"),
+                        d_nullbv,
+                        d_nullbv);
+  test_normalize_bounds(BitVector(4, "0000"),
+                        false,
+                        BitVector(4, "1111"),
+                        false,
+                        d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1111"),
+                        BitVector(4, "0000"),
+                        BitVector(4, "0111"));
+  test_normalize_bounds(BitVector(4, "0011"),
+                        false,
+                        BitVector(4, "1101"),
+                        false,
+                        d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1101"),
+                        BitVector(4, "0011"),
+                        BitVector(4, "0111"));
+  // some bounds exclusive ---------------------------
+  test_normalize_bounds(BitVector(4, "0000"),
+                        true,
+                        BitVector(4, "0111"),
+                        false,
+                        d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        d_nullbv,
+                        d_nullbv,
+                        BitVector(4, "0001"),
+                        BitVector(4, "0111"));
+  test_normalize_bounds(BitVector(4, "1000"),
+                        false,
+                        BitVector(4, "1111"),
+                        true,
+                        d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1110"),
+                        d_nullbv,
+                        d_nullbv);
+  test_normalize_bounds(BitVector(4, "0000"),
+                        true,
+                        BitVector(4, "1111"),
+                        true,
+                        d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1110"),
+                        BitVector(4, "0001"),
+                        BitVector(4, "0111"));
+  test_normalize_bounds(BitVector(4, "0011"),
+                        false,
+                        BitVector(4, "1101"),
+                        true,
+                        d_nullbv,
+                        false,
+                        d_nullbv,
+                        false,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1100"),
+                        BitVector(4, "0011"),
+                        BitVector(4, "0111"));
+  // all bounds exclusive ----------------------------
+  test_normalize_bounds(BitVector(4, "0000"),
+                        true,
+                        BitVector(4, "0111"),
+                        true,
+                        d_nullbv,
+                        true,
+                        d_nullbv,
+                        true,
+                        d_nullbv,
+                        d_nullbv,
+                        BitVector(4, "0001"),
+                        BitVector(4, "0110"));
+  test_normalize_bounds(BitVector(4, "1000"),
+                        true,
+                        BitVector(4, "1111"),
+                        true,
+                        d_nullbv,
+                        true,
+                        d_nullbv,
+                        true,
+                        BitVector(4, "1001"),
+                        BitVector(4, "1110"),
+                        d_nullbv,
+                        d_nullbv);
+  test_normalize_bounds(BitVector(4, "0000"),
+                        true,
+                        BitVector(4, "1111"),
+                        true,
+                        d_nullbv,
+                        true,
+                        d_nullbv,
+                        true,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1110"),
+                        BitVector(4, "0001"),
+                        BitVector(4, "0111"));
+  test_normalize_bounds(BitVector(4, "0011"),
+                        true,
+                        BitVector(4, "1101"),
+                        true,
+                        d_nullbv,
+                        true,
+                        d_nullbv,
+                        true,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1100"),
+                        BitVector(4, "0100"),
+                        BitVector(4, "0111"));
 }
 
 void
@@ -299,7 +655,10 @@ TestBvNode::test_normalize_bounds_only_hi()
 TEST_F(TestBvNode, normalize_bounds)
 {
   // no signed bounds ------------------------------------------------------
+  test_normalize_bounds_no_s();
+
   // no unsigned bounds ----------------------------------------------------
+  test_normalize_bounds_no_u();
 
   // overlap in [0 ... smax] -----------------------------------------------
   test_normalize_bounds_only_hi();

@@ -190,6 +190,8 @@ BitVectorNode::update_bounds(const BitVector& min,
                              bool max_is_exclusive,
                              bool is_signed)
 {
+  assert(!min.is_null());
+  assert(!max.is_null());
   assert(size() == min.size());
   assert(size() == max.size());
   assert(is_signed || min.compare(max) <= 0);
