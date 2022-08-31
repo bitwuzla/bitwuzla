@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "bzlabvstruct.h"
+#include "solver/fp/rounding_mode.h"
 
 extern "C" {
 #include "bzlabv.h"
@@ -47,6 +48,15 @@ template <bool is_signed>
 class BzlaFPSymBV;
 class BzlaFPWordBlaster;
 class BzlaFloatingPointSize;
+
+static std::unordered_map<BzlaRoundingMode, bzla::fp::RoundingMode> bzlarm2rm =
+    {
+        {BZLA_RM_RNA, bzla::fp::RoundingMode::RNA},
+        {BZLA_RM_RNE, bzla::fp::RoundingMode::RNE},
+        {BZLA_RM_RTN, bzla::fp::RoundingMode::RTN},
+        {BZLA_RM_RTP, bzla::fp::RoundingMode::RTP},
+        {BZLA_RM_RTZ, bzla::fp::RoundingMode::RTZ},
+};
 
 /* ========================================================================== */
 /* Glue for SymFPU: concrete.                                                 */
@@ -658,18 +668,18 @@ class BzlaFPTraits
  public:
   /* The six key types that SymFPU uses. */
   using bwt  = uint32_t;
-  using rm   = BzlaRoundingMode;
+  using rm   = bzla::fp::RoundingMode;
   using fpt  = BzlaFloatingPointSize;
   using prop = bool;
   using sbv  = BzlaFPBV<true>;
   using ubv  = BzlaFPBV<false>;
 
   /* Give concrete instances of each rounding mode, mainly for comparisons. */
-  static BzlaRoundingMode RNE(void);
-  static BzlaRoundingMode RNA(void);
-  static BzlaRoundingMode RTP(void);
-  static BzlaRoundingMode RTN(void);
-  static BzlaRoundingMode RTZ(void);
+  static bzla::fp::RoundingMode RNE(void);
+  static bzla::fp::RoundingMode RNA(void);
+  static bzla::fp::RoundingMode RTP(void);
+  static bzla::fp::RoundingMode RTN(void);
+  static bzla::fp::RoundingMode RTZ(void);
 
   /* Properties used by Symfpu. */
   static void precondition(const bool &p);
@@ -679,34 +689,34 @@ class BzlaFPTraits
 
 /* -------------------------------------------------------------------------- */
 
-BzlaRoundingMode
+bzla::fp::RoundingMode
 BzlaFPTraits::RNE(void)
 {
-  return BZLA_RM_RNE;
+  return bzla::fp::RoundingMode::RNE;
 }
 
-BzlaRoundingMode
+bzla::fp::RoundingMode
 BzlaFPTraits::RNA(void)
 {
-  return BZLA_RM_RNA;
+  return bzla::fp::RoundingMode::RNA;
 }
 
-BzlaRoundingMode
+bzla::fp::RoundingMode
 BzlaFPTraits::RTP(void)
 {
-  return BZLA_RM_RTP;
+  return bzla::fp::RoundingMode::RTP;
 }
 
-BzlaRoundingMode
+bzla::fp::RoundingMode
 BzlaFPTraits::RTN(void)
 {
-  return BZLA_RM_RTN;
+  return bzla::fp::RoundingMode::RTN;
 }
 
-BzlaRoundingMode
+bzla::fp::RoundingMode
 BzlaFPTraits::RTZ(void)
 {
-  return BZLA_RM_RTZ;
+  return bzla::fp::RoundingMode::RTZ;
 }
 
 void
@@ -3377,7 +3387,7 @@ bzla_fp_sqrt(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
   res->size = new BzlaFloatingPointSize(fp->size->exponentWidth(),
                                         fp->size->significandWidth());
   res->fp   = new BzlaUnpackedFloat(
-      symfpu::sqrt<BzlaFPTraits>(*res->size, rm, *fp->fp));
+      symfpu::sqrt<BzlaFPTraits>(*res->size, bzlarm2rm.at(rm), *fp->fp));
   return res;
 }
 
@@ -3392,8 +3402,8 @@ bzla_fp_rti(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
   BZLA_CNEW(bzla->mm, res);
   res->size = new BzlaFloatingPointSize(fp->size->exponentWidth(),
                                         fp->size->significandWidth());
-  res->fp   = new BzlaUnpackedFloat(
-      symfpu::roundToIntegral<BzlaFPTraits>(*res->size, rm, *fp->fp));
+  res->fp   = new BzlaUnpackedFloat(symfpu::roundToIntegral<BzlaFPTraits>(
+      *res->size, bzlarm2rm.at(rm), *fp->fp));
   return res;
 }
 
@@ -3435,8 +3445,8 @@ bzla_fp_add(Bzla *bzla,
   BZLA_CNEW(bzla->mm, res);
   res->size = new BzlaFloatingPointSize(fp0->size->exponentWidth(),
                                         fp0->size->significandWidth());
-  res->fp   = new BzlaUnpackedFloat(
-      symfpu::add<BzlaFPTraits>(*res->size, rm, *fp0->fp, *fp1->fp, true));
+  res->fp   = new BzlaUnpackedFloat(symfpu::add<BzlaFPTraits>(
+      *res->size, bzlarm2rm.at(rm), *fp0->fp, *fp1->fp, true));
   return res;
 }
 
@@ -3457,8 +3467,8 @@ bzla_fp_mul(Bzla *bzla,
   BZLA_CNEW(bzla->mm, res);
   res->size = new BzlaFloatingPointSize(fp0->size->exponentWidth(),
                                         fp0->size->significandWidth());
-  res->fp   = new BzlaUnpackedFloat(
-      symfpu::multiply<BzlaFPTraits>(*res->size, rm, *fp0->fp, *fp1->fp));
+  res->fp   = new BzlaUnpackedFloat(symfpu::multiply<BzlaFPTraits>(
+      *res->size, bzlarm2rm.at(rm), *fp0->fp, *fp1->fp));
   return res;
 }
 
@@ -3479,8 +3489,8 @@ bzla_fp_div(Bzla *bzla,
   BZLA_CNEW(bzla->mm, res);
   res->size = new BzlaFloatingPointSize(fp0->size->exponentWidth(),
                                         fp0->size->significandWidth());
-  res->fp   = new BzlaUnpackedFloat(
-      symfpu::divide<BzlaFPTraits>(*res->size, rm, *fp0->fp, *fp1->fp));
+  res->fp   = new BzlaUnpackedFloat(symfpu::divide<BzlaFPTraits>(
+      *res->size, bzlarm2rm.at(rm), *fp0->fp, *fp1->fp));
   return res;
 }
 
@@ -3505,8 +3515,8 @@ bzla_fp_fma(Bzla *bzla,
   BZLA_CNEW(bzla->mm, res);
   res->size = new BzlaFloatingPointSize(fp0->size->exponentWidth(),
                                         fp0->size->significandWidth());
-  res->fp   = new BzlaUnpackedFloat(
-      symfpu::fma<BzlaFPTraits>(*res->size, rm, *fp0->fp, *fp1->fp, *fp2->fp));
+  res->fp   = new BzlaUnpackedFloat(symfpu::fma<BzlaFPTraits>(
+      *res->size, bzlarm2rm.at(rm), *fp0->fp, *fp1->fp, *fp2->fp));
   return res;
 }
 
@@ -3524,7 +3534,7 @@ bzla_fp_convert(Bzla *bzla,
   BzlaFPWordBlaster::set_s_bzla(bzla);
   res     = bzla_fp_new(bzla, sort);
   res->fp = new BzlaUnpackedFloat(symfpu::convertFloatToFloat<BzlaFPTraits>(
-      *fp->size, *res->size, rm, *fp->fp));
+      *fp->size, *res->size, bzlarm2rm.at(rm), *fp->fp));
   return res;
 }
 
@@ -3545,7 +3555,7 @@ bzla_fp_convert_from_ubv(Bzla *bzla,
    *       doesn't copy it but sets d_bv = bv and 2) the wrong constructor is
    *       matched (const bool &val). */
   res->fp = new BzlaUnpackedFloat(symfpu::convertUBVToFloat<BzlaFPTraits>(
-      *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
+      *res->size, bzlarm2rm.at(rm), bzla_bv_copy(bzla->mm, bv)));
   return res;
 }
 
@@ -3568,7 +3578,7 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
      *       doesn't copy it but sets d_bv = bv and 2) the wrong constructor is
      *       matched (const bool &val). */
     res->fp = new BzlaUnpackedFloat(symfpu::convertUBVToFloat<BzlaFPTraits>(
-        *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
+        *res->size, bzlarm2rm.at(rm), bzla_bv_copy(bzla->mm, bv)));
     /* We need special handling for bit-vectors of size one since symFPU does
      * not allow conversions from signed bit-vectors of size one.  */
     if (bzla_bv_is_one(bv))
@@ -3584,7 +3594,7 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
      *       doesn't copy it but sets d_bv = bv and 2) the wrong constructor is
      *       matched (const bool &val). */
     res->fp = new BzlaUnpackedFloat(symfpu::convertSBVToFloat<BzlaFPTraits>(
-        *res->size, rm, bzla_bv_copy(bzla->mm, bv)));
+        *res->size, bzlarm2rm.at(rm), bzla_bv_copy(bzla->mm, bv)));
   }
   return res;
 }
@@ -3694,7 +3704,7 @@ make_mpq_from_ui(mpq_t &res, uint32_t n, uint32_t d)
 static BzlaFloatingPoint *
 fp_convert_from_rational_aux(Bzla *bzla,
                              BzlaSortId sort,
-                             const BzlaRoundingMode rm,
+                             const bzla::fp::RoundingMode rm,
                              const char *num,
                              const char *den)
 {
@@ -3897,7 +3907,8 @@ bzla_fp_convert_from_real(Bzla *bzla,
                           const BzlaRoundingMode rm,
                           const char *real)
 {
-  return fp_convert_from_rational_aux(bzla, sort, rm, real, nullptr);
+  return fp_convert_from_rational_aux(
+      bzla, sort, bzlarm2rm.at(rm), real, nullptr);
 }
 
 BzlaFloatingPoint *
@@ -3907,7 +3918,7 @@ bzla_fp_convert_from_rational(Bzla *bzla,
                               const char *num,
                               const char *den)
 {
-  return fp_convert_from_rational_aux(bzla, sort, rm, num, den);
+  return fp_convert_from_rational_aux(bzla, sort, bzlarm2rm.at(rm), num, den);
 }
 
 void
