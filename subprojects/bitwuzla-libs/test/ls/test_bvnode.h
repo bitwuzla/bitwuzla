@@ -167,6 +167,7 @@ class TestBvNode : public TestBvNodeCommon
   void test_normalize_bounds_no_s();
   void test_normalize_bounds_only_hi();
   void test_normalize_bounds_only_lo();
+  void test_normalize_bounds_both();
 
  protected:
   void test_normalize_bounds(const BitVector& min_u,
