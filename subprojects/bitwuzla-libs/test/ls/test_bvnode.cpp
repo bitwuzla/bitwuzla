@@ -700,6 +700,274 @@ TestBvNode::test_normalize_bounds_only_hi()
                         d_nullbv);
 }
 
+void
+TestBvNode::test_normalize_bounds_only_lo()
+{
+  // no bounds exclusive -----------------------------
+
+  // unsigned: [1000, 1111]
+  // signed:   [1000, 1111]
+  test_normalize_bounds(BitVector(4, "1000"),
+                        false,
+                        BitVector(4, "1111"),
+                        false,
+                        BitVector(4, "1000"),
+                        false,
+                        BitVector(4, "1111"),
+                        false,
+                        BitVector(4, "1000"),
+                        BitVector(4, "1111"),
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: [1000, 1111]
+  // signed:   [1011, 1110]
+  test_normalize_bounds(BitVector(4, "1000"),
+                        false,
+                        BitVector(4, "1111"),
+                        false,
+                        BitVector(4, "1011"),
+                        false,
+                        BitVector(4, "1110"),
+                        false,
+                        BitVector(4, "1011"),
+                        BitVector(4, "1110"),
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: [1011, 1100]
+  // signed:   [1001, 1110]
+  test_normalize_bounds(BitVector(4, "1011"),
+                        false,
+                        BitVector(4, "1100"),
+                        false,
+                        BitVector(4, "1001"),
+                        false,
+                        BitVector(4, "1110"),
+                        false,
+                        BitVector(4, "1011"),
+                        BitVector(4, "1100"),
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: [1010, 1100]
+  // signed:   [1011, 1101]
+  test_normalize_bounds(BitVector(4, "1010"),
+                        false,
+                        BitVector(4, "1100"),
+                        false,
+                        BitVector(4, "1011"),
+                        false,
+                        BitVector(4, "1101"),
+                        false,
+                        BitVector(4, "1011"),
+                        BitVector(4, "1100"),
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: [1010, 1110]
+  // signed:   [1001, 1101]
+  test_normalize_bounds(BitVector(4, "1010"),
+                        false,
+                        BitVector(4, "1110"),
+                        false,
+                        BitVector(4, "1001"),
+                        false,
+                        BitVector(4, "1101"),
+                        false,
+                        BitVector(4, "1010"),
+                        BitVector(4, "1101"),
+                        d_nullbv,
+                        d_nullbv);
+
+  // unsigned: [1001, 1010]
+  // signed:   [1011, 1111]
+  test_normalize_bounds(BitVector(4, "1001"),
+                        false,
+                        BitVector(4, "1010"),
+                        false,
+                        BitVector(4, "1011"),
+                        false,
+                        BitVector(4, "1111"),
+                        false,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv);
+
+  // some bounds exclusive ---------------------------
+
+  // unsigned: [1000, 1111[
+  // signed:   ]1000, 1111]
+  test_normalize_bounds(BitVector(4, "1000"),
+                        false,
+                        BitVector(4, "1111"),
+                        true,
+                        BitVector(4, "1000"),
+                        true,
+                        BitVector(4, "1111"),
+                        false,
+                        BitVector(4, "1001"),
+                        BitVector(4, "1110"),
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: [1000, 1111[
+  // signed:   [1011, 1110[
+  test_normalize_bounds(BitVector(4, "1000"),
+                        false,
+                        BitVector(4, "1111"),
+                        true,
+                        BitVector(4, "1011"),
+                        false,
+                        BitVector(4, "1110"),
+                        true,
+                        BitVector(4, "1011"),
+                        BitVector(4, "1101"),
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: ]1011, 1100]
+  // signed:   ]1001, 1110]
+  test_normalize_bounds(BitVector(4, "1011"),
+                        true,
+                        BitVector(4, "1100"),
+                        false,
+                        BitVector(4, "1001"),
+                        true,
+                        BitVector(4, "1110"),
+                        false,
+                        BitVector(4, "1100"),
+                        BitVector(4, "1100"),
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: ]1010, 1100]
+  // signed:   [1011, 1101[
+  test_normalize_bounds(BitVector(4, "1010"),
+                        true,
+                        BitVector(4, "1100"),
+                        false,
+                        BitVector(4, "1011"),
+                        false,
+                        BitVector(4, "1101"),
+                        true,
+                        BitVector(4, "1011"),
+                        BitVector(4, "1011"),
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: ]1010, 1110[
+  // signed:   [1001, 1101]
+  test_normalize_bounds(BitVector(4, "1010"),
+                        true,
+                        BitVector(4, "1110"),
+                        true,
+                        BitVector(4, "1001"),
+                        false,
+                        BitVector(4, "1101"),
+                        false,
+                        BitVector(4, "1011"),
+                        BitVector(4, "1101"),
+                        d_nullbv,
+                        d_nullbv);
+
+  // unsigned: [1001, 1010]
+  // signed:   ]1011, 1111[
+  test_normalize_bounds(BitVector(4, "1001"),
+                        false,
+                        BitVector(4, "1010"),
+                        false,
+                        BitVector(4, "1011"),
+                        true,
+                        BitVector(4, "1111"),
+                        true,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv);
+
+  // all bounds exclusive ----------------------------
+
+  // unsigned: ]1000, 1111[
+  // signed:   ]1000, 1111[
+  test_normalize_bounds(BitVector(4, "1000"),
+                        true,
+                        BitVector(4, "1111"),
+                        true,
+                        BitVector(4, "1000"),
+                        true,
+                        BitVector(4, "1111"),
+                        true,
+                        BitVector(4, "1001"),
+                        BitVector(4, "1110"),
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: ]1000, 1111[
+  // signed:   ]1011, 1110[
+  test_normalize_bounds(BitVector(4, "1000"),
+                        true,
+                        BitVector(4, "1111"),
+                        true,
+                        BitVector(4, "1011"),
+                        true,
+                        BitVector(4, "1110"),
+                        true,
+                        BitVector(4, "1100"),
+                        BitVector(4, "1101"),
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: ]1011, 1100[
+  // signed:   ]1001, 1110[
+  test_normalize_bounds(BitVector(4, "1011"),
+                        true,
+                        BitVector(4, "1100"),
+                        true,
+                        BitVector(4, "1001"),
+                        true,
+                        BitVector(4, "1110"),
+                        true,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: ]1010, 1100[
+  // signed:   ]1011, 1101[
+  test_normalize_bounds(BitVector(4, "1010"),
+                        true,
+                        BitVector(4, "1100"),
+                        true,
+                        BitVector(4, "1011"),
+                        true,
+                        BitVector(4, "1101"),
+                        true,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv);
+  // unsigned: ]1010, 1110[
+  // signed:   ]1001, 1101[
+  test_normalize_bounds(BitVector(4, "1010"),
+                        true,
+                        BitVector(4, "1110"),
+                        true,
+                        BitVector(4, "1001"),
+                        true,
+                        BitVector(4, "1101"),
+                        true,
+                        BitVector(4, "1011"),
+                        BitVector(4, "1100"),
+                        d_nullbv,
+                        d_nullbv);
+
+  // unsigned: ]1001, 1010[
+  // signed:   ]1011, 1111[
+  test_normalize_bounds(BitVector(4, "1001"),
+                        true,
+                        BitVector(4, "1010"),
+                        true,
+                        BitVector(4, "1011"),
+                        true,
+                        BitVector(4, "1111"),
+                        true,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv,
+                        d_nullbv);
+}
+
 TEST_F(TestBvNode, normalize_bounds)
 {
   // no signed bounds ------------------------------------------------------
@@ -712,6 +980,7 @@ TEST_F(TestBvNode, normalize_bounds)
   test_normalize_bounds_only_hi();
 
   // overlap in [smin ... ones] --------------------------------------------
+  test_normalize_bounds_only_lo();
 
   // overlap in [0 ... ones] and [smin ... smax]
   // no overlap
