@@ -47,7 +47,7 @@ extern "C" {
 template <bool is_signed>
 class BzlaFPSymBV;
 class BzlaFPWordBlaster;
-class BzlaFloatingPointSize;
+class BzlaFPSortInfo;
 
 static std::unordered_map<BzlaRoundingMode, bzla::fp::RoundingMode> bzlarm2rm =
     {
@@ -669,7 +669,7 @@ class BzlaFPTraits
   /* The six key types that SymFPU uses. */
   using bwt  = uint32_t;
   using rm   = bzla::fp::RoundingMode;
-  using fpt  = BzlaFloatingPointSize;
+  using fpt  = BzlaFPSortInfo;
   using prop = bool;
   using sbv  = BzlaFPBV<true>;
   using ubv  = BzlaFPBV<false>;
@@ -744,31 +744,11 @@ BzlaFPTraits::invariant(const bool &p)
 /* Floating-Point constants.                                                  */
 /* ========================================================================== */
 
-class BzlaFloatingPointSize
-{
- public:
-  BzlaFloatingPointSize(uint32_t e, uint32_t s) : d_ewidth(e), d_swidth(s) {}
-  BzlaFloatingPointSize(const BzlaFloatingPointSize &other)
-      : d_ewidth(other.d_ewidth), d_swidth(other.d_swidth)
-  {
-  }
-  /* symFPU interface */
-  uint32_t exponentWidth() const { return d_ewidth; }
-  uint32_t significandWidth() const { return d_swidth; }
-  uint32_t packedWidth() const { return d_ewidth + d_swidth; }
-  uint32_t packedExponentWidth() const { return d_ewidth; }
-  uint32_t packedSignificandWidth() const { return d_swidth - 1; }
-
- protected:
-  uint32_t d_ewidth; /* size of exponent */
-  uint32_t d_swidth; /* size of significand */
-};
-
 using BzlaUnpackedFloat = ::symfpu::unpackedFloat<BzlaFPTraits>;
 
 struct BzlaFloatingPoint
 {
-  BzlaFloatingPointSize *size;
+  BzlaFPSortInfo *size;
   ::symfpu::unpackedFloat<BzlaFPTraits> *fp;
 };
 
@@ -777,7 +757,6 @@ struct BzlaFloatingPoint
 /* ========================================================================== */
 
 class BzlaFPSymRM;
-class BzlaFPSortInfo;
 class BzlaFPSymProp;
 template <bool T>
 class BzlaFPSymBV;
@@ -800,7 +779,7 @@ struct BzlaSignedToLitSort<false>
 /* Bitwuzla wrapper for floating-point sorts.                                */
 /* -------------------------------------------------------------------------- */
 
-class BzlaFPSortInfo : public BzlaFloatingPointSize
+class BzlaFPSortInfo
 {
   friend BzlaFPWordBlaster;
 
@@ -812,7 +791,16 @@ class BzlaFPSortInfo : public BzlaFloatingPointSize
 
   BzlaSortId getSort(void) const;
 
+  /* symFPU interface */
+  uint32_t exponentWidth() const { return d_ewidth; }
+  uint32_t significandWidth() const { return d_swidth; }
+  uint32_t packedWidth() const { return d_ewidth + d_swidth; }
+  uint32_t packedExponentWidth() const { return d_ewidth; }
+  uint32_t packedSignificandWidth() const { return d_swidth - 1; }
+
  private:
+  uint32_t d_ewidth; /* size of exponent */
+  uint32_t d_swidth; /* size of significand */
   BzlaSortId d_sort;
   static Bzla *s_bzla;
 };
@@ -822,8 +810,8 @@ class BzlaFPSortInfo : public BzlaFloatingPointSize
 Bzla *BzlaFPSortInfo::s_bzla = nullptr;
 
 BzlaFPSortInfo::BzlaFPSortInfo(const BzlaSortId sort)
-    : BzlaFloatingPointSize(bzla_sort_fp_get_exp_width(s_bzla, sort),
-                            bzla_sort_fp_get_sig_width(s_bzla, sort))
+    : d_ewidth(bzla_sort_fp_get_exp_width(s_bzla, sort)),
+      d_swidth(bzla_sort_fp_get_sig_width(s_bzla, sort))
 {
   assert(s_bzla);
   assert(bzla_sort_is_fp(s_bzla, sort));
@@ -831,14 +819,14 @@ BzlaFPSortInfo::BzlaFPSortInfo(const BzlaSortId sort)
 }
 
 BzlaFPSortInfo::BzlaFPSortInfo(uint32_t ewidth, uint32_t swidth)
-    : BzlaFloatingPointSize(ewidth, swidth)
+    : d_ewidth(ewidth), d_swidth(swidth)
 {
   assert(s_bzla);
   d_sort = bzla_sort_fp(s_bzla, ewidth, swidth);
 }
 
 BzlaFPSortInfo::BzlaFPSortInfo(const BzlaFPSortInfo &other)
-    : BzlaFloatingPointSize(other.d_ewidth, other.d_swidth)
+    : d_ewidth(other.d_ewidth), d_swidth(other.d_swidth)
 {
   assert(s_bzla);
   assert(other.d_sort);
@@ -2929,10 +2917,8 @@ bzla_fp_new(Bzla *bzla, BzlaSortId sort)
   assert(bzla_sort_is_fp(bzla, sort));
 
   BzlaFloatingPoint *res;
-  uint32_t ewidth = bzla_sort_fp_get_exp_width(bzla, sort);
-  uint32_t swidth = bzla_sort_fp_get_sig_width(bzla, sort);
   BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(ewidth, swidth);
+  res->size = new BzlaFPSortInfo(sort);
   return res;
 }
 
@@ -3352,8 +3338,8 @@ bzla_fp_abs(Bzla *bzla, const BzlaFloatingPoint *fp)
   BzlaFloatingPoint *res;
   BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(fp->size->exponentWidth(),
-                                        fp->size->significandWidth());
+  res->size = new BzlaFPSortInfo(fp->size->exponentWidth(),
+                                 fp->size->significandWidth());
   res->fp   = new BzlaUnpackedFloat(
       symfpu::absolute<BzlaFPTraits>(*res->size, *fp->fp));
   return res;
@@ -3368,8 +3354,8 @@ bzla_fp_neg(Bzla *bzla, const BzlaFloatingPoint *fp)
   BzlaFloatingPoint *res;
   BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(fp->size->exponentWidth(),
-                                        fp->size->significandWidth());
+  res->size = new BzlaFPSortInfo(fp->size->exponentWidth(),
+                                 fp->size->significandWidth());
   res->fp =
       new BzlaUnpackedFloat(symfpu::negate<BzlaFPTraits>(*res->size, *fp->fp));
   return res;
@@ -3384,8 +3370,8 @@ bzla_fp_sqrt(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
   BzlaFloatingPoint *res;
   BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(fp->size->exponentWidth(),
-                                        fp->size->significandWidth());
+  res->size = new BzlaFPSortInfo(fp->size->exponentWidth(),
+                                 fp->size->significandWidth());
   res->fp   = new BzlaUnpackedFloat(
       symfpu::sqrt<BzlaFPTraits>(*res->size, bzlarm2rm.at(rm), *fp->fp));
   return res;
@@ -3400,8 +3386,8 @@ bzla_fp_rti(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
   BzlaFloatingPoint *res;
   BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(fp->size->exponentWidth(),
-                                        fp->size->significandWidth());
+  res->size = new BzlaFPSortInfo(fp->size->exponentWidth(),
+                                 fp->size->significandWidth());
   res->fp   = new BzlaUnpackedFloat(symfpu::roundToIntegral<BzlaFPTraits>(
       *res->size, bzlarm2rm.at(rm), *fp->fp));
   return res;
@@ -3421,8 +3407,8 @@ bzla_fp_rem(Bzla *bzla,
   BzlaFloatingPoint *res;
   BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(fp0->size->exponentWidth(),
-                                        fp0->size->significandWidth());
+  res->size = new BzlaFPSortInfo(fp0->size->exponentWidth(),
+                                 fp0->size->significandWidth());
   res->fp   = new BzlaUnpackedFloat(
       symfpu::remainder<BzlaFPTraits>(*res->size, *fp0->fp, *fp1->fp));
   return res;
@@ -3443,8 +3429,8 @@ bzla_fp_add(Bzla *bzla,
   BzlaFloatingPoint *res;
   BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(fp0->size->exponentWidth(),
-                                        fp0->size->significandWidth());
+  res->size = new BzlaFPSortInfo(fp0->size->exponentWidth(),
+                                 fp0->size->significandWidth());
   res->fp   = new BzlaUnpackedFloat(symfpu::add<BzlaFPTraits>(
       *res->size, bzlarm2rm.at(rm), *fp0->fp, *fp1->fp, true));
   return res;
@@ -3465,8 +3451,8 @@ bzla_fp_mul(Bzla *bzla,
   BzlaFloatingPoint *res;
   BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(fp0->size->exponentWidth(),
-                                        fp0->size->significandWidth());
+  res->size = new BzlaFPSortInfo(fp0->size->exponentWidth(),
+                                 fp0->size->significandWidth());
   res->fp   = new BzlaUnpackedFloat(symfpu::multiply<BzlaFPTraits>(
       *res->size, bzlarm2rm.at(rm), *fp0->fp, *fp1->fp));
   return res;
@@ -3487,8 +3473,8 @@ bzla_fp_div(Bzla *bzla,
   BzlaFloatingPoint *res;
   BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(fp0->size->exponentWidth(),
-                                        fp0->size->significandWidth());
+  res->size = new BzlaFPSortInfo(fp0->size->exponentWidth(),
+                                 fp0->size->significandWidth());
   res->fp   = new BzlaUnpackedFloat(symfpu::divide<BzlaFPTraits>(
       *res->size, bzlarm2rm.at(rm), *fp0->fp, *fp1->fp));
   return res;
@@ -3513,8 +3499,8 @@ bzla_fp_fma(Bzla *bzla,
   BzlaFloatingPoint *res;
   BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->size = new BzlaFloatingPointSize(fp0->size->exponentWidth(),
-                                        fp0->size->significandWidth());
+  res->size = new BzlaFPSortInfo(fp0->size->exponentWidth(),
+                                 fp0->size->significandWidth());
   res->fp   = new BzlaUnpackedFloat(symfpu::fma<BzlaFPTraits>(
       *res->size, bzlarm2rm.at(rm), *fp0->fp, *fp1->fp, *fp2->fp));
   return res;
@@ -3862,7 +3848,7 @@ fp_convert_from_rational_aux(Bzla *bzla,
 
     /* Exact float ------------------------------------------------------- */
 
-    BzlaFloatingPointSize exact_format(n_exp_bits, n_sig_bits);
+    BzlaFPSortInfo exact_format(n_exp_bits, n_sig_bits);
 
     /* If the format has n_exp_bits, the unpacked format may have more to allow
      * subnormals to be normalised. */
