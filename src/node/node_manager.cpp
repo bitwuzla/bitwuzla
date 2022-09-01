@@ -484,7 +484,7 @@ NodeManager::check_type(Kind kind,
       }
       if (!children[1].get_type().is_bool())
       {
-        ss << kind << ": Expected Booleam term at position 1";
+        ss << kind << ": Expected Boolean term at position 1";
         return std::make_pair(false, ss.str());
       }
       break;
