@@ -25,8 +25,6 @@ shared=no
 prefix=
 path=
 
-symfpu=yes
-
 testing=unknown
 
 cadical=unknown
@@ -82,8 +80,6 @@ Options:
 
   --python          compile python API
   --time-stats      compile with time statistics
-
-  --no-symfpu       disable FP support
 
   --testing         enable unit and regression testing
   --no-testing      disable unit and regression testing
@@ -170,8 +166,6 @@ do
     --python)     python=yes;;
     --time-stats) timestats=yes;;
 
-    --no-symfpu) symfpu=no;;
-
     --testing) testing=yes;;
     --no-testing) testing=no;;
 
@@ -220,8 +214,6 @@ cmake_opts="$CMAKE_OPTS"
 
 [ -n "$prefix" ] && cmake_opts="$cmake_opts -DCMAKE_INSTALL_PREFIX=$prefix"
 [ -n "$path" ] && cmake_opts="$cmake_opts -DCMAKE_PREFIX_PATH=$path"
-
-[ $symfpu = yes ] && cmake_opts="$cmake_opts -DUSE_SYMFPU=ON"
 
 [ $testing = yes ] && cmake_opts="$cmake_opts -DTESTING=ON"
 [ $testing = no ] && cmake_opts="$cmake_opts -DTESTING=OFF"

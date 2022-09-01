@@ -1133,11 +1133,9 @@ bitwuzla_copyright(Bitwuzla *bitwuzla)
       "  CryptoMiniSat\n"
       "  https://github.com/msoos/cryptominisat\n"
 #endif
-#ifdef BZLA_USE_SYMFPU
       "\n"
       "  SymFPU\n"
       "  https://github.com/martin-cs/symfpu \n"
-#endif
       "";
 }
 

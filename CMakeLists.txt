@@ -54,7 +54,6 @@ option3vl(USE_MINISAT    "Use and link with MiniSat")
 option3vl(USE_PICOSAT    "Use and link with PicoSAT")
 option3vl(USE_KISSAT     "Use and link with Kissat")
 option3vl(USE_GIMSATUL   "Use and link with Gimsatul")
-option3vl(USE_SYMFPU     "Use and link with SymFPU")
 
 option(ONLY_CADICAL   "Only use CaDiCaL" OFF)
 option(ONLY_CMS       "Only use CryptoMiniSat" OFF)
@@ -118,7 +117,6 @@ set_option(USE_MINISAT ON)
 set_option(USE_PICOSAT ON)
 set_option(USE_KISSAT ON)
 set_option(USE_GIMSATUL ON)
-set_option(USE_SYMFPU OFF)
 
 #-----------------------------------------------------------------------------#
 
@@ -263,12 +261,7 @@ if(NOT IS_WINDOWS_BUILD AND (USE_CMS OR TESTING))
   endif()
 endif()
 
-if(USE_SYMFPU)
-  find_package(SymFPU REQUIRED)
-  if(SymFPU_FOUND)
-    add_definitions("-DBZLA_USE_SYMFPU")
-  endif()
-endif()
+find_package(SymFPU REQUIRED)
 
 if(USE_LINGELING)
   find_package(Lingeling)

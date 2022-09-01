@@ -25,11 +25,11 @@ jobs:
             config:
 
           - name: production-clang
-            config: --no-symfpu
+            config:
             env: CC=clang CXX=clang++
 
           - name: debug
-            config: debug --no-symfpu
+            config: debug
 
           - name: debug-clang
             config: debug

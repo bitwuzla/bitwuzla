@@ -1768,9 +1768,6 @@ exp_rm_const_aux(Bzla *bzla, const BzlaRoundingMode rm)
 BzlaNode *
 bzla_exp_rm_const(Bzla *bzla, BzlaRoundingMode rm)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   return exp_rm_const_aux(bzla, rm);
 }
 
@@ -1785,9 +1782,6 @@ bzla_exp_fp_const_fp(Bzla *bzla, const BzlaFloatingPoint *fp)
 BzlaNode *
 bzla_exp_fp_pos_zero(Bzla *bzla, BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla);
   assert(sort);
   assert(bzla_sort_is_fp(bzla, sort));
@@ -1804,9 +1798,6 @@ bzla_exp_fp_pos_zero(Bzla *bzla, BzlaSortId sort)
 BzlaNode *
 bzla_exp_fp_neg_zero(Bzla *bzla, BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla);
   assert(sort);
   assert(bzla_sort_is_fp(bzla, sort));
@@ -1823,9 +1814,6 @@ bzla_exp_fp_neg_zero(Bzla *bzla, BzlaSortId sort)
 BzlaNode *
 bzla_exp_fp_pos_inf(Bzla *bzla, BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla);
   assert(sort);
   assert(bzla_sort_is_fp(bzla, sort));
@@ -1842,9 +1830,6 @@ bzla_exp_fp_pos_inf(Bzla *bzla, BzlaSortId sort)
 BzlaNode *
 bzla_exp_fp_neg_inf(Bzla *bzla, BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla);
   assert(sort);
   assert(bzla_sort_is_fp(bzla, sort));
@@ -1861,9 +1846,6 @@ bzla_exp_fp_neg_inf(Bzla *bzla, BzlaSortId sort)
 BzlaNode *
 bzla_exp_fp_nan(Bzla *bzla, BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla);
   assert(sort);
   assert(bzla_sort_is_fp(bzla, sort));
@@ -1883,9 +1865,6 @@ bzla_exp_fp_const(Bzla *bzla,
                   BzlaNode *e1_exp,
                   BzlaNode *e2_sig)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla);
   assert(e0_sign);
   assert(e1_exp);
@@ -1923,9 +1902,6 @@ bzla_exp_fp_const_from_real(Bzla *bzla,
                             BzlaNode *rm,
                             const char *real)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla);
   assert(sort);
   assert(bzla_sort_is_fp(bzla, sort));
@@ -2012,9 +1988,6 @@ BzlaNode *
 bzla_exp_fp_const_from_rational(
     Bzla *bzla, BzlaSortId sort, BzlaNode *rm, const char *num, const char *den)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla);
   assert(sort);
   assert(bzla_sort_is_fp(bzla, sort));
@@ -2103,9 +2076,6 @@ bzla_exp_fp_fp(Bzla *bzla,
                BzlaNode *e1_exp,
                BzlaNode *e2_sig)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla);
   assert(e0_sign);
   assert(e1_exp);
@@ -2143,9 +2113,6 @@ bzla_exp_fp_fp(Bzla *bzla,
 BzlaNode *
 bzla_exp_fp_abs(Bzla *bzla, BzlaNode *node)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
@@ -2158,9 +2125,6 @@ bzla_exp_fp_abs(Bzla *bzla, BzlaNode *node)
 BzlaNode *
 bzla_exp_fp_neg(Bzla *bzla, BzlaNode *node)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
@@ -2173,9 +2137,6 @@ bzla_exp_fp_neg(Bzla *bzla, BzlaNode *node)
 BzlaNode *
 bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *node)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
@@ -2188,9 +2149,6 @@ bzla_exp_fp_is_normal(Bzla *bzla, BzlaNode *node)
 BzlaNode *
 bzla_exp_fp_is_subnormal(Bzla *bzla, BzlaNode *node)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
@@ -2203,9 +2161,6 @@ bzla_exp_fp_is_subnormal(Bzla *bzla, BzlaNode *node)
 BzlaNode *
 bzla_exp_fp_is_zero(Bzla *bzla, BzlaNode *node)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
@@ -2218,9 +2173,6 @@ bzla_exp_fp_is_zero(Bzla *bzla, BzlaNode *node)
 BzlaNode *
 bzla_exp_fp_is_inf(Bzla *bzla, BzlaNode *node)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
@@ -2233,9 +2185,6 @@ bzla_exp_fp_is_inf(Bzla *bzla, BzlaNode *node)
 BzlaNode *
 bzla_exp_fp_is_nan(Bzla *bzla, BzlaNode *node)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
@@ -2248,9 +2197,6 @@ bzla_exp_fp_is_nan(Bzla *bzla, BzlaNode *node)
 BzlaNode *
 bzla_exp_fp_is_neg(Bzla *bzla, BzlaNode *node)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
@@ -2263,9 +2209,6 @@ bzla_exp_fp_is_neg(Bzla *bzla, BzlaNode *node)
 BzlaNode *
 bzla_exp_fp_is_pos(Bzla *bzla, BzlaNode *node)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   node = bzla_simplify_exp(bzla, node);
   if (bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 0)
@@ -2278,9 +2221,6 @@ bzla_exp_fp_is_pos(Bzla *bzla, BzlaNode *node)
 BzlaNode *
 bzla_exp_fp_min(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2294,9 +2234,6 @@ bzla_exp_fp_min(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 BzlaNode *
 bzla_exp_fp_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2310,9 +2247,6 @@ bzla_exp_fp_max(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 BzlaNode *
 bzla_exp_fp_rem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2326,9 +2260,6 @@ bzla_exp_fp_rem(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 BzlaNode *
 bzla_exp_fp_fpeq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
   BzlaNode *isnan0, *isnan1, *not_isnan0, *not_isnan1;
@@ -2370,9 +2301,6 @@ bzla_exp_fp_fpeq(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 BzlaNode *
 bzla_exp_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2386,9 +2314,6 @@ bzla_exp_fp_lte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 BzlaNode *
 bzla_exp_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2402,9 +2327,6 @@ bzla_exp_fp_lt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 BzlaNode *
 bzla_exp_fp_gte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
 
@@ -2418,9 +2340,6 @@ bzla_exp_fp_gte(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 BzlaNode *
 bzla_exp_fp_gt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
 
@@ -2437,9 +2356,6 @@ bzla_exp_fp_gt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 BzlaNode *
 bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2453,9 +2369,6 @@ bzla_exp_fp_sqrt(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 BzlaNode *
 bzla_exp_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2469,9 +2382,6 @@ bzla_exp_fp_rti(Bzla *bzla, BzlaNode *e0, BzlaNode *e1)
 BzlaNode *
 bzla_exp_fp_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2486,9 +2396,6 @@ bzla_exp_fp_add(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 BzlaNode *
 bzla_exp_fp_sub(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla == bzla_node_real_addr(e0)->bzla);
   assert(bzla == bzla_node_real_addr(e1)->bzla);
   assert(bzla == bzla_node_real_addr(e2)->bzla);
@@ -2506,9 +2413,6 @@ bzla_exp_fp_sub(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 BzlaNode *
 bzla_exp_fp_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2523,9 +2427,6 @@ bzla_exp_fp_mul(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 BzlaNode *
 bzla_exp_fp_div(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2541,9 +2442,6 @@ BzlaNode *
 bzla_exp_fp_fma(
     Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaNode *e2, BzlaNode *e3)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2559,9 +2457,6 @@ bzla_exp_fp_fma(
 BzlaNode *
 bzla_exp_fp_to_sbv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   return bzla_node_create_fp_to_sbv(bzla, e0, e1, sort);
@@ -2570,9 +2465,6 @@ bzla_exp_fp_to_sbv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 BzlaNode *
 bzla_exp_fp_to_ubv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
   return bzla_node_create_fp_to_ubv(bzla, e0, e1, sort);
@@ -2581,9 +2473,6 @@ bzla_exp_fp_to_ubv(Bzla *bzla, BzlaNode *e0, BzlaNode *e1, BzlaSortId sort)
 BzlaNode *
 bzla_exp_fp_to_fp_from_bv(Bzla *bzla, BzlaNode *node, BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla_node_bv_get_width(bzla, node)
          == bzla_sort_fp_get_bv_width(bzla, sort));
   BzlaNode *result;
@@ -2606,9 +2495,6 @@ bzla_exp_fp_to_fp_from_fp(Bzla *bzla,
                           BzlaNode *e1,
                           BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
@@ -2630,9 +2516,6 @@ bzla_exp_fp_to_fp_from_sbv(Bzla *bzla,
                            BzlaNode *e1,
                            BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   assert(bzla_node_is_bv(bzla, e1));
 
   BzlaNode *result;
@@ -2674,9 +2557,6 @@ bzla_exp_fp_to_fp_from_ubv(Bzla *bzla,
                            BzlaNode *e1,
                            BzlaSortId sort)
 {
-#if !defined(BZLA_USE_SYMFPU)
-  BZLA_ABORT(true, "SymFPU not configured");
-#endif
   BzlaNode *result;
   e0 = bzla_simplify_exp(bzla, e0);
   e1 = bzla_simplify_exp(bzla, e1);
