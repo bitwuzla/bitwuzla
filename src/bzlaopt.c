@@ -1140,7 +1140,7 @@ bzla_opt_init_opts(Bzla *bzla)
            false,
            "prop-prob-rand-input",
            0,
-           0,
+           10,
            0,
            BZLA_PROB_100,
            "probability for selecting a random input instead of an essential "
@@ -1281,7 +1281,7 @@ bzla_opt_init_opts(Bzla *bzla)
            true,
            "prop-use-inv-lt-concat",
            0,
-           0,
+           1,
            0,
            1,
            "use special inverse value functions for slt/ult over concats");
@@ -1292,7 +1292,7 @@ bzla_opt_init_opts(Bzla *bzla)
            true,
            "prop-infer-ineq-bounds",
            0,
-           0,
+           1,
            0,
            1,
            "use special inverse value functions for slt/ult over concats");

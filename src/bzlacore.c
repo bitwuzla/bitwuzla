@@ -2781,6 +2781,18 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 
   BZLA_MSG(bzla->msg, 1, "calling SAT");
 
+  if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP))
+  {
+    bzla_opt_set(bzla, BZLA_OPT_PROP_NPROPS, 10000);
+    bzla_opt_set(bzla, BZLA_OPT_PROP_NUPDATES, 2000000);
+    bzla_opt_set(bzla, BZLA_OPT_PROP_SEXT, 1);
+  }
+
+  if (bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_PROP)
+  {
+    bzla_opt_set(bzla, BZLA_OPT_PROP_SEXT, 1);
+  }
+
   if (bzla->valid_assignments == 1) bzla_reset_incremental_usage(bzla);
 
   /* 'bzla->assertions' contains all assertions that were asserted in context
