@@ -235,6 +235,7 @@ class TestProp : public TestBzla
     /* -> then test completeness of the whole propagation algorithm
      *    (we must find a solution within n move(s)) */
     ((BzlaPropSolver *) d_bzla->slv)->stats.moves = 0;
+    bzla_opt_set(d_bzla, BZLA_OPT_PROP_PROB_RANDOM_INPUT, 0);
     bzla_assume_exp(d_bzla, eq);
     bzla_model_init_bv(d_bzla, &d_bzla->bv_model);
     bzla_model_init_fun(d_bzla, &d_bzla->fun_model);
