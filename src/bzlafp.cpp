@@ -1115,14 +1115,6 @@ bzla_fp_get_fp(BzlaNode *node)
   return static_cast<BzlaFloatingPoint *>(((BzlaFPConstNode *) node)->fp);
 }
 
-size_t
-bzla_fp_get_bytes(BzlaNode *node)
-{
-  // FIXME: Only used for cloning, thus obsolete.
-  (void) node;
-  return 0;
-}
-
 uint32_t
 bzla_fp_hash(const BzlaFloatingPoint *fp)
 {

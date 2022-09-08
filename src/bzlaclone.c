@@ -843,45 +843,11 @@ clone_nodes_unique_table(Bzla *bzla, Bzla *clone, BzlaNodeMap *exp_map)
   }
 }
 
-#define MEM_INT_HASH_TABLE(table)                               \
-  ((table) ? sizeof(*(table)) + (table)->size * sizeof(int32_t) \
-                 + (table)->size * sizeof(uint8_t)              \
-           : 0)
-
-#define MEM_INT_HASH_MAP(table)                                                \
-  ((table)                                                                     \
-       ? MEM_INT_HASH_TABLE(table) + (table)->size * sizeof(BzlaHashTableData) \
-       : 0)
-
-#define MEM_PTR_HASH_TABLE(table)                                           \
-  ((table) ? sizeof(*(table)) + (table)->size * sizeof(BzlaPtrHashBucket *) \
-                 + (table)->count * sizeof(BzlaPtrHashBucket)               \
-           : 0)
-
-#define CHKCLONE_MEM_INT_HASH_TABLE(table, clone)                   \
-  do                                                                \
-  {                                                                 \
-    assert(MEM_INT_HASH_TABLE(table) == MEM_INT_HASH_TABLE(clone)); \
-  } while (0)
-
-#define CHKCLONE_MEM_INT_HASH_MAP(table, clone)                 \
-  do                                                            \
-  {                                                             \
-    assert(MEM_INT_HASH_MAP(table) == MEM_INT_HASH_MAP(clone)); \
-  } while (0)
-
-#define CHKCLONE_MEM_PTR_HASH_TABLE(table, clone)                   \
-  do                                                                \
-  {                                                                 \
-    assert(MEM_PTR_HASH_TABLE(table) == MEM_PTR_HASH_TABLE(clone)); \
-  } while (0)
-
 #define CLONE_PTR_HASH_TABLE(table)                           \
   do                                                          \
   {                                                           \
     clone->table = bzla_hashptr_table_clone(                  \
         mm, bzla->table, bzla_clone_key_as_node, 0, emap, 0); \
-    CHKCLONE_MEM_PTR_HASH_TABLE(bzla->table, clone->table);   \
   } while (0)
 
 #define CLONE_PTR_HASH_TABLE_DATA(table, data_func)                      \
@@ -893,23 +859,7 @@ clone_nodes_unique_table(Bzla *bzla, Bzla *clone, BzlaNodeMap *exp_map)
     BZLALOG(2,                                                           \
             "  clone " #table " table: %.3f s",                          \
             (bzla_util_time_stamp() - delta));                           \
-    CHKCLONE_MEM_PTR_HASH_TABLE(bzla->table, clone->table);              \
   } while (0)
-
-#if 0
-#define CLONE_INT_HASH_MAP_DATA(table, data_func)                         \
-  do                                                                      \
-  {                                                                       \
-    BZLALOG_TIMESTAMP(delta);                                             \
-    clone->table = bzla_hashint_map_clone(mm, bzla->table, data_func, 0); \
-    BZLALOG(2,                                                            \
-            "  clone " #table " table: %.3f s",                           \
-            (bzla_util_time_stamp() - delta));                            \
-    CHKCLONE_MEM_INT_HASH_MAP(bzla->table, clone->table);                 \
-  } while (0)
-#endif
-
-#define MEM_BITVEC(bv) ((bv) ? bzla_bv_size(bv) : 0)
 
 static Bzla *
 clone_aux_bzla(Bzla *bzla,
@@ -931,19 +881,8 @@ clone_aux_bzla(Bzla *bzla,
   BzlaPtrHashTableIterator pit;
   BzlaNodePtrStack rhos;
 #ifndef NDEBUG
-  uint32_t h;
-  size_t allocated;
-  BzlaNode *cur;
-  BzlaAIGMgr *amgr;
-  BzlaBVAss *bvass;
-  BzlaFunAss *funass;
-  BzlaPtrHashTableIterator cpit, ncpit;
   BzlaIntHashTableIterator iit, ciit;
-  BzlaSort *sort;
-  char **ind, **val;
-  amgr = exp_layer_only ? 0 : bzla_get_aig_mgr(bzla);
   BzlaHashTableData *data, *cdata;
-  BzlaOption o;
 #endif
 
   BZLALOG(2, "start cloning bzla %p ...", bzla);
@@ -956,26 +895,9 @@ clone_aux_bzla(Bzla *bzla,
   clone->qslv = NULL;
   clone->mm  = mm;
   clone->rng = bzla_rng_clone(bzla->rng, mm);
-#ifndef NDEBUG
-  allocated = clone->mm->allocated;  // we cannot retrieve size of RNG
-#endif
 
   BZLA_CLR(&clone->cbs);
   bzla_opt_clone_opts(bzla, clone);
-#ifndef NDEBUG
-  allocated += BZLA_OPT_NUM_OPTS * sizeof(BzlaOpt);
-  for (o = bzla_opt_first(bzla); bzla_opt_is_valid(bzla, o);
-       o = bzla_opt_next(bzla, o))
-  {
-    if (bzla->options[o].valstr)
-      allocated += strlen(bzla->options[o].valstr) + 1;
-    if (bzla->options[o].options)
-      allocated += MEM_PTR_HASH_TABLE(clone->options[o].options)
-                   + clone->options[o].options->count * sizeof(BzlaOptHelp);
-  }
-  allocated += MEM_PTR_HASH_TABLE(clone->str2opt);
-#endif
-  assert(allocated == clone->mm->allocated);
 
   /* always auto cleanup internal and external references (may be dangling
    * otherise) */
@@ -994,22 +916,14 @@ clone_aux_bzla(Bzla *bzla,
     clone->stats.rw_rules_applied = 0;
 #endif
     bzla_reset_stats(clone);
-#ifndef NDEBUG
-    allocated += MEM_PTR_HASH_TABLE(clone->stats.rw_rules_applied);
-    assert(allocated == clone->mm->allocated);
-#endif
   }
 
   clone->msg = bzla_msg_new(clone);
-  assert((allocated += sizeof(BzlaMsg)) == clone->mm->allocated);
 
   /* set msg prefix for clone */
   clone_prefix = "clone";
   len          = bzla->msg->prefix ? strlen(bzla->msg->prefix) : 0;
   len += strlen(clone_prefix) + 1;
-#ifndef NDEBUG
-  allocated += len + 1;
-#endif
   BZLA_NEWN(clone->mm, prefix, len + 1);
   sprintf(prefix, "%s>%s", bzla->msg->prefix, clone_prefix);
   bzla_set_msg_prefix(clone, prefix);
@@ -1018,7 +932,6 @@ clone_aux_bzla(Bzla *bzla,
   if (exp_layer_only)
   {
     clone->bv_assignments = bzla_ass_new_bv_list(mm);
-    assert((allocated += sizeof(BzlaBVAssList)) == clone->mm->allocated);
   }
   else
   {
@@ -1027,17 +940,11 @@ clone_aux_bzla(Bzla *bzla,
         bzla_ass_clone_bv_list(clone->mm, bzla->bv_assignments);
     BZLALOG(
         1, "  clone BV assignments: %.3f s", (bzla_util_time_stamp() - delta));
-#ifndef NDEBUG
-    for (bvass = bzla->bv_assignments->first; bvass; bvass = bvass->next)
-      allocated += sizeof(BzlaBVAss) + strlen(bzla_ass_get_bv_str(bvass)) + 1;
-    assert((allocated += sizeof(BzlaBVAssList)) == clone->mm->allocated);
-#endif
   }
 
   if (exp_layer_only)
   {
     clone->fun_assignments = bzla_ass_new_fun_list(mm);
-    assert((allocated += sizeof(BzlaFunAssList)) == clone->mm->allocated);
   }
   else
   {
@@ -1047,16 +954,6 @@ clone_aux_bzla(Bzla *bzla,
     BZLALOG(2,
             "  clone array assignments: %.3f s",
             (bzla_util_time_stamp() - delta));
-#ifndef NDEBUG
-    for (funass = bzla->fun_assignments->first; funass; funass = funass->next)
-    {
-      allocated += sizeof(BzlaFunAss) + 2 * funass->size * sizeof(char *);
-      bzla_ass_get_fun_indices_values(funass, &ind, &val, funass->size);
-      for (i = 0; i < funass->size; i++)
-        allocated += strlen(ind[i]) + 1 + strlen(val[i]) + 1;
-    }
-    assert((allocated += sizeof(BzlaFunAssList)) == clone->mm->allocated);
-#endif
   }
 
   if (bzla->avmgr)
@@ -1064,49 +961,12 @@ clone_aux_bzla(Bzla *bzla,
     if (exp_layer_only)
     {
       clone->avmgr = bzla_aigvec_mgr_new(clone);
-      assert((allocated += sizeof(BzlaAIGVecMgr) + sizeof(BzlaAIGMgr)
-                           + sizeof(BzlaSATMgr)
-                           /* true and false AIGs */
-                           + 2 * sizeof(BzlaAIG *)
-                           + sizeof(int32_t)) /* unique table chains */
-             == clone->mm->allocated);
     }
     else
     {
       BZLALOG_TIMESTAMP(delta);
       clone->avmgr = bzla_aigvec_mgr_clone(clone, bzla->avmgr);
       BZLALOG(2, "  clone AIG mgr: %.3f s", (bzla_util_time_stamp() - delta));
-#ifndef NDEBUG
-      allocated +=
-          sizeof(BzlaAIGVecMgr) + sizeof(BzlaAIGMgr)
-          + sizeof(BzlaSATMgr)
-          /* memory of AIG nodes */
-          + (amgr->cur_num_aigs + amgr->cur_num_aig_vars) * sizeof(BzlaAIG)
-          /* children for AND AIGs */
-          + amgr->cur_num_aigs * sizeof(int32_t) * 2
-          /* unique table chain */
-          + amgr->table.size * sizeof(int32_t)
-          + BZLA_SIZE_STACK(amgr->id2aig) * sizeof(BzlaAIG *)
-          + BZLA_SIZE_STACK(amgr->cnfid2aig) * sizeof(int32_t);
-#ifdef BZLA_USE_LINGELING
-      assert(strcmp(amgr->smgr->name, "Lingeling") == 0
-             || strcmp(amgr->smgr->name, "DIMACS Printer") == 0);
-      assert(strcmp(amgr->smgr->name, "DIMACS Printer") != 0
-             || strcmp(((BzlaCnfPrinter *) amgr->smgr->solver)->smgr->name,
-                       "Lingeling")
-                    == 0);
-      allocated += amgr->smgr->solver ? sizeof(BzlaLGL) : 0;
-      if (strcmp(amgr->smgr->name, "DIMACS Printer") == 0)
-      {
-        BzlaCnfPrinter *cnf_printer = ((BzlaCnfPrinter *) amgr->smgr->solver);
-        allocated +=
-            sizeof(BzlaCnfPrinter) + sizeof(BzlaSATMgr)
-            + BZLA_SIZE_STACK(cnf_printer->clauses) * sizeof(int32_t)
-            + BZLA_SIZE_STACK(cnf_printer->assumptions) * sizeof(int32_t);
-      }
-#endif
-      assert(allocated == clone->mm->allocated);
-#endif
     }
   }
 
@@ -1115,23 +975,8 @@ clone_aux_bzla(Bzla *bzla,
   BZLALOG(2,
           "  clone sorts unique table: %.3f s",
           (bzla_util_time_stamp() - delta));
-#ifndef NDEBUG
-  allocated +=
-      bzla->sorts_unique_table.size * sizeof(BzlaSort *)
-      + bzla->sorts_unique_table.num_elements * sizeof(BzlaSort)
-      + BZLA_SIZE_STACK(bzla->sorts_unique_table.id2sort) * sizeof(BzlaSort *);
-  for (i = 0; i < BZLA_COUNT_STACK(bzla->sorts_unique_table.id2sort); i++)
-  {
-    sort = BZLA_PEEK_STACK(bzla->sorts_unique_table.id2sort, i);
-    if (!sort || sort->kind != BZLA_TUPLE_SORT) continue;
-    allocated += sort->tuple.num_elements * sizeof(BzlaSort *);
-  }
-  assert(allocated == clone->mm->allocated);
-#endif
 
   emap = bzla_nodemap_new(clone);
-  assert((allocated += sizeof(*emap) + MEM_PTR_HASH_TABLE(emap->table))
-         == clone->mm->allocated);
 
   BZLA_INIT_STACK(bzla->mm, rhos);
   BZLALOG_TIMESTAMP(delta);
@@ -1144,38 +989,6 @@ clone_aux_bzla(Bzla *bzla,
                        clone_simplified);
   BZLALOG(
       2, "  clone nodes id table: %.3f s", (bzla_util_time_stamp() - delta));
-#ifndef NDEBUG
-  for (i = 1; i < BZLA_COUNT_STACK(bzla->nodes_id_table); i++)
-  {
-    if (!(cur = BZLA_PEEK_STACK(bzla->nodes_id_table, i))) continue;
-    allocated += cur->bytes;
-    if (bzla_node_is_bv_const(cur))
-    {
-      allocated += MEM_BITVEC(bzla_node_bv_const_get_bits_ptr(cur));
-      allocated += MEM_BITVEC(bzla_node_bv_const_get_invbits_ptr(cur));
-    }
-    else if (bzla_node_is_fp_const(cur))
-    {
-      allocated += bzla_fp_get_bytes(cur);
-    }
-    if (!exp_layer_only)
-    {
-      if (!bzla_node_is_fun(cur) && cur->av)
-      {
-        allocated += sizeof(*(cur->av)) + cur->av->width * sizeof(BzlaAIG *);
-      }
-    }
-    if (bzla_node_is_lambda(cur) && bzla_node_lambda_get_static_rho(cur))
-    {
-      allocated += MEM_PTR_HASH_TABLE(bzla_node_lambda_get_static_rho(cur));
-    }
-  }
-  /* Note: hash table is initialized with size 1 */
-  allocated += (emap->table->size - 1) * sizeof(BzlaPtrHashBucket *)
-               + emap->table->count * sizeof(BzlaPtrHashBucket)
-               + BZLA_SIZE_STACK(bzla->nodes_id_table) * sizeof(BzlaNode *);
-  assert(allocated == clone->mm->allocated);
-#endif
 
   clone->true_exp = bzla_nodemap_mapped(emap, bzla->true_exp);
   assert(clone->true_exp);
@@ -1185,8 +998,6 @@ clone_aux_bzla(Bzla *bzla,
   BZLALOG(2,
           "  clone nodes unique table: %.3f s",
           (bzla_util_time_stamp() - delta));
-  assert((allocated += bzla->nodes_unique_table.size * sizeof(BzlaNode *))
-         == clone->mm->allocated);
 
   clone->node2symbol = bzla_hashptr_table_clone(mm,
                                                 bzla->node2symbol,
@@ -1194,72 +1005,32 @@ clone_aux_bzla(Bzla *bzla,
                                                 bzla_clone_data_as_str,
                                                 emap,
                                                 NULL);
-#ifndef NDEBUG
-  bzla_iter_hashptr_init(&pit, bzla->node2symbol);
-  while (bzla_iter_hashptr_has_next(&pit))
-  {
-    allocated += strlen(bzla_iter_hashptr_next_data(&pit)->as_str) + 1;
-  }
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->node2symbol))
-         == clone->mm->allocated);
-#endif
 
   CLONE_PTR_HASH_TABLE_DATA(inputs, bzla_clone_data_as_int);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->inputs))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE(bv_vars);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->bv_vars))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE(ufs);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->ufs)) == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE_DATA(lambdas, bzla_clone_data_as_int);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->lambdas))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE_DATA(quantifiers, bzla_clone_data_as_int);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->quantifiers))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE_DATA(feqs, bzla_clone_data_as_int);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->feqs)) == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE_DATA(substitutions, bzla_clone_data_as_node_ptr);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->substitutions))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE_DATA(varsubst_constraints, bzla_clone_data_as_node_ptr);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->varsubst_constraints))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE(embedded_constraints);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->embedded_constraints))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE(unsynthesized_constraints);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->unsynthesized_constraints))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE(synthesized_constraints);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->synthesized_constraints))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE(assumptions);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->assumptions))
-         == clone->mm->allocated);
   CLONE_PTR_HASH_TABLE(orig_assumptions);
-  assert((allocated += MEM_PTR_HASH_TABLE(bzla->orig_assumptions))
-         == clone->mm->allocated);
 
   clone->assertions_cache =
       bzla_hashint_table_clone(clone->mm, bzla->assertions_cache);
-  assert((allocated += MEM_INT_HASH_TABLE(bzla->assertions_cache))
-         == clone->mm->allocated);
 
   bzla_clone_node_ptr_stack(
       mm, &bzla->assertions, &clone->assertions, emap, false);
-  assert((allocated += BZLA_SIZE_STACK(bzla->assertions) * sizeof(BzlaNode *))
-         == clone->mm->allocated);
 
   BZLA_INIT_STACK(clone->mm, clone->assertions_trail);
   for (i = 0; i < BZLA_COUNT_STACK(bzla->assertions_trail); i++)
     BZLA_PUSH_STACK(clone->assertions_trail,
                     BZLA_PEEK_STACK(bzla->assertions_trail, i));
   BZLA_ADJUST_STACK(bzla->assertions_trail, clone->assertions_trail);
-  assert(
-      (allocated += BZLA_SIZE_STACK(bzla->assertions_trail) * sizeof(uint32_t))
-      == clone->mm->allocated);
 
   if (bzla->bv_model)
   {
@@ -1273,51 +1044,13 @@ clone_aux_bzla(Bzla *bzla,
       cdata = bzla_iter_hashint_next_data(&ciit);
       assert(bzla_bv_size((BzlaBitVector *) data->as_ptr)
              == bzla_bv_size((BzlaBitVector *) cdata->as_ptr));
-      allocated += bzla_bv_size((BzlaBitVector *) cdata->as_ptr);
     }
 #endif
   }
-  assert((allocated += MEM_INT_HASH_MAP(bzla->bv_model))
-         == clone->mm->allocated);
-#ifndef NDEBUG
-  if (!exp_layer_only && bzla->stats.rw_rules_applied)
-  {
-    clone->stats.rw_rules_applied =
-        bzla_hashptr_table_clone(mm,
-                                 bzla->stats.rw_rules_applied,
-                                 bzla_clone_key_as_static_str,
-                                 bzla_clone_data_as_int,
-                                 0,
-                                 0);
-    assert((allocated += MEM_PTR_HASH_TABLE(bzla->stats.rw_rules_applied))
-           == clone->mm->allocated);
-  }
-#endif
   if (bzla->fun_model)
   {
     clone->fun_model = bzla_model_clone_fun(clone, bzla->fun_model, false);
-#ifndef NDEBUG
-    bzla_iter_hashint_init(&iit, bzla->fun_model);
-    bzla_iter_hashint_init(&ciit, clone->fun_model);
-    while (bzla_iter_hashint_has_next(&iit))
-    {
-      data  = bzla_iter_hashint_next_data(&iit);
-      cdata = bzla_iter_hashint_next_data(&ciit);
-      assert(MEM_PTR_HASH_TABLE((BzlaPtrHashTable *) data->as_ptr)
-             == MEM_PTR_HASH_TABLE((BzlaPtrHashTable *) cdata->as_ptr));
-      allocated += MEM_PTR_HASH_TABLE((BzlaPtrHashTable *) data->as_ptr);
-      bzla_iter_hashptr_init(&ncpit, ((BzlaPtrHashTable *) data->as_ptr));
-      while (bzla_iter_hashptr_has_next(&ncpit))
-      {
-        allocated += bzla_bv_size((BzlaBitVector *) ncpit.bucket->data.as_ptr);
-        allocated += bzla_bv_size_tuple(
-            (BzlaBitVectorTuple *) bzla_iter_hashptr_next(&ncpit));
-      }
-    }
-#endif
   }
-  assert((allocated += MEM_INT_HASH_MAP(bzla->fun_model))
-         == clone->mm->allocated);
 
   /* NOTE: we need bv_model for cloning rhos */
   while (!BZLA_EMPTY_STACK(rhos))
@@ -1333,12 +1066,8 @@ clone_aux_bzla(Bzla *bzla,
                                                bzla_clone_data_as_node_ptr,
                                                emap,
                                                emap);
-#ifndef NDEBUG
-    allocated += MEM_PTR_HASH_TABLE(cloned_exp->rho);
-#endif
   }
   BZLA_RELEASE_STACK(rhos);
-  assert(allocated == clone->mm->allocated);
 
   if (exp_layer_only)
   {
@@ -1362,16 +1091,11 @@ clone_aux_bzla(Bzla *bzla,
     BZLALOG(2,
             "  clone functions_with_model: %.3f s",
             bzla_util_time_stamp() - delta);
-    assert((allocated +=
-            BZLA_SIZE_STACK(bzla->functions_with_model) * sizeof(BzlaNode *))
-           == clone->mm->allocated);
   }
 
   BZLALOG_TIMESTAMP(delta);
   bzla_clone_node_ptr_stack(mm, &bzla->outputs, &clone->outputs, emap, false);
   BZLALOG(2, "  clone outputs: %.3f s", bzla_util_time_stamp() - delta);
-  assert((allocated += BZLA_SIZE_STACK(bzla->outputs) * sizeof(BzlaNode *))
-         == clone->mm->allocated);
 
   BZLALOG_TIMESTAMP(delta);
   clone->parameterized = bzla_hashptr_table_clone(mm,
@@ -1383,41 +1107,16 @@ clone_aux_bzla(Bzla *bzla,
   BZLALOG(2,
           "  clone parameterized table: %.3f s",
           (bzla_util_time_stamp() - delta));
-#ifndef NDEBUG
-  CHKCLONE_MEM_PTR_HASH_TABLE(bzla->parameterized, clone->parameterized);
-  allocated += MEM_PTR_HASH_TABLE(bzla->parameterized);
-  bzla_iter_hashptr_init(&pit, bzla->parameterized);
-  bzla_iter_hashptr_init(&cpit, clone->parameterized);
-  while (bzla_iter_hashptr_has_next(&pit))
-  {
-    assert(bzla_hashint_table_size(pit.bucket->data.as_ptr)
-           == bzla_hashint_table_size(cpit.bucket->data.as_ptr));
-    allocated += bzla_hashint_table_size(cpit.bucket->data.as_ptr);
-    (void) bzla_iter_hashptr_next(&pit);
-    (void) bzla_iter_hashptr_next(&cpit);
-  }
-  assert(allocated == clone->mm->allocated);
-#endif
   BZLA_NEW(mm, clone->rw_cache);
   memcpy(clone->rw_cache, bzla->rw_cache, sizeof(BzlaRwCache));
   clone->rw_cache->bzla  = clone;
   clone->rw_cache->cache = bzla_hashptr_table_clone(
       mm, bzla->rw_cache->cache, bzla_clone_key_as_rw_cache_tuple, 0, 0, 0);
-#ifndef NDEBUG
-  CHKCLONE_MEM_PTR_HASH_TABLE(bzla->rw_cache->cache, clone->rw_cache->cache);
-  allocated += sizeof(*bzla->rw_cache);
-  allocated += bzla->rw_cache->cache->count * sizeof(BzlaRwCacheTuple);
-  allocated += MEM_PTR_HASH_TABLE(bzla->rw_cache->cache);
-#endif
 
   /* move synthesized constraints to unsynthesized if we only clone the exp
    * layer */
   if (exp_layer_only)
   {
-#ifndef NDEBUG
-    allocated -= MEM_PTR_HASH_TABLE(clone->synthesized_constraints);
-    allocated -= MEM_PTR_HASH_TABLE(clone->unsynthesized_constraints);
-#endif
     bzla_iter_hashptr_init(&pit, clone->synthesized_constraints);
     while (bzla_iter_hashptr_has_next(&pit))
     {
@@ -1429,11 +1128,6 @@ clone_aux_bzla(Bzla *bzla,
         bzla_hashptr_table_new(mm,
                                (BzlaHashPtr) bzla_node_hash_by_id,
                                (BzlaCmpPtr) bzla_node_compare_by_id);
-#ifndef NDEBUG
-    allocated += MEM_PTR_HASH_TABLE(clone->synthesized_constraints);
-    allocated += MEM_PTR_HASH_TABLE(clone->unsynthesized_constraints);
-    assert(allocated == clone->mm->allocated);
-#endif
   }
 
   if (clone_slv && bzla->slv)
@@ -1450,121 +1144,34 @@ clone_aux_bzla(Bzla *bzla,
       BzlaFunSolver *slv  = BZLA_FUN_SOLVER(bzla);
       BzlaFunSolver *cslv = BZLA_FUN_SOLVER(clone);
 
-      allocated += sizeof(BzlaFunSolver);
-
-      allocated += MEM_PTR_HASH_TABLE(slv->lemmas);
-      allocated += BZLA_SIZE_STACK(slv->cur_lemmas) * sizeof(BzlaNode *);
-      allocated += BZLA_SIZE_STACK(slv->constraints) * sizeof(BzlaNode *);
-
-      if (slv->score)
-      {
-        h = bzla_opt_get(bzla, BZLA_OPT_FUN_JUST_HEURISTIC);
-        if (h == BZLA_JUST_HEUR_BRANCH_MIN_APP)
-        {
-          CHKCLONE_MEM_PTR_HASH_TABLE(slv->score, cslv->score);
-          allocated += MEM_PTR_HASH_TABLE(slv->score);
-
-          bzla_iter_hashptr_init(&pit, slv->score);
-          bzla_iter_hashptr_init(&cpit, cslv->score);
-          while (bzla_iter_hashptr_has_next(&pit))
-          {
-            assert(
-                MEM_PTR_HASH_TABLE((BzlaPtrHashTable *) pit.bucket->data.as_ptr)
-                == MEM_PTR_HASH_TABLE(
-                    (BzlaPtrHashTable *) cpit.bucket->data.as_ptr));
-            allocated += MEM_PTR_HASH_TABLE(
-                (BzlaPtrHashTable *) pit.bucket->data.as_ptr);
-            (void) bzla_iter_hashptr_next(&pit);
-            (void) bzla_iter_hashptr_next(&cpit);
-          }
-        }
-        else
-        {
-          assert(h == BZLA_JUST_HEUR_BRANCH_MIN_DEP);
-          allocated += MEM_PTR_HASH_TABLE(slv->score);
-        }
-      }
-
       assert(BZLA_SIZE_STACK(slv->stats.lemmas_size)
              == BZLA_SIZE_STACK(cslv->stats.lemmas_size));
       assert(BZLA_COUNT_STACK(slv->stats.lemmas_size)
              == BZLA_COUNT_STACK(cslv->stats.lemmas_size));
-      allocated += BZLA_SIZE_STACK(slv->stats.lemmas_size) * sizeof(uint32_t);
     }
     else if (clone->slv->kind == BZLA_SLS_SOLVER_KIND)
     {
-      BzlaSLSMove *m;
       BzlaSLSSolver *slv  = BZLA_SLS_SOLVER(bzla);
       BzlaSLSSolver *cslv = BZLA_SLS_SOLVER(clone);
-
-      CHKCLONE_MEM_INT_HASH_MAP(slv->roots, cslv->roots);
-      CHKCLONE_MEM_INT_HASH_MAP(slv->score, cslv->score);
-      CHKCLONE_MEM_INT_HASH_MAP(slv->weights, cslv->weights);
-
-      allocated += sizeof(BzlaSLSSolver) + MEM_INT_HASH_MAP(cslv->roots)
-                   + MEM_INT_HASH_MAP(cslv->score)
-                   + MEM_INT_HASH_MAP(cslv->weights);
-
-      if (slv->weights)
-        allocated += slv->weights->count * sizeof(BzlaSLSConstrData);
 
       assert(BZLA_SIZE_STACK(slv->moves) == BZLA_SIZE_STACK(cslv->moves));
       assert(BZLA_COUNT_STACK(slv->moves) == BZLA_COUNT_STACK(cslv->moves));
 
-      allocated += BZLA_SIZE_STACK(cslv->moves) * sizeof(BzlaSLSMove *)
-                   + BZLA_COUNT_STACK(cslv->moves) * sizeof(BzlaSLSMove);
-
       for (i = 0; i < BZLA_COUNT_STACK(cslv->moves); i++)
       {
         assert(BZLA_PEEK_STACK(cslv->moves, i));
-        m = BZLA_PEEK_STACK(cslv->moves, i);
-        assert(MEM_PTR_HASH_TABLE(m->cans)
-               == MEM_PTR_HASH_TABLE(BZLA_PEEK_STACK(cslv->moves, i)->cans));
-        allocated += MEM_PTR_HASH_TABLE(m->cans);
-        bzla_iter_hashint_init(&iit, m->cans);
-        while (bzla_iter_hashint_has_next(&iit))
-          allocated += bzla_bv_size(bzla_iter_hashint_next_data(&iit)->as_ptr);
       }
 
       if (cslv->max_cans)
       {
         assert(slv->max_cans);
         assert(slv->max_cans->count == cslv->max_cans->count);
-        allocated += MEM_PTR_HASH_TABLE(cslv->max_cans);
-        bzla_iter_hashint_init(&iit, cslv->max_cans);
-        while (bzla_iter_hashint_has_next(&iit))
-          allocated += bzla_bv_size(bzla_iter_hashint_next_data(&iit)->as_ptr);
       }
     }
-    else if (clone->slv->kind == BZLA_PROP_OLD_SOLVER_KIND)
-    {
-      BzlaPropOldSolver *slv  = BZLA_PROP_OLD_SOLVER(bzla);
-      BzlaPropOldSolver *cslv = BZLA_PROP_OLD_SOLVER(clone);
-
-      CHKCLONE_MEM_INT_HASH_MAP(slv->roots, cslv->roots);
-      CHKCLONE_MEM_INT_HASH_MAP(slv->score, cslv->score);
-
-      allocated +=
-          sizeof(BzlaPropOldSolver) + MEM_PTR_HASH_TABLE(cslv->roots)
-          + MEM_PTR_HASH_TABLE(cslv->score)
-#ifndef NDEBUG
-          + BZLA_SIZE_STACK(cslv->prop_path) * sizeof(BzlaPropEntailInfo);
-#endif
-      +BZLA_SIZE_STACK(cslv->toprop) * sizeof(BzlaPropEntailInfo);
-      for (i = 0; i < BZLA_COUNT_STACK(cslv->toprop); i++)
-        allocated += MEM_BITVEC(BZLA_PEEK_STACK(cslv->toprop, i).bvexp);
-    }
-    else if (clone->slv->kind == BZLA_AIGPROP_SOLVER_KIND)
-    {
-      allocated += sizeof(BzlaAIGPropSolver);
-    }
-
-    assert(allocated == clone->mm->allocated);
   }
 #endif
 
   clone->word_blaster = bzla_fp_word_blaster_clone(bzla, clone, emap);
-  assert(allocated == clone->mm->allocated);
 
 #ifndef NDEBUG
   clone->clone = NULL;

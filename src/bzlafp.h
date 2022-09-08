@@ -71,9 +71,6 @@ void bzla_fp_as_bvs(Bzla *bzla,
 /** Get the floating-point of a floating-point constant node. */
 BzlaFloatingPoint *bzla_fp_get_fp(BzlaNode *node);
 
-/** Get the size of a floating-point node (for debugging cloning). */
-size_t bzla_fp_get_bytes(BzlaNode *node);
-
 /** Compute the hash of the given floating-point. */
 uint32_t bzla_fp_hash(const BzlaFloatingPoint *fp);
 
