@@ -5,7 +5,7 @@
 #include "solver/fp/rounding_mode.h"
 
 extern "C" {
-#include "bzlabv.h"
+#include "bzlabvstruct.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
 #include "bzlanode.h"
@@ -13,6 +13,7 @@ extern "C" {
 
 #include <cstdint>
 
+#include "bitvector.h"
 #include "symfpu/core/ite.h"
 #include "symfpu/utils/numberOfRoundingModes.h"
 
@@ -42,7 +43,7 @@ struct signedToLiteralType<false>
 };
 
 /* -------------------------------------------------------------------------- */
-/* Wrapper for BzlaBitVector.                                                 */
+/* Wrapper for BitVector.                                                     */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -67,11 +68,11 @@ class SymFpuBV
   SymFpuBV(const bool &val);
   SymFpuBV(const SymFpuBV<is_signed> &other);
   SymFpuBV(const SymFpuBV<!is_signed> &other);
-  SymFpuBV(BzlaBitVector *bv);
+  SymFpuBV(const BitVector &bv);
   ~SymFpuBV();
 
   uint32_t getWidth(void) const;
-  BzlaBitVector *getBv(void) const { return d_bv; }
+  BitVector *getBv(void) const { return d_bv.get(); }
 
   static SymFpuBV<is_signed> one(const uint32_t &bw);
   static SymFpuBV<is_signed> zero(const uint32_t &bw);
@@ -132,8 +133,7 @@ class SymFpuBV
   SymFpuBV<is_signed> extract(uint32_t upper, uint32_t lower) const;
 
  private:
-  static inline Bzla *s_bzla = nullptr;
-  BzlaBitVector *d_bv        = nullptr;
+  std::unique_ptr<BitVector> d_bv;
 };
 
 /* --- SymFpuBV public ------------------------------------------------------ */
@@ -141,132 +141,112 @@ class SymFpuBV
 template <bool is_signed>
 SymFpuBV<is_signed>::SymFpuBV(const uint32_t bw, const uint32_t val)
 {
-  assert(s_bzla);
   assert(bw);
-  d_bv = bzla_bv_uint64_to_bv(s_bzla->mm, val, bw);
+  d_bv.reset(new BitVector(bw, val));
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>::SymFpuBV(const bool &val)
 {
-  assert(s_bzla);
-  d_bv = val ? bzla_bv_one(s_bzla->mm, 1) : bzla_bv_zero(s_bzla->mm, 1);
+  d_bv.reset(new BitVector(val ? BitVector::mk_true() : BitVector::mk_false()));
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>::SymFpuBV(const SymFpuBV<is_signed> &other)
 {
-  assert(s_bzla);
   assert(other.d_bv);
-  d_bv = bzla_bv_copy(s_bzla->mm, other.d_bv);
+  d_bv.reset(new BitVector(*other.d_bv));
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>::SymFpuBV(const SymFpuBV<!is_signed> &other)
 {
-  assert(s_bzla);
   assert(other.d_bv);
-  d_bv = bzla_bv_copy(s_bzla->mm, other.d_bv);
+  d_bv.reset(new BitVector(*other.d_bv));
 }
 
 template <bool is_signed>
-SymFpuBV<is_signed>::SymFpuBV(BzlaBitVector *bv)
+SymFpuBV<is_signed>::SymFpuBV(const BitVector &bv)
 {
-  assert(s_bzla);
-  assert(bv);
-  d_bv = bv;
+  assert(!bv.is_null());
+  d_bv.reset(new BitVector(bv));
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>::~SymFpuBV()
 {
-  assert(s_bzla);
-  assert(d_bv);
-  bzla_bv_free(s_bzla->mm, d_bv);
 }
 
 template <bool is_signed>
 uint32_t
 SymFpuBV<is_signed>::getWidth(void) const
 {
-  assert(s_bzla);
   assert(d_bv);
-  return bzla_bv_get_width(d_bv);
+  return d_bv->size();
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::one(const uint32_t &bw)
 {
-  assert(s_bzla);
   assert(bw);
-  return bzla_bv_one(s_bzla->mm, bw);
+  return BitVector::mk_one(bw);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::zero(const uint32_t &bw)
 {
-  assert(s_bzla);
   assert(bw);
-  return bzla_bv_zero(s_bzla->mm, bw);
+  return BitVector::mk_zero(bw);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::allOnes(const uint32_t &bw)
 {
-  assert(s_bzla);
   assert(bw);
-  return bzla_bv_ones(s_bzla->mm, bw);
+  return BitVector::mk_ones(bw);
 }
 
 template <bool is_signed>
 bool
 SymFpuBV<is_signed>::isAllOnes() const
 {
-  assert(s_bzla);
   assert(d_bv);
-  return bzla_bv_is_ones(d_bv);
+  return d_bv->is_ones();
 }
 
 template <bool is_signed>
 bool
 SymFpuBV<is_signed>::isAllZeros() const
 {
-  assert(s_bzla);
   assert(d_bv);
-  return bzla_bv_is_zero(d_bv);
+  return d_bv->is_zero();
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::maxValue(const uint32_t &bw)
 {
-  assert(s_bzla);
   assert(bw);
-  return is_signed ? bzla_bv_max_signed(s_bzla->mm, bw)
-                   : bzla_bv_ones(s_bzla->mm, bw);
+  return is_signed ? BitVector::mk_max_signed(bw) : BitVector::mk_ones(bw);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::minValue(const uint32_t &bw)
 {
-  assert(s_bzla);
   assert(bw);
-  return is_signed ? bzla_bv_min_signed(s_bzla->mm, bw)
-                   : bzla_bv_zero(s_bzla->mm, bw);
+  return is_signed ? BitVector::mk_min_signed(bw) : BitVector::mk_zero(bw);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator=(const SymFpuBV<is_signed> &other)
 {
-  assert(s_bzla);
   assert(d_bv);
-  bzla_bv_free(s_bzla->mm, d_bv);
-  d_bv = bzla_bv_copy(s_bzla->mm, other.d_bv);
+  d_bv.reset(new BitVector(*other.d_bv));
   return *this;
 }
 
@@ -274,153 +254,131 @@ template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator<<(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return bzla_bv_sll(s_bzla->mm, d_bv, op.d_bv);
+  return d_bv->bvshl(*op.d_bv);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator>>(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_sra(s_bzla->mm, d_bv, op.d_bv)
-                   : bzla_bv_srl(s_bzla->mm, d_bv, op.d_bv);
+  return is_signed ? d_bv->bvashr(*op.d_bv) : d_bv->bvshr(*op.d_bv);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator|(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return bzla_bv_or(s_bzla->mm, d_bv, op.d_bv);
+  return d_bv->bvor(*op.d_bv);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator&(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return bzla_bv_and(s_bzla->mm, d_bv, op.d_bv);
+  return d_bv->bvand(*op.d_bv);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator+(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return bzla_bv_add(s_bzla->mm, d_bv, op.d_bv);
+  return d_bv->bvadd(*op.d_bv);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator-(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return bzla_bv_sub(s_bzla->mm, d_bv, op.d_bv);
+  return d_bv->bvsub(*op.d_bv);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator*(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return bzla_bv_mul(s_bzla->mm, d_bv, op.d_bv);
+  return d_bv->bvmul(*op.d_bv);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator/(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_sdiv(s_bzla->mm, d_bv, op.d_bv)
-                   : bzla_bv_udiv(s_bzla->mm, d_bv, op.d_bv);
+  return is_signed ? d_bv->bvsdiv(*op.d_bv) : d_bv->bvudiv(*op.d_bv);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator%(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_srem(s_bzla->mm, d_bv, op.d_bv)
-                   : bzla_bv_urem(s_bzla->mm, d_bv, op.d_bv);
+  return is_signed ? d_bv->bvsrem(*op.d_bv) : d_bv->bvurem(*op.d_bv);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator-(void) const
 {
-  assert(s_bzla);
   assert(d_bv);
-  return bzla_bv_neg(s_bzla->mm, d_bv);
+  return d_bv->bvneg();
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::operator~(void) const
 {
-  assert(s_bzla);
   assert(d_bv);
-  return bzla_bv_not(s_bzla->mm, d_bv);
+  return d_bv->bvnot();
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::increment() const
 {
-  assert(s_bzla);
   assert(d_bv);
-  return bzla_bv_inc(s_bzla->mm, d_bv);
+  return d_bv->bvinc();
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::decrement() const
 {
-  assert(s_bzla);
   assert(d_bv);
-  return bzla_bv_dec(s_bzla->mm, d_bv);
+  return d_bv->bvdec();
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::signExtendRightShift(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  uint32_t bw   = bzla_bv_get_width(d_bv);
-  uint32_t bwop = bzla_bv_get_width(op.d_bv);
+  uint32_t bw   = d_bv->size();
+  uint32_t bwop = op.d_bv->size();
   assert(bwop <= bw);
-  BzlaBitVector *res, *bvop = op.d_bv;
-  bvop = bzla_bv_sext(s_bzla->mm, op.d_bv, bw - bwop);
-  res  = bzla_bv_sra(s_bzla->mm, d_bv, bvop);
-  bzla_bv_free(s_bzla->mm, bvop);
-  return res;
+  return d_bv->bvashr(op.d_bv->bvsext(bw - bwop));
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::modularLeftShift(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
   return *this << op;
@@ -430,7 +388,6 @@ template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::modularRightShift(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
   return *this >> op;
@@ -440,7 +397,6 @@ template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::modularIncrement() const
 {
-  assert(s_bzla);
   assert(d_bv);
   return increment();
 }
@@ -449,7 +405,6 @@ template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::modularDecrement() const
 {
-  assert(s_bzla);
   assert(d_bv);
   return decrement();
 }
@@ -458,7 +413,6 @@ template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::modularAdd(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
   return *this + op;
@@ -468,7 +422,6 @@ template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::modularNegate() const
 {
-  assert(s_bzla);
   assert(d_bv);
   return -(*this);
 }
@@ -477,64 +430,55 @@ template <bool is_signed>
 bool
 SymFpuBV<is_signed>::operator==(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  BzlaBitVector *res_bv = bzla_bv_eq(s_bzla->mm, d_bv, op.d_bv);
-  bool res              = bzla_bv_is_true(res_bv);
-  bzla_bv_free(s_bzla->mm, res_bv);
-  return res;
+  return d_bv->bveq(*op.d_bv).is_true();
 }
 
 template <bool is_signed>
 bool
 SymFpuBV<is_signed>::operator<=(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_signed_compare(d_bv, op.d_bv) <= 0
-                   : bzla_bv_compare(d_bv, op.d_bv) <= 0;
+  return is_signed ? d_bv->signed_compare(*op.d_bv) <= 0
+                   : d_bv->compare(*op.d_bv) <= 0;
 }
 
 template <bool is_signed>
 bool
 SymFpuBV<is_signed>::operator>=(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_signed_compare(d_bv, op.d_bv) >= 0
-                   : bzla_bv_compare(d_bv, op.d_bv) >= 0;
+  return is_signed ? d_bv->signed_compare(*op.d_bv) >= 0
+                   : d_bv->compare(*op.d_bv) >= 0;
 }
 
 template <bool is_signed>
 bool
 SymFpuBV<is_signed>::operator<(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_signed_compare(d_bv, op.d_bv) < 0
-                   : bzla_bv_compare(d_bv, op.d_bv) < 0;
+  return is_signed ? d_bv->signed_compare(*op.d_bv) < 0
+                   : d_bv->compare(*op.d_bv) < 0;
 }
 
 template <bool is_signed>
 bool
 SymFpuBV<is_signed>::operator>(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return is_signed ? bzla_bv_signed_compare(d_bv, op.d_bv) > 0
-                   : bzla_bv_compare(d_bv, op.d_bv) > 0;
+  return is_signed ? d_bv->signed_compare(*op.d_bv) > 0
+                   : d_bv->compare(*op.d_bv) > 0;
 }
 
 template <bool is_signed>
 SymFpuBV<true>
 SymFpuBV<is_signed>::toSigned(void) const
 {
-  assert(s_bzla);
   assert(d_bv);
   return SymFpuBV<true>(*this);
 }
@@ -543,7 +487,6 @@ template <bool is_signed>
 SymFpuBV<false>
 SymFpuBV<is_signed>::toUnsigned(void) const
 {
-  assert(s_bzla);
   assert(d_bv);
   return SymFpuBV<false>(*this);
 }
@@ -552,28 +495,24 @@ template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::extend(uint32_t extension) const
 {
-  assert(s_bzla);
   assert(d_bv);
-  return is_signed ? bzla_bv_sext(s_bzla->mm, d_bv, extension)
-                   : bzla_bv_uext(s_bzla->mm, d_bv, extension);
+  return is_signed ? d_bv->bvsext(extension) : d_bv->bvzext(extension);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::contract(uint32_t reduction) const
 {
-  assert(s_bzla);
   assert(d_bv);
   uint32_t bw = getWidth();
   assert(bw - 1 - reduction < bw);
-  return bzla_bv_slice(s_bzla->mm, d_bv, bw - 1 - reduction, 0);
+  return d_bv->bvextract(bw - 1 - reduction, 0);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::resize(uint32_t newSize) const
 {
-  assert(s_bzla);
   assert(d_bv);
   uint32_t bw = getWidth();
   if (newSize > bw)
@@ -591,7 +530,6 @@ template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::matchWidth(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
   uint32_t bw = getWidth();
@@ -603,20 +541,18 @@ template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::append(const SymFpuBV<is_signed> &op) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(op.d_bv);
-  return bzla_bv_concat(s_bzla->mm, d_bv, op.d_bv);
+  return d_bv->bvconcat(*op.d_bv);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
 SymFpuBV<is_signed>::extract(uint32_t upper, uint32_t lower) const
 {
-  assert(s_bzla);
   assert(d_bv);
   assert(upper >= lower);
-  return bzla_bv_slice(s_bzla->mm, d_bv, upper, lower);
+  return d_bv->bvextract(upper, lower);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -726,7 +662,7 @@ class SymFpuSymBV
   SymFpuSymBV(const SymFpuSymProp &p);
   SymFpuSymBV(const SymFpuSymBV<is_signed> &other);
   SymFpuSymBV(const SymFpuSymBV<!is_signed> &other);
-  SymFpuSymBV(const BzlaBitVector *bv);
+  SymFpuSymBV(const BitVector &bv);
   SymFpuSymBV(const SymFpuBV<is_signed> &bv);
   /** Constructors for Boolean nodes. */
   SymFpuSymBV(bool v);
@@ -876,10 +812,13 @@ SymFpuSymBV<is_signed>::SymFpuSymBV(const SymFpuSymBV<!is_signed> &other)
 }
 
 template <bool is_signed>
-SymFpuSymBV<is_signed>::SymFpuSymBV(const BzlaBitVector *bv)
+SymFpuSymBV<is_signed>::SymFpuSymBV(const BitVector &bv)
 {
   assert(s_bzla);
-  d_node = bzla_exp_bv_const(s_bzla, bv);
+  BzlaBitVector *bbv = bzla_bv_new(s_bzla->mm, bv.size());
+  bbv->d_bv.reset(new bzla::BitVector(bv));
+  d_node = bzla_exp_bv_const(s_bzla, bbv);
+  bzla_bv_free(s_bzla->mm, bbv);
 }
 
 template <bool is_signed>
@@ -887,7 +826,10 @@ SymFpuSymBV<is_signed>::SymFpuSymBV(const SymFpuBV<is_signed> &bv)
 {
   assert(s_bzla);
   assert(bv.d_bv);
-  d_node = bzla_exp_bv_const(s_bzla, bv.d_bv);
+  BzlaBitVector *bbv = bzla_bv_new(s_bzla->mm, bv.d_bv->size());
+  bbv->d_bv.reset(new bzla::BitVector(*bv.d_bv));
+  d_node = bzla_exp_bv_const(s_bzla, bbv);
+  bzla_bv_free(s_bzla->mm, bbv);
 }
 
 template <bool is_signed>

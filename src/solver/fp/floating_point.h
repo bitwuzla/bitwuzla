@@ -8,6 +8,7 @@ extern "C" {
 #include "bzlasort.h"
 }
 
+#include "bitvector.h"
 #include "solver/fp/rounding_mode.h"
 
 namespace symfpu {
@@ -31,6 +32,20 @@ class FloatingPoint
   friend WordBlaster;
 
  public:
+  /**
+   * Convenience helper to split an IEEE-754 bit-vector into its components
+   * (sign, exponent, significand).
+   * @param sort The floating-point sort.
+   * @param bv   The IEEE-754 bit-vector representation of a floating-point.
+   * @param sign The output parameter for the sign bit.
+   * @param exp  The output parameter for the exponent bit-vector.
+   * @param sig  The output parameter for the significand bit-vector.
+   */
+  static void ieee_bv_as_bvs(BzlaSortId sort,
+                             const BitVector &bv,
+                             BitVector &sign,
+                             BitVector &exp,
+                             BitVector &sig);
   /**
    * Create a floating-point of given sort converted from the given real
    * constant represented as a decimal string w.r.t. to the given rounding
@@ -90,9 +105,9 @@ class FloatingPoint
    * @return The floating-point corresponding to the given IEEE-754 bit-vector
    *         representation.
    */
-  static FloatingPoint fpfp(BzlaBitVector *sign,
-                            BzlaBitVector *exp,
-                            BzlaBitVector *sig);
+  static FloatingPoint fpfp(const BitVector &sign,
+                            const BitVector &exp,
+                            const BitVector &sig);
   /**
    * Constructor.
    * Create new nullary floating-point of given sort.
@@ -119,7 +134,7 @@ class FloatingPoint
    * @param sort The sort.
    * @param bv The IEEE-754 bit-vector representation of the floating-point.
    */
-  FloatingPoint(BzlaSortId sort, const BzlaBitVector *bv);
+  FloatingPoint(BzlaSortId sort, const BitVector &bv);
   /**
    * Constructor.
    * Create new floating-point of given sort converted from the given
@@ -145,7 +160,7 @@ class FloatingPoint
    */
   FloatingPoint(BzlaSortId sort,
                 const RoundingMode rm,
-                const BzlaBitVector *bv,
+                const BitVector &bv,
                 bool sign);
 
   /** Copy constructor. */
@@ -300,20 +315,7 @@ class FloatingPoint
                       const FloatingPoint &fp1) const;
 
   /** @return The IEEE-754 bit-vector representation of  this floating-point. */
-  BzlaBitVector *as_bv() const;
-
-  /**
-   * Get the triple of IEEE-754 bit-vectors representing this floating-point.
-   * @param sign The output parameter for the bit-vector representation of the
-   *             sign bit.
-   * @param exp  The output parameter for the bit-vector representation of the
-   *             exponent.
-   * @param sig  The output parameter for the bit-vector representation of the
-   *             significand.
-   */
-  void as_bvs(BzlaBitVector **sign,
-              BzlaBitVector **exp,
-              BzlaBitVector **sig) const;
+  BitVector as_bv() const;
 
  private:
   static inline uint32_t s_hash_primes[] = {
@@ -322,9 +324,6 @@ class FloatingPoint
   /**
    * Helper to create a floating-point from its unpacked bit-vector
    * representation given as sign bit, exponent bits, and significand bits.
-   *
-   * @see constructor FloatingPointSortInfo(BzlaSortId sort, BzlaBitVector
-   * *sign, BzlaBitvector *exp, BzlaBitvector *sig).
    *
    * This unpacked representation accounts for additional bits required for the
    * exponent to allow subnormals to be normalized.
@@ -338,9 +337,9 @@ class FloatingPoint
    * @return The floating-point corresponding to the given unpacked bit-vector
    *         representation.
    */
-  static FloatingPoint from_unpacked(BzlaBitVector *sign,
-                                     BzlaBitVector *exp,
-                                     BzlaBitVector *sig);
+  static FloatingPoint from_unpacked(const BitVector &sign,
+                                     const BitVector &exp,
+                                     const BitVector &sig);
   /**
    * Helper for constructors from real and rational strings.
    * @param sort The floating-point sort.

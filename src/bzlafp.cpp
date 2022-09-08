@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "bitvector.h"
 #include "bzlabvstruct.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
@@ -114,7 +115,10 @@ bzla_fp_as_bv(Bzla *bzla, BzlaFloatingPoint *fp)
   assert(bzla);
   assert(fp);
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp->d_fp->as_bv();
+  bzla::BitVector bv = fp->d_fp->as_bv();
+  BzlaBitVector *bbv = bzla_bv_new(bzla->mm, bv.size());
+  bbv->d_bv.reset(new bzla::BitVector(bv));
+  return bbv;
 }
 
 void
@@ -125,29 +129,16 @@ bzla_fp_ieee_bv_as_bvs(Bzla *bzla,
                        BzlaBitVector **exp,
                        BzlaBitVector **sig)
 {
-  uint32_t bw     = bzla_bv_get_width(bv);
-  uint32_t bw_exp = bzla_sort_fp_get_exp_width(bzla, fp_sort);
-  uint32_t bw_sig = bzla_sort_fp_get_sig_width(bzla, fp_sort);
-  *sign           = bzla_bv_slice(bzla->mm, bv, bw - 1, bw - 1);
-  *exp            = bzla_bv_slice(bzla->mm, bv, bw - 2, bw - 1 - bw_exp);
-  *sig            = bzla_bv_slice(bzla->mm, bv, bw_sig - 2, 0);
-}
-
-void
-bzla_fp_as_bvs(Bzla *bzla,
-               BzlaFloatingPoint *fp,
-               BzlaBitVector **sign,
-               BzlaBitVector **exp,
-               BzlaBitVector **sig)
-{
-  assert(bzla);
-  assert(fp);
-  assert(sign);
-  assert(exp);
-  assert(sig);
-
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  fp->d_fp->as_bvs(sign, exp, sig);
+  bzla::BitVector bsign, bexp, bsig;
+  bzla::fp::FloatingPoint::ieee_bv_as_bvs(
+      fp_sort, *bv->d_bv, bsign, bexp, bsig);
+  *sign = bzla_bv_new(bzla->mm, bsign.size());
+  (*sign)->d_bv.reset(new bzla::BitVector(bsign));
+  *exp = bzla_bv_new(bzla->mm, bexp.size());
+  (*exp)->d_bv.reset(new bzla::BitVector(bexp));
+  *sig = bzla_bv_new(bzla->mm, bsig.size());
+  (*sig)->d_bv.reset(new bzla::BitVector(bsig));
 }
 
 BzlaFloatingPoint *
@@ -350,7 +341,7 @@ bzla_fp_fp(Bzla *bzla,
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(new bzla::fp::FloatingPoint(
-      bzla::fp::FloatingPoint::fpfp(sign, exp, sig)));
+      bzla::fp::FloatingPoint::fpfp(*sign->d_bv, *exp->d_bv, *sig->d_bv)));
   return res;
 }
 
@@ -367,7 +358,7 @@ bzla_fp_from_bv(Bzla *bzla, BzlaSortId sort, const BzlaBitVector *bv_const)
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(sort, bv_const));
+  res->d_fp.reset(new bzla::fp::FloatingPoint(sort, *bv_const->d_bv));
   return res;
 }
 
@@ -571,7 +562,7 @@ bzla_fp_convert_from_ubv(Bzla *bzla,
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(sort, bzlarm2rm.at(rm), bv, false));
+      new bzla::fp::FloatingPoint(sort, bzlarm2rm.at(rm), *bv->d_bv, false));
   return res;
 }
 
@@ -589,7 +580,7 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(sort, bzlarm2rm.at(rm), bv, true));
+      new bzla::fp::FloatingPoint(sort, bzlarm2rm.at(rm), *bv->d_bv, true));
   return res;
 }
 

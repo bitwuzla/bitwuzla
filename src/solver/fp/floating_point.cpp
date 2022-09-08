@@ -3,6 +3,7 @@
 #include "solver/fp/symfpu_wrapper.h"
 
 extern "C" {
+#include "bzlabvstruct.h"
 #include "bzlacore.h"
 }
 
@@ -27,7 +28,80 @@ class SymFpuSymBV;
 namespace bzla {
 namespace fp {
 
-/* --- Floating public ------------------------------------------------------ */
+/* --- FloatingPoint public static ------------------------------------------ */
+
+void
+FloatingPoint::ieee_bv_as_bvs(BzlaSortId sort,
+                              const BitVector &bv,
+                              BitVector &sign,
+                              BitVector &exp,
+                              BitVector &sig)
+{
+  assert(s_bzla);
+  uint32_t bw     = bv.size();
+  uint32_t bw_exp = bzla_sort_fp_get_exp_width(s_bzla, sort);
+  uint32_t bw_sig = bzla_sort_fp_get_sig_width(s_bzla, sort);
+  sign            = bv.bvextract(bw - 1, bw - 1);
+  exp             = bv.bvextract(bw - 2, bw - 1 - bw_exp);
+  sig             = bv.bvextract(bw_sig - 2, 0);
+}
+
+FloatingPoint
+FloatingPoint::from_real(BzlaSortId sort,
+                         const RoundingMode rm,
+                         const std::string &real)
+{
+  return convert_from_rational_aux(sort, rm, real.c_str(), nullptr);
+}
+
+FloatingPoint
+FloatingPoint::from_rational(BzlaSortId sort,
+                             const RoundingMode rm,
+                             const std::string &num,
+                             const std::string &den)
+{
+  return convert_from_rational_aux(sort, rm, num.c_str(), den.c_str());
+}
+
+FloatingPoint
+FloatingPoint::fpzero(BzlaSortId sort, bool sign)
+{
+  FloatingPoint res(sort);
+  res.d_uf.reset(new UnpackedFloat(UnpackedFloat::makeZero(*res.size(), sign)));
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpinf(BzlaSortId sort, bool sign)
+{
+  FloatingPoint res(sort);
+  res.d_uf.reset(new UnpackedFloat(UnpackedFloat::makeInf(*res.size(), sign)));
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpnan(BzlaSortId sort)
+{
+  FloatingPoint res(sort);
+  res.d_uf.reset(new UnpackedFloat(UnpackedFloat::makeNaN(*res.size())));
+  return res;
+}
+
+FloatingPoint
+FloatingPoint::fpfp(const BitVector &sign,
+                    const BitVector &exp,
+                    const BitVector &sig)
+{
+  assert(s_bzla);
+  BzlaSortId sort = bzla_sort_fp(s_bzla, exp.size(), sig.size() + 1);
+
+  FloatingPoint res(sort, sign.bvconcat(exp).ibvconcat(sig));
+
+  bzla_sort_release(s_bzla, sort);
+  return res;
+}
+
+/* --- FloatingPoint public ------------------------------------------------- */
 
 FloatingPoint::FloatingPoint(BzlaSortId sort)
 {
@@ -45,12 +119,11 @@ FloatingPoint::FloatingPoint(BzlaSortId sort, const UnpackedFloat &uf)
   d_uf.reset(new UnpackedFloat(uf));
 }
 
-FloatingPoint::FloatingPoint(BzlaSortId sort, const BzlaBitVector *bv)
+FloatingPoint::FloatingPoint(BzlaSortId sort, const BitVector &bv)
     : FloatingPoint(sort)
 {
   assert(s_bzla);
-  d_uf.reset(new UnpackedFloat(
-      symfpu::unpack<SymFpuTraits>(*d_size, bzla_bv_copy(s_bzla->mm, bv))));
+  d_uf.reset(new UnpackedFloat(symfpu::unpack<SymFpuTraits>(*d_size, bv)));
 }
 
 FloatingPoint::FloatingPoint(BzlaSortId sort,
@@ -64,23 +137,23 @@ FloatingPoint::FloatingPoint(BzlaSortId sort,
 
 FloatingPoint::FloatingPoint(BzlaSortId sort,
                              const RoundingMode rm,
-                             const BzlaBitVector *bv,
+                             const BitVector &bv,
                              bool sign)
     : FloatingPoint(sort)
 {
   assert(s_bzla);
   if (sign)
   {
-    if (bzla_bv_get_width(bv) == 1)
+    if (bv.size() == 1)
     {
       /* Note: We must copy the bv here, because 1) the corresponding
        * constructor doesn't copy it but sets d_bv = bv and 2) the wrong
        * constructor is matched (const bool &val). */
-      UnpackedFloat uf = symfpu::convertUBVToFloat<SymFpuTraits>(
-          *d_size, rm, bzla_bv_copy(s_bzla->mm, bv));
+      UnpackedFloat uf =
+          symfpu::convertUBVToFloat<SymFpuTraits>(*d_size, rm, bv);
       /* We need special handling for bit-vectors of size one since symFPU does
        * not allow conversions from signed bit-vectors of size one.  */
-      if (bzla_bv_is_one(bv))
+      if (bv.is_one())
       {
         uf = symfpu::negate<SymFpuTraits>(*d_size, uf);
       }
@@ -91,14 +164,14 @@ FloatingPoint::FloatingPoint(BzlaSortId sort,
       /* Note: We must copy the bv here, because 1) the corresponding
        * constructor doesn't copy it but sets d_bv = bv and 2) the wrong
        * constructor is matched (const bool &val). */
-      d_uf.reset(new UnpackedFloat(symfpu::convertSBVToFloat<SymFpuTraits>(
-          *d_size, rm, bzla_bv_copy(s_bzla->mm, bv))));
+      d_uf.reset(new UnpackedFloat(
+          symfpu::convertSBVToFloat<SymFpuTraits>(*d_size, rm, bv)));
     }
   }
   else
   {
-    d_uf.reset(new UnpackedFloat(symfpu::convertUBVToFloat<SymFpuTraits>(
-        *d_size, rm, bzla_bv_copy(s_bzla->mm, bv))));
+    d_uf.reset(new UnpackedFloat(
+        symfpu::convertUBVToFloat<SymFpuTraits>(*d_size, rm, bv)));
   }
 }
 
@@ -136,8 +209,8 @@ FloatingPoint::hash() const
   hash += d_uf->getInf() * s_hash_primes[1];
   hash += d_uf->getZero() * s_hash_primes[2];
   hash += d_uf->getSign() * s_hash_primes[3];
-  hash += bzla_bv_hash(d_uf->getExponent().getBv()) * s_hash_primes[4];
-  hash += bzla_bv_hash(d_uf->getSignificand().getBv()) * s_hash_primes[5];
+  hash += d_uf->getExponent().getBv()->hash() * s_hash_primes[4];
+  hash += d_uf->getSignificand().getBv()->hash() * s_hash_primes[5];
   return hash;
 }
 
@@ -147,23 +220,21 @@ FloatingPoint::compare(const FloatingPoint &fp) const
   UnpackedFloat *uf_a = d_uf.get();
   UnpackedFloat *uf_b = fp.unpacked();
 
-  BzlaBitVector *exp_a = uf_a->getExponent().getBv();
-  BzlaBitVector *sig_a = uf_a->getSignificand().getBv();
+  BitVector *exp_a = uf_a->getExponent().getBv();
+  BitVector *sig_a = uf_a->getSignificand().getBv();
 
-  BzlaBitVector *exp_b = uf_b->getExponent().getBv();
-  BzlaBitVector *sig_b = uf_b->getSignificand().getBv();
+  BitVector *exp_b = uf_b->getExponent().getBv();
+  BitVector *sig_b = uf_b->getSignificand().getBv();
 
-  if (bzla_bv_get_width(exp_a) != bzla_bv_get_width(exp_b)
-      || bzla_bv_get_width(sig_a) != bzla_bv_get_width(sig_b))
+  if (exp_a->size() != exp_b->size() || sig_a->size() != sig_b->size())
   {
     return -1;
   }
 
   if (uf_a->getNaN() == uf_b->getNaN() && uf_a->getInf() == uf_b->getInf()
       && uf_a->getZero() == uf_b->getZero()
-      && uf_a->getSign() == uf_b->getSign()
-      && bzla_bv_compare(exp_a, exp_b) == 0
-      && bzla_bv_compare(sig_a, sig_b) == 0)
+      && uf_a->getSign() == uf_b->getSign() && exp_a->compare(*exp_b) == 0
+      && sig_a->compare(*sig_b) == 0)
   {
     return 0;
   }
@@ -192,23 +263,6 @@ void
 FloatingPoint::set_unpacked(const UnpackedFloat &uf)
 {
   d_uf.reset(new UnpackedFloat(uf));
-}
-
-FloatingPoint
-FloatingPoint::from_real(BzlaSortId sort,
-                         const RoundingMode rm,
-                         const std::string &real)
-{
-  return convert_from_rational_aux(sort, rm, real.c_str(), nullptr);
-}
-
-FloatingPoint
-FloatingPoint::from_rational(BzlaSortId sort,
-                             const RoundingMode rm,
-                             const std::string &num,
-                             const std::string &den)
-{
-  return convert_from_rational_aux(sort, rm, num.c_str(), den.c_str());
 }
 
 bool
@@ -269,48 +323,6 @@ bool
 FloatingPoint::is_le(const FloatingPoint &fp) const
 {
   return symfpu::lessThanOrEqual<SymFpuTraits>(*d_size, *d_uf, *fp.unpacked());
-}
-
-FloatingPoint
-FloatingPoint::fpzero(BzlaSortId sort, bool sign)
-{
-  FloatingPoint res(sort);
-  res.d_uf.reset(new UnpackedFloat(UnpackedFloat::makeZero(*res.size(), sign)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpinf(BzlaSortId sort, bool sign)
-{
-  FloatingPoint res(sort);
-  res.d_uf.reset(new UnpackedFloat(UnpackedFloat::makeInf(*res.size(), sign)));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpnan(BzlaSortId sort)
-{
-  FloatingPoint res(sort);
-  res.d_uf.reset(new UnpackedFloat(UnpackedFloat::makeNaN(*res.size())));
-  return res;
-}
-
-FloatingPoint
-FloatingPoint::fpfp(BzlaBitVector *sign, BzlaBitVector *exp, BzlaBitVector *sig)
-{
-  assert(s_bzla);
-  BzlaSortId sort =
-      bzla_sort_fp(s_bzla, bzla_bv_get_width(exp), bzla_bv_get_width(sig) + 1);
-
-  BzlaBitVector *tmp      = bzla_bv_concat(s_bzla->mm, sign, exp);
-  BzlaBitVector *bv_const = bzla_bv_concat(s_bzla->mm, tmp, sig);
-
-  FloatingPoint res(sort, bv_const);
-
-  bzla_bv_free(s_bzla->mm, tmp);
-  bzla_bv_free(s_bzla->mm, bv_const);
-  bzla_sort_release(s_bzla, sort);
-  return res;
 }
 
 FloatingPoint
@@ -396,44 +408,23 @@ FloatingPoint::fpfma(const RoundingMode rm,
   return res;
 }
 
-BzlaBitVector *
+BitVector
 FloatingPoint::as_bv() const
 {
   assert(s_bzla);
-  return bzla_bv_copy(s_bzla->mm, symfpu::pack(*d_size, *d_uf).getBv());
-}
-
-void
-FloatingPoint::as_bvs(BzlaBitVector **sign,
-                      BzlaBitVector **exp,
-                      BzlaBitVector **sig) const
-{
-  assert(s_bzla);
-  uint32_t bw     = d_size->packedWidth();
-  uint32_t bw_exp = d_size->exponentWidth();
-  uint32_t bw_sig = d_size->significandWidth();
-  BzlaBitVector *bv =
-      bzla_bv_copy(s_bzla->mm, symfpu::pack(*d_size, *d_uf).getBv());
-  *sign = bzla_bv_slice(s_bzla->mm, bv, bw - 1, bw - 1);
-  *exp  = bzla_bv_slice(s_bzla->mm, bv, bw - 2, bw - 1 - bw_exp);
-  *sig  = bzla_bv_slice(s_bzla->mm, bv, bw_sig - 2, 0);
-  bzla_bv_free(s_bzla->mm, bv);
+  return *symfpu::pack(*d_size, *d_uf).getBv();
 }
 
 /* --- Floating private ----------------------------------------------------- */
 
 FloatingPoint
-FloatingPoint::from_unpacked(BzlaBitVector *sign,
-                             BzlaBitVector *exp,
-                             BzlaBitVector *sig)
+FloatingPoint::from_unpacked(const BitVector &sign,
+                             const BitVector &exp,
+                             const BitVector &sig)
 {
   assert(s_bzla);
-  BzlaSortId sort =
-      bzla_sort_fp(s_bzla, bzla_bv_get_width(exp), bzla_bv_get_width(sig) + 1);
-  FloatingPoint res(sort,
-                    UnpackedFloat(bzla_bv_is_one(sign),
-                                  bzla_bv_copy(s_bzla->mm, exp),
-                                  bzla_bv_copy(s_bzla->mm, sig)));
+  BzlaSortId sort = bzla_sort_fp(s_bzla, exp.size(), sig.size() + 1);
+  FloatingPoint res(sort, UnpackedFloat(sign.is_one(), exp, sig));
   bzla_sort_release(s_bzla, sort);
   return res;
 }
@@ -654,13 +645,11 @@ FloatingPoint::convert_from_rational_aux(BzlaSortId sort,
   free(exp_bin_str);
 #endif
 
-  BzlaMemMgr *mm = s_bzla->mm;
-
   /* Significand ------------------------------------------------------- */
 
   /* sig bits of sort + guard and sticky bits */
   uint32_t n_sig_bits = bzla_sort_fp_get_sig_width(s_bzla, sort) + 2;
-  BzlaBitVector *sig  = bzla_bv_zero(mm, n_sig_bits);
+  BitVector sig       = BitVector::mk_zero(n_sig_bits);
   mpq_t tmp_sig, mid;
   make_mpq_from_ui(tmp_sig, 0, 1);
   mpq_init(mid);
@@ -669,12 +658,10 @@ FloatingPoint::convert_from_rational_aux(BzlaSortId sort,
     mpq_add(mid, tmp_sig, tmp_exp);
     if (mpq_cmp(mid, r) <= 0)
     {
-      bzla_bv_set_bit(sig, 0, 1);
+      sig.set_bit(0, 1);
       mpq_set(tmp_sig, mid);
     }
-    BzlaBitVector *shl = bzla_bv_sll_uint64(mm, sig, 1);
-    bzla_bv_free(mm, sig);
-    sig = shl;
+    sig.ibvshl(1);
     mpq_div_2exp(tmp_exp, tmp_exp, 1);
   }
 
@@ -691,7 +678,7 @@ FloatingPoint::convert_from_rational_aux(BzlaSortId sort,
 #endif
   if (mpq_sgn(remainder) != 0)
   {
-    bzla_bv_set_bit(sig, 0, 1);
+    sig.set_bit(0, 1);
   }
 
   /* Exact float ------------------------------------------------------- */
@@ -702,16 +689,14 @@ FloatingPoint::convert_from_rational_aux(BzlaSortId sort,
    * subnormals to be normalised. */
   uint32_t extension = UnpackedFloat::exponentWidth(exact_format) - n_exp_bits;
 
-  BzlaBitVector *sign = sgn < 0 ? bzla_bv_one(mm, 1) : bzla_bv_zero(mm, 1);
-  char *str           = mpz_get_str(nullptr, 10, iexp);
-  BzlaBitVector *exp  = bzla_bv_constd(mm, str, n_exp_bits);
+  BitVector sign = sgn < 0 ? BitVector::mk_true() : BitVector::mk_false();
+  char *str      = mpz_get_str(nullptr, 10, iexp);
+  BitVector exp(n_exp_bits, str, 10);
   free(str);
 
   if (extension > 0)
   {
-    BzlaBitVector *tmp = bzla_bv_sext(mm, exp, extension);
-    bzla_bv_free(mm, exp);
-    exp = tmp;
+    exp.ibvsext(extension);
   }
 
   FloatingPoint exact_float = from_unpacked(sign, exp, sig);
@@ -719,10 +704,6 @@ FloatingPoint::convert_from_rational_aux(BzlaSortId sort,
   FloatingPoint res(sort);
   res.d_uf.reset(new UnpackedFloat(symfpu::convertFloatToFloat<SymFpuTraits>(
       exact_format, *res.size(), rm, *exact_float.unpacked())));
-
-  bzla_bv_free(mm, exp);
-  bzla_bv_free(mm, sign);
-  bzla_bv_free(mm, sig);
 
   mpq_clear(remainder);
   mpq_clear(tmp_sig);

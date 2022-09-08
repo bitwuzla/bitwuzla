@@ -55,19 +55,6 @@ void bzla_fp_ieee_bv_as_bvs(Bzla *bzla,
                             BzlaBitVector **exp,
                             BzlaBitVector **sig);
 
-/**
- * Get the triple of bit-vectors representing a given floating-point.
- * sign: The output argument for the bit-vector representation of the sign bit.
- * exp : The output argument for the bit-vector representation of the exponent.
- * sig : The output argument for the bit-vector representation of the
- *       significand.
- */
-void bzla_fp_as_bvs(Bzla *bzla,
-                    BzlaFloatingPoint *fp,
-                    BzlaBitVector **sign,
-                    BzlaBitVector **exp,
-                    BzlaBitVector **sig);
-
 /** Get the floating-point of a floating-point constant node. */
 BzlaFloatingPoint *bzla_fp_get_fp(BzlaNode *node);
 

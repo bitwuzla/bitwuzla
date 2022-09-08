@@ -76,8 +76,6 @@ WordBlaster::set_s_bzla(Bzla *bzla)
 {
   FloatingPoint::s_bzla         = bzla;
   FloatingPointSortInfo::s_bzla = bzla;
-  SymFpuBV<true>::s_bzla        = bzla;
-  SymFpuBV<false>::s_bzla       = bzla;
   SymFpuSymRM::s_bzla           = bzla;
   SymFpuSymProp::s_bzla         = bzla;
   SymFpuSymBV<true>::s_bzla     = bzla;

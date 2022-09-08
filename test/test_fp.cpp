@@ -84,9 +84,11 @@ class TestFpInternal : public TestBzla
     fp = bzla_fp_get_fp(node_fp);
 
     res_bv = bzla_fp_as_bv(d_bzla, fp);
-    bzla_fp_as_bvs(d_bzla, fp, &res_sign, &res_exp, &res_sig);
+    bzla_fp_ieee_bv_as_bvs(
+        d_bzla, res_bv, sort_fp, &res_sign, &res_exp, &res_sig);
     tmp     = bzla_bv_concat(d_bzla->mm, res_sign, res_exp);
     res_tmp = bzla_bv_concat(d_bzla->mm, tmp, res_sig);
+    assert(bzla_bv_compare(res_bv, res_tmp) == 0);
     ASSERT_EQ(bzla_bv_compare(res_bv, res_tmp), 0);
 
     if (bzla_fp_is_nan(d_bzla, fp))
@@ -133,7 +135,9 @@ class TestFpInternal : public TestBzla
     for (size_t i = 0, n = d_constants_dec.size(); i < n; ++i)
     {
       fp = bzla_fp_convert_from_real(d_bzla, d_f16, rm, d_constants_dec[i]);
-      bzla_fp_as_bvs(d_bzla, fp, &sign, &exp, &sig);
+      BzlaBitVector *bv = bzla_fp_as_bv(d_bzla, fp);
+      bzla_fp_ieee_bv_as_bvs(d_bzla, bv, d_f16, &sign, &exp, &sig);
+      bzla_bv_free(d_bzla->mm, bv);
       sign_str = bzla_bv_to_char(mm, sign);
       exp_str  = bzla_bv_to_char(mm, exp);
       sig_str  = bzla_bv_to_char(mm, sig);
@@ -181,7 +185,9 @@ class TestFpInternal : public TestBzla
     {
       fp = bzla_fp_convert_from_rational(
           d_bzla, d_f16, rm, constants[i].first, constants[i].second);
-      bzla_fp_as_bvs(d_bzla, fp, &sign, &exp, &sig);
+      BzlaBitVector *bv = bzla_fp_as_bv(d_bzla, fp);
+      bzla_fp_ieee_bv_as_bvs(d_bzla, bv, d_f16, &sign, &exp, &sig);
+      bzla_bv_free(d_bzla->mm, bv);
       sign_str = bzla_bv_to_char(mm, sign);
       exp_str  = bzla_bv_to_char(mm, exp);
       sig_str  = bzla_bv_to_char(mm, sig);
