@@ -16,6 +16,10 @@ namespace bzla {
 
 class BitVector;
 
+namespace fp {
+enum class RoundingMode;
+}
+
 namespace node {
 
 class NodeManager
@@ -44,15 +48,6 @@ class NodeManager
   Node mk_var(const type::Type& t, const std::string& symbol = "");
 
   /**
-   * Create value.
-   *
-   * @param t Type of the value.
-   * @param value The value itself.
-   * @return Node representing given value.
-   */
-  // TODO: Instantiations for fp, rm
-
-  /**
    * Create Boolean value.
    *
    * @param value Boolean value to create.
@@ -67,6 +62,14 @@ class NodeManager
    * @return Node representing given bit-vector value of given size.
    */
   Node mk_value(const BitVector& value);
+
+  /**
+   * Create rounding mode value.
+   *
+   * @param value Rounding mode value to create.
+   * @return Node representing given rounding mode value.
+   */
+  Node mk_value(const fp::RoundingMode value);
 
   /**
    * Create node of kind `kind` with given children and indices.

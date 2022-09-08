@@ -12,6 +12,10 @@ namespace bzla {
 
 class BitVector;
 
+namespace fp {
+enum class RoundingMode;
+}
+
 namespace node {
 
 /* --- Node ---------------------------------------------------------------- */
@@ -82,6 +86,11 @@ class Node
    */
   uint64_t get_index(size_t index) const;
 
+  /**
+   * Get the value represented by this node.
+   *
+   * @return The value of type T.
+   */
   template <class T>
   const T& get_value() const;
 
@@ -122,6 +131,8 @@ template <>
 const bool& Node::get_value() const;
 template <>
 const BitVector& Node::get_value() const;
+template <>
+const fp::RoundingMode& Node::get_value() const;
 
 }  // namespace node
 }  // namespace bzla

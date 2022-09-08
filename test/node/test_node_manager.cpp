@@ -1,6 +1,7 @@
 #include "bitvector.h"
 #include "node/node.h"
 #include "node/node_manager.h"
+#include "solver/fp/rounding_mode.h"
 #include "test.h"
 
 namespace bzla::test {
@@ -109,7 +110,42 @@ TEST_F(TestNodeManager, mk_value_bv)
   ASSERT_NE(val, nm.mk_value(BitVector(32, 2)));
 };
 
-// TODO: mk_value
+TEST_F(TestNodeManager, mk_value_rm)
+{
+  NodeManager nm;
+
+  Node val_rna = nm.mk_value(fp::RoundingMode::RNA);
+  Node val_rne = nm.mk_value(fp::RoundingMode::RNE);
+  Node val_rtn = nm.mk_value(fp::RoundingMode::RTN);
+  Node val_rtp = nm.mk_value(fp::RoundingMode::RTP);
+  Node val_rtz = nm.mk_value(fp::RoundingMode::RTZ);
+
+  for (const auto& val : {val_rna, val_rne, val_rtn, val_rtp, val_rtz})
+  {
+    ASSERT_EQ(val.get_kind(), Kind::VALUE);
+    ASSERT_EQ(val.get_type(), nm.mk_rm_type());
+    ASSERT_EQ(val_rna.get_type(), val.get_type());
+  }
+
+  ASSERT_EQ(val_rna, nm.mk_value(fp::RoundingMode::RNA));
+  ASSERT_EQ(val_rne, nm.mk_value(fp::RoundingMode::RNE));
+  ASSERT_EQ(val_rtn, nm.mk_value(fp::RoundingMode::RTN));
+  ASSERT_EQ(val_rtp, nm.mk_value(fp::RoundingMode::RTP));
+  ASSERT_EQ(val_rtz, nm.mk_value(fp::RoundingMode::RTZ));
+
+  ASSERT_EQ(val_rna.get_value<fp::RoundingMode>(), fp::RoundingMode::RNA);
+  ASSERT_EQ(val_rne.get_value<fp::RoundingMode>(), fp::RoundingMode::RNE);
+  ASSERT_EQ(val_rtn.get_value<fp::RoundingMode>(), fp::RoundingMode::RTN);
+  ASSERT_EQ(val_rtp.get_value<fp::RoundingMode>(), fp::RoundingMode::RTP);
+  ASSERT_EQ(val_rtz.get_value<fp::RoundingMode>(), fp::RoundingMode::RTZ);
+
+  for (const auto& val : {val_rne, val_rtn, val_rtp, val_rtz})
+  {
+    ASSERT_NE(val_rna, val);
+  }
+};
+
+// TODO: mk_value_fp
 
 TEST_F(TestNodeManager, mk_node)
 {

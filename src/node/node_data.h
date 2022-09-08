@@ -118,9 +118,6 @@ class NodeData
    */
   bool is_nary() const;
 
-  // TODO: instantiate with
-  // - FloatingPoint
-  // - RoundingMode
   template <class T>
   const T& get_value() const
   {
