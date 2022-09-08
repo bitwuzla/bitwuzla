@@ -148,28 +148,6 @@ class FloatingPoint
                 const RoundingMode rm,
                 const BzlaBitVector *bv,
                 bool sign);
-  /**
-   * Constructor.
-   *
-   * Create new floating-point from its unpacked bit-vector representation
-   * given as sign bit, exponent bits, and significand bits.
-   *
-   * This unpacked representation accounts for additional bits required for the
-   * exponent to allow subnormals to be normalized.
-   *
-   * @note This should NOT be used to create a literal from its IEEE-754
-   *       bit-vector representation -- for this, fpfp() is to be used.
-   *
-   * @param sign A bit-vector of size 1 representing the sign bit.
-   * @param exp  A bit-vector representing the unpacked exponent.
-   * @param sig  A bit-vector representing the unpacked significand.
-   * @return The floating-point corresponding to the given unpacked bit-vector
-   *         representation.
-   */
-  FloatingPoint(BzlaSortId sort,
-                BzlaBitVector *sign,
-                BzlaBitVector *exp,
-                BzlaBitVector *sig);
 
   /** Copy constructor. */
   FloatingPoint(const FloatingPoint &other);
