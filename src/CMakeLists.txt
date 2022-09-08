@@ -93,6 +93,7 @@ set(libbitwuzla_src_files
   sat/kissat.cpp
   solver/fp/floating_point.cpp
   solver/fp/symfpu_wrapper.cpp
+  solver/fp/word_blaster.cpp
   utils/bzlahashint.c
   utils/bzlahashptr.c
   utils/bzlamem.c

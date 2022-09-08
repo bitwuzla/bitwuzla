@@ -16,13 +16,12 @@ extern "C" {
 #include "symfpu/core/ite.h"
 #include "symfpu/utils/numberOfRoundingModes.h"
 
-class BzlaFPWordBlaster;
-
 namespace bzla {
 namespace fp {
 
 template <bool T>
 class BzlaFPSymBV;
+class WordBlaster;
 
 /* ========================================================================== */
 /* Glue for SymFPU: concrete.                                                 */
@@ -55,7 +54,7 @@ class BzlaFPBV
 {
   friend BzlaFPSymBV<true>;
   friend BzlaFPSymBV<false>;
-  friend BzlaFPWordBlaster;
+  friend WordBlaster;
 
  protected:
   using literalType = typename signedToLiteralType<is_signed>::literalType;
@@ -677,7 +676,7 @@ struct BzlaSignedToLitSort<false>
 
 class BzlaFPSymProp
 {
-  friend BzlaFPWordBlaster;
+  friend WordBlaster;
   friend BzlaFPSymBV<true>;
   friend BzlaFPSymBV<false>;
   friend ::symfpu::ite<BzlaFPSymProp, BzlaFPSymProp>;
@@ -716,7 +715,7 @@ class BzlaFPSymBV;
 template <bool is_signed>
 class BzlaFPSymBV
 {
-  friend BzlaFPWordBlaster;
+  friend WordBlaster;
   friend BzlaFPSymBV<!is_signed>; /* Allow conversion between the sorts. */
   friend ::symfpu::ite<BzlaFPSymProp, BzlaFPSymBV<is_signed> >;
 
@@ -1410,7 +1409,7 @@ BzlaFPSymBV<is_signed>::checkBooleanNode(const BzlaNode *node) const
 
 class BzlaFPSymRM
 {
-  friend BzlaFPWordBlaster;
+  friend WordBlaster;
   friend symfpu::ite<BzlaFPSymProp, BzlaFPSymRM>;
 
  public:

@@ -15,13 +15,12 @@ template <class T>
 class unpackedFloat;
 }
 
-class BzlaFPWordBlaster;
-
 namespace bzla {
 namespace fp {
 
 class BzlaFPTraits;
 class FloatingPointSortInfo;
+class WordBlaster;
 
 using UnpackedFloat = ::symfpu::unpackedFloat<BzlaFPTraits>;
 
@@ -29,7 +28,7 @@ using UnpackedFloat = ::symfpu::unpackedFloat<BzlaFPTraits>;
 
 class FloatingPoint
 {
-  friend BzlaFPWordBlaster;
+  friend WordBlaster;
 
  public:
   /**
@@ -367,7 +366,7 @@ class FloatingPoint
  */
 class FloatingPointSortInfo
 {
-  friend BzlaFPWordBlaster;
+  friend WordBlaster;
 
  public:
   /**

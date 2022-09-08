@@ -71,6 +71,9 @@ void bzla_fp_as_bvs(Bzla *bzla,
 /** Get the floating-point of a floating-point constant node. */
 BzlaFloatingPoint *bzla_fp_get_fp(BzlaNode *node);
 
+// FIXME: obsolete with new node infrastructure
+void *bzla_fp_get_unpacked_float(BzlaNode *node);
+
 /** Compute the hash of the given floating-point. */
 uint32_t bzla_fp_hash(const BzlaFloatingPoint *fp);
 
