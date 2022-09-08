@@ -1028,6 +1028,7 @@ bzla_fp_free(Bzla *bzla, BzlaFloatingPoint *fp)
   assert(bzla);
   assert(fp);
   BzlaFPWordBlaster::set_s_bzla(bzla);
+  fp->d_fp.reset(nullptr);
   BZLA_DELETE(bzla->mm, fp);
 }
 
@@ -1547,6 +1548,7 @@ bzla_fp_convert_from_real(Bzla *bzla,
                           const char *real)
 {
   BzlaFloatingPoint *res;
+  BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(new bzla::fp::FloatingPoint(
       bzla::fp::FloatingPoint::from_real(sort, bzlarm2rm.at(rm), real)));
@@ -1561,6 +1563,7 @@ bzla_fp_convert_from_rational(Bzla *bzla,
                               const char *den)
 {
   BzlaFloatingPoint *res;
+  BzlaFPWordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
   res->d_fp.reset(
       new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::from_rational(

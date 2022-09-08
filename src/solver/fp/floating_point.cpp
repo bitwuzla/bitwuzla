@@ -284,6 +284,7 @@ FloatingPoint::fpfp(BzlaBitVector *sign, BzlaBitVector *exp, BzlaBitVector *sig)
   FloatingPoint res(sort, bv_const);
 
   bzla_bv_free(s_bzla->mm, tmp);
+  bzla_bv_free(s_bzla->mm, bv_const);
   bzla_sort_release(s_bzla, sort);
   return res;
 }
@@ -402,9 +403,13 @@ FloatingPoint::from_unpacked(BzlaBitVector *sign,
                              BzlaBitVector *exp,
                              BzlaBitVector *sig)
 {
+  assert(s_bzla);
   BzlaSortId sort =
       bzla_sort_fp(s_bzla, bzla_bv_get_width(exp), bzla_bv_get_width(sig) + 1);
-  FloatingPoint res(sort, UnpackedFloat(bzla_bv_is_one(sign), exp, sig));
+  FloatingPoint res(sort,
+                    UnpackedFloat(bzla_bv_is_one(sign),
+                                  bzla_bv_copy(s_bzla->mm, exp),
+                                  bzla_bv_copy(s_bzla->mm, sig)));
   bzla_sort_release(s_bzla, sort);
   return res;
 }
@@ -627,9 +632,6 @@ FloatingPoint::convert_from_rational_aux(BzlaSortId sort,
 
   BzlaMemMgr *mm = s_bzla->mm;
 
-  BzlaBitVector *exp =
-      bzla_bv_constd(mm, mpz_get_str(nullptr, 10, iexp), n_exp_bits);
-
   /* Significand ------------------------------------------------------- */
 
   /* sig bits of sort + guard and sticky bits */
@@ -677,6 +679,9 @@ FloatingPoint::convert_from_rational_aux(BzlaSortId sort,
   uint32_t extension = UnpackedFloat::exponentWidth(exact_format) - n_exp_bits;
 
   BzlaBitVector *sign = sgn < 0 ? bzla_bv_one(mm, 1) : bzla_bv_zero(mm, 1);
+  char *str           = mpz_get_str(nullptr, 10, iexp);
+  BzlaBitVector *exp  = bzla_bv_constd(mm, str, n_exp_bits);
+  free(str);
 
   if (extension > 0)
   {
