@@ -1870,22 +1870,22 @@ BitVector::ibvshl(const BitVector& bv, uint64_t shift)
 }
 
 BitVector&
-BitVector::ibvshl(const BitVector& bv0, const BitVector& bv1)
+BitVector::ibvshl(const BitVector& bv, const BitVector& shift)
 {
-  assert(!bv0.is_null());
-  assert(!bv1.is_null());
-  assert(bv0.d_size == bv1.d_size);
+  assert(!bv.is_null());
+  assert(!shift.is_null());
+  assert(bv.d_size == shift.d_size);
 
-  uint64_t shift;
-  uint64_t size = bv0.d_size;
+  uint64_t ishift;
+  uint64_t size = bv.d_size;
 
-  if (bv1.shift_is_uint64(&shift))
+  if (shift.shift_is_uint64(&ishift))
   {
-    ibvshl(bv0, shift);
+    ibvshl(bv, ishift);
   }
   else
   {
-    if (bv0.is_gmp())
+    if (bv.is_gmp())
     {
       if (!is_gmp())
       {
@@ -1948,22 +1948,22 @@ BitVector::ibvshr(const BitVector& bv, uint64_t shift)
 }
 
 BitVector&
-BitVector::ibvshr(const BitVector& bv0, const BitVector& bv1)
+BitVector::ibvshr(const BitVector& bv, const BitVector& shift)
 {
-  assert(!bv0.is_null());
-  assert(!bv1.is_null());
-  assert(bv0.d_size == bv1.d_size);
+  assert(!bv.is_null());
+  assert(!shift.is_null());
+  assert(bv.d_size == shift.d_size);
 
-  uint64_t shift;
-  uint64_t size = bv0.d_size;
+  uint64_t ishift;
+  uint64_t size = bv.d_size;
 
-  if (bv1.shift_is_uint64(&shift))
+  if (shift.shift_is_uint64(&ishift))
   {
-    ibvshr(bv0, shift);
+    ibvshr(bv, ishift);
   }
   else
   {
-    if (bv0.is_gmp())
+    if (bv.is_gmp())
     {
       if (!is_gmp())
       {
@@ -2001,28 +2001,28 @@ BitVector::ibvashr(const BitVector& bv, uint64_t shift)
 }
 
 BitVector&
-BitVector::ibvashr(const BitVector& bv0, const BitVector& bv1)
+BitVector::ibvashr(const BitVector& bv, const BitVector& shift)
 {
-  assert(!bv0.is_null());
-  assert(!bv1.is_null());
-  assert(bv0.d_size == bv1.d_size);
+  assert(!bv.is_null());
+  assert(!shift.is_null());
+  assert(bv.d_size == shift.d_size);
 
-  if (bv0.get_msb())
+  if (bv.get_msb())
   {
-    if (&bv1 == this)
+    if (&shift == this)
     {
-      BitVector b1(bv1); /* copy to guard for bv1 == *this */
-      ibvnot(bv0).ibvshr(b1);
+      BitVector b1(shift); /* copy to guard for bv1 == *this */
+      ibvnot(bv).ibvshr(b1);
     }
     else
     {
-      ibvnot(bv0).ibvshr(bv1);
+      ibvnot(bv).ibvshr(shift);
     }
     ibvnot();
   }
   else
   {
-    ibvshr(bv0, bv1);
+    ibvshr(bv, shift);
   }
   return *this;
 }
