@@ -27,19 +27,6 @@
 typedef struct BzlaFloatingPoint BzlaFloatingPoint;
 typedef struct BzlaNodePtrStack BzlaNodePtrStack;
 
-/**
- * Create a new floating-point wrapper object.
- *
- * This does not yet initialize the underlying SymFPU UnpackedFloat
- * representation -- must be set after creation with bzla_fp_set_fp.
- *
- * Note: Memory for the returned BzlaFloatingPoint object itself is managed
- *       by the memory manager of the given Bzla instance. Memory for the
- *       underlying FloatingPointSize and UnpackedFloat is not managed by the
- *       memory manager, but (de)allocated with free and delete.
- */
-BzlaFloatingPoint *bzla_fp_new(Bzla *bzla, BzlaSortId sort);
-
 /** Free the memory of the given BzlaFloatingPoint and it's wrapped objects.  */
 void bzla_fp_free(Bzla *bzla, BzlaFloatingPoint *fp);
 

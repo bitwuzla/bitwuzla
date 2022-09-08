@@ -91,6 +91,8 @@ set(libbitwuzla_src_files
   sat/cadical.cpp
   sat/cryptominisat.cpp
   sat/kissat.cpp
+  solver/fp/floating_point.cpp
+  solver/fp/symfpu_wrapper.cpp
   utils/bzlahashint.c
   utils/bzlahashptr.c
   utils/bzlamem.c
