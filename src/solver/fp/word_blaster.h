@@ -15,7 +15,7 @@ extern "C" {
 namespace bzla {
 namespace fp {
 
-class BzlaFPSymTraits;
+class SymFpuSymTraits;
 
 /* -------------------------------------------------------------------------- */
 
@@ -43,9 +43,9 @@ struct BzlaNodeHashFunction
 /* -------------------------------------------------------------------------- */
 
 template <bool T>
-class BzlaFPSymBV;
-class BzlaFPSymRM;
-class BzlaFPSymProp;
+class SymFpuSymBV;
+class SymFpuSymRM;
+class SymFpuSymProp;
 
 class WordBlaster
 {
@@ -65,29 +65,29 @@ class WordBlaster
   static void set_s_bzla(Bzla *bzla);
 
  private:
-  using SymUnpackedFloat = ::symfpu::unpackedFloat<BzlaFPSymTraits>;
-  using BzlaFPUnpackedFloatMap =
+  using SymUnpackedFloat = ::symfpu::unpackedFloat<SymFpuSymTraits>;
+  using UnpackedFloatMap =
       std::unordered_map<BzlaNode *, SymUnpackedFloat, BzlaNodeHashFunction>;
-  using BzlaFPSymRMMap =
-      std::unordered_map<BzlaNode *, BzlaFPSymRM, BzlaNodeHashFunction>;
-  using BzlaFPSymPropMap =
-      std::unordered_map<BzlaNode *, BzlaFPSymProp, BzlaNodeHashFunction>;
-  using BzlaFPPackedFloatMap =
-      std::unordered_map<BzlaNode *, BzlaFPSymBV<false>, BzlaNodeHashFunction>;
-  using BzlaFPSymSBVMap =
-      std::unordered_map<BzlaNode *, BzlaFPSymBV<true>, BzlaNodeHashFunction>;
-  using BzlaFPSymUBVMap =
-      std::unordered_map<BzlaNode *, BzlaFPSymBV<false>, BzlaNodeHashFunction>;
+  using SymFpuSymRMMap =
+      std::unordered_map<BzlaNode *, SymFpuSymRM, BzlaNodeHashFunction>;
+  using SymFpuSymPropMap =
+      std::unordered_map<BzlaNode *, SymFpuSymProp, BzlaNodeHashFunction>;
+  using PackedFloatMap =
+      std::unordered_map<BzlaNode *, SymFpuSymBV<false>, BzlaNodeHashFunction>;
+  using SymSBVMap =
+      std::unordered_map<BzlaNode *, SymFpuSymBV<true>, BzlaNodeHashFunction>;
+  using SymUBVMap =
+      std::unordered_map<BzlaNode *, SymFpuSymBV<false>, BzlaNodeHashFunction>;
 
   BzlaNode *min_max_uf(BzlaNode *node);
   BzlaNode *sbv_ubv_uf(BzlaNode *node);
 
-  BzlaFPSymRMMap d_rm_map;
-  BzlaFPSymPropMap d_prop_map;
-  BzlaFPSymUBVMap d_ubv_map;
-  BzlaFPSymSBVMap d_sbv_map;
-  BzlaFPUnpackedFloatMap d_unpacked_float_map;
-  BzlaFPPackedFloatMap d_packed_float_map;
+  SymFpuSymRMMap d_rm_map;
+  SymFpuSymPropMap d_prop_map;
+  SymUBVMap d_ubv_map;
+  SymSBVMap d_sbv_map;
+  UnpackedFloatMap d_unpacked_float_map;
+  PackedFloatMap d_packed_float_map;
 
   std::unordered_map<BzlaSortId, BzlaNode *, BzlaSortHashFunction>
       d_min_max_uf_map;

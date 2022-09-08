@@ -18,11 +18,11 @@ class unpackedFloat;
 namespace bzla {
 namespace fp {
 
-class BzlaFPTraits;
+class SymFpuTraits;
 class FloatingPointSortInfo;
 class WordBlaster;
 
-using UnpackedFloat = ::symfpu::unpackedFloat<BzlaFPTraits>;
+using UnpackedFloat = ::symfpu::unpackedFloat<SymFpuTraits>;
 
 /* -------------------------------------------------------------------------- */
 

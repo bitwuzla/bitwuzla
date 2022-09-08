@@ -76,12 +76,12 @@ WordBlaster::set_s_bzla(Bzla *bzla)
 {
   FloatingPoint::s_bzla         = bzla;
   FloatingPointSortInfo::s_bzla = bzla;
-  BzlaFPBV<true>::s_bzla        = bzla;
-  BzlaFPBV<false>::s_bzla       = bzla;
-  BzlaFPSymRM::s_bzla           = bzla;
-  BzlaFPSymProp::s_bzla         = bzla;
-  BzlaFPSymBV<true>::s_bzla     = bzla;
-  BzlaFPSymBV<false>::s_bzla    = bzla;
+  SymFpuBV<true>::s_bzla        = bzla;
+  SymFpuBV<false>::s_bzla       = bzla;
+  SymFpuSymRM::s_bzla           = bzla;
+  SymFpuSymProp::s_bzla         = bzla;
+  SymFpuSymBV<true>::s_bzla     = bzla;
+  SymFpuSymBV<false>::s_bzla    = bzla;
 }
 
 BzlaNode *
@@ -140,8 +140,8 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_rm_map.find(cur->e[1]) != d_rm_map.end());
         assert(d_rm_map.find(cur->e[2]) != d_rm_map.end());
         d_rm_map.emplace(bzla_node_copy(d_bzla, cur),
-                         symfpu::ite<BzlaFPSymProp, BzlaFPSymRM>::iteOp(
-                             BzlaFPSymProp(cur->e[0]),
+                         symfpu::ite<SymFpuSymProp, SymFpuSymRM>::iteOp(
+                             SymFpuSymProp(cur->e[0]),
                              d_rm_map.at(cur->e[1]),
                              d_rm_map.at(cur->e[2])));
       }
@@ -188,12 +188,12 @@ WordBlaster::word_blast(BzlaNode *node)
       }
       else if (bzla_node_is_rm_const(cur))
       {
-        d_rm_map.emplace(bzla_node_copy(d_bzla, cur), BzlaFPSymRM(cur));
+        d_rm_map.emplace(bzla_node_copy(d_bzla, cur), SymFpuSymRM(cur));
       }
       else if (bzla_node_is_rm_var(cur)
                || (bzla_node_is_apply(cur) && bzla_node_is_rm(d_bzla, cur)))
       {
-        BzlaFPSymRM var(cur);
+        SymFpuSymRM var(cur);
         d_rm_map.emplace(bzla_node_copy(d_bzla, cur), var);
         d_additional_assertions.push_back(
             bzla_node_copy(d_bzla, var.valid().getNode()));
@@ -251,7 +251,7 @@ WordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         d_prop_map.emplace(
             bzla_node_copy(d_bzla, cur),
-            symfpu::smtlibEqual<BzlaFPSymTraits>(
+            symfpu::smtlibEqual<SymFpuSymTraits>(
                 FloatingPointSortInfo(bzla_node_get_sort_id(cur->e[0])),
                 d_unpacked_float_map.at(cur->e[0]),
                 d_unpacked_float_map.at(cur->e[1])));
@@ -268,7 +268,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
-                                     symfpu::absolute<BzlaFPSymTraits>(
+                                     symfpu::absolute<SymFpuSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_unpacked_float_map.at(cur->e[0])));
       }
@@ -277,7 +277,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
-                                     symfpu::negate<BzlaFPSymTraits>(
+                                     symfpu::negate<SymFpuSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_unpacked_float_map.at(cur->e[0])));
       }
@@ -286,7 +286,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
         d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
-                           symfpu::isNormal<BzlaFPSymTraits>(
+                           symfpu::isNormal<SymFpuSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
       }
@@ -295,7 +295,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
         d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
-                           symfpu::isSubnormal<BzlaFPSymTraits>(
+                           symfpu::isSubnormal<SymFpuSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
       }
@@ -304,7 +304,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
         d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
-                           symfpu::isZero<BzlaFPSymTraits>(
+                           symfpu::isZero<SymFpuSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
       }
@@ -313,7 +313,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
         d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
-                           symfpu::isInfinite<BzlaFPSymTraits>(
+                           symfpu::isInfinite<SymFpuSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
       }
@@ -323,7 +323,7 @@ WordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         d_prop_map.emplace(
             bzla_node_copy(d_bzla, cur),
-            symfpu::isNaN<BzlaFPSymTraits>(bzla_node_get_sort_id(cur->e[0]),
+            symfpu::isNaN<SymFpuSymTraits>(bzla_node_get_sort_id(cur->e[0]),
                                            d_unpacked_float_map.at(cur->e[0])));
       }
       else if (bzla_node_is_fp_is_neg(cur))
@@ -331,7 +331,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
         d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
-                           symfpu::isNegative<BzlaFPSymTraits>(
+                           symfpu::isNegative<SymFpuSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
       }
@@ -340,7 +340,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[0])
                != d_unpacked_float_map.end());
         d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
-                           symfpu::isPositive<BzlaFPSymTraits>(
+                           symfpu::isPositive<SymFpuSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0])));
       }
@@ -351,7 +351,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
         d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
-                           symfpu::lessThanOrEqual<BzlaFPSymTraits>(
+                           symfpu::lessThanOrEqual<SymFpuSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[1])));
@@ -363,7 +363,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
         d_prop_map.emplace(bzla_node_copy(d_bzla, cur),
-                           symfpu::lessThan<BzlaFPSymTraits>(
+                           symfpu::lessThan<SymFpuSymTraits>(
                                bzla_node_get_sort_id(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[0]),
                                d_unpacked_float_map.at(cur->e[1])));
@@ -392,7 +392,7 @@ WordBlaster::word_blast(BzlaNode *node)
         {
           d_unpacked_float_map.emplace(
               bzla_node_copy(d_bzla, cur),
-              symfpu::min<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
+              symfpu::min<SymFpuSymTraits>(bzla_node_get_sort_id(cur),
                                            d_unpacked_float_map.at(cur->e[0]),
                                            d_unpacked_float_map.at(cur->e[1]),
                                            apply));
@@ -401,7 +401,7 @@ WordBlaster::word_blast(BzlaNode *node)
         {
           d_unpacked_float_map.emplace(
               bzla_node_copy(d_bzla, cur),
-              symfpu::max<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
+              symfpu::max<SymFpuSymTraits>(bzla_node_get_sort_id(cur),
                                            d_unpacked_float_map.at(cur->e[0]),
                                            d_unpacked_float_map.at(cur->e[1]),
                                            apply));
@@ -416,7 +416,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
-                                     symfpu::remainder<BzlaFPSymTraits>(
+                                     symfpu::remainder<SymFpuSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_unpacked_float_map.at(cur->e[0]),
                                          d_unpacked_float_map.at(cur->e[1])));
@@ -428,7 +428,7 @@ WordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(
             bzla_node_copy(d_bzla, cur),
-            symfpu::sqrt<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
+            symfpu::sqrt<SymFpuSymTraits>(bzla_node_get_sort_id(cur),
                                           d_rm_map.at(cur->e[0]),
                                           d_unpacked_float_map.at(cur->e[1])));
       }
@@ -438,7 +438,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[1])
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
-                                     symfpu::roundToIntegral<BzlaFPSymTraits>(
+                                     symfpu::roundToIntegral<SymFpuSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
                                          d_unpacked_float_map.at(cur->e[1])));
@@ -452,11 +452,11 @@ WordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(
             bzla_node_copy(d_bzla, cur),
-            symfpu::add<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
+            symfpu::add<SymFpuSymTraits>(bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
                                          d_unpacked_float_map.at(cur->e[1]),
                                          d_unpacked_float_map.at(cur->e[2]),
-                                         BzlaFPSymProp(true)));
+                                         SymFpuSymProp(true)));
       }
       else if (bzla_node_is_fp_mul(cur))
       {
@@ -466,7 +466,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[2])
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
-                                     symfpu::multiply<BzlaFPSymTraits>(
+                                     symfpu::multiply<SymFpuSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
                                          d_unpacked_float_map.at(cur->e[1]),
@@ -480,7 +480,7 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_unpacked_float_map.find(cur->e[2])
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
-                                     symfpu::divide<BzlaFPSymTraits>(
+                                     symfpu::divide<SymFpuSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
                                          d_unpacked_float_map.at(cur->e[1]),
@@ -497,7 +497,7 @@ WordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(
             bzla_node_copy(d_bzla, cur),
-            symfpu::fma<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
+            symfpu::fma<SymFpuSymTraits>(bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
                                          d_unpacked_float_map.at(cur->e[1]),
                                          d_unpacked_float_map.at(cur->e[2]),
@@ -516,22 +516,22 @@ WordBlaster::word_blast(BzlaNode *node)
         if (bzla_node_is_fp_to_sbv(cur))
         {
           d_sbv_map.emplace(bzla_node_copy(d_bzla, cur),
-                            symfpu::convertFloatToSBV<BzlaFPSymTraits>(
+                            symfpu::convertFloatToSBV<SymFpuSymTraits>(
                                 bzla_node_get_sort_id(cur->e[1]),
                                 d_rm_map.at(cur->e[0]),
                                 d_unpacked_float_map.at(cur->e[1]),
                                 bw,
-                                BzlaFPSymBV<true>(apply)));
+                                SymFpuSymBV<true>(apply)));
         }
         else
         {
           d_ubv_map.emplace(bzla_node_copy(d_bzla, cur),
-                            symfpu::convertFloatToUBV<BzlaFPSymTraits>(
+                            symfpu::convertFloatToUBV<SymFpuSymTraits>(
                                 bzla_node_get_sort_id(cur->e[1]),
                                 d_rm_map.at(cur->e[0]),
                                 d_unpacked_float_map.at(cur->e[1]),
                                 bw,
-                                BzlaFPSymBV<false>(apply)));
+                                SymFpuSymBV<false>(apply)));
         }
         bzla_node_release(d_bzla, apply);
         bzla_node_release(d_bzla, apply_args);
@@ -541,8 +541,8 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(bzla_node_is_bv(d_bzla, cur->e[0]));
         d_unpacked_float_map.emplace(
             bzla_node_copy(d_bzla, cur),
-            symfpu::unpack<BzlaFPSymTraits>(bzla_node_get_sort_id(cur),
-                                            BzlaFPSymBV<false>(cur->e[0])));
+            symfpu::unpack<SymFpuSymTraits>(bzla_node_get_sort_id(cur),
+                                            SymFpuSymBV<false>(cur->e[0])));
       }
       else if (bzla_node_is_fp_to_fp_from_fp(cur))
       {
@@ -551,7 +551,7 @@ WordBlaster::word_blast(BzlaNode *node)
                != d_unpacked_float_map.end());
         d_unpacked_float_map.emplace(
             bzla_node_copy(d_bzla, cur),
-            symfpu::convertFloatToFloat<BzlaFPSymTraits>(
+            symfpu::convertFloatToFloat<SymFpuSymTraits>(
                 bzla_node_get_sort_id(cur->e[1]),
                 bzla_node_get_sort_id(cur),
                 d_rm_map.at(cur->e[0]),
@@ -562,20 +562,20 @@ WordBlaster::word_blast(BzlaNode *node)
         assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
         assert(bzla_node_is_bv(d_bzla, cur->e[1]));
         d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
-                                     symfpu::convertSBVToFloat<BzlaFPSymTraits>(
+                                     symfpu::convertSBVToFloat<SymFpuSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
-                                         BzlaFPSymBV<true>(cur->e[1])));
+                                         SymFpuSymBV<true>(cur->e[1])));
       }
       else if (bzla_node_is_fp_to_fp_from_ubv(cur))
       {
         assert(d_rm_map.find(cur->e[0]) != d_rm_map.end());
         assert(bzla_node_is_bv(d_bzla, cur->e[1]));
         d_unpacked_float_map.emplace(bzla_node_copy(d_bzla, cur),
-                                     symfpu::convertUBVToFloat<BzlaFPSymTraits>(
+                                     symfpu::convertUBVToFloat<SymFpuSymTraits>(
                                          bzla_node_get_sort_id(cur),
                                          d_rm_map.at(cur->e[0]),
-                                         BzlaFPSymBV<false>(cur->e[1])));
+                                         SymFpuSymBV<false>(cur->e[1])));
       }
       visited.at(cur) = 1;
     }
@@ -713,7 +713,7 @@ WordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_rm_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_rm_map.emplace(cexp, BzlaFPSymRM(scexp));
+    res->d_rm_map.emplace(cexp, SymFpuSymRM(scexp));
   }
   for (const auto &p : d_prop_map)
   {
@@ -726,7 +726,7 @@ WordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_prop_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_prop_map.emplace(cexp, BzlaFPSymProp(scexp));
+    res->d_prop_map.emplace(cexp, SymFpuSymProp(scexp));
   }
   for (const auto &p : d_sbv_map)
   {
@@ -739,7 +739,7 @@ WordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_sbv_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_sbv_map.emplace(cexp, BzlaFPSymBV<true>(scexp));
+    res->d_sbv_map.emplace(cexp, SymFpuSymBV<true>(scexp));
   }
   for (const auto &p : d_ubv_map)
   {
@@ -752,7 +752,7 @@ WordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
     BzlaNode *sexp  = d_ubv_map.at(exp).getNode();
     BzlaNode *scexp = bzla_nodemap_mapped(exp_map, sexp);
     assert(scexp);
-    res->d_ubv_map.emplace(cexp, BzlaFPSymBV<false>(scexp));
+    res->d_ubv_map.emplace(cexp, SymFpuSymBV<false>(scexp));
   }
   for (const auto &p : d_unpacked_float_map)
   {
@@ -795,12 +795,12 @@ WordBlaster::clone(Bzla *cbzla, BzlaNodeMap *exp_map)
 
     res->d_unpacked_float_map.emplace(
         cexp,
-        SymUnpackedFloat(BzlaFPSymProp(cnan),
-                         BzlaFPSymProp(cinf),
-                         BzlaFPSymProp(czero),
-                         BzlaFPSymProp(csign),
-                         BzlaFPSymBV<true>(cexpo),
-                         BzlaFPSymBV<false>(csig)));
+        SymUnpackedFloat(SymFpuSymProp(cnan),
+                         SymFpuSymProp(cinf),
+                         SymFpuSymProp(czero),
+                         SymFpuSymProp(csign),
+                         SymFpuSymBV<true>(cexpo),
+                         SymFpuSymBV<false>(csig)));
   }
   for (BzlaNode *node : d_additional_assertions)
   {

@@ -22,7 +22,7 @@ extern "C" {
 #include "symfpu/core/unpackedFloat.h"
 
 template <bool T>
-class BzlaFPSymBV;
+class SymFpuSymBV;
 
 namespace bzla {
 namespace fp {
@@ -50,7 +50,7 @@ FloatingPoint::FloatingPoint(BzlaSortId sort, const BzlaBitVector *bv)
 {
   assert(s_bzla);
   d_uf.reset(new UnpackedFloat(
-      symfpu::unpack<BzlaFPTraits>(*d_size, bzla_bv_copy(s_bzla->mm, bv))));
+      symfpu::unpack<SymFpuTraits>(*d_size, bzla_bv_copy(s_bzla->mm, bv))));
 }
 
 FloatingPoint::FloatingPoint(BzlaSortId sort,
@@ -58,7 +58,7 @@ FloatingPoint::FloatingPoint(BzlaSortId sort,
                              const FloatingPoint &fp)
     : FloatingPoint(sort)
 {
-  d_uf.reset(new UnpackedFloat(symfpu::convertFloatToFloat<BzlaFPTraits>(
+  d_uf.reset(new UnpackedFloat(symfpu::convertFloatToFloat<SymFpuTraits>(
       *fp.size(), *d_size, rm, *fp.unpacked())));
 }
 
@@ -76,13 +76,13 @@ FloatingPoint::FloatingPoint(BzlaSortId sort,
       /* Note: We must copy the bv here, because 1) the corresponding
        * constructor doesn't copy it but sets d_bv = bv and 2) the wrong
        * constructor is matched (const bool &val). */
-      UnpackedFloat uf = symfpu::convertUBVToFloat<BzlaFPTraits>(
+      UnpackedFloat uf = symfpu::convertUBVToFloat<SymFpuTraits>(
           *d_size, rm, bzla_bv_copy(s_bzla->mm, bv));
       /* We need special handling for bit-vectors of size one since symFPU does
        * not allow conversions from signed bit-vectors of size one.  */
       if (bzla_bv_is_one(bv))
       {
-        uf = symfpu::negate<BzlaFPTraits>(*d_size, uf);
+        uf = symfpu::negate<SymFpuTraits>(*d_size, uf);
       }
       d_uf.reset(new UnpackedFloat(uf));
     }
@@ -91,13 +91,13 @@ FloatingPoint::FloatingPoint(BzlaSortId sort,
       /* Note: We must copy the bv here, because 1) the corresponding
        * constructor doesn't copy it but sets d_bv = bv and 2) the wrong
        * constructor is matched (const bool &val). */
-      d_uf.reset(new UnpackedFloat(symfpu::convertSBVToFloat<BzlaFPTraits>(
+      d_uf.reset(new UnpackedFloat(symfpu::convertSBVToFloat<SymFpuTraits>(
           *d_size, rm, bzla_bv_copy(s_bzla->mm, bv))));
     }
   }
   else
   {
-    d_uf.reset(new UnpackedFloat(symfpu::convertUBVToFloat<BzlaFPTraits>(
+    d_uf.reset(new UnpackedFloat(symfpu::convertUBVToFloat<SymFpuTraits>(
         *d_size, rm, bzla_bv_copy(s_bzla->mm, bv))));
   }
 }
@@ -256,19 +256,19 @@ FloatingPoint::is_pos() const
 bool
 FloatingPoint::is_eq(const FloatingPoint &fp) const
 {
-  return symfpu::smtlibEqual<BzlaFPTraits>(*d_size, *d_uf, *fp.unpacked());
+  return symfpu::smtlibEqual<SymFpuTraits>(*d_size, *d_uf, *fp.unpacked());
 }
 
 bool
 FloatingPoint::is_lt(const FloatingPoint &fp) const
 {
-  return symfpu::lessThan<BzlaFPTraits>(*d_size, *d_uf, *fp.unpacked());
+  return symfpu::lessThan<SymFpuTraits>(*d_size, *d_uf, *fp.unpacked());
 }
 
 bool
 FloatingPoint::is_le(const FloatingPoint &fp) const
 {
-  return symfpu::lessThanOrEqual<BzlaFPTraits>(*d_size, *d_uf, *fp.unpacked());
+  return symfpu::lessThanOrEqual<SymFpuTraits>(*d_size, *d_uf, *fp.unpacked());
 }
 
 FloatingPoint
@@ -318,7 +318,7 @@ FloatingPoint::fpabs() const
 {
   FloatingPoint res(*d_size);
   res.d_uf.reset(
-      new UnpackedFloat(symfpu::absolute<BzlaFPTraits>(*res.size(), *d_uf)));
+      new UnpackedFloat(symfpu::absolute<SymFpuTraits>(*res.size(), *d_uf)));
   return res;
 }
 
@@ -327,7 +327,7 @@ FloatingPoint::fpneg() const
 {
   FloatingPoint res(*d_size);
   res.d_uf.reset(
-      new UnpackedFloat(symfpu::negate<BzlaFPTraits>(*res.size(), *d_uf)));
+      new UnpackedFloat(symfpu::negate<SymFpuTraits>(*res.size(), *d_uf)));
   return res;
 }
 
@@ -336,7 +336,7 @@ FloatingPoint::fpsqrt(const RoundingMode rm) const
 {
   FloatingPoint res(*d_size);
   res.d_uf.reset(
-      new UnpackedFloat(symfpu::sqrt<BzlaFPTraits>(*res.size(), rm, *d_uf)));
+      new UnpackedFloat(symfpu::sqrt<SymFpuTraits>(*res.size(), rm, *d_uf)));
   return res;
 }
 
@@ -345,7 +345,7 @@ FloatingPoint::fprti(const RoundingMode rm) const
 {
   FloatingPoint res(*d_size);
   res.d_uf.reset(new UnpackedFloat(
-      symfpu::roundToIntegral<BzlaFPTraits>(*res.size(), rm, *d_uf)));
+      symfpu::roundToIntegral<SymFpuTraits>(*res.size(), rm, *d_uf)));
   return res;
 }
 
@@ -354,7 +354,7 @@ FloatingPoint::fprem(const FloatingPoint &fp) const
 {
   FloatingPoint res(*d_size);
   res.d_uf.reset(new UnpackedFloat(
-      symfpu::remainder<BzlaFPTraits>(*res.size(), *d_uf, *fp.unpacked())));
+      symfpu::remainder<SymFpuTraits>(*res.size(), *d_uf, *fp.unpacked())));
   return res;
 }
 
@@ -363,7 +363,7 @@ FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
 {
   FloatingPoint res(*d_size);
   res.d_uf.reset(new UnpackedFloat(
-      symfpu::add<BzlaFPTraits>(*res.size(), rm, *d_uf, *fp.unpacked(), true)));
+      symfpu::add<SymFpuTraits>(*res.size(), rm, *d_uf, *fp.unpacked(), true)));
   return res;
 }
 
@@ -372,7 +372,7 @@ FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
 {
   FloatingPoint res(*d_size);
   res.d_uf.reset(new UnpackedFloat(
-      symfpu::multiply<BzlaFPTraits>(*res.size(), rm, *d_uf, *fp.unpacked())));
+      symfpu::multiply<SymFpuTraits>(*res.size(), rm, *d_uf, *fp.unpacked())));
   return res;
 }
 
@@ -381,7 +381,7 @@ FloatingPoint::fpdiv(const RoundingMode rm, const FloatingPoint &fp) const
 {
   FloatingPoint res(*d_size);
   res.d_uf.reset(new UnpackedFloat(
-      symfpu::divide<BzlaFPTraits>(*res.size(), rm, *d_uf, *fp.unpacked())));
+      symfpu::divide<SymFpuTraits>(*res.size(), rm, *d_uf, *fp.unpacked())));
   return res;
 }
 
@@ -391,7 +391,7 @@ FloatingPoint::fpfma(const RoundingMode rm,
                      const FloatingPoint &fp1) const
 {
   FloatingPoint res(*d_size);
-  res.d_uf.reset(new UnpackedFloat(symfpu::fma<BzlaFPTraits>(
+  res.d_uf.reset(new UnpackedFloat(symfpu::fma<SymFpuTraits>(
       *res.size(), rm, *d_uf, *fp0.unpacked(), *fp1.unpacked())));
   return res;
 }
@@ -717,7 +717,7 @@ FloatingPoint::convert_from_rational_aux(BzlaSortId sort,
   FloatingPoint exact_float = from_unpacked(sign, exp, sig);
 
   FloatingPoint res(sort);
-  res.d_uf.reset(new UnpackedFloat(symfpu::convertFloatToFloat<BzlaFPTraits>(
+  res.d_uf.reset(new UnpackedFloat(symfpu::convertFloatToFloat<SymFpuTraits>(
       exact_format, *res.size(), rm, *exact_float.unpacked())));
 
   bzla_bv_free(mm, exp);

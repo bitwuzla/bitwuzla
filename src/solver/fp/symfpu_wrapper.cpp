@@ -5,75 +5,75 @@
 namespace bzla {
 namespace fp {
 
-/* --- BzlaFPTraits public -------------------------------------------------- */
+/* --- SymFpuTraits public -------------------------------------------------- */
 
 RoundingMode
-BzlaFPTraits::RNE(void)
+SymFpuTraits::RNE(void)
 {
   return RoundingMode::RNE;
 }
 
 RoundingMode
-BzlaFPTraits::RNA(void)
+SymFpuTraits::RNA(void)
 {
   return RoundingMode::RNA;
 }
 
 RoundingMode
-BzlaFPTraits::RTP(void)
+SymFpuTraits::RTP(void)
 {
   return RoundingMode::RTP;
 }
 
 RoundingMode
-BzlaFPTraits::RTN(void)
+SymFpuTraits::RTN(void)
 {
   return RoundingMode::RTN;
 }
 
 RoundingMode
-BzlaFPTraits::RTZ(void)
+SymFpuTraits::RTZ(void)
 {
   return RoundingMode::RTZ;
 }
 
 void
-BzlaFPTraits::precondition(const bool &p)
+SymFpuTraits::precondition(const bool &p)
 {
   assert(p);
   (void) p;
 }
 
 void
-BzlaFPTraits::postcondition(const bool &p)
+SymFpuTraits::postcondition(const bool &p)
 {
   assert(p);
   (void) p;
 }
 
 void
-BzlaFPTraits::invariant(const bool &p)
+SymFpuTraits::invariant(const bool &p)
 {
   assert(p);
   (void) p;
 }
 
-/* --- BzlaFPSymProp -------------------------------------------------------- */
+/* --- SymFpuSymProp -------------------------------------------------------- */
 
-BzlaFPSymProp::BzlaFPSymProp(BzlaNode *node)
+SymFpuSymProp::SymFpuSymProp(BzlaNode *node)
 {
   assert(s_bzla);
   assert(check_node(node));
   d_node = bzla_node_copy(s_bzla, node);
 }
 
-BzlaFPSymProp::BzlaFPSymProp(bool v)
+SymFpuSymProp::SymFpuSymProp(bool v)
 {
   assert(s_bzla);
   d_node = v ? bzla_exp_true(s_bzla) : bzla_exp_false(s_bzla);
 }
 
-BzlaFPSymProp::BzlaFPSymProp(const BzlaFPSymProp &other)
+SymFpuSymProp::SymFpuSymProp(const SymFpuSymProp &other)
 {
   assert(s_bzla);
   assert(other.d_node);
@@ -81,14 +81,14 @@ BzlaFPSymProp::BzlaFPSymProp(const BzlaFPSymProp &other)
   d_node = bzla_node_copy(s_bzla, other.d_node);
 }
 
-BzlaFPSymProp::~BzlaFPSymProp()
+SymFpuSymProp::~SymFpuSymProp()
 {
   assert(s_bzla);
   bzla_node_release(s_bzla, d_node);
 }
 
-BzlaFPSymProp &
-BzlaFPSymProp::operator=(const BzlaFPSymProp &other)
+SymFpuSymProp &
+SymFpuSymProp::operator=(const SymFpuSymProp &other)
 {
   assert(d_node);
   assert(other.d_node);
@@ -100,62 +100,62 @@ BzlaFPSymProp::operator=(const BzlaFPSymProp &other)
   return *this;
 }
 
-BzlaFPSymProp
-BzlaFPSymProp::operator!(void) const
+SymFpuSymProp
+SymFpuSymProp::operator!(void) const
 {
   assert(s_bzla);
   BzlaNode *n       = bzla_exp_bv_not(s_bzla, d_node);
-  BzlaFPSymProp res = BzlaFPSymProp(n);
+  SymFpuSymProp res = SymFpuSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
-BzlaFPSymProp
-BzlaFPSymProp::operator&&(const BzlaFPSymProp &op) const
+SymFpuSymProp
+SymFpuSymProp::operator&&(const SymFpuSymProp &op) const
 {
   assert(s_bzla);
   assert(check_node(op.d_node));
   BzlaNode *n       = bzla_exp_bv_and(s_bzla, d_node, op.d_node);
-  BzlaFPSymProp res = BzlaFPSymProp(n);
+  SymFpuSymProp res = SymFpuSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
-BzlaFPSymProp
-BzlaFPSymProp::operator||(const BzlaFPSymProp &op) const
+SymFpuSymProp
+SymFpuSymProp::operator||(const SymFpuSymProp &op) const
 {
   assert(s_bzla);
   assert(check_node(op.d_node));
   BzlaNode *n       = bzla_exp_bv_or(s_bzla, d_node, op.d_node);
-  BzlaFPSymProp res = BzlaFPSymProp(n);
+  SymFpuSymProp res = SymFpuSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
-BzlaFPSymProp
-BzlaFPSymProp::operator==(const BzlaFPSymProp &op) const
+SymFpuSymProp
+SymFpuSymProp::operator==(const SymFpuSymProp &op) const
 {
   assert(s_bzla);
   assert(check_node(op.d_node));
   BzlaNode *n       = bzla_exp_eq(s_bzla, d_node, op.d_node);
-  BzlaFPSymProp res = BzlaFPSymProp(n);
+  SymFpuSymProp res = SymFpuSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
-BzlaFPSymProp
-BzlaFPSymProp::operator^(const BzlaFPSymProp &op) const
+SymFpuSymProp
+SymFpuSymProp::operator^(const SymFpuSymProp &op) const
 {
   assert(s_bzla);
   assert(check_node(op.d_node));
   BzlaNode *n       = bzla_exp_bv_xor(s_bzla, d_node, op.d_node);
-  BzlaFPSymProp res = BzlaFPSymProp(n);
+  SymFpuSymProp res = SymFpuSymProp(n);
   bzla_node_release(s_bzla, n);
   return res;
 }
 
 bool
-BzlaFPSymProp::check_node(const BzlaNode *node) const
+SymFpuSymProp::check_node(const BzlaNode *node) const
 {
   assert(s_bzla == bzla_node_real_addr(node)->bzla);
   return bzla_sort_is_bv(s_bzla, bzla_node_get_sort_id(node))
@@ -165,7 +165,7 @@ BzlaFPSymProp::check_node(const BzlaNode *node) const
 /* --- BzlaSymRM public ----------------------------------------------------- */
 
 BzlaNode *
-BzlaFPSymRM::init_const(const uint32_t val)
+SymFpuSymRM::init_const(const uint32_t val)
 {
   assert(s_bzla);
   assert(bzla_rm_is_valid(val));
@@ -176,7 +176,7 @@ BzlaFPSymRM::init_const(const uint32_t val)
   return res;
 }
 
-BzlaFPSymRM::BzlaFPSymRM(BzlaNode *node)
+SymFpuSymRM::SymFpuSymRM(BzlaNode *node)
 {
   assert(s_bzla);
   assert(check_node(node));
@@ -199,14 +199,14 @@ BzlaFPSymRM::BzlaFPSymRM(BzlaNode *node)
   }
 }
 
-BzlaFPSymRM::BzlaFPSymRM(const uint32_t val)
+SymFpuSymRM::SymFpuSymRM(const uint32_t val)
 {
   assert(s_bzla);
   d_node = init_const(val);
   assert(check_node(d_node));
 }
 
-BzlaFPSymRM::BzlaFPSymRM(const BzlaFPSymRM &other)
+SymFpuSymRM::SymFpuSymRM(const SymFpuSymRM &other)
 {
   assert(s_bzla);
   assert(other.d_node);
@@ -214,38 +214,38 @@ BzlaFPSymRM::BzlaFPSymRM(const BzlaFPSymRM &other)
   d_node = bzla_node_copy(s_bzla, other.d_node);
 }
 
-BzlaFPSymRM::~BzlaFPSymRM()
+SymFpuSymRM::~SymFpuSymRM()
 {
   assert(s_bzla);
   bzla_node_release(s_bzla, d_node);
 }
 
-BzlaFPSymProp
-BzlaFPSymRM::valid(void) const
+SymFpuSymProp
+SymFpuSymRM::valid(void) const
 {
   assert(d_node);
   BzlaNode *max =
       bzla_exp_bv_unsigned(s_bzla, BZLA_RM_MAX, bzla_node_get_sort_id(d_node));
   BzlaNode *valid = bzla_exp_bv_ult(s_bzla, d_node, max);
-  BzlaFPSymProp res(valid);
+  SymFpuSymProp res(valid);
   bzla_node_release(s_bzla, max);
   bzla_node_release(s_bzla, valid);
   return res;
 }
 
-BzlaFPSymProp
-BzlaFPSymRM::operator==(const BzlaFPSymRM &other) const
+SymFpuSymProp
+SymFpuSymRM::operator==(const SymFpuSymRM &other) const
 {
   assert(d_node);
   assert(other.d_node);
   BzlaNode *eq = bzla_exp_eq(s_bzla, d_node, other.d_node);
-  BzlaFPSymProp res(eq);
+  SymFpuSymProp res(eq);
   bzla_node_release(s_bzla, eq);
   return res;
 }
 
 bool
-BzlaFPSymRM::check_node(const BzlaNode *node) const
+SymFpuSymRM::check_node(const BzlaNode *node) const
 {
   assert(s_bzla);
   assert(node);
@@ -256,73 +256,73 @@ BzlaFPSymRM::check_node(const BzlaNode *node) const
          || bzla_node_is_rm(s_bzla, node);
 }
 
-/* --- BzlaFPSymTraits public ----------------------------------------------- */
+/* --- SymFpuSymTraits public ----------------------------------------------- */
 
-BzlaFPSymRM
-BzlaFPSymTraits::RNE(void)
+SymFpuSymRM
+SymFpuSymTraits::RNE(void)
 {
   return BZLA_RM_RNE;
 }
 
-BzlaFPSymRM
-BzlaFPSymTraits::RNA(void)
+SymFpuSymRM
+SymFpuSymTraits::RNA(void)
 {
   return BZLA_RM_RNA;
 }
 
-BzlaFPSymRM
-BzlaFPSymTraits::RTP(void)
+SymFpuSymRM
+SymFpuSymTraits::RTP(void)
 {
   return BZLA_RM_RTP;
 }
 
-BzlaFPSymRM
-BzlaFPSymTraits::RTN(void)
+SymFpuSymRM
+SymFpuSymTraits::RTN(void)
 {
   return BZLA_RM_RTN;
 }
 
-BzlaFPSymRM
-BzlaFPSymTraits::RTZ(void)
+SymFpuSymRM
+SymFpuSymTraits::RTZ(void)
 {
   return BZLA_RM_RTZ;
 }
 
 void
-BzlaFPSymTraits::precondition(const bool b)
+SymFpuSymTraits::precondition(const bool b)
 {
   assert(b);
   (void) b;
 }
 
 void
-BzlaFPSymTraits::postcondition(const bool b)
+SymFpuSymTraits::postcondition(const bool b)
 {
   assert(b);
   (void) b;
 }
 
 void
-BzlaFPSymTraits::invariant(const bool b)
+SymFpuSymTraits::invariant(const bool b)
 {
   assert(b);
   (void) b;
 }
 
 void
-BzlaFPSymTraits::precondition(const prop &p)
+SymFpuSymTraits::precondition(const prop &p)
 {
   (void) p;
 }
 
 void
-BzlaFPSymTraits::postcondition(const prop &p)
+SymFpuSymTraits::postcondition(const prop &p)
 {
   (void) p;
 }
 
 void
-BzlaFPSymTraits::invariant(const prop &p)
+SymFpuSymTraits::invariant(const prop &p)
 {
   (void) p;
 }
