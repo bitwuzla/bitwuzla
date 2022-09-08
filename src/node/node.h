@@ -51,7 +51,7 @@ class Node
   /**
    * @return The type of this node.
    */
-  const type::Type& get_type() const;
+  const Type& get_type() const;
 
   /**
    * @return True if this node is null.

@@ -4,7 +4,7 @@
 
 #include "type/type_data.h"
 
-namespace bzla::type {
+namespace bzla {
 
 /* --- Type public --------------------------------------------------------- */
 
@@ -65,39 +65,39 @@ bool
 Type::is_bool() const
 {
   assert(d_data != nullptr);
-  return d_data->get_kind() == TypeData::Kind::BOOL;
+  return d_data->get_kind() == type::TypeData::Kind::BOOL;
 }
 
 bool
 Type::is_bv() const
 {
   assert(d_data != nullptr);
-  return d_data->get_kind() == TypeData::Kind::BV;
+  return d_data->get_kind() == type::TypeData::Kind::BV;
 }
 
 bool
 Type::is_fp() const
 {
   assert(d_data != nullptr);
-  return d_data->get_kind() == TypeData::Kind::FP;
+  return d_data->get_kind() == type::TypeData::Kind::FP;
 }
 bool
 Type::is_rm() const
 {
   assert(d_data != nullptr);
-  return d_data->get_kind() == TypeData::Kind::RM;
+  return d_data->get_kind() == type::TypeData::Kind::RM;
 }
 bool
 Type::is_array() const
 {
   assert(d_data != nullptr);
-  return d_data->get_kind() == TypeData::Kind::ARRAY;
+  return d_data->get_kind() == type::TypeData::Kind::ARRAY;
 }
 bool
 Type::is_fun() const
 {
   assert(d_data != nullptr);
-  return d_data->get_kind() == TypeData::Kind::FUN;
+  return d_data->get_kind() == type::TypeData::Kind::FUN;
 }
 
 uint64_t
@@ -169,24 +169,24 @@ Type::operator!=(const Type& other) const
 
 /* --- Type private -------------------------------------------------------- */
 
-Type::Type(TypeData* data) : d_data(data)
+Type::Type(type::TypeData* data) : d_data(data)
 {
   assert(data != nullptr);
   d_data->inc_ref();
 }
 
-}  // namespace bzla::type
+}  // namespace bzla
 
 namespace std {
 
 size_t
-hash<bzla::type::Type>::operator()(const bzla::type::Type& type) const
+hash<bzla::Type>::operator()(const bzla::Type& type) const
 {
   return type.get_id();
 }
 
 size_t
-hash<bzla::type::Type*>::operator()(const bzla::type::Type* type) const
+hash<bzla::Type*>::operator()(const bzla::Type* type) const
 {
   return type->get_id();
 }

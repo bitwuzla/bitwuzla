@@ -36,7 +36,7 @@ class NodeManager
    * @param symbol The symbol of the constant.
    * @return Constant of type `t`.
    */
-  Node mk_const(const type::Type& t, const std::string& symbol = "");
+  Node mk_const(const Type& t, const std::string& symbol = "");
 
   /**
    * Create variable.
@@ -45,7 +45,7 @@ class NodeManager
    * @param symbol The symbol of the variable.
    * @return Variable of type `t`.
    */
-  Node mk_var(const type::Type& t, const std::string& symbol = "");
+  Node mk_var(const Type& t, const std::string& symbol = "");
 
   /**
    * Create Boolean value.
@@ -96,7 +96,7 @@ class NodeManager
   /**
    * @return Boolean type.
    */
-  type::Type mk_bool_type();
+  Type mk_bool_type();
 
   /**
    * Create bit-vector type.
@@ -104,7 +104,7 @@ class NodeManager
    * @param size Size of the bit-vector type.
    * @return Bit-vector type of given size.
    */
-  type::Type mk_bv_type(uint64_t size);
+  Type mk_bv_type(uint64_t size);
 
   /**
    * Create floating-point type.
@@ -113,12 +113,12 @@ class NodeManager
    * @param sig_size Significand size.
    * @return Floating-point type of given format.
    */
-  type::Type mk_fp_type(uint64_t exp_size, uint64_t sig_size);
+  Type mk_fp_type(uint64_t exp_size, uint64_t sig_size);
 
   /**
    * @return Rounding mode type.
    */
-  type::Type mk_rm_type();
+  Type mk_rm_type();
 
   /**
    * Create array type.
@@ -127,7 +127,7 @@ class NodeManager
    * @param element Element type.
    * @return Array type of given index and element type.
    */
-  type::Type mk_array_type(const type::Type& index, const type::Type& elem);
+  Type mk_array_type(const Type& index, const Type& elem);
 
   /**
    * Create function type.
@@ -136,7 +136,7 @@ class NodeManager
    *              type being the last element of the vector.
    * @return Function type of given codmain and domain types.
    */
-  type::Type mk_fun_type(const std::vector<type::Type>& types);
+  Type mk_fun_type(const std::vector<Type>& types);
 
   /** Type checking of children and indices based on kind. */
   std::pair<bool, std::string> check_type(
@@ -179,9 +179,9 @@ class NodeManager
   NodeData* find_or_insert_node(NodeData* lookup);
 
   /** Compute type for a node. */
-  type::Type compute_type(Kind kind,
-                          const std::vector<Node>& children,
-                          const std::vector<uint64_t>& indices = {});
+  Type compute_type(Kind kind,
+                    const std::vector<Node>& children,
+                    const std::vector<uint64_t>& indices = {});
 
   /**
    * Garbage collect node data.

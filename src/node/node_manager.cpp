@@ -9,7 +9,7 @@ namespace bzla::node {
 /* --- NodeManager public -------------------------------------------------- */
 
 Node
-NodeManager::mk_const(const type::Type& t, const std::string& symbol)
+NodeManager::mk_const(const Type& t, const std::string& symbol)
 {
   assert(!t.is_null());
   // TODO: handle symbol
@@ -20,7 +20,7 @@ NodeManager::mk_const(const type::Type& t, const std::string& symbol)
 }
 
 Node
-NodeManager::mk_var(const type::Type& t, const std::string& symbol)
+NodeManager::mk_var(const Type& t, const std::string& symbol)
 {
   assert(!t.is_null());
   // TODO: handle symbol
@@ -107,43 +107,43 @@ NodeManager::mk_node(Kind kind,
   return Node(data);
 }
 
-type::Type
+Type
 NodeManager::mk_bool_type()
 {
   return d_tm.mk_bool_type();
 }
 
-type::Type
+Type
 NodeManager::mk_bv_type(uint64_t size)
 {
   return d_tm.mk_bv_type(size);
 }
 
-type::Type
+Type
 NodeManager::mk_fp_type(uint64_t exp_size, uint64_t sig_size)
 {
   return d_tm.mk_fp_type(exp_size, sig_size);
 }
 
-type::Type
+Type
 NodeManager::mk_rm_type()
 {
   return d_tm.mk_rm_type();
 }
 
-type::Type
-NodeManager::mk_array_type(const type::Type& index, const type::Type& elem)
+Type
+NodeManager::mk_array_type(const Type& index, const Type& elem)
 {
   return d_tm.mk_array_type(index, elem);
 }
 
-type::Type
-NodeManager::mk_fun_type(const std::vector<type::Type>& types)
+Type
+NodeManager::mk_fun_type(const std::vector<Type>& types)
 {
   return d_tm.mk_fun_type(types);
 }
 
-type::Type
+Type
 NodeManager::compute_type(Kind kind,
                           const std::vector<Node>& children,
                           const std::vector<uint64_t>& indices)
@@ -235,7 +235,7 @@ NodeManager::compute_type(Kind kind,
     case Kind::APPLY: return children[0].get_type().get_fun_types().back();
 
     case Kind::LAMBDA: {
-      std::vector<type::Type> types{children[0].get_type()};
+      std::vector<Type> types{children[0].get_type()};
       // Flatten function types
       if (children[1].get_type().is_fun())
       {
@@ -251,7 +251,7 @@ NodeManager::compute_type(Kind kind,
   }
 
   assert(false);
-  return type::Type();
+  return Type();
 }
 
 std::pair<bool, std::string>

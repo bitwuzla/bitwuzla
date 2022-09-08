@@ -6,9 +6,12 @@
 #include <variant>
 #include <vector>
 
-namespace bzla::type {
+namespace bzla {
 
 class Type;
+
+namespace type {
+
 class TypeManager;
 
 class TypeData
@@ -117,5 +120,6 @@ struct TypeDataKeyEqual
   bool operator()(const TypeData* d0, const TypeData* d1) const;
 };
 
-}  // namespace bzla::type
+}  // namespace type
+}  // namespace bzla
 #endif

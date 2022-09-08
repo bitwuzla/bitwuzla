@@ -87,7 +87,7 @@ Node::get_kind() const
   return d_data->get_kind();
 }
 
-const type::Type&
+const Type&
 Node::get_type() const
 {
   assert(!is_null());

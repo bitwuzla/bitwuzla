@@ -61,7 +61,7 @@ class NodeData
   /**
    * @return The node type.
    */
-  const type::Type& get_type() const { return d_type; }
+  const Type& get_type() const { return d_type; }
 
   /**
    * @return True if node data stores children.
@@ -158,7 +158,7 @@ class NodeData
   /** Node kind. */
   Kind d_kind;
   /** Node type. */
-  type::Type d_type;
+  Type d_type;
   /** Number of references. */
   uint32_t d_refs = 0;
 };

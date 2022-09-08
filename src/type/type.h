@@ -4,14 +4,16 @@
 #include <cstdint>
 #include <vector>
 
-namespace bzla::type {
+namespace bzla {
 
+namespace type {
 class TypeData;
 class TypeManager;
+}  // namespace type
 
 class Type
 {
-  friend class TypeManager;
+  friend class type::TypeManager;
 
  public:
   Type() = default;
@@ -109,26 +111,26 @@ class Type
   bool operator!=(const Type& other) const;
 
  private:
-  Type(TypeData* d);
+  Type(type::TypeData* d);
 
   /** Type payload */
-  TypeData* d_data = nullptr;
+  type::TypeData* d_data = nullptr;
 };
 
-}  // namespace bzla::type
+}  // namespace bzla
 
 namespace std {
 
 template <>
-struct hash<bzla::type::Type>
+struct hash<bzla::Type>
 {
-  size_t operator()(const bzla::type::Type& type) const;
+  size_t operator()(const bzla::Type& type) const;
 };
 
 template <>
-struct hash<bzla::type::Type*>
+struct hash<bzla::Type*>
 {
-  size_t operator()(const bzla::type::Type* type) const;
+  size_t operator()(const bzla::Type* type) const;
 };
 
 }  // namespace std

@@ -11,7 +11,7 @@ extern "C" {
 
 namespace bzla::node {
 
-type::Type
+Type
 translate_bzla_sort(NodeManager &nm,
                     Bzla *bzla,
                     BzlaNode *n,
@@ -45,7 +45,7 @@ translate_bzla_sort(NodeManager &nm,
 
   if (bzla_sort_is_fun(bzla, sort_id))
   {
-    std::vector<type::Type> types;
+    std::vector<Type> types;
     auto codomain =
         bzla_sort_get_by_id(bzla, bzla_sort_fun_get_codomain(bzla, sort_id));
     for (size_t i = 0; i < codomain->tuple.num_elements; ++i)
@@ -58,7 +58,7 @@ translate_bzla_sort(NodeManager &nm,
     return nm.mk_fun_type(types);
   }
   assert(false);
-  return type::Type();
+  return Type();
 }
 
 Node
@@ -175,7 +175,7 @@ translate_bzla_node(NodeManager &nm, BzlaNode *node)
           case BZLA_UF_NODE:
           case BZLA_PARAM_NODE:
           case BZLA_VAR_NODE: {
-            type::Type t =
+            Type t =
                 translate_bzla_sort(nm, bzla, cur, bzla_node_get_sort_id(cur));
             if (bzla_node_get_kind(cur) == BZLA_PARAM_NODE)
             {

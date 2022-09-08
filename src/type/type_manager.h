@@ -7,9 +7,11 @@
 
 #include "type/type_data.h"
 
-namespace bzla::type {
+namespace bzla {
 
 class Type;
+
+namespace type {
 
 class TypeManager
 {
@@ -101,6 +103,6 @@ class TypeManager
   std::unordered_set<TypeData*, TypeDataHash, TypeDataKeyEqual> d_unique_types;
 };
 
-}  // namespace bzla::type
-
+}  // namespace type
+}  // namespace bzla
 #endif
