@@ -72,6 +72,14 @@ class NodeManager
   Node mk_value(const fp::RoundingMode value);
 
   /**
+   * Create floating-point value.
+   *
+   * @param value Floating-point value to create.
+   * @return Node representing given floating-point value.
+   */
+  Node mk_value(const fp::FloatingPoint& value);
+
+  /**
    * Create node of kind `kind` with given children and indices.
    *
    * @param kind Node kind.

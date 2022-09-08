@@ -110,6 +110,18 @@ FloatingPoint::FloatingPoint(const FloatingPoint &other)
 
 FloatingPoint::~FloatingPoint() {}
 
+uint64_t
+FloatingPoint::get_exponent_size() const
+{
+  return d_size->exponentWidth();
+}
+
+uint64_t
+FloatingPoint::get_significand_size() const
+{
+  return d_size->significandWidth();
+}
+
 FloatingPointSortInfo *
 FloatingPoint::size() const
 {
@@ -156,6 +168,18 @@ FloatingPoint::compare(const FloatingPoint &fp) const
     return 0;
   }
   return -1;
+}
+
+bool
+FloatingPoint::operator==(const FloatingPoint &other) const
+{
+  return compare(other) == 0;
+}
+
+bool
+FloatingPoint::operator!=(const FloatingPoint &other) const
+{
+  return compare(other) != 0;
 }
 
 UnpackedFloat *

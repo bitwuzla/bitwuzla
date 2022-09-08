@@ -1,6 +1,7 @@
 #include "node/node_manager.h"
 
 #include "bitvector.h"
+#include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
 namespace bzla::node {
@@ -62,6 +63,21 @@ NodeManager::mk_value(const fp::RoundingMode value)
 {
   NodeData* data  = new NodeDataValue(this, value);
   data->d_type    = mk_rm_type();
+  auto found_data = find_or_insert_node(data);
+  if (found_data)
+  {
+    delete data;
+    data = found_data;
+  }
+  return Node(data);
+}
+
+Node
+NodeManager::mk_value(const fp::FloatingPoint& value)
+{
+  NodeData* data = new NodeDataValue(this, value);
+  data->d_type =
+      mk_fp_type(value.get_exponent_size(), value.get_significand_size());
   auto found_data = find_or_insert_node(data);
   if (found_data)
   {

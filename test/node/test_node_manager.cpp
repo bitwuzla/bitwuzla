@@ -1,6 +1,7 @@
 #include "bitvector.h"
 #include "node/node.h"
 #include "node/node_manager.h"
+#include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "test.h"
 
@@ -145,7 +146,10 @@ TEST_F(TestNodeManager, mk_value_rm)
   }
 };
 
-// TODO: mk_value_fp
+TEST_F(TestNodeManager, mk_value_fp)
+{
+  // TODO: after FloatingPoint refactor is done.
+}
 
 TEST_F(TestNodeManager, mk_node)
 {

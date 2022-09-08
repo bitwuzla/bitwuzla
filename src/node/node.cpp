@@ -6,6 +6,7 @@
 
 #include "node/node_data.h"
 #include "node/node_manager.h"
+#include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
 namespace bzla::node {
@@ -168,6 +169,15 @@ Node::get_value() const
   assert(!is_null());
   assert(get_type().is_rm());
   return d_data->get_value<fp::RoundingMode>();
+}
+
+template <>
+const fp::FloatingPoint&
+Node::get_value() const
+{
+  assert(!is_null());
+  assert(get_type().is_fp());
+  return d_data->get_value<fp::FloatingPoint>();
 }
 
 Node::iterator

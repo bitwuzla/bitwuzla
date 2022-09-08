@@ -154,6 +154,11 @@ class FloatingPoint
   /** Destructor. */
   ~FloatingPoint();
 
+  /** @return The exponent size of this floating-point. */
+  uint64_t get_exponent_size() const;
+  /** @return The significand size of this floating-point. */
+  uint64_t get_significand_size() const;
+
   /** @return The size of this floating-point. */
   FloatingPointSortInfo *size() const;
   /** @return The wrapped symFPU unpacked float. */
@@ -174,6 +179,17 @@ class FloatingPoint
    * @return 0 if the floating-points are equal and -1 if they are disequal.
    */
   int32_t compare(const FloatingPoint &fp) const;
+
+  /**
+   * Equality comparison operator.
+   * @param other The floating-point to compare this floating-point to.
+   */
+  bool operator==(const FloatingPoint &other) const;
+  /**
+   * Disequality comparison operator.
+   * @param other The floating-point to compare this floating-point to.
+   */
+  bool operator!=(const FloatingPoint &other) const;
 
   /** @return True if this floating-point represents a zero value. */
   bool is_zero() const;
