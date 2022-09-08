@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <variant>
 #include <vector>
 
 namespace bzla::type {
@@ -88,20 +89,14 @@ class TypeData
   /** Reference count. */
   uint32_t d_refs = 0;
 
-  union
-  {
-    /** Size of bit-vector type. */
-    uint64_t d_bv_size;
-    struct
-    {
-      /** Exponent size of floating-point type. */
-      uint64_t d_fp_exp_size;
-      /** Significand size of floating-point type. */
-      uint64_t d_fp_sig_size;
-    };
-    /** Types for array and function types. */
-    std::vector<Type> d_types;
-  };
+  /**
+   * Variant that either stores the
+   * (1) size of a bit-vector type (for Kind::BV)
+   * (2) exponent and significand size of a floating-point type (for Kind::FP)
+   * (3) types for array and function types (for Kind::ARRAY, Kind::FUN).
+   */
+  std::variant<uint64_t, std::pair<uint64_t, uint64_t>, std::vector<Type>>
+      d_data;
 };
 
 /**

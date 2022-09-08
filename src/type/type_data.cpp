@@ -73,20 +73,18 @@ TypeDataKeyEqual::operator()(const TypeData* d0, const TypeData* d1) const
 /* --- TypeData public ------------------------------------------------------*/
 
 TypeData::TypeData(TypeManager* mgr, Kind kind, const std::vector<Type>& types)
-    : d_mgr(mgr), d_kind(kind), d_types(types)
+    : d_mgr(mgr), d_kind(kind), d_data(types)
 {
 }
 
 TypeData::TypeData(TypeManager* mgr, uint64_t size)
-    : d_mgr(mgr), d_kind(Kind::BV), d_bv_size(size)
+    : d_mgr(mgr), d_kind(Kind::BV), d_data(size)
 {
 }
 
 TypeData::TypeData(TypeManager* mgr, uint64_t exp_size, uint64_t sig_size)
-    : d_mgr(mgr),
-      d_kind(Kind::FP),
-      d_fp_exp_size(exp_size),
-      d_fp_sig_size(sig_size)
+    : d_mgr(mgr), d_kind(Kind::FP), d_data(std::make_pair(exp_size, sig_size))
+
 {
 }
 
@@ -108,28 +106,28 @@ const std::vector<Type>&
 TypeData::get_types() const
 {
   assert(d_kind == Kind::ARRAY || d_kind == Kind::FUN);
-  return d_types;
+  return std::get<std::vector<Type>>(d_data);
 }
 
 uint64_t
 TypeData::get_bv_size() const
 {
   assert(d_kind == Kind::BV);
-  return d_bv_size;
+  return std::get<uint64_t>(d_data);
 }
 
 uint64_t
 TypeData::get_fp_exp_size() const
 {
   assert(d_kind == Kind::FP);
-  return d_fp_exp_size;
+  return std::get<std::pair<uint64_t, uint64_t>>(d_data).first;
 }
 
 uint64_t
 TypeData::get_fp_sig_size() const
 {
   assert(d_kind == Kind::FP);
-  return d_fp_sig_size;
+  return std::get<std::pair<uint64_t, uint64_t>>(d_data).second;
 }
 
 void

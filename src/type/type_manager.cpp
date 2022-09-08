@@ -117,9 +117,10 @@ TypeManager::garbage_collect(TypeData* data)
     auto kind = cur->get_kind();
     if (kind == TypeData::Kind::ARRAY || kind == TypeData::Kind::FUN)
     {
-      for (size_t i = 0, size = cur->get_types().size(); i < size; ++i)
+      auto& types = std::get<std::vector<Type>>(cur->d_data);
+      for (size_t i = 0, size = types.size(); i < size; ++i)
       {
-        Type& t = cur->d_types[i];
+        Type& t = types[i];
         auto d  = t.d_data;
 
         // Manually decrement reference count to not trigger decrement of
