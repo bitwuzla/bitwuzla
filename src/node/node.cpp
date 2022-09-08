@@ -9,7 +9,7 @@
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
-namespace bzla::node {
+namespace bzla {
 
 /* --- Node public --------------------------------------------------------- */
 
@@ -77,12 +77,12 @@ Node::get_id() const
   return 0;
 }
 
-Kind
+node::Kind
 Node::get_kind() const
 {
   if (is_null())
   {
-    return Kind::NULL_NODE;
+    return node::Kind::NULL_NODE;
   }
   return d_data->get_kind();
 }
@@ -202,10 +202,10 @@ Node::end() const
 
 /* --- Node private -------------------------------------------------------- */
 
-Node::Node(NodeData* data) : d_data(data)
+Node::Node(node::NodeData* data) : d_data(data)
 {
   assert(data != nullptr);
   d_data->inc_ref();
 };
 
-}  // namespace bzla::node
+}  // namespace bzla

@@ -18,14 +18,15 @@ class FloatingPoint;
 }
 
 namespace node {
+class NodeData;
+class NodeManager;
+}  // namespace node
 
 /* --- Node ---------------------------------------------------------------- */
 
-class NodeData;
-
 class Node
 {
-  friend class NodeManager;
+  friend class node::NodeManager;
 
  public:
   using iterator = const Node*;
@@ -45,7 +46,7 @@ class Node
   /**
    * @return The kind of this node.
    */
-  Kind get_kind() const;
+  node::Kind get_kind() const;
 
   /**
    * @return The type of this node.
@@ -122,10 +123,10 @@ class Node
   iterator end() const;
 
  private:
-  Node(NodeData* data);
+  Node(node::NodeData* data);
 
   /** Node payload. */
-  NodeData* d_data = nullptr;
+  node::NodeData* d_data = nullptr;
 };
 
 template <>
@@ -137,6 +138,5 @@ const fp::RoundingMode& Node::get_value() const;
 template <>
 const fp::FloatingPoint& Node::get_value() const;
 
-}  // namespace node
 }  // namespace bzla
 #endif
