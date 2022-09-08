@@ -139,4 +139,20 @@ template <>
 const fp::FloatingPoint& Node::get_value() const;
 
 }  // namespace bzla
+
+namespace std {
+
+template <>
+struct hash<bzla::Node>
+{
+  size_t operator()(const bzla::Node& node) const;
+};
+
+template <>
+struct hash<bzla::Node*>
+{
+  size_t operator()(const bzla::Node* node) const;
+};
+
+}  // namespace std
 #endif

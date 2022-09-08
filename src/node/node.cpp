@@ -209,3 +209,19 @@ Node::Node(node::NodeData* data) : d_data(data)
 };
 
 }  // namespace bzla
+
+namespace std {
+
+size_t
+hash<bzla::Node>::operator()(const bzla::Node& node) const
+{
+  return node.get_id();
+}
+
+size_t
+hash<bzla::Node*>::operator()(const bzla::Node* node) const
+{
+  return node->get_id();
+}
+
+}  // namespace std
