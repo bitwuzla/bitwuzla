@@ -8,6 +8,13 @@ namespace bzla::node {
 
 /* --- NodeManager public -------------------------------------------------- */
 
+NodeManager&
+NodeManager::get()
+{
+  thread_local static NodeManager mgr;
+  return mgr;
+}
+
 Node
 NodeManager::mk_const(const Type& t, const std::string& symbol)
 {

@@ -30,6 +30,11 @@ class NodeManager
   /* --- Node interface ---------------------------------------------------- */
 
   /**
+   * Get thread-local node manager singleton.
+   */
+  static NodeManager& get();
+
+  /**
    * Create constant.
    *
    * @param t The type of the constant.
@@ -145,6 +150,16 @@ class NodeManager
       const std::vector<uint64_t>& indices = {});
 
  private:
+  /**
+   * Constructor, copy constructor, copy assignment and destructor are private
+   * since node manager is a thread-local singleton that should always be
+   * aquired via NodeManager::get().
+   */
+  NodeManager()                              = default;
+  ~NodeManager()                             = default;
+  NodeManager(const NodeManager&)            = delete;
+  NodeManager& operator=(const NodeManager&) = delete;
+
   /**
    * Initialize node data.
    *
