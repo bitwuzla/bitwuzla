@@ -90,6 +90,7 @@ AigNodeUniqueTable::erase(const AigNodeData* d)
   size_t h          = hash(d->d_left, d->d_right);
   AigNodeData* cur  = d_buckets[h];
   AigNodeData* prev = nullptr;
+  assert(cur != nullptr);
 
   // Should not happen
   if (cur == nullptr)
@@ -651,13 +652,13 @@ AigManager::garbage_collect(AigNodeData* d)
     visit.pop_back();
     assert(cur->d_refs == 0);
 
-    // Erase node data before we modify children.
-    d_unique_table.erase(cur);
-
     // Decrement reference counts for children of AND nodes
     if (!cur->d_left.is_null())
     {
       assert(!cur->d_right.is_null());
+
+      // Erase node data from unique table before we modify children.
+      d_unique_table.erase(cur);
 
       data = cur->d_left.d_data;
       --data->d_refs;
