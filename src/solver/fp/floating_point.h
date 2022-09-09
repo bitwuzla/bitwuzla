@@ -10,6 +10,7 @@ extern "C" {
 
 #include "bitvector.h"
 #include "solver/fp/rounding_mode.h"
+#include "type/type.h"
 
 namespace symfpu {
 template <class T>
@@ -20,7 +21,7 @@ namespace bzla {
 namespace fp {
 
 class SymFpuTraits;
-class FloatingPointSortInfo;
+class FloatingPointTypeInfo;
 class WordBlaster;
 
 using UnpackedFloat = ::symfpu::unpackedFloat<SymFpuTraits>;
@@ -35,66 +36,66 @@ class FloatingPoint
   /**
    * Convenience helper to split an IEEE-754 bit-vector into its components
    * (sign, exponent, significand).
-   * @param sort The floating-point sort.
+   * @param type The floating-point type.
    * @param bv   The IEEE-754 bit-vector representation of a floating-point.
    * @param sign The output parameter for the sign bit.
    * @param exp  The output parameter for the exponent bit-vector.
    * @param sig  The output parameter for the significand bit-vector.
    */
-  static void ieee_bv_as_bvs(BzlaSortId sort,
+  static void ieee_bv_as_bvs(const Type &type,
                              const BitVector &bv,
                              BitVector &sign,
                              BitVector &exp,
                              BitVector &sig);
   /**
-   * Create a floating-point of given sort converted from the given real
+   * Create a floating-point of given type converted from the given real
    * constant represented as a decimal string w.r.t. to the given rounding
    * mode.
-   * @param sort The sort.
+   * @param type The type.
    * @param rm   The rounding mode.
    * @param real A string representing the real to convert from.
-   * @return A floating-point of given sort converted from the given real.
+   * @return A floating-point of given type converted from the given real.
    */
-  static FloatingPoint from_real(BzlaSortId sort,
+  static FloatingPoint from_real(const Type &type,
                                  const RoundingMode rm,
                                  const std::string &real);
   /**
-   * Create a floating-point of given sort converted from the given rational
+   * Create a floating-point of given type converted from the given rational
    * constant represented as a numerator and denominator decimal string w.r.t.
    * to the given rounding mode.
-   * @param sort The sort.
+   * @param type The type.
    * @param rm  The rounding mode.
    * @param num A string representing the numerator of the rational.
    * @param den A string representing the denominator of the rational.
-   * @return A floating-point of given sort converted from the given rational.
+   * @return A floating-point of given type converted from the given rational.
    */
-  static FloatingPoint from_rational(BzlaSortId sort,
+  static FloatingPoint from_rational(const Type &type,
                                      const RoundingMode rm,
                                      const std::string &num,
                                      const std::string &den);
 
   /**
-   * Create a floating-point of given sort representing zero.
-   * @param sort The sort.
+   * Create a floating-point of given type representing zero.
+   * @param type The type.
    * @param sign False for +zero and true for -zero.
-   * @return A floating-point of given sort representing zero.
+   * @return A floating-point of given type representing zero.
    */
-  static FloatingPoint fpzero(BzlaSortId sort, bool sign);
+  static FloatingPoint fpzero(const Type &type, bool sign);
 
   /**
-   * Create a floating-point of given sort representing infinity.
-   * @param sort The sort.
+   * Create a floating-point of given type representing infinity.
+   * @param type The type.
    * @param sign False for +inf and true for -inf.
-   * @return A floating-point of given sort representing infinity.
+   * @return A floating-point of given type representing infinity.
    */
-  static FloatingPoint fpinf(BzlaSortId sort, bool sign);
+  static FloatingPoint fpinf(const Type &type, bool sign);
 
   /**
-   * Create a floating-point of given sort representing nan.
-   * @param sort The sort.
-   * @return A floating-point of given sort representing nan.
+   * Create a floating-point of given type representing nan.
+   * @param type The type.
+   * @return A floating-point of given type representing nan.
    */
-  static FloatingPoint fpnan(BzlaSortId sort);
+  static FloatingPoint fpnan(const Type &type);
 
   /**
    * Create a floating-point from its IEEE-754 bit-vector representation given
@@ -110,55 +111,55 @@ class FloatingPoint
                             const BitVector &sig);
   /**
    * Constructor.
-   * Create new nullary floating-point of given sort.
-   * @param sort The floating-point sort.
+   * Create new nullary floating-point of given type.
+   * @param type The floating-point type.
    */
-  FloatingPoint(BzlaSortId sort);
+  FloatingPoint(const Type &type);
   /**
    * Constructor.
    * Create new nullary floating-point of given size.
    * @param size The floating-point size.
    */
-  FloatingPoint(const FloatingPointSortInfo &size);
+  FloatingPoint(const FloatingPointTypeInfo &size);
   /**
    * Constructor.
-   * Create new floating-point of given sort, wrapping the given symFPU
+   * Create new floating-point of given type, wrapping the given symFPU
    * unpacked float.
-   * @param sort The floating-point sort.
+   * @param type The floating-point type.
    * @param uf The symFPU unpacked float.
    */
-  FloatingPoint(BzlaSortId sort, const UnpackedFloat &uf);
+  FloatingPoint(const Type &type, const UnpackedFloat &uf);
   /**
    * Constructor.
-   * Create new floating-point of given sort from an IEEE-754 bit-vector.
-   * @param sort The sort.
+   * Create new floating-point of given type from an IEEE-754 bit-vector.
+   * @param type The type.
    * @param bv The IEEE-754 bit-vector representation of the floating-point.
    */
-  FloatingPoint(BzlaSortId sort, const BitVector &bv);
+  FloatingPoint(const Type &type, const BitVector &bv);
   /**
    * Constructor.
-   * Create new floating-point of given sort converted from the given
+   * Create new floating-point of given type converted from the given
    * floating-point constant w.r.t. to the given rounding mode.
-   * @param sort The sort.
+   * @param type The type.
    * @param rm The rounding mode.
    * @param fp The floating-point to convert from.
    */
-  FloatingPoint(BzlaSortId sort,
+  FloatingPoint(const Type &type,
                 const RoundingMode rm,
                 const FloatingPoint &fp);
   /**
    * Constructor.
-   * Create new floating-point of given sort converted from the given
+   * Create new floating-point of given type converted from the given
    * bit-vector constant (interpreted as signed or unsigned machine integer)
    * w.r.t. to the given rounding mode.
-   * @param sort The sort.
+   * @param type The type.
    * @param rm The rounding mode.
    * @param bv The bit-vector to convert from (interpreted as signed if `sign`
    *           is true).
    * @param sign True if `bv` is to be interpreted as signed machine integer,
    *             else unsigned.
    */
-  FloatingPoint(BzlaSortId sort,
+  FloatingPoint(const Type &type,
                 const RoundingMode rm,
                 const BitVector &bv,
                 bool sign);
@@ -174,7 +175,7 @@ class FloatingPoint
   uint64_t get_significand_size() const;
 
   /** @return The size of this floating-point. */
-  FloatingPointSortInfo *size() const;
+  FloatingPointTypeInfo *size() const;
   /** @return The wrapped symFPU unpacked float. */
   UnpackedFloat *unpacked() const;
   /**
@@ -342,28 +343,28 @@ class FloatingPoint
                                      const BitVector &sig);
   /**
    * Helper for constructors from real and rational strings.
-   * @param sort The floating-point sort.
+   * @param type The floating-point type.
    * @param rm   The rounding mode.
    * @param num  The string denoting the numerator.
    * @param den  The string denoting the denominator, nullptr for from real.
    * @return The constructed floating-point.
    */
-  static FloatingPoint convert_from_rational_aux(BzlaSortId sort,
+  static FloatingPoint convert_from_rational_aux(const Type &type,
                                                  const RoundingMode rm,
                                                  const char *num,
                                                  const char *den);
 
   static inline Bzla *s_bzla = nullptr;
-  std::unique_ptr<FloatingPointSortInfo> d_size;
+  std::unique_ptr<FloatingPointTypeInfo> d_size;
   std::unique_ptr<UnpackedFloat> d_uf;
 };
 
 /* -------------------------------------------------------------------------- */
 
 /**
- * Wrapper for floating-point sorts providing the interface required by symFPU.
+ * Wrapper for floating-point types providing the interface required by symFPU.
  */
-class FloatingPointSortInfo
+class FloatingPointTypeInfo
 {
   friend WordBlaster;
 
@@ -372,20 +373,26 @@ class FloatingPointSortInfo
    * Constructor.
    * @param sort The Bitwuzla floating-point sort.
    */
-  FloatingPointSortInfo(const BzlaSortId sort);
+  FloatingPointTypeInfo(const BzlaSortId sort);
+
+  /**
+   * Constructor.
+   * @param type The Bitwuzla floating-point type.
+   */
+  FloatingPointTypeInfo(const Type &type);
   /**
    * Constructor.
    * @param esize The size of the exponent.
    * @param ssize The size of the significand.
    */
-  FloatingPointSortInfo(uint32_t esize, uint32_t ssize);
+  FloatingPointTypeInfo(uint32_t esize, uint32_t ssize);
   /** Copy constructor. */
-  FloatingPointSortInfo(const FloatingPointSortInfo &other);
+  FloatingPointTypeInfo(const FloatingPointTypeInfo &other);
   /** Destructor. */
-  ~FloatingPointSortInfo();
+  ~FloatingPointTypeInfo();
 
-  /** @return The associated floating-point sort. */
-  BzlaSortId get_sort(void) const;
+  /** @return The associated floating-point type. */
+  const Type &get_type(void) const;
 
   /* symFPU interface --------------------------------------------- */
 
@@ -415,8 +422,8 @@ class FloatingPointSortInfo
   uint32_t d_esize;
   /** The size of significand. */
   uint32_t d_ssize;
-  /** The wrapped floating-point sort. */
-  BzlaSortId d_sort;
+  /** The wrapped floating-point type. */
+  Type d_type;
 };
 
 /* -------------------------------------------------------------------------- */

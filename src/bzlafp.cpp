@@ -34,6 +34,7 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
+#include "node/node_manager.h"
 #include "symfpu/core/add.h"
 #include "symfpu/core/classify.h"
 #include "symfpu/core/compare.h"
@@ -131,8 +132,14 @@ bzla_fp_ieee_bv_as_bvs(Bzla *bzla,
 {
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   bzla::BitVector bsign, bexp, bsig;
+  bzla::node::NodeManager &nm = bzla::node::NodeManager::get();
   bzla::fp::FloatingPoint::ieee_bv_as_bvs(
-      fp_sort, *bv->d_bv, bsign, bexp, bsig);
+      nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, fp_sort),
+                    bzla_sort_fp_get_sig_width(bzla, fp_sort)),
+      *bv->d_bv,
+      bsign,
+      bexp,
+      bsig);
   *sign = bzla_bv_new(bzla->mm, bsign.size());
   (*sign)->d_bv.reset(new bzla::BitVector(bsign));
   *exp = bzla_bv_new(bzla->mm, bexp.size());
@@ -291,8 +298,11 @@ bzla_fp_zero(Bzla *bzla, BzlaSortId sort, bool sign)
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
+  bzla::node::NodeManager &nm = bzla::node::NodeManager::get();
+  bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
+                                  bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::fpzero(sort, sign)));
+      new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::fpzero(type, sign)));
   return res;
 }
 
@@ -306,8 +316,11 @@ bzla_fp_inf(Bzla *bzla, BzlaSortId sort, bool sign)
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
+  bzla::node::NodeManager &nm = bzla::node::NodeManager::get();
+  bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
+                                  bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::fpinf(sort, sign)));
+      new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::fpinf(type, sign)));
   return res;
 }
 
@@ -321,8 +334,11 @@ bzla_fp_nan(Bzla *bzla, BzlaSortId sort)
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
+  bzla::node::NodeManager &nm = bzla::node::NodeManager::get();
+  bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
+                                  bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::fpnan(sort)));
+      new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::fpnan(type)));
   return res;
 }
 
@@ -358,7 +374,10 @@ bzla_fp_from_bv(Bzla *bzla, BzlaSortId sort, const BzlaBitVector *bv_const)
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(sort, *bv_const->d_bv));
+  bzla::node::NodeManager &nm = bzla::node::NodeManager::get();
+  bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
+                                  bzla_sort_fp_get_sig_width(bzla, sort));
+  res->d_fp.reset(new bzla::fp::FloatingPoint(type, *bv_const->d_bv));
   return res;
 }
 
@@ -543,8 +562,11 @@ bzla_fp_convert(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
+  bzla::node::NodeManager &nm = bzla::node::NodeManager::get();
+  bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
+                                  bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(sort, bzlarm2rm.at(rm), *fp->d_fp));
+      new bzla::fp::FloatingPoint(type, bzlarm2rm.at(rm), *fp->d_fp));
   return res;
 }
 
@@ -561,8 +583,11 @@ bzla_fp_convert_from_ubv(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
+  bzla::node::NodeManager &nm = bzla::node::NodeManager::get();
+  bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
+                                  bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(sort, bzlarm2rm.at(rm), *bv->d_bv, false));
+      new bzla::fp::FloatingPoint(type, bzlarm2rm.at(rm), *bv->d_bv, false));
   return res;
 }
 
@@ -579,8 +604,11 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
+  bzla::node::NodeManager &nm = bzla::node::NodeManager::get();
+  bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
+                                  bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(sort, bzlarm2rm.at(rm), *bv->d_bv, true));
+      new bzla::fp::FloatingPoint(type, bzlarm2rm.at(rm), *bv->d_bv, true));
   return res;
 }
 
@@ -593,8 +621,11 @@ bzla_fp_convert_from_real(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
+  bzla::node::NodeManager &nm = bzla::node::NodeManager::get();
+  bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
+                                  bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(new bzla::fp::FloatingPoint(
-      bzla::fp::FloatingPoint::from_real(sort, bzlarm2rm.at(rm), real)));
+      bzla::fp::FloatingPoint::from_real(type, bzlarm2rm.at(rm), real)));
   return res;
 }
 
@@ -608,9 +639,12 @@ bzla_fp_convert_from_rational(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
+  bzla::node::NodeManager &nm = bzla::node::NodeManager::get();
+  bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
+                                  bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
       new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::from_rational(
-          sort, bzlarm2rm.at(rm), num, den)));
+          type, bzlarm2rm.at(rm), num, den)));
   return res;
 }
 

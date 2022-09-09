@@ -28,7 +28,7 @@ class WordBlaster;
 /* Glue for SymFPU: concrete.                                                 */
 /* ========================================================================== */
 
-/* Mapping between sorts. */
+/* Mapping between types. */
 template <bool T>
 struct signedToLiteralType;
 template <>
@@ -565,7 +565,7 @@ class SymFpuTraits
   /* The six key types that SymFPU uses. */
   using bwt  = uint32_t;
   using rm   = RoundingMode;
-  using fpt  = FloatingPointSortInfo;
+  using fpt  = FloatingPointTypeInfo;
   using prop = bool;
   using sbv  = SymFpuBV<true>;
   using ubv  = SymFpuBV<false>;
@@ -1386,7 +1386,7 @@ class SymFpuSymTraits
   /* The six key types that SymFPU uses. */
   using bwt  = uint32_t;
   using rm   = SymFpuSymRM;
-  using fpt  = bzla::fp::FloatingPointSortInfo;
+  using fpt  = FloatingPointTypeInfo;
   using prop = SymFpuSymProp;
   using sbv  = SymFpuSymBV<true>;
   using ubv  = SymFpuSymBV<false>;

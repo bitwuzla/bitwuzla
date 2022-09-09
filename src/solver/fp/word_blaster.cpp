@@ -75,7 +75,7 @@ void
 WordBlaster::set_s_bzla(Bzla *bzla)
 {
   FloatingPoint::s_bzla         = bzla;
-  FloatingPointSortInfo::s_bzla = bzla;
+  FloatingPointTypeInfo::s_bzla = bzla;
   SymFpuSymRM::s_bzla           = bzla;
   SymFpuSymProp::s_bzla         = bzla;
   SymFpuSymBV<true>::s_bzla     = bzla;
@@ -250,7 +250,7 @@ WordBlaster::word_blast(BzlaNode *node)
         d_prop_map.emplace(
             bzla_node_copy(d_bzla, cur),
             symfpu::smtlibEqual<SymFpuSymTraits>(
-                FloatingPointSortInfo(bzla_node_get_sort_id(cur->e[0])),
+                FloatingPointTypeInfo(bzla_node_get_sort_id(cur->e[0])),
                 d_unpacked_float_map.at(cur->e[0]),
                 d_unpacked_float_map.at(cur->e[1])));
       }
