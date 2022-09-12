@@ -1,6 +1,10 @@
 #ifndef BZLA_SAT_CMS_H_INCLUDED
 #define BZLA_SAT_CMS_H_INCLUDED
 
+/*------------------------------------------------------------------------*/
+#ifdef BZLA_USE_CMS
+/*------------------------------------------------------------------------*/
+
 #include <cryptominisat5/cryptominisat.h>
 
 #include <memory>
@@ -71,4 +75,8 @@ class CryptoMiniSat : public SatSolver
 };
 
 }  // namespace bzla::sat
+/*------------------------------------------------------------------------*/
+#endif
+/*------------------------------------------------------------------------*/
+
 #endif
