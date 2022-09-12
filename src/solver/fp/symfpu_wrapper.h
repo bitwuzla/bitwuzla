@@ -350,7 +350,7 @@ class SymFpuSymRM
  public:
   /* Constructors. */
   SymFpuSymRM(BzlaNode *node);
-  SymFpuSymRM(const uint32_t val);
+  SymFpuSymRM(const RoundingMode rm);
   SymFpuSymRM(const SymFpuSymRM &other);
   /* Destructor. */
   ~SymFpuSymRM();
@@ -365,7 +365,7 @@ class SymFpuSymRM
 
  private:
   static inline Bzla *s_bzla = nullptr;
-  BzlaNode *init_const(const uint32_t val);
+  BzlaNode *init_const(const RoundingMode rm);
   BzlaNode *d_node;
 };
 

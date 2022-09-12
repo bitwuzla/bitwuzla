@@ -1178,14 +1178,16 @@ template class SymFpuSymBV<false>;
 /* --- SymFpuSymRM public --------------------------------------------------- */
 
 BzlaNode *
-SymFpuSymRM::init_const(const uint32_t val)
+SymFpuSymRM::init_const(const RoundingMode rm)
 {
   assert(s_bzla);
-  assert(bzla_rm_is_valid(val));
+  assert(rm != RoundingMode::NUM_RM);
   BzlaMemMgr *mm    = s_bzla->mm;
-  BzlaBitVector *rm = bzla_bv_uint64_to_bv(mm, val, BZLA_RM_BW);
-  BzlaNode *res     = bzla_exp_bv_const(s_bzla, rm);
-  bzla_bv_free(mm, rm);
+  BitVector rmbv       = BitVector(BZLA_RM_BW, static_cast<uint64_t>(rm));
+  BzlaBitVector *brmbv = bzla_bv_new(s_bzla->mm, rmbv.size());
+  brmbv->d_bv.reset(new bzla::BitVector(rmbv));
+  BzlaNode *res = bzla_exp_bv_const(s_bzla, brmbv);
+  bzla_bv_free(mm, brmbv);
   return res;
 }
 
@@ -1199,7 +1201,30 @@ SymFpuSymRM::SymFpuSymRM(BzlaNode *node)
   }
   else if (bzla_node_is_rm_const(node))
   {
-    d_node = init_const(bzla_node_rm_const_get_rm(node));
+    BzlaRoundingMode brm = bzla_node_rm_const_get_rm(node);
+    RoundingMode rm;
+    if (brm == BZLA_RM_RNA)
+    {
+      rm = bzla::fp::RoundingMode::RNA;
+    }
+    else if (brm == BZLA_RM_RNE)
+    {
+      rm = bzla::fp::RoundingMode::RNE;
+    }
+    else if (brm == BZLA_RM_RTN)
+    {
+      rm = bzla::fp::RoundingMode::RTN;
+    }
+    else if (brm == BZLA_RM_RTP)
+    {
+      rm = bzla::fp::RoundingMode::RTP;
+    }
+    else
+    {
+      assert(brm == BZLA_RM_RTZ);
+      rm = bzla::fp::RoundingMode::RTZ;
+    }
+    d_node = init_const(rm);
   }
   else
   {
@@ -1212,10 +1237,10 @@ SymFpuSymRM::SymFpuSymRM(BzlaNode *node)
   }
 }
 
-SymFpuSymRM::SymFpuSymRM(const uint32_t val)
+SymFpuSymRM::SymFpuSymRM(const RoundingMode rm)
 {
   assert(s_bzla);
-  d_node = init_const(val);
+  d_node = init_const(rm);
   assert(check_node(d_node));
 }
 
@@ -1274,31 +1299,31 @@ SymFpuSymRM::check_node(const BzlaNode *node) const
 SymFpuSymRM
 SymFpuSymTraits::RNE(void)
 {
-  return BZLA_RM_RNE;
+  return RoundingMode::RNE;
 }
 
 SymFpuSymRM
 SymFpuSymTraits::RNA(void)
 {
-  return BZLA_RM_RNA;
+  return RoundingMode::RNA;
 }
 
 SymFpuSymRM
 SymFpuSymTraits::RTP(void)
 {
-  return BZLA_RM_RTP;
+  return RoundingMode::RTP;
 }
 
 SymFpuSymRM
 SymFpuSymTraits::RTN(void)
 {
-  return BZLA_RM_RTN;
+  return RoundingMode::RTN;
 }
 
 SymFpuSymRM
 SymFpuSymTraits::RTZ(void)
 {
-  return BZLA_RM_RTZ;
+  return RoundingMode::RTZ;
 }
 
 void
