@@ -79,15 +79,12 @@ class WordBlaster
   using SymUBVMap =
       std::unordered_map<BzlaNode *, SymFpuSymBV<false>, BzlaNodeHashFunction>;
 
+  struct Internal;
+
   BzlaNode *min_max_uf(BzlaNode *node);
   BzlaNode *sbv_ubv_uf(BzlaNode *node);
 
-  SymFpuSymRMMap d_rm_map;
-  SymFpuSymPropMap d_prop_map;
-  SymUBVMap d_ubv_map;
-  SymSBVMap d_sbv_map;
-  UnpackedFloatMap d_unpacked_float_map;
-  PackedFloatMap d_packed_float_map;
+  std::unique_ptr<Internal> d_internal;
 
   std::unordered_map<BzlaSortId, BzlaNode *, BzlaSortHashFunction>
       d_min_max_uf_map;
