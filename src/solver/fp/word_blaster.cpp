@@ -20,9 +20,8 @@ extern "C" {
 namespace bzla {
 namespace fp {
 
-/* --- WordBlaster public --------------------------------------------------- */
-
-static std::string
+namespace {
+std::string
 create_component_symbol(BzlaNode *node, const char *s)
 {
   assert(node);
@@ -31,6 +30,11 @@ create_component_symbol(BzlaNode *node, const char *s)
   ss << "_fp_var_" << bzla_node_get_id(node) << s << "_component_";
   return ss.str();
 }
+}  // namespace
+
+/* --- WordBlaster public --------------------------------------------------- */
+
+WordBlaster::WordBlaster(Bzla *bzla) : d_bzla(bzla) {}
 
 WordBlaster::~WordBlaster()
 {

@@ -50,7 +50,7 @@ class SymFpuSymProp;
 class WordBlaster
 {
  public:
-  WordBlaster(Bzla *bzla) : d_bzla(bzla) {}
+  WordBlaster(Bzla *bzla);
   ~WordBlaster();
 
   BzlaNode *word_blast(BzlaNode *node);
