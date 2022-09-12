@@ -49,10 +49,6 @@ extern "C" {
 #include "symfpu/core/sqrt.h"
 #include "symfpu/core/unpackedFloat.h"
 
-namespace bzla::fp {
-class WordBlaster;
-}
-
 static std::unordered_map<BzlaRoundingMode, bzla::fp::RoundingMode> bzlarm2rm =
     {
         {BZLA_RM_RNA, bzla::fp::RoundingMode::RNA},
