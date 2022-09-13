@@ -567,12 +567,12 @@ BitVectorDomainGenerator::generate_next(bool random)
 
 BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
     const BitVectorDomain &domain,
-    const BitVector *min_hi,
-    const BitVector *max_hi,
     const BitVector *min_lo,
-    const BitVector *max_lo)
+    const BitVector *max_lo,
+    const BitVector *min_hi,
+    const BitVector *max_hi)
     : BitVectorDomainDualGenerator(
-        domain, nullptr, min_hi, max_hi, min_lo, max_lo)
+        domain, nullptr, min_lo, max_lo, min_hi, max_hi)
 {
 }
 
@@ -588,8 +588,8 @@ BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
   assert(!max_lo || !min_lo || max_lo->compare(*min_lo) >= 0);
   assert(!max_hi || !min_hi || max_hi->compare(*min_hi) >= 0);
   uint64_t size = domain.size();
-  assert(!max_hi || max_hi->compare(BitVector::mk_max_signed(size)) <= 0);
-  assert(!min_lo || min_lo->compare(BitVector::mk_min_signed(size)) >= 0);
+  assert(!max_lo || max_lo->compare(BitVector::mk_max_signed(size)) <= 0);
+  assert(!min_hi || min_hi->compare(BitVector::mk_min_signed(size)) >= 0);
 
   d_gen_lo.reset(nullptr);
   d_gen_hi.reset(nullptr);
@@ -599,8 +599,8 @@ BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
     d_gen_lo.reset(new BitVectorDomainGenerator(
         domain,
         rng,
-        min_lo ? *min_lo : BitVector::mk_min_signed(size),
-        max_lo ? *max_lo : BitVector::mk_ones(size)));
+        min_lo ? *min_lo : BitVector::mk_zero(size),
+        max_lo ? *max_lo : BitVector::mk_max_signed(size)));
     d_gen_cur = d_gen_lo.get();
   }
   if (min_hi || max_hi)
@@ -608,8 +608,8 @@ BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
     d_gen_hi.reset(new BitVectorDomainGenerator(
         domain,
         rng,
-        min_hi ? *min_hi : BitVector::mk_zero(size),
-        max_hi ? *max_hi : BitVector::mk_max_signed(size)));
+        min_hi ? *min_hi : BitVector::mk_min_signed(size),
+        max_hi ? *max_hi : BitVector::mk_ones(size)));
     if (d_gen_cur == nullptr) d_gen_cur = d_gen_hi.get();
   }
 }

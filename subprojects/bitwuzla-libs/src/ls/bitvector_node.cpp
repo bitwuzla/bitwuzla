@@ -292,13 +292,13 @@ BitVectorNode::normalize_bounds(uint64_t size,
 
     if (min_comp_max_signed <= 0)
     {
-      min_hi = min_u ? min_u : &zero;
-      max_hi = max_comp_max_signed <= 0 ? max_u : &max_signed;
+      min_lo = min_u ? min_u : &zero;
+      max_lo = max_comp_max_signed <= 0 ? max_u : &max_signed;
     }
     if (max_comp_max_signed > 0)
     {
-      min_lo = min_comp_max_signed > 0 ? min_u : &min_signed;
-      max_lo = max_u ? max_u : &ones;
+      min_hi = min_comp_max_signed > 0 ? min_u : &min_signed;
+      max_hi = max_u ? max_u : &ones;
     }
   }
   if (min_s || max_s)
@@ -323,90 +323,90 @@ BitVectorNode::normalize_bounds(uint64_t size,
 
     if (!min_u && !max_u)
     {
-      min_lo = mins;
-      max_lo = maxs;
-      min_hi = minu;
-      max_hi = maxu;
+      min_hi = mins;
+      max_hi = maxs;
+      min_lo = minu;
+      max_lo = maxu;
     }
     else
     {
-      if (min_lo)
-      {
-        if (!mins)
-        {
-          min_lo = nullptr;
-          max_lo = nullptr;
-        }
-        else
-        {
-          if (max_lo && mins->compare(*max_lo) > 0)
-          {
-            min_lo = nullptr;
-            max_lo = nullptr;
-          }
-          else if (!min_lo || mins->compare(*min_lo) > 0)
-          {
-            min_lo = mins;
-          }
-        }
-      }
-      if (max_lo)
-      {
-        if (!maxs)
-        {
-          min_lo = nullptr;
-          max_lo = nullptr;
-        }
-        else
-        {
-          if (min_lo && maxs->compare(*min_lo) < 0)
-          {
-            min_lo = nullptr;
-            max_lo = nullptr;
-          }
-          else if (!max_lo || maxs->compare(*max_lo) < 0)
-          {
-            max_lo = maxs;
-          }
-        }
-      }
       if (min_hi)
       {
-        if (!minu)
+        if (!mins)
         {
           min_hi = nullptr;
           max_hi = nullptr;
         }
         else
         {
-          if (max_hi && minu->compare(*max_hi) > 0)
+          if (max_hi && mins->compare(*max_hi) > 0)
           {
             min_hi = nullptr;
             max_hi = nullptr;
           }
-          else if (!min_hi || minu->compare(*min_hi) > 0)
+          else if (!min_hi || mins->compare(*min_hi) > 0)
           {
-            min_hi = minu;
+            min_hi = mins;
           }
         }
       }
       if (max_hi)
       {
-        if (!maxu)
+        if (!maxs)
         {
           min_hi = nullptr;
           max_hi = nullptr;
         }
         else
         {
-          if (min_hi && maxu->compare(*min_hi) < 0)
+          if (min_hi && maxs->compare(*min_hi) < 0)
           {
             min_hi = nullptr;
             max_hi = nullptr;
           }
-          else if (!max_hi || maxu->compare(*max_hi) < 0)
+          else if (!max_hi || maxs->compare(*max_hi) < 0)
           {
-            max_hi = maxu;
+            max_hi = maxs;
+          }
+        }
+      }
+      if (min_lo)
+      {
+        if (!minu)
+        {
+          min_lo = nullptr;
+          max_lo = nullptr;
+        }
+        else
+        {
+          if (max_lo && minu->compare(*max_lo) > 0)
+          {
+            min_lo = nullptr;
+            max_lo = nullptr;
+          }
+          else if (!min_lo || minu->compare(*min_lo) > 0)
+          {
+            min_lo = minu;
+          }
+        }
+      }
+      if (max_lo)
+      {
+        if (!maxu)
+        {
+          min_lo = nullptr;
+          max_lo = nullptr;
+        }
+        else
+        {
+          if (min_lo && maxu->compare(*min_lo) < 0)
+          {
+            min_lo = nullptr;
+            max_lo = nullptr;
+          }
+          else if (!max_lo || maxu->compare(*max_lo) < 0)
+          {
+            max_lo = maxu;
           }
         }
       }

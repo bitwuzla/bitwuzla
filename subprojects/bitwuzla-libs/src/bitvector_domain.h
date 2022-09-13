@@ -343,14 +343,14 @@ class BitVectorDomainDualGenerator
    * Construct generator for values within given ranges (non-overlapping,
    * bounds are inclusive), interpreted as unsigned.
    * @param domain The domain to enumerate values for.
-   * @param min_lo The minimum value to of the lower range (between
+   * @param min_lo The minimum value to of the lower range (between zero and
+   *               the max_signed value).
+   * @param max_lo The maximum value of the lower range (between zero and
+   *               the max_signed value).
+   * @param min_hi The minimum value to of the upper range (between
    *               min_signed and ones).
-   * @param max_lo The maximum value of the lower range (between min_signed
+   * @param max_hi The maximum value of the upper range (between min_signed
    *               and ones).
-   * @param min_hi The minimum value to of the upper range (between zero and
-   *               the max_signed value).
-   * @param max_hi The maximum value of the upper range (between zero and
-   *               the max_signed value).
    */
   BitVectorDomainDualGenerator(const BitVectorDomain &domain,
                                const BitVector *min_lo,
@@ -362,14 +362,14 @@ class BitVectorDomainDualGenerator
    * interpreted as unsigned.
    * @param domain The domain to enumerate values for.
    * @param rng    The associated random number generator.
-   * @param min_lo The minimum value to of the lower range (between
-   *               min_signed and the ones).
-   * @param max_lo The maximum value of the lower range (between min_signed
-   *               and the ones).
-   * @param min_hi The minimum value to of the upper range (between zero and
+   * @param min_lo The minimum value to of the lower range (between zero and
    *               the max_signed value).
-   * @param max_hi The maximum value of the upper range (between zero and
+   * @param max_lo The maximum value of the lower range (between zero and
    *               the max_signed value).
+   * @param min_hi The minimum value to of the upper range (between
+   *               min_signed and ones).
+   * @param max_hi The maximum value of the upper range (between min_signed
+   *               and ones).
    */
   BitVectorDomainDualGenerator(const BitVectorDomain &domain,
                                RNG *rng,
