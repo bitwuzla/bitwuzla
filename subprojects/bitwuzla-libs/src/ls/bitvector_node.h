@@ -29,6 +29,37 @@ class BitVectorNode
    */
   static inline uint32_t s_prob_pick_ess_input = 990;
 
+  /**
+   * Normalize given signed and unsigned bounds into a lower (from min_signed
+   * to ones) and upper (from zero to max_signed) ranges. If the given signed
+   * and unsigned ranges of don't have any intersection, all return parameters
+   * will be null nodes.
+   *
+   * @param size       The bit-width of the bounds.
+   *
+   * @param min_u      The lower unsigned bound.
+   * @param max_u      The upper unsigned bound.
+   * @param min_s      The lower signed bound.
+   * @param max_s      The upper signed bound.
+   *
+   * @param res_min_lo The minimum value of the resulting lower range, null if
+   *                   no values in the lower range are covered.
+   * @param res_max_lo The maximum value of the resulting lower range, null if
+   *                   no values in the lower range are covered.
+   * @param res_min_hi The minimum value of the resulting upper range, null if
+   *                   no values in the upper range are covered.
+   * @param res_max_hi The maximum value of the resulting upper range, null if
+   *                   no values in the upper range are covered.
+   */
+  static void normalize_bounds(uint64_t size,
+                               BitVector* min_u,
+                               BitVector* max_u,
+                               BitVector* min_s,
+                               BitVector* max_s,
+                               BitVector& res_min_lo,
+                               BitVector& res_max_lo,
+                               BitVector& res_min_hi,
+                               BitVector& res_max_hi);
   enum Kind
   {
     ADD,
@@ -266,24 +297,6 @@ class BitVectorNode
    * Reset signed and unsigned bounds.
    */
   void reset_bounds();
-  /**
-   * Normalize signed and unsigned bounds into a lower (from min_signed and
-   * ones) and upper (from zero to max_signed) ranges. If signed and unsigned
-   * ranges of this node don't have any intersection, all return parameters
-   * will be null nodes.
-   * @param min_lo The minimum value of the resulting lower range, null if
-   *               no values in the lower range are covered.
-   * @param max_lo The maximum value of the resulting lower range, null if
-   *               no values in the lower range are covered.
-   * @param min_hi The minimum value of the resulting upper range, null if
-   *               no values in the upper range are covered.
-   * @param max_hi The maximum value of the resulting upper range, null if
-   *               no values in the upper range are covered.
-   */
-  void normalize_bounds(BitVector& res_min_lo,
-                        BitVector& res_max_lo,
-                        BitVector& res_min_hi,
-                        BitVector& res_max_hi);
 
   /** Get the string representation of this node. */
   virtual std::string to_string() const;

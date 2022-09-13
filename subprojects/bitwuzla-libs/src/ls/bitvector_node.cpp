@@ -263,20 +263,25 @@ BitVectorNode::reset_bounds()
 }
 
 void
-BitVectorNode::normalize_bounds(BitVector& res_min_lo,
+BitVectorNode::normalize_bounds(uint64_t size,
+                                BitVector* min_u,
+                                BitVector* max_u,
+                                BitVector* min_s,
+                                BitVector* max_s,
+                                BitVector& res_min_lo,
                                 BitVector& res_max_lo,
                                 BitVector& res_min_hi,
                                 BitVector& res_max_hi)
 {
-  uint64_t bw          = size();
-  BitVector zero       = BitVector::mk_zero(bw);
-  BitVector ones       = BitVector::mk_ones(bw);
-  BitVector min_signed = BitVector::mk_min_signed(bw);
-  BitVector max_signed = BitVector::mk_max_signed(bw);
-  BitVector* min_u     = d_min_u.get();
-  BitVector* max_u     = d_max_u.get();
-  BitVector* min_s     = d_min_s.get();
-  BitVector* max_s     = d_max_s.get();
+  assert(!min_u || min_u->size() == size);
+  assert(!max_u || max_u->size() == size);
+  assert(!min_s || min_s->size() == size);
+  assert(!max_s || max_s->size() == size);
+
+  BitVector zero       = BitVector::mk_zero(size);
+  BitVector ones       = BitVector::mk_ones(size);
+  BitVector min_signed = BitVector::mk_min_signed(size);
+  BitVector max_signed = BitVector::mk_max_signed(size);
   BitVector *min_lo = nullptr, *max_lo = nullptr;
   BitVector *min_hi = nullptr, *max_hi = nullptr;
 
@@ -706,7 +711,15 @@ BitVectorAnd::is_invertible(const BitVector& t,
   if (res && (min_u || max_u || min_s || max_s))
   {
     BitVector min_lo, max_lo, min_hi, max_hi;
-    op_x->normalize_bounds(min_lo, max_lo, min_hi, max_hi);
+    BitVectorNode::normalize_bounds(op_x->size(),
+                                    op_x->min_u(),
+                                    op_x->max_u(),
+                                    op_x->min_s(),
+                                    op_x->max_s(),
+                                    min_lo,
+                                    max_lo,
+                                    min_hi,
+                                    max_hi);
 
     BitVector lo = x.lo().bvor(t);
     BitVector hi = x.hi().bvand(s.bvxnor(t));
@@ -3593,6 +3606,7 @@ BitVectorUlt::compute_min_max_bounds(
     const BitVector& s, bool t, uint32_t pos_x, BitVector& min, BitVector& max)
 {
   uint64_t size = s.size();
+
   BitVector *min_u, *max_u;
   if (pos_x == 0)
   {
