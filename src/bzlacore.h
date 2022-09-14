@@ -141,10 +141,6 @@ struct Bzla
   /* Number of push/pop calls (used for unique symbol prefixes) */
   uint32_t num_push_pop;
 
-#ifndef NDEBUG
-  Bzla *clone; /* shadow clone (debugging only) */
-#endif
-
   FILE *apitrace;
   int8_t close_apitrace;
 

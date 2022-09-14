@@ -1172,10 +1172,6 @@ clone_aux_bzla(Bzla *bzla,
 #endif
 
   clone->word_blaster = bzla_fp_word_blaster_clone(bzla, clone, emap);
-
-#ifndef NDEBUG
-  clone->clone = NULL;
-#endif
   clone->close_apitrace = 0;
 
   if (exp_map)
