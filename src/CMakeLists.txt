@@ -83,14 +83,17 @@ set(libbitwuzla_src_files
   sat/bzlacadical.cpp
   sat/bzlacms.cpp
   sat/bzlalgl.c
-  sat/bzlakissat.cpp
   sat/bzlagimsatul.c
+  sat/bzlakissat.cpp
   sat/cadical.cpp
   sat/cryptominisat.cpp
   sat/kissat.cpp
+  solver/bv/bv_solver.cpp
   solver/fp/floating_point.cpp
   solver/fp/symfpu_wrapper.cpp
   solver/fp/word_blaster.cpp
+  solver/solver.cpp
+  solving_context.cpp
   utils/bzlahashint.c
   utils/bzlahashptr.c
   utils/bzlamem.c
