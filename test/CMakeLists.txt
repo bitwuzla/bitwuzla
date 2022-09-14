@@ -1422,6 +1422,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(node)
 add_subdirectory(option)
 add_subdirectory(type)
+add_subdirectory(solver)
 
 if(PYTHON)
   add_subdirectory(python)
