@@ -12,7 +12,6 @@
 
 #include <math.h>
 
-#include "bzlaclone.h"
 #include "bzlacore.h"
 #include "utils/bzlahashint.h"
 #include "utils/bzlahashptr.h"
@@ -1080,31 +1079,6 @@ DONE:
 
   aprop->time.sat += bzla_util_time_stamp() - start;
   return sat_result;
-}
-
-BzlaAIGProp *
-bzla_aigprop_clone_aigprop(BzlaAIGMgr *clone, BzlaAIGProp *aprop)
-{
-  assert(clone);
-
-  BzlaAIGProp *res;
-  BzlaMemMgr *mm;
-
-  if (!aprop) return 0;
-
-  mm = bzla_mem_mgr_new();
-  BZLA_CNEW(mm, res);
-  memcpy(res, aprop, sizeof(BzlaAIGProp));
-  res->mm   = mm;
-  res->rng  = bzla_rng_clone(aprop->rng, mm);
-  res->amgr = clone;
-  res->unsatroots =
-      bzla_hashint_map_clone(mm, aprop->unsatroots, bzla_clone_data_as_int, 0);
-  res->score =
-      bzla_hashint_map_clone(mm, aprop->score, bzla_clone_data_as_dbl, 0);
-  res->model =
-      bzla_hashint_map_clone(mm, aprop->model, bzla_clone_data_as_int, 0);
-  return res;
 }
 
 BzlaAIGProp *

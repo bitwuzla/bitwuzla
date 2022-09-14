@@ -40,7 +40,6 @@ struct BzlaAIGVecMgr
 /*------------------------------------------------------------------------*/
 
 BzlaAIGVecMgr *bzla_aigvec_mgr_new(Bzla *bzla);
-BzlaAIGVecMgr *bzla_aigvec_mgr_clone(Bzla *bzla, BzlaAIGVecMgr *avmgr);
 void bzla_aigvec_mgr_delete(BzlaAIGVecMgr *avmgr);
 
 BzlaAIGMgr *bzla_aigvec_get_aig_mgr(const BzlaAIGVecMgr *avmgr);
@@ -191,12 +190,6 @@ BzlaAIGVec *bzla_aigvec_cond(BzlaAIGVecMgr *avmgr,
  * width(result) = width(av)
  */
 BzlaAIGVec *bzla_aigvec_copy(BzlaAIGVecMgr *avmgr, BzlaAIGVec *av);
-
-/**
- * Clone the given AIG vector.
- * All aigs referenced must already be cloned.
- */
-BzlaAIGVec *bzla_aigvec_clone(BzlaAIGVec *av, BzlaAIGVecMgr *avmgr);
 
 /*i* Translate every AIG of the given AIG vector into SAT in both phases.  */
 void bzla_aigvec_to_sat_tseitin(BzlaAIGVecMgr *avmgr, BzlaAIGVec *av);

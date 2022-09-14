@@ -13,7 +13,6 @@
 #include <math.h>
 
 #include "bzlabv.h"
-#include "bzlaclone.h"
 #include "bzlacore.h"
 #include "bzladbg.h"
 #include "bzlalog.h"
@@ -423,6 +422,114 @@ cmp_sls_moves_qsort(const void *move1, const void *move2)
     }                                                                        \
   } while (0)
 
+typedef void (*BzlaCloneHashTableData)(BzlaMemMgr *mm,
+                                       const void *map,
+                                       BzlaHashTableData *data,
+                                       BzlaHashTableData *cloned_data);
+
+static BzlaIntHashTable *
+clone_hashint_table(BzlaMemMgr *mm, BzlaIntHashTable *table)
+{
+  assert(mm);
+
+  BzlaIntHashTable *res;
+
+  if (!table) return NULL;
+
+  res = bzla_hashint_table_new(mm);
+  while (res->size < table->size) bzla_hashint_table_resize(res);
+  assert(res->size == table->size);
+  memcpy(res->keys, table->keys, table->size * sizeof(*table->keys));
+  memcpy(
+      res->hop_info, table->hop_info, table->size * sizeof(*table->hop_info));
+  res->count = table->count;
+  return res;
+}
+
+static BzlaIntHashTable *
+clone_hashint_map(BzlaMemMgr *mm,
+                  BzlaIntHashTable *table,
+                  BzlaCloneHashTableData cdata,
+                  const void *data_map)
+{
+  assert(mm);
+
+  size_t i;
+  BzlaIntHashTable *res;
+
+  if (!table) return NULL;
+
+  res = clone_hashint_table(mm, table);
+  BZLA_CNEWN(mm, res->data, res->size);
+  if (cdata)
+  {
+    for (i = 0; i < res->size; i++)
+    {
+      if (!table->keys[i]) continue;
+      cdata(mm, data_map, &table->data[i], &res->data[i]);
+    }
+  }
+  else /* as_ptr does not have to be cloned */
+  {
+    memcpy(res->data, table->data, table->size * sizeof(*table->data));
+  }
+
+  assert(table->count == res->count);
+
+  return res;
+}
+
+void
+clone_data_as_bv_ptr(BzlaMemMgr *mm,
+                     const void *map,
+                     BzlaHashTableData *data,
+                     BzlaHashTableData *cloned_data)
+{
+  assert(mm);
+  assert(data);
+  assert(cloned_data);
+
+  (void) map;
+  cloned_data->as_ptr = bzla_bv_copy(mm, (BzlaBitVector *) data->as_ptr);
+}
+
+void
+clone_data_as_dbl(BzlaMemMgr *mm,
+                  const void *map,
+                  BzlaHashTableData *data,
+                  BzlaHashTableData *cloned_data)
+{
+  assert(data);
+  assert(cloned_data);
+
+  (void) mm;
+  (void) map;
+
+  cloned_data->as_dbl = data->as_dbl;
+}
+
+static BzlaIntHashTable *
+clone_bv_model(Bzla *bzla, BzlaIntHashTable *bv_model, bool inc_ref_cnt)
+{
+  assert(bzla);
+  assert(bv_model);
+
+  BzlaIntHashTable *res;
+  BzlaIntHashTableIterator it;
+  BzlaNode *exp;
+
+  res = clone_hashint_map(bzla->mm, bv_model, clone_data_as_bv_ptr, 0);
+
+  bzla_iter_hashint_init(&it, res);
+  while (bzla_iter_hashint_has_next(&it))
+  {
+    exp = bzla_node_get_by_id(bzla, bzla_iter_hashint_next(&it));
+    assert(exp);
+    if (inc_ref_cnt) bzla_node_copy(bzla, exp);
+  }
+  return res;
+}
+
 static inline bool
 select_inc_dec_not_move(Bzla *bzla,
                         BzlaBitVector *(*fun)(BzlaMemMgr *,
@@ -456,9 +563,8 @@ select_inc_dec_not_move(Bzla *bzla,
     mk = BZLA_SLS_MOVE_NOT;
   }
 
-  bv_model = bzla_model_clone_bv(bzla, bzla->bv_model, true);
-  score =
-      bzla_hashint_map_clone(bzla->mm, slv->score, bzla_clone_data_as_dbl, 0);
+  bv_model = clone_bv_model(bzla, bzla->bv_model, true);
+  score    = clone_hashint_map(bzla->mm, slv->score, clone_data_as_dbl, 0);
 
   cans = bzla_hashint_map_new(bzla->mm);
 
@@ -515,9 +621,8 @@ select_flip_move(Bzla *bzla, BzlaNodePtrStack *candidates, int32_t gw)
 
   mk = BZLA_SLS_MOVE_FLIP;
 
-  bv_model = bzla_model_clone_bv(bzla, bzla->bv_model, true);
-  score =
-      bzla_hashint_map_clone(bzla->mm, slv->score, bzla_clone_data_as_dbl, 0);
+  bv_model = clone_bv_model(bzla, bzla->bv_model, true);
+  score    = clone_hashint_map(bzla->mm, slv->score, clone_data_as_dbl, 0);
 
   for (pos = 0, n_endpos = 0; n_endpos < BZLA_COUNT_STACK(*candidates); pos++)
   {
@@ -580,9 +685,8 @@ select_flip_range_move(Bzla *bzla, BzlaNodePtrStack *candidates, int32_t gw)
 
   mk = BZLA_SLS_MOVE_FLIP_RANGE;
 
-  bv_model = bzla_model_clone_bv(bzla, bzla->bv_model, true);
-  score =
-      bzla_hashint_map_clone(bzla->mm, slv->score, bzla_clone_data_as_dbl, 0);
+  bv_model = clone_bv_model(bzla, bzla->bv_model, true);
+  score    = clone_hashint_map(bzla->mm, slv->score, clone_data_as_dbl, 0);
 
   for (up = 1, n_endpos = 0; n_endpos < BZLA_COUNT_STACK(*candidates);
        up = 2 * up + 1)
@@ -661,9 +765,8 @@ select_flip_segment_move(Bzla *bzla, BzlaNodePtrStack *candidates, int32_t gw)
 
   mk = BZLA_SLS_MOVE_FLIP_SEGMENT;
 
-  bv_model = bzla_model_clone_bv(bzla, bzla->bv_model, true);
-  score =
-      bzla_hashint_map_clone(bzla->mm, slv->score, bzla_clone_data_as_dbl, 0);
+  bv_model = clone_bv_model(bzla, bzla->bv_model, true);
+  score    = clone_hashint_map(bzla->mm, slv->score, clone_data_as_dbl, 0);
 
   for (seg = 2; seg <= 8; seg <<= 1)
   {
@@ -749,9 +852,8 @@ select_rand_range_move(Bzla *bzla, BzlaNodePtrStack *candidates, int32_t gw)
 
   mk = BZLA_SLS_MOVE_RAND;
 
-  bv_model = bzla_model_clone_bv(bzla, bzla->bv_model, true);
-  score =
-      bzla_hashint_map_clone(bzla->mm, slv->score, bzla_clone_data_as_dbl, 0);
+  bv_model = clone_bv_model(bzla, bzla->bv_model, true);
+  score    = clone_hashint_map(bzla->mm, slv->score, clone_data_as_dbl, 0);
 
   for (up = 1, n_endpos = 0; n_endpos < BZLA_COUNT_STACK(*candidates);
        up = 2 * up + 1)

@@ -24,14 +24,6 @@
 typedef struct BzlaPtrHashTable BzlaPtrHashTable;
 typedef struct BzlaPtrHashBucket BzlaPtrHashBucket;
 
-typedef void *(*BzlaCloneKeyPtr)(BzlaMemMgr *mm,
-                                 const void *map,
-                                 const void *key);
-typedef void (*BzlaCloneDataPtr)(BzlaMemMgr *mm,
-                                 const void *map,
-                                 BzlaHashTableData *data,
-                                 BzlaHashTableData *cloned_data);
-
 struct BzlaPtrHashBucket
 {
   /* public:
@@ -66,17 +58,6 @@ struct BzlaPtrHashTable
 /*------------------------------------------------------------------------*/
 
 BzlaPtrHashTable *bzla_hashptr_table_new(BzlaMemMgr *, BzlaHashPtr, BzlaCmpPtr);
-
-/* Clone hash table. 'ckey' is a function mapping key to cloned key,
- * 'cdata' is a function mapping data to cloned data (note: as_ptr vs.
- * as_int!). 'key_map' represents a map mapping key to cloned key values.
- * 'data_map' represents a map mapping data to cloned data values. */
-BzlaPtrHashTable *bzla_hashptr_table_clone(BzlaMemMgr *mm,
-                                           BzlaPtrHashTable *table,
-                                           BzlaCloneKeyPtr ckey,
-                                           BzlaCloneDataPtr cdata,
-                                           const void *key_map,
-                                           const void *data_map);
 
 void bzla_hashptr_table_delete(BzlaPtrHashTable *p2iht);
 

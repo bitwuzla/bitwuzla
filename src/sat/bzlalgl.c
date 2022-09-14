@@ -263,31 +263,6 @@ fixed(BzlaSATMgr *smgr, int32_t lit)
   return lglfixed(blgl->lgl, lit);
 }
 
-static void *
-clone(Bzla *bzla, BzlaSATMgr *smgr)
-{
-  assert(smgr);
-
-  BzlaLGL *res, *blgl;
-  BzlaMemMgr *mm;
-
-  mm   = bzla->mm;
-  blgl = smgr->solver;
-
-  /* not initialized yet */
-  if (!blgl) return 0;
-
-  BZLA_CNEW(mm, res);
-  res->nforked = blgl->nforked;
-  res->blimit  = blgl->blimit;
-  res->lgl     = lglmclone(blgl->lgl,
-                       mm,
-                       (lglalloc) bzla_mem_sat_malloc,
-                       (lglrealloc) bzla_mem_sat_realloc,
-                       (lgldealloc) bzla_mem_sat_free);
-  return res;
-}
-
 static void
 setterm(BzlaSATMgr *smgr)
 {
@@ -327,7 +302,6 @@ bzla_sat_enable_lingeling(BzlaSATMgr *smgr)
   smgr->api.set_output       = set_output;
   smgr->api.set_prefix       = set_prefix;
   smgr->api.stats            = stats;
-  smgr->api.clone            = clone;
   smgr->api.setterm          = setterm;
   return true;
 }

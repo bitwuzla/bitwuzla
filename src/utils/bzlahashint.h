@@ -44,6 +44,8 @@ void bzla_hashint_table_delete(BzlaIntHashTable *t);
 /** Returns the size of the BzlaIntHashTable in Byte. */
 size_t bzla_hashint_table_size(BzlaIntHashTable *t);
 
+void bzla_hashint_table_resize(BzlaIntHashTable *t);
+
 /**
  * Add 'key' to the hash table and return the position at which 'key' is
  * stored in the keys array.
@@ -72,10 +74,6 @@ size_t bzla_hashint_table_remove(BzlaIntHashTable *t, int32_t key);
  * 'size' of the hash table if 'key' could not be found.
  */
 size_t bzla_hashint_table_get_pos(BzlaIntHashTable *t, int32_t key);
-
-/** Clone int hash table. */
-BzlaIntHashTable *bzla_hashint_table_clone(BzlaMemMgr *mm,
-                                           BzlaIntHashTable *table);
 
 /*----------------------------------------------------------------------------*/
 /* hash map                                                                   */
@@ -110,22 +108,6 @@ BzlaHashTableData *bzla_hashint_map_get(BzlaIntHashTable *t, int32_t key);
  * keys, hop_info and mapped data are cleared (set to 0).
  */
 void bzla_hashint_map_clear(BzlaIntHashTable *t);
-
-/**
- * Clone int hash map.
- *
- * mm      : The memory manager of the clone.
- * table   : The int hash map to clone.
- * cdata   : The function for cloning the mapped data.
- * data_map: The (optional) map for cloning the mapped data (maps data items
- *           to be cloned to cloned data items, e.g., expressions).
- *
- * Returns the cloned int hash map.
- */
-BzlaIntHashTable *bzla_hashint_map_clone(BzlaMemMgr *mm,
-                                         BzlaIntHashTable *table,
-                                         BzlaCloneHashTableData cdata,
-                                         const void *data_map);
 
 /*----------------------------------------------------------------------------*/
 /* iterators                                                                  */

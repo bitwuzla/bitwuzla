@@ -164,7 +164,6 @@ bzla_aig_get_right_child(BzlaAIGMgr *amgr, const BzlaAIG *aig)
 
 /*------------------------------------------------------------------------*/
 BzlaAIGMgr *bzla_aig_mgr_new(Bzla *bzla);
-BzlaAIGMgr *bzla_aig_mgr_clone(Bzla *bzla, BzlaAIGMgr *amgr);
 void bzla_aig_mgr_delete(BzlaAIGMgr *amgr);
 
 BzlaSATMgr *bzla_aig_get_sat_mgr(const BzlaAIGMgr *amgr);

@@ -70,48 +70,6 @@ bzla_hashptr_table_new(BzlaMemMgr *mm, BzlaHashPtr hash, BzlaCmpPtr cmp)
   return res;
 }
 
-BzlaPtrHashTable *
-bzla_hashptr_table_clone(BzlaMemMgr *mm,
-                         BzlaPtrHashTable *table,
-                         BzlaCloneKeyPtr ckey,
-                         BzlaCloneDataPtr cdata,
-                         const void *key_map,
-                         const void *data_map)
-{
-  assert(mm);
-  assert(ckey);
-
-  BzlaPtrHashTable *res;
-  BzlaPtrHashTableIterator it;
-  BzlaPtrHashBucket *b, *cloned_b;
-  void *key, *cloned_key;
-
-  if (!table) return NULL;
-
-  res = bzla_hashptr_table_new(mm, table->hash, table->cmp);
-  while (res->size < table->size) bzla_enlarge_ptr_hash_table(res);
-  assert(res->size == table->size);
-
-  bzla_iter_hashptr_init(&it, table);
-  while (bzla_iter_hashptr_has_next(&it))
-  {
-    b          = it.bucket;
-    key        = bzla_iter_hashptr_next(&it);
-    cloned_key = ckey(mm, key_map, key);
-    assert(cloned_key);
-    cloned_b            = bzla_hashptr_table_add(res, cloned_key);
-    cloned_b->data.flag = b->data.flag;
-    if (!cdata)
-      assert(b->data.as_ptr == 0);
-    else
-      cdata(mm, data_map, &b->data, &cloned_b->data);
-  }
-
-  assert(table->count == res->count);
-
-  return res;
-}
-
 void
 bzla_hashptr_table_delete(BzlaPtrHashTable *p2iht)
 {

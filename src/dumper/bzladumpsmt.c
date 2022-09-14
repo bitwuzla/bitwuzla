@@ -8,19 +8,16 @@
  * See COPYING for more information on using this software.
  */
 
+#include "bzladumpsmt.h"
+
+#include <ctype.h>
+#include <limits.h>
+
 #include "bzlacore.h"
 #include "bzlaexit.h"
 #include "bzlaexp.h"
 #include "bzlasort.h"
 #include "utils/bzlahashint.h"
-#include "utils/bzlahashptr.h"
-#ifndef NDEBUG
-#include "bzlaclone.h"
-#endif
-#include <ctype.h>
-#include <limits.h>
-
-#include "bzladumpsmt.h"
 #include "utils/bzlahashptr.h"
 #include "utils/bzlanodeiter.h"
 

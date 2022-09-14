@@ -11,7 +11,6 @@
 #include "bzlamodel.h"
 
 #include "bzlabeta.h"
-#include "bzlaclone.h"
 #include "bzladbg.h"
 #include "bzlalog.h"
 #include "bzlarm.h"
@@ -61,31 +60,6 @@ bzla_model_init_bv(Bzla *bzla, BzlaIntHashTable **bv_model)
   if (*bv_model) bzla_model_delete_bv(bzla, bv_model);
 
   *bv_model = bzla_hashint_map_new(bzla->mm);
-}
-
-/*------------------------------------------------------------------------*/
-
-BzlaIntHashTable *
-bzla_model_clone_bv(Bzla *bzla, BzlaIntHashTable *bv_model, bool inc_ref_cnt)
-{
-  assert(bzla);
-  assert(bv_model);
-
-  BzlaIntHashTable *res;
-  BzlaIntHashTableIterator it;
-  BzlaNode *exp;
-
-  res =
-      bzla_hashint_map_clone(bzla->mm, bv_model, bzla_clone_data_as_bv_ptr, 0);
-
-  bzla_iter_hashint_init(&it, res);
-  while (bzla_iter_hashint_has_next(&it))
-  {
-    exp = bzla_node_get_by_id(bzla, bzla_iter_hashint_next(&it));
-    assert(exp);
-    if (inc_ref_cnt) bzla_node_copy(bzla, exp);
-  }
-  return res;
 }
 
 /*------------------------------------------------------------------------*/
@@ -920,31 +894,6 @@ bzla_model_init_fun(Bzla *bzla, BzlaIntHashTable **fun_model)
   if (*fun_model) delete_fun_model(bzla, fun_model);
 
   *fun_model = bzla_hashint_map_new(bzla->mm);
-}
-
-/*------------------------------------------------------------------------*/
-
-BzlaIntHashTable *
-bzla_model_clone_fun(Bzla *bzla, BzlaIntHashTable *fun_model, bool inc_ref_cnt)
-{
-  assert(bzla);
-  assert(fun_model);
-
-  BzlaIntHashTable *res;
-  BzlaIntHashTableIterator it;
-  BzlaNode *exp;
-
-  res = bzla_hashint_map_clone(
-      bzla->mm, fun_model, bzla_clone_data_as_bv_ptr_htable, 0);
-
-  bzla_iter_hashint_init(&it, res);
-  while (bzla_iter_hashint_has_next(&it))
-  {
-    exp = bzla_node_get_by_id(bzla, bzla_iter_hashint_next(&it));
-    assert(exp);
-    if (inc_ref_cnt) bzla_node_copy(bzla, exp);
-  }
-  return res;
 }
 
 /*------------------------------------------------------------------------*/

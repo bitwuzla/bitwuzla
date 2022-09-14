@@ -58,8 +58,6 @@ class WordBlaster
   void get_introduced_ufs(std::vector<BzlaNode *> &ufs);
   void add_additional_assertions();
 
-  WordBlaster *clone(Bzla *cbzla, BzlaNodeMap *exp_map);
-
   Bzla *get_bzla() { return d_bzla; }
 
   static void set_s_bzla(Bzla *bzla);

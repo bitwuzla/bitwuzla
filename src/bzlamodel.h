@@ -47,15 +47,6 @@ void bzla_model_init_fun(Bzla* bzla, BzlaIntHashTable** fun_model);
 
 /*------------------------------------------------------------------------*/
 
-BzlaIntHashTable* bzla_model_clone_bv(Bzla* bzla,
-                                      BzlaIntHashTable* bv_model,
-                                      bool inc_ref_cnt);
-BzlaIntHashTable* bzla_model_clone_fun(Bzla* bzla,
-                                       BzlaIntHashTable* fun_model,
-                                       bool inc_ref_cnt);
-
-/*------------------------------------------------------------------------*/
-
 const BzlaBitVector* bzla_model_get_bv(Bzla* bzla, BzlaNode* exp);
 const BzlaBitVector* bzla_model_get_bv_aux(Bzla* bzla,
                                            BzlaIntHashTable* bv_model,

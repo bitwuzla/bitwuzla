@@ -179,8 +179,8 @@ add(BzlaIntHashTable *t, int32_t key)
   return pos;
 }
 
-static void
-resize(BzlaIntHashTable *t)
+void
+bzla_hashint_table_resize(BzlaIntHashTable *t)
 {
 #ifndef NDEBUG
   size_t old_count;
@@ -275,7 +275,7 @@ bzla_hashint_table_add(BzlaIntHashTable *t, int32_t key)
    * we need to resize 't'. */
   while (pos == t->size)  // TODO: loop may be obsolete
   {
-    resize(t);
+    bzla_hashint_table_resize(t);
     pos = add(t, key);
   }
   return pos;
@@ -332,25 +332,6 @@ bzla_hashint_table_get_pos(BzlaIntHashTable *t, int32_t key)
     if (keys[i] == key) return i;
   }
   return size;
-}
-
-BzlaIntHashTable *
-bzla_hashint_table_clone(BzlaMemMgr *mm, BzlaIntHashTable *table)
-{
-  assert(mm);
-
-  BzlaIntHashTable *res;
-
-  if (!table) return NULL;
-
-  res = bzla_hashint_table_new(mm);
-  while (res->size < table->size) resize(res);
-  assert(res->size == table->size);
-  memcpy(res->keys, table->keys, table->size * sizeof(*table->keys));
-  memcpy(
-      res->hop_info, table->hop_info, table->size * sizeof(*table->hop_info));
-  res->count = table->count;
-  return res;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -428,39 +409,6 @@ bzla_hashint_map_delete(BzlaIntHashTable *t)
   BZLA_DELETEN(t->mm, t->data, t->size);
   t->data = 0;
   bzla_hashint_table_delete(t);
-}
-
-BzlaIntHashTable *
-bzla_hashint_map_clone(BzlaMemMgr *mm,
-                       BzlaIntHashTable *table,
-                       BzlaCloneHashTableData cdata,
-                       const void *data_map)
-{
-  assert(mm);
-
-  size_t i;
-  BzlaIntHashTable *res;
-
-  if (!table) return NULL;
-
-  res = bzla_hashint_table_clone(mm, table);
-  BZLA_CNEWN(mm, res->data, res->size);
-  if (cdata)
-  {
-    for (i = 0; i < res->size; i++)
-    {
-      if (!table->keys[i]) continue;
-      cdata(mm, data_map, &table->data[i], &res->data[i]);
-    }
-  }
-  else /* as_ptr does not have to be cloned */
-  {
-    memcpy(res->data, table->data, table->size * sizeof(*table->data));
-  }
-
-  assert(table->count == res->count);
-
-  return res;
 }
 
 /*----------------------------------------------------------------------------*/

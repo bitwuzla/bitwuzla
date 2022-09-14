@@ -1405,24 +1405,6 @@ bzla_node_set_symbol(Bzla *bzla, BzlaNode *exp, const char *symbol)
 
 /*------------------------------------------------------------------------*/
 
-BzlaNode *
-bzla_node_match(Bzla *bzla, BzlaNode *exp)
-{
-  assert(bzla);
-  assert(exp);
-
-  uint32_t id;
-  BzlaNode *res;
-
-  id = bzla_node_real_addr(exp)->id;
-  assert(id > 0);
-  if (id >= BZLA_COUNT_STACK(bzla->nodes_id_table)) return 0;
-  res = bzla_node_copy(bzla, BZLA_PEEK_STACK(bzla->nodes_id_table, id));
-  return bzla_node_is_inverted(exp) ? bzla_node_invert(res) : res;
-}
-
-/*------------------------------------------------------------------------*/
-
 /* Compares expressions by id */
 int32_t
 bzla_node_compare_by_id(const BzlaNode *exp0, const BzlaNode *exp1)

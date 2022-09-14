@@ -30,8 +30,6 @@ struct BzlaSATMgr
 
   const char *name; /* solver name */
 
-  /* Note: do not change order! (bzla_sat_mgr_clone relies on inc_required
-   * to come first of all fields following below.) */
   bool inc_required;
 #ifdef BZLA_USE_LINGELING
   bool fork;
@@ -70,7 +68,6 @@ struct BzlaSATMgr
     void (*set_output)(BzlaSATMgr *, FILE *);
     void (*set_prefix)(BzlaSATMgr *, const char *);
     void (*stats)(BzlaSATMgr *);
-    void *(*clone)(Bzla *bzla, BzlaSATMgr *);
     void (*setterm)(BzlaSATMgr *);
   } api;
 };
@@ -94,16 +91,11 @@ typedef struct BzlaCnfPrinter BzlaCnfPrinter;
  */
 BzlaSATMgr *bzla_sat_mgr_new(Bzla *bzla);
 
-bool bzla_sat_mgr_has_clone_support(const BzlaSATMgr *smgr);
-
 bool bzla_sat_mgr_has_incremental_support(const BzlaSATMgr *smgr);
 
 void bzla_sat_mgr_set_term(BzlaSATMgr *smgr,
                            int32_t (*fun)(void *),
                            void *state);
-
-/* Clones existing SAT manager (and underlying SAT solver). */
-BzlaSATMgr *bzla_sat_mgr_clone(Bzla *bzla, BzlaSATMgr *smgr);
 
 /* Deletes SAT manager from memory. */
 void bzla_sat_mgr_delete(BzlaSATMgr *smgr);

@@ -35,14 +35,6 @@ BzlaRNG* bzla_rng_new(BzlaMemMgr* mm, uint32_t seed);
  */
 void bzla_rng_init(BzlaRNG* rng, uint32_t seed);
 
-/**
- * Initialize given RNG clone when cloning.
- * This does nothing when not compiled with GMP but must be called when cloning
- * objects that maintain an RNG struct (and thus memcpy the state of this object
- * to the cloned object when cloning) when compiled with GMP.
- */
-BzlaRNG* bzla_rng_clone(BzlaRNG* rng, BzlaMemMgr* mm);
-
 /** Get a pointer to the gmp_randstate_t of the RNG. */
 void* bzla_rng_get_gmp_state(BzlaRNG* rng);
 

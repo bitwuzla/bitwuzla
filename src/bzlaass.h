@@ -23,9 +23,6 @@ typedef struct BzlaBVAssList BzlaBVAssList;
 
 struct BzlaBVAss
 {
-#ifndef NDEBUG
-  const char *cloned_assignment; /* needed for shadow clone only */
-#endif
   BzlaBVAss *prev;
   BzlaBVAss *next;
 };
@@ -40,9 +37,6 @@ struct BzlaBVAssList
 
 /* Create new bv assignment list. */
 BzlaBVAssList *bzla_ass_new_bv_list(BzlaMemMgr *mm);
-
-/* Clone bv assignment list. */
-BzlaBVAssList *bzla_ass_clone_bv_list(BzlaMemMgr *mm, BzlaBVAssList *list);
 
 /* Delete bv assignment list. */
 void bzla_ass_delete_bv_list(BzlaBVAssList *list, bool auto_cleanup);
@@ -66,8 +60,6 @@ typedef struct BzlaFunAssList BzlaFunAssList;
 
 struct BzlaFunAss
 {
-  char **cloned_indices;
-  char **cloned_values;
   uint32_t size;
   BzlaFunAss *prev;
   BzlaFunAss *next;
@@ -83,9 +75,6 @@ struct BzlaFunAssList
 
 /* Create new array assignment list. */
 BzlaFunAssList *bzla_ass_new_fun_list(BzlaMemMgr *mm);
-
-/* Clone array assignment list. */
-BzlaFunAssList *bzla_ass_clone_fun_list(BzlaMemMgr *mm, BzlaFunAssList *list);
 
 /* Delete array assignment list. */
 void bzla_ass_delete_fun_list(BzlaFunAssList *list, bool auto_cleanup);

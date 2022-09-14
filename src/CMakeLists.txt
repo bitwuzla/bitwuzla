@@ -17,7 +17,6 @@ set(libbitwuzla_src_files
   bzlabv.cpp
   bzlabvdomain.c
   bzlabvprop.c
-  bzlaclone.c
   bzlaconsutils.c
   bzlacore.c
   bzladbg.c

@@ -887,42 +887,6 @@ bzla_aigvec_copy(BzlaAIGVecMgr *avmgr, BzlaAIGVec *av)
   return result;
 }
 
-BzlaAIGVec *
-bzla_aigvec_clone(BzlaAIGVec *av, BzlaAIGVecMgr *avmgr)
-{
-  assert(av);
-  assert(avmgr);
-
-  uint32_t i;
-  BzlaAIGVec *res;
-  BzlaAIGMgr *amgr;
-  BzlaAIG *aig, *caig;
-
-  amgr = avmgr->amgr;
-  res  = new_aigvec(avmgr, av->width);
-  for (i = 0; i < av->width; i++)
-  {
-    if (bzla_aig_is_const(av->aigs[i]))
-      res->aigs[i] = av->aigs[i];
-    else
-    {
-      aig = av->aigs[i];
-      assert(BZLA_REAL_ADDR_AIG(aig)->id >= 0);
-      assert((size_t) BZLA_REAL_ADDR_AIG(aig)->id
-             < BZLA_COUNT_STACK(amgr->id2aig));
-      caig = BZLA_PEEK_STACK(amgr->id2aig, BZLA_REAL_ADDR_AIG(aig)->id);
-      assert(caig);
-      assert(!bzla_aig_is_const(caig));
-      if (BZLA_IS_INVERTED_AIG(aig))
-        res->aigs[i] = BZLA_INVERT_AIG(caig);
-      else
-        res->aigs[i] = caig;
-      assert(res->aigs[i]);
-    }
-  }
-  return res;
-}
-
 void
 bzla_aigvec_to_sat_tseitin(BzlaAIGVecMgr *avmgr, BzlaAIGVec *av)
 {
@@ -963,22 +927,6 @@ bzla_aigvec_mgr_new(Bzla *bzla)
   avmgr->bzla = bzla;
   avmgr->amgr = bzla_aig_mgr_new(bzla);
   return avmgr;
-}
-
-BzlaAIGVecMgr *
-bzla_aigvec_mgr_clone(Bzla *bzla, BzlaAIGVecMgr *avmgr)
-{
-  assert(bzla);
-  assert(avmgr);
-
-  BzlaAIGVecMgr *res;
-  BZLA_NEW(bzla->mm, res);
-
-  res->bzla            = bzla;
-  res->amgr            = bzla_aig_mgr_clone(bzla, avmgr->amgr);
-  res->max_num_aigvecs = avmgr->max_num_aigvecs;
-  res->cur_num_aigvecs = avmgr->cur_num_aigvecs;
-  return res;
 }
 
 void

@@ -64,7 +64,6 @@ BzlaAIGProp *bzla_aigprop_new_aigprop(BzlaAIGMgr *amgr,
                                       uint32_t use_bandit,
                                       uint64_t nprops);
 
-BzlaAIGProp *bzla_aigprop_clone_aigprop(BzlaAIGMgr *clone, BzlaAIGProp *aprop);
 void bzla_aigprop_delete_aigprop(BzlaAIGProp *aprop);
 
 int32_t bzla_aigprop_get_assignment_aig(BzlaAIGProp *aprop, BzlaAIG *aig);

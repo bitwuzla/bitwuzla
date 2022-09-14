@@ -178,7 +178,6 @@ struct Bzla
     BzlaConstraintStats constraints;
     BzlaConstraintStats oldconstraints;
     uint_least64_t expressions;
-    uint_least64_t clone_calls;
     size_t node_bytes_alloc;
     uint_least64_t beta_reduce_calls;
     uint_least64_t betap_reduce_calls;

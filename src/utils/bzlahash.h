@@ -33,8 +33,4 @@ typedef struct BzlaHashTableData BzlaHashTableData;
 typedef uint32_t (*BzlaHashPtr)(const void* key);
 typedef int32_t (*BzlaCmpPtr)(const void* a, const void* b);
 
-typedef void (*BzlaCloneHashTableData)(BzlaMemMgr* mm,
-                                       const void* map,
-                                       BzlaHashTableData* data,
-                                       BzlaHashTableData* cloned_data);
 #endif

@@ -12,7 +12,6 @@
 
 #include <limits.h>
 
-#include "bzlaclone.h"
 #include "bzlacore.h"
 #include "bzlalog.h"
 #include "bzlamodel.h"
@@ -1556,62 +1555,6 @@ bzla_opt_init_opts(Bzla *bzla)
            0,
            1,
            "enable SMT-COMP mode");
-}
-
-static void
-clone_data_as_opt_help_ptr(BzlaMemMgr *mm,
-                           const void *map,
-                           BzlaHashTableData *data,
-                           BzlaHashTableData *cloned_data)
-{
-  assert(data);
-  assert(cloned_data);
-  (void) map;
-
-  BzlaOptHelp *cloned_hdata;
-
-  BZLA_NEW(mm, cloned_hdata);
-  cloned_hdata->val   = ((BzlaOptHelp *) data->as_ptr)->val;
-  cloned_hdata->msg   = ((BzlaOptHelp *) data->as_ptr)->msg;
-  cloned_data->as_ptr = cloned_hdata;
-}
-
-void
-bzla_opt_clone_opts(Bzla *bzla, Bzla *clone)
-{
-  assert(bzla);
-
-  BzlaOption o;
-
-  if (bzla->options)
-  {
-    BZLA_CNEWN(clone->mm, clone->options, BZLA_OPT_NUM_OPTS);
-    for (o = bzla_opt_first(bzla); bzla_opt_is_valid(bzla, o);
-         o = bzla_opt_next(bzla, o))
-    {
-      memcpy(&clone->options[o], &bzla->options[o], sizeof(BzlaOpt));
-      if (bzla->options[o].valstr)
-        clone->options[o].valstr =
-            bzla_mem_strdup(clone->mm, bzla->options[o].valstr);
-      if (bzla->options[o].options)
-        clone->options[o].options =
-            bzla_hashptr_table_clone(clone->mm,
-                                     bzla->options[o].options,
-                                     bzla_clone_key_as_static_str,
-                                     clone_data_as_opt_help_ptr,
-                                     0,
-                                     0);
-    }
-  }
-  if (bzla->str2opt)
-  {
-    clone->str2opt = bzla_hashptr_table_clone(clone->mm,
-                                              bzla->str2opt,
-                                              bzla_clone_key_as_static_str,
-                                              bzla_clone_data_as_int,
-                                              0,
-                                              0);
-  }
 }
 
 void

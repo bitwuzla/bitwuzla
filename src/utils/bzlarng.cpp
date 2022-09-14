@@ -36,18 +36,6 @@ bzla_rng_init(BzlaRNG* rng, uint32_t seed)
   rng->d_rng.reset(new bzla::RNG(seed));
 }
 
-BzlaRNG*
-bzla_rng_clone(BzlaRNG* rng, BzlaMemMgr* mm)
-{
-  assert(rng);
-  assert(mm);
-  BzlaRNG* res;
-  BZLA_CNEW(mm, res);
-  res->mm = mm;
-  res->d_rng.reset(new bzla::RNG(*rng->d_rng.get()));
-  return res;
-}
-
 void*
 bzla_rng_get_gmp_state(BzlaRNG* rng)
 {

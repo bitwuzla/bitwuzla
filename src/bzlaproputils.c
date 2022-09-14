@@ -7845,47 +7845,6 @@ DONE:
 /* ========================================================================== */
 
 void
-bzla_proputils_clone_prop_info_stack(BzlaMemMgr *mm,
-                                     BzlaPropEntailInfoStack *stack,
-                                     BzlaPropEntailInfoStack *res,
-                                     BzlaNodeMap *exp_map)
-{
-  assert(mm);
-  assert(stack);
-  assert(res);
-  assert(exp_map);
-
-  uint32_t i;
-  int32_t cloned_idx_x;
-  BzlaNode *cloned_exp;
-  BzlaBitVector *cloned_bvexp;
-
-  BZLA_INIT_STACK(mm, *res);
-  assert(BZLA_SIZE_STACK(*stack) || !BZLA_COUNT_STACK(*stack));
-  if (BZLA_SIZE_STACK(*stack))
-  {
-    BZLA_NEWN(mm, res->start, BZLA_SIZE_STACK(*stack));
-    res->top = res->start;
-    res->end = res->start + BZLA_SIZE_STACK(*stack);
-
-    for (i = 0; i < BZLA_COUNT_STACK(*stack); i++)
-    {
-      assert(BZLA_PEEK_STACK(*stack, i).exp);
-      cloned_exp = bzla_nodemap_mapped(exp_map, BZLA_PEEK_STACK(*stack, i).exp);
-      assert(cloned_exp);
-      assert(BZLA_PEEK_STACK(*stack, i).bvexp);
-      cloned_bvexp = bzla_bv_copy(mm, BZLA_PEEK_STACK(*stack, i).bvexp);
-      cloned_idx_x = BZLA_PEEK_STACK(*stack, i).idx_x;
-      assert(cloned_idx_x == 0 || cloned_idx_x == 1);
-      BzlaPropEntailInfo cloned_prop = {cloned_exp, cloned_bvexp, cloned_idx_x};
-      BZLA_PUSH_STACK(*res, cloned_prop);
-    }
-  }
-  assert(BZLA_COUNT_STACK(*stack) == BZLA_COUNT_STACK(*res));
-  assert(BZLA_SIZE_STACK(*stack) == BZLA_SIZE_STACK(*res));
-}
-
-void
 bzla_proputils_reset_prop_info_stack(BzlaMemMgr *mm,
                                      BzlaPropEntailInfoStack *stack)
 {

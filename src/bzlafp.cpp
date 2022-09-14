@@ -668,18 +668,6 @@ bzla_fp_word_blaster_new(Bzla *bzla)
   return new bzla::fp::WordBlaster(bzla);
 }
 
-void *
-bzla_fp_word_blaster_clone(Bzla *bzla, Bzla *clone, BzlaNodeMap *exp_map)
-{
-  assert(bzla);
-  assert(bzla->word_blaster);
-  assert(clone);
-  assert(exp_map);
-  bzla::fp::WordBlaster::set_s_bzla(clone);
-  return static_cast<bzla::fp::WordBlaster *>(bzla->word_blaster)
-      ->clone(clone, exp_map);
-}
-
 void
 bzla_fp_word_blaster_delete(Bzla *bzla)
 {

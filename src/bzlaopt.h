@@ -435,7 +435,6 @@ extern const char *const g_bzla_se_name[BZLA_SAT_ENGINE_MAX + 1];
 /*------------------------------------------------------------------------*/
 
 void bzla_opt_init_opts(Bzla *bzla);
-void bzla_opt_clone_opts(Bzla *bzla, Bzla *clone);
 void bzla_opt_delete_opts(Bzla *bzla);
 
 bool bzla_opt_is_valid(const Bzla *bzla, const BzlaOption opt);

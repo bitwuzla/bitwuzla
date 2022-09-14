@@ -38,11 +38,6 @@ typedef struct BzlaPropEntailInfo BzlaPropEntailInfo;
 
 BZLA_DECLARE_STACK(BzlaPropEntailInfo, BzlaPropEntailInfo);
 
-void bzla_proputils_clone_prop_info_stack(BzlaMemMgr* mm,
-                                          BzlaPropEntailInfoStack* stack,
-                                          BzlaPropEntailInfoStack* res,
-                                          BzlaNodeMap* exp_map);
-
 void bzla_proputils_reset_prop_info_stack(BzlaMemMgr* mm,
                                           BzlaPropEntailInfoStack* stack);
 

@@ -55,15 +55,6 @@ assume(BzlaSATMgr *smgr, int32_t lit)
   smgr->api.assume(smgr, lit);
 }
 
-static inline void *
-clone(Bzla *bzla, BzlaSATMgr *smgr)
-{
-  BZLA_ABORT(!smgr->api.clone,
-             "SAT solver %s does not support 'clone' API call",
-             smgr->name);
-  return smgr->api.clone(bzla, smgr);
-}
-
 static inline int32_t
 deref(BzlaSATMgr *smgr, int32_t lit)
 {
@@ -175,13 +166,6 @@ bzla_sat_mgr_new(Bzla *bzla)
 }
 
 bool
-bzla_sat_mgr_has_clone_support(const BzlaSATMgr *smgr)
-{
-  if (!smgr) return true;
-  return smgr->api.clone != 0;
-}
-
-bool
 bzla_sat_mgr_has_incremental_support(const BzlaSATMgr *smgr)
 {
   if (!smgr) return false;
@@ -195,35 +179,6 @@ bzla_sat_mgr_set_term(BzlaSATMgr *smgr, int32_t (*fun)(void *), void *state)
   smgr->term.fun   = fun;
   smgr->term.state = state;
 }
-
-// FIXME log output handling, in particular: sat manager name output
-// (see lingeling_sat) should be unique, which is not the case for
-// clones
-BzlaSATMgr *
-bzla_sat_mgr_clone(Bzla *bzla, BzlaSATMgr *smgr)
-{
-  assert(bzla);
-  assert(smgr);
-
-  BzlaSATMgr *res;
-  BzlaMemMgr *mm;
-
-  BZLA_ABORT(!bzla_sat_mgr_has_clone_support(smgr),
-             "SAT solver does not support cloning");
-
-  mm = bzla->mm;
-  BZLA_NEW(mm, res);
-  res->solver = clone(bzla, smgr);
-  res->bzla   = bzla;
-  assert(mm->sat_allocated == smgr->bzla->mm->sat_allocated);
-  res->name = smgr->name;
-  memcpy(&res->inc_required,
-         &smgr->inc_required,
-         (char *) smgr + sizeof(*smgr) - (char *) &smgr->inc_required);
-  BZLA_CLR(&res->term);
-  return res;
-}
-
 bool
 bzla_sat_is_initialized(BzlaSATMgr *smgr)
 {
@@ -640,40 +595,6 @@ dimacs_printer_stats(BzlaSATMgr *smgr)
 }
 
 static void
-clone_int_stack(BzlaMemMgr *mm, BzlaIntStack *clone, BzlaIntStack *stack)
-{
-  size_t size = BZLA_SIZE_STACK(*stack);
-  size_t cnt  = BZLA_COUNT_STACK(*stack);
-
-  BZLA_INIT_STACK(mm, *clone);
-  if (size)
-  {
-    BZLA_CNEWN(mm, clone->start, size);
-    clone->end = clone->start + size;
-    clone->top = clone->start + cnt;
-    memcpy(clone->start, stack->start, cnt * sizeof(int32_t));
-  }
-}
-
-static void *
-dimacs_printer_clone(Bzla *bzla, BzlaSATMgr *smgr)
-{
-  BzlaCnfPrinter *printer, *printer_clone;
-  BzlaMemMgr *mm;
-
-  mm      = bzla->mm;
-  printer = (BzlaCnfPrinter *) smgr->solver;
-
-  BZLA_CNEW(mm, printer_clone);
-  clone_int_stack(mm, &printer_clone->assumptions, &printer->assumptions);
-  clone_int_stack(mm, &printer_clone->clauses, &printer->clauses);
-  printer_clone->out  = printer->out;
-  printer_clone->smgr = bzla_sat_mgr_clone(bzla, printer->smgr);
-
-  return printer_clone;
-}
-
-static void
 dimacs_printer_setterm(BzlaSATMgr *smgr)
 {
   BzlaCnfPrinter *printer = (BzlaCnfPrinter *) smgr->solver;
@@ -742,7 +663,6 @@ enable_dimacs_printer(BzlaSATMgr *smgr)
    * set if the underlying SAT solver also has support for it. */
   smgr->api.assume = printer->smgr->api.assume ? dimacs_printer_assume : 0;
   smgr->api.failed = printer->smgr->api.failed ? dimacs_printer_failed : 0;
-  smgr->api.clone  = printer->smgr->api.clone ? dimacs_printer_clone : 0;
 
   return true;
 }

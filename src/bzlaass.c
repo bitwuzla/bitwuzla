@@ -28,22 +28,6 @@ bzla_ass_new_bv_list(BzlaMemMgr *mm)
   return res;
 }
 
-BzlaBVAssList *
-bzla_ass_clone_bv_list(BzlaMemMgr *mm, BzlaBVAssList *list)
-{
-  assert(mm);
-  assert(list);
-
-  BzlaBVAssList *res;
-  BzlaBVAss *bvass;
-
-  res = bzla_ass_new_bv_list(mm);
-  for (bvass = list->first; bvass; bvass = bvass->next)
-    (void) bzla_ass_new_bv(res, (char *) bzla_ass_get_bv_str(bvass));
-
-  return res;
-}
-
 void
 bzla_ass_delete_bv_list(BzlaBVAssList *list, bool auto_cleanup)
 {
@@ -154,32 +138,6 @@ bzla_ass_new_fun_list(BzlaMemMgr *mm)
   BZLA_CNEW(mm, res);
   res->mm   = mm;
   res->last = res->first;
-  return res;
-}
-
-BzlaFunAssList *
-bzla_ass_clone_fun_list(BzlaMemMgr *mm, BzlaFunAssList *list)
-{
-  assert(mm);
-  assert(list);
-
-  BzlaFunAssList *res;
-  BzlaFunAss *funass;
-  char **ind, **val, **cind, **cval;
-
-  res = bzla_ass_new_fun_list(mm);
-  for (funass = list->first; funass; funass = funass->next)
-  {
-    bzla_ass_get_fun_indices_values(funass, &ind, &val, funass->size);
-    bzla_ass_get_fun_indices_values(
-        bzla_ass_new_fun(res, ind, val, funass->size),
-        &cind,
-        &cval,
-        funass->size);
-    funass->cloned_indices = cind;
-    funass->cloned_values  = cval;
-  }
-
   return res;
 }
 

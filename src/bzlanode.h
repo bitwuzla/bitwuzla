@@ -1187,18 +1187,6 @@ void bzla_node_set_symbol(Bzla *bzla, BzlaNode *exp, const char *symbol);
 
 /*------------------------------------------------------------------------*/
 
-/**
- * Retrieve the exp (belonging to instance 'bzla') that matches given
- * expression by id. This is intended to be used for handling expressions
- * of a cloned instance (in a clone and its parent, expressions
- * with the same id correspond to each other, i.e. initially, the cloned
- * expression is an identical copy of the parent expression).
- * (Note: increases ref counter of return match!)
- */
-BzlaNode *bzla_node_match(Bzla *bzla, BzlaNode *exp);
-
-/*------------------------------------------------------------------------*/
-
 /** Compares two expression pairs by ID */
 int32_t bzla_node_compare_by_id(const BzlaNode *exp0, const BzlaNode *exp1);
 /** Compare function for expressions (by ID) to be used for qsort */

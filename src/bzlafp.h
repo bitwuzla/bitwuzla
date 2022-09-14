@@ -288,12 +288,6 @@ BzlaFloatingPoint *bzla_fp_convert_from_rational(Bzla *bzla,
 void *bzla_fp_word_blaster_new(Bzla *bzla);
 
 /**
- * Clone given word-blaster.
- * Note: Memory is not managed by the memory manager of the given Bzla instance.
- */
-void *bzla_fp_word_blaster_clone(Bzla *bzla, Bzla *clone, BzlaNodeMap *exp_map);
-
-/**
  * Delete word-blaster of given Bzla instance.
  * Note: Memory is not managed by the memory manager of the given Bzla instance.
  */
