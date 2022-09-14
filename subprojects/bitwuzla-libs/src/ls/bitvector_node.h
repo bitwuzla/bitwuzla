@@ -1254,6 +1254,9 @@ class BitVectorUlt : public BitVectorNode
   void _evaluate_and_set_domain();
   /**
    * Helper for is_invertible().
+   *
+   * @note Does not and (must not) reset cached inverse.
+   *
    * @param d The domain representing operand 'x'.
    * @param s The value of the other operand.
    * @param t The target value of this node.
@@ -1293,26 +1296,17 @@ class BitVectorUlt : public BitVectorNode
    */
   BitVector* inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s);
   /**
-   * Helper for sext-specific (when x is a sign extension) inverse value
-   * computation. @param s The value of the other operand.
-   * @param t The target value of this node.
-   * @param pos_x The index of operand `x`, which is a sign extension node.
-   * @return The inverse value.
-   */
-  BitVector* inverse_value_sext(bool t, uint32_t pos_x, uint32_t pos_s);
-  /**
-   * Helper for inverse_value_concat() and inverse_value_sext() to generate a
-   * new random value with respect to the given domain and within given min/max
-   * range.
+   * Helper for inverse_value_concat()  to generate a new random value with
+   * respect to the given domain and within given min/max range.
    * @param d The domain.
    * @param min The lower bound of the range.
    * @param max The upper bound of the range.
    * @return A random value within the given range, if there is one, else
    *         a null BitVector.
    */
-  BitVector inverse_value_concat_sext_new_random(const BitVectorDomain& d,
-                                                 const BitVector& min,
-                                                 const BitVector& max);
+  BitVector inverse_value_concat_new_random(const BitVectorDomain& d,
+                                            const BitVector& min,
+                                            const BitVector& max);
   /**
    * True to enable optimization for inverse_value computation of concat
    * and sign extension operands.
@@ -1411,6 +1405,9 @@ class BitVectorSlt : public BitVectorNode
   void _evaluate_and_set_domain();
   /**
    * Helper for is_invertible().
+   *
+   * @note Does not and (must not) reset cached inverse.
+   *
    * @param d The domain representing operand 'x'.
    * @param s The value of the other operand.
    * @param t The target value of this node.
@@ -1450,26 +1447,17 @@ class BitVectorSlt : public BitVectorNode
    */
   BitVector* inverse_value_concat(bool t, uint32_t pos_x, uint32_t pos_s);
   /**
-   * Helper for sext-specific (when x is a sign extension) inverse value
-   * computation. @param s The value of the other operand.
-   * @param t The target value of this node.
-   * @param pos_x The index of operand `x`, which is a sign extension node.
-   * @return The inverse value.
-   */
-  BitVector* inverse_value_sext(bool t, uint32_t pos_x, uint32_t pos_s);
-  /**
-   * Helper for inverse_value_concat() and inverse_value_sext() to generate a
-   * new random value with respect to the given domain and within given min/max
-   * range.
+   * Helper for inverse_value_concat()  to generate a new random value with
+   * respect to the given domain and within given min/max range.
    * @param d The domain.
    * @param min The lower bound of the range.
    * @param max The upper bound of the range.
    * @return A random value within the given range, if there is one, else
    *         a null BitVector.
    */
-  BitVector inverse_value_concat_sext_new_random(const BitVectorDomain& d,
-                                                 const BitVector& min,
-                                                 const BitVector& max);
+  BitVector inverse_value_concat_new_random(const BitVectorDomain& d,
+                                            const BitVector& min,
+                                            const BitVector& max);
   /**
    * True to enable optimization for inverse_value computation of concat
    * and sign extension operands.
