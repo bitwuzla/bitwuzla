@@ -104,6 +104,16 @@ TEST_F(TestBvNodeIsInv, slt)
   test_binary<BitVectorUlt>(IS_INV, SLT, 1, NONE, OptimizationKind::SEXT);
   test_binary<BitVectorSlt>(IS_INV, SLT, 0, SIGNED);
   test_binary<BitVectorSlt>(IS_INV, SLT, 1, SIGNED);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 0, SIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 1, SIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 0, SIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 1, SIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 0, BOTH);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 1, BOTH);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 0, BOTH, OptimizationKind::CONCAT);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 1, BOTH, OptimizationKind::CONCAT);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 0, BOTH, OptimizationKind::SEXT);
+  test_binary<BitVectorSlt>(IS_INV, SLT, 1, BOTH, OptimizationKind::SEXT);
 }
 
 TEST_F(TestBvNodeIsInv, urem)
