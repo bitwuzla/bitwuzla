@@ -191,8 +191,8 @@ TEST_F(TestBvNodeInv, ult)
   test_binary<BitVectorUlt>(INV, ULT, 1);
   test_binary<BitVectorUlt>(INV, ULT, 0, TestBvNode::BoundsKind::UNSIGNED);
   test_binary<BitVectorUlt>(INV, ULT, 1, TestBvNode::BoundsKind::UNSIGNED);
-  // test_binary<BitVectorUlt>(INV, ULT, 0, TestBvNode::BoundsKind::SIGNED);
-  // test_binary<BitVectorUlt>(INV, ULT, 1, TestBvNode::BoundsKind::SIGNED);
+  test_binary<BitVectorUlt>(INV, ULT, 0, TestBvNode::BoundsKind::SIGNED);
+  test_binary<BitVectorUlt>(INV, ULT, 1, TestBvNode::BoundsKind::SIGNED);
 }
 
 TEST_F(TestBvNodeInv, ult_concat)

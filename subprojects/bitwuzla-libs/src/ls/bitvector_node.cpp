@@ -428,6 +428,8 @@ BitVectorNode::normalize_bounds(uint64_t size,
   res_max_lo = max_lo ? *max_lo : BitVector();
   res_min_hi = min_hi ? *min_hi : BitVector();
   res_max_hi = max_hi ? *max_hi : BitVector();
+  assert(res_min_lo.is_null() || !res_max_lo.is_null());
+  assert(res_min_hi.is_null() || !res_max_hi.is_null());
 }
 
 std::string
@@ -3612,6 +3614,12 @@ BitVectorUlt::compute_min_max_bounds(
   {
     if (t)
     {
+      if (s.is_zero())  // conflict
+      {
+        min = BitVector();
+        max = BitVector();
+        return;
+      }
       min = BitVector::mk_zero(size);
       max = s.bvdec();
     }
@@ -3628,6 +3636,12 @@ BitVectorUlt::compute_min_max_bounds(
   {
     if (t)
     {
+      if (s.is_ones())  // conflict
+      {
+        min = BitVector();
+        max = BitVector();
+        return;
+      }
       min = s.bvinc();
       max = BitVector::mk_ones(size);
     }
@@ -3651,12 +3665,18 @@ BitVectorUlt::compute_min_max_bounds(
   {
     mmax = max_u;
   }
-  if ((min_u || max_u) && (mmin->compare(*mmax) <= 0))
+  if (mmin->compare(*mmax) <= 0)
   {
     if (mmin != &min) min = *mmin;
     if (mmax != &max) max = *mmax;
   }
-  /* else conflict, use the default bounds */
+  else
+  {
+    /* else conflict */
+    min = BitVector();
+    max = BitVector();
+  }
+  assert(min.is_null() == max.is_null());
 }
 
 bool
@@ -3671,14 +3691,20 @@ BitVectorUlt::is_invertible(const BitVector& t,
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
   const BitVectorDomain& x = d_children[pos_x]->domain();
-  bool has_fixed_bits      = x.has_fixed_bits();
   bool is_true             = t.is_true();
-  BitVector* min_u         = d_children[pos_x]->min_u();
-  BitVector* max_u         = d_children[pos_x]->max_u();
 
-  bool opt_sext = d_opt_concat_sext && d_children[pos_x]->get_kind() == SEXT;
-  BitVectorDomain dxn, dxx;
   uint64_t n = 0, bw_x = 0, bw_xx = 0;
+  bool opt_sext = d_opt_concat_sext && d_children[pos_x]->get_kind() == SEXT;
+  const BitVectorDomain* dx = &x;
+  BitVectorDomain dxn, dxx, ddx;
+
+  /**
+   * IC_wo: pos_x = 0: t = 0 || s != 0
+   *        pos_x = 1: t = 0 || s != ones
+   *
+   * IC: pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
+   *     pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
+   */
 
   if (opt_sext)
   {
@@ -3689,124 +3715,66 @@ BitVectorUlt::is_invertible(const BitVector& t,
       bw_xx = bw_x - n;
       dxn   = x.bvextract(bw_x - 1, bw_xx);
       dxx   = x.bvextract(bw_xx - 1, 0);
-    }
-    else
-    {
-      opt_sext = false;
-    }
-  }
-
-  const BitVectorDomain* dx = &x;
-  BitVectorDomain ddx;
-
-  /**
-   * IC_wo: pos_x = 0: t = 0 || s != 0
-   *        pos_x = 1: t = 0 || s != ones
-   *
-   * IC: pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
-   *     pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
-   */
-
-  if (opt_sext && n > 0)
-  {
-    if (pos_x == 0 && is_true)
-    {
-      res = !s.is_zero();
-    }
-    else if (pos_x == 1 && is_true)
-    {
-      res = !s.is_ones();
-    }
-
-    if (res)
-    {
-      if (dxx.is_fixed_bit_true(bw_xx - 1)
-          || (!dxx.is_fixed_bit(bw_xx - 1) && dxn.has_fixed_bits_true()))
+      if (pos_x == 0 && is_true)
       {
-        // check if all fixed bits in dxn are 1
-        res = !dxn.has_fixed_bits() || dxn.has_fixed_bits_true_only();
-        // check for invertibility wrt s and fixed bits
-        if (res)
+        res = !s.is_zero();
+      }
+      else if (pos_x == 1 && is_true)
+      {
+        res = !s.is_ones();
+      }
+
+      if (res)
+      {
+        if (dxx.is_fixed_bit_true(bw_xx - 1)
+            || (!dxx.is_fixed_bit(bw_xx - 1) && dxn.has_fixed_bits_true()))
         {
+          // check if all fixed bits in dxn are 1
+          res = !dxn.has_fixed_bits() || dxn.has_fixed_bits_true_only();
+          // check for invertibility wrt s and fixed bits
+          if (res)
+          {
+            dxn.fix(BitVector::mk_ones(dxn.size()));
+            ddx = dxn.bvconcat(dxx);
+            ddx.fix_bit(bw_xx - 1, true);
+            dx = &ddx;
+          }
+        }
+        else if (dxx.is_fixed_bit_false(bw_xx - 1)
+                 || (!dxx.is_fixed_bit(bw_xx - 1)
+                     && dxn.has_fixed_bits_false()))
+        {
+          // check if all fixed bits in dxn are 0
+          res = !dxn.has_fixed_bits() || dxn.has_fixed_bits_false_only();
+          // check for invertibility wrt s and fixed bits
+          if (res)
+          {
+            dxn.fix(BitVector::mk_zero(dxn.size()));
+            ddx = dxn.bvconcat(dxx);
+            ddx.fix_bit(bw_xx - 1, false);
+            dx = &ddx;
+          }
+        }
+        else
+        {
+          // we have to check for both cases and make sure to randomly choose
+          // from either (if possible) if is_essential_check is false
           dxn.fix(BitVector::mk_ones(dxn.size()));
           ddx = dxn.bvconcat(dxx);
           ddx.fix_bit(bw_xx - 1, true);
-          dx = &ddx;
-        }
-      }
-      else if (dxx.is_fixed_bit_false(bw_xx - 1)
-               || (!dxx.is_fixed_bit(bw_xx - 1) && dxn.has_fixed_bits_false()))
-      {
-        // check if all fixed bits in dxn are 0
-        res = !dxn.has_fixed_bits() || dxn.has_fixed_bits_false_only();
-        // check for invertibility wrt s and fixed bits
-        if (res)
-        {
-          dxn.fix(BitVector::mk_zero(dxn.size()));
-          ddx = dxn.bvconcat(dxx);
-          ddx.fix_bit(bw_xx - 1, false);
-          dx = &ddx;
-        }
-      }
-      else
-      {
-        // we have to check for both cases and make sure to randomly choose
-        // from either (if possible) if is_essential_check is false
-        dxn.fix(BitVector::mk_ones(dxn.size()));
-        ddx = dxn.bvconcat(dxx);
-        ddx.fix_bit(bw_xx - 1, true);
-        dx  = &ddx;
-        res = _is_invertible(dx, s, is_true, pos_x, is_essential_check);
-        if (!res || d_rng->flip_coin())
-        {
-          dxn.fix(BitVector::mk_zero(dxn.size()));
-          ddx = dxn.bvconcat(dxx);
-          ddx.fix_bit(bw_xx - 1, false);
-          dx        = &ddx;
-          bool _res = _is_invertible(dx, s, is_true, pos_x, is_essential_check);
-          return !res ? _res : res;
-        }
-      }
-    }
-  }
-  else
-  {
-    if (pos_x == 0)
-    {
-      if (is_true)
-      {
-        res = (min_u && min_u->compare(s) < 0) || (!min_u && !s.is_zero());
-        if (res && has_fixed_bits)
-        {
-          res = x.lo().compare(s) < 0;
-        }
-      }
-      else
-      {
-        res = !max_u || max_u->compare(s) >= 0;
-        if (res && has_fixed_bits)
-        {
-          res = x.hi().compare(s) >= 0;
-        }
-      }
-    }
-    else
-    {
-      assert(pos_x == 1);
-      if (is_true)
-      {
-        res = (max_u && max_u->compare(s) > 0) || (!max_u && !s.is_ones());
-        if (res && has_fixed_bits)
-        {
-          res = x.hi().compare(s) > 0;
-        }
-      }
-      else
-      {
-        res = !min_u || min_u->compare(s) <= 0;
-        if (res && has_fixed_bits)
-        {
-          res = x.lo().compare(s) <= 0;
+          dx  = &ddx;
+          res = _is_invertible(dx, s, is_true, pos_x, is_essential_check);
+          if (!res || d_rng->flip_coin())
+          {
+            dxn.fix(BitVector::mk_zero(dxn.size()));
+            ddx = dxn.bvconcat(dxx);
+            ddx.fix_bit(bw_xx - 1, false);
+            dx = &ddx;
+            bool _res =
+                _is_invertible(dx, s, is_true, pos_x, is_essential_check);
+            if (!res) res = _res;
+          }
+          return res;
         }
       }
     }
@@ -3828,13 +3796,39 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
 {
   BitVector min, max;
   compute_min_max_bounds(s, t, pos_x, min, max);
+  if (min.is_null())
+  {
+    assert(max.is_null());
+    return false;
+  }
+
+  BitVectorNode* op_x = d_children[pos_x];
+  BitVector min_lo, max_lo, min_hi, max_hi;
+  BitVectorNode::normalize_bounds(min.size(),
+                                  &min,
+                                  &max,
+                                  op_x->min_s(),
+                                  op_x->max_s(),
+                                  min_lo,
+                                  max_lo,
+                                  min_hi,
+                                  max_hi);
+  if (min_lo.is_null() && min_hi.is_null())
+  {
+    return false;
+  }
+
   if (d->is_fixed())
   {
-    if (d->lo().compare(min) >= 0 && d->lo().compare(max) <= 0)
+    const BitVector& xval = d->lo();
+    if ((!min_lo.is_null() && xval.compare(min_lo) >= 0
+         && xval.compare(max_lo) <= 0)
+        || (!min_hi.is_null() && xval.compare(min_hi) >= 0
+            && xval.compare(max_hi) <= 0))
     {
       if (!is_essential_check)
       {
-        d_inverse.reset(new BitVector(d->lo()));
+        d_inverse.reset(new BitVector(xval));
       }
       return true;
     }
@@ -3842,7 +3836,12 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
   }
   if (d->has_fixed_bits())
   {
-    BitVectorDomainGenerator gen(*d, d_rng, min, max);
+    BitVectorDomainDualGenerator gen(*d,
+                                     d_rng,
+                                     min_lo.is_null() ? nullptr : &min_lo,
+                                     max_lo.is_null() ? nullptr : &max_lo,
+                                     min_hi.is_null() ? nullptr : &min_hi,
+                                     max_hi.is_null() ? nullptr : &max_hi);
     if (gen.has_random())
     {
       if (!is_essential_check)
@@ -3853,10 +3852,28 @@ BitVectorUlt::_is_invertible(const BitVectorDomain* d,
     }
     return false;
   }
-  assert(min.compare(max) <= 0);
+  assert(!min_lo.is_null() || !min_hi.is_null());
   if (!is_essential_check)
   {
-    d_inverse.reset(new BitVector(d->size(), *d_rng, min, max, false));
+    if (!min_lo.is_null())
+    {
+      assert(!max_lo.is_null());
+      if (!min_hi.is_null() && d_rng->flip_coin())
+      {
+        assert(!max_hi.is_null());
+        d_inverse.reset(
+            new BitVector(d->size(), *d_rng, min_hi, max_hi, false));
+      }
+      else
+      {
+        d_inverse.reset(
+            new BitVector(d->size(), *d_rng, min_lo, max_lo, false));
+      }
+    }
+    else
+    {
+      d_inverse.reset(new BitVector(d->size(), *d_rng, min_hi, max_hi, false));
+    }
   }
   return true;
 }
@@ -3885,59 +3902,16 @@ BitVectorUlt::is_consistent(const BitVector& t, uint32_t pos_x)
 const BitVector&
 BitVectorUlt::inverse_value(const BitVector& t, uint32_t pos_x)
 {
+#ifndef NDEBUG
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
-
-  if (d_inverse == nullptr)
-  {
-    assert(!x.has_fixed_bits() || !d_children[pos_x]->min_u());
-    assert(!x.has_fixed_bits() || !d_children[pos_x]->max_u());
-
-    Kind kind = d_children[pos_x]->get_kind();
-    if (d_opt_concat_sext && kind == CONCAT)
-    {
-      d_inverse.reset(inverse_value_concat(t.is_true(), pos_x, pos_s));
-    }
-    else if (d_opt_concat_sext && kind == SEXT)
-    {
-      d_inverse.reset(inverse_value_sext(t.is_true(), pos_x, pos_s));
-    }
-
-    if (d_inverse == nullptr)
-    {
-      uint64_t size = s.size();
-      bool is_true  = t.is_true();
-
-      /**
-       * inverse value:
-       *   pos_x = 0: t = 0: random value >= s
-       *              t = 1: random value < s
-       *   pos_x = 1: t = 0: random value <= s
-       *              t = 1: random value > s
-       */
-
-      BitVector min, max;
-      compute_min_max_bounds(s, is_true, pos_x, min, max);
-
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainGenerator gen(x, d_rng, min, max);
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
-      }
-      else
-      {
-        d_inverse.reset(new BitVector(size, *d_rng, min, max));
-      }
-    }
-  }
-
   assert(d_inverse);
   assert(pos_x == 1 || t.compare(d_inverse->bvult(s)) == 0);
   assert(pos_x == 0 || t.compare(s.bvult(*d_inverse)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
+#endif
   return *d_inverse;
 }
 

@@ -686,20 +686,22 @@ TestBvNode::test_binary(Kind kind,
             {
               if (op_kind == ULT)
               {
-                op.reset(new BitVectorUlt(d_rng.get(),
-                                          bw_t,
-                                          pos_x == 0 ? op_x.get() : op_s.get(),
-                                          pos_x == 1 ? op_x.get() : op_s.get(),
-                                          true));
+                op.reset(
+                    new BitVectorUlt(d_rng.get(),
+                                     bw_t,
+                                     pos_x == 0 ? op_x.get() : op_s.get(),
+                                     pos_x == 1 ? op_x.get() : op_s.get(),
+                                     opt_kind == CONCAT || opt_kind == SEXT));
               }
               else
               {
                 assert(op_kind == SLT);
-                op.reset(new BitVectorSlt(d_rng.get(),
-                                          bw_t,
-                                          pos_x == 0 ? op_x.get() : op_s.get(),
-                                          pos_x == 1 ? op_x.get() : op_s.get(),
-                                          true));
+                op.reset(
+                    new BitVectorSlt(d_rng.get(),
+                                     bw_t,
+                                     pos_x == 0 ? op_x.get() : op_s.get(),
+                                     pos_x == 1 ? op_x.get() : op_s.get(),
+                                     opt_kind == CONCAT || opt_kind == SEXT));
               }
             }
 

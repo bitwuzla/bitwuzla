@@ -76,8 +76,22 @@ TEST_F(TestBvNodeIsInv, ult)
   test_binary<BitVectorUlt>(IS_INV, ULT, 1, NONE, OptimizationKind::SEXT);
   test_binary<BitVectorUlt>(IS_INV, ULT, 0, UNSIGNED);
   test_binary<BitVectorUlt>(IS_INV, ULT, 1, UNSIGNED);
-  // test_binary<BitVectorUlt>(IS_INV, ULT, 0, TestBvNode::BoundsKind::SIGNED);
-  // test_binary<BitVectorUlt>(IS_INV, ULT, 1, TestBvNode::BoundsKind::SIGNED);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, UNSIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, UNSIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, UNSIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, UNSIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, SIGNED);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, SIGNED);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, SIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, SIGNED, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, SIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, SIGNED, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, BOTH);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, BOTH);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, BOTH, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, BOTH, OptimizationKind::CONCAT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 0, BOTH, OptimizationKind::SEXT);
+  test_binary<BitVectorUlt>(IS_INV, ULT, 1, BOTH, OptimizationKind::SEXT);
 }
 
 TEST_F(TestBvNodeIsInv, slt)
@@ -88,9 +102,6 @@ TEST_F(TestBvNodeIsInv, slt)
   test_binary<BitVectorUlt>(IS_INV, SLT, 1, NONE, OptimizationKind::CONCAT);
   test_binary<BitVectorUlt>(IS_INV, SLT, 0, NONE, OptimizationKind::SEXT);
   test_binary<BitVectorUlt>(IS_INV, SLT, 1, NONE, OptimizationKind::SEXT);
-  // test_binary<BitVectorSlt>(IS_INV, SLT, 0,
-  // TestBvNode::BoundsKind::UNSIGNED); test_binary<BitVectorSlt>(IS_INV, SLT,
-  // 1, TestBvNodeIsInv::UNSIGNED);
   test_binary<BitVectorSlt>(IS_INV, SLT, 0, SIGNED);
   test_binary<BitVectorSlt>(IS_INV, SLT, 1, SIGNED);
 }
