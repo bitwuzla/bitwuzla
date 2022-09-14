@@ -1130,10 +1130,7 @@ clone_aux_bzla(Bzla *bzla,
                                (BzlaCmpPtr) bzla_node_compare_by_id);
   }
 
-  if (clone_slv && bzla->slv)
-    clone->slv = bzla->slv->api.clone(clone, bzla->slv, emap);
-  else
-    clone->slv = 0;
+  clone->slv = 0;
   assert(!clone_slv || (bzla->slv && clone->slv)
          || (!bzla->slv && !clone->slv));
 #ifndef NDEBUG

@@ -1341,55 +1341,6 @@ DONE:
 
 /*------------------------------------------------------------------------*/
 
-static BzlaSLSSolver *
-clone_sls_solver(Bzla *clone, BzlaSLSSolver *slv, BzlaNodeMap *exp_map)
-{
-  assert(clone);
-  assert(slv);
-  assert(slv->kind == BZLA_SLS_SOLVER_KIND);
-
-  uint32_t i;
-  BzlaSLSSolver *res;
-  BzlaSLSMove *m, *cm;
-
-  (void) exp_map;
-
-  BZLA_NEW(clone->mm, res);
-  memcpy(res, slv, sizeof(BzlaSLSSolver));
-
-  res->bzla  = clone;
-  res->roots = bzla_hashint_map_clone(clone->mm, slv->roots, 0, 0);
-  res->score =
-      bzla_hashint_map_clone(clone->mm, slv->score, bzla_clone_data_as_dbl, 0);
-
-  BZLA_INIT_STACK(clone->mm, res->moves);
-  assert(BZLA_SIZE_STACK(slv->moves) || !BZLA_COUNT_STACK(slv->moves));
-  if (BZLA_SIZE_STACK(slv->moves))
-  {
-    BZLA_NEWN(clone->mm, res->moves.start, BZLA_SIZE_STACK(slv->moves));
-    res->moves.top = res->moves.start;
-    res->moves.end = res->moves.start + BZLA_SIZE_STACK(slv->moves);
-
-    for (i = 0; i < BZLA_COUNT_STACK(slv->moves); i++)
-    {
-      m = BZLA_PEEK_STACK(slv->moves, i);
-      assert(m);
-      BZLA_NEW(clone->mm, cm);
-      cm->cans = bzla_hashint_map_clone(
-          clone->mm, m->cans, bzla_clone_data_as_bv_ptr, 0);
-      cm->sc = m->sc;
-      BZLA_PUSH_STACK(res->moves, m);
-    }
-  }
-  assert(BZLA_COUNT_STACK(slv->moves) == BZLA_COUNT_STACK(res->moves));
-  assert(BZLA_SIZE_STACK(slv->moves) == BZLA_SIZE_STACK(res->moves));
-
-  res->max_cans = bzla_hashint_map_clone(
-      clone->mm, slv->max_cans, bzla_clone_data_as_bv_ptr, 0);
-
-  return res;
-}
-
 static void
 delete_sls_solver(BzlaSLSSolver *slv)
 {
@@ -1745,7 +1696,6 @@ bzla_new_sls_solver(Bzla *bzla)
 
   BZLA_INIT_STACK(bzla->mm, slv->moves);
 
-  slv->api.clone          = (BzlaSolverClone) clone_sls_solver;
   slv->api.delet          = (BzlaSolverDelete) delete_sls_solver;
   slv->api.sat            = (BzlaSolverSat) sat_sls_solver;
   slv->api.generate_model = (BzlaSolverGenerateModel) generate_model_sls_solver;

@@ -15,7 +15,6 @@
 #include "bzlaaigvec.h"
 #include "bzlabv.h"
 #include "bzlabvprop.h"
-#include "bzlaclone.h"
 #include "bzlacore.h"
 #include "bzladbg.h"
 #include "bzlalog.h"
@@ -296,35 +295,6 @@ DONE:
 }
 
 /*------------------------------------------------------------------------*/
-
-static BzlaPropOldSolver *
-clone_propold_solver(Bzla *clone, BzlaPropOldSolver *slv, BzlaNodeMap *exp_map)
-{
-  assert(clone);
-  assert(slv);
-  assert(slv->kind == BZLA_PROP_OLD_SOLVER_KIND);
-
-  BzlaPropOldSolver *res;
-
-  (void) exp_map;
-
-  BZLA_NEW(clone->mm, res);
-  memcpy(res, slv, sizeof(BzlaPropOldSolver));
-
-  res->bzla  = clone;
-  res->roots = bzla_hashint_map_clone(clone->mm, slv->roots, 0, 0);
-  res->score =
-      bzla_hashint_map_clone(clone->mm, slv->score, bzla_clone_data_as_dbl, 0);
-  // TODO clone const_bits
-
-  bzla_proputils_clone_prop_info_stack(
-      clone->mm, &slv->toprop, &res->toprop, exp_map);
-#ifndef NDEBUG
-  bzla_proputils_clone_prop_info_stack(
-      clone->mm, &slv->prop_path, &res->prop_path, exp_map);
-#endif
-  return res;
-}
 
 static void
 delete_propold_solver(BzlaPropOldSolver *slv)
@@ -1122,7 +1092,6 @@ bzla_new_propold_solver(Bzla *bzla)
   slv->kind    = BZLA_PROP_OLD_SOLVER_KIND;
   slv->domains = bzla_hashint_map_new(bzla->mm);
 
-  slv->api.clone = (BzlaSolverClone) clone_propold_solver;
   slv->api.delet = (BzlaSolverDelete) delete_propold_solver;
   slv->api.sat   = (BzlaSolverSat) sat_propold_solver;
   slv->api.generate_model =

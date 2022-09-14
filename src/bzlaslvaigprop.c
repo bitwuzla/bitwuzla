@@ -11,7 +11,6 @@
 #include "bzlaslvaigprop.h"
 
 #include "aigprop.h"
-#include "bzlaclone.h"
 #include "bzlacore.h"
 #include "bzladbg.h"
 #include "bzlamodel.h"
@@ -29,25 +28,6 @@
   (BZLA_AIGPROP_MAXSTEPS_CFACT * ((i) &1u ? 1 : 1 << ((i) >> 1)))
 
 /*------------------------------------------------------------------------*/
-
-static BzlaAIGPropSolver *
-clone_aigprop_solver(Bzla *clone, BzlaAIGPropSolver *slv, BzlaNodeMap *exp_map)
-{
-  assert(clone);
-  assert(slv);
-  assert(slv->kind == BZLA_AIGPROP_SOLVER_KIND);
-  assert(exp_map);
-
-  (void) exp_map;
-
-  BzlaAIGPropSolver *res;
-
-  BZLA_NEW(clone->mm, res);
-  memcpy(res, slv, sizeof(BzlaAIGPropSolver));
-  res->bzla  = clone;
-  res->aprop = bzla_aigprop_clone_aigprop(bzla_get_aig_mgr(clone), slv->aprop);
-  return res;
-}
 
 static void
 delete_aigprop_solver(BzlaAIGPropSolver *slv)
@@ -371,7 +351,6 @@ bzla_new_aigprop_solver(Bzla *bzla)
   slv->bzla = bzla;
   slv->kind = BZLA_AIGPROP_SOLVER_KIND;
 
-  slv->api.clone = (BzlaSolverClone) clone_aigprop_solver;
   slv->api.delet = (BzlaSolverDelete) delete_aigprop_solver;
   slv->api.sat   = (BzlaSolverSat) sat_aigprop_solver;
   slv->api.generate_model =

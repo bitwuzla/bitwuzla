@@ -614,15 +614,6 @@ DONE:
   return sat_result;
 }
 
-BzlaPropSolver *
-clone_prop_solver(Bzla *clone, Bzla *bzla, BzlaNodeMap *exp_map)
-{
-  (void) clone;
-  (void) bzla;
-  (void) exp_map;
-  return nullptr;
-}
-
 void
 delete_prop_solver(BzlaPropSolver *slv)
 {
@@ -684,7 +675,6 @@ bzla_new_prop_solver(Bzla *bzla)
   slv->d_state.reset(new bzla::prop::PropSolverState(bzla));
   slv->kind      = BZLA_PROP_SOLVER_KIND;
   slv->bzla      = bzla;
-  slv->api.clone = (BzlaSolverClone) clone_prop_solver;
   slv->api.delet = (BzlaSolverDelete) delete_prop_solver;
   slv->api.sat   = (BzlaSolverSat) check_sat_prop_solver;
   slv->api.generate_model =

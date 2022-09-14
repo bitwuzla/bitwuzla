@@ -12,7 +12,6 @@ extern "C" {
 
 #include "bzlabeta.h"
 #include "bzlabv.h"
-#include "bzlaclone.h"
 #include "bzlacore.h"
 #include "bzlaexp.h"
 #include "bzlamodel.h"
@@ -2445,15 +2444,6 @@ check_sat_portfolio(BzlaQuantSolver *slv)
   return res;
 }
 
-static BzlaQuantSolver *
-clone_quant_solver(Bzla *clone, Bzla *bzla, BzlaNodeMap *exp_map)
-{
-  (void) clone;
-  (void) bzla;
-  (void) exp_map;
-  return 0;
-}
-
 static void
 delete_quant_solver(BzlaQuantSolver *slv)
 {
@@ -2507,7 +2497,6 @@ bzla_new_quantifier_solver(Bzla *bzla)
 
   slv->kind      = BZLA_QUANT_SOLVER_KIND;
   slv->bzla      = bzla;
-  slv->api.clone = (BzlaSolverClone) clone_quant_solver;
   slv->api.delet = (BzlaSolverDelete) delete_quant_solver;
   if (bzla_opt_get(bzla, BZLA_OPT_QUANT_MODE) == BZLA_QUANT_MODE_PORTFOLIO)
   {

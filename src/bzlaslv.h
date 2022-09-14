@@ -38,9 +38,7 @@ enum BzlaSolverKind
 };
 typedef enum BzlaSolverKind BzlaSolverKind;
 
-typedef struct BzlaSolver *(*BzlaSolverClone)(Bzla *,
-                                              struct BzlaSolver *,
-                                              BzlaNodeMap *);
+typedef struct BzlaSolver BzlaSolver;
 typedef void (*BzlaSolverDelete)(struct BzlaSolver *);
 typedef BzlaSolverResult (*BzlaSolverSat)(struct BzlaSolver *);
 typedef void (*BzlaSolverGenerateModel)(struct BzlaSolver *, bool, bool);
@@ -57,7 +55,6 @@ typedef void (*BzlaSolverPrintModel)(struct BzlaSolver *,
     Bzla *bzla;                                  \
     struct                                       \
     {                                            \
-      BzlaSolverClone clone;                     \
       BzlaSolverDelete delet;                    \
       BzlaSolverSat sat;                         \
       BzlaSolverGenerateModel generate_model;    \
@@ -71,6 +68,5 @@ struct BzlaSolver
 {
   BZLA_SOLVER_STRUCT;
 };
-typedef struct BzlaSolver BzlaSolver;
 
 #endif

@@ -36,76 +36,6 @@
 
 /*------------------------------------------------------------------------*/
 
-static BzlaFunSolver *
-clone_fun_solver(Bzla *clone, BzlaFunSolver *slv, BzlaNodeMap *exp_map)
-{
-  assert(clone);
-  assert(slv);
-  assert(slv->kind == BZLA_FUN_SOLVER_KIND);
-  assert(exp_map);
-
-  uint32_t h;
-  Bzla *bzla;
-  BzlaFunSolver *res;
-
-  bzla = slv->bzla;
-
-  BZLA_NEW(clone->mm, res);
-  memcpy(res, slv, sizeof(BzlaFunSolver));
-
-  res->bzla   = clone;
-  res->lemmas = bzla_hashptr_table_clone(
-      clone->mm, slv->lemmas, bzla_clone_key_as_node, 0, exp_map, 0);
-
-  bzla_clone_node_ptr_stack(
-      clone->mm, &slv->cur_lemmas, &res->cur_lemmas, exp_map, false);
-
-  bzla_clone_node_ptr_stack(
-      clone->mm, &slv->constraints, &res->constraints, exp_map, false);
-
-  if (slv->score)
-  {
-    h = bzla_opt_get(bzla, BZLA_OPT_FUN_JUST_HEURISTIC);
-    if (h == BZLA_JUST_HEUR_BRANCH_MIN_APP)
-    {
-      res->score = bzla_hashptr_table_clone(clone->mm,
-                                            slv->score,
-                                            bzla_clone_key_as_node,
-                                            bzla_clone_data_as_ptr_htable,
-                                            exp_map,
-                                            exp_map);
-    }
-    else
-    {
-      assert(h == BZLA_JUST_HEUR_BRANCH_MIN_DEP);
-      res->score = bzla_hashptr_table_clone(clone->mm,
-                                            slv->score,
-                                            bzla_clone_key_as_node,
-                                            bzla_clone_data_as_int,
-                                            exp_map,
-                                            0);
-    }
-  }
-
-  BZLA_INIT_STACK(clone->mm, res->stats.lemmas_size);
-  if (BZLA_SIZE_STACK(slv->stats.lemmas_size) > 0)
-  {
-    BZLA_CNEWN(clone->mm,
-               res->stats.lemmas_size.start,
-               BZLA_SIZE_STACK(slv->stats.lemmas_size));
-
-    res->stats.lemmas_size.end =
-        res->stats.lemmas_size.start + BZLA_SIZE_STACK(slv->stats.lemmas_size);
-    res->stats.lemmas_size.top =
-        res->stats.lemmas_size.start + BZLA_COUNT_STACK(slv->stats.lemmas_size);
-    memcpy(res->stats.lemmas_size.start,
-           slv->stats.lemmas_size.start,
-           BZLA_SIZE_STACK(slv->stats.lemmas_size) * sizeof(uint32_t));
-  }
-
-  return res;
-}
-
 static void
 delete_fun_solver(BzlaFunSolver *slv)
 {
@@ -346,79 +276,6 @@ get_bv_assignment(Bzla *bzla, BzlaNode *exp)
 }
 
 /*------------------------------------------------------------------------*/
-
-static Bzla *
-new_exp_layer_clone_for_dual_prop(Bzla *bzla,
-                                  BzlaNodeMap **exp_map,
-                                  BzlaNode **root)
-{
-  assert(bzla);
-  assert(bzla->slv);
-  assert(bzla->slv->kind == BZLA_FUN_SOLVER_KIND);
-  assert(exp_map);
-  assert(root);
-
-  double start;
-  Bzla *clone;
-  BzlaNode *cur, *and;
-  BzlaPtrHashTableIterator it;
-
-  /* empty formula */
-  if (bzla->unsynthesized_constraints->count == 0) return 0;
-
-  start = bzla_util_time_stamp();
-  clone = bzla_clone_exp_layer(bzla, exp_map, true);
-  assert(!clone->synthesized_constraints->count);
-  assert(clone->embedded_constraints->count == 0);
-  assert(clone->unsynthesized_constraints->count);
-
-  bzla_opt_set(clone, BZLA_OPT_PRODUCE_MODELS, 0);
-  bzla_opt_set(clone, BZLA_OPT_INCREMENTAL, 1);
-  //  bzla_opt_set (clone, BZLA_OPT_LOGLEVEL, 0);
-  //  bzla_opt_set (clone, BZLA_OPT_VERBOSITY, 0);
-  bzla_opt_set(clone, BZLA_OPT_FUN_DUAL_PROP, 0);
-
-  assert(!bzla_sat_is_initialized(bzla_get_sat_mgr(clone)));
-  bzla_opt_set_str(clone, BZLA_OPT_SAT_ENGINE, "plain=1");
-  configure_sat_mgr(clone);
-
-  bzla_iter_hashptr_init(&it, clone->unsynthesized_constraints);
-  bzla_iter_hashptr_queue(&it, clone->assumptions);
-  while (bzla_iter_hashptr_has_next(&it))
-  {
-    cur                                  = bzla_iter_hashptr_next(&it);
-    bzla_node_real_addr(cur)->constraint = 0;
-    if (!*root)
-    {
-      *root = bzla_node_copy(clone, cur);
-    }
-    else
-    {
-      and = bzla_exp_bv_and(clone, *root, cur);
-      bzla_node_release(clone, *root);
-      *root = and;
-    }
-  }
-
-  bzla_iter_hashptr_init(&it, clone->unsynthesized_constraints);
-  bzla_iter_hashptr_queue(&it, clone->assumptions);
-  while (bzla_iter_hashptr_has_next(&it))
-    bzla_node_release(clone, bzla_iter_hashptr_next(&it));
-  bzla_hashptr_table_delete(clone->unsynthesized_constraints);
-  bzla_hashptr_table_delete(clone->assumptions);
-  clone->unsynthesized_constraints =
-      bzla_hashptr_table_new(clone->mm,
-                             (BzlaHashPtr) bzla_node_hash_by_id,
-                             (BzlaCmpPtr) bzla_node_compare_by_id);
-  clone->assumptions =
-      bzla_hashptr_table_new(clone->mm,
-                             (BzlaHashPtr) bzla_node_hash_by_id,
-                             (BzlaCmpPtr) bzla_node_compare_by_id);
-
-  BZLA_FUN_SOLVER(bzla)->time.search_init_apps_cloning +=
-      bzla_util_time_stamp() - start;
-  return clone;
-}
 
 static void
 assume_inputs(Bzla *bzla,
@@ -2732,7 +2589,7 @@ sat_fun_solver(BzlaFunSolver *slv)
   /* initialize dual prop clone */
   if (bzla_opt_get(bzla, BZLA_OPT_FUN_DUAL_PROP))
   {
-    clone = new_exp_layer_clone_for_dual_prop(bzla, &exp_map, &clone_root);
+    // disabled
   }
 
   BzlaPtrHashTableIterator it;
@@ -3117,7 +2974,6 @@ bzla_new_fun_solver(Bzla *bzla)
   slv->kind = BZLA_FUN_SOLVER_KIND;
   slv->bzla = bzla;
 
-  slv->api.clone          = (BzlaSolverClone) clone_fun_solver;
   slv->api.delet          = (BzlaSolverDelete) delete_fun_solver;
   slv->api.sat            = (BzlaSolverSat) sat_fun_solver;
   slv->api.generate_model = (BzlaSolverGenerateModel) generate_model_fun_solver;
