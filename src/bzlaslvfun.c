@@ -277,6 +277,7 @@ get_bv_assignment(Bzla *bzla, BzlaNode *exp)
 
 /*------------------------------------------------------------------------*/
 
+#if 0
 static void
 assume_inputs(Bzla *bzla,
               Bzla *clone,
@@ -322,6 +323,7 @@ assume_inputs(Bzla *bzla,
     bzla_node_release(clone, bv_eq);
   }
 }
+#endif
 
 static BzlaNode *
 create_function_disequality_witness(Bzla *bzla, BzlaNode *feq)
@@ -446,6 +448,7 @@ add_function_disequality_witnesses(Bzla *bzla)
   bzla_hashint_table_delete(cache);
 }
 
+#if 0
 static int32_t
 sat_aux_bzla_dual_prop(Bzla *bzla)
 {
@@ -803,6 +806,7 @@ add_lemma_to_dual_prop_clone(Bzla *bzla,
   bzla_node_release(clone, *root);
   *root = and;
 }
+#endif
 
 /*------------------------------------------------------------------------*/
 
@@ -2144,6 +2148,9 @@ check_and_resolve_conflicts(Bzla *bzla,
                             BzlaNodePtrStack *init_apps,
                             BzlaIntHashTable *init_apps_cache)
 {
+  (void) clone;
+  (void) clone_root;
+  (void) exp_map;
   assert(bzla);
   assert(bzla->slv);
   assert(bzla->slv->kind == BZLA_FUN_SOLVER_KIND);
@@ -2189,13 +2196,16 @@ check_and_resolve_conflicts(Bzla *bzla,
     push_applies_for_propagation(bzla, cur, &prop_stack, apply_search_cache);
   }
 
+#if 0
   if (clone)
   {
     search_initial_applies_dual_prop(
         bzla, clone, clone_root, exp_map, &top_applies);
     init_apps = &top_applies;
   }
-  else if (bzla_opt_get(bzla, BZLA_OPT_FUN_JUST))
+  else
+#endif
+  if (bzla_opt_get(bzla, BZLA_OPT_FUN_JUST))
   {
     search_initial_applies_just(bzla, &top_applies);
     init_apps = &top_applies;
@@ -2549,7 +2559,8 @@ sat_fun_solver(BzlaFunSolver *slv)
   bool opt_prels, opt_prop_const_bits;
   BzlaSolverResult result;
   Bzla *bzla, *clone;
-  BzlaNode *clone_root, *lemma;
+  BzlaNode *clone_root;
+  BzlaNode *lemma;
   BzlaNodeMap *exp_map;
   BzlaIntHashTable *init_apps_cache;
   BzlaNodePtrStack init_apps;
@@ -2688,8 +2699,10 @@ sat_fun_solver(BzlaFunSolver *slv)
         bzla_assume_exp(bzla, lemma);
       else
         bzla_insert_unsynthesized_constraint(bzla, lemma);
+#if 0
       if (clone)
         add_lemma_to_dual_prop_clone(bzla, clone, &clone_root, lemma, exp_map);
+#endif
       BZLA_PUSH_STACK(slv->constraints, bzla_node_copy(bzla, lemma));
     }
     BZLA_RESET_STACK(slv->cur_lemmas);
@@ -2719,6 +2732,7 @@ DONE:
   BZLA_RELEASE_STACK(init_apps);
   bzla_hashint_table_delete(init_apps_cache);
 
+#if 0
   if (clone)
   {
     assert(exp_map);
@@ -2726,6 +2740,7 @@ DONE:
     bzla_node_release(clone, clone_root);
     bzla_delete(clone);
   }
+#endif
   if (ls_slv)
   {
     bzla->slv = ls_slv;
