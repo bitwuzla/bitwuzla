@@ -12,10 +12,6 @@
 
 #include <limits.h>
 
-#ifndef NDEBUG
-#include "bzlachkfailed.h"
-#include "bzlachkmodel.h"
-#endif
 #include "bzlaclone.h"
 #include "bzlaconfig.h"
 #include "bzladbg.h"
@@ -505,7 +501,6 @@ bzla_print_stats(Bzla *bzla)
            bzla->stats.prop_apply_update);
   BZLA_MSG(
       bzla->msg, 1, "%5lld beta reductions", bzla->stats.beta_reduce_calls);
-  BZLA_MSG(bzla->msg, 1, "%5lld clone calls", bzla->stats.clone_calls);
 
   BZLA_MSG(bzla->msg, 1, "");
   BZLA_MSG(bzla->msg, 1, "rewrite rule cache");
@@ -2771,9 +2766,6 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
   assert(bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL)
          || bzla->bzla_sat_bzla_called == 0);
 
-#ifndef NDEBUG
-  bool check = true;
-#endif
   double start, delta;
   BzlaSolverResult res;
   uint32_t engine;
@@ -2819,39 +2811,6 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
     BZLA_MSG(bzla->msg, 1, "found FP expressions, disable lambda extraction");
     bzla_opt_set(bzla, BZLA_OPT_PP_EXTRACT_LAMBDAS, 0);
   }
-
-#ifndef NDEBUG
-  // NOTE: disable checking if quantifiers present for now (not supported yet)
-  if (bzla->quantifiers->count) check = false;
-
-  Bzla *uclone = 0;
-  if (check && bzla_opt_get(bzla, BZLA_OPT_CHECK_UNCONSTRAINED)
-      && bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION)
-      && bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2
-      && !bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL)
-      && !bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS)
-      && !bzla_opt_get(bzla, BZLA_OPT_PRINT_DIMACS))
-  {
-    uclone = bzla_clone(bzla);
-    bzla_opt_set(uclone, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION, 0);
-    bzla_opt_set(uclone, BZLA_OPT_CHECK_UNCONSTRAINED, 0);
-    bzla_opt_set(uclone, BZLA_OPT_CHECK_MODEL, 0);
-    bzla_opt_set(uclone, BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS, 0);
-    bzla_set_term(uclone, 0, 0);
-
-    bzla_opt_set(uclone, BZLA_OPT_ENGINE, BZLA_ENGINE_FUN);
-    if (uclone->slv)
-    {
-      uclone->slv->api.delet(uclone->slv);
-      uclone->slv = 0;
-    }
-  }
-  BzlaCheckModelContext *chkmodel = 0;
-  if (check && bzla_opt_get(bzla, BZLA_OPT_CHECK_MODEL))
-  {
-    chkmodel = bzla_check_model_init(bzla);
-  }
-#endif
 
 #ifndef NBZLALOG
   bzla_opt_log_opts(bzla);
@@ -2990,39 +2949,6 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
             bzla->slv, bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS) == 2, true);
     }
   }
-
-#ifndef NDEBUG
-  if (uclone)
-  {
-    assert(bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION));
-    assert(bzla_opt_get(bzla, BZLA_OPT_RW_LEVEL) > 2);
-    assert(!bzla_opt_get(bzla, BZLA_OPT_INCREMENTAL));
-    assert(!bzla_opt_get(bzla, BZLA_OPT_PRODUCE_MODELS));
-    BzlaSolverResult ucres = bzla_check_sat(uclone, -1, -1);
-    assert(res == ucres);
-    bzla_delete(uclone);
-  }
-
-  if (chkmodel)
-  {
-    if (res == BZLA_RESULT_SAT
-        && !bzla_opt_get(bzla, BZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION))
-    {
-      bzla_check_model(chkmodel);
-    }
-    bzla_check_model_delete(chkmodel);
-  }
-#endif
-
-#ifndef NDEBUG
-  if (check && bzla_opt_get(bzla, BZLA_OPT_ENGINE) != BZLA_ENGINE_PROP
-      && bzla_opt_get(bzla, BZLA_OPT_ENGINE) != BZLA_ENGINE_PROP_OLD
-      && bzla_opt_get(bzla, BZLA_OPT_CHECK_UNSAT_ASSUMPTIONS)
-      && !bzla->inconsistent && bzla->last_sat_result == BZLA_RESULT_UNSAT)
-  {
-    bzla_check_failed_assumptions(bzla);
-  }
-#endif
 
   delta = bzla_util_time_stamp() - start;
 
