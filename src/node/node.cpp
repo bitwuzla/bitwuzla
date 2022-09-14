@@ -100,18 +100,6 @@ Node::is_null() const
   return d_data == nullptr;
 }
 
-bool
-Node::operator==(const Node& other) const
-{
-  return d_data == other.d_data;
-}
-
-bool
-Node::operator!=(const Node& other) const
-{
-  return d_data != other.d_data;
-}
-
 size_t
 Node::get_num_children() const
 {
@@ -207,6 +195,20 @@ Node::Node(node::NodeData* data) : d_data(data)
   assert(data != nullptr);
   d_data->inc_ref();
 };
+
+/* --- Other --------------------------------------------------------------- */
+
+bool
+operator==(const Node& a, const Node& b)
+{
+  return a.d_data == b.d_data;
+}
+
+bool
+operator!=(const Node& a, const Node& b)
+{
+  return a.d_data != b.d_data;
+}
 
 }  // namespace bzla
 

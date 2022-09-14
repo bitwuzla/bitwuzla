@@ -27,6 +27,8 @@ class NodeManager;
 class Node
 {
   friend class node::NodeManager;
+  friend bool operator==(const Node& a, const Node& b);
+  friend bool operator!=(const Node& a, const Node& b);
 
  public:
   using iterator = const Node*;
@@ -97,22 +99,6 @@ class Node
   const T& get_value() const;
 
   /**
-   * Syntactical equality operator.
-   *
-   * @param other The node to compare against.
-   * @return True if this node and other are equal.
-   */
-  bool operator==(const Node& other) const;
-
-  /**
-   * Syntactical disequality operator.
-   *
-   * @param other The node to compare against.
-   * @return True if this node and other are disequal.
-   */
-  bool operator!=(const Node& other) const;
-
-  /**
    * @return An iterator to the first child of this node.
    */
   iterator begin() const;
@@ -129,6 +115,12 @@ class Node
   node::NodeData* d_data = nullptr;
 };
 
+/** Syntactical equality over two nodes. */
+bool operator==(const Node& a, const Node& b);
+/** Syntactical disequality over two nodes. */
+bool operator!=(const Node& a, const Node& b);
+
+// Node::get_value() instantiations for different value types
 template <>
 const bool& Node::get_value() const;
 template <>
