@@ -16,24 +16,30 @@ NodeManager::get()
 }
 
 Node
-NodeManager::mk_const(const Type& t, const std::string& symbol)
+NodeManager::mk_const(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
-  // TODO: handle symbol
   NodeData* data = new NodeData(this, Kind::CONSTANT);
   data->d_type   = t;
   init_id(data);
+  if (symbol)
+  {
+    d_symbol_table.emplace(data, *symbol);
+  }
   return Node(data);
 }
 
 Node
-NodeManager::mk_var(const Type& t, const std::string& symbol)
+NodeManager::mk_var(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
-  // TODO: handle symbol
   NodeData* data = new NodeData(this, Kind::VARIABLE);
   data->d_type   = t;
   init_id(data);
+  if (symbol)
+  {
+    d_symbol_table.emplace(data, *symbol);
+  }
   return Node(data);
 }
 
@@ -694,10 +700,23 @@ NodeManager::garbage_collect(NodeData* data)
     }
 
     assert(d_node_data[cur->d_id - 1]->d_id == cur->d_id);
+    d_symbol_table.erase(cur);
     d_node_data[cur->d_id - 1].reset(nullptr);
   } while (!visit.empty());
 
   d_in_gc_mode = false;
+}
+
+const std::string&
+NodeManager::get_symbol(const NodeData* data) const
+{
+  auto it = d_symbol_table.find(data);
+  if (it == d_symbol_table.end())
+  {
+    static std::string no_symbol;
+    return no_symbol;
+  }
+  return it->second;
 }
 
 }  // namespace bzla::node

@@ -168,6 +168,13 @@ Node::get_value() const
   return d_data->get_value<fp::FloatingPoint>();
 }
 
+const std::string&
+Node::get_symbol() const
+{
+  assert(!is_null());
+  return d_data->get_symbol();
+}
+
 Node::iterator
 Node::begin() const
 {

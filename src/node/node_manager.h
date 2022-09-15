@@ -4,7 +4,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -41,7 +43,8 @@ class NodeManager
    * @param symbol The symbol of the constant.
    * @return Constant of type `t`.
    */
-  Node mk_const(const Type& t, const std::string& symbol = "");
+  Node mk_const(const Type& t,
+                const std::optional<std::string>& symbol = std::nullopt);
 
   /**
    * Create variable.
@@ -50,7 +53,8 @@ class NodeManager
    * @param symbol The symbol of the variable.
    * @return Variable of type `t`.
    */
-  Node mk_var(const Type& t, const std::string& symbol = "");
+  Node mk_var(const Type& t,
+              const std::optional<std::string>& symbol = std::nullopt);
 
   /**
    * Create Boolean value.
@@ -208,6 +212,8 @@ class NodeManager
    */
   void garbage_collect(NodeData* d);
 
+  const std::string& get_symbol(const NodeData* d) const;
+
   /** Type manager. */
   type::TypeManager d_tm;
 
@@ -222,6 +228,9 @@ class NodeManager
 
   /** Lookup data structure for hash consing of node data. */
   std::unordered_set<NodeData*, NodeDataHash, NodeDataKeyEqual> d_unique_nodes;
+
+  /** Stores symbols for nodes. */
+  std::unordered_map<const NodeData*, std::string> d_symbol_table;
 };
 
 }  // namespace node

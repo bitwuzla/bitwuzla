@@ -99,6 +99,11 @@ class Node
   const T& get_value() const;
 
   /**
+   * @return Symbol of this node or empty string if node does not have a symbol.
+   */
+  const std::string& get_symbol() const;
+
+  /**
    * @return An iterator to the first child of this node.
    */
   iterator begin() const;

@@ -179,11 +179,13 @@ translate_bzla_node(NodeManager &nm, BzlaNode *node)
                 translate_bzla_sort(nm, bzla, cur, bzla_node_get_sort_id(cur));
             if (bzla_node_get_kind(cur) == BZLA_PARAM_NODE)
             {
-              res = nm.mk_var(t);
+              std::string symbol(bzla_node_get_symbol(bzla, cur));
+              res = nm.mk_var(t, symbol);
             }
             else
             {
-              res = nm.mk_const(t);
+              std::string symbol(bzla_node_get_symbol(bzla, cur));
+              res = nm.mk_const(t, symbol);
             }
           }
           break;

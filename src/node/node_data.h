@@ -126,6 +126,11 @@ class NodeData
     return data.d_value;
   }
 
+  /**
+   * @return Symbol of this node or empty string if node does not have a symbol.
+   */
+  const std::string& get_symbol() const;
+
   /** Increase the reference count by one. */
   void inc_ref();
 
