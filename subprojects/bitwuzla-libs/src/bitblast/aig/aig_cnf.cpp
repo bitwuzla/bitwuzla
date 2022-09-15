@@ -26,7 +26,7 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level)
       auto cur = visit.back();
       visit.pop_back();
 
-      auto [it, inserted] = cache.insert(std::abs(cur->get_id()));
+      auto [it, inserted] = cache.insert(cur->get_id());
 
       if (!inserted)
       {
