@@ -330,7 +330,7 @@ BvSolver::bitblast(const Node& t)
         case Kind::VALUE:
           it->second = type.is_bool()
                            ? d_bitblaster.bv_value(
-                               BitVector(cur.get_value<bool>() ? 1 : 0, 1))
+                               BitVector(1, cur.get_value<bool>() ? 1 : 0, 1))
                            : d_bitblaster.bv_value(cur.get_value<BitVector>());
           break;
 
