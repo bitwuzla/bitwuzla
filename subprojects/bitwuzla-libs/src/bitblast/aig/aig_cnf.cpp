@@ -1,65 +1,66 @@
 #include "bitblast/aig/aig_cnf.h"
 
-#include <iostream>
+#include <functional>
 
 namespace bzla::bb {
+
 void
 AigCnfEncoder::encode(const AigNode& node, bool top_level)
 {
   if (top_level)
   {
     std::unordered_set<int64_t> cache;
-    std::vector<const AigNode*> visit;
-    std::vector<const AigNode*> children;
+    std::vector<std::reference_wrapper<const AigNode>> visit;
+    std::vector<std::reference_wrapper<const AigNode>> children;
     if (node.is_and())
     {
-      visit.push_back(&node[1]);
-      visit.push_back(&node[0]);
+      visit.push_back(node[1]);
+      visit.push_back(node[0]);
     }
     else
     {
-      visit.push_back(&node);
+      visit.push_back(node);
     }
 
     do
     {
-      auto cur = visit.back();
+      const AigNode& cur = visit.back();
       visit.pop_back();
 
-      auto [it, inserted] = cache.insert(cur->get_id());
-
+      auto [it, inserted] = cache.insert(cur.get_id());
       if (!inserted)
       {
         continue;
       }
 
-      if (cur->is_and() && !cur->is_negated())
+      if (cur.is_and() && !cur.is_negated())
       {
-        visit.push_back(&(*cur)[1]);
-        visit.push_back(&(*cur)[0]);
+        visit.push_back(cur[1]);
+        visit.push_back(cur[0]);
       }
       else
       {
         children.push_back(cur);
-        _encode(*cur);
+        _encode(cur);
       }
     } while (!visit.empty());
+    assert(!children.empty());
 
     // Top-level or
     if (node.is_and() && node.is_negated())
     {
-      for (auto child : children)
+      for (const AigNode& child : children)
       {
-        d_sat_solver.add(-child->get_id());
+        d_sat_solver.add(-child.get_id());
       }
       d_sat_solver.add(0);
     }
-    // Top-evel and
+    // Top-level and
     else
     {
-      for (auto child : children)
+      for (const AigNode& child : children)
       {
-        d_sat_solver.add_clause({child->get_id()});
+        d_sat_solver.add_clause({child.get_id()});
       }
     }
   }
