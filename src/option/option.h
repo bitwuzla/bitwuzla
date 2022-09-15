@@ -288,6 +288,11 @@ class Options
   /** Constructor. */
   Options();
 
+  OptionBool incremental;
+  OptionNumeric log_level;
+  OptionEnum<SatSolver> sat_solver;
+
+ private:
   /**
    * Set current value of Boolean option.
    * @note This is mainly necessary to have access to options via their enum
@@ -334,12 +339,6 @@ class Options
    * @return The current value of an enum option.
    */
   const std::string& get_option_enum(Option opt) const;
-
-  OptionBool incremental;
-  OptionNumeric log_level;
-  OptionEnum<SatSolver> sat_solver;
-
- private:
   /**
    * Register option.
    * @note This is mainly necessary to have access to options via their enum

@@ -338,8 +338,17 @@ configure_file(
 #-----------------------------------------------------------------------------#
 # Regression tests
 
+set(ENABLE_WHITEBOX_TESTS OFF)
 if(TESTING)
   enable_testing()
+
+  # Check if Clang version has the bug that was fixed in
+  # https://reviews.llvm.org/D93104
+  check_cxx_compiler_flag("-faccess-control" HAVE_CXX_FLAGfaccess_control)
+  if(HAVE_CXX_FLAGfaccess_control)
+    set(ENABLE_WHITEBOX_TESTS ON)
+    message(STATUS "Enabling white box unit tests")
+  endif()
 endif()
 
 #-----------------------------------------------------------------------------#
