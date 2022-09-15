@@ -12,6 +12,28 @@ class TestBvSolver : public TestCommon
 
 TEST_F(TestBvSolver, ctor_dtor) { SolvingContext ctx; }
 
+TEST_F(TestBvSolver, solve_empty)
+{
+  SolvingContext ctx;
+  ASSERT_EQ(ctx.solve(), Result::SAT);
+}
+
+TEST_F(TestBvSolver, solve_true)
+{
+  NodeManager& nm = NodeManager::get();
+  SolvingContext ctx;
+  ctx.assert_formula(nm.mk_value(true));
+  ASSERT_EQ(ctx.solve(), Result::SAT);
+}
+
+TEST_F(TestBvSolver, solve_false)
+{
+  NodeManager& nm = NodeManager::get();
+  SolvingContext ctx;
+  ctx.assert_formula(nm.mk_value(false));
+  ASSERT_EQ(ctx.solve(), Result::UNSAT);
+}
+
 TEST_F(TestBvSolver, solve_eq1)
 {
   NodeManager& nm = NodeManager::get();
@@ -150,6 +172,22 @@ TEST_F(TestBvSolver, multiple_ctxs)
   ASSERT_EQ(ctx2.solve(), Result::SAT);
   ASSERT_EQ(ctx2.get_value(x), ctx1.get_value(x));
   ASSERT_EQ(ctx2.get_value(y), ctx1.get_value(y));
+}
+
+TEST_F(TestBvSolver, solve1)
+{
+  NodeManager& nm = NodeManager::get();
+  SolvingContext ctx;
+
+  Type bv2    = nm.mk_bv_type(2);
+  Node x      = nm.mk_const(bv2);
+  Node concat = nm.mk_node(Kind::BV_CONCAT, {nm.mk_value(BitVector(6, 0)), x});
+
+  ctx.assert_formula(nm.mk_node(
+      Kind::EQUAL,
+      {concat,
+       nm.mk_node(Kind::BV_SHL, {nm.mk_value(BitVector(8, 1)), concat})}));
+  ASSERT_EQ(ctx.solve(), Result::UNSAT);
 }
 
 }  // namespace bzla::test
