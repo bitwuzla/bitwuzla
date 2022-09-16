@@ -212,7 +212,8 @@ class NodeManager
    */
   void garbage_collect(NodeData* d);
 
-  const std::string& get_symbol(const NodeData* d) const;
+  const std::optional<std::reference_wrapper<const std::string>> get_symbol(
+      const NodeData* d) const;
 
   /** Type manager. */
   type::TypeManager d_tm;

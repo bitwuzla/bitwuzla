@@ -168,7 +168,7 @@ Node::get_value() const
   return d_data->get_value<fp::FloatingPoint>();
 }
 
-const std::string&
+std::optional<std::reference_wrapper<const std::string>>
 Node::get_symbol() const
 {
   assert(!is_null());

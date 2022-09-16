@@ -122,7 +122,7 @@ NodeData::is_nary() const
   return s_node_kind_info[d_kind].num_children == KindInformation::s_nary;
 }
 
-const std::string&
+std::optional<std::reference_wrapper<const std::string>>
 NodeData::get_symbol() const
 {
   return d_mgr->get_symbol(this);

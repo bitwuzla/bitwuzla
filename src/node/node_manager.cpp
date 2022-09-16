@@ -1,5 +1,7 @@
 #include "node/node_manager.h"
 
+#include <functional>
+
 #include "bitvector.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
@@ -707,16 +709,15 @@ NodeManager::garbage_collect(NodeData* data)
   d_in_gc_mode = false;
 }
 
-const std::string&
+const std::optional<std::reference_wrapper<const std::string>>
 NodeManager::get_symbol(const NodeData* data) const
 {
   auto it = d_symbol_table.find(data);
   if (it == d_symbol_table.end())
   {
-    static std::string no_symbol;
-    return no_symbol;
+    return std::nullopt;
   }
-  return it->second;
+  return std::optional<std::reference_wrapper<const std::string>>{it->second};
 }
 
 }  // namespace bzla::node

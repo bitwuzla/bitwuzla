@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 #include "node/node_kind.h"
 #include "type/type.h"
@@ -101,7 +102,7 @@ class Node
   /**
    * @return Symbol of this node or empty string if node does not have a symbol.
    */
-  const std::string& get_symbol() const;
+  std::optional<std::reference_wrapper<const std::string>> get_symbol() const;
 
   /**
    * @return An iterator to the first child of this node.

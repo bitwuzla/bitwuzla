@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 #include "bitvector.h"
 #include "node/node.h"
@@ -129,7 +130,7 @@ class NodeData
   /**
    * @return Symbol of this node or empty string if node does not have a symbol.
    */
-  const std::string& get_symbol() const;
+  std::optional<std::reference_wrapper<const std::string>> get_symbol() const;
 
   /** Increase the reference count by one. */
   void inc_ref();
