@@ -100,6 +100,12 @@ Node::is_null() const
   return d_data == nullptr;
 }
 
+bool
+Node::is_value() const
+{
+  return d_data->get_kind() == node::Kind::VALUE;
+}
+
 size_t
 Node::get_num_children() const
 {

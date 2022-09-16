@@ -62,6 +62,11 @@ class Node
   bool is_null() const;
 
   /**
+   * @return True if this node is a value.
+   */
+  bool is_value() const;
+
+  /**
    * @return The number of children.
    */
   size_t get_num_children() const;
