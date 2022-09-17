@@ -80,6 +80,8 @@ set(libbitwuzla_src_files
   preprocess/bzlaskolemize.c
   preprocess/bzlaunconstrained.c
   preprocess/bzlavarsubst.c
+  rewrite/rewriter.cpp
+  rewrite/rewrites_bv.cpp
   sat/bzlacadical.cpp
   sat/bzlacms.cpp
   sat/bzlalgl.c
