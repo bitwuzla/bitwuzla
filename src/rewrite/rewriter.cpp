@@ -1,5 +1,6 @@
 #include "rewrite/rewriter.h"
 
+#include "node/node_manager.h"
 #include "rewrite/rewrites_bv.h"
 
 #define BZLA_APPLY_RW_RULE(rw_rule)                                \
@@ -14,10 +15,46 @@ namespace bzla {
 
 /* === Rewriter public ====================================================== */
 
-void
+const Node&
 Rewriter::rewrite(const Node& node)
 {
-  // TODO
+  NodeManager& nm = NodeManager::get();
+  std::vector<std::reference_wrapper<const Node>> visit{node};
+  do
+  {
+    const Node& cur = visit.back();
+    auto it         = d_cache.find(cur);
+    if (it == d_cache.end())
+    {
+      d_cache.emplace(cur, Node());
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second.is_null())
+    {
+      if (cur.num_children())
+      {
+        std::vector<Node> children;
+        std::vector<uint64_t> indices;
+        for (const auto& c : cur)
+        {
+          children.push_back(d_cache.at(c));
+        }
+        for (size_t i = 0, n = cur.num_indices(); i < n; ++i)
+        {
+          indices.push_back(cur.index(i));
+        }
+        it->second = _rewrite(nm.mk_node(cur.kind(), children, indices));
+      }
+      else
+      {
+        it->second = cur;
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+  assert(d_cache.find(node) != d_cache.end());
+  return d_cache.at(node);
 }
 
 /* === Rewriter private ===================================================== */
@@ -25,13 +62,6 @@ Rewriter::rewrite(const Node& node)
 Node
 Rewriter::_rewrite(const Node& node)
 {
-  // query cache
-  auto it = d_cache.find(node);
-  if (it != d_cache.end())
-  {
-    return it->second;
-  }
-  // rewrite
   Node res = node;
 
   switch (node.kind())
@@ -39,11 +69,6 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::BV_AND: res = rewrite_bv_and(node); break;
 
     default: assert(false);
-  }
-  // cache
-  if (res != node)
-  {
-    d_cache.emplace(node, res);
   }
 
   return res;
@@ -84,7 +109,7 @@ Rewriter::rewrite_bv_and(const Node& node)
   // TODO
 
 DONE:
-  return node;
+  return res;
 }
 
 Node

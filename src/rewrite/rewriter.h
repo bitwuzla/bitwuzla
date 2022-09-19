@@ -12,7 +12,7 @@ namespace bzla {
 class Rewriter
 {
  public:
-  void rewrite(const Node& node);
+  const Node& rewrite(const Node& node);
 
  private:
   Node _rewrite(const Node& node);
