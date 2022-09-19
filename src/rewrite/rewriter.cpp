@@ -34,7 +34,7 @@ Rewriter::_rewrite(const Node& node)
   // rewrite
   Node res = node;
 
-  switch (node.get_kind())
+  switch (node.kind())
   {
     case node::Kind::BV_AND: res = rewrite_bv_and(node); break;
 

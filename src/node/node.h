@@ -42,17 +42,17 @@ class Node
   /**
    * @return The id of this node.
    */
-  uint64_t get_id() const;
+  uint64_t id() const;
 
   /**
    * @return The kind of this node.
    */
-  node::Kind get_kind() const;
+  node::Kind kind() const;
 
   /**
    * @return The type of this node.
    */
-  const Type& get_type() const;
+  const Type& type() const;
 
   /**
    * @return True if this node is null.
@@ -67,12 +67,12 @@ class Node
   /**
    * @return The number of children.
    */
-  size_t get_num_children() const;
+  size_t num_children() const;
 
   /**
    * Return child at position `index`.
    *
-   * @note Only valid to call if get_num_children() > 0.
+   * @note Only valid to call if num_children() > 0.
    *
    * @param index The position of the child.
    * @return The child node at position `index`.
@@ -82,17 +82,17 @@ class Node
   /**
    * @return The number of indices of this node.
    */
-  size_t get_num_indices() const;
+  size_t num_indices() const;
 
   /**
    * Return index at position `index`.
    *
-   * @note: Only valid to call if get_num_indices() > 0.
+   * @note: Only valid to call if num_indices() > 0.
    *
    * @param index The position of the index.
    * @return The index.
    */
-  uint64_t get_index(size_t index) const;
+  uint64_t index(size_t index) const;
 
   /**
    * Get the value represented by this node.
@@ -100,12 +100,12 @@ class Node
    * @return The value of type T.
    */
   template <class T>
-  const T& get_value() const;
+  const T& value() const;
 
   /**
    * @return Symbol of this node or empty string if node does not have a symbol.
    */
-  std::optional<std::reference_wrapper<const std::string>> get_symbol() const;
+  std::optional<std::reference_wrapper<const std::string>> symbol() const;
 
   /**
    * @return An iterator to the first child of this node.
@@ -129,15 +129,15 @@ bool operator==(const Node& a, const Node& b);
 /** Syntactical disequality over two nodes. */
 bool operator!=(const Node& a, const Node& b);
 
-// Node::get_value() instantiations for different value types
+// Node:: value() instantiations for different value types
 template <>
-const bool& Node::get_value() const;
+const bool& Node::value() const;
 template <>
-const BitVector& Node::get_value() const;
+const BitVector& Node::value() const;
 template <>
-const RoundingMode& Node::get_value() const;
+const RoundingMode& Node::value() const;
 template <>
-const FloatingPoint& Node::get_value() const;
+const FloatingPoint& Node::value() const;
 
 }  // namespace bzla
 

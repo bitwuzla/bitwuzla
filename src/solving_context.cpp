@@ -18,7 +18,7 @@ SolvingContext::solve()
 void
 SolvingContext::assert_formula(const Node& formula)
 {
-  assert(formula.get_type().is_bool());
+  assert(formula.type().is_bool());
   auto [it, inserted] = d_assertions_cache.insert(formula);
   if (inserted)
   {
@@ -31,7 +31,7 @@ SolvingContext::get_value(const Node& term)
 {
   assert(d_sat_state == Result::SAT);
 
-  const Type& type = term.get_type();
+  const Type& type = term.type();
   if (type.is_bool() || type.is_bv())
   {
     return d_bv_solver.value(term);

@@ -88,7 +88,7 @@ Node
 BvSolver::value(const Node& term)
 {
   assert(d_sat_state == Result::SAT);
-  assert(term.get_type().is_bool() || term.get_type().is_bv());
+  assert(term.type().is_bool() || term.type().is_bv());
 
   NodeManager& nm = NodeManager::get();
   NodeRefVector visit{term};
@@ -97,7 +97,7 @@ BvSolver::value(const Node& term)
   do
   {
     const Node& cur = visit.back();
-    assert(cur.get_type().is_bool() || cur.get_type().is_bv());
+    assert(cur.type().is_bool() || cur.type().is_bv());
 
     if (!get_cached_value(cur).is_null())
     {
@@ -120,7 +120,7 @@ BvSolver::value(const Node& term)
       it->second = true;
 
       Node value;
-      switch (cur.get_kind())
+      switch (cur.kind())
       {
         case Kind::VALUE: value = cur; break;
 
@@ -149,48 +149,46 @@ BvSolver::value(const Node& term)
           break;
 
         case Kind::NOT:
-          value = nm.mk_value(!get_cached_value(cur[0]).get_value<bool>());
+          value = nm.mk_value(!get_cached_value(cur[0]).value<bool>());
           break;
 
         case Kind::BV_NOT:
-          value = nm.mk_value(
-              get_cached_value(cur[0]).get_value<BitVector>().bvnot());
+          value =
+              nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvnot());
           break;
 
         case Kind::AND:
-          value = nm.mk_value(get_cached_value(cur[0]).get_value<bool>()
-                              && get_cached_value(cur[1]).get_value<bool>());
+          value = nm.mk_value(get_cached_value(cur[0]).value<bool>()
+                              && get_cached_value(cur[1]).value<bool>());
           break;
 
         case Kind::BV_AND:
-          value =
-              nm.mk_value(get_cached_value(cur[0]).get_value<BitVector>().bvand(
-                  get_cached_value(cur[1]).get_value<BitVector>()));
+          value = nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvand(
+              get_cached_value(cur[1]).value<BitVector>()));
           break;
 
         case Kind::OR:
-          value = nm.mk_value(get_cached_value(cur[0]).get_value<bool>()
-                              || get_cached_value(cur[1]).get_value<bool>());
+          value = nm.mk_value(get_cached_value(cur[0]).value<bool>()
+                              || get_cached_value(cur[1]).value<bool>());
           break;
 
         case Kind::BV_EXTRACT:
-          value = nm.mk_value(
-              get_cached_value(cur[0]).get_value<BitVector>().bvextract(
-                  cur.get_index(0), cur.get_index(1)));
+          value =
+              nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvextract(
+                  cur.index(0), cur.index(1)));
           break;
 
         case Kind::EQUAL: {
-          const Type& type0 = cur[0].get_type();
+          const Type& type0 = cur[0].type();
           if (type0.is_bool())
           {
-            value = nm.mk_value(get_cached_value(cur[0]).get_value<bool>()
-                                == get_cached_value(cur[1]).get_value<bool>());
+            value = nm.mk_value(get_cached_value(cur[0]).value<bool>()
+                                == get_cached_value(cur[1]).value<bool>());
           }
           else if (type0.is_bv())
           {
-            value =
-                nm.mk_value(get_cached_value(cur[0]).get_value<BitVector>()
-                            == get_cached_value(cur[1]).get_value<BitVector>());
+            value = nm.mk_value(get_cached_value(cur[0]).value<BitVector>()
+                                == get_cached_value(cur[1]).value<BitVector>());
           }
           else
           {
@@ -200,69 +198,65 @@ BvSolver::value(const Node& term)
         break;
 
         case Kind::BV_ADD:
-          value =
-              nm.mk_value(get_cached_value(cur[0]).get_value<BitVector>().bvadd(
-                  get_cached_value(cur[1]).get_value<BitVector>()));
+          value = nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvadd(
+              get_cached_value(cur[1]).value<BitVector>()));
           break;
 
         case Kind::BV_MUL:
-          value =
-              nm.mk_value(get_cached_value(cur[0]).get_value<BitVector>().bvmul(
-                  get_cached_value(cur[1]).get_value<BitVector>()));
+          value = nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvmul(
+              get_cached_value(cur[1]).value<BitVector>()));
           break;
 
         case Kind::BV_ULT:
-          value = nm.mk_value(
-              get_cached_value(cur[0]).get_value<BitVector>().compare(
-                  get_cached_value(cur[1]).get_value<BitVector>())
-              < 0);
+          value =
+              nm.mk_value(get_cached_value(cur[0]).value<BitVector>().compare(
+                              get_cached_value(cur[1]).value<BitVector>())
+                          < 0);
           break;
 
         case Kind::BV_SHL:
-          value =
-              nm.mk_value(get_cached_value(cur[0]).get_value<BitVector>().bvshl(
-                  get_cached_value(cur[1]).get_value<BitVector>()));
+          value = nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvshl(
+              get_cached_value(cur[1]).value<BitVector>()));
           break;
 
         case Kind::BV_SLT:
           value = nm.mk_value(
-              get_cached_value(cur[0]).get_value<BitVector>().signed_compare(
-                  get_cached_value(cur[1]).get_value<BitVector>())
+              get_cached_value(cur[0]).value<BitVector>().signed_compare(
+                  get_cached_value(cur[1]).value<BitVector>())
               < 0);
           break;
 
         case Kind::BV_SHR:
-          value =
-              nm.mk_value(get_cached_value(cur[0]).get_value<BitVector>().bvshr(
-                  get_cached_value(cur[1]).get_value<BitVector>()));
+          value = nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvshr(
+              get_cached_value(cur[1]).value<BitVector>()));
           break;
 
         case Kind::BV_ASHR:
-          value = nm.mk_value(
-              get_cached_value(cur[0]).get_value<BitVector>().bvashr(
-                  get_cached_value(cur[1]).get_value<BitVector>()));
+          value =
+              nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvashr(
+                  get_cached_value(cur[1]).value<BitVector>()));
           break;
 
         case Kind::BV_UDIV:
-          value = nm.mk_value(
-              get_cached_value(cur[0]).get_value<BitVector>().bvudiv(
-                  get_cached_value(cur[1]).get_value<BitVector>()));
+          value =
+              nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvudiv(
+                  get_cached_value(cur[1]).value<BitVector>()));
           break;
 
         case Kind::BV_UREM:
-          value = nm.mk_value(
-              get_cached_value(cur[0]).get_value<BitVector>().bvurem(
-                  get_cached_value(cur[1]).get_value<BitVector>()));
+          value =
+              nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvurem(
+                  get_cached_value(cur[1]).value<BitVector>()));
           break;
 
         case Kind::BV_CONCAT:
-          value = nm.mk_value(
-              get_cached_value(cur[0]).get_value<BitVector>().bvconcat(
-                  get_cached_value(cur[1]).get_value<BitVector>()));
+          value =
+              nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvconcat(
+                  get_cached_value(cur[1]).value<BitVector>()));
           break;
 
         case Kind::ITE:
-          value = get_cached_value(cur[0]).get_value<bool>()
+          value = get_cached_value(cur[0]).value<bool>()
                       ? get_cached_value(cur[1])
                       : get_cached_value(cur[2]);
           break;
@@ -308,7 +302,7 @@ BvSolver::bitblast(const Node& t)
   do
   {
     const Node& cur = visit.back();
-    assert(cur.get_type().is_bool() || cur.get_type().is_bv());
+    assert(cur.type().is_bool() || cur.type().is_bv());
 
     auto it = d_bitblaster_cache.find(cur);
     if (it == d_bitblaster_cache.end())
@@ -322,16 +316,16 @@ BvSolver::bitblast(const Node& t)
     }
     else if (it->second.empty())
     {
-      const Type& type = cur.get_type();
+      const Type& type = cur.type();
       assert(type.is_bool() || type.is_bv());
 
-      switch (cur.get_kind())
+      switch (cur.kind())
       {
         case Kind::VALUE:
           it->second = type.is_bool()
                            ? d_bitblaster.bv_value(
-                               BitVector(1, cur.get_value<bool>() ? 1 : 0, 1))
-                           : d_bitblaster.bv_value(cur.get_value<BitVector>());
+                               BitVector(1, cur.value<bool>() ? 1 : 0, 1))
+                           : d_bitblaster.bv_value(cur.value<BitVector>());
           break;
 
         // Boolean abstractions
@@ -363,15 +357,15 @@ BvSolver::bitblast(const Node& t)
 
         case Kind::NOT:
         case Kind::BV_NOT:
-          assert(cur.get_kind() != Kind::NOT || type.is_bool());
-          assert(cur.get_kind() != Kind::BV_NOT || type.is_bv());
+          assert(cur.kind() != Kind::NOT || type.is_bool());
+          assert(cur.kind() != Kind::BV_NOT || type.is_bv());
           it->second = d_bitblaster.bv_not(get_bits(cur[0]));
           break;
 
         case Kind::AND:
         case Kind::BV_AND:
-          assert(cur.get_kind() != Kind::NOT || type.is_bool());
-          assert(cur.get_kind() != Kind::BV_NOT || type.is_bv());
+          assert(cur.kind() != Kind::NOT || type.is_bool());
+          assert(cur.kind() != Kind::BV_NOT || type.is_bv());
           it->second = d_bitblaster.bv_and(get_bits(cur[0]), get_bits(cur[1]));
           break;
 
@@ -383,11 +377,11 @@ BvSolver::bitblast(const Node& t)
         case Kind::BV_EXTRACT:
           assert(type.is_bv());
           it->second = d_bitblaster.bv_extract(
-              get_bits(cur[0]), cur.get_index(0), cur.get_index(1));
+              get_bits(cur[0]), cur.index(0), cur.index(1));
           break;
 
         case Kind::EQUAL: {
-          const Type& type0 = cur[0].get_type();
+          const Type& type0 = cur[0].type();
           if (type0.is_bool() || type0.is_bv())
           {
             it->second = d_bitblaster.bv_eq(get_bits(cur[0]), get_bits(cur[1]));
@@ -453,7 +447,7 @@ BvSolver::bitblast(const Node& t)
           break;
 
         case Kind::ITE:
-          assert(cur[0].get_type().is_bool());
+          assert(cur[0].type().is_bool());
           it->second = d_bitblaster.bv_ite(
               get_bits(cur[0])[0], get_bits(cur[1]), get_bits(cur[2]));
           break;
@@ -501,7 +495,7 @@ BvSolver::get_bits(const Node& term) const
 bool
 BvSolver::is_leaf(const Node& term) const
 {
-  Kind k = term.get_kind();
+  Kind k = term.kind();
   return k == Kind::CONSTANT
          // Quantifiers
          || k == Kind::FORALL
@@ -519,18 +513,18 @@ BvSolver::is_leaf(const Node& term) const
          || k == Kind::FP_TO_SBV
          || k == Kind::FP_TO_UBV
          // Equalities over terms that are not Booleans or bit-vectors
-         || (k == Kind::EQUAL && !term[0].get_type().is_bool()
-             && !term[0].get_type().is_bv());
+         || (k == Kind::EQUAL && !term[0].type().is_bool()
+             && !term[0].type().is_bv());
 }
 
 Node
 BvSolver::get_assignment(const Node& term) const
 {
   assert(is_leaf(term));
-  assert(term.get_type().is_bool() || term.get_type().is_bv());
+  assert(term.type().is_bool() || term.type().is_bv());
 
   auto it          = d_bitblaster_cache.find(term);
-  const Type& type = term.get_type();
+  const Type& type = term.type();
   NodeManager& nm  = NodeManager::get();
 
   // Return default values if not bit-blasted

@@ -16,9 +16,9 @@ TEST_F(TestNode, node_ctor_dtor)
 {
   Node n;
   ASSERT_TRUE(n.is_null());
-  ASSERT_EQ(n.get_kind(), Kind::NULL_NODE);
-  ASSERT_EQ(n.get_id(), 0);
-  ASSERT_EQ(n.get_num_children(), 0);
+  ASSERT_EQ(n.kind(), Kind::NULL_NODE);
+  ASSERT_EQ(n.id(), 0);
+  ASSERT_EQ(n.num_children(), 0);
   ASSERT_EQ(n.begin(), n.end());
 }
 

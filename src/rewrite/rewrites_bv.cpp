@@ -12,7 +12,7 @@ RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   if (!node[0].is_value() || !node[1].is_value()) return node;
   return NodeManager::get().mk_value(
-      node[0].get_value<BitVector>().bvand(node[1].get_value<BitVector>()));
+      node[0].value<BitVector>().bvand(node[1].value<BitVector>()));
 }
 
 }  // namespace bzla

@@ -211,8 +211,8 @@ NodeManager::compute_type(Kind kind,
     }
 
     case Kind::BV_CONCAT:
-      return d_tm.mk_bv_type(children[0].get_type().get_bv_size()
-                             + children[1].get_type().get_bv_size());
+      return d_tm.mk_bv_type(children[0].type().get_bv_size()
+                             + children[1].type().get_bv_size());
 
     case Kind::BV_NOT:
     case Kind::BV_AND:
@@ -228,7 +228,7 @@ NodeManager::compute_type(Kind kind,
     case Kind::FP_MIN:
     case Kind::FP_MAX:
     case Kind::FP_REM:
-    case Kind::STORE: return children[0].get_type();
+    case Kind::STORE: return children[0].type();
 
     case Kind::FP_SQRT:
     case Kind::FP_RTI:
@@ -236,7 +236,7 @@ NodeManager::compute_type(Kind kind,
     case Kind::FP_MUL:
     case Kind::FP_DIV:
     case Kind::ITE:
-    case Kind::FP_FMA: return children[1].get_type();
+    case Kind::FP_FMA: return children[1].type();
 
     case Kind::FP_TO_SBV:
     case Kind::FP_TO_UBV: return d_tm.mk_bv_type(indices[0]);
@@ -247,21 +247,21 @@ NodeManager::compute_type(Kind kind,
     case Kind::FP_TO_FP_FROM_UBV:
       return d_tm.mk_fp_type(indices[0], indices[1]);
 
-    case Kind::SELECT: return children[0].get_type().get_array_element();
+    case Kind::SELECT: return children[0].type().get_array_element();
 
-    case Kind::APPLY: return children[0].get_type().get_fun_types().back();
+    case Kind::APPLY: return children[0].type().get_fun_types().back();
 
     case Kind::LAMBDA: {
-      std::vector<Type> types{children[0].get_type()};
+      std::vector<Type> types{children[0].type()};
       // Flatten function types
-      if (children[1].get_type().is_fun())
+      if (children[1].type().is_fun())
       {
-        auto const& fun_types = children[1].get_type().get_fun_types();
+        auto const& fun_types = children[1].type().get_fun_types();
         types.insert(types.end(), fun_types.begin(), fun_types.end());
       }
       else
       {
-        types.push_back(children[1].get_type());
+        types.push_back(children[1].type());
       }
       return d_tm.mk_fun_type(types);
     }
@@ -315,7 +315,7 @@ NodeManager::check_type(Kind kind,
     case Kind::OR:
       for (size_t i = 0, size = children.size(); i < size; ++i)
       {
-        if (!children[i].get_type().is_bool())
+        if (!children[i].type().is_bool())
         {
           ss << kind << ": ";
           ss << "Expected Boolean term at position " << i;
@@ -325,12 +325,12 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::BV_EXTRACT:
-      if (!children[0].get_type().is_bv())
+      if (!children[0].type().is_bv())
       {
         ss << kind << ": Expected bit-vector term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].get_type().get_bv_size() <= indices[0])
+      if (children[0].type().get_bv_size() <= indices[0])
       {
         ss << kind << ": Upper index must be less than the bit-width";
         return std::make_pair(false, ss.str());
@@ -351,7 +351,7 @@ NodeManager::check_type(Kind kind,
     case Kind::FP_IS_POS:
     case Kind::FP_IS_SUBNORM:
     case Kind::FP_IS_ZERO:
-      if (!children[0].get_type().is_fp())
+      if (!children[0].type().is_fp())
       {
         ss << kind << ": Expected floating point term at position 0";
         return std::make_pair(false, ss.str());
@@ -359,12 +359,12 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::FP_TO_FP_FROM_BV:
-      if (!children[0].get_type().is_bv())
+      if (!children[0].type().is_bv())
       {
         ss << kind << ": Expected bit-vector term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].get_type().get_bv_size() != indices[0] + indices[1])
+      if (children[0].type().get_bv_size() != indices[0] + indices[1])
       {
         ss << kind
            << ": Floating-point format does not match size of bit-vector term "
@@ -374,7 +374,7 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::EQUAL:
-      if (children[0].get_type() != children[1].get_type())
+      if (children[0].type() != children[1].type())
       {
         ss << kind << ": Expected terms with same type.";
         return std::make_pair(false, ss.str());
@@ -383,7 +383,7 @@ NodeManager::check_type(Kind kind,
 
     // Unary bit-vector operators
     case Kind::BV_NOT:
-      if (!children[0].get_type().is_bv())
+      if (!children[0].type().is_bv())
       {
         ss << kind << ": Expected bit-vector term at position 0";
         return std::make_pair(false, ss.str());
@@ -401,12 +401,12 @@ NodeManager::check_type(Kind kind,
     case Kind::BV_ASHR:
     case Kind::BV_UDIV:
     case Kind::BV_UREM:
-      if (!children[0].get_type().is_bv())
+      if (!children[0].type().is_bv())
       {
         ss << kind << ": Expected bit-vector term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].get_type() != children[1].get_type())
+      if (children[0].type() != children[1].type())
       {
         ss << kind << ": Expected terms of the same bit-vector type.";
         return std::make_pair(false, ss.str());
@@ -414,12 +414,12 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::BV_CONCAT:
-      if (!children[0].get_type().is_bv())
+      if (!children[0].type().is_bv())
       {
         ss << kind << ": Expected bit-vector term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (!children[1].get_type().is_bv())
+      if (!children[1].type().is_bv())
       {
         ss << kind << ": Expected bit-vector term at position 1";
         return std::make_pair(false, ss.str());
@@ -432,12 +432,12 @@ NodeManager::check_type(Kind kind,
     case Kind::FP_MIN:
     case Kind::FP_MAX:
     case Kind::FP_REM:
-      if (!children[0].get_type().is_fp())
+      if (!children[0].type().is_fp())
       {
         ss << kind << ": Expected floating-point term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].get_type() != children[1].get_type())
+      if (children[0].type() != children[1].type())
       {
         ss << kind << ": Expected terms of the same floating-point type.";
         return std::make_pair(false, ss.str());
@@ -449,12 +449,12 @@ NodeManager::check_type(Kind kind,
     case Kind::FP_TO_SBV:
     case Kind::FP_TO_UBV:
     case Kind::FP_TO_FP_FROM_FP:
-      if (!children[0].get_type().is_rm())
+      if (!children[0].type().is_rm())
       {
         ss << kind << ": Expected rounding mode term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (!children[1].get_type().is_fp())
+      if (!children[1].type().is_fp())
       {
         ss << kind << ": Expected floating-point term at position 1";
         return std::make_pair(false, ss.str());
@@ -463,12 +463,12 @@ NodeManager::check_type(Kind kind,
 
     case Kind::FP_TO_FP_FROM_SBV:
     case Kind::FP_TO_FP_FROM_UBV:
-      if (!children[0].get_type().is_rm())
+      if (!children[0].type().is_rm())
       {
         ss << kind << ": Expected rounding mode term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (!children[1].get_type().is_bv())
+      if (!children[1].type().is_bv())
       {
         ss << kind << ": Expected bit-vector term at position 1";
         return std::make_pair(false, ss.str());
@@ -476,12 +476,12 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::SELECT:
-      if (!children[0].get_type().is_array())
+      if (!children[0].type().is_array())
       {
         ss << kind << ": Expected array term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].get_type().get_array_index() != children[1].get_type())
+      if (children[0].type().get_array_index() != children[1].type())
       {
         ss << kind << ": Index term does not match array index type";
         return std::make_pair(false, ss.str());
@@ -489,12 +489,12 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::APPLY: {
-      if (!children[0].get_type().is_fun())
+      if (!children[0].type().is_fun())
       {
         ss << kind << ": Expected function term at position 0";
         return std::make_pair(false, ss.str());
       }
-      const auto& fun_types = children[0].get_type().get_fun_types();
+      const auto& fun_types = children[0].type().get_fun_types();
       if (children.size() != fun_types.size())
       {
         ss << kind << ": Number of arguments does not match function domain: "
@@ -503,7 +503,7 @@ NodeManager::check_type(Kind kind,
       }
       for (size_t i = 1, size = children.size(); i < size; ++i)
       {
-        if (children[i].get_type() != fun_types[i - 1])
+        if (children[i].type() != fun_types[i - 1])
         {
           ss << kind << ": Term at position " << i
              << " does not match function domain type";
@@ -515,22 +515,22 @@ NodeManager::check_type(Kind kind,
 
     case Kind::FORALL:
     case Kind::EXISTS:
-      if (children[0].get_kind() != Kind::VARIABLE)
+      if (children[0].kind() != Kind::VARIABLE)
       {
         ss << kind << ": Expected variable at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].get_type().is_array())
+      if (children[0].type().is_array())
       {
         ss << kind << ": Array type not supported for variables";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].get_type().is_fun())
+      if (children[0].type().is_fun())
       {
         ss << kind << ": Function type not supported for variables";
         return std::make_pair(false, ss.str());
       }
-      if (!children[1].get_type().is_bool())
+      if (!children[1].type().is_bool())
       {
         ss << kind << ": Expected Boolean term at position 1";
         return std::make_pair(false, ss.str());
@@ -538,7 +538,7 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::LAMBDA:
-      if (children[0].get_kind() != Kind::VARIABLE)
+      if (children[0].kind() != Kind::VARIABLE)
       {
         ss << kind << ": Expected variable at position 0";
         return std::make_pair(false, ss.str());
@@ -546,12 +546,12 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::ITE:
-      if (!children[0].get_type().is_bool())
+      if (!children[0].type().is_bool())
       {
         ss << kind << ": Expected Boolean term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[1].get_type() != children[2].get_type())
+      if (children[1].type() != children[2].type())
       {
         ss << kind << ": Expected terms of the type at position 1 and 2.";
         return std::make_pair(false, ss.str());
@@ -561,17 +561,17 @@ NodeManager::check_type(Kind kind,
     case Kind::FP_ADD:
     case Kind::FP_MUL:
     case Kind::FP_DIV:
-      if (!children[0].get_type().is_rm())
+      if (!children[0].type().is_rm())
       {
         ss << kind << ": Expected rounding mode term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (!children[1].get_type().is_fp())
+      if (!children[1].type().is_fp())
       {
         ss << kind << ": Expected floating-point term at position 1";
         return std::make_pair(false, ss.str());
       }
-      if (children[1].get_type() != children[2].get_type())
+      if (children[1].type() != children[2].type())
       {
         ss << kind << ": Expected terms of the same floating-point type.";
         return std::make_pair(false, ss.str());
@@ -579,17 +579,17 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::STORE:
-      if (!children[0].get_type().is_array())
+      if (!children[0].type().is_array())
       {
         ss << kind << ": Expected array term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].get_type().get_array_index() != children[1].get_type())
+      if (children[0].type().get_array_index() != children[1].type())
       {
         ss << kind << ": Index term does not match index type of array";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].get_type().get_array_element() != children[2].get_type())
+      if (children[0].type().get_array_element() != children[2].type())
       {
         ss << kind << ": Element term does not match element type of array";
         return std::make_pair(false, ss.str());
@@ -597,18 +597,18 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::FP_FMA:
-      if (!children[0].get_type().is_rm())
+      if (!children[0].type().is_rm())
       {
         ss << kind << ": Expected rounding mode term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (!children[1].get_type().is_fp())
+      if (!children[1].type().is_fp())
       {
         ss << kind << ": Expected floating-point term at position 1";
         return std::make_pair(false, ss.str());
       }
-      if (children[1].get_type() != children[2].get_type()
-          || children[1].get_type() != children[3].get_type())
+      if (children[1].type() != children[2].type()
+          || children[1].type() != children[3].type())
       {
         ss << kind << ": Expected terms of the same floating-point type.";
         return std::make_pair(false, ss.str());

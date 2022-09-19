@@ -68,7 +68,7 @@ Node::operator=(Node&& other)
 }
 
 uint64_t
-Node::get_id() const
+Node::id() const
 {
   if (d_data)
   {
@@ -78,7 +78,7 @@ Node::get_id() const
 }
 
 node::Kind
-Node::get_kind() const
+Node::kind() const
 {
   if (is_null())
   {
@@ -88,7 +88,7 @@ Node::get_kind() const
 }
 
 const Type&
-Node::get_type() const
+Node::type() const
 {
   assert(!is_null());
   return d_data->get_type();
@@ -107,7 +107,7 @@ Node::is_value() const
 }
 
 size_t
-Node::get_num_children() const
+Node::num_children() const
 {
   if (is_null())
   {
@@ -124,58 +124,58 @@ Node::operator[](size_t index) const
 }
 
 size_t
-Node::get_num_indices() const
+Node::num_indices() const
 {
   assert(!is_null());
   return d_data->get_num_indices();
 }
 
 uint64_t
-Node::get_index(size_t index) const
+Node::index(size_t index) const
 {
   assert(!is_null());
-  assert(get_num_indices() > 0);
+  assert(num_indices() > 0);
   return d_data->get_index(index);
 }
 
 template <>
 const bool&
-Node::get_value() const
+Node::value() const
 {
   assert(!is_null());
-  assert(get_type().is_bool());
+  assert(type().is_bool());
   return d_data->get_value<bool>();
 }
 
 template <>
 const BitVector&
-Node::get_value() const
+Node::value() const
 {
   assert(!is_null());
-  assert(get_type().is_bv());
+  assert(type().is_bv());
   return d_data->get_value<BitVector>();
 }
 
 template <>
 const RoundingMode&
-Node::get_value() const
+Node::value() const
 {
   assert(!is_null());
-  assert(get_type().is_rm());
+  assert(type().is_rm());
   return d_data->get_value<RoundingMode>();
 }
 
 template <>
 const FloatingPoint&
-Node::get_value() const
+Node::value() const
 {
   assert(!is_null());
-  assert(get_type().is_fp());
+  assert(type().is_fp());
   return d_data->get_value<FloatingPoint>();
 }
 
 std::optional<std::reference_wrapper<const std::string>>
-Node::get_symbol() const
+Node::symbol() const
 {
   assert(!is_null());
   return d_data->get_symbol();
@@ -230,13 +230,13 @@ namespace std {
 size_t
 hash<bzla::Node>::operator()(const bzla::Node& node) const
 {
-  return node.get_id();
+  return node.id();
 }
 
 size_t
 hash<bzla::Node*>::operator()(const bzla::Node* node) const
 {
-  return node->get_id();
+  return node->id();
 }
 
 }  // namespace std

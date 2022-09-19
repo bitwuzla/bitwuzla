@@ -93,14 +93,14 @@ Printer::print(std::ostream& os,
         os << " ";
       }
 
-      for (size_t i = 0, size = cur.get_num_children(); i < size; ++i)
+      for (size_t i = 0, size = cur.num_children(); i < size; ++i)
       {
         visit.push_back(cur[size - 1 - i]);
       }
 
       expect_space                = true;
-      const KindInformation& info = s_node_kind_info[cur.get_kind()];
-      switch (cur.get_kind())
+      const KindInformation& info = s_node_kind_info[cur.kind()];
+      switch (cur.kind())
       {
         case Kind::VALUE:
         case Kind::CONSTANT:
@@ -155,9 +155,9 @@ Printer::print(std::ostream& os,
         case Kind::FP_TO_FP_FROM_UBV:
         case Kind::BV_EXTRACT:
           os << "((_ " << info.smt2_name;
-          for (size_t i = 0; i < cur.get_num_indices(); ++i)
+          for (size_t i = 0; i < cur.num_indices(); ++i)
           {
-            os << " " << cur.get_index(i);
+            os << " " << cur.index(i);
           }
           os << ")";
           break;
@@ -173,7 +173,7 @@ Printer::print(std::ostream& os,
           os << "(" << info.smt2_name << " ((";
           print_symbol(os, cur[0]);
           os << " ";
-          Printer::print(os, cur[0].get_type());
+          Printer::print(os, cur[0].type());
           os << ")) ";
           visit.pop_back();  // Pop variable
           visit.pop_back();  // Pop body
@@ -192,17 +192,17 @@ Printer::print(std::ostream& os,
     }
     else
     {
-      const Type& type = cur.get_type();
-      auto kind        = cur.get_kind();
+      const Type& type = cur.type();
+      auto kind        = cur.kind();
       if (kind == Kind::VALUE)
       {
         if (type.is_bool())
         {
-          os << (cur.get_value<bool>() ? "true" : "false");
+          os << (cur.value<bool>() ? "true" : "false");
         }
         else if (type.is_bv())
         {
-          os << "#b" << cur.get_value<BitVector>();
+          os << "#b" << cur.value<BitVector>();
         }
         else
         {
@@ -226,7 +226,7 @@ Printer::print(std::ostream& os,
 void
 Printer::print_symbol(std::ostream& os, const Node& node)
 {
-  const auto symbol = node.get_symbol();
+  const auto symbol = node.symbol();
   if (symbol)
   {
     os << symbol->get();
@@ -234,8 +234,8 @@ Printer::print_symbol(std::ostream& os, const Node& node)
   // Default symbol
   else
   {
-    os << (node.get_kind() == Kind::CONSTANT ? "@bzla.const" : "@bzla.var");
-    os << "_" << node.get_id();
+    os << (node.kind() == Kind::CONSTANT ? "@bzla.const" : "@bzla.var");
+    os << "_" << node.id();
   }
 }
 
@@ -256,7 +256,7 @@ Printer::letify(std::ostream& os,
     visit.pop_back();
 
     // Do not go below binders
-    auto kind = cur.get_kind();
+    auto kind = cur.kind();
     if (kind == Kind::FORALL || kind == Kind::EXISTS || kind == Kind::LAMBDA)
     {
       binders.push_back(cur);
@@ -266,11 +266,11 @@ Printer::letify(std::ostream& os,
     auto [it, inserted] = cache.emplace(cur, false);
     if (inserted)
     {
-      for (size_t i = 0, size = cur.get_num_children(); i < size; ++i)
+      for (size_t i = 0, size = cur.num_children(); i < size; ++i)
       {
         visit.push_back(cur[i]);
         ++refs[cur[i]];
-        if (refs[cur[i]] == 2 && cur[i].get_num_children() > 0)
+        if (refs[cur[i]] == 2 && cur[i].num_children() > 0)
         {
           lets.push_back(cur[i]);
         }
@@ -286,7 +286,7 @@ Printer::letify(std::ostream& os,
     auto [it, inserted] = cache.emplace(cur, false);
     if (inserted)
     {
-      for (size_t i = 0, size = cur.get_num_children(); i < size; ++i)
+      for (size_t i = 0, size = cur.num_children(); i < size; ++i)
       {
         binders.push_back(cur[i]);
         auto itr = refs.find(cur[i]);
@@ -295,7 +295,7 @@ Printer::letify(std::ostream& os,
           continue;
         }
         ++itr->second;
-        if (itr->second == 2 && cur[i].get_num_children() > 0)
+        if (itr->second == 2 && cur[i].num_children() > 0)
         {
           lets.push_back(cur[i]);
         }
@@ -305,7 +305,7 @@ Printer::letify(std::ostream& os,
 
   // Sort letified nodes by id in ascending order
   std::sort(lets.begin(), lets.end(), [](const Node& a, const Node& b) {
-    return a.get_id() < b.get_id();
+    return a.id() < b.id();
   });
   if (lets.size() > 0)
   {

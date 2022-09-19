@@ -59,7 +59,7 @@ TEST_F(TestPrinter, print_const)
     std::stringstream ss, expected;
     Node n = nm.mk_const(nm.mk_bool_type());
     Printer::print(ss, n);
-    expected << "@bzla.const_" << n.get_id();
+    expected << "@bzla.const_" << n.id();
     ASSERT_EQ(ss.str(), expected.str());
   }
 }
@@ -84,7 +84,7 @@ TEST_F(TestPrinter, print_var)
     std::stringstream ss, expected;
     Node n = nm.mk_var(nm.mk_bool_type());
     Printer::print(ss, n);
-    expected << "@bzla.var_" << n.get_id();
+    expected << "@bzla.var_" << n.id();
     ASSERT_EQ(ss.str(), expected.str());
   }
 }
