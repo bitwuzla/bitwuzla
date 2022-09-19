@@ -15,7 +15,7 @@ namespace type {
 
 class TypeManager
 {
-  friend class TypeData;
+  friend TypeData;
 
  public:
   /**

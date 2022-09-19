@@ -12,8 +12,8 @@ namespace bzla {
 
 class SolvingContext
 {
-  friend class bv::BvSolver;  // TODO: Temporary until we have proper assertion
-                              // interface
+  friend bv::BvSolver;  // TODO: Temporary until we have proper assertion
+                        // interface
 
  public:
   SolvingContext();

@@ -13,7 +13,7 @@ class TypeManager;
 
 class Type
 {
-  friend class type::TypeManager;
+  friend type::TypeManager;
 
  public:
   Type() = default;

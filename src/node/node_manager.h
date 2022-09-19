@@ -25,7 +25,7 @@ class FloatingPoint;
 
 class NodeManager
 {
-  friend class node::NodeData;
+  friend node::NodeData;
 
  public:
   /* --- Node interface ---------------------------------------------------- */

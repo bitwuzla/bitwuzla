@@ -16,7 +16,7 @@ class TypeManager;
 
 class TypeData
 {
-  friend class TypeManager;
+  friend TypeManager;
 
  public:
   enum class Kind
