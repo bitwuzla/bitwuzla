@@ -43,6 +43,7 @@ TEST_F(TestNode, node_is_value)
   ASSERT_TRUE(nm.mk_value(false).is_value());
 
   ASSERT_TRUE(nm.mk_value(BitVector(32, 1)).is_value());
+  ASSERT_TRUE(nm.mk_value(FloatingPoint::fpzero(fp_type, true)).is_value());
 
   ASSERT_TRUE(nm.mk_value(RoundingMode::RNA).is_value());
   ASSERT_TRUE(nm.mk_value(RoundingMode::RNE).is_value());
@@ -53,6 +54,46 @@ TEST_F(TestNode, node_is_value)
   ASSERT_FALSE(
       nm.mk_node(Kind::AND, {nm.mk_const(bool_type), nm.mk_const(bool_type)})
           .is_value());
+}
+
+TEST_F(TestNode, operator_out)
+{
+  NodeManager& nm = NodeManager::get();
+  Type bool_type  = nm.mk_bool_type();
+  Type bv_type    = nm.mk_bv_type(32);
+  Type fp_type    = nm.mk_fp_type(5, 11);
+  Type rm_type    = nm.mk_rm_type();
+  Type array_type = nm.mk_array_type(bv_type, fp_type);
+  Type fun_type   = nm.mk_fun_type({bool_type, rm_type, array_type});
+
+  std::cout << nm.mk_const(bool_type) << std::endl;
+  std::cout << nm.mk_const(bv_type) << std::endl;
+  std::cout << nm.mk_const(fp_type) << std::endl;
+  std::cout << nm.mk_const(rm_type) << std::endl;
+  std::cout << nm.mk_const(array_type) << std::endl;
+  std::cout << nm.mk_const(fun_type) << std::endl;
+
+  // std::cout << nm.mk_value(RoundingMode::RNA) << std::endl;
+  // std::cout << nm.mk_value(RoundingMode::RNE) << std::endl;
+  // std::cout << nm.mk_value(RoundingMode::RTN) << std::endl;
+  // std::cout << nm.mk_value(RoundingMode::RTP) << std::endl;
+  // std::cout << nm.mk_value(RoundingMode::RTZ) << std::endl;
+
+  std::cout << nm.mk_value(true) << std::endl;
+  std::cout << nm.mk_value(false) << std::endl;
+
+  std::cout << nm.mk_value(BitVector(32, 1)) << std::endl;
+  // std::cout << nm.mk_value(FloatingPoint::fpzero(fp_type, true)) <<
+  // std::endl;
+
+  std::cout << nm.mk_node(Kind::AND,
+                          {nm.mk_const(bool_type), nm.mk_const(bool_type)})
+            << std::endl;
+  std::cout << nm.mk_node(Kind::APPLY,
+                          {nm.mk_const(fun_type, "fun"),
+                           nm.mk_const(bool_type, "x"),
+                           nm.mk_const(rm_type, "y")})
+            << std::endl;
 }
 
 }  // namespace bzla::test

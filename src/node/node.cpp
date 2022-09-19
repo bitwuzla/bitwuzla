@@ -6,6 +6,7 @@
 
 #include "node/node_data.h"
 #include "node/node_manager.h"
+#include "printer/printer.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
@@ -221,6 +222,13 @@ bool
 operator!=(const Node& a, const Node& b)
 {
   return a.d_data != b.d_data;
+}
+
+std::ostream&
+operator<<(std::ostream& out, const Node& node)
+{
+  Printer::print(out, node);
+  return out;
 }
 
 }  // namespace bzla

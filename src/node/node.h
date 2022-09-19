@@ -128,6 +128,8 @@ class Node
 bool operator==(const Node& a, const Node& b);
 /** Syntactical disequality over two nodes. */
 bool operator!=(const Node& a, const Node& b);
+/** Print node to stream. */
+std::ostream& operator<<(std::ostream& out, const Node& node);
 
 // Node:: value() instantiations for different value types
 template <>
