@@ -213,4 +213,17 @@ TEST_F(TestPrinter, print_let4)
             "(_let1 (or _let0 _let0))) (and _let1 _let1))))");
 }
 
+TEST_F(TestPrinter, print_nested)
+{
+  NodeManager& nm = NodeManager::get();
+  Node bvand0     = nm.mk_node(
+      Kind::BV_AND,
+      {nm.mk_value(BitVector(4, "1001")), nm.mk_value(BitVector(4, "1110"))});
+  Node bvand1 =
+      nm.mk_node(Kind::BV_AND, {nm.mk_value(BitVector(4, "1001")), bvand0});
+  std::stringstream ss;
+  Printer::print(ss, bvand1);
+  // ASSERT_EQ(ss.str(), "(bvand #b1001 (bvand #b1001 #b1110)");
+}
+
 }  // namespace bzla::test
