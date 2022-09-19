@@ -18,19 +18,21 @@ class unpackedFloat;
 }
 
 namespace bzla {
-namespace fp {
 
-class SymFpuTraits;
 class FloatingPointTypeInfo;
-class WordBlaster;
 
-using UnpackedFloat = ::symfpu::unpackedFloat<SymFpuTraits>;
+namespace fp {
+class SymFpuTraits;
+class WordBlaster;
+}  // namespace fp
+
+using UnpackedFloat = ::symfpu::unpackedFloat<fp::SymFpuTraits>;
 
 /* -------------------------------------------------------------------------- */
 
 class FloatingPoint
 {
-  friend WordBlaster;
+  friend fp::WordBlaster;
 
  public:
   /**
@@ -366,7 +368,7 @@ class FloatingPoint
  */
 class FloatingPointTypeInfo
 {
-  friend WordBlaster;
+  friend fp::WordBlaster;
 
  public:
   /**
@@ -427,16 +429,15 @@ class FloatingPointTypeInfo
 };
 
 /* -------------------------------------------------------------------------- */
-}  // namespace fp
 }  // namespace bzla
 
 namespace std {
 
 /** Hash function. */
 template <>
-struct hash<bzla::fp::FloatingPoint>
+struct hash<bzla::FloatingPoint>
 {
-  size_t operator()(const bzla::fp::FloatingPoint &fp) const;
+  size_t operator()(const bzla::FloatingPoint &fp) const;
 };
 
 }  // namespace std

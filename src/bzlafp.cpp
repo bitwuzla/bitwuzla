@@ -49,18 +49,17 @@ extern "C" {
 #include "symfpu/core/sqrt.h"
 #include "symfpu/core/unpackedFloat.h"
 
-static std::unordered_map<BzlaRoundingMode, bzla::fp::RoundingMode> bzlarm2rm =
-    {
-        {BZLA_RM_RNA, bzla::fp::RoundingMode::RNA},
-        {BZLA_RM_RNE, bzla::fp::RoundingMode::RNE},
-        {BZLA_RM_RTN, bzla::fp::RoundingMode::RTN},
-        {BZLA_RM_RTP, bzla::fp::RoundingMode::RTP},
-        {BZLA_RM_RTZ, bzla::fp::RoundingMode::RTZ},
+static std::unordered_map<BzlaRoundingMode, bzla::RoundingMode> bzlarm2rm = {
+    {BZLA_RM_RNA, bzla::RoundingMode::RNA},
+    {BZLA_RM_RNE, bzla::RoundingMode::RNE},
+    {BZLA_RM_RTN, bzla::RoundingMode::RTN},
+    {BZLA_RM_RTP, bzla::RoundingMode::RTP},
+    {BZLA_RM_RTZ, bzla::RoundingMode::RTZ},
 };
 
 struct BzlaFloatingPoint
 {
-  std::unique_ptr<bzla::fp::FloatingPoint> d_fp;
+  std::unique_ptr<bzla::FloatingPoint> d_fp;
 };
 
 void
@@ -83,7 +82,7 @@ bzla_fp_copy(Bzla *bzla, const BzlaFloatingPoint *fp)
 
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(*fp->d_fp));
+  res->d_fp.reset(new bzla::FloatingPoint(*fp->d_fp));
   return res;
 }
 
@@ -129,7 +128,7 @@ bzla_fp_ieee_bv_as_bvs(Bzla *bzla,
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   bzla::BitVector bsign, bexp, bsig;
   bzla::NodeManager &nm = bzla::NodeManager::get();
-  bzla::fp::FloatingPoint::ieee_bv_as_bvs(
+  bzla::FloatingPoint::ieee_bv_as_bvs(
       nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, fp_sort),
                     bzla_sort_fp_get_sig_width(bzla, fp_sort)),
       *bv->d_bv,
@@ -298,7 +297,7 @@ bzla_fp_zero(Bzla *bzla, BzlaSortId sort, bool sign)
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
                                   bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::fpzero(type, sign)));
+      new bzla::FloatingPoint(bzla::FloatingPoint::fpzero(type, sign)));
   return res;
 }
 
@@ -316,7 +315,7 @@ bzla_fp_inf(Bzla *bzla, BzlaSortId sort, bool sign)
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
                                   bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::fpinf(type, sign)));
+      new bzla::FloatingPoint(bzla::FloatingPoint::fpinf(type, sign)));
   return res;
 }
 
@@ -333,8 +332,7 @@ bzla_fp_nan(Bzla *bzla, BzlaSortId sort)
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
                                   bzla_sort_fp_get_sig_width(bzla, sort));
-  res->d_fp.reset(
-      new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::fpnan(type)));
+  res->d_fp.reset(new bzla::FloatingPoint(bzla::FloatingPoint::fpnan(type)));
   return res;
 }
 
@@ -352,8 +350,8 @@ bzla_fp_fp(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(
-      bzla::fp::FloatingPoint::fpfp(*sign->d_bv, *exp->d_bv, *sig->d_bv)));
+  res->d_fp.reset(new bzla::FloatingPoint(
+      bzla::FloatingPoint::fpfp(*sign->d_bv, *exp->d_bv, *sig->d_bv)));
   return res;
 }
 
@@ -373,7 +371,7 @@ bzla_fp_from_bv(Bzla *bzla, BzlaSortId sort, const BzlaBitVector *bv_const)
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
                                   bzla_sort_fp_get_sig_width(bzla, sort));
-  res->d_fp.reset(new bzla::fp::FloatingPoint(type, *bv_const->d_bv));
+  res->d_fp.reset(new bzla::FloatingPoint(type, *bv_const->d_bv));
   return res;
 }
 
@@ -386,7 +384,7 @@ bzla_fp_abs(Bzla *bzla, const BzlaFloatingPoint *fp)
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(fp->d_fp->fpabs()));
+  res->d_fp.reset(new bzla::FloatingPoint(fp->d_fp->fpabs()));
   return res;
 }
 
@@ -399,7 +397,7 @@ bzla_fp_neg(Bzla *bzla, const BzlaFloatingPoint *fp)
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(fp->d_fp->fpneg()));
+  res->d_fp.reset(new bzla::FloatingPoint(fp->d_fp->fpneg()));
   return res;
 }
 
@@ -412,8 +410,7 @@ bzla_fp_sqrt(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(
-      new bzla::fp::FloatingPoint(fp->d_fp->fpsqrt(bzlarm2rm.at(rm))));
+  res->d_fp.reset(new bzla::FloatingPoint(fp->d_fp->fpsqrt(bzlarm2rm.at(rm))));
   return res;
 }
 
@@ -426,8 +423,7 @@ bzla_fp_rti(Bzla *bzla, const BzlaRoundingMode rm, const BzlaFloatingPoint *fp)
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(
-      new bzla::fp::FloatingPoint(fp->d_fp->fprti(bzlarm2rm.at(rm))));
+  res->d_fp.reset(new bzla::FloatingPoint(fp->d_fp->fprti(bzlarm2rm.at(rm))));
   return res;
 }
 
@@ -447,7 +443,7 @@ bzla_fp_rem(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(fp0->d_fp->fprem(*fp1->d_fp)));
+  res->d_fp.reset(new bzla::FloatingPoint(fp0->d_fp->fprem(*fp1->d_fp)));
   return res;
 }
 
@@ -468,8 +464,8 @@ bzla_fp_add(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(
-      fp0->d_fp->fpadd(bzlarm2rm.at(rm), *fp1->d_fp)));
+  res->d_fp.reset(
+      new bzla::FloatingPoint(fp0->d_fp->fpadd(bzlarm2rm.at(rm), *fp1->d_fp)));
   return res;
 }
 
@@ -490,8 +486,8 @@ bzla_fp_mul(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(
-      fp0->d_fp->fpmul(bzlarm2rm.at(rm), *fp1->d_fp)));
+  res->d_fp.reset(
+      new bzla::FloatingPoint(fp0->d_fp->fpmul(bzlarm2rm.at(rm), *fp1->d_fp)));
   return res;
 }
 
@@ -512,8 +508,8 @@ bzla_fp_div(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(
-      fp0->d_fp->fpdiv(bzlarm2rm.at(rm), *fp1->d_fp)));
+  res->d_fp.reset(
+      new bzla::FloatingPoint(fp0->d_fp->fpdiv(bzlarm2rm.at(rm), *fp1->d_fp)));
   return res;
 }
 
@@ -540,7 +536,7 @@ bzla_fp_fma(Bzla *bzla,
   BzlaFloatingPoint *res;
   bzla::fp::WordBlaster::set_s_bzla(bzla);
   BZLA_CNEW(bzla->mm, res);
-  res->d_fp.reset(new bzla::fp::FloatingPoint(
+  res->d_fp.reset(new bzla::FloatingPoint(
       fp0->d_fp->fpfma(bzlarm2rm.at(rm), *fp1->d_fp, *fp2->d_fp)));
   return res;
 }
@@ -561,8 +557,7 @@ bzla_fp_convert(Bzla *bzla,
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
                                   bzla_sort_fp_get_sig_width(bzla, sort));
-  res->d_fp.reset(
-      new bzla::fp::FloatingPoint(type, bzlarm2rm.at(rm), *fp->d_fp));
+  res->d_fp.reset(new bzla::FloatingPoint(type, bzlarm2rm.at(rm), *fp->d_fp));
   return res;
 }
 
@@ -583,7 +578,7 @@ bzla_fp_convert_from_ubv(Bzla *bzla,
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
                                   bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(type, bzlarm2rm.at(rm), *bv->d_bv, false));
+      new bzla::FloatingPoint(type, bzlarm2rm.at(rm), *bv->d_bv, false));
   return res;
 }
 
@@ -604,7 +599,7 @@ bzla_fp_convert_from_sbv(Bzla *bzla,
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
                                   bzla_sort_fp_get_sig_width(bzla, sort));
   res->d_fp.reset(
-      new bzla::fp::FloatingPoint(type, bzlarm2rm.at(rm), *bv->d_bv, true));
+      new bzla::FloatingPoint(type, bzlarm2rm.at(rm), *bv->d_bv, true));
   return res;
 }
 
@@ -620,8 +615,8 @@ bzla_fp_convert_from_real(Bzla *bzla,
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
                                   bzla_sort_fp_get_sig_width(bzla, sort));
-  res->d_fp.reset(new bzla::fp::FloatingPoint(
-      bzla::fp::FloatingPoint::from_real(type, bzlarm2rm.at(rm), real)));
+  res->d_fp.reset(new bzla::FloatingPoint(
+      bzla::FloatingPoint::from_real(type, bzlarm2rm.at(rm), real)));
   return res;
 }
 
@@ -638,9 +633,8 @@ bzla_fp_convert_from_rational(Bzla *bzla,
   bzla::NodeManager &nm = bzla::NodeManager::get();
   bzla::Type type = nm.mk_fp_type(bzla_sort_fp_get_exp_width(bzla, sort),
                                   bzla_sort_fp_get_sig_width(bzla, sort));
-  res->d_fp.reset(
-      new bzla::fp::FloatingPoint(bzla::fp::FloatingPoint::from_rational(
-          type, bzlarm2rm.at(rm), num, den)));
+  res->d_fp.reset(new bzla::FloatingPoint(
+      bzla::FloatingPoint::from_rational(type, bzlarm2rm.at(rm), num, den)));
   return res;
 }
 

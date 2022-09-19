@@ -2,7 +2,6 @@
 #define BZLA_SOLVER_FP_ROUNDING_MODE_H_INCLUDED
 
 namespace bzla {
-namespace fp {
 
 enum class RoundingMode
 {
@@ -14,7 +13,6 @@ enum class RoundingMode
   NUM_RM,
 };
 
-}  // namespace fp
 }  // namespace bzla
 
 #endif

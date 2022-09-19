@@ -157,21 +157,21 @@ Node::get_value() const
 }
 
 template <>
-const fp::RoundingMode&
+const RoundingMode&
 Node::get_value() const
 {
   assert(!is_null());
   assert(get_type().is_rm());
-  return d_data->get_value<fp::RoundingMode>();
+  return d_data->get_value<RoundingMode>();
 }
 
 template <>
-const fp::FloatingPoint&
+const FloatingPoint&
 Node::get_value() const
 {
   assert(!is_null());
   assert(get_type().is_fp());
-  return d_data->get_value<fp::FloatingPoint>();
+  return d_data->get_value<FloatingPoint>();
 }
 
 std::optional<std::reference_wrapper<const std::string>>

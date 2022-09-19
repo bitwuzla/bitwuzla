@@ -48,11 +48,11 @@ TEST_F(TestNodeManager, node_is_value)
 
   ASSERT_TRUE(nm.mk_value(BitVector(32, 1)).is_value());
 
-  ASSERT_TRUE(nm.mk_value(fp::RoundingMode::RNA).is_value());
-  ASSERT_TRUE(nm.mk_value(fp::RoundingMode::RNE).is_value());
-  ASSERT_TRUE(nm.mk_value(fp::RoundingMode::RTN).is_value());
-  ASSERT_TRUE(nm.mk_value(fp::RoundingMode::RTP).is_value());
-  ASSERT_TRUE(nm.mk_value(fp::RoundingMode::RTZ).is_value());
+  ASSERT_TRUE(nm.mk_value(RoundingMode::RNA).is_value());
+  ASSERT_TRUE(nm.mk_value(RoundingMode::RNE).is_value());
+  ASSERT_TRUE(nm.mk_value(RoundingMode::RTN).is_value());
+  ASSERT_TRUE(nm.mk_value(RoundingMode::RTP).is_value());
+  ASSERT_TRUE(nm.mk_value(RoundingMode::RTZ).is_value());
 
   ASSERT_FALSE(
       nm.mk_node(Kind::AND, {nm.mk_const(bool_type), nm.mk_const(bool_type)})
@@ -146,11 +146,11 @@ TEST_F(TestNodeManager, mk_value_rm)
 {
   NodeManager& nm = NodeManager::get();
 
-  Node val_rna = nm.mk_value(fp::RoundingMode::RNA);
-  Node val_rne = nm.mk_value(fp::RoundingMode::RNE);
-  Node val_rtn = nm.mk_value(fp::RoundingMode::RTN);
-  Node val_rtp = nm.mk_value(fp::RoundingMode::RTP);
-  Node val_rtz = nm.mk_value(fp::RoundingMode::RTZ);
+  Node val_rna = nm.mk_value(RoundingMode::RNA);
+  Node val_rne = nm.mk_value(RoundingMode::RNE);
+  Node val_rtn = nm.mk_value(RoundingMode::RTN);
+  Node val_rtp = nm.mk_value(RoundingMode::RTP);
+  Node val_rtz = nm.mk_value(RoundingMode::RTZ);
 
   for (const auto& val : {val_rna, val_rne, val_rtn, val_rtp, val_rtz})
   {
@@ -159,17 +159,17 @@ TEST_F(TestNodeManager, mk_value_rm)
     ASSERT_EQ(val_rna.get_type(), val.get_type());
   }
 
-  ASSERT_EQ(val_rna, nm.mk_value(fp::RoundingMode::RNA));
-  ASSERT_EQ(val_rne, nm.mk_value(fp::RoundingMode::RNE));
-  ASSERT_EQ(val_rtn, nm.mk_value(fp::RoundingMode::RTN));
-  ASSERT_EQ(val_rtp, nm.mk_value(fp::RoundingMode::RTP));
-  ASSERT_EQ(val_rtz, nm.mk_value(fp::RoundingMode::RTZ));
+  ASSERT_EQ(val_rna, nm.mk_value(RoundingMode::RNA));
+  ASSERT_EQ(val_rne, nm.mk_value(RoundingMode::RNE));
+  ASSERT_EQ(val_rtn, nm.mk_value(RoundingMode::RTN));
+  ASSERT_EQ(val_rtp, nm.mk_value(RoundingMode::RTP));
+  ASSERT_EQ(val_rtz, nm.mk_value(RoundingMode::RTZ));
 
-  ASSERT_EQ(val_rna.get_value<fp::RoundingMode>(), fp::RoundingMode::RNA);
-  ASSERT_EQ(val_rne.get_value<fp::RoundingMode>(), fp::RoundingMode::RNE);
-  ASSERT_EQ(val_rtn.get_value<fp::RoundingMode>(), fp::RoundingMode::RTN);
-  ASSERT_EQ(val_rtp.get_value<fp::RoundingMode>(), fp::RoundingMode::RTP);
-  ASSERT_EQ(val_rtz.get_value<fp::RoundingMode>(), fp::RoundingMode::RTZ);
+  ASSERT_EQ(val_rna.get_value<RoundingMode>(), RoundingMode::RNA);
+  ASSERT_EQ(val_rne.get_value<RoundingMode>(), RoundingMode::RNE);
+  ASSERT_EQ(val_rtn.get_value<RoundingMode>(), RoundingMode::RTN);
+  ASSERT_EQ(val_rtp.get_value<RoundingMode>(), RoundingMode::RTP);
+  ASSERT_EQ(val_rtz.get_value<RoundingMode>(), RoundingMode::RTZ);
 
   for (const auto& val : {val_rne, val_rtn, val_rtp, val_rtz})
   {

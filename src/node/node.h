@@ -14,10 +14,8 @@ namespace bzla {
 class BitVector;
 class NodeManager;
 
-namespace fp {
 enum class RoundingMode;
 class FloatingPoint;
-}
 
 namespace node {
 class NodeData;
@@ -137,9 +135,9 @@ const bool& Node::get_value() const;
 template <>
 const BitVector& Node::get_value() const;
 template <>
-const fp::RoundingMode& Node::get_value() const;
+const RoundingMode& Node::get_value() const;
 template <>
-const fp::FloatingPoint& Node::get_value() const;
+const FloatingPoint& Node::get_value() const;
 
 }  // namespace bzla
 

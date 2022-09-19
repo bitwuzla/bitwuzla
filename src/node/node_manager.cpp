@@ -76,7 +76,7 @@ NodeManager::mk_value(const BitVector& value)
 }
 
 Node
-NodeManager::mk_value(const fp::RoundingMode value)
+NodeManager::mk_value(const RoundingMode value)
 {
   NodeData* data  = new NodeDataValue(this, value);
   data->d_type    = mk_rm_type();
@@ -90,7 +90,7 @@ NodeManager::mk_value(const fp::RoundingMode value)
 }
 
 Node
-NodeManager::mk_value(const fp::FloatingPoint& value)
+NodeManager::mk_value(const FloatingPoint& value)
 {
   NodeData* data = new NodeDataValue(this, value);
   data->d_type =

@@ -17,11 +17,8 @@
 namespace bzla {
 
 class BitVector;
-
-namespace fp {
-enum class RoundingMode;
 class FloatingPoint;
-}
+enum class RoundingMode;
 
 class NodeManager
 {
@@ -77,7 +74,7 @@ class NodeManager
    * @param value Rounding mode value to create.
    * @return Node representing given rounding mode value.
    */
-  Node mk_value(const fp::RoundingMode value);
+  Node mk_value(const RoundingMode value);
 
   /**
    * Create floating-point value.
@@ -85,7 +82,7 @@ class NodeManager
    * @param value Floating-point value to create.
    * @return Node representing given floating-point value.
    */
-  Node mk_value(const fp::FloatingPoint& value);
+  Node mk_value(const FloatingPoint& value);
 
   /**
    * Create node of kind `kind` with given children and indices.
