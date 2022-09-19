@@ -11,7 +11,7 @@ RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 {
   (void) rewriter;
   if (!node[0].is_value() || !node[1].is_value()) return node;
-  return node::NodeManager::get().mk_value(
+  return NodeManager::get().mk_value(
       node[0].get_value<BitVector>().bvand(node[1].get_value<BitVector>()));
 }
 

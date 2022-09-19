@@ -6,7 +6,9 @@
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
-namespace bzla::node {
+namespace bzla {
+
+using namespace node;
 
 /* --- NodeManager public -------------------------------------------------- */
 
@@ -720,4 +722,4 @@ NodeManager::get_symbol(const NodeData* data) const
   return std::optional<std::reference_wrapper<const std::string>>{it->second};
 }
 
-}  // namespace bzla::node
+}  // namespace bzla

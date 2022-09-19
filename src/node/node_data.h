@@ -11,9 +11,12 @@
 #include "node/node.h"
 #include "type/type.h"
 
-namespace bzla::node {
+namespace bzla {
 
 class NodeManager;
+
+namespace node {
+
 enum class Kind;
 
 template <class T>
@@ -26,7 +29,7 @@ class NodeDataValue;
  */
 class NodeData
 {
-  friend class NodeManager;
+  friend NodeManager;
   friend struct NodeDataHash;
   friend struct NodeDataKeyEqual;
 
@@ -176,7 +179,7 @@ class NodeData
  */
 class NodeDataChildren : public NodeData
 {
-  friend class NodeData;
+  friend NodeData;
 
  public:
   static constexpr size_t s_max_children = 4;
@@ -205,7 +208,7 @@ class NodeDataChildren : public NodeData
  */
 class NodeDataIndexed : public NodeDataChildren
 {
-  friend class NodeData;
+  friend NodeData;
 
  public:
   NodeDataIndexed() = delete;
@@ -230,7 +233,7 @@ class NodeDataIndexed : public NodeDataChildren
  */
 class NodeDataNary : public NodeData
 {
-  friend class NodeData;
+  friend NodeData;
 
  public:
   NodeDataNary()  = delete;
@@ -252,7 +255,7 @@ class NodeDataNary : public NodeData
 template <class T>
 class NodeDataValue : public NodeData
 {
-  friend class NodeData;
+  friend NodeData;
 
  public:
   NodeDataValue() = delete;
@@ -304,5 +307,6 @@ struct NodeDataKeyEqual
   bool operator()(const NodeData* d0, const NodeData* d1) const;
 };
 
-}  // namespace bzla::node
+}  // namespace node
+}  // namespace bzla
 #endif

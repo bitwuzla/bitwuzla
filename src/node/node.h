@@ -12,6 +12,7 @@
 namespace bzla {
 
 class BitVector;
+class NodeManager;
 
 namespace fp {
 enum class RoundingMode;
@@ -20,14 +21,13 @@ class FloatingPoint;
 
 namespace node {
 class NodeData;
-class NodeManager;
 }  // namespace node
 
 /* --- Node ---------------------------------------------------------------- */
 
 class Node
 {
-  friend class node::NodeManager;
+  friend NodeManager;
   friend bool operator==(const Node& a, const Node& b);
   friend bool operator!=(const Node& a, const Node& b);
 

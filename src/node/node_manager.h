@@ -20,13 +20,12 @@ class BitVector;
 
 namespace fp {
 enum class RoundingMode;
+class FloatingPoint;
 }
-
-namespace node {
 
 class NodeManager
 {
-  friend class NodeData;
+  friend class node::NodeData;
 
  public:
   /* --- Node interface ---------------------------------------------------- */
@@ -96,7 +95,7 @@ class NodeManager
    * @param indices The indices if kind is indexed.
    * @return Node of kind `kind`.
    */
-  Node mk_node(Kind kind,
+  Node mk_node(node::Kind kind,
                const std::vector<Node>& children,
                const std::vector<uint64_t>& indices = {});
 
@@ -149,7 +148,7 @@ class NodeManager
 
   /** Type checking of children and indices based on kind. */
   std::pair<bool, std::string> check_type(
-      Kind kind,
+      node::Kind kind,
       const std::vector<Node>& children,
       const std::vector<uint64_t>& indices = {});
 
@@ -172,7 +171,7 @@ class NodeManager
    *
    * @param d Node data to initialize.
    */
-  void init_id(NodeData* d);
+  void init_id(node::NodeData* d);
 
   /**
    * Create node data object.
@@ -185,9 +184,9 @@ class NodeManager
    * @param indices The indices of the node.
    * @return Node data.
    */
-  NodeData* new_data(Kind kind,
-                     const std::vector<Node>& children,
-                     const std::vector<uint64_t>& indices);
+  node::NodeData* new_data(node::Kind kind,
+                           const std::vector<Node>& children,
+                           const std::vector<uint64_t>& indices);
 
   /**
    * Find or insert new node data.
@@ -195,10 +194,10 @@ class NodeManager
    * @param lookup The node data to look up in d_unique_nodes
    * @return Node data pointer if node already exists and nullptr otherwise.
    */
-  NodeData* find_or_insert_node(NodeData* lookup);
+  node::NodeData* find_or_insert_node(node::NodeData* lookup);
 
   /** Compute type for a node. */
-  Type compute_type(Kind kind,
+  Type compute_type(node::Kind kind,
                     const std::vector<Node>& children,
                     const std::vector<uint64_t>& indices = {});
 
@@ -210,10 +209,10 @@ class NodeManager
    *
    * @param d Node data to delete.
    */
-  void garbage_collect(NodeData* d);
+  void garbage_collect(node::NodeData* d);
 
   const std::optional<std::reference_wrapper<const std::string>> get_symbol(
-      const NodeData* d) const;
+      const node::NodeData* d) const;
 
   /** Type manager. */
   type::TypeManager d_tm;
@@ -225,15 +224,16 @@ class NodeManager
   bool d_in_gc_mode = false;
 
   /** Stores all node data objects, accessiable via the node id. */
-  std::vector<std::unique_ptr<NodeData>> d_node_data;
+  std::vector<std::unique_ptr<node::NodeData>> d_node_data;
 
   /** Lookup data structure for hash consing of node data. */
-  std::unordered_set<NodeData*, NodeDataHash, NodeDataKeyEqual> d_unique_nodes;
+  std::
+      unordered_set<node::NodeData*, node::NodeDataHash, node::NodeDataKeyEqual>
+          d_unique_nodes;
 
   /** Stores symbols for nodes. */
-  std::unordered_map<const NodeData*, std::string> d_symbol_table;
+  std::unordered_map<const node::NodeData*, std::string> d_symbol_table;
 };
 
-}  // namespace node
 }  // namespace bzla
 #endif
