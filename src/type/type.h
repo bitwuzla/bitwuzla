@@ -56,38 +56,38 @@ class Type
   /**
    * @return The size of this bit-vector type.
    */
-  uint64_t get_bv_size() const;
+  uint64_t bv_size() const;
 
   /**
    * @return The Exponent size of this floating-point type.
    */
-  uint64_t get_fp_exp_size() const;
+  uint64_t fp_exp_size() const;
 
   /**
    * @return The significand size of this floating-point type.
    */
-  uint64_t get_fp_sig_size() const;
+  uint64_t fp_sig_size() const;
 
   /**
    * @return The index type of this array type.
    */
-  const Type& get_array_index() const;
+  const Type& array_index() const;
 
   /**
    * @return The element type of this array type.
    */
-  const Type& get_array_element() const;
+  const Type& array_element() const;
 
   /**
    * @return The codomain types and domain type of this function type.
    * @note Last element in vector is domain type.
    */
-  const std::vector<Type>& get_fun_types() const;
+  const std::vector<Type>& fun_types() const;
 
   /**
    * @return The id of this type.
    */
-  uint64_t get_id() const;
+  uint64_t id() const;
 
   /**
    * @return True if this type is a null type.

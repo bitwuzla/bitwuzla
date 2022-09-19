@@ -39,8 +39,8 @@ FloatingPoint::ieee_bv_as_bvs(const Type &type,
                               BitVector &sig)
 {
   uint32_t bw     = bv.size();
-  uint32_t bw_exp = type.get_fp_exp_size();
-  uint32_t bw_sig = type.get_fp_sig_size();
+  uint32_t bw_exp = type.fp_exp_size();
+  uint32_t bw_sig = type.fp_sig_size();
   sign            = bv.bvextract(bw - 1, bw - 1);
   exp             = bv.bvextract(bw - 2, bw - 1 - bw_exp);
   sig             = bv.bvextract(bw_sig - 2, 0);
@@ -655,7 +655,7 @@ FloatingPoint::convert_from_rational_aux(const Type &type,
   /* Significand ------------------------------------------------------- */
 
   /* sig bits of type + guard and sticky bits */
-  uint32_t n_sig_bits = type.get_fp_sig_size() + 2;
+  uint32_t n_sig_bits = type.fp_sig_size() + 2;
   BitVector sig       = BitVector::mk_zero(n_sig_bits);
   mpq_t tmp_sig, mid;
   make_mpq_from_ui(tmp_sig, 0, 1);
@@ -726,7 +726,7 @@ FloatingPoint::convert_from_rational_aux(const Type &type,
 /* --- FloatingPointTypeInfo public ----------------------------------------- */
 
 FloatingPointTypeInfo::FloatingPointTypeInfo(const Type &type)
-    : d_esize(type.get_fp_exp_size()), d_ssize(type.get_fp_sig_size())
+    : d_esize(type.fp_exp_size()), d_ssize(type.fp_sig_size())
 {
   assert(type.is_fp());
   d_type = type;

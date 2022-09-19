@@ -40,8 +40,8 @@ TEST_F(TestTypeManager, bv_type)
   ASSERT_FALSE(bv32.is_array());
   ASSERT_FALSE(bv32.is_fun());
 
-  ASSERT_EQ(bv32.get_bv_size(), 32);
-  ASSERT_EQ(bv64.get_bv_size(), 64);
+  ASSERT_EQ(bv32.bv_size(), 32);
+  ASSERT_EQ(bv64.bv_size(), 64);
 
   ASSERT_NE(bv32, bv64);
   ASSERT_EQ(bv32, tm.mk_bv_type(32));
@@ -61,8 +61,8 @@ TEST_F(TestTypeManager, fp_type)
   ASSERT_FALSE(fp16.is_array());
   ASSERT_FALSE(fp16.is_fun());
 
-  ASSERT_EQ(fp16.get_fp_exp_size(), 5);
-  ASSERT_EQ(fp16.get_fp_sig_size(), 11);
+  ASSERT_EQ(fp16.fp_exp_size(), 5);
+  ASSERT_EQ(fp16.fp_sig_size(), 11);
 
   ASSERT_NE(fp16, fp32);
   ASSERT_EQ(fp16, tm.mk_fp_type(5, 11));

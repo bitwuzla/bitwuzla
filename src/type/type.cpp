@@ -101,49 +101,49 @@ Type::is_fun() const
 }
 
 uint64_t
-Type::get_bv_size() const
+Type::bv_size() const
 {
   assert(is_bv());
   return d_data->get_bv_size();
 }
 
 uint64_t
-Type::get_fp_exp_size() const
+Type::fp_exp_size() const
 {
   assert(is_fp());
   return d_data->get_fp_exp_size();
 }
 
 uint64_t
-Type::get_fp_sig_size() const
+Type::fp_sig_size() const
 {
   assert(is_fp());
   return d_data->get_fp_sig_size();
 }
 
 const Type&
-Type::get_array_index() const
+Type::array_index() const
 {
   assert(is_array());
   return d_data->get_types()[0];
 }
 
 const Type&
-Type::get_array_element() const
+Type::array_element() const
 {
   assert(is_array());
   return d_data->get_types()[1];
 }
 
 const std::vector<Type>&
-Type::get_fun_types() const
+Type::fun_types() const
 {
   assert(is_fun());
   return d_data->get_types();
 }
 
 uint64_t
-Type::get_id() const
+Type::id() const
 {
   assert(d_data != nullptr);
   return d_data->get_id();
@@ -182,13 +182,13 @@ namespace std {
 size_t
 hash<bzla::Type>::operator()(const bzla::Type& type) const
 {
-  return type.get_id();
+  return type.id();
 }
 
 size_t
 hash<bzla::Type*>::operator()(const bzla::Type* type) const
 {
-  return type->get_id();
+  return type->id();
 }
 
 }  // namespace std

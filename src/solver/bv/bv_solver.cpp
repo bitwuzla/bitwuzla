@@ -352,7 +352,7 @@ BvSolver::bitblast(const Node& t)
           assert(is_leaf(cur));
           it->second = type.is_bool()
                            ? d_bitblaster.bv_constant(1)
-                           : d_bitblaster.bv_constant(type.get_bv_size());
+                           : d_bitblaster.bv_constant(type.bv_size());
           break;
 
         case Kind::NOT:
@@ -536,7 +536,7 @@ BvSolver::get_assignment(const Node& term) const
     }
     else
     {
-      return nm.mk_value(BitVector(type.get_bv_size(), 0));
+      return nm.mk_value(BitVector(type.bv_size(), 0));
     }
   }
 
@@ -546,7 +546,7 @@ BvSolver::get_assignment(const Node& term) const
     return nm.mk_value(d_cnf_encoder->value(bits[0]));
   }
 
-  BitVector val(type.get_bv_size());
+  BitVector val(type.bv_size());
   for (size_t i = 0, size = bits.size(); i < size; ++i)
   {
     val.set_bit(size - 1 - i, d_cnf_encoder->value(bits[i]) == 1);

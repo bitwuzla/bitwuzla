@@ -26,7 +26,7 @@ TypeDataHash::operator()(const TypeData* d) const
     const auto& types = d->get_types();
     for (size_t i = 0, size = types.size(); i < size; ++i)
     {
-      hash += s_primes[i % sizeof(s_primes)] * types[i].get_id();
+      hash += s_primes[i % sizeof(s_primes)] * types[i].id();
     }
   }
   return hash;
@@ -60,7 +60,7 @@ TypeDataKeyEqual::operator()(const TypeData* d0, const TypeData* d1) const
     }
     for (size_t i = 0, size = types0.size(); i < size; ++i)
     {
-      if (types0[i].get_id() != types1[i].get_id())
+      if (types0[i].id() != types1[i].id())
       {
         return false;
       }

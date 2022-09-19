@@ -34,12 +34,12 @@ Printer::print(std::ostream& os, const Type& type)
   }
   else if (type.is_bv())
   {
-    os << "(_ BitVec " << type.get_bv_size() << ")";
+    os << "(_ BitVec " << type.bv_size() << ")";
   }
   else if (type.is_fp())
   {
-    os << "(_ FloatingPoint " << type.get_fp_exp_size() << " "
-       << type.get_fp_sig_size() << ")";
+    os << "(_ FloatingPoint " << type.fp_exp_size() << " " << type.fp_sig_size()
+       << ")";
   }
   else if (type.is_rm())
   {
@@ -48,9 +48,9 @@ Printer::print(std::ostream& os, const Type& type)
   else if (type.is_array())
   {
     os << "(Array ";
-    print(os, type.get_array_index());
+    print(os, type.array_index());
     os << " ";
-    print(os, type.get_array_element());
+    print(os, type.array_element());
     os << ")";
   }
   else

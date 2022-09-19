@@ -211,8 +211,8 @@ NodeManager::compute_type(Kind kind,
     }
 
     case Kind::BV_CONCAT:
-      return d_tm.mk_bv_type(children[0].type().get_bv_size()
-                             + children[1].type().get_bv_size());
+      return d_tm.mk_bv_type(children[0].type().bv_size()
+                             + children[1].type().bv_size());
 
     case Kind::BV_NOT:
     case Kind::BV_AND:
@@ -247,16 +247,16 @@ NodeManager::compute_type(Kind kind,
     case Kind::FP_TO_FP_FROM_UBV:
       return d_tm.mk_fp_type(indices[0], indices[1]);
 
-    case Kind::SELECT: return children[0].type().get_array_element();
+    case Kind::SELECT: return children[0].type().array_element();
 
-    case Kind::APPLY: return children[0].type().get_fun_types().back();
+    case Kind::APPLY: return children[0].type().fun_types().back();
 
     case Kind::LAMBDA: {
       std::vector<Type> types{children[0].type()};
       // Flatten function types
       if (children[1].type().is_fun())
       {
-        auto const& fun_types = children[1].type().get_fun_types();
+        auto const& fun_types = children[1].type().fun_types();
         types.insert(types.end(), fun_types.begin(), fun_types.end());
       }
       else
@@ -330,7 +330,7 @@ NodeManager::check_type(Kind kind,
         ss << kind << ": Expected bit-vector term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].type().get_bv_size() <= indices[0])
+      if (children[0].type().bv_size() <= indices[0])
       {
         ss << kind << ": Upper index must be less than the bit-width";
         return std::make_pair(false, ss.str());
@@ -364,7 +364,7 @@ NodeManager::check_type(Kind kind,
         ss << kind << ": Expected bit-vector term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].type().get_bv_size() != indices[0] + indices[1])
+      if (children[0].type().bv_size() != indices[0] + indices[1])
       {
         ss << kind
            << ": Floating-point format does not match size of bit-vector term "
@@ -481,7 +481,7 @@ NodeManager::check_type(Kind kind,
         ss << kind << ": Expected array term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].type().get_array_index() != children[1].type())
+      if (children[0].type().array_index() != children[1].type())
       {
         ss << kind << ": Index term does not match array index type";
         return std::make_pair(false, ss.str());
@@ -494,7 +494,7 @@ NodeManager::check_type(Kind kind,
         ss << kind << ": Expected function term at position 0";
         return std::make_pair(false, ss.str());
       }
-      const auto& fun_types = children[0].type().get_fun_types();
+      const auto& fun_types = children[0].type().fun_types();
       if (children.size() != fun_types.size())
       {
         ss << kind << ": Number of arguments does not match function domain: "
@@ -584,12 +584,12 @@ NodeManager::check_type(Kind kind,
         ss << kind << ": Expected array term at position 0";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].type().get_array_index() != children[1].type())
+      if (children[0].type().array_index() != children[1].type())
       {
         ss << kind << ": Index term does not match index type of array";
         return std::make_pair(false, ss.str());
       }
-      if (children[0].type().get_array_element() != children[2].type())
+      if (children[0].type().array_element() != children[2].type())
       {
         ss << kind << ": Element term does not match element type of array";
         return std::make_pair(false, ss.str());
