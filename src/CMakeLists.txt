@@ -56,6 +56,7 @@ set(libbitwuzla_src_files
   node/node_kind.cpp
   node/node_manager.cpp
   node/node_translation.cpp
+  printer/printer.cpp
   type/type.cpp
   type/type_data.cpp
   type/type_manager.cpp
