@@ -1,1 +1,1 @@
-add_unit_test(test_rewriter)
+add_unit_test(test_rewriter_bv)
