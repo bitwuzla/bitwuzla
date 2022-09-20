@@ -8,6 +8,9 @@ namespace bzla {
 /* bvadd -------------------------------------------------------------------- */
 
 // const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 // bool_add
@@ -58,9 +61,17 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 
 /* bvashr ------------------------------------------------------------------- */
 
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
 /* bvconcat ----------------------------------------------------------------- */
 
 // const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 // const_concat
@@ -85,6 +96,9 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 /* bvmul -------------------------------------------------------------------- */
 
 // const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 // bool_mul
@@ -103,6 +117,9 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 /* bvshl -------------------------------------------------------------------- */
 
 // const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 // const_sll
@@ -110,6 +127,10 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 /* bvshr -------------------------------------------------------------------- */
 
 // const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 // const_srl
@@ -119,6 +140,9 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 /* bvslt -------------------------------------------------------------------- */
 
 // const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 // false_lt
@@ -129,6 +153,9 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 /* bvudiv ------------------------------------------------------------------- */
 
 // const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 // bool_udiv
@@ -139,6 +166,9 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 /* bvult -------------------------------------------------------------------- */
 
 // const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 // false_lt
@@ -150,6 +180,9 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 /* bvurem ------------------------------------------------------------------- */
 
 // const_binary_bv_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
 // bool_urem

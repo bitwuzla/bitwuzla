@@ -66,7 +66,61 @@ Rewriter::_rewrite(const Node& node)
 
   switch (node.kind())
   {
+    case node::Kind::EQUAL: res = rewrite_eq(node); break;
+    case node::Kind::ITE: res = rewrite_ite(node); break;
+
     case node::Kind::BV_AND: res = rewrite_bv_and(node); break;
+    case node::Kind::BV_ADD: res = rewrite_bv_add(node); break;
+    case node::Kind::BV_ASHR: res = rewrite_bv_ashr(node); break;
+    case node::Kind::BV_CONCAT: res = rewrite_bv_concat(node); break;
+    case node::Kind::BV_EXTRACT: res = rewrite_bv_extract(node); break;
+    case node::Kind::BV_MUL: res = rewrite_bv_mul(node); break;
+    case node::Kind::BV_SHL: res = rewrite_bv_shl(node); break;
+    case node::Kind::BV_SHR: res = rewrite_bv_shr(node); break;
+    case node::Kind::BV_SLT: res = rewrite_bv_slt(node); break;
+    case node::Kind::BV_UDIV: res = rewrite_bv_udiv(node); break;
+    case node::Kind::BV_ULT: res = rewrite_bv_ult(node); break;
+    case node::Kind::BV_UREM: res = rewrite_bv_urem(node); break;
+
+    case node::Kind::FP_ABS: res = rewrite_fp_abs(node); break;
+    case node::Kind::FP_ADD: res = rewrite_fp_add(node); break;
+    case node::Kind::FP_DIV: res = rewrite_fp_div(node); break;
+
+    case node::Kind::FP_IS_INF:
+    case node::Kind::FP_IS_NAN:
+    case node::Kind::FP_IS_NEG:
+    case node::Kind::FP_IS_NORM:
+    case node::Kind::FP_IS_POS:
+    case node::Kind::FP_IS_SUBNORM: res = rewrite_fp_is_tester(node); break;
+
+    case node::Kind::FP_LE: res = rewrite_fp_le(node); break;
+    case node::Kind::FP_LT: res = rewrite_fp_lt(node); break;
+    case node::Kind::FP_MAX: res = rewrite_fp_max(node); break;
+    case node::Kind::FP_MIN: res = rewrite_fp_min(node); break;
+    case node::Kind::FP_MUL: res = rewrite_fp_mul(node); break;
+    case node::Kind::FP_NEG: res = rewrite_fp_neg(node); break;
+    case node::Kind::FP_REM: res = rewrite_fp_rem(node); break;
+    case node::Kind::FP_RTI: res = rewrite_fp_rti(node); break;
+    case node::Kind::FP_SQRT: res = rewrite_fp_sqrt(node); break;
+
+    case node::Kind::FP_TO_FP_FROM_BV:
+      res = rewrite_fp_to_fp_from_bv(node);
+      break;
+    case node::Kind::FP_TO_FP_FROM_FP:
+      res = rewrite_fp_to_fp_from_fp(node);
+      break;
+    case node::Kind::FP_TO_FP_FROM_SBV:
+      res = rewrite_fp_to_fp_from_sbv(node);
+      break;
+    case node::Kind::FP_TO_FP_FROM_UBV:
+      res = rewrite_fp_to_fp_from_ubv(node);
+      break;
+
+    case node::Kind::APPLY: res = rewrite_apply(node); break;
+    case node::Kind::LAMBDA: res = rewrite_lambda(node); break;
+
+    case node::Kind::FORALL: res = rewrite_forall(node); break;
+    case node::Kind::EXISTS: res = rewrite_exists(node); break;
 
     default: assert(false);
   }
@@ -77,14 +131,14 @@ Rewriter::_rewrite(const Node& node)
 /* -------------------------------------------------------------------------- */
 
 Node
-rewrite_eq(const Node& node)
+Rewriter::rewrite_eq(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_ite(const Node& node)
+Rewriter::rewrite_ite(const Node& node)
 {
   // TODO
   return node;
@@ -95,8 +149,14 @@ rewrite_ite(const Node& node)
 Node
 Rewriter::rewrite_bv_add(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_ADD_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
@@ -115,15 +175,27 @@ DONE:
 Node
 Rewriter::rewrite_bv_ashr(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_ASHR_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_bv_concat(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_CONCAT_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
@@ -136,168 +208,210 @@ Rewriter::rewrite_bv_extract(const Node& node)
 Node
 Rewriter::rewrite_bv_mul(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_MUL_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_bv_shl(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_SHL_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_bv_shr(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_SHR_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_bv_slt(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_SLT_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_bv_udiv(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_UDIV_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_bv_ult(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_ULT_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_bv_urem(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_UREM_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 /* FP rewrites -------------------------------------------------------------- */
 
 Node
-rewrite_fp_abs(const Node& node)
+Rewriter::rewrite_fp_abs(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_add(const Node& node)
+Rewriter::rewrite_fp_add(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_div(const Node& node)
+Rewriter::rewrite_fp_div(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_is_tester(const Node& node)
+Rewriter::rewrite_fp_is_tester(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_le(const Node& node)
+Rewriter::rewrite_fp_le(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_lt(const Node& node)
+Rewriter::rewrite_fp_lt(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_max(const Node& node)
+Rewriter::rewrite_fp_max(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_min(const Node& node)
+Rewriter::rewrite_fp_min(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_mul(const Node& node)
+Rewriter::rewrite_fp_mul(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_neg(const Node& node)
+Rewriter::rewrite_fp_neg(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_rem(const Node& node)
+Rewriter::rewrite_fp_rem(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_rti(const Node& node)
+Rewriter::rewrite_fp_rti(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_sqrt(const Node& node)
+Rewriter::rewrite_fp_sqrt(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_to_fp_from_bv(const Node& node)
+Rewriter::rewrite_fp_to_fp_from_bv(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_to_fp_from_fp(const Node& node)
+Rewriter::rewrite_fp_to_fp_from_fp(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_to_fp_from_sbv(const Node& node)
+Rewriter::rewrite_fp_to_fp_from_sbv(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_fp_to_fp_from_ubv(const Node& node)
+Rewriter::rewrite_fp_to_fp_from_ubv(const Node& node)
 {
   // TODO
   return node;
@@ -306,14 +420,14 @@ rewrite_fp_to_fp_from_ubv(const Node& node)
 /* Array rewrites ----------------------------------------------------------- */
 
 Node
-rewrite_apply(const Node& node)
+Rewriter::rewrite_apply(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_lambda(const Node& node)
+Rewriter::rewrite_lambda(const Node& node)
 {
   // TODO
   return node;
@@ -322,14 +436,14 @@ rewrite_lambda(const Node& node)
 /* Quant rewrites ----------------------------------------------------------- */
 
 Node
-rewrite_forall(const Node& node)
+Rewriter::rewrite_forall(const Node& node)
 {
   // TODO
   return node;
 }
 
 Node
-rewrite_exists(const Node& node)
+Rewriter::rewrite_exists(const Node& node)
 {
   // TODO
   return node;
