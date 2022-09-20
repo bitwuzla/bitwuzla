@@ -331,7 +331,8 @@ BvSolver::value(const Node& term)
         case Kind::FP_TO_FP_FROM_SBV:
         case Kind::FP_TO_FP_FROM_UBV:
         case Kind::LAMBDA:
-        case Kind::STORE: assert(false); break;
+        case Kind::STORE:
+        case Kind::CONST_ARRAY: assert(false); break;
       }
       cache_value(cur, value);
     }
@@ -569,7 +570,8 @@ BvSolver::bitblast(const Node& t)
         case Kind::FP_TO_FP_FROM_SBV:
         case Kind::FP_TO_FP_FROM_UBV:
         case Kind::LAMBDA:
-        case Kind::STORE: assert(false); break;
+        case Kind::STORE:
+        case Kind::CONST_ARRAY: assert(false); break;
       }
     }
     visit.pop_back();

@@ -229,6 +229,13 @@ NodeDataChildren::equals(const NodeData& other) const
       return false;
     }
   }
+  // Constant arrays are a special case since they require the type info.
+  if (get_kind() == Kind::CONST_ARRAY)
+  {
+    assert(!get_type().is_null());
+    assert(!other.get_type().is_null());
+    return get_type() == other.get_type();
+  }
   return true;
 }
 

@@ -3165,7 +3165,8 @@ bitwuzla_mk_const_array(Bitwuzla *bitwuzla,
                  != bzla_sort_array_get_element(bzla, bzla_sort),
              "sort of 'value' does not match array element sort");
   BzlaNode *res = bzla_exp_const_array(bzla, bzla_sort, bzla_val);
-  BZLA_RETURN_BITWUZLA_TERM(res, Node());
+  Node term = NodeManager::get().mk_const_array(sort->d_type, value->d_node);
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *

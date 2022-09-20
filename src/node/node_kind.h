@@ -113,6 +113,7 @@ enum class Kind
   FP_TO_UBV,          // ((_ fp.to_ubv m) RoundingMode (_ FloatingPoint eb sb))
 
   /* --- Arrays ------------------------------------------------------------- */
+  CONST_ARRAY,
   SELECT,
   STORE,
 
@@ -274,8 +275,9 @@ mk_kind_info()
   info.init(Kind::FP_TO_SBV) = {2, 1, "FP_TO_SBV", "to_sbv"};
   info.init(Kind::FP_TO_UBV) = {2, 1, "FP_TO_UBV", "to_ubv"};
   /* Arrays */
-  info.init(Kind::SELECT) = {2, 0, "SELECT", "select"};
-  info.init(Kind::STORE)  = {3, 0, "STORE", "store"};
+  info.init(Kind::CONST_ARRAY) = {1, 0, "CONST_ARRAY"};
+  info.init(Kind::SELECT)      = {2, 0, "SELECT", "select"};
+  info.init(Kind::STORE)       = {3, 0, "STORE", "store"};
   /* Quantifiers */
   info.init(Kind::EXISTS) = {2, 0, "EXISTS", "exists"};
   info.init(Kind::FORALL) = {2, 0, "FORALL", "forall"};

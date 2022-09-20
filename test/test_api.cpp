@@ -76,9 +76,10 @@ class TestApi : public TestBitwuzla
     d_bool_var =
         bitwuzla_mk_var(d_bzla, bitwuzla_mk_bool_sort(d_bzla), "bool_var");
 
-    d_not_bv_const1 = bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_NOT, d_bv_const1);
+    d_not_bv_const1 =
+        bitwuzla_mk_term1(d_bzla, BITWUZLA_KIND_BV_NOT, d_bv_const1);
     d_and_bv_const1 =
-        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_AND, d_true, d_bv_const1);
+        bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_BV_AND, d_bv_one1, d_bv_const1);
     d_eq_bv_const8 =
         bitwuzla_mk_term2(d_bzla, BITWUZLA_KIND_EQUAL, d_bv_const8, d_bv_zero8);
 

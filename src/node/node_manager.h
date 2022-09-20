@@ -43,6 +43,15 @@ class NodeManager
                 const std::optional<std::string>& symbol = std::nullopt);
 
   /**
+   * Create constant array.
+   *
+   * @param t The array type of the constant array.
+   * @param term The initializer term of the constant array.
+   * @return Constant array of type `t` initialized with `term`.
+   */
+  Node mk_const_array(const Type& t, const Node& term);
+
+  /**
    * Create variable.
    *
    * @param t The type of the variable.

@@ -238,4 +238,18 @@ TEST_F(TestPrinter, print_nested)
   // ASSERT_EQ(ss.str(), "(bvand #b1001 (bvand #b1001 #b1110)");
 }
 
+TEST_F(TestPrinter, print_const_array)
+{
+  NodeManager& nm = NodeManager::get();
+
+  Type bv32        = nm.mk_bv_type(32);
+  Type fp32        = nm.mk_fp_type(8, 24);
+  Node value       = nm.mk_const(bv32, "val");
+  Node const_array = nm.mk_const_array(nm.mk_array_type(fp32, bv32), value);
+  std::stringstream ss;
+  Printer::print(ss, const_array);
+  ASSERT_EQ(ss.str(),
+            "((as const (Array (_ FloatingPoint 8 24) (_ BitVec 32))) val)");
+}
+
 }  // namespace bzla::test

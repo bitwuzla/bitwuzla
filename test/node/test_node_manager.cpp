@@ -64,6 +64,23 @@ TEST_F(TestNodeManager, mk_const)
   ASSERT_TRUE(fun_const.type().is_fun());
 };
 
+TEST_F(TestNodeManager, mk_const_array)
+{
+  NodeManager& nm = NodeManager::get();
+
+  Type bv32  = nm.mk_bv_type(32);
+  Node value = nm.mk_const(bv32);
+  Node const_array =
+      nm.mk_const_array(nm.mk_array_type(nm.mk_bool_type(), bv32), value);
+  ASSERT_EQ(const_array.kind(), Kind::CONST_ARRAY);
+  ASSERT_TRUE(const_array.type().is_array());
+  ASSERT_EQ(
+      const_array,
+      nm.mk_const_array(nm.mk_array_type(nm.mk_bool_type(), bv32), value));
+  ASSERT_NE(const_array,
+            nm.mk_const_array(nm.mk_array_type(bv32, bv32), value));
+}
+
 TEST_F(TestNodeManager, mk_value_bool)
 {
   NodeManager& nm = NodeManager::get();

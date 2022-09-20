@@ -34,6 +34,25 @@ NodeManager::mk_const(const Type& t, const std::optional<std::string>& symbol)
 }
 
 Node
+NodeManager::mk_const_array(const Type& t, const Node& term)
+{
+  assert(!t.is_null());
+  assert(!term.is_null());
+  assert(t.is_array());
+  assert(t.array_element() == term.type());
+
+  NodeData* data  = new_data(Kind::CONST_ARRAY, {term}, {});
+  data->d_type    = t;
+  auto found_data = find_or_insert_node(data);
+  if (found_data)
+  {
+    delete data;
+    data = found_data;
+  }
+  return Node(data);
+}
+
+Node
 NodeManager::mk_var(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
@@ -178,6 +197,7 @@ NodeManager::compute_type(Kind kind,
       break;
 
     case Kind::CONSTANT:
+    case Kind::CONST_ARRAY:
     case Kind::VARIABLE:
     case Kind::VALUE:
       // No need to compute type since they are assigned on construction for
@@ -350,6 +370,7 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::CONSTANT:
+    case Kind::CONST_ARRAY:
     case Kind::VARIABLE:
     case Kind::VALUE:
       // Nothing to do here for now.

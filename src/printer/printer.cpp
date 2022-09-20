@@ -108,6 +108,12 @@ Printer::print(std::ostream& os,
         case Kind::CONSTANT:
         case Kind::VARIABLE: it->second = true; break;
 
+        case Kind::CONST_ARRAY:
+          os << "((as const ";
+          Printer::print(os, cur.type());
+          os << ")";
+          break;
+
         case Kind::NOT:
         case Kind::AND:
         case Kind::OR:
