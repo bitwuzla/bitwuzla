@@ -83,6 +83,7 @@ set(libbitwuzla_src_files
   preprocess/bzlavarsubst.c
   rewrite/rewriter.cpp
   rewrite/rewrites_bv.cpp
+  rewrite/rewrites_fp.cpp
   sat/bzlacadical.cpp
   sat/bzlacms.cpp
   sat/bzlalgl.c

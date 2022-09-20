@@ -2,6 +2,7 @@
 
 #include "node/node_manager.h"
 #include "rewrite/rewrites_bv.h"
+#include "rewrite/rewrites_fp.h"
 
 #define BZLA_APPLY_RW_RULE(rw_rule)                                \
   do                                                               \
@@ -86,12 +87,13 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::FP_ADD: res = rewrite_fp_add(node); break;
     case node::Kind::FP_DIV: res = rewrite_fp_div(node); break;
 
-    case node::Kind::FP_IS_INF:
-    case node::Kind::FP_IS_NAN:
-    case node::Kind::FP_IS_NEG:
-    case node::Kind::FP_IS_NORM:
-    case node::Kind::FP_IS_POS:
-    case node::Kind::FP_IS_SUBNORM: res = rewrite_fp_is_tester(node); break;
+    case node::Kind::FP_IS_INF: res = rewrite_fp_is_inf(node); break;
+    case node::Kind::FP_IS_NAN: res = rewrite_fp_is_nan(node); break;
+    case node::Kind::FP_IS_NEG: res = rewrite_fp_is_neg(node); break;
+    case node::Kind::FP_IS_NORM: res = rewrite_fp_is_normal(node); break;
+    case node::Kind::FP_IS_POS: res = rewrite_fp_is_pos(node); break;
+    case node::Kind::FP_IS_SUBNORM: res = rewrite_fp_is_subnormal(node); break;
+    case node::Kind::FP_IS_ZERO: res = rewrite_fp_is_zero(node); break;
 
     case node::Kind::FP_LE: res = rewrite_fp_le(node); break;
     case node::Kind::FP_LT: res = rewrite_fp_lt(node); break;
@@ -301,29 +303,131 @@ DONE:
 Node
 Rewriter::rewrite_fp_abs(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_ABS_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_add(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_ADD_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_div(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_DIV_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
-Rewriter::rewrite_fp_is_tester(const Node& node)
+Rewriter::rewrite_fp_is_inf(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_IS_INF_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_fp_is_nan(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_IS_NAN_EVAL);
+  // TODO
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_fp_is_neg(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_IS_NEG_EVAL);
+  // TODO
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_fp_is_normal(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_IS_NORM_EVAL);
+  // TODO
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_fp_is_pos(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_IS_POS_EVAL);
+  // TODO
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_fp_is_subnormal(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_IS_SUBNORM_EVAL);
+  // TODO
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_fp_is_zero(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_IS_ZERO_EVAL);
+  // TODO
+
+DONE:
+  return res;
 }
 
 Node

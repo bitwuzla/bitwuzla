@@ -36,7 +36,13 @@ class Rewriter
   Node rewrite_fp_abs(const Node& node);
   Node rewrite_fp_add(const Node& node);
   Node rewrite_fp_div(const Node& node);
-  Node rewrite_fp_is_tester(const Node& node);
+  Node rewrite_fp_is_inf(const Node& node);
+  Node rewrite_fp_is_nan(const Node& node);
+  Node rewrite_fp_is_neg(const Node& node);
+  Node rewrite_fp_is_normal(const Node& node);
+  Node rewrite_fp_is_pos(const Node& node);
+  Node rewrite_fp_is_subnormal(const Node& node);
+  Node rewrite_fp_is_zero(const Node& node);
   Node rewrite_fp_le(const Node& node);
   Node rewrite_fp_lt(const Node& node);
   Node rewrite_fp_max(const Node& node);
@@ -75,6 +81,17 @@ enum class RewriteRuleKind
   BV_UDIV_EVAL,
   BV_ULT_EVAL,
   BV_UREM_EVAL,
+
+  FP_ABS_EVAL,
+  FP_ADD_EVAL,
+  FP_DIV_EVAL,
+  FP_IS_INF_EVAL,
+  FP_IS_NAN_EVAL,
+  FP_IS_NEG_EVAL,
+  FP_IS_NORM_EVAL,
+  FP_IS_POS_EVAL,
+  FP_IS_SUBNORM_EVAL,
+  FP_IS_ZERO_EVAL,
 };
 
 template <RewriteRuleKind K>
