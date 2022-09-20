@@ -209,34 +209,34 @@ class FloatingPoint
   bool operator!=(const FloatingPoint &other) const;
 
   /** @return True if this floating-point represents a zero value. */
-  bool is_zero() const;
+  bool fpiszero() const;
 
   /** @return True if this floating-point represents a normal value. */
-  bool is_normal() const;
+  bool fpisnormal() const;
 
   /** @return True if this floating-point represents a subnormal value. */
-  bool is_subnormal() const;
+  bool fpissubnormal() const;
 
   /** @return True if this floating-point represents a nan value. */
-  bool is_nan() const;
+  bool fpisnan() const;
 
   /** @return True if this floating-point represents a infinite value. */
-  bool is_inf() const;
+  bool fpisinf() const;
 
   /** @return True if this floating-point represents a negative value. */
-  bool is_neg() const;
+  bool fpisneg() const;
 
   /** @return True if this floating-point represents a positive value. */
-  bool is_pos() const;
+  bool fpispos() const;
 
   /** @return True if this floating-point is equal to `fp`. */
-  bool is_eq(const FloatingPoint &fp) const;
+  bool fpeq(const FloatingPoint &fp) const;
 
   /** @return True if this floating-point is less than `fp`. */
-  bool is_lt(const FloatingPoint &fp) const;
+  bool fplt(const FloatingPoint &fp) const;
 
   /** @return True if this floating-point is less than or equal `fp`. */
-  bool is_le(const FloatingPoint &fp) const;
+  bool fple(const FloatingPoint &fp) const;
 
   /**
    * Create a floating-point representing the absolute value of this

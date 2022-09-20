@@ -181,7 +181,7 @@ bzla_fp_is_zero(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp->d_fp->is_zero();
+  return fp->d_fp->fpiszero();
 }
 
 bool
@@ -189,7 +189,7 @@ bzla_fp_is_normal(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp->d_fp->is_normal();
+  return fp->d_fp->fpisnormal();
 }
 
 bool
@@ -197,7 +197,7 @@ bzla_fp_is_subnormal(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp->d_fp->is_subnormal();
+  return fp->d_fp->fpissubnormal();
 }
 
 bool
@@ -205,7 +205,7 @@ bzla_fp_is_nan(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp->d_fp->is_nan();
+  return fp->d_fp->fpisnan();
 }
 
 bool
@@ -213,7 +213,7 @@ bzla_fp_is_inf(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp->d_fp->is_inf();
+  return fp->d_fp->fpisinf();
 }
 
 bool
@@ -221,7 +221,7 @@ bzla_fp_is_neg(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp->d_fp->is_neg();
+  return fp->d_fp->fpisneg();
 }
 
 bool
@@ -229,7 +229,7 @@ bzla_fp_is_pos(Bzla *bzla, const BzlaFloatingPoint *fp)
 {
   assert(fp);
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp->d_fp->is_pos();
+  return fp->d_fp->fpispos();
 }
 
 bool
@@ -246,7 +246,7 @@ bzla_fp_eq(Bzla *bzla,
          == fp1->d_fp->size()->significandWidth());
 
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp0->d_fp->is_eq(*fp1->d_fp);
+  return fp0->d_fp->fpeq(*fp1->d_fp);
 }
 
 bool
@@ -263,7 +263,7 @@ bzla_fp_lt(Bzla *bzla,
          == fp1->d_fp->size()->significandWidth());
 
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp0->d_fp->is_lt(*fp1->d_fp);
+  return fp0->d_fp->fplt(*fp1->d_fp);
 }
 
 bool
@@ -280,7 +280,7 @@ bzla_fp_lte(Bzla *bzla,
          == fp1->d_fp->size()->significandWidth());
 
   bzla::fp::WordBlaster::set_s_bzla(bzla);
-  return fp0->d_fp->is_le(*fp1->d_fp);
+  return fp0->d_fp->fple(*fp1->d_fp);
 }
 
 BzlaFloatingPoint *

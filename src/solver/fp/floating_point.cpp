@@ -271,61 +271,61 @@ FloatingPoint::set_unpacked(const UnpackedFloat &uf)
 }
 
 bool
-FloatingPoint::is_zero() const
+FloatingPoint::fpiszero() const
 {
   return symfpu::isZero(*d_size, *d_uf);
 }
 
 bool
-FloatingPoint::is_normal() const
+FloatingPoint::fpisnormal() const
 {
   return symfpu::isNormal(*d_size, *d_uf);
 }
 
 bool
-FloatingPoint::is_subnormal() const
+FloatingPoint::fpissubnormal() const
 {
   return symfpu::isSubnormal(*d_size, *d_uf);
 }
 
 bool
-FloatingPoint::is_nan() const
+FloatingPoint::fpisnan() const
 {
   return symfpu::isNaN(*d_size, *d_uf);
 }
 
 bool
-FloatingPoint::is_inf() const
+FloatingPoint::fpisinf() const
 {
   return symfpu::isInfinite(*d_size, *d_uf);
 }
 
 bool
-FloatingPoint::is_neg() const
+FloatingPoint::fpisneg() const
 {
   return symfpu::isNegative(*d_size, *d_uf);
 }
 
 bool
-FloatingPoint::is_pos() const
+FloatingPoint::fpispos() const
 {
   return symfpu::isPositive(*d_size, *d_uf);
 }
 
 bool
-FloatingPoint::is_eq(const FloatingPoint &fp) const
+FloatingPoint::fpeq(const FloatingPoint &fp) const
 {
   return symfpu::smtlibEqual<fp::SymFpuTraits>(*d_size, *d_uf, *fp.unpacked());
 }
 
 bool
-FloatingPoint::is_lt(const FloatingPoint &fp) const
+FloatingPoint::fplt(const FloatingPoint &fp) const
 {
   return symfpu::lessThan<fp::SymFpuTraits>(*d_size, *d_uf, *fp.unpacked());
 }
 
 bool
-FloatingPoint::is_le(const FloatingPoint &fp) const
+FloatingPoint::fple(const FloatingPoint &fp) const
 {
   return symfpu::lessThanOrEqual<fp::SymFpuTraits>(
       *d_size, *d_uf, *fp.unpacked());
