@@ -111,7 +111,59 @@ Printer::print(std::ostream& os,
         case Kind::NOT:
         case Kind::AND:
         case Kind::OR:
+        case Kind::IMPLIES:
+        case Kind::XOR:
+        case Kind::DISTINCT:
+        case Kind::EQUAL:
+        case Kind::ITE:
+        case Kind::BV_ADD:
+        case Kind::BV_AND:
+        case Kind::BV_ASHR:
+        case Kind::BV_COMP:
+        case Kind::BV_CONCAT:
+        case Kind::BV_MUL:
+        case Kind::BV_NAND:
+        case Kind::BV_NEG:
+        case Kind::BV_NOR:
+        case Kind::BV_NOT:
+        case Kind::BV_OR:
+        case Kind::BV_REDAND:
+        case Kind::BV_REDOR:
+        case Kind::BV_REDXOR:
+        case Kind::BV_ROL:
+        case Kind::BV_ROR:
+        case Kind::BV_SADDO:
+        case Kind::BV_SDIV:
+        case Kind::BV_SDIVO:
+        case Kind::BV_SGE:
+        case Kind::BV_SGT:
+        case Kind::BV_SHL:
+        case Kind::BV_SHR:
+        case Kind::BV_SLE:
+        case Kind::BV_SLT:
+        case Kind::BV_SMOD:
+        case Kind::BV_SMULO:
+        case Kind::BV_SREM:
+        case Kind::BV_SSUBO:
+        case Kind::BV_SUB:
+        case Kind::BV_UADDO:
+        case Kind::BV_UDIV:
+        case Kind::BV_UGE:
+        case Kind::BV_UGT:
+        case Kind::BV_ULE:
+        case Kind::BV_ULT:
+        case Kind::BV_UMULO:
+        case Kind::BV_UREM:
+        case Kind::BV_USUBO:
+        case Kind::BV_XNOR:
+        case Kind::BV_XOR:
         case Kind::FP_ABS:
+        case Kind::FP_ADD:
+        case Kind::FP_DIV:
+        case Kind::FP_EQUAL:
+        case Kind::FP_FMA:
+        case Kind::FP_GE:
+        case Kind::FP_GT:
         case Kind::FP_IS_INF:
         case Kind::FP_IS_NAN:
         case Kind::FP_IS_NEG:
@@ -119,43 +171,31 @@ Printer::print(std::ostream& os,
         case Kind::FP_IS_POS:
         case Kind::FP_IS_SUBNORM:
         case Kind::FP_IS_ZERO:
-        case Kind::FP_NEG:
-        case Kind::EQUAL:
-        case Kind::BV_NOT:
-        case Kind::BV_AND:
-        case Kind::BV_ADD:
-        case Kind::BV_MUL:
-        case Kind::BV_ULT:
-        case Kind::BV_SHL:
-        case Kind::BV_SLT:
-        case Kind::BV_SHR:
-        case Kind::BV_ASHR:
-        case Kind::BV_UDIV:
-        case Kind::BV_UREM:
-        case Kind::BV_CONCAT:
-        case Kind::FP_EQUAL:
         case Kind::FP_LE:
         case Kind::FP_LT:
-        case Kind::FP_MIN:
         case Kind::FP_MAX:
-        case Kind::FP_SQRT:
+        case Kind::FP_MIN:
+        case Kind::FP_MUL:
+        case Kind::FP_NEG:
         case Kind::FP_REM:
         case Kind::FP_RTI:
+        case Kind::FP_SQRT:
+        case Kind::FP_SUB:
         case Kind::SELECT:
-        case Kind::ITE:
-        case Kind::FP_ADD:
-        case Kind::FP_MUL:
-        case Kind::FP_DIV:
-        case Kind::STORE:
-        case Kind::FP_FMA: os << "(" << info.smt2_name; break;
+        case Kind::STORE: os << "(" << info.smt2_name; break;
 
+        case Kind::BV_EXTRACT:
+        case Kind::BV_REPEAT:
+        case Kind::BV_ROLI:
+        case Kind::BV_RORI:
+        case Kind::BV_SIGN_EXTEND:
+        case Kind::BV_ZERO_EXTEND:
         case Kind::FP_TO_FP_FROM_BV:
-        case Kind::FP_TO_SBV:
-        case Kind::FP_TO_UBV:
         case Kind::FP_TO_FP_FROM_FP:
         case Kind::FP_TO_FP_FROM_SBV:
         case Kind::FP_TO_FP_FROM_UBV:
-        case Kind::BV_EXTRACT:
+        case Kind::FP_TO_SBV:
+        case Kind::FP_TO_UBV:
           os << "((_ " << info.smt2_name;
           for (size_t i = 0; i < cur.num_indices(); ++i)
           {

@@ -30,6 +30,17 @@ extern "C" {
 
 #include <unordered_map>
 
+#include "node/node_manager.h"
+#include "solver/fp/floating_point.h"
+#if 0
+#include "solving_context.h"
+#endif
+
+using namespace bzla;
+
+struct BitwuzlaSort;
+struct BitwuzlaTerm;
+
 /* -------------------------------------------------------------------------- */
 
 BZLA_DECLARE_STACK(BitwuzlaTermConstPtr, const BitwuzlaTerm *);
@@ -43,6 +54,7 @@ struct Bitwuzla
 {
   /* Non-simplified assumptions as assumed via bitwuzla_assume. */
   BitwuzlaTermConstPtrStack d_assumptions;
+  std::vector<const BitwuzlaTerm *> d_assertions;
   /* Unsat assumptions of current bitwuzla_get_unsat_assumptions query. */
   BitwuzlaTermConstPtrStack d_unsat_assumptions;
   /* Unsat core of the current bitwuzla_get_unsat_core query. */
@@ -68,20 +80,44 @@ struct Bitwuzla
   BitwuzlaTermConstPtrPtrStack d_fun_args_ptr;
   BitwuzlaTermConstPtrStack d_fun_values;
   BzlaConstCharPtrStack d_option_info_values;
-  /* Map internal sort id to external sort wrapper. */
-  BzlaIntHashTable *d_sort_map;
   /* Internal solver. */
   Bzla *d_bzla;
   /* API memory manager. */
   BzlaMemMgr *d_mm;
+
+  /* Map internal sort id to external sort wrapper. */
+  std::unordered_map<Type, std::unique_ptr<BitwuzlaSort>> d_sort_map;
+  std::unordered_map<Node, std::unique_ptr<BitwuzlaTerm>> d_node_map;
+
+#if 0
+  SolvingContext d_ctx;
+#endif
 };
 
 struct BitwuzlaSort
 {
+  BitwuzlaSort(BzlaSortId sort, Bitwuzla *bzla, const Type &type)
+      : d_bzla_sort(sort), d_bzla(bzla), d_type(type)
+  {
+  }
+
   /* Internal sort. */
   BzlaSortId d_bzla_sort;
   /* Associated solver. */
   Bitwuzla *d_bzla;
+
+  Type d_type;
+};
+
+struct BitwuzlaTerm
+{
+  BitwuzlaTerm(BzlaNode *bzla_node, const Node &node)
+      : d_bzla_node(bzla_node), d_node(node)
+  {
+  }
+
+  BzlaNode *d_bzla_node;
+  Node d_node;
 };
 
 static std::unordered_map<BitwuzlaOption, BzlaOption> bzla_options{
@@ -420,13 +456,13 @@ static const char *bzla_kind_to_str[BITWUZLA_NUM_KINDS] = {
 #define BZLA_IMPORT_BITWUZLA(bitwuzla) (bitwuzla->d_bzla)
 #define BZLA_EXPORT_BITWUZLA(bzla) ((Bitwuzla *) (bzla)->bitwuzla)
 
-#define BZLA_IMPORT_BITWUZLA_TERM(term) (((BzlaNode *) (term)))
-#define BZLA_IMPORT_BITWUZLA_TERMS(terms) (((BzlaNode **) (terms)))
-#define BZLA_EXPORT_BITWUZLA_TERM(node) (((const BitwuzlaTerm *) (node)))
-#define BZLA_EXPORT_BITWUZLA_TERMS(terms) (((const BitwuzlaTerm **) (terms)))
+#define BZLA_IMPORT_BITWUZLA_TERM(term) term->d_bzla_node
+#define BZLA_EXPORT_BITWUZLA_TERM(bzla_node, node) \
+  wrap_term(bitwuzla, bzla_node, node)
 
 #define BZLA_IMPORT_BITWUZLA_SORT(sort) ((sort)->d_bzla_sort)
-#define BZLA_EXPORT_BITWUZLA_SORT(bitwuzla, sort) wrap_sort(bitwuzla, sort)
+#define BZLA_EXPORT_BITWUZLA_SORT(bitwuzla, sort, type) \
+  wrap_sort(bitwuzla, sort, type)
 
 #define BZLA_IMPORT_BITWUZLA_OPTION(option) (bzla_options.at(option))
 #define BZLA_EXPORT_BITWUZLA_OPTION(option) (bitwuzla_options.at(option))
@@ -824,6 +860,22 @@ mk_term_left_assoc(Bzla *bzla,
   return res;
 }
 
+static Node
+mk_term_left_assoc(node::Kind kind, const std::vector<Node> &children)
+{
+  assert(children.size() >= 2);
+  Node res, tmp;
+
+  NodeManager &nm = NodeManager::get();
+  res             = nm.mk_node(kind, {children[0], children[1]});
+  for (uint32_t i = 2; i < children.size(); i++)
+  {
+    tmp = nm.mk_node(kind, {res, children[i]});
+    res = tmp;
+  }
+  return res;
+}
+
 static BzlaNode *
 mk_term_right_assoc(Bzla *bzla,
                     BzlaNode *args[],
@@ -840,6 +892,22 @@ mk_term_right_assoc(Bzla *bzla,
     res = tmp;
   }
   assert(res);
+  return res;
+}
+
+static Node
+mk_term_right_assoc(node::Kind kind, const std::vector<Node> &children)
+{
+  assert(children.size() >= 2);
+  Node res, tmp;
+  NodeManager &nm = NodeManager::get();
+  res             = children.back();
+  for (uint32_t i = 1, size = children.size(); i < size; ++i)
+  {
+    tmp = nm.mk_node(kind, {children[size - i - 1], res});
+    res = tmp;
+  }
+  assert(!res.is_null());
   return res;
 }
 
@@ -875,6 +943,33 @@ mk_term_pairwise(Bzla *bzla,
   return res;
 }
 
+static Node
+mk_term_pairwise(node::Kind kind, const std::vector<Node> &children)
+{
+  assert(children.size() >= 2);
+  Node res, tmp, old;
+
+  NodeManager &nm = NodeManager::get();
+  for (uint32_t i = 0; i < children.size() - 1; i++)
+  {
+    for (uint32_t j = i + 1; j < children.size(); j++)
+    {
+      tmp = nm.mk_node(kind, {children[i], children[j]});
+      if (!res.is_null())
+      {
+        old = res;
+        res = nm.mk_node(node::Kind::AND, {old, tmp});
+      }
+      else
+      {
+        res = tmp;
+      }
+    }
+  }
+  assert(!res.is_null());
+  return res;
+}
+
 static BzlaNode *
 mk_term_chained(Bzla *bzla,
                 BzlaNode *args[],
@@ -904,26 +999,83 @@ mk_term_chained(Bzla *bzla,
   return res;
 }
 
+static Node
+mk_term_chained(node::Kind kind, const std::vector<Node> &children)
+{
+  assert(children.size() >= 2);
+  Node res, tmp, old;
+
+  NodeManager &nm = NodeManager::get();
+  for (uint32_t i = 0, j = 1; j < children.size(); i++, j++)
+  {
+    tmp = nm.mk_node(kind, {children[i], children[j]});
+    if (!res.is_null())
+    {
+      old = res;
+      res = nm.mk_node(node::Kind::AND, {old, tmp});
+    }
+    else
+    {
+      res = tmp;
+    }
+  }
+  assert(!res.is_null());
+  return res;
+}
+
+static Node
+mk_term_binder(node::Kind kind, const std::vector<Node> &children)
+{
+  assert(children.size() >= 2);
+  NodeManager &nm = NodeManager::get();
+  Node res        = children.back();
+  for (size_t i = 1, size = children.size(); i < size; ++i)
+  {
+    const auto &var = children[size - 1 - i];
+    assert(var.kind() == node::Kind::VARIABLE);
+    res = nm.mk_node(kind, {var, res});
+  }
+  return res;
+}
+
 static const BitwuzlaSort *
-wrap_sort(Bitwuzla *bitwuzla, BzlaSortId bzla_sort)
+wrap_sort(Bitwuzla *bitwuzla, BzlaSortId bzla_sort, const Type &type)
 {
   assert(bitwuzla);
   assert(bzla_sort);
+  assert(!type.is_null());
 
   BitwuzlaSort *res;
-  if (bzla_hashint_map_contains(bitwuzla->d_sort_map, bzla_sort))
+  const auto it = bitwuzla->d_sort_map.find(type);
+  if (it == bitwuzla->d_sort_map.end())
   {
-    res = static_cast<BitwuzlaSort *>(
-        bzla_hashint_map_get(bitwuzla->d_sort_map, bzla_sort)->as_ptr);
+    res = new BitwuzlaSort(bzla_sort, bitwuzla, type);
+    bitwuzla->d_sort_map.emplace(type, res);
   }
   else
   {
-    BZLA_NEW(bitwuzla->d_mm, res);
-    res->d_bzla_sort = bzla_sort;
-    res->d_bzla      = bitwuzla;
-    bzla_hashint_map_add(bitwuzla->d_sort_map,
-                         bzla_sort_copy(bitwuzla->d_bzla, bzla_sort))
-        ->as_ptr = res;
+    res = it->second.get();
+  }
+  return res;
+}
+
+static const BitwuzlaTerm *
+wrap_term(Bitwuzla *bitwuzla, BzlaNode *bzla_node, const Node &node)
+{
+  assert(bitwuzla);
+  assert(bzla_node);
+  //  assert(!node.is_null());
+
+  BitwuzlaTerm *res;
+  const auto it = bitwuzla->d_node_map.find(node);
+  if (it == bitwuzla->d_node_map.end())
+  {
+    res = new BitwuzlaTerm(bzla_node, node);
+    bitwuzla->d_node_map.emplace(node, res);
+  }
+  else
+  {
+    res = it->second.get();
   }
   return res;
 }
@@ -941,20 +1093,20 @@ reset_assumptions(Bitwuzla *bitwuzla)
 
 /* -------------------------------------------------------------------------- */
 
-#define BZLA_RETURN_BITWUZLA_SORT(bitwuzla, sort)    \
-  do                                                 \
-  {                                                  \
-    assert(res);                                     \
-    inc_ext_refs_sort(bzla, res);                    \
-    return BZLA_EXPORT_BITWUZLA_SORT(bitwuzla, res); \
+#define BZLA_RETURN_BITWUZLA_SORT(bitwuzla, sort, type)    \
+  do                                                       \
+  {                                                        \
+    assert(res);                                           \
+    inc_ext_refs_sort(bzla, res);                          \
+    return BZLA_EXPORT_BITWUZLA_SORT(bitwuzla, res, type); \
   } while (0)
 
-#define BZLA_RETURN_BITWUZLA_TERM(term)       \
-  do                                          \
-  {                                           \
-    assert(res);                              \
-    bzla_node_inc_ext_ref_counter(bzla, res); \
-    return BZLA_EXPORT_BITWUZLA_TERM(res);    \
+#define BZLA_RETURN_BITWUZLA_TERM(res, node)     \
+  do                                             \
+  {                                              \
+    assert(res);                                 \
+    bzla_node_inc_ext_ref_counter(bzla, res);    \
+    return BZLA_EXPORT_BITWUZLA_TERM(res, node); \
   } while (0)
 
 /* -------------------------------------------------------------------------- */
@@ -1014,7 +1166,6 @@ init(Bitwuzla *bitwuzla, BzlaMemMgr *mm)
   bitwuzla->d_mm             = mm;
   bitwuzla->d_bzla           = bzla_new();
   bitwuzla->d_bzla->bitwuzla = bitwuzla;
-  bitwuzla->d_sort_map       = bzla_hashint_map_new(mm);
   BZLA_INIT_STACK(mm, bitwuzla->d_assumptions);
   BZLA_INIT_STACK(mm, bitwuzla->d_unsat_assumptions);
   BZLA_INIT_STACK(mm, bitwuzla->d_unsat_core);
@@ -1033,9 +1184,9 @@ init(Bitwuzla *bitwuzla, BzlaMemMgr *mm)
 Bitwuzla *
 bitwuzla_new(void)
 {
-  Bitwuzla *res;
+  new Bitwuzla();
+  Bitwuzla *res  = new Bitwuzla();
   BzlaMemMgr *mm = bzla_mem_mgr_new();
-  BZLA_CNEW(mm, res);
   init(res, mm);
   return res;
 }
@@ -1043,16 +1194,6 @@ bitwuzla_new(void)
 static void
 reset(Bitwuzla *bitwuzla)
 {
-  BzlaIntHashTableIterator it;
-  bzla_iter_hashint_init(&it, bitwuzla->d_sort_map);
-  while (bzla_iter_hashint_has_next(&it))
-  {
-    bzla_sort_release(bitwuzla->d_bzla, it.t->keys[it.cur_pos]);
-    BitwuzlaSort *sort =
-        static_cast<BitwuzlaSort *>(bzla_iter_hashint_next_data(&it)->as_ptr);
-    BZLA_DELETE(bitwuzla->d_mm, sort);
-  }
-  bzla_hashint_map_delete(bitwuzla->d_sort_map);
   BZLA_RELEASE_STACK(bitwuzla->d_assumptions);
   BZLA_RELEASE_STACK(bitwuzla->d_unsat_assumptions);
   BZLA_RELEASE_STACK(bitwuzla->d_unsat_core);
@@ -1089,7 +1230,7 @@ bitwuzla_delete(Bitwuzla *bitwuzla)
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
   reset(bitwuzla);
   BzlaMemMgr *mm = bitwuzla->d_mm;
-  BZLA_DELETE(mm, bitwuzla);
+  delete bitwuzla;
   bzla_mem_mgr_delete(mm);
 }
 
@@ -1427,7 +1568,8 @@ bitwuzla_mk_array_sort(Bitwuzla *bitwuzla,
   BZLA_CHECK_SORT_NOT_IS_FUN(bzla, esort);
 
   BzlaSortId res = bzla_sort_array(bzla, isort, esort);
-  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res);
+  Type type = NodeManager::get().mk_array_type(index->d_type, element->d_type);
+  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res, type);
 }
 
 const BitwuzlaSort *
@@ -1437,7 +1579,8 @@ bitwuzla_mk_bool_sort(Bitwuzla *bitwuzla)
 
   Bzla *bzla     = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSortId res = bzla_sort_bool(bzla);
-  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res);
+  Type type      = NodeManager::get().mk_bool_type();
+  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res, type);
 }
 
 const BitwuzlaSort *
@@ -1448,7 +1591,8 @@ bitwuzla_mk_bv_sort(Bitwuzla *bitwuzla, uint32_t size)
 
   Bzla *bzla     = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSortId res = bzla_sort_bv(bzla, size);
-  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res);
+  Type type      = NodeManager::get().mk_bv_type(size);
+  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res, type);
 }
 
 const BitwuzlaSort *
@@ -1460,7 +1604,8 @@ bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla, uint32_t exp_size, uint32_t sig_size)
 
   Bzla *bzla     = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSortId res = bzla_sort_fp(bzla, exp_size, sig_size);
-  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res);
+  Type type      = NodeManager::get().mk_fp_type(exp_size, sig_size);
+  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res, type);
 }
 
 const BitwuzlaSort *
@@ -1479,18 +1624,22 @@ bitwuzla_mk_fun_sort(Bitwuzla *bitwuzla,
   BzlaSortId cdom = BZLA_IMPORT_BITWUZLA_SORT(codomain);
   BZLA_CHECK_SORT_NOT_IS_FUN(bzla, cdom);
 
+  std::vector<Type> types;
   BzlaSortId dom[arity];
   for (uint32_t i = 0; i < arity; i++)
   {
     dom[i] = BZLA_IMPORT_BITWUZLA_SORT(domain[i]);
     BZLA_CHECK_SORT_BITWUZLA_AT_IDX(bitwuzla, domain[i], i);
     BZLA_CHECK_SORT_NOT_IS_FUN_AT_IDX(bzla, dom[i], i);
+    types.push_back(domain[i]->d_type);
   }
+  types.push_back(codomain->d_type);
   BzlaSortId tupsort = bzla_sort_tuple(bzla, dom, arity);
 
   BzlaSortId res = bzla_sort_fun(bzla, tupsort, cdom);
   bzla_sort_release(bzla, tupsort);
-  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res);
+  Type type = NodeManager::get().mk_fun_type(types);
+  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res, type);
 }
 
 const BitwuzlaSort *
@@ -1500,7 +1649,8 @@ bitwuzla_mk_rm_sort(Bitwuzla *bitwuzla)
 
   Bzla *bzla     = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSortId res = bzla_sort_rm(bzla);
-  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res);
+  Type type      = NodeManager::get().mk_rm_type();
+  BZLA_RETURN_BITWUZLA_SORT(bitwuzla, res, type);
 }
 
 const BitwuzlaTerm *
@@ -1510,7 +1660,8 @@ bitwuzla_mk_true(Bitwuzla *bitwuzla)
 
   Bzla *bzla    = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaNode *res = bzla_exp_true(bzla);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term     = NodeManager::get().mk_value(true);
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1520,7 +1671,8 @@ bitwuzla_mk_false(Bitwuzla *bitwuzla)
 
   Bzla *bzla    = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaNode *res = bzla_exp_false(bzla);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term     = NodeManager::get().mk_value(false);
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1535,7 +1687,9 @@ bitwuzla_mk_bv_zero(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_bv_zero(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term =
+      NodeManager::get().mk_value(BitVector::mk_zero(sort->d_type.bv_size()));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1550,7 +1704,9 @@ bitwuzla_mk_bv_one(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_bv_one(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term =
+      NodeManager::get().mk_value(BitVector::mk_one(sort->d_type.bv_size()));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1565,7 +1721,9 @@ bitwuzla_mk_bv_ones(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_bv_ones(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term =
+      NodeManager::get().mk_value(BitVector::mk_ones(sort->d_type.bv_size()));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1580,7 +1738,9 @@ bitwuzla_mk_bv_min_signed(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_bv_min_signed(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term     = NodeManager::get().mk_value(
+      BitVector::mk_min_signed(sort->d_type.bv_size()));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1595,7 +1755,9 @@ bitwuzla_mk_bv_max_signed(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_BV(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_bv_max_signed(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term     = NodeManager::get().mk_value(
+      BitVector::mk_max_signed(sort->d_type.bv_size()));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1610,7 +1772,9 @@ bitwuzla_mk_fp_pos_zero(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_fp_pos_zero(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term =
+      NodeManager::get().mk_value(FloatingPoint::fpzero(sort->d_type, true));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1625,7 +1789,9 @@ bitwuzla_mk_fp_neg_zero(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_fp_neg_zero(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term =
+      NodeManager::get().mk_value(FloatingPoint::fpzero(sort->d_type, false));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1640,7 +1806,9 @@ bitwuzla_mk_fp_pos_inf(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_fp_pos_inf(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term =
+      NodeManager::get().mk_value(FloatingPoint::fpinf(sort->d_type, true));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1655,7 +1823,9 @@ bitwuzla_mk_fp_neg_inf(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_fp_neg_inf(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term =
+      NodeManager::get().mk_value(FloatingPoint::fpinf(sort->d_type, false));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1670,7 +1840,8 @@ bitwuzla_mk_fp_nan(Bitwuzla *bitwuzla, const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_FP(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_fp_nan(bzla, bzla_sort);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term = NodeManager::get().mk_value(FloatingPoint::fpnan(sort->d_type));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1699,9 +1870,11 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
       size);
 
   BzlaBitVector *bv;
+  uint32_t _base = 0;
   switch (base)
   {
     case BITWUZLA_BV_BASE_BIN: {
+      _base = 2;
       for (const char *p = value; *p; p++)
       {
         BZLA_ABORT(*p != '1' && *p != '0', "invalid binary string '%s'", value);
@@ -1723,6 +1896,7 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
     }
 
     case BITWUZLA_BV_BASE_DEC: {
+      _base         = 10;
       const char *p = value;
       if (*p && p[0] == '-')
       {
@@ -1746,6 +1920,7 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
       BZLA_ABORT(base != BITWUZLA_BV_BASE_HEX,
                  "invalid base for numerical string '%s'",
                  value);
+      _base = 16;
       for (const char *p = value; *p; p++)
       {
         /* 48-57: 0-9, 65-70: A-F, 97-102: a-f */
@@ -1764,7 +1939,9 @@ bitwuzla_mk_bv_value(Bitwuzla *bitwuzla,
   BzlaNode *res = bzla_exp_bv_const(bzla, bv);
   assert(bzla_node_get_sort_id(res) == bzla_sort);
   bzla_bv_free(bzla->mm, bv);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term = NodeManager::get().mk_value(
+      BitVector(sort->d_type.bv_size(), value, _base));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1789,7 +1966,9 @@ bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
       bzla->mm, value, bzla_sort_bv_get_width(bzla, bzla_sort));
   BzlaNode *res = bzla_exp_bv_const(bzla, bv);
   bzla_bv_free(bzla->mm, bv);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term =
+      NodeManager::get().mk_value(BitVector(sort->d_type.bv_size(), value));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1814,7 +1993,9 @@ bitwuzla_mk_bv_value_int64(Bitwuzla *bitwuzla,
       bzla->mm, value, bzla_sort_bv_get_width(bzla, bzla_sort));
   BzlaNode *res = bzla_exp_bv_const(bzla, bv);
   bzla_bv_free(bzla->mm, bv);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term = NodeManager::get().mk_value(
+      BitVector(sort->d_type.bv_size(), value, value < 0));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1849,7 +2030,11 @@ bitwuzla_mk_fp_value(Bitwuzla *bitwuzla,
       "invalid bit-vector size for argument 'bv_sign', expected size one");
 
   BzlaNode *res = bzla_exp_fp_const(bzla, sign, exp, sig);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term     = NodeManager::get().mk_value(
+      FloatingPoint::fpfp(bv_sign->d_node.value<BitVector>(),
+                          bv_exponent->d_node.value<BitVector>(),
+                          bv_significand->d_node.value<BitVector>()));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1877,7 +2062,9 @@ bitwuzla_mk_fp_value_from_real(Bitwuzla *bitwuzla,
   BZLA_CHECK_TERM_IS_RM(bzla, bzla_rm);
 
   BzlaNode *res = bzla_exp_fp_const_from_real(bzla, bzla_sort, bzla_rm, real);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term     = NodeManager::get().mk_value(FloatingPoint::from_real(
+      sort->d_type, rm->d_node.value<RoundingMode>(), real));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1909,7 +2096,9 @@ bitwuzla_mk_fp_value_from_rational(Bitwuzla *bitwuzla,
 
   BzlaNode *res =
       bzla_exp_fp_const_from_rational(bzla, bzla_sort, bzla_rm, num, den);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term = NodeManager::get().mk_value(FloatingPoint::from_rational(
+      sort->d_type, rm->d_node.value<RoundingMode>(), num, den));
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1920,7 +2109,18 @@ bitwuzla_mk_rm_value(Bitwuzla *bitwuzla, BitwuzlaRoundingMode rm)
 
   Bzla *bzla    = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaNode *res = bzla_exp_rm_const(bzla, BZLA_IMPORT_BITWUZLA_RM(rm));
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  RoundingMode _rm;
+  switch (rm)
+  {
+    case BITWUZLA_RM_RNA: _rm = RoundingMode::RNA; break;
+    case BITWUZLA_RM_RNE: _rm = RoundingMode::RNE; break;
+    case BITWUZLA_RM_RTN: _rm = RoundingMode::RTN; break;
+    case BITWUZLA_RM_RTP: _rm = RoundingMode::RTP; break;
+    case BITWUZLA_RM_RTZ: _rm = RoundingMode::RTZ; break;
+    default: assert(false);
+  }
+  Node term = NodeManager::get().mk_value(_rm);
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -1961,494 +2161,589 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
 
-  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BzlaNode **bzla_args = BZLA_IMPORT_BITWUZLA_TERMS(args);
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
 
-  BzlaNode *res = NULL;
+  BzlaNode *res   = NULL;
+  NodeManager &nm = NodeManager::get();
+  Node term;
+  std::vector<BzlaNode *> bzla_args;
+  std::vector<Node> children;
+  for (uint32_t i = 0; i < argc; ++i)
+  {
+    BZLA_CHECK_ARG_NOT_NULL(args[i]);
+    bzla_args.push_back(args[i]->d_bzla_node);
+    children.push_back(args[i]->d_node);
+  }
   switch (kind)
   {
     case BITWUZLA_KIND_EQUAL:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, sort_any, true);
-      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_eq);
+          kind, true, bzla_args.data(), 2, argc, 0, sort_any, true);
+      res  = mk_term_chained(bzla, bzla_args.data(), argc, bzla_exp_eq);
+      term = mk_term_chained(node::Kind::EQUAL, children);
       break;
 
     case BITWUZLA_KIND_DISTINCT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, sort_any, true);
-      res = mk_term_pairwise(bzla, bzla_args, argc, bzla_exp_ne);
+          kind, true, bzla_args.data(), 2, argc, 0, sort_any, true);
+      res  = mk_term_pairwise(bzla, bzla_args.data(), argc, bzla_exp_ne);
+      term = mk_term_pairwise(node::Kind::DISTINCT, children);
       break;
 
     case BITWUZLA_KIND_IMPLIES:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
-      res = mk_term_right_assoc(bzla, bzla_args, argc, bzla_exp_implies);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bool, true);
+      res = mk_term_right_assoc(bzla, bzla_args.data(), argc, bzla_exp_implies);
+      term = mk_term_right_assoc(node::Kind::IMPLIES, children);
       break;
 
     case BITWUZLA_KIND_IFF:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
-      res = bzla_exp_iff(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bool, true);
+      res  = bzla_exp_iff(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::EQUAL, children);
       break;
 
     case BITWUZLA_KIND_NOT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_bool, true);
-      res = bzla_exp_bv_not(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_bool, true);
+      res  = bzla_exp_bv_not(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::NOT, children);
       break;
 
     case BITWUZLA_KIND_AND:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
-      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_and);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bool, true);
+      res  = mk_term_left_assoc(bzla, bzla_args.data(), argc, bzla_exp_bv_and);
+      term = mk_term_left_assoc(node::Kind::AND, children);
       break;
 
     case BITWUZLA_KIND_OR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
-      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_or);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bool, true);
+      res  = mk_term_left_assoc(bzla, bzla_args.data(), argc, bzla_exp_bv_or);
+      term = mk_term_left_assoc(node::Kind::OR, children);
       break;
 
     case BITWUZLA_KIND_XOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bool, true);
-      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_xor);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bool, true);
+      res  = mk_term_left_assoc(bzla, bzla_args.data(), argc, bzla_exp_bv_xor);
+      term = mk_term_left_assoc(node::Kind::XOR, children);
       break;
 
     case BITWUZLA_KIND_BV_COMP:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_eq(bzla, bzla_args[0], bzla_args[1]);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_eq(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_COMP, children);
       break;
 
     case BITWUZLA_KIND_BV_NOT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_not(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_not(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::BV_NOT, children);
       break;
 
     case BITWUZLA_KIND_BV_NEG:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_neg(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_neg(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::BV_NEG, children);
       break;
 
     case BITWUZLA_KIND_BV_REDOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_redor(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_redor(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::BV_REDOR, children);
       break;
 
     case BITWUZLA_KIND_BV_REDXOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_redxor(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_redxor(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::BV_REDXOR, children);
       break;
 
     case BITWUZLA_KIND_BV_REDAND:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_redand(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_redand(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::BV_REDAND, children);
       break;
 
     case BITWUZLA_KIND_BV_XOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_xor);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = mk_term_left_assoc(bzla, bzla_args.data(), argc, bzla_exp_bv_xor);
+      term = mk_term_left_assoc(node::Kind::BV_XOR, children);
       break;
 
     case BITWUZLA_KIND_BV_XNOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_xnor(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_xnor(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_XNOR, children);
       break;
 
     case BITWUZLA_KIND_BV_AND:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_and);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = mk_term_left_assoc(bzla, bzla_args.data(), argc, bzla_exp_bv_and);
+      term = nm.mk_node(node::Kind::BV_AND, children);
       break;
 
     case BITWUZLA_KIND_BV_NAND:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_nand(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_nand(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_NAND, children);
       break;
 
     case BITWUZLA_KIND_BV_OR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_or);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = mk_term_left_assoc(bzla, bzla_args.data(), argc, bzla_exp_bv_or);
+      term = nm.mk_node(node::Kind::BV_OR, children);
       break;
 
     case BITWUZLA_KIND_BV_NOR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_nor(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_nor(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_NOR, children);
       break;
 
     case BITWUZLA_KIND_BV_ADD:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_add);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = mk_term_left_assoc(bzla, bzla_args.data(), argc, bzla_exp_bv_add);
+      term = mk_term_left_assoc(node::Kind::BV_ADD, children);
       break;
 
     case BITWUZLA_KIND_BV_UADD_OVERFLOW:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_uaddo(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_uaddo(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_UADDO, children);
       break;
 
     case BITWUZLA_KIND_BV_SADD_OVERFLOW:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_saddo(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_saddo(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SADDO, children);
       break;
 
     case BITWUZLA_KIND_BV_MUL:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_mul);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = mk_term_left_assoc(bzla, bzla_args.data(), argc, bzla_exp_bv_mul);
+      term = nm.mk_node(node::Kind::BV_MUL, children);
       break;
 
     case BITWUZLA_KIND_BV_UMUL_OVERFLOW:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_umulo(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_umulo(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_UMULO, children);
       break;
 
     case BITWUZLA_KIND_BV_SMUL_OVERFLOW:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_smulo(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_smulo(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SMULO, children);
       break;
 
     case BITWUZLA_KIND_BV_ULT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_ult(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_ult(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_ULT, children);
       break;
 
     case BITWUZLA_KIND_BV_SLT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_slt(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_slt(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SLT, children);
       break;
 
     case BITWUZLA_KIND_BV_ULE:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_ulte(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_ulte(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_ULE, children);
       break;
 
     case BITWUZLA_KIND_BV_SLE:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_slte(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_slte(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SLE, children);
       break;
 
     case BITWUZLA_KIND_BV_UGT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_ugt(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_ugt(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_UGT, children);
       break;
 
     case BITWUZLA_KIND_BV_SGT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_sgt(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_sgt(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SGT, children);
       break;
 
     case BITWUZLA_KIND_BV_UGE:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_ugte(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_ugte(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_UGE, children);
       break;
 
     case BITWUZLA_KIND_BV_SGE:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_sgte(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_sgte(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SGE, children);
       break;
 
     case BITWUZLA_KIND_BV_SHL:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_sll(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_sll(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SHL, children);
       break;
 
     case BITWUZLA_KIND_BV_SHR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_srl(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_srl(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SHR, children);
       break;
 
     case BITWUZLA_KIND_BV_ASHR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_sra(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_sra(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_ASHR, children);
       break;
 
     case BITWUZLA_KIND_BV_SUB:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_sub(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_sub(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SUB, children);
       break;
 
     case BITWUZLA_KIND_BV_USUB_OVERFLOW:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_usubo(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_usubo(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_USUBO, children);
       break;
 
     case BITWUZLA_KIND_BV_SSUB_OVERFLOW:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_ssubo(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_ssubo(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SSUBO, children);
       break;
 
     case BITWUZLA_KIND_BV_UDIV:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_udiv(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_udiv(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_UDIV, children);
       break;
 
     case BITWUZLA_KIND_BV_SDIV:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_sdiv(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_sdiv(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SDIV, children);
       break;
 
     case BITWUZLA_KIND_BV_SDIV_OVERFLOW:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_sdivo(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_sdivo(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SDIVO, children);
       break;
 
     case BITWUZLA_KIND_BV_UREM:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_urem(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_urem(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_UREM, children);
       break;
 
     case BITWUZLA_KIND_BV_SREM:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_srem(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_srem(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SREM, children);
       break;
 
     case BITWUZLA_KIND_BV_SMOD:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_smod(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_smod(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_SMOD, children);
       break;
 
     case BITWUZLA_KIND_BV_ROL:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_rol(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_rol(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_ROL, children);
       break;
 
     case BITWUZLA_KIND_BV_ROR:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_ror(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_ror(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::BV_ROR, children);
       break;
 
     case BITWUZLA_KIND_BV_INC:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_inc(bzla, bzla_args[0]);
+      // TODO: remove?
       break;
 
     case BITWUZLA_KIND_BV_DEC:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_bv, true);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_bv, true);
       res = bzla_exp_bv_dec(bzla, bzla_args[0]);
+      // TODO: remove?
       break;
 
     case BITWUZLA_KIND_BV_CONCAT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_bv, false);
-      res = mk_term_left_assoc(bzla, bzla_args, argc, bzla_exp_bv_concat);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_bv, false);
+      res =
+          mk_term_left_assoc(bzla, bzla_args.data(), argc, bzla_exp_bv_concat);
+      term = mk_term_left_assoc(node::Kind::BV_CONCAT, children);
       break;
 
-    case BITWUZLA_KIND_FP_FP:
+    case BITWUZLA_KIND_FP_FP: {
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 3, argc, 0, bzla_sort_is_bv, false);
+          kind, false, bzla_args.data(), 3, argc, 0, bzla_sort_is_bv, false);
       BZLA_ABORT(
           bzla_node_bv_get_width(bzla, bzla_args[0]) != 1,
           "invalid bit-vector size for argument at index 0, expected size 1");
-      res = bzla_exp_fp_fp(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
-      break;
+      res  = bzla_exp_fp_fp(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      term = nm.mk_node(
+          node::Kind::FP_TO_FP_FROM_BV,
+          {nm.mk_node(
+              node::Kind::BV_CONCAT,
+              {children[0],
+               nm.mk_node(node::Kind::BV_CONCAT, {children[1], children[2]})})},
+          {children[0].type().bv_size() + children[2].type().bv_size(),
+           children[1].type().bv_size()});
+    }
+    break;
 
     case BITWUZLA_KIND_FP_ABS:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_abs(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_abs(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::FP_ABS, children);
       break;
 
     case BITWUZLA_KIND_FP_NEG:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_neg(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_neg(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::FP_NEG, children);
       break;
 
     case BITWUZLA_KIND_FP_IS_NORMAL:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_is_normal(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_is_normal(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::FP_IS_NORM, children);
       break;
 
     case BITWUZLA_KIND_FP_IS_SUBNORMAL:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_is_subnormal(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_is_subnormal(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::FP_IS_SUBNORM, children);
       break;
 
     case BITWUZLA_KIND_FP_IS_NAN:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_is_nan(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_is_nan(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::FP_IS_NAN, children);
       break;
 
     case BITWUZLA_KIND_FP_IS_ZERO:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_is_zero(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_is_zero(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::FP_IS_ZERO, children);
       break;
 
     case BITWUZLA_KIND_FP_IS_INF:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_is_inf(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_is_inf(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::FP_IS_INF, children);
       break;
 
     case BITWUZLA_KIND_FP_IS_NEG:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_is_neg(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_is_neg(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::FP_IS_NEG, children);
       break;
 
     case BITWUZLA_KIND_FP_IS_POS:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 1, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_is_pos(bzla, bzla_args[0]);
+          kind, false, bzla_args.data(), 1, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_is_pos(bzla, bzla_args[0]);
+      term = nm.mk_node(node::Kind::FP_IS_POS, children);
       break;
 
     case BITWUZLA_KIND_FP_MIN:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_min(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_min(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::FP_MIN, children);
       break;
 
     case BITWUZLA_KIND_FP_MAX:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_max(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_max(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::FP_MAX, children);
       break;
 
     case BITWUZLA_KIND_FP_REM:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = bzla_exp_fp_rem(bzla, bzla_args[0], bzla_args[1]);
+          kind, false, bzla_args.data(), 2, argc, 0, bzla_sort_is_fp, true);
+      res  = bzla_exp_fp_rem(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::FP_REM, children);
       break;
 
     case BITWUZLA_KIND_FP_EQ:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_fp_fpeq);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_fp, true);
+      res  = mk_term_chained(bzla, bzla_args.data(), argc, bzla_exp_fp_fpeq);
+      term = mk_term_chained(node::Kind::FP_EQUAL, children);
       break;
 
     case BITWUZLA_KIND_FP_LEQ:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_fp_lte);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_fp, true);
+      res  = mk_term_chained(bzla, bzla_args.data(), argc, bzla_exp_fp_lte);
+      term = mk_term_chained(node::Kind::FP_LE, children);
       break;
 
     case BITWUZLA_KIND_FP_LT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_fp_lt);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_fp, true);
+      res  = mk_term_chained(bzla, bzla_args.data(), argc, bzla_exp_fp_lt);
+      term = mk_term_chained(node::Kind::FP_LT, children);
       break;
 
     case BITWUZLA_KIND_FP_GEQ:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_fp_gte);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_fp, true);
+      res  = mk_term_chained(bzla, bzla_args.data(), argc, bzla_exp_fp_gte);
+      term = mk_term_chained(node::Kind::FP_GE, children);
       break;
 
     case BITWUZLA_KIND_FP_GT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, true, bzla_args, 2, argc, 0, bzla_sort_is_fp, true);
-      res = mk_term_chained(bzla, bzla_args, argc, bzla_exp_fp_gt);
+          kind, true, bzla_args.data(), 2, argc, 0, bzla_sort_is_fp, true);
+      res  = mk_term_chained(bzla, bzla_args.data(), argc, bzla_exp_fp_gt);
+      term = mk_term_chained(node::Kind::FP_GT, children);
       break;
 
     case BITWUZLA_KIND_FP_SQRT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 1, bzla_sort_is_fp, true);
+          kind, false, bzla_args.data(), 2, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
-      res = bzla_exp_fp_sqrt(bzla, bzla_args[0], bzla_args[1]);
+      res  = bzla_exp_fp_sqrt(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::FP_SQRT, children);
       break;
 
     case BITWUZLA_KIND_FP_RTI:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 1, bzla_sort_is_fp, true);
+          kind, false, bzla_args.data(), 2, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
-      res = bzla_exp_fp_rti(bzla, bzla_args[0], bzla_args[1]);
+      res  = bzla_exp_fp_rti(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::FP_RTI, children);
       break;
 
     case BITWUZLA_KIND_FP_ADD:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
+          kind, false, bzla_args.data(), 3, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
-      res = bzla_exp_fp_add(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      res  = bzla_exp_fp_add(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      term = nm.mk_node(node::Kind::FP_ADD, children);
       break;
 
     case BITWUZLA_KIND_FP_SUB:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
+          kind, false, bzla_args.data(), 3, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
-      res = bzla_exp_fp_sub(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      res  = bzla_exp_fp_sub(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      term = nm.mk_node(node::Kind::FP_SUB, children);
       break;
 
     case BITWUZLA_KIND_FP_MUL:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
+          kind, false, bzla_args.data(), 3, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
-      res = bzla_exp_fp_mul(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      res  = bzla_exp_fp_mul(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      term = nm.mk_node(node::Kind::FP_MUL, children);
       break;
 
     case BITWUZLA_KIND_FP_DIV:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 3, argc, 1, bzla_sort_is_fp, true);
+          kind, false, bzla_args.data(), 3, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
-      res = bzla_exp_fp_div(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      res  = bzla_exp_fp_div(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      term = nm.mk_node(node::Kind::FP_DIV, children);
       break;
 
     case BITWUZLA_KIND_FP_FMA:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 4, argc, 1, bzla_sort_is_fp, true);
+          kind, false, bzla_args.data(), 4, argc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       res = bzla_exp_fp_fma(
           bzla, bzla_args[0], bzla_args[1], bzla_args[2], bzla_args[3]);
+      term = nm.mk_node(node::Kind::FP_FMA, children);
       break;
 
     case BITWUZLA_KIND_ARRAY_SELECT:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 2, argc, 0, sort_any, false);
+          kind, false, bzla_args.data(), 2, argc, 0, sort_any, false);
       BZLA_CHECK_TERM_IS_ARRAY_AT_IDX(bzla_args[0], 0);
       BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(bzla_args[1], 1);
       BZLA_ABORT(
           bzla_sort_array_get_index(bzla, bzla_node_get_sort_id(bzla_args[0]))
               != bzla_node_get_sort_id(bzla_args[1]),
           "sort of index term does not match index sort of array");
-      res = bzla_exp_read(bzla, bzla_args[0], bzla_args[1]);
+      res  = bzla_exp_read(bzla, bzla_args[0], bzla_args[1]);
+      term = nm.mk_node(node::Kind::SELECT, children);
       break;
 
     case BITWUZLA_KIND_ARRAY_STORE:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 3, argc, 0, sort_any, false);
+          kind, false, bzla_args.data(), 3, argc, 0, sort_any, false);
       BZLA_CHECK_TERM_IS_ARRAY_AT_IDX(bzla_args[0], 0);
       BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(bzla_args[1], 1);
       BZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(bzla_args[2], 2);
@@ -2460,14 +2755,16 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
           bzla_sort_array_get_element(bzla, bzla_node_get_sort_id(bzla_args[0]))
               != bzla_node_get_sort_id(bzla_args[2]),
           "sort of element term does not match element sort of array");
-      res = bzla_exp_write(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      res  = bzla_exp_write(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      term = nm.mk_node(node::Kind::STORE, children);
       break;
 
     case BITWUZLA_KIND_ITE:
       BZLA_CHECK_MK_TERM_ARGS(
-          kind, false, bzla_args, 3, argc, 1, sort_any, true);
+          kind, false, bzla_args.data(), 3, argc, 1, sort_any, true);
       BZLA_CHECK_TERM_IS_BOOL_AT_IDX(bzla, bzla_args[0], 0);
-      res = bzla_exp_cond(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      res  = bzla_exp_cond(bzla, bzla_args[0], bzla_args[1], bzla_args[2]);
+      term = nm.mk_node(node::Kind::ITE, children);
       break;
 
     case BITWUZLA_KIND_APPLY: {
@@ -2500,6 +2797,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       res = bzla_exp_apply(bzla, fun, apply_args_node);
       BZLA_RELEASE_STACK(apply_args);
       bzla_node_release(bzla, apply_args_node);
+      term = nm.mk_node(node::Kind::APPLY, children);
     }
     break;
 
@@ -2524,6 +2822,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       BZLA_CHECK_TERM_IS_BV_LAMBDA_AT_IDX(bzla, bzla_args[paramc], paramc);
       res = bzla_exp_fun(bzla, params.start, paramc, bzla_args[paramc]);
       BZLA_RELEASE_STACK(params);
+      term = mk_term_binder(node::Kind::LAMBDA, children);
     }
     break;
 
@@ -2547,6 +2846,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       BZLA_CHECK_TERM_IS_BOOL_AT_IDX(bzla, bzla_args[paramc], paramc);
       res = bzla_exp_forall_n(bzla, params.start, paramc, bzla_args[paramc]);
       BZLA_RELEASE_STACK(params);
+      term = mk_term_binder(node::Kind::FORALL, children);
     }
     break;
 
@@ -2570,13 +2870,15 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       BZLA_CHECK_TERM_IS_BOOL_AT_IDX(bzla, bzla_args[paramc], paramc);
       res = bzla_exp_exists_n(bzla, params.start, paramc, bzla_args[paramc]);
       BZLA_RELEASE_STACK(params);
+      term = mk_term_binder(node::Kind::EXISTS, children);
     }
     break;
 
     default:
       BZLA_ABORT(true, "unexpected operator kind '%s'", bzla_kind_to_str[kind]);
   }
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  assert(!term.is_null());
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -2637,29 +2939,35 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
 
-  Bzla *bzla           = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BzlaNode **bzla_args = BZLA_IMPORT_BITWUZLA_TERMS(args);
+  Bzla *bzla = BZLA_IMPORT_BITWUZLA(bitwuzla);
+  std::vector<BzlaNode *> bzla_args;
+  std::vector<Node> children;
   for (uint32_t i = 0; i < argc; i++)
   {
-    assert(bzla_node_get_ext_refs(bzla_args[i]));
-    BZLA_CHECK_TERM_BZLA(bzla, bzla_args[i]);
+    bzla_args.push_back(args[i]->d_bzla_node);
+    assert(bzla_node_get_ext_refs(bzla_args.back()));
+    BZLA_CHECK_TERM_BZLA(bzla, bzla_args.back());
+    children.push_back(args[i]->d_node);
   }
 
+  NodeManager &nm = NodeManager::get();
+  Node term;
   BzlaNode *res = NULL;
   switch (kind)
   {
     case BITWUZLA_KIND_BV_EXTRACT:
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 1, argc, 2, idxc, 0, bzla_sort_is_bv, true);
+          kind, bzla_args.data(), 1, argc, 2, idxc, 0, bzla_sort_is_bv, true);
       BZLA_ABORT(idxs[0] > bzla_node_bv_get_width(bzla, bzla_args[0]),
                  "upper index must be < bit-vector size of given term");
       BZLA_ABORT(idxs[0] < idxs[1], "upper index must be >= lower index");
-      res = bzla_exp_bv_slice(bzla, bzla_args[0], idxs[0], idxs[1]);
+      res  = bzla_exp_bv_slice(bzla, bzla_args[0], idxs[0], idxs[1]);
+      term = nm.mk_node(node::Kind::BV_EXTRACT, children, {idxs[0], idxs[1]});
       break;
 
     case BITWUZLA_KIND_BV_ZERO_EXTEND:
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 1, argc, 1, idxc, 0, bzla_sort_is_bv, true);
+          kind, bzla_args.data(), 1, argc, 1, idxc, 0, bzla_sort_is_bv, true);
       BZLA_ABORT(
           idxs[0] > UINT32_MAX - bzla_node_bv_get_width(bzla, bzla_args[0]),
           "extending term of bit-vector size %u with %u bits exceeds maximum "
@@ -2667,12 +2975,13 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
           bzla_node_bv_get_width(bzla, bzla_args[0]),
           idxs[0],
           UINT32_MAX);
-      res = bzla_exp_bv_uext(bzla, bzla_args[0], idxs[0]);
+      res  = bzla_exp_bv_uext(bzla, bzla_args[0], idxs[0]);
+      term = nm.mk_node(node::Kind::BV_ZERO_EXTEND, children, {idxs[0]});
       break;
 
     case BITWUZLA_KIND_BV_SIGN_EXTEND:
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 1, argc, 1, idxc, 0, bzla_sort_is_bv, true);
+          kind, bzla_args.data(), 1, argc, 1, idxc, 0, bzla_sort_is_bv, true);
       BZLA_ABORT(
           idxs[0] > UINT32_MAX - bzla_node_bv_get_width(bzla, bzla_args[0]),
           "extending term of bit-vector size %u with %u bits exceeds maximum "
@@ -2680,55 +2989,61 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
           bzla_node_bv_get_width(bzla, bzla_args[0]),
           idxs[0],
           UINT32_MAX);
-      res = bzla_exp_bv_sext(bzla, bzla_args[0], idxs[0]);
+      res  = bzla_exp_bv_sext(bzla, bzla_args[0], idxs[0]);
+      term = nm.mk_node(node::Kind::BV_SIGN_EXTEND, children, {idxs[0]});
       break;
 
     case BITWUZLA_KIND_BV_ROLI:
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 1, argc, 1, idxc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_roli(bzla, bzla_args[0], idxs[0]);
+          kind, bzla_args.data(), 1, argc, 1, idxc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_roli(bzla, bzla_args[0], idxs[0]);
+      term = nm.mk_node(node::Kind::BV_ROLI, children, {idxs[0]});
       break;
 
     case BITWUZLA_KIND_BV_RORI:
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 1, argc, 1, idxc, 0, bzla_sort_is_bv, true);
-      res = bzla_exp_bv_rori(bzla, bzla_args[0], idxs[0]);
+          kind, bzla_args.data(), 1, argc, 1, idxc, 0, bzla_sort_is_bv, true);
+      res  = bzla_exp_bv_rori(bzla, bzla_args[0], idxs[0]);
+      term = nm.mk_node(node::Kind::BV_RORI, children, {idxs[0]});
       break;
 
     case BITWUZLA_KIND_BV_REPEAT:
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 1, argc, 1, idxc, 0, bzla_sort_is_bv, true);
+          kind, bzla_args.data(), 1, argc, 1, idxc, 0, bzla_sort_is_bv, true);
       BZLA_ABORT(((uint32_t) (UINT32_MAX / idxs[0]))
                      < bzla_node_bv_get_width(bzla, bzla_args[0]),
                  "resulting bit-vector size of 'repeat' exceeds maximum "
                  "bit-vector size of %u",
                  UINT32_MAX);
-      res = bzla_exp_bv_repeat(bzla, bzla_args[0], idxs[0]);
+      res  = bzla_exp_bv_repeat(bzla, bzla_args[0], idxs[0]);
+      term = nm.mk_node(node::Kind::BV_REPEAT, children, {idxs[0]});
       break;
 
     case BITWUZLA_KIND_FP_TO_SBV: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 2, argc, 1, idxc, 1, bzla_sort_is_fp, true);
+          kind, bzla_args.data(), 2, argc, 1, idxc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       BzlaSortId sort = bzla_sort_bv(bzla, idxs[0]);
       res = bzla_exp_fp_to_sbv(bzla, bzla_args[0], bzla_args[1], sort);
       bzla_sort_release(bzla, sort);
+      term = nm.mk_node(node::Kind::FP_TO_SBV, children, {idxs[0]});
     }
     break;
 
     case BITWUZLA_KIND_FP_TO_UBV: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 2, argc, 1, idxc, 1, bzla_sort_is_fp, true);
+          kind, bzla_args.data(), 2, argc, 1, idxc, 1, bzla_sort_is_fp, true);
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       BzlaSortId sort = bzla_sort_bv(bzla, idxs[0]);
       res = bzla_exp_fp_to_ubv(bzla, bzla_args[0], bzla_args[1], sort);
       bzla_sort_release(bzla, sort);
+      term = nm.mk_node(node::Kind::FP_TO_UBV, children, {idxs[0]});
     }
     break;
 
     case BITWUZLA_KIND_FP_TO_FP_FROM_BV: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 1, argc, 2, idxc, 0, bzla_sort_is_bv, true);
+          kind, bzla_args.data(), 1, argc, 2, idxc, 0, bzla_sort_is_bv, true);
       BZLA_ABORT(idxs[0] <= 1, "expected exponent size > 1");
       BZLA_ABORT(idxs[1] <= 1, "expected significand size > 1");
       BZLA_ABORT(
@@ -2737,48 +3052,57 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
       BzlaSortId sort = bzla_sort_fp(bzla, idxs[0], idxs[1]);
       res             = bzla_exp_fp_to_fp_from_bv(bzla, bzla_args[0], sort);
       bzla_sort_release(bzla, sort);
+      term = nm.mk_node(
+          node::Kind::FP_TO_FP_FROM_BV, children, {idxs[0], idxs[1]});
     }
     break;
 
     case BITWUZLA_KIND_FP_TO_FP_FROM_FP: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 2, argc, 2, idxc, 1, bzla_sort_is_fp, true);
+          kind, bzla_args.data(), 2, argc, 2, idxc, 1, bzla_sort_is_fp, true);
       BZLA_ABORT(idxs[0] <= 1, "expected exponent size > 1");
       BZLA_ABORT(idxs[1] <= 1, "expected significand size > 1");
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       BzlaSortId sort = bzla_sort_fp(bzla, idxs[0], idxs[1]);
       res = bzla_exp_fp_to_fp_from_fp(bzla, bzla_args[0], bzla_args[1], sort);
       bzla_sort_release(bzla, sort);
+      term = nm.mk_node(
+          node::Kind::FP_TO_FP_FROM_FP, children, {idxs[0], idxs[1]});
     }
     break;
 
     case BITWUZLA_KIND_FP_TO_FP_FROM_SBV: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 2, argc, 2, idxc, 1, bzla_sort_is_bv, true);
+          kind, bzla_args.data(), 2, argc, 2, idxc, 1, bzla_sort_is_bv, true);
       BZLA_ABORT(idxs[0] <= 1, "expected exponent size > 1");
       BZLA_ABORT(idxs[1] <= 1, "expected significand size > 1");
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       BzlaSortId sort = bzla_sort_fp(bzla, idxs[0], idxs[1]);
       res = bzla_exp_fp_to_fp_from_sbv(bzla, bzla_args[0], bzla_args[1], sort);
       bzla_sort_release(bzla, sort);
+      term = nm.mk_node(
+          node::Kind::FP_TO_FP_FROM_SBV, children, {idxs[0], idxs[1]});
     }
     break;
 
     case BITWUZLA_KIND_FP_TO_FP_FROM_UBV: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
-          kind, bzla_args, 2, argc, 2, idxc, 1, bzla_sort_is_bv, true);
+          kind, bzla_args.data(), 2, argc, 2, idxc, 1, bzla_sort_is_bv, true);
       BZLA_ABORT(idxs[0] <= 1, "expected exponent size > 1");
       BZLA_ABORT(idxs[1] <= 1, "expected significand size > 1");
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       BzlaSortId sort = bzla_sort_fp(bzla, idxs[0], idxs[1]);
       res = bzla_exp_fp_to_fp_from_ubv(bzla, bzla_args[0], bzla_args[1], sort);
       bzla_sort_release(bzla, sort);
+      term = nm.mk_node(
+          node::Kind::FP_TO_FP_FROM_UBV, children, {idxs[0], idxs[1]});
     }
     break;
     default:
       BZLA_ABORT(true, "unexpected operator kind '%s'", bzla_kind_to_str[kind]);
   }
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  assert(!term.is_null());
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -2807,7 +3131,16 @@ bitwuzla_mk_const(Bitwuzla *bitwuzla,
     res = bzla_exp_var(bzla, bzla_sort, symbol);
   }
   (void) bzla_hashptr_table_add(bzla->inputs, bzla_node_copy(bzla, res));
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term;
+  if (symbol)
+  {
+    term = NodeManager::get().mk_const(sort->d_type, symbol);
+  }
+  else
+  {
+    term = NodeManager::get().mk_const(sort->d_type);
+  }
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 const BitwuzlaTerm *
@@ -2832,7 +3165,7 @@ bitwuzla_mk_const_array(Bitwuzla *bitwuzla,
                  != bzla_sort_array_get_element(bzla, bzla_sort),
              "sort of 'value' does not match array element sort");
   BzlaNode *res = bzla_exp_const_array(bzla, bzla_sort, bzla_val);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  BZLA_RETURN_BITWUZLA_TERM(res, Node());
 }
 
 const BitwuzlaTerm *
@@ -2849,7 +3182,16 @@ bitwuzla_mk_var(Bitwuzla *bitwuzla,
   BZLA_CHECK_SORT_NOT_IS_FUN(bzla, bzla_sort);
 
   BzlaNode *res = bzla_exp_param(bzla, bzla_sort, symbol);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  Node term;
+  if (symbol)
+  {
+    term = NodeManager::get().mk_var(sort->d_type, symbol);
+  }
+  else
+  {
+    term = NodeManager::get().mk_var(sort->d_type);
+  }
+  BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
 void
@@ -2895,6 +3237,7 @@ bitwuzla_pop(Bitwuzla *bitwuzla, uint32_t nlevels)
       BzlaNode *cur = BZLA_POP_STACK(bzla->assertions);
       bzla_hashint_table_remove(bzla->assertions_cache, bzla_node_get_id(cur));
       bzla_node_release(bzla, cur);
+      bitwuzla->d_assertions.pop_back();
     }
     bzla->num_push_pop++;
   }
@@ -2925,12 +3268,16 @@ bitwuzla_assert(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
     {
       BZLA_PUSH_STACK(bzla->assertions, bzla_node_copy(bzla, bzla_term));
       bzla_hashint_table_add(bzla->assertions_cache, id);
+      bitwuzla->d_assertions.push_back(term);
     }
   }
   else
   {
     bzla_assert_exp(bzla, bzla_term);
   }
+#if 0
+  bitwuzla->d_ctx.assert_formula(term->d_node);
+#endif
 }
 
 void
@@ -2987,13 +3334,13 @@ bitwuzla_get_unsat_assumptions(Bitwuzla *bitwuzla, size_t *size)
 
   for (size_t i = 0; i < BZLA_COUNT_STACK(bitwuzla->d_assumptions); i++)
   {
-    BzlaNode *bzla_assumption =
-        BZLA_IMPORT_BITWUZLA_TERM(BZLA_PEEK_STACK(bitwuzla->d_assumptions, i));
+    const BitwuzlaTerm *term  = BZLA_PEEK_STACK(bitwuzla->d_assumptions, i);
+    BzlaNode *bzla_assumption = term->d_bzla_node;
     assert(bzla_is_assumption_exp(bzla, bzla_assumption));
     if (bzla_failed_exp(bzla, bzla_assumption))
     {
       BZLA_PUSH_STACK(bitwuzla->d_unsat_assumptions,
-                      BZLA_EXPORT_BITWUZLA_TERM(bzla_assumption));
+                      BZLA_EXPORT_BITWUZLA_TERM(bzla_assumption, term->d_node));
     }
   }
   *size = BZLA_COUNT_STACK(bitwuzla->d_unsat_assumptions);
@@ -3019,8 +3366,10 @@ bitwuzla_get_unsat_core(Bitwuzla *bitwuzla, size_t *size)
 
     if (bzla_failed_exp(bzla, cur))
     {
-      BZLA_PUSH_STACK(bitwuzla->d_unsat_core,
-                      BZLA_EXPORT_BITWUZLA_TERM(bzla_node_copy(bzla, cur)));
+      BZLA_PUSH_STACK(
+          bitwuzla->d_unsat_core,
+          BZLA_EXPORT_BITWUZLA_TERM(bzla_node_copy(bzla, cur),
+                                    bitwuzla->d_assertions[i]->d_node));
       bzla_node_inc_ext_ref_counter(bzla, cur);
     }
   }
@@ -3079,6 +3428,21 @@ bitwuzla_check_sat(Bitwuzla *bitwuzla)
 
   BzlaSolverResult bzla_res =
       static_cast<BzlaSolverResult>(bzla_check_sat(bzla, -1, -1));
+
+#if 0
+  auto start = bzla_util_time_stamp();
+  auto res   = bitwuzla->d_ctx.solve();
+  auto dur   = bzla_util_time_stamp() - start;
+
+  std::cout << "ctx: " << dur << "seconds" << std::endl;
+  switch (bzla_res)
+  {
+    case BZLA_RESULT_SAT: assert(res == Result::SAT); break;
+    case BZLA_RESULT_UNSAT: assert(res == Result::UNSAT); break;
+    default: break;
+  }
+#endif
+
   if (bzla_res == BZLA_RESULT_SAT) return BITWUZLA_SAT;
   if (bzla_res == BZLA_RESULT_UNSAT) return BITWUZLA_UNSAT;
   assert(bzla_res == BZLA_RESULT_UNKNOWN);
@@ -3102,7 +3466,7 @@ bitwuzla_get_value(Bitwuzla *bitwuzla, const BitwuzlaTerm *term)
   BZLA_CHECK_TERM_BZLA(bzla, bzla_term);
 
   BzlaNode *res = bzla_model_get_value(bzla, bzla_term);
-  BZLA_RETURN_BITWUZLA_TERM(res);
+  BZLA_RETURN_BITWUZLA_TERM(res, Node());
 }
 
 const char *
@@ -3262,9 +3626,10 @@ bitwuzla_get_array_value(Bitwuzla *bitwuzla,
     index = BZLA_PEEK_STACK(_indices, i);
     value = BZLA_PEEK_STACK(_values, i);
     BZLA_PUSH_STACK(bitwuzla->d_array_indices,
-                    BZLA_EXPORT_BITWUZLA_TERM(index));
+                    BZLA_EXPORT_BITWUZLA_TERM(index, Node()));
     bzla_node_inc_ext_ref_counter(bzla, index);
-    BZLA_PUSH_STACK(bitwuzla->d_array_values, BZLA_EXPORT_BITWUZLA_TERM(value));
+    BZLA_PUSH_STACK(bitwuzla->d_array_values,
+                    BZLA_EXPORT_BITWUZLA_TERM(value, Node()));
     bzla_node_inc_ext_ref_counter(bzla, value);
   }
 
@@ -3278,7 +3643,7 @@ bitwuzla_get_array_value(Bitwuzla *bitwuzla,
 
   if (_default_value)
   {
-    *default_value = BZLA_EXPORT_BITWUZLA_TERM(_default_value);
+    *default_value = BZLA_EXPORT_BITWUZLA_TERM(_default_value, Node());
     bzla_node_inc_ext_ref_counter(bzla, _default_value);
   }
   BZLA_RELEASE_STACK(_indices);
@@ -3340,7 +3705,8 @@ bitwuzla_get_fun_value(Bitwuzla *bitwuzla,
   for (size_t i = 0; i < BZLA_COUNT_STACK(_args); ++i)
   {
     arg = BZLA_PEEK_STACK(_args, i);
-    BZLA_PUSH_STACK(bitwuzla->d_fun_args, BZLA_EXPORT_BITWUZLA_TERM(arg));
+    BZLA_PUSH_STACK(bitwuzla->d_fun_args,
+                    BZLA_EXPORT_BITWUZLA_TERM(arg, Node()));
     bzla_node_inc_ext_ref_counter(bzla, arg);
   }
 
@@ -3349,7 +3715,8 @@ bitwuzla_get_fun_value(Bitwuzla *bitwuzla,
     BZLA_PUSH_STACK(bitwuzla->d_fun_args_ptr,
                     bitwuzla->d_fun_args.start + i * _arity);
     value = BZLA_PEEK_STACK(_values, i);
-    BZLA_PUSH_STACK(bitwuzla->d_fun_values, BZLA_EXPORT_BITWUZLA_TERM(value));
+    BZLA_PUSH_STACK(bitwuzla->d_fun_values,
+                    BZLA_EXPORT_BITWUZLA_TERM(value, Node()));
     bzla_node_inc_ext_ref_counter(bzla, value);
   }
 
@@ -3524,14 +3891,15 @@ bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
 
   BzlaNode *k, *v;
   Bzla *bzla                 = BZLA_IMPORT_BITWUZLA(bitwuzla);
-  BzlaNode **bzla_map_keys   = BZLA_IMPORT_BITWUZLA_TERMS(map_keys);
-  BzlaNode **bzla_map_values = BZLA_IMPORT_BITWUZLA_TERMS(map_values);
+  std::vector<BzlaNode *> bzla_map_keys, bzla_map_values;
 
   BzlaNodePtrStack keys, values;
   BZLA_INIT_STACK(bzla->mm, keys);
   BZLA_INIT_STACK(bzla->mm, values);
   for (size_t i = 0; i < map_size; ++i)
   {
+    bzla_map_keys.push_back(map_keys[i]->d_bzla_node);
+    bzla_map_values.push_back(map_values[i]->d_bzla_node);
     k = bzla_map_keys[i];
     v = bzla_map_values[i];
     BZLA_ABORT(bzla_node_is_inverted(k)
@@ -3561,7 +3929,7 @@ bitwuzla_substitute_terms(Bitwuzla *bitwuzla,
   for (size_t i = 0; i < terms_size; ++i)
   {
     k        = BZLA_PEEK_STACK(bzla_terms, i);
-    terms[i] = BZLA_EXPORT_BITWUZLA_TERM(k);
+    terms[i] = BZLA_EXPORT_BITWUZLA_TERM(k, Node());
     bzla_node_inc_ext_ref_counter(bzla, k);
   }
   BZLA_RELEASE_STACK(bzla_terms);
@@ -3629,7 +3997,8 @@ bitwuzla_sort_array_get_index(const BitwuzlaSort *sort)
 
   /* Note: We don't need to increase the ref counter here. */
   return BZLA_EXPORT_BITWUZLA_SORT(sort->d_bzla,
-                                   bzla_sort_array_get_index(bzla, bzla_sort));
+                                   bzla_sort_array_get_index(bzla, bzla_sort),
+                                   sort->d_type.array_index());
 }
 
 const BitwuzlaSort *
@@ -3643,8 +4012,9 @@ bitwuzla_sort_array_get_element(const BitwuzlaSort *sort)
   BZLA_CHECK_SORT_IS_ARRAY(bzla, bzla_sort);
 
   /* Note: We don't need to increase the ref counter here. */
-  return BZLA_EXPORT_BITWUZLA_SORT(
-      sort->d_bzla, bzla_sort_array_get_element(bzla, bzla_sort));
+  return BZLA_EXPORT_BITWUZLA_SORT(sort->d_bzla,
+                                   bzla_sort_array_get_element(bzla, bzla_sort),
+                                   sort->d_type.array_element());
 }
 
 const BitwuzlaSort **
@@ -3665,11 +4035,12 @@ bitwuzla_sort_fun_get_domain_sorts(const BitwuzlaSort *sort, size_t *size)
       &bzla_sort_get_by_id(bzla, bzla_sort_fun_get_domain(bzla, bzla_sort))
            ->tuple;
   assert(arity == tuple_sort->num_elements);
+  const auto &types = sort->d_type.fun_types();
   for (uint32_t i = 0; i < arity; i++)
   {
     BzlaSortId id = tuple_sort->elements[i]->id;
     BZLA_PUSH_STACK(bitwuzla->d_sort_fun_domain_sorts,
-                    BZLA_EXPORT_BITWUZLA_SORT(bitwuzla, id));
+                    BZLA_EXPORT_BITWUZLA_SORT(bitwuzla, id, types[i]));
     bzla_sort_copy(bzla, id);
     inc_ext_refs_sort(bzla, id);
   }
@@ -3689,7 +4060,8 @@ bitwuzla_sort_fun_get_codomain(const BitwuzlaSort *sort)
 
   /* Note: We don't need to increase the ref counter here. */
   return BZLA_EXPORT_BITWUZLA_SORT(sort->d_bzla,
-                                   bzla_sort_fun_get_codomain(bzla, bzla_sort));
+                                   bzla_sort_fun_get_codomain(bzla, bzla_sort),
+                                   sort->d_type.fun_types().back());
 }
 
 uint32_t
@@ -3959,14 +4331,16 @@ bitwuzla_term_get_children(const BitwuzlaTerm *term, size_t *size)
     if (!bzla_node_is_bv_const(bzla_term))
     {
       n = bzla_node_copy(bzla, bzla_node_real_addr(bzla_term));
-      BZLA_PUSH_STACK(bitwuzla->d_term_children, BZLA_EXPORT_BITWUZLA_TERM(n));
+      BZLA_PUSH_STACK(bitwuzla->d_term_children,
+                      BZLA_EXPORT_BITWUZLA_TERM(n, Node()));
       bzla_node_inc_ext_ref_counter(bzla, n);
     }
   }
   else if (bzla_node_is_apply(bzla_term) || bzla_node_is_update(bzla_term))
   {
     n = bzla_node_copy(bzla, bzla_term->e[0]);
-    BZLA_PUSH_STACK(bitwuzla->d_term_children, BZLA_EXPORT_BITWUZLA_TERM(n));
+    BZLA_PUSH_STACK(bitwuzla->d_term_children,
+                    BZLA_EXPORT_BITWUZLA_TERM(n, Node()));
     bzla_node_inc_ext_ref_counter(bzla, n);
 
     /* collect all arguments */
@@ -3975,21 +4349,24 @@ bitwuzla_term_get_children(const BitwuzlaTerm *term, size_t *size)
     while (bzla_iter_args_has_next(&it))
     {
       n = bzla_node_copy(bzla, bzla_iter_args_next(&it));
-      BZLA_PUSH_STACK(bitwuzla->d_term_children, BZLA_EXPORT_BITWUZLA_TERM(n));
+      BZLA_PUSH_STACK(bitwuzla->d_term_children,
+                      BZLA_EXPORT_BITWUZLA_TERM(n, Node()));
       bzla_node_inc_ext_ref_counter(bzla, n);
     }
 
     if (bzla_node_is_update(bzla_term))
     {
       n = bzla_node_copy(bzla, bzla_term->e[2]);
-      BZLA_PUSH_STACK(bitwuzla->d_term_children, BZLA_EXPORT_BITWUZLA_TERM(n));
+      BZLA_PUSH_STACK(bitwuzla->d_term_children,
+                      BZLA_EXPORT_BITWUZLA_TERM(n, Node()));
       bzla_node_inc_ext_ref_counter(bzla, n);
     }
   }
   else if (bzla_node_is_const_array(bzla_term))
   {
     n = bzla_node_copy(bzla, bzla_node_binder_get_body(bzla_term));
-    BZLA_PUSH_STACK(bitwuzla->d_term_children, BZLA_EXPORT_BITWUZLA_TERM(n));
+    BZLA_PUSH_STACK(bitwuzla->d_term_children,
+                    BZLA_EXPORT_BITWUZLA_TERM(n, Node()));
     bzla_node_inc_ext_ref_counter(bzla, n);
   }
   else if (bzla_node_is_binder(bzla_term))
@@ -4002,11 +4379,13 @@ bitwuzla_term_get_children(const BitwuzlaTerm *term, size_t *size)
     {
       binder = bzla_iter_binder_next(&it);
       n      = bzla_node_copy(bzla, binder->e[0]);
-      BZLA_PUSH_STACK(bitwuzla->d_term_children, BZLA_EXPORT_BITWUZLA_TERM(n));
+      BZLA_PUSH_STACK(bitwuzla->d_term_children,
+                      BZLA_EXPORT_BITWUZLA_TERM(n, Node()));
       bzla_node_inc_ext_ref_counter(bzla, n);
     }
     n = bzla_node_copy(bzla, bzla_node_binder_get_body(bzla_term));
-    BZLA_PUSH_STACK(bitwuzla->d_term_children, BZLA_EXPORT_BITWUZLA_TERM(n));
+    BZLA_PUSH_STACK(bitwuzla->d_term_children,
+                    BZLA_EXPORT_BITWUZLA_TERM(n, Node()));
     bzla_node_inc_ext_ref_counter(bzla, n);
   }
   else
@@ -4014,7 +4393,8 @@ bitwuzla_term_get_children(const BitwuzlaTerm *term, size_t *size)
     for (size_t i = 0; i < bzla_term->arity; ++i)
     {
       n = bzla_node_copy(bzla, bzla_term->e[i]);
-      BZLA_PUSH_STACK(bitwuzla->d_term_children, BZLA_EXPORT_BITWUZLA_TERM(n));
+      BZLA_PUSH_STACK(bitwuzla->d_term_children,
+                      BZLA_EXPORT_BITWUZLA_TERM(n, Node()));
       bzla_node_inc_ext_ref_counter(bzla, n);
     }
   }
@@ -4105,14 +4485,18 @@ bitwuzla_term_get_sort(const BitwuzlaTerm *term)
                         bzla_sort_array_get_element(bzla, bzla_sort));
 
     sort = BZLA_EXPORT_BITWUZLA_SORT(
-        BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)), array_sort);
+        BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)),
+        array_sort,
+        term->d_node.type());
 
     bzla_sort_release(bzla, array_sort);
   }
   else
   {
     sort = BZLA_EXPORT_BITWUZLA_SORT(
-        BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)), bzla_sort);
+        BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)),
+        bzla_sort,
+        term->d_node.type());
   }
 
   return sort;
@@ -4130,7 +4514,8 @@ bitwuzla_term_array_get_index_sort(const BitwuzlaTerm *term)
   return BZLA_EXPORT_BITWUZLA_SORT(
       BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)),
       bzla_sort_array_get_index(bzla_node_get_bzla(bzla_term),
-                                bzla_node_get_sort_id(bzla_term)));
+                                bzla_node_get_sort_id(bzla_term)),
+      term->d_node.type().array_index());
 }
 
 const BitwuzlaSort *
@@ -4145,7 +4530,8 @@ bitwuzla_term_array_get_element_sort(const BitwuzlaTerm *term)
   return BZLA_EXPORT_BITWUZLA_SORT(
       BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)),
       bzla_sort_array_get_element(bzla_node_get_bzla(bzla_term),
-                                  bzla_node_get_sort_id(bzla_term)));
+                                  bzla_node_get_sort_id(bzla_term)),
+      term->d_node.type().array_element());
 }
 
 const BitwuzlaSort **
@@ -4167,11 +4553,12 @@ bitwuzla_term_fun_get_domain_sorts(const BitwuzlaTerm *term, size_t *size)
            bzla_sort_fun_get_domain(bzla, bzla_node_get_sort_id(bzla_term)))
            ->tuple;
   assert(arity == tuple_sort->num_elements);
+  const auto &types = term->d_node.type().fun_types();
   for (uint32_t i = 0; i < arity; i++)
   {
     BzlaSortId id = tuple_sort->elements[i]->id;
     BZLA_PUSH_STACK(bitwuzla->d_fun_domain_sorts,
-                    BZLA_EXPORT_BITWUZLA_SORT(bitwuzla, id));
+                    BZLA_EXPORT_BITWUZLA_SORT(bitwuzla, id, types[i]));
     bzla_sort_copy(bzla, id);
     inc_ext_refs_sort(bzla, id);
   }
@@ -4191,7 +4578,8 @@ bitwuzla_term_fun_get_codomain_sort(const BitwuzlaTerm *term)
   return BZLA_EXPORT_BITWUZLA_SORT(
       BZLA_EXPORT_BITWUZLA(bzla_node_get_bzla(bzla_term)),
       bzla_sort_fun_get_codomain(bzla_node_get_bzla(bzla_term),
-                                 bzla_node_get_sort_id(bzla_term)));
+                                 bzla_node_get_sort_id(bzla_term)),
+      term->d_node.type().fun_types().back());
 }
 
 uint32_t

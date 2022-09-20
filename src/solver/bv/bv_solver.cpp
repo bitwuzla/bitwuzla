@@ -197,6 +197,15 @@ BvSolver::value(const Node& term)
         }
         break;
 
+        // TODO: maybe eliminate
+        case Kind::BV_COMP: {
+          bool equal = get_cached_value(cur[0]).value<BitVector>()
+                       == get_cached_value(cur[1]).value<BitVector>();
+          value =
+              nm.mk_value(BitVector(cur[0].type().bv_size(), equal ? 1 : 0));
+        }
+        break;
+
         case Kind::BV_ADD:
           value = nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvadd(
               get_cached_value(cur[1]).value<BitVector>()));
@@ -265,23 +274,64 @@ BvSolver::value(const Node& term)
         case Kind::NUM_KINDS:
         case Kind::NULL_NODE:
         case Kind::VARIABLE:
+        case Kind::IMPLIES:
+        case Kind::DISTINCT:
+        case Kind::XOR:
+
+        case Kind::BV_NAND:
+        case Kind::BV_NEG:
+        case Kind::BV_NOR:
+        case Kind::BV_OR:
+        case Kind::BV_REDAND:
+        case Kind::BV_REDOR:
+        case Kind::BV_REDXOR:
+        case Kind::BV_REPEAT:
+        case Kind::BV_ROL:
+        case Kind::BV_ROLI:
+        case Kind::BV_ROR:
+        case Kind::BV_RORI:
+        case Kind::BV_SADDO:
+        case Kind::BV_SDIV:
+        case Kind::BV_SDIVO:
+        case Kind::BV_SGE:
+        case Kind::BV_SGT:
+        case Kind::BV_SIGN_EXTEND:
+        case Kind::BV_SLE:
+        case Kind::BV_SMOD:
+        case Kind::BV_SMULO:
+        case Kind::BV_SREM:
+        case Kind::BV_SSUBO:
+        case Kind::BV_SUB:
+        case Kind::BV_UADDO:
+        case Kind::BV_UGE:
+        case Kind::BV_UGT:
+        case Kind::BV_ULE:
+        case Kind::BV_UMULO:
+        case Kind::BV_USUBO:
+        case Kind::BV_XNOR:
+        case Kind::BV_XOR:
+        case Kind::BV_ZERO_EXTEND:
+
         case Kind::FP_ABS:
-        case Kind::FP_NEG:
-        case Kind::FP_TO_FP_FROM_BV:
-        case Kind::FP_MIN:
+        case Kind::FP_ADD:
+        case Kind::FP_DIV:
+        case Kind::FP_FMA:
+        case Kind::FP_GE:
+        case Kind::FP_GT:
         case Kind::FP_MAX:
-        case Kind::FP_SQRT:
+        case Kind::FP_MIN:
+        case Kind::FP_MUL:
+        case Kind::FP_NEG:
         case Kind::FP_REM:
         case Kind::FP_RTI:
+        case Kind::FP_SQRT:
+        case Kind::FP_SUB:
+        case Kind::FP_TO_FP_FROM_BV:
         case Kind::FP_TO_FP_FROM_FP:
         case Kind::FP_TO_FP_FROM_SBV:
         case Kind::FP_TO_FP_FROM_UBV:
         case Kind::LAMBDA:
-        case Kind::FP_ADD:
-        case Kind::FP_MUL:
-        case Kind::FP_DIV:
-        case Kind::STORE:
-        case Kind::FP_FMA: assert(false); break;
+        case Kind::STORE: assert(false); break;
       }
       cache_value(cur, value);
     }
@@ -395,6 +445,12 @@ BvSolver::bitblast(const Node& t)
         }
         break;
 
+        // TODO: maybe eliminate
+        case Kind::BV_COMP:
+          assert(type.is_bv());
+          it->second = d_bitblaster.bv_eq(get_bits(cur[0]), get_bits(cur[1]));
+          break;
+
         case Kind::BV_ADD:
           assert(type.is_bv());
           it->second = d_bitblaster.bv_add(get_bits(cur[0]), get_bits(cur[1]));
@@ -456,23 +512,64 @@ BvSolver::bitblast(const Node& t)
         case Kind::NUM_KINDS:
         case Kind::NULL_NODE:
         case Kind::VARIABLE:
+        case Kind::IMPLIES:
+        case Kind::DISTINCT:
+        case Kind::XOR:
+
+        case Kind::BV_NAND:
+        case Kind::BV_NEG:
+        case Kind::BV_NOR:
+        case Kind::BV_OR:
+        case Kind::BV_REDAND:
+        case Kind::BV_REDOR:
+        case Kind::BV_REDXOR:
+        case Kind::BV_REPEAT:
+        case Kind::BV_ROL:
+        case Kind::BV_ROLI:
+        case Kind::BV_ROR:
+        case Kind::BV_RORI:
+        case Kind::BV_SADDO:
+        case Kind::BV_SDIV:
+        case Kind::BV_SDIVO:
+        case Kind::BV_SGE:
+        case Kind::BV_SGT:
+        case Kind::BV_SIGN_EXTEND:
+        case Kind::BV_SLE:
+        case Kind::BV_SMOD:
+        case Kind::BV_SMULO:
+        case Kind::BV_SREM:
+        case Kind::BV_SSUBO:
+        case Kind::BV_SUB:
+        case Kind::BV_UADDO:
+        case Kind::BV_UGE:
+        case Kind::BV_UGT:
+        case Kind::BV_ULE:
+        case Kind::BV_UMULO:
+        case Kind::BV_USUBO:
+        case Kind::BV_XNOR:
+        case Kind::BV_XOR:
+        case Kind::BV_ZERO_EXTEND:
+
         case Kind::FP_ABS:
-        case Kind::FP_NEG:
-        case Kind::FP_TO_FP_FROM_BV:
-        case Kind::FP_MIN:
+        case Kind::FP_ADD:
+        case Kind::FP_DIV:
+        case Kind::FP_FMA:
+        case Kind::FP_GE:
+        case Kind::FP_GT:
         case Kind::FP_MAX:
-        case Kind::FP_SQRT:
+        case Kind::FP_MIN:
+        case Kind::FP_MUL:
+        case Kind::FP_NEG:
         case Kind::FP_REM:
         case Kind::FP_RTI:
+        case Kind::FP_SQRT:
+        case Kind::FP_SUB:
+        case Kind::FP_TO_FP_FROM_BV:
         case Kind::FP_TO_FP_FROM_FP:
         case Kind::FP_TO_FP_FROM_SBV:
         case Kind::FP_TO_FP_FROM_UBV:
         case Kind::LAMBDA:
-        case Kind::FP_ADD:
-        case Kind::FP_MUL:
-        case Kind::FP_DIV:
-        case Kind::STORE:
-        case Kind::FP_FMA: assert(false); break;
+        case Kind::STORE: assert(false); break;
       }
     }
     visit.pop_back();

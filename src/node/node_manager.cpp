@@ -188,12 +188,30 @@ NodeManager::compute_type(Kind kind,
     case Kind::NOT:
     case Kind::AND:
     case Kind::OR:
+    case Kind::IMPLIES:
+    case Kind::XOR:
+    case Kind::DISTINCT:
     case Kind::EQUAL:
     case Kind::BV_ULT:
+    case Kind::BV_UGE:
+    case Kind::BV_SADDO:
+    case Kind::BV_UADDO:
+    case Kind::BV_SDIVO:
+    case Kind::BV_UMULO:
+    case Kind::BV_SMULO:
+    case Kind::BV_SSUBO:
+    case Kind::BV_USUBO:
+    case Kind::BV_UGT:
+    case Kind::BV_ULE:
     case Kind::BV_SLT:
+    case Kind::BV_SGE:
+    case Kind::BV_SGT:
+    case Kind::BV_SLE:
     case Kind::FP_EQUAL:
     case Kind::FP_LE:
     case Kind::FP_LT:
+    case Kind::FP_GE:
+    case Kind::FP_GT:
     case Kind::FP_IS_INF:
     case Kind::FP_IS_NAN:
     case Kind::FP_IS_NEG:
@@ -210,33 +228,60 @@ NodeManager::compute_type(Kind kind,
       return d_tm.mk_bv_type(upper - lower + 1);
     }
 
+    case Kind::BV_REPEAT:
+      return d_tm.mk_bv_type(children[0].type().bv_size() * indices[0]);
+
+    case Kind::BV_SIGN_EXTEND:
+    case Kind::BV_ZERO_EXTEND:
+      return d_tm.mk_bv_type(children[0].type().bv_size() + indices[0]);
+
     case Kind::BV_CONCAT:
       return d_tm.mk_bv_type(children[0].type().bv_size()
                              + children[1].type().bv_size());
 
-    case Kind::BV_NOT:
-    case Kind::BV_AND:
+    case Kind::BV_COMP:
+    case Kind::BV_REDAND:
+    case Kind::BV_REDOR:
+    case Kind::BV_REDXOR: return d_tm.mk_bv_type(1);
+
     case Kind::BV_ADD:
+    case Kind::BV_AND:
+    case Kind::BV_ASHR:
     case Kind::BV_MUL:
+    case Kind::BV_NAND:
+    case Kind::BV_NEG:
+    case Kind::BV_NOR:
+    case Kind::BV_NOT:
+    case Kind::BV_OR:
+    case Kind::BV_ROL:
+    case Kind::BV_ROLI:
+    case Kind::BV_ROR:
+    case Kind::BV_RORI:
+    case Kind::BV_SDIV:
     case Kind::BV_SHL:
     case Kind::BV_SHR:
-    case Kind::BV_ASHR:
+    case Kind::BV_SMOD:
+    case Kind::BV_SREM:
+    case Kind::BV_SUB:
     case Kind::BV_UDIV:
     case Kind::BV_UREM:
+    case Kind::BV_XNOR:
+    case Kind::BV_XOR:
     case Kind::FP_ABS:
-    case Kind::FP_NEG:
-    case Kind::FP_MIN:
     case Kind::FP_MAX:
+    case Kind::FP_MIN:
+    case Kind::FP_NEG:
     case Kind::FP_REM:
     case Kind::STORE: return children[0].type();
 
-    case Kind::FP_SQRT:
-    case Kind::FP_RTI:
     case Kind::FP_ADD:
-    case Kind::FP_MUL:
     case Kind::FP_DIV:
-    case Kind::ITE:
-    case Kind::FP_FMA: return children[1].type();
+    case Kind::FP_FMA:
+    case Kind::FP_MUL:
+    case Kind::FP_RTI:
+    case Kind::FP_SQRT:
+    case Kind::FP_SUB:
+    case Kind::ITE: return children[1].type();
 
     case Kind::FP_TO_SBV:
     case Kind::FP_TO_UBV: return d_tm.mk_bv_type(indices[0]);
@@ -313,6 +358,8 @@ NodeManager::check_type(Kind kind,
     case Kind::NOT:
     case Kind::AND:
     case Kind::OR:
+    case Kind::IMPLIES:
+    case Kind::XOR:
       for (size_t i = 0, size = children.size(); i < size; ++i)
       {
         if (!children[i].type().is_bool())
@@ -338,6 +385,30 @@ NodeManager::check_type(Kind kind,
       if (indices[0] < indices[1])
       {
         ss << kind << ": Upper index must be greater equal lower index";
+        return std::make_pair(false, ss.str());
+      }
+      break;
+
+    case Kind::BV_REPEAT:
+      if (!children[0].type().is_bv())
+      {
+        ss << kind << ": Expected bit-vector term at position 0";
+        return std::make_pair(false, ss.str());
+      }
+      if (indices[0] == 0)
+      {
+        ss << kind << ": Index must be greater than 0";
+        return std::make_pair(false, ss.str());
+      }
+      break;
+
+    case Kind::BV_ROLI:
+    case Kind::BV_RORI:
+    case Kind::BV_SIGN_EXTEND:
+    case Kind::BV_ZERO_EXTEND:
+      if (!children[0].type().is_bv())
+      {
+        ss << kind << ": Expected bit-vector term at position 0";
         return std::make_pair(false, ss.str());
       }
       break;
@@ -373,6 +444,7 @@ NodeManager::check_type(Kind kind,
       }
       break;
 
+    case Kind::DISTINCT:
     case Kind::EQUAL:
       if (children[0].type() != children[1].type())
       {
@@ -382,6 +454,7 @@ NodeManager::check_type(Kind kind,
       break;
 
     // Unary bit-vector operators
+    case Kind::BV_NEG:
     case Kind::BV_NOT:
       if (!children[0].type().is_bv())
       {
@@ -391,16 +464,44 @@ NodeManager::check_type(Kind kind,
       break;
 
     // Binary bit-vector operators
-    case Kind::BV_AND:
     case Kind::BV_ADD:
-    case Kind::BV_MUL:
-    case Kind::BV_ULT:
-    case Kind::BV_SHL:
-    case Kind::BV_SLT:
-    case Kind::BV_SHR:
+    case Kind::BV_AND:
     case Kind::BV_ASHR:
+    case Kind::BV_COMP:
+    case Kind::BV_MUL:
+    case Kind::BV_NAND:
+    case Kind::BV_NOR:
+    case Kind::BV_OR:
+    case Kind::BV_REDAND:
+    case Kind::BV_REDOR:
+    case Kind::BV_REDXOR:
+    case Kind::BV_ROL:
+    case Kind::BV_ROR:
+    case Kind::BV_SADDO:
+    case Kind::BV_SDIV:
+    case Kind::BV_SDIVO:
+    case Kind::BV_SGE:
+    case Kind::BV_SGT:
+    case Kind::BV_SHL:
+    case Kind::BV_SHR:
+    case Kind::BV_SLE:
+    case Kind::BV_SLT:
+    case Kind::BV_SMOD:
+    case Kind::BV_SMULO:
+    case Kind::BV_SREM:
+    case Kind::BV_SSUBO:
+    case Kind::BV_SUB:
+    case Kind::BV_UADDO:
     case Kind::BV_UDIV:
+    case Kind::BV_UGE:
+    case Kind::BV_UGT:
+    case Kind::BV_ULE:
+    case Kind::BV_ULT:
+    case Kind::BV_UMULO:
     case Kind::BV_UREM:
+    case Kind::BV_USUBO:
+    case Kind::BV_XNOR:
+    case Kind::BV_XOR:
       if (!children[0].type().is_bv())
       {
         ss << kind << ": Expected bit-vector term at position 0";
@@ -427,10 +528,12 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::FP_EQUAL:
+    case Kind::FP_GE:
+    case Kind::FP_GT:
     case Kind::FP_LE:
     case Kind::FP_LT:
-    case Kind::FP_MIN:
     case Kind::FP_MAX:
+    case Kind::FP_MIN:
     case Kind::FP_REM:
       if (!children[0].type().is_fp())
       {
@@ -559,6 +662,7 @@ NodeManager::check_type(Kind kind,
       break;
 
     case Kind::FP_ADD:
+    case Kind::FP_SUB:
     case Kind::FP_MUL:
     case Kind::FP_DIV:
       if (!children[0].type().is_rm())

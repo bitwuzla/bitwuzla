@@ -2881,7 +2881,7 @@ close_term(BzlaSMT2Parser *parser)
     }
     parser->work.top = item_cur;
     item_open->tag   = BZLA_EXP_TAG_SMT2;
-    item_open->exp   = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_BV_NOT, tmp);
+    item_open->exp   = bitwuzla_mk_term1(bitwuzla, BITWUZLA_KIND_NOT, tmp);
   }
   /* CORE: IMPLIES ---------------------------------------------------------- */
   else if (tag == BZLA_IMPLIES_TAG_SMT2)
