@@ -3,6 +3,8 @@
 #include "bitvector.h"
 #include "node/node_manager.h"
 #include "printer/printer.h"
+#include "solver/fp/floating_point.h"
+#include "solver/fp/rounding_mode.h"
 #include "test.h"
 
 namespace bzla::test {
@@ -35,8 +37,18 @@ TEST_F(TestPrinter, print_value)
     ASSERT_EQ(ss.str(), "#b0010");
   }
 
-  // TODO: rounding mode values
-  // TODO: floating-point values
+  {
+    std::stringstream ss;
+    Printer::print(
+        ss, nm.mk_value(FloatingPoint(nm.mk_fp_type(3, 5), BitVector(8, 2))));
+    ASSERT_EQ(ss.str(), "(fp #b0 #b000 #b0010)");
+  }
+
+  {
+    std::stringstream ss;
+    Printer::print(ss, nm.mk_value(RoundingMode::RNA));
+    ASSERT_EQ(ss.str(), "RNA");
+  }
 }
 
 TEST_F(TestPrinter, print_const)

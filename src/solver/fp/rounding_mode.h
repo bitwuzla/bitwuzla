@@ -1,6 +1,8 @@
 #ifndef BZLA_SOLVER_FP_ROUNDING_MODE_H_INCLUDED
 #define BZLA_SOLVER_FP_ROUNDING_MODE_H_INCLUDED
 
+#include <iostream>
+
 namespace bzla {
 
 enum class RoundingMode
@@ -12,6 +14,8 @@ enum class RoundingMode
   RTZ,      // roundTowardZero
   NUM_RM,
 };
+
+std::ostream& operator<<(std::ostream& out, const RoundingMode& rm);
 
 }  // namespace bzla
 

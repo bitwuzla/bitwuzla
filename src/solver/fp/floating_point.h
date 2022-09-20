@@ -361,6 +361,8 @@ class FloatingPoint
   std::unique_ptr<UnpackedFloat> d_uf;
 };
 
+std::ostream &operator<<(std::ostream &out, const FloatingPoint &fp);
+
 /* -------------------------------------------------------------------------- */
 
 /**

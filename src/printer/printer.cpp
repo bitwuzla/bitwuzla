@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "bitvector.h"
+#include "solver/fp/floating_point.h"
+#include "solver/fp/rounding_mode.h"
 
 namespace bzla {
 
@@ -204,9 +206,16 @@ Printer::print(std::ostream& os,
         {
           os << "#b" << cur.value<BitVector>();
         }
+        else if (type.is_fp())
+        {
+          os << cur.value<FloatingPoint>();
+        }
+        else if (type.is_rm())
+        {
+          os << cur.value<RoundingMode>();
+        }
         else
         {
-          // TODO: more values
           assert(false);
         }
       }

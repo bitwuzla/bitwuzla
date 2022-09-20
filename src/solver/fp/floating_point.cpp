@@ -129,7 +129,6 @@ FloatingPoint::FloatingPoint(const Type &type, const UnpackedFloat &uf)
 FloatingPoint::FloatingPoint(const Type &type, const BitVector &bv)
     : FloatingPoint(type)
 {
-  assert(s_bzla);
   d_uf.reset(new UnpackedFloat(symfpu::unpack<fp::SymFpuTraits>(*d_size, bv)));
 }
 
@@ -148,7 +147,6 @@ FloatingPoint::FloatingPoint(const Type &type,
                              bool sign)
     : FloatingPoint(type)
 {
-  assert(s_bzla);
   if (sign)
   {
     if (bv.size() == 1)
@@ -419,7 +417,6 @@ FloatingPoint::fpfma(const RoundingMode rm,
 BitVector
 FloatingPoint::as_bv() const
 {
-  assert(s_bzla);
   return *symfpu::pack(*d_size, *d_uf).getBv();
 }
 
@@ -430,7 +427,6 @@ FloatingPoint::from_unpacked(const BitVector &sign,
                              const BitVector &exp,
                              const BitVector &sig)
 {
-  assert(s_bzla);
   NodeManager &nm = NodeManager::get();
   FloatingPoint res(nm.mk_fp_type(exp.size(), sig.size() + 1),
                     UnpackedFloat(sign.is_one(), exp, sig));
@@ -547,7 +543,6 @@ FloatingPoint::convert_from_rational_aux(const Type &type,
                                          const char *num,
                                          const char *den)
 {
-  assert(s_bzla);
   assert(num);
 
   mpq_t r;
@@ -753,6 +748,19 @@ FloatingPointTypeInfo::get_type(void) const
 {
   return d_type;
 }
+
+/* --- Other ---------------------------------------------------------------- */
+
+std::ostream &
+operator<<(std::ostream &out, const FloatingPoint &fp)
+{
+  BitVector sign, exp, sig;
+  FloatingPoint::ieee_bv_as_bvs(
+      fp.size()->get_type(), fp.as_bv(), sign, exp, sig);
+  out << "(fp #b" << sign << " #b" << exp << " #b" << sig << ")";
+  return out;
+}
+
 }  // namespace bzla
 
 namespace std {
