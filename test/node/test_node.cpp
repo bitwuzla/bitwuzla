@@ -73,18 +73,17 @@ TEST_F(TestNode, operator_out)
   std::cout << nm.mk_const(array_type) << std::endl;
   std::cout << nm.mk_const(fun_type) << std::endl;
 
-  // std::cout << nm.mk_value(RoundingMode::RNA) << std::endl;
-  // std::cout << nm.mk_value(RoundingMode::RNE) << std::endl;
-  // std::cout << nm.mk_value(RoundingMode::RTN) << std::endl;
-  // std::cout << nm.mk_value(RoundingMode::RTP) << std::endl;
-  // std::cout << nm.mk_value(RoundingMode::RTZ) << std::endl;
+  std::cout << nm.mk_value(RoundingMode::RNA) << std::endl;
+  std::cout << nm.mk_value(RoundingMode::RNE) << std::endl;
+  std::cout << nm.mk_value(RoundingMode::RTN) << std::endl;
+  std::cout << nm.mk_value(RoundingMode::RTP) << std::endl;
+  std::cout << nm.mk_value(RoundingMode::RTZ) << std::endl;
 
   std::cout << nm.mk_value(true) << std::endl;
   std::cout << nm.mk_value(false) << std::endl;
 
   std::cout << nm.mk_value(BitVector(32, 1ul)) << std::endl;
-  // std::cout << nm.mk_value(FloatingPoint::fpzero(fp_type, true)) <<
-  // std::endl;
+  std::cout << nm.mk_value(FloatingPoint::fpzero(fp_type, true)) << std::endl;
 
   std::cout << nm.mk_node(Kind::AND,
                           {nm.mk_const(bool_type), nm.mk_const(bool_type)})
