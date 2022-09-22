@@ -58,6 +58,15 @@ Rewriter::rewrite(const Node& node)
   return d_cache.at(node);
 }
 
+const Node&
+Rewriter::mk_node(node::Kind kind,
+                  const std::vector<Node>& children,
+                  const std::vector<uint64_t>& indices)
+{
+  return rewrite(NodeManager::get().mk_node(kind, children, indices));
+}
+
+
 /* === Rewriter private ===================================================== */
 
 Node

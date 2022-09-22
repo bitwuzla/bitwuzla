@@ -14,6 +14,10 @@ class Rewriter
  public:
   const Node& rewrite(const Node& node);
 
+  const Node& mk_node(node::Kind kind,
+               const std::vector<Node>& children,
+               const std::vector<uint64_t>& indices = {});
+
  private:
   Node _rewrite(const Node& node);
 
