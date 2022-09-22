@@ -11,7 +11,7 @@ template <bool is_signed>
 SymFpuBV<is_signed>::SymFpuBV(const uint32_t bw, const uint32_t val)
 {
   assert(bw);
-  d_bv.reset(new BitVector(bw, val));
+  d_bv.reset(new BitVector(bw, static_cast<uint64_t>(val)));
 }
 
 template <bool is_signed>
@@ -1205,24 +1205,24 @@ SymFpuSymRM::SymFpuSymRM(BzlaNode *node)
     RoundingMode rm;
     if (brm == BZLA_RM_RNA)
     {
-      rm = bzla::fp::RoundingMode::RNA;
+      rm = bzla::RoundingMode::RNA;
     }
     else if (brm == BZLA_RM_RNE)
     {
-      rm = bzla::fp::RoundingMode::RNE;
+      rm = bzla::RoundingMode::RNE;
     }
     else if (brm == BZLA_RM_RTN)
     {
-      rm = bzla::fp::RoundingMode::RTN;
+      rm = bzla::RoundingMode::RTN;
     }
     else if (brm == BZLA_RM_RTP)
     {
-      rm = bzla::fp::RoundingMode::RTP;
+      rm = bzla::RoundingMode::RTP;
     }
     else
     {
       assert(brm == BZLA_RM_RTZ);
-      rm = bzla::fp::RoundingMode::RTZ;
+      rm = bzla::RoundingMode::RTZ;
     }
     d_node = init_const(rm);
   }

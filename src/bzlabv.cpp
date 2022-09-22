@@ -127,7 +127,7 @@ bzla_bv_int64_to_bv(BzlaMemMgr *mm, int64_t value, uint32_t bw)
 
   BzlaBitVector *res;
   BZLA_CNEW(mm, res);
-  res->d_bv.reset(new bzla::BitVector(bw, value, true));
+  res->d_bv.reset(new bzla::BitVector(bw, value));
   return res;
 }
 

@@ -42,7 +42,7 @@ TEST_F(TestNode, node_is_value)
   ASSERT_TRUE(nm.mk_value(true).is_value());
   ASSERT_TRUE(nm.mk_value(false).is_value());
 
-  ASSERT_TRUE(nm.mk_value(BitVector(32, 1)).is_value());
+  ASSERT_TRUE(nm.mk_value(BitVector(32, 1ul)).is_value());
   ASSERT_TRUE(nm.mk_value(FloatingPoint::fpzero(fp_type, true)).is_value());
 
   ASSERT_TRUE(nm.mk_value(RoundingMode::RNA).is_value());
@@ -82,7 +82,7 @@ TEST_F(TestNode, operator_out)
   std::cout << nm.mk_value(true) << std::endl;
   std::cout << nm.mk_value(false) << std::endl;
 
-  std::cout << nm.mk_value(BitVector(32, 1)) << std::endl;
+  std::cout << nm.mk_value(BitVector(32, 1ul)) << std::endl;
   // std::cout << nm.mk_value(FloatingPoint::fpzero(fp_type, true)) <<
   // std::endl;
 

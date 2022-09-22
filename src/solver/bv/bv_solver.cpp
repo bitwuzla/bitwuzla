@@ -201,8 +201,8 @@ BvSolver::value(const Node& term)
         case Kind::BV_COMP: {
           bool equal = get_cached_value(cur[0]).value<BitVector>()
                        == get_cached_value(cur[1]).value<BitVector>();
-          value =
-              nm.mk_value(BitVector(cur[0].type().bv_size(), equal ? 1 : 0));
+          value = nm.mk_value(
+              BitVector(cur[0].type().bv_size(), equal ? 1ul : 0ul));
         }
         break;
 
@@ -375,7 +375,7 @@ BvSolver::bitblast(const Node& t)
         case Kind::VALUE:
           it->second = type.is_bool()
                            ? d_bitblaster.bv_value(
-                               BitVector(1, cur.value<bool>() ? 1 : 0, 1))
+                               BitVector(1, cur.value<bool>() ? 1ul : 0ul))
                            : d_bitblaster.bv_value(cur.value<BitVector>());
           break;
 
@@ -635,7 +635,7 @@ BvSolver::get_assignment(const Node& term) const
     }
     else
     {
-      return nm.mk_value(BitVector(type.bv_size(), 0));
+      return nm.mk_value(BitVector(type.bv_size(), 0ul));
     }
   }
 

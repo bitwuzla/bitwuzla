@@ -33,14 +33,14 @@ TEST_F(TestPrinter, print_value)
 
   {
     std::stringstream ss;
-    Printer::print(ss, nm.mk_value(BitVector(4, 2)));
+    Printer::print(ss, nm.mk_value(BitVector(4, 2ul)));
     ASSERT_EQ(ss.str(), "#b0010");
   }
 
   {
     std::stringstream ss;
     Printer::print(
-        ss, nm.mk_value(FloatingPoint(nm.mk_fp_type(3, 5), BitVector(8, 2))));
+        ss, nm.mk_value(FloatingPoint(nm.mk_fp_type(3, 5), BitVector(8, 2ul))));
     ASSERT_EQ(ss.str(), "(fp #b0 #b000 #b0010)");
   }
 
