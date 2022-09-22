@@ -75,24 +75,22 @@ Printer::print(std::ostream& os,
   {
     const Node& cur = visit.back();
 
-    auto lit = let_map.find(cur);
-    if (lit != let_map.end())
-    {
-      if (expect_space)
-      {
-        os << " ";
-      }
-      os << lit->second;
-      visit.pop_back();
-      continue;
-    }
-
     auto [it, inserted] = cache.emplace(cur, false);
     if (inserted)
     {
-      if (expect_space)
+      Kind kind = cur.kind();
+      if (kind == Kind::VALUE || kind == Kind::CONSTANT
+          || kind == Kind::VARIABLE)
       {
-        os << " ";
+        it->second = true;
+        continue;
+      }
+
+      auto lit = let_map.find(cur);
+      if (lit != let_map.end())
+      {
+        it->second = true;
+        continue;
       }
 
       for (size_t i = 0, size = cur.num_children(); i < size; ++i)
@@ -100,14 +98,15 @@ Printer::print(std::ostream& os,
         visit.push_back(cur[size - 1 - i]);
       }
 
-      expect_space                = true;
+      if (expect_space)
+      {
+        os << " ";
+      }
+      expect_space = true;
+
       const KindInformation& info = s_node_kind_info[cur.kind()];
       switch (cur.kind())
       {
-        case Kind::VALUE:
-        case Kind::CONSTANT:
-        case Kind::VARIABLE: it->second = true; break;
-
         case Kind::CONST_ARRAY:
           os << "((as const ";
           Printer::print(os, cur.type());
@@ -228,6 +227,9 @@ Printer::print(std::ostream& os,
           letify(os, cur[1], let_map);
           break;
 
+        case Kind::VALUE:
+        case Kind::CONSTANT:
+        case Kind::VARIABLE:
         case Kind::NULL_NODE:
         case Kind::NUM_KINDS: assert(false); break;
       }
@@ -240,6 +242,12 @@ Printer::print(std::ostream& os,
     }
     else
     {
+      if (expect_space)
+      {
+        os << " ";
+      }
+      expect_space = true;
+
       const Type& type = cur.type();
       auto kind        = cur.kind();
       if (kind == Kind::VALUE)
@@ -271,7 +279,9 @@ Printer::print(std::ostream& os,
       }
       else
       {
-        assert(false);
+        auto lit = let_map.find(cur);
+        assert(lit != let_map.end());
+        os << lit->second;
       }
     }
     visit.pop_back();

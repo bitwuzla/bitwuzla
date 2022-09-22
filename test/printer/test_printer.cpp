@@ -235,7 +235,7 @@ TEST_F(TestPrinter, print_nested)
       nm.mk_node(Kind::BV_AND, {nm.mk_value(BitVector(4, "1001")), bvand0});
   std::stringstream ss;
   Printer::print(ss, bvand1);
-  // ASSERT_EQ(ss.str(), "(bvand #b1001 (bvand #b1001 #b1110)");
+  ASSERT_EQ(ss.str(), "(bvand #b1001 (bvand #b1001 #b1110))");
 }
 
 TEST_F(TestPrinter, print_const_array)
