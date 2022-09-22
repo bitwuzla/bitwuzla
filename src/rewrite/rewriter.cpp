@@ -433,15 +433,27 @@ DONE:
 Node
 Rewriter::rewrite_fp_le(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_LE_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_lt(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_LT_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
@@ -461,64 +473,118 @@ Rewriter::rewrite_fp_min(const Node& node)
 Node
 Rewriter::rewrite_fp_mul(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_MUL_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_neg(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_NEG_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_rem(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_REM_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_rti(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_RTI_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_sqrt(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_SQRT_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_to_fp_from_bv(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_BV_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_to_fp_from_fp(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_FP_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_to_fp_from_sbv(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_SBV_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
 Rewriter::rewrite_fp_to_fp_from_ubv(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_UBV_EVAL);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 /* Array rewrites ----------------------------------------------------------- */
