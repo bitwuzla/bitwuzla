@@ -29,9 +29,9 @@ template <class T>
 void
 TestBvNodeSelPath::test_binary(OpKind op_kind)
 {
-  uint32_t bw_s0 = TEST_BW;
-  uint32_t bw_s1 = TEST_BW;
-  uint32_t bw_t  = TEST_BW;
+  uint64_t bw_s0 = TEST_BW;
+  uint64_t bw_s1 = TEST_BW;
+  uint64_t bw_t  = TEST_BW;
 
   if (op_kind == ULT || op_kind == SLT || op_kind == EQ)
   {
@@ -43,7 +43,7 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
     bw_t  = bw_s0 + bw_s1;
   }
 
-  uint32_t nval_t = 1 << bw_t;
+  uint64_t nval_t = 1 << bw_t;
 
   std::vector<std::string>& s0values = d_xvalues;
   std::vector<std::string> s1values;
@@ -65,7 +65,7 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
     for (const std::string& s1_value : s1values)
     {
       BitVectorDomain s1(s1_value);
-      for (uint32_t j = 0; j < nval_t; ++j)
+      for (uint64_t j = 0; j < nval_t; ++j)
       {
         /* Target value of the operation (op). */
         BitVector t(bw_t, j);
@@ -156,9 +156,9 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
 void
 TestBvNodeSelPath::test_ite()
 {
-  uint32_t bw_t = TEST_BW;
+  uint64_t bw_t = TEST_BW;
 
-  uint32_t nval_t = 1 << bw_t;
+  uint64_t nval_t = 1 << bw_t;
 
   std::vector<std::string> s0values  = {"x", "0", "1"};
   std::vector<std::string>& s1values = d_xvalues;
@@ -177,7 +177,7 @@ TestBvNodeSelPath::test_ite()
       {
         BitVectorDomain s2(s2_value);
 
-        for (uint32_t j = 0; j < nval_t; ++j)
+        for (uint64_t j = 0; j < nval_t; ++j)
         {
           /* Target value of the operation (op). */
           BitVector t(bw_t, j);
@@ -292,7 +292,7 @@ TestBvNodeSelPath::test_ite()
 void
 TestBvNodeSelPath::test_not()
 {
-  uint32_t bw_t = TEST_BW;
+  uint64_t bw_t = TEST_BW;
 
   bool test_const_leaf = true;
   bool test_const_op   = true;
@@ -300,7 +300,7 @@ TestBvNodeSelPath::test_not()
   for (const std::string& s0_value : d_xvalues)
   {
     BitVectorDomain s0(s0_value);
-    for (uint32_t i = 0, n = 1 << bw_t; i < n; ++i)
+    for (uint64_t i = 0, n = 1 << bw_t; i < n; ++i)
     {
       /* Target value of the operation (op). */
       BitVector t(bw_t, i);
@@ -365,7 +365,7 @@ TestBvNodeSelPath::test_not()
 void
 TestBvNodeSelPath::test_extract()
 {
-  uint32_t bw_x = TEST_BW;
+  uint64_t bw_x = TEST_BW;
 
   bool test_const_leaf = true;
   bool test_const_op   = true;
@@ -373,12 +373,12 @@ TestBvNodeSelPath::test_extract()
   for (const std::string& s0_value : d_xvalues)
   {
     BitVectorDomain s0(s0_value);
-    for (uint32_t lo = 0; lo < bw_x; ++lo)
+    for (uint64_t lo = 0; lo < bw_x; ++lo)
     {
-      for (uint32_t hi = lo; hi < bw_x; ++hi)
+      for (uint64_t hi = lo; hi < bw_x; ++hi)
       {
-        uint32_t bw_t = hi - lo + 1;
-        for (uint32_t i = 0, n = 1 << bw_t; i < n; ++i)
+        uint64_t bw_t = hi - lo + 1;
+        for (uint64_t i = 0, n = 1 << bw_t; i < n; ++i)
         {
           /* Target value of the operation (op). */
           BitVector t(bw_t, i);
@@ -446,7 +446,7 @@ TestBvNodeSelPath::test_extract()
 void
 TestBvNodeSelPath::test_sext()
 {
-  uint32_t bw_x = TEST_BW;
+  uint64_t bw_x = TEST_BW;
 
   bool test_const_leaf = true;
   bool test_const_op   = true;
@@ -454,10 +454,10 @@ TestBvNodeSelPath::test_sext()
   for (const std::string& s0_value : d_xvalues)
   {
     BitVectorDomain s0(s0_value);
-    for (uint32_t n = 1; n <= bw_x; ++n)
+    for (uint64_t n = 1; n <= bw_x; ++n)
     {
-      uint32_t bw_t = bw_x + n;
-      for (uint32_t i = 0, m = 1 << bw_t; i < m; ++i)
+      uint64_t bw_t = bw_x + n;
+      for (uint64_t i = 0, m = 1 << bw_t; i < m; ++i)
       {
         /* Target value of the operation (op). */
         BitVector t(bw_t, i);

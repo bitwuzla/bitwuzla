@@ -111,9 +111,9 @@ TEST_F(TestAigBitblaster, ctor_dtor) { bb::AigBitblaster bb; }
 
 TEST_F(TestAigBitblaster, bv_value)
 {
-  BitVector zero(32, 0);
+  BitVector zero(32, 0ul);
   BitVector ones = zero.bvnot();
-  BitVector val(32, 2863311530);  // 101010...
+  BitVector val(32, 2863311530ul);  // 101010...
 
   bb::AigBitblaster bb;
   auto bb_zero = bb.bv_value(zero);
@@ -154,7 +154,7 @@ TEST_F(TestAigBitblaster, bv_constant)
 
 TEST_F(TestAigBitblaster, bv_not)
 {
-  BitVector zero(32, 0);
+  BitVector zero(32, 0ul);
   BitVector ones = zero.bvnot();
 
   bb::AigBitblaster bb;

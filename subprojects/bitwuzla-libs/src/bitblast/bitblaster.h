@@ -138,7 +138,7 @@ class BitblasterInterface
 
     Bits res = bv_ite(ult_helper(b, bv_value(BitVector(b.size(), size))),
                       shift_result,
-                      bv_value(BitVector(size, 0)));
+                      bv_value(BitVector(size, 0ul)));
 
     return res;
   }
@@ -180,7 +180,7 @@ class BitblasterInterface
 
     Bits res = bv_ite(ult_helper(b, bv_value(BitVector(b.size(), size))),
                       shift_result,
-                      bv_value(BitVector(size, 0)));
+                      bv_value(BitVector(size, 0ul)));
 
     return res;
   }

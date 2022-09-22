@@ -434,7 +434,7 @@ TestBitVector::mk_min_signed(uint64_t size)
   {
     return BitVector(size, ((uint64_t) 1) << (size - 1));
   }
-  BitVector r(64, 0);
+  BitVector r(64, 0ul);
   BitVector l(size - 64, ((uint64_t) 1) << (size - 1 - 64));
   return l.bvconcat(r);
 }
@@ -489,7 +489,7 @@ void
 TestBitVector::test_count_aux(const std::string& val, bool leading, bool zeros)
 {
   uint64_t size     = val.size();
-  uint32_t expected = 0;
+  uint64_t expected = 0;
   char c            = zeros ? '0' : '1';
   BitVector bv(size, val);
   if (leading)
@@ -835,13 +835,13 @@ void
 TestBitVector::test_ite(BvFunKind fun_kind)
 {
   /* test all values for bit-widths 1 - 4 */
-  for (uint32_t k = 0; k < 2; ++k)
+  for (uint64_t k = 0; k < 2; ++k)
   {
     for (uint64_t size = 1; size <= 4; ++size)
     {
-      for (uint32_t i = 0, n = 1 << size; i < n; ++i)
+      for (uint64_t i = 0, n = 1 << size; i < n; ++i)
       {
-        for (uint32_t j = 0, m = 1 << size; j < m; ++j)
+        for (uint64_t j = 0, m = 1 << size; j < m; ++j)
         {
           test_ite_aux(fun_kind,
                        BitVector(1, k),
@@ -933,7 +933,7 @@ TestBitVector::test_modinv(BvFunKind fun_kind)
   /* test all values for bit-widths 1 - 4 */
   for (uint64_t size = 1; size <= 4; ++size)
   {
-    for (uint32_t i = 0, n = 1 << size; i < n; ++i)
+    for (uint64_t i = 0, n = 1 << size; i < n; ++i)
     {
       if ((i & 1) == 0) continue;
       test_modinv_aux(fun_kind, BitVector(size, i));
@@ -1122,7 +1122,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind)
   /* test all values for bit-widths 1 - 4 */
   for (uint64_t size = 1; size <= 4; ++size)
   {
-    for (uint32_t i = 0, n = 1 << size; i < n; ++i)
+    for (uint64_t i = 0, n = 1 << size; i < n; ++i)
     {
       test_unary_aux(fun_kind, kind, BitVector(size, i));
     }
@@ -1158,7 +1158,7 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
   std::vector<std::pair<uint64_t, uint64_t>> int_args = {
       std::make_pair(0, a1), std::make_pair(a0, 0), std::make_pair(a0, a1)};
 
-  for (uint32_t i = 0; i < 3; ++i)
+  for (size_t i = 0; i < 3; ++i)
   {
     const BitVector& b1 = bv_args[i].first;
     const BitVector& b2 = bv_args[i].second;
@@ -1812,9 +1812,9 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
   /* test all values for bit-widths 1 - 4 */
   for (uint64_t size = 1; size <= 4; ++size)
   {
-    for (uint32_t i = 0, n = 1 << size; i < n; ++i)
+    for (uint64_t i = 0, n = 1 << size; i < n; ++i)
     {
-      for (uint32_t j = 0, m = 1 << size; j < m; ++j)
+      for (uint64_t j = 0, m = 1 << size; j < m; ++j)
       {
         test_binary_aux(fun_kind, kind, BitVector(size, i), BitVector(size, j));
       }
@@ -2216,7 +2216,7 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
   std::vector<std::pair<uint64_t, uint64_t>> int_args = {
       std::make_pair(0, a2), std::make_pair(a1, 0), std::make_pair(a1, a2)};
 
-  for (uint32_t i = 0; i < 3; ++i)
+  for (size_t i = 0; i < 3; ++i)
   {
     const BitVector& b1 = bv_args[i].first;
     const BitVector& b2 = bv_args[i].second;
@@ -2389,9 +2389,9 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
   /* test all values for bit-widths 1 - 4 */
   for (uint64_t size = 1; size <= 4; ++size)
   {
-    for (uint32_t i = 0, n = 1 << size; i < n; ++i)
+    for (uint64_t i = 0, n = 1 << size; i < n; ++i)
     {
-      for (uint32_t j = 0, m = 1 << size; j < m; ++j)
+      for (uint64_t j = 0, m = 1 << size; j < m; ++j)
       {
         test_binary_signed_aux(
             fun_kind, kind, BitVector(size, i), BitVector(size, j));
@@ -2571,9 +2571,9 @@ TestBitVector::test_concat(BvFunKind fun_kind)
   {
     uint64_t size0 = d_rng->pick<uint64_t>(1, size - 1);
     uint64_t size1 = size - size0;
-    for (uint32_t i = 0, n = 1 << size0; i < n; ++i)
+    for (uint64_t i = 0, n = 1 << size0; i < n; ++i)
     {
-      for (uint32_t j = 0, m = 1 << size1; j < m; ++j)
+      for (uint64_t j = 0, m = 1 << size1; j < m; ++j)
       {
         test_concat_aux(fun_kind, BitVector(size, i), BitVector(size, j));
       }
@@ -2657,13 +2657,13 @@ TestBitVector::test_extract(BvFunKind fun_kind)
   /* test all values for bit-widths 1 - 8 */
   for (uint64_t size = 1; size <= 8; ++size)
   {
-    for (uint32_t i = 0, n = 1 << size; i < n; ++i)
+    for (uint64_t i = 0, n = 1 << size; i < n; ++i)
     {
       test_extract_aux(fun_kind, BitVector(size, i));
     }
   }
   /* test random values for bit-widths 16, 32, 35 */
-  for (uint32_t i = 0; i < N_TESTS; ++i)
+  for (uint64_t i = 0; i < N_TESTS; ++i)
   {
     test_extract_aux(fun_kind, BitVector(16, i));
     test_extract_aux(fun_kind, BitVector(32, i));
@@ -2816,9 +2816,9 @@ TestBitVector::test_shift_aux(BvFunKind fun_kind,
 void
 TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
 {
-  for (uint32_t i = 0, size = 2; i < (1u << size); ++i)
+  for (uint64_t i = 0, size = 2; i < (1u << size); ++i)
   {
-    for (uint32_t j = 0; j < (1u << size); ++j)
+    for (uint64_t j = 0; j < (1u << size); ++j)
     {
       std::stringstream ss_expected;
       if (kind == SHL)
@@ -2854,9 +2854,9 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
     }
   }
 
-  for (uint32_t i = 0, size = 3; i < (1u << size); ++i)
+  for (uint64_t i = 0, size = 3; i < (1u << size); ++i)
   {
-    for (uint32_t j = 0; j < (1u << size); ++j)
+    for (uint64_t j = 0; j < (1u << size); ++j)
     {
       std::stringstream ss_expected;
       if (kind == SHL)
@@ -2892,9 +2892,9 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
     }
   }
 
-  for (uint32_t i = 0, size = 8; i < (1u << size); ++i)
+  for (uint64_t i = 0, size = 8; i < (1u << size); ++i)
   {
-    for (uint32_t j = 0; j < (1u << size); ++j)
+    for (uint64_t j = 0; j < (1u << size); ++j)
     {
       std::stringstream ss_expected;
       if (kind == SHL)
@@ -2930,7 +2930,7 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
     }
   }
 
-  for (uint32_t i = 0, size = 65; i < (1u << size); ++i)
+  for (uint64_t i = 0, size = 65; i < (1u << size); ++i)
   {
     /* shift value fits into uint64_t */
     for (uint64_t j = 0; j < 32; ++j)
@@ -2978,7 +2978,7 @@ TestBitVector::test_shift(BvFunKind fun_kind, Kind kind, bool shift_by_int)
     }
   }
 
-  for (uint32_t i = 0, size = 128; i < (1u << size); ++i)
+  for (uint64_t i = 0, size = 128; i < (1u << size); ++i)
   {
     /* shift value fits into uint64_t */
     for (uint64_t j = 0; j < 32; ++j)
@@ -3151,23 +3151,39 @@ TestBitVector::test_udivurem(uint64_t size)
 
 TEST_F(TestBitVector, ctor_dtor)
 {
-  ASSERT_NO_FATAL_FAILURE(BitVector(1));
-  ASSERT_NO_FATAL_FAILURE(BitVector(10));
-  ASSERT_NO_FATAL_FAILURE(BitVector(6, "101010"));
-  ASSERT_NO_FATAL_FAILURE(BitVector(6, "000101010"));
-  ASSERT_NO_FATAL_FAILURE(BitVector(8, "101010"));
-  ASSERT_NO_FATAL_FAILURE(BitVector(8, "128", 10));
-  ASSERT_NO_FATAL_FAILURE(BitVector(8, "-3", 10));
-  ASSERT_NO_FATAL_FAILURE(BitVector(8, "-127", 10));
-  ASSERT_NO_FATAL_FAILURE(BitVector(8, "-128", 10));
-  ASSERT_NO_FATAL_FAILURE(BitVector(8, "a1", 16));
-  ASSERT_NO_FATAL_FAILURE(BitVector(8, "F1", 16));
-  ASSERT_NO_FATAL_FAILURE(BitVector(8, -3, true));
-  ASSERT_NO_FATAL_FAILURE(BitVector(8, -127, true));
-  ASSERT_NO_FATAL_FAILURE(BitVector(8, -128, true));
-  ASSERT_NO_FATAL_FAILURE(BitVector(11, 1234));
-  ASSERT_NO_FATAL_FAILURE(BitVector(16, 1234));
-  ASSERT_NO_FATAL_FAILURE(BitVector(16, 65535));
+  ASSERT_EQ(BitVector(1).to_string(), "0");
+  ASSERT_EQ(BitVector(10).to_string(), "0000000000");
+
+  ASSERT_EQ(BitVector(6, "101010").to_string(), "101010");
+  ASSERT_EQ(BitVector(6, "000101010").to_string(), "101010");
+  ASSERT_EQ(BitVector(8, "101010").to_string(), "00101010");
+  ASSERT_EQ(BitVector(8, "128", 10).to_string(), "10000000");
+
+  ASSERT_EQ(BitVector(8, "-3", 10).to_string(), "11111101");
+  ASSERT_EQ(BitVector(8, "-127", 10).to_string(), "10000001");
+  ASSERT_EQ(BitVector(8, "-128", 10).to_string(), "10000000");
+
+  ASSERT_EQ(BitVector(8, "a1", 16).to_string(), "10100001");
+  ASSERT_EQ(BitVector(8, "F1", 16).to_string(), "11110001");
+
+  ASSERT_EQ(BitVector(8, -3l).to_string(), "11111101");
+  ASSERT_EQ(BitVector(8, -127l).to_string(), "10000001");
+  ASSERT_EQ(BitVector(8, -128l).to_string(), "10000000");
+
+  ASSERT_EQ(
+      BitVector(68, -3l).to_string(),
+      "11111111111111111111111111111111111111111111111111111111111111111101");
+  ASSERT_EQ(
+      BitVector(68, -3ul).to_string(),
+      "00001111111111111111111111111111111111111111111111111111111111111101");
+  ASSERT_EQ(
+      BitVector(68, 3ul).to_string(),
+      "00000000000000000000000000000000000000000000000000000000000000000011");
+
+  ASSERT_EQ(BitVector(11, 1234ul).to_string(), "10011010010");
+  ASSERT_EQ(BitVector(16, 1234ul).to_string(), "0000010011010010");
+  ASSERT_EQ(BitVector(16, 65535ul).to_string(), "1111111111111111");
+
   ASSERT_DEATH(BitVector(0), "> 0");
   ASSERT_DEATH(BitVector(2, "101010"), "fits_in_size");
   ASSERT_DEATH(BitVector(6, "a01010"), "is_valid_bin_str");
@@ -3179,11 +3195,11 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_DEATH(BitVector(6, "1z", 16), "is_valid_hex_str");
   ASSERT_DEATH(BitVector(8, "-12", 16), "is_valid_hex_str");
   ASSERT_DEATH(BitVector(2, ""), "empty");
-  ASSERT_DEATH(BitVector(0, 1234), "> 0");
-  ASSERT_DEATH(BitVector(8, -129, true), "fits_in_size");
-  ASSERT_DEATH(BitVector(10, 1234), "fits_in_size");
-  ASSERT_DEATH(BitVector(16, 123412341234), "fits_in_size");
-  ASSERT_DEATH(BitVector(16, 65536), "fits_in_size");
+  ASSERT_DEATH(BitVector(0, 1234ul), "> 0");
+  ASSERT_DEATH(BitVector(8, -129l), "fits_in_size");
+  ASSERT_DEATH(BitVector(10, 1234ul), "fits_in_size");
+  ASSERT_DEATH(BitVector(16, 123412341234ul), "fits_in_size");
+  ASSERT_DEATH(BitVector(16, 65536ul), "fits_in_size");
 }
 
 TEST_F(TestBitVector, ctor_rand)
@@ -3271,10 +3287,10 @@ TEST_F(TestBitVector, to_string)
   ASSERT_EQ(BitVector(10).to_string(), "0000000000");
   ASSERT_EQ(BitVector(6, "101010").to_string(), "101010");
   ASSERT_EQ(BitVector(8, "101010").to_string(), "00101010");
-  ASSERT_EQ(BitVector(16, 1234).to_string(), "0000010011010010");
-  ASSERT_EQ(BitVector(16, 65530).to_string(), "1111111111111010");
-  ASSERT_EQ(BitVector(16, 65535).to_string(), "1111111111111111");
-  ASSERT_EQ(BitVector(32, 4294967295).to_string(),
+  ASSERT_EQ(BitVector(16, 1234ul).to_string(), "0000010011010010");
+  ASSERT_EQ(BitVector(16, 65530ul).to_string(), "1111111111111010");
+  ASSERT_EQ(BitVector(16, 65535ul).to_string(), "1111111111111111");
+  ASSERT_EQ(BitVector(32, 4294967295ul).to_string(),
             "11111111111111111111111111111111");
   ASSERT_EQ(BitVector(64, UINT64_MAX).to_string(),
             "1111111111111111111111111111111111111111111111111111111111111111");
@@ -3285,20 +3301,20 @@ TEST_F(TestBitVector, to_string)
   ASSERT_EQ(BitVector(10).to_string(10), "0");
   ASSERT_EQ(BitVector(6, "101010").to_string(10), "42");
   ASSERT_EQ(BitVector(8, "101010").to_string(10), "42");
-  ASSERT_EQ(BitVector(16, 1234).to_string(10), "1234");
-  ASSERT_EQ(BitVector(16, 65530).to_string(10), "65530");
-  ASSERT_EQ(BitVector(16, 65535).to_string(10), "65535");
-  ASSERT_EQ(BitVector(32, 4294967295).to_string(10), "4294967295");
+  ASSERT_EQ(BitVector(16, 1234ul).to_string(10), "1234");
+  ASSERT_EQ(BitVector(16, 65530ul).to_string(10), "65530");
+  ASSERT_EQ(BitVector(16, 65535ul).to_string(10), "65535");
+  ASSERT_EQ(BitVector(32, 4294967295ul).to_string(10), "4294967295");
   ASSERT_EQ(BitVector(64, UINT64_MAX).to_string(10), "18446744073709551615");
   ASSERT_EQ(BitVector(65, UINT64_MAX).to_string(10), "18446744073709551615");
 
   ASSERT_EQ(BitVector(10).to_string(16), "0");
   ASSERT_EQ(BitVector(6, "101010").to_string(16), "2a");
   ASSERT_EQ(BitVector(8, "101010").to_string(16), "2a");
-  ASSERT_EQ(BitVector(16, 1234).to_string(16), "4d2");
-  ASSERT_EQ(BitVector(16, 65530).to_string(16), "fffa");
-  ASSERT_EQ(BitVector(16, 65535).to_string(16), "ffff");
-  ASSERT_EQ(BitVector(32, 4294967295).to_string(16), "ffffffff");
+  ASSERT_EQ(BitVector(16, 1234ul).to_string(16), "4d2");
+  ASSERT_EQ(BitVector(16, 65530ul).to_string(16), "fffa");
+  ASSERT_EQ(BitVector(16, 65535ul).to_string(16), "ffff");
+  ASSERT_EQ(BitVector(32, 4294967295ul).to_string(16), "ffffffff");
   ASSERT_EQ(BitVector(64, UINT64_MAX).to_string(16), "ffffffffffffffff");
   ASSERT_EQ(BitVector(65, UINT64_MAX).to_string(16), "ffffffffffffffff");
 }
@@ -3318,7 +3334,7 @@ TEST_F(TestBitVector, to_uint64)
 
 TEST_F(TestBitVector, compare)
 {
-  for (uint32_t i = 0; i < 15; ++i)
+  for (uint64_t i = 0; i < 15; ++i)
   {
     BitVector bv1(4, i);
     BitVector bv2(4, i);
@@ -3326,7 +3342,7 @@ TEST_F(TestBitVector, compare)
     ASSERT_TRUE(bv1 == bv2);
   }
 
-  for (uint32_t i = 0; i < 15 - 1; ++i)
+  for (uint64_t i = 0; i < 15 - 1; ++i)
   {
     BitVector bv1(4, i);
     BitVector bv2(4, i + 1);
@@ -3336,9 +3352,9 @@ TEST_F(TestBitVector, compare)
     ASSERT_TRUE(bv1 != bv2);
   }
 
-  for (uint32_t i = 0, j = 0; i < 15; ++i)
+  for (uint64_t i = 0, j = 0; i < 15; ++i)
   {
-    uint32_t k = rand() % 16;
+    uint64_t k = rand() % 16;
     do
     {
       j = rand() % 16;
@@ -3366,36 +3382,36 @@ TEST_F(TestBitVector, compare)
 
 TEST_F(TestBitVector, signed_compare)
 {
-  for (int32_t i = -8; i < 7; ++i)
+  for (int64_t i = -8; i < 7; ++i)
   {
-    BitVector bv1(4, i, true);
-    BitVector bv2(4, i, true);
+    BitVector bv1(4, i);
+    BitVector bv2(4, i);
     ASSERT_EQ(bv1.signed_compare(bv2), 0);
     ASSERT_TRUE(bv1 == bv2);
   }
 
-  for (int32_t i = -8; i < 7 - 1; i++)
+  for (int64_t i = -8; i < 7 - 1; i++)
   {
-    BitVector bv1(4, i, true);
-    BitVector bv2(4, i + 1, true);
+    BitVector bv1(4, i);
+    BitVector bv2(4, i + 1);
     ASSERT_LT(bv1.signed_compare(bv2), 0);
     ASSERT_GT(bv2.signed_compare(bv1), 0);
     ASSERT_FALSE(bv1 == bv2);
     ASSERT_TRUE(bv1 != bv2);
   }
 
-  for (int32_t i = 0, j = 0; i < 15; i++)
+  for (int64_t i = 0, j = 0; i < 15; i++)
   {
     /* j <= 0, k <= 0 */
-    int32_t k = rand() % 9;
+    int64_t k = rand() % 9;
     do
     {
       j = rand() % 9;
     } while (j == k);
     j = -j;
     k = -k;
-    BitVector bv1(4, j, true);
-    BitVector bv2(4, k, true);
+    BitVector bv1(4, j);
+    BitVector bv2(4, k);
     if (j > k)
     {
       ASSERT_GT(bv1.signed_compare(bv2), 0);
@@ -3419,7 +3435,7 @@ TEST_F(TestBitVector, signed_compare)
         j = rand() % 9;
       } while (j == k);
       j = -j;
-      BitVector bv1(4, j, true);
+      BitVector bv1(4, j);
       BitVector bv2(4, k);
       if (j > k)
       {
@@ -3446,7 +3462,7 @@ TEST_F(TestBitVector, signed_compare)
       } while (j == k);
       k = -k;
       BitVector bv1(4, j);
-      BitVector bv2(4, k, true);
+      BitVector bv2(4, k);
       if (j > k)
       {
         ASSERT_GT(bv1.signed_compare(bv2), 0);
@@ -3470,8 +3486,8 @@ TEST_F(TestBitVector, signed_compare)
       {
         j = rand() % 8;
       } while (j == k);
-      BitVector bv1(4, -j, true);
-      BitVector bv2(4, -k, true);
+      BitVector bv1(4, -j);
+      BitVector bv2(4, -k);
       if (-j > -k)
       {
         ASSERT_GT(bv1.signed_compare(bv2), 0);
@@ -3495,10 +3511,10 @@ TEST_F(TestBitVector, is_true)
 {
   BitVector bv1 = BitVector::mk_true();
   ASSERT_TRUE(bv1.is_true());
-  for (int32_t i = 1; i < 32; ++i)
+  for (int64_t i = 1; i < 32; ++i)
   {
     BitVector bv2 = BitVector::mk_one(i);
-    BitVector bv3(i, d_rng->pick<uint32_t>(1, (1 << i) - 1));
+    BitVector bv3(i, d_rng->pick<uint64_t>(1, (1 << i) - 1));
     if (i > 1)
     {
       ASSERT_FALSE(bv2.is_true());
@@ -3516,10 +3532,10 @@ TEST_F(TestBitVector, is_false)
 {
   BitVector bv1 = BitVector::mk_false();
   ASSERT_TRUE(bv1.is_false());
-  for (int32_t i = 1; i < 32; ++i)
+  for (int64_t i = 1; i < 32; ++i)
   {
     BitVector bv2 = BitVector::mk_zero(i);
-    BitVector bv3(i, d_rng->pick<uint32_t>(1, (1 << i) - 1));
+    BitVector bv3(i, d_rng->pick<uint64_t>(1, (1 << i) - 1));
     if (i > 1)
     {
       ASSERT_FALSE(bv2.is_false());
@@ -3535,10 +3551,10 @@ TEST_F(TestBitVector, is_false)
 
 TEST_F(TestBitVector, set_get_flip_bit)
 {
-  for (uint32_t i = 1; i < 32; ++i)
+  for (size_t i = 1; i < 32; ++i)
   {
     BitVector bv(i, *d_rng);
-    uint32_t n  = d_rng->pick<uint32_t>(0, i - 1);
+    size_t n    = d_rng->pick<size_t>(0, i - 1);
     uint32_t v  = bv.get_bit(n);
     uint32_t vv = d_rng->flip_coin() ? 1 : 0;
     bv.set_bit(n, vv);
@@ -3552,7 +3568,7 @@ TEST_F(TestBitVector, set_get_flip_bit)
 
 TEST_F(TestBitVector, is_zero)
 {
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::string s(i, '0');
     BitVector bv1 = BitVector::mk_zero(i);
@@ -3560,12 +3576,12 @@ TEST_F(TestBitVector, is_zero)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 0);
+      bv3 = BitVector(i, 0ul);
     }
     else
     {
-      BitVector r(64, 0);
-      BitVector l(i - 64, 0);
+      BitVector r(64, 0ul);
+      BitVector l(i - 64, 0ul);
       bv3 = l.bvconcat(r);
       assert(bv3.size() == i);
     }
@@ -3576,7 +3592,7 @@ TEST_F(TestBitVector, is_zero)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::stringstream ss;
     ss << std::string(i - 1, '0') << "1";
@@ -3585,12 +3601,12 @@ TEST_F(TestBitVector, is_zero)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 1);
+      bv3 = BitVector(i, 1ul);
     }
     else
     {
-      BitVector r(i - 64, 1);
-      BitVector l(64, 0);
+      BitVector r(i - 64, 1ul);
+      BitVector l(64, 0ul);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_zero());
@@ -3600,7 +3616,7 @@ TEST_F(TestBitVector, is_zero)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::string s(i, '1');
     BitVector bv1 = BitVector::mk_ones(i);
@@ -3613,7 +3629,7 @@ TEST_F(TestBitVector, is_zero)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::stringstream ss;
     ss << "1" << std::string(i - 1, '0');
@@ -3627,7 +3643,7 @@ TEST_F(TestBitVector, is_zero)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 2; i <= 128; i++)
+  for (uint64_t i = 2; i <= 128; i++)
   {
     std::stringstream ss;
     ss << "0" << std::string(i - 1, '1');
@@ -3644,7 +3660,7 @@ TEST_F(TestBitVector, is_zero)
 
 TEST_F(TestBitVector, is_one)
 {
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::string s(i, '0');
     BitVector bv1 = BitVector::mk_zero(i);
@@ -3652,12 +3668,12 @@ TEST_F(TestBitVector, is_one)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 0);
+      bv3 = BitVector(i, 0ul);
     }
     else
     {
-      BitVector r(64, 0);
-      BitVector l(i - 64, 0);
+      BitVector r(64, 0ul);
+      BitVector l(i - 64, 0ul);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_one());
@@ -3667,7 +3683,7 @@ TEST_F(TestBitVector, is_one)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::stringstream ss;
     ss << std::string(i - 1, '0') << "1";
@@ -3676,12 +3692,12 @@ TEST_F(TestBitVector, is_one)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 1);
+      bv3 = BitVector(i, 1ul);
     }
     else
     {
-      BitVector r(i - 64, 1);
-      BitVector l(64, 0);
+      BitVector r(i - 64, 1ul);
+      BitVector l(64, 0ul);
       bv3 = l.bvconcat(r);
     }
     ASSERT_TRUE(bv1.is_one());
@@ -3691,7 +3707,7 @@ TEST_F(TestBitVector, is_one)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 2; i <= 128; i++)
+  for (uint64_t i = 2; i <= 128; i++)
   {
     std::string s(i, '1');
     BitVector bv1 = BitVector::mk_ones(i);
@@ -3704,7 +3720,7 @@ TEST_F(TestBitVector, is_one)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 2; i <= 128; i++)
+  for (uint64_t i = 2; i <= 128; i++)
   {
     std::stringstream ss;
     ss << "1" << std::string(i - 1, '0');
@@ -3718,7 +3734,7 @@ TEST_F(TestBitVector, is_one)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 3; i <= 128; i++)
+  for (uint64_t i = 3; i <= 128; i++)
   {
     std::stringstream ss;
     ss << "0" << std::string(i - 1, '1');
@@ -3735,7 +3751,7 @@ TEST_F(TestBitVector, is_one)
 
 TEST_F(TestBitVector, is_ones)
 {
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::string s(i, '0');
     BitVector bv1 = BitVector::mk_zero(i);
@@ -3743,12 +3759,12 @@ TEST_F(TestBitVector, is_ones)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 0);
+      bv3 = BitVector(i, 0ul);
     }
     else
     {
-      BitVector r(64, 0);
-      BitVector l(i - 64, 0);
+      BitVector r(64, 0ul);
+      BitVector l(i - 64, 0ul);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_ones());
@@ -3758,7 +3774,7 @@ TEST_F(TestBitVector, is_ones)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 2; i <= 128; i++)
+  for (uint64_t i = 2; i <= 128; i++)
   {
     std::stringstream ss;
     ss << std::string(i - 1, '0') << "1";
@@ -3767,12 +3783,12 @@ TEST_F(TestBitVector, is_ones)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 1);
+      bv3 = BitVector(i, 1ul);
     }
     else
     {
-      BitVector r(i - 64, 1);
-      BitVector l(64, 0);
+      BitVector r(i - 64, 1ul);
+      BitVector l(64, 0ul);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_ones());
@@ -3782,7 +3798,7 @@ TEST_F(TestBitVector, is_ones)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::string s(i, '1');
     BitVector bv1 = BitVector::mk_ones(i);
@@ -3795,7 +3811,7 @@ TEST_F(TestBitVector, is_ones)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 2; i <= 128; i++)
+  for (uint64_t i = 2; i <= 128; i++)
   {
     std::stringstream ss;
     ss << "1" << std::string(i - 1, '0');
@@ -3809,7 +3825,7 @@ TEST_F(TestBitVector, is_ones)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 2; i <= 128; i++)
+  for (uint64_t i = 2; i <= 128; i++)
   {
     std::stringstream ss;
     ss << "0" << std::string(i - 1, '1');
@@ -3826,7 +3842,7 @@ TEST_F(TestBitVector, is_ones)
 
 TEST_F(TestBitVector, is_max_signed)
 {
-  for (uint32_t i = 2; i <= 128; i++)
+  for (uint64_t i = 2; i <= 128; i++)
   {
     std::string s(i, '0');
     BitVector bv1 = BitVector::mk_zero(i);
@@ -3834,12 +3850,12 @@ TEST_F(TestBitVector, is_max_signed)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 0);
+      bv3 = BitVector(i, 0ul);
     }
     else
     {
-      BitVector r(64, 0);
-      BitVector l(i - 64, 0);
+      BitVector r(64, 0ul);
+      BitVector l(i - 64, 0ul);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_max_signed());
@@ -3849,7 +3865,7 @@ TEST_F(TestBitVector, is_max_signed)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 3; i <= 128; i++)
+  for (uint64_t i = 3; i <= 128; i++)
   {
     std::stringstream ss;
     ss << std::string(i - 1, '0') << "1";
@@ -3858,12 +3874,12 @@ TEST_F(TestBitVector, is_max_signed)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 1);
+      bv3 = BitVector(i, 1ul);
     }
     else
     {
-      BitVector r(i - 64, 1);
-      BitVector l(64, 0);
+      BitVector r(i - 64, 1ul);
+      BitVector l(64, 0ul);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_max_signed());
@@ -3873,7 +3889,7 @@ TEST_F(TestBitVector, is_max_signed)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::string s(i, '1');
     BitVector bv1 = BitVector::mk_ones(i);
@@ -3886,7 +3902,7 @@ TEST_F(TestBitVector, is_max_signed)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::stringstream ss;
     ss << "1" << std::string(i - 1, '0');
@@ -3900,7 +3916,7 @@ TEST_F(TestBitVector, is_max_signed)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::stringstream ss;
     ss << "0" << std::string(i - 1, '1');
@@ -3917,7 +3933,7 @@ TEST_F(TestBitVector, is_max_signed)
 
 TEST_F(TestBitVector, is_min_signed)
 {
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::string s(i, '0');
     BitVector bv1 = BitVector::mk_zero(i);
@@ -3925,12 +3941,12 @@ TEST_F(TestBitVector, is_min_signed)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 0);
+      bv3 = BitVector(i, 0ul);
     }
     else
     {
-      BitVector r(64, 0);
-      BitVector l(i - 64, 0);
+      BitVector r(64, 0ul);
+      BitVector l(i - 64, 0ul);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_min_signed());
@@ -3940,7 +3956,7 @@ TEST_F(TestBitVector, is_min_signed)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 2; i <= 128; i++)
+  for (uint64_t i = 2; i <= 128; i++)
   {
     std::stringstream ss;
     ss << std::string(i - 1, '0') << "1";
@@ -3949,12 +3965,12 @@ TEST_F(TestBitVector, is_min_signed)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 1);
+      bv3 = BitVector(i, 1ul);
     }
     else
     {
-      BitVector r(i - 64, 1);
-      BitVector l(64, 0);
+      BitVector r(i - 64, 1ul);
+      BitVector l(64, 0ul);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_min_signed());
@@ -3964,7 +3980,7 @@ TEST_F(TestBitVector, is_min_signed)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 2; i <= 128; i++)
+  for (uint64_t i = 2; i <= 128; i++)
   {
     std::string s(i, '1');
     BitVector bv1 = BitVector::mk_ones(i);
@@ -3977,7 +3993,7 @@ TEST_F(TestBitVector, is_min_signed)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::stringstream ss;
     ss << "1" << std::string(i - 1, '0');
@@ -3991,7 +4007,7 @@ TEST_F(TestBitVector, is_min_signed)
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
 
-  for (uint32_t i = 1; i <= 128; i++)
+  for (uint64_t i = 1; i <= 128; i++)
   {
     std::stringstream ss;
     ss << "0" << std::string(i - 1, '1');

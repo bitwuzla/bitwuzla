@@ -21,21 +21,21 @@ TestBvNodeInv::test_inv_ineq_concat(OpKind op_kind,
 {
   assert(op_kind == ULT || op_kind == SLT);
 
-  uint32_t bw_x = TEST_BW;
-  uint32_t bw_s = TEST_BW;
-  uint32_t bw_t = 1;
+  uint64_t bw_x = TEST_BW;
+  uint64_t bw_s = TEST_BW;
+  uint64_t bw_t = 1;
 
-  uint32_t nval_s = 1 << bw_s;
-  uint32_t nval_t = 1 << bw_t;
+  uint64_t nval_s = 1 << bw_s;
+  uint64_t nval_t = 1 << bw_t;
 
   for (const std::string& x_value : d_xvalues)
   {
     BitVectorDomain x(x_value);
-    for (uint32_t i = 0; i < nval_s; i++)
+    for (uint64_t i = 0; i < nval_s; i++)
     {
       /* Assignment of the other operand. */
       BitVector s_val(bw_s, i);
-      for (uint32_t j = 0; j < nval_t; j++)
+      for (uint64_t j = 0; j < nval_t; j++)
       {
         /* Target value of the operation (op). */
         BitVector t(bw_t, j);
@@ -54,8 +54,8 @@ TestBvNodeInv::test_inv_ineq_concat(OpKind op_kind,
         std::unique_ptr<BitVector> min, max;
         do
         {
-          uint32_t bw_x0     = d_rng->pick<uint32_t>(1, TEST_BW - 1);
-          uint32_t bw_x1     = bw_x - bw_x0;
+          uint64_t bw_x0     = d_rng->pick<uint64_t>(1, TEST_BW - 1);
+          uint64_t bw_x1     = bw_x - bw_x0;
           BitVectorDomain x0 = x.bvextract(bw_x - 1, bw_x1);
           BitVectorDomain x1 = x.bvextract(bw_x1 - 1, 0);
           BitVector x0_val   = x_val.bvextract(bw_x - 1, bw_x1);

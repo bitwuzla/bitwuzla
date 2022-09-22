@@ -144,12 +144,20 @@ class BitVector
   /**
    * Construct a bit-vector of given size from given uint64 value.
    * @param size  The size of the bit-vector.
-   * @param value A uint64 (when unsigned) or int64 (when signed) representing
-   *              the bit-vector value. The value must be representable with
-   *              `size` bits.
+   * @param value A uint64 representing the bit-vector value. The value must be
+   *              representable with `size` bits.
    * @param sign  True if given value should be interpreted as signed integer.
    */
-  BitVector(uint64_t size, uint64_t value, bool sign = false);
+  BitVector(uint64_t size, uint64_t value);
+
+  /**
+   * Construct a bit-vector of given size from given int64 value.
+   * @param size  The size of the bit-vector.
+   * @param value A int64 representing the bit-vector value. The value must be
+   *              representable with `size` bits.
+   * @param sign  True if given value should be interpreted as signed integer.
+   */
+  BitVector(uint64_t size, int64_t value);
 
   /** Copy constructor. */
   BitVector(const BitVector& other);
