@@ -162,7 +162,10 @@ namespace std {
 template <>
 struct hash<bzla::bb::AigNode>
 {
-  size_t operator()(const bzla::bb::AigNode& aig) const { return aig.get_id(); }
+  size_t operator()(const bzla::bb::AigNode& aig) const
+  {
+    return static_cast<size_t>(aig.get_id());
+  }
 };
 
 }  // namespace std

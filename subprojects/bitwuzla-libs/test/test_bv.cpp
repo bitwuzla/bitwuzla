@@ -107,6 +107,7 @@ class TestBitVector : public TestCommon
   static uint64_t _xnor(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t _xor(uint64_t x, uint64_t y, uint64_t size);
   static uint64_t normalize_uint64(uint64_t size, uint64_t value);
+  static int64_t normalize_int64(uint64_t size, int64_t value);
 
   BitVector mk_ones(uint64_t size);
   BitVector mk_min_signed(uint64_t size);
@@ -172,6 +173,13 @@ TestBitVector::normalize_uint64(uint64_t size, uint64_t value)
 {
   return size > 63 ? value
                    : (value % (uint64_t) pow(2, static_cast<double>(size)));
+}
+
+int64_t
+TestBitVector::normalize_int64(uint64_t size, int64_t value)
+{
+  return size > 63 ? value
+                   : (value % (int64_t) pow(2, static_cast<double>(size)));
 }
 
 uint64_t
@@ -364,7 +372,7 @@ TestBitVector::_ashr(uint64_t x, uint64_t y, uint64_t size)
   size = size > 64 ? 64 : size;
   if ((x >> (size - 1)) & 1)
   {
-    if (y > size) return normalize_uint64(size, ~0);
+    if (y > size) return normalize_uint64(size, ~0ul);
     return normalize_uint64(size, ~(normalize_uint64(size, ~x) >> y));
   }
   if (y > size) return 0;
@@ -396,16 +404,16 @@ TestBitVector::_sdiv(int64_t x, int64_t y, uint64_t size)
 {
   if (y == 0)
   {
-    return x < 0 ? 1 : normalize_uint64(size, UINT64_MAX);
+    return x < 0 ? 1 : static_cast<int64_t>(normalize_uint64(size, UINT64_MAX));
   }
-  return normalize_uint64(size, x / y);
+  return normalize_int64(size, x / y);
 }
 
 int64_t
 TestBitVector::_srem(int64_t x, int64_t y, uint64_t size)
 {
-  if (y == 0) return normalize_uint64(size, x);
-  return normalize_uint64(size, x % y);
+  if (y == 0) return normalize_int64(size, x);
+  return normalize_int64(size, x % y);
 }
 
 uint64_t
@@ -2208,29 +2216,31 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
   BitVector b1(bv0);
   BitVector b2(bv1);
   /* we only test values representable in 64 bits */
-  int64_t a1 = size > 64 ? b1.bvextract(63, 0).to_uint64() : b1.to_uint64();
-  int64_t a2 = size > 64 ? b2.bvextract(63, 0).to_uint64() : b2.to_uint64();
+  int64_t a1 = static_cast<int64_t>(size > 64 ? b1.bvextract(63, 0).to_uint64()
+                                              : b1.to_uint64());
+  int64_t a2 = static_cast<int64_t>(size > 64 ? b2.bvextract(63, 0).to_uint64()
+                                              : b2.to_uint64());
   if (b1.get_bit(size - 1))
   {
-    a1 = (UINT64_MAX << size) | a1;
+    a1 = static_cast<int64_t>((UINT64_MAX << size) | static_cast<uint64_t>(a1));
   }
   if (b2.get_bit(size - 1))
   {
-    a2 = (UINT64_MAX << size) | a2;
+    a2 = static_cast<int64_t>((UINT64_MAX << size) | static_cast<uint64_t>(a2));
   }
   std::vector<std::pair<BitVector, BitVector>> bv_args = {
       std::make_pair(zero, b2),
       std::make_pair(b1, zero),
       std::make_pair(b1, b2)};
-  std::vector<std::pair<uint64_t, uint64_t>> int_args = {
+  std::vector<std::pair<int64_t, int64_t>> int_args = {
       std::make_pair(0, a2), std::make_pair(a1, 0), std::make_pair(a1, a2)};
 
   for (size_t i = 0; i < 3; ++i)
   {
     const BitVector& b1 = bv_args[i].first;
     const BitVector& b2 = bv_args[i].second;
-    uint64_t i1         = int_args[i].first;
-    uint64_t i2         = int_args[i].second;
+    int64_t i1          = int_args[i].first;
+    int64_t i2          = int_args[i].second;
     std::vector<BitVector> reses{BitVector(b1)};
     if (fun_kind != INPLACE_THIS)
     {
@@ -2239,7 +2249,7 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
       reses.emplace_back(65);
     }
     BitVector tres;
-    uint64_t ares = 0, atres = 0;
+    int64_t ares = 0, atres = 0;
 
     for (auto& res : reses)
     {
@@ -2264,10 +2274,8 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvsdiv(b2);
           }
-          ares = static_cast<uint64_t>(
-              _sdiv(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
-          atres = static_cast<uint64_t>(
-              _sdiv(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
+          ares  = _sdiv(i1, i2, size);
+          atres = _sdiv(i1, i1, size);
           break;
 
         case SLT:
@@ -2289,10 +2297,8 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvslt(b2);
           }
-          ares = static_cast<uint64_t>(
-              _slt(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
-          atres = static_cast<uint64_t>(
-              _slt(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
+          ares  = _slt(i1, i2, size);
+          atres = _slt(i1, i1, size);
           break;
 
         case SLE:
@@ -2314,10 +2320,8 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvsle(b2);
           }
-          ares = static_cast<uint64_t>(
-              _sle(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
-          atres = static_cast<uint64_t>(
-              _sle(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
+          ares  = _sle(i1, i2, size);
+          atres = _sle(i1, i1, size);
           break;
 
         case SGT:
@@ -2339,10 +2343,8 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvsgt(b2);
           }
-          ares = static_cast<uint64_t>(
-              _sgt(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
-          atres = static_cast<uint64_t>(
-              _sgt(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
+          ares  = _sgt(i1, i2, size);
+          atres = _sgt(i1, i1, size);
           break;
 
         case SGE:
@@ -2364,10 +2366,8 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvsge(b2);
           }
-          ares = static_cast<uint64_t>(
-              _sge(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
-          atres = static_cast<uint64_t>(
-              _sge(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
+          ares  = _sge(i1, i2, size);
+          atres = _sge(i1, i1, size);
           break;
 
         case SREM:
@@ -2389,17 +2389,15 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvsrem(b2);
           }
-          ares = static_cast<uint64_t>(
-              _srem(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
-          atres = static_cast<uint64_t>(
-              _srem(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
+          ares  = _srem(i1, i2, size);
+          atres = _srem(i1, i1, size);
           break;
 
         default: assert(false);
       }
-      ASSERT_EQ(BitVector::from_ui(res.size(), ares).compare(res), 0);
+      ASSERT_EQ(BitVector::from_si(res.size(), ares).compare(res), 0);
       ASSERT_TRUE(tres.is_null()
-                  || BitVector::from_ui(tres.size(), atres).compare(tres) == 0);
+                  || BitVector::from_si(tres.size(), atres).compare(tres) == 0);
     }
   }
 }
@@ -3198,7 +3196,7 @@ TEST_F(TestBitVector, ctor_dtor)
       BitVector::from_si(68, -3).to_string(),
       "11111111111111111111111111111111111111111111111111111111111111111101");
   ASSERT_EQ(
-      BitVector::from_ui(68, -3).to_string(),
+      BitVector::from_ui(68, static_cast<uint64_t>(-3)).to_string(),
       "00001111111111111111111111111111111111111111111111111111111111111101");
   ASSERT_EQ(
       BitVector::from_ui(68, 3).to_string(),
@@ -3325,7 +3323,7 @@ TEST_F(TestBitVector, to_string)
       BitVector::from_si(68, -3).to_string(),
       "11111111111111111111111111111111111111111111111111111111111111111101");
   ASSERT_EQ(
-      BitVector::from_ui(68, -3).to_string(),
+      BitVector::from_ui(68, static_cast<uint64_t>(-3)).to_string(),
       "00001111111111111111111111111111111111111111111111111111111111111101");
   ASSERT_EQ(
       BitVector::from_ui(68, 3).to_string(),
@@ -3343,7 +3341,8 @@ TEST_F(TestBitVector, to_string)
   ASSERT_EQ(BitVector::from_ui(65, UINT64_MAX).to_string(10),
             "18446744073709551615");
   ASSERT_EQ(BitVector::from_si(68, -3).to_string(10), "295147905179352825853");
-  ASSERT_EQ(BitVector::from_ui(68, -3).to_string(10), "18446744073709551613");
+  ASSERT_EQ(BitVector::from_ui(68, static_cast<uint64_t>(-3)).to_string(10),
+            "18446744073709551613");
   ASSERT_EQ(BitVector::from_ui(68, 3).to_string(10), "3");
 
   ASSERT_EQ(BitVector(10).to_string(16), "0");
@@ -3358,7 +3357,8 @@ TEST_F(TestBitVector, to_string)
   ASSERT_EQ(BitVector::from_ui(65, UINT64_MAX).to_string(16),
             "ffffffffffffffff");
   ASSERT_EQ(BitVector::from_si(68, -3).to_string(16), "ffffffffffffffffd");
-  ASSERT_EQ(BitVector::from_ui(68, -3).to_string(16), "fffffffffffffffd");
+  ASSERT_EQ(BitVector::from_ui(68, static_cast<uint64_t>(-3)).to_string(16),
+            "fffffffffffffffd");
   ASSERT_EQ(BitVector::from_ui(68, 3).to_string(16), "3");
 }
 
@@ -3397,10 +3397,10 @@ TEST_F(TestBitVector, compare)
 
   for (uint64_t i = 0, j = 0; i < 15; ++i)
   {
-    uint64_t k = rand() % 16;
+    uint64_t k = static_cast<uint64_t>(rand()) % 16;
     do
     {
-      j = rand() % 16;
+      j = static_cast<uint64_t>(rand()) % 16;
     } while (j == k);
 
     BitVector bv1 = BitVector::from_ui(4, j);

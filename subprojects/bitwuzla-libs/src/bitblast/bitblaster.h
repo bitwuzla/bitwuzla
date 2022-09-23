@@ -238,7 +238,10 @@ class BitblasterInterface
   {
     assert(lower <= upper);
     assert(upper < bits.size());
-    Bits res(bits.begin() + (bits.size() - 1 - upper), bits.end() - lower);
+    Bits res(bits.begin()
+                 + static_cast<typename Bits::difference_type>(
+                     (bits.size() - 1 - upper)),
+             bits.end() - static_cast<typename Bits::difference_type>(lower));
     assert(res.size() == upper - lower + 1);
     return res;
   }

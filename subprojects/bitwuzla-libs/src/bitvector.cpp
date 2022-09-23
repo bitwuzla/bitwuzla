@@ -257,7 +257,8 @@ BitVector::BitVector(uint64_t size, const std::string& value, uint32_t base)
   }
   else
   {
-    d_val_uint64 = uint64_fdiv_r_2exp(size, std::stoull(value, 0, base));
+    d_val_uint64 = uint64_fdiv_r_2exp(
+        size, std::stoull(value, 0, static_cast<int32_t>(base)));
   }
 }
 
@@ -763,19 +764,23 @@ BitVector::is_ones() const
   {
     uint64_t n = mpz_size(d_val_gmp);
     if (n == 0) return false;  // zero
-    uint64_t m = d_size / mp_bits_per_limb;
-    if (d_size % mp_bits_per_limb) m += 1;
+    uint64_t m = d_size / static_cast<const uint64_t>(mp_bits_per_limb);
+    if (d_size % static_cast<const uint64_t>(mp_bits_per_limb)) m += 1;
     if (m != n) return false;  // less limbs used than expected, not ones
     uint64_t max = mp_bits_per_limb == 64 ? UINT64_MAX : UINT32_MAX;
     for (uint64_t i = 0; i < n - 1; ++i)
     {
       mp_limb_t limb = mpz_getlimbn(d_val_gmp, i);
-      if (((uint64_t) limb) != max) return false;
+      if ((static_cast<uint64_t>(limb)) != max) return false;
     }
     mp_limb_t limb = mpz_getlimbn(d_val_gmp, n - 1);
-    if (d_size == (uint64_t) mp_bits_per_limb) return ((uint64_t) limb) == max;
-    m = static_cast<uint64_t>(mp_bits_per_limb - d_size % mp_bits_per_limb);
-    return ((uint64_t) limb) == (max >> m);
+    if (d_size == static_cast<uint64_t>(mp_bits_per_limb))
+    {
+      return (static_cast<uint64_t>(limb)) == max;
+    }
+    m = static_cast<uint64_t>(mp_bits_per_limb)
+        - d_size % static_cast<uint64_t>(mp_bits_per_limb);
+    return (static_cast<uint64_t>(limb)) == (max >> m);
   }
   return d_val_uint64 == uint64_fdiv_r_2exp(d_size, UINT64_MAX);
 }
@@ -3155,8 +3160,9 @@ BitVector::get_limb(void* limb, uint64_t nbits_rem, bool zeros) const
     }
     else
     {
-      n_limbs =
-          (d_val_uint64 >> mp_bits_per_limb) == 0 ? 1 : 64 / mp_bits_per_limb;
+      n_limbs = (d_val_uint64 >> mp_bits_per_limb) == 0
+                    ? 1
+                    : 64 / static_cast<uint64_t>(mp_bits_per_limb);
     }
   }
 
@@ -3183,7 +3189,8 @@ BitVector::get_limb(void* limb, uint64_t nbits_rem, bool zeros) const
   }
 
   /* for leading ones */
-  n_limbs_total = d_size / mp_bits_per_limb + (nbits_rem ? 1 : 0);
+  n_limbs_total =
+      d_size / static_cast<uint64_t>(mp_bits_per_limb) + (nbits_rem ? 1 : 0);
   if (n_limbs != n_limbs_total)
   {
     /* no leading ones, simulate */

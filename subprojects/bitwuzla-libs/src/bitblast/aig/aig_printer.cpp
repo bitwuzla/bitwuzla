@@ -48,7 +48,7 @@ Smt2Printer::print(std::stringstream& ss, const std::vector<AigNode>& bits)
   {
     AigNode n = visit.back();
     visit.pop_back();
-    uint64_t id = std::labs(n.get_id());
+    int64_t id = std::labs(n.get_id());
 
     auto it = cache.find(id);
     if (it == cache.end())

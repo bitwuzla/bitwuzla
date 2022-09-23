@@ -678,8 +678,9 @@ AigManager::garbage_collect(AigNodeData* d)
     }
 
     // Delete node data
-    assert(d_node_data[cur->d_id - 1]->d_id == cur->d_id);
-    d_node_data[cur->d_id - 1].reset(nullptr);
+    assert(cur->d_id > 0);
+    assert(d_node_data[static_cast<size_t>(cur->d_id) - 1]->d_id == cur->d_id);
+    d_node_data[static_cast<size_t>(cur->d_id) - 1].reset(nullptr);
   } while (!visit.empty());
 
   d_gc_mode = false;

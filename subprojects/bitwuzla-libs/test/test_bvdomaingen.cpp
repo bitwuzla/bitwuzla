@@ -89,7 +89,7 @@ TestBvDomainGen::generate_expected_signed(std::string x,
     {
       bv_mask.set_bit(i, false);
     }
-    int64_t mask = bv_mask.to_uint64();
+    int64_t mask = static_cast<int64_t>(bv_mask.to_uint64());
     imin |= mask;
   }
 
@@ -100,7 +100,7 @@ TestBvDomainGen::generate_expected_signed(std::string x,
     {
       bv_mask.set_bit(i, false);
     }
-    int64_t mask = bv_mask.to_uint64();
+    int64_t mask = static_cast<int64_t>(bv_mask.to_uint64());
     imax |= mask;
   }
 
@@ -108,7 +108,7 @@ TestBvDomainGen::generate_expected_signed(std::string x,
   {
     for (int64_t i = imin; i <= imax; ++i)
     {
-      std::string v = std::bitset<TEST_BW>(i).to_string();
+      std::string v = std::bitset<TEST_BW>(static_cast<size_t>(i)).to_string();
       if (check_const_bits(x, v))
       {
         res.push_back(v);

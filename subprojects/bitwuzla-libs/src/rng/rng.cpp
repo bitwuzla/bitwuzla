@@ -8,7 +8,7 @@ namespace bzla {
 
 RNG::RNG(uint32_t seed) : d_seed(seed)
 {
-  d_rng.seed(seed);
+  d_rng.seed(d_seed);
   gmp_randinit_mt(d_gmp_randstate);
   gmp_randseed_ui(d_gmp_randstate, pick<uint32_t>());
 }

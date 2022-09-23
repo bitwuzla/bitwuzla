@@ -156,7 +156,7 @@ AigCnfEncoder::_encode(const AigNode& aig)
 void
 AigCnfEncoder::resize(const AigNode& aig)
 {
-  size_t pos = std::abs(aig.get_id()) - 1;
+  size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
   if (pos < d_aig_encoded.size())
   {
     return;
@@ -167,7 +167,7 @@ AigCnfEncoder::resize(const AigNode& aig)
 bool
 AigCnfEncoder::is_encoded(const AigNode& aig) const
 {
-  size_t pos = std::abs(aig.get_id()) - 1;
+  size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
   if (pos < d_aig_encoded.size())
   {
     return d_aig_encoded[pos];
@@ -178,7 +178,7 @@ AigCnfEncoder::is_encoded(const AigNode& aig) const
 void
 AigCnfEncoder::set_encoded(const AigNode& aig)
 {
-  size_t pos = std::abs(aig.get_id()) - 1;
+  size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
   assert(pos < d_aig_encoded.size());
   d_aig_encoded[pos] = true;
 }

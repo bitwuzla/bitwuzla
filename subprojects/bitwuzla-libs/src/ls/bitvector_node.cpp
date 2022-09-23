@@ -107,7 +107,7 @@ BitVectorNode::BitVectorNode(RNG* rng,
   d_all_const = child0->is_const() && child1->is_const() && child2->is_const();
 }
 
-int32_t
+uint32_t
 BitVectorNode::select_path_non_const(std::vector<uint32_t>& inputs) const
 {
   assert(inputs.empty());
@@ -116,7 +116,7 @@ BitVectorNode::select_path_non_const(std::vector<uint32_t>& inputs) const
     if (d_children[i]->is_const()) continue;
     inputs.push_back(i);
   }
-  if (inputs.size() > 1) return -1;
+  if (inputs.size() > 1) return static_cast<uint32_t>(-1);
   return inputs[0];
 }
 
@@ -128,11 +128,11 @@ BitVectorNode::select_path(const BitVector& t)
   std::vector<uint32_t> inputs;
 
   /* select non-const operand if only one is non-const */
-  int32_t pos_x = select_path_non_const(inputs);
+  uint32_t pos_x = select_path_non_const(inputs);
 
   /* select essential input if any and path selection based on essential
    * inputs is enabled. */
-  if (pos_x == -1 && s_path_sel_essential
+  if (pos_x == static_cast<uint32_t>(-1) && s_path_sel_essential
       && d_rng->pick_with_prob(s_prob_pick_ess_input))
   {
     /* determine essential inputs */
@@ -153,7 +153,7 @@ BitVectorNode::select_path(const BitVector& t)
 
   /* select random input if operation has no essential inputs or if random path
    * selection enabled */
-  if (pos_x == -1)
+  if (pos_x == static_cast<uint32_t>(-1))
   {
     pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>(inputs);
   }
@@ -5843,7 +5843,7 @@ BitVectorIte::consistent_value(const BitVector& t, uint32_t pos_x)
   return *d_consistent;
 }
 
-int32_t
+uint32_t
 BitVectorIte::select_path_non_const(std::vector<uint32_t>& inputs) const
 {
   assert(inputs.empty());
@@ -5855,8 +5855,11 @@ BitVectorIte::select_path_non_const(std::vector<uint32_t>& inputs) const
     if (i == 2 && cond) continue;
     inputs.push_back(i);
   }
-  if (inputs.size() == 1) return inputs[0];
-  return -1;
+  if (inputs.size() == 1)
+  {
+    return inputs[0];
+  }
+  return static_cast<uint32_t>(-1);
 }
 
 uint32_t
@@ -5867,11 +5870,11 @@ BitVectorIte::select_path(const BitVector& t)
   std::vector<uint32_t> inputs;
 
   /* select non-const operand if only one is non-const */
-  int32_t pos_x = select_path_non_const(inputs);
+  uint32_t pos_x = select_path_non_const(inputs);
 
   /* select essential input if any and path selection based on essential
    * inputs is enabled. */
-  if (pos_x == -1 && s_path_sel_essential
+  if (pos_x == static_cast<uint32_t>(-1) && s_path_sel_essential
       && d_rng->pick_with_prob(s_prob_pick_ess_input))
   {
     /* determine essential inputs, disabled branches are excluded */
@@ -5888,7 +5891,7 @@ BitVectorIte::select_path(const BitVector& t)
 
   /* select random input if operation has no essential inputs or if random path
    * selection enabled */
-  if (pos_x == -1)
+  if (pos_x == static_cast<uint32_t>(-1))
   {
     /* It can happen that inputs is empty (for example, if cond and enabled
      * branch are const). This shouldn't happen in practice, but can happen
