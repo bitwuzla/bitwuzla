@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include "printer/printer.h"
 #include "type/type_data.h"
 
 namespace bzla {
@@ -173,6 +174,15 @@ Type::Type(type::TypeData* data) : d_data(data)
 {
   assert(data != nullptr);
   d_data->inc_ref();
+}
+
+/* --- Other --------------------------------------------------------------- */
+
+std::ostream&
+operator<<(std::ostream& out, const Type& type)
+{
+  Printer::print(out, type);
+  return out;
 }
 
 }  // namespace bzla

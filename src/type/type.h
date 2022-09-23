@@ -2,6 +2,7 @@
 #define BZLA_TYPE_TYPE_H_INCLUDED
 
 #include <cstdint>
+#include <ostream>
 #include <vector>
 
 namespace bzla {
@@ -116,6 +117,9 @@ class Type
   /** Type payload */
   type::TypeData* d_data = nullptr;
 };
+
+/** Print type to stream. */
+std::ostream& operator<<(std::ostream& out, const Type& type);
 
 }  // namespace bzla
 
