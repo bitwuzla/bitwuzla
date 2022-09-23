@@ -235,13 +235,13 @@ TEST_F(TestRewriter, bv_slt_eval)
   Node bvslt0 = d_nm.mk_node(Kind::BV_SLT,
                              {d_nm.mk_value(BitVector(4, "1001")),
                               d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(d_nm.mk_value(BitVector::mk_true()), d_rewriter.rewrite(bvslt0));
+  ASSERT_EQ(d_nm.mk_value(true), d_rewriter.rewrite(bvslt0));
   Node bvslt1 = d_nm.mk_node(Kind::BV_SLT,
                              {d_nm.mk_value(BitVector(4, "0001")),
                               d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(d_nm.mk_value(BitVector::mk_false()), d_rewriter.rewrite(bvslt1));
+  ASSERT_EQ(d_nm.mk_value(false), d_rewriter.rewrite(bvslt1));
   // with empty cache
-  ASSERT_EQ(d_nm.mk_value(BitVector::mk_false()), Rewriter().rewrite(bvslt1));
+  ASSERT_EQ(d_nm.mk_value(false), Rewriter().rewrite(bvslt1));
   // does not apply
   Node bvslt2 = d_nm.mk_node(
       Kind::BV_SLT,
@@ -286,13 +286,13 @@ TEST_F(TestRewriter, bv_ult_eval)
   Node bvult0 = d_nm.mk_node(Kind::BV_ULT,
                              {d_nm.mk_value(BitVector(4, "1001")),
                               d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(d_nm.mk_value(BitVector::mk_true()), d_rewriter.rewrite(bvult0));
+  ASSERT_EQ(d_nm.mk_value(true), d_rewriter.rewrite(bvult0));
   Node bvult1 = d_nm.mk_node(Kind::BV_ULT,
                              {d_nm.mk_value(BitVector(4, "1110")),
                               d_nm.mk_value(BitVector(4, "0001"))});
-  ASSERT_EQ(d_nm.mk_value(BitVector::mk_false()), d_rewriter.rewrite(bvult1));
+  ASSERT_EQ(d_nm.mk_value(false), d_rewriter.rewrite(bvult1));
   // with empty cache
-  ASSERT_EQ(d_nm.mk_value(BitVector::mk_false()), Rewriter().rewrite(bvult1));
+  ASSERT_EQ(d_nm.mk_value(false), Rewriter().rewrite(bvult1));
   // does not apply
   Node bvult2 = d_nm.mk_node(
       Kind::BV_ULT,

@@ -113,7 +113,8 @@ RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   if (!node[0].is_value() || !node[1].is_value()) return node;
   Node res = NodeManager::get().mk_value(
-      node[0].value<BitVector>().bvslt(node[1].value<BitVector>()));
+      node[0].value<BitVector>().signed_compare(node[1].value<BitVector>())
+      < 0);
   return res;
 }
 
@@ -141,7 +142,7 @@ RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
   (void) rewriter;
   if (!node[0].is_value() || !node[1].is_value()) return node;
   Node res = NodeManager::get().mk_value(
-      node[0].value<BitVector>().bvult(node[1].value<BitVector>()));
+      node[0].value<BitVector>().compare(node[1].value<BitVector>()) < 0);
   return res;
 }
 

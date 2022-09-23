@@ -40,6 +40,7 @@ Rewriter::rewrite(const Node& node)
         for (const auto& c : cur)
         {
           children.push_back(d_cache.at(c));
+          assert(!children.back().is_null());
         }
         for (size_t i = 0, n = cur.num_indices(); i < n; ++i)
         {
@@ -136,6 +137,7 @@ Rewriter::_rewrite(const Node& node)
     default: assert(false);
   }
 
+  assert(res.type() == node.type());
   return res;
 }
 
