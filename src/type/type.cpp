@@ -28,15 +28,15 @@ Type::Type(const Type& other) : d_data(other.d_data)
 Type&
 Type::operator=(const Type& other)
 {
+  if (other.d_data)
+  {
+    other.d_data->inc_ref();
+  }
   if (d_data)
   {
     d_data->dec_ref();
   }
-  if (other.d_data)
-  {
-    d_data = other.d_data;
-    d_data->inc_ref();
-  }
+  d_data = other.d_data;
   return *this;
 }
 
