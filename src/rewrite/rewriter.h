@@ -15,11 +15,11 @@ class Rewriter
   const Node& rewrite(const Node& node);
 
   const Node& mk_node(node::Kind kind,
-               const std::vector<Node>& children,
-               const std::vector<uint64_t>& indices = {});
+                      const std::vector<Node>& children,
+                      const std::vector<uint64_t>& indices = {});
 
  private:
-  Node _rewrite(const Node& node);
+  const Node& _rewrite(const Node& node);
 
   Node rewrite_eq(const Node& node);
   Node rewrite_ite(const Node& node);

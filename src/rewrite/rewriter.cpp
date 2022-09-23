@@ -24,10 +24,9 @@ Rewriter::rewrite(const Node& node)
   do
   {
     const Node& cur = visit.back();
-    auto it         = d_cache.find(cur);
-    if (it == d_cache.end())
+    auto [it, inserted] = d_cache.emplace(cur, Node());
+    if (inserted)
     {
-      d_cache.emplace(cur, Node());
       visit.insert(visit.end(), cur.begin(), cur.end());
       continue;
     }
@@ -64,17 +63,22 @@ Rewriter::mk_node(node::Kind kind,
                   const std::vector<Node>& children,
                   const std::vector<uint64_t>& indices)
 {
-  return rewrite(NodeManager::get().mk_node(kind, children, indices));
+  return _rewrite(NodeManager::get().mk_node(kind, children, indices));
 }
-
 
 /* === Rewriter private ===================================================== */
 
-Node
+const Node&
 Rewriter::_rewrite(const Node& node)
 {
-  Node res = node;
+  // Lookup rewrite cache
+  auto [it, inserted] = d_cache.emplace(node, Node());
+  if (!inserted && !it->second.is_null())
+  {
+    return it->second;
+  }
 
+  Node res;
   switch (node.kind())
   {
     case node::Kind::EQUAL: res = rewrite_eq(node); break;
@@ -136,9 +140,13 @@ Rewriter::_rewrite(const Node& node)
 
     default: assert(false);
   }
-
   assert(res.type() == node.type());
-  return res;
+  assert(it->second.is_null());
+
+  // Cache result
+  it->second = res;
+
+  return it->second;
 }
 
 /* -------------------------------------------------------------------------- */
