@@ -209,7 +209,7 @@ mk_kind_info()
   info.init(Kind::BV_REDAND)      = {1, 0, "BV_REDAND", "bvredand"};
   info.init(Kind::BV_REDOR)       = {1, 0, "BV_REDOR", "bvredor"};
   info.init(Kind::BV_REDXOR)      = {1, 0, "BV_REDXOR", "bvredxor"};
-  info.init(Kind::BV_REPEAT)      = {1, 1, "BV_REPEAT", "bvrepeat"};
+  info.init(Kind::BV_REPEAT)      = {1, 1, "BV_REPEAT", "repeat"};
   info.init(Kind::BV_ROL)         = {1, 1, "BV_ROL", "bvrol"};
   info.init(Kind::BV_ROLI)        = {1, 1, "BV_ROLI", "rotate_left"};
   info.init(Kind::BV_ROR)         = {2, 0, "BV_ROR", "bvror"};
