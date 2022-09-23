@@ -475,6 +475,9 @@ NodeManager::check_type(Kind kind,
       break;
 
     // Unary bit-vector operators
+    case Kind::BV_REDAND:
+    case Kind::BV_REDOR:
+    case Kind::BV_REDXOR:
     case Kind::BV_NEG:
     case Kind::BV_NOT:
       if (!children[0].type().is_bv())
@@ -493,9 +496,6 @@ NodeManager::check_type(Kind kind,
     case Kind::BV_NAND:
     case Kind::BV_NOR:
     case Kind::BV_OR:
-    case Kind::BV_REDAND:
-    case Kind::BV_REDOR:
-    case Kind::BV_REDXOR:
     case Kind::BV_ROL:
     case Kind::BV_ROR:
     case Kind::BV_SADDO:
