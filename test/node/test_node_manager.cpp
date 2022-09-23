@@ -101,15 +101,15 @@ TEST_F(TestNodeManager, mk_value_bool)
 TEST_F(TestNodeManager, mk_value_bv)
 {
   NodeManager& nm = NodeManager::get();
-  BitVector bv(32, 1ul);
+  BitVector bv    = BitVector::from_ui(32, 1);
 
   Node val = nm.mk_value(bv);
   ASSERT_EQ(val.kind(), Kind::VALUE);
   ASSERT_EQ(val.type(), nm.mk_bv_type(32));
-  ASSERT_EQ(val, nm.mk_value(BitVector(32, 1ul)));
+  ASSERT_EQ(val, nm.mk_value(BitVector::from_ui(32, 1)));
   ASSERT_EQ(val.value<BitVector>(), bv);
-  ASSERT_EQ(val.value<BitVector>(), BitVector(32, 1ul));
-  ASSERT_NE(val, nm.mk_value(BitVector(32, 2ul)));
+  ASSERT_EQ(val.value<BitVector>(), BitVector::from_ui(32, 1));
+  ASSERT_NE(val, nm.mk_value(BitVector::from_ui(32, 2)));
 };
 
 TEST_F(TestNodeManager, mk_value_rm)

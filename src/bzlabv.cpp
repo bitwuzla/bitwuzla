@@ -116,7 +116,7 @@ bzla_bv_uint64_to_bv(BzlaMemMgr *mm, uint64_t value, uint32_t bw)
 
   BzlaBitVector *res;
   BZLA_CNEW(mm, res);
-  res->d_bv.reset(new bzla::BitVector(bw, value));
+  res->d_bv.reset(new bzla::BitVector(bzla::BitVector::from_ui(bw, value)));
   return res;
 }
 
@@ -127,7 +127,7 @@ bzla_bv_int64_to_bv(BzlaMemMgr *mm, int64_t value, uint32_t bw)
 
   BzlaBitVector *res;
   BZLA_CNEW(mm, res);
-  res->d_bv.reset(new bzla::BitVector(bw, value));
+  res->d_bv.reset(new bzla::BitVector(bzla::BitVector::from_si(bw, value)));
   return res;
 }
 

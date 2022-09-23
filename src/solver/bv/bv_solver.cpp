@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "bitvector.h"
 #include "node/node_manager.h"
 #include "sat/cadical.h"
 #include "solving_context.h"
@@ -202,7 +203,7 @@ BvSolver::value(const Node& term)
           bool equal = get_cached_value(cur[0]).value<BitVector>()
                        == get_cached_value(cur[1]).value<BitVector>();
           value = nm.mk_value(
-              BitVector(cur[0].type().bv_size(), equal ? 1ul : 0ul));
+              BitVector::from_ui(cur[0].type().bv_size(), equal ? 1 : 0));
         }
         break;
 
@@ -375,7 +376,7 @@ BvSolver::bitblast(const Node& t)
         case Kind::VALUE:
           it->second = type.is_bool()
                            ? d_bitblaster.bv_value(
-                               BitVector(1, cur.value<bool>() ? 1ul : 0ul))
+                               BitVector::from_ui(1, cur.value<bool>() ? 1 : 0))
                            : d_bitblaster.bv_value(cur.value<BitVector>());
           break;
 
@@ -581,6 +582,7 @@ BvSolver::bitblast(const Node& t)
 void
 BvSolver::register_abstraction(const Node& term)
 {
+  (void) term;
   // TODO:
 }
 
@@ -635,7 +637,7 @@ BvSolver::get_assignment(const Node& term) const
     }
     else
     {
-      return nm.mk_value(BitVector(type.bv_size(), 0ul));
+      return nm.mk_value(BitVector::mk_zero(type.bv_size()));
     }
   }
 

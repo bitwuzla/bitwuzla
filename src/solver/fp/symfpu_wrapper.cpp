@@ -11,7 +11,7 @@ template <bool is_signed>
 SymFpuBV<is_signed>::SymFpuBV(const uint32_t bw, const uint32_t val)
 {
   assert(bw);
-  d_bv.reset(new BitVector(bw, static_cast<uint64_t>(val)));
+  d_bv.reset(new BitVector(BitVector::from_ui(bw, static_cast<uint64_t>(val))));
 }
 
 template <bool is_signed>
@@ -1183,7 +1183,7 @@ SymFpuSymRM::init_const(const RoundingMode rm)
   assert(s_bzla);
   assert(rm != RoundingMode::NUM_RM);
   BzlaMemMgr *mm    = s_bzla->mm;
-  BitVector rmbv       = BitVector(BZLA_RM_BW, static_cast<uint64_t>(rm));
+  BitVector rmbv    = BitVector::from_ui(BZLA_RM_BW, static_cast<uint64_t>(rm));
   BzlaBitVector *brmbv = bzla_bv_new(s_bzla->mm, rmbv.size());
   brmbv->d_bv.reset(new bzla::BitVector(rmbv));
   BzlaNode *res = bzla_exp_bv_const(s_bzla, brmbv);

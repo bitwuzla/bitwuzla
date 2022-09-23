@@ -284,7 +284,7 @@ RewriteRule<RewriteRuleKind::BV_ROL_ELIM>::_apply(Rewriter& rewriter,
   }
 
   NodeManager& nm       = NodeManager::get();
-  Node num_bits         = nm.mk_value(BitVector(size, size));
+  Node num_bits         = nm.mk_value(BitVector::from_ui(size, size));
   const Node& bits_left = rewriter.mk_node(Kind::BV_UREM, {node[1], num_bits});
   const Node& bits_right =
       rewriter.mk_node(Kind::BV_SUB, {num_bits, bits_left});
@@ -334,7 +334,7 @@ RewriteRule<RewriteRuleKind::BV_ROR_ELIM>::_apply(Rewriter& rewriter,
   }
 
   NodeManager& nm        = NodeManager::get();
-  Node num_bits          = nm.mk_value(BitVector(size, size));
+  Node num_bits          = nm.mk_value(BitVector::from_ui(size, size));
   const Node& bits_right = rewriter.mk_node(Kind::BV_UREM, {node[1], num_bits});
   const Node& bits_left =
       rewriter.mk_node(Kind::BV_SUB, {num_bits, bits_right});

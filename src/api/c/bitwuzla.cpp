@@ -1966,8 +1966,8 @@ bitwuzla_mk_bv_value_uint64(Bitwuzla *bitwuzla,
       bzla->mm, value, bzla_sort_bv_get_width(bzla, bzla_sort));
   BzlaNode *res = bzla_exp_bv_const(bzla, bv);
   bzla_bv_free(bzla->mm, bv);
-  Node term =
-      NodeManager::get().mk_value(BitVector(sort->d_type.bv_size(), value));
+  Node term = NodeManager::get().mk_value(
+      BitVector::from_ui(sort->d_type.bv_size(), value));
   BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
@@ -1993,8 +1993,8 @@ bitwuzla_mk_bv_value_int64(Bitwuzla *bitwuzla,
       bzla->mm, value, bzla_sort_bv_get_width(bzla, bzla_sort));
   BzlaNode *res = bzla_exp_bv_const(bzla, bv);
   bzla_bv_free(bzla->mm, bv);
-  Node term =
-      NodeManager::get().mk_value(BitVector(sort->d_type.bv_size(), value));
+  Node term = NodeManager::get().mk_value(
+      BitVector::from_si(sort->d_type.bv_size(), value));
   BZLA_RETURN_BITWUZLA_TERM(res, term);
 }
 
