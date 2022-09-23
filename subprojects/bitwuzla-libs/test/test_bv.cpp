@@ -422,7 +422,7 @@ TestBitVector::mk_ones(uint64_t size)
   {
     return BitVector(size, std::string(size, '1'), 2);
   }
-  BitVector r(64, UINT64_MAX);
+  BitVector r = BitVector::from_ui(64, UINT64_MAX);
   BitVector l(size - 64, std::string(size - 64, '1'), 2);
   return l.bvconcat(r);
 }
@@ -432,10 +432,11 @@ TestBitVector::mk_min_signed(uint64_t size)
 {
   if (size <= 64)
   {
-    return BitVector(size, ((uint64_t) 1) << (size - 1));
+    return BitVector::from_ui(size, ((uint64_t) 1) << (size - 1));
   }
-  BitVector r(64, 0ul);
-  BitVector l(size - 64, ((uint64_t) 1) << (size - 1 - 64));
+  BitVector r = BitVector::from_ui(64, 0);
+  BitVector l =
+      BitVector::from_ui(size - 64, ((uint64_t) 1) << (size - 1 - 64));
   return l.bvconcat(r);
 }
 
@@ -444,10 +445,11 @@ TestBitVector::mk_max_signed(uint64_t size)
 {
   if (size <= 64)
   {
-    return BitVector(size, (((uint64_t) 1) << (size - 1)) - 1);
+    return BitVector::from_ui(size, (((uint64_t) 1) << (size - 1)) - 1);
   }
-  BitVector r(64, UINT64_MAX);
-  BitVector l(size - 64, (((uint64_t) 1) << (size - 1 - 64)) - 1);
+  BitVector r = BitVector::from_ui(64, UINT64_MAX);
+  BitVector l =
+      BitVector::from_ui(size - 64, (((uint64_t) 1) << (size - 1 - 64)) - 1);
   return l.bvconcat(r);
 }
 
@@ -664,7 +666,7 @@ TestBitVector::test_extend(BvFunKind fun_kind, Kind kind)
     uint64_t s = size - n;
     for (uint64_t i = 0, m = 1 << s; i < m; ++i)
     {
-      test_extend_aux(fun_kind, kind, BitVector(s, i), n);
+      test_extend_aux(fun_kind, kind, BitVector::from_ui(s, i), n);
     }
   }
   /* test random values for bit-widths 16, 64, 65, 127 */
@@ -818,8 +820,8 @@ TestBitVector::test_ite_aux(BvFunKind fun_kind,
       BitVector tres1(b1);
       (void) tres0.ibvite(tres0, b1, b2);
       (void) tres1.ibvite(b0, tres1, tres1);
-      ASSERT_TRUE(BitVector(tres0.size(), ares).compare(tres0) == 0);
-      ASSERT_TRUE(BitVector(tres0.size(), atres).compare(tres1) == 0);
+      ASSERT_TRUE(BitVector::from_ui(tres0.size(), ares).compare(tres0) == 0);
+      ASSERT_TRUE(BitVector::from_ui(tres0.size(), atres).compare(tres1) == 0);
     }
     else
     {
@@ -827,7 +829,7 @@ TestBitVector::test_ite_aux(BvFunKind fun_kind,
       res = BitVector::bvite(b0, b1, b2);
     }
 
-    ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+    ASSERT_EQ(BitVector::from_ui(res.size(), ares).compare(res), 0);
   }
 }
 
@@ -844,9 +846,9 @@ TestBitVector::test_ite(BvFunKind fun_kind)
         for (uint64_t j = 0, m = 1 << size; j < m; ++j)
         {
           test_ite_aux(fun_kind,
-                       BitVector(1, k),
-                       BitVector(size, i),
-                       BitVector(size, j));
+                       BitVector::from_ui(1, k),
+                       BitVector::from_ui(size, i),
+                       BitVector::from_ui(size, j));
         }
       }
     }
@@ -936,7 +938,7 @@ TestBitVector::test_modinv(BvFunKind fun_kind)
     for (uint64_t i = 0, n = 1 << size; i < n; ++i)
     {
       if ((i & 1) == 0) continue;
-      test_modinv_aux(fun_kind, BitVector(size, i));
+      test_modinv_aux(fun_kind, BitVector::from_ui(size, i));
     }
   }
   /* test random values for bit-widths 16, 32, 35 */
@@ -1103,15 +1105,16 @@ TestBitVector::test_unary_aux(BvFunKind fun_kind,
     }
     if (res.size() > 64)
     {
-      ASSERT_EQ(BitVector(64, ares).compare(res.ibvextract(63, 0)), 0);
-      ASSERT_TRUE(tres.is_null()
-                  || BitVector(64, ares).compare(tres.ibvextract(63, 0)) == 0);
+      ASSERT_EQ(BitVector::from_ui(64, ares).compare(res.ibvextract(63, 0)), 0);
+      ASSERT_TRUE(
+          tres.is_null()
+          || BitVector::from_ui(64, ares).compare(tres.ibvextract(63, 0)) == 0);
     }
     else
     {
-      ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+      ASSERT_EQ(BitVector::from_ui(res.size(), ares).compare(res), 0);
       ASSERT_TRUE(tres.is_null()
-                  || BitVector(tres.size(), ares).compare(tres) == 0);
+                  || BitVector::from_ui(tres.size(), ares).compare(tres) == 0);
     }
   }
 }
@@ -1124,7 +1127,7 @@ TestBitVector::test_unary(BvFunKind fun_kind, Kind kind)
   {
     for (uint64_t i = 0, n = 1 << size; i < n; ++i)
     {
-      test_unary_aux(fun_kind, kind, BitVector(size, i));
+      test_unary_aux(fun_kind, kind, BitVector::from_ui(size, i));
     }
   }
   /* test random values for bit-widths 16, 32, 35 */
@@ -1791,16 +1794,19 @@ TestBitVector::test_binary_aux(BvFunKind fun_kind,
       }
       if (res.size() > 64)
       {
-        ASSERT_EQ(BitVector(64, ares).compare(res.ibvextract(63, 0)), 0);
-        ASSERT_TRUE(tres.is_null()
-                    || BitVector(64, atres).compare(tres.ibvextract(63, 0))
-                           == 0);
+        ASSERT_EQ(BitVector::from_ui(64, ares).compare(res.ibvextract(63, 0)),
+                  0);
+        ASSERT_TRUE(
+            tres.is_null()
+            || BitVector::from_ui(64, atres).compare(tres.ibvextract(63, 0))
+                   == 0);
       }
       else
       {
-        ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+        ASSERT_EQ(BitVector::from_ui(res.size(), ares).compare(res), 0);
         ASSERT_TRUE(tres.is_null()
-                    || BitVector(tres.size(), atres).compare(tres) == 0);
+                    || BitVector::from_ui(tres.size(), atres).compare(tres)
+                           == 0);
       }
     }
   }
@@ -1816,7 +1822,10 @@ TestBitVector::test_binary(BvFunKind fun_kind, TestBitVector::Kind kind)
     {
       for (uint64_t j = 0, m = 1 << size; j < m; ++j)
       {
-        test_binary_aux(fun_kind, kind, BitVector(size, i), BitVector(size, j));
+        test_binary_aux(fun_kind,
+                        kind,
+                        BitVector::from_ui(size, i),
+                        BitVector::from_ui(size, j));
       }
     }
     if (kind == IMPLIES) return;
@@ -2255,8 +2264,10 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvsdiv(b2);
           }
-          ares  = _sdiv(i1, i2, size);
-          atres = _sdiv(i1, i1, size);
+          ares = static_cast<uint64_t>(
+              _sdiv(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
+          atres = static_cast<uint64_t>(
+              _sdiv(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
           break;
 
         case SLT:
@@ -2278,8 +2289,10 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvslt(b2);
           }
-          ares  = _slt(i1, i2, size);
-          atres = _slt(i1, i1, size);
+          ares = static_cast<uint64_t>(
+              _slt(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
+          atres = static_cast<uint64_t>(
+              _slt(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
           break;
 
         case SLE:
@@ -2301,8 +2314,10 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvsle(b2);
           }
-          ares  = _sle(i1, i2, size);
-          atres = _sle(i1, i1, size);
+          ares = static_cast<uint64_t>(
+              _sle(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
+          atres = static_cast<uint64_t>(
+              _sle(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
           break;
 
         case SGT:
@@ -2324,8 +2339,10 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvsgt(b2);
           }
-          ares  = _sgt(i1, i2, size);
-          atres = _sgt(i1, i1, size);
+          ares = static_cast<uint64_t>(
+              _sgt(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
+          atres = static_cast<uint64_t>(
+              _sgt(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
           break;
 
         case SGE:
@@ -2347,8 +2364,10 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvsge(b2);
           }
-          ares  = _sge(i1, i2, size);
-          atres = _sge(i1, i1, size);
+          ares = static_cast<uint64_t>(
+              _sge(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
+          atres = static_cast<uint64_t>(
+              _sge(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
           break;
 
         case SREM:
@@ -2370,15 +2389,17 @@ TestBitVector::test_binary_signed_aux(BvFunKind fun_kind,
           {
             res = b1.bvsrem(b2);
           }
-          ares  = _srem(i1, i2, size);
-          atres = _srem(i1, i1, size);
+          ares = static_cast<uint64_t>(
+              _srem(static_cast<int64_t>(i1), static_cast<int64_t>(i2), size));
+          atres = static_cast<uint64_t>(
+              _srem(static_cast<int64_t>(i1), static_cast<int64_t>(i1), size));
           break;
 
         default: assert(false);
       }
-      ASSERT_EQ(BitVector(res.size(), ares).compare(res), 0);
+      ASSERT_EQ(BitVector::from_ui(res.size(), ares).compare(res), 0);
       ASSERT_TRUE(tres.is_null()
-                  || BitVector(tres.size(), atres).compare(tres) == 0);
+                  || BitVector::from_ui(tres.size(), atres).compare(tres) == 0);
     }
   }
 }
@@ -2393,8 +2414,10 @@ TestBitVector::test_binary_signed(BvFunKind fun_kind, Kind kind)
     {
       for (uint64_t j = 0, m = 1 << size; j < m; ++j)
       {
-        test_binary_signed_aux(
-            fun_kind, kind, BitVector(size, i), BitVector(size, j));
+        test_binary_signed_aux(fun_kind,
+                               kind,
+                               BitVector::from_ui(size, i),
+                               BitVector::from_ui(size, j));
       }
     }
   }
@@ -2575,7 +2598,8 @@ TestBitVector::test_concat(BvFunKind fun_kind)
     {
       for (uint64_t j = 0, m = 1 << size1; j < m; ++j)
       {
-        test_concat_aux(fun_kind, BitVector(size, i), BitVector(size, j));
+        test_concat_aux(
+            fun_kind, BitVector::from_ui(size, i), BitVector::from_ui(size, j));
       }
     }
   }
@@ -2659,15 +2683,15 @@ TestBitVector::test_extract(BvFunKind fun_kind)
   {
     for (uint64_t i = 0, n = 1 << size; i < n; ++i)
     {
-      test_extract_aux(fun_kind, BitVector(size, i));
+      test_extract_aux(fun_kind, BitVector::from_ui(size, i));
     }
   }
   /* test random values for bit-widths 16, 32, 35 */
   for (uint64_t i = 0; i < N_TESTS; ++i)
   {
-    test_extract_aux(fun_kind, BitVector(16, i));
-    test_extract_aux(fun_kind, BitVector(32, i));
-    test_extract_aux(fun_kind, BitVector(35, i));
+    test_extract_aux(fun_kind, BitVector::from_ui(16, i));
+    test_extract_aux(fun_kind, BitVector::from_ui(32, i));
+    test_extract_aux(fun_kind, BitVector::from_ui(35, i));
   }
   ASSERT_DEATH(BitVector(33, *d_rng).bvextract(31, 32), "idx_hi >= idx_lo");
 }
@@ -3166,23 +3190,23 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_EQ(BitVector(8, "a1", 16).to_string(), "10100001");
   ASSERT_EQ(BitVector(8, "F1", 16).to_string(), "11110001");
 
-  ASSERT_EQ(BitVector(8, -3l).to_string(), "11111101");
-  ASSERT_EQ(BitVector(8, -127l).to_string(), "10000001");
-  ASSERT_EQ(BitVector(8, -128l).to_string(), "10000000");
+  ASSERT_EQ(BitVector::from_si(8, -3).to_string(), "11111101");
+  ASSERT_EQ(BitVector::from_si(8, -127).to_string(), "10000001");
+  ASSERT_EQ(BitVector::from_si(8, -128).to_string(), "10000000");
 
   ASSERT_EQ(
-      BitVector(68, -3l).to_string(),
+      BitVector::from_si(68, -3).to_string(),
       "11111111111111111111111111111111111111111111111111111111111111111101");
   ASSERT_EQ(
-      BitVector(68, -3ul).to_string(),
+      BitVector::from_ui(68, -3).to_string(),
       "00001111111111111111111111111111111111111111111111111111111111111101");
   ASSERT_EQ(
-      BitVector(68, 3ul).to_string(),
+      BitVector::from_ui(68, 3).to_string(),
       "00000000000000000000000000000000000000000000000000000000000000000011");
 
-  ASSERT_EQ(BitVector(11, 1234ul).to_string(), "10011010010");
-  ASSERT_EQ(BitVector(16, 1234ul).to_string(), "0000010011010010");
-  ASSERT_EQ(BitVector(16, 65535ul).to_string(), "1111111111111111");
+  ASSERT_EQ(BitVector::from_ui(11, 1234).to_string(), "10011010010");
+  ASSERT_EQ(BitVector::from_ui(16, 1234).to_string(), "0000010011010010");
+  ASSERT_EQ(BitVector::from_ui(16, 65535).to_string(), "1111111111111111");
 
   ASSERT_DEATH(BitVector(0), "> 0");
   ASSERT_DEATH(BitVector(2, "101010"), "fits_in_size");
@@ -3195,11 +3219,11 @@ TEST_F(TestBitVector, ctor_dtor)
   ASSERT_DEATH(BitVector(6, "1z", 16), "is_valid_hex_str");
   ASSERT_DEATH(BitVector(8, "-12", 16), "is_valid_hex_str");
   ASSERT_DEATH(BitVector(2, ""), "empty");
-  ASSERT_DEATH(BitVector(0, 1234ul), "> 0");
-  ASSERT_DEATH(BitVector(8, -129l), "fits_in_size");
-  ASSERT_DEATH(BitVector(10, 1234ul), "fits_in_size");
-  ASSERT_DEATH(BitVector(16, 123412341234ul), "fits_in_size");
-  ASSERT_DEATH(BitVector(16, 65536ul), "fits_in_size");
+  ASSERT_DEATH(BitVector::from_ui(0, 1234), "> 0");
+  ASSERT_DEATH(BitVector::from_si(8, -129), "fits_in_size");
+  ASSERT_DEATH(BitVector::from_ui(10, 1234), "fits_in_size");
+  ASSERT_DEATH(BitVector::from_ui(16, 123412341234), "fits_in_size");
+  ASSERT_DEATH(BitVector::from_ui(16, 65536), "fits_in_size");
 }
 
 TEST_F(TestBitVector, ctor_rand)
@@ -3287,36 +3311,55 @@ TEST_F(TestBitVector, to_string)
   ASSERT_EQ(BitVector(10).to_string(), "0000000000");
   ASSERT_EQ(BitVector(6, "101010").to_string(), "101010");
   ASSERT_EQ(BitVector(8, "101010").to_string(), "00101010");
-  ASSERT_EQ(BitVector(16, 1234ul).to_string(), "0000010011010010");
-  ASSERT_EQ(BitVector(16, 65530ul).to_string(), "1111111111111010");
-  ASSERT_EQ(BitVector(16, 65535ul).to_string(), "1111111111111111");
-  ASSERT_EQ(BitVector(32, 4294967295ul).to_string(),
+  ASSERT_EQ(BitVector::from_ui(16, 1234).to_string(), "0000010011010010");
+  ASSERT_EQ(BitVector::from_ui(16, 65530).to_string(), "1111111111111010");
+  ASSERT_EQ(BitVector::from_ui(16, 65535).to_string(), "1111111111111111");
+  ASSERT_EQ(BitVector::from_ui(32, 4294967295).to_string(),
             "11111111111111111111111111111111");
-  ASSERT_EQ(BitVector(64, UINT64_MAX).to_string(),
+  ASSERT_EQ(BitVector::from_ui(64, UINT64_MAX).to_string(),
             "1111111111111111111111111111111111111111111111111111111111111111");
   ASSERT_EQ(
-      BitVector(65, UINT64_MAX).to_string(),
+      BitVector::from_ui(65, UINT64_MAX).to_string(),
       "01111111111111111111111111111111111111111111111111111111111111111");
+  ASSERT_EQ(
+      BitVector::from_si(68, -3).to_string(),
+      "11111111111111111111111111111111111111111111111111111111111111111101");
+  ASSERT_EQ(
+      BitVector::from_ui(68, -3).to_string(),
+      "00001111111111111111111111111111111111111111111111111111111111111101");
+  ASSERT_EQ(
+      BitVector::from_ui(68, 3).to_string(),
+      "00000000000000000000000000000000000000000000000000000000000000000011");
 
   ASSERT_EQ(BitVector(10).to_string(10), "0");
   ASSERT_EQ(BitVector(6, "101010").to_string(10), "42");
   ASSERT_EQ(BitVector(8, "101010").to_string(10), "42");
-  ASSERT_EQ(BitVector(16, 1234ul).to_string(10), "1234");
-  ASSERT_EQ(BitVector(16, 65530ul).to_string(10), "65530");
-  ASSERT_EQ(BitVector(16, 65535ul).to_string(10), "65535");
-  ASSERT_EQ(BitVector(32, 4294967295ul).to_string(10), "4294967295");
-  ASSERT_EQ(BitVector(64, UINT64_MAX).to_string(10), "18446744073709551615");
-  ASSERT_EQ(BitVector(65, UINT64_MAX).to_string(10), "18446744073709551615");
+  ASSERT_EQ(BitVector::from_ui(16, 1234).to_string(10), "1234");
+  ASSERT_EQ(BitVector::from_ui(16, 65530).to_string(10), "65530");
+  ASSERT_EQ(BitVector::from_ui(16, 65535).to_string(10), "65535");
+  ASSERT_EQ(BitVector::from_ui(32, 4294967295).to_string(10), "4294967295");
+  ASSERT_EQ(BitVector::from_ui(64, UINT64_MAX).to_string(10),
+            "18446744073709551615");
+  ASSERT_EQ(BitVector::from_ui(65, UINT64_MAX).to_string(10),
+            "18446744073709551615");
+  ASSERT_EQ(BitVector::from_si(68, -3).to_string(10), "295147905179352825853");
+  ASSERT_EQ(BitVector::from_ui(68, -3).to_string(10), "18446744073709551613");
+  ASSERT_EQ(BitVector::from_ui(68, 3).to_string(10), "3");
 
   ASSERT_EQ(BitVector(10).to_string(16), "0");
   ASSERT_EQ(BitVector(6, "101010").to_string(16), "2a");
   ASSERT_EQ(BitVector(8, "101010").to_string(16), "2a");
-  ASSERT_EQ(BitVector(16, 1234ul).to_string(16), "4d2");
-  ASSERT_EQ(BitVector(16, 65530ul).to_string(16), "fffa");
-  ASSERT_EQ(BitVector(16, 65535ul).to_string(16), "ffff");
-  ASSERT_EQ(BitVector(32, 4294967295ul).to_string(16), "ffffffff");
-  ASSERT_EQ(BitVector(64, UINT64_MAX).to_string(16), "ffffffffffffffff");
-  ASSERT_EQ(BitVector(65, UINT64_MAX).to_string(16), "ffffffffffffffff");
+  ASSERT_EQ(BitVector::from_ui(16, 1234).to_string(16), "4d2");
+  ASSERT_EQ(BitVector::from_ui(16, 65530).to_string(16), "fffa");
+  ASSERT_EQ(BitVector::from_ui(16, 65535).to_string(16), "ffff");
+  ASSERT_EQ(BitVector::from_ui(32, 4294967295).to_string(16), "ffffffff");
+  ASSERT_EQ(BitVector::from_ui(64, UINT64_MAX).to_string(16),
+            "ffffffffffffffff");
+  ASSERT_EQ(BitVector::from_ui(65, UINT64_MAX).to_string(16),
+            "ffffffffffffffff");
+  ASSERT_EQ(BitVector::from_si(68, -3).to_string(16), "ffffffffffffffffd");
+  ASSERT_EQ(BitVector::from_ui(68, -3).to_string(16), "fffffffffffffffd");
+  ASSERT_EQ(BitVector::from_ui(68, 3).to_string(16), "3");
 }
 
 TEST_F(TestBitVector, to_uint64)
@@ -3324,7 +3367,7 @@ TEST_F(TestBitVector, to_uint64)
   for (uint64_t i = 0; i < N_TESTS; ++i)
   {
     uint64_t x = (d_rng->pick<uint64_t>() << 32) | d_rng->pick<uint64_t>();
-    BitVector bv(64, x);
+    BitVector bv = BitVector::from_ui(64, x);
     uint64_t y = bv.to_uint64();
     ASSERT_EQ(x, y);
   }
@@ -3336,16 +3379,16 @@ TEST_F(TestBitVector, compare)
 {
   for (uint64_t i = 0; i < 15; ++i)
   {
-    BitVector bv1(4, i);
-    BitVector bv2(4, i);
+    BitVector bv1 = BitVector::from_ui(4, i);
+    BitVector bv2 = BitVector::from_ui(4, i);
     ASSERT_EQ(bv1.compare(bv2), 0);
     ASSERT_TRUE(bv1 == bv2);
   }
 
   for (uint64_t i = 0; i < 15 - 1; ++i)
   {
-    BitVector bv1(4, i);
-    BitVector bv2(4, i + 1);
+    BitVector bv1 = BitVector::from_ui(4, i);
+    BitVector bv2 = BitVector::from_ui(4, i + 1);
     ASSERT_LT(bv1.compare(bv2), 0);
     ASSERT_GT(bv2.compare(bv1), 0);
     ASSERT_FALSE(bv1 == bv2);
@@ -3360,8 +3403,8 @@ TEST_F(TestBitVector, compare)
       j = rand() % 16;
     } while (j == k);
 
-    BitVector bv1(4, j);
-    BitVector bv2(4, k);
+    BitVector bv1 = BitVector::from_ui(4, j);
+    BitVector bv2 = BitVector::from_ui(4, k);
     if (j > k)
     {
       ASSERT_GT(bv1.compare(bv2), 0);
@@ -3384,16 +3427,16 @@ TEST_F(TestBitVector, signed_compare)
 {
   for (int64_t i = -8; i < 7; ++i)
   {
-    BitVector bv1(4, i);
-    BitVector bv2(4, i);
+    BitVector bv1 = BitVector::from_si(4, i);
+    BitVector bv2 = BitVector::from_si(4, i);
     ASSERT_EQ(bv1.signed_compare(bv2), 0);
     ASSERT_TRUE(bv1 == bv2);
   }
 
   for (int64_t i = -8; i < 7 - 1; i++)
   {
-    BitVector bv1(4, i);
-    BitVector bv2(4, i + 1);
+    BitVector bv1 = BitVector::from_si(4, i);
+    BitVector bv2 = BitVector::from_si(4, i + 1);
     ASSERT_LT(bv1.signed_compare(bv2), 0);
     ASSERT_GT(bv2.signed_compare(bv1), 0);
     ASSERT_FALSE(bv1 == bv2);
@@ -3410,8 +3453,8 @@ TEST_F(TestBitVector, signed_compare)
     } while (j == k);
     j = -j;
     k = -k;
-    BitVector bv1(4, j);
-    BitVector bv2(4, k);
+    BitVector bv1 = BitVector::from_si(4, j);
+    BitVector bv2 = BitVector::from_si(4, k);
     if (j > k)
     {
       ASSERT_GT(bv1.signed_compare(bv2), 0);
@@ -3435,8 +3478,8 @@ TEST_F(TestBitVector, signed_compare)
         j = rand() % 9;
       } while (j == k);
       j = -j;
-      BitVector bv1(4, j);
-      BitVector bv2(4, k);
+      BitVector bv1 = BitVector::from_si(4, j);
+      BitVector bv2 = BitVector::from_si(4, k);
       if (j > k)
       {
         ASSERT_GT(bv1.signed_compare(bv2), 0);
@@ -3461,8 +3504,8 @@ TEST_F(TestBitVector, signed_compare)
         j = rand() % 8;
       } while (j == k);
       k = -k;
-      BitVector bv1(4, j);
-      BitVector bv2(4, k);
+      BitVector bv1 = BitVector::from_si(4, j);
+      BitVector bv2 = BitVector::from_si(4, k);
       if (j > k)
       {
         ASSERT_GT(bv1.signed_compare(bv2), 0);
@@ -3486,8 +3529,8 @@ TEST_F(TestBitVector, signed_compare)
       {
         j = rand() % 8;
       } while (j == k);
-      BitVector bv1(4, -j);
-      BitVector bv2(4, -k);
+      BitVector bv1 = BitVector::from_si(4, -j);
+      BitVector bv2 = BitVector::from_si(4, -k);
       if (-j > -k)
       {
         ASSERT_GT(bv1.signed_compare(bv2), 0);
@@ -3511,10 +3554,11 @@ TEST_F(TestBitVector, is_true)
 {
   BitVector bv1 = BitVector::mk_true();
   ASSERT_TRUE(bv1.is_true());
-  for (int64_t i = 1; i < 32; ++i)
+  for (uint64_t i = 1; i < 32; ++i)
   {
     BitVector bv2 = BitVector::mk_one(i);
-    BitVector bv3(i, d_rng->pick<uint64_t>(1, (1 << i) - 1));
+    BitVector bv3 =
+        BitVector::from_ui(i, d_rng->pick<uint64_t>(1, (1 << i) - 1));
     if (i > 1)
     {
       ASSERT_FALSE(bv2.is_true());
@@ -3532,10 +3576,11 @@ TEST_F(TestBitVector, is_false)
 {
   BitVector bv1 = BitVector::mk_false();
   ASSERT_TRUE(bv1.is_false());
-  for (int64_t i = 1; i < 32; ++i)
+  for (uint64_t i = 1; i < 32; ++i)
   {
     BitVector bv2 = BitVector::mk_zero(i);
-    BitVector bv3(i, d_rng->pick<uint64_t>(1, (1 << i) - 1));
+    BitVector bv3 =
+        BitVector::from_ui(i, d_rng->pick<uint64_t>(1, (1 << i) - 1));
     if (i > 1)
     {
       ASSERT_FALSE(bv2.is_false());
@@ -3551,10 +3596,10 @@ TEST_F(TestBitVector, is_false)
 
 TEST_F(TestBitVector, set_get_flip_bit)
 {
-  for (size_t i = 1; i < 32; ++i)
+  for (uint64_t i = 1; i < 32; ++i)
   {
     BitVector bv(i, *d_rng);
-    size_t n    = d_rng->pick<size_t>(0, i - 1);
+    uint64_t n  = d_rng->pick<uint64_t>(0, i - 1);
     uint32_t v  = bv.get_bit(n);
     uint32_t vv = d_rng->flip_coin() ? 1 : 0;
     bv.set_bit(n, vv);
@@ -3576,12 +3621,12 @@ TEST_F(TestBitVector, is_zero)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 0ul);
+      bv3 = BitVector::from_ui(i, 0);
     }
     else
     {
-      BitVector r(64, 0ul);
-      BitVector l(i - 64, 0ul);
+      BitVector r = BitVector::from_ui(64, 0);
+      BitVector l = BitVector::from_ui(i - 64, 0);
       bv3 = l.bvconcat(r);
       assert(bv3.size() == i);
     }
@@ -3601,12 +3646,12 @@ TEST_F(TestBitVector, is_zero)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 1ul);
+      bv3 = BitVector::from_ui(i, 1);
     }
     else
     {
-      BitVector r(i - 64, 1ul);
-      BitVector l(64, 0ul);
+      BitVector r = BitVector::from_ui(i - 64, 1);
+      BitVector l = BitVector::from_ui(64, 0);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_zero());
@@ -3624,7 +3669,7 @@ TEST_F(TestBitVector, is_zero)
     BitVector bv3 = mk_ones(i);
     ASSERT_FALSE(bv1.is_zero());
     ASSERT_FALSE(bv2.is_zero());
-    ASSERT_FALSE(bv3.is_zero());
+    ASSERT_FALSE(bv2.is_zero());
     ASSERT_EQ(bv1.compare(bv2), 0);
     ASSERT_EQ(bv1.compare(bv3), 0);
   }
@@ -3668,12 +3713,12 @@ TEST_F(TestBitVector, is_one)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 0ul);
+      bv3 = BitVector::from_ui(i, 0);
     }
     else
     {
-      BitVector r(64, 0ul);
-      BitVector l(i - 64, 0ul);
+      BitVector r = BitVector::from_ui(64, 0);
+      BitVector l = BitVector::from_ui(i - 64, 0);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_one());
@@ -3692,12 +3737,12 @@ TEST_F(TestBitVector, is_one)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 1ul);
+      bv3 = BitVector::from_ui(i, 1);
     }
     else
     {
-      BitVector r(i - 64, 1ul);
-      BitVector l(64, 0ul);
+      BitVector r = BitVector::from_ui(i - 64, 1);
+      BitVector l = BitVector::from_ui(64, 0);
       bv3 = l.bvconcat(r);
     }
     ASSERT_TRUE(bv1.is_one());
@@ -3759,12 +3804,12 @@ TEST_F(TestBitVector, is_ones)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 0ul);
+      bv3 = BitVector::from_ui(i, 0);
     }
     else
     {
-      BitVector r(64, 0ul);
-      BitVector l(i - 64, 0ul);
+      BitVector r = BitVector::from_ui(64, 0);
+      BitVector l = BitVector::from_ui(i - 64, 0);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_ones());
@@ -3783,12 +3828,12 @@ TEST_F(TestBitVector, is_ones)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 1ul);
+      bv3 = BitVector::from_ui(i, 1);
     }
     else
     {
-      BitVector r(i - 64, 1ul);
-      BitVector l(64, 0ul);
+      BitVector r = BitVector::from_ui(i - 64, 1);
+      BitVector l = BitVector::from_ui(64, 0);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_ones());
@@ -3850,12 +3895,12 @@ TEST_F(TestBitVector, is_max_signed)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 0ul);
+      bv3 = BitVector::from_ui(i, 0);
     }
     else
     {
-      BitVector r(64, 0ul);
-      BitVector l(i - 64, 0ul);
+      BitVector r = BitVector::from_ui(64, 0);
+      BitVector l = BitVector::from_ui(i - 64, 0);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_max_signed());
@@ -3874,12 +3919,12 @@ TEST_F(TestBitVector, is_max_signed)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 1ul);
+      bv3 = BitVector::from_ui(i, 1);
     }
     else
     {
-      BitVector r(i - 64, 1ul);
-      BitVector l(64, 0ul);
+      BitVector r = BitVector::from_ui(i - 64, 1);
+      BitVector l = BitVector::from_ui(64, 0);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_max_signed());
@@ -3941,12 +3986,12 @@ TEST_F(TestBitVector, is_min_signed)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 0ul);
+      bv3 = BitVector::from_ui(i, 0);
     }
     else
     {
-      BitVector r(64, 0ul);
-      BitVector l(i - 64, 0ul);
+      BitVector r = BitVector::from_ui(64, 0);
+      BitVector l = BitVector::from_ui(i - 64, 0);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_min_signed());
@@ -3965,12 +4010,12 @@ TEST_F(TestBitVector, is_min_signed)
     BitVector bv3;
     if (i <= 64)
     {
-      bv3 = BitVector(i, 1ul);
+      bv3 = BitVector::from_ui(i, 1);
     }
     else
     {
-      BitVector r(i - 64, 1ul);
-      BitVector l(64, 0ul);
+      BitVector r = BitVector::from_ui(i - 64, 1);
+      BitVector l = BitVector::from_ui(64, 0);
       bv3 = l.bvconcat(r);
     }
     ASSERT_FALSE(bv1.is_min_signed());

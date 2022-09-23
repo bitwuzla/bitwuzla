@@ -7,10 +7,10 @@ WheelFactorizer::WheelFactorizer(const BitVector& n, uint64_t limit)
     : d_num(n), d_limit(limit)
 {
   uint64_t bw = n.size();
-  d_one       = BitVector(bw, 1ul);
-  d_two       = BitVector(bw, 2ul);
-  d_four      = BitVector(bw, 4ul);
-  d_six       = BitVector(bw, 6ul);
+  d_one       = BitVector::from_ui(bw, 1);
+  d_two       = BitVector::from_ui(bw, 2);
+  d_four      = BitVector::from_ui(bw, 4);
+  d_six       = BitVector::from_ui(bw, 6);
   d_fact      = d_two;
   d_inc[0]    = &d_one;
   d_inc[1]    = &d_two;

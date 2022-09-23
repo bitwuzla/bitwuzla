@@ -34,11 +34,11 @@ TestBvNodeInv::test_inv_ineq_concat(OpKind op_kind,
     for (uint64_t i = 0; i < nval_s; i++)
     {
       /* Assignment of the other operand. */
-      BitVector s_val(bw_s, i);
+      BitVector s_val = BitVector::from_ui(bw_s, i);
       for (uint64_t j = 0; j < nval_t; j++)
       {
         /* Target value of the operation (op). */
-        BitVector t(bw_t, j);
+        BitVector t = BitVector::from_ui(bw_t, j);
         /* For this test, we don't care about the current assignment of x,
          * thus we initialize it with a random value that matches constant
          * bits in x. */

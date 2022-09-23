@@ -42,7 +42,7 @@ TEST_F(TestBitVectorDomain, ctor_dtor)
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain(1));
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain(10));
   ASSERT_NO_FATAL_FAILURE(
-      BitVectorDomain(BitVector(10, 4ul), BitVector(10, 5ul)));
+      BitVectorDomain(BitVector::from_ui(10, 4), BitVector::from_ui(10, 5)));
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain("00000000"));
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain("11111111"));
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain("10110100"));
@@ -54,8 +54,9 @@ TEST_F(TestBitVectorDomain, ctor_dtor)
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain(8, 5));
   ASSERT_NO_FATAL_FAILURE(BitVectorDomain(BitVectorDomain(8, 5)));
   ASSERT_DEATH(BitVectorDomain(0), "size > 0");
-  ASSERT_DEATH(BitVectorDomain(BitVector(10, 4ul), BitVector(11, 5ul)),
-               "lo.size\\(\\) == hi.size\\(\\)");
+  ASSERT_DEATH(
+      BitVectorDomain(BitVector::from_ui(10, 4), BitVector::from_ui(11, 5)),
+      "lo.size\\(\\) == hi.size\\(\\)");
   ASSERT_DEATH(BitVectorDomain(""), "size > 0");
   ASSERT_DEATH(BitVectorDomain("12345"), "is_valid_bin_str");
 }
@@ -64,7 +65,10 @@ TEST_F(TestBitVectorDomain, size)
 {
   ASSERT_EQ(BitVectorDomain(1).size(), 1);
   ASSERT_EQ(BitVectorDomain(10).size(), 10);
-  ASSERT_EQ(BitVectorDomain(BitVector(10, 4ul), BitVector(10, 5ul)).size(), 10);
+  ASSERT_EQ(
+      BitVectorDomain(BitVector::from_ui(10, 4), BitVector::from_ui(10, 5))
+          .size(),
+      10);
   ASSERT_EQ(BitVectorDomain("00000000").size(), 8);
   ASSERT_EQ(BitVectorDomain("11111111").size(), 8);
   ASSERT_EQ(BitVectorDomain("10110100").size(), 8);
@@ -82,7 +86,8 @@ TEST_F(TestBitVectorDomain, is_valid)
   ASSERT_TRUE(BitVectorDomain(1).is_valid());
   ASSERT_TRUE(BitVectorDomain(10).is_valid());
   ASSERT_TRUE(
-      BitVectorDomain(BitVector(10, 4ul), BitVector(10, 5ul)).is_valid());
+      BitVectorDomain(BitVector::from_ui(10, 4), BitVector::from_ui(10, 5))
+          .is_valid());
   ASSERT_TRUE(BitVectorDomain("00000000").is_valid());
   ASSERT_TRUE(BitVectorDomain("11111111").is_valid());
   ASSERT_TRUE(BitVectorDomain("10110100").is_valid());
@@ -108,7 +113,8 @@ TEST_F(TestBitVectorDomain, is_fixed)
   ASSERT_FALSE(BitVectorDomain(1).is_fixed());
   ASSERT_FALSE(BitVectorDomain(10).is_fixed());
   ASSERT_FALSE(
-      BitVectorDomain(BitVector(10, 4ul), BitVector(10, 5ul)).is_fixed());
+      BitVectorDomain(BitVector::from_ui(10, 4), BitVector::from_ui(10, 5))
+          .is_fixed());
   ASSERT_TRUE(BitVectorDomain("00000000").is_fixed());
   ASSERT_TRUE(BitVectorDomain("11111111").is_fixed());
   ASSERT_TRUE(BitVectorDomain("10110100").is_fixed());
@@ -134,7 +140,8 @@ TEST_F(TestBitVectorDomain, has_fixed_bits)
   ASSERT_FALSE(BitVectorDomain(1).has_fixed_bits());
   ASSERT_FALSE(BitVectorDomain(10).has_fixed_bits());
   ASSERT_TRUE(
-      BitVectorDomain(BitVector(10, 4ul), BitVector(10, 5ul)).has_fixed_bits());
+      BitVectorDomain(BitVector::from_ui(10, 4), BitVector::from_ui(10, 5))
+          .has_fixed_bits());
   ASSERT_TRUE(BitVectorDomain("00000000").has_fixed_bits());
   ASSERT_TRUE(BitVectorDomain("11111111").has_fixed_bits());
   ASSERT_TRUE(BitVectorDomain("10110100").has_fixed_bits());
@@ -292,11 +299,11 @@ TEST_F(TestBitVectorDomain, shl)
       for (int32_t j = i; j >= 0; --j)
       {
         BitVectorDomain d(c);
-        for (int64_t k = 0; k < 3; ++k)
+        for (uint64_t k = 0; k < 3; ++k)
         {
-          BitVectorDomain dshl = d.bvshl(BitVector(3, k));
+          BitVectorDomain dshl = d.bvshl(BitVector::from_ui(3, k));
           ASSERT_EQ(d.size(), dshl.size());
-          for (int64_t l = 0, n = d.size(); l < n; ++l)
+          for (size_t l = 0, n = d.size(); l < n; ++l)
           {
             if (l < k)
             {
@@ -339,11 +346,11 @@ TEST_F(TestBitVectorDomain, shr)
       for (int32_t j = i; j >= 0; --j)
       {
         BitVectorDomain d(c);
-        for (int64_t k = 0; k < 3; ++k)
+        for (uint64_t k = 0; k < 3; ++k)
         {
-          BitVectorDomain dshr = d.bvshr(BitVector(3, k));
+          BitVectorDomain dshr = d.bvshr(BitVector::from_ui(3, k));
           ASSERT_EQ(d.size(), dshr.size());
-          for (int64_t l = 0, n = d.size(); l < n; ++l)
+          for (size_t l = 0, n = d.size(); l < n; ++l)
           {
             if (l >= n - k)
             {
@@ -386,11 +393,11 @@ TEST_F(TestBitVectorDomain, ashr)
       for (int32_t j = i; j >= 0; --j)
       {
         BitVectorDomain d(c);
-        for (int64_t k = 0; k < 3; ++k)
+        for (uint64_t k = 0; k < 3; ++k)
         {
-          BitVectorDomain dashr = d.bvashr(BitVector(3, k));
+          BitVectorDomain dashr = d.bvashr(BitVector::from_ui(3, k));
           ASSERT_EQ(d.size(), dashr.size());
-          for (int64_t l = 0, n = d.size(); l < n; ++l)
+          for (size_t l = 0, n = d.size(); l < n; ++l)
           {
             if (l >= n - k)
             {
@@ -446,10 +453,10 @@ TEST_F(TestBitVectorDomain, concat)
         BitVectorDomain d(c);
         for (int64_t k = 0; k < 3; ++k)
         {
-          BitVector bvk(3, k);
+          BitVector bvk           = BitVector::from_si(3, k);
           BitVectorDomain dconcat = d.bvconcat(bvk);
           ASSERT_EQ(dconcat.size(), d.size() + bvk.size());
-          for (int64_t l = 0, n = d.size(); l < n; ++l)
+          for (size_t l = 0, n = d.size(); l < n; ++l)
           {
             if (l >= 3)
             {
@@ -475,26 +482,27 @@ TEST_F(TestBitVectorDomain, extract)
 
   for (const std::string &c : consts)
   {
-    for (int32_t i = 2; i >= 0; --i)
+    for (int64_t i = 2; i >= 0; --i)
     {
-      for (int32_t j = i; j >= 0; --j)
+      for (int64_t j = i; j >= 0; --j)
       {
         BitVectorDomain d(c);
-        BitVectorDomain dext = d.bvextract(i, j);
+        BitVectorDomain dext =
+            d.bvextract(static_cast<uint64_t>(i), static_cast<uint64_t>(j));
         ASSERT_EQ(dext.size(), i - j + 1);
-        for (int64_t k = 0, n = d.size(), m = dext.size(); k < m; ++k)
+        for (size_t k = 0, n = d.size(), m = dext.size(); k < m; ++k)
         {
-          if (c[n - k - j - 1] == 'x')
+          if (c[n - k - static_cast<uint64_t>(j) - 1] == 'x')
           {
             ASSERT_FALSE(dext.is_fixed_bit(k));
           }
-          else if (c[n - k - j - 1] == '1')
+          else if (c[n - k - static_cast<uint64_t>(j) - 1] == '1')
           {
             ASSERT_TRUE(dext.is_fixed_bit_true(k));
           }
           else
           {
-            assert(c[n - k - j - 1] == '0');
+            assert(c[n - k - static_cast<uint64_t>(j) - 1] == '0');
             ASSERT_TRUE(dext.is_fixed_bit_false(k));
           }
         }
@@ -507,8 +515,10 @@ TEST_F(TestBitVectorDomain, to_string)
 {
   ASSERT_EQ(BitVectorDomain(1).to_string(), "x");
   ASSERT_EQ(BitVectorDomain(10).to_string(), "xxxxxxxxxx");
-  ASSERT_EQ(BitVectorDomain(BitVector(10, 4ul), BitVector(10, 5ul)).to_string(),
-            "000000010x");
+  ASSERT_EQ(
+      BitVectorDomain(BitVector::from_ui(10, 4), BitVector::from_ui(10, 5))
+          .to_string(),
+      "000000010x");
   ASSERT_EQ(BitVectorDomain("00000000").to_string(), "00000000");
   ASSERT_EQ(BitVectorDomain("11111111").to_string(), "11111111");
   ASSERT_EQ(BitVectorDomain("10110100").to_string(), "10110100");

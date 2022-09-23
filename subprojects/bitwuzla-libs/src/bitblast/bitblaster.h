@@ -136,9 +136,10 @@ class BitblasterInterface
       }
     }
 
-    Bits res = bv_ite(ult_helper(b, bv_value(BitVector(b.size(), size))),
-                      shift_result,
-                      bv_value(BitVector(size, 0ul)));
+    Bits res =
+        bv_ite(ult_helper(b, bv_value(BitVector::from_ui(b.size(), size))),
+               shift_result,
+               bv_value(BitVector::from_ui(size, 0)));
 
     return res;
   }
@@ -178,9 +179,10 @@ class BitblasterInterface
       }
     }
 
-    Bits res = bv_ite(ult_helper(b, bv_value(BitVector(b.size(), size))),
-                      shift_result,
-                      bv_value(BitVector(size, 0ul)));
+    Bits res =
+        bv_ite(ult_helper(b, bv_value(BitVector::from_ui(b.size(), size))),
+               shift_result,
+               bv_value(BitVector::from_ui(size, 0)));
 
     return res;
   }
@@ -221,7 +223,8 @@ class BitblasterInterface
       }
     }
 
-    T shift_less_than_size = ult_helper(b, bv_value(BitVector(b.size(), size)));
+    T shift_less_than_size =
+        ult_helper(b, bv_value(BitVector::from_ui(b.size(), size)));
     for (size_t i = 0; i < size; ++i)
     {
       shift_result[i] =

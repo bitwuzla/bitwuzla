@@ -1717,7 +1717,7 @@ BitVectorShl::is_invertible(const BitVector& t,
     {
       uint64_t size  = x.size();
       bool s_is_zero = s.is_zero();
-      BitVector min  = BitVector(size, ctz_t - ctz_s);
+      BitVector min  = BitVector::from_ui(size, ctz_t - ctz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
       {
         if (!is_essential_check)
@@ -1731,7 +1731,7 @@ BitVectorShl::is_invertible(const BitVector& t,
       }
       return false;
     }
-    return x.match_fixed_bits(BitVector(x.size(), ctz_t - ctz_s));
+    return x.match_fixed_bits(BitVector::from_ui(x.size(), ctz_t - ctz_s));
   }
 
   return ic_wo;
@@ -1796,10 +1796,11 @@ BitVectorShl::is_consistent(const BitVector& t, uint32_t pos_x)
     {
       if (x.is_fixed())
       {
-        return BitVector(size, ctz_t).compare(x.lo()) >= 0;
+        return BitVector::from_ui(size, ctz_t).compare(x.lo()) >= 0;
       }
 
-      BitVectorDomainGenerator gen(x, d_rng, x.lo(), BitVector(size, ctz_t));
+      BitVectorDomainGenerator gen(
+          x, d_rng, x.lo(), BitVector::from_ui(size, ctz_t));
       bool res = gen.has_random();
       if (res)
       {
@@ -1907,12 +1908,14 @@ BitVectorShl::inverse_value(const BitVector& t, uint32_t pos_x)
         if (t.is_zero())
         {
           assert(!x.has_fixed_bits());
-          d_inverse.reset(new BitVector(
-              size, *d_rng, BitVector(size, shift), BitVector::mk_ones(size)));
+          d_inverse.reset(new BitVector(size,
+                                        *d_rng,
+                                        BitVector::from_ui(size, shift),
+                                        BitVector::mk_ones(size)));
         }
         else
         {
-          d_inverse.reset(new BitVector(size, shift));
+          d_inverse.reset(new BitVector(BitVector::from_ui(size, shift)));
         }
       }
     }
@@ -1979,13 +1982,14 @@ BitVectorShl::consistent_value(const BitVector& t, uint32_t pos_x)
       if (x.has_fixed_bits())
       {
         BitVectorDomainGenerator gen(
-            x, d_rng, BitVector::mk_zero(size), BitVector(size, max));
+            x, d_rng, BitVector::mk_zero(size), BitVector::from_ui(size, max));
         assert(gen.has_random());
         d_consistent.reset(new BitVector(gen.random()));
       }
       else
       {
-        d_consistent.reset(new BitVector(size, d_rng->pick<uint64_t>(0, max)));
+        d_consistent.reset(new BitVector(
+            BitVector::from_ui(size, d_rng->pick<uint64_t>(0, max))));
       }
     }
   }
@@ -2129,7 +2133,7 @@ BitVectorShr::is_invertible(RNG* rng,
     {
       uint64_t size  = x.size();
       bool s_is_zero = s.is_zero();
-      BitVector min  = BitVector(size, clz_t - clz_s);
+      BitVector min  = BitVector::from_ui(size, clz_t - clz_s);
       if (s_is_zero || x.hi().compare(min) >= 0)
       {
         if (inverse != nullptr)
@@ -2143,7 +2147,7 @@ BitVectorShr::is_invertible(RNG* rng,
       }
       return false;
     }
-    return x.match_fixed_bits(BitVector(x.size(), clz_t - clz_s));
+    return x.match_fixed_bits(BitVector::from_ui(x.size(), clz_t - clz_s));
   }
 
   return ic_wo;
@@ -2203,10 +2207,11 @@ BitVectorShr::is_consistent(const BitVector& t, uint32_t pos_x)
     {
       if (x.is_fixed())
       {
-        return BitVector(size, clz_t).compare(x.lo()) >= 0;
+        return BitVector::from_ui(size, clz_t).compare(x.lo()) >= 0;
       }
 
-      BitVectorDomainGenerator gen(x, d_rng, x.lo(), BitVector(size, clz_t));
+      BitVectorDomainGenerator gen(
+          x, d_rng, x.lo(), BitVector::from_ui(size, clz_t));
       bool res = gen.has_random();
       if (res)
       {
@@ -2230,9 +2235,11 @@ BitVectorShr::inverse_value(const BitVector& t, uint32_t pos_x)
   {
     if (pos_x == 0)
     {
-      assert(s.compare(BitVector(s.size(), s.size())) >= 0
-             || s.compare(BitVector(s.size(), t.count_leading_zeros())) <= 0);
-      assert(s.compare(BitVector(s.size(), s.size())) < 0 || t.is_zero());
+      assert(s.compare(BitVector::from_ui(s.size(), s.size())) >= 0
+             || s.compare(BitVector::from_ui(s.size(), t.count_leading_zeros()))
+                    <= 0);
+      assert(s.compare(BitVector::from_ui(s.size(), s.size())) < 0
+             || t.is_zero());
       inverse_value(d_rng, t, s, x, 0, d_inverse);
     }
     else
@@ -2338,12 +2345,14 @@ BitVectorShr::inverse_value(RNG* rng,
       if (t.is_zero())
       {
         assert(!x.has_fixed_bits());
-        inverse_value.reset(new BitVector(
-            size, *rng, BitVector(size, shift), BitVector::mk_ones(size)));
+        inverse_value.reset(new BitVector(size,
+                                          *rng,
+                                          BitVector::from_ui(size, shift),
+                                          BitVector::mk_ones(size)));
       }
       else
       {
-        inverse_value.reset(new BitVector(size, shift));
+        inverse_value.reset(new BitVector(BitVector::from_ui(size, shift)));
       }
     }
   }
@@ -2404,13 +2413,14 @@ BitVectorShr::consistent_value(const BitVector& t, uint32_t pos_x)
       if (x.has_fixed_bits())
       {
         BitVectorDomainGenerator gen(
-            x, d_rng, BitVector::mk_zero(size), BitVector(size, max));
+            x, d_rng, BitVector::mk_zero(size), BitVector::from_ui(size, max));
         assert(gen.has_random());
         d_consistent.reset(new BitVector(gen.random()));
       }
       else
       {
-        d_consistent.reset(new BitVector(size, d_rng->pick<uint64_t>(0, max)));
+        d_consistent.reset(new BitVector(
+            BitVector::from_ui(size, d_rng->pick<uint64_t>(0, max))));
       }
     }
   }
@@ -2529,7 +2539,7 @@ BitVectorAshr::is_invertible(const BitVector& t,
   }
 
   uint64_t size = s.size();
-  if (s.compare(BitVector(size, size)) < 0)
+  if (s.compare(BitVector::from_ui(size, size)) < 0)
   {
     ic_wo = t.bvshl(s).ibvashr(s).compare(t) == 0;
   }
@@ -2583,7 +2593,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint32_t pos_x)
       return x.lo().bvashr(cnt_t - cnt_x).compare(t) == 0;
     }
     return t.is_zero() || t.is_ones()
-           || BitVector(size, cnt_t).compare(x.lo()) > 0;
+           || BitVector::from_ui(size, cnt_t).compare(x.lo()) > 0;
   }
 
   if (!is_signed && t.is_zero())
@@ -2620,7 +2630,8 @@ BitVectorAshr::is_consistent(const BitVector& t, uint32_t pos_x)
 
   if (pos_x)
   {
-    BitVectorDomainGenerator gen(x, d_rng, x.lo(), BitVector(size, cnt_t - 1));
+    BitVectorDomainGenerator gen(
+        x, d_rng, x.lo(), BitVector::from_ui(size, cnt_t - 1));
     bool res = gen.has_random();
     if (res)
     {
@@ -2678,9 +2689,12 @@ BitVectorAshr::inverse_value(const BitVector& t, uint32_t pos_x)
           assert(!x.is_fixed_bit(x.size() - 1));
           d_inverse->set_bit(x.size() - 1, true);
         }
-        assert(s.compare(BitVector(s.size(), s.size())) >= 0
-               || s.compare(BitVector(s.size(), t.count_leading_ones())) <= 0);
-        assert(s.compare(BitVector(s.size(), s.size())) < 0 || t.is_ones());
+        assert(
+            s.compare(BitVector::from_ui(s.size(), s.size())) >= 0
+            || s.compare(BitVector::from_ui(s.size(), t.count_leading_ones()))
+                   <= 0);
+        assert(s.compare(BitVector::from_ui(s.size(), s.size())) < 0
+               || t.is_ones());
       }
       else
       {
@@ -2689,9 +2703,12 @@ BitVectorAshr::inverse_value(const BitVector& t, uint32_t pos_x)
           assert(!x.is_fixed_bit(x.size() - 1));
           d_inverse->set_bit(x.size() - 1, false);
         }
-        assert(s.compare(BitVector(s.size(), s.size())) >= 0
-               || s.compare(BitVector(s.size(), t.count_leading_zeros())) <= 0);
-        assert(s.compare(BitVector(s.size(), s.size())) < 0 || t.is_zero());
+        assert(
+            s.compare(BitVector::from_ui(s.size(), s.size())) >= 0
+            || s.compare(BitVector::from_ui(s.size(), t.count_leading_zeros()))
+                   <= 0);
+        assert(s.compare(BitVector::from_ui(s.size(), s.size())) < 0
+               || t.is_zero());
       }
     }
     else
@@ -2728,12 +2745,12 @@ BitVectorAshr::inverse_value(const BitVector& t, uint32_t pos_x)
             assert(!x.has_fixed_bits());
             d_inverse.reset(new BitVector(size,
                                           *d_rng,
-                                          BitVector(size, shift),
+                                          BitVector::from_ui(size, shift),
                                           BitVector::mk_ones(size)));
           }
           else
           {
-            d_inverse.reset(new BitVector(size, shift));
+            d_inverse.reset(new BitVector(BitVector::from_ui(size, shift)));
           }
         }
       }
@@ -2816,13 +2833,14 @@ BitVectorAshr::consistent_value(const BitVector& t, uint32_t pos_x)
       if (x.has_fixed_bits())
       {
         BitVectorDomainGenerator gen(
-            x, d_rng, BitVector::mk_zero(size), BitVector(size, max));
+            x, d_rng, BitVector::mk_zero(size), BitVector::from_ui(size, max));
         assert(gen.has_random());
         d_consistent.reset(new BitVector(gen.random()));
       }
       else
       {
-        d_consistent.reset(new BitVector(size, d_rng->pick<uint64_t>(0, max)));
+        d_consistent.reset(new BitVector(
+            BitVector::from_ui(size, d_rng->pick<uint64_t>(0, max))));
       }
     }
   }

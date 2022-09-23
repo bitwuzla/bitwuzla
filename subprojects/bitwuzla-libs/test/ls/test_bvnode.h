@@ -576,11 +576,11 @@ TestBvNode::test_binary(Kind kind,
       BitVectorDomain s(s_value);
       for (uint64_t i = 0; i < nval_x; i++)
       {
-        BitVector x_val(bw_x, i);
+        BitVector x_val = BitVector::from_ui(bw_x, i);
         for (uint64_t j = 0; j < nval_t; j++)
         {
           /* Target value of the operation (op). */
-          BitVector t(bw_t, j);
+          BitVector t = BitVector::from_ui(bw_t, j);
           /* For this test, we don't care about the current assignment of s,
            * thus we initialize it with a random value that matches constant
            * bits in s. */
@@ -624,11 +624,11 @@ TestBvNode::test_binary(Kind kind,
       for (uint64_t i = 0; i < nval_s; i++)
       {
         /* Assignment of the other operand. */
-        BitVector s_val(bw_s, i);
+        BitVector s_val = BitVector::from_ui(bw_s, i);
         for (uint64_t j = 0; j < nval_t; j++)
         {
           /* Target value of the operation (op). */
-          BitVector t(bw_t, j);
+          BitVector t = BitVector::from_ui(bw_t, j);
           /* For this test, we don't care about the current assignment of x,
            * thus we initialize it with a random value that matches constant
            * bits in x. */
@@ -864,10 +864,10 @@ TestBvNode::test_ite(Kind kind, uint32_t pos_x)
         BitVectorDomain s1(s1_value);
         for (uint64_t i = 0; i < n_vals; i++)
         {
-          BitVector x_val(bw_x, i);
+          BitVector x_val = BitVector::from_ui(bw_x, i);
           for (uint64_t j = 0; j < n_vals; j++)
           {
-            BitVector t(bw_t, j);
+            BitVector t = BitVector::from_ui(bw_t, j);
             /* For this test, the domain of x is irrelevant, hence we
              * initialize it with an unconstrained domain. */
             std::unique_ptr<BitVectorNode> op_x(
@@ -935,13 +935,13 @@ TestBvNode::test_ite(Kind kind, uint32_t pos_x)
       BitVectorDomain x(x_value);
       for (uint64_t i = 0; i < n_vals_s0; i++)
       {
-        BitVector s0_val(bw_s0, i);
+        BitVector s0_val = BitVector::from_ui(bw_s0, i);
         for (uint64_t j = 0; j < n_vals_s1; j++)
         {
-          BitVector s1_val(bw_s1, j);
+          BitVector s1_val = BitVector::from_ui(bw_s1, j);
           for (uint64_t k = 0; k < n_vals; k++)
           {
-            BitVector t(bw_t, k);
+            BitVector t = BitVector::from_ui(bw_t, k);
 
             /* For this test, we don't care about the current assignment of x,
              * thus we initialize it with a random value that matches constant
@@ -1049,7 +1049,7 @@ TestBvNode::test_not(Kind kind)
     uint64_t bw_t = x.size();
     for (uint64_t i = 0, n = 1 << bw_t; i < n; ++i)
     {
-      BitVector t(bw_t, i);
+      BitVector t = BitVector::from_ui(bw_t, i);
       /* For this test, we don't care about the current assignment of x,
        * thus we initialize it with a random value that matches constant
        * bits in x. */
@@ -1132,7 +1132,7 @@ TestBvNode::test_extract(Kind kind)
         uint64_t bw_t = hi - lo + 1;
         for (uint64_t i = 0, n = 1 << bw_t; i < n; ++i)
         {
-          BitVector t(bw_t, i);
+          BitVector t = BitVector::from_ui(bw_t, i);
           /* For this test, we don't care about the current assignment of x,
            * thus we initialize it with a random value that matches constant
            * bits in x. */
@@ -1222,7 +1222,7 @@ TestBvNode::test_sext(Kind kind)
       uint64_t bw_t = bw_x + n;
       for (uint64_t i = 0, m = 1 << bw_t; i < m; ++i)
       {
-        BitVector t(bw_t, i);
+        BitVector t = BitVector::from_ui(bw_t, i);
         /* For this test, we don't care about the current assignment of x,
          * thus we initialize it with a random value that matches constant
          * bits in x. */

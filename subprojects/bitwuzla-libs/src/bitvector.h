@@ -40,6 +40,34 @@ class BitVector
    * @return True if given value fits into a bit-vecgtor of given size.
    */
   static bool fits_in_size(uint64_t size, uint64_t value, bool sign = false);
+
+  /**
+   * Construct a bit-vector of given size from given uint64 value.
+   *
+   * @note For signed values, use `from_si()` instead. It guarantees that
+   *       negative values are sign extended to `size` if `size > 64`, which
+   *       is not the case with `from_ui()` (which zero extends the value).
+   *
+   * @param size  The size of the bit-vector.
+   * @param value A uint64 representing the bit-vector value. The value must be
+   *              representable with `size` bits.
+   * @param sign  True if given value should be interpreted as signed integer.
+   */
+  static BitVector from_ui(uint64_t size, uint64_t value);
+  /**
+   * Construct a bit-vector of given size from given int64 value.
+   *
+   * @note For signed values, always use this function. It guarantees that
+   *       negative values are sign extended to `size` if `size > 64`, which
+   *       is not the case with `from_ui()` (which zero extends the value).
+   *
+   * @param size  The size of the bit-vector.
+   * @param value A int64 representing the bit-vector value. The value must be
+   *              representable with `size` bits.
+   * @param sign  True if given value should be interpreted as signed integer.
+   */
+  static BitVector from_si(uint64_t size, int64_t value);
+
   /**
    * Create a true bit-vector (value 1 of size 1).
    * @return A bit-vector representing True.
@@ -140,24 +168,6 @@ class BitVector
    *              16 for hexadecimal).
    */
   BitVector(uint64_t size, const std::string& value, uint32_t base = 2);
-
-  /**
-   * Construct a bit-vector of given size from given uint64 value.
-   * @param size  The size of the bit-vector.
-   * @param value A uint64 representing the bit-vector value. The value must be
-   *              representable with `size` bits.
-   * @param sign  True if given value should be interpreted as signed integer.
-   */
-  BitVector(uint64_t size, uint64_t value);
-
-  /**
-   * Construct a bit-vector of given size from given int64 value.
-   * @param size  The size of the bit-vector.
-   * @param value A int64 representing the bit-vector value. The value must be
-   *              representable with `size` bits.
-   * @param sign  True if given value should be interpreted as signed integer.
-   */
-  BitVector(uint64_t size, int64_t value);
 
   /** Copy constructor. */
   BitVector(const BitVector& other);

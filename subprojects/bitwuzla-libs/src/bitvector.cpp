@@ -141,7 +141,7 @@ BitVector::mk_zero(uint64_t size)
 BitVector
 BitVector::mk_one(uint64_t size)
 {
-  return BitVector(size, 1ul);
+  return from_ui(size, 1);
 }
 
 BitVector
@@ -261,36 +261,42 @@ BitVector::BitVector(uint64_t size, const std::string& value, uint32_t base)
   }
 }
 
-BitVector::BitVector(uint64_t size, uint64_t value) : d_size(size)
+BitVector
+BitVector::from_ui(uint64_t size, uint64_t value)
 {
   assert(size > 0);
   assert(fits_in_size(size, value));
 
-  if (is_gmp())
+  BitVector res(size);
+  if (res.is_gmp())
   {
-    mpz_init_set_ui(d_val_gmp, value);
-    mpz_fdiv_r_2exp(d_val_gmp, d_val_gmp, size);
+    mpz_init_set_ui(res.d_val_gmp, value);
+    mpz_fdiv_r_2exp(res.d_val_gmp, res.d_val_gmp, size);
   }
   else
   {
-    d_val_uint64 = uint64_fdiv_r_2exp(size, value);
+    res.d_val_uint64 = uint64_fdiv_r_2exp(size, value);
   }
+  return res;
 }
 
-BitVector::BitVector(uint64_t size, int64_t value) : d_size(size)
+BitVector
+BitVector::from_si(uint64_t size, int64_t value)
 {
   assert(size > 0);
   assert(fits_in_size(size, static_cast<uint64_t>(value), true));
 
-  if (is_gmp())
+  BitVector res(size);
+  if (res.is_gmp())
   {
-    mpz_init_set_si(d_val_gmp, value);
-    mpz_fdiv_r_2exp(d_val_gmp, d_val_gmp, size);
+    mpz_init_set_si(res.d_val_gmp, value);
+    mpz_fdiv_r_2exp(res.d_val_gmp, res.d_val_gmp, size);
   }
   else
   {
-    d_val_uint64 = uint64_fdiv_r_2exp(size, static_cast<uint64_t>(value));
+    res.d_val_uint64 = uint64_fdiv_r_2exp(size, static_cast<uint64_t>(value));
   }
+  return res;
 }
 
 BitVector::BitVector(const BitVector& other)
@@ -3078,8 +3084,8 @@ BitVector::bvudivurem(const BitVector& bv,
       uint64_t a = d_val_uint64;
       /* copy to guard for bv == *quot or bv == *rem */
       uint64_t b = bv.d_val_uint64;
-      *quot      = BitVector(d_size, a / b);
-      *rem       = BitVector(d_size, a % b);
+      *quot      = from_ui(d_size, a / b);
+      *rem       = from_ui(d_size, a % b);
     }
   }
 }

@@ -68,7 +68,7 @@ TestBvNodeSelPath::test_binary(OpKind op_kind)
       for (uint64_t j = 0; j < nval_t; ++j)
       {
         /* Target value of the operation (op). */
-        BitVector t(bw_t, j);
+        BitVector t = BitVector::from_ui(bw_t, j);
 
         /* The current assignment of the operands, we choose a random value. */
         BitVector s0_val = s0.lo();
@@ -180,7 +180,7 @@ TestBvNodeSelPath::test_ite()
         for (uint64_t j = 0; j < nval_t; ++j)
         {
           /* Target value of the operation (op). */
-          BitVector t(bw_t, j);
+          BitVector t = BitVector::from_ui(bw_t, j);
 
           /* Current assignment of the operands, we choose a random value. */
           BitVector s0_val = s0.lo();
@@ -303,7 +303,7 @@ TestBvNodeSelPath::test_not()
     for (uint64_t i = 0, n = 1 << bw_t; i < n; ++i)
     {
       /* Target value of the operation (op). */
-      BitVector t(bw_t, i);
+      BitVector t = BitVector::from_ui(bw_t, i);
 
       /* The current assignment of the operands, we choose a random value. */
       BitVector s0_val = s0.lo();
@@ -381,7 +381,7 @@ TestBvNodeSelPath::test_extract()
         for (uint64_t i = 0, n = 1 << bw_t; i < n; ++i)
         {
           /* Target value of the operation (op). */
-          BitVector t(bw_t, i);
+          BitVector t = BitVector::from_ui(bw_t, i);
 
           /* The current assignment of the operands, we choose a random value.
            */
@@ -460,7 +460,7 @@ TestBvNodeSelPath::test_sext()
       for (uint64_t i = 0, m = 1 << bw_t; i < m; ++i)
       {
         /* Target value of the operation (op). */
-        BitVector t(bw_t, i);
+        BitVector t = BitVector::from_ui(bw_t, i);
 
         /* The current assignment of the operands, we choose a random value. */
         BitVector s0_val = s0.lo();

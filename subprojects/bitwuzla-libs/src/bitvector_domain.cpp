@@ -43,7 +43,7 @@ BitVectorDomain::BitVectorDomain(const BitVector &bv) : d_lo(bv), d_hi(bv)
 }
 
 BitVectorDomain::BitVectorDomain(uint64_t size, uint64_t value)
-    : BitVectorDomain(BitVector(size, value))
+    : BitVectorDomain(BitVector::from_ui(size, value))
 {
 }
 
