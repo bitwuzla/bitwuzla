@@ -764,8 +764,8 @@ BitVector::is_ones() const
   {
     uint64_t n = mpz_size(d_val_gmp);
     if (n == 0) return false;  // zero
-    uint64_t m = d_size / static_cast<const uint64_t>(mp_bits_per_limb);
-    if (d_size % static_cast<const uint64_t>(mp_bits_per_limb)) m += 1;
+    uint64_t m = d_size / static_cast<uint64_t>(mp_bits_per_limb);
+    if (d_size % static_cast<uint64_t>(mp_bits_per_limb)) m += 1;
     if (m != n) return false;  // less limbs used than expected, not ones
     uint64_t max = mp_bits_per_limb == 64 ? UINT64_MAX : UINT32_MAX;
     for (uint64_t i = 0; i < n - 1; ++i)

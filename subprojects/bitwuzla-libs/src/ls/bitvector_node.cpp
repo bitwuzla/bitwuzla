@@ -158,7 +158,7 @@ BitVectorNode::select_path(const BitVector& t)
     pos_x = d_rng->pick_from_set<std::vector<uint32_t>, uint32_t>(inputs);
   }
 
-  assert(pos_x >= 0);
+  assert(pos_x != static_cast<uint32_t>(-1));
   return pos_x;
 }
 
@@ -5911,7 +5911,7 @@ BitVectorIte::select_path(const BitVector& t)
     }
   }
 
-  assert(pos_x >= 0);
+  assert(pos_x != static_cast<uint32_t>(-1));
   return pos_x;
 }
 
