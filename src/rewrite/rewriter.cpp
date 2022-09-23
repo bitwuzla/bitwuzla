@@ -81,9 +81,14 @@ Rewriter::_rewrite(const Node& node)
   Node res;
   switch (node.kind())
   {
+    case node::Kind::NOT: res = node; break;  // TODO
+    case node::Kind::AND: res = node; break;  // TODO
+    case node::Kind::OR: res = node; break;   // TODO
+
     case node::Kind::EQUAL: res = rewrite_eq(node); break;
     case node::Kind::ITE: res = rewrite_ite(node); break;
 
+    case node::Kind::BV_NOT: res = node; break;  // TODO
     case node::Kind::BV_AND: res = rewrite_bv_and(node); break;
     case node::Kind::BV_ADD: res = rewrite_bv_add(node); break;
     case node::Kind::BV_ASHR: res = rewrite_bv_ashr(node); break;
@@ -96,6 +101,44 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::BV_UDIV: res = rewrite_bv_udiv(node); break;
     case node::Kind::BV_ULT: res = rewrite_bv_ult(node); break;
     case node::Kind::BV_UREM: res = rewrite_bv_urem(node); break;
+    case node::Kind::BV_COMP:
+      res = node; // TODO
+      break;
+
+    /* Eliminated bit-vector operators */
+    case node::Kind::BV_NAND: res = rewrite_bv_nand(node); break;
+    case node::Kind::BV_NEG: res = rewrite_bv_neg(node); break;
+    case node::Kind::BV_NOR: res = rewrite_bv_nor(node); break;
+    case node::Kind::BV_OR: res = rewrite_bv_or(node); break;
+    case node::Kind::BV_REDAND: res = rewrite_bv_redand(node); break;
+    case node::Kind::BV_REDOR: res = rewrite_bv_redor(node); break;
+    case node::Kind::BV_REDXOR: res = rewrite_bv_redxor(node); break;
+    case node::Kind::BV_REPEAT: res = rewrite_bv_repeat(node); break;
+    case node::Kind::BV_ROL: res = rewrite_bv_rol(node); break;
+    case node::Kind::BV_ROLI: res = rewrite_bv_roli(node); break;
+    case node::Kind::BV_ROR: res = rewrite_bv_ror(node); break;
+    case node::Kind::BV_RORI: res = rewrite_bv_rori(node); break;
+    case node::Kind::BV_SADDO: res = rewrite_bv_saddo(node); break;
+    case node::Kind::BV_SDIV: res = rewrite_bv_sdiv(node); break;
+    case node::Kind::BV_SDIVO: res = rewrite_bv_sdivo(node); break;
+    case node::Kind::BV_SGE: res = rewrite_bv_sge(node); break;
+    case node::Kind::BV_SGT: res = rewrite_bv_sgt(node); break;
+    case node::Kind::BV_SIGN_EXTEND: res = rewrite_bv_sign_extend(node); break;
+    case node::Kind::BV_SLE: res = rewrite_bv_sle(node); break;
+    case node::Kind::BV_SMOD: res = rewrite_bv_smod(node); break;
+    // case node::Kind::BV_SMULO: res = rewrite_bv_smulo(node); break;
+    case node::Kind::BV_SREM: res = rewrite_bv_srem(node); break;
+    case node::Kind::BV_SSUBO: res = rewrite_bv_ssubo(node); break;
+    case node::Kind::BV_SUB: res = rewrite_bv_sub(node); break;
+    // case node::Kind::BV_UMULO: res = rewrite_bv_umulo(node); break;
+    case node::Kind::BV_UADDO: res = rewrite_bv_uaddo(node); break;
+    case node::Kind::BV_UGE: res = rewrite_bv_uge(node); break;
+    case node::Kind::BV_UGT: res = rewrite_bv_ugt(node); break;
+    case node::Kind::BV_ULE: res = rewrite_bv_ule(node); break;
+    case node::Kind::BV_USUBO: res = rewrite_bv_usubo(node); break;
+    case node::Kind::BV_XNOR: res = rewrite_bv_xnor(node); break;
+    case node::Kind::BV_XOR: res = rewrite_bv_xor(node); break;
+    case node::Kind::BV_ZERO_EXTEND: res = rewrite_bv_zero_extend(node); break;
 
     case node::Kind::FP_ABS: res = rewrite_fp_abs(node); break;
     case node::Kind::FP_ADD: res = rewrite_fp_add(node); break;
@@ -316,6 +359,56 @@ Rewriter::rewrite_bv_urem(const Node& node)
 DONE:
   return res;
 }
+
+/* Eliminated operators */
+
+#define BZLA_ELIM_KIND_IMPL(name, rule)              \
+  Node Rewriter::rewrite_bv_##name(const Node& node) \
+  {                                                  \
+    RewriteRuleKind kind;                            \
+    Node res;                                        \
+                                                     \
+    BZLA_APPLY_RW_RULE(rule);                        \
+                                                     \
+  DONE:                                              \
+    return res;                                      \
+  }
+
+BZLA_ELIM_KIND_IMPL(nand, BV_NAND_ELIM)
+BZLA_ELIM_KIND_IMPL(neg, BV_NEG_ELIM)
+BZLA_ELIM_KIND_IMPL(nor, BV_NOR_ELIM)
+BZLA_ELIM_KIND_IMPL(or, BV_OR_ELIM)
+BZLA_ELIM_KIND_IMPL(redand, BV_REDAND_ELIM)
+BZLA_ELIM_KIND_IMPL(redor, BV_REDOR_ELIM)
+BZLA_ELIM_KIND_IMPL(redxor, BV_REDXOR_ELIM)
+BZLA_ELIM_KIND_IMPL(repeat, BV_REPEAT_ELIM)
+BZLA_ELIM_KIND_IMPL(rol, BV_ROL_ELIM)
+BZLA_ELIM_KIND_IMPL(roli, BV_ROLI_ELIM)
+BZLA_ELIM_KIND_IMPL(ror, BV_ROR_ELIM)
+BZLA_ELIM_KIND_IMPL(rori, BV_RORI_ELIM)
+BZLA_ELIM_KIND_IMPL(saddo, BV_SADDO_ELIM)
+BZLA_ELIM_KIND_IMPL(sdiv, BV_SDIV_ELIM)
+BZLA_ELIM_KIND_IMPL(sdivo, BV_SDIVO_ELIM)
+BZLA_ELIM_KIND_IMPL(sge, BV_SGE_ELIM)
+BZLA_ELIM_KIND_IMPL(sgt, BV_SGT_ELIM)
+BZLA_ELIM_KIND_IMPL(sign_extend, BV_SIGN_EXTEND_ELIM)
+BZLA_ELIM_KIND_IMPL(sle, BV_SLE_ELIM)
+BZLA_ELIM_KIND_IMPL(smod, BV_SMOD_ELIM)
+// BZLA_ELIM_KIND_IMPL(smulo, BV_SMULO_ELIM)
+BZLA_ELIM_KIND_IMPL(srem, BV_SREM_ELIM)
+BZLA_ELIM_KIND_IMPL(ssubo, BV_SSUBO_ELIM)
+BZLA_ELIM_KIND_IMPL(sub, BV_SUB_ELIM)
+BZLA_ELIM_KIND_IMPL(uaddo, BV_UADDO_ELIM)
+BZLA_ELIM_KIND_IMPL(uge, BV_UGE_ELIM)
+BZLA_ELIM_KIND_IMPL(ugt, BV_UGT_ELIM)
+BZLA_ELIM_KIND_IMPL(ule, BV_ULE_ELIM)
+// BZLA_ELIM_KIND_IMPL(umulo, BV_UMULO_ELIM)
+BZLA_ELIM_KIND_IMPL(usubo, BV_USUBO_ELIM)
+BZLA_ELIM_KIND_IMPL(xnor, BV_XNOR_ELIM)
+BZLA_ELIM_KIND_IMPL(xor, BV_XOR_ELIM)
+BZLA_ELIM_KIND_IMPL(zero_extend, BV_ZERO_EXTEND_ELIM)
+
+#undef BZLA_ELIM_KIND_IMPL
 
 /* FP rewrites -------------------------------------------------------------- */
 

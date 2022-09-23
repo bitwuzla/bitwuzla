@@ -411,5 +411,81 @@ TEST_F(TestRewriter, bv_urem_eval)
   ASSERT_EQ(bvurem3, d_rewriter.rewrite(bvurem3));
 }
 
+/* --- Elimination Rules ---------------------------------------------------- */
+
+TEST_F(TestRewriter, bv_nand_elim) { test_elim_rule(Kind::BV_NAND); }
+
+TEST_F(TestRewriter, bv_neg_elim) { test_elim_rule(Kind::BV_NEG); }
+
+TEST_F(TestRewriter, bv_nor_elim) { test_elim_rule(Kind::BV_NOR); }
+
+TEST_F(TestRewriter, bv_or_elim) { test_elim_rule(Kind::BV_OR); }
+
+TEST_F(TestRewriter, bv_redand_elim) { test_elim_rule(Kind::BV_REDAND); }
+
+TEST_F(TestRewriter, bv_redor_elim) { test_elim_rule(Kind::BV_REDOR); }
+
+// not supported by Bitwuzla main
+// TEST_F(TestRewriter, bv_redxor_elim) { test_elim_rule(Kind::BV_REDXOR); }
+
+TEST_F(TestRewriter, bv_roli_elim) { test_elim_rule(Kind::BV_ROLI); }
+
+TEST_F(TestRewriter, bv_rori_elim) { test_elim_rule(Kind::BV_RORI); }
+
+TEST_F(TestRewriter, bv_repeat_elim) { test_elim_rule(Kind::BV_REPEAT); }
+
+// not supported by Bitwuzla main
+// TEST_F(TestRewriter, bv_saddo_elim) { test_elim_rule(Kind::BV_SADDO); }
+
+TEST_F(TestRewriter, bv_sdiv_elim) { test_elim_rule(Kind::BV_SDIV); }
+
+// not supported by Bitwuzla main
+// TEST_F(TestRewriter, bv_sdivo_elim) { test_elim_rule(Kind::BV_SDIVO); }
+
+TEST_F(TestRewriter, bv_sge_elim) { test_elim_rule(Kind::BV_SGE); }
+
+TEST_F(TestRewriter, bv_sgt_elim) { test_elim_rule(Kind::BV_SGT); }
+
+TEST_F(TestRewriter, bv_sign_extend_elim)
+{
+  test_elim_rule(Kind::BV_SIGN_EXTEND);
+}
+
+TEST_F(TestRewriter, bv_sle_elim) { test_elim_rule(Kind::BV_SLE); }
+
+TEST_F(TestRewriter, bv_smod_elim) { test_elim_rule(Kind::BV_SMOD); }
+
+// not supported by Bitwuzla main
+// TEST_F(TestRewriter, bv_smulo_elim) { test_elim_rule(Kind::BV_SMULO); }
+
+TEST_F(TestRewriter, bv_srem_elim) { test_elim_rule(Kind::BV_SREM); }
+
+// not supported by Bitwuzla main
+// TEST_F(TestRewriter, bv_ssubo_elim) { test_elim_rule(Kind::BV_SSUBO); }
+
+TEST_F(TestRewriter, bv_sub_elim) { test_elim_rule(Kind::BV_SUB); }
+
+// not supported by Bitwuzla main
+// TEST_F(TestRewriter, bv_uaddo_elim) { test_elim_rule(Kind::BV_UADDO); }
+
+TEST_F(TestRewriter, bv_uge_elim) { test_elim_rule(Kind::BV_UGE); }
+
+TEST_F(TestRewriter, bv_ugt_elim) { test_elim_rule(Kind::BV_UGT); }
+
+TEST_F(TestRewriter, bv_ule_elim) { test_elim_rule(Kind::BV_ULE); }
+
+// not supported by Bitwuzla main
+// TEST_F(TestRewriter, bv_umulo_elim) { test_elim_rule(Kind::BV_UMULO); }
+// TEST_F(TestRewriter, bv_usubo_elim) { test_elim_rule(Kind::BV_USUBO); }
+
+TEST_F(TestRewriter, bv_xnor_elim) { test_elim_rule(Kind::BV_XNOR); }
+
+TEST_F(TestRewriter, bv_xor_elim) { test_elim_rule(Kind::BV_XOR); }
+
+TEST_F(TestRewriter, bv_zero_extend_elim)
+{
+  test_elim_rule(Kind::BV_ZERO_EXTEND);
+}
+
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla::test

@@ -37,6 +37,41 @@ class Rewriter
   Node rewrite_bv_ult(const Node& node);
   Node rewrite_bv_urem(const Node& node);
 
+  /* Eliminated operators */
+  Node rewrite_bv_nand(const Node& node);
+  Node rewrite_bv_neg(const Node& node);
+  Node rewrite_bv_nor(const Node& node);
+  Node rewrite_bv_or(const Node& node);
+  Node rewrite_bv_redand(const Node& node);
+  Node rewrite_bv_redor(const Node& node);
+  Node rewrite_bv_redxor(const Node& node);
+  Node rewrite_bv_repeat(const Node& node);
+  Node rewrite_bv_rol(const Node& node);
+  Node rewrite_bv_roli(const Node& node);
+  Node rewrite_bv_ror(const Node& node);
+  Node rewrite_bv_rori(const Node& node);
+  Node rewrite_bv_saddo(const Node& node);
+  Node rewrite_bv_sdiv(const Node& node);
+  Node rewrite_bv_sdivo(const Node& node);
+  Node rewrite_bv_sge(const Node& node);
+  Node rewrite_bv_sgt(const Node& node);
+  Node rewrite_bv_sign_extend(const Node& node);
+  Node rewrite_bv_sle(const Node& node);
+  Node rewrite_bv_smod(const Node& node);
+  // Node rewrite_bv_smulo(const Node& node);
+  Node rewrite_bv_srem(const Node& node);
+  Node rewrite_bv_ssubo(const Node& node);
+  Node rewrite_bv_sub(const Node& node);
+  Node rewrite_bv_uaddo(const Node& node);
+  Node rewrite_bv_uge(const Node& node);
+  Node rewrite_bv_ugt(const Node& node);
+  Node rewrite_bv_ule(const Node& node);
+  // Node rewrite_bv_umulo(const Node& node);
+  Node rewrite_bv_usubo(const Node& node);
+  Node rewrite_bv_xnor(const Node& node);
+  Node rewrite_bv_xor(const Node& node);
+  Node rewrite_bv_zero_extend(const Node& node);
+
   Node rewrite_fp_abs(const Node& node);
   Node rewrite_fp_add(const Node& node);
   Node rewrite_fp_div(const Node& node);
@@ -85,6 +120,40 @@ enum class RewriteRuleKind
   BV_UDIV_EVAL,
   BV_ULT_EVAL,
   BV_UREM_EVAL,
+
+  BV_NAND_ELIM,
+  BV_NEG_ELIM,
+  BV_NOR_ELIM,
+  BV_OR_ELIM,
+  BV_REDAND_ELIM,
+  BV_REDOR_ELIM,
+  BV_REDXOR_ELIM,
+  BV_REPEAT_ELIM,
+  BV_ROL_ELIM,
+  BV_ROLI_ELIM,
+  BV_ROR_ELIM,
+  BV_RORI_ELIM,
+  BV_SADDO_ELIM,
+  BV_SDIV_ELIM,
+  BV_SDIVO_ELIM,
+  BV_SGE_ELIM,
+  BV_SGT_ELIM,
+  BV_SIGN_EXTEND_ELIM,
+  BV_SLE_ELIM,
+  BV_SMOD_ELIM,
+  // BV_SMULO_ELIM,
+  BV_SREM_ELIM,
+  BV_SSUBO_ELIM,
+  BV_SUB_ELIM,
+  BV_UADDO_ELIM,
+  BV_UGE_ELIM,
+  BV_UGT_ELIM,
+  BV_ULE_ELIM,
+  // BV_UMULO_ELIM,
+  BV_USUBO_ELIM,
+  BV_XNOR_ELIM,
+  BV_XOR_ELIM,
+  BV_ZERO_EXTEND_ELIM,
 
   FP_ABS_EVAL,
   FP_ADD_EVAL,

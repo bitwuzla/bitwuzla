@@ -188,6 +188,135 @@ Node RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
 // bool_urem
 // zero_urem
 
-}  // namespace bzla
+/* --- Elimination Rules ---------------------------------------------------- */
 
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NAND_ELIM>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NOR_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_OR_ELIM>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_REDAND_ELIM>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_REDOR_ELIM>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_REDXOR_ELIM>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_REPEAT_ELIM>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ROL_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ROLI_ELIM>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ROR_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_RORI_ELIM>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SADDO_ELIM>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SDIV_ELIM>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SDIVO_ELIM>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SGE_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SGT_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SIGN_EXTEND_ELIM>::_apply(
+    Rewriter& rewriter, const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SLE_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SMOD_ELIM>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
+// template <>
+// Node RewriteRule<RewriteRuleKind::BV_SMULO_ELIM>::_apply(Rewriter& rewriter,
+//                                                         const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SREM_ELIM>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SSUBO_ELIM>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SUB_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UADDO_ELIM>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UGE_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UGT_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ULE_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_USUBO_ELIM>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_XNOR_ELIM>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_XOR_ELIM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ZERO_EXTEND_ELIM>::_apply(
+    Rewriter& rewriter, const Node& node);
+
+}  // namespace bzla
 #endif
