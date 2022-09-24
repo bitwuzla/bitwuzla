@@ -21,6 +21,9 @@ class Rewriter
  private:
   const Node& _rewrite(const Node& node);
 
+  Node rewrite_and(const Node& node);
+  Node rewrite_not(const Node& node);
+
   Node rewrite_eq(const Node& node);
   Node rewrite_ite(const Node& node);
 
@@ -110,6 +113,9 @@ class Rewriter
 
 enum class RewriteRuleKind
 {
+  AND_EVAL,
+  NOT_EVAL,
+
   BV_ADD_EVAL,
   BV_AND_EVAL,
   BV_ASHR_EVAL,

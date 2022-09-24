@@ -1,6 +1,7 @@
 #include "rewrite/rewriter.h"
 
 #include "node/node_manager.h"
+#include "rewrite/rewrites_bool.h"
 #include "rewrite/rewrites_bv.h"
 #include "rewrite/rewrites_fp.h"
 
@@ -81,9 +82,9 @@ Rewriter::_rewrite(const Node& node)
   Node res;
   switch (node.kind())
   {
-    case node::Kind::NOT: res = node; break;  // TODO
-    case node::Kind::AND: res = node; break;  // TODO
-    case node::Kind::OR: res = node; break;   // TODO
+    case node::Kind::AND: res = rewrite_and(node); break;
+    case node::Kind::NOT: res = rewrite_not(node); break;
+    case node::Kind::OR: res = node; break;  // TODO
 
     case node::Kind::EQUAL: res = rewrite_eq(node); break;
     case node::Kind::ITE: res = rewrite_ite(node); break;
@@ -190,6 +191,34 @@ Rewriter::_rewrite(const Node& node)
   it->second = res;
 
   return it->second;
+}
+
+/* Boolean rewrites --------------------------------------------------------- */
+
+Node
+Rewriter::rewrite_and(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(AND_EVAL);
+  // TODO
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_not(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(NOT_EVAL);
+  // TODO
+
+DONE:
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
