@@ -1272,19 +1272,32 @@ class BitVectorUlt : public BitVectorNode
                       uint32_t pos_x,
                       bool is_essential_check);
   /**
-   * Helper to compute the min and max bounds for `x` with respect to the
-   * current min/max bounds of this node, if any.
+   * Helper to compute the normalized min and max bounds for `x` with respect
+   * to `s` and `t` and the current signed and unsigned min/max bounds of `x`,
+   * if any. The resulting bounds are split into a lower (from min_signed to
+   * ones) and upper (from zero to max_signed) ranges. If the resulting ranges
+   * are empty (no inverse value exists with respect to `s` and `t` and the
+   * current bounds on `x`), all return parameters will be null nodes.
+   *
    * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`.
-   * @param min The resulting lower bound.
-   * @param max The resulting upper bound.
+   * @param res_min_lo The minimum value of the resulting lower range, null if
+   *                   no values in the lower range are covered.
+   * @param res_max_lo The maximum value of the resulting lower range, null if
+   *                   no values in the lower range are covered.
+   * @param res_min_hi The minimum value of the resulting upper range, null if
+   *                   no values in the upper range are covered.
+   * @param res_max_hi The maximum value of the resulting upper range, null if
+   *                   no values in the upper range are covered.
    */
   void compute_min_max_bounds(const BitVector& s,
                               bool t,
                               uint32_t pos_x,
-                              BitVector& min,
-                              BitVector& max);
+                              BitVector& res_min_lo,
+                              BitVector& res_max_lo,
+                              BitVector& res_min_hi,
+                              BitVector& res_max_hi);
   /**
    * Helper for concat-specific (when x is a concat) inverse value computation.
    * Attempts to find an inverse value by only changing the value of one of
@@ -1423,19 +1436,32 @@ class BitVectorSlt : public BitVectorNode
                       uint32_t pos_x,
                       bool is_essential_check);
   /**
-   * Helper to compute the min and max bounds for `x` with respect to the
-   * current min/max bounds of this node, if any.
+   * Helper to compute the normalized min and max bounds for `x` with respect
+   * to `s` and `t` and the current signed and unsigned min/max bounds of `x`,
+   * if any. The resulting bounds are split into a lower (from min_signed to
+   * ones) and upper (from zero to max_signed) ranges. If the resulting ranges
+   * are empty (no inverse value exists with respect to `s` and `t` and the
+   * current bounds on `x`), all return parameters will be null nodes.
+   *
    * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`.
-   * @param min The resulting lower bound.
-   * @param max The resulting upper bound.
+   * @param res_min_lo The minimum value of the resulting lower range, null if
+   *                   no values in the lower range are covered.
+   * @param res_max_lo The maximum value of the resulting lower range, null if
+   *                   no values in the lower range are covered.
+   * @param res_min_hi The minimum value of the resulting upper range, null if
+   *                   no values in the upper range are covered.
+   * @param res_max_hi The maximum value of the resulting upper range, null if
+   *                   no values in the upper range are covered.
    */
   void compute_min_max_bounds(const BitVector& s,
                               bool t,
                               uint32_t pos_x,
-                              BitVector& min,
-                              BitVector& max);
+                              BitVector& res_min_lo,
+                              BitVector& res_max_lo,
+                              BitVector& res_min_hi,
+                              BitVector& res_max_hi);
   /**
    * Helper for concat-specific (when x is a concat) inverse value computation.
    * Attempts to find an inverse value by only changing the value of one of
