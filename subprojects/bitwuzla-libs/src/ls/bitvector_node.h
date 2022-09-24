@@ -323,7 +323,16 @@ class BitVectorNode
                 BitVectorNode* child1,
                 BitVectorNode* child2);
 
-  virtual uint32_t select_path_non_const(std::vector<uint32_t>& inputs) const;
+  /**
+   * Helper to select a non-const operand. Additional collects the indices
+   * of all non-const operands.
+   * @note Asserts that at least one operand is non-const.
+   * @param res_inputs The resulting vector of indices of non-const operands.
+   * @return -1 if more than one operand is non-const (and thus
+   *         `res_intpus.size() > 1`), else the index of the non-const operand.
+   */
+  virtual uint32_t select_path_non_const(
+      std::vector<uint32_t>& res_inputs) const;
 
   uint64_t d_id = 0;
   std::unique_ptr<BitVectorNode*[]> d_children;

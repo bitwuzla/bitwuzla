@@ -108,16 +108,16 @@ BitVectorNode::BitVectorNode(RNG* rng,
 }
 
 uint32_t
-BitVectorNode::select_path_non_const(std::vector<uint32_t>& inputs) const
+BitVectorNode::select_path_non_const(std::vector<uint32_t>& res_inputs) const
 {
-  assert(inputs.empty());
+  assert(res_inputs.empty());
   for (uint32_t i = 0; i < d_arity; ++i)
   {
     if (d_children[i]->is_const()) continue;
-    inputs.push_back(i);
+    res_inputs.push_back(i);
   }
-  if (inputs.size() > 1) return static_cast<uint32_t>(-1);
-  return inputs[0];
+  if (res_inputs.size() > 1) return static_cast<uint32_t>(-1);
+  return res_inputs[0];
 }
 
 uint32_t
