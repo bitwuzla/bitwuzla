@@ -13,6 +13,10 @@ template <>
 Node RewriteRule<RewriteRuleKind::NOT_EVAL>::_apply(Rewriter& rewriter,
                                                     const Node& node);
 
+template <>
+Node RewriteRule<RewriteRuleKind::OR_ELIM>::_apply(Rewriter& rewriter,
+                                                   const Node& node);
+
 }  // namespace bzla
 
 #endif

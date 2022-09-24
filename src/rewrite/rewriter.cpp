@@ -13,6 +13,18 @@
     if (res != node) goto DONE;                                    \
   } while (false);
 
+#define BZLA_ELIM_KIND_IMPL(name, rule)           \
+  Node Rewriter::rewrite_##name(const Node& node) \
+  {                                               \
+    RewriteRuleKind kind;                         \
+    Node res;                                     \
+                                                  \
+    BZLA_APPLY_RW_RULE(rule);                     \
+                                                  \
+  DONE:                                           \
+    return res;                                   \
+  }
+
 namespace bzla {
 
 /* === Rewriter public ====================================================== */
@@ -84,7 +96,7 @@ Rewriter::_rewrite(const Node& node)
   {
     case node::Kind::AND: res = rewrite_and(node); break;
     case node::Kind::NOT: res = rewrite_not(node); break;
-    case node::Kind::OR: res = node; break;  // TODO
+    case node::Kind::OR: res = rewrite_or(node); break;
 
     case node::Kind::EQUAL: res = rewrite_eq(node); break;
     case node::Kind::ITE: res = rewrite_ite(node); break;
@@ -220,6 +232,8 @@ Rewriter::rewrite_not(const Node& node)
 DONE:
   return res;
 }
+
+BZLA_ELIM_KIND_IMPL(or, OR_ELIM)
 
 /* -------------------------------------------------------------------------- */
 
@@ -404,51 +418,39 @@ DONE:
 
 /* Eliminated operators */
 
-#define BZLA_ELIM_KIND_IMPL(name, rule)              \
-  Node Rewriter::rewrite_bv_##name(const Node& node) \
-  {                                                  \
-    RewriteRuleKind kind;                            \
-    Node res;                                        \
-                                                     \
-    BZLA_APPLY_RW_RULE(rule);                        \
-                                                     \
-  DONE:                                              \
-    return res;                                      \
-  }
-
-BZLA_ELIM_KIND_IMPL(nand, BV_NAND_ELIM)
-BZLA_ELIM_KIND_IMPL(neg, BV_NEG_ELIM)
-BZLA_ELIM_KIND_IMPL(nor, BV_NOR_ELIM)
-BZLA_ELIM_KIND_IMPL(or, BV_OR_ELIM)
-BZLA_ELIM_KIND_IMPL(redand, BV_REDAND_ELIM)
-BZLA_ELIM_KIND_IMPL(redor, BV_REDOR_ELIM)
-BZLA_ELIM_KIND_IMPL(redxor, BV_REDXOR_ELIM)
-BZLA_ELIM_KIND_IMPL(repeat, BV_REPEAT_ELIM)
-BZLA_ELIM_KIND_IMPL(rol, BV_ROL_ELIM)
-BZLA_ELIM_KIND_IMPL(roli, BV_ROLI_ELIM)
-BZLA_ELIM_KIND_IMPL(ror, BV_ROR_ELIM)
-BZLA_ELIM_KIND_IMPL(rori, BV_RORI_ELIM)
-BZLA_ELIM_KIND_IMPL(saddo, BV_SADDO_ELIM)
-BZLA_ELIM_KIND_IMPL(sdiv, BV_SDIV_ELIM)
-BZLA_ELIM_KIND_IMPL(sdivo, BV_SDIVO_ELIM)
-BZLA_ELIM_KIND_IMPL(sge, BV_SGE_ELIM)
-BZLA_ELIM_KIND_IMPL(sgt, BV_SGT_ELIM)
-BZLA_ELIM_KIND_IMPL(sign_extend, BV_SIGN_EXTEND_ELIM)
-BZLA_ELIM_KIND_IMPL(sle, BV_SLE_ELIM)
-BZLA_ELIM_KIND_IMPL(smod, BV_SMOD_ELIM)
-// BZLA_ELIM_KIND_IMPL(smulo, BV_SMULO_ELIM)
-BZLA_ELIM_KIND_IMPL(srem, BV_SREM_ELIM)
-BZLA_ELIM_KIND_IMPL(ssubo, BV_SSUBO_ELIM)
-BZLA_ELIM_KIND_IMPL(sub, BV_SUB_ELIM)
-BZLA_ELIM_KIND_IMPL(uaddo, BV_UADDO_ELIM)
-BZLA_ELIM_KIND_IMPL(uge, BV_UGE_ELIM)
-BZLA_ELIM_KIND_IMPL(ugt, BV_UGT_ELIM)
-BZLA_ELIM_KIND_IMPL(ule, BV_ULE_ELIM)
-// BZLA_ELIM_KIND_IMPL(umulo, BV_UMULO_ELIM)
-BZLA_ELIM_KIND_IMPL(usubo, BV_USUBO_ELIM)
-BZLA_ELIM_KIND_IMPL(xnor, BV_XNOR_ELIM)
-BZLA_ELIM_KIND_IMPL(xor, BV_XOR_ELIM)
-BZLA_ELIM_KIND_IMPL(zero_extend, BV_ZERO_EXTEND_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_nand, BV_NAND_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_neg, BV_NEG_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_nor, BV_NOR_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_or, BV_OR_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_redand, BV_REDAND_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_redor, BV_REDOR_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_redxor, BV_REDXOR_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_repeat, BV_REPEAT_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_rol, BV_ROL_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_roli, BV_ROLI_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_ror, BV_ROR_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_rori, BV_RORI_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_saddo, BV_SADDO_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_sdiv, BV_SDIV_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_sdivo, BV_SDIVO_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_sge, BV_SGE_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_sgt, BV_SGT_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_sign_extend, BV_SIGN_EXTEND_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_sle, BV_SLE_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_smod, BV_SMOD_ELIM)
+// BZLA_ELIM_KIND_IMPL(bv_smulo, BV_SMULO_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_srem, BV_SREM_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_ssubo, BV_SSUBO_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_sub, BV_SUB_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_uaddo, BV_UADDO_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_uge, BV_UGE_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_ugt, BV_UGT_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_ule, BV_ULE_ELIM)
+// BZLA_ELIM_KIND_IMPL(bv_umulo, BV_UMULO_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_usubo, BV_USUBO_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_xnor, BV_XNOR_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_xor, BV_XOR_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_zero_extend, BV_ZERO_EXTEND_ELIM)
 
 #undef BZLA_ELIM_KIND_IMPL
 

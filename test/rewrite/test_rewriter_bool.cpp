@@ -2,21 +2,27 @@
 #include "node/node_manager.h"
 #include "rewrite/rewriter.h"
 #include "rewrite/rewrites_bool.h"
+#include "test_rewriter.h"
 
 namespace bzla::test {
 
 using namespace bzla::node;
 
-class TestRewriter : public ::testing::Test
+class TestRewriterBool : public TestRewriter
 {
   void SetUp() override {}
 
  protected:
+  void test_elim_rule_bool(Kind kind)
+  {
+    test_elim_rule(kind, d_nm.mk_bool_type());
+  }
+
   Rewriter d_rewriter;
   NodeManager& d_nm = NodeManager::get();
 };
 
-TEST_F(TestRewriter, bool_and_eval)
+TEST_F(TestRewriterBool, bool_and_eval)
 {
   // applies
   Node and0 =
@@ -35,7 +41,7 @@ TEST_F(TestRewriter, bool_and_eval)
       RewriteRule<RewriteRuleKind::AND_EVAL>::apply(d_rewriter, and2).first);
 }
 
-TEST_F(TestRewriter, bool_not_eval)
+TEST_F(TestRewriterBool, bool_not_eval)
 {
   // applies
   Node not0 = d_nm.mk_node(Kind::NOT, {d_nm.mk_value(false)});
@@ -51,6 +57,8 @@ TEST_F(TestRewriter, bool_not_eval)
       not2,
       RewriteRule<RewriteRuleKind::NOT_EVAL>::apply(d_rewriter, not2).first);
 }
+
+TEST_F(TestRewriterBool, bool_or_elim) { test_elim_rule_bool(Kind::OR); }
 
 }  // namespace bzla::test
 

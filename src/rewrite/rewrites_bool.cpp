@@ -26,4 +26,16 @@ RewriteRule<RewriteRuleKind::NOT_EVAL>::_apply(Rewriter& rewriter,
   return NodeManager::get().mk_value(!node[0].value<bool>());
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::OR_ELIM>::_apply(Rewriter& rewriter,
+                                              const Node& node)
+{
+  return rewriter.mk_node(
+      Kind::NOT,
+      {rewriter.mk_node(Kind::AND,
+                        {rewriter.mk_node(Kind::NOT, {node[0]}),
+                         rewriter.mk_node(Kind::NOT, {node[1]})})});
+}
+
 }  // namespace bzla

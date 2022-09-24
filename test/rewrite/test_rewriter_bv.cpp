@@ -3,97 +3,21 @@
 #include "node/node_manager.h"
 #include "printer/printer.h"
 #include "rewrite/rewriter.h"
+#include "rewrite/test_rewriter.h"
 #include "solver/fp/floating_point.h"
 
 namespace bzla::test {
 
-static const char* s_solver_binary = std::getenv("SOLVER_BINARY");
-
 using namespace bzla::node;
 
-class TestRewriter : public ::testing::Test
+class TestRewriterBv : public TestRewriter
 {
   void SetUp() override { d_bv_type = d_nm.mk_bv_type(4); }
 
  protected:
-  static std::string check_sat(std::stringstream& ss)
+  void test_elim_rule_bv(Kind kind)
   {
-    std::stringstream bench;
-    bench << "(set-logic QF_BV)\n";
-    bench << "(set-option :produce-models true)\n";
-    bench << ss.str();
-    bench << "(check-sat)\n";
-    bench << "(get-model)\n";
-
-    char filename[] = "bzlarwtest-XXXXXX";
-    int fd          = mkstemp(filename);
-    assert(fd != -1);
-
-    FILE* file = fdopen(fd, "w");
-    fputs(bench.str().c_str(), file);
-    fflush(file);
-
-    std::stringstream cmd;
-    cmd << s_solver_binary << " " << filename;
-
-    // Execute solver and read output.
-    FILE* fp = popen(cmd.str().c_str(), "r");
-    char buf[1024];
-    std::stringstream output;
-    while (fgets(buf, 1024, fp))
-    {
-      output << buf;
-    }
-    remove(filename);
-    fclose(file);
-
-    std::string result = output.str();
-    size_t newline_pos = result.find_last_of('\n');
-    return result.substr(0, newline_pos);
-  }
-
-  void test_elim_rule(Kind kind)
-  {
-    if (s_solver_binary == nullptr)
-    {
-      GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
-    }
-
-    size_t num_children = s_node_kind_info[kind].num_children;
-    size_t num_indices  = s_node_kind_info[kind].num_indices;
-
-    NodeManager& nm = NodeManager::get();
-    Type bv8        = nm.mk_bv_type(8);
-    std::vector<Node> children;
-    std::vector<uint64_t> indices;
-    if (num_children >= 1)
-    {
-      children.push_back(nm.mk_const(bv8, "a"));
-    }
-    if (num_children >= 2)
-    {
-      children.push_back(nm.mk_const(bv8, "b"));
-    }
-
-    if (num_indices == 1)
-    {
-      indices.push_back(7);
-    }
-    if (num_indices == 2)
-    {
-      indices.push_back(1);
-    }
-
-    Node node = nm.mk_node(kind, children, indices);
-
-    std::stringstream ss;
-    for (const Node& child : children)
-    {
-      ss << "(declare-const " << child << " " << child.type() << ")\n";
-    }
-    ss << "(assert (distinct " << node << " " << d_rewriter.rewrite(node)
-       << "))\n";
-    ASSERT_EQ(check_sat(ss), "unsat");
+    test_elim_rule(kind, d_nm.mk_bv_type(8));
   }
 
   Rewriter d_rewriter;
@@ -103,7 +27,7 @@ class TestRewriter : public ::testing::Test
 
 /* bvadd -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_add_eval)
+TEST_F(TestRewriterBv, bv_add_eval)
 {
   // applies
   Node bvadd0 = d_nm.mk_node(Kind::BV_ADD,
@@ -132,7 +56,7 @@ TEST_F(TestRewriter, bv_add_eval)
 
 /* bvand -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_and_eval)
+TEST_F(TestRewriterBv, bv_and_eval)
 {
   // applies
   Node bvand0 = d_nm.mk_node(Kind::BV_AND,
@@ -161,7 +85,7 @@ TEST_F(TestRewriter, bv_and_eval)
 
 /* bvashr ------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_ashr_eval)
+TEST_F(TestRewriterBv, bv_ashr_eval)
 {
   // applies
   Node bvashr0 = d_nm.mk_node(Kind::BV_ASHR,
@@ -190,7 +114,7 @@ TEST_F(TestRewriter, bv_ashr_eval)
 
 /* bvconcat ----------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_concat_eval)
+TEST_F(TestRewriterBv, bv_concat_eval)
 {
   // applies
   Node bvconcat0 = d_nm.mk_node(Kind::BV_CONCAT,
@@ -224,7 +148,7 @@ TEST_F(TestRewriter, bv_concat_eval)
 
 /* bvmul -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_mul_eval)
+TEST_F(TestRewriterBv, bv_mul_eval)
 {
   // applies
   Node bvmul0 = d_nm.mk_node(Kind::BV_MUL,
@@ -253,7 +177,7 @@ TEST_F(TestRewriter, bv_mul_eval)
 
 /* bvnot -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_not_eval)
+TEST_F(TestRewriterBv, bv_not_eval)
 {
   // applies
   Node bvnot0 =
@@ -273,7 +197,7 @@ TEST_F(TestRewriter, bv_not_eval)
 
 /* bvshl -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_shl_eval)
+TEST_F(TestRewriterBv, bv_shl_eval)
 {
   // applies
   Node bvshl0 = d_nm.mk_node(Kind::BV_SHL,
@@ -302,7 +226,7 @@ TEST_F(TestRewriter, bv_shl_eval)
 
 /* bvshr -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_shr_eval)
+TEST_F(TestRewriterBv, bv_shr_eval)
 {
   // applies
   Node bvshr0 = d_nm.mk_node(Kind::BV_SHR,
@@ -331,7 +255,7 @@ TEST_F(TestRewriter, bv_shr_eval)
 
 /* bvslt -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_slt_eval)
+TEST_F(TestRewriterBv, bv_slt_eval)
 {
   // applies
   Node bvslt0 = d_nm.mk_node(Kind::BV_SLT,
@@ -353,7 +277,7 @@ TEST_F(TestRewriter, bv_slt_eval)
 
 /* bvudiv-------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_udiv_eval)
+TEST_F(TestRewriterBv, bv_udiv_eval)
 {
   // applies
   Node bvudiv0 = d_nm.mk_node(Kind::BV_UDIV,
@@ -382,7 +306,7 @@ TEST_F(TestRewriter, bv_udiv_eval)
 
 /* bvult -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_ult_eval)
+TEST_F(TestRewriterBv, bv_ult_eval)
 {
   // applies
   Node bvult0 = d_nm.mk_node(Kind::BV_ULT,
@@ -404,7 +328,7 @@ TEST_F(TestRewriter, bv_ult_eval)
 
 /* bvudiv-------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_urem_eval)
+TEST_F(TestRewriterBv, bv_urem_eval)
 {
   // applies
   Node bvurem0 = d_nm.mk_node(Kind::BV_UREM,
@@ -433,78 +357,79 @@ TEST_F(TestRewriter, bv_urem_eval)
 
 /* --- Elimination Rules ---------------------------------------------------- */
 
-TEST_F(TestRewriter, bv_nand_elim) { test_elim_rule(Kind::BV_NAND); }
+TEST_F(TestRewriterBv, bv_nand_elim) { test_elim_rule_bv(Kind::BV_NAND); }
 
-TEST_F(TestRewriter, bv_neg_elim) { test_elim_rule(Kind::BV_NEG); }
+TEST_F(TestRewriterBv, bv_neg_elim) { test_elim_rule_bv(Kind::BV_NEG); }
 
-TEST_F(TestRewriter, bv_nor_elim) { test_elim_rule(Kind::BV_NOR); }
+TEST_F(TestRewriterBv, bv_nor_elim) { test_elim_rule_bv(Kind::BV_NOR); }
 
-TEST_F(TestRewriter, bv_or_elim) { test_elim_rule(Kind::BV_OR); }
+TEST_F(TestRewriterBv, bv_or_elim) { test_elim_rule_bv(Kind::BV_OR); }
 
-TEST_F(TestRewriter, bv_redand_elim) { test_elim_rule(Kind::BV_REDAND); }
+TEST_F(TestRewriterBv, bv_redand_elim) { test_elim_rule_bv(Kind::BV_REDAND); }
 
-TEST_F(TestRewriter, bv_redor_elim) { test_elim_rule(Kind::BV_REDOR); }
-
-// not supported by Bitwuzla main
-// TEST_F(TestRewriter, bv_redxor_elim) { test_elim_rule(Kind::BV_REDXOR); }
-
-TEST_F(TestRewriter, bv_roli_elim) { test_elim_rule(Kind::BV_ROLI); }
-
-TEST_F(TestRewriter, bv_rori_elim) { test_elim_rule(Kind::BV_RORI); }
-
-TEST_F(TestRewriter, bv_repeat_elim) { test_elim_rule(Kind::BV_REPEAT); }
+TEST_F(TestRewriterBv, bv_redor_elim) { test_elim_rule_bv(Kind::BV_REDOR); }
 
 // not supported by Bitwuzla main
-// TEST_F(TestRewriter, bv_saddo_elim) { test_elim_rule(Kind::BV_SADDO); }
+// TEST_F(TestRewriterBv, bv_redxor_elim) { test_elim_rule_bv(Kind::BV_REDXOR);
+// }
 
-TEST_F(TestRewriter, bv_sdiv_elim) { test_elim_rule(Kind::BV_SDIV); }
+TEST_F(TestRewriterBv, bv_roli_elim) { test_elim_rule_bv(Kind::BV_ROLI); }
+
+TEST_F(TestRewriterBv, bv_rori_elim) { test_elim_rule_bv(Kind::BV_RORI); }
+
+TEST_F(TestRewriterBv, bv_repeat_elim) { test_elim_rule_bv(Kind::BV_REPEAT); }
 
 // not supported by Bitwuzla main
-// TEST_F(TestRewriter, bv_sdivo_elim) { test_elim_rule(Kind::BV_SDIVO); }
+// TEST_F(TestRewriterBv, bv_saddo_elim) { test_elim_rule_bv(Kind::BV_SADDO); }
 
-TEST_F(TestRewriter, bv_sge_elim) { test_elim_rule(Kind::BV_SGE); }
+TEST_F(TestRewriterBv, bv_sdiv_elim) { test_elim_rule_bv(Kind::BV_SDIV); }
 
-TEST_F(TestRewriter, bv_sgt_elim) { test_elim_rule(Kind::BV_SGT); }
+// not supported by Bitwuzla main
+// TEST_F(TestRewriterBv, bv_sdivo_elim) { test_elim_rule_bv(Kind::BV_SDIVO); }
 
-TEST_F(TestRewriter, bv_sign_extend_elim)
+TEST_F(TestRewriterBv, bv_sge_elim) { test_elim_rule_bv(Kind::BV_SGE); }
+
+TEST_F(TestRewriterBv, bv_sgt_elim) { test_elim_rule_bv(Kind::BV_SGT); }
+
+TEST_F(TestRewriterBv, bv_sign_extend_elim)
 {
-  test_elim_rule(Kind::BV_SIGN_EXTEND);
+  test_elim_rule_bv(Kind::BV_SIGN_EXTEND);
 }
 
-TEST_F(TestRewriter, bv_sle_elim) { test_elim_rule(Kind::BV_SLE); }
+TEST_F(TestRewriterBv, bv_sle_elim) { test_elim_rule_bv(Kind::BV_SLE); }
 
-TEST_F(TestRewriter, bv_smod_elim) { test_elim_rule(Kind::BV_SMOD); }
-
-// not supported by Bitwuzla main
-// TEST_F(TestRewriter, bv_smulo_elim) { test_elim_rule(Kind::BV_SMULO); }
-
-TEST_F(TestRewriter, bv_srem_elim) { test_elim_rule(Kind::BV_SREM); }
+TEST_F(TestRewriterBv, bv_smod_elim) { test_elim_rule_bv(Kind::BV_SMOD); }
 
 // not supported by Bitwuzla main
-// TEST_F(TestRewriter, bv_ssubo_elim) { test_elim_rule(Kind::BV_SSUBO); }
+// TEST_F(TestRewriterBv, bv_smulo_elim) { test_elim_rule_bv(Kind::BV_SMULO); }
 
-TEST_F(TestRewriter, bv_sub_elim) { test_elim_rule(Kind::BV_SUB); }
-
-// not supported by Bitwuzla main
-// TEST_F(TestRewriter, bv_uaddo_elim) { test_elim_rule(Kind::BV_UADDO); }
-
-TEST_F(TestRewriter, bv_uge_elim) { test_elim_rule(Kind::BV_UGE); }
-
-TEST_F(TestRewriter, bv_ugt_elim) { test_elim_rule(Kind::BV_UGT); }
-
-TEST_F(TestRewriter, bv_ule_elim) { test_elim_rule(Kind::BV_ULE); }
+TEST_F(TestRewriterBv, bv_srem_elim) { test_elim_rule_bv(Kind::BV_SREM); }
 
 // not supported by Bitwuzla main
-// TEST_F(TestRewriter, bv_umulo_elim) { test_elim_rule(Kind::BV_UMULO); }
-// TEST_F(TestRewriter, bv_usubo_elim) { test_elim_rule(Kind::BV_USUBO); }
+// TEST_F(TestRewriterBv, bv_ssubo_elim) { test_elim_rule_bv(Kind::BV_SSUBO); }
 
-TEST_F(TestRewriter, bv_xnor_elim) { test_elim_rule(Kind::BV_XNOR); }
+TEST_F(TestRewriterBv, bv_sub_elim) { test_elim_rule_bv(Kind::BV_SUB); }
 
-TEST_F(TestRewriter, bv_xor_elim) { test_elim_rule(Kind::BV_XOR); }
+// not supported by Bitwuzla main
+// TEST_F(TestRewriterBv, bv_uaddo_elim) { test_elim_rule_bv(Kind::BV_UADDO); }
 
-TEST_F(TestRewriter, bv_zero_extend_elim)
+TEST_F(TestRewriterBv, bv_uge_elim) { test_elim_rule_bv(Kind::BV_UGE); }
+
+TEST_F(TestRewriterBv, bv_ugt_elim) { test_elim_rule_bv(Kind::BV_UGT); }
+
+TEST_F(TestRewriterBv, bv_ule_elim) { test_elim_rule_bv(Kind::BV_ULE); }
+
+// not supported by Bitwuzla main
+// TEST_F(TestRewriterBv, bv_umulo_elim) { test_elim_rule_bv(Kind::BV_UMULO); }
+// TEST_F(TestRewriterBv, bv_usubo_elim) { test_elim_rule_bv(Kind::BV_USUBO); }
+
+TEST_F(TestRewriterBv, bv_xnor_elim) { test_elim_rule_bv(Kind::BV_XNOR); }
+
+TEST_F(TestRewriterBv, bv_xor_elim) { test_elim_rule_bv(Kind::BV_XOR); }
+
+TEST_F(TestRewriterBv, bv_zero_extend_elim)
 {
-  test_elim_rule(Kind::BV_ZERO_EXTEND);
+  test_elim_rule_bv(Kind::BV_ZERO_EXTEND);
 }
 
 /* -------------------------------------------------------------------------- */

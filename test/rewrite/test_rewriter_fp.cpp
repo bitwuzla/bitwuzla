@@ -3,13 +3,14 @@
 #include "node/node_manager.h"
 #include "printer/printer.h"
 #include "rewrite/rewriter.h"
+#include "rewrite/test_rewriter.h"
 #include "solver/fp/floating_point.h"
 
 namespace bzla::test {
 
 using namespace bzla::node;
 
-class TestRewriter : public ::testing::Test
+class TestRewriterFp : public TestRewriter
 {
   void SetUp() override
   {
@@ -30,7 +31,7 @@ class TestRewriter : public ::testing::Test
 
 /* fpabs -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_abs_eval)
+TEST_F(TestRewriterFp, fp_abs_eval)
 {
   // applies
   Node fpabs0 = d_nm.mk_node(
@@ -51,7 +52,7 @@ TEST_F(TestRewriter, fp_abs_eval)
 
 /* fpadd -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_add_eval)
+TEST_F(TestRewriterFp, fp_add_eval)
 {
   // applies
   Node fpadd0 = d_nm.mk_node(
@@ -103,7 +104,7 @@ TEST_F(TestRewriter, fp_add_eval)
 
 /* fpdiv -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_div_eval)
+TEST_F(TestRewriterFp, fp_div_eval)
 {
   // applies
   Node fpdiv0 = d_nm.mk_node(
@@ -154,7 +155,7 @@ TEST_F(TestRewriter, fp_div_eval)
 
 /* fpisinf ------------------------------------------------------------------ */
 
-TEST_F(TestRewriter, fp_is_inf_eval)
+TEST_F(TestRewriterFp, fp_is_inf_eval)
 {
   // applies
   Node fpisinf0 = d_nm.mk_node(
@@ -173,7 +174,7 @@ TEST_F(TestRewriter, fp_is_inf_eval)
 
 /* fpisnan ------------------------------------------------------------------ */
 
-TEST_F(TestRewriter, fp_is_nan_eval)
+TEST_F(TestRewriterFp, fp_is_nan_eval)
 {
   // applies
   Node fpisnan0 = d_nm.mk_node(
@@ -192,7 +193,7 @@ TEST_F(TestRewriter, fp_is_nan_eval)
 
 /* fpisneg ------------------------------------------------------------------ */
 
-TEST_F(TestRewriter, fp_is_neg_eval)
+TEST_F(TestRewriterFp, fp_is_neg_eval)
 {
   // applies
   Node fpisneg0 = d_nm.mk_node(
@@ -212,7 +213,7 @@ TEST_F(TestRewriter, fp_is_neg_eval)
 
 /* fpisnorm ----------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_is_norm_eval)
+TEST_F(TestRewriterFp, fp_is_norm_eval)
 {
   // applies
   Node fpisnorm0 = d_nm.mk_node(
@@ -232,7 +233,7 @@ TEST_F(TestRewriter, fp_is_norm_eval)
 
 /* fpispos ------------------------------------------------------------------ */
 
-TEST_F(TestRewriter, fp_is_pos_eval)
+TEST_F(TestRewriterFp, fp_is_pos_eval)
 {
   // applies
   Node fpispos0 = d_nm.mk_node(
@@ -252,7 +253,7 @@ TEST_F(TestRewriter, fp_is_pos_eval)
 
 /* fpissubnorm -------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_is_subnorm_eval)
+TEST_F(TestRewriterFp, fp_is_subnorm_eval)
 {
   // applies
   Node fpissubnorm0 = d_nm.mk_node(
@@ -277,7 +278,7 @@ TEST_F(TestRewriter, fp_is_subnorm_eval)
 
 /* fpiszero ----------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_is_zero_eval)
+TEST_F(TestRewriterFp, fp_is_zero_eval)
 {
   // applies
   Node fpiszero0 = d_nm.mk_node(Kind::FP_IS_ZERO, {d_fp_pzero});
@@ -297,7 +298,7 @@ TEST_F(TestRewriter, fp_is_zero_eval)
 
 /* fple --------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_le_eval)
+TEST_F(TestRewriterFp, fp_le_eval)
 {
   // evaluates to (fp #b0 #b010 #b0000")
   Node fpadd0 = d_nm.mk_node(
@@ -331,7 +332,7 @@ TEST_F(TestRewriter, fp_le_eval)
 
 /* fplt --------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_lt_eval)
+TEST_F(TestRewriterFp, fp_lt_eval)
 {
   // evaluates to (fp #b0 #b010 #b0000")
   Node fpadd0 = d_nm.mk_node(
@@ -365,7 +366,7 @@ TEST_F(TestRewriter, fp_lt_eval)
 
 /* fpmul -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_mul_eval)
+TEST_F(TestRewriterFp, fp_mul_eval)
 {
   // applies
   Node fpmul0 = d_nm.mk_node(
@@ -417,7 +418,7 @@ TEST_F(TestRewriter, fp_mul_eval)
 
 /* fpneg -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_neg_eval)
+TEST_F(TestRewriterFp, fp_neg_eval)
 {
   // applies
   Node fpneg0 = d_nm.mk_node(
@@ -438,7 +439,7 @@ TEST_F(TestRewriter, fp_neg_eval)
 
 /* fprem -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_rem_eval)
+TEST_F(TestRewriterFp, fp_rem_eval)
 {
   // applies
   Node fprem0 = d_nm.mk_node(
@@ -473,7 +474,7 @@ TEST_F(TestRewriter, fp_rem_eval)
 
 /* fprti -------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_rti_eval)
+TEST_F(TestRewriterFp, fp_rti_eval)
 {
   // evaluates to (fp #b0 #b010 #b0000")
   Node fpadd0 = d_nm.mk_node(
@@ -512,7 +513,7 @@ TEST_F(TestRewriter, fp_rti_eval)
 
 /* fpsqrt ------------------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_sqrt_eval)
+TEST_F(TestRewriterFp, fp_sqrt_eval)
 {
   // evaluates to (fp #b0 #b010 #b0000")
   Node fpadd0 = d_nm.mk_node(
@@ -551,7 +552,7 @@ TEST_F(TestRewriter, fp_sqrt_eval)
 
 /* to_fp: from_bv ----------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_to_fp_from_bv)
+TEST_F(TestRewriterFp, fp_to_fp_from_bv)
 {
   // evaluates to #b00010111
   Node bvadd0 = d_nm.mk_node(Kind::BV_ADD,
@@ -577,7 +578,7 @@ TEST_F(TestRewriter, fp_to_fp_from_bv)
 
 /* to_fp: from_fp ----------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_to_fp_from_fp)
+TEST_F(TestRewriterFp, fp_to_fp_from_fp)
 {
   Type float16 = d_nm.mk_fp_type(5, 11);
   // evaluates to (fp #b0 #b010 #b0000")
@@ -621,7 +622,7 @@ TEST_F(TestRewriter, fp_to_fp_from_fp)
 
 /* to_fp: from_sbv ---------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_to_fp_from_sbv)
+TEST_F(TestRewriterFp, fp_to_fp_from_sbv)
 {
   Type float16 = d_nm.mk_fp_type(5, 11);
   // evaluates to #b10010111
@@ -661,7 +662,7 @@ TEST_F(TestRewriter, fp_to_fp_from_sbv)
 
 /* to_fp: from_ubv ---------------------------------------------------------- */
 
-TEST_F(TestRewriter, fp_to_fp_from_ubv)
+TEST_F(TestRewriterFp, fp_to_fp_from_ubv)
 {
   Type float16 = d_nm.mk_fp_type(5, 11);
   // evaluates to #b10010111

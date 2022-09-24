@@ -23,6 +23,7 @@ class Rewriter
 
   Node rewrite_and(const Node& node);
   Node rewrite_not(const Node& node);
+  Node rewrite_or(const Node& node);
 
   Node rewrite_eq(const Node& node);
   Node rewrite_ite(const Node& node);
@@ -115,6 +116,8 @@ enum class RewriteRuleKind
 {
   AND_EVAL,
   NOT_EVAL,
+
+  OR_ELIM,
 
   BV_ADD_EVAL,
   BV_AND_EVAL,
