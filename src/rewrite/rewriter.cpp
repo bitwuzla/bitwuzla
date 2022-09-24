@@ -88,13 +88,13 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::EQUAL: res = rewrite_eq(node); break;
     case node::Kind::ITE: res = rewrite_ite(node); break;
 
-    case node::Kind::BV_NOT: res = node; break;  // TODO
     case node::Kind::BV_AND: res = rewrite_bv_and(node); break;
     case node::Kind::BV_ADD: res = rewrite_bv_add(node); break;
     case node::Kind::BV_ASHR: res = rewrite_bv_ashr(node); break;
     case node::Kind::BV_CONCAT: res = rewrite_bv_concat(node); break;
     case node::Kind::BV_EXTRACT: res = rewrite_bv_extract(node); break;
     case node::Kind::BV_MUL: res = rewrite_bv_mul(node); break;
+    case node::Kind::BV_NOT: res = rewrite_bv_not(node); break;
     case node::Kind::BV_SHL: res = rewrite_bv_shl(node); break;
     case node::Kind::BV_SHR: res = rewrite_bv_shr(node); break;
     case node::Kind::BV_SLT: res = rewrite_bv_slt(node); break;
@@ -276,6 +276,19 @@ Rewriter::rewrite_bv_mul(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_MUL_EVAL);
+  // TODO
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_bv_not(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(BV_NOT_EVAL);
   // TODO
 
 DONE:

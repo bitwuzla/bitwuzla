@@ -114,6 +114,12 @@ Node RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
 // neg_mul
 // ones_mul
 
+/* bvnot -------------------------------------------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_NOT_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
 /* bvshl -------------------------------------------------------------------- */
 
 // const_binary_bv_exp

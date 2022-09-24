@@ -251,6 +251,26 @@ TEST_F(TestRewriter, bv_mul_eval)
   ASSERT_EQ(bvmul3, d_rewriter.rewrite(bvmul3));
 }
 
+/* bvnot -------------------------------------------------------------------- */
+
+TEST_F(TestRewriter, bv_not_eval)
+{
+  // applies
+  Node bvnot0 =
+      d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_value(BitVector(4, "1001"))});
+  ASSERT_EQ(d_nm.mk_value(BitVector(4, "0110")), d_rewriter.rewrite(bvnot0));
+  Node bvnot1 = d_nm.mk_node(Kind::BV_NOT, {bvnot0});
+  ASSERT_EQ(d_nm.mk_value(BitVector(4, "1001")), d_rewriter.rewrite(bvnot1));
+  Node bvnot2 = d_nm.mk_node(Kind::BV_NOT, {bvnot1});
+  ASSERT_EQ(d_nm.mk_value(BitVector(4, "0110")), d_rewriter.rewrite(bvnot2));
+
+  // with empty cache
+  ASSERT_EQ(d_nm.mk_value(BitVector(4, "0110")), Rewriter().rewrite(bvnot2));
+  // does not apply
+  Node bvnot3 = d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_const(d_bv_type)});
+  ASSERT_EQ(bvnot3, d_rewriter.rewrite(bvnot3));
+}
+
 /* bvshl -------------------------------------------------------------------- */
 
 TEST_F(TestRewriter, bv_shl_eval)

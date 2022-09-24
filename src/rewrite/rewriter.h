@@ -30,6 +30,7 @@ class Rewriter
   Node rewrite_bv_concat(const Node& node);
   Node rewrite_bv_extract(const Node& node);
   Node rewrite_bv_mul(const Node& node);
+  Node rewrite_bv_not(const Node& node);
   Node rewrite_bv_shl(const Node& node);
   Node rewrite_bv_shr(const Node& node);
   Node rewrite_bv_slt(const Node& node);
@@ -114,6 +115,7 @@ enum class RewriteRuleKind
   BV_ASHR_EVAL,
   BV_CONCAT_EVAL,
   BV_MUL_EVAL,
+  BV_NOT_EVAL,
   BV_SHL_EVAL,
   BV_SHR_EVAL,
   BV_SLT_EVAL,
