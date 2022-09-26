@@ -13,6 +13,9 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ADD_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 // bool_add
 // mult_add
 // not_add
@@ -36,6 +39,9 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 // idem1_and
 // contr1_and
 // contr2_and
@@ -64,6 +70,9 @@ Node RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::_apply(Rewriter& rewriter,
                                                         const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ASHR_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 
 /* bvconcat ----------------------------------------------------------------- */
 
@@ -101,6 +110,9 @@ Node RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 // bool_mul
 #if 0
 // this increases mul nodes in the general case
@@ -128,6 +140,9 @@ Node RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHL_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 // const_sll
 
 /* bvshr -------------------------------------------------------------------- */
@@ -139,6 +154,9 @@ Node RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::_apply(Rewriter& rewriter,
 
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SHR_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 // const_srl
 // same_srl
 // not_same_srl
@@ -164,6 +182,9 @@ Node RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::_apply(Rewriter& rewriter,
                                                         const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UDIV_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 // bool_udiv
 // power2_udiv
 // one_udiv
@@ -191,6 +212,9 @@ Node RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
                                                         const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_UREM_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 // bool_urem
 // zero_urem
 

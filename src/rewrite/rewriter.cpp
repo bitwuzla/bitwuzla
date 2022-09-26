@@ -260,6 +260,7 @@ Rewriter::rewrite_bv_add(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_ADD_EVAL);
+  BZLA_APPLY_RW_RULE(BV_ADD_SPECIAL_CONST);
   // TODO
 
 DONE:
@@ -273,6 +274,7 @@ Rewriter::rewrite_bv_and(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_AND_EVAL);
+  BZLA_APPLY_RW_RULE(BV_AND_SPECIAL_CONST);
   // TODO
 
 DONE:
@@ -286,6 +288,7 @@ Rewriter::rewrite_bv_ashr(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_ASHR_EVAL);
+  BZLA_APPLY_RW_RULE(BV_ASHR_SPECIAL_CONST);
   // TODO
 
 DONE:
@@ -319,6 +322,7 @@ Rewriter::rewrite_bv_mul(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_MUL_EVAL);
+  BZLA_APPLY_RW_RULE(BV_MUL_SPECIAL_CONST);
   // TODO
 
 DONE:
@@ -345,6 +349,7 @@ Rewriter::rewrite_bv_shl(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_SHL_EVAL);
+  BZLA_APPLY_RW_RULE(BV_SHL_SPECIAL_CONST);
   // TODO
 
 DONE:
@@ -358,6 +363,7 @@ Rewriter::rewrite_bv_shr(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_SHR_EVAL);
+  BZLA_APPLY_RW_RULE(BV_SHR_SPECIAL_CONST);
   // TODO
 
 DONE:
@@ -384,6 +390,7 @@ Rewriter::rewrite_bv_udiv(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_UDIV_EVAL);
+  BZLA_APPLY_RW_RULE(BV_UDIV_SPECIAL_CONST);
   // TODO
 
 DONE:
@@ -410,6 +417,7 @@ Rewriter::rewrite_bv_urem(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_UREM_EVAL);
+  BZLA_APPLY_RW_RULE(BV_UREM_SPECIAL_CONST);
   // TODO
 
 DONE:

@@ -119,18 +119,39 @@ enum class RewriteRuleKind
 
   OR_ELIM,
 
+  /* BV rewrites --------------------------------- */
+
   BV_ADD_EVAL,
+  BV_ADD_SPECIAL_CONST,
+
   BV_AND_EVAL,
+  BV_AND_SPECIAL_CONST,
+
   BV_ASHR_EVAL,
+  BV_ASHR_SPECIAL_CONST,
+
   BV_CONCAT_EVAL,
+
   BV_MUL_EVAL,
+  BV_MUL_SPECIAL_CONST,
+
   BV_NOT_EVAL,
+
   BV_SHL_EVAL,
+  BV_SHL_SPECIAL_CONST,
+
   BV_SHR_EVAL,
+  BV_SHR_SPECIAL_CONST,
+
   BV_SLT_EVAL,
+
   BV_UDIV_EVAL,
+  BV_UDIV_SPECIAL_CONST,
+
   BV_ULT_EVAL,
+
   BV_UREM_EVAL,
+  BV_UREM_SPECIAL_CONST,
 
   BV_NAND_ELIM,
   BV_NEG_ELIM,
@@ -165,6 +186,8 @@ enum class RewriteRuleKind
   BV_XNOR_ELIM,
   BV_XOR_ELIM,
   BV_ZERO_EXTEND_ELIM,
+
+  /* FP rewrites --------------------------------- */
 
   FP_ABS_EVAL,
   FP_ADD_EVAL,

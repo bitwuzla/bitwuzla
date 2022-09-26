@@ -22,6 +22,30 @@ RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                           const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && !node[1].is_value())
+  {
+    if (node[0].value<BitVector>().is_zero())
+    {
+      return node[1];
+    }
+  }
+  else if (!node[0].is_value() && node[1].is_value())
+  {
+    if (node[1].value<BitVector>().is_zero())
+    {
+      return node[0];
+    }
+  }
+  return node;
+}
+
 /* bvand -------------------------------------------------------------------- */
 
 template <>
@@ -37,6 +61,32 @@ RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                           const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && !node[1].is_value())
+  {
+    const BitVector& value0 = node[0].value<BitVector>();
+    if (value0.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+    }
+  }
+  else if (!node[0].is_value() && node[1].is_value())
+  {
+    const BitVector& value1 = node[1].value<BitVector>();
+    if (value1.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value1.size()));
+    }
+  }
+  return node;
+}
+
 /* bvashr ------------------------------------------------------------------- */
 
 template <>
@@ -50,6 +100,32 @@ RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::_apply(Rewriter& rewriter,
   Node res = NodeManager::get().mk_value(
       node[0].value<BitVector>().bvashr(node[1].value<BitVector>()));
   return res;
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ASHR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                            const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && !node[1].is_value())
+  {
+    const BitVector& value0 = node[0].value<BitVector>();
+    if (value0.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+    }
+  }
+  else if (!node[0].is_value() && node[1].is_value())
+  {
+    const BitVector& value1 = node[1].value<BitVector>();
+    if (value1.is_zero())
+    {
+      return node[0];
+    }
+  }
+  return node;
 }
 
 /* bvconcat ----------------------------------------------------------------- */
@@ -82,6 +158,32 @@ RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_MUL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                           const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && !node[1].is_value())
+  {
+    const BitVector& value0 = node[0].value<BitVector>();
+    if (value0.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+    }
+  }
+  else if (!node[0].is_value() && node[1].is_value())
+  {
+    const BitVector& value1 = node[1].value<BitVector>();
+    if (value1.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value1.size()));
+    }
+  }
+  return node;
+}
+
 /* bvnot -------------------------------------------------------------------- */
 
 template <>
@@ -109,6 +211,32 @@ RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SHL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                           const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && !node[1].is_value())
+  {
+    const BitVector& value0 = node[0].value<BitVector>();
+    if (value0.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+    }
+  }
+  else if (!node[0].is_value() && node[1].is_value())
+  {
+    const BitVector& value1 = node[1].value<BitVector>();
+    if (value1.is_zero())
+    {
+      return node[0];
+    }
+  }
+  return node;
+}
+
 /* bvshr -------------------------------------------------------------------- */
 
 template <>
@@ -122,6 +250,32 @@ RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::_apply(Rewriter& rewriter,
   Node res = NodeManager::get().mk_value(
       node[0].value<BitVector>().bvshr(node[1].value<BitVector>()));
   return res;
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SHR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                           const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && !node[1].is_value())
+  {
+    const BitVector& value0 = node[0].value<BitVector>();
+    if (value0.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+    }
+  }
+  else if (!node[0].is_value() && node[1].is_value())
+  {
+    const BitVector& value1 = node[1].value<BitVector>();
+    if (value1.is_zero())
+    {
+      return node[0];
+    }
+  }
+  return node;
 }
 
 /* bvslt -------------------------------------------------------------------- */
@@ -155,6 +309,37 @@ RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UDIV_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                            const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && !node[1].is_value())
+  {
+    const BitVector& value0 = node[0].value<BitVector>();
+    if (value0.is_zero())
+    {
+      Node zero =
+          NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+      Node ones =
+          NodeManager::get().mk_value(BitVector::mk_ones(value0.size()));
+      return rewriter.mk_node(
+          Kind::ITE,
+          {rewriter.mk_node(Kind::EQUAL, {node[1], zero}), ones, zero});
+    }
+  }
+  else if (!node[0].is_value() && node[1].is_value())
+  {
+    const BitVector& value1 = node[1].value<BitVector>();
+    if (value1.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_ones(value1.size()));
+    }
+  }
+  return node;
+}
+
 /* bvult -------------------------------------------------------------------- */
 
 template <>
@@ -183,6 +368,32 @@ RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
   Node res = NodeManager::get().mk_value(
       node[0].value<BitVector>().bvurem(node[1].value<BitVector>()));
   return res;
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_UREM_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                            const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && !node[1].is_value())
+  {
+    const BitVector& value0 = node[0].value<BitVector>();
+    if (value0.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+    }
+  }
+  else if (!node[0].is_value() && node[1].is_value())
+  {
+    const BitVector& value1 = node[1].value<BitVector>();
+    if (value1.is_zero())
+    {
+      return node[0];
+    }
+  }
+  return node;
 }
 
 /* --- Elimination Rules ---------------------------------------------------- */
