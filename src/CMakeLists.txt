@@ -10,6 +10,7 @@
 
 set(libbitwuzla_src_files
   aigprop.c
+  backtrack/backtrackable.cpp
   bzlaaig.c
   bzlaaigvec.c
   bzlaass.c
