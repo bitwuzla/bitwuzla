@@ -41,6 +41,7 @@ class Rewriter
   Node rewrite_bv_udiv(const Node& node);
   Node rewrite_bv_ult(const Node& node);
   Node rewrite_bv_urem(const Node& node);
+  Node rewrite_bv_xor(const Node& node);
 
   /* Eliminated operators */
   Node rewrite_bv_nand(const Node& node);
@@ -74,7 +75,6 @@ class Rewriter
   // Node rewrite_bv_umulo(const Node& node);
   Node rewrite_bv_usubo(const Node& node);
   Node rewrite_bv_xnor(const Node& node);
-  Node rewrite_bv_xor(const Node& node);
   Node rewrite_bv_zero_extend(const Node& node);
 
   Node rewrite_fp_abs(const Node& node);
@@ -115,6 +115,10 @@ class Rewriter
 enum class RewriteRuleKind
 {
   AND_EVAL,
+
+  EQUAL_EVAL,
+  EQUAL_SPECIAL_CONST,
+
   NOT_EVAL,
 
   OR_ELIM,

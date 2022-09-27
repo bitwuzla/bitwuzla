@@ -240,8 +240,15 @@ BZLA_ELIM_KIND_IMPL(or, OR_ELIM)
 Node
 Rewriter::rewrite_eq(const Node& node)
 {
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(EQUAL_EVAL);
+  BZLA_APPLY_RW_RULE(EQUAL_SPECIAL_CONST);
   // TODO
-  return node;
+
+DONE:
+  return res;
 }
 
 Node
@@ -426,6 +433,13 @@ DONE:
   return res;
 }
 
+Node
+Rewriter::rewrite_bv_xor(const Node& node)
+{
+  // TODO
+  return node;
+}
+
 /* Eliminated operators */
 
 BZLA_ELIM_KIND_IMPL(bv_nand, BV_NAND_ELIM)
@@ -459,7 +473,7 @@ BZLA_ELIM_KIND_IMPL(bv_ule, BV_ULE_ELIM)
 // BZLA_ELIM_KIND_IMPL(bv_umulo, BV_UMULO_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_usubo, BV_USUBO_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_xnor, BV_XNOR_ELIM)
-BZLA_ELIM_KIND_IMPL(bv_xor, BV_XOR_ELIM)
+// BZLA_ELIM_KIND_IMPL(bv_xor, BV_XOR_ELIM) do not eliminate
 BZLA_ELIM_KIND_IMPL(bv_zero_extend, BV_ZERO_EXTEND_ELIM)
 
 #undef BZLA_ELIM_KIND_IMPL
