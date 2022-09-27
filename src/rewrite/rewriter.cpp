@@ -377,6 +377,7 @@ Rewriter::rewrite_bv_slt(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_SLT_EVAL);
+  BZLA_APPLY_RW_RULE(BV_SLT_SPECIAL_CONST);
   // TODO
 
 DONE:
@@ -404,6 +405,7 @@ Rewriter::rewrite_bv_ult(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_ULT_EVAL);
+  BZLA_APPLY_RW_RULE(BV_ULT_SPECIAL_CONST);
   // TODO
 
 DONE:

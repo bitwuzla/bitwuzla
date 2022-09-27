@@ -169,6 +169,9 @@ Node RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SLT_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 // false_lt
 // bool_slt
 // concat_lower_slt
@@ -198,6 +201,9 @@ Node RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // special_const_lhs_binary_exp
 // special_const_rhs_binary_exp
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(
+    Rewriter& rewriter, const Node& node);
 // false_lt
 // bool_ult
 // concat_upper_ult

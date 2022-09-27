@@ -294,6 +294,32 @@ RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SLT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                           const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && !node[1].is_value())
+  {
+    const BitVector& value0 = node[0].value<BitVector>();
+    if (value0.size() == 1 && value0.is_zero())
+    {
+      return NodeManager::get().mk_value(false);
+    }
+  }
+  else if (!node[0].is_value() && node[1].is_value())
+  {
+    const BitVector& value1 = node[1].value<BitVector>();
+    if (value1.size() == 1 && value1.is_zero())
+    {
+      return rewriter.mk_node(
+          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+    }
+  }
+  return node;
+}
+
 /* bvudiv ------------------------------------------------------------------- */
 
 template <>
@@ -353,6 +379,32 @@ RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
   Node res = NodeManager::get().mk_value(
       node[0].value<BitVector>().compare(node[1].value<BitVector>()) < 0);
   return res;
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
+                                                           const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && !node[1].is_value())
+  {
+    const BitVector& value0 = node[0].value<BitVector>();
+    if (value0.size() == 1 && value0.is_zero())
+    {
+      return rewriter.mk_node(
+          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+    }
+  }
+  else if (!node[0].is_value() && node[1].is_value())
+  {
+    const BitVector& value1 = node[1].value<BitVector>();
+    if (value1.size() == 1 && value1.is_zero())
+    {
+      return NodeManager::get().mk_value(false);
+    }
+  }
+  return node;
 }
 
 /* bvudiv ------------------------------------------------------------------- */

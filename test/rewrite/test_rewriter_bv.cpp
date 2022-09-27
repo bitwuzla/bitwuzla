@@ -16,6 +16,8 @@ class TestRewriterBv : public TestRewriter
   {
     d_bv_type = d_nm.mk_bv_type(4);
     d_bv_zero = d_nm.mk_value(BitVector::mk_zero(4));
+    d_false   = d_nm.mk_value(false);
+    d_true    = d_nm.mk_value(true);
   }
 
  protected:
@@ -28,6 +30,8 @@ class TestRewriterBv : public TestRewriter
   NodeManager& d_nm = NodeManager::get();
   Type d_bv_type;
   Node d_bv_zero;
+  Node d_false;
+  Node d_true;
 };
 
 /* bvadd -------------------------------------------------------------------- */
@@ -475,18 +479,59 @@ TEST_F(TestRewriterBv, bv_slt_eval)
   Node bvslt0 = d_nm.mk_node(Kind::BV_SLT,
                              {d_nm.mk_value(BitVector(4, "1001")),
                               d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(d_nm.mk_value(true), d_rewriter.rewrite(bvslt0));
+  ASSERT_EQ(d_true, d_rewriter.rewrite(bvslt0));
   Node bvslt1 = d_nm.mk_node(Kind::BV_SLT,
                              {d_nm.mk_value(BitVector(4, "0001")),
                               d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(d_nm.mk_value(false), d_rewriter.rewrite(bvslt1));
+  ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt1));
   // with empty cache
-  ASSERT_EQ(d_nm.mk_value(false), Rewriter().rewrite(bvslt1));
+  ASSERT_EQ(d_false, Rewriter().rewrite(bvslt1));
   // does not apply
   Node bvslt2 = d_nm.mk_node(
       Kind::BV_SLT,
       {d_nm.mk_const(d_bv_type), d_nm.mk_value(BitVector(4, "1110"))});
   ASSERT_EQ(bvslt2, d_rewriter.rewrite(bvslt2));
+}
+
+TEST_F(TestRewriterBv, bv_slt_special_const)
+{
+  Type bv1_type = d_nm.mk_bv_type(1);
+  Node a        = d_nm.mk_const(bv1_type);
+  Node b        = d_nm.mk_const(d_bv_type);
+  Node zero     = d_nm.mk_value(BitVector::mk_zero(1));
+  Node dis    = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {a, zero})});
+  Node bvadd0 = d_nm.mk_node(Kind::BV_ADD,
+                             {d_nm.mk_node(Kind::BV_ADD,
+                                           {d_nm.mk_value(BitVector(1, "1")),
+                                            d_nm.mk_value(BitVector(1, "0"))}),
+                              d_nm.mk_value(BitVector(1, "1"))});
+  // applies
+  Node bvslt0 = d_nm.mk_node(Kind::BV_SLT, {zero, a});
+  ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt0));
+  Node bvslt1 = d_nm.mk_node(Kind::BV_SLT, {a, zero});
+  ASSERT_EQ(dis, d_rewriter.rewrite(bvslt1));
+  Node bvslt0_1 = d_nm.mk_node(Kind::BV_SLT, {bvadd0, a});
+  ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt0_1));
+  Node bvslt1_1 = d_nm.mk_node(Kind::BV_SLT, {a, bvadd0});
+  ASSERT_EQ(dis, d_rewriter.rewrite(bvslt1_1));
+  // with empty cache
+  ASSERT_EQ(d_false, Rewriter().rewrite(bvslt0_1));
+  ASSERT_EQ(dis, Rewriter().rewrite(bvslt1_1));
+  // does not apply
+  Node bvslt2 = d_nm.mk_node(
+      Kind::BV_SLT, {d_nm.mk_const(bv1_type), d_nm.mk_const(bv1_type)});
+  ASSERT_EQ(bvslt2, d_rewriter.rewrite(bvslt2));
+  Node bvslt3 =
+      d_nm.mk_node(Kind::BV_SLT,
+                   {d_nm.mk_value(BitVector(1, "1")), d_nm.mk_const(bv1_type)});
+  ASSERT_EQ(bvslt3, d_rewriter.rewrite(bvslt3));
+  Node bvslt4 =
+      d_nm.mk_node(Kind::BV_SLT,
+                   {d_nm.mk_const(bv1_type), d_nm.mk_value(BitVector(1, "1"))});
+  ASSERT_EQ(bvslt4, d_rewriter.rewrite(bvslt4));
+  Node bvslt5 =
+      d_nm.mk_node(Kind::BV_SLT, {d_nm.mk_const(d_bv_type), d_bv_zero});
+  ASSERT_EQ(bvslt5, d_rewriter.rewrite(bvslt5));
 }
 
 /* bvudiv-------------------------------------------------------------------- */
@@ -568,18 +613,59 @@ TEST_F(TestRewriterBv, bv_ult_eval)
   Node bvult0 = d_nm.mk_node(Kind::BV_ULT,
                              {d_nm.mk_value(BitVector(4, "1001")),
                               d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(d_nm.mk_value(true), d_rewriter.rewrite(bvult0));
+  ASSERT_EQ(d_true, d_rewriter.rewrite(bvult0));
   Node bvult1 = d_nm.mk_node(Kind::BV_ULT,
                              {d_nm.mk_value(BitVector(4, "1110")),
                               d_nm.mk_value(BitVector(4, "0001"))});
-  ASSERT_EQ(d_nm.mk_value(false), d_rewriter.rewrite(bvult1));
+  ASSERT_EQ(d_false, d_rewriter.rewrite(bvult1));
   // with empty cache
-  ASSERT_EQ(d_nm.mk_value(false), Rewriter().rewrite(bvult1));
+  ASSERT_EQ(d_false, Rewriter().rewrite(bvult1));
   // does not apply
   Node bvult2 = d_nm.mk_node(
       Kind::BV_ULT,
       {d_nm.mk_const(d_bv_type), d_nm.mk_value(BitVector(4, "1110"))});
   ASSERT_EQ(bvult2, d_rewriter.rewrite(bvult2));
+}
+
+TEST_F(TestRewriterBv, bv_ult_special_const)
+{
+  Type bv1_type = d_nm.mk_bv_type(1);
+  Node a        = d_nm.mk_const(bv1_type);
+  Node b        = d_nm.mk_const(d_bv_type);
+  Node zero     = d_nm.mk_value(BitVector::mk_zero(1));
+  Node dis    = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {zero, a})});
+  Node bvadd0 = d_nm.mk_node(Kind::BV_ADD,
+                             {d_nm.mk_node(Kind::BV_ADD,
+                                           {d_nm.mk_value(BitVector(1, "1")),
+                                            d_nm.mk_value(BitVector(1, "0"))}),
+                              d_nm.mk_value(BitVector(1, "1"))});
+  // applies
+  Node bvult0 = d_nm.mk_node(Kind::BV_ULT, {zero, a});
+  ASSERT_EQ(dis, d_rewriter.rewrite(bvult0));
+  Node bvult1 = d_nm.mk_node(Kind::BV_ULT, {a, zero});
+  ASSERT_EQ(d_false, d_rewriter.rewrite(bvult1));
+  Node bvult0_1 = d_nm.mk_node(Kind::BV_ULT, {bvadd0, a});
+  ASSERT_EQ(dis, d_rewriter.rewrite(bvult0_1));
+  Node bvult1_1 = d_nm.mk_node(Kind::BV_ULT, {a, bvadd0});
+  ASSERT_EQ(d_false, d_rewriter.rewrite(bvult1_1));
+  // with empty cache
+  ASSERT_EQ(dis, Rewriter().rewrite(bvult0_1));
+  ASSERT_EQ(d_false, Rewriter().rewrite(bvult1_1));
+  // does not apply
+  Node bvult2 = d_nm.mk_node(
+      Kind::BV_ULT, {d_nm.mk_const(bv1_type), d_nm.mk_const(bv1_type)});
+  ASSERT_EQ(bvult2, d_rewriter.rewrite(bvult2));
+  Node bvult3 =
+      d_nm.mk_node(Kind::BV_ULT,
+                   {d_nm.mk_value(BitVector(1, "1")), d_nm.mk_const(bv1_type)});
+  ASSERT_EQ(bvult3, d_rewriter.rewrite(bvult3));
+  Node bvult4 =
+      d_nm.mk_node(Kind::BV_ULT,
+                   {d_nm.mk_const(bv1_type), d_nm.mk_value(BitVector(1, "1"))});
+  ASSERT_EQ(bvult4, d_rewriter.rewrite(bvult4));
+  Node bvult5 =
+      d_nm.mk_node(Kind::BV_ULT, {d_nm.mk_const(d_bv_type), d_bv_zero});
+  ASSERT_EQ(bvult5, d_rewriter.rewrite(bvult5));
 }
 
 /* bvudiv-------------------------------------------------------------------- */
