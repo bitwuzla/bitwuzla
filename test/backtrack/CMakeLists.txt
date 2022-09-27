@@ -1,1 +1,2 @@
 add_unit_test(test_vector)
+add_unit_test(test_unordered_map)
