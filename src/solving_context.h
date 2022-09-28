@@ -4,7 +4,10 @@
 #include <unordered_set>
 #include <vector>
 
+#include "backtrack/assertion_stack.h"
+#include "backtrack/backtrackable.h"
 #include "node/node.h"
+#include "rewrite/rewriter.h"
 #include "solver/bv/bv_solver.h"
 #include "solver/result.h"
 
@@ -12,9 +15,6 @@ namespace bzla {
 
 class SolvingContext
 {
-  friend bv::BvSolver;  // TODO: Temporary until we have proper assertion
-                        // interface
-
  public:
   SolvingContext();
 
@@ -34,16 +34,21 @@ class SolvingContext
    */
   Node get_value(const Node& term);
 
-  // void push();
-  // void pop();
+  void push();
+  void pop();
+
   // std::vector<Node>& get_unsat_core();
   // bool is_in_unsat_core(const Node& term) const;
 
+  backtrack::AssertionView& assertions();
+
+  backtrack::BacktrackManager* backtrack_mgr();
+
  private:
-  /** Currently asserted formulas. */
-  std::vector<Node> d_assertions;
-  /** Cache of currently asserted formulas. */
-  std::unordered_set<Node> d_assertions_cache;
+  backtrack::BacktrackManager d_backtrack_mgr;
+  backtrack::AssertionStack d_assertions;
+
+  Rewriter d_rewriter;
 
   /** Result of last solve() call. */
   Result d_sat_state = Result::UNKNOWN;

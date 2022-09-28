@@ -6,7 +6,10 @@ namespace bzla {
 
 /* --- SolvingContext public ----------------------------------------------- */
 
-SolvingContext::SolvingContext() : d_bv_solver(*this) {}
+SolvingContext::SolvingContext()
+    : d_assertions(&d_backtrack_mgr), d_bv_solver(*this)
+{
+}
 
 Result
 SolvingContext::solve()
@@ -19,11 +22,7 @@ void
 SolvingContext::assert_formula(const Node& formula)
 {
   assert(formula.type().is_bool());
-  auto [it, inserted] = d_assertions_cache.insert(formula);
-  if (inserted)
-  {
-    d_assertions.push_back(formula);
-  }
+  d_assertions.push_back(formula);
 }
 
 Node
@@ -40,6 +39,30 @@ SolvingContext::get_value(const Node& term)
   // TODO: Handle more types.
   assert(false);
   return Node();
+}
+
+void
+SolvingContext::push()
+{
+  d_backtrack_mgr.push();
+}
+
+void
+SolvingContext::pop()
+{
+  d_backtrack_mgr.pop();
+}
+
+backtrack::AssertionView&
+SolvingContext::assertions()
+{
+  return d_assertions.create_view();
+}
+
+backtrack::BacktrackManager*
+SolvingContext::backtrack_mgr()
+{
+  return &d_backtrack_mgr;
 }
 
 }  // namespace bzla

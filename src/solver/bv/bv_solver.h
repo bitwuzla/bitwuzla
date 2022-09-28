@@ -3,6 +3,8 @@
 
 #include <unordered_map>
 
+#include "backtrack/assertion_stack.h"
+#include "backtrack/vector.h"
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig_bitblaster.h"
 #include "sat/sat_solver.h"
@@ -37,6 +39,9 @@ class BvSolver : public Solver
 
   /** Query assignment from SAT solver. */
   Node get_assignment(const Node& term) const;
+
+  backtrack::AssertionView& d_assertion_view;
+  backtrack::vector<Node> d_assumptions;
 
   /** AIG Bit-blaster. */
   bb::AigBitblaster d_bitblaster;

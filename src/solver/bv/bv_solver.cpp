@@ -39,7 +39,10 @@ class BvSolver::BitblastSatSolver : public bb::SatInterface
 
 /* --- BvSolver public ----------------------------------------------------- */
 
-BvSolver::BvSolver(SolvingContext& context) : Solver(context)
+BvSolver::BvSolver(SolvingContext& context)
+    : Solver(context),
+      d_assertion_view(context.assertions()),
+      d_assumptions(context.backtrack_mgr())
 {
   d_sat_solver.reset(new sat::Cadical());
   d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
@@ -51,16 +54,28 @@ BvSolver::~BvSolver() {}
 Result
 BvSolver::check()
 {
-  for (const Node& assertion : d_context.d_assertions)
+  while (!d_assertion_view.empty())
   {
-    auto it = d_bitblaster_cache.find(assertion);
+    const auto& [assertion, level] = d_assertion_view.next_level();
+    auto it                        = d_bitblaster_cache.find(assertion);
+
+    if (level > 0)
+    {
+      d_assumptions.push_back(assertion);
+    }
+
     if (it != d_bitblaster_cache.end())
     {
       continue;
     }
 
     bitblast(assertion);
-    d_cnf_encoder->encode(get_bits(assertion)[0], true);
+    d_cnf_encoder->encode(get_bits(assertion)[0], level == 0);
+  }
+
+  for (const Node& assumption : d_assumptions)
+  {
+    d_sat_solver->assume(get_bits(assumption)[0].get_id());
   }
 
   auto sat_res = d_sat_solver->solve();
