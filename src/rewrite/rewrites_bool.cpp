@@ -52,74 +52,69 @@ RewriteRule<RewriteRuleKind::EQUAL_EVAL>::_apply(Rewriter& rewriter,
       (node[0].value<RoundingMode>() == node[1].value<RoundingMode>()));
 }
 
+namespace {
+Node
+_rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].is_value() && !node[idx1].is_value())
+  {
+    const Type& type0 = node[idx0].type();
+    if (type0.is_bv())
+    {
+      BitVector value0 = node[idx0].value<BitVector>();
+      if (value0.is_zero())
+      {
+        if (node[idx1].kind() == Kind::BV_XOR)
+        {
+          // 0 == a ^ b  --->  a = b
+          return rewriter.mk_node(Kind::EQUAL, {node[idx1][0], node[idx1][1]});
+        }
+        if (node[idx1].kind() == Kind::BV_NOT
+            && node[idx1][0].kind() == Kind::BV_AND)
+        {
+          // 0 == a | b  ---> a == 0 && b == 0
+          return rewriter.mk_node(
+              Kind::AND,
+              {
+                  rewriter.mk_node(Kind::EQUAL, {node[idx1][0][0], node[idx0]}),
+                  rewriter.mk_node(Kind::EQUAL, {node[idx1][0][1], node[idx0]}),
+              });
+        }
+      }
+      if (value0.size() == 1 && value0.is_one())
+      {
+        return node[idx1];
+      }
+    }
+    else if (type0.is_bool())
+    {
+      if (node[idx0].value<bool>())
+      {
+        return node[idx1];
+      }
+      return rewriter.mk_node(Kind::NOT, {node[idx1]});
+    }
+  }
+  return node;
+}
+}  // namespace
+
 template <>
 Node
 RewriteRule<RewriteRuleKind::EQUAL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
                                                           const Node& node)
 {
-  (void) rewriter;
   assert(node.num_children() == 2);
 
-  NodeManager& nm = NodeManager::get();
   if (node[0].is_value() && !node[1].is_value())
   {
-    const Type& type0 = node[0].type();
-    if (type0.is_bv())
-    {
-      BitVector value0 = node[0].value<BitVector>();
-      if (value0.is_zero())
-      {
-        if (node[1].kind() == Kind::BV_XOR)
-        {
-          // 0 == a ^ b  --->  a = b
-          return nm.mk_node(Kind::EQUAL, {node[1][0], node[1][1]});
-        }
-        if (node[1].kind() == Kind::BV_NOT && node[1][0].kind() == Kind::BV_AND)
-        {
-          // 0 == a | b  ---> a == 0 && b == 0
-          return nm.mk_node(
-              Kind::AND,
-              {
-                  nm.mk_node(Kind::EQUAL, {node[1][0][0], node[0]}),
-                  nm.mk_node(Kind::EQUAL, {node[1][0][1], node[0]}),
-              });
-        }
-      }
-    }
-    else if (type0.is_bool() && !node[0].value<bool>())
-    {
-      return nm.mk_node(Kind::NOT, {node[1]});
-    }
+    return _rw_eq_special_const(rewriter, node, 0);
   }
   else if (!node[0].is_value() && node[1].is_value())
   {
-    const Type& type1 = node[1].type();
-    if (type1.is_bv())
-    {
-      BitVector value1 = node[1].value<BitVector>();
-      if (value1.is_zero())
-      {
-        if (node[0].kind() == Kind::BV_XOR)
-        {
-          // a ^ b == 0  --->  a = b
-          return nm.mk_node(Kind::EQUAL, {node[0][0], node[0][1]});
-        }
-        if (node[0].kind() == Kind::BV_NOT && node[0][0].kind() == Kind::BV_AND)
-        {
-          // a | b == 0  ---> a == 0 && b == 0
-          return nm.mk_node(
-              Kind::AND,
-              {
-                  nm.mk_node(Kind::EQUAL, {node[0][0][0], node[1]}),
-                  nm.mk_node(Kind::EQUAL, {node[0][0][1], node[1]}),
-              });
-        }
-      }
-    }
-    else if (type1.is_bool() && !node[1].value<bool>())
-    {
-      return nm.mk_node(Kind::NOT, {node[0]});
-    }
+    return _rw_eq_special_const(rewriter, node, 1);
   }
   return node;
 }
