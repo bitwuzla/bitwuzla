@@ -75,10 +75,15 @@ _rw_and_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 {
   (void) rewriter;
   size_t idx0             = idx;
+  size_t idx1             = 1 - idx;
   const BitVector& value0 = node[idx0].value<BitVector>();
   if (value0.is_zero())
   {
     return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+  }
+  if (value0.is_ones())
+  {
+    return node[idx1];
   }
   return node;
 }
@@ -176,12 +181,20 @@ namespace {
 Node
 _rw_mul_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 {
-  (void) rewriter;
   size_t idx0             = idx;
+  size_t idx1             = 1 - idx;
   const BitVector& value0 = node[idx0].value<BitVector>();
   if (value0.is_zero())
   {
     return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+  }
+  if (value0.is_one())
+  {
+    return node[idx1];
+  }
+  if (value0.is_ones())
+  {
+    return rewriter.mk_node(Kind::BV_NEG, {node[idx1]});
   }
   return node;
 }
@@ -324,8 +337,23 @@ RewriteRule<RewriteRuleKind::BV_SLT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   if (node[0].is_value() && !node[1].is_value())
   {
     const BitVector& value0 = node[0].value<BitVector>();
-    if (value0.size() == 1 && value0.is_zero())
+    uint64_t size           = value0.size();
+    if (size == 1)
     {
+      if (value0.is_zero())
+      {
+        return NodeManager::get().mk_value(false);
+      }
+      if (value0.is_one())
+      {
+        // min_signed < node[1]  --->  node[1] != min_signed
+        return rewriter.mk_node(
+            Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+      }
+    }
+    if (size == 2 && value0.is_one())
+    {
+      // max_signed < node[1]  --->  false
       return NodeManager::get().mk_value(false);
     }
   }
@@ -411,10 +439,17 @@ RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   if (node[0].is_value() && !node[1].is_value())
   {
     const BitVector& value0 = node[0].value<BitVector>();
-    if (value0.size() == 1 && value0.is_zero())
+    if (value0.size() == 1)
     {
-      return rewriter.mk_node(
-          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+      if (value0.is_zero())
+      {
+        return rewriter.mk_node(
+            Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+      }
+    }
+    if (value0.is_ones())
+    {
+      return NodeManager::get().mk_value(false);
     }
   }
   else if (!node[0].is_value() && node[1].is_value())

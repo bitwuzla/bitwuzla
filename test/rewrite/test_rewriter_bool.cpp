@@ -97,14 +97,16 @@ TEST_F(TestRewriterBool, bool_equal_special_const)
   Node b        = d_nm.mk_const(d_nm.mk_bool_type());
   Node bv1_zero = d_nm.mk_value(BitVector::mk_zero(1));
   Node bv4_zero = d_nm.mk_value(BitVector::mk_zero(4));
+  Node bv1_ones = d_nm.mk_value(BitVector::mk_ones(1));
+  Node bv4_ones = d_nm.mk_value(BitVector::mk_ones(4));
   Node bv4a     = d_nm.mk_const(bv4_type);
   Node bv4b     = d_nm.mk_const(bv4_type);
-  Node bv4xor   = d_nm.mk_node(Kind::BV_XOR, {bv4a, bv4b});
-  Node bv4or    = d_nm.mk_node(Kind::BV_OR, {bv4a, bv4b});
+  Node res_eq   = d_nm.mk_node(Kind::EQUAL, {bv4a, bv4b});
   ////// special const 0
   {
     //// applies
-    Node res_eq  = d_nm.mk_node(Kind::EQUAL, {bv4a, bv4b});
+    Node bv4xor  = d_nm.mk_node(Kind::BV_XOR, {bv4a, bv4b});
+    Node bv4or   = d_nm.mk_node(Kind::BV_OR, {bv4a, bv4b});
     Node res_and = d_nm.mk_node(
         Kind::AND,
         {d_nm.mk_node(Kind::EQUAL,
@@ -134,6 +136,31 @@ TEST_F(TestRewriterBool, bool_equal_special_const)
     Node equal7 = d_nm.mk_node(
         Kind::EQUAL, {d_nm.mk_const(bv4_type), d_nm.mk_const(bv4_type)});
     ASSERT_EQ(equal7, d_rewriter.rewrite(equal7));
+  }
+  ////// special const 0
+  {
+    //// applies
+    Node bv4and  = d_nm.mk_node(Kind::BV_AND, {bv4a, bv4b});
+    Node bv4xnor = d_nm.mk_node(Kind::BV_XNOR, {bv4a, bv4b});
+    // lhs ones
+    Node equal0 = d_nm.mk_node(Kind::EQUAL, {d_true, b});
+    ASSERT_EQ(b, d_rewriter.rewrite(equal0));
+    Node equal0_1 = d_nm.mk_node(Kind::EQUAL, {b, d_true});
+    ASSERT_EQ(b, d_rewriter.rewrite(equal0_1));
+    Node equal1 = d_nm.mk_node(Kind::EQUAL, {bv4_ones, bv4and});
+    ASSERT_EQ(d_nm.mk_node(Kind::AND,
+                           {d_nm.mk_node(Kind::EQUAL, {bv4a, bv4_ones}),
+                            d_nm.mk_node(Kind::EQUAL, {bv4b, bv4_ones})}),
+              d_rewriter.rewrite(equal1));
+    Node equal1_1 = d_nm.mk_node(Kind::EQUAL, {bv4and, bv4_ones});
+    ASSERT_EQ(d_nm.mk_node(Kind::AND,
+                           {d_nm.mk_node(Kind::EQUAL, {bv4a, bv4_ones}),
+                            d_nm.mk_node(Kind::EQUAL, {bv4b, bv4_ones})}),
+              d_rewriter.rewrite(equal1_1));
+    Node equal2 = d_nm.mk_node(Kind::EQUAL, {bv4_ones, bv4xnor});
+    ASSERT_EQ(res_eq, d_rewriter.rewrite(equal2));
+    Node equal2_1 = d_nm.mk_node(Kind::EQUAL, {bv4xnor, bv4_ones});
+    ASSERT_EQ(res_eq, d_rewriter.rewrite(equal2_1));
   }
 }
 

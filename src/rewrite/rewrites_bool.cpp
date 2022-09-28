@@ -83,9 +83,25 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
               });
         }
       }
-      if (value0.size() == 1 && value0.is_one())
+      if (value0.is_ones())
       {
-        return node[idx1];
+        if (node[idx1].kind() == Kind::BV_AND)
+        {
+          // 1..1 == a & b  ---> a == 1..1 && b == 1..1
+          return rewriter.mk_node(
+              Kind::AND,
+              {rewriter.mk_node(Kind::EQUAL, {node[idx1][0], node[idx0]}),
+               rewriter.mk_node(Kind::EQUAL, {node[idx1][1], node[idx0]})
+
+              });
+        }
+        if (node[idx1].kind() == Kind::BV_NOT
+            && node[idx1][0].kind() == Kind::BV_XOR)
+        {
+          // 1..1 == a XNOR b  --->  a = b
+          return rewriter.mk_node(Kind::EQUAL,
+                                  {node[idx1][0][0], node[idx1][0][1]});
+        }
       }
     }
     else if (type0.is_bool())
