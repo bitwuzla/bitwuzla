@@ -1,0 +1,1 @@
+log/smt2perr180.smt2:1:35: expected positive 32 bit integer > 1 for exponent size, got '1'

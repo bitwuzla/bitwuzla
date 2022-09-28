@@ -3963,9 +3963,22 @@ parse_open_term_indexed_parametric(BzlaSMT2Parser *parser,
            || tag == BZLA_FP_TO_FP_UNSIGNED_TAG_SMT2)
   {
     assert(nargs == 2);
-    if (!parse_bit_width_smt2(parser, &item_open->idx0)) return 0;
-    firstcoo = parser->coo;
-    if (!parse_bit_width_smt2(parser, &item_open->idx1)) return 0;
+    if (!parse_uint32_smt2(parser, true, &item_open->idx0)) return 0;
+    if (item_open->idx0 <= 1)
+    {
+      return !perr_smt2(
+          parser,
+          "expected positive 32 bit integer > 1 for exponent size, got '%u'",
+          item_open->idx0);
+    }
+    if (!parse_uint32_smt2(parser, true, &item_open->idx1)) return 0;
+    if (item_open->idx1 <= 1)
+    {
+      return !perr_smt2(
+          parser,
+          "expected positive 32 bit integer > 1 for significand size, got '%u'",
+          item_open->idx1);
+    }
   }
   else
   {
@@ -4015,8 +4028,22 @@ parse_open_close_term_indexed_fp_special_const(
   Bitwuzla *bitwuzla = parser->bitwuzla;
   BzlaSMT2Item *item_open = item_cur - 1;
   assert(node && tag == (int32_t) node->tag);
-  if (!parse_bit_width_smt2(parser, &item_open->idx0)) return 0;
-  if (!parse_bit_width_smt2(parser, &item_open->idx1)) return 0;
+  if (!parse_uint32_smt2(parser, true, &item_open->idx0)) return 0;
+  if (item_open->idx0 <= 1)
+  {
+    return !perr_smt2(
+        parser,
+        "expected positive 32 bit integer > 1 for exponent size, got '%u'",
+        item_open->idx0);
+  }
+  if (!parse_uint32_smt2(parser, true, &item_open->idx1)) return 0;
+  if (item_open->idx1 <= 1)
+  {
+    return !perr_smt2(
+        parser,
+        "expected positive 32 bit integer > 1 for significand size, got '%u'",
+        item_open->idx1);
+  }
 
   const BitwuzlaSort *sort =
       bitwuzla_mk_fp_sort(bitwuzla, item_open->idx0, item_open->idx1);
@@ -4758,7 +4785,7 @@ parse_bv_or_fp_sort(BzlaSMT2Parser *parser,
   assert(skiptokens <= 2);
 
   int32_t tag;
-  uint32_t width = 0, width_eb, width_sb;
+  uint32_t width = 0, width_eb = 0, width_sb = 0;
   char *msg;
 
   Bitwuzla *bitwuzla = parser->bitwuzla;
@@ -4792,16 +4819,23 @@ parse_bv_or_fp_sort(BzlaSMT2Parser *parser,
                       "expected 'BitVec' or 'FloatingPoint' at '%s'",
                       parser->token.start);
   }
-  if (!parse_bit_width_smt2(parser, &width))
-  {
-    return 0;
-  }
   if (tag == BZLA_FP_FLOATINGPOINT_TAG_SMT2)
   {
-    width_eb = width;
-    if (!parse_bit_width_smt2(parser, &width_sb))
+    if (!parse_uint32_smt2(parser, true, &width_eb)) return 0;
+    if (width_eb <= 1)
     {
-      return 0;
+      return !perr_smt2(
+          parser,
+          "expected positive 32 bit integer > 1 for exponent size, got '%u'",
+          width_eb);
+    }
+    if (!parse_uint32_smt2(parser, true, &width_sb)) return 0;
+    if (width_sb <= 1)
+    {
+      return !perr_smt2(
+          parser,
+          "expected positive 32 bit integer > 1 for significand size, got '%u'",
+          width_sb);
     }
     BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
              3,
@@ -4814,6 +4848,10 @@ parse_bv_or_fp_sort(BzlaSMT2Parser *parser,
   }
   else
   {
+    if (!parse_bit_width_smt2(parser, &width))
+    {
+      return 0;
+    }
     BZLA_MSG(bitwuzla_get_bzla_msg(bitwuzla),
              3,
              "parsed bit-vector sort of width %d",

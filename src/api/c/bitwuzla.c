@@ -1466,8 +1466,8 @@ const BitwuzlaSort *
 bitwuzla_mk_fp_sort(Bitwuzla *bitwuzla, uint32_t exp_size, uint32_t sig_size)
 {
   BZLA_CHECK_ARG_NOT_NULL(bitwuzla);
-  BZLA_CHECK_ARG_NOT_ZERO(exp_size);
-  BZLA_CHECK_ARG_NOT_ZERO(sig_size);
+  BZLA_ABORT(exp_size <= 1, "argument 'exp_size' must be > 1")
+  BZLA_ABORT(sig_size <= 1, "argument 'sig_size' must be > 1")
 
   Bzla *bzla     = BZLA_IMPORT_BITWUZLA(bitwuzla);
   BzlaSortId res = bzla_sort_fp(bzla, exp_size, sig_size);
@@ -2700,6 +2700,8 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
     case BITWUZLA_KIND_FP_TO_FP_FROM_BV: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
           kind, bzla_args, 1, argc, 2, idxc, 0, bzla_sort_is_bv, true);
+      BZLA_ABORT(idxs[0] <= 1, "expected exponent size > 1");
+      BZLA_ABORT(idxs[1] <= 1, "expected significand size > 1");
       BZLA_ABORT(
           idxs[0] + idxs[1] != bzla_node_bv_get_width(bzla, bzla_args[0]),
           "size of bit-vector does not match given floating-point format");
@@ -2712,6 +2714,8 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
     case BITWUZLA_KIND_FP_TO_FP_FROM_FP: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
           kind, bzla_args, 2, argc, 2, idxc, 1, bzla_sort_is_fp, true);
+      BZLA_ABORT(idxs[0] <= 1, "expected exponent size > 1");
+      BZLA_ABORT(idxs[1] <= 1, "expected significand size > 1");
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       BzlaSortId sort = bzla_sort_fp(bzla, idxs[0], idxs[1]);
       res = bzla_exp_fp_to_fp_from_fp(bzla, bzla_args[0], bzla_args[1], sort);
@@ -2722,6 +2726,8 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
     case BITWUZLA_KIND_FP_TO_FP_FROM_SBV: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
           kind, bzla_args, 2, argc, 2, idxc, 1, bzla_sort_is_bv, true);
+      BZLA_ABORT(idxs[0] <= 1, "expected exponent size > 1");
+      BZLA_ABORT(idxs[1] <= 1, "expected significand size > 1");
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       BzlaSortId sort = bzla_sort_fp(bzla, idxs[0], idxs[1]);
       res = bzla_exp_fp_to_fp_from_sbv(bzla, bzla_args[0], bzla_args[1], sort);
@@ -2732,6 +2738,8 @@ bitwuzla_mk_term_indexed(Bitwuzla *bitwuzla,
     case BITWUZLA_KIND_FP_TO_FP_FROM_UBV: {
       BZLA_CHECK_MK_TERM_ARGS_IDXED(
           kind, bzla_args, 2, argc, 2, idxc, 1, bzla_sort_is_bv, true);
+      BZLA_ABORT(idxs[0] <= 1, "expected exponent size > 1");
+      BZLA_ABORT(idxs[1] <= 1, "expected significand size > 1");
       BZLA_CHECK_TERM_IS_RM_AT_IDX(bzla, bzla_args[0], 0);
       BzlaSortId sort = bzla_sort_fp(bzla, idxs[0], idxs[1]);
       res = bzla_exp_fp_to_fp_from_ubv(bzla, bzla_args[0], bzla_args[1], sort);

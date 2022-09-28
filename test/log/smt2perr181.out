@@ -1,0 +1,1 @@
+log/smt2perr181.smt2:1:37: expected positive 32 bit integer > 1 for significand size, got '1'
