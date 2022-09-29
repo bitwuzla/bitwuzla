@@ -183,8 +183,12 @@ TEST_F(TestRewriterBool, bool_not_eval)
       RewriteRule<RewriteRuleKind::NOT_EVAL>::apply(d_rewriter, not2).first);
 }
 
-/* or ----------------------------------------------------------------------- */
+/* --- Elimination Rules ---------------------------------------------------- */
 
+TEST_F(TestRewriterBool, bool_distinct_elim)
+{
+  test_elim_rule_bool(Kind::DISTINCT);
+}
 TEST_F(TestRewriterBool, bool_or_elim) { test_elim_rule_bool(Kind::OR); }
 
 /* -------------------------------------------------------------------------- */

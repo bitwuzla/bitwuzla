@@ -95,6 +95,7 @@ Rewriter::_rewrite(const Node& node)
   switch (node.kind())
   {
     case node::Kind::AND: res = rewrite_and(node); break;
+    case node::Kind::DISTINCT: res = rewrite_distinct(node); break;
     case node::Kind::NOT: res = rewrite_not(node); break;
     case node::Kind::OR: res = rewrite_or(node); break;
 
@@ -233,6 +234,7 @@ DONE:
   return res;
 }
 
+BZLA_ELIM_KIND_IMPL(distinct, DISTINCT_ELIM)
 BZLA_ELIM_KIND_IMPL(or, OR_ELIM)
 
 /* -------------------------------------------------------------------------- */

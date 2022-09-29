@@ -147,7 +147,16 @@ RewriteRule<RewriteRuleKind::NOT_EVAL>::_apply(Rewriter& rewriter,
   return NodeManager::get().mk_value(!node[0].value<bool>());
 }
 
-/* or ----------------------------------------------------------------------- */
+/* --- Elimination Rules ---------------------------------------------------- */
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::DISTINCT_ELIM>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  return rewriter.mk_node(Kind::NOT,
+                          {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+}
 
 template <>
 Node

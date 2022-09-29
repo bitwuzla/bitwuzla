@@ -21,13 +21,16 @@ class Rewriter
  private:
   const Node& _rewrite(const Node& node);
 
+  /* Boolean ------------------------------------- */
   Node rewrite_and(const Node& node);
   Node rewrite_not(const Node& node);
-  Node rewrite_or(const Node& node);
-
   Node rewrite_eq(const Node& node);
   Node rewrite_ite(const Node& node);
+  /* Eliminated operators */
+  Node rewrite_distinct(const Node& node);
+  Node rewrite_or(const Node& node);
 
+  /* BV ------------------------------------------ */
   Node rewrite_bv_add(const Node& node);
   Node rewrite_bv_and(const Node& node);
   Node rewrite_bv_ashr(const Node& node);
@@ -42,7 +45,6 @@ class Rewriter
   Node rewrite_bv_ult(const Node& node);
   Node rewrite_bv_urem(const Node& node);
   Node rewrite_bv_xor(const Node& node);
-
   /* Eliminated operators */
   Node rewrite_bv_nand(const Node& node);
   Node rewrite_bv_neg(const Node& node);
@@ -77,6 +79,7 @@ class Rewriter
   Node rewrite_bv_xnor(const Node& node);
   Node rewrite_bv_zero_extend(const Node& node);
 
+  /* FP ------------------------------------------ */
   Node rewrite_fp_abs(const Node& node);
   Node rewrite_fp_add(const Node& node);
   Node rewrite_fp_div(const Node& node);
@@ -101,9 +104,11 @@ class Rewriter
   Node rewrite_fp_to_fp_from_sbv(const Node& node);
   Node rewrite_fp_to_fp_from_ubv(const Node& node);
 
+  /* Fun ----------------------------------------- */
   Node rewrite_apply(const Node& node);
   Node rewrite_lambda(const Node& node);
 
+  /* Quant --------------------------------------- */
   Node rewrite_forall(const Node& node);
   Node rewrite_exists(const Node& node);
 
@@ -121,6 +126,7 @@ enum class RewriteRuleKind
 
   NOT_EVAL,
 
+  DISTINCT_ELIM,
   OR_ELIM,
 
   /* BV rewrites --------------------------------- */
