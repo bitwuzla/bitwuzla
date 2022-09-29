@@ -44,11 +44,11 @@ TEST_F(TestRewriterBool, bool_and_eval)
   // empty cache
   ASSERT_EQ(d_false, Rewriter().rewrite(and1));
   // does not apply
-  Node and2 =
+  Node and_x0 =
       d_nm.mk_node(Kind::AND, {d_nm.mk_const(d_nm.mk_bool_type()), d_false});
   ASSERT_EQ(
-      and2,
-      RewriteRule<RewriteRuleKind::AND_EVAL>::apply(d_rewriter, and2).first);
+      and_x0,
+      RewriteRule<RewriteRuleKind::AND_EVAL>::apply(d_rewriter, and_x0).first);
 }
 
 /* equal -------------------------------------------------------------------- */
@@ -83,11 +83,12 @@ TEST_F(TestRewriterBool, bool_equal_eval)
   // empty cache
   ASSERT_EQ(d_false, Rewriter().rewrite(equal0_1));
   // does not apply
-  Node equal5 =
+  Node equal_x0 =
       d_nm.mk_node(Kind::EQUAL, {d_nm.mk_const(d_nm.mk_bool_type()), d_false});
-  ASSERT_EQ(equal5,
-            RewriteRule<RewriteRuleKind::EQUAL_EVAL>::apply(d_rewriter, equal5)
-                .first);
+  ASSERT_EQ(
+      equal_x0,
+      RewriteRule<RewriteRuleKind::EQUAL_EVAL>::apply(d_rewriter, equal_x0)
+          .first);
 }
 
 TEST_F(TestRewriterBool, bool_equal_special_const)
@@ -114,53 +115,56 @@ TEST_F(TestRewriterBool, bool_equal_special_const)
          d_nm.mk_node(Kind::EQUAL,
                       {d_nm.mk_node(Kind::BV_NOT, {bv4b}), bv4_zero})});
     // lhs 0
-    Node equal0 = d_nm.mk_node(Kind::EQUAL, {d_false, b});
-    ASSERT_EQ(d_nm.mk_node(Kind::NOT, {b}), d_rewriter.rewrite(equal0));
-    Node equal1 = d_nm.mk_node(Kind::EQUAL, {bv4_zero, bv4xor});
-    ASSERT_EQ(res_eq, d_rewriter.rewrite(equal1));
-    Node equal2 = d_nm.mk_node(Kind::EQUAL, {bv4_zero, bv4or});
-    ASSERT_EQ(res_and, d_rewriter.rewrite(equal2));
+    Node equal_lhs0 = d_nm.mk_node(Kind::EQUAL, {d_false, b});
+    ASSERT_EQ(d_nm.mk_node(Kind::NOT, {b}), d_rewriter.rewrite(equal_lhs0));
+    Node equal_lhs1 = d_nm.mk_node(Kind::EQUAL, {bv4_zero, bv4xor});
+    ASSERT_EQ(res_eq, d_rewriter.rewrite(equal_lhs1));
+    Node equal_lhs2 = d_nm.mk_node(Kind::EQUAL, {bv4_zero, bv4or});
+    ASSERT_EQ(res_and, d_rewriter.rewrite(equal_lhs2));
     // rhs 0
-    Node equal3 = d_nm.mk_node(Kind::EQUAL, {b, d_false});
-    ASSERT_EQ(d_nm.mk_node(Kind::NOT, {b}), d_rewriter.rewrite(equal3));
-    Node equal4 = d_nm.mk_node(Kind::EQUAL, {bv4xor, bv4_zero});
-    ASSERT_EQ(res_eq, d_rewriter.rewrite(equal4));
-    Node equal5 = d_nm.mk_node(Kind::EQUAL, {bv4or, bv4_zero});
-    ASSERT_EQ(res_and, d_rewriter.rewrite(equal5));
+    Node equal_rhs0 = d_nm.mk_node(Kind::EQUAL, {b, d_false});
+    ASSERT_EQ(d_nm.mk_node(Kind::NOT, {b}), d_rewriter.rewrite(equal_rhs0));
+    Node equal_rhs1 = d_nm.mk_node(Kind::EQUAL, {bv4xor, bv4_zero});
+    ASSERT_EQ(res_eq, d_rewriter.rewrite(equal_rhs1));
+    Node equal_rhs2 = d_nm.mk_node(Kind::EQUAL, {bv4or, bv4_zero});
+    ASSERT_EQ(res_and, d_rewriter.rewrite(equal_rhs2));
     //// empty cache
-    ASSERT_EQ(res_and, Rewriter().rewrite(equal5));
+    ASSERT_EQ(res_and, Rewriter().rewrite(equal_rhs2));
     //// does not apply
-    Node equal6 =
+    Node equal_x0 =
         d_nm.mk_node(Kind::EQUAL, {bv1_zero, d_nm.mk_const(bv1_type)});
-    ASSERT_EQ(equal6, d_rewriter.rewrite(equal6));
-    Node equal7 = d_nm.mk_node(
+    ASSERT_EQ(equal_x0, d_rewriter.rewrite(equal_x0));
+    Node equal_x1 = d_nm.mk_node(
         Kind::EQUAL, {d_nm.mk_const(bv4_type), d_nm.mk_const(bv4_type)});
-    ASSERT_EQ(equal7, d_rewriter.rewrite(equal7));
+    ASSERT_EQ(equal_x1, d_rewriter.rewrite(equal_x1));
   }
-  ////// special const 0
+  ////// special const ones
   {
     //// applies
     Node bv4and  = d_nm.mk_node(Kind::BV_AND, {bv4a, bv4b});
     Node bv4xnor = d_nm.mk_node(Kind::BV_XNOR, {bv4a, bv4b});
+    // lhs true
+    Node equal_lhs0 = d_nm.mk_node(Kind::EQUAL, {d_true, b});
+    ASSERT_EQ(b, d_rewriter.rewrite(equal_lhs0));
+    // rhs true
+    Node equal_rhs0 = d_nm.mk_node(Kind::EQUAL, {b, d_true});
+    ASSERT_EQ(b, d_rewriter.rewrite(equal_rhs0));
     // lhs ones
-    Node equal0 = d_nm.mk_node(Kind::EQUAL, {d_true, b});
-    ASSERT_EQ(b, d_rewriter.rewrite(equal0));
-    Node equal0_1 = d_nm.mk_node(Kind::EQUAL, {b, d_true});
-    ASSERT_EQ(b, d_rewriter.rewrite(equal0_1));
-    Node equal1 = d_nm.mk_node(Kind::EQUAL, {bv4_ones, bv4and});
+    Node equal_lhs1 = d_nm.mk_node(Kind::EQUAL, {bv4_ones, bv4and});
     ASSERT_EQ(d_nm.mk_node(Kind::AND,
                            {d_nm.mk_node(Kind::EQUAL, {bv4a, bv4_ones}),
                             d_nm.mk_node(Kind::EQUAL, {bv4b, bv4_ones})}),
-              d_rewriter.rewrite(equal1));
-    Node equal1_1 = d_nm.mk_node(Kind::EQUAL, {bv4and, bv4_ones});
+              d_rewriter.rewrite(equal_lhs1));
+    Node equal_lhs2 = d_nm.mk_node(Kind::EQUAL, {bv4_ones, bv4xnor});
+    ASSERT_EQ(res_eq, d_rewriter.rewrite(equal_lhs2));
+    // rhs ones
+    Node equal_rhs1 = d_nm.mk_node(Kind::EQUAL, {bv4and, bv4_ones});
     ASSERT_EQ(d_nm.mk_node(Kind::AND,
                            {d_nm.mk_node(Kind::EQUAL, {bv4a, bv4_ones}),
                             d_nm.mk_node(Kind::EQUAL, {bv4b, bv4_ones})}),
-              d_rewriter.rewrite(equal1_1));
-    Node equal2 = d_nm.mk_node(Kind::EQUAL, {bv4_ones, bv4xnor});
-    ASSERT_EQ(res_eq, d_rewriter.rewrite(equal2));
-    Node equal2_1 = d_nm.mk_node(Kind::EQUAL, {bv4xnor, bv4_ones});
-    ASSERT_EQ(res_eq, d_rewriter.rewrite(equal2_1));
+              d_rewriter.rewrite(equal_rhs1));
+    Node equal_rhs2 = d_nm.mk_node(Kind::EQUAL, {bv4xnor, bv4_ones});
+    ASSERT_EQ(res_eq, d_rewriter.rewrite(equal_rhs2));
   }
 }
 
@@ -177,10 +181,10 @@ TEST_F(TestRewriterBool, bool_not_eval)
   // empty cache
   ASSERT_EQ(d_false, Rewriter().rewrite(not1));
   // does not apply
-  Node not2 = d_nm.mk_node(Kind::NOT, {d_nm.mk_const(d_nm.mk_bool_type())});
+  Node not_x0 = d_nm.mk_node(Kind::NOT, {d_nm.mk_const(d_nm.mk_bool_type())});
   ASSERT_EQ(
-      not2,
-      RewriteRule<RewriteRuleKind::NOT_EVAL>::apply(d_rewriter, not2).first);
+      not_x0,
+      RewriteRule<RewriteRuleKind::NOT_EVAL>::apply(d_rewriter, not_x0).first);
 }
 
 /* --- Elimination Rules ---------------------------------------------------- */

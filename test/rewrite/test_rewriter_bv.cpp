@@ -70,13 +70,13 @@ TEST_F(TestRewriterBv, bv_add_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvadd1_2));
   //// does not apply
-  Node bvadd2 = d_nm.mk_node(
+  Node bvadd_x0 = d_nm.mk_node(
       Kind::BV_ADD,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvadd2, d_rewriter.rewrite(bvadd2));
-  Node bvadd3 =
-      d_nm.mk_node(Kind::BV_ADD, {bvadd2, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvadd3, d_rewriter.rewrite(bvadd3));
+  ASSERT_EQ(bvadd_x0, d_rewriter.rewrite(bvadd_x0));
+  Node bvadd_x1 = d_nm.mk_node(Kind::BV_ADD,
+                               {bvadd_x0, d_nm.mk_value(BitVector(4, "1110"))});
+  ASSERT_EQ(bvadd_x1, d_rewriter.rewrite(bvadd_x1));
 }
 
 TEST_F(TestRewriterBv, bv_add_special_const)
@@ -84,32 +84,35 @@ TEST_F(TestRewriterBv, bv_add_special_const)
   ////// special const 0
   {
     //// applies
-    Node bvadd0 = d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd0));
-    Node bvadd1 = d_nm.mk_node(Kind::BV_ADD, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd1));
-    Node bvadd0_1 = d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, bvadd0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd0_1));
-    Node bvadd0_2 = d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, bvadd1});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd0_2));
-    Node bvadd1_1 = d_nm.mk_node(Kind::BV_ADD, {bvadd0, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd1_1));
-    Node bvadd1_2 = d_nm.mk_node(Kind::BV_ADD, {bvadd1, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd1_2));
+    // lhs 0
+    Node bvadd_lhs0 = d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, d_a4});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_lhs0));
+    Node bvadd_lhs1 = d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, bvadd_lhs0});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_lhs1));
+    // rhs 0
+    Node bvadd_rhs0 = d_nm.mk_node(Kind::BV_ADD, {d_a4, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_rhs0));
+    Node bvadd_rhs1 = d_nm.mk_node(Kind::BV_ADD, {bvadd_lhs0, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_rhs1));
+    Node bvadd_rhs2 = d_nm.mk_node(Kind::BV_ADD, {bvadd_rhs0, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_rhs2));
+    // lhs 0
+    Node bvadd_lhs2 = d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, bvadd_rhs0});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_lhs2));
     // with empty cache
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvadd1_2));
+    ASSERT_EQ(d_a4, Rewriter().rewrite(bvadd_rhs1));
     //// does not apply
-    Node bvadd2 = d_nm.mk_node(
+    Node bvadd_x0 = d_nm.mk_node(
         Kind::BV_ADD, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvadd2, d_rewriter.rewrite(bvadd2));
-    Node bvadd3 = d_nm.mk_node(
+    ASSERT_EQ(bvadd_x0, d_rewriter.rewrite(bvadd_x0));
+    Node bvadd_x1 = d_nm.mk_node(
         Kind::BV_ADD,
         {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvadd3, d_rewriter.rewrite(bvadd3));
-    Node bvadd4 = d_nm.mk_node(
+    ASSERT_EQ(bvadd_x1, d_rewriter.rewrite(bvadd_x1));
+    Node bvadd_x2 = d_nm.mk_node(
         Kind::BV_ADD,
         {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvadd4, d_rewriter.rewrite(bvadd4));
+    ASSERT_EQ(bvadd_x2, d_rewriter.rewrite(bvadd_x2));
   }
 }
 
@@ -133,13 +136,13 @@ TEST_F(TestRewriterBv, bv_and_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "1000")), Rewriter().rewrite(bvand1_2));
   //// does not apply
-  Node bvand2 = d_nm.mk_node(
+  Node bvand_x0 = d_nm.mk_node(
       Kind::BV_AND,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvand2, d_rewriter.rewrite(bvand2));
-  Node bvand3 =
-      d_nm.mk_node(Kind::BV_AND, {bvand2, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvand3, d_rewriter.rewrite(bvand3));
+  ASSERT_EQ(bvand_x0, d_rewriter.rewrite(bvand_x0));
+  Node bvand_x1 = d_nm.mk_node(Kind::BV_AND,
+                               {bvand_x0, d_nm.mk_value(BitVector(4, "1110"))});
+  ASSERT_EQ(bvand_x1, d_rewriter.rewrite(bvand_x1));
 }
 
 TEST_F(TestRewriterBv, bv_and_special_const)
@@ -147,52 +150,58 @@ TEST_F(TestRewriterBv, bv_and_special_const)
   ////// special const 0
   {
     //// applies
-    Node bvand0 = d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand0));
-    Node bvand1 = d_nm.mk_node(Kind::BV_AND, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand1));
-    Node bvand0_1 = d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, bvand0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand0_1));
-    Node bvand0_2 = d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, bvand1});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand0_2));
-    Node bvand0_3 = d_nm.mk_node(Kind::BV_AND, {d_a4, bvand1});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand0_3));
-    Node bvand1_1 = d_nm.mk_node(Kind::BV_AND, {bvand0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand1_1));
-    Node bvand1_2 = d_nm.mk_node(Kind::BV_AND, {bvand1, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand1_2));
+    // lhs 0
+    Node bvand_lhs0 = d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_a4});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_lhs0));
+    Node bvand_lhs1 = d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, bvand_lhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_lhs1));
+    // rhs 0
+    Node bvand_rhs0 = d_nm.mk_node(Kind::BV_AND, {d_a4, d_bv4_zero});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_rhs0));
+    Node bvand_rhs1 = d_nm.mk_node(Kind::BV_AND, {bvand_lhs0, d_bv4_zero});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_rhs1));
+    Node bvand_rhs2 = d_nm.mk_node(Kind::BV_AND, {bvand_rhs0, d_bv4_zero});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_rhs2));
+    Node bvand_rhs3 = d_nm.mk_node(Kind::BV_AND, {d_a4, bvand_rhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_rhs3));
+    // lhs 0
+    Node bvand_lhs2 = d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, bvand_rhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_lhs2));
     // with empty cache
-    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvand0_3));
-    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvand1_2));
+    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvand_rhs3));
+    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvand_rhs2));
     //// does not apply
-    Node bvand2 = d_nm.mk_node(
-        Kind::BV_AND, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvand2, d_rewriter.rewrite(bvand2));
-    Node bvand3 = d_nm.mk_node(
-        Kind::BV_AND,
-        {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvand3, d_rewriter.rewrite(bvand3));
-    Node bvand4 = d_nm.mk_node(
-        Kind::BV_AND,
-        {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvand4, d_rewriter.rewrite(bvand4));
+    Node bvand_x0 = d_nm.mk_node(Kind::BV_AND, {d_a4, d_a4});
+    ASSERT_EQ(bvand_x0, d_rewriter.rewrite(bvand_x0));
+    Node bvand_x1 =
+        d_nm.mk_node(Kind::BV_AND, {d_nm.mk_value(BitVector(4, "1110")), d_a4});
+    ASSERT_EQ(bvand_x1, d_rewriter.rewrite(bvand_x1));
+    Node bvand_x2 =
+        d_nm.mk_node(Kind::BV_AND, {d_a4, d_nm.mk_value(BitVector(4, "1110"))});
+    ASSERT_EQ(bvand_x2, d_rewriter.rewrite(bvand_x2));
   }
   ////// special const 1
   {
     //// applies
     // lhs 1
-    Node bvand0 = d_nm.mk_node(Kind::BV_AND, {d_bv1_one, d_a1});
-    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvand0));
+    Node bvand_lhs0 = d_nm.mk_node(Kind::BV_AND, {d_bv1_one, d_a1});
+    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvand_lhs0));
+    // rhs 1
+    Node bvand_rhs0 = d_nm.mk_node(Kind::BV_AND, {d_a1, d_bv1_one});
+    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvand_rhs0));
     //// does not apply
-    Node bvand1 = d_nm.mk_node(Kind::BV_AND, {d_bv4_one, d_a4});
-    ASSERT_EQ(bvand1, d_rewriter.rewrite(bvand1));
+    Node bvand_x0 = d_nm.mk_node(Kind::BV_AND, {d_bv4_one, d_a4});
+    ASSERT_EQ(bvand_x0, d_rewriter.rewrite(bvand_x0));
   }
   ////// special const ones
   {
     //// applies
     // lhs ones
-    Node bvand0 = d_nm.mk_node(Kind::BV_AND, {d_bv4_ones, d_a4});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvand0));
+    Node bvand_lhs0 = d_nm.mk_node(Kind::BV_AND, {d_bv4_ones, d_a4});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvand_lhs0));
+    //// does not apply
+    Node bvand_x0 = d_nm.mk_node(Kind::BV_AND, {d_a4, d_bv4_ones});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvand_x0));
   }
 }
 
@@ -216,13 +225,13 @@ TEST_F(TestRewriterBv, bv_ashr_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvashr1_2));
   //// does not apply
-  Node bvashr2 = d_nm.mk_node(
+  Node bvashr_x0 = d_nm.mk_node(
       Kind::BV_ASHR,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "0010"))});
-  ASSERT_EQ(bvashr2, d_rewriter.rewrite(bvashr2));
-  Node bvashr3 = d_nm.mk_node(Kind::BV_ASHR,
-                              {bvashr2, d_nm.mk_value(BitVector(4, "0001"))});
-  ASSERT_EQ(bvashr3, d_rewriter.rewrite(bvashr3));
+  ASSERT_EQ(bvashr_x0, d_rewriter.rewrite(bvashr_x0));
+  Node bvashr_x1 = d_nm.mk_node(
+      Kind::BV_ASHR, {bvashr_x0, d_nm.mk_value(BitVector(4, "0001"))});
+  ASSERT_EQ(bvashr_x1, d_rewriter.rewrite(bvashr_x1));
 }
 
 TEST_F(TestRewriterBv, bv_ashr_special_const)
@@ -230,35 +239,38 @@ TEST_F(TestRewriterBv, bv_ashr_special_const)
   ////// special const 0
   {
     //// applies
-    Node bvashr0 = d_nm.mk_node(Kind::BV_ASHR, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr0));
-    Node bvashr1 = d_nm.mk_node(Kind::BV_ASHR, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvashr1));
-    Node bvashr0_1 = d_nm.mk_node(Kind::BV_ASHR, {d_bv4_zero, bvashr0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr0_1));
-    Node bvashr0_2 = d_nm.mk_node(Kind::BV_ASHR, {d_bv4_zero, bvashr1});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr0_2));
-    Node bvashr0_3 = d_nm.mk_node(Kind::BV_ASHR, {d_a4, bvashr0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvashr0_3));
-    Node bvashr1_1 = d_nm.mk_node(Kind::BV_ASHR, {bvashr0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr1_1));
-    Node bvashr1_2 = d_nm.mk_node(Kind::BV_ASHR, {bvashr1, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvashr1_2));
+    // lhs 0
+    Node bvashr_lhs0 = d_nm.mk_node(Kind::BV_ASHR, {d_bv4_zero, d_a4});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr_lhs0));
+    Node bvashr_lhs1 = d_nm.mk_node(Kind::BV_ASHR, {d_bv4_zero, bvashr_lhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr_lhs1));
+    // rhs 0
+    Node bvashr_rhs0 = d_nm.mk_node(Kind::BV_ASHR, {d_a4, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvashr_rhs0));
+    Node bvashr_rhs1 = d_nm.mk_node(Kind::BV_ASHR, {d_a4, bvashr_lhs0});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvashr_rhs1));
+    Node bvashr_rhs2 = d_nm.mk_node(Kind::BV_ASHR, {bvashr_lhs0, d_bv4_zero});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr_rhs2));
+    Node bvashr_rhs3 = d_nm.mk_node(Kind::BV_ASHR, {bvashr_rhs0, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvashr_rhs3));
+    // lhs 0
+    Node bvashr_lhs2 = d_nm.mk_node(Kind::BV_ASHR, {d_bv4_zero, bvashr_rhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr_lhs2));
     // with empty cache
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvashr0_3));
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvashr1_2));
+    ASSERT_EQ(d_a4, Rewriter().rewrite(bvashr_rhs1));
+    ASSERT_EQ(d_a4, Rewriter().rewrite(bvashr_rhs3));
     //// does not apply
-    Node bvashr2 = d_nm.mk_node(
+    Node bvashr_x0 = d_nm.mk_node(
         Kind::BV_ASHR, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvashr2, d_rewriter.rewrite(bvashr2));
-    Node bvashr3 = d_nm.mk_node(
+    ASSERT_EQ(bvashr_x0, d_rewriter.rewrite(bvashr_x0));
+    Node bvashr_x1 = d_nm.mk_node(
         Kind::BV_ASHR,
         {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvashr3, d_rewriter.rewrite(bvashr3));
-    Node bvashr4 = d_nm.mk_node(
+    ASSERT_EQ(bvashr_x1, d_rewriter.rewrite(bvashr_x1));
+    Node bvashr_x2 = d_nm.mk_node(
         Kind::BV_ASHR,
         {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvashr4, d_rewriter.rewrite(bvashr4));
+    ASSERT_EQ(bvashr_x2, d_rewriter.rewrite(bvashr_x2));
   }
 }
 
@@ -287,13 +299,13 @@ TEST_F(TestRewriterBv, bv_concat_eval)
   ASSERT_EQ(d_nm.mk_value(BitVector(24, "100110011110100110011110")),
             Rewriter().rewrite(bvconcat1_2));
   //// does not apply
-  Node bvconcat2 = d_nm.mk_node(
+  Node bvconcat_x0 = d_nm.mk_node(
       Kind::BV_CONCAT,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvconcat2, d_rewriter.rewrite(bvconcat2));
-  Node bvconcat3 = d_nm.mk_node(
-      Kind::BV_CONCAT, {bvconcat2, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvconcat3, d_rewriter.rewrite(bvconcat3));
+  ASSERT_EQ(bvconcat_x0, d_rewriter.rewrite(bvconcat_x0));
+  Node bvconcat_x1 = d_nm.mk_node(
+      Kind::BV_CONCAT, {bvconcat_x0, d_nm.mk_value(BitVector(4, "1110"))});
+  ASSERT_EQ(bvconcat_x1, d_rewriter.rewrite(bvconcat_x1));
 }
 
 /* bvmul -------------------------------------------------------------------- */
@@ -316,13 +328,13 @@ TEST_F(TestRewriterBv, bv_mul_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0100")), Rewriter().rewrite(bvmul1_2));
   //// does not apply
-  Node bvmul2 = d_nm.mk_node(
+  Node bvmul_x0 = d_nm.mk_node(
       Kind::BV_MUL,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvmul2, d_rewriter.rewrite(bvmul2));
-  Node bvmul3 =
-      d_nm.mk_node(Kind::BV_MUL, {bvmul2, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvmul3, d_rewriter.rewrite(bvmul3));
+  ASSERT_EQ(bvmul_x0, d_rewriter.rewrite(bvmul_x0));
+  Node bvmul_x1 = d_nm.mk_node(Kind::BV_MUL,
+                               {bvmul_x0, d_nm.mk_value(BitVector(4, "1110"))});
+  ASSERT_EQ(bvmul_x1, d_rewriter.rewrite(bvmul_x1));
 }
 
 TEST_F(TestRewriterBv, bv_mul_special_const)
@@ -330,54 +342,66 @@ TEST_F(TestRewriterBv, bv_mul_special_const)
   ////// special const 0
   {
     //// applies
-    Node bvmul0 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul0));
-    Node bvmul1 = d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul1));
-    Node bvmul0_1 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, bvmul0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul0_1));
-    Node bvmul0_2 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, bvmul1});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul0_2));
-    Node bvmul0_3 = d_nm.mk_node(Kind::BV_MUL, {d_a4, bvmul0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul0_3));
-    Node bvmul0_4 = d_nm.mk_node(Kind::BV_MUL, {bvmul0, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul0_4));
-    Node bvmul1_1 = d_nm.mk_node(Kind::BV_MUL, {bvmul0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul1_1));
-    Node bvmul1_2 = d_nm.mk_node(Kind::BV_MUL, {bvmul1, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul1_2));
+    // lhs 0
+    Node bvmul_lhs0 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, d_a4});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_lhs0));
+    Node bvmul_lhs1 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, bvmul_lhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_lhs1));
+    Node bvmul_lhs3 = d_nm.mk_node(Kind::BV_MUL, {bvmul_lhs0, d_a4});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_lhs3));
+    // rhs 0
+    Node bvmul_rhs0 = d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_zero});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_rhs0));
+    Node bvmul_rhs1 = d_nm.mk_node(Kind::BV_MUL, {d_a4, bvmul_lhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_rhs1));
+    Node bvmul_rhs2 = d_nm.mk_node(Kind::BV_MUL, {bvmul_lhs0, d_bv4_zero});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_rhs2));
+    Node bvmul_rhs3 = d_nm.mk_node(Kind::BV_MUL, {bvmul_rhs0, d_bv4_zero});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_rhs3));
+    // lhs 0
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_lhs1));
+    Node bvmul_lhs2 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, bvmul_rhs0});
     // with empty cache
-    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvmul0_4));
-    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvmul1_2));
+    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvmul_lhs3));
+    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvmul_rhs3));
     //// does not apply
-    Node bvmul2 = d_nm.mk_node(
+    Node bvmul_x0 = d_nm.mk_node(
         Kind::BV_MUL, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvmul2, d_rewriter.rewrite(bvmul2));
-    Node bvmul3 = d_nm.mk_node(
+    ASSERT_EQ(bvmul_x0, d_rewriter.rewrite(bvmul_x0));
+    Node bvmul_x1 = d_nm.mk_node(
         Kind::BV_MUL,
         {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvmul3, d_rewriter.rewrite(bvmul3));
-    Node bvmul4 = d_nm.mk_node(
+    ASSERT_EQ(bvmul_x1, d_rewriter.rewrite(bvmul_x1));
+    Node bvmul_x2 = d_nm.mk_node(
         Kind::BV_MUL,
         {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvmul4, d_rewriter.rewrite(bvmul4));
+    ASSERT_EQ(bvmul_x2, d_rewriter.rewrite(bvmul_x2));
   }
   ////// special const 1
   {
     //// applies
     // lhs 1
-    Node bvmul0 = d_nm.mk_node(Kind::BV_MUL, {d_bv1_one, d_a1});
-    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvmul0));
-    Node bvmul1 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_one, d_a4});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvmul1));
+    Node bvmul_lhs0 = d_nm.mk_node(Kind::BV_MUL, {d_bv1_one, d_a1});
+    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvmul_lhs0));
+    Node bvmul_lhs1 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_one, d_a4});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvmul_lhs1));
+    // rhs 1
+    Node bvmul_rhs0 = d_nm.mk_node(Kind::BV_MUL, {d_a1, d_bv1_one});
+    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvmul_rhs0));
+    Node bvmul_rhs1 = d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_one});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvmul_rhs1));
   }
   ////// special const ones
   {
     //// applies
     // lhs ones
-    Node bvmul0 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_ones, d_a4});
+    Node bvmul_lhs0 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_ones, d_a4});
     ASSERT_EQ(d_rewriter.rewrite(d_nm.mk_node(Kind::BV_NEG, {d_a4})),
-              d_rewriter.rewrite(bvmul0));
+              d_rewriter.rewrite(bvmul_lhs0));
+    // rhs ones
+    Node bvmul_rhs0 = d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_ones});
+    ASSERT_EQ(d_rewriter.rewrite(d_nm.mk_node(Kind::BV_NEG, {d_a4})),
+              d_rewriter.rewrite(bvmul_rhs0));
   }
 }
 
@@ -397,8 +421,8 @@ TEST_F(TestRewriterBv, bv_not_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0110")), Rewriter().rewrite(bvnot2));
   //// does not apply
-  Node bvnot3 = d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_const(d_bv4_type)});
-  ASSERT_EQ(bvnot3, d_rewriter.rewrite(bvnot3));
+  Node bvnot_x0 = d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_const(d_bv4_type)});
+  ASSERT_EQ(bvnot_x0, d_rewriter.rewrite(bvnot_x0));
 }
 
 /* bvshl -------------------------------------------------------------------- */
@@ -421,13 +445,13 @@ TEST_F(TestRewriterBv, bv_shl_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvshl1_2));
   //// does not apply
-  Node bvshl2 = d_nm.mk_node(
+  Node bvshl_x0 = d_nm.mk_node(
       Kind::BV_SHL,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "0010"))});
-  ASSERT_EQ(bvshl2, d_rewriter.rewrite(bvshl2));
-  Node bvshl3 =
-      d_nm.mk_node(Kind::BV_SHL, {bvshl2, d_nm.mk_value(BitVector(4, "0001"))});
-  ASSERT_EQ(bvshl3, d_rewriter.rewrite(bvshl3));
+  ASSERT_EQ(bvshl_x0, d_rewriter.rewrite(bvshl_x0));
+  Node bvshl_x1 = d_nm.mk_node(Kind::BV_SHL,
+                               {bvshl_x0, d_nm.mk_value(BitVector(4, "0001"))});
+  ASSERT_EQ(bvshl_x1, d_rewriter.rewrite(bvshl_x1));
 }
 
 TEST_F(TestRewriterBv, bv_shl_special_const)
@@ -435,35 +459,38 @@ TEST_F(TestRewriterBv, bv_shl_special_const)
   ////// special const 0
   {
     //// applies
-    Node bvshl0 = d_nm.mk_node(Kind::BV_SHL, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl0));
-    Node bvshl1 = d_nm.mk_node(Kind::BV_SHL, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshl1));
-    Node bvshl0_1 = d_nm.mk_node(Kind::BV_SHL, {d_bv4_zero, bvshl0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl0_1));
-    Node bvshl0_2 = d_nm.mk_node(Kind::BV_SHL, {d_bv4_zero, bvshl1});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl0_2));
-    Node bvshl0_3 = d_nm.mk_node(Kind::BV_SHL, {d_a4, bvshl0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshl0_3));
-    Node bvshl1_1 = d_nm.mk_node(Kind::BV_SHL, {bvshl0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl1_1));
-    Node bvshl1_2 = d_nm.mk_node(Kind::BV_SHL, {bvshl1, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshl1_2));
+    // lhs 0
+    Node bvshl_lhs0 = d_nm.mk_node(Kind::BV_SHL, {d_bv4_zero, d_a4});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl_lhs0));
+    Node bvshl_lhs1 = d_nm.mk_node(Kind::BV_SHL, {d_bv4_zero, bvshl_lhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl_lhs1));
+    // rhs 0
+    Node bvshl_rhs0 = d_nm.mk_node(Kind::BV_SHL, {d_a4, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshl_rhs0));
+    Node bvshl_rhs1 = d_nm.mk_node(Kind::BV_SHL, {d_a4, bvshl_lhs0});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshl_rhs1));
+    Node bvshl_rhs2 = d_nm.mk_node(Kind::BV_SHL, {bvshl_lhs0, d_bv4_zero});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl_rhs2));
+    Node bvshl_rhs3 = d_nm.mk_node(Kind::BV_SHL, {bvshl_rhs0, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshl_rhs3));
+    // lhs 0
+    Node bvshl_lhs2 = d_nm.mk_node(Kind::BV_SHL, {d_bv4_zero, bvshl_rhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl_lhs2));
     // with empty cache
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshl0_3));
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshl1_2));
+    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshl_rhs1));
+    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshl_rhs3));
     //// does not apply
-    Node bvshl2 = d_nm.mk_node(
+    Node bvshl_x0 = d_nm.mk_node(
         Kind::BV_SHL, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvshl2, d_rewriter.rewrite(bvshl2));
-    Node bvshl3 = d_nm.mk_node(
+    ASSERT_EQ(bvshl_x0, d_rewriter.rewrite(bvshl_x0));
+    Node bvshl_x1 = d_nm.mk_node(
         Kind::BV_SHL,
         {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvshl3, d_rewriter.rewrite(bvshl3));
-    Node bvshl4 = d_nm.mk_node(
+    ASSERT_EQ(bvshl_x1, d_rewriter.rewrite(bvshl_x1));
+    Node bvshl_x2 = d_nm.mk_node(
         Kind::BV_SHL,
         {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvshl4, d_rewriter.rewrite(bvshl4));
+    ASSERT_EQ(bvshl_x2, d_rewriter.rewrite(bvshl_x2));
   }
 }
 
@@ -487,13 +514,13 @@ TEST_F(TestRewriterBv, bv_shr_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvshr1_2));
   //// does not apply
-  Node bvshr2 = d_nm.mk_node(
+  Node bvshr_x0 = d_nm.mk_node(
       Kind::BV_SHR,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "0010"))});
-  ASSERT_EQ(bvshr2, d_rewriter.rewrite(bvshr2));
-  Node bvshr3 =
-      d_nm.mk_node(Kind::BV_SHR, {bvshr2, d_nm.mk_value(BitVector(4, "0001"))});
-  ASSERT_EQ(bvshr3, d_rewriter.rewrite(bvshr3));
+  ASSERT_EQ(bvshr_x0, d_rewriter.rewrite(bvshr_x0));
+  Node bvshr_x1 = d_nm.mk_node(Kind::BV_SHR,
+                               {bvshr_x0, d_nm.mk_value(BitVector(4, "0001"))});
+  ASSERT_EQ(bvshr_x1, d_rewriter.rewrite(bvshr_x1));
 }
 
 TEST_F(TestRewriterBv, bv_shr_special_const)
@@ -501,35 +528,38 @@ TEST_F(TestRewriterBv, bv_shr_special_const)
   ////// special const 0
   {
     //// applies
-    Node bvshr0 = d_nm.mk_node(Kind::BV_SHR, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr0));
-    Node bvshr1 = d_nm.mk_node(Kind::BV_SHR, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshr1));
-    Node bvshr0_1 = d_nm.mk_node(Kind::BV_SHR, {d_bv4_zero, bvshr0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr0_1));
-    Node bvshr0_2 = d_nm.mk_node(Kind::BV_SHR, {d_bv4_zero, bvshr1});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr0_2));
-    Node bvshr0_3 = d_nm.mk_node(Kind::BV_SHR, {d_a4, bvshr0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshr0_3));
-    Node bvshr1_1 = d_nm.mk_node(Kind::BV_SHR, {bvshr0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr1_1));
-    Node bvshr1_2 = d_nm.mk_node(Kind::BV_SHR, {bvshr1, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshr1_2));
+    // lhs 0
+    Node bvshr_lhs0 = d_nm.mk_node(Kind::BV_SHR, {d_bv4_zero, d_a4});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr_lhs0));
+    Node bvshr_lhs1 = d_nm.mk_node(Kind::BV_SHR, {d_bv4_zero, bvshr_lhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr_lhs1));
+    // rhs 0
+    Node bvshr_rhs0 = d_nm.mk_node(Kind::BV_SHR, {d_a4, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshr_rhs0));
+    Node bvshr_rhs1 = d_nm.mk_node(Kind::BV_SHR, {d_a4, bvshr_lhs0});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshr_rhs1));
+    Node bvshr_rhs2 = d_nm.mk_node(Kind::BV_SHR, {bvshr_lhs0, d_bv4_zero});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr_rhs2));
+    Node bvshr_rhs4 = d_nm.mk_node(Kind::BV_SHR, {bvshr_rhs0, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshr_rhs4));
+    // lhs 0
+    Node bvshr_lhs2 = d_nm.mk_node(Kind::BV_SHR, {d_bv4_zero, bvshr_rhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr_lhs2));
     // with empty cache
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshr0_3));
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshr1_2));
+    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshr_rhs1));
+    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshr_rhs4));
     //// does not apply
-    Node bvshr2 = d_nm.mk_node(
+    Node bvshr_x0 = d_nm.mk_node(
         Kind::BV_SHR, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvshr2, d_rewriter.rewrite(bvshr2));
-    Node bvshr3 = d_nm.mk_node(
+    ASSERT_EQ(bvshr_x0, d_rewriter.rewrite(bvshr_x0));
+    Node bvshr_x1 = d_nm.mk_node(
         Kind::BV_SHR,
         {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvshr3, d_rewriter.rewrite(bvshr3));
-    Node bvshr4 = d_nm.mk_node(
+    ASSERT_EQ(bvshr_x1, d_rewriter.rewrite(bvshr_x1));
+    Node bvshr_x2 = d_nm.mk_node(
         Kind::BV_SHR,
         {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvshr4, d_rewriter.rewrite(bvshr4));
+    ASSERT_EQ(bvshr_x2, d_rewriter.rewrite(bvshr_x2));
   }
 }
 
@@ -549,10 +579,10 @@ TEST_F(TestRewriterBv, bv_slt_eval)
   // with empty cache
   ASSERT_EQ(d_false, Rewriter().rewrite(bvslt1));
   //// does not apply
-  Node bvslt2 = d_nm.mk_node(
+  Node bvslt_x0 = d_nm.mk_node(
       Kind::BV_SLT,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvslt2, d_rewriter.rewrite(bvslt2));
+  ASSERT_EQ(bvslt_x0, d_rewriter.rewrite(bvslt_x0));
 }
 
 TEST_F(TestRewriterBv, bv_slt_special_const)
@@ -690,13 +720,13 @@ TEST_F(TestRewriterBv, bv_udiv_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0001")), Rewriter().rewrite(bvudiv1_2));
   //// does not apply
-  Node bvudiv2 = d_nm.mk_node(
+  Node bvudiv_x0 = d_nm.mk_node(
       Kind::BV_UDIV,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvudiv2, d_rewriter.rewrite(bvudiv2));
-  Node bvudiv3 = d_nm.mk_node(Kind::BV_UDIV,
-                              {bvudiv2, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvudiv3, d_rewriter.rewrite(bvudiv3));
+  ASSERT_EQ(bvudiv_x0, d_rewriter.rewrite(bvudiv_x0));
+  Node bvudiv_x1 = d_nm.mk_node(
+      Kind::BV_UDIV, {bvudiv_x0, d_nm.mk_value(BitVector(4, "1110"))});
+  ASSERT_EQ(bvudiv_x1, d_rewriter.rewrite(bvudiv_x1));
 }
 
 TEST_F(TestRewriterBv, bv_udiv_special_const)
@@ -711,36 +741,39 @@ TEST_F(TestRewriterBv, bv_udiv_special_const)
         Kind::ITE,
         {d_nm.mk_node(Kind::EQUAL, {ite, d_bv4_zero}), ones, d_bv4_zero});
     //// applies
-    Node bvudiv0 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_zero, d_a4});
-    ASSERT_EQ(ite, d_rewriter.rewrite(bvudiv0));
-    Node bvudiv1 = d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_bv4_zero});
-    ASSERT_EQ(ones, d_rewriter.rewrite(bvudiv1));
-    Node bvudiv0_1 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_zero, bvudiv0});
-    ASSERT_EQ(ite2, d_rewriter.rewrite(bvudiv0_1));
-    Node bvudiv0_2 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_zero, bvudiv1});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvudiv0_2));
-    Node bvudiv0_3 = d_nm.mk_node(Kind::BV_UDIV, {d_a4, bvudiv0});
+    // lhs 0
+    Node bvudiv_lhs0 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_zero, d_a4});
+    ASSERT_EQ(ite, d_rewriter.rewrite(bvudiv_lhs0));
+    Node bvudiv_lhs1 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_zero, bvudiv_lhs0});
+    ASSERT_EQ(ite2, d_rewriter.rewrite(bvudiv_lhs1));
+    // rhs 0
+    Node bvudiv_rhs0 = d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_bv4_zero});
+    ASSERT_EQ(ones, d_rewriter.rewrite(bvudiv_rhs0));
+    Node bvudiv_rhs1 = d_nm.mk_node(Kind::BV_UDIV, {d_a4, bvudiv_lhs0});
     ASSERT_EQ(d_nm.mk_node(Kind::BV_UDIV, {d_a4, ite}),
-              d_rewriter.rewrite(bvudiv0_3));
-    Node bvudiv1_1 = d_nm.mk_node(Kind::BV_UDIV, {bvudiv0, d_bv4_zero});
-    ASSERT_EQ(ones, d_rewriter.rewrite(bvudiv1_1));
-    Node bvudiv1_2 = d_nm.mk_node(Kind::BV_UDIV, {bvudiv1, d_bv4_zero});
-    ASSERT_EQ(ones, d_rewriter.rewrite(bvudiv1_2));
+              d_rewriter.rewrite(bvudiv_rhs1));
+    Node bvudiv_rhs2 = d_nm.mk_node(Kind::BV_UDIV, {bvudiv_lhs0, d_bv4_zero});
+    ASSERT_EQ(ones, d_rewriter.rewrite(bvudiv_rhs2));
+    Node bvudiv_rhs3 = d_nm.mk_node(Kind::BV_UDIV, {bvudiv_rhs0, d_bv4_zero});
+    ASSERT_EQ(ones, d_rewriter.rewrite(bvudiv_rhs3));
+    // lhs 0
+    Node bvudiv_lhs2 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_zero, bvudiv_rhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvudiv_lhs2));
     // with empty cache
-    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvudiv0_2));
-    ASSERT_EQ(ones, Rewriter().rewrite(bvudiv1_2));
+    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvudiv_lhs2));
+    ASSERT_EQ(ones, Rewriter().rewrite(bvudiv_rhs3));
     //// does not apply
-    Node bvudiv2 = d_nm.mk_node(
+    Node bvudiv_x0 = d_nm.mk_node(
         Kind::BV_UDIV, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvudiv2, d_rewriter.rewrite(bvudiv2));
-    Node bvudiv3 = d_nm.mk_node(
+    ASSERT_EQ(bvudiv_x0, d_rewriter.rewrite(bvudiv_x0));
+    Node bvudiv_x1 = d_nm.mk_node(
         Kind::BV_UDIV,
         {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvudiv3, d_rewriter.rewrite(bvudiv3));
-    Node bvudiv4 = d_nm.mk_node(
+    ASSERT_EQ(bvudiv_x1, d_rewriter.rewrite(bvudiv_x1));
+    Node bvudiv_x2 = d_nm.mk_node(
         Kind::BV_UDIV,
         {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvudiv4, d_rewriter.rewrite(bvudiv4));
+    ASSERT_EQ(bvudiv_x2, d_rewriter.rewrite(bvudiv_x2));
   }
   ////// special const 1
   {
@@ -750,6 +783,11 @@ TEST_F(TestRewriterBv, bv_udiv_special_const)
     ASSERT_EQ(d_a1, d_rewriter.rewrite(bvudiv_rhs0));
     Node bvudiv_rhs1 = d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_bv4_one});
     ASSERT_EQ(d_a4, d_rewriter.rewrite(bvudiv_rhs1));
+    //// does not apply
+    Node bvudiv_x0 = d_nm.mk_node(Kind::BV_UDIV, {d_bv1_one, d_a1});
+    ASSERT_EQ(bvudiv_x0, d_rewriter.rewrite(bvudiv_x0));
+    Node bvudiv_x1 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_one, d_a4});
+    ASSERT_EQ(bvudiv_x1, d_rewriter.rewrite(bvudiv_x1));
   }
 }
 
@@ -769,10 +807,10 @@ TEST_F(TestRewriterBv, bv_ult_eval)
   // with empty cache
   ASSERT_EQ(d_false, Rewriter().rewrite(bvult1));
   //// does not apply
-  Node bvult2 = d_nm.mk_node(
+  Node bvult_x0 = d_nm.mk_node(
       Kind::BV_ULT,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvult2, d_rewriter.rewrite(bvult2));
+  ASSERT_EQ(bvult_x0, d_rewriter.rewrite(bvult_x0));
 }
 
 TEST_F(TestRewriterBv, bv_ult_special_const)
@@ -834,9 +872,15 @@ TEST_F(TestRewriterBv, bv_ult_special_const)
   }
   ////// special const ones
   {
+    //// applies
     // lhs ones
     Node bvult_lhs0 = d_nm.mk_node(Kind::BV_ULT, {d_bv4_ones, d_a4});
     ASSERT_EQ(d_false, d_rewriter.rewrite(bvult_lhs0));
+    //// does not apply
+    Node bvult_x0 = d_nm.mk_node(Kind::BV_ULT, {d_a4, d_bv4_ones});
+    ASSERT_EQ(
+        Rewriter().rewrite(d_nm.mk_node(Kind::DISTINCT, {d_a4, d_bv4_ones})),
+        d_rewriter.rewrite(bvult_x0));
   }
 }
 
@@ -860,13 +904,13 @@ TEST_F(TestRewriterBv, bv_urem_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvurem1_2));
   //// does not apply
-  Node bvurem2 = d_nm.mk_node(
+  Node bvurem_x0 = d_nm.mk_node(
       Kind::BV_UREM,
       {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvurem2, d_rewriter.rewrite(bvurem2));
-  Node bvurem3 = d_nm.mk_node(Kind::BV_UREM,
-                              {bvurem2, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvurem3, d_rewriter.rewrite(bvurem3));
+  ASSERT_EQ(bvurem_x0, d_rewriter.rewrite(bvurem_x0));
+  Node bvurem_x1 = d_nm.mk_node(
+      Kind::BV_UREM, {bvurem_x0, d_nm.mk_value(BitVector(4, "1110"))});
+  ASSERT_EQ(bvurem_x1, d_rewriter.rewrite(bvurem_x1));
 }
 
 TEST_F(TestRewriterBv, bv_urem_special_const)
@@ -874,35 +918,38 @@ TEST_F(TestRewriterBv, bv_urem_special_const)
   ////// special const 0
   {
     //// applies
-    Node bvurem0 = d_nm.mk_node(Kind::BV_UREM, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem0));
-    Node bvurem1 = d_nm.mk_node(Kind::BV_UREM, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvurem1));
-    Node bvurem0_1 = d_nm.mk_node(Kind::BV_UREM, {d_bv4_zero, bvurem0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem0_1));
-    Node bvurem0_2 = d_nm.mk_node(Kind::BV_UREM, {d_bv4_zero, bvurem1});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem0_2));
-    Node bvurem0_3 = d_nm.mk_node(Kind::BV_UREM, {d_a4, bvurem0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvurem0_3));
-    Node bvurem1_1 = d_nm.mk_node(Kind::BV_UREM, {bvurem0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem1_1));
-    Node bvurem1_2 = d_nm.mk_node(Kind::BV_UREM, {bvurem1, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvurem1_2));
+    // lhs 0
+    Node bvurem_lhs0 = d_nm.mk_node(Kind::BV_UREM, {d_bv4_zero, d_a4});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem_lhs0));
+    Node bvurem_lhs1 = d_nm.mk_node(Kind::BV_UREM, {d_bv4_zero, bvurem_lhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem_lhs1));
+    // rhs 0
+    Node bvurem_rhs0 = d_nm.mk_node(Kind::BV_UREM, {d_a4, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvurem_rhs0));
+    Node bvurem_rhs1 = d_nm.mk_node(Kind::BV_UREM, {d_a4, bvurem_lhs0});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvurem_rhs1));
+    Node bvurem_rhs2 = d_nm.mk_node(Kind::BV_UREM, {bvurem_lhs0, d_bv4_zero});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem_rhs2));
+    Node bvurem_rhs3 = d_nm.mk_node(Kind::BV_UREM, {bvurem_rhs0, d_bv4_zero});
+    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvurem_rhs3));
+    // lhs 0
+    Node bvurem_lhs2 = d_nm.mk_node(Kind::BV_UREM, {d_bv4_zero, bvurem_rhs0});
+    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem_lhs2));
     // with empty cache
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvurem0_3));
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvurem1_2));
+    ASSERT_EQ(d_a4, Rewriter().rewrite(bvurem_rhs1));
+    ASSERT_EQ(d_a4, Rewriter().rewrite(bvurem_rhs3));
     //// does not apply
-    Node bvurem2 = d_nm.mk_node(
+    Node bvurem_x0 = d_nm.mk_node(
         Kind::BV_UREM, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvurem2, d_rewriter.rewrite(bvurem2));
-    Node bvurem3 = d_nm.mk_node(
+    ASSERT_EQ(bvurem_x0, d_rewriter.rewrite(bvurem_x0));
+    Node bvurem_x1 = d_nm.mk_node(
         Kind::BV_UREM,
         {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvurem3, d_rewriter.rewrite(bvurem3));
-    Node bvurem4 = d_nm.mk_node(
+    ASSERT_EQ(bvurem_x1, d_rewriter.rewrite(bvurem_x1));
+    Node bvurem_x2 = d_nm.mk_node(
         Kind::BV_UREM,
         {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvurem4, d_rewriter.rewrite(bvurem4));
+    ASSERT_EQ(bvurem_x2, d_rewriter.rewrite(bvurem_x2));
   }
 }
 
