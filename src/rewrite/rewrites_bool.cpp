@@ -2,6 +2,7 @@
 
 #include "bitvector.h"
 #include "node/node_manager.h"
+#include "node/node_utils.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
@@ -95,8 +96,7 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 
               });
         }
-        if (node[idx1].kind() == Kind::BV_NOT
-            && node[idx1][0].kind() == Kind::BV_XOR)
+        if (node::utils::is_bv_xnor(node[idx1]))
         {
           // 1..1 == a XNOR b  --->  a = b
           return rewriter.mk_node(Kind::EQUAL,
