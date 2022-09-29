@@ -337,33 +337,31 @@ RewriteRule<RewriteRuleKind::BV_SLT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   if (node[0].is_value() && !node[1].is_value())
   {
     const BitVector& value0 = node[0].value<BitVector>();
-    uint64_t size           = value0.size();
-    if (size == 1)
-    {
-      if (value0.is_zero())
-      {
-        return NodeManager::get().mk_value(false);
-      }
-      if (value0.is_one())
-      {
-        // min_signed < node[1]  --->  node[1] != min_signed
-        return rewriter.mk_node(
-            Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
-      }
-    }
-    if (size == 2 && value0.is_one())
+    if (value0.is_max_signed())
     {
       // max_signed < node[1]  --->  false
       return NodeManager::get().mk_value(false);
+    }
+    if (value0.is_min_signed())
+    {
+      // min_signed < node[1]  --->  node[1] != min_signed
+      return rewriter.mk_node(
+          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
     }
   }
   else if (!node[0].is_value() && node[1].is_value())
   {
     const BitVector& value1 = node[1].value<BitVector>();
-    if (value1.size() == 1 && value1.is_zero())
+    if (value1.is_max_signed())
     {
+      // node[0] < max_signed --->  node[0] != node[1]
       return rewriter.mk_node(
           Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+    }
+    if (value1.is_min_signed())
+    {
+      // node[0] < min_signed  --->  false
+      return NodeManager::get().mk_value(false);
     }
   }
   return node;
@@ -411,6 +409,10 @@ RewriteRule<RewriteRuleKind::BV_UDIV_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     {
       return NodeManager::get().mk_value(BitVector::mk_ones(value1.size()));
     }
+    if (value1.is_one())
+    {
+      return node[0];
+    }
   }
   return node;
 }
@@ -439,13 +441,10 @@ RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   if (node[0].is_value() && !node[1].is_value())
   {
     const BitVector& value0 = node[0].value<BitVector>();
-    if (value0.size() == 1)
+    if (value0.is_zero())
     {
-      if (value0.is_zero())
-      {
-        return rewriter.mk_node(
-            Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
-      }
+      return rewriter.mk_node(
+          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
     }
     if (value0.is_ones())
     {
@@ -455,9 +454,21 @@ RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   else if (!node[0].is_value() && node[1].is_value())
   {
     const BitVector& value1 = node[1].value<BitVector>();
-    if (value1.size() == 1 && value1.is_zero())
+    if (value1.is_zero())
     {
       return NodeManager::get().mk_value(false);
+    }
+    if (value1.is_one())
+    {
+      return rewriter.mk_node(Kind::EQUAL,
+                              {node[0],
+                               NodeManager::get().mk_value(BitVector::mk_zero(
+                                   node[0].type().bv_size()))});
+    }
+    if (value1.is_ones())
+    {
+      return rewriter.mk_node(
+          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
     }
   }
   return node;
@@ -499,6 +510,10 @@ RewriteRule<RewriteRuleKind::BV_UREM_SPECIAL_CONST>::_apply(Rewriter& rewriter,
     if (value1.is_zero())
     {
       return node[0];
+    }
+    if (value1.is_one())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value1.size()));
     }
   }
   return node;
