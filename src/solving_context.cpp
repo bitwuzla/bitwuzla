@@ -7,13 +7,17 @@ namespace bzla {
 /* --- SolvingContext public ----------------------------------------------- */
 
 SolvingContext::SolvingContext()
-    : d_assertions(&d_backtrack_mgr), d_bv_solver(*this)
+    : d_assertions(&d_backtrack_mgr),
+      d_preprocessor(*this),
+      d_rewriter(),
+      d_bv_solver(*this)
 {
 }
 
 Result
 SolvingContext::solve()
 {
+  d_preprocessor.preprocess();
   d_sat_state = d_bv_solver.check();
   return d_sat_state;
 }
@@ -63,6 +67,12 @@ backtrack::BacktrackManager*
 SolvingContext::backtrack_mgr()
 {
   return &d_backtrack_mgr;
+}
+
+Rewriter&
+SolvingContext::rewriter()
+{
+  return d_rewriter;
 }
 
 }  // namespace bzla

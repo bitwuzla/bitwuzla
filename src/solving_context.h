@@ -7,6 +7,7 @@
 #include "backtrack/assertion_stack.h"
 #include "backtrack/backtrackable.h"
 #include "node/node.h"
+#include "preprocess/preprocessor.h"
 #include "rewrite/rewriter.h"
 #include "solver/bv/bv_solver.h"
 #include "solver/result.h"
@@ -44,10 +45,13 @@ class SolvingContext
 
   backtrack::BacktrackManager* backtrack_mgr();
 
+  Rewriter& rewriter();
+
  private:
   backtrack::BacktrackManager d_backtrack_mgr;
   backtrack::AssertionStack d_assertions;
 
+  preprocess::Preprocessor d_preprocessor;
   Rewriter d_rewriter;
 
   /** Result of last solve() call. */

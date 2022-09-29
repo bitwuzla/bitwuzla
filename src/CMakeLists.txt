@@ -84,6 +84,7 @@ set(libbitwuzla_src_files
   preprocess/bzlaunconstrained.c
   preprocess/bzlavarsubst.c
   preprocess/pass/rewrite.cpp
+  preprocess/preprocessor.cpp
   rewrite/rewriter.cpp
   rewrite/rewrites_bool.cpp
   rewrite/rewrites_bv.cpp
