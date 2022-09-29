@@ -108,6 +108,14 @@ AssertionView::next_level()
   return d_assertions.get(d_index++);
 }
 
+std::pair<Node, size_t>
+AssertionView::next_index()
+{
+  assert(!empty());
+  size_t index = d_index;
+  return std::make_pair(next(), index);
+}
+
 bool
 AssertionView::empty() const
 {
@@ -118,6 +126,12 @@ size_t
 AssertionView::size()
 {
   return d_assertions.size() - d_index;
+}
+
+void
+AssertionView::replace(size_t index, const Node& assertion)
+{
+  d_assertions.replace(index, assertion);
 }
 
 }  // namespace bzla::backtrack

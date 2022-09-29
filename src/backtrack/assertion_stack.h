@@ -29,11 +29,17 @@ class AssertionView
   /** @return The next assertion and its associated scope level. */
   const std::pair<Node, size_t>& next_level();
 
+  /** @return The next assertion and its associated index on the assertion
+   * stack. */
+  std::pair<Node, size_t> next_index();
+
   /** @return Whether the view still has assertions to process. */
   bool empty() const;
 
   /** @return The number of assertions seen by this view. */
   size_t size();
+
+  void replace(size_t index, const Node& assertion);
 
  private:
   AssertionView(AssertionStack& assertions);
