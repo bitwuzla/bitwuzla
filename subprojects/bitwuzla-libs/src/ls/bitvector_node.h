@@ -334,6 +334,64 @@ class BitVectorNode
   virtual uint32_t select_path_non_const(
       std::vector<uint32_t>& res_inputs) const;
 
+  /**
+   * Helper to compute the normalized min and max bounds for `x` with respect
+   * to `s` and `t` and the current signed and unsigned min/max bounds of `x`,
+   * if any. The resulting bounds are split into a lower (from min_signed to
+   * ones) and upper (from zero to max_signed) ranges. If the resulting ranges
+   * are empty (no inverse value exists with respect to `s` and `t` and the
+   * current bounds on `x`), all return parameters will be null nodes.
+   *
+   * @param s The value of the other operand.
+   * @param t The target value of this node.
+   * @param pos_x The index of operand `x`.
+   * @param res_min_lo The minimum value of the resulting lower range, null if
+   *                   no values in the lower range are covered.
+   * @param res_max_lo The maximum value of the resulting lower range, null if
+   *                   no values in the lower range are covered.
+   * @param res_min_hi The minimum value of the resulting upper range, null if
+   *                   no values in the upper range are covered.
+   * @param res_max_hi The maximum value of the resulting upper range, null if
+   *                   no values in the upper range are covered.
+   */
+  void compute_normalized_bounds(const BitVector& s,
+                                 bool t,
+                                 uint32_t pos_x,
+                                 BitVector& res_min_lo,
+                                 BitVector& res_max_lo,
+                                 BitVector& res_min_hi,
+                                 BitVector& res_max_hi);
+
+  /**
+   * Helper to compute the signed or unsigned min and max bounds for `x` with
+   * respect to the semantics of the operator, `s`, `t`, and the current signed
+   * or unsigned min/max bounds of `x`, if any. If the resulting ranges are
+   * empty, all return parameters will be null nodes.
+   *
+   * @note Computes signed bounds for signed operators, and unsigned bounds
+   *       for unsigned operators. Thus, either of the resulting bounds will
+   *       be null nodes, depending on the signedness of the operator.
+   *
+   * @param s The value of the other operand.
+   * @param t The target value of this node.
+   * @param pos_x The index of operand `x`.
+   * @param res_min_u The minimum value of the resulting unsigned range, null
+   *                  for signed operators.
+   * @param res_max_u The maximum value of the resulting unsigned range, null
+   *                  for signed operators.
+   * @param res_min_s The minimum value of the resulting signed range, null
+   *                  for unsigned operators.
+   * @param res_max_s The maximum value of the resulting signed range, null
+   *                  for unsigned operators.
+   */
+  virtual void compute_min_max_bounds(const BitVector& s,
+                                      bool t,
+                                      uint32_t pos_x,
+                                      BitVector& res_min_u,
+                                      BitVector& res_max_u,
+                                      BitVector& res_min_s,
+                                      BitVector& res_max_s);
+
   uint64_t d_id = 0;
   std::unique_ptr<BitVectorNode*[]> d_children;
   RNG* d_rng;
@@ -1232,6 +1290,14 @@ class BitVectorUlt : public BitVectorNode
 
   std::string to_string() const override;
 
+  void compute_min_max_bounds(const BitVector& s,
+                              bool t,
+                              uint32_t pos_x,
+                              BitVector& res_min_u,
+                              BitVector& res_max_u,
+                              BitVector& res_min_s,
+                              BitVector& res_max_s) override;
+
  private:
   /**
    * Evaluate the assignment of this node.
@@ -1280,33 +1346,7 @@ class BitVectorUlt : public BitVectorNode
                       bool t,
                       uint32_t pos_x,
                       bool is_essential_check);
-  /**
-   * Helper to compute the normalized min and max bounds for `x` with respect
-   * to `s` and `t` and the current signed and unsigned min/max bounds of `x`,
-   * if any. The resulting bounds are split into a lower (from min_signed to
-   * ones) and upper (from zero to max_signed) ranges. If the resulting ranges
-   * are empty (no inverse value exists with respect to `s` and `t` and the
-   * current bounds on `x`), all return parameters will be null nodes.
-   *
-   * @param s The value of the other operand.
-   * @param t The target value of this node.
-   * @param pos_x The index of operand `x`.
-   * @param res_min_lo The minimum value of the resulting lower range, null if
-   *                   no values in the lower range are covered.
-   * @param res_max_lo The maximum value of the resulting lower range, null if
-   *                   no values in the lower range are covered.
-   * @param res_min_hi The minimum value of the resulting upper range, null if
-   *                   no values in the upper range are covered.
-   * @param res_max_hi The maximum value of the resulting upper range, null if
-   *                   no values in the upper range are covered.
-   */
-  void compute_min_max_bounds(const BitVector& s,
-                              bool t,
-                              uint32_t pos_x,
-                              BitVector& res_min_lo,
-                              BitVector& res_max_lo,
-                              BitVector& res_min_hi,
-                              BitVector& res_max_hi);
+
   /**
    * Helper for concat-specific (when x is a concat) inverse value computation.
    * Attempts to find an inverse value by only changing the value of one of
@@ -1396,6 +1436,14 @@ class BitVectorSlt : public BitVectorNode
 
   std::string to_string() const override;
 
+  void compute_min_max_bounds(const BitVector& s,
+                              bool t,
+                              uint32_t pos_x,
+                              BitVector& res_min_u,
+                              BitVector& res_max_u,
+                              BitVector& res_min_s,
+                              BitVector& res_max_s) override;
+
  private:
   /**
    * Evaluate the assignment of this node.
@@ -1444,33 +1492,6 @@ class BitVectorSlt : public BitVectorNode
                       bool t,
                       uint32_t pos_x,
                       bool is_essential_check);
-  /**
-   * Helper to compute the normalized min and max bounds for `x` with respect
-   * to `s` and `t` and the current signed and unsigned min/max bounds of `x`,
-   * if any. The resulting bounds are split into a lower (from min_signed to
-   * ones) and upper (from zero to max_signed) ranges. If the resulting ranges
-   * are empty (no inverse value exists with respect to `s` and `t` and the
-   * current bounds on `x`), all return parameters will be null nodes.
-   *
-   * @param s The value of the other operand.
-   * @param t The target value of this node.
-   * @param pos_x The index of operand `x`.
-   * @param res_min_lo The minimum value of the resulting lower range, null if
-   *                   no values in the lower range are covered.
-   * @param res_max_lo The maximum value of the resulting lower range, null if
-   *                   no values in the lower range are covered.
-   * @param res_min_hi The minimum value of the resulting upper range, null if
-   *                   no values in the upper range are covered.
-   * @param res_max_hi The maximum value of the resulting upper range, null if
-   *                   no values in the upper range are covered.
-   */
-  void compute_min_max_bounds(const BitVector& s,
-                              bool t,
-                              uint32_t pos_x,
-                              BitVector& res_min_lo,
-                              BitVector& res_max_lo,
-                              BitVector& res_min_hi,
-                              BitVector& res_max_hi);
   /**
    * Helper for concat-specific (when x is a concat) inverse value computation.
    * Attempts to find an inverse value by only changing the value of one of
