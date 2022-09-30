@@ -263,6 +263,72 @@ BitVectorNode::reset_bounds()
 }
 
 void
+BitVectorNode::tighten_bounds(BitVector* min_u,
+                              BitVector* max_u,
+                              BitVector* min_s,
+                              BitVector* max_s,
+                              BitVector& res_min_u,
+                              BitVector& res_max_u,
+                              BitVector& res_min_s,
+                              BitVector& res_max_s)
+{
+  BitVector* mmin;
+  BitVector* mmax;
+  // unsigned
+  if (min_u)
+  {
+    assert(max_u);
+    mmin = min_u;
+    mmax = max_u;
+    if (d_min_u && d_min_u->compare(*min_u) > 0)
+    {
+      mmin = d_min_u.get();
+    }
+    if (d_max_u && d_max_u->compare(*max_u) < 0)
+    {
+      mmax = d_max_u.get();
+    }
+    if (mmin->compare(*mmax) > 0)
+    {
+      // conflict
+      res_min_u = BitVector();
+      res_max_u = BitVector();
+    }
+    else
+    {
+      if (mmin != &res_min_u) res_min_u = *mmin;
+      if (mmax != &res_max_u) res_max_u = *mmax;
+    }
+  }
+  // signed
+  if (min_s)
+  {
+    assert(max_s);
+    mmin = min_s;
+    mmax = max_s;
+    if (d_min_s && d_min_s->signed_compare(*min_s) > 0)
+    {
+      mmin = d_min_s.get();
+    }
+    if (d_max_s && d_max_s->signed_compare(*max_s) < 0)
+    {
+      mmax = d_max_s.get();
+    }
+    if (mmin->signed_compare(*mmax) > 0)
+    {
+      // conflict
+      res_min_s = BitVector();
+      res_max_s = BitVector();
+    }
+    else
+    {
+      if (mmin != &res_min_s) res_min_s = *mmin;
+      if (mmax != &res_max_s) res_max_s = *mmax;
+    }
+  }
+}
+
+void
 BitVectorNode::normalize_bounds(BitVector* min_u,
                                 BitVector* max_u,
                                 BitVector* min_s,
@@ -3699,7 +3765,6 @@ BitVectorUlt::compute_min_max_bounds(const BitVector& s,
   assert(res_max_s.is_null());
 
   uint64_t size = s.size();
-  BitVector *min_u, *max_u;  // the current unsigned bounds on x
 
   // compute unsigned min/max bounds wrt. s and t
   if (pos_x == 0)
@@ -3718,9 +3783,6 @@ BitVectorUlt::compute_min_max_bounds(const BitVector& s,
       res_min_u = s;
       res_max_u = BitVector::mk_ones(size);
     }
-
-    min_u = d_children[0]->min_u();
-    max_u = d_children[0]->max_u();
   }
   else
   {
@@ -3738,33 +3800,17 @@ BitVectorUlt::compute_min_max_bounds(const BitVector& s,
       res_min_u = BitVector::mk_zero(size);
       res_max_u = s;
     }
-
-    min_u = d_children[1]->min_u();
-    max_u = d_children[1]->max_u();
   }
 
   // tighten unsigned bounds wrt. to current unsigned bounds of x
-  BitVector* mmin = &res_min_u;
-  BitVector* mmax = &res_max_u;
-  if (min_u && min_u->compare(res_min_u) > 0)
-  {
-    mmin = min_u;
-  }
-  if (max_u && max_u->compare(res_max_u) < 0)
-  {
-    mmax = max_u;
-  }
-  if (mmin->compare(*mmax) <= 0)
-  {
-    if (mmin != &res_min_u) res_min_u = *mmin;
-    if (mmax != &res_max_u) res_max_u = *mmax;
-  }
-  else
-  {
-    // conflict
-    res_min_u = BitVector();
-    res_max_u = BitVector();
-  }
+  d_children[pos_x]->tighten_bounds(&res_min_u,
+                                    &res_max_u,
+                                    nullptr,
+                                    nullptr,
+                                    res_min_u,
+                                    res_max_u,
+                                    res_min_s,
+                                    res_max_s);
 }
 
 bool
@@ -3861,8 +3907,7 @@ BitVectorUlt::is_invertible(const BitVector& t,
             // Note: _is_invertible does not reset d_inverse, thus this second
             //       call is unproblematic, even in the case were the first
             //       check was true, but this second check is false.
-            bool _res =
-                _is_invertible(dx, s, is_true, pos_x, is_essential_check);
+            bool _res = _is_invertible(dx, s, is_true, pos_x, is_essential_check);
             if (!res) res = _res;
           }
           return res;
@@ -4316,8 +4361,6 @@ BitVectorSlt::compute_min_max_bounds(const BitVector& s,
 
   uint64_t size = s.size();
 
-  BitVector *min_s, *max_s;  // the current signed bounds on x
-
   // compute signed min/max bounds wrt. s and t
   if (pos_x == 0)
   {
@@ -4335,9 +4378,6 @@ BitVectorSlt::compute_min_max_bounds(const BitVector& s,
       res_min_s = s;
       res_max_s = BitVector::mk_max_signed(size);
     }
-
-    min_s = d_children[0]->min_s();
-    max_s = d_children[0]->max_s();
   }
   else
   {
@@ -4355,33 +4395,17 @@ BitVectorSlt::compute_min_max_bounds(const BitVector& s,
       res_min_s = BitVector::mk_min_signed(size);
       res_max_s = s;
     }
-
-    min_s = d_children[1]->min_s();
-    max_s = d_children[1]->max_s();
   }
 
   // tighten signed bounds wrt. to current signed bounds of x
-  BitVector* mmin = &res_min_s;
-  BitVector* mmax = &res_max_s;
-  if (min_s && min_s->signed_compare(res_min_s) > 0)
-  {
-    mmin = min_s;
-  }
-  if (max_s && max_s->signed_compare(res_max_s) < 0)
-  {
-    mmax = max_s;
-  }
-  if (mmin->signed_compare(*mmax) <= 0)
-  {
-    if (mmin != &res_min_s) res_min_s = *mmin;
-    if (mmax != &res_max_s) res_max_s = *mmax;
-  }
-  else
-  {
-    // conflict
-    res_min_s = BitVector();
-    res_max_s = BitVector();
-  }
+  d_children[pos_x]->tighten_bounds(nullptr,
+                                    nullptr,
+                                    &res_min_s,
+                                    &res_max_s,
+                                    res_min_u,
+                                    res_max_u,
+                                    res_min_s,
+                                    res_max_s);
 }
 
 bool

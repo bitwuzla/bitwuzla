@@ -81,9 +81,32 @@ class BitVectorNode
   virtual void evaluate() {}
 
   /**
+   * Tighten signed and/or unsigned bounds of this node wrt. to the given
+   * signed and unsigned bounds. If the given signed and unsigned ranges don't
+   * have any intersection with the bounds of this node, all return parameters
+   * will be null nodes
+   * @param min_u     The lower unsigned bound.
+   * @param max_u     The upper unsigned bound.
+   * @param min_s     The lower signed bound.
+   * @param max_s     The upper signed bound.
+   * @param res_min_u The resulting lower unsigned bound.
+   * @param res_max_u The resulting upper unsigned bound.
+   * @param res_min_s The resulting lower signed bound.
+   * @param res_max_s The resulting upper signed bound.
+   */
+  void tighten_bounds(BitVector* min_u,
+                      BitVector* max_u,
+                      BitVector* min_s,
+                      BitVector* max_s,
+                      BitVector& res_min_u,
+                      BitVector& res_max_u,
+                      BitVector& res_min_s,
+                      BitVector& res_max_s);
+
+  /**
    * Normalize given signed and unsigned bounds into a lower (from min_signed
    * to ones) and upper (from zero to max_signed) ranges. If the given signed
-   * and unsigned ranges of don't have any intersection, all return parameters
+   * and unsigned ranges don't have any intersection, all return parameters
    * will be null nodes.
    *
    * @param min_u      The lower unsigned bound.
