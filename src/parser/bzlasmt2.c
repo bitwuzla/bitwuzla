@@ -264,7 +264,10 @@ typedef enum BzlaSMT2Tag
   /* Bitwuzla extensions */
   BZLA_BV_REDOR_TAG_SMT2  = 36 + BZLA_BV_TAG_CLASS_SMT2,
   BZLA_BV_REDAND_TAG_SMT2 = 37 + BZLA_BV_TAG_CLASS_SMT2,
-  BZLA_BV_SMULO_TAG_SMT2  = 38 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_SADDO_TAG_SMT2  = 38 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_UADDO_TAG_SMT2  = 39 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_SMULO_TAG_SMT2  = 40 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_UMULO_TAG_SMT2  = 41 + BZLA_BV_TAG_CLASS_SMT2,
 
   /* Theory of Floating Point Numbers ------------------------------------- */
   BZLA_FP_FLOATINGPOINT_TAG_SMT2                = 0 + BZLA_FP_TAG_CLASS_SMT2,
@@ -1081,7 +1084,10 @@ insert_bitvec_symbols_smt2(BzlaSMT2Parser *parser)
   /* Bitwuzla extensions */
   INSERT("bvredor", BZLA_BV_REDOR_TAG_SMT2);
   INSERT("bvredand", BZLA_BV_REDAND_TAG_SMT2);
+  INSERT("bvsaddo", BZLA_BV_SADDO_TAG_SMT2);
+  INSERT("bvuaddo", BZLA_BV_UADDO_TAG_SMT2);
   INSERT("bvsmulo", BZLA_BV_SMULO_TAG_SMT2);
+  INSERT("bvumulo", BZLA_BV_UMULO_TAG_SMT2);
 }
 
 static void
@@ -2178,7 +2184,10 @@ close_term_bin_bv_fun(BzlaSMT2Parser *parser,
          || item_cur->tag == BZLA_BV_SLE_TAG_SMT2
          || item_cur->tag == BZLA_BV_SGT_TAG_SMT2
          || item_cur->tag == BZLA_BV_SGE_TAG_SMT2
-         || item_cur->tag == BZLA_BV_SMULO_TAG_SMT2);
+         || item_cur->tag == BZLA_BV_SADDO_TAG_SMT2
+         || item_cur->tag == BZLA_BV_UADDO_TAG_SMT2
+         || item_cur->tag == BZLA_BV_SMULO_TAG_SMT2
+         || item_cur->tag == BZLA_BV_UMULO_TAG_SMT2);
 
   if (!check_nargs_smt2(parser, item_cur, nargs, 2)) return 0;
   if (!check_arg_sorts_match_smt2(parser, item_cur, 0, 2)) return 0;
@@ -3387,11 +3396,38 @@ close_term(BzlaSMT2Parser *parser)
       return 0;
     }
   }
+  /* BV: SADDO -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_SADDO_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SADD_OVERFLOW))
+    {
+      return 0;
+    }
+  }
+  /* BV: UADDO -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_UADDO_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UADD_OVERFLOW))
+    {
+      return 0;
+    }
+  }
   /* BV: SMULO -------------------------------------------------------------- */
   else if (tag == BZLA_BV_SMULO_TAG_SMT2)
   {
     if (!close_term_bin_bv_fun(
             parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_SMUL_OVERFLOW))
+    {
+      return 0;
+    }
+  }
+  /* BV: UMULO -------------------------------------------------------------- */
+  else if (tag == BZLA_BV_UMULO_TAG_SMT2)
+  {
+    if (!close_term_bin_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_UMUL_OVERFLOW))
     {
       return 0;
     }
