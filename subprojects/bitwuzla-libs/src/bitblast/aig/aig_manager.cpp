@@ -326,13 +326,7 @@ AigManager::mk_not(const AigNode& a)
 AigNode
 AigManager::mk_and(const AigNode& a, const AigNode& b)
 {
-  bool swap = std::abs(a.get_id()) > std::abs(b.get_id());
-
-  // Normalize ANDs
-  const AigNode& left  = swap ? b : a;
-  const AigNode& right = swap ? a : b;
-
-  return rewrite_and(left, right);
+  return rewrite_and(a, b);
 }
 
 AigNode
@@ -367,7 +361,8 @@ AigManager::init_id(AigNodeData* d)
 AigNodeData*
 AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
 {
-  AigNodeData* d = new AigNodeData(this, left, right);
+  assert(std::abs(left.get_id()) < std::abs(right.get_id()));
+  AigNodeData* d          = new AigNodeData(this, left, right);
   auto [inserted, lookup] = d_unique_table.insert(d);
   if (!inserted)
   {
@@ -402,6 +397,10 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
     {
       return right;
     }
+    if (right.is_true())
+    {
+      return left;
+    }
     // Boundedness rule
     //   shape:  a /\ 0
     //   result: 0
@@ -414,7 +413,6 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
     {
       return d_false;
     }
-    assert(!right.is_true());
 
     /** Optimization level 2 */
 
@@ -506,19 +504,21 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
 
     // Resolution rule
     //   shape:     ~(a /\ b) /\ ~(c /\ d)
-    //   condition: (a = d) \/ (b = ~c)
+    //   condition: (a = d) /\ (b = ~c)
     //   result:    ~a
     if (left.is_negated() && left.is_and() && right.is_negated()
-        && right.is_and()
-        && (left[0] == right[1] || left[1].get_id() == -right[0].get_id()))
+        && right.is_and())
     {
-      return mk_not(left[0]);
-    }
-    if (right.is_negated() && right.is_and() && left.is_negated()
-        && left.is_and()
-        && (right[0] == left[1] || right[1].get_id() == -left[0].get_id()))
-    {
-      return mk_not(right[0]);
+      if ((left[0] == right[0] && left[1].get_id() == -right[1].get_id())
+          || (left[0] == right[1] && left[1].get_id() == -right[0].get_id()))
+      {
+        return mk_not(left[0]);
+      }
+      if ((right[1] == left[1] && right[0].get_id() == -left[0].get_id())
+          || (right[1] == left[0] && right[0].get_id() == -left[1].get_id()))
+      {
+        return mk_not(right[0]);
+      }
     }
 
     /** Optimization level 3 **/
@@ -616,6 +616,12 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
 
     break;
   } while (true);
+
+  // Normalize ANDs
+  if (std::abs(left.get_id()) > std::abs(right.get_id()))
+  {
+    std::swap(left, right);
+  }
 
   // create AND with left, right
   AigNodeData* d = find_or_create_and(left, right);

@@ -175,4 +175,281 @@ TEST_F(TestAigMgr, ite_unique_aig)
   ASSERT_EQ(ite_aig, aigmgr.mk_ite(aigmgr.mk_not(cond), right, left));
 }
 
+TEST_F(TestAigMgr, neutrality1)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto T = mgr.mk_true();
+
+  ASSERT_EQ(mgr.mk_and(a, T), a);
+  ASSERT_EQ(mgr.mk_and(T, a), a);
+}
+
+TEST_F(TestAigMgr, boundedness1)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto F = mgr.mk_false();
+
+  ASSERT_EQ(mgr.mk_and(a, F), F);
+  ASSERT_EQ(mgr.mk_and(F, a), F);
+}
+
+TEST_F(TestAigMgr, idempotence1)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = a;
+
+  ASSERT_EQ(mgr.mk_and(a, b), a);
+  ASSERT_EQ(mgr.mk_and(b, a), a);
+}
+
+TEST_F(TestAigMgr, contradiction1)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_not(a);
+  auto F = mgr.mk_false();
+
+  ASSERT_EQ(mgr.mk_and(a, b), F);
+  ASSERT_EQ(mgr.mk_and(b, a), F);
+}
+
+TEST_F(TestAigMgr, contradiction2_1)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_bit();
+  auto F = mgr.mk_false();
+
+  // case: (a = ~c)
+  {
+    auto c = mgr.mk_not(a);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), c), F);
+  }
+
+  // case: (b = ~c)
+  {
+    auto c = mgr.mk_not(b);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), c), F);
+  }
+}
+
+TEST_F(TestAigMgr, contradiction2_2)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_bit();
+  auto c = mgr.mk_bit();
+  auto d = mgr.mk_bit();
+  auto F = mgr.mk_false();
+
+  // case: (a = ~c)
+  {
+    auto c = mgr.mk_not(a);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), mgr.mk_and(c, d)), F);
+  }
+
+  // case: (a = ~d)
+  {
+    auto d = mgr.mk_not(a);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), mgr.mk_and(c, d)), F);
+  }
+
+  // case: (b = ~c)
+  {
+    auto c = mgr.mk_not(b);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), mgr.mk_and(c, d)), F);
+  }
+
+  // case: (b = ~d)
+  {
+    auto d = mgr.mk_not(b);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), mgr.mk_and(c, d)), F);
+  }
+}
+
+TEST_F(TestAigMgr, subsumption2_1)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_bit();
+
+  // case: (a = ~c)
+  {
+    auto c = mgr.mk_not(a);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), c), c);
+  }
+
+  // case: (b = ~c)
+  {
+    auto c = mgr.mk_not(b);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), c), c);
+  }
+}
+
+TEST_F(TestAigMgr, subsumption2_2)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_bit();
+  auto c = mgr.mk_bit();
+  auto d = mgr.mk_bit();
+
+  // case: (a = ~c)
+  {
+    auto c = mgr.mk_not(a);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_and(c, d)),
+              mgr.mk_and(c, d));
+  }
+
+  // case: (a = ~d)
+  {
+    auto d = mgr.mk_not(a);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_and(c, d)),
+              mgr.mk_and(c, d));
+  }
+
+  // case: (b = ~c)
+  {
+    auto c = mgr.mk_not(b);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_and(c, d)),
+              mgr.mk_and(c, d));
+  }
+
+  // case: (b = ~d)
+  {
+    auto d = mgr.mk_not(b);
+    ASSERT_EQ(mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_and(c, d)),
+              mgr.mk_and(c, d));
+  }
+}
+
+TEST_F(TestAigMgr, idempotence2)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_bit();
+
+  // case: (a = c)
+  {
+    auto c = a;
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), c), mgr.mk_and(a, b));
+  }
+
+  // case: (b = c)
+  {
+    auto c = b;
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), c), mgr.mk_and(a, b));
+  }
+}
+
+TEST_F(TestAigMgr, resolution2)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_bit();
+
+  // (a = d) /\ (b = ~c)
+  {
+    auto c = mgr.mk_not(b);
+    auto d = a;
+    ASSERT_EQ(
+        mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_not(mgr.mk_and(c, d))),
+        mgr.mk_not(a));
+  }
+
+  // (a = d) /\ (b = ~c)
+  {
+    auto c = mgr.mk_not(a);
+    auto d = b;
+    ASSERT_EQ(
+        mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_not(mgr.mk_and(c, d))),
+        mgr.mk_not(c));
+  }
+}
+
+TEST_F(TestAigMgr, substitution3_1)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_bit();
+  auto c = b;
+
+  ASSERT_EQ(mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), c),
+            mgr.mk_and(mgr.mk_not(a), b));
+  ASSERT_EQ(mgr.mk_and(c, mgr.mk_not(mgr.mk_and(a, b))),
+            mgr.mk_and(mgr.mk_not(a), b));
+}
+
+TEST_F(TestAigMgr, substitution3_2)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_bit();
+  auto c = b;
+  auto d = mgr.mk_bit();
+
+  ASSERT_EQ(mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_and(c, d)),
+            mgr.mk_and(mgr.mk_not(a), mgr.mk_and(c, d)));
+  ASSERT_EQ(mgr.mk_and(mgr.mk_and(c, d), mgr.mk_not(mgr.mk_and(a, b))),
+            mgr.mk_and(mgr.mk_not(a), mgr.mk_and(c, d)));
+}
+
+TEST_F(TestAigMgr, idempotence4_1)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_bit();
+  auto d = mgr.mk_bit();
+
+  {
+    auto c = a;
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), mgr.mk_and(c, d)),
+              mgr.mk_and(mgr.mk_and(a, b), d));
+  }
+
+  {
+    auto c = b;
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), mgr.mk_and(c, d)),
+              mgr.mk_and(mgr.mk_and(a, b), d));
+  }
+}
+
+TEST_F(TestAigMgr, idempotence4_3)
+{
+  bb::AigManager mgr;
+
+  auto a = mgr.mk_bit();
+  auto b = mgr.mk_bit();
+  auto c = mgr.mk_bit();
+  auto d = mgr.mk_bit();
+
+  {
+    auto d = a;
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), mgr.mk_and(c, d)),
+              mgr.mk_and(mgr.mk_and(a, b), c));
+  }
+
+  {
+    auto d = b;
+    ASSERT_EQ(mgr.mk_and(mgr.mk_and(a, b), mgr.mk_and(c, d)),
+              mgr.mk_and(mgr.mk_and(a, b), c));
+  }
+}
+
 }  // namespace bzla::test
