@@ -310,9 +310,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_SMOD_ELIM>::_apply(Rewriter& rewriter,
                                                         const Node& node);
 
-// template <>
-// Node RewriteRule<RewriteRuleKind::BV_SMULO_ELIM>::_apply(Rewriter& rewriter,
-//                                                         const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::BV_SMULO_ELIM>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
 
 template <>
 Node RewriteRule<RewriteRuleKind::BV_SREM_ELIM>::_apply(Rewriter& rewriter,

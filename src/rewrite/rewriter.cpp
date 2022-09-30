@@ -140,7 +140,7 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::BV_SIGN_EXTEND: res = rewrite_bv_sign_extend(node); break;
     case node::Kind::BV_SLE: res = rewrite_bv_sle(node); break;
     case node::Kind::BV_SMOD: res = rewrite_bv_smod(node); break;
-    // case node::Kind::BV_SMULO: res = rewrite_bv_smulo(node); break;
+    case node::Kind::BV_SMULO: res = rewrite_bv_smulo(node); break;
     case node::Kind::BV_SREM: res = rewrite_bv_srem(node); break;
     case node::Kind::BV_SSUBO: res = rewrite_bv_ssubo(node); break;
     case node::Kind::BV_SUB: res = rewrite_bv_sub(node); break;
@@ -465,7 +465,7 @@ BZLA_ELIM_KIND_IMPL(bv_sgt, BV_SGT_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_sign_extend, BV_SIGN_EXTEND_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_sle, BV_SLE_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_smod, BV_SMOD_ELIM)
-// BZLA_ELIM_KIND_IMPL(bv_smulo, BV_SMULO_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_smulo, BV_SMULO_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_srem, BV_SREM_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_ssubo, BV_SSUBO_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_sub, BV_SUB_ELIM)

@@ -66,7 +66,7 @@ class Rewriter
   Node rewrite_bv_sign_extend(const Node& node);
   Node rewrite_bv_sle(const Node& node);
   Node rewrite_bv_smod(const Node& node);
-  // Node rewrite_bv_smulo(const Node& node);
+  Node rewrite_bv_smulo(const Node& node);
   Node rewrite_bv_srem(const Node& node);
   Node rewrite_bv_ssubo(const Node& node);
   Node rewrite_bv_sub(const Node& node);
@@ -186,7 +186,7 @@ enum class RewriteRuleKind
   BV_SIGN_EXTEND_ELIM,
   BV_SLE_ELIM,
   BV_SMOD_ELIM,
-  // BV_SMULO_ELIM,
+  BV_SMULO_ELIM,
   BV_SREM_ELIM,
   BV_SSUBO_ELIM,
   BV_SUB_ELIM,

@@ -932,28 +932,89 @@ RewriteRule<RewriteRuleKind::BV_SMOD_ELIM>::_apply(Rewriter& rewriter,
                               neg_urem})})});
 }
 
-// template <>
-// Node
-// RewriteRule<RewriteRuleKind::BV_SMULO_ELIM>::_apply(Rewriter& rewriter,
-//                                                     const Node& node)
-//{
-//   uint64_t size = node.type().bv_size();
-//
-//   NodeManager& nm = NodeManager::get();
-//   if (size == 1)
-//   {
-//     Node one = nm.mk_value(BitVector::mk_one(1));
-//     return rewriter.mk_node(Kind::AND,
-//                             {rewriter.mk_node(Kind::EQUAL, {node[0], one}),
-//                              rewriter.mk_node(Kind::EQUAL, {node[1], one})});
-//   }
-//
-//   if (size == 2)
-//   {
-//     // TODO:
-//
-//   }
-// }
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_SMULO_ELIM>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  assert(node.num_children() == 2);
+
+  /* Signed multiplication overflow detection.
+   * See M.Gok, M.J. Schulte, P.I. Balzola, "Efficient integer multiplication
+   * overflow detection circuits", 2001.
+   * http://ieeexplore.ieee.org/document/987767 */
+
+  uint64_t size = node[0].type().bv_size();
+  Node one      = NodeManager::get().mk_value(BitVector::mk_one(1));
+
+  if (size == 1)
+  {
+    return rewriter.mk_node(
+        Kind::EQUAL, {rewriter.mk_node(Kind::BV_AND, {node[0], node[1]}), one});
+  }
+
+  Node mul = rewriter.mk_node(
+      Kind::BV_MUL,
+      {rewriter.mk_node(Kind::BV_SIGN_EXTEND, {node[0]}, {1}),
+       rewriter.mk_node(Kind::BV_SIGN_EXTEND, {node[1]}, {1})});
+  if (size == 2)
+  {
+    return rewriter.mk_node(
+        Kind::EQUAL,
+        {rewriter.mk_node(
+             Kind::BV_XOR,
+             {rewriter.mk_node(Kind::BV_EXTRACT, {mul}, {size, size}),
+              rewriter.mk_node(Kind::BV_EXTRACT, {mul}, {size - 1, size - 1})}),
+         one});
+  }
+
+  Node xor0 = rewriter.mk_node(
+      Kind::BV_XOR,
+      {node[0],
+       rewriter.mk_node(Kind::BV_SIGN_EXTEND,
+                        {rewriter.mk_node(
+                            Kind::BV_EXTRACT, {node[0]}, {size - 1, size - 1})},
+                        {size - 1})});
+  Node xor1 = rewriter.mk_node(
+      Kind::BV_XOR,
+      {node[1],
+       rewriter.mk_node(Kind::BV_SIGN_EXTEND,
+                        {rewriter.mk_node(
+                            Kind::BV_EXTRACT, {node[1]}, {size - 1, size - 1})},
+                        {size - 1})});
+
+  Node ppc = rewriter.mk_node(Kind::BV_EXTRACT, {xor0}, {size - 2, size - 2});
+  Node res = rewriter.mk_node(
+      Kind::BV_AND, {rewriter.mk_node(Kind::BV_EXTRACT, {xor1}, {1, 1}), ppc});
+  for (uint64_t i = 1; i < size - 2; ++i)
+  {
+    ppc = rewriter.mk_node(
+        Kind::BV_OR,
+        {ppc,
+         rewriter.mk_node(
+             Kind::BV_EXTRACT, {xor0}, {size - 2 - i, size - 2 - i})});
+    res = rewriter.mk_node(
+        Kind::BV_OR,
+        {res,
+         rewriter.mk_node(
+             Kind::BV_AND,
+             {rewriter.mk_node(Kind::BV_EXTRACT, {xor1}, {i + 1, i + 1}),
+              ppc})});
+  }
+
+  return rewriter.mk_node(
+      Kind::EQUAL,
+      {rewriter.mk_node(
+           Kind::BV_OR,
+           {res,
+            rewriter.mk_node(
+                Kind::BV_XOR,
+                {rewriter.mk_node(Kind::BV_EXTRACT, {mul}, {size, size}),
+                 rewriter.mk_node(Kind::BV_EXTRACT, {mul}, {size - 1, size - 1})
+
+                })}),
+       one});
+}
 
 template <>
 Node
