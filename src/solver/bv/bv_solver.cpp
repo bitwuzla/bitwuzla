@@ -1,7 +1,5 @@
 #include "solver/bv/bv_solver.h"
 
-#include <iostream>
-
 #include "bitvector.h"
 #include "node/node_manager.h"
 #include "sat/cadical.h"
@@ -188,6 +186,11 @@ BvSolver::value(const Node& term)
                               || get_cached_value(cur[1]).value<bool>());
           break;
 
+        case Kind::BV_XOR:
+          value = nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvxor(
+              get_cached_value(cur[1]).value<BitVector>()));
+          break;
+
         case Kind::BV_EXTRACT:
           value =
               nm.mk_value(get_cached_value(cur[0]).value<BitVector>().bvextract(
@@ -325,7 +328,6 @@ BvSolver::value(const Node& term)
         case Kind::BV_UMULO:
         case Kind::BV_USUBO:
         case Kind::BV_XNOR:
-        case Kind::BV_XOR:
         case Kind::BV_ZERO_EXTEND:
 
         case Kind::FP_ABS:
@@ -439,6 +441,10 @@ BvSolver::bitblast(const Node& t)
         case Kind::OR:
           assert(type.is_bool());
           it->second = d_bitblaster.bv_or(get_bits(cur[0]), get_bits(cur[1]));
+          break;
+
+        case Kind::BV_XOR:
+          it->second = d_bitblaster.bv_xor(get_bits(cur[0]), get_bits(cur[1]));
           break;
 
         case Kind::BV_EXTRACT:
@@ -564,7 +570,6 @@ BvSolver::bitblast(const Node& t)
         case Kind::BV_UMULO:
         case Kind::BV_USUBO:
         case Kind::BV_XNOR:
-        case Kind::BV_XOR:
         case Kind::BV_ZERO_EXTEND:
 
         case Kind::FP_ABS:
