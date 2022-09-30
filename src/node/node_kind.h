@@ -220,7 +220,7 @@ mk_kind_info()
   info.init(Kind::BV_SGE)         = {2, 0, "BV_SGE", "bvsge"};
   info.init(Kind::BV_SGT)         = {2, 0, "BV_SGT", "bvsgt"};
   info.init(Kind::BV_SHL)         = {2, 0, "BV_SHL", "bvshl"};
-  info.init(Kind::BV_SHR)         = {2, 0, "BV_SHR", "bvshr"};
+  info.init(Kind::BV_SHR)         = {2, 0, "BV_SHR", "bvlshr"};
   info.init(Kind::BV_SIGN_EXTEND) = {1, 1, "BV_SIGN_EXTEND", "sign_extend"};
   info.init(Kind::BV_SLE)         = {2, 0, "BV_SLE", "bvsle"};
   info.init(Kind::BV_SLT)         = {2, 0, "BV_SLT", "bvslt"};
