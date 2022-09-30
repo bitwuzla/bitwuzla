@@ -79,8 +79,14 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
           return rewriter.mk_node(
               Kind::AND,
               {
-                  rewriter.mk_node(Kind::EQUAL, {node[idx1][0][0], node[idx0]}),
-                  rewriter.mk_node(Kind::EQUAL, {node[idx1][0][1], node[idx0]}),
+                  rewriter.mk_node(
+                      Kind::EQUAL,
+                      {rewriter.mk_node(Kind::BV_NOT, {node[idx1][0][0]}),
+                       node[idx0]}),
+                  rewriter.mk_node(
+                      Kind::EQUAL,
+                      {rewriter.mk_node(Kind::BV_NOT, {node[idx1][0][1]}),
+                       node[idx0]}),
               });
         }
       }

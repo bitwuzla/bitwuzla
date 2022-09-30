@@ -108,12 +108,9 @@ TEST_F(TestRewriterBool, bool_equal_special_const)
     //// applies
     Node bv4xor  = d_nm.mk_node(Kind::BV_XOR, {bv4a, bv4b});
     Node bv4or   = d_nm.mk_node(Kind::BV_OR, {bv4a, bv4b});
-    Node res_and = d_nm.mk_node(
-        Kind::AND,
-        {d_nm.mk_node(Kind::EQUAL,
-                      {d_nm.mk_node(Kind::BV_NOT, {bv4a}), bv4_zero}),
-         d_nm.mk_node(Kind::EQUAL,
-                      {d_nm.mk_node(Kind::BV_NOT, {bv4b}), bv4_zero})});
+    Node res_and = d_nm.mk_node(Kind::AND,
+                                {d_nm.mk_node(Kind::EQUAL, {bv4a, bv4_zero}),
+                                 d_nm.mk_node(Kind::EQUAL, {bv4b, bv4_zero})});
     // lhs 0
     Node equal_lhs0 = d_nm.mk_node(Kind::EQUAL, {d_false, b});
     ASSERT_EQ(d_nm.mk_node(Kind::NOT, {b}), d_rewriter.rewrite(equal_lhs0));
