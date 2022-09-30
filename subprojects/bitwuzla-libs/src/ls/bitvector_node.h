@@ -29,37 +29,6 @@ class BitVectorNode
    */
   static inline uint32_t s_prob_pick_ess_input = 990;
 
-  /**
-   * Normalize given signed and unsigned bounds into a lower (from min_signed
-   * to ones) and upper (from zero to max_signed) ranges. If the given signed
-   * and unsigned ranges of don't have any intersection, all return parameters
-   * will be null nodes.
-   *
-   * @param size       The bit-width of the bounds.
-   *
-   * @param min_u      The lower unsigned bound.
-   * @param max_u      The upper unsigned bound.
-   * @param min_s      The lower signed bound.
-   * @param max_s      The upper signed bound.
-   *
-   * @param res_min_lo The minimum value of the resulting lower range, null if
-   *                   no values in the lower range are covered.
-   * @param res_max_lo The maximum value of the resulting lower range, null if
-   *                   no values in the lower range are covered.
-   * @param res_min_hi The minimum value of the resulting upper range, null if
-   *                   no values in the upper range are covered.
-   * @param res_max_hi The maximum value of the resulting upper range, null if
-   *                   no values in the upper range are covered.
-   */
-  static void normalize_bounds(uint64_t size,
-                               BitVector* min_u,
-                               BitVector* max_u,
-                               BitVector* min_s,
-                               BitVector* max_s,
-                               BitVector& res_min_lo,
-                               BitVector& res_max_lo,
-                               BitVector& res_min_hi,
-                               BitVector& res_max_hi);
   enum Kind
   {
     ADD,
@@ -111,6 +80,34 @@ class BitVectorNode
   /** Update assignment based on the assignment of its children. */
   virtual void evaluate() {}
 
+  /**
+   * Normalize given signed and unsigned bounds into a lower (from min_signed
+   * to ones) and upper (from zero to max_signed) ranges. If the given signed
+   * and unsigned ranges of don't have any intersection, all return parameters
+   * will be null nodes.
+   *
+   * @param min_u      The lower unsigned bound.
+   * @param max_u      The upper unsigned bound.
+   * @param min_s      The lower signed bound.
+   * @param max_s      The upper signed bound.
+   *
+   * @param res_min_lo The minimum value of the resulting lower range, null if
+   *                   no values in the lower range are covered.
+   * @param res_max_lo The maximum value of the resulting lower range, null if
+   *                   no values in the lower range are covered.
+   * @param res_min_hi The minimum value of the resulting upper range, null if
+   *                   no values in the upper range are covered.
+   * @param res_max_hi The maximum value of the resulting upper range, null if
+   *                   no values in the upper range are covered.
+   */
+  virtual void normalize_bounds(BitVector* min_u,
+                                BitVector* max_u,
+                                BitVector* min_s,
+                                BitVector* max_s,
+                                BitVector& res_min_lo,
+                                BitVector& res_max_lo,
+                                BitVector& res_min_hi,
+                                BitVector& res_max_hi);
   /**
    * Check if operand at index `pos_x` is essential with respect to constant
    * bits and target value `t`.
@@ -1997,6 +1994,15 @@ class BitVectorSignExtend : public BitVectorNode
   Kind get_kind() const override { return SEXT; }
 
   void evaluate() override;
+
+  virtual void normalize_bounds(BitVector* min_u,
+                                BitVector* max_u,
+                                BitVector* min_s,
+                                BitVector* max_s,
+                                BitVector& res_min_lo,
+                                BitVector& res_max_lo,
+                                BitVector& res_min_hi,
+                                BitVector& res_max_hi) override;
 
   bool is_essential(const BitVector& t, uint32_t pos_x) override;
 
