@@ -101,6 +101,18 @@ class BitblasterInterface
     return res;
   }
 
+  virtual Bits bv_xor(const Bits& a, const Bits& b)
+  {
+    assert(a.size() == b.size());
+    Bits res;
+    res.reserve(a.size());
+    for (size_t i = 0; i < a.size(); ++i)
+    {
+      res.push_back(mk_xor(a[i], b[i]));
+    }
+    return res;
+  }
+
   virtual Bits bv_shl(const Bits& a, const Bits& b)
   {
     assert(a.size() == b.size());
