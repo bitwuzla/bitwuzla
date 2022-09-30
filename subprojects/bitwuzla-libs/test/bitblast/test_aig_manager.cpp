@@ -361,6 +361,15 @@ TEST_F(TestAigMgr, resolution2)
   auto a = mgr.mk_bit();
   auto b = mgr.mk_bit();
 
+  // (a = c) /\ (b = ~d)
+  {
+    auto c = a;
+    auto d = mgr.mk_not(b);
+    ASSERT_EQ(
+        mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_not(mgr.mk_and(c, d))),
+        mgr.mk_not(a));
+  }
+
   // (a = d) /\ (b = ~c)
   {
     auto c = mgr.mk_not(b);
@@ -370,13 +379,22 @@ TEST_F(TestAigMgr, resolution2)
         mgr.mk_not(a));
   }
 
-  // (a = d) /\ (b = ~c)
+  // (b = d) /\ (a = ~c)
   {
     auto c = mgr.mk_not(a);
     auto d = b;
     ASSERT_EQ(
         mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_not(mgr.mk_and(c, d))),
-        mgr.mk_not(c));
+        mgr.mk_not(d));
+  }
+
+  // (a = d) /\ (b = ~c) (redundant)
+  {
+    auto c = mgr.mk_not(b);
+    auto d = a;
+    ASSERT_EQ(
+        mgr.mk_and(mgr.mk_not(mgr.mk_and(a, b)), mgr.mk_not(mgr.mk_and(c, d))),
+        mgr.mk_not(d));
   }
 }
 

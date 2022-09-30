@@ -517,7 +517,7 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
       if ((right[1] == left[1] && right[0].get_id() == -left[0].get_id())
           || (right[1] == left[0] && right[0].get_id() == -left[1].get_id()))
       {
-        return mk_not(right[0]);
+        return mk_not(right[1]);
       }
     }
 
