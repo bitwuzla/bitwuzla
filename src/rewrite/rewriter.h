@@ -146,6 +146,7 @@ enum class RewriteRuleKind
   BV_MUL_SPECIAL_CONST,
 
   BV_NOT_EVAL,
+  BV_NOT_BV_NOT,
 
   BV_SHL_EVAL,
   BV_SHL_SPECIAL_CONST,

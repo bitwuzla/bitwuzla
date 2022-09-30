@@ -230,6 +230,16 @@ RewriteRule<RewriteRuleKind::BV_NOT_EVAL>::_apply(Rewriter& rewriter,
   return NodeManager::get().mk_value(node[0].value<BitVector>().bvnot());
 }
 
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_NOT_BV_NOT>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  (void) rewriter;
+  if (node[0].kind() != Kind::BV_NOT) return node;
+  return node[0][0];
+}
+
 /* bvshl -------------------------------------------------------------------- */
 
 template <>

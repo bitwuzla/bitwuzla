@@ -345,6 +345,7 @@ Rewriter::rewrite_bv_not(const Node& node)
   Node res;
 
   BZLA_APPLY_RW_RULE(BV_NOT_EVAL);
+  BZLA_APPLY_RW_RULE(BV_NOT_BV_NOT);
   // TODO
 
 DONE:
