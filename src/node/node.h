@@ -65,6 +65,11 @@ class Node
   bool is_value() const;
 
   /**
+   * @return True if this node is a first order constant.
+   */
+  bool is_const() const;
+
+  /**
    * @return The number of children.
    */
   size_t num_children() const;

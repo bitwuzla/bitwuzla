@@ -107,6 +107,12 @@ Node::is_value() const
   return d_data->get_kind() == node::Kind::VALUE;
 }
 
+bool
+Node::is_const() const
+{
+  return d_data->get_kind() == node::Kind::CONSTANT;
+}
+
 size_t
 Node::num_children() const
 {

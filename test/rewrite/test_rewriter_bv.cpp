@@ -14,16 +14,7 @@ class TestRewriterBv : public TestRewriter
 {
   void SetUp() override
   {
-    d_bv4_type = d_nm.mk_bv_type(4);
-    d_bv1_type = d_nm.mk_bv_type(1);
-    d_bv4_zero = d_nm.mk_value(BitVector::mk_zero(4));
-    d_bv1_zero = d_nm.mk_value(BitVector::mk_zero(1));
-    d_bv4_one  = d_nm.mk_value(BitVector::mk_one(4));
-    d_bv1_one  = d_nm.mk_value(BitVector::mk_one(1));
-    d_bv4_ones = d_nm.mk_value(BitVector::mk_ones(4));
-    d_bv1_ones = d_nm.mk_value(BitVector::mk_ones(1));
-    d_false   = d_nm.mk_value(false);
-    d_true     = d_nm.mk_value(true);
+    TestRewriter::SetUp();
     d_a4       = d_nm.mk_const(d_bv4_type);
     d_a1       = d_nm.mk_const(d_bv1_type);
   }
@@ -34,18 +25,6 @@ class TestRewriterBv : public TestRewriter
     test_elim_rule(kind, d_nm.mk_bv_type(8));
   }
 
-  Rewriter d_rewriter;
-  NodeManager& d_nm = NodeManager::get();
-  Type d_bv4_type;
-  Type d_bv1_type;
-  Node d_bv4_zero;
-  Node d_bv1_zero;
-  Node d_bv1_one;
-  Node d_bv4_one;
-  Node d_bv1_ones;
-  Node d_bv4_ones;
-  Node d_false;
-  Node d_true;
   Node d_a1;
   Node d_a4;
 };
@@ -54,6 +33,7 @@ class TestRewriterBv : public TestRewriter
 
 TEST_F(TestRewriterBv, bv_add_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_EVAL;
   //// applies
   Node bvadd0 = d_nm.mk_node(Kind::BV_ADD,
                              {d_nm.mk_value(BitVector(4, "1001")),
@@ -70,49 +50,26 @@ TEST_F(TestRewriterBv, bv_add_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvadd1_2));
   //// does not apply
-  Node bvadd_x0 = d_nm.mk_node(
-      Kind::BV_ADD,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvadd_x0, d_rewriter.rewrite(bvadd_x0));
-  Node bvadd_x1 = d_nm.mk_node(Kind::BV_ADD,
-                               {bvadd_x0, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvadd_x1, d_rewriter.rewrite(bvadd_x1));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ADD, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
 }
 
 TEST_F(TestRewriterBv, bv_add_special_const)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_SPECIAL_CONST;
   ////// special const 0
   {
     //// applies
     // lhs 0
-    Node bvadd_lhs0 = d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_lhs0));
-    Node bvadd_lhs1 = d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, bvadd_lhs0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_lhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, d_a4}));
     // rhs 0
-    Node bvadd_rhs0 = d_nm.mk_node(Kind::BV_ADD, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_rhs0));
-    Node bvadd_rhs1 = d_nm.mk_node(Kind::BV_ADD, {bvadd_lhs0, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_rhs1));
-    Node bvadd_rhs2 = d_nm.mk_node(Kind::BV_ADD, {bvadd_rhs0, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_rhs2));
-    // lhs 0
-    Node bvadd_lhs2 = d_nm.mk_node(Kind::BV_ADD, {d_bv4_zero, bvadd_rhs0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvadd_lhs2));
-    // with empty cache
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvadd_rhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ADD, {d_a4, d_bv4_zero}));
     //// does not apply
-    Node bvadd_x0 = d_nm.mk_node(
-        Kind::BV_ADD, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvadd_x0, d_rewriter.rewrite(bvadd_x0));
-    Node bvadd_x1 = d_nm.mk_node(
-        Kind::BV_ADD,
-        {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvadd_x1, d_rewriter.rewrite(bvadd_x1));
-    Node bvadd_x2 = d_nm.mk_node(
-        Kind::BV_ADD,
-        {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvadd_x2, d_rewriter.rewrite(bvadd_x2));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_ADD, {d_a4, d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_ADD, {d_nm.mk_value(BitVector(4, "1110")), d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_ADD, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
   }
 }
 
@@ -120,6 +77,7 @@ TEST_F(TestRewriterBv, bv_add_special_const)
 
 TEST_F(TestRewriterBv, bv_and_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_EVAL;
   //// applies
   Node bvand0 = d_nm.mk_node(Kind::BV_AND,
                              {d_nm.mk_value(BitVector(4, "1001")),
@@ -136,72 +94,42 @@ TEST_F(TestRewriterBv, bv_and_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "1000")), Rewriter().rewrite(bvand1_2));
   //// does not apply
-  Node bvand_x0 = d_nm.mk_node(
-      Kind::BV_AND,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvand_x0, d_rewriter.rewrite(bvand_x0));
-  Node bvand_x1 = d_nm.mk_node(Kind::BV_AND,
-                               {bvand_x0, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvand_x1, d_rewriter.rewrite(bvand_x1));
+  Node bvand_x0 =
+      d_nm.mk_node(Kind::BV_AND, {d_a4, d_nm.mk_value(BitVector(4, "1110"))});
+  test_rule_does_not_apply<kind>(bvand_x0);
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_AND, {bvand_x0, d_nm.mk_value(BitVector(4, "1110"))}));
 }
 
 TEST_F(TestRewriterBv, bv_and_special_const)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_SPECIAL_CONST;
   ////// special const 0
   {
     //// applies
-    // lhs 0
-    Node bvand_lhs0 = d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_lhs0));
-    Node bvand_lhs1 = d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, bvand_lhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_lhs1));
-    // rhs 0
-    Node bvand_rhs0 = d_nm.mk_node(Kind::BV_AND, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_rhs0));
-    Node bvand_rhs1 = d_nm.mk_node(Kind::BV_AND, {bvand_lhs0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_rhs1));
-    Node bvand_rhs2 = d_nm.mk_node(Kind::BV_AND, {bvand_rhs0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_rhs2));
-    Node bvand_rhs3 = d_nm.mk_node(Kind::BV_AND, {d_a4, bvand_rhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_rhs3));
-    // lhs 0
-    Node bvand_lhs2 = d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, bvand_rhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvand_lhs2));
-    // with empty cache
-    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvand_rhs3));
-    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvand_rhs2));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv4_zero, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_a4, d_bv4_zero}));
     //// does not apply
-    Node bvand_x0 = d_nm.mk_node(Kind::BV_AND, {d_a4, d_a4});
-    ASSERT_EQ(bvand_x0, d_rewriter.rewrite(bvand_x0));
-    Node bvand_x1 =
-        d_nm.mk_node(Kind::BV_AND, {d_nm.mk_value(BitVector(4, "1110")), d_a4});
-    ASSERT_EQ(bvand_x1, d_rewriter.rewrite(bvand_x1));
-    Node bvand_x2 =
-        d_nm.mk_node(Kind::BV_AND, {d_a4, d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvand_x2, d_rewriter.rewrite(bvand_x2));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_AND, {d_a4, d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_AND, {d_nm.mk_value(BitVector(4, "1110")), d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_AND, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
   }
   ////// special const 1
   {
     //// applies
-    // lhs 1
-    Node bvand_lhs0 = d_nm.mk_node(Kind::BV_AND, {d_bv1_one, d_a1});
-    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvand_lhs0));
-    // rhs 1
-    Node bvand_rhs0 = d_nm.mk_node(Kind::BV_AND, {d_a1, d_bv1_one});
-    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvand_rhs0));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv1_one, d_a1}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_a1, d_bv1_one}));
     //// does not apply
-    Node bvand_x0 = d_nm.mk_node(Kind::BV_AND, {d_bv4_one, d_a4});
-    ASSERT_EQ(bvand_x0, d_rewriter.rewrite(bvand_x0));
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_AND, {d_bv4_one, d_a4}));
   }
   ////// special const ones
   {
     //// applies
-    // lhs ones
-    Node bvand_lhs0 = d_nm.mk_node(Kind::BV_AND, {d_bv4_ones, d_a4});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvand_lhs0));
-    //// does not apply
-    Node bvand_x0 = d_nm.mk_node(Kind::BV_AND, {d_a4, d_bv4_ones});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvand_x0));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv4_ones, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_a4, d_bv4_ones}));
   }
 }
 
@@ -209,6 +137,7 @@ TEST_F(TestRewriterBv, bv_and_special_const)
 
 TEST_F(TestRewriterBv, bv_ashr_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ASHR_EVAL;
   //// applies
   Node bvashr0 = d_nm.mk_node(Kind::BV_ASHR,
                               {d_nm.mk_value(BitVector(4, "1101")),
@@ -225,52 +154,24 @@ TEST_F(TestRewriterBv, bv_ashr_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvashr1_2));
   //// does not apply
-  Node bvashr_x0 = d_nm.mk_node(
-      Kind::BV_ASHR,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "0010"))});
-  ASSERT_EQ(bvashr_x0, d_rewriter.rewrite(bvashr_x0));
-  Node bvashr_x1 = d_nm.mk_node(
-      Kind::BV_ASHR, {bvashr_x0, d_nm.mk_value(BitVector(4, "0001"))});
-  ASSERT_EQ(bvashr_x1, d_rewriter.rewrite(bvashr_x1));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ASHR, {d_a4, d_nm.mk_value(BitVector(4, "0010"))}));
 }
 
 TEST_F(TestRewriterBv, bv_ashr_special_const)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ASHR_SPECIAL_CONST;
   ////// special const 0
   {
     //// applies
-    // lhs 0
-    Node bvashr_lhs0 = d_nm.mk_node(Kind::BV_ASHR, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr_lhs0));
-    Node bvashr_lhs1 = d_nm.mk_node(Kind::BV_ASHR, {d_bv4_zero, bvashr_lhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr_lhs1));
-    // rhs 0
-    Node bvashr_rhs0 = d_nm.mk_node(Kind::BV_ASHR, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvashr_rhs0));
-    Node bvashr_rhs1 = d_nm.mk_node(Kind::BV_ASHR, {d_a4, bvashr_lhs0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvashr_rhs1));
-    Node bvashr_rhs2 = d_nm.mk_node(Kind::BV_ASHR, {bvashr_lhs0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr_rhs2));
-    Node bvashr_rhs3 = d_nm.mk_node(Kind::BV_ASHR, {bvashr_rhs0, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvashr_rhs3));
-    // lhs 0
-    Node bvashr_lhs2 = d_nm.mk_node(Kind::BV_ASHR, {d_bv4_zero, bvashr_rhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvashr_lhs2));
-    // with empty cache
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvashr_rhs1));
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvashr_rhs3));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ASHR, {d_bv4_zero, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ASHR, {d_a4, d_bv4_zero}));
     //// does not apply
-    Node bvashr_x0 = d_nm.mk_node(
-        Kind::BV_ASHR, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvashr_x0, d_rewriter.rewrite(bvashr_x0));
-    Node bvashr_x1 = d_nm.mk_node(
-        Kind::BV_ASHR,
-        {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvashr_x1, d_rewriter.rewrite(bvashr_x1));
-    Node bvashr_x2 = d_nm.mk_node(
-        Kind::BV_ASHR,
-        {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvashr_x2, d_rewriter.rewrite(bvashr_x2));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_ASHR, {d_a4, d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_ASHR, {d_nm.mk_value(BitVector(4, "1110")), d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_ASHR, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
   }
 }
 
@@ -278,6 +179,7 @@ TEST_F(TestRewriterBv, bv_ashr_special_const)
 
 TEST_F(TestRewriterBv, bv_concat_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_CONCAT_EVAL;
   //// applies
   Node bvconcat0 = d_nm.mk_node(Kind::BV_CONCAT,
                                 {d_nm.mk_value(BitVector(4, "1001")),
@@ -299,19 +201,15 @@ TEST_F(TestRewriterBv, bv_concat_eval)
   ASSERT_EQ(d_nm.mk_value(BitVector(24, "100110011110100110011110")),
             Rewriter().rewrite(bvconcat1_2));
   //// does not apply
-  Node bvconcat_x0 = d_nm.mk_node(
-      Kind::BV_CONCAT,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvconcat_x0, d_rewriter.rewrite(bvconcat_x0));
-  Node bvconcat_x1 = d_nm.mk_node(
-      Kind::BV_CONCAT, {bvconcat_x0, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvconcat_x1, d_rewriter.rewrite(bvconcat_x1));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_CONCAT, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
 }
 
 /* bvmul -------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_mul_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_EVAL;
   //// applies
   Node bvmul0 = d_nm.mk_node(Kind::BV_MUL,
                              {d_nm.mk_value(BitVector(4, "1001")),
@@ -328,80 +226,38 @@ TEST_F(TestRewriterBv, bv_mul_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0100")), Rewriter().rewrite(bvmul1_2));
   //// does not apply
-  Node bvmul_x0 = d_nm.mk_node(
-      Kind::BV_MUL,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvmul_x0, d_rewriter.rewrite(bvmul_x0));
-  Node bvmul_x1 = d_nm.mk_node(Kind::BV_MUL,
-                               {bvmul_x0, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvmul_x1, d_rewriter.rewrite(bvmul_x1));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_MUL, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
 }
 
 TEST_F(TestRewriterBv, bv_mul_special_const)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_SPECIAL_CONST;
   ////// special const 0
   {
     //// applies
-    // lhs 0
-    Node bvmul_lhs0 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_lhs0));
-    Node bvmul_lhs1 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, bvmul_lhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_lhs1));
-    Node bvmul_lhs3 = d_nm.mk_node(Kind::BV_MUL, {bvmul_lhs0, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_lhs3));
-    // rhs 0
-    Node bvmul_rhs0 = d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_rhs0));
-    Node bvmul_rhs1 = d_nm.mk_node(Kind::BV_MUL, {d_a4, bvmul_lhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_rhs1));
-    Node bvmul_rhs2 = d_nm.mk_node(Kind::BV_MUL, {bvmul_lhs0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_rhs2));
-    Node bvmul_rhs3 = d_nm.mk_node(Kind::BV_MUL, {bvmul_rhs0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_rhs3));
-    // lhs 0
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvmul_lhs1));
-    Node bvmul_lhs2 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, bvmul_rhs0});
-    // with empty cache
-    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvmul_lhs3));
-    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvmul_rhs3));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_zero, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_zero}));
     //// does not apply
-    Node bvmul_x0 = d_nm.mk_node(
-        Kind::BV_MUL, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvmul_x0, d_rewriter.rewrite(bvmul_x0));
-    Node bvmul_x1 = d_nm.mk_node(
-        Kind::BV_MUL,
-        {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvmul_x1, d_rewriter.rewrite(bvmul_x1));
-    Node bvmul_x2 = d_nm.mk_node(
-        Kind::BV_MUL,
-        {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvmul_x2, d_rewriter.rewrite(bvmul_x2));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_MUL, {d_a4, d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_MUL, {d_nm.mk_value(BitVector(4, "1110")), d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_MUL, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
   }
   ////// special const 1
   {
     //// applies
-    // lhs 1
-    Node bvmul_lhs0 = d_nm.mk_node(Kind::BV_MUL, {d_bv1_one, d_a1});
-    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvmul_lhs0));
-    Node bvmul_lhs1 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_one, d_a4});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvmul_lhs1));
-    // rhs 1
-    Node bvmul_rhs0 = d_nm.mk_node(Kind::BV_MUL, {d_a1, d_bv1_one});
-    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvmul_rhs0));
-    Node bvmul_rhs1 = d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_one});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvmul_rhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv1_one, d_a1}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_one, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_a1, d_bv1_one}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_one}));
   }
   ////// special const ones
   {
     //// applies
-    // lhs ones
-    Node bvmul_lhs0 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_ones, d_a4});
-    ASSERT_EQ(d_rewriter.rewrite(d_nm.mk_node(Kind::BV_NEG, {d_a4})),
-              d_rewriter.rewrite(bvmul_lhs0));
-    // rhs ones
-    Node bvmul_rhs0 = d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_ones});
-    ASSERT_EQ(d_rewriter.rewrite(d_nm.mk_node(Kind::BV_NEG, {d_a4})),
-              d_rewriter.rewrite(bvmul_rhs0));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_ones, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_a4, d_bv4_ones}));
   }
 }
 
@@ -409,6 +265,7 @@ TEST_F(TestRewriterBv, bv_mul_special_const)
 
 TEST_F(TestRewriterBv, bv_not_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_NOT_EVAL;
   //// applies
   Node bvnot0 =
       d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_value(BitVector(4, "1001"))});
@@ -421,14 +278,14 @@ TEST_F(TestRewriterBv, bv_not_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0110")), Rewriter().rewrite(bvnot2));
   //// does not apply
-  Node bvnot_x0 = d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_const(d_bv4_type)});
-  ASSERT_EQ(bvnot_x0, d_rewriter.rewrite(bvnot_x0));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_NOT, {d_a4}));
 }
 
 /* bvshl -------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_shl_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SHL_EVAL;
   //// applies
   Node bvshl0 = d_nm.mk_node(Kind::BV_SHL,
                              {d_nm.mk_value(BitVector(4, "1001")),
@@ -445,52 +302,24 @@ TEST_F(TestRewriterBv, bv_shl_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvshl1_2));
   //// does not apply
-  Node bvshl_x0 = d_nm.mk_node(
-      Kind::BV_SHL,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "0010"))});
-  ASSERT_EQ(bvshl_x0, d_rewriter.rewrite(bvshl_x0));
-  Node bvshl_x1 = d_nm.mk_node(Kind::BV_SHL,
-                               {bvshl_x0, d_nm.mk_value(BitVector(4, "0001"))});
-  ASSERT_EQ(bvshl_x1, d_rewriter.rewrite(bvshl_x1));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_SHL, {d_a4, d_nm.mk_value(BitVector(4, "0010"))}));
 }
 
 TEST_F(TestRewriterBv, bv_shl_special_const)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SHL_SPECIAL_CONST;
   ////// special const 0
   {
     //// applies
-    // lhs 0
-    Node bvshl_lhs0 = d_nm.mk_node(Kind::BV_SHL, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl_lhs0));
-    Node bvshl_lhs1 = d_nm.mk_node(Kind::BV_SHL, {d_bv4_zero, bvshl_lhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl_lhs1));
-    // rhs 0
-    Node bvshl_rhs0 = d_nm.mk_node(Kind::BV_SHL, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshl_rhs0));
-    Node bvshl_rhs1 = d_nm.mk_node(Kind::BV_SHL, {d_a4, bvshl_lhs0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshl_rhs1));
-    Node bvshl_rhs2 = d_nm.mk_node(Kind::BV_SHL, {bvshl_lhs0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl_rhs2));
-    Node bvshl_rhs3 = d_nm.mk_node(Kind::BV_SHL, {bvshl_rhs0, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshl_rhs3));
-    // lhs 0
-    Node bvshl_lhs2 = d_nm.mk_node(Kind::BV_SHL, {d_bv4_zero, bvshl_rhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshl_lhs2));
-    // with empty cache
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshl_rhs1));
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshl_rhs3));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SHL, {d_bv4_zero, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SHL, {d_a4, d_bv4_zero}));
     //// does not apply
-    Node bvshl_x0 = d_nm.mk_node(
-        Kind::BV_SHL, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvshl_x0, d_rewriter.rewrite(bvshl_x0));
-    Node bvshl_x1 = d_nm.mk_node(
-        Kind::BV_SHL,
-        {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvshl_x1, d_rewriter.rewrite(bvshl_x1));
-    Node bvshl_x2 = d_nm.mk_node(
-        Kind::BV_SHL,
-        {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvshl_x2, d_rewriter.rewrite(bvshl_x2));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_SHL, {d_a4, d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_SHL, {d_nm.mk_value(BitVector(4, "1110")), d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_SHL, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
   }
 }
 
@@ -498,6 +327,7 @@ TEST_F(TestRewriterBv, bv_shl_special_const)
 
 TEST_F(TestRewriterBv, bv_shr_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SHR_EVAL;
   //// applies
   Node bvshr0 = d_nm.mk_node(Kind::BV_SHR,
                              {d_nm.mk_value(BitVector(4, "1101")),
@@ -514,52 +344,24 @@ TEST_F(TestRewriterBv, bv_shr_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvshr1_2));
   //// does not apply
-  Node bvshr_x0 = d_nm.mk_node(
-      Kind::BV_SHR,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "0010"))});
-  ASSERT_EQ(bvshr_x0, d_rewriter.rewrite(bvshr_x0));
-  Node bvshr_x1 = d_nm.mk_node(Kind::BV_SHR,
-                               {bvshr_x0, d_nm.mk_value(BitVector(4, "0001"))});
-  ASSERT_EQ(bvshr_x1, d_rewriter.rewrite(bvshr_x1));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_SHR, {d_a4, d_nm.mk_value(BitVector(4, "0010"))}));
 }
 
 TEST_F(TestRewriterBv, bv_shr_special_const)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SHR_SPECIAL_CONST;
   ////// special const 0
   {
     //// applies
-    // lhs 0
-    Node bvshr_lhs0 = d_nm.mk_node(Kind::BV_SHR, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr_lhs0));
-    Node bvshr_lhs1 = d_nm.mk_node(Kind::BV_SHR, {d_bv4_zero, bvshr_lhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr_lhs1));
-    // rhs 0
-    Node bvshr_rhs0 = d_nm.mk_node(Kind::BV_SHR, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshr_rhs0));
-    Node bvshr_rhs1 = d_nm.mk_node(Kind::BV_SHR, {d_a4, bvshr_lhs0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshr_rhs1));
-    Node bvshr_rhs2 = d_nm.mk_node(Kind::BV_SHR, {bvshr_lhs0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr_rhs2));
-    Node bvshr_rhs4 = d_nm.mk_node(Kind::BV_SHR, {bvshr_rhs0, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvshr_rhs4));
-    // lhs 0
-    Node bvshr_lhs2 = d_nm.mk_node(Kind::BV_SHR, {d_bv4_zero, bvshr_rhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvshr_lhs2));
-    // with empty cache
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshr_rhs1));
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvshr_rhs4));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SHR, {d_bv4_zero, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SHR, {d_a4, d_bv4_zero}));
     //// does not apply
-    Node bvshr_x0 = d_nm.mk_node(
-        Kind::BV_SHR, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvshr_x0, d_rewriter.rewrite(bvshr_x0));
-    Node bvshr_x1 = d_nm.mk_node(
-        Kind::BV_SHR,
-        {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvshr_x1, d_rewriter.rewrite(bvshr_x1));
-    Node bvshr_x2 = d_nm.mk_node(
-        Kind::BV_SHR,
-        {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvshr_x2, d_rewriter.rewrite(bvshr_x2));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_SHR, {d_a4, d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_SHR, {d_nm.mk_value(BitVector(4, "1110")), d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_SHR, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
   }
 }
 
@@ -567,6 +369,7 @@ TEST_F(TestRewriterBv, bv_shr_special_const)
 
 TEST_F(TestRewriterBv, bv_slt_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SLT_EVAL;
   //// applies
   Node bvslt0 = d_nm.mk_node(Kind::BV_SLT,
                              {d_nm.mk_value(BitVector(4, "1001")),
@@ -579,84 +382,52 @@ TEST_F(TestRewriterBv, bv_slt_eval)
   // with empty cache
   ASSERT_EQ(d_false, Rewriter().rewrite(bvslt1));
   //// does not apply
-  Node bvslt_x0 = d_nm.mk_node(
-      Kind::BV_SLT,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvslt_x0, d_rewriter.rewrite(bvslt_x0));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_SLT, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
 }
 
 TEST_F(TestRewriterBv, bv_slt_special_const)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SLT_SPECIAL_CONST;
   Node a2      = d_nm.mk_const(d_nm.mk_bv_type(2));
-  Node bv2_one = d_nm.mk_value(BitVector::mk_one(2));
-  Node bvadd0 = d_nm.mk_node(Kind::BV_ADD,
-                             {d_nm.mk_node(Kind::BV_ADD,
-                                           {d_nm.mk_value(BitVector(1, "1")),
-                                            d_nm.mk_value(BitVector(1, "0"))}),
-                              d_nm.mk_value(BitVector(1, "1"))});
+  Node bv2_one                   = d_nm.mk_value(BitVector::mk_one(2));
   ////// special const 0
   {
     Node dis = d_nm.mk_node(Kind::NOT,
                             {d_nm.mk_node(Kind::EQUAL, {d_a1, d_bv1_zero})});
     //// applies
-    // lhs 0
-    Node bvslt_lhs0 = d_nm.mk_node(Kind::BV_SLT, {d_bv1_zero, d_a1});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt_lhs0));
-    Node bvslt_lhs1 = d_nm.mk_node(Kind::BV_SLT, {bvadd0, d_a1});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt_lhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {d_bv1_zero, d_a1}));
     // rhs 0
-    Node bvslt_rhs0 = d_nm.mk_node(Kind::BV_SLT, {d_a1, d_bv1_zero});
-    ASSERT_EQ(dis, d_rewriter.rewrite(bvslt_rhs0));
-    Node bvslt_rhs1 = d_nm.mk_node(Kind::BV_SLT, {d_a1, bvadd0});
-    ASSERT_EQ(dis, d_rewriter.rewrite(bvslt_rhs1));
-    // with empty cache
-    ASSERT_EQ(d_false, Rewriter().rewrite(bvslt_lhs1));
-    ASSERT_EQ(dis, Rewriter().rewrite(bvslt_rhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {d_a1, d_bv1_zero}));
     //// does not apply
-    Node bvslt_x0 = d_nm.mk_node(
-        Kind::BV_SLT, {d_nm.mk_const(d_bv1_type), d_nm.mk_const(d_bv1_type)});
-    ASSERT_EQ(bvslt_x0, d_rewriter.rewrite(bvslt_x0));
-    Node bvslt_x1 =
-        d_nm.mk_node(Kind::BV_SLT, {d_nm.mk_const(d_bv4_type), d_bv4_zero});
-    ASSERT_EQ(bvslt_x1, d_rewriter.rewrite(bvslt_x1));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_SLT, {d_a1, d_a1}));
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_SLT, {d_a4, d_bv4_zero}));
   }
   ////// special const 1
   {
     //// applies
-    // lhs 1
-    Node bvslt_lhs0 = d_nm.mk_node(Kind::BV_SLT, {d_bv1_one, d_a1});
-    ASSERT_EQ(
-        d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {d_bv1_one, d_a1})}),
-        d_rewriter.rewrite(bvslt_lhs0));
-    Node bvslt_lhs1 = d_nm.mk_node(Kind::BV_SLT, {bv2_one, a2});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt_lhs1));
-    // rhs 1
-    Node bvslt_rhs0 = d_nm.mk_node(Kind::BV_SLT, {d_a1, d_bv1_one});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt_rhs0));
-    Node bvslt_rhs1 = d_nm.mk_node(Kind::BV_SLT, {a2, bv2_one});
-    ASSERT_EQ(Rewriter().rewrite(d_nm.mk_node(Kind::DISTINCT, {a2, bv2_one})),
-              d_rewriter.rewrite(bvslt_rhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {d_bv1_one, d_a1}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {bv2_one, a2}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {d_a1, d_bv1_one}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {a2, bv2_one}));
     //// does not apply
-    Node bvslt_x0 = d_nm.mk_node(Kind::BV_SLT, {d_bv4_one, d_a4});
-    ASSERT_EQ(bvslt_x0, d_rewriter.rewrite(bvslt_x0));
-    Node bvslt_x1 = d_nm.mk_node(Kind::BV_SLT, {d_a4, d_bv4_one});
-    ASSERT_EQ(bvslt_x1, d_rewriter.rewrite(bvslt_x1));
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_SLT, {d_bv4_one, d_a4}));
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_SLT, {d_a4, d_bv4_one}));
   }
   ////// special const ones
   {
     //// applies
-    // lhs 1
-    Node bvslt_lhs0 = d_nm.mk_node(Kind::BV_SLT, {d_bv1_ones, d_a1});
-    ASSERT_EQ(
-        d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {d_bv1_one, d_a1})}),
-        d_rewriter.rewrite(bvslt_lhs0));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {d_bv1_ones, d_a1}));
     //// does not apply
-    Node bvslt_x0 = d_nm.mk_node(Kind::BV_SLT, {d_bv4_ones, d_a4});
-    ASSERT_EQ(bvslt_x0, d_rewriter.rewrite(bvslt_x0));
-    Node bvslt_x1 = d_nm.mk_node(Kind::BV_SLT,
-                                 {d_nm.mk_value(BitVector::mk_ones(2)),
-                                  d_nm.mk_const(d_nm.mk_bv_type(2))});
-    ASSERT_EQ(bvslt_x1, d_rewriter.rewrite(bvslt_x1));
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_SLT, {d_bv4_ones, d_a4}));
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_SLT,
+                     {d_nm.mk_value(BitVector::mk_ones(2)),
+                      d_nm.mk_const(d_nm.mk_bv_type(2))}));
   }
   ////// special const min_signed
   {
@@ -664,19 +435,11 @@ TEST_F(TestRewriterBv, bv_slt_special_const)
     Node min4_s = d_nm.mk_value(BitVector::mk_min_signed(4));
     //// applies
     // lhs min_signed
-    Node bvslt_lhs0 = d_nm.mk_node(Kind::BV_SLT, {min1_s, d_a1});
-    ASSERT_EQ(
-        d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {min1_s, d_a1})}),
-        d_rewriter.rewrite(bvslt_lhs0));
-    Node bvslt_lhs1 = d_nm.mk_node(Kind::BV_SLT, {min4_s, d_a4});
-    ASSERT_EQ(
-        d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {min4_s, d_a4})}),
-        d_rewriter.rewrite(bvslt_lhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {min1_s, d_a1}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {min4_s, d_a4}));
     // rhs min_signed
-    Node bvslt_rhs0 = d_nm.mk_node(Kind::BV_SLT, {d_a1, min1_s});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt_rhs0));
-    Node bvslt_rhs1 = d_nm.mk_node(Kind::BV_SLT, {d_a4, min4_s});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt_rhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {d_a1, min1_s}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {d_a4, min4_s}));
   }
   ////// special const max_signed
   {
@@ -684,19 +447,11 @@ TEST_F(TestRewriterBv, bv_slt_special_const)
     Node max4_s = d_nm.mk_value(BitVector::mk_max_signed(4));
     //// applies
     // lhs max_signed
-    Node bvslt_lhs0 = d_nm.mk_node(Kind::BV_SLT, {max1_s, d_a1});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt_lhs0));
-    Node bvslt_lhs1 = d_nm.mk_node(Kind::BV_SLT, {max4_s, d_a4});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvslt_lhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {max1_s, d_a1}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {max4_s, d_a4}));
     // rhs max_signed
-    Node bvslt_rhs0 = d_nm.mk_node(Kind::BV_SLT, {d_a1, max1_s});
-    ASSERT_EQ(
-        d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {d_a1, max1_s})}),
-        d_rewriter.rewrite(bvslt_rhs0));
-    Node bvslt_rhs1 = d_nm.mk_node(Kind::BV_SLT, {d_a4, max4_s});
-    ASSERT_EQ(
-        d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {d_a4, max4_s})}),
-        d_rewriter.rewrite(bvslt_rhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {d_a1, max1_s}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_SLT, {d_a4, max4_s}));
   }
 }
 
@@ -704,6 +459,7 @@ TEST_F(TestRewriterBv, bv_slt_special_const)
 
 TEST_F(TestRewriterBv, bv_udiv_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UDIV_EVAL;
   //// applies
   Node bvudiv0 = d_nm.mk_node(Kind::BV_UDIV,
                               {d_nm.mk_value(BitVector(4, "1001")),
@@ -720,74 +476,35 @@ TEST_F(TestRewriterBv, bv_udiv_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0001")), Rewriter().rewrite(bvudiv1_2));
   //// does not apply
-  Node bvudiv_x0 = d_nm.mk_node(
-      Kind::BV_UDIV,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvudiv_x0, d_rewriter.rewrite(bvudiv_x0));
-  Node bvudiv_x1 = d_nm.mk_node(
-      Kind::BV_UDIV, {bvudiv_x0, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvudiv_x1, d_rewriter.rewrite(bvudiv_x1));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
 }
 
 TEST_F(TestRewriterBv, bv_udiv_special_const)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UDIV_SPECIAL_CONST;
   ////// special const 0
   {
-    Node ones = d_nm.mk_value(BitVector::mk_ones(4));
-    Node ite  = d_nm.mk_node(
-        Kind::ITE,
-        {d_nm.mk_node(Kind::EQUAL, {d_a4, d_bv4_zero}), ones, d_bv4_zero});
-    Node ite2 = d_nm.mk_node(
-        Kind::ITE,
-        {d_nm.mk_node(Kind::EQUAL, {ite, d_bv4_zero}), ones, d_bv4_zero});
     //// applies
-    // lhs 0
-    Node bvudiv_lhs0 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_zero, d_a4});
-    ASSERT_EQ(ite, d_rewriter.rewrite(bvudiv_lhs0));
-    Node bvudiv_lhs1 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_zero, bvudiv_lhs0});
-    ASSERT_EQ(ite2, d_rewriter.rewrite(bvudiv_lhs1));
-    // rhs 0
-    Node bvudiv_rhs0 = d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_bv4_zero});
-    ASSERT_EQ(ones, d_rewriter.rewrite(bvudiv_rhs0));
-    Node bvudiv_rhs1 = d_nm.mk_node(Kind::BV_UDIV, {d_a4, bvudiv_lhs0});
-    ASSERT_EQ(d_nm.mk_node(Kind::BV_UDIV, {d_a4, ite}),
-              d_rewriter.rewrite(bvudiv_rhs1));
-    Node bvudiv_rhs2 = d_nm.mk_node(Kind::BV_UDIV, {bvudiv_lhs0, d_bv4_zero});
-    ASSERT_EQ(ones, d_rewriter.rewrite(bvudiv_rhs2));
-    Node bvudiv_rhs3 = d_nm.mk_node(Kind::BV_UDIV, {bvudiv_rhs0, d_bv4_zero});
-    ASSERT_EQ(ones, d_rewriter.rewrite(bvudiv_rhs3));
-    // lhs 0
-    Node bvudiv_lhs2 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_zero, bvudiv_rhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvudiv_lhs2));
-    // with empty cache
-    ASSERT_EQ(d_bv4_zero, Rewriter().rewrite(bvudiv_lhs2));
-    ASSERT_EQ(ones, Rewriter().rewrite(bvudiv_rhs3));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_bv4_zero, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_bv4_zero}));
     //// does not apply
-    Node bvudiv_x0 = d_nm.mk_node(
-        Kind::BV_UDIV, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvudiv_x0, d_rewriter.rewrite(bvudiv_x0));
-    Node bvudiv_x1 = d_nm.mk_node(
-        Kind::BV_UDIV,
-        {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvudiv_x1, d_rewriter.rewrite(bvudiv_x1));
-    Node bvudiv_x2 = d_nm.mk_node(
-        Kind::BV_UDIV,
-        {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvudiv_x2, d_rewriter.rewrite(bvudiv_x2));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_UDIV, {d_nm.mk_value(BitVector(4, "1110")), d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_UDIV, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
   }
   ////// special const 1
   {
     //// applies
-    // rhs 1
-    Node bvudiv_rhs0 = d_nm.mk_node(Kind::BV_UDIV, {d_a1, d_bv1_one});
-    ASSERT_EQ(d_a1, d_rewriter.rewrite(bvudiv_rhs0));
-    Node bvudiv_rhs1 = d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_bv4_one});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvudiv_rhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a1, d_bv1_one}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_bv4_one}));
     //// does not apply
-    Node bvudiv_x0 = d_nm.mk_node(Kind::BV_UDIV, {d_bv1_one, d_a1});
-    ASSERT_EQ(bvudiv_x0, d_rewriter.rewrite(bvudiv_x0));
-    Node bvudiv_x1 = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_one, d_a4});
-    ASSERT_EQ(bvudiv_x1, d_rewriter.rewrite(bvudiv_x1));
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_UDIV, {d_bv1_one, d_a1}));
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_UDIV, {d_bv4_one, d_a4}));
   }
 }
 
@@ -795,6 +512,7 @@ TEST_F(TestRewriterBv, bv_udiv_special_const)
 
 TEST_F(TestRewriterBv, bv_ult_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ULT_EVAL;
   //// applies
   Node bvult0 = d_nm.mk_node(Kind::BV_ULT,
                              {d_nm.mk_value(BitVector(4, "1001")),
@@ -807,80 +525,38 @@ TEST_F(TestRewriterBv, bv_ult_eval)
   // with empty cache
   ASSERT_EQ(d_false, Rewriter().rewrite(bvult1));
   //// does not apply
-  Node bvult_x0 = d_nm.mk_node(
-      Kind::BV_ULT,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvult_x0, d_rewriter.rewrite(bvult_x0));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ULT, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
 }
 
 TEST_F(TestRewriterBv, bv_ult_special_const)
 {
-  Node bvadd0 = d_nm.mk_node(Kind::BV_ADD,
-                             {d_nm.mk_node(Kind::BV_ADD,
-                                           {d_nm.mk_value(BitVector(1, "1")),
-                                            d_nm.mk_value(BitVector(1, "0"))}),
-                              d_nm.mk_value(BitVector(1, "1"))});
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ULT_SPECIAL_CONST;
   ////// special const 0
   {
-    Node dis1 = d_nm.mk_node(Kind::NOT,
-                             {d_nm.mk_node(Kind::EQUAL, {d_bv1_zero, d_a1})});
-    Node dis4 = d_nm.mk_node(Kind::NOT,
-                             {d_nm.mk_node(Kind::EQUAL, {d_bv4_zero, d_a4})});
     //// applies
-    // lhs 0
-    Node bvult_lhs0 = d_nm.mk_node(Kind::BV_ULT, {d_bv1_zero, d_a1});
-    ASSERT_EQ(dis1, d_rewriter.rewrite(bvult_lhs0));
-    Node bvult_lhs1 = d_nm.mk_node(Kind::BV_ULT, {bvadd0, d_a1});
-    ASSERT_EQ(dis1, d_rewriter.rewrite(bvult_lhs1));
-    Node bvult_lhs2 = d_nm.mk_node(Kind::BV_ULT, {d_bv4_zero, d_a4});
-    ASSERT_EQ(dis4, d_rewriter.rewrite(bvult_lhs2));
-    // rhs 0
-    Node bvult_rhs0 = d_nm.mk_node(Kind::BV_ULT, {d_a1, d_bv1_zero});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvult_rhs0));
-    Node bvult_rhs1 = d_nm.mk_node(Kind::BV_ULT, {d_a1, bvadd0});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvult_rhs1));
-    Node bvult_rhs2 = d_nm.mk_node(Kind::BV_ULT, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvult_rhs2));
-    // with empty cache
-    ASSERT_EQ(dis1, Rewriter().rewrite(bvult_lhs1));
-    ASSERT_EQ(d_false, Rewriter().rewrite(bvult_rhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_bv1_zero, d_a1}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_bv4_zero, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_a1, d_bv1_zero}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_a4, d_bv4_zero}));
     //// does not apply
-    Node bvult_x0 = d_nm.mk_node(
-        Kind::BV_ULT, {d_nm.mk_const(d_bv1_type), d_nm.mk_const(d_bv1_type)});
-    ASSERT_EQ(bvult_x0, d_rewriter.rewrite(bvult_x0));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_ULT, {d_a1, d_a1}));
   }
   ////// special const 1
   {
-    Node dis1 = d_nm.mk_node(Kind::NOT,
-                             {d_nm.mk_node(Kind::EQUAL, {d_bv1_ones, d_a1})});
-    Node dis4 = d_nm.mk_node(Kind::NOT,
-                             {d_nm.mk_node(Kind::EQUAL, {d_bv4_ones, d_a4})});
     //// applies
-    // lhs 1
-    Node bvult_lhs0 = d_nm.mk_node(Kind::BV_ULT, {d_bv1_one, d_a1});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvult_lhs0));
-    // rhs 1
-    Node bvult_rhs0 = d_nm.mk_node(Kind::BV_ULT, {d_a1, d_bv1_one});
-    ASSERT_EQ(d_nm.mk_node(Kind::EQUAL, {d_a1, d_bv1_zero}),
-              d_rewriter.rewrite(bvult_rhs0));
-    Node bvult_rhs1 = d_nm.mk_node(Kind::BV_ULT, {d_a4, d_bv4_one});
-    ASSERT_EQ(d_nm.mk_node(Kind::EQUAL, {d_a4, d_bv4_zero}),
-              d_rewriter.rewrite(bvult_rhs1));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_bv1_one, d_a1}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_a1, d_bv1_one}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_a4, d_bv4_one}));
     //// does not apply
-    Node bvult_x0 = d_nm.mk_node(Kind::BV_ULT, {d_bv4_one, d_a4});
-    ASSERT_EQ(bvult_x0, d_rewriter.rewrite(bvult_x0));
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_ULT, {d_bv4_one, d_a4}));
   }
   ////// special const ones
   {
     //// applies
-    // lhs ones
-    Node bvult_lhs0 = d_nm.mk_node(Kind::BV_ULT, {d_bv4_ones, d_a4});
-    ASSERT_EQ(d_false, d_rewriter.rewrite(bvult_lhs0));
-    //// does not apply
-    Node bvult_x0 = d_nm.mk_node(Kind::BV_ULT, {d_a4, d_bv4_ones});
-    ASSERT_EQ(
-        Rewriter().rewrite(d_nm.mk_node(Kind::DISTINCT, {d_a4, d_bv4_ones})),
-        d_rewriter.rewrite(bvult_x0));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_bv4_ones, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_a4, d_bv4_ones}));
   }
 }
 
@@ -888,6 +564,7 @@ TEST_F(TestRewriterBv, bv_ult_special_const)
 
 TEST_F(TestRewriterBv, bv_urem_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UREM_EVAL;
   //// applies
   Node bvurem0 = d_nm.mk_node(Kind::BV_UREM,
                               {d_nm.mk_value(BitVector(4, "1001")),
@@ -904,52 +581,24 @@ TEST_F(TestRewriterBv, bv_urem_eval)
   // with empty cache
   ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvurem1_2));
   //// does not apply
-  Node bvurem_x0 = d_nm.mk_node(
-      Kind::BV_UREM,
-      {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvurem_x0, d_rewriter.rewrite(bvurem_x0));
-  Node bvurem_x1 = d_nm.mk_node(
-      Kind::BV_UREM, {bvurem_x0, d_nm.mk_value(BitVector(4, "1110"))});
-  ASSERT_EQ(bvurem_x1, d_rewriter.rewrite(bvurem_x1));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_UREM, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
 }
 
 TEST_F(TestRewriterBv, bv_urem_special_const)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_UREM_SPECIAL_CONST;
   ////// special const 0
   {
     //// applies
-    // lhs 0
-    Node bvurem_lhs0 = d_nm.mk_node(Kind::BV_UREM, {d_bv4_zero, d_a4});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem_lhs0));
-    Node bvurem_lhs1 = d_nm.mk_node(Kind::BV_UREM, {d_bv4_zero, bvurem_lhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem_lhs1));
-    // rhs 0
-    Node bvurem_rhs0 = d_nm.mk_node(Kind::BV_UREM, {d_a4, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvurem_rhs0));
-    Node bvurem_rhs1 = d_nm.mk_node(Kind::BV_UREM, {d_a4, bvurem_lhs0});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvurem_rhs1));
-    Node bvurem_rhs2 = d_nm.mk_node(Kind::BV_UREM, {bvurem_lhs0, d_bv4_zero});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem_rhs2));
-    Node bvurem_rhs3 = d_nm.mk_node(Kind::BV_UREM, {bvurem_rhs0, d_bv4_zero});
-    ASSERT_EQ(d_a4, d_rewriter.rewrite(bvurem_rhs3));
-    // lhs 0
-    Node bvurem_lhs2 = d_nm.mk_node(Kind::BV_UREM, {d_bv4_zero, bvurem_rhs0});
-    ASSERT_EQ(d_bv4_zero, d_rewriter.rewrite(bvurem_lhs2));
-    // with empty cache
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvurem_rhs1));
-    ASSERT_EQ(d_a4, Rewriter().rewrite(bvurem_rhs3));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_UREM, {d_bv4_zero, d_a4}));
+    test_rule<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a4, d_bv4_zero}));
     //// does not apply
-    Node bvurem_x0 = d_nm.mk_node(
-        Kind::BV_UREM, {d_nm.mk_const(d_bv4_type), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvurem_x0, d_rewriter.rewrite(bvurem_x0));
-    Node bvurem_x1 = d_nm.mk_node(
-        Kind::BV_UREM,
-        {d_nm.mk_value(BitVector(4, "1110")), d_nm.mk_const(d_bv4_type)});
-    ASSERT_EQ(bvurem_x1, d_rewriter.rewrite(bvurem_x1));
-    Node bvurem_x2 = d_nm.mk_node(
-        Kind::BV_UREM,
-        {d_nm.mk_const(d_bv4_type), d_nm.mk_value(BitVector(4, "1110"))});
-    ASSERT_EQ(bvurem_x2, d_rewriter.rewrite(bvurem_x2));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a4, d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_UREM, {d_nm.mk_value(BitVector(4, "1110")), d_a4}));
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_UREM, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
   }
 }
 

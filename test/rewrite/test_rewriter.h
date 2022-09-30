@@ -9,6 +9,21 @@ static const char* s_solver_binary = std::getenv("SOLVER_BINARY");
 class TestRewriter : public ::testing::Test
 {
  protected:
+  void SetUp() override
+  {
+    d_bv4_type  = d_nm.mk_bv_type(4);
+    d_bv1_type  = d_nm.mk_bv_type(1);
+    d_fp35_type = d_nm.mk_fp_type(3, 5);
+    d_bv4_zero  = d_nm.mk_value(BitVector::mk_zero(4));
+    d_bv1_zero  = d_nm.mk_value(BitVector::mk_zero(1));
+    d_bv4_one   = d_nm.mk_value(BitVector::mk_one(4));
+    d_bv1_one   = d_nm.mk_value(BitVector::mk_one(1));
+    d_bv4_ones  = d_nm.mk_value(BitVector::mk_ones(4));
+    d_bv1_ones  = d_nm.mk_value(BitVector::mk_ones(1));
+    d_false     = d_nm.mk_value(false);
+    d_true      = d_nm.mk_value(true);
+  }
+
   static std::string check_sat(std::stringstream& ss)
   {
     std::stringstream bench;
@@ -87,6 +102,63 @@ class TestRewriter : public ::testing::Test
        << "))\n";
     ASSERT_EQ(check_sat(ss), "unsat");
   }
+
+  template <RewriteRuleKind K>
+  void test_rule(const Node& node)
+  {
+    if (s_solver_binary == nullptr)
+    {
+      GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
+    }
+    Rewriter rewriter;
+    std::stringstream ss;
+    std::vector<std::reference_wrapper<const Node>> visit{node};
+    std::unordered_set<Node> visited;
+    do
+    {
+      const Node& cur = visit.back();
+      visit.pop_back();
+      auto [it, inserted] = visited.emplace(cur);
+      if (inserted)
+      {
+        if (cur.is_const())
+        {
+          ss << "(declare-const " << cur << " " << cur.type() << ")\n";
+        }
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+    } while (!visit.empty());
+    Node res;
+    RewriteRuleKind kind;
+    std::tie(res, kind) = RewriteRule<K>::apply(rewriter, node);
+    if (res == node)
+    {
+      std::cout << "node: " << node << std::endl;
+    }
+    ASSERT_NE(node, res);
+    ss << "(assert (distinct " << node << " " << res << "))\n";
+    ASSERT_EQ(check_sat(ss), "unsat");
+  }
+
+  template <RewriteRuleKind K>
+  void test_rule_does_not_apply(const Node& node)
+  {
+    ASSERT_EQ(node, RewriteRule<K>::apply(d_rewriter, node).first);
+  }
+
+  Rewriter d_rewriter;
+  NodeManager& d_nm = NodeManager::get();
+  Type d_bv4_type;
+  Type d_bv1_type;
+  Type d_fp35_type;
+  Node d_bv4_zero;
+  Node d_bv1_zero;
+  Node d_bv1_one;
+  Node d_bv4_one;
+  Node d_bv1_ones;
+  Node d_bv4_ones;
+  Node d_false;
+  Node d_true;
 };
 
 }  // namespace bzla::test
