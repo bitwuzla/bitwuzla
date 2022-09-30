@@ -281,6 +281,16 @@ TEST_F(TestRewriterBv, bv_not_eval)
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_NOT, {d_a4}));
 }
 
+TEST_F(TestRewriterBv, bv_not_bv_not)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_NOT_BV_NOT;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_NOT, {d_a4})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_NOT, {d_a4}));
+}
+
 /* bvshl -------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_shl_eval)
