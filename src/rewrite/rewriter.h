@@ -74,7 +74,7 @@ class Rewriter
   Node rewrite_bv_uge(const Node& node);
   Node rewrite_bv_ugt(const Node& node);
   Node rewrite_bv_ule(const Node& node);
-  // Node rewrite_bv_umulo(const Node& node);
+  Node rewrite_bv_umulo(const Node& node);
   Node rewrite_bv_usubo(const Node& node);
   Node rewrite_bv_xnor(const Node& node);
   Node rewrite_bv_zero_extend(const Node& node);
@@ -194,7 +194,7 @@ enum class RewriteRuleKind
   BV_UGE_ELIM,
   BV_UGT_ELIM,
   BV_ULE_ELIM,
-  // BV_UMULO_ELIM,
+  BV_UMULO_ELIM,
   BV_USUBO_ELIM,
   BV_XNOR_ELIM,
   BV_XOR_ELIM,

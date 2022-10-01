@@ -144,7 +144,7 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::BV_SREM: res = rewrite_bv_srem(node); break;
     case node::Kind::BV_SSUBO: res = rewrite_bv_ssubo(node); break;
     case node::Kind::BV_SUB: res = rewrite_bv_sub(node); break;
-    // case node::Kind::BV_UMULO: res = rewrite_bv_umulo(node); break;
+    case node::Kind::BV_UMULO: res = rewrite_bv_umulo(node); break;
     case node::Kind::BV_UADDO: res = rewrite_bv_uaddo(node); break;
     case node::Kind::BV_UGE: res = rewrite_bv_uge(node); break;
     case node::Kind::BV_UGT: res = rewrite_bv_ugt(node); break;
@@ -473,7 +473,7 @@ BZLA_ELIM_KIND_IMPL(bv_uaddo, BV_UADDO_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_uge, BV_UGE_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_ugt, BV_UGT_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_ule, BV_ULE_ELIM)
-// BZLA_ELIM_KIND_IMPL(bv_umulo, BV_UMULO_ELIM)
+BZLA_ELIM_KIND_IMPL(bv_umulo, BV_UMULO_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_usubo, BV_USUBO_ELIM)
 BZLA_ELIM_KIND_IMPL(bv_xnor, BV_XNOR_ELIM)
 // BZLA_ELIM_KIND_IMPL(bv_xor, BV_XOR_ELIM) do not eliminate

@@ -343,6 +343,10 @@ Node RewriteRule<RewriteRuleKind::BV_ULE_ELIM>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 
 template <>
+Node RewriteRule<RewriteRuleKind::BV_UMULO_ELIM>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
+template <>
 Node RewriteRule<RewriteRuleKind::BV_USUBO_ELIM>::_apply(Rewriter& rewriter,
                                                          const Node& node);
 

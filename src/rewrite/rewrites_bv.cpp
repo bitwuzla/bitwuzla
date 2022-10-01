@@ -1143,6 +1143,57 @@ RewriteRule<RewriteRuleKind::BV_ULE_ELIM>::_apply(Rewriter& rewriter,
 
 template <>
 Node
+RewriteRule<RewriteRuleKind::BV_UMULO_ELIM>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  /* Unsigned multiplication overflow detection.
+   * See M.Gok, M.J. Schulte, P.I. Balzola, "Efficient integer multiplication
+   * overflow detection circuits", 2001.
+   * http://ieeexplore.ieee.org/document/987767 */
+
+  uint64_t size = node[0].type().bv_size();
+
+  if (size == 1)
+  {
+    return NodeManager::get().mk_value(false);
+  }
+
+  Node res;
+  Node uppc =
+      rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, size - 1});
+
+  for (uint64_t i = 1; i < size; ++i)
+  {
+    Node aand = rewriter.mk_node(
+        Kind::BV_AND,
+        {rewriter.mk_node(Kind::BV_EXTRACT, {node[1]}, {i, i}), uppc});
+    if (res.is_null())
+    {
+      res = aand;
+    }
+    else
+    {
+      res = rewriter.mk_node(Kind::BV_OR, {res, aand});
+    }
+    uppc = rewriter.mk_node(
+        Kind::BV_OR,
+        {rewriter.mk_node(
+             Kind::BV_EXTRACT, {node[0]}, {size - 1 - i, size - 1 - i}),
+         uppc});
+  }
+  Node mul = rewriter.mk_node(
+      Kind::BV_MUL,
+      {rewriter.mk_node(Kind::BV_ZERO_EXTEND, {node[0]}, {1}),
+       rewriter.mk_node(Kind::BV_ZERO_EXTEND, {node[1]}, {1})});
+  res = rewriter.mk_node(
+      Kind::BV_OR,
+      {res, rewriter.mk_node(Kind::BV_EXTRACT, {mul}, {size, size})});
+  return rewriter.mk_node(
+      Kind::EQUAL, {res, NodeManager::get().mk_value(BitVector::mk_one(1))});
+}
+
+template <>
+Node
 RewriteRule<RewriteRuleKind::BV_USUBO_ELIM>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
