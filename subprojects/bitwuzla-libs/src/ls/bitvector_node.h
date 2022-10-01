@@ -375,7 +375,7 @@ class BitVectorNode
    *                   no values in the upper range are covered.
    */
   void compute_normalized_bounds(const BitVector& s,
-                                 bool t,
+                                 const BitVector& t,
                                  uint32_t pos_x,
                                  BitVector& res_min_lo,
                                  BitVector& res_max_lo,
@@ -405,7 +405,7 @@ class BitVectorNode
    *                  for unsigned operators.
    */
   virtual void compute_min_max_bounds(const BitVector& s,
-                                      bool t,
+                                      const BitVector& t,
                                       uint32_t pos_x,
                                       BitVector& res_min_u,
                                       BitVector& res_max_u,
@@ -546,6 +546,13 @@ class BitVectorAnd : public BitVectorNode
 
   void evaluate() override;
 
+  void compute_min_max_bounds(const BitVector& s,
+                              const BitVector& t,
+                              uint32_t pos_x,
+                              BitVector& res_min_u,
+                              BitVector& res_max_u,
+                              BitVector& res_min_s,
+                              BitVector& res_max_s) override;
   /**
    * IC:
    *   w/o const bits (IC_wo): (t & s) = t
@@ -603,6 +610,10 @@ class BitVectorAnd : public BitVectorNode
    *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
+  /** Cache for current lower bound wrt. s and t and fixed bits in x. */
+  BitVector d_lo;
+  /** Cache for current upper bound wrt. s and t and fixed bits in x. */
+  BitVector d_hi;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorAnd& node);
@@ -1311,7 +1322,7 @@ class BitVectorUlt : public BitVectorNode
   std::string to_string() const override;
 
   void compute_min_max_bounds(const BitVector& s,
-                              bool t,
+                              const BitVector& t,
                               uint32_t pos_x,
                               BitVector& res_min_u,
                               BitVector& res_max_u,
@@ -1363,7 +1374,7 @@ class BitVectorUlt : public BitVectorNode
    */
   bool _is_invertible(const BitVectorDomain* d,
                       const BitVector& s,
-                      bool t,
+                      const BitVector& t,
                       uint32_t pos_x,
                       bool is_essential_check);
 
@@ -1457,7 +1468,7 @@ class BitVectorSlt : public BitVectorNode
   std::string to_string() const override;
 
   void compute_min_max_bounds(const BitVector& s,
-                              bool t,
+                              const BitVector& t,
                               uint32_t pos_x,
                               BitVector& res_min_u,
                               BitVector& res_max_u,
@@ -1509,7 +1520,7 @@ class BitVectorSlt : public BitVectorNode
    */
   bool _is_invertible(const BitVectorDomain* d,
                       const BitVector& s,
-                      bool t,
+                      const BitVector& t,
                       uint32_t pos_x,
                       bool is_essential_check);
   /**
