@@ -663,10 +663,10 @@ Node
 RewriteRule<RewriteRuleKind::BV_ROLI_ELIM>::_apply(Rewriter& rewriter,
                                                    const Node& node)
 {
-  uint64_t rotate_by = node.index(0);
+  uint64_t size      = node.type().bv_size();
+  uint64_t rotate_by = node.index(0) % size;
   if (rotate_by)
   {
-    uint64_t size = node.type().bv_size();
     return rewriter.mk_node(
         Kind::BV_CONCAT,
         {rewriter.mk_node(
@@ -713,10 +713,10 @@ Node
 RewriteRule<RewriteRuleKind::BV_RORI_ELIM>::_apply(Rewriter& rewriter,
                                                    const Node& node)
 {
-  uint64_t rotate_by = node.index(0);
+  uint64_t size      = node.type().bv_size();
+  uint64_t rotate_by = node.index(0) % size;
   if (rotate_by)
   {
-    uint64_t size = node.type().bv_size();
     return rewriter.mk_node(
         Kind::BV_CONCAT,
         {rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {rotate_by - 1, 0}),
@@ -772,7 +772,10 @@ RewriteRule<RewriteRuleKind::BV_SDIV_ELIM>::_apply(Rewriter& rewriter,
   if (size == 1)
   {
     return rewriter.mk_node(
-        Kind::BV_NOT, {rewriter.mk_node(Kind::BV_NOT, {node[0]}), node[1]});
+        Kind::BV_NOT,
+        {rewriter.mk_node(
+            Kind::BV_AND,
+            {rewriter.mk_node(Kind::BV_NOT, {node[0]}), node[1]})});
   }
 
   // Extract MSB of operands

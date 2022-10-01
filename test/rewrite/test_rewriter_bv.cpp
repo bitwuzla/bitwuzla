@@ -20,11 +20,6 @@ class TestRewriterBv : public TestRewriter
   }
 
  protected:
-  void test_elim_rule_bv(Kind kind)
-  {
-    test_elim_rule(kind, d_nm.mk_bv_type(8));
-  }
-
   Node d_a1;
   Node d_a4;
 };
@@ -614,74 +609,220 @@ TEST_F(TestRewriterBv, bv_urem_special_const)
 
 /* --- Elimination Rules ---------------------------------------------------- */
 
-TEST_F(TestRewriterBv, bv_nand_elim) { test_elim_rule_bv(Kind::BV_NAND); }
+TEST_F(TestRewriterBv, bv_nand_elim)
+{
+  test_elim_rule(Kind::BV_NAND, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_NAND, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_NAND, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_NAND, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_NAND, d_nm.mk_bv_type(8));
+}
 
-TEST_F(TestRewriterBv, bv_neg_elim) { test_elim_rule_bv(Kind::BV_NEG); }
+TEST_F(TestRewriterBv, bv_neg_elim)
+{
+  test_elim_rule(Kind::BV_NEG, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_NEG, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_NEG, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_NEG, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_NEG, d_nm.mk_bv_type(8));
+}
 
-TEST_F(TestRewriterBv, bv_nor_elim) { test_elim_rule_bv(Kind::BV_NOR); }
+TEST_F(TestRewriterBv, bv_nor_elim)
+{
+  test_elim_rule(Kind::BV_NOR, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_NOR, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_NOR, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_NOR, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_NOR, d_nm.mk_bv_type(8));
+}
 
-TEST_F(TestRewriterBv, bv_or_elim) { test_elim_rule_bv(Kind::BV_OR); }
+TEST_F(TestRewriterBv, bv_or_elim)
+{
+  test_elim_rule(Kind::BV_OR, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_OR, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_OR, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_OR, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_OR, d_nm.mk_bv_type(8));
+}
 
-TEST_F(TestRewriterBv, bv_redand_elim) { test_elim_rule_bv(Kind::BV_REDAND); }
+TEST_F(TestRewriterBv, bv_redand_elim)
+{
+  test_elim_rule(Kind::BV_REDAND, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_REDAND, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_REDAND, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_REDAND, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_REDAND, d_nm.mk_bv_type(8));
+}
 
-TEST_F(TestRewriterBv, bv_redor_elim) { test_elim_rule_bv(Kind::BV_REDOR); }
+TEST_F(TestRewriterBv, bv_redor_elim)
+{
+  test_elim_rule(Kind::BV_REDOR, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_REDOR, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_REDOR, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_REDOR, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_REDOR, d_nm.mk_bv_type(8));
+}
 
 // not supported by Bitwuzla main
 // TEST_F(TestRewriterBv, bv_redxor_elim) { test_elim_rule_bv(Kind::BV_REDXOR);
 // }
 
-TEST_F(TestRewriterBv, bv_roli_elim) { test_elim_rule_bv(Kind::BV_ROLI); }
+TEST_F(TestRewriterBv, bv_roli_elim)
+{
+  test_elim_rule(Kind::BV_ROLI, d_nm.mk_bv_type(1), {0});
+  test_elim_rule(Kind::BV_ROLI, d_nm.mk_bv_type(2), {1});
+  test_elim_rule(Kind::BV_ROLI, d_nm.mk_bv_type(3), {2});
+  test_elim_rule(Kind::BV_ROLI, d_nm.mk_bv_type(4), {3});
+  test_elim_rule(Kind::BV_ROLI, d_nm.mk_bv_type(8), {12});
+}
 
-TEST_F(TestRewriterBv, bv_rori_elim) { test_elim_rule_bv(Kind::BV_RORI); }
+TEST_F(TestRewriterBv, bv_rori_elim)
+{
+  test_elim_rule(Kind::BV_RORI, d_nm.mk_bv_type(1), {0});
+  test_elim_rule(Kind::BV_RORI, d_nm.mk_bv_type(2), {1});
+  test_elim_rule(Kind::BV_RORI, d_nm.mk_bv_type(3), {2});
+  test_elim_rule(Kind::BV_RORI, d_nm.mk_bv_type(4), {3});
+  test_elim_rule(Kind::BV_RORI, d_nm.mk_bv_type(8), {12});
+}
 
-TEST_F(TestRewriterBv, bv_repeat_elim) { test_elim_rule_bv(Kind::BV_REPEAT); }
+TEST_F(TestRewriterBv, bv_repeat_elim)
+{
+  test_elim_rule(Kind::BV_REPEAT, d_nm.mk_bv_type(1), {1});
+  test_elim_rule(Kind::BV_REPEAT, d_nm.mk_bv_type(2), {1});
+  test_elim_rule(Kind::BV_REPEAT, d_nm.mk_bv_type(3), {2});
+  test_elim_rule(Kind::BV_REPEAT, d_nm.mk_bv_type(4), {3});
+  test_elim_rule(Kind::BV_REPEAT, d_nm.mk_bv_type(8), {4});
+}
 
 TEST_F(TestRewriterBv, bv_saddo_elim) { test_elim_rule_bv(Kind::BV_SADDO); }
 
-TEST_F(TestRewriterBv, bv_sdiv_elim) { test_elim_rule_bv(Kind::BV_SDIV); }
+TEST_F(TestRewriterBv, bv_sdiv_elim)
+{
+  test_elim_rule(Kind::BV_SDIV, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_SDIV, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_SDIV, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_SDIV, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_SDIV, d_nm.mk_bv_type(8));
+}
 
 TEST_F(TestRewriterBv, bv_sdivo_elim) { test_elim_rule_bv(Kind::BV_SDIVO); }
 
-TEST_F(TestRewriterBv, bv_sge_elim) { test_elim_rule_bv(Kind::BV_SGE); }
+TEST_F(TestRewriterBv, bv_sge_elim)
+{
+  test_elim_rule(Kind::BV_SGE, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_SGE, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_SGE, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_SGE, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_SGE, d_nm.mk_bv_type(8));
+}
 
-TEST_F(TestRewriterBv, bv_sgt_elim) { test_elim_rule_bv(Kind::BV_SGT); }
+TEST_F(TestRewriterBv, bv_sgt_elim)
+{
+  test_elim_rule(Kind::BV_SGT, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_SGT, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_SGT, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_SGT, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_SGT, d_nm.mk_bv_type(8));
+}
 
 TEST_F(TestRewriterBv, bv_sign_extend_elim)
 {
-  test_elim_rule_bv(Kind::BV_SIGN_EXTEND);
+  test_elim_rule(Kind::BV_SIGN_EXTEND, d_nm.mk_bv_type(1), {0});
+  test_elim_rule(Kind::BV_SIGN_EXTEND, d_nm.mk_bv_type(2), {1});
+  test_elim_rule(Kind::BV_SIGN_EXTEND, d_nm.mk_bv_type(3), {2});
+  test_elim_rule(Kind::BV_SIGN_EXTEND, d_nm.mk_bv_type(4), {3});
+  test_elim_rule(Kind::BV_SIGN_EXTEND, d_nm.mk_bv_type(8), {4});
 }
 
-TEST_F(TestRewriterBv, bv_sle_elim) { test_elim_rule_bv(Kind::BV_SLE); }
+TEST_F(TestRewriterBv, bv_sle_elim)
+{
+  test_elim_rule(Kind::BV_SLE, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_SLE, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_SLE, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_SLE, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_SLE, d_nm.mk_bv_type(8));
+}
 
-TEST_F(TestRewriterBv, bv_smod_elim) { test_elim_rule_bv(Kind::BV_SMOD); }
+TEST_F(TestRewriterBv, bv_smod_elim)
+{
+  test_elim_rule(Kind::BV_SMOD, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_SMOD, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_SMOD, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_SMOD, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_SMOD, d_nm.mk_bv_type(8));
+}
 
 TEST_F(TestRewriterBv, bv_smulo_elim) { test_elim_rule_bv(Kind::BV_SMULO); }
 
-TEST_F(TestRewriterBv, bv_srem_elim) { test_elim_rule_bv(Kind::BV_SREM); }
+TEST_F(TestRewriterBv, bv_srem_elim)
+{
+  test_elim_rule(Kind::BV_SREM, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_SREM, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_SREM, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_SREM, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_SREM, d_nm.mk_bv_type(8));
+}
 
 TEST_F(TestRewriterBv, bv_ssubo_elim) { test_elim_rule_bv(Kind::BV_SSUBO); }
 
-TEST_F(TestRewriterBv, bv_sub_elim) { test_elim_rule_bv(Kind::BV_SUB); }
+TEST_F(TestRewriterBv, bv_sub_elim)
+{
+  test_elim_rule(Kind::BV_SUB, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_SUB, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_SUB, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_SUB, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_SUB, d_nm.mk_bv_type(8));
+}
 
 TEST_F(TestRewriterBv, bv_uaddo_elim) { test_elim_rule_bv(Kind::BV_UADDO); }
 
-TEST_F(TestRewriterBv, bv_uge_elim) { test_elim_rule_bv(Kind::BV_UGE); }
+TEST_F(TestRewriterBv, bv_uge_elim)
+{
+  test_elim_rule(Kind::BV_UGE, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_UGE, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_UGE, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_UGE, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_UGE, d_nm.mk_bv_type(8));
+}
 
-TEST_F(TestRewriterBv, bv_ugt_elim) { test_elim_rule_bv(Kind::BV_UGT); }
+TEST_F(TestRewriterBv, bv_ugt_elim)
+{
+  test_elim_rule(Kind::BV_UGT, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_UGT, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_UGT, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_UGT, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_UGT, d_nm.mk_bv_type(8));
+}
 
-TEST_F(TestRewriterBv, bv_ule_elim) { test_elim_rule_bv(Kind::BV_ULE); }
+TEST_F(TestRewriterBv, bv_ule_elim)
+{
+  test_elim_rule(Kind::BV_ULE, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_ULE, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_ULE, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_ULE, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_ULE, d_nm.mk_bv_type(8));
+}
 
 TEST_F(TestRewriterBv, bv_umulo_elim) { test_elim_rule_bv(Kind::BV_UMULO); }
 
 TEST_F(TestRewriterBv, bv_usubo_elim) { test_elim_rule_bv(Kind::BV_USUBO); }
 
-TEST_F(TestRewriterBv, bv_xnor_elim) { test_elim_rule_bv(Kind::BV_XNOR); }
-
-TEST_F(TestRewriterBv, bv_xor_elim) { test_elim_rule_bv(Kind::BV_XOR); }
+TEST_F(TestRewriterBv, bv_xnor_elim)
+{
+  test_elim_rule(Kind::BV_XNOR, d_nm.mk_bv_type(1));
+  test_elim_rule(Kind::BV_XNOR, d_nm.mk_bv_type(2));
+  test_elim_rule(Kind::BV_XNOR, d_nm.mk_bv_type(3));
+  test_elim_rule(Kind::BV_XNOR, d_nm.mk_bv_type(4));
+  test_elim_rule(Kind::BV_XNOR, d_nm.mk_bv_type(8));
+}
 
 TEST_F(TestRewriterBv, bv_zero_extend_elim)
 {
-  test_elim_rule_bv(Kind::BV_ZERO_EXTEND);
+  test_elim_rule(Kind::BV_ZERO_EXTEND, d_nm.mk_bv_type(1), {0});
+  test_elim_rule(Kind::BV_ZERO_EXTEND, d_nm.mk_bv_type(2), {1});
+  test_elim_rule(Kind::BV_ZERO_EXTEND, d_nm.mk_bv_type(3), {2});
+  test_elim_rule(Kind::BV_ZERO_EXTEND, d_nm.mk_bv_type(4), {3});
+  test_elim_rule(Kind::BV_ZERO_EXTEND, d_nm.mk_bv_type(8), {4});
 }
 
 /* -------------------------------------------------------------------------- */

@@ -60,7 +60,9 @@ class TestRewriter : public ::testing::Test
     return result.substr(0, newline_pos);
   }
 
-  void test_elim_rule(node::Kind kind, const Type& type)
+  void test_elim_rule(node::Kind kind,
+                      const Type& type,
+                      const std::vector<uint64_t>& indices = {})
   {
     if (s_solver_binary == nullptr)
     {
@@ -69,10 +71,10 @@ class TestRewriter : public ::testing::Test
 
     size_t num_children = node::s_node_kind_info[kind].num_children;
     size_t num_indices  = node::s_node_kind_info[kind].num_indices;
+    ASSERT_EQ(indices.size(), num_indices);
 
     NodeManager& nm = NodeManager::get();
     std::vector<Node> children;
-    std::vector<uint64_t> indices;
     if (num_children >= 1)
     {
       children.push_back(nm.mk_const(type, "a"));
@@ -80,15 +82,6 @@ class TestRewriter : public ::testing::Test
     if (num_children >= 2)
     {
       children.push_back(nm.mk_const(type, "b"));
-    }
-
-    if (num_indices == 1)
-    {
-      indices.push_back(7);
-    }
-    if (num_indices == 2)
-    {
-      indices.push_back(1);
     }
 
     Node node = nm.mk_node(kind, children, indices);
