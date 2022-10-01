@@ -730,7 +730,8 @@ Node
 RewriteRule<RewriteRuleKind::BV_SADDO_ELIM>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
-  uint64_t size = node.type().bv_size();
+  assert(node.num_children() == 2);
+  uint64_t size = node[0].type().bv_size();
   const Node& sign0 =
       rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, size - 1});
   const Node& sign1 =
@@ -811,8 +812,9 @@ Node
 RewriteRule<RewriteRuleKind::BV_SDIVO_ELIM>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
+  assert(node.num_children() == 2);
   // Overflow if node[0] = min_signed and node[1] = -1
-  uint64_t size   = node.type().bv_size();
+  uint64_t size   = node[0].type().bv_size();
   NodeManager& nm = NodeManager::get();
   Node min_signed = nm.mk_value(BitVector::mk_min_signed(size));
   Node ones       = nm.mk_value(BitVector::mk_ones(size));
@@ -1060,7 +1062,8 @@ Node
 RewriteRule<RewriteRuleKind::BV_SSUBO_ELIM>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
-  uint64_t size = node.type().bv_size();
+  assert(node.num_children() == 2);
+  uint64_t size = node[0].type().bv_size();
   const Node& sign0 =
       rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, size - 1});
   const Node& sign1 =
