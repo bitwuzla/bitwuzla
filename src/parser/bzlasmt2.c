@@ -264,13 +264,14 @@ typedef enum BzlaSMT2Tag
   /* Bitwuzla extensions */
   BZLA_BV_REDOR_TAG_SMT2  = 36 + BZLA_BV_TAG_CLASS_SMT2,
   BZLA_BV_REDAND_TAG_SMT2 = 37 + BZLA_BV_TAG_CLASS_SMT2,
-  BZLA_BV_SADDO_TAG_SMT2  = 38 + BZLA_BV_TAG_CLASS_SMT2,
-  BZLA_BV_UADDO_TAG_SMT2  = 39 + BZLA_BV_TAG_CLASS_SMT2,
-  BZLA_BV_SDIVO_TAG_SMT2  = 40 + BZLA_BV_TAG_CLASS_SMT2,
-  BZLA_BV_SMULO_TAG_SMT2  = 41 + BZLA_BV_TAG_CLASS_SMT2,
-  BZLA_BV_UMULO_TAG_SMT2  = 42 + BZLA_BV_TAG_CLASS_SMT2,
-  BZLA_BV_SSUBO_TAG_SMT2  = 43 + BZLA_BV_TAG_CLASS_SMT2,
-  BZLA_BV_USUBO_TAG_SMT2  = 44 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_REDXOR_TAG_SMT2 = 38 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_SADDO_TAG_SMT2  = 39 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_UADDO_TAG_SMT2  = 40 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_SDIVO_TAG_SMT2  = 41 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_SMULO_TAG_SMT2  = 42 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_UMULO_TAG_SMT2  = 43 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_SSUBO_TAG_SMT2  = 44 + BZLA_BV_TAG_CLASS_SMT2,
+  BZLA_BV_USUBO_TAG_SMT2  = 45 + BZLA_BV_TAG_CLASS_SMT2,
 
   /* Theory of Floating Point Numbers ------------------------------------- */
   BZLA_FP_FLOATINGPOINT_TAG_SMT2                = 0 + BZLA_FP_TAG_CLASS_SMT2,
@@ -1086,6 +1087,7 @@ insert_bitvec_symbols_smt2(BzlaSMT2Parser *parser)
   INSERT("bvsge", BZLA_BV_SGE_TAG_SMT2);
   /* Bitwuzla extensions */
   INSERT("bvredor", BZLA_BV_REDOR_TAG_SMT2);
+  INSERT("bvredxor", BZLA_BV_REDXOR_TAG_SMT2);
   INSERT("bvredand", BZLA_BV_REDAND_TAG_SMT2);
   INSERT("bvsaddo", BZLA_BV_SADDO_TAG_SMT2);
   INSERT("bvuaddo", BZLA_BV_UADDO_TAG_SMT2);
@@ -2083,6 +2085,7 @@ close_term_unary_bv_fun(BzlaSMT2Parser *parser,
   assert(item_cur->tag == BZLA_BV_NOT_TAG_SMT2
          || item_cur->tag == BZLA_BV_NEG_TAG_SMT2
          || item_cur->tag == BZLA_BV_REDOR_TAG_SMT2
+         || item_cur->tag == BZLA_BV_REDXOR_TAG_SMT2
          || item_cur->tag == BZLA_BV_REDAND_TAG_SMT2);
 
   const BitwuzlaTerm *exp;
@@ -3098,6 +3101,15 @@ close_term(BzlaSMT2Parser *parser)
   {
     if (!close_term_unary_bv_fun(
             parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_REDOR))
+    {
+      return 0;
+    }
+  }
+  /* BV: REDXOR ------------------------------------------------------------- */
+  else if (tag == BZLA_BV_REDXOR_TAG_SMT2)
+  {
+    if (!close_term_unary_bv_fun(
+            parser, item_open, item_cur, nargs, BITWUZLA_KIND_BV_REDXOR))
     {
       return 0;
     }

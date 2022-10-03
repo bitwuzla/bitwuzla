@@ -350,6 +350,7 @@ set(sat_testcases
 "substitute4.btor"
 "substitute40.btor"
 "substitute5.btor"
+"substitute5.smt2"
 "swapmem002se.smt2"
 "uaddo1.smt2"
 "ultsubst1.btor -rwl 0"
