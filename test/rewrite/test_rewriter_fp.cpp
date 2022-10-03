@@ -700,5 +700,11 @@ TEST_F(TestRewriterFp, fp_to_fp_from_ubv)
   ASSERT_EQ(tofpfromubv4, d_rewriter.rewrite(tofpfromubv4));
 }
 
+/* --- Elimination Rules ---------------------------------------------------- */
+
+TEST_F(TestRewriterFp, fp_equal_elim)
+{
+  test_elim_rule(Kind::FP_EQUAL, d_fp_type);
+}
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla::test

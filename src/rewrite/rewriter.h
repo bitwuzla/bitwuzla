@@ -85,6 +85,9 @@ class Rewriter
   Node rewrite_fp_abs(const Node& node);
   Node rewrite_fp_add(const Node& node);
   Node rewrite_fp_div(const Node& node);
+  Node rewrite_fp_equal(const Node& node);
+  Node rewrite_fp_gt(const Node& node);
+  Node rewrite_fp_ge(const Node& node);
   Node rewrite_fp_is_inf(const Node& node);
   Node rewrite_fp_is_nan(const Node& node);
   Node rewrite_fp_is_neg(const Node& node);
@@ -121,6 +124,8 @@ class Rewriter
 
 enum class RewriteRuleKind
 {
+  /* Boolean rewrites ---------------------------- */
+
   AND_EVAL,
 
   EQUAL_EVAL,
@@ -230,6 +235,9 @@ enum class RewriteRuleKind
   FP_TO_FP_FROM_SBV_EVAL,
   FP_TO_FP_FROM_UBV_EVAL,
 
+  FP_GE_ELIM,
+  FP_GT_ELIM,
+  FP_EQUAL_ELIM,
 };
 
 template <RewriteRuleKind K>

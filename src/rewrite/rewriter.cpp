@@ -159,6 +159,9 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::FP_ABS: res = rewrite_fp_abs(node); break;
     case node::Kind::FP_ADD: res = rewrite_fp_add(node); break;
     case node::Kind::FP_DIV: res = rewrite_fp_div(node); break;
+    case node::Kind::FP_EQUAL: res = rewrite_fp_equal(node); break;
+    case node::Kind::FP_GE: res = rewrite_fp_ge(node); break;
+    case node::Kind::FP_GT: res = rewrite_fp_gt(node); break;
 
     case node::Kind::FP_IS_INF: res = rewrite_fp_is_inf(node); break;
     case node::Kind::FP_IS_NAN: res = rewrite_fp_is_nan(node); break;
@@ -483,8 +486,6 @@ BZLA_ELIM_KIND_IMPL(bv_xnor, BV_XNOR_ELIM)
 // BZLA_ELIM_KIND_IMPL(bv_xor, BV_XOR_ELIM) do not eliminate
 BZLA_ELIM_KIND_IMPL(bv_zero_extend, BV_ZERO_EXTEND_ELIM)
 
-#undef BZLA_ELIM_KIND_IMPL
-
 /* FP rewrites -------------------------------------------------------------- */
 
 Node
@@ -773,6 +774,12 @@ Rewriter::rewrite_fp_to_fp_from_ubv(const Node& node)
 DONE:
   return res;
 }
+
+BZLA_ELIM_KIND_IMPL(fp_equal, FP_EQUAL_ELIM)
+BZLA_ELIM_KIND_IMPL(fp_gt, FP_GT_ELIM)
+BZLA_ELIM_KIND_IMPL(fp_ge, FP_GE_ELIM)
+
+#undef BZLA_ELIM_KIND_IMPL
 
 /* Array rewrites ----------------------------------------------------------- */
 
