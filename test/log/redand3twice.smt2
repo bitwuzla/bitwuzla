@@ -1,0 +1,5 @@
+(set-logic QF_BV)
+(declare-const x (_ BitVec 3))
+(declare-const y (_ BitVec 3))
+(assert (or (bvredand x) (bvredand y)))
+(check-sat)
