@@ -28,7 +28,9 @@ class Rewriter
   Node rewrite_ite(const Node& node);
   /* Eliminated operators */
   Node rewrite_distinct(const Node& node);
+  Node rewrite_implies(const Node& node);
   Node rewrite_or(const Node& node);
+  Node rewrite_xor(const Node& node);
 
   /* BV ------------------------------------------ */
   Node rewrite_bv_add(const Node& node);
@@ -127,7 +129,9 @@ enum class RewriteRuleKind
   NOT_EVAL,
 
   DISTINCT_ELIM,
+  IMPLIES_ELIM,
   OR_ELIM,
+  XOR_ELIM,
 
   /* BV rewrites --------------------------------- */
 

@@ -142,7 +142,15 @@ TEST_F(TestRewriterBool, bool_distinct_elim)
 {
   test_elim_rule_bool(Kind::DISTINCT);
 }
+
+TEST_F(TestRewriterBool, bool_implies_elim)
+{
+  test_elim_rule_bool(Kind::IMPLIES);
+}
+
 TEST_F(TestRewriterBool, bool_or_elim) { test_elim_rule_bool(Kind::OR); }
+
+TEST_F(TestRewriterBool, bool_xor_elim) { test_elim_rule_bool(Kind::XOR); }
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla::test

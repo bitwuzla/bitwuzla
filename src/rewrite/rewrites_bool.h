@@ -27,11 +27,20 @@ template <>
 Node RewriteRule<RewriteRuleKind::NOT_EVAL>::_apply(Rewriter& rewriter,
                                                     const Node& node);
 
-/* or ----------------------------------------------------------------------- */
+/* --- Elimination Rules ---------------------------------------------------- */
 
+template <>
+Node RewriteRule<RewriteRuleKind::DISTINCT_ELIM>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::IMPLIES_ELIM>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 template <>
 Node RewriteRule<RewriteRuleKind::OR_ELIM>::_apply(Rewriter& rewriter,
                                                    const Node& node);
+template <>
+Node RewriteRule<RewriteRuleKind::XOR_ELIM>::_apply(Rewriter& rewriter,
+                                                    const Node& node);
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla

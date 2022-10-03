@@ -166,6 +166,17 @@ RewriteRule<RewriteRuleKind::DISTINCT_ELIM>::_apply(Rewriter& rewriter,
 
 template <>
 Node
+RewriteRule<RewriteRuleKind::IMPLIES_ELIM>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  return rewriter.mk_node(
+      Kind::NOT,
+      {rewriter.mk_node(Kind::AND,
+                        {node[0], rewriter.mk_node(Kind::NOT, {node[1]})})});
+}
+
+template <>
+Node
 RewriteRule<RewriteRuleKind::OR_ELIM>::_apply(Rewriter& rewriter,
                                               const Node& node)
 {
@@ -174,6 +185,18 @@ RewriteRule<RewriteRuleKind::OR_ELIM>::_apply(Rewriter& rewriter,
       {rewriter.mk_node(Kind::AND,
                         {rewriter.mk_node(Kind::NOT, {node[0]}),
                          rewriter.mk_node(Kind::NOT, {node[1]})})});
+}
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::XOR_ELIM>::_apply(Rewriter& rewriter,
+                                               const Node& node)
+{
+  return rewriter.mk_node(
+      Kind::AND,
+      {rewriter.mk_node(Kind::OR, {node[0], node[1]}),
+       rewriter.mk_node(Kind::NOT,
+                        {rewriter.mk_node(Kind::AND, {node[0], node[1]})})});
 }
 
 /* -------------------------------------------------------------------------- */
