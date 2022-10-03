@@ -55,16 +55,10 @@ BvSolver::check()
   while (!d_assertion_view.empty())
   {
     const auto& [assertion, level] = d_assertion_view.next_level();
-    auto it                        = d_bitblaster_cache.find(assertion);
 
     if (level > 0)
     {
       d_assumptions.push_back(assertion);
-    }
-
-    if (it != d_bitblaster_cache.end())
-    {
-      continue;
     }
 
     bitblast(assertion);
