@@ -90,7 +90,7 @@ _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
               });
         }
       }
-      if (value0.is_ones())
+      else if (value0.is_ones())
       {
         if (node[idx1].kind() == Kind::BV_AND)
         {
