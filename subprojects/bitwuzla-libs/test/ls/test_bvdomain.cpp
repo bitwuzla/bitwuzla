@@ -1,6 +1,6 @@
 #include <bitset>
 
-#include "bitvector_domain.h"
+#include "ls/bitvector_domain.h"
 #include "test.h"
 
 namespace bzla::ls::test {

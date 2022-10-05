@@ -3,8 +3,8 @@
 
 #include <vector>
 
-#include "bitvector.h"
-#include "bitvector_domain.h"
+#include "bv/bitvector.h"
+#include "ls/bitvector_domain.h"
 
 namespace bzla {
 

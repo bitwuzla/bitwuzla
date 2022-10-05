@@ -1,4 +1,4 @@
-#include "bitvector.h"
+#include "bv/bitvector.h"
 
 #include <bitset>
 #include <cassert>
@@ -371,7 +371,7 @@ BitVector::operator=(const BitVector& other)
     {
       mpz_clear(d_val_gmp);
     }
-    d_size = 0;
+    d_size       = 0;
     d_val_uint64 = 0;
   }
   else
@@ -1293,7 +1293,7 @@ BitVector::ibvredand(const BitVector& bv)
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
-  d_size = 1;
+  d_size       = 1;
   return *this;
 }
 
@@ -1321,7 +1321,7 @@ BitVector::ibvredor(const BitVector& bv)
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
-  d_size = 1;
+  d_size       = 1;
   return *this;
 }
 
@@ -1432,7 +1432,7 @@ BitVector::ibvimplies(const BitVector& bv0, const BitVector& bv1)
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
-  d_size = 1;
+  d_size       = 1;
   return *this;
 }
 
@@ -1614,7 +1614,7 @@ BitVector::ibveq(const BitVector& bv0, const BitVector& bv1)
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
-  d_size = 1;
+  d_size       = 1;
   return *this;
 }
 
@@ -1638,7 +1638,7 @@ BitVector::ibvne(const BitVector& bv0, const BitVector& bv1)
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
-  d_size = 1;
+  d_size       = 1;
   return *this;
 }
 
@@ -1662,7 +1662,7 @@ BitVector::ibvult(const BitVector& bv0, const BitVector& bv1)
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
-  d_size = 1;
+  d_size       = 1;
   return *this;
 }
 
@@ -1686,7 +1686,7 @@ BitVector::ibvule(const BitVector& bv0, const BitVector& bv1)
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
-  d_size = 1;
+  d_size       = 1;
   return *this;
 }
 
@@ -1710,7 +1710,7 @@ BitVector::ibvugt(const BitVector& bv0, const BitVector& bv1)
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
-  d_size = 1;
+  d_size       = 1;
   return *this;
 }
 
@@ -1734,7 +1734,7 @@ BitVector::ibvuge(const BitVector& bv0, const BitVector& bv1)
   }
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
-  d_size = 1;
+  d_size       = 1;
   return *this;
 }
 
@@ -1804,13 +1804,13 @@ BitVector::ibvsgt(const BitVector& bv0, const BitVector& bv1)
   {
     if (is_gmp()) mpz_clear(d_val_gmp);
     d_val_uint64 = 0;
-    d_size = 1;
+    d_size       = 1;
   }
   else if (!msb_bv0 && msb_bv1)
   {
     if (is_gmp()) mpz_clear(d_val_gmp);
     d_val_uint64 = 1;
-    d_size = 1;
+    d_size       = 1;
   }
   else
   {
@@ -1831,13 +1831,13 @@ BitVector::ibvsge(const BitVector& bv0, const BitVector& bv1)
   {
     if (is_gmp()) mpz_clear(d_val_gmp);
     d_val_uint64 = 0;
-    d_size = 1;
+    d_size       = 1;
   }
   else if (!msb_bv0 && msb_bv1)
   {
     if (is_gmp()) mpz_clear(d_val_gmp);
     d_val_uint64 = 1;
-    d_size = 1;
+    d_size       = 1;
   }
   else
   {

@@ -1,5 +1,5 @@
 set(libbzlabv_src_files
-  bitvector.cpp
+  bv/bitvector.cpp
 )
 
 set(libbzlabb_src_files
@@ -9,7 +9,7 @@ set(libbzlabb_src_files
 )
 
 set(libbzlals_src_files
-  bitvector_domain.cpp
+  ls/bitvector_domain.cpp
   ls/ls.cpp
   ls/bitvector_node.cpp
   utils/wheel_factorizer.cpp

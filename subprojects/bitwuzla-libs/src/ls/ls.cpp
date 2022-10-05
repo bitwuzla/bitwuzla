@@ -4,7 +4,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "ls/bitvector_node.h"
 #include "rng/rng.h"
 

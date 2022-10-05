@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <vector>
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 
 namespace bzla::bb {
 

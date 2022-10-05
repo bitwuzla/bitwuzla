@@ -4,7 +4,7 @@
 #include <cmath>
 #include <string>
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "gtest/gtest.h"
 #include "rng/rng.h"
 

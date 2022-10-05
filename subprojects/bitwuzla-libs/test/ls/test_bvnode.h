@@ -1,8 +1,8 @@
 #ifndef BZLALS__TEST__TEST_BVNODE_H
 #define BZLALS__TEST__TEST_BVNODE_H
 
-#include "bitvector.h"
-#include "bitvector_domain.h"
+#include "bv/bitvector.h"
+#include "ls/bitvector_domain.h"
 #include "ls/bitvector_node.h"
 #include "test.h"
 

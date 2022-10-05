@@ -1,4 +1,4 @@
-#include "bitvector_domain.h"
+#include "ls/bitvector_domain.h"
 
 #include <algorithm>
 #include <cassert>
@@ -32,8 +32,8 @@ BitVectorDomain::BitVectorDomain(const std::string &value)
   std::string hi(value);
   std::replace(lo.begin(), lo.end(), 'x', '0');
   std::replace(hi.begin(), hi.end(), 'x', '1');
-  d_lo = BitVector(size, lo);
-  d_hi = BitVector(size, hi);
+  d_lo             = BitVector(size, lo);
+  d_hi             = BitVector(size, hi);
   d_has_fixed_bits = !d_lo.is_zero() || !d_hi.is_ones();
 }
 
@@ -54,9 +54,7 @@ BitVectorDomain::BitVectorDomain(const BitVectorDomain &other)
   assert(d_has_fixed_bits == (!d_lo.is_zero() || !d_hi.is_ones()));
 }
 
-BitVectorDomain::~BitVectorDomain()
-{
-}
+BitVectorDomain::~BitVectorDomain() {}
 
 uint64_t
 BitVectorDomain::size() const
@@ -191,8 +189,8 @@ BitVectorDomain::operator=(const BitVectorDomain &other)
 {
   if (&other == this) return *this;
   assert(!other.is_null());
-  d_lo = other.d_lo;
-  d_hi = other.d_hi;
+  d_lo             = other.d_lo;
+  d_hi             = other.d_hi;
   d_has_fixed_bits = other.d_has_fixed_bits;
   return *this;
 }
