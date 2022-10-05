@@ -145,6 +145,18 @@ Node::index(size_t index) const
   return d_data->get_index(index);
 }
 
+std::vector<uint64_t>
+Node::indices() const
+{
+  assert(!is_null());
+  std::vector<uint64_t> indices;
+  for (size_t i = 0, size = num_indices(); i < size; ++i)
+  {
+    indices.push_back(d_data->get_index(i));
+  }
+  return indices;
+}
+
 template <>
 const bool&
 Node::value() const

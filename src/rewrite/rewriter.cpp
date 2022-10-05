@@ -48,17 +48,12 @@ Rewriter::rewrite(const Node& node)
       if (cur.num_children())
       {
         std::vector<Node> children;
-        std::vector<uint64_t> indices;
         for (const auto& c : cur)
         {
           children.push_back(d_cache.at(c));
           assert(!children.back().is_null());
         }
-        for (size_t i = 0, n = cur.num_indices(); i < n; ++i)
-        {
-          indices.push_back(cur.index(i));
-        }
-        it->second = _rewrite(nm.mk_node(cur.kind(), children, indices));
+        it->second = _rewrite(nm.mk_node(cur.kind(), children, cur.indices()));
       }
       else
       {

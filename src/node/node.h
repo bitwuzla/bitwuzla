@@ -92,12 +92,23 @@ class Node
   /**
    * Return index at position `index`.
    *
-   * @note: Only valid to call if num_indices() > 0.
+   * @note Only valid to call if num_indices() > 0.
    *
    * @param index The position of the index.
    * @return The index.
    */
   uint64_t index(size_t index) const;
+
+  /**
+   * Return the indices as a vector.
+   *
+   * @note This does not return a reference since internally we store an
+   *       std::array for the indices and we have to explicitly create a vector
+   *       from it.
+   *
+   * @return The indices.
+   */
+  std::vector<uint64_t> indices() const;
 
   /**
    * Get the value represented by this node.
