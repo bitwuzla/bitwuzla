@@ -1,0 +1,1 @@
+regress/parser/smt2perr055.smt2:1:19: illegal (non-printable) character (code 12)

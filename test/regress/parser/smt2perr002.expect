@@ -1,0 +1,1 @@
+regress/parser/smt2perr002.smt2:2:12: sorts of arguments 1 and 2 of 'bvsle' do not match

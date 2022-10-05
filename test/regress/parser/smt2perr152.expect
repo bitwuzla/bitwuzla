@@ -1,0 +1,1 @@
+regress/parser/smt2perr152.smt2:2:1: expected '(' after 'forall' at end-of-file

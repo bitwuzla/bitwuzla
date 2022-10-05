@@ -1,0 +1,1 @@
+regress/parser/smt2perr005.smt2:1:5: expected command at 'oops'

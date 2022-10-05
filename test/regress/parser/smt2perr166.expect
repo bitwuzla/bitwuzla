@@ -1,0 +1,1 @@
+regress/parser/smt2perr166.smt2:1:9: unexpected 'Float16'

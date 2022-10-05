@@ -1,0 +1,1 @@
+regress/parser/smt2perr138.smt2:1:9: expected '(' before '(_ extract'

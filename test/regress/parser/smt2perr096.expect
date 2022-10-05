@@ -1,0 +1,1 @@
+regress/parser/smt2perr096.smt2:1:10: sorts of second and third argument to 'ite' do not match

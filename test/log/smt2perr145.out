@@ -1,1 +1,0 @@
-log/smt2perr145.smt2:1:14: decimal constant '15' needs 4 bits which exceeds bit-width '3'

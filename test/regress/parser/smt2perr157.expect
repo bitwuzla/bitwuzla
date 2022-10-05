@@ -1,0 +1,1 @@
+regress/parser/smt2perr157.smt2:1:12: unsupported logic 'oops'

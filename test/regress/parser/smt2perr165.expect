@@ -1,0 +1,1 @@
+regress/parser/smt2perr165.smt2:1:9: unexpected 'FloatingPoint'

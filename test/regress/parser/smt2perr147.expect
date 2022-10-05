@@ -1,0 +1,1 @@
+regress/parser/smt2perr147.smt2:1:12: invalid parametric term '_ oops'

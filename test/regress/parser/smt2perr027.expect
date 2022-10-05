@@ -1,0 +1,1 @@
+regress/parser/smt2perr027.smt2:2:14: symbol 'symbol' already defined at line 1 column 14

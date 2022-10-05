@@ -1,0 +1,1 @@
+regress/parser/smt2perr069.smt2:1:14: expected bit-vector of size 1

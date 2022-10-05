@@ -1,0 +1,1 @@
+regress/parser/smt2perr099.smt2:2:19: second argument of 'select' is an array

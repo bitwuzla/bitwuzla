@@ -1,0 +1,1 @@
+regress/parser/smt2perr168.smt2:1:9: unexpected 'Float64'

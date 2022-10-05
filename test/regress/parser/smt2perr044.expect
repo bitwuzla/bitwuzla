@@ -1,0 +1,1 @@
+regress/parser/smt2perr044.smt2:1:36: illegal (non-printable) character (code 195)

@@ -1,0 +1,1 @@
+regress/parser/smt2perr041.smt2:1:29: illegal (non-printable) character (code 0)

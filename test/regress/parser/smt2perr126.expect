@@ -1,0 +1,1 @@
+regress/parser/smt2perr126.smt2:1:9: unexpected command 'assert'

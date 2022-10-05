@@ -1,0 +1,1 @@
+regress/parser/smt2perr078.smt2:1:10: sorts of arguments 1 and 3 of '=' do not match

@@ -1,0 +1,1 @@
+regress/parser/smt2perr174.smt2:1:47: expected positive 32 bit integer > 1 for exponent size, got '0'

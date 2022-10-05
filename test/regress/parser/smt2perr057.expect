@@ -1,0 +1,1 @@
+regress/parser/smt2perr057.smt2:1:19: value after ':status' missing

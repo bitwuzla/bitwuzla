@@ -1,0 +1,1 @@
+regress/parser/smt2perr127.smt2:1:9: unexpected keyword ':status'

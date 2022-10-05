@@ -1,0 +1,1 @@
+regress/parser/smt2perr007.smt2:2:11: unsupported logic 'QF_LRA'

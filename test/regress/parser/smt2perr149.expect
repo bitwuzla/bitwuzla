@@ -1,0 +1,1 @@
+regress/parser/smt2perr149.smt2:1:9: undefined symbol 'undefined'

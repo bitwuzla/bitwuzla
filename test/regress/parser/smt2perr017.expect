@@ -1,0 +1,1 @@
+regress/parser/smt2perr017.smt2:1:2: expected command at 'unsupported-command'

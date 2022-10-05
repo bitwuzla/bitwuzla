@@ -1,0 +1,1 @@
+regress/parser/smt2perr082.smt2:2:10: sorts of arguments 1 and 2 of 'distinct' do not match
