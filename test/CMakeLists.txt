@@ -458,6 +458,8 @@ set(unsat_testcases
 "extarraywrite3.smt2"
 "fifo32bc04k05.smt2"
 "issue97.smt2"
+"lambda_elim1.smt2"
+"lambda_elim2.smt2"
 #"lambda2.btor"
 "memcpy02.smt2"
 "quant_regr10.smt2"
