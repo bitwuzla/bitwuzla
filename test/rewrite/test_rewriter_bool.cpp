@@ -1,4 +1,4 @@
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "gtest/gtest.h"
 #include "node/node_manager.h"
 #include "rewrite/rewriter.h"

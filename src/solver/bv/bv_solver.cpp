@@ -1,6 +1,6 @@
 #include "solver/bv/bv_solver.h"
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "node/node_manager.h"
 #include "sat/cadical.h"
 #include "solving_context.h"

@@ -21,8 +21,8 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
-#include "bitvector.h"
-#include "bitvector_domain.h"
+#include "bv/bitvector.h"
+#include "ls/bitvector_domain.h"
 #include "ls/ls.h"
 
 struct BzlaPropSolver;

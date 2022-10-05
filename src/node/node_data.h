@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <optional>
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "node/node.h"
 #include "type/type.h"
 

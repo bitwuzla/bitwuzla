@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 

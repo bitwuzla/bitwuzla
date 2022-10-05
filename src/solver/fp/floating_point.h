@@ -8,7 +8,7 @@ extern "C" {
 #include "bzlasort.h"
 }
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "solver/fp/rounding_mode.h"
 #include "type/type.h"
 

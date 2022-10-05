@@ -15,7 +15,7 @@ extern "C" {
 #include "utils/bzlautil.h"
 }
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "bzlabvstruct.h"
 #include "utils/bzlarngstruct.h"
 

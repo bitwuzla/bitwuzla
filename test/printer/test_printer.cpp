@@ -1,6 +1,6 @@
 #include <sstream>
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "node/node_manager.h"
 #include "printer/printer.h"
 #include "solver/fp/floating_point.h"

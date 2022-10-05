@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
 #include "solver/fp/floating_point.h"

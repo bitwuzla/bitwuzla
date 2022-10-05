@@ -12,7 +12,7 @@
 
 #include <memory>
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 
 struct BzlaBitVector
 {

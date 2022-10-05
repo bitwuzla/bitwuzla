@@ -15,8 +15,8 @@ extern "C" {
 #include "bzlaslvprop.h"
 }
 
-#include "bitvector.h"
-#include "bitvector_domain.h"
+#include "bv/bitvector.h"
+#include "ls/bitvector_domain.h"
 #include "rng/rng.h"
 
 namespace bzla {

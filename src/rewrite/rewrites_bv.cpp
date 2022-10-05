@@ -1,6 +1,6 @@
 #include "rewrite/rewrites_bv.h"
 
-#include "bitvector.h"
+#include "bv/bitvector.h"
 #include "node/node_manager.h"
 
 namespace bzla {
