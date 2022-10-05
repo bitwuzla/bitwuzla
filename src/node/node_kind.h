@@ -184,7 +184,8 @@ mk_kind_info()
   info.init(Kind::CONSTANT) = {0, 0, "CONSTANT"};
   info.init(Kind::VALUE)    = {0, 0, "VALUE"};
   info.init(Kind::VARIABLE) = {0, 0, "VARIABLE"};
-  info.init(Kind::DISTINCT) = {2, 0, "DISTINCT", "distinct"};
+  info.init(Kind::DISTINCT) = {
+      KindInformation::s_nary, 0, "DISTINCT", "distinct"};
   info.init(Kind::EQUAL)    = {2, 0, "EQUAL", "="};
   info.init(Kind::ITE)      = {3, 0, "ITE", "ite"};
   /* Boolean */

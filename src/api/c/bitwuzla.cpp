@@ -821,7 +821,7 @@ sort_any(Bzla *bzla, BzlaSortId node)
   return true;
 }
 
-/** Return true given variable terms are distinct. */
+/** Return true if given variable terms are distinct. */
 static bool
 vars_distinct(Bzla *bzla, BzlaNode *vars[], uint32_t paramc)
 {
@@ -940,33 +940,6 @@ mk_term_pairwise(Bzla *bzla,
     }
   }
   assert(res);
-  return res;
-}
-
-static Node
-mk_term_pairwise(node::Kind kind, const std::vector<Node> &children)
-{
-  assert(children.size() >= 2);
-  Node res, tmp, old;
-
-  NodeManager &nm = NodeManager::get();
-  for (uint32_t i = 0; i < children.size() - 1; i++)
-  {
-    for (uint32_t j = i + 1; j < children.size(); j++)
-    {
-      tmp = nm.mk_node(kind, {children[i], children[j]});
-      if (!res.is_null())
-      {
-        old = res;
-        res = nm.mk_node(node::Kind::AND, {old, tmp});
-      }
-      else
-      {
-        res = tmp;
-      }
-    }
-  }
-  assert(!res.is_null());
   return res;
 }
 
@@ -2187,7 +2160,7 @@ bitwuzla_mk_term(Bitwuzla *bitwuzla,
       BZLA_CHECK_MK_TERM_ARGS(
           kind, true, bzla_args.data(), 2, argc, 0, sort_any, true);
       res  = mk_term_pairwise(bzla, bzla_args.data(), argc, bzla_exp_ne);
-      term = mk_term_pairwise(node::Kind::DISTINCT, children);
+      term = nm.mk_node(node::Kind::DISTINCT, children);
       break;
 
     case BITWUZLA_KIND_IMPLIES:

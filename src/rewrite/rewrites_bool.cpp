@@ -160,8 +160,32 @@ Node
 RewriteRule<RewriteRuleKind::DISTINCT_ELIM>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
-  return rewriter.mk_node(Kind::NOT,
-                          {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+  uint64_t num_children = node.num_children();
+  if (num_children == 2)
+  {
+    return rewriter.mk_node(
+        Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[0], node[1]})});
+  }
+
+  Node res;
+  for (size_t i = 0; i < num_children; ++i)
+  {
+    for (size_t j = i + 1; j < num_children; ++j)
+    {
+      Node tmp = rewriter.mk_node(
+          Kind::NOT, {rewriter.mk_node(Kind::EQUAL, {node[i], node[j]})});
+      if (res.is_null())
+      {
+        res = tmp;
+      }
+      else
+      {
+        res = rewriter.mk_node(Kind::AND, {res, tmp});
+      }
+    }
+  }
+  assert(!res.is_null());
+  return res;
 }
 
 template <>
