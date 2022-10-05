@@ -70,7 +70,7 @@ msg () {
 
 #--------------------------------------------------------------------------#
 
-[ ! -e src/bitvector.cpp ] && die "$0 not called from bzla-libs base directory"
+[ ! -e src/bv/bitvector.cpp ] && die "$0 not called from bzla-libs base directory"
 
 while [ $# -gt 0 ]
 do
