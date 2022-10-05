@@ -118,6 +118,23 @@ TEST_F(TestRewriterBool, bool_equal_special_const)
   }
 }
 
+/* distinct ----------------------------------------------------------------- */
+
+TEST_F(TestRewriterBool, bool_distinct_card)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::DISTINCT_CARD;
+  Type bv2_type                  = d_nm.mk_bv_type(2);
+  Node a                         = d_nm.mk_const(bv2_type);
+  Node b                         = d_nm.mk_const(bv2_type);
+  Node c                         = d_nm.mk_const(bv2_type);
+  Node d                         = d_nm.mk_const(bv2_type);
+  Node e                         = d_nm.mk_const(bv2_type);
+  // applies
+  test_rule<kind>(d_nm.mk_node(Kind::DISTINCT, {a, b, c, d, e}));
+  // does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::DISTINCT, {a, b, d, d}));
+}
+
 /* not ---------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBool, bool_not_eval)

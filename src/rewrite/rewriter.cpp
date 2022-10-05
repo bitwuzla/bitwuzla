@@ -227,6 +227,18 @@ DONE:
 }
 
 Node
+Rewriter::rewrite_distinct(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res;
+
+  BZLA_APPLY_RW_RULE(DISTINCT_CARD);
+  BZLA_APPLY_RW_RULE(DISTINCT_ELIM);
+DONE:
+  return res;
+}
+
+Node
 Rewriter::rewrite_not(const Node& node)
 {
   RewriteRuleKind kind;
@@ -239,7 +251,6 @@ DONE:
   return res;
 }
 
-BZLA_ELIM_KIND_IMPL(distinct, DISTINCT_ELIM)
 BZLA_ELIM_KIND_IMPL(implies, IMPLIES_ELIM)
 BZLA_ELIM_KIND_IMPL(or, OR_ELIM)
 BZLA_ELIM_KIND_IMPL(xor, XOR_ELIM)

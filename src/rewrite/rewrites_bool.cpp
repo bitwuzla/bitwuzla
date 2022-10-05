@@ -1,5 +1,7 @@
 #include "rewrite/rewrites_bool.h"
 
+#include <cmath>
+
 #include "bitvector.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
@@ -137,6 +139,28 @@ RewriteRule<RewriteRuleKind::EQUAL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   else if (!node[0].is_value() && node[1].is_value())
   {
     return _rw_eq_special_const(rewriter, node, 1);
+  }
+  return node;
+}
+
+/* distinct ----------------------------------------------------------------- */
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
+{
+  uint64_t num_children = node.num_children();
+  if (num_children > 2)
+  {
+    const Type& type = node[0].type();
+    if ((type.is_bv() && std::log2(num_children) > type.bv_size())
+        || (type.is_fp()
+            && std::log2(num_children)
+                   > (type.fp_exp_size() + type.fp_sig_size())))
+    {
+      return NodeManager::get().mk_value(false);
+    }
   }
   return node;
 }

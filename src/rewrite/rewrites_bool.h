@@ -21,6 +21,12 @@ template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 
+/* distinct ----------------------------------------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
+
 /* not ---------------------------------------------------------------------- */
 
 template <>

@@ -133,7 +133,9 @@ enum class RewriteRuleKind
 
   NOT_EVAL,
 
+  DISTINCT_CARD,
   DISTINCT_ELIM,
+
   IMPLIES_ELIM,
   OR_ELIM,
   XOR_ELIM,
