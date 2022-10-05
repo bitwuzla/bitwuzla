@@ -12,6 +12,13 @@ namespace bzla {
 class Rewriter
 {
  public:
+  /**
+   * Constructor.
+   * @param enabled True to enable rewriting, false to disable all rewrites
+   *                except for operator elimination.
+   */
+  Rewriter(bool enabled = true) : d_enabled(enabled) {}
+
   const Node& rewrite(const Node& node);
 
   const Node& mk_node(node::Kind kind,
@@ -117,6 +124,9 @@ class Rewriter
   Node rewrite_forall(const Node& node);
   Node rewrite_exists(const Node& node);
 
+  /** True to enable rewriting, false to only enable operator elimination. */
+  bool d_enabled;
+  /** Cache for rewritten nodes, maps node to its rewritten form. */
   std::unordered_map<Node, Node> d_cache;
 };
 

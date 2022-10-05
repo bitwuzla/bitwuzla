@@ -150,6 +150,7 @@ Node
 RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
+  (void) rewriter;
   uint64_t num_children = node.num_children();
   if (num_children > 2)
   {
