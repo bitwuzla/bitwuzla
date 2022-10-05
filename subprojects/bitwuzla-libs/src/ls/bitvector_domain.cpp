@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "rng/rng.h"
-#include "utils/wheel_factorizer.h"
+#include "util/wheel_factorizer.h"
 
 namespace bzla {
 namespace ls {

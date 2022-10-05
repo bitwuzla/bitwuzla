@@ -12,7 +12,7 @@ set(libbzlals_src_files
   ls/bitvector_domain.cpp
   ls/ls.cpp
   ls/bitvector_node.cpp
-  utils/wheel_factorizer.cpp
+  util/wheel_factorizer.cpp
 )
 
 set(libbzlarng_src_files
