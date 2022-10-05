@@ -856,9 +856,6 @@ class BitVectorMul : public BitVectorNode
    *       variables that are implied by the formula can be queried.
    */
   void _evaluate_and_set_domain();
-
-  /** Cached inverse values result. */
-  std::unique_ptr<BitVectorDomain> d_inverse_domain;
 };
 
 std::ostream& operator<<(std::ostream& out, const BitVectorMul& node);

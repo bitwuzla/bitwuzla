@@ -1367,7 +1367,6 @@ BitVectorMul::BitVectorMul(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  d_inverse_domain.reset(nullptr);
   _evaluate_and_set_domain();
 }
 
@@ -1379,7 +1378,6 @@ BitVectorMul::BitVectorMul(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  d_inverse_domain.reset(nullptr);
   _evaluate_and_set_domain();
 }
 
@@ -1417,7 +1415,6 @@ BitVectorMul::is_invertible(const BitVector& t,
 {
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
-  d_inverse_domain.reset(nullptr);
 
   uint32_t pos_s           = 1 - pos_x;
   const BitVector& s       = d_children[pos_s]->assignment();
@@ -1432,57 +1429,116 @@ BitVectorMul::is_invertible(const BitVector& t,
    *               (!odd(s) => mfb (x << c, y << c))))
    *     with c = ctz(s) and y = (t >> c) * (s >> c)^-1
    */
-  if (ic_wo && x.has_fixed_bits())
+  if (ic_wo)
   {
-    if (x.is_fixed())
+    if (x.has_fixed_bits())
     {
-      if (x.lo().bvmul(s).compare(t) == 0)
+      if (x.is_fixed())
       {
-        return true;
-      }
-      return false;
-    }
-
-    if (!s.is_zero())
-    {
-      /*-- s odd --*/
-      if (s.get_lsb())
-      {
-        BitVector inv = s.bvmodinv().ibvmul(t);
-        if (x.match_fixed_bits(inv))
+        if (x.lo().bvmul(s).compare(t) == 0)
         {
-          if (!is_essential_check)
-          {
-            d_inverse.reset(new BitVector(std::move(inv)));
-          }
           return true;
         }
         return false;
       }
 
-      /*-- s even --*/
-      /* Check if relevant bits of
-       *   y = (t >> ctz(s)) * (s >> ctz(s))^-1
-       * match corresponding constant bits of x, i.e.,
-       * mfb(x[size - ctz(s) - 1:0], y[size - ctz(s) - 1:0]). */
-      uint64_t size   = x.size();
-      uint64_t ctz    = s.count_trailing_zeros();
-      BitVector y_ext = t.bvshr(ctz)
-                            .ibvmul(s.bvshr(ctz).ibvmodinv())
-                            .ibvextract(size - ctz - 1, 0);
-      if (x.bvextract(size - ctz - 1, 0).match_fixed_bits(y_ext))
+      if (!s.is_zero())
       {
-        /* Result domain is x[size - 1:size - ctz] o y[size - ctz(s) - 1:0] */
-        if (!is_essential_check)
+        /*-- s odd ------------------------------*/
+        if (s.get_lsb())
         {
-          d_inverse_domain.reset(new BitVectorDomain(
-              x.bvextract(size - 1, size - ctz).bvconcat(y_ext)));
+          BitVector inv = s.bvmodinv().ibvmul(t);
+          if (x.match_fixed_bits(inv))
+          {
+            if (!is_essential_check)
+            {
+              d_inverse.reset(new BitVector(std::move(inv)));
+            }
+            return true;
+          }
+          return false;
         }
-        return true;
+
+        /*-- s even -----------------------------*/
+        /* Check if relevant bits of
+         *   y = (t >> ctz(s)) * (s >> ctz(s))^-1
+         * match corresponding constant bits of x, i.e.,
+         * mfb(x[size - ctz(s) - 1:0], y[size - ctz(s) - 1:0]). */
+        uint64_t size   = x.size();
+        uint64_t ctz    = s.count_trailing_zeros();
+        BitVector y_ext = t.bvshr(ctz)
+                              .ibvmul(s.bvshr(ctz).ibvmodinv())
+                              .ibvextract(size - ctz - 1, 0);
+        if (x.bvextract(size - ctz - 1, 0).match_fixed_bits(y_ext))
+        {
+          /* Result domain is x[size - 1:size - ctz] o y[size - ctz(s) - 1:0] */
+          if (!is_essential_check)
+          {
+            BitVectorDomain d(
+                x.bvextract(size - 1, size - ctz).bvconcat(y_ext));
+            if (d.is_fixed())
+            {
+              d_inverse.reset(new BitVector(d.lo()));
+            }
+            else
+            {
+              BitVectorDomainGenerator gen(d, d_rng);
+              d_inverse.reset(new BitVector(gen.random()));
+            }
+          }
+          return true;
+        }
+        return false;
       }
-      return false;
+      if (!is_essential_check)
+      {
+        BitVectorDomainGenerator gen(x, d_rng);
+        assert(gen.has_random());
+        d_inverse.reset(new BitVector(gen.random()));
+      }
+      return true;
     }
-    return true;
+
+    if (!is_essential_check)
+    {
+      if (s.is_zero())
+      {
+        /* s = 0 (=> t = 0): random bit-vector */
+        d_inverse.reset(new BitVector(x.size(), *d_rng));
+      }
+      else if (s.get_lsb())
+      {
+        /* s odd : t * s^-1 (unique solution) */
+        d_inverse.reset(new BitVector(t.bvmul(s.bvmodinv())));
+      }
+      else
+      {
+        /* s even: multiple solutions possible
+         *      + s = 2^n: t >> n
+         *                 with all bits shifted in randomly set to 0 or 1
+         *      + s = 2^n * m, m is odd: c * m^-1
+         *                               with c = t >> n and
+         *                               all bits shifted in set randomly and
+         *                               m^-1 the mod inverse of m
+         */
+        assert(t.count_trailing_zeros() >= s.count_trailing_zeros());
+        uint64_t n    = s.count_trailing_zeros();
+        uint64_t size = s.size();
+        BitVector right;
+        if (s.is_power_of_two())
+        {
+          right = t.bvextract(size - 1, n);
+        }
+        else
+        {
+          right = s.bvshr(n)
+                      .ibvmodinv()
+                      .ibvmul(t.bvshr(n))
+                      .ibvextract(size - n - 1, 0);
+        }
+        d_inverse.reset(new BitVector(BitVector(n, *d_rng).ibvconcat(right)));
+      }
+    }
   }
 
   return ic_wo;
@@ -1549,86 +1605,16 @@ BitVectorMul::is_consistent(const BitVector& t, uint32_t pos_x)
 const BitVector&
 BitVectorMul::inverse_value(const BitVector& t, uint32_t pos_x)
 {
+#ifndef NDEBUG
   const BitVectorDomain& x = d_children[pos_x]->domain();
   assert(!x.is_fixed());
   uint32_t pos_s     = 1 - pos_x;
   const BitVector& s = d_children[pos_s]->assignment();
-
-  /**
-   * inverse value:
-   *
-   *   s = 0 (=> t = 0): random bit-vector
-   *
-   *   s odd : t * s^-1 (unique solution)
-   *
-   *   s even: multiple solutions possible
-   *      + s = 2^n: t >> n
-   *                 with all bits shifted in randomly set to 0 or 1
-   *      + s = 2^n * m, m is odd: c * m^-1
-   *                               with c = t >> n and
-   *                               all bits shifted in set randomly and
-   *                               m^-1 the mod inverse of m
-   *
-   */
-
-  uint64_t size = t.size();
-
-  if (d_inverse == nullptr && d_inverse_domain == nullptr)
-  {
-    if (s.is_zero())
-    {
-      assert(t.is_zero());
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainGenerator gen(x, d_rng);
-        assert(gen.has_random());
-        d_inverse.reset(new BitVector(gen.random()));
-      }
-      else
-      {
-        d_inverse.reset(new BitVector(size, *d_rng));
-      }
-    }
-    else if (s.get_lsb())
-    {
-      assert(!x.has_fixed_bits());
-      d_inverse.reset(new BitVector(t.bvmul(s.bvmodinv())));
-    }
-    else
-    {
-      assert(!x.has_fixed_bits());
-      assert(t.count_trailing_zeros() >= s.count_trailing_zeros());
-      uint64_t n = s.count_trailing_zeros();
-      BitVector right;
-      if (s.is_power_of_two())
-      {
-        right = t.bvextract(size - 1, n);
-      }
-      else
-      {
-        right = s.bvshr(n)
-                    .ibvmodinv()
-                    .ibvmul(t.bvshr(n))
-                    .ibvextract(size - n - 1, 0);
-      }
-      d_inverse.reset(new BitVector(BitVector(n, *d_rng).ibvconcat(right)));
-    }
-  }
-  else if (d_inverse_domain != nullptr)
-  {
-    if (d_inverse_domain->is_fixed())
-    {
-      d_inverse.reset(new BitVector(d_inverse_domain->lo()));
-    }
-    else
-    {
-      BitVectorDomainGenerator gen(*d_inverse_domain, d_rng);
-      d_inverse.reset(new BitVector(gen.random()));
-    }
-  }
+  assert(d_inverse);
   assert(pos_x == 1 || t.compare(d_inverse->bvmul(s)) == 0);
   assert(pos_x == 0 || t.compare(s.bvmul(*d_inverse)) == 0);
   assert(x.match_fixed_bits(*d_inverse));
+#endif
   return *d_inverse;
 }
 
