@@ -2,11 +2,14 @@ set(libbzlabv_src_files
   bitvector.cpp
 )
 
-set(libbzlals_src_files
-  bitvector_domain.cpp
+set(libbzlabb_src_files
   bitblast/aig/aig_manager.cpp
   bitblast/aig/aig_cnf.cpp
   bitblast/aig/aig_printer.cpp
+)
+
+set(libbzlals_src_files
+  bitvector_domain.cpp
   ls/ls.cpp
   ls/bitvector_node.cpp
   utils/wheel_factorizer.cpp
@@ -41,6 +44,17 @@ target_include_directories(bzlabv
     $<INSTALL_INTERFACE:include>)
 
 #-----------------------------------------------------------------------------#
+# bzlabb library
+
+add_library(bzlabb ${libbzlabb_src_files})
+target_link_libraries(bzlabb bzlabv)
+
+target_include_directories(bzlabb
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>)
+
+#-----------------------------------------------------------------------------#
 # bzlals library
 
 add_library(bzlals ${libbzlals_src_files})
@@ -56,6 +70,12 @@ target_include_directories(bzlals
 
 install(TARGETS bzlabv
   EXPORT bzlabv-export
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+
+install(TARGETS bzlabb
+  EXPORT bzlabb-export
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
@@ -77,13 +97,18 @@ install(EXPORT bzlabv-export
   NAMESPACE BzlaBV::
   DESTINATION lib/cmake/BzlaBV)
 
+install(EXPORT bzlabb-export
+  FILE BzlaBBTargets.cmake
+  NAMESPACE BzlaBB::
+  DESTINATION lib/cmake/BzlaBB)
+
 install(EXPORT bzlals-export
   FILE BzlaLSTargets.cmake
   NAMESPACE BzlaLS::
   DESTINATION lib/cmake/BzlaLS)
 
 install(EXPORT bzlarng-export
-  FILE BzlaBVTargets.cmake
+  FILE BzlaRNGTargets.cmake
   NAMESPACE BzlaRNG::
   DESTINATION lib/cmake/BzlaRNG)
 

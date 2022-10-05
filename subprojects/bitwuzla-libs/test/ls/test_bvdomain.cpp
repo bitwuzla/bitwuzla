@@ -14,7 +14,7 @@ class TestBitVectorDomain : public ::bzla::test::TestCommon
 };
 
 void
-TestBitVectorDomain::test_match_fixed_bits(const std::string& value)
+TestBitVectorDomain::test_match_fixed_bits(const std::string &value)
 {
   assert(value.size() == 3);
   BitVectorDomain d(value);
