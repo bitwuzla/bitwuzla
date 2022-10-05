@@ -13,14 +13,11 @@ class PassRewrite : public PreprocessingPass
 {
  public:
   PassRewrite(backtrack::AssertionView& assertions, Rewriter& rewriter)
-      : PreprocessingPass(assertions), d_rewriter(rewriter)
+      : PreprocessingPass(assertions, rewriter)
   {
   }
 
   void apply() override;
-
- private:
-  Rewriter& d_rewriter;
 };
 
 }  // namespace bzla::preprocess::pass

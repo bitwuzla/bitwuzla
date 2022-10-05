@@ -2,6 +2,7 @@
 #define BZLA_PREPROCESS_PREPROCESSING_PASS_H_INCLUDED
 
 #include "backtrack/assertion_stack.h"
+#include "rewrite/rewriter.h"
 
 namespace bzla::preprocess {
 
@@ -11,8 +12,8 @@ namespace bzla::preprocess {
 class PreprocessingPass
 {
  public:
-  PreprocessingPass(backtrack::AssertionView& assertions)
-      : d_assertions(assertions)
+  PreprocessingPass(backtrack::AssertionView& assertions, Rewriter& rewriter)
+      : d_assertions(assertions), d_rewriter(rewriter)
   {
   }
 
@@ -21,6 +22,7 @@ class PreprocessingPass
 
  protected:
   backtrack::AssertionView& d_assertions;
+  Rewriter& d_rewriter;
 };
 
 }  // namespace bzla::preprocess
