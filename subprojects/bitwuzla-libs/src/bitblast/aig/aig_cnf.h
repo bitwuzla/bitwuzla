@@ -1,3 +1,5 @@
+#ifndef BZLA__BITBLAST_AIG_CNF_H
+#define BZLA__BITBLAST_AIG_CNF_H
 #include "bitblast/aig/aig_manager.h"
 
 namespace bzla::bb {
@@ -53,3 +55,4 @@ class AigCnfEncoder
   SatInterface& d_sat_solver;
 };
 }  // namespace bzla::bb
+#endif
