@@ -19,14 +19,8 @@ struct LocalSearchMove;
 class BitVectorDomain;
 class BitVectorNode;
 
-namespace test {
-class TestLsBv;
-}
-
 class LocalSearch
 {
-  friend class test::TestLsBv;
-
  public:
   using NodesIdTable = std::vector<std::unique_ptr<BitVectorNode>>;
   using ParentsSet   = std::unordered_set<uint64_t>;
