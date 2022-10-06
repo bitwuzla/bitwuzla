@@ -5,7 +5,7 @@
 #include "printer/printer.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
-#include "test.h"
+#include "test/unit/test.h"
 
 namespace bzla::test {
 

@@ -1,6 +1,6 @@
 #include "node/node_manager.h"
 #include "solving_context.h"
-#include "test.h"
+#include "test/unit/test.h"
 
 namespace bzla::test {
 

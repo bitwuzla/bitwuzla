@@ -3,8 +3,8 @@
 #include "node/node_manager.h"
 #include "printer/printer.h"
 #include "rewrite/rewriter.h"
-#include "rewrite/test_rewriter.h"
 #include "solver/fp/floating_point.h"
+#include "test/unit/rewrite/test_rewriter.h"
 
 namespace bzla::test {
 
