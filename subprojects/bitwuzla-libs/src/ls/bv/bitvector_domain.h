@@ -1,5 +1,5 @@
-#ifndef BZLALS__BITVECTOR_DOMAIN_H
-#define BZLALS__BITVECTOR_DOMAIN_H
+#ifndef BZLA__LS_BITVECTOR_DOMAIN_H
+#define BZLA__LS_BITVECTOR_DOMAIN_H
 
 #include "bv/bitvector.h"
 

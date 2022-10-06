@@ -1,5 +1,5 @@
-#ifndef BZLALS__RNG_H
-#define BZLALS__RNG_H
+#ifndef BZLA__RNG_RNG_H
+#define BZLA__RNG_RNG_H
 
 #include <gmpxx.h>
 

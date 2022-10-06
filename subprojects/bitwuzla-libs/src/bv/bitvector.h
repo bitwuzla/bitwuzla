@@ -1,5 +1,5 @@
-#ifndef BZLALS__BITVECTOR_H
-#define BZLALS__BITVECTOR_H
+#ifndef BZLA__BV_BITVECTOR_H
+#define BZLA__BV_BITVECTOR_H
 
 #include <gmpxx.h>
 
