@@ -224,15 +224,30 @@ enum class RewriteRuleKind
   /* FP rewrites --------------------------------- */
 
   FP_ABS_EVAL,
+  FP_ABS_ABS_NEG,
+
   FP_ADD_EVAL,
   FP_DIV_EVAL,
+
   FP_IS_INF_EVAL,
+  FP_IS_INF_ABS_NEG,
+
   FP_IS_NAN_EVAL,
+  FP_IS_NAN_ABS_NEG,
+
   FP_IS_NEG_EVAL,
+
   FP_IS_NORM_EVAL,
+  FP_IS_NORM_ABS_NEG,
+
   FP_IS_POS_EVAL,
+
   FP_IS_SUBNORM_EVAL,
+  FP_IS_SUBNORM_ABS_NEG,
+
   FP_IS_ZERO_EVAL,
+  FP_IS_ZERO_ABS_NEG,
+
   FP_LE_EVAL,
   FP_LT_EVAL,
   FP_MIN_EVAL,

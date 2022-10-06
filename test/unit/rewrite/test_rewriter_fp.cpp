@@ -5,6 +5,7 @@
 #include "rewrite/rewriter.h"
 #include "rewrite/test_rewriter.h"
 #include "solver/fp/floating_point.h"
+#include "test.h"
 
 namespace bzla::test {
 
@@ -18,6 +19,8 @@ class TestRewriterFp : public TestRewriter
     d_rm_type  = d_nm.mk_rm_type();
     d_fp_pzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp_type, false));
     d_fp_nzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp_type, true));
+    d_a        = d_nm.mk_const(d_fp_type);
+    d_rm       = d_nm.mk_const(d_rm_type);
   }
 
  protected:
@@ -27,6 +30,8 @@ class TestRewriterFp : public TestRewriter
   Type d_rm_type;
   Node d_fp_pzero;
   Node d_fp_nzero;
+  Node d_a;
+  Node d_rm;
 };
 
 /* fpabs -------------------------------------------------------------------- */
@@ -48,6 +53,20 @@ TEST_F(TestRewriterFp, fp_abs_eval)
   // does not apply
   Node fpabs2 = d_nm.mk_node(Kind::FP_ABS, {d_nm.mk_const(d_fp_type)});
   ASSERT_EQ(fpabs2, d_rewriter.rewrite(fpabs2));
+}
+
+TEST_F(TestRewriterFp, fp_abs_abs_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_ABS_ABS_NEG;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_ABS, {d_nm.mk_node(Kind::FP_ABS, {d_a})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_ABS, {d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_ABS, {d_a}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::FP_ABS, {d_nm.mk_node(Kind::FP_SQRT, {d_rm, d_a})}));
 }
 
 /* fpadd -------------------------------------------------------------------- */
@@ -172,6 +191,20 @@ TEST_F(TestRewriterFp, fp_is_inf_eval)
   ASSERT_EQ(fpisinf2, d_rewriter.rewrite(fpisinf2));
 }
 
+TEST_F(TestRewriterFp, fp_is_inf_abs_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_INF_ABS_NEG;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_IS_INF, {d_nm.mk_node(Kind::FP_ABS, {d_a})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_IS_INF, {d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_IS_INF, {d_a}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::FP_IS_INF, {d_nm.mk_node(Kind::FP_SQRT, {d_rm, d_a})}));
+}
+
 /* fpisnan ------------------------------------------------------------------ */
 
 TEST_F(TestRewriterFp, fp_is_nan_eval)
@@ -189,6 +222,20 @@ TEST_F(TestRewriterFp, fp_is_nan_eval)
   // does not apply
   Node fpisnan2 = d_nm.mk_node(Kind::FP_IS_NAN, {d_nm.mk_const(d_fp_type)});
   ASSERT_EQ(fpisnan2, d_rewriter.rewrite(fpisnan2));
+}
+
+TEST_F(TestRewriterFp, fp_is_nan_abs_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_NAN_ABS_NEG;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_IS_NAN, {d_nm.mk_node(Kind::FP_ABS, {d_a})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_IS_NAN, {d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_IS_NAN, {d_a}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::FP_IS_NAN, {d_nm.mk_node(Kind::FP_SQRT, {d_rm, d_a})}));
 }
 
 /* fpisneg ------------------------------------------------------------------ */
@@ -229,6 +276,20 @@ TEST_F(TestRewriterFp, fp_is_norm_eval)
   // does not apply
   Node fpisnorm2 = d_nm.mk_node(Kind::FP_IS_NORM, {d_nm.mk_const(d_fp_type)});
   ASSERT_EQ(fpisnorm2, d_rewriter.rewrite(fpisnorm2));
+}
+
+TEST_F(TestRewriterFp, fp_is_norm_abs_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_NORM_ABS_NEG;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_IS_NORM, {d_nm.mk_node(Kind::FP_ABS, {d_a})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_IS_NORM, {d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_IS_NORM, {d_a}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::FP_IS_NORM, {d_nm.mk_node(Kind::FP_SQRT, {d_rm, d_a})}));
 }
 
 /* fpispos ------------------------------------------------------------------ */
@@ -276,6 +337,20 @@ TEST_F(TestRewriterFp, fp_is_subnorm_eval)
   ASSERT_EQ(fpissubnorm2, d_rewriter.rewrite(fpissubnorm2));
 }
 
+TEST_F(TestRewriterFp, fp_is_subnorm_abs_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_SUBNORM_ABS_NEG;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_IS_SUBNORM, {d_nm.mk_node(Kind::FP_ABS, {d_a})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_IS_SUBNORM, {d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_IS_SUBNORM, {d_a}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::FP_IS_SUBNORM, {d_nm.mk_node(Kind::FP_SQRT, {d_rm, d_a})}));
+}
+
 /* fpiszero ----------------------------------------------------------------- */
 
 TEST_F(TestRewriterFp, fp_is_zero_eval)
@@ -294,6 +369,20 @@ TEST_F(TestRewriterFp, fp_is_zero_eval)
   // does not apply
   Node fpiszero2 = d_nm.mk_node(Kind::FP_IS_ZERO, {d_nm.mk_const(d_fp_type)});
   ASSERT_EQ(fpiszero2, d_rewriter.rewrite(fpiszero2));
+}
+
+TEST_F(TestRewriterFp, fp_is_zero_abs_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_ZERO_ABS_NEG;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_IS_ZERO, {d_nm.mk_node(Kind::FP_ABS, {d_a})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_IS_ZERO, {d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_IS_ZERO, {d_a}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::FP_IS_ZERO, {d_nm.mk_node(Kind::FP_SQRT, {d_rm, d_a})}));
 }
 
 /* fple --------------------------------------------------------------------- */

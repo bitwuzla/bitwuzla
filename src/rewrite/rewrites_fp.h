@@ -12,6 +12,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_ABS_EVAL>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // fp_abs
+template <>
+Node RewriteRule<RewriteRuleKind::FP_ABS_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
 
 /* fpadd -------------------------------------------------------------------- */
 
@@ -34,6 +37,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_IS_INF_EVAL>::_apply(Rewriter& rewriter,
                                                           const Node& node);
 // fp_tester_sign_ops
+template <>
+Node RewriteRule<RewriteRuleKind::FP_IS_INF_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
 
 /* fpisnan ------------------------------------------------------------------ */
 
@@ -42,6 +48,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_IS_NAN_EVAL>::_apply(Rewriter& rewriter,
                                                           const Node& node);
 // fp_tester_sign_ops
+template <>
+Node RewriteRule<RewriteRuleKind::FP_IS_NAN_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                             const Node& node);
 
 /* fpisneg ------------------------------------------------------------------ */
 
@@ -49,8 +58,6 @@ Node RewriteRule<RewriteRuleKind::FP_IS_NAN_EVAL>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::FP_IS_NEG_EVAL>::_apply(Rewriter& rewriter,
                                                           const Node& node);
-// fp_tester_sign_ops
-
 /* fpisnorm ----------------------------------------------------------------- */
 
 // const_fp_tester
@@ -58,6 +65,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_IS_NORM_EVAL>::_apply(Rewriter& rewriter,
                                                            const Node& node);
 // fp_tester_sign_ops
+template <>
+Node RewriteRule<RewriteRuleKind::FP_IS_NORM_ABS_NEG>::_apply(
+    Rewriter& rewriter, const Node& node);
 
 /* fpispos ------------------------------------------------------------------ */
 
@@ -65,7 +75,6 @@ Node RewriteRule<RewriteRuleKind::FP_IS_NORM_EVAL>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::FP_IS_POS_EVAL>::_apply(Rewriter& rewriter,
                                                           const Node& node);
-// fp_tester_sign_ops
 
 /* fpissubnorm -------------------------------------------------------------- */
 
@@ -74,6 +83,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_IS_SUBNORM_EVAL>::_apply(
     Rewriter& rewriter, const Node& node);
 // fp_tester_sign_ops
+template <>
+Node RewriteRule<RewriteRuleKind::FP_IS_SUBNORM_ABS_NEG>::_apply(
+    Rewriter& rewriter, const Node& node);
 
 /* fpiszero ----------------------------------------------------------------- */
 
@@ -82,6 +94,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_IS_ZERO_EVAL>::_apply(Rewriter& rewriter,
                                                            const Node& node);
 // fp_tester_sign_ops
+template <>
+Node RewriteRule<RewriteRuleKind::FP_IS_ZERO_ABS_NEG>::_apply(
+    Rewriter& rewriter, const Node& node);
 
 /* fple --------------------------------------------------------------------- */
 

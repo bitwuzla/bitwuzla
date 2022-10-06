@@ -554,7 +554,7 @@ Rewriter::rewrite_fp_abs(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_ABS_EVAL);
-    // TODO
+    BZLA_APPLY_RW_RULE(FP_ABS_ABS_NEG);
   }
 
 DONE:
@@ -570,7 +570,6 @@ Rewriter::rewrite_fp_add(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_ADD_EVAL);
-    // TODO
   }
 
 DONE:
@@ -586,7 +585,6 @@ Rewriter::rewrite_fp_div(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_DIV_EVAL);
-    // TODO
   }
 
 DONE:
@@ -602,7 +600,7 @@ Rewriter::rewrite_fp_is_inf(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_IS_INF_EVAL);
-    // TODO
+    BZLA_APPLY_RW_RULE(FP_IS_INF_ABS_NEG);
   }
 
 DONE:
@@ -618,7 +616,7 @@ Rewriter::rewrite_fp_is_nan(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_IS_NAN_EVAL);
-    // TODO
+    BZLA_APPLY_RW_RULE(FP_IS_NAN_ABS_NEG);
   }
 
 DONE:
@@ -634,7 +632,6 @@ Rewriter::rewrite_fp_is_neg(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_IS_NEG_EVAL);
-    // TODO
   }
 
 DONE:
@@ -650,7 +647,7 @@ Rewriter::rewrite_fp_is_normal(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_IS_NORM_EVAL);
-    // TODO
+    BZLA_APPLY_RW_RULE(FP_IS_NORM_ABS_NEG);
   }
 
 DONE:
@@ -666,7 +663,6 @@ Rewriter::rewrite_fp_is_pos(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_IS_POS_EVAL);
-    // TODO
   }
 
 DONE:
@@ -682,7 +678,7 @@ Rewriter::rewrite_fp_is_subnormal(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_IS_SUBNORM_EVAL);
-    // TODO
+    BZLA_APPLY_RW_RULE(FP_IS_SUBNORM_ABS_NEG);
   }
 
 DONE:
@@ -698,7 +694,7 @@ Rewriter::rewrite_fp_is_zero(const Node& node)
   if (d_enabled)
   {
     BZLA_APPLY_RW_RULE(FP_IS_ZERO_EVAL);
-    // TODO
+    BZLA_APPLY_RW_RULE(FP_IS_ZERO_ABS_NEG);
   }
 
 DONE:

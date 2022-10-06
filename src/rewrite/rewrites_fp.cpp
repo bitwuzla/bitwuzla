@@ -23,6 +23,25 @@ RewriteRule<RewriteRuleKind::FP_ABS_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  fp.abs(fp.abs(a)) or fp.abs(fp.neg(a))
+ * result: fp.abs(a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_ABS_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node[0].type().is_fp());
+
+  if (node[0].kind() != Kind::FP_ABS && node[0].kind() != Kind::FP_NEG)
+  {
+    return node;
+  }
+  return rewriter.mk_node(Kind::FP_ABS, {node[0][0]});
+}
+
 /* fpadd -------------------------------------------------------------------- */
 
 template <>
@@ -81,6 +100,25 @@ RewriteRule<RewriteRuleKind::FP_IS_INF_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  fp.isInfinite(fp.abs(a) or fp.isInfinite(fp.neg(a))
+ * result: fp.isInfinite(a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_IS_INF_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node[0].type().is_fp());
+
+  if (node[0].kind() != Kind::FP_ABS && node[0].kind() != Kind::FP_NEG)
+  {
+    return node;
+  }
+  return rewriter.mk_node(Kind::FP_IS_INF, {node[0][0]});
+}
+
 /* fpisnan ------------------------------------------------------------------ */
 
 template <>
@@ -95,6 +133,25 @@ RewriteRule<RewriteRuleKind::FP_IS_NAN_EVAL>::_apply(Rewriter& rewriter,
   Node res =
       NodeManager::get().mk_value(node[0].value<FloatingPoint>().fpisnan());
   return res;
+}
+
+/**
+ * match:  fp.isNaN(fp.abs(a) or fp.isNaN(fp.neg(a))
+ * result: fp.isNaN(a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_IS_NAN_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                        const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node[0].type().is_fp());
+
+  if (node[0].kind() != Kind::FP_ABS && node[0].kind() != Kind::FP_NEG)
+  {
+    return node;
+  }
+  return rewriter.mk_node(Kind::FP_IS_NAN, {node[0][0]});
 }
 
 /* fpisneg ------------------------------------------------------------------ */
@@ -129,6 +186,25 @@ RewriteRule<RewriteRuleKind::FP_IS_NORM_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  fp.isNormal(fp.abs(a) or fp.isNormal(fp.neg(a))
+ * result: fp.isNormal(a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_IS_NORM_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                         const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node[0].type().is_fp());
+
+  if (node[0].kind() != Kind::FP_ABS && node[0].kind() != Kind::FP_NEG)
+  {
+    return node;
+  }
+  return rewriter.mk_node(Kind::FP_IS_NORM, {node[0][0]});
+}
+
 /* fpispos ------------------------------------------------------------------ */
 
 template <>
@@ -161,6 +237,25 @@ RewriteRule<RewriteRuleKind::FP_IS_SUBNORM_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  fp.isSubnormal(fp.abs(a) or fp.isSubnormal(fp.neg(a))
+ * result: fp.isSubnormal(a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_IS_SUBNORM_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                            const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node[0].type().is_fp());
+
+  if (node[0].kind() != Kind::FP_ABS && node[0].kind() != Kind::FP_NEG)
+  {
+    return node;
+  }
+  return rewriter.mk_node(Kind::FP_IS_SUBNORM, {node[0][0]});
+}
+
 /* fpiszero ----------------------------------------------------------------- */
 
 template <>
@@ -175,6 +270,25 @@ RewriteRule<RewriteRuleKind::FP_IS_ZERO_EVAL>::_apply(Rewriter& rewriter,
   Node res =
       NodeManager::get().mk_value(node[0].value<FloatingPoint>().fpiszero());
   return res;
+}
+
+/**
+ * match:  fp.isZero(fp.abs(a) or fp.isZero(fp.neg(a))
+ * result: fp.isZero(a)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_IS_ZERO_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                         const Node& node)
+{
+  assert(node.num_children() == 1);
+  assert(node[0].type().is_fp());
+
+  if (node[0].kind() != Kind::FP_ABS && node[0].kind() != Kind::FP_NEG)
+  {
+    return node;
+  }
+  return rewriter.mk_node(Kind::FP_IS_ZERO, {node[0][0]});
 }
 
 /* fple --------------------------------------------------------------------- */
