@@ -9,9 +9,9 @@ set(libbzlabb_src_files
 )
 
 set(libbzlals_src_files
-  ls/bitvector_domain.cpp
   ls/ls.cpp
-  ls/bitvector_node.cpp
+  ls/bv/bitvector_domain.cpp
+  ls/bv/bitvector_node.cpp
   util/wheel_factorizer.cpp
 )
 

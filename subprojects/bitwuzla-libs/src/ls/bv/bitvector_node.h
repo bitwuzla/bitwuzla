@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "bv/bitvector.h"
-#include "ls/bitvector_domain.h"
+#include "ls/bv/bitvector_domain.h"
 
 namespace bzla {
 

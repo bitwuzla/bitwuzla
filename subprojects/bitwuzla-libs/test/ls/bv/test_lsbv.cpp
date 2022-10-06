@@ -5,7 +5,7 @@
 
 namespace bzla::ls::test {
 
-class TestLs : public TestBvNodeCommon
+class TestLsBv : public TestBvNodeCommon
 {
  protected:
   /**
@@ -148,7 +148,7 @@ class TestLs : public TestBvNodeCommon
 };
 
 LocalSearch::ParentsMap
-TestLs::get_expected_parents()
+TestLsBv::get_expected_parents()
 {
   LocalSearch::ParentsMap parents;
   std::vector<uint64_t> to_visit = {d_root1, d_root2};
@@ -178,15 +178,15 @@ TestLs::get_expected_parents()
 }
 
 void
-TestLs::update_cone(uint64_t id, const BitVector& assignment)
+TestLsBv::update_cone(uint64_t id, const BitVector& assignment)
 {
   d_ls->update_cone(d_ls->get_node(id), assignment);
 }
 
 void
-TestLs::test_move_binary(OpKind opkind,
-                         LocalSearch::OperatorKind kind,
-                         uint32_t pos_x)
+TestLsBv::test_move_binary(OpKind opkind,
+                           LocalSearch::OperatorKind kind,
+                           uint32_t pos_x)
 {
   std::vector<std::string> xvalues;
   if (TEST_SLOW)
@@ -299,7 +299,7 @@ TestLs::test_move_binary(OpKind opkind,
 }
 
 void
-TestLs::test_move_ite(uint32_t pos_x)
+TestLsBv::test_move_ite(uint32_t pos_x)
 {
   std::vector<std::string> cond_values = {"x", "0", "1"};
   std::vector<std::string> xvalues, s0values, s1values;
@@ -452,7 +452,7 @@ TestLs::test_move_ite(uint32_t pos_x)
 }
 
 void
-TestLs::test_move_not()
+TestLsBv::test_move_not()
 {
   std::vector<std::string> xvalues;
   if (TEST_SLOW)
@@ -499,7 +499,7 @@ TestLs::test_move_not()
 }
 
 void
-TestLs::test_move_extract()
+TestLsBv::test_move_extract()
 {
   std::vector<std::string> xvalues;
   if (TEST_SLOW)
@@ -558,7 +558,7 @@ TestLs::test_move_extract()
 }
 
 void
-TestLs::test_move_sext()
+TestLsBv::test_move_sext()
 {
   std::vector<std::string> xvalues;
   if (TEST_SLOW)
@@ -609,7 +609,7 @@ TestLs::test_move_sext()
   }
 }
 
-TEST_F(TestLs, parents)
+TEST_F(TestLsBv, parents)
 {
   d_ls->register_root(d_root1);
   d_ls->register_root(d_root2);
@@ -744,7 +744,7 @@ TEST_F(TestLs, parents)
   }
 }
 
-TEST_F(TestLs, update_cone)
+TEST_F(TestLsBv, update_cone)
 {
   std::map<uint32_t, BitVector> ass_init = {
       {d_c1, d_ten4},            // 1010
@@ -850,95 +850,95 @@ TEST_F(TestLs, update_cone)
   }
 }
 
-TEST_F(TestLs, move_add)
+TEST_F(TestLsBv, move_add)
 {
   test_move_binary(ADD, LocalSearch::OperatorKind::ADD, 0);
   test_move_binary(ADD, LocalSearch::OperatorKind::ADD, 1);
 }
 
-TEST_F(TestLs, move_and)
+TEST_F(TestLsBv, move_and)
 {
   test_move_binary(AND, LocalSearch::OperatorKind::AND, 0);
   test_move_binary(AND, LocalSearch::OperatorKind::AND, 1);
 }
 
-TEST_F(TestLs, move_concat)
+TEST_F(TestLsBv, move_concat)
 {
   test_move_binary(CONCAT, LocalSearch::OperatorKind::CONCAT, 0);
   test_move_binary(CONCAT, LocalSearch::OperatorKind::CONCAT, 1);
 }
 
-TEST_F(TestLs, move_eq)
+TEST_F(TestLsBv, move_eq)
 {
   test_move_binary(EQ, LocalSearch::OperatorKind::EQ, 0);
   test_move_binary(EQ, LocalSearch::OperatorKind::EQ, 1);
 }
 
-TEST_F(TestLs, move_mul)
+TEST_F(TestLsBv, move_mul)
 {
   test_move_binary(MUL, LocalSearch::OperatorKind::MUL, 0);
   test_move_binary(MUL, LocalSearch::OperatorKind::MUL, 1);
 }
 
-TEST_F(TestLs, move_shl)
+TEST_F(TestLsBv, move_shl)
 {
   test_move_binary(SHL, LocalSearch::OperatorKind::SHL, 0);
   test_move_binary(SHL, LocalSearch::OperatorKind::SHL, 1);
 }
 
-TEST_F(TestLs, move_shr)
+TEST_F(TestLsBv, move_shr)
 {
   test_move_binary(SHR, LocalSearch::OperatorKind::SHR, 0);
   test_move_binary(SHR, LocalSearch::OperatorKind::SHR, 1);
 }
 
-TEST_F(TestLs, move_ashr)
+TEST_F(TestLsBv, move_ashr)
 {
   test_move_binary(ASHR, LocalSearch::OperatorKind::ASHR, 0);
   test_move_binary(ASHR, LocalSearch::OperatorKind::ASHR, 1);
 }
 
-TEST_F(TestLs, move_udiv)
+TEST_F(TestLsBv, move_udiv)
 {
   test_move_binary(UDIV, LocalSearch::OperatorKind::UDIV, 0);
   test_move_binary(UDIV, LocalSearch::OperatorKind::UDIV, 1);
 }
 
-TEST_F(TestLs, move_ult)
+TEST_F(TestLsBv, move_ult)
 {
   test_move_binary(ULT, LocalSearch::OperatorKind::ULT, 0);
   test_move_binary(ULT, LocalSearch::OperatorKind::ULT, 1);
 }
 
-TEST_F(TestLs, move_slt)
+TEST_F(TestLsBv, move_slt)
 {
   test_move_binary(SLT, LocalSearch::OperatorKind::SLT, 0);
   test_move_binary(SLT, LocalSearch::OperatorKind::SLT, 1);
 }
 
-TEST_F(TestLs, move_urem)
+TEST_F(TestLsBv, move_urem)
 {
   test_move_binary(UREM, LocalSearch::OperatorKind::UREM, 0);
   test_move_binary(UREM, LocalSearch::OperatorKind::UREM, 1);
 }
 
-TEST_F(TestLs, move_xor)
+TEST_F(TestLsBv, move_xor)
 {
   test_move_binary(XOR, LocalSearch::OperatorKind::XOR, 0);
   test_move_binary(XOR, LocalSearch::OperatorKind::XOR, 1);
 }
 
-TEST_F(TestLs, ite)
+TEST_F(TestLsBv, ite)
 {
   test_move_ite(0);
   test_move_ite(1);
   test_move_ite(2);
 }
 
-TEST_F(TestLs, not ) { test_move_not(); }
+TEST_F(TestLsBv, not ) { test_move_not(); }
 
-TEST_F(TestLs, extract) { test_move_extract(); }
+TEST_F(TestLsBv, extract) { test_move_extract(); }
 
-TEST_F(TestLs, sext) { test_move_sext(); }
+TEST_F(TestLsBv, sext) { test_move_sext(); }
 
 }  // namespace bzla::ls::test

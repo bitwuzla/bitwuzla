@@ -1,4 +1,4 @@
-#include "ls/bitvector_domain.h"
+#include "ls/bv/bitvector_domain.h"
 
 #include <algorithm>
 #include <cassert>

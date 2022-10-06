@@ -2,8 +2,8 @@
 #define BZLALS__TEST__TEST_BVNODE_H
 
 #include "bv/bitvector.h"
-#include "ls/bitvector_domain.h"
-#include "ls/bitvector_node.h"
+#include "ls/bv/bitvector_domain.h"
+#include "ls/bv/bitvector_node.h"
 #include "test.h"
 
 namespace bzla::ls::test {

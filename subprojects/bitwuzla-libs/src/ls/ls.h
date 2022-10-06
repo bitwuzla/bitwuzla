@@ -20,12 +20,12 @@ class BitVectorDomain;
 class BitVectorNode;
 
 namespace test {
-class TestLs;
+class TestLsBv;
 }
 
 class LocalSearch
 {
-  friend class test::TestLs;
+  friend class test::TestLsBv;
 
  public:
   using NodesIdTable = std::vector<std::unique_ptr<BitVectorNode>>;

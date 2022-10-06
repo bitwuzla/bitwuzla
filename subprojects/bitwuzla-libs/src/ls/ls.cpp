@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "bv/bitvector.h"
-#include "ls/bitvector_node.h"
+#include "ls/bv/bitvector_node.h"
 #include "rng/rng.h"
 
 namespace bzla {

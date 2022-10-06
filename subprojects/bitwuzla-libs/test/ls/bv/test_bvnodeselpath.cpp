@@ -520,10 +520,7 @@ TestBvNodeSelPath::test_sext()
   }
 }
 
-TEST_F(TestBvNodeSelPath, add)
-{
-  test_binary<BitVectorAdd>(ADD);
-}
+TEST_F(TestBvNodeSelPath, add) { test_binary<BitVectorAdd>(ADD); }
 
 TEST_F(TestBvNodeSelPath, and) { test_binary<BitVectorAnd>(AND); }
 

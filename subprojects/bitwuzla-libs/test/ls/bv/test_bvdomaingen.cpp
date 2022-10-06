@@ -2,7 +2,7 @@
 #include <string>
 #include <unordered_set>
 
-#include "ls/bitvector_domain.h"
+#include "ls/bv/bitvector_domain.h"
 #include "test.h"
 
 namespace bzla::ls::test {
