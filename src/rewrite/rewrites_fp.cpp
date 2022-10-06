@@ -24,8 +24,8 @@ RewriteRule<RewriteRuleKind::FP_ABS_EVAL>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match:  fp.abs(fp.abs(a)) or fp.abs(fp.neg(a))
- * result: fp.abs(a)
+ * match:  (fp.abs (fp.abs a)) or (fp.abs (fp.neg a))
+ * result: (fp.abs a)
  */
 template <>
 Node
@@ -101,8 +101,8 @@ RewriteRule<RewriteRuleKind::FP_IS_INF_EVAL>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match:  fp.isInfinite(fp.abs(a) or fp.isInfinite(fp.neg(a))
- * result: fp.isInfinite(a)
+ * match:  (fp.isInfinite (fp.abs a)) or (fp.isInfinite (fp.neg a))
+ * result: (fp.isInfinite a)
  */
 template <>
 Node
@@ -136,8 +136,8 @@ RewriteRule<RewriteRuleKind::FP_IS_NAN_EVAL>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match:  fp.isNaN(fp.abs(a) or fp.isNaN(fp.neg(a))
- * result: fp.isNaN(a)
+ * match:  (fp.isNaN (fp.abs a)) or (fp.isNaN (fp.neg a))
+ * result: (fp.isNaN a)
  */
 template <>
 Node
@@ -187,8 +187,8 @@ RewriteRule<RewriteRuleKind::FP_IS_NORM_EVAL>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match:  fp.isNormal(fp.abs(a) or fp.isNormal(fp.neg(a))
- * result: fp.isNormal(a)
+ * match:  (fp.isNormal (fp.abs a)) or (fp.isNormal (fp.neg a))
+ * result: (fp.isNormal a)
  */
 template <>
 Node
@@ -238,8 +238,8 @@ RewriteRule<RewriteRuleKind::FP_IS_SUBNORM_EVAL>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match:  fp.isSubnormal(fp.abs(a) or fp.isSubnormal(fp.neg(a))
- * result: fp.isSubnormal(a)
+ * match:  (fp.isSubnormal (fp.abs a)) or (fp.isSubnormal (fp.neg a))
+ * result: (fp.isSubnormal a)
  */
 template <>
 Node
@@ -273,8 +273,8 @@ RewriteRule<RewriteRuleKind::FP_IS_ZERO_EVAL>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match:  fp.isZero(fp.abs(a) or fp.isZero(fp.neg(a))
- * result: fp.isZero(a)
+ * match:  (fp.isZero (fp.abs a)) or (fp.isZero (fp.neg a))
+ * result: (fp.isZero a)
  */
 template <>
 Node
@@ -308,6 +308,21 @@ RewriteRule<RewriteRuleKind::FP_LE_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  (fp.leq a  a)
+ * result: (not (fp.isNaN a))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_LE_EQ>::_apply(Rewriter& rewriter,
+                                               const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0] != node[1]) return node;
+  return rewriter.mk_node(Kind::NOT,
+                          {rewriter.mk_node(Kind::FP_IS_NAN, {node[0]})});
+}
+
 /* fplt --------------------------------------------------------------------- */
 
 template <>
@@ -325,9 +340,54 @@ RewriteRule<RewriteRuleKind::FP_LT_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  (fp.lt a a)
+ * result: false
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_LT_EQ>::_apply(Rewriter& rewriter,
+                                               const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0] != node[1]) return node;
+  return NodeManager::get().mk_value(false);
+}
+
 /* fpmin -------------------------------------------------------------------- */
 
+/**
+ * match:  (fp.min a a)
+ * result: a
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_MIN_EQ>::_apply(Rewriter& rewriter,
+                                                const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0] != node[1]) return node;
+  return node[0];
+}
+
 /* fpmax -------------------------------------------------------------------- */
+
+/**
+ * match:  (fp.max a a)
+ * result: a
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_MAX_EQ>::_apply(Rewriter& rewriter,
+                                                const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0] != node[1]) return node;
+  return node[0];
+}
 
 /* fpmul -------------------------------------------------------------------- */
 
@@ -366,6 +426,21 @@ RewriteRule<RewriteRuleKind::FP_NEG_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * match:  (fp.neg (fp.neg a))
+ * result: a
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_NEG_NEG>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 1);
+  if (node[0].kind() != Kind::FP_NEG) return node;
+  return node[0];
+}
+
 /* fprem -------------------------------------------------------------------- */
 
 template <>
@@ -381,6 +456,53 @@ RewriteRule<RewriteRuleKind::FP_REM_EVAL>::_apply(Rewriter& rewriter,
   Node res = NodeManager::get().mk_value(
       node[0].value<FloatingPoint>().fprem(node[1].value<FloatingPoint>()));
   return res;
+}
+
+/**
+ * match:  (fp.rem (fp.rem a  b)  b)
+ * result: (fp.rem a  b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_REM_SAME_DIV>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0].kind() != Kind::FP_REM || node[1] != node[0][1]) return node;
+  return node[0];
+}
+
+/**
+ * match:  (fp.rem a (fp.abs b)) or (fp.rem (a (fp.neg b))
+ * result: (fp.rem a  b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_REM_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[1].kind() != Kind::FP_ABS && node[1].kind() != Kind::FP_NEG)
+  {
+    return node;
+  }
+  return rewriter.mk_node(Kind::FP_REM, {node[0], node[1][0]});
+}
+
+/**
+ * match:  (fp.rem (fp.neg a) b)
+ * result: (fp.neg (fp.rem a b))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_REM_NEG>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].kind() != Kind::FP_NEG) return node;
+  return rewriter.mk_node(
+      Kind::FP_NEG, {rewriter.mk_node(Kind::FP_REM, {node[0][0], node[1]})});
 }
 
 /* fprti -------------------------------------------------------------------- */

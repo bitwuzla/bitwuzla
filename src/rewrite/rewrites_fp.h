@@ -105,22 +105,34 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_LE_EVAL>::_apply(Rewriter& rewriter,
                                                       const Node& node);
 // fp_lte
+template <>
+Node RewriteRule<RewriteRuleKind::FP_LE_EQ>::_apply(Rewriter& rewriter,
+                                                    const Node& node);
 
-/* fplt --------------------------------------------------------------------- */
+/* fplte -------------------------------------------------------------------- */
 
 // const_binary_fp_bool_exp
 template <>
 Node RewriteRule<RewriteRuleKind::FP_LT_EVAL>::_apply(Rewriter& rewriter,
                                                       const Node& node);
 // fp_lt
+template <>
+Node RewriteRule<RewriteRuleKind::FP_LT_EQ>::_apply(Rewriter& rewriter,
+                                                    const Node& node);
 
 /* fpmin -------------------------------------------------------------------- */
 
 // fp_min_max
+template <>
+Node RewriteRule<RewriteRuleKind::FP_MIN_EQ>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
 
 /* fpmax -------------------------------------------------------------------- */
 
 // fp_min_max
+template <>
+Node RewriteRule<RewriteRuleKind::FP_MAX_EQ>::_apply(Rewriter& rewriter,
+                                                     const Node& node);
 
 /* fpmul -------------------------------------------------------------------- */
 
@@ -136,6 +148,9 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_NEG_EVAL>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // fp_neg
+template <>
+Node RewriteRule<RewriteRuleKind::FP_NEG_NEG>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 
 /* fprem -------------------------------------------------------------------- */
 
@@ -144,8 +159,17 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_REM_EVAL>::_apply(Rewriter& rewriter,
                                                        const Node& node);
 // fp_rem_same_divisor
+template <>
+Node RewriteRule<RewriteRuleKind::FP_REM_SAME_DIV>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
 // fp_rem_sign_divisor
+template <>
+Node RewriteRule<RewriteRuleKind::FP_REM_ABS_NEG>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
 // fp_rem_neg
+template <>
+Node RewriteRule<RewriteRuleKind::FP_REM_NEG>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 
 /* fprti -------------------------------------------------------------------- */
 
@@ -167,6 +191,7 @@ Node RewriteRule<RewriteRuleKind::FP_SQRT_EVAL>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_BV_EVAL>::_apply(
     Rewriter& rewriter, const Node& node);
+
 /* to_fp: from_fp ----------------------------------------------------------- */
 
 // const_fp_to_fp_from_fp_exp

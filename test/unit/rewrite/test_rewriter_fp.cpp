@@ -19,6 +19,7 @@ class TestRewriterFp : public TestRewriter
     d_fp_pzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp_type, false));
     d_fp_nzero = d_nm.mk_value(FloatingPoint::fpzero(d_fp_type, true));
     d_a        = d_nm.mk_const(d_fp_type);
+    d_b        = d_nm.mk_const(d_fp_type);
     d_rm       = d_nm.mk_const(d_rm_type);
   }
 
@@ -30,6 +31,7 @@ class TestRewriterFp : public TestRewriter
   Node d_fp_pzero;
   Node d_fp_nzero;
   Node d_a;
+  Node d_b;
   Node d_rm;
 };
 
@@ -418,6 +420,18 @@ TEST_F(TestRewriterFp, fp_le_eval)
   ASSERT_EQ(fple3, d_rewriter.rewrite(fple3));
 }
 
+TEST_F(TestRewriterFp, fp_le_eq)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_LE_EQ;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::FP_LE, {d_a, d_a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::FP_LE,
+      {d_nm.mk_node(Kind::FP_NEG, {d_a}), d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_LE, {d_a, d_b}));
+}
+
 /* fplt --------------------------------------------------------------------- */
 
 TEST_F(TestRewriterFp, fp_lt_eval)
@@ -450,6 +464,46 @@ TEST_F(TestRewriterFp, fp_lt_eval)
   Node fplt3 =
       d_nm.mk_node(Kind::FP_LT, {d_fp_pzero, d_nm.mk_const(d_fp_type)});
   ASSERT_EQ(fplt3, d_rewriter.rewrite(fplt3));
+}
+
+TEST_F(TestRewriterFp, fp_lt_eq)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_LT_EQ;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::FP_LT, {d_a, d_a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::FP_LT,
+      {d_nm.mk_node(Kind::FP_NEG, {d_a}), d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_LT, {d_a, d_b}));
+}
+
+/* fpmin -------------------------------------------------------------------- */
+
+TEST_F(TestRewriterFp, fp_min_eq)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_MIN_EQ;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::FP_MIN, {d_a, d_a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::FP_MIN,
+      {d_nm.mk_node(Kind::FP_NEG, {d_a}), d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_MIN, {d_a, d_b}));
+}
+
+/* fpmax -------------------------------------------------------------------- */
+
+TEST_F(TestRewriterFp, fp_max_eq)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_MAX_EQ;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::FP_MAX, {d_a, d_a}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::FP_MAX,
+      {d_nm.mk_node(Kind::FP_NEG, {d_a}), d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_MAX, {d_a, d_b}));
 }
 
 /* fpmul -------------------------------------------------------------------- */
@@ -525,6 +579,16 @@ TEST_F(TestRewriterFp, fp_neg_eval)
   ASSERT_EQ(fpneg2, d_rewriter.rewrite(fpneg2));
 }
 
+TEST_F(TestRewriterFp, fp_neg_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_NEG_NEG;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_NEG, {d_nm.mk_node(Kind::FP_NEG, {d_a})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_NEG, {d_a}));
+}
+
 /* fprem -------------------------------------------------------------------- */
 
 TEST_F(TestRewriterFp, fp_rem_eval)
@@ -558,6 +622,41 @@ TEST_F(TestRewriterFp, fp_rem_eval)
   Node fprem3 =
       d_nm.mk_node(Kind::FP_REM, {d_fp_pzero, d_nm.mk_const(d_fp_type)});
   ASSERT_EQ(fprem3, d_rewriter.rewrite(fprem3));
+}
+
+TEST_F(TestRewriterFp, fp_rem_same_div)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_REM_SAME_DIV;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::FP_REM,
+                               {d_nm.mk_node(Kind::FP_REM, {d_a, d_b}), d_b}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::FP_REM, {d_nm.mk_node(Kind::FP_REM, {d_b, d_a}), d_b}));
+}
+
+TEST_F(TestRewriterFp, fp_rem_abs_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_REM_ABS_NEG;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_REM, {d_a, d_nm.mk_node(Kind::FP_ABS, {d_b})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_REM, {d_a, d_nm.mk_node(Kind::FP_NEG, {d_b})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::FP_REM, {d_a, d_nm.mk_node(Kind::FP_RTI, {d_rm, d_b})}));
+}
+
+TEST_F(TestRewriterFp, fp_rem_neg)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_REM_NEG;
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::FP_REM, {d_nm.mk_node(Kind::FP_NEG, {d_a}), d_a}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::FP_REM, {d_nm.mk_node(Kind::FP_ABS, {d_a}), d_a}));
 }
 
 /* fprti -------------------------------------------------------------------- */

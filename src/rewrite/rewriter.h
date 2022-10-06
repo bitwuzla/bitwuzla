@@ -249,12 +249,27 @@ enum class RewriteRuleKind
   FP_IS_ZERO_ABS_NEG,
 
   FP_LE_EVAL,
+  FP_LE_EQ,
+
   FP_LT_EVAL,
+  FP_LT_EQ,
+
   FP_MIN_EVAL,
+  FP_MIN_EQ,
+
   FP_MAX_EVAL,
+  FP_MAX_EQ,
+
   FP_MUL_EVAL,
+
   FP_NEG_EVAL,
+  FP_NEG_NEG,
+
   FP_REM_EVAL,
+  FP_REM_SAME_DIV,
+  FP_REM_ABS_NEG,
+  FP_REM_NEG,
+
   FP_RTI_EVAL,
   FP_SQRT_EVAL,
   FP_TO_FP_FROM_BV_EVAL,
