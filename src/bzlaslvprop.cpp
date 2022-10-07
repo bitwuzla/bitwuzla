@@ -22,8 +22,8 @@ extern "C" {
 }
 
 #include "bv/bitvector.h"
-#include "ls/bitvector_domain.h"
-#include "ls/ls.h"
+#include "ls/bv/bitvector_domain.h"
+#include "ls/ls_bv.h"
 
 struct BzlaPropSolver;
 
@@ -53,7 +53,7 @@ class PropSolverState
   {
     assert(bzla);
 
-    d_ls.reset(new bzla::ls::LocalSearch(
+    d_ls.reset(new bzla::ls::LocalSearchBV(
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_NPROPS),
         bzla_opt_get(d_bzla, BZLA_OPT_PROP_NUPDATES),
         bzla_opt_get(d_bzla, BZLA_OPT_SEED)));
@@ -91,7 +91,7 @@ class PropSolverState
   void synthesize_constraints();
   void print_progress() const;
   Bzla *d_bzla;
-  std::unique_ptr<bzla::ls::LocalSearch> d_ls;
+  std::unique_ptr<bzla::ls::LocalSearchBV> d_ls;
   NodeMap<uint32_t> d_node_map;
   NodeStack d_leafs;
   /**
@@ -156,14 +156,14 @@ PropSolverState::mk_node(BzlaNode *node)
     case BZLA_BV_ADD_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::ADD,
+          d_ls->mk_node(bzla::ls::OperatorKind::BV_ADD,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_AND_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::AND,
+          d_ls->mk_node(bzla::ls::OperatorKind::BV_AND,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
@@ -172,7 +172,7 @@ PropSolverState::mk_node(BzlaNode *node)
       if (d_use_sext && bzla_exp_is_bv_sext(d_bzla, node))
       {
         res =
-            d_ls->mk_indexed_node(bzla::ls::LocalSearch::OperatorKind::SEXT,
+            d_ls->mk_indexed_node(bzla::ls::OperatorKind::BV_SEXT,
                                   domain,
                                   d_node_map.at(node->e[1]),
                                   {bzla_node_bv_get_width(d_bzla, node->e[0])});
@@ -180,7 +180,7 @@ PropSolverState::mk_node(BzlaNode *node)
       else
       {
         res = d_ls->mk_node(
-            bzla::ls::LocalSearch::OperatorKind::CONCAT,
+            bzla::ls::OperatorKind::BV_CONCAT,
             domain,
             {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       }
@@ -188,27 +188,27 @@ PropSolverState::mk_node(BzlaNode *node)
     case BZLA_BV_EQ_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::EQ,
+          d_ls->mk_node(bzla::ls::OperatorKind::EQ,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_MUL_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::MUL,
+          d_ls->mk_node(bzla::ls::OperatorKind::BV_MUL,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_ULT_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::ULT,
+          d_ls->mk_node(bzla::ls::OperatorKind::BV_ULT,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_SLICE_NODE:
       assert(node->arity == 1);
-      res = d_ls->mk_indexed_node(bzla::ls::LocalSearch::OperatorKind::EXTRACT,
+      res = d_ls->mk_indexed_node(bzla::ls::OperatorKind::BV_EXTRACT,
                                   domain,
                                   d_node_map.at(node->e[0]),
                                   {bzla_node_bv_slice_get_upper(node),
@@ -217,41 +217,41 @@ PropSolverState::mk_node(BzlaNode *node)
     case BZLA_BV_SLL_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::SHL,
+          d_ls->mk_node(bzla::ls::OperatorKind::BV_SHL,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_SLT_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::SLT,
+          d_ls->mk_node(bzla::ls::OperatorKind::BV_SLT,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_SRL_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::SHR,
+          d_ls->mk_node(bzla::ls::OperatorKind::BV_SHR,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_UDIV_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::UDIV,
+          d_ls->mk_node(bzla::ls::OperatorKind::BV_UDIV,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_BV_UREM_NODE:
       assert(node->arity == 2);
       res =
-          d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::UREM,
+          d_ls->mk_node(bzla::ls::OperatorKind::BV_UREM,
                         domain,
                         {d_node_map.at(node->e[0]), d_node_map.at(node->e[1])});
       break;
     case BZLA_COND_NODE:
       assert(node->arity == 3);
-      res = d_ls->mk_node(bzla::ls::LocalSearch::OperatorKind::ITE,
+      res = d_ls->mk_node(bzla::ls::OperatorKind::ITE,
                           domain,
                           {d_node_map.at(node->e[0]),
                            d_node_map.at(node->e[1]),
@@ -438,14 +438,14 @@ PropSolverState::check_sat()
       }
     }
 
-    bzla::ls::LocalSearch::Result res = d_ls->move();
+    bzla::ls::Result res = d_ls->move();
 
-    if (res == bzla::ls::LocalSearch::Result::UNSAT)
+    if (res == bzla::ls::Result::UNSAT)
     {
       goto UNSAT;
     }
 
-    if (res == bzla::ls::LocalSearch::Result::SAT)
+    if (res == bzla::ls::Result::SAT)
     {
       goto SAT;
     }
