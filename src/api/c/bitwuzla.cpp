@@ -2089,8 +2089,7 @@ bitwuzla_mk_rm_value(Bitwuzla *bitwuzla, BitwuzlaRoundingMode rm)
     case BITWUZLA_RM_RNE: _rm = RoundingMode::RNE; break;
     case BITWUZLA_RM_RTN: _rm = RoundingMode::RTN; break;
     case BITWUZLA_RM_RTP: _rm = RoundingMode::RTP; break;
-    case BITWUZLA_RM_RTZ: _rm = RoundingMode::RTZ; break;
-    default: assert(false);
+    default: assert(rm == BITWUZLA_RM_RTZ); _rm = RoundingMode::RTZ;
   }
   Node term = NodeManager::get().mk_value(_rm);
   BZLA_RETURN_BITWUZLA_TERM(res, term);
