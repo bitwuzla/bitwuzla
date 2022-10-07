@@ -13,6 +13,8 @@ class RNG;
 
 namespace ls {
 
+/* -------------------------------------------------------------------------- */
+
 enum class OperatorKind
 {
   AND,
@@ -57,7 +59,13 @@ enum class OperatorKind
   // BV_XNOR,
   BV_XOR,
   // BV_ZEXT,
+  /* must be last */
+  NUM_OPS,
 };
+
+std::ostream& operator<<(std::ostream& out, const OperatorKind& kind);
+
+/* -------------------------------------------------------------------------- */
 
 enum class Result
 {
@@ -66,8 +74,12 @@ enum class Result
   UNKNOWN = 0,
 };
 
+/* -------------------------------------------------------------------------- */
+
 template <class VALUE, class Node>
 struct LocalSearchMove;
+
+/* -------------------------------------------------------------------------- */
 
 template <class BOOL, class VALUE, class NODE>
 class LocalSearch
@@ -89,46 +101,8 @@ class LocalSearch
     uint64_t d_nconf = 0;
 
 #ifndef NDEBUG
-    struct
-    {
-      uint64_t d_add     = 0;
-      uint64_t d_and     = 0;
-      uint64_t d_ashr    = 0;
-      uint64_t d_concat  = 0;
-      uint64_t d_extract = 0;
-      uint64_t d_eq      = 0;
-      uint64_t d_ite     = 0;
-      uint64_t d_mul     = 0;
-      uint64_t d_not     = 0;
-      uint64_t d_sext    = 0;
-      uint64_t d_shl     = 0;
-      uint64_t d_shr     = 0;
-      uint64_t d_slt     = 0;
-      uint64_t d_udiv    = 0;
-      uint64_t d_ult     = 0;
-      uint64_t d_urem    = 0;
-      uint64_t d_xor     = 0;
-    } d_ninv;
-    struct
-    {
-      uint64_t d_add     = 0;
-      uint64_t d_and     = 0;
-      uint64_t d_ashr    = 0;
-      uint64_t d_concat  = 0;
-      uint64_t d_extract = 0;
-      uint64_t d_eq      = 0;
-      uint64_t d_ite     = 0;
-      uint64_t d_mul     = 0;
-      uint64_t d_not     = 0;
-      uint64_t d_sext    = 0;
-      uint64_t d_shl     = 0;
-      uint64_t d_shr     = 0;
-      uint64_t d_slt     = 0;
-      uint64_t d_udiv    = 0;
-      uint64_t d_ult     = 0;
-      uint64_t d_urem    = 0;
-      uint64_t d_xor     = 0;
-    } d_ncons;
+    std::unordered_map<OperatorKind, uint64_t> d_ninv;
+    std::unordered_map<OperatorKind, uint64_t> d_ncons;
 #endif
   } d_statistics;
 
@@ -385,6 +359,7 @@ class LocalSearch
   uint32_t d_seed;
 };
 
+/* -------------------------------------------------------------------------- */
 }  // namespace ls
 }  // namespace bzla
 #endif

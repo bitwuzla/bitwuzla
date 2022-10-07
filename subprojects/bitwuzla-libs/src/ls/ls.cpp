@@ -27,6 +27,38 @@ class OstreamVoider
 
 /* -------------------------------------------------------------------------- */
 
+std::ostream&
+operator<<(std::ostream& out, const OperatorKind& kind)
+{
+  switch (kind)
+  {
+    case OperatorKind::AND: out << "and"; break;
+    case OperatorKind::EQ: out << "eq"; break;
+    case OperatorKind::ITE: out << "ite"; break;
+    case OperatorKind::NOT: out << "not"; break;
+    case OperatorKind::XOR: out << "xor"; break;
+    case OperatorKind::BV_ADD: out << "bvadd"; break;
+    case OperatorKind::BV_AND: out << "bvand"; break;
+    case OperatorKind::BV_ASHR: out << "bvashr"; break;
+    case OperatorKind::BV_CONCAT: out << "bvconcat"; break;
+    case OperatorKind::BV_EXTRACT: out << "bvextract"; break;
+    case OperatorKind::BV_MUL: out << "bvmul"; break;
+    case OperatorKind::BV_NOT: out << "bvnot"; break;
+    case OperatorKind::BV_SEXT: out << "bvsext"; break;
+    case OperatorKind::BV_SHL: out << "bvshl"; break;
+    case OperatorKind::BV_SHR: out << "bvshr"; break;
+    case OperatorKind::BV_SLT: out << "bvslt"; break;
+    case OperatorKind::BV_UDIV: out << "bvudiv"; break;
+    case OperatorKind::BV_ULT: out << "bvult"; break;
+    case OperatorKind::BV_UREM: out << "bvurem"; break;
+    case OperatorKind::BV_XOR: out << "bvxor"; break;
+    default: assert(false);
+  }
+  return out;
+}
+
+/* -------------------------------------------------------------------------- */
+
 template <class VALUE, class NODE>
 struct LocalSearchMove
 {
@@ -261,90 +293,126 @@ LocalSearch<BOOL, VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
         t = cur->inverse_value(t, pos_x);
         BZLALSLOG(1) << "      inverse value: " << t << std::endl;
         d_statistics.d_nprops_inv += 1;
-        //#ifndef NDEBUG
-        //        switch (cur->get_kind())
-        //        {
-        //          case BitVectorNode::Kind::ADD: d_statistics.d_ninv.d_add +=
-        //          1; break; case BitVectorNode::Kind::AND:
-        //          d_statistics.d_ninv.d_and += 1; break; case
-        //          BitVectorNode::Kind::ASHR:
-        //            d_statistics.d_ninv.d_ashr += 1;
-        //            break;
-        //          case BitVectorNode::Kind::CONCAT:
-        //            d_statistics.d_ninv.d_concat += 1;
-        //            break;
-        //          case BitVectorNode::Kind::EXTRACT:
-        //            d_statistics.d_ninv.d_extract += 1;
-        //            break;
-        //          case BitVectorNode::Kind::EQ: d_statistics.d_ninv.d_eq += 1;
-        //          break; case BitVectorNode::Kind::ITE:
-        //          d_statistics.d_ninv.d_ite += 1; break; case
-        //          BitVectorNode::Kind::MUL: d_statistics.d_ninv.d_mul += 1;
-        //          break; case BitVectorNode::Kind::NOT:
-        //          d_statistics.d_ninv.d_not += 1; break; case
-        //          BitVectorNode::Kind::SEXT:
-        //            d_statistics.d_ninv.d_sext += 1;
-        //            break;
-        //          case BitVectorNode::Kind::SHL: d_statistics.d_ninv.d_shl +=
-        //          1; break; case BitVectorNode::Kind::SHR:
-        //          d_statistics.d_ninv.d_shr += 1; break; case
-        //          BitVectorNode::Kind::SLT: d_statistics.d_ninv.d_slt += 1;
-        //          break; case BitVectorNode::Kind::UDIV:
-        //            d_statistics.d_ninv.d_udiv += 1;
-        //            break;
-        //          case BitVectorNode::Kind::ULT: d_statistics.d_ninv.d_ult +=
-        //          1; break; case BitVectorNode::Kind::UREM:
-        //            d_statistics.d_ninv.d_urem += 1;
-        //            break;
-        //          case BitVectorNode::Kind::XOR: d_statistics.d_ninv.d_xor +=
-        //          1; break; default: assert(false);
-        //        };
-        //#endif
+#ifndef NDEBUG
+        switch (cur->get_kind())
+        {
+          case BitVectorNode::Kind::ADD:
+            d_statistics.d_ninv[OperatorKind::BV_ADD] += 1;
+            break;
+          case BitVectorNode::Kind::AND:
+            d_statistics.d_ninv[OperatorKind::BV_AND] += 1;
+            break;
+          case BitVectorNode::Kind::ASHR:
+            d_statistics.d_ninv[OperatorKind::BV_ASHR] += 1;
+            break;
+          case BitVectorNode::Kind::CONCAT:
+            d_statistics.d_ninv[OperatorKind::BV_CONCAT] += 1;
+            break;
+          case BitVectorNode::Kind::EXTRACT:
+            d_statistics.d_ninv[OperatorKind::BV_EXTRACT] += 1;
+            break;
+          case BitVectorNode::Kind::EQ:
+            d_statistics.d_ninv[OperatorKind::EQ] += 1;
+            break;
+          case BitVectorNode::Kind::ITE:
+            d_statistics.d_ninv[OperatorKind::ITE] += 1;
+            break;
+          case BitVectorNode::Kind::MUL:
+            d_statistics.d_ninv[OperatorKind::BV_MUL] += 1;
+            break;
+          case BitVectorNode::Kind::NOT:
+            d_statistics.d_ninv[OperatorKind::BV_NOT] += 1;
+            break;
+          case BitVectorNode::Kind::SEXT:
+            d_statistics.d_ninv[OperatorKind::BV_SEXT] += 1;
+            break;
+          case BitVectorNode::Kind::SHL:
+            d_statistics.d_ninv[OperatorKind::BV_SHL] += 1;
+            break;
+          case BitVectorNode::Kind::SHR:
+            d_statistics.d_ninv[OperatorKind::BV_SHR] += 1;
+            break;
+          case BitVectorNode::Kind::SLT:
+            d_statistics.d_ninv[OperatorKind::BV_SLT] += 1;
+            break;
+          case BitVectorNode::Kind::UDIV:
+            d_statistics.d_ninv[OperatorKind::BV_UDIV] += 1;
+            break;
+          case BitVectorNode::Kind::ULT:
+            d_statistics.d_ninv[OperatorKind::BV_ULT] += 1;
+            break;
+          case BitVectorNode::Kind::UREM:
+            d_statistics.d_ninv[OperatorKind::BV_UREM] += 1;
+            break;
+          case BitVectorNode::Kind::XOR:
+            d_statistics.d_ninv[OperatorKind::BV_XOR] += 1;
+            break;
+          default: assert(false);
+        };
+#endif
       }
       else if (cur->is_consistent(t, pos_x))
       {
         t = cur->consistent_value(t, pos_x);
         BZLALSLOG(1) << "      consistent value: " << t << std::endl;
         d_statistics.d_nprops_cons += 1;
-        //#ifndef NDEBUG
-        //        switch (cur->get_kind())
-        //        {
-        //          case BitVectorNode::Kind::ADD: d_statistics.d_ncons.d_add +=
-        //          1; break; case BitVectorNode::Kind::AND:
-        //          d_statistics.d_ncons.d_and += 1; break; case
-        //          BitVectorNode::Kind::ASHR:
-        //            d_statistics.d_ncons.d_ashr += 1;
-        //            break;
-        //          case BitVectorNode::Kind::CONCAT:
-        //            d_statistics.d_ncons.d_concat += 1;
-        //            break;
-        //          case BitVectorNode::Kind::EXTRACT:
-        //            d_statistics.d_ncons.d_extract += 1;
-        //            break;
-        //          case BitVectorNode::Kind::EQ: d_statistics.d_ncons.d_eq +=
-        //          1; break; case BitVectorNode::Kind::ITE:
-        //          d_statistics.d_ncons.d_ite += 1; break; case
-        //          BitVectorNode::Kind::MUL: d_statistics.d_ncons.d_mul += 1;
-        //          break; case BitVectorNode::Kind::NOT:
-        //          d_statistics.d_ncons.d_not += 1; break; case
-        //          BitVectorNode::Kind::SEXT:
-        //            d_statistics.d_ncons.d_sext += 1;
-        //            break;
-        //          case BitVectorNode::Kind::SHL: d_statistics.d_ncons.d_shl +=
-        //          1; break; case BitVectorNode::Kind::SHR:
-        //          d_statistics.d_ncons.d_shr += 1; break; case
-        //          BitVectorNode::Kind::SLT: d_statistics.d_ncons.d_slt += 1;
-        //          break; case BitVectorNode::Kind::UDIV:
-        //            d_statistics.d_ncons.d_udiv += 1;
-        //            break;
-        //          case BitVectorNode::Kind::ULT: d_statistics.d_ncons.d_ult +=
-        //          1; break; case BitVectorNode::Kind::UREM:
-        //            d_statistics.d_ncons.d_urem += 1;
-        //            break;
-        //          case BitVectorNode::Kind::XOR: d_statistics.d_ncons.d_xor +=
-        //          1; break; default: assert(false);
-        //        };
-        //#endif
+#ifndef NDEBUG
+        switch (cur->get_kind())
+        {
+          case BitVectorNode::Kind::ADD:
+            d_statistics.d_ncons[OperatorKind::BV_ADD] += 1;
+            break;
+          case BitVectorNode::Kind::AND:
+            d_statistics.d_ncons[OperatorKind::BV_AND] += 1;
+            break;
+          case BitVectorNode::Kind::ASHR:
+            d_statistics.d_ncons[OperatorKind::BV_ASHR] += 1;
+            break;
+          case BitVectorNode::Kind::CONCAT:
+            d_statistics.d_ncons[OperatorKind::BV_CONCAT] += 1;
+            break;
+          case BitVectorNode::Kind::EXTRACT:
+            d_statistics.d_ncons[OperatorKind::BV_EXTRACT] += 1;
+            break;
+          case BitVectorNode::Kind::EQ:
+            d_statistics.d_ncons[OperatorKind::EQ] += 1;
+            break;
+          case BitVectorNode::Kind::ITE:
+            d_statistics.d_ncons[OperatorKind::ITE] += 1;
+            break;
+          case BitVectorNode::Kind::MUL:
+            d_statistics.d_ncons[OperatorKind::BV_MUL] += 1;
+            break;
+          case BitVectorNode::Kind::NOT:
+            d_statistics.d_ncons[OperatorKind::BV_NOT] += 1;
+            break;
+          case BitVectorNode::Kind::SEXT:
+            d_statistics.d_ncons[OperatorKind::BV_SEXT] += 1;
+            break;
+          case BitVectorNode::Kind::SHL:
+            d_statistics.d_ncons[OperatorKind::BV_SHL] += 1;
+            break;
+          case BitVectorNode::Kind::SHR:
+            d_statistics.d_ncons[OperatorKind::BV_SHR] += 1;
+            break;
+          case BitVectorNode::Kind::SLT:
+            d_statistics.d_ncons[OperatorKind::BV_SLT] += 1;
+            break;
+          case BitVectorNode::Kind::UDIV:
+            d_statistics.d_ncons[OperatorKind::BV_UDIV] += 1;
+            break;
+          case BitVectorNode::Kind::ULT:
+            d_statistics.d_ncons[OperatorKind::BV_ULT] += 1;
+            break;
+          case BitVectorNode::Kind::UREM:
+            d_statistics.d_ncons[OperatorKind::BV_UREM] += 1;
+            break;
+          case BitVectorNode::Kind::XOR:
+            d_statistics.d_ncons[OperatorKind::BV_XOR] += 1;
+            break;
+          default: assert(false);
+        };
+#endif
       }
       else
       {
