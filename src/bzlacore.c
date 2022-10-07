@@ -2783,14 +2783,16 @@ bzla_check_sat(Bzla *bzla, int32_t lod_limit, int32_t sat_limit)
 
   if (bzla_opt_get(bzla, BZLA_OPT_FUN_PREPROP))
   {
-    bzla_opt_set(bzla, BZLA_OPT_PROP_NPROPS, 10000);
-    bzla_opt_set(bzla, BZLA_OPT_PROP_NUPDATES, 2000000);
-    bzla_opt_set(bzla, BZLA_OPT_PROP_SEXT, 1);
-  }
-
-  if (bzla_opt_get(bzla, BZLA_OPT_ENGINE) == BZLA_ENGINE_PROP)
-  {
-    bzla_opt_set(bzla, BZLA_OPT_PROP_SEXT, 1);
+    if (bzla_opt_get(bzla, BZLA_OPT_PROP_NPROPS)
+        == bzla_opt_get_dflt(bzla, BZLA_OPT_PROP_NPROPS))
+    {
+      bzla_opt_set(bzla, BZLA_OPT_PROP_NPROPS, 10000);
+    }
+    if (bzla_opt_get(bzla, BZLA_OPT_PROP_NUPDATES)
+        == bzla_opt_get_dflt(bzla, BZLA_OPT_PROP_NUPDATES))
+    {
+      bzla_opt_set(bzla, BZLA_OPT_PROP_NUPDATES, 2000000);
+    }
   }
 
   if (bzla->valid_assignments == 1) bzla_reset_incremental_usage(bzla);

@@ -1303,7 +1303,7 @@ bzla_opt_init_opts(Bzla *bzla)
            true,
            "prop-sext",
            0,
-           0,
+           1,
            0,
            1,
            "use sign_extend inverse value computation");
