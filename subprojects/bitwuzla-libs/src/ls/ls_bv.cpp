@@ -11,7 +11,8 @@ namespace bzla::ls {
 LocalSearchBV::LocalSearchBV(uint64_t max_nprops,
                              uint64_t max_nupdates,
                              uint32_t seed)
-    : LocalSearch<BitVector, BitVectorNode>(max_nprops, max_nupdates, seed)
+    : LocalSearch<BitVector, BitVector, BitVectorNode>(
+        max_nprops, max_nupdates, seed)
 
 {
   d_true.reset(new BitVector(BitVector::mk_true()));

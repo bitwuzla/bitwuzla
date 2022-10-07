@@ -12,7 +12,7 @@ namespace ls {
 class BitVectorDomain;
 class BitVectorNode;
 
-class LocalSearchBV : public LocalSearch<BitVector, BitVectorNode>
+class LocalSearchBV : public LocalSearch<BitVector, BitVector, BitVectorNode>
 {
  public:
   /**
