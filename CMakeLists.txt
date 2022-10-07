@@ -336,7 +336,7 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/src/bzlaconfig.h)
 
 #-----------------------------------------------------------------------------#
-# Regression tests
+# Unit tests
 
 set(ENABLE_WHITEBOX_TESTS OFF)
 if(TESTING)

@@ -104,27 +104,40 @@ class PropSolverState
   bool d_use_sext = false;
 };
 
+namespace {
+bool
+is_leaf_node(BzlaNode *n)
+{
+  assert(n);
+  return bzla_node_is_bv_var(n) || bzla_node_is_apply(n)
+         || bzla_node_is_fun_eq(n) || bzla_node_is_quantifier(n);
+}
+}  // namespace
+
 uint32_t
 PropSolverState::mk_node(BzlaNode *node)
 {
   assert(bzla_node_is_regular(node));
-  assert(bzla_node_is_bv(d_bzla, node));
+  assert(bzla_node_is_bv(d_bzla, node) || is_leaf_node(node));
 
   uint32_t res = 0;
   uint32_t bw  = bzla_node_bv_get_width(d_bzla, node);
 
-  for (uint32_t i = 0; i < node->arity; ++i)
+  if (!is_leaf_node(node))
   {
-    BzlaNode *e      = node->e[i];
-    BzlaNode *real_e = bzla_node_real_addr(e);
-    auto it          = d_node_map.find(real_e);
-    assert(it != d_node_map.end());
-    if (bzla_node_is_inverted(e))
+    for (uint32_t i = 0; i < node->arity; ++i)
     {
-      auto iit = d_node_map.find(e);
-      if (iit == d_node_map.end())
+      BzlaNode *e      = node->e[i];
+      BzlaNode *real_e = bzla_node_real_addr(e);
+      auto it          = d_node_map.find(real_e);
+      assert(it != d_node_map.end());
+      if (bzla_node_is_inverted(e))
       {
-        d_node_map[e] = d_ls->invert_node(it->second);
+        auto iit = d_node_map.find(e);
+        if (iit == d_node_map.end())
+        {
+          d_node_map[e] = d_ls->invert_node(it->second);
+        }
       }
     }
   }
@@ -263,7 +276,9 @@ PropSolverState::mk_node(BzlaNode *node)
       break;
     case BZLA_BV_CONST_NODE:
     case BZLA_VAR_NODE: res = d_ls->mk_node(domain.lo(), domain); break;
-    default: assert(false);
+    default:
+      assert(is_leaf_node(node));
+      res = d_ls->mk_node(domain.lo(), domain);
   }
 
   return res;
@@ -329,15 +344,21 @@ PropSolverState::init_nodes()
     {
       assert(bzla_node_is_regular(cur));
       d_node_map[cur] = mk_node(cur);
-      if (bzla_node_is_bv_var(cur)) d_leafs.push_back(cur);
     }
     else
     {
       cache.emplace(cur);
       visit.push_back(cur);
-      for (uint32_t i = 0; i < cur->arity; ++i)
+      if (is_leaf_node(cur))
       {
-        visit.push_back(cur->e[i]);
+        d_leafs.push_back(cur);
+      }
+      else
+      {
+        for (uint32_t i = 0; i < cur->arity; ++i)
+        {
+          visit.push_back(cur->e[i]);
+        }
       }
     }
   }
@@ -476,7 +497,7 @@ PropSolverState::generate_model()
   for (BzlaNode *leaf : d_leafs)
   {
     assert(bzla_node_is_regular(leaf));
-    assert(bzla_node_is_bv_var(leaf));
+    assert(is_leaf_node(leaf));
 
     auto iit = d_node_map.find(leaf);
     assert(iit != d_node_map.end());
