@@ -1,5 +1,5 @@
-#ifndef BZLALS__BITVECTOR_OP_H
-#define BZLALS__BITVECTOR_OP_H
+#ifndef BZLA__LS_BITVECTOR_NODE_H
+#define BZLA__LS_BITVECTOR_NODE_H
 
 #include <vector>
 
@@ -63,13 +63,24 @@ class BitVectorNode
    * Get the domain of this node.
    * @return A reference to the domain of this node.
    */
-  const BitVectorDomain& get_domain() { return d_domain; }
+  const BitVectorDomain& get_domain() const { return d_domain; }
 
   /**
    * Get the kind of the node.
    * @return The kind of this node.
    */
   virtual Kind get_kind() const { return CONST; }
+
+  /**
+   * Determine if this node is an inequality node.
+   * @return True if this is an inequality node.
+   */
+  bool is_inequality() const;
+  /**
+   * Determine if this node is a not node.
+   * @return True if this is a not node.
+   */
+  bool is_not() const;
 
   /**
    * Get the bit-vector size of the node.

@@ -107,6 +107,18 @@ BitVectorNode::BitVectorNode(RNG* rng,
   d_all_const = child0->is_const() && child1->is_const() && child2->is_const();
 }
 
+bool
+BitVectorNode::is_inequality() const
+{
+  return get_kind() == Kind::SLT || get_kind() == Kind::ULT;
+}
+
+bool
+BitVectorNode::is_not() const
+{
+  return get_kind() == Kind::NOT;
+}
+
 uint32_t
 BitVectorNode::select_path_non_const(std::vector<uint32_t>& res_inputs) const
 {

@@ -27,14 +27,15 @@ class OstreamVoider
 
 /* -------------------------------------------------------------------------- */
 
+template <class VALUE, class NODE>
 struct LocalSearchMove
 {
   LocalSearchMove() : d_nprops(0), d_nupdates(0), d_input(nullptr) {}
 
   LocalSearchMove(uint64_t nprops,
                   uint64_t nupdates,
-                  BitVectorNode* input,
-                  BitVector assignment)
+                  NODE* input,
+                  VALUE assignment)
       : d_nprops(nprops),
         d_nupdates(nupdates),
         d_input(input),
@@ -44,283 +45,82 @@ struct LocalSearchMove
 
   uint64_t d_nprops;
   uint64_t d_nupdates;
-  BitVectorNode* d_input;
-  BitVector d_assignment;
+  NODE* d_input;
+  VALUE d_assignment;
 };
+
+template struct LocalSearchMove<BitVector, BitVectorNode>;
 
 /* -------------------------------------------------------------------------- */
 
-LocalSearch::LocalSearch(uint64_t max_nprops,
-                         uint64_t max_nupdates,
-                         uint32_t seed)
+template <class VALUE, class NODE>
+LocalSearch<VALUE, NODE>::LocalSearch(uint64_t max_nprops,
+                                      uint64_t max_nupdates,
+                                      uint32_t seed)
     : d_max_nprops(max_nprops), d_max_nupdates(max_nupdates), d_seed(seed)
 
 {
   d_rng.reset(new RNG(d_seed));
-  d_one.reset(new BitVector(BitVector::mk_one(1)));
 }
 
-LocalSearch::~LocalSearch() {}
+template <class VALUE, class NODE>
+LocalSearch<VALUE, NODE>::~LocalSearch()
+{
+}
 
+template <class VALUE, class NODE>
 void
-LocalSearch::init()
+LocalSearch<VALUE, NODE>::init()
 {
-  BitVectorNode::s_path_sel_essential  = d_options.use_path_sel_essential;
-  BitVectorNode::s_prob_pick_ess_input = d_options.prob_pick_ess_input;
+  NODE::s_path_sel_essential  = d_options.use_path_sel_essential;
+  NODE::s_prob_pick_ess_input = d_options.prob_pick_ess_input;
 }
 
-uint64_t
-LocalSearch::mk_node(uint64_t size)
-{
-  return mk_node(BitVector::mk_zero(size), BitVectorDomain(size));
-}
-
-uint64_t
-LocalSearch::mk_node(OperatorKind kind,
-                     uint64_t size,
-                     const std::vector<uint64_t>& children)
-{
-  return mk_node(kind, BitVectorDomain(size), children);
-}
-
-uint64_t
-LocalSearch::mk_indexed_node(OperatorKind kind,
-                             uint64_t size,
-                             uint64_t child0,
-                             const std::vector<uint64_t>& indices)
-{
-  return mk_indexed_node(kind, BitVectorDomain(size), child0, indices);
-}
-
-uint64_t
-LocalSearch::mk_node(const BitVector& assignment, const BitVectorDomain& domain)
-{
-  uint64_t id = d_nodes.size();
-  assert(assignment.size() == domain.size());  // API check
-  std::unique_ptr<BitVectorNode> res(
-      new BitVectorNode(d_rng.get(), assignment, domain));
-  res->set_id(id);
-  d_nodes.push_back(std::move(res));
-  assert(get_node(id) == d_nodes.back().get());
-  assert(d_parents.find(id) == d_parents.end());
-  d_parents[id] = {};
-  return id;
-}
-
-uint64_t
-LocalSearch::mk_node(OperatorKind kind,
-                     const BitVectorDomain& domain,
-                     const std::vector<uint64_t>& children)
-{
-  uint64_t id = d_nodes.size();
-  for (uint64_t c : children)
-  {
-    assert(c < id);  // API check
-    assert(d_parents.find(c) != d_parents.end());
-    d_parents.at(c).insert(id);
-  }
-
-  std::unique_ptr<BitVectorNode> res;
-
-  switch (kind)
-  {
-    case ADD:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorAdd(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-
-    case AND:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorAnd(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-    case ASHR:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorAshr(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-    case CONCAT:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorConcat(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-    case EQ:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorEq(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-    case ITE:
-      assert(children.size() == 3);  // API check
-      res.reset(new BitVectorIte(d_rng.get(),
-                                 domain,
-                                 get_node(children[0]),
-                                 get_node(children[1]),
-                                 get_node(children[2])));
-      break;
-    case MUL:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorMul(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-    case NOT:
-      assert(children.size() == 1);  // API check
-      res.reset(new BitVectorNot(d_rng.get(), domain, get_node(children[0])));
-      break;
-    case SHL:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorShl(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-    case SHR:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorShr(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-    case SLT:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorSlt(d_rng.get(),
-                                 domain,
-                                 get_node(children[0]),
-                                 get_node(children[1]),
-                                 d_options.use_opt_lt_concat_sext));
-      break;
-    case UDIV:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorUdiv(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-    case ULT:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorUlt(d_rng.get(),
-                                 domain,
-                                 get_node(children[0]),
-                                 get_node(children[1]),
-                                 d_options.use_opt_lt_concat_sext));
-      break;
-    case UREM:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorUrem(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-    case XOR:
-      assert(children.size() == 2);  // API check
-      res.reset(new BitVectorXor(
-          d_rng.get(), domain, get_node(children[0]), get_node(children[1])));
-      break;
-
-    default: assert(0);  // API check
-  }
-  res->set_id(id);
-  d_nodes.push_back(std::move(res));
-  assert(get_node(id) == d_nodes.back().get());
-  assert(d_parents.find(id) == d_parents.end());
-  d_parents[id] = {};
-
-  return id;
-}
-
-uint64_t
-LocalSearch::mk_indexed_node(OperatorKind kind,
-                             const BitVectorDomain& domain,
-                             uint64_t child0,
-                             const std::vector<uint64_t>& indices)
-{
-  assert(kind == EXTRACT || kind == SEXT);              // API check
-  assert(kind != EXTRACT || indices.size() == 2);       // API check
-  assert(kind != EXTRACT || indices[0] >= indices[1]);  // API check
-  assert(kind != EXTRACT
-         || indices[0] < get_node(child0)->size());  // API check
-  assert(kind != SEXT || indices.size() == 1);       // API check
-
-  uint64_t id = d_nodes.size();
-  assert(child0 < id);
-
-  assert(d_parents.find(child0) != d_parents.end());
-  d_parents.at(child0).insert(id);
-
-  std::unique_ptr<BitVectorNode> res;
-  if (kind == EXTRACT)
-  {
-    res.reset(new BitVectorExtract(
-        d_rng.get(), domain, get_node(child0), indices[0], indices[1]));
-  }
-  else
-  {
-    res.reset(new BitVectorSignExtend(
-        d_rng.get(), domain, get_node(child0), indices[0]));
-  }
-  res->set_id(id);
-  d_nodes.push_back(std::move(res));
-  assert(get_node(id) == d_nodes.back().get());
-  assert(d_parents.find(id) == d_parents.end());
-  d_parents[id] = {};
-  return id;
-}
-
-uint64_t
-LocalSearch::invert_node(uint64_t id)
-{
-  assert(id < d_nodes.size());  // API check
-  return mk_node(NOT, get_node(id)->domain().bvnot(), {id});
-}
-
-const BitVector&
-LocalSearch::get_assignment(uint64_t id) const
+template <class VALUE, class NODE>
+const VALUE&
+LocalSearch<VALUE, NODE>::get_assignment(uint64_t id) const
 {
   assert(id < d_nodes.size());  // API check
   return get_node(id)->assignment();
 }
 
-const BitVectorDomain&
-LocalSearch::get_domain(uint64_t id) const
-{
-  assert(id < d_nodes.size());  // API check
-  return get_node(id)->domain();
-}
-
+template <class VALUE, class NODE>
 void
-LocalSearch::set_assignment(uint64_t id, const BitVector& assignment)
+LocalSearch<VALUE, NODE>::set_assignment(uint64_t id, const VALUE& assignment)
 {
   assert(id < d_nodes.size());  // API check
   get_node(id)->set_assignment(assignment);
 }
 
+template <class VALUE, class NODE>
 void
-LocalSearch::fix_bit(uint64_t id, uint32_t idx, bool value)
+LocalSearch<VALUE, NODE>::register_root(uint64_t id)
 {
   assert(id < d_nodes.size());  // API check
-  BitVectorNode* node = get_node(id);
-  assert(idx < node->domain().size());  // API check
-  node->fix_bit(idx, value);
-}
-
-void
-LocalSearch::register_root(uint64_t id)
-{
-  assert(id < d_nodes.size());  // API check
-  BitVectorNode* root = get_node(id);
+  NODE* root = get_node(id);
   d_roots.push_back(root);
-  if (is_ineq_node(root))
+  if (root->is_inequality())
   {
     d_roots_ineq.insert({root, true});
   }
-  if (is_not_node(root) && is_ineq_node((*root)[0]))
+  if (root->is_not() && (*root)[0]->is_inequality())
   {
     d_roots_ineq.insert({(*root)[0], false});
   }
   update_unsat_roots(root);
 }
 
+template <class VALUE, class NODE>
 uint32_t
-LocalSearch::get_arity(uint64_t id) const
+LocalSearch<VALUE, NODE>::get_arity(uint64_t id) const
 {
   assert(id < d_nodes.size());  // API check
   return get_node(id)->arity();
 }
 
+template <class VALUE, class NODE>
 uint64_t
-LocalSearch::get_child(uint64_t id, uint32_t idx) const
+LocalSearch<VALUE, NODE>::get_child(uint64_t id, uint32_t idx) const
 {
   assert(id < d_nodes.size());  // API check
   assert(idx < get_arity(id));  // API check
@@ -329,56 +129,48 @@ LocalSearch::get_child(uint64_t id, uint32_t idx) const
 
 /* -------------------------------------------------------------------------- */
 
-BitVectorNode*
-LocalSearch::get_node(uint64_t id) const
+template <class VALUE, class NODE>
+NODE*
+LocalSearch<VALUE, NODE>::get_node(uint64_t id) const
 {
   assert(id < d_nodes.size());
   assert(d_nodes[id]->id() == id);
   return d_nodes[id].get();
 }
 
+template <class VALUE, class NODE>
 bool
-LocalSearch::is_leaf_node(const BitVectorNode* node) const
+LocalSearch<VALUE, NODE>::is_leaf_node(const NODE* node) const
 {
   assert(node);
   return node->arity() == 0;
 }
 
+template <class VALUE, class NODE>
 bool
-LocalSearch::is_root_node(const BitVectorNode* node) const
+LocalSearch<VALUE, NODE>::is_root_node(const NODE* node) const
 {
   assert(node);
   assert(d_parents.find(node->id()) != d_parents.end());
   return d_parents.at(node->id()).empty();
 }
 
+template <class VALUE, class NODE>
 bool
-LocalSearch::is_ineq_root(const BitVectorNode* node) const
+LocalSearch<VALUE, NODE>::is_ineq_root(const NODE* node) const
 {
   return d_roots_ineq.find(node) != d_roots_ineq.end();
 }
 
-bool
-LocalSearch::is_ineq_node(const BitVectorNode* node)
-{
-  BitVectorNode::Kind kind = node->get_kind();
-  return kind == BitVectorNode::Kind::SLT || kind == BitVectorNode::Kind::ULT;
-}
-
-bool
-LocalSearch::is_not_node(const BitVectorNode* node)
-{
-  return node->get_kind() == BitVectorNode::Kind::NOT;
-}
-
-LocalSearchMove
-LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
+template <class VALUE, class NODE>
+LocalSearchMove<VALUE, NODE>
+LocalSearch<VALUE, NODE>::select_move(NODE* root, const VALUE& t_root)
 {
   assert(root);
 
   uint64_t nprops = 0, nupdates = 0;
-  BitVectorNode* cur = root;
-  BitVector t        = t_root;
+  NODE* cur = root;
+  VALUE t   = t_root;
 
   for (;;)
   {
@@ -470,82 +262,90 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
         t = cur->inverse_value(t, pos_x);
         BZLALSLOG(1) << "      inverse value: " << t << std::endl;
         d_statistics.d_nprops_inv += 1;
-#ifndef NDEBUG
-        switch (cur->get_kind())
-        {
-          case BitVectorNode::Kind::ADD: d_statistics.d_ninv.d_add += 1; break;
-          case BitVectorNode::Kind::AND: d_statistics.d_ninv.d_and += 1; break;
-          case BitVectorNode::Kind::ASHR:
-            d_statistics.d_ninv.d_ashr += 1;
-            break;
-          case BitVectorNode::Kind::CONCAT:
-            d_statistics.d_ninv.d_concat += 1;
-            break;
-          case BitVectorNode::Kind::EXTRACT:
-            d_statistics.d_ninv.d_extract += 1;
-            break;
-          case BitVectorNode::Kind::EQ: d_statistics.d_ninv.d_eq += 1; break;
-          case BitVectorNode::Kind::ITE: d_statistics.d_ninv.d_ite += 1; break;
-          case BitVectorNode::Kind::MUL: d_statistics.d_ninv.d_mul += 1; break;
-          case BitVectorNode::Kind::NOT: d_statistics.d_ninv.d_not += 1; break;
-          case BitVectorNode::Kind::SEXT:
-            d_statistics.d_ninv.d_sext += 1;
-            break;
-          case BitVectorNode::Kind::SHL: d_statistics.d_ninv.d_shl += 1; break;
-          case BitVectorNode::Kind::SHR: d_statistics.d_ninv.d_shr += 1; break;
-          case BitVectorNode::Kind::SLT: d_statistics.d_ninv.d_slt += 1; break;
-          case BitVectorNode::Kind::UDIV:
-            d_statistics.d_ninv.d_udiv += 1;
-            break;
-          case BitVectorNode::Kind::ULT: d_statistics.d_ninv.d_ult += 1; break;
-          case BitVectorNode::Kind::UREM:
-            d_statistics.d_ninv.d_urem += 1;
-            break;
-          case BitVectorNode::Kind::XOR: d_statistics.d_ninv.d_xor += 1; break;
-          default: assert(false);
-        };
-#endif
+        //#ifndef NDEBUG
+        //        switch (cur->get_kind())
+        //        {
+        //          case BitVectorNode::Kind::ADD: d_statistics.d_ninv.d_add +=
+        //          1; break; case BitVectorNode::Kind::AND:
+        //          d_statistics.d_ninv.d_and += 1; break; case
+        //          BitVectorNode::Kind::ASHR:
+        //            d_statistics.d_ninv.d_ashr += 1;
+        //            break;
+        //          case BitVectorNode::Kind::CONCAT:
+        //            d_statistics.d_ninv.d_concat += 1;
+        //            break;
+        //          case BitVectorNode::Kind::EXTRACT:
+        //            d_statistics.d_ninv.d_extract += 1;
+        //            break;
+        //          case BitVectorNode::Kind::EQ: d_statistics.d_ninv.d_eq += 1;
+        //          break; case BitVectorNode::Kind::ITE:
+        //          d_statistics.d_ninv.d_ite += 1; break; case
+        //          BitVectorNode::Kind::MUL: d_statistics.d_ninv.d_mul += 1;
+        //          break; case BitVectorNode::Kind::NOT:
+        //          d_statistics.d_ninv.d_not += 1; break; case
+        //          BitVectorNode::Kind::SEXT:
+        //            d_statistics.d_ninv.d_sext += 1;
+        //            break;
+        //          case BitVectorNode::Kind::SHL: d_statistics.d_ninv.d_shl +=
+        //          1; break; case BitVectorNode::Kind::SHR:
+        //          d_statistics.d_ninv.d_shr += 1; break; case
+        //          BitVectorNode::Kind::SLT: d_statistics.d_ninv.d_slt += 1;
+        //          break; case BitVectorNode::Kind::UDIV:
+        //            d_statistics.d_ninv.d_udiv += 1;
+        //            break;
+        //          case BitVectorNode::Kind::ULT: d_statistics.d_ninv.d_ult +=
+        //          1; break; case BitVectorNode::Kind::UREM:
+        //            d_statistics.d_ninv.d_urem += 1;
+        //            break;
+        //          case BitVectorNode::Kind::XOR: d_statistics.d_ninv.d_xor +=
+        //          1; break; default: assert(false);
+        //        };
+        //#endif
       }
       else if (cur->is_consistent(t, pos_x))
       {
         t = cur->consistent_value(t, pos_x);
         BZLALSLOG(1) << "      consistent value: " << t << std::endl;
         d_statistics.d_nprops_cons += 1;
-#ifndef NDEBUG
-        switch (cur->get_kind())
-        {
-          case BitVectorNode::Kind::ADD: d_statistics.d_ncons.d_add += 1; break;
-          case BitVectorNode::Kind::AND: d_statistics.d_ncons.d_and += 1; break;
-          case BitVectorNode::Kind::ASHR:
-            d_statistics.d_ncons.d_ashr += 1;
-            break;
-          case BitVectorNode::Kind::CONCAT:
-            d_statistics.d_ncons.d_concat += 1;
-            break;
-          case BitVectorNode::Kind::EXTRACT:
-            d_statistics.d_ncons.d_extract += 1;
-            break;
-          case BitVectorNode::Kind::EQ: d_statistics.d_ncons.d_eq += 1; break;
-          case BitVectorNode::Kind::ITE: d_statistics.d_ncons.d_ite += 1; break;
-          case BitVectorNode::Kind::MUL: d_statistics.d_ncons.d_mul += 1; break;
-          case BitVectorNode::Kind::NOT: d_statistics.d_ncons.d_not += 1; break;
-          case BitVectorNode::Kind::SEXT:
-            d_statistics.d_ncons.d_sext += 1;
-            break;
-          case BitVectorNode::Kind::SHL: d_statistics.d_ncons.d_shl += 1; break;
-          case BitVectorNode::Kind::SHR: d_statistics.d_ncons.d_shr += 1; break;
-          case BitVectorNode::Kind::SLT: d_statistics.d_ncons.d_slt += 1; break;
-          case BitVectorNode::Kind::UDIV:
-            d_statistics.d_ncons.d_udiv += 1;
-            break;
-          case BitVectorNode::Kind::ULT: d_statistics.d_ncons.d_ult += 1; break;
-          case BitVectorNode::Kind::UREM:
-            d_statistics.d_ncons.d_urem += 1;
-            break;
-          case BitVectorNode::Kind::XOR: d_statistics.d_ncons.d_xor += 1; break;
-          default: assert(false);
-        };
-#endif
+        //#ifndef NDEBUG
+        //        switch (cur->get_kind())
+        //        {
+        //          case BitVectorNode::Kind::ADD: d_statistics.d_ncons.d_add +=
+        //          1; break; case BitVectorNode::Kind::AND:
+        //          d_statistics.d_ncons.d_and += 1; break; case
+        //          BitVectorNode::Kind::ASHR:
+        //            d_statistics.d_ncons.d_ashr += 1;
+        //            break;
+        //          case BitVectorNode::Kind::CONCAT:
+        //            d_statistics.d_ncons.d_concat += 1;
+        //            break;
+        //          case BitVectorNode::Kind::EXTRACT:
+        //            d_statistics.d_ncons.d_extract += 1;
+        //            break;
+        //          case BitVectorNode::Kind::EQ: d_statistics.d_ncons.d_eq +=
+        //          1; break; case BitVectorNode::Kind::ITE:
+        //          d_statistics.d_ncons.d_ite += 1; break; case
+        //          BitVectorNode::Kind::MUL: d_statistics.d_ncons.d_mul += 1;
+        //          break; case BitVectorNode::Kind::NOT:
+        //          d_statistics.d_ncons.d_not += 1; break; case
+        //          BitVectorNode::Kind::SEXT:
+        //            d_statistics.d_ncons.d_sext += 1;
+        //            break;
+        //          case BitVectorNode::Kind::SHL: d_statistics.d_ncons.d_shl +=
+        //          1; break; case BitVectorNode::Kind::SHR:
+        //          d_statistics.d_ncons.d_shr += 1; break; case
+        //          BitVectorNode::Kind::SLT: d_statistics.d_ncons.d_slt += 1;
+        //          break; case BitVectorNode::Kind::UDIV:
+        //            d_statistics.d_ncons.d_udiv += 1;
+        //            break;
+        //          case BitVectorNode::Kind::ULT: d_statistics.d_ncons.d_ult +=
+        //          1; break; case BitVectorNode::Kind::UREM:
+        //            d_statistics.d_ncons.d_urem += 1;
+        //            break;
+        //          case BitVectorNode::Kind::XOR: d_statistics.d_ncons.d_xor +=
+        //          1; break; default: assert(false);
+        //        };
+        //#endif
       }
       else
       {
@@ -564,11 +364,12 @@ LocalSearch::select_move(BitVectorNode* root, const BitVector& t_root)
   BZLALSLOG(1) << "*** conflict" << std::endl;
 
   /* Conflict case */
-  return LocalSearchMove(nprops, nupdates, nullptr, BitVector());
+  return LocalSearchMove<VALUE, NODE>(nprops, nupdates, nullptr, VALUE());
 }
 
+template <class VALUE, class NODE>
 void
-LocalSearch::update_unsat_roots(BitVectorNode* root)
+LocalSearch<VALUE, NODE>::update_unsat_roots(NODE* root)
 {
   assert(is_root_node(root));
 
@@ -589,114 +390,9 @@ LocalSearch::update_unsat_roots(BitVectorNode* root)
   }
 }
 
-void
-LocalSearch::compute_bounds(BitVectorNode* node)
-{
-  for (uint32_t i = 0, arity = node->arity(); i < arity; ++i)
-  {
-    (*node)[i]->reset_bounds();
-  }
-  for (uint32_t i = 0, arity = node->arity(); i < arity; ++i)
-  {
-    const BitVectorNode* child                  = (*node)[i];
-    const std::unordered_set<uint64_t>& parents = d_parents.at(child->id());
-    for (uint64_t pid : parents)
-    {
-      BitVectorNode* p = get_node(pid);
-      if (!is_ineq_root(p)) continue;
-      if (p->assignment().is_true() != d_roots_ineq.at(p)) continue;
-      if (p->get_kind() == BitVectorNode::Kind::NOT)
-      {
-        p = (*p)[0];
-      }
-
-      update_bounds_aux(p, child == (*p)[0] ? (child == (*p)[1] ? -1 : 0) : 1);
-    }
-  }
-}
-
-void
-LocalSearch::update_bounds_aux(BitVectorNode* root, int32_t pos)
-{
-  assert(is_ineq_node(root));
-  assert(root->arity() == 2);
-
-  BitVectorNode* child0 = (*root)[0];
-  BitVectorNode* child1 = (*root)[1];
-  bool is_signed        = root->get_kind() == BitVectorNode::Kind::SLT;
-  uint64_t size         = child0->size();
-  BitVector min_value, max_value;
-
-  if (is_signed)
-  {
-    min_value = BitVector::mk_min_signed(size);
-    max_value = BitVector::mk_max_signed(size);
-  }
-  else
-  {
-    min_value = BitVector::mk_zero(size);
-    max_value = BitVector::mk_ones(size);
-  }
-
-  bool is_ult = d_roots_ineq.at(root);
-  assert((is_ult && root->assignment().is_true())
-         || (!is_ult && root->assignment().is_false()));
-  if (is_ult)
-  {
-    // x < s
-    if (!child0->all_const() && (pos < 0 || pos == 0))
-    {
-      assert((is_signed && child1->assignment().signed_compare(min_value) > 0)
-             || (!is_signed && child1->assignment().compare(min_value) > 0));
-      child0->update_bounds(
-          min_value, child1->assignment(), false, true, is_signed);
-      assert(is_signed || child0->min_u()->compare(*child0->max_u()) <= 0);
-      assert(!is_signed
-             || child0->min_s()->signed_compare(*child0->max_s()) <= 0);
-    }
-
-    // s < x
-    if (!child1->all_const() && (pos < 0 || pos == 1))
-    {
-      assert((is_signed && child0->assignment().signed_compare(max_value) < 0)
-             || (!is_signed && child0->assignment().compare(max_value) < 0));
-      child1->update_bounds(
-          child0->assignment(), max_value, true, false, is_signed);
-      assert(is_signed || child1->min_u()->compare(*child1->max_u()) <= 0);
-      assert(!is_signed
-             || child1->min_s()->signed_compare(*child1->max_s()) <= 0);
-    }
-  }
-  else
-  {
-    // x >= s
-    if (!child0->all_const() && (pos < 0 || pos == 0))
-    {
-      assert((is_signed && child1->assignment().signed_compare(max_value) <= 0)
-             || (!is_signed && child1->assignment().compare(max_value) <= 0));
-      child0->update_bounds(
-          child1->assignment(), max_value, false, false, is_signed);
-      assert(is_signed || child0->min_u()->compare(*child0->max_u()) <= 0);
-      assert(!is_signed
-             || child0->min_s()->signed_compare(*child0->max_s()) <= 0);
-    }
-
-    // s >= x
-    if (!child1->all_const() && (pos < 0 || pos == 1))
-    {
-      assert((is_signed && min_value.signed_compare(child0->assignment()) <= 0)
-             || (!is_signed && min_value.compare(child0->assignment()) <= 0));
-      child1->update_bounds(
-          min_value, child0->assignment(), false, false, is_signed);
-      assert(is_signed || child1->min_u()->compare(*child1->max_u()) <= 0);
-      assert(!is_signed
-             || child1->min_s()->signed_compare(*child1->max_s()) <= 0);
-    }
-  }
-}
-
+template <class VALUE, class NODE>
 uint64_t
-LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
+LocalSearch<VALUE, NODE>::update_cone(NODE* node, const VALUE& assignment)
 {
   assert(node);
   assert(is_leaf_node(node));
@@ -719,7 +415,7 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
   uint64_t nupdates = 1;
 
   std::vector<uint64_t> cone;
-  std::vector<BitVectorNode*> to_visit;
+  std::vector<NODE*> to_visit;
   std::unordered_set<uint64_t> visited;
 
   /* reset cone */
@@ -731,7 +427,7 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
 
   while (!to_visit.empty())
   {
-    BitVectorNode* cur = to_visit.back();
+    NODE* cur = to_visit.back();
     to_visit.pop_back();
 
     if (visited.find(cur->id()) != visited.end()) continue;
@@ -755,7 +451,7 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
 
   for (uint64_t id : cone)
   {
-    BitVectorNode* cur = get_node(id);
+    NODE* cur = get_node(id);
     BZLALSLOG(2) << "  node: " << *cur << " -> ";
     cur->evaluate();
     nupdates += 1;
@@ -783,8 +479,9 @@ LocalSearch::update_cone(BitVectorNode* node, const BitVector& assignment)
   return nupdates;
 }
 
-LocalSearch::Result
-LocalSearch::move()
+template <class VALUE, class NODE>
+Result
+LocalSearch<VALUE, NODE>::move()
 {
   BZLALSLOG(1) << "*** move: " << d_statistics.d_nmoves + 1 << std::endl;
   if (BZLALSLOG_ENABLED(1))
@@ -802,29 +499,29 @@ LocalSearch::move()
     }
   }
 
-  if (d_roots_unsat.empty()) return SAT;
+  if (d_roots_unsat.empty()) return Result::SAT;
 
-  LocalSearchMove m;
+  LocalSearchMove<VALUE, NODE> m;
   do
   {
     if (d_max_nprops > 0 && d_statistics.d_nprops >= d_max_nprops)
-      return UNKNOWN;
+      return Result::UNKNOWN;
     if (d_max_nupdates > 0 && d_statistics.d_nupdates >= d_max_nupdates)
-      return UNKNOWN;
+      return Result::UNKNOWN;
 
-    BitVectorNode* root =
+    NODE* root =
         get_node(d_rng->pick_from_set<std::unordered_set<uint64_t>, uint64_t>(
             d_roots_unsat));
 
     if (root->is_const() && root->domain().lo().is_false())
     {
-      return UNSAT;
+      return Result::UNSAT;
     }
 
     BZLALSLOG(1) << std::endl;
     BZLALSLOG(1) << "  select constraint: " << *root << std::endl;
 
-    m = select_move(root, *d_one);
+    m = select_move(root, *d_true);
     d_statistics.d_nprops += m.d_nprops;
     d_statistics.d_nupdates += m.d_nupdates;
   } while (m.d_input == nullptr);
@@ -849,9 +546,11 @@ LocalSearch::move()
                << std::endl;
   BZLALSLOG(1) << std::endl;
 
-  if (d_roots_unsat.empty()) return SAT;
-  return LocalSearch::UNKNOWN;
+  if (d_roots_unsat.empty()) return Result::SAT;
+  return Result::UNKNOWN;
 }
+
+template class LocalSearch<BitVector, BitVectorNode>;
 
 /* -------------------------------------------------------------------------- */
 

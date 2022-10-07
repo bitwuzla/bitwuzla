@@ -1,5 +1,5 @@
-#ifndef BZLALS__BZLALS_H
-#define BZLALS__BZLALS_H
+#ifndef BZLA__LS_LS_H
+#define BZLA__LS_LS_H
 
 #include <cstdint>
 #include <memory>
@@ -9,71 +9,73 @@
 
 namespace bzla {
 
-class BitVector;
 class RNG;
 
 namespace ls {
 
+enum class OperatorKind
+{
+  AND,
+  EQ,
+  // IMPLIES,
+  ITE,
+  NOT,
+  XOR,
+
+  BV_ADD,
+  BV_AND,
+  BV_ASHR,
+  BV_CONCAT,
+  // BV_DEC,
+  BV_EXTRACT,
+  // BV_INC,
+  BV_MUL,
+  // BV_NAND,
+  // BV_NE,
+  // BV_NEG,
+  // BV_NOR,
+  BV_NOT,
+  // BV_OR,
+  // BV_REDAND,
+  // BV_REDOR,
+  // BV_SDIV,
+  BV_SEXT,
+  // BV_SGT,
+  // BV_SGE,
+  BV_SHL,
+  BV_SHR,
+  BV_SLT,
+  // BV_SLE,
+  // BV_SREM,
+  // BV_SUB,
+  BV_UDIV,
+  // BV_UGT,
+  // BV_UGE,
+  BV_ULT,
+  // BV_ULE,
+  BV_UREM,
+  // BV_XNOR,
+  BV_XOR,
+  // BV_ZEXT,
+};
+
+enum class Result
+{
+  SAT     = 10,
+  UNSAT   = 20,
+  UNKNOWN = 0,
+};
+
+template <class VALUE, class Node>
 struct LocalSearchMove;
 
-class BitVectorDomain;
-class BitVectorNode;
-
+template <class VALUE, class NODE>
 class LocalSearch
 {
  public:
-  using NodesIdTable = std::vector<std::unique_ptr<BitVectorNode>>;
+  using NodesIdTable = std::vector<std::unique_ptr<NODE>>;
   using ParentsSet   = std::unordered_set<uint64_t>;
   using ParentsMap   = std::unordered_map<uint64_t, ParentsSet>;
-
-  enum Result
-  {
-    SAT     = 10,
-    UNSAT   = 20,
-    UNKNOWN = 0,
-  };
-
-  enum OperatorKind
-  {
-    ADD,
-    AND,
-    ASHR,
-    CONCAT,
-    // DEC,
-    EXTRACT,
-    EQ,
-    // IMPLIES,
-    ITE,
-    // INC,
-    MUL,
-    // NAND,
-    // NE,
-    // NEG,
-    // NOR,
-    NOT,
-    // OR,
-    // REDAND,
-    // REDOR,
-    // SDIV,
-    SEXT,
-    // SGT,
-    // SGE,
-    SHL,
-    SHR,
-    SLT,
-    // SLE,
-    // SREM,
-    // SUB,
-    UDIV,
-    // UGT,
-    // UGE,
-    ULT,
-    // ULE,
-    UREM,
-    // XNOR,
-    XOR,
-    // ZEXT,
-  };
 
   struct
   {
@@ -192,7 +194,7 @@ class LocalSearch
    */
   LocalSearch(uint64_t max_nprops, uint64_t max_nupdates, uint32_t seed = 1234);
   /** Destructor. */
-  ~LocalSearch();
+  virtual ~LocalSearch();
 
   /**
    * Initialize local search module.
@@ -201,50 +203,39 @@ class LocalSearch
    */
   void init();
 
+  /**
+   * Configure the maximum number of propagations to perform.
+   * @param max The maximum number of propagations.
+   */
   void set_max_nprops(uint64_t max) { d_max_nprops = max; }
+  /**
+   * Configure the maximum number of updates to perform.
+   * @param max The maximum number of updates.
+   */
   void set_max_nupdates(uint64_t max) { d_max_nupdates = max; }
 
-  uint64_t mk_node(uint64_t size);
-  uint64_t mk_node(OperatorKind kind,
-                   uint64_t size,
-                   const std::vector<uint64_t>& children);
-  uint64_t mk_indexed_node(OperatorKind kind,
+  virtual uint64_t mk_node(uint64_t size)                                = 0;
+  virtual uint64_t mk_node(OperatorKind kind,
                            uint64_t size,
-                           uint64_t child0,
-                           const std::vector<uint64_t>& indices);
+                           const std::vector<uint64_t>& children)        = 0;
+  virtual uint64_t mk_indexed_node(OperatorKind kind,
+                                   uint64_t size,
+                                   uint64_t child0,
+                                   const std::vector<uint64_t>& indices) = 0;
 
-  uint64_t mk_node(const BitVector& assignment, const BitVectorDomain& domain);
-  uint64_t mk_node(OperatorKind kind,
-                   const BitVectorDomain& domain,
-                   const std::vector<uint64_t>& children);
-  uint64_t mk_indexed_node(OperatorKind kind,
-                           const BitVectorDomain& domain,
-                           uint64_t child0,
-                           const std::vector<uint64_t>& indices);
-
-  uint64_t invert_node(uint64_t id);
+  virtual uint64_t invert_node(uint64_t id) = 0;
 
   /**
    * Get the assignment of the node given by id.
    * @param id The id of the node to query.
    */
-  const BitVector& get_assignment(uint64_t id) const;
+  const VALUE& get_assignment(uint64_t id) const;
   /**
    * Set the assignment of the node given by id.
    * @param id The id of the node.
    * @param assignment The assignment to set.
    */
-  void set_assignment(uint64_t id, const BitVector& assignment);
-  /**
-   * Get the domain of the node given by id.
-   * @param id The id of the node to query.
-   * @return The domain of the node given by id.
-   */
-  const BitVectorDomain& get_domain(uint64_t id) const;
-  // void set_domain(uint64_t node, const BitVectorDomain& domain);
-
-  /** Fix domain bit of given node at index 'idx' to 'value'. */
-  void fix_bit(uint64_t id, uint32_t idx, bool value);
+  void set_assignment(uint64_t id, const VALUE& assignment);
 
   /**
    * Register node as root.
@@ -291,44 +282,32 @@ class LocalSearch
    */
   void set_log_level(uint32_t level) { d_log_level = level; }
 
- private:
-  /**
-   * Determine if given node is an inequality (ULT or SLT).
-   * @param node The node to query.
-   * @return True if `node` is an inequality.
-   */
-  static bool is_ineq_node(const BitVectorNode* node);
-  /**
-   * Determine if given node is a NOT node.
-   * @param node The node to query.
-   * @return True if `node` is a NOT node.
-   */
-  static bool is_not_node(const BitVectorNode* node);
+ protected:
   /**
    * Get node by id.
    * @param id The node id.
    * @return The node with the given id.
    */
-  BitVectorNode* get_node(uint64_t id) const;
+  NODE* get_node(uint64_t id) const;
   /**
    * Determine if given node is a leaf node (its arity = 0).
    * @param node The node to query.
    * @return True if `node` is a leaf.
    */
-  bool is_leaf_node(const BitVectorNode* node) const;
+  bool is_leaf_node(const NODE* node) const;
   /**
    * Determine if given node is a root node.
    * @param node The node to query.
    * @return True if `node` is a root.
    */
-  bool is_root_node(const BitVectorNode* node) const;
+  bool is_root_node(const NODE* node) const;
   /**
    * Determine if given node is an inequality (ULT or SLT) root (this includes
    * negated inequalities).
    * @param node The node to query.
    * @return True if `node` is a (possibly negated) inequality root.
    */
-  bool is_ineq_root(const BitVectorNode* node) const;
+  bool is_ineq_root(const NODE* node) const;
   /**
    * Update information related to the root given by id.
    *
@@ -341,24 +320,17 @@ class LocalSearch
    *
    * @param root The root to update.
    */
-  void update_unsat_roots(BitVectorNode* root);
+  void update_unsat_roots(NODE* root);
   /**
    * Compute min/max bounds for children of given node.
    *
-   * This must be called after update_unsat_roots() has been called and the
-   * assignment of all nodes has been computed/updated, i.e., the assignment is
-   * consistent.
+   * If the bounds are depending on the current assignment, this must be called
+   * after update_unsat_roots() has been called and the assignment of all nodes
+   * has been computed/updated, i.e., the assignment is consistent.
    *
    * @param node The node.
    */
-  void compute_bounds(BitVectorNode* node);
-  /**
-   * Helper for computing bounds of children of root inequalities.
-   * @param root The root node.
-   * @param pos The position of the child to update, -1 for updating all
-   *            children.
-   */
-  void update_bounds_aux(BitVectorNode* root, int32_t pos);
+  virtual void compute_bounds(NODE* node) = 0;
   /**
    * Update the assignment of the given node to the given assignment, and
    * recompute the assignment of all nodes in its cone of influence
@@ -367,7 +339,7 @@ class LocalSearch
    * @param assignment The new assignment of the given node.
    * @return The number of updated assignments.
    */
-  uint64_t update_cone(BitVectorNode* node, const BitVector& assignment);
+  uint64_t update_cone(NODE* node, const VALUE& assignment);
   /**
    * Select an input and a new assignment for that input by propagating the
    * given target value `t_root` for the given root along one path towards an
@@ -377,7 +349,7 @@ class LocalSearch
    * @param t_root The target value of the given root.
    * @return An object encapsulating all information necessary for that move.
    */
-  LocalSearchMove select_move(BitVectorNode* root, const BitVector& t_root);
+  LocalSearchMove<VALUE, NODE> select_move(NODE* root, const VALUE& t_root);
 
   /** The random number generator. */
   std::unique_ptr<RNG> d_rng;
@@ -385,7 +357,7 @@ class LocalSearch
   /** Map from node id to nodes. */
   NodesIdTable d_nodes;
   /** The set of roots. */
-  std::vector<BitVectorNode*> d_roots;
+  std::vector<NODE*> d_roots;
   /** The set of unsatisfied roots. */
   std::unordered_set<uint64_t> d_roots_unsat;
   /**
@@ -396,12 +368,12 @@ class LocalSearch
    * @note This includes top-level inequalities and negated inequalities that
    *       are not roots but whose parents are a top-level NOT.
    */
-  std::unordered_map<const BitVectorNode*, bool> d_roots_ineq;
+  std::unordered_map<const NODE*, bool> d_roots_ineq;
   /** Map nodes to their parent nodes. */
   ParentsMap d_parents;
 
-  /** Bit-vector one of size one, the target value for each root. */
-  std::unique_ptr<BitVector> d_one;
+  /** The target value for each root. */
+  std::unique_ptr<VALUE> d_true;
 
   /** The log level. */
   uint32_t d_log_level = 0;

@@ -10,6 +10,7 @@ set(libbzlabb_src_files
 
 set(libbzlals_src_files
   ls/ls.cpp
+  ls/ls_bv.cpp
   ls/bv/bitvector_domain.cpp
   ls/bv/bitvector_node.cpp
   util/wheel_factorizer.cpp
@@ -112,4 +113,4 @@ install(EXPORT bzlarng-export
   NAMESPACE BzlaRNG::
   DESTINATION lib/cmake/BzlaRNG)
 
-install(FILES ls.h bitvector.h DESTINATION include/bzlalibs)
+install(FILES ls.h ls_bv.h bitvector.h DESTINATION include/bzlalibs)
