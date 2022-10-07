@@ -9,6 +9,10 @@
  */
 
 #include <iostream>
+#ifndef NDEBUG
+#include <iomanip>
+#include <sstream>
+#endif
 
 extern "C" {
 #include "bzlacore.h"
@@ -525,46 +529,20 @@ PropSolverState::print_statistics()
   BZLA_MSG(d_bzla->msg, 1, "");
   BZLA_MSG(d_bzla->msg, 1, "value computations:");
   BZLA_MSG(d_bzla->msg, 1, "  inverse:");
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld add ", d_ls->d_statistics.d_ninv.d_add);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld and ", d_ls->d_statistics.d_ninv.d_and);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld ashr ", d_ls->d_statistics.d_ninv.d_ashr);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld concat ", d_ls->d_statistics.d_ninv.d_concat);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld eq ", d_ls->d_statistics.d_ninv.d_eq);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld extract ", d_ls->d_statistics.d_ninv.d_extract);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld ite ", d_ls->d_statistics.d_ninv.d_ite);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld mul ", d_ls->d_statistics.d_ninv.d_mul);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld not ", d_ls->d_statistics.d_ninv.d_not);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld sext ", d_ls->d_statistics.d_ninv.d_sext);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld shl ", d_ls->d_statistics.d_ninv.d_shl);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld shr ", d_ls->d_statistics.d_ninv.d_shr);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld slt ", d_ls->d_statistics.d_ninv.d_slt);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld udiv ", d_ls->d_statistics.d_ninv.d_udiv);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld ult ", d_ls->d_statistics.d_ninv.d_ult);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld urem ", d_ls->d_statistics.d_ninv.d_urem);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld xor ", d_ls->d_statistics.d_ninv.d_xor);
+  for (const auto &p : d_ls->d_statistics.d_ninv)
+  {
+    std::stringstream ss;
+    ss << std::setw(8) << p.second << " " << p.first;
+    BZLA_MSG(d_bzla->msg, 1, ss.str().c_str());
+  }
 
   BZLA_MSG(d_bzla->msg, 1, "  consistent:");
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld add ", d_ls->d_statistics.d_ncons.d_add);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld and ", d_ls->d_statistics.d_ncons.d_and);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld ashr ", d_ls->d_statistics.d_ncons.d_ashr);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld concat ", d_ls->d_statistics.d_ncons.d_concat);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld eq ", d_ls->d_statistics.d_ncons.d_eq);
-  BZLA_MSG(
-      d_bzla->msg, 1, "  %5lld extract ", d_ls->d_statistics.d_ncons.d_extract);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld ite ", d_ls->d_statistics.d_ncons.d_ite);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld mul ", d_ls->d_statistics.d_ncons.d_mul);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld not ", d_ls->d_statistics.d_ncons.d_not);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld sext ", d_ls->d_statistics.d_ncons.d_sext);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld shl ", d_ls->d_statistics.d_ncons.d_shl);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld shr ", d_ls->d_statistics.d_ncons.d_shr);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld slt ", d_ls->d_statistics.d_ncons.d_slt);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld udiv ", d_ls->d_statistics.d_ncons.d_udiv);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld ult ", d_ls->d_statistics.d_ncons.d_ult);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld urem ", d_ls->d_statistics.d_ncons.d_urem);
-  BZLA_MSG(d_bzla->msg, 1, "  %5lld xor ", d_ls->d_statistics.d_ncons.d_xor);
+  for (const auto &p : d_ls->d_statistics.d_ncons)
+  {
+    std::stringstream ss;
+    ss << std::setw(8) << p.second << " " << p.first;
+    BZLA_MSG(d_bzla->msg, 1, ss.str().c_str());
+  }
 #endif
 
   if (bzla_opt_get(d_bzla, BZLA_OPT_PROP_CONST_BITS))
