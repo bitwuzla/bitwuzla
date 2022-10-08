@@ -221,32 +221,10 @@ class LocalSearch
    * @param root The id of the node to register as root.
    */
   void register_root(uint64_t root);
-  /**
-   * Determine if all roots are sat.
-   * @return True if all roots are sat.
-   */
-  bool all_roots_sat() const { return d_roots_unsat.empty(); }
-  /**
-   * Get the number of unsat roots.
-   * @return The number of unsat roots.
-   */
-  uint64_t get_num_roots_unsat() const { return d_roots_unsat.size(); }
-
   // TODO: incremental case:
   //       - we need to be able to unregister roots (assumptions)
   //       - we might want to exclude nodes that are not in the formula from
   //         cone updates
-
-  /**
-   * Get the arity of the node given by id.
-   * @param id The id of the node to query.
-   */
-  uint32_t get_arity(uint64_t id) const;
-  /**
-   * Get the child at given index of the node given by id.
-   * @param id The id of the node to query.
-   */
-  uint64_t get_child(uint64_t id, uint32_t idx) const;
 
   Result move();
 
@@ -276,12 +254,32 @@ class LocalSearch
    */
   bool is_root_node(const NODE* node) const;
   /**
+   * Get the arity of the node given by id.
+   * @param id The id of the node to query.
+   */
+  uint32_t get_arity(uint64_t id) const;
+  /**
+   * Get the child at given index of the node given by id.
+   * @param id The id of the node to query.
+   */
+  uint64_t get_child(uint64_t id, uint32_t idx) const;
+  /**
    * Determine if given node is an inequality (ULT or SLT) root (this includes
    * negated inequalities).
    * @param node The node to query.
    * @return True if `node` is a (possibly negated) inequality root.
    */
   bool is_ineq_root(const NODE* node) const;
+  /**
+   * Determine if all roots are sat.
+   * @return True if all roots are sat.
+   */
+  bool all_roots_sat() const { return d_roots_unsat.empty(); }
+  /**
+   * Get the number of unsat roots.
+   * @return The number of unsat roots.
+   */
+  uint64_t get_num_roots_unsat() const { return d_roots_unsat.size(); }
   /**
    * Update information related to the root given by id.
    *
