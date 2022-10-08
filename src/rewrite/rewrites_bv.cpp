@@ -9,6 +9,9 @@ using namespace node;
 
 /* bvadd -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
@@ -22,6 +25,12 @@ RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvadd (_ bv0 N) a) or (bvadd a (_ bv0 N))
+ * result: a
+ */
 namespace {
 Node
 _rw_add_special_const(Rewriter& rewriter, const Node& node, size_t idx)
@@ -56,6 +65,9 @@ RewriteRule<RewriteRuleKind::BV_ADD_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 
 /* bvand -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
@@ -69,6 +81,15 @@ RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvand (_ bv0 N) a) or (bvand a (_ bv0 N))
+ * result: (_ bv0 N)
+ *
+ * match:  (bvand (bvnot (_ bv0 N)) a) or (bvand a (bvnot (_ bv0 N)))
+ * result: a
+ */
 namespace {
 Node
 _rw_and_special_const(Rewriter& rewriter, const Node& node, size_t idx)
@@ -108,6 +129,9 @@ RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 
 /* bvashr ------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::_apply(Rewriter& rewriter,
@@ -121,6 +145,15 @@ RewriteRule<RewriteRuleKind::BV_ASHR_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvashr (_ bv0 N) a)
+ * result: (_ bv0 N)
+ *
+ * match:  (bvashr a (_ bv0 N))
+ * result: a
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_ASHR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
@@ -149,6 +182,9 @@ RewriteRule<RewriteRuleKind::BV_ASHR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 
 /* bvconcat ----------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::_apply(Rewriter& rewriter,
@@ -164,6 +200,9 @@ RewriteRule<RewriteRuleKind::BV_CONCAT_EVAL>::_apply(Rewriter& rewriter,
 
 /* bvmul -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
@@ -177,6 +216,15 @@ RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvmul (_ bv0 N) a) or (bvmul a (_ bv0 N))
+ * result: (_ bv0 N)
+ *
+ * match:  (bvmul (bvnot (_ bv0 N)) a) or (bvmul a (bvnot (_ bv0 N)))
+ * result: (bvneg a)
+ */
 namespace {
 Node
 _rw_mul_special_const(Rewriter& rewriter, const Node& node, size_t idx)
@@ -220,6 +268,9 @@ RewriteRule<RewriteRuleKind::BV_MUL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 
 /* bvnot -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_NOT_EVAL>::_apply(Rewriter& rewriter,
@@ -230,6 +281,10 @@ RewriteRule<RewriteRuleKind::BV_NOT_EVAL>::_apply(Rewriter& rewriter,
   return NodeManager::get().mk_value(node[0].value<BitVector>().bvnot());
 }
 
+/**
+ * match:  (bvnot (bvnot a))
+ * result: a
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_NOT_BV_NOT>::_apply(Rewriter& rewriter,
@@ -242,6 +297,9 @@ RewriteRule<RewriteRuleKind::BV_NOT_BV_NOT>::_apply(Rewriter& rewriter,
 
 /* bvshl -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::_apply(Rewriter& rewriter,
@@ -255,6 +313,15 @@ RewriteRule<RewriteRuleKind::BV_SHL_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvshl (_ bv0 N) a)
+ * result: (_ bv0 N)
+ *
+ * match:  (bvshl a (_ bv0 N))
+ * result: a
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_SHL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
@@ -283,6 +350,9 @@ RewriteRule<RewriteRuleKind::BV_SHL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 
 /* bvshr -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::_apply(Rewriter& rewriter,
@@ -296,6 +366,15 @@ RewriteRule<RewriteRuleKind::BV_SHR_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvlshr (_ bv0 N) a)
+ * result: (_ bv0 N)
+ *
+ * match:  (bvlshr a (_ bv0 N))
+ * result: a
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_SHR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
@@ -324,6 +403,9 @@ RewriteRule<RewriteRuleKind::BV_SHR_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 
 /* bvslt -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
@@ -338,6 +420,21 @@ RewriteRule<RewriteRuleKind::BV_SLT_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvslt (_ bv01..1 N) a)
+ * result: false
+ *
+ * match:  (bvslt (_ bv10..0 N) a)
+ * result: (distinct (_ bv10..0 N) a)
+ *
+ * match:  (bvslt a (_ bv01..1 N))
+ * result: (distinct a (_ bv01..1 N))
+ *
+ * match:  (bvslt a (_ bv10..0 N))
+ * result: false
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_SLT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
@@ -379,6 +476,9 @@ RewriteRule<RewriteRuleKind::BV_SLT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 
 /* bvudiv ------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::_apply(Rewriter& rewriter,
@@ -392,6 +492,18 @@ RewriteRule<RewriteRuleKind::BV_UDIV_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvudiv (_ bv0 N) a)
+ * result: (ite (= a (_ bv0 N)) (not (_ bv0 N)) (_ bv0 N))
+ *
+ * match:  (bvudiv a (_ bv0 N))
+ * result: (not (_ bv0 N))
+ *
+ * match:  (bvudiv a (_ bv1 N))
+ * result: a
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_UDIV_SPECIAL_CONST>::_apply(Rewriter& rewriter,
@@ -429,6 +541,9 @@ RewriteRule<RewriteRuleKind::BV_UDIV_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 
 /* bvult -------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
@@ -442,6 +557,24 @@ RewriteRule<RewriteRuleKind::BV_ULT_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvult (_ bv0 N) a)
+ * result: (distinct (_ bv0 N) a)
+ *
+ * match:  (bvult (not (_ bv0 N)) a)
+ * result: false
+ *
+ * match:  (bvult a (_ bv0 N))
+ * result: false
+ *
+ * match:  (bvult a (_ bv1 N))
+ * result: (= a (_ bv0 N))
+ *
+ * match:  (bvult a (not (_ bv0 N)))
+ * result: (distinct a (not (_ bv0 N)))
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
@@ -486,6 +619,9 @@ RewriteRule<RewriteRuleKind::BV_ULT_SPECIAL_CONST>::_apply(Rewriter& rewriter,
 
 /* bvudiv ------------------------------------------------------------------- */
 
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
@@ -499,6 +635,18 @@ RewriteRule<RewriteRuleKind::BV_UREM_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/**
+ * Match special values on either lhs or rhs.
+ *
+ * match:  (bvurem (_ bv0 N) a)
+ * result: (_ bv0 N)
+ *
+ * match:  (bvurem a (_ bv0 N))
+ * result: a
+ *
+ * match:  (bvurem a (_ bv1 N))
+ * result: (_ bv0 N)
+ */
 template <>
 Node
 RewriteRule<RewriteRuleKind::BV_UREM_SPECIAL_CONST>::_apply(Rewriter& rewriter,
