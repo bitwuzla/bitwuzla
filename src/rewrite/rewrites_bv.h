@@ -37,17 +37,20 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_UREM>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_NEG>::_apply(Rewriter& rewriter,
                                                       const Node& node);
-// zero_add
-template <>
-Node RewriteRule<RewriteRuleKind::BV_ADD_ZERO>::_apply(Rewriter& rewriter,
-                                                       const Node& node);
+// zero_add (subsumed by BV_ADD_SPECIAL_CONST)
 // const_lhs_add
 // const_rhs_add
 // const_neg_lhs_add
 // const_neg_rhs_add
 // push_ite_add
 // sll_add
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ADD_SHL>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 // mul_add
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ADD_MUL>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 
 /* bvand -------------------------------------------------------------------- */
 

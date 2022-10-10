@@ -301,8 +301,10 @@ Rewriter::rewrite_bv_add(const Node& node)
     BZLA_APPLY_RW_RULE(BV_ADD_MUL_TWO);
     BZLA_APPLY_RW_RULE(BV_ADD_NOT);
     BZLA_APPLY_RW_RULE(BV_ADD_NEG);
-    BZLA_APPLY_RW_RULE(BV_ADD_ZERO);
     BZLA_APPLY_RW_RULE(BV_ADD_UREM);
+    // LEVEL 3 rewrites
+    BZLA_APPLY_RW_RULE(BV_ADD_MUL);
+    BZLA_APPLY_RW_RULE(BV_ADD_SHL);
     // TODO
   }
 

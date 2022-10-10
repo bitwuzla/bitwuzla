@@ -97,8 +97,8 @@ TEST_F(TestRewriterBv, bv_add_mul_two)
   constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_MUL_TWO;
   //// applies
   test_rule<kind>(d_nm.mk_node(Kind::BV_ADD, {d_a4, d_a4}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ADD, {d_a1, d_a1}));
   //// does not apply
-  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_ADD, {d_a1, d_a1}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4}));
 }
 
@@ -134,18 +134,6 @@ TEST_F(TestRewriterBv, bv_add_neg)
   //// does not apply
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::BV_NEG, {d_b4})}));
-}
-
-TEST_F(TestRewriterBv, bv_add_zero)
-{
-  Node zero                      = d_nm.mk_value(BitVector::mk_zero(4));
-  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_ZERO;
-  //// applies
-  test_rule<kind>(d_nm.mk_node(Kind::BV_ADD, {d_a4, zero}));
-  test_rule<kind>(d_nm.mk_node(Kind::BV_ADD, {zero, d_a4}));
-  //// does not apply
-  test_rule_does_not_apply<kind>(
-      d_nm.mk_node(Kind::BV_ADD, {d_a4, d_nm.mk_value(BitVector::mk_one(4))}));
 }
 
 TEST_F(TestRewriterBv, bv_add_urem)
@@ -269,6 +257,41 @@ TEST_F(TestRewriterBv, bv_add_urem)
                     {d_nm.mk_node(
                         Kind::BV_MUL,
                         {d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4}), d_b4})})}));
+}
+
+TEST_F(TestRewriterBv, bv_add_mul)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_MUL;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::BV_MUL, {d_b4, d_a4})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4}), d_a4}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::BV_MUL, {d_b4, d_a4}), d_a4}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::BV_MUL, {d_a4, d_a4})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ADD,
+                   {d_a4,
+                    d_nm.mk_node(Kind::BV_MUL,
+                                 {d_b4, d_nm.mk_node(Kind::BV_NOT, {d_a4})})}));
+}
+
+TEST_F(TestRewriterBv, bv_add_shl)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_SHL;
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::BV_SHL, {d_b4, d_a4})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::BV_SHL, {d_b4, d_a4}), d_a4}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::BV_SHL, {d_a4, d_b4})}));
 }
 
 /* bvand -------------------------------------------------------------------- */
