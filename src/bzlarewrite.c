@@ -515,7 +515,7 @@ is_urem_exp(Bzla *bzla,
   if (!bzla_node_is_inverted(mul->e[0]) && bzla_node_is_bv_udiv(mul->e[0]))
   {
     udiv = mul->e[0];
-    y    = mul->e[0];
+    y    = mul->e[1];
   }
   else if (!bzla_node_is_inverted(mul->e[1]) && bzla_node_is_bv_udiv(mul->e[1]))
   {

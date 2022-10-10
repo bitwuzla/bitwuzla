@@ -35,4 +35,16 @@ TEST_F(TestNodeUtils, is_bv_xnor)
   ASSERT_TRUE(utils::is_bv_xnor(res));
   ASSERT_FALSE(utils::is_bv_xnor(d_nm.mk_node(Kind::BV_XOR, {d_a4, d_b4})));
 }
+
+TEST_F(TestNodeUtils, is_bv_neg)
+{
+  Node res;
+  RewriteRuleKind kind;
+  Node neg = d_nm.mk_node(Kind::BV_NEG, {d_a4});
+  ASSERT_TRUE(utils::is_bv_neg(neg));
+  std::tie(res, kind) =
+      RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(d_rewriter, neg);
+  ASSERT_TRUE(utils::is_bv_neg(res));
+  ASSERT_FALSE(utils::is_bv_neg(d_nm.mk_node(Kind::BV_NOT, {d_a4})));
+}
 }  // namespace bzla::test

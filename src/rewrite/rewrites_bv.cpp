@@ -2,6 +2,7 @@
 
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
+#include "node/node_utils.h"
 
 namespace bzla {
 
@@ -59,6 +60,180 @@ RewriteRule<RewriteRuleKind::BV_ADD_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   else if (!node[0].is_value() && node[1].is_value())
   {
     return _rw_add_special_const(rewriter, node, 1);
+  }
+  return node;
+}
+
+/**
+ * match:  (bvadd a b) with a and b of bit-width 1
+ * result: (bvxor a b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_BV1>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].type().bv_size() != 1) return node;
+  return rewriter.mk_node(Kind::BV_XOR, {node[0], node[1]});
+}
+
+/**
+ * match:  (bvadd a a) with a of bit-width > 1
+ * result: (bvshl a (_ bv1 N))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_MUL_TWO>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0] != node[1]) return node;
+  if (node[0].type().bv_size() == 1) return node;
+  return rewriter.mk_node(Kind::BV_SHL,
+                          {node[0],
+                           NodeManager::get().mk_value(
+                               BitVector::mk_one(node[0].type().bv_size()))});
+}
+
+/**
+ * match:  (bvadd a (bvnot a))
+ * result: (bvnot (_ bv0 N))
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_NOT>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if ((node[1].kind() == Kind::BV_NOT && node[0] == node[1][0])
+      || (node[0].kind() == Kind::BV_NOT && node[1] == node[0][0]))
+  {
+    return NodeManager::get().mk_value(
+        BitVector::mk_ones(node[0].type().bv_size()));
+  }
+  return node;
+}
+
+/**
+ * We have for a / b that a = n * b + r (a - n * b = r), and thus for
+ * a - ((a / b) * b) = a % b with (a / b) = n .
+ * match:  (bvadd a (bvneg (bvmul (bvudiv a b) b)))
+ *         (bvadd a (bvmul (bvneg (bvudiv a b)) b)))
+ *         (bvadd a (bvmul (bvudiv a b)) (bvneg b))))
+ * result: (bvurem a b)
+ */
+namespace {
+Node
+_rw_add_urem(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  size_t idx0      = idx;
+  size_t idx1      = 1 - idx;
+  const Node *udiv = nullptr, *b = nullptr;
+  const Node& a = node[idx1];
+  // (bvadd a (bvneg (bvmul (bvudiv a b) b)))
+  if (node::utils::is_bv_neg(node[idx0]))
+  {
+    const Node& mul = node[idx0][0];
+    if (mul[0].kind() == Kind::BV_UDIV)
+    {
+      udiv = &mul[0];
+      b    = &mul[1];
+    }
+    if (mul[1].kind() == Kind::BV_UDIV)
+    {
+      udiv = &mul[1];
+      b    = &mul[0];
+    }
+  }
+  // (bvadd a (bvmul (bvneg (bvudiv a b)) b)))
+  // (bvadd a (bvmul (bvudiv a b)) (bvneg b))))
+  else if (node[idx0].kind() == Kind::BV_MUL)
+  {
+    const Node& mul = node[idx0];
+    if (node::utils::is_bv_neg(mul[0]) && mul[0][0].kind() == Kind::BV_UDIV)
+    {
+      udiv = &mul[0][0];
+      b    = &mul[1];
+    }
+    else if (node::utils::is_bv_neg(mul[1])
+             && mul[1][0].kind() == Kind::BV_UDIV)
+    {
+      udiv = &mul[1][0];
+      b    = &mul[0];
+    }
+    else if (mul[0].kind() == Kind::BV_UDIV && node::utils::is_bv_neg(mul[1]))
+    {
+      udiv = &mul[0];
+      b    = &mul[1][0];
+    }
+    else if (mul[1].kind() == Kind::BV_UDIV && node::utils::is_bv_neg(mul[0]))
+    {
+      udiv = &mul[1];
+      b    = &mul[0][0];
+    }
+  }
+  if (udiv && b && (*udiv)[0] == a && (*udiv)[1] == *b)
+  {
+    return rewriter.mk_node(Kind::BV_UREM, {a, *b});
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_UREM>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  Node res = _rw_add_urem(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_add_urem(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (bvadd a (bvneg a)) or (bvadd (bvneg a) a)
+ * result: 0
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_NEG>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if ((node::utils::is_bv_neg(node[1]) && node[0] == node[1][0])
+      || (node::utils::is_bv_neg(node[0]) && node[1] == node[0][0]))
+  {
+    return NodeManager::get().mk_value(
+        BitVector::mk_zero(node[0].type().bv_size()));
+  }
+  return node;
+}
+
+template <>
+/*
+ * match: (bvadd (_ bv0 N) a) or (bvadd a (_ bv0 N))
+ * result: a
+ */
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_ZERO>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (node[0].is_value() && node[0].value<BitVector>().is_zero())
+  {
+    return node[1];
+  }
+  if (node[1].is_value() && node[1].value<BitVector>().is_zero())
+  {
+    return node[0];
   }
   return node;
 }
