@@ -221,6 +221,11 @@ class LocalSearch
    * @param root The id of the node to register as root.
    */
   void register_root(uint64_t root);
+  /**
+   * Get the number of unsat roots.
+   * @return The number of unsat roots.
+   */
+  uint64_t get_num_roots_unsat() const { return d_roots_unsat.size(); }
   // TODO: incremental case:
   //       - we need to be able to unregister roots (assumptions)
   //       - we might want to exclude nodes that are not in the formula from
@@ -275,11 +280,6 @@ class LocalSearch
    * @return True if all roots are sat.
    */
   bool all_roots_sat() const { return d_roots_unsat.empty(); }
-  /**
-   * Get the number of unsat roots.
-   * @return The number of unsat roots.
-   */
-  uint64_t get_num_roots_unsat() const { return d_roots_unsat.size(); }
   /**
    * Update information related to the root given by id.
    *
