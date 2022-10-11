@@ -28,7 +28,8 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_MUL_TWO>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_NOT>::_apply(Rewriter& rewriter,
                                                       const Node& node);
-// bcond_add
+// bcond_add (TODO tbd)
+
 // urem_add
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_UREM>::_apply(Rewriter& rewriter,
@@ -40,9 +41,16 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_NEG>::_apply(Rewriter& rewriter,
 // zero_add (subsumed by BV_ADD_SPECIAL_CONST)
 // const_lhs_add
 // const_rhs_add
-// const_neg_lhs_add
-// const_neg_rhs_add
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ADD_CONST>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
+// const_neg_lhs_add (TODO tbd)
+// const_neg_rhs_add (TODO tbd)
+
 // push_ite_add
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ADD_ITE>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 // sll_add
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_SHL>::_apply(Rewriter& rewriter,

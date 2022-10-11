@@ -82,6 +82,23 @@ TEST_F(TestRewriterBv, bv_add_special_const)
   }
 }
 
+TEST_F(TestRewriterBv, bv_add_const)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_CONST;
+  Node a_val                     = d_nm.mk_value(BitVector::from_ui(4, 5));
+  Node b_val                     = d_nm.mk_value(BitVector::from_ui(4, 1));
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::BV_ADD, {a_val, d_a4}), b_val}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {b_val, d_nm.mk_node(Kind::BV_ADD, {a_val, d_a4})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::BV_ADD, {a_val, d_a4}), a_val}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::BV_ADD, {a_val, d_a4}), d_a4}));
+}
+
 TEST_F(TestRewriterBv, bv_add_bv1)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_BV1;
@@ -299,6 +316,32 @@ TEST_F(TestRewriterBv, bv_add_shl)
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::BV_SHL, {d_a4, d_b4})}));
+}
+
+TEST_F(TestRewriterBv, bv_add_ite)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_ITE;
+  Node cond                      = d_nm.mk_const(d_nm.mk_bool_type());
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::ITE, {cond, d_bv4_zero, d_a4})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::ITE, {cond, d_a4, d_bv4_zero})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD,
+      {d_a4, d_nm.mk_node(Kind::ITE, {cond, d_bv4_zero, d_bv4_zero})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::ITE, {cond, d_bv4_zero, d_a4}), d_a4}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::ITE, {cond, d_a4, d_bv4_zero}), d_a4}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD,
+      {d_nm.mk_node(Kind::ITE, {cond, d_bv4_zero, d_bv4_zero}), d_a4}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::ITE, {cond, d_bv4_one, d_a4})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_a4, d_nm.mk_node(Kind::ITE, {cond, d_a4, d_b4})}));
 }
 
 /* bvand -------------------------------------------------------------------- */

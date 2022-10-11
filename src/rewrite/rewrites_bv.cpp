@@ -1,9 +1,10 @@
 #include "rewrite/rewrites_bv.h"
 
+#include <iostream>
+
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
-
 namespace bzla {
 
 using namespace node;
@@ -34,7 +35,7 @@ RewriteRule<RewriteRuleKind::BV_ADD_EVAL>::_apply(Rewriter& rewriter,
  */
 namespace {
 Node
-_rw_add_special_const(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_bv_add_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 {
   (void) rewriter;
   assert(node.num_children() == 2);
@@ -56,10 +57,55 @@ Node
 RewriteRule<RewriteRuleKind::BV_ADD_SPECIAL_CONST>::_apply(Rewriter& rewriter,
                                                            const Node& node)
 {
-  Node res = _rw_add_special_const(rewriter, node, 0);
+  Node res = _rw_bv_add_special_const(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_add_special_const(rewriter, node, 1);
+    res = _rw_bv_add_special_const(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (bvadd (_ bvX N) (bvadd (_ bvY N) a))
+ * result: (bvadd (_ bvZ N) a) with Z = X + Y
+ */
+namespace {
+Node
+_rw_bv_add_const(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].is_value() && node[idx1].kind() == Kind::BV_ADD)
+  {
+    if (node[idx1][0].is_value())
+    {
+      return rewriter.mk_node(
+          Kind::BV_ADD,
+          {rewriter.mk_node(Kind::BV_ADD, {node[idx0], node[idx1][0]}),
+           node[idx1][1]});
+    }
+    else if (node[idx1][1].is_value())
+    {
+      return rewriter.mk_node(
+          Kind::BV_ADD,
+          {rewriter.mk_node(Kind::BV_ADD, {node[idx0], node[idx1][1]}),
+           node[idx1][0]});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_CONST>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  Node res = _rw_bv_add_const(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_add_const(rewriter, node, 1);
   }
   return res;
 }
@@ -101,7 +147,7 @@ RewriteRule<RewriteRuleKind::BV_ADD_MUL_TWO>::_apply(Rewriter& rewriter,
  */
 namespace {
 Node
-_rw_add_mul(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_bv_add_mul(Rewriter& rewriter, const Node& node, size_t idx)
 {
   assert(node.num_children() == 2);
   size_t idx0 = idx;
@@ -138,10 +184,10 @@ Node
 RewriteRule<RewriteRuleKind::BV_ADD_MUL>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
-  Node res = _rw_add_mul(rewriter, node, 0);
+  Node res = _rw_bv_add_mul(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_add_mul(rewriter, node, 1);
+    res = _rw_bv_add_mul(rewriter, node, 1);
   }
   return res;
 }
@@ -152,7 +198,7 @@ RewriteRule<RewriteRuleKind::BV_ADD_MUL>::_apply(Rewriter& rewriter,
  */
 namespace {
 Node
-_rw_add_not(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_bv_add_not(Rewriter& rewriter, const Node& node, size_t idx)
 {
   (void) rewriter;
   assert(node.num_children() == 2);
@@ -172,10 +218,10 @@ Node
 RewriteRule<RewriteRuleKind::BV_ADD_NOT>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
-  Node res = _rw_add_not(rewriter, node, 0);
+  Node res = _rw_bv_add_not(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_add_not(rewriter, node, 1);
+    res = _rw_bv_add_not(rewriter, node, 1);
   }
   return res;
 }
@@ -186,7 +232,7 @@ RewriteRule<RewriteRuleKind::BV_ADD_NOT>::_apply(Rewriter& rewriter,
  */
 namespace {
 Node
-_rw_add_neg(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_bv_add_neg(Rewriter& rewriter, const Node& node, size_t idx)
 {
   (void) rewriter;
   assert(node.num_children() == 2);
@@ -207,10 +253,10 @@ RewriteRule<RewriteRuleKind::BV_ADD_NEG>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
   (void) rewriter;
-  Node res = _rw_add_neg(rewriter, node, 0);
+  Node res = _rw_bv_add_neg(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_add_neg(rewriter, node, 1);
+    res = _rw_bv_add_neg(rewriter, node, 1);
   }
   return res;
 }
@@ -225,7 +271,7 @@ RewriteRule<RewriteRuleKind::BV_ADD_NEG>::_apply(Rewriter& rewriter,
  */
 namespace {
 Node
-_rw_add_urem(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_bv_add_urem(Rewriter& rewriter, const Node& node, size_t idx)
 {
   (void) rewriter;
   size_t idx0      = idx;
@@ -288,10 +334,50 @@ Node
 RewriteRule<RewriteRuleKind::BV_ADD_UREM>::_apply(Rewriter& rewriter,
                                                   const Node& node)
 {
-  Node res = _rw_add_urem(rewriter, node, 0);
+  Node res = _rw_bv_add_urem(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_add_urem(rewriter, node, 1);
+    res = _rw_bv_add_urem(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (bvadd a (ite c 0 e)) or (bvadd a (ite c t 0))
+ * result: (ite c a (bvadd e a)) or (ite c (bvadd t a) a)
+ */
+namespace {
+Node
+_rw_bv_add_ite(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::ITE
+      && ((node[idx0][1].is_value()
+           && node[idx0][1].value<BitVector>().is_zero())
+          || (node[idx0][2].is_value()
+              && node[idx0][2].value<BitVector>().is_zero())))
+  {
+    return rewriter.mk_node(
+        Kind::ITE,
+        {node[idx0][0],
+         rewriter.mk_node(Kind::BV_ADD, {node[idx0][1], node[idx1]}),
+         rewriter.mk_node(Kind::BV_ADD, {node[idx0][2], node[idx1]})});
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_ITE>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  Node res = _rw_bv_add_ite(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_add_ite(rewriter, node, 1);
   }
   return res;
 }
@@ -302,7 +388,7 @@ RewriteRule<RewriteRuleKind::BV_ADD_UREM>::_apply(Rewriter& rewriter,
  */
 namespace {
 Node
-_rw_add_shl(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_bv_add_shl(Rewriter& rewriter, const Node& node, size_t idx)
 {
   (void) rewriter;
   assert(node.num_children() == 2);
@@ -321,10 +407,10 @@ Node
 RewriteRule<RewriteRuleKind::BV_ADD_SHL>::_apply(Rewriter& rewriter,
                                                  const Node& node)
 {
-  Node res = _rw_add_shl(rewriter, node, 0);
+  Node res = _rw_bv_add_shl(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_add_shl(rewriter, node, 1);
+    res = _rw_bv_add_shl(rewriter, node, 1);
   }
   return res;
 }
@@ -358,7 +444,7 @@ RewriteRule<RewriteRuleKind::BV_AND_EVAL>::_apply(Rewriter& rewriter,
  */
 namespace {
 Node
-_rw_and_special_const(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_bv_and_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 {
   (void) rewriter;
   assert(node.num_children() == 2);
@@ -385,10 +471,10 @@ Node
 RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(Rewriter& rewriter,
                                                            const Node& node)
 {
-  Node res = _rw_and_special_const(rewriter, node, 0);
+  Node res = _rw_bv_and_special_const(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_and_special_const(rewriter, node, 1);
+    res = _rw_bv_and_special_const(rewriter, node, 1);
   }
   return res;
 }
@@ -493,7 +579,7 @@ RewriteRule<RewriteRuleKind::BV_MUL_EVAL>::_apply(Rewriter& rewriter,
  */
 namespace {
 Node
-_rw_mul_special_const(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_bv_mul_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 {
   assert(node.num_children() == 2);
   size_t idx0             = idx;
@@ -523,10 +609,10 @@ Node
 RewriteRule<RewriteRuleKind::BV_MUL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
                                                            const Node& node)
 {
-  Node res = _rw_mul_special_const(rewriter, node, 0);
+  Node res = _rw_bv_mul_special_const(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_mul_special_const(rewriter, node, 1);
+    res = _rw_bv_mul_special_const(rewriter, node, 1);
   }
   return res;
 }

@@ -154,7 +154,9 @@ enum class RewriteRuleKind
 
   BV_ADD_EVAL,
   BV_ADD_SPECIAL_CONST,
+  BV_ADD_CONST,
   BV_ADD_BV1,
+  BV_ADD_ITE,
   BV_ADD_MUL,
   BV_ADD_MUL_TWO,
   BV_ADD_NOT,
