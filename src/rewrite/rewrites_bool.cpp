@@ -59,6 +59,7 @@ namespace {
 Node
 _rw_eq_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 {
+  assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
   if (node[idx0].is_value() && !node[idx1].is_value())
@@ -130,17 +131,12 @@ Node
 RewriteRule<RewriteRuleKind::EQUAL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
                                                           const Node& node)
 {
-  assert(node.num_children() == 2);
-
-  if (node[0].is_value() && !node[1].is_value())
+  Node res = _rw_eq_special_const(rewriter, node, 0);
+  if (res == node)
   {
-    return _rw_eq_special_const(rewriter, node, 0);
+    res = _rw_eq_special_const(rewriter, node, 1);
   }
-  else if (!node[0].is_value() && node[1].is_value())
-  {
-    return _rw_eq_special_const(rewriter, node, 1);
-  }
-  return node;
+  return res;
 }
 
 /* distinct ----------------------------------------------------------------- */

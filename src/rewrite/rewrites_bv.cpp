@@ -37,11 +37,15 @@ Node
 _rw_add_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 {
   (void) rewriter;
+  assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
-  if (node[idx0].value<BitVector>().is_zero())
+  if (node[idx0].is_value() && !node[idx1].is_value())
   {
-    return node[idx1];
+    if (node[idx0].value<BitVector>().is_zero())
+    {
+      return node[idx1];
+    }
   }
   return node;
 }
@@ -52,16 +56,12 @@ Node
 RewriteRule<RewriteRuleKind::BV_ADD_SPECIAL_CONST>::_apply(Rewriter& rewriter,
                                                            const Node& node)
 {
-  assert(node.num_children() == 2);
-  if (node[0].is_value() && !node[1].is_value())
+  Node res = _rw_add_special_const(rewriter, node, 0);
+  if (res == node)
   {
-    return _rw_add_special_const(rewriter, node, 0);
+    res = _rw_add_special_const(rewriter, node, 1);
   }
-  else if (!node[0].is_value() && node[1].is_value())
-  {
-    return _rw_add_special_const(rewriter, node, 1);
-  }
-  return node;
+  return res;
 }
 
 /**
@@ -360,16 +360,20 @@ Node
 _rw_and_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 {
   (void) rewriter;
+  assert(node.num_children() == 2);
   size_t idx0             = idx;
   size_t idx1             = 1 - idx;
-  const BitVector& value0 = node[idx0].value<BitVector>();
-  if (value0.is_zero())
+  if (node[idx0].is_value() && !node[idx1].is_value())
   {
-    return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
-  }
-  if (value0.is_ones())
-  {
-    return node[idx1];
+    const BitVector& value0 = node[idx0].value<BitVector>();
+    if (value0.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+    }
+    if (value0.is_ones())
+    {
+      return node[idx1];
+    }
   }
   return node;
 }
@@ -380,16 +384,12 @@ Node
 RewriteRule<RewriteRuleKind::BV_AND_SPECIAL_CONST>::_apply(Rewriter& rewriter,
                                                            const Node& node)
 {
-  assert(node.num_children() == 2);
-  if (node[0].is_value() && !node[1].is_value())
+  Node res = _rw_and_special_const(rewriter, node, 0);
+  if (res == node)
   {
-    return _rw_and_special_const(rewriter, node, 0);
+    res = _rw_and_special_const(rewriter, node, 1);
   }
-  else if (!node[0].is_value() && node[1].is_value())
-  {
-    return _rw_and_special_const(rewriter, node, 1);
-  }
-  return node;
+  return res;
 }
 
 /* bvashr ------------------------------------------------------------------- */
@@ -494,20 +494,24 @@ namespace {
 Node
 _rw_mul_special_const(Rewriter& rewriter, const Node& node, size_t idx)
 {
+  assert(node.num_children() == 2);
   size_t idx0             = idx;
   size_t idx1             = 1 - idx;
-  const BitVector& value0 = node[idx0].value<BitVector>();
-  if (value0.is_zero())
+  if (node[idx0].is_value() && !node[idx1].is_value())
   {
-    return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
-  }
-  if (value0.is_one())
-  {
-    return node[idx1];
-  }
-  if (value0.is_ones())
-  {
-    return rewriter.mk_node(Kind::BV_NEG, {node[idx1]});
+    const BitVector& value0 = node[idx0].value<BitVector>();
+    if (value0.is_zero())
+    {
+      return NodeManager::get().mk_value(BitVector::mk_zero(value0.size()));
+    }
+    if (value0.is_one())
+    {
+      return node[idx1];
+    }
+    if (value0.is_ones())
+    {
+      return rewriter.mk_node(Kind::BV_NEG, {node[idx1]});
+    }
   }
   return node;
 }
@@ -518,17 +522,12 @@ Node
 RewriteRule<RewriteRuleKind::BV_MUL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
                                                            const Node& node)
 {
-  (void) rewriter;
-  assert(node.num_children() == 2);
-  if (node[0].is_value() && !node[1].is_value())
+  Node res = _rw_mul_special_const(rewriter, node, 0);
+  if (res == node)
   {
-    return _rw_mul_special_const(rewriter, node, 0);
+    res = _rw_mul_special_const(rewriter, node, 1);
   }
-  else if (!node[0].is_value() && node[1].is_value())
-  {
-    return _rw_mul_special_const(rewriter, node, 1);
-  }
-  return node;
+  return res;
 }
 
 /* bvnot -------------------------------------------------------------------- */
