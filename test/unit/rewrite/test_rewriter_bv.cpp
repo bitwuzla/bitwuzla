@@ -229,6 +229,20 @@ TEST_F(TestRewriterBv, bv_add_urem)
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::BV_ADD,
       {d_a4,
+       d_nm.mk_node(Kind::BV_NEG,
+                    {d_nm.mk_node(
+                        Kind::BV_ADD,
+                        {d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4}), d_b4})})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD,
+      {d_b4,
+       d_nm.mk_node(Kind::BV_NEG,
+                    {d_nm.mk_node(
+                        Kind::BV_MUL,
+                        {d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4}), d_b4})})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD,
+      {d_a4,
        d_nm.mk_node(Kind::BV_MUL,
                     {d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4}), d_b4})}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
@@ -250,13 +264,6 @@ TEST_F(TestRewriterBv, bv_add_urem)
                     {
 
                         d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4}), d_b4})}));
-  test_rule_does_not_apply<kind>(d_nm.mk_node(
-      Kind::BV_ADD,
-      {d_b4,
-       d_nm.mk_node(Kind::BV_NEG,
-                    {d_nm.mk_node(
-                        Kind::BV_MUL,
-                        {d_nm.mk_node(Kind::BV_UDIV, {d_a4, d_b4}), d_b4})})}));
 }
 
 TEST_F(TestRewriterBv, bv_add_mul)

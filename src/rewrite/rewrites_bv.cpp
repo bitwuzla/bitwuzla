@@ -233,7 +233,8 @@ _rw_add_urem(Rewriter& rewriter, const Node& node, size_t idx)
   const Node *udiv = nullptr, *b = nullptr;
   const Node& a = node[idx1];
   // (bvadd a (bvneg (bvmul (bvudiv a b) b)))
-  if (node::utils::is_bv_neg(node[idx0]))
+  if (node::utils::is_bv_neg(node[idx0])
+      && node[idx0][0].kind() == Kind::BV_MUL)
   {
     const Node& mul = node[idx0][0];
     if (mul[0].kind() == Kind::BV_UDIV)
