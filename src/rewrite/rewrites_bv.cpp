@@ -78,6 +78,7 @@ _rw_bv_add_const(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx1 = 1 - idx;
   if (node[idx0].is_value() && node[idx1].kind() == Kind::BV_ADD)
   {
+    assert(node[idx1].num_children() == 2);
     if (node[idx1][0].is_value())
     {
       return rewriter.mk_node(
@@ -622,6 +623,181 @@ RewriteRule<RewriteRuleKind::BV_MUL_SPECIAL_CONST>::_apply(Rewriter& rewriter,
   if (res == node)
   {
     res = _rw_bv_mul_special_const(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (bvadd a b) with a and b of bit-width 1
+ * result: (bvand a b)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_MUL_BV1>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  assert(node.num_children() == 2);
+  if (node[0].type().bv_size() != 1) return node;
+  return rewriter.mk_node(Kind::BV_AND, {node[0], node[1]});
+}
+
+/**
+ * match:  (bvmul (_ bvX N) (bvmul (_ bvY N) a))
+ * result: (bvmul (_ bvZ N) a) with Z = X * Y
+ */
+namespace {
+Node
+_rw_bv_mul_const(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].is_value() && node[idx1].kind() == Kind::BV_MUL)
+  {
+    assert(node[idx1].num_children() == 2);
+    if (node[idx1][0].is_value())
+    {
+      return rewriter.mk_node(
+          Kind::BV_MUL,
+          {rewriter.mk_node(Kind::BV_MUL, {node[idx0], node[idx1][0]}),
+           node[idx1][1]});
+    }
+    else if (node[idx1][1].is_value())
+    {
+      return rewriter.mk_node(
+          Kind::BV_MUL,
+          {rewriter.mk_node(Kind::BV_MUL, {node[idx0], node[idx1][1]}),
+           node[idx1][0]});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_MUL_CONST>::_apply(Rewriter& rewriter,
+                                                   const Node& node)
+{
+  Node res = _rw_bv_mul_const(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_mul_const(rewriter, node, 1);
+  }
+  return res;
+}
+
+/*
+ * match:  (bvmul (_ bvX N) (bvadd a (_ bvY N))
+ * result: (bvadd (bvmul (_ bvX N) a) (_ bvZ N)) with Z = X * Y
+ */
+namespace {
+Node
+_rw_bv_mul_const_add(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  assert(node.num_children() == 2);
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].is_value() && node[idx1].kind() == Kind::BV_ADD)
+  {
+    assert(node[idx1].num_children() == 2);
+    if (node[idx1][0].is_value() || node[idx1][1].is_value())
+    {
+      return rewriter.mk_node(
+          Kind::BV_ADD,
+          {rewriter.mk_node(Kind::BV_MUL, {node[idx0], node[idx1][0]}),
+           rewriter.mk_node(Kind::BV_MUL, {node[idx0], node[idx1][1]})});
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_MUL_CONST_ADD>::_apply(Rewriter& rewriter,
+                                                       const Node& node)
+{
+  Node res = _rw_bv_mul_const_add(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_mul_const_add(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (bvmul a (ite c 0 e)) or (bvmul a (ite c t 0))
+ * result: (ite c a (bvmul e a)) or (ite c (bvmul t a) a)
+ */
+namespace {
+Node
+_rw_bv_mul_ite(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  if (node[idx0].kind() == Kind::ITE
+      && ((node[idx0][1].is_value()
+           && node[idx0][1].value<BitVector>().is_zero())
+          || (node[idx0][2].is_value()
+              && node[idx0][2].value<BitVector>().is_zero())))
+  {
+    return rewriter.mk_node(
+        Kind::ITE,
+        {node[idx0][0],
+         rewriter.mk_node(Kind::BV_MUL, {node[idx0][1], node[idx1]}),
+         rewriter.mk_node(Kind::BV_MUL, {node[idx0][2], node[idx1]})});
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_MUL_ITE>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  Node res = _rw_bv_mul_ite(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_mul_ite(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
+ * match:  (bvmul (bvshl a b) c)
+ * result: (bvshl (bvmul a c) b)
+ */
+namespace {
+Node
+_rw_bv_mul_shl(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  (void) rewriter;
+  size_t idx0 = idx;
+  size_t idx1 = 1 - idx;
+  assert(node.num_children() == 2);
+  if (node[idx0].kind() == Kind::BV_SHL)
+  {
+    return rewriter.mk_node(
+        Kind::BV_SHL,
+        {rewriter.mk_node(Kind::BV_MUL, {node[idx0][0], node[idx1]}),
+         node[idx0][1]});
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_MUL_SHL>::_apply(Rewriter& rewriter,
+                                                 const Node& node)
+{
+  Node res = _rw_bv_mul_shl(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_mul_shl(rewriter, node, 1);
   }
   return res;
 }

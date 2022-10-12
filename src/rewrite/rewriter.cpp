@@ -303,7 +303,7 @@ Rewriter::rewrite_bv_add(const Node& node)
     BZLA_APPLY_RW_RULE(BV_ADD_NOT);
     BZLA_APPLY_RW_RULE(BV_ADD_NEG);
     BZLA_APPLY_RW_RULE(BV_ADD_UREM);
-    // LEVEL 3 rewrites
+    // LEVEL 3 rewrites /////////////////////////////////////////
     BZLA_APPLY_RW_RULE(BV_ADD_ITE);
     BZLA_APPLY_RW_RULE(BV_ADD_MUL);
     BZLA_APPLY_RW_RULE(BV_ADD_SHL);
@@ -383,6 +383,13 @@ Rewriter::rewrite_bv_mul(const Node& node)
   {
     BZLA_APPLY_RW_RULE(BV_MUL_EVAL);
     BZLA_APPLY_RW_RULE(BV_MUL_SPECIAL_CONST);
+    BZLA_APPLY_RW_RULE(BV_MUL_CONST);
+    BZLA_APPLY_RW_RULE(BV_MUL_BV1);
+    // LEVEL 3 rewrites /////////////////////////////////////////
+    BZLA_APPLY_RW_RULE(BV_MUL_CONST_ADD);
+    // rewrites for Noetzli benchmarks
+    BZLA_APPLY_RW_RULE(BV_MUL_ITE);
+    BZLA_APPLY_RW_RULE(BV_MUL_SHL);
     // TODO
   }
 

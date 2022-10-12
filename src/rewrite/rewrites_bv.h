@@ -143,15 +143,30 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_MUL_SPECIAL_CONST>::_apply(
     Rewriter& rewriter, const Node& node);
 // bool_mul
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_BV1>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 #if 0
 // this increases mul nodes in the general case
 // bcond_mul
 #endif
 // const_lhs_mul
 // const_rhs_mul
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_CONST>::_apply(Rewriter& rewriter,
+                                                        const Node& node);
 // const_mul
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_CONST_ADD>::_apply(Rewriter& rewriter,
+                                                            const Node& node);
 // push_ite_mul
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_ITE>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 // sll_mul
+template <>
+Node RewriteRule<RewriteRuleKind::BV_MUL_SHL>::_apply(Rewriter& rewriter,
+                                                      const Node& node);
 // neg_mul
 // ones_mul
 
