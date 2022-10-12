@@ -293,6 +293,12 @@ template <>
 Node RewriteRule<RewriteRuleKind::BV_UREM_ZERO>::_apply(Rewriter& rewriter,
                                                         const Node& node);
 
+/* bvxor -------------------------------------------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>

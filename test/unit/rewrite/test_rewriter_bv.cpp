@@ -1121,6 +1121,31 @@ TEST_F(TestRewriterBv, bv_urem_zero)
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_UREM, {d_a4, d_b4}));
 }
 
+/* bvxor -------------------------------------------------------------------- */
+
+TEST_F(TestRewriterBv, bv_xor_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_XOR_EVAL;
+  //// applies
+  Node bvxor0 = d_nm.mk_node(Kind::BV_XOR,
+                             {d_nm.mk_value(BitVector(4, "1001")),
+                              d_nm.mk_value(BitVector(4, "1110"))});
+  ASSERT_EQ(d_nm.mk_value(BitVector(4, "0111")), d_rewriter.rewrite(bvxor0));
+  Node bvxor1 =
+      d_nm.mk_node(Kind::BV_XOR, {d_nm.mk_value(BitVector(4, "1001")), bvxor0});
+  ASSERT_EQ(d_nm.mk_value(BitVector(4, "1110")), d_rewriter.rewrite(bvxor1));
+  Node bvxor1_1 =
+      d_nm.mk_node(Kind::BV_XOR, {bvxor1, d_nm.mk_value(BitVector(4, "1110"))});
+  ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), d_rewriter.rewrite(bvxor1_1));
+  Node bvxor1_2 = d_nm.mk_node(Kind::BV_XOR, {bvxor1, bvxor1});
+  ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), d_rewriter.rewrite(bvxor1_2));
+  // with empty cache
+  ASSERT_EQ(d_nm.mk_value(BitVector(4, "0000")), Rewriter().rewrite(bvxor1_2));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_XOR, {d_a4, d_nm.mk_value(BitVector(4, "1110"))}));
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_nand_elim) { test_elim_rule_bv(Kind::BV_NAND); }

@@ -524,8 +524,16 @@ DONE:
 Node
 Rewriter::rewrite_bv_xor(const Node& node)
 {
-  // TODO
-  return node;
+  RewriteRuleKind kind;
+  Node res;
+
+  if (d_enabled)
+  {
+    BZLA_APPLY_RW_RULE(BV_XOR_EVAL);
+  }
+
+DONE:
+  return res;
 }
 
 /* Eliminated operators */

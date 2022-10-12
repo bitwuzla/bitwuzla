@@ -223,6 +223,9 @@ enum class RewriteRuleKind
   BV_UREM_BV1,
   BV_UREM_ZERO,
 
+  //// bvxor
+  BV_XOR_EVAL,
+
   //// Elimination rules
   BV_NAND_ELIM,
   BV_NEG_ELIM,

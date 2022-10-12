@@ -1376,6 +1376,24 @@ RewriteRule<RewriteRuleKind::BV_UREM_ZERO>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/* bvxor -------------------------------------------------------------------- */
+
+/**
+ * Constant folding, matches when both lhs and rhs are values.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_XOR_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  (void) rewriter;
+  assert(node.num_children() == 2);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  Node res = NodeManager::get().mk_value(
+      node[0].value<BitVector>().bvxor(node[1].value<BitVector>()));
+  return res;
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>
