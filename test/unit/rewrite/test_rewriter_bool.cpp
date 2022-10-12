@@ -103,8 +103,7 @@ TEST_F(TestRewriterBool, bool_equal_special_const)
   {
     //// applies
     Node bv4and = d_nm.mk_node(Kind::BV_AND, {bv4a, bv4b});
-    Node bv4xnor =
-        d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_node(Kind::BV_XOR, {bv4a, bv4b})});
+    Node bv4xnor = d_nm.mk_node(Kind::BV_XNOR, {bv4a, bv4b});
     // lhs true
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_true, b}));
     // rhs true
